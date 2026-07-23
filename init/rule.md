@@ -49,7 +49,7 @@ Part A. Project Sub-Terra Agent 작업 규칙
    - 유저 간 거래, 실시간 랭킹과 유료 상품
 
    2-4. 권장 기술 스택
-   - Unity 6.3 LTS
+   - Unity 6.5 LTS
    - Universal Render Pipeline 2D Renderer
    - C#과 MonoBehaviour
    - Unity Input System
@@ -290,7 +290,7 @@ Part A. Project Sub-Terra Agent 작업 규칙
 
 12. 테스트와 검증 원칙
     12-1. 기본 검증
-    - 지정된 Unity 6.3 LTS에서 프로젝트를 열고 초기 Console 오류를 확인한다.
+    - 지정된 Unity 6.5 LTS에서 프로젝트를 열고 초기 Console 오류를 확인한다.
     - 순수 계산은 Edit Mode 테스트, Scene·컴포넌트 연결은 Play Mode 테스트로 검증한다.
     - 테스트 명령이나 자동화 환경이 아직 구성되지 않았다면 그 사실과 수동 검증 결과를 보고한다.
     - Unity Test Framework 실행 뒤 실패 원인과 미실행 항목을 구분해 기록한다.
