@@ -123,8 +123,8 @@ Tilemap 기반 암석과 광물
 4. 개발 기술 스택
    4.1 게임 엔진
    권장 버전
-   Unity 6.3 LTS
-   2026년 7월 기준 Unity 6.5가 최신 기능 릴리스이지만, Unity 6.3은 LTS 계열이므로 처음 개발하는 협업 프로젝트에서는 최신 기능보다 안정성과 장기 지원을 우선하여 Unity 6.3 LTS를 사용하는 것을 권장한다.
+   Unity 6.5 LTS
+   2026년 7월 기준 Unity 6.5가 최신 기능 릴리스이지만, Unity 6.5은 LTS 계열이므로 처음 개발하는 협업 프로젝트에서는 최신 기능보다 안정성과 장기 지원을 우선하여 Unity 6.5 LTS를 사용하는 것을 권장한다.
    프로젝트가 이미 다른 Unity 6 버전으로 생성됐다면 특별한 문제가 없는 한 개발 도중 엔진 버전을 자주 변경하지 않는다.
    4.2 렌더링
    Universal Render Pipeline
@@ -988,7 +988,7 @@ FPS
 15. 개발 절차
     단계 0. 프로젝트 기준 고정
     작업
-    Unity 6.3 LTS 설치
+    Unity 6.5 LTS 설치
     2D URP 프로젝트 생성
     Git 저장소 생성
     Unity .gitignore 적용
@@ -1189,7 +1189,7 @@ UI
     이 기획대로 게임 전체를 만들어줘.
 
 좋은 요청:
-현재 Unity 6.3 LTS 2D URP 프로젝트다.
+현재 Unity 6.5 LTS 2D URP 프로젝트다.
 
 Foreground Tilemap에서 플레이어가 바라보는 방향의 타일을
 일정 시간 채굴하고 제거하는 MiningSystem을 구현해라.
