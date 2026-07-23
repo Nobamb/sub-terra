@@ -1,0 +1,19 @@
+{
+    "name": "SubTerra.Gameplay.Player.PlayModeTests",
+    "rootNamespace": "SubTerra.Gameplay.Player.Tests",
+    "references": [
+        "SubTerra.Gameplay.Player"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "noEngineReferences": false
+}
