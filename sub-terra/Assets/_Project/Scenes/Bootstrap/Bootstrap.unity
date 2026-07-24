@@ -148,6 +148,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65263e6a634211e44a49bd02f451e440, type: 3}
   m_Name: 
   m_EditorClassIdentifier: SubTerra.App::SubTerra.App.Core.GameBootstrapper
+  gameDataCatalog: {fileID: 11400000, guid: 12d1b2c7b00e8754a9133b2481febe0d, type: 2}
 --- !u!4 &1029570182
 Transform:
   m_ObjectHideFlags: 0

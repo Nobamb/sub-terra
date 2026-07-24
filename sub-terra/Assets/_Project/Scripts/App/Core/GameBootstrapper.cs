@@ -22,9 +22,14 @@ namespace SubTerra.App.Core
         /// <summary>Awake에서 중복 Root로 판정되어 폐기 대상인지.</summary>
         public bool IsDuplicateDiscarded { get; private set; }
 
+        [SerializeField] private ScriptableObject gameDataCatalog;
+
         public IDataCatalogPort Catalog { get; set; } = new NullCatalog();
         public ISavePort Save { get; set; } = new EmptySave();
         public ISceneLoader Scenes { get; set; } = new UnitySceneLoader();
+
+        /// <summary>Inspector에 연결된 카탈로그 포트. 구체 데이터 타입은 참조하지 않는다.</summary>
+        public IDataCatalogPort AssignedCatalog => gameDataCatalog as IDataCatalogPort;
 
         // Domain Reload 꺼짐 설정에서도 static 싱글톤이 이전 플레이 값을 유지하지 않게 한다.
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -61,6 +66,28 @@ namespace SubTerra.App.Core
             }
 
             ClaimInstance();
+            ApplySerializedCatalogIfPresent();
+        }
+
+        /// <summary>
+        /// Inspector 에셋이 IDataCatalogPort를 구현하면 NullCatalog 대신 실제 포트로 쓴다.
+        /// 테스트에서 Catalog 프로퍼티를 직접 주입한 경우는 덮어쓰지 않는다.
+        /// </summary>
+        private void ApplySerializedCatalogIfPresent()
+        {
+            if (gameDataCatalog != null && Catalog is NullCatalog)
+            {
+                Catalog = gameDataCatalog as IDataCatalogPort ?? new InvalidCatalogPort();
+            }
+        }
+
+        private sealed class InvalidCatalogPort : IDataCatalogPort
+        {
+            public bool Validate(out string reason)
+            {
+                reason = "Assigned catalog asset does not implement IDataCatalogPort.";
+                return false;
+            }
         }
 
         private void OnDestroy()
