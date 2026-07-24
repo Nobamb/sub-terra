@@ -1,6 +1,6 @@
 {
   "name": "SubTerra.App.Tests.EditMode",
-  "references": ["SubTerra.App"],
+  "references": ["SubTerra.App", "SubTerra.App.Editor"],
   "optionalUnityReferences": ["TestAssemblies"],
   "includePlatforms": ["Editor"],
   "autoReferenced": false
