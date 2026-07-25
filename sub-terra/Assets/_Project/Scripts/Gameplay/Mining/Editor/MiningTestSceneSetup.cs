@@ -44,6 +44,14 @@ namespace SubTerra.Gameplay.Mining.Editor
             tilemap.SetTile(new Vector3Int(3, 0, 0), iron);
             tilemap.SetTile(new Vector3Int(5, 0, 0), lithium);
 
+            // Tilemap collider seams cannot make the player fall through this test floor.
+            // Mining targets stay on the Tilemap; only collision uses this continuous surface.
+            GameObject safetyGround = new("SafetyGround");
+            safetyGround.transform.SetParent(root.transform);
+            safetyGround.transform.position = new Vector3(0f, -1.5f, 0f);
+            BoxCollider2D safetyCollider = safetyGround.AddComponent<BoxCollider2D>();
+            safetyCollider.size = new Vector2(30f, 1f);
+
             GameObject systems = new("MineSystems"); systems.transform.SetParent(root.transform);
             MiningTileResolver resolver = systems.AddComponent<MiningTileResolver>();
             resolver.EditorSetEntries(
