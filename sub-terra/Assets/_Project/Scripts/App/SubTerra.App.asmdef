@@ -1,7 +1,10 @@
 {
   "name": "SubTerra.App",
   "rootNamespace": "SubTerra.App",
-  "references": [],
+  "references": [
+    "Unity.TextMeshPro",
+    "UnityEngine.UI"
+  ],
   "includePlatforms": [],
   "excludePlatforms": [],
   "allowUnsafeCode": false,
