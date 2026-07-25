@@ -3,7 +3,8 @@ using UnityEngine;
 namespace SubTerra.App.Core.Data
 {
     /// <summary>
-    /// 광물 정적 정의. 보유량·골드는 넣지 않는다(플레이어 상태는 GameState 쪽).
+    /// 광물의 영구 ID와 경제 정보를 관리하는 정적 정의.
+    /// 보유량·골드는 GameState에, 내구도·채굴 시간·구조 영향은 MiningTileData에 둔다.
     /// </summary>
     [CreateAssetMenu(fileName = "MineralData", menuName = "SubTerra/Data/Mineral", order = 10)]
     public sealed class MineralData : ScriptableObject
