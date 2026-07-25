@@ -5,9 +5,11 @@ using SubTerra.App.Core;
 using SubTerra.App.Core.Data;
 using SubTerra.App.Editor.DataValidation;
 using SubTerra.App.State;
+using SubTerra.Shared;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.TestTools;
+using UnityEngine.Tilemaps;
 
 namespace SubTerra.App.Tests.Data
 {
@@ -31,6 +33,111 @@ namespace SubTerra.App.Tests.Data
 
             created.Clear();
             GameBootstrapper.ResetInstanceForTests();
+        }
+
+        [Test]
+        public void MiningRewardReceiver_KeepsAgreedSignature()
+        {
+            var method = typeof(IMiningRewardReceiver).GetMethod(nameof(IMiningRewardReceiver.AddMineral));
+
+            Assert.That(method, Is.Not.Null);
+            Assert.That(method.ReturnType, Is.EqualTo(typeof(void)));
+            var parameters = method.GetParameters();
+            Assert.That(parameters.Select(p => p.ParameterType), Is.EqualTo(new[] { typeof(string), typeof(int) }));
+            Assert.That(parameters.Select(p => p.Name), Is.EqualTo(new[] { "mineralId", "quantity" }));
+        }
+
+        [Test]
+        public void MiningTileContract_RequiredFieldsRoundTripAndResolveByTileAsset()
+        {
+            var catalog = CreateValidMvpCatalog();
+            var tileAsset = Track(ScriptableObject.CreateInstance<Tile>());
+            var definition = Track(ScriptableObject.CreateInstance<MiningTileData>());
+            definition.name = "Tile_Copper";
+            definition.EditorSet(
+                "tile.mineral.copper",
+                tileAsset,
+                true,
+                12f,
+                1.5f,
+                catalog.Minerals.First(m => m.Id == DataIds.Minerals.Copper),
+                2,
+                0.25f,
+                true);
+
+            catalog.EditorSetLists(
+                catalog.Minerals.ToList(),
+                new List<MiningTileData> { definition },
+                catalog.Buildings.ToList(),
+                catalog.Recipes.ToList(),
+                catalog.Upgrades.ToList(),
+                catalog.Dialogues.ToList());
+
+            var validation = catalog.ValidateAll();
+            Assert.That(validation.IsValid, Is.True, validation.FormatAll());
+            Assert.That(catalog.TryGetMiningTile("tile.mineral.copper", out var byId), Is.True);
+            Assert.That(catalog.TryGetMiningTile(tileAsset, out var byAsset), Is.True);
+            Assert.That(byId, Is.SameAs(definition));
+            Assert.That(byAsset, Is.SameAs(definition));
+
+            // 기존 B 빌더의 5개 목록 오버로드가 새 채굴 타일 등록을 지우면 안 된다.
+            catalog.EditorSetLists(
+                catalog.Minerals.ToList(),
+                catalog.Buildings.ToList(),
+                catalog.Recipes.ToList(),
+                catalog.Upgrades.ToList(),
+                catalog.Dialogues.ToList());
+            Assert.That(catalog.ValidateAll().IsValid, Is.True);
+            Assert.That(catalog.TryGetMiningTile(tileAsset, out byAsset), Is.True);
+            Assert.That(byAsset, Is.SameAs(definition));
+
+            var dto = definition.ToDto();
+            Assert.That(dto.tileId, Is.EqualTo("tile.mineral.copper"));
+            Assert.That(dto.mineralId, Is.EqualTo(DataIds.Minerals.Copper));
+            Assert.That(dto.quantity, Is.EqualTo(2));
+            Assert.That(dto.isMineable, Is.True);
+            Assert.That(dto.durability, Is.EqualTo(12f));
+            Assert.That(dto.miningTime, Is.EqualTo(1.5f));
+            Assert.That(dto.structuralImpact, Is.EqualTo(0.25f));
+            Assert.That(dto.containsGas, Is.True);
+        }
+
+        [Test]
+        public void MiningTileValidation_RejectsAmbiguousTileAndRewardWithoutMineral()
+        {
+            var catalog = CreateValidMvpCatalog();
+            var tileAsset = Track(ScriptableObject.CreateInstance<Tile>());
+            var first = Track(ScriptableObject.CreateInstance<MiningTileData>());
+            first.name = "Tile_InvalidReward";
+            first.EditorSet("tile.rock.invalid_reward", tileAsset, true, 1f, 1f, null, 1, 0f, false);
+
+            var second = Track(ScriptableObject.CreateInstance<MiningTileData>());
+            second.name = "Tile_DuplicateAsset";
+            second.EditorSet(
+                "tile.rock.duplicate_asset",
+                tileAsset,
+                true,
+                1f,
+                1f,
+                catalog.Minerals.First(),
+                1,
+                0f,
+                false);
+
+            catalog.EditorSetLists(
+                catalog.Minerals.ToList(),
+                new List<MiningTileData> { first, second },
+                catalog.Buildings.ToList(),
+                catalog.Recipes.ToList(),
+                catalog.Upgrades.ToList(),
+                catalog.Dialogues.ToList());
+
+            var validation = catalog.ValidateAll();
+
+            Assert.That(validation.IsValid, Is.False);
+            Assert.That(validation.Issues.Any(i => i.FieldName == "tileAsset"), Is.True);
+            Assert.That(validation.Issues.Any(i => i.FieldName == "quantity"), Is.True);
+            Assert.That(catalog.TryGetMiningTile(tileAsset, out _), Is.False);
         }
 
         [Test]
