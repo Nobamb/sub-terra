@@ -2,6 +2,7 @@
   "name": "SubTerra.App",
   "rootNamespace": "SubTerra.App",
   "references": [
+    "SubTerra.Shared",
     "Unity.TextMeshPro",
     "UnityEngine.UI"
   ],
