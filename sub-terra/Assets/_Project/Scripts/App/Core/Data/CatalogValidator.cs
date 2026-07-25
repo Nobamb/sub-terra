@@ -20,21 +20,23 @@ namespace SubTerra.App.Core.Data
             }
 
             var minerals = catalog.Minerals;
+            var miningTiles = catalog.MiningTiles;
             var buildings = catalog.Buildings;
             var recipes = catalog.Recipes;
             var upgrades = catalog.Upgrades;
             var dialogues = catalog.Dialogues;
 
             ValidateMinerals(minerals, result);
+            ValidateMiningTiles(miningTiles, result);
             ValidateBuildings(buildings, result);
             ValidateRecipes(recipes, result);
             ValidateUpgrades(upgrades, result);
             ValidateDialogues(dialogues, result);
-            ValidateReferences(minerals, buildings, recipes, upgrades, result);
+            ValidateReferences(minerals, miningTiles, buildings, recipes, upgrades, result);
             ValidateRequiredMvpIds(minerals, buildings, recipes, upgrades, dialogues, result);
 
             // 중복을 포함한 검증 오류가 하나라도 있으면 조회 Dictionary를 성공 상태로 공개하지 않는다.
-            var hasDuplicate = HasAnyDuplicateIds(minerals, buildings, recipes, upgrades, dialogues, result);
+            var hasDuplicate = HasAnyDuplicateIds(minerals, miningTiles, buildings, recipes, upgrades, dialogues, result);
             result.SetDictionaryInitialized(!hasDuplicate && result.ErrorCount == 0);
 
             return result;
@@ -42,6 +44,7 @@ namespace SubTerra.App.Core.Data
 
         private static bool HasAnyDuplicateIds(
             IReadOnlyList<MineralData> minerals,
+            IReadOnlyList<MiningTileData> miningTiles,
             IReadOnlyList<BuildingData> buildings,
             IReadOnlyList<RecipeData> recipes,
             IReadOnlyList<UpgradeData> upgrades,
@@ -50,16 +53,18 @@ namespace SubTerra.App.Core.Data
         {
             var found = false;
             found |= ReportDuplicates(CollectIds(minerals, m => m != null ? m.Id : null, GetPath), result, "mineral");
+            found |= ReportDuplicates(CollectIds(miningTiles, t => t != null ? t.Id : null, GetPath), result, "miningTile");
             found |= ReportDuplicates(CollectIds(buildings, b => b != null ? b.Id : null, GetPath), result, "building");
             found |= ReportDuplicates(CollectIds(recipes, r => r != null ? r.Id : null, GetPath), result, "recipe");
             found |= ReportDuplicates(CollectIds(upgrades, u => u != null ? u.Id : null, GetPath), result, "upgrade");
             found |= ReportDuplicates(CollectIds(dialogues, d => d != null ? d.Id : null, GetPath), result, "dialogue");
-            found |= ReportCrossTypeDuplicates(minerals, buildings, recipes, upgrades, dialogues, result);
+            found |= ReportCrossTypeDuplicates(minerals, miningTiles, buildings, recipes, upgrades, dialogues, result);
             return found;
         }
 
         private static bool ReportCrossTypeDuplicates(
             IReadOnlyList<MineralData> minerals,
+            IReadOnlyList<MiningTileData> miningTiles,
             IReadOnlyList<BuildingData> buildings,
             IReadOnlyList<RecipeData> recipes,
             IReadOnlyList<UpgradeData> upgrades,
@@ -68,6 +73,7 @@ namespace SubTerra.App.Core.Data
         {
             var entries = new List<(string Id, string Type, string Path)>();
             AddTypedIds(entries, minerals, m => m != null ? m.Id : null, "mineral");
+            AddTypedIds(entries, miningTiles, t => t != null ? t.Id : null, "miningTile");
             AddTypedIds(entries, buildings, b => b != null ? b.Id : null, "building");
             AddTypedIds(entries, recipes, r => r != null ? r.Id : null, "recipe");
             AddTypedIds(entries, upgrades, u => u != null ? u.Id : null, "upgrade");
@@ -245,6 +251,65 @@ namespace SubTerra.App.Core.Data
             }
         }
 
+        private static void ValidateMiningTiles(IReadOnlyList<MiningTileData> miningTiles, CatalogValidationResult result)
+        {
+            if (miningTiles == null)
+            {
+                return;
+            }
+
+            var tileAssets = new HashSet<Object>();
+            for (var i = 0; i < miningTiles.Count; i++)
+            {
+                var data = miningTiles[i];
+                if (data == null)
+                {
+                    result.AddError(string.Empty, $"miningTiles[{i}]", "Null mining tile entry in catalog list.");
+                    continue;
+                }
+
+                var path = GetPath(data);
+                ValidateIdField(data.Id, "tile.", path, result);
+
+                if (data.TileAsset == null)
+                {
+                    result.AddError(path, "tileAsset", "Required tile asset is missing.");
+                }
+                else if (!tileAssets.Add(data.TileAsset))
+                {
+                    result.AddError(path, "tileAsset", "Tile asset is already registered by another mining tile.");
+                }
+
+                if (data.Durability <= 0f)
+                {
+                    result.AddError(path, "durability", "Durability must be greater than 0.");
+                }
+
+                if (data.MiningTime <= 0f)
+                {
+                    result.AddError(path, "miningTime", "Mining time must be greater than 0.");
+                }
+
+                if (data.Quantity < 0)
+                {
+                    result.AddError(path, "quantity", "Reward quantity must not be negative.");
+                }
+                else if (data.RewardMineral == null && data.Quantity != 0)
+                {
+                    result.AddError(path, "quantity", "A tile without a reward mineral must have zero quantity.");
+                }
+                else if (data.RewardMineral != null && data.Quantity <= 0)
+                {
+                    result.AddError(path, "quantity", "A mineral tile must have a positive reward quantity.");
+                }
+
+                if (data.StructuralImpact < 0f)
+                {
+                    result.AddError(path, "structuralImpact", "Structural impact must not be negative.");
+                }
+            }
+        }
+
         private static void ValidateBuildings(IReadOnlyList<BuildingData> buildings, CatalogValidationResult result)
         {
             if (buildings == null)
@@ -416,6 +481,7 @@ namespace SubTerra.App.Core.Data
 
         private static void ValidateReferences(
             IReadOnlyList<MineralData> minerals,
+            IReadOnlyList<MiningTileData> miningTiles,
             IReadOnlyList<BuildingData> buildings,
             IReadOnlyList<RecipeData> recipes,
             IReadOnlyList<UpgradeData> upgrades,
@@ -423,6 +489,18 @@ namespace SubTerra.App.Core.Data
         {
             var mineralIds = CollectIdSet(minerals, m => m != null ? m.Id : null);
             var buildingIds = CollectIdSet(buildings, b => b != null ? b.Id : null);
+
+            if (miningTiles != null)
+            {
+                for (var i = 0; i < miningTiles.Count; i++)
+                {
+                    var data = miningTiles[i];
+                    if (data != null && !string.IsNullOrEmpty(data.MineralId) && !mineralIds.Contains(data.MineralId))
+                    {
+                        result.AddError(GetPath(data), "mineralId", $"Referenced mineral id '{data.MineralId}' is not registered.");
+                    }
+                }
+            }
 
             if (buildings != null)
             {

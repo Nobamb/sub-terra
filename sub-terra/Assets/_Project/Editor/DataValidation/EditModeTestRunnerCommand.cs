@@ -18,9 +18,11 @@ namespace SubTerra.App.Editor.DataValidation
     public static class EditModeTestRunnerCommand
     {
         private const string FlagPath = "Temp/subterra-run-editmode.flag";
+        private const string PlayModeFlagPath = "Temp/subterra-run-playmode.flag";
         private const string BuildDataFlagPath = "Temp/subterra-build-phaseb-data.flag";
         private const string EvidenceFlagPath = "Temp/subterra-phaseb-evidence.flag";
         private const string DefaultResultPath = "Temp/subterra-editmode-results.txt";
+        private const string DefaultPlayModeResultPath = "Temp/subterra-playmode-results.txt";
         private const string EvidenceDir = "Temp/phase-b-evidence";
         private static TestRunnerApi activeApi;
         private static ResultWriter activeReceiver;
@@ -45,6 +47,20 @@ namespace SubTerra.App.Editor.DataValidation
                 {
                     Debug.LogWarning(
                         "[SubTerra] Edit Mode test flag handling failed: " + exception.GetType().Name);
+                }
+            }
+
+            if (File.Exists(PlayModeFlagPath))
+            {
+                try
+                {
+                    File.Delete(PlayModeFlagPath);
+                    RunPlayModeTests(DefaultPlayModeResultPath);
+                }
+                catch (Exception exception)
+                {
+                    Debug.LogWarning(
+                        "[SubTerra] Play Mode test flag handling failed: " + exception.GetType().Name);
                 }
             }
 
@@ -81,6 +97,12 @@ namespace SubTerra.App.Editor.DataValidation
         public static void RunFromMenu()
         {
             RunEditModeTests(DefaultResultPath);
+        }
+
+        [MenuItem("SubTerra/Tests/Run Play Mode Tests")]
+        public static void RunPlayModeFromMenu()
+        {
+            RunPlayModeTests(DefaultPlayModeResultPath);
         }
 
         [MenuItem("SubTerra/Data/Capture Phase B Evidence")]
@@ -227,9 +249,19 @@ namespace SubTerra.App.Editor.DataValidation
 
         public static void RunEditModeTests(string resultPath)
         {
+            StartTestRun(TestMode.EditMode, "SubTerra.App.Tests.EditMode", resultPath, "Edit Mode");
+        }
+
+        public static void RunPlayModeTests(string resultPath)
+        {
+            StartTestRun(TestMode.PlayMode, "SubTerra.App.Tests.PlayMode", resultPath, "Play Mode");
+        }
+
+        private static void StartTestRun(TestMode mode, string assemblyName, string resultPath, string label)
+        {
             if (testRunActive)
             {
-                Debug.LogWarning("[SubTerra] Edit Mode tests are already running.");
+                Debug.LogWarning("[SubTerra] " + label + " tests are already running.");
                 return;
             }
 
@@ -237,15 +269,15 @@ namespace SubTerra.App.Editor.DataValidation
             activeApi = ScriptableObject.CreateInstance<TestRunnerApi>();
             var filter = new Filter
             {
-                testMode = TestMode.EditMode,
-                assemblyNames = new[] { "SubTerra.App.Tests.EditMode" }
+                testMode = mode,
+                assemblyNames = new[] { assemblyName }
             };
 
             activeReceiver = new ResultWriter(resultPath);
             activeApi.RegisterCallbacks(activeReceiver);
             testRunActive = true;
             activeApi.Execute(new ExecutionSettings(filter));
-            Debug.Log("[SubTerra] Edit Mode test run requested → " + resultPath);
+            Debug.Log("[SubTerra] " + label + " test run requested → " + resultPath);
         }
 
         private static void ScheduleRunnerRelease(ResultWriter receiver)

@@ -11,10 +11,14 @@ namespace SubTerra.App.Tests
             var state = GameState.CreateNew();
             Assert.That(GameState.IsComplete(state), Is.True);
             Assert.That(state.Player.Energy, Is.EqualTo(100));
+            Assert.That(state.Player.MaxEnergy, Is.EqualTo(100));
             Assert.That(state.Player.Gold, Is.Zero);
             Assert.That(state.Player.Cargo, Is.Zero);
+            Assert.That(state.Player.UnsettledValue, Is.Zero);
             Assert.That(state.Run.IsSafe, Is.True);
             Assert.That(state.Run.Depth, Is.Zero);
+            Assert.That(state.Run.StructuralRisk, Is.EqualTo(StructuralRiskLevel.Safe));
+            Assert.That(state.Run.GasExposure, Is.EqualTo(GasRiskLevel.Safe));
             Assert.That(state.Progress.CompletedObjectives, Is.Zero);
         }
 
