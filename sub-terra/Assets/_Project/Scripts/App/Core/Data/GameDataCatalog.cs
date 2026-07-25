@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 
 namespace SubTerra.App.Core.Data
 {
@@ -12,12 +13,15 @@ namespace SubTerra.App.Core.Data
     public sealed class GameDataCatalog : ScriptableObject, IDataCatalogPort
     {
         [SerializeField] private List<MineralData> minerals = new List<MineralData>();
+        [SerializeField] private List<MiningTileData> miningTiles = new List<MiningTileData>();
         [SerializeField] private List<BuildingData> buildings = new List<BuildingData>();
         [SerializeField] private List<RecipeData> recipes = new List<RecipeData>();
         [SerializeField] private List<UpgradeData> upgrades = new List<UpgradeData>();
         [SerializeField] private List<DialogueTemplateData> dialogues = new List<DialogueTemplateData>();
 
         private Dictionary<string, MineralData> mineralById;
+        private Dictionary<string, MiningTileData> miningTileById;
+        private Dictionary<TileBase, MiningTileData> miningTileByAsset;
         private Dictionary<string, BuildingData> buildingById;
         private Dictionary<string, RecipeData> recipeById;
         private Dictionary<string, UpgradeData> upgradeById;
@@ -26,6 +30,7 @@ namespace SubTerra.App.Core.Data
         private bool lookupsValid;
 
         public IReadOnlyList<MineralData> Minerals => minerals;
+        public IReadOnlyList<MiningTileData> MiningTiles => miningTiles;
         public IReadOnlyList<BuildingData> Buildings => buildings;
         public IReadOnlyList<RecipeData> Recipes => recipes;
         public IReadOnlyList<UpgradeData> Upgrades => upgrades;
@@ -71,6 +76,31 @@ namespace SubTerra.App.Core.Data
             }
 
             return mineralById.TryGetValue(id, out data);
+        }
+
+        public bool TryGetMiningTile(string id, out MiningTileData data)
+        {
+            EnsureLookups();
+            data = null;
+            if (!lookupsValid || string.IsNullOrEmpty(id) || miningTileById == null)
+            {
+                return false;
+            }
+
+            return miningTileById.TryGetValue(id, out data);
+        }
+
+        /// <summary>Foreground Tilemap에서 읽은 타일 에셋을 채굴 정의로 변환한다.</summary>
+        public bool TryGetMiningTile(TileBase tileAsset, out MiningTileData data)
+        {
+            EnsureLookups();
+            data = null;
+            if (!lookupsValid || tileAsset == null || miningTileByAsset == null)
+            {
+                return false;
+            }
+
+            return miningTileByAsset.TryGetValue(tileAsset, out data);
         }
 
         public bool TryGetBuilding(string id, out BuildingData data)
@@ -122,6 +152,7 @@ namespace SubTerra.App.Core.Data
         }
 
 #if UNITY_EDITOR
+        /// <summary>기존 B 데이터 빌더가 새 채굴 타일 등록을 지우지 않도록 보존하는 호환 오버로드.</summary>
         public void EditorSetLists(
             List<MineralData> mineralList,
             List<BuildingData> buildingList,
@@ -129,7 +160,25 @@ namespace SubTerra.App.Core.Data
             List<UpgradeData> upgradeList,
             List<DialogueTemplateData> dialogueList)
         {
+            EditorSetLists(
+                mineralList,
+                miningTiles,
+                buildingList,
+                recipeList,
+                upgradeList,
+                dialogueList);
+        }
+
+        public void EditorSetLists(
+            List<MineralData> mineralList,
+            List<MiningTileData> miningTileList,
+            List<BuildingData> buildingList,
+            List<RecipeData> recipeList,
+            List<UpgradeData> upgradeList,
+            List<DialogueTemplateData> dialogueList)
+        {
             minerals = mineralList ?? new List<MineralData>();
+            miningTiles = miningTileList ?? new List<MiningTileData>();
             buildings = buildingList ?? new List<BuildingData>();
             recipes = recipeList ?? new List<RecipeData>();
             upgrades = upgradeList ?? new List<UpgradeData>();
@@ -164,6 +213,8 @@ namespace SubTerra.App.Core.Data
             ClearLookups();
 
             mineralById = new Dictionary<string, MineralData>();
+            miningTileById = new Dictionary<string, MiningTileData>();
+            miningTileByAsset = new Dictionary<TileBase, MiningTileData>();
             buildingById = new Dictionary<string, BuildingData>();
             recipeById = new Dictionary<string, RecipeData>();
             upgradeById = new Dictionary<string, UpgradeData>();
@@ -171,6 +222,8 @@ namespace SubTerra.App.Core.Data
 
             var ok = true;
             ok &= Fill(mineralById, minerals, m => m != null ? m.Id : null);
+            ok &= Fill(miningTileById, miningTiles, t => t != null ? t.Id : null);
+            ok &= FillMiningTileAssets(miningTileByAsset, miningTiles);
             ok &= Fill(buildingById, buildings, b => b != null ? b.Id : null);
             ok &= Fill(recipeById, recipes, r => r != null ? r.Id : null);
             ok &= Fill(upgradeById, upgrades, u => u != null ? u.Id : null);
@@ -221,9 +274,41 @@ namespace SubTerra.App.Core.Data
             return ok;
         }
 
+        private static bool FillMiningTileAssets(
+            Dictionary<TileBase, MiningTileData> map,
+            List<MiningTileData> source)
+        {
+            if (source == null)
+            {
+                return true;
+            }
+
+            var ok = true;
+            for (var i = 0; i < source.Count; i++)
+            {
+                var entry = source[i];
+                if (entry == null || entry.TileAsset == null)
+                {
+                    continue;
+                }
+
+                if (map.ContainsKey(entry.TileAsset))
+                {
+                    ok = false;
+                    continue;
+                }
+
+                map[entry.TileAsset] = entry;
+            }
+
+            return ok;
+        }
+
         private void ClearLookups()
         {
             mineralById = null;
+            miningTileById = null;
+            miningTileByAsset = null;
             buildingById = null;
             recipeById = null;
             upgradeById = null;
