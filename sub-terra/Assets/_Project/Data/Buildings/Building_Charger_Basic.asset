@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0f7fc9d9be322ff4082345b1cb4187a0, type: 3}
+  m_Name: Building_Charger_Basic
+  m_EditorClassIdentifier: SubTerra.App::SubTerra.App.Core.Data.BuildingData
+  id: building.charger.basic
+  displayName: Basic Charger
+  runtimePrefab: {fileID: 3766932780806278260, guid: d9f8a92858c77d94f808199827a493f8, type: 3}
+  icon: {fileID: 6838030193426678921, guid: 42527be5cf11e3c42871944ebbfd1fd6, type: 2}
+  powerDraw: 3
+  buildCosts:
+  - itemId: mineral.copper
+    quantity: 3

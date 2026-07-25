@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 24e534a77f01b69498af335ee77f184c, type: 3}
+  m_Name: GameDataCatalog
+  m_EditorClassIdentifier: SubTerra.App::SubTerra.App.Core.Data.GameDataCatalog
+  minerals:
+  - {fileID: 11400000, guid: 3313a39c6e1d3214abef4f85690256a3, type: 2}
+  - {fileID: 11400000, guid: e62f915cba55fdd44b43858421c18c38, type: 2}
+  - {fileID: 11400000, guid: d8109f2553adf114a9b7c225a6968318, type: 2}
+  buildings:
+  - {fileID: 11400000, guid: 8b806f92e14a7da478d52e2e042a57e5, type: 2}
+  - {fileID: 11400000, guid: 35d95ff508c3cab4d926f775aabaee93, type: 2}
+  - {fileID: 11400000, guid: 16d557600954c624d87e510fc8a044e0, type: 2}
+  - {fileID: 11400000, guid: c28bb0b0ed29eae4683c8f01f97c04c0, type: 2}
+  - {fileID: 11400000, guid: ab8535b8cce2fe64ca81cfded9688d68, type: 2}
+  - {fileID: 11400000, guid: 6c156618ce4cc1c4480efe3902af470a, type: 2}
+  recipes:
+  - {fileID: 11400000, guid: f90ed462aa109e34292a84f9b66355c0, type: 2}
+  upgrades:
+  - {fileID: 11400000, guid: 2bc563394de80e14f827b07cebc8c269, type: 2}
+  - {fileID: 11400000, guid: 12efde94f9311014b94bdf018c6bb9bd, type: 2}
+  - {fileID: 11400000, guid: d1b62113bd781a142a873271f91fd3cc, type: 2}
+  - {fileID: 11400000, guid: fe4de9f0a633cdb43a0491a64845182f, type: 2}
+  dialogues:
+  - {fileID: 11400000, guid: 851b44a4709ab4147bfe5b668a71b527, type: 2}

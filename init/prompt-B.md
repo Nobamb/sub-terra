@@ -1,35 +1,11 @@
 ## 기본 세팅 관련 프롬프트
 
-1. init/structure.md의 내용을 참고해서 전체적인 구조들에 대한 폴더/파일을 만들어줄래? 파일 내에는 코드는 따로 만들어주지 않아도 되고 대신 파일 내에 구체적으로 어떤 역할을 하게 되는지에 대해서 각 파일 내에 한국어로 주석들 하나씩 달아줘
-
-2. 일단 A작업에 대한 상세한 작업 절차들을 단계별로 상세하게 알려줄래? init/process-A.md 내용 확인해서 구조 작성 이후에 해야 될 작업들에 대해서 각 단계마다 순차적으로 실행하면 결과에 충분히 도달할 수 있도록 상세하게 정리하면서 그 내용들을 work_process/process-A 폴더에 있는 test, research 폴더에 단계별로 파일을 만들어줘 work_process/process-A/ex 폴더에 있는 research-ex.md, test-ex.md 양식 참고해서 각각의 test, research 파일을 test, research 폴더에 만들어주면 돼 예를 들어서 첫번째 작업은 research 폴더에는 research-A.md, test 폴더에는 test-A.md 파일을 만들어서 각각 필요한 내용들을 정리해서 구체적으로 어떻게 할 것인지에 대해 넣어주면 돼 만약에 단계가 너무 많아서 Z단계까지 작성했다면 그 다음 단계는 AA, AB.. 이런 식으로 적어주면 돼
+1. init 폴더 안의 파일들의 내용들을 참고해서 process-B에 해당하는 test, research 파일을 work_process/MVP/MVP-B 폴더 내에서 A,B,C... 형태로 단계별ㅀ 폴더를 생성해주면서 해당 단계 폴더 내에 만들어줘 test, research 파일에 대한 구조는 work_process/process-B/ex/test-ex.md, work_process/process-B/ex/research-ex.md 파일의 내용을 참고해서 만들어주면 돼 만약에 단계가 너무 많아서 Z단계까지 있다면 다음 단계는 AA, AB 등으로 이어나가면 돼
 
 ## 상세 작업 프롬프트
 
-3. work_process/process-A에 있는 research/research-A.md, test/test-A.md의 내용을 참고해서 MVP A단계를 수행해 프로젝트 기반을 확인하는 단계이고 전반적인 준비 작업 및 시작 전 이상 확인 단계를 수행하는거야 코드 작성할 일 있으면 init/rule.md 내용 참고해주고 주석도 자세하게 달아줘 만약에 위험 코드가 존재한다면 dangerous 폴더에 dangerous1.md로 추가해서 어떤 문제가 있고 구체적으로 어떻게 해결해야되는지 적어줘
+2. work_process/MVP/MVP-B 폴더 내에서 work_process/MVP/MVP-B/A/research.md, work_process/MVP/MVP-B/A/test.md 파일을 읽고 A 단계의 작업을 수행해줘 A단계의 주요 작업 내용은 전역 객체 생성 및 게임 관련 상태 구현, 전역 서비스 중복 생성 방지, 데이터 검증 실패 등에 대한 내용들에 대해 기록 등의 작업을 거치면서 데이터 카탈로그와 실제 세이브 구현은 뒤 단계에서 주입할 수 있게 경계를 두되, 이 단계에서는 새 게임 상태로 Main Menu까지 안전하게 진입하는 것이 목표야 unity MCP도 같이 연결해놓은 상태니까 unity editor에서도 같이 작업을 해주도록 하고 작업 내용에 대해서는 init/rule.md의 내용 참고하면서 한국어 주석도 같이 작성해주면서 진행해주면 돼
 
-4. work_process/process-A에 있는 research/research-B.md, test/test-B.md의 내용을 참고해서 MVP B단계를 수행해 이번에는 재사용 가능한 공통 UI 컴포넌트에 대한 구현 단계의 작업들을 수행하면서 프로젝트에 쓰이게 될 요소들의 UI적인 부분들을 만들어내는거야 코드 작성하게 될 때 init/rule.md 내용 참고해주고 주석도 자세하게 달아줘 만약에 위험 코드가 존재한다면 dangerous 폴더에 dangerous1.md로 추가해서 어떤 문제가 있고 구체적으로 어떻게 해결해야되는지 적어줘
+3. work_process/MVP/MVP-B 폴더 내에서 work_process/MVP/MVP-B/B/research.md, work_process/MVP/MVP-B/B/test.md 파일을 읽고 B 단계의 작업을 수행해줘 B단계의 주요 작업 내용은 표시 이름과 저장/연동용 ID를 분리, 구리·철·리튬, MVP 시설과 업그레이드 정의를 코드 수정 없이 편집 및 중복 ID와 필수 참조 누락을 실행 전 자동으로 찾게 하면서 A 단계는 구체 App 클래스가 아니라 합의된 데이터/Shared 경계로 읽을 수 있게 하면서 광물, 시설, 레시피, 업그레이드, 대사 정의를 ScriptableObject 에셋으로 만들고, 영구 ID로 안전하게 조회·검증하는 단일 카탈로그를 구축하는 것이 목표야 unity MCP도 같이 연결해놓은 상태니까 unity editor에서도 같이 작업을 해주도록 하고 작업 내용에 대해서는 init/rule.md의 내용 참고하면서 한국어 주석도 같이 작성해주면서 진행해주면 돼
 
-5. work_process/process-A에 있는 research/research-C.md, test/test-C.md의 내용을 참고해서 MVP C단계를 수행해 이번에는 메인 현장 상황판 구현 단계의 작업들을 수행해서 사용자가 현장의 상황을 바로 파악할 수 있도록 하는거야 코드 작성하게 될 때 init/rule.md 내용 참고해주고 주석도 자세하게 달아줘 만약에 위험 코드가 존재한다면 dangerous 폴더에 dangerous1.md로 추가해서 어떤 문제가 있고 구체적으로 어떻게 해결해야되는지 적어줘
-
-6. work_process/process-A에 있는 research/research-D.md, test/test-D.md의 내용을 참고해서 MVP D단계를 수행해 이번에는 현장 제보 작성 단계의 작업들을 수행해서 시민들이 현장의 상황을 제보할 수 있도록 하는거야 코드 작성하게 될 때 init/rule.md 내용 참고해주고 주석도 자세하게 달아줘 만약에 위험 코드가 존재한다면 dangerous 폴더에 dangerous1.md로 추가해서 어떤 문제가 있고 구체적으로 어떻게 해결해야되는지 적어줘
-
-7. work_process/process-A에 있는 research/research-E.md, test/test-E.md의 내용을 참고해서 MVP E단계를 수행해 이번에는 현장 제보와 확인 정보를 목록과 상세 화면에서 확인할 수 있도록 작업을 수행하는거야 코드 작성하게 될 때 init/rule.md 내용 참고해주고 주석도 자세하게 달아줘 만약에 위험 코드가 존재한다면 dangerous 폴더에 dangerous1.md로 추가해서 어떤 문제가 있고 구체적으로 어떻게 해결해야되는지 적어줘
-
-8. work_process/process-A에 있는 research/research-F.md, test/test-F.md의 내용을 참고해서 MVP F단계를 수행해 이번에는 태극기 참여 모드 구현 단계의 작업들을 수행하는거야 코드 작성하게 될 때 init/rule.md 내용 참고해주고 주석도 자세하게 달아줘 만약에 위험 코드가 존재한다면 dangerous 폴더에 dangerous1.md로 추가해서 어떤 문제가 있고 구체적으로 어떻게 해결해야되는지 적어줘
-
-9. work_process/process-A에 있는 research/research-G.md, test/test-G.md의 내용을 참고해서 MVP G단계를 수행해 이번에는 오디오 컨트롤러, TTS, 음악 재생 구현 단계의 작업들을 수행하는거야 코드 작성하게 될 때 init/rule.md 내용 참고해주고 주석도 자세하게 달아줘 만약에 위험 코드가 존재한다면 dangerous 폴더에 dangerous1.md로 추가해서 어떤 문제가 있고 구체적으로 어떻게 해결해야되는지 적어줘
-
-9-1. 참여 페이지에서 태극기 정중앙에 있는 태극 문양이 좀 기울어져있거든? 음/양 부분(빨간색, 파란색 문양이 합친 부분)이 오른쪽으로 살짝 틀어져있어 태극 문양 부분을 다시 위에 빨간색, 아래에는 파란색을 위아래로 수평으로 맞춰서 틀어지지 않은 형태로 수정해 그리고 "rounded-xl border border-gray-200 bg-white/95 p-3 shadow-sm" 섹션(반복 정지 및 대기 설정 영역)에서 정지, 전체 정지 버튼은 삭제하고 대신에 "absolute inset-x-0 bottom-0 z-40 flex flex-col gap-2 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]" 영역(ui숨기기, 전체 화면, 설정, 전체 정지가 존재하는 영역)에서 상단 부분에도 padding 12px 주도록 하고 영역 내에 존재하는 전체 정지 버튼 오른쪽에 각 버튼들의 간격과 동일하게 일시 정지 버튼, 재생 버튼을 만들어서 일시 정지 버튼을 누르면 처음부터 다시 시작이 아닌 tts가 중간에 끊기고 다시 재생 버튼을 누르면 중간에 정지된 부분부터 다시 시작하는 형태로 바꿔줘
-
-9-2. 모바일, 태블릿 환경에서 나타나는 "가로 화면으로 돌려주세요" 팝업의 경우에도 z-index 값을 가장 높게 줘서 다른 요소들보다도 훨씬 앞에 나타나게 만들고, 정중앙에 고정되도록 위치 고정시켜주고 해당 팝업창 오른쪽 상단에 x표시의 닫기 버튼을 만들어서 해당 x버튼을 클릭하면 팝업이 사라지는 형태로 수정해줘
-
-9-3. data-testid="audio-status"로 되어있는 p 태그의 정지라는 단어가 있는 부분을 h2 태그로 바꿔주면서 TTS 설정이라는 글자로 바꿔줘 그리고 직접 입력 구호 부분에서 건, 곤 부분을 입력했을 때 재생되는 것이 아닌 직접 입력 구호 입력 요소의 오른쪽에 구호 재생 버튼 하나 만들어서 해당 버튼 클릭하면 직접 입력한 구호가 재생되는 방식으로 바꿔줘 건, 곤 부분은 지정된 구호가 나오도록 유지하도록 하고, 건 부분은 "부정선거 재선거 당일투표 수개표" 로 나오게 하고 곤 부분은 "한미공조 국제수사 에이웹"이라는 구호가 나오게 해줘
-
-10. work_process/process-A에 있는 research/research-H.md, test/test-H.md의 내용을 참고해서 MVP H단계를 수행해 이번에는 화면 관련 기능들의 작업들을 수행하는거야 지금 단계에서 화면 방향 안내 및 전체화면 부분은 구현은 되어있는데 아직 부족한 부분이 있을 수 있으니까 보완할 부분 있으면 수정해서 보완해주도록 하고 화면 꺼짐 방지 기능은 아직 제대로 구현하지 않은 상태이니까 그 기능은 추가로 구현해주면돼 코드 작성하게 될 때 init/rule.md 내용 참고해주고 주석도 자세하게 달아줘 만약에 위험 코드가 존재한다면 dangerous 폴더에 dangerous1.md로 추가해서 어떤 문제가 있고 구체적으로 어떻게 해결해야되는지 적어줘
-
-11. work_process/process-A에 있는 research/research-I.md, test/test-I.md의 내용을 참고해서 MVP I단계를 수행해 이번에는 안전, 공식 링크, 기록 화면 작업들을 수행하는거야 코드 작성하게 될 때 init/rule.md 내용 참고해주고 주석도 자세하게 달아줘 만약에 위험 코드가 존재한다면 dangerous 폴더에 dangerous1.md로 추가해서 어떤 문제가 있고 구체적으로 어떻게 해결해야되는지 적어줘
-
-12. work_process/process-A에 있는 research/research-J.md, test/test-J.md의 내용을 참고해서 MVP J단계를 수행해 이번에는 접근성, 반응형 관련 작업 및 통합 검수 작업을 수행하는거야 코드 작성하게 될 때 init/rule.md 내용 참고해주고 주석도 자세하게 달아줘 만약에 위험 코드가 존재한다면 dangerous 폴더에 dangerous1.md로 추가해서 어떤 문제가 있고 구체적으로 어떻게 해결해야되는지 적어줘
-
-12-1. 태극 문양에 존재하는 빨간색, 파란색 문양이 각각 너무 휘어져있거든 원본 태극기 태극 문양처럼 좀 더 각 원 부분이 문양 안쪽으로 절반정도 들어간 형태면 좋겠어 그리고 구호음성 영역에서는 건/곤 버튼 안의 글자를 각각 건(부정선거 재선거 당일투표 수개표), 곤(한미공조 국제수사 A-WEB)이라는 글자로 수정해주면 좋겠어 그리고 참여 페이지에 있는 태극기 화면에 있는 버튼들은 마우스 커서를 올리는 즉시 불투명도가 바뀌는 이벤트가 바로 발생하던데 커서를 올리고 transition 0.3초정도 주면서 scale 값도 1.2배 정도 더 커지는 형태도 추가하면 좋겠어 그리고 태극기 영역 아래의 설정관련 버튼들이 모여있는 영역에 보면 화면 꺼짐 방지 글자 요소가 영역 밖의 태극기 영역까지 빠져나오던데 설정 관련 버튼 영역의 높이를 좀 더 높이고 화면 꺼짐 방지 글자 요소를 해당 영역 내에 다른 버튼들보다 최상단에 위치시킨채로 간격은 다른 설정 버튼들의 위아래 간격과 동일한 수준으로 조정해줘 코드 작성하게 될 때 init/rule.md 내용 참고해주고 주석도 자세하게 달아줘 만약에 위험 코드가 존재한다면 dangerous 폴더에 dangerous1.md로 추가해서 어떤 문제가 있고 구체적으로 어떻게 해결해야되는지 적어줘
+4. work_process/MVP/MVP-B 폴더 내에서 work_process/MVP/MVP-B/C/research.md, work_process/MVP/MVP-B/C/test.md 파일을 읽고 C 단계의 작업을 수행해줘 C단계의 주요 작업 내용은 전력, 깊이, 골드, 화물, 가치, 구조, 가스, 건설 선택과 상호작용 안내를 표시, UI가 State를 직접 변경하지 않도록 설정, Scene 로드 후 UI 구독과 참조가 다시 연결되고, 파괴된 UI가 이벤트에 남지 않게 설정, 여러 해상도에서 안전 영역과 레이아웃을 유지하면서 HUD를 State의 읽기 전용 표현으로 만들고 상태 변경 이벤트가 발생한 항목만 갱신하도록 하면 돼 unity MCP도 같이 연결해놓은 상태니까 unity editor에서도 같이 작업을 해주도록 하고 작업 내용에 대해서는 init/rule.md의 내용 참고하면서 한국어 주석도 같이 작성해주면서 진행해주면 돼

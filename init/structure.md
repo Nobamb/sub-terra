@@ -8,7 +8,7 @@
 
 - 프로젝트명: Project Sub-Terra
 - 게임 성격: 2D 횡스크롤 기반 지하 탐사·채굴·위험 관리·기지 건설 게임
-- 권장 스택: Unity 6.3 LTS, URP 2D Renderer, C#, Input System, Tilemap, Light 2D, Unity UI Canvas, TextMeshPro, Unity Test Framework
+- 권장 스택: Unity 6.5 LTS, URP 2D Renderer, C#, Input System, Tilemap, Light 2D, Unity UI Canvas, TextMeshPro, Unity Test Framework
 - 데이터·저장 기준: ScriptableObject 정적 데이터, C# 런타임 상태, `[Serializable]` DTO, 로컬 JSON 세이브
 - 초기 빌드 대상: Windows x64 Standalone
 
