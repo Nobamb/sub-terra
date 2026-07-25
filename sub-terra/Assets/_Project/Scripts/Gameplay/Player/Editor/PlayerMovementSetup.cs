@@ -92,7 +92,7 @@ namespace SubTerra.Gameplay.Player.Editor
 
             tile.sprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UISprite.psd");
             tile.color = new Color(0.22f, 0.25f, 0.3f);
-            tile.colliderType = Tile.ColliderType.Sprite;
+            tile.colliderType = Tile.ColliderType.Grid;
             EditorUtility.SetDirty(tile);
             return tile;
         }

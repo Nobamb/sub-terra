@@ -1,0 +1,15 @@
+{
+  "name": "SubTerra.Gameplay.Mining.PlayModeTests",
+  "rootNamespace": "SubTerra.Gameplay.Mining.Tests",
+  "references": ["SubTerra.Gameplay.Mining", "SubTerra.Shared"],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": false,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "optionalUnityReferences": ["TestAssemblies"],
+  "noEngineReferences": false
+}
