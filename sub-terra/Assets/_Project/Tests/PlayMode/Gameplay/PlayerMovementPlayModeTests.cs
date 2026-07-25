@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Reflection;
 using NUnit.Framework;
 using SubTerra.Gameplay.Player;
 using UnityEngine;
@@ -11,6 +12,7 @@ namespace SubTerra.Gameplay.Player.Tests
         private GameObject playerObject;
         private PlayerMovement movement;
         private Rigidbody2D body;
+        private GameObject groundObject;
 
         [SetUp]
         public void SetUp()
@@ -25,6 +27,7 @@ namespace SubTerra.Gameplay.Player.Tests
         public void TearDown()
         {
             Object.DestroyImmediate(playerObject);
+            Object.DestroyImmediate(groundObject);
         }
 
         [UnityTest]
@@ -69,6 +72,32 @@ namespace SubTerra.Gameplay.Player.Tests
             movement.SetCargoSpeedMultiplier(-1f);
 
             Assert.AreEqual(0f, movement.CurrentSpeedMultiplier);
+        }
+
+        [UnityTest]
+        public IEnumerator JumpRequestAddsUpwardVelocityWhenGrounded()
+        {
+            Transform groundCheck = new GameObject("GroundCheck").transform;
+            groundCheck.SetParent(playerObject.transform);
+            groundCheck.localPosition = new Vector3(0f, -0.9f, 0f);
+
+            FieldInfo groundCheckField = typeof(PlayerMovement).GetField(
+                "groundCheck",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            groundCheckField.SetValue(movement, groundCheck);
+
+            groundObject = new GameObject("Ground");
+            groundObject.transform.position = new Vector3(0f, -1.2f, 0f);
+            BoxCollider2D groundCollider = groundObject.AddComponent<BoxCollider2D>();
+            groundCollider.size = new Vector2(4f, 0.5f);
+
+            yield return null;
+            Assert.IsTrue(movement.IsGrounded);
+
+            movement.RequestJump();
+            yield return new WaitForFixedUpdate();
+
+            Assert.Greater(body.linearVelocityY, 0f);
         }
     }
 }
