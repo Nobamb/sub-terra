@@ -1,7 +1,12 @@
 {
   "name": "SubTerra.App.Editor",
   "rootNamespace": "SubTerra.App.Editor",
-  "references": ["SubTerra.App"],
+  "references": [
+    "SubTerra.App",
+    "SubTerra.Shared",
+    "Unity.TextMeshPro",
+    "UnityEngine.UI"
+  ],
   "includePlatforms": ["Editor"],
   "excludePlatforms": [],
   "allowUnsafeCode": false,
