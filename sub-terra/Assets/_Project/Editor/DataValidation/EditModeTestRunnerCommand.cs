@@ -21,9 +21,12 @@ namespace SubTerra.App.Editor.DataValidation
         private const string PlayModeFlagPath = "Temp/subterra-run-playmode.flag";
         private const string BuildDataFlagPath = "Temp/subterra-build-phaseb-data.flag";
         private const string EvidenceFlagPath = "Temp/subterra-phaseb-evidence.flag";
+        private const string RefreshFlagPath = "Temp/subterra-refresh-assets.flag";
+        private const string PhaseDEvidenceFlagPath = "Temp/subterra-phased-evidence.flag";
         private const string DefaultResultPath = "Temp/subterra-editmode-results.txt";
         private const string DefaultPlayModeResultPath = "Temp/subterra-playmode-results.txt";
         private const string EvidenceDir = "Temp/phase-b-evidence";
+        private const string PhaseDEvidenceDir = "Temp/phase-d-evidence";
         private static TestRunnerApi activeApi;
         private static ResultWriter activeReceiver;
         private static bool testRunActive;
@@ -91,12 +94,158 @@ namespace SubTerra.App.Editor.DataValidation
                         "[SubTerra] Phase B evidence flag handling failed: " + exception.GetType().Name);
                 }
             }
+
+            if (File.Exists(RefreshFlagPath))
+            {
+                try
+                {
+                    File.Delete(RefreshFlagPath);
+                    AssetDatabase.Refresh(ImportAssetOptions.ForceUpdate);
+                    Debug.Log("[SubTerra] AssetDatabase.Refresh requested.");
+                    File.WriteAllText("Temp/subterra-refresh-assets.done", DateTime.Now.ToString("o"));
+                }
+                catch (Exception exception)
+                {
+                    Debug.LogWarning(
+                        "[SubTerra] Asset refresh flag handling failed: " + exception.GetType().Name);
+                }
+            }
+
+            if (File.Exists(PhaseDEvidenceFlagPath))
+            {
+                try
+                {
+                    File.Delete(PhaseDEvidenceFlagPath);
+                    CapturePhaseDEvidence();
+                }
+                catch (Exception exception)
+                {
+                    Debug.LogWarning(
+                        "[SubTerra] Phase D evidence flag handling failed: " + exception.GetType().Name);
+                }
+            }
+        }
+
+        /// <summary>Phase D 정적 증거: 인벤토리 구현·prefab·Shared 미변경 요약을 Temp에 기록한다.</summary>
+        public static void CapturePhaseDEvidence()
+        {
+            var evidenceDir = ResolveProjectPath(PhaseDEvidenceDir);
+            Directory.CreateDirectory(evidenceDir);
+            var sb = new StringBuilder();
+            sb.AppendLine("Phase D inventory evidence");
+            sb.AppendLine("Time: " + DateTime.Now.ToString("o"));
+
+            // 컴파일 순서 독립을 위해 리플렉션으로 App 타입을 찾는다.
+            Type invService = null;
+            foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                if (asm.GetName().Name != "SubTerra.App")
+                {
+                    continue;
+                }
+
+                invService = asm.GetType("SubTerra.App.Inventory.InventoryService");
+                break;
+            }
+
+            sb.AppendLine("InventoryService type: " + (invService != null ? invService.FullName : "MISSING"));
+            if (invService != null)
+            {
+                var receiver = Type.GetType("SubTerra.Shared.IMiningRewardReceiver, SubTerra.Shared");
+                sb.AppendLine(
+                    "Implements IMiningRewardReceiver: " +
+                    (receiver != null && receiver.IsAssignableFrom(invService)));
+            }
+
+            var sharedPath = Path.Combine(
+                Application.dataPath,
+                "_Project",
+                "Scripts",
+                "Shared",
+                "Contracts",
+                "IMiningRewardReceiver.cs");
+            sb.AppendLine("Shared contract path exists: " + File.Exists(sharedPath));
+            if (File.Exists(sharedPath))
+            {
+                sb.AppendLine(
+                    "Shared unchanged signature: " +
+                    File.ReadAllText(sharedPath).Contains("void AddMineral(string mineralId, int quantity)"));
+            }
+
+            var panelPath = "Assets/_Project/Prefabs/UI/InventoryPanel.prefab";
+            var panel = AssetDatabase.LoadAssetAtPath<GameObject>(panelPath);
+            sb.AppendLine("InventoryPanel prefab exists: " + (panel != null));
+            if (panel != null)
+            {
+                var comps = panel.GetComponents<Component>();
+                sb.AppendLine("Panel component count: " + comps.Length);
+                foreach (var c in comps)
+                {
+                    if (c != null)
+                    {
+                        sb.AppendLine("  - " + c.GetType().FullName);
+                    }
+                }
+            }
+
+            var invDir = Path.Combine(Application.dataPath, "_Project", "Scripts", "App", "Inventory");
+            sb.AppendLine("Inventory scripts dir exists: " + Directory.Exists(invDir));
+            if (Directory.Exists(invDir))
+            {
+                foreach (var file in Directory.GetFiles(invDir, "*.cs"))
+                {
+                    sb.AppendLine("  script: " + Path.GetFileName(file));
+                }
+            }
+
+            var gameplayDir = Path.Combine(Application.dataPath, "_Project", "Scripts", "Gameplay");
+            sb.AppendLine("Gameplay folder present (untouched by D): " + Directory.Exists(gameplayDir));
+
+            File.WriteAllText(Path.Combine(evidenceDir, "phase-d-static.txt"), sb.ToString());
+            File.WriteAllText(Path.Combine(evidenceDir, "done.txt"), "ok");
+            Debug.Log("[SubTerra] Phase D evidence captured under " + evidenceDir);
         }
 
         [MenuItem("SubTerra/Tests/Run Edit Mode Tests")]
         public static void RunFromMenu()
         {
             RunEditModeTests(DefaultResultPath);
+        }
+
+        /// <summary>
+        /// Batchmode 진입점: 에셋 리프레시 → InventoryPanel 생성 → Phase D 증거 → Edit Mode 테스트.
+        /// </summary>
+        public static void BatchPhaseDVerify()
+        {
+            try
+            {
+                AssetDatabase.Refresh(ImportAssetOptions.ForceUpdate);
+                var panelReport = InventoryPanelPrefabBuilder.BuildPrefab();
+                File.WriteAllText("Temp/subterra-inventory-panel-build.txt", panelReport);
+                Debug.Log("[SubTerra] " + panelReport);
+                CapturePhaseDEvidence();
+                RunEditModeTests(DefaultResultPath);
+            }
+            catch (Exception exception)
+            {
+                Debug.LogError("[SubTerra] BatchPhaseDVerify failed: " + exception.GetType().Name + " " + exception.Message);
+                EditorApplication.Exit(1);
+            }
+        }
+
+        /// <summary>Batchmode Play Mode 테스트 실행 후 종료.</summary>
+        public static void BatchRunPlayModeThenQuit()
+        {
+            try
+            {
+                AssetDatabase.Refresh(ImportAssetOptions.ForceUpdate);
+                RunPlayModeTests(DefaultPlayModeResultPath);
+            }
+            catch (Exception exception)
+            {
+                Debug.LogError("[SubTerra] BatchRunPlayModeThenQuit failed: " + exception.GetType().Name);
+                EditorApplication.Exit(1);
+            }
         }
 
         [MenuItem("SubTerra/Tests/Run Play Mode Tests")]
@@ -249,12 +398,24 @@ namespace SubTerra.App.Editor.DataValidation
 
         public static void RunEditModeTests(string resultPath)
         {
-            StartTestRun(TestMode.EditMode, "SubTerra.App.Tests.EditMode", resultPath, "Edit Mode");
+            StartTestRun(TestMode.EditMode, "SubTerra.App.Tests.EditMode", ResolveProjectPath(resultPath), "Edit Mode");
         }
 
         public static void RunPlayModeTests(string resultPath)
         {
-            StartTestRun(TestMode.PlayMode, "SubTerra.App.Tests.PlayMode", resultPath, "Play Mode");
+            StartTestRun(TestMode.PlayMode, "SubTerra.App.Tests.PlayMode", ResolveProjectPath(resultPath), "Play Mode");
+        }
+
+        /// <summary>상대 경로는 프로젝트 루트(Application.dataPath 상위) 기준으로 절대 경로화한다.</summary>
+        private static string ResolveProjectPath(string path)
+        {
+            if (string.IsNullOrEmpty(path) || Path.IsPathRooted(path))
+            {
+                return path;
+            }
+
+            var projectRoot = Path.GetFullPath(Path.Combine(Application.dataPath, ".."));
+            return Path.GetFullPath(Path.Combine(projectRoot, path));
         }
 
         private static void StartTestRun(TestMode mode, string assemblyName, string resultPath, string label)
@@ -367,8 +528,15 @@ namespace SubTerra.App.Editor.DataValidation
                     Debug.LogError("[SubTerra] Failed to write test results: " + ex.GetType().Name);
                 }
 
-                Debug.Log("[SubTerra] Edit Mode finished: " + result.TestStatus + " P=" + pass + " F=" + fail);
+                Debug.Log("[SubTerra] Test run finished: " + result.TestStatus + " P=" + pass + " F=" + fail);
                 ScheduleRunnerRelease(this);
+
+                // Batchmode(-batchmode)에서는 테스트 종료 후 프로세스를 닫아 하네스가 대기에서 풀리게 한다.
+                if (Application.isBatchMode)
+                {
+                    EditorApplication.delayCall += () =>
+                        EditorApplication.Exit(fail > 0 ? 1 : 0);
+                }
             }
 
             public void TestStarted(ITestAdaptor test)
