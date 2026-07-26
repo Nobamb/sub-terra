@@ -12,3 +12,5 @@
 
 5. work_process/MVP/MVP-B 폴더 내에서 work_process/MVP/MVP-B/D/research.md, work_process/MVP/MVP-B/D/test.md 파일을 읽고 D 단계의 작업을 수행해줘 D단계의 주요 작업 내용은 `IMiningRewardReceiver`의 B 측 구현체를 제공, 광물별 수량, 현재/최대 화물 중량과 미정산 가치를 관리, 최대 적재량, 잘못된 ID·수량과 중복 지급 경계를 명시 및 인벤토리와 HUD가 한 번의 상태 변경 결과를 즉시 표시하면서 A의 채굴 시스템이 전달한 광물 ID와 수량을 인벤토리에 반영하고, 데이터 카탈로그를 기준으로 총중량과 미정산 가치를 일관되게 계산하는거야
    unity MCP도 같이 연결해놓은 상태니까 unity editor에서도 같이 작업을 해주도록 하고 작업 내용에 대해서는 init/rule.md의 내용 참고하면서 한국어 주석도 같이 작성해주면서 진행해주면 돼
+
+6. work_process/MVP/MVP-B 폴더 내에서 work_process/MVP/MVP-B/E/research.md, work_process/MVP/MVP-B/E/test.md 파일을 읽고 E 단계의 작업을 수행해줘 E단계의 주요 작업 내용은 선택한 광물만 판매하고 정확한 골드를 지급, `IResourceWallet`로 시설 비용의 지불 가능 여부와 실제 차감을 제공, 판매·제작 성공/실패 결과를 UI와 자동 저장 요청에 전달, 중간 실패 시 인벤토리와 골드가 부분 변경되지 않게 하는 기능들을 구현하면서 광물 판매와 시설 제작 비용 검사를 Service 트랜잭션으로 처리하고, 설치 성공 전에는 자원을 차감하지 않도록 하는거야 unity MCP도 같이 연결해놓은 상태니까 unity editor에서도 같이 작업을 해주도록 하고 작업 내용에 대해서는 init/rule.md의 내용 참고하면서 한국어 주석도 같이 작성해주면서 진행해주면 돼
