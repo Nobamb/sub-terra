@@ -27,13 +27,21 @@ namespace SubTerra.App.Core.Data
         {
             public const string DrillSpeed = "upgrade.drill.speed";
             public const string DrillEfficiency = "upgrade.drill.efficiency";
+            public const string MaximumEnergy = "upgrade.energy.maximum";
+            public const string MaximumCargo = "upgrade.cargo.maximum";
             public const string DroneScan = "upgrade.drone.scan";
             public const string DroneRescue = "upgrade.drone.rescue";
+            public const string GasResistance = "upgrade.gas.resistance";
         }
 
         public static class Recipes
         {
             public const string SupportBasic = "recipe.building.support.basic";
+        }
+
+        public static class Zones
+        {
+            public const string Deep = "zone.deep";
         }
 
         public static class Dialogue
