@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Upgrade_Drill_Efficiency
   m_EditorClassIdentifier: SubTerra.App::SubTerra.App.Core.Data.UpgradeData
   id: upgrade.drill.efficiency
-  displayName: Drill Efficiency
+  displayName: "\uB4DC\uB9B4 \uC804\uB825 \uD6A8\uC728"
   maxLevel: 3
   levels:
   - level: 1
