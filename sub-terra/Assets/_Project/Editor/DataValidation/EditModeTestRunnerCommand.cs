@@ -300,8 +300,11 @@ namespace SubTerra.App.Editor.DataValidation
             Bld(DataIds.Buildings.OutpostCoreBasic);
             Upg(DataIds.Upgrades.DrillSpeed);
             Upg(DataIds.Upgrades.DrillEfficiency);
+            Upg(DataIds.Upgrades.MaximumEnergy);
+            Upg(DataIds.Upgrades.MaximumCargo);
             Upg(DataIds.Upgrades.DroneScan);
             Upg(DataIds.Upgrades.DroneRescue);
+            Upg(DataIds.Upgrades.GasResistance);
             ids.AppendLine(catalog != null && catalog.TryGetRecipe(DataIds.Recipes.SupportBasic, out var recipe)
                 ? $"OK recipe {recipe.Id} inputs={recipe.Inputs.Count}"
                 : "FAIL recipe");
