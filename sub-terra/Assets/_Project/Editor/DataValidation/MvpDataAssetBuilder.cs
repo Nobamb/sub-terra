@@ -266,10 +266,13 @@ namespace SubTerra.App.Editor.DataValidation
         {
             return new List<UpgradeData>
             {
-                EnsureUpgrade("Upgrade_Drill_Speed.asset", DataIds.Upgrades.DrillSpeed, "Drill Speed", 3, 0.1f),
-                EnsureUpgrade("Upgrade_Drill_Efficiency.asset", DataIds.Upgrades.DrillEfficiency, "Drill Efficiency", 3, 0.05f),
-                EnsureUpgrade("Upgrade_Drone_Scan.asset", DataIds.Upgrades.DroneScan, "Drone Scan", 2, 1f),
-                EnsureUpgrade("Upgrade_Drone_Rescue.asset", DataIds.Upgrades.DroneRescue, "Drone Rescue", 2, 1f)
+                EnsureUpgrade("Upgrade_Drill_Speed.asset", DataIds.Upgrades.DrillSpeed, "드릴 속도", 3, 0.1f),
+                EnsureUpgrade("Upgrade_Drill_Efficiency.asset", DataIds.Upgrades.DrillEfficiency, "드릴 전력 효율", 3, 0.05f),
+                EnsureUpgrade("Upgrade_Maximum_Energy.asset", DataIds.Upgrades.MaximumEnergy, "최대 전력", 3, 20f),
+                EnsureUpgrade("Upgrade_Maximum_Cargo.asset", DataIds.Upgrades.MaximumCargo, "최대 화물 중량", 3, 10f),
+                EnsureUpgrade("Upgrade_Drone_Scan.asset", DataIds.Upgrades.DroneScan, "드론 스캔 범위", 2, 2f),
+                EnsureUpgrade("Upgrade_Drone_Rescue.asset", DataIds.Upgrades.DroneRescue, "드론 구조 보존", 2, 0.15f),
+                EnsureUpgrade("Upgrade_Gas_Resistance.asset", DataIds.Upgrades.GasResistance, "가스 저항", 3, 0.1f)
             };
         }
 
