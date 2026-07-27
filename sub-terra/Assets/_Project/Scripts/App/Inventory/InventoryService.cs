@@ -266,6 +266,22 @@ namespace SubTerra.App.Inventory
         public float MaxCapacity => state.MaxCapacity;
         public float UnsettledValue => state.UnsettledValue;
 
+        /// <summary>
+        /// 업그레이드 파생 최대 화물 중량을 반영한다.
+        /// 보유 화물은 버리지 않고 최대치 표시/추가 획득 경계만 즉시 갱신한다.
+        /// </summary>
+        public void SetMaximumCapacity(float maximumCapacity)
+        {
+            var clamped = maximumCapacity < 0f ? 0f : maximumCapacity;
+            if (Math.Abs(state.MaxCapacity - clamped) < 0.0001f)
+            {
+                return;
+            }
+
+            state.SetMaxCapacity(clamped);
+            RaiseChangedOnce();
+        }
+
         private InventoryMutationResult Fail(
             InventoryMutationStatus status,
             string mineralId,
