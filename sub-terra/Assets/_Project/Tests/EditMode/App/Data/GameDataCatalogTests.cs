@@ -645,8 +645,11 @@ namespace SubTerra.App.Tests.Data
             {
                 CreateUpgrade("Upg_DrillSpeed", DataIds.Upgrades.DrillSpeed, "Drill Speed", 3, 0.1f),
                 CreateUpgrade("Upg_DrillEff", DataIds.Upgrades.DrillEfficiency, "Drill Efficiency", 3, 0.05f),
+                CreateUpgrade("Upg_MaxEnergy", DataIds.Upgrades.MaximumEnergy, "Maximum Energy", 3, 20f),
+                CreateUpgrade("Upg_MaxCargo", DataIds.Upgrades.MaximumCargo, "Maximum Cargo", 3, 10f),
                 CreateUpgrade("Upg_DroneScan", DataIds.Upgrades.DroneScan, "Drone Scan", 2, 1f),
-                CreateUpgrade("Upg_DroneRescue", DataIds.Upgrades.DroneRescue, "Drone Rescue", 2, 1f)
+                CreateUpgrade("Upg_DroneRescue", DataIds.Upgrades.DroneRescue, "Drone Rescue", 2, 0.15f),
+                CreateUpgrade("Upg_GasResistance", DataIds.Upgrades.GasResistance, "Gas Resistance", 3, 0.1f)
             };
 
             var dialogues = new List<DialogueTemplateData>
