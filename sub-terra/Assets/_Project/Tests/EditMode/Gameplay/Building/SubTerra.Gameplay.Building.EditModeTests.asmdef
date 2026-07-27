@@ -1,0 +1,14 @@
+{
+  "name": "SubTerra.Gameplay.Building.EditModeTests",
+  "rootNamespace": "SubTerra.Gameplay.Building.Tests",
+  "references": ["SubTerra.Gameplay.Building", "UnityEngine.TestRunner", "UnityEditor.TestRunner"],
+  "includePlatforms": ["Editor"],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
