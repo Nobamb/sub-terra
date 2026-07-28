@@ -1,6 +1,11 @@
 {
   "name": "SubTerra.App.Tests.PlayMode",
-  "references": ["SubTerra.App", "SubTerra.Shared"],
+  "references": [
+    "SubTerra.App",
+    "SubTerra.App.GameplayIntegration",
+    "SubTerra.Shared",
+    "SubTerra.Gameplay.Building"
+  ],
   "optionalUnityReferences": ["TestAssemblies"],
   "includePlatforms": [],
   "autoReferenced": false
