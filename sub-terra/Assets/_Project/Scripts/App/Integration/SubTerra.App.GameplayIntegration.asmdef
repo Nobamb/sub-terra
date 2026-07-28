@@ -1,0 +1,22 @@
+{
+  "name": "SubTerra.App.GameplayIntegration",
+  "rootNamespace": "SubTerra.App.Integration",
+  "references": [
+    "SubTerra.App",
+    "SubTerra.Shared",
+    "SubTerra.Gameplay.Building",
+    "SubTerra.Gameplay.Structural",
+    "SubTerra.Gameplay.Hazards",
+    "SubTerra.Gameplay.Power",
+    "Unity.InputSystem"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
