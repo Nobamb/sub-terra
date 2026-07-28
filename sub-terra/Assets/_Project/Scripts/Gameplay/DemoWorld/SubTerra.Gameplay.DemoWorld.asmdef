@@ -1,7 +1,7 @@
 {
   "name": "SubTerra.Gameplay.DemoWorld",
   "rootNamespace": "SubTerra.Gameplay.DemoWorld",
-  "references": ["SubTerra.Shared", "SubTerra.Gameplay.Player", "SubTerra.Gameplay.Mining", "SubTerra.Gameplay.Structural", "SubTerra.Gameplay.Hazards", "SubTerra.Gameplay.Building", "SubTerra.Gameplay.Power", "SubTerra.Gameplay.Drone", "SubTerra.Gameplay.Snapshot", "Unity.InputSystem"],
+  "references": ["SubTerra.Shared", "SubTerra.Gameplay.Player", "SubTerra.Gameplay.Mining", "SubTerra.Gameplay.Structural", "SubTerra.Gameplay.Hazards", "SubTerra.Gameplay.Building", "SubTerra.Gameplay.Power", "SubTerra.Gameplay.Drone", "SubTerra.Gameplay.Snapshot", "SubTerra.Gameplay.IntegrationBridge", "Unity.InputSystem"],
   "includePlatforms": [],
   "excludePlatforms": [],
   "allowUnsafeCode": false,

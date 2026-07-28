@@ -18,6 +18,7 @@ namespace SubTerra.Gameplay.Building
 
         private readonly HashSet<Vector3Int> occupiedCells = new();
         private IBuildingResourceWallet resourceWallet;
+        private IResourceWallet sharedResourceWallet;
         private BuildingPlacementDefinition selection;
         private int nextInstanceSequence = 1;
         private readonly HashSet<string> restoredInstanceIds = new();
@@ -34,6 +35,9 @@ namespace SubTerra.Gameplay.Building
 
         public void Select(BuildingPlacementDefinition definition) => selection = definition;
         public void ClearSelection() => selection = null;
+
+        /// <summary>Called by App bootstrap to connect the Shared economy contract without a Unity object reference.</summary>
+        public void SetResourceWallet(IResourceWallet wallet) => sharedResourceWallet = wallet;
 
         public Vector3Int WorldToCell(Vector3 worldPosition)
         {
@@ -63,12 +67,20 @@ namespace SubTerra.Gameplay.Building
                 }
             }
 
-            if (resourceWallet == null)
+            if (sharedResourceWallet != null)
+            {
+                if (!sharedResourceWallet.CanAfford(selection.Costs))
+                {
+                    failure = BuildingPlacementFailure.CannotAfford;
+                    return false;
+                }
+            }
+            else if (resourceWallet == null)
             {
                 failure = BuildingPlacementFailure.ResourceWalletUnavailable;
                 return false;
             }
-            if (!resourceWallet.CanAfford(selection.BuildingId))
+            else if (!resourceWallet.CanAfford(selection.BuildingId))
             {
                 failure = BuildingPlacementFailure.CannotAfford;
                 return false;
@@ -85,7 +97,10 @@ namespace SubTerra.Gameplay.Building
             if (instanceObject == null) return Reject(BuildingPlacementFailure.InstantiateFailed, origin);
 
             // 비용은 생성에 성공한 뒤에만 차감한다. 실패하면 생성물을 되돌린다.
-            if (!resourceWallet.TrySpend(selection.BuildingId))
+            bool spent = sharedResourceWallet != null
+                ? sharedResourceWallet.TrySpend(selection.Costs)
+                : resourceWallet.TrySpend(selection.BuildingId);
+            if (!spent)
             {
                 Destroy(instanceObject);
                 return Reject(BuildingPlacementFailure.SpendFailed, origin);

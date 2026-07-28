@@ -1,6 +1,7 @@
 using SubTerra.Gameplay.Building;
 using SubTerra.Gameplay.Drone;
 using SubTerra.Gameplay.Hazards;
+using SubTerra.Gameplay.Integration;
 using SubTerra.Gameplay.Mining;
 using SubTerra.Gameplay.Player;
 using SubTerra.Gameplay.Power;
@@ -77,6 +78,10 @@ namespace SubTerra.Gameplay.DemoWorld.Editor
             WorldSnapshotSystem snapshot = systems.AddComponent<WorldSnapshotSystem>();
             SetReference(snapshot, "foregroundTilemap", tilemap); SetReference(snapshot, "miningSystem", mining); SetReference(snapshot, "structuralSystem", structural);
             SetReference(snapshot, "gasHazardSystem", gas); SetReference(snapshot, "buildingPlacementSystem", building); SetReference(snapshot, "powerNetworkSystem", power);
+            GameplayEventRecorder recorder = systems.AddComponent<GameplayEventRecorder>();
+            GameplayEventBridge eventBridge = systems.AddComponent<GameplayEventBridge>();
+            SetReference(eventBridge, "eventSinkBehaviour", recorder); SetReference(eventBridge, "miningSystem", mining); SetReference(eventBridge, "structuralSystem", structural);
+            SetReference(eventBridge, "gasHazardSystem", gas); SetReference(eventBridge, "buildingPlacementSystem", building); SetReference(eventBridge, "powerNetworkSystem", power);
             CreateCamera(player);
 
             EditorSceneManager.SaveScene(scene, ScenePath);
