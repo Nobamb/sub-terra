@@ -1,0 +1,14 @@
+{
+  "name": "SubTerra.Gameplay.Drone",
+  "rootNamespace": "SubTerra.Gameplay.Drone",
+  "references": ["SubTerra.Shared", "SubTerra.Gameplay.Player", "SubTerra.Gameplay.Mining", "SubTerra.Gameplay.Structural", "SubTerra.Gameplay.Hazards", "SubTerra.Gameplay.Power"],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
