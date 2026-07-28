@@ -201,17 +201,23 @@ namespace SubTerra.App.Editor.DataValidation
         {
             return new List<BuildingData>
             {
-                EnsureBuilding("Building_Support_Basic.asset", DataIds.Buildings.SupportBasic, "Basic Support", prefab, 0,
+                EnsureBuilding("Building_Support_Basic.asset", DataIds.Buildings.SupportBasic, "기본 버팀목",
+                    "주변 지형을 보강해 구조 위험을 낮춥니다.", prefab, 0,
                     icon, new List<ItemCostEntry> { new ItemCostEntry(DataIds.Minerals.Copper, 2) }),
-                EnsureBuilding("Building_Light_Basic.asset", DataIds.Buildings.LightBasic, "Basic Light", prefab, 1,
+                EnsureBuilding("Building_Light_Basic.asset", DataIds.Buildings.LightBasic, "기본 조명",
+                    "전력이 연결된 지하 구역을 밝힙니다.", prefab, 1,
                     icon, new List<ItemCostEntry> { new ItemCostEntry(DataIds.Minerals.Iron, 1) }),
-                EnsureBuilding("Building_Charger_Basic.asset", DataIds.Buildings.ChargerBasic, "Basic Charger", prefab, 3,
+                EnsureBuilding("Building_Charger_Basic.asset", DataIds.Buildings.ChargerBasic, "기본 충전기",
+                    "전력망에 연결되면 플레이어 장비를 충전합니다.", prefab, 3,
                     icon, new List<ItemCostEntry> { new ItemCostEntry(DataIds.Minerals.Copper, 3) }),
-                EnsureBuilding("Building_Storage_Basic.asset", DataIds.Buildings.StorageBasic, "Basic Storage", prefab, 0,
+                EnsureBuilding("Building_Storage_Basic.asset", DataIds.Buildings.StorageBasic, "기본 보관함",
+                    "탐사 중 수집한 광물을 임시 보관합니다.", prefab, 0,
                     icon, new List<ItemCostEntry> { new ItemCostEntry(DataIds.Minerals.Iron, 2) }),
-                EnsureBuilding("Building_Settlement_Basic.asset", DataIds.Buildings.SettlementBasic, "Settlement Console", prefab, 1,
+                EnsureBuilding("Building_Settlement_Basic.asset", DataIds.Buildings.SettlementBasic, "정산 콘솔",
+                    "보관한 광물을 정산해 골드로 전환합니다.", prefab, 1,
                     icon, new List<ItemCostEntry> { new ItemCostEntry(DataIds.Minerals.Lithium, 1) }),
-                EnsureBuilding("Building_OutpostCore_Basic.asset", DataIds.Buildings.OutpostCoreBasic, "Outpost Core", prefab, 5,
+                EnsureBuilding("Building_OutpostCore_Basic.asset", DataIds.Buildings.OutpostCoreBasic, "전진기지 코어",
+                    "연결된 시설에 전력을 공급하고 탐사 거점을 형성합니다.", prefab, 5,
                     icon, new List<ItemCostEntry>
                     {
                         new ItemCostEntry(DataIds.Minerals.Copper, 5),
@@ -224,6 +230,7 @@ namespace SubTerra.App.Editor.DataValidation
             string file,
             string id,
             string name,
+            string description,
             GameObject prefab,
             int power,
             Sprite icon,
@@ -237,7 +244,7 @@ namespace SubTerra.App.Editor.DataValidation
                 AssetDatabase.CreateAsset(asset, path);
             }
 
-            asset.EditorSet(id, name, prefab, icon, power, costs);
+            asset.EditorSet(id, name, description, prefab, icon, power, costs);
             EditorUtility.SetDirty(asset);
             return asset;
         }
