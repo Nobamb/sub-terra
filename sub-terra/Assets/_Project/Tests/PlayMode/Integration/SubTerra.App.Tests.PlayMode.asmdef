@@ -4,7 +4,8 @@
     "SubTerra.App",
     "SubTerra.App.GameplayIntegration",
     "SubTerra.Shared",
-    "SubTerra.Gameplay.Building"
+    "SubTerra.Gameplay.Building",
+    "Unity.TextMeshPro"
   ],
   "optionalUnityReferences": ["TestAssemblies"],
   "includePlatforms": [],

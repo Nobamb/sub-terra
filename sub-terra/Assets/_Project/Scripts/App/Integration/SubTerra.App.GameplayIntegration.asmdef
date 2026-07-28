@@ -8,6 +8,7 @@
     "SubTerra.Gameplay.Structural",
     "SubTerra.Gameplay.Hazards",
     "SubTerra.Gameplay.Power",
+    "SubTerra.Gameplay.Drone",
     "Unity.InputSystem"
   ],
   "includePlatforms": [],

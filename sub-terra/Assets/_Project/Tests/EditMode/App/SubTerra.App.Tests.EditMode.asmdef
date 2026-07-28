@@ -1,6 +1,11 @@
 {
   "name": "SubTerra.App.Tests.EditMode",
-  "references": ["SubTerra.App", "SubTerra.App.Editor", "SubTerra.Shared"],
+  "references": [
+    "SubTerra.App",
+    "SubTerra.App.Editor",
+    "SubTerra.App.GameplayIntegration",
+    "SubTerra.Shared"
+  ],
   "optionalUnityReferences": ["TestAssemblies"],
   "includePlatforms": ["Editor"],
   "autoReferenced": false

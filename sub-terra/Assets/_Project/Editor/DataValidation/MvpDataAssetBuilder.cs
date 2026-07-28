@@ -309,7 +309,76 @@ namespace SubTerra.App.Editor.DataValidation
 
         private static List<DialogueTemplateData> BuildDialogues()
         {
-            var path = Root + "/Dialogue/Dialogue_LowPower_Warning.asset";
+            return new List<DialogueTemplateData>
+            {
+                EnsureDialogue(
+                    "Dialogue_Drone_Emergency.asset",
+                    DataIds.Dialogue.DroneEmergency,
+                    "긴급 생존 경고",
+                    "survival_emergency",
+                    700,
+                    "{reason} {action} 가능 여부를 즉시 확인하세요."),
+                EnsureDialogue(
+                    "Dialogue_Drone_Structural_Warning.asset",
+                    DataIds.Dialogue.DroneStructuralWarning,
+                    "붕괴 임박 경고",
+                    "structural_critical",
+                    600,
+                    "구조 안정도 {structuralIntegrity}. 버팀목 설치 지점을 확보하세요."),
+                EnsureDialogue(
+                    "Dialogue_Drone_Gas_Warning.asset",
+                    DataIds.Dialogue.DroneGasWarning,
+                    "가스 위험 경고",
+                    "gas_risk",
+                    500,
+                    "가스 위험 {gasRisk}. 가스 구역에서 이탈하세요."),
+                EnsureDialogue(
+                    "Dialogue_LowPower_Warning.asset",
+                    DataIds.Dialogue.LowPowerWarning,
+                    "전력 부족 경고",
+                    "low_power",
+                    400,
+                    "현재 전력 {currentEnergy}, 귀환 예상 {returnEnergyEstimate}. {action}을 권장합니다."),
+                EnsureDialogue(
+                    "Dialogue_Drone_Return.asset",
+                    DataIds.Dialogue.DroneReturn,
+                    "귀환 추천",
+                    "return",
+                    300,
+                    "미정산 가치 {unsettledCargoValue}. 기지 귀환을 권장합니다."),
+                EnsureDialogue(
+                    "Dialogue_Drone_Lithium.asset",
+                    DataIds.Dialogue.DroneLithium,
+                    "희귀 광물 발견",
+                    "rare_mineral",
+                    200,
+                    "인근에서 {mineralId} 신호를 확인했습니다."),
+                EnsureDialogue(
+                    "Dialogue_Drone_Outpost.asset",
+                    DataIds.Dialogue.DroneOutpost,
+                    "전진기지 추천",
+                    "outpost",
+                    100,
+                    "기지 거리 {nearestBaseDistance}m. 전진기지 설치를 검토하세요."),
+                EnsureDialogue(
+                    "Dialogue_Drone_Explore.asset",
+                    DataIds.Dialogue.DroneExplore,
+                    "일반 탐사",
+                    "explore",
+                    0,
+                    "현재 심도 {depth}. 확인된 즉시 위험이 없어 하강을 계속할 수 있습니다.")
+            };
+        }
+
+        private static DialogueTemplateData EnsureDialogue(
+            string file,
+            string id,
+            string name,
+            string situation,
+            int priority,
+            string template)
+        {
+            var path = Root + "/Dialogue/" + file;
             var asset = AssetDatabase.LoadAssetAtPath<DialogueTemplateData>(path);
             if (asset == null)
             {
@@ -318,13 +387,13 @@ namespace SubTerra.App.Editor.DataValidation
             }
 
             asset.EditorSet(
-                DataIds.Dialogue.LowPowerWarning,
-                "Low Power Warning",
-                "low_power",
-                100,
-                "Power is low. Return or recharge.");
+                id,
+                name,
+                situation,
+                priority,
+                template);
             EditorUtility.SetDirty(asset);
-            return new List<DialogueTemplateData> { asset };
+            return asset;
         }
 
         private static void WireBootstrap(GameDataCatalog catalog)

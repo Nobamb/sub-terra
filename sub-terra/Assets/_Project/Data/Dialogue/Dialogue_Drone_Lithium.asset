@@ -10,11 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fb06d2a4a2a15fa4486b9d051c9b5f9c, type: 3}
-  m_Name: Dialogue_LowPower_Warning
+  m_Name: Dialogue_Drone_Lithium
   m_EditorClassIdentifier: SubTerra.App::SubTerra.App.Core.Data.DialogueTemplateData
-  id: dialogue.low_power.warning
-  displayName: "\uC804\uB825 \uBD80\uC871 \uACBD\uACE0"
-  situationKey: low_power
-  priority: 400
-  template: "\uD604\uC7AC \uC804\uB825 {currentEnergy}, \uADC0\uD658 \uC608\uC0C1
-    {returnEnergyEstimate}. {action}\uC744 \uAD8C\uC7A5\uD569\uB2C8\uB2E4."
+  id: dialogue.drone.lithium
+  displayName: "\uD76C\uADC0 \uAD11\uBB3C \uBC1C\uACAC"
+  situationKey: rare_mineral
+  priority: 200
+  template: "\uC778\uADFC\uC5D0\uC11C {mineralId} \uC2E0\uD638\uB97C \uD655\uC778\uD588\uC2B5\uB2C8\uB2E4."

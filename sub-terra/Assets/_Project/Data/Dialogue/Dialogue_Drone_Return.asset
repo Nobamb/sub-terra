@@ -10,11 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fb06d2a4a2a15fa4486b9d051c9b5f9c, type: 3}
-  m_Name: Dialogue_LowPower_Warning
+  m_Name: Dialogue_Drone_Return
   m_EditorClassIdentifier: SubTerra.App::SubTerra.App.Core.Data.DialogueTemplateData
-  id: dialogue.low_power.warning
-  displayName: "\uC804\uB825 \uBD80\uC871 \uACBD\uACE0"
-  situationKey: low_power
-  priority: 400
-  template: "\uD604\uC7AC \uC804\uB825 {currentEnergy}, \uADC0\uD658 \uC608\uC0C1
-    {returnEnergyEstimate}. {action}\uC744 \uAD8C\uC7A5\uD569\uB2C8\uB2E4."
+  id: dialogue.drone.return
+  displayName: "\uADC0\uD658 \uCD94\uCC9C"
+  situationKey: return
+  priority: 300
+  template: "\uBBF8\uC815\uC0B0 \uAC00\uCE58 {unsettledCargoValue}. \uAE30\uC9C0
+    \uADC0\uD658\uC744 \uAD8C\uC7A5\uD569\uB2C8\uB2E4."

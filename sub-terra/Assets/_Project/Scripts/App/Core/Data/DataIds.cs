@@ -47,6 +47,13 @@ namespace SubTerra.App.Core.Data
         public static class Dialogue
         {
             public const string LowPowerWarning = "dialogue.low_power.warning";
+            public const string DroneEmergency = "dialogue.drone.survival.emergency";
+            public const string DroneStructuralWarning = "dialogue.drone.structural.warning";
+            public const string DroneGasWarning = "dialogue.drone.gas.warning";
+            public const string DroneReturn = "dialogue.drone.return";
+            public const string DroneLithium = "dialogue.drone.lithium";
+            public const string DroneOutpost = "dialogue.drone.outpost";
+            public const string DroneExplore = "dialogue.drone.explore";
         }
     }
 }
