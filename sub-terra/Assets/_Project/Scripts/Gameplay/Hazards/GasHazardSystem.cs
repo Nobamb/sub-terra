@@ -20,6 +20,7 @@ namespace SubTerra.Gameplay.Hazards
         private int nextZoneSequence = 1;
 
         public GasExposureState CurrentExposure { get; private set; } = new(false, GasRiskLevel.Safe, GasType.Unknown, string.Empty, 0f);
+        public IReadOnlyList<GasZone> ActiveZones => zones;
         public event Action<GasExposureState> ExposureChanged;
         public event Action<GasZone> GasZoneActivated;
         public event Action<string> GasZoneDeactivated;
@@ -44,6 +45,25 @@ namespace SubTerra.Gameplay.Hazards
             string id = $"gas-{nextZoneSequence++:D4}";
             float intensity = Mathf.Max(defaultIntensity, tile.structuralImpact);
             zone.Activate(id, GasType.Toxic, intensity, defaultRadius, defaultDuration);
+            zones.Add(zone);
+            GasZoneActivated?.Invoke(zone);
+            ReevaluateExposure();
+            return zone;
+        }
+
+        /// <summary>Restores the saved position and concentration; duration intentionally resets to the MVP default.</summary>
+        public GasZone RestoreGasZone(GasSnapshotDto snapshot)
+        {
+            if (!snapshot.isActive || snapshot.isNeutralized) return null;
+            foreach (GasZone existing in zones)
+            {
+                if (existing != null && existing.IsActive && existing.GasZoneId == snapshot.gasZoneId) return existing;
+            }
+
+            string id = string.IsNullOrWhiteSpace(snapshot.gasZoneId) ? $"gas-{nextZoneSequence++:D4}" : snapshot.gasZoneId;
+            if (Enum.TryParse(snapshot.gasTypeId, out GasType parsedType) == false) parsedType = GasType.Toxic;
+            GasZone zone = CreateZone(new Vector3(snapshot.x, snapshot.y, 0f));
+            zone.Activate(id, parsedType, snapshot.concentrationLevel, defaultRadius, defaultDuration);
             zones.Add(zone);
             GasZoneActivated?.Invoke(zone);
             ReevaluateExposure();

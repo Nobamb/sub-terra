@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using SubTerra.Gameplay.Structural;
+using SubTerra.Shared;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -13,11 +14,13 @@ namespace SubTerra.Gameplay.Building
         [SerializeField] private Transform buildingRoot;
         [SerializeField] private MonoBehaviour resourceWalletBehaviour;
         [SerializeField] private StructuralIntegritySystem structuralIntegritySystem;
+        [SerializeField] private BuildingPlacementDefinition[] restoreDefinitions = Array.Empty<BuildingPlacementDefinition>();
 
         private readonly HashSet<Vector3Int> occupiedCells = new();
         private IBuildingResourceWallet resourceWallet;
         private BuildingPlacementDefinition selection;
         private int nextInstanceSequence = 1;
+        private readonly HashSet<string> restoredInstanceIds = new();
 
         public BuildingPlacementDefinition Selection => selection;
         public event Action<BuildingPlacementResult> BuildingPlaced;
@@ -100,11 +103,39 @@ namespace SubTerra.Gameplay.Building
             return result;
         }
 
+        /// <summary>Restores a previously placed building without querying or spending the App-owned wallet.</summary>
+        public bool TryRestoreBuilding(BuildingSnapshotDto snapshot)
+        {
+            if (string.IsNullOrWhiteSpace(snapshot.instanceId) || restoredInstanceIds.Contains(snapshot.instanceId)) return false;
+            BuildingPlacementDefinition definition = FindDefinition(snapshot.buildingTypeId);
+            if (definition == null || definition.RuntimePrefab == null) return false;
+
+            var cell = new Vector3Int(snapshot.x, snapshot.y, 0);
+            GameObject instanceObject = Instantiate(definition.RuntimePrefab, CellToWorld(cell), Quaternion.identity, buildingRoot != null ? buildingRoot : transform);
+            BuildingInstance instance = instanceObject.GetComponent<BuildingInstance>() ?? instanceObject.AddComponent<BuildingInstance>();
+            instance.Initialize(snapshot.instanceId, snapshot.buildingTypeId);
+            foreach (Vector3Int occupied in EnumerateFootprint(cell, definition.Footprint)) occupiedCells.Add(occupied);
+            StructuralSupport support = instanceObject.GetComponent<StructuralSupport>();
+            if (support != null) structuralIntegritySystem?.RegisterSupport(support);
+            restoredInstanceIds.Add(snapshot.instanceId);
+            return true;
+        }
+
         private BuildingPlacementResult Reject(BuildingPlacementFailure failure, Vector3Int cell)
         {
             var result = new BuildingPlacementResult(false, failure, string.Empty, selection != null ? selection.BuildingId : string.Empty, cell);
             PlacementRejected?.Invoke(result);
             return result;
+        }
+
+        private BuildingPlacementDefinition FindDefinition(string buildingId)
+        {
+            if (selection != null && selection.BuildingId == buildingId) return selection;
+            foreach (BuildingPlacementDefinition definition in restoreDefinitions)
+            {
+                if (definition != null && definition.BuildingId == buildingId) return definition;
+            }
+            return null;
         }
 
         private Vector3 CellToWorld(Vector3Int cell)
