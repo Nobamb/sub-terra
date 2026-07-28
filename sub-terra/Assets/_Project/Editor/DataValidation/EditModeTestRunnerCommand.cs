@@ -401,12 +401,23 @@ namespace SubTerra.App.Editor.DataValidation
 
         public static void RunEditModeTests(string resultPath)
         {
-            StartTestRun(TestMode.EditMode, "SubTerra.App.Tests.EditMode", ResolveProjectPath(resultPath), "Edit Mode");
+            StartTestRun(
+                TestMode.EditMode,
+                new[] { "SubTerra.App.Tests.EditMode" },
+                ResolveProjectPath(resultPath),
+                "Edit Mode");
         }
 
         public static void RunPlayModeTests(string resultPath)
         {
-            StartTestRun(TestMode.PlayMode, "SubTerra.App.Tests.PlayMode", ResolveProjectPath(resultPath), "Play Mode");
+            StartTestRun(
+                TestMode.PlayMode,
+                new[]
+                {
+                    "SubTerra.App.Tests.PlayMode"
+                },
+                ResolveProjectPath(resultPath),
+                "Play Mode");
         }
 
         /// <summary>상대 경로는 프로젝트 루트(Application.dataPath 상위) 기준으로 절대 경로화한다.</summary>
@@ -421,7 +432,11 @@ namespace SubTerra.App.Editor.DataValidation
             return Path.GetFullPath(Path.Combine(projectRoot, path));
         }
 
-        private static void StartTestRun(TestMode mode, string assemblyName, string resultPath, string label)
+        private static void StartTestRun(
+            TestMode mode,
+            string[] assemblyNames,
+            string resultPath,
+            string label)
         {
             if (testRunActive)
             {
@@ -434,7 +449,7 @@ namespace SubTerra.App.Editor.DataValidation
             var filter = new Filter
             {
                 testMode = mode,
-                assemblyNames = new[] { assemblyName }
+                assemblyNames = assemblyNames
             };
 
             activeReceiver = new ResultWriter(resultPath);
