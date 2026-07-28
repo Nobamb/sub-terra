@@ -774,8 +774,11 @@ namespace SubTerra.App.Core.Data
                 {
                     DataIds.Upgrades.DrillSpeed,
                     DataIds.Upgrades.DrillEfficiency,
+                    DataIds.Upgrades.MaximumEnergy,
+                    DataIds.Upgrades.MaximumCargo,
                     DataIds.Upgrades.DroneScan,
-                    DataIds.Upgrades.DroneRescue
+                    DataIds.Upgrades.DroneRescue,
+                    DataIds.Upgrades.GasResistance
                 },
                 "upgrade",
                 result);

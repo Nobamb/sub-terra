@@ -13,16 +13,16 @@ MonoBehaviour:
   m_Name: Upgrade_Drone_Rescue
   m_EditorClassIdentifier: SubTerra.App::SubTerra.App.Core.Data.UpgradeData
   id: upgrade.drone.rescue
-  displayName: Drone Rescue
+  displayName: "\uB4DC\uB860 \uAD6C\uC870 \uBCF4\uC874"
   maxLevel: 2
   levels:
   - level: 1
     costs:
     - itemId: mineral.copper
       quantity: 1
-    effectValue: 1
+    effectValue: 0.15
   - level: 2
     costs:
     - itemId: mineral.copper
       quantity: 2
-    effectValue: 2
+    effectValue: 0.3

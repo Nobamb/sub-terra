@@ -16,6 +16,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 3313a39c6e1d3214abef4f85690256a3, type: 2}
   - {fileID: 11400000, guid: e62f915cba55fdd44b43858421c18c38, type: 2}
   - {fileID: 11400000, guid: d8109f2553adf114a9b7c225a6968318, type: 2}
+  miningTiles: []
   buildings:
   - {fileID: 11400000, guid: 8b806f92e14a7da478d52e2e042a57e5, type: 2}
   - {fileID: 11400000, guid: 35d95ff508c3cab4d926f775aabaee93, type: 2}
@@ -28,7 +29,10 @@ MonoBehaviour:
   upgrades:
   - {fileID: 11400000, guid: 2bc563394de80e14f827b07cebc8c269, type: 2}
   - {fileID: 11400000, guid: 12efde94f9311014b94bdf018c6bb9bd, type: 2}
+  - {fileID: 11400000, guid: 4958f8cfd43eef8499cd9291614fdc44, type: 2}
+  - {fileID: 11400000, guid: ca2794d0c126d0844aefdf7b8a5297f2, type: 2}
   - {fileID: 11400000, guid: d1b62113bd781a142a873271f91fd3cc, type: 2}
   - {fileID: 11400000, guid: fe4de9f0a633cdb43a0491a64845182f, type: 2}
+  - {fileID: 11400000, guid: faa09590034064a498802e892a1b37b4, type: 2}
   dialogues:
   - {fileID: 11400000, guid: 851b44a4709ab4147bfe5b668a71b527, type: 2}
