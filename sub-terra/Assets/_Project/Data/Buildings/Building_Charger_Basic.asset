@@ -13,7 +13,9 @@ MonoBehaviour:
   m_Name: Building_Charger_Basic
   m_EditorClassIdentifier: SubTerra.App::SubTerra.App.Core.Data.BuildingData
   id: building.charger.basic
-  displayName: Basic Charger
+  displayName: "\uAE30\uBCF8 \uCDA9\uC804\uAE30"
+  description: "\uC804\uB825\uB9DD\uC5D0 \uC5F0\uACB0\uB418\uBA74 \uD50C\uB808\uC774\uC5B4
+    \uC7A5\uBE44\uB97C \uCDA9\uC804\uD569\uB2C8\uB2E4."
   runtimePrefab: {fileID: 3766932780806278260, guid: d9f8a92858c77d94f808199827a493f8, type: 3}
   icon: {fileID: 6838030193426678921, guid: 42527be5cf11e3c42871944ebbfd1fd6, type: 2}
   powerDraw: 3
