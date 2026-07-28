@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace SubTerra.Shared
 {
@@ -46,9 +47,11 @@ namespace SubTerra.Shared
     [Serializable]
     public struct GasSnapshotDto
     {
+        public string gasZoneId;
         public int x;
         public int y;
         public float concentrationLevel;
+        public float remainingDuration;
     }
 
     /// <summary>
@@ -60,5 +63,16 @@ namespace SubTerra.Shared
         public float totalStoredPower;
         public float gridMaxCapacity;
         public bool isGridActive;
+        public List<PowerConnectionSnapshotDto> cableConnections;
+    }
+
+    /// <summary>
+    /// 전력망을 구성하는 두 Runtime 인스턴스 사이의 케이블 연결을 저장하는 DTO
+    /// </summary>
+    [Serializable]
+    public struct PowerConnectionSnapshotDto
+    {
+        public string nodeAInstanceId;
+        public string nodeBInstanceId;
     }
 }
