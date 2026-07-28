@@ -9,13 +9,17 @@ namespace SubTerra.Shared
     [Serializable]
     public class WorldSnapshotDto
     {
-        public string version = "1.0";
+        public string version = "1.1";
         public long timestamp;
+        public int worldSeed;
 
         public List<MiningSnapshotDto> miningChanges = new List<MiningSnapshotDto>();
         public List<CollapseSnapshotDto> collapseChanges = new List<CollapseSnapshotDto>();
         public List<BuildingSnapshotDto> buildings = new List<BuildingSnapshotDto>();
         public List<GasSnapshotDto> gasChanges = new List<GasSnapshotDto>();
-        public PowerSnapshotDto powerState;
+        public PowerSnapshotDto powerState = new PowerSnapshotDto
+        {
+            cableConnections = new List<PowerConnectionSnapshotDto>()
+        };
     }
 }
