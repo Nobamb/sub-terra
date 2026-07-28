@@ -55,6 +55,7 @@ MonoBehaviour:
   contextProviderBehaviour: {fileID: 0}
   catalog: {fileID: 11400000, guid: 12d1b2c7b00e8754a9133b2481febe0d, type: 2}
   settings: {fileID: 11400000, guid: f183101d833856a4599968aaa3adf676, type: 2}
+  cloudDialogueConfig: {fileID: 0}
   refreshInterval: 0.5
 --- !u!1001 &64876597599338844
 PrefabInstance:

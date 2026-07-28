@@ -46,6 +46,12 @@ namespace SubTerra.App.Drone.Dialogue
 
         public DroneDialogueResult Generate(DroneAnalysisResult analysis)
         {
+            return Generate(analysis, false);
+        }
+
+        /// <summary>클라우드가 실패한 명시적 요청에서는 기존 표시 쿨다운과 무관하게 같은 분석의 대사를 즉시 만든다.</summary>
+        public DroneDialogueResult Generate(DroneAnalysisResult analysis, bool ignoreCooldown)
+        {
             if (analysis?.Dialogue == null)
             {
                 return Fallback(string.Empty);
@@ -55,7 +61,8 @@ namespace SubTerra.App.Drone.Dialogue
             var cooldown = request.IsUrgent
                 ? settings.UrgentDialogueRepeatSeconds
                 : settings.RegularDialogueCooldownSeconds;
-            if (lastShownAt.TryGetValue(request.TemplateId, out var previous)
+            if (!ignoreCooldown
+                && lastShownAt.TryGetValue(request.TemplateId, out var previous)
                 && clock.Now - previous < cooldown)
             {
                 return new DroneDialogueResult(

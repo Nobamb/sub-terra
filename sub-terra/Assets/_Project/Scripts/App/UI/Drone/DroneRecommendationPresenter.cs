@@ -1,3 +1,6 @@
+using System.Threading;
+using System.Threading.Tasks;
+using SubTerra.App.AI;
 using SubTerra.App.Drone;
 using SubTerra.App.Drone.Dialogue;
 using SubTerra.Shared;
@@ -13,6 +16,9 @@ namespace SubTerra.App.UI.Drone
         private IDroneContextProvider contextProvider;
         private DroneAnalysisService analysisService;
         private TemplateDialogueGenerator dialogueGenerator;
+        private IDialogueGenerator cloudDialogueGenerator;
+        private CancellationTokenSource bindingCancellation;
+        private int bindingVersion;
 
         public bool IsBound =>
             contextProvider != null && analysisService != null && dialogueGenerator != null;
@@ -30,10 +36,21 @@ namespace SubTerra.App.UI.Drone
             DroneAnalysisService analysis,
             TemplateDialogueGenerator generator)
         {
+            Bind(provider, analysis, generator, null);
+        }
+
+        public void Bind(
+            IDroneContextProvider provider,
+            DroneAnalysisService analysis,
+            TemplateDialogueGenerator generator,
+            IDialogueGenerator cloudGenerator)
+        {
             Unbind();
             contextProvider = provider;
             analysisService = analysis;
             dialogueGenerator = generator;
+            cloudDialogueGenerator = cloudGenerator;
+            bindingCancellation = new CancellationTokenSource();
 
             var visible = IsBound;
             dialogueView?.SetVisible(visible);
@@ -46,9 +63,14 @@ namespace SubTerra.App.UI.Drone
 
         public void Unbind()
         {
+            bindingVersion++;
+            bindingCancellation?.Cancel();
+            bindingCancellation?.Dispose();
+            bindingCancellation = null;
             contextProvider = null;
             analysisService = null;
             dialogueGenerator = null;
+            cloudDialogueGenerator = null;
             dialogueView?.SetVisible(false);
             reasonView?.SetVisible(false);
         }
@@ -60,6 +82,70 @@ namespace SubTerra.App.UI.Drone
                 return null;
             }
 
+            var analysis = AnalyzeCurrentContext();
+            reasonView?.SetAnalysis(analysis);
+
+            var dialogue = dialogueGenerator.Generate(analysis);
+            if (!dialogue.IsSuppressed)
+            {
+                dialogueView?.SetDialogue(dialogue);
+            }
+
+            return analysis;
+        }
+
+        /// <summary>허용된 이벤트 또는 사용자 직접 요청에서만 클라우드 표현 경로를 연다.</summary>
+        public async Task<DialogueGenerationResult> RequestCloudDialogueAsync(
+            CloudDialogueEvent eventType,
+            CancellationToken cancellationToken = default)
+        {
+            if (!IsBound)
+            {
+                return null;
+            }
+
+            var version = bindingVersion;
+            var analysis = AnalyzeCurrentContext();
+            reasonView?.SetAnalysis(analysis);
+
+            if (cloudDialogueGenerator == null)
+            {
+                var templateResult = new DialogueGenerationResult(
+                    analysis,
+                    dialogueGenerator.Generate(analysis, true),
+                    false);
+                ShowIfCurrent(templateResult, version);
+                return templateResult;
+            }
+
+            using (var requestCancellation =
+                CancellationTokenSource.CreateLinkedTokenSource(
+                    bindingCancellation.Token,
+                    cancellationToken))
+            {
+                DialogueGenerationResult generated;
+                try
+                {
+                    generated = await cloudDialogueGenerator.GenerateAsync(
+                        analysis,
+                        eventType,
+                        requestCancellation.Token);
+                }
+                catch
+                {
+                    generated = new DialogueGenerationResult(
+                        analysis,
+                        dialogueGenerator.Generate(analysis, true),
+                        false);
+                }
+
+                ShowIfCurrent(generated, version);
+                return generated;
+            }
+        }
+
+        private DroneAnalysisResult AnalyzeCurrentContext()
+        {
             DroneContextDto context;
             try
             {
@@ -70,16 +156,22 @@ namespace SubTerra.App.UI.Drone
                 context = null;
             }
 
-            var analysis = analysisService.Analyze(context);
-            reasonView?.SetAnalysis(analysis);
+            return analysisService.Analyze(context);
+        }
 
-            var dialogue = dialogueGenerator.Generate(analysis);
-            if (!dialogue.IsSuppressed)
+        private void ShowIfCurrent(DialogueGenerationResult generated, int version)
+        {
+            if (generated == null
+                || generated.WasCancelled
+                || generated.Dialogue == null
+                || generated.Dialogue.IsSuppressed
+                || version != bindingVersion
+                || !IsBound)
             {
-                dialogueView?.SetDialogue(dialogue);
+                return;
             }
 
-            return analysis;
+            dialogueView?.SetDialogue(generated.Dialogue);
         }
     }
 }

@@ -1,3 +1,4 @@
+#if UNITY_EDITOR
 using SubTerra.Gameplay.Building;
 using SubTerra.Gameplay.Hazards;
 using SubTerra.Gameplay.Mining;
@@ -74,3 +75,4 @@ namespace SubTerra.Gameplay.Snapshot.Editor
         }
     }
 }
+#endif

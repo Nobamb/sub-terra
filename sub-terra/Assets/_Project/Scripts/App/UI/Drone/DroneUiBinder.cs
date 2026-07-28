@@ -1,3 +1,6 @@
+using System.Threading;
+using System.Threading.Tasks;
+using SubTerra.App.AI;
 using SubTerra.App.Core.Data;
 using SubTerra.App.Drone;
 using SubTerra.App.Drone.Dialogue;
@@ -14,6 +17,7 @@ namespace SubTerra.App.UI.Drone
         [SerializeField] private MonoBehaviour contextProviderBehaviour;
         [SerializeField] private GameDataCatalog catalog;
         [SerializeField] private DroneAnalysisSettings settings;
+        [SerializeField] private CloudDialogueConfig cloudDialogueConfig;
         [SerializeField, Min(0.1f)] private float refreshInterval = 0.5f;
 
         private DroneRecommendationPresenter presenter;
@@ -52,7 +56,9 @@ namespace SubTerra.App.UI.Drone
             IDroneContextProvider provider,
             DroneAnalysisSettings analysisSettings,
             GameDataCatalog dataCatalog,
-            IDroneClock clock = null)
+            IDroneClock clock = null,
+            IDialogueTransport dialogueTransport = null,
+            CloudDialogueConfig cloudConfig = null)
         {
             EnsurePresenter();
             settings = analysisSettings;
@@ -63,18 +69,48 @@ namespace SubTerra.App.UI.Drone
                 return;
             }
 
+            var activeClock = clock ?? new UnityRealtimeDroneClock();
             var analysis = new DroneAnalysisService(settings);
             var generator = new TemplateDialogueGenerator(
                 catalog.Dialogues,
-                clock ?? new UnityRealtimeDroneClock(),
+                activeClock,
                 settings);
-            presenter.Bind(provider, analysis, generator);
+            var activeCloudConfig = cloudConfig != null
+                ? cloudConfig
+                : cloudDialogueConfig;
+            IDialogueGenerator cloudGenerator = null;
+            if (activeCloudConfig != null)
+            {
+                var options = activeCloudConfig.CreateOptions();
+                cloudGenerator = new CloudDialogueGenerator(
+                    generator,
+                    dialogueTransport ?? new UnityWebRequestDialogueTransport(),
+                    options,
+                    new CloudDialoguePolicy(activeClock, options));
+            }
+
+            presenter.Bind(provider, analysis, generator, cloudGenerator);
             nextRefreshAt = Time.unscaledTime + refreshInterval;
         }
 
         public DroneAnalysisResult AnalyzeNow()
         {
             return presenter?.Refresh();
+        }
+
+        public Task<DialogueGenerationResult> RequestCloudDialogueAsync(
+            CloudDialogueEvent eventType,
+            CancellationToken cancellationToken = default)
+        {
+            return presenter == null
+                ? Task.FromResult<DialogueGenerationResult>(null)
+                : presenter.RequestCloudDialogueAsync(eventType, cancellationToken);
+        }
+
+        /// <summary>Unity UI Button에서 연결할 수 있는 사용자 직접 분석 경로.</summary>
+        public async void RequestManualAnalysis()
+        {
+            await RequestCloudDialogueAsync(CloudDialogueEvent.ManualAnalysis);
         }
 
         public bool HasRequiredReferences()

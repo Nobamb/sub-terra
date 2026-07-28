@@ -1,3 +1,4 @@
+#if UNITY_EDITOR
 using SubTerra.Gameplay.Mining;
 using SubTerra.Shared;
 using UnityEditor;
@@ -136,3 +137,4 @@ namespace SubTerra.Gameplay.Drone.Editor
         }
     }
 }
+#endif

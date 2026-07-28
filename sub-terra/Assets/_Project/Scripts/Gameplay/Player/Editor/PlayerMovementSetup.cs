@@ -1,3 +1,4 @@
+#if UNITY_EDITOR
 using System.IO;
 using SubTerra.Gameplay.Player;
 using UnityEditor;
@@ -177,3 +178,4 @@ namespace SubTerra.Gameplay.Player.Editor
         }
     }
 }
+#endif

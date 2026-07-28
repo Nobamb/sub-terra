@@ -1,3 +1,4 @@
+#if UNITY_EDITOR
 using SubTerra.Gameplay.Player;
 using SubTerra.Shared;
 using UnityEditor;
@@ -105,3 +106,4 @@ namespace SubTerra.Gameplay.Mining.Editor
         }
     }
 }
+#endif
