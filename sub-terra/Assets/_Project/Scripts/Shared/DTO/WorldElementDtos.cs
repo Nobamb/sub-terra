@@ -16,6 +16,18 @@ namespace SubTerra.Shared
     }
 
     /// <summary>
+    /// 기본 월드 타일과 달라진 좌표 및 복원할 영구 타일 ID를 저장하는 DTO
+    /// </summary>
+    [Serializable]
+    public struct ChangedTileSnapshotDto
+    {
+        public int x;
+        public int y;
+        public string tileId;
+        public float remainingDurability;
+    }
+
+    /// <summary>
     /// 붕괴 및 구조적 안정성 변경점을 저장하는 DTO
     /// </summary>
     [Serializable]
@@ -37,8 +49,9 @@ namespace SubTerra.Shared
         public string buildingTypeId;
         public int x;
         public int y;
+        public int rotation;
+        public int level;
         public float health;
-        public bool isActive;
     }
 
     /// <summary>
@@ -48,10 +61,13 @@ namespace SubTerra.Shared
     public struct GasSnapshotDto
     {
         public string gasZoneId;
+        public string gasTypeId;
         public int x;
         public int y;
         public float concentrationLevel;
         public float remainingDuration;
+        public bool isActive;
+        public bool isNeutralized;
     }
 
     /// <summary>
@@ -60,9 +76,6 @@ namespace SubTerra.Shared
     [Serializable]
     public struct PowerSnapshotDto
     {
-        public float totalStoredPower;
-        public float gridMaxCapacity;
-        public bool isGridActive;
         public List<PowerConnectionSnapshotDto> cableConnections;
     }
 
