@@ -1,13 +1,16 @@
 using System.Linq;
 using NUnit.Framework;
 using SubTerra.App.Core;
+using SubTerra.App.Integration;
 using SubTerra.App.Save;
+using SubTerra.App.UI.HUD;
 using SubTerra.App.UI.Save;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
+using UnityEngine.Tilemaps;
 
 namespace SubTerra.App.Tests.Save
 {
@@ -62,6 +65,33 @@ namespace SubTerra.App.Tests.Save
                 EditorBuildSettings.scenes.Any(
                     scene => scene.enabled && scene.path == IntegrationPath),
                 Is.True);
+
+            var integrationScene = EditorSceneManager.OpenScene(
+                IntegrationPath,
+                OpenSceneMode.Additive);
+            try
+            {
+                Assert.That(
+                    FindInScene<IntegrationRuntimeBinder>(integrationScene),
+                    Is.Not.Null);
+                Assert.That(FindInScene<HudBinder>(integrationScene), Is.Not.Null);
+                Assert.That(FindInScene<EventSystem>(integrationScene), Is.Not.Null);
+
+                var tilemap = FindInScene<Tilemap>(integrationScene);
+                Assert.That(tilemap, Is.Not.Null);
+                Assert.That(tilemap.GetUsedTilesCount(), Is.GreaterThan(0));
+
+                Assert.That(
+                    HasComponent(integrationScene, "SubTerra.Gameplay.Player.PlayerMovement"),
+                    Is.True);
+                Assert.That(
+                    HasComponent(integrationScene, "SubTerra.Gameplay.Snapshot.WorldSnapshotSystem"),
+                    Is.True);
+            }
+            finally
+            {
+                EditorSceneManager.CloseScene(integrationScene, true);
+            }
         }
 
         private static T FindInScene<T>(Scene scene) where T : Component
@@ -76,6 +106,15 @@ namespace SubTerra.App.Tests.Save
             }
 
             return null;
+        }
+
+        private static bool HasComponent(Scene scene, string fullTypeName)
+        {
+            return scene.GetRootGameObjects()
+                .SelectMany(root => root.GetComponentsInChildren<MonoBehaviour>(true))
+                .Any(component =>
+                    component != null
+                    && component.GetType().FullName == fullTypeName);
         }
     }
 }
