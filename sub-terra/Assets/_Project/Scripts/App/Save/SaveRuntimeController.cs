@@ -583,33 +583,36 @@ namespace SubTerra.App.Save
                 yield break;
             }
 
-            var world = Resolve();
-            if (world == null)
+            if (ContinueService.RequiresWorldRestore(load.State.TargetSceneName))
             {
-                CompleteContinue(
-                    new ContinueResult(ContinueStatus.WorldProviderMissing, load),
-                    completed);
-                yield break;
-            }
+                var world = Resolve();
+                if (world == null)
+                {
+                    CompleteContinue(
+                        new ContinueResult(ContinueStatus.WorldProviderMissing, load),
+                        completed);
+                    yield break;
+                }
 
-            try
-            {
-                world.RestoreSnapshot(load.State.World);
-            }
-            catch
-            {
-                CompleteContinue(
-                    new ContinueResult(ContinueStatus.WorldRestoreFailed, load),
-                    completed);
-                yield break;
-            }
+                try
+                {
+                    world.RestoreSnapshot(load.State.World);
+                }
+                catch
+                {
+                    CompleteContinue(
+                        new ContinueResult(ContinueStatus.WorldRestoreFailed, load),
+                        completed);
+                    yield break;
+                }
 
-            if (!Recalculate())
-            {
-                CompleteContinue(
-                    new ContinueResult(ContinueStatus.RecalculationFailed, load),
-                    completed);
-                yield break;
+                if (!Recalculate())
+                {
+                    CompleteContinue(
+                        new ContinueResult(ContinueStatus.RecalculationFailed, load),
+                        completed);
+                    yield break;
+                }
             }
 
             ActivateSlot(slotId);
