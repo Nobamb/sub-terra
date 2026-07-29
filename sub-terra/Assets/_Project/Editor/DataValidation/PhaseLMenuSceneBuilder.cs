@@ -40,6 +40,7 @@ namespace SubTerra.App.Editor.DataValidation
         public static string Build()
         {
             var previous = SceneManager.GetActiveScene().path;
+            EnsureKoreanFontFallback();
             PhaseKSaveSlotPrefabBuilder.Build();
             BuildMainMenuPrefab();
             BuildSurfaceBasePrefab();
@@ -247,6 +248,7 @@ namespace SubTerra.App.Editor.DataValidation
         {
             EnsureSceneAsset(MainMenuScenePath);
             var scene = EditorSceneManager.OpenScene(MainMenuScenePath, OpenSceneMode.Single);
+            EnsureMainCamera(scene);
             DestroyOwned("MainMenuCanvas");
             DestroyOwned("MainMenuEventSystem");
             DestroyOwned("SaveMenuCanvas");
@@ -265,18 +267,13 @@ namespace SubTerra.App.Editor.DataValidation
                 PrefabUtility.InstantiatePrefab(prefab, canvasRoot.transform);
             }
 
-            // Phase K 슬롯 패널도 유지해 기존 이어하기 경로를 보존한다.
+            // Phase K 슬롯 패널은 비활성화하여 Phase L 메인 메뉴 패널과 중복 겹침을 방지한다.
             var slotPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(
                 PhaseKSaveSlotPrefabBuilder.PrefabPath);
             if (slotPrefab != null)
             {
                 var slot = (GameObject)PrefabUtility.InstantiatePrefab(slotPrefab, canvasRoot.transform);
-                var slotRect = slot.GetComponent<RectTransform>();
-                if (slotRect != null)
-                {
-                    slotRect.anchoredPosition = new Vector2(520f, 0f);
-                    slotRect.localScale = Vector3.one * 0.75f;
-                }
+                slot.SetActive(false);
             }
 
             CreateEventSystem("MainMenuEventSystem");
@@ -287,6 +284,7 @@ namespace SubTerra.App.Editor.DataValidation
         {
             EnsureSceneAsset(SurfaceBaseScenePath);
             var scene = EditorSceneManager.OpenScene(SurfaceBaseScenePath, OpenSceneMode.Single);
+            EnsureMainCamera(scene);
             DestroyOwned("SurfaceBaseCanvas");
             DestroyOwned("SurfaceBaseEventSystem");
 
@@ -299,6 +297,29 @@ namespace SubTerra.App.Editor.DataValidation
 
             CreateEventSystem("SurfaceBaseEventSystem");
             EditorSceneManager.SaveScene(scene);
+        }
+
+        private static void EnsureMainCamera(Scene scene)
+        {
+            var cameras = Object.FindObjectsByType<Camera>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            if (cameras != null && cameras.Any(c => c.gameObject.scene == scene))
+            {
+                return;
+            }
+
+            var camGo = new GameObject("Main Camera", typeof(Camera), typeof(AudioListener));
+            camGo.tag = "MainCamera";
+            var cam = camGo.GetComponent<Camera>();
+            cam.clearFlags = CameraClearFlags.SolidColor;
+            cam.backgroundColor = new Color(0.02f, 0.04f, 0.07f, 1f);
+            cam.orthographic = true;
+            cam.orthographicSize = 5f;
+            camGo.transform.position = new Vector3(0f, 0f, -10f);
+        }
+
+        private static void EnsureKoreanFontFallback()
+        {
+            KoreanFontAssetUtility.GetOrCreateKoreanFontAsset();
         }
 
         private static void EnsureSceneAsset(string path)
@@ -419,6 +440,11 @@ namespace SubTerra.App.Editor.DataValidation
             rect.anchoredPosition = position;
             rect.sizeDelta = size;
             var text = go.AddComponent<TextMeshProUGUI>();
+            var fontAsset = KoreanFontAssetUtility.GetOrCreateKoreanFontAsset();
+            if (fontAsset != null)
+            {
+                text.font = fontAsset;
+            }
             text.text = value;
             text.fontSize = fontSize;
             text.color = Color.white;

@@ -132,6 +132,11 @@ namespace SubTerra.App.Editor.DataValidation
             rect.sizeDelta = sizeDelta;
 
             var tmp = go.AddComponent<TextMeshProUGUI>();
+            var fontAsset = KoreanFontAssetUtility.GetOrCreateKoreanFontAsset();
+            if (fontAsset != null)
+            {
+                tmp.font = fontAsset;
+            }
             tmp.text = text;
             tmp.fontSize = fontSize;
             tmp.color = Color.white;

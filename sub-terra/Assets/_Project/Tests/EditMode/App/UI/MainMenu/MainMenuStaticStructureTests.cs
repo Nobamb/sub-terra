@@ -5,6 +5,7 @@ using SubTerra.App.Core;
 using SubTerra.App.Editor.DataValidation;
 using SubTerra.App.UI.MainMenu;
 using SubTerra.App.UI.SurfaceBase;
+using TMPro;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -32,6 +33,14 @@ namespace SubTerra.App.Tests.UI.MainMenu
             Assert.That(view, Is.Not.Null);
             Assert.That(view.HasRequiredReferences(), Is.True);
             Assert.That(prefab.GetComponent<MainMenuBinder>(), Is.Not.Null);
+            foreach (var text in prefab.GetComponentsInChildren<TMP_Text>(true))
+            {
+                Assert.That(text.font, Is.Not.Null, text.name);
+                Assert.That(text.font.material, Is.Not.Null, text.name + " material");
+                Assert.That(text.font.atlasTextures, Is.Not.Null, text.name + " atlas");
+                Assert.That(text.font.atlasTextures.Length, Is.GreaterThan(0), text.name + " atlas count");
+                Assert.That(text.font.atlasTextures[0], Is.Not.Null, text.name + " atlas[0]");
+            }
 
             var scene = EditorSceneManager.OpenScene(
                 PhaseLMenuSceneBuilder.MainMenuScenePath,

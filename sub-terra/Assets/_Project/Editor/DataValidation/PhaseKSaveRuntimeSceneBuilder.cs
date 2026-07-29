@@ -66,6 +66,19 @@ namespace SubTerra.App.Editor.DataValidation
             var scene = EditorSceneManager.OpenScene(
                 BootstrapScenePath,
                 OpenSceneMode.Single);
+            var cameras = Object.FindObjectsByType<Camera>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            if (cameras == null || !cameras.Any(c => c.gameObject.scene == scene))
+            {
+                var camGo = new GameObject("Main Camera", typeof(Camera), typeof(AudioListener));
+                camGo.tag = "MainCamera";
+                var cam = camGo.GetComponent<Camera>();
+                cam.clearFlags = CameraClearFlags.SolidColor;
+                cam.backgroundColor = new Color(0.02f, 0.04f, 0.07f, 1f);
+                cam.orthographic = true;
+                cam.orthographicSize = 5f;
+                camGo.transform.position = new Vector3(0f, 0f, -10f);
+            }
+
             var bootstrap = Object.FindFirstObjectByType<GameBootstrapper>();
             if (bootstrap == null)
             {

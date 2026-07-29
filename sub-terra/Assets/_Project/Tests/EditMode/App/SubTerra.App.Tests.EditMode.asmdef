@@ -4,7 +4,8 @@
     "SubTerra.App",
     "SubTerra.App.Editor",
     "SubTerra.App.GameplayIntegration",
-    "SubTerra.Shared"
+    "SubTerra.Shared",
+    "Unity.TextMeshPro"
   ],
   "optionalUnityReferences": ["TestAssemblies"],
   "includePlatforms": ["Editor"],

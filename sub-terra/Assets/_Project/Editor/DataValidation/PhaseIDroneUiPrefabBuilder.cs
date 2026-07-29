@@ -205,6 +205,11 @@ namespace SubTerra.App.Editor.DataValidation
             rect.anchoredPosition = position;
             rect.sizeDelta = size;
             var text = root.AddComponent<TextMeshProUGUI>();
+            var fontAsset = KoreanFontAssetUtility.GetOrCreateKoreanFontAsset();
+            if (fontAsset != null)
+            {
+                text.font = fontAsset;
+            }
             text.text = value;
             text.fontSize = fontSize;
             text.color = Color.white;
