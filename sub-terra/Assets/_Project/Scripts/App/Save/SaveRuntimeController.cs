@@ -1,0 +1,602 @@
+using System;
+using System.Collections;
+using System.IO;
+using SubTerra.App.Core;
+using SubTerra.App.Core.Data;
+using SubTerra.App.Drone;
+using SubTerra.App.Drone.Dialogue;
+using SubTerra.App.Economy;
+using SubTerra.App.Inventory;
+using SubTerra.App.Outpost;
+using SubTerra.App.Progression;
+using SubTerra.App.State;
+using SubTerra.Shared;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+namespace SubTerra.App.Save
+{
+    /// <summary>
+    /// Bootstrap 수명에 붙어 슬롯 선택, 이어하기, 자동 저장과 종료 저장을 실제 Scene에 연결한다.
+    /// 세이브 원문과 전체 저장 경로는 로그로 남기지 않는다.
+    /// </summary>
+    [DefaultExecutionOrder(100)]
+    public sealed class SaveRuntimeController : MonoBehaviour,
+        IRestoredStateReceiver,
+        IWorldSnapshotResolver,
+        IDerivedStateRecalculator,
+        ILoadedUiGate
+    {
+        public static SaveRuntimeController Instance { get; private set; }
+
+        [SerializeField] private DroneAnalysisSettings droneSettings;
+        [SerializeField, Min(1f)] private float periodicDirtySeconds = 30f;
+
+        private SaveService saveService;
+        private LoadService loadService;
+        private AutoSaveCoordinator autoSave;
+        private AutoSaveEventBinder eventBinder;
+        private InventoryState inventory;
+        private UpgradeState upgrades;
+        private TemplateDialogueGenerator dialogueGenerator;
+        private GameState boundState;
+        private int activeSlot;
+        private bool dirty;
+        private bool pendingInitialSave;
+        private bool uiReady;
+        private float nextPeriodicSaveAt;
+        private SaveResult lastSaveResult;
+        private ContinueResult lastContinueResult;
+
+        public LoadService Loader => loadService;
+        public int ActiveSlot => activeSlot;
+        public bool IsUiReady => uiReady;
+        public SaveResult LastSaveResult => lastSaveResult;
+        public ContinueResult LastContinueResult => lastContinueResult;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStatics()
+        {
+            Instance = null;
+        }
+
+        private void Awake()
+        {
+            if (Instance != null && Instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+
+            Instance = this;
+            var migrations = new SaveMigrationService();
+            var paths = new SavePathPolicy(ResolveSaveRoot());
+            var mapper = new SaveDataMapper(new SystemSaveClock());
+            var json = new SaveJsonCodec(migrations);
+            var fileSystem = new PhysicalSaveFileSystem();
+            saveService = new SaveService(fileSystem, paths, mapper, json);
+            loadService = new LoadService(fileSystem, paths, mapper, json);
+            SceneManager.sceneLoaded += OnSceneLoaded;
+        }
+
+        private IEnumerator Start()
+        {
+            // GameBootstrapper.Start의 MainMenu 전환이 끝난 다음 기본 런타임 상태를 잡는다.
+            yield return null;
+            var bootstrap = GameBootstrapper.Instance;
+            if (bootstrap != null && GameState.IsComplete(bootstrap.State))
+            {
+                ApplyRuntimeState(
+                    bootstrap.State,
+                    new InventoryState(),
+                    new UpgradeState(),
+                    null);
+            }
+
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            yield return RunDevelopmentSmokeCommand();
+#endif
+        }
+
+        private void Update()
+        {
+            if (!dirty
+                || autoSave == null
+                || Time.unscaledTime < nextPeriodicSaveAt)
+            {
+                return;
+            }
+
+            dirty = false;
+            nextPeriodicSaveAt = Time.unscaledTime + periodicDirtySeconds;
+            _ = autoSave.RequestAsync(AutoSaveReason.PeriodicDirty);
+        }
+
+        private void OnDestroy()
+        {
+            SceneManager.sceneLoaded -= OnSceneLoaded;
+            UnbindStateDirtyEvents();
+            eventBinder?.Dispose();
+            autoSave?.Dispose();
+            if (Instance == this)
+            {
+                Instance = null;
+            }
+        }
+
+        private void OnApplicationPause(bool paused)
+        {
+            if (paused)
+            {
+                SaveCurrent(AutoSaveReason.QuitRequested);
+            }
+        }
+
+        private void OnApplicationQuit()
+        {
+            SaveCurrent(AutoSaveReason.QuitRequested);
+        }
+
+        public bool StartNewGame(int slotId)
+        {
+            if (!IsAllowedSlot(slotId))
+            {
+                return false;
+            }
+
+            var state = GameState.CreateNew();
+            if (!ApplyRuntimeState(
+                    state,
+                    new InventoryState(),
+                    new UpgradeState(),
+                    null))
+            {
+                return false;
+            }
+
+            ActivateSlot(slotId);
+            pendingInitialSave = true;
+            uiReady = false;
+            if (!new UnitySceneLoader().Load(SceneNames.Integration))
+            {
+                pendingInitialSave = false;
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Unity Scene 활성화 완료를 기다린 뒤 월드를 복원하는 실제 런타임 이어하기 경로.
+        /// </summary>
+        public void BeginContinue(
+            int slotId,
+            Action<ContinueResult> completed = null)
+        {
+            StartCoroutine(ContinueRoutine(slotId, completed));
+        }
+
+        public ContinueResult Continue(int slotId)
+        {
+            if (!IsAllowedSlot(slotId))
+            {
+                lastContinueResult = new ContinueResult(
+                    ContinueStatus.LoadFailed,
+                    new LoadResult(LoadStatus.InvalidSlot, slotId));
+                return lastContinueResult;
+            }
+
+            var service = new ContinueService(
+                loadService,
+                this,
+                new UnitySceneLoader(),
+                this,
+                this,
+                this);
+            lastContinueResult = service.Continue(slotId);
+            if (lastContinueResult.IsSuccess)
+            {
+                ActivateSlot(slotId);
+                dirty = false;
+            }
+
+            return lastContinueResult;
+        }
+
+        public SaveResult SaveCurrent(AutoSaveReason reason = AutoSaveReason.Manual)
+        {
+            if (activeSlot == 0)
+            {
+                return new SaveResult(SaveStatus.InvalidSlot, activeSlot);
+            }
+
+            var context = CaptureContext();
+            lastSaveResult = saveService.Save(activeSlot, context);
+            if (lastSaveResult.IsSuccess)
+            {
+                dirty = false;
+            }
+
+            return lastSaveResult;
+        }
+
+        /// <summary>경제·진행·전진기지 성공 이벤트를 현재 슬롯 자동 저장에 연결한다.</summary>
+        public void BindAutoSaveEvents(
+            EconomyService economy = null,
+            ProgressionService progression = null,
+            OutpostService outpost = null)
+        {
+            eventBinder?.Dispose();
+            eventBinder = autoSave == null
+                ? null
+                : new AutoSaveEventBinder(autoSave, economy, progression, outpost);
+        }
+
+        public void NotifyAutoSave(AutoSaveReason reason)
+        {
+            if (autoSave != null)
+            {
+                dirty = false;
+                _ = autoSave.RequestAsync(reason);
+            }
+        }
+
+        public bool RestoreBState(RestoredSaveState state)
+        {
+            return state != null
+                && ApplyRuntimeState(
+                    state.GameState,
+                    state.Inventory,
+                    state.Upgrades,
+                    state.Drone);
+        }
+
+        public IWorldSnapshotProvider Resolve()
+        {
+            var behaviours = FindObjectsByType<MonoBehaviour>(
+                FindObjectsInactive.Exclude);
+            for (var i = 0; i < behaviours.Length; i++)
+            {
+                if (behaviours[i] is IWorldSnapshotProvider provider)
+                {
+                    return provider;
+                }
+            }
+
+            return null;
+        }
+
+        public bool Recalculate()
+        {
+            // A WorldSnapshotSystem.RestoreSnapshot이 전력망 재계산을 요청한 뒤 반환한다.
+            return Resolve() != null;
+        }
+
+        public void SetReady(bool ready)
+        {
+            uiReady = ready;
+        }
+
+        private bool ApplyRuntimeState(
+            GameState state,
+            InventoryState restoredInventory,
+            UpgradeState restoredUpgrades,
+            DroneSaveData restoredDrone)
+        {
+            var bootstrap = GameBootstrapper.Instance;
+            if (bootstrap == null
+                || !bootstrap.TryReplaceState(state)
+                || restoredInventory == null
+                || restoredUpgrades == null)
+            {
+                return false;
+            }
+
+            UnbindStateDirtyEvents();
+            inventory = restoredInventory;
+            upgrades = restoredUpgrades;
+            dialogueGenerator = CreateDialogueGenerator();
+            if (restoredDrone != null
+                && !DroneSaveRestorer.TryRestore(restoredDrone, dialogueGenerator))
+            {
+                return false;
+            }
+
+            BindStateDirtyEvents(state);
+            return true;
+        }
+
+        private TemplateDialogueGenerator CreateDialogueGenerator()
+        {
+            if (droneSettings == null)
+            {
+                droneSettings = ScriptableObject.CreateInstance<DroneAnalysisSettings>();
+            }
+
+            var catalog =
+                GameBootstrapper.Instance?.AssignedCatalog as GameDataCatalog;
+            return new TemplateDialogueGenerator(
+                catalog != null ? catalog.Dialogues : Array.Empty<DialogueTemplateData>(),
+                new UnityRealtimeDroneClock(),
+                droneSettings);
+        }
+
+        private SaveCaptureContext CaptureContext()
+        {
+            return new SaveCaptureContext(
+                GameBootstrapper.Instance?.State,
+                inventory,
+                upgrades,
+                dialogueGenerator,
+                Resolve(),
+                SceneManager.GetActiveScene().name,
+                Application.version);
+        }
+
+        private void ActivateSlot(int slotId)
+        {
+            eventBinder?.Dispose();
+            eventBinder = null;
+            autoSave?.Dispose();
+            activeSlot = slotId;
+            autoSave = new AutoSaveCoordinator(saveService, CaptureContext, slotId);
+            nextPeriodicSaveAt = Time.unscaledTime + periodicDirtySeconds;
+        }
+
+        private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            if (!pendingInitialSave || scene.name != SceneNames.Integration)
+            {
+                return;
+            }
+
+            pendingInitialSave = false;
+            uiReady = true;
+            lastSaveResult = SaveCurrent(AutoSaveReason.Manual);
+        }
+
+        private IEnumerator ContinueRoutine(
+            int slotId,
+            Action<ContinueResult> completed)
+        {
+            uiReady = false;
+            if (!IsAllowedSlot(slotId))
+            {
+                CompleteContinue(
+                    new ContinueResult(
+                        ContinueStatus.LoadFailed,
+                        new LoadResult(LoadStatus.InvalidSlot, slotId)),
+                    completed);
+                yield break;
+            }
+
+            var load = loadService.Load(slotId);
+            if (!load.IsSuccess || load.State == null)
+            {
+                CompleteContinue(
+                    new ContinueResult(ContinueStatus.LoadFailed, load),
+                    completed);
+                yield break;
+            }
+
+            if (!RestoreBState(load.State))
+            {
+                CompleteContinue(
+                    new ContinueResult(ContinueStatus.StateRestoreFailed, load),
+                    completed);
+                yield break;
+            }
+
+            if (!new UnitySceneLoader().Load(load.State.TargetSceneName))
+            {
+                CompleteContinue(
+                    new ContinueResult(ContinueStatus.SceneLoadFailed, load),
+                    completed);
+                yield break;
+            }
+
+            const int maximumSceneWaitFrames = 300;
+            var waitedFrames = 0;
+            while (SceneManager.GetActiveScene().name != load.State.TargetSceneName
+                && waitedFrames < maximumSceneWaitFrames)
+            {
+                waitedFrames++;
+                yield return null;
+            }
+
+            if (SceneManager.GetActiveScene().name != load.State.TargetSceneName)
+            {
+                CompleteContinue(
+                    new ContinueResult(ContinueStatus.SceneLoadFailed, load),
+                    completed);
+                yield break;
+            }
+
+            var world = Resolve();
+            if (world == null)
+            {
+                CompleteContinue(
+                    new ContinueResult(ContinueStatus.WorldProviderMissing, load),
+                    completed);
+                yield break;
+            }
+
+            try
+            {
+                world.RestoreSnapshot(load.State.World);
+            }
+            catch
+            {
+                CompleteContinue(
+                    new ContinueResult(ContinueStatus.WorldRestoreFailed, load),
+                    completed);
+                yield break;
+            }
+
+            if (!Recalculate())
+            {
+                CompleteContinue(
+                    new ContinueResult(ContinueStatus.RecalculationFailed, load),
+                    completed);
+                yield break;
+            }
+
+            ActivateSlot(slotId);
+            dirty = false;
+            uiReady = true;
+            CompleteContinue(
+                new ContinueResult(ContinueStatus.Success, load),
+                completed);
+        }
+
+        private void CompleteContinue(
+            ContinueResult result,
+            Action<ContinueResult> completed)
+        {
+            lastContinueResult = result;
+            completed?.Invoke(result);
+        }
+
+        private void BindStateDirtyEvents(GameState state)
+        {
+            if (state == null)
+            {
+                return;
+            }
+
+            boundState = state;
+            state.EnergyChanged += OnPersistentStateChanged;
+            state.CreditsChanged += OnPersistentStateChanged;
+            state.InventoryChanged += OnPersistentStateChanged;
+            state.DepthChanged += OnPersistentStateChanged;
+            state.StructuralRiskChanged += OnPersistentStateChanged;
+            state.GasExposureChanged += OnPersistentStateChanged;
+        }
+
+        private void UnbindStateDirtyEvents()
+        {
+            var state = boundState;
+            if (state == null)
+            {
+                return;
+            }
+
+            state.EnergyChanged -= OnPersistentStateChanged;
+            state.CreditsChanged -= OnPersistentStateChanged;
+            state.InventoryChanged -= OnPersistentStateChanged;
+            state.DepthChanged -= OnPersistentStateChanged;
+            state.StructuralRiskChanged -= OnPersistentStateChanged;
+            state.GasExposureChanged -= OnPersistentStateChanged;
+            boundState = null;
+        }
+
+        private void OnPersistentStateChanged<T>(T _)
+        {
+            dirty = true;
+        }
+
+        private static bool IsAllowedSlot(int slotId)
+        {
+            return slotId >= SavePathPolicy.MinimumSlot
+                && slotId <= SavePathPolicy.MaximumSlot;
+        }
+
+        private static string ResolveSaveRoot()
+        {
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+            var args = Environment.GetCommandLineArgs();
+            for (var i = 0; i < args.Length - 1; i++)
+            {
+                if (args[i] == "-subterra-save-root"
+                    && !string.IsNullOrWhiteSpace(args[i + 1]))
+                {
+                    return Path.GetFullPath(args[i + 1]);
+                }
+            }
+#endif
+            return Application.persistentDataPath;
+        }
+
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
+        private IEnumerator RunDevelopmentSmokeCommand()
+        {
+            var command = GetCommandLineValue("-subterra-save-smoke");
+            if (string.IsNullOrEmpty(command))
+            {
+                yield break;
+            }
+
+            var slotText = GetCommandLineValue("-subterra-save-slot");
+            var slot = int.TryParse(slotText, out var parsed) ? parsed : 1;
+            var success = false;
+            if (command == "new")
+            {
+                success = StartNewGame(slot);
+                var waitFrames = 0;
+                while (success
+                    && pendingInitialSave
+                    && waitFrames < 300)
+                {
+                    waitFrames++;
+                    yield return null;
+                }
+
+                success = success
+                    && !pendingInitialSave
+                    && lastSaveResult != null
+                    && lastSaveResult.IsSuccess;
+                if (success)
+                {
+                    var state = GameBootstrapper.Instance.State;
+                    state.SetGold(321);
+                    state.SetDepth(12);
+                    success = SaveCurrent().IsSuccess;
+                }
+            }
+            else if (command == "continue")
+            {
+                ContinueResult result = null;
+                var finished = false;
+                BeginContinue(
+                    slot,
+                    value =>
+                    {
+                        result = value;
+                        finished = true;
+                    });
+                var waitFrames = 0;
+                while (!finished && waitFrames < 300)
+                {
+                    waitFrames++;
+                    yield return null;
+                }
+
+                var state = GameBootstrapper.Instance?.State;
+                success = finished
+                    && result != null
+                    && result.IsSuccess
+                    && state != null
+                    && state.Player.Gold == 321
+                    && state.Run.Depth == 12;
+            }
+
+            yield return null;
+            Application.Quit(success ? 0 : 2);
+        }
+
+        private static string GetCommandLineValue(string name)
+        {
+            var args = Environment.GetCommandLineArgs();
+            for (var i = 0; i < args.Length - 1; i++)
+            {
+                if (args[i] == name)
+                {
+                    return args[i + 1];
+                }
+            }
+
+            return string.Empty;
+        }
+#endif
+    }
+}
