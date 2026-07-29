@@ -103,6 +103,51 @@ namespace SubTerra.App.Drone.Dialogue
                     false);
         }
 
+        public IReadOnlyList<DroneDialogueCooldownState> CaptureCooldowns()
+        {
+            var result = new List<DroneDialogueCooldownState>(lastShownAt.Count);
+            foreach (var pair in lastShownAt)
+            {
+                result.Add(new DroneDialogueCooldownState(pair.Key, pair.Value));
+            }
+
+            result.Sort(
+                (left, right) => string.CompareOrdinal(left.TemplateId, right.TemplateId));
+            return result;
+        }
+
+        public bool TryRestoreCooldowns(
+            IReadOnlyList<DroneDialogueCooldownState> restored)
+        {
+            if (restored == null)
+            {
+                return false;
+            }
+
+            var next = new Dictionary<string, double>(StringComparer.Ordinal);
+            for (var i = 0; i < restored.Count; i++)
+            {
+                var entry = restored[i];
+                if (string.IsNullOrEmpty(entry.TemplateId)
+                    || double.IsNaN(entry.LastShownAt)
+                    || double.IsInfinity(entry.LastShownAt)
+                    || next.ContainsKey(entry.TemplateId))
+                {
+                    return false;
+                }
+
+                next.Add(entry.TemplateId, entry.LastShownAt);
+            }
+
+            lastShownAt.Clear();
+            foreach (var pair in next)
+            {
+                lastShownAt.Add(pair.Key, pair.Value);
+            }
+
+            return true;
+        }
+
         private static DroneDialogueResult Fallback(string templateId)
         {
             return new DroneDialogueResult(
@@ -110,6 +155,18 @@ namespace SubTerra.App.Drone.Dialogue
                 "현재 상태를 확인하고 안전한 위치에서 다시 분석하세요.",
                 false,
                 true);
+        }
+    }
+
+    public readonly struct DroneDialogueCooldownState
+    {
+        public string TemplateId { get; }
+        public double LastShownAt { get; }
+
+        public DroneDialogueCooldownState(string templateId, double lastShownAt)
+        {
+            TemplateId = templateId ?? string.Empty;
+            LastShownAt = lastShownAt;
         }
     }
 }
