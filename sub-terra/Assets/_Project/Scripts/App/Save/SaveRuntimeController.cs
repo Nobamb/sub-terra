@@ -10,6 +10,7 @@ using SubTerra.App.Inventory;
 using SubTerra.App.Outpost;
 using SubTerra.App.Progression;
 using SubTerra.App.State;
+using SubTerra.App.UI.MainMenu;
 using SubTerra.Shared;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -38,21 +39,37 @@ namespace SubTerra.App.Save
         private AutoSaveEventBinder eventBinder;
         private InventoryState inventory;
         private UpgradeState upgrades;
+        private InventoryService inventoryService;
+        private EconomyService economy;
+        private CraftingService crafting;
+        private ProgressionService progression;
         private TemplateDialogueGenerator dialogueGenerator;
         private GameState boundState;
         private int activeSlot;
         private bool dirty;
         private bool pendingInitialSave;
         private bool uiReady;
+        private bool saveInProgress;
         private float nextPeriodicSaveAt;
         private SaveResult lastSaveResult;
         private ContinueResult lastContinueResult;
+        private readonly ExplorationStartGuard explorationGuard = new ExplorationStartGuard();
+        private string pendingInitialScene = SceneNames.SurfaceBase;
 
         public LoadService Loader => loadService;
         public int ActiveSlot => activeSlot;
         public bool IsUiReady => uiReady;
+        public bool IsDirty => dirty;
+        public bool IsSaveInProgress => saveInProgress;
         public SaveResult LastSaveResult => lastSaveResult;
         public ContinueResult LastContinueResult => lastContinueResult;
+        public InventoryState Inventory => inventory;
+        public UpgradeState Upgrades => upgrades;
+        public InventoryService InventoryService => inventoryService;
+        public EconomyService Economy => economy;
+        public CraftingService Crafting => crafting;
+        public ProgressionService Progression => progression;
+        public ExplorationStartGuard ExplorationGuard => explorationGuard;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStatics()
@@ -137,10 +154,22 @@ namespace SubTerra.App.Save
             SaveCurrent(AutoSaveReason.QuitRequested);
         }
 
-        public bool StartNewGame(int slotId)
+        /// <summary>
+        /// 새 게임 시작. confirmOverwrite가 false이고 슬롯에 세이브가 있으면 거부한다.
+        /// 기본 첫 Scene은 Surface Base이며, 탐사는 TryStartExploration으로만 진입한다.
+        /// </summary>
+        public bool StartNewGame(int slotId, bool confirmOverwrite = false)
         {
             if (!IsAllowedSlot(slotId))
             {
+                return false;
+            }
+
+            var metadata = loadService.GetSlotMetadata(slotId);
+            var eligibility = SlotContinuePolicy.FromMetadata(metadata);
+            if (SlotContinuePolicy.RequiresOverwriteConfirm(eligibility) && !confirmOverwrite)
+            {
+                // 기존 슬롯 침묵 덮어쓰기 금지. UI 확인 후 confirmOverwrite=true로 재호출.
                 return false;
             }
 
@@ -156,14 +185,113 @@ namespace SubTerra.App.Save
 
             ActivateSlot(slotId);
             pendingInitialSave = true;
+            pendingInitialScene = SceneNames.SurfaceBase;
             uiReady = false;
-            if (!new UnitySceneLoader().Load(SceneNames.Integration))
+            explorationGuard.Reset();
+            if (!new UnitySceneLoader().Load(SceneNames.SurfaceBase))
             {
                 pendingInitialSave = false;
                 return false;
             }
 
             return true;
+        }
+
+        /// <summary>
+        /// Surface Base에서 탐사(Integration/Mine)로 진입.
+        /// 유효 슬롯·State가 없으면 로드하지 않고, 연타 시 Scene 로드는 한 번만 시도한다.
+        /// </summary>
+        public bool TryStartExploration(out string reason)
+        {
+            reason = string.Empty;
+            if (activeSlot == 0 || boundState == null || !GameState.IsComplete(boundState))
+            {
+                reason = "유효한 슬롯/상태가 없어 탐사에 진입할 수 없습니다.";
+                return false;
+            }
+
+            var started = explorationGuard.TryStart(
+                () =>
+                {
+                    boundState.SetDepth(0);
+                    boundState.SetStructuralRisk(StructuralRiskLevel.Safe);
+                    boundState.SetGasExposure(GasRiskLevel.Safe);
+                },
+                () => new UnitySceneLoader().Load(SceneNames.Integration));
+
+            if (!started)
+            {
+                reason = explorationGuard.IsInFlight
+                    ? "탐사 전환이 이미 진행 중입니다."
+                    : "탐사 Scene 로드에 실패했습니다.";
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>Surface Base UI가 판매·제작·업그레이드 서비스를 쓸 수 있게 보장한다.</summary>
+        public void EnsureGameplayServices()
+        {
+            if (boundState == null || inventory == null || upgrades == null)
+            {
+                return;
+            }
+
+            if (economy != null && progression != null && inventoryService != null)
+            {
+                return;
+            }
+
+            RebuildGameplayServices(boundState, inventory, upgrades);
+        }
+
+        public void RequestQuit()
+        {
+            if (saveInProgress)
+            {
+                return;
+            }
+
+            if (dirty && activeSlot > 0)
+            {
+                SaveCurrent(AutoSaveReason.QuitRequested);
+            }
+
+            // Editor Play Mode: Application.Quit만으로는 재생이 멈추지 않는다.
+            // App 어셈블리는 UnityEditor를 참조하지 않으므로 리플렉션으로 isPlaying을 끈다.
+            // Player 빌드: Application.Quit 경로.
+            if (Application.isEditor)
+            {
+                StopEditorPlayMode();
+            }
+            else
+            {
+                Application.Quit();
+            }
+        }
+
+        /// <summary>Editor 전용 종료. 플레이어 빌드에서는 no-op에 가깝다(타입 없음).</summary>
+        private static void StopEditorPlayMode()
+        {
+            var editorApplication = System.Type.GetType(
+                "UnityEditor.EditorApplication, UnityEditor");
+            if (editorApplication == null)
+            {
+                Application.Quit();
+                return;
+            }
+
+            var isPlaying = editorApplication.GetProperty(
+                "isPlaying",
+                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+            if (isPlaying != null && isPlaying.CanWrite)
+            {
+                isPlaying.SetValue(null, false);
+                return;
+            }
+
+            Application.Quit();
         }
 
         /// <summary>
@@ -210,14 +338,22 @@ namespace SubTerra.App.Save
                 return new SaveResult(SaveStatus.InvalidSlot, activeSlot);
             }
 
-            var context = CaptureContext();
-            lastSaveResult = saveService.Save(activeSlot, context);
-            if (lastSaveResult.IsSuccess)
+            saveInProgress = true;
+            try
             {
-                dirty = false;
-            }
+                var context = CaptureContext();
+                lastSaveResult = saveService.Save(activeSlot, context);
+                if (lastSaveResult.IsSuccess)
+                {
+                    dirty = false;
+                }
 
-            return lastSaveResult;
+                return lastSaveResult;
+            }
+            finally
+            {
+                saveInProgress = false;
+            }
         }
 
         /// <summary>경제·진행·전진기지 성공 이벤트를 현재 슬롯 자동 저장에 연결한다.</summary>
@@ -302,8 +438,38 @@ namespace SubTerra.App.Save
                 return false;
             }
 
+            RebuildGameplayServices(state, restoredInventory, restoredUpgrades);
             BindStateDirtyEvents(state);
             return true;
+        }
+
+        private void RebuildGameplayServices(
+            GameState state,
+            InventoryState inventoryState,
+            UpgradeState upgradeState)
+        {
+            eventBinder?.Dispose();
+            eventBinder = null;
+
+            var catalog = GameBootstrapper.Instance?.AssignedCatalog as GameDataCatalog;
+            IMineralCatalogLookup mineralLookup = catalog != null
+                ? (IMineralCatalogLookup)new GameDataCatalogMineralLookup(catalog)
+                : new InMemoryMineralCatalog();
+            IUpgradeCatalog upgradeCatalog = catalog != null
+                ? (IUpgradeCatalog)new GameDataUpgradeCatalog(catalog)
+                : null;
+
+            inventoryService = new InventoryService(mineralLookup, inventoryState, state);
+            economy = new EconomyService(inventoryService, mineralLookup, state);
+            crafting = new CraftingService(economy);
+            progression = upgradeCatalog != null
+                ? new ProgressionService(upgradeState, upgradeCatalog, economy)
+                : null;
+
+            if (autoSave != null)
+            {
+                BindAutoSaveEvents(economy, progression, null);
+            }
         }
 
         private TemplateDialogueGenerator CreateDialogueGenerator()
@@ -345,7 +511,12 @@ namespace SubTerra.App.Save
 
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
-            if (!pendingInitialSave || scene.name != SceneNames.Integration)
+            if (scene.name == SceneNames.Integration)
+            {
+                explorationGuard.Complete();
+            }
+
+            if (!pendingInitialSave || scene.name != pendingInitialScene)
             {
                 return;
             }
@@ -531,7 +702,8 @@ namespace SubTerra.App.Save
             var success = false;
             if (command == "new")
             {
-                success = StartNewGame(slot);
+                // 스모크는 빈 슬롯 전제. 확인 플래그 true로 명시 덮어쓰기 경로를 허용한다.
+                success = StartNewGame(slot, confirmOverwrite: true);
                 var waitFrames = 0;
                 while (success
                     && pendingInitialSave
@@ -544,7 +716,8 @@ namespace SubTerra.App.Save
                 success = success
                     && !pendingInitialSave
                     && lastSaveResult != null
-                    && lastSaveResult.IsSuccess;
+                    && lastSaveResult.IsSuccess
+                    && SceneManager.GetActiveScene().name == SceneNames.SurfaceBase;
                 if (success)
                 {
                     var state = GameBootstrapper.Instance.State;
