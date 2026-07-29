@@ -11,7 +11,7 @@ using UnityEngine.Tilemaps;
 namespace SubTerra.Gameplay.Drone
 {
     /// <summary>Samples real gameplay facts periodically; it never chooses a recommendation or updates UI.</summary>
-    public sealed class DroneSensor : MonoBehaviour, IDroneContextProvider
+    public sealed class DroneSensor : MonoBehaviour, IDroneContextProvider, SubTerra.Shared.IDroneContextProvider
     {
         [SerializeField] private Transform playerTransform;
         [SerializeField] private Tilemap foregroundTilemap;
@@ -63,6 +63,24 @@ namespace SubTerra.Gameplay.Drone
             return new DroneContextDto(depth, currentEnergy, returnEnergyEstimate, structuralRisk, gasRisk, unsettledCargoValue, cargoWeight, baseDistance, minerals, returnPathAvailable);
         }
 
+        SubTerra.Shared.DroneContextDto SubTerra.Shared.IDroneContextProvider.CreateContext()
+        {
+            DroneContextDto context = CaptureContext();
+            return new SubTerra.Shared.DroneContextDto
+            {
+                depth = context.Depth,
+                currentEnergy = context.CurrentEnergy,
+                returnEnergyEstimate = context.ReturnEnergyEstimate,
+                structuralIntegrity = ToIntegrityValue(context.StructuralRisk),
+                gasRisk = ToRiskValue(context.GasRisk),
+                unsettledCargoValue = context.UnsettledCargoValue,
+                cargoWeight = context.CargoWeight,
+                nearestBaseDistance = context.NearestBaseDistance,
+                nearbyMineralIds = new List<string>(context.NearbyMineralIds),
+                returnPathAvailable = context.ReturnPathAvailable
+            };
+        }
+
         private void CaptureAndNotify()
         {
             CurrentContext = CaptureContext();
@@ -82,6 +100,16 @@ namespace SubTerra.Gameplay.Drone
                 mineralIds.Add(definition.mineralId);
             }
             return new List<string>(mineralIds);
+        }
+
+        private static float ToIntegrityValue(StructuralRiskLevel risk)
+        {
+            return risk switch { StructuralRiskLevel.Stable => 1f, StructuralRiskLevel.Caution => 0.5f, _ => 0.1f };
+        }
+
+        private static float ToRiskValue(GasRiskLevel risk)
+        {
+            return risk switch { GasRiskLevel.Safe => 0f, GasRiskLevel.Caution => 0.5f, _ => 1f };
         }
     }
 }
