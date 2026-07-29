@@ -122,6 +122,21 @@ namespace SubTerra.App.Core
         }
 
         /// <summary>
+        /// 슬롯 선택 후 새 게임/이어하기가 검증된 전체 State를 전역 Root에 반영한다.
+        /// 불완전한 State는 기존 값을 보존하고 거부한다.
+        /// </summary>
+        public bool TryReplaceState(GameState state)
+        {
+            if (!GameState.IsComplete(state))
+            {
+                return false;
+            }
+
+            State = state;
+            return true;
+        }
+
+        /// <summary>
         /// 초기화 계약(순서 고정):
         /// 1) 포트 null 검사
         /// 2) 카탈로그 검증
