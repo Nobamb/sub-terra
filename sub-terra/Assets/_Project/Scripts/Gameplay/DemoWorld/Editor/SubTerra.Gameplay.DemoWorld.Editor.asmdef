@@ -1,0 +1,28 @@
+{
+  "name": "SubTerra.Gameplay.DemoWorld.Editor",
+  "rootNamespace": "SubTerra.Gameplay.DemoWorld.Editor",
+  "references": [
+    "SubTerra.Shared",
+    "SubTerra.Gameplay.Player",
+    "SubTerra.Gameplay.Mining",
+    "SubTerra.Gameplay.Structural",
+    "SubTerra.Gameplay.Hazards",
+    "SubTerra.Gameplay.Building",
+    "SubTerra.Gameplay.Power",
+    "SubTerra.Gameplay.Drone",
+    "SubTerra.Gameplay.Snapshot",
+    "SubTerra.Gameplay.IntegrationBridge",
+    "Unity.InputSystem"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
