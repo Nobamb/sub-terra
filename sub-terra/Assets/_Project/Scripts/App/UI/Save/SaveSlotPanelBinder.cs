@@ -76,7 +76,9 @@ namespace SubTerra.App.UI.Save
 
         private void StartNewGame(int slotId)
         {
-            SaveRuntimeController.Instance?.StartNewGame(slotId);
+            // Phase L: 기존 세이브가 있으면 확인 없이 덮어쓰지 않는다.
+            // SaveSlotPanel 단독 경로는 빈 슬롯 전용. 덮어쓰기는 MainMenu 확인 UI를 사용한다.
+            SaveRuntimeController.Instance?.StartNewGame(slotId, confirmOverwrite: false);
         }
     }
 }
