@@ -88,15 +88,32 @@ namespace SubTerra.App.Save
 
         public SaveSlotMetadata GetSlotMetadata(int slotId)
         {
+            if (!paths.TryGetPaths(slotId, out var slotPaths))
+            {
+                return new SaveSlotMetadata(
+                    slotId,
+                    false,
+                    false,
+                    0,
+                    0,
+                    0,
+                    0,
+                    LoadStatus.InvalidSlot);
+            }
+
             var result = Load(slotId);
             if (!result.IsSuccess || result.State == null)
             {
-                return new SaveSlotMetadata(slotId, false, false, 0, 0, 0, 0);
-            }
-
-            if (!paths.TryGetPaths(slotId, out var slotPaths))
-            {
-                return new SaveSlotMetadata(slotId, false, false, 0, 0, 0, 0);
+                // 빈 슬롯·손상·미래 버전을 LoadStatus로 보존해 Main Menu 이어하기 표시에 쓴다.
+                return new SaveSlotMetadata(
+                    slotId,
+                    false,
+                    false,
+                    0,
+                    0,
+                    0,
+                    0,
+                    result.Status);
             }
 
             var source = result.UsedBackup ? slotPaths.Backup : slotPaths.Normal;
@@ -107,7 +124,15 @@ namespace SubTerra.App.Save
                     || status == SaveMigrationStatus.InvalidData
                     || data == null)
                 {
-                    return new SaveSlotMetadata(slotId, false, false, 0, 0, 0, 0);
+                    return new SaveSlotMetadata(
+                        slotId,
+                        false,
+                        false,
+                        0,
+                        0,
+                        0,
+                        0,
+                        result.Status);
                 }
 
                 return new SaveSlotMetadata(
@@ -117,11 +142,20 @@ namespace SubTerra.App.Save
                     data.saveVersion,
                     data.savedAtUtc,
                     data.player.gold,
-                    data.run.depth);
+                    data.run.depth,
+                    result.Status);
             }
             catch
             {
-                return new SaveSlotMetadata(slotId, false, false, 0, 0, 0, 0);
+                return new SaveSlotMetadata(
+                    slotId,
+                    false,
+                    false,
+                    0,
+                    0,
+                    0,
+                    0,
+                    LoadStatus.IoFailure);
             }
         }
 
