@@ -48,6 +48,38 @@ namespace SubTerra.Gameplay.Building.Editor
             SetReference(input, "preview", preview);
             SetReference(input, "targetCamera", Camera.main);
 
+            // UI Canvas 및 EventSystem 생성
+            GameObject canvasObject = new("UICanvas", typeof(RectTransform), typeof(Canvas), typeof(UnityEngine.UI.CanvasScaler), typeof(UnityEngine.UI.GraphicRaycaster));
+            Canvas canvas = canvasObject.GetComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            UnityEngine.UI.CanvasScaler scaler = canvasObject.GetComponent<UnityEngine.UI.CanvasScaler>();
+            scaler.uiScaleMode = UnityEngine.UI.CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution = new Vector2(1920f, 1080f);
+
+            GameObject menuPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/Prefabs/UI/BuildingMenu.prefab");
+            if (menuPrefab != null)
+            {
+                GameObject menuInstance = (GameObject)PrefabUtility.InstantiatePrefab(menuPrefab, canvasObject.transform);
+                SubTerra.App.UI.Building.BuildingMenuBinder menuBinder = menuInstance.GetComponent<SubTerra.App.UI.Building.BuildingMenuBinder>();
+                BuildingTestAutoBinder autoBinder = systems.AddComponent<BuildingTestAutoBinder>();
+                SetReference(autoBinder, "menuBinder", menuBinder);
+                SetReference(autoBinder, "catalog", AssetDatabase.LoadAssetAtPath<SubTerra.App.Core.Data.GameDataCatalog>("Assets/_Project/Data/Catalog/GameDataCatalog.asset"));
+                SetReference(autoBinder, "placementSystem", placement);
+                SetReference(autoBinder, "preview", preview);
+                SetReference(autoBinder, "sceneReferences", sceneReferences);
+            }
+
+            GameObject eventSystemObject = new("EventSystem", typeof(UnityEngine.EventSystems.EventSystem));
+            var inputModuleType = System.Type.GetType("UnityEngine.InputSystem.UI.InputSystemUIInputModule, Unity.InputSystem");
+            if (inputModuleType != null)
+            {
+                eventSystemObject.AddComponent(inputModuleType);
+            }
+            else
+            {
+                eventSystemObject.AddComponent<UnityEngine.EventSystems.StandaloneInputModule>();
+            }
+
             EditorSceneManager.SaveScene(scene, ScenePath);
             AssetDatabase.SaveAssets();
             Debug.Log($"Created {ScenePath}. Move the mouse over empty ground cells to preview the support pillar.");
