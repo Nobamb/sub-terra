@@ -26,16 +26,27 @@ namespace SubTerra.App.Inventory
             IMineralCatalogLookup catalog,
             float maxCapacity = InventoryState.DefaultMaxCapacity,
             GameState gameState = null)
+            : this(catalog, new InventoryState(maxCapacity), gameState)
+        {
+        }
+
+        /// <summary>
+        /// 세이브 복원·Surface Base 등 기존 InventoryState를 재사용할 때 사용한다.
+        /// State를 복제하지 않고 같은 인스턴스를 소유한다.
+        /// </summary>
+        public InventoryService(
+            IMineralCatalogLookup catalog,
+            InventoryState existingState,
+            GameState gameState = null)
         {
             this.catalog = catalog;
-            state = new InventoryState(maxCapacity);
+            state = existingState ?? new InventoryState();
             this.gameState = gameState;
             LastResult = InventoryMutationResult.Invalid(
                 InventoryMutationStatus.InvalidQuantity,
                 string.Empty,
                 0,
                 "No mutation yet.");
-            // 시작 합산(빈 인벤토리)을 GameState 읽기 모델과 맞춘다.
             RecomputeAggregates();
             PushAggregatesToGameState();
         }
