@@ -62,12 +62,22 @@ namespace SubTerra.App.UI.Save
             var index = metadata.SlotId - 1;
             if (slotTexts[index] != null)
             {
-                slotTexts[index].text = metadata.HasSave
-                    ? "Slot " + metadata.SlotId
+                if (metadata.CanContinue)
+                {
+                    slotTexts[index].text = "Slot " + metadata.SlotId
                         + "  Gold " + metadata.Gold
                         + "  Depth " + metadata.Depth
-                        + (metadata.IsRecoverableFromBackup ? "  [Backup]" : string.Empty)
-                    : "Slot " + metadata.SlotId + "  Empty";
+                        + (metadata.IsRecoverableFromBackup ? "  [Backup]" : string.Empty);
+                }
+                else if (metadata.LoadStatus == LoadStatus.NotFound
+                    || metadata.LoadStatus == LoadStatus.InvalidSlot)
+                {
+                    slotTexts[index].text = "Slot " + metadata.SlotId + "  Empty";
+                }
+                else
+                {
+                    slotTexts[index].text = "Slot " + metadata.SlotId + "  [Damaged]";
+                }
             }
         }
 
