@@ -98,28 +98,36 @@ namespace SubTerra.App.Save
                 return new ContinueResult(ContinueStatus.SceneLoadFailed, load);
             }
 
-            var world = worldResolver.Resolve();
-            if (world == null)
+            if (RequiresWorldRestore(load.State.TargetSceneName))
             {
-                return new ContinueResult(ContinueStatus.WorldProviderMissing, load);
-            }
+                var world = worldResolver.Resolve();
+                if (world == null)
+                {
+                    return new ContinueResult(ContinueStatus.WorldProviderMissing, load);
+                }
 
-            try
-            {
-                world.RestoreSnapshot(load.State.World);
-            }
-            catch
-            {
-                return new ContinueResult(ContinueStatus.WorldRestoreFailed, load);
-            }
+                try
+                {
+                    world.RestoreSnapshot(load.State.World);
+                }
+                catch
+                {
+                    return new ContinueResult(ContinueStatus.WorldRestoreFailed, load);
+                }
 
-            if (!recalculator.Recalculate())
-            {
-                return new ContinueResult(ContinueStatus.RecalculationFailed, load);
+                if (!recalculator.Recalculate())
+                {
+                    return new ContinueResult(ContinueStatus.RecalculationFailed, load);
+                }
             }
 
             uiGate.SetReady(true);
             return new ContinueResult(ContinueStatus.Success, load);
+        }
+
+        internal static bool RequiresWorldRestore(string sceneName)
+        {
+            return sceneName != SceneNames.SurfaceBase;
         }
     }
 
