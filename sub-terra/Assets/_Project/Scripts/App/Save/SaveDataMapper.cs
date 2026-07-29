@@ -5,6 +5,7 @@ using SubTerra.App.Inventory;
 using SubTerra.App.Outpost;
 using SubTerra.App.Progression;
 using SubTerra.App.State;
+using SubTerra.Shared;
 
 namespace SubTerra.App.Save
 {
@@ -22,8 +23,16 @@ namespace SubTerra.App.Save
             if (context == null
                 || !GameState.IsComplete(context.GameState)
                 || context.Inventory == null
-                || context.Upgrades == null
-                || context.WorldProvider == null)
+                || context.Upgrades == null)
+            {
+                return null;
+            }
+
+            // Surface Base 등 월드 Provider가 없을 때는 빈 스냅샷으로 저장한다.
+            var world = context.WorldProvider != null
+                ? context.WorldProvider.CaptureSnapshot()
+                : new WorldSnapshotDto();
+            if (world == null)
             {
                 return null;
             }
@@ -60,10 +69,10 @@ namespace SubTerra.App.Save
                 upgrades = CaptureUpgrades(context.Upgrades),
                 outpost = CaptureOutpost(game.Outpost),
                 drone = CaptureDrone(context.DialogueGenerator),
-                world = context.WorldProvider.CaptureSnapshot()
+                world = world
             };
 
-            return data.world == null ? null : data;
+            return data;
         }
 
         public bool TryRestore(GameSaveData data, out RestoredSaveState restored)
