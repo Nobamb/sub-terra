@@ -46,7 +46,8 @@ namespace SubTerra.App.UI.Save
         {
             selectedSlot = slotId;
             var metadata = loader.GetSlotMetadata(slotId);
-            view.SetSelectedSlot(slotId, metadata.HasSave);
+            // HasSave 대신 CanContinue: 백업 복구 가능은 활성, 손상은 비활성.
+            view.SetSelectedSlot(slotId, metadata.CanContinue);
         }
 
         private void Continue()
