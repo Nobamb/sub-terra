@@ -13,16 +13,16 @@ MonoBehaviour:
   m_Name: Upgrade_Drone_Scan
   m_EditorClassIdentifier: SubTerra.App::SubTerra.App.Core.Data.UpgradeData
   id: upgrade.drone.scan
-  displayName: Drone Scan
+  displayName: "\uB4DC\uB860 \uC2A4\uCE94 \uBC94\uC704"
   maxLevel: 2
   levels:
   - level: 1
     costs:
     - itemId: mineral.copper
       quantity: 1
-    effectValue: 1
+    effectValue: 2
   - level: 2
     costs:
     - itemId: mineral.copper
       quantity: 2
-    effectValue: 2
+    effectValue: 4

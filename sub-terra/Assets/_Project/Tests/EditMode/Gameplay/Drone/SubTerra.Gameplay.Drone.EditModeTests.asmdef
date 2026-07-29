@@ -1,0 +1,14 @@
+{
+  "name": "SubTerra.Gameplay.Drone.EditModeTests",
+  "rootNamespace": "SubTerra.Gameplay.Drone.Tests",
+  "references": ["SubTerra.Gameplay.Drone", "UnityEngine.TestRunner", "UnityEditor.TestRunner"],
+  "includePlatforms": ["Editor"],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

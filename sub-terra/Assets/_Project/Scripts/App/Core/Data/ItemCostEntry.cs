@@ -4,7 +4,8 @@ using UnityEngine;
 namespace SubTerra.App.Core.Data
 {
     /// <summary>
-    /// App 로컬 비용 항목. Shared ItemCostDto가 합의·병합되면 교체 대상으로 둔다.
+    /// App 로컬(ScriptableObject 직렬화) 비용 항목.
+    /// 런타임 지갑 계약은 Shared ItemCostDto를 쓰며, ItemCostMapping으로 변환한다.
     /// 플레이어 보유량이 아닌 정적 정의(필요 ID·수량)만 담는다.
     /// </summary>
     [Serializable]

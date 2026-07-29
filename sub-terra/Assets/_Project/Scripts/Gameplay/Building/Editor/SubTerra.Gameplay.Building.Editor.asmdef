@@ -1,0 +1,21 @@
+{
+  "name": "SubTerra.Gameplay.Building.Editor",
+  "rootNamespace": "SubTerra.Gameplay.Building.Editor",
+  "references": [
+    "SubTerra.App",
+    "SubTerra.App.GameplayIntegration",
+    "SubTerra.Gameplay.Building",
+    "SubTerra.Gameplay.Structural",
+    "SubTerra.Shared",
+    "UnityEngine.UI"
+  ],
+  "includePlatforms": ["Editor"],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

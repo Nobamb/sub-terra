@@ -27,8 +27,11 @@ namespace SubTerra.App.Core.Data
         {
             public const string DrillSpeed = "upgrade.drill.speed";
             public const string DrillEfficiency = "upgrade.drill.efficiency";
+            public const string MaximumEnergy = "upgrade.energy.maximum";
+            public const string MaximumCargo = "upgrade.cargo.maximum";
             public const string DroneScan = "upgrade.drone.scan";
             public const string DroneRescue = "upgrade.drone.rescue";
+            public const string GasResistance = "upgrade.gas.resistance";
         }
 
         public static class Recipes
@@ -36,9 +39,21 @@ namespace SubTerra.App.Core.Data
             public const string SupportBasic = "recipe.building.support.basic";
         }
 
+        public static class Zones
+        {
+            public const string Deep = "zone.deep";
+        }
+
         public static class Dialogue
         {
             public const string LowPowerWarning = "dialogue.low_power.warning";
+            public const string DroneEmergency = "dialogue.drone.survival.emergency";
+            public const string DroneStructuralWarning = "dialogue.drone.structural.warning";
+            public const string DroneGasWarning = "dialogue.drone.gas.warning";
+            public const string DroneReturn = "dialogue.drone.return";
+            public const string DroneLithium = "dialogue.drone.lithium";
+            public const string DroneOutpost = "dialogue.drone.outpost";
+            public const string DroneExplore = "dialogue.drone.explore";
         }
     }
 }

@@ -201,17 +201,23 @@ namespace SubTerra.App.Editor.DataValidation
         {
             return new List<BuildingData>
             {
-                EnsureBuilding("Building_Support_Basic.asset", DataIds.Buildings.SupportBasic, "Basic Support", prefab, 0,
+                EnsureBuilding("Building_Support_Basic.asset", DataIds.Buildings.SupportBasic, "기본 버팀목",
+                    "주변 지형을 보강해 구조 위험을 낮춥니다.", prefab, 0,
                     icon, new List<ItemCostEntry> { new ItemCostEntry(DataIds.Minerals.Copper, 2) }),
-                EnsureBuilding("Building_Light_Basic.asset", DataIds.Buildings.LightBasic, "Basic Light", prefab, 1,
+                EnsureBuilding("Building_Light_Basic.asset", DataIds.Buildings.LightBasic, "기본 조명",
+                    "전력이 연결된 지하 구역을 밝힙니다.", prefab, 1,
                     icon, new List<ItemCostEntry> { new ItemCostEntry(DataIds.Minerals.Iron, 1) }),
-                EnsureBuilding("Building_Charger_Basic.asset", DataIds.Buildings.ChargerBasic, "Basic Charger", prefab, 3,
+                EnsureBuilding("Building_Charger_Basic.asset", DataIds.Buildings.ChargerBasic, "기본 충전기",
+                    "전력망에 연결되면 플레이어 장비를 충전합니다.", prefab, 3,
                     icon, new List<ItemCostEntry> { new ItemCostEntry(DataIds.Minerals.Copper, 3) }),
-                EnsureBuilding("Building_Storage_Basic.asset", DataIds.Buildings.StorageBasic, "Basic Storage", prefab, 0,
+                EnsureBuilding("Building_Storage_Basic.asset", DataIds.Buildings.StorageBasic, "기본 보관함",
+                    "탐사 중 수집한 광물을 임시 보관합니다.", prefab, 0,
                     icon, new List<ItemCostEntry> { new ItemCostEntry(DataIds.Minerals.Iron, 2) }),
-                EnsureBuilding("Building_Settlement_Basic.asset", DataIds.Buildings.SettlementBasic, "Settlement Console", prefab, 1,
+                EnsureBuilding("Building_Settlement_Basic.asset", DataIds.Buildings.SettlementBasic, "정산 콘솔",
+                    "보관한 광물을 정산해 골드로 전환합니다.", prefab, 1,
                     icon, new List<ItemCostEntry> { new ItemCostEntry(DataIds.Minerals.Lithium, 1) }),
-                EnsureBuilding("Building_OutpostCore_Basic.asset", DataIds.Buildings.OutpostCoreBasic, "Outpost Core", prefab, 5,
+                EnsureBuilding("Building_OutpostCore_Basic.asset", DataIds.Buildings.OutpostCoreBasic, "전진기지 코어",
+                    "연결된 시설에 전력을 공급하고 탐사 거점을 형성합니다.", prefab, 5,
                     icon, new List<ItemCostEntry>
                     {
                         new ItemCostEntry(DataIds.Minerals.Copper, 5),
@@ -224,6 +230,7 @@ namespace SubTerra.App.Editor.DataValidation
             string file,
             string id,
             string name,
+            string description,
             GameObject prefab,
             int power,
             Sprite icon,
@@ -237,7 +244,7 @@ namespace SubTerra.App.Editor.DataValidation
                 AssetDatabase.CreateAsset(asset, path);
             }
 
-            asset.EditorSet(id, name, prefab, icon, power, costs);
+            asset.EditorSet(id, name, description, prefab, icon, power, costs);
             EditorUtility.SetDirty(asset);
             return asset;
         }
@@ -266,10 +273,13 @@ namespace SubTerra.App.Editor.DataValidation
         {
             return new List<UpgradeData>
             {
-                EnsureUpgrade("Upgrade_Drill_Speed.asset", DataIds.Upgrades.DrillSpeed, "Drill Speed", 3, 0.1f),
-                EnsureUpgrade("Upgrade_Drill_Efficiency.asset", DataIds.Upgrades.DrillEfficiency, "Drill Efficiency", 3, 0.05f),
-                EnsureUpgrade("Upgrade_Drone_Scan.asset", DataIds.Upgrades.DroneScan, "Drone Scan", 2, 1f),
-                EnsureUpgrade("Upgrade_Drone_Rescue.asset", DataIds.Upgrades.DroneRescue, "Drone Rescue", 2, 1f)
+                EnsureUpgrade("Upgrade_Drill_Speed.asset", DataIds.Upgrades.DrillSpeed, "드릴 속도", 3, 0.1f),
+                EnsureUpgrade("Upgrade_Drill_Efficiency.asset", DataIds.Upgrades.DrillEfficiency, "드릴 전력 효율", 3, 0.05f),
+                EnsureUpgrade("Upgrade_Maximum_Energy.asset", DataIds.Upgrades.MaximumEnergy, "최대 전력", 3, 20f),
+                EnsureUpgrade("Upgrade_Maximum_Cargo.asset", DataIds.Upgrades.MaximumCargo, "최대 화물 중량", 3, 10f),
+                EnsureUpgrade("Upgrade_Drone_Scan.asset", DataIds.Upgrades.DroneScan, "드론 스캔 범위", 2, 2f),
+                EnsureUpgrade("Upgrade_Drone_Rescue.asset", DataIds.Upgrades.DroneRescue, "드론 구조 보존", 2, 0.15f),
+                EnsureUpgrade("Upgrade_Gas_Resistance.asset", DataIds.Upgrades.GasResistance, "가스 저항", 3, 0.1f)
             };
         }
 
@@ -299,7 +309,76 @@ namespace SubTerra.App.Editor.DataValidation
 
         private static List<DialogueTemplateData> BuildDialogues()
         {
-            var path = Root + "/Dialogue/Dialogue_LowPower_Warning.asset";
+            return new List<DialogueTemplateData>
+            {
+                EnsureDialogue(
+                    "Dialogue_Drone_Emergency.asset",
+                    DataIds.Dialogue.DroneEmergency,
+                    "긴급 생존 경고",
+                    "survival_emergency",
+                    700,
+                    "{reason} {action} 가능 여부를 즉시 확인하세요."),
+                EnsureDialogue(
+                    "Dialogue_Drone_Structural_Warning.asset",
+                    DataIds.Dialogue.DroneStructuralWarning,
+                    "붕괴 임박 경고",
+                    "structural_critical",
+                    600,
+                    "구조 안정도 {structuralIntegrity}. 버팀목 설치 지점을 확보하세요."),
+                EnsureDialogue(
+                    "Dialogue_Drone_Gas_Warning.asset",
+                    DataIds.Dialogue.DroneGasWarning,
+                    "가스 위험 경고",
+                    "gas_risk",
+                    500,
+                    "가스 위험 {gasRisk}. 가스 구역에서 이탈하세요."),
+                EnsureDialogue(
+                    "Dialogue_LowPower_Warning.asset",
+                    DataIds.Dialogue.LowPowerWarning,
+                    "전력 부족 경고",
+                    "low_power",
+                    400,
+                    "현재 전력 {currentEnergy}, 귀환 예상 {returnEnergyEstimate}. {action}을 권장합니다."),
+                EnsureDialogue(
+                    "Dialogue_Drone_Return.asset",
+                    DataIds.Dialogue.DroneReturn,
+                    "귀환 추천",
+                    "return",
+                    300,
+                    "미정산 가치 {unsettledCargoValue}. 기지 귀환을 권장합니다."),
+                EnsureDialogue(
+                    "Dialogue_Drone_Lithium.asset",
+                    DataIds.Dialogue.DroneLithium,
+                    "희귀 광물 발견",
+                    "rare_mineral",
+                    200,
+                    "인근에서 {mineralId} 신호를 확인했습니다."),
+                EnsureDialogue(
+                    "Dialogue_Drone_Outpost.asset",
+                    DataIds.Dialogue.DroneOutpost,
+                    "전진기지 추천",
+                    "outpost",
+                    100,
+                    "기지 거리 {nearestBaseDistance}m. 전진기지 설치를 검토하세요."),
+                EnsureDialogue(
+                    "Dialogue_Drone_Explore.asset",
+                    DataIds.Dialogue.DroneExplore,
+                    "일반 탐사",
+                    "explore",
+                    0,
+                    "현재 심도 {depth}. 확인된 즉시 위험이 없어 하강을 계속할 수 있습니다.")
+            };
+        }
+
+        private static DialogueTemplateData EnsureDialogue(
+            string file,
+            string id,
+            string name,
+            string situation,
+            int priority,
+            string template)
+        {
+            var path = Root + "/Dialogue/" + file;
             var asset = AssetDatabase.LoadAssetAtPath<DialogueTemplateData>(path);
             if (asset == null)
             {
@@ -308,13 +387,13 @@ namespace SubTerra.App.Editor.DataValidation
             }
 
             asset.EditorSet(
-                DataIds.Dialogue.LowPowerWarning,
-                "Low Power Warning",
-                "low_power",
-                100,
-                "Power is low. Return or recharge.");
+                id,
+                name,
+                situation,
+                priority,
+                template);
             EditorUtility.SetDirty(asset);
-            return new List<DialogueTemplateData> { asset };
+            return asset;
         }
 
         private static void WireBootstrap(GameDataCatalog catalog)

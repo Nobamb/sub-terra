@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Upgrade_Drill_Speed
   m_EditorClassIdentifier: SubTerra.App::SubTerra.App.Core.Data.UpgradeData
   id: upgrade.drill.speed
-  displayName: Drill Speed
+  displayName: "\uB4DC\uB9B4 \uC18D\uB3C4"
   maxLevel: 3
   levels:
   - level: 1

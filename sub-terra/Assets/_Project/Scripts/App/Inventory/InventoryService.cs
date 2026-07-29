@@ -26,16 +26,27 @@ namespace SubTerra.App.Inventory
             IMineralCatalogLookup catalog,
             float maxCapacity = InventoryState.DefaultMaxCapacity,
             GameState gameState = null)
+            : this(catalog, new InventoryState(maxCapacity), gameState)
+        {
+        }
+
+        /// <summary>
+        /// 세이브 복원·Surface Base 등 기존 InventoryState를 재사용할 때 사용한다.
+        /// State를 복제하지 않고 같은 인스턴스를 소유한다.
+        /// </summary>
+        public InventoryService(
+            IMineralCatalogLookup catalog,
+            InventoryState existingState,
+            GameState gameState = null)
         {
             this.catalog = catalog;
-            state = new InventoryState(maxCapacity);
+            state = existingState ?? new InventoryState();
             this.gameState = gameState;
             LastResult = InventoryMutationResult.Invalid(
                 InventoryMutationStatus.InvalidQuantity,
                 string.Empty,
                 0,
                 "No mutation yet.");
-            // 시작 합산(빈 인벤토리)을 GameState 읽기 모델과 맞춘다.
             RecomputeAggregates();
             PushAggregatesToGameState();
         }
@@ -172,6 +183,91 @@ namespace SubTerra.App.Inventory
             return LastResult;
         }
 
+        /// <summary>
+        /// 여러 광물을 전량 사전 검증한 뒤 한 트랜잭션으로 차감한다.
+        /// 하나라도 부족·무효면 상태를 바꾸지 않으며, 성공 시 InventoryChanged는 1회만 발행한다.
+        /// Economy TrySpend가 부분 루프 차감을 쓰지 않도록 일괄 경로를 제공한다.
+        /// 입력 항목은 이미 동일 ID 합산이 끝난 정규화 목록을 권장한다.
+        /// </summary>
+        public InventoryMutationResult TryReduceMany(
+            System.Collections.Generic.IReadOnlyList<System.Collections.Generic.KeyValuePair<string, int>> reductions)
+        {
+            if (catalog == null)
+            {
+                return Fail(InventoryMutationStatus.CatalogMissing, string.Empty, 0, "Catalog missing.");
+            }
+
+            if (reductions == null || reductions.Count == 0)
+            {
+                // 비용 0건은 성공(무변경). 이벤트는 발행하지 않는다.
+                LastResult = InventoryMutationResult.Accepted(
+                    InventoryMutationStatus.Success,
+                    string.Empty,
+                    0,
+                    0,
+                    "Empty reduction list.");
+                return LastResult;
+            }
+
+            // 1단계: 전 항목 검증. 여기서 실패하면 SetQuantity를 한 번도 호출하지 않는다.
+            for (var i = 0; i < reductions.Count; i++)
+            {
+                var mineralId = reductions[i].Key;
+                var quantity = reductions[i].Value;
+
+                if (string.IsNullOrEmpty(mineralId))
+                {
+                    return Fail(InventoryMutationStatus.InvalidId, mineralId, quantity, "Empty mineral id.");
+                }
+
+                if (quantity <= 0)
+                {
+                    return Fail(
+                        InventoryMutationStatus.InvalidQuantity,
+                        mineralId,
+                        quantity,
+                        "Quantity must be positive.");
+                }
+
+                if (!catalog.TryGetMineral(mineralId, out _))
+                {
+                    return Fail(InventoryMutationStatus.InvalidId, mineralId, quantity, "Unknown mineral id.");
+                }
+
+                var existing = state.GetQuantity(mineralId);
+                if (existing < quantity)
+                {
+                    return Fail(
+                        InventoryMutationStatus.Insufficient,
+                        mineralId,
+                        quantity,
+                        "Insufficient quantity.");
+                }
+            }
+
+            // 2단계: 검증 통과 후에만 일괄 적용. 중간 이벤트 없음.
+            var totalRequested = 0;
+            var firstId = reductions[0].Key;
+            for (var i = 0; i < reductions.Count; i++)
+            {
+                var mineralId = reductions[i].Key;
+                var quantity = reductions[i].Value;
+                var existing = state.GetQuantity(mineralId);
+                state.SetQuantity(mineralId, existing - quantity);
+                totalRequested += quantity;
+            }
+
+            RecomputeAggregates();
+            RaiseChangedOnce();
+
+            LastResult = InventoryMutationResult.Accepted(
+                InventoryMutationStatus.Success,
+                firstId,
+                totalRequested,
+                totalRequested);
+            return LastResult;
+        }
+
         public InventorySnapshot GetSnapshot()
         {
             return state.CreateSnapshot(catalog);
@@ -180,6 +276,22 @@ namespace SubTerra.App.Inventory
         public float CurrentWeight => state.CurrentWeight;
         public float MaxCapacity => state.MaxCapacity;
         public float UnsettledValue => state.UnsettledValue;
+
+        /// <summary>
+        /// 업그레이드 파생 최대 화물 중량을 반영한다.
+        /// 보유 화물은 버리지 않고 최대치 표시/추가 획득 경계만 즉시 갱신한다.
+        /// </summary>
+        public void SetMaximumCapacity(float maximumCapacity)
+        {
+            var clamped = maximumCapacity < 0f ? 0f : maximumCapacity;
+            if (Math.Abs(state.MaxCapacity - clamped) < 0.0001f)
+            {
+                return;
+            }
+
+            state.SetMaxCapacity(clamped);
+            RaiseChangedOnce();
+        }
 
         private InventoryMutationResult Fail(
             InventoryMutationStatus status,

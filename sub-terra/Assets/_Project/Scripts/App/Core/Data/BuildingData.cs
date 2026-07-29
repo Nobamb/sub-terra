@@ -11,6 +11,7 @@ namespace SubTerra.App.Core.Data
     {
         [SerializeField] private string id;
         [SerializeField] private string displayName;
+        [SerializeField, TextArea] private string description;
         [SerializeField] private GameObject runtimePrefab;
         [SerializeField] private Sprite icon;
         [SerializeField] private int powerDraw;
@@ -18,6 +19,7 @@ namespace SubTerra.App.Core.Data
 
         public string Id => id;
         public string DisplayName => displayName;
+        public string Description => description;
         public GameObject RuntimePrefab => runtimePrefab;
         public Sprite Icon => icon;
         public int PowerDraw => powerDraw;
@@ -31,7 +33,7 @@ namespace SubTerra.App.Core.Data
             int power,
             List<ItemCostEntry> costs)
         {
-            EditorSet(permanentId, name, prefab, icon, power, costs);
+            EditorSet(permanentId, name, description, prefab, icon, power, costs);
         }
 
         public void EditorSet(
@@ -42,8 +44,21 @@ namespace SubTerra.App.Core.Data
             int power,
             List<ItemCostEntry> costs)
         {
+            EditorSet(permanentId, name, description, prefab, dataIcon, power, costs);
+        }
+
+        public void EditorSet(
+            string permanentId,
+            string name,
+            string detail,
+            GameObject prefab,
+            Sprite dataIcon,
+            int power,
+            List<ItemCostEntry> costs)
+        {
             id = permanentId;
             displayName = name;
+            description = detail ?? string.Empty;
             runtimePrefab = prefab;
             icon = dataIcon;
             powerDraw = power;

@@ -1,0 +1,14 @@
+{
+  "name": "SubTerra.Gameplay.IntegrationBridge.EditModeTests",
+  "rootNamespace": "SubTerra.Gameplay.Integration.Tests",
+  "references": ["SubTerra.Gameplay.IntegrationBridge", "SubTerra.Shared", "UnityEngine.TestRunner", "UnityEditor.TestRunner"],
+  "includePlatforms": ["Editor"],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

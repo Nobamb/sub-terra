@@ -1,0 +1,19 @@
+{
+  "name": "SubTerra.Gameplay.Hazards",
+  "rootNamespace": "SubTerra.Gameplay.Hazards",
+  "references": [
+    "SubTerra.Shared",
+    "SubTerra.Gameplay.Mining",
+    "SubTerra.Gameplay.Player",
+    "Unity.InputSystem"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

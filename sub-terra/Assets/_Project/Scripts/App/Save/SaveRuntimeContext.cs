@@ -1,0 +1,74 @@
+using System;
+using SubTerra.App.Drone.Dialogue;
+using SubTerra.App.Inventory;
+using SubTerra.App.Progression;
+using SubTerra.App.State;
+using SubTerra.Shared;
+
+namespace SubTerra.App.Save
+{
+    public sealed class SaveCaptureContext
+    {
+        public GameState GameState { get; }
+        public InventoryState Inventory { get; }
+        public UpgradeState Upgrades { get; }
+        public TemplateDialogueGenerator DialogueGenerator { get; }
+        public IWorldSnapshotProvider WorldProvider { get; }
+        public string TargetSceneName { get; }
+        public string GameVersion { get; }
+
+        public SaveCaptureContext(
+            GameState gameState,
+            InventoryState inventory,
+            UpgradeState upgrades,
+            TemplateDialogueGenerator dialogueGenerator,
+            IWorldSnapshotProvider worldProvider,
+            string targetSceneName,
+            string gameVersion)
+        {
+            GameState = gameState;
+            Inventory = inventory;
+            Upgrades = upgrades;
+            DialogueGenerator = dialogueGenerator;
+            WorldProvider = worldProvider;
+            TargetSceneName = targetSceneName ?? string.Empty;
+            GameVersion = gameVersion ?? string.Empty;
+        }
+    }
+
+    public sealed class RestoredSaveState
+    {
+        public GameState GameState { get; }
+        public InventoryState Inventory { get; }
+        public UpgradeState Upgrades { get; }
+        public DroneSaveData Drone { get; }
+        public WorldSnapshotDto World { get; }
+        public string TargetSceneName { get; }
+
+        public RestoredSaveState(
+            GameState gameState,
+            InventoryState inventory,
+            UpgradeState upgrades,
+            DroneSaveData drone,
+            WorldSnapshotDto world,
+            string targetSceneName)
+        {
+            GameState = gameState;
+            Inventory = inventory;
+            Upgrades = upgrades;
+            Drone = drone;
+            World = world;
+            TargetSceneName = targetSceneName ?? string.Empty;
+        }
+    }
+
+    public interface ISaveClock
+    {
+        long UtcNowSeconds { get; }
+    }
+
+    public sealed class SystemSaveClock : ISaveClock
+    {
+        public long UtcNowSeconds => DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+    }
+}

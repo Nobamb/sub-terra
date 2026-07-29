@@ -13,7 +13,9 @@ MonoBehaviour:
   m_Name: Building_Support_Basic
   m_EditorClassIdentifier: SubTerra.App::SubTerra.App.Core.Data.BuildingData
   id: building.support.basic
-  displayName: Basic Support
+  displayName: "\uAE30\uBCF8 \uBC84\uD300\uBAA9"
+  description: "\uC8FC\uBCC0 \uC9C0\uD615\uC744 \uBCF4\uAC15\uD574 \uAD6C\uC870 \uC704\uD5D8\uC744
+    \uB0AE\uCDA5\uB2C8\uB2E4."
   runtimePrefab: {fileID: 3766932780806278260, guid: d9f8a92858c77d94f808199827a493f8, type: 3}
   icon: {fileID: 6838030193426678921, guid: 42527be5cf11e3c42871944ebbfd1fd6, type: 2}
   powerDraw: 0

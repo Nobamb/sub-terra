@@ -1,4 +1,5 @@
 using System;
+using SubTerra.App.Outpost;
 
 namespace SubTerra.App.State
 {
@@ -128,12 +129,19 @@ namespace SubTerra.App.State
     public sealed class ProgressState
     {
         public int CompletedObjectives { get; private set; }
+        public bool HasSeenOutpostTutorial { get; private set; }
 
         private ProgressState() { }
 
-        public ProgressState(int completedObjectives)
+        public ProgressState(int completedObjectives, bool hasSeenOutpostTutorial = false)
         {
             CompletedObjectives = completedObjectives;
+            HasSeenOutpostTutorial = hasSeenOutpostTutorial;
+        }
+
+        internal void MarkOutpostTutorialSeen()
+        {
+            HasSeenOutpostTutorial = true;
         }
     }
 
@@ -193,6 +201,7 @@ namespace SubTerra.App.State
         public PlayerState Player { get; private set; }
         public ProgressState Progress { get; private set; }
         public RunState Run { get; private set; }
+        public OutpostState Outpost { get; private set; }
 
         public string SelectedBuildingId { get; private set; }
         public string SelectedBuildingDisplayName { get; private set; }
@@ -217,6 +226,7 @@ namespace SubTerra.App.State
                 Player = new PlayerState(100, 100, 0, 0f, 0f, 0f),
                 Progress = new ProgressState(0),
                 Run = new RunState(0, true, StructuralRiskLevel.Safe, GasRiskLevel.Safe),
+                Outpost = new OutpostState(),
                 SelectedBuildingId = string.Empty,
                 SelectedBuildingDisplayName = string.Empty,
                 InteractionPrompt = string.Empty
@@ -227,7 +237,11 @@ namespace SubTerra.App.State
         /// 세이브 복원용 팩터리. 하위 상태가 하나라도 없으면 null을 반환해
         /// 불완전한 상태로 MainMenu에 진입하지 않게 한다.
         /// </summary>
-        public static GameState FromParts(PlayerState player, ProgressState progress, RunState run)
+        public static GameState FromParts(
+            PlayerState player,
+            ProgressState progress,
+            RunState run,
+            OutpostState outpost = null)
         {
             if (player == null || progress == null || run == null)
             {
@@ -239,6 +253,7 @@ namespace SubTerra.App.State
                 Player = player,
                 Progress = progress,
                 Run = run,
+                Outpost = outpost ?? new OutpostState(),
                 SelectedBuildingId = string.Empty,
                 SelectedBuildingDisplayName = string.Empty,
                 InteractionPrompt = string.Empty
@@ -251,7 +266,8 @@ namespace SubTerra.App.State
             return state != null
                 && state.Player != null
                 && state.Progress != null
-                && state.Run != null;
+                && state.Run != null
+                && state.Outpost != null;
         }
 
         public EnergyReadModel GetEnergy()
@@ -417,6 +433,12 @@ namespace SubTerra.App.State
 
             InteractionPrompt = text;
             InteractionPromptChanged?.Invoke(InteractionPrompt);
+        }
+
+        /// <summary>첫 전진기지 튜토리얼 표시 여부를 저장 가능한 진행 상태에 기록한다.</summary>
+        public void MarkOutpostTutorialSeen()
+        {
+            Progress?.MarkOutpostTutorialSeen();
         }
 
         private static bool Approximately(float a, float b)

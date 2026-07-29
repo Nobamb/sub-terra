@@ -1,0 +1,14 @@
+{
+  "name": "SubTerra.Gameplay.Building",
+  "rootNamespace": "SubTerra.Gameplay.Building",
+  "references": ["SubTerra.Shared", "SubTerra.Gameplay.Structural", "Unity.InputSystem"],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

@@ -13,7 +13,8 @@ MonoBehaviour:
   m_Name: Dialogue_LowPower_Warning
   m_EditorClassIdentifier: SubTerra.App::SubTerra.App.Core.Data.DialogueTemplateData
   id: dialogue.low_power.warning
-  displayName: Low Power Warning
+  displayName: "\uC804\uB825 \uBD80\uC871 \uACBD\uACE0"
   situationKey: low_power
-  priority: 100
-  template: Power is low. Return or recharge.
+  priority: 400
+  template: "\uD604\uC7AC \uC804\uB825 {currentEnergy}, \uADC0\uD658 \uC608\uC0C1
+    {returnEnergyEstimate}. {action}\uC744 \uAD8C\uC7A5\uD569\uB2C8\uB2E4."

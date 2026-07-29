@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fb06d2a4a2a15fa4486b9d051c9b5f9c, type: 3}
+  m_Name: Dialogue_Drone_Structural_Warning
+  m_EditorClassIdentifier: SubTerra.App::SubTerra.App.Core.Data.DialogueTemplateData
+  id: dialogue.drone.structural.warning
+  displayName: "\uBD95\uAD34 \uC784\uBC15 \uACBD\uACE0"
+  situationKey: structural_critical
+  priority: 600
+  template: "\uAD6C\uC870 \uC548\uC815\uB3C4 {structuralIntegrity}. \uBC84\uD300\uBAA9
+    \uC124\uCE58 \uC9C0\uC810\uC744 \uD655\uBCF4\uD558\uC138\uC694."
