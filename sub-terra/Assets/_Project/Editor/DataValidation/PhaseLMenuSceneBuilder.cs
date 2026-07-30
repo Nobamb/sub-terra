@@ -69,44 +69,53 @@ namespace SubTerra.App.Editor.DataValidation
             rect.offsetMax = Vector2.zero;
             root.GetComponent<Image>().color = new Color(0.02f, 0.04f, 0.07f, 0.96f);
 
-            CreateText(root.transform, "Title", new Vector2(0f, -40f), new Vector2(700f, 56f), 34f, "Sub-Terra");
+            var content = CreatePanel(
+                root.transform,
+                "MenuContent",
+                Vector2.zero,
+                new Vector2(940f, 820f),
+                new Color(0.035f, 0.075f, 0.105f, 0.98f));
+            CreateText(content.transform, "Title", new Vector2(0f, 330f), new Vector2(760f, 76f), 44f, "Sub-Terra");
             var slotButtons = new Button[3];
             var slotTexts = new TMP_Text[3];
             for (var i = 0; i < 3; i++)
             {
                 slotButtons[i] = CreateButton(
-                    root.transform,
+                    content.transform,
                     "Slot" + (i + 1),
-                    new Vector2(0f, -120f - i * 70f),
-                    new Vector2(560f, 56f),
+                    new Vector2(0f, 210f - i * 90f),
+                    new Vector2(728f, 73f),
                     "Slot " + (i + 1) + "  Empty",
-                    out slotTexts[i]);
+                    out slotTexts[i],
+                    23f);
             }
 
             var continueButton = CreateButton(
-                root.transform, "ContinueButton", new Vector2(-200f, -360f), new Vector2(170f, 50f), "이어하기", out _);
+                content.transform, "ContinueButton", new Vector2(-240f, -100f), new Vector2(221f, 65f), "이어하기", out _, 23f);
             var newGameButton = CreateButton(
-                root.transform, "NewGameButton", new Vector2(0f, -360f), new Vector2(170f, 50f), "새 게임", out _);
+                content.transform, "NewGameButton", new Vector2(0f, -100f), new Vector2(221f, 65f), "새 게임", out _, 23f);
             var settingsButton = CreateButton(
-                root.transform, "SettingsButton", new Vector2(200f, -360f), new Vector2(170f, 50f), "설정", out _);
+                content.transform, "SettingsButton", new Vector2(240f, -100f), new Vector2(221f, 65f), "설정", out _, 23f);
             var quitButton = CreateButton(
-                root.transform, "QuitButton", new Vector2(0f, -430f), new Vector2(200f, 48f), "종료", out _);
-            var message = CreateText(root.transform, "MessageText", new Vector2(0f, -490f), new Vector2(640f, 40f), 16f, string.Empty);
-            var version = CreateText(root.transform, "VersionText", new Vector2(0f, -540f), new Vector2(300f, 32f), 14f, "v0.0.0");
+                content.transform, "QuitButton", new Vector2(0f, -188f), new Vector2(260f, 62f), "종료", out _, 22f);
+            var message = CreateText(content.transform, "MessageText", new Vector2(0f, -258f), new Vector2(780f, 54f), 20f, string.Empty);
+            var version = CreateText(content.transform, "VersionText", new Vector2(0f, -318f), new Vector2(360f, 38f), 18f, "v0.0.0");
 
             var overwriteRoot = new GameObject("OverwriteConfirm", typeof(RectTransform), typeof(Image));
             overwriteRoot.transform.SetParent(root.transform, false);
             var overwriteRect = overwriteRoot.GetComponent<RectTransform>();
             overwriteRect.anchorMin = overwriteRect.anchorMax = new Vector2(0.5f, 0.5f);
-            overwriteRect.sizeDelta = new Vector2(480f, 220f);
+            overwriteRect.pivot = new Vector2(0.5f, 0.5f);
+            overwriteRect.anchoredPosition = Vector2.zero;
+            overwriteRect.sizeDelta = new Vector2(624f, 286f);
             overwriteRoot.GetComponent<Image>().color = new Color(0.1f, 0.05f, 0.05f, 0.98f);
             overwriteRoot.SetActive(false);
             var overwriteMsg = CreateText(
-                overwriteRoot.transform, "OverwriteMessage", new Vector2(0f, 40f), new Vector2(420f, 60f), 18f, "덮어쓰기?");
+                overwriteRoot.transform, "OverwriteMessage", new Vector2(0f, 28.6f), new Vector2(546f, 78f), 23.4f, "덮어쓰기?");
             var overwriteYes = CreateButton(
-                overwriteRoot.transform, "OverwriteYes", new Vector2(-100f, -50f), new Vector2(140f, 44f), "확인", out _);
+                overwriteRoot.transform, "OverwriteYes", new Vector2(-120f, -28.6f), new Vector2(182f, 57.2f), "확인", out _, 23.4f);
             var overwriteNo = CreateButton(
-                overwriteRoot.transform, "OverwriteNo", new Vector2(100f, -50f), new Vector2(140f, 44f), "취소", out _);
+                overwriteRoot.transform, "OverwriteNo", new Vector2(120f, -28.6f), new Vector2(182f, 57.2f), "취소", out _, 23.4f);
 
             var settingsRoot = new GameObject("SettingsPanel", typeof(RectTransform), typeof(Image));
             settingsRoot.transform.SetParent(root.transform, false);
@@ -178,23 +187,30 @@ namespace SubTerra.App.Editor.DataValidation
             rect.offsetMax = Vector2.zero;
             root.GetComponent<Image>().color = new Color(0.03f, 0.06f, 0.05f, 0.95f);
 
-            CreateText(root.transform, "Title", new Vector2(0f, -36f), new Vector2(600f, 48f), 30f, "Surface Base");
-            var goals = CreateText(root.transform, "GoalsText", new Vector2(0f, -100f), new Vector2(640f, 40f), 18f, "목표");
-            var deep = CreateText(root.transform, "DeepZoneText", new Vector2(0f, -150f), new Vector2(640f, 40f), 18f, "심층");
-            var recent = CreateText(root.transform, "RecentRunText", new Vector2(0f, -200f), new Vector2(640f, 40f), 18f, "최근 탐사");
-            var message = CreateText(root.transform, "MessageText", new Vector2(0f, -250f), new Vector2(640f, 40f), 16f, string.Empty);
+            var content = CreatePanel(
+                root.transform,
+                "SurfaceBaseContent",
+                Vector2.zero,
+                new Vector2(980f, 900f),
+                new Color(0.045f, 0.095f, 0.08f, 0.98f));
+            CreateText(content.transform, "Title", new Vector2(0f, 380f), new Vector2(760f, 64f), 38f, "Surface Base");
+            var goals = CreateText(content.transform, "GoalsText", new Vector2(0f, 300f), new Vector2(800f, 52f), 22f, "목표");
+            var deep = CreateText(content.transform, "DeepZoneText", new Vector2(0f, 245f), new Vector2(800f, 46f), 21f, "심층");
+            var recent = CreateText(content.transform, "RecentRunText", new Vector2(0f, 190f), new Vector2(800f, 46f), 21f, "최근 탐사");
+            var message = CreateText(content.transform, "MessageText", new Vector2(0f, 135f), new Vector2(800f, 46f), 19f, string.Empty);
             var explore = CreateButton(
-                root.transform, "ExploreButton", new Vector2(0f, -320f), new Vector2(240f, 56f), "탐사 시작", out _);
+                content.transform, "ExploreButton", new Vector2(0f, 65f), new Vector2(312f, 73f), "탐사 시작", out _, 23f);
             var refresh = CreateButton(
-                root.transform, "RefreshButton", new Vector2(0f, -390f), new Vector2(180f, 44f), "새로고침", out _);
+                content.transform, "RefreshButton", new Vector2(0f, -15f), new Vector2(234f, 57f), "새로고침", out _, 20f);
 
             // 기존 Economy/Progression View 컴포넌트를 같은 패널에 부착해 Service 재사용 경로를 유지한다.
             var economyGo = new GameObject("EconomyPanel", typeof(RectTransform));
-            economyGo.transform.SetParent(root.transform, false);
+            economyGo.transform.SetParent(content.transform, false);
+            Stretch(economyGo.GetComponent<RectTransform>());
             var ecoView = economyGo.AddComponent<EconomyPanelView>();
             var ecoBinder = economyGo.AddComponent<EconomyPanelBinder>();
-            var ecoStatus = CreateText(economyGo.transform, "EcoStatus", new Vector2(-220f, -460f), new Vector2(300f, 36f), 14f, "판매/제작");
-            var ecoDetail = CreateText(economyGo.transform, "EcoDetail", new Vector2(-220f, -500f), new Vector2(300f, 30f), 12f, string.Empty);
+            var ecoStatus = CreateText(economyGo.transform, "EcoStatus", new Vector2(0f, -105f), new Vector2(800f, 42f), 18f, "판매 / 제작");
+            var ecoDetail = CreateText(economyGo.transform, "EcoDetail", new Vector2(0f, -150f), new Vector2(800f, 36f), 16f, string.Empty);
             var ecoSo = new SerializedObject(ecoView);
             ecoSo.FindProperty("statusMessageText").objectReferenceValue = ecoStatus;
             ecoSo.FindProperty("statusDetailText").objectReferenceValue = ecoDetail;
@@ -204,13 +220,14 @@ namespace SubTerra.App.Editor.DataValidation
             ecoBinderSo.ApplyModifiedPropertiesWithoutUndo();
 
             var progGo = new GameObject("ProgressionPanel", typeof(RectTransform));
-            progGo.transform.SetParent(root.transform, false);
+            progGo.transform.SetParent(content.transform, false);
+            Stretch(progGo.GetComponent<RectTransform>());
             var progView = progGo.AddComponent<ProgressionPanelView>();
             var progBinder = progGo.AddComponent<ProgressionPanelBinder>();
-            var progList = CreateText(progGo.transform, "UpgradeList", new Vector2(220f, -460f), new Vector2(300f, 36f), 14f, "업그레이드");
-            var progDetail = CreateText(progGo.transform, "UpgradeDetail", new Vector2(220f, -500f), new Vector2(300f, 30f), 12f, string.Empty);
-            var progResult = CreateText(progGo.transform, "UpgradeResult", new Vector2(220f, -530f), new Vector2(300f, 28f), 12f, string.Empty);
-            var progDeep = CreateText(progGo.transform, "ProgDeep", new Vector2(220f, -560f), new Vector2(300f, 28f), 12f, string.Empty);
+            var progList = CreateText(progGo.transform, "UpgradeList", new Vector2(0f, -215f), new Vector2(800f, 44f), 18f, "드릴 / 드론 업그레이드");
+            var progDetail = CreateText(progGo.transform, "UpgradeDetail", new Vector2(0f, -260f), new Vector2(800f, 36f), 16f, string.Empty);
+            var progResult = CreateText(progGo.transform, "UpgradeResult", new Vector2(0f, -305f), new Vector2(800f, 36f), 16f, string.Empty);
+            var progDeep = CreateText(progGo.transform, "ProgDeep", new Vector2(0f, -350f), new Vector2(800f, 36f), 16f, string.Empty);
             var progSo = new SerializedObject(progView);
             progSo.FindProperty("upgradeListText").objectReferenceValue = progList;
             progSo.FindProperty("detailText").objectReferenceValue = progDetail;
@@ -404,17 +421,18 @@ namespace SubTerra.App.Editor.DataValidation
             Vector2 position,
             Vector2 size,
             string label,
-            out TMP_Text text)
+            out TMP_Text text,
+            float fontSize = 18f)
         {
             var go = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button));
             go.transform.SetParent(parent, false);
             var rect = go.GetComponent<RectTransform>();
-            rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 1f);
-            rect.pivot = new Vector2(0.5f, 1f);
+            rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
             rect.anchoredPosition = position;
             rect.sizeDelta = size;
             go.GetComponent<Image>().color = new Color(0.14f, 0.28f, 0.34f, 1f);
-            text = CreateText(go.transform, "Label", Vector2.zero, size, 18f, label);
+            text = CreateText(go.transform, "Label", Vector2.zero, size, fontSize, label);
             var textRect = text.GetComponent<RectTransform>();
             textRect.anchorMin = Vector2.zero;
             textRect.anchorMax = Vector2.one;
@@ -435,8 +453,8 @@ namespace SubTerra.App.Editor.DataValidation
             var go = new GameObject(name, typeof(RectTransform));
             go.transform.SetParent(parent, false);
             var rect = go.GetComponent<RectTransform>();
-            rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 1f);
-            rect.pivot = new Vector2(0.5f, 1f);
+            rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
             rect.anchoredPosition = position;
             rect.sizeDelta = size;
             var text = go.AddComponent<TextMeshProUGUI>();
@@ -451,6 +469,32 @@ namespace SubTerra.App.Editor.DataValidation
             text.alignment = TextAlignmentOptions.Center;
             text.raycastTarget = false;
             return text;
+        }
+
+        private static GameObject CreatePanel(
+            Transform parent,
+            string name,
+            Vector2 position,
+            Vector2 size,
+            Color color)
+        {
+            var go = new GameObject(name, typeof(RectTransform), typeof(Image));
+            go.transform.SetParent(parent, false);
+            var rect = go.GetComponent<RectTransform>();
+            rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = position;
+            rect.sizeDelta = size;
+            go.GetComponent<Image>().color = color;
+            return go;
+        }
+
+        private static void Stretch(RectTransform rect)
+        {
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
         }
 
         private static void AssignArray<T>(SerializedProperty property, T[] values)

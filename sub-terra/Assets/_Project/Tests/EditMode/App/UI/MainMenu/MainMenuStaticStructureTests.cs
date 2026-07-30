@@ -11,6 +11,7 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
+using UnityEngine.Tilemaps;
 
 namespace SubTerra.App.Tests.UI.MainMenu
 {
@@ -21,6 +22,7 @@ namespace SubTerra.App.Tests.UI.MainMenu
         public void BuildScenes()
         {
             PhaseLMenuSceneBuilder.Build();
+            PhaseOUiPolishBuilder.Build();
         }
 
         [Test]
@@ -160,6 +162,114 @@ namespace SubTerra.App.Tests.UI.MainMenu
             Assert.That(runtime, Does.Contain("confirmOverwrite"));
             Assert.That(runtime, Does.Contain("RequiresOverwriteConfirm"));
             Assert.That(runtime, Does.Contain("SceneNames.SurfaceBase"));
+        }
+
+        [Test]
+        public void Prompt16_MainMenuAndOverwriteDialog_AreCenteredAndEnlarged()
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                PhaseLMenuSceneBuilder.MainMenuPrefabPath);
+            var content = prefab.transform.Find("MenuContent") as RectTransform;
+            Assert.That(content, Is.Not.Null);
+            Assert.That(content.anchoredPosition, Is.EqualTo(Vector2.zero));
+            Assert.That(content.sizeDelta.x, Is.GreaterThanOrEqualTo(900f));
+            Assert.That(content.sizeDelta.y, Is.GreaterThanOrEqualTo(780f));
+
+            var overwrite = prefab.transform.Find("OverwriteConfirm") as RectTransform;
+            Assert.That(overwrite, Is.Not.Null);
+            Assert.That(overwrite.anchoredPosition, Is.EqualTo(Vector2.zero));
+            Assert.That(overwrite.sizeDelta.x, Is.EqualTo(624f).Within(0.1f));
+            Assert.That(overwrite.sizeDelta.y, Is.EqualTo(286f).Within(0.1f));
+
+            var message = overwrite.Find("OverwriteMessage").GetComponent<TMP_Text>();
+            var yes = overwrite.Find("OverwriteYes").GetComponent<RectTransform>();
+            var no = overwrite.Find("OverwriteNo").GetComponent<RectTransform>();
+            Assert.That(message.fontSize, Is.EqualTo(23.4f).Within(0.1f));
+            Assert.That(message.rectTransform.sizeDelta, Is.EqualTo(new Vector2(546f, 78f)));
+            Assert.That(message.rectTransform.anchoredPosition.y, Is.EqualTo(28.6f).Within(0.1f));
+            Assert.That(yes.sizeDelta, Is.EqualTo(new Vector2(182f, 57.2f)));
+            Assert.That(no.sizeDelta, Is.EqualTo(new Vector2(182f, 57.2f)));
+            Assert.That(yes.anchoredPosition.y, Is.EqualTo(-28.6f).Within(0.1f));
+            Assert.That(no.anchoredPosition.y, Is.EqualTo(-28.6f).Within(0.1f));
+        }
+
+        [Test]
+        public void Prompt16_SurfaceBaseInformation_IsOneCenteredGroup()
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                PhaseLMenuSceneBuilder.SurfaceBasePrefabPath);
+            var content = prefab.transform.Find("SurfaceBaseContent") as RectTransform;
+            Assert.That(content, Is.Not.Null);
+            Assert.That(content.anchorMin, Is.EqualTo(new Vector2(0.5f, 0.5f)));
+            Assert.That(content.anchorMax, Is.EqualTo(new Vector2(0.5f, 0.5f)));
+            Assert.That(content.anchoredPosition, Is.EqualTo(Vector2.zero));
+
+            var centeredPaths = new[]
+            {
+                "GoalsText",
+                "DeepZoneText",
+                "RecentRunText",
+                "ExploreButton",
+                "EconomyPanel/EcoStatus",
+                "ProgressionPanel/UpgradeList",
+                "ProgressionPanel/ProgDeep"
+            };
+            foreach (var path in centeredPaths)
+            {
+                var rect = content.Find(path) as RectTransform;
+                Assert.That(rect, Is.Not.Null, path);
+                Assert.That(rect.anchoredPosition.x, Is.EqualTo(0f).Within(0.1f), path);
+            }
+        }
+
+        [Test]
+        public void Prompt16_IntegrationTerrain_IsReadableBoundedAndExplained()
+        {
+            var scene = EditorSceneManager.OpenScene(
+                PhaseOUiPolishBuilder.IntegrationScenePath,
+                OpenSceneMode.Additive);
+            try
+            {
+                var tilemap = scene.GetRootGameObjects()
+                    .SelectMany(root => root.GetComponentsInChildren<Tilemap>(true))
+                    .FirstOrDefault(item => item.name == "ForegroundTilemap");
+                Assert.That(tilemap, Is.Not.Null);
+                Assert.That(tilemap.GetTile(new Vector3Int(-40, -2, 0)), Is.Not.Null);
+                Assert.That(tilemap.GetTile(new Vector3Int(40, -2, 0)), Is.Not.Null);
+                Assert.That(tilemap.GetTile(new Vector3Int(-40, 5, 0)), Is.Not.Null);
+                Assert.That(tilemap.GetTile(new Vector3Int(40, 5, 0)), Is.Not.Null);
+                Assert.That(
+                    tilemap.GetSprite(new Vector3Int(0, -2, 0)).bounds.size.x,
+                    Is.EqualTo(1f).Within(0.01f));
+
+                var safetyGround = scene.GetRootGameObjects()
+                    .SelectMany(root => root.GetComponentsInChildren<Transform>(true))
+                    .FirstOrDefault(item => item.name == "SafetyGround");
+                Assert.That(safetyGround, Is.Not.Null);
+                Assert.That(
+                    safetyGround.GetComponent<BoxCollider2D>().size.x,
+                    Is.GreaterThanOrEqualTo(82f));
+                Assert.That(
+                    safetyGround.GetComponent<SpriteRenderer>().size.x,
+                    Is.GreaterThanOrEqualTo(82f));
+
+                var legend = scene.GetRootGameObjects()
+                    .SelectMany(root => root.GetComponentsInChildren<TMP_Text>(true))
+                    .FirstOrDefault(item => item.name == "LegendText");
+                Assert.That(legend, Is.Not.Null);
+                var legendPanel = legend.transform.parent.GetComponent<RectTransform>();
+                Assert.That(legendPanel.anchorMin, Is.EqualTo(new Vector2(0.5f, 0f)));
+                Assert.That(legendPanel.anchorMax, Is.EqualTo(new Vector2(0.5f, 0f)));
+                Assert.That(legendPanel.anchoredPosition.x, Is.EqualTo(0f));
+                Assert.That(legend.text, Does.Contain("[##] 암반"));
+                Assert.That(legend.text, Does.Contain("(Cu) 구리"));
+                Assert.That(legend.text, Does.Contain("~~~ 가스"));
+                Assert.That(legend.text, Does.Contain("봉인 신호"));
+            }
+            finally
+            {
+                EditorSceneManager.CloseScene(scene, true);
+            }
         }
 
         private static T FindInScene<T>(Scene scene) where T : Component

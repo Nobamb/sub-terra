@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 13312, guid: 0000000000000000e000000000000000, type: 0}
   m_Name: LockedSignal
   m_EditorClassIdentifier: UnityEngine.dll::UnityEngine.Tilemaps.Tile
-  m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+  m_Sprite: {fileID: -1349651928315979372, guid: f90bd8fc92d23294ca0c24631e99a455, type: 2}
   m_Color: {r: 0.9, g: 0.32, b: 0.95, a: 1}
   m_Transform:
     e00: 1

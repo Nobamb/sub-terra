@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 13312, guid: 0000000000000000e000000000000000, type: 0}
   m_Name: GasPocket
   m_EditorClassIdentifier: UnityEngine.dll::UnityEngine.Tilemaps.Tile
-  m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+  m_Sprite: {fileID: 2375781017694985612, guid: 2c729676b0e521045ae863c5deadc4d1, type: 2}
   m_Color: {r: 0.35, g: 0.92, b: 0.45, a: 1}
   m_Transform:
     e00: 1
