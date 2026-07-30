@@ -77,15 +77,37 @@ namespace SubTerra.App.Tests.Save
                 Assert.That(FindInScene<HudBinder>(integrationScene), Is.Not.Null);
                 Assert.That(FindInScene<EventSystem>(integrationScene), Is.Not.Null);
 
-                var tilemap = FindInScene<Tilemap>(integrationScene);
-                Assert.That(tilemap, Is.Not.Null);
-                Assert.That(tilemap.GetUsedTilesCount(), Is.GreaterThan(0));
+                // 채굴 지형은 Foreground. Background 등 빈 레이어가 먼저 잡히지 않게 이름으로 찾는다.
+                var foreground = integrationScene.GetRootGameObjects()
+                    .SelectMany(root => root.GetComponentsInChildren<Tilemap>(true))
+                    .FirstOrDefault(tm => tm.gameObject.name == "ForegroundTilemap");
+                Assert.That(foreground, Is.Not.Null);
+                Assert.That(foreground.GetUsedTilesCount(), Is.GreaterThan(0));
+
+                // M-S01: 4 Tilemap 기준 계층
+                var tilemapNames = integrationScene.GetRootGameObjects()
+                    .SelectMany(root => root.GetComponentsInChildren<Tilemap>(true))
+                    .Select(tm => tm.gameObject.name)
+                    .ToHashSet();
+                Assert.That(tilemapNames, Does.Contain("BackgroundTilemap"));
+                Assert.That(tilemapNames, Does.Contain("ForegroundTilemap"));
+                Assert.That(tilemapNames, Does.Contain("HazardTilemap"));
+                Assert.That(tilemapNames, Does.Contain("BuildingTilemap"));
 
                 Assert.That(
                     HasComponent(integrationScene, "SubTerra.Gameplay.Player.PlayerMovement"),
                     Is.True);
                 Assert.That(
                     HasComponent(integrationScene, "SubTerra.Gameplay.Snapshot.WorldSnapshotSystem"),
+                    Is.True);
+                Assert.That(
+                    HasComponent(integrationScene, "SubTerra.App.Integration.GameplayHazardStatusBridge"),
+                    Is.True);
+                Assert.That(
+                    HasComponent(integrationScene, "SubTerra.App.Integration.OutpostRuntimeBridge"),
+                    Is.True);
+                Assert.That(
+                    HasComponent(integrationScene, "SubTerra.App.Integration.DroneContextProviderAdapter"),
                     Is.True);
             }
             finally
