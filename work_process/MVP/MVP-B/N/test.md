@@ -52,5 +52,24 @@
 
 ## 4. 검증 결과 요약
 
+- **날짜:** 2026-07-30
+- **환경:** Unity Editor (Windows), 브랜치 MVP-B-N, 에이전트 검증
+- **정적**
+  - N-S01: PASS — 필수 13개 목표 ID·문구·완료 신호·다음 목표 표 존재
+  - N-S02: PASS — Director가 이벤트/Service 결과만 구독, Gameplay 계산 복제 없음
+  - N-S03: PASS — `UiLayerPriority` Hazard > Tutorial, Presenter 위험 양보
+  - N-S04: PASS — `DemoObjectiveDebugTools` / `DebugForceAdvance` 가 `#if DEVELOPMENT_BUILD || UNITY_EDITOR`
+  - N-S05: SKIP(허용) — 기본 BGM/SFX 미배선, 무단 외부 오디오 없음
+- **기능(자동화)**
+  - N-F01: PASS — 13단계 신호 시퀀스 완주
+  - N-F02: PASS — 순서 밖 신호 무단 스킵 없음
+  - N-F03: PASS — 위험 중 튜토리얼 입력 양보·dismiss 후 잠금 없음
+  - N-F04: PASS — 목표 ID 세이브 왕복, unknown 폴백, 중복 전진 없음
+  - Deep unlock: PASS — `ProgressionService.TryPurchase` → `TryUnlockDeepZone` 실경로로 demo.end (MaximumEnergy 단독 불가; DroneScan L2+GasResistance L1)
+  - N-F05: 미실행 — 첫 사용자 관찰 플레이테스트(에이전트 환경 제약). 사유: 외부 플레이테스터 없음
+- **게이트 실행:** `SubTerra/Tests/Verify Phase N Gates` → **pass=40 fail=0** (incl. `real-service-unlock-path`)
+- **증거 로그:** `Temp/phase-n-editmode-results.txt`, `Temp/phase-n-playmode-results.txt`, `Temp/phase-n-tutorial-ui-build.txt`
+- **Integration UI:** `Mine_Demo_Integration` 에 DemoObjectiveRoot/TutorialDirectorBinder 연결 완료
+
 - **모든 항목 통과 시:** Phase N 완료. 완주 시간, 막힘 여부, Console 상태와 남은 UX 이슈를 기록한다.
 - **실패 항목 존재 시:** 목표 트리거, 실제 시스템 실패, 문구/레이아웃 문제를 구분하고 관련 단계 테스트도 회귀 실행한다.
