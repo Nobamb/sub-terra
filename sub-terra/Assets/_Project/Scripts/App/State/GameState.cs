@@ -124,24 +124,40 @@ namespace SubTerra.App.State
         }
     }
 
-    /// <summary>진행 목표 카운트. 하위 시스템 교체 없이 GameState가 소유한다.</summary>
+    /// <summary>진행 목표 카운트·현재 데모 목표 ID. 하위 시스템 교체 없이 GameState가 소유한다.</summary>
     [Serializable]
     public sealed class ProgressState
     {
         public int CompletedObjectives { get; private set; }
         public bool HasSeenOutpostTutorial { get; private set; }
+        /// <summary>현재 데모 목표 영구 ID. 비어 있으면 복원 시 완료 개수로 폴백한다.</summary>
+        public string CurrentObjectiveId { get; private set; }
+        public bool IsDemoComplete { get; private set; }
 
         private ProgressState() { }
 
-        public ProgressState(int completedObjectives, bool hasSeenOutpostTutorial = false)
+        public ProgressState(
+            int completedObjectives,
+            bool hasSeenOutpostTutorial = false,
+            string currentObjectiveId = null,
+            bool isDemoComplete = false)
         {
-            CompletedObjectives = completedObjectives;
+            CompletedObjectives = completedObjectives < 0 ? 0 : completedObjectives;
             HasSeenOutpostTutorial = hasSeenOutpostTutorial;
+            CurrentObjectiveId = currentObjectiveId ?? string.Empty;
+            IsDemoComplete = isDemoComplete;
         }
 
         internal void MarkOutpostTutorialSeen()
         {
             HasSeenOutpostTutorial = true;
+        }
+
+        internal void ApplyDemoProgress(string objectiveId, int completedCount, bool isDemoComplete)
+        {
+            CurrentObjectiveId = objectiveId ?? string.Empty;
+            CompletedObjectives = completedCount < 0 ? 0 : completedCount;
+            IsDemoComplete = isDemoComplete;
         }
     }
 
@@ -215,6 +231,7 @@ namespace SubTerra.App.State
         public event Action<GasRiskLevel> GasExposureChanged;
         public event Action<BuildingSelectionReadModel> BuildingSelectionChanged;
         public event Action<string> InteractionPromptChanged;
+        public event Action DemoProgressChanged;
 
         private GameState() { }
 
@@ -439,6 +456,30 @@ namespace SubTerra.App.State
         public void MarkOutpostTutorialSeen()
         {
             Progress?.MarkOutpostTutorialSeen();
+        }
+
+        /// <summary>
+        /// 데모 목표 ID·완료 개수를 진행 State에 반영한다.
+        /// TutorialDirector만 호출하며, 자원·위험 수치는 건드리지 않는다.
+        /// </summary>
+        public void SetDemoProgress(string objectiveId, int completedCount, bool isDemoComplete)
+        {
+            if (Progress == null)
+            {
+                return;
+            }
+
+            var id = objectiveId ?? string.Empty;
+            var count = completedCount < 0 ? 0 : completedCount;
+            if (Progress.CurrentObjectiveId == id
+                && Progress.CompletedObjectives == count
+                && Progress.IsDemoComplete == isDemoComplete)
+            {
+                return;
+            }
+
+            Progress.ApplyDemoProgress(id, count, isDemoComplete);
+            DemoProgressChanged?.Invoke();
         }
 
         private static bool Approximately(float a, float b)
