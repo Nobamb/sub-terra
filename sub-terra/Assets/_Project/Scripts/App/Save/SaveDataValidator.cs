@@ -75,6 +75,7 @@ namespace SubTerra.App.Save
             data.targetSceneName ??= string.Empty;
             data.player ??= new PlayerSaveData();
             data.progress ??= new ProgressSaveData();
+            data.progress.currentObjectiveId ??= string.Empty;
             data.run ??= new RunSaveData();
             data.inventory ??= new InventorySaveData();
             data.inventory.quantities ??= new List<QuantitySaveEntry>();
