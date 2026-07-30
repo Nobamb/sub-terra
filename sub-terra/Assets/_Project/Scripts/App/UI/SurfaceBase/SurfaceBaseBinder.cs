@@ -46,7 +46,13 @@ namespace SubTerra.App.UI.SurfaceBase
 
             if (progressionBinder != null && runtime.Progression != null)
             {
-                progressionBinder.BindTo(runtime.Progression);
+                // 구매 성공 후 TryUnlockDeepZone에 넘길 완료 목표 수(GameState).
+                var state = bootstrap.State;
+                progressionBinder.BindTo(
+                    runtime.Progression,
+                    () => state != null && state.Progress != null
+                        ? state.Progress.CompletedObjectives
+                        : 0);
             }
 
             presenter = new SurfaceBasePresenter(view);
