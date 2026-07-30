@@ -1,3 +1,4 @@
+using SubTerra.App.Tutorial;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -7,6 +8,7 @@ namespace SubTerra.App.UI.Hazards
     /// <summary>
     /// 색과 함께 기호·문구·실제 수치를 표시하는 위험 HUD.
     /// 색각 구분이 어려워도 상태를 읽을 수 있도록 텍스트 접두 기호를 유지한다.
+    /// Canvas sort는 튜토리얼 안내보다 항상 높게 유지한다.
     /// </summary>
     public sealed class HazardHudView : MonoBehaviour, IHazardStatusView
     {
@@ -17,6 +19,12 @@ namespace SubTerra.App.UI.Hazards
         [SerializeField] private GameObject gasWarningRoot;
         [SerializeField] private TMP_Text powerText;
         [SerializeField] private Image powerIcon;
+        [SerializeField] private Canvas hazardCanvas;
+
+        private void Awake()
+        {
+            EnsureHazardSortOrder(false);
+        }
 
         public void SetStructuralStatus(HazardStatusReadModel status)
         {
@@ -63,7 +71,32 @@ namespace SubTerra.App.UI.Hazards
             {
                 gasWarningRoot.transform.SetAsLastSibling();
             }
+
+            EnsureHazardSortOrder(isPriority);
         }
+
+        /// <summary>위험 HUD sort order가 튜토리얼(UiLayerPriority.TutorialGuidance)보다 큰지 보장한다.</summary>
+        public void EnsureHazardSortOrder(bool isCritical)
+        {
+            if (hazardCanvas == null)
+            {
+                hazardCanvas = GetComponentInParent<Canvas>();
+            }
+
+            if (hazardCanvas == null)
+            {
+                return;
+            }
+
+            var target = UiLayerPriority.ResolveHazardSortOrder(isCritical);
+            if (hazardCanvas.sortingOrder < target)
+            {
+                hazardCanvas.sortingOrder = target;
+            }
+        }
+
+        public int CurrentSortOrder =>
+            hazardCanvas != null ? hazardCanvas.sortingOrder : UiLayerPriority.HazardWarning;
 
         public bool HasRequiredReferences()
         {
