@@ -6,6 +6,7 @@ using SubTerra.App.Outpost;
 using SubTerra.App.Save;
 using SubTerra.App.State;
 using SubTerra.App.UI.HUD;
+using SubTerra.App.UI.Tutorial;
 using SubTerra.Gameplay.Building;
 using SubTerra.Gameplay.Drone;
 using SubTerra.Shared;
@@ -35,6 +36,7 @@ namespace SubTerra.App.Integration
         [SerializeField] private MonoBehaviour worldSnapshotProviderBehaviour;
         [SerializeField] private CanvasGroup hudCanvasGroup;
         [SerializeField] private Behaviour[] deferredInputBehaviours;
+        [SerializeField] private TutorialDirectorBinder tutorialDirector;
 
         private SaveRuntimeController runtime;
         private GameBootstrapper bootstrap;
@@ -169,6 +171,22 @@ namespace SubTerra.App.Integration
             if (outpostBridge != null)
             {
                 eventFanOut.Add(outpostBridge);
+            }
+
+            if (tutorialDirector == null)
+            {
+                tutorialDirector = FindFirstObjectByType<TutorialDirectorBinder>();
+            }
+
+            if (tutorialDirector != null)
+            {
+                eventFanOut.Add(tutorialDirector);
+                tutorialDirector.BindTo(
+                    bootstrap.State,
+                    runtime.InventoryService,
+                    runtime.Economy,
+                    runtime.Progression,
+                    outpostService);
             }
 
             var worldProvider = worldSnapshotProviderBehaviour as IWorldSnapshotProvider
