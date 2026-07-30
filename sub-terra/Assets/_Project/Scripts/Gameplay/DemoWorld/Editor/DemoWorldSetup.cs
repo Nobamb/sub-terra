@@ -43,7 +43,6 @@ namespace SubTerra.Gameplay.DemoWorld.Editor
             GameObject root = new("GameplayRoot");
             Tilemap tilemap = CreateTilemap(root.transform);
             PopulateDemoRoute(tilemap, rock, copper, iron, lithium, gasPocket, lockedSignal);
-            CreateSafetyGround(root.transform);
 
             GameObject systems = new("DemoSystems"); systems.transform.SetParent(root.transform);
             MiningTileResolver resolver = systems.AddComponent<MiningTileResolver>();
@@ -91,13 +90,22 @@ namespace SubTerra.Gameplay.DemoWorld.Editor
 
         private static void PopulateDemoRoute(Tilemap tilemap, Tile rock, Tile copper, Tile iron, Tile lithium, Tile gasPocket, Tile lockedSignal)
         {
-            for (int x = -15; x <= 15; x++) tilemap.SetTile(new Vector3Int(x, -2, 0), rock);
-            tilemap.SetTile(new Vector3Int(-3, 0, 0), copper); // Copper tutorial
-            tilemap.SetTile(new Vector3Int(1, 0, 0), iron); // Iron reward branch
-            tilemap.SetTile(new Vector3Int(5, 0, 0), lithium); // Structural risk trigger
-            for (int x = 4; x <= 7; x++) tilemap.SetTile(new Vector3Int(x, 3, 0), rock); // Unsupported ceiling
-            tilemap.SetTile(new Vector3Int(8, 0, 0), gasPocket); // Gas route
-            tilemap.SetTile(new Vector3Int(13, 0, 0), lockedSignal); // Future content signal
+            for (int y = -2; y >= -41; y--)
+                for (int x = -40; x <= 40; x++)
+                    tilemap.SetTile(new Vector3Int(x, y, 0), rock);
+
+            for (int y = -1; y <= 5; y++)
+            {
+                tilemap.SetTile(new Vector3Int(-40, y, 0), lockedSignal);
+                tilemap.SetTile(new Vector3Int(40, y, 0), lockedSignal);
+            }
+
+            tilemap.SetTile(new Vector3Int(-8, -2, 0), copper);
+            tilemap.SetTile(new Vector3Int(-7, -3, 0), copper);
+            tilemap.SetTile(new Vector3Int(-3, -3, 0), iron);
+            tilemap.SetTile(new Vector3Int(2, -5, 0), lithium);
+            tilemap.SetTile(new Vector3Int(8, -4, 0), gasPocket);
+            tilemap.SetTile(new Vector3Int(14, -7, 0), lockedSignal);
         }
 
         private static Tilemap CreateTilemap(Transform root)
@@ -105,15 +113,11 @@ namespace SubTerra.Gameplay.DemoWorld.Editor
             GameObject grid = new("Grid"); grid.transform.SetParent(root); grid.AddComponent<Grid>();
             GameObject map = new("ForegroundTilemap"); map.transform.SetParent(grid.transform);
             Tilemap tilemap = map.AddComponent<Tilemap>(); map.AddComponent<TilemapRenderer>();
-            TilemapCollider2D collider = map.AddComponent<TilemapCollider2D>(); collider.compositeOperation = Collider2D.CompositeOperation.Merge;
-            Rigidbody2D body = map.AddComponent<Rigidbody2D>(); body.bodyType = RigidbodyType2D.Static; map.AddComponent<CompositeCollider2D>();
+            TilemapCollider2D collider = map.AddComponent<TilemapCollider2D>();
+            collider.compositeOperation = Collider2D.CompositeOperation.None;
+            Rigidbody2D body = map.AddComponent<Rigidbody2D>();
+            body.bodyType = RigidbodyType2D.Static;
             return tilemap;
-        }
-
-        private static void CreateSafetyGround(Transform root)
-        {
-            GameObject ground = new("SafetyGround"); ground.transform.SetParent(root); ground.transform.position = new Vector3(0f, -1.5f, 0f);
-            ground.AddComponent<BoxCollider2D>().size = new Vector2(32f, 1f);
         }
 
         private static Transform CreatePlayer(Transform root, MiningSystem mining)
@@ -121,7 +125,7 @@ namespace SubTerra.Gameplay.DemoWorld.Editor
             GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PlayerPrefabPath);
             if (prefab == null) return new GameObject("Player").transform;
             GameObject player = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
-            player.name = "Player"; player.transform.SetParent(root); player.transform.position = new Vector3(-10f, 0f, 0f);
+            player.name = "Player"; player.transform.SetParent(root); player.transform.position = new Vector3(-9.5f, -0.65f, 0f);
             PlayerMiningController controller = player.GetComponent<PlayerMiningController>() ?? player.AddComponent<PlayerMiningController>();
             SetReference(controller, "miningSystem", mining); SetReference(controller, "inputActions", AssetDatabase.LoadAssetAtPath<InputActionAsset>(InputActionsPath));
             return player.transform;
@@ -140,7 +144,14 @@ namespace SubTerra.Gameplay.DemoWorld.Editor
             GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(DronePrefabPath);
             if (prefab == null) return;
             GameObject drone = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
-            drone.name = "DiggerBot_Runtime"; drone.transform.SetParent(root); drone.transform.position = player.position + new Vector3(-1f, 1f, 0f);
+            drone.name = "DiggerBot_Runtime"; drone.transform.SetParent(root); drone.transform.position = player.position + new Vector3(-0.8f, 0.55f, 0f);
+            drone.transform.localScale = Vector3.one;
+            var renderer = drone.GetComponent<SpriteRenderer>();
+            if (renderer != null)
+            {
+                renderer.drawMode = SpriteDrawMode.Sliced;
+                renderer.size = new Vector2(0.45f, 0.35f);
+            }
             drone.GetComponent<DroneFollower>()?.SetTarget(player);
             DroneSensor sensor = drone.GetComponent<DroneSensor>();
             if (sensor == null) return;
@@ -153,7 +164,7 @@ namespace SubTerra.Gameplay.DemoWorld.Editor
         {
             GameObject cameraObject = new("Main Camera"); cameraObject.tag = "MainCamera";
             Camera camera = cameraObject.AddComponent<Camera>(); camera.orthographic = true; camera.orthographicSize = 5f;
-            cameraObject.transform.position = new Vector3(-7f, 1f, -10f);
+            cameraObject.transform.position = new Vector3(-9.5f, 0.35f, -10f);
             if (player != null) cameraObject.AddComponent<PlayerCameraFollow>().SetTarget(player);
         }
 
