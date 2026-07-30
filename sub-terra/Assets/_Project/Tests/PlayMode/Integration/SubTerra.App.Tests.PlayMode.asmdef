@@ -5,6 +5,8 @@
     "SubTerra.App.GameplayIntegration",
     "SubTerra.Shared",
     "SubTerra.Gameplay.Building",
+    "SubTerra.Gameplay.Snapshot",
+    "SubTerra.Gameplay.Mining",
     "Unity.TextMeshPro"
   ],
   "optionalUnityReferences": ["TestAssemblies"],
