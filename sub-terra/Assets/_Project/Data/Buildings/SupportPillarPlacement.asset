@@ -12,7 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 68d7a4d58d5942f469c7dc2935a40cdb, type: 3}
   m_Name: SupportPillarPlacement
   m_EditorClassIdentifier: SubTerra.Gameplay.Building::SubTerra.Gameplay.Building.BuildingPlacementDefinition
-  buildingId: building.support
+  buildingId: building.support.basic
   runtimePrefab: {fileID: 876753129368335756, guid: c07253bcef8bfe645a16d80436788e1f, type: 3}
   footprint: {x: 1, y: 1}
   requiresGround: 1
+  costs:
+  - itemId: mineral.copper
+    quantity: 2
