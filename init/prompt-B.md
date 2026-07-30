@@ -40,4 +40,4 @@ MVP-connect2의 월드 스냅샷 DTO와 IWorldSnapshotProvider merge를 완료�
 
 14. work_process/MVP/MVP-B 폴더 내에서 work_process/MVP/MVP-B/M/research.md, work_process/MVP/MVP-B/M/test.md 파일을 읽고 M 단계의 작업을 수행해줘 M단계의 작업 내용은 Grid/Tilemap, GameplayRoot, ApplicationRoot, HUDCanvas와 EventSystem의 기준 계층을 생성, Shared 인터페이스와 이벤트를 통해 A Producer와 B Consumer를 연결, 저장 복원과 HUD 활성화의 순서를 보장, A Runtime Prefab 내부를 수정하지 않고 전체 플레이 루프를 통합, A의 검증된 Runtime Prefab과 B의 State·UI·Save 서비스를 `Mine_Demo_Integration.unity` 하나에 연결하는거야 unity MCP도 같이 연결해놓은 상태니까 unity editor에서도 같이 작업을 해주도록 하고 작업 내용에 대해서는 init/rule.md의 내용 참고하면서 한국어 주석도 같이 작성해주면서 진행해주면 돼
 
-15.
+15. work_process/MVP/MVP-B 폴더 내에서 work_process/MVP/MVP-B/N/research.md, work_process/MVP/MVP-B/N/test.md 파일을 읽고 N 단계의 작업을 수행해줘 N단계의 작업 내용은 탐사 시작부터 심층 신호와 데모 종료까지 필수 흐름을 완주하게 하도록 하고, 현재 목표와 다음 행동은 명확히 보이되 조작을 과도하게 막지 않기, 구조·가스 등 긴급 UI가 튜토리얼보다 우선시하면서 정산, 업그레이드와 잠금 결과를 실제 State와 동기화하면서 Phase M의 통합 기능을 처음 플레이하는 사람이 막힘 없이 경험하도록 목표, 안내, 드론 대사, 결과와 기본 사운드를 순서에 맞춰 연출하는거야 unity MCP도 같이 연결해놓은 상태니까 unity editor에서도 같이 작업을 해주도록 하고 작업 내용에 대해서는 init/rule.md의 내용 참고하면서 한국어 주석도 같이 작성해주면서 진행해주면 돼
