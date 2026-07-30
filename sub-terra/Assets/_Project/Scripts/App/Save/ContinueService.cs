@@ -26,6 +26,16 @@ namespace SubTerra.App.Save
         void SetReady(bool ready);
     }
 
+    /// <summary>
+    /// 이어하기 월드 복원·파생 재계산 완료를 Integration binder 등에 알린다.
+    /// App 어셈블리가 GameplayIntegration을 참조하지 않도록 계약만 둔다.
+    /// </summary>
+    public interface IIntegrationRestoreListener
+    {
+        void NotifyWorldRestored();
+        void NotifyDerivedRecalculated();
+    }
+
     public enum ContinueStatus
     {
         Success = 0,
