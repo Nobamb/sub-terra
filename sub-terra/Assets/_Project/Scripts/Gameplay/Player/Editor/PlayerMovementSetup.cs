@@ -40,7 +40,7 @@ namespace SubTerra.Gameplay.Player.Editor
         private static GameObject CreatePlayerPrefab()
         {
             GameObject root = new("Player");
-            root.transform.position = new Vector3(-6f, -1f, 0f);
+            root.transform.position = new Vector3(-9.5f, -0.65f, 0f);
 
             Rigidbody2D body = root.AddComponent<Rigidbody2D>();
             body.gravityScale = 3f;
@@ -49,7 +49,7 @@ namespace SubTerra.Gameplay.Player.Editor
             body.interpolation = RigidbodyInterpolation2D.Interpolate;
 
             CapsuleCollider2D collider = root.AddComponent<CapsuleCollider2D>();
-            collider.size = new Vector2(0.8f, 1.8f);
+            collider.size = new Vector2(0.6f, 0.7f);
 
             PlayerMovement movement = root.AddComponent<PlayerMovement>();
             PlayerController controller = root.AddComponent<PlayerController>();
@@ -57,11 +57,11 @@ namespace SubTerra.Gameplay.Player.Editor
 
             Transform interactionOrigin = new GameObject("PlayerInteractionOrigin").transform;
             interactionOrigin.SetParent(root.transform, false);
-            interactionOrigin.localPosition = new Vector3(0.7f, 0f, 0f);
+            interactionOrigin.localPosition = new Vector3(0.45f, -0.1f, 0f);
 
             Transform groundCheck = new GameObject("GroundCheck").transform;
             groundCheck.SetParent(root.transform, false);
-            groundCheck.localPosition = new Vector3(0f, -0.94f, 0f);
+            groundCheck.localPosition = new Vector3(0f, -0.37f, 0f);
 
             Transform visualRoot = new GameObject("VisualRoot").transform;
             visualRoot.SetParent(root.transform, false);
@@ -69,9 +69,11 @@ namespace SubTerra.Gameplay.Player.Editor
             SpriteRenderer renderer = visualRoot.gameObject.AddComponent<SpriteRenderer>();
             renderer.sprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UISprite.psd");
             renderer.color = new Color(0.2f, 0.75f, 0.95f);
-            renderer.size = new Vector2(0.8f, 1.8f);
+            renderer.drawMode = SpriteDrawMode.Sliced;
+            renderer.size = new Vector2(0.7f, 0.7f);
 
             SetObjectReference(movement, "groundCheck", groundCheck);
+            SetFloat(movement, "groundCheckRadius", 0.08f);
             SetObjectReference(facing, "visualRoot", visualRoot);
 
             InputActionAsset actions = AssetDatabase.LoadAssetAtPath<InputActionAsset>(InputActionsPath);
@@ -133,7 +135,7 @@ namespace SubTerra.Gameplay.Player.Editor
 
             GameObject player = (GameObject)PrefabUtility.InstantiatePrefab(playerPrefab);
             player.transform.SetParent(gameplayRoot.transform);
-            player.transform.position = new Vector3(-6f, 0f, 0f);
+            player.transform.position = new Vector3(-9.5f, -0.65f, 0f);
 
             GameObject cameraObject = new("Main Camera");
             cameraObject.tag = "MainCamera";
@@ -142,7 +144,7 @@ namespace SubTerra.Gameplay.Player.Editor
             camera.orthographicSize = 5f;
             camera.clearFlags = CameraClearFlags.SolidColor;
             camera.backgroundColor = new Color(0.035f, 0.045f, 0.065f);
-            cameraObject.transform.position = new Vector3(-6f, 1f, -10f);
+            cameraObject.transform.position = new Vector3(-9.5f, 0.35f, -10f);
             PlayerCameraFollow follow = cameraObject.AddComponent<PlayerCameraFollow>();
             follow.SetTarget(player.transform);
 
@@ -156,6 +158,13 @@ namespace SubTerra.Gameplay.Player.Editor
         {
             SerializedObject serializedObject = new(target);
             serializedObject.FindProperty(propertyName).objectReferenceValue = value;
+            serializedObject.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        private static void SetFloat(Object target, string propertyName, float value)
+        {
+            SerializedObject serializedObject = new(target);
+            serializedObject.FindProperty(propertyName).floatValue = value;
             serializedObject.ApplyModifiedPropertiesWithoutUndo();
         }
 
