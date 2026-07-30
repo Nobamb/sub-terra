@@ -606,6 +606,9 @@ namespace SubTerra.App.Save
                     yield break;
                 }
 
+                // Integration binder 게이트: 월드 복원 완료 신호 (HUD는 아직 비활성).
+                NotifyIntegrationWorldRestored();
+
                 if (!Recalculate())
                 {
                     CompleteContinue(
@@ -613,6 +616,14 @@ namespace SubTerra.App.Save
                         completed);
                     yield break;
                 }
+
+                NotifyIntegrationDerivedRecalculated();
+            }
+            else
+            {
+                // SurfaceBase 등 월드 복원 불필요 Scene은 게이트를 바로 통과 가능하게 둔다.
+                NotifyIntegrationWorldRestored();
+                NotifyIntegrationDerivedRecalculated();
             }
 
             ActivateSlot(slotId);
@@ -621,6 +632,34 @@ namespace SubTerra.App.Save
             CompleteContinue(
                 new ContinueResult(ContinueStatus.Success, load),
                 completed);
+        }
+
+        /// <summary>
+        /// Integration Scene binder에 복원 단계 완료를 알린다.
+        /// App→Integration 순환 참조 없이 IIntegrationRestoreListener로 탐색한다.
+        /// </summary>
+        private static void NotifyIntegrationWorldRestored()
+        {
+            var behaviours = FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Exclude);
+            for (var i = 0; i < behaviours.Length; i++)
+            {
+                if (behaviours[i] is IIntegrationRestoreListener listener)
+                {
+                    listener.NotifyWorldRestored();
+                }
+            }
+        }
+
+        private static void NotifyIntegrationDerivedRecalculated()
+        {
+            var behaviours = FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Exclude);
+            for (var i = 0; i < behaviours.Length; i++)
+            {
+                if (behaviours[i] is IIntegrationRestoreListener listener)
+                {
+                    listener.NotifyDerivedRecalculated();
+                }
+            }
         }
 
         private void CompleteContinue(
