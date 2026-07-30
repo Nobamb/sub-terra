@@ -4,6 +4,7 @@ using NUnit.Framework;
 using SubTerra.Gameplay.Player;
 using UnityEngine;
 using UnityEngine.TestTools;
+using UnityEngine.Tilemaps;
 
 namespace SubTerra.Gameplay.Player.Tests
 {
@@ -13,6 +14,8 @@ namespace SubTerra.Gameplay.Player.Tests
         private PlayerMovement movement;
         private Rigidbody2D body;
         private GameObject groundObject;
+        private GameObject wallObject;
+        private Tile wallTile;
 
         [SetUp]
         public void SetUp()
@@ -28,6 +31,8 @@ namespace SubTerra.Gameplay.Player.Tests
         {
             Object.DestroyImmediate(playerObject);
             Object.DestroyImmediate(groundObject);
+            Object.DestroyImmediate(wallObject);
+            Object.DestroyImmediate(wallTile);
         }
 
         [UnityTest]
@@ -98,6 +103,42 @@ namespace SubTerra.Gameplay.Player.Tests
             yield return new WaitForFixedUpdate();
 
             Assert.Greater(body.linearVelocityY, 0f);
+        }
+
+        [UnityTest]
+        public IEnumerator TilemapWallStopsThePlayerInsteadOfAllowingPassThrough()
+        {
+            body.position = new Vector2(-1f, 0.5f);
+            body.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
+            CapsuleCollider2D playerCollider = playerObject.AddComponent<CapsuleCollider2D>();
+            playerCollider.size = new Vector2(0.6f, 0.7f);
+
+            wallObject = new GameObject("WallGrid");
+            wallObject.AddComponent<Grid>();
+            GameObject tilemapObject = new("WallTilemap");
+            tilemapObject.transform.SetParent(wallObject.transform);
+            Tilemap tilemap = tilemapObject.AddComponent<Tilemap>();
+            tilemapObject.AddComponent<TilemapCollider2D>();
+            Rigidbody2D wallBody = tilemapObject.AddComponent<Rigidbody2D>();
+            wallBody.bodyType = RigidbodyType2D.Static;
+            wallTile = ScriptableObject.CreateInstance<Tile>();
+            wallTile.colliderType = Tile.ColliderType.Grid;
+            for (int y = -1; y <= 2; y++)
+            {
+                tilemap.SetTile(new Vector3Int(0, y, 0), wallTile);
+            }
+
+            Physics2D.SyncTransforms();
+            movement.SetMoveInput(1f);
+            for (int frame = 0; frame < 30; frame++)
+            {
+                yield return new WaitForFixedUpdate();
+            }
+
+            Assert.LessOrEqual(
+                body.position.x,
+                -0.29f,
+                "The player's 0.6-wide capsule must stop at the wall's left face.");
         }
     }
 }
