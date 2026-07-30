@@ -7,12 +7,15 @@ using SubTerra.App.Integration;
 using SubTerra.App.Inventory;
 using SubTerra.App.State;
 using SubTerra.Gameplay.Building;
+using SubTerra.Gameplay.Mining;
+using SubTerra.Gameplay.Player;
 using SubTerra.Gameplay.Snapshot;
 using SubTerra.Shared;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 using UnityEngine.Tilemaps;
 
@@ -49,6 +52,110 @@ namespace SubTerra.App.Tests.Integration
                 Assert.That(tilemapNames, Does.Contain("HazardTilemap"));
                 Assert.That(tilemapNames, Does.Contain("BuildingTilemap"));
                 Assert.That(FindInSceneByName(scene, "RuntimeBuildings"), Is.Not.Null);
+            }
+            finally
+            {
+                EditorSceneManager.CloseScene(scene, true);
+            }
+        }
+
+        [Test]
+        public void PlayableMineScene_HasRequestedCharacterTerrainAndMiningLayout()
+        {
+            var scene = EditorSceneManager.OpenScene(IntegrationPath, OpenSceneMode.Additive);
+            try
+            {
+                var tilemapObject = FindInSceneByName(scene, "ForegroundTilemap");
+                Assert.That(tilemapObject, Is.Not.Null);
+                var tilemap = tilemapObject.GetComponent<Tilemap>();
+                Assert.That(tilemap, Is.Not.Null);
+
+                for (int y = -2; y >= -41; y--)
+                {
+                    for (int x = -40; x <= 40; x++)
+                    {
+                        Assert.That(
+                            tilemap.HasTile(new Vector3Int(x, y, 0)),
+                            Is.True,
+                            $"Missing terrain at ({x}, {y}).");
+                    }
+                }
+
+                for (int y = -1; y <= 5; y++)
+                {
+                    Assert.That(tilemap.HasTile(new Vector3Int(-40, y, 0)), Is.True);
+                    Assert.That(tilemap.HasTile(new Vector3Int(40, y, 0)), Is.True);
+                }
+
+                var tilemapCollider = tilemapObject.GetComponent<TilemapCollider2D>();
+                Assert.That(tilemapCollider, Is.Not.Null);
+                Assert.That(
+                    tilemapCollider.compositeOperation,
+                    Is.EqualTo(Collider2D.CompositeOperation.None));
+                Assert.That(tilemapObject.GetComponent<CompositeCollider2D>(), Is.Null);
+                var terrainBody = tilemapObject.GetComponent<Rigidbody2D>();
+                Assert.That(terrainBody, Is.Not.Null);
+                Assert.That(terrainBody.bodyType, Is.EqualTo(RigidbodyType2D.Static));
+
+                var player = FindInSceneByName(scene, "Player");
+                Assert.That(player, Is.Not.Null);
+                var playerCollider = player.GetComponent<CapsuleCollider2D>();
+                Assert.That(playerCollider, Is.Not.Null);
+                Assert.That(playerCollider.size, Is.EqualTo(new Vector2(0.6f, 0.7f)));
+                var playerRenderer = player.GetComponentInChildren<SpriteRenderer>(true);
+                Assert.That(playerRenderer, Is.Not.Null);
+                Assert.That(playerRenderer.size, Is.EqualTo(new Vector2(0.7f, 0.7f)));
+
+                float playerBottom = player.transform.position.y
+                    + playerCollider.offset.y
+                    - playerCollider.size.y * 0.5f;
+                float terrainTop = tilemap.CellToWorld(new Vector3Int(-10, -1, 0)).y;
+                Assert.That(playerBottom, Is.EqualTo(terrainTop).Within(0.001f));
+
+                var drone = FindInSceneByName(scene, "DiggerBot_Runtime");
+                Assert.That(drone, Is.Not.Null);
+                var droneRenderer = drone.GetComponent<SpriteRenderer>();
+                Assert.That(droneRenderer, Is.Not.Null);
+                Vector2 droneSize = Vector2.Scale(
+                    droneRenderer.size,
+                    new Vector2(
+                        Mathf.Abs(drone.transform.lossyScale.x),
+                        Mathf.Abs(drone.transform.lossyScale.y)));
+                Assert.That(droneSize.x, Is.LessThan(playerRenderer.size.x));
+                Assert.That(droneSize.y, Is.LessThan(playerRenderer.size.y));
+
+                Assert.That(
+                    tilemap.GetTile(new Vector3Int(-8, -2, 0)).name,
+                    Is.EqualTo("Copper"));
+                Assert.That(
+                    tilemap.GetTile(new Vector3Int(-3, -3, 0)).name,
+                    Is.EqualTo("Iron"));
+                Assert.That(
+                    tilemap.GetTile(new Vector3Int(2, -5, 0)).name,
+                    Is.EqualTo("Lithium"));
+
+                var miningController = player.GetComponent<PlayerMiningController>();
+                Assert.That(miningController, Is.Not.Null);
+                Assert.That(miningController.enabled, Is.True);
+                var miningControllerData = new SerializedObject(miningController);
+                Assert.That(
+                    miningControllerData.FindProperty("reach").floatValue,
+                    Is.EqualTo(1.35f).Within(0.001f));
+                Assert.That(
+                    miningControllerData.FindProperty("miningSystem").objectReferenceValue,
+                    Is.Not.Null);
+                var actions = miningControllerData.FindProperty("inputActions").objectReferenceValue
+                    as InputActionAsset;
+                Assert.That(actions, Is.Not.Null);
+                var mineAction = actions.FindAction("Player/Attack", true);
+                Assert.That(
+                    mineAction.bindings,
+                    Has.Some.Matches<InputBinding>(
+                        binding => binding.path == "<Mouse>/leftButton"));
+                Assert.That(
+                    mineAction.bindings,
+                    Has.Some.Matches<InputBinding>(
+                        binding => binding.path == "<Keyboard>/enter"));
             }
             finally
             {
