@@ -39,7 +39,7 @@ namespace SubTerra.App.Editor.DataValidation
             var scene = EditorSceneManager.OpenScene(
                 IntegrationScenePath,
                 OpenSceneMode.Single);
-            PolishTerrain(scene, tiles[0]);
+            PolishTerrain(scene, tiles);
             EnsureTerrainLegend(scene);
             PolishWorldMarkers(scene, sprites[0]);
             EditorSceneManager.MarkSceneDirty(scene);
@@ -95,7 +95,7 @@ namespace SubTerra.App.Editor.DataValidation
             return result;
         }
 
-        private static void PolishTerrain(Scene scene, Tile rock)
+        private static void PolishTerrain(Scene scene, Tile[] tiles)
         {
             var tilemap = FindInScene<Tilemap>(scene, "ForegroundTilemap");
             if (tilemap == null)
@@ -103,18 +103,39 @@ namespace SubTerra.App.Editor.DataValidation
                 throw new System.InvalidOperationException("ForegroundTilemap missing.");
             }
 
-            for (var x = -RouteBoundary; x <= RouteBoundary; x++)
+            var rock = tiles[0];
+            var copper = tiles[1];
+            var iron = tiles[2];
+            var lithium = tiles[3];
+            var gasPocket = tiles[4];
+            var lockedSignal = tiles[5];
+            tilemap.ClearAllTiles();
+            for (var y = -2; y >= -41; y--)
             {
-                tilemap.SetTile(new Vector3Int(x, -2, 0), rock);
+                for (var x = -RouteBoundary; x <= RouteBoundary; x++)
+                {
+                    tilemap.SetTile(new Vector3Int(x, y, 0), rock);
+                }
             }
 
             for (var y = -1; y <= 5; y++)
             {
-                tilemap.SetTile(new Vector3Int(-RouteBoundary, y, 0), rock);
-                tilemap.SetTile(new Vector3Int(RouteBoundary, y, 0), rock);
+                tilemap.SetTile(
+                    new Vector3Int(-RouteBoundary, y, 0),
+                    lockedSignal);
+                tilemap.SetTile(
+                    new Vector3Int(RouteBoundary, y, 0),
+                    lockedSignal);
             }
 
+            tilemap.SetTile(new Vector3Int(-8, -2, 0), copper);
+            tilemap.SetTile(new Vector3Int(-7, -3, 0), copper);
+            tilemap.SetTile(new Vector3Int(-3, -3, 0), iron);
+            tilemap.SetTile(new Vector3Int(2, -5, 0), lithium);
+            tilemap.SetTile(new Vector3Int(8, -4, 0), gasPocket);
+            tilemap.SetTile(new Vector3Int(14, -7, 0), lockedSignal);
             tilemap.RefreshAllTiles();
+            EditorUtility.SetDirty(tilemap);
             var tileRenderer = tilemap.GetComponent<TilemapRenderer>();
             if (tileRenderer != null)
             {
@@ -122,28 +143,31 @@ namespace SubTerra.App.Editor.DataValidation
                 EditorUtility.SetDirty(tileRenderer);
             }
 
+            var tileCollider = tilemap.GetComponent<TilemapCollider2D>();
+            if (tileCollider != null)
+            {
+                tileCollider.compositeOperation =
+                    Collider2D.CompositeOperation.None;
+                EditorUtility.SetDirty(tileCollider);
+            }
+
+            var terrainBody = tilemap.GetComponent<Rigidbody2D>();
+            if (terrainBody != null)
+            {
+                terrainBody.bodyType = RigidbodyType2D.Static;
+                EditorUtility.SetDirty(terrainBody);
+            }
+
+            var composite = tilemap.GetComponent<CompositeCollider2D>();
+            if (composite != null)
+            {
+                Object.DestroyImmediate(composite);
+            }
+
             var safetyGround = FindInScene<Transform>(scene, "SafetyGround");
             if (safetyGround != null)
             {
-                var collider = safetyGround.GetComponent<BoxCollider2D>();
-                if (collider != null)
-                {
-                    collider.size = new Vector2(RouteBoundary * 2f + 2f, 1f);
-                    EditorUtility.SetDirty(collider);
-                }
-
-                var visual = safetyGround.GetComponent<SpriteRenderer>();
-                if (visual == null)
-                {
-                    visual = safetyGround.gameObject.AddComponent<SpriteRenderer>();
-                }
-
-                visual.sprite = rock.sprite;
-                visual.drawMode = SpriteDrawMode.Sliced;
-                visual.size = new Vector2(RouteBoundary * 2f + 2f, 1f);
-                visual.color = new Color(0.32f, 0.35f, 0.42f, 1f);
-                visual.sortingOrder = -1;
-                EditorUtility.SetDirty(visual);
+                Object.DestroyImmediate(safetyGround.gameObject);
             }
 
             var camera = FindInScene<Camera>(scene, "Main Camera");
@@ -247,19 +271,65 @@ namespace SubTerra.App.Editor.DataValidation
 
         private static void PolishWorldMarkers(Scene scene, Sprite markerSprite)
         {
+            var player = FindInScene<Transform>(scene, "Player");
+            if (player != null)
+            {
+                player.position = new Vector3(-9.5f, -0.65f, 0f);
+                var playerCollider = player.GetComponent<CapsuleCollider2D>();
+                if (playerCollider != null)
+                {
+                    playerCollider.size = new Vector2(0.6f, 0.7f);
+                    playerCollider.offset = Vector2.zero;
+                    EditorUtility.SetDirty(playerCollider);
+                }
+
+                var groundCheck = player.Find("GroundCheck");
+                if (groundCheck != null)
+                {
+                    groundCheck.localPosition = new Vector3(0f, -0.37f, 0f);
+                    EditorUtility.SetDirty(groundCheck);
+                }
+
+                var miningController = player.GetComponents<MonoBehaviour>()
+                    .FirstOrDefault(component =>
+                        component != null
+                        && component.GetType().FullName
+                        == "SubTerra.Gameplay.Mining.PlayerMiningController");
+                if (miningController != null)
+                {
+                    miningController.enabled = true;
+                    var serialized = new SerializedObject(miningController);
+                    serialized.FindProperty("reach").floatValue = 1.35f;
+                    serialized.ApplyModifiedPropertiesWithoutUndo();
+                    EditorUtility.SetDirty(miningController);
+                }
+
+                EditorUtility.SetDirty(player);
+            }
+
+            var drone = FindInScene<Transform>(scene, "DiggerBot_Runtime");
+            if (drone != null && player != null)
+            {
+                drone.position = player.position + new Vector3(-0.8f, 0.55f, 0f);
+                drone.localScale = Vector3.one;
+                EditorUtility.SetDirty(drone);
+            }
+
             foreach (var renderer in scene.GetRootGameObjects()
                          .SelectMany(root => root.GetComponentsInChildren<SpriteRenderer>(true)))
             {
                 var path = GetHierarchyPath(renderer.transform);
                 if (path.Contains("Player/VisualRoot"))
                 {
+                    renderer.drawMode = SpriteDrawMode.Sliced;
+                    renderer.size = new Vector2(0.7f, 0.7f);
                     renderer.sortingOrder = 10;
                 }
                 else if (path.Contains("DiggerBot_Runtime"))
                 {
                     renderer.sprite = markerSprite;
                     renderer.drawMode = SpriteDrawMode.Sliced;
-                    renderer.size = new Vector2(0.8f, 0.6f);
+                    renderer.size = new Vector2(0.45f, 0.35f);
                     renderer.sortingOrder = 9;
                 }
                 else if (path.Contains("OutpostCore_Demo"))
