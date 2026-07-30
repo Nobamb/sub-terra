@@ -1,3 +1,4 @@
+using System;
 using SubTerra.App.Progression;
 
 namespace SubTerra.App.UI.Progression
@@ -5,11 +6,13 @@ namespace SubTerra.App.UI.Progression
     /// <summary>
     /// 업그레이드 목록·상세·구매 UI Presenter.
     /// 구매 버튼은 ProgressionService만 호출하며 중복 제출을 한 건으로 제한한다.
+    /// 구매 성공 후에는 완료 목표 수로 TryUnlockDeepZone을 호출해 심층 잠금을 커밋한다.
     /// </summary>
     public sealed class ProgressionPanelPresenter
     {
         private readonly IProgressionPanelView view;
         private ProgressionService service;
+        private Func<int> completedObjectivesProvider;
         private string selectedUpgradeId = string.Empty;
         private bool busy;
 
@@ -24,8 +27,14 @@ namespace SubTerra.App.UI.Progression
 
         public void Bind(ProgressionService progression)
         {
+            Bind(progression, null);
+        }
+
+        public void Bind(ProgressionService progression, Func<int> completedObjectives)
+        {
             Unbind();
             service = progression;
+            completedObjectivesProvider = completedObjectives ?? (() => 0);
             if (service != null)
             {
                 service.PurchaseCompleted += OnPurchaseCompleted;
@@ -36,6 +45,11 @@ namespace SubTerra.App.UI.Progression
             view?.SetBusy(false);
             view?.SetPurchaseResult(string.Empty, string.Empty);
             Refresh();
+            // 바인드 시점에도 조건이 이미 맞으면 잠금을 커밋한다.
+            if (service != null)
+            {
+                RefreshDeepZoneAccess(completedObjectivesProvider(), persistUnlock: true);
+            }
         }
 
         public void Unbind()
@@ -48,6 +62,7 @@ namespace SubTerra.App.UI.Progression
                 service = null;
             }
 
+            completedObjectivesProvider = null;
             busy = false;
             view?.SetBusy(false);
         }
@@ -142,6 +157,14 @@ namespace SubTerra.App.UI.Progression
         private void OnPurchaseCompleted(ProgressionPurchaseResult result)
         {
             ApplyResult(result);
+            if (result.IsSuccess)
+            {
+                // 구매 성공 직후 실제 Service 경로로 심층 잠금을 시도한다.
+                var completed = completedObjectivesProvider != null
+                    ? completedObjectivesProvider()
+                    : 0;
+                RefreshDeepZoneAccess(completed, persistUnlock: true);
+            }
         }
 
         private void OnUpgradeChanged(UpgradeSnapshot snapshot)
