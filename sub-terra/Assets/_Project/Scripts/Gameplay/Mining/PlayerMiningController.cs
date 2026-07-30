@@ -10,7 +10,7 @@ namespace SubTerra.Gameplay.Mining
         [SerializeField] private MiningSystem miningSystem;
         [SerializeField] private InputActionAsset inputActions;
         [SerializeField] private string mineActionPath = "Player/Attack";
-        [SerializeField, Min(0f)] private float reach = 1.1f;
+        [SerializeField, Min(0f)] private float reach = 1.35f;
 
         private PlayerMovement movement;
         private InputAction mineAction;
@@ -31,18 +31,30 @@ namespace SubTerra.Gameplay.Mining
 
         private void Update()
         {
-            if (miningSystem == null || mineAction == null || !mineAction.IsPressed())
+            if (miningSystem == null
+                || mineAction == null
+                || !mineAction.WasPressedThisFrame())
             {
-                miningSystem?.CancelMining();
                 return;
             }
 
-            if (!miningSystem.IsMining)
+            bool mousePressed = Mouse.current != null
+                && Mouse.current.leftButton.wasPressedThisFrame;
+            if (mousePressed && Camera.main != null)
             {
-                miningSystem.TryStartMiningFrom(movement.Position, movement.FacingDirection, reach);
+                Vector3 world = Camera.main.ScreenToWorldPoint(
+                    Mouse.current.position.ReadValue());
+                miningSystem.TryMineInstantAtWorldPoint(
+                    world,
+                    movement.Position,
+                    reach);
+                return;
             }
 
-            miningSystem.TickMining(Time.deltaTime);
+            miningSystem.TryMineInstantFrom(
+                movement.Position,
+                movement.FacingDirection,
+                reach);
         }
     }
 }
