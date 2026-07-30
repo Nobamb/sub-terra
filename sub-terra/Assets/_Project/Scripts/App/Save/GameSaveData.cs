@@ -37,6 +37,9 @@ namespace SubTerra.App.Save
     {
         public int completedObjectives;
         public bool hasSeenOutpostTutorial;
+        /// <summary>현재 데모 목표 ID. 구버전 세이브는 빈 문자열 → 완료 개수로 폴백.</summary>
+        public string currentObjectiveId = string.Empty;
+        public bool isDemoComplete;
     }
 
     [Serializable]
