@@ -242,16 +242,13 @@ namespace SubTerra.App.Tests.UI.MainMenu
                     tilemap.GetSprite(new Vector3Int(0, -2, 0)).bounds.size.x,
                     Is.EqualTo(1f).Within(0.01f));
 
-                var safetyGround = scene.GetRootGameObjects()
-                    .SelectMany(root => root.GetComponentsInChildren<Transform>(true))
-                    .FirstOrDefault(item => item.name == "SafetyGround");
-                Assert.That(safetyGround, Is.Not.Null);
+                var terrainCollider = tilemap.GetComponent<TilemapCollider2D>();
+                Assert.That(terrainCollider, Is.Not.Null);
+                Assert.That(terrainCollider.enabled, Is.True);
                 Assert.That(
-                    safetyGround.GetComponent<BoxCollider2D>().size.x,
-                    Is.GreaterThanOrEqualTo(82f));
-                Assert.That(
-                    safetyGround.GetComponent<SpriteRenderer>().size.x,
-                    Is.GreaterThanOrEqualTo(82f));
+                    terrainCollider.compositeOperation,
+                    Is.EqualTo(Collider2D.CompositeOperation.None));
+                Assert.That(tilemap.GetTile(new Vector3Int(0, -41, 0)), Is.Not.Null);
 
                 var legend = scene.GetRootGameObjects()
                     .SelectMany(root => root.GetComponentsInChildren<TMP_Text>(true))
