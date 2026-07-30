@@ -1,3 +1,4 @@
+using System;
 using SubTerra.App.Progression;
 using UnityEngine;
 
@@ -31,12 +32,17 @@ namespace SubTerra.App.UI.Progression
 
         public void BindTo(ProgressionService service)
         {
+            BindTo(service, null);
+        }
+
+        public void BindTo(ProgressionService service, Func<int> completedObjectivesProvider)
+        {
             if (presenter == null)
             {
                 presenter = new ProgressionPanelPresenter(view);
             }
 
-            presenter.Bind(service);
+            presenter.Bind(service, completedObjectivesProvider);
         }
 
         public bool SelectUpgrade(string upgradeId)
