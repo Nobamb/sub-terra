@@ -53,14 +53,17 @@ namespace SubTerra.App.UI.SurfaceBase
             }
 
             var completed = state.Progress.CompletedObjectives;
-            view.SetGoals(
-                completed,
-                "완료 목표 " + completed + "개");
+            var objectiveId = state.Progress.CurrentObjectiveId;
+            var goalSummary = string.IsNullOrEmpty(objectiveId)
+                ? "완료 목표 " + completed + "개"
+                : "완료 " + completed + " · 현재 " + objectiveId;
+            view.SetGoals(completed, goalSummary);
 
             ZoneAccessResult access;
             if (progression != null)
             {
-                access = progression.GetDeepZoneAccess(completed);
+                // 읽기만이 아니라 조건 충족 시 실제 잠금 커밋(DeepZoneAccessChanged)까지 수행한다.
+                access = progression.TryUnlockDeepZone(completed);
             }
             else
             {
