@@ -166,7 +166,7 @@ namespace SubTerra.App.Tests.PlayMode.Save
             Assert.That(SceneManager.GetActiveScene().name, Is.EqualTo(SceneNames.MainMenu));
             Assert.That(SaveRuntimeController.Instance, Is.Not.Null);
             Assert.That(
-                UnityEngine.Object.FindFirstObjectByType<SaveSlotPanelBinder>(),
+                UnityEngine.Object.FindFirstObjectByType<SaveSlotPanelBinder>(FindObjectsInactive.Include),
                 Is.Not.Null);
             Assert.That(
                 UnityEngine.Object.FindFirstObjectByType<EventSystem>(),

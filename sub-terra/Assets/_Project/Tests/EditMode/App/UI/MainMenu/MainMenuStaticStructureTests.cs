@@ -234,10 +234,22 @@ namespace SubTerra.App.Tests.UI.MainMenu
                     .SelectMany(root => root.GetComponentsInChildren<Tilemap>(true))
                     .FirstOrDefault(item => item.name == "ForegroundTilemap");
                 Assert.That(tilemap, Is.Not.Null);
-                Assert.That(tilemap.GetTile(new Vector3Int(-40, -2, 0)), Is.Not.Null);
-                Assert.That(tilemap.GetTile(new Vector3Int(40, -2, 0)), Is.Not.Null);
-                Assert.That(tilemap.GetTile(new Vector3Int(-40, 5, 0)), Is.Not.Null);
-                Assert.That(tilemap.GetTile(new Vector3Int(40, 5, 0)), Is.Not.Null);
+                // Phase B owns left/right edges as BoundaryRock; Phase O must not repaint them as Rock.
+                var boundary = AssetDatabase.LoadAssetAtPath<TileBase>(
+                    "Assets/_Project/Tilemaps/DemoWorld/BoundaryRock.asset");
+                Assert.That(boundary, Is.Not.Null);
+                Assert.That(
+                    tilemap.GetTile(new Vector3Int(-40, -2, 0)),
+                    Is.SameAs(boundary));
+                Assert.That(
+                    tilemap.GetTile(new Vector3Int(40, -2, 0)),
+                    Is.SameAs(boundary));
+                Assert.That(
+                    tilemap.GetTile(new Vector3Int(-40, 5, 0)),
+                    Is.SameAs(boundary));
+                Assert.That(
+                    tilemap.GetTile(new Vector3Int(40, 5, 0)),
+                    Is.SameAs(boundary));
                 Assert.That(
                     tilemap.GetSprite(new Vector3Int(0, -2, 0)).bounds.size.x,
                     Is.EqualTo(1f).Within(0.01f));

@@ -1,0 +1,116 @@
+Starting EditMode tests...
+FAIL: SubTerra.App.Tests.Integration.IntegrationWiringTests.PlayableMineScene_HasRequestedCharacterTerrainAndMiningLayout
+MSG:   String lengths are both 4. Strings differ at index 0.
+  Expected: "Iron"
+  But was:  "Rock"
+  -----------^
+
+STACK: at SubTerra.App.Tests.Integration.IntegrationWiringTests.PlayableMineScene_HasRequestedCharacterTerrainAndMiningLayout () [0x00312] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Tests\EditMode\App\Integration\IntegrationWiringTests.cs:130
+
+
+FAIL: SubTerra.App.Tests.Integration.IntegrationWiringTests
+MSG: One or more child tests had errors
+STACK: 
+
+FAIL: SubTerra.App.Tests.Integration
+MSG: One or more child tests had errors
+STACK: 
+
+FAIL: SubTerra.App.Tests.Integration.IntegrationWiringTests.PlayableMineScene_HasRequestedCharacterTerrainAndMiningLayout
+MSG:   String lengths are both 4. Strings differ at index 0.
+  Expected: "Iron"
+  But was:  "Rock"
+  -----------^
+
+STACK: at SubTerra.App.Tests.Integration.IntegrationWiringTests.PlayableMineScene_HasRequestedCharacterTerrainAndMiningLayout () [0x00312] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Tests\EditMode\App\Integration\IntegrationWiringTests.cs:130
+
+
+FAIL: SubTerra.App.Tests.Integration.IntegrationWiringTests
+MSG: One or more child tests had errors
+STACK: 
+
+FAIL: SubTerra.App.Tests.Integration
+MSG: One or more child tests had errors
+STACK: 
+
+FAIL: SubTerra.App.Tests
+MSG: One or more child tests had errors
+STACK: 
+
+FAIL: SubTerra.App
+MSG: One or more child tests had errors
+STACK: 
+
+FAIL: SubTerra
+MSG: One or more child tests had errors
+STACK: 
+
+FAIL: C:/Users/USER/Desktop/develop/sub-terra/sub-terra/Library/ScriptAssemblies/SubTerra.App.Tests.EditMode.dll
+MSG: One or more child tests had errors
+STACK: 
+
+FAIL: SubTerra.App.Tests
+MSG: One or more child tests had errors
+STACK: 
+
+FAIL: SubTerra.App
+MSG: One or more child tests had errors
+STACK: 
+
+FAIL: SubTerra
+MSG: One or more child tests had errors
+STACK: 
+
+FAIL: C:/Users/USER/Desktop/develop/sub-terra/sub-terra/Library/ScriptAssemblies/SubTerra.App.Tests.EditMode.dll
+MSG: One or more child tests had errors
+STACK: 
+
+FAIL: sub-terra
+MSG: One or more child tests had errors
+STACK: 
+
+FAIL: sub-terra
+MSG: One or more child tests had errors
+STACK: 
+
+Finished. Total tests: 277, Passed: 276, Failed: 1, Skipped: 0, Inconclusive: 0
+Finished. Total tests: 277, Passed: 276, Failed: 1, Skipped: 0, Inconclusive: 0
+FAIL: SubTerra.App.Tests.Integration.IntegrationWiringTests.PlayableMineScene_HasRequestedCharacterTerrainAndMiningLayout
+MSG:   String lengths are both 4. Strings differ at index 0.
+  Expected: "Iron"
+  But was:  "Rock"
+  -----------^
+
+STACK: at SubTerra.App.Tests.Integration.IntegrationWiringTests.PlayableMineScene_HasRequestedCharacterTerrainAndMiningLayout () [0x00312] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Tests\EditMode\App\Integration\IntegrationWiringTests.cs:130
+
+
+FAIL: SubTerra.App.Tests.Integration.IntegrationWiringTests
+MSG: One or more child tests had errors
+STACK: 
+
+FAIL: SubTerra.App.Tests.Integration
+MSG: One or more child tests had errors
+STACK: 
+
+FAIL: SubTerra.App.Tests
+MSG: One or more child tests had errors
+STACK: 
+
+FAIL: SubTerra.App
+MSG: One or more child tests had errors
+STACK: 
+
+FAIL: SubTerra
+MSG: One or more child tests had errors
+STACK: 
+
+FAIL: C:/Users/USER/Desktop/develop/sub-terra/sub-terra/Library/ScriptAssemblies/SubTerra.App.Tests.EditMode.dll
+MSG: One or more child tests had errors
+STACK: 
+
+FAIL: sub-terra
+MSG: One or more child tests had errors
+STACK: 
+
+Finished. Total tests: 277, Passed: 276, Failed: 1, Skipped: 0, Inconclusive: 0
+Finished. Total tests: 41, Passed: 41, Failed: 0, Skipped: 0, Inconclusive: 0

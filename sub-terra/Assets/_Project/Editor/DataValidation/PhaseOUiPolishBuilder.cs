@@ -21,8 +21,6 @@ namespace SubTerra.App.Editor.DataValidation
         public const string TerrainVisualFolder =
             "Assets/_Project/Visuals/Graybox/Terrain";
 
-        private const int RouteBoundary = 40;
-
         [MenuItem("SubTerra/UI/Build Phase O UI Polish")]
         public static void BuildFromMenu()
         {
@@ -92,6 +90,17 @@ namespace SubTerra.App.Editor.DataValidation
                 result[i] = tile;
             }
 
+            // BoundaryRock keeps a darker Rock-pattern look so edges stay visually distinct.
+            var boundaryPath = "Assets/_Project/Tilemaps/DemoWorld/BoundaryRock.asset";
+            var boundary = AssetDatabase.LoadAssetAtPath<Tile>(boundaryPath);
+            if (boundary != null && sprites.Length > 0)
+            {
+                boundary.sprite = sprites[0];
+                boundary.color = new Color(0.45f, 0.48f, 0.55f, 1f);
+                boundary.colliderType = Tile.ColliderType.Grid;
+                EditorUtility.SetDirty(boundary);
+            }
+
             return result;
         }
 
@@ -103,37 +112,18 @@ namespace SubTerra.App.Editor.DataValidation
                 throw new System.InvalidOperationException("ForegroundTilemap missing.");
             }
 
-            var rock = tiles[0];
-            var copper = tiles[1];
-            var iron = tiles[2];
-            var lithium = tiles[3];
-            var gasPocket = tiles[4];
-            var lockedSignal = tiles[5];
-            tilemap.ClearAllTiles();
-            for (var y = -2; y >= -41; y--)
+            // Phase B owns the authored 40m mine layer (including BoundaryRock edges).
+            // Never ClearAllTiles or repaint Rock fill — only overlay tutorial markers + polish.
+            if (tiles != null && tiles.Length >= 6)
             {
-                for (var x = -RouteBoundary; x <= RouteBoundary; x++)
-                {
-                    tilemap.SetTile(new Vector3Int(x, y, 0), rock);
-                }
+                tilemap.SetTile(new Vector3Int(-8, -2, 0), tiles[1]); // Copper
+                tilemap.SetTile(new Vector3Int(-7, -3, 0), tiles[1]);
+                tilemap.SetTile(new Vector3Int(-3, -3, 0), tiles[2]); // Iron
+                tilemap.SetTile(new Vector3Int(2, -5, 0), tiles[3]); // Lithium
+                tilemap.SetTile(new Vector3Int(8, -4, 0), tiles[4]); // GasPocket
+                tilemap.SetTile(new Vector3Int(14, -7, 0), tiles[5]); // LockedSignal
             }
 
-            for (var y = -1; y <= 5; y++)
-            {
-                tilemap.SetTile(
-                    new Vector3Int(-RouteBoundary, y, 0),
-                    lockedSignal);
-                tilemap.SetTile(
-                    new Vector3Int(RouteBoundary, y, 0),
-                    lockedSignal);
-            }
-
-            tilemap.SetTile(new Vector3Int(-8, -2, 0), copper);
-            tilemap.SetTile(new Vector3Int(-7, -3, 0), copper);
-            tilemap.SetTile(new Vector3Int(-3, -3, 0), iron);
-            tilemap.SetTile(new Vector3Int(2, -5, 0), lithium);
-            tilemap.SetTile(new Vector3Int(8, -4, 0), gasPocket);
-            tilemap.SetTile(new Vector3Int(14, -7, 0), lockedSignal);
             tilemap.RefreshAllTiles();
             EditorUtility.SetDirty(tilemap);
             var tileRenderer = tilemap.GetComponent<TilemapRenderer>();

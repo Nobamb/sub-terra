@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: BoundaryRock
   m_EditorClassIdentifier: UnityEngine.dll::UnityEngine.Tilemaps.Tile
   m_Sprite: {fileID: 6825934107385633269, guid: e19c6173021a1aa469705d004062de28, type: 2}
-  m_Color: {r: 0.182, g: 0.19500001, b: 0.22749999, a: 0.65}
+  m_Color: {r: 0.45, g: 0.48, b: 0.55, a: 1}
   m_Transform:
     e00: 1
     e01: 0

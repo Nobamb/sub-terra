@@ -102,8 +102,32 @@ namespace SubTerra.Gameplay.DemoWorld.Editor
                     $"{scene.path}: 기본 지층 생성에 실패했습니다.");
             }
 
+            // Demo/tutorial path markers expected by Integration wiring tests.
+            // Applied after regenerate so BoundaryRock edges stay intact.
+            RestoreAuthoredDemoMarkers(tilemap);
+
             EditorUtility.SetDirty(generator);
             EditorUtility.SetDirty(snapshot);
+            EditorUtility.SetDirty(tilemap);
+        }
+
+        /// <summary>
+        /// Places fixed tutorial mineral markers without clearing the Phase B layer.
+        /// </summary>
+        internal static void RestoreAuthoredDemoMarkers(Tilemap tilemap)
+        {
+            if (tilemap == null)
+            {
+                return;
+            }
+
+            tilemap.SetTile(new Vector3Int(-8, -2, 0), LoadTile("Copper"));
+            tilemap.SetTile(new Vector3Int(-7, -3, 0), LoadTile("Copper"));
+            tilemap.SetTile(new Vector3Int(-3, -3, 0), LoadTile("Iron"));
+            tilemap.SetTile(new Vector3Int(2, -5, 0), LoadTile("Lithium"));
+            tilemap.SetTile(new Vector3Int(8, -4, 0), LoadTile("GasPocket"));
+            tilemap.SetTile(new Vector3Int(14, -7, 0), LoadTile("LockedSignal"));
+            tilemap.RefreshAllTiles();
             EditorUtility.SetDirty(tilemap);
         }
 
