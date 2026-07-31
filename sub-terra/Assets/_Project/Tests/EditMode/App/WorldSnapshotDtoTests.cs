@@ -13,6 +13,7 @@ namespace SubTerra.App.Tests
             var source = new WorldSnapshotDto
             {
                 worldSeed = 4_294_967_301L,
+                generatorVersion = 3,
                 changedTiles = new List<ChangedTileSnapshotDto>
                 {
                     new ChangedTileSnapshotDto
@@ -56,6 +57,7 @@ namespace SubTerra.App.Tests
 
             Assert.That(restored.version, Is.EqualTo("1.2"));
             Assert.That(restored.worldSeed, Is.EqualTo(4_294_967_301L));
+            Assert.That(restored.generatorVersion, Is.EqualTo(3));
             Assert.That(restored.changedTiles[0].tileId, Is.EqualTo("tile.rock.fractured"));
             Assert.That(restored.gasChanges[0].gasZoneId, Is.EqualTo("gas-zone-01"));
             Assert.That(restored.gasChanges[0].gasTypeId, Is.EqualTo("gas.basic"));
