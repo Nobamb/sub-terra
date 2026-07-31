@@ -20,11 +20,16 @@ namespace SubTerra.Gameplay.Snapshot
         [SerializeField] private GasHazardSystem gasHazardSystem;
         [SerializeField] private BuildingPlacementSystem buildingPlacementSystem;
         [SerializeField] private PowerNetworkSystem powerNetworkSystem;
+        [SerializeField] private MonoBehaviour baseWorldGeneratorBehaviour;
         [SerializeField] private long worldSeed;
+        [SerializeField, Min(1)] private int generatorVersion = 1;
 
         private readonly Dictionary<Vector3Int, MiningSnapshotDto> minedCells = new();
         private readonly Dictionary<Vector3Int, CollapseSnapshotDto> collapsedCells = new();
         private readonly Dictionary<string, BuildingSnapshotDto> buildings = new();
+        private IWorldBaseGenerator baseWorldGenerator;
+
+        private void Awake() => ResolveBaseWorldGenerator();
 
         private void OnEnable()
         {
@@ -46,6 +51,7 @@ namespace SubTerra.Gameplay.Snapshot
             {
                 timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
                 worldSeed = worldSeed,
+                generatorVersion = generatorVersion,
                 miningChanges = new List<MiningSnapshotDto>(minedCells.Values),
                 collapseChanges = new List<CollapseSnapshotDto>(collapsedCells.Values),
                 buildings = new List<BuildingSnapshotDto>(buildings.Values),
@@ -59,12 +65,32 @@ namespace SubTerra.Gameplay.Snapshot
         public void RestoreSnapshot(WorldSnapshotDto snapshot)
         {
             if (snapshot == null) return;
+            ResolveBaseWorldGenerator();
+            int restoredVersion = snapshot.generatorVersion > 0
+                ? snapshot.generatorVersion
+                : 1;
+            if (baseWorldGenerator != null
+                && !baseWorldGenerator.Regenerate(snapshot.worldSeed, restoredVersion))
+            {
+                Debug.LogError(
+                    $"Cannot restore world seed {snapshot.worldSeed}: generator version {restoredVersion} is unavailable.",
+                    this);
+                return;
+            }
+
             worldSeed = snapshot.worldSeed;
+            generatorVersion = restoredVersion;
             ApplyRemovedTiles(snapshot.miningChanges);
             ApplyCollapsedTiles(snapshot.collapseChanges);
             RestoreBuildings(snapshot.buildings);
             RestoreGasZones(snapshot.gasChanges);
             powerNetworkSystem?.RequestRebuild();
+        }
+
+        public void ConfigureBaseWorldIdentity(long seed, int version)
+        {
+            worldSeed = seed;
+            generatorVersion = Mathf.Max(1, version);
         }
 
         private void OnTileMined(Vector3Int cell, MiningTileDto _)
@@ -150,6 +176,11 @@ namespace SubTerra.Gameplay.Snapshot
         {
             if (gasHazardSystem == null || snapshots == null) return;
             foreach (GasSnapshotDto gas in snapshots) gasHazardSystem.RestoreGasZone(gas);
+        }
+
+        private void ResolveBaseWorldGenerator()
+        {
+            baseWorldGenerator = baseWorldGeneratorBehaviour as IWorldBaseGenerator;
         }
     }
 }
