@@ -1,5 +1,9 @@
 # Phase P — 성능·Windows QA·배포 게이트
 
+## 0. 작업 전
+
+해당 Phase를 수행하기전 work_process/MVP2/MVP-B/O/research.md, work_process/MVP2/MVP-B/O/test.md 파일의 내용을 참고하면서 작업을 진행해야함
+
 ## 1. 개요
 
 MVP 완료는 Editor 테스트 통과가 아니라 Windows x64 빌드에서 새 게임, 완주, 저장, 프로세스 재실행, 이어하기가 가능한 상태다.
@@ -41,4 +45,3 @@ MVP 완료는 Editor 테스트 통과가 아니라 Windows x64 빌드에서 새 
 - Windows x64 빌드가 생성되고 필수 파일이 완전하다.
 - 개발 PC와 다른 PC에서 최종 완주/저장/재실행/이어하기가 성공한다.
 - 치명적 오류 0, 성능 예산과 알려진 제한이 기록된다.
-
