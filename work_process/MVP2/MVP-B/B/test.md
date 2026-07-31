@@ -49,7 +49,16 @@
 
 ## 4. 검증 결과 요약
 
-- **상태:** 미실행
+- **상태:** 통과 (2026-07-31)
+- **NUnit Edit Mode:** Phase B 생성기·Integration Scene·Snapshot 8/8 통과
+- **고정 Seed 표본:** 128개 모두 암석 85~90%, band별 허용 종류, 2~5칸 광맥/가스 포켓, 필수 자원 최소 수량과 안전 경로 통과
+- **결정론:** 같은 Seed/버전 해시 일치. Integration Seed `20260731`, version `1`, hash `11394529670739120800`
+- **Integration 분포:** 3,240칸, 암석 90.00%, 구리 122, 철 115, 리튬 39, 가스 47, 잠긴 신호 1
+- **Play Mode:** 실제 Tilemap 생성·경계 채굴 거부 1/1, 기존 Mining 회귀 4/4 통과
+- **Integration Play:** 실제 Scene 진입 시 40m·Seed·버전·안전 경로·해시 일치 확인
+- **DTO/Scene 회귀:** generatorVersion JSON 왕복과 Integration 구조/Missing Script 감사 5/5 통과
+- **측정:** 128개 순수 지층 생성 35.74ms, Integration Tilemap 기록+Physics 동기화 6.11ms
+- **Console:** Phase B 생성 오류 없음. 직접 Integration Scene만 연 검증에서는 기존 `DemoObjectiveDebugTools`의 구 Input API 오류가 별도로 재현됨
 - **모든 항목 통과 시:** Phase B 완료
 - **실패 항목 존재 시:** 실패 Seed와 분포 통계를 남기되 전체 Tilemap 덤프는 남기지 않는다.
 
