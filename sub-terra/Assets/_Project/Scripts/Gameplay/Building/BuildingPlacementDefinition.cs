@@ -48,6 +48,27 @@ namespace SubTerra.Gameplay.Building
             footprint = size;
             requiresGround = needsGround;
         }
+
+        public void EditorSetCosts(params ItemCostDto[] values)
+        {
+            costs.Clear();
+            if (values == null)
+            {
+                return;
+            }
+
+            foreach (var value in values)
+            {
+                if (!string.IsNullOrWhiteSpace(value.ItemId) && value.Quantity > 0)
+                {
+                    costs.Add(new CostEntry
+                    {
+                        itemId = value.ItemId,
+                        quantity = value.Quantity
+                    });
+                }
+            }
+        }
 #endif
     }
 }
