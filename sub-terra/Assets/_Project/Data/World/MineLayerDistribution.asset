@@ -1,0 +1,44 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c5fa42ac83d842a44bfd7c374d36a87c, type: 3}
+  m_Name: MineLayerDistribution
+  m_EditorClassIdentifier: SubTerra.Gameplay.DemoWorld::SubTerra.Gameplay.DemoWorld.MineLayerDistribution
+  width: 81
+  depth: 40
+  minX: -40
+  topY: -2
+  contentRatio: 0.1
+  minVeinSize: 2
+  maxVeinSize: 5
+  generatorVersion: 1
+  protectedRouteX: -9
+  signalX: 14
+  signalDepth: 38
+  surfaceBoundaryHeight: 7
+  bands:
+  - minDepth: 1
+    maxDepth: 15
+    contents:
+    - kind: 2
+      weight: 1
+  - minDepth: 16
+    maxDepth: 35
+    contents:
+    - kind: 3
+      weight: 0.7
+    - kind: 5
+      weight: 0.3
+  - minDepth: 36
+    maxDepth: 40
+    contents:
+    - kind: 4
+      weight: 1
