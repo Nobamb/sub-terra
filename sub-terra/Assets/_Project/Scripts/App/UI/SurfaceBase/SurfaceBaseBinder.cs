@@ -2,6 +2,7 @@ using SubTerra.App.Core;
 using SubTerra.App.Save;
 using SubTerra.App.UI.Economy;
 using SubTerra.App.UI.Progression;
+using SubTerra.Shared;
 using UnityEngine;
 
 namespace SubTerra.App.UI.SurfaceBase
@@ -60,6 +61,10 @@ namespace SubTerra.App.UI.SurfaceBase
             view.ExploreClicked += OnExploreClicked;
             view.RefreshClicked += OnRefreshClicked;
             presenter.RefreshReadModel();
+            if (runtime.ElevatorState == ElevatorTravelState.Arrived)
+            {
+                view.SetMessage("Arrived · Surface Base 도착");
+            }
         }
 
         private void OnDisable()
