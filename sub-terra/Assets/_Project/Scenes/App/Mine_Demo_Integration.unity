@@ -1895,6 +1895,7 @@ GameObject:
   - component: {fileID: 879686160}
   - component: {fileID: 879686159}
   - component: {fileID: 879686162}
+  - component: {fileID: 879686163}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -1917,6 +1918,8 @@ MonoBehaviour:
   target: {fileID: 72969609}
   offset: {x: 0, y: 1, z: -10}
   smoothTime: 0.18
+  teleportDistance: 3
+  boundsProvider: {fileID: 879686163}
 --- !u!20 &879686160
 Camera:
   m_ObjectHideFlags: 0
@@ -1991,6 +1994,20 @@ AudioListener:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 879686158}
   m_Enabled: 1
+--- !u!114 &879686163
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 879686158}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: faa00ac1a948bbe4b8f8418db46a42d8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SubTerra.Gameplay.Player::SubTerra.Gameplay.Player.CameraBounds2D
+  center: {x: 0.5, y: -17.5}
+  size: {x: 81, y: 47}
 --- !u!1 &879827608
 GameObject:
   m_ObjectHideFlags: 0
