@@ -54,7 +54,10 @@ namespace SubTerra.App.Save
         private SaveResult lastSaveResult;
         private ContinueResult lastContinueResult;
         private readonly ExplorationStartGuard explorationGuard = new ExplorationStartGuard();
+        private ElevatorTravelSession elevatorTravel;
         private string pendingInitialScene = SceneNames.SurfaceBase;
+
+        private const int MineElevatorEnergyCost = 5;
 
         public LoadService Loader => loadService;
         public int ActiveSlot => activeSlot;
@@ -70,6 +73,8 @@ namespace SubTerra.App.Save
         public CraftingService Crafting => crafting;
         public ProgressionService Progression => progression;
         public ExplorationStartGuard ExplorationGuard => explorationGuard;
+        public ElevatorTravelState ElevatorState =>
+            elevatorTravel?.State ?? ElevatorTravelState.Idle;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStatics()
@@ -188,6 +193,7 @@ namespace SubTerra.App.Save
             pendingInitialScene = SceneNames.SurfaceBase;
             uiReady = false;
             explorationGuard.Reset();
+            elevatorTravel?.Reset();
             if (!new UnitySceneLoader().Load(SceneNames.SurfaceBase))
             {
                 pendingInitialSave = false;
@@ -203,31 +209,21 @@ namespace SubTerra.App.Save
         /// </summary>
         public bool TryStartExploration(out string reason)
         {
-            reason = string.Empty;
-            if (activeSlot == 0 || boundState == null || !GameState.IsComplete(boundState))
-            {
-                reason = "유효한 슬롯/상태가 없어 탐사에 진입할 수 없습니다.";
-                return false;
-            }
+            return TryElevatorTravel(
+                SceneNames.Integration,
+                MineElevatorEnergyCost,
+                resetRunOnArrival: true,
+                out reason);
+        }
 
-            var started = explorationGuard.TryStart(
-                () =>
-                {
-                    boundState.SetDepth(0);
-                    boundState.SetStructuralRisk(StructuralRiskLevel.Safe);
-                    boundState.SetGasExposure(GasRiskLevel.Safe);
-                },
-                () => new UnitySceneLoader().Load(SceneNames.Integration));
-
-            if (!started)
-            {
-                reason = explorationGuard.IsInFlight
-                    ? "탐사 전환이 이미 진행 중입니다."
-                    : "탐사 Scene 로드에 실패했습니다.";
-                return false;
-            }
-
-            return true;
+        /// <summary>Mine 정거장에서 Surface Base로 비상 귀환한다. 귀환에는 전력을 차감하지 않는다.</summary>
+        public bool TryReturnToSurface(out string reason)
+        {
+            return TryElevatorTravel(
+                SceneNames.SurfaceBase,
+                0,
+                resetRunOnArrival: false,
+                out reason);
         }
 
         /// <summary>Surface Base UI가 판매·제작·업그레이드 서비스를 쓸 수 있게 보장한다.</summary>
@@ -431,6 +427,7 @@ namespace SubTerra.App.Save
             UnbindStateDirtyEvents();
             inventory = restoredInventory;
             upgrades = restoredUpgrades;
+            elevatorTravel = new ElevatorTravelSession(state);
             dialogueGenerator = CreateDialogueGenerator();
             if (restoredDrone != null
                 && !DroneSaveRestorer.TryRestore(restoredDrone, dialogueGenerator))
@@ -497,6 +494,70 @@ namespace SubTerra.App.Save
                 Resolve(),
                 SceneManager.GetActiveScene().name,
                 Application.version);
+        }
+
+        private bool TryElevatorTravel(
+            string destinationScene,
+            int energyCost,
+            bool resetRunOnArrival,
+            out string reason)
+        {
+            reason = string.Empty;
+            if (activeSlot == 0 || boundState == null || !GameState.IsComplete(boundState))
+            {
+                reason = "유효한 슬롯과 게임 상태가 없어 엘리베이터를 이용할 수 없습니다.";
+                return false;
+            }
+
+            elevatorTravel ??= new ElevatorTravelSession(boundState);
+            if (!elevatorTravel.TryCall(
+                    destinationScene,
+                    energyCost,
+                    isExitClear: true,
+                    out var callFailure))
+            {
+                reason = DescribeElevatorFailure(callFailure);
+                return false;
+            }
+
+            if (!elevatorTravel.TryDepart(new UnitySceneLoader(), out var departFailure))
+            {
+                reason = DescribeElevatorFailure(departFailure);
+                return false;
+            }
+
+            if (resetRunOnArrival)
+            {
+                boundState.SetDepth(0);
+                boundState.SetStructuralRisk(StructuralRiskLevel.Safe);
+                boundState.SetGasExposure(GasRiskLevel.Safe);
+            }
+
+            // 목적지 Scene 시스템의 Start가 끝난 다음 프레임에 저장해 생성 seed와 위치를 함께 잡는다.
+            StartCoroutine(SaveAfterElevatorArrival());
+            return true;
+        }
+
+        private IEnumerator SaveAfterElevatorArrival()
+        {
+            yield return null;
+            if (activeSlot > 0)
+            {
+                SaveCurrent(AutoSaveReason.Manual);
+            }
+        }
+
+        private static string DescribeElevatorFailure(ElevatorTravelFailure failure)
+        {
+            return failure switch
+            {
+                ElevatorTravelFailure.Busy => "엘리베이터가 이미 이동 중입니다.",
+                ElevatorTravelFailure.InsufficientEnergy => "엘리베이터 전력이 부족합니다. (필요 전력 5)",
+                ElevatorTravelFailure.BlockedExit => "도착 지점이 막혀 이동할 수 없습니다.",
+                ElevatorTravelFailure.SceneLoadFailed => "목적지 Scene 로드에 실패했습니다.",
+                ElevatorTravelFailure.InvalidDestination => "엘리베이터 목적지가 올바르지 않습니다.",
+                _ => "엘리베이터를 이용할 수 없습니다."
+            };
         }
 
         private void ActivateSlot(int slotId)
