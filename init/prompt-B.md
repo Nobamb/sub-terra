@@ -94,3 +94,5 @@ MVP-connect2의 월드 스냅샷 DTO와 IWorldSnapshotProvider merge를 완료�
 ## 상세 작업 프롬프트(MVP 2차 작업)
 
 19. work_process/MVP2/MVP-B 폴더 내에서 work_process/MVP2/MVP-B/A/research.md, work_process/MVP2/MVP-B/A/test.md 파일을 읽고 2차 MVP A 단계의 작업을 수행해줘 A단계의 작업 내용은 PRD 필수 기능을 Definition/Runtime/Restore/Play 네 수준으로 추적 및 Integration Scene의 Missing Script, 누락 참조, 중복 시스템과 임시 placeholder를 자동 탐지, 실제 입력 기반 최종 완주 테스트의 뼈대를 만들고 대역 테스트와 실제 Runtime 테스트 결과를 구분하는거야 unity MCP도 같이 연결해놓은 상태니까 unity editor에서도 같이 작업을 해주도록 하고 작업 내용에 대해서는 init/rule.md의 내용 참고하면서 한국어 주석도 같이 작성해주면서 진행해주면 돼
+
+20. work_process/MVP2/MVP-B 폴더 내에서 work_process/MVP2/MVP-B/B/research.md, work_process/MVP2/MVP-B/B/test.md 파일을 읽고 2차 MVP B 단계의 작업을 수행해줘 B단계의 작업 내용은 1~15m 상층, 15~35m 중층, 35~40m 심층 규칙을 구현, 전체 지층의 암석 85~90%, 자원/가스/신호 약 10%를 목표 범위로 두고 낱개 점이 아닌 2~5칸 광맥과 위험 포켓을 생성, 시작/엘리베이터/필수 튜토리얼 경로는 항상 통과 가능하게 보장하는거야 unity MCP도 같이 연결해놓은 상태니까 unity editor에서도 같이 작업을 해주도록 하고 작업 내용에 대해서는 init/rule.md의 내용 참고하면서 한국어 주석도 같이 작성해주면서 진행해주면 돼
