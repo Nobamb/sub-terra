@@ -90,3 +90,7 @@ MVP-connect2의 월드 스냅샷 DTO와 IWorldSnapshotProvider merge를 완료�
 - **필요 작업**: 위험 가스 포켓 근처에 가거나 지반이 붕괴될 때, 인벤토리가 가득 찼을 때 드론 머리 위에 **상황별 템플릿/생성형 대사 팝업**이 표시되어 플레이어에게 가이드를 주도록 연결해야 합니다.
 
 그래서 이 내용을 포함해서 PRD 내에서 추가로 구현이 안된 부분들을 더 조사해서 추가로 구현해야 될 내용들을 모두 정리한 후에 work_process/MVP2/MVP-B 폴더에 A폴더부터 해서 순서대로 test, research 파일들을 정리해서 만들어줘 PRD나 기타 게임에 필요한 요소 및 수정해야 될 요소들 전체를 정리해서 MVP2 폴더 내에 정리한 것들을 작업을 하게 되면 전체적인 게임의 흐름과 핵심 콘텐츠가 다 구현될 수 있도록 말이야
+
+## 상세 작업 프롬프트(MVP 2차 작업)
+
+19. work_process/MVP2/MVP-B 폴더 내에서 work_process/MVP2/MVP-B/A/research.md, work_process/MVP2/MVP-B/A/test.md 파일을 읽고 2차 MVP A 단계의 작업을 수행해줘 A단계의 작업 내용은 PRD 필수 기능을 Definition/Runtime/Restore/Play 네 수준으로 추적 및 Integration Scene의 Missing Script, 누락 참조, 중복 시스템과 임시 placeholder를 자동 탐지, 실제 입력 기반 최종 완주 테스트의 뼈대를 만들고 대역 테스트와 실제 Runtime 테스트 결과를 구분하는거야 unity MCP도 같이 연결해놓은 상태니까 unity editor에서도 같이 작업을 해주도록 하고 작업 내용에 대해서는 init/rule.md의 내용 참고하면서 한국어 주석도 같이 작성해주면서 진행해주면 돼
