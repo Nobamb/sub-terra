@@ -2,7 +2,8 @@
     "name": "SubTerra.Gameplay.Player.PlayModeTests",
     "rootNamespace": "SubTerra.Gameplay.Player.Tests",
     "references": [
-        "SubTerra.Gameplay.Player"
+        "SubTerra.Gameplay.Player",
+        "SubTerra.Shared"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
