@@ -12,6 +12,7 @@ namespace SubTerra.Shared
         public string version = "1.2";
         public long timestamp;
         public long worldSeed;
+        public int generatorVersion = 1;
 
         public List<MiningSnapshotDto> miningChanges = new List<MiningSnapshotDto>();
         public List<ChangedTileSnapshotDto> changedTiles = new List<ChangedTileSnapshotDto>();
