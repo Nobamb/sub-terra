@@ -5,6 +5,9 @@
     "SubTerra.App",
     "SubTerra.App.GameplayIntegration",
     "SubTerra.Shared",
+    "SubTerra.Gameplay.Building",
+    "SubTerra.Gameplay.Player",
+    "Unity.InputSystem",
     "Unity.TextMeshPro",
     "UnityEngine.UI"
   ],
