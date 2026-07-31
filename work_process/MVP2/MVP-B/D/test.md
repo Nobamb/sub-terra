@@ -43,7 +43,12 @@
 
 ## 4. 검증 결과 요약
 
-- **상태:** 미실행
-- **모든 항목 통과 시:** Phase D 완료
-- **실패 항목 존재 시:** 해상도, aspect, bounds, 카메라 위치를 기록한다.
+- **상태:** 통과 (2026-07-31)
+- **Edit Mode:** `PhaseDCameraTests` 5/5 통과
+  - Mine/Surface Scene별 경계와 Follow 참조 확인
+  - 16:9, 16:10, 4:3 viewport clamp 및 작은 월드 중앙 고정 확인
+- **Play Mode:** `PlayerCameraFollowPlayModeTests` 4/4 통과
+  - 네 방향 경계, 40m 연속 하강, 세 종횡비 viewport 모서리, 순간이동 스냅 확인
+- **Scene 연결:** Mine `81 x 47`, Surface Base `36 x 20` 경계를 Unity Editor 빌더로 저장
+- **컴파일:** Player Runtime, App Editor, EditMode/PlayMode 테스트 어셈블리 오류 0
 
