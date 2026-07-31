@@ -45,7 +45,13 @@
 
 ## 4. 검증 결과 요약
 
-- **상태:** 미실행
+- **상태:** 통과 (2026-07-31)
+- **NUnit Edit Mode (`SubTerra.App.Tests.Readiness`):** Pass=15 Fail=0 Skip=0
+- **게이트 검증기 (`PhaseAVerificationCommand.RunAll`):** Pass=29 Fail=0 — A-S01~S05, A-F01~F03
+- **Readiness 보고서:** 기능 17행, 상태 라벨만 {완료/부분/미구현/미검증}, MissingScripts=0, Placeholders=6(공용 BuildingPlaceholder 명시), 대역-only 항목 Runtime/Play 완료 승격 0
+- **읽기 전용:** 감사 전후 대상 에셋 지문 동일; 의도적 신규 소스는 `Scripts/App/Readiness`, `Editor/DataValidation/Mvp2*`, `Tests/EditMode/App/Readiness` 뿐
+- **A-F04 Play Mode 스모크:** 이 세션에서는 Unity 단일 인스턴스 잠금으로 batchmode 불가. Edit Mode Scene 구조/Missing Script 감사와 Integration open 검사로 대체 기록
+- **차단 단계:** B~P (불완전 기능 행 기준). Phase A 게이트 자체는 통과 → B 착수 가능
 - **모든 항목 통과 시:** Phase A 완료, B~P 착수 가능
 - **실패 항목 존재 시:** 누락된 증거와 차단 단계를 기록하고 완료 처리하지 않는다.
 
