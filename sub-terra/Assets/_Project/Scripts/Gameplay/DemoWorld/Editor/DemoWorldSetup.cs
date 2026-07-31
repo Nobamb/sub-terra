@@ -84,6 +84,8 @@ namespace SubTerra.Gameplay.DemoWorld.Editor
             CreateCamera(player);
 
             EditorSceneManager.SaveScene(scene, ScenePath);
+            PhaseBMineLayerSetup.ApplyToOpenScene(scene);
+            EditorSceneManager.SaveScene(scene, ScenePath);
             AssetDatabase.SaveAssets();
             Debug.Log($"Created {ScenePath}. Follow the documented route from safe start to the locked rare-mineral signal.");
         }
