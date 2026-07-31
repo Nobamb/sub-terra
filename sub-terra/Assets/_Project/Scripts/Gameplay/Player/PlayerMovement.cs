@@ -10,6 +10,7 @@ namespace SubTerra.Gameplay.Player
         [SerializeField, Min(0f)] private float acceleration = 45f;
         [SerializeField, Min(0f)] private float deceleration = 55f;
         [SerializeField, Min(0f)] private float jumpImpulse = 11f;
+        [SerializeField, Min(0f)] private float ladderSpeed = 4f;
 
         [Header("Ground Check")]
         [SerializeField] private Transform groundCheck;
@@ -20,7 +21,9 @@ namespace SubTerra.Gameplay.Player
         private Collider2D[] ownColliders;
         private readonly Collider2D[] groundHits = new Collider2D[8];
         private float moveInput;
+        private float verticalMoveInput;
         private bool jumpRequested;
+        private float gravityBeforeClimbing;
         private float cargoSpeedMultiplier = 1f;
         private float hazardSpeedMultiplier = 1f;
 
@@ -28,6 +31,7 @@ namespace SubTerra.Gameplay.Player
         public float FacingDirection { get; private set; } = 1f;
         public bool IsGrounded { get; private set; }
         public bool CanMove { get; private set; } = true;
+        public bool IsClimbing { get; private set; }
         public float CurrentSpeedMultiplier => cargoSpeedMultiplier * hazardSpeedMultiplier;
 
         private void Awake()
@@ -44,7 +48,19 @@ namespace SubTerra.Gameplay.Player
         private void FixedUpdate()
         {
             ApplyHorizontalMovement();
-            ApplyJump();
+            if (IsClimbing)
+            {
+                ApplyVerticalMovement();
+            }
+            else
+            {
+                ApplyJump();
+            }
+        }
+
+        private void OnDisable()
+        {
+            ExitLadder();
         }
 
         public void SetMoveInput(float horizontal)
@@ -60,6 +76,36 @@ namespace SubTerra.Gameplay.Player
         public void RequestJump()
         {
             jumpRequested = true;
+        }
+
+        public void SetVerticalMoveInput(float vertical)
+        {
+            verticalMoveInput = Mathf.Clamp(vertical, -1f, 1f);
+        }
+
+        public void EnterLadder()
+        {
+            if (IsClimbing || body == null)
+            {
+                return;
+            }
+
+            gravityBeforeClimbing = body.gravityScale;
+            body.gravityScale = 0f;
+            body.linearVelocity = new Vector2(body.linearVelocityX, 0f);
+            IsClimbing = true;
+        }
+
+        public void ExitLadder()
+        {
+            if (!IsClimbing || body == null)
+            {
+                return;
+            }
+
+            body.gravityScale = gravityBeforeClimbing;
+            verticalMoveInput = 0f;
+            IsClimbing = false;
         }
 
         public void SetCanMove(bool canMove)
@@ -104,6 +150,14 @@ namespace SubTerra.Gameplay.Player
 
             body.AddForce(Vector2.up * jumpImpulse, ForceMode2D.Impulse);
             IsGrounded = false;
+        }
+
+        private void ApplyVerticalMovement()
+        {
+            var verticalVelocity = CanMove
+                ? verticalMoveInput * ladderSpeed * CurrentSpeedMultiplier
+                : 0f;
+            body.linearVelocity = new Vector2(body.linearVelocityX, verticalVelocity);
         }
 
         private void UpdateGroundedState()
