@@ -102,7 +102,7 @@ namespace SubTerra.App.UI.SurfaceBase
 
             // 실제 가드/로드 전에 busy를 켜 연타 UI를 막되, 실패 시 반드시 해제한다.
             view.SetExplorationBusy(true);
-            view.SetMessage("탐사 준비 중…");
+            view.SetMessage("Calling · 엘리베이터 호출 중");
 
             var result = startExploration();
             if (!result.success)
