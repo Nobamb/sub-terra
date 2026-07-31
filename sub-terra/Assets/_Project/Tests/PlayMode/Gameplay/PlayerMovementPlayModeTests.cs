@@ -140,5 +140,39 @@ namespace SubTerra.Gameplay.Player.Tests
                 -0.29f,
                 "The player's 0.6-wide capsule must stop at the wall's left face.");
         }
+
+        [UnityTest]
+        public IEnumerator LadderMode_ClimbsWithoutGravityAndRestoresPhysicsOnExit()
+        {
+            body.gravityScale = 3f;
+            movement.EnterLadder();
+            movement.SetVerticalMoveInput(1f);
+
+            for (int frame = 0; frame < 10; frame++)
+            {
+                yield return new WaitForFixedUpdate();
+            }
+
+            Assert.IsTrue(movement.IsClimbing);
+            Assert.AreEqual(0f, body.gravityScale);
+            Assert.Greater(body.position.y, 0.5f);
+
+            movement.ExitLadder();
+
+            Assert.IsFalse(movement.IsClimbing);
+            Assert.AreEqual(3f, body.gravityScale);
+        }
+
+        [Test]
+        public void DisablingMovementWhileClimbing_RestoresGravity()
+        {
+            body.gravityScale = 2.5f;
+            movement.EnterLadder();
+
+            movement.enabled = false;
+
+            Assert.AreEqual(2.5f, body.gravityScale);
+            Assert.IsFalse(movement.IsClimbing);
+        }
     }
 }
