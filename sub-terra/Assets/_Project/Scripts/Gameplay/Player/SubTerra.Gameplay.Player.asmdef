@@ -2,7 +2,9 @@
     "name": "SubTerra.Gameplay.Player",
     "rootNamespace": "SubTerra.Gameplay.Player",
     "references": [
-        "Unity.InputSystem"
+        "SubTerra.Shared",
+        "Unity.InputSystem",
+        "Unity.TextMeshPro"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
