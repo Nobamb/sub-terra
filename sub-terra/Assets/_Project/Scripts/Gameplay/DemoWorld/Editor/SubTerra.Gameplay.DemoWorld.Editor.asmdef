@@ -2,6 +2,7 @@
   "name": "SubTerra.Gameplay.DemoWorld.Editor",
   "rootNamespace": "SubTerra.Gameplay.DemoWorld.Editor",
   "references": [
+    "SubTerra.Gameplay.DemoWorld",
     "SubTerra.Shared",
     "SubTerra.Gameplay.Player",
     "SubTerra.Gameplay.Mining",
