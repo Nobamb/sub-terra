@@ -38,7 +38,9 @@ namespace SubTerra.Gameplay.Player
 
         private void Update()
         {
-            movement.SetMoveInput(moveAction?.ReadValue<Vector2>().x ?? 0f);
+            var input = moveAction?.ReadValue<Vector2>() ?? Vector2.zero;
+            movement.SetMoveInput(input.x);
+            movement.SetVerticalMoveInput(input.y);
         }
 
         private void OnDisable()
@@ -55,6 +57,7 @@ namespace SubTerra.Gameplay.Player
             }
 
             movement?.SetMoveInput(0f);
+            movement?.SetVerticalMoveInput(0f);
         }
 
         private void ResolveActions()
