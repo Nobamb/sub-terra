@@ -79,6 +79,8 @@ namespace SubTerra.App.Editor
                 typeof(SpriteRenderer),
                 typeof(BoxCollider2D),
                 typeof(ElevatorController));
+            // Collider size is local; non-1 scale shrinks the boarding trigger below usable size.
+            root.transform.localScale = Vector3.one;
             var renderer = root.GetComponent<SpriteRenderer>();
             renderer.sprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UISprite.psd");
             renderer.color = new Color(0.16f, 0.52f, 0.62f, 0.95f);
@@ -115,7 +117,9 @@ namespace SubTerra.App.Editor
                 AssetDatabase.LoadAssetAtPath<InputActionAsset>(InputActionsPath);
             serialized.FindProperty("boardingAnchor").objectReferenceValue = boarding;
             serialized.FindProperty("safeExitPoint").objectReferenceValue = safeExit;
-            serialized.FindProperty("exitBlockerLayers").intValue = 1 << 0;
+            // Default(0) 레이어를 쓰면 플레이어/타일이 항상 막아서 이동이 거부된다.
+            // 장애물 전용 레이어를 쓰기 전까지는 비활성(0)으로 둔다.
+            serialized.FindProperty("exitBlockerLayers").intValue = 0;
             serialized.FindProperty("statusText").objectReferenceValue = status;
             serialized.ApplyModifiedPropertiesWithoutUndo();
 
