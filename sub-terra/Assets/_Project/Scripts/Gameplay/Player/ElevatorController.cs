@@ -49,7 +49,9 @@ namespace SubTerra.Gameplay.Player
             ResolveInput();
             if (interactAction != null)
             {
-                interactAction.performed += OnInteract;
+                // InputSystem_Actions의 Interact는 Hold interaction이라
+                // performed는 길게 눌러야만 발생한다. 탭은 started/WasPressedThisFrame로 받는다.
+                interactAction.started += OnInteractStarted;
                 interactAction.Enable();
             }
         }
@@ -58,7 +60,7 @@ namespace SubTerra.Gameplay.Player
         {
             if (interactAction != null)
             {
-                interactAction.performed -= OnInteract;
+                interactAction.started -= OnInteractStarted;
                 interactAction.Disable();
             }
 
@@ -71,23 +73,26 @@ namespace SubTerra.Gameplay.Player
             ReleaseRider();
         }
 
+        private void Update()
+        {
+            // started 콜백과 이중 안전장치. Hold interaction에서도 누른 프레임에 반응.
+            if (interactAction != null && interactAction.WasPressedThisFrame())
+            {
+                RequestTravel();
+            }
+        }
+
         private void OnTriggerEnter2D(Collider2D other)
         {
-            var movement = other.GetComponentInParent<PlayerMovement>();
-            if (movement == null)
-            {
-                return;
-            }
+            TryAcquireRider(other);
+        }
 
-            riderMovement = movement;
-            riderBody = movement.GetComponent<Rigidbody2D>();
-            if (State == ElevatorTravelState.Arrived || State == ElevatorTravelState.Blocked)
+        private void OnTriggerStay2D(Collider2D other)
+        {
+            // 콜라이더 크기 변경·스폰 직후 등 Enter를 놓친 경우에도 탑승 인식.
+            if (riderMovement == null)
             {
-                SetState(ElevatorTravelState.Idle);
-            }
-            else
-            {
-                RefreshStatus();
+                TryAcquireRider(other);
             }
         }
 
@@ -106,13 +111,18 @@ namespace SubTerra.Gameplay.Player
             RefreshStatus();
         }
 
-        private void OnInteract(InputAction.CallbackContext _)
+        private void OnInteractStarted(InputAction.CallbackContext _)
         {
             RequestTravel();
         }
 
         public bool RequestTravel()
         {
+            if (riderMovement == null)
+            {
+                TryAcquireRiderFromOverlap();
+            }
+
             if (riderMovement == null
                 || State == ElevatorTravelState.Calling
                 || State == ElevatorTravelState.Moving)
@@ -220,6 +230,56 @@ namespace SubTerra.Gameplay.Player
                 safeExitSize,
                 0f,
                 exitBlockerLayers) == null;
+        }
+
+        private void TryAcquireRider(Collider2D other)
+        {
+            var movement = other.GetComponentInParent<PlayerMovement>();
+            if (movement == null)
+            {
+                return;
+            }
+
+            riderMovement = movement;
+            riderBody = movement.GetComponent<Rigidbody2D>();
+            if (State == ElevatorTravelState.Arrived || State == ElevatorTravelState.Blocked)
+            {
+                SetState(ElevatorTravelState.Idle);
+            }
+            else
+            {
+                RefreshStatus();
+            }
+        }
+
+        private void TryAcquireRiderFromOverlap()
+        {
+            var zone = GetComponent<Collider2D>();
+            if (zone == null)
+            {
+                return;
+            }
+
+            var filter = new ContactFilter2D
+            {
+                useTriggers = true,
+                useLayerMask = false
+            };
+            var hits = new Collider2D[8];
+            var count = zone.Overlap(filter, hits);
+            for (var i = 0; i < count; i++)
+            {
+                if (hits[i] == null)
+                {
+                    continue;
+                }
+
+                TryAcquireRider(hits[i]);
+                if (riderMovement != null)
+                {
+                    return;
+                }
+            }
         }
 
         private void ResolveInput()
