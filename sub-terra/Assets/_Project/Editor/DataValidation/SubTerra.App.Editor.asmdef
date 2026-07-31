@@ -3,6 +3,7 @@
   "rootNamespace": "SubTerra.App.Editor",
   "references": [
     "SubTerra.App",
+    "SubTerra.App.GameplayIntegration",
     "SubTerra.Shared",
     "Unity.TextMeshPro",
     "UnityEngine.UI"
