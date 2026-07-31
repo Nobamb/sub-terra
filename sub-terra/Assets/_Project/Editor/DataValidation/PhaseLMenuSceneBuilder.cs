@@ -199,7 +199,7 @@ namespace SubTerra.App.Editor.DataValidation
             var recent = CreateText(content.transform, "RecentRunText", new Vector2(0f, 190f), new Vector2(800f, 46f), 21f, "최근 탐사");
             var message = CreateText(content.transform, "MessageText", new Vector2(0f, 135f), new Vector2(800f, 46f), 19f, string.Empty);
             var explore = CreateButton(
-                content.transform, "ExploreButton", new Vector2(0f, 65f), new Vector2(312f, 73f), "탐사 시작", out _, 23f);
+                content.transform, "ExploreButton", new Vector2(0f, 65f), new Vector2(360f, 73f), "엘리베이터 호출 · 전력 5", out _, 21f);
             var refresh = CreateButton(
                 content.transform, "RefreshButton", new Vector2(0f, -15f), new Vector2(234f, 57f), "새로고침", out _, 20f);
 
