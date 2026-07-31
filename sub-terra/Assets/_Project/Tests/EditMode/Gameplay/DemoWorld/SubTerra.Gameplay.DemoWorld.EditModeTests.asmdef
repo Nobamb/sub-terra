@@ -1,0 +1,21 @@
+{
+  "name": "SubTerra.Gameplay.DemoWorld.EditModeTests",
+  "rootNamespace": "SubTerra.Gameplay.DemoWorld.Tests",
+  "references": [
+    "SubTerra.Gameplay.DemoWorld",
+    "SubTerra.Gameplay.Mining",
+    "SubTerra.Gameplay.Snapshot",
+    "SubTerra.Shared",
+    "UnityEngine.TestRunner",
+    "UnityEditor.TestRunner"
+  ],
+  "includePlatforms": ["Editor"],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
