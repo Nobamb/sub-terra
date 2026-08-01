@@ -9,6 +9,10 @@
     "SubTerra.Gameplay.Hazards",
     "SubTerra.Gameplay.Power",
     "SubTerra.Gameplay.Drone",
+    "SubTerra.Gameplay.Mining",
+    "SubTerra.Gameplay.Player",
+    "Unity.TextMeshPro",
+    "UnityEngine.UI",
     "Unity.InputSystem"
   ],
   "includePlatforms": [],

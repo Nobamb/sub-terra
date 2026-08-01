@@ -1,7 +1,7 @@
 {
   "name": "SubTerra.Gameplay.Mining.PlayModeTests",
   "rootNamespace": "SubTerra.Gameplay.Mining.Tests",
-  "references": ["SubTerra.Gameplay.Mining", "SubTerra.Shared"],
+  "references": ["SubTerra.Gameplay.Mining", "SubTerra.Gameplay.Player", "SubTerra.Shared", "Unity.InputSystem"],
   "includePlatforms": [],
   "excludePlatforms": [],
   "allowUnsafeCode": false,

@@ -17,7 +17,7 @@ namespace SubTerra.Gameplay.Mining
 
         [SerializeField] private List<Entry> entries = new();
         private readonly Dictionary<TileBase, MiningTileDto> lookup = new();
-        private bool initialized;
+        [NonSerialized] private bool initialized;
 
         public bool TryResolve(TileBase tile, out MiningTileDto definition)
         {
@@ -49,7 +49,7 @@ namespace SubTerra.Gameplay.Mining
 
         private void BuildLookup()
         {
-            if (initialized) return;
+            if (initialized && (lookup.Count > 0 || entries.Count == 0)) return;
             initialized = true;
             lookup.Clear();
             foreach (Entry entry in entries)

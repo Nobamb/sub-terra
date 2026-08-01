@@ -844,6 +844,8 @@ MonoBehaviour:
   foregroundTilemap: {fileID: 1443727076}
   tileResolver: {fileID: 279480563}
   rewardReceiverBehaviour: {fileID: 976616832}
+  miningTransactionBehaviour: {fileID: 976616832}
+  upgradeEffectProviderBehaviour: {fileID: 0}
   resourceDropSprite: {fileID: 0}
   defaultMiningDuration: 1
   resourceDropSize: 0.35
@@ -903,6 +905,8 @@ MonoBehaviour:
       isMineable: 1
       durability: 1
       miningTime: 0.35
+      requiredDrillLevel: 0
+      energyCost: 1
       structuralImpact: 0.05
       containsGas: 0
   - tile: {fileID: 11400000, guid: 6843c6080b286e64b90f9a571d2fa5b9, type: 2}
@@ -913,6 +917,8 @@ MonoBehaviour:
       isMineable: 1
       durability: 1
       miningTime: 0.6
+      requiredDrillLevel: 0
+      energyCost: 1
       structuralImpact: 0.1
       containsGas: 0
   - tile: {fileID: 11400000, guid: 1f504e882a2b6b842b0d2ba5e934ac75, type: 2}
@@ -923,6 +929,8 @@ MonoBehaviour:
       isMineable: 1
       durability: 1
       miningTime: 0.8
+      requiredDrillLevel: 1
+      energyCost: 2
       structuralImpact: 0.18
       containsGas: 0
   - tile: {fileID: 11400000, guid: ffaecd3dfbdc9984493750d7dd2ea533, type: 2}
@@ -933,6 +941,8 @@ MonoBehaviour:
       isMineable: 1
       durability: 1
       miningTime: 1.2
+      requiredDrillLevel: 2
+      energyCost: 3
       structuralImpact: 0.3
       containsGas: 1
   - tile: {fileID: 11400000, guid: 313ac2f0cb03b33428ceb5cc601e237d, type: 2}
@@ -943,6 +953,8 @@ MonoBehaviour:
       isMineable: 1
       durability: 1
       miningTime: 0.5
+      requiredDrillLevel: 1
+      energyCost: 2
       structuralImpact: 0.8
       containsGas: 1
   - tile: {fileID: 11400000, guid: c845a78b501b4b546915dcd7e6f970a7, type: 2}
@@ -953,6 +965,8 @@ MonoBehaviour:
       isMineable: 0
       durability: 1
       miningTime: 1
+      requiredDrillLevel: 0
+      energyCost: 0
       structuralImpact: 0
       containsGas: 0
 --- !u!4 &279480564
@@ -2434,6 +2448,9 @@ MonoBehaviour:
   - {fileID: 72969611}
   - {fileID: 72969612}
   tutorialDirector: {fileID: 1763463920}
+  miningSystem: {fileID: 279480560}
+  playerMovement: {fileID: 72969612}
+  miningProgressHud: {fileID: 1895091422}
 --- !u!4 &976616833
 Transform:
   m_ObjectHideFlags: 0
@@ -36466,6 +36483,17 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1895091422 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 9151752038466753569, guid: 70be12ad7eb4976408ab5dee48e88428, type: 3}
+  m_PrefabInstance: {fileID: 258569977}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 258569979}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 866f40cf455820c45a5ec6bcba217886, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SubTerra.App.GameplayIntegration::SubTerra.App.Integration.MiningProgressHud
 --- !u!1 &1929342142
 GameObject:
   m_ObjectHideFlags: 0

@@ -228,6 +228,7 @@ namespace SubTerra.App.Tests.Progression
             Assert.That(state.TryRestore(entries), Is.True);
             var provider = new UpgradeEffectProvider(state, new Catalog(upgrades));
 
+            Assert.That(provider.GetDrillLevel(), Is.EqualTo(1));
             Assert.That(provider.GetDrillSpeedMultiplier(), Is.EqualTo(1.2f).Within(0.0001f));
             Assert.That(provider.GetEnergyEfficiencyMultiplier(), Is.EqualTo(1.1f).Within(0.0001f));
             Assert.That(provider.GetMaximumEnergy(100), Is.EqualTo(125));

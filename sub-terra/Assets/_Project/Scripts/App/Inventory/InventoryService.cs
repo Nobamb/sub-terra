@@ -67,6 +67,22 @@ namespace SubTerra.App.Inventory
         /// <summary>B 내부/테스트용. 수락·거절·진단 결과를 반환한다.</summary>
         public InventoryMutationResult TryAddMineral(string mineralId, int quantity)
         {
+            return TryAddMineralInternal(mineralId, quantity, allowPartial: true);
+        }
+
+        /// <summary>
+        /// 채굴 완료용 전량 수락 경로. 한 단위라도 담지 못하면 Inventory를 변경하지 않는다.
+        /// </summary>
+        public InventoryMutationResult TryAddMineralExact(string mineralId, int quantity)
+        {
+            return TryAddMineralInternal(mineralId, quantity, allowPartial: false);
+        }
+
+        private InventoryMutationResult TryAddMineralInternal(
+            string mineralId,
+            int quantity,
+            bool allowPartial)
+        {
             if (catalog == null)
             {
                 return Fail(InventoryMutationStatus.CatalogMissing, mineralId, quantity, "Catalog missing.");
@@ -107,6 +123,17 @@ namespace SubTerra.App.Inventory
             }
 
             var maxFit = InventoryCalculator.MaxFittingUnits(remaining, info.UnitWeight);
+            if (!allowPartial && quantity > maxFit)
+            {
+                LastResult = InventoryMutationResult.Accepted(
+                    InventoryMutationStatus.CapacityFull,
+                    mineralId,
+                    quantity,
+                    0,
+                    "Insufficient capacity for the complete reward.");
+                return LastResult;
+            }
+
             var accepted = quantity <= maxFit ? quantity : maxFit;
 
             if (accepted <= 0)

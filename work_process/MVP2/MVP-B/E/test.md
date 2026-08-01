@@ -49,7 +49,10 @@
 
 ## 4. 검증 결과 요약
 
-- **상태:** 미실행
-- **모든 항목 통과 시:** Phase E 완료
-- **실패 항목 존재 시:** 타일 ID, 입력 경로, 전력 전후, 보상 횟수를 기록한다.
+- **상태:** 실행 완료 (2026-08-01)
+- **Edit Mode 전체 회귀:** 264 통과 / 0 실패 / 0 건너뜀
+- **Phase E Edit Mode 계약 검사:** 4 통과 / 0 실패 / 0 건너뜀
+- **Phase E Mining·Player Play Mode:** 22 통과 / 0 실패 / 0 건너뜀
+- **App Play Mode 회귀:** 25 통과 / 0 실패 / 0 건너뜀
+- **Unity Editor 연결 검사:** `HUDCanvas.prefab` 진행 HUD, Integration Scene 트랜잭션·Player·HUD 참조, 타일별 드릴 레벨·전력 비용 직렬화 확인
 

@@ -6,6 +6,7 @@ namespace SubTerra.Shared
     /// </summary>
     public interface IUpgradeEffectProvider
     {
+        int GetDrillLevel();
         float GetDrillSpeedMultiplier();
         float GetEnergyEfficiencyMultiplier();
         int GetMaximumEnergy(int baseMaximum);

@@ -5,64 +5,169 @@ using UnityEngine.Tilemaps;
 
 namespace SubTerra.Gameplay.Mining
 {
+    public enum MiningPhase
+    {
+        Idle = 0,
+        Mining = 1,
+        Completed = 2,
+        Cancelled = 3,
+        Failed = 4
+    }
+
+    public enum MiningFailureReason
+    {
+        None = 0,
+        InvalidTarget = 1,
+        NotMineable = 2,
+        DrillLevelTooLow = 3,
+        InsufficientEnergy = 4,
+        InventoryFull = 5,
+        TargetChanged = 6,
+        DependencyMissing = 7,
+        InvalidReward = 8,
+        OutOfRange = 9
+    }
+
+    public readonly struct MiningProgressState
+    {
+        public MiningPhase Phase { get; }
+        public MiningFailureReason FailureReason { get; }
+        public float Progress { get; }
+        public float Duration { get; }
+        public int EnergyCost { get; }
+
+        public MiningProgressState(
+            MiningPhase phase,
+            MiningFailureReason failureReason,
+            float progress,
+            float duration,
+            int energyCost)
+        {
+            Phase = phase;
+            FailureReason = failureReason;
+            Progress = progress;
+            Duration = duration;
+            EnergyCost = energyCost;
+        }
+    }
+
     public sealed class MiningSystem : MonoBehaviour
     {
         [SerializeField] private Tilemap foregroundTilemap;
         [SerializeField] private MiningTileResolver tileResolver;
         [SerializeField] private MonoBehaviour rewardReceiverBehaviour;
+        [SerializeField] private MonoBehaviour miningTransactionBehaviour;
+        [SerializeField] private MonoBehaviour upgradeEffectProviderBehaviour;
         [SerializeField] private Sprite resourceDropSprite;
         [SerializeField, Min(0.1f)] private float defaultMiningDuration = 1f;
         [SerializeField, Min(0.1f)] private float resourceDropSize = 0.35f;
 
         private IMiningRewardReceiver rewardReceiver;
+        private IMiningTransaction miningTransaction;
+        private IUpgradeEffectProvider upgradeEffects;
         private Vector3Int activeCell;
+        private TileBase activeTileAsset;
         private MiningTileDto activeTile;
         private float elapsed;
 
         public bool IsMining { get; private set; }
         public bool HasMiningPower { get; private set; } = true;
         public float Progress { get; private set; }
+        public float EffectiveDuration { get; private set; }
+        public int RequiredEnergy { get; private set; }
         public int SpawnedResourceDropCount { get; private set; }
+        public MiningFailureReason LastFailure { get; private set; }
         public event Action<Vector3Int, MiningTileDto> TileMined;
+        public event Action<MiningProgressState> ProgressChanged;
 
-        private void Awake() => ResolveRewardReceiver();
+        private void Awake() => ResolveServices();
+
+        public void SetRuntimeServices(
+            IMiningTransaction transaction,
+            IUpgradeEffectProvider effectProvider)
+        {
+            miningTransaction = transaction;
+            upgradeEffects = effectProvider;
+        }
 
         public void SetMiningPowerAvailable(bool available)
         {
             HasMiningPower = available;
-            if (!available) CancelMining();
+            if (!available && IsMining)
+            {
+                Fail(MiningFailureReason.InsufficientEnergy);
+            }
         }
 
         public bool TryStartMining(Vector3Int cell)
         {
-            if (IsMining && activeCell == cell) return true;
-            CancelMining();
-            ResolveRewardReceiver();
-            if (!HasMiningPower || foregroundTilemap == null || tileResolver == null) return false;
+            if (IsMining && activeCell == cell)
+            {
+                return true;
+            }
+
+            if (IsMining)
+            {
+                CancelMining();
+            }
+
+            ResolveServices();
+            if (!HasMiningPower || foregroundTilemap == null || tileResolver == null)
+            {
+                return Fail(HasMiningPower
+                    ? MiningFailureReason.DependencyMissing
+                    : MiningFailureReason.InsufficientEnergy);
+            }
 
             TileBase tile = foregroundTilemap.GetTile(cell);
-            if (tile == null || !tileResolver.TryResolve(tile, out MiningTileDto definition) || !definition.isMineable)
-                return false;
+            if (tile == null || !tileResolver.TryResolve(tile, out MiningTileDto definition))
+            {
+                return Fail(MiningFailureReason.InvalidTarget);
+            }
+
+            if (!definition.isMineable)
+            {
+                return Fail(MiningFailureReason.NotMineable);
+            }
+
+            var drillLevel = upgradeEffects?.GetDrillLevel() ?? 0;
+            if (drillLevel < Mathf.Max(0, definition.requiredDrillLevel))
+            {
+                return Fail(MiningFailureReason.DrillLevelTooLow);
+            }
+
+            RequiredEnergy = CalculateEnergyCost(definition.energyCost);
+            if (RequiredEnergy > 0
+                && (miningTransaction == null
+                    || !miningTransaction.CanAffordEnergy(RequiredEnergy)))
+            {
+                return Fail(miningTransaction == null
+                    ? MiningFailureReason.DependencyMissing
+                    : MiningFailureReason.InsufficientEnergy);
+            }
 
             activeCell = cell;
+            activeTileAsset = tile;
             activeTile = definition;
             elapsed = 0f;
             Progress = 0f;
+            LastFailure = MiningFailureReason.None;
+            EffectiveDuration = CalculateDuration(definition.miningTime);
             IsMining = true;
+            Publish(MiningPhase.Mining);
             return true;
         }
 
         public bool TryStartMiningFrom(Vector2 origin, float facingDirection, float range)
         {
-            if (foregroundTilemap == null || Mathf.Approximately(facingDirection, 0f))
-            {
-                return false;
-            }
+            return TryGetDirectionalCell(origin, facingDirection, range, out var cell)
+                && TryStartMining(cell);
+        }
 
-            Vector3 target = origin
-                + Vector2.right * Mathf.Sign(facingDirection) * Mathf.Max(0f, range)
-                + Vector2.down * 0.5f;
-            return TryStartMining(foregroundTilemap.WorldToCell(target));
+        public bool TryStartMiningAtWorldPoint(Vector2 worldPoint, Vector2 origin, float range)
+        {
+            return TryGetWorldPointCell(worldPoint, origin, range, out var cell)
+                && TryStartMining(cell);
         }
 
         public bool TryMineInstant(Vector3Int cell)
@@ -72,12 +177,153 @@ namespace SubTerra.Gameplay.Mining
                 return false;
             }
 
-            CompleteMining();
-            return true;
+            return CompleteMining();
         }
 
         public bool TryMineInstantFrom(Vector2 origin, float facingDirection, float range)
         {
+            return TryGetDirectionalCell(origin, facingDirection, range, out var cell)
+                && TryMineInstant(cell);
+        }
+
+        public bool TryMineInstantAtWorldPoint(Vector2 worldPoint, Vector2 origin, float range)
+        {
+            return TryGetWorldPointCell(worldPoint, origin, range, out var cell)
+                && TryMineInstant(cell);
+        }
+
+        public void TickMining(float deltaTime)
+        {
+            if (!ValidateActiveMining())
+            {
+                return;
+            }
+
+            elapsed += Mathf.Max(0f, deltaTime);
+            Progress = Mathf.Clamp01(elapsed / EffectiveDuration);
+            Publish(MiningPhase.Mining);
+            if (Progress >= 1f)
+            {
+                CompleteMining();
+            }
+        }
+
+        public void TickMining(float deltaTime, Vector2 origin, float range)
+        {
+            if (IsMining && !IsCellInRange(activeCell, origin, range))
+            {
+                Fail(MiningFailureReason.OutOfRange);
+                return;
+            }
+
+            TickMining(deltaTime);
+        }
+
+        public void CancelMining()
+        {
+            if (!IsMining)
+            {
+                return;
+            }
+
+            IsMining = false;
+            elapsed = 0f;
+            Progress = 0f;
+            LastFailure = MiningFailureReason.None;
+            Publish(MiningPhase.Cancelled);
+        }
+
+        private bool ValidateActiveMining()
+        {
+            if (!IsMining)
+            {
+                return false;
+            }
+
+            if (!HasMiningPower
+                || (RequiredEnergy > 0
+                    && (miningTransaction == null
+                        || !miningTransaction.CanAffordEnergy(RequiredEnergy))))
+            {
+                Fail(miningTransaction == null && HasMiningPower
+                    ? MiningFailureReason.DependencyMissing
+                    : MiningFailureReason.InsufficientEnergy);
+                return false;
+            }
+
+            if (foregroundTilemap.GetTile(activeCell) != activeTileAsset)
+            {
+                Fail(MiningFailureReason.TargetChanged);
+                return false;
+            }
+
+            return true;
+        }
+
+        private bool CompleteMining()
+        {
+            if (!ValidateActiveMining())
+            {
+                return false;
+            }
+
+            if (miningTransaction != null)
+            {
+                var commit = miningTransaction.TryCommitMining(
+                    activeTile.mineralId,
+                    activeTile.quantity,
+                    RequiredEnergy);
+                if (!commit.Succeeded)
+                {
+                    Fail(ToFailureReason(commit.Status));
+                    return false;
+                }
+            }
+            else if (RequiredEnergy > 0)
+            {
+                return Fail(MiningFailureReason.DependencyMissing);
+            }
+
+            TileBase tile = foregroundTilemap.GetTile(activeCell);
+            if (tile != activeTileAsset)
+            {
+                return Fail(MiningFailureReason.TargetChanged);
+            }
+
+            Sprite minedSprite = foregroundTilemap.GetSprite(activeCell);
+            Color minedColor = tile is Tile coloredTile ? coloredTile.color : Color.white;
+            foregroundTilemap.SetTile(activeCell, null);
+
+            if (miningTransaction == null
+                && rewardReceiver != null
+                && !string.IsNullOrEmpty(activeTile.mineralId)
+                && activeTile.quantity > 0)
+            {
+                rewardReceiver.AddMineral(activeTile.mineralId, activeTile.quantity);
+            }
+            else if (miningTransaction == null
+                && rewardReceiver == null
+                && !string.IsNullOrEmpty(activeTile.mineralId))
+            {
+                // Inventory 소유자가 없을 때만 월드 드롭을 만든다. 두 보상 경로를 동시에 만들지 않는다.
+                SpawnResourceDrop(activeCell, activeTile.mineralId, minedSprite, minedColor);
+            }
+
+            IsMining = false;
+            Progress = 1f;
+            LastFailure = MiningFailureReason.None;
+            TileMined?.Invoke(activeCell, activeTile);
+            Publish(MiningPhase.Completed);
+            return true;
+        }
+
+        private bool TryGetDirectionalCell(
+            Vector2 origin,
+            float facingDirection,
+            float range,
+            out Vector3Int cell)
+        {
+            cell = default;
             if (foregroundTilemap == null || Mathf.Approximately(facingDirection, 0f))
             {
                 return false;
@@ -86,74 +332,96 @@ namespace SubTerra.Gameplay.Mining
             Vector3 target = origin
                 + Vector2.right * Mathf.Sign(facingDirection) * Mathf.Max(0f, range)
                 + Vector2.down * 0.5f;
-            return TryMineInstant(foregroundTilemap.WorldToCell(target));
+            cell = foregroundTilemap.WorldToCell(target);
+            return true;
         }
 
-        public bool TryMineInstantAtWorldPoint(Vector2 worldPoint, Vector2 origin, float range)
+        private bool TryGetWorldPointCell(
+            Vector2 worldPoint,
+            Vector2 origin,
+            float range,
+            out Vector3Int cell)
+        {
+            cell = default;
+            if (foregroundTilemap == null)
+            {
+                return false;
+            }
+
+            cell = foregroundTilemap.WorldToCell(worldPoint);
+            return IsCellInRange(cell, origin, range);
+        }
+
+        private bool IsCellInRange(Vector3Int cell, Vector2 origin, float range)
         {
             if (foregroundTilemap == null)
             {
                 return false;
             }
 
-            Vector3Int cell = foregroundTilemap.WorldToCell(worldPoint);
             Vector3 center = foregroundTilemap.GetCellCenterWorld(cell);
             float allowed = Mathf.Max(0f, range) + 0.5f;
-            if (Mathf.Abs(center.x - origin.x) > allowed
-                || Mathf.Abs(center.y - origin.y) > allowed)
+            return Mathf.Abs(center.x - origin.x) <= allowed
+                && Mathf.Abs(center.y - origin.y) <= allowed;
+        }
+
+        private float CalculateDuration(float baseDuration)
+        {
+            var duration = baseDuration > 0f ? baseDuration : defaultMiningDuration;
+            var speed = upgradeEffects?.GetDrillSpeedMultiplier() ?? 1f;
+            if (speed <= 0f || float.IsNaN(speed) || float.IsInfinity(speed))
             {
-                return false;
+                speed = 1f;
             }
 
-            return TryMineInstant(cell);
+            return Mathf.Max(0.01f, duration / speed);
         }
 
-        public void TickMining(float deltaTime)
+        private int CalculateEnergyCost(int baseCost)
         {
-            if (!IsMining) return;
-            if (!HasMiningPower) { CancelMining(); return; }
+            if (baseCost <= 0)
+            {
+                return 0;
+            }
 
-            float duration = activeTile.miningTime > 0f ? activeTile.miningTime : defaultMiningDuration;
-            elapsed += Mathf.Max(0f, deltaTime);
-            Progress = Mathf.Clamp01(elapsed / duration);
-            if (Progress < 1f) return;
+            var efficiency = upgradeEffects?.GetEnergyEfficiencyMultiplier() ?? 1f;
+            if (efficiency <= 0f || float.IsNaN(efficiency) || float.IsInfinity(efficiency))
+            {
+                efficiency = 1f;
+            }
 
-            CompleteMining();
+            return Mathf.Max(1, Mathf.CeilToInt(baseCost / efficiency));
         }
 
-        public void CancelMining()
+        private bool Fail(MiningFailureReason reason)
         {
             IsMining = false;
             elapsed = 0f;
-            Progress = 0f;
+            LastFailure = reason;
+            Publish(MiningPhase.Failed);
+            return false;
         }
 
-        private void CompleteMining()
+        private void Publish(MiningPhase phase)
         {
-            IsMining = false;
-            Progress = 1f;
-            TileBase tile = foregroundTilemap.GetTile(activeCell);
-            if (tile == null)
-            {
-                return;
-            }
+            ProgressChanged?.Invoke(new MiningProgressState(
+                phase,
+                LastFailure,
+                Progress,
+                EffectiveDuration,
+                RequiredEnergy));
+        }
 
-            Sprite minedSprite = foregroundTilemap.GetSprite(activeCell);
-            Color minedColor = tile is Tile coloredTile ? coloredTile.color : Color.white;
-            foregroundTilemap.SetTile(activeCell, null);
-            if (rewardReceiver != null
-                && !string.IsNullOrEmpty(activeTile.mineralId)
-                && activeTile.quantity > 0)
+        private static MiningFailureReason ToFailureReason(MiningCommitStatus status)
+        {
+            return status switch
             {
-                rewardReceiver.AddMineral(activeTile.mineralId, activeTile.quantity);
-            }
-
-            if (!string.IsNullOrEmpty(activeTile.mineralId))
-            {
-                SpawnResourceDrop(activeCell, activeTile.mineralId, minedSprite, minedColor);
-            }
-
-            TileMined?.Invoke(activeCell, activeTile);
+                MiningCommitStatus.InsufficientEnergy => MiningFailureReason.InsufficientEnergy,
+                MiningCommitStatus.InventoryFull => MiningFailureReason.InventoryFull,
+                MiningCommitStatus.InvalidReward => MiningFailureReason.InvalidReward,
+                MiningCommitStatus.DependencyMissing => MiningFailureReason.DependencyMissing,
+                _ => MiningFailureReason.None
+            };
         }
 
         private void SpawnResourceDrop(
@@ -169,15 +437,11 @@ namespace SubTerra.Gameplay.Mining
                 dropRoot.SetParent(transform, false);
             }
 
-            var drop = new GameObject(
-                "MinedResource_" + mineralId.Replace('.', '_'));
+            var drop = new GameObject("MinedResource_" + mineralId.Replace('.', '_'));
             drop.transform.SetParent(dropRoot, false);
-            drop.transform.position =
-                foregroundTilemap.GetCellCenterWorld(cell) + Vector3.up * 0.2f;
+            drop.transform.position = foregroundTilemap.GetCellCenterWorld(cell) + Vector3.up * 0.2f;
             var renderer = drop.AddComponent<SpriteRenderer>();
-            renderer.sprite = resourceDropSprite != null
-                ? resourceDropSprite
-                : minedSprite;
+            renderer.sprite = resourceDropSprite != null ? resourceDropSprite : minedSprite;
             renderer.color = minedColor;
             renderer.drawMode = SpriteDrawMode.Sliced;
             renderer.size = Vector2.one * resourceDropSize;
@@ -185,6 +449,11 @@ namespace SubTerra.Gameplay.Mining
             SpawnedResourceDropCount++;
         }
 
-        private void ResolveRewardReceiver() => rewardReceiver = rewardReceiverBehaviour as IMiningRewardReceiver;
+        private void ResolveServices()
+        {
+            rewardReceiver = rewardReceiverBehaviour as IMiningRewardReceiver;
+            miningTransaction ??= miningTransactionBehaviour as IMiningTransaction;
+            upgradeEffects ??= upgradeEffectProviderBehaviour as IUpgradeEffectProvider;
+        }
     }
 }

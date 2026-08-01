@@ -9,6 +9,8 @@ using SubTerra.App.UI.HUD;
 using SubTerra.App.UI.Tutorial;
 using SubTerra.Gameplay.Building;
 using SubTerra.Gameplay.Drone;
+using SubTerra.Gameplay.Mining;
+using SubTerra.Gameplay.Player;
 using SubTerra.Shared;
 using UnityEngine;
 
@@ -22,6 +24,7 @@ namespace SubTerra.App.Integration
     public sealed class IntegrationRuntimeBinder :
         MonoBehaviour,
         IMiningRewardReceiver,
+        IMiningTransaction,
         IGameplayEventSink,
         IIntegrationRestoreListener
     {
@@ -37,6 +40,9 @@ namespace SubTerra.App.Integration
         [SerializeField] private CanvasGroup hudCanvasGroup;
         [SerializeField] private Behaviour[] deferredInputBehaviours;
         [SerializeField] private TutorialDirectorBinder tutorialDirector;
+        [SerializeField] private MiningSystem miningSystem;
+        [SerializeField] private PlayerMovement playerMovement;
+        [SerializeField] private MiningProgressHud miningProgressHud;
 
         private SaveRuntimeController runtime;
         private GameBootstrapper bootstrap;
@@ -46,6 +52,7 @@ namespace SubTerra.App.Integration
         private IntegrationActivationGate activationGate;
         private bool contractsWired;
         private bool uiActivated;
+        private bool inventorySpeedBound;
 
         public IntegrationContractRegistry Contracts => contracts;
         public IntegrationActivationGate ActivationGate => activationGate;
@@ -115,6 +122,13 @@ namespace SubTerra.App.Integration
 
             runtime.EnsureGameplayServices();
             runtime.InventoryService?.BindGameState(bootstrap.State);
+
+            if (miningSystem != null)
+            {
+                miningSystem.SetRuntimeServices(this, runtime.Progression?.Effects);
+            }
+
+            BindCargoSpeed();
 
             // IResourceWallet: A BuildingPlacementSystem → B EconomyService
             if (buildingPlacementSystem != null && runtime.Economy != null)
@@ -259,6 +273,8 @@ namespace SubTerra.App.Integration
                 hudBinder.BindTo(bootstrap.State);
             }
 
+            miningProgressHud?.BindTo(miningSystem);
+
             SetHudVisible(true);
             SetDeferredInputEnabled(true);
             uiActivated = true;
@@ -269,6 +285,88 @@ namespace SubTerra.App.Integration
         {
             runtime ??= SaveRuntimeController.Instance;
             runtime?.InventoryService?.AddMineral(mineralId, quantity);
+        }
+
+        public bool CanAffordEnergy(int energyCost)
+        {
+            var state = bootstrap != null ? bootstrap.State : GameBootstrapper.Instance?.State;
+            return state != null && state.Player.Energy >= Mathf.Max(0, energyCost);
+        }
+
+        public MiningCommitResult TryCommitMining(
+            string mineralId,
+            int quantity,
+            int energyCost)
+        {
+            runtime ??= SaveRuntimeController.Instance;
+            bootstrap ??= GameBootstrapper.Instance;
+            var inventory = runtime?.InventoryService;
+            var state = bootstrap?.State;
+            if (inventory == null || state == null)
+            {
+                return new MiningCommitResult(MiningCommitStatus.DependencyMissing);
+            }
+
+            var cost = Mathf.Max(0, energyCost);
+            if (state.Player.Energy < cost)
+            {
+                return new MiningCommitResult(MiningCommitStatus.InsufficientEnergy);
+            }
+
+            var hasReward = !string.IsNullOrEmpty(mineralId) || quantity != 0;
+            if (hasReward)
+            {
+                if (string.IsNullOrEmpty(mineralId) || quantity <= 0)
+                {
+                    return new MiningCommitResult(MiningCommitStatus.InvalidReward);
+                }
+
+                // 전량 수락을 먼저 확정한다. 실패하면 전력과 월드 타일은 그대로 남는다.
+                var reward = inventory.TryAddMineralExact(mineralId, quantity);
+                if (reward.Status != InventoryMutationStatus.Success)
+                {
+                    return new MiningCommitResult(
+                        reward.Status == InventoryMutationStatus.CapacityFull
+                            ? MiningCommitStatus.InventoryFull
+                            : MiningCommitStatus.InvalidReward);
+                }
+            }
+
+            state.SetCurrentEnergy(state.Player.Energy - cost);
+            return MiningCommitResult.Success();
+        }
+
+        private void BindCargoSpeed()
+        {
+            if (inventorySpeedBound || runtime?.InventoryService == null || playerMovement == null)
+            {
+                return;
+            }
+
+            runtime.InventoryService.InventoryChanged += OnInventoryChangedForMovement;
+            inventorySpeedBound = true;
+            ApplyCargoSpeed(runtime.InventoryService.GetSnapshot());
+        }
+
+        private void OnInventoryChangedForMovement(InventorySnapshot snapshot)
+        {
+            ApplyCargoSpeed(snapshot);
+        }
+
+        private void ApplyCargoSpeed(InventorySnapshot snapshot)
+        {
+            playerMovement?.SetCargoSpeedMultiplier(
+                CargoSpeedPolicy.Evaluate(snapshot.CurrentWeight, snapshot.MaxCapacity));
+        }
+
+        private void OnDestroy()
+        {
+            if (inventorySpeedBound && runtime?.InventoryService != null)
+            {
+                runtime.InventoryService.InventoryChanged -= OnInventoryChangedForMovement;
+            }
+
+            inventorySpeedBound = false;
         }
 
         public void Publish(GameplayEventDto gameplayEvent)

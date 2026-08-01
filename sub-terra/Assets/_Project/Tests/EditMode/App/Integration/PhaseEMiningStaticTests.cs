@@ -1,0 +1,60 @@
+using System.IO;
+using NUnit.Framework;
+using SubTerra.Shared;
+using UnityEngine;
+
+namespace SubTerra.App.Tests.Integration
+{
+    public sealed class PhaseEMiningStaticTests
+    {
+        [Test]
+        public void E_S01_MiningData_ContainsTimeLevelAndEnergyFields()
+        {
+            Assert.That(typeof(MiningTileDto).GetField("miningTime"), Is.Not.Null);
+            Assert.That(typeof(MiningTileDto).GetField("requiredDrillLevel"), Is.Not.Null);
+            Assert.That(typeof(MiningTileDto).GetField("energyCost"), Is.Not.Null);
+        }
+
+        [Test]
+        public void E_S02_KeyboardAndMouseController_UseStartTickCompleteFlow()
+        {
+            var source = Read("Scripts", "Gameplay", "Mining", "PlayerMiningController.cs");
+            Assert.That(source, Does.Contain("TryStartMiningAtWorldPoint"));
+            Assert.That(source, Does.Contain("TryStartMiningFrom"));
+            Assert.That(source, Does.Contain("TickMining"));
+            Assert.That(source, Does.Not.Contain("TryMineInstant"));
+        }
+
+        [Test]
+        public void E_S03_CargoSpeed_IsSubscribedToInventoryChanges()
+        {
+            var source = Read("Scripts", "App", "Integration", "IntegrationRuntimeBinder.cs");
+            Assert.That(source, Does.Contain("InventoryChanged += OnInventoryChangedForMovement"));
+            Assert.That(source, Does.Contain("CargoSpeedPolicy.Evaluate"));
+        }
+
+        [Test]
+        public void E_S04_ProgressHudAndRuntimeReferences_AreSerialized()
+        {
+            var prefab = Read("Prefabs", "UI", "HUDCanvas.prefab");
+            var scene = Read("Scenes", "App", "Mine_Demo_Integration.unity");
+            Assert.That(prefab, Does.Contain("MiningProgressHud"));
+            Assert.That(prefab, Does.Contain("MiningProgressStatus"));
+            Assert.That(scene, Does.Match(@"miningTransactionBehaviour: \{fileID: [1-9]"));
+            Assert.That(scene, Does.Match(@"miningProgressHud: \{fileID: [1-9]"));
+            Assert.That(scene, Does.Contain("requiredDrillLevel: 2"));
+            Assert.That(scene, Does.Contain("energyCost: 3"));
+        }
+
+        private static string Read(params string[] parts)
+        {
+            var path = Path.Combine(Application.dataPath, "_Project");
+            for (var index = 0; index < parts.Length; index++)
+            {
+                path = Path.Combine(path, parts[index]);
+            }
+
+            return File.ReadAllText(path);
+        }
+    }
+}

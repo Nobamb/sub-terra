@@ -11,6 +11,22 @@ namespace SubTerra.App.Tests.Inventory
     /// </summary>
     public sealed class InventoryServiceTests
     {
+        [Test]
+        public void E_F05_ExactMiningReward_WhenCapacityIsShort_ChangesNothing()
+        {
+            var catalog = CreateMvpCatalog();
+            var service = new InventoryService(catalog, 2f);
+            var events = 0;
+            service.InventoryChanged += _ => events++;
+
+            var result = service.TryAddMineralExact("mineral.copper", 2);
+
+            Assert.That(result.Status, Is.EqualTo(InventoryMutationStatus.CapacityFull));
+            Assert.That(service.State.GetQuantity("mineral.copper"), Is.Zero);
+            Assert.That(service.CurrentWeight, Is.Zero);
+            Assert.That(events, Is.Zero);
+        }
+
         private const string Copper = "mineral.copper";
         private const string Iron = "mineral.iron";
         private const string Lithium = "mineral.lithium";

@@ -15,6 +15,8 @@ namespace SubTerra.Shared
         public bool isMineable;
         public float durability;
         public float miningTime;
+        public int requiredDrillLevel;
+        public int energyCost;
         public float structuralImpact;
         public bool containsGas;
 
@@ -26,7 +28,9 @@ namespace SubTerra.Shared
             float durability,
             float miningTime,
             float structuralImpact,
-            bool containsGas)
+            bool containsGas,
+            int requiredDrillLevel = 0,
+            int energyCost = 0)
         {
             this.tileId = tileId;
             this.mineralId = mineralId;
@@ -34,6 +38,8 @@ namespace SubTerra.Shared
             this.isMineable = isMineable;
             this.durability = durability;
             this.miningTime = miningTime;
+            this.requiredDrillLevel = requiredDrillLevel;
+            this.energyCost = energyCost;
             this.structuralImpact = structuralImpact;
             this.containsGas = containsGas;
         }

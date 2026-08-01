@@ -19,6 +19,11 @@ namespace SubTerra.App.Progression
             this.catalog = catalog;
         }
 
+        public int GetDrillLevel()
+        {
+            return state?.GetLevel(DataIds.Upgrades.DrillSpeed) ?? 0;
+        }
+
         public float GetDrillSpeedMultiplier()
         {
             return 1f + GetCurrentEffect(DataIds.Upgrades.DrillSpeed);

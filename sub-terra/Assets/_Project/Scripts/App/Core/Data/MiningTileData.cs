@@ -16,6 +16,8 @@ namespace SubTerra.App.Core.Data
         [SerializeField] private bool isMineable = true;
         [SerializeField] private float durability = 1f;
         [SerializeField] private float miningTime = 1f;
+        [SerializeField, Min(0)] private int requiredDrillLevel;
+        [SerializeField, Min(0)] private int energyCost = 1;
         [SerializeField] private MineralData rewardMineral;
         [SerializeField] private int quantity;
         [SerializeField] private float structuralImpact;
@@ -26,6 +28,8 @@ namespace SubTerra.App.Core.Data
         public bool IsMineable => isMineable;
         public float Durability => durability;
         public float MiningTime => miningTime;
+        public int RequiredDrillLevel => requiredDrillLevel;
+        public int EnergyCost => energyCost;
         public MineralData RewardMineral => rewardMineral;
         public string MineralId => rewardMineral != null ? rewardMineral.Id : string.Empty;
         public int Quantity => quantity;
@@ -43,7 +47,9 @@ namespace SubTerra.App.Core.Data
                 durability,
                 miningTime,
                 structuralImpact,
-                containsGas);
+                containsGas,
+                requiredDrillLevel,
+                energyCost);
         }
 
 #if UNITY_EDITOR
@@ -56,13 +62,17 @@ namespace SubTerra.App.Core.Data
             MineralData mineral,
             int rewardQuantity,
             float impact,
-            bool gas)
+            bool gas,
+            int minimumDrillLevel = 0,
+            int miningEnergyCost = 1)
         {
             id = permanentId;
             tileAsset = asset;
             isMineable = mineable;
             durability = tileDurability;
             miningTime = timeToMine;
+            requiredDrillLevel = minimumDrillLevel;
+            energyCost = miningEnergyCost;
             rewardMineral = mineral;
             quantity = rewardQuantity;
             structuralImpact = impact;

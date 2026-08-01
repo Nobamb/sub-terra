@@ -66,7 +66,7 @@ namespace SubTerra.App.Tests.Progression
         {
             Assert.That(typeof(IUpgradeEffectProvider).Assembly.GetName().Name, Is.EqualTo("SubTerra.Shared"));
             var methods = typeof(IUpgradeEffectProvider).GetMethods();
-            Assert.That(methods.Length, Is.EqualTo(7));
+            Assert.That(methods.Length, Is.EqualTo(8));
             foreach (var method in methods)
             {
                 Assert.That(method.ReturnType.Namespace, Does.Not.StartWith("SubTerra.App"));
