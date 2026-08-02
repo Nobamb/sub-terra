@@ -1,20 +1,28 @@
 using SubTerra.Gameplay.Mining;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace SubTerra.App.Integration
 {
-    /// <summary>채굴 진행률과 차단 사유를 MiningSystem 이벤트에서만 표시한다.</summary>
+    /// <summary>채굴이 진행되는 동안 플레이어 머리 위에 진행 게이지를 표시한다.</summary>
     public sealed class MiningProgressHud : MonoBehaviour
     {
         [SerializeField] private GameObject statusRoot;
         [SerializeField] private TMP_Text statusText;
+        [SerializeField] private Image progressFill;
+        [SerializeField] private Vector2 screenOffset = new(0f, 20f);
 
         private MiningSystem boundSystem;
+        private Transform playerTarget;
+        private Collider2D playerCollider;
+        private RectTransform statusRect;
+        private RectTransform progressFillRect;
+        private Canvas parentCanvas;
 
-        public void BindTo(MiningSystem system)
+        public void BindTo(MiningSystem system, Transform player)
         {
-            if (boundSystem == system)
+            if (boundSystem == system && playerTarget == player)
             {
                 return;
             }
@@ -25,6 +33,11 @@ namespace SubTerra.App.Integration
             }
 
             boundSystem = system;
+            playerTarget = player;
+            playerCollider = playerTarget != null
+                ? playerTarget.GetComponent<Collider2D>()
+                : null;
+            CacheUiReferences();
             if (boundSystem != null)
             {
                 boundSystem.ProgressChanged += OnProgressChanged;
@@ -32,6 +45,8 @@ namespace SubTerra.App.Integration
 
             SetVisible(false);
         }
+
+        public void BindTo(MiningSystem system) => BindTo(system, playerTarget);
 
         private void OnDisable()
         {
@@ -42,22 +57,40 @@ namespace SubTerra.App.Integration
             }
         }
 
+        private void LateUpdate()
+        {
+            if (statusRoot != null && statusRoot.activeSelf)
+            {
+                UpdatePosition();
+            }
+        }
+
         private void OnProgressChanged(MiningProgressState state)
         {
-            if (statusText == null)
+            bool isMining = state.Phase == MiningPhase.Mining;
+            if (progressFill != null)
             {
-                return;
+                float progress = Mathf.Clamp01(state.Progress);
+                progressFillRect.localScale = new Vector3(progress, 1f, 1f);
+                progressFill.gameObject.SetActive(isMining);
             }
 
-            statusText.text = state.Phase switch
+            if (statusText != null)
             {
-                MiningPhase.Mining => $"채굴 {Mathf.RoundToInt(state.Progress * 100f)}%  |  전력 {state.EnergyCost}",
-                MiningPhase.Completed => "채굴 완료",
-                MiningPhase.Cancelled => "채굴 취소",
-                MiningPhase.Failed => FailureMessage(state.FailureReason),
-                _ => string.Empty
-            };
-            SetVisible(state.Phase != MiningPhase.Idle);
+                statusText.text = state.Phase switch
+                {
+                    MiningPhase.Mining => $"채굴 {Mathf.RoundToInt(state.Progress * 100f)}%",
+                    MiningPhase.Failed => FailureMessage(state.FailureReason),
+                    _ => string.Empty
+                };
+            }
+
+            bool isVisible = isMining || state.Phase == MiningPhase.Failed;
+            SetVisible(isVisible);
+            if (isVisible)
+            {
+                UpdatePosition();
+            }
         }
 
         private void SetVisible(bool visible)
@@ -65,6 +98,49 @@ namespace SubTerra.App.Integration
             if (statusRoot != null)
             {
                 statusRoot.SetActive(visible);
+            }
+        }
+
+        private void CacheUiReferences()
+        {
+            statusRect = statusRoot != null
+                ? statusRoot.GetComponent<RectTransform>()
+                : null;
+            parentCanvas = GetComponentInParent<Canvas>();
+            if (progressFill != null)
+            {
+                progressFillRect = progressFill.rectTransform;
+                progressFill.type = Image.Type.Simple;
+            }
+        }
+
+        private void UpdatePosition()
+        {
+            Camera worldCamera = Camera.main;
+            if (playerTarget == null || statusRect == null || worldCamera == null)
+            {
+                return;
+            }
+
+            float top = playerCollider != null
+                ? playerCollider.bounds.max.y
+                : playerTarget.position.y;
+            Vector3 screenPoint = worldCamera.WorldToScreenPoint(
+                new Vector3(playerTarget.position.x, top, playerTarget.position.z));
+            screenPoint += (Vector3)screenOffset;
+
+            Camera uiCamera = parentCanvas != null
+                && parentCanvas.renderMode != RenderMode.ScreenSpaceOverlay
+                    ? parentCanvas.worldCamera
+                    : null;
+            if (statusRect.parent is RectTransform parentRect
+                && RectTransformUtility.ScreenPointToWorldPointInRectangle(
+                    parentRect,
+                    screenPoint,
+                    uiCamera,
+                    out Vector3 worldPoint))
+            {
+                statusRect.position = worldPoint;
             }
         }
 
