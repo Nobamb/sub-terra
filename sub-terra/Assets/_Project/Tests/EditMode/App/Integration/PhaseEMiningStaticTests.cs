@@ -40,10 +40,25 @@ namespace SubTerra.App.Tests.Integration
             var scene = Read("Scenes", "App", "Mine_Demo_Integration.unity");
             Assert.That(prefab, Does.Contain("MiningProgressHud"));
             Assert.That(prefab, Does.Contain("MiningProgressStatus"));
+            Assert.That(prefab, Does.Contain("MiningProgressFill"));
             Assert.That(scene, Does.Match(@"miningTransactionBehaviour: \{fileID: [1-9]"));
             Assert.That(scene, Does.Match(@"miningProgressHud: \{fileID: [1-9]"));
             Assert.That(scene, Does.Contain("requiredDrillLevel: 2"));
             Assert.That(scene, Does.Contain("energyCost: 3"));
+        }
+
+        [Test]
+        public void E_S05_ProgressHud_FollowsPlayerAndUsesMiningProgressAsFill()
+        {
+            var source = Read("Scripts", "App", "Integration", "MiningProgressHud.cs");
+            var binder = Read("Scripts", "App", "Integration", "IntegrationRuntimeBinder.cs");
+
+            Assert.That(source, Does.Contain("float progress = Mathf.Clamp01(state.Progress)"));
+            Assert.That(source, Does.Contain("progressFillRect.localScale"));
+            Assert.That(source, Does.Contain("state.Phase == MiningPhase.Mining"));
+            Assert.That(source, Does.Contain("playerCollider.bounds.max.y"));
+            Assert.That(source, Does.Contain("screenOffset = new(0f, 20f)"));
+            Assert.That(binder, Does.Contain("playerMovement.transform"));
         }
 
         private static string Read(params string[] parts)
