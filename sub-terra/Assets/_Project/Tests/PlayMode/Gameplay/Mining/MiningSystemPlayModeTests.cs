@@ -220,6 +220,55 @@ namespace SubTerra.Gameplay.Mining.Tests
             Object.DestroyImmediate(tile);
         }
 
+        [Test]
+        public void Prompt23_1_DirectionalMining_PrioritizesImmediateSideBlock()
+        {
+            CreateSystem(out var root, out var tilemap, out var resolver, out var system);
+            var tile = ScriptableObject.CreateInstance<Tile>();
+            resolver.RegisterRuntime(tile, new MiningTileDto(
+                "tile.rock.normal", string.Empty, 0, true, 1f, 0.1f, 0f, false));
+            var immediateRight = new Vector3Int(0, 0, 0);
+            var immediateLeft = new Vector3Int(-1, 0, 0);
+            var previousOffsetTarget = new Vector3Int(1, -1, 0);
+            tilemap.SetTile(immediateRight, tile);
+            tilemap.SetTile(immediateLeft, tile);
+            tilemap.SetTile(previousOffsetTarget, tile);
+
+            Assert.IsTrue(system.TryMineInstantFrom(Vector2.zero, -1f, 1.35f));
+            Assert.IsNull(tilemap.GetTile(immediateLeft));
+            Assert.IsNotNull(tilemap.GetTile(immediateRight));
+
+            Assert.IsTrue(system.TryMineInstantFrom(Vector2.zero, 1f, 1.35f));
+            Assert.IsNull(tilemap.GetTile(immediateRight));
+            Assert.IsNotNull(tilemap.GetTile(previousOffsetTarget));
+
+            Object.DestroyImmediate(root);
+            Object.DestroyImmediate(tile);
+        }
+
+        [Test]
+        public void Prompt23_1_DirectionalMining_UsesUpperThenLowerFallback()
+        {
+            CreateSystem(out var root, out var tilemap, out var resolver, out var system);
+            var tile = ScriptableObject.CreateInstance<Tile>();
+            resolver.RegisterRuntime(tile, new MiningTileDto(
+                "tile.rock.normal", string.Empty, 0, true, 1f, 0.1f, 0f, false));
+            var upperRight = new Vector3Int(0, 1, 0);
+            var lowerRight = new Vector3Int(0, -1, 0);
+            tilemap.SetTile(upperRight, tile);
+            tilemap.SetTile(lowerRight, tile);
+
+            Assert.IsTrue(system.TryMineInstantFrom(Vector2.zero, 1f, 1.35f));
+            Assert.IsNull(tilemap.GetTile(upperRight));
+            Assert.IsNotNull(tilemap.GetTile(lowerRight));
+
+            Assert.IsTrue(system.TryMineInstantFrom(Vector2.zero, 1f, 1.35f));
+            Assert.IsNull(tilemap.GetTile(lowerRight));
+
+            Object.DestroyImmediate(root);
+            Object.DestroyImmediate(tile);
+        }
+
         [UnityTest]
         public IEnumerator E_F03_KeyboardAndMouse_UseTheSameTimedCompletionPath()
         {
@@ -249,7 +298,7 @@ namespace SubTerra.Gameplay.Mining.Tests
             var tile = ScriptableObject.CreateInstance<Tile>();
             resolver.RegisterRuntime(tile, new MiningTileDto(
                 "tile.copper", "mineral.copper", 1, true, 1f, 0.25f, 0f, false));
-            var cell = tilemap.WorldToCell(new Vector3(1.35f, -0.5f, 0f));
+            var cell = new Vector3Int(0, 0, 0);
             var completions = 0;
             system.TileMined += (_, _) => completions++;
             player.SetActive(true);
