@@ -329,11 +329,42 @@ namespace SubTerra.Gameplay.Mining
                 return false;
             }
 
-            Vector3 target = origin
-                + Vector2.right * Mathf.Sign(facingDirection) * Mathf.Max(0f, range)
-                + Vector2.down * 0.5f;
-            cell = foregroundTilemap.WorldToCell(target);
-            return true;
+            int horizontalDirection = facingDirection > 0f ? 1 : -1;
+            Vector3Int sideCell = foregroundTilemap.WorldToCell(origin);
+            float sideCellCenterX = foregroundTilemap.GetCellCenterWorld(sideCell).x;
+            if ((horizontalDirection > 0 && sideCellCenterX <= origin.x)
+                || (horizontalDirection < 0 && sideCellCenterX >= origin.x))
+            {
+                sideCell.x += horizontalDirection;
+            }
+
+            // 엔터 채굴은 가까운 방향의 바로 옆을 먼저 보고, 빈칸이면 위와 아래를 차례로 확인한다.
+            if (IsDirectionalCandidate(sideCell, origin, range))
+            {
+                cell = sideCell;
+                return true;
+            }
+
+            Vector3Int upperCell = sideCell + Vector3Int.up;
+            if (IsDirectionalCandidate(upperCell, origin, range))
+            {
+                cell = upperCell;
+                return true;
+            }
+
+            Vector3Int lowerCell = sideCell + Vector3Int.down;
+            if (IsDirectionalCandidate(lowerCell, origin, range))
+            {
+                cell = lowerCell;
+                return true;
+            }
+
+            return false;
+        }
+
+        private bool IsDirectionalCandidate(Vector3Int cell, Vector2 origin, float range)
+        {
+            return foregroundTilemap.HasTile(cell) && IsCellInRange(cell, origin, range);
         }
 
         private bool TryGetWorldPointCell(
