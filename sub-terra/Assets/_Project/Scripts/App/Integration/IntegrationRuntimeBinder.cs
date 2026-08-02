@@ -273,7 +273,9 @@ namespace SubTerra.App.Integration
                 hudBinder.BindTo(bootstrap.State);
             }
 
-            miningProgressHud?.BindTo(miningSystem);
+            miningProgressHud?.BindTo(
+                miningSystem,
+                playerMovement != null ? playerMovement.transform : null);
 
             SetHudVisible(true);
             SetDeferredInputEnabled(true);
