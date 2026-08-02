@@ -43,19 +43,12 @@ namespace SubTerra.Gameplay.Mining
             }
 
             bool miningInputPressed = IsMiningInputPressed();
-            if (miningInputPressed && !miningInputPressedLastFrame)
+            if (miningInputPressed && !miningInputPressedLastFrame && !miningSystem.IsMining)
             {
                 CaptureCurrentTarget();
             }
 
             miningInputPressedLastFrame = miningInputPressed;
-            if (!miningInputPressed)
-            {
-                startPending = false;
-                miningSystem.CancelMining();
-                return;
-            }
-
             if (movement.IsMovementRequested)
             {
                 miningSystem.CancelMining();

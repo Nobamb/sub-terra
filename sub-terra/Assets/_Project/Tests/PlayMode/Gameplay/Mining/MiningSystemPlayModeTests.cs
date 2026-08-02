@@ -5,6 +5,7 @@ using SubTerra.Gameplay.Player;
 using SubTerra.Shared;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Controls;
 using UnityEngine.InputSystem.LowLevel;
 using UnityEngine.TestTools;
 using UnityEngine.Tilemaps;
@@ -257,40 +258,45 @@ namespace SubTerra.Gameplay.Mining.Tests
             Assert.IsFalse(action.enabled, "The regression must not rely on the shared Attack action.");
 
             tilemap.SetTile(cell, tile);
-            movement.SetMoveInput(1f);
-            InputSystem.QueueStateEvent(keyboard, new KeyboardState(Key.Enter));
-            yield return null;
-            Assert.IsFalse(system.IsMining, "Mining waits while movement input is active.");
-            movement.SetMoveInput(0f);
-            yield return null;
-            Assert.IsTrue(system.IsMining);
+            SetButtonState(keyboard.enterKey, 1f);
+            Assert.IsTrue(keyboard.enterKey.isPressed, "The Enter press was not applied.");
+            InvokePrivate(controller, "Update");
+            Assert.IsTrue(
+                system.IsMining,
+                $"Mining did not start. ControllerActive={controller.isActiveAndEnabled}, "
+                + $"Pending={GetPrivate(controller, "startPending")}, "
+                + $"Failure={system.LastFailure}, Position={movement.Position}, "
+                + $"Facing={movement.FacingDirection}, Cell={cell}");
             Assert.IsNotNull(tilemap.GetTile(cell), "Enter must not bypass mining duration.");
+            SetButtonState(keyboard.enterKey, 0f);
+            InvokePrivate(controller, "Update");
+            Assert.IsTrue(system.IsMining, "Releasing Enter must not cancel mining.");
             yield return new WaitForSeconds(0.3f);
 
             Assert.IsNull(tilemap.GetTile(cell));
             Assert.AreEqual(1, completions);
-            InputSystem.QueueStateEvent(keyboard, new KeyboardState());
-            yield return null;
 
             tilemap.SetTile(cell, tile);
             var screen = (Vector2)camera.WorldToScreenPoint(tilemap.GetCellCenterWorld(cell));
-            movement.SetMoveInput(-1f);
-            var pressedMouse = new MouseState { position = screen }
-                .WithButton(MouseButton.Left, true);
-            InputSystem.QueueStateEvent(mouse, pressedMouse);
-            yield return null;
-            Assert.IsFalse(system.IsMining, "Mining waits while movement input is active.");
-            movement.SetMoveInput(0f);
-            yield return null;
-            Assert.IsTrue(system.IsMining);
+            InputSystem.QueueStateEvent(mouse, new MouseState { position = screen });
+            InputSystem.Update();
+            SetButtonState(mouse.leftButton, 1f);
+            InvokePrivate(controller, "Update");
+            Assert.IsTrue(
+                system.IsMining,
+                $"Mouse mining did not start. Button={mouse.leftButton.isPressed}, "
+                + $"Pointer={mouse.position.ReadValue()}, Screen={screen}, "
+                + $"Pending={GetPrivate(controller, "startPending")}, "
+                + $"Failure={system.LastFailure}");
             Assert.IsNotNull(tilemap.GetTile(cell), "Mouse click must not bypass mining duration.");
+            SetButtonState(mouse.leftButton, 0f);
+            InvokePrivate(controller, "Update");
+            Assert.IsTrue(system.IsMining, "Releasing the mouse button must not cancel mining.");
             yield return new WaitForSeconds(0.3f);
 
             Assert.IsNull(tilemap.GetTile(cell));
             Assert.AreEqual(2, completions);
 
-            InputSystem.QueueStateEvent(mouse, new MouseState { position = screen });
-            yield return null;
             Object.DestroyImmediate(player);
             Object.DestroyImmediate(root);
             Object.DestroyImmediate(cameraObject);
@@ -391,6 +397,24 @@ namespace SubTerra.Gameplay.Mining.Tests
             return target.GetType().GetField(
                 field,
                 System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).GetValue(target);
+        }
+
+        private static void InvokePrivate(object target, string method)
+        {
+            target.GetType().GetMethod(
+                method,
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).Invoke(target, null);
+        }
+
+        private static void SetButtonState(ButtonControl button, float value)
+        {
+            using (StateEvent.From(button.device, out var eventPtr))
+            {
+                button.WriteValueIntoEvent(value, eventPtr);
+                InputSystem.QueueEvent(eventPtr);
+            }
+
+            InputSystem.Update();
         }
 
         private static void CreateSystem(
