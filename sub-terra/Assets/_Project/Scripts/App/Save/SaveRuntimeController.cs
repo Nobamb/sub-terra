@@ -57,7 +57,7 @@ namespace SubTerra.App.Save
         private ElevatorTravelSession elevatorTravel;
         private string pendingInitialScene = SceneNames.SurfaceBase;
 
-        private const int MineElevatorEnergyCost = 5;
+        public const int MineElevatorEnergyCost = 5;
 
         public LoadService Loader => loadService;
         public int ActiveSlot => activeSlot;
@@ -572,6 +572,13 @@ namespace SubTerra.App.Save
 
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
+            if (scene.name == SceneNames.SurfaceBase
+                && GameState.IsComplete(boundState))
+            {
+                // 지상 기지는 다음 탐사를 준비하는 안전 구역이므로 도착 즉시 완충한다.
+                boundState.SetCurrentEnergy(boundState.Player.MaxEnergy);
+            }
+
             if (scene.name == SceneNames.Integration)
             {
                 explorationGuard.Complete();

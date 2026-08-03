@@ -1,5 +1,6 @@
 using System;
 using SubTerra.App.Progression;
+using SubTerra.App.Save;
 using SubTerra.App.State;
 
 namespace SubTerra.App.UI.SurfaceBase
@@ -7,6 +8,7 @@ namespace SubTerra.App.UI.SurfaceBase
     public interface ISurfaceBaseView
     {
         void SetGoals(int completedObjectives, string summary);
+        void SetEnergy(int current, int max, int explorationCost);
         void SetDeepZoneLock(bool unlocked, string reason);
         void SetRecentRun(int depth, bool isSafe, string structural, string gas);
         void SetExplorationBusy(bool busy);
@@ -23,21 +25,37 @@ namespace SubTerra.App.UI.SurfaceBase
         private readonly ISurfaceBaseView view;
         private GameState state;
         private ProgressionService progression;
+        private int explorationEnergyCost;
 
         public SurfaceBasePresenter(ISurfaceBaseView surfaceView)
         {
             view = surfaceView ?? throw new ArgumentNullException(nameof(surfaceView));
         }
 
-        public void Bind(GameState gameState, ProgressionService progressionService)
+        public void Bind(
+            GameState gameState,
+            ProgressionService progressionService,
+            int energyCost = SaveRuntimeController.MineElevatorEnergyCost)
         {
+            Unbind();
             state = gameState;
             progression = progressionService;
+            explorationEnergyCost = Math.Max(0, energyCost);
+            if (state != null)
+            {
+                state.EnergyChanged += OnEnergyChanged;
+            }
+
             RefreshReadModel();
         }
 
         public void Unbind()
         {
+            if (state != null)
+            {
+                state.EnergyChanged -= OnEnergyChanged;
+            }
+
             state = null;
             progression = null;
         }
@@ -47,10 +65,13 @@ namespace SubTerra.App.UI.SurfaceBase
             if (state == null)
             {
                 view.SetGoals(0, "상태 없음");
+                view.SetEnergy(0, 0, explorationEnergyCost);
                 view.SetDeepZoneLock(false, "상태 없음");
                 view.SetRecentRun(0, true, "-", "-");
                 return;
             }
+
+            RenderEnergy(state.GetEnergy());
 
             var completed = state.Progress.CompletedObjectives;
             var objectiveId = state.Progress.CurrentObjectiveId;
@@ -76,6 +97,16 @@ namespace SubTerra.App.UI.SurfaceBase
                 state.Run.IsSafe,
                 state.Run.StructuralRisk.ToString(),
                 state.Run.GasExposure.ToString());
+        }
+
+        private void OnEnergyChanged(EnergyReadModel energy)
+        {
+            RenderEnergy(energy);
+        }
+
+        private void RenderEnergy(EnergyReadModel energy)
+        {
+            view.SetEnergy(energy.Current, energy.Max, explorationEnergyCost);
         }
 
         /// <summary>

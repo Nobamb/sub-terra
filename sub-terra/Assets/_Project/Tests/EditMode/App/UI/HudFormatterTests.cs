@@ -9,8 +9,8 @@ namespace SubTerra.App.Tests.UI
         [Test]
         public void FormatEnergy_UsesCurrentAndMax()
         {
-            Assert.That(HudFormatter.FormatEnergy(40, 100), Is.EqualTo("40 / 100"));
-            Assert.That(HudFormatter.FormatEnergy(new EnergyReadModel(0, 0)), Is.EqualTo("0 / 0"));
+            Assert.That(HudFormatter.FormatEnergy(40, 100), Is.EqualTo("전력 40 / 100"));
+            Assert.That(HudFormatter.FormatEnergy(new EnergyReadModel(0, 0)), Is.EqualTo("전력 0 / 0"));
         }
 
         [Test]

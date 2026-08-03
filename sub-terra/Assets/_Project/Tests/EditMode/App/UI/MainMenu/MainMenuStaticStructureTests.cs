@@ -206,6 +206,7 @@ namespace SubTerra.App.Tests.UI.MainMenu
 
             var centeredPaths = new[]
             {
+                "EnergyText",
                 "GoalsText",
                 "DeepZoneText",
                 "RecentRunText",

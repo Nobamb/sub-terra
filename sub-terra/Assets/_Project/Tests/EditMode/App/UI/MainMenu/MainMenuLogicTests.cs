@@ -297,6 +297,25 @@ namespace SubTerra.App.Tests.UI.MainMenu
         }
 
         [Test]
+        public void SurfaceBasePresenter_ShowsEnergyAndDepartureCost_AndRefreshesOnChange()
+        {
+            var view = new RecordingSurfaceView();
+            var presenter = new SurfaceBasePresenter(view);
+            var state = GameState.CreateNew();
+
+            presenter.Bind(state, null, 5);
+
+            Assert.That(view.EnergyCurrent, Is.EqualTo(100));
+            Assert.That(view.EnergyMax, Is.EqualTo(100));
+            Assert.That(view.EnergyCost, Is.EqualTo(5));
+
+            state.SetCurrentEnergy(80);
+
+            Assert.That(view.EnergyCurrent, Is.EqualTo(80));
+            presenter.Dispose();
+        }
+
+        [Test]
         public void RequestQuit_Source_HasEditorAndPlayerPaths()
         {
             var runtimePath = Path.Combine(
@@ -406,8 +425,17 @@ namespace SubTerra.App.Tests.UI.MainMenu
             public string DeepReason;
             public bool Busy;
             public string Message;
+            public int EnergyCurrent;
+            public int EnergyMax;
+            public int EnergyCost;
 
             public void SetGoals(int completedObjectives, string summary) => Goals = summary;
+            public void SetEnergy(int current, int max, int explorationCost)
+            {
+                EnergyCurrent = current;
+                EnergyMax = max;
+                EnergyCost = explorationCost;
+            }
             public void SetDeepZoneLock(bool unlocked, string reason) => DeepReason = reason;
             public void SetRecentRun(int depth, bool isSafe, string structural, string gas) { }
             public void SetExplorationBusy(bool busy) => Busy = busy;

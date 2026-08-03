@@ -9,6 +9,7 @@ namespace SubTerra.App.UI.SurfaceBase
     public sealed class SurfaceBaseView : MonoBehaviour, ISurfaceBaseView
     {
         [SerializeField] private TMP_Text goalsText;
+        [SerializeField] private TMP_Text energyText;
         [SerializeField] private TMP_Text deepZoneText;
         [SerializeField] private TMP_Text recentRunText;
         [SerializeField] private TMP_Text messageText;
@@ -48,6 +49,22 @@ namespace SubTerra.App.UI.SurfaceBase
             }
         }
 
+        public void SetEnergy(int current, int max, int explorationCost)
+        {
+            if (energyText == null)
+            {
+                return;
+            }
+
+            var safeCurrent = Mathf.Max(0, current);
+            var safeMax = Mathf.Max(0, max);
+            var safeCost = Mathf.Max(0, explorationCost);
+            var afterDeparture = Mathf.Max(0, safeCurrent - safeCost);
+            energyText.text = "전력 " + safeCurrent + " / " + safeMax
+                + "  ·  지하행 " + safeCost + " 소모"
+                + "  ·  도착 예상 " + afterDeparture;
+        }
+
         public void SetRecentRun(int depth, bool isSafe, string structural, string gas)
         {
             if (recentRunText != null)
@@ -79,6 +96,7 @@ namespace SubTerra.App.UI.SurfaceBase
         public bool HasRequiredReferences()
         {
             return goalsText != null
+                && energyText != null
                 && deepZoneText != null
                 && recentRunText != null
                 && messageText != null

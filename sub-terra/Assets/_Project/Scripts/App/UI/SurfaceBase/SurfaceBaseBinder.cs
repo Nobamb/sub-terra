@@ -57,7 +57,10 @@ namespace SubTerra.App.UI.SurfaceBase
             }
 
             presenter = new SurfaceBasePresenter(view);
-            presenter.Bind(bootstrap.State, runtime.Progression);
+            presenter.Bind(
+                bootstrap.State,
+                runtime.Progression,
+                SaveRuntimeController.MineElevatorEnergyCost);
             view.ExploreClicked += OnExploreClicked;
             view.RefreshClicked += OnRefreshClicked;
             presenter.RefreshReadModel();

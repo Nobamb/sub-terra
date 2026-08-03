@@ -28,7 +28,7 @@ namespace SubTerra.App.UI.HUD
                 max = 0;
             }
 
-            return current + " / " + max;
+            return "전력 " + current + " / " + max;
         }
 
         public static string FormatEnergy(EnergyReadModel model)

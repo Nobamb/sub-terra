@@ -194,14 +194,21 @@ namespace SubTerra.App.Editor.DataValidation
                 new Vector2(980f, 900f),
                 new Color(0.045f, 0.095f, 0.08f, 0.98f));
             CreateText(content.transform, "Title", new Vector2(0f, 380f), new Vector2(760f, 64f), 38f, "Surface Base");
-            var goals = CreateText(content.transform, "GoalsText", new Vector2(0f, 300f), new Vector2(800f, 52f), 22f, "목표");
-            var deep = CreateText(content.transform, "DeepZoneText", new Vector2(0f, 245f), new Vector2(800f, 46f), 21f, "심층");
-            var recent = CreateText(content.transform, "RecentRunText", new Vector2(0f, 190f), new Vector2(800f, 46f), 21f, "최근 탐사");
-            var message = CreateText(content.transform, "MessageText", new Vector2(0f, 135f), new Vector2(800f, 46f), 19f, string.Empty);
+            var energy = CreateText(
+                content.transform,
+                "EnergyText",
+                new Vector2(0f, 315f),
+                new Vector2(840f, 48f),
+                22f,
+                "전력 100 / 100  ·  지하행 5 소모  ·  도착 예상 95");
+            var goals = CreateText(content.transform, "GoalsText", new Vector2(0f, 255f), new Vector2(800f, 52f), 22f, "목표");
+            var deep = CreateText(content.transform, "DeepZoneText", new Vector2(0f, 205f), new Vector2(800f, 46f), 21f, "심층");
+            var recent = CreateText(content.transform, "RecentRunText", new Vector2(0f, 155f), new Vector2(800f, 46f), 21f, "최근 탐사");
+            var message = CreateText(content.transform, "MessageText", new Vector2(0f, 105f), new Vector2(800f, 46f), 19f, string.Empty);
             var explore = CreateButton(
-                content.transform, "ExploreButton", new Vector2(0f, 65f), new Vector2(360f, 73f), "엘리베이터 호출 · 전력 5", out _, 21f);
+                content.transform, "ExploreButton", new Vector2(0f, 35f), new Vector2(360f, 73f), "지하 탐사 시작 · 전력 5", out _, 21f);
             var refresh = CreateButton(
-                content.transform, "RefreshButton", new Vector2(0f, -15f), new Vector2(234f, 57f), "새로고침", out _, 20f);
+                content.transform, "RefreshButton", new Vector2(0f, -45f), new Vector2(234f, 57f), "새로고침", out _, 20f);
 
             // 기존 Economy/Progression View 컴포넌트를 같은 패널에 부착해 Service 재사용 경로를 유지한다.
             var economyGo = new GameObject("EconomyPanel", typeof(RectTransform));
@@ -242,6 +249,7 @@ namespace SubTerra.App.Editor.DataValidation
             var view = root.AddComponent<SurfaceBaseView>();
             var viewSo = new SerializedObject(view);
             viewSo.FindProperty("goalsText").objectReferenceValue = goals;
+            viewSo.FindProperty("energyText").objectReferenceValue = energy;
             viewSo.FindProperty("deepZoneText").objectReferenceValue = deep;
             viewSo.FindProperty("recentRunText").objectReferenceValue = recent;
             viewSo.FindProperty("messageText").objectReferenceValue = message;
