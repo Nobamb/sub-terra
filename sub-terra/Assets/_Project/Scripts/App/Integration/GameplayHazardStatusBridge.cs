@@ -124,7 +124,8 @@ namespace SubTerra.App.Integration
 
         private void OnStructuralRiskChanged(GameplayStructuralRiskLevel risk)
         {
-            var severity = risk == GameplayStructuralRiskLevel.Critical
+            var severity = risk == GameplayStructuralRiskLevel.CollapseImminent
+                || risk == GameplayStructuralRiskLevel.Danger
                 ? HazardSeverity.Critical
                 : risk == GameplayStructuralRiskLevel.Caution
                     ? HazardSeverity.Caution
@@ -194,7 +195,8 @@ namespace SubTerra.App.Integration
 
         private static AppStructuralRiskLevel ToAppStructuralRisk(GameplayStructuralRiskLevel risk)
         {
-            return risk == GameplayStructuralRiskLevel.Critical
+            return risk == GameplayStructuralRiskLevel.CollapseImminent
+                || risk == GameplayStructuralRiskLevel.Danger
                 ? AppStructuralRiskLevel.Critical
                 : risk == GameplayStructuralRiskLevel.Caution
                     ? AppStructuralRiskLevel.Caution

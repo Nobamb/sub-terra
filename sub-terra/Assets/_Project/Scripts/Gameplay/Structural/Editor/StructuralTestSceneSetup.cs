@@ -61,6 +61,8 @@ namespace SubTerra.Gameplay.Structural.Editor
             CreatePlayer(root.transform, miningSystem);
             CreateCamera(root.transform.Find("Player"));
 
+            PhaseGStructuralSceneSetup.ApplyToOpenScene(scene);
+
             EditorSceneManager.SaveScene(scene, ScenePath);
             AssetDatabase.SaveAssets();
             Debug.Log($"Created {ScenePath}. Mine the lithium tile under the ceiling to trigger a partial collapse.");

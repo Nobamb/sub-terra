@@ -1,5 +1,6 @@
 using SubTerra.Gameplay.Mining;
 using SubTerra.Gameplay.Snapshot;
+using SubTerra.Gameplay.Structural;
 using SubTerra.Shared;
 using UnityEngine;
 using UnityEngine.Tilemaps;
@@ -19,6 +20,7 @@ namespace SubTerra.Gameplay.DemoWorld
         [SerializeField] private TileBase lockedSignalTile;
         [SerializeField] private MiningTileResolver tileResolver;
         [SerializeField] private WorldSnapshotSystem snapshotSystem;
+        [SerializeField] private StructuralIntegritySystem structuralSystem;
         [SerializeField] private long worldSeed = 20260731;
 
         public MineLayerLayout CurrentLayout { get; private set; }
@@ -51,6 +53,9 @@ namespace SubTerra.Gameplay.DemoWorld
             lockedSignalTile = signal;
             tileResolver = resolver;
             snapshotSystem = snapshot;
+            structuralSystem = snapshot != null
+                ? snapshot.GetComponent<StructuralIntegritySystem>()
+                : null;
             worldSeed = seed;
         }
 #endif
@@ -110,6 +115,7 @@ namespace SubTerra.Gameplay.DemoWorld
             worldSeed = seed;
             CurrentLayout = layout;
             snapshotSystem?.ConfigureBaseWorldIdentity(seed, generatorVersion);
+            structuralSystem?.ConfigureWorldSeed(seed);
             return true;
         }
 

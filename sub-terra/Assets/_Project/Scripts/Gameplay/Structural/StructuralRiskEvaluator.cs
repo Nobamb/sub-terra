@@ -2,19 +2,33 @@ using UnityEngine;
 
 namespace SubTerra.Gameplay.Structural
 {
-    /// <summary>Pure, deterministic score calculation shared by runtime and tests.</summary>
+    /// <summary>Runtime과 테스트가 공유하는 순수 구조 점수 계산.</summary>
     public static class StructuralRiskEvaluator
     {
-        public static float CalculateScore(float miningImpact, int unsupportedTiles, int supportStrength)
+        public static float CalculateScore(
+            float miningImpact,
+            int unsupportedTiles,
+            int supportStrength,
+            StructuralRiskSettings settings)
         {
-            return Mathf.Max(0, miningImpact + unsupportedTiles * 20 - supportStrength);
+            return Mathf.Max(
+                0f,
+                miningImpact + unsupportedTiles * settings.UnsupportedTileWeight - supportStrength);
         }
 
-        public static StructuralRiskLevel Evaluate(float miningImpact, int unsupportedTiles, int supportStrength)
+        public static StructuralRiskLevel Evaluate(
+            float miningImpact,
+            int unsupportedTiles,
+            int supportStrength,
+            StructuralRiskSettings settings)
         {
-            float score = CalculateScore(miningImpact, unsupportedTiles, supportStrength);
-            if (score >= 60) return StructuralRiskLevel.Critical;
-            if (score >= 30) return StructuralRiskLevel.Caution;
+            float score = CalculateScore(miningImpact, unsupportedTiles, supportStrength, settings);
+            if (score >= settings.CollapseImminentThreshold)
+                return StructuralRiskLevel.CollapseImminent;
+            if (score >= settings.DangerThreshold)
+                return StructuralRiskLevel.Danger;
+            if (score >= settings.CautionThreshold)
+                return StructuralRiskLevel.Caution;
             return StructuralRiskLevel.Stable;
         }
     }

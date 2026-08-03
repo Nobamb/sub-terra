@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace SubTerra.Gameplay.Structural
@@ -10,6 +11,10 @@ namespace SubTerra.Gameplay.Structural
 
         public float Radius => radius;
         public int Strength => strength;
+        public event Action<StructuralSupport> AvailabilityChanged;
+
+        private void OnEnable() => AvailabilityChanged?.Invoke(this);
+        private void OnDisable() => AvailabilityChanged?.Invoke(this);
 
         public bool Supports(Vector3 worldPosition)
         {

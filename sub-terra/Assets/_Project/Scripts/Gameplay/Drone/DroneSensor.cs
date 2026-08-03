@@ -104,7 +104,13 @@ namespace SubTerra.Gameplay.Drone
 
         private static float ToIntegrityValue(StructuralRiskLevel risk)
         {
-            return risk switch { StructuralRiskLevel.Stable => 1f, StructuralRiskLevel.Caution => 0.5f, _ => 0.1f };
+            return risk switch
+            {
+                StructuralRiskLevel.Stable => 1f,
+                StructuralRiskLevel.Caution => 0.65f,
+                StructuralRiskLevel.Danger => 0.3f,
+                _ => 0f
+            };
         }
 
         private static float ToRiskValue(GasRiskLevel risk)

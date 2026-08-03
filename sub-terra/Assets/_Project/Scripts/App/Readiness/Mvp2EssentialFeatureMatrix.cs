@@ -67,8 +67,9 @@ namespace SubTerra.App.Readiness
                     "균열·부분 붕괴",
                     "G",
                     requiresRestore: true,
-                    EvidenceKind.Definition | EvidenceKind.SurrogateTest,
-                    "위험 계산/타일 제거는 있으나 균열 시각화·낙석 피해 연결이 없음"),
+                    EvidenceKind.Definition | EvidenceKind.SurrogateTest
+                        | EvidenceKind.RuntimePrefab | EvidenceKind.Restore | EvidenceKind.Play,
+                    "4단계 경고·분리 균열 Overlay·결정론적 타일 제거·Collider/Snapshot·Shared 붕괴 이벤트 검증 완료"),
                 Entry(
                     "gas-hazard-effects",
                     "가스 위험 실제 효과",

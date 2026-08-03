@@ -17,7 +17,8 @@ namespace SubTerra.Shared
         PlayerRescued = 7,
         DepthZoneEntered = 8,
         BuildingPlacementChanged = 9,
-        OutpostStatusChanged = 10
+        OutpostStatusChanged = 10,
+        StructuralCollapse = 11
     }
 
     /// <summary>
@@ -38,5 +39,6 @@ namespace SubTerra.Shared
         public float gasRisk;
         public BuildingPlacementResultDto buildingPlacement;
         public OutpostStatusDto outpostStatus;
+        public StructuralCollapseEventDto structuralCollapse;
     }
 }

@@ -1,19 +1,19 @@
 {
-  "name": "SubTerra.Gameplay.Structural.EditModeTests",
+  "name": "SubTerra.Gameplay.Structural.PlayModeTests",
   "rootNamespace": "SubTerra.Gameplay.Structural.Tests",
   "references": [
-    "SubTerra.Gameplay.Structural",
     "SubTerra.Shared",
-    "UnityEngine.TestRunner",
-    "UnityEditor.TestRunner"
+    "SubTerra.Gameplay.Structural",
+    "SubTerra.Gameplay.Snapshot"
   ],
-  "includePlatforms": ["Editor"],
+  "includePlatforms": [],
   "excludePlatforms": [],
   "allowUnsafeCode": false,
   "overrideReferences": false,
   "precompiledReferences": [],
-  "autoReferenced": true,
+  "autoReferenced": false,
   "defineConstraints": [],
   "versionDefines": [],
+  "optionalUnityReferences": ["TestAssemblies"],
   "noEngineReferences": false
 }

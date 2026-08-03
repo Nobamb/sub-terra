@@ -34,14 +34,14 @@ namespace SubTerra.Gameplay.Snapshot
         private void OnEnable()
         {
             if (miningSystem != null) miningSystem.TileMined += OnTileMined;
-            if (structuralSystem != null) structuralSystem.PartialCollapseTriggered += OnPartialCollapse;
+            if (structuralSystem != null) structuralSystem.CollapseTriggered += OnStructuralCollapse;
             if (buildingPlacementSystem != null) buildingPlacementSystem.BuildingPlaced += OnBuildingPlaced;
         }
 
         private void OnDisable()
         {
             if (miningSystem != null) miningSystem.TileMined -= OnTileMined;
-            if (structuralSystem != null) structuralSystem.PartialCollapseTriggered -= OnPartialCollapse;
+            if (structuralSystem != null) structuralSystem.CollapseTriggered -= OnStructuralCollapse;
             if (buildingPlacementSystem != null) buildingPlacementSystem.BuildingPlaced -= OnBuildingPlaced;
         }
 
@@ -98,11 +98,13 @@ namespace SubTerra.Gameplay.Snapshot
             minedCells[cell] = new MiningSnapshotDto { x = cell.x, y = cell.y, isDestroyed = true, remainingDurability = 0f };
         }
 
-        private void OnPartialCollapse(IReadOnlyList<Vector3Int> cells)
+        private void OnStructuralCollapse(StructuralCollapseEventDto collapse)
         {
-            foreach (Vector3Int cell in cells)
+            if (collapse?.cells == null) return;
+            foreach (CollapseCellDto cell in collapse.cells)
             {
-                collapsedCells[cell] = new CollapseSnapshotDto { x = cell.x, y = cell.y, isCollapsed = true, structuralIntegrity = 0f };
+                var key = new Vector3Int(cell.x, cell.y, 0);
+                collapsedCells[key] = new CollapseSnapshotDto { x = cell.x, y = cell.y, isCollapsed = true, structuralIntegrity = 0f };
             }
         }
 
@@ -155,10 +157,19 @@ namespace SubTerra.Gameplay.Snapshot
         private void ApplyCollapsedTiles(IEnumerable<CollapseSnapshotDto> changes)
         {
             if (foregroundTilemap == null || changes == null) return;
+            bool tileChanged = false;
             foreach (CollapseSnapshotDto change in changes)
             {
-                if (change.isCollapsed) foregroundTilemap.SetTile(new Vector3Int(change.x, change.y, 0), null);
+                if (!change.isCollapsed) continue;
+                foregroundTilemap.SetTile(new Vector3Int(change.x, change.y, 0), null);
+                tileChanged = true;
             }
+
+            if (!tileChanged) return;
+            foregroundTilemap.RefreshAllTiles();
+            TilemapCollider2D tilemapCollider = foregroundTilemap.GetComponent<TilemapCollider2D>();
+            if (tilemapCollider != null && tilemapCollider.hasTilemapChanges)
+                tilemapCollider.ProcessTilemapChanges();
         }
 
         private void RestoreBuildings(IEnumerable<BuildingSnapshotDto> snapshots)

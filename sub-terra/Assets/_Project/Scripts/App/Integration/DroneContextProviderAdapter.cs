@@ -54,10 +54,12 @@ namespace SubTerra.App.Integration
         {
             switch (risk)
             {
-                case StructuralRiskLevel.Critical:
+                case StructuralRiskLevel.CollapseImminent:
                     return 0f;
+                case StructuralRiskLevel.Danger:
+                    return 0.3f;
                 case StructuralRiskLevel.Caution:
-                    return 0.5f;
+                    return 0.65f;
                 default:
                     return 1f;
             }

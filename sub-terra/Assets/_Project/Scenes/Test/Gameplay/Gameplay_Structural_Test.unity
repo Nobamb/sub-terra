@@ -819,6 +819,133 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 30, y: 1}
   m_EdgeRadius: 0
+--- !u!1 &1096068526
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1096068529}
+  - component: {fileID: 1096068527}
+  - component: {fileID: 1096068528}
+  m_Layer: 0
+  m_Name: StructuralCrackOverlay
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!1839735485 &1096068527
+Tilemap:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1096068526}
+  m_Enabled: 1
+  m_Tiles: {}
+  m_AnimatedTiles: {}
+  m_TileAssetArray: []
+  m_TileSpriteArray: []
+  m_TileMatrixArray: []
+  m_TileColorArray: []
+  m_TileObjectToInstantiateArray: []
+  m_AnimationFrameRate: 1
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Origin: {x: 0, y: 0, z: 0}
+  m_Size: {x: 0, y: 0, z: 1}
+  m_TileAnchor: {x: 0.5, y: 0.5, z: 0}
+  m_TileOrientation: 0
+  m_TileOrientationMatrix:
+    e00: 1
+    e01: 0
+    e02: 0
+    e03: 0
+    e10: 0
+    e11: 1
+    e12: 0
+    e13: 0
+    e20: 0
+    e21: 0
+    e22: 1
+    e23: 0
+    e30: 0
+    e31: 0
+    e32: 0
+    e33: 1
+--- !u!483693784 &1096068528
+TilemapRenderer:
+  serializedVersion: 2
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1096068526}
+  m_Enabled: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 0
+  m_ReflectionProbeUsage: 0
+  m_RayTracingMode: 0
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: a97c105638bdf8b4a8650670310a4cd3, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 0
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 10
+  m_MaskInteraction: 0
+  m_ChunkSize: {x: 32, y: 32, z: 32}
+  m_ChunkCullingBounds: {x: 0, y: 0, z: 0}
+  m_MaxChunkCount: 16
+  m_MaxFrameAge: 16
+  m_SortOrder: 0
+  m_Mode: 0
+  m_DetectChunkCullingBounds: 0
+--- !u!4 &1096068529
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1096068526}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1903410273}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1476364253
 GameObject:
   m_ObjectHideFlags: 0
@@ -852,6 +979,8 @@ MonoBehaviour:
   target: {fileID: 1574265203}
   offset: {x: 0, y: 1, z: -10}
   smoothTime: 0.18
+  teleportDistance: 3
+  boundsProvider: {fileID: 0}
 --- !u!20 &1476364255
 Camera:
   m_ObjectHideFlags: 0
@@ -1035,6 +1164,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 63601808}
+  - {fileID: 1096068529}
   m_Father: {fileID: 379312271}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!156049354 &1903410274
@@ -1062,6 +1192,9 @@ GameObject:
   - component: {fileID: 1969376681}
   - component: {fileID: 1969376680}
   - component: {fileID: 1969376679}
+  - component: {fileID: 1969376685}
+  - component: {fileID: 1969376684}
+  - component: {fileID: 1969376683}
   m_Layer: 0
   m_Name: StructuralSystems
   m_TagString: Untagged
@@ -1111,9 +1244,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: SubTerra.Gameplay.Structural::SubTerra.Gameplay.Structural.StructuralIntegritySystem
   foregroundTilemap: {fileID: 63601803}
+  crackOverlay: {fileID: 1969376685}
+  riskSettings: {fileID: 11400000, guid: 92a67ceac25edd34fb998cda1a88d6df, type: 2}
   scanRadius: 3
   maximumCollapseTiles: 3
   miningImpactMultiplier: 100
+  worldSeed: 20260731
+  protectedTiles: []
+  protectedCells: []
   supports:
   - {fileID: 2139406791}
 --- !u!114 &1969376681
@@ -1131,7 +1269,11 @@ MonoBehaviour:
   foregroundTilemap: {fileID: 63601803}
   tileResolver: {fileID: 1969376682}
   rewardReceiverBehaviour: {fileID: 0}
+  miningTransactionBehaviour: {fileID: 0}
+  upgradeEffectProviderBehaviour: {fileID: 0}
+  resourceDropSprite: {fileID: 0}
   defaultMiningDuration: 1
+  resourceDropSize: 0.35
 --- !u!114 &1969376682
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1153,6 +1295,8 @@ MonoBehaviour:
       isMineable: 1
       durability: 1
       miningTime: 0.35
+      requiredDrillLevel: 0
+      energyCost: 0
       structuralImpact: 0.05
       containsGas: 0
   - tile: {fileID: 11400000, guid: 700a03ebca42a284c851f62f25e6ddcc, type: 2}
@@ -1163,8 +1307,140 @@ MonoBehaviour:
       isMineable: 1
       durability: 1
       miningTime: 0.5
+      requiredDrillLevel: 0
+      energyCost: 0
       structuralImpact: 0.3
       containsGas: 0
+--- !u!114 &1969376683
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1969376677}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc2a359d98acd664a8b12c104a57d2ad, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SubTerra.Gameplay.Structural::SubTerra.Gameplay.Structural.StructuralRiskFeedback
+  structuralSystem: {fileID: 1969376680}
+  audioSource: {fileID: 1969376684}
+  warningTone: {fileID: 0}
+  reduceMotion: 0
+--- !u!82 &1969376684
+AudioSource:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1969376677}
+  m_Enabled: 1
+  serializedVersion: 4
+  OutputAudioMixerGroup: {fileID: 0}
+  m_audioClip: {fileID: 0}
+  m_Resource: {fileID: 0}
+  m_PlayOnAwake: 0
+  m_Volume: 1
+  m_Pitch: 1
+  Loop: 0
+  Mute: 0
+  Spatialize: 0
+  SpatializePostEffects: 0
+  Priority: 128
+  DopplerLevel: 1
+  MinDistance: 1
+  MaxDistance: 500
+  Pan2D: 0
+  rolloffMode: 0
+  BypassEffects: 0
+  BypassListenerEffects: 0
+  BypassReverbZones: 0
+  rolloffCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  panLevelCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  spreadCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  reverbZoneMixCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+--- !u!114 &1969376685
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1969376677}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e760e5066a5796e478390f4f25ebc115, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SubTerra.Gameplay.Structural::SubTerra.Gameplay.Structural.StructuralCrackOverlay
+  overlayTilemap: {fileID: 1096068527}
+  crackTile: {fileID: 0}
+  cautionColor: {r: 1, g: 0.82, b: 0.2, a: 0.55}
+  dangerColor: {r: 1, g: 0.38, b: 0.08, a: 0.72}
+  imminentColor: {r: 0.95, g: 0.08, b: 0.06, a: 0.9}
 --- !u!1 &2139406788
 GameObject:
   m_ObjectHideFlags: 0

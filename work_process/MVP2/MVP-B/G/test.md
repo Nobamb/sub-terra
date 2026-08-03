@@ -49,7 +49,13 @@
 
 ## 4. 검증 결과 요약
 
-- **상태:** 미실행
-- **모든 항목 통과 시:** Phase G 완료
-- **실패 항목 존재 시:** Seed, 이벤트 순서, 후보/붕괴 cell만 기록한다.
+- **상태:** 통과 (2026-08-03, Unity 6000.5.4f1)
+- **Edit Mode:** `SubTerra.Gameplay.Structural.EditModeTests` 13/13 통과
+- **Play Mode:** `SubTerra.Gameplay.Structural.PlayModeTests` 2/2 통과
+- **Scene 검사:** Structural Test, DemoWorld Test, Integration Scene 모두 임계치 에셋·분리 Overlay·AudioSource 연결 통과. Overlay에는 Collider가 없다.
+- **G-S01~G-S04:** 단일 `StructuralRiskSettings`, Shared 붕괴 DTO, 변경 셀 주변 국소 재계산, 별도 Overlay로 통과
+- **G-F01~G-F04:** 4단계 전이, 동일 Seed/상태의 동일 cell, Support 국소 완화, 경계/코어 보호로 통과
+- **G-F05:** 붕괴 직후 `TilemapCollider2D` 갱신과 Snapshot 캡처·복원 후 제거 타일 일치를 Play Mode에서 통과
+- **접근성:** 모션 감소 설정에서 화면 흔들림 요청이 발생하지 않음을 검증
+- **판정:** Phase G 완료. 실제 Player 피해·행동불능·실패 처리는 Shared 붕괴 이벤트를 소비하는 Phase L 범위다.
 

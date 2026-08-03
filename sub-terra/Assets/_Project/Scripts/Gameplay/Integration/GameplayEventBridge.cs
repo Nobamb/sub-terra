@@ -27,7 +27,11 @@ namespace SubTerra.Gameplay.Integration
         private void OnEnable()
         {
             if (miningSystem != null) miningSystem.TileMined += OnTileMined;
-            if (structuralSystem != null) structuralSystem.RiskChanged += OnStructuralRiskChanged;
+            if (structuralSystem != null)
+            {
+                structuralSystem.RiskChanged += OnStructuralRiskChanged;
+                structuralSystem.CollapseTriggered += OnStructuralCollapse;
+            }
             if (gasHazardSystem != null) gasHazardSystem.GasZoneActivated += OnGasZoneActivated;
             if (buildingPlacementSystem != null)
             {
@@ -40,7 +44,11 @@ namespace SubTerra.Gameplay.Integration
         private void OnDisable()
         {
             if (miningSystem != null) miningSystem.TileMined -= OnTileMined;
-            if (structuralSystem != null) structuralSystem.RiskChanged -= OnStructuralRiskChanged;
+            if (structuralSystem != null)
+            {
+                structuralSystem.RiskChanged -= OnStructuralRiskChanged;
+                structuralSystem.CollapseTriggered -= OnStructuralCollapse;
+            }
             if (gasHazardSystem != null) gasHazardSystem.GasZoneActivated -= OnGasZoneActivated;
             if (buildingPlacementSystem != null)
             {
@@ -59,8 +67,24 @@ namespace SubTerra.Gameplay.Integration
 
         private void OnStructuralRiskChanged(StructuralRiskLevel risk)
         {
-            float integrity = risk switch { StructuralRiskLevel.Stable => 1f, StructuralRiskLevel.Caution => 0.5f, _ => 0.1f };
+            float integrity = risk switch
+            {
+                StructuralRiskLevel.Stable => 1f,
+                StructuralRiskLevel.Caution => 0.65f,
+                StructuralRiskLevel.Danger => 0.3f,
+                _ => 0f
+            };
             Publish(new GameplayEventDto { type = GameplayEventType.StructuralRiskChanged, structuralIntegrity = integrity });
+        }
+
+        private void OnStructuralCollapse(StructuralCollapseEventDto collapse)
+        {
+            Publish(new GameplayEventDto
+            {
+                type = GameplayEventType.StructuralCollapse,
+                structuralIntegrity = 0f,
+                structuralCollapse = collapse
+            });
         }
 
         private void OnGasZoneActivated(GasZone zone)
