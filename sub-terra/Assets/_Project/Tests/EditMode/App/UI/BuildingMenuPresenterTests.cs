@@ -119,6 +119,25 @@ namespace SubTerra.App.Tests.UI
             Assert.That(view.StatusMessage, Does.Contain("차지한 위치"));
         }
 
+        [TestCase("out_of_range", "너무 먼")]
+        [TestCase("outside_allowed_area", "허용되지 않은 구역")]
+        public void F_F02_PlacementLimitFailure_ShowsImmediateReason(
+            string reasonId,
+            string expectedMessage)
+        {
+            Assert.That(presenter.SelectBuilding(DataIds.Buildings.SupportBasic), Is.True);
+
+            placement.Emit(new BuildingPlacementResultDto
+            {
+                state = BuildingPlacementState.Failed,
+                buildingId = DataIds.Buildings.SupportBasic,
+                reasonId = reasonId
+            });
+
+            Assert.That(view.StatusMessage, Does.Contain(expectedMessage));
+            Assert.That(wallet.TrySpendCount, Is.Zero);
+        }
+
         [Test]
         public void G_F04_DuplicateSuccessEvent_DoesNotTriggerUiPaymentOrRestoreSelection()
         {

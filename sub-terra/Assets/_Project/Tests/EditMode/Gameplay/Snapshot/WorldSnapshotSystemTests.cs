@@ -1,7 +1,10 @@
 using NUnit.Framework;
+using SubTerra.Gameplay.Building;
+using SubTerra.Gameplay.Structural;
 using SubTerra.Shared;
 using System.Reflection;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 
 namespace SubTerra.Gameplay.Snapshot.Tests
 {
@@ -51,6 +54,80 @@ namespace SubTerra.Gameplay.Snapshot.Tests
             Assert.That(generator.LastSeed, Is.EqualTo(7123L));
             Assert.That(generator.LastVersion, Is.EqualTo(4));
             Object.DestroyImmediate(host);
+        }
+
+        [Test]
+        public void RestoreSnapshot_RecreatesSupportEffectWithoutWalletSpend()
+        {
+            var host = new GameObject("SupportRestore");
+            var gridObject = new GameObject("Grid");
+            gridObject.transform.SetParent(host.transform);
+            gridObject.AddComponent<Grid>();
+            var tilemapObject = new GameObject("Terrain");
+            tilemapObject.transform.SetParent(gridObject.transform);
+            var tilemap = tilemapObject.AddComponent<Tilemap>();
+            tilemapObject.AddComponent<TilemapRenderer>();
+            var tile = ScriptableObject.CreateInstance<Tile>();
+            var prefab = new GameObject("SupportPrefab");
+            prefab.AddComponent<BuildingInstance>();
+            prefab.AddComponent<StructuralSupport>();
+            var definition = ScriptableObject.CreateInstance<BuildingPlacementDefinition>();
+            definition.EditorSet("building.support.basic", prefab, Vector2Int.one, false);
+
+            try
+            {
+                var structural = host.AddComponent<StructuralIntegritySystem>();
+                SetField(structural, "foregroundTilemap", tilemap);
+                var placement = host.AddComponent<BuildingPlacementSystem>();
+                SetField(placement, "terrainTilemap", tilemap);
+                SetField(placement, "structuralIntegritySystem", structural);
+                SetField(placement, "restoreDefinitions", new[] { definition });
+                var snapshotSystem = host.AddComponent<WorldSnapshotSystem>();
+                SetField(snapshotSystem, "buildingPlacementSystem", placement);
+
+                snapshotSystem.RestoreSnapshot(new WorldSnapshotDto
+                {
+                    buildings = new System.Collections.Generic.List<BuildingSnapshotDto>
+                    {
+                        new()
+                        {
+                            instanceId = "support-restore-0001",
+                            buildingTypeId = "building.support.basic",
+                            x = 0,
+                            y = 0,
+                            level = 1,
+                            health = 1f
+                        }
+                    }
+                });
+
+                tilemap.SetTile(new Vector3Int(0, 1, 0), tile);
+                tilemap.SetTile(new Vector3Int(6, 1, 0), tile);
+                var impact = new MiningTileDto(
+                    "tile.test",
+                    string.Empty,
+                    0,
+                    true,
+                    1f,
+                    1f,
+                    0.1f,
+                    false);
+                structural.NotifyTileMined(Vector3Int.zero, impact);
+                structural.NotifyTileMined(new Vector3Int(6, 0, 0), impact);
+
+                Assert.That(host.GetComponentsInChildren<BuildingInstance>().Length, Is.EqualTo(1));
+                Assert.That(structural.EvaluateAt(Vector3Int.zero), Is.EqualTo(StructuralRiskLevel.Stable));
+                Assert.That(
+                    structural.EvaluateAt(new Vector3Int(6, 0, 0)),
+                    Is.EqualTo(StructuralRiskLevel.Caution));
+            }
+            finally
+            {
+                Object.DestroyImmediate(host);
+                Object.DestroyImmediate(prefab);
+                Object.DestroyImmediate(definition);
+                Object.DestroyImmediate(tile);
+            }
         }
 
         private static void SetField(object target, string name, object value)

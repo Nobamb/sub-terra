@@ -18,6 +18,8 @@ namespace SubTerra.App.Editor.DataValidation
         private const string Root = "Assets/_Project/Data";
         private const string CatalogPath = Root + "/Catalog/GameDataCatalog.asset";
         private const string PrefabPath = Root + "/Prefabs/Buildings/BuildingPlaceholder.prefab";
+        private const string SupportPrefabPath =
+            "Assets/_Project/Prefabs/Gameplay/Buildings/SupportPillar.prefab";
         private const string IconPath = Root + "/Icons/DataPlaceholder.asset";
         private const string BootstrapScenePath = "Assets/_Project/Scenes/Bootstrap/Bootstrap.unity";
 
@@ -57,9 +59,11 @@ namespace SubTerra.App.Editor.DataValidation
             EnsureFolders();
 
             var prefab = EnsurePlaceholderPrefab();
+            var supportPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(SupportPrefabPath)
+                ?? prefab;
             var icon = EnsurePlaceholderIcon();
             var minerals = BuildMinerals(icon);
-            var buildings = BuildBuildings(prefab, icon);
+            var buildings = BuildBuildings(prefab, supportPrefab, icon);
             var recipes = BuildRecipes();
             var upgrades = BuildUpgrades();
             var dialogues = BuildDialogues();
@@ -197,12 +201,15 @@ namespace SubTerra.App.Editor.DataValidation
             return asset;
         }
 
-        private static List<BuildingData> BuildBuildings(GameObject prefab, Sprite icon)
+        private static List<BuildingData> BuildBuildings(
+            GameObject prefab,
+            GameObject supportPrefab,
+            Sprite icon)
         {
             return new List<BuildingData>
             {
                 EnsureBuilding("Building_Support_Basic.asset", DataIds.Buildings.SupportBasic, "기본 버팀목",
-                    "주변 지형을 보강해 구조 위험을 낮춥니다.", prefab, 0,
+                    "주변 지형을 보강해 구조 위험을 낮춥니다.", supportPrefab, 0,
                     icon, new List<ItemCostEntry> { new ItemCostEntry(DataIds.Minerals.Copper, 2) }),
                 EnsureBuilding("Building_Light_Basic.asset", DataIds.Buildings.LightBasic, "기본 조명",
                     "전력이 연결된 지하 구역을 밝힙니다.", prefab, 1,

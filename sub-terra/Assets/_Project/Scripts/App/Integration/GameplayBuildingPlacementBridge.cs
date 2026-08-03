@@ -5,6 +5,7 @@ using SubTerra.App.UI.Building;
 using SubTerra.Gameplay.Building;
 using SubTerra.Shared;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.Tilemaps;
 
@@ -76,6 +77,12 @@ namespace SubTerra.App.Integration
                 return;
             }
 
+            if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
+            {
+                CancelPreview();
+                return;
+            }
+
             var cameraToUse = targetCamera != null ? targetCamera : Camera.main;
             if (cameraToUse == null)
             {
@@ -105,7 +112,8 @@ namespace SubTerra.App.Integration
 
             if (Mouse.current.leftButton.wasPressedThisFrame
                 && locationValid
-                && CanAfford(selectedBuildingId))
+                && CanAfford(selectedBuildingId)
+                && (EventSystem.current == null || !EventSystem.current.IsPointerOverGameObject()))
             {
                 placementSystem.TryPlaceAt(cell);
             }
@@ -305,6 +313,10 @@ namespace SubTerra.App.Integration
                     return "wallet_unavailable";
                 case BuildingPlacementFailure.NoSelection:
                     return "no_selection";
+                case BuildingPlacementFailure.OutOfRange:
+                    return "out_of_range";
+                case BuildingPlacementFailure.OutsideAllowedArea:
+                    return "outside_allowed_area";
                 default:
                     return string.Empty;
             }

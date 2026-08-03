@@ -1,6 +1,8 @@
 #if UNITY_EDITOR
 using UnityEditor;
 using UnityEditor.SceneManagement;
+using SubTerra.App.Core.Data;
+using SubTerra.Shared;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.Tilemaps;
@@ -133,7 +135,8 @@ namespace SubTerra.Gameplay.Building.Editor
                 definition = ScriptableObject.CreateInstance<BuildingPlacementDefinition>();
                 AssetDatabase.CreateAsset(definition, DefinitionPath);
             }
-            definition.EditorSet("building.support", prefab, Vector2Int.one, true);
+            definition.EditorSet(DataIds.Buildings.SupportBasic, prefab, Vector2Int.one, true);
+            definition.EditorSetCosts(new ItemCostDto(DataIds.Minerals.Copper, 2));
             EditorUtility.SetDirty(definition);
             return definition;
         }

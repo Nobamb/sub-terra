@@ -1,7 +1,14 @@
 {
   "name": "SubTerra.Gameplay.Snapshot.EditModeTests",
   "rootNamespace": "SubTerra.Gameplay.Snapshot.Tests",
-  "references": ["SubTerra.Gameplay.Snapshot", "SubTerra.Shared", "UnityEngine.TestRunner", "UnityEditor.TestRunner"],
+  "references": [
+    "SubTerra.Gameplay.Snapshot",
+    "SubTerra.Gameplay.Building",
+    "SubTerra.Gameplay.Structural",
+    "SubTerra.Shared",
+    "UnityEngine.TestRunner",
+    "UnityEditor.TestRunner"
+  ],
   "includePlatforms": ["Editor"],
   "excludePlatforms": [],
   "allowUnsafeCode": false,

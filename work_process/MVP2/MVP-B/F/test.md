@@ -49,7 +49,28 @@
 
 ## 4. 검증 결과 요약
 
-- **상태:** 미실행
-- **모든 항목 통과 시:** Phase F 완료
-- **실패 항목 존재 시:** cell, 실패 enum, 비용 전후, 생성 객체 수를 기록한다.
+- **실행일:** 2026-08-03
+- **상태:** 통과
+- **Edit Mode:** 281 Pass / 0 Fail / 0 Skip
+- **Play Mode:** 26 Pass / 0 Fail / 0 Skip
+
+### 항목별 결과
+
+| ID | 결과 | 자동 검증 근거 |
+| :-- | :-- | :-- |
+| F-S01 | 통과 | Support Prefab의 `BoxCollider2D`, `StructuralSupport`, `BuildingInstance`, `VisualRoot` 검사 |
+| F-S02 | 통과 | Integration Scene의 menu/bridge/system/preview와 배치 원점·거리·허용 영역 참조 검사 |
+| F-S03 | 통과 | 성공 1회 설치 시 Prefab 1개 생성·비용 1회 차감, 실패 시 미차감 검사 |
+| F-S04 | 통과 | `BuildingSnapshotDto` 필드와 Unity Object 참조 부재 검사 |
+| F-F01 | 통과 | 실제 placement bridge의 선택/Preview 흐름과 Runtime 설치 경로 검사 |
+| F-F02 | 통과 | 지면 없음·점유·거리 밖·허용 영역 밖 실패 enum 및 월드 불변 검사 |
+| F-F03 | 통과 | 설치 반경 안은 Stable로 감소하고 반경 밖은 Caution 유지 검사 |
+| F-F04 | 통과 | 성공 직후 선택 해제 및 같은 프레임 재호출의 `NoSelection`, 비용/Prefab 1회 검사 |
+| F-F05 | 통과 | Snapshot 복원 시 비용 재차감 없이 같은 위치의 Support 효과와 범위 밖 불변 검사 |
+
+### 실행 기록
+
+- Unity 6000.5.4f1 Editor에서 Phase F 에셋 빌더를 실행해 Support Prefab/Data/Integration Scene 참조를 생성·저장했다.
+- `SubTerra.App.Tests.EditMode`, `SubTerra.Gameplay.Building.EditModeTests`, `SubTerra.Gameplay.Snapshot.EditModeTests`를 함께 실행했다.
+- `SubTerra.App.Tests.PlayMode` 전체 회귀를 실행했다.
 

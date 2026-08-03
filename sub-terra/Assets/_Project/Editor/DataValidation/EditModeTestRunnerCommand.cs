@@ -403,7 +403,12 @@ namespace SubTerra.App.Editor.DataValidation
         {
             StartTestRun(
                 TestMode.EditMode,
-                new[] { "SubTerra.App.Tests.EditMode" },
+                new[]
+                {
+                    "SubTerra.App.Tests.EditMode",
+                    "SubTerra.Gameplay.Building.EditModeTests",
+                    "SubTerra.Gameplay.Snapshot.EditModeTests"
+                },
                 ResolveProjectPath(resultPath),
                 "Edit Mode");
         }

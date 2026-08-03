@@ -14,6 +14,9 @@ namespace SubTerra.Gameplay.Building
         [SerializeField] private Transform buildingRoot;
         [SerializeField] private MonoBehaviour resourceWalletBehaviour;
         [SerializeField] private StructuralIntegritySystem structuralIntegritySystem;
+        [SerializeField] private Transform placementOrigin;
+        [SerializeField, Min(0f)] private float maximumPlacementDistance = 6f;
+        [SerializeField] private Collider2D allowedPlacementArea;
         [SerializeField] private BuildingPlacementDefinition[] restoreDefinitions = Array.Empty<BuildingPlacementDefinition>();
 
         private readonly HashSet<Vector3Int> occupiedCells = new();
@@ -50,6 +53,21 @@ namespace SubTerra.Gameplay.Building
             if (string.IsNullOrWhiteSpace(selection.BuildingId) || selection.RuntimePrefab == null)
             {
                 failure = BuildingPlacementFailure.InvalidDefinition;
+                return false;
+            }
+
+            Vector3 worldPosition = CellToWorld(origin);
+            if (allowedPlacementArea != null && !allowedPlacementArea.OverlapPoint(worldPosition))
+            {
+                failure = BuildingPlacementFailure.OutsideAllowedArea;
+                return false;
+            }
+
+            if (placementOrigin != null
+                && maximumPlacementDistance > 0f
+                && Vector2.Distance(placementOrigin.position, worldPosition) > maximumPlacementDistance)
+            {
+                failure = BuildingPlacementFailure.OutOfRange;
                 return false;
             }
 
@@ -93,27 +111,30 @@ namespace SubTerra.Gameplay.Building
         public BuildingPlacementResult TryPlaceAt(Vector3Int origin)
         {
             if (!CanPlaceAt(origin, out BuildingPlacementFailure failure)) return Reject(failure, origin);
-            GameObject instanceObject = Instantiate(selection.RuntimePrefab, CellToWorld(origin), Quaternion.identity, buildingRoot);
+            BuildingPlacementDefinition definition = selection;
+            GameObject instanceObject = Instantiate(definition.RuntimePrefab, CellToWorld(origin), Quaternion.identity, buildingRoot);
             if (instanceObject == null) return Reject(BuildingPlacementFailure.InstantiateFailed, origin);
 
             // 비용은 생성에 성공한 뒤에만 차감한다. 실패하면 생성물을 되돌린다.
             bool spent = sharedResourceWallet != null
-                ? sharedResourceWallet.TrySpend(selection.Costs)
-                : resourceWallet.TrySpend(selection.BuildingId);
+                ? sharedResourceWallet.TrySpend(definition.Costs)
+                : resourceWallet.TrySpend(definition.BuildingId);
             if (!spent)
             {
                 Destroy(instanceObject);
                 return Reject(BuildingPlacementFailure.SpendFailed, origin);
             }
 
-            string instanceId = $"{selection.BuildingId}-{nextInstanceSequence++:D4}";
+            string instanceId = $"{definition.BuildingId}-{nextInstanceSequence++:D4}";
             BuildingInstance instance = instanceObject.GetComponent<BuildingInstance>() ?? instanceObject.AddComponent<BuildingInstance>();
-            instance.Initialize(instanceId, selection.BuildingId);
-            foreach (Vector3Int cell in EnumerateFootprint(origin, selection.Footprint)) occupiedCells.Add(cell);
+            instance.Initialize(instanceId, definition.BuildingId);
+            foreach (Vector3Int cell in EnumerateFootprint(origin, definition.Footprint)) occupiedCells.Add(cell);
             StructuralSupport support = instanceObject.GetComponent<StructuralSupport>();
             if (support != null) structuralIntegritySystem?.RegisterSupport(support);
 
-            var result = new BuildingPlacementResult(true, BuildingPlacementFailure.None, instanceId, selection.BuildingId, origin);
+            // 한 번의 선택은 한 시설만 확정한다. 이벤트 재진입과 같은 프레임 중복 확정을 함께 막는다.
+            selection = null;
+            var result = new BuildingPlacementResult(true, BuildingPlacementFailure.None, instanceId, definition.BuildingId, origin);
             BuildingPlaced?.Invoke(result);
             return result;
         }

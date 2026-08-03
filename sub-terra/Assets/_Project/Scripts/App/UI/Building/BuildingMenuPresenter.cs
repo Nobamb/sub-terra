@@ -276,6 +276,14 @@ namespace SubTerra.App.UI.Building
                     return "비용 차감에 실패했습니다.";
                 case "cannot_afford":
                     return "자원이 부족합니다.";
+                case "wallet_unavailable":
+                    return "건설 자원 상태를 확인할 수 없습니다.";
+                case "no_selection":
+                    return "선택된 시설이 없습니다.";
+                case "out_of_range":
+                    return "플레이어에게서 너무 먼 위치입니다.";
+                case "outside_allowed_area":
+                    return "건설이 허용되지 않은 구역입니다.";
                 default:
                     return failed ? "시설 설치에 실패했습니다." : string.Empty;
             }

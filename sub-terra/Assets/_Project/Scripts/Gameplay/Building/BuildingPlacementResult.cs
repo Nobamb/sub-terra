@@ -13,7 +13,9 @@ namespace SubTerra.Gameplay.Building
         ResourceWalletUnavailable = 5,
         CannotAfford = 6,
         SpendFailed = 7,
-        InstantiateFailed = 8
+        InstantiateFailed = 8,
+        OutOfRange = 9,
+        OutsideAllowedArea = 10
     }
 
     [Serializable]
