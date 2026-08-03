@@ -119,7 +119,13 @@ namespace SubTerra.Gameplay.Hazards
                 return;
             }
 
-            SetExposure(new GasExposureState(true, GasRiskEvaluator.Evaluate(selected.Intensity), selected.GasType, selected.GasZoneId, selected.RemainingDuration));
+            SetExposure(new GasExposureState(
+                true,
+                GasRiskEvaluator.Evaluate(selected.Intensity),
+                selected.GasType,
+                selected.GasZoneId,
+                selected.RemainingDuration,
+                selected.Intensity));
         }
 
         private void SetExposure(GasExposureState next)

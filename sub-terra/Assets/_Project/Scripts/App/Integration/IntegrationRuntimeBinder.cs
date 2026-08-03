@@ -31,6 +31,7 @@ namespace SubTerra.App.Integration
         [SerializeField] private BuildingPlacementSystem buildingPlacementSystem;
         [SerializeField] private HudBinder hudBinder;
         [SerializeField] private GameplayHazardStatusBridge hazardBridge;
+        [SerializeField] private GasExposureEffectController gasEffectController;
         [SerializeField] private OutpostRuntimeBridge outpostBridge;
         [SerializeField] private BuildingUiIntegrationBinder buildingUiBinder;
         [SerializeField] private GameplayBuildingPlacementBridge placementBridge;
@@ -155,6 +156,12 @@ namespace SubTerra.App.Integration
             }
 
             hazardBridge?.BindGameState(bootstrap.State);
+            if (gasEffectController != null)
+            {
+                gasEffectController.FailureInputRaised += OnGasFailureInputRaised;
+                gasEffectController.EffectStateChanged += OnGasEffectStateChanged;
+                gasEffectController.Bind(bootstrap.State, runtime.Progression?.Effects);
+            }
 
             var dataCatalog = bootstrap.AssignedCatalog as GameDataCatalog;
             if (placementBridge != null && runtime.Economy != null)
@@ -369,6 +376,11 @@ namespace SubTerra.App.Integration
             }
 
             inventorySpeedBound = false;
+            if (gasEffectController != null)
+            {
+                gasEffectController.FailureInputRaised -= OnGasFailureInputRaised;
+                gasEffectController.EffectStateChanged -= OnGasEffectStateChanged;
+            }
         }
 
         public void Publish(GameplayEventDto gameplayEvent)
@@ -385,7 +397,15 @@ namespace SubTerra.App.Integration
             }
             else if (gameplayEvent.type == GameplayEventType.GasTriggered)
             {
-                state.SetGasExposure(ToGasRisk(gameplayEvent.gasRisk));
+                // 효과 컨트롤러가 있으면 저항·전진기지 보호가 반영된 값만 RunState에 기록한다.
+                if (gasEffectController == null)
+                {
+                    state.SetGasExposure(ToGasRisk(gameplayEvent.gasRisk));
+                }
+            }
+            else if (gameplayEvent.type == GameplayEventType.OutpostStatusChanged)
+            {
+                gasEffectController?.ApplyOutpostStatus(gameplayEvent.outpostStatus);
             }
 
             eventFanOut?.Publish(gameplayEvent);
@@ -404,6 +424,24 @@ namespace SubTerra.App.Integration
             }
 
             return droneContextAdapter;
+        }
+
+        private void OnGasFailureInputRaised(GasExposureFailureInputDto input)
+        {
+            Publish(new GameplayEventDto
+            {
+                type = GameplayEventType.GasExposureThreshold,
+                entityId = "player",
+                instanceId = input?.gasZoneId ?? string.Empty,
+                reasonId = "gas_exposure_threshold",
+                gasExposureFailure = input
+            });
+        }
+
+        private void OnGasEffectStateChanged(
+            SubTerra.Gameplay.Hazards.GasExposureEffectState effect)
+        {
+            droneSensor?.SetAppliedGasRisk(effect.Risk);
         }
 
         private void SetHudVisible(bool visible)

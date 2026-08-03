@@ -30,6 +30,7 @@ namespace SubTerra.Gameplay.Drone
         private int unsettledCargoValue;
         private float cargoWeight;
         private bool returnPathAvailable = true;
+        private GasRiskLevel? appliedGasRisk;
 
         public DroneContextDto CurrentContext { get; private set; }
         public event Action<DroneContextDto> ContextUpdated;
@@ -42,6 +43,17 @@ namespace SubTerra.Gameplay.Drone
         }
 
         public void SetPlayerTransform(Transform target) => playerTransform = target;
+
+        /// <summary>효과 적용 계층이 확정한 저항·대피소 반영 위험도를 Drone Context와 공유한다.</summary>
+        public void SetAppliedGasRisk(GasRiskLevel risk)
+        {
+            appliedGasRisk = risk;
+        }
+
+        public void ClearAppliedGasRisk()
+        {
+            appliedGasRisk = null;
+        }
 
         public void SetAppReadings(int energy, int returnEstimate, int cargoValue, float nextCargoWeight, bool hasReturnPath)
         {
@@ -57,7 +69,10 @@ namespace SubTerra.Gameplay.Drone
             Vector2 playerPosition = playerTransform != null ? playerTransform.position : transform.position;
             int depth = DroneContextCalculator.CalculateDepth(surfaceY, playerPosition.y);
             StructuralRiskLevel structuralRisk = structuralSystem != null ? structuralSystem.CurrentRisk : StructuralRiskLevel.Stable;
-            GasRiskLevel gasRisk = gasHazardSystem != null ? gasHazardSystem.CurrentExposure.Risk : GasRiskLevel.Safe;
+            GasRiskLevel gasRisk = appliedGasRisk
+                ?? (gasHazardSystem != null
+                    ? gasHazardSystem.CurrentExposure.Risk
+                    : GasRiskLevel.Safe);
             float baseDistance = DroneContextCalculator.FindNearestDistance(playerPosition, outpostCores);
             IReadOnlyList<string> minerals = ScanNearbyMinerals(playerPosition);
             return new DroneContextDto(depth, currentEnergy, returnEnergyEstimate, structuralRisk, gasRisk, unsettledCargoValue, cargoWeight, baseDistance, minerals, returnPathAvailable);

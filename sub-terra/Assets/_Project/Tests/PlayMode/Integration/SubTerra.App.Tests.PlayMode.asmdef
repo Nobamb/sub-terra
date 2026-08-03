@@ -8,6 +8,8 @@
     "SubTerra.Gameplay.Snapshot",
     "SubTerra.Gameplay.Mining",
     "SubTerra.Gameplay.Player",
+    "SubTerra.Gameplay.Hazards",
+    "SubTerra.Gameplay.Drone",
     "Unity.TextMeshPro"
   ],
   "optionalUnityReferences": ["TestAssemblies"],

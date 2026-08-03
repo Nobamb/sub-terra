@@ -25,6 +25,7 @@ namespace SubTerra.App.Integration
     {
         [SerializeField] private StructuralIntegritySystem structuralSystem;
         [SerializeField] private GasHazardSystem gasSystem;
+        [SerializeField] private GasExposureEffectController gasEffectController;
         [SerializeField] private PowerNetworkSystem powerSystem;
 
         private GameState gameState;
@@ -48,7 +49,12 @@ namespace SubTerra.App.Integration
                 OnStructuralRiskChanged(structuralSystem.CurrentRisk);
             }
 
-            if (gasSystem != null)
+            if (gasEffectController != null)
+            {
+                gasEffectController.EffectStateChanged += OnGasEffectStateChanged;
+                OnGasEffectStateChanged(gasEffectController.CurrentState);
+            }
+            else if (gasSystem != null)
             {
                 gasSystem.ExposureChanged += OnGasExposureChanged;
                 OnGasExposureChanged(gasSystem.CurrentExposure);
@@ -68,7 +74,11 @@ namespace SubTerra.App.Integration
                 structuralSystem.RiskChanged -= OnStructuralRiskChanged;
             }
 
-            if (gasSystem != null)
+            if (gasEffectController != null)
+            {
+                gasEffectController.EffectStateChanged -= OnGasEffectStateChanged;
+            }
+            else if (gasSystem != null)
             {
                 gasSystem.ExposureChanged -= OnGasExposureChanged;
             }
@@ -155,6 +165,28 @@ namespace SubTerra.App.Integration
                     : severity == HazardSeverity.Caution ? "주의" : "위험",
                 duration);
             gameState?.SetGasExposure(ToAppGasRisk(exposure.Risk));
+            GasStatusChanged?.Invoke(GasStatus);
+        }
+
+        private void OnGasEffectStateChanged(GasExposureEffectState effect)
+        {
+            var severity = effect.Risk == GameplayGasRiskLevel.Critical
+                ? HazardSeverity.Critical
+                : effect.Risk == GameplayGasRiskLevel.Caution
+                    ? HazardSeverity.Caution
+                    : HazardSeverity.Safe;
+            var value = effect.IsSheltered
+                ? "전진기지 정화 보호"
+                : effect.IsExposed
+                    ? "노출 " + effect.CumulativeExposure.ToString("0.0")
+                        + "초 · 한계 " + effect.FailureThreshold.ToString("0.0") + "초"
+                    : string.Empty;
+            GasStatus = new HazardStatusReadModel(
+                severity,
+                severity == HazardSeverity.Safe ? "안전"
+                    : severity == HazardSeverity.Caution ? "주의" : "위험",
+                value);
+            gameState?.SetGasExposure(ToAppGasRisk(effect.Risk));
             GasStatusChanged?.Invoke(GasStatus);
         }
 

@@ -75,8 +75,9 @@ namespace SubTerra.App.Readiness
                     "가스 위험 실제 효과",
                     "H",
                     requiresRestore: true,
-                    EvidenceKind.Definition | EvidenceKind.SurrogateTest | EvidenceKind.RuntimePrefab,
-                    "Zone과 HUD 이벤트는 있으나 전력/이동/시야/피해 효과가 없음"),
+                    EvidenceKind.Definition | EvidenceKind.SurrogateTest
+                        | EvidenceKind.RuntimePrefab | EvidenceKind.Restore | EvidenceKind.Play,
+                    "고정 tick 전력·누적 노출, 이동·시야, 저항·전진기지 보호, L 단계 실패 입력 연결 검증 완료"),
                 Entry(
                     "building-power-grid",
                     "시설·전력망 Runtime",

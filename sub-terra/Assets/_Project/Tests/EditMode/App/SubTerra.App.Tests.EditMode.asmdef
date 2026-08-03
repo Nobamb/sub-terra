@@ -7,6 +7,7 @@
     "SubTerra.Shared",
     "SubTerra.Gameplay.Building",
     "SubTerra.Gameplay.Structural",
+    "SubTerra.Gameplay.Hazards",
     "SubTerra.Gameplay.Mining",
     "SubTerra.Gameplay.Player",
     "SubTerra.Gameplay.Snapshot",

@@ -1,7 +1,7 @@
 {
   "name": "SubTerra.Gameplay.Hazards.EditModeTests",
   "rootNamespace": "SubTerra.Gameplay.Hazards.Tests",
-  "references": ["SubTerra.Gameplay.Hazards", "UnityEngine.TestRunner", "UnityEditor.TestRunner"],
+  "references": ["SubTerra.Gameplay.Hazards", "SubTerra.Shared", "UnityEngine.TestRunner", "UnityEditor.TestRunner"],
   "includePlatforms": ["Editor"],
   "excludePlatforms": [],
   "allowUnsafeCode": false,

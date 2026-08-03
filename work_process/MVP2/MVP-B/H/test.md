@@ -49,7 +49,18 @@
 
 ## 4. 검증 결과 요약
 
-- **상태:** 미실행
-- **모든 항목 통과 시:** Phase H 완료
-- **실패 항목 존재 시:** Zone ID, 강도, 경과 시간, 적용 tick을 기록한다.
+- **상태:** 통과 (2026-08-03, Unity 6000.5.4f1)
+- **Phase H Edit Mode:** 16/16 통과
+- **Phase H Play Mode:** 1/1 통과
+- **전체 App Edit Mode 회귀:** 287/287 통과
+- **전체 App Play Mode 회귀:** 27/27 통과
+- **H-S01~H-S04:** Zone 판정과 효과 적용 분리, 1초 고정 tick, Energy/Movement/Visual 연결, 텍스트·기호·색상 경고를 확인했다.
+- **H-F01:** 강도 비례 전력 감소와 누적 노출이 고정 tick 수만큼 적용되고 전력이 0 아래로 내려가지 않는다.
+- **H-F02:** Zone 이탈 즉시 감속·시야 제한이 해제되고 누적 노출은 tick마다 회복한다.
+- **H-F03:** 중첩 Zone은 기존 `GasHazardSystem`의 최고 강도 하나만 선택하여 중복 적용하지 않는다.
+- **H-F04:** `upgrade.gas.resistance` 카탈로그 효과가 모든 불이익을 비례 감소시키며, 활성 전진기지 상호작용 범위는 정화 보호를 제공한다.
+- **H-F05:** Gameplay 효과 상태, GameState RunState, HUD가 같은 위험 단계를 표시하며 누적 한계 도달 시 `GasExposureFailureInputDto`를 한 번 발행한다.
+- **Integration Scene:** `GasExposureEffectController`와 입력을 막지 않는 `GasVisionOverlay` 참조를 Unity Editor에서 연결했다.
+- **Unity Console:** 오류 0건. 확인된 경고는 Bootstrap 없이 Integration Scene을 여는 기존 테스트 경고와 기존 TMP 글리프 경고다.
+- **판정:** Phase H 완료. 실제 피해·행동불능·구조 결과 처리는 Shared 실패 입력을 소비하는 Phase L 범위다.
 

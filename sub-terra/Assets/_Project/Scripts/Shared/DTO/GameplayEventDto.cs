@@ -18,7 +18,8 @@ namespace SubTerra.Shared
         DepthZoneEntered = 8,
         BuildingPlacementChanged = 9,
         OutpostStatusChanged = 10,
-        StructuralCollapse = 11
+        StructuralCollapse = 11,
+        GasExposureThreshold = 12
     }
 
     /// <summary>
@@ -40,5 +41,6 @@ namespace SubTerra.Shared
         public BuildingPlacementResultDto buildingPlacement;
         public OutpostStatusDto outpostStatus;
         public StructuralCollapseEventDto structuralCollapse;
+        public GasExposureFailureInputDto gasExposureFailure;
     }
 }
