@@ -367,7 +367,8 @@ namespace SubTerra.App.Editor.DataValidation
                 }
             }
 
-            Check("A-S04-placeholders-reported", placeholders > 0, "placeholders=" + placeholders);
+            // Phase I: 공용 BuildingPlaceholder 0 — 시설별 실제 Prefab 사용.
+            Check("A-S04-placeholders-cleared", placeholders == 0, "placeholders=" + placeholders);
             Check("A-S04-no-null-prefab", missingPrefabs == 0, "missing=" + missingPrefabs);
 
             // A-F01 read-only report
@@ -378,7 +379,8 @@ namespace SubTerra.App.Editor.DataValidation
             Check("A-F01-feature-count", readiness.Features.Count >= 17);
             Check("A-F01-sections", readiness.FormatText().Contains("## MissingScripts")
                 && readiness.FormatText().Contains("## Placeholders"));
-            Check("A-F01-placeholders-section", readiness.Placeholders.Count > 0);
+            // 섹션은 항상 존재하며, Phase I 이후 placeholder 개수는 0일 수 있다.
+            Check("A-F01-placeholders-section", readiness.Placeholders != null);
 
             // A-F02 missing ref fixture via CatalogValidator (same shipped validator path)
             var broken = ScriptableObject.CreateInstance<BuildingData>();
