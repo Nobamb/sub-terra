@@ -162,6 +162,14 @@ namespace SubTerra.App.Tutorial
                 case GameplayEventType.OutpostActivated:
                     HandleSignal(DemoProgressSignal.OutpostInstalled);
                     break;
+                case GameplayEventType.PlayerRescued:
+                    // 실패 결과를 다시 계산하지 않고 Shared 결과를 다음 행동 안내에 반영한다.
+                    var rescue = gameplayEvent.playerRescue;
+                    gameState?.SetInteractionPrompt(
+                        rescue != null && rescue.usedCheckpoint
+                            ? "드론 구조 완료: 전진기지에서 탐사를 재개하세요."
+                            : "드론 구조 완료: Surface Base에서 장비를 정비하세요.");
+                    break;
             }
         }
 

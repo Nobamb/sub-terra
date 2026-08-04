@@ -14,7 +14,8 @@ namespace SubTerra.App.Save
         StructuralFailure = 5,
         QuitRequested = 6,
         PeriodicDirty = 7,
-        Manual = 8
+        Manual = 8,
+        RunFailure = 9
     }
 
     /// <summary>

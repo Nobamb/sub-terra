@@ -44,6 +44,7 @@ namespace SubTerra.App.Integration
         [SerializeField] private MiningSystem miningSystem;
         [SerializeField] private PlayerMovement playerMovement;
         [SerializeField] private MiningProgressHud miningProgressHud;
+        [SerializeField] private RunFailureRuntimeController runFailureController;
 
         private SaveRuntimeController runtime;
         private GameBootstrapper bootstrap;
@@ -165,6 +166,12 @@ namespace SubTerra.App.Integration
                 gasEffectController.Bind(bootstrap.State, runtime.Progression?.Effects);
             }
 
+            if (runFailureController != null)
+            {
+                runFailureController.Bind(runtime, bootstrap.State);
+                runFailureController.PlayerRescued += OnPlayerRescued;
+            }
+
             var dataCatalog = bootstrap.AssignedCatalog as GameDataCatalog;
             if (placementBridge != null && runtime.Economy != null)
             {
@@ -194,6 +201,11 @@ namespace SubTerra.App.Integration
             if (outpostBridge != null)
             {
                 eventFanOut.Add(outpostBridge);
+            }
+
+            if (runFailureController != null)
+            {
+                eventFanOut.Add(runFailureController);
             }
 
             if (tutorialDirector == null)
@@ -394,6 +406,12 @@ namespace SubTerra.App.Integration
                 gasEffectController.FailureInputRaised -= OnGasFailureInputRaised;
                 gasEffectController.EffectStateChanged -= OnGasEffectStateChanged;
             }
+
+            if (runFailureController != null)
+            {
+                runFailureController.PlayerRescued -= OnPlayerRescued;
+                runFailureController.Unbind();
+            }
         }
 
         private void BindDroneReadings()
@@ -498,6 +516,25 @@ namespace SubTerra.App.Integration
             SubTerra.Gameplay.Hazards.GasExposureEffectState effect)
         {
             droneSensor?.SetAppliedGasRisk(effect.Risk);
+        }
+
+        private void OnPlayerRescued(PlayerRescueResultDto rescue)
+        {
+            if (rescue == null)
+            {
+                return;
+            }
+
+            eventFanOut?.Publish(new GameplayEventDto
+            {
+                type = GameplayEventType.PlayerRescued,
+                entityId = "player",
+                instanceId = rescue.failureToken,
+                reasonId = rescue.cause.ToString(),
+                x = rescue.returnX,
+                y = rescue.returnY,
+                playerRescue = rescue
+            });
         }
 
         private void SetHudVisible(bool visible)
