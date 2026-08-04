@@ -805,6 +805,7 @@ MonoBehaviour:
   buildingRoot: {fileID: 1068944461}
   resourceWalletBehaviour: {fileID: 0}
   structuralIntegritySystem: {fileID: 279480562}
+  powerNetworkSystem: {fileID: 0}
   placementOrigin: {fileID: 72969609}
   maximumPlacementDistance: 6
   allowedPlacementArea: {fileID: 2107825900}
@@ -1479,6 +1480,7 @@ MonoBehaviour:
   supply: 5
   demand: 0
   priority: 0
+  entityId: 
 --- !u!212 &427267210
 SpriteRenderer:
   serializedVersion: 3

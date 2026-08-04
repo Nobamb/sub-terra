@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using SubTerra.Gameplay.Structural;
+using SubTerra.Gameplay.Power;
 using SubTerra.Shared;
 using UnityEngine;
 using UnityEngine.Tilemaps;
@@ -14,6 +15,7 @@ namespace SubTerra.Gameplay.Building
         [SerializeField] private Transform buildingRoot;
         [SerializeField] private MonoBehaviour resourceWalletBehaviour;
         [SerializeField] private StructuralIntegritySystem structuralIntegritySystem;
+        [SerializeField] private PowerNetworkSystem powerNetworkSystem;
         [SerializeField] private Transform placementOrigin;
         [SerializeField, Min(0f)] private float maximumPlacementDistance = 6f;
         [SerializeField] private Collider2D allowedPlacementArea;
@@ -34,6 +36,7 @@ namespace SubTerra.Gameplay.Building
         {
             resourceWallet = resourceWalletBehaviour as IBuildingResourceWallet;
             if (buildingRoot == null) buildingRoot = transform;
+            if (powerNetworkSystem == null) powerNetworkSystem = GetComponent<PowerNetworkSystem>();
         }
 
         public void Select(BuildingPlacementDefinition definition) => selection = definition;
@@ -128,6 +131,7 @@ namespace SubTerra.Gameplay.Building
             string instanceId = $"{definition.BuildingId}-{nextInstanceSequence++:D4}";
             BuildingInstance instance = instanceObject.GetComponent<BuildingInstance>() ?? instanceObject.AddComponent<BuildingInstance>();
             instance.Initialize(instanceId, definition.BuildingId);
+            BindPowerNode(instanceObject, instanceId);
             foreach (Vector3Int cell in EnumerateFootprint(origin, definition.Footprint)) occupiedCells.Add(cell);
             StructuralSupport support = instanceObject.GetComponent<StructuralSupport>();
             if (support != null) structuralIntegritySystem?.RegisterSupport(support);
@@ -150,11 +154,24 @@ namespace SubTerra.Gameplay.Building
             GameObject instanceObject = Instantiate(definition.RuntimePrefab, CellToWorld(cell), Quaternion.identity, buildingRoot != null ? buildingRoot : transform);
             BuildingInstance instance = instanceObject.GetComponent<BuildingInstance>() ?? instanceObject.AddComponent<BuildingInstance>();
             instance.Initialize(snapshot.instanceId, snapshot.buildingTypeId);
+            BindPowerNode(instanceObject, snapshot.instanceId);
             foreach (Vector3Int occupied in EnumerateFootprint(cell, definition.Footprint)) occupiedCells.Add(occupied);
             StructuralSupport support = instanceObject.GetComponent<StructuralSupport>();
             if (support != null) structuralIntegritySystem?.RegisterSupport(support);
             restoredInstanceIds.Add(snapshot.instanceId);
             return true;
+        }
+
+        private void BindPowerNode(GameObject instanceObject, string instanceId)
+        {
+            PowerNode powerNode = instanceObject.GetComponent<PowerNode>();
+            if (powerNode == null)
+            {
+                return;
+            }
+
+            powerNode.SetEntityId(instanceId);
+            powerNode.SetNetwork(powerNetworkSystem);
         }
 
         private BuildingPlacementResult Reject(BuildingPlacementFailure failure, Vector3Int cell)

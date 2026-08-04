@@ -9,6 +9,7 @@
     "SubTerra.Gameplay.Structural",
     "SubTerra.Gameplay.Mining",
     "SubTerra.Gameplay.Player",
+    "SubTerra.Gameplay.Power",
     "Unity.InputSystem",
     "Unity.TextMeshPro",
     "UnityEngine.UI"

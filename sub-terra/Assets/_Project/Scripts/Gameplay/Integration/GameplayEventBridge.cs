@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using SubTerra.Gameplay.Building;
 using SubTerra.Gameplay.Hazards;
 using SubTerra.Gameplay.Mining;
@@ -103,8 +104,51 @@ namespace SubTerra.Gameplay.Integration
 
         private void OnPowerNetworkRebuilt(PowerNetworkSnapshot snapshot)
         {
-            var status = new OutpostStatusDto { outpostInstanceId = outpostInstanceId, isActive = snapshot.Supply > 0, totalPowerSupply = snapshot.Supply, totalPowerConsumption = snapshot.Demand };
+            var status = new OutpostStatusDto
+            {
+                outpostInstanceId = outpostInstanceId,
+                isActive = snapshot.Supply > 0,
+                totalPowerSupply = snapshot.Supply,
+                totalPowerConsumption = snapshot.Demand,
+                connectedFacilities = BuildFacilityStatuses()
+            };
             Publish(new GameplayEventDto { type = GameplayEventType.OutpostStatusChanged, instanceId = outpostInstanceId, outpostStatus = status });
+        }
+
+        private List<ConnectedFacilityStatusDto> BuildFacilityStatuses()
+        {
+            var statuses = new List<ConnectedFacilityStatusDto>();
+            if (powerNetworkSystem == null)
+            {
+                return statuses;
+            }
+
+            foreach (PowerNode node in powerNetworkSystem.Nodes)
+            {
+                if (node == null || node.IsPowerSource)
+                {
+                    continue;
+                }
+
+                BuildingInstance instance = node.GetComponent<BuildingInstance>();
+                if (instance == null || string.IsNullOrWhiteSpace(instance.BuildingId))
+                {
+                    continue;
+                }
+
+                statuses.Add(new ConnectedFacilityStatusDto
+                {
+                    instanceId = instance.InstanceId,
+                    buildingId = instance.BuildingId,
+                    isActive = node.IsPowered,
+                    inactiveReasonId = node.IsPowered
+                        ? string.Empty
+                        : powerNetworkSystem.IsReachable(node) ? "insufficient_power" : "power_disconnected"
+                });
+            }
+
+            statuses.Sort((left, right) => string.CompareOrdinal(left.instanceId, right.instanceId));
+            return statuses;
         }
 
         private void Publish(GameplayEventDto gameplayEvent) => eventSink?.Publish(gameplayEvent);

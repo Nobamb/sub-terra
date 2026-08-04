@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2987875217438073630}
   - component: {fileID: 6320902357291324484}
+  - component: {fileID: 5177969310775642154}
   - component: {fileID: 4838217035380246955}
   m_Layer: 0
   m_Name: OutpostCore
@@ -83,7 +84,7 @@ SpriteRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
-  m_Color: {r: 0.2, g: 0.72, b: 1, a: 1}
+  m_Color: {r: 0.18, g: 0.72, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -93,6 +94,20 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
   m_BlendShapeWeights: []
+--- !u!114 &5177969310775642154
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5310527296871149544}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6621eff82699a8f4aa0462cd3f338ecb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SubTerra.Gameplay.Building::SubTerra.Gameplay.Building.BuildingInstance
+  instanceId: 
+  buildingId: 
 --- !u!114 &4838217035380246955
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -110,3 +125,4 @@ MonoBehaviour:
   supply: 5
   demand: 0
   priority: 0
+  entityId: 

@@ -10,8 +10,10 @@ namespace SubTerra.Gameplay.Power
     {
         private readonly HashSet<PowerNode> nodes = new();
         private readonly HashSet<PowerCable> cables = new();
+        private HashSet<PowerNode> reachableNodes = new();
 
         public PowerNetworkSnapshot CurrentSnapshot { get; private set; }
+        public IReadOnlyCollection<PowerNode> Nodes => nodes;
         public event Action<PowerNetworkSnapshot> NetworkRebuilt;
 
         public void RegisterNode(PowerNode node)
@@ -40,14 +42,14 @@ namespace SubTerra.Gameplay.Power
         {
             nodes.RemoveWhere(node => node == null);
             cables.RemoveWhere(cable => cable == null || !cable.IsValid);
-            var reachable = FindReachableNodes();
-            int supply = reachable.Where(node => node.IsPowerSource).Sum(node => node.Supply);
-            int demand = reachable.Where(node => !node.IsPowerSource).Sum(node => node.Demand);
+            reachableNodes = FindReachableNodes();
+            int supply = reachableNodes.Where(node => node.IsPowerSource).Sum(node => node.Supply);
+            int demand = reachableNodes.Where(node => !node.IsPowerSource).Sum(node => node.Demand);
             int remaining = supply;
             int activeFacilities = 0;
 
-            foreach (PowerNode source in reachable.Where(node => node.IsPowerSource)) source.SetPowered(true);
-            foreach (PowerNode facility in reachable.Where(node => !node.IsPowerSource).OrderBy(node => node.Priority).ThenBy(node => node.GetEntityId()))
+            foreach (PowerNode source in reachableNodes.Where(node => node.IsPowerSource)) source.SetPowered(true);
+            foreach (PowerNode facility in reachableNodes.Where(node => !node.IsPowerSource).OrderBy(node => node.Priority).ThenBy(node => node.EntityId).ThenBy(node => node.GetEntityId().ToString()))
             {
                 bool powered = facility.Demand <= remaining;
                 facility.SetPowered(powered);
@@ -56,9 +58,14 @@ namespace SubTerra.Gameplay.Power
                 activeFacilities++;
             }
 
-            foreach (PowerNode disconnected in nodes.Where(node => !reachable.Contains(node))) disconnected.SetPowered(false);
+            foreach (PowerNode disconnected in nodes.Where(node => !reachableNodes.Contains(node))) disconnected.SetPowered(false);
             CurrentSnapshot = new PowerNetworkSnapshot(supply, demand, activeFacilities);
             NetworkRebuilt?.Invoke(CurrentSnapshot);
+        }
+
+        public bool IsReachable(PowerNode node)
+        {
+            return node != null && reachableNodes.Contains(node);
         }
 
         private HashSet<PowerNode> FindReachableNodes()

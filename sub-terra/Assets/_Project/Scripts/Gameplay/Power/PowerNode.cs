@@ -11,11 +11,14 @@ namespace SubTerra.Gameplay.Power
         [SerializeField, Min(0)] private int supply;
         [SerializeField, Min(0)] private int demand;
         [SerializeField] private PowerPriority priority = PowerPriority.Normal;
+        [SerializeField] private string entityId;
 
         public bool IsPowerSource => isPowerSource;
         public int Supply => supply;
         public int Demand => demand;
         public PowerPriority Priority => priority;
+        public string EntityId => entityId;
+        public PowerNetworkSystem Network => network;
         public bool IsPowered { get; private set; }
         public event Action<PowerNode, bool> PowerStateChanged;
 
@@ -24,16 +27,43 @@ namespace SubTerra.Gameplay.Power
 
         public void Configure(PowerNetworkSystem targetNetwork, bool source, int sourceSupply, int powerDemand, PowerPriority nodePriority)
         {
-            network = targetNetwork;
+            SetNetwork(targetNetwork);
             isPowerSource = source;
             supply = Mathf.Max(0, sourceSupply);
             demand = Mathf.Max(0, powerDemand);
             priority = nodePriority;
+            network?.RequestRebuild();
+        }
+
+        /// <summary>Assigns this node to a network after a facility prefab has been instantiated or restored.</summary>
+        public void SetNetwork(PowerNetworkSystem targetNetwork)
+        {
+            if (network == targetNetwork)
+            {
+                return;
+            }
+
+            if (isActiveAndEnabled)
+            {
+                network?.UnregisterNode(this);
+            }
+
+            network = targetNetwork;
+            if (isActiveAndEnabled)
+            {
+                network?.RegisterNode(this);
+            }
         }
 
         public void SetDemand(int nextDemand)
         {
             demand = Mathf.Max(0, nextDemand);
+            network?.RequestRebuild();
+        }
+
+        public void SetEntityId(string nextEntityId)
+        {
+            entityId = nextEntityId ?? string.Empty;
             network?.RequestRebuild();
         }
 

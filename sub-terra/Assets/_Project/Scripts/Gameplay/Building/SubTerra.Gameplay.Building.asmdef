@@ -1,7 +1,7 @@
 {
   "name": "SubTerra.Gameplay.Building",
   "rootNamespace": "SubTerra.Gameplay.Building",
-  "references": ["SubTerra.Shared", "SubTerra.Gameplay.Structural", "Unity.InputSystem"],
+  "references": ["SubTerra.Shared", "SubTerra.Gameplay.Structural", "SubTerra.Gameplay.Power", "Unity.InputSystem"],
   "includePlatforms": [],
   "excludePlatforms": [],
   "allowUnsafeCode": false,
