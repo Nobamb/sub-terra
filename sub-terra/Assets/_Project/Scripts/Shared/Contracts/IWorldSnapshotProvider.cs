@@ -1,7 +1,8 @@
 namespace SubTerra.Shared
 {
     /// <summary>
-    /// 개발자 A(Gameplay)와 개발자 B(SaveService)를 연결하는 월드 스냅샷 계약 인터페이스
+    /// 개발자 A(Gameplay)와 개발자 B(SaveService)를 연결하는 월드 스냅샷 계약 인터페이스.
+    /// JSON에는 Unity Object를 넣지 않고, Seed+변경점만 왕복한다.
     /// </summary>
     public interface IWorldSnapshotProvider
     {
@@ -11,8 +12,10 @@ namespace SubTerra.Shared
         WorldSnapshotDto CaptureSnapshot();
 
         /// <summary>
-        /// (개발자 A 구현) 전달받은 스냅샷 DTO를 기반으로 월드 상태를 복원합니다.
+        /// (개발자 A 구현) 스냅샷 DTO로 월드를 복원합니다.
+        /// generatorVersion 불일치 등 기본 월드 재생성이 불가능하면 false를 반환합니다.
+        /// null 스냅샷은 무해한 no-op으로 true를 반환합니다.
         /// </summary>
-        void RestoreSnapshot(WorldSnapshotDto snapshot);
+        bool RestoreSnapshot(WorldSnapshotDto snapshot);
     }
 }

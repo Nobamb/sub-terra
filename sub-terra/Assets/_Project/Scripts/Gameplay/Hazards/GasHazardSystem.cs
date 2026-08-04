@@ -51,7 +51,10 @@ namespace SubTerra.Gameplay.Hazards
             return zone;
         }
 
-        /// <summary>Restores the saved position and concentration; duration intentionally resets to the MVP default.</summary>
+        /// <summary>
+        /// 저장된 위치·농도·남은 시간을 복원한다.
+        /// remainingDuration이 0 이하면 기본 지속시간을 사용한다.
+        /// </summary>
         public GasZone RestoreGasZone(GasSnapshotDto snapshot)
         {
             if (!snapshot.isActive || snapshot.isNeutralized) return null;
@@ -62,12 +65,33 @@ namespace SubTerra.Gameplay.Hazards
 
             string id = string.IsNullOrWhiteSpace(snapshot.gasZoneId) ? $"gas-{nextZoneSequence++:D4}" : snapshot.gasZoneId;
             if (Enum.TryParse(snapshot.gasTypeId, out GasType parsedType) == false) parsedType = GasType.Toxic;
+            float duration = snapshot.remainingDuration > 0f
+                ? snapshot.remainingDuration
+                : defaultDuration;
             GasZone zone = CreateZone(new Vector3(snapshot.x, snapshot.y, 0f));
-            zone.Activate(id, parsedType, snapshot.concentrationLevel, defaultRadius, defaultDuration);
+            zone.Activate(id, parsedType, snapshot.concentrationLevel, defaultRadius, duration);
             zones.Add(zone);
             GasZoneActivated?.Invoke(zone);
             ReevaluateExposure();
             return zone;
+        }
+
+        /// <summary>월드 스냅샷 복원 전 활성 가스 구역을 제거한다.</summary>
+        public void ClearRestoredZones()
+        {
+            for (int index = zones.Count - 1; index >= 0; index--)
+            {
+                GasZone zone = zones[index];
+                if (zone != null)
+                {
+                    if (Application.isPlaying) Destroy(zone.gameObject);
+                    else DestroyImmediate(zone.gameObject);
+                }
+            }
+
+            zones.Clear();
+            nextZoneSequence = 1;
+            SetExposure(new GasExposureState(false, GasRiskLevel.Safe, GasType.Unknown, string.Empty, 0f));
         }
 
         private GasZone CreateZone(Vector3 position)

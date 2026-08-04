@@ -143,6 +143,29 @@ namespace SubTerra.Gameplay.Building
             return result;
         }
 
+        /// <summary>
+        /// 월드 스냅샷 복원 직전 호출. 기존 Runtime 시설을 제거하고 점유/멱등 상태를 초기화한다.
+        /// 지갑·선택 상태는 건드리지 않는다.
+        /// </summary>
+        public void PrepareForWorldRestore()
+        {
+            Transform root = buildingRoot != null ? buildingRoot : transform;
+            for (int index = root.childCount - 1; index >= 0; index--)
+            {
+                Transform child = root.GetChild(index);
+                if (child == null) continue;
+                BuildingInstance building = child.GetComponent<BuildingInstance>();
+                if (building == null) continue;
+                StructuralSupport support = child.GetComponent<StructuralSupport>();
+                if (support != null) structuralIntegritySystem?.UnregisterSupport(support);
+                DestroyRuntime(child.gameObject);
+            }
+
+            occupiedCells.Clear();
+            restoredInstanceIds.Clear();
+            nextInstanceSequence = 1;
+        }
+
         /// <summary>Restores a previously placed building without querying or spending the App-owned wallet.</summary>
         public bool TryRestoreBuilding(BuildingSnapshotDto snapshot)
         {
@@ -159,6 +182,16 @@ namespace SubTerra.Gameplay.Building
             StructuralSupport support = instanceObject.GetComponent<StructuralSupport>();
             if (support != null) structuralIntegritySystem?.RegisterSupport(support);
             restoredInstanceIds.Add(snapshot.instanceId);
+
+            // 멱등 복원 시 이후 배치 시퀀스가 저장 인스턴스 ID와 겹치지 않게 시퀀스를 전진시킨다.
+            int separator = snapshot.instanceId.LastIndexOf('-');
+            if (separator >= 0
+                && int.TryParse(snapshot.instanceId.Substring(separator + 1), out int sequence)
+                && sequence >= nextInstanceSequence)
+            {
+                nextInstanceSequence = sequence + 1;
+            }
+
             return true;
         }
 
@@ -201,6 +234,13 @@ namespace SubTerra.Gameplay.Building
             for (int x = 0; x < size.x; x++)
             for (int y = 0; y < size.y; y++)
                 yield return origin + new Vector3Int(x, y, 0);
+        }
+
+        private static void DestroyRuntime(UnityEngine.Object target)
+        {
+            if (target == null) return;
+            if (Application.isPlaying) Destroy(target);
+            else DestroyImmediate(target);
         }
     }
 }

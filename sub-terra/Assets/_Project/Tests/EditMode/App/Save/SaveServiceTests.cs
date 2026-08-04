@@ -468,9 +468,7 @@ namespace SubTerra.App.Tests.Save
                 };
             }
 
-            public void RestoreSnapshot(WorldSnapshotDto snapshot)
-            {
-            }
+            public bool RestoreSnapshot(WorldSnapshotDto snapshot) => true;
         }
 
         public enum FaultStage

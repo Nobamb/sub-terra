@@ -396,7 +396,7 @@ namespace SubTerra.App.Tests.UI.MainMenu
         private sealed class EmptyWorld : IWorldSnapshotProvider
         {
             public WorldSnapshotDto CaptureSnapshot() => new WorldSnapshotDto();
-            public void RestoreSnapshot(WorldSnapshotDto snapshot) { }
+            public bool RestoreSnapshot(WorldSnapshotDto snapshot) => true;
         }
 
         private sealed class FixedClock : ISaveClock
