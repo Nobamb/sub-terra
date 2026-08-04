@@ -78,6 +78,38 @@ namespace SubTerra.App.Tests.Drone
         }
 
         [Test]
+        public void K_F02_UrgentDialogue_BypassesAndRenewsRegularChannelCooldown()
+        {
+            var clock = new ManualClock();
+            var generator = new TemplateDialogueGenerator(
+                new[]
+                {
+                    CreateTemplate(DataIds.Dialogue.DroneExplore, "탐사 {depth}"),
+                    CreateTemplate(
+                        DataIds.Dialogue.DroneStructuralWarning,
+                        "붕괴 {structuralIntegrity}")
+                },
+                clock,
+                settings);
+            var context = SafeContext();
+
+            Assert.That(generator.Generate(analysis.Analyze(context)).Text, Is.EqualTo("탐사 10"));
+
+            clock.NowValue = 1d;
+            context.structuralIntegrity = 0.1f;
+            var urgent = generator.Generate(analysis.Analyze(context));
+            Assert.That(urgent.IsSuppressed, Is.False);
+            Assert.That(urgent.IsUrgent, Is.True);
+            Assert.That(urgent.Text, Is.EqualTo("붕괴 0.1"));
+
+            context.structuralIntegrity = 1f;
+            clock.NowValue = 10.9d;
+            Assert.That(generator.Generate(analysis.Analyze(context)).IsSuppressed, Is.True);
+            clock.NowValue = 11d;
+            Assert.That(generator.Generate(analysis.Analyze(context)).Text, Is.EqualTo("탐사 10"));
+        }
+
+        [Test]
         public void MissingTemplateToken_ReturnsTruthNeutralFallback()
         {
             var template = CreateTemplate(
@@ -112,6 +144,8 @@ namespace SubTerra.App.Tests.Drone
                 structuralIntegrity = 1f,
                 gasRisk = 0f,
                 unsettledCargoValue = 0,
+                cargoWeight = 0f,
+                maxCargoWeight = 50f,
                 nearestBaseDistance = 20f,
                 nearbyMineralIds = new List<string>(),
                 returnPathAvailable = true

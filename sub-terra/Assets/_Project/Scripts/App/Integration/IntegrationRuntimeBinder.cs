@@ -54,6 +54,7 @@ namespace SubTerra.App.Integration
         private bool contractsWired;
         private bool uiActivated;
         private bool inventorySpeedBound;
+        private bool droneReadingsBound;
 
         public IntegrationContractRegistry Contracts => contracts;
         public IntegrationActivationGate ActivationGate => activationGate;
@@ -130,6 +131,7 @@ namespace SubTerra.App.Integration
             }
 
             BindCargoSpeed();
+            BindDroneReadings();
 
             // IResourceWallet: A BuildingPlacementSystem → B EconomyService
             if (buildingPlacementSystem != null && runtime.Economy != null)
@@ -376,11 +378,65 @@ namespace SubTerra.App.Integration
             }
 
             inventorySpeedBound = false;
+            if (droneReadingsBound && bootstrap?.State != null)
+            {
+                bootstrap.State.EnergyChanged -= OnEnergyChangedForDrone;
+            }
+
+            if (droneReadingsBound && runtime?.InventoryService != null)
+            {
+                runtime.InventoryService.InventoryChanged -= OnInventoryChangedForDrone;
+            }
+
+            droneReadingsBound = false;
             if (gasEffectController != null)
             {
                 gasEffectController.FailureInputRaised -= OnGasFailureInputRaised;
                 gasEffectController.EffectStateChanged -= OnGasEffectStateChanged;
             }
+        }
+
+        private void BindDroneReadings()
+        {
+            if (droneReadingsBound
+                || droneSensor == null
+                || bootstrap?.State == null
+                || runtime?.InventoryService == null)
+            {
+                return;
+            }
+
+            bootstrap.State.EnergyChanged += OnEnergyChangedForDrone;
+            runtime.InventoryService.InventoryChanged += OnInventoryChangedForDrone;
+            droneReadingsBound = true;
+            SyncDroneReadings(runtime.InventoryService.GetSnapshot());
+        }
+
+        private void OnEnergyChangedForDrone(EnergyReadModel _)
+        {
+            if (runtime?.InventoryService != null)
+            {
+                SyncDroneReadings(runtime.InventoryService.GetSnapshot());
+            }
+        }
+
+        private void OnInventoryChangedForDrone(InventorySnapshot snapshot)
+        {
+            SyncDroneReadings(snapshot);
+        }
+
+        private void SyncDroneReadings(InventorySnapshot snapshot)
+        {
+            if (droneSensor == null || bootstrap?.State == null || snapshot == null)
+            {
+                return;
+            }
+
+            droneSensor.SetAppStateReadings(
+                bootstrap.State.Player.Energy,
+                Mathf.RoundToInt(snapshot.UnsettledValue),
+                snapshot.CurrentWeight,
+                snapshot.MaxCapacity);
         }
 
         public void Publish(GameplayEventDto gameplayEvent)

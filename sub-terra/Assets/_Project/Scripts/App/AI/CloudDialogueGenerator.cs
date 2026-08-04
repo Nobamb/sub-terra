@@ -76,7 +76,8 @@ namespace SubTerra.App.AI
                             analysis.Dialogue.TemplateId,
                             dialogue,
                             false,
-                            false),
+                            false,
+                            analysis.Dialogue.IsUrgent),
                         true);
                 }
                 catch (OperationCanceledException)
@@ -89,7 +90,8 @@ namespace SubTerra.App.AI
                                 analysis.Dialogue.TemplateId,
                                 string.Empty,
                                 true,
-                                false),
+                                false,
+                                analysis.Dialogue.IsUrgent),
                             false,
                             true);
                     }

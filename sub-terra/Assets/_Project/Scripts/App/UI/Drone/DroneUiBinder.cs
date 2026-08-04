@@ -13,6 +13,7 @@ namespace SubTerra.App.UI.Drone
     public sealed class DroneUiBinder : MonoBehaviour
     {
         [SerializeField] private DroneDialoguePanelView dialogueView;
+        [SerializeField] private DroneDialogueSocket worldDialogueSocket;
         [SerializeField] private DroneReasonPanelView reasonView;
         [SerializeField] private MonoBehaviour contextProviderBehaviour;
         [SerializeField] private GameDataCatalog catalog;
@@ -25,6 +26,8 @@ namespace SubTerra.App.UI.Drone
 
         public DroneRecommendationPresenter Presenter => presenter;
         public bool IsBound => presenter != null && presenter.IsBound;
+        public bool HasWorldDialogueSocket => worldDialogueSocket != null
+            && worldDialogueSocket.HasRequiredReferences();
 
         private void Awake()
         {
@@ -144,7 +147,10 @@ namespace SubTerra.App.UI.Drone
 
             if (presenter == null)
             {
-                presenter = new DroneRecommendationPresenter(dialogueView, reasonView);
+                presenter = new DroneRecommendationPresenter(
+                    dialogueView,
+                    worldDialogueSocket,
+                    reasonView);
             }
         }
     }
