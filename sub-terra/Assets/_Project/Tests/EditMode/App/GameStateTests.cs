@@ -17,6 +17,8 @@ namespace SubTerra.App.Tests
             Assert.That(state.Player.UnsettledValue, Is.Zero);
             Assert.That(state.Run.IsSafe, Is.True);
             Assert.That(state.Run.Depth, Is.Zero);
+            Assert.That(state.Run.MaximumDepth, Is.Zero);
+            Assert.That(state.Run.LifecyclePhase, Is.EqualTo(RunLifecyclePhase.Ready));
             Assert.That(state.Run.StructuralRisk, Is.EqualTo(StructuralRiskLevel.Safe));
             Assert.That(state.Run.GasExposure, Is.EqualTo(GasRiskLevel.Safe));
             Assert.That(state.Progress.CompletedObjectives, Is.Zero);

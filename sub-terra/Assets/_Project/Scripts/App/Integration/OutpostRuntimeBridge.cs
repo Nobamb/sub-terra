@@ -1,4 +1,5 @@
 using SubTerra.App.Outpost;
+using SubTerra.App.Save;
 using SubTerra.Shared;
 using UnityEngine;
 
@@ -27,6 +28,7 @@ namespace SubTerra.App.Integration
             if (gameplayEvent.type == GameplayEventType.OutpostStatusChanged)
             {
                 service.ApplyRuntimeStatus(gameplayEvent.outpostStatus);
+                SaveRuntimeController.Instance?.ReportOutpostStatus(gameplayEvent.outpostStatus);
                 return;
             }
 
@@ -51,6 +53,7 @@ namespace SubTerra.App.Integration
         {
             // Scene 종료나 Runtime 제거 시 열린 패널이 이전 상태를 유지하지 않게 한다.
             service?.ClearRuntimeStatus();
+            SaveRuntimeController.Instance?.ReportOutpostStatus(null);
         }
     }
 }

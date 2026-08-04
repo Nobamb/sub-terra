@@ -73,6 +73,10 @@ namespace SubTerra.App.Tests.Save
             Assert.That(loaded.State.GameState.Progress.CompletedObjectives, Is.EqualTo(3));
             Assert.That(loaded.State.GameState.Progress.HasSeenOutpostTutorial, Is.True);
             Assert.That(loaded.State.GameState.Run.Depth, Is.EqualTo(40));
+            Assert.That(loaded.State.GameState.Run.MaximumDepth, Is.EqualTo(64));
+            Assert.That(
+                loaded.State.GameState.Run.LifecyclePhase,
+                Is.EqualTo(RunLifecyclePhase.Active));
             Assert.That(
                 loaded.State.GameState.Run.StructuralRisk,
                 Is.EqualTo(StructuralRiskLevel.Caution));
@@ -312,9 +316,11 @@ namespace SubTerra.App.Tests.Save
                 new ProgressState(3, true),
                 new RunState(
                     40,
+                    64,
                     false,
                     StructuralRiskLevel.Caution,
-                    GasRiskLevel.Elevated),
+                    GasRiskLevel.Elevated,
+                    RunLifecyclePhase.Active),
                 outpost);
 
             var catalog = new InMemoryMineralCatalog();

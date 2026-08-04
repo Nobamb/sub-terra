@@ -55,6 +55,8 @@ namespace SubTerra.App.Save
         private ContinueResult lastContinueResult;
         private readonly ExplorationStartGuard explorationGuard = new ExplorationStartGuard();
         private ElevatorTravelSession elevatorTravel;
+        private RunLifecycleService runLifecycle;
+        private OutpostStatusDto latestOutpostStatus;
         private string pendingInitialScene = SceneNames.SurfaceBase;
 
         public const int MineElevatorEnergyCost = 5;
@@ -75,6 +77,8 @@ namespace SubTerra.App.Save
         public ExplorationStartGuard ExplorationGuard => explorationGuard;
         public ElevatorTravelState ElevatorState =>
             elevatorTravel?.State ?? ElevatorTravelState.Idle;
+        public RunLifecyclePhase RunPhase => runLifecycle?.Phase ?? RunLifecyclePhase.Ready;
+        public RunReturnTarget LastReturnTarget { get; private set; }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStatics()
@@ -209,21 +213,64 @@ namespace SubTerra.App.Save
         /// </summary>
         public bool TryStartExploration(out string reason)
         {
-            return TryElevatorTravel(
+            if (!TryElevatorTravel(
                 SceneNames.Integration,
                 MineElevatorEnergyCost,
-                resetRunOnArrival: true,
-                out reason);
+                AutoSaveReason.Manual,
+                out reason))
+            {
+                return false;
+            }
+
+            if (runLifecycle == null)
+            {
+                reason = "Run 수명주기 서비스가 준비되지 않았습니다.";
+                return false;
+            }
+
+            return runLifecycle.TryBeginExploration(out reason);
         }
 
         /// <summary>Mine 정거장에서 Surface Base로 비상 귀환한다. 귀환에는 전력을 차감하지 않는다.</summary>
         public bool TryReturnToSurface(out string reason)
         {
-            return TryElevatorTravel(
+            if (runLifecycle == null)
+            {
+                reason = "Run 수명주기 서비스가 준비되지 않았습니다.";
+                return false;
+            }
+
+            if (!runLifecycle.TryPrepareNormalReturn(
+                    latestOutpostStatus,
+                    out var returnTarget,
+                    out reason))
+            {
+                return false;
+            }
+
+            if (!TryElevatorTravel(
                 SceneNames.SurfaceBase,
                 0,
-                resetRunOnArrival: false,
-                out reason);
+                AutoSaveReason.SurfaceReturn,
+                out reason))
+            {
+                runLifecycle.AbortPendingReturn();
+                return false;
+            }
+
+            if (!runLifecycle.CompleteNormalReturn(out reason))
+            {
+                runLifecycle.AbortPendingReturn();
+                return false;
+            }
+
+            LastReturnTarget = returnTarget;
+            return true;
+        }
+
+        public void ReportOutpostStatus(OutpostStatusDto status)
+        {
+            latestOutpostStatus = status;
         }
 
         /// <summary>Surface Base UI가 판매·제작·업그레이드 서비스를 쓸 수 있게 보장한다.</summary>
@@ -428,6 +475,9 @@ namespace SubTerra.App.Save
             inventory = restoredInventory;
             upgrades = restoredUpgrades;
             elevatorTravel = new ElevatorTravelSession(state);
+            runLifecycle = new RunLifecycleService(state);
+            latestOutpostStatus = null;
+            LastReturnTarget = default;
             dialogueGenerator = CreateDialogueGenerator();
             if (restoredDrone != null
                 && !DroneSaveRestorer.TryRestore(restoredDrone, dialogueGenerator))
@@ -499,7 +549,7 @@ namespace SubTerra.App.Save
         private bool TryElevatorTravel(
             string destinationScene,
             int energyCost,
-            bool resetRunOnArrival,
+            AutoSaveReason arrivalSaveReason,
             out string reason)
         {
             reason = string.Empty;
@@ -526,24 +576,17 @@ namespace SubTerra.App.Save
                 return false;
             }
 
-            if (resetRunOnArrival)
-            {
-                boundState.SetDepth(0);
-                boundState.SetStructuralRisk(StructuralRiskLevel.Safe);
-                boundState.SetGasExposure(GasRiskLevel.Safe);
-            }
-
             // 목적지 Scene 시스템의 Start가 끝난 다음 프레임에 저장해 생성 seed와 위치를 함께 잡는다.
-            StartCoroutine(SaveAfterElevatorArrival());
+            StartCoroutine(SaveAfterElevatorArrival(arrivalSaveReason));
             return true;
         }
 
-        private IEnumerator SaveAfterElevatorArrival()
+        private IEnumerator SaveAfterElevatorArrival(AutoSaveReason reason)
         {
             yield return null;
             if (activeSlot > 0)
             {
-                SaveCurrent(AutoSaveReason.Manual);
+                NotifyAutoSave(reason);
             }
         }
 

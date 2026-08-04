@@ -19,6 +19,15 @@ namespace SubTerra.App.State
         Hazard = 2
     }
 
+    /// <summary>Run의 명시적 진행 단계. 장면 전환 중에는 Returning으로 잠가 중복 귀환을 막는다.</summary>
+    public enum RunLifecyclePhase
+    {
+        Ready = 0,
+        Active = 1,
+        Returning = 2,
+        Completed = 3
+    }
+
     /// <summary>전력 현재/최대 읽기 모델. HUD 이벤트 payload.</summary>
     public readonly struct EnergyReadModel
     {
@@ -166,9 +175,11 @@ namespace SubTerra.App.State
     public sealed class RunState
     {
         public int Depth { get; private set; }
+        public int MaximumDepth { get; private set; }
         public bool IsSafe { get; private set; }
         public StructuralRiskLevel StructuralRisk { get; private set; }
         public GasRiskLevel GasExposure { get; private set; }
+        public RunLifecyclePhase LifecyclePhase { get; private set; }
 
         private RunState() { }
 
@@ -178,16 +189,48 @@ namespace SubTerra.App.State
         }
 
         public RunState(int depth, bool safe, StructuralRiskLevel structuralRisk, GasRiskLevel gasExposure)
+            : this(depth, depth, safe, structuralRisk, gasExposure, RunLifecyclePhase.Ready)
         {
-            Depth = depth;
+        }
+
+        public RunState(
+            int depth,
+            int maximumDepth,
+            bool safe,
+            StructuralRiskLevel structuralRisk,
+            GasRiskLevel gasExposure,
+            RunLifecyclePhase lifecyclePhase)
+        {
+            Depth = depth < 0 ? 0 : depth;
+            MaximumDepth = maximumDepth < Depth ? Depth : maximumDepth;
             IsSafe = safe;
             StructuralRisk = structuralRisk;
             GasExposure = gasExposure;
+            LifecyclePhase = lifecyclePhase;
         }
 
         internal void ApplyDepth(int depth)
         {
             Depth = depth < 0 ? 0 : depth;
+            if (Depth > MaximumDepth)
+            {
+                MaximumDepth = Depth;
+            }
+        }
+
+        internal void ResetForNewRun()
+        {
+            Depth = 0;
+            MaximumDepth = 0;
+            IsSafe = true;
+            StructuralRisk = StructuralRiskLevel.Safe;
+            GasExposure = GasRiskLevel.Safe;
+            LifecyclePhase = RunLifecyclePhase.Active;
+        }
+
+        internal void ApplyLifecyclePhase(RunLifecyclePhase phase)
+        {
+            LifecyclePhase = phase;
         }
 
         internal void ApplyStructuralRisk(StructuralRiskLevel level)
@@ -398,6 +441,24 @@ namespace SubTerra.App.State
 
             Run.ApplyDepth(clamped);
             DepthChanged?.Invoke(Run.Depth);
+        }
+
+        /// <summary>새 탐사 Run을 시작하며 이전 Run의 깊이·위험 상태를 초기화한다.</summary>
+        public void BeginRun()
+        {
+            var wasAtZero = Run.Depth == 0;
+            Run.ResetForNewRun();
+            if (!wasAtZero)
+            {
+                DepthChanged?.Invoke(Run.Depth);
+            }
+            StructuralRiskChanged?.Invoke(Run.StructuralRisk);
+            GasExposureChanged?.Invoke(Run.GasExposure);
+        }
+
+        public void SetRunLifecyclePhase(RunLifecyclePhase phase)
+        {
+            Run.ApplyLifecyclePhase(phase);
         }
 
         /// <summary>구조 안정도 표시 등급 설정. 동일 값이면 이벤트 없음.</summary>

@@ -46,9 +46,11 @@ namespace SubTerra.App.Save
     public sealed class RunSaveData
     {
         public int depth;
+        public int maximumDepth;
         public bool isSafe;
         public int structuralRisk;
         public int gasExposure;
+        public int lifecyclePhase;
     }
 
     [Serializable]

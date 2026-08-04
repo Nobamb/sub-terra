@@ -34,8 +34,10 @@ namespace SubTerra.App.Save
                 || !IsFinite(data.player.progress)
                 || data.progress.completedObjectives < 0
                 || data.run.depth < 0
+                || data.run.maximumDepth < data.run.depth
                 || !Enum.IsDefined(typeof(StructuralRiskLevel), data.run.structuralRisk)
-                || !Enum.IsDefined(typeof(GasRiskLevel), data.run.gasExposure))
+                || !Enum.IsDefined(typeof(GasRiskLevel), data.run.gasExposure)
+                || !Enum.IsDefined(typeof(RunLifecyclePhase), data.run.lifecyclePhase))
             {
                 reason = "state-range";
                 return false;
@@ -77,6 +79,10 @@ namespace SubTerra.App.Save
             data.progress ??= new ProgressSaveData();
             data.progress.currentObjectiveId ??= string.Empty;
             data.run ??= new RunSaveData();
+            if (data.run.maximumDepth < data.run.depth)
+            {
+                data.run.maximumDepth = data.run.depth;
+            }
             data.inventory ??= new InventorySaveData();
             data.inventory.quantities ??= new List<QuantitySaveEntry>();
             data.upgrades ??= new UpgradeSaveData();

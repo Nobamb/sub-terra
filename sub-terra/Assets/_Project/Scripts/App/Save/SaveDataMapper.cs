@@ -63,9 +63,11 @@ namespace SubTerra.App.Save
                 run = new RunSaveData
                 {
                     depth = game.Run.Depth,
+                    maximumDepth = game.Run.MaximumDepth,
                     isSafe = game.Run.IsSafe,
                     structuralRisk = (int)game.Run.StructuralRisk,
-                    gasExposure = (int)game.Run.GasExposure
+                    gasExposure = (int)game.Run.GasExposure,
+                    lifecyclePhase = (int)game.Run.LifecyclePhase
                 },
                 inventory = CaptureInventory(context.Inventory),
                 upgrades = CaptureUpgrades(context.Upgrades),
@@ -99,9 +101,11 @@ namespace SubTerra.App.Save
                 data.progress.isDemoComplete);
             var run = new RunState(
                 data.run.depth,
+                data.run.maximumDepth,
                 data.run.isSafe,
                 (StructuralRiskLevel)data.run.structuralRisk,
-                (GasRiskLevel)data.run.gasExposure);
+                (GasRiskLevel)data.run.gasExposure,
+                (RunLifecyclePhase)data.run.lifecyclePhase);
             var outpost = RestoreOutpost(data.outpost);
             var game = GameState.FromParts(player, progress, run, outpost);
             var inventory = RestoreInventory(data.inventory);
