@@ -1,3 +1,3 @@
 Starting EditMode tests...
-Finished. Total tests: 288, Passed: 288, Failed: 0, Skipped: 0, Inconclusive: 0
-Finished. Total tests: 288, Passed: 288, Failed: 0, Skipped: 0, Inconclusive: 0
+Finished. Total tests: 320, Passed: 320, Failed: 0, Skipped: 0, Inconclusive: 0
+Finished. Total tests: 320, Passed: 320, Failed: 0, Skipped: 0, Inconclusive: 0
