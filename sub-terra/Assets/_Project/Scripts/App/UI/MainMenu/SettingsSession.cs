@@ -4,6 +4,7 @@ namespace SubTerra.App.UI.MainMenu
     public sealed class SettingsValues
     {
         public float MasterVolume { get; set; }
+        public bool ReduceMotion { get; set; }
         public int ResolutionWidth { get; set; }
         public int ResolutionHeight { get; set; }
 
@@ -12,6 +13,7 @@ namespace SubTerra.App.UI.MainMenu
             return new SettingsValues
             {
                 MasterVolume = 1f,
+                ReduceMotion = false,
                 ResolutionWidth = 1920,
                 ResolutionHeight = 1080
             };
@@ -22,6 +24,7 @@ namespace SubTerra.App.UI.MainMenu
             return new SettingsValues
             {
                 MasterVolume = MasterVolume,
+                ReduceMotion = ReduceMotion,
                 ResolutionWidth = ResolutionWidth,
                 ResolutionHeight = ResolutionHeight
             };
@@ -35,6 +38,7 @@ namespace SubTerra.App.UI.MainMenu
             }
 
             MasterVolume = other.MasterVolume;
+            ReduceMotion = other.ReduceMotion;
             ResolutionWidth = other.ResolutionWidth;
             ResolutionHeight = other.ResolutionHeight;
         }

@@ -9,6 +9,7 @@ using SubTerra.App.Save;
 using SubTerra.App.State;
 using SubTerra.App.UI.MainMenu;
 using SubTerra.App.UI.SurfaceBase;
+using SubTerra.App.UI;
 using SubTerra.Shared;
 using UnityEngine;
 
@@ -359,8 +360,10 @@ namespace SubTerra.App.Tests.UI.MainMenu
             var session = new SettingsSession();
             session.Open();
             session.Draft.MasterVolume = 0.25f;
+            session.Draft.ReduceMotion = true;
             session.Apply();
             Assert.That(session.Applied.MasterVolume, Is.EqualTo(0.25f));
+            Assert.That(session.Applied.ReduceMotion, Is.True);
 
             session.Open();
             session.Draft.MasterVolume = 0.9f;
@@ -371,6 +374,25 @@ namespace SubTerra.App.Tests.UI.MainMenu
             session.Open();
             session.ResetDefaults();
             Assert.That(session.Draft.MasterVolume, Is.EqualTo(1f));
+            Assert.That(session.Draft.ReduceMotion, Is.False);
+        }
+
+        [Test]
+        public void SafeAreaFitter_MapsPixelSafeAreaToNormalizedAnchors()
+        {
+            var host = new GameObject("SafeAreaTest", typeof(RectTransform));
+            created.Add(host);
+            var target = host.GetComponent<RectTransform>();
+
+            SafeAreaFitter.ApplySafeArea(
+                target,
+                new Rect(100f, 50f, 1800f, 900f),
+                new Vector2Int(2000, 1000));
+
+            Assert.That(target.anchorMin, Is.EqualTo(new Vector2(0.05f, 0.05f)));
+            Assert.That(target.anchorMax, Is.EqualTo(new Vector2(0.95f, 0.95f)));
+            Assert.That(target.offsetMin, Is.EqualTo(Vector2.zero));
+            Assert.That(target.offsetMax, Is.EqualTo(Vector2.zero));
         }
 
         [Test]

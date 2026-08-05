@@ -1,4 +1,5 @@
 using System;
+using SubTerra.Shared;
 using UnityEngine;
 
 namespace SubTerra.Gameplay.Structural
@@ -35,7 +36,7 @@ namespace SubTerra.Gameplay.Structural
                 audioSource.PlayOneShot(ResolveWarningTone());
             }
 
-            if (ShouldRequestCameraShake(risk, reduceMotion))
+            if (ShouldRequestCameraShake(risk, reduceMotion || AccessibilityPreferences.ReduceMotion))
                 CameraShakeRequested?.Invoke(risk);
         }
 

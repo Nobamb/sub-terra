@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using SubTerra.App.Core;
+using SubTerra.App.UI;
 using SubTerra.App.UI.Economy;
 using SubTerra.App.UI.MainMenu;
 using SubTerra.App.UI.Progression;
@@ -137,6 +138,14 @@ namespace SubTerra.App.Editor.DataValidation
             volumeSlider.value = 1f;
             var resLabel = CreateText(
                 settingsRoot.transform, "ResolutionLabel", new Vector2(0f, -10f), new Vector2(360f, 30f), 16f, "1920 x 1080");
+            var reduceMotionGo = new GameObject("ReduceMotion", typeof(RectTransform), typeof(Toggle));
+            reduceMotionGo.transform.SetParent(settingsRoot.transform, false);
+            var reduceMotionRect = reduceMotionGo.GetComponent<RectTransform>();
+            reduceMotionRect.anchorMin = reduceMotionRect.anchorMax = new Vector2(0.5f, 0.5f);
+            reduceMotionRect.anchoredPosition = new Vector2(0f, -45f);
+            reduceMotionRect.sizeDelta = new Vector2(360f, 28f);
+            var reduceMotionToggle = reduceMotionGo.GetComponent<Toggle>();
+            CreateText(reduceMotionGo.transform, "Label", Vector2.zero, new Vector2(360f, 28f), 16f, "Reduce motion");
             var apply = CreateButton(
                 settingsRoot.transform, "SettingsApply", new Vector2(-140f, -90f), new Vector2(120f, 40f), "적용", out _);
             var cancel = CreateButton(
@@ -161,6 +170,7 @@ namespace SubTerra.App.Editor.DataValidation
             so.FindProperty("overwriteCancelButton").objectReferenceValue = overwriteNo;
             so.FindProperty("settingsRoot").objectReferenceValue = settingsRoot;
             so.FindProperty("masterVolumeSlider").objectReferenceValue = volumeSlider;
+            so.FindProperty("reduceMotionToggle").objectReferenceValue = reduceMotionToggle;
             so.FindProperty("resolutionLabel").objectReferenceValue = resLabel;
             so.FindProperty("settingsApplyButton").objectReferenceValue = apply;
             so.FindProperty("settingsCancelButton").objectReferenceValue = cancel;
@@ -286,10 +296,11 @@ namespace SubTerra.App.Editor.DataValidation
             }
 
             var canvasRoot = CreateCanvas("MainMenuCanvas");
+            var safeAreaRoot = CreateSafeAreaRoot(canvasRoot.transform);
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(MainMenuPrefabPath);
             if (prefab != null)
             {
-                PrefabUtility.InstantiatePrefab(prefab, canvasRoot.transform);
+                PrefabUtility.InstantiatePrefab(prefab, safeAreaRoot.transform);
             }
 
             // Phase K 슬롯 패널은 비활성화하여 Phase L 메인 메뉴 패널과 중복 겹침을 방지한다.
@@ -297,7 +308,7 @@ namespace SubTerra.App.Editor.DataValidation
                 PhaseKSaveSlotPrefabBuilder.PrefabPath);
             if (slotPrefab != null)
             {
-                var slot = (GameObject)PrefabUtility.InstantiatePrefab(slotPrefab, canvasRoot.transform);
+                var slot = (GameObject)PrefabUtility.InstantiatePrefab(slotPrefab, safeAreaRoot.transform);
                 slot.SetActive(false);
             }
 
@@ -314,10 +325,11 @@ namespace SubTerra.App.Editor.DataValidation
             DestroyOwned("SurfaceBaseEventSystem");
 
             var canvasRoot = CreateCanvas("SurfaceBaseCanvas");
+            var safeAreaRoot = CreateSafeAreaRoot(canvasRoot.transform);
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(SurfaceBasePrefabPath);
             if (prefab != null)
             {
-                PrefabUtility.InstantiatePrefab(prefab, canvasRoot.transform);
+                PrefabUtility.InstantiatePrefab(prefab, safeAreaRoot.transform);
             }
 
             CreateEventSystem("SurfaceBaseEventSystem");
@@ -391,6 +403,22 @@ namespace SubTerra.App.Editor.DataValidation
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(1920f, 1080f);
             return canvasRoot;
+        }
+
+        private static GameObject CreateSafeAreaRoot(Transform canvasRoot)
+        {
+            var safeAreaRoot = new GameObject(
+                "SafeArea",
+                typeof(RectTransform),
+                typeof(SafeAreaFitter));
+            safeAreaRoot.transform.SetParent(canvasRoot, false);
+
+            var rect = safeAreaRoot.GetComponent<RectTransform>();
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
+            return safeAreaRoot;
         }
 
         private static void CreateEventSystem(string name)
