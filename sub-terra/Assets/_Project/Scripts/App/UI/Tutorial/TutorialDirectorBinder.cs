@@ -203,8 +203,8 @@ namespace SubTerra.App.UI.Tutorial
             director?.OnGameplayEvent(gameplayEvent);
         }
 
-#if DEVELOPMENT_BUILD || UNITY_EDITOR
-        /// <summary>Development 전용 강제 진행. Release 빌드에서는 컴파일되지 않는다.</summary>
+#if UNITY_EDITOR || SUBTERRA_BUILD_DEVELOPMENT
+        /// <summary>Development 전용 강제 진행. QA/Release 빌드에서는 컴파일되지 않는다.</summary>
         public void DebugForceAdvanceObjective()
         {
             director?.DebugForceAdvance();

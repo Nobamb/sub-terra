@@ -1,4 +1,5 @@
 using System;
+using SubTerra.App.RuntimeInfo;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -152,7 +153,7 @@ namespace SubTerra.App.UI.MainMenu
         {
             if (versionText != null)
             {
-                versionText.text = "v" + (version ?? string.Empty);
+                versionText.text = BuildVersionInfo.Format(version);
             }
         }
 

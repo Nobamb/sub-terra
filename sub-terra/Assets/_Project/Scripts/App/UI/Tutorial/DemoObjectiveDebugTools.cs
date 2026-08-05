@@ -9,7 +9,7 @@ namespace SubTerra.App.UI.Tutorial
     /// </summary>
     public sealed class DemoObjectiveDebugTools : MonoBehaviour
     {
-#if DEVELOPMENT_BUILD || UNITY_EDITOR
+#if UNITY_EDITOR || SUBTERRA_BUILD_DEVELOPMENT
         [SerializeField] private TutorialDirectorBinder tutorialBinder;
 
         private void Awake()

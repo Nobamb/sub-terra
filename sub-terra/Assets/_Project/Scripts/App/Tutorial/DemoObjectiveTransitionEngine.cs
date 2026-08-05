@@ -140,8 +140,8 @@ namespace SubTerra.App.Tutorial
                 string.Empty);
         }
 
-#if DEVELOPMENT_BUILD || UNITY_EDITOR
-        /// <summary>Development 전용 강제 1단계 전진. Release 경로에서는 컴파일되지 않는다.</summary>
+#if UNITY_EDITOR || SUBTERRA_BUILD_DEVELOPMENT
+        /// <summary>Development 전용 강제 1단계 전진. QA/Release 경로에서는 컴파일되지 않는다.</summary>
         public DemoTransitionResult DebugForceAdvance()
         {
             if (isDemoComplete)
