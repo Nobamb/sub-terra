@@ -183,6 +183,8 @@ namespace SubTerra.App.Integration
                 droneContextAdapter.BindTo(droneSensor);
             }
 
+            droneSensor?.SetUpgradeEffects(runtime.Progression?.Effects);
+
             eventFanOut = new IntegrationEventFanOut();
             if (hazardBridge != null)
             {

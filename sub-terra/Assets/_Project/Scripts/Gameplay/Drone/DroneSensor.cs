@@ -31,8 +31,10 @@ namespace SubTerra.Gameplay.Drone
         private float cargoWeight;
         private bool returnPathAvailable = true;
         private GasRiskLevel? appliedGasRisk;
+        private IUpgradeEffectProvider upgradeEffects;
 
         public DroneContextDto CurrentContext { get; private set; }
+        public int EffectiveMineralScanRadius => ResolveMineralScanRadius();
         public event Action<DroneContextDto> ContextUpdated;
 
         private void Update()
@@ -43,6 +45,8 @@ namespace SubTerra.Gameplay.Drone
         }
 
         public void SetPlayerTransform(Transform target) => playerTransform = target;
+
+        public void SetUpgradeEffects(IUpgradeEffectProvider effects) => upgradeEffects = effects;
 
         /// <summary>효과 적용 계층이 확정한 저항·대피소 반영 위험도를 Drone Context와 공유한다.</summary>
         public void SetAppliedGasRisk(GasRiskLevel risk)
@@ -107,14 +111,27 @@ namespace SubTerra.Gameplay.Drone
             var mineralIds = new HashSet<string>();
             if (foregroundTilemap == null || tileResolver == null) return new List<string>();
             Vector3Int center = foregroundTilemap.WorldToCell(playerPosition);
-            for (int x = center.x - mineralScanRadius; x <= center.x + mineralScanRadius; x++)
-            for (int y = center.y - mineralScanRadius; y <= center.y + mineralScanRadius; y++)
+            var radius = ResolveMineralScanRadius();
+            for (int x = center.x - radius; x <= center.x + radius; x++)
+            for (int y = center.y - radius; y <= center.y + radius; y++)
             {
                 TileBase tile = foregroundTilemap.GetTile(new Vector3Int(x, y, center.z));
                 if (tile == null || !tileResolver.TryResolve(tile, out MiningTileDto definition) || string.IsNullOrWhiteSpace(definition.mineralId)) continue;
                 mineralIds.Add(definition.mineralId);
             }
             return new List<string>(mineralIds);
+        }
+
+        private int ResolveMineralScanRadius()
+        {
+            var baseRadius = Mathf.Max(1, mineralScanRadius);
+            var effectiveRadius = upgradeEffects?.GetDroneScanRadius(baseRadius) ?? baseRadius;
+            if (float.IsNaN(effectiveRadius) || float.IsInfinity(effectiveRadius))
+            {
+                return baseRadius;
+            }
+
+            return Mathf.Max(1, Mathf.CeilToInt(effectiveRadius));
         }
 
         private static float ToIntegrityValue(StructuralRiskLevel risk)

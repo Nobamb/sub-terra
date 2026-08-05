@@ -5,12 +5,36 @@ using SubTerra.App.State;
 
 namespace SubTerra.App.UI.SurfaceBase
 {
+    /// <summary>J가 확정해 저장한 Run 결과를 Surface가 읽기 전용으로 소비하는 모델.</summary>
+    public readonly struct SurfaceRunResultReadModel
+    {
+        public bool HasCompletedReturn { get; }
+        public int MaximumDepth { get; }
+        public float CargoWeight { get; }
+        public float UnsettledValue { get; }
+        public bool IsSafe { get; }
+        public string StructuralRisk { get; }
+        public string GasExposure { get; }
+
+        public SurfaceRunResultReadModel(bool hasCompletedReturn, int maximumDepth, float cargoWeight, float unsettledValue, bool isSafe, string structuralRisk, string gasExposure)
+        {
+            HasCompletedReturn = hasCompletedReturn;
+            MaximumDepth = Math.Max(0, maximumDepth);
+            CargoWeight = Math.Max(0f, cargoWeight);
+            UnsettledValue = Math.Max(0f, unsettledValue);
+            IsSafe = isSafe;
+            StructuralRisk = structuralRisk ?? string.Empty;
+            GasExposure = gasExposure ?? string.Empty;
+        }
+    }
+
     public interface ISurfaceBaseView
     {
         void SetGoals(int completedObjectives, string summary);
         void SetEnergy(int current, int max, int explorationCost);
         void SetDeepZoneLock(bool unlocked, string reason);
         void SetRecentRun(int depth, bool isSafe, string structural, string gas);
+        void SetReturnResult(SurfaceRunResultReadModel result);
         void SetExplorationBusy(bool busy);
         void SetMessage(string message);
     }
@@ -93,10 +117,11 @@ namespace SubTerra.App.UI.SurfaceBase
 
             view.SetDeepZoneLock(access.IsUnlocked, access.Reason);
             view.SetRecentRun(
-                state.Run.Depth,
+                state.Run.MaximumDepth,
                 state.Run.IsSafe,
                 state.Run.StructuralRisk.ToString(),
                 state.Run.GasExposure.ToString());
+            view.SetReturnResult(CreateReturnResult(state));
         }
 
         private void OnEnergyChanged(EnergyReadModel energy)
@@ -107,6 +132,24 @@ namespace SubTerra.App.UI.SurfaceBase
         private void RenderEnergy(EnergyReadModel energy)
         {
             view.SetEnergy(energy.Current, energy.Max, explorationEnergyCost);
+        }
+
+        private static SurfaceRunResultReadModel CreateReturnResult(GameState gameState)
+        {
+            if (gameState?.Run == null || gameState.Run.LifecyclePhase != RunLifecyclePhase.Completed)
+            {
+                return default;
+            }
+
+            var inventory = gameState.GetInventory();
+            return new SurfaceRunResultReadModel(
+                true,
+                gameState.Run.MaximumDepth,
+                inventory.CargoWeight,
+                inventory.UnsettledValue,
+                gameState.Run.IsSafe,
+                gameState.Run.StructuralRisk.ToString(),
+                gameState.Run.GasExposure.ToString());
         }
 
         /// <summary>

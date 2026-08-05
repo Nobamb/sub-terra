@@ -316,6 +316,27 @@ namespace SubTerra.App.Tests.UI.MainMenu
         }
 
         [Test]
+        public void SurfaceBasePresenter_ConsumesCompletedRunResult_WithoutChangingRunLifecycle()
+        {
+            var view = new RecordingSurfaceView();
+            var presenter = new SurfaceBasePresenter(view);
+            var state = GameState.CreateNew();
+            state.BeginRun();
+            state.SetDepth(27);
+            state.SetInventory(12.5f, 340f);
+            state.SetRunLifecyclePhase(RunLifecyclePhase.Completed);
+
+            presenter.Bind(state, null);
+
+            Assert.That(view.ReturnResult.HasCompletedReturn, Is.True);
+            Assert.That(view.ReturnResult.MaximumDepth, Is.EqualTo(27));
+            Assert.That(view.ReturnResult.CargoWeight, Is.EqualTo(12.5f));
+            Assert.That(view.ReturnResult.UnsettledValue, Is.EqualTo(340f));
+            Assert.That(state.Run.LifecyclePhase, Is.EqualTo(RunLifecyclePhase.Completed));
+            presenter.Dispose();
+        }
+
+        [Test]
         public void RequestQuit_Source_HasEditorAndPlayerPaths()
         {
             var runtimePath = Path.Combine(
@@ -428,6 +449,7 @@ namespace SubTerra.App.Tests.UI.MainMenu
             public int EnergyCurrent;
             public int EnergyMax;
             public int EnergyCost;
+            public SurfaceRunResultReadModel ReturnResult;
 
             public void SetGoals(int completedObjectives, string summary) => Goals = summary;
             public void SetEnergy(int current, int max, int explorationCost)
@@ -438,6 +460,7 @@ namespace SubTerra.App.Tests.UI.MainMenu
             }
             public void SetDeepZoneLock(bool unlocked, string reason) => DeepReason = reason;
             public void SetRecentRun(int depth, bool isSafe, string structural, string gas) { }
+            public void SetReturnResult(SurfaceRunResultReadModel result) => ReturnResult = result;
             public void SetExplorationBusy(bool busy) => Busy = busy;
             public void SetMessage(string message) => Message = message;
         }
