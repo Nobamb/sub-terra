@@ -6,6 +6,18 @@ using System.IO;
 [InitializeOnLoad]
 public static class PrintTestFailuresOnLoad
 {
+    private static string FailureLogPath
+    {
+        get
+        {
+            var projectRoot = Directory.GetParent(Application.dataPath)?.FullName
+                ?? Application.dataPath;
+            var resultDirectory = Path.Combine(projectRoot, "Library", "TestResults");
+            Directory.CreateDirectory(resultDirectory);
+            return Path.Combine(resultDirectory, "TestFailures.txt");
+        }
+    }
+
     static PrintTestFailuresOnLoad()
     {
         if (SessionState.GetBool("TestsRun2", false)) return;
@@ -22,14 +34,14 @@ public static class PrintTestFailuresOnLoad
     
     private class Callbacks : ICallbacks
     {
-        public void RunStarted(ITestAdaptor testsToRun) { File.WriteAllText("c:/Users/USER/Desktop/develop/sub-terra/sub-terra/TestFailures.txt", "Running...\n"); }
-        public void RunFinished(ITestResultAdaptor result) { File.AppendAllText("c:/Users/USER/Desktop/develop/sub-terra/sub-terra/TestFailures.txt", "Done."); }
+        public void RunStarted(ITestAdaptor testsToRun) { File.WriteAllText(FailureLogPath, "Running...\n"); }
+        public void RunFinished(ITestResultAdaptor result) { File.AppendAllText(FailureLogPath, "Done."); }
         public void TestStarted(ITestAdaptor test) {}
         public void TestFinished(ITestResultAdaptor result) 
         {
             if (result.TestStatus == TestStatus.Failed)
             {
-                File.AppendAllText("c:/Users/USER/Desktop/develop/sub-terra/sub-terra/TestFailures.txt", "FAIL: " + result.FullName + "\nMSG: " + result.Message + "\n\n");
+                File.AppendAllText(FailureLogPath, "FAIL: " + result.FullName + "\nMSG: " + result.Message + "\n\n");
             }
         }
     }
