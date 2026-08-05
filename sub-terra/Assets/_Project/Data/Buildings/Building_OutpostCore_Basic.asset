@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: "\uC804\uC9C4\uAE30\uC9C0 \uCF54\uC5B4"
   description: "\uC5F0\uACB0\uB41C \uC2DC\uC124\uC5D0 \uC804\uB825\uC744 \uACF5\uAE09\uD558\uACE0
     \uD0D0\uC0AC \uAC70\uC810\uC744 \uD615\uC131\uD569\uB2C8\uB2E4."
-  runtimePrefab: {fileID: 5310527296871149544, guid: f78e346ee8ac03c4e9a60a46a532574a, type: 3}
+  runtimePrefab: {fileID: 3766932780806278260, guid: d9f8a92858c77d94f808199827a493f8, type: 3}
   icon: {fileID: 6838030193426678921, guid: 42527be5cf11e3c42871944ebbfd1fd6, type: 2}
   powerDraw: 5
   buildCosts:

@@ -1,4 +1,5 @@
 using System;
+using SubTerra.App.RuntimeInfo;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -27,6 +28,7 @@ namespace SubTerra.App.UI.MainMenu
         [Header("Settings")]
         [SerializeField] private GameObject settingsRoot;
         [SerializeField] private Slider masterVolumeSlider;
+        [SerializeField] private Toggle reduceMotionToggle;
         [SerializeField] private TMP_Text resolutionLabel;
         [SerializeField] private Button settingsApplyButton;
         [SerializeField] private Button settingsCancelButton;
@@ -135,6 +137,10 @@ namespace SubTerra.App.UI.MainMenu
             {
                 masterVolumeSlider.SetValueWithoutNotify(values.MasterVolume);
             }
+            if (reduceMotionToggle != null)
+            {
+                reduceMotionToggle.SetIsOnWithoutNotify(values.ReduceMotion);
+            }
 
             if (resolutionLabel != null)
             {
@@ -147,7 +153,7 @@ namespace SubTerra.App.UI.MainMenu
         {
             if (versionText != null)
             {
-                versionText.text = "v" + (version ?? string.Empty);
+                versionText.text = BuildVersionInfo.Format(version);
             }
         }
 
@@ -170,6 +176,10 @@ namespace SubTerra.App.UI.MainMenu
             if (masterVolumeSlider != null)
             {
                 result.MasterVolume = masterVolumeSlider.value;
+            }
+            if (reduceMotionToggle != null)
+            {
+                result.ReduceMotion = reduceMotionToggle.isOn;
             }
 
             return result;

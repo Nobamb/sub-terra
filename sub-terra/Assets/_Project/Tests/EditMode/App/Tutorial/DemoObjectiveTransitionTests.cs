@@ -304,7 +304,7 @@ namespace SubTerra.App.Tests.Tutorial
                 "Tutorial",
                 "DemoObjectiveDebugTools.cs");
             var source = File.ReadAllText(path);
-            Assert.That(source, Does.Contain("#if DEVELOPMENT_BUILD || UNITY_EDITOR"));
+            Assert.That(source, Does.Contain("#if UNITY_EDITOR || SUBTERRA_BUILD_DEVELOPMENT"));
             Assert.That(source, Does.Contain("DebugForceAdvanceObjective"));
 
             var enginePath = Path.Combine(
@@ -315,7 +315,7 @@ namespace SubTerra.App.Tests.Tutorial
                 "Tutorial",
                 "DemoObjectiveTransitionEngine.cs");
             var engineSource = File.ReadAllText(enginePath);
-            Assert.That(engineSource, Does.Contain("#if DEVELOPMENT_BUILD || UNITY_EDITOR"));
+            Assert.That(engineSource, Does.Contain("#if UNITY_EDITOR || SUBTERRA_BUILD_DEVELOPMENT"));
             Assert.That(engineSource, Does.Contain("DebugForceAdvance"));
         }
 

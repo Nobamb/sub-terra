@@ -3,6 +3,7 @@ using System.Linq;
 using NUnit.Framework;
 using SubTerra.App.Core;
 using SubTerra.App.Editor.DataValidation;
+using SubTerra.App.UI;
 using SubTerra.App.UI.MainMenu;
 using SubTerra.App.UI.SurfaceBase;
 using TMPro;
@@ -50,6 +51,7 @@ namespace SubTerra.App.Tests.UI.MainMenu
             try
             {
                 Assert.That(FindInScene<MainMenuBinder>(scene), Is.Not.Null);
+                Assert.That(FindInScene<SafeAreaFitter>(scene), Is.Not.Null);
                 Assert.That(FindInScene<EventSystem>(scene), Is.Not.Null);
                 var eventSystems = 0;
                 foreach (var root in scene.GetRootGameObjects())
@@ -83,6 +85,7 @@ namespace SubTerra.App.Tests.UI.MainMenu
             try
             {
                 Assert.That(FindInScene<SurfaceBaseBinder>(scene), Is.Not.Null);
+                Assert.That(FindInScene<SafeAreaFitter>(scene), Is.Not.Null);
                 Assert.That(FindInScene<EventSystem>(scene), Is.Not.Null);
             }
             finally

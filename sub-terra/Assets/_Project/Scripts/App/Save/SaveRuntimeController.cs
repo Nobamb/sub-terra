@@ -119,7 +119,7 @@ namespace SubTerra.App.Save
                     null);
             }
 
-#if DEVELOPMENT_BUILD || UNITY_EDITOR
+#if UNITY_EDITOR || SUBTERRA_BUILD_DEVELOPMENT || SUBTERRA_BUILD_QA
             yield return RunDevelopmentSmokeCommand();
 #endif
         }
@@ -834,7 +834,7 @@ namespace SubTerra.App.Save
 
         private static string ResolveSaveRoot()
         {
-#if DEVELOPMENT_BUILD || UNITY_EDITOR
+#if UNITY_EDITOR || SUBTERRA_BUILD_DEVELOPMENT || SUBTERRA_BUILD_QA
             var args = Environment.GetCommandLineArgs();
             for (var i = 0; i < args.Length - 1; i++)
             {
@@ -848,7 +848,7 @@ namespace SubTerra.App.Save
             return Application.persistentDataPath;
         }
 
-#if DEVELOPMENT_BUILD || UNITY_EDITOR
+#if UNITY_EDITOR || SUBTERRA_BUILD_DEVELOPMENT || SUBTERRA_BUILD_QA
         private IEnumerator RunDevelopmentSmokeCommand()
         {
             var command = GetCommandLineValue("-subterra-save-smoke");

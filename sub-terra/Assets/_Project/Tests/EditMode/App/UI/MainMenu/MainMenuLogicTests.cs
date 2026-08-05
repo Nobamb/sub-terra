@@ -9,6 +9,7 @@ using SubTerra.App.Save;
 using SubTerra.App.State;
 using SubTerra.App.UI.MainMenu;
 using SubTerra.App.UI.SurfaceBase;
+using SubTerra.App.UI;
 using SubTerra.Shared;
 using UnityEngine;
 
@@ -316,6 +317,27 @@ namespace SubTerra.App.Tests.UI.MainMenu
         }
 
         [Test]
+        public void SurfaceBasePresenter_ConsumesCompletedRunResult_WithoutChangingRunLifecycle()
+        {
+            var view = new RecordingSurfaceView();
+            var presenter = new SurfaceBasePresenter(view);
+            var state = GameState.CreateNew();
+            state.BeginRun();
+            state.SetDepth(27);
+            state.SetInventory(12.5f, 340f);
+            state.SetRunLifecyclePhase(RunLifecyclePhase.Completed);
+
+            presenter.Bind(state, null);
+
+            Assert.That(view.ReturnResult.HasCompletedReturn, Is.True);
+            Assert.That(view.ReturnResult.MaximumDepth, Is.EqualTo(27));
+            Assert.That(view.ReturnResult.CargoWeight, Is.EqualTo(12.5f));
+            Assert.That(view.ReturnResult.UnsettledValue, Is.EqualTo(340f));
+            Assert.That(state.Run.LifecyclePhase, Is.EqualTo(RunLifecyclePhase.Completed));
+            presenter.Dispose();
+        }
+
+        [Test]
         public void RequestQuit_Source_HasEditorAndPlayerPaths()
         {
             var runtimePath = Path.Combine(
@@ -338,8 +360,10 @@ namespace SubTerra.App.Tests.UI.MainMenu
             var session = new SettingsSession();
             session.Open();
             session.Draft.MasterVolume = 0.25f;
+            session.Draft.ReduceMotion = true;
             session.Apply();
             Assert.That(session.Applied.MasterVolume, Is.EqualTo(0.25f));
+            Assert.That(session.Applied.ReduceMotion, Is.True);
 
             session.Open();
             session.Draft.MasterVolume = 0.9f;
@@ -350,6 +374,25 @@ namespace SubTerra.App.Tests.UI.MainMenu
             session.Open();
             session.ResetDefaults();
             Assert.That(session.Draft.MasterVolume, Is.EqualTo(1f));
+            Assert.That(session.Draft.ReduceMotion, Is.False);
+        }
+
+        [Test]
+        public void SafeAreaFitter_MapsPixelSafeAreaToNormalizedAnchors()
+        {
+            var host = new GameObject("SafeAreaTest", typeof(RectTransform));
+            created.Add(host);
+            var target = host.GetComponent<RectTransform>();
+
+            SafeAreaFitter.ApplySafeArea(
+                target,
+                new Rect(100f, 50f, 1800f, 900f),
+                new Vector2Int(2000, 1000));
+
+            Assert.That(target.anchorMin, Is.EqualTo(new Vector2(0.05f, 0.05f)));
+            Assert.That(target.anchorMax, Is.EqualTo(new Vector2(0.95f, 0.95f)));
+            Assert.That(target.offsetMin, Is.EqualTo(Vector2.zero));
+            Assert.That(target.offsetMax, Is.EqualTo(Vector2.zero));
         }
 
         [Test]
@@ -428,6 +471,7 @@ namespace SubTerra.App.Tests.UI.MainMenu
             public int EnergyCurrent;
             public int EnergyMax;
             public int EnergyCost;
+            public SurfaceRunResultReadModel ReturnResult;
 
             public void SetGoals(int completedObjectives, string summary) => Goals = summary;
             public void SetEnergy(int current, int max, int explorationCost)
@@ -438,6 +482,7 @@ namespace SubTerra.App.Tests.UI.MainMenu
             }
             public void SetDeepZoneLock(bool unlocked, string reason) => DeepReason = reason;
             public void SetRecentRun(int depth, bool isSafe, string structural, string gas) { }
+            public void SetReturnResult(SurfaceRunResultReadModel result) => ReturnResult = result;
             public void SetExplorationBusy(bool busy) => Busy = busy;
             public void SetMessage(string message) => Message = message;
         }

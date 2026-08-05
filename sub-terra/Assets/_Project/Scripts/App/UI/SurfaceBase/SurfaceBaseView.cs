@@ -77,6 +77,21 @@ namespace SubTerra.App.UI.SurfaceBase
             }
         }
 
+        public void SetReturnResult(SurfaceRunResultReadModel result)
+        {
+            if (recentRunText == null || !result.HasCompletedReturn)
+            {
+                return;
+            }
+
+            recentRunText.text = "귀환 결과 · 최고 깊이 " + result.MaximumDepth
+                + " / 화물 " + result.CargoWeight.ToString("0.##")
+                + " / 판매 예상 " + result.UnsettledValue.ToString("0.##")
+                + " / " + (result.IsSafe ? "안전" : "위험")
+                + " / 구조 " + result.StructuralRisk
+                + " / 가스 " + result.GasExposure;
+        }
+
         public void SetExplorationBusy(bool busy)
         {
             if (exploreButton != null)

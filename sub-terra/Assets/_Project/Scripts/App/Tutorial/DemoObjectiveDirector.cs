@@ -278,7 +278,7 @@ namespace SubTerra.App.Tutorial
             HandleSignal(DemoProgressSignal.ReturnRecommendationPresented);
         }
 
-#if DEVELOPMENT_BUILD || UNITY_EDITOR
+#if UNITY_EDITOR || SUBTERRA_BUILD_DEVELOPMENT
         public DemoTransitionResult DebugForceAdvance()
         {
             var result = engine.DebugForceAdvance();

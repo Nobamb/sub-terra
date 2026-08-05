@@ -1,4 +1,5 @@
 using SubTerra.App.Save;
+using SubTerra.Shared;
 using UnityEngine;
 
 namespace SubTerra.App.UI.MainMenu
@@ -163,6 +164,7 @@ namespace SubTerra.App.UI.MainMenu
             }
 
             AudioListener.volume = Mathf.Clamp01(values.MasterVolume);
+            AccessibilityPreferences.ReduceMotion = values.ReduceMotion;
             // 해상도는 플레이어 빌드에서만 적용. Editor는 미리보기만.
             if (!Application.isEditor
                 && values.ResolutionWidth > 0
