@@ -1,11 +1,15 @@
 using System;
+using SubTerra.App.UI.MainMenu;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace SubTerra.App.UI.SurfaceBase
 {
-    /// <summary>Surface Base 표시. 경제 수치는 Economy/Progression 패널이 담당한다.</summary>
+    /// <summary>
+    /// Surface Base 표시. 경제 수치는 Economy/Progression 패널이 담당한다.
+    /// prompt-B 31-1: 새로고침 대신 설정·종료 버튼을 제공한다.
+    /// </summary>
     public sealed class SurfaceBaseView : MonoBehaviour, ISurfaceBaseView
     {
         [SerializeField] private TMP_Text goalsText;
@@ -14,21 +18,52 @@ namespace SubTerra.App.UI.SurfaceBase
         [SerializeField] private TMP_Text recentRunText;
         [SerializeField] private TMP_Text messageText;
         [SerializeField] private Button exploreButton;
+        [SerializeField] private Button settingsButton;
+        [SerializeField] private Button quitButton;
+
+        [Header("Settings")]
+        [SerializeField] private GameObject settingsRoot;
+        [SerializeField] private Slider masterVolumeSlider;
+        [SerializeField] private Toggle reduceMotionToggle;
+        [SerializeField] private TMP_Text resolutionLabel;
+        [SerializeField] private Button settingsApplyButton;
+        [SerializeField] private Button settingsCancelButton;
+        [SerializeField] private Button settingsDefaultsButton;
+
+        // 구 버전 Prefab 호환(비활성 유지). 더 이상 사용하지 않는다.
         [SerializeField] private Button refreshButton;
 
         public event Action ExploreClicked;
-        public event Action RefreshClicked;
+        public event Action SettingsClicked;
+        public event Action QuitClicked;
+        public event Action SettingsApplyClicked;
+        public event Action SettingsCancelClicked;
+        public event Action SettingsDefaultsClicked;
 
         private void OnEnable()
         {
             exploreButton?.onClick.AddListener(OnExplore);
-            refreshButton?.onClick.AddListener(OnRefresh);
+            settingsButton?.onClick.AddListener(OnSettings);
+            quitButton?.onClick.AddListener(OnQuit);
+            settingsApplyButton?.onClick.AddListener(OnSettingsApply);
+            settingsCancelButton?.onClick.AddListener(OnSettingsCancel);
+            settingsDefaultsButton?.onClick.AddListener(OnSettingsDefaults);
+
+            // 남아 있는 새로고침 버튼은 숨긴다.
+            if (refreshButton != null)
+            {
+                refreshButton.gameObject.SetActive(false);
+            }
         }
 
         private void OnDisable()
         {
             exploreButton?.onClick.RemoveListener(OnExplore);
-            refreshButton?.onClick.RemoveListener(OnRefresh);
+            settingsButton?.onClick.RemoveListener(OnSettings);
+            quitButton?.onClick.RemoveListener(OnQuit);
+            settingsApplyButton?.onClick.RemoveListener(OnSettingsApply);
+            settingsCancelButton?.onClick.RemoveListener(OnSettingsCancel);
+            settingsDefaultsButton?.onClick.RemoveListener(OnSettingsDefaults);
         }
 
         public void SetGoals(int completedObjectives, string summary)
@@ -108,6 +143,54 @@ namespace SubTerra.App.UI.SurfaceBase
             }
         }
 
+        public void SetSettingsVisible(bool visible)
+        {
+            if (settingsRoot != null)
+            {
+                settingsRoot.SetActive(visible);
+            }
+        }
+
+        public void SetSettingsDraft(SettingsValues values)
+        {
+            if (values == null)
+            {
+                return;
+            }
+
+            if (masterVolumeSlider != null)
+            {
+                masterVolumeSlider.SetValueWithoutNotify(values.MasterVolume);
+            }
+
+            if (reduceMotionToggle != null)
+            {
+                reduceMotionToggle.SetIsOnWithoutNotify(values.ReduceMotion);
+            }
+
+            if (resolutionLabel != null)
+            {
+                resolutionLabel.text =
+                    values.ResolutionWidth + " x " + values.ResolutionHeight;
+            }
+        }
+
+        public SettingsValues ReadSettingsDraft(SettingsValues fallback)
+        {
+            var result = fallback != null ? fallback.Clone() : SettingsValues.CreateDefaults();
+            if (masterVolumeSlider != null)
+            {
+                result.MasterVolume = masterVolumeSlider.value;
+            }
+
+            if (reduceMotionToggle != null)
+            {
+                result.ReduceMotion = reduceMotionToggle.isOn;
+            }
+
+            return result;
+        }
+
         public bool HasRequiredReferences()
         {
             return goalsText != null
@@ -115,10 +198,16 @@ namespace SubTerra.App.UI.SurfaceBase
                 && deepZoneText != null
                 && recentRunText != null
                 && messageText != null
-                && exploreButton != null;
+                && exploreButton != null
+                && settingsButton != null
+                && quitButton != null;
         }
 
         private void OnExplore() => ExploreClicked?.Invoke();
-        private void OnRefresh() => RefreshClicked?.Invoke();
+        private void OnSettings() => SettingsClicked?.Invoke();
+        private void OnQuit() => QuitClicked?.Invoke();
+        private void OnSettingsApply() => SettingsApplyClicked?.Invoke();
+        private void OnSettingsCancel() => SettingsCancelClicked?.Invoke();
+        private void OnSettingsDefaults() => SettingsDefaultsClicked?.Invoke();
     }
 }

@@ -22,8 +22,8 @@ namespace SubTerra.App.Tests.UI
         public void BuildLayout()
         {
             HudPanelChromeLayoutBuilder.Build();
-            // prompt-B 31 가이드/최하단 digger 배치까지 이어서 적용.
-            GameGuidePanelBuilder.Build();
+            // prompt-B 31 / 31-1 가이드·좌측 건설·Surface 설정 등 적용.
+            PromptB31_1LayoutBuilder.Build();
         }
 
         [Test]

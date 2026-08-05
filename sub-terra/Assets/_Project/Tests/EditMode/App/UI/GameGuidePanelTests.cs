@@ -22,7 +22,7 @@ namespace SubTerra.App.Tests.UI
         [OneTimeSetUp]
         public void BuildLayout()
         {
-            GameGuidePanelBuilder.Build();
+            PromptB31_1LayoutBuilder.Build();
         }
 
         [Test]
@@ -89,9 +89,18 @@ namespace SubTerra.App.Tests.UI
             Assert.That(guide, Is.Not.Null);
             Assert.That(guide.gameObject.activeSelf, Is.False);
 
+            var guideRect = guide as RectTransform;
+            Assert.That(guideRect, Is.Not.Null);
+            // 전체 화면 70% (여백 15%).
+            Assert.That(guideRect.anchorMin.x, Is.EqualTo(0.15f).Within(0.001f));
+            Assert.That(guideRect.anchorMax.x, Is.EqualTo(0.85f).Within(0.001f));
+            Assert.That(guideRect.anchorMin.y, Is.EqualTo(0.15f).Within(0.001f));
+            Assert.That(guideRect.anchorMax.y, Is.EqualTo(0.85f).Within(0.001f));
+
             var guideView = guide.GetComponent<GameGuidePanelView>();
             Assert.That(guideView, Is.Not.Null);
             Assert.That(guideView.HasRequiredReferences(), Is.True);
+            Assert.That(guideView.CloseButton, Is.Not.Null);
 
             var openGuide = canvas.transform.Find("OpenGameGuideButton");
             Assert.That(openGuide, Is.Not.Null);
@@ -102,6 +111,37 @@ namespace SubTerra.App.Tests.UI
             Assert.That(chrome, Is.Not.Null);
             Assert.That(chrome.HasRequiredReferences(), Is.True);
             Assert.That(chrome.IsGameGuideOpen, Is.False);
+
+            // 미표시 버그 회귀: 닫힌 root에서 Open 시 root가 켜져야 한다.
+            chrome.OpenGameGuide();
+            Assert.That(chrome.IsGameGuideOpen, Is.True);
+            Assert.That(guide.gameObject.activeSelf, Is.True);
+            chrome.CloseGameGuide();
+            Assert.That(guide.gameObject.activeSelf, Is.False);
+        }
+
+        [Test]
+        public void IntegrationScene_BuildingMenu_IsBelowQuestOnLeft()
+        {
+            var scene = OpenIntegration();
+            var building = FindRect(scene, "BuildingMenu");
+            var title = FindRect(scene, "ObjectiveTitle");
+            Assert.That(building, Is.Not.Null);
+            Assert.That(title, Is.Not.Null);
+
+            Assert.That(building.anchorMin.x, Is.EqualTo(0f).Within(0.01f));
+            Assert.That(building.pivot.x, Is.EqualTo(0f).Within(0.01f));
+            Assert.That(building.sizeDelta.x, Is.EqualTo(440f).Within(1f));
+            // 퀘스트보다 아래 (y가 더 작음).
+            Assert.That(building.anchoredPosition.y, Is.LessThan(title.anchoredPosition.y - 100f));
+
+            var cancel = building.GetComponentsInChildren<Transform>(true)
+                .FirstOrDefault(t => t.name == "CancelButton");
+            Assert.That(cancel, Is.Null);
+
+            var controlsBody = GameGuidePanelView.GetTabBody(GameGuidePanelView.GuideTab.Controls);
+            Assert.That(controlsBody, Does.Not.Contain("F 키"));
+            Assert.That(controlsBody, Does.Contain("E 키"));
         }
 
         [Test]

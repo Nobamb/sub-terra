@@ -217,8 +217,48 @@ namespace SubTerra.App.Editor.DataValidation
             var message = CreateText(content.transform, "MessageText", new Vector2(0f, 105f), new Vector2(800f, 46f), 19f, string.Empty);
             var explore = CreateButton(
                 content.transform, "ExploreButton", new Vector2(0f, 35f), new Vector2(360f, 73f), "지하 탐사 시작 · 전력 5", out _, 21f);
-            var refresh = CreateButton(
-                content.transform, "RefreshButton", new Vector2(0f, -45f), new Vector2(234f, 57f), "새로고침", out _, 20f);
+            // prompt-B 31-1: 새로고침 제거 → Main Menu와 동일한 설정·종료.
+            var settingsButton = CreateButton(
+                content.transform, "SettingsButton", new Vector2(-130f, -45f), new Vector2(220f, 57f), "설정", out _, 20f);
+            var quitButton = CreateButton(
+                content.transform, "QuitButton", new Vector2(130f, -45f), new Vector2(220f, 57f), "종료", out _, 20f);
+
+            var settingsRoot = new GameObject("SettingsPanel", typeof(RectTransform), typeof(Image));
+            settingsRoot.transform.SetParent(root.transform, false);
+            var settingsRect = settingsRoot.GetComponent<RectTransform>();
+            settingsRect.anchorMin = settingsRect.anchorMax = new Vector2(0.5f, 0.5f);
+            settingsRect.pivot = new Vector2(0.5f, 0.5f);
+            settingsRect.anchoredPosition = Vector2.zero;
+            settingsRect.sizeDelta = new Vector2(520f, 280f);
+            settingsRoot.GetComponent<Image>().color = new Color(0.05f, 0.08f, 0.12f, 0.98f);
+            settingsRoot.SetActive(false);
+            CreateText(settingsRoot.transform, "SettingsTitle", new Vector2(0f, 100f), new Vector2(400f, 40f), 22f, "설정");
+            var volumeGo = new GameObject("MasterVolume", typeof(RectTransform), typeof(Slider));
+            volumeGo.transform.SetParent(settingsRoot.transform, false);
+            var volumeRect = volumeGo.GetComponent<RectTransform>();
+            volumeRect.anchorMin = volumeRect.anchorMax = new Vector2(0.5f, 0.5f);
+            volumeRect.anchoredPosition = new Vector2(0f, 30f);
+            volumeRect.sizeDelta = new Vector2(360f, 24f);
+            var volumeSlider = volumeGo.GetComponent<Slider>();
+            volumeSlider.minValue = 0f;
+            volumeSlider.maxValue = 1f;
+            volumeSlider.value = 1f;
+            var resLabel = CreateText(
+                settingsRoot.transform, "ResolutionLabel", new Vector2(0f, -10f), new Vector2(360f, 30f), 16f, "1920 x 1080");
+            var reduceMotionGo = new GameObject("ReduceMotion", typeof(RectTransform), typeof(Toggle));
+            reduceMotionGo.transform.SetParent(settingsRoot.transform, false);
+            var reduceMotionRect = reduceMotionGo.GetComponent<RectTransform>();
+            reduceMotionRect.anchorMin = reduceMotionRect.anchorMax = new Vector2(0.5f, 0.5f);
+            reduceMotionRect.anchoredPosition = new Vector2(0f, -45f);
+            reduceMotionRect.sizeDelta = new Vector2(360f, 28f);
+            var reduceMotionToggle = reduceMotionGo.GetComponent<Toggle>();
+            CreateText(reduceMotionGo.transform, "Label", Vector2.zero, new Vector2(360f, 28f), 16f, "Reduce motion");
+            var settingsApply = CreateButton(
+                settingsRoot.transform, "SettingsApply", new Vector2(-140f, -90f), new Vector2(120f, 40f), "적용", out _);
+            var settingsCancel = CreateButton(
+                settingsRoot.transform, "SettingsCancel", new Vector2(0f, -90f), new Vector2(120f, 40f), "취소", out _);
+            var settingsDefaults = CreateButton(
+                settingsRoot.transform, "SettingsDefaults", new Vector2(140f, -90f), new Vector2(120f, 40f), "기본값", out _);
 
             // 기존 Economy/Progression View 컴포넌트를 같은 패널에 부착해 Service 재사용 경로를 유지한다.
             var economyGo = new GameObject("EconomyPanel", typeof(RectTransform));
@@ -264,7 +304,15 @@ namespace SubTerra.App.Editor.DataValidation
             viewSo.FindProperty("recentRunText").objectReferenceValue = recent;
             viewSo.FindProperty("messageText").objectReferenceValue = message;
             viewSo.FindProperty("exploreButton").objectReferenceValue = explore;
-            viewSo.FindProperty("refreshButton").objectReferenceValue = refresh;
+            viewSo.FindProperty("settingsButton").objectReferenceValue = settingsButton;
+            viewSo.FindProperty("quitButton").objectReferenceValue = quitButton;
+            viewSo.FindProperty("settingsRoot").objectReferenceValue = settingsRoot;
+            viewSo.FindProperty("masterVolumeSlider").objectReferenceValue = volumeSlider;
+            viewSo.FindProperty("reduceMotionToggle").objectReferenceValue = reduceMotionToggle;
+            viewSo.FindProperty("resolutionLabel").objectReferenceValue = resLabel;
+            viewSo.FindProperty("settingsApplyButton").objectReferenceValue = settingsApply;
+            viewSo.FindProperty("settingsCancelButton").objectReferenceValue = settingsCancel;
+            viewSo.FindProperty("settingsDefaultsButton").objectReferenceValue = settingsDefaults;
             viewSo.ApplyModifiedPropertiesWithoutUndo();
 
             var binder = root.AddComponent<SurfaceBaseBinder>();

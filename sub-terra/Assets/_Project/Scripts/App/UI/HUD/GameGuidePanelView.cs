@@ -57,7 +57,24 @@ namespace SubTerra.App.UI.HUD
 
         public void SetVisible(bool visible)
         {
-            (panelRoot != null ? panelRoot : gameObject).SetActive(visible);
+            // root가 비활성이면 자식 PanelRoot만 켜도 화면에 안 나온다.
+            // 열 때 root를 켜고 맨 앞으로, 닫을 때 root 전체를 끈다.
+            if (visible)
+            {
+                gameObject.SetActive(true);
+                transform.SetAsLastSibling();
+            }
+
+            if (panelRoot != null)
+            {
+                panelRoot.SetActive(visible);
+            }
+
+            if (!visible)
+            {
+                gameObject.SetActive(false);
+            }
+
             if (visible)
             {
                 ApplyTab(activeTab, force: true);
@@ -255,7 +272,7 @@ namespace SubTerra.App.UI.HUD
             + "캐릭터 이동 및 수직 이동\n"
             + "· 좌우 이동: A / D 키 또는 ← / → (방향키)\n"
             + "· 사다리 이동 / 수직 탐사: 사다리 위치에서 W / S 키 또는 ↑ / ↓ (방향키)\n"
-            + "· 엘리베이터 & 시설 상호작용: E 키 또는 F 키 (지상-지하 이동 및 기지 코어 사용)\n\n"
+            + "· 엘리베이터 & 시설 상호작용: E 키 (지상-지하 이동 및 기지 코어 사용)\n\n"
             + "지형 채굴 (Mining)\n"
             + "· 근접 타일 채굴: 채굴하고자 하는 블록(암반/광물)을 마우스 Left Click(왼쪽 클릭) 또는 Enter 키\n"
             + "· 팁: 캐릭터 근처의 이웃한 타일만 채굴 가능하며, 업그레이드에 따라 채굴 속도가 빨라집니다.\n\n"

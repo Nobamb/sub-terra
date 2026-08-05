@@ -243,11 +243,16 @@ namespace SubTerra.App.UI.HUD
 
             if (gameGuideView != null)
             {
+                // View가 root 활성/비활성과 최전면 정렬까지 처리한다.
                 gameGuideView.SetVisible(visible);
             }
             else if (gameGuideRoot != null)
             {
                 gameGuideRoot.SetActive(visible);
+                if (visible)
+                {
+                    gameGuideRoot.transform.SetAsLastSibling();
+                }
             }
 
             // 가이드 열기 버튼은 항상 우측에서 접근 가능하게 유지한다.

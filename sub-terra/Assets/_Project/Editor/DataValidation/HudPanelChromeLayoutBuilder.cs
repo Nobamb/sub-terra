@@ -184,17 +184,8 @@ namespace SubTerra.App.Editor.DataValidation
             var buildingMenu = FindInSceneTransform(scene, "BuildingMenu");
             if (buildingMenu != null)
             {
-                EnsureBuildingCloseButton(buildingMenu.gameObject);
-                // 우측 중앙 배치 유지.
-                var rt = buildingMenu as RectTransform;
-                if (rt != null)
-                {
-                    rt.anchorMin = rt.anchorMax = new Vector2(1f, 0.5f);
-                    rt.pivot = new Vector2(1f, 0.5f);
-                    rt.anchoredPosition = new Vector2(-24f, 0f);
-                    rt.sizeDelta = new Vector2(620f, 560f);
-                    EditorUtility.SetDirty(rt);
-                }
+                // prompt-B 31-1: 좌측 퀘스트 하단 배치.
+                PromptB31_1LayoutBuilder.ApplyBuildingMenuLeftLayout(buildingMenu.gameObject);
             }
 
             var digger = FindInSceneTransform(scene, "DroneDialoguePanel");

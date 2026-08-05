@@ -218,6 +218,10 @@ namespace SubTerra.App.Tests.UI.MainMenu
                 "ProgressionPanel/UpgradeList",
                 "ProgressionPanel/ProgDeep"
             };
+            // prompt-B 31-1: 새로고침 제거, 설정·종료 추가.
+            Assert.That(content.Find("RefreshButton"), Is.Null);
+            Assert.That(content.Find("SettingsButton"), Is.Not.Null);
+            Assert.That(content.Find("QuitButton"), Is.Not.Null);
             foreach (var path in centeredPaths)
             {
                 var rect = content.Find(path) as RectTransform;

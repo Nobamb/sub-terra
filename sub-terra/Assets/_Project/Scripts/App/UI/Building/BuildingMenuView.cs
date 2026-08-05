@@ -27,6 +27,7 @@ namespace SubTerra.App.UI.Building
                 return;
             }
 
+            // 필요 전력은 우측 상세(selection)에 이미 표시하므로 목록에는 이름만.
             var builder = new StringBuilder();
             if (items != null)
             {
@@ -37,9 +38,7 @@ namespace SubTerra.App.UI.Building
                         builder.AppendLine();
                     }
 
-                    builder.Append(items[i].DisplayName)
-                        .Append("  전력 ")
-                        .Append(items[i].PowerDraw);
+                    builder.Append(items[i].DisplayName);
                 }
             }
 
@@ -159,12 +158,12 @@ namespace SubTerra.App.UI.Building
 
         public bool HasRequiredReferences()
         {
-            // closeButton은 레이아웃 빌더가 주입하는 선택 필드다.
+            // closeButton·cancelButton은 레이아웃 정책에 따라 선택 필드다.
+            // prompt-B 31-1: 건설 취소 버튼 제거.
             return buildingListText != null
                 && selectionText != null
                 && availabilityText != null
                 && statusText != null
-                && cancelButton != null
                 && panelRoot != null;
         }
     }
