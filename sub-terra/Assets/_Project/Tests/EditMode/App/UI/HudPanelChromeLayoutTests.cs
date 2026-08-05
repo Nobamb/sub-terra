@@ -22,6 +22,8 @@ namespace SubTerra.App.Tests.UI
         public void BuildLayout()
         {
             HudPanelChromeLayoutBuilder.Build();
+            // prompt-B 31 가이드/최하단 digger 배치까지 이어서 적용.
+            GameGuidePanelBuilder.Build();
         }
 
         [Test]
@@ -57,23 +59,29 @@ namespace SubTerra.App.Tests.UI
             var basic = FindRect(scene, "BasicHUD");
             var title = FindRect(scene, "ObjectiveTitle");
             var digger = FindRect(scene, "DroneDialoguePanel");
-            var legend = FindRect(scene, "TerrainLegendPanel");
+            var legend = FindTransform(scene, "TerrainLegendPanel");
             var building = FindRect(scene, "BuildingMenu");
             var reason = FindTransform(scene, "DroneReasonPanel");
+            var guide = FindTransform(scene, "GameGuidePanel");
 
             Assert.That(basic, Is.Not.Null);
             Assert.That(title, Is.Not.Null);
             Assert.That(digger, Is.Not.Null);
-            Assert.That(legend, Is.Not.Null);
             Assert.That(building, Is.Not.Null);
+            Assert.That(guide, Is.Not.Null);
 
             // 스테이터스 유지, 퀘스트는 그 아래.
             Assert.That(basic.anchoredPosition.y, Is.EqualTo(-16f).Within(0.5f));
             Assert.That(title.anchoredPosition.y, Is.LessThan(basic.anchoredPosition.y - basic.sizeDelta.y));
 
-            // 하단 범례 유지, Digger-Bot은 더 위.
-            Assert.That(legend.anchoredPosition.y, Is.EqualTo(24f).Within(0.5f));
-            Assert.That(digger.anchoredPosition.y, Is.GreaterThan(legend.anchoredPosition.y + legend.sizeDelta.y));
+            // prompt-B 31: Digger-Bot은 기존 범례 자리(최하단), 범례는 비활성.
+            Assert.That(digger.anchoredPosition.y, Is.EqualTo(24f).Within(0.5f));
+            if (legend != null)
+            {
+                Assert.That(legend.gameObject.activeSelf, Is.False);
+            }
+
+            Assert.That(guide.gameObject.activeSelf, Is.False);
 
             // 우측 단독 추천 창은 비활성.
             if (reason != null)
@@ -87,10 +95,13 @@ namespace SubTerra.App.Tests.UI
 
             var openBuilding = canvas.transform.Find("OpenBuildingMenuButton");
             var openDigger = canvas.transform.Find("OpenDiggerBotButton");
+            var openGuide = canvas.transform.Find("OpenGameGuideButton");
             Assert.That(openBuilding, Is.Not.Null);
             Assert.That(openDigger, Is.Not.Null);
+            Assert.That(openGuide, Is.Not.Null);
             Assert.That(openBuilding.GetComponent<Button>(), Is.Not.Null);
             Assert.That(openDigger.GetComponent<Button>(), Is.Not.Null);
+            Assert.That(openGuide.GetComponent<Button>(), Is.Not.Null);
         }
 
         [Test]
@@ -99,6 +110,7 @@ namespace SubTerra.App.Tests.UI
             var host = new GameObject("ChromeHost");
             var buildingRoot = new GameObject("BuildingRoot");
             var diggerRoot = new GameObject("DiggerRoot");
+            var guideRoot = new GameObject("GuideRoot");
             var openBuilding = new GameObject("OpenBuilding");
             openBuilding.AddComponent<RectTransform>();
             openBuilding.AddComponent<UnityEngine.UI.Image>();
@@ -107,6 +119,10 @@ namespace SubTerra.App.Tests.UI
             openDigger.AddComponent<RectTransform>();
             openDigger.AddComponent<UnityEngine.UI.Image>();
             openDigger.AddComponent<Button>();
+            var openGuide = new GameObject("OpenGuide");
+            openGuide.AddComponent<RectTransform>();
+            openGuide.AddComponent<UnityEngine.UI.Image>();
+            openGuide.AddComponent<Button>();
             try
             {
                 var chrome = host.AddComponent<HudPanelChromeController>();
@@ -117,8 +133,12 @@ namespace SubTerra.App.Tests.UI
                 so.FindProperty("diggerBotRoot").objectReferenceValue = diggerRoot;
                 so.FindProperty("diggerOpenButton").objectReferenceValue =
                     openDigger.GetComponent<Button>();
+                so.FindProperty("gameGuideRoot").objectReferenceValue = guideRoot;
+                so.FindProperty("gameGuideOpenButton").objectReferenceValue =
+                    openGuide.GetComponent<Button>();
                 so.FindProperty("buildingMenuOpen").boolValue = true;
                 so.FindProperty("diggerBotOpen").boolValue = true;
+                so.FindProperty("gameGuideOpen").boolValue = false;
                 so.ApplyModifiedPropertiesWithoutUndo();
 
                 // Awake 경로 재현.
@@ -143,14 +163,24 @@ namespace SubTerra.App.Tests.UI
                 Assert.That(chrome.IsDiggerBotOpen, Is.True);
                 Assert.That(diggerRoot.activeSelf, Is.True);
                 Assert.That(openDigger.activeSelf, Is.False);
+
+                chrome.OpenGameGuide();
+                Assert.That(chrome.IsGameGuideOpen, Is.True);
+                Assert.That(guideRoot.activeSelf, Is.True);
+
+                chrome.CloseGameGuide();
+                Assert.That(chrome.IsGameGuideOpen, Is.False);
+                Assert.That(guideRoot.activeSelf, Is.False);
             }
             finally
             {
                 Object.DestroyImmediate(host);
                 Object.DestroyImmediate(buildingRoot);
                 Object.DestroyImmediate(diggerRoot);
+                Object.DestroyImmediate(guideRoot);
                 Object.DestroyImmediate(openBuilding);
                 Object.DestroyImmediate(openDigger);
+                Object.DestroyImmediate(openGuide);
             }
         }
 

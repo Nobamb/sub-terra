@@ -6,7 +6,7 @@ using UnityEngine.UI;
 namespace SubTerra.App.UI.HUD
 {
     /// <summary>
-    /// 시설 건설·Digger-Bot 패널의 닫기/재오픈 토글만 담당한다.
+    /// 시설 건설·Digger-Bot·게임 가이드 패널의 닫기/재오픈 토글만 담당한다.
     /// 레이아웃 수치 자체는 에디터 빌더가 Prefab/Scene에 적용한다.
     /// </summary>
     public sealed class HudPanelChromeController : MonoBehaviour
@@ -22,17 +22,25 @@ namespace SubTerra.App.UI.HUD
         [SerializeField] private Button diggerCloseButton;
         [SerializeField] private Button diggerOpenButton;
 
+        [SerializeField] private GameGuidePanelView gameGuideView;
+        [SerializeField] private GameObject gameGuideRoot;
+        [SerializeField] private Button gameGuideCloseButton;
+        [SerializeField] private Button gameGuideOpenButton;
+
         [SerializeField] private bool buildingMenuOpen = true;
         [SerializeField] private bool diggerBotOpen = true;
+        [SerializeField] private bool gameGuideOpen;
 
         public bool IsBuildingMenuOpen => buildingMenuOpen;
         public bool IsDiggerBotOpen => diggerBotOpen;
+        public bool IsGameGuideOpen => gameGuideOpen;
 
         private void Awake()
         {
             WireButtons();
             ApplyBuildingMenuVisible(buildingMenuOpen, cancelSelection: false);
             ApplyDiggerBotVisible(diggerBotOpen);
+            ApplyGameGuideVisible(gameGuideOpen);
         }
 
         private void OnEnable()
@@ -86,12 +94,31 @@ namespace SubTerra.App.UI.HUD
             ApplyDiggerBotVisible(!diggerBotOpen);
         }
 
+        /// <summary>게임 가이드 패널을 닫는다.</summary>
+        public void CloseGameGuide()
+        {
+            ApplyGameGuideVisible(false);
+        }
+
+        /// <summary>우측 게임 가이드 버튼으로 가이드 패널을 연다.</summary>
+        public void OpenGameGuide()
+        {
+            ApplyGameGuideVisible(true);
+        }
+
+        public void ToggleGameGuide()
+        {
+            ApplyGameGuideVisible(!gameGuideOpen);
+        }
+
         public bool HasRequiredReferences()
         {
             return buildingMenuRoot != null
                 && buildingOpenButton != null
                 && diggerBotRoot != null
-                && diggerOpenButton != null;
+                && diggerOpenButton != null
+                && gameGuideRoot != null
+                && gameGuideOpenButton != null;
         }
 
         private void WireButtons()
@@ -119,6 +146,18 @@ namespace SubTerra.App.UI.HUD
                 diggerOpenButton.onClick.RemoveListener(OpenDiggerBot);
                 diggerOpenButton.onClick.AddListener(OpenDiggerBot);
             }
+
+            if (gameGuideCloseButton != null)
+            {
+                gameGuideCloseButton.onClick.RemoveListener(CloseGameGuide);
+                gameGuideCloseButton.onClick.AddListener(CloseGameGuide);
+            }
+
+            if (gameGuideOpenButton != null)
+            {
+                gameGuideOpenButton.onClick.RemoveListener(OpenGameGuide);
+                gameGuideOpenButton.onClick.AddListener(OpenGameGuide);
+            }
         }
 
         private void UnwireButtons()
@@ -141,6 +180,16 @@ namespace SubTerra.App.UI.HUD
             if (diggerOpenButton != null)
             {
                 diggerOpenButton.onClick.RemoveListener(OpenDiggerBot);
+            }
+
+            if (gameGuideCloseButton != null)
+            {
+                gameGuideCloseButton.onClick.RemoveListener(CloseGameGuide);
+            }
+
+            if (gameGuideOpenButton != null)
+            {
+                gameGuideOpenButton.onClick.RemoveListener(OpenGameGuide);
             }
         }
 
@@ -185,6 +234,26 @@ namespace SubTerra.App.UI.HUD
             if (diggerOpenButton != null)
             {
                 diggerOpenButton.gameObject.SetActive(!visible);
+            }
+        }
+
+        private void ApplyGameGuideVisible(bool visible)
+        {
+            gameGuideOpen = visible;
+
+            if (gameGuideView != null)
+            {
+                gameGuideView.SetVisible(visible);
+            }
+            else if (gameGuideRoot != null)
+            {
+                gameGuideRoot.SetActive(visible);
+            }
+
+            // 가이드 열기 버튼은 항상 우측에서 접근 가능하게 유지한다.
+            if (gameGuideOpenButton != null)
+            {
+                gameGuideOpenButton.gameObject.SetActive(true);
             }
         }
     }

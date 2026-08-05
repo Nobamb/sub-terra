@@ -37,11 +37,8 @@ namespace SubTerra.App.Editor.DataValidation
         private const float QuestGap = 12f;
         private const float QuestStartY = StatusTopY - StatusHeight - QuestGap;
 
-        // 하단 범례 위쪽에 Digger-Bot 통합 창을 둔다.
-        private const float LegendBottomY = 24f;
-        private const float LegendHeight = 72f;
-        private const float DiggerGap = 14f;
-        private const float DiggerBottomY = LegendBottomY + LegendHeight + DiggerGap;
+        // prompt-B 31: 자원 범례 자리에 Digger-Bot을 최하단 배치한다.
+        private const float DiggerBottomY = 24f;
         private const float DiggerWidth = 760f;
         private const float DiggerHeight = 220f;
 
@@ -175,7 +172,14 @@ namespace SubTerra.App.Editor.DataValidation
             }
 
             LayoutQuestBelowStatus(scene);
-            LayoutTerrainLegend(scene);
+
+            // prompt-B 31: 하단 자원 범례는 가이드로 대체 → 비활성.
+            var legend = FindInSceneTransform(scene, "TerrainLegendPanel");
+            if (legend != null)
+            {
+                legend.gameObject.SetActive(false);
+                EditorUtility.SetDirty(legend.gameObject);
+            }
 
             var buildingMenu = FindInSceneTransform(scene, "BuildingMenu");
             if (buildingMenu != null)
@@ -419,22 +423,6 @@ namespace SubTerra.App.Editor.DataValidation
             }
 
             EditorUtility.SetDirty(t);
-        }
-
-        private static void LayoutTerrainLegend(Scene scene)
-        {
-            var legend = FindInSceneTransform(scene, "TerrainLegendPanel") as RectTransform;
-            if (legend == null)
-            {
-                return;
-            }
-
-            // 하단 정보 창 위치 유지.
-            legend.anchorMin = legend.anchorMax = new Vector2(0.5f, 0f);
-            legend.pivot = new Vector2(0.5f, 0f);
-            legend.anchoredPosition = new Vector2(0f, LegendBottomY);
-            legend.sizeDelta = new Vector2(1280f, LegendHeight);
-            EditorUtility.SetDirty(legend);
         }
 
         private static void ApplyDiggerBotLayout(Transform diggerRoot)
