@@ -15,7 +15,10 @@ namespace SubTerra.App.UI.Building
         [SerializeField] private TMP_Text statusText;
         [SerializeField] private Image selectedIcon;
         [SerializeField] private Button cancelButton;
+        [SerializeField] private Button closeButton;
         [SerializeField] private GameObject panelRoot;
+
+        public Button CloseButton => closeButton;
 
         public void SetBuildingList(IReadOnlyList<BuildingMenuItemReadModel> items)
         {
@@ -156,6 +159,7 @@ namespace SubTerra.App.UI.Building
 
         public bool HasRequiredReferences()
         {
+            // closeButton은 레이아웃 빌더가 주입하는 선택 필드다.
             return buildingListText != null
                 && selectionText != null
                 && availabilityText != null

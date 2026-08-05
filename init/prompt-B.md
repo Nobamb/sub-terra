@@ -116,3 +116,7 @@ MVP-connect2의 월드 스냅샷 DTO와 IWorldSnapshotProvider merge를 완료�
 28. work_process/MVP2/MVP-B 폴더 내에서 work_process/MVP2/MVP-B/L/research.md, work_process/MVP2/MVP-B/L/test.md 파일을 읽고 2차 MVP L 단계의 작업을 수행해줘 L단계의 작업 내용은 Player health/행동 가능 상태와 실패 조건을 정의,붕괴·가스·전력 고갈을 같은 Run 실패 Orchestrator에 연결, 미정산 화물 30~50% 손실과 드론 구조 업그레이드 보호 효과를 결정론적으로 계산,체크포인트 또는 Surface Base로 안전하게 복귀하도록 하는거야 unity MCP도 같이 연결해놓은 상태니까 unity editor에서도 같이 작업을 해주도록 하고 작업 내용에 대해서는 init/rule.md의 내용 참고하면서 한국어 주석도 같이 작성해주면서 진행해주면 돼
 
 29. work_process/MVP2/MVP-B 폴더 내에서 work_process/MVP2/MVP-B/M/research.md, work_process/MVP2/MVP-B/M/test.md 파일을 읽고 2차 MVP M 단계의 작업을 수행해줘 M단계의 작업 내용은 기본 월드는 Seed와 generatorVersion으로 재생성 및 채굴/변경 타일, 건물, 가스, 붕괴, 발견 구역만 변경점으로 저장, Player/Inventory/Upgrade/Outpost/Run/Drone cooldown을 함께 복원, 복원 순서 후 파생 상태와 UI를 활성화하는거야 unity MCP도 같이 연결해놓은 상태니까 unity editor에서도 같이 작업을 해주도록 하고 작업 내용에 대해서는 init/rule.md의 내용 참고하면서 한국어 주석도 같이 작성해주면서 진행해주면 돼
+
+## MVP 2차까지 작업 후 추가 수정 방안
+
+30. 지금 게임 내에서 왼쪽 상단에는 스테이터스 창이랑 퀘스트창이 겹쳐있고, 하단에 여러 정보 표시 창과 digger-bot 창이 겹쳐있고, 오른쪽에는 시설 건설과 드론추천 창이 겹쳐있거든? 일단 거기서부터 각각 겹치지 않도록 수정해줘 일단 스테이터스 창은 현재 위치 그대로 두고, 퀘스트 창은 스테이터스의 바로 밑에 위치시켜줘 그리고 우측의 드론 추천 창은 제거해서 digger-bot창으로 통합시킬거야 그리고 하단에 있는 여러 정보를 표시하는 창의 위치는 유지하면서 digger-bot 창은 그보다 좀 더 위에 위치시켜줘 시설 건설은 닫을 수 있게 닫기 버튼을 추가해서 해당 닫기 버튼을 클릭하면 닫히되 나중에 시설 건설 창을 따로 띄울 수 있는 버튼을 우측에 만들어서 해당 버튼을 누르면 시설 건설창을 그 위치에 띄울 수 있도록 하고 digger-bot 창도 닫기 버튼을 만들어서 같이 닫을 수 있게 만들되, 드론 버튼을 누르면 digger-bot 버튼을 다시 띄울 수 있게 만들어줘 unity MCP도 같이 연결해놓은 상태니까 unity editor에서도 같이 작업을 해주도록 하고 작업 내용에 대해서는 init/rule.md의 내용 참고하면서 한국어 주석도 같이 작성해주면서 진행해주면 돼

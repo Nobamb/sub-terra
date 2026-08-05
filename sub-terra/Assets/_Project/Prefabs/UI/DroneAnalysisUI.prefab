@@ -52,7 +52,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: SubTerra.App::SubTerra.App.UI.Drone.DroneUiBinder
   dialogueView: {fileID: 7183682296032874027}
   worldDialogueSocket: {fileID: 0}
-  reasonView: {fileID: 8994192278805044288}
+  reasonView: {fileID: 0}
   contextProviderBehaviour: {fileID: 0}
   catalog: {fileID: 11400000, guid: 12d1b2c7b00e8754a9133b2481febe0d, type: 2}
   settings: {fileID: 11400000, guid: f183101d833856a4599968aaa3adf676, type: 2}
@@ -96,11 +96,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5929859283775694558, guid: c408073afc00a1c4fbbc08a86d04587e, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 720
+      value: 760
       objectReference: {fileID: 0}
     - target: {fileID: 5929859283775694558, guid: c408073afc00a1c4fbbc08a86d04587e, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 130
+      value: 220
       objectReference: {fileID: 0}
     - target: {fileID: 5929859283775694558, guid: c408073afc00a1c4fbbc08a86d04587e, type: 3}
       propertyPath: m_LocalPosition.x
@@ -136,7 +136,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5929859283775694558, guid: c408073afc00a1c4fbbc08a86d04587e, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 28
+      value: 110
       objectReference: {fileID: 0}
     - target: {fileID: 5929859283775694558, guid: c408073afc00a1c4fbbc08a86d04587e, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -182,6 +182,10 @@ PrefabInstance:
     - target: {fileID: 489860353542796435, guid: e8ab331fafefeb04caaad25dfc77b9df, type: 3}
       propertyPath: m_Name
       value: DroneReasonPanel
+      objectReference: {fileID: 0}
+    - target: {fileID: 489860353542796435, guid: e8ab331fafefeb04caaad25dfc77b9df, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7031583602364761566, guid: e8ab331fafefeb04caaad25dfc77b9df, type: 3}
       propertyPath: m_Pivot.x
@@ -273,14 +277,3 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 7031583602364761566, guid: e8ab331fafefeb04caaad25dfc77b9df, type: 3}
   m_PrefabInstance: {fileID: 1385723929109651497}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &8994192278805044288 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 8064502909803084905, guid: e8ab331fafefeb04caaad25dfc77b9df, type: 3}
-  m_PrefabInstance: {fileID: 1385723929109651497}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1f929d9587610764c8e2f4e7c5d68c73, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: SubTerra.App::SubTerra.App.UI.Drone.DroneReasonPanelView
