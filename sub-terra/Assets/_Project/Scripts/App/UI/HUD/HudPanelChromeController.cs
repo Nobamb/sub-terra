@@ -1,12 +1,15 @@
 using SubTerra.App.UI.Building;
 using SubTerra.App.UI.Drone;
+using SubTerra.App.UI.Inventory;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 namespace SubTerra.App.UI.HUD
 {
     /// <summary>
-    /// 시설 건설·Digger-Bot·게임 가이드 패널의 닫기/재오픈 토글만 담당한다.
+    /// 시설 건설·Digger-Bot·게임 가이드·인벤토리 패널의 닫기/재오픈 토글과
+    /// 가이드에 명시된 단축키(B/I)를 담당한다.
     /// 레이아웃 수치 자체는 에디터 빌더가 Prefab/Scene에 적용한다.
     /// </summary>
     public sealed class HudPanelChromeController : MonoBehaviour
@@ -27,13 +30,19 @@ namespace SubTerra.App.UI.HUD
         [SerializeField] private Button gameGuideCloseButton;
         [SerializeField] private Button gameGuideOpenButton;
 
+        [SerializeField] private InventoryPanelView inventoryPanelView;
+        [SerializeField] private GameObject inventoryPanelRoot;
+        [SerializeField] private Button inventoryCloseButton;
+
         [SerializeField] private bool buildingMenuOpen = true;
         [SerializeField] private bool diggerBotOpen = true;
         [SerializeField] private bool gameGuideOpen;
+        [SerializeField] private bool inventoryPanelOpen;
 
         public bool IsBuildingMenuOpen => buildingMenuOpen;
         public bool IsDiggerBotOpen => diggerBotOpen;
         public bool IsGameGuideOpen => gameGuideOpen;
+        public bool IsInventoryPanelOpen => inventoryPanelOpen;
 
         private void Awake()
         {
@@ -41,6 +50,7 @@ namespace SubTerra.App.UI.HUD
             ApplyBuildingMenuVisible(buildingMenuOpen, cancelSelection: false);
             ApplyDiggerBotVisible(diggerBotOpen);
             ApplyGameGuideVisible(gameGuideOpen);
+            ApplyInventoryPanelVisible(inventoryPanelOpen);
         }
 
         private void OnEnable()
@@ -51,6 +61,26 @@ namespace SubTerra.App.UI.HUD
         private void OnDisable()
         {
             UnwireButtons();
+        }
+
+        private void Update()
+        {
+            // 게임 가이드 조작법: B=시설 건설, I=화물/인벤토리
+            var keyboard = Keyboard.current;
+            if (keyboard == null)
+            {
+                return;
+            }
+
+            if (keyboard.bKey.wasPressedThisFrame)
+            {
+                ToggleBuildingMenu();
+            }
+
+            if (keyboard.iKey.wasPressedThisFrame)
+            {
+                ToggleInventoryPanel();
+            }
         }
 
         /// <summary>시설 건설 패널을 닫는다. 진행 중 Preview는 취소한다.</summary>
@@ -111,6 +141,23 @@ namespace SubTerra.App.UI.HUD
             ApplyGameGuideVisible(!gameGuideOpen);
         }
 
+        /// <summary>화물/인벤토리 패널을 닫는다.</summary>
+        public void CloseInventoryPanel()
+        {
+            ApplyInventoryPanelVisible(false);
+        }
+
+        /// <summary>I 키 등으로 화물/인벤토리 패널을 연다.</summary>
+        public void OpenInventoryPanel()
+        {
+            ApplyInventoryPanelVisible(true);
+        }
+
+        public void ToggleInventoryPanel()
+        {
+            ApplyInventoryPanelVisible(!inventoryPanelOpen);
+        }
+
         public bool HasRequiredReferences()
         {
             return buildingMenuRoot != null
@@ -158,6 +205,12 @@ namespace SubTerra.App.UI.HUD
                 gameGuideOpenButton.onClick.RemoveListener(OpenGameGuide);
                 gameGuideOpenButton.onClick.AddListener(OpenGameGuide);
             }
+
+            if (inventoryCloseButton != null)
+            {
+                inventoryCloseButton.onClick.RemoveListener(CloseInventoryPanel);
+                inventoryCloseButton.onClick.AddListener(CloseInventoryPanel);
+            }
         }
 
         private void UnwireButtons()
@@ -190,6 +243,11 @@ namespace SubTerra.App.UI.HUD
             if (gameGuideOpenButton != null)
             {
                 gameGuideOpenButton.onClick.RemoveListener(OpenGameGuide);
+            }
+
+            if (inventoryCloseButton != null)
+            {
+                inventoryCloseButton.onClick.RemoveListener(CloseInventoryPanel);
             }
         }
 
@@ -259,6 +317,33 @@ namespace SubTerra.App.UI.HUD
             if (gameGuideOpenButton != null)
             {
                 gameGuideOpenButton.gameObject.SetActive(true);
+            }
+        }
+
+        private void ApplyInventoryPanelVisible(bool visible)
+        {
+            inventoryPanelOpen = visible;
+
+            if (inventoryPanelView != null)
+            {
+                inventoryPanelView.SetVisible(visible);
+            }
+            else if (inventoryPanelRoot != null)
+            {
+                inventoryPanelRoot.SetActive(visible);
+            }
+
+            // View가 panelRoot만 토글해도 루트 참조가 있으면 동기화한다.
+            if (inventoryPanelRoot != null
+                && inventoryPanelView != null
+                && inventoryPanelRoot.activeSelf != visible)
+            {
+                inventoryPanelRoot.SetActive(visible);
+            }
+
+            if (visible && inventoryPanelRoot != null)
+            {
+                inventoryPanelRoot.transform.SetAsLastSibling();
             }
         }
     }

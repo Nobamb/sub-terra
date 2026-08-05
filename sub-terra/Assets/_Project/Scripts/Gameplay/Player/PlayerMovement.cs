@@ -23,6 +23,8 @@ namespace SubTerra.Gameplay.Player
         private float moveInput;
         private float verticalMoveInput;
         private bool jumpRequested;
+        /// <summary>착지(또는 사다리 재진입) 전까지 점프를 1회만 허용한다.</summary>
+        private bool hasUsedAirJump;
         private float gravityBeforeClimbing;
         private float cargoSpeedMultiplier = 1f;
         private float hazardSpeedMultiplier = 1f;
@@ -50,13 +52,11 @@ namespace SubTerra.Gameplay.Player
         private void FixedUpdate()
         {
             ApplyHorizontalMovement();
-            if (IsClimbing)
+            // 점프는 지면·사다리 모두에서 처리한다. 사다리 점프 시 등반은 그 프레임 생략.
+            var jumped = TryApplyJump();
+            if (IsClimbing && !jumped)
             {
                 ApplyVerticalMovement();
-            }
-            else
-            {
-                ApplyJump();
             }
         }
 
@@ -96,6 +96,8 @@ namespace SubTerra.Gameplay.Player
             body.gravityScale = 0f;
             body.linearVelocity = new Vector2(body.linearVelocityX, 0f);
             IsClimbing = true;
+            // 사다리에 붙으면 다시 점프 1회를 허용한다.
+            hasUsedAirJump = false;
         }
 
         public void ExitLadder()
@@ -137,21 +139,49 @@ namespace SubTerra.Gameplay.Player
             body.linearVelocity = new Vector2(nextVelocityX, body.linearVelocityY);
         }
 
-        private void ApplyJump()
+        /// <summary>
+        /// 지면 착지 전 점프 1회. 사다리 탑승 중에도 점프 가능(사다리 탈출 후 상승 임펄스).
+        /// </summary>
+        /// <returns>이번 FixedUpdate에서 점프를 적용했으면 true.</returns>
+        private bool TryApplyJump()
         {
             if (!jumpRequested)
             {
-                return;
+                return false;
             }
 
             jumpRequested = false;
-            if (!CanMove || !IsGrounded)
+            if (!CanMove || body == null)
             {
-                return;
+                return false;
+            }
+
+            // 사다리 중: 탈출 후 점프. 공중 연타 방지를 위해 hasUsedAirJump 갱신.
+            if (IsClimbing)
+            {
+                if (hasUsedAirJump)
+                {
+                    return false;
+                }
+
+                ExitLadder();
+                body.linearVelocity = new Vector2(body.linearVelocityX, 0f);
+                body.AddForce(Vector2.up * jumpImpulse, ForceMode2D.Impulse);
+                hasUsedAirJump = true;
+                IsGrounded = false;
+                return true;
+            }
+
+            // 지면 점프: 착지 전 1회만 (연속 점프·지면 체크 잔류 연타 차단).
+            if (!IsGrounded || hasUsedAirJump)
+            {
+                return false;
             }
 
             body.AddForce(Vector2.up * jumpImpulse, ForceMode2D.Impulse);
+            hasUsedAirJump = true;
             IsGrounded = false;
+            return true;
         }
 
         private void ApplyVerticalMovement()
@@ -176,15 +206,26 @@ namespace SubTerra.Gameplay.Player
                 groundHits,
                 groundLayers);
 
-            IsGrounded = false;
+            bool grounded = false;
             for (int index = 0; index < hitCount; index++)
             {
                 Collider2D hit = groundHits[index];
                 if (hit != null && !IsOwnCollider(hit))
                 {
-                    IsGrounded = true;
+                    grounded = true;
                     break;
                 }
+            }
+
+            IsGrounded = grounded;
+            // 하강·정지 상태로 착지했을 때만 점프 횟수를 회복한다.
+            // (점프 직후 지면 오버랩이 남아도 연타 점프가 나지 않게 한다.)
+            if (grounded
+                && !IsClimbing
+                && body != null
+                && body.linearVelocityY <= 0.05f)
+            {
+                hasUsedAirJump = false;
             }
         }
 

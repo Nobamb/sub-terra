@@ -24,6 +24,8 @@ namespace SubTerra.App.Tests.UI
             HudPanelChromeLayoutBuilder.Build();
             // prompt-B 31 / 31-1 가이드·좌측 건설·Surface 설정 등 적용.
             PromptB31_1LayoutBuilder.Build();
+            // prompt-B 31-2 건설 목록 텍스트 제거·우측 폭·인벤토리 패널.
+            PromptB31_2LayoutBuilder.Build();
         }
 
         [Test]
@@ -102,6 +104,27 @@ namespace SubTerra.App.Tests.UI
             Assert.That(openBuilding.GetComponent<Button>(), Is.Not.Null);
             Assert.That(openDigger.GetComponent<Button>(), Is.Not.Null);
             Assert.That(openGuide.GetComponent<Button>(), Is.Not.Null);
+
+            // prompt-B 31-2: 좌측 목록 텍스트 숨김, 패널 폭 460, I키용 인벤토리.
+            var listText = building.Find("PanelRoot/BuildingListText")
+                ?? building.Find("BuildingListText");
+            if (listText != null)
+            {
+                Assert.That(listText.gameObject.activeSelf, Is.False);
+            }
+
+            Assert.That(building.sizeDelta.x, Is.EqualTo(460f).Within(0.5f));
+            var selection = building.Find("PanelRoot/SelectionText") as RectTransform
+                ?? building.Find("SelectionText") as RectTransform;
+            if (selection != null)
+            {
+                // 좌측 버튼(20+132) + 10px 간격 = 162.
+                Assert.That(selection.anchoredPosition.x, Is.EqualTo(162f).Within(0.5f));
+            }
+
+            var inventory = FindTransform(scene, "InventoryPanel");
+            Assert.That(inventory, Is.Not.Null);
+            Assert.That(inventory.gameObject.activeSelf, Is.False);
         }
 
         [Test]
@@ -111,6 +134,7 @@ namespace SubTerra.App.Tests.UI
             var buildingRoot = new GameObject("BuildingRoot");
             var diggerRoot = new GameObject("DiggerRoot");
             var guideRoot = new GameObject("GuideRoot");
+            var inventoryRoot = new GameObject("InventoryRoot");
             var openBuilding = new GameObject("OpenBuilding");
             openBuilding.AddComponent<RectTransform>();
             openBuilding.AddComponent<UnityEngine.UI.Image>();
@@ -136,9 +160,11 @@ namespace SubTerra.App.Tests.UI
                 so.FindProperty("gameGuideRoot").objectReferenceValue = guideRoot;
                 so.FindProperty("gameGuideOpenButton").objectReferenceValue =
                     openGuide.GetComponent<Button>();
+                so.FindProperty("inventoryPanelRoot").objectReferenceValue = inventoryRoot;
                 so.FindProperty("buildingMenuOpen").boolValue = true;
                 so.FindProperty("diggerBotOpen").boolValue = true;
                 so.FindProperty("gameGuideOpen").boolValue = false;
+                so.FindProperty("inventoryPanelOpen").boolValue = false;
                 so.ApplyModifiedPropertiesWithoutUndo();
 
                 // Awake 경로 재현.
@@ -148,6 +174,16 @@ namespace SubTerra.App.Tests.UI
                 Assert.That(chrome.IsBuildingMenuOpen, Is.False);
                 Assert.That(buildingRoot.activeSelf, Is.False);
                 Assert.That(openBuilding.activeSelf, Is.True);
+
+                chrome.ToggleBuildingMenu();
+                Assert.That(chrome.IsBuildingMenuOpen, Is.True);
+
+                chrome.OpenInventoryPanel();
+                Assert.That(chrome.IsInventoryPanelOpen, Is.True);
+                Assert.That(inventoryRoot.activeSelf, Is.True);
+                chrome.CloseInventoryPanel();
+                Assert.That(chrome.IsInventoryPanelOpen, Is.False);
+                Assert.That(inventoryRoot.activeSelf, Is.False);
 
                 chrome.OpenBuildingMenu();
                 Assert.That(chrome.IsBuildingMenuOpen, Is.True);
@@ -178,6 +214,7 @@ namespace SubTerra.App.Tests.UI
                 Object.DestroyImmediate(buildingRoot);
                 Object.DestroyImmediate(diggerRoot);
                 Object.DestroyImmediate(guideRoot);
+                Object.DestroyImmediate(inventoryRoot);
                 Object.DestroyImmediate(openBuilding);
                 Object.DestroyImmediate(openDigger);
                 Object.DestroyImmediate(openGuide);

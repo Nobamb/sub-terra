@@ -6,6 +6,7 @@ using SubTerra.App.Outpost;
 using SubTerra.App.Save;
 using SubTerra.App.State;
 using SubTerra.App.UI.HUD;
+using SubTerra.App.UI.Inventory;
 using SubTerra.App.UI.Tutorial;
 using SubTerra.Gameplay.Building;
 using SubTerra.Gameplay.Drone;
@@ -296,6 +297,9 @@ namespace SubTerra.App.Integration
                 hudBinder.BindTo(bootstrap.State);
             }
 
+            // I 키 인벤토리 패널: 전역 InventoryService에 구독만 연결 (중복 생성 없음).
+            BindInventoryPanelUi();
+
             miningProgressHud?.BindTo(
                 miningSystem,
                 playerMovement != null ? playerMovement.transform : null);
@@ -304,6 +308,20 @@ namespace SubTerra.App.Integration
             SetDeferredInputEnabled(true);
             uiActivated = true;
             return true;
+        }
+
+        private void BindInventoryPanelUi()
+        {
+            if (runtime?.InventoryService == null)
+            {
+                return;
+            }
+
+            var panel = FindFirstObjectByType<InventoryPanelBinder>(FindObjectsInactive.Include);
+            if (panel != null)
+            {
+                panel.BindTo(runtime.InventoryService);
+            }
         }
 
         public void AddMineral(string mineralId, int quantity)

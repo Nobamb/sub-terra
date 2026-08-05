@@ -119,6 +119,51 @@ namespace SubTerra.Gameplay.Player.Tests
         }
 
         [UnityTest]
+        public IEnumerator Jump_IsLimitedToOnceUntilLanding()
+        {
+            body.gravityScale = 0f;
+            Transform groundCheck = new GameObject("GroundCheck").transform;
+            groundCheck.SetParent(playerObject.transform);
+            groundCheck.localPosition = new Vector3(0f, -0.9f, 0f);
+            typeof(PlayerMovement)
+                .GetField("groundCheck", BindingFlags.Instance | BindingFlags.NonPublic)
+                .SetValue(movement, groundCheck);
+
+            groundObject = new GameObject("Ground");
+            groundObject.transform.position = new Vector3(0f, -1.2f, 0f);
+            groundObject.AddComponent<BoxCollider2D>().size = new Vector2(4f, 0.5f);
+
+            yield return null;
+            Assert.IsTrue(movement.IsGrounded);
+
+            movement.RequestJump();
+            yield return new WaitForFixedUpdate();
+            float firstJumpVy = body.linearVelocityY;
+            Assert.Greater(firstJumpVy, 0f);
+
+            // 공중(또는 점프 직후)에서 연타해도 추가 임펄스가 적용되지 않아야 한다.
+            body.linearVelocity = new Vector2(0f, 2f);
+            movement.RequestJump();
+            yield return new WaitForFixedUpdate();
+            Assert.AreEqual(2f, body.linearVelocityY, 0.01f);
+        }
+
+        [UnityTest]
+        public IEnumerator Jump_WorksWhileClimbingLadder()
+        {
+            body.gravityScale = 3f;
+            movement.EnterLadder();
+            Assert.IsTrue(movement.IsClimbing);
+
+            movement.RequestJump();
+            yield return new WaitForFixedUpdate();
+
+            Assert.IsFalse(movement.IsClimbing);
+            Assert.Greater(body.linearVelocityY, 0f);
+            Assert.AreEqual(3f, body.gravityScale);
+        }
+
+        [UnityTest]
         public IEnumerator TilemapWallStopsThePlayerInsteadOfAllowingPassThrough()
         {
             body.position = new Vector2(-1f, 0.5f);
