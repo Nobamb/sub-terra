@@ -8,6 +8,7 @@ namespace SubTerra.Gameplay.Structural
 {
     /// <summary>
     /// 채굴 변경점 주변만 재계산하고 확정된 균열·부분 붕괴 결과를 외부에 전달한다.
+    /// 위험 원인이 해소되면(비지지 천장 제거·버팀목 설치) 누적 충격을 지우고 안정 상태로 복귀한다.
     /// </summary>
     public sealed class StructuralIntegritySystem : MonoBehaviour
     {
@@ -38,7 +39,9 @@ namespace SubTerra.Gameplay.Structural
             float impact = Mathf.Max(0f, tile.structuralImpact) * miningImpactMultiplier;
             accumulatedImpact.TryGetValue(cell, out float currentImpact);
             accumulatedImpact[cell] = currentImpact + impact;
+            // 채굴 지점 + 알려진 모든 영향 구역을 다시 평가해 고착된 위험 단계를 해소한다.
             Reevaluate(cell, true);
+            RefreshAllKnownRegions(cell);
         }
 
         public void RegisterSupport(StructuralSupport support)
@@ -70,6 +73,12 @@ namespace SubTerra.Gameplay.Structural
         public StructuralRiskLevel EvaluateAt(Vector3Int center)
         {
             int unsupportedTiles = FindUnsupportedCeilingTiles(center).Count;
+            // 현재 비지지 구조가 없으면 과거 충격과 무관하게 안정으로 본다.
+            if (unsupportedTiles == 0)
+            {
+                return StructuralRiskLevel.Stable;
+            }
+
             int supportStrength = GetSupportStrength(center);
             float impact = GetAccumulatedImpact(center);
             return StructuralRiskEvaluator.Evaluate(
@@ -97,28 +106,99 @@ namespace SubTerra.Gameplay.Structural
         private void Reevaluate(Vector3Int center, bool allowCollapse)
         {
             List<Vector3Int> candidates = FindUnsupportedCeilingTiles(center);
-            StructuralRiskLevel risk = StructuralRiskEvaluator.Evaluate(
-                GetAccumulatedImpact(center),
-                candidates.Count,
-                GetSupportStrength(center),
-                Settings);
+            StructuralRiskLevel risk = ResolveRisk(center, candidates);
             evaluatedRegions[center] = risk;
             crackOverlay?.UpdateRegion(center, scanRadius, candidates, risk);
-            UpdateCurrentRisk();
-            if (!allowCollapse || risk != StructuralRiskLevel.CollapseImminent) return;
+
+            if (!allowCollapse || risk != StructuralRiskLevel.CollapseImminent)
+            {
+                UpdateCurrentRisk();
+                return;
+            }
 
             StructuralCollapseEventDto collapse = CollapseUnsupportedCeiling(candidates);
-            if (collapse.cells.Count == 0) return;
+            if (collapse.cells.Count == 0)
+            {
+                UpdateCurrentRisk();
+                return;
+            }
 
             CollapseTriggered?.Invoke(collapse);
             candidates = FindUnsupportedCeilingTiles(center);
-            evaluatedRegions[center] = StructuralRiskEvaluator.Evaluate(
+            risk = ResolveRisk(center, candidates);
+            evaluatedRegions[center] = risk;
+            crackOverlay?.UpdateRegion(center, scanRadius, candidates, risk);
+            UpdateCurrentRisk();
+        }
+
+        /// <summary>
+        /// 비지지 천장이 없으면 누적 충격을 제거하고 Stable을 반환한다.
+        /// 위험이 한 번 뜬 뒤 원인 블록을 제거해도 단계가 남는 문제를 막는다.
+        /// </summary>
+        private StructuralRiskLevel ResolveRisk(Vector3Int center, List<Vector3Int> candidates)
+        {
+            if (candidates == null || candidates.Count == 0)
+            {
+                ClearImpactNear(center);
+                return StructuralRiskLevel.Stable;
+            }
+
+            return StructuralRiskEvaluator.Evaluate(
                 GetAccumulatedImpact(center),
                 candidates.Count,
                 GetSupportStrength(center),
                 Settings);
-            crackOverlay?.UpdateRegion(center, scanRadius, candidates, evaluatedRegions[center]);
-            UpdateCurrentRisk();
+        }
+
+        private void RefreshAllKnownRegions(Vector3Int primaryCenter)
+        {
+            var centers = new List<Vector3Int>(accumulatedImpact.Count + evaluatedRegions.Count);
+            foreach (Vector3Int key in accumulatedImpact.Keys)
+            {
+                if (key != primaryCenter)
+                {
+                    centers.Add(key);
+                }
+            }
+
+            foreach (Vector3Int key in evaluatedRegions.Keys)
+            {
+                if (key == primaryCenter || centers.Contains(key))
+                {
+                    continue;
+                }
+
+                centers.Add(key);
+            }
+
+            for (int i = 0; i < centers.Count; i++)
+            {
+                // 연쇄 붕괴는 1차 채굴 지점에서만 허용한다.
+                Reevaluate(centers[i], false);
+            }
+        }
+
+        private void ClearImpactNear(Vector3Int center)
+        {
+            if (accumulatedImpact.Count == 0)
+            {
+                return;
+            }
+
+            var remove = new List<Vector3Int>();
+            foreach (Vector3Int key in accumulatedImpact.Keys)
+            {
+                if (Mathf.Abs(key.x - center.x) <= scanRadius
+                    && Mathf.Abs(key.y - center.y) <= scanRadius)
+                {
+                    remove.Add(key);
+                }
+            }
+
+            for (int i = 0; i < remove.Count; i++)
+            {
+                accumulatedImpact.Remove(remove[i]);
+            }
         }
 
         private List<Vector3Int> FindUnsupportedCeilingTiles(Vector3Int center)
@@ -223,9 +303,13 @@ namespace SubTerra.Gameplay.Structural
 
         private void ReevaluateAffectedBySupport(StructuralSupport support)
         {
-            if (support == null || foregroundTilemap == null || accumulatedImpact.Count == 0) return;
+            if (support == null || foregroundTilemap == null)
+            {
+                return;
+            }
 
-            var affectedCenters = new List<Vector3Int>();
+            // 버팀목 설치/제거 시 충격 이력이 없어도 주변 위험 구역을 다시 본다.
+            var affectedCenters = new HashSet<Vector3Int>();
             foreach (Vector3Int center in accumulatedImpact.Keys)
             {
                 Vector3 world = foregroundTilemap.GetCellCenterWorld(center);
@@ -233,7 +317,26 @@ namespace SubTerra.Gameplay.Structural
                     affectedCenters.Add(center);
             }
 
-            foreach (Vector3Int center in affectedCenters) Reevaluate(center, false);
+            foreach (Vector3Int center in evaluatedRegions.Keys)
+            {
+                Vector3 world = foregroundTilemap.GetCellCenterWorld(center);
+                if (Vector2.Distance(world, support.transform.position) <= support.Radius + scanRadius)
+                    affectedCenters.Add(center);
+            }
+
+            // 영향 중심이 없으면 버팀목 위치 기준으로 한 번 평가한다.
+            if (affectedCenters.Count == 0)
+            {
+                Vector3Int supportCell = foregroundTilemap.WorldToCell(support.transform.position);
+                affectedCenters.Add(supportCell);
+            }
+
+            foreach (Vector3Int center in affectedCenters)
+            {
+                Reevaluate(center, false);
+            }
+
+            UpdateCurrentRisk();
         }
 
         private void UpdateCurrentRisk()

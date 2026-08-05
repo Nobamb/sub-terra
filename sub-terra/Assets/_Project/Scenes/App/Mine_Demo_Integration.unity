@@ -1451,6 +1451,7 @@ MonoBehaviour:
   audioSource: {fileID: 279480569}
   warningTone: {fileID: 0}
   reduceMotion: 0
+  cameraFollow: {fileID: 0}
 --- !u!82 &279480569
 AudioSource:
   m_ObjectHideFlags: 0
@@ -2794,6 +2795,8 @@ MonoBehaviour:
   smoothTime: 0.18
   teleportDistance: 3
   boundsProvider: {fileID: 879686163}
+  defaultShakeAmplitude: 0.22
+  defaultShakeDuration: 0.28
 --- !u!20 &879686160
 Camera:
   m_ObjectHideFlags: 0
@@ -3174,6 +3177,22 @@ PrefabInstance:
     - target: {fileID: 1197547870862390238, guid: a289c635ff10e834facbb23edae98a14, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3841513939634759557, guid: a289c635ff10e834facbb23edae98a14, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 72
+      objectReference: {fileID: 0}
+    - target: {fileID: 3841513939634759557, guid: a289c635ff10e834facbb23edae98a14, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 28
+      objectReference: {fileID: 0}
+    - target: {fileID: 3841513939634759557, guid: a289c635ff10e834facbb23edae98a14, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: -8
+      objectReference: {fileID: 0}
+    - target: {fileID: 3841513939634759557, guid: a289c635ff10e834facbb23edae98a14, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -8
       objectReference: {fileID: 0}
     - target: {fileID: 4060540184646201524, guid: a289c635ff10e834facbb23edae98a14, type: 3}
       propertyPath: m_Name

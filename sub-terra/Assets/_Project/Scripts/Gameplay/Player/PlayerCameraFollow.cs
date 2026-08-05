@@ -1,3 +1,4 @@
+using SubTerra.Shared;
 using UnityEngine;
 
 namespace SubTerra.Gameplay.Player
@@ -13,6 +14,10 @@ namespace SubTerra.Gameplay.Player
         [SerializeField, Min(0f)] private float teleportDistance = 3f;
         [SerializeField] private CameraBounds2D boundsProvider;
 
+        [Header("Screen Shake")]
+        [SerializeField, Min(0f)] private float defaultShakeAmplitude = 0.22f;
+        [SerializeField, Min(0f)] private float defaultShakeDuration = 0.28f;
+
         private Vector3 velocity;
         private Camera controlledCamera;
         private CameraBounds2D cachedBoundsProvider;
@@ -22,6 +27,9 @@ namespace SubTerra.Gameplay.Player
         private int cachedBoundsVersion = -1;
         private Vector3 previousTargetPosition;
         private bool hasPreviousTargetPosition;
+        private float shakeTimeRemaining;
+        private float shakeDuration;
+        private float shakeAmplitude;
 
         public void SetTarget(Transform newTarget, bool snapImmediately = false)
         {
@@ -58,7 +66,30 @@ namespace SubTerra.Gameplay.Player
             velocity = Vector3.zero;
             previousTargetPosition = target.position;
             hasPreviousTargetPosition = true;
+            shakeTimeRemaining = 0f;
             return true;
+        }
+
+        /// <summary>
+        /// 구조 붕괴·위험 시 화면 흔들림. 접근성 "화면 진동 억제"가 켜져 있으면 무시한다.
+        /// </summary>
+        public void RequestShake(float amplitude = -1f, float duration = -1f)
+        {
+            if (AccessibilityPreferences.ReduceMotion)
+            {
+                return;
+            }
+
+            float nextAmplitude = amplitude > 0f ? amplitude : defaultShakeAmplitude;
+            float nextDuration = duration > 0f ? duration : defaultShakeDuration;
+            // 더 강한/긴 요청이 오면 덮어쓰고, 약하면 현재를 유지한다.
+            if (nextAmplitude >= shakeAmplitude || shakeTimeRemaining <= 0f)
+            {
+                shakeAmplitude = nextAmplitude;
+            }
+
+            shakeDuration = Mathf.Max(shakeDuration, nextDuration);
+            shakeTimeRemaining = Mathf.Max(shakeTimeRemaining, nextDuration);
         }
 
         private void LateUpdate()
@@ -96,8 +127,29 @@ namespace SubTerra.Gameplay.Player
                 velocity.y = 0f;
             }
 
-            transform.position = constrainedPosition;
+            transform.position = constrainedPosition + SampleShakeOffset();
             previousTargetPosition = currentTargetPosition;
+        }
+
+        private Vector3 SampleShakeOffset()
+        {
+            if (shakeTimeRemaining <= 0f || AccessibilityPreferences.ReduceMotion)
+            {
+                shakeTimeRemaining = 0f;
+                shakeAmplitude = 0f;
+                return Vector3.zero;
+            }
+
+            shakeTimeRemaining = Mathf.Max(0f, shakeTimeRemaining - Time.deltaTime);
+            float falloff = shakeDuration > 0f
+                ? Mathf.Clamp01(shakeTimeRemaining / shakeDuration)
+                : 0f;
+            float strength = shakeAmplitude * falloff;
+            // 프레임마다 다른 오프셋으로 붕괴/위험 피드백을 준다.
+            return new Vector3(
+                (Mathf.PerlinNoise(Time.time * 28f, 0.17f) - 0.5f) * 2f * strength,
+                (Mathf.PerlinNoise(0.41f, Time.time * 31f) - 0.5f) * 2f * strength,
+                0f);
         }
 
         private Vector3 KeepTargetVisible(Vector3 cameraPosition, Vector3 targetPosition)

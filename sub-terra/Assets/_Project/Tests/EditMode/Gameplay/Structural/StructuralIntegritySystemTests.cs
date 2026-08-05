@@ -56,6 +56,26 @@ namespace SubTerra.Gameplay.Structural.Tests
             Assert.That(fixture.Overlay.HasTile(new Vector3Int(0, 2, 0)), Is.False);
         }
 
+        [Test]
+        public void RemovingUnsupportedCeiling_ClearsStuckStructuralRisk()
+        {
+            // prompt-B 31-3: 위험 원인 블록을 제거하면 구조 위험이 고착되지 않고 안정으로 돌아와야 한다.
+            using var fixture = new StructuralFixture(3, true);
+            fixture.Mine(0.5f);
+            Assert.That(fixture.System.CurrentRisk, Is.GreaterThan(StructuralRiskLevel.Stable));
+
+            // 비지지 천장 타일을 모두 제거한 뒤 재평가를 트리거한다.
+            for (int x = -1; x <= 1; x++)
+            {
+                fixture.Foreground.SetTile(new Vector3Int(x, 2, 0), null);
+            }
+
+            fixture.Mine(0.01f);
+
+            Assert.That(fixture.System.CurrentRisk, Is.EqualTo(StructuralRiskLevel.Stable));
+            Assert.That(fixture.Overlay.HasTile(new Vector3Int(0, 2, 0)), Is.False);
+        }
+
         private static List<CollapseCellDto> RunCollapse(long seed)
         {
             using var fixture = new StructuralFixture(7);

@@ -13,7 +13,7 @@ namespace SubTerra.App.UI.SurfaceBase
     /// 판매·제작·업그레이드는 기존 Economy/Progression 바인더에 연결하고
     /// 목표·잠금·탐사 시작만 Surface Presenter가 담당한다.
     /// 탐사 단일 비행 가드는 SaveRuntimeController.TryStartExploration 한 경로만 사용한다.
-    /// prompt-B 31-1: 설정·종료는 Main Menu와 동일 정책을 재사용한다.
+    /// prompt-B 31-1/31-3: 설정·종료는 Main Menu와 동일 정책을 재사용한다.
     /// </summary>
     public sealed class SurfaceBaseBinder : MonoBehaviour
     {
@@ -64,7 +64,9 @@ namespace SubTerra.App.UI.SurfaceBase
                 bootstrap.State,
                 runtime.Progression,
                 SaveRuntimeController.MineElevatorEnergyCost);
-            settings = new SettingsSession();
+            var initialSettings = SettingsRuntimeApplier.LoadOrDefaults();
+            SettingsRuntimeApplier.Apply(initialSettings, applyResolution: false);
+            settings = new SettingsSession(initialSettings);
             view.SetSettingsVisible(false);
 
             view.ExploreClicked += OnExploreClicked;
@@ -73,6 +75,7 @@ namespace SubTerra.App.UI.SurfaceBase
             view.SettingsApplyClicked += OnSettingsApply;
             view.SettingsCancelClicked += OnSettingsCancel;
             view.SettingsDefaultsClicked += OnSettingsDefaults;
+            view.MasterVolumePreviewChanged += OnMasterVolumePreview;
 
             presenter.RefreshReadModel();
             if (runtime.ElevatorState == ElevatorTravelState.Arrived)
@@ -91,6 +94,7 @@ namespace SubTerra.App.UI.SurfaceBase
                 view.SettingsApplyClicked -= OnSettingsApply;
                 view.SettingsCancelClicked -= OnSettingsCancel;
                 view.SettingsDefaultsClicked -= OnSettingsDefaults;
+                view.MasterVolumePreviewChanged -= OnMasterVolumePreview;
                 view.SetSettingsVisible(false);
             }
 
@@ -145,18 +149,7 @@ namespace SubTerra.App.UI.SurfaceBase
             settings.Draft.CopyFrom(draft);
             settings.Apply();
             view.SetSettingsVisible(false);
-
-            AudioListener.volume = Mathf.Clamp01(settings.Applied.MasterVolume);
-            AccessibilityPreferences.ReduceMotion = settings.Applied.ReduceMotion;
-            if (!Application.isEditor
-                && settings.Applied.ResolutionWidth > 0
-                && settings.Applied.ResolutionHeight > 0)
-            {
-                Screen.SetResolution(
-                    settings.Applied.ResolutionWidth,
-                    settings.Applied.ResolutionHeight,
-                    FullScreenMode.Windowed);
-            }
+            SettingsRuntimeApplier.Apply(settings.Applied, applyResolution: true);
         }
 
         private void OnSettingsCancel()
@@ -168,6 +161,7 @@ namespace SubTerra.App.UI.SurfaceBase
 
             settings.Cancel();
             view.SetSettingsVisible(false);
+            SettingsRuntimeApplier.RestoreAppliedVolume(settings.Applied);
         }
 
         private void OnSettingsDefaults()
@@ -179,6 +173,11 @@ namespace SubTerra.App.UI.SurfaceBase
 
             settings.ResetDefaults();
             view.SetSettingsDraft(settings.Draft);
+        }
+
+        private void OnMasterVolumePreview(float volume)
+        {
+            SettingsRuntimeApplier.PreviewMasterVolume(volume);
         }
 
         private void OnQuitClicked()

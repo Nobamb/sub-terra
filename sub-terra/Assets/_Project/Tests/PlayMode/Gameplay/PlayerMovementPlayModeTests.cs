@@ -146,6 +146,15 @@ namespace SubTerra.Gameplay.Player.Tests
             movement.RequestJump();
             yield return new WaitForFixedUpdate();
             Assert.AreEqual(2f, body.linearVelocityY, 0.01f);
+
+            // 지면 오버랩이 남아 있어도 에어 락 동안 재점프되면 안 된다 (31-3 무한 점프 회귀).
+            body.linearVelocity = new Vector2(0f, 0f);
+            for (int i = 0; i < 3; i++)
+            {
+                movement.RequestJump();
+                yield return new WaitForFixedUpdate();
+                Assert.AreEqual(0f, body.linearVelocityY, 0.01f);
+            }
         }
 
         [UnityTest]

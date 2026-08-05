@@ -1,5 +1,6 @@
 using System;
 using SubTerra.App.UI.MainMenu;
+using SubTerra.Shared.Localization;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -8,7 +9,7 @@ namespace SubTerra.App.UI.SurfaceBase
 {
     /// <summary>
     /// Surface Base 표시. 경제 수치는 Economy/Progression 패널이 담당한다.
-    /// prompt-B 31-1: 새로고침 대신 설정·종료 버튼을 제공한다.
+    /// prompt-B 31-1/31-3: 설정(음량·해상도·진동 억제·언어)과 종료를 제공한다.
     /// </summary>
     public sealed class SurfaceBaseView : MonoBehaviour, ISurfaceBaseView
     {
@@ -24,8 +25,15 @@ namespace SubTerra.App.UI.SurfaceBase
         [Header("Settings")]
         [SerializeField] private GameObject settingsRoot;
         [SerializeField] private Slider masterVolumeSlider;
+        [SerializeField] private TMP_Text masterVolumeLabel;
         [SerializeField] private Toggle reduceMotionToggle;
+        [SerializeField] private TMP_Text reduceMotionLabel;
         [SerializeField] private TMP_Text resolutionLabel;
+        [SerializeField] private Button resolutionPrevButton;
+        [SerializeField] private Button resolutionNextButton;
+        [SerializeField] private TMP_Text languageLabel;
+        [SerializeField] private Button languageCycleButton;
+        [SerializeField] private TMP_Text bgmHintLabel;
         [SerializeField] private Button settingsApplyButton;
         [SerializeField] private Button settingsCancelButton;
         [SerializeField] private Button settingsDefaultsButton;
@@ -33,12 +41,17 @@ namespace SubTerra.App.UI.SurfaceBase
         // 구 버전 Prefab 호환(비활성 유지). 더 이상 사용하지 않는다.
         [SerializeField] private Button refreshButton;
 
+        private int draftResolutionWidth = 1920;
+        private int draftResolutionHeight = 1080;
+        private string draftLanguageCode = GameLanguageCodes.Korean;
+
         public event Action ExploreClicked;
         public event Action SettingsClicked;
         public event Action QuitClicked;
         public event Action SettingsApplyClicked;
         public event Action SettingsCancelClicked;
         public event Action SettingsDefaultsClicked;
+        public event Action<float> MasterVolumePreviewChanged;
 
         private void OnEnable()
         {
@@ -48,6 +61,13 @@ namespace SubTerra.App.UI.SurfaceBase
             settingsApplyButton?.onClick.AddListener(OnSettingsApply);
             settingsCancelButton?.onClick.AddListener(OnSettingsCancel);
             settingsDefaultsButton?.onClick.AddListener(OnSettingsDefaults);
+            resolutionPrevButton?.onClick.AddListener(OnResolutionPrev);
+            resolutionNextButton?.onClick.AddListener(OnResolutionNext);
+            languageCycleButton?.onClick.AddListener(OnLanguageCycle);
+            if (masterVolumeSlider != null)
+            {
+                masterVolumeSlider.onValueChanged.AddListener(OnMasterVolumeChanged);
+            }
 
             // 남아 있는 새로고침 버튼은 숨긴다.
             if (refreshButton != null)
@@ -64,6 +84,13 @@ namespace SubTerra.App.UI.SurfaceBase
             settingsApplyButton?.onClick.RemoveListener(OnSettingsApply);
             settingsCancelButton?.onClick.RemoveListener(OnSettingsCancel);
             settingsDefaultsButton?.onClick.RemoveListener(OnSettingsDefaults);
+            resolutionPrevButton?.onClick.RemoveListener(OnResolutionPrev);
+            resolutionNextButton?.onClick.RemoveListener(OnResolutionNext);
+            languageCycleButton?.onClick.RemoveListener(OnLanguageCycle);
+            if (masterVolumeSlider != null)
+            {
+                masterVolumeSlider.onValueChanged.RemoveListener(OnMasterVolumeChanged);
+            }
         }
 
         public void SetGoals(int completedObjectives, string summary)
@@ -158,6 +185,12 @@ namespace SubTerra.App.UI.SurfaceBase
                 return;
             }
 
+            draftResolutionWidth = values.ResolutionWidth > 0 ? values.ResolutionWidth : 1920;
+            draftResolutionHeight = values.ResolutionHeight > 0 ? values.ResolutionHeight : 1080;
+            draftLanguageCode = string.IsNullOrEmpty(values.LanguageCode)
+                ? GameLanguageCodes.Korean
+                : values.LanguageCode;
+
             if (masterVolumeSlider != null)
             {
                 masterVolumeSlider.SetValueWithoutNotify(values.MasterVolume);
@@ -168,11 +201,7 @@ namespace SubTerra.App.UI.SurfaceBase
                 reduceMotionToggle.SetIsOnWithoutNotify(values.ReduceMotion);
             }
 
-            if (resolutionLabel != null)
-            {
-                resolutionLabel.text =
-                    values.ResolutionWidth + " x " + values.ResolutionHeight;
-            }
+            RefreshSettingsLabels(values.MasterVolume);
         }
 
         public SettingsValues ReadSettingsDraft(SettingsValues fallback)
@@ -188,6 +217,9 @@ namespace SubTerra.App.UI.SurfaceBase
                 result.ReduceMotion = reduceMotionToggle.isOn;
             }
 
+            result.ResolutionWidth = draftResolutionWidth;
+            result.ResolutionHeight = draftResolutionHeight;
+            result.LanguageCode = draftLanguageCode;
             return result;
         }
 
@@ -201,6 +233,91 @@ namespace SubTerra.App.UI.SurfaceBase
                 && exploreButton != null
                 && settingsButton != null
                 && quitButton != null;
+        }
+
+        private void RefreshSettingsLabels(float volume)
+        {
+            if (masterVolumeLabel != null)
+            {
+                masterVolumeLabel.text = LocalizationService.FormatMasterVolume(volume);
+            }
+
+            if (resolutionLabel != null)
+            {
+                resolutionLabel.text = LocalizationService.FormatResolution(
+                    draftResolutionWidth,
+                    draftResolutionHeight);
+            }
+
+            if (reduceMotionLabel != null)
+            {
+                reduceMotionLabel.text = LocalizationService.Get(
+                    "settings.reduce_motion",
+                    "화면 진동 억제");
+            }
+
+            if (languageLabel != null)
+            {
+                var language = GameLanguageCodes.FromCode(draftLanguageCode);
+                languageLabel.text = LocalizationService.Get("settings.language", "언어")
+                    + ": "
+                    + LocalizationService.FormatLanguage(language);
+            }
+
+            if (bgmHintLabel != null)
+            {
+                bgmHintLabel.text = LocalizationService.Get(
+                    "settings.bgm_hint",
+                    "BGM 4종(타이틀/기지/탐사/위험)은 마스터 음량으로 조절됩니다.");
+            }
+        }
+
+        private void OnMasterVolumeChanged(float value)
+        {
+            if (masterVolumeLabel != null)
+            {
+                masterVolumeLabel.text = LocalizationService.FormatMasterVolume(value);
+            }
+
+            MasterVolumePreviewChanged?.Invoke(value);
+        }
+
+        private void OnResolutionPrev()
+        {
+            var next = ResolutionPresets.Cycle(draftResolutionWidth, draftResolutionHeight, -1);
+            draftResolutionWidth = next.width;
+            draftResolutionHeight = next.height;
+            if (resolutionLabel != null)
+            {
+                resolutionLabel.text = LocalizationService.FormatResolution(
+                    draftResolutionWidth,
+                    draftResolutionHeight);
+            }
+        }
+
+        private void OnResolutionNext()
+        {
+            var next = ResolutionPresets.Cycle(draftResolutionWidth, draftResolutionHeight, 1);
+            draftResolutionWidth = next.width;
+            draftResolutionHeight = next.height;
+            if (resolutionLabel != null)
+            {
+                resolutionLabel.text = LocalizationService.FormatResolution(
+                    draftResolutionWidth,
+                    draftResolutionHeight);
+            }
+        }
+
+        private void OnLanguageCycle()
+        {
+            draftLanguageCode = draftLanguageCode == GameLanguageCodes.English
+                ? GameLanguageCodes.Korean
+                : GameLanguageCodes.English;
+            var previous = LocalizationService.Current;
+            LocalizationService.SetLanguageCode(draftLanguageCode);
+            float volume = masterVolumeSlider != null ? masterVolumeSlider.value : 1f;
+            RefreshSettingsLabels(volume);
+            LocalizationService.SetLanguage(previous);
         }
 
         private void OnExplore() => ExploreClicked?.Invoke();
