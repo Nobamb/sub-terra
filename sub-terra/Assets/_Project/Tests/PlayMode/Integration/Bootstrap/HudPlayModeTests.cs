@@ -38,9 +38,9 @@ namespace SubTerra.App.Tests
             var presenter = new HudPresenter(view);
             presenter.Bind(state);
 
-            Assert.That(view.Gold, Is.EqualTo("21"));
+            Assert.That(view.Gold, Is.EqualTo(HudFormatter.FormatGold(21)));
             Assert.That(view.Energy, Is.EqualTo(HudFormatter.FormatEnergy(55, 100)));
-            Assert.That(view.Depth, Is.EqualTo("7"));
+            Assert.That(view.Depth, Is.EqualTo(HudFormatter.FormatDepth(7)));
 
             view.ResetCounts();
             presenter.Unbind();
@@ -48,7 +48,7 @@ namespace SubTerra.App.Tests
             Assert.That(view.GoldCount, Is.Zero, "Unbound presenter must not receive events.");
 
             presenter.Bind(state);
-            Assert.That(view.Gold, Is.EqualTo("22"));
+            Assert.That(view.Gold, Is.EqualTo(HudFormatter.FormatGold(22)));
             view.ResetCounts();
             state.AddGold(3);
             Assert.That(view.GoldCount, Is.EqualTo(1));

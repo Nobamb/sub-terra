@@ -99,10 +99,10 @@ namespace SubTerra.App.Tests.Inventory
             Assert.That(hudView.UnsettledValue, Is.EqualTo(HudFormatter.FormatUnsettledValue(expectedValue)));
 
             Assert.That(panelView.Cargo, Is.EqualTo(
-                HudFormatter.FormatCargo(expectedWeight) + " / " + HudFormatter.FormatCargo(50f)));
+                HudFormatter.FormatCargoSummary(expectedWeight, 50f)));
             Assert.That(panelView.Value, Is.EqualTo(HudFormatter.FormatUnsettledValue(expectedValue)));
-            Assert.That(panelView.Stacks, Does.Contain("Copper x2"));
-            Assert.That(panelView.Stacks, Does.Contain("Iron x1"));
+            Assert.That(panelView.Stacks, Does.Contain("x2"));
+            Assert.That(panelView.Stacks, Does.Contain("x1"));
             Assert.That(panelView.StackModels, Has.Count.EqualTo(2));
             Assert.That(panelView.StackModels[0].Quantity, Is.EqualTo(2));
             Assert.That(panelView.StackModels[1].Quantity, Is.EqualTo(1));

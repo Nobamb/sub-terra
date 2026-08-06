@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Text;
+using SubTerra.App.Core.Data;
 using SubTerra.App.Progression;
 using TMPro;
 using UnityEngine;
@@ -7,7 +8,7 @@ using UnityEngine.UI;
 
 namespace SubTerra.App.UI.Progression
 {
-    /// <summary>Surface Base 업그레이드 패널의 최소 TextMeshPro View.</summary>
+    /// <summary>Surface Base·Mine 업그레이드 패널 View. 탭 단위 필터와 한국어 비용을 표시한다.</summary>
     public sealed class ProgressionPanelView : MonoBehaviour, IProgressionPanelView
     {
         [SerializeField] private TMP_Text upgradeListText;
@@ -17,19 +18,32 @@ namespace SubTerra.App.UI.Progression
         [SerializeField] private Button purchaseButton;
         [SerializeField] private GameObject panelRoot;
         [SerializeField] private ProgressionUpgradeEntryButton[] upgradeButtons;
+        [SerializeField] private Button[] categoryTabButtons;
+        [SerializeField] private TMP_Text[] categoryTabLabels;
 
         private bool hasSelection;
         private bool selectedAtMaximum;
         private bool selectedCanAfford;
         private bool busy;
+        private UpgradeCategory activeCategory = UpgradeCategory.Drill;
+        private ProgressionPanelPresenter presenter;
+
+        public UpgradeCategory ActiveCategory => activeCategory;
+
+        public void BindPresenter(ProgressionPanelPresenter target)
+        {
+            presenter = target;
+        }
+
+        public void SetActiveCategory(UpgradeCategory category)
+        {
+            activeCategory = category;
+            RefreshCategoryTabs();
+            ApplyCategoryFilterToButtons();
+        }
 
         public void SetUpgradeList(IReadOnlyList<UpgradeSnapshot> upgrades)
         {
-            if (upgradeListText == null)
-            {
-                return;
-            }
-
             if (upgradeButtons != null && upgradeButtons.Length > 0)
             {
                 for (var i = 0; i < upgradeButtons.Length; i++)
@@ -37,7 +51,17 @@ namespace SubTerra.App.UI.Progression
                     upgradeButtons[i]?.SetSnapshot(upgrades);
                 }
 
-                upgradeListText.text = "업그레이드를 선택하세요.";
+                ApplyCategoryFilterToButtons();
+                if (upgradeListText != null)
+                {
+                    upgradeListText.text = "탭에서 업그레이드를 선택하세요.";
+                }
+
+                return;
+            }
+
+            if (upgradeListText == null)
+            {
                 return;
             }
 
@@ -47,12 +71,17 @@ namespace SubTerra.App.UI.Progression
                 for (var i = 0; i < upgrades.Count; i++)
                 {
                     var item = upgrades[i];
-                    if (i > 0)
+                    if (!UpgradeCategoryRules.Matches(item.UpgradeId, activeCategory))
+                    {
+                        continue;
+                    }
+
+                    if (builder.Length > 0)
                     {
                         builder.AppendLine();
                     }
 
-                    builder.Append(item.DisplayName)
+                    builder.Append(ItemDisplayNames.PreferDisplay(item.UpgradeId, item.DisplayName))
                         .Append("  Lv.")
                         .Append(item.CurrentLevel)
                         .Append('/')
@@ -60,7 +89,9 @@ namespace SubTerra.App.UI.Progression
                 }
             }
 
-            upgradeListText.text = builder.ToString();
+            upgradeListText.text = builder.Length > 0
+                ? builder.ToString()
+                : "이 탭에 업그레이드가 없습니다.";
         }
 
         public void SetSelectedUpgrade(UpgradeSnapshot upgrade)
@@ -70,8 +101,9 @@ namespace SubTerra.App.UI.Progression
                 return;
             }
 
+            var name = ItemDisplayNames.PreferDisplay(upgrade.UpgradeId, upgrade.DisplayName);
             var builder = new StringBuilder()
-                .Append(upgrade.DisplayName)
+                .Append(name)
                 .Append("  Lv.")
                 .Append(upgrade.CurrentLevel)
                 .Append('/')
@@ -95,15 +127,16 @@ namespace SubTerra.App.UI.Progression
                         builder.Append(", ");
                     }
 
-                    builder.Append(upgrade.NextCosts[i].ItemId)
+                    var cost = upgrade.NextCosts[i];
+                    builder.Append(ItemDisplayNames.Mineral(cost.ItemId))
                         .Append(" x")
-                        .Append(upgrade.NextCosts[i].Quantity);
+                        .Append(cost.Quantity);
                 }
 
                 builder.AppendLine()
                     .Append(upgrade.CanAffordNextLevel
                         ? "구매 가능"
-                        : "자원 부족");
+                        : "자원 부족 (보유 화물 인벤토리 기준)");
             }
 
             detailText.text = builder.ToString();
@@ -144,6 +177,25 @@ namespace SubTerra.App.UI.Progression
             (panelRoot != null ? panelRoot : gameObject).SetActive(visible);
         }
 
+        /// <summary>탭 버튼 클릭 (Inspector persistent 리스너용 인덱스 오버로드).</summary>
+        public void SelectCategoryTab(int categoryIndex)
+        {
+            if (categoryIndex < 0 || categoryIndex > (int)UpgradeCategory.Hazard)
+            {
+                return;
+            }
+
+            var category = (UpgradeCategory)categoryIndex;
+            if (presenter != null)
+            {
+                presenter.SelectCategory(category);
+            }
+            else
+            {
+                SetActiveCategory(category);
+            }
+        }
+
         private void RefreshPurchaseButton()
         {
             if (purchaseButton != null)
@@ -152,6 +204,63 @@ namespace SubTerra.App.UI.Progression
                     && !busy
                     && !selectedAtMaximum
                     && selectedCanAfford;
+            }
+        }
+
+        private void RefreshCategoryTabs()
+        {
+            if (categoryTabButtons == null)
+            {
+                return;
+            }
+
+            for (var i = 0; i < categoryTabButtons.Length; i++)
+            {
+                var button = categoryTabButtons[i];
+                if (button == null)
+                {
+                    continue;
+                }
+
+                var image = button.GetComponent<Image>();
+                if (image != null)
+                {
+                    image.color = i == (int)activeCategory
+                        ? new Color(0.22f, 0.42f, 0.55f, 1f)
+                        : new Color(0.12f, 0.18f, 0.24f, 0.95f);
+                }
+            }
+
+            if (categoryTabLabels != null)
+            {
+                for (var i = 0; i < categoryTabLabels.Length
+                    && i < UpgradeCategoryRules.TabLabels.Length; i++)
+                {
+                    if (categoryTabLabels[i] != null)
+                    {
+                        categoryTabLabels[i].text = UpgradeCategoryRules.TabLabels[i];
+                    }
+                }
+            }
+        }
+
+        private void ApplyCategoryFilterToButtons()
+        {
+            if (upgradeButtons == null)
+            {
+                return;
+            }
+
+            for (var i = 0; i < upgradeButtons.Length; i++)
+            {
+                var entry = upgradeButtons[i];
+                if (entry == null)
+                {
+                    continue;
+                }
+
+                var match = UpgradeCategoryRules.Matches(entry.UpgradeId, activeCategory);
+                entry.gameObject.SetActive(match);
             }
         }
     }

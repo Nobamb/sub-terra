@@ -16,16 +16,19 @@ namespace SubTerra.App.Tests.UI
         [Test]
         public void FormatDefaults_ZeroNullAndNone()
         {
-            Assert.That(HudFormatter.FormatGold(0), Is.EqualTo("0"));
-            Assert.That(HudFormatter.FormatGold(-3), Is.EqualTo("0"));
-            Assert.That(HudFormatter.FormatDepth(0), Is.EqualTo("0"));
-            Assert.That(HudFormatter.FormatCargo(0f), Is.EqualTo("0"));
-            Assert.That(HudFormatter.FormatUnsettledValue(0f), Is.EqualTo("0"));
-            Assert.That(HudFormatter.FormatStructuralRisk(StructuralRiskLevel.Safe), Is.EqualTo(HudFormatter.LabelSafe));
-            Assert.That(HudFormatter.FormatGasRisk(GasRiskLevel.Safe), Is.EqualTo(HudFormatter.LabelSafe));
-            Assert.That(HudFormatter.FormatBuildingSelection(null, null), Is.EqualTo(HudFormatter.DefaultBuildingNone));
+            Assert.That(HudFormatter.FormatGold(0), Is.EqualTo("골드 0"));
+            Assert.That(HudFormatter.FormatGold(-3), Is.EqualTo("골드 0"));
+            Assert.That(HudFormatter.FormatDepth(0), Is.EqualTo("깊이 0m"));
+            Assert.That(HudFormatter.FormatCargo(0f), Is.EqualTo("화물 0"));
+            Assert.That(HudFormatter.FormatUnsettledValue(0f), Is.EqualTo("미정산 0"));
+            Assert.That(HudFormatter.FormatStructuralRisk(StructuralRiskLevel.Safe),
+                Is.EqualTo("구조 " + HudFormatter.LabelSafe));
+            Assert.That(HudFormatter.FormatGasRisk(GasRiskLevel.Safe),
+                Is.EqualTo("가스 " + HudFormatter.LabelSafe));
+            Assert.That(HudFormatter.FormatBuildingSelection(null, null),
+                Is.EqualTo("시설 " + HudFormatter.DefaultBuildingNone));
             Assert.That(HudFormatter.FormatBuildingSelection(string.Empty, string.Empty),
-                Is.EqualTo(HudFormatter.DefaultBuildingNone));
+                Is.EqualTo("시설 " + HudFormatter.DefaultBuildingNone));
             Assert.That(HudFormatter.FormatInteractionPrompt(null), Is.EqualTo(HudFormatter.DefaultInteractionEmpty));
             Assert.That(HudFormatter.FormatInteractionPrompt(string.Empty),
                 Is.EqualTo(HudFormatter.DefaultInteractionEmpty));
@@ -35,17 +38,17 @@ namespace SubTerra.App.Tests.UI
         public void FormatRiskAndSelection_UsesDefinedLabels()
         {
             Assert.That(HudFormatter.FormatStructuralRisk(StructuralRiskLevel.Caution),
-                Is.EqualTo(HudFormatter.LabelCaution));
+                Is.EqualTo("구조 " + HudFormatter.LabelCaution));
             Assert.That(HudFormatter.FormatStructuralRisk(StructuralRiskLevel.Critical),
-                Is.EqualTo(HudFormatter.LabelCritical));
+                Is.EqualTo("구조 " + HudFormatter.LabelCritical));
             Assert.That(HudFormatter.FormatGasRisk(GasRiskLevel.Elevated),
-                Is.EqualTo(HudFormatter.LabelGasElevated));
+                Is.EqualTo("가스 " + HudFormatter.LabelGasElevated));
             Assert.That(HudFormatter.FormatGasRisk(GasRiskLevel.Hazard),
-                Is.EqualTo(HudFormatter.LabelGasHazard));
+                Is.EqualTo("가스 " + HudFormatter.LabelGasHazard));
             Assert.That(HudFormatter.FormatBuildingSelection("building.support.basic", "기본 버팀목"),
-                Is.EqualTo("기본 버팀목"));
+                Is.EqualTo("시설 기본 버팀목"));
             Assert.That(HudFormatter.FormatBuildingSelection("building.support.basic", null),
-                Is.EqualTo("building.support.basic"));
+                Is.EqualTo("시설 building.support.basic"));
             Assert.That(HudFormatter.FormatInteractionPrompt("E: 충전"), Is.EqualTo("E: 충전"));
         }
 

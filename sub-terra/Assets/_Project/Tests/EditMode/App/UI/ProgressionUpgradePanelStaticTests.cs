@@ -49,8 +49,21 @@ namespace SubTerra.App.Tests.UI
             Assert.That(File.Exists(entryPath), Is.True);
             Assert.That(File.ReadAllText(entryPath), Does.Contain("binder?.SelectUpgrade(upgradeId)"));
             Assert.That(File.ReadAllText(viewPath), Does.Contain("selectedCanAfford"));
+            Assert.That(File.ReadAllText(viewPath), Does.Contain("SelectCategoryTab"));
             Assert.That(File.ReadAllText(binderPath), Does.Contain("presenter?.Refresh()"));
             Assert.That(File.ReadAllText(builderPath), Does.Contain("CreateUpgradeEntries"));
+
+            var categoryPath = Path.Combine(
+                root,
+                "Assets",
+                "_Project",
+                "Scripts",
+                "App",
+                "Progression",
+                "UpgradeCategory.cs");
+            Assert.That(File.Exists(categoryPath), Is.True);
+            Assert.That(File.ReadAllText(categoryPath), Does.Contain("UpgradeCategory"));
+            Assert.That(File.ReadAllText(categoryPath), Does.Contain("Drone"));
         }
     }
 }

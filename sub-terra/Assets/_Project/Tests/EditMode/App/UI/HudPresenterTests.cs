@@ -19,7 +19,7 @@ namespace SubTerra.App.Tests.UI
             state.AddGold(10);
 
             Assert.That(view.GoldCount, Is.EqualTo(1));
-            Assert.That(view.Gold, Is.EqualTo("15"));
+            Assert.That(view.Gold, Is.EqualTo(HudFormatter.FormatGold(15)));
             Assert.That(view.EnergyCount, Is.Zero);
             Assert.That(view.DepthCount, Is.Zero);
             Assert.That(view.CargoCount, Is.Zero);
@@ -48,14 +48,14 @@ namespace SubTerra.App.Tests.UI
             presenter.Bind(state);
 
             Assert.That(view.Energy, Is.EqualTo(HudFormatter.FormatEnergy(40, 120)));
-            Assert.That(view.Gold, Is.EqualTo("77"));
-            Assert.That(view.Depth, Is.EqualTo("12"));
+            Assert.That(view.Gold, Is.EqualTo(HudFormatter.FormatGold(77)));
+            Assert.That(view.Depth, Is.EqualTo(HudFormatter.FormatDepth(12)));
             Assert.That(view.Cargo, Is.EqualTo(HudFormatter.FormatCargo(3.5f)));
-            Assert.That(view.UnsettledValue, Is.EqualTo("42"));
-            Assert.That(view.Structural, Is.EqualTo(HudFormatter.LabelCaution));
-            Assert.That(view.GasRisk, Is.EqualTo(HudFormatter.LabelGasElevated));
+            Assert.That(view.UnsettledValue, Is.EqualTo(HudFormatter.FormatUnsettledValue(42f)));
+            Assert.That(view.Structural, Is.EqualTo(HudFormatter.FormatStructuralRisk(StructuralRiskLevel.Caution)));
+            Assert.That(view.GasRisk, Is.EqualTo(HudFormatter.FormatGasRisk(GasRiskLevel.Elevated)));
             Assert.That(view.GasVisible, Is.True);
-            Assert.That(view.Building, Is.EqualTo("기본 조명"));
+            Assert.That(view.Building, Is.EqualTo(HudFormatter.FormatBuildingSelection("building.light.basic", "기본 조명")));
             Assert.That(view.Interaction, Is.EqualTo("F: 상호작용"));
 
             // 최초 렌더는 이벤트 없이 State 스냅샷만 반영한다.
@@ -130,13 +130,13 @@ namespace SubTerra.App.Tests.UI
             view.ResetCounts();
 
             presenter.Bind(state);
-            Assert.That(view.Gold, Is.EqualTo("9"));
+            Assert.That(view.Gold, Is.EqualTo(HudFormatter.FormatGold(9)));
             Assert.That(view.GoldCount, Is.EqualTo(1));
 
             view.ResetCounts();
             state.AddGold(1);
             Assert.That(view.GoldCount, Is.EqualTo(1));
-            Assert.That(view.Gold, Is.EqualTo("10"));
+            Assert.That(view.Gold, Is.EqualTo(HudFormatter.FormatGold(10)));
             Assert.That(view.EnergyCount, Is.Zero);
         }
 
@@ -154,8 +154,8 @@ namespace SubTerra.App.Tests.UI
             Assert.That(view.CargoCount, Is.EqualTo(1));
             Assert.That(view.UnsettledValueCount, Is.EqualTo(1));
             Assert.That(view.GoldCount, Is.Zero);
-            Assert.That(view.Cargo, Is.EqualTo("2"));
-            Assert.That(view.UnsettledValue, Is.EqualTo("15"));
+            Assert.That(view.Cargo, Is.EqualTo(HudFormatter.FormatCargo(2f)));
+            Assert.That(view.UnsettledValue, Is.EqualTo(HudFormatter.FormatUnsettledValue(15f)));
         }
 
         [Test]

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Mineral_Iron
   m_EditorClassIdentifier: SubTerra.App::SubTerra.App.Core.Data.MineralData
   id: mineral.iron
-  displayName: Iron
+  displayName: "\uCCA0"
   unitWeight: 2
   unitPrice: 15
   icon: {fileID: -5349939458896161623, guid: a24b9605246fd964190756219d2b0ebf, type: 2}

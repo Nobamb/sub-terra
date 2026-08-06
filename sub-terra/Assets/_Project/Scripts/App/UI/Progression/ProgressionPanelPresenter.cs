@@ -15,14 +15,20 @@ namespace SubTerra.App.UI.Progression
         private Func<int> completedObjectivesProvider;
         private string selectedUpgradeId = string.Empty;
         private bool busy;
+        private UpgradeCategory activeCategory = UpgradeCategory.Drill;
 
         public bool IsBound => service != null;
         public bool IsBusy => busy;
         public string SelectedUpgradeId => selectedUpgradeId;
+        public UpgradeCategory ActiveCategory => activeCategory;
 
         public ProgressionPanelPresenter(IProgressionPanelView view)
         {
             this.view = view;
+            if (view is ProgressionPanelView panelView)
+            {
+                panelView.BindPresenter(this);
+            }
         }
 
         public void Bind(ProgressionService progression)
@@ -42,6 +48,12 @@ namespace SubTerra.App.UI.Progression
                 service.DeepZoneAccessChanged += OnDeepZoneAccessChanged;
             }
 
+            if (view is ProgressionPanelView panelView)
+            {
+                panelView.BindPresenter(this);
+                panelView.SetActiveCategory(activeCategory);
+            }
+
             view?.SetBusy(false);
             view?.SetPurchaseResult(string.Empty, string.Empty);
             Refresh();
@@ -50,6 +62,19 @@ namespace SubTerra.App.UI.Progression
             {
                 RefreshDeepZoneAccess(completedObjectivesProvider(), persistUnlock: true);
             }
+        }
+
+        /// <summary>탭 전환. 해당 카테고리 첫 업그레이드를 자동 선택한다.</summary>
+        public void SelectCategory(UpgradeCategory category)
+        {
+            activeCategory = category;
+            if (view is ProgressionPanelView panelView)
+            {
+                panelView.SetActiveCategory(category);
+            }
+
+            selectedUpgradeId = string.Empty;
+            Refresh();
         }
 
         public void Unbind()
@@ -148,9 +173,21 @@ namespace SubTerra.App.UI.Progression
 
             var snapshots = service.GetSnapshots();
             view?.SetUpgradeList(snapshots);
-            if (string.IsNullOrEmpty(selectedUpgradeId) && snapshots.Count > 0)
+
+            // 현재 탭에 속한 항목만 자동 선택 후보로 쓴다.
+            if (string.IsNullOrEmpty(selectedUpgradeId)
+                || !UpgradeCategoryRules.Matches(selectedUpgradeId, activeCategory))
             {
-                SelectUpgrade(snapshots[0].UpgradeId);
+                for (var i = 0; i < snapshots.Count; i++)
+                {
+                    if (UpgradeCategoryRules.Matches(snapshots[i].UpgradeId, activeCategory))
+                    {
+                        SelectUpgrade(snapshots[i].UpgradeId);
+                        return;
+                    }
+                }
+
+                selectedUpgradeId = string.Empty;
                 return;
             }
 

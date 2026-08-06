@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using SubTerra.App.Core.Data;
 using SubTerra.App.Economy;
 using SubTerra.Shared;
+// ItemDisplayNames: 업그레이드 표시 이름 한국어 폴백
 
 namespace SubTerra.App.Progression
 {
@@ -216,15 +217,20 @@ namespace SubTerra.App.Progression
                 && data.Levels[current] != null)
             {
                 nextEffect = data.Levels[current].EffectValue;
-                nextCosts = ItemCostMapping.ToDtoList(data.Levels[current].Costs);
-                canAffordNextLevel = nextCosts.Count > 0
-                    && wallet != null
-                    && wallet.CanAfford(nextCosts);
+                var rawCosts = ItemCostMapping.ToDtoList(data.Levels[current].Costs);
+                // TryPurchase와 동일하게 정규화한 뒤 지불 가능 여부를 판정한다.
+                if (CostAggregator.TryNormalize(rawCosts, out var normalized, out _)
+                    && normalized.Count > 0)
+                {
+                    nextCosts = normalized;
+                    canAffordNextLevel = wallet != null && wallet.CanAfford(normalized);
+                }
             }
 
+            var displayName = ItemDisplayNames.PreferDisplay(data.Id, data.DisplayName);
             snapshot = new UpgradeSnapshot(
                 data.Id,
-                data.DisplayName,
+                displayName,
                 current,
                 data.MaxLevel,
                 currentEffect,

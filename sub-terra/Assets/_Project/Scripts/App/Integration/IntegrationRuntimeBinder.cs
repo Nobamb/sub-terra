@@ -201,6 +201,13 @@ namespace SubTerra.App.Integration
                 runtime.Progression,
                 () => bootstrap?.State?.Progress?.CompletedObjectives ?? 0);
 
+            // 인벤토리 변경 시 업그레이드 구매 가능 표시를 즉시 갱신한다.
+            if (runtime.InventoryService != null)
+            {
+                runtime.InventoryService.InventoryChanged -= OnInventoryChangedForProgression;
+                runtime.InventoryService.InventoryChanged += OnInventoryChangedForProgression;
+            }
+
             droneSensor?.SetUpgradeEffects(runtime.Progression?.Effects);
 
             eventFanOut = new IntegrationEventFanOut();
@@ -410,11 +417,21 @@ namespace SubTerra.App.Integration
                 CargoSpeedPolicy.Evaluate(snapshot.CurrentWeight, snapshot.MaxCapacity));
         }
 
+        private void OnInventoryChangedForProgression(InventorySnapshot _)
+        {
+            progressionPanelBinder?.Presenter?.Refresh();
+        }
+
         private void OnDestroy()
         {
             if (inventorySpeedBound && runtime?.InventoryService != null)
             {
                 runtime.InventoryService.InventoryChanged -= OnInventoryChangedForMovement;
+            }
+
+            if (runtime?.InventoryService != null)
+            {
+                runtime.InventoryService.InventoryChanged -= OnInventoryChangedForProgression;
             }
 
             inventorySpeedBound = false;

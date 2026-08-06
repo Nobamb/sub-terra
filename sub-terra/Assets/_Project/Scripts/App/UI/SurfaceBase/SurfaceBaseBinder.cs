@@ -1,4 +1,5 @@
 using SubTerra.App.Core;
+using SubTerra.App.Inventory;
 using SubTerra.App.Save;
 using SubTerra.App.UI.Economy;
 using SubTerra.App.UI.MainMenu;
@@ -23,6 +24,7 @@ namespace SubTerra.App.UI.SurfaceBase
 
         private SurfaceBasePresenter presenter;
         private SettingsSession settings;
+        private InventoryService boundInventory;
 
         public SurfaceBasePresenter Presenter => presenter;
         public bool IsBound => presenter != null;
@@ -57,6 +59,13 @@ namespace SubTerra.App.UI.SurfaceBase
                     () => state != null && state.Progress != null
                         ? state.Progress.CompletedObjectives
                         : 0);
+            }
+
+            // 채굴·판매 후 보유량이 바뀌면 업그레이드 구매 가능 여부를 즉시 갱신한다.
+            boundInventory = runtime.InventoryService;
+            if (boundInventory != null)
+            {
+                boundInventory.InventoryChanged += OnInventoryChangedForProgression;
             }
 
             presenter = new SurfaceBasePresenter(view);
@@ -105,8 +114,19 @@ namespace SubTerra.App.UI.SurfaceBase
             }
 
             settings = null;
+            if (boundInventory != null)
+            {
+                boundInventory.InventoryChanged -= OnInventoryChangedForProgression;
+                boundInventory = null;
+            }
+
             economyBinder?.Unbind();
             progressionBinder?.Presenter?.Unbind();
+        }
+
+        private void OnInventoryChangedForProgression(InventorySnapshot _)
+        {
+            progressionBinder?.Presenter?.Refresh();
         }
 
         public bool HasRequiredReferences()

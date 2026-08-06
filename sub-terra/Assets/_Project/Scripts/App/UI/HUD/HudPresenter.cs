@@ -90,7 +90,7 @@ namespace SubTerra.App.UI.HUD
             view.SetStructuralRisk(HudFormatter.FormatStructuralRisk(StructuralRiskLevel.Safe));
             view.SetGasRisk(HudFormatter.FormatGasRisk(GasRiskLevel.Safe));
             view.SetGasWarningVisible(false);
-            view.SetBuildingSelection(HudFormatter.DefaultBuildingNone);
+            view.SetBuildingSelection(HudFormatter.FormatBuildingSelection(string.Empty, string.Empty));
             view.SetInteractionPrompt(HudFormatter.DefaultInteractionEmpty);
         }
 

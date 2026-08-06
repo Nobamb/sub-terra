@@ -14,6 +14,8 @@ namespace SubTerra.App.UI.Progression
         [SerializeField] private ProgressionPanelBinder binder;
         [SerializeField] private TMP_Text label;
 
+        public string UpgradeId => upgradeId;
+
         private Button button;
 
         private void Awake()

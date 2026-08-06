@@ -38,15 +38,17 @@ namespace SubTerra.App.UI.HUD
 
         public static string FormatGold(int gold)
         {
-            return gold < 0 ? "0" : gold.ToString();
+            var safe = gold < 0 ? 0 : gold;
+            return "골드 " + safe;
         }
 
         public static string FormatDepth(int depth)
         {
-            return depth < 0 ? "0" : depth.ToString();
+            var safe = depth < 0 ? 0 : depth;
+            return "깊이 " + safe + "m";
         }
 
-        public static string FormatCargo(float cargoWeight)
+        public static string FormatCargoAmount(float cargoWeight)
         {
             if (cargoWeight < 0f)
             {
@@ -56,6 +58,17 @@ namespace SubTerra.App.UI.HUD
             return cargoWeight.ToString("0.#");
         }
 
+        public static string FormatCargo(float cargoWeight)
+        {
+            return "화물 " + FormatCargoAmount(cargoWeight);
+        }
+
+        public static string FormatCargoSummary(float currentWeight, float maxCapacity)
+        {
+            return "화물 " + FormatCargoAmount(currentWeight)
+                + " / " + FormatCargoAmount(maxCapacity);
+        }
+
         public static string FormatUnsettledValue(float value)
         {
             if (value < 0f)
@@ -63,7 +76,7 @@ namespace SubTerra.App.UI.HUD
                 value = 0f;
             }
 
-            return value.ToString("0");
+            return "미정산 " + value.ToString("0");
         }
 
         public static string FormatStructuralRisk(StructuralRiskLevel level)
@@ -71,11 +84,11 @@ namespace SubTerra.App.UI.HUD
             switch (level)
             {
                 case StructuralRiskLevel.Caution:
-                    return LabelCaution;
+                    return "구조 " + LabelCaution;
                 case StructuralRiskLevel.Critical:
-                    return LabelCritical;
+                    return "구조 " + LabelCritical;
                 default:
-                    return LabelSafe;
+                    return "구조 " + LabelSafe;
             }
         }
 
@@ -84,11 +97,11 @@ namespace SubTerra.App.UI.HUD
             switch (level)
             {
                 case GasRiskLevel.Elevated:
-                    return LabelGasElevated;
+                    return "가스 " + LabelGasElevated;
                 case GasRiskLevel.Hazard:
-                    return LabelGasHazard;
+                    return "가스 " + LabelGasHazard;
                 default:
-                    return LabelSafe;
+                    return "가스 " + LabelSafe;
             }
         }
 
@@ -96,15 +109,15 @@ namespace SubTerra.App.UI.HUD
         {
             if (!selection.HasSelection)
             {
-                return DefaultBuildingNone;
+                return "시설 " + DefaultBuildingNone;
             }
 
             if (!string.IsNullOrEmpty(selection.DisplayName))
             {
-                return selection.DisplayName;
+                return "시설 " + selection.DisplayName;
             }
 
-            return selection.BuildingId;
+            return "시설 " + selection.BuildingId;
         }
 
         public static string FormatBuildingSelection(string buildingId, string displayName)

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Mineral_Copper
   m_EditorClassIdentifier: SubTerra.App::SubTerra.App.Core.Data.MineralData
   id: mineral.copper
-  displayName: Copper
+  displayName: "\uAD6C\uB9AC"
   unitWeight: 1.5
   unitPrice: 10
   icon: {fileID: 7479408425341918238, guid: d338226fc193fb844b6fb7edc79e2f73, type: 2}

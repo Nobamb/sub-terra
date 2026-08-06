@@ -63,8 +63,7 @@ namespace SubTerra.App.UI.Inventory
             }
 
             view.SetCargoSummary(
-                HudFormatter.FormatCargo(snapshot.CurrentWeight) + " / " +
-                HudFormatter.FormatCargo(snapshot.MaxCapacity));
+                HudFormatter.FormatCargoSummary(snapshot.CurrentWeight, snapshot.MaxCapacity));
             view.SetUnsettledValue(HudFormatter.FormatUnsettledValue(snapshot.UnsettledValue));
             view.SetStacksText(FormatStacks(snapshot));
             view.SetStacks(CreateStackReadModels(snapshot));
@@ -72,7 +71,7 @@ namespace SubTerra.App.UI.Inventory
 
         private void RenderEmpty()
         {
-            view.SetCargoSummary(HudFormatter.FormatCargo(0f) + " / " + HudFormatter.FormatCargo(0f));
+            view.SetCargoSummary(HudFormatter.FormatCargoSummary(0f, 0f));
             view.SetUnsettledValue(HudFormatter.FormatUnsettledValue(0f));
             view.SetStacksText(string.Empty);
             view.SetStacks(System.Array.Empty<InventoryStackReadModel>());

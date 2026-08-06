@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Text;
+using SubTerra.App.Core.Data;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -13,12 +14,24 @@ namespace SubTerra.App.UI.Building
         [SerializeField] private TMP_Text selectionText;
         [SerializeField] private TMP_Text availabilityText;
         [SerializeField] private TMP_Text statusText;
+        // prompt-B 33: X 버튼과 겹치는 민트 아이콘 제거 — 필드는 호환용으로만 남긴다.
         [SerializeField] private Image selectedIcon;
+        // prompt-B 31-1/33: 건설 취소 버튼 제거. 참조가 있으면 숨긴다.
         [SerializeField] private Button cancelButton;
         [SerializeField] private Button closeButton;
         [SerializeField] private GameObject panelRoot;
 
         public Button CloseButton => closeButton;
+
+        private void Awake()
+        {
+            HideLegacyChrome();
+        }
+
+        private void OnEnable()
+        {
+            HideLegacyChrome();
+        }
 
         public void SetBuildingList(IReadOnlyList<BuildingMenuItemReadModel> items)
         {
@@ -53,10 +66,11 @@ namespace SubTerra.App.UI.Building
                 return;
             }
 
+            // 우측 상단 X와 겹치던 SelectedIcon은 더 이상 표시하지 않는다.
             if (selectedIcon != null)
             {
-                selectedIcon.sprite = item.Icon;
-                selectedIcon.enabled = item.Icon != null;
+                selectedIcon.sprite = null;
+                selectedIcon.enabled = false;
             }
 
             if (selectionText != null)
@@ -79,7 +93,7 @@ namespace SubTerra.App.UI.Building
                     }
 
                     var cost = item.Costs[i];
-                    builder.Append(cost.ItemId)
+                    builder.Append(ItemDisplayNames.Mineral(cost.ItemId))
                         .Append(' ')
                         .Append(cost.Owned)
                         .Append('/')
@@ -87,11 +101,6 @@ namespace SubTerra.App.UI.Building
                 }
 
                 selectionText.text = builder.ToString();
-            }
-
-            if (cancelButton != null)
-            {
-                cancelButton.interactable = true;
             }
         }
 
@@ -107,10 +116,19 @@ namespace SubTerra.App.UI.Building
                 selectedIcon.sprite = null;
                 selectedIcon.enabled = false;
             }
+        }
+
+        private void HideLegacyChrome()
+        {
+            if (selectedIcon != null)
+            {
+                selectedIcon.enabled = false;
+                selectedIcon.gameObject.SetActive(false);
+            }
 
             if (cancelButton != null)
             {
-                cancelButton.interactable = false;
+                cancelButton.gameObject.SetActive(false);
             }
         }
 
