@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: storage_basicPlacement
   m_EditorClassIdentifier: SubTerra.Gameplay.Building::SubTerra.Gameplay.Building.BuildingPlacementDefinition
   buildingId: building.storage.basic
-  runtimePrefab: {fileID: 3766932780806278260, guid: d9f8a92858c77d94f808199827a493f8, type: 3}
+  runtimePrefab: {fileID: 8399673546014846682, guid: d0c7a301147833d46a0eda454df6de31, type: 3}
   footprint: {x: 1, y: 1}
   requiresGround: 1
   costs:

@@ -4,6 +4,7 @@ using SubTerra.App.Core.Data;
 using SubTerra.App.Integration;
 using SubTerra.App.UI;
 using SubTerra.App.UI.Building;
+using SubTerra.App.UI.HUD;
 using SubTerra.App.UI.Inventory;
 using SubTerra.App.UI.Progression;
 using TMPro;
@@ -49,6 +50,8 @@ namespace SubTerra.App.Editor.DataValidation
             }
 
             RemoveLegacyDirectBuildingPanels(canvas.transform);
+            RemoveLegacyHudPanelChrome(canvas);
+            RemoveLegacyOpenButtons(canvas.transform);
 
             PositionExistingHud(canvas.transform);
             var layout = new GameObject("PanelLayout", typeof(RectTransform));
@@ -67,13 +70,19 @@ namespace SubTerra.App.Editor.DataValidation
             var upgradeBinder = upgrade.GetComponent<ProgressionPanelBinder>();
             var controller = layout.AddComponent<PanelToggleController>();
             AssignController(controller, building, inventory, upgrade, guide, drone, buildingBinder);
+            RemoveExistingCloseButtons(building.transform);
             AddCloseButton(building.transform, controller, "CloseBuilding", new Vector2(-18f, -18f));
+            RemoveExistingCloseButtons(inventory.transform);
             AddCloseButton(inventory.transform, controller, "CloseInventory", new Vector2(-18f, -18f));
+            RemoveExistingCloseButtons(upgrade.transform);
             AddCloseButton(upgrade.transform, controller, "CloseUpgrade", new Vector2(-18f, -18f));
+            RemoveExistingCloseButtons(guide.transform);
             AddCloseButton(guide.transform, controller, "CloseGameGuide", new Vector2(-18f, -18f));
+            RemoveExistingCloseButtons(drone.transform);
             AddCloseButton(drone.transform, controller, "CloseDiggerBot", new Vector2(-18f, -18f));
             CreateShortcutBar(layout.transform, controller);
             WireRuntimeBinders(buildingBinder, inventoryBinder, upgradeBinder, drone.GetComponent<SubTerra.App.UI.Drone.DroneUiBinder>());
+            SetInitialVisibility(building, inventory, upgrade, guide, drone);
 
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);
@@ -116,6 +125,36 @@ namespace SubTerra.App.Editor.DataValidation
             for (var i = 0; i < legacyPanels.Count; i++)
             {
                 UnityEngine.Object.DestroyImmediate(legacyPanels[i]);
+            }
+        }
+
+        // Phase Q 이후에는 PanelToggleController가 보조 패널의 표시 상태를 단독으로 관리한다.
+        // 이전 컨트롤러가 남아 있으면 입력과 버튼 리스너가 이중으로 실행될 수 있다.
+        private static void RemoveLegacyHudPanelChrome(GameObject canvas)
+        {
+            var legacyController = canvas.GetComponent<HudPanelChromeController>();
+            if (legacyController != null)
+            {
+                UnityEngine.Object.DestroyImmediate(legacyController);
+            }
+        }
+
+        private static void RemoveLegacyOpenButtons(Transform canvas)
+        {
+            var legacyButtonNames = new[]
+            {
+                "OpenBuildingMenuButton",
+                "OpenDiggerBotButton",
+                "OpenGameGuideButton"
+            };
+
+            for (var i = 0; i < legacyButtonNames.Length; i++)
+            {
+                var legacyButton = canvas.Find(legacyButtonNames[i]);
+                if (legacyButton != null)
+                {
+                    UnityEngine.Object.DestroyImmediate(legacyButton.gameObject);
+                }
             }
         }
 
@@ -226,6 +265,29 @@ namespace SubTerra.App.Editor.DataValidation
             AddControllerListener(button, controller, method);
         }
 
+        private static void RemoveExistingCloseButtons(Transform parent)
+        {
+            var buttons = parent.GetComponentsInChildren<Button>(true);
+            for (var i = 0; i < buttons.Length; i++)
+            {
+                if (buttons[i] != null && buttons[i].name == "CloseButton")
+                {
+                    UnityEngine.Object.DestroyImmediate(buttons[i].gameObject);
+                }
+            }
+        }
+
+        private static void SetInitialVisibility(params GameObject[] panels)
+        {
+            for (var i = 0; i < panels.Length; i++)
+            {
+                if (panels[i] != null)
+                {
+                    panels[i].SetActive(false);
+                }
+            }
+        }
+
         private static void AddControllerListener(Button button, PanelToggleController controller, string method)
         {
             switch (method)
@@ -315,7 +377,7 @@ namespace SubTerra.App.Editor.DataValidation
                 }
             }
 
-            var objective = canvas.Find("DemoObjectiveRoot");
+            var objective = FindDescendant(canvas, "DemoObjectiveRoot");
             if (objective == null) return;
             PositionObjectiveText(objective, "ObjectiveTitle", 0.72f, 0.76f, 20f);
             PositionObjectiveText(objective, "ObjectiveBody", 0.64f, 0.69f, 16f);
@@ -331,6 +393,20 @@ namespace SubTerra.App.Editor.DataValidation
             target.offsetMin = target.offsetMax = Vector2.zero;
             var text = target.GetComponent<TMP_Text>();
             if (text != null) text.fontSize = fontSize;
+        }
+
+        private static Transform FindDescendant(Transform root, string name)
+        {
+            var transforms = root.GetComponentsInChildren<Transform>(true);
+            for (var i = 0; i < transforms.Length; i++)
+            {
+                if (transforms[i].name == name)
+                {
+                    return transforms[i];
+                }
+            }
+
+            return null;
         }
 
         private static GameObject CreatePanel(Transform parent, string name, Vector2 anchor, Vector2 position, Vector2 size)

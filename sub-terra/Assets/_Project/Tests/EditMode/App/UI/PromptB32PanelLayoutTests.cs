@@ -2,6 +2,7 @@ using System.Linq;
 using NUnit.Framework;
 using SubTerra.App.Core.Data;
 using SubTerra.App.Editor.DataValidation;
+using SubTerra.App.UI;
 using SubTerra.App.UI.Building;
 using SubTerra.App.UI.HUD;
 using SubTerra.App.UI.Inventory;
@@ -20,12 +21,6 @@ namespace SubTerra.App.Tests.UI
         private const string ScenePath =
             "Assets/_Project/Scenes/App/Mine_Demo_Integration.unity";
 
-        [OneTimeSetUp]
-        public void BuildLayout()
-        {
-            PromptB32LayoutBuilder.Build();
-        }
-
         [Test]
         public void IntegrationScene_RemovesRightCenterOpenButtons()
         {
@@ -36,20 +31,22 @@ namespace SubTerra.App.Tests.UI
             Assert.That(canvas.transform.Find("OpenGameGuideButton"), Is.Null);
             Assert.That(canvas.transform.Find("OpenBuildingMenuButton"), Is.Null);
             // 드론 재열기는 유지 가능.
-            Assert.That(canvas.transform.Find("OpenDiggerBotButton"), Is.Not.Null);
+            Assert.That(canvas.transform.Find("OpenDiggerBotButton"), Is.Null);
+            Assert.That(FindTransform(scene, "PanelShortcutBar"), Is.Not.Null);
         }
 
         [Test]
         public void BuildingPanel_HasOnlyXClose_AndIncreasedSize()
         {
             var scene = OpenIntegration();
-            var building = FindTransform(scene, "BuildingPanel")
-                ?? FindTransform(scene, "BuildingMenu");
+            var layout = FindTransform(scene, "PanelLayout");
+            Assert.That(layout, Is.Not.Null);
+            var building = layout.Find("BuildingPanel");
             Assert.That(building, Is.Not.Null);
 
             var rect = building as RectTransform;
-            Assert.That(rect.sizeDelta.x, Is.EqualTo(480f).Within(0.5f));
-            Assert.That(rect.sizeDelta.y, Is.EqualTo(560f).Within(0.5f));
+            Assert.That(rect.sizeDelta.x, Is.EqualTo(440f).Within(0.5f));
+            Assert.That(rect.sizeDelta.y, Is.EqualTo(500f).Within(0.5f));
 
             var closeButtons = building.GetComponentsInChildren<Button>(true)
                 .Where(b => b.name == "CloseButton")
@@ -73,10 +70,10 @@ namespace SubTerra.App.Tests.UI
         {
             var scene = OpenIntegration();
             var bar = FindTransform(scene, "PanelShortcutBar");
-            var chrome = Find<Canvas>(scene, "HUDCanvas")
-                ?.GetComponent<HudPanelChromeController>();
+            var controller = FindTransform(scene, "PanelLayout")
+                ?.GetComponent<PanelToggleController>();
             Assert.That(bar, Is.Not.Null);
-            Assert.That(chrome, Is.Not.Null);
+            Assert.That(controller, Is.Not.Null);
 
             var buttons = bar.GetComponentsInChildren<Button>(true);
             Assert.That(buttons.Length, Is.GreaterThanOrEqualTo(3));
@@ -85,7 +82,7 @@ namespace SubTerra.App.Tests.UI
             {
                 for (var i = 0; i < button.onClick.GetPersistentEventCount(); i++)
                 {
-                    if (button.onClick.GetPersistentTarget(i) == chrome
+                    if (button.onClick.GetPersistentTarget(i) == controller
                         && button.onClick.GetPersistentMethodName(i) == method)
                     {
                         return true;
@@ -115,9 +112,9 @@ namespace SubTerra.App.Tests.UI
             Assert.That(buildingBtn, Is.Not.Null);
             Assert.That(inventoryBtn, Is.Not.Null);
             Assert.That(guideBtn, Is.Not.Null);
-            Assert.That(HasListener(buildingBtn, nameof(HudPanelChromeController.ToggleBuildingMenu)), Is.True);
-            Assert.That(HasListener(inventoryBtn, nameof(HudPanelChromeController.ToggleInventoryPanel)), Is.True);
-            Assert.That(HasListener(guideBtn, nameof(HudPanelChromeController.ToggleGameGuide)), Is.True);
+            Assert.That(HasListener(buildingBtn, nameof(PanelToggleController.ToggleBuilding)), Is.True);
+            Assert.That(HasListener(inventoryBtn, nameof(PanelToggleController.ToggleInventory)), Is.True);
+            Assert.That(HasListener(guideBtn, nameof(PanelToggleController.ToggleGameGuide)), Is.True);
         }
 
         [Test]
@@ -155,8 +152,6 @@ namespace SubTerra.App.Tests.UI
                 so.FindProperty("gameGuideOpen").boolValue = false;
                 so.FindProperty("inventoryPanelOpen").boolValue = false;
                 so.ApplyModifiedPropertiesWithoutUndo();
-
-                chrome.SendMessage("Awake", SendMessageOptions.DontRequireReceiver);
 
                 Assert.That(chrome.HasRequiredReferences(), Is.True);
 
@@ -215,7 +210,9 @@ namespace SubTerra.App.Tests.UI
         public void InventoryPanel_HasStackRowsWithIcons()
         {
             var scene = OpenIntegration();
-            var inventory = FindTransform(scene, "InventoryPanel");
+            var layout = FindTransform(scene, "PanelLayout");
+            Assert.That(layout, Is.Not.Null);
+            var inventory = layout.Find("InventoryPanel");
             Assert.That(inventory, Is.Not.Null);
             Assert.That(inventory.gameObject.activeSelf, Is.False);
 

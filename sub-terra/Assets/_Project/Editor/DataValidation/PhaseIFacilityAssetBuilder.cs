@@ -17,6 +17,7 @@ namespace SubTerra.App.Editor.DataValidation
         public static void BuildFromMenu()
         {
             MvpDataAssetBuilder.BuildAll();
+            PhaseFSupportBuilder.Build();
             EnsureFolder("Assets/_Project/Prefabs/Gameplay", "Power");
 
             GameObject light = CreateFacility("LightFacility", 1, PowerPriority.High, new Color(1f, 0.86f, 0.25f));
@@ -30,10 +31,42 @@ namespace SubTerra.App.Editor.DataValidation
             UpdateBuildingData("Building_Storage_Basic.asset", storage);
             UpdateBuildingData("Building_Settlement_Basic.asset", settlement);
             UpdateBuildingData("Building_OutpostCore_Basic.asset", core);
+            RestoreMineralVisualIcons();
+            FacilityPurchaseFlowBuilder.Build();
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
             Debug.Log("[SubTerra] Phase I facility prefabs and BuildingData references are ready.");
+        }
+
+        private static void RestoreMineralVisualIcons()
+        {
+            var pairs = new[]
+            {
+                ("Assets/_Project/Data/Minerals/Mineral_Copper.asset", "Assets/_Project/Visuals/Graybox/Terrain/CopperVisual.asset"),
+                ("Assets/_Project/Data/Minerals/Mineral_Iron.asset", "Assets/_Project/Visuals/Graybox/Terrain/IronVisual.asset"),
+                ("Assets/_Project/Data/Minerals/Mineral_Lithium.asset", "Assets/_Project/Visuals/Graybox/Terrain/LithiumVisual.asset")
+            };
+
+            for (var i = 0; i < pairs.Length; i++)
+            {
+                var mineral = AssetDatabase.LoadAssetAtPath<MineralData>(pairs[i].Item1);
+                var assets = AssetDatabase.LoadAllAssetsAtPath(pairs[i].Item2);
+                Sprite icon = null;
+                for (var j = 0; j < assets.Length; j++)
+                {
+                    icon = assets[j] as Sprite;
+                    if (icon != null) break;
+                }
+
+                if (mineral == null || icon == null)
+                {
+                    throw new System.InvalidOperationException("Missing mineral visual data: " + pairs[i].Item1);
+                }
+
+                mineral.EditorSet(mineral.Id, mineral.DisplayName, mineral.UnitWeight, mineral.UnitPrice, icon);
+                EditorUtility.SetDirty(mineral);
+            }
         }
 
         private static GameObject CreateFacility(

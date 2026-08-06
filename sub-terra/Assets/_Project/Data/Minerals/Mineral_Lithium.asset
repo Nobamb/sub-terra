@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Mineral_Lithium
   m_EditorClassIdentifier: SubTerra.App::SubTerra.App.Core.Data.MineralData
   id: mineral.lithium
-  displayName: "\uB9AC\uD2AC"
+  displayName: Lithium
   unitWeight: 0.8
   unitPrice: 40
   icon: {fileID: 8471354916875712057, guid: a01c268f368c2f84182515dd945b8b0f, type: 2}

@@ -61,7 +61,9 @@ namespace SubTerra.Gameplay.Structural.Tests
         {
             // prompt-B 31-3: 위험 원인 블록을 제거하면 구조 위험이 고착되지 않고 안정으로 돌아와야 한다.
             using var fixture = new StructuralFixture(3, true);
-            fixture.Mine(0.5f);
+            // 0.5f는 현재 설정에서 즉시 붕괴 임계값을 넘어 천장이 이미 사라진다.
+            // 이 검증은 위험 원인이 제거되면 Stable로 복구되는지를 다루므로 붕괴 전 상태를 만든다.
+            fixture.Mine(0.1f);
             Assert.That(fixture.System.CurrentRisk, Is.GreaterThan(StructuralRiskLevel.Stable));
 
             // 비지지 천장 타일을 모두 제거한 뒤 재평가를 트리거한다.

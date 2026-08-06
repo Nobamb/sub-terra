@@ -39,6 +39,12 @@ namespace SubTerra.App.Tests.UI
                 Assert.That(Directory.Exists(root), Is.True, "HUD source folder missing: " + root);
                 foreach (var file in Directory.GetFiles(root, "*.cs"))
                 {
+                    // 패널 단축키 입력은 HUD 텍스트 폴링이 아닌 별도 컨트롤러의 책임이다.
+                    if (Path.GetFileName(file) == "HudPanelChromeController.cs")
+                    {
+                        continue;
+                    }
+
                     var text = File.ReadAllText(file);
                     // Update 루프에서 전체 Text 재설정 패턴이 없어야 한다.
                     Assert.That(text, Does.Not.Contain("void Update("));

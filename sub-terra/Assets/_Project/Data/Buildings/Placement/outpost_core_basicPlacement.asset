@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: outpost_core_basicPlacement
   m_EditorClassIdentifier: SubTerra.Gameplay.Building::SubTerra.Gameplay.Building.BuildingPlacementDefinition
   buildingId: building.outpost_core.basic
-  runtimePrefab: {fileID: 3766932780806278260, guid: d9f8a92858c77d94f808199827a493f8, type: 3}
+  runtimePrefab: {fileID: 5310527296871149544, guid: f78e346ee8ac03c4e9a60a46a532574a, type: 3}
   footprint: {x: 1, y: 1}
   requiresGround: 1
   costs:

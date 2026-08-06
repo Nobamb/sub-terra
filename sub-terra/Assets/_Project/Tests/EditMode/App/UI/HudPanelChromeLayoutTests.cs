@@ -1,6 +1,7 @@
 using System.Linq;
 using NUnit.Framework;
 using SubTerra.App.Editor.DataValidation;
+using SubTerra.App.UI;
 using SubTerra.App.UI.Building;
 using SubTerra.App.UI.Drone;
 using SubTerra.App.UI.HUD;
@@ -21,13 +22,9 @@ namespace SubTerra.App.Tests.UI
         [OneTimeSetUp]
         public void BuildLayout()
         {
-            HudPanelChromeLayoutBuilder.Build();
             // prompt-B 31 / 31-1 가이드·좌측 건설·Surface 설정 등 적용.
-            PromptB31_1LayoutBuilder.Build();
             // prompt-B 31-2 건설 목록 텍스트 제거·우측 폭·인벤토리 패널.
-            PromptB31_2LayoutBuilder.Build();
             // prompt-B 32: 우측 중앙 버튼 제거·X 닫기·단축키 단일 경로.
-            PromptB32LayoutBuilder.Build();
         }
 
         [Test]
@@ -65,10 +62,11 @@ namespace SubTerra.App.Tests.UI
 
             var basic = FindRect(scene, "BasicHUD");
             var title = FindRect(scene, "ObjectiveTitle");
-            var digger = FindRect(scene, "DroneDialoguePanel");
+            var digger = FindRect(scene, "DiggerBotPanel");
             var legend = FindTransform(scene, "TerrainLegendPanel");
-            var building = FindRect(scene, "BuildingPanel")
-                ?? FindRect(scene, "BuildingMenu");
+            var layout = FindTransform(scene, "PanelLayout");
+            Assert.That(layout, Is.Not.Null);
+            var building = layout.Find("BuildingPanel") as RectTransform;
             var reason = FindTransform(scene, "DroneReasonPanel");
             var guide = FindTransform(scene, "GameGuidePanel");
 
@@ -80,10 +78,13 @@ namespace SubTerra.App.Tests.UI
 
             // 스테이터스 유지, 퀘스트는 그 아래.
             Assert.That(basic.anchoredPosition.y, Is.EqualTo(-16f).Within(0.5f));
-            Assert.That(title.anchoredPosition.y, Is.LessThan(basic.anchoredPosition.y - basic.sizeDelta.y));
+            // Phase Q는 해상도 대응을 위해 퀘스트를 절대 y값이 아닌 Anchor 영역에 배치한다.
+            // offset이 0이면 anchoredPosition도 0이 될 수 있으므로 Anchor 범위를 검증한다.
+            Assert.That(title.anchorMin.y, Is.EqualTo(0.72f).Within(0.01f));
+            Assert.That(title.anchorMax.y, Is.EqualTo(0.76f).Within(0.01f));
 
             // prompt-B 31: Digger-Bot은 기존 범례 자리(최하단), 범례는 비활성.
-            Assert.That(digger.anchoredPosition.y, Is.EqualTo(24f).Within(0.5f));
+            Assert.That(digger.anchoredPosition.y, Is.EqualTo(112f).Within(0.5f));
             if (legend != null)
             {
                 Assert.That(legend.gameObject.activeSelf, Is.False);
@@ -97,9 +98,8 @@ namespace SubTerra.App.Tests.UI
                 Assert.That(reason.gameObject.activeSelf, Is.False);
             }
 
-            var chrome = canvas.GetComponent<HudPanelChromeController>();
-            Assert.That(chrome, Is.Not.Null);
-            Assert.That(chrome.HasRequiredReferences(), Is.True);
+            Assert.That(layout.GetComponent<PanelToggleController>(), Is.Not.Null);
+            Assert.That(canvas.GetComponent<HudPanelChromeController>(), Is.Null);
 
             // prompt-B 32: 우측 중앙 시설/가이드 재열기 버튼 제거, 드론만 유지.
             var openBuilding = canvas.transform.Find("OpenBuildingMenuButton");
@@ -107,8 +107,8 @@ namespace SubTerra.App.Tests.UI
             var openGuide = canvas.transform.Find("OpenGameGuideButton");
             Assert.That(openBuilding, Is.Null);
             Assert.That(openGuide, Is.Null);
-            Assert.That(openDigger, Is.Not.Null);
-            Assert.That(openDigger.GetComponent<Button>(), Is.Not.Null);
+            Assert.That(openDigger, Is.Null);
+            Assert.That(FindTransform(scene, "PanelShortcutBar"), Is.Not.Null);
 
             // prompt-B 32: 좌측 목록 텍스트 숨김, 패널 폭 480(+20), I키용 인벤토리.
             var listText = building.Find("PanelRoot/BuildingListText")
@@ -118,8 +118,8 @@ namespace SubTerra.App.Tests.UI
                 Assert.That(listText.gameObject.activeSelf, Is.False);
             }
 
-            Assert.That(building.sizeDelta.x, Is.EqualTo(480f).Within(0.5f));
-            Assert.That(building.sizeDelta.y, Is.EqualTo(560f).Within(0.5f));
+            Assert.That(building.sizeDelta.x, Is.EqualTo(440f).Within(0.5f));
+            Assert.That(building.sizeDelta.y, Is.EqualTo(500f).Within(0.5f));
             var selection = building.Find("PanelRoot/SelectionText") as RectTransform
                 ?? building.Find("SelectionText") as RectTransform;
             if (selection != null)
@@ -128,7 +128,7 @@ namespace SubTerra.App.Tests.UI
                 Assert.That(selection.anchoredPosition.x, Is.EqualTo(162f).Within(0.5f));
             }
 
-            var inventory = FindTransform(scene, "InventoryPanel");
+            var inventory = layout.Find("InventoryPanel");
             Assert.That(inventory, Is.Not.Null);
             Assert.That(inventory.gameObject.activeSelf, Is.False);
         }
@@ -174,8 +174,6 @@ namespace SubTerra.App.Tests.UI
                 so.ApplyModifiedPropertiesWithoutUndo();
 
                 // Awake 경로 재현.
-                chrome.SendMessage("Awake", SendMessageOptions.DontRequireReceiver);
-
                 chrome.CloseBuildingMenu();
                 Assert.That(chrome.IsBuildingMenuOpen, Is.False);
                 Assert.That(buildingRoot.activeSelf, Is.False);

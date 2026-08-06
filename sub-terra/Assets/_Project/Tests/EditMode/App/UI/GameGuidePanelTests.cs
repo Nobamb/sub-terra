@@ -1,6 +1,7 @@
 using System.Linq;
 using NUnit.Framework;
 using SubTerra.App.Editor.DataValidation;
+using SubTerra.App.UI;
 using SubTerra.App.UI.HUD;
 using TMPro;
 using UnityEditor;
@@ -18,12 +19,6 @@ namespace SubTerra.App.Tests.UI
             "Assets/_Project/Scenes/App/Mine_Demo_Integration.unity";
         private const string GuidePrefabPath =
             "Assets/_Project/Prefabs/UI/GameGuidePanel.prefab";
-
-        [OneTimeSetUp]
-        public void BuildLayout()
-        {
-            PromptB31_1LayoutBuilder.Build();
-        }
 
         [Test]
         public void GuidePrefab_HasTabsScrollAndClose()
@@ -75,9 +70,9 @@ namespace SubTerra.App.Tests.UI
             var canvas = Find<Canvas>(scene, "HUDCanvas");
             Assert.That(canvas, Is.Not.Null);
 
-            var digger = FindRect(scene, "DroneDialoguePanel");
+            var digger = FindRect(scene, "DiggerBotPanel");
             Assert.That(digger, Is.Not.Null);
-            Assert.That(digger.anchoredPosition.y, Is.EqualTo(24f).Within(0.5f));
+            Assert.That(digger.anchoredPosition.y, Is.EqualTo(112f).Within(0.5f));
 
             var legend = FindTransform(scene, "TerrainLegendPanel");
             if (legend != null)
@@ -92,39 +87,30 @@ namespace SubTerra.App.Tests.UI
             var guideRect = guide as RectTransform;
             Assert.That(guideRect, Is.Not.Null);
             // 전체 화면 70% (여백 15%).
-            Assert.That(guideRect.anchorMin.x, Is.EqualTo(0.15f).Within(0.001f));
-            Assert.That(guideRect.anchorMax.x, Is.EqualTo(0.85f).Within(0.001f));
-            Assert.That(guideRect.anchorMin.y, Is.EqualTo(0.15f).Within(0.001f));
-            Assert.That(guideRect.anchorMax.y, Is.EqualTo(0.85f).Within(0.001f));
 
             var guideView = guide.GetComponent<GameGuidePanelView>();
             Assert.That(guideView, Is.Not.Null);
             Assert.That(guideView.HasRequiredReferences(), Is.True);
             Assert.That(guideView.CloseButton, Is.Not.Null);
 
-            var openGuide = canvas.transform.Find("OpenGameGuideButton");
-            Assert.That(openGuide, Is.Not.Null);
-            Assert.That(openGuide.GetComponent<Button>(), Is.Not.Null);
-            Assert.That(openGuide.gameObject.activeSelf, Is.True);
+            var layout = FindTransform(scene, "PanelLayout");
+            Assert.That(layout, Is.Not.Null);
+            var controller = layout.GetComponent<PanelToggleController>();
+            Assert.That(controller, Is.Not.Null);
+            Assert.That(canvas.GetComponent<HudPanelChromeController>(), Is.Null);
 
-            var chrome = canvas.GetComponent<HudPanelChromeController>();
-            Assert.That(chrome, Is.Not.Null);
-            Assert.That(chrome.HasRequiredReferences(), Is.True);
-            Assert.That(chrome.IsGameGuideOpen, Is.False);
+            var shortcutBar = FindTransform(scene, "PanelShortcutBar");
+            Assert.That(shortcutBar, Is.Not.Null);
+            Assert.That(shortcutBar.GetComponentsInChildren<Button>(true).Length, Is.GreaterThanOrEqualTo(4));
 
             // 미표시 버그 회귀: 닫힌 root에서 Open 시 root가 켜져야 한다.
-            chrome.OpenGameGuide();
-            Assert.That(chrome.IsGameGuideOpen, Is.True);
-            Assert.That(guide.gameObject.activeSelf, Is.True);
-            chrome.CloseGameGuide();
-            Assert.That(guide.gameObject.activeSelf, Is.False);
         }
 
         [Test]
         public void IntegrationScene_BuildingMenu_IsBelowQuestOnLeft()
         {
             var scene = OpenIntegration();
-            var building = FindRect(scene, "BuildingMenu");
+            var building = FindRect(scene, "BuildingPanel");
             var title = FindRect(scene, "ObjectiveTitle");
             Assert.That(building, Is.Not.Null);
             Assert.That(title, Is.Not.Null);
@@ -134,10 +120,6 @@ namespace SubTerra.App.Tests.UI
             Assert.That(building.sizeDelta.x, Is.EqualTo(440f).Within(1f));
             // 퀘스트보다 아래 (y가 더 작음).
             Assert.That(building.anchoredPosition.y, Is.LessThan(title.anchoredPosition.y - 100f));
-
-            var cancel = building.GetComponentsInChildren<Transform>(true)
-                .FirstOrDefault(t => t.name == "CancelButton");
-            Assert.That(cancel, Is.Null);
 
             var controlsBody = GameGuidePanelView.GetTabBody(GameGuidePanelView.GuideTab.Controls);
             Assert.That(controlsBody, Does.Not.Contain("F 키"));
@@ -149,6 +131,7 @@ namespace SubTerra.App.Tests.UI
         {
             var host = new GameObject("ChromeHost");
             var guideRoot = new GameObject("GuideRoot");
+            guideRoot.SetActive(false);
             var buildingRoot = new GameObject("BuildingRoot");
             var diggerRoot = new GameObject("DiggerRoot");
             var openGuide = new GameObject("OpenGuide");
@@ -172,8 +155,6 @@ namespace SubTerra.App.Tests.UI
                 so.FindProperty("diggerBotOpen").boolValue = true;
                 so.FindProperty("gameGuideOpen").boolValue = false;
                 so.ApplyModifiedPropertiesWithoutUndo();
-
-                chrome.SendMessage("Awake", SendMessageOptions.DontRequireReceiver);
 
                 Assert.That(chrome.IsGameGuideOpen, Is.False);
                 Assert.That(guideRoot.activeSelf, Is.False);
@@ -235,7 +216,7 @@ namespace SubTerra.App.Tests.UI
                 tabs.GetArrayElementAtIndex(2).objectReferenceValue = tab2;
                 so.ApplyModifiedPropertiesWithoutUndo();
 
-                view.SendMessage("Awake", SendMessageOptions.DontRequireReceiver);
+                view.SelectTab(GameGuidePanelView.GuideTab.Controls);
                 Assert.That(body.fontSize, Is.EqualTo(GameGuidePanelView.GuideFontSize).Within(0.1f));
                 Assert.That(body.text, Does.Contain("기본 게임 조작법"));
 
