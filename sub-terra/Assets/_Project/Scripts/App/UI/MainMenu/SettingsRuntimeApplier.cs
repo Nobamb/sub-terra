@@ -15,6 +15,7 @@ namespace SubTerra.App.UI.MainMenu
         private const string PrefResWidth = "subterra.settings.resWidth";
         private const string PrefResHeight = "subterra.settings.resHeight";
         private const string PrefLanguage = "subterra.settings.language";
+        private const string PrefFrameRate = "subterra.settings.frameRate";
 
         public static SettingsValues LoadOrDefaults()
         {
@@ -40,6 +41,12 @@ namespace SubTerra.App.UI.MainMenu
                 values.LanguageCode = PlayerPrefs.GetString(PrefLanguage, GameLanguageCodes.Korean);
             }
 
+            if (PlayerPrefs.HasKey(PrefFrameRate))
+            {
+                values.FrameRate = FrameRatePresets.FromIndex(
+                    PlayerPrefs.GetInt(PrefFrameRate, 0));
+            }
+
             return values;
         }
 
@@ -59,6 +66,7 @@ namespace SubTerra.App.UI.MainMenu
                 string.IsNullOrEmpty(values.LanguageCode)
                     ? GameLanguageCodes.Korean
                     : values.LanguageCode);
+            PlayerPrefs.SetInt(PrefFrameRate, FrameRatePresets.ToIndex(values.FrameRate));
             PlayerPrefs.Save();
         }
 
@@ -68,7 +76,7 @@ namespace SubTerra.App.UI.MainMenu
             AudioListener.volume = Mathf.Clamp01(volume01);
         }
 
-        /// <summary>적용 확정. 음량·접근성·언어·해상도를 반영한다.</summary>
+        /// <summary>적용 확정. 음량·접근성·언어·해상도·프레임을 반영한다.</summary>
         public static void Apply(SettingsValues values, bool applyResolution)
         {
             if (values == null)
@@ -82,6 +90,8 @@ namespace SubTerra.App.UI.MainMenu
                 string.IsNullOrEmpty(values.LanguageCode)
                     ? GameLanguageCodes.Korean
                     : values.LanguageCode);
+
+            ApplyFrameRate(values.FrameRate);
 
             if (applyResolution
                 && values.ResolutionWidth > 0
@@ -98,6 +108,22 @@ namespace SubTerra.App.UI.MainMenu
             }
 
             Save(values);
+        }
+
+        /// <summary>
+        /// prompt-B 33-2: Auto=VSync(모니터 주사율), 고정 FPS, Unlimited=제한 없음.
+        /// </summary>
+        public static void ApplyFrameRate(FrameRateMode mode)
+        {
+            if (FrameRatePresets.UsesVSync(mode))
+            {
+                QualitySettings.vSyncCount = 1;
+                Application.targetFrameRate = -1;
+                return;
+            }
+
+            QualitySettings.vSyncCount = 0;
+            Application.targetFrameRate = FrameRatePresets.ToTargetFrameRate(mode);
         }
 
         public static void RestoreAppliedVolume(SettingsValues applied)

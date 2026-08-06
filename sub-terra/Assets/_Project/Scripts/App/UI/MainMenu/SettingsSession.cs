@@ -4,8 +4,21 @@ using SubTerra.Shared.Localization;
 namespace SubTerra.App.UI.MainMenu
 {
     /// <summary>
+    /// 프레임 제한 모드. Auto는 모니터 주사율(VSync), Unlimited는 제한 없음.
+    /// </summary>
+    public enum FrameRateMode
+    {
+        Auto = 0,
+        Fps30 = 1,
+        Fps60 = 2,
+        Fps120 = 3,
+        Fps144 = 4,
+        Unlimited = 5
+    }
+
+    /// <summary>
     /// MVP 설정 값.
-    /// 마스터 음량(향후 4종 BGM 공통), 해상도, 화면 진동 억제, 언어를 포함한다.
+    /// 마스터 음량(향후 4종 BGM 공통), 해상도, 화면 진동 억제, 언어, 프레임을 포함한다.
     /// </summary>
     public sealed class SettingsValues
     {
@@ -15,6 +28,8 @@ namespace SubTerra.App.UI.MainMenu
         public int ResolutionHeight { get; set; }
         /// <summary>언어 코드. 기본 "ko", 영어 준비 "en".</summary>
         public string LanguageCode { get; set; }
+        /// <summary>프레임 모드. 기본 Auto(모니터 주사율).</summary>
+        public FrameRateMode FrameRate { get; set; }
 
         public static SettingsValues CreateDefaults()
         {
@@ -24,7 +39,8 @@ namespace SubTerra.App.UI.MainMenu
                 ReduceMotion = false,
                 ResolutionWidth = 1920,
                 ResolutionHeight = 1080,
-                LanguageCode = GameLanguageCodes.Korean
+                LanguageCode = GameLanguageCodes.Korean,
+                FrameRate = FrameRateMode.Auto
             };
         }
 
@@ -36,7 +52,8 @@ namespace SubTerra.App.UI.MainMenu
                 ReduceMotion = ReduceMotion,
                 ResolutionWidth = ResolutionWidth,
                 ResolutionHeight = ResolutionHeight,
-                LanguageCode = LanguageCode
+                LanguageCode = LanguageCode,
+                FrameRate = FrameRate
             };
         }
 
@@ -52,6 +69,69 @@ namespace SubTerra.App.UI.MainMenu
             ResolutionWidth = other.ResolutionWidth;
             ResolutionHeight = other.ResolutionHeight;
             LanguageCode = other.LanguageCode;
+            FrameRate = other.FrameRate;
+        }
+    }
+
+    /// <summary>프레임 모드 인덱스·표시 이름 헬퍼.</summary>
+    public static class FrameRatePresets
+    {
+        public static readonly FrameRateMode[] All =
+        {
+            FrameRateMode.Auto,
+            FrameRateMode.Fps30,
+            FrameRateMode.Fps60,
+            FrameRateMode.Fps120,
+            FrameRateMode.Fps144,
+            FrameRateMode.Unlimited
+        };
+
+        public static int ToIndex(FrameRateMode mode)
+        {
+            for (var i = 0; i < All.Length; i++)
+            {
+                if (All[i] == mode)
+                {
+                    return i;
+                }
+            }
+
+            return 0;
+        }
+
+        public static FrameRateMode FromIndex(int index)
+        {
+            if (index < 0 || index >= All.Length)
+            {
+                return FrameRateMode.Auto;
+            }
+
+            return All[index];
+        }
+
+        public static int ToTargetFrameRate(FrameRateMode mode)
+        {
+            switch (mode)
+            {
+                case FrameRateMode.Fps30:
+                    return 30;
+                case FrameRateMode.Fps60:
+                    return 60;
+                case FrameRateMode.Fps120:
+                    return 120;
+                case FrameRateMode.Fps144:
+                    return 144;
+                case FrameRateMode.Unlimited:
+                    return -1;
+                default:
+                    // Auto: VSync로 모니터 주사율에 맞춤.
+                    return -1;
+            }
+        }
+
+        public static bool UsesVSync(FrameRateMode mode)
+        {
+            return mode == FrameRateMode.Auto;
         }
     }
 

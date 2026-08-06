@@ -98,10 +98,36 @@ namespace SubTerra.Shared.Localization
             Add("settings.language", "언어", "Language");
             Add("settings.language.ko", "한국어", "Korean");
             Add("settings.language.en", "English", "English");
+            Add("settings.frame_rate", "프레임", "Frame Rate");
+            Add("settings.frame.auto", "자동(기본값)", "Auto (Default)");
+            Add("settings.frame.30", "30", "30");
+            Add("settings.frame.60", "60", "60");
+            Add("settings.frame.120", "120", "120");
+            Add("settings.frame.144", "144", "144");
+            Add("settings.frame.unlimited", "제한없음", "Unlimited");
             Add("settings.apply", "적용", "Apply");
             Add("settings.cancel", "취소", "Cancel");
             Add("settings.defaults", "기본값", "Defaults");
             Add("settings.bgm_hint", "BGM 4종(타이틀/기지/탐사/위험)은 마스터 음량으로 조절됩니다.", "Four BGMs (title/base/mine/danger) follow master volume.");
+        }
+
+        public static string FormatFrameRateOption(int optionIndex)
+        {
+            switch (optionIndex)
+            {
+                case 1:
+                    return Get("settings.frame.30", "30");
+                case 2:
+                    return Get("settings.frame.60", "60");
+                case 3:
+                    return Get("settings.frame.120", "120");
+                case 4:
+                    return Get("settings.frame.144", "144");
+                case 5:
+                    return Get("settings.frame.unlimited", "제한없음");
+                default:
+                    return Get("settings.frame.auto", "자동(기본값)");
+            }
         }
 
         private static void Add(string key, string ko, string en)

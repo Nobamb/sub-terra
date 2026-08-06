@@ -35,6 +35,9 @@ namespace SubTerra.App.UI.SurfaceBase
         [SerializeField] private Button languageCycleButton;
         // prompt-B 33-1: 언어 드롭다운(한국어 기본, 영어 선택).
         [SerializeField] private TMP_Dropdown languageDropdown;
+        // prompt-B 33-2: 프레임 설정 드롭다운.
+        [SerializeField] private TMP_Text frameRateLabel;
+        [SerializeField] private TMP_Dropdown frameRateDropdown;
         [SerializeField] private TMP_Text bgmHintLabel;
         [SerializeField] private Button settingsApplyButton;
         [SerializeField] private Button settingsCancelButton;
@@ -46,6 +49,7 @@ namespace SubTerra.App.UI.SurfaceBase
         private int draftResolutionWidth = 1920;
         private int draftResolutionHeight = 1080;
         private string draftLanguageCode = GameLanguageCodes.Korean;
+        private FrameRateMode draftFrameRate = FrameRateMode.Auto;
 
         public event Action ExploreClicked;
         public event Action SettingsClicked;
@@ -69,6 +73,11 @@ namespace SubTerra.App.UI.SurfaceBase
             if (languageDropdown != null)
             {
                 languageDropdown.onValueChanged.AddListener(OnLanguageDropdownChanged);
+            }
+
+            if (frameRateDropdown != null)
+            {
+                frameRateDropdown.onValueChanged.AddListener(OnFrameRateDropdownChanged);
             }
 
             if (masterVolumeSlider != null)
@@ -97,6 +106,11 @@ namespace SubTerra.App.UI.SurfaceBase
             if (languageDropdown != null)
             {
                 languageDropdown.onValueChanged.RemoveListener(OnLanguageDropdownChanged);
+            }
+
+            if (frameRateDropdown != null)
+            {
+                frameRateDropdown.onValueChanged.RemoveListener(OnFrameRateDropdownChanged);
             }
 
             if (masterVolumeSlider != null)
@@ -202,6 +216,7 @@ namespace SubTerra.App.UI.SurfaceBase
             draftLanguageCode = string.IsNullOrEmpty(values.LanguageCode)
                 ? GameLanguageCodes.Korean
                 : values.LanguageCode;
+            draftFrameRate = values.FrameRate;
 
             if (masterVolumeSlider != null)
             {
@@ -214,6 +229,7 @@ namespace SubTerra.App.UI.SurfaceBase
             }
 
             SyncLanguageDropdown();
+            SyncFrameRateDropdown();
             RefreshSettingsLabels(values.MasterVolume);
         }
 
@@ -237,9 +253,15 @@ namespace SubTerra.App.UI.SurfaceBase
                     : GameLanguageCodes.Korean;
             }
 
+            if (frameRateDropdown != null)
+            {
+                draftFrameRate = FrameRatePresets.FromIndex(frameRateDropdown.value);
+            }
+
             result.ResolutionWidth = draftResolutionWidth;
             result.ResolutionHeight = draftResolutionHeight;
             result.LanguageCode = draftLanguageCode;
+            result.FrameRate = draftFrameRate;
             return result;
         }
 
@@ -291,6 +313,11 @@ namespace SubTerra.App.UI.SurfaceBase
                 }
             }
 
+            if (frameRateLabel != null)
+            {
+                frameRateLabel.text = LocalizationService.Get("settings.frame_rate", "프레임");
+            }
+
             if (bgmHintLabel != null)
             {
                 bgmHintLabel.text = LocalizationService.Get(
@@ -311,6 +338,17 @@ namespace SubTerra.App.UI.SurfaceBase
             languageDropdown.SetValueWithoutNotify(index);
         }
 
+        private void SyncFrameRateDropdown()
+        {
+            if (frameRateDropdown == null)
+            {
+                return;
+            }
+
+            EnsureFrameRateDropdownOptions();
+            frameRateDropdown.SetValueWithoutNotify(FrameRatePresets.ToIndex(draftFrameRate));
+        }
+
         private void EnsureLanguageDropdownOptions()
         {
             if (languageDropdown == null)
@@ -329,6 +367,26 @@ namespace SubTerra.App.UI.SurfaceBase
             }
         }
 
+        private void EnsureFrameRateDropdownOptions()
+        {
+            if (frameRateDropdown == null)
+            {
+                return;
+            }
+
+            if (frameRateDropdown.options == null || frameRateDropdown.options.Count < 6)
+            {
+                frameRateDropdown.ClearOptions();
+                var options = new System.Collections.Generic.List<string>(6);
+                for (var i = 0; i < 6; i++)
+                {
+                    options.Add(LocalizationService.FormatFrameRateOption(i));
+                }
+
+                frameRateDropdown.AddOptions(options);
+            }
+        }
+
         private void OnLanguageDropdownChanged(int index)
         {
             draftLanguageCode = index == 1
@@ -339,6 +397,11 @@ namespace SubTerra.App.UI.SurfaceBase
             float volume = masterVolumeSlider != null ? masterVolumeSlider.value : 1f;
             RefreshSettingsLabels(volume);
             LocalizationService.SetLanguage(previous);
+        }
+
+        private void OnFrameRateDropdownChanged(int index)
+        {
+            draftFrameRate = FrameRatePresets.FromIndex(index);
         }
 
         private void OnMasterVolumeChanged(float value)

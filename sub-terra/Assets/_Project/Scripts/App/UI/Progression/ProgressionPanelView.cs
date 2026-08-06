@@ -20,6 +20,10 @@ namespace SubTerra.App.UI.Progression
         [SerializeField] private ProgressionUpgradeEntryButton[] upgradeButtons;
         [SerializeField] private Button[] categoryTabButtons;
         [SerializeField] private TMP_Text[] categoryTabLabels;
+        /// <summary>
+        /// prompt-B 33-2: Surface Base처럼 상세 카드만 쓸 때 좌측 목록 버튼을 숨긴다.
+        /// </summary>
+        [SerializeField] private bool hideUpgradeEntryList;
 
         private bool hasSelection;
         private bool selectedAtMaximum;
@@ -281,10 +285,23 @@ namespace SubTerra.App.UI.Progression
                     continue;
                 }
 
+                if (hideUpgradeEntryList)
+                {
+                    entry.gameObject.SetActive(false);
+                    continue;
+                }
+
                 var match = UpgradeCategoryRules.Matches(entry.UpgradeId, activeCategory);
                 entry.gameObject.SetActive(match);
             }
         }
+
+#if UNITY_EDITOR
+        public void EditorSetHideUpgradeEntryList(bool hide)
+        {
+            hideUpgradeEntryList = hide;
+        }
+#endif
 
         private void RefreshSelectionHighlight(string selectedUpgradeId)
         {
