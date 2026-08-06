@@ -24,6 +24,12 @@ namespace SubTerra.App.UI.Progression
             presenter = new ProgressionPanelPresenter(view);
         }
 
+        private void OnEnable()
+        {
+            // 패널을 다시 열었을 때, 채굴 등으로 바뀐 보유 자원을 즉시 다시 반영한다.
+            presenter?.Refresh();
+        }
+
         private void OnDestroy()
         {
             presenter?.Unbind();

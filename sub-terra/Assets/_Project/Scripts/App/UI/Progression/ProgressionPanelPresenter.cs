@@ -146,7 +146,14 @@ namespace SubTerra.App.UI.Progression
                 return;
             }
 
-            view?.SetUpgradeList(service.GetSnapshots());
+            var snapshots = service.GetSnapshots();
+            view?.SetUpgradeList(snapshots);
+            if (string.IsNullOrEmpty(selectedUpgradeId) && snapshots.Count > 0)
+            {
+                SelectUpgrade(snapshots[0].UpgradeId);
+                return;
+            }
+
             if (!string.IsNullOrEmpty(selectedUpgradeId)
                 && service.TryGetSnapshot(selectedUpgradeId, out var selected))
             {

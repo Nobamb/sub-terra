@@ -16,15 +16,28 @@ namespace SubTerra.App.UI.Progression
         [SerializeField] private TMP_Text deepZoneText;
         [SerializeField] private Button purchaseButton;
         [SerializeField] private GameObject panelRoot;
+        [SerializeField] private ProgressionUpgradeEntryButton[] upgradeButtons;
 
         private bool hasSelection;
         private bool selectedAtMaximum;
+        private bool selectedCanAfford;
         private bool busy;
 
         public void SetUpgradeList(IReadOnlyList<UpgradeSnapshot> upgrades)
         {
             if (upgradeListText == null)
             {
+                return;
+            }
+
+            if (upgradeButtons != null && upgradeButtons.Length > 0)
+            {
+                for (var i = 0; i < upgradeButtons.Length; i++)
+                {
+                    upgradeButtons[i]?.SetSnapshot(upgrades);
+                }
+
+                upgradeListText.text = "업그레이드를 선택하세요.";
                 return;
             }
 
@@ -86,11 +99,17 @@ namespace SubTerra.App.UI.Progression
                         .Append(" x")
                         .Append(upgrade.NextCosts[i].Quantity);
                 }
+
+                builder.AppendLine()
+                    .Append(upgrade.CanAffordNextLevel
+                        ? "구매 가능"
+                        : "자원 부족");
             }
 
             detailText.text = builder.ToString();
             hasSelection = !string.IsNullOrEmpty(upgrade.UpgradeId);
             selectedAtMaximum = upgrade.IsMaximumLevel;
+            selectedCanAfford = upgrade.CanAffordNextLevel;
             RefreshPurchaseButton();
         }
 
@@ -129,7 +148,10 @@ namespace SubTerra.App.UI.Progression
         {
             if (purchaseButton != null)
             {
-                purchaseButton.interactable = hasSelection && !busy && !selectedAtMaximum;
+                purchaseButton.interactable = hasSelection
+                    && !busy
+                    && !selectedAtMaximum
+                    && selectedCanAfford;
             }
         }
     }

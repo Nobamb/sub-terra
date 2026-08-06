@@ -13,6 +13,7 @@ namespace SubTerra.App.Progression
         public float CurrentEffectValue { get; }
         public float NextEffectValue { get; }
         public IReadOnlyList<ItemCostDto> NextCosts { get; }
+        public bool CanAffordNextLevel { get; }
 
         public bool IsMaximumLevel => CurrentLevel >= MaximumLevel;
 
@@ -23,7 +24,8 @@ namespace SubTerra.App.Progression
             int maximumLevel,
             float currentEffectValue,
             float nextEffectValue,
-            IReadOnlyList<ItemCostDto> nextCosts)
+            IReadOnlyList<ItemCostDto> nextCosts,
+            bool canAffordNextLevel)
         {
             UpgradeId = upgradeId ?? string.Empty;
             DisplayName = displayName ?? string.Empty;
@@ -32,6 +34,7 @@ namespace SubTerra.App.Progression
             CurrentEffectValue = currentEffectValue;
             NextEffectValue = nextEffectValue;
             NextCosts = nextCosts ?? System.Array.Empty<ItemCostDto>();
+            CanAffordNextLevel = canAffordNextLevel;
         }
     }
 }

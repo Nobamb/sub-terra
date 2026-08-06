@@ -208,6 +208,7 @@ namespace SubTerra.App.Progression
             var currentEffect = effects.GetCurrentEffect(upgradeId);
             var nextEffect = 0f;
             IReadOnlyList<ItemCostDto> nextCosts = Array.Empty<ItemCostDto>();
+            var canAffordNextLevel = false;
             if (current >= 0
                 && current < data.MaxLevel
                 && data.Levels != null
@@ -216,6 +217,9 @@ namespace SubTerra.App.Progression
             {
                 nextEffect = data.Levels[current].EffectValue;
                 nextCosts = ItemCostMapping.ToDtoList(data.Levels[current].Costs);
+                canAffordNextLevel = nextCosts.Count > 0
+                    && wallet != null
+                    && wallet.CanAfford(nextCosts);
             }
 
             snapshot = new UpgradeSnapshot(
@@ -225,7 +229,8 @@ namespace SubTerra.App.Progression
                 data.MaxLevel,
                 currentEffect,
                 nextEffect,
-                nextCosts);
+                nextCosts,
+                canAffordNextLevel);
             return true;
         }
 

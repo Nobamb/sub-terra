@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using SubTerra.App.Core.Data;
 using SubTerra.App.Integration;
 using SubTerra.App.UI;
 using SubTerra.App.UI.Building;
@@ -22,6 +23,7 @@ namespace SubTerra.App.Editor.DataValidation
         private const string BuildingPrefabPath = "Assets/_Project/Prefabs/UI/BuildingMenu.prefab";
         private const string InventoryPrefabPath = "Assets/_Project/Prefabs/UI/InventoryPanel.prefab";
         private const string DronePrefabPath = "Assets/_Project/Prefabs/UI/DroneAnalysisUI.prefab";
+        private const string CatalogPath = "Assets/_Project/Data/Catalog/GameDataCatalog.asset";
 
         [MenuItem("SubTerra/UI/Build Phase Q Panel Layout")]
         public static void BuildFromMenu()
@@ -119,6 +121,12 @@ namespace SubTerra.App.Editor.DataValidation
 
         private static GameObject CreateUpgradePanel(Transform parent)
         {
+            var catalog = AssetDatabase.LoadAssetAtPath<GameDataCatalog>(CatalogPath);
+            if (catalog == null || catalog.Upgrades == null || catalog.Upgrades.Count == 0)
+            {
+                throw new InvalidOperationException("GameDataCatalog upgrades are missing.");
+            }
+
             var root = CreatePanel(parent, "UpgradePanel", new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(680f, 500f));
             CreateText(root.transform, "Title", new Vector2(22f, -18f), new Vector2(600f, 34f), 26f, "장비 업그레이드 [U]");
             var list = CreateText(root.transform, "UpgradeList", new Vector2(22f, -70f), new Vector2(280f, 300f), 18f, string.Empty);
@@ -139,8 +147,44 @@ namespace SubTerra.App.Editor.DataValidation
             var binderSo = new SerializedObject(binder);
             binderSo.FindProperty("view").objectReferenceValue = view;
             binderSo.ApplyModifiedPropertiesWithoutUndo();
+            var entries = CreateUpgradeEntries(root.transform, binder, catalog);
+            var viewEntries = viewSo.FindProperty("upgradeButtons");
+            viewEntries.arraySize = entries.Count;
+            for (var i = 0; i < entries.Count; i++)
+            {
+                viewEntries.GetArrayElementAtIndex(i).objectReferenceValue = entries[i];
+            }
+            viewSo.ApplyModifiedPropertiesWithoutUndo();
             UnityEventTools.AddPersistentListener(purchase.onClick, binder.PurchaseSelected);
             return root;
+        }
+
+        private static List<ProgressionUpgradeEntryButton> CreateUpgradeEntries(
+            Transform parent,
+            ProgressionPanelBinder binder,
+            GameDataCatalog catalog)
+        {
+            var entries = new List<ProgressionUpgradeEntryButton>(catalog.Upgrades.Count);
+            for (var i = 0; i < catalog.Upgrades.Count; i++)
+            {
+                var upgrade = catalog.Upgrades[i];
+                if (upgrade == null || string.IsNullOrEmpty(upgrade.Id))
+                {
+                    continue;
+                }
+
+                var button = CreateButton(
+                    parent,
+                    "UpgradeEntry_" + i,
+                    new Vector2(22f, -108f - (i * 48f)),
+                    new Vector2(280f, 40f),
+                    upgrade.DisplayName);
+                var entry = button.gameObject.AddComponent<ProgressionUpgradeEntryButton>();
+                entry.EditorSet(upgrade.Id, binder, button.GetComponentInChildren<TMP_Text>());
+                entries.Add(entry);
+            }
+
+            return entries;
         }
 
         private static GameObject CreateGuidePanel(Transform parent)
