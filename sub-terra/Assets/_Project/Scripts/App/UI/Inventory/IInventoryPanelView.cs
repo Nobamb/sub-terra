@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace SubTerra.App.UI.Inventory
 {
     /// <summary>
@@ -8,6 +10,7 @@ namespace SubTerra.App.UI.Inventory
         void SetCargoSummary(string cargoText);
         void SetUnsettledValue(string valueText);
         void SetStacksText(string stacksText);
+        void SetStacks(IReadOnlyList<InventoryStackReadModel> stacks);
         void SetVisible(bool visible);
     }
 }

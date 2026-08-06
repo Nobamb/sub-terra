@@ -1,4 +1,5 @@
 using SubTerra.App.Inventory;
+using SubTerra.App.Core.Data;
 using UnityEngine;
 
 namespace SubTerra.App.UI.Inventory
@@ -11,6 +12,7 @@ namespace SubTerra.App.UI.Inventory
     public sealed class InventoryPanelBinder : MonoBehaviour
     {
         [SerializeField] private InventoryPanelView panelView;
+        [SerializeField] private GameDataCatalog catalog;
 
         private InventoryPanelPresenter presenter;
         private InventoryService boundService;
@@ -63,7 +65,7 @@ namespace SubTerra.App.UI.Inventory
                 panelView = GetComponent<InventoryPanelView>();
             }
 
-            presenter = new InventoryPanelPresenter(panelView);
+            presenter = new InventoryPanelPresenter(panelView, catalog);
         }
     }
 }

@@ -1,4 +1,5 @@
 using System.IO;
+using SubTerra.App.Core.Data;
 using SubTerra.App.UI.Inventory;
 using TMPro;
 using UnityEditor;
@@ -14,6 +15,7 @@ namespace SubTerra.App.Editor.DataValidation
     public static class InventoryPanelPrefabBuilder
     {
         private const string PrefabPath = "Assets/_Project/Prefabs/UI/InventoryPanel.prefab";
+        private const string CatalogPath = "Assets/_Project/Data/Catalog/GameDataCatalog.asset";
         private const string FlagPath = "Temp/subterra-build-inventory-panel.flag";
 
         [InitializeOnLoadMethod]
@@ -70,10 +72,31 @@ namespace SubTerra.App.Editor.DataValidation
                 new Vector2(12f, -12f), new Vector2(396f, 32f), 22, "0 / 50");
             var value = CreateTmp(panelRoot.transform, "UnsettledValueText", new Vector2(0f, 1f), new Vector2(0f, 1f),
                 new Vector2(12f, -48f), new Vector2(396f, 28f), 20, "0");
-            var stacks = CreateTmp(panelRoot.transform, "StacksText", new Vector2(0f, 1f), new Vector2(1f, 0f),
-                new Vector2(12f, -84f), new Vector2(-24f, -12f), 18, string.Empty);
-            stacks.alignment = TextAlignmentOptions.TopLeft;
-            stacks.textWrappingMode = TextWrappingModes.Normal;
+            var rowsRoot = new GameObject("StackRows", typeof(RectTransform));
+            rowsRoot.transform.SetParent(panelRoot.transform, false);
+            var rowsRect = rowsRoot.GetComponent<RectTransform>();
+            rowsRect.anchorMin = new Vector2(0f, 0f);
+            rowsRect.anchorMax = new Vector2(1f, 1f);
+            rowsRect.offsetMin = new Vector2(12f, 12f);
+            rowsRect.offsetMax = new Vector2(-12f, -84f);
+
+            var catalog = AssetDatabase.LoadAssetAtPath<GameDataCatalog>(CatalogPath);
+            var rows = new InventoryStackRowView[catalog != null ? catalog.Minerals.Count : 0];
+            for (var i = 0; i < rows.Length; i++)
+            {
+                var mineral = catalog.Minerals[i];
+                rows[i] = CreateStackRow(
+                    rowsRoot.transform,
+                    mineral != null ? mineral.Id : string.Empty,
+                    mineral != null ? mineral.DisplayName : string.Empty,
+                    mineral != null ? mineral.Icon : null,
+                    i);
+            }
+
+            // 기존 텍스트 계약을 보존하되 화면에는 광물 행만 표시한다.
+            var stacks = CreateTmp(panelRoot.transform, "StacksText", Vector2.zero, Vector2.zero,
+                Vector2.zero, Vector2.zero, 1, string.Empty);
+            stacks.gameObject.SetActive(false);
 
             var view = root.AddComponent<InventoryPanelView>();
             var binder = root.AddComponent<InventoryPanelBinder>();
@@ -84,10 +107,17 @@ namespace SubTerra.App.Editor.DataValidation
             viewSo.FindProperty("cargoSummaryText").objectReferenceValue = cargo;
             viewSo.FindProperty("unsettledValueText").objectReferenceValue = value;
             viewSo.FindProperty("stacksText").objectReferenceValue = stacks;
+            var rowProperty = viewSo.FindProperty("stackRows");
+            rowProperty.arraySize = rows.Length;
+            for (var i = 0; i < rows.Length; i++)
+            {
+                rowProperty.GetArrayElementAtIndex(i).objectReferenceValue = rows[i];
+            }
             viewSo.ApplyModifiedPropertiesWithoutUndo();
 
             var binderSo = new SerializedObject(binder);
             binderSo.FindProperty("panelView").objectReferenceValue = view;
+            binderSo.FindProperty("catalog").objectReferenceValue = catalog;
             binderSo.ApplyModifiedPropertiesWithoutUndo();
 
             var existing = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath);
@@ -143,6 +173,49 @@ namespace SubTerra.App.Editor.DataValidation
             tmp.raycastTarget = false;
             tmp.alignment = TextAlignmentOptions.TopLeft;
             return tmp;
+        }
+
+        private static InventoryStackRowView CreateStackRow(
+            Transform parent,
+            string mineralId,
+            string displayName,
+            Sprite icon,
+            int index)
+        {
+            var root = new GameObject("Stack_" + mineralId, typeof(RectTransform), typeof(Image));
+            root.transform.SetParent(parent, false);
+            var rect = root.GetComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0f, 1f);
+            rect.anchorMax = new Vector2(1f, 1f);
+            rect.pivot = new Vector2(0.5f, 1f);
+            rect.anchoredPosition = new Vector2(0f, -index * 58f);
+            rect.sizeDelta = new Vector2(0f, 50f);
+            root.GetComponent<Image>().color = new Color(0.1f, 0.14f, 0.19f, 0.88f);
+
+            var iconGo = new GameObject("Icon", typeof(RectTransform), typeof(Image));
+            iconGo.transform.SetParent(root.transform, false);
+            var iconRect = iconGo.GetComponent<RectTransform>();
+            iconRect.anchorMin = iconRect.anchorMax = new Vector2(0f, 0.5f);
+            iconRect.pivot = new Vector2(0f, 0.5f);
+            iconRect.anchoredPosition = new Vector2(10f, 0f);
+            iconRect.sizeDelta = new Vector2(34f, 34f);
+            var iconImage = iconGo.GetComponent<Image>();
+            iconImage.sprite = icon;
+            iconImage.preserveAspect = true;
+            iconImage.enabled = icon != null;
+
+            var name = CreateTmp(root.transform, "Name", new Vector2(0f, 0.5f), new Vector2(0f, 0.5f),
+                new Vector2(54f, 0f), new Vector2(210f, 34f), 18, displayName);
+            name.GetComponent<RectTransform>().pivot = new Vector2(0f, 0.5f);
+            name.alignment = TextAlignmentOptions.Left;
+            var quantity = CreateTmp(root.transform, "Quantity", new Vector2(1f, 0.5f), new Vector2(1f, 0.5f),
+                new Vector2(-12f, 0f), new Vector2(100f, 34f), 19, "x0");
+            quantity.GetComponent<RectTransform>().pivot = new Vector2(1f, 0.5f);
+            quantity.alignment = TextAlignmentOptions.Right;
+
+            var row = root.AddComponent<InventoryStackRowView>();
+            row.EditorSetReferences(mineralId, iconImage, name, quantity);
+            return row;
         }
 
         private static void StretchFull(RectTransform rect)

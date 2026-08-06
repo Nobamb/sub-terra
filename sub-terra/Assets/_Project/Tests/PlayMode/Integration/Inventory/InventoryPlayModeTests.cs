@@ -152,6 +152,8 @@ namespace SubTerra.App.Tests
                 Stacks = stacksText;
             }
 
+            public void SetStacks(System.Collections.Generic.IReadOnlyList<InventoryStackReadModel> stacks) { }
+
             public void SetVisible(bool visible) { }
         }
     }

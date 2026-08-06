@@ -1,5 +1,6 @@
 using TMPro;
 using UnityEngine;
+using System.Collections.Generic;
 
 namespace SubTerra.App.UI.Inventory
 {
@@ -12,6 +13,7 @@ namespace SubTerra.App.UI.Inventory
         [SerializeField] private TextMeshProUGUI cargoSummaryText;
         [SerializeField] private TextMeshProUGUI unsettledValueText;
         [SerializeField] private TextMeshProUGUI stacksText;
+        [SerializeField] private InventoryStackRowView[] stackRows;
 
         public GameObject PanelRoot => panelRoot;
         public TextMeshProUGUI CargoSummaryText => cargoSummaryText;
@@ -33,6 +35,42 @@ namespace SubTerra.App.UI.Inventory
             SetText(stacksText, text);
         }
 
+        public void SetStacks(IReadOnlyList<InventoryStackReadModel> stacks)
+        {
+            if (stackRows == null)
+            {
+                return;
+            }
+
+            for (var i = 0; i < stackRows.Length; i++)
+            {
+                var row = stackRows[i];
+                if (row == null)
+                {
+                    continue;
+                }
+
+                var found = false;
+                if (stacks != null)
+                {
+                    for (var j = 0; j < stacks.Count; j++)
+                    {
+                        if (stacks[j].MineralId == row.MineralId)
+                        {
+                            row.SetStack(stacks[j]);
+                            found = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!found)
+                {
+                    row.SetStack(new InventoryStackReadModel(row.MineralId, row.MineralId, null, 0));
+                }
+            }
+        }
+
         public void SetVisible(bool visible)
         {
             if (panelRoot != null)
@@ -49,7 +87,9 @@ namespace SubTerra.App.UI.Inventory
         {
             return cargoSummaryText != null
                 && unsettledValueText != null
-                && stacksText != null;
+                && stacksText != null
+                && stackRows != null
+                && stackRows.Length > 0;
         }
 
         private static void SetText(TextMeshProUGUI target, string text)

@@ -1,4 +1,6 @@
 using System.Text;
+using System.Collections.Generic;
+using SubTerra.App.Core.Data;
 using SubTerra.App.Inventory;
 using SubTerra.App.UI.HUD;
 
@@ -12,10 +14,12 @@ namespace SubTerra.App.UI.Inventory
     {
         private readonly IInventoryPanelView view;
         private InventoryService boundService;
+        private readonly GameDataCatalog catalog;
 
-        public InventoryPanelPresenter(IInventoryPanelView view)
+        public InventoryPanelPresenter(IInventoryPanelView view, GameDataCatalog gameDataCatalog = null)
         {
             this.view = view;
+            catalog = gameDataCatalog;
         }
 
         public bool IsBound => boundService != null;
@@ -63,6 +67,7 @@ namespace SubTerra.App.UI.Inventory
                 HudFormatter.FormatCargo(snapshot.MaxCapacity));
             view.SetUnsettledValue(HudFormatter.FormatUnsettledValue(snapshot.UnsettledValue));
             view.SetStacksText(FormatStacks(snapshot));
+            view.SetStacks(CreateStackReadModels(snapshot));
         }
 
         private void RenderEmpty()
@@ -70,6 +75,7 @@ namespace SubTerra.App.UI.Inventory
             view.SetCargoSummary(HudFormatter.FormatCargo(0f) + " / " + HudFormatter.FormatCargo(0f));
             view.SetUnsettledValue(HudFormatter.FormatUnsettledValue(0f));
             view.SetStacksText(string.Empty);
+            view.SetStacks(System.Array.Empty<InventoryStackReadModel>());
         }
 
         private static string FormatStacks(InventorySnapshot snapshot)
@@ -96,6 +102,43 @@ namespace SubTerra.App.UI.Inventory
             }
 
             return sb.ToString();
+        }
+
+        private IReadOnlyList<InventoryStackReadModel> CreateStackReadModels(InventorySnapshot snapshot)
+        {
+            var result = new List<InventoryStackReadModel>();
+            if (catalog != null && catalog.Minerals != null)
+            {
+                for (var i = 0; i < catalog.Minerals.Count; i++)
+                {
+                    var mineral = catalog.Minerals[i];
+                    if (mineral == null || string.IsNullOrEmpty(mineral.Id))
+                    {
+                        continue;
+                    }
+
+                    result.Add(new InventoryStackReadModel(
+                        mineral.Id,
+                        mineral.DisplayName,
+                        mineral.Icon,
+                        snapshot.GetQuantity(mineral.Id)));
+                }
+
+                return result;
+            }
+
+            var stacks = snapshot.Stacks;
+            for (var i = 0; i < stacks.Count; i++)
+            {
+                var stack = stacks[i];
+                result.Add(new InventoryStackReadModel(
+                    stack.MineralId,
+                    stack.DisplayName,
+                    null,
+                    stack.Quantity));
+            }
+
+            return result;
         }
     }
 }

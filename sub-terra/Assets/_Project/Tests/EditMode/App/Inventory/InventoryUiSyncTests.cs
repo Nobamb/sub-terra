@@ -1,4 +1,5 @@
 using NUnit.Framework;
+using System.Collections.Generic;
 using SubTerra.App.Inventory;
 using SubTerra.App.State;
 using SubTerra.App.Tests.UI;
@@ -22,6 +23,7 @@ namespace SubTerra.App.Tests.Inventory
             public string Value;
             public string Stacks;
             public bool Visible = true;
+            public IReadOnlyList<InventoryStackReadModel> StackModels;
 
             public void ResetCounts()
             {
@@ -46,6 +48,11 @@ namespace SubTerra.App.Tests.Inventory
             {
                 Stacks = stacksText;
                 StacksCount++;
+            }
+
+            public void SetStacks(IReadOnlyList<InventoryStackReadModel> stacks)
+            {
+                StackModels = stacks;
             }
 
             public void SetVisible(bool visible)
@@ -96,6 +103,9 @@ namespace SubTerra.App.Tests.Inventory
             Assert.That(panelView.Value, Is.EqualTo(HudFormatter.FormatUnsettledValue(expectedValue)));
             Assert.That(panelView.Stacks, Does.Contain("Copper x2"));
             Assert.That(panelView.Stacks, Does.Contain("Iron x1"));
+            Assert.That(panelView.StackModels, Has.Count.EqualTo(2));
+            Assert.That(panelView.StackModels[0].Quantity, Is.EqualTo(2));
+            Assert.That(panelView.StackModels[1].Quantity, Is.EqualTo(1));
 
             // GameState 읽기 모델과 서비스 합산 일치
             var inv = gameState.GetInventory();
