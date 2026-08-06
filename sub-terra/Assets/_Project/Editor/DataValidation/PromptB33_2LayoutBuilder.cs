@@ -77,6 +77,109 @@ namespace SubTerra.App.Editor.DataValidation
             return sb.ToString();
         }
 
+        /// <summary>
+        /// SurfaceBase + MainMenu 설정 패널에 해상도 드롭다운 포함 레이아웃만 재적용.
+        /// (본문/업그레이드 패널은 건드리지 않음)
+        /// </summary>
+        public static string BuildSettingsDropdownsOnly()
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("Prompt-B 33-2 Settings dropdowns (resolution/language/frame)");
+            sb.AppendLine(UpdateSurfaceBaseSettingsOnly());
+            sb.AppendLine(UpdateMainMenuSettingsOnly());
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            return sb.ToString();
+        }
+
+        private static string UpdateSurfaceBaseSettingsOnly()
+        {
+            if (AssetDatabase.LoadAssetAtPath<GameObject>(SurfaceBasePrefabPath) == null)
+            {
+                return "SKIP: SurfaceBase prefab missing";
+            }
+
+            var root = PrefabUtility.LoadPrefabContents(SurfaceBasePrefabPath);
+            try
+            {
+                ApplySettingsPanelLayout(root, typeof(SurfaceBaseView));
+                PrefabUtility.SaveAsPrefabAsset(root, SurfaceBasePrefabPath);
+            }
+            finally
+            {
+                PrefabUtility.UnloadPrefabContents(root);
+            }
+
+            if (!File.Exists(SurfaceBaseScenePath))
+            {
+                return "SurfaceBasePrefab settings OK; SKIP scene";
+            }
+
+            var previous = SceneManager.GetActiveScene().path;
+            var scene = EditorSceneManager.OpenScene(SurfaceBaseScenePath, OpenSceneMode.Single);
+            if (!scene.IsValid())
+            {
+                return "FAIL: open SurfaceBase";
+            }
+
+            var panel = Object.FindFirstObjectByType<SurfaceBaseView>(FindObjectsInactive.Include);
+            if (panel != null)
+            {
+                ApplySettingsPanelLayout(panel.gameObject, typeof(SurfaceBaseView));
+                PrefabUtility.RecordPrefabInstancePropertyModifications(panel.gameObject);
+                EditorUtility.SetDirty(panel.gameObject);
+            }
+
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
+            RestoreScene(previous, SurfaceBaseScenePath);
+            return "SurfaceBase settings resolution-dropdown";
+        }
+
+        private static string UpdateMainMenuSettingsOnly()
+        {
+            if (AssetDatabase.LoadAssetAtPath<GameObject>(MainMenuPrefabPath) == null)
+            {
+                return "SKIP: MainMenu prefab missing";
+            }
+
+            var root = PrefabUtility.LoadPrefabContents(MainMenuPrefabPath);
+            try
+            {
+                ApplySettingsPanelLayout(root, typeof(MainMenuView));
+                PrefabUtility.SaveAsPrefabAsset(root, MainMenuPrefabPath);
+            }
+            finally
+            {
+                PrefabUtility.UnloadPrefabContents(root);
+            }
+
+            if (!File.Exists(MainMenuScenePath))
+            {
+                return "MainMenuPrefab settings OK; SKIP scene";
+            }
+
+            var previous = SceneManager.GetActiveScene().path;
+            var scene = EditorSceneManager.OpenScene(MainMenuScenePath, OpenSceneMode.Single);
+            if (!scene.IsValid())
+            {
+                return "FAIL: open MainMenu";
+            }
+
+            var view = Object.FindFirstObjectByType<MainMenuView>(FindObjectsInactive.Include);
+            if (view != null)
+            {
+                ApplySettingsPanelLayout(view.gameObject, typeof(MainMenuView));
+                PrefabUtility.RecordPrefabInstancePropertyModifications(view.gameObject);
+                EditorUtility.SetDirty(view.gameObject);
+            }
+
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
+            RestoreScene(previous, MainMenuScenePath);
+            return "MainMenu settings resolution-dropdown";
+        }
+
         private static string UpdateSurfaceBasePrefab()
         {
             if (AssetDatabase.LoadAssetAtPath<GameObject>(SurfaceBasePrefabPath) == null)
@@ -495,7 +598,11 @@ namespace SubTerra.App.Editor.DataValidation
             // 언어 드롭다운 흰 네모(Arrow) 제거.
             StripDropdownWhiteArrow(settingsRoot.Find("LanguageDropdown"));
 
-            // 프레임 드롭다운 확보 — 레이아웃 전에 생성해야 PlaceSettingsRow가 적용된다.
+            // 해상도·프레임 드롭다운 확보 — 레이아웃 전에 생성해야 PlaceSettingsRow가 적용된다.
+            var resolutionDropdown = EnsureResolutionDropdown(settingsRoot);
+            StripDropdownWhiteArrow(
+                resolutionDropdown != null ? resolutionDropdown.transform : null);
+
             var frameLabel = EnsureFrameRateLabel(settingsRoot);
             var frameDropdown = EnsureFrameRateDropdown(settingsRoot);
             StripDropdownWhiteArrow(frameDropdown != null ? frameDropdown.transform : null);
@@ -508,6 +615,11 @@ namespace SubTerra.App.Editor.DataValidation
 
             // View 직렬화 연결.
             var so = new SerializedObject(view);
+            if (so.FindProperty("resolutionDropdown") != null)
+            {
+                so.FindProperty("resolutionDropdown").objectReferenceValue = resolutionDropdown;
+            }
+
             if (so.FindProperty("frameRateLabel") != null)
             {
                 so.FindProperty("frameRateLabel").objectReferenceValue =
@@ -527,6 +639,18 @@ namespace SubTerra.App.Editor.DataValidation
                     langDd.GetComponent<TMP_Dropdown>();
             }
 
+            // 해상도 라벨을 "해상도" 단독으로(드롭다운 옆 표기).
+            var resLabelTf = settingsRoot.Find("ResolutionLabel");
+            if (resLabelTf != null)
+            {
+                var resTmp = resLabelTf.GetComponent<TMP_Text>();
+                if (resTmp != null)
+                {
+                    resTmp.text = LocalizationService.Get("settings.resolution", "해상도");
+                    EditorUtility.SetDirty(resTmp);
+                }
+            }
+
             so.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(view);
         }
@@ -534,28 +658,36 @@ namespace SubTerra.App.Editor.DataValidation
         private static void LayoutSettingsChildren(Transform settingsRoot)
         {
             // stretch 패널 기준: anchor Y 비율로 배치해 높이 50%에 맞게 간격 확보.
-            // 위→아래: 제목, 음량라벨, 슬라이더, 해상도, 진동억제, 언어, 프레임, BGM, 버튼
-            PlaceSettingsRow(settingsRoot, "SettingsTitle", 0.92f, 40f, 420f);
-            PlaceSettingsRow(settingsRoot, "MasterVolumeLabel", 0.82f, 28f, 420f);
-            PlaceSettingsRow(settingsRoot, "MasterVolume", 0.74f, 28f, 400f);
-            PlaceSettingsRow(settingsRoot, "ResolutionLabel", 0.64f, 28f, 280f);
-            PlaceSettingsRow(settingsRoot, "ResolutionPrev", 0.64f, 36f, 70f, -210f);
-            PlaceSettingsRow(settingsRoot, "ResolutionNext", 0.64f, 36f, 70f, 210f);
-            PlaceSettingsRow(settingsRoot, "ReduceMotionGroup", 0.54f, 32f, 400f);
-            PlaceSettingsRow(settingsRoot, "LanguageLabel", 0.46f, 24f, 280f);
+            // 위→아래: 제목, 음량, 해상도(드롭다운), 진동억제, 언어, 프레임, BGM, 버튼
+            PlaceSettingsRow(settingsRoot, "SettingsTitle", 0.94f, 36f, 420f);
+            PlaceSettingsRow(settingsRoot, "MasterVolumeLabel", 0.86f, 24f, 420f);
+            PlaceSettingsRow(settingsRoot, "MasterVolume", 0.79f, 28f, 400f);
+            PlaceSettingsRow(settingsRoot, "ResolutionLabel", 0.71f, 22f, 280f);
+            PlaceSettingsRow(settingsRoot, "ResolutionDropdown", 0.64f, 36f, 280f);
+            PlaceSettingsRow(settingsRoot, "ReduceMotionGroup", 0.55f, 32f, 400f);
+            PlaceSettingsRow(settingsRoot, "LanguageLabel", 0.47f, 22f, 280f);
             PlaceSettingsRow(settingsRoot, "LanguageDropdown", 0.40f, 36f, 280f);
-            PlaceSettingsRow(settingsRoot, "FrameRateLabel", 0.32f, 24f, 280f);
-            PlaceSettingsRow(settingsRoot, "FrameRateDropdown", 0.26f, 36f, 280f);
-            PlaceSettingsRow(settingsRoot, "BgmHint", 0.16f, 40f, 520f);
+            PlaceSettingsRow(settingsRoot, "FrameRateLabel", 0.32f, 22f, 280f);
+            PlaceSettingsRow(settingsRoot, "FrameRateDropdown", 0.25f, 36f, 280f);
+            PlaceSettingsRow(settingsRoot, "BgmHint", 0.15f, 40f, 520f);
             PlaceSettingsRow(settingsRoot, "SettingsApply", 0.06f, 40f, 120f, -140f);
             PlaceSettingsRow(settingsRoot, "SettingsCancel", 0.06f, 40f, 120f, 0f);
             PlaceSettingsRow(settingsRoot, "SettingsDefaults", 0.06f, 40f, 120f, 140f);
 
-            // 구 사이클 버튼 숨김.
+            // 구 사이클/prev-next 버튼 숨김.
             var cycle = settingsRoot.Find("LanguageCycle");
             if (cycle != null)
             {
                 cycle.gameObject.SetActive(false);
+            }
+
+            foreach (var name in new[] { "ResolutionPrev", "ResolutionNext" })
+            {
+                var btn = settingsRoot.Find(name);
+                if (btn != null)
+                {
+                    btn.gameObject.SetActive(false);
+                }
             }
         }
 
@@ -603,6 +735,39 @@ namespace SubTerra.App.Editor.DataValidation
                 label.offsetMin = new Vector2(10f, 2f);
                 label.offsetMax = new Vector2(-10f, -2f);
                 EditorUtility.SetDirty(label);
+            }
+        }
+
+        private static TMP_Dropdown EnsureResolutionDropdown(Transform settingsRoot)
+        {
+            var existing = settingsRoot.Find("ResolutionDropdown");
+            if (existing != null)
+            {
+                var dd = existing.GetComponent<TMP_Dropdown>();
+                if (dd != null)
+                {
+                    EnsureResolutionOptions(dd);
+                    return dd;
+                }
+
+                Object.DestroyImmediate(existing.gameObject);
+            }
+
+            return CreateDropdown(
+                settingsRoot,
+                "ResolutionDropdown",
+                ResolutionPresets.BuildOptionLabels());
+        }
+
+        private static void EnsureResolutionOptions(TMP_Dropdown dropdown)
+        {
+            var labels = ResolutionPresets.BuildOptionLabels();
+            if (dropdown.options == null || dropdown.options.Count != labels.Count)
+            {
+                dropdown.ClearOptions();
+                dropdown.AddOptions(labels);
+                dropdown.value = ResolutionPresets.FindIndex(1920, 1080);
+                dropdown.RefreshShownValue();
             }
         }
 

@@ -187,6 +187,23 @@ namespace SubTerra.App.UI.MainMenu
 
             return All[index];
         }
+
+        public static string FormatOption(int index)
+        {
+            var preset = Get(index);
+            return LocalizationService.FormatResolutionOption(preset.width, preset.height);
+        }
+
+        public static System.Collections.Generic.List<string> BuildOptionLabels()
+        {
+            var list = new System.Collections.Generic.List<string>(All.Count);
+            for (var i = 0; i < All.Count; i++)
+            {
+                list.Add(FormatOption(i));
+            }
+
+            return list;
+        }
     }
 
     /// <summary>

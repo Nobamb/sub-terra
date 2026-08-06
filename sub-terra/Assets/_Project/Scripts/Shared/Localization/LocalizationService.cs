@@ -76,6 +76,12 @@ namespace SubTerra.Shared.Localization
             return Get("settings.resolution", "해상도") + ": " + width + " x " + height;
         }
 
+        /// <summary>해상도 드롭다운 옵션 라벨 (예: 1920 x 1080).</summary>
+        public static string FormatResolutionOption(int width, int height)
+        {
+            return width + " x " + height;
+        }
+
         public static string FormatLanguage(GameLanguage language)
         {
             return language == GameLanguage.English

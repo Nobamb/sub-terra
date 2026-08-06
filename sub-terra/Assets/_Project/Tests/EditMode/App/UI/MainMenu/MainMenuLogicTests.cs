@@ -395,6 +395,16 @@ namespace SubTerra.App.Tests.UI.MainMenu
         }
 
         [Test]
+        public void ResolutionPresets_BuildOptionLabels_MatchesAllPresets()
+        {
+            var labels = ResolutionPresets.BuildOptionLabels();
+            Assert.That(labels.Count, Is.EqualTo(ResolutionPresets.All.Count));
+            Assert.That(labels[2], Is.EqualTo("1920 x 1080"));
+            var byIndex = ResolutionPresets.Get(1);
+            Assert.That(labels[1], Is.EqualTo(byIndex.width + " x " + byIndex.height));
+        }
+
+        [Test]
         public void SafeAreaFitter_MapsPixelSafeAreaToNormalizedAnchors()
         {
             var host = new GameObject("SafeAreaTest", typeof(RectTransform));

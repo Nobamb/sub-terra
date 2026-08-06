@@ -35,6 +35,8 @@ namespace SubTerra.App.UI.MainMenu
         [SerializeField] private TMP_Text resolutionLabel;
         [SerializeField] private Button resolutionPrevButton;
         [SerializeField] private Button resolutionNextButton;
+        // 해상도 드롭다운(프리셋). 있으면 prev/next 버튼을 대체한다.
+        [SerializeField] private TMP_Dropdown resolutionDropdown;
         [SerializeField] private TMP_Text languageLabel;
         [SerializeField] private Button languageCycleButton;
         // prompt-B 33-1: 언어는 드롭다운(한국어 기본, 영어 선택).
@@ -82,6 +84,20 @@ namespace SubTerra.App.UI.MainMenu
             resolutionPrevButton?.onClick.AddListener(OnResolutionPrev);
             resolutionNextButton?.onClick.AddListener(OnResolutionNext);
             languageCycleButton?.onClick.AddListener(OnLanguageCycle);
+            if (resolutionDropdown != null)
+            {
+                resolutionDropdown.onValueChanged.AddListener(OnResolutionDropdownChanged);
+                if (resolutionPrevButton != null)
+                {
+                    resolutionPrevButton.gameObject.SetActive(false);
+                }
+
+                if (resolutionNextButton != null)
+                {
+                    resolutionNextButton.gameObject.SetActive(false);
+                }
+            }
+
             if (languageDropdown != null)
             {
                 languageDropdown.onValueChanged.AddListener(OnLanguageDropdownChanged);
@@ -115,6 +131,11 @@ namespace SubTerra.App.UI.MainMenu
             resolutionPrevButton?.onClick.RemoveListener(OnResolutionPrev);
             resolutionNextButton?.onClick.RemoveListener(OnResolutionNext);
             languageCycleButton?.onClick.RemoveListener(OnLanguageCycle);
+            if (resolutionDropdown != null)
+            {
+                resolutionDropdown.onValueChanged.RemoveListener(OnResolutionDropdownChanged);
+            }
+
             if (languageDropdown != null)
             {
                 languageDropdown.onValueChanged.RemoveListener(OnLanguageDropdownChanged);
@@ -204,6 +225,7 @@ namespace SubTerra.App.UI.MainMenu
                 reduceMotionToggle.SetIsOnWithoutNotify(values.ReduceMotion);
             }
 
+            SyncResolutionDropdown();
             SyncLanguageDropdown();
             SyncFrameRateDropdown();
             RefreshSettingsLabels(values.MasterVolume);
@@ -241,6 +263,13 @@ namespace SubTerra.App.UI.MainMenu
             if (reduceMotionToggle != null)
             {
                 result.ReduceMotion = reduceMotionToggle.isOn;
+            }
+
+            if (resolutionDropdown != null)
+            {
+                var preset = ResolutionPresets.Get(resolutionDropdown.value);
+                draftResolutionWidth = preset.width;
+                draftResolutionHeight = preset.height;
             }
 
             if (languageDropdown != null)
@@ -292,9 +321,16 @@ namespace SubTerra.App.UI.MainMenu
 
             if (resolutionLabel != null)
             {
-                resolutionLabel.text = LocalizationService.FormatResolution(
-                    draftResolutionWidth,
-                    draftResolutionHeight);
+                if (resolutionDropdown != null)
+                {
+                    resolutionLabel.text = LocalizationService.Get("settings.resolution", "해상도");
+                }
+                else
+                {
+                    resolutionLabel.text = LocalizationService.FormatResolution(
+                        draftResolutionWidth,
+                        draftResolutionHeight);
+                }
             }
 
             if (reduceMotionLabel != null)
@@ -333,6 +369,18 @@ namespace SubTerra.App.UI.MainMenu
             }
         }
 
+        private void SyncResolutionDropdown()
+        {
+            if (resolutionDropdown == null)
+            {
+                return;
+            }
+
+            EnsureResolutionDropdownOptions();
+            resolutionDropdown.SetValueWithoutNotify(
+                ResolutionPresets.FindIndex(draftResolutionWidth, draftResolutionHeight));
+        }
+
         private void SyncLanguageDropdown()
         {
             if (languageDropdown == null)
@@ -354,6 +402,21 @@ namespace SubTerra.App.UI.MainMenu
 
             EnsureFrameRateDropdownOptions();
             frameRateDropdown.SetValueWithoutNotify(FrameRatePresets.ToIndex(draftFrameRate));
+        }
+
+        private void EnsureResolutionDropdownOptions()
+        {
+            if (resolutionDropdown == null)
+            {
+                return;
+            }
+
+            var expected = ResolutionPresets.All.Count;
+            if (resolutionDropdown.options == null || resolutionDropdown.options.Count != expected)
+            {
+                resolutionDropdown.ClearOptions();
+                resolutionDropdown.AddOptions(ResolutionPresets.BuildOptionLabels());
+            }
         }
 
         private void EnsureLanguageDropdownOptions()
@@ -392,6 +455,13 @@ namespace SubTerra.App.UI.MainMenu
 
                 frameRateDropdown.AddOptions(options);
             }
+        }
+
+        private void OnResolutionDropdownChanged(int index)
+        {
+            var preset = ResolutionPresets.Get(index);
+            draftResolutionWidth = preset.width;
+            draftResolutionHeight = preset.height;
         }
 
         private void OnLanguageDropdownChanged(int index)
