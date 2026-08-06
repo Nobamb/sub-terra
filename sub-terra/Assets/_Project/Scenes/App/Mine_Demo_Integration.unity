@@ -3190,7 +3190,7 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1691016234}
-  m_Father: {fileID: 1039056362}
+  m_Father: {fileID: 1039056360}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
@@ -3454,7 +3454,7 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1986719241}
-  - {fileID: 1039056362}
+  - {fileID: 1039056360}
   - {fileID: 1185730223}
   - {fileID: 1384950353}
   - {fileID: 1935426469}
@@ -3483,7 +3483,7 @@ MonoBehaviour:
     panelRoot: {fileID: 1986719240}
     visibleOnStart: 0
   - panelId: 1
-    panelRoot: {fileID: 1039056360}
+    panelRoot: {fileID: 0}
     visibleOnStart: 0
   - panelId: 2
     panelRoot: {fileID: 1384950348}
@@ -4279,7 +4279,7 @@ MonoBehaviour:
   gasEffectController: {fileID: 976616839}
   outpostBridge: {fileID: 976616835}
   buildingUiBinder: {fileID: 976616837}
-  inventoryPanelBinder: {fileID: 1039056361}
+  inventoryPanelBinder: {fileID: 0}
   progressionPanelBinder: {fileID: 1384950349}
   placementBridge: {fileID: 976616838}
   droneContextAdapter: {fileID: 976616834}
@@ -4580,30 +4580,14 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects:
-    - targetCorrespondingSourceObject: {fileID: 9172631783828380550, guid: 67fd58b9fb816b6488b0b5f5dd3f5632, type: 3}
+    - targetCorrespondingSourceObject: {fileID: 3891479769033115367, guid: 67fd58b9fb816b6488b0b5f5dd3f5632, type: 3}
       insertIndex: -1
       addedObject: {fileID: 653242021}
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 67fd58b9fb816b6488b0b5f5dd3f5632, type: 3}
---- !u!1 &1039056360 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 1220421203379172918, guid: 67fd58b9fb816b6488b0b5f5dd3f5632, type: 3}
-  m_PrefabInstance: {fileID: 1039056359}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &1039056361 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 1180506790126299466, guid: 67fd58b9fb816b6488b0b5f5dd3f5632, type: 3}
-  m_PrefabInstance: {fileID: 1039056359}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1039056360}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f15577ed785e48058625e0ca9ebc74c0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: SubTerra.App::SubTerra.App.UI.Inventory.InventoryPanelBinder
---- !u!224 &1039056362 stripped
+--- !u!224 &1039056360 stripped
 RectTransform:
-  m_CorrespondingSourceObject: {fileID: 9172631783828380550, guid: 67fd58b9fb816b6488b0b5f5dd3f5632, type: 3}
+  m_CorrespondingSourceObject: {fileID: 3891479769033115367, guid: 67fd58b9fb816b6488b0b5f5dd3f5632, type: 3}
   m_PrefabInstance: {fileID: 1039056359}
   m_PrefabAsset: {fileID: 0}
 --- !u!1 &1062368720
@@ -5837,6 +5821,7 @@ MonoBehaviour:
   deepZoneText: {fileID: 780300492}
   purchaseButton: {fileID: 1915998976}
   panelRoot: {fileID: 1384950348}
+  upgradeButtons: []
 --- !u!114 &1384950351
 MonoBehaviour:
   m_ObjectHideFlags: 0
