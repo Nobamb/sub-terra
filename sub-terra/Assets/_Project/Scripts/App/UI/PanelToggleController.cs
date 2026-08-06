@@ -57,21 +57,12 @@ namespace SubTerra.App.UI
                 return;
             }
 
-            if (keyboard.bKey.wasPressedThisFrame)
-            {
-                Toggle(RuntimePanelId.Building);
-            }
-            else if (keyboard.iKey.wasPressedThisFrame)
-            {
-                Toggle(RuntimePanelId.Inventory);
-            }
-            else if (keyboard.uKey.wasPressedThisFrame)
+            // prompt-B 32: B/I/G는 HudPanelChromeController가 단일 소유한다.
+            // 여기서 같이 토글하면 창이 열렸다 닫히거나 X·닫기 상태가 엇갈린다.
+            // 업그레이드(U)만 이 컨트롤러가 담당한다.
+            if (keyboard.uKey.wasPressedThisFrame)
             {
                 Toggle(RuntimePanelId.Upgrade);
-            }
-            else if (keyboard.gKey.wasPressedThisFrame)
-            {
-                Toggle(RuntimePanelId.GameGuide);
             }
         }
 

@@ -153,7 +153,16 @@ namespace SubTerra.App.UI.Building
 
         public void SetVisible(bool visible)
         {
-            (panelRoot != null ? panelRoot : gameObject).SetActive(visible);
+            // panelRoot와 루트 GO를 함께 맞춰 X 버튼만 남거나 내용만 사라지는 상태를 막는다.
+            if (panelRoot != null)
+            {
+                panelRoot.SetActive(visible);
+            }
+
+            if (gameObject.activeSelf != visible)
+            {
+                gameObject.SetActive(visible);
+            }
         }
 
         public bool HasRequiredReferences()

@@ -26,6 +26,8 @@ namespace SubTerra.App.Tests.UI
             PromptB31_1LayoutBuilder.Build();
             // prompt-B 31-2 건설 목록 텍스트 제거·우측 폭·인벤토리 패널.
             PromptB31_2LayoutBuilder.Build();
+            // prompt-B 32: 우측 중앙 버튼 제거·X 닫기·단축키 단일 경로.
+            PromptB32LayoutBuilder.Build();
         }
 
         [Test]
@@ -41,7 +43,7 @@ namespace SubTerra.App.Tests.UI
         }
 
         [Test]
-        public void BuildingMenuPrefab_HasCloseButton()
+        public void BuildingMenuPrefab_HasXCloseButton()
         {
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
                 "Assets/_Project/Prefabs/UI/BuildingMenu.prefab");
@@ -49,6 +51,9 @@ namespace SubTerra.App.Tests.UI
             var view = prefab.GetComponent<BuildingMenuView>();
             Assert.That(view, Is.Not.Null);
             Assert.That(view.CloseButton, Is.Not.Null);
+            var label = view.CloseButton.GetComponentInChildren<TMPro.TMP_Text>(true);
+            Assert.That(label, Is.Not.Null);
+            Assert.That(label.text, Is.EqualTo("×"));
         }
 
         [Test]
@@ -62,7 +67,8 @@ namespace SubTerra.App.Tests.UI
             var title = FindRect(scene, "ObjectiveTitle");
             var digger = FindRect(scene, "DroneDialoguePanel");
             var legend = FindTransform(scene, "TerrainLegendPanel");
-            var building = FindRect(scene, "BuildingMenu");
+            var building = FindRect(scene, "BuildingPanel")
+                ?? FindRect(scene, "BuildingMenu");
             var reason = FindTransform(scene, "DroneReasonPanel");
             var guide = FindTransform(scene, "GameGuidePanel");
 
@@ -95,17 +101,16 @@ namespace SubTerra.App.Tests.UI
             Assert.That(chrome, Is.Not.Null);
             Assert.That(chrome.HasRequiredReferences(), Is.True);
 
+            // prompt-B 32: 우측 중앙 시설/가이드 재열기 버튼 제거, 드론만 유지.
             var openBuilding = canvas.transform.Find("OpenBuildingMenuButton");
             var openDigger = canvas.transform.Find("OpenDiggerBotButton");
             var openGuide = canvas.transform.Find("OpenGameGuideButton");
-            Assert.That(openBuilding, Is.Not.Null);
+            Assert.That(openBuilding, Is.Null);
+            Assert.That(openGuide, Is.Null);
             Assert.That(openDigger, Is.Not.Null);
-            Assert.That(openGuide, Is.Not.Null);
-            Assert.That(openBuilding.GetComponent<Button>(), Is.Not.Null);
             Assert.That(openDigger.GetComponent<Button>(), Is.Not.Null);
-            Assert.That(openGuide.GetComponent<Button>(), Is.Not.Null);
 
-            // prompt-B 31-2: 좌측 목록 텍스트 숨김, 패널 폭 460, I키용 인벤토리.
+            // prompt-B 32: 좌측 목록 텍스트 숨김, 패널 폭 480(+20), I키용 인벤토리.
             var listText = building.Find("PanelRoot/BuildingListText")
                 ?? building.Find("BuildingListText");
             if (listText != null)
@@ -113,7 +118,8 @@ namespace SubTerra.App.Tests.UI
                 Assert.That(listText.gameObject.activeSelf, Is.False);
             }
 
-            Assert.That(building.sizeDelta.x, Is.EqualTo(460f).Within(0.5f));
+            Assert.That(building.sizeDelta.x, Is.EqualTo(480f).Within(0.5f));
+            Assert.That(building.sizeDelta.y, Is.EqualTo(560f).Within(0.5f));
             var selection = building.Find("PanelRoot/SelectionText") as RectTransform
                 ?? building.Find("SelectionText") as RectTransform;
             if (selection != null)
@@ -173,7 +179,8 @@ namespace SubTerra.App.Tests.UI
                 chrome.CloseBuildingMenu();
                 Assert.That(chrome.IsBuildingMenuOpen, Is.False);
                 Assert.That(buildingRoot.activeSelf, Is.False);
-                Assert.That(openBuilding.activeSelf, Is.True);
+                // prompt-B 32: 우측 중앙 재열기 버튼은 사용하지 않는다.
+                Assert.That(openBuilding.activeSelf, Is.False);
 
                 chrome.ToggleBuildingMenu();
                 Assert.That(chrome.IsBuildingMenuOpen, Is.True);
@@ -203,6 +210,8 @@ namespace SubTerra.App.Tests.UI
                 chrome.OpenGameGuide();
                 Assert.That(chrome.IsGameGuideOpen, Is.True);
                 Assert.That(guideRoot.activeSelf, Is.True);
+                // 우측 중앙 가이드 버튼은 숨김(상단 G 단축키 사용).
+                Assert.That(openGuide.activeSelf, Is.False);
 
                 chrome.CloseGameGuide();
                 Assert.That(chrome.IsGameGuideOpen, Is.False);

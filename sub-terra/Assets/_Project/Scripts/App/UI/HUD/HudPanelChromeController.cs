@@ -8,8 +8,9 @@ using UnityEngine.UI;
 namespace SubTerra.App.UI.HUD
 {
     /// <summary>
-    /// 시설 건설·Digger-Bot·게임 가이드·인벤토리 패널의 닫기/재오픈 토글과
-    /// 가이드에 명시된 단축키(B/I)를 담당한다.
+    /// 시설 건설·Digger-Bot·게임 가이드·인벤토리 패널의 닫기/토글과
+    /// 가이드에 명시된 단축키(B/I/G)를 담당한다.
+    /// prompt-B 32: 우측 중앙 재열기 버튼 없이, 우측 상단 단축키·X 닫기만 사용한다.
     /// 레이아웃 수치 자체는 에디터 빌더가 Prefab/Scene에 적용한다.
     /// </summary>
     public sealed class HudPanelChromeController : MonoBehaviour
@@ -18,6 +19,7 @@ namespace SubTerra.App.UI.HUD
         [SerializeField] private BuildingMenuBinder buildingMenuBinder;
         [SerializeField] private GameObject buildingMenuRoot;
         [SerializeField] private Button buildingCloseButton;
+        // prompt-B 32: 우측 중앙 시설 재열기 버튼은 사용하지 않는다(레거시 호환 필드).
         [SerializeField] private Button buildingOpenButton;
 
         [SerializeField] private DroneDialoguePanelView diggerBotView;
@@ -28,6 +30,7 @@ namespace SubTerra.App.UI.HUD
         [SerializeField] private GameGuidePanelView gameGuideView;
         [SerializeField] private GameObject gameGuideRoot;
         [SerializeField] private Button gameGuideCloseButton;
+        // prompt-B 32: 우측 중앙 가이드 버튼 대신 우측 상단 [G] 단축키/버튼만 사용.
         [SerializeField] private Button gameGuideOpenButton;
 
         [SerializeField] private InventoryPanelView inventoryPanelView;
@@ -65,7 +68,7 @@ namespace SubTerra.App.UI.HUD
 
         private void Update()
         {
-            // 게임 가이드 조작법: B=시설 건설, I=화물/인벤토리
+            // 게임 가이드 조작법: B=시설 건설, I=화물/인벤토리, G=게임 가이드
             var keyboard = Keyboard.current;
             if (keyboard == null)
             {
@@ -81,6 +84,11 @@ namespace SubTerra.App.UI.HUD
             {
                 ToggleInventoryPanel();
             }
+
+            if (keyboard.gKey.wasPressedThisFrame)
+            {
+                ToggleGameGuide();
+            }
         }
 
         /// <summary>시설 건설 패널을 닫는다. 진행 중 Preview는 취소한다.</summary>
@@ -89,7 +97,7 @@ namespace SubTerra.App.UI.HUD
             ApplyBuildingMenuVisible(false, cancelSelection: true);
         }
 
-        /// <summary>우측 열기 버튼으로 시설 건설 패널을 다시 연다.</summary>
+        /// <summary>시설 건설 패널을 연다.</summary>
         public void OpenBuildingMenu()
         {
             ApplyBuildingMenuVisible(true, cancelSelection: false);
@@ -130,7 +138,7 @@ namespace SubTerra.App.UI.HUD
             ApplyGameGuideVisible(false);
         }
 
-        /// <summary>우측 게임 가이드 버튼으로 가이드 패널을 연다.</summary>
+        /// <summary>우측 상단 게임 가이드(G) 버튼/단축키로 가이드 패널을 연다.</summary>
         public void OpenGameGuide()
         {
             ApplyGameGuideVisible(true);
@@ -147,7 +155,7 @@ namespace SubTerra.App.UI.HUD
             ApplyInventoryPanelVisible(false);
         }
 
-        /// <summary>I 키 등으로 화물/인벤토리 패널을 연다.</summary>
+        /// <summary>I 키·화물(I) 버튼으로 화물/인벤토리 패널을 연다.</summary>
         public void OpenInventoryPanel()
         {
             ApplyInventoryPanelVisible(true);
@@ -160,12 +168,11 @@ namespace SubTerra.App.UI.HUD
 
         public bool HasRequiredReferences()
         {
+            // prompt-B 32: 우측 중앙 재열기 버튼은 필수가 아니다.
             return buildingMenuRoot != null
-                && buildingOpenButton != null
                 && diggerBotRoot != null
                 && diggerOpenButton != null
-                && gameGuideRoot != null
-                && gameGuideOpenButton != null;
+                && gameGuideRoot != null;
         }
 
         private void WireButtons()
@@ -176,10 +183,11 @@ namespace SubTerra.App.UI.HUD
                 buildingCloseButton.onClick.AddListener(CloseBuildingMenu);
             }
 
+            // 레거시 우측 중앙 시설 버튼이 남아 있으면 토글로 연결(빌더는 제거한다).
             if (buildingOpenButton != null)
             {
-                buildingOpenButton.onClick.RemoveListener(OpenBuildingMenu);
-                buildingOpenButton.onClick.AddListener(OpenBuildingMenu);
+                buildingOpenButton.onClick.RemoveListener(ToggleBuildingMenu);
+                buildingOpenButton.onClick.AddListener(ToggleBuildingMenu);
             }
 
             if (diggerCloseButton != null)
@@ -202,8 +210,8 @@ namespace SubTerra.App.UI.HUD
 
             if (gameGuideOpenButton != null)
             {
-                gameGuideOpenButton.onClick.RemoveListener(OpenGameGuide);
-                gameGuideOpenButton.onClick.AddListener(OpenGameGuide);
+                gameGuideOpenButton.onClick.RemoveListener(ToggleGameGuide);
+                gameGuideOpenButton.onClick.AddListener(ToggleGameGuide);
             }
 
             if (inventoryCloseButton != null)
@@ -222,7 +230,7 @@ namespace SubTerra.App.UI.HUD
 
             if (buildingOpenButton != null)
             {
-                buildingOpenButton.onClick.RemoveListener(OpenBuildingMenu);
+                buildingOpenButton.onClick.RemoveListener(ToggleBuildingMenu);
             }
 
             if (diggerCloseButton != null)
@@ -242,7 +250,7 @@ namespace SubTerra.App.UI.HUD
 
             if (gameGuideOpenButton != null)
             {
-                gameGuideOpenButton.onClick.RemoveListener(OpenGameGuide);
+                gameGuideOpenButton.onClick.RemoveListener(ToggleGameGuide);
             }
 
             if (inventoryCloseButton != null)
@@ -260,19 +268,21 @@ namespace SubTerra.App.UI.HUD
                 buildingMenuBinder.CancelSelection();
             }
 
-            if (buildingMenuView != null)
-            {
-                buildingMenuView.SetVisible(visible);
-            }
-            else if (buildingMenuRoot != null)
+            // 패널 전체(루트)를 토글한다. PanelRoot만 끄면 X 버튼이 루트에 남아 상태가 꼬인다.
+            if (buildingMenuRoot != null)
             {
                 buildingMenuRoot.SetActive(visible);
             }
 
-            // 닫혀 있을 때만 우측 열기 버튼을 보여 겹침을 줄인다.
+            if (buildingMenuView != null)
+            {
+                buildingMenuView.SetVisible(visible);
+            }
+
+            // prompt-B 32: 우측 중앙 재열기 버튼은 항상 숨긴다.
             if (buildingOpenButton != null)
             {
-                buildingOpenButton.gameObject.SetActive(!visible);
+                buildingOpenButton.gameObject.SetActive(false);
             }
         }
 
@@ -304,7 +314,8 @@ namespace SubTerra.App.UI.HUD
                 // View가 root 활성/비활성과 최전면 정렬까지 처리한다.
                 gameGuideView.SetVisible(visible);
             }
-            else if (gameGuideRoot != null)
+
+            if (gameGuideRoot != null)
             {
                 gameGuideRoot.SetActive(visible);
                 if (visible)
@@ -313,10 +324,10 @@ namespace SubTerra.App.UI.HUD
                 }
             }
 
-            // 가이드 열기 버튼은 항상 우측에서 접근 가능하게 유지한다.
+            // 우측 중앙 레거시 가이드 버튼이 있으면 숨긴다(상단 [G]만 사용).
             if (gameGuideOpenButton != null)
             {
-                gameGuideOpenButton.gameObject.SetActive(true);
+                gameGuideOpenButton.gameObject.SetActive(false);
             }
         }
 

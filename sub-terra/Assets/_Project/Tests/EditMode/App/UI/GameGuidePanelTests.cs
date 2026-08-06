@@ -181,8 +181,8 @@ namespace SubTerra.App.Tests.UI
                 chrome.OpenGameGuide();
                 Assert.That(chrome.IsGameGuideOpen, Is.True);
                 Assert.That(guideRoot.activeSelf, Is.True);
-                // 가이드 열기 버튼은 항상 접근 가능.
-                Assert.That(openGuide.activeSelf, Is.True);
+                // prompt-B 32: 우측 중앙 가이드 버튼은 숨기고 상단 [G]만 사용.
+                Assert.That(openGuide.activeSelf, Is.False);
 
                 chrome.CloseGameGuide();
                 Assert.That(chrome.IsGameGuideOpen, Is.False);
