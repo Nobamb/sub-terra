@@ -89,6 +89,60 @@ namespace SubTerra.App.Tests.PlayMode.Drone
             yield return null;
         }
 
+        [UnityTest]
+        public IEnumerator K_F01_WorldDialogue_FollowsSocketAndClampsInsideCamera()
+        {
+            var cameraObject = new GameObject("Main Camera", typeof(Camera));
+            cameraObject.tag = "MainCamera";
+            cameraObject.transform.position = new Vector3(0f, 0f, -10f);
+            var camera = cameraObject.GetComponent<Camera>();
+            camera.orthographic = true;
+            camera.orthographicSize = 5f;
+
+            var socketObject = new GameObject("ViewSocket");
+            socketObject.transform.position = new Vector3(100f, 100f, 0f);
+            var canvasObject = new GameObject(
+                "WorldDialogueCanvas",
+                typeof(RectTransform),
+                typeof(Canvas),
+                typeof(CanvasGroup));
+            canvasObject.transform.SetParent(socketObject.transform, false);
+            var canvas = canvasObject.GetComponent<Canvas>();
+            canvas.renderMode = RenderMode.WorldSpace;
+            var group = canvasObject.GetComponent<CanvasGroup>();
+            group.interactable = false;
+            group.blocksRaycasts = false;
+            var text = CreateText(canvasObject.transform, "DialogueText");
+            text.raycastTarget = false;
+
+            var socket = socketObject.AddComponent<DroneDialogueSocket>();
+            SetField(socket, "anchor", socketObject.transform);
+            SetField(socket, "visualRoot", canvasObject.GetComponent<RectTransform>());
+            SetField(socket, "worldCanvas", canvas);
+            SetField(socket, "canvasGroup", group);
+            SetField(socket, "dialogueText", text);
+            SetField(socket, "worldCamera", camera);
+
+            socket.SetVisible(true);
+            socket.SetDialogue(new DroneDialogueResult(
+                "dialogue.test",
+                "긴급 경고",
+                false,
+                false,
+                true));
+            socket.RefreshPosition();
+
+            var viewport = camera.WorldToViewportPoint(canvasObject.transform.position);
+            Assert.That(group.alpha, Is.EqualTo(1f));
+            Assert.That(group.blocksRaycasts, Is.False);
+            Assert.That(viewport.x, Is.InRange(0.079f, 0.921f));
+            Assert.That(viewport.y, Is.InRange(0.119f, 0.881f));
+
+            Object.Destroy(socketObject);
+            Object.Destroy(cameraObject);
+            yield return null;
+        }
+
         private sealed class FakeProvider : IDroneContextProvider
         {
             public DroneContextDto Context;

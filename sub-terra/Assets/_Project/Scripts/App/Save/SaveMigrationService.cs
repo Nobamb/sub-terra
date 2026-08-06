@@ -53,6 +53,26 @@ namespace SubTerra.App.Save
                 data.targetSceneName = SceneNames.Integration;
             }
 
+            // 구버전 월드 메타: Seed/생성기 버전 누락 시 안전한 기본값.
+            if (data.world != null)
+            {
+                if (data.world.generatorVersion <= 0)
+                {
+                    data.world.generatorVersion = 1;
+                }
+
+                if (string.IsNullOrEmpty(data.world.version))
+                {
+                    data.world.version = "1.2";
+                }
+            }
+
+            // 신규 Progress 필드 기본값(빈 목표 ID, 미완료 데모).
+            if (data.progress != null && data.progress.currentObjectiveId == null)
+            {
+                data.progress.currentObjectiveId = string.Empty;
+            }
+
             data.saveVersion = 2;
         }
     }

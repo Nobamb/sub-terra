@@ -42,5 +42,7 @@ namespace SubTerra.Shared
         public OutpostStatusDto outpostStatus;
         public StructuralCollapseEventDto structuralCollapse;
         public GasExposureFailureInputDto gasExposureFailure;
+        public RunFailureInputDto runFailure;
+        public PlayerRescueResultDto playerRescue;
     }
 }

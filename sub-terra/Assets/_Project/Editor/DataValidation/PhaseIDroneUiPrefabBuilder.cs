@@ -186,6 +186,7 @@ namespace SubTerra.App.Editor.DataValidation
             panel.transform.SetParent(parent, false);
             StretchFull(panel.GetComponent<RectTransform>());
             panel.GetComponent<Image>().color = new Color(0.035f, 0.065f, 0.095f, 0.96f);
+            panel.GetComponent<Image>().raycastTarget = false;
             return panel;
         }
 

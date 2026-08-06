@@ -48,6 +48,7 @@ namespace SubTerra.App.Integration
         [SerializeField] private MiningSystem miningSystem;
         [SerializeField] private PlayerMovement playerMovement;
         [SerializeField] private MiningProgressHud miningProgressHud;
+        [SerializeField] private RunFailureRuntimeController runFailureController;
 
         private SaveRuntimeController runtime;
         private GameBootstrapper bootstrap;
@@ -58,6 +59,7 @@ namespace SubTerra.App.Integration
         private bool contractsWired;
         private bool uiActivated;
         private bool inventorySpeedBound;
+        private bool droneReadingsBound;
 
         public IntegrationContractRegistry Contracts => contracts;
         public IntegrationActivationGate ActivationGate => activationGate;
@@ -134,6 +136,7 @@ namespace SubTerra.App.Integration
             }
 
             BindCargoSpeed();
+            BindDroneReadings();
 
             // IResourceWallet: A BuildingPlacementSystem → B EconomyService
             if (buildingPlacementSystem != null && runtime.Economy != null)
@@ -165,6 +168,12 @@ namespace SubTerra.App.Integration
                 gasEffectController.FailureInputRaised += OnGasFailureInputRaised;
                 gasEffectController.EffectStateChanged += OnGasEffectStateChanged;
                 gasEffectController.Bind(bootstrap.State, runtime.Progression?.Effects);
+            }
+
+            if (runFailureController != null)
+            {
+                runFailureController.Bind(runtime, bootstrap.State);
+                runFailureController.PlayerRescued += OnPlayerRescued;
             }
 
             var dataCatalog = bootstrap.AssignedCatalog as GameDataCatalog;
@@ -203,6 +212,11 @@ namespace SubTerra.App.Integration
             if (outpostBridge != null)
             {
                 eventFanOut.Add(outpostBridge);
+            }
+
+            if (runFailureController != null)
+            {
+                eventFanOut.Add(runFailureController);
             }
 
             if (tutorialDirector == null)
@@ -291,6 +305,9 @@ namespace SubTerra.App.Integration
                 hudBinder.BindTo(bootstrap.State);
             }
 
+            // I 키 인벤토리 패널: 전역 InventoryService에 구독만 연결 (중복 생성 없음).
+            BindInventoryPanelUi();
+
             miningProgressHud?.BindTo(
                 miningSystem,
                 playerMovement != null ? playerMovement.transform : null);
@@ -299,6 +316,20 @@ namespace SubTerra.App.Integration
             SetDeferredInputEnabled(true);
             uiActivated = true;
             return true;
+        }
+
+        private void BindInventoryPanelUi()
+        {
+            if (runtime?.InventoryService == null)
+            {
+                return;
+            }
+
+            var panel = FindFirstObjectByType<InventoryPanelBinder>(FindObjectsInactive.Include);
+            if (panel != null)
+            {
+                panel.BindTo(runtime.InventoryService);
+            }
         }
 
         public void AddMineral(string mineralId, int quantity)
@@ -387,11 +418,71 @@ namespace SubTerra.App.Integration
             }
 
             inventorySpeedBound = false;
+            if (droneReadingsBound && bootstrap?.State != null)
+            {
+                bootstrap.State.EnergyChanged -= OnEnergyChangedForDrone;
+            }
+
+            if (droneReadingsBound && runtime?.InventoryService != null)
+            {
+                runtime.InventoryService.InventoryChanged -= OnInventoryChangedForDrone;
+            }
+
+            droneReadingsBound = false;
             if (gasEffectController != null)
             {
                 gasEffectController.FailureInputRaised -= OnGasFailureInputRaised;
                 gasEffectController.EffectStateChanged -= OnGasEffectStateChanged;
             }
+
+            if (runFailureController != null)
+            {
+                runFailureController.PlayerRescued -= OnPlayerRescued;
+                runFailureController.Unbind();
+            }
+        }
+
+        private void BindDroneReadings()
+        {
+            if (droneReadingsBound
+                || droneSensor == null
+                || bootstrap?.State == null
+                || runtime?.InventoryService == null)
+            {
+                return;
+            }
+
+            bootstrap.State.EnergyChanged += OnEnergyChangedForDrone;
+            runtime.InventoryService.InventoryChanged += OnInventoryChangedForDrone;
+            droneReadingsBound = true;
+            SyncDroneReadings(runtime.InventoryService.GetSnapshot());
+        }
+
+        private void OnEnergyChangedForDrone(EnergyReadModel _)
+        {
+            if (runtime?.InventoryService != null)
+            {
+                SyncDroneReadings(runtime.InventoryService.GetSnapshot());
+            }
+        }
+
+        private void OnInventoryChangedForDrone(InventorySnapshot snapshot)
+        {
+            SyncDroneReadings(snapshot);
+        }
+
+        private void SyncDroneReadings(InventorySnapshot snapshot)
+        {
+            if (droneSensor == null || bootstrap?.State == null || snapshot == null)
+            {
+                return;
+            }
+
+            droneSensor.SetAppStateReadings(
+                bootstrap.State.Player.Energy,
+                Mathf.RoundToInt(snapshot.UnsettledValue),
+                snapshot.CurrentWeight,
+                snapshot.MaxCapacity);
         }
 
         public void Publish(GameplayEventDto gameplayEvent)
@@ -453,6 +544,25 @@ namespace SubTerra.App.Integration
             SubTerra.Gameplay.Hazards.GasExposureEffectState effect)
         {
             droneSensor?.SetAppliedGasRisk(effect.Risk);
+        }
+
+        private void OnPlayerRescued(PlayerRescueResultDto rescue)
+        {
+            if (rescue == null)
+            {
+                return;
+            }
+
+            eventFanOut?.Publish(new GameplayEventDto
+            {
+                type = GameplayEventType.PlayerRescued,
+                entityId = "player",
+                instanceId = rescue.failureToken,
+                reasonId = rescue.cause.ToString(),
+                x = rescue.returnX,
+                y = rescue.returnY,
+                playerRescue = rescue
+            });
         }
 
         private void SetHudVisible(bool visible)

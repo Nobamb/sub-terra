@@ -1,6 +1,7 @@
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
-using System.Collections.Generic;
+using UnityEngine.UI;
 
 namespace SubTerra.App.UI.Inventory
 {
@@ -14,11 +15,13 @@ namespace SubTerra.App.UI.Inventory
         [SerializeField] private TextMeshProUGUI unsettledValueText;
         [SerializeField] private TextMeshProUGUI stacksText;
         [SerializeField] private InventoryStackRowView[] stackRows;
+        [SerializeField] private Button closeButton;
 
         public GameObject PanelRoot => panelRoot;
         public TextMeshProUGUI CargoSummaryText => cargoSummaryText;
         public TextMeshProUGUI UnsettledValueText => unsettledValueText;
         public TextMeshProUGUI StacksText => stacksText;
+        public Button CloseButton => closeButton;
 
         public void SetCargoSummary(string cargoText)
         {
@@ -73,13 +76,22 @@ namespace SubTerra.App.UI.Inventory
 
         public void SetVisible(bool visible)
         {
+            // 루트가 비활성이면 자식 panelRoot만 켜도 화면에 안 보이므로 루트도 함께 토글한다.
+            if (!visible)
+            {
+                if (panelRoot != null)
+                {
+                    panelRoot.SetActive(false);
+                }
+
+                gameObject.SetActive(false);
+                return;
+            }
+
+            gameObject.SetActive(true);
             if (panelRoot != null)
             {
-                panelRoot.SetActive(visible);
-            }
-            else
-            {
-                gameObject.SetActive(visible);
+                panelRoot.SetActive(true);
             }
         }
 

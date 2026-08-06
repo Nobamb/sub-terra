@@ -32,6 +32,7 @@ namespace SubTerra.App.Integration
                 gasRisk = MapGasRisk(source.GasRisk),
                 unsettledCargoValue = source.UnsettledCargoValue,
                 cargoWeight = source.CargoWeight,
+                maxCargoWeight = source.MaxCargoWeight,
                 nearestBaseDistance = source.NearestBaseDistance,
                 nearbyMineralIds = source.NearbyMineralIds != null
                     ? new List<string>(source.NearbyMineralIds)

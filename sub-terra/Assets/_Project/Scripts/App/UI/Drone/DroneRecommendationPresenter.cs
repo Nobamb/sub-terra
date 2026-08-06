@@ -11,6 +11,7 @@ namespace SubTerra.App.UI.Drone
     public sealed class DroneRecommendationPresenter
     {
         private readonly IDroneDialogueView dialogueView;
+        private readonly IDroneDialogueView worldDialogueView;
         private readonly IDroneReasonView reasonView;
 
         private IDroneContextProvider contextProvider;
@@ -26,8 +27,17 @@ namespace SubTerra.App.UI.Drone
         public DroneRecommendationPresenter(
             IDroneDialogueView droneDialogueView,
             IDroneReasonView droneReasonView)
+            : this(droneDialogueView, null, droneReasonView)
+        {
+        }
+
+        public DroneRecommendationPresenter(
+            IDroneDialogueView droneDialogueView,
+            IDroneDialogueView droneWorldDialogueView,
+            IDroneReasonView droneReasonView)
         {
             dialogueView = droneDialogueView;
+            worldDialogueView = droneWorldDialogueView;
             reasonView = droneReasonView;
         }
 
@@ -54,6 +64,7 @@ namespace SubTerra.App.UI.Drone
 
             var visible = IsBound;
             dialogueView?.SetVisible(visible);
+            worldDialogueView?.SetVisible(visible);
             reasonView?.SetVisible(visible);
             if (visible)
             {
@@ -72,6 +83,7 @@ namespace SubTerra.App.UI.Drone
             dialogueGenerator = null;
             cloudDialogueGenerator = null;
             dialogueView?.SetVisible(false);
+            worldDialogueView?.SetVisible(false);
             reasonView?.SetVisible(false);
         }
 
@@ -89,6 +101,7 @@ namespace SubTerra.App.UI.Drone
             if (!dialogue.IsSuppressed)
             {
                 dialogueView?.SetDialogue(dialogue);
+                worldDialogueView?.SetDialogue(dialogue);
             }
 
             return analysis;
@@ -172,6 +185,7 @@ namespace SubTerra.App.UI.Drone
             }
 
             dialogueView?.SetDialogue(generated.Dialogue);
+            worldDialogueView?.SetDialogue(generated.Dialogue);
         }
     }
 }

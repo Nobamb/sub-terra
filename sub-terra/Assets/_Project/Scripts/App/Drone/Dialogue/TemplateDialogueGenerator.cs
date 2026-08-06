@@ -19,6 +19,7 @@ namespace SubTerra.App.Drone.Dialogue
             new Dictionary<string, double>(StringComparer.Ordinal);
         private readonly IDroneClock clock;
         private readonly DroneAnalysisSettings settings;
+        private double lastRegularChannelShownAt = double.NegativeInfinity;
 
         public TemplateDialogueGenerator(
             IEnumerable<DialogueTemplateData> dialogueTemplates,
@@ -54,30 +55,29 @@ namespace SubTerra.App.Drone.Dialogue
         {
             if (analysis?.Dialogue == null)
             {
-                return Fallback(string.Empty);
+                return Fallback(string.Empty, true);
             }
 
             var request = analysis.Dialogue;
-            var cooldown = request.IsUrgent
-                ? settings.UrgentDialogueRepeatSeconds
-                : settings.RegularDialogueCooldownSeconds;
-            if (!ignoreCooldown
-                && lastShownAt.TryGetValue(request.TemplateId, out var previous)
-                && clock.Now - previous < cooldown)
+            var now = clock.Now;
+            if (!ignoreCooldown && IsCoolingDown(request, now))
             {
                 return new DroneDialogueResult(
                     request.TemplateId,
                     string.Empty,
                     true,
-                    false);
+                    false,
+                    request.IsUrgent);
             }
 
-            lastShownAt[request.TemplateId] = clock.Now;
+            lastShownAt[request.TemplateId] = now;
+            // 긴급 경고는 일반 채널을 선점하고, 위험이 해제돼도 일반 대사가 곧바로 덮지 못하게 갱신한다.
+            lastRegularChannelShownAt = now;
             if (!templates.TryGetValue(request.TemplateId, out var template)
                 || template == null
                 || string.IsNullOrWhiteSpace(template.Template))
             {
-                return Fallback(request.TemplateId);
+                return Fallback(request.TemplateId, request.IsUrgent);
             }
 
             var missingToken = false;
@@ -95,12 +95,13 @@ namespace SubTerra.App.Drone.Dialogue
             });
 
             return missingToken || string.IsNullOrWhiteSpace(rendered)
-                ? Fallback(request.TemplateId)
+                ? Fallback(request.TemplateId, request.IsUrgent)
                 : new DroneDialogueResult(
                     request.TemplateId,
                     rendered,
                     false,
-                    false);
+                    false,
+                    request.IsUrgent);
         }
 
         public IReadOnlyList<DroneDialogueCooldownState> CaptureCooldowns()
@@ -140,21 +141,39 @@ namespace SubTerra.App.Drone.Dialogue
             }
 
             lastShownAt.Clear();
+            lastRegularChannelShownAt = double.NegativeInfinity;
             foreach (var pair in next)
             {
                 lastShownAt.Add(pair.Key, pair.Value);
+                if (pair.Value > lastRegularChannelShownAt)
+                {
+                    lastRegularChannelShownAt = pair.Value;
+                }
             }
 
             return true;
         }
 
-        private static DroneDialogueResult Fallback(string templateId)
+        private bool IsCoolingDown(DroneDialogueRequest request, double now)
+        {
+            if (request.IsUrgent)
+            {
+                return lastShownAt.TryGetValue(request.TemplateId, out var previous)
+                    && now - previous < settings.UrgentDialogueRepeatSeconds;
+            }
+
+            return now - lastRegularChannelShownAt
+                < settings.RegularDialogueCooldownSeconds;
+        }
+
+        private static DroneDialogueResult Fallback(string templateId, bool isUrgent)
         {
             return new DroneDialogueResult(
                 templateId,
                 "현재 상태를 확인하고 안전한 위치에서 다시 분석하세요.",
                 false,
-                true);
+                true,
+                isUrgent);
         }
     }
 

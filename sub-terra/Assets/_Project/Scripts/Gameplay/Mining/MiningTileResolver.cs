@@ -26,6 +26,28 @@ namespace SubTerra.Gameplay.Mining
             return tile != null && lookup.TryGetValue(tile, out definition);
         }
 
+        /// <summary>
+        /// 저장 DTO의 영구 tileId로 TileBase를 역조회한다.
+        /// 변경 타일 복원 시 사용하며, 매칭이 없으면 false.
+        /// </summary>
+        public bool TryFindTileById(string tileId, out TileBase tile)
+        {
+            BuildLookup();
+            tile = null;
+            if (string.IsNullOrEmpty(tileId)) return false;
+            foreach (KeyValuePair<TileBase, MiningTileDto> pair in lookup)
+            {
+                if (pair.Key != null
+                    && string.Equals(pair.Value.tileId, tileId, StringComparison.Ordinal))
+                {
+                    tile = pair.Key;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         public void RegisterRuntime(TileBase tile, MiningTileDto definition)
         {
             if (tile == null) return;

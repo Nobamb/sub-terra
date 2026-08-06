@@ -16,6 +16,7 @@ namespace SubTerra.Shared
         public float gasRisk;
         public long unsettledCargoValue;
         public float cargoWeight;
+        public float maxCargoWeight;
         public float nearestBaseDistance;
         public List<string> nearbyMineralIds = new List<string>();
         public bool returnPathAvailable;

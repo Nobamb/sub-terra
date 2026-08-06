@@ -43,6 +43,12 @@ namespace SubTerra.App.Drone
             var hasGas = IsUnitValue(context.gasRisk);
             var hasEnergy = context.currentEnergy >= 0 && context.returnEnergyEstimate >= 0;
             var hasCargoValue = context.unsettledCargoValue >= 0;
+            var hasCargoCapacity = context.cargoWeight >= 0f
+                && !float.IsNaN(context.cargoWeight)
+                && !float.IsInfinity(context.cargoWeight)
+                && context.maxCargoWeight > 0f
+                && !float.IsNaN(context.maxCargoWeight)
+                && !float.IsInfinity(context.maxCargoWeight);
             var hasDistance = context.nearestBaseDistance >= 0f
                 && !float.IsNaN(context.nearestBaseDistance)
                 && !float.IsInfinity(context.nearestBaseDistance);
@@ -56,6 +62,8 @@ namespace SubTerra.App.Drone
                 && context.structuralIntegrity <= settings.StructuralCriticalThreshold;
             var gasWarning = hasGas && context.gasRisk >= settings.GasWarningThreshold;
             var gasCritical = hasGas && context.gasRisk >= settings.GasCriticalThreshold;
+            var cargoFull = hasCargoCapacity
+                && context.cargoWeight >= context.maxCargoWeight;
             var lithiumNearby = ContainsOrdinal(
                 context.nearbyMineralIds,
                 DataIds.Minerals.Lithium);
@@ -137,6 +145,18 @@ namespace SubTerra.App.Drone
                     0);
             }
 
+            if (cargoFull && context.returnPathAvailable)
+            {
+                builders[DroneAction.ReturnToBase].Add(
+                    "inventory_full",
+                    "화물 " + Format(context.cargoWeight)
+                        + "/" + Format(context.maxCargoWeight),
+                    context.cargoWeight,
+                    "weight",
+                    settings.CargoReturnScore,
+                    100);
+            }
+
             if (lithiumNearby)
             {
                 builders[DroneAction.MineNearbyMineral].Add(
@@ -209,8 +229,8 @@ namespace SubTerra.App.Drone
                 structuralWarning,
                 structuralCritical,
                 gasWarning,
-                gasCritical,
                 lowEnergy,
+                cargoFull,
                 lithiumNearby);
             return new DroneAnalysisResult(recommendation, candidates, dialogue, usedFallback);
         }
@@ -299,8 +319,8 @@ namespace SubTerra.App.Drone
             bool structuralWarning,
             bool structuralCritical,
             bool gasWarning,
-            bool gasCritical,
             bool lowEnergy,
+            bool cargoFull,
             bool lithiumNearby)
         {
             string templateId;
@@ -323,7 +343,8 @@ namespace SubTerra.App.Drone
             else if (gasWarning)
             {
                 templateId = DataIds.Dialogue.DroneGasWarning;
-                urgent = gasCritical;
+                // 가스 진입은 일반 탐사 대사의 전역 쿨다운을 기다리지 않고 즉시 알린다.
+                urgent = true;
             }
             else if (structuralWarning)
             {
@@ -333,6 +354,10 @@ namespace SubTerra.App.Drone
             {
                 templateId = DataIds.Dialogue.LowPowerWarning;
                 urgent = true;
+            }
+            else if (cargoFull && HasReason(recommendation, "inventory_full"))
+            {
+                templateId = DataIds.Dialogue.DroneCargoFull;
             }
             else if (recommendation.Action == DroneAction.ReturnToBase)
             {
@@ -385,6 +410,20 @@ namespace SubTerra.App.Drone
             {
                 tokens["unsettledCargoValue"] =
                     context.unsettledCargoValue.ToString(CultureInfo.InvariantCulture);
+            }
+
+            if (context.cargoWeight >= 0f
+                && !float.IsNaN(context.cargoWeight)
+                && !float.IsInfinity(context.cargoWeight))
+            {
+                tokens["cargoWeight"] = Format(context.cargoWeight);
+            }
+
+            if (context.maxCargoWeight > 0f
+                && !float.IsNaN(context.maxCargoWeight)
+                && !float.IsInfinity(context.maxCargoWeight))
+            {
+                tokens["maxCargoWeight"] = Format(context.maxCargoWeight);
             }
 
             if (context.nearestBaseDistance >= 0f

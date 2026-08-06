@@ -1,4 +1,5 @@
 using System;
+using SubTerra.Gameplay.Player;
 using SubTerra.Shared;
 using UnityEngine;
 
@@ -11,6 +12,7 @@ namespace SubTerra.Gameplay.Structural
         [SerializeField] private AudioSource audioSource;
         [SerializeField] private AudioClip warningTone;
         [SerializeField] private bool reduceMotion;
+        [SerializeField] private PlayerCameraFollow cameraFollow;
 
         private AudioClip runtimeWarningTone;
 
@@ -18,17 +20,28 @@ namespace SubTerra.Gameplay.Structural
 
         private void OnEnable()
         {
-            if (structuralSystem != null) structuralSystem.RiskChanged += OnRiskChanged;
+            if (structuralSystem != null)
+            {
+                structuralSystem.RiskChanged += OnRiskChanged;
+                structuralSystem.CollapseTriggered += OnCollapseTriggered;
+            }
         }
 
         private void OnDisable()
         {
-            if (structuralSystem != null) structuralSystem.RiskChanged -= OnRiskChanged;
+            if (structuralSystem != null)
+            {
+                structuralSystem.RiskChanged -= OnRiskChanged;
+                structuralSystem.CollapseTriggered -= OnCollapseTriggered;
+            }
         }
 
         private void OnRiskChanged(StructuralRiskLevel risk)
         {
-            if (risk == StructuralRiskLevel.Stable) return;
+            if (risk == StructuralRiskLevel.Stable)
+            {
+                return;
+            }
 
             if (audioSource != null)
             {
@@ -37,7 +50,22 @@ namespace SubTerra.Gameplay.Structural
             }
 
             if (ShouldRequestCameraShake(risk, reduceMotion || AccessibilityPreferences.ReduceMotion))
+            {
                 CameraShakeRequested?.Invoke(risk);
+                ApplyCameraShake(ResolveShakeAmplitude(risk), ResolveShakeDuration(risk));
+            }
+        }
+
+        private void OnCollapseTriggered(StructuralCollapseEventDto collapse)
+        {
+            if (collapse == null || AccessibilityPreferences.ReduceMotion || reduceMotion)
+            {
+                return;
+            }
+
+            // 실제 붕괴는 위험 단계 상승보다 강한 흔들림을 준다.
+            CameraShakeRequested?.Invoke(StructuralRiskLevel.CollapseImminent);
+            ApplyCameraShake(0.38f, 0.4f);
         }
 
         public static float GetPitch(StructuralRiskLevel risk)
@@ -50,6 +78,35 @@ namespace SubTerra.Gameplay.Structural
         public static bool ShouldRequestCameraShake(StructuralRiskLevel risk, bool reduceMotion)
         {
             return !reduceMotion && risk >= StructuralRiskLevel.Danger;
+        }
+
+        public static float ResolveShakeAmplitude(StructuralRiskLevel risk)
+        {
+            return risk == StructuralRiskLevel.CollapseImminent ? 0.32f
+                : risk == StructuralRiskLevel.Danger ? 0.22f
+                : 0.12f;
+        }
+
+        public static float ResolveShakeDuration(StructuralRiskLevel risk)
+        {
+            return risk == StructuralRiskLevel.CollapseImminent ? 0.38f
+                : risk == StructuralRiskLevel.Danger ? 0.28f
+                : 0.18f;
+        }
+
+        private void ApplyCameraShake(float amplitude, float duration)
+        {
+            PlayerCameraFollow follow = cameraFollow;
+            if (follow == null)
+            {
+                Camera main = Camera.main;
+                if (main != null)
+                {
+                    follow = main.GetComponent<PlayerCameraFollow>();
+                }
+            }
+
+            follow?.RequestShake(amplitude, duration);
         }
 
         private AudioClip ResolveWarningTone()

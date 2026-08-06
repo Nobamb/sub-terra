@@ -40,5 +40,17 @@ namespace SubTerra.Gameplay.Structural.Tests
                     false),
                 Is.True);
         }
+
+        [Test]
+        public void ShakeAmplitude_ScalesWithRiskLevel()
+        {
+            Assert.That(
+                StructuralRiskFeedback.ResolveShakeAmplitude(StructuralRiskLevel.CollapseImminent),
+                Is.GreaterThan(
+                    StructuralRiskFeedback.ResolveShakeAmplitude(StructuralRiskLevel.Danger)));
+            Assert.That(
+                StructuralRiskFeedback.ResolveShakeDuration(StructuralRiskLevel.Danger),
+                Is.GreaterThan(0f));
+        }
     }
 }

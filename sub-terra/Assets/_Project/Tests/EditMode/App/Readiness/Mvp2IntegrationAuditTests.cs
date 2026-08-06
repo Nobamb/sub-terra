@@ -78,9 +78,26 @@ namespace SubTerra.App.Tests.Readiness
                 }
             }
 
-            // 현재 카탈로그는 공용 BuildingPlaceholder를 다수 사용한다 — 명시 보고가 목적.
-            Assert.That(placeholders, Is.GreaterThan(0), "Expected at least one placeholder Runtime Prefab");
-            Assert.That(missing, Is.EqualTo(0), "Catalog buildings should have a prefab assigned (even if placeholder)");
+            // Phase I 이후 카탈로그는 시설별 실제 Runtime Prefab을 사용한다(공용 placeholder 0).
+            // 감사기는 placeholder가 있으면 명시 보고하고, 없으면 0으로 유지한다.
+            Assert.That(placeholders, Is.EqualTo(0),
+                "Catalog buildings should use real Runtime Prefabs (no shared BuildingPlaceholder)");
+            Assert.That(missing, Is.EqualTo(0),
+                "Catalog buildings should have a real prefab assigned");
+
+            // 분류기 자체는 placeholder/real/missing 라벨을 구분할 수 있어야 한다.
+            Assert.That(
+                PlaceholderRuntimeClassifier.ClassifyLabel(
+                    "BuildingPlaceholder",
+                    "Assets/_Project/Data/Prefabs/Buildings/BuildingPlaceholder.prefab",
+                    false),
+                Is.EqualTo("placeholder"));
+            Assert.That(
+                PlaceholderRuntimeClassifier.ClassifyLabel(
+                    "SupportPillar",
+                    "Assets/_Project/Prefabs/Gameplay/Buildings/SupportPillar.prefab",
+                    false),
+                Is.EqualTo("real"));
         }
 
         [Test]

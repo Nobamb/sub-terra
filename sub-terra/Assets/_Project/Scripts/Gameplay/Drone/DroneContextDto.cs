@@ -16,11 +16,12 @@ namespace SubTerra.Gameplay.Drone
         public GasRiskLevel GasRisk { get; }
         public int UnsettledCargoValue { get; }
         public float CargoWeight { get; }
+        public float MaxCargoWeight { get; }
         public float NearestBaseDistance { get; }
         public IReadOnlyList<string> NearbyMineralIds { get; }
         public bool ReturnPathAvailable { get; }
 
-        public DroneContextDto(int depth, int currentEnergy, int returnEnergyEstimate, StructuralRiskLevel structuralRisk, GasRiskLevel gasRisk, int unsettledCargoValue, float cargoWeight, float nearestBaseDistance, IReadOnlyList<string> nearbyMineralIds, bool returnPathAvailable)
+        public DroneContextDto(int depth, int currentEnergy, int returnEnergyEstimate, StructuralRiskLevel structuralRisk, GasRiskLevel gasRisk, int unsettledCargoValue, float cargoWeight, float maxCargoWeight, float nearestBaseDistance, IReadOnlyList<string> nearbyMineralIds, bool returnPathAvailable)
         {
             Depth = depth;
             CurrentEnergy = currentEnergy;
@@ -29,6 +30,7 @@ namespace SubTerra.Gameplay.Drone
             GasRisk = gasRisk;
             UnsettledCargoValue = unsettledCargoValue;
             CargoWeight = cargoWeight;
+            MaxCargoWeight = maxCargoWeight;
             NearestBaseDistance = nearestBaseDistance;
             NearbyMineralIds = nearbyMineralIds ?? Array.Empty<string>();
             ReturnPathAvailable = returnPathAvailable;

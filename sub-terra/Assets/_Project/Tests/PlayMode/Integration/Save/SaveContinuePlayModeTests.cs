@@ -185,9 +185,7 @@ namespace SubTerra.App.Tests.PlayMode.Save
                 return new WorldSnapshotDto { worldSeed = 9876 };
             }
 
-            public void RestoreSnapshot(WorldSnapshotDto snapshot)
-            {
-            }
+            public bool RestoreSnapshot(WorldSnapshotDto snapshot) => true;
         }
 
         private sealed class RestoreWorldProvider : IWorldSnapshotProvider
@@ -202,10 +200,11 @@ namespace SubTerra.App.Tests.PlayMode.Save
 
             public WorldSnapshotDto CaptureSnapshot() => null;
 
-            public void RestoreSnapshot(WorldSnapshotDto snapshot)
+            public bool RestoreSnapshot(WorldSnapshotDto snapshot)
             {
                 order.Add("world");
                 Restored = snapshot;
+                return true;
             }
         }
 

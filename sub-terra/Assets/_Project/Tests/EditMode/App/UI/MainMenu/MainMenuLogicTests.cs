@@ -361,9 +361,14 @@ namespace SubTerra.App.Tests.UI.MainMenu
             session.Open();
             session.Draft.MasterVolume = 0.25f;
             session.Draft.ReduceMotion = true;
+            session.Draft.LanguageCode = "en";
+            session.Draft.ResolutionWidth = 1280;
+            session.Draft.ResolutionHeight = 720;
             session.Apply();
             Assert.That(session.Applied.MasterVolume, Is.EqualTo(0.25f));
             Assert.That(session.Applied.ReduceMotion, Is.True);
+            Assert.That(session.Applied.LanguageCode, Is.EqualTo("en"));
+            Assert.That(session.Applied.ResolutionWidth, Is.EqualTo(1280));
 
             session.Open();
             session.Draft.MasterVolume = 0.9f;
@@ -375,6 +380,18 @@ namespace SubTerra.App.Tests.UI.MainMenu
             session.ResetDefaults();
             Assert.That(session.Draft.MasterVolume, Is.EqualTo(1f));
             Assert.That(session.Draft.ReduceMotion, Is.False);
+            Assert.That(session.Draft.LanguageCode, Is.EqualTo("ko"));
+            Assert.That(session.Draft.ResolutionWidth, Is.EqualTo(1920));
+        }
+
+        [Test]
+        public void ResolutionPresets_CycleWrapsAndFindsKnownModes()
+        {
+            Assert.That(ResolutionPresets.FindIndex(1920, 1080), Is.EqualTo(2));
+            var next = ResolutionPresets.Cycle(1920, 1080, 1);
+            Assert.That(next.width, Is.EqualTo(2560));
+            var prev = ResolutionPresets.Cycle(1280, 720, -1);
+            Assert.That(prev.width, Is.EqualTo(2560));
         }
 
         [Test]
@@ -439,7 +456,7 @@ namespace SubTerra.App.Tests.UI.MainMenu
         private sealed class EmptyWorld : IWorldSnapshotProvider
         {
             public WorldSnapshotDto CaptureSnapshot() => new WorldSnapshotDto();
-            public void RestoreSnapshot(WorldSnapshotDto snapshot) { }
+            public bool RestoreSnapshot(WorldSnapshotDto snapshot) => true;
         }
 
         private sealed class FixedClock : ISaveClock

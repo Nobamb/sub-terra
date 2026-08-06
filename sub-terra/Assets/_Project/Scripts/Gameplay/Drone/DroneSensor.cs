@@ -29,6 +29,7 @@ namespace SubTerra.Gameplay.Drone
         private int returnEnergyEstimate;
         private int unsettledCargoValue;
         private float cargoWeight;
+        private float maxCargoWeight;
         private bool returnPathAvailable = true;
         private GasRiskLevel? appliedGasRisk;
         private IUpgradeEffectProvider upgradeEffects;
@@ -59,13 +60,33 @@ namespace SubTerra.Gameplay.Drone
             appliedGasRisk = null;
         }
 
-        public void SetAppReadings(int energy, int returnEstimate, int cargoValue, float nextCargoWeight, bool hasReturnPath)
+        public void SetAppReadings(
+            int energy,
+            int returnEstimate,
+            int cargoValue,
+            float nextCargoWeight,
+            float nextMaxCargoWeight,
+            bool hasReturnPath)
         {
             currentEnergy = Mathf.Max(0, energy);
             returnEnergyEstimate = Mathf.Max(0, returnEstimate);
             unsettledCargoValue = Mathf.Max(0, cargoValue);
             cargoWeight = Mathf.Max(0f, nextCargoWeight);
+            maxCargoWeight = Mathf.Max(0f, nextMaxCargoWeight);
             returnPathAvailable = hasReturnPath;
+        }
+
+        /// <summary>App이 소유한 현재 전력·인벤토리 수치만 갱신하고 Gameplay 귀환 판정은 보존한다.</summary>
+        public void SetAppStateReadings(
+            int energy,
+            int cargoValue,
+            float nextCargoWeight,
+            float nextMaxCargoWeight)
+        {
+            currentEnergy = Mathf.Max(0, energy);
+            unsettledCargoValue = Mathf.Max(0, cargoValue);
+            cargoWeight = Mathf.Max(0f, nextCargoWeight);
+            maxCargoWeight = Mathf.Max(0f, nextMaxCargoWeight);
         }
 
         public DroneContextDto CaptureContext()
@@ -79,7 +100,7 @@ namespace SubTerra.Gameplay.Drone
                     : GasRiskLevel.Safe);
             float baseDistance = DroneContextCalculator.FindNearestDistance(playerPosition, outpostCores);
             IReadOnlyList<string> minerals = ScanNearbyMinerals(playerPosition);
-            return new DroneContextDto(depth, currentEnergy, returnEnergyEstimate, structuralRisk, gasRisk, unsettledCargoValue, cargoWeight, baseDistance, minerals, returnPathAvailable);
+            return new DroneContextDto(depth, currentEnergy, returnEnergyEstimate, structuralRisk, gasRisk, unsettledCargoValue, cargoWeight, maxCargoWeight, baseDistance, minerals, returnPathAvailable);
         }
 
         SubTerra.Shared.DroneContextDto SubTerra.Shared.IDroneContextProvider.CreateContext()
@@ -94,6 +115,7 @@ namespace SubTerra.Gameplay.Drone
                 gasRisk = ToRiskValue(context.GasRisk),
                 unsettledCargoValue = context.UnsettledCargoValue,
                 cargoWeight = context.CargoWeight,
+                maxCargoWeight = context.MaxCargoWeight,
                 nearestBaseDistance = context.NearestBaseDistance,
                 nearbyMineralIds = new List<string>(context.NearbyMineralIds),
                 returnPathAvailable = context.ReturnPathAvailable

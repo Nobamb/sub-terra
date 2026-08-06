@@ -347,6 +347,13 @@ namespace SubTerra.App.Editor.DataValidation
                     400,
                     "현재 전력 {currentEnergy}, 귀환 예상 {returnEnergyEstimate}. {action}을 권장합니다."),
                 EnsureDialogue(
+                    "Dialogue_Drone_Cargo_Full.asset",
+                    DataIds.Dialogue.DroneCargoFull,
+                    "인벤토리 가득 참",
+                    "cargo_full",
+                    350,
+                    "화물 {cargoWeight}/{maxCargoWeight}. 더 담을 수 없어 기지 귀환을 권장합니다."),
+                EnsureDialogue(
                     "Dialogue_Drone_Return.asset",
                     DataIds.Dialogue.DroneReturn,
                     "귀환 추천",

@@ -14,6 +14,8 @@ namespace SubTerra.Gameplay.Power
 
         public PowerNetworkSnapshot CurrentSnapshot { get; private set; }
         public IReadOnlyCollection<PowerNode> Nodes => nodes;
+        /// <summary>현재 등록된 케이블. 스냅샷 캡처·복원 시 토폴로지 조회용.</summary>
+        public IReadOnlyCollection<PowerCable> Cables => cables;
         public event Action<PowerNetworkSnapshot> NetworkRebuilt;
 
         public void RegisterNode(PowerNode node)

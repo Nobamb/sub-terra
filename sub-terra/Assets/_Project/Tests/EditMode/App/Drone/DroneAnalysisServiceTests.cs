@@ -113,6 +113,61 @@ namespace SubTerra.App.Tests.Drone
         }
 
         [Test]
+        public void K_F01_InventoryFull_UsesActualCapacityAndReturnTemplate()
+        {
+            var context = SafeContext();
+            context.cargoWeight = 50f;
+            context.maxCargoWeight = 50f;
+
+            var result = service.Analyze(context);
+
+            Assert.That(result.RecommendedAction, Is.EqualTo(DroneAction.ReturnToBase));
+            Assert.That(result.Dialogue.TemplateId, Is.EqualTo(DataIds.Dialogue.DroneCargoFull));
+            Assert.That(result.Dialogue.Tokens["cargoWeight"], Is.EqualTo("50"));
+            Assert.That(result.Dialogue.Tokens["maxCargoWeight"], Is.EqualTo("50"));
+            Assert.That(
+                result.Recommendation.Reasons.Single().ActualValue,
+                Is.EqualTo(50d));
+        }
+
+        [Test]
+        public void K_F02_GasEntry_IsUrgentBeforeRegularExploration()
+        {
+            var context = SafeContext();
+            context.gasRisk = 0.5f;
+
+            var result = service.Analyze(context);
+
+            Assert.That(result.Dialogue.TemplateId, Is.EqualTo(DataIds.Dialogue.DroneGasWarning));
+            Assert.That(result.Dialogue.IsUrgent, Is.True);
+        }
+
+        [Test]
+        public void K_S02_AllRequiredSituationTriggers_MapToTemplates()
+        {
+            var gas = SafeContext();
+            gas.gasRisk = 0.5f;
+            var collapse = SafeContext();
+            collapse.structuralIntegrity = 0f;
+            var cargo = SafeContext();
+            cargo.cargoWeight = cargo.maxCargoWeight;
+            var power = SafeContext();
+            power.currentEnergy = 10;
+            power.returnEnergyEstimate = 10;
+            var rare = SafeContext();
+            rare.nearbyMineralIds.Add(DataIds.Minerals.Lithium);
+            var returning = SafeContext();
+            returning.unsettledCargoValue = settings.HighCargoValueThreshold;
+
+            Assert.That(service.Analyze(gas).Dialogue.TemplateId, Is.EqualTo(DataIds.Dialogue.DroneGasWarning));
+            Assert.That(service.Analyze(collapse).Dialogue.TemplateId, Is.EqualTo(DataIds.Dialogue.DroneStructuralWarning));
+            Assert.That(service.Analyze(cargo).Dialogue.TemplateId, Is.EqualTo(DataIds.Dialogue.DroneCargoFull));
+            Assert.That(service.Analyze(power).Dialogue.TemplateId, Is.EqualTo(DataIds.Dialogue.LowPowerWarning));
+            Assert.That(service.Analyze(rare).Dialogue.TemplateId, Is.EqualTo(DataIds.Dialogue.DroneLithium));
+            Assert.That(service.Analyze(returning).Dialogue.TemplateId, Is.EqualTo(DataIds.Dialogue.DroneReturn));
+        }
+
+        [Test]
         public void I_F05_NullAndUnknownContext_UseSafeFallbackWithoutInventedValue()
         {
             var missing = service.Analyze(null);
@@ -197,6 +252,7 @@ namespace SubTerra.App.Tests.Drone
                 gasRisk = 0f,
                 unsettledCargoValue = 0,
                 cargoWeight = 0f,
+                maxCargoWeight = 50f,
                 nearestBaseDistance = 20f,
                 nearbyMineralIds = new List<string>(),
                 returnPathAvailable = true

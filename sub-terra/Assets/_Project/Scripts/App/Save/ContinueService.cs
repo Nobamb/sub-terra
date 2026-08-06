@@ -118,7 +118,11 @@ namespace SubTerra.App.Save
 
                 try
                 {
-                    world.RestoreSnapshot(load.State.World);
+                    // generatorVersion 불일치 등 기본 월드 재생성 실패 시 명시적으로 실패한다.
+                    if (!world.RestoreSnapshot(load.State.World))
+                    {
+                        return new ContinueResult(ContinueStatus.WorldRestoreFailed, load);
+                    }
                 }
                 catch
                 {

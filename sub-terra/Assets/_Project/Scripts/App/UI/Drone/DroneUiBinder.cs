@@ -13,6 +13,7 @@ namespace SubTerra.App.UI.Drone
     public sealed class DroneUiBinder : MonoBehaviour
     {
         [SerializeField] private DroneDialoguePanelView dialogueView;
+        [SerializeField] private DroneDialogueSocket worldDialogueSocket;
         [SerializeField] private DroneReasonPanelView reasonView;
         [SerializeField] private MonoBehaviour contextProviderBehaviour;
         [SerializeField] private GameDataCatalog catalog;
@@ -25,6 +26,8 @@ namespace SubTerra.App.UI.Drone
 
         public DroneRecommendationPresenter Presenter => presenter;
         public bool IsBound => presenter != null && presenter.IsBound;
+        public bool HasWorldDialogueSocket => worldDialogueSocket != null
+            && worldDialogueSocket.HasRequiredReferences();
 
         private void Awake()
         {
@@ -116,8 +119,9 @@ namespace SubTerra.App.UI.Drone
         public bool HasRequiredReferences()
         {
             // Provider는 Scene의 A Runtime 또는 Integration 어댑터가 주입한다.
+            // 추천 근거는 우측 단독 패널 또는 Digger-Bot 통합 창 중 하나면 충분하다.
             return dialogueView != null
-                && reasonView != null
+                && ResolveReasonView() != null
                 && catalog != null
                 && settings != null;
         }
@@ -142,10 +146,30 @@ namespace SubTerra.App.UI.Drone
                 reasonView = GetComponentInChildren<DroneReasonPanelView>(true);
             }
 
+            // 통합 레이아웃에서는 별도 추천 패널 없이 대화 창이 근거를 함께 표시한다.
+            var activeReason = ResolveReasonView();
             if (presenter == null)
             {
-                presenter = new DroneRecommendationPresenter(dialogueView, reasonView);
+                presenter = new DroneRecommendationPresenter(
+                    dialogueView,
+                    worldDialogueSocket,
+                    activeReason);
             }
+        }
+
+        private IDroneReasonView ResolveReasonView()
+        {
+            if (dialogueView != null && dialogueView.HasIntegratedReasonTexts())
+            {
+                return dialogueView;
+            }
+
+            if (reasonView != null)
+            {
+                return reasonView;
+            }
+
+            return dialogueView as IDroneReasonView;
         }
     }
 }

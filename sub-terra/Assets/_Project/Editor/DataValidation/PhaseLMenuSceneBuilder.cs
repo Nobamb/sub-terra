@@ -118,40 +118,7 @@ namespace SubTerra.App.Editor.DataValidation
             var overwriteNo = CreateButton(
                 overwriteRoot.transform, "OverwriteNo", new Vector2(120f, -28.6f), new Vector2(182f, 57.2f), "취소", out _, 23.4f);
 
-            var settingsRoot = new GameObject("SettingsPanel", typeof(RectTransform), typeof(Image));
-            settingsRoot.transform.SetParent(root.transform, false);
-            var settingsRect = settingsRoot.GetComponent<RectTransform>();
-            settingsRect.anchorMin = settingsRect.anchorMax = new Vector2(0.5f, 0.5f);
-            settingsRect.sizeDelta = new Vector2(520f, 280f);
-            settingsRoot.GetComponent<Image>().color = new Color(0.05f, 0.08f, 0.12f, 0.98f);
-            settingsRoot.SetActive(false);
-            CreateText(settingsRoot.transform, "SettingsTitle", new Vector2(0f, 100f), new Vector2(400f, 40f), 22f, "설정");
-            var volumeGo = new GameObject("MasterVolume", typeof(RectTransform), typeof(Slider));
-            volumeGo.transform.SetParent(settingsRoot.transform, false);
-            var volumeRect = volumeGo.GetComponent<RectTransform>();
-            volumeRect.anchorMin = volumeRect.anchorMax = new Vector2(0.5f, 0.5f);
-            volumeRect.anchoredPosition = new Vector2(0f, 30f);
-            volumeRect.sizeDelta = new Vector2(360f, 24f);
-            var volumeSlider = volumeGo.GetComponent<Slider>();
-            volumeSlider.minValue = 0f;
-            volumeSlider.maxValue = 1f;
-            volumeSlider.value = 1f;
-            var resLabel = CreateText(
-                settingsRoot.transform, "ResolutionLabel", new Vector2(0f, -10f), new Vector2(360f, 30f), 16f, "1920 x 1080");
-            var reduceMotionGo = new GameObject("ReduceMotion", typeof(RectTransform), typeof(Toggle));
-            reduceMotionGo.transform.SetParent(settingsRoot.transform, false);
-            var reduceMotionRect = reduceMotionGo.GetComponent<RectTransform>();
-            reduceMotionRect.anchorMin = reduceMotionRect.anchorMax = new Vector2(0.5f, 0.5f);
-            reduceMotionRect.anchoredPosition = new Vector2(0f, -45f);
-            reduceMotionRect.sizeDelta = new Vector2(360f, 28f);
-            var reduceMotionToggle = reduceMotionGo.GetComponent<Toggle>();
-            CreateText(reduceMotionGo.transform, "Label", Vector2.zero, new Vector2(360f, 28f), 16f, "Reduce motion");
-            var apply = CreateButton(
-                settingsRoot.transform, "SettingsApply", new Vector2(-140f, -90f), new Vector2(120f, 40f), "적용", out _);
-            var cancel = CreateButton(
-                settingsRoot.transform, "SettingsCancel", new Vector2(0f, -90f), new Vector2(120f, 40f), "취소", out _);
-            var defaults = CreateButton(
-                settingsRoot.transform, "SettingsDefaults", new Vector2(140f, -90f), new Vector2(120f, 40f), "기본값", out _);
+            var settings = BuildSettingsPanel(root.transform);
 
             var view = root.AddComponent<MainMenuView>();
             var so = new SerializedObject(view);
@@ -168,13 +135,7 @@ namespace SubTerra.App.Editor.DataValidation
             so.FindProperty("overwriteMessageText").objectReferenceValue = overwriteMsg;
             so.FindProperty("overwriteConfirmButton").objectReferenceValue = overwriteYes;
             so.FindProperty("overwriteCancelButton").objectReferenceValue = overwriteNo;
-            so.FindProperty("settingsRoot").objectReferenceValue = settingsRoot;
-            so.FindProperty("masterVolumeSlider").objectReferenceValue = volumeSlider;
-            so.FindProperty("reduceMotionToggle").objectReferenceValue = reduceMotionToggle;
-            so.FindProperty("resolutionLabel").objectReferenceValue = resLabel;
-            so.FindProperty("settingsApplyButton").objectReferenceValue = apply;
-            so.FindProperty("settingsCancelButton").objectReferenceValue = cancel;
-            so.FindProperty("settingsDefaultsButton").objectReferenceValue = defaults;
+            AssignSettingsToView(so, settings);
             so.ApplyModifiedPropertiesWithoutUndo();
 
             var binder = root.AddComponent<MainMenuBinder>();
@@ -217,8 +178,13 @@ namespace SubTerra.App.Editor.DataValidation
             var message = CreateText(content.transform, "MessageText", new Vector2(0f, 105f), new Vector2(800f, 46f), 19f, string.Empty);
             var explore = CreateButton(
                 content.transform, "ExploreButton", new Vector2(0f, 35f), new Vector2(360f, 73f), "지하 탐사 시작 · 전력 5", out _, 21f);
-            var refresh = CreateButton(
-                content.transform, "RefreshButton", new Vector2(0f, -45f), new Vector2(234f, 57f), "새로고침", out _, 20f);
+            // prompt-B 31-1: 새로고침 제거 → Main Menu와 동일한 설정·종료.
+            var settingsButton = CreateButton(
+                content.transform, "SettingsButton", new Vector2(-130f, -45f), new Vector2(220f, 57f), "설정", out _, 20f);
+            var quitButton = CreateButton(
+                content.transform, "QuitButton", new Vector2(130f, -45f), new Vector2(220f, 57f), "종료", out _, 20f);
+
+            var settings = BuildSettingsPanel(root.transform);
 
             // 기존 Economy/Progression View 컴포넌트를 같은 패널에 부착해 Service 재사용 경로를 유지한다.
             var economyGo = new GameObject("EconomyPanel", typeof(RectTransform));
@@ -264,7 +230,9 @@ namespace SubTerra.App.Editor.DataValidation
             viewSo.FindProperty("recentRunText").objectReferenceValue = recent;
             viewSo.FindProperty("messageText").objectReferenceValue = message;
             viewSo.FindProperty("exploreButton").objectReferenceValue = explore;
-            viewSo.FindProperty("refreshButton").objectReferenceValue = refresh;
+            viewSo.FindProperty("settingsButton").objectReferenceValue = settingsButton;
+            viewSo.FindProperty("quitButton").objectReferenceValue = quitButton;
+            AssignSettingsToView(viewSo, settings);
             viewSo.ApplyModifiedPropertiesWithoutUndo();
 
             var binder = root.AddComponent<SurfaceBaseBinder>();
@@ -449,6 +417,226 @@ namespace SubTerra.App.Editor.DataValidation
             {
                 Object.DestroyImmediate(root);
             }
+        }
+
+        private sealed class SettingsPanelRefs
+        {
+            public GameObject Root;
+            public Slider VolumeSlider;
+            public TMP_Text VolumeLabel;
+            public Toggle ReduceMotionToggle;
+            public TMP_Text ReduceMotionLabel;
+            public TMP_Text ResolutionLabel;
+            public Button ResolutionPrev;
+            public Button ResolutionNext;
+            public TMP_Text LanguageLabel;
+            public Button LanguageCycle;
+            public TMP_Text BgmHint;
+            public Button Apply;
+            public Button Cancel;
+            public Button Defaults;
+        }
+
+        /// <summary>
+        /// prompt-B 31-3: 마스터 음량(즉시 수치 반영), 해상도 전환, 화면 진동 억제, 언어 선택 UI.
+        /// </summary>
+        private static SettingsPanelRefs BuildSettingsPanel(Transform parent)
+        {
+            var settingsRoot = new GameObject("SettingsPanel", typeof(RectTransform), typeof(Image));
+            settingsRoot.transform.SetParent(parent, false);
+            var settingsRect = settingsRoot.GetComponent<RectTransform>();
+            settingsRect.anchorMin = settingsRect.anchorMax = new Vector2(0.5f, 0.5f);
+            settingsRect.pivot = new Vector2(0.5f, 0.5f);
+            settingsRect.anchoredPosition = Vector2.zero;
+            settingsRect.sizeDelta = new Vector2(560f, 420f);
+            settingsRoot.GetComponent<Image>().color = new Color(0.05f, 0.08f, 0.12f, 0.98f);
+            settingsRoot.SetActive(false);
+
+            CreateText(settingsRoot.transform, "SettingsTitle", new Vector2(0f, 170f), new Vector2(420f, 40f), 24f, "설정");
+
+            var volumeLabel = CreateText(
+                settingsRoot.transform,
+                "MasterVolumeLabel",
+                new Vector2(0f, 120f),
+                new Vector2(420f, 28f),
+                18f,
+                "마스터 음량: 100%");
+
+            var volumeGo = new GameObject("MasterVolume", typeof(RectTransform), typeof(Slider));
+            volumeGo.transform.SetParent(settingsRoot.transform, false);
+            var volumeRect = volumeGo.GetComponent<RectTransform>();
+            volumeRect.anchorMin = volumeRect.anchorMax = new Vector2(0.5f, 0.5f);
+            volumeRect.anchoredPosition = new Vector2(0f, 80f);
+            volumeRect.sizeDelta = new Vector2(400f, 28f);
+            var volumeSlider = volumeGo.GetComponent<Slider>();
+            volumeSlider.minValue = 0f;
+            volumeSlider.maxValue = 1f;
+            volumeSlider.value = 1f;
+            // 트랙/핸들 최소 시각 요소 (Slider 동작용).
+            var background = new GameObject("Background", typeof(RectTransform), typeof(Image));
+            background.transform.SetParent(volumeGo.transform, false);
+            var bgRect = background.GetComponent<RectTransform>();
+            bgRect.anchorMin = new Vector2(0f, 0.25f);
+            bgRect.anchorMax = new Vector2(1f, 0.75f);
+            bgRect.offsetMin = bgRect.offsetMax = Vector2.zero;
+            background.GetComponent<Image>().color = new Color(0.2f, 0.25f, 0.3f, 1f);
+            var fillArea = new GameObject("Fill Area", typeof(RectTransform));
+            fillArea.transform.SetParent(volumeGo.transform, false);
+            var fillAreaRect = fillArea.GetComponent<RectTransform>();
+            fillAreaRect.anchorMin = new Vector2(0f, 0.25f);
+            fillAreaRect.anchorMax = new Vector2(1f, 0.75f);
+            fillAreaRect.offsetMin = new Vector2(5f, 0f);
+            fillAreaRect.offsetMax = new Vector2(-5f, 0f);
+            var fill = new GameObject("Fill", typeof(RectTransform), typeof(Image));
+            fill.transform.SetParent(fillArea.transform, false);
+            var fillRect = fill.GetComponent<RectTransform>();
+            fillRect.anchorMin = Vector2.zero;
+            fillRect.anchorMax = Vector2.one;
+            fillRect.offsetMin = fillRect.offsetMax = Vector2.zero;
+            fill.GetComponent<Image>().color = new Color(0.25f, 0.65f, 0.85f, 1f);
+            var handleArea = new GameObject("Handle Slide Area", typeof(RectTransform));
+            handleArea.transform.SetParent(volumeGo.transform, false);
+            var handleAreaRect = handleArea.GetComponent<RectTransform>();
+            handleAreaRect.anchorMin = Vector2.zero;
+            handleAreaRect.anchorMax = Vector2.one;
+            handleAreaRect.offsetMin = new Vector2(10f, 0f);
+            handleAreaRect.offsetMax = new Vector2(-10f, 0f);
+            var handle = new GameObject("Handle", typeof(RectTransform), typeof(Image));
+            handle.transform.SetParent(handleArea.transform, false);
+            var handleRect = handle.GetComponent<RectTransform>();
+            handleRect.sizeDelta = new Vector2(20f, 0f);
+            handle.GetComponent<Image>().color = Color.white;
+            volumeSlider.fillRect = fillRect;
+            volumeSlider.handleRect = handleRect;
+            volumeSlider.targetGraphic = handle.GetComponent<Image>();
+            volumeSlider.direction = Slider.Direction.LeftToRight;
+
+            var resLabel = CreateText(
+                settingsRoot.transform,
+                "ResolutionLabel",
+                new Vector2(0f, 30f),
+                new Vector2(280f, 28f),
+                17f,
+                "해상도: 1920 x 1080");
+            var resPrev = CreateButton(
+                settingsRoot.transform,
+                "ResolutionPrev",
+                new Vector2(-210f, 30f),
+                new Vector2(70f, 36f),
+                "<",
+                out _,
+                20f);
+            var resNext = CreateButton(
+                settingsRoot.transform,
+                "ResolutionNext",
+                new Vector2(210f, 30f),
+                new Vector2(70f, 36f),
+                ">",
+                out _,
+                20f);
+
+            var reduceMotionGo = new GameObject("ReduceMotion", typeof(RectTransform), typeof(Toggle));
+            reduceMotionGo.transform.SetParent(settingsRoot.transform, false);
+            var reduceMotionRect = reduceMotionGo.GetComponent<RectTransform>();
+            reduceMotionRect.anchorMin = reduceMotionRect.anchorMax = new Vector2(0.5f, 0.5f);
+            reduceMotionRect.anchoredPosition = new Vector2(0f, -20f);
+            reduceMotionRect.sizeDelta = new Vector2(400f, 32f);
+            var reduceMotionToggle = reduceMotionGo.GetComponent<Toggle>();
+            var checkBg = new GameObject("Background", typeof(RectTransform), typeof(Image));
+            checkBg.transform.SetParent(reduceMotionGo.transform, false);
+            var checkBgRect = checkBg.GetComponent<RectTransform>();
+            checkBgRect.anchorMin = new Vector2(0f, 0.5f);
+            checkBgRect.anchorMax = new Vector2(0f, 0.5f);
+            checkBgRect.pivot = new Vector2(0f, 0.5f);
+            checkBgRect.anchoredPosition = Vector2.zero;
+            checkBgRect.sizeDelta = new Vector2(28f, 28f);
+            checkBg.GetComponent<Image>().color = new Color(0.2f, 0.25f, 0.3f, 1f);
+            var checkmark = new GameObject("Checkmark", typeof(RectTransform), typeof(Image));
+            checkmark.transform.SetParent(checkBg.transform, false);
+            var checkmarkRect = checkmark.GetComponent<RectTransform>();
+            checkmarkRect.anchorMin = Vector2.zero;
+            checkmarkRect.anchorMax = Vector2.one;
+            checkmarkRect.offsetMin = new Vector2(4f, 4f);
+            checkmarkRect.offsetMax = new Vector2(-4f, -4f);
+            checkmark.GetComponent<Image>().color = new Color(0.3f, 0.85f, 0.5f, 1f);
+            reduceMotionToggle.targetGraphic = checkBg.GetComponent<Image>();
+            reduceMotionToggle.graphic = checkmark.GetComponent<Image>();
+            reduceMotionToggle.isOn = false;
+            var reduceLabel = CreateText(
+                reduceMotionGo.transform,
+                "Label",
+                new Vector2(40f, 0f),
+                new Vector2(340f, 28f),
+                16f,
+                "화면 진동 억제");
+            reduceLabel.alignment = TextAlignmentOptions.Left;
+
+            var languageLabel = CreateText(
+                settingsRoot.transform,
+                "LanguageLabel",
+                new Vector2(-40f, -70f),
+                new Vector2(280f, 28f),
+                17f,
+                "언어: 한국어");
+            var languageCycle = CreateButton(
+                settingsRoot.transform,
+                "LanguageCycle",
+                new Vector2(180f, -70f),
+                new Vector2(120f, 36f),
+                "전환",
+                out _,
+                16f);
+
+            var bgmHint = CreateText(
+                settingsRoot.transform,
+                "BgmHint",
+                new Vector2(0f, -115f),
+                new Vector2(500f, 40f),
+                14f,
+                "BGM 4종(타이틀/기지/탐사/위험)은 마스터 음량으로 조절됩니다.");
+
+            var apply = CreateButton(
+                settingsRoot.transform, "SettingsApply", new Vector2(-140f, -165f), new Vector2(120f, 40f), "적용", out _);
+            var cancel = CreateButton(
+                settingsRoot.transform, "SettingsCancel", new Vector2(0f, -165f), new Vector2(120f, 40f), "취소", out _);
+            var defaults = CreateButton(
+                settingsRoot.transform, "SettingsDefaults", new Vector2(140f, -165f), new Vector2(120f, 40f), "기본값", out _);
+
+            return new SettingsPanelRefs
+            {
+                Root = settingsRoot,
+                VolumeSlider = volumeSlider,
+                VolumeLabel = volumeLabel,
+                ReduceMotionToggle = reduceMotionToggle,
+                ReduceMotionLabel = reduceLabel,
+                ResolutionLabel = resLabel,
+                ResolutionPrev = resPrev,
+                ResolutionNext = resNext,
+                LanguageLabel = languageLabel,
+                LanguageCycle = languageCycle,
+                BgmHint = bgmHint,
+                Apply = apply,
+                Cancel = cancel,
+                Defaults = defaults
+            };
+        }
+
+        private static void AssignSettingsToView(SerializedObject so, SettingsPanelRefs settings)
+        {
+            so.FindProperty("settingsRoot").objectReferenceValue = settings.Root;
+            so.FindProperty("masterVolumeSlider").objectReferenceValue = settings.VolumeSlider;
+            so.FindProperty("masterVolumeLabel").objectReferenceValue = settings.VolumeLabel;
+            so.FindProperty("reduceMotionToggle").objectReferenceValue = settings.ReduceMotionToggle;
+            so.FindProperty("reduceMotionLabel").objectReferenceValue = settings.ReduceMotionLabel;
+            so.FindProperty("resolutionLabel").objectReferenceValue = settings.ResolutionLabel;
+            so.FindProperty("resolutionPrevButton").objectReferenceValue = settings.ResolutionPrev;
+            so.FindProperty("resolutionNextButton").objectReferenceValue = settings.ResolutionNext;
+            so.FindProperty("languageLabel").objectReferenceValue = settings.LanguageLabel;
+            so.FindProperty("languageCycleButton").objectReferenceValue = settings.LanguageCycle;
+            so.FindProperty("bgmHintLabel").objectReferenceValue = settings.BgmHint;
+            so.FindProperty("settingsApplyButton").objectReferenceValue = settings.Apply;
+            so.FindProperty("settingsCancelButton").objectReferenceValue = settings.Cancel;
+            so.FindProperty("settingsDefaultsButton").objectReferenceValue = settings.Defaults;
         }
 
         private static Button CreateButton(

@@ -32,7 +32,8 @@ namespace SubTerra.Gameplay.Snapshot.Tests
             GameObject host = new("Snapshot");
             WorldSnapshotSystem system = host.AddComponent<WorldSnapshotSystem>();
 
-            Assert.DoesNotThrow(() => system.RestoreSnapshot(null));
+            Assert.That(system.RestoreSnapshot(null), Is.True);
+            Assert.That(system.LastRestoreSucceeded, Is.True);
             Object.DestroyImmediate(host);
         }
 
@@ -49,7 +50,7 @@ namespace SubTerra.Gameplay.Snapshot.Tests
             Assert.That(captured.worldSeed, Is.EqualTo(7123L));
             Assert.That(captured.generatorVersion, Is.EqualTo(4));
 
-            system.RestoreSnapshot(captured);
+            Assert.That(system.RestoreSnapshot(captured), Is.True);
             Assert.That(generator.CallCount, Is.EqualTo(1));
             Assert.That(generator.LastSeed, Is.EqualTo(7123L));
             Assert.That(generator.LastVersion, Is.EqualTo(4));
@@ -85,21 +86,23 @@ namespace SubTerra.Gameplay.Snapshot.Tests
                 var snapshotSystem = host.AddComponent<WorldSnapshotSystem>();
                 SetField(snapshotSystem, "buildingPlacementSystem", placement);
 
-                snapshotSystem.RestoreSnapshot(new WorldSnapshotDto
-                {
-                    buildings = new System.Collections.Generic.List<BuildingSnapshotDto>
+                Assert.That(
+                    snapshotSystem.RestoreSnapshot(new WorldSnapshotDto
                     {
-                        new()
+                        buildings = new System.Collections.Generic.List<BuildingSnapshotDto>
                         {
-                            instanceId = "support-restore-0001",
-                            buildingTypeId = "building.support.basic",
-                            x = 0,
-                            y = 0,
-                            level = 1,
-                            health = 1f
+                            new()
+                            {
+                                instanceId = "support-restore-0001",
+                                buildingTypeId = "building.support.basic",
+                                x = 0,
+                                y = 0,
+                                level = 1,
+                                health = 1f
+                            }
                         }
-                    }
-                });
+                    }),
+                    Is.True);
 
                 tilemap.SetTile(new Vector3Int(0, 1, 0), tile);
                 tilemap.SetTile(new Vector3Int(6, 1, 0), tile);

@@ -1,5 +1,4 @@
 using SubTerra.App.Save;
-using SubTerra.Shared;
 using UnityEngine;
 
 namespace SubTerra.App.UI.MainMenu
@@ -30,10 +29,14 @@ namespace SubTerra.App.UI.MainMenu
                 return;
             }
 
+            var initialSettings = SettingsRuntimeApplier.LoadOrDefaults();
+            SettingsRuntimeApplier.Apply(initialSettings, applyResolution: false);
+
             presenter = new MainMenuPresenter(
                 view,
                 runtime.Loader,
-                Application.version);
+                Application.version,
+                initialSettings);
             presenter.ContinueRequested += OnContinue;
             presenter.StartNewGameConfirmed += OnStartNewGame;
             presenter.QuitConfirmed += OnQuit;
@@ -47,8 +50,9 @@ namespace SubTerra.App.UI.MainMenu
             view.OverwriteConfirmClicked += OnOverwriteConfirm;
             view.OverwriteCancelClicked += OnOverwriteCancel;
             view.SettingsApplyClicked += OnSettingsApply;
-            view.SettingsCancelClicked += presenter.CancelSettings;
+            view.SettingsCancelClicked += OnSettingsCancel;
             view.SettingsDefaultsClicked += presenter.ResetSettingsDefaults;
+            view.MasterVolumePreviewChanged += OnMasterVolumePreview;
 
             presenter.Refresh();
         }
@@ -65,8 +69,9 @@ namespace SubTerra.App.UI.MainMenu
                 view.OverwriteConfirmClicked -= OnOverwriteConfirm;
                 view.OverwriteCancelClicked -= OnOverwriteCancel;
                 view.SettingsApplyClicked -= OnSettingsApply;
-                view.SettingsCancelClicked -= presenter.CancelSettings;
+                view.SettingsCancelClicked -= OnSettingsCancel;
                 view.SettingsDefaultsClicked -= presenter.ResetSettingsDefaults;
+                view.MasterVolumePreviewChanged -= OnMasterVolumePreview;
             }
 
             if (presenter != null)
@@ -110,6 +115,23 @@ namespace SubTerra.App.UI.MainMenu
 
             var draft = view.ReadSettingsDraft(presenter.Settings.Draft);
             presenter.ApplySettings(draft);
+        }
+
+        private void OnSettingsCancel()
+        {
+            if (presenter == null)
+            {
+                return;
+            }
+
+            presenter.CancelSettings();
+            // 미리듣기 음량을 적용된 값으로 되돌린다.
+            SettingsRuntimeApplier.RestoreAppliedVolume(presenter.Settings.Applied);
+        }
+
+        private void OnMasterVolumePreview(float volume)
+        {
+            SettingsRuntimeApplier.PreviewMasterVolume(volume);
         }
 
         private void OnQuitClicked()
@@ -158,23 +180,7 @@ namespace SubTerra.App.UI.MainMenu
 
         private void OnSettingsApplied(SettingsValues values)
         {
-            if (values == null)
-            {
-                return;
-            }
-
-            AudioListener.volume = Mathf.Clamp01(values.MasterVolume);
-            AccessibilityPreferences.ReduceMotion = values.ReduceMotion;
-            // 해상도는 플레이어 빌드에서만 적용. Editor는 미리보기만.
-            if (!Application.isEditor
-                && values.ResolutionWidth > 0
-                && values.ResolutionHeight > 0)
-            {
-                Screen.SetResolution(
-                    values.ResolutionWidth,
-                    values.ResolutionHeight,
-                    FullScreenMode.Windowed);
-            }
+            SettingsRuntimeApplier.Apply(values, applyResolution: true);
         }
     }
 }

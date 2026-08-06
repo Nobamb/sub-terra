@@ -1,6 +1,7 @@
 using SubTerra.App.Core;
 using SubTerra.App.Save;
 using SubTerra.App.UI.Economy;
+using SubTerra.App.UI.MainMenu;
 using SubTerra.App.UI.Progression;
 using SubTerra.Shared;
 using UnityEngine;
@@ -12,6 +13,7 @@ namespace SubTerra.App.UI.SurfaceBase
     /// 판매·제작·업그레이드는 기존 Economy/Progression 바인더에 연결하고
     /// 목표·잠금·탐사 시작만 Surface Presenter가 담당한다.
     /// 탐사 단일 비행 가드는 SaveRuntimeController.TryStartExploration 한 경로만 사용한다.
+    /// prompt-B 31-1/31-3: 설정·종료는 Main Menu와 동일 정책을 재사용한다.
     /// </summary>
     public sealed class SurfaceBaseBinder : MonoBehaviour
     {
@@ -20,6 +22,7 @@ namespace SubTerra.App.UI.SurfaceBase
         [SerializeField] private ProgressionPanelBinder progressionBinder;
 
         private SurfaceBasePresenter presenter;
+        private SettingsSession settings;
 
         public SurfaceBasePresenter Presenter => presenter;
         public bool IsBound => presenter != null;
@@ -61,8 +64,19 @@ namespace SubTerra.App.UI.SurfaceBase
                 bootstrap.State,
                 runtime.Progression,
                 SaveRuntimeController.MineElevatorEnergyCost);
+            var initialSettings = SettingsRuntimeApplier.LoadOrDefaults();
+            SettingsRuntimeApplier.Apply(initialSettings, applyResolution: false);
+            settings = new SettingsSession(initialSettings);
+            view.SetSettingsVisible(false);
+
             view.ExploreClicked += OnExploreClicked;
-            view.RefreshClicked += OnRefreshClicked;
+            view.SettingsClicked += OnSettingsClicked;
+            view.QuitClicked += OnQuitClicked;
+            view.SettingsApplyClicked += OnSettingsApply;
+            view.SettingsCancelClicked += OnSettingsCancel;
+            view.SettingsDefaultsClicked += OnSettingsDefaults;
+            view.MasterVolumePreviewChanged += OnMasterVolumePreview;
+
             presenter.RefreshReadModel();
             if (runtime.ElevatorState == ElevatorTravelState.Arrived)
             {
@@ -75,7 +89,13 @@ namespace SubTerra.App.UI.SurfaceBase
             if (view != null)
             {
                 view.ExploreClicked -= OnExploreClicked;
-                view.RefreshClicked -= OnRefreshClicked;
+                view.SettingsClicked -= OnSettingsClicked;
+                view.QuitClicked -= OnQuitClicked;
+                view.SettingsApplyClicked -= OnSettingsApply;
+                view.SettingsCancelClicked -= OnSettingsCancel;
+                view.SettingsDefaultsClicked -= OnSettingsDefaults;
+                view.MasterVolumePreviewChanged -= OnMasterVolumePreview;
+                view.SetSettingsVisible(false);
             }
 
             if (presenter != null)
@@ -84,6 +104,7 @@ namespace SubTerra.App.UI.SurfaceBase
                 presenter = null;
             }
 
+            settings = null;
             economyBinder?.Unbind();
             progressionBinder?.Presenter?.Unbind();
         }
@@ -105,9 +126,76 @@ namespace SubTerra.App.UI.SurfaceBase
             presenter.RequestExplorationStart(TryStartExplorationViaRuntime);
         }
 
-        private void OnRefreshClicked()
+        private void OnSettingsClicked()
         {
-            presenter?.RefreshReadModel();
+            if (settings == null || view == null)
+            {
+                return;
+            }
+
+            settings.Open();
+            view.SetSettingsDraft(settings.Draft);
+            view.SetSettingsVisible(true);
+        }
+
+        private void OnSettingsApply()
+        {
+            if (settings == null || view == null)
+            {
+                return;
+            }
+
+            var draft = view.ReadSettingsDraft(settings.Draft);
+            settings.Draft.CopyFrom(draft);
+            settings.Apply();
+            view.SetSettingsVisible(false);
+            SettingsRuntimeApplier.Apply(settings.Applied, applyResolution: true);
+        }
+
+        private void OnSettingsCancel()
+        {
+            if (settings == null || view == null)
+            {
+                return;
+            }
+
+            settings.Cancel();
+            view.SetSettingsVisible(false);
+            SettingsRuntimeApplier.RestoreAppliedVolume(settings.Applied);
+        }
+
+        private void OnSettingsDefaults()
+        {
+            if (settings == null || view == null)
+            {
+                return;
+            }
+
+            settings.ResetDefaults();
+            view.SetSettingsDraft(settings.Draft);
+        }
+
+        private void OnMasterVolumePreview(float volume)
+        {
+            SettingsRuntimeApplier.PreviewMasterVolume(volume);
+        }
+
+        private void OnQuitClicked()
+        {
+            var runtime = SaveRuntimeController.Instance;
+            if (runtime == null)
+            {
+                return;
+            }
+
+            var decision = QuitPolicy.Decide(runtime.IsDirty, runtime.IsSaveInProgress);
+            if (decision == QuitDecision.DeferWhileSaving)
+            {
+                view?.SetMessage("저장 중입니다. 잠시 후 다시 시도하세요.");
+                return;
+            }
+
+            runtime.RequestQuit();
         }
 
         /// <summary>
