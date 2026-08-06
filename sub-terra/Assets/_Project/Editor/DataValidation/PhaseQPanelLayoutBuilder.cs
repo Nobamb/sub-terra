@@ -308,16 +308,18 @@ namespace SubTerra.App.Editor.DataValidation
                     var rect = fields[i].rectTransform;
                     rect.anchorMin = rect.anchorMax = new Vector2(0f, 1f);
                     rect.pivot = new Vector2(0f, 1f);
-                    rect.anchoredPosition = new Vector2(24f, -22f - (i * 27f));
-                    rect.sizeDelta = new Vector2(380f, 25f);
+                    rect.anchoredPosition = new Vector2(24f, -28f - (i * 30f));
+                    rect.sizeDelta = new Vector2(360f, 26f);
+                    fields[i].alignment = TextAlignmentOptions.TopLeft;
+                    fields[i].textWrappingMode = TextWrappingModes.NoWrap;
                 }
             }
 
             var objective = canvas.Find("DemoObjectiveRoot");
             if (objective == null) return;
-            PositionObjectiveText(objective, "ObjectiveTitle", 0.69f, 0.74f, 20f);
-            PositionObjectiveText(objective, "ObjectiveBody", 0.61f, 0.69f, 16f);
-            PositionObjectiveText(objective, "NextAction", 0.56f, 0.61f, 15f);
+            PositionObjectiveText(objective, "ObjectiveTitle", 0.72f, 0.76f, 20f);
+            PositionObjectiveText(objective, "ObjectiveBody", 0.64f, 0.69f, 16f);
+            PositionObjectiveText(objective, "NextAction", 0.58f, 0.62f, 15f);
         }
 
         private static void PositionObjectiveText(Transform root, string name, float minY, float maxY, float fontSize)
@@ -325,7 +327,7 @@ namespace SubTerra.App.Editor.DataValidation
             var target = root.Find(name) as RectTransform;
             if (target == null) return;
             target.anchorMin = new Vector2(0.02f, minY);
-            target.anchorMax = new Vector2(0.25f, maxY);
+            target.anchorMax = new Vector2(0.34f, maxY);
             target.offsetMin = target.offsetMax = Vector2.zero;
             var text = target.GetComponent<TMP_Text>();
             if (text != null) text.fontSize = fontSize;
