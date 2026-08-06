@@ -61,6 +61,44 @@ namespace SubTerra.App.Editor.DataValidation
                 report);
         }
 
+        /// <summary>
+        /// MVP2-fix 전체 체인: 33-2 설정/본문 → 33-3 레벨요약 → 33-4 중복/메시지 정리.
+        /// SurfaceBase prefab·씬 + Integration UpgradePanel 까지 한 번에 맞춘다.
+        /// </summary>
+        [MenuItem("SubTerra/UI/Rebuild SurfaceBase From MVP2-fix Chain")]
+        public static void RebuildSurfaceBaseFromMvp2FixChainMenu()
+        {
+            var report = RebuildSurfaceBaseFromMvp2FixChain();
+            Debug.Log("[SubTerra] " + report);
+            var projectRoot = Path.GetFullPath(Path.Combine(Application.dataPath, ".."));
+            Directory.CreateDirectory(Path.Combine(projectRoot, "Temp"));
+            File.WriteAllText(
+                Path.Combine(projectRoot, "Temp", "surfacebase-mvp2fix-chain.txt"),
+                report);
+        }
+
+        public static string RebuildSurfaceBaseFromMvp2FixChain()
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("SurfaceBase MVP2-fix rebuild chain (33-2 → 33-3 → 33-4)");
+
+            // 33-2: 크기/단일열 + 설정 패널(프레임 드롭다운 포함)
+            sb.AppendLine(RebuildSurfaceBaseWithSettings());
+            // 33-3: 하단 레벨 요약만
+            sb.AppendLine(PromptB33_3LayoutBuilder.BuildSurfaceBaseOnly());
+            // 33-4: 타이틀 제거·메시지 위치 + Integration Upgrade 96%
+            sb.AppendLine(Build());
+            return sb.ToString();
+        }
+
+        /// <summary>SurfaceBase prefab/씬에 33-2 설정·본문 레이아웃만 재적용.</summary>
+        public static string RebuildSurfaceBaseWithSettings()
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine(PromptB33_2LayoutBuilder.BuildSurfaceBaseOnly());
+            return sb.ToString().TrimEnd();
+        }
+
         public static string Build()
         {
             var sb = new StringBuilder();

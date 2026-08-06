@@ -1,72 +1,15 @@
 Starting EditMode tests...
-FAIL: SubTerra.App.Tests.Integration.PhaseLRunFailureStaticTests.L_S03_IntegrationScene_WiresSurvivalFailureUiAndAllGameplayInput
-MSG: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
-STACK:   at (wrapper managed-to-native) UnityEditor.SceneManagement.EditorSceneManager.OpenScene_Injected(UnityEngine.Bindings.ManagedSpanWrapper&,UnityEditor.SceneManagement.OpenSceneMode,UnityEngine.SceneManagement.Scene&)
-  at UnityEditor.SceneManagement.EditorSceneManager.OpenScene (System.String scenePath, UnityEditor.SceneManagement.OpenSceneMode mode) [0x0002a] in <b69798a175fc402fb7a30c358b62aa3a>:0 
-  at SubTerra.App.Tests.Integration.PhaseLRunFailureStaticTests.L_S03_IntegrationScene_WiresSurvivalFailureUiAndAllGameplayInput () [0x0000e] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Tests\EditMode\App\Integration\PhaseLRunFailureStaticTests.cs:24 
-  at (wrapper managed-to-native) System.Reflection.RuntimeMethodInfo.InternalInvoke(System.Reflection.RuntimeMethodInfo,object,object[],System.Exception&)
-  at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x0006a] in <816f70bc2a9c4332b0bd119906a8d40e>:0 
+FAIL: SubTerra.App.Tests.Readiness.Mvp2IntegrationAuditTests.A_S04_BuildingRuntimePrefabs_LabelPlaceholderVersusReal
+MSG:   Catalog buildings should use real Runtime Prefabs (no shared BuildingPlaceholder)
+  Expected: 0
+  But was:  5
 
-FAIL: SubTerra.App.Tests.Integration.PhaseLRunFailureStaticTests
+STACK: at SubTerra.App.Tests.Readiness.Mvp2IntegrationAuditTests.A_S04_BuildingRuntimePrefabs_LabelPlaceholderVersusReal () [0x00098] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Tests\EditMode\App\Readiness\Mvp2IntegrationAuditTests.cs:83
+
+
+FAIL: SubTerra.App.Tests.Readiness.Mvp2IntegrationAuditTests
 MSG: One or more child tests had errors
 STACK: 
-
-FAIL: SubTerra.App.Tests.Integration
-MSG: One or more child tests had errors
-STACK: 
-
-FAIL: SubTerra.App.Tests.Integration.PhaseLRunFailureStaticTests.L_S03_IntegrationScene_WiresSurvivalFailureUiAndAllGameplayInput
-MSG: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
-STACK:   at (wrapper managed-to-native) UnityEditor.SceneManagement.EditorSceneManager.OpenScene_Injected(UnityEngine.Bindings.ManagedSpanWrapper&,UnityEditor.SceneManagement.OpenSceneMode,UnityEngine.SceneManagement.Scene&)
-  at UnityEditor.SceneManagement.EditorSceneManager.OpenScene (System.String scenePath, UnityEditor.SceneManagement.OpenSceneMode mode) [0x0002a] in <b69798a175fc402fb7a30c358b62aa3a>:0 
-  at SubTerra.App.Tests.Integration.PhaseLRunFailureStaticTests.L_S03_IntegrationScene_WiresSurvivalFailureUiAndAllGameplayInput () [0x0000e] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Tests\EditMode\App\Integration\PhaseLRunFailureStaticTests.cs:24 
-  at (wrapper managed-to-native) System.Reflection.RuntimeMethodInfo.InternalInvoke(System.Reflection.RuntimeMethodInfo,object,object[],System.Exception&)
-  at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x0006a] in <816f70bc2a9c4332b0bd119906a8d40e>:0 
-
-FAIL: SubTerra.App.Tests.Integration.PhaseLRunFailureStaticTests
-MSG: One or more child tests had errors
-STACK: 
-
-FAIL: SubTerra.App.Tests.Integration
-MSG: One or more child tests had errors
-STACK: 
-
-FAIL: SubTerra.App.Tests.Readiness.Mvp2IntegrationAuditTests.A_F01_ReadinessAudit_IsReadOnly_AndReturnsStructuredReport
-MSG: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
-STACK:   at (wrapper managed-to-native) UnityEditor.SceneManagement.EditorSceneManager.OpenScene_Injected(UnityEngine.Bindings.ManagedSpanWrapper&,UnityEditor.SceneManagement.OpenSceneMode,UnityEngine.SceneManagement.Scene&)
-  at UnityEditor.SceneManagement.EditorSceneManager.OpenScene (System.String scenePath, UnityEditor.SceneManagement.OpenSceneMode mode) [0x0002a] in <b69798a175fc402fb7a30c358b62aa3a>:0 
-  at SubTerra.App.Editor.DataValidation.Mvp2IntegrationAuditor.AuditIntegrationScene (System.Collections.Generic.List`1[T] findings) [0x00051] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Editor\DataValidation\Mvp2IntegrationAuditor.cs:89 
-  at SubTerra.App.Editor.DataValidation.Mvp2IntegrationAuditor.AuditAll (System.Boolean includeCatalogPlaceholders) [0x00006] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Editor\DataValidation\Mvp2IntegrationAuditor.cs:54 
-  at SubTerra.App.Editor.DataValidation.Mvp2ReadinessMenu.GenerateReport () [0x00005] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Editor\DataValidation\Mvp2ReadinessMenu.cs:39 
-  at SubTerra.App.Tests.Readiness.Mvp2IntegrationAuditTests.A_F01_ReadinessAudit_IsReadOnly_AndReturnsStructuredReport () [0x00006] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Tests\EditMode\App\Readiness\Mvp2IntegrationAuditTests.cs:107 
-  at (wrapper managed-to-native) System.Reflection.RuntimeMethodInfo.InternalInvoke(System.Reflection.RuntimeMethodInfo,object,object[],System.Exception&)
-  at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x0006a] in <816f70bc2a9c4332b0bd119906a8d40e>:0 
-
-FAIL: SubTerra.App.Tests.Readiness.Mvp2IntegrationAuditTests.A_S02_IntegrationScene_RequiredStructure_IsReportedCleanOrWithNamedGaps
-MSG: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
-STACK:   at (wrapper managed-to-native) UnityEditor.SceneManagement.EditorSceneManager.OpenScene_Injected(UnityEngine.Bindings.ManagedSpanWrapper&,UnityEditor.SceneManagement.OpenSceneMode,UnityEngine.SceneManagement.Scene&)
-  at UnityEditor.SceneManagement.EditorSceneManager.OpenScene (System.String scenePath, UnityEditor.SceneManagement.OpenSceneMode mode) [0x0002a] in <b69798a175fc402fb7a30c358b62aa3a>:0 
-  at SubTerra.App.Editor.DataValidation.Mvp2IntegrationAuditor.AuditIntegrationScene (System.Collections.Generic.List`1[T] findings) [0x00051] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Editor\DataValidation\Mvp2IntegrationAuditor.cs:89 
-  at SubTerra.App.Tests.Readiness.Mvp2IntegrationAuditTests.A_S02_IntegrationScene_RequiredStructure_IsReportedCleanOrWithNamedGaps () [0x00006] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Tests\EditMode\App\Readiness\Mvp2IntegrationAuditTests.cs:21 
-  at (wrapper managed-to-native) System.Reflection.RuntimeMethodInfo.InternalInvoke(System.Reflection.RuntimeMethodInfo,object,object[],System.Exception&)
-  at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x0006a] in <816f70bc2a9c4332b0bd119906a8d40e>:0 
-
-FAIL: SubTerra.App.Tests.Readiness.Mvp2IntegrationAuditTests.A_S02_OpenIntegrationScene_DoesNotRequireSave
-MSG: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
-STACK:   at (wrapper managed-to-native) UnityEditor.SceneManagement.EditorSceneManager.OpenScene_Injected(UnityEngine.Bindings.ManagedSpanWrapper&,UnityEditor.SceneManagement.OpenSceneMode,UnityEngine.SceneManagement.Scene&)
-  at UnityEditor.SceneManagement.EditorSceneManager.OpenScene (System.String scenePath, UnityEditor.SceneManagement.OpenSceneMode mode) [0x0002a] in <b69798a175fc402fb7a30c358b62aa3a>:0 
-  at SubTerra.App.Tests.Readiness.Mvp2IntegrationAuditTests.A_S02_OpenIntegrationScene_DoesNotRequireSave () [0x00000] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Tests\EditMode\App\Readiness\Mvp2IntegrationAuditTests.cs:181 
-  at (wrapper managed-to-native) System.Reflection.RuntimeMethodInfo.InternalInvoke(System.Reflection.RuntimeMethodInfo,object,object[],System.Exception&)
-  at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x0006a] in <816f70bc2a9c4332b0bd119906a8d40e>:0 
-
-FAIL: SubTerra.App.Tests.Readiness.Mvp2IntegrationAuditTests.A_S03_IntegrationScene_MissingScriptCount_IsZero
-MSG: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
-STACK:   at (wrapper managed-to-native) UnityEditor.SceneManagement.EditorSceneManager.OpenScene_Injected(UnityEngine.Bindings.ManagedSpanWrapper&,UnityEditor.SceneManagement.OpenSceneMode,UnityEngine.SceneManagement.Scene&)
-  at UnityEditor.SceneManagement.EditorSceneManager.OpenScene (System.String scenePath, UnityEditor.SceneManagement.OpenSceneMode mode) [0x0002a] in <b69798a175fc402fb7a30c358b62aa3a>:0 
-  at SubTerra.App.Editor.DataValidation.Mvp2IntegrationAuditor.AuditIntegrationScene (System.Collections.Generic.List`1[T] findings) [0x00051] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Editor\DataValidation\Mvp2IntegrationAuditor.cs:89 
-  at SubTerra.App.Tests.Readiness.Mvp2IntegrationAuditTests.A_S03_IntegrationScene_MissingScriptCount_IsZero () [0x00006] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Tests\EditMode\App\Readiness\Mvp2IntegrationAuditTests.cs:43 
-  at (wrapper managed-to-native) System.Reflection.RuntimeMethodInfo.InternalInvoke(System.Reflection.RuntimeMethodInfo,object,object[],System.Exception&)
-  at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x0006a] in <816f70bc2a9c4332b0bd119906a8d40e>:0 
 
 FAIL: SubTerra.App.Tests.Readiness.Mvp2IntegrationAuditTests.A_S04_BuildingRuntimePrefabs_LabelPlaceholderVersusReal
 MSG:   Catalog buildings should use real Runtime Prefabs (no shared BuildingPlaceholder)
@@ -80,79 +23,6 @@ FAIL: SubTerra.App.Tests.Readiness.Mvp2IntegrationAuditTests
 MSG: One or more child tests had errors
 STACK: 
 
-FAIL: SubTerra.App.Tests.Readiness.Mvp2IntegrationAuditTests.A_F01_ReadinessAudit_IsReadOnly_AndReturnsStructuredReport
-MSG: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
-STACK:   at (wrapper managed-to-native) UnityEditor.SceneManagement.EditorSceneManager.OpenScene_Injected(UnityEngine.Bindings.ManagedSpanWrapper&,UnityEditor.SceneManagement.OpenSceneMode,UnityEngine.SceneManagement.Scene&)
-  at UnityEditor.SceneManagement.EditorSceneManager.OpenScene (System.String scenePath, UnityEditor.SceneManagement.OpenSceneMode mode) [0x0002a] in <b69798a175fc402fb7a30c358b62aa3a>:0 
-  at SubTerra.App.Editor.DataValidation.Mvp2IntegrationAuditor.AuditIntegrationScene (System.Collections.Generic.List`1[T] findings) [0x00051] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Editor\DataValidation\Mvp2IntegrationAuditor.cs:89 
-  at SubTerra.App.Editor.DataValidation.Mvp2IntegrationAuditor.AuditAll (System.Boolean includeCatalogPlaceholders) [0x00006] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Editor\DataValidation\Mvp2IntegrationAuditor.cs:54 
-  at SubTerra.App.Editor.DataValidation.Mvp2ReadinessMenu.GenerateReport () [0x00005] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Editor\DataValidation\Mvp2ReadinessMenu.cs:39 
-  at SubTerra.App.Tests.Readiness.Mvp2IntegrationAuditTests.A_F01_ReadinessAudit_IsReadOnly_AndReturnsStructuredReport () [0x00006] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Tests\EditMode\App\Readiness\Mvp2IntegrationAuditTests.cs:107 
-  at (wrapper managed-to-native) System.Reflection.RuntimeMethodInfo.InternalInvoke(System.Reflection.RuntimeMethodInfo,object,object[],System.Exception&)
-  at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x0006a] in <816f70bc2a9c4332b0bd119906a8d40e>:0 
-
-FAIL: SubTerra.App.Tests.Readiness.Mvp2IntegrationAuditTests.A_S02_IntegrationScene_RequiredStructure_IsReportedCleanOrWithNamedGaps
-MSG: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
-STACK:   at (wrapper managed-to-native) UnityEditor.SceneManagement.EditorSceneManager.OpenScene_Injected(UnityEngine.Bindings.ManagedSpanWrapper&,UnityEditor.SceneManagement.OpenSceneMode,UnityEngine.SceneManagement.Scene&)
-  at UnityEditor.SceneManagement.EditorSceneManager.OpenScene (System.String scenePath, UnityEditor.SceneManagement.OpenSceneMode mode) [0x0002a] in <b69798a175fc402fb7a30c358b62aa3a>:0 
-  at SubTerra.App.Editor.DataValidation.Mvp2IntegrationAuditor.AuditIntegrationScene (System.Collections.Generic.List`1[T] findings) [0x00051] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Editor\DataValidation\Mvp2IntegrationAuditor.cs:89 
-  at SubTerra.App.Tests.Readiness.Mvp2IntegrationAuditTests.A_S02_IntegrationScene_RequiredStructure_IsReportedCleanOrWithNamedGaps () [0x00006] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Tests\EditMode\App\Readiness\Mvp2IntegrationAuditTests.cs:21 
-  at (wrapper managed-to-native) System.Reflection.RuntimeMethodInfo.InternalInvoke(System.Reflection.RuntimeMethodInfo,object,object[],System.Exception&)
-  at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x0006a] in <816f70bc2a9c4332b0bd119906a8d40e>:0 
-
-FAIL: SubTerra.App.Tests.Readiness.Mvp2IntegrationAuditTests.A_S02_OpenIntegrationScene_DoesNotRequireSave
-MSG: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
-STACK:   at (wrapper managed-to-native) UnityEditor.SceneManagement.EditorSceneManager.OpenScene_Injected(UnityEngine.Bindings.ManagedSpanWrapper&,UnityEditor.SceneManagement.OpenSceneMode,UnityEngine.SceneManagement.Scene&)
-  at UnityEditor.SceneManagement.EditorSceneManager.OpenScene (System.String scenePath, UnityEditor.SceneManagement.OpenSceneMode mode) [0x0002a] in <b69798a175fc402fb7a30c358b62aa3a>:0 
-  at SubTerra.App.Tests.Readiness.Mvp2IntegrationAuditTests.A_S02_OpenIntegrationScene_DoesNotRequireSave () [0x00000] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Tests\EditMode\App\Readiness\Mvp2IntegrationAuditTests.cs:181 
-  at (wrapper managed-to-native) System.Reflection.RuntimeMethodInfo.InternalInvoke(System.Reflection.RuntimeMethodInfo,object,object[],System.Exception&)
-  at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x0006a] in <816f70bc2a9c4332b0bd119906a8d40e>:0 
-
-FAIL: SubTerra.App.Tests.Readiness.Mvp2IntegrationAuditTests.A_S03_IntegrationScene_MissingScriptCount_IsZero
-MSG: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
-STACK:   at (wrapper managed-to-native) UnityEditor.SceneManagement.EditorSceneManager.OpenScene_Injected(UnityEngine.Bindings.ManagedSpanWrapper&,UnityEditor.SceneManagement.OpenSceneMode,UnityEngine.SceneManagement.Scene&)
-  at UnityEditor.SceneManagement.EditorSceneManager.OpenScene (System.String scenePath, UnityEditor.SceneManagement.OpenSceneMode mode) [0x0002a] in <b69798a175fc402fb7a30c358b62aa3a>:0 
-  at SubTerra.App.Editor.DataValidation.Mvp2IntegrationAuditor.AuditIntegrationScene (System.Collections.Generic.List`1[T] findings) [0x00051] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Editor\DataValidation\Mvp2IntegrationAuditor.cs:89 
-  at SubTerra.App.Tests.Readiness.Mvp2IntegrationAuditTests.A_S03_IntegrationScene_MissingScriptCount_IsZero () [0x00006] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Tests\EditMode\App\Readiness\Mvp2IntegrationAuditTests.cs:43 
-  at (wrapper managed-to-native) System.Reflection.RuntimeMethodInfo.InternalInvoke(System.Reflection.RuntimeMethodInfo,object,object[],System.Exception&)
-  at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x0006a] in <816f70bc2a9c4332b0bd119906a8d40e>:0 
-
-FAIL: SubTerra.App.Tests.Readiness.Mvp2IntegrationAuditTests.A_S04_BuildingRuntimePrefabs_LabelPlaceholderVersusReal
-MSG:   Catalog buildings should use real Runtime Prefabs (no shared BuildingPlaceholder)
-  Expected: 0
-  But was:  5
-
-STACK: at SubTerra.App.Tests.Readiness.Mvp2IntegrationAuditTests.A_S04_BuildingRuntimePrefabs_LabelPlaceholderVersusReal () [0x00098] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Tests\EditMode\App\Readiness\Mvp2IntegrationAuditTests.cs:83
-
-
-FAIL: SubTerra.App.Tests.Readiness.Mvp2IntegrationAuditTests
-MSG: One or more child tests had errors
-STACK: 
-
-FAIL: SubTerra.App.Tests.Readiness.PhaseCTraversalStaticTests.IntegrationScene_WiresStationBridgeAndRestorableLadder
-MSG: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
-STACK:   at (wrapper managed-to-native) UnityEditor.SceneManagement.EditorSceneManager.OpenScene_Injected(UnityEngine.Bindings.ManagedSpanWrapper&,UnityEditor.SceneManagement.OpenSceneMode,UnityEngine.SceneManagement.Scene&)
-  at UnityEditor.SceneManagement.EditorSceneManager.OpenScene (System.String scenePath, UnityEditor.SceneManagement.OpenSceneMode mode) [0x0002a] in <b69798a175fc402fb7a30c358b62aa3a>:0 
-  at SubTerra.App.Tests.Readiness.PhaseCTraversalStaticTests.IntegrationScene_WiresStationBridgeAndRestorableLadder () [0x00006] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Tests\EditMode\App\Readiness\PhaseCTraversalStaticTests.cs:52 
-  at (wrapper managed-to-native) System.Reflection.RuntimeMethodInfo.InternalInvoke(System.Reflection.RuntimeMethodInfo,object,object[],System.Exception&)
-  at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x0006a] in <816f70bc2a9c4332b0bd119906a8d40e>:0 
-
-FAIL: SubTerra.App.Tests.Readiness.PhaseCTraversalStaticTests
-MSG: One or more child tests had errors
-STACK: 
-
-FAIL: SubTerra.App.Tests.Readiness.PhaseCTraversalStaticTests.IntegrationScene_WiresStationBridgeAndRestorableLadder
-MSG: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
-STACK:   at (wrapper managed-to-native) UnityEditor.SceneManagement.EditorSceneManager.OpenScene_Injected(UnityEngine.Bindings.ManagedSpanWrapper&,UnityEditor.SceneManagement.OpenSceneMode,UnityEngine.SceneManagement.Scene&)
-  at UnityEditor.SceneManagement.EditorSceneManager.OpenScene (System.String scenePath, UnityEditor.SceneManagement.OpenSceneMode mode) [0x0002a] in <b69798a175fc402fb7a30c358b62aa3a>:0 
-  at SubTerra.App.Tests.Readiness.PhaseCTraversalStaticTests.IntegrationScene_WiresStationBridgeAndRestorableLadder () [0x00006] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Tests\EditMode\App\Readiness\PhaseCTraversalStaticTests.cs:52 
-  at (wrapper managed-to-native) System.Reflection.RuntimeMethodInfo.InternalInvoke(System.Reflection.RuntimeMethodInfo,object,object[],System.Exception&)
-  at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x0006a] in <816f70bc2a9c4332b0bd119906a8d40e>:0 
-
-FAIL: SubTerra.App.Tests.Readiness.PhaseCTraversalStaticTests
-MSG: One or more child tests had errors
-STACK: 
-
 FAIL: SubTerra.App.Tests.Readiness
 MSG: One or more child tests had errors
 STACK: 
@@ -161,159 +31,133 @@ FAIL: SubTerra.App.Tests.Readiness
 MSG: One or more child tests had errors
 STACK: 
 
-FAIL: SubTerra.App.Tests.Save.SaveRuntimeWiringTests.K_S01_RuntimeScenes_HaveSaveRootMenuAndLoadableIntegration
-MSG: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
-STACK:   at (wrapper managed-to-native) UnityEditor.SceneManagement.EditorSceneManager.OpenScene_Injected(UnityEngine.Bindings.ManagedSpanWrapper&,UnityEditor.SceneManagement.OpenSceneMode,UnityEngine.SceneManagement.Scene&)
-  at UnityEditor.SceneManagement.EditorSceneManager.OpenScene (System.String scenePath, UnityEditor.SceneManagement.OpenSceneMode mode) [0x0002a] in <b69798a175fc402fb7a30c358b62aa3a>:0 
-  at SubTerra.App.Tests.Save.SaveRuntimeWiringTests.K_S01_RuntimeScenes_HaveSaveRootMenuAndLoadableIntegration () [0x00000] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Tests\EditMode\App\Save\SaveRuntimeWiringTests.cs:29 
-  at (wrapper managed-to-native) System.Reflection.RuntimeMethodInfo.InternalInvoke(System.Reflection.RuntimeMethodInfo,object,object[],System.Exception&)
-  at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x0006a] in <816f70bc2a9c4332b0bd119906a8d40e>:0 
+FAIL: SubTerra.App.Tests.UI.GameGuidePanelTests.ChromeController_TogglesGameGuide
+MSG: Unhandled log message: '[Assert] Assertion failed on expression: 'ShouldRunBehaviour()''. Use UnityEngine.TestTools.LogAssert.Expect
+STACK: UnityEngine.Component:SendMessage (string,UnityEngine.SendMessageOptions)
+SubTerra.App.Tests.UI.GameGuidePanelTests:ChromeController_TogglesGameGuide () (at Assets/_Project/Tests/EditMode/App/UI/GameGuidePanelTests.cs:176)
+System.Reflection.MethodBase:Invoke (object,object[])
+NUnit.Framework.Internal.Reflect:InvokeMethod (System.Reflection.MethodInfo,object,object[])
+NUnit.Framework.Internal.MethodWrapper:Invoke (object,object[])
+NUnit.Framework.Internal.Commands.TestMethodCommand:RunNonAsyncTestMethod (NUnit.Framework.Internal.ITestExecutionContext)
+NUnit.Framework.Internal.Commands.TestMethodCommand:RunTestMethod (NUnit.Framework.Internal.ITestExecutionContext)
+NUnit.Framework.Internal.Commands.TestMethodCommand:Execute (NUnit.Framework.Internal.ITestExecutionContext)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
 
-FAIL: SubTerra.App.Tests.Save.SaveRuntimeWiringTests
-MSG: One or more child tests had errors
-STACK: 
 
-FAIL: SubTerra.App.Tests.Save.SaveRuntimeWiringTests.K_S01_RuntimeScenes_HaveSaveRootMenuAndLoadableIntegration
-MSG: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
-STACK:   at (wrapper managed-to-native) UnityEditor.SceneManagement.EditorSceneManager.OpenScene_Injected(UnityEngine.Bindings.ManagedSpanWrapper&,UnityEditor.SceneManagement.OpenSceneMode,UnityEngine.SceneManagement.Scene&)
-  at UnityEditor.SceneManagement.EditorSceneManager.OpenScene (System.String scenePath, UnityEditor.SceneManagement.OpenSceneMode mode) [0x0002a] in <b69798a175fc402fb7a30c358b62aa3a>:0 
-  at SubTerra.App.Tests.Save.SaveRuntimeWiringTests.K_S01_RuntimeScenes_HaveSaveRootMenuAndLoadableIntegration () [0x00000] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Tests\EditMode\App\Save\SaveRuntimeWiringTests.cs:29 
-  at (wrapper managed-to-native) System.Reflection.RuntimeMethodInfo.InternalInvoke(System.Reflection.RuntimeMethodInfo,object,object[],System.Exception&)
-  at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x0006a] in <816f70bc2a9c4332b0bd119906a8d40e>:0 
 
-FAIL: SubTerra.App.Tests.Save.SaveRuntimeWiringTests
-MSG: One or more child tests had errors
-STACK: 
+FAIL: SubTerra.App.Tests.UI.GameGuidePanelTests.GuideView_SelectsTabsAndKeepsFontSize
+MSG: Unhandled log message: '[Assert] Assertion failed on expression: 'ShouldRunBehaviour()''. Use UnityEngine.TestTools.LogAssert.Expect
+STACK: UnityEngine.Component:SendMessage (string,UnityEngine.SendMessageOptions)
+SubTerra.App.Tests.UI.GameGuidePanelTests:GuideView_SelectsTabsAndKeepsFontSize () (at Assets/_Project/Tests/EditMode/App/UI/GameGuidePanelTests.cs:238)
+System.Reflection.MethodBase:Invoke (object,object[])
+NUnit.Framework.Internal.Reflect:InvokeMethod (System.Reflection.MethodInfo,object,object[])
+NUnit.Framework.Internal.MethodWrapper:Invoke (object,object[])
+NUnit.Framework.Internal.Commands.TestMethodCommand:RunNonAsyncTestMethod (NUnit.Framework.Internal.ITestExecutionContext)
+NUnit.Framework.Internal.Commands.TestMethodCommand:RunTestMethod (NUnit.Framework.Internal.ITestExecutionContext)
+NUnit.Framework.Internal.Commands.TestMethodCommand:Execute (NUnit.Framework.Internal.ITestExecutionContext)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
 
-FAIL: SubTerra.App.Tests.Save
-MSG: One or more child tests had errors
-STACK: 
 
-FAIL: SubTerra.App.Tests.Save
+
+FAIL: SubTerra.App.Tests.UI.GameGuidePanelTests.IntegrationScene_BuildingMenu_IsBelowQuestOnLeft
+MSG:   Expected: not null
+  But was:  null
+
+STACK: at SubTerra.App.Tests.UI.GameGuidePanelTests.IntegrationScene_BuildingMenu_IsBelowQuestOnLeft () [0x0001c] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Tests\EditMode\App\UI\GameGuidePanelTests.cs:129
+
+
+FAIL: SubTerra.App.Tests.UI.GameGuidePanelTests.IntegrationScene_GuideStartsHidden_DiggerAtBottom_LegendDisabled
+MSG:   Expected: True
+  But was:  False
+
+STACK: at SubTerra.App.Tests.UI.GameGuidePanelTests.IntegrationScene_GuideStartsHidden_DiggerAtBottom_LegendDisabled () [0x00229] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Tests\EditMode\App\UI\GameGuidePanelTests.cs:112
+
+
+FAIL: SubTerra.App.Tests.UI.GameGuidePanelTests
 MSG: One or more child tests had errors
 STACK: 
 
 FAIL: SubTerra.App.Tests.UI.GameGuidePanelTests.ChromeController_TogglesGameGuide
-MSG: OneTimeSetUp: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
-STACK: 
+MSG: Unhandled log message: '[Assert] Assertion failed on expression: 'ShouldRunBehaviour()''. Use UnityEngine.TestTools.LogAssert.Expect
+STACK: UnityEngine.Component:SendMessage (string,UnityEngine.SendMessageOptions)
+SubTerra.App.Tests.UI.GameGuidePanelTests:ChromeController_TogglesGameGuide () (at Assets/_Project/Tests/EditMode/App/UI/GameGuidePanelTests.cs:176)
+System.Reflection.MethodBase:Invoke (object,object[])
+NUnit.Framework.Internal.Reflect:InvokeMethod (System.Reflection.MethodInfo,object,object[])
+NUnit.Framework.Internal.MethodWrapper:Invoke (object,object[])
+NUnit.Framework.Internal.Commands.TestMethodCommand:RunNonAsyncTestMethod (NUnit.Framework.Internal.ITestExecutionContext)
+NUnit.Framework.Internal.Commands.TestMethodCommand:RunTestMethod (NUnit.Framework.Internal.ITestExecutionContext)
+NUnit.Framework.Internal.Commands.TestMethodCommand:Execute (NUnit.Framework.Internal.ITestExecutionContext)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
 
-FAIL: SubTerra.App.Tests.UI.GameGuidePanelTests.GuideContent_CoversThreeMajorSections
-MSG: OneTimeSetUp: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
-STACK: 
 
-FAIL: SubTerra.App.Tests.UI.GameGuidePanelTests.GuidePrefab_HasTabsScrollAndClose
-MSG: OneTimeSetUp: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
-STACK: 
-
-FAIL: SubTerra.App.Tests.UI.GameGuidePanelTests.GuideView_SelectsTabsAndKeepsFontSize
-MSG: OneTimeSetUp: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
-STACK: 
-
-FAIL: SubTerra.App.Tests.UI.GameGuidePanelTests.IntegrationScene_BuildingMenu_IsBelowQuestOnLeft
-MSG: OneTimeSetUp: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
-STACK: 
-
-FAIL: SubTerra.App.Tests.UI.GameGuidePanelTests.IntegrationScene_GuideStartsHidden_DiggerAtBottom_LegendDisabled
-MSG: OneTimeSetUp: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
-STACK: 
-
-FAIL: SubTerra.App.Tests.UI.GameGuidePanelTests
-MSG: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
-STACK:   at (wrapper managed-to-native) UnityEditor.SceneManagement.EditorSceneManager.OpenScene_Injected(UnityEngine.Bindings.ManagedSpanWrapper&,UnityEditor.SceneManagement.OpenSceneMode,UnityEngine.SceneManagement.Scene&)
-  at UnityEditor.SceneManagement.EditorSceneManager.OpenScene (System.String scenePath, UnityEditor.SceneManagement.OpenSceneMode mode) [0x0002a] in <b69798a175fc402fb7a30c358b62aa3a>:0 
-  at SubTerra.App.Editor.DataValidation.PhaseLMenuSceneBuilder.WireMainMenuScene () [0x0000a] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Editor\DataValidation\PhaseLMenuSceneBuilder.cs:253 
-  at SubTerra.App.Editor.DataValidation.PhaseLMenuSceneBuilder.Build () [0x00025] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Editor\DataValidation\PhaseLMenuSceneBuilder.cs:48 
-  at SubTerra.App.Editor.DataValidation.PromptB31_1LayoutBuilder.Build () [0x00029] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Editor\DataValidation\PromptB31_1LayoutBuilder.cs:69 
-  at SubTerra.App.Tests.UI.GameGuidePanelTests.BuildLayout () [0x00000] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Tests\EditMode\App\UI\GameGuidePanelTests.cs:25 
-  at (wrapper managed-to-native) System.Reflection.RuntimeMethodInfo.InternalInvoke(System.Reflection.RuntimeMethodInfo,object,object[],System.Exception&)
-  at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x0006a] in <816f70bc2a9c4332b0bd119906a8d40e>:0 
-
-FAIL: SubTerra.App.Tests.UI.GameGuidePanelTests.ChromeController_TogglesGameGuide
-MSG: OneTimeSetUp: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
-STACK: 
-
-FAIL: SubTerra.App.Tests.UI.GameGuidePanelTests.GuideContent_CoversThreeMajorSections
-MSG: OneTimeSetUp: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
-STACK: 
-
-FAIL: SubTerra.App.Tests.UI.GameGuidePanelTests.GuidePrefab_HasTabsScrollAndClose
-MSG: OneTimeSetUp: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
-STACK: 
 
 FAIL: SubTerra.App.Tests.UI.GameGuidePanelTests.GuideView_SelectsTabsAndKeepsFontSize
-MSG: OneTimeSetUp: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
-STACK: 
+MSG: Unhandled log message: '[Assert] Assertion failed on expression: 'ShouldRunBehaviour()''. Use UnityEngine.TestTools.LogAssert.Expect
+STACK: UnityEngine.Component:SendMessage (string,UnityEngine.SendMessageOptions)
+SubTerra.App.Tests.UI.GameGuidePanelTests:GuideView_SelectsTabsAndKeepsFontSize () (at Assets/_Project/Tests/EditMode/App/UI/GameGuidePanelTests.cs:238)
+System.Reflection.MethodBase:Invoke (object,object[])
+NUnit.Framework.Internal.Reflect:InvokeMethod (System.Reflection.MethodInfo,object,object[])
+NUnit.Framework.Internal.MethodWrapper:Invoke (object,object[])
+NUnit.Framework.Internal.Commands.TestMethodCommand:RunNonAsyncTestMethod (NUnit.Framework.Internal.ITestExecutionContext)
+NUnit.Framework.Internal.Commands.TestMethodCommand:RunTestMethod (NUnit.Framework.Internal.ITestExecutionContext)
+NUnit.Framework.Internal.Commands.TestMethodCommand:Execute (NUnit.Framework.Internal.ITestExecutionContext)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+
 
 FAIL: SubTerra.App.Tests.UI.GameGuidePanelTests.IntegrationScene_BuildingMenu_IsBelowQuestOnLeft
-MSG: OneTimeSetUp: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
-STACK: 
+MSG:   Expected: not null
+  But was:  null
+
+STACK: at SubTerra.App.Tests.UI.GameGuidePanelTests.IntegrationScene_BuildingMenu_IsBelowQuestOnLeft () [0x0001c] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Tests\EditMode\App\UI\GameGuidePanelTests.cs:129
+
 
 FAIL: SubTerra.App.Tests.UI.GameGuidePanelTests.IntegrationScene_GuideStartsHidden_DiggerAtBottom_LegendDisabled
-MSG: OneTimeSetUp: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
-STACK: 
+MSG:   Expected: True
+  But was:  False
+
+STACK: at SubTerra.App.Tests.UI.GameGuidePanelTests.IntegrationScene_GuideStartsHidden_DiggerAtBottom_LegendDisabled () [0x00229] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Tests\EditMode\App\UI\GameGuidePanelTests.cs:112
+
 
 FAIL: SubTerra.App.Tests.UI.GameGuidePanelTests
-MSG: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
-STACK:   at (wrapper managed-to-native) UnityEditor.SceneManagement.EditorSceneManager.OpenScene_Injected(UnityEngine.Bindings.ManagedSpanWrapper&,UnityEditor.SceneManagement.OpenSceneMode,UnityEngine.SceneManagement.Scene&)
-  at UnityEditor.SceneManagement.EditorSceneManager.OpenScene (System.String scenePath, UnityEditor.SceneManagement.OpenSceneMode mode) [0x0002a] in <b69798a175fc402fb7a30c358b62aa3a>:0 
-  at SubTerra.App.Editor.DataValidation.PhaseLMenuSceneBuilder.WireMainMenuScene () [0x0000a] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Editor\DataValidation\PhaseLMenuSceneBuilder.cs:253 
-  at SubTerra.App.Editor.DataValidation.PhaseLMenuSceneBuilder.Build () [0x00025] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Editor\DataValidation\PhaseLMenuSceneBuilder.cs:48 
-  at SubTerra.App.Editor.DataValidation.PromptB31_1LayoutBuilder.Build () [0x00029] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Editor\DataValidation\PromptB31_1LayoutBuilder.cs:69 
-  at SubTerra.App.Tests.UI.GameGuidePanelTests.BuildLayout () [0x00000] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Tests\EditMode\App\UI\GameGuidePanelTests.cs:25 
-  at (wrapper managed-to-native) System.Reflection.RuntimeMethodInfo.InternalInvoke(System.Reflection.RuntimeMethodInfo,object,object[],System.Exception&)
-  at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x0006a] in <816f70bc2a9c4332b0bd119906a8d40e>:0 
-
-FAIL: SubTerra.App.Tests.UI.HudPanelChromeLayoutTests.BuildingMenuPrefab_HasCloseButton
-MSG: OneTimeSetUp: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
+MSG: One or more child tests had errors
 STACK: 
 
 FAIL: SubTerra.App.Tests.UI.HudPanelChromeLayoutTests.ChromeController_TogglesPanels
-MSG: OneTimeSetUp: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
-STACK: 
+MSG: Unhandled log message: '[Assert] Assertion failed on expression: 'ShouldRunBehaviour()''. Use UnityEngine.TestTools.LogAssert.Expect
+STACK: UnityEngine.Component:SendMessage (string,UnityEngine.SendMessageOptions)
+SubTerra.App.Tests.UI.HudPanelChromeLayoutTests:ChromeController_TogglesPanels () (at Assets/_Project/Tests/EditMode/App/UI/HudPanelChromeLayoutTests.cs:177)
+System.Reflection.MethodBase:Invoke (object,object[])
+NUnit.Framework.Internal.Reflect:InvokeMethod (System.Reflection.MethodInfo,object,object[])
+NUnit.Framework.Internal.MethodWrapper:Invoke (object,object[])
+NUnit.Framework.Internal.Commands.TestMethodCommand:RunNonAsyncTestMethod (NUnit.Framework.Internal.ITestExecutionContext)
+NUnit.Framework.Internal.Commands.TestMethodCommand:RunTestMethod (NUnit.Framework.Internal.ITestExecutionContext)
+NUnit.Framework.Internal.Commands.TestMethodCommand:Execute (NUnit.Framework.Internal.ITestExecutionContext)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
 
-FAIL: SubTerra.App.Tests.UI.HudPanelChromeLayoutTests.DialoguePrefab_IntegratesRecommendationTexts
-MSG: OneTimeSetUp: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
-STACK: 
 
-FAIL: SubTerra.App.Tests.UI.HudPanelChromeLayoutTests.IntegrationScene_DoesNotOverlapPrimaryPanels
-MSG: OneTimeSetUp: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
-STACK: 
 
 FAIL: SubTerra.App.Tests.UI.HudPanelChromeLayoutTests
-MSG: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
-STACK:   at (wrapper managed-to-native) UnityEditor.SceneManagement.EditorSceneManager.OpenScene_Injected(UnityEngine.Bindings.ManagedSpanWrapper&,UnityEditor.SceneManagement.OpenSceneMode,UnityEngine.SceneManagement.Scene&)
-  at UnityEditor.SceneManagement.EditorSceneManager.OpenScene (System.String scenePath, UnityEditor.SceneManagement.OpenSceneMode mode) [0x0002a] in <b69798a175fc402fb7a30c358b62aa3a>:0 
-  at SubTerra.App.Editor.DataValidation.HudPanelChromeLayoutBuilder.UpdateIntegrationScene () [0x0000f] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Editor\DataValidation\HudPanelChromeLayoutBuilder.cs:147 
-  at SubTerra.App.Editor.DataValidation.HudPanelChromeLayoutBuilder.Build () [0x00035] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Editor\DataValidation\HudPanelChromeLayoutBuilder.cs:65 
-  at SubTerra.App.Tests.UI.HudPanelChromeLayoutTests.BuildLayout () [0x00000] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Tests\EditMode\App\UI\HudPanelChromeLayoutTests.cs:24 
-  at (wrapper managed-to-native) System.Reflection.RuntimeMethodInfo.InternalInvoke(System.Reflection.RuntimeMethodInfo,object,object[],System.Exception&)
-  at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x0006a] in <816f70bc2a9c4332b0bd119906a8d40e>:0 
-
-FAIL: SubTerra.App.Tests.UI.HudPanelChromeLayoutTests.BuildingMenuPrefab_HasCloseButton
-MSG: OneTimeSetUp: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
+MSG: One or more child tests had errors
 STACK: 
 
 FAIL: SubTerra.App.Tests.UI.HudPanelChromeLayoutTests.ChromeController_TogglesPanels
-MSG: OneTimeSetUp: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
-STACK: 
+MSG: Unhandled log message: '[Assert] Assertion failed on expression: 'ShouldRunBehaviour()''. Use UnityEngine.TestTools.LogAssert.Expect
+STACK: UnityEngine.Component:SendMessage (string,UnityEngine.SendMessageOptions)
+SubTerra.App.Tests.UI.HudPanelChromeLayoutTests:ChromeController_TogglesPanels () (at Assets/_Project/Tests/EditMode/App/UI/HudPanelChromeLayoutTests.cs:177)
+System.Reflection.MethodBase:Invoke (object,object[])
+NUnit.Framework.Internal.Reflect:InvokeMethod (System.Reflection.MethodInfo,object,object[])
+NUnit.Framework.Internal.MethodWrapper:Invoke (object,object[])
+NUnit.Framework.Internal.Commands.TestMethodCommand:RunNonAsyncTestMethod (NUnit.Framework.Internal.ITestExecutionContext)
+NUnit.Framework.Internal.Commands.TestMethodCommand:RunTestMethod (NUnit.Framework.Internal.ITestExecutionContext)
+NUnit.Framework.Internal.Commands.TestMethodCommand:Execute (NUnit.Framework.Internal.ITestExecutionContext)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
 
-FAIL: SubTerra.App.Tests.UI.HudPanelChromeLayoutTests.DialoguePrefab_IntegratesRecommendationTexts
-MSG: OneTimeSetUp: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
-STACK: 
 
-FAIL: SubTerra.App.Tests.UI.HudPanelChromeLayoutTests.IntegrationScene_DoesNotOverlapPrimaryPanels
-MSG: OneTimeSetUp: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
-STACK: 
 
 FAIL: SubTerra.App.Tests.UI.HudPanelChromeLayoutTests
-MSG: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
-STACK:   at (wrapper managed-to-native) UnityEditor.SceneManagement.EditorSceneManager.OpenScene_Injected(UnityEngine.Bindings.ManagedSpanWrapper&,UnityEditor.SceneManagement.OpenSceneMode,UnityEngine.SceneManagement.Scene&)
-  at UnityEditor.SceneManagement.EditorSceneManager.OpenScene (System.String scenePath, UnityEditor.SceneManagement.OpenSceneMode mode) [0x0002a] in <b69798a175fc402fb7a30c358b62aa3a>:0 
-  at SubTerra.App.Editor.DataValidation.HudPanelChromeLayoutBuilder.UpdateIntegrationScene () [0x0000f] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Editor\DataValidation\HudPanelChromeLayoutBuilder.cs:147 
-  at SubTerra.App.Editor.DataValidation.HudPanelChromeLayoutBuilder.Build () [0x00035] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Editor\DataValidation\HudPanelChromeLayoutBuilder.cs:65 
-  at SubTerra.App.Tests.UI.HudPanelChromeLayoutTests.BuildLayout () [0x00000] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Tests\EditMode\App\UI\HudPanelChromeLayoutTests.cs:24 
-  at (wrapper managed-to-native) System.Reflection.RuntimeMethodInfo.InternalInvoke(System.Reflection.RuntimeMethodInfo,object,object[],System.Exception&)
-  at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x0006a] in <816f70bc2a9c4332b0bd119906a8d40e>:0 
+MSG: One or more child tests had errors
+STACK: 
 
 FAIL: SubTerra.App.Tests.UI.HudStaticStructureTests.C_S02_HudSources_DoNotPollTextInUpdate
 MSG:   Expected: not String containing "void Update("
@@ -327,8 +171,9 @@ using UnityEngine.UI;
 namespace SubTerra.App.UI.HUD
 {
     /// <summary>
-    /// 시설 건설·Digger-Bot·게임 가이드·인벤토리 패널의 닫기/재오픈 토글과
-    /// 가이드에 명시된 단축키(B/I)를 담당한다.
+    /// 시설 건설·Digger-Bot·게임 가이드·인벤토리 패널의 닫기/토글과
+    /// 가이드에 명시된 단축키(B/I/G)를 담당한다.
+    /// prompt-B 32: 우측 중앙 재열기 버튼 없이, 우측 상단 단축키·X 닫기만 사용한다.
     /// 레이아웃 수치 자체는 에디터 빌더가 Prefab/Scene에 적용한다.
     /// </summary>
     public sealed class HudPanelChromeController : MonoBehaviour
@@ -337,6 +182,7 @@ namespace SubTerra.App.UI.HUD
         [SerializeField] private BuildingMenuBinder buildingMenuBinder;
         [SerializeField] private GameObject buildingMenuRoot;
         [SerializeField] private Button buildingCloseButton;
+        // prompt-B 32: 우측 중앙 시설 재열기 버튼은 사용하지 않는다(레거시 호환 필드).
         [SerializeField] private Button buildingOpenButton;
 
         [SerializeField] private DroneDialoguePanelView diggerBotView;
@@ -347,15 +193,19 @@ namespace SubTerra.App.UI.HUD
         [SerializeField] private GameGuidePanelView gameGuideView;
         [SerializeField] private GameObject gameGuideRoot;
         [SerializeField] private Button gameGuideCloseButton;
+        // prompt-B 32: 우측 중앙 가이드 버튼 대신 우측 상단 [G] 단축키/버튼만 사용.
         [SerializeField] private Button gameGuideOpenButton;
 
         [SerializeField] private InventoryPanelView inventoryPanelView;
         [SerializeField] private GameObject inventoryPanelRoot;
         [SerializeField] private Button inventoryCloseButton;
+        // prompt-B 33-1: 우측 상단 인벤토리(I) 단축키 버튼(토글).
+        [SerializeField] private Button inventoryOpenButton;
 
         [SerializeField] private bool buildingMenuOpen = true;
         [SerializeField] private bool diggerBotOpen = true;
         [SerializeField] private bool gameGuideOpen;
+        // prompt-B 33-1: 시작 시 인벤토리 창은 닫힌 상태.
         [SerializeField] private bool inventoryPanelOpen;
 
         public bool IsBuildingMenuOpen => buildingMenuOpen;
@@ -384,7 +234,7 @@ namespace SubTerra.App.UI.HUD
 
         private void Update()
         {
-            // 게임 가이드 조작법: B=시설 건설, I=화물/인벤토리
+            // 게임 가이드 조작법: B=시설 건설, I=화물/인벤토리, G=게임 가이드
             var keyboard = Keyboard.current;
             if (keyboard == null)
             {
@@ -400,6 +250,11 @@ namespace SubTerra.App.UI.HUD
             {
                 ToggleInventoryPanel();
             }
+
+            if (keyboard.gKey.wasPressedThisFrame)
+            {
+                ToggleGameGuide();
+            }
         }
 
         /// <summary>시설 건설 패널을 닫는다. 진행 중 Preview는 취소한다.</summary>
@@ -408,7 +263,7 @@ namespace SubTerra.App.UI.HUD
             ApplyBuildingMenuVisible(false, cancelSelection: true);
         }
 
-        /// <summary>우측 열기 버튼으로 시설 건설 패널을 다시 연다.</summary>
+        /// <summary>시설 건설 패널을 연다.</summary>
         public void OpenBuildingMenu()
         {
             ApplyBuildingMenuVisible(true, cancelSelection: false);
@@ -449,7 +304,7 @@ namespace SubTerra.App.UI.HUD
             ApplyGameGuideVisible(false);
         }
 
-        /// <summary>우측 게임 가이드 버튼으로 가이드 패널을 연다.</summary>
+        /// <summary>우측 상단 게임 가이드(G) 버튼/단축키로 가이드 패널을 연다.</summary>
         public void OpenGameGuide()
         {
             ApplyGameGuideVisible(true);
@@ -466,7 +321,7 @@ namespace SubTerra.App.UI.HUD
             ApplyInventoryPanelVisible(false);
         }
 
-        /// <summary>I 키 등으로 화물/인벤토리 패널을 연다.</summary>
+        /// <summary>I 키·화물(I) 버튼으로 화물/인벤토리 패널을 연다.</summary>
         public void OpenInventoryPanel()
         {
             ApplyInventoryPanelVisible(true);
@@ -479,12 +334,11 @@ namespace SubTerra.App.UI.HUD
 
         public bool HasRequiredReferences()
         {
+            // prompt-B 32: 우측 중앙 재열기 버튼은 필수가 아니다.
             return buildingMenuRoot != null
-                && buildingOpenButton != null
                 && diggerBotRoot != null
                 && diggerOpenButton != null
-                && gameGuideRoot != null
-                && gameGuideOpenButton != null;
+                && gameGuideRoot != null;
         }
 
         private void WireButtons()
@@ -495,10 +349,11 @@ namespace SubTerra.App.UI.HUD
                 buildingCloseButton.onClick.AddListener(CloseBuildingMenu);
             }
 
+            // 레거시 우측 중앙 시설 버튼이 남아 있으면 토글로 연결(빌더는 제거한다).
             if (buildingOpenButton != null)
             {
-                buildingOpenButton.onClick.RemoveListener(OpenBuildingMenu);
-                buildingOpenButton.onClick.AddListener(OpenBuildingMenu);
+                buildingOpenButton.onClick.RemoveListener(ToggleBuildingMenu);
+                buildingOpenButton.onClick.AddListener(ToggleBuildingMenu);
             }
 
             if (diggerCloseButton != null)
@@ -521,14 +376,20 @@ namespace SubTerra.App.UI.HUD
 
             if (gameGuideOpenButton != null)
             {
-                gameGuideOpenButton.onClick.RemoveListener(OpenGameGuide);
-                gameGuideOpenButton.onClick.AddListener(OpenGameGuide);
+                gameGuideOpenButton.onClick.RemoveListener(ToggleGameGuide);
+                gameGuideOpenButton.onClick.AddListener(ToggleGameGuide);
             }
 
             if (inventoryCloseButton != null)
             {
                 inventoryCloseButton.onClick.RemoveListener(CloseInventoryPanel);
                 inventoryCloseButton.onClick.AddListener(CloseInventoryPanel);
+            }
+
+            if (inventoryOpenButton != null)
+            {
+                inventoryOpenButton.onClick.RemoveListener(ToggleInventoryPanel);
+                inventoryOpenButton.onClick.AddListener(ToggleInventoryPanel);
             }
         }
 
@@ -541,7 +402,7 @@ namespace SubTerra.App.UI.HUD
 
             if (buildingOpenButton != null)
             {
-                buildingOpenButton.onClick.RemoveListener(OpenBuildingMenu);
+                buildingOpenButton.onClick.RemoveListener(ToggleBuildingMenu);
             }
 
             if (diggerCloseButton != null)
@@ -561,12 +422,17 @@ namespace SubTerra.App.UI.HUD
 
             if (gameGuideOpenButton != null)
             {
-                gameGuideOpenButton.onClick.RemoveListener(OpenGameGuide);
+                gameGuideOpenButton.onClick.RemoveListener(ToggleGameGuide);
             }
 
             if (inventoryCloseButton != null)
             {
                 inventoryCloseButton.onClick.RemoveListener(CloseInventoryPanel);
+            }
+
+            if (inventoryOpenButton != null)
+            {
+                inventoryOpenButton.onClick.RemoveListener(ToggleInventoryPanel);
             }
         }
 
@@ -579,19 +445,21 @@ namespace SubTerra.App.UI.HUD
                 buildingMenuBinder.CancelSelection();
             }
 
-            if (buildingMenuView != null)
-            {
-                buildingMenuView.SetVisible(visible);
-            }
-            else if (buildingMenuRoot != null)
+            // 패널 전체(루트)를 토글한다. PanelRoot만 끄면 X 버튼이 루트에 남아 상태가 꼬인다.
+            if (buildingMenuRoot != null)
             {
                 buildingMenuRoot.SetActive(visible);
             }
 
-            // 닫혀 있을 때만 우측 열기 버튼을 보여 겹침을 줄인다.
+            if (buildingMenuView != null)
+            {
+                buildingMenuView.SetVisible(visible);
+            }
+
+            // prompt-B 32: 우측 중앙 재열기 버튼은 항상 숨긴다.
             if (buildingOpenButton != null)
             {
-                buildingOpenButton.gameObject.SetActive(!visible);
+                buildingOpenButton.gameObject.SetActive(false);
             }
         }
 
@@ -623,7 +491,8 @@ namespace SubTerra.App.UI.HUD
                 // View가 root 활성/비활성과 최전면 정렬까지 처리한다.
                 gameGuideView.SetVisible(visible);
             }
-            else if (gameGuideRoot != null)
+
+            if (gameGuideRoot != null)
             {
                 gameGuideRoot.SetActive(visible);
                 if (visible)
@@ -632,10 +501,10 @@ namespace SubTerra.App.UI.HUD
                 }
             }
 
-            // 가이드 열기 버튼은 항상 우측에서 접근 가능하게 유지한다.
+            // 우측 중앙 레거시 가이드 버튼이 있으면 숨긴다(상단 [G]만 사용).
             if (gameGuideOpenButton != null)
             {
-                gameGuideOpenButton.gameObject.SetActive(true);
+                gameGuideOpenButton.gameObject.SetActive(false);
             }
         }
 
@@ -643,21 +512,26 @@ namespace SubTerra.App.UI.HUD
         {
             inventoryPanelOpen = visible;
 
+            // View 경로: PanelRoot·X 버튼만 토글(루트 유지).
             if (inventoryPanelView != null)
             {
                 inventoryPanelView.SetVisible(visible);
             }
-            else if (inventoryPanelRoot != null)
+
+            // 루트 참조가 View와 다른 오브젝트면 함께 맞춘다.
+            // 단 View가 있는 루트를 SetActive(false)로 끄면 구독이 끊기므로, View 없을 때만 사용.
+            if (inventoryPanelRoot != null && inventoryPanelView == null)
             {
                 inventoryPanelRoot.SetActive(visible);
             }
-
-            // View가 panelRoot만 토글해도 루트 참조가 있으면 동기화한다.
-            if (inventoryPanelRoot != null
-                && inventoryPanelView != null
-                && inventoryPanelRoot.activeSelf != visible)
+            else if (inventoryPanelRoot != null && !inventoryPanelRoot.activeSelf)
             {
-                inventoryPanelRoot.SetActive(visible);
+                // 중복 패널 제거 후 숨겨진 정식 패널만 켠다.
+                inventoryPanelRoot.SetActive(true);
+                if (inventoryPanelView != null)
+                {
+                    inventoryPanelView.SetVisible(visible);
+                }
             }
 
             if (visible && inventoryPanelRoot != null)
@@ -688,8 +562,9 @@ using UnityEngine.UI;
 namespace SubTerra.App.UI.HUD
 {
     /// <summary>
-    /// 시설 건설·Digger-Bot·게임 가이드·인벤토리 패널의 닫기/재오픈 토글과
-    /// 가이드에 명시된 단축키(B/I)를 담당한다.
+    /// 시설 건설·Digger-Bot·게임 가이드·인벤토리 패널의 닫기/토글과
+    /// 가이드에 명시된 단축키(B/I/G)를 담당한다.
+    /// prompt-B 32: 우측 중앙 재열기 버튼 없이, 우측 상단 단축키·X 닫기만 사용한다.
     /// 레이아웃 수치 자체는 에디터 빌더가 Prefab/Scene에 적용한다.
     /// </summary>
     public sealed class HudPanelChromeController : MonoBehaviour
@@ -698,6 +573,7 @@ namespace SubTerra.App.UI.HUD
         [SerializeField] private BuildingMenuBinder buildingMenuBinder;
         [SerializeField] private GameObject buildingMenuRoot;
         [SerializeField] private Button buildingCloseButton;
+        // prompt-B 32: 우측 중앙 시설 재열기 버튼은 사용하지 않는다(레거시 호환 필드).
         [SerializeField] private Button buildingOpenButton;
 
         [SerializeField] private DroneDialoguePanelView diggerBotView;
@@ -708,15 +584,19 @@ namespace SubTerra.App.UI.HUD
         [SerializeField] private GameGuidePanelView gameGuideView;
         [SerializeField] private GameObject gameGuideRoot;
         [SerializeField] private Button gameGuideCloseButton;
+        // prompt-B 32: 우측 중앙 가이드 버튼 대신 우측 상단 [G] 단축키/버튼만 사용.
         [SerializeField] private Button gameGuideOpenButton;
 
         [SerializeField] private InventoryPanelView inventoryPanelView;
         [SerializeField] private GameObject inventoryPanelRoot;
         [SerializeField] private Button inventoryCloseButton;
+        // prompt-B 33-1: 우측 상단 인벤토리(I) 단축키 버튼(토글).
+        [SerializeField] private Button inventoryOpenButton;
 
         [SerializeField] private bool buildingMenuOpen = true;
         [SerializeField] private bool diggerBotOpen = true;
         [SerializeField] private bool gameGuideOpen;
+        // prompt-B 33-1: 시작 시 인벤토리 창은 닫힌 상태.
         [SerializeField] private bool inventoryPanelOpen;
 
         public bool IsBuildingMenuOpen => buildingMenuOpen;
@@ -745,7 +625,7 @@ namespace SubTerra.App.UI.HUD
 
         private void Update()
         {
-            // 게임 가이드 조작법: B=시설 건설, I=화물/인벤토리
+            // 게임 가이드 조작법: B=시설 건설, I=화물/인벤토리, G=게임 가이드
             var keyboard = Keyboard.current;
             if (keyboard == null)
             {
@@ -761,6 +641,11 @@ namespace SubTerra.App.UI.HUD
             {
                 ToggleInventoryPanel();
             }
+
+            if (keyboard.gKey.wasPressedThisFrame)
+            {
+                ToggleGameGuide();
+            }
         }
 
         /// <summary>시설 건설 패널을 닫는다. 진행 중 Preview는 취소한다.</summary>
@@ -769,7 +654,7 @@ namespace SubTerra.App.UI.HUD
             ApplyBuildingMenuVisible(false, cancelSelection: true);
         }
 
-        /// <summary>우측 열기 버튼으로 시설 건설 패널을 다시 연다.</summary>
+        /// <summary>시설 건설 패널을 연다.</summary>
         public void OpenBuildingMenu()
         {
             ApplyBuildingMenuVisible(true, cancelSelection: false);
@@ -810,7 +695,7 @@ namespace SubTerra.App.UI.HUD
             ApplyGameGuideVisible(false);
         }
 
-        /// <summary>우측 게임 가이드 버튼으로 가이드 패널을 연다.</summary>
+        /// <summary>우측 상단 게임 가이드(G) 버튼/단축키로 가이드 패널을 연다.</summary>
         public void OpenGameGuide()
         {
             ApplyGameGuideVisible(true);
@@ -827,7 +712,7 @@ namespace SubTerra.App.UI.HUD
             ApplyInventoryPanelVisible(false);
         }
 
-        /// <summary>I 키 등으로 화물/인벤토리 패널을 연다.</summary>
+        /// <summary>I 키·화물(I) 버튼으로 화물/인벤토리 패널을 연다.</summary>
         public void OpenInventoryPanel()
         {
             ApplyInventoryPanelVisible(true);
@@ -840,12 +725,11 @@ namespace SubTerra.App.UI.HUD
 
         public bool HasRequiredReferences()
         {
+            // prompt-B 32: 우측 중앙 재열기 버튼은 필수가 아니다.
             return buildingMenuRoot != null
-                && buildingOpenButton != null
                 && diggerBotRoot != null
                 && diggerOpenButton != null
-                && gameGuideRoot != null
-                && gameGuideOpenButton != null;
+                && gameGuideRoot != null;
         }
 
         private void WireButtons()
@@ -856,10 +740,11 @@ namespace SubTerra.App.UI.HUD
                 buildingCloseButton.onClick.AddListener(CloseBuildingMenu);
             }
 
+            // 레거시 우측 중앙 시설 버튼이 남아 있으면 토글로 연결(빌더는 제거한다).
             if (buildingOpenButton != null)
             {
-                buildingOpenButton.onClick.RemoveListener(OpenBuildingMenu);
-                buildingOpenButton.onClick.AddListener(OpenBuildingMenu);
+                buildingOpenButton.onClick.RemoveListener(ToggleBuildingMenu);
+                buildingOpenButton.onClick.AddListener(ToggleBuildingMenu);
             }
 
             if (diggerCloseButton != null)
@@ -882,14 +767,20 @@ namespace SubTerra.App.UI.HUD
 
             if (gameGuideOpenButton != null)
             {
-                gameGuideOpenButton.onClick.RemoveListener(OpenGameGuide);
-                gameGuideOpenButton.onClick.AddListener(OpenGameGuide);
+                gameGuideOpenButton.onClick.RemoveListener(ToggleGameGuide);
+                gameGuideOpenButton.onClick.AddListener(ToggleGameGuide);
             }
 
             if (inventoryCloseButton != null)
             {
                 inventoryCloseButton.onClick.RemoveListener(CloseInventoryPanel);
                 inventoryCloseButton.onClick.AddListener(CloseInventoryPanel);
+            }
+
+            if (inventoryOpenButton != null)
+            {
+                inventoryOpenButton.onClick.RemoveListener(ToggleInventoryPanel);
+                inventoryOpenButton.onClick.AddListener(ToggleInventoryPanel);
             }
         }
 
@@ -902,7 +793,7 @@ namespace SubTerra.App.UI.HUD
 
             if (buildingOpenButton != null)
             {
-                buildingOpenButton.onClick.RemoveListener(OpenBuildingMenu);
+                buildingOpenButton.onClick.RemoveListener(ToggleBuildingMenu);
             }
 
             if (diggerCloseButton != null)
@@ -922,12 +813,17 @@ namespace SubTerra.App.UI.HUD
 
             if (gameGuideOpenButton != null)
             {
-                gameGuideOpenButton.onClick.RemoveListener(OpenGameGuide);
+                gameGuideOpenButton.onClick.RemoveListener(ToggleGameGuide);
             }
 
             if (inventoryCloseButton != null)
             {
                 inventoryCloseButton.onClick.RemoveListener(CloseInventoryPanel);
+            }
+
+            if (inventoryOpenButton != null)
+            {
+                inventoryOpenButton.onClick.RemoveListener(ToggleInventoryPanel);
             }
         }
 
@@ -940,19 +836,21 @@ namespace SubTerra.App.UI.HUD
                 buildingMenuBinder.CancelSelection();
             }
 
-            if (buildingMenuView != null)
-            {
-                buildingMenuView.SetVisible(visible);
-            }
-            else if (buildingMenuRoot != null)
+            // 패널 전체(루트)를 토글한다. PanelRoot만 끄면 X 버튼이 루트에 남아 상태가 꼬인다.
+            if (buildingMenuRoot != null)
             {
                 buildingMenuRoot.SetActive(visible);
             }
 
-            // 닫혀 있을 때만 우측 열기 버튼을 보여 겹침을 줄인다.
+            if (buildingMenuView != null)
+            {
+                buildingMenuView.SetVisible(visible);
+            }
+
+            // prompt-B 32: 우측 중앙 재열기 버튼은 항상 숨긴다.
             if (buildingOpenButton != null)
             {
-                buildingOpenButton.gameObject.SetActive(!visible);
+                buildingOpenButton.gameObject.SetActive(false);
             }
         }
 
@@ -984,7 +882,8 @@ namespace SubTerra.App.UI.HUD
                 // View가 root 활성/비활성과 최전면 정렬까지 처리한다.
                 gameGuideView.SetVisible(visible);
             }
-            else if (gameGuideRoot != null)
+
+            if (gameGuideRoot != null)
             {
                 gameGuideRoot.SetActive(visible);
                 if (visible)
@@ -993,10 +892,10 @@ namespace SubTerra.App.UI.HUD
                 }
             }
 
-            // 가이드 열기 버튼은 항상 우측에서 접근 가능하게 유지한다.
+            // 우측 중앙 레거시 가이드 버튼이 있으면 숨긴다(상단 [G]만 사용).
             if (gameGuideOpenButton != null)
             {
-                gameGuideOpenButton.gameObject.SetActive(true);
+                gameGuideOpenButton.gameObject.SetActive(false);
             }
         }
 
@@ -1004,21 +903,26 @@ namespace SubTerra.App.UI.HUD
         {
             inventoryPanelOpen = visible;
 
+            // View 경로: PanelRoot·X 버튼만 토글(루트 유지).
             if (inventoryPanelView != null)
             {
                 inventoryPanelView.SetVisible(visible);
             }
-            else if (inventoryPanelRoot != null)
+
+            // 루트 참조가 View와 다른 오브젝트면 함께 맞춘다.
+            // 단 View가 있는 루트를 SetActive(false)로 끄면 구독이 끊기므로, View 없을 때만 사용.
+            if (inventoryPanelRoot != null && inventoryPanelView == null)
             {
                 inventoryPanelRoot.SetActive(visible);
             }
-
-            // View가 panelRoot만 토글해도 루트 참조가 있으면 동기화한다.
-            if (inventoryPanelRoot != null
-                && inventoryPanelView != null
-                && inventoryPanelRoot.activeSelf != visible)
+            else if (inventoryPanelRoot != null && !inventoryPanelRoot.activeSelf)
             {
-                inventoryPanelRoot.SetActive(visible);
+                // 중복 패널 제거 후 숨겨진 정식 패널만 켠다.
+                inventoryPanelRoot.SetActive(true);
+                if (inventoryPanelView != null)
+                {
+                    inventoryPanelView.SetVisible(visible);
+                }
             }
 
             if (visible && inventoryPanelRoot != null)
@@ -1037,91 +941,505 @@ FAIL: SubTerra.App.Tests.UI.HudStaticStructureTests
 MSG: One or more child tests had errors
 STACK: 
 
-FAIL: SubTerra.App.Tests.UI.MainMenu.MainMenuStaticStructureTests.L_S01_MainMenu_ExposesNewContinueSlotsSettingsQuitVersion
-MSG: OneTimeSetUp: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
+FAIL: SubTerra.App.Tests.UI.ProgressionUpgradePanelStaticTests.UpgradePanel_HasSelectableEntriesAndAffordabilityGate
+MSG:   Expected: String containing "RemoveListener(Select)"
+  But was:  "using System.Collections.Generic;
+using SubTerra.App.Core.Data;
+using SubTerra.App.Progression;
+using TMPro;
+using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.UI;
+
+namespace SubTerra.App.UI.Progression
+{
+    /// <summary>
+    /// 업그레이드 목록의 한 행.
+    /// Button.onClick 외에 IPointerClickHandler로도 선택해
+    /// 하위 탭 클릭이 다른 UI/리스너 상태에 막히지 않게 한다.
+    /// </summary>
+    [RequireComponent(typeof(Button))]
+    [RequireComponent(typeof(Image))]
+    public sealed class ProgressionUpgradeEntryButton : MonoBehaviour, IPointerClickHandler
+    {
+        private static readonly Color NormalColor = new Color(0.14f, 0.28f, 0.34f, 1f);
+        private static readonly Color SelectedColor = new Color(0.28f, 0.52f, 0.42f, 1f);
+
+        [SerializeField] private string upgradeId;
+        [SerializeField] private ProgressionPanelBinder binder;
+        [SerializeField] private TMP_Text label;
+
+        public string UpgradeId => upgradeId;
+
+        private Button button;
+        private Image background;
+        private ProgressionPanelView cachedView;
+
+        private void Awake()
+        {
+            button = GetComponent<Button>();
+            background = GetComponent<Image>();
+            ConfigureButton();
+        }
+
+        private void OnEnable()
+        {
+            EnsureInteractable();
+        }
+
+        private void OnDisable()
+        {
+            if (button != null)
+            {
+                button.onClick.RemoveListener(OnButtonClicked);
+            }
+        }
+
+        public void SetSnapshot(IReadOnlyList<UpgradeSnapshot> upgrades)
+        {
+            if (upgrades == null || label == null || string.IsNullOrEmpty(upgradeId))
+            {
+                return;
+            }
+
+            for (var i = 0; i < upgrades.Count; i++)
+            {
+                var upgrade = upgrades[i];
+                if (upgrade.UpgradeId != upgradeId)
+                {
+                    continue;
+                }
+
+                var name = ItemDisplayNames.PreferDisplay(upgrade.UpgradeId, upgrade.DisplayName);
+                label.text = name
+                    + "  Lv."
+                    + upgrade.CurrentLevel
+                    + "/"
+                    + upgrade.MaximumLevel;
+                return;
+            }
+        }
+
+        /// <summary>선택 중인 목록 행을 색상으로 하이라이트한다.</summary>
+        public void SetSelected(bool selected)
+        {
+            if (background == null)
+            {
+                background = GetComponent<Image>();
+            }
+
+            if (background != null)
+            {
+                background.color = selected ? SelectedColor : NormalColor;
+            }
+        }
+
+        /// <summary>EventSystem 포인터 클릭 — Button 리스너가 깨져도 동작한다.</summary>
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            if (eventData == null
+                || eventData.button != PointerEventData.InputButton.Left)
+            {
+                return;
+            }
+
+            RequestSelect();
+        }
+
+        private void OnButtonClicked()
+        {
+            RequestSelect();
+        }
+
+        private void RequestSelect()
+        {
+            if (string.IsNullOrEmpty(upgradeId))
+            {
+                return;
+            }
+
+            // 1) View 직접 경로 (presenter 연결이 가장 확실)
+            if (cachedView == null)
+            {
+                cachedView = GetComponentInParent<ProgressionPanelView>(true);
+            }
+
+            if (cachedView != null)
+            {
+                cachedView.SelectUpgradeEntry(upgradeId);
+                return;
+            }
+
+            // 2) Binder 경로 폴백
+            var target = binder != null
+                ? binder
+                : GetComponentInParent<ProgressionPanelBinder>(true);
+            if (target == null)
+            {
+                return;
+            }
+
+            binder = target;
+            target.SelectUpgrade(upgradeId);
+        }
+
+        /// <summary>
+        /// 필터로 다시 켜진 하위 탭이 항상 클릭·선택 가능하도록
+        /// 버튼/그래픽/클릭 리스너를 재배선한다.
+        /// </summary>
+        public void EnsureInteractable()
+        {
+            if (button == null)
+            {
+                button = GetComponent<Button>();
+            }
+
+            if (background == null)
+            {
+                background = GetComponent<Image>();
+            }
+
+            ConfigureButton();
+
+            if (button != null)
+            {
+                button.interactable = true;
+                button.enabled = true;
+                button.onClick.RemoveListener(OnButtonClicked);
+                button.onClick.AddListener(OnButtonClicked);
+            }
+
+            if (background != null)
+            {
+                background.enabled = true;
+                background.raycastTarget = true;
+                var color = background.color;
+                if (color.a < 0.9f)
+                {
+                    color.a = 1f;
+                    background.color = color;
+                }
+            }
+
+            if (label != null)
+            {
+                label.raycastTarget = false;
+            }
+
+            if (binder == null)
+            {
+                binder = GetComponentInParent<ProgressionPanelBinder>(true);
+            }
+
+            cachedView = GetComponentInParent<ProgressionPanelView>(true);
+        }
+
+        private void ConfigureButton()
+        {
+            if (button == null)
+            {
+                return;
+            }
+
+            if (background != null)
+            {
+                button.targetGraphic = background;
+            }
+
+            // 키보드 네비게이션이 포커스를 가로채지 않게 한다.
+            var nav = button.navigation;
+            nav.mode = Navigation.Mode.None;
+            button.navigation = nav;
+            button.transition = Selectable.Transition.ColorTint;
+        }
+
+#if UNITY_EDITOR
+        public void EditorSet(string permanentId, ProgressionPanelBinder target, TMP_Text targetLabel)
+        {
+            upgradeId = permanentId ?? string.Empty;
+            binder = target;
+            label = targetLabel;
+        }
+#endif
+    }
+}
+"
+
+STACK: at SubTerra.App.Tests.UI.ProgressionUpgradePanelStaticTests.UpgradePanel_HasSelectableEntriesAndAffordabilityGate () [0x003c4] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Tests\EditMode\App\UI\ProgressionUpgradePanelStaticTests.cs:108
+
+
+FAIL: SubTerra.App.Tests.UI.ProgressionUpgradePanelStaticTests
+MSG: One or more child tests had errors
 STACK: 
 
-FAIL: SubTerra.App.Tests.UI.MainMenu.MainMenuStaticStructureTests.L_S02_SurfaceBase_ExposesSellCraftUpgradeGoalsExplore
-MSG: OneTimeSetUp: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
+FAIL: SubTerra.App.Tests.UI.ProgressionUpgradePanelStaticTests.UpgradePanel_HasSelectableEntriesAndAffordabilityGate
+MSG:   Expected: String containing "RemoveListener(Select)"
+  But was:  "using System.Collections.Generic;
+using SubTerra.App.Core.Data;
+using SubTerra.App.Progression;
+using TMPro;
+using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.UI;
+
+namespace SubTerra.App.UI.Progression
+{
+    /// <summary>
+    /// 업그레이드 목록의 한 행.
+    /// Button.onClick 외에 IPointerClickHandler로도 선택해
+    /// 하위 탭 클릭이 다른 UI/리스너 상태에 막히지 않게 한다.
+    /// </summary>
+    [RequireComponent(typeof(Button))]
+    [RequireComponent(typeof(Image))]
+    public sealed class ProgressionUpgradeEntryButton : MonoBehaviour, IPointerClickHandler
+    {
+        private static readonly Color NormalColor = new Color(0.14f, 0.28f, 0.34f, 1f);
+        private static readonly Color SelectedColor = new Color(0.28f, 0.52f, 0.42f, 1f);
+
+        [SerializeField] private string upgradeId;
+        [SerializeField] private ProgressionPanelBinder binder;
+        [SerializeField] private TMP_Text label;
+
+        public string UpgradeId => upgradeId;
+
+        private Button button;
+        private Image background;
+        private ProgressionPanelView cachedView;
+
+        private void Awake()
+        {
+            button = GetComponent<Button>();
+            background = GetComponent<Image>();
+            ConfigureButton();
+        }
+
+        private void OnEnable()
+        {
+            EnsureInteractable();
+        }
+
+        private void OnDisable()
+        {
+            if (button != null)
+            {
+                button.onClick.RemoveListener(OnButtonClicked);
+            }
+        }
+
+        public void SetSnapshot(IReadOnlyList<UpgradeSnapshot> upgrades)
+        {
+            if (upgrades == null || label == null || string.IsNullOrEmpty(upgradeId))
+            {
+                return;
+            }
+
+            for (var i = 0; i < upgrades.Count; i++)
+            {
+                var upgrade = upgrades[i];
+                if (upgrade.UpgradeId != upgradeId)
+                {
+                    continue;
+                }
+
+                var name = ItemDisplayNames.PreferDisplay(upgrade.UpgradeId, upgrade.DisplayName);
+                label.text = name
+                    + "  Lv."
+                    + upgrade.CurrentLevel
+                    + "/"
+                    + upgrade.MaximumLevel;
+                return;
+            }
+        }
+
+        /// <summary>선택 중인 목록 행을 색상으로 하이라이트한다.</summary>
+        public void SetSelected(bool selected)
+        {
+            if (background == null)
+            {
+                background = GetComponent<Image>();
+            }
+
+            if (background != null)
+            {
+                background.color = selected ? SelectedColor : NormalColor;
+            }
+        }
+
+        /// <summary>EventSystem 포인터 클릭 — Button 리스너가 깨져도 동작한다.</summary>
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            if (eventData == null
+                || eventData.button != PointerEventData.InputButton.Left)
+            {
+                return;
+            }
+
+            RequestSelect();
+        }
+
+        private void OnButtonClicked()
+        {
+            RequestSelect();
+        }
+
+        private void RequestSelect()
+        {
+            if (string.IsNullOrEmpty(upgradeId))
+            {
+                return;
+            }
+
+            // 1) View 직접 경로 (presenter 연결이 가장 확실)
+            if (cachedView == null)
+            {
+                cachedView = GetComponentInParent<ProgressionPanelView>(true);
+            }
+
+            if (cachedView != null)
+            {
+                cachedView.SelectUpgradeEntry(upgradeId);
+                return;
+            }
+
+            // 2) Binder 경로 폴백
+            var target = binder != null
+                ? binder
+                : GetComponentInParent<ProgressionPanelBinder>(true);
+            if (target == null)
+            {
+                return;
+            }
+
+            binder = target;
+            target.SelectUpgrade(upgradeId);
+        }
+
+        /// <summary>
+        /// 필터로 다시 켜진 하위 탭이 항상 클릭·선택 가능하도록
+        /// 버튼/그래픽/클릭 리스너를 재배선한다.
+        /// </summary>
+        public void EnsureInteractable()
+        {
+            if (button == null)
+            {
+                button = GetComponent<Button>();
+            }
+
+            if (background == null)
+            {
+                background = GetComponent<Image>();
+            }
+
+            ConfigureButton();
+
+            if (button != null)
+            {
+                button.interactable = true;
+                button.enabled = true;
+                button.onClick.RemoveListener(OnButtonClicked);
+                button.onClick.AddListener(OnButtonClicked);
+            }
+
+            if (background != null)
+            {
+                background.enabled = true;
+                background.raycastTarget = true;
+                var color = background.color;
+                if (color.a < 0.9f)
+                {
+                    color.a = 1f;
+                    background.color = color;
+                }
+            }
+
+            if (label != null)
+            {
+                label.raycastTarget = false;
+            }
+
+            if (binder == null)
+            {
+                binder = GetComponentInParent<ProgressionPanelBinder>(true);
+            }
+
+            cachedView = GetComponentInParent<ProgressionPanelView>(true);
+        }
+
+        private void ConfigureButton()
+        {
+            if (button == null)
+            {
+                return;
+            }
+
+            if (background != null)
+            {
+                button.targetGraphic = background;
+            }
+
+            // 키보드 네비게이션이 포커스를 가로채지 않게 한다.
+            var nav = button.navigation;
+            nav.mode = Navigation.Mode.None;
+            button.navigation = nav;
+            button.transition = Selectable.Transition.ColorTint;
+        }
+
+#if UNITY_EDITOR
+        public void EditorSet(string permanentId, ProgressionPanelBinder target, TMP_Text targetLabel)
+        {
+            upgradeId = permanentId ?? string.Empty;
+            binder = target;
+            label = targetLabel;
+        }
+#endif
+    }
+}
+"
+
+STACK: at SubTerra.App.Tests.UI.ProgressionUpgradePanelStaticTests.UpgradePanel_HasSelectableEntriesAndAffordabilityGate () [0x003c4] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Tests\EditMode\App\UI\ProgressionUpgradePanelStaticTests.cs:108
+
+
+FAIL: SubTerra.App.Tests.UI.ProgressionUpgradePanelStaticTests
+MSG: One or more child tests had errors
 STACK: 
 
-FAIL: SubTerra.App.Tests.UI.MainMenu.MainMenuStaticStructureTests.L_S03_SurfaceMenu_DoesNotDuplicateEconomyProgressionLogic
-MSG: OneTimeSetUp: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
+FAIL: SubTerra.App.Tests.UI.PromptB32PanelLayoutTests.ChromeController_ClosesBuildingRootCompletely
+MSG: Unhandled log message: '[Assert] Assertion failed on expression: 'ShouldRunBehaviour()''. Use UnityEngine.TestTools.LogAssert.Expect
+STACK: UnityEngine.Component:SendMessage (string,UnityEngine.SendMessageOptions)
+SubTerra.App.Tests.UI.PromptB32PanelLayoutTests:ChromeController_ClosesBuildingRootCompletely () (at Assets/_Project/Tests/EditMode/App/UI/PromptB32PanelLayoutTests.cs:159)
+System.Reflection.MethodBase:Invoke (object,object[])
+NUnit.Framework.Internal.Reflect:InvokeMethod (System.Reflection.MethodInfo,object,object[])
+NUnit.Framework.Internal.MethodWrapper:Invoke (object,object[])
+NUnit.Framework.Internal.Commands.TestMethodCommand:RunNonAsyncTestMethod (NUnit.Framework.Internal.ITestExecutionContext)
+NUnit.Framework.Internal.Commands.TestMethodCommand:RunTestMethod (NUnit.Framework.Internal.ITestExecutionContext)
+NUnit.Framework.Internal.Commands.TestMethodCommand:Execute (NUnit.Framework.Internal.ITestExecutionContext)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+
+
+FAIL: SubTerra.App.Tests.UI.PromptB32PanelLayoutTests
+MSG: One or more child tests had errors
 STACK: 
 
-FAIL: SubTerra.App.Tests.UI.MainMenu.MainMenuStaticStructureTests.L_S04_OverwriteAndDeletePaths_RequireConfirmedSlot
-MSG: OneTimeSetUp: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
-STACK: 
+FAIL: SubTerra.App.Tests.UI.PromptB32PanelLayoutTests.ChromeController_ClosesBuildingRootCompletely
+MSG: Unhandled log message: '[Assert] Assertion failed on expression: 'ShouldRunBehaviour()''. Use UnityEngine.TestTools.LogAssert.Expect
+STACK: UnityEngine.Component:SendMessage (string,UnityEngine.SendMessageOptions)
+SubTerra.App.Tests.UI.PromptB32PanelLayoutTests:ChromeController_ClosesBuildingRootCompletely () (at Assets/_Project/Tests/EditMode/App/UI/PromptB32PanelLayoutTests.cs:159)
+System.Reflection.MethodBase:Invoke (object,object[])
+NUnit.Framework.Internal.Reflect:InvokeMethod (System.Reflection.MethodInfo,object,object[])
+NUnit.Framework.Internal.MethodWrapper:Invoke (object,object[])
+NUnit.Framework.Internal.Commands.TestMethodCommand:RunNonAsyncTestMethod (NUnit.Framework.Internal.ITestExecutionContext)
+NUnit.Framework.Internal.Commands.TestMethodCommand:RunTestMethod (NUnit.Framework.Internal.ITestExecutionContext)
+NUnit.Framework.Internal.Commands.TestMethodCommand:Execute (NUnit.Framework.Internal.ITestExecutionContext)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
 
-FAIL: SubTerra.App.Tests.UI.MainMenu.MainMenuStaticStructureTests.Prompt16_IntegrationTerrain_IsReadableBoundedAndExplained
-MSG: OneTimeSetUp: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
-STACK: 
 
-FAIL: SubTerra.App.Tests.UI.MainMenu.MainMenuStaticStructureTests.Prompt16_MainMenuAndOverwriteDialog_AreCenteredAndEnlarged
-MSG: OneTimeSetUp: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
-STACK: 
 
-FAIL: SubTerra.App.Tests.UI.MainMenu.MainMenuStaticStructureTests.Prompt16_SurfaceBaseInformation_IsOneCenteredGroup
-MSG: OneTimeSetUp: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
-STACK: 
-
-FAIL: SubTerra.App.Tests.UI.MainMenu.MainMenuStaticStructureTests
-MSG: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
-STACK:   at (wrapper managed-to-native) UnityEditor.SceneManagement.EditorSceneManager.OpenScene_Injected(UnityEngine.Bindings.ManagedSpanWrapper&,UnityEditor.SceneManagement.OpenSceneMode,UnityEngine.SceneManagement.Scene&)
-  at UnityEditor.SceneManagement.EditorSceneManager.OpenScene (System.String scenePath, UnityEditor.SceneManagement.OpenSceneMode mode) [0x0002a] in <b69798a175fc402fb7a30c358b62aa3a>:0 
-  at SubTerra.App.Editor.DataValidation.PhaseLMenuSceneBuilder.WireMainMenuScene () [0x0000a] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Editor\DataValidation\PhaseLMenuSceneBuilder.cs:253 
-  at SubTerra.App.Editor.DataValidation.PhaseLMenuSceneBuilder.Build () [0x00025] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Editor\DataValidation\PhaseLMenuSceneBuilder.cs:48 
-  at SubTerra.App.Tests.UI.MainMenu.MainMenuStaticStructureTests.BuildScenes () [0x00000] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Tests\EditMode\App\UI\MainMenu\MainMenuStaticStructureTests.cs:25 
-  at (wrapper managed-to-native) System.Reflection.RuntimeMethodInfo.InternalInvoke(System.Reflection.RuntimeMethodInfo,object,object[],System.Exception&)
-  at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x0006a] in <816f70bc2a9c4332b0bd119906a8d40e>:0 
-
-FAIL: SubTerra.App.Tests.UI.MainMenu
+FAIL: SubTerra.App.Tests.UI.PromptB32PanelLayoutTests
 MSG: One or more child tests had errors
 STACK: 
 
 FAIL: SubTerra.App.Tests.UI
-MSG: One or more child tests had errors
-STACK: 
-
-FAIL: SubTerra.App.Tests.UI.MainMenu.MainMenuStaticStructureTests.L_S01_MainMenu_ExposesNewContinueSlotsSettingsQuitVersion
-MSG: OneTimeSetUp: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
-STACK: 
-
-FAIL: SubTerra.App.Tests.UI.MainMenu.MainMenuStaticStructureTests.L_S02_SurfaceBase_ExposesSellCraftUpgradeGoalsExplore
-MSG: OneTimeSetUp: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
-STACK: 
-
-FAIL: SubTerra.App.Tests.UI.MainMenu.MainMenuStaticStructureTests.L_S03_SurfaceMenu_DoesNotDuplicateEconomyProgressionLogic
-MSG: OneTimeSetUp: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
-STACK: 
-
-FAIL: SubTerra.App.Tests.UI.MainMenu.MainMenuStaticStructureTests.L_S04_OverwriteAndDeletePaths_RequireConfirmedSlot
-MSG: OneTimeSetUp: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
-STACK: 
-
-FAIL: SubTerra.App.Tests.UI.MainMenu.MainMenuStaticStructureTests.Prompt16_IntegrationTerrain_IsReadableBoundedAndExplained
-MSG: OneTimeSetUp: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
-STACK: 
-
-FAIL: SubTerra.App.Tests.UI.MainMenu.MainMenuStaticStructureTests.Prompt16_MainMenuAndOverwriteDialog_AreCenteredAndEnlarged
-MSG: OneTimeSetUp: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
-STACK: 
-
-FAIL: SubTerra.App.Tests.UI.MainMenu.MainMenuStaticStructureTests.Prompt16_SurfaceBaseInformation_IsOneCenteredGroup
-MSG: OneTimeSetUp: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
-STACK: 
-
-FAIL: SubTerra.App.Tests.UI.MainMenu.MainMenuStaticStructureTests
-MSG: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
-STACK:   at (wrapper managed-to-native) UnityEditor.SceneManagement.EditorSceneManager.OpenScene_Injected(UnityEngine.Bindings.ManagedSpanWrapper&,UnityEditor.SceneManagement.OpenSceneMode,UnityEngine.SceneManagement.Scene&)
-  at UnityEditor.SceneManagement.EditorSceneManager.OpenScene (System.String scenePath, UnityEditor.SceneManagement.OpenSceneMode mode) [0x0002a] in <b69798a175fc402fb7a30c358b62aa3a>:0 
-  at SubTerra.App.Editor.DataValidation.PhaseLMenuSceneBuilder.WireMainMenuScene () [0x0000a] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Editor\DataValidation\PhaseLMenuSceneBuilder.cs:253 
-  at SubTerra.App.Editor.DataValidation.PhaseLMenuSceneBuilder.Build () [0x00025] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Editor\DataValidation\PhaseLMenuSceneBuilder.cs:48 
-  at SubTerra.App.Tests.UI.MainMenu.MainMenuStaticStructureTests.BuildScenes () [0x00000] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Tests\EditMode\App\UI\MainMenu\MainMenuStaticStructureTests.cs:25 
-  at (wrapper managed-to-native) System.Reflection.RuntimeMethodInfo.InternalInvoke(System.Reflection.RuntimeMethodInfo,object,object[],System.Exception&)
-  at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x0006a] in <816f70bc2a9c4332b0bd119906a8d40e>:0 
-
-FAIL: SubTerra.App.Tests.UI.MainMenu
 MSG: One or more child tests had errors
 STACK: 
 
@@ -1231,5 +1549,5 @@ FAIL: sub-terra
 MSG: One or more child tests had errors
 STACK: 
 
-Finished. Total tests: 374, Passed: 347, Failed: 27, Skipped: 0, Inconclusive: 0
-Finished. Total tests: 374, Passed: 347, Failed: 27, Skipped: 0, Inconclusive: 0
+Finished. Total tests: 394, Passed: 384, Failed: 10, Skipped: 0, Inconclusive: 0
+Finished. Total tests: 394, Passed: 384, Failed: 10, Skipped: 0, Inconclusive: 0

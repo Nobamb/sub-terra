@@ -65,6 +65,18 @@ namespace SubTerra.App.Editor.DataValidation
             return sb.ToString();
         }
 
+        /// <summary>SurfaceBase prefab·씬만 33-2 설정/본문 레이아웃 적용(MainMenu·Integration 제외).</summary>
+        public static string BuildSurfaceBaseOnly()
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("Prompt-B 33-2 SurfaceBase only");
+            sb.AppendLine(UpdateSurfaceBasePrefab());
+            sb.AppendLine(UpdateSurfaceBaseScene());
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            return sb.ToString();
+        }
+
         private static string UpdateSurfaceBasePrefab()
         {
             if (AssetDatabase.LoadAssetAtPath<GameObject>(SurfaceBasePrefabPath) == null)
@@ -480,19 +492,19 @@ namespace SubTerra.App.Editor.DataValidation
                 EditorUtility.SetDirty(settingsRect);
             }
 
+            // 언어 드롭다운 흰 네모(Arrow) 제거.
+            StripDropdownWhiteArrow(settingsRoot.Find("LanguageDropdown"));
+
+            // 프레임 드롭다운 확보 — 레이아웃 전에 생성해야 PlaceSettingsRow가 적용된다.
+            var frameLabel = EnsureFrameRateLabel(settingsRoot);
+            var frameDropdown = EnsureFrameRateDropdown(settingsRoot);
+            StripDropdownWhiteArrow(frameDropdown != null ? frameDropdown.transform : null);
+
             // 상하 간격 확대 — 정규화 y로 배치(패널 높이 기준).
             // 패널 local: 상단 +0.5 ~ 하단 -0.5 (anchor stretch 후 sizeDelta.y=0이면
             // anchoredPosition은 부모 높이 기준이 아니라 자체 좌표계이므로
             // stretch 높이에서는 offset 대신 비율 앵커 자식을 쓴다.
             LayoutSettingsChildren(settingsRoot);
-
-            // 언어 드롭다운 흰 네모(Arrow) 제거.
-            StripDropdownWhiteArrow(settingsRoot.Find("LanguageDropdown"));
-
-            // 프레임 드롭다운 확보.
-            var frameLabel = EnsureFrameRateLabel(settingsRoot);
-            var frameDropdown = EnsureFrameRateDropdown(settingsRoot);
-            StripDropdownWhiteArrow(frameDropdown != null ? frameDropdown.transform : null);
 
             // View 직렬화 연결.
             var so = new SerializedObject(view);

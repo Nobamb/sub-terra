@@ -70,6 +70,18 @@ namespace SubTerra.App.Editor.DataValidation
             return sb.ToString();
         }
 
+        /// <summary>SurfaceBase prefab·씬만 레벨 요약 레이아웃 적용(Integration Upgrade 제외).</summary>
+        public static string BuildSurfaceBaseOnly()
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("Prompt-B 33-3 SurfaceBase only");
+            sb.AppendLine(UpdateSurfaceBasePrefab());
+            sb.AppendLine(UpdateSurfaceBaseScene());
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            return sb.ToString();
+        }
+
         private static string UpdateIntegrationUpgradePanel()
         {
             var previous = SceneManager.GetActiveScene().path;
