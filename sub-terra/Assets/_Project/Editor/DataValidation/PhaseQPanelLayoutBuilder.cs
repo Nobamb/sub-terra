@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using SubTerra.App.Integration;
 using SubTerra.App.UI;
 using SubTerra.App.UI.Building;
@@ -44,6 +45,8 @@ namespace SubTerra.App.Editor.DataValidation
             {
                 UnityEngine.Object.DestroyImmediate(oldLayout.gameObject);
             }
+
+            RemoveLegacyDirectBuildingPanels(canvas.transform);
 
             PositionExistingHud(canvas.transform);
             var layout = new GameObject("PanelLayout", typeof(RectTransform));
@@ -92,6 +95,26 @@ namespace SubTerra.App.Editor.DataValidation
             rect.pivot = anchor;
             rect.anchoredPosition = position;
             return instance;
+        }
+
+        // Phase Q 이전 씬에 직접 배치된 BuildingMenu는 새 PanelLayout과 중복되며,
+        // BuildingUiIntegrationBinder가 새 패널 하나만 바인딩하므로 여기서 제거한다.
+        private static void RemoveLegacyDirectBuildingPanels(Transform canvas)
+        {
+            var legacyPanels = new List<GameObject>();
+            for (var i = 0; i < canvas.childCount; i++)
+            {
+                var child = canvas.GetChild(i);
+                if (child.GetComponent<BuildingMenuBinder>() != null)
+                {
+                    legacyPanels.Add(child.gameObject);
+                }
+            }
+
+            for (var i = 0; i < legacyPanels.Count; i++)
+            {
+                UnityEngine.Object.DestroyImmediate(legacyPanels[i]);
+            }
         }
 
         private static GameObject CreateUpgradePanel(Transform parent)
