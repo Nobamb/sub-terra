@@ -36,10 +36,13 @@ namespace SubTerra.App.UI.HUD
         [SerializeField] private InventoryPanelView inventoryPanelView;
         [SerializeField] private GameObject inventoryPanelRoot;
         [SerializeField] private Button inventoryCloseButton;
+        // prompt-B 33-1: 우측 상단 인벤토리(I) 단축키 버튼(토글).
+        [SerializeField] private Button inventoryOpenButton;
 
         [SerializeField] private bool buildingMenuOpen = true;
         [SerializeField] private bool diggerBotOpen = true;
         [SerializeField] private bool gameGuideOpen;
+        // prompt-B 33-1: 시작 시 인벤토리 창은 닫힌 상태.
         [SerializeField] private bool inventoryPanelOpen;
 
         public bool IsBuildingMenuOpen => buildingMenuOpen;
@@ -219,6 +222,12 @@ namespace SubTerra.App.UI.HUD
                 inventoryCloseButton.onClick.RemoveListener(CloseInventoryPanel);
                 inventoryCloseButton.onClick.AddListener(CloseInventoryPanel);
             }
+
+            if (inventoryOpenButton != null)
+            {
+                inventoryOpenButton.onClick.RemoveListener(ToggleInventoryPanel);
+                inventoryOpenButton.onClick.AddListener(ToggleInventoryPanel);
+            }
         }
 
         private void UnwireButtons()
@@ -256,6 +265,11 @@ namespace SubTerra.App.UI.HUD
             if (inventoryCloseButton != null)
             {
                 inventoryCloseButton.onClick.RemoveListener(CloseInventoryPanel);
+            }
+
+            if (inventoryOpenButton != null)
+            {
+                inventoryOpenButton.onClick.RemoveListener(ToggleInventoryPanel);
             }
         }
 
@@ -335,21 +349,26 @@ namespace SubTerra.App.UI.HUD
         {
             inventoryPanelOpen = visible;
 
+            // View 경로: PanelRoot·X 버튼만 토글(루트 유지).
             if (inventoryPanelView != null)
             {
                 inventoryPanelView.SetVisible(visible);
             }
-            else if (inventoryPanelRoot != null)
+
+            // 루트 참조가 View와 다른 오브젝트면 함께 맞춘다.
+            // 단 View가 있는 루트를 SetActive(false)로 끄면 구독이 끊기므로, View 없을 때만 사용.
+            if (inventoryPanelRoot != null && inventoryPanelView == null)
             {
                 inventoryPanelRoot.SetActive(visible);
             }
-
-            // View가 panelRoot만 토글해도 루트 참조가 있으면 동기화한다.
-            if (inventoryPanelRoot != null
-                && inventoryPanelView != null
-                && inventoryPanelRoot.activeSelf != visible)
+            else if (inventoryPanelRoot != null && !inventoryPanelRoot.activeSelf)
             {
-                inventoryPanelRoot.SetActive(visible);
+                // 중복 패널 제거 후 숨겨진 정식 패널만 켠다.
+                inventoryPanelRoot.SetActive(true);
+                if (inventoryPanelView != null)
+                {
+                    inventoryPanelView.SetVisible(visible);
+                }
             }
 
             if (visible && inventoryPanelRoot != null)

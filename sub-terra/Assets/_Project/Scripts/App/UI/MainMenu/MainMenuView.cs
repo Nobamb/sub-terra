@@ -37,6 +37,8 @@ namespace SubTerra.App.UI.MainMenu
         [SerializeField] private Button resolutionNextButton;
         [SerializeField] private TMP_Text languageLabel;
         [SerializeField] private Button languageCycleButton;
+        // prompt-B 33-1: 언어는 드롭다운(한국어 기본, 영어 선택).
+        [SerializeField] private TMP_Dropdown languageDropdown;
         [SerializeField] private TMP_Text bgmHintLabel;
         [SerializeField] private Button settingsApplyButton;
         [SerializeField] private Button settingsCancelButton;
@@ -76,6 +78,11 @@ namespace SubTerra.App.UI.MainMenu
             resolutionPrevButton?.onClick.AddListener(OnResolutionPrev);
             resolutionNextButton?.onClick.AddListener(OnResolutionNext);
             languageCycleButton?.onClick.AddListener(OnLanguageCycle);
+            if (languageDropdown != null)
+            {
+                languageDropdown.onValueChanged.AddListener(OnLanguageDropdownChanged);
+            }
+
             if (masterVolumeSlider != null)
             {
                 masterVolumeSlider.onValueChanged.AddListener(OnMasterVolumeChanged);
@@ -99,6 +106,11 @@ namespace SubTerra.App.UI.MainMenu
             resolutionPrevButton?.onClick.RemoveListener(OnResolutionPrev);
             resolutionNextButton?.onClick.RemoveListener(OnResolutionNext);
             languageCycleButton?.onClick.RemoveListener(OnLanguageCycle);
+            if (languageDropdown != null)
+            {
+                languageDropdown.onValueChanged.RemoveListener(OnLanguageDropdownChanged);
+            }
+
             if (masterVolumeSlider != null)
             {
                 masterVolumeSlider.onValueChanged.RemoveListener(OnMasterVolumeChanged);
@@ -177,6 +189,7 @@ namespace SubTerra.App.UI.MainMenu
                 reduceMotionToggle.SetIsOnWithoutNotify(values.ReduceMotion);
             }
 
+            SyncLanguageDropdown();
             RefreshSettingsLabels(values.MasterVolume);
         }
 
@@ -212,6 +225,13 @@ namespace SubTerra.App.UI.MainMenu
             if (reduceMotionToggle != null)
             {
                 result.ReduceMotion = reduceMotionToggle.isOn;
+            }
+
+            if (languageDropdown != null)
+            {
+                draftLanguageCode = languageDropdown.value == 1
+                    ? GameLanguageCodes.English
+                    : GameLanguageCodes.Korean;
             }
 
             result.ResolutionWidth = draftResolutionWidth;
@@ -264,10 +284,18 @@ namespace SubTerra.App.UI.MainMenu
 
             if (languageLabel != null)
             {
-                var language = GameLanguageCodes.FromCode(draftLanguageCode);
-                languageLabel.text = LocalizationService.Get("settings.language", "언어")
-                    + ": "
-                    + LocalizationService.FormatLanguage(language);
+                // 드롭다운이 있으면 라벨은 "언어"만, 없으면 기존 사이클 표기.
+                if (languageDropdown != null)
+                {
+                    languageLabel.text = LocalizationService.Get("settings.language", "언어");
+                }
+                else
+                {
+                    var language = GameLanguageCodes.FromCode(draftLanguageCode);
+                    languageLabel.text = LocalizationService.Get("settings.language", "언어")
+                        + ": "
+                        + LocalizationService.FormatLanguage(language);
+                }
             }
 
             if (bgmHintLabel != null)
@@ -276,6 +304,48 @@ namespace SubTerra.App.UI.MainMenu
                     "settings.bgm_hint",
                     "BGM 4종(타이틀/기지/탐사/위험)은 마스터 음량으로 조절됩니다.");
             }
+        }
+
+        private void SyncLanguageDropdown()
+        {
+            if (languageDropdown == null)
+            {
+                return;
+            }
+
+            EnsureLanguageDropdownOptions();
+            var index = draftLanguageCode == GameLanguageCodes.English ? 1 : 0;
+            languageDropdown.SetValueWithoutNotify(index);
+        }
+
+        private void EnsureLanguageDropdownOptions()
+        {
+            if (languageDropdown == null)
+            {
+                return;
+            }
+
+            if (languageDropdown.options == null || languageDropdown.options.Count < 2)
+            {
+                languageDropdown.ClearOptions();
+                languageDropdown.AddOptions(new System.Collections.Generic.List<string>
+                {
+                    LocalizationService.FormatLanguage(GameLanguage.Korean),
+                    LocalizationService.FormatLanguage(GameLanguage.English)
+                });
+            }
+        }
+
+        private void OnLanguageDropdownChanged(int index)
+        {
+            draftLanguageCode = index == 1
+                ? GameLanguageCodes.English
+                : GameLanguageCodes.Korean;
+            var previous = LocalizationService.Current;
+            LocalizationService.SetLanguageCode(draftLanguageCode);
+            float volume = masterVolumeSlider != null ? masterVolumeSlider.value : 1f;
+            RefreshSettingsLabels(volume);
+            LocalizationService.SetLanguage(previous);
         }
 
         private void OnMasterVolumeChanged(float value)

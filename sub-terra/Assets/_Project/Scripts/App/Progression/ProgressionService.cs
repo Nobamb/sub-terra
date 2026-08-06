@@ -272,10 +272,14 @@ namespace SubTerra.App.Progression
                     || requirement.RequiredLevel <= 0
                     || current < requirement.RequiredLevel)
                 {
+                    // prompt-B 33-1: drone.scan 등 영구 ID 대신 한국어 표시 이름.
+                    var upgradeName = ItemDisplayNames.PreferDisplay(
+                        requirement.UpgradeId,
+                        requirement.UpgradeId);
                     return new ZoneAccessResult(
                         false,
                         false,
-                        $"{requirement.UpgradeId} {requirement.RequiredLevel}레벨 필요");
+                        $"{upgradeName} {requirement.RequiredLevel}레벨 필요");
                 }
             }
 

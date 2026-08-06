@@ -103,7 +103,8 @@ namespace SubTerra.App.Tests.UI
             var inventoryBtn = buttons.FirstOrDefault(b =>
             {
                 var t = b.GetComponentInChildren<TMP_Text>(true);
-                return t != null && t.text.Contains("화물");
+                return t != null
+                    && (t.text.Contains("화물") || t.text.Contains("인벤토리"));
             });
             var guideBtn = buttons.FirstOrDefault(b =>
             {

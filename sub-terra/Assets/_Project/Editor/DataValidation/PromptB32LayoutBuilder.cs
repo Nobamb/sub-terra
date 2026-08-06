@@ -388,8 +388,20 @@ namespace SubTerra.App.Editor.DataValidation
                         button.onClick,
                         chrome.ToggleBuildingMenu);
                 }
-                else if (text.Contains("화물") || text.Contains("[I]"))
+                else if (text.Contains("화물")
+                    || text.Contains("인벤토리")
+                    || text.Contains("[I]")
+                    || text.Contains("(I)"))
                 {
+                    // prompt-B 33-1: 라벨은 인벤토리(I)를 권장하되 구 라벨도 배선한다.
+                    var invLabel = button.GetComponentInChildren<TMP_Text>(true);
+                    if (invLabel != null
+                        && (invLabel.text.Contains("화물") || invLabel.text.Contains("[I]")))
+                    {
+                        invLabel.text = "인벤토리(I)";
+                        EditorUtility.SetDirty(invLabel);
+                    }
+
                     UnityEventTools.AddPersistentListener(
                         button.onClick,
                         chrome.ToggleInventoryPanel);

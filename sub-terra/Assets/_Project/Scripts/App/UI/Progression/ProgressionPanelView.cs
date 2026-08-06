@@ -96,54 +96,76 @@ namespace SubTerra.App.UI.Progression
 
         public void SetSelectedUpgrade(UpgradeSnapshot upgrade)
         {
-            if (detailText == null)
-            {
-                return;
-            }
-
+            // prompt-B 33-1 Detail Card:
+            // 상단 이름·레벨 / 중단 현재→다음·재료 / 하단 구매 안내.
             var name = ItemDisplayNames.PreferDisplay(upgrade.UpgradeId, upgrade.DisplayName);
-            var builder = new StringBuilder()
-                .Append(name)
-                .Append("  Lv.")
-                .Append(upgrade.CurrentLevel)
-                .Append('/')
-                .Append(upgrade.MaximumLevel)
-                .AppendLine()
-                .Append("현재 효과: ")
-                .Append(upgrade.CurrentEffectValue.ToString("0.##"));
-
-            if (!upgrade.IsMaximumLevel)
+            if (detailText != null)
             {
-                builder.AppendLine()
-                    .Append("다음 효과: ")
-                    .Append(upgrade.NextEffectValue.ToString("0.##"))
-                    .AppendLine()
-                    .Append("비용: ");
+                var builder = new StringBuilder()
+                    .Append(name)
+                    .Append("  Lv.")
+                    .Append(upgrade.CurrentLevel)
+                    .Append('/')
+                    .Append(upgrade.MaximumLevel);
 
-                for (var i = 0; i < upgrade.NextCosts.Count; i++)
+                if (upgrade.IsMaximumLevel)
                 {
-                    if (i > 0)
+                    builder.AppendLine()
+                        .Append("현재 수치 ")
+                        .Append(upgrade.CurrentEffectValue.ToString("0.##"))
+                        .AppendLine()
+                        .Append("최대 레벨입니다.");
+                }
+                else
+                {
+                    var delta = upgrade.NextEffectValue - upgrade.CurrentEffectValue;
+                    var deltaSign = delta >= 0f ? "+" : string.Empty;
+                    builder.AppendLine()
+                        .Append("현재 ")
+                        .Append(upgrade.CurrentEffectValue.ToString("0.##"))
+                        .Append("  →  다음 ")
+                        .Append(upgrade.NextEffectValue.ToString("0.##"))
+                        .Append(" (")
+                        .Append(deltaSign)
+                        .Append(delta.ToString("0.##"))
+                        .Append(')')
+                        .AppendLine()
+                        .Append("필요 재료: ");
+
+                    if (upgrade.NextCosts == null || upgrade.NextCosts.Count == 0)
                     {
-                        builder.Append(", ");
+                        builder.Append("없음");
+                    }
+                    else
+                    {
+                        for (var i = 0; i < upgrade.NextCosts.Count; i++)
+                        {
+                            if (i > 0)
+                            {
+                                builder.Append(", ");
+                            }
+
+                            var cost = upgrade.NextCosts[i];
+                            builder.Append(ItemDisplayNames.Mineral(cost.ItemId))
+                                .Append(" x")
+                                .Append(cost.Quantity);
+                        }
                     }
 
-                    var cost = upgrade.NextCosts[i];
-                    builder.Append(ItemDisplayNames.Mineral(cost.ItemId))
-                        .Append(" x")
-                        .Append(cost.Quantity);
+                    builder.AppendLine()
+                        .Append(upgrade.CanAffordNextLevel
+                            ? "구매 가능"
+                            : "자원 부족 (인벤토리 보유량 기준)");
                 }
 
-                builder.AppendLine()
-                    .Append(upgrade.CanAffordNextLevel
-                        ? "구매 가능"
-                        : "자원 부족 (보유 화물 인벤토리 기준)");
+                detailText.text = builder.ToString();
             }
 
-            detailText.text = builder.ToString();
             hasSelection = !string.IsNullOrEmpty(upgrade.UpgradeId);
             selectedAtMaximum = upgrade.IsMaximumLevel;
             selectedCanAfford = upgrade.CanAffordNextLevel;
             RefreshPurchaseButton();
+            RefreshSelectionHighlight(upgrade.UpgradeId);
         }
 
         public void SetPurchaseResult(string message, string detail)
@@ -261,6 +283,27 @@ namespace SubTerra.App.UI.Progression
 
                 var match = UpgradeCategoryRules.Matches(entry.UpgradeId, activeCategory);
                 entry.gameObject.SetActive(match);
+            }
+        }
+
+        private void RefreshSelectionHighlight(string selectedUpgradeId)
+        {
+            if (upgradeButtons == null)
+            {
+                return;
+            }
+
+            for (var i = 0; i < upgradeButtons.Length; i++)
+            {
+                var entry = upgradeButtons[i];
+                if (entry == null)
+                {
+                    continue;
+                }
+
+                entry.SetSelected(
+                    !string.IsNullOrEmpty(selectedUpgradeId)
+                    && entry.UpgradeId == selectedUpgradeId);
             }
         }
     }
