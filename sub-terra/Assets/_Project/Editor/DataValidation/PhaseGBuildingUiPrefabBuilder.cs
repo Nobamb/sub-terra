@@ -161,7 +161,7 @@ namespace SubTerra.App.Editor.DataValidation
                 if (powerText == null)
                 {
                     powerText = CreateText(root.transform, "PowerConnectionText",
-                        new Vector2(20f, -238f), new Vector2(440f, 60f), 19, "전력 ✕ 미연결");
+                        new Vector2(20f, -238f), new Vector2(440f, 60f), 19, "전력 X 미연결");
                 }
 
                 var view = root.AddComponent<HazardHudView>();

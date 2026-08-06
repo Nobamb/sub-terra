@@ -42,7 +42,7 @@ namespace SubTerra.App.UI.Hazards
 
         public void SetPowerStatus(PowerStatusReadModel status)
         {
-            var connectedLabel = status.IsConnected ? "✓ 연결" : "✕ 미연결";
+            var connectedLabel = status.IsConnected ? "✓ 연결" : "X 미연결";
             if (powerText != null)
             {
                 powerText.text = "전력 " + connectedLabel

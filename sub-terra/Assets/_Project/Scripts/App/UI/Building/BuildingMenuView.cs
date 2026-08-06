@@ -132,7 +132,7 @@ namespace SubTerra.App.UI.Building
                 return;
             }
 
-            var prefix = availability.CanAfford ? "⚠ 위치 확인" : "✕ 자원 부족";
+            var prefix = availability.CanAfford ? "⚠ 위치 확인" : "X 자원 부족";
             availabilityText.text = string.IsNullOrEmpty(availability.Message)
                 ? prefix
                 : prefix + "\n" + availability.Message;
