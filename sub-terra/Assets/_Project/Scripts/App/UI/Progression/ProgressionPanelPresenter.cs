@@ -102,11 +102,35 @@ namespace SubTerra.App.UI.Progression
 
         public bool SelectUpgrade(string upgradeId)
         {
-            if (service == null
-                || string.IsNullOrEmpty(upgradeId)
-                || !service.TryGetSnapshot(upgradeId, out var snapshot))
+            if (string.IsNullOrEmpty(upgradeId))
             {
                 return false;
+            }
+
+            if (service == null)
+            {
+                return false;
+            }
+
+            if (!service.TryGetSnapshot(upgradeId, out var snapshot))
+            {
+                return false;
+            }
+
+            // 하위 탭 클릭 시 해당 장비 카테고리로 맞춘 뒤 상세·하이라이트를 갱신한다.
+            var resolved = UpgradeCategoryRules.Resolve(upgradeId);
+            if (UpgradeCategoryRules.IsDeepZoneTab(activeCategory)
+                || resolved != activeCategory)
+            {
+                // 심층 탭에서도 장비 행을 누르면 해당 카테고리로 빠져 선택이 보이게 한다.
+                if (!UpgradeCategoryRules.IsDeepZoneTab(resolved))
+                {
+                    activeCategory = resolved;
+                    if (view is ProgressionPanelView panelView)
+                    {
+                        panelView.SetActiveCategory(resolved);
+                    }
+                }
             }
 
             selectedUpgradeId = upgradeId;

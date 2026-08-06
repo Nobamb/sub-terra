@@ -186,6 +186,12 @@ namespace SubTerra.App.UI.SurfaceBase
             {
                 exploreButton.interactable = !busy;
             }
+
+            // prompt-B 33-4: 탐사 시작 busy 중에는 버튼 뒤/겹침 메시지가 보이지 않게 한다.
+            if (busy && messageText != null)
+            {
+                messageText.text = string.Empty;
+            }
         }
 
         public void SetMessage(string message)

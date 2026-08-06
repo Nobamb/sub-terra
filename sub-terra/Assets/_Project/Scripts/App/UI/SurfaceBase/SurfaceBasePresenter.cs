@@ -175,8 +175,9 @@ namespace SubTerra.App.UI.SurfaceBase
             }
 
             // 실제 가드/로드 전에 busy를 켜 연타 UI를 막되, 실패 시 반드시 해제한다.
+            // prompt-B 33-4: 호출 중 메시지가 반투명 버튼 뒤에 비치지 않도록 비운다.
             view.SetExplorationBusy(true);
-            view.SetMessage("Calling · 엘리베이터 호출 중");
+            view.SetMessage(string.Empty);
 
             var result = startExploration();
             if (!result.success)

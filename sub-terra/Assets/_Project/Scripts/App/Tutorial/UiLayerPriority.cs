@@ -7,6 +7,8 @@ namespace SubTerra.App.Tutorial
     public static class UiLayerPriority
     {
         public const int TutorialGuidance = 100;
+        /// <summary>장비 업그레이드·인벤토리 등 플레이어 호출 모달. 일반 HUD/튜토리얼 위.</summary>
+        public const int ModalPanel = 450;
         public const int HazardWarning = 500;
         public const int CriticalHazard = 600;
 

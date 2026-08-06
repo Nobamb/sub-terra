@@ -54,6 +54,38 @@ namespace SubTerra.App.Core.Data
             }
         }
 
+        /// <summary>
+        /// prompt-B 33-4: 장비 업그레이드 상세 설명.
+        /// 필요 재료 위에 표시해 각 장비가 무엇을 강화하는지 안내한다.
+        /// </summary>
+        public static string UpgradeDescription(string upgradeId)
+        {
+            if (string.IsNullOrEmpty(upgradeId))
+            {
+                return string.Empty;
+            }
+
+            switch (upgradeId)
+            {
+                case DataIds.Upgrades.DrillSpeed:
+                    return "채굴에 걸리는 시간을 줄여 같은 구간을 더 빠르게 뚫습니다.";
+                case DataIds.Upgrades.DrillEfficiency:
+                    return "채굴 시 소모되는 전력을 줄여 더 오래 탐사할 수 있습니다.";
+                case DataIds.Upgrades.MaximumEnergy:
+                    return "휴대 가능한 최대 전력량을 늘려 심층 탐사를 안정적으로 유지합니다.";
+                case DataIds.Upgrades.MaximumCargo:
+                    return "한 번에 운반할 수 있는 화물 중량 한도를 늘립니다.";
+                case DataIds.Upgrades.DroneScan:
+                    return "Digger-Bot이 주변 광물·위험을 감지하는 범위를 확장합니다.";
+                case DataIds.Upgrades.DroneRescue:
+                    return "탐사 실패 시 미정산 화물 손실을 줄이는 구조 보존 성능을 강화합니다.";
+                case DataIds.Upgrades.GasResistance:
+                    return "독성 가스 노출 피해와 이동 페널티를 줄여 위험 지대를 견딥니다.";
+                default:
+                    return "장비 성능을 한 단계 강화합니다.";
+            }
+        }
+
         /// <summary>표시용 이름. 카탈로그 이름이 비어 있거나 ID와 같으면 한국어 폴백.</summary>
         public static string PreferDisplay(string permanentId, string catalogDisplayName)
         {

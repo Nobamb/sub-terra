@@ -2,8 +2,10 @@ using System.Collections.Generic;
 using System.Text;
 using SubTerra.App.Core.Data;
 using SubTerra.App.Progression;
+using SubTerra.App.Tutorial;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.UI;
 
 namespace SubTerra.App.UI.Progression
@@ -11,15 +13,16 @@ namespace SubTerra.App.UI.Progression
     /// <summary>
     /// Surface Base·Mine 업그레이드 패널 View.
     /// prompt-B 33-3: 탭별 좌측 목록 시작 Y 고정, 심층 구역 전용 탭, Surface 레벨 요약 모드.
+    /// prompt-B 33-4/후속: 하위 탭 런타임 배선, 심층 안내 단일 텍스트.
     /// </summary>
     public sealed class ProgressionPanelView : MonoBehaviour, IProgressionPanelView
     {
         /// <summary>드릴 탭 기준과 동일한 좌측 목록 시작 위치(top-left anchor).</summary>
         private const float EntryListStartY = -120f;
-        private const float EntryListRowHeight = 46f;
+        private const float EntryListRowHeight = 50f;
         private const float EntryListColumnX = 20f;
-        private const float EntryListWidth = 280f;
-        private const float EntryListHeight = 40f;
+        private const float EntryListWidth = 340f;
+        private const float EntryListHeight = 44f;
 
         [SerializeField] private TMP_Text upgradeListText;
         [SerializeField] private TMP_Text detailText;
@@ -51,10 +54,27 @@ namespace SubTerra.App.UI.Progression
         private UpgradeCategory activeCategory = UpgradeCategory.Drill;
         private ProgressionPanelPresenter presenter;
         private ZoneAccessResult lastDeepZoneAccess;
+        private UnityAction[] categoryTabRuntimeActions;
 
         public UpgradeCategory ActiveCategory => activeCategory;
         public bool LevelsOnlySummary => levelsOnlySummary;
         public bool HideDeepZoneTab => hideDeepZoneTab;
+
+        private void OnEnable()
+        {
+            // 직렬화 리스너가 깨져 있어도 탭·하위 탭 선택이 동작하도록 런타임 배선.
+            RebuildEntryButtonCacheIfNeeded();
+            WireCategoryTabsRuntime();
+            if (!levelsOnlySummary)
+            {
+                ApplyCategoryFilterToButtons();
+            }
+        }
+
+        private void OnDisable()
+        {
+            UnwireCategoryTabsRuntime();
+        }
 
         public void BindPresenter(ProgressionPanelPresenter target)
         {
@@ -91,10 +111,12 @@ namespace SubTerra.App.UI.Progression
                 }
 
                 ApplyCategoryFilterToButtons();
+                // prompt-B 33-4: 클릭 가능한 하위 탭(엔트리 버튼)만 남긴다.
+                // 텍스트 요약 목록은 클릭이 안 되어 선택이 안 되는 것처럼 보이므로 숨긴다.
                 if (upgradeListText != null)
                 {
-                    // 목록 영역에도 항상 7종 레벨 요약을 보여 비용/변화치가 섞이지 않게 한다.
-                    upgradeListText.text = BuildLevelsOnlyText(upgrades);
+                    upgradeListText.gameObject.SetActive(false);
+                    upgradeListText.text = string.Empty;
                 }
 
                 return;
@@ -163,11 +185,20 @@ namespace SubTerra.App.UI.Progression
                 return;
             }
 
-            // prompt-B 33-1 Detail Card:
-            // 상단 이름·레벨 / 중단 현재→다음·재료 / 하단 구매 안내.
+            // prompt-B 33-1/33-4 Detail Card:
+            // 상단 이름·레벨 / 현재→다음 / 장비 설명 / 필요 재료 / 구매 안내.
+            // 설명은 기존 필요 재료 위치에, 필요 재료는 설명 바로 아래에 둔다.
+            // 선택 직후 심층 텍스트가 덮지 않도록 deepZone 영역을 끈다.
+            if (deepZoneText != null)
+            {
+                deepZoneText.gameObject.SetActive(false);
+                deepZoneText.text = string.Empty;
+            }
+
             var name = ItemDisplayNames.PreferDisplay(upgrade.UpgradeId, upgrade.DisplayName);
             if (detailText != null)
             {
+                var description = ItemDisplayNames.UpgradeDescription(upgrade.UpgradeId);
                 var builder = new StringBuilder()
                     .Append(name)
                     .Append("  Lv.")
@@ -180,6 +211,8 @@ namespace SubTerra.App.UI.Progression
                     builder.AppendLine()
                         .Append("현재 수치 ")
                         .Append(upgrade.CurrentEffectValue.ToString("0.##"))
+                        .AppendLine()
+                        .Append(description)
                         .AppendLine()
                         .Append("최대 레벨입니다.");
                 }
@@ -196,6 +229,8 @@ namespace SubTerra.App.UI.Progression
                         .Append(deltaSign)
                         .Append(delta.ToString("0.##"))
                         .Append(')')
+                        .AppendLine()
+                        .Append(description)
                         .AppendLine()
                         .Append("필요 재료: ");
 
@@ -225,6 +260,7 @@ namespace SubTerra.App.UI.Progression
                             : "자원 부족 (인벤토리 보유량 기준)");
                 }
 
+                detailText.gameObject.SetActive(true);
                 detailText.text = builder.ToString();
             }
 
@@ -248,35 +284,13 @@ namespace SubTerra.App.UI.Progression
         public void SetDeepZoneAccess(ZoneAccessResult access)
         {
             lastDeepZoneAccess = access;
-            if (deepZoneText == null)
-            {
-                return;
-            }
-
-            // 심층 탭에서만 심층 안내를 보여 다른 탭·Surface Base와 섞이지 않게 한다.
-            if (!UpgradeCategoryRules.IsDeepZoneTab(activeCategory) || levelsOnlySummary)
-            {
-                deepZoneText.gameObject.SetActive(false);
-                return;
-            }
-
-            deepZoneText.gameObject.SetActive(true);
-            deepZoneText.text = BuildDeepZoneDetail(access);
-            if (detailText != null && UpgradeCategoryRules.IsDeepZoneTab(activeCategory))
-            {
-                detailText.text = BuildDeepZoneDetail(access);
-            }
+            ApplyDeepZoneDisplay();
         }
 
         public void SetBusy(bool busy)
         {
             this.busy = busy;
             RefreshPurchaseButton();
-        }
-
-        public void SetVisible(bool visible)
-        {
-            (panelRoot != null ? panelRoot : gameObject).SetActive(visible);
         }
 
         /// <summary>탭 버튼 클릭 (Inspector persistent 리스너용 인덱스 오버로드).</summary>
@@ -298,8 +312,80 @@ namespace SubTerra.App.UI.Progression
             }
         }
 
+        /// <summary>
+        /// 좌측 하위 탭(장비 행) 클릭 진입점.
+        /// Entry 버튼이 binder 직렬화 없이 View→Presenter로 선택한다.
+        /// </summary>
+        public void SelectUpgradeEntry(string upgradeId)
+        {
+            if (string.IsNullOrEmpty(upgradeId) || levelsOnlySummary)
+            {
+                return;
+            }
+
+            if (presenter != null)
+            {
+                presenter.SelectUpgrade(upgradeId);
+                return;
+            }
+
+            // Presenter 미연결 시 Binder 폴백.
+            var binder = GetComponent<ProgressionPanelBinder>()
+                ?? GetComponentInParent<ProgressionPanelBinder>(true);
+            binder?.SelectUpgrade(upgradeId);
+        }
+
+        /// <summary>
+        /// 업그레이드 창을 다른 HUD보다 앞에 올리고 입력 레이캐스트를 확보한다.
+        /// </summary>
+        public void BringToFront()
+        {
+            var root = panelRoot != null ? panelRoot : gameObject;
+            root.transform.SetAsLastSibling();
+
+            var canvas = root.GetComponent<Canvas>();
+            if (canvas == null)
+            {
+                canvas = root.AddComponent<Canvas>();
+            }
+
+            canvas.overrideSorting = true;
+            if (canvas.sortingOrder < UiLayerPriority.ModalPanel)
+            {
+                canvas.sortingOrder = UiLayerPriority.ModalPanel;
+            }
+
+            // Nested Canvas에 GraphicRaycaster가 있어야 하위 버튼 클릭이 된다.
+            if (root.GetComponent<GraphicRaycaster>() == null)
+            {
+                root.AddComponent<GraphicRaycaster>();
+            }
+
+            // 패널 자체 배경도 레이캐스트를 받아 뒤 HUD 클릭이 새지 않게 한다.
+            var bg = root.GetComponent<Image>();
+            if (bg != null)
+            {
+                bg.raycastTarget = true;
+            }
+
+            RebuildEntryButtonCacheIfNeeded();
+            ApplyCategoryFilterToButtons();
+        }
+
+        public void SetVisible(bool visible)
+        {
+            var root = panelRoot != null ? panelRoot : gameObject;
+            root.SetActive(visible);
+            if (visible)
+            {
+                BringToFront();
+            }
+        }
+
         private void WriteLevelsOnlySummary(IReadOnlyList<UpgradeSnapshot> upgrades)
         {
+            // prompt-B 33-4: 동일 레벨 요약이 좌·중 두 곳에 겹치지 않도록
+            // 중앙(UpgradeList) 하나만 남기고 상세 카드는 끈다.
             var text = BuildLevelsOnlyText(upgrades);
             if (upgradeListText != null)
             {
@@ -309,13 +395,14 @@ namespace SubTerra.App.UI.Progression
 
             if (detailText != null)
             {
-                detailText.gameObject.SetActive(true);
-                detailText.text = text;
+                detailText.text = string.Empty;
+                detailText.gameObject.SetActive(false);
             }
 
             if (resultText != null)
             {
                 resultText.text = string.Empty;
+                resultText.gameObject.SetActive(false);
             }
 
             if (deepZoneText != null)
@@ -419,25 +506,127 @@ namespace SubTerra.App.UI.Progression
 
         private void RefreshDeepZoneVisibility()
         {
-            if (deepZoneText == null)
+            ApplyDeepZoneDisplay();
+        }
+
+        /// <summary>
+        /// 심층 구역 안내는 detailText 한곳에만 표시한다.
+        /// deepZoneText와 동일 내용을 동시에 켜면 겹치므로 deepZoneText는 항상 끈다.
+        /// </summary>
+        private void ApplyDeepZoneDisplay()
+        {
+            var show = !levelsOnlySummary && UpgradeCategoryRules.IsDeepZoneTab(activeCategory);
+            if (!show)
+            {
+                if (deepZoneText != null)
+                {
+                    deepZoneText.gameObject.SetActive(false);
+                    deepZoneText.text = string.Empty;
+                }
+
+                return;
+            }
+
+            var text = BuildDeepZoneDetail(lastDeepZoneAccess);
+            if (detailText != null)
+            {
+                detailText.gameObject.SetActive(true);
+                detailText.text = text;
+            }
+
+            // 중복 영역 제거: 별도 deepZoneText는 비활성·비움.
+            if (deepZoneText != null)
+            {
+                deepZoneText.gameObject.SetActive(false);
+                deepZoneText.text = string.Empty;
+            }
+
+            if (resultText != null)
+            {
+                resultText.text = string.Empty;
+            }
+
+            // 심층 탭에서는 좌측 장비 목록을 숨긴다.
+            if (upgradeListText != null)
+            {
+                upgradeListText.gameObject.SetActive(false);
+            }
+        }
+
+        private void WireCategoryTabsRuntime()
+        {
+            UnwireCategoryTabsRuntime();
+            if (categoryTabButtons == null || categoryTabButtons.Length == 0)
             {
                 return;
             }
 
-            var show = !levelsOnlySummary && UpgradeCategoryRules.IsDeepZoneTab(activeCategory);
-            deepZoneText.gameObject.SetActive(show);
-            if (show)
+            categoryTabRuntimeActions = new UnityAction[categoryTabButtons.Length];
+            for (var i = 0; i < categoryTabButtons.Length; i++)
             {
-                deepZoneText.text = BuildDeepZoneDetail(lastDeepZoneAccess);
-                if (detailText != null)
+                var button = categoryTabButtons[i];
+                if (button == null)
                 {
-                    detailText.text = deepZoneText.text;
+                    continue;
                 }
 
-                if (resultText != null)
+                var index = i;
+                UnityAction action = () => SelectCategoryTab(index);
+                categoryTabRuntimeActions[i] = action;
+                button.onClick.AddListener(action);
+            }
+        }
+
+        private void UnwireCategoryTabsRuntime()
+        {
+            if (categoryTabButtons == null || categoryTabRuntimeActions == null)
+            {
+                categoryTabRuntimeActions = null;
+                return;
+            }
+
+            for (var i = 0; i < categoryTabButtons.Length
+                && i < categoryTabRuntimeActions.Length; i++)
+            {
+                if (categoryTabButtons[i] != null && categoryTabRuntimeActions[i] != null)
                 {
-                    resultText.text = string.Empty;
+                    categoryTabButtons[i].onClick.RemoveListener(categoryTabRuntimeActions[i]);
                 }
+            }
+
+            categoryTabRuntimeActions = null;
+        }
+
+        /// <summary>직렬화 배열이 비었거나 null 항목이 있으면 자식 엔트리로 재구성한다.</summary>
+        private void RebuildEntryButtonCacheIfNeeded()
+        {
+            var found = GetComponentsInChildren<ProgressionUpgradeEntryButton>(true);
+            if (found == null || found.Length == 0)
+            {
+                return;
+            }
+
+            var needsRebuild = upgradeButtons == null || upgradeButtons.Length != found.Length;
+            if (!needsRebuild)
+            {
+                for (var i = 0; i < upgradeButtons.Length; i++)
+                {
+                    if (upgradeButtons[i] == null)
+                    {
+                        needsRebuild = true;
+                        break;
+                    }
+                }
+            }
+
+            if (needsRebuild)
+            {
+                upgradeButtons = found;
+            }
+
+            for (var i = 0; i < upgradeButtons.Length; i++)
+            {
+                upgradeButtons[i]?.EnsureInteractable();
             }
         }
 
@@ -527,20 +716,50 @@ namespace SubTerra.App.UI.Progression
                     continue;
                 }
 
-                // 드릴 탭과 동일한 시작점에서 보이는 항목만 순서대로 배치.
+                // EntryListRoot 안에서는 로컬 Y만 재배치한다(루트 자체가 좌측 열).
                 var rect = entry.GetComponent<RectTransform>();
                 if (rect != null)
                 {
                     rect.anchorMin = new Vector2(0f, 1f);
                     rect.anchorMax = new Vector2(0f, 1f);
                     rect.pivot = new Vector2(0f, 1f);
-                    rect.anchoredPosition = new Vector2(
-                        EntryListColumnX,
-                        EntryListStartY - visibleIndex * EntryListRowHeight);
+                    var parentIsEntryRoot = entry.transform.parent != null
+                        && entry.transform.parent.name == "EntryListRoot";
+                    if (parentIsEntryRoot)
+                    {
+                        rect.anchoredPosition = new Vector2(
+                            0f,
+                            -visibleIndex * EntryListRowHeight);
+                    }
+                    else
+                    {
+                        rect.anchoredPosition = new Vector2(
+                            EntryListColumnX,
+                            EntryListStartY - visibleIndex * EntryListRowHeight);
+                    }
+
                     rect.sizeDelta = new Vector2(EntryListWidth, EntryListHeight);
+                    rect.localScale = Vector3.one;
+                    rect.SetAsLastSibling();
                 }
 
+                // 선택 가능 상태를 명시적으로 복구한다.
+                entry.EnsureInteractable();
                 visibleIndex++;
+            }
+
+            // 엔트리 컨테이너를 상세 텍스트 앞으로, X 버튼보다는 뒤에 둔다.
+            var root = panelRoot != null ? panelRoot.transform : transform;
+            var entryRoot = root.Find("EntryListRoot") ?? transform.Find("EntryListRoot");
+            if (entryRoot != null)
+            {
+                entryRoot.SetAsLastSibling();
+            }
+
+            var close = root.Find("CloseButton") ?? transform.Find("CloseButton");
+            if (close != null)
+            {
+                close.SetAsLastSibling();
             }
         }
 

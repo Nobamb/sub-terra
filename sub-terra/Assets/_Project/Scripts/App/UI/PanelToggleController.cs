@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using SubTerra.App.UI.Building;
+using SubTerra.App.UI.Progression;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -95,6 +96,16 @@ namespace SubTerra.App.UI
 
             state.SetVisible(panelId, visible);
             panelRoot.SetActive(visible);
+
+            // 업그레이드 창은 열릴 때 맨 앞 + 높은 sortingOrder로 올려 다른 HUD에 묻히지 않게 한다.
+            if (visible && panelId == RuntimePanelId.Upgrade)
+            {
+                panelRoot.transform.SetAsLastSibling();
+                var progressionView = panelRoot.GetComponent<ProgressionPanelView>()
+                    ?? panelRoot.GetComponentInChildren<ProgressionPanelView>(true);
+                progressionView?.BringToFront();
+            }
+
             VisibilityChanged?.Invoke(panelId, visible);
         }
 
