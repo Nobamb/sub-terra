@@ -95,22 +95,15 @@ namespace SubTerra.Gameplay.Player.Tests
         [UnityTest]
         public IEnumerator JumpRequestAddsUpwardVelocityWhenGrounded()
         {
-            Transform groundCheck = new GameObject("GroundCheck").transform;
-            groundCheck.SetParent(playerObject.transform);
-            groundCheck.localPosition = new Vector3(0f, -0.9f, 0f);
+            SetupGroundedPlayerWithContacts(airLockDuration: 0.05f);
 
-            FieldInfo groundCheckField = typeof(PlayerMovement).GetField(
-                "groundCheck",
-                BindingFlags.Instance | BindingFlags.NonPublic);
-            groundCheckField.SetValue(movement, groundCheck);
+            // 물리 접점 생성
+            for (int i = 0; i < 3; i++)
+            {
+                yield return new WaitForFixedUpdate();
+            }
 
-            groundObject = new GameObject("Ground");
-            groundObject.transform.position = new Vector3(0f, -1.2f, 0f);
-            BoxCollider2D groundCollider = groundObject.AddComponent<BoxCollider2D>();
-            groundCollider.size = new Vector2(4f, 0.5f);
-
-            yield return null;
-            Assert.IsTrue(movement.IsGrounded);
+            Assert.IsTrue(movement.IsGrounded, "바닥에 올려둔 플레이어는 착지 상태여야 한다.");
 
             movement.RequestJump();
             yield return new WaitForFixedUpdate();
@@ -121,40 +114,133 @@ namespace SubTerra.Gameplay.Player.Tests
         [UnityTest]
         public IEnumerator Jump_IsLimitedToOnceUntilLanding()
         {
-            body.gravityScale = 0f;
-            Transform groundCheck = new GameObject("GroundCheck").transform;
-            groundCheck.SetParent(playerObject.transform);
-            groundCheck.localPosition = new Vector3(0f, -0.9f, 0f);
-            typeof(PlayerMovement)
-                .GetField("groundCheck", BindingFlags.Instance | BindingFlags.NonPublic)
-                .SetValue(movement, groundCheck);
+            SetupGroundedPlayerWithContacts(airLockDuration: 0.05f);
 
-            groundObject = new GameObject("Ground");
-            groundObject.transform.position = new Vector3(0f, -1.2f, 0f);
-            groundObject.AddComponent<BoxCollider2D>().size = new Vector2(4f, 0.5f);
+            for (int i = 0; i < 3; i++)
+            {
+                yield return new WaitForFixedUpdate();
+            }
 
-            yield return null;
             Assert.IsTrue(movement.IsGrounded);
 
             movement.RequestJump();
             yield return new WaitForFixedUpdate();
-            float firstJumpVy = body.linearVelocityY;
-            Assert.Greater(firstJumpVy, 0f);
+            Assert.Greater(body.linearVelocityY, 0f);
 
-            // 공중(또는 점프 직후)에서 연타해도 추가 임펄스가 적용되지 않아야 한다.
+            // 공중 연타 불가
             body.linearVelocity = new Vector2(0f, 2f);
             movement.RequestJump();
             yield return new WaitForFixedUpdate();
             Assert.AreEqual(2f, body.linearVelocityY, 0.01f);
 
-            // 지면 오버랩이 남아 있어도 에어 락 동안 재점프되면 안 된다 (31-3 무한 점프 회귀).
-            body.linearVelocity = new Vector2(0f, 0f);
-            for (int i = 0; i < 3; i++)
+            // 지면 제거 후에도 점프 차지 회복 불가
+            yield return new WaitForSeconds(0.1f);
+            Object.DestroyImmediate(groundObject);
+            groundObject = null;
+            Physics2D.SyncTransforms();
+            body.linearVelocity = new Vector2(0f, -0.2f);
+            yield return new WaitForFixedUpdate();
+            yield return new WaitForFixedUpdate();
+
+            for (int i = 0; i < 5; i++)
             {
+                float before = body.linearVelocityY;
                 movement.RequestJump();
                 yield return new WaitForFixedUpdate();
-                Assert.AreEqual(0f, body.linearVelocityY, 0.01f);
+                Assert.AreEqual(
+                    before,
+                    body.linearVelocityY,
+                    0.01f,
+                    "공중에서는 점프 차지가 회복되면 안 된다.");
             }
+        }
+
+        [UnityTest]
+        public IEnumerator Jump_CanJumpAgainAfterLandingOnGround()
+        {
+            SetupGroundedPlayerWithContacts(airLockDuration: 0.05f);
+
+            for (int i = 0; i < 3; i++)
+            {
+                yield return new WaitForFixedUpdate();
+            }
+
+            Assert.IsTrue(movement.IsGrounded);
+
+            // 1차 점프
+            movement.RequestJump();
+            yield return new WaitForFixedUpdate();
+            Assert.Greater(body.linearVelocityY, 0f);
+
+            // 공중 불가
+            body.linearVelocity = new Vector2(0f, 1.5f);
+            movement.RequestJump();
+            yield return new WaitForFixedUpdate();
+            Assert.AreEqual(1.5f, body.linearVelocityY, 0.01f);
+
+            // 다시 바닥 위에 올려 착지 접점 생성
+            yield return new WaitForSeconds(0.1f);
+            body.linearVelocity = Vector2.zero;
+            body.position = new Vector2(0f, 0.5f);
+            Physics2D.SyncTransforms();
+            for (int i = 0; i < 4; i++)
+            {
+                yield return new WaitForFixedUpdate();
+            }
+
+            Assert.IsTrue(movement.IsGrounded, "재착지 후 IsGrounded 가 true 여야 한다.");
+
+            // 2차 점프 가능
+            movement.RequestJump();
+            yield return new WaitForFixedUpdate();
+            Assert.Greater(body.linearVelocityY, 0f);
+
+            // 다시 공중 불가
+            body.linearVelocity = new Vector2(0f, 1.2f);
+            movement.RequestJump();
+            yield return new WaitForFixedUpdate();
+            Assert.AreEqual(1.2f, body.linearVelocityY, 0.01f);
+        }
+
+        /// <summary>
+        /// Rigidbody 접점 기반 착지 판정을 위해 플레이어 콜라이더 + 정적 바닥을 배치한다.
+        /// </summary>
+        private void SetupGroundedPlayerWithContacts(float airLockDuration = 0.12f)
+        {
+            body.gravityScale = 1f;
+            body.bodyType = RigidbodyType2D.Dynamic;
+            body.position = new Vector2(0f, 0.5f);
+
+            var capsule = playerObject.GetComponent<CapsuleCollider2D>();
+            if (capsule == null)
+            {
+                capsule = playerObject.AddComponent<CapsuleCollider2D>();
+            }
+
+            capsule.size = new Vector2(0.5f, 0.9f);
+
+            Transform groundCheck = new GameObject("GroundCheck").transform;
+            groundCheck.SetParent(playerObject.transform, false);
+            groundCheck.localPosition = new Vector3(0f, -0.45f, 0f);
+            typeof(PlayerMovement)
+                .GetField("groundCheck", BindingFlags.Instance | BindingFlags.NonPublic)
+                .SetValue(movement, groundCheck);
+            typeof(PlayerMovement)
+                .GetField("jumpAirLockDuration", BindingFlags.Instance | BindingFlags.NonPublic)
+                .SetValue(movement, airLockDuration);
+
+            // Awake 이후 추가된 콜라이더를 바디가 인식하도록 재할당
+            typeof(PlayerMovement)
+                .GetField("bodyCollider", BindingFlags.Instance | BindingFlags.NonPublic)
+                ?.SetValue(movement, capsule);
+
+            groundObject = new GameObject("Ground");
+            groundObject.transform.position = new Vector3(0f, -0.25f, 0f);
+            var groundCollider = groundObject.AddComponent<BoxCollider2D>();
+            groundCollider.size = new Vector2(8f, 0.5f);
+            var groundBody = groundObject.AddComponent<Rigidbody2D>();
+            groundBody.bodyType = RigidbodyType2D.Static;
+            Physics2D.SyncTransforms();
         }
 
         [UnityTest]

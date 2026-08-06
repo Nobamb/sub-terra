@@ -14,26 +14,30 @@ namespace SubTerra.Gameplay.Player
 
         [Header("Ground Check")]
         [SerializeField] private Transform groundCheck;
-        [SerializeField, Min(0.01f)] private float groundCheckRadius = 0.16f;
+        [SerializeField, Min(0.01f)] private float groundCheckRadius = 0.08f;
         [SerializeField] private LayerMask groundLayers = ~0;
         /// <summary>
-        /// 점프 직후 이 시간 동안은 지면 오버랩이 남아도 착지로 보지 않는다.
-        /// (점프 직후 groundCheck가 여전히 지면과 겹쳐 무한 점프가 나는 것을 막는다.)
+        /// 점프 직후 이 시간 동안은 착지·재점프로 보지 않는다.
         /// </summary>
-        [SerializeField, Min(0.01f)] private float jumpAirLockDuration = 0.18f;
+        [SerializeField, Min(0.01f)] private float jumpAirLockDuration = 0.15f;
+        /// <summary>발 아래 보조 레이 길이 (접점 누락 대비).</summary>
+        [SerializeField, Min(0.01f)] private float groundProbeDistance = 0.12f;
+        /// <summary>바닥으로 인정할 최소 노멀 Y (1=완전 위).</summary>
+        [SerializeField, Range(0.1f, 1f)] private float minGroundNormalY = 0.6f;
 
         private Rigidbody2D body;
-        private Collider2D[] ownColliders;
-        private readonly Collider2D[] groundHits = new Collider2D[8];
+        private Collider2D bodyCollider;
+        private readonly ContactPoint2D[] contactBuffer = new ContactPoint2D[16];
+        private readonly RaycastHit2D[] probeHits = new RaycastHit2D[8];
         private float moveInput;
         private float verticalMoveInput;
         private bool jumpRequested;
-        /// <summary>착지(또는 사다리 재진입) 전까지 점프를 1회만 허용한다.</summary>
-        private bool hasUsedAirJump;
-        /// <summary>점프 후 지면을 한 번이라도 떠난 적이 있는지.</summary>
-        private bool hasLeftGroundSinceJump;
-        /// <summary>점프 직후 착지 판정·점프 회복을 막는 남은 시간.</summary>
         private float jumpAirLockRemaining;
+        /// <summary>
+        /// true면 이번 공중 구간에서 이미 점프를 썼다.
+        /// 착지(물리 접촉 + 비상승) 전까지 절대 회복하지 않는다.
+        /// </summary>
+        private bool jumpUsedUntilLand;
         private float gravityBeforeClimbing;
         private float cargoSpeedMultiplier = 1f;
         private float hazardSpeedMultiplier = 1f;
@@ -50,23 +54,20 @@ namespace SubTerra.Gameplay.Player
         private void Awake()
         {
             body = GetComponent<Rigidbody2D>();
-            ownColliders = GetComponentsInChildren<Collider2D>();
-        }
-
-        private void Update()
-        {
-            if (jumpAirLockRemaining > 0f)
-            {
-                jumpAirLockRemaining = Mathf.Max(0f, jumpAirLockRemaining - Time.deltaTime);
-            }
-
-            UpdateGroundedState();
+            bodyCollider = GetComponent<Collider2D>();
         }
 
         private void FixedUpdate()
         {
+            if (jumpAirLockRemaining > 0f)
+            {
+                jumpAirLockRemaining = Mathf.Max(0f, jumpAirLockRemaining - Time.fixedDeltaTime);
+            }
+
+            // 점프 판정과 같은 물리 틱에서 착지를 갱신한다.
+            UpdateGroundedState();
             ApplyHorizontalMovement();
-            // 점프는 지면·사다리 모두에서 처리한다. 사다리 점프 시 등반은 그 프레임 생략.
+
             var jumped = TryApplyJump();
             if (IsClimbing && !jumped)
             {
@@ -110,8 +111,9 @@ namespace SubTerra.Gameplay.Player
             body.gravityScale = 0f;
             body.linearVelocity = new Vector2(body.linearVelocityX, 0f);
             IsClimbing = true;
-            // 사다리에 붙으면 다시 점프 1회를 허용한다.
-            ResetJumpCharge();
+            // 사다리 탑승 시 탈출 점프 1회 허용.
+            jumpAirLockRemaining = 0f;
+            jumpUsedUntilLand = false;
         }
 
         public void ExitLadder()
@@ -149,14 +151,16 @@ namespace SubTerra.Gameplay.Player
         {
             float targetVelocity = CanMove ? moveInput * moveSpeed * CurrentSpeedMultiplier : 0f;
             float rate = Mathf.Abs(targetVelocity) > 0.01f ? acceleration : deceleration;
-            float nextVelocityX = Mathf.MoveTowards(body.linearVelocityX, targetVelocity, rate * Time.fixedDeltaTime);
+            float nextVelocityX = Mathf.MoveTowards(
+                body.linearVelocityX,
+                targetVelocity,
+                rate * Time.fixedDeltaTime);
             body.linearVelocity = new Vector2(nextVelocityX, body.linearVelocityY);
         }
 
         /// <summary>
-        /// 지면 착지 전 점프 1회. 사다리 탑승 중에도 점프 가능(사다리 탈출 후 상승 임펄스).
+        /// 지면에서만 점프 1회. 공중 연타 불가. 착지 후 다시 1회.
         /// </summary>
-        /// <returns>이번 FixedUpdate에서 점프를 적용했으면 true.</returns>
         private bool TryApplyJump()
         {
             if (!jumpRequested)
@@ -164,53 +168,55 @@ namespace SubTerra.Gameplay.Player
                 return false;
             }
 
+            // 입력을 소모한다. 실패해도 버퍼를 붙잡지 않아 공중 연타가 쌓이지 않는다.
             jumpRequested = false;
+
             if (!CanMove || body == null)
             {
                 return false;
             }
 
-            // 공중 연타·점프 직후 재점프 차단.
-            if (hasUsedAirJump || jumpAirLockRemaining > 0f)
+            if (jumpAirLockRemaining > 0f)
             {
                 return false;
             }
 
-            // 사다리 중: 탈출 후 점프.
+            // 핵심: 점프 후 착지 확정 전까지는 IsGrounded 와 무관하게 차단.
+            if (jumpUsedUntilLand && !IsClimbing)
+            {
+                return false;
+            }
+
             if (IsClimbing)
             {
                 ExitLadder();
                 body.linearVelocity = new Vector2(body.linearVelocityX, 0f);
-                body.AddForce(Vector2.up * jumpImpulse, ForceMode2D.Impulse);
-                ConsumeJumpCharge();
-                IsGrounded = false;
+                ApplyJumpImpulse();
                 return true;
             }
 
-            // 지면 점프: 물리적으로 지면에 있을 때만.
-            if (!IsGrounded)
+            // 점프 시작 조건: 실제 바닥 충돌 접점이 있어야 한다 (레이 보조만으로는 불가).
+            if (!HasFloorContact())
             {
                 return false;
             }
 
-            body.AddForce(Vector2.up * jumpImpulse, ForceMode2D.Impulse);
-            ConsumeJumpCharge();
-            IsGrounded = false;
+            ApplyJumpImpulse();
             return true;
         }
 
-        private void ConsumeJumpCharge()
+        private void ApplyJumpImpulse()
         {
-            hasUsedAirJump = true;
-            hasLeftGroundSinceJump = false;
-            jumpAirLockRemaining = jumpAirLockDuration;
-        }
+            // 하강 중 점프 시 속도 상쇄 후 일정한 상승을 준다.
+            if (body.linearVelocityY < 0f)
+            {
+                body.linearVelocity = new Vector2(body.linearVelocityX, 0f);
+            }
 
-        private void ResetJumpCharge()
-        {
-            hasUsedAirJump = false;
-            hasLeftGroundSinceJump = false;
-            jumpAirLockRemaining = 0f;
+            body.AddForce(Vector2.up * jumpImpulse, ForceMode2D.Impulse);
+            jumpAirLockRemaining = jumpAirLockDuration;
+            jumpUsedUntilLand = true;
+            IsGrounded = false;
         }
 
         private void ApplyVerticalMovement()
@@ -223,78 +229,65 @@ namespace SubTerra.Gameplay.Player
 
         private void UpdateGroundedState()
         {
-            if (groundCheck == null)
-            {
-                IsGrounded = false;
-                return;
-            }
-
-            int hitCount = Physics2D.OverlapCircleNonAlloc(
-                groundCheck.position,
-                groundCheckRadius,
-                groundHits,
-                groundLayers);
-
-            bool physicallyGrounded = false;
-            for (int index = 0; index < hitCount; index++)
-            {
-                Collider2D hit = groundHits[index];
-                if (hit != null && !IsOwnCollider(hit))
-                {
-                    physicallyGrounded = true;
-                    break;
-                }
-            }
-
-            // 점프 직후 에어 락 동안은 지면 오버랩이 있어도 착지로 취급하지 않는다.
+            // 에어 락 동안은 무조건 공중 취급 → 연타/즉시 재점프 불가.
             if (jumpAirLockRemaining > 0f)
             {
                 IsGrounded = false;
-                if (!physicallyGrounded)
-                {
-                    hasLeftGroundSinceJump = true;
-                }
-
                 return;
             }
 
-            if (!physicallyGrounded)
+            // 표시/기타용 착지: 접점 또는 짧은 발 밑 레이.
+            bool floorContact = HasFloorContact();
+            bool onFloor = floorContact || HasFloorProbeHit();
+
+            // 강하게 상승 중이면 착지로 보지 않는다.
+            if (onFloor && body != null && body.linearVelocityY > 0.4f)
             {
                 IsGrounded = false;
-                if (hasUsedAirJump)
-                {
-                    hasLeftGroundSinceJump = true;
-                }
-
                 return;
             }
 
-            IsGrounded = true;
+            IsGrounded = onFloor;
 
-            // 착지 회복 조건:
-            // 1) 점프 후 실제로 지면을 떠났다가 다시 닿았고 하강/정지 중일 때
-            // 2) 사다리가 아닐 때
-            // (점프 직후 지면 체크가 남아 있어도 1번이 충족되기 전에는 회복하지 않음)
-            if (hasUsedAirJump
-                && !IsClimbing
-                && hasLeftGroundSinceJump
+            // 점프 차지 회복은 "실제 충돌 접점"으로 바닥에 정착했을 때만.
+            // 레이 오탐만으로는 절대 회복하지 않아 공중 무한 점프를 막는다.
+            if (jumpUsedUntilLand
+                && floorContact
                 && body != null
-                && body.linearVelocityY <= 0.05f)
+                && body.linearVelocityY <= 0.1f)
             {
-                ResetJumpCharge();
+                jumpUsedUntilLand = false;
             }
         }
 
-        private bool IsOwnCollider(Collider2D candidate)
+        /// <summary>
+        /// Rigidbody 실제 충돌 접점 중 위쪽 노멀(바닥)만 착지로 인정.
+        /// 공중에서는 접점이 없어 무한 점프 오탐을 막는다.
+        /// </summary>
+        private bool HasFloorContact()
         {
-            if (ownColliders == null)
+            if (body == null)
             {
                 return false;
             }
 
-            foreach (Collider2D ownCollider in ownColliders)
+            int count = body.GetContacts(contactBuffer);
+            for (int i = 0; i < count; i++)
             {
-                if (candidate == ownCollider)
+                ContactPoint2D contact = contactBuffer[i];
+                Collider2D other = contact.collider;
+                if (other == null || other.isTrigger)
+                {
+                    continue;
+                }
+
+                if (!IsInGroundLayer(other.gameObject.layer))
+                {
+                    continue;
+                }
+
+                // 플레이어 기준 상대 노멀: 바닥은 대략 (0,1).
+                if (contact.normal.y >= minGroundNormalY)
                 {
                     return true;
                 }
@@ -303,15 +296,69 @@ namespace SubTerra.Gameplay.Player
             return false;
         }
 
-        private void OnDrawGizmosSelected()
+        /// <summary>
+        /// 접점이 한 프레임 누락될 때 보조. 발 아래 짧은 레이만 사용.
+        /// </summary>
+        private bool HasFloorProbeHit()
         {
-            if (groundCheck == null)
+            Vector2 origin;
+            if (groundCheck != null)
             {
-                return;
+                origin = groundCheck.position;
+            }
+            else if (bodyCollider != null)
+            {
+                Bounds b = bodyCollider.bounds;
+                origin = new Vector2(b.center.x, b.min.y + 0.02f);
+            }
+            else
+            {
+                return false;
             }
 
+            int hitCount = Physics2D.RaycastNonAlloc(
+                origin,
+                Vector2.down,
+                probeHits,
+                groundProbeDistance,
+                groundLayers);
+
+            for (int i = 0; i < hitCount; i++)
+            {
+                RaycastHit2D hit = probeHits[i];
+                if (hit.collider == null || hit.collider.isTrigger)
+                {
+                    continue;
+                }
+
+                if (bodyCollider != null && hit.collider == bodyCollider)
+                {
+                    continue;
+                }
+
+                if (hit.normal.y >= minGroundNormalY)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private bool IsInGroundLayer(int layer)
+        {
+            return (groundLayers.value & (1 << layer)) != 0;
+        }
+
+        private void OnDrawGizmosSelected()
+        {
+            Vector3 origin = groundCheck != null
+                ? groundCheck.position
+                : transform.position;
+
             Gizmos.color = IsGrounded ? Color.green : Color.yellow;
-            Gizmos.DrawWireSphere(groundCheck.position, groundCheckRadius);
+            Gizmos.DrawLine(origin, origin + Vector3.down * groundProbeDistance);
+            Gizmos.DrawWireSphere(origin, 0.04f);
         }
     }
 }

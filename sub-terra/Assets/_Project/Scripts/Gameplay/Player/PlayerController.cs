@@ -31,7 +31,8 @@ namespace SubTerra.Gameplay.Player
 
             if (jumpAction != null)
             {
-                jumpAction.performed += OnJumpPerformed;
+                // started: 누른 순간 1회만. performed 연타/홀드 반복을 피한다.
+                jumpAction.started += OnJumpStarted;
                 jumpAction.Enable();
             }
         }
@@ -52,7 +53,7 @@ namespace SubTerra.Gameplay.Player
 
             if (jumpAction != null)
             {
-                jumpAction.performed -= OnJumpPerformed;
+                jumpAction.started -= OnJumpStarted;
                 jumpAction.Disable();
             }
 
@@ -71,8 +72,13 @@ namespace SubTerra.Gameplay.Player
             jumpAction ??= inputActions.FindAction(jumpActionPath, false);
         }
 
-        private void OnJumpPerformed(InputAction.CallbackContext context)
+        private void OnJumpStarted(InputAction.CallbackContext context)
         {
+            if (!context.started)
+            {
+                return;
+            }
+
             movement.RequestJump();
         }
     }
