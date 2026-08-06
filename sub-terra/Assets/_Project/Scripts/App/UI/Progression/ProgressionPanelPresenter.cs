@@ -75,6 +75,14 @@ namespace SubTerra.App.UI.Progression
 
             selectedUpgradeId = string.Empty;
             Refresh();
+
+            // 심층 탭은 목록 선택이 아니라 잠금 상태·조건을 즉시 표시한다.
+            if (UpgradeCategoryRules.IsDeepZoneTab(category)
+                && service != null
+                && completedObjectivesProvider != null)
+            {
+                RefreshDeepZoneAccess(completedObjectivesProvider(), persistUnlock: false);
+            }
         }
 
         public void Unbind()
@@ -173,6 +181,24 @@ namespace SubTerra.App.UI.Progression
 
             var snapshots = service.GetSnapshots();
             view?.SetUpgradeList(snapshots);
+
+            // Surface 레벨 요약·심층 탭은 장비 자동 선택을 하지 않는다.
+            if (view is ProgressionPanelView panel && panel.LevelsOnlySummary)
+            {
+                selectedUpgradeId = string.Empty;
+                return;
+            }
+
+            if (UpgradeCategoryRules.IsDeepZoneTab(activeCategory))
+            {
+                selectedUpgradeId = string.Empty;
+                if (completedObjectivesProvider != null)
+                {
+                    RefreshDeepZoneAccess(completedObjectivesProvider(), persistUnlock: false);
+                }
+
+                return;
+            }
 
             // 현재 탭에 속한 항목만 자동 선택 후보로 쓴다.
             if (string.IsNullOrEmpty(selectedUpgradeId)

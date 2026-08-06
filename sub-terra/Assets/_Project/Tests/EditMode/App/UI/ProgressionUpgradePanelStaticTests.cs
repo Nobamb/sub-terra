@@ -62,8 +62,17 @@ namespace SubTerra.App.Tests.UI
                 "Progression",
                 "UpgradeCategory.cs");
             Assert.That(File.Exists(categoryPath), Is.True);
-            Assert.That(File.ReadAllText(categoryPath), Does.Contain("UpgradeCategory"));
-            Assert.That(File.ReadAllText(categoryPath), Does.Contain("Drone"));
+            var categorySource = File.ReadAllText(categoryPath);
+            Assert.That(categorySource, Does.Contain("UpgradeCategory"));
+            Assert.That(categorySource, Does.Contain("Drone"));
+            // prompt-B 33-3: 심층 구역 전용 탭.
+            Assert.That(categorySource, Does.Contain("DeepZone"));
+            Assert.That(categorySource, Does.Contain("심층 구역"));
+
+            var viewSource = File.ReadAllText(viewPath);
+            Assert.That(viewSource, Does.Contain("EntryListStartY"));
+            Assert.That(viewSource, Does.Contain("levelsOnlySummary"));
+            Assert.That(viewSource, Does.Contain("hideDeepZoneTab"));
         }
     }
 }

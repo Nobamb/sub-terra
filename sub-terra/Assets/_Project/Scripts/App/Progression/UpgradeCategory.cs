@@ -6,7 +6,9 @@ namespace SubTerra.App.Progression
         Drill = 0,
         Capacity = 1,
         Drone = 2,
-        Hazard = 3
+        Hazard = 3,
+        /// <summary>prompt-B 33-3: 심층 구역 잠금·조건은 전용 탭에서만 표시한다.</summary>
+        DeepZone = 4
     }
 
     public static class UpgradeCategoryRules
@@ -16,7 +18,8 @@ namespace SubTerra.App.Progression
             "드릴",
             "전력·화물",
             "드론",
-            "가스"
+            "가스",
+            "심층 구역"
         };
 
         public static UpgradeCategory Resolve(string upgradeId)
@@ -47,12 +50,24 @@ namespace SubTerra.App.Progression
                 return UpgradeCategory.Hazard;
             }
 
+            // 심층 구역은 카탈로그 업그레이드 ID가 아니라 탭 전용 상태다.
             return UpgradeCategory.Drill;
         }
 
         public static bool Matches(string upgradeId, UpgradeCategory category)
         {
+            // 심층 탭은 개별 업그레이드 목록을 쓰지 않는다.
+            if (category == UpgradeCategory.DeepZone)
+            {
+                return false;
+            }
+
             return Resolve(upgradeId) == category;
+        }
+
+        public static bool IsDeepZoneTab(UpgradeCategory category)
+        {
+            return category == UpgradeCategory.DeepZone;
         }
     }
 }
