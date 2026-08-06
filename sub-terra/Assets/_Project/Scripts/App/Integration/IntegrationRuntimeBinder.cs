@@ -6,6 +6,8 @@ using SubTerra.App.Outpost;
 using SubTerra.App.Save;
 using SubTerra.App.State;
 using SubTerra.App.UI.HUD;
+using SubTerra.App.UI.Inventory;
+using SubTerra.App.UI.Progression;
 using SubTerra.App.UI.Tutorial;
 using SubTerra.Gameplay.Building;
 using SubTerra.Gameplay.Drone;
@@ -34,6 +36,8 @@ namespace SubTerra.App.Integration
         [SerializeField] private GasExposureEffectController gasEffectController;
         [SerializeField] private OutpostRuntimeBridge outpostBridge;
         [SerializeField] private BuildingUiIntegrationBinder buildingUiBinder;
+        [SerializeField] private InventoryPanelBinder inventoryPanelBinder;
+        [SerializeField] private ProgressionPanelBinder progressionPanelBinder;
         [SerializeField] private GameplayBuildingPlacementBridge placementBridge;
         [SerializeField] private DroneContextProviderAdapter droneContextAdapter;
         [SerializeField] private DroneSensor droneSensor;
@@ -182,6 +186,11 @@ namespace SubTerra.App.Integration
             {
                 droneContextAdapter.BindTo(droneSensor);
             }
+
+            inventoryPanelBinder?.BindTo(runtime.InventoryService);
+            progressionPanelBinder?.BindTo(
+                runtime.Progression,
+                () => bootstrap?.State?.Progress?.CompletedObjectives ?? 0);
 
             droneSensor?.SetUpgradeEffects(runtime.Progression?.Effects);
 
