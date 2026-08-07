@@ -40,6 +40,11 @@ namespace SubTerra.App.Editor.DataValidation
             return "Phase F Support prefab/data/integration wired.";
         }
 
+        // 세로 기둥 너비/높이. 가로 캡 높이는 기둥 너비와 같고, 캡 너비는 일반 블록(1칸) 너비.
+        private const float PostWidth = 0.4f;
+        private const float PostHeight = 1.8f;
+        private const float BlockWidth = 1f;
+
         private static GameObject BuildSupportPrefab()
         {
             var root = PrefabUtility.LoadPrefabContents(SupportPrefabPath);
@@ -53,6 +58,7 @@ namespace SubTerra.App.Editor.DataValidation
                 root.name = "SupportPillar";
                 root.transform.localScale = Vector3.one;
 
+                // 루트에 남은 구형 단일 스프라이트는 VisualRoot 하위로 이관한다.
                 var oldRenderer = root.GetComponent<SpriteRenderer>();
                 var sprite = AssetDatabase.GetBuiltinExtraResource<Sprite>(
                     "UI/Skin/UISprite.psd");
@@ -75,25 +81,50 @@ namespace SubTerra.App.Editor.DataValidation
                 visual.localPosition = Vector3.zero;
                 visual.localRotation = Quaternion.identity;
                 visual.localScale = Vector3.one;
-                var renderer = visual.GetComponent<SpriteRenderer>();
-                if (renderer == null)
-                {
-                    renderer = visual.gameObject.AddComponent<SpriteRenderer>();
-                }
-                renderer.sprite = sprite;
-                renderer.color = color;
-                renderer.drawMode = SpriteDrawMode.Sliced;
-                renderer.size = new Vector2(0.4f, 1.8f);
-                renderer.sortingOrder = 3;
 
-                var collider = root.GetComponent<BoxCollider2D>();
-                if (collider == null)
+                // VisualRoot 자체의 단일 스프라이트는 Post/Cap 자식으로 대체한다.
+                var visualRenderer = visual.GetComponent<SpriteRenderer>();
+                if (visualRenderer != null)
                 {
-                    collider = root.AddComponent<BoxCollider2D>();
+                    Object.DestroyImmediate(visualRenderer);
                 }
-                collider.isTrigger = false;
-                collider.offset = Vector2.zero;
-                collider.size = new Vector2(0.4f, 1.8f);
+
+                // 가로 캡: 일반 블록 너비 × 세로 기둥 너비, 기둥 맨 위에 올려 T자 형성.
+                float capHeight = PostWidth;
+                float capLocalY = (PostHeight * 0.5f) + (capHeight * 0.5f);
+
+                ConfigureSlicedSprite(
+                    EnsureChild(visual, "Post"),
+                    sprite,
+                    color,
+                    new Vector2(PostWidth, PostHeight),
+                    Vector3.zero,
+                    sortingOrder: 3);
+                ConfigureSlicedSprite(
+                    EnsureChild(visual, "Cap"),
+                    sprite,
+                    color,
+                    new Vector2(BlockWidth, capHeight),
+                    new Vector3(0f, capLocalY, 0f),
+                    sortingOrder: 4);
+
+                // 구형 단일 콜라이더를 제거하고 T자 두 조각(기둥+캡)으로 재구성한다.
+                foreach (var existing in root.GetComponents<BoxCollider2D>())
+                {
+                    Object.DestroyImmediate(existing);
+                }
+
+                // 세로 기둥 콜라이더 — 얇게 유지해 인접 버팀목 사이 통행 공간을 확보한다.
+                var postCollider = root.AddComponent<BoxCollider2D>();
+                postCollider.isTrigger = false;
+                postCollider.offset = Vector2.zero;
+                postCollider.size = new Vector2(PostWidth, PostHeight);
+
+                // 가로 캡 콜라이더 — 기둥 상단 발판/보.
+                var capCollider = root.AddComponent<BoxCollider2D>();
+                capCollider.isTrigger = false;
+                capCollider.offset = new Vector2(0f, capLocalY);
+                capCollider.size = new Vector2(BlockWidth, capHeight);
 
                 var support = root.GetComponent<StructuralSupport>();
                 if (support == null)
@@ -118,6 +149,44 @@ namespace SubTerra.App.Editor.DataValidation
             }
 
             return AssetDatabase.LoadAssetAtPath<GameObject>(SupportPrefabPath);
+        }
+
+        private static Transform EnsureChild(Transform parent, string name)
+        {
+            var child = parent.Find(name);
+            if (child != null)
+            {
+                return child;
+            }
+
+            var childObject = new GameObject(name);
+            childObject.transform.SetParent(parent, false);
+            return childObject.transform;
+        }
+
+        private static void ConfigureSlicedSprite(
+            Transform target,
+            Sprite sprite,
+            Color color,
+            Vector2 size,
+            Vector3 localPosition,
+            int sortingOrder)
+        {
+            target.localPosition = localPosition;
+            target.localRotation = Quaternion.identity;
+            target.localScale = Vector3.one;
+
+            var renderer = target.GetComponent<SpriteRenderer>();
+            if (renderer == null)
+            {
+                renderer = target.gameObject.AddComponent<SpriteRenderer>();
+            }
+
+            renderer.sprite = sprite;
+            renderer.color = color;
+            renderer.drawMode = SpriteDrawMode.Sliced;
+            renderer.size = size;
+            renderer.sortingOrder = sortingOrder;
         }
 
         private static BuildingPlacementDefinition BuildDefinition(GameObject prefab)

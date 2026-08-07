@@ -24,12 +24,37 @@ namespace SubTerra.App.Tests.Integration
 
             Assert.That(prefab, Is.Not.Null);
             Assert.That(prefab.transform.localScale, Is.EqualTo(Vector3.one));
-            Assert.That(prefab.GetComponent<BoxCollider2D>(), Is.Not.Null);
             Assert.That(prefab.GetComponent<StructuralSupport>(), Is.Not.Null);
             Assert.That(prefab.GetComponent<BuildingInstance>(), Is.Not.Null);
+
+            // T자 버팀목: 세로 기둥 + 상단 가로 캡 콜라이더 2개.
+            var colliders = prefab.GetComponents<BoxCollider2D>();
+            Assert.That(colliders.Length, Is.EqualTo(2));
+            Assert.That(
+                colliders.Any(c => Approximately(c.size, new Vector2(0.4f, 1.8f))
+                    && Approximately(c.offset, Vector2.zero)),
+                Is.True,
+                "세로 기둥 콜라이더(0.4×1.8)가 있어야 한다.");
+            Assert.That(
+                colliders.Any(c => Approximately(c.size, new Vector2(1f, 0.4f))),
+                Is.True,
+                "상단 가로 캡 콜라이더(1.0×0.4, 블록 너비×기둥 너비)가 있어야 한다.");
+
             var visualRoot = prefab.transform.Find("VisualRoot");
             Assert.That(visualRoot, Is.Not.Null);
-            Assert.That(visualRoot.GetComponent<SpriteRenderer>(), Is.Not.Null);
+            var post = visualRoot.Find("Post");
+            var cap = visualRoot.Find("Cap");
+            Assert.That(post, Is.Not.Null, "T자 세로 기둥 Visual Post가 있어야 한다.");
+            Assert.That(cap, Is.Not.Null, "T자 가로 캡 Visual Cap이 있어야 한다.");
+            Assert.That(post.GetComponent<SpriteRenderer>(), Is.Not.Null);
+            Assert.That(cap.GetComponent<SpriteRenderer>(), Is.Not.Null);
+            Assert.That(post.GetComponent<SpriteRenderer>().size, Is.EqualTo(new Vector2(0.4f, 1.8f)));
+            Assert.That(cap.GetComponent<SpriteRenderer>().size, Is.EqualTo(new Vector2(1f, 0.4f)));
+        }
+
+        private static bool Approximately(Vector2 a, Vector2 b)
+        {
+            return Mathf.Abs(a.x - b.x) < 0.001f && Mathf.Abs(a.y - b.y) < 0.001f;
         }
 
         [Test]
