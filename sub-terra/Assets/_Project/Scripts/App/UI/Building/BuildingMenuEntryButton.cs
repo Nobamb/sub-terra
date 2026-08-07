@@ -3,7 +3,11 @@ using UnityEngine.UI;
 
 namespace SubTerra.App.UI.Building
 {
-    /// <summary>Prefab의 시설 버튼을 영구 ID 기반 선택 요청에 연결한다.</summary>
+    /// <summary>
+    /// Prefab의 시설 버튼을 영구 ID 기반 선택 요청에 연결한다.
+    /// prompt-B 35-3: 클릭 후 EventSystem 선택을 남겨 두지 않아
+    /// Enter가 시설 버튼/단축키 Submit으로 재실행되지 않게 한다.
+    /// </summary>
     [RequireComponent(typeof(Button))]
     public sealed class BuildingMenuEntryButton : MonoBehaviour
     {
@@ -15,6 +19,7 @@ namespace SubTerra.App.UI.Building
         private void Awake()
         {
             button = GetComponent<Button>();
+            UiKeyboardSubmitGuard.ConfigurePointerPreferredButton(button);
         }
 
         private void OnEnable()
@@ -24,6 +29,8 @@ namespace SubTerra.App.UI.Building
                 button = GetComponent<Button>();
             }
 
+            UiKeyboardSubmitGuard.ConfigurePointerPreferredButton(button);
+            button.onClick.RemoveListener(Select);
             button.onClick.AddListener(Select);
         }
 
@@ -35,6 +42,8 @@ namespace SubTerra.App.UI.Building
         private void Select()
         {
             binder?.SelectBuilding(buildingId);
+            // 선택 직후에도 키보드 Submit 잔여 대상을 남기지 않는다.
+            UiKeyboardSubmitGuard.ClearSelection();
         }
 
 #if UNITY_EDITOR

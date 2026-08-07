@@ -12,7 +12,10 @@ namespace SubTerra.App.UI.HUD
     /// 시설 건설·Digger-Bot·게임 가이드·인벤토리 패널의 닫기/토글과
     /// 가이드에 명시된 단축키(B/I/G/Tab)를 담당한다.
     /// prompt-B 34: Tab 또는 드론 클릭으로 digger-bot 창 토글, X로 닫기.
+    /// prompt-B 35-3: 시설 건설 중 Enter가 UI Submit으로 게임 가이드를 토글하지 않게 한다.
+    /// EventSystem보다 먼저 Enter를 처리해 선택 해제가 Submit보다 앞서 적용되게 한다.
     /// </summary>
+    [DefaultExecutionOrder(-200)]
     public sealed class HudPanelChromeController : MonoBehaviour
     {
         [SerializeField] private BuildingMenuView buildingMenuView;
@@ -62,6 +65,7 @@ namespace SubTerra.App.UI.HUD
             ResolveDiggerWorldTargetIfNeeded();
             EnsureDiggerHostActive();
             WireButtons();
+            ConfigurePointerPreferredChromeButtons();
             ApplyBuildingMenuVisible(buildingMenuOpen, cancelSelection: false);
             ApplyDiggerBotVisible(diggerBotOpen);
             ApplyGameGuideVisible(gameGuideOpen);
@@ -73,6 +77,7 @@ namespace SubTerra.App.UI.HUD
             ResolveDiggerWorldTargetIfNeeded();
             EnsureDiggerHostActive();
             WireButtons();
+            ConfigurePointerPreferredChromeButtons();
         }
 
         private void OnDisable()
@@ -86,6 +91,16 @@ namespace SubTerra.App.UI.HUD
             var keyboard = Keyboard.current;
             if (keyboard != null)
             {
+                // prompt-B 35-3: 시설 건설 창이 열린 동안 Enter는 배치 전용.
+                // EventSystem Submit이 선택된 단축키(게임 가이드 등)를 다시 누르지 않게
+                // 매 프레임(EventSystem보다 먼저) 선택을 해제한다.
+                if (buildingMenuOpen
+                    && (keyboard.enterKey.wasPressedThisFrame
+                        || keyboard.numpadEnterKey.wasPressedThisFrame))
+                {
+                    UiKeyboardSubmitGuard.ClearSelection();
+                }
+
                 if (keyboard.bKey.wasPressedThisFrame)
                 {
                     ToggleBuildingMenu();
@@ -315,6 +330,66 @@ namespace SubTerra.App.UI.HUD
             {
                 buildingOpenButton.gameObject.SetActive(false);
             }
+
+            // 창을 열거나 닫을 때 남아 있는 UI 선택을 비워 Enter Submit 잔여 효과를 끊는다.
+            if (visible)
+            {
+                UiKeyboardSubmitGuard.ClearSelection();
+                // 시설 목록 버튼도 키보드 Submit 대상에서 제외한다.
+                if (buildingMenuRoot != null)
+                {
+                    UiKeyboardSubmitGuard.ConfigureButtonsUnder(buildingMenuRoot.transform);
+                }
+            }
+        }
+
+        /// <summary>
+        /// 우측 상단 단축키·패널 닫기 버튼이 Enter Submit/키보드 네비로
+        /// 의도치 않게 재실행되지 않도록 설정한다 (prompt-B 35-3).
+        /// </summary>
+        private void ConfigurePointerPreferredChromeButtons()
+        {
+            UiKeyboardSubmitGuard.ConfigurePointerPreferredButton(buildingCloseButton);
+            UiKeyboardSubmitGuard.ConfigurePointerPreferredButton(buildingOpenButton);
+            UiKeyboardSubmitGuard.ConfigurePointerPreferredButton(diggerCloseButton);
+            UiKeyboardSubmitGuard.ConfigurePointerPreferredButton(diggerOpenButton);
+            UiKeyboardSubmitGuard.ConfigurePointerPreferredButton(gameGuideCloseButton);
+            UiKeyboardSubmitGuard.ConfigurePointerPreferredButton(gameGuideOpenButton);
+            UiKeyboardSubmitGuard.ConfigurePointerPreferredButton(inventoryCloseButton);
+            UiKeyboardSubmitGuard.ConfigurePointerPreferredButton(inventoryOpenButton);
+
+            // PanelShortcutBar(시설/인벤/가이드 등)는 SerializeField가 아닐 수 있어 이름으로 찾는다.
+            var shortcutBar = FindShortcutBarTransform();
+            if (shortcutBar != null)
+            {
+                UiKeyboardSubmitGuard.ConfigureButtonsUnder(shortcutBar);
+            }
+
+            if (buildingMenuRoot != null)
+            {
+                UiKeyboardSubmitGuard.ConfigureButtonsUnder(buildingMenuRoot.transform);
+            }
+        }
+
+        private Transform FindShortcutBarTransform()
+        {
+            // Canvas 자신 또는 자식에서 단축키 바를 찾는다.
+            var self = transform.Find("PanelShortcutBar");
+            if (self != null)
+            {
+                return self;
+            }
+
+            var nested = GetComponentsInChildren<Transform>(true);
+            for (var i = 0; i < nested.Length; i++)
+            {
+                if (nested[i] != null && nested[i].name == "PanelShortcutBar")
+                {
+                    return nested[i];
+                }
+            }
+
+            return null;
         }
 
         private void ApplyDiggerBotVisible(bool visible)

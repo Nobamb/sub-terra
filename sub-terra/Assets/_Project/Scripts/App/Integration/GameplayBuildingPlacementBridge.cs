@@ -1,6 +1,7 @@
 using System;
 using SubTerra.App.Core.Data;
 using SubTerra.App.Economy;
+using SubTerra.App.UI;
 using SubTerra.App.UI.Building;
 using SubTerra.Gameplay.Building;
 using SubTerra.Gameplay.Player;
@@ -84,8 +85,12 @@ namespace SubTerra.App.Integration
             }
 
             // Enter: 커서 위치가 아니라 플레이어 근접 최적 칸에 1회 설치(prompt-B 35).
-            if (Keyboard.current != null && Keyboard.current.enterKey.wasPressedThisFrame)
+            // prompt-B 35-3: Enter 배치 직전에 UI 선택을 지워 Submit이 가이드 등을 토글하지 않게 한다.
+            if (Keyboard.current != null
+                && (Keyboard.current.enterKey.wasPressedThisFrame
+                    || Keyboard.current.numpadEnterKey.wasPressedThisFrame))
             {
+                UiKeyboardSubmitGuard.ClearSelection();
                 TryPlaceNearestByEnter();
                 return;
             }
