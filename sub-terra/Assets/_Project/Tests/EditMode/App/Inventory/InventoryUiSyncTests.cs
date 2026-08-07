@@ -130,7 +130,10 @@ namespace SubTerra.App.Tests.Inventory
             Assert.That(presenter.IsBound, Is.False);
 
             presenter.Bind(service);
-            Assert.That(panelView.Cargo, Does.Contain(HudFormatter.FormatCargo(1.5f)));
+            // prompt-B 36-1: 인벤토리 패널 요약은 FormatCargoSummary("인벤토리 …")를 쓴다.
+            Assert.That(
+                panelView.Cargo,
+                Is.EqualTo(HudFormatter.FormatCargoSummary(1.5f, 50f)));
             panelView.ResetCounts();
             service.AddMineral("mineral.copper", 1);
             Assert.That(panelView.CargoCount, Is.EqualTo(1));

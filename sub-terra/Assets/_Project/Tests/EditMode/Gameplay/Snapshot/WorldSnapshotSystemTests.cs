@@ -58,6 +58,70 @@ namespace SubTerra.Gameplay.Snapshot.Tests
         }
 
         [Test]
+        public void RestoreSnapshot_RebuildsStructuralRiskFromMinedCells()
+        {
+            // prompt-B 36-1: 월드 복원 후 구조 위험이 Stable로 남지 않고 맵 기준으로 재계산된다.
+            var host = new GameObject("StructuralRestore");
+            var gridObject = new GameObject("Grid");
+            gridObject.transform.SetParent(host.transform);
+            gridObject.AddComponent<Grid>();
+            var tilemapObject = new GameObject("Terrain");
+            tilemapObject.transform.SetParent(gridObject.transform);
+            var tilemap = tilemapObject.AddComponent<Tilemap>();
+            tilemapObject.AddComponent<TilemapRenderer>();
+            var tile = ScriptableObject.CreateInstance<Tile>();
+            var overlayObject = new GameObject("CrackOverlay");
+            overlayObject.transform.SetParent(gridObject.transform);
+            var overlayMap = overlayObject.AddComponent<Tilemap>();
+            overlayObject.AddComponent<TilemapRenderer>();
+
+            try
+            {
+                // y=1 바닥, y=2 비지지 천장. 채굴 셀 (0,0) 위 천장이 위험 후보.
+                tilemap.SetTile(new Vector3Int(0, 1, 0), tile);
+                tilemap.SetTile(new Vector3Int(0, 2, 0), tile);
+
+                var structural = host.AddComponent<StructuralIntegritySystem>();
+                var overlay = overlayObject.AddComponent<StructuralCrackOverlay>();
+                SetField(overlay, "overlayTilemap", overlayMap);
+                SetField(structural, "foregroundTilemap", tilemap);
+                SetField(structural, "crackOverlay", overlay);
+                SetField(structural, "localRiskRadius", 1);
+                SetField(structural, "scanRadius", 3);
+
+                var snapshotSystem = host.AddComponent<WorldSnapshotSystem>();
+                SetField(snapshotSystem, "foregroundTilemap", tilemap);
+                SetField(snapshotSystem, "structuralSystem", structural);
+
+                Assert.That(
+                    snapshotSystem.RestoreSnapshot(new WorldSnapshotDto
+                    {
+                        miningChanges = new System.Collections.Generic.List<MiningSnapshotDto>
+                        {
+                            new()
+                            {
+                                x = 0,
+                                y = 0,
+                                isDestroyed = true,
+                                remainingDurability = 0f
+                            }
+                        }
+                    }),
+                    Is.True);
+
+                Assert.That(structural.CurrentRisk, Is.GreaterThan(StructuralRiskLevel.Stable));
+                Assert.That(
+                    structural.EvaluateAt(Vector3Int.zero),
+                    Is.GreaterThan(StructuralRiskLevel.Stable));
+            }
+            finally
+            {
+                Object.DestroyImmediate(host);
+                Object.DestroyImmediate(tile);
+            }
+        }
+
+        [Test]
         public void RestoreSnapshot_RecreatesSupportEffectWithoutWalletSpend()
         {
             var host = new GameObject("SupportRestore");

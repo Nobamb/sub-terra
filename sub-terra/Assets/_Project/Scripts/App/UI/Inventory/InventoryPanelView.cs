@@ -23,6 +23,13 @@ namespace SubTerra.App.UI.Inventory
         public TextMeshProUGUI StacksText => stacksText;
         public Button CloseButton => closeButton;
 
+        private void Awake()
+        {
+            // prompt-B 36-1: 시작 시 인벤토리 창은 닫힌 상태.
+            // HudPanelChromeController가 I 키/버튼으로 토글한다.
+            SetVisible(false);
+        }
+
         public void SetCargoSummary(string cargoText)
         {
             SetText(cargoSummaryText, cargoText);

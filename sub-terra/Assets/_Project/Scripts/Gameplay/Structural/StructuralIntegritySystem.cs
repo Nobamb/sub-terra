@@ -45,6 +45,67 @@ namespace SubTerra.Gameplay.Structural
 
         public void ConfigureWorldSeed(long seed) => worldSeed = seed;
 
+        /// <summary>
+        /// prompt-B 36-1: 런타임 충격·위험 타일·균열 표시를 비운다.
+        /// 세이브 복원 직전/직후 재계산 전에 호출한다.
+        /// </summary>
+        public void ClearRuntimeRiskState()
+        {
+            accumulatedImpact.Clear();
+            if (tileRisks.Count > 0)
+            {
+                var tracked = new List<Vector3Int>(tileRisks.Keys);
+                for (int i = 0; i < tracked.Count; i++)
+                {
+                    ClearTileRisk(tracked[i]);
+                }
+            }
+
+            crackOverlay?.ClearAll();
+            if (CurrentRisk != StructuralRiskLevel.Stable)
+            {
+                CurrentRisk = StructuralRiskLevel.Stable;
+                RiskChanged?.Invoke(CurrentRisk);
+            }
+        }
+
+        /// <summary>
+        /// prompt-B 36-1: 복원된 채굴 변경점과 현재 맵 기하를 기준으로 구조 위험을 재구성한다.
+        /// 붕괴는 발동하지 않아 로드 중 추가 붕괴가 생기지 않는다.
+        /// 기본 충격은 카탈로그 일반 암석(0.25)과 동일한 값을 사용한다.
+        /// </summary>
+        public void RebuildRiskFromMinedCells(
+            IEnumerable<Vector3Int> minedCells,
+            float defaultStructuralImpact = 0.25f)
+        {
+            ClearRuntimeRiskState();
+            if (minedCells == null)
+            {
+                UpdateCurrentRisk();
+                return;
+            }
+
+            float impact = Mathf.Max(0f, defaultStructuralImpact) * miningImpactMultiplier;
+            var affected = new HashSet<Vector3Int>();
+            foreach (Vector3Int cell in minedCells)
+            {
+                if (impact > 0f)
+                {
+                    accumulatedImpact.TryGetValue(cell, out float currentImpact);
+                    accumulatedImpact[cell] = currentImpact + impact;
+                }
+
+                foreach (Vector3Int ceiling in EnumerateUnsupportedCeilingsNearMine(cell))
+                {
+                    affected.Add(ceiling);
+                }
+            }
+
+            // 충격 없이도 비지지 천장 개수만으로 주의/위험이 될 수 있으므로
+            // 추적된 채굴 주변 천장을 전부 재평가한다.
+            ReevaluateTiles(affected, allowCollapse: false);
+        }
+
         public void NotifyTileMined(Vector3Int cell, MiningTileDto tile)
         {
             float impact = Mathf.Max(0f, tile.structuralImpact) * miningImpactMultiplier;

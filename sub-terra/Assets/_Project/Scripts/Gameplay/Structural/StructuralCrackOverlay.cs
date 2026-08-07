@@ -55,6 +55,42 @@ namespace SubTerra.Gameplay.Structural
         }
 
         /// <summary>
+        /// 세이브 복원·전체 재계산 전 표시를 비운다.
+        /// 원본 지형 Tilemap은 건드리지 않는다.
+        /// </summary>
+        public void ClearAll()
+        {
+            if (overlayTilemap == null)
+            {
+                visibleCells.Clear();
+                cellRisks.Clear();
+                return;
+            }
+
+            if (visibleCells.Count == 0 && cellRisks.Count == 0)
+            {
+                return;
+            }
+
+            var cells = new List<Vector3Int>(visibleCells);
+            foreach (Vector3Int cell in cellRisks.Keys)
+            {
+                if (!visibleCells.Contains(cell))
+                {
+                    cells.Add(cell);
+                }
+            }
+
+            for (int i = 0; i < cells.Count; i++)
+            {
+                ClearCell(cells[i]);
+            }
+
+            visibleCells.Clear();
+            cellRisks.Clear();
+        }
+
+        /// <summary>
         /// 하위 호환: 구역 단위 갱신. 소유 셀을 지운 뒤 후보를 타일 단위로 다시 칠한다.
         /// </summary>
         public void UpdateRegion(

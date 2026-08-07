@@ -67,6 +67,8 @@ namespace SubTerra.App.Editor.DataValidation
             var image = panelRoot.GetComponent<Image>();
             image.color = new Color(0.08f, 0.1f, 0.14f, 0.92f);
             image.raycastTarget = true;
+            // prompt-B 36-1: 프리팹 기본값은 닫힌 상태. I 키/버튼으로 연다.
+            panelRoot.SetActive(false);
 
             var cargo = CreateTmp(panelRoot.transform, "CargoSummaryText", new Vector2(0f, 1f), new Vector2(0f, 1f),
                 new Vector2(12f, -12f), new Vector2(396f, 32f), 22, "0 / 50");

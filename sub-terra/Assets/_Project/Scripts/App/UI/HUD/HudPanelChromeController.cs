@@ -63,21 +63,35 @@ namespace SubTerra.App.UI.HUD
         private void Awake()
         {
             ResolveDiggerWorldTargetIfNeeded();
+            ResolveInventoryPanelIfNeeded();
             EnsureDiggerHostActive();
             WireButtons();
             ConfigurePointerPreferredChromeButtons();
             ApplyBuildingMenuVisible(buildingMenuOpen, cancelSelection: false);
             ApplyDiggerBotVisible(diggerBotOpen);
             ApplyGameGuideVisible(gameGuideOpen);
-            ApplyInventoryPanelVisible(inventoryPanelOpen);
+            // prompt-B 36-1: 시작 시 인벤토리는 항상 닫힌 상태.
+            inventoryPanelOpen = false;
+            ApplyInventoryPanelVisible(false);
         }
 
         private void OnEnable()
         {
             ResolveDiggerWorldTargetIfNeeded();
+            ResolveInventoryPanelIfNeeded();
             EnsureDiggerHostActive();
             WireButtons();
             ConfigurePointerPreferredChromeButtons();
+        }
+
+        private void Start()
+        {
+            // 다른 UI 초기화가 PanelRoot를 다시 켠 경우 한 번 더 닫아 둔다.
+            ResolveInventoryPanelIfNeeded();
+            if (!inventoryPanelOpen)
+            {
+                ApplyInventoryPanelVisible(false);
+            }
         }
 
         private void OnDisable()
@@ -251,13 +265,15 @@ namespace SubTerra.App.UI.HUD
 
             if (inventoryCloseButton != null)
             {
-                inventoryCloseButton.onClick.RemoveListener(CloseInventoryPanel);
+                // Scene 영속 리스너와 런타임 리스너가 겹치면 토글이 두 번 호출되어
+                // 창이 열렸다 바로 닫히는 것처럼 보인다. 단일 리스너만 남긴다.
+                inventoryCloseButton.onClick.RemoveAllListeners();
                 inventoryCloseButton.onClick.AddListener(CloseInventoryPanel);
             }
 
             if (inventoryOpenButton != null)
             {
-                inventoryOpenButton.onClick.RemoveListener(ToggleInventoryPanel);
+                inventoryOpenButton.onClick.RemoveAllListeners();
                 inventoryOpenButton.onClick.AddListener(ToggleInventoryPanel);
             }
         }
@@ -556,33 +572,146 @@ namespace SubTerra.App.UI.HUD
         private void ApplyInventoryPanelVisible(bool visible)
         {
             inventoryPanelOpen = visible;
+            ResolveInventoryPanelIfNeeded();
 
-            // View 경로: PanelRoot·X 버튼만 토글(루트 유지).
             if (inventoryPanelView != null)
             {
+                // View가 있으면 Binder 구독 유지를 위해 루트는 켠 채 PanelRoot만 토글한다.
+                if (inventoryPanelRoot != null && !inventoryPanelRoot.activeSelf)
+                {
+                    inventoryPanelRoot.SetActive(true);
+                }
+
                 inventoryPanelView.SetVisible(visible);
             }
-
-            // 루트 참조가 View와 다른 오브젝트면 함께 맞춘다.
-            // 단 View가 있는 루트를 SetActive(false)로 끄면 구독이 끊기므로, View 없을 때만 사용.
-            if (inventoryPanelRoot != null && inventoryPanelView == null)
+            else if (inventoryPanelRoot != null)
             {
+                // View 없는 테스트·레거시 배치는 루트 자체를 토글한다.
                 inventoryPanelRoot.SetActive(visible);
-            }
-            else if (inventoryPanelRoot != null && !inventoryPanelRoot.activeSelf)
-            {
-                // 중복 패널 제거 후 숨겨진 정식 패널만 켠다.
-                inventoryPanelRoot.SetActive(true);
-                if (inventoryPanelView != null)
-                {
-                    inventoryPanelView.SetVisible(visible);
-                }
             }
 
             if (visible && inventoryPanelRoot != null)
             {
                 inventoryPanelRoot.transform.SetAsLastSibling();
             }
+        }
+
+        /// <summary>
+        /// prompt-B 36-1: Scene Prefab 인스턴스 ID가 깨져 Inspector 참조가 비어도
+        /// 배정된 루트(또는 씬 내 InventoryPanel)에서 패널·닫기 버튼을 다시 찾는다.
+        /// 다른 테스트 오브젝트의 임의 View를 붙잡지 않도록 루트 우선으로 해석한다.
+        /// </summary>
+        private void ResolveInventoryPanelIfNeeded()
+        {
+            if (inventoryPanelView != null
+                && inventoryPanelRoot != null
+                && !IsViewUnderRoot(inventoryPanelView, inventoryPanelRoot))
+            {
+                // 루트와 무관한 View가 붙어 있으면 버리고 다시 찾는다.
+                inventoryPanelView = null;
+            }
+
+            if (inventoryPanelView == null && inventoryPanelRoot != null)
+            {
+                inventoryPanelView = inventoryPanelRoot.GetComponent<InventoryPanelView>()
+                    ?? inventoryPanelRoot.GetComponentInChildren<InventoryPanelView>(true);
+            }
+
+            if (inventoryPanelView == null && inventoryPanelRoot == null)
+            {
+                inventoryPanelView = FindFirstObjectByType<InventoryPanelView>(
+                    FindObjectsInactive.Include);
+            }
+
+            if (inventoryPanelView != null && inventoryPanelRoot == null)
+            {
+                inventoryPanelRoot = inventoryPanelView.gameObject;
+            }
+
+            if (inventoryCloseButton == null)
+            {
+                inventoryCloseButton = ResolveInventoryCloseButton(inventoryPanelView, inventoryPanelRoot);
+            }
+
+            if (inventoryPanelRoot == null)
+            {
+                var binder = FindFirstObjectByType<InventoryPanelBinder>(
+                    FindObjectsInactive.Include);
+                if (binder != null)
+                {
+                    inventoryPanelRoot = binder.gameObject;
+                    if (inventoryPanelView == null)
+                    {
+                        inventoryPanelView = binder.PanelView
+                            ?? binder.GetComponent<InventoryPanelView>();
+                    }
+
+                    if (inventoryCloseButton == null)
+                    {
+                        inventoryCloseButton = ResolveInventoryCloseButton(
+                            inventoryPanelView,
+                            inventoryPanelRoot);
+                    }
+                }
+            }
+        }
+
+        private static Button ResolveInventoryCloseButton(
+            InventoryPanelView view,
+            GameObject root)
+        {
+            if (view != null && view.CloseButton != null)
+            {
+                return view.CloseButton;
+            }
+
+            // Scene 인스턴스가 closeButton을 null로 덮어쓴 경우 이름 기반으로 복구한다.
+            Transform searchRoot = null;
+            if (view != null && view.PanelRoot != null)
+            {
+                searchRoot = view.PanelRoot.transform;
+            }
+            else if (view != null)
+            {
+                searchRoot = view.transform;
+            }
+            else if (root != null)
+            {
+                searchRoot = root.transform;
+            }
+
+            if (searchRoot == null)
+            {
+                return null;
+            }
+
+            var named = searchRoot.Find("CloseButton");
+            if (named != null)
+            {
+                return named.GetComponent<Button>();
+            }
+
+            var buttons = searchRoot.GetComponentsInChildren<Button>(true);
+            for (var i = 0; i < buttons.Length; i++)
+            {
+                if (buttons[i] != null && buttons[i].gameObject.name == "CloseButton")
+                {
+                    return buttons[i];
+                }
+            }
+
+            return null;
+        }
+
+        private static bool IsViewUnderRoot(InventoryPanelView view, GameObject root)
+        {
+            if (view == null || root == null)
+            {
+                return false;
+            }
+
+            return view.gameObject == root
+                || view.transform.IsChildOf(root.transform);
         }
     }
 }

@@ -124,7 +124,9 @@ namespace SubTerra.Gameplay.Snapshot
             ApplyRemovedTiles(snapshot.miningChanges);
             ApplyChangedTiles(snapshot.changedTiles);
             ApplyCollapsedTiles(snapshot.collapseChanges);
+            // 버팀목 등 지지물이 먼저 복원된 뒤 구조 위험을 재계산해야 한다.
             RestoreBuildings(snapshot.buildings);
+            RebuildStructuralRiskAfterRestore(snapshot);
             RestoreGasZones(snapshot.gasChanges);
             RestoreDiscoveredChunks(snapshot.discoveredChunkIds);
             RestorePowerConnections(snapshot.powerState);
@@ -132,6 +134,70 @@ namespace SubTerra.Gameplay.Snapshot
 
             LastRestoreSucceeded = true;
             return true;
+        }
+
+        /// <summary>
+        /// prompt-B 36-1: 타일 변경점 적용 후 전체 맵 기하 기준으로 구조 위험을 복원한다.
+        /// 런타임 충격 버퍼는 세이브에 없으므로 파괴된 채굴/붕괴 셀을 충격 원천으로 재주입한다.
+        /// </summary>
+        private void RebuildStructuralRiskAfterRestore(WorldSnapshotDto snapshot)
+        {
+            if (structuralSystem == null)
+            {
+                return;
+            }
+
+            var minedCells = new List<Vector3Int>();
+            if (snapshot?.miningChanges != null)
+            {
+                foreach (MiningSnapshotDto change in snapshot.miningChanges)
+                {
+                    if (!change.isDestroyed)
+                    {
+                        continue;
+                    }
+
+                    minedCells.Add(new Vector3Int(change.x, change.y, 0));
+                }
+            }
+
+            // 붕괴로 사라진 셀도 비지지 기하에 기여하는 채굴 흔적으로 취급한다.
+            if (snapshot?.collapseChanges != null)
+            {
+                foreach (CollapseSnapshotDto change in snapshot.collapseChanges)
+                {
+                    if (!change.isCollapsed)
+                    {
+                        continue;
+                    }
+
+                    var key = new Vector3Int(change.x, change.y, 0);
+                    if (!minedCells.Contains(key))
+                    {
+                        minedCells.Add(key);
+                    }
+                }
+            }
+
+            // remainingDurability 0 변경 타일도 실질적으로 제거된 것으로 본다.
+            if (snapshot?.changedTiles != null)
+            {
+                foreach (ChangedTileSnapshotDto change in snapshot.changedTiles)
+                {
+                    if (change.remainingDurability > 0f && !string.IsNullOrEmpty(change.tileId))
+                    {
+                        continue;
+                    }
+
+                    var key = new Vector3Int(change.x, change.y, 0);
+                    if (!minedCells.Contains(key))
+                    {
+                        minedCells.Add(key);
+                    }
+                }
+            }
+
+            structuralSystem.RebuildRiskFromMinedCells(minedCells);
         }
 
         public void ConfigureBaseWorldIdentity(long seed, int version)

@@ -138,6 +138,32 @@ namespace SubTerra.Gameplay.Structural.Tests
                 Is.LessThan(StructuralRiskLevel.Danger));
         }
 
+        [Test]
+        public void RebuildRiskFromMinedCells_RestoresRiskWithoutCollapse()
+        {
+            // prompt-B 36-1: 세이브 복원처럼 런타임 상태를 비운 뒤 채굴 셀만으로 위험을 재구성한다.
+            using var fixture = new StructuralFixture(1, true);
+            var mineCell = Vector3Int.zero;
+            var ceiling = new Vector3Int(0, 2, 0);
+
+            fixture.Mine(0.1f);
+            Assert.That(fixture.System.CurrentRisk, Is.EqualTo(StructuralRiskLevel.Caution));
+            Assert.That(fixture.Overlay.HasTile(ceiling), Is.True);
+
+            fixture.System.ClearRuntimeRiskState();
+            Assert.That(fixture.System.CurrentRisk, Is.EqualTo(StructuralRiskLevel.Stable));
+            Assert.That(fixture.Overlay.HasTile(ceiling), Is.False);
+
+            StructuralCollapseEventDto collapse = null;
+            fixture.System.CollapseTriggered += value => collapse = value;
+            fixture.System.RebuildRiskFromMinedCells(new[] { mineCell }, 0.1f);
+
+            Assert.That(collapse, Is.Null);
+            Assert.That(fixture.System.CurrentRisk, Is.EqualTo(StructuralRiskLevel.Caution));
+            Assert.That(fixture.Overlay.HasTile(ceiling), Is.True);
+            Assert.That(fixture.System.EvaluateAt(mineCell), Is.EqualTo(StructuralRiskLevel.Caution));
+        }
+
         private static List<CollapseCellDto> RunCollapse(long seed)
         {
             using var fixture = new StructuralFixture(7);

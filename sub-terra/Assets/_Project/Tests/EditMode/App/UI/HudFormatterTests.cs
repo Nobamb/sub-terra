@@ -20,6 +20,8 @@ namespace SubTerra.App.Tests.UI
             Assert.That(HudFormatter.FormatGold(-3), Is.EqualTo("골드 0"));
             Assert.That(HudFormatter.FormatDepth(0), Is.EqualTo("깊이 0m"));
             Assert.That(HudFormatter.FormatCargo(0f), Is.EqualTo("화물 0"));
+            // prompt-B 36-1: 인벤토리 패널 요약 라벨은 "인벤토리".
+            Assert.That(HudFormatter.FormatCargoSummary(0f, 50f), Is.EqualTo("인벤토리 0 / 50"));
             Assert.That(HudFormatter.FormatUnsettledValue(0f), Is.EqualTo("미정산 0"));
             Assert.That(HudFormatter.FormatStructuralRisk(StructuralRiskLevel.Safe),
                 Is.EqualTo("구조 " + HudFormatter.LabelSafe));

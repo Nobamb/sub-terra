@@ -63,9 +63,13 @@ namespace SubTerra.App.UI.HUD
             return "화물 " + FormatCargoAmount(cargoWeight);
         }
 
+        /// <summary>
+        /// 인벤토리 패널 상단 요약. prompt-B 36-1: 표시 라벨은 "인벤토리".
+        /// HUD 화물 한 줄 표시(FormatCargo)와 구분한다.
+        /// </summary>
         public static string FormatCargoSummary(float currentWeight, float maxCapacity)
         {
-            return "화물 " + FormatCargoAmount(currentWeight)
+            return "인벤토리 " + FormatCargoAmount(currentWeight)
                 + " / " + FormatCargoAmount(maxCapacity);
         }
 
