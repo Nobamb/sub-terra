@@ -39,8 +39,39 @@ namespace SubTerra.Gameplay.Building
             if (powerNetworkSystem == null) powerNetworkSystem = GetComponent<PowerNetworkSystem>();
         }
 
-        public void Select(BuildingPlacementDefinition definition) => selection = definition;
-        public void ClearSelection() => selection = null;
+        private void OnDisable()
+        {
+            // 비활성 시 잔여 Preview가 Enter 채굴 게이트를 붙잡지 않게 한다.
+            if (selection != null)
+            {
+                selection = null;
+                BuildingPlacementActivity.End();
+            }
+        }
+
+        public void Select(BuildingPlacementDefinition definition)
+        {
+            if (selection != null)
+            {
+                BuildingPlacementActivity.End();
+            }
+
+            selection = definition;
+            if (selection != null)
+            {
+                BuildingPlacementActivity.Begin();
+            }
+        }
+
+        public void ClearSelection()
+        {
+            if (selection != null)
+            {
+                BuildingPlacementActivity.End();
+            }
+
+            selection = null;
+        }
 
         /// <summary>Called by App bootstrap to connect the Shared economy contract without a Unity object reference.</summary>
         public void SetResourceWallet(IResourceWallet wallet) => sharedResourceWallet = wallet;
@@ -137,10 +168,200 @@ namespace SubTerra.Gameplay.Building
             if (support != null) structuralIntegritySystem?.RegisterSupport(support);
 
             // 한 번의 선택은 한 시설만 확정한다. 이벤트 재진입과 같은 프레임 중복 확정을 함께 막는다.
-            selection = null;
+            ClearSelection();
             var result = new BuildingPlacementResult(true, BuildingPlacementFailure.None, instanceId, definition.BuildingId, origin);
             BuildingPlaced?.Invoke(result);
             return result;
+        }
+
+        /// <summary>
+        /// Enter 확정용: 플레이어 기준 배치 반경 안에서 CanPlaceAt을 통과하는 칸 중
+        /// 가장 가까운 칸을 고른다. 거리 동률이면 발밑 → 전방 → 아래/옆 순.
+        /// 후보가 없으면 false와 대표 실패 사유를 반환한다.
+        /// </summary>
+        /// <param name="facingDirection">플레이어 전방 부호(+1 오른쪽, -1 왼쪽).</param>
+        public bool TryFindBestPlacementCell(
+            float facingDirection,
+            out Vector3Int bestCell,
+            out BuildingPlacementFailure failure)
+        {
+            bestCell = default;
+            if (selection == null)
+            {
+                failure = BuildingPlacementFailure.NoSelection;
+                return false;
+            }
+
+            Vector3 originWorld = placementOrigin != null
+                ? placementOrigin.position
+                : transform.position;
+            Vector3Int playerCell = WorldToCell(originWorld);
+            int facingSign = facingDirection > 0.01f ? 1 : facingDirection < -0.01f ? -1 : 1;
+            int radius = Mathf.Max(1, Mathf.CeilToInt(maximumPlacementDistance > 0f
+                ? maximumPlacementDistance
+                : 6f));
+
+            bool hasCandidate = false;
+            Vector3Int candidate = default;
+            float bestDistance = float.PositiveInfinity;
+            int bestPreference = int.MaxValue;
+            int bestManhattan = int.MaxValue;
+
+            BuildingPlacementFailure nearestFailure = BuildingPlacementFailure.OutOfRange;
+            float nearestFailureDistance = float.PositiveInfinity;
+            int nearestFailurePreference = int.MaxValue;
+
+            for (int dx = -radius; dx <= radius; dx++)
+            {
+                for (int dy = -radius; dy <= radius; dy++)
+                {
+                    var cell = new Vector3Int(playerCell.x + dx, playerCell.y + dy, playerCell.z);
+                    float distance = Vector2.Distance(originWorld, CellToWorld(cell));
+                    if (maximumPlacementDistance > 0f && distance > maximumPlacementDistance + 0.001f)
+                    {
+                        continue;
+                    }
+
+                    int preference = RankPlacementPreference(cell, playerCell, facingSign);
+                    int manhattan = Mathf.Abs(dx) + Mathf.Abs(dy);
+
+                    if (CanPlaceAt(cell, out BuildingPlacementFailure cellFailure))
+                    {
+                        if (!hasCandidate
+                            || distance < bestDistance - 0.0001f
+                            || (Mathf.Abs(distance - bestDistance) <= 0.0001f
+                                && (preference < bestPreference
+                                    || (preference == bestPreference && manhattan < bestManhattan))))
+                        {
+                            hasCandidate = true;
+                            candidate = cell;
+                            bestDistance = distance;
+                            bestPreference = preference;
+                            bestManhattan = manhattan;
+                        }
+                    }
+                    else if (cellFailure != BuildingPlacementFailure.None
+                             && (distance < nearestFailureDistance - 0.0001f
+                                 || (Mathf.Abs(distance - nearestFailureDistance) <= 0.0001f
+                                     && (preference < nearestFailurePreference
+                                         || (preference == nearestFailurePreference
+                                             && PreferFailure(cellFailure, nearestFailure))))))
+                    {
+                        nearestFailure = cellFailure;
+                        nearestFailureDistance = distance;
+                        nearestFailurePreference = preference;
+                    }
+                }
+            }
+
+            if (hasCandidate)
+            {
+                bestCell = candidate;
+                failure = BuildingPlacementFailure.None;
+                return true;
+            }
+
+            failure = nearestFailure;
+            bestCell = playerCell;
+            return false;
+        }
+
+        /// <summary>
+        /// Enter 확정: 최적 칸에 1회 설치한다. 성공 시 비용 1회 차감·선택 해제(좌클릭과 동일).
+        /// 후보가 없을 때는 PlacementRejected를 올리지 않고 실패 결과만 반환한다(선택 유지·사유 표시용).
+        /// </summary>
+        public BuildingPlacementResult TryPlaceNearest(float facingDirection)
+        {
+            if (!TryFindBestPlacementCell(facingDirection, out Vector3Int cell, out BuildingPlacementFailure failure))
+            {
+                return new BuildingPlacementResult(
+                    false,
+                    failure,
+                    string.Empty,
+                    selection != null ? selection.BuildingId : string.Empty,
+                    cell);
+            }
+
+            return TryPlaceAt(cell);
+        }
+
+        /// <summary>
+        /// 거리 동률 시 우선순위. 값이 작을수록 우선.
+        /// 0 발밑(동일 칸) → 1 발밑 축(동일 X) → 2 전방 수평 → 3 전방 기타 → 4 아래 → 5 옆 → 6 기타.
+        /// </summary>
+        public static int RankPlacementPreference(
+            Vector3Int cell,
+            Vector3Int playerCell,
+            int facingSign)
+        {
+            int dx = cell.x - playerCell.x;
+            int dy = cell.y - playerCell.y;
+            if (dx == 0 && dy == 0)
+            {
+                return 0;
+            }
+
+            if (dx == 0)
+            {
+                return 1;
+            }
+
+            bool facing = facingSign != 0 && Mathf.Sign(dx) == facingSign;
+            if (facing && dy == 0)
+            {
+                return 2;
+            }
+
+            if (facing)
+            {
+                return 3;
+            }
+
+            if (dy < 0)
+            {
+                return 4;
+            }
+
+            if (dx != 0)
+            {
+                return 5;
+            }
+
+            return 6;
+        }
+
+        /// <summary>
+        /// 후보 부재 시 플레이어에게 더 유용한 실패 사유를 고른다.
+        /// 자원 부족 &gt; 지면 없음 &gt; 점유 &gt; 허용 구역 밖 &gt; 거리 초과 순.
+        /// </summary>
+        private static bool PreferFailure(
+            BuildingPlacementFailure candidate,
+            BuildingPlacementFailure current)
+        {
+            return FailurePriority(candidate) < FailurePriority(current);
+        }
+
+        private static int FailurePriority(BuildingPlacementFailure failure)
+        {
+            switch (failure)
+            {
+                case BuildingPlacementFailure.CannotAfford:
+                    return 0;
+                case BuildingPlacementFailure.MissingGround:
+                    return 1;
+                case BuildingPlacementFailure.Occupied:
+                    return 2;
+                case BuildingPlacementFailure.OutsideAllowedArea:
+                    return 3;
+                case BuildingPlacementFailure.OutOfRange:
+                    return 4;
+                case BuildingPlacementFailure.ResourceWalletUnavailable:
+                    return 5;
+                case BuildingPlacementFailure.InvalidDefinition:
+                    return 6;
+                default:
+                    return 10;
+            }
         }
 
         /// <summary>

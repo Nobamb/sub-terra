@@ -3,6 +3,7 @@ using SubTerra.App.Core.Data;
 using SubTerra.App.Economy;
 using SubTerra.App.UI.Building;
 using SubTerra.Gameplay.Building;
+using SubTerra.Gameplay.Player;
 using SubTerra.Shared;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -34,6 +35,7 @@ namespace SubTerra.App.Integration
         [SerializeField] private BuildingPlacementPreview preview;
         [SerializeField] private BuildingPlacementSceneReferences sceneReferences;
         [SerializeField] private Camera targetCamera;
+        [SerializeField] private PlayerMovement playerMovement;
         [SerializeField] private BuildingPlacementBinding[] bindings =
             Array.Empty<BuildingPlacementBinding>();
 
@@ -69,9 +71,7 @@ namespace SubTerra.App.Integration
 
         private void Update()
         {
-            if (placementSystem == null
-                || placementSystem.Selection == null
-                || Mouse.current == null)
+            if (placementSystem == null || placementSystem.Selection == null)
             {
                 preview?.Hide();
                 return;
@@ -80,6 +80,19 @@ namespace SubTerra.App.Integration
             if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
             {
                 CancelPreview();
+                return;
+            }
+
+            // Enter: 커서 위치가 아니라 플레이어 근접 최적 칸에 1회 설치(prompt-B 35).
+            if (Keyboard.current != null && Keyboard.current.enterKey.wasPressedThisFrame)
+            {
+                TryPlaceNearestByEnter();
+                return;
+            }
+
+            if (Mouse.current == null)
+            {
+                preview?.Hide();
                 return;
             }
 
@@ -117,6 +130,40 @@ namespace SubTerra.App.Integration
             {
                 placementSystem.TryPlaceAt(cell);
             }
+        }
+
+        /// <summary>
+        /// Enter 설치: 6칸 이내·CanPlaceAt 통과·최근접(동률 시 발밑→전방→아래/옆).
+        /// 후보 없음 → 설치 없이 사유만 Invalid로 알림(선택 유지).
+        /// 성공 → TryPlaceAt과 동일하게 비용 1회·선택 해제.
+        /// </summary>
+        private void TryPlaceNearestByEnter()
+        {
+            float facing = ResolveFacingDirection();
+            if (!placementSystem.TryFindBestPlacementCell(
+                    facing,
+                    out var cell,
+                    out var failure))
+            {
+                PublishIfChanged(
+                    BuildingPlacementState.Invalid,
+                    ToReasonId(failure),
+                    cell);
+                return;
+            }
+
+            // 마우스 좌클릭과 동일한 확정 경로(성공 시 비용 1회·선택 해제 이벤트).
+            placementSystem.TryPlaceAt(cell);
+        }
+
+        private float ResolveFacingDirection()
+        {
+            if (playerMovement == null)
+            {
+                playerMovement = FindFirstObjectByType<PlayerMovement>();
+            }
+
+            return playerMovement != null ? playerMovement.FacingDirection : 1f;
         }
 
         public void BindWallet(IResourceWallet resourceWallet, GameDataCatalog dataCatalog)

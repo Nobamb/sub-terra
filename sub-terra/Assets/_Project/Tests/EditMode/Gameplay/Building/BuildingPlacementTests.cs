@@ -99,6 +99,106 @@ namespace SubTerra.Gameplay.Building.Tests
         }
 
         [Test]
+        public void RankPlacementPreference_UnderFeetThenFacingThenDownSide()
+        {
+            var player = Vector3Int.zero;
+            Assert.That(
+                BuildingPlacementSystem.RankPlacementPreference(Vector3Int.zero, player, 1),
+                Is.EqualTo(0));
+            Assert.That(
+                BuildingPlacementSystem.RankPlacementPreference(new Vector3Int(0, -1, 0), player, 1),
+                Is.EqualTo(1));
+            Assert.That(
+                BuildingPlacementSystem.RankPlacementPreference(new Vector3Int(1, 0, 0), player, 1),
+                Is.EqualTo(2));
+            Assert.That(
+                BuildingPlacementSystem.RankPlacementPreference(new Vector3Int(1, -1, 0), player, 1),
+                Is.EqualTo(3));
+            Assert.That(
+                BuildingPlacementSystem.RankPlacementPreference(new Vector3Int(-1, -1, 0), player, 1),
+                Is.EqualTo(4));
+            Assert.That(
+                BuildingPlacementSystem.RankPlacementPreference(new Vector3Int(-1, 0, 0), player, 1),
+                Is.EqualTo(5));
+        }
+
+        [Test]
+        public void TryFindBestPlacementCell_PrefersNearestWithinRange()
+        {
+            BuildingPlacementActivity.ResetForTests();
+            var setup = CreateSetup(maximumDistance: 6f, areaSize: new Vector2(20f, 12f));
+            try
+            {
+                // 플레이어 원점 기준: 전방 2칸만 지면·빈 칸 확보, 발밑(0,0)은 지면 없음.
+                setup.Terrain.SetTile(new Vector3Int(2, -1, 0), setup.Tile);
+                setup.Terrain.SetTile(new Vector3Int(3, -1, 0), setup.Tile);
+
+                Assert.That(
+                    setup.Placement.TryFindBestPlacementCell(1f, out var best, out var failure),
+                    Is.True,
+                    failure.ToString());
+                Assert.That(failure, Is.EqualTo(BuildingPlacementFailure.None));
+                Assert.That(best, Is.EqualTo(new Vector3Int(2, 0, 0)));
+            }
+            finally
+            {
+                setup.Dispose();
+                BuildingPlacementActivity.ResetForTests();
+            }
+        }
+
+        [Test]
+        public void TryPlaceNearest_SpendsOnceAndClearsSelection()
+        {
+            BuildingPlacementActivity.ResetForTests();
+            var setup = CreateSetup(maximumDistance: 6f, areaSize: new Vector2(20f, 12f));
+            try
+            {
+                setup.Terrain.SetTile(new Vector3Int(0, -1, 0), setup.Tile);
+                setup.Terrain.SetTile(new Vector3Int(1, -1, 0), setup.Tile);
+
+                var result = setup.Placement.TryPlaceNearest(1f);
+                Assert.That(result.IsSuccess, Is.True, result.Failure.ToString());
+                Assert.That(setup.Wallet.SpendCount, Is.EqualTo(1));
+                Assert.That(setup.Placement.Selection, Is.Null);
+                Assert.That(BuildingPlacementActivity.IsActive, Is.False);
+
+                // 두 번째 Enter는 선택 없음.
+                var second = setup.Placement.TryPlaceNearest(1f);
+                Assert.That(second.IsSuccess, Is.False);
+                Assert.That(second.Failure, Is.EqualTo(BuildingPlacementFailure.NoSelection));
+                Assert.That(setup.Wallet.SpendCount, Is.EqualTo(1));
+            }
+            finally
+            {
+                setup.Dispose();
+                BuildingPlacementActivity.ResetForTests();
+            }
+        }
+
+        [Test]
+        public void TryFindBestPlacementCell_NoCandidate_ReportsReasonWithoutPlacing()
+        {
+            BuildingPlacementActivity.ResetForTests();
+            var setup = CreateSetup(maximumDistance: 6f, areaSize: new Vector2(20f, 12f));
+            try
+            {
+                // 지면 타일 없음 → MissingGround 계열 실패.
+                Assert.That(
+                    setup.Placement.TryFindBestPlacementCell(1f, out _, out var failure),
+                    Is.False);
+                Assert.That(failure, Is.EqualTo(BuildingPlacementFailure.MissingGround));
+                Assert.That(setup.Wallet.SpendCount, Is.EqualTo(0));
+                Assert.That(setup.Placement.Selection, Is.Not.Null);
+            }
+            finally
+            {
+                setup.Dispose();
+                BuildingPlacementActivity.ResetForTests();
+            }
+        }
+
+        [Test]
         public void PlacedSupport_ReducesRiskOnlyInsideItsRadius()
         {
             var setup = CreateSetup(maximumDistance: 10f, areaSize: new Vector2(20f, 8f));
@@ -249,6 +349,8 @@ namespace SubTerra.Gameplay.Building.Tests
 
             public void Dispose()
             {
+                Placement?.ClearSelection();
+                BuildingPlacementActivity.ResetForTests();
                 Object.DestroyImmediate(Host);
                 Object.DestroyImmediate(prefab);
                 Object.DestroyImmediate(definition);
