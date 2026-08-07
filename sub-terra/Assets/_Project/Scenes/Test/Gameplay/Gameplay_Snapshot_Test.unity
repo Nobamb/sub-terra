@@ -479,6 +479,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: SubTerra.Gameplay.Structural::SubTerra.Gameplay.Structural.StructuralIntegritySystem
   foregroundTilemap: {fileID: 475071509}
   scanRadius: 3
+  localRiskRadius: 1
   maximumCollapseTiles: 3
   miningImpactMultiplier: 100
   supports: []

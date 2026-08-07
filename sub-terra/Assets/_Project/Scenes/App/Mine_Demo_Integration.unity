@@ -1842,6 +1842,7 @@ MonoBehaviour:
   crackOverlay: {fileID: 279480567}
   riskSettings: {fileID: 11400000, guid: 92a67ceac25edd34fb998cda1a88d6df, type: 2}
   scanRadius: 3
+  localRiskRadius: 1
   maximumCollapseTiles: 3
   miningImpactMultiplier: 100
   worldSeed: 20260731
