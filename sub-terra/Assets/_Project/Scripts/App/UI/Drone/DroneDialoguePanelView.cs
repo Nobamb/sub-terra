@@ -3,26 +3,53 @@ using SubTerra.App.Drone;
 using SubTerra.App.Drone.Dialogue;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace SubTerra.App.UI.Drone
 {
     /// <summary>
     /// Digger-Bot 창: 템플릿 대사와 (통합된) 추천 행동·근거를 함께 표시한다.
-    /// 우측 단독 드론 추천 패널 대신 이 창으로 합친다.
+    /// 드론 머리 위 말풍선보다 큰 글자로 같은 대사를 하단 중앙에 보여 준다.
     /// </summary>
     public sealed class DroneDialoguePanelView : MonoBehaviour, IDroneDialogueView, IDroneReasonView
     {
+        /// <summary>하단 digger-bot 창 대사 기본 글자 크기(말풍선보다 크게).</summary>
+        public const float PanelDialogueFontSize = 26f;
+
         [SerializeField] private GameObject panelRoot;
         [SerializeField] private TMP_Text dialogueText;
         [SerializeField] private TMP_Text actionText;
         [SerializeField] private TMP_Text reasonText;
+        [SerializeField] private Button closeButton;
+
+        /// <summary>닫기(X) 버튼. HudPanelChromeController가 배선한다.</summary>
+        public Button CloseButton => closeButton;
+
+        public bool IsVisible
+        {
+            get
+            {
+                var root = panelRoot != null ? panelRoot : gameObject;
+                return root != null && root.activeSelf;
+            }
+        }
 
         public void SetDialogue(DroneDialogueResult dialogue)
         {
-            if (dialogueText != null && dialogue != null && !dialogue.IsSuppressed)
+            // 쿨다운으로 억제된 결과는 기존 문구를 유지한다(창을 열었을 때 빈 칸 방지).
+            if (dialogueText == null || dialogue == null || dialogue.IsSuppressed)
             {
-                dialogueText.text = dialogue.Text;
+                return;
             }
+
+            if (string.IsNullOrWhiteSpace(dialogue.Text))
+            {
+                return;
+            }
+
+            dialogueText.text = dialogue.Text;
+            // 말풍선보다 큰 digger-bot 창 전용 글자 크기 유지.
+            dialogueText.fontSize = PanelDialogueFontSize;
         }
 
         public void SetAnalysis(DroneAnalysisResult analysis)

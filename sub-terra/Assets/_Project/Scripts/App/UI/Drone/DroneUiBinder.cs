@@ -141,6 +141,11 @@ namespace SubTerra.App.UI.Drone
                 dialogueView = GetComponentInChildren<DroneDialoguePanelView>(true);
             }
 
+            if (worldDialogueSocket == null)
+            {
+                worldDialogueSocket = FindFirstObjectByType<DroneDialogueSocket>();
+            }
+
             if (reasonView == null)
             {
                 reasonView = GetComponentInChildren<DroneReasonPanelView>(true);
@@ -148,6 +153,7 @@ namespace SubTerra.App.UI.Drone
 
             // 통합 레이아웃에서는 별도 추천 패널 없이 대화 창이 근거를 함께 표시한다.
             var activeReason = ResolveReasonView();
+            // world socket이 늦게 연결되면 Presenter를 다시 만들어 말풍선 경로를 복구한다.
             if (presenter == null)
             {
                 presenter = new DroneRecommendationPresenter(

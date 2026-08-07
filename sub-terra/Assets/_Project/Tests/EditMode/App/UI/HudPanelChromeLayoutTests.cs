@@ -101,14 +101,13 @@ namespace SubTerra.App.Tests.UI
             Assert.That(chrome, Is.Not.Null);
             Assert.That(chrome.HasRequiredReferences(), Is.True);
 
-            // prompt-B 32: 우측 중앙 시설/가이드 재열기 버튼 제거, 드론만 유지.
+            // prompt-B 32/34: 우측 중앙 재열기 버튼 제거. digger는 Tab/드론 클릭만 사용.
             var openBuilding = canvas.transform.Find("OpenBuildingMenuButton");
             var openDigger = canvas.transform.Find("OpenDiggerBotButton");
             var openGuide = canvas.transform.Find("OpenGameGuideButton");
             Assert.That(openBuilding, Is.Null);
             Assert.That(openGuide, Is.Null);
-            Assert.That(openDigger, Is.Not.Null);
-            Assert.That(openDigger.GetComponent<Button>(), Is.Not.Null);
+            Assert.That(openDigger, Is.Null);
 
             // prompt-B 32: 좌측 목록 텍스트 숨김, 패널 폭 480(+20), I키용 인벤토리.
             var listText = building.Find("PanelRoot/BuildingListText")
@@ -200,7 +199,8 @@ namespace SubTerra.App.Tests.UI
                 chrome.CloseDiggerBot();
                 Assert.That(chrome.IsDiggerBotOpen, Is.False);
                 Assert.That(diggerRoot.activeSelf, Is.False);
-                Assert.That(openDigger.activeSelf, Is.True);
+                // 드론 재오픈 버튼은 더 이상 쓰지 않는다.
+                Assert.That(openDigger.activeSelf, Is.False);
 
                 chrome.OpenDiggerBot();
                 Assert.That(chrome.IsDiggerBotOpen, Is.True);

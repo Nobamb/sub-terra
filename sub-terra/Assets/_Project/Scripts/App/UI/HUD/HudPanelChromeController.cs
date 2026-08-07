@@ -2,6 +2,7 @@ using SubTerra.App.UI.Building;
 using SubTerra.App.UI.Drone;
 using SubTerra.App.UI.Inventory;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
@@ -9,9 +10,8 @@ namespace SubTerra.App.UI.HUD
 {
     /// <summary>
     /// 시설 건설·Digger-Bot·게임 가이드·인벤토리 패널의 닫기/토글과
-    /// 가이드에 명시된 단축키(B/I/G)를 담당한다.
-    /// prompt-B 32: 우측 중앙 재열기 버튼 없이, 우측 상단 단축키·X 닫기만 사용한다.
-    /// 레이아웃 수치 자체는 에디터 빌더가 Prefab/Scene에 적용한다.
+    /// 가이드에 명시된 단축키(B/I/G/Tab)를 담당한다.
+    /// prompt-B 34: Tab 또는 드론 클릭으로 digger-bot 창 토글, X로 닫기.
     /// </summary>
     public sealed class HudPanelChromeController : MonoBehaviour
     {
@@ -25,7 +25,13 @@ namespace SubTerra.App.UI.HUD
         [SerializeField] private DroneDialoguePanelView diggerBotView;
         [SerializeField] private GameObject diggerBotRoot;
         [SerializeField] private Button diggerCloseButton;
+        // 레거시 필드: 드론 재오픈 버튼은 사용하지 않는다(항상 숨김).
         [SerializeField] private Button diggerOpenButton;
+        // Tab/드론 클릭 토글 대상(DiggerBot_Runtime).
+        [SerializeField] private Transform diggerBotWorldTarget;
+        [SerializeField, Min(0.2f)] private float diggerClickRadius = 1.25f;
+        // DroneUiBinder가 붙은 합성 루트. 창을 닫아도 분석·말풍선이 계속 동작하도록 항상 활성 유지.
+        [SerializeField] private GameObject diggerHostRoot;
 
         [SerializeField] private GameGuidePanelView gameGuideView;
         [SerializeField] private GameObject gameGuideRoot;
@@ -40,7 +46,8 @@ namespace SubTerra.App.UI.HUD
         [SerializeField] private Button inventoryOpenButton;
 
         [SerializeField] private bool buildingMenuOpen = true;
-        [SerializeField] private bool diggerBotOpen = true;
+        // digger-bot 창은 시작 시 닫힌 상태. Tab/드론 클릭으로 연다.
+        [SerializeField] private bool diggerBotOpen;
         [SerializeField] private bool gameGuideOpen;
         // prompt-B 33-1: 시작 시 인벤토리 창은 닫힌 상태.
         [SerializeField] private bool inventoryPanelOpen;
@@ -52,6 +59,8 @@ namespace SubTerra.App.UI.HUD
 
         private void Awake()
         {
+            ResolveDiggerWorldTargetIfNeeded();
+            EnsureDiggerHostActive();
             WireButtons();
             ApplyBuildingMenuVisible(buildingMenuOpen, cancelSelection: false);
             ApplyDiggerBotVisible(diggerBotOpen);
@@ -61,6 +70,8 @@ namespace SubTerra.App.UI.HUD
 
         private void OnEnable()
         {
+            ResolveDiggerWorldTargetIfNeeded();
+            EnsureDiggerHostActive();
             WireButtons();
         }
 
@@ -71,27 +82,33 @@ namespace SubTerra.App.UI.HUD
 
         private void Update()
         {
-            // 게임 가이드 조작법: B=시설 건설, I=화물/인벤토리, G=게임 가이드
+            // 게임 가이드 조작법: B=시설 건설, I=화물/인벤토리, G=게임 가이드, Tab=Digger-Bot
             var keyboard = Keyboard.current;
-            if (keyboard == null)
+            if (keyboard != null)
             {
-                return;
+                if (keyboard.bKey.wasPressedThisFrame)
+                {
+                    ToggleBuildingMenu();
+                }
+
+                if (keyboard.iKey.wasPressedThisFrame)
+                {
+                    ToggleInventoryPanel();
+                }
+
+                if (keyboard.gKey.wasPressedThisFrame)
+                {
+                    ToggleGameGuide();
+                }
+
+                // prompt-B 34: Tab 키로 digger-bot 창 활성/비활성.
+                if (keyboard.tabKey.wasPressedThisFrame)
+                {
+                    ToggleDiggerBot();
+                }
             }
 
-            if (keyboard.bKey.wasPressedThisFrame)
-            {
-                ToggleBuildingMenu();
-            }
-
-            if (keyboard.iKey.wasPressedThisFrame)
-            {
-                ToggleInventoryPanel();
-            }
-
-            if (keyboard.gKey.wasPressedThisFrame)
-            {
-                ToggleGameGuide();
-            }
+            TryToggleDiggerBotByWorldClick();
         }
 
         /// <summary>시설 건설 패널을 닫는다. 진행 중 Preview는 취소한다.</summary>
@@ -171,10 +188,9 @@ namespace SubTerra.App.UI.HUD
 
         public bool HasRequiredReferences()
         {
-            // prompt-B 32: 우측 중앙 재열기 버튼은 필수가 아니다.
+            // digger 재오픈 버튼은 더 이상 필수가 아니다(Tab/드론 클릭만 사용).
             return buildingMenuRoot != null
                 && diggerBotRoot != null
-                && diggerOpenButton != null
                 && gameGuideRoot != null;
         }
 
@@ -199,10 +215,11 @@ namespace SubTerra.App.UI.HUD
                 diggerCloseButton.onClick.AddListener(CloseDiggerBot);
             }
 
+            // 드론 재오픈 버튼은 제거 대상. 남아 있어도 숨기고 연결하지 않는다.
             if (diggerOpenButton != null)
             {
                 diggerOpenButton.onClick.RemoveListener(OpenDiggerBot);
-                diggerOpenButton.onClick.AddListener(OpenDiggerBot);
+                diggerOpenButton.gameObject.SetActive(false);
             }
 
             if (gameGuideCloseButton != null)
@@ -304,19 +321,135 @@ namespace SubTerra.App.UI.HUD
         {
             diggerBotOpen = visible;
 
+            // 분석/말풍선용 호스트는 절대 끄지 않는다.
+            EnsureDiggerHostActive();
+
+            // digger-bot 창 본체만 토글한다.
+            if (diggerBotRoot != null)
+            {
+                diggerBotRoot.SetActive(visible);
+                if (visible)
+                {
+                    diggerBotRoot.transform.SetAsLastSibling();
+                    // 부모 레이아웃 안에서도 최상단으로 올려 가려지지 않게 한다.
+                    if (diggerBotRoot.transform.parent != null)
+                    {
+                        diggerBotRoot.transform.parent.SetAsLastSibling();
+                    }
+                }
+            }
+
             if (diggerBotView != null)
             {
                 diggerBotView.SetVisible(visible);
             }
-            else if (diggerBotRoot != null)
-            {
-                diggerBotRoot.SetActive(visible);
-            }
 
+            // 드론 재오픈 버튼은 사용하지 않는다.
             if (diggerOpenButton != null)
             {
-                diggerOpenButton.gameObject.SetActive(!visible);
+                diggerOpenButton.gameObject.SetActive(false);
             }
+        }
+
+        /// <summary>
+        /// DiggerBotPanel(호스트)이 PanelToggle 등으로 꺼져 있으면
+        /// 말풍선 분석 Binder까지 함께 죽어 복구한다.
+        /// </summary>
+        private void EnsureDiggerHostActive()
+        {
+            if (diggerHostRoot == null)
+            {
+                // 호스트 미지정 시 digger 창의 부모(보통 DiggerBotPanel)를 호스트로 본다.
+                if (diggerBotRoot != null && diggerBotRoot.transform.parent != null)
+                {
+                    diggerHostRoot = diggerBotRoot.transform.parent.gameObject;
+                }
+            }
+
+            if (diggerHostRoot != null && !diggerHostRoot.activeSelf)
+            {
+                diggerHostRoot.SetActive(true);
+            }
+        }
+
+        /// <summary>
+        /// UI 위를 클릭한 경우가 아니면, 월드 드론 근처 좌클릭으로 digger-bot 창을 토글한다.
+        /// </summary>
+        private void TryToggleDiggerBotByWorldClick()
+        {
+            var mouse = Mouse.current;
+            if (mouse == null || !mouse.leftButton.wasPressedThisFrame)
+            {
+                return;
+            }
+
+            if (IsPointerOverUi())
+            {
+                return;
+            }
+
+            ResolveDiggerWorldTargetIfNeeded();
+            if (diggerBotWorldTarget == null)
+            {
+                return;
+            }
+
+            var camera = Camera.main;
+            if (camera == null)
+            {
+                return;
+            }
+
+            var screen = mouse.position.ReadValue();
+            var world = camera.ScreenToWorldPoint(new Vector3(screen.x, screen.y, 0f));
+            world.z = diggerBotWorldTarget.position.z;
+            var distance = Vector2.Distance(world, diggerBotWorldTarget.position);
+            if (distance <= diggerClickRadius)
+            {
+                ToggleDiggerBot();
+            }
+        }
+
+        private void ResolveDiggerWorldTargetIfNeeded()
+        {
+            if (diggerBotWorldTarget != null)
+            {
+                return;
+            }
+
+            var runtime = GameObject.Find("DiggerBot_Runtime");
+            if (runtime != null)
+            {
+                diggerBotWorldTarget = runtime.transform;
+            }
+        }
+
+        private static bool IsPointerOverUi()
+        {
+            if (EventSystem.current == null)
+            {
+                return false;
+            }
+
+            // 마우스/터치가 UI 위에 있으면 월드 클릭 토글을 하지 않는다.
+            if (EventSystem.current.IsPointerOverGameObject())
+            {
+                return true;
+            }
+
+            var mouse = Mouse.current;
+            if (mouse == null)
+            {
+                return false;
+            }
+
+            var eventData = new PointerEventData(EventSystem.current)
+            {
+                position = mouse.position.ReadValue()
+            };
+            var results = new System.Collections.Generic.List<RaycastResult>();
+            EventSystem.current.RaycastAll(eventData, results);
+            return results.Count > 0;
         }
 
         private void ApplyGameGuideVisible(bool visible)

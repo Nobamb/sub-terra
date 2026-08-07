@@ -36,7 +36,8 @@ namespace SubTerra.App.Tests.UI
             Assert.That(canvas.transform.Find("OpenGameGuideButton"), Is.Null);
             Assert.That(canvas.transform.Find("OpenBuildingMenuButton"), Is.Null);
             // 드론 재열기는 유지 가능.
-            Assert.That(canvas.transform.Find("OpenDiggerBotButton"), Is.Not.Null);
+            // prompt-B 34: 드론 재오픈 버튼 제거. Tab/드론 클릭으로 digger-bot 창 토글.
+            Assert.That(canvas.transform.Find("OpenDiggerBotButton"), Is.Null);
         }
 
         [Test]

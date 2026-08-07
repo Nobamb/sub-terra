@@ -20,6 +20,9 @@ namespace SubTerra.App.UI.Drone
         private IDialogueGenerator cloudDialogueGenerator;
         private CancellationTokenSource bindingCancellation;
         private int bindingVersion;
+        private string lastShownTemplateId = string.Empty;
+        private DroneAction lastShownAction;
+        private bool hasShownDialogue;
 
         public bool IsBound =>
             contextProvider != null && analysisService != null && dialogueGenerator != null;
@@ -62,11 +65,13 @@ namespace SubTerra.App.UI.Drone
             cloudDialogueGenerator = cloudGenerator;
             bindingCancellation = new CancellationTokenSource();
 
-            var visible = IsBound;
-            dialogueView?.SetVisible(visible);
-            worldDialogueView?.SetVisible(visible);
-            reasonView?.SetVisible(visible);
-            if (visible)
+            // digger-bot 하단 창 가시성은 HudPanelChromeController(Tab/클릭/X)가 소유한다.
+            // Presenter는 머리 위 말풍선(World)과 창 텍스트 갱신을 담당한다.
+            worldDialogueView?.SetVisible(IsBound);
+            lastShownTemplateId = string.Empty;
+            lastShownAction = default;
+            hasShownDialogue = false;
+            if (IsBound)
             {
                 Refresh();
             }
@@ -82,9 +87,10 @@ namespace SubTerra.App.UI.Drone
             analysisService = null;
             dialogueGenerator = null;
             cloudDialogueGenerator = null;
-            dialogueView?.SetVisible(false);
+            lastShownTemplateId = string.Empty;
+            lastShownAction = default;
+            hasShownDialogue = false;
             worldDialogueView?.SetVisible(false);
-            reasonView?.SetVisible(false);
         }
 
         public DroneAnalysisResult Refresh()
@@ -97,9 +103,23 @@ namespace SubTerra.App.UI.Drone
             var analysis = AnalyzeCurrentContext();
             reasonView?.SetAnalysis(analysis);
 
-            var dialogue = dialogueGenerator.Generate(analysis);
+            // 상황(추천 행동·템플릿)이 바뀌면 쿨다운을 무시하고 말풍선/창 대사를 즉시 갱신한다.
+            var situationChanged = analysis?.Dialogue != null
+                && (!hasShownDialogue
+                    || !string.Equals(
+                        analysis.Dialogue.TemplateId,
+                        lastShownTemplateId,
+                        System.StringComparison.Ordinal)
+                    || analysis.RecommendedAction != lastShownAction);
+
+            var dialogue = dialogueGenerator.Generate(analysis, situationChanged);
             if (!dialogue.IsSuppressed)
             {
+                lastShownTemplateId = dialogue.TemplateId ?? string.Empty;
+                lastShownAction = analysis != null
+                    ? analysis.RecommendedAction
+                    : default;
+                hasShownDialogue = true;
                 dialogueView?.SetDialogue(dialogue);
                 worldDialogueView?.SetDialogue(dialogue);
             }

@@ -51,11 +51,23 @@ namespace SubTerra.App.UI.Drone
                 return;
             }
 
+            if (string.IsNullOrWhiteSpace(dialogue.Text))
+            {
+                return;
+            }
+
             dialogueText.text = dialogue.Text;
             hasDialogue = true;
+            // 바인딩 전이라도 대사가 오면 표시 가능하게 둔다(Bind SetVisible 레이스 방지).
+            if (!boundVisible)
+            {
+                boundVisible = true;
+            }
+
             visibleUntil = Time.unscaledTime
                 + (dialogue.IsUrgent ? urgentVisibleSeconds : regularVisibleSeconds);
-            SetCanvasVisible(boundVisible);
+            ApplyNonBlockingPresentation();
+            SetCanvasVisible(true);
             RefreshPosition();
         }
 
