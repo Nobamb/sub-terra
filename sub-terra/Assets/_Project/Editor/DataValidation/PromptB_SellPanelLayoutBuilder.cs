@@ -228,10 +228,15 @@ namespace SubTerra.App.Editor.DataValidation
 
             MoveLegacySellChildren(economy, card);
 
-            BuildEconomySellInternals(economy, card, openSell, modalCanvasGroup);
-
             // 판매 카드가 모달로 빠진 기본 화면의 빈 공간을 사용한다.
             var progression = root.GetComponentsInChildren<ProgressionPanelView>(true).FirstOrDefault();
+            BuildEconomySellInternals(
+                economy,
+                card,
+                openSell,
+                modalCanvasGroup,
+                progression != null ? progression.gameObject : null);
+
             if (progression != null)
             {
                 var panel = progression.GetComponent<RectTransform>();
@@ -302,7 +307,8 @@ namespace SubTerra.App.Editor.DataValidation
             Transform modalRoot,
             Transform card,
             Button openSell,
-            CanvasGroup modalCanvasGroup)
+            CanvasGroup modalCanvasGroup,
+            GameObject levelSummaryRoot)
         {
             var title = EnsureTmp(card, "SellTitle", new Vector2(-205f, 222f), new Vector2(300f, 34f), 22f, "자원 판매");
             var credits = EnsureTmp(card, "CreditsLabel", new Vector2(190f, 222f), new Vector2(230f, 34f), 17f, "골드 0");
@@ -413,7 +419,7 @@ namespace SubTerra.App.Editor.DataValidation
             };
 
             view.EditorBind(ecoStatus, ecoDetail, null, busyControls);
-            view.EditorBindModal(openSell, close, modalCanvasGroup);
+            view.EditorBindModal(openSell, close, modalCanvasGroup, levelSummaryRoot);
             view.EditorBindSell(
                 title,
                 credits,

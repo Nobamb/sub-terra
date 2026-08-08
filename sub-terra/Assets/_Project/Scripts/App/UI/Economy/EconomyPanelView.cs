@@ -20,6 +20,7 @@ namespace SubTerra.App.UI.Economy
         [Header("Sell modal")]
         [SerializeField] private Button openSellButton;
         [SerializeField] private Button closeSellButton;
+        [SerializeField] private GameObject levelSummaryRoot;
 
         [Header("Sell panel")]
         [SerializeField] private TMP_Text titleText;
@@ -39,6 +40,8 @@ namespace SubTerra.App.UI.Economy
         private bool busy;
         private bool sellSelectedEnabled;
         private bool sellAllEnabled;
+        private bool levelSummaryVisibilityCaptured;
+        private bool levelSummaryWasActive;
 
         /// <summary>행 선택 / 수량 / 판매 버튼을 Presenter에 연결할 때 사용.</summary>
         public event Action<string> MineralRowSelected;
@@ -105,6 +108,11 @@ namespace SubTerra.App.UI.Economy
             {
                 // 레벨 요약 패널이 활성화되며 sibling 순서를 바꿔도 판매 모달이 항상 위를 덮는다.
                 transform.SetAsLastSibling();
+                HideLevelSummary();
+            }
+            else
+            {
+                RestoreLevelSummary();
             }
 
             if (canvasGroup != null)
@@ -264,6 +272,29 @@ namespace SubTerra.App.UI.Economy
         private void OnSellSelected() => SellSelectedClicked?.Invoke();
         private void OnSellAll() => SellAllClicked?.Invoke();
 
+        private void HideLevelSummary()
+        {
+            if (levelSummaryRoot == null || levelSummaryVisibilityCaptured)
+            {
+                return;
+            }
+
+            levelSummaryWasActive = levelSummaryRoot.activeSelf;
+            levelSummaryVisibilityCaptured = true;
+            levelSummaryRoot.SetActive(false);
+        }
+
+        private void RestoreLevelSummary()
+        {
+            if (levelSummaryRoot == null || !levelSummaryVisibilityCaptured)
+            {
+                return;
+            }
+
+            levelSummaryRoot.SetActive(levelSummaryWasActive);
+            levelSummaryVisibilityCaptured = false;
+        }
+
         private void EnsureListContent()
         {
             if (sellListContent != null)
@@ -386,11 +417,16 @@ namespace SubTerra.App.UI.Economy
             sellAllButton = sellAll;
         }
 
-        public void EditorBindModal(Button openButton, Button closeButton, CanvasGroup group)
+        public void EditorBindModal(
+            Button openButton,
+            Button closeButton,
+            CanvasGroup group,
+            GameObject levelSummary)
         {
             openSellButton = openButton;
             closeSellButton = closeButton;
             canvasGroup = group;
+            levelSummaryRoot = levelSummary;
         }
 #endif
     }

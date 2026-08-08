@@ -186,11 +186,15 @@ namespace SubTerra.App.Tests.UI
                 Assert.That(group.interactable, Is.True);
                 Assert.That(group.blocksRaycasts, Is.True);
                 Assert.That(economy.GetSiblingIndex(), Is.EqualTo(economy.parent.childCount - 1));
+                Assert.That(progression.gameObject.activeSelf, Is.False,
+                    "level summary must be hidden while the sell modal is open");
 
                 close.onClick.Invoke();
                 Assert.That(group.alpha, Is.Zero);
                 Assert.That(group.interactable, Is.False);
                 Assert.That(group.blocksRaycasts, Is.False);
+                Assert.That(progression.gameObject.activeSelf, Is.True,
+                    "level summary must be restored after the sell modal closes");
             }
             finally
             {

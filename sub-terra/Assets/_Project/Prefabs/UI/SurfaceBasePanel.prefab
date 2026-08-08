@@ -13434,6 +13434,7 @@ MonoBehaviour:
   - {fileID: 419235875772830657}
   openSellButton: {fileID: 4759269449210534035}
   closeSellButton: {fileID: 5677278438350466782}
+  levelSummaryRoot: {fileID: 3952869952083863695}
   titleText: {fileID: 3943694715626290472}
   creditsLabelText: {fileID: 6118232668924799788}
   sellListContent: {fileID: 2120006323965971952}
