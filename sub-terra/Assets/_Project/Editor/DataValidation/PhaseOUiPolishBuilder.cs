@@ -116,7 +116,11 @@ namespace SubTerra.App.Editor.DataValidation
             // Never ClearAllTiles or repaint Rock fill — only overlay tutorial markers + polish.
             if (tiles != null && tiles.Length >= 6)
             {
-                tilemap.SetTile(new Vector3Int(-8, -2, 0), tiles[1]); // Copper
+                var elevatorProtectedBlock = AssetDatabase.LoadAssetAtPath<TileBase>(
+                    "Assets/_Project/Tilemaps/DemoWorld/ElevatorProtectedBlock.asset");
+                tilemap.SetTile(new Vector3Int(-8, -2, 0), elevatorProtectedBlock);
+                tilemap.SetTile(new Vector3Int(-7, -2, 0), elevatorProtectedBlock);
+                tilemap.SetTile(new Vector3Int(-6, -2, 0), elevatorProtectedBlock);
                 tilemap.SetTile(new Vector3Int(-7, -3, 0), tiles[1]);
                 tilemap.SetTile(new Vector3Int(-3, -3, 0), tiles[2]); // Iron
                 tilemap.SetTile(new Vector3Int(2, -5, 0), tiles[3]); // Lithium

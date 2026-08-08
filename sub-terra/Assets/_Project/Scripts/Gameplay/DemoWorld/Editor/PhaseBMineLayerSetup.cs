@@ -83,6 +83,7 @@ namespace SubTerra.Gameplay.DemoWorld.Editor
                 distribution,
                 LoadTile("Rock"),
                 boundary,
+                LoadTile("ElevatorProtectedBlock"),
                 LoadTile("Copper"),
                 LoadTile("Iron"),
                 LoadTile("Lithium"),
@@ -121,7 +122,10 @@ namespace SubTerra.Gameplay.DemoWorld.Editor
                 return;
             }
 
-            tilemap.SetTile(new Vector3Int(-8, -2, 0), LoadTile("Copper"));
+            TileBase elevatorProtectedBlock = LoadTile("ElevatorProtectedBlock");
+            tilemap.SetTile(new Vector3Int(-8, -2, 0), elevatorProtectedBlock);
+            tilemap.SetTile(new Vector3Int(-7, -2, 0), elevatorProtectedBlock);
+            tilemap.SetTile(new Vector3Int(-6, -2, 0), elevatorProtectedBlock);
             tilemap.SetTile(new Vector3Int(-7, -3, 0), LoadTile("Copper"));
             tilemap.SetTile(new Vector3Int(-3, -3, 0), LoadTile("Iron"));
             tilemap.SetTile(new Vector3Int(2, -5, 0), LoadTile("Lithium"));

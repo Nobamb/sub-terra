@@ -59,6 +59,7 @@ namespace SubTerra.Gameplay.Mining
         [SerializeField] private MonoBehaviour miningTransactionBehaviour;
         [SerializeField] private MonoBehaviour upgradeEffectProviderBehaviour;
         [SerializeField] private Sprite resourceDropSprite;
+        [SerializeField] private Vector3Int[] protectedCells = Array.Empty<Vector3Int>();
         [SerializeField, Min(0.1f)] private float defaultMiningDuration = 1f;
         [SerializeField, Min(0.1f)] private float resourceDropSize = 0.35f;
 
@@ -117,6 +118,11 @@ namespace SubTerra.Gameplay.Mining
                 return Fail(HasMiningPower
                     ? MiningFailureReason.DependencyMissing
                     : MiningFailureReason.InsufficientEnergy);
+            }
+
+            if (Array.IndexOf(protectedCells, cell) >= 0)
+            {
+                return Fail(MiningFailureReason.NotMineable);
             }
 
             TileBase tile = foregroundTilemap.GetTile(cell);

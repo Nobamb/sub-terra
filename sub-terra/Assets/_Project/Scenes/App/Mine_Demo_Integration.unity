@@ -1943,6 +1943,10 @@ MonoBehaviour:
   miningTransactionBehaviour: {fileID: 976616832}
   upgradeEffectProviderBehaviour: {fileID: 0}
   resourceDropSprite: {fileID: 0}
+  protectedCells:
+  - {x: -8, y: -2, z: 0}
+  - {x: -7, y: -2, z: 0}
+  - {x: -6, y: -2, z: 0}
   defaultMiningDuration: 1
   resourceDropSize: 0.35
 --- !u!114 &279480561
@@ -1987,6 +1991,9 @@ MonoBehaviour:
   - {fileID: 11400000, guid: e006b8c9f8b501447b72e1ab2cce68b7, type: 2}
   protectedCells:
   - {x: -8, y: 0, z: 0}
+  - {x: -8, y: -2, z: 0}
+  - {x: -7, y: -2, z: 0}
+  - {x: -6, y: -2, z: 0}
   supports: []
 --- !u!114 &279480563
 MonoBehaviour:
@@ -2117,6 +2124,7 @@ MonoBehaviour:
   distribution: {fileID: 11400000, guid: d9e5165ac181c984cb41200485bed2df, type: 2}
   rockTile: {fileID: 11400000, guid: 82bd8373d0f909f4e87880622de4753a, type: 2}
   boundaryRockTile: {fileID: 11400000, guid: e006b8c9f8b501447b72e1ab2cce68b7, type: 2}
+  elevatorProtectedBlockTile: {fileID: 11400000, guid: 7e03d6a10a28467291c18d5ec0b4c3fa, type: 2}
   copperTile: {fileID: 11400000, guid: 6843c6080b286e64b90f9a571d2fa5b9, type: 2}
   ironTile: {fileID: 11400000, guid: 1f504e882a2b6b842b0d2ba5e934ac75, type: 2}
   lithiumTile: {fileID: 11400000, guid: ffaecd3dfbdc9984493750d7dd2ea533, type: 2}
