@@ -58,6 +58,14 @@ namespace SubTerra.App.Tests.Economy
             }
 
             public void SetVisible(bool visible) { }
+
+            public void SetSellRows(System.Collections.Generic.IReadOnlyList<SellMineralRowReadModel> rows) { }
+            public void SetSelectedMineral(string mineralId, int sellQuantity, int owned, int unitPrice) { }
+            public void SetSellQuantityControls(int sellQuantity, int min, int max) { }
+            public void SetPreviewCredits(int previewCredits, string previewLabel) { }
+            public void SetCreditsLabel(int credits) { }
+            public void SetSellActionsEnabled(bool sellSelected, bool sellAll) { }
+            public void SetEmptySellState(bool isEmpty, string emptyMessage) { }
         }
 
         private sealed class CallbackPlacement : IBuildingPlacementGate

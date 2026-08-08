@@ -18,6 +18,8 @@ Record the package SHA-256 and `BUILD_MANIFEST.json` before testing. Run the sam
 1. Start a new game from Bootstrap/MainMenu.
 2. Complete the documented 40m demo route using normal input only.
 3. Return normally, sell/upgrade at Surface Base, then exit the process fully.
+   - **Surface sell (prompt-B 39)**: Economy panel lists owned minerals only; select row → qty default 1 → preview credits = unit price × qty; Sell Selected reduces stack and increases gold; Sell All sells every positive stack under one busy span. Mine inventory must **not** expose sell buttons.
+   - After layout refresh: menu `SubTerra/UI/Build Prompt-B Sell Panel Layout (SurfaceBase only)` if sell list/qty/action controls are missing under EconomyPanel.
 4. Relaunch the same package and use Continue; verify world changes, facilities, progress, cargo settlement, and checkpoint state restore.
 5. Check `%USERPROFILE%/AppData/LocalLow/DefaultCompany/sub-terra/Player.log` for new fatal errors.
 6. Start with a temporary save directory fixture and verify migration/corrupt-save recovery before using a real player save.

@@ -121,6 +121,7 @@ namespace SubTerra.App.Tests.Economy
             var text = File.ReadAllText(presenterPath);
 
             // State/Inventory 직접 쓰기 API 호출 금지 — 서비스 호출만.
+            // 표시용 Credits 접두/접미는 View API에서 허용 (SetCreditsLabel / SetPreviewCredits).
             Assert.That(text, Does.Not.Contain("SetGold"));
             Assert.That(text, Does.Not.Contain("AddGold"));
             Assert.That(text, Does.Not.Contain("TryReduceMineral"));
@@ -129,15 +130,36 @@ namespace SubTerra.App.Tests.Economy
             Assert.That(text, Does.Contain("TrySellMineral"));
             Assert.That(text, Does.Contain("TryCraftBuilding"));
             Assert.That(text, Does.Contain("busy"));
+            Assert.That(text, Does.Contain("suppressListRebuildFromInventory"));
+            Assert.That(text, Does.Contain("suppressStatusFromTransactions"));
 
-            // View 계약에도 mutation API 없음
+            // View 계약: mutation 토큰 금지. Credits 표시 API는 허용.
             var methods = typeof(IEconomyPanelView).GetMethods();
+            var names = new System.Collections.Generic.HashSet<string>();
             foreach (var method in methods)
             {
+                names.Add(method.Name);
                 Assert.That(method.Name, Does.Not.Contain("Gold"));
                 Assert.That(method.Name, Does.Not.Contain("Inventory"));
                 Assert.That(method.Name, Does.Not.Contain("Spend"));
             }
+
+            Assert.That(names, Does.Contain("SetSellRows"));
+            Assert.That(names, Does.Contain("SetPreviewCredits"));
+            Assert.That(names, Does.Contain("SetCreditsLabel"));
+            Assert.That(names, Does.Contain("SetSellActionsEnabled"));
+            Assert.That(names, Does.Contain("SetEmptySellState"));
+        }
+
+        [Test]
+        public void E_S05_RequiredSellScripts_Exist()
+        {
+            var ecoDir = Path.Combine(Application.dataPath, "_Project", "Scripts", "App", "Economy");
+            var uiDir = Path.Combine(Application.dataPath, "_Project", "Scripts", "App", "UI", "Economy");
+            Assert.That(File.Exists(Path.Combine(ecoDir, "ISellGate.cs")), Is.True);
+            Assert.That(File.Exists(Path.Combine(ecoDir, "EconomyPricing.cs")), Is.True);
+            Assert.That(File.Exists(Path.Combine(uiDir, "SellMineralRowReadModel.cs")), Is.True);
+            Assert.That(File.Exists(Path.Combine(uiDir, "EconomySellRowView.cs")), Is.True);
         }
 
         [Test]

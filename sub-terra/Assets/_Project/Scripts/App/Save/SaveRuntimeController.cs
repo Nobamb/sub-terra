@@ -43,6 +43,7 @@ namespace SubTerra.App.Save
         private EconomyService economy;
         private CraftingService crafting;
         private ProgressionService progression;
+        private ISellGate sellGate;
         private TemplateDialogueGenerator dialogueGenerator;
         private GameState boundState;
         private int activeSlot;
@@ -80,6 +81,8 @@ namespace SubTerra.App.Save
         public EconomyService Economy => economy;
         public CraftingService Crafting => crafting;
         public ProgressionService Progression => progression;
+        /// <summary>판매 게이트. 기본 false. SurfaceBaseBinder가 OnEnable/OnDisable에서 토글.</summary>
+        public ISellGate SellGate => sellGate;
         public ExplorationStartGuard ExplorationGuard => explorationGuard;
         public ElevatorTravelState ElevatorState =>
             elevatorTravel?.State ?? ElevatorTravelState.Idle;
@@ -529,7 +532,9 @@ namespace SubTerra.App.Save
                 : null;
 
             inventoryService = new InventoryService(mineralLookup, inventoryState, state);
-            economy = new EconomyService(inventoryService, mineralLookup, state);
+            // 기본 deny. Surface Base Binder만 IsSellAllowed=true. null gate 아님 — 런타임 경로 방어.
+            sellGate = new SceneSellGate { IsSellAllowed = false };
+            economy = new EconomyService(inventoryService, mineralLookup, state, sellGate);
             crafting = new CraftingService(economy);
             progression = upgradeCatalog != null
                 ? new ProgressionService(upgradeState, upgradeCatalog, economy)

@@ -443,16 +443,58 @@ namespace SubTerra.App.UI.HUD
             if (inventoryCloseButton != null)
             {
                 // Scene 영속 리스너와 런타임 리스너가 겹치면 토글이 두 번 호출되어
-                // 창이 열렸다 바로 닫히는 것처럼 보인다. 단일 리스너만 남긴다.
-                inventoryCloseButton.onClick.RemoveAllListeners();
+                // 창이 열렸다 바로 닫히는 것처럼 보인다. 이벤트 자체를 교체해 단일 리스너만 남긴다.
+                // RemoveAllListeners()는 영속(persistent) 호출을 지우지 않는다.
+                inventoryCloseButton.onClick = new Button.ButtonClickedEvent();
                 inventoryCloseButton.onClick.AddListener(CloseInventoryPanel);
+            }
+
+            if (inventoryOpenButton == null)
+            {
+                // Scene 직렬화 참조가 비어도 단축키 바의 인벤토리 버튼을 찾아 연결한다.
+                inventoryOpenButton = ResolveInventoryOpenButtonFromShortcutBar();
             }
 
             if (inventoryOpenButton != null)
             {
-                inventoryOpenButton.onClick.RemoveAllListeners();
+                // I 키와 동일하게 ToggleInventoryPanel 한 번만 실행되게 한다.
+                // 영속 onClick + 런타임 AddListener 중복 시 열림→즉시 닫힘으로 보인다.
+                inventoryOpenButton.onClick = new Button.ButtonClickedEvent();
                 inventoryOpenButton.onClick.AddListener(ToggleInventoryPanel);
             }
+        }
+
+        /// <summary>
+        /// PanelShortcutBar 아래 라벨에 "인벤토리"가 포함된 버튼을 찾는다.
+        /// inventoryOpenButton 직렬화 누락 시 폴백.
+        /// </summary>
+        private Button ResolveInventoryOpenButtonFromShortcutBar()
+        {
+            var shortcutBar = FindShortcutBarTransform();
+            if (shortcutBar == null)
+            {
+                return null;
+            }
+
+            var buttons = shortcutBar.GetComponentsInChildren<Button>(true);
+            for (var i = 0; i < buttons.Length; i++)
+            {
+                var button = buttons[i];
+                if (button == null)
+                {
+                    continue;
+                }
+
+                var label = button.GetComponentInChildren<TMPro.TMP_Text>(true);
+                if (label != null
+                    && !string.IsNullOrEmpty(label.text)
+                    && label.text.IndexOf("인벤토리", System.StringComparison.Ordinal) >= 0)
+                {
+                    return button;
+                }
+            }
+
+            return null;
         }
 
         private void UnwireButtons()
@@ -1171,16 +1213,58 @@ namespace SubTerra.App.UI.HUD
             if (inventoryCloseButton != null)
             {
                 // Scene 영속 리스너와 런타임 리스너가 겹치면 토글이 두 번 호출되어
-                // 창이 열렸다 바로 닫히는 것처럼 보인다. 단일 리스너만 남긴다.
-                inventoryCloseButton.onClick.RemoveAllListeners();
+                // 창이 열렸다 바로 닫히는 것처럼 보인다. 이벤트 자체를 교체해 단일 리스너만 남긴다.
+                // RemoveAllListeners()는 영속(persistent) 호출을 지우지 않는다.
+                inventoryCloseButton.onClick = new Button.ButtonClickedEvent();
                 inventoryCloseButton.onClick.AddListener(CloseInventoryPanel);
+            }
+
+            if (inventoryOpenButton == null)
+            {
+                // Scene 직렬화 참조가 비어도 단축키 바의 인벤토리 버튼을 찾아 연결한다.
+                inventoryOpenButton = ResolveInventoryOpenButtonFromShortcutBar();
             }
 
             if (inventoryOpenButton != null)
             {
-                inventoryOpenButton.onClick.RemoveAllListeners();
+                // I 키와 동일하게 ToggleInventoryPanel 한 번만 실행되게 한다.
+                // 영속 onClick + 런타임 AddListener 중복 시 열림→즉시 닫힘으로 보인다.
+                inventoryOpenButton.onClick = new Button.ButtonClickedEvent();
                 inventoryOpenButton.onClick.AddListener(ToggleInventoryPanel);
             }
+        }
+
+        /// <summary>
+        /// PanelShortcutBar 아래 라벨에 "인벤토리"가 포함된 버튼을 찾는다.
+        /// inventoryOpenButton 직렬화 누락 시 폴백.
+        /// </summary>
+        private Button ResolveInventoryOpenButtonFromShortcutBar()
+        {
+            var shortcutBar = FindShortcutBarTransform();
+            if (shortcutBar == null)
+            {
+                return null;
+            }
+
+            var buttons = shortcutBar.GetComponentsInChildren<Button>(true);
+            for (var i = 0; i < buttons.Length; i++)
+            {
+                var button = buttons[i];
+                if (button == null)
+                {
+                    continue;
+                }
+
+                var label = button.GetComponentInChildren<TMPro.TMP_Text>(true);
+                if (label != null
+                    && !string.IsNullOrEmpty(label.text)
+                    && label.text.IndexOf("인벤토리", System.StringComparison.Ordinal) >= 0)
+                {
+                    return button;
+                }
+            }
+
+            return null;
         }
 
         private void UnwireButtons()
@@ -2142,40 +2226,158 @@ MSG: One or more child tests had errors
 STACK: 
 
 FAIL: SubTerra.App.Tests.UI.PromptB34DiggerBotUiTests.ChromeController_ToggleDiggerBot_ShowsPanelWithoutOpenButton
-MSG: Unhandled log message: '[Assert] Assertion failed on expression: 'ShouldRunBehaviour()''. Use UnityEngine.TestTools.LogAssert.Expect
-STACK: UnityEngine.Component:SendMessage (string,UnityEngine.SendMessageOptions)
-SubTerra.App.Tests.UI.PromptB34DiggerBotUiTests:ChromeController_ToggleDiggerBot_ShowsPanelWithoutOpenButton () (at Assets/_Project/Tests/EditMode/App/UI/PromptB34DiggerBotUiTests.cs:119)
-System.Reflection.MethodBase:Invoke (object,object[])
-NUnit.Framework.Internal.Reflect:InvokeMethod (System.Reflection.MethodInfo,object,object[])
-NUnit.Framework.Internal.MethodWrapper:Invoke (object,object[])
-NUnit.Framework.Internal.Commands.TestMethodCommand:RunNonAsyncTestMethod (NUnit.Framework.Internal.ITestExecutionContext)
-NUnit.Framework.Internal.Commands.TestMethodCommand:RunTestMethod (NUnit.Framework.Internal.ITestExecutionContext)
-NUnit.Framework.Internal.Commands.TestMethodCommand:Execute (NUnit.Framework.Internal.ITestExecutionContext)
-UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+MSG: OneTimeSetUp: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
+STACK: 
 
+FAIL: SubTerra.App.Tests.UI.PromptB34DiggerBotUiTests.DialoguePrefab_HasLargeDialogueTextAndXClose
+MSG: OneTimeSetUp: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
+STACK: 
 
+FAIL: SubTerra.App.Tests.UI.PromptB34DiggerBotUiTests.IntegrationScene_DiggerBotWired_HostAlwaysOn_NoOpenButton
+MSG: OneTimeSetUp: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
+STACK: 
 
 FAIL: SubTerra.App.Tests.UI.PromptB34DiggerBotUiTests
-MSG: One or more child tests had errors
-STACK: 
+MSG: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
+STACK:   at (wrapper managed-to-native) UnityEditor.SceneManagement.EditorSceneManager.OpenScene_Injected(UnityEngine.Bindings.ManagedSpanWrapper&,UnityEditor.SceneManagement.OpenSceneMode,UnityEngine.SceneManagement.Scene&)
+  at UnityEditor.SceneManagement.EditorSceneManager.OpenScene (System.String scenePath, UnityEditor.SceneManagement.OpenSceneMode mode) [0x0002a] in <b69798a175fc402fb7a30c358b62aa3a>:0 
+  at SubTerra.App.Editor.DataValidation.PromptB34DiggerBotUiBuilder.UpdateIntegrationScene () [0x0000f] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Editor\DataValidation\PromptB34DiggerBotUiBuilder.cs:112 
+  at SubTerra.App.Editor.DataValidation.PromptB34DiggerBotUiBuilder.Build () [0x00029] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Editor\DataValidation\PromptB34DiggerBotUiBuilder.cs:51 
+  at SubTerra.App.Tests.UI.PromptB34DiggerBotUiTests.BuildLayout () [0x00000] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Tests\EditMode\App\UI\PromptB34DiggerBotUiTests.cs:24 
+  at (wrapper managed-to-native) System.Reflection.RuntimeMethodInfo.InternalInvoke(System.Reflection.RuntimeMethodInfo,object,object[],System.Exception&)
+  at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x0006a] in <816f70bc2a9c4332b0bd119906a8d40e>:0 
 
 FAIL: SubTerra.App.Tests.UI.PromptB34DiggerBotUiTests.ChromeController_ToggleDiggerBot_ShowsPanelWithoutOpenButton
-MSG: Unhandled log message: '[Assert] Assertion failed on expression: 'ShouldRunBehaviour()''. Use UnityEngine.TestTools.LogAssert.Expect
-STACK: UnityEngine.Component:SendMessage (string,UnityEngine.SendMessageOptions)
-SubTerra.App.Tests.UI.PromptB34DiggerBotUiTests:ChromeController_ToggleDiggerBot_ShowsPanelWithoutOpenButton () (at Assets/_Project/Tests/EditMode/App/UI/PromptB34DiggerBotUiTests.cs:119)
-System.Reflection.MethodBase:Invoke (object,object[])
-NUnit.Framework.Internal.Reflect:InvokeMethod (System.Reflection.MethodInfo,object,object[])
-NUnit.Framework.Internal.MethodWrapper:Invoke (object,object[])
-NUnit.Framework.Internal.Commands.TestMethodCommand:RunNonAsyncTestMethod (NUnit.Framework.Internal.ITestExecutionContext)
-NUnit.Framework.Internal.Commands.TestMethodCommand:RunTestMethod (NUnit.Framework.Internal.ITestExecutionContext)
-NUnit.Framework.Internal.Commands.TestMethodCommand:Execute (NUnit.Framework.Internal.ITestExecutionContext)
-UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+MSG: OneTimeSetUp: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
+STACK: 
 
+FAIL: SubTerra.App.Tests.UI.PromptB34DiggerBotUiTests.DialoguePrefab_HasLargeDialogueTextAndXClose
+MSG: OneTimeSetUp: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
+STACK: 
 
+FAIL: SubTerra.App.Tests.UI.PromptB34DiggerBotUiTests.IntegrationScene_DiggerBotWired_HostAlwaysOn_NoOpenButton
+MSG: OneTimeSetUp: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
+STACK: 
 
 FAIL: SubTerra.App.Tests.UI.PromptB34DiggerBotUiTests
-MSG: One or more child tests had errors
+MSG: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
+STACK:   at (wrapper managed-to-native) UnityEditor.SceneManagement.EditorSceneManager.OpenScene_Injected(UnityEngine.Bindings.ManagedSpanWrapper&,UnityEditor.SceneManagement.OpenSceneMode,UnityEngine.SceneManagement.Scene&)
+  at UnityEditor.SceneManagement.EditorSceneManager.OpenScene (System.String scenePath, UnityEditor.SceneManagement.OpenSceneMode mode) [0x0002a] in <b69798a175fc402fb7a30c358b62aa3a>:0 
+  at SubTerra.App.Editor.DataValidation.PromptB34DiggerBotUiBuilder.UpdateIntegrationScene () [0x0000f] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Editor\DataValidation\PromptB34DiggerBotUiBuilder.cs:112 
+  at SubTerra.App.Editor.DataValidation.PromptB34DiggerBotUiBuilder.Build () [0x00029] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Editor\DataValidation\PromptB34DiggerBotUiBuilder.cs:51 
+  at SubTerra.App.Tests.UI.PromptB34DiggerBotUiTests.BuildLayout () [0x00000] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Tests\EditMode\App\UI\PromptB34DiggerBotUiTests.cs:24 
+  at (wrapper managed-to-native) System.Reflection.RuntimeMethodInfo.InternalInvoke(System.Reflection.RuntimeMethodInfo,object,object[],System.Exception&)
+  at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x0006a] in <816f70bc2a9c4332b0bd119906a8d40e>:0 
+
+FAIL: SubTerra.App.Tests.UI.PromptB35_2SurfaceSettingsLayoutTests.MainMenuSettingsPanel_MatchesMainHalfHeightLayout
+MSG: OneTimeSetUp: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
 STACK: 
+
+FAIL: SubTerra.App.Tests.UI.PromptB35_2SurfaceSettingsLayoutTests.SettingsPanel_ChildrenUseProportionalAnchors
+MSG: OneTimeSetUp: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
+STACK: 
+
+FAIL: SubTerra.App.Tests.UI.PromptB35_2SurfaceSettingsLayoutTests.SettingsPanel_HasResolutionAndFrameRateDropdowns
+MSG: OneTimeSetUp: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
+STACK: 
+
+FAIL: SubTerra.App.Tests.UI.PromptB35_2SurfaceSettingsLayoutTests.SurfaceBaseContent_MatchesMainSizePlusTenPercent
+MSG: OneTimeSetUp: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
+STACK: 
+
+FAIL: SubTerra.App.Tests.UI.PromptB35_2SurfaceSettingsLayoutTests.SurfaceBaseSettingsPanel_MatchesMainHalfHeightLayout
+MSG: OneTimeSetUp: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
+STACK: 
+
+FAIL: SubTerra.App.Tests.UI.PromptB35_2SurfaceSettingsLayoutTests
+MSG: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
+STACK:   at (wrapper managed-to-native) UnityEditor.SceneManagement.EditorSceneManager.OpenScene_Injected(UnityEngine.Bindings.ManagedSpanWrapper&,UnityEditor.SceneManagement.OpenSceneMode,UnityEngine.SceneManagement.Scene&)
+  at UnityEditor.SceneManagement.EditorSceneManager.OpenScene (System.String scenePath, UnityEditor.SceneManagement.OpenSceneMode mode) [0x0002a] in <b69798a175fc402fb7a30c358b62aa3a>:0 
+  at SubTerra.App.Editor.DataValidation.PromptB33_2LayoutBuilder.UpdateSurfaceBaseScene () [0x00020] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Editor\DataValidation\PromptB33_2LayoutBuilder.cs:232 
+  at SubTerra.App.Editor.DataValidation.PromptB33_2LayoutBuilder.BuildSurfaceBaseOnly () [0x0001d] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Editor\DataValidation\PromptB33_2LayoutBuilder.cs:74 
+  at SubTerra.App.Editor.DataValidation.PromptB33_4LayoutBuilder.RebuildSurfaceBaseWithSettings () [0x00005] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Editor\DataValidation\PromptB33_4LayoutBuilder.cs:98 
+  at SubTerra.App.Editor.DataValidation.PromptB33_4LayoutBuilder.RebuildSurfaceBaseFromMvp2FixChain () [0x00011] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Editor\DataValidation\PromptB33_4LayoutBuilder.cs:86 
+  at SubTerra.App.Editor.DataValidation.PromptB35_2LayoutBuilder.Build () [0x00011] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Editor\DataValidation\PromptB35_2LayoutBuilder.cs:57 
+  at SubTerra.App.Tests.UI.PromptB35_2SurfaceSettingsLayoutTests.RebuildMainBaseline () [0x00000] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Tests\EditMode\App\UI\PromptB35_2SurfaceSettingsLayoutTests.cs:19 
+  at (wrapper managed-to-native) System.Reflection.RuntimeMethodInfo.InternalInvoke(System.Reflection.RuntimeMethodInfo,object,object[],System.Exception&)
+  at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x0006a] in <816f70bc2a9c4332b0bd119906a8d40e>:0 
+
+FAIL: SubTerra.App.Tests.UI.PromptB35_2SurfaceSettingsLayoutTests.MainMenuSettingsPanel_MatchesMainHalfHeightLayout
+MSG: OneTimeSetUp: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
+STACK: 
+
+FAIL: SubTerra.App.Tests.UI.PromptB35_2SurfaceSettingsLayoutTests.SettingsPanel_ChildrenUseProportionalAnchors
+MSG: OneTimeSetUp: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
+STACK: 
+
+FAIL: SubTerra.App.Tests.UI.PromptB35_2SurfaceSettingsLayoutTests.SettingsPanel_HasResolutionAndFrameRateDropdowns
+MSG: OneTimeSetUp: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
+STACK: 
+
+FAIL: SubTerra.App.Tests.UI.PromptB35_2SurfaceSettingsLayoutTests.SurfaceBaseContent_MatchesMainSizePlusTenPercent
+MSG: OneTimeSetUp: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
+STACK: 
+
+FAIL: SubTerra.App.Tests.UI.PromptB35_2SurfaceSettingsLayoutTests.SurfaceBaseSettingsPanel_MatchesMainHalfHeightLayout
+MSG: OneTimeSetUp: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
+STACK: 
+
+FAIL: SubTerra.App.Tests.UI.PromptB35_2SurfaceSettingsLayoutTests
+MSG: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
+STACK:   at (wrapper managed-to-native) UnityEditor.SceneManagement.EditorSceneManager.OpenScene_Injected(UnityEngine.Bindings.ManagedSpanWrapper&,UnityEditor.SceneManagement.OpenSceneMode,UnityEngine.SceneManagement.Scene&)
+  at UnityEditor.SceneManagement.EditorSceneManager.OpenScene (System.String scenePath, UnityEditor.SceneManagement.OpenSceneMode mode) [0x0002a] in <b69798a175fc402fb7a30c358b62aa3a>:0 
+  at SubTerra.App.Editor.DataValidation.PromptB33_2LayoutBuilder.UpdateSurfaceBaseScene () [0x00020] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Editor\DataValidation\PromptB33_2LayoutBuilder.cs:232 
+  at SubTerra.App.Editor.DataValidation.PromptB33_2LayoutBuilder.BuildSurfaceBaseOnly () [0x0001d] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Editor\DataValidation\PromptB33_2LayoutBuilder.cs:74 
+  at SubTerra.App.Editor.DataValidation.PromptB33_4LayoutBuilder.RebuildSurfaceBaseWithSettings () [0x00005] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Editor\DataValidation\PromptB33_4LayoutBuilder.cs:98 
+  at SubTerra.App.Editor.DataValidation.PromptB33_4LayoutBuilder.RebuildSurfaceBaseFromMvp2FixChain () [0x00011] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Editor\DataValidation\PromptB33_4LayoutBuilder.cs:86 
+  at SubTerra.App.Editor.DataValidation.PromptB35_2LayoutBuilder.Build () [0x00011] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Editor\DataValidation\PromptB35_2LayoutBuilder.cs:57 
+  at SubTerra.App.Tests.UI.PromptB35_2SurfaceSettingsLayoutTests.RebuildMainBaseline () [0x00000] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Tests\EditMode\App\UI\PromptB35_2SurfaceSettingsLayoutTests.cs:19 
+  at (wrapper managed-to-native) System.Reflection.RuntimeMethodInfo.InternalInvoke(System.Reflection.RuntimeMethodInfo,object,object[],System.Exception&)
+  at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x0006a] in <816f70bc2a9c4332b0bd119906a8d40e>:0 
+
+FAIL: SubTerra.App.Tests.UI.PromptB35PanelLayoutTests.BuildingMenuPrefab_MatchesPanelWidth
+MSG: OneTimeSetUp: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
+STACK: 
+
+FAIL: SubTerra.App.Tests.UI.PromptB35PanelLayoutTests.BuildingPanel_LeftRightContentGapIncreased
+MSG: OneTimeSetUp: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
+STACK: 
+
+FAIL: SubTerra.App.Tests.UI.PromptB35PanelLayoutTests.BuildingPanel_WidthIncreasedByTenPercent
+MSG: OneTimeSetUp: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
+STACK: 
+
+FAIL: SubTerra.App.Tests.UI.PromptB35PanelLayoutTests
+MSG: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
+STACK:   at (wrapper managed-to-native) UnityEditor.SceneManagement.EditorSceneManager.OpenScene_Injected(UnityEngine.Bindings.ManagedSpanWrapper&,UnityEditor.SceneManagement.OpenSceneMode,UnityEngine.SceneManagement.Scene&)
+  at UnityEditor.SceneManagement.EditorSceneManager.OpenScene (System.String scenePath, UnityEditor.SceneManagement.OpenSceneMode mode) [0x0002a] in <b69798a175fc402fb7a30c358b62aa3a>:0 
+  at SubTerra.App.Editor.DataValidation.PromptB35LayoutBuilder.UpdateIntegrationScene () [0x0000e] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Editor\DataValidation\PromptB35LayoutBuilder.cs:89 
+  at SubTerra.App.Editor.DataValidation.PromptB35LayoutBuilder.Build () [0x0001d] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Editor\DataValidation\PromptB35LayoutBuilder.cs:63 
+  at SubTerra.App.Tests.UI.PromptB35PanelLayoutTests.BuildLayout () [0x00000] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Tests\EditMode\App\UI\PromptB35PanelLayoutTests.cs:22 
+  at (wrapper managed-to-native) System.Reflection.RuntimeMethodInfo.InternalInvoke(System.Reflection.RuntimeMethodInfo,object,object[],System.Exception&)
+  at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x0006a] in <816f70bc2a9c4332b0bd119906a8d40e>:0 
+
+FAIL: SubTerra.App.Tests.UI.PromptB35PanelLayoutTests.BuildingMenuPrefab_MatchesPanelWidth
+MSG: OneTimeSetUp: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
+STACK: 
+
+FAIL: SubTerra.App.Tests.UI.PromptB35PanelLayoutTests.BuildingPanel_LeftRightContentGapIncreased
+MSG: OneTimeSetUp: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
+STACK: 
+
+FAIL: SubTerra.App.Tests.UI.PromptB35PanelLayoutTests.BuildingPanel_WidthIncreasedByTenPercent
+MSG: OneTimeSetUp: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
+STACK: 
+
+FAIL: SubTerra.App.Tests.UI.PromptB35PanelLayoutTests
+MSG: System.InvalidOperationException : This cannot be used during play mode, please use SceneManager.LoadScene()/SceneManager.LoadSceneAsync() instead.
+STACK:   at (wrapper managed-to-native) UnityEditor.SceneManagement.EditorSceneManager.OpenScene_Injected(UnityEngine.Bindings.ManagedSpanWrapper&,UnityEditor.SceneManagement.OpenSceneMode,UnityEngine.SceneManagement.Scene&)
+  at UnityEditor.SceneManagement.EditorSceneManager.OpenScene (System.String scenePath, UnityEditor.SceneManagement.OpenSceneMode mode) [0x0002a] in <b69798a175fc402fb7a30c358b62aa3a>:0 
+  at SubTerra.App.Editor.DataValidation.PromptB35LayoutBuilder.UpdateIntegrationScene () [0x0000e] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Editor\DataValidation\PromptB35LayoutBuilder.cs:89 
+  at SubTerra.App.Editor.DataValidation.PromptB35LayoutBuilder.Build () [0x0001d] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Editor\DataValidation\PromptB35LayoutBuilder.cs:63 
+  at SubTerra.App.Tests.UI.PromptB35PanelLayoutTests.BuildLayout () [0x00000] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Tests\EditMode\App\UI\PromptB35PanelLayoutTests.cs:22 
+  at (wrapper managed-to-native) System.Reflection.RuntimeMethodInfo.InternalInvoke(System.Reflection.RuntimeMethodInfo,object,object[],System.Exception&)
+  at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x0006a] in <816f70bc2a9c4332b0bd119906a8d40e>:0 
 
 FAIL: SubTerra.App.Tests.UI.UiKeyboardSubmitGuardTests.ClearSelection_RemovesCurrentSelectedGameObject
 MSG:   Expected: null
@@ -2261,5 +2463,5 @@ FAIL: sub-terra
 MSG: One or more child tests had errors
 STACK: 
 
-Finished. Total tests: 418, Passed: 404, Failed: 14, Skipped: 0, Inconclusive: 0
-Finished. Total tests: 418, Passed: 404, Failed: 14, Skipped: 0, Inconclusive: 0
+Finished. Total tests: 429, Passed: 405, Failed: 24, Skipped: 0, Inconclusive: 0
+Finished. Total tests: 429, Passed: 405, Failed: 24, Skipped: 0, Inconclusive: 0

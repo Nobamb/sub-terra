@@ -45,9 +45,24 @@ namespace SubTerra.App.UI.SurfaceBase
 
             // 런타임이 Economy/Progression을 소유. Surface는 복제 트랜잭션을 만들지 않는다.
             runtime.EnsureGameplayServices();
+
+            // Surface Base 진입 시 판매 게이트 허용. Binder 대입은 ISellGate setter만 사용.
+            if (runtime.SellGate != null)
+            {
+                runtime.SellGate.IsSellAllowed = true;
+            }
+
             if (economyBinder != null && runtime.Economy != null)
             {
-                economyBinder.BindTo(runtime.Economy, runtime.Crafting);
+                var state = bootstrap.State;
+                var catalog = bootstrap.AssignedCatalog as SubTerra.App.Core.Data.GameDataCatalog;
+                // inventory + GameState + optional catalog(아이콘)로 판매 목록/크레딧 배선.
+                economyBinder.BindTo(
+                    runtime.Economy,
+                    runtime.Crafting,
+                    runtime.InventoryService,
+                    state,
+                    catalog);
             }
 
             if (progressionBinder != null && runtime.Progression != null)
@@ -120,6 +135,13 @@ namespace SubTerra.App.UI.SurfaceBase
                 boundInventory = null;
             }
 
+            // Surface 이탈 시 판매 게이트 차단.
+            var runtimeOnDisable = SaveRuntimeController.Instance;
+            if (runtimeOnDisable?.SellGate != null)
+            {
+                runtimeOnDisable.SellGate.IsSellAllowed = false;
+            }
+
             economyBinder?.Unbind();
             progressionBinder?.Presenter?.Unbind();
         }
@@ -127,6 +149,8 @@ namespace SubTerra.App.UI.SurfaceBase
         private void OnInventoryChangedForProgression(InventorySnapshot _)
         {
             progressionBinder?.Presenter?.Refresh();
+            // 판매 후 귀환 요약(미정산 가치 등)도 같이 갱신.
+            presenter?.RefreshReadModel();
         }
 
         public bool HasRequiredReferences()

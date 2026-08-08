@@ -17,6 +17,7 @@ namespace SubTerra.App.Economy
         private readonly InventoryService inventory;
         private readonly IMineralCatalogLookup catalog;
         private readonly GameState gameState;
+        private readonly ISellGate sellGate;
 
         /// <summary>성공·실패 모두 발행. 실패는 상태 이벤트를 동반하지 않는다.</summary>
         public event Action<EconomyTransactionResult> TransactionCompleted;
@@ -26,14 +27,19 @@ namespace SubTerra.App.Economy
 
         public EconomyTransactionResult LastResult { get; private set; }
 
+        /// <summary>
+        /// 생성. sellGate null = 판매 허용(기존 단위 테스트 new EconomyService(inv, catalog, state) 무수정).
+        /// </summary>
         public EconomyService(
             InventoryService inventory,
             IMineralCatalogLookup catalog,
-            GameState gameState)
+            GameState gameState,
+            ISellGate sellGate = null)
         {
             this.inventory = inventory;
             this.catalog = catalog;
             this.gameState = gameState;
+            this.sellGate = sellGate;
             LastResult = EconomyTransactionResult.Fail(
                 EconomyTransactionStatus.InvalidRequest,
                 EconomyTransactionKind.Sell,
@@ -53,6 +59,19 @@ namespace SubTerra.App.Economy
                     EconomyTransactionKind.Sell,
                     "필수 서비스가 없습니다.",
                     "Inventory, catalog, or GameState missing.");
+            }
+
+            // optional 게이트: null이면 허용. false면 InvalidRequest + DenyReason.
+            if (sellGate != null && !sellGate.IsSellAllowed)
+            {
+                var deny = string.IsNullOrEmpty(sellGate.DenyReason)
+                    ? "Surface Base에서만 판매할 수 있습니다."
+                    : sellGate.DenyReason;
+                return CompleteFail(
+                    EconomyTransactionStatus.InvalidRequest,
+                    EconomyTransactionKind.Sell,
+                    deny,
+                    "SellGate denied.");
             }
 
             if (string.IsNullOrEmpty(mineralId))
@@ -103,7 +122,8 @@ namespace SubTerra.App.Economy
             }
 
             // 골드 오버플로 사전 검사. 차감 전에 거부해야 부분 적용이 없다.
-            if (!TryComputeGoldGain(info.UnitPrice, quantity, out var goldGain, out var goldDiag))
+            // EconomyPricing과 동일 규칙 공유.
+            if (!EconomyPricing.TryComputeGoldGain(info.UnitPrice, quantity, out var goldGain, out var goldDiag))
             {
                 return CompleteFail(
                     EconomyTransactionStatus.GoldOverflow,
@@ -269,33 +289,6 @@ namespace SubTerra.App.Economy
             }
 
             return null;
-        }
-
-        /// <summary>단가 × 수량 골드 계산. 오버플로 시 false.</summary>
-        private static bool TryComputeGoldGain(
-            int unitPrice,
-            int quantity,
-            out int goldGain,
-            out string diagnostic)
-        {
-            goldGain = 0;
-            diagnostic = string.Empty;
-
-            if (unitPrice == 0 || quantity == 0)
-            {
-                goldGain = 0;
-                return true;
-            }
-
-            // unitPrice * quantity 가 int 범위를 넘는지 검사.
-            if (unitPrice > 0 && quantity > int.MaxValue / unitPrice)
-            {
-                diagnostic = "unitPrice*quantity overflow.";
-                return false;
-            }
-
-            goldGain = unitPrice * quantity;
-            return true;
         }
 
         private EconomyTransactionResult CompleteFail(
