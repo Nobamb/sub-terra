@@ -33,6 +33,7 @@ namespace SubTerra.App.Integration
         [SerializeField] private BuildingPlacementSystem buildingPlacementSystem;
         [SerializeField] private HudBinder hudBinder;
         [SerializeField] private GameplayHazardStatusBridge hazardBridge;
+        [SerializeField] private GameplayDepthStatusBridge depthBridge;
         [SerializeField] private GasExposureEffectController gasEffectController;
         [SerializeField] private OutpostRuntimeBridge outpostBridge;
         [SerializeField] private BuildingUiIntegrationBinder buildingUiBinder;
@@ -163,6 +164,8 @@ namespace SubTerra.App.Integration
             }
 
             hazardBridge?.BindGameState(bootstrap.State);
+            // 플레이어 Y → Run.Depth → HUD 깊이 텍스트 실시간 반영.
+            BindDepthBridge();
             if (gasEffectController != null)
             {
                 gasEffectController.FailureInputRaised += OnGasFailureInputRaised;
@@ -457,6 +460,41 @@ namespace SubTerra.App.Integration
                 runFailureController.PlayerRescued -= OnPlayerRescued;
                 runFailureController.Unbind();
             }
+        }
+
+        /// <summary>
+        /// 플레이어 위치를 깊이(m)로 변환해 GameState에 연결한다.
+        /// Scene에 브리지가 없으면 ApplicationRoot에 런타임 생성한다.
+        /// </summary>
+        private void BindDepthBridge()
+        {
+            if (bootstrap?.State == null)
+            {
+                return;
+            }
+
+            if (depthBridge == null)
+            {
+                depthBridge = FindFirstObjectByType<GameplayDepthStatusBridge>();
+            }
+
+            if (depthBridge == null)
+            {
+                depthBridge = gameObject.AddComponent<GameplayDepthStatusBridge>();
+            }
+
+            // DroneSensor와 동일한 지표면 기준을 사용해 드론 문맥·HUD 깊이를 맞춘다.
+            if (droneSensor != null)
+            {
+                depthBridge.SetSurfaceY(droneSensor.SurfaceY);
+            }
+
+            if (playerMovement != null)
+            {
+                depthBridge.SetPlayer(playerMovement.transform);
+            }
+
+            depthBridge.BindGameState(bootstrap.State);
         }
 
         private void BindDroneReadings()
