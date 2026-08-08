@@ -17,6 +17,12 @@ namespace SubTerra.App.Save
         public string TargetSceneName { get; }
         public string GameVersion { get; }
 
+        /// <summary>
+        /// Provider가 없을 때(Surface Base 등) 사용할 마지막 Mine world 폴백.
+        /// null이면 기존처럼 빈 WorldSnapshotDto를 저장한다.
+        /// </summary>
+        public WorldSnapshotDto MineWorldFallback { get; }
+
         public SaveCaptureContext(
             GameState gameState,
             InventoryState inventory,
@@ -24,7 +30,8 @@ namespace SubTerra.App.Save
             TemplateDialogueGenerator dialogueGenerator,
             IWorldSnapshotProvider worldProvider,
             string targetSceneName,
-            string gameVersion)
+            string gameVersion,
+            WorldSnapshotDto mineWorldFallback = null)
         {
             GameState = gameState;
             Inventory = inventory;
@@ -33,6 +40,7 @@ namespace SubTerra.App.Save
             WorldProvider = worldProvider;
             TargetSceneName = targetSceneName ?? string.Empty;
             GameVersion = gameVersion ?? string.Empty;
+            MineWorldFallback = mineWorldFallback;
         }
     }
 

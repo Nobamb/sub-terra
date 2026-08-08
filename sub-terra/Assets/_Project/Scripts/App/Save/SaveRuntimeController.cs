@@ -58,8 +58,14 @@ namespace SubTerra.App.Save
         private RunLifecycleService runLifecycle;
         private OutpostStatusDto latestOutpostStatus;
         private string pendingInitialScene = SceneNames.SurfaceBase;
+        /// <summary>마지막 유효 Mine world. Surface 저장·엘리베이터 왕복 Restore에 사용.</summary>
+        private readonly MineWorldCache mineWorldCache = new MineWorldCache();
+        private bool pendingMineWorldRestore;
 
         public const int MineElevatorEnergyCost = 5;
+
+        /// <summary>테스트·진단용. 현재 Mine world 캐시 복사본.</summary>
+        public WorldSnapshotDto PeekMineWorldCache() => mineWorldCache.Peek();
 
         public LoadService Loader => loadService;
         public int ActiveSlot => activeSlot;
@@ -192,6 +198,10 @@ namespace SubTerra.App.Save
                 return false;
             }
 
+            // 새 게임은 이전 슬롯 Mine 캐시를 물려받지 않는다.
+            mineWorldCache.Clear();
+            pendingMineWorldRestore = false;
+
             ActivateSlot(slotId);
             pendingInitialSave = true;
             pendingInitialScene = SceneNames.SurfaceBase;
@@ -210,6 +220,7 @@ namespace SubTerra.App.Save
         /// <summary>
         /// Surface Base에서 탐사(Integration/Mine)로 진입.
         /// 유효 슬롯·State가 없으면 로드하지 않고, 연타 시 Scene 로드는 한 번만 시도한다.
+        /// 재진입 시 캐시/세이브 world를 Restore해 채굴 변경점을 유지한다.
         /// </summary>
         public bool TryStartExploration(out string reason)
         {
@@ -228,7 +239,15 @@ namespace SubTerra.App.Save
                 return false;
             }
 
-            return runLifecycle.TryBeginExploration(out reason);
+            if (!runLifecycle.TryBeginExploration(out reason))
+            {
+                return false;
+            }
+
+            // Scene Load 직후 한 프레임 뒤 Restore (Awake 지층 생성 이후 변경점 적용).
+            pendingMineWorldRestore = true;
+            StartCoroutine(RestoreMineWorldAfterExplorationEntry());
+            return true;
         }
 
         /// <summary>Mine 정거장에서 Surface Base로 비상 귀환한다. 귀환에는 전력을 차감하지 않는다.</summary>
@@ -367,6 +386,9 @@ namespace SubTerra.App.Save
             lastContinueResult = service.Continue(slotId);
             if (lastContinueResult.IsSuccess)
             {
+                // 동기 Continue도 Mine 캐시를 시드해 Surface 저장·재진입에 사용한다.
+                mineWorldCache.Clear();
+                mineWorldCache.SeedFromSave(lastContinueResult.Load?.State?.World);
                 ActivateSlot(slotId);
                 dirty = false;
             }
@@ -536,14 +558,125 @@ namespace SubTerra.App.Save
 
         private SaveCaptureContext CaptureContext()
         {
+            var provider = Resolve();
+            if (provider != null)
+            {
+                // Provider가 살아있는 동안 캡처해 캐시를 최신으로 유지한다.
+                // Surface 저장 시 Provider null이면 이 캐시가 폴백으로 쓰인다.
+                TryCaptureMineWorldIntoCache(provider);
+            }
+
             return new SaveCaptureContext(
                 GameBootstrapper.Instance?.State,
                 inventory,
                 upgrades,
                 dialogueGenerator,
-                Resolve(),
+                provider,
                 SceneManager.GetActiveScene().name,
-                Application.version);
+                Application.version,
+                mineWorldCache.Peek());
+        }
+
+        /// <summary>
+        /// Integration Scene의 Provider에서 스냅샷을 읽어 Mine 캐시에 넣는다.
+        /// 실패 시 이전 캐시를 유지한다(빈 값으로 덮지 않음).
+        /// </summary>
+        private bool TryCaptureMineWorldIntoCache(IWorldSnapshotProvider provider = null)
+        {
+            provider ??= Resolve();
+            if (provider == null)
+            {
+                return false;
+            }
+
+            try
+            {
+                var snapshot = provider.CaptureSnapshot();
+                if (snapshot == null)
+                {
+                    Debug.LogWarning(
+                        "[SubTerra] Mine world CaptureSnapshot returned null. Keeping previous cache.");
+                    return false;
+                }
+
+                mineWorldCache.ReplaceFromProvider(snapshot);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning(
+                    "[SubTerra] Mine world capture failed. Keeping previous cache. " + ex.Message);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// 캐시(또는 명시 스냅샷)를 Integration Provider에 복원한다.
+        /// Continue·엘리베이터 재진입이 공유한다. 빈 스냅샷이면 신규 탐사와 동일하게 통과.
+        /// </summary>
+        public bool TryRestoreMineWorld(WorldSnapshotDto snapshot, out string reason)
+        {
+            reason = string.Empty;
+            if (!MineWorldCache.HasMeaningfulContent(snapshot))
+            {
+                // 복원할 변경점 없음 → 풀 맵 유지.
+                NotifyIntegrationWorldRestored();
+                NotifyIntegrationDerivedRecalculated();
+                return true;
+            }
+
+            var world = Resolve();
+            if (world == null)
+            {
+                reason = "월드 스냅샷 Provider를 찾을 수 없습니다.";
+                return false;
+            }
+
+            try
+            {
+                if (!world.RestoreSnapshot(snapshot))
+                {
+                    reason = "월드 스냅샷 복원에 실패했습니다.";
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                reason = "월드 스냅샷 복원 중 예외: " + ex.Message;
+                return false;
+            }
+
+            // 성공 복원 결과를 캐시에 반영(이어하기 로드 경로와 동일 시맨틱).
+            mineWorldCache.ReplaceFromProvider(snapshot);
+
+            NotifyIntegrationWorldRestored();
+            if (!Recalculate())
+            {
+                reason = "월드 복원 후 파생 상태 재계산에 실패했습니다.";
+                return false;
+            }
+
+            NotifyIntegrationDerivedRecalculated();
+            return true;
+        }
+
+        private IEnumerator RestoreMineWorldAfterExplorationEntry()
+        {
+            // MineLayerTilemapGenerator.Awake 풀 재생성 이후 변경점을 얹는다.
+            yield return null;
+            if (!pendingMineWorldRestore)
+            {
+                yield break;
+            }
+
+            pendingMineWorldRestore = false;
+            var snapshot = mineWorldCache.Peek();
+            if (!TryRestoreMineWorld(snapshot, out var restoreReason)
+                && !string.IsNullOrEmpty(restoreReason))
+            {
+                Debug.LogWarning(
+                    "[SubTerra] Elevator re-entry world restore failed: " + restoreReason);
+            }
         }
 
         private bool TryElevatorTravel(
@@ -568,6 +701,13 @@ namespace SubTerra.App.Save
             {
                 reason = DescribeElevatorFailure(callFailure);
                 return false;
+            }
+
+            // 지하 → 지상 귀환: Scene 언로드 전에 world를 캡처해 캐시에 확보한다.
+            // 도착 후 저장은 Provider가 없어도 캐시 폴백으로 miningChanges를 유지한다.
+            if (destinationScene == SceneNames.SurfaceBase)
+            {
+                TryCaptureMineWorldIntoCache();
             }
 
             if (!elevatorTravel.TryDepart(new UnitySceneLoader(), out var departFailure))
@@ -694,48 +834,24 @@ namespace SubTerra.App.Save
                 yield break;
             }
 
+            // 세이브 world로 캐시를 시드해 이후 Surface 저장·엘리베이터 왕복에 사용한다.
+            mineWorldCache.Clear();
+            mineWorldCache.SeedFromSave(load.State.World);
+
             if (ContinueService.RequiresWorldRestore(load.State.TargetSceneName))
             {
-                var world = Resolve();
-                if (world == null)
+                if (!TryRestoreMineWorld(load.State.World, out var restoreReason))
                 {
-                    CompleteContinue(
-                        new ContinueResult(ContinueStatus.WorldProviderMissing, load),
-                        completed);
+                    var status = restoreReason != null
+                        && restoreReason.IndexOf("Provider", StringComparison.OrdinalIgnoreCase) >= 0
+                            ? ContinueStatus.WorldProviderMissing
+                            : restoreReason != null
+                              && restoreReason.IndexOf("재계산", StringComparison.Ordinal) >= 0
+                                ? ContinueStatus.RecalculationFailed
+                                : ContinueStatus.WorldRestoreFailed;
+                    CompleteContinue(new ContinueResult(status, load), completed);
                     yield break;
                 }
-
-                try
-                {
-                    // generatorVersion 불일치 등 기본 월드 재생성 실패 시 이어하기를 중단한다.
-                    if (!world.RestoreSnapshot(load.State.World))
-                    {
-                        CompleteContinue(
-                            new ContinueResult(ContinueStatus.WorldRestoreFailed, load),
-                            completed);
-                        yield break;
-                    }
-                }
-                catch
-                {
-                    CompleteContinue(
-                        new ContinueResult(ContinueStatus.WorldRestoreFailed, load),
-                        completed);
-                    yield break;
-                }
-
-                // Integration binder 게이트: 월드 복원 완료 신호 (HUD는 아직 비활성).
-                NotifyIntegrationWorldRestored();
-
-                if (!Recalculate())
-                {
-                    CompleteContinue(
-                        new ContinueResult(ContinueStatus.RecalculationFailed, load),
-                        completed);
-                    yield break;
-                }
-
-                NotifyIntegrationDerivedRecalculated();
             }
             else
             {

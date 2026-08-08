@@ -28,10 +28,9 @@ namespace SubTerra.App.Save
                 return null;
             }
 
-            // Surface Base 등 월드 Provider가 없을 때는 빈 스냅샷으로 저장한다.
-            var world = context.WorldProvider != null
-                ? context.WorldProvider.CaptureSnapshot()
-                : new WorldSnapshotDto();
+            // Provider가 있으면 캡처. 없으면(Surface Base 등) 마지막 Mine 캐시 폴백.
+            // 캐시도 없으면 빈 스냅샷으로 저장해 구 슬롯·호환 경로를 유지한다.
+            var world = CaptureWorld(context);
             if (world == null)
             {
                 return null;
@@ -125,8 +124,31 @@ namespace SubTerra.App.Save
             return true;
         }
 
+        /// <summary>
+        /// 월드 스냅샷 확보 정책:
+        /// 1) Provider 있음 → CaptureSnapshot
+        /// 2) Provider 없음 + MineWorldFallback 있음 → 캐시 사용(빈 world 덮어쓰기 방지)
+        /// 3) 둘 다 없음 → 빈 DTO
+        /// </summary>
+        private static WorldSnapshotDto CaptureWorld(SaveCaptureContext context)
+        {
+            if (context.WorldProvider != null)
+            {
+                return context.WorldProvider.CaptureSnapshot();
+            }
+
+            if (context.MineWorldFallback != null)
+            {
+                return MineWorldCache.Clone(context.MineWorldFallback)
+                    ?? context.MineWorldFallback;
+            }
+
+            return new WorldSnapshotDto();
+        }
+
         private static InventorySaveData CaptureInventory(InventoryState state)
         {
+
             var entries = new List<QuantitySaveEntry>();
             foreach (var pair in state.Quantities)
             {
