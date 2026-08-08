@@ -27,6 +27,10 @@ namespace SubTerra.App.Tests.UI
             {
                 "SellListViewport",
                 "SellListContent",
+                "OpenSellButton",
+                "SellModalCard",
+                "CloseSellButton",
+                "SellDescription",
                 "SellSelectedButton",
                 "SellAllButton",
                 "CreditsLabel",
@@ -48,10 +52,11 @@ namespace SubTerra.App.Tests.UI
             Assert.That(text, Does.Contain("sellListContent:"));
             Assert.That(text, Does.Contain("qtyMinusButton:"));
             Assert.That(text, Does.Contain("previewText:"));
-            Assert.That(text, Does.Contain("m_SizeDelta: {x: 760, y: 260}"));
-            Assert.That(text, Does.Contain("m_AnchoredPosition: {x: 0, y: 55}"));
+            Assert.That(text, Does.Contain("openSellButton:"));
+            Assert.That(text, Does.Contain("closeSellButton:"));
+            Assert.That(text, Does.Contain("m_SizeDelta: {x: 760, y: 520}"));
             Assert.That(text, Does.Contain("m_SizeDelta: {x: 760, y: 220}"));
-            Assert.That(text, Does.Contain("m_AnchoredPosition: {x: 0, y: -250}"));
+            Assert.That(text, Does.Contain("m_AnchoredPosition: {x: 0, y: -146}"));
         }
 
         [Test]
@@ -68,7 +73,7 @@ namespace SubTerra.App.Tests.UI
                 Does.Contain("m_GameObject: {fileID: 9100000000000000014}"),
                 "VLG/CSF target SellListContent GO");
 
-            // EconomyPanel ScrollRect wires viewport + content.
+            // SellModalCard ScrollRect wires viewport + content.
             Assert.That(text, Does.Contain("UnityEngine.UI::UnityEngine.UI.ScrollRect"));
             Assert.That(
                 Regex.IsMatch(
@@ -83,19 +88,19 @@ namespace SubTerra.App.Tests.UI
                 Is.True,
                 "ScrollRect.m_Viewport = SellListViewport");
 
-            // Status band below list/qty (design y=-115 / -132).
+            // Status band stays inside the opaque modal card.
             Assert.That(
                 Regex.IsMatch(
                     text,
-                    @"m_GameObject: \{fileID: 4956128646536738813\}[\s\S]{0,400}m_AnchoredPosition: \{x: 0, y: -115\}"),
+                    @"m_GameObject: \{fileID: 4956128646536738813\}[\s\S]{0,400}m_AnchoredPosition: \{x: 0, y: -145\}"),
                 Is.True,
-                "EcoStatus @ y=-115");
+                "EcoStatus @ y=-145");
             Assert.That(
                 Regex.IsMatch(
                     text,
-                    @"m_GameObject: \{fileID: 4627569984472076596\}[\s\S]{0,400}m_AnchoredPosition: \{x: 0, y: -132\}"),
+                    @"m_GameObject: \{fileID: 4627569984472076596\}[\s\S]{0,400}m_AnchoredPosition: \{x: 0, y: -181\}"),
                 Is.True,
-                "EcoDetail @ y=-132");
+                "EcoDetail @ y=-181");
             Assert.That(
                 Regex.IsMatch(
                     text,

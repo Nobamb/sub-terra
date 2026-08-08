@@ -26,7 +26,8 @@ public static class SellPanelTestRunner
             groupNames = new[]
             {
                 "SubTerra.App.Tests.Economy",
-                "SubTerra.App.Tests.UI.PromptBSellPanelLayoutTests"
+                "SubTerra.App.Tests.UI.PromptBSellPanelLayoutTests",
+                "SubTerra.App.Tests.UI.SellPanelPrefabStructureTests"
             }
         };
         api.Execute(new ExecutionSettings(filter));

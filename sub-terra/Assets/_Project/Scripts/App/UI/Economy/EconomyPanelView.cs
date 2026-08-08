@@ -17,6 +17,10 @@ namespace SubTerra.App.UI.Economy
         [SerializeField] private CanvasGroup canvasGroup;
         [SerializeField] private Selectable[] controlsToDisableWhenBusy;
 
+        [Header("Sell modal")]
+        [SerializeField] private Button openSellButton;
+        [SerializeField] private Button closeSellButton;
+
         [Header("Sell panel")]
         [SerializeField] private TMP_Text titleText;
         [SerializeField] private TMP_Text creditsLabelText;
@@ -47,6 +51,10 @@ namespace SubTerra.App.UI.Economy
         private void Awake()
         {
             WireButtons(true);
+            if (canvasGroup != null)
+            {
+                SetVisible(false);
+            }
         }
 
         private void OnDestroy()
@@ -93,6 +101,12 @@ namespace SubTerra.App.UI.Economy
 
         public void SetVisible(bool visible)
         {
+            if (visible)
+            {
+                // 레벨 요약 패널이 활성화되며 sibling 순서를 바꿔도 판매 모달이 항상 위를 덮는다.
+                transform.SetAsLastSibling();
+            }
+
             if (canvasGroup != null)
             {
                 canvasGroup.alpha = visible ? 1f : 0f;
@@ -215,6 +229,8 @@ namespace SubTerra.App.UI.Economy
 
         private void WireButtons(bool add)
         {
+            Wire(openSellButton, OnOpenSell, add);
+            Wire(closeSellButton, OnCloseSell, add);
             Wire(qtyMinusButton, OnQtyMinus, add);
             Wire(qtyPlusButton, OnQtyPlus, add);
             Wire(qtyMaxButton, OnQtyMax, add);
@@ -240,6 +256,8 @@ namespace SubTerra.App.UI.Economy
         }
 
         private void OnRowSelected(string mineralId) => MineralRowSelected?.Invoke(mineralId);
+        private void OnOpenSell() => SetVisible(true);
+        private void OnCloseSell() => SetVisible(false);
         private void OnQtyMinus() => QtyMinusClicked?.Invoke();
         private void OnQtyPlus() => QtyPlusClicked?.Invoke();
         private void OnQtyMax() => QtyMaxClicked?.Invoke();
@@ -366,6 +384,13 @@ namespace SubTerra.App.UI.Economy
             qtyMaxButton = max;
             sellSelectedButton = sellSelected;
             sellAllButton = sellAll;
+        }
+
+        public void EditorBindModal(Button openButton, Button closeButton, CanvasGroup group)
+        {
+            openSellButton = openButton;
+            closeSellButton = closeButton;
+            canvasGroup = group;
         }
 #endif
     }

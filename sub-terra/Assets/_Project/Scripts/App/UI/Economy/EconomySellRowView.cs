@@ -16,6 +16,9 @@ namespace SubTerra.App.UI.Economy
         [SerializeField] private Button selectButton;
         [SerializeField] private Graphic selectedChrome;
 
+        private Color unselectedChromeColor;
+        private bool hasUnselectedChromeColor;
+
         public string MineralId => mineralId;
         public event Action<string> Selected;
 
@@ -62,7 +65,24 @@ namespace SubTerra.App.UI.Economy
 
             if (selectedChrome != null)
             {
-                selectedChrome.enabled = row.IsSelected;
+                if (!hasUnselectedChromeColor)
+                {
+                    unselectedChromeColor = selectedChrome.color;
+                    hasUnselectedChromeColor = true;
+                }
+
+                if (selectButton != null && selectedChrome == selectButton.targetGraphic)
+                {
+                    // 선택 강조가 버튼의 레이캐스트 Graphic을 끄면 행을 처음부터 클릭할 수 없다.
+                    selectedChrome.enabled = true;
+                    selectedChrome.color = row.IsSelected
+                        ? Color.Lerp(unselectedChromeColor, Color.white, 0.25f)
+                        : unselectedChromeColor;
+                }
+                else
+                {
+                    selectedChrome.enabled = row.IsSelected;
+                }
             }
         }
 

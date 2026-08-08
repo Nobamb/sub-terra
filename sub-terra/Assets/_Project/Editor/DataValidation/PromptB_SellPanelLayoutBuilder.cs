@@ -3,19 +3,16 @@ using System.Linq;
 using System.Text;
 using SubTerra.App.UI.Economy;
 using SubTerra.App.UI.Progression;
-using SubTerra.App.UI.SurfaceBase;
 using TMPro;
 using UnityEditor;
-using UnityEditor.SceneManagement;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace SubTerra.App.Editor.DataValidation
 {
     /// <summary>
     /// prompt-B 39 / surface-base-sell-system-design PR-2:
-    /// Surface Base chrome 권위 좌표 + EconomyPanel 판매 카드 내부 컨트롤 + Progression 축소.
+    /// Surface Base chrome 권위 좌표 + 자원 판매 진입 버튼/모달 + Progression 배치.
     /// rule 2-5: SurfaceBasePanel.prefab + SurfaceBase.unity 만 수정. 다른 UI Prefab 순회 금지.
     /// </summary>
     public static class PromptB_SellPanelLayoutBuilder
@@ -28,16 +25,17 @@ namespace SubTerra.App.Editor.DataValidation
             "Assets/_Project/Prefabs/UI/EconomySellRow.prefab";
 
         // 권위 좌표표 (design §2)
-        public const float GoalsY = 430f;
-        public const float EnergyY = 388f;
-        public const float DeepZoneY = 352f;
-        public const float RecentRunY = 320f;
-        public const float ActionY = 272f;
-        public const float MessageY = 218f;
-        public const float EconomyY = 55f;
+        public const float GoalsY = 314f;
+        public const float EnergyY = 264f;
+        public const float DeepZoneY = 218f;
+        public const float RecentRunY = 174f;
+        public const float ActionY = 120f;
+        public const float SellButtonY = 56f;
+        public const float MessageY = 0f;
+        public const float EconomyY = 0f;
         public const float EconomyW = 760f;
-        public const float EconomyH = 260f;
-        public const float ProgressionY = -250f;
+        public const float EconomyH = 520f;
+        public const float ProgressionY = -146f;
         public const float ProgressionW = 760f;
         public const float ProgressionH = 220f;
         public const float UpgradeListW = 700f;
@@ -131,35 +129,16 @@ namespace SubTerra.App.Editor.DataValidation
 
         private static string UpdateSurfaceBaseScene()
         {
-            if (!File.Exists(Path.Combine(
-                    Application.dataPath,
-                    "_Project",
-                    "Scenes",
-                    "App",
-                    "SurfaceBase.unity")))
-            {
-                return "SKIP: SurfaceBase scene missing";
-            }
-
-            var previous = SceneManager.GetActiveScene().path;
-            var scene = EditorSceneManager.OpenScene(SurfaceBaseScenePath, OpenSceneMode.Single);
-            if (!scene.IsValid())
-            {
-                return "FAIL: open SurfaceBase";
-            }
-
-            var panel = Object.FindFirstObjectByType<SurfaceBaseView>(FindObjectsInactive.Include);
-            if (panel != null)
-            {
-                ApplySellChromeAndControls(panel.gameObject);
-                PrefabUtility.RecordPrefabInstancePropertyModifications(panel.gameObject);
-                EditorUtility.SetDirty(panel.gameObject);
-            }
-
-            EditorSceneManager.MarkSceneDirty(scene);
-            EditorSceneManager.SaveScene(scene);
-            RestoreScene(previous);
-            return "SurfaceBase scene sell chrome + controls";
+            // Scene은 SurfaceBasePanel prefab 인스턴스를 사용한다. 인스턴스 자식을 직접
+            // 재부모화하면 불법 override가 생기므로 prefab 갱신만 상속받게 둔다.
+            return File.Exists(Path.Combine(
+                Application.dataPath,
+                "_Project",
+                "Scenes",
+                "App",
+                "SurfaceBase.unity"))
+                ? "SurfaceBase scene inherits prefab sell modal"
+                : "SKIP: SurfaceBase scene missing";
         }
 
         private static void ApplySellChromeAndControls(GameObject root)
@@ -173,11 +152,20 @@ namespace SubTerra.App.Editor.DataValidation
             PlaceCentered(host, "RecentRunText", RecentRunY, 720f, 28f);
 
             // 액션 행
-            PlaceAnchored(host, "ExploreButton", new Vector2(-200f, ActionY), new Vector2(320f, 48f));
-            PlaceAnchored(host, "SettingsButton", new Vector2(40f, ActionY), new Vector2(140f, 48f));
-            PlaceAnchored(host, "QuitButton", new Vector2(190f, ActionY), new Vector2(140f, 48f));
+            // 320 + 20 + 140 + 20 + 140 = 640 폭의 액션 행을 x=0 기준으로 맞춘다.
+            PlaceAnchored(host, "ExploreButton", new Vector2(-160f, ActionY), new Vector2(320f, 48f));
+            PlaceAnchored(host, "SettingsButton", new Vector2(90f, ActionY), new Vector2(140f, 48f));
+            PlaceAnchored(host, "QuitButton", new Vector2(250f, ActionY), new Vector2(140f, 48f));
 
-            // Message below Explore (33-4 계약)
+            // 탐사 버튼 바로 아래에 판매 진입점을 둔다.
+            var openSell = EnsureButton(
+                host,
+                "OpenSellButton",
+                new Vector2(0f, SellButtonY),
+                new Vector2(320f, 48f),
+                "자원 판매");
+
+            // 두 액션 행 아래 상태 메시지.
             PlaceCentered(host, "MessageText", MessageY, 720f, 32f);
 
             var economy = host.Find("EconomyPanel");
@@ -197,20 +185,21 @@ namespace SubTerra.App.Editor.DataValidation
                 }
             }
 
-            // Economy root: 고정 sizeDelta 카드 (stretch 제거)
+            // Economy root는 항상 활성 상태로 바인딩을 유지하되, CanvasGroup으로 모달만 숨긴다.
             var ecoRect = economy as RectTransform;
             if (ecoRect != null)
             {
-                ecoRect.anchorMin = ecoRect.anchorMax = new Vector2(0.5f, 0.5f);
+                ecoRect.anchorMin = Vector2.zero;
+                ecoRect.anchorMax = Vector2.one;
                 ecoRect.pivot = new Vector2(0.5f, 0.5f);
-                ecoRect.anchoredPosition = new Vector2(0f, EconomyY);
-                ecoRect.sizeDelta = new Vector2(EconomyW, EconomyH);
-                ecoRect.offsetMin = ecoRect.anchoredPosition - ecoRect.sizeDelta * 0.5f;
-                // sizeDelta 고정이 핵심 — offset은 비stretch에서 sizeDelta로 결정
-                ecoRect.anchoredPosition = new Vector2(0f, EconomyY);
-                ecoRect.sizeDelta = new Vector2(EconomyW, EconomyH);
+                ecoRect.anchoredPosition = Vector2.zero;
+                ecoRect.sizeDelta = Vector2.zero;
+                ecoRect.offsetMin = Vector2.zero;
+                ecoRect.offsetMax = Vector2.zero;
                 EditorUtility.SetDirty(ecoRect);
             }
+
+            economy.SetAsLastSibling();
 
             var ecoImage = economy.GetComponent<Image>();
             if (ecoImage == null)
@@ -218,11 +207,30 @@ namespace SubTerra.App.Editor.DataValidation
                 ecoImage = economy.gameObject.AddComponent<Image>();
             }
 
-            ecoImage.color = new Color(0.08f, 0.1f, 0.14f, 0.92f);
+            ecoImage.color = new Color(0.025f, 0.035f, 0.055f, 1f);
+            ecoImage.raycastTarget = true;
 
-            BuildEconomySellInternals(economy);
+            var modalCanvasGroup = economy.GetComponent<CanvasGroup>();
+            if (modalCanvasGroup == null)
+            {
+                modalCanvasGroup = economy.gameObject.AddComponent<CanvasGroup>();
+            }
 
-            // Progression 760×220 @ -250, UpgradeList 700×180
+            modalCanvasGroup.alpha = 0f;
+            modalCanvasGroup.interactable = false;
+            modalCanvasGroup.blocksRaycasts = false;
+
+            var card = EnsureChild(economy, "SellModalCard", typeof(RectTransform), typeof(Image), typeof(RectMask2D));
+            PlaceLocal(card, new Vector2(0f, EconomyY), new Vector2(EconomyW, EconomyH));
+            var cardImage = card.GetComponent<Image>();
+            cardImage.color = new Color(0.075f, 0.1f, 0.145f, 1f);
+            cardImage.raycastTarget = true;
+
+            MoveLegacySellChildren(economy, card);
+
+            BuildEconomySellInternals(economy, card, openSell, modalCanvasGroup);
+
+            // 판매 카드가 모달로 빠진 기본 화면의 빈 공간을 사용한다.
             var progression = root.GetComponentsInChildren<ProgressionPanelView>(true).FirstOrDefault();
             if (progression != null)
             {
@@ -271,7 +279,7 @@ namespace SubTerra.App.Editor.DataValidation
                     var tmp = list.GetComponent<TMP_Text>();
                     if (tmp != null)
                     {
-                        tmp.alignment = TextAlignmentOptions.TopLeft;
+                        tmp.alignment = TextAlignmentOptions.Top;
                         tmp.fontSize = 16f;
                         tmp.textWrappingMode = TextWrappingModes.Normal;
                         EditorUtility.SetDirty(tmp);
@@ -290,17 +298,31 @@ namespace SubTerra.App.Editor.DataValidation
             }
         }
 
-        private static void BuildEconomySellInternals(Transform economy)
+        private static void BuildEconomySellInternals(
+            Transform modalRoot,
+            Transform card,
+            Button openSell,
+            CanvasGroup modalCanvasGroup)
         {
-            // 내부 예산 h=260: Header26 + List88 + Qty30 + Preview20 + Actions34 + Status24 + pads/spacings
-            var title = EnsureTmp(economy, "SellTitle", new Vector2(-180f, 108f), new Vector2(320f, 26f), 18f, "광물 판매");
-            var credits = EnsureTmp(economy, "CreditsLabel", new Vector2(220f, 108f), new Vector2(240f, 26f), 16f, "골드 0");
+            var title = EnsureTmp(card, "SellTitle", new Vector2(-205f, 222f), new Vector2(300f, 34f), 22f, "자원 판매");
+            var credits = EnsureTmp(card, "CreditsLabel", new Vector2(190f, 222f), new Vector2(230f, 34f), 17f, "골드 0");
             title.alignment = TextAlignmentOptions.MidlineLeft;
             credits.alignment = TextAlignmentOptions.MidlineRight;
 
+            var description = EnsureTmp(
+                card,
+                "SellDescription",
+                new Vector2(0f, 180f),
+                new Vector2(680f, 34f),
+                15f,
+                "보유한 자원을 선택하고 수량을 정해 골드로 판매하세요.");
+            description.alignment = TextAlignmentOptions.MidlineLeft;
+
+            var close = EnsureButton(card, "CloseSellButton", new Vector2(344f, 222f), new Vector2(44f, 36f), "×");
+
             // Scroll list
-            var viewport = EnsureChild(economy, "SellListViewport", typeof(RectTransform), typeof(Image), typeof(Mask));
-            PlaceLocal(viewport, new Vector2(0f, 40f), new Vector2(720f, 88f));
+            var viewport = EnsureChild(card, "SellListViewport", typeof(RectTransform), typeof(Image), typeof(Mask));
+            PlaceLocal(viewport, new Vector2(0f, 91f), new Vector2(700f, 132f));
             var vpImage = viewport.GetComponent<Image>();
             vpImage.color = new Color(0.05f, 0.06f, 0.08f, 0.8f);
             var mask = viewport.GetComponent<Mask>();
@@ -328,10 +350,16 @@ namespace SubTerra.App.Editor.DataValidation
             fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
             fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
 
-            var scroll = economy.GetComponent<ScrollRect>();
+            var rootScroll = modalRoot.GetComponent<ScrollRect>();
+            if (rootScroll != null)
+            {
+                Object.DestroyImmediate(rootScroll);
+            }
+
+            var scroll = card.GetComponent<ScrollRect>();
             if (scroll == null)
             {
-                scroll = economy.gameObject.AddComponent<ScrollRect>();
+                scroll = card.gameObject.AddComponent<ScrollRect>();
             }
 
             scroll.viewport = viewport as RectTransform;
@@ -340,32 +368,36 @@ namespace SubTerra.App.Editor.DataValidation
             scroll.vertical = true;
             scroll.movementType = ScrollRect.MovementType.Clamped;
 
-            var empty = EnsureTmp(economy, "EmptySellText", new Vector2(0f, 40f), new Vector2(700f, 48f), 15f,
+            var empty = EnsureTmp(card, "EmptySellText", new Vector2(0f, 91f), new Vector2(680f, 64f), 15f,
                 "판매할 광물이 없습니다. 탐사 후 귀환하세요.");
             empty.alignment = TextAlignmentOptions.Center;
 
             // Qty row
-            var qtyMinus = EnsureButton(economy, "QtyMinusButton", new Vector2(-120f, -20f), new Vector2(36f, 30f), "-");
-            var qtyText = EnsureTmp(economy, "QtyText", new Vector2(-40f, -20f), new Vector2(60f, 30f), 16f, "1");
+            var qtyLabel = EnsureTmp(card, "QtyLabel", new Vector2(-235f, 4f), new Vector2(120f, 34f), 15f, "판매 수량");
+            qtyLabel.alignment = TextAlignmentOptions.MidlineLeft;
+            var qtyMinus = EnsureButton(card, "QtyMinusButton", new Vector2(-105f, 4f), new Vector2(42f, 34f), "-");
+            var qtyText = EnsureTmp(card, "QtyText", new Vector2(-35f, 4f), new Vector2(64f, 34f), 16f, "1");
             qtyText.alignment = TextAlignmentOptions.Center;
-            var qtyPlus = EnsureButton(economy, "QtyPlusButton", new Vector2(40f, -20f), new Vector2(36f, 30f), "+");
-            var qtyMax = EnsureButton(economy, "QtyMaxButton", new Vector2(140f, -20f), new Vector2(80f, 30f), "최대");
+            var qtyPlus = EnsureButton(card, "QtyPlusButton", new Vector2(35f, 4f), new Vector2(42f, 34f), "+");
+            var qtyMax = EnsureButton(card, "QtyMaxButton", new Vector2(115f, 4f), new Vector2(88f, 34f), "최대");
 
-            var preview = EnsureTmp(economy, "PreviewText", new Vector2(0f, -50f), new Vector2(700f, 20f), 15f, "예상 골드 +0");
+            var preview = EnsureTmp(card, "PreviewText", new Vector2(0f, -43f), new Vector2(680f, 26f), 16f, "예상 골드 +0");
             preview.alignment = TextAlignmentOptions.Center;
 
-            var sellSelected = EnsureButton(economy, "SellSelectedButton", new Vector2(-160f, -85f), new Vector2(180f, 34f), "선택 판매");
-            var sellAll = EnsureButton(economy, "SellAllButton", new Vector2(160f, -85f), new Vector2(180f, 34f), "전체 판매");
+            var sellSelected = EnsureButton(card, "SellSelectedButton", new Vector2(-150f, -91f), new Vector2(220f, 42f), "선택 판매");
+            var sellAll = EnsureButton(card, "SellAllButton", new Vector2(150f, -91f), new Vector2(220f, 42f), "전체 판매");
 
-            var ecoStatus = EnsureTmp(economy, "EcoStatus", new Vector2(0f, -115f), new Vector2(720f, 24f), 14f, string.Empty);
-            var ecoDetail = EnsureTmp(economy, "EcoDetail", new Vector2(0f, -132f), new Vector2(720f, 20f), 12f, string.Empty);
+            var ecoStatus = EnsureTmp(card, "EcoStatus", new Vector2(0f, -145f), new Vector2(680f, 30f), 15f, string.Empty);
+            var ecoDetail = EnsureTmp(card, "EcoDetail", new Vector2(0f, -181f), new Vector2(680f, 34f), 13f, string.Empty);
             ecoStatus.alignment = TextAlignmentOptions.Center;
             ecoDetail.alignment = TextAlignmentOptions.Center;
+            ecoStatus.textWrappingMode = TextWrappingModes.Normal;
+            ecoDetail.textWrappingMode = TextWrappingModes.Normal;
 
-            var view = economy.GetComponent<EconomyPanelView>();
+            var view = modalRoot.GetComponent<EconomyPanelView>();
             if (view == null)
             {
-                view = economy.gameObject.AddComponent<EconomyPanelView>();
+                view = modalRoot.gameObject.AddComponent<EconomyPanelView>();
             }
 
             var rowPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(SellRowPrefabPath);
@@ -381,6 +413,7 @@ namespace SubTerra.App.Editor.DataValidation
             };
 
             view.EditorBind(ecoStatus, ecoDetail, null, busyControls);
+            view.EditorBindModal(openSell, close, modalCanvasGroup);
             view.EditorBindSell(
                 title,
                 credits,
@@ -396,10 +429,10 @@ namespace SubTerra.App.Editor.DataValidation
                 sellAll);
             EditorUtility.SetDirty(view);
 
-            var binder = economy.GetComponent<EconomyPanelBinder>();
+            var binder = modalRoot.GetComponent<EconomyPanelBinder>();
             if (binder == null)
             {
-                binder = economy.gameObject.AddComponent<EconomyPanelBinder>();
+                binder = modalRoot.gameObject.AddComponent<EconomyPanelBinder>();
             }
 
             // Prefab 직렬화: Binder.view 참조를 명시적으로 연결.
@@ -414,11 +447,57 @@ namespace SubTerra.App.Editor.DataValidation
             EditorUtility.SetDirty(binder);
         }
 
+        private static void MoveLegacySellChildren(Transform modalRoot, Transform card)
+        {
+            var names = new[]
+            {
+                "SellTitle",
+                "CreditsLabel",
+                "SellListViewport",
+                "EmptySellText",
+                "QtyLabel",
+                "QtyMinusButton",
+                "QtyText",
+                "QtyPlusButton",
+                "QtyMaxButton",
+                "PreviewText",
+                "SellSelectedButton",
+                "SellAllButton",
+                "EcoStatus",
+                "EcoDetail"
+            };
+
+            foreach (var name in names)
+            {
+                var child = FindChildRecursive(modalRoot, name);
+                if (child == null || child == card || child.IsChildOf(card))
+                {
+                    continue;
+                }
+
+                child.SetParent(card, false);
+                EditorUtility.SetDirty(child);
+            }
+        }
+
         private static Transform EnsureChild(Transform parent, string name, params System.Type[] components)
         {
             var existing = parent.Find(name);
             if (existing != null)
             {
+                GameObjectUtility.RemoveMonoBehavioursWithMissingScript(existing.gameObject);
+                foreach (var componentType in components)
+                {
+                    if (componentType == typeof(Transform)
+                        || componentType == typeof(RectTransform)
+                        || existing.GetComponent(componentType) != null)
+                    {
+                        continue;
+                    }
+
+                    existing.gameObject.AddComponent(componentType);
+                }
+
                 return existing;
             }
 
@@ -611,24 +690,5 @@ namespace SubTerra.App.Editor.DataValidation
             }
         }
 
-        private static void RestoreScene(string previousPath)
-        {
-            if (string.IsNullOrEmpty(previousPath) || previousPath == SurfaceBaseScenePath)
-            {
-                return;
-            }
-
-            if (File.Exists(previousPath) || previousPath.StartsWith("Assets/"))
-            {
-                try
-                {
-                    EditorSceneManager.OpenScene(previousPath, OpenSceneMode.Single);
-                }
-                catch
-                {
-                    // ignore
-                }
-            }
-        }
     }
 }
