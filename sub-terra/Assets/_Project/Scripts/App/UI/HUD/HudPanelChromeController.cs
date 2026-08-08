@@ -266,16 +266,58 @@ namespace SubTerra.App.UI.HUD
             if (inventoryCloseButton != null)
             {
                 // Scene 영속 리스너와 런타임 리스너가 겹치면 토글이 두 번 호출되어
-                // 창이 열렸다 바로 닫히는 것처럼 보인다. 단일 리스너만 남긴다.
-                inventoryCloseButton.onClick.RemoveAllListeners();
+                // 창이 열렸다 바로 닫히는 것처럼 보인다. 이벤트 자체를 교체해 단일 리스너만 남긴다.
+                // RemoveAllListeners()는 영속(persistent) 호출을 지우지 않는다.
+                inventoryCloseButton.onClick = new Button.ButtonClickedEvent();
                 inventoryCloseButton.onClick.AddListener(CloseInventoryPanel);
+            }
+
+            if (inventoryOpenButton == null)
+            {
+                // Scene 직렬화 참조가 비어도 단축키 바의 인벤토리 버튼을 찾아 연결한다.
+                inventoryOpenButton = ResolveInventoryOpenButtonFromShortcutBar();
             }
 
             if (inventoryOpenButton != null)
             {
-                inventoryOpenButton.onClick.RemoveAllListeners();
+                // I 키와 동일하게 ToggleInventoryPanel 한 번만 실행되게 한다.
+                // 영속 onClick + 런타임 AddListener 중복 시 열림→즉시 닫힘으로 보인다.
+                inventoryOpenButton.onClick = new Button.ButtonClickedEvent();
                 inventoryOpenButton.onClick.AddListener(ToggleInventoryPanel);
             }
+        }
+
+        /// <summary>
+        /// PanelShortcutBar 아래 라벨에 "인벤토리"가 포함된 버튼을 찾는다.
+        /// inventoryOpenButton 직렬화 누락 시 폴백.
+        /// </summary>
+        private Button ResolveInventoryOpenButtonFromShortcutBar()
+        {
+            var shortcutBar = FindShortcutBarTransform();
+            if (shortcutBar == null)
+            {
+                return null;
+            }
+
+            var buttons = shortcutBar.GetComponentsInChildren<Button>(true);
+            for (var i = 0; i < buttons.Length; i++)
+            {
+                var button = buttons[i];
+                if (button == null)
+                {
+                    continue;
+                }
+
+                var label = button.GetComponentInChildren<TMPro.TMP_Text>(true);
+                if (label != null
+                    && !string.IsNullOrEmpty(label.text)
+                    && label.text.IndexOf("인벤토리", System.StringComparison.Ordinal) >= 0)
+                {
+                    return button;
+                }
+            }
+
+            return null;
         }
 
         private void UnwireButtons()

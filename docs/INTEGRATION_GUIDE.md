@@ -80,6 +80,38 @@ A 쪽 직렬 참조 (통합 시 확인):
 
 새 게임 → Surface Base → 탐사는 SurfaceBase 진입 시 이미 `IsUiReady=true`인 경우가 많다.
 
+## 엘리베이터 왕복 저장·복원 순서
+
+지상↔지하 엘리베이터 왕복 후에도 채굴·시설 변경점이 유지되어야 한다.
+`MineWorldCache` + `SaveRuntimeController`가 담당한다.
+
+### 지하 → 지상 귀환 (`TryReturnToSurface` / `TryElevatorTravel` → SurfaceBase)
+
+1. **전력·Busy 검사** — `ElevatorTravelSession.TryCall` (귀환 비용 0)
+2. **World Capture (Scene 언로드 전)** — `IWorldSnapshotProvider.CaptureSnapshot` → `MineWorldCache.ReplaceFromProvider`
+3. **Scene 로드** — Surface Base (`TryDepart`)
+4. **도착 후 자동 저장** — Provider가 없어도 `MineWorldFallback` 캐시로 `world.miningChanges` 유지
+5. 지상 도착 시 전력 완충 (기존 정책 유지)
+
+### 지상 → 지하 재진입 (`TryStartExploration`)
+
+1. **전력 차감 5** + Scene 로드(Integration)
+2. **Run 수명주기** — `TryBeginExploration`
+3. **1프레임 대기** — `MineLayerTilemapGenerator.Awake` 풀 맵 생성 이후
+4. **World Restore** — `TryRestoreMineWorld(cachedMineWorld)` (캐시 우선, 의미 없으면 신규 탐사)
+5. **Notify + Recalculate** — Continue와 동일 게이트 신호
+
+### Surface Base에서 저장할 때
+
+- Provider null + 캐시 있음 → 캐시 world를 파일에 기록 (빈 스냅샷으로 덮지 않음)
+- Provider null + 캐시 없음 → 빈 `WorldSnapshotDto` (구 호환)
+- 새 게임 / 슬롯 전환 시 캐시 Clear 후, 로드된 세이브 world로 Seed
+
+### 이어하기와의 공유
+
+Continue 경로의 월드 복원은 `TryRestoreMineWorld`를 사용한다.
+복원 소스 우선순위: **1) 메모리 캐시 2) 세이브 world**.
+
 ## 중복 방지
 
 - Bootstrap `GameBootstrapper` / `SaveRuntimeController`는 DontDestroyOnLoad 단일 인스턴스

@@ -115,6 +115,18 @@ namespace SubTerra.Shared.Localization
             Add("settings.cancel", "취소", "Cancel");
             Add("settings.defaults", "기본값", "Defaults");
             Add("settings.bgm_hint", "BGM 4종(타이틀/기지/탐사/위험)은 마스터 음량으로 조절됩니다.", "Four BGMs (title/base/mine/danger) follow master volume.");
+            Add("economy.sell.title", "광물 판매", "Sell Minerals");
+            Add("economy.sell.owned", "보유 {0}", "Owned {0}");
+            Add("economy.sell.unit_price", "단가 {0}G", "Unit {0}G");
+            Add("economy.sell.preview", "예상 골드 +{0}", "Preview +{0}G");
+            Add("economy.sell.selected", "선택 판매", "Sell Selected");
+            Add("economy.sell.all", "전체 판매 · +{0}G", "Sell All · +{0}G");
+            Add("economy.sell.empty", "판매할 광물이 없습니다. 탐사 후 귀환하세요.", "No minerals to sell. Return from exploration.");
+            Add("economy.sell.denied", "Surface Base에서만 판매할 수 있습니다.", "Sell only at Surface Base.");
+            Add("economy.sell.qty_max", "최대", "Max");
+            Add("economy.sell.partial", "부분 판매: {0}/{1} 성공 · +{2}G", "Partial sell: {0}/{1} ok · +{2}G");
+            Add("economy.sell.all_ok", "{0}종 판매 · +{1}G", "Sold {0} kinds · +{1}G");
+            Add("economy.sell.credits", "골드 {0}", "Credits {0}");
         }
 
         public static string FormatFrameRateOption(int optionIndex)

@@ -228,7 +228,15 @@ namespace SubTerra.App.Editor
             tilemap.SetTile(
                 new Vector3Int(-8, -2, 0),
                 AssetDatabase.LoadAssetAtPath<TileBase>(
-                    "Assets/_Project/Tilemaps/DemoWorld/Copper.asset"));
+                    "Assets/_Project/Tilemaps/DemoWorld/ElevatorProtectedBlock.asset"));
+            tilemap.SetTile(
+                new Vector3Int(-7, -2, 0),
+                AssetDatabase.LoadAssetAtPath<TileBase>(
+                    "Assets/_Project/Tilemaps/DemoWorld/ElevatorProtectedBlock.asset"));
+            tilemap.SetTile(
+                new Vector3Int(-6, -2, 0),
+                AssetDatabase.LoadAssetAtPath<TileBase>(
+                    "Assets/_Project/Tilemaps/DemoWorld/ElevatorProtectedBlock.asset"));
             tilemap.SetTile(
                 new Vector3Int(-3, -3, 0),
                 AssetDatabase.LoadAssetAtPath<TileBase>(

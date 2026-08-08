@@ -36,6 +36,13 @@ namespace SubTerra.Gameplay.Drone
 
         public DroneContextDto CurrentContext { get; private set; }
         public int EffectiveMineralScanRadius => ResolveMineralScanRadius();
+        /// <summary>지표면 기준 Y. HUD 깊이 브리지와 동일 값을 공유할 때 사용한다.</summary>
+        public float SurfaceY
+        {
+            get => surfaceY;
+            set => surfaceY = value;
+        }
+
         public event Action<DroneContextDto> ContextUpdated;
 
         private void Update()

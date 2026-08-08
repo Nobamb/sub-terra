@@ -45,6 +45,7 @@ namespace SubTerra.Gameplay.DemoWorld.Tests
                 distribution,
                 rock,
                 boundary,
+                boundary,
                 copper,
                 iron,
                 lithium,

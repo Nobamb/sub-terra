@@ -13,6 +13,7 @@ namespace SubTerra.Gameplay.DemoWorld
         [SerializeField] private MineLayerDistribution distribution;
         [SerializeField] private TileBase rockTile;
         [SerializeField] private TileBase boundaryRockTile;
+        [SerializeField] private TileBase elevatorProtectedBlockTile;
         [SerializeField] private TileBase copperTile;
         [SerializeField] private TileBase ironTile;
         [SerializeField] private TileBase lithiumTile;
@@ -33,6 +34,7 @@ namespace SubTerra.Gameplay.DemoWorld
             MineLayerDistribution layerDistribution,
             TileBase rock,
             TileBase boundary,
+            TileBase elevatorProtectedBlock,
             TileBase copper,
             TileBase iron,
             TileBase lithium,
@@ -46,6 +48,7 @@ namespace SubTerra.Gameplay.DemoWorld
             distribution = layerDistribution;
             rockTile = rock;
             boundaryRockTile = boundary;
+            elevatorProtectedBlockTile = elevatorProtectedBlock;
             copperTile = copper;
             ironTile = iron;
             lithiumTile = lithium;
@@ -99,10 +102,23 @@ namespace SubTerra.Gameplay.DemoWorld
                     boundaryRockTile);
             }
 
+            PlaceElevatorProtectedBlocks();
+
             tileResolver?.RegisterRuntime(
                 boundaryRockTile,
                 new MiningTileDto(
                     MineLayerTileIds.BoundaryRock,
+                    string.Empty,
+                    0,
+                    false,
+                    1f,
+                    0f,
+                    0f,
+                    false));
+            tileResolver?.RegisterRuntime(
+                elevatorProtectedBlockTile,
+                new MiningTileDto(
+                    "tile.elevator.protected",
                     string.Empty,
                     0,
                     false,
@@ -123,11 +139,19 @@ namespace SubTerra.Gameplay.DemoWorld
         {
             return rockTile != null
                 && boundaryRockTile != null
+                && elevatorProtectedBlockTile != null
                 && copperTile != null
                 && ironTile != null
                 && lithiumTile != null
                 && gasPocketTile != null
                 && lockedSignalTile != null;
+        }
+
+        private void PlaceElevatorProtectedBlocks()
+        {
+            foregroundTilemap.SetTile(new Vector3Int(-8, -2, 0), elevatorProtectedBlockTile);
+            foregroundTilemap.SetTile(new Vector3Int(-7, -2, 0), elevatorProtectedBlockTile);
+            foregroundTilemap.SetTile(new Vector3Int(-6, -2, 0), elevatorProtectedBlockTile);
         }
 
         private TileBase ResolveTile(MineLayerCellKind kind)
