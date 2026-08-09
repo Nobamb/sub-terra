@@ -251,3 +251,5 @@ UI 및 건설/가이드 조작
 39-2. 지금 surface base 창에서 자원 판매 창 띄우면 자원 판매창보다 기존 surface base에 있던 하단의 레벨 관련 텍스트들이 더 앞에 보이는 문제가 있어 surface base 창에서 자원 판매 창을 띄우면 레벨 관련 텍스트가 안보이도록 수정해줘
 
 39-3. 지금 엘레베이터 하단에 엘레베이터 영역과 맞닿는 블록 3칸 있잖아 해당 블록들을 제거 불가능한 블록으로 수정해서 엘레베이터 밑의 블록 3칸은 근처에서 엔터를 통해 캐려하거나 클릭을 해도 제거되지 않도록 수정해줘
+
+40. editmode에서 현재 SubTerra.App.Tests.EditMode.dll에서 11개의 오류가 발생하였거든? 그리고 Playmodes에서는 SubTerra.App.Tests.PlayMode.dll에서 오류 1개, SubTerra.Gameplay.Player.PlayModeTests.dll에서 3개의 오류가 발생해서 총 4개의 오류가 발생했어 이 오류들을 해결해주도록 하고 rule.md의 내용을 참고해서 수정 작업을 진행해줬으면 좋겠어

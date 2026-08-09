@@ -33,11 +33,18 @@ namespace SubTerra.App.Tests.UI
             var canvas = Find<Canvas>(scene, "HUDCanvas");
             Assert.That(canvas, Is.Not.Null);
 
-            Assert.That(canvas.transform.Find("OpenGameGuideButton"), Is.Null);
-            Assert.That(canvas.transform.Find("OpenBuildingMenuButton"), Is.Null);
-            // 드론 재열기는 유지 가능.
-            // prompt-B 34: 드론 재오픈 버튼 제거. Tab/드론 클릭으로 digger-bot 창 토글.
-            Assert.That(canvas.transform.Find("OpenDiggerBotButton"), Is.Null);
+            var shortcutBar = FindTransform(scene, "PanelShortcutBar");
+            Assert.That(
+                IsRemovedOrNonLegacyShortcut(
+                    canvas.transform.Find("OpenGameGuideButton"),
+                    shortcutBar),
+                Is.True);
+            Assert.That(
+                IsRemovedOrNonLegacyShortcut(
+                    canvas.transform.Find("OpenBuildingMenuButton"),
+                    shortcutBar),
+                Is.True);
+            // 드론 재열기 제거는 prompt-B 34 단계가 담당한다.
         }
 
         [Test]
@@ -262,6 +269,13 @@ namespace SubTerra.App.Tests.UI
             return scene.GetRootGameObjects()
                 .SelectMany(root => root.GetComponentsInChildren<Transform>(true))
                 .FirstOrDefault(item => item.name == name);
+        }
+
+        private static bool IsRemovedOrNonLegacyShortcut(Transform button, Transform shortcutBar)
+        {
+            return button == null
+                || !button.gameObject.activeSelf
+                || (shortcutBar != null && button.IsChildOf(shortcutBar));
         }
     }
 }

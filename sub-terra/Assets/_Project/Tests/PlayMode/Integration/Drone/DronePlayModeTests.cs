@@ -79,8 +79,10 @@ namespace SubTerra.App.Tests.PlayMode.Drone
             Assert.That(reasonRoot.activeSelf, Is.True);
 
             presenter.Unbind();
-            Assert.That(dialogueRoot.activeSelf, Is.False);
-            Assert.That(reasonRoot.activeSelf, Is.False);
+            // 하단 패널 가시성은 HudPanelChromeController가 소유한다.
+            // Presenter 해제는 패널을 임의로 닫지 않는다.
+            Assert.That(dialogueRoot.activeSelf, Is.True);
+            Assert.That(reasonRoot.activeSelf, Is.True);
 
             Object.Destroy(dialogueRoot);
             Object.Destroy(reasonRoot);

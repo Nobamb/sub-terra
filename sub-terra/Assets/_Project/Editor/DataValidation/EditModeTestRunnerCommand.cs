@@ -419,7 +419,8 @@ namespace SubTerra.App.Editor.DataValidation
                 TestMode.PlayMode,
                 new[]
                 {
-                    "SubTerra.App.Tests.PlayMode"
+                    "SubTerra.App.Tests.PlayMode",
+                    "SubTerra.Gameplay.Player.PlayModeTests"
                 },
                 ResolveProjectPath(resultPath),
                 "Play Mode");
@@ -579,6 +580,7 @@ namespace SubTerra.App.Editor.DataValidation
                         fail++;
                         sb.AppendLine("FAIL: " + result.FullName);
                         sb.AppendLine("  " + result.Message);
+                        sb.AppendLine("  " + result.StackTrace);
                     }
                     else
                     {

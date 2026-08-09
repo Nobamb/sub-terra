@@ -14,13 +14,18 @@ namespace SubTerra.App.UI
         /// <summary>현재 EventSystem 선택을 해제한다. 선택이 없으면 아무 것도 하지 않는다.</summary>
         public static void ClearSelection()
         {
-            var eventSystem = EventSystem.current;
-            if (eventSystem == null || eventSystem.currentSelectedGameObject == null)
+            var eventSystems = Object.FindObjectsByType<EventSystem>(
+                FindObjectsInactive.Include);
+            for (var i = 0; i < eventSystems.Length; i++)
             {
-                return;
-            }
+                var eventSystem = eventSystems[i];
+                if (eventSystem == null || eventSystem.currentSelectedGameObject == null)
+                {
+                    continue;
+                }
 
-            eventSystem.SetSelectedGameObject(null);
+                eventSystem.SetSelectedGameObject(null);
+            }
         }
 
         /// <summary>

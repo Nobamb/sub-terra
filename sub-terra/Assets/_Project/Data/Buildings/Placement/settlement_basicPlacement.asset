@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: settlement_basicPlacement
   m_EditorClassIdentifier: SubTerra.Gameplay.Building::SubTerra.Gameplay.Building.BuildingPlacementDefinition
   buildingId: building.settlement.basic
-  runtimePrefab: {fileID: 3766932780806278260, guid: d9f8a92858c77d94f808199827a493f8, type: 3}
+  runtimePrefab: {fileID: 6594216637482197258, guid: d7137e45dafeedb42a9a6d5244367863, type: 3}
   footprint: {x: 1, y: 1}
   requiresGround: 1
   costs:

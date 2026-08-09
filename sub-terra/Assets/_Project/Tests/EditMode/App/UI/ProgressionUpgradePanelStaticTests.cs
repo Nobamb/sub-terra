@@ -105,7 +105,9 @@ namespace SubTerra.App.Tests.UI
             var entrySource = File.ReadAllText(entryPath);
             Assert.That(entrySource, Does.Contain("EnsureInteractable"));
             Assert.That(entrySource, Does.Contain("GetComponentInParent"));
-            Assert.That(entrySource, Does.Contain("RemoveListener(Select)"));
+            Assert.That(entrySource, Does.Contain("RemoveListener(OnButtonClicked)"));
+            Assert.That(entrySource, Does.Contain("AddListener(OnButtonClicked)"));
+            Assert.That(entrySource, Does.Contain("IPointerClickHandler"));
 
             var presenterPath = Path.Combine(
                 root,

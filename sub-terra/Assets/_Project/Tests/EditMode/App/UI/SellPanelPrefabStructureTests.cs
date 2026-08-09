@@ -1,7 +1,9 @@
 using System.IO;
-using System.Text.RegularExpressions;
+using System.Linq;
 using NUnit.Framework;
+using UnityEditor;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace SubTerra.App.Tests.UI
 {
@@ -62,51 +64,37 @@ namespace SubTerra.App.Tests.UI
         [Test]
         public void SurfaceBasePanel_SellListHasVerticalLayoutAndScrollRect()
         {
-            var text = PrefabText("SurfaceBasePanel.prefab");
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                "Assets/_Project/Prefabs/UI/SurfaceBasePanel.prefab");
+            Assert.That(prefab, Is.Not.Null);
+
+            var transforms = prefab.GetComponentsInChildren<Transform>(true);
+            var content = transforms.FirstOrDefault(item => item.name == "SellListContent");
+            var viewport = transforms.FirstOrDefault(item => item.name == "SellListViewport");
+            var modal = transforms.FirstOrDefault(item => item.name == "SellModalCard");
+            Assert.That(content, Is.Not.Null);
+            Assert.That(viewport, Is.Not.Null);
+            Assert.That(modal, Is.Not.Null);
 
             // SellListContent must drive stacked rows (not all at y=0).
-            Assert.That(text, Does.Contain("UnityEngine.UI::UnityEngine.UI.VerticalLayoutGroup"));
-            Assert.That(text, Does.Contain("UnityEngine.UI::UnityEngine.UI.ContentSizeFitter"));
-            Assert.That(text, Does.Contain("m_VerticalFit: 2"), "ContentSizeFitter vertical preferred");
-            Assert.That(
-                text,
-                Does.Contain("m_GameObject: {fileID: 9100000000000000014}"),
-                "VLG/CSF target SellListContent GO");
+            Assert.That(content.GetComponent<VerticalLayoutGroup>(), Is.Not.Null);
+            var fitter = content.GetComponent<ContentSizeFitter>();
+            Assert.That(fitter, Is.Not.Null);
+            Assert.That(fitter.verticalFit, Is.EqualTo(ContentSizeFitter.FitMode.PreferredSize));
 
             // SellModalCard ScrollRect wires viewport + content.
-            Assert.That(text, Does.Contain("UnityEngine.UI::UnityEngine.UI.ScrollRect"));
-            Assert.That(
-                Regex.IsMatch(
-                    text,
-                    @"m_EditorClassIdentifier: UnityEngine\.UI::UnityEngine\.UI\.ScrollRect\s+m_Content: \{fileID: 9100000000000000015\}"),
-                Is.True,
-                "ScrollRect.m_Content = SellListContent");
-            Assert.That(
-                Regex.IsMatch(
-                    text,
-                    @"m_Viewport: \{fileID: 9100000000000000010\}"),
-                Is.True,
-                "ScrollRect.m_Viewport = SellListViewport");
+            var scroll = modal.GetComponent<ScrollRect>();
+            Assert.That(scroll, Is.Not.Null);
+            Assert.That(scroll.content, Is.SameAs(content as RectTransform));
+            Assert.That(scroll.viewport, Is.SameAs(viewport as RectTransform));
 
             // Status band stays inside the opaque modal card.
-            Assert.That(
-                Regex.IsMatch(
-                    text,
-                    @"m_GameObject: \{fileID: 4956128646536738813\}[\s\S]{0,400}m_AnchoredPosition: \{x: 0, y: -145\}"),
-                Is.True,
-                "EcoStatus @ y=-145");
-            Assert.That(
-                Regex.IsMatch(
-                    text,
-                    @"m_GameObject: \{fileID: 4627569984472076596\}[\s\S]{0,400}m_AnchoredPosition: \{x: 0, y: -181\}"),
-                Is.True,
-                "EcoDetail @ y=-181");
-            Assert.That(
-                Regex.IsMatch(
-                    text,
-                    @"m_GameObject: \{fileID: 4956128646536738813\}[\s\S]{0,400}m_AnchoredPosition: \{x: 0, y: 10\}"),
-                Is.False,
-                "EcoStatus must not remain at y=10");
+            var status = transforms.FirstOrDefault(item => item.name == "EcoStatus") as RectTransform;
+            var detail = transforms.FirstOrDefault(item => item.name == "EcoDetail") as RectTransform;
+            Assert.That(status, Is.Not.Null);
+            Assert.That(detail, Is.Not.Null);
+            Assert.That(status.anchoredPosition.y, Is.EqualTo(-145f).Within(0.5f));
+            Assert.That(detail.anchoredPosition.y, Is.EqualTo(-181f).Within(0.5f));
         }
 
         [Test]

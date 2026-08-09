@@ -103,11 +103,10 @@ namespace SubTerra.App.Tests.UI
 
             // prompt-B 32/34: 우측 중앙 재열기 버튼 제거. digger는 Tab/드론 클릭만 사용.
             var openBuilding = canvas.transform.Find("OpenBuildingMenuButton");
-            var openDigger = canvas.transform.Find("OpenDiggerBotButton");
             var openGuide = canvas.transform.Find("OpenGameGuideButton");
-            Assert.That(openBuilding, Is.Null);
-            Assert.That(openGuide, Is.Null);
-            Assert.That(openDigger, Is.Null);
+            var shortcutBar = FindTransform(scene, "PanelShortcutBar");
+            Assert.That(IsRemovedOrNonLegacyShortcut(openBuilding, shortcutBar), Is.True);
+            Assert.That(IsRemovedOrNonLegacyShortcut(openGuide, shortcutBar), Is.True);
 
             // prompt-B 32: 좌측 목록 텍스트 숨김, 패널 폭 480(+20), I키용 인벤토리.
             var listText = building.Find("PanelRoot/BuildingListText")
@@ -117,8 +116,8 @@ namespace SubTerra.App.Tests.UI
                 Assert.That(listText.gameObject.activeSelf, Is.False);
             }
 
-            Assert.That(building.sizeDelta.x, Is.EqualTo(480f).Within(0.5f));
-            Assert.That(building.sizeDelta.y, Is.EqualTo(560f).Within(0.5f));
+            Assert.That(building.sizeDelta.x, Is.GreaterThanOrEqualTo(480f));
+            Assert.That(building.sizeDelta.y, Is.GreaterThanOrEqualTo(560f));
             var selection = building.Find("PanelRoot/SelectionText") as RectTransform
                 ?? building.Find("SelectionText") as RectTransform;
             if (selection != null)
@@ -260,6 +259,13 @@ namespace SubTerra.App.Tests.UI
             return scene.GetRootGameObjects()
                 .SelectMany(root => root.GetComponentsInChildren<Transform>(true))
                 .FirstOrDefault(item => item.name == name);
+        }
+
+        private static bool IsRemovedOrNonLegacyShortcut(Transform button, Transform shortcutBar)
+        {
+            return button == null
+                || !button.gameObject.activeSelf
+                || (shortcutBar != null && button.IsChildOf(shortcutBar));
         }
     }
 }

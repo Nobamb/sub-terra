@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: light_basicPlacement
   m_EditorClassIdentifier: SubTerra.Gameplay.Building::SubTerra.Gameplay.Building.BuildingPlacementDefinition
   buildingId: building.light.basic
-  runtimePrefab: {fileID: 3766932780806278260, guid: d9f8a92858c77d94f808199827a493f8, type: 3}
+  runtimePrefab: {fileID: 7593593327156216058, guid: 57b1560617d7d9a4da00b172c189a363, type: 3}
   footprint: {x: 1, y: 1}
   requiresGround: 1
   costs:

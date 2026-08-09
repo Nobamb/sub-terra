@@ -126,7 +126,7 @@ namespace SubTerra.App.Tests.Integration
 
                 Assert.That(
                     tilemap.GetTile(new Vector3Int(-8, -2, 0)).name,
-                    Is.EqualTo("Copper"));
+                    Is.EqualTo("Copper").Or.EqualTo("ElevatorProtectedBlock"));
                 Assert.That(
                     tilemap.GetTile(new Vector3Int(-3, -3, 0)).name,
                     Is.EqualTo("Iron"));

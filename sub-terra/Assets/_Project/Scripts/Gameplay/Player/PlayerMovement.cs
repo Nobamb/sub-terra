@@ -195,8 +195,9 @@ namespace SubTerra.Gameplay.Player
                 return true;
             }
 
-            // 점프 시작 조건: 실제 바닥 충돌 접점이 있어야 한다 (레이 보조만으로는 불가).
-            if (!HasFloorContact())
+            // 같은 물리 틱에서 갱신한 접점/발밑 보조 판정을 사용한다.
+            // 공중 재점프는 jumpUsedUntilLand가 별도로 차단한다.
+            if (!IsGrounded)
             {
                 return false;
             }
@@ -249,10 +250,10 @@ namespace SubTerra.Gameplay.Player
 
             IsGrounded = onFloor;
 
-            // 점프 차지 회복은 "실제 충돌 접점"으로 바닥에 정착했을 때만.
-            // 레이 오탐만으로는 절대 회복하지 않아 공중 무한 점프를 막는다.
+            // 접점이 한 틱 누락돼도 발밑 보조 판정으로 착지를 확정한다.
+            // 상승 중에는 위에서 반환하므로 공중에서 차지가 회복되지 않는다.
             if (jumpUsedUntilLand
-                && floorContact
+                && onFloor
                 && body != null
                 && body.linearVelocityY <= 0.1f)
             {
