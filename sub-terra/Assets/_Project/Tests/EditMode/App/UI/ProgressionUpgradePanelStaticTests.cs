@@ -1,6 +1,12 @@
 using System.IO;
+using System.Linq;
 using NUnit.Framework;
+using SubTerra.App.Tutorial;
+using SubTerra.App.UI.Progression;
+using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 namespace SubTerra.App.Tests.UI
 {
@@ -119,6 +125,26 @@ namespace SubTerra.App.Tests.UI
             var presenterSource = File.ReadAllText(presenterPath);
             Assert.That(presenterSource, Does.Contain("UpgradeCategoryRules.Resolve"));
             Assert.That(presenterSource, Does.Contain("SetActiveCategory"));
+        }
+
+        [Test]
+        public void MineDemoIntegration_UpgradePanel_IsConfiguredAsModalInputLayer()
+        {
+            const string scenePath = "Assets/_Project/Scenes/App/Mine_Demo_Integration.unity";
+            var scene = EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Single);
+            var panel = scene.GetRootGameObjects()
+                .SelectMany(root => root.GetComponentsInChildren<ProgressionPanelView>(true))
+                .SingleOrDefault();
+
+            Assert.That(panel, Is.Not.Null, "Mine demo scene must contain the upgrade panel.");
+
+            var panelRoot = panel.transform;
+            var canvas = panelRoot.GetComponent<Canvas>();
+            Assert.That(canvas, Is.Not.Null, "Upgrade panel needs its own Canvas to stay above other panels.");
+            Assert.That(canvas.overrideSorting, Is.True);
+            Assert.That(canvas.sortingOrder, Is.GreaterThanOrEqualTo(UiLayerPriority.ModalPanel));
+            Assert.That(panelRoot.GetComponent<GraphicRaycaster>(), Is.Not.Null,
+                "Upgrade panel must receive input while shown as the top layer.");
         }
     }
 }
