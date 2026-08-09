@@ -136,6 +136,7 @@ namespace SubTerra.App.Tests.UI
         public void ChromeController_TogglesPanels()
         {
             var host = new GameObject("ChromeHost");
+            host.SetActive(false);
             var buildingRoot = new GameObject("BuildingRoot");
             var diggerRoot = new GameObject("DiggerRoot");
             var guideRoot = new GameObject("GuideRoot");
@@ -172,8 +173,8 @@ namespace SubTerra.App.Tests.UI
                 so.FindProperty("inventoryPanelOpen").boolValue = false;
                 so.ApplyModifiedPropertiesWithoutUndo();
 
-                // Awake 경로 재현.
-                chrome.SendMessage("Awake", SendMessageOptions.DontRequireReceiver);
+                // Unity 수명주기로 Awake 경로를 재현한다.
+                host.SetActive(true);
 
                 chrome.CloseBuildingMenu();
                 Assert.That(chrome.IsBuildingMenuOpen, Is.False);

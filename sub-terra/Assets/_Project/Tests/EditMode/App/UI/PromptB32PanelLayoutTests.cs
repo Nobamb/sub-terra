@@ -125,6 +125,7 @@ namespace SubTerra.App.Tests.UI
         public void ChromeController_ClosesBuildingRootCompletely()
         {
             var host = new GameObject("ChromeHost");
+            host.SetActive(false);
             var buildingRoot = new GameObject("BuildingRoot");
             var diggerRoot = new GameObject("DiggerRoot");
             var guideRoot = new GameObject("GuideRoot");
@@ -157,7 +158,7 @@ namespace SubTerra.App.Tests.UI
                 so.FindProperty("inventoryPanelOpen").boolValue = false;
                 so.ApplyModifiedPropertiesWithoutUndo();
 
-                chrome.SendMessage("Awake", SendMessageOptions.DontRequireReceiver);
+                host.SetActive(true);
 
                 Assert.That(chrome.HasRequiredReferences(), Is.True);
 

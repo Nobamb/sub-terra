@@ -1,4 +1,5 @@
 using System.Linq;
+using System.Reflection;
 using NUnit.Framework;
 using SubTerra.App.Editor.DataValidation;
 using SubTerra.App.UI.HUD;
@@ -148,6 +149,7 @@ namespace SubTerra.App.Tests.UI
         public void ChromeController_TogglesGameGuide()
         {
             var host = new GameObject("ChromeHost");
+            host.SetActive(false);
             var guideRoot = new GameObject("GuideRoot");
             var buildingRoot = new GameObject("BuildingRoot");
             var diggerRoot = new GameObject("DiggerRoot");
@@ -173,7 +175,7 @@ namespace SubTerra.App.Tests.UI
                 so.FindProperty("gameGuideOpen").boolValue = false;
                 so.ApplyModifiedPropertiesWithoutUndo();
 
-                chrome.SendMessage("Awake", SendMessageOptions.DontRequireReceiver);
+                InvokePrivateAwake(chrome);
 
                 Assert.That(chrome.IsGameGuideOpen, Is.False);
                 Assert.That(guideRoot.activeSelf, Is.False);
@@ -204,11 +206,15 @@ namespace SubTerra.App.Tests.UI
         public void GuideView_SelectsTabsAndKeepsFontSize()
         {
             var root = new GameObject("GuideRuntime");
+            root.SetActive(false);
             var panel = new GameObject("PanelRoot");
             panel.transform.SetParent(root.transform);
             var bodyGo = new GameObject("BodyText", typeof(RectTransform));
             bodyGo.transform.SetParent(panel.transform);
             var body = bodyGo.AddComponent<TextMeshProUGUI>();
+            body.font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(
+                "Assets/_Project/Fonts/NotoSansKR-Regular_SDF.asset");
+            Assert.That(body.font, Is.Not.Null);
             body.fontSize = 12f;
 
             var contentGo = new GameObject("Content", typeof(RectTransform));
@@ -235,7 +241,7 @@ namespace SubTerra.App.Tests.UI
                 tabs.GetArrayElementAtIndex(2).objectReferenceValue = tab2;
                 so.ApplyModifiedPropertiesWithoutUndo();
 
-                view.SendMessage("Awake", SendMessageOptions.DontRequireReceiver);
+                InvokePrivateAwake(view);
                 Assert.That(body.fontSize, Is.EqualTo(GameGuidePanelView.GuideFontSize).Within(0.1f));
                 Assert.That(body.text, Does.Contain("기본 게임 조작법"));
 
@@ -263,6 +269,15 @@ namespace SubTerra.App.Tests.UI
             go.AddComponent<RectTransform>();
             go.AddComponent<Image>();
             return go.AddComponent<Button>();
+        }
+
+        private static void InvokePrivateAwake(Component component)
+        {
+            var awake = component.GetType().GetMethod(
+                "Awake",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(awake, Is.Not.Null, "테스트 대상의 Awake 초기화가 필요합니다.");
+            awake.Invoke(component, null);
         }
 
         private static Scene OpenIntegration()

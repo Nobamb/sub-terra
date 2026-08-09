@@ -1,4 +1,5 @@
 using System.Linq;
+using System.Reflection;
 using NUnit.Framework;
 using SubTerra.App.Editor.DataValidation;
 using SubTerra.App.UI.Drone;
@@ -105,6 +106,7 @@ namespace SubTerra.App.Tests.UI
         public void ChromeController_ToggleDiggerBot_ShowsPanelWithoutOpenButton()
         {
             var host = new GameObject("ChromeHost34");
+            host.SetActive(false);
             var diggerHost = new GameObject("DiggerHost34");
             var diggerRoot = new GameObject("DiggerRoot34");
             diggerRoot.transform.SetParent(diggerHost.transform);
@@ -116,7 +118,7 @@ namespace SubTerra.App.Tests.UI
                 so.FindProperty("diggerHostRoot").objectReferenceValue = diggerHost;
                 so.FindProperty("diggerBotOpen").boolValue = false;
                 so.ApplyModifiedPropertiesWithoutUndo();
-                chrome.SendMessage("Awake", SendMessageOptions.DontRequireReceiver);
+                InvokePrivateAwake(chrome);
 
                 Assert.That(chrome.IsDiggerBotOpen, Is.False);
                 Assert.That(diggerRoot.activeSelf, Is.False);
@@ -149,6 +151,15 @@ namespace SubTerra.App.Tests.UI
             }
 
             return scene;
+        }
+
+        private static void InvokePrivateAwake(Component component)
+        {
+            var awake = component.GetType().GetMethod(
+                "Awake",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(awake, Is.Not.Null, "테스트 대상의 Awake 초기화가 필요합니다.");
+            awake.Invoke(component, null);
         }
 
         private static T Find<T>(Scene scene, string name)
