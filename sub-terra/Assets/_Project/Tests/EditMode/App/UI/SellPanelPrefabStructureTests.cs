@@ -1,6 +1,7 @@
 using System.IO;
 using System.Linq;
 using NUnit.Framework;
+using SubTerra.App.Editor.DataValidation;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
@@ -13,6 +14,13 @@ namespace SubTerra.App.Tests.UI
     /// </summary>
     public sealed class SellPanelPrefabStructureTests
     {
+        [OneTimeSetUp]
+        public void BuildSurfaceBaseSellPanelPrefab()
+        {
+            var report = PromptB_SellPanelLayoutBuilder.Build();
+            Assert.That(report, Does.Contain("Sell").Or.Contain("SurfaceBase"));
+        }
+
         private static string PrefabText(string fileName)
         {
             var path = Path.Combine(Application.dataPath, "_Project", "Prefabs", "UI", fileName);

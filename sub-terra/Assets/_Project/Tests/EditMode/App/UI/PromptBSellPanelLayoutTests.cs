@@ -18,6 +18,13 @@ namespace SubTerra.App.Tests.UI
     /// </summary>
     public sealed class PromptBSellPanelLayoutTests
     {
+        [OneTimeSetUp]
+        public void BuildSurfaceBaseSellPanelPrefab()
+        {
+            var report = PromptB_SellPanelLayoutBuilder.Build();
+            Assert.That(report, Does.Contain("Sell").Or.Contain("SurfaceBase"));
+        }
+
         [Test]
         public void SurfaceBasePrefab_MatchesAuthorityCoordinates_AndSellChildren()
         {
