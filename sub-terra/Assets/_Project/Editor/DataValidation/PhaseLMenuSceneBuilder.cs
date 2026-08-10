@@ -460,7 +460,7 @@ namespace SubTerra.App.Editor.DataValidation
                 new Vector2(0f, 120f),
                 new Vector2(420f, 28f),
                 18f,
-                "마스터 음량: 100%");
+                "마스터 음량: 50%");
 
             var volumeGo = new GameObject("MasterVolume", typeof(RectTransform), typeof(Slider));
             volumeGo.transform.SetParent(settingsRoot.transform, false);
@@ -471,7 +471,7 @@ namespace SubTerra.App.Editor.DataValidation
             var volumeSlider = volumeGo.GetComponent<Slider>();
             volumeSlider.minValue = 0f;
             volumeSlider.maxValue = 1f;
-            volumeSlider.value = 1f;
+            volumeSlider.value = 0.5f;
             // 트랙/핸들 최소 시각 요소 (Slider 동작용).
             var background = new GameObject("Background", typeof(RectTransform), typeof(Image));
             background.transform.SetParent(volumeGo.transform, false);

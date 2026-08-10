@@ -477,7 +477,7 @@ namespace SubTerra.App.UI.SurfaceBase
                 : GameLanguageCodes.Korean;
             var previous = LocalizationService.Current;
             LocalizationService.SetLanguageCode(draftLanguageCode);
-            float volume = masterVolumeSlider != null ? masterVolumeSlider.value : 1f;
+            float volume = masterVolumeSlider != null ? masterVolumeSlider.value : 0.5f;
             RefreshSettingsLabels(volume);
             LocalizationService.SetLanguage(previous);
         }
@@ -530,7 +530,7 @@ namespace SubTerra.App.UI.SurfaceBase
                 : GameLanguageCodes.English;
             var previous = LocalizationService.Current;
             LocalizationService.SetLanguageCode(draftLanguageCode);
-            float volume = masterVolumeSlider != null ? masterVolumeSlider.value : 1f;
+            float volume = masterVolumeSlider != null ? masterVolumeSlider.value : 0.5f;
             RefreshSettingsLabels(volume);
             LocalizationService.SetLanguage(previous);
         }

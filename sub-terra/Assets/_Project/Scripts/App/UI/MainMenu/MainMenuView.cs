@@ -471,7 +471,7 @@ namespace SubTerra.App.UI.MainMenu
                 : GameLanguageCodes.Korean;
             var previous = LocalizationService.Current;
             LocalizationService.SetLanguageCode(draftLanguageCode);
-            float volume = masterVolumeSlider != null ? masterVolumeSlider.value : 1f;
+            float volume = masterVolumeSlider != null ? masterVolumeSlider.value : 0.5f;
             RefreshSettingsLabels(volume);
             LocalizationService.SetLanguage(previous);
         }
@@ -525,7 +525,7 @@ namespace SubTerra.App.UI.MainMenu
             // 라벨 미리보기는 선택 언어 기준으로 갱신(적용 전 미리보기).
             var previous = LocalizationService.Current;
             LocalizationService.SetLanguageCode(draftLanguageCode);
-            float volume = masterVolumeSlider != null ? masterVolumeSlider.value : 1f;
+            float volume = masterVolumeSlider != null ? masterVolumeSlider.value : 0.5f;
             RefreshSettingsLabels(volume);
             LocalizationService.SetLanguage(previous);
         }
