@@ -7,6 +7,7 @@ using SubTerra.App.UI.MainMenu;
 using SubTerra.App.UI.Progression;
 using SubTerra.App.UI.Save;
 using SubTerra.App.UI.SurfaceBase;
+using SubTerra.App.Tutorial;
 using TMPro;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -442,8 +443,19 @@ namespace SubTerra.App.Editor.DataValidation
         /// </summary>
         private static SettingsPanelRefs BuildSettingsPanel(Transform parent)
         {
-            var settingsRoot = new GameObject("SettingsPanel", typeof(RectTransform), typeof(Image));
+            var settingsRoot = new GameObject(
+                "SettingsPanel",
+                typeof(RectTransform),
+                typeof(Canvas),
+                typeof(GraphicRaycaster),
+                typeof(Image));
             settingsRoot.transform.SetParent(parent, false);
+            var settingsCanvas = settingsRoot.GetComponent<Canvas>();
+            settingsCanvas.overrideSorting = true;
+            settingsCanvas.sortingOrder = UiLayerPriority.SettingsModal;
+            var settingsCanvasSo = new SerializedObject(settingsCanvas);
+            settingsCanvasSo.FindProperty("m_OverrideSorting").boolValue = true;
+            settingsCanvasSo.ApplyModifiedPropertiesWithoutUndo();
             var settingsRect = settingsRoot.GetComponent<RectTransform>();
             settingsRect.anchorMin = settingsRect.anchorMax = new Vector2(0.5f, 0.5f);
             settingsRect.pivot = new Vector2(0.5f, 0.5f);
