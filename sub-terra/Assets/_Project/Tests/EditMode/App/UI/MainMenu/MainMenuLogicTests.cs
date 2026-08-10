@@ -378,7 +378,7 @@ namespace SubTerra.App.Tests.UI.MainMenu
 
             session.Open();
             session.ResetDefaults();
-            Assert.That(session.Draft.MasterVolume, Is.EqualTo(1f));
+            Assert.That(session.Draft.MasterVolume, Is.EqualTo(0.5f));
             Assert.That(session.Draft.ReduceMotion, Is.False);
             Assert.That(session.Draft.LanguageCode, Is.EqualTo("ko"));
             Assert.That(session.Draft.ResolutionWidth, Is.EqualTo(1920));

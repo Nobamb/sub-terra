@@ -10,6 +10,8 @@ namespace SubTerra.Gameplay.Structural
     {
         [SerializeField] private StructuralIntegritySystem structuralSystem;
         [SerializeField] private AudioSource audioSource;
+        [SerializeField] private AudioSource explorationBgmSource;
+        [SerializeField] private AudioSource dangerBgmSource;
         [SerializeField] private AudioClip warningTone;
         [SerializeField] private bool reduceMotion;
         [SerializeField] private PlayerCameraFollow cameraFollow;
@@ -38,6 +40,8 @@ namespace SubTerra.Gameplay.Structural
 
         private void OnRiskChanged(StructuralRiskLevel risk)
         {
+            UpdateDangerBgm(risk);
+
             if (risk == StructuralRiskLevel.Stable)
             {
                 return;
@@ -58,6 +62,16 @@ namespace SubTerra.Gameplay.Structural
 
         private void OnCollapseTriggered(StructuralCollapseEventDto collapse)
         {
+            if (explorationBgmSource != null && explorationBgmSource.isPlaying)
+            {
+                explorationBgmSource.Pause();
+            }
+
+            if (dangerBgmSource != null && !dangerBgmSource.isPlaying)
+            {
+                dangerBgmSource.Play();
+            }
+
             if (collapse == null || AccessibilityPreferences.ReduceMotion || reduceMotion)
             {
                 return;
@@ -107,6 +121,36 @@ namespace SubTerra.Gameplay.Structural
             }
 
             follow?.RequestShake(amplitude, duration);
+        }
+
+        private void UpdateDangerBgm(StructuralRiskLevel risk)
+        {
+            if (dangerBgmSource == null)
+            {
+                return;
+            }
+
+            if (risk >= StructuralRiskLevel.Danger)
+            {
+                if (explorationBgmSource != null && explorationBgmSource.isPlaying)
+                {
+                    explorationBgmSource.Pause();
+                }
+
+                if (!dangerBgmSource.isPlaying)
+                {
+                    dangerBgmSource.Play();
+                }
+            }
+            else if (dangerBgmSource.isPlaying)
+            {
+                dangerBgmSource.Pause();
+
+                if (explorationBgmSource != null)
+                {
+                    explorationBgmSource.UnPause();
+                }
+            }
         }
 
         private AudioClip ResolveWarningTone()

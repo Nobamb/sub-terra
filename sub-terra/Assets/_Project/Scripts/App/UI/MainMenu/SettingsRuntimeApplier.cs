@@ -22,7 +22,7 @@ namespace SubTerra.App.UI.MainMenu
             var values = SettingsValues.CreateDefaults();
             if (PlayerPrefs.HasKey(PrefMasterVolume))
             {
-                values.MasterVolume = Mathf.Clamp01(PlayerPrefs.GetFloat(PrefMasterVolume, 1f));
+                values.MasterVolume = Mathf.Clamp01(PlayerPrefs.GetFloat(PrefMasterVolume, 0.5f));
             }
 
             if (PlayerPrefs.HasKey(PrefReduceMotion))

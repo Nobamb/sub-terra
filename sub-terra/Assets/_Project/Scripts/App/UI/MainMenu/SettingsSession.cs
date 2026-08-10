@@ -35,7 +35,7 @@ namespace SubTerra.App.UI.MainMenu
         {
             return new SettingsValues
             {
-                MasterVolume = 1f,
+                MasterVolume = 0.5f,
                 ReduceMotion = false,
                 ResolutionWidth = 1920,
                 ResolutionHeight = 1080,
