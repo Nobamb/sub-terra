@@ -662,44 +662,6 @@ namespace SubTerra.App.Editor.DataValidation
 
             // 설정/종료 사이·상단에 보이는 "Surface Base" 타이틀 제거.
             // SettingsPanel 내부 제목은 유지한다.
-            foreach (var title in host.GetComponentsInChildren<TMP_Text>(true))
-            {
-                if (title == null)
-                {
-                    continue;
-                }
-
-                var inSettings = false;
-                var p = title.transform;
-                while (p != null)
-                {
-                    if (p.name == "SettingsPanel" || p.name == "settingsRoot")
-                    {
-                        inSettings = true;
-                        break;
-                    }
-
-                    p = p.parent;
-                }
-
-                if (inSettings)
-                {
-                    continue;
-                }
-
-                var text = (title.text ?? string.Empty).Trim();
-                var isSurfaceTitle = title.name == "Title"
-                    || text.Equals("Surface Base", System.StringComparison.OrdinalIgnoreCase);
-                if (!isSurfaceTitle)
-                {
-                    continue;
-                }
-
-                title.text = string.Empty;
-                title.gameObject.SetActive(false);
-                EditorUtility.SetDirty(title);
-            }
-
             // 탐사 시작 메시지는 버튼 아래 분리 배치(겹침 방지).
             var explore = FindChildRecursive(host, "ExploreButton") as RectTransform;
             var message = FindChildRecursive(host, "MessageText") as RectTransform;

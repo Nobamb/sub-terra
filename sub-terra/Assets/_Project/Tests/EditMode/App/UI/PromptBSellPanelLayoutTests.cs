@@ -19,11 +19,8 @@ namespace SubTerra.App.Tests.UI
     public sealed class PromptBSellPanelLayoutTests
     {
         [Test]
-        public void Builder_AppliesAuthorityCoordinates_AndSellChildren()
+        public void SurfaceBasePrefab_MatchesAuthorityCoordinates_AndSellChildren()
         {
-            var report = PromptB_SellPanelLayoutBuilder.Build();
-            Assert.That(report, Does.Contain("Sell").Or.Contain("SurfaceBase"));
-
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
                 PromptB_SellPanelLayoutBuilder.SurfaceBasePrefabPath);
             Assert.That(prefab, Is.Not.Null);
@@ -104,6 +101,11 @@ namespace SubTerra.App.Tests.UI
             var deepZone = FindDeep(content, "DeepZoneText") as RectTransform;
             var recentRun = FindDeep(content, "RecentRunText") as RectTransform;
             var explore = FindDeep(content, "ExploreButton") as RectTransform;
+            Assert.That(title, Is.Not.Null, "Surface Base title missing");
+            Assert.That(title.gameObject.activeSelf, Is.True, "Surface Base title must be visible");
+            Assert.That(title.anchoredPosition.y,
+                Is.EqualTo(PromptB_SellPanelLayoutBuilder.TitleY).Within(0.5f));
+            Assert.That(title.GetComponent<TMP_Text>().text, Is.EqualTo("Surface Base"));
             AssertBelowWithGap(title, goals, 16f);
             AssertBelowWithGap(goals, energy, 16f);
             AssertBelowWithGap(energy, deepZone, 16f);

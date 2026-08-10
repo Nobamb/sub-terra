@@ -26,6 +26,7 @@ namespace SubTerra.App.Editor.DataValidation
 
         // 권위 좌표표 (design §2)
         public const float GoalsY = 314f;
+        public const float TitleY = 382f;
         public const float EnergyY = 264f;
         public const float DeepZoneY = 218f;
         public const float RecentRunY = 174f;
@@ -51,6 +52,13 @@ namespace SubTerra.App.Editor.DataValidation
             File.WriteAllText(
                 Path.Combine(projectRoot, "Temp", "prompt-b-sell-panel-layout.txt"),
                 report);
+        }
+
+        [MenuItem("SubTerra/UI/Repair Surface Base Title Only")]
+        public static void RepairSurfaceBaseTitleOnlyFromMenu()
+        {
+            var report = UpdateSurfaceBaseTitleOnly();
+            Debug.Log("[SubTerra] " + report);
         }
 
         public static string Build()
@@ -127,6 +135,27 @@ namespace SubTerra.App.Editor.DataValidation
             }
         }
 
+        private static string UpdateSurfaceBaseTitleOnly()
+        {
+            if (AssetDatabase.LoadAssetAtPath<GameObject>(SurfaceBasePrefabPath) == null)
+            {
+                return "SKIP: SurfaceBase prefab missing";
+            }
+
+            var root = PrefabUtility.LoadPrefabContents(SurfaceBasePrefabPath);
+            try
+            {
+                var host = root.transform.Find("SurfaceBaseContent") ?? root.transform;
+                EnsureSurfaceTitle(host);
+                PrefabUtility.SaveAsPrefabAsset(root, SurfaceBasePrefabPath);
+                return "SurfaceBasePrefab title repaired";
+            }
+            finally
+            {
+                PrefabUtility.UnloadPrefabContents(root);
+            }
+        }
+
         private static string UpdateSurfaceBaseScene()
         {
             // Scene은 SurfaceBasePanel prefab 인스턴스를 사용한다. 인스턴스 자식을 직접
@@ -144,6 +173,7 @@ namespace SubTerra.App.Editor.DataValidation
         private static void ApplySellChromeAndControls(GameObject root)
         {
             var host = root.transform.Find("SurfaceBaseContent") ?? root.transform;
+            EnsureSurfaceTitle(host);
 
             // 상태 밴드 압축 (권위 표)
             PlaceCentered(host, "GoalsText", GoalsY, 720f, 36f);
@@ -538,6 +568,23 @@ namespace SubTerra.App.Editor.DataValidation
             tmp.overflowMode = TextOverflowModes.Ellipsis;
             EditorUtility.SetDirty(tmp);
             return tmp;
+        }
+
+        private static void EnsureSurfaceTitle(Transform host)
+        {
+            var title = EnsureTmp(
+                host,
+                "Title",
+                new Vector2(0f, TitleY),
+                new Vector2(760f, 56f),
+                38f,
+                "Surface Base");
+
+            title.gameObject.SetActive(true);
+            title.alignment = TextAlignmentOptions.Center;
+            title.fontStyle = FontStyles.Bold;
+            title.transform.SetSiblingIndex(0);
+            EditorUtility.SetDirty(title);
         }
 
         private static Button EnsureButton(Transform parent, string name, Vector2 pos, Vector2 size, string label)
