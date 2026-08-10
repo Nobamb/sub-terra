@@ -1,4 +1,5 @@
 using System;
+using SubTerra.App.Tutorial;
 using SubTerra.App.RuntimeInfo;
 using SubTerra.Shared.Localization;
 using TMPro;
@@ -53,6 +54,8 @@ namespace SubTerra.App.UI.MainMenu
         private int draftResolutionHeight = 1080;
         private string draftLanguageCode = GameLanguageCodes.Korean;
         private FrameRateMode draftFrameRate = FrameRateMode.Auto;
+        private readonly Color[] slotDefaultColors = new Color[3];
+        private readonly bool[] hasSlotDefaultColor = new bool[3];
 
         public event Action<int> SlotSelected;
         public event Action ContinueClicked;
@@ -177,6 +180,8 @@ namespace SubTerra.App.UI.MainMenu
             {
                 messageText.text = message;
             }
+
+            RefreshSlotSelection(slotId);
         }
 
         public void SetOverwriteConfirmVisible(bool visible, int slotId)
@@ -198,6 +203,10 @@ namespace SubTerra.App.UI.MainMenu
             if (settingsRoot != null)
             {
                 settingsRoot.SetActive(visible);
+                if (visible)
+                {
+                    BringSettingsToFront();
+                }
             }
         }
 
@@ -489,6 +498,54 @@ namespace SubTerra.App.UI.MainMenu
             }
 
             MasterVolumePreviewChanged?.Invoke(value);
+        }
+
+        private void BringSettingsToFront()
+        {
+            settingsRoot.transform.SetAsLastSibling();
+
+            var canvas = settingsRoot.GetComponent<Canvas>();
+            if (canvas == null)
+            {
+                canvas = settingsRoot.AddComponent<Canvas>();
+            }
+
+            canvas.overrideSorting = true;
+            canvas.sortingOrder = UiLayerPriority.SettingsModal;
+
+            if (settingsRoot.GetComponent<GraphicRaycaster>() == null)
+            {
+                settingsRoot.AddComponent<GraphicRaycaster>();
+            }
+        }
+
+        private void RefreshSlotSelection(int selectedSlotId)
+        {
+            if (slotButtons == null)
+            {
+                return;
+            }
+
+            for (var i = 0; i < slotButtons.Length && i < 3; i++)
+            {
+                var button = slotButtons[i];
+                if (button == null)
+                {
+                    continue;
+                }
+
+                var colors = button.colors;
+                if (!hasSlotDefaultColor[i])
+                {
+                    slotDefaultColors[i] = colors.normalColor;
+                    hasSlotDefaultColor[i] = true;
+                }
+
+                colors.normalColor = i == selectedSlotId - 1
+                    ? colors.pressedColor
+                    : slotDefaultColors[i];
+                button.colors = colors;
+            }
         }
 
         private void OnResolutionPrev()
