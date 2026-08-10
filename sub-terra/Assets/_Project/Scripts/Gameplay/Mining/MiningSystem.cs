@@ -25,7 +25,8 @@ namespace SubTerra.Gameplay.Mining
         TargetChanged = 6,
         DependencyMissing = 7,
         InvalidReward = 8,
-        OutOfRange = 9
+        OutOfRange = 9,
+        DeepZoneLocked = 10
     }
 
     public readonly struct MiningProgressState
@@ -53,6 +54,8 @@ namespace SubTerra.Gameplay.Mining
 
     public sealed class MiningSystem : MonoBehaviour
     {
+        private const string LockedSignalTileId = "tile.locked.signal";
+
         [SerializeField] private Tilemap foregroundTilemap;
         [SerializeField] private MiningTileResolver tileResolver;
         [SerializeField] private MonoBehaviour rewardReceiverBehaviour;
@@ -66,6 +69,7 @@ namespace SubTerra.Gameplay.Mining
         private IMiningRewardReceiver rewardReceiver;
         private IMiningTransaction miningTransaction;
         private IUpgradeEffectProvider upgradeEffects;
+        private IDeepZoneAccessProvider deepZoneAccess;
         private Vector3Int activeCell;
         private TileBase activeTileAsset;
         private MiningTileDto activeTile;
@@ -79,16 +83,19 @@ namespace SubTerra.Gameplay.Mining
         public int SpawnedResourceDropCount { get; private set; }
         public MiningFailureReason LastFailure { get; private set; }
         public event Action<Vector3Int, MiningTileDto> TileMined;
+        public event Action<Vector3Int> DeepZoneSignalAccessed;
         public event Action<MiningProgressState> ProgressChanged;
 
         private void Awake() => ResolveServices();
 
         public void SetRuntimeServices(
             IMiningTransaction transaction,
-            IUpgradeEffectProvider effectProvider)
+            IUpgradeEffectProvider effectProvider,
+            IDeepZoneAccessProvider deepZoneAccessProvider = null)
         {
             miningTransaction = transaction;
             upgradeEffects = effectProvider;
+            deepZoneAccess = deepZoneAccessProvider;
         }
 
         public void SetMiningPowerAvailable(bool available)
@@ -129,6 +136,11 @@ namespace SubTerra.Gameplay.Mining
             if (tile == null || !tileResolver.TryResolve(tile, out MiningTileDto definition))
             {
                 return Fail(MiningFailureReason.InvalidTarget);
+            }
+
+            if (definition.tileId == LockedSignalTileId)
+            {
+                return TryAccessDeepZoneSignal(cell);
             }
 
             if (!definition.isMineable)
@@ -183,7 +195,7 @@ namespace SubTerra.Gameplay.Mining
                 return false;
             }
 
-            return CompleteMining();
+            return IsMining ? CompleteMining() : LastFailure == MiningFailureReason.None;
         }
 
         public bool TryMineInstantFrom(Vector2 origin, float facingDirection, float range)
@@ -437,6 +449,18 @@ namespace SubTerra.Gameplay.Mining
             LastFailure = reason;
             Publish(MiningPhase.Failed);
             return false;
+        }
+
+        private bool TryAccessDeepZoneSignal(Vector3Int cell)
+        {
+            if (deepZoneAccess?.IsDeepZoneUnlocked != true)
+            {
+                return Fail(MiningFailureReason.DeepZoneLocked);
+            }
+
+            LastFailure = MiningFailureReason.None;
+            DeepZoneSignalAccessed?.Invoke(cell);
+            return true;
         }
 
         private void Publish(MiningPhase phase)

@@ -14,6 +14,7 @@ namespace SubTerra.App.UI.Progression
         [SerializeField] private ProgressionPanelView view;
 
         private ProgressionPanelPresenter presenter;
+        private ProgressionService service;
 
         public ProgressionPanelPresenter Presenter => presenter;
         public bool IsBound => presenter != null && presenter.IsBound;
@@ -49,8 +50,14 @@ namespace SubTerra.App.UI.Progression
 
         private void OnDestroy()
         {
+            if (service != null)
+            {
+                service.DeepZoneAccessChanged -= OnDeepZoneAccessChanged;
+            }
+
             presenter?.Unbind();
             presenter = null;
+            service = null;
         }
 
         public void BindTo(ProgressionService service)
@@ -61,12 +68,31 @@ namespace SubTerra.App.UI.Progression
         public void BindTo(ProgressionService service, Func<int> completedObjectivesProvider)
         {
             EnsureView();
+            if (this.service != null)
+            {
+                this.service.DeepZoneAccessChanged -= OnDeepZoneAccessChanged;
+            }
+
+            this.service = service;
+            if (this.service != null)
+            {
+                this.service.DeepZoneAccessChanged += OnDeepZoneAccessChanged;
+            }
+
             if (presenter == null)
             {
                 presenter = new ProgressionPanelPresenter(view);
             }
 
             presenter.Bind(service, completedObjectivesProvider);
+        }
+
+        private void OnDeepZoneAccessChanged(ZoneAccessResult result)
+        {
+            if (result.IsUnlocked && result.DidUnlockNow)
+            {
+                view?.ShowDeepZoneUnlockPopup();
+            }
         }
 
         public bool SelectUpgrade(string upgradeId)

@@ -133,7 +133,10 @@ namespace SubTerra.App.Integration
 
             if (miningSystem != null)
             {
-                miningSystem.SetRuntimeServices(this, runtime.Progression?.Effects);
+                miningSystem.SetRuntimeServices(
+                    this,
+                    runtime.Progression?.Effects,
+                    runtime);
             }
 
             BindCargoSpeed();

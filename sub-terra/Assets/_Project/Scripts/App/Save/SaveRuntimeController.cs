@@ -26,7 +26,8 @@ namespace SubTerra.App.Save
         IRestoredStateReceiver,
         IWorldSnapshotResolver,
         IDerivedStateRecalculator,
-        ILoadedUiGate
+        ILoadedUiGate,
+        IDeepZoneAccessProvider
     {
         public static SaveRuntimeController Instance { get; private set; }
 
@@ -43,6 +44,7 @@ namespace SubTerra.App.Save
         private EconomyService economy;
         private CraftingService crafting;
         private ProgressionService progression;
+        private ProgressionDerivedStateSynchronizer progressionDerivedStateSynchronizer;
         private ISellGate sellGate;
         private TemplateDialogueGenerator dialogueGenerator;
         private GameState boundState;
@@ -81,6 +83,8 @@ namespace SubTerra.App.Save
         public EconomyService Economy => economy;
         public CraftingService Crafting => crafting;
         public ProgressionService Progression => progression;
+        public bool IsDeepZoneUnlocked => upgrades != null
+            && upgrades.IsZoneUnlocked(DataIds.Zones.Deep);
         /// <summary>판매 게이트. 기본 false. SurfaceBaseBinder가 OnEnable/OnDisable에서 토글.</summary>
         public ISellGate SellGate => sellGate;
         public ExplorationStartGuard ExplorationGuard => explorationGuard;
@@ -153,6 +157,8 @@ namespace SubTerra.App.Save
             UnbindStateDirtyEvents();
             eventBinder?.Dispose();
             autoSave?.Dispose();
+            progressionDerivedStateSynchronizer?.Dispose();
+            progressionDerivedStateSynchronizer = null;
             if (Instance == this)
             {
                 Instance = null;
@@ -522,6 +528,8 @@ namespace SubTerra.App.Save
         {
             eventBinder?.Dispose();
             eventBinder = null;
+            progressionDerivedStateSynchronizer?.Dispose();
+            progressionDerivedStateSynchronizer = null;
 
             var catalog = GameBootstrapper.Instance?.AssignedCatalog as GameDataCatalog;
             IMineralCatalogLookup mineralLookup = catalog != null
@@ -539,6 +547,14 @@ namespace SubTerra.App.Save
             progression = upgradeCatalog != null
                 ? new ProgressionService(upgradeState, upgradeCatalog, economy)
                 : null;
+
+            if (progression != null)
+            {
+                progressionDerivedStateSynchronizer = new ProgressionDerivedStateSynchronizer(
+                    state,
+                    inventoryService);
+                progressionDerivedStateSynchronizer.Bind(progression);
+            }
 
             if (autoSave != null)
             {

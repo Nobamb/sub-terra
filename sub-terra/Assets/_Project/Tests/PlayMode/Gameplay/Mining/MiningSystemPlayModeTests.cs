@@ -57,6 +57,11 @@ namespace SubTerra.Gameplay.Mining.Tests
             public float GetGasResistance() => 0f;
         }
 
+        private sealed class DeepZoneAccess : IDeepZoneAccessProvider
+        {
+            public bool IsDeepZoneUnlocked { get; set; }
+        }
+
         [Test]
         public void CompletionRemovesTileAndPaysRewardOnlyOnce()
         {
@@ -101,6 +106,34 @@ namespace SubTerra.Gameplay.Mining.Tests
             Assert.That(system.TryMineInstant(protectedCell), Is.False);
             Assert.That(system.LastFailure, Is.EqualTo(MiningFailureReason.NotMineable));
             Assert.That(tilemap.GetTile(protectedCell), Is.SameAs(tile));
+
+            Object.DestroyImmediate(root);
+            Object.DestroyImmediate(tile);
+        }
+
+        [Test]
+        public void DeepZoneSignal_BlocksBeforeUnlock_AndAllowsInteractionAfterUnlock()
+        {
+            CreateSystem(out var root, out var tilemap, out var resolver, out var system);
+            var access = new DeepZoneAccess();
+            system.SetRuntimeServices(null, null, access);
+            var tile = ScriptableObject.CreateInstance<Tile>();
+            var cell = new Vector3Int(14, -7, 0);
+            var signalAccesses = 0;
+            resolver.RegisterRuntime(tile, new MiningTileDto(
+                "tile.locked.signal", string.Empty, 0, false, 1f, 0f, 0f, false));
+            tilemap.SetTile(cell, tile);
+            system.DeepZoneSignalAccessed += _ => signalAccesses++;
+
+            Assert.That(system.TryMineInstant(cell), Is.False);
+            Assert.That(system.LastFailure, Is.EqualTo(MiningFailureReason.DeepZoneLocked));
+            Assert.That(tilemap.GetTile(cell), Is.SameAs(tile));
+
+            access.IsDeepZoneUnlocked = true;
+            Assert.That(system.TryMineInstant(cell), Is.True);
+            Assert.That(system.LastFailure, Is.EqualTo(MiningFailureReason.None));
+            Assert.That(signalAccesses, Is.EqualTo(1));
+            Assert.That(tilemap.GetTile(cell), Is.SameAs(tile));
 
             Object.DestroyImmediate(root);
             Object.DestroyImmediate(tile);

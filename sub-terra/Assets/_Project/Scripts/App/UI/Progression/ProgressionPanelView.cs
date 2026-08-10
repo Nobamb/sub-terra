@@ -28,6 +28,8 @@ namespace SubTerra.App.UI.Progression
         [SerializeField] private TMP_Text detailText;
         [SerializeField] private TMP_Text resultText;
         [SerializeField] private TMP_Text deepZoneText;
+        [SerializeField] private GameObject deepZoneUnlockPopupRoot;
+        [SerializeField] private TMP_Text deepZoneUnlockPopupText;
         [SerializeField] private Button purchaseButton;
         [SerializeField] private GameObject panelRoot;
         [SerializeField] private ProgressionUpgradeEntryButton[] upgradeButtons;
@@ -285,6 +287,82 @@ namespace SubTerra.App.UI.Progression
         {
             lastDeepZoneAccess = access;
             ApplyDeepZoneDisplay();
+        }
+
+        public void ShowDeepZoneUnlockPopup()
+        {
+            const string message = "심층 구역 잠금이 해제되었습니다";
+            CreateDeepZoneUnlockPopupIfNeeded();
+            if (deepZoneUnlockPopupText != null)
+            {
+                deepZoneUnlockPopupText.text = message;
+            }
+
+            if (deepZoneUnlockPopupRoot != null)
+            {
+                deepZoneUnlockPopupRoot.SetActive(true);
+                deepZoneUnlockPopupRoot.transform.SetAsLastSibling();
+                return;
+            }
+
+            SetPurchaseResult(message, string.Empty);
+        }
+
+        public void HideDeepZoneUnlockPopup()
+        {
+            if (deepZoneUnlockPopupRoot != null)
+            {
+                deepZoneUnlockPopupRoot.SetActive(false);
+            }
+        }
+
+        private void CreateDeepZoneUnlockPopupIfNeeded()
+        {
+            if (deepZoneUnlockPopupRoot != null || resultText == null)
+            {
+                return;
+            }
+
+            var canvases = GetComponentsInParent<Canvas>(true);
+            if (canvases == null || canvases.Length == 0)
+            {
+                return;
+            }
+
+            var root = new GameObject(
+                "DeepZoneUnlockPopup_Runtime",
+                typeof(RectTransform),
+                typeof(Image),
+                typeof(Canvas),
+                typeof(GraphicRaycaster),
+                typeof(Button));
+            root.transform.SetParent(canvases[canvases.Length - 1].transform, false);
+            var rect = root.GetComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0.5f, 0.5f);
+            rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.sizeDelta = new Vector2(520f, 180f);
+            root.GetComponent<Image>().color = new Color(0.035f, 0.1f, 0.16f, 0.98f);
+            var popupCanvas = root.GetComponent<Canvas>();
+            popupCanvas.overrideSorting = true;
+            popupCanvas.sortingOrder = UiLayerPriority.ModalPanel + 10;
+
+            var label = Instantiate(resultText, root.transform);
+            label.name = "Message";
+            label.gameObject.SetActive(true);
+            label.raycastTarget = false;
+            var labelRect = label.rectTransform;
+            labelRect.anchorMin = Vector2.zero;
+            labelRect.anchorMax = Vector2.one;
+            labelRect.offsetMin = new Vector2(28f, 28f);
+            labelRect.offsetMax = new Vector2(-28f, -28f);
+            label.alignment = TextAlignmentOptions.Center;
+            label.fontSize = 28f;
+
+            deepZoneUnlockPopupRoot = root;
+            deepZoneUnlockPopupText = label;
+            root.GetComponent<Button>().onClick.AddListener(HideDeepZoneUnlockPopup);
+            root.SetActive(false);
         }
 
         public void SetBusy(bool busy)
