@@ -1,4 +1,5 @@
 using System;
+using SubTerra.App.Tutorial;
 using SubTerra.App.UI.MainMenu;
 using SubTerra.Shared.Localization;
 using TMPro;
@@ -226,9 +227,43 @@ namespace SubTerra.App.UI.SurfaceBase
 
         public void SetSettingsVisible(bool visible)
         {
-            if (settingsRoot != null)
+            if (settingsRoot == null)
             {
-                settingsRoot.SetActive(visible);
+                return;
+            }
+
+            settingsRoot.SetActive(visible);
+            if (visible)
+            {
+                // prompt-B 44: 설정창을 Surface Base 본문(레벨 요약 포함)보다 상위 레이어로 올린다.
+                BringSettingsToFront();
+            }
+        }
+
+        /// <summary>
+        /// 설정 모달을 SurfaceBaseContent(레벨 요약 등) 형제 중 최후방 + 높은 sortingOrder로 올린다.
+        /// </summary>
+        private void BringSettingsToFront()
+        {
+            if (settingsRoot == null)
+            {
+                return;
+            }
+
+            settingsRoot.transform.SetAsLastSibling();
+
+            var canvas = settingsRoot.GetComponent<Canvas>();
+            if (canvas == null)
+            {
+                canvas = settingsRoot.AddComponent<Canvas>();
+            }
+
+            canvas.overrideSorting = true;
+            canvas.sortingOrder = UiLayerPriority.SettingsModal;
+
+            if (settingsRoot.GetComponent<GraphicRaycaster>() == null)
+            {
+                settingsRoot.AddComponent<GraphicRaycaster>();
             }
         }
 

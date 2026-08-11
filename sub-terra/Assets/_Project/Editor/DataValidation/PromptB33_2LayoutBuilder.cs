@@ -699,21 +699,22 @@ namespace SubTerra.App.Editor.DataValidation
         private static void LayoutSettingsChildren(Transform settingsRoot)
         {
             // stretch 패널 기준: anchor Y 비율로 배치해 높이 50%에 맞게 간격 확보.
+            // prompt-B 44: 마스터 음량·해상도 하향, 프레임 상향 → 진동억제↔언어 간격과 유사.
             // 위→아래: 제목, 음량, 해상도(드롭다운), 진동억제, 언어, 프레임, BGM, 버튼
-            PlaceSettingsRow(settingsRoot, "SettingsTitle", 0.94f, 36f, 420f);
-            PlaceSettingsRow(settingsRoot, "MasterVolumeLabel", 0.86f, 24f, 420f);
-            PlaceSettingsRow(settingsRoot, "MasterVolume", 0.79f, 28f, 400f);
-            PlaceSettingsRow(settingsRoot, "ResolutionLabel", 0.71f, 22f, 280f);
-            PlaceSettingsRow(settingsRoot, "ResolutionDropdown", 0.64f, 36f, 280f);
-            PlaceSettingsRow(settingsRoot, "ReduceMotionGroup", 0.55f, 32f, 400f);
-            PlaceSettingsRow(settingsRoot, "LanguageLabel", 0.47f, 22f, 280f);
-            PlaceSettingsRow(settingsRoot, "LanguageDropdown", 0.40f, 36f, 280f);
-            PlaceSettingsRow(settingsRoot, "FrameRateLabel", 0.32f, 22f, 280f);
-            PlaceSettingsRow(settingsRoot, "FrameRateDropdown", 0.25f, 36f, 280f);
-            PlaceSettingsRow(settingsRoot, "BgmHint", 0.15f, 40f, 520f);
-            PlaceSettingsRow(settingsRoot, "SettingsApply", 0.06f, 40f, 120f, -140f);
-            PlaceSettingsRow(settingsRoot, "SettingsCancel", 0.06f, 40f, 120f, 0f);
-            PlaceSettingsRow(settingsRoot, "SettingsDefaults", 0.06f, 40f, 120f, 140f);
+            PlaceSettingsRow(settingsRoot, "SettingsTitle", 0.93f, 36f, 420f);
+            PlaceSettingsRow(settingsRoot, "MasterVolumeLabel", 0.82f, 24f, 420f);
+            PlaceSettingsRow(settingsRoot, "MasterVolume", 0.75f, 28f, 400f);
+            PlaceSettingsRow(settingsRoot, "ResolutionLabel", 0.66f, 22f, 280f);
+            PlaceSettingsRow(settingsRoot, "ResolutionDropdown", 0.59f, 36f, 280f);
+            PlaceSettingsRow(settingsRoot, "ReduceMotionGroup", 0.50f, 32f, 400f);
+            PlaceSettingsRow(settingsRoot, "LanguageLabel", 0.42f, 22f, 280f);
+            PlaceSettingsRow(settingsRoot, "LanguageDropdown", 0.35f, 36f, 280f);
+            PlaceSettingsRow(settingsRoot, "FrameRateLabel", 0.27f, 22f, 280f);
+            PlaceSettingsRow(settingsRoot, "FrameRateDropdown", 0.20f, 36f, 280f);
+            PlaceSettingsRow(settingsRoot, "BgmHint", 0.12f, 40f, 520f);
+            PlaceSettingsRow(settingsRoot, "SettingsApply", 0.05f, 40f, 120f, -140f);
+            PlaceSettingsRow(settingsRoot, "SettingsCancel", 0.05f, 40f, 120f, 0f);
+            PlaceSettingsRow(settingsRoot, "SettingsDefaults", 0.05f, 40f, 120f, 140f);
 
             // 구 사이클/prev-next 버튼 숨김.
             var cycle = settingsRoot.Find("LanguageCycle");

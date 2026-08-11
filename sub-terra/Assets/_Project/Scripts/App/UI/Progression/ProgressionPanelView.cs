@@ -415,10 +415,23 @@ namespace SubTerra.App.UI.Progression
 
         /// <summary>
         /// 업그레이드 창을 다른 HUD보다 앞에 올리고 입력 레이캐스트를 확보한다.
+        /// Surface Base 레벨 요약(levelsOnlySummary)은 모달이 아니라 본문 일부이므로
+        /// ModalPanel sortingOrder를 올리지 않아 설정창 등 상위 모달을 가리지 않는다.
         /// </summary>
         public void BringToFront()
         {
             var root = panelRoot != null ? panelRoot : gameObject;
+
+            // prompt-B 44: 레벨 요약은 SurfaceBaseContent 계층에 묶인 채 표시한다.
+            // 독립 Canvas/overrideSorting을 쓰면 설정 모달(SettingsModal) 위로 올라온다.
+            if (levelsOnlySummary)
+            {
+                KeepLevelSummaryInSurfaceBaseHierarchy(root);
+                RebuildEntryButtonCacheIfNeeded();
+                ApplyCategoryFilterToButtons();
+                return;
+            }
+
             root.transform.SetAsLastSibling();
 
             var canvas = root.GetComponent<Canvas>();
@@ -448,6 +461,50 @@ namespace SubTerra.App.UI.Progression
 
             RebuildEntryButtonCacheIfNeeded();
             ApplyCategoryFilterToButtons();
+        }
+
+        /// <summary>
+        /// Surface Base 레벨 요약을 부모(SurfaceBaseContent) 하위 형제로 유지하고
+        /// 모달용 Nested Canvas를 제거해 설정창이 항상 위에 오도록 한다.
+        /// </summary>
+        private static void KeepLevelSummaryInSurfaceBaseHierarchy(GameObject root)
+        {
+            if (root == null)
+            {
+                return;
+            }
+
+            // SurfaceBaseContent 안에서는 형제 순서만 정리(본문 안 최후방).
+            // 패널 루트 밖으로 올리지 않는다.
+            root.transform.SetAsLastSibling();
+
+            var canvas = root.GetComponent<Canvas>();
+            if (canvas != null)
+            {
+                // 기존 BringToFront로 붙었을 수 있는 모달 Canvas를 해제한다.
+                canvas.overrideSorting = false;
+                if (Application.isPlaying)
+                {
+                    Object.Destroy(canvas);
+                }
+                else
+                {
+                    Object.DestroyImmediate(canvas);
+                }
+            }
+
+            var raycaster = root.GetComponent<GraphicRaycaster>();
+            if (raycaster != null)
+            {
+                if (Application.isPlaying)
+                {
+                    Object.Destroy(raycaster);
+                }
+                else
+                {
+                    Object.DestroyImmediate(raycaster);
+                }
+            }
         }
 
         public void SetVisible(bool visible)

@@ -130,20 +130,22 @@ namespace SubTerra.App.Editor.DataValidation
 
         private static void LayoutSettingsRows(Transform settingsPanel)
         {
-            Place(settingsPanel, "SettingsTitle", 350f, 44f, 520f);
-            Place(settingsPanel, "MasterVolumeLabel", 290f, 26f, 500f);
-            Place(settingsPanel, "MasterVolume", 248f, 30f, 460f);
-            Place(settingsPanel, "ResolutionLabel", 184f, 24f, 320f);
-            Place(settingsPanel, "ResolutionDropdown", 146f, DropdownHeight, 320f);
-            Place(settingsPanel, "ReduceMotionGroup", -4f, 34f, 460f);
-            Place(settingsPanel, "LanguageLabel", -58f, 24f, 320f);
-            Place(settingsPanel, "LanguageDropdown", -96f, DropdownHeight, 320f);
-            Place(settingsPanel, "FrameRateLabel", -176f, 24f, 320f);
-            Place(settingsPanel, "FrameRateDropdown", -214f, DropdownHeight, 320f);
-            Place(settingsPanel, "BgmHint", -272f, 30f, 560f);
-            Place(settingsPanel, "SettingsApply", -330f, 42f, 132f, -150f);
-            Place(settingsPanel, "SettingsCancel", -330f, 42f, 132f, 0f);
-            Place(settingsPanel, "SettingsDefaults", -330f, 42f, 132f, 150f);
+            // prompt-B 44: 마스터 음량·해상도는 아래로, 프레임은 위로 당겨
+            // 화면진동 억제↔언어와 비슷한 행 간격(~50~55)으로 맞춘다.
+            Place(settingsPanel, "SettingsTitle", 340f, 44f, 520f);
+            Place(settingsPanel, "MasterVolumeLabel", 250f, 26f, 500f);
+            Place(settingsPanel, "MasterVolume", 208f, 30f, 460f);
+            Place(settingsPanel, "ResolutionLabel", 140f, 24f, 320f);
+            Place(settingsPanel, "ResolutionDropdown", 100f, DropdownHeight, 320f);
+            Place(settingsPanel, "ReduceMotionGroup", 20f, 34f, 460f);
+            Place(settingsPanel, "LanguageLabel", -36f, 24f, 320f);
+            Place(settingsPanel, "LanguageDropdown", -74f, DropdownHeight, 320f);
+            Place(settingsPanel, "FrameRateLabel", -130f, 24f, 320f);
+            Place(settingsPanel, "FrameRateDropdown", -168f, DropdownHeight, 320f);
+            Place(settingsPanel, "BgmHint", -236f, 30f, 560f);
+            Place(settingsPanel, "SettingsApply", -310f, 42f, 132f, -150f);
+            Place(settingsPanel, "SettingsCancel", -310f, 42f, 132f, 0f);
+            Place(settingsPanel, "SettingsDefaults", -310f, 42f, 132f, 150f);
         }
 
         private static void Place(
