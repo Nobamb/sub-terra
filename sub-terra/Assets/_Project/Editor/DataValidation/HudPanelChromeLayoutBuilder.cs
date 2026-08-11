@@ -473,6 +473,8 @@ namespace SubTerra.App.Editor.DataValidation
                 "상태 정보 없음");
             reason.textWrappingMode = TextWrappingModes.Normal;
 
+            AnchorRecommendationFooter(action.rectTransform, reason.rectTransform);
+
             var close = EnsureTopRightButton(
                 panelRoot,
                 "CloseButton",
@@ -495,6 +497,21 @@ namespace SubTerra.App.Editor.DataValidation
             so.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(view);
             EditorUtility.SetDirty(close);
+        }
+
+        private static void AnchorRecommendationFooter(
+            RectTransform action,
+            RectTransform reason)
+        {
+            reason.anchorMin = reason.anchorMax = new Vector2(0f, 0f);
+            reason.pivot = new Vector2(0f, 0f);
+            reason.anchoredPosition = new Vector2(20f, 12f);
+            reason.sizeDelta = new Vector2(720f, 72f);
+
+            action.anchorMin = action.anchorMax = new Vector2(0f, 0f);
+            action.pivot = new Vector2(0f, 0f);
+            action.anchoredPosition = new Vector2(20f, 92f);
+            action.sizeDelta = new Vector2(720f, 28f);
         }
 
         private static void EnsureBuildingCloseButton(GameObject buildingMenuRoot)

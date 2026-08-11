@@ -55,7 +55,8 @@ namespace SubTerra.App.Editor.DataValidation
                 typeof(CanvasGroup));
             canvasObject.transform.SetParent(root.transform, false);
             var canvasRect = canvasObject.GetComponent<RectTransform>();
-            canvasRect.sizeDelta = new Vector2(360f, 104f);
+            // 드론 말풍선을 기존보다 20% 크게 표시한다.
+            canvasRect.sizeDelta = new Vector2(456f, 132f);
             canvasRect.localScale = Vector3.one * 0.006f;
             var canvas = canvasObject.GetComponent<Canvas>();
             canvas.renderMode = RenderMode.WorldSpace;

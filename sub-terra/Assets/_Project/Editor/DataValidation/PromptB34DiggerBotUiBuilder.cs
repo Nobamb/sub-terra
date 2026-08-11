@@ -348,7 +348,7 @@ namespace SubTerra.App.Editor.DataValidation
                 EditorUtility.SetDirty(panelRoot);
             }
 
-            // 대사 영역: 더 큰 글자를 위해 높이 확보.
+            // 대사 영역.
             var dialogue = diggerRoot.Find("PanelRoot/DialogueText") as RectTransform
                 ?? diggerRoot.GetComponentsInChildren<TMP_Text>(true)
                     .FirstOrDefault(t => t.name == "DialogueText")
@@ -362,6 +362,33 @@ namespace SubTerra.App.Editor.DataValidation
                 dialogue.sizeDelta = new Vector2(DiggerWidth - 40f, 72f);
                 EditorUtility.SetDirty(dialogue);
             }
+
+            AnchorRecommendationFooter(diggerRoot);
+        }
+
+        private static void AnchorRecommendationFooter(Transform diggerRoot)
+        {
+            var action = diggerRoot.GetComponentsInChildren<TMP_Text>(true)
+                .FirstOrDefault(text => text.name == "ActionText")?.rectTransform;
+            var reason = diggerRoot.GetComponentsInChildren<TMP_Text>(true)
+                .FirstOrDefault(text => text.name == "ReasonText")?.rectTransform;
+            if (action == null || reason == null)
+            {
+                return;
+            }
+
+            reason.anchorMin = reason.anchorMax = new Vector2(0f, 0f);
+            reason.pivot = new Vector2(0f, 0f);
+            reason.anchoredPosition = new Vector2(20f, 12f);
+            reason.sizeDelta = new Vector2(DiggerWidth - 40f, 72f);
+
+            action.anchorMin = action.anchorMax = new Vector2(0f, 0f);
+            action.pivot = new Vector2(0f, 0f);
+            action.anchoredPosition = new Vector2(20f, 92f);
+            action.sizeDelta = new Vector2(DiggerWidth - 40f, 28f);
+
+            EditorUtility.SetDirty(action);
+            EditorUtility.SetDirty(reason);
         }
 
         private static void ApplyLargeDialogueFont(Transform diggerRoot)

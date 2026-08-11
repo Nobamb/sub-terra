@@ -13,8 +13,8 @@ namespace SubTerra.App.UI.Drone
     /// </summary>
     public sealed class DroneDialoguePanelView : MonoBehaviour, IDroneDialogueView, IDroneReasonView
     {
-        /// <summary>하단 digger-bot 창 대사 기본 글자 크기(말풍선보다 크게).</summary>
-        public const float PanelDialogueFontSize = 26f;
+        /// <summary>하단 digger-bot 창 대사 기본 글자 크기.</summary>
+        public const float PanelDialogueFontSize = 20f;
 
         [SerializeField] private GameObject panelRoot;
         [SerializeField] private TMP_Text dialogueText;
@@ -48,7 +48,7 @@ namespace SubTerra.App.UI.Drone
             }
 
             dialogueText.text = dialogue.Text;
-            // 말풍선보다 큰 digger-bot 창 전용 글자 크기 유지.
+            // 창 제목과 같은 크기의 본문 글자 크기를 유지한다.
             dialogueText.fontSize = PanelDialogueFontSize;
         }
 
