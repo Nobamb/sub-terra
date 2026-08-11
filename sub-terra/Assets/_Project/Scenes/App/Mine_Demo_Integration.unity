@@ -274,7 +274,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7474593373023220286, guid: 75826962844de7f4496d11c06ec59a93, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -9.5
+      value: -6.5
       objectReference: {fileID: 0}
     - target: {fileID: 7474593373023220286, guid: 75826962844de7f4496d11c06ec59a93, type: 3}
       propertyPath: m_LocalPosition.y
@@ -1892,6 +1892,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 8eec242a876bea348893c6a4e93a1f6c, type: 2}
   - {fileID: 11400000, guid: c3951343b8709bb4f85fe90c082cd384, type: 2}
   - {fileID: 11400000, guid: b23c820634d53fa4ab091fc336e995ff, type: 2}
+  - {fileID: 11400000, guid: 560674f18e68b5d4c8d3b08875c21f6b, type: 2}
 --- !u!114 &279480558
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2821,7 +2822,7 @@ Transform:
   m_GameObject: {fileID: 415041239}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -9.5, y: -0.65, z: 0}
+  m_LocalPosition: {x: -6.5, y: -0.65, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -5566,6 +5567,7 @@ GameObject:
   - component: {fileID: 976616838}
   - component: {fileID: 976616837}
   - component: {fileID: 976616839}
+  - component: {fileID: 976616840}
   m_Layer: 0
   m_Name: ApplicationRoot
   m_TagString: Untagged
@@ -5715,6 +5717,8 @@ MonoBehaviour:
     definition: {fileID: 11400000, guid: c3951343b8709bb4f85fe90c082cd384, type: 2}
   - buildingId: building.outpost_core.basic
     definition: {fileID: 11400000, guid: b23c820634d53fa4ab091fc336e995ff, type: 2}
+  - buildingId: building.escape_portal.emergency
+    definition: {fileID: 11400000, guid: 560674f18e68b5d4c8d3b08875c21f6b, type: 2}
 --- !u!114 &976616839
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5737,6 +5741,21 @@ MonoBehaviour:
     maximumVisionObscuration: 0.7
     failureExposureThreshold: 10
     recoveryPerTick: 1
+--- !u!114 &976616840
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 976616831}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4aeed606fae94da45821fda46a2c674e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SubTerra.App.GameplayIntegration::SubTerra.App.Integration.EmergencyEscapePortalRuntimeBridge
+  playerTransform: {fileID: 72969609}
+  elevatorCenter: {fileID: 985740728}
+  outpostArrivalOffset: {x: 0, y: 1}
 --- !u!1001 &985740725
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -5821,6 +5840,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b133b86c80242eb45881e9dcc6e76662, type: 3}
   m_Name: 
   m_EditorClassIdentifier: SubTerra.Gameplay.Player::SubTerra.Gameplay.Player.ElevatorController
+--- !u!4 &985740728 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 3556966428175814365, guid: 6732a6a222cd32c4f8fb349bc1bf38c0, type: 3}
+  m_PrefabInstance: {fileID: 985740725}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1033686687
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -6545,12 +6569,12 @@ PrefabInstance:
   m_SourcePrefab: {fileID: 100100000, guid: 67fd58b9fb816b6488b0b5f5dd3f5632, type: 3}
 --- !u!224 &1039056360 stripped
 RectTransform:
-  m_CorrespondingSourceObject: {fileID: 4400856234108193671, guid: 67fd58b9fb816b6488b0b5f5dd3f5632, type: 3}
+  m_CorrespondingSourceObject: {fileID: 5938095782308196496, guid: 67fd58b9fb816b6488b0b5f5dd3f5632, type: 3}
   m_PrefabInstance: {fileID: 1039056359}
   m_PrefabAsset: {fileID: 0}
 --- !u!114 &1039056361 stripped
 MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 7116392004883337958, guid: 67fd58b9fb816b6488b0b5f5dd3f5632, type: 3}
+  m_CorrespondingSourceObject: {fileID: 2437504462114891814, guid: 67fd58b9fb816b6488b0b5f5dd3f5632, type: 3}
   m_PrefabInstance: {fileID: 1039056359}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 0}
@@ -6561,12 +6585,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
 --- !u!1 &1039056362 stripped
 GameObject:
-  m_CorrespondingSourceObject: {fileID: 9099836943930751043, guid: 67fd58b9fb816b6488b0b5f5dd3f5632, type: 3}
+  m_CorrespondingSourceObject: {fileID: 3986767131026995592, guid: 67fd58b9fb816b6488b0b5f5dd3f5632, type: 3}
   m_PrefabInstance: {fileID: 1039056359}
   m_PrefabAsset: {fileID: 0}
 --- !u!114 &1039056363 stripped
 MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 3098836860655863671, guid: 67fd58b9fb816b6488b0b5f5dd3f5632, type: 3}
+  m_CorrespondingSourceObject: {fileID: 4287182949182112179, guid: 67fd58b9fb816b6488b0b5f5dd3f5632, type: 3}
   m_PrefabInstance: {fileID: 1039056359}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1039056362}

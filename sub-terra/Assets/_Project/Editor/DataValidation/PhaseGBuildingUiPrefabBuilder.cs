@@ -79,11 +79,12 @@ namespace SubTerra.App.Editor.DataValidation
                 DataIds.Buildings.ChargerBasic,
                 DataIds.Buildings.StorageBasic,
                 DataIds.Buildings.SettlementBasic,
-                DataIds.Buildings.OutpostCoreBasic
+                DataIds.Buildings.OutpostCoreBasic,
+                DataIds.Buildings.EmergencyEscapePortal
             };
             var names = new[]
             {
-                "버팀목", "조명", "충전기", "보관함", "정산 콘솔", "전진기지 코어"
+                "버팀목", "조명", "충전기", "보관함", "정산 콘솔", "전진기지 코어", "긴급 탈출 포탈"
             };
 
             for (var i = 0; i < ids.Length; i++)

@@ -20,6 +20,8 @@ namespace SubTerra.App.Editor.DataValidation
         private const string PrefabPath = Root + "/Prefabs/Buildings/BuildingPlaceholder.prefab";
         private const string SupportPrefabPath =
             "Assets/_Project/Prefabs/Gameplay/Buildings/SupportPillar.prefab";
+        private const string EmergencyEscapePortalPrefabPath =
+            "Assets/_Project/Prefabs/Gameplay/Buildings/EmergencyEscapePortal.prefab";
         private const string IconPath = Root + "/Icons/DataPlaceholder.asset";
         private const string BootstrapScenePath = "Assets/_Project/Scenes/Bootstrap/Bootstrap.unity";
 
@@ -61,9 +63,16 @@ namespace SubTerra.App.Editor.DataValidation
             var prefab = EnsurePlaceholderPrefab();
             var supportPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(SupportPrefabPath)
                 ?? prefab;
+            var emergencyEscapePortalPrefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(EmergencyEscapePortalPrefabPath)
+                ?? prefab;
             var icon = EnsurePlaceholderIcon();
             var minerals = BuildMinerals(icon);
-            var buildings = BuildBuildings(prefab, supportPrefab, icon);
+            var buildings = BuildBuildings(
+                prefab,
+                supportPrefab,
+                emergencyEscapePortalPrefab,
+                icon);
             var recipes = BuildRecipes();
             var upgrades = BuildUpgrades();
             var dialogues = BuildDialogues();
@@ -204,6 +213,7 @@ namespace SubTerra.App.Editor.DataValidation
         private static List<BuildingData> BuildBuildings(
             GameObject prefab,
             GameObject supportPrefab,
+            GameObject emergencyEscapePortalPrefab,
             Sprite icon)
         {
             return new List<BuildingData>
@@ -229,6 +239,15 @@ namespace SubTerra.App.Editor.DataValidation
                     {
                         new ItemCostEntry(DataIds.Minerals.Copper, 5),
                         new ItemCostEntry(DataIds.Minerals.Iron, 5)
+                    }),
+                EnsureBuilding("Building_EmergencyEscapePortal.asset", DataIds.Buildings.EmergencyEscapePortal,
+                    "긴급 탈출 포탈",
+                    "E키로 사용합니다. 100G와 최대 전력의 10%를 소모해 최근 전진기지 코어 또는 엘리베이터로 이동합니다.",
+                    emergencyEscapePortalPrefab, 30,
+                    icon, new List<ItemCostEntry>
+                    {
+                        new ItemCostEntry(DataIds.Minerals.Iron, 3),
+                        new ItemCostEntry(DataIds.Minerals.Lithium, 3)
                     })
             };
         }

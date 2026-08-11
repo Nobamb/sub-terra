@@ -21,6 +21,7 @@ namespace SubTerra.App.Core.Data
             public const string StorageBasic = "building.storage.basic";
             public const string SettlementBasic = "building.settlement.basic";
             public const string OutpostCoreBasic = "building.outpost_core.basic";
+            public const string EmergencyEscapePortal = "building.escape_portal.emergency";
         }
 
         public static class Upgrades

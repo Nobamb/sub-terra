@@ -29,7 +29,8 @@ namespace SubTerra.App.Editor.DataValidation
             DataIds.Buildings.ChargerBasic,
             DataIds.Buildings.StorageBasic,
             DataIds.Buildings.SettlementBasic,
-            DataIds.Buildings.OutpostCoreBasic
+            DataIds.Buildings.OutpostCoreBasic,
+            DataIds.Buildings.EmergencyEscapePortal
         };
 
         [MenuItem("SubTerra/UI/Build Facility Purchase Flow")]

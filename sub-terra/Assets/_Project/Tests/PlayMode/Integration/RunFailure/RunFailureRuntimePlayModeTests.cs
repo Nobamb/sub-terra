@@ -16,6 +16,74 @@ namespace SubTerra.App.Tests.PlayMode.RunFailure
     public sealed class RunFailureRuntimePlayModeTests
     {
         [UnityTest]
+        public IEnumerator PromptB46_SurfaceFallback_RespawnsAtElevatorCenterInMine()
+        {
+            GameBootstrapper.ResetInstanceForTests();
+            if (SaveRuntimeController.Instance != null)
+            {
+                Object.DestroyImmediate(SaveRuntimeController.Instance.gameObject);
+            }
+
+            var state = GameState.CreateNew();
+            state.BeginRun();
+            var bootstrapObject = new GameObject("PromptB46_Bootstrap");
+            var bootstrap = bootstrapObject.AddComponent<GameBootstrapper>();
+            bootstrap.enabled = false;
+            Assert.That(bootstrap.TryReplaceState(state), Is.True);
+
+            var runtimeObject = new GameObject("PromptB46_Save");
+            var runtime = runtimeObject.AddComponent<SaveRuntimeController>();
+            yield return null;
+            yield return null;
+
+            var catalog = new InMemoryMineralCatalog();
+            catalog.Register("mineral.copper", 1f, 10, "Copper");
+            var inventoryState = new InventoryState(100f);
+            var inventory = new InventoryService(catalog, inventoryState, state);
+            inventory.TryAddMineral("mineral.copper", 10);
+            SetField(runtime, "inventory", inventoryState);
+            SetField(runtime, "inventoryService", inventory);
+
+            var player = new GameObject("PromptB46_Player");
+            player.transform.position = new Vector3(8f, -20f, 0f);
+            player.AddComponent<Rigidbody2D>().gravityScale = 0f;
+            var movement = player.AddComponent<PlayerMovement>();
+            var fallback = new GameObject("PromptB46_ElevatorCenter");
+            fallback.transform.position = new Vector3(-6.5f, -0.65f, 0f);
+            var settings = ScriptableObject.CreateInstance<PlayerSurvivalSettings>();
+            var host = new GameObject("PromptB46_RunFailure");
+            var survival = host.AddComponent<PlayerSurvivalController>();
+            survival.Configure(settings, player.transform);
+            var controller = host.AddComponent<RunFailureRuntimeController>();
+            SetField(controller, "survivalController", survival);
+            SetField(controller, "playerMovement", movement);
+            SetField(controller, "playerTransform", player.transform);
+            SetField(controller, "localSurfaceFallback", fallback.transform);
+            SetField(controller, "failureDisplaySeconds", 0f);
+            controller.Bind(runtime, state);
+
+            state.SetCurrentEnergy(0);
+            yield return null;
+
+            Assert.That(controller.IsHandling, Is.False);
+            Assert.That(player.transform.position, Is.EqualTo(fallback.transform.position));
+            Assert.That(state.Run.LifecyclePhase, Is.EqualTo(RunLifecyclePhase.Active));
+            Assert.That(state.Player.Energy,
+                Is.EqualTo(SaveRuntimeController.MineElevatorEnergyCost));
+            Assert.That(movement.CanMove, Is.True);
+
+            controller.Unbind();
+            Object.Destroy(host);
+            Object.Destroy(settings);
+            Object.Destroy(fallback);
+            Object.Destroy(player);
+            Object.Destroy(runtimeObject);
+            Object.Destroy(bootstrapObject);
+            yield return null;
+            GameBootstrapper.ResetInstanceForTests();
+        }
+
+        [UnityTest]
         public IEnumerator L_F04_F05_RuntimeCheckpointRescue_LocksInputAndCommitsOnce()
         {
             GameBootstrapper.ResetInstanceForTests();

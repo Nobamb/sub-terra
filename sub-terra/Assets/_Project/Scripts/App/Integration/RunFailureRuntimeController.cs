@@ -147,12 +147,25 @@ namespace SubTerra.App.Integration
             }
 
             var atCheckpoint = result.ReturnTarget.Kind == RunReturnTargetKind.OutpostCheckpoint;
+            var canRecoverInMine = atCheckpoint || localSurfaceFallback != null;
             if (atCheckpoint)
             {
                 MovePlayerTo(result.ReturnTarget.X, result.ReturnTarget.Y);
             }
+            else if (localSurfaceFallback != null && playerTransform != null)
+            {
+                playerTransform.position = localSurfaceFallback.position;
+                if (gameState?.Player != null
+                    && gameState.Player.Energy < SaveRuntimeController.MineElevatorEnergyCost)
+                {
+                    // 엘리베이터 앞 부활 직후 전력 부족으로 지상 귀환까지 막히는 상태를 방지한다.
+                    gameState.SetCurrentEnergy(Mathf.Min(
+                        gameState.Player.MaxEnergy,
+                        SaveRuntimeController.MineElevatorEnergyCost));
+                }
+            }
 
-            if (!failureService.Complete(result.Input.failureToken, atCheckpoint))
+            if (!failureService.Complete(result.Input.failureToken, canRecoverInMine))
             {
                 RecoverLocally();
                 yield break;
@@ -162,7 +175,7 @@ namespace SubTerra.App.Integration
             PlayerRescued?.Invoke(result.Rescue);
             runtime?.SaveCurrent(AutoSaveReason.RunFailure);
 
-            if (atCheckpoint)
+            if (canRecoverInMine)
             {
                 CompleteLocalRecovery();
                 yield break;
