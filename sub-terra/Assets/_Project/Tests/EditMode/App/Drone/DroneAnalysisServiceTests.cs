@@ -110,6 +110,35 @@ namespace SubTerra.App.Tests.Drone
                 result.Dialogue.TemplateId,
                 Is.EqualTo(DataIds.Dialogue.DroneStructuralWarning));
             Assert.That(result.Dialogue.IsUrgent, Is.True);
+            Assert.That(result.Dialogue.Tokens["safetyGuidance"], Does.Contain("가스 구역에서 이탈"));
+            Assert.That(result.Dialogue.Tokens["safetyGuidance"], Does.Contain("전진기지 코어"));
+            Assert.That(result.Dialogue.Tokens["safetyGuidance"], Does.Contain("버팀목 설치"));
+        }
+
+        [Test]
+        public void GasRisk_WithoutStructuralRisk_OffersExitOrOutpostSafeZone()
+        {
+            var context = SafeContext();
+            context.gasRisk = 0.7f;
+
+            var result = service.Analyze(context);
+
+            Assert.That(result.Dialogue.Tokens["safetyGuidance"], Does.Contain("가스 구역에서 이탈"));
+            Assert.That(result.Dialogue.Tokens["safetyGuidance"], Does.Contain("전진기지 코어"));
+            Assert.That(result.Dialogue.Tokens["safetyGuidance"], Does.Not.Contain("버팀목"));
+        }
+
+        [Test]
+        public void StructuralRisk_WithoutGasRisk_OnlyOffersSupport()
+        {
+            var context = SafeContext();
+            context.structuralIntegrity = 0.4f;
+
+            var result = service.Analyze(context);
+
+            Assert.That(result.Dialogue.Tokens["safetyGuidance"], Does.Contain("버팀목 설치"));
+            Assert.That(result.Dialogue.Tokens["safetyGuidance"], Does.Not.Contain("가스 구역"));
+            Assert.That(result.Dialogue.Tokens["safetyGuidance"], Does.Not.Contain("전진기지 코어"));
         }
 
         [Test]

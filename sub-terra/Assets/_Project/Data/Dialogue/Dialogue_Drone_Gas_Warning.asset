@@ -16,5 +16,4 @@ MonoBehaviour:
   displayName: "\uAC00\uC2A4 \uC704\uD5D8 \uACBD\uACE0"
   situationKey: gas_risk
   priority: 500
-  template: "\uAC00\uC2A4 \uC704\uD5D8 {gasRisk}. \uAC00\uC2A4 \uAD6C\uC5ED\uC5D0\uC11C
-    \uC774\uD0C8\uD558\uC138\uC694."
+  template: "{safetyGuidance}"

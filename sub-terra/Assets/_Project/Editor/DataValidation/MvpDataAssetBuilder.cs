@@ -224,7 +224,7 @@ namespace SubTerra.App.Editor.DataValidation
                     "보관한 광물을 정산해 골드로 전환합니다.", prefab, 1,
                     icon, new List<ItemCostEntry> { new ItemCostEntry(DataIds.Minerals.Lithium, 1) }),
                 EnsureBuilding("Building_OutpostCore_Basic.asset", DataIds.Buildings.OutpostCoreBasic, "전진기지 코어",
-                    "연결된 시설에 전력을 공급하고 탐사 거점을 형성합니다.", prefab, 5,
+                    "연결된 시설에 전력을 공급하고 유독 가스 정화 안전지대를 형성하며 탐사 체크포인트 역할을 합니다.", prefab, 5,
                     icon, new List<ItemCostEntry>
                     {
                         new ItemCostEntry(DataIds.Minerals.Copper, 5),
@@ -331,14 +331,14 @@ namespace SubTerra.App.Editor.DataValidation
                     "붕괴 임박 경고",
                     "structural_critical",
                     600,
-                    "구조 안정도 {structuralIntegrity}. 버팀목 설치 지점을 확보하세요."),
+                    "{safetyGuidance}"),
                 EnsureDialogue(
                     "Dialogue_Drone_Gas_Warning.asset",
                     DataIds.Dialogue.DroneGasWarning,
                     "가스 위험 경고",
                     "gas_risk",
                     500,
-                    "가스 위험 {gasRisk}. 가스 구역에서 이탈하세요."),
+                    "{safetyGuidance}"),
                 EnsureDialogue(
                     "Dialogue_LowPower_Warning.asset",
                     DataIds.Dialogue.LowPowerWarning,

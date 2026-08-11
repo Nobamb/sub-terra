@@ -381,7 +381,11 @@ namespace SubTerra.App.Drone
                 ["action"] = FormatAction(recommendation.Action),
                 ["reason"] = recommendation.Reasons.Count > 0
                     ? recommendation.Reasons[0].Message
-                    : string.Empty
+                    : string.Empty,
+                ["safetyGuidance"] = CreateSafetyGuidance(
+                    context,
+                    structuralWarning,
+                    gasWarning)
             };
 
             if (context.currentEnergy >= 0)
@@ -444,6 +448,32 @@ namespace SubTerra.App.Drone
             }
 
             return new DroneDialogueRequest(templateId, urgent, tokens);
+        }
+
+        private static string CreateSafetyGuidance(
+            DroneContextDto context,
+            bool structuralWarning,
+            bool gasWarning)
+        {
+            var guidance = string.Empty;
+            if (gasWarning)
+            {
+                guidance = "가스 위험 " + Format(context.gasRisk)
+                    + ". 가스 구역에서 이탈하거나 전진기지 코어를 설치해 안전지대를 확보하세요.";
+            }
+
+            if (structuralWarning)
+            {
+                if (guidance.Length > 0)
+                {
+                    guidance += " ";
+                }
+
+                guidance += "구조 안정도 " + Format(context.structuralIntegrity)
+                    + ". 버팀목 설치 지점을 확보하세요.";
+            }
+
+            return guidance;
         }
 
         private static bool HasReason(DroneActionScore candidate, string reasonId)

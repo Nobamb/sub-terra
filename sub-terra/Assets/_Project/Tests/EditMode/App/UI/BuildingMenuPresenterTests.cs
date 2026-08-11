@@ -52,6 +52,15 @@ namespace SubTerra.App.Tests.UI
         }
 
         [Test]
+        public void PromptB45_OutpostCoreDescriptionExplainsGasSafeZoneAndCheckpoint()
+        {
+            var core = FindItem(DataIds.Buildings.OutpostCoreBasic);
+
+            Assert.That(core.Description, Does.Contain("유독 가스 정화 안전지대"));
+            Assert.That(core.Description, Does.Contain("탐사 체크포인트"));
+        }
+
+        [Test]
         public void G_S05_PrefabsContainBuildingAndAccessibleHazardViews()
         {
             var menu = AssetDatabase.LoadAssetAtPath<UnityEngine.GameObject>(

@@ -16,5 +16,4 @@ MonoBehaviour:
   displayName: "\uBD95\uAD34 \uC784\uBC15 \uACBD\uACE0"
   situationKey: structural_critical
   priority: 600
-  template: "\uAD6C\uC870 \uC548\uC815\uB3C4 {structuralIntegrity}. \uBC84\uD300\uBAA9
-    \uC124\uCE58 \uC9C0\uC810\uC744 \uD655\uBCF4\uD558\uC138\uC694."
+  template: "{safetyGuidance}"
