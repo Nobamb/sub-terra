@@ -3,7 +3,6 @@ using UnityEditor.TestTools.TestRunner.Api;
 using UnityEngine;
 using System.IO;
 
-[InitializeOnLoad]
 public static class AutoTestRunner
 {
     static AutoTestRunner()

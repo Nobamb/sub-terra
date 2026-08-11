@@ -8,7 +8,6 @@ namespace SubTerra.App.Tests.Save
 {
     public sealed class SaveSlotUiStaticTests
     {
-        [OneTimeSetUp]
         public void BuildPrefab()
         {
             PhaseKSaveSlotPrefabBuilder.Build();

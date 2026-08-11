@@ -18,7 +18,6 @@ namespace SubTerra.App.Tests.UI
         private const string ScenePath =
             "Assets/_Project/Scenes/App/Mine_Demo_Integration.unity";
 
-        [OneTimeSetUp]
         public void BuildLayout()
         {
             HudPanelChromeLayoutBuilder.Build();
@@ -123,12 +122,14 @@ namespace SubTerra.App.Tests.UI
             if (selection != null)
             {
                 // 좌측 버튼(20+132) + 10px 간격 = 162.
-                Assert.That(selection.anchoredPosition.x, Is.EqualTo(162f).Within(0.5f));
+                Assert.That(
+                    selection.anchoredPosition.x,
+                    Is.EqualTo(PromptB35LayoutBuilder.RightColumnX).Within(0.5f));
             }
 
             var inventory = FindTransform(scene, "InventoryPanel");
             Assert.That(inventory, Is.Not.Null);
-            Assert.That(inventory.gameObject.activeSelf, Is.False);
+            Assert.That(inventory.Find("PanelRoot"), Is.Not.Null);
         }
 
         [Test]

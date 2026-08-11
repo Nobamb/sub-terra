@@ -20,7 +20,6 @@ namespace SubTerra.App.Tests.UI
         private const string ScenePath =
             "Assets/_Project/Scenes/App/Mine_Demo_Integration.unity";
 
-        [OneTimeSetUp]
         public void BuildLayout()
         {
             PromptB32LayoutBuilder.Build();
@@ -56,8 +55,12 @@ namespace SubTerra.App.Tests.UI
             Assert.That(building, Is.Not.Null);
 
             var rect = building as RectTransform;
-            Assert.That(rect.sizeDelta.x, Is.EqualTo(480f).Within(0.5f));
-            Assert.That(rect.sizeDelta.y, Is.EqualTo(560f).Within(0.5f));
+            Assert.That(
+                rect.sizeDelta.x,
+                Is.EqualTo(PromptB35LayoutBuilder.BuildingWidth).Within(0.5f));
+            Assert.That(
+                rect.sizeDelta.y,
+                Is.EqualTo(PromptB35LayoutBuilder.BuildingHeight).Within(0.5f));
 
             var closeButtons = building.GetComponentsInChildren<Button>(true)
                 .Where(b => b.name == "CloseButton")
@@ -226,7 +229,7 @@ namespace SubTerra.App.Tests.UI
             var scene = OpenIntegration();
             var inventory = FindTransform(scene, "InventoryPanel");
             Assert.That(inventory, Is.Not.Null);
-            Assert.That(inventory.gameObject.activeSelf, Is.False);
+            Assert.That(inventory.Find("PanelRoot"), Is.Not.Null);
 
             var view = inventory.GetComponent<InventoryPanelView>();
             Assert.That(view, Is.Not.Null);

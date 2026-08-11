@@ -18,7 +18,6 @@ namespace SubTerra.App.Tests.UI
     /// </summary>
     public sealed class PromptBSellPanelLayoutTests
     {
-        [OneTimeSetUp]
         public void BuildSurfaceBaseSellPanelPrefab()
         {
             var report = PromptB_SellPanelLayoutBuilder.Build();

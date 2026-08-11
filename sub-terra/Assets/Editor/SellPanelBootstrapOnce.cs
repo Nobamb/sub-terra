@@ -8,7 +8,6 @@ using SubTerra.App.Editor.DataValidation;
 /// One-shot: apply Surface Base sell layout + run Economy/Sell EditMode tests.
 /// Writes evidence logs under the goal scratch path when present, else Temp/.
 /// </summary>
-[InitializeOnLoad]
 public static class SellPanelBootstrapOnce
 {
     private const string SessionKey = "SellPanelBootstrap_PR12345_v1";

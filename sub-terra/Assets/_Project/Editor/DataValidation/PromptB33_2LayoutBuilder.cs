@@ -92,6 +92,47 @@ namespace SubTerra.App.Editor.DataValidation
             return sb.ToString();
         }
 
+        [MenuItem("SubTerra/UI/Build Surface Base Settings Dropdown Spacing")]
+        public static void BuildSurfaceBaseDropdownSpacingFromMenu()
+        {
+            var report = NormalizeSurfaceBaseDropdownSpacing();
+            Debug.Log("[SubTerra] " + report);
+        }
+
+        /// <summary>
+        /// Normalizes only the Surface Base resolution and frame-rate dropdown templates.
+        /// This intentionally avoids opening or saving MainMenu and scene assets.
+        /// </summary>
+        public static string NormalizeSurfaceBaseDropdownSpacing()
+        {
+            if (AssetDatabase.LoadAssetAtPath<GameObject>(SurfaceBasePrefabPath) == null)
+            {
+                return "SKIP: SurfaceBase prefab missing";
+            }
+
+            var root = PrefabUtility.LoadPrefabContents(SurfaceBasePrefabPath);
+            try
+            {
+                var settingsRoot = FindChildRecursive(root.transform, "SettingsPanel");
+                if (settingsRoot == null)
+                {
+                    return "SKIP: SurfaceBase SettingsPanel missing";
+                }
+
+                NormalizeDropdownTemplateSpacing(
+                    settingsRoot.Find("ResolutionDropdown")?.GetComponent<TMP_Dropdown>());
+                NormalizeDropdownTemplateSpacing(
+                    settingsRoot.Find("FrameRateDropdown")?.GetComponent<TMP_Dropdown>());
+
+                PrefabUtility.SaveAsPrefabAsset(root, SurfaceBasePrefabPath);
+                return "SurfaceBase resolution/frame dropdown template spacing normalized";
+            }
+            finally
+            {
+                PrefabUtility.UnloadPrefabContents(root);
+            }
+        }
+
         private static string UpdateSurfaceBaseSettingsOnly()
         {
             if (AssetDatabase.LoadAssetAtPath<GameObject>(SurfaceBasePrefabPath) == null)
@@ -736,6 +777,43 @@ namespace SubTerra.App.Editor.DataValidation
                 label.offsetMax = new Vector2(-10f, -2f);
                 EditorUtility.SetDirty(label);
             }
+        }
+
+        private static void NormalizeDropdownTemplateSpacing(TMP_Dropdown dropdown)
+        {
+            if (dropdown == null || dropdown.template == null)
+            {
+                return;
+            }
+
+            var viewport = dropdown.template.Find("Viewport") as RectTransform;
+            var content = viewport != null ? viewport.Find("Content") as RectTransform : null;
+            var item = content != null ? content.Find("Item") as RectTransform : null;
+            if (viewport == null || content == null || item == null)
+            {
+                return;
+            }
+
+            StretchFull(viewport);
+
+            // TMP_Dropdown creates option rows from this template at runtime.
+            // Content and Item must start at the top edge; stretching Content to zero
+            // height leaves the generated popup with a background but no visible rows.
+            content.anchorMin = new Vector2(0f, 1f);
+            content.anchorMax = new Vector2(1f, 1f);
+            content.pivot = new Vector2(0.5f, 1f);
+            content.anchoredPosition = Vector2.zero;
+            content.sizeDelta = new Vector2(0f, 28f);
+
+            item.anchorMin = new Vector2(0f, 1f);
+            item.anchorMax = new Vector2(1f, 1f);
+            item.pivot = new Vector2(0.5f, 1f);
+            item.anchoredPosition = Vector2.zero;
+            item.sizeDelta = new Vector2(0f, 28f);
+
+            EditorUtility.SetDirty(viewport);
+            EditorUtility.SetDirty(content);
+            EditorUtility.SetDirty(item);
         }
 
         private static TMP_Dropdown EnsureResolutionDropdown(Transform settingsRoot)

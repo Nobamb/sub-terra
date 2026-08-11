@@ -16,7 +16,6 @@ namespace SubTerra.App.Tests.UI
         private const string PrefabPath =
             "Assets/_Project/Prefabs/UI/BuildingMenu.prefab";
 
-        [OneTimeSetUp]
         public void BuildLayout()
         {
             PromptB35LayoutBuilder.Build();

@@ -20,7 +20,6 @@ namespace SubTerra.App.Tests.UI
         private const string GuidePrefabPath =
             "Assets/_Project/Prefabs/UI/GameGuidePanel.prefab";
 
-        [OneTimeSetUp]
         public void BuildLayout()
         {
             PromptB31_1LayoutBuilder.Build();

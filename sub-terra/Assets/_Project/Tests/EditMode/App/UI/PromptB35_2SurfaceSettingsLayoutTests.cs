@@ -5,6 +5,7 @@ using SubTerra.App.UI.SurfaceBase;
 using TMPro;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace SubTerra.App.Tests.UI
 {
@@ -13,7 +14,6 @@ namespace SubTerra.App.Tests.UI
     /// </summary>
     public sealed class PromptB35_2SurfaceSettingsLayoutTests
     {
-        [OneTimeSetUp]
         public void RebuildMainBaseline()
         {
             PromptB35_2LayoutBuilder.Build();
@@ -37,7 +37,7 @@ namespace SubTerra.App.Tests.UI
         }
 
         [Test]
-        public void SurfaceBaseSettingsPanel_MatchesMainHalfHeightLayout()
+        public void SurfaceBaseSettingsPanel_UsesFullScreenBlockerAndCenteredCard()
         {
             AssertSettingsPanelLayout(
                 PromptB35_2LayoutBuilder.SurfaceBasePrefabPath,
@@ -45,7 +45,7 @@ namespace SubTerra.App.Tests.UI
         }
 
         [Test]
-        public void MainMenuSettingsPanel_MatchesMainHalfHeightLayout()
+        public void MainMenuSettingsPanel_UsesFullScreenBlockerAndCenteredCard()
         {
             AssertSettingsPanelLayout(
                 PromptB35_2LayoutBuilder.MainMenuPrefabPath,
@@ -60,24 +60,24 @@ namespace SubTerra.App.Tests.UI
         }
 
         [Test]
-        public void SettingsPanel_ChildrenUseProportionalAnchors()
+        public void SettingsPanel_ChildrenUseCenteredCardRows()
         {
-            AssertProportionalChild(
+            AssertCenteredCardRow(
                 PromptB35_2LayoutBuilder.SurfaceBasePrefabPath,
                 "SettingsTitle",
-                0.94f);
-            AssertProportionalChild(
+                350f);
+            AssertCenteredCardRow(
                 PromptB35_2LayoutBuilder.MainMenuPrefabPath,
                 "SettingsTitle",
-                0.94f);
-            AssertProportionalChild(
+                350f);
+            AssertCenteredCardRow(
                 PromptB35_2LayoutBuilder.SurfaceBasePrefabPath,
                 "ResolutionDropdown",
-                0.64f);
-            AssertProportionalChild(
+                146f);
+            AssertCenteredCardRow(
                 PromptB35_2LayoutBuilder.MainMenuPrefabPath,
                 "FrameRateDropdown",
-                0.25f);
+                -214f);
         }
 
         private static void AssertSettingsPanelLayout(string prefabPath, System.Type viewType)
@@ -86,21 +86,21 @@ namespace SubTerra.App.Tests.UI
             var settings = FindChild(prefab.transform, "SettingsPanel") as RectTransform;
             Assert.That(settings, Is.Not.Null, prefabPath + " SettingsPanel");
 
-            Assert.That(settings.anchorMin.x, Is.EqualTo(0.5f).Within(0.001f));
-            Assert.That(settings.anchorMax.x, Is.EqualTo(0.5f).Within(0.001f));
-            Assert.That(
-                settings.anchorMin.y,
-                Is.EqualTo(PromptB35_2LayoutBuilder.SettingsAnchorMinY).Within(0.001f));
-            Assert.That(
-                settings.anchorMax.y,
-                Is.EqualTo(PromptB35_2LayoutBuilder.SettingsAnchorMaxY).Within(0.001f));
-            Assert.That(settings.anchoredPosition, Is.EqualTo(Vector2.zero));
-            Assert.That(
-                settings.sizeDelta.x,
-                Is.EqualTo(PromptB35_2LayoutBuilder.SettingsPanelWidth).Within(0.5f));
-            // 세로는 앵커 50% 구간이므로 sizeDelta.y 는 0.
-            Assert.That(settings.sizeDelta.y, Is.EqualTo(0f).Within(0.5f));
+            Assert.That(settings.anchorMin, Is.EqualTo(Vector2.zero));
+            Assert.That(settings.anchorMax, Is.EqualTo(Vector2.one));
+            Assert.That(settings.offsetMin, Is.EqualTo(Vector2.zero));
+            Assert.That(settings.offsetMax, Is.EqualTo(Vector2.zero));
 
+            var blocker = settings.GetComponent<Image>();
+            Assert.That(blocker, Is.Not.Null);
+            Assert.That(blocker.raycastTarget, Is.True);
+
+            var card = settings.Find("SettingsCard") as RectTransform;
+            Assert.That(card, Is.Not.Null, prefabPath + " SettingsCard");
+            Assert.That(card.anchorMin, Is.EqualTo(new Vector2(0.5f, 0.5f)));
+            Assert.That(card.anchorMax, Is.EqualTo(new Vector2(0.5f, 0.5f)));
+            Assert.That(card.anchoredPosition, Is.EqualTo(Vector2.zero));
+            Assert.That(card.sizeDelta, Is.EqualTo(new Vector2(680f, 800f)));
             var view = prefab.GetComponent(viewType);
             Assert.That(view, Is.Not.Null, viewType.Name);
 
@@ -136,19 +136,20 @@ namespace SubTerra.App.Tests.UI
             Assert.That(language.GetComponent<TMP_Dropdown>(), Is.Not.Null);
         }
 
-        private static void AssertProportionalChild(
+        private static void AssertCenteredCardRow(
             string prefabPath,
             string childName,
-            float expectedAnchorY)
+            float expectedY)
         {
             var prefab = LoadPrefab(prefabPath);
             var settings = FindChild(prefab.transform, "SettingsPanel");
             Assert.That(settings, Is.Not.Null);
             var child = settings.Find(childName) as RectTransform;
             Assert.That(child, Is.Not.Null, prefabPath + " " + childName);
-            Assert.That(child.anchorMin.y, Is.EqualTo(expectedAnchorY).Within(0.001f));
-            Assert.That(child.anchorMax.y, Is.EqualTo(expectedAnchorY).Within(0.001f));
-            Assert.That(child.anchoredPosition, Is.EqualTo(Vector2.zero));
+            Assert.That(child.anchorMin, Is.EqualTo(new Vector2(0.5f, 0.5f)));
+            Assert.That(child.anchorMax, Is.EqualTo(new Vector2(0.5f, 0.5f)));
+            Assert.That(child.anchoredPosition.x, Is.EqualTo(0f).Within(0.001f));
+            Assert.That(child.anchoredPosition.y, Is.EqualTo(expectedY).Within(0.001f));
         }
 
         private static GameObject LoadPrefab(string path)

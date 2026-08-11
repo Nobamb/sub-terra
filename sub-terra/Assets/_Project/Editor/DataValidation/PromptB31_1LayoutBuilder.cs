@@ -58,6 +58,13 @@ namespace SubTerra.App.Editor.DataValidation
                 report);
         }
 
+        [MenuItem("SubTerra/UI/Repair Integration Game Guide")]
+        public static void RepairIntegrationGameGuideFromMenu()
+        {
+            var report = RepairIntegrationGameGuide();
+            Debug.Log("[SubTerra] " + report);
+        }
+
         public static string Build()
         {
             var sb = new StringBuilder();
@@ -72,6 +79,69 @@ namespace SubTerra.App.Editor.DataValidation
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
             return sb.ToString();
+        }
+
+        /// <summary>
+        /// Restores only the game-guide instance and its HUD toggle references in the
+        /// integration scene. This intentionally avoids rebuilding unrelated panels.
+        /// </summary>
+        public static string RepairIntegrationGameGuide()
+        {
+            UpdateGameGuidePrefab();
+
+            var previous = SceneManager.GetActiveScene().path;
+            var scene = EditorSceneManager.OpenScene(IntegrationScenePath, OpenSceneMode.Single);
+            if (!scene.IsValid())
+            {
+                return "FAIL: scene open " + IntegrationScenePath;
+            }
+
+            var canvas = FindInScene<Canvas>(scene, "HUDCanvas");
+            if (canvas == null)
+            {
+                return "FAIL: HUDCanvas missing";
+            }
+
+            var guide = EnsureGameGuideInCanvas(canvas.transform);
+            guide.SetActive(false);
+
+            var openGuide = EnsureSideToggleButton(
+                canvas.transform,
+                "OpenGameGuideButton",
+                new Vector2(-16f, 140f),
+                new Vector2(148f, 48f),
+                "게임 가이드");
+            openGuide.gameObject.SetActive(true);
+
+            var chrome = canvas.GetComponent<HudPanelChromeController>();
+            if (chrome == null)
+            {
+                chrome = canvas.gameObject.AddComponent<HudPanelChromeController>();
+            }
+
+            var guideView = guide.GetComponent<GameGuidePanelView>();
+            var guideClose = guideView != null ? guideView.CloseButton : null;
+            var chromeSo = new SerializedObject(chrome);
+            chromeSo.FindProperty("gameGuideView").objectReferenceValue = guideView;
+            chromeSo.FindProperty("gameGuideRoot").objectReferenceValue = guide;
+            chromeSo.FindProperty("gameGuideCloseButton").objectReferenceValue = guideClose;
+            chromeSo.FindProperty("gameGuideOpenButton").objectReferenceValue = openGuide;
+            chromeSo.FindProperty("gameGuideOpen").boolValue = false;
+            chromeSo.ApplyModifiedPropertiesWithoutUndo();
+
+            EditorUtility.SetDirty(chrome);
+            EditorUtility.SetDirty(canvas.gameObject);
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
+
+            if (!string.IsNullOrEmpty(previous)
+                && previous != IntegrationScenePath
+                && File.Exists(previous))
+            {
+                EditorSceneManager.OpenScene(previous, OpenSceneMode.Single);
+            }
+
+            return "Integration game guide restored";
         }
 
         private static string UpdateBuildingMenuPrefab()

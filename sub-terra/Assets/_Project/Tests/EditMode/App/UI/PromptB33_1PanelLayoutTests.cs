@@ -18,7 +18,6 @@ namespace SubTerra.App.Tests.UI
         private const string ScenePath =
             "Assets/_Project/Scenes/App/Mine_Demo_Integration.unity";
 
-        [OneTimeSetUp]
         public void BuildLayout()
         {
             PromptB33_1LayoutBuilder.Build();

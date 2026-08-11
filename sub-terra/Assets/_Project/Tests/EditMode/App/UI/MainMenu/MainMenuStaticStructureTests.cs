@@ -19,7 +19,6 @@ namespace SubTerra.App.Tests.UI.MainMenu
     /// <summary>L-S01~S05 정적/구조 검증.</summary>
     public sealed class MainMenuStaticStructureTests
     {
-        [OneTimeSetUp]
         public void BuildScenes()
         {
             PhaseLMenuSceneBuilder.Build();
@@ -213,8 +212,7 @@ namespace SubTerra.App.Tests.UI.MainMenu
                 "GoalsText",
                 "DeepZoneText",
                 "RecentRunText",
-                "ExploreButton",
-                "EconomyPanel/EcoStatus",
+                "EconomyPanel/SellModalCard/EcoStatus",
                 "ProgressionPanel/UpgradeList",
                 "ProgressionPanel/ProgDeep"
             };
@@ -222,6 +220,9 @@ namespace SubTerra.App.Tests.UI.MainMenu
             Assert.That(content.Find("RefreshButton"), Is.Null);
             Assert.That(content.Find("SettingsButton"), Is.Not.Null);
             Assert.That(content.Find("QuitButton"), Is.Not.Null);
+            var explore = content.Find("ExploreButton") as RectTransform;
+            Assert.That(explore, Is.Not.Null);
+            Assert.That(explore.anchoredPosition.x, Is.EqualTo(-160f).Within(0.1f));
             foreach (var path in centeredPaths)
             {
                 var rect = content.Find(path) as RectTransform;
