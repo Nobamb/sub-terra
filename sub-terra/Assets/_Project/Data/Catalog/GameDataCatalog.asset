@@ -19,6 +19,7 @@ MonoBehaviour:
   miningTiles: []
   buildings:
   - {fileID: 11400000, guid: 8b806f92e14a7da478d52e2e042a57e5, type: 2}
+  - {fileID: 11400000, guid: 20d63a97f3c35c84292a4ecd97a0b15f, type: 2}
   - {fileID: 11400000, guid: 35d95ff508c3cab4d926f775aabaee93, type: 2}
   - {fileID: 11400000, guid: 16d557600954c624d87e510fc8a044e0, type: 2}
   - {fileID: 11400000, guid: c28bb0b0ed29eae4683c8f01f97c04c0, type: 2}

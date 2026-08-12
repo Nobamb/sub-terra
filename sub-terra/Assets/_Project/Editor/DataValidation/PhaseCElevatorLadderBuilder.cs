@@ -24,6 +24,9 @@ namespace SubTerra.App.Editor
             "Assets/_Project/Scenes/App/Mine_Demo_Integration.unity";
         public const string LadderPrefabPath =
             "Assets/_Project/Prefabs/Gameplay/Traversal/Ladder.prefab";
+        /// <summary>시설 건설 설치용 세로 5칸 사다리. 씬 기본 Ladder와 분리한다.</summary>
+        public const string LadderBuildablePrefabPath =
+            "Assets/_Project/Prefabs/Gameplay/Traversal/Ladder_Buildable.prefab";
         public const string ElevatorPrefabPath =
             "Assets/_Project/Prefabs/Gameplay/Traversal/StartElevator.prefab";
         public const string LadderDataPath =
@@ -38,9 +41,12 @@ namespace SubTerra.App.Editor
         public static string BuildAll()
         {
             EnsureFolder("Assets/_Project/Prefabs/Gameplay/Traversal");
-            var ladderPrefab = BuildLadderPrefab();
+            // 씬 기본 사다리는 세로 1유닛, 설치용은 세로 5칸으로 분리한다.
+            var ladderPrefab = BuildLadderPrefab(LadderPrefabPath, "Ladder", height: 1f);
+            var buildablePrefab = BuildLadderPrefab(
+                LadderBuildablePrefabPath, "Ladder_Buildable", height: 5f);
             var elevatorPrefab = BuildElevatorPrefab();
-            var placement = BuildLadderDefinitions(ladderPrefab);
+            var placement = BuildLadderDefinitions(buildablePrefab);
             AddLadderToCatalog();
             WireIntegrationScene(ladderPrefab, elevatorPrefab, placement);
             PhaseLMenuSceneBuilder.BuildSurfaceBasePrefab();
@@ -49,25 +55,25 @@ namespace SubTerra.App.Editor
             return "Phase C elevator, ladder, catalog, and Integration Scene wired.";
         }
 
-        private static GameObject BuildLadderPrefab()
+        private static GameObject BuildLadderPrefab(string path, string name, float height)
         {
             var root = new GameObject(
-                "Ladder",
+                name,
                 typeof(SpriteRenderer),
                 typeof(BoxCollider2D),
                 typeof(LadderZone));
             var renderer = root.GetComponent<SpriteRenderer>();
             renderer.sprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UISprite.psd");
             renderer.color = new Color(0.95f, 0.67f, 0.18f, 0.9f);
-            renderer.size = new Vector2(0.65f, 1f);
+            renderer.size = new Vector2(0.65f, height);
             renderer.drawMode = SpriteDrawMode.Sliced;
             renderer.sortingOrder = 4;
 
             var zone = root.GetComponent<BoxCollider2D>();
             zone.isTrigger = true;
-            zone.size = new Vector2(0.7f, 1f);
+            zone.size = new Vector2(0.7f, height);
 
-            var saved = PrefabUtility.SaveAsPrefabAsset(root, LadderPrefabPath);
+            var saved = PrefabUtility.SaveAsPrefabAsset(root, path);
             UnityEngine.Object.DestroyImmediate(root);
             return saved;
         }
@@ -134,16 +140,22 @@ namespace SubTerra.App.Editor
             data.EditorSet(
                 LadderId,
                 "기본 사다리",
-                "깊은 수직 갱도에서 중력 없이 오르내릴 수 있습니다.",
+                "깊은 수직 갱도에서 중력 없이 오르내릴 수 있습니다. 철 1개·구리 3개로 세로 5칸 설치합니다.",
                 prefab,
                 AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Knob.psd"),
                 0,
-                new List<ItemCostEntry> { new("mineral.copper", 1) });
+                new List<ItemCostEntry>
+                {
+                    new("mineral.iron", 1),
+                    new("mineral.copper", 3)
+                });
             EditorUtility.SetDirty(data);
 
             var placement = LoadOrCreate<BuildingPlacementDefinition>(LadderPlacementPath);
-            placement.EditorSet(LadderId, prefab, Vector2Int.one, needsGround: false);
-            placement.EditorSetCosts(new ItemCostDto("mineral.copper", 1));
+            placement.EditorSet(LadderId, prefab, new Vector2Int(1, 5), needsGround: false);
+            placement.EditorSetCosts(
+                new ItemCostDto("mineral.iron", 1),
+                new ItemCostDto("mineral.copper", 3));
             EditorUtility.SetDirty(placement);
             return placement;
         }
@@ -190,7 +202,8 @@ namespace SubTerra.App.Editor
             elevator.transform.SetParent(traversal.transform, false);
             elevator.transform.position = new Vector3(-6.5f, 0f, 0f);
 
-            // 시작 세로 통로를 채굴하면 즉시 6칸 사다리를 검증할 수 있는 데모 구간.
+            // 시작 세로 통로를 채굴하면 즉시 6칸 이상 사다리를 검증할 수 있는 데모 구간.
+            // 기본 Ladder Prefab(높이 1)을 y=7로 스케일해 이전 세로 길이를 유지한다.
             var demoLadder = (GameObject)PrefabUtility.InstantiatePrefab(ladderPrefab, scene);
             demoLadder.name = "LadderTrainingShaft_6m";
             demoLadder.transform.SetParent(traversal.transform, false);

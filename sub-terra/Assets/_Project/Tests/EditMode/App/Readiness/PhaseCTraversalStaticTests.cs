@@ -73,9 +73,12 @@ namespace SubTerra.App.Tests.Readiness
         {
             var placementDefinition = AssetDatabase.LoadAssetAtPath<BuildingPlacementDefinition>(
                 "Assets/_Project/Data/Buildings/LadderPlacement.asset");
-            Assert.AreEqual(1, placementDefinition.Costs.Count);
-            Assert.AreEqual("mineral.copper", placementDefinition.Costs[0].ItemId);
-            Assert.AreEqual(1, placementDefinition.Costs[0].Quantity);
+            Assert.AreEqual(new Vector2Int(1, 5), placementDefinition.Footprint);
+            Assert.AreEqual(2, placementDefinition.Costs.Count);
+            Assert.IsTrue(placementDefinition.Costs.Any(c =>
+                c.ItemId == "mineral.iron" && c.Quantity == 1));
+            Assert.IsTrue(placementDefinition.Costs.Any(c =>
+                c.ItemId == "mineral.copper" && c.Quantity == 3));
             var host = new GameObject("LadderRestoreTest");
             try
             {
@@ -96,7 +99,8 @@ namespace SubTerra.App.Tests.Readiness
 
                 var ladder = host.GetComponentInChildren<LadderZone>();
                 Assert.NotNull(ladder);
-                Assert.AreEqual(new Vector3(3f, -8f, 0f), ladder.transform.position);
+                // 1x5 footprint 복원 시 좌하단 origin (3,-8) 기준 중심은 (3,-6).
+                Assert.AreEqual(new Vector3(3f, -6f, 0f), ladder.transform.position);
             }
             finally
             {

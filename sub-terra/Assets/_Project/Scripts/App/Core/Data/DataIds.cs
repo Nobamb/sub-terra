@@ -16,6 +16,7 @@ namespace SubTerra.App.Core.Data
         public static class Buildings
         {
             public const string SupportBasic = "building.support.basic";
+            public const string LadderBasic = "building.ladder.basic";
             public const string LightBasic = "building.light.basic";
             public const string ChargerBasic = "building.charger.basic";
             public const string StorageBasic = "building.storage.basic";
