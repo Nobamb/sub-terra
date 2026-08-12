@@ -14,9 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: SubTerra.App::SubTerra.App.Core.Data.BuildingData
   id: building.escape_portal.emergency
   displayName: "\uAE34\uAE09 \uD0C8\uCD9C \uD3EC\uD0C8"
-  description: "E\uD0A4\uB85C \uC0AC\uC6A9\uD569\uB2C8\uB2E4. 100G\uC640 \uCD5C\uB300
-    \uC804\uB825\uC758 10%\uB97C \uC18C\uBAA8\uD574 \uCD5C\uADFC \uC804\uC9C4\uAE30\uC9C0
-    \uCF54\uC5B4 \uB610\uB294 \uC5D8\uB9AC\uBCA0\uC774\uD130\uB85C \uC774\uB3D9\uD569\uB2C8\uB2E4."
+  description: "E\uD0A4\uB85C \uBAA9\uC801\uC9C0 \uC120\uD0DD \uCC3D\uC744 \uC5FD\uB2C8\uB2E4.
+    100G\uC640 \uCD5C\uB300 \uC804\uB825\uC758 10%\uB97C \uC18C\uBAA8\uD574 \uC5D8\uB9AC\uBCA0\uC774\uD130
+    \uB610\uB294 \uC124\uCE58\uD55C \uC804\uC9C4\uAE30\uC9C0 \uCF54\uC5B4\uB85C \uC774\uB3D9\uD569\uB2C8\uB2E4."
   runtimePrefab: {fileID: 8209685397134881772, guid: dd142c76e4dfbd04c9003d8aec154b33, type: 3}
   icon: {fileID: 6838030193426678921, guid: 42527be5cf11e3c42871944ebbfd1fd6, type: 2}
   powerDraw: 30

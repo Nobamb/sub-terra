@@ -69,21 +69,22 @@ namespace SubTerra.App.Editor.DataValidation
                 typeof(EmergencyEscapePortal));
             try
             {
+                // prompt-B 47-1: 2x2 footprint 중심에 배치되는 실제 월드 크기 네모.
                 var zone = root.GetComponent<BoxCollider2D>();
                 zone.isTrigger = true;
-                zone.size = new Vector2(1.4f, 2.2f);
-                zone.offset = new Vector2(0f, 0.55f);
+                zone.size = new Vector2(2f, 2f);
+                zone.offset = Vector2.zero;
 
                 var power = root.GetComponent<PowerNode>();
                 power.Configure(null, false, 0, 30, PowerPriority.Critical);
 
                 var sprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UISprite.psd");
                 CreateVisual(root.transform, "OuterFrame", sprite,
-                    new Vector3(0f, 0.55f, 0f), new Vector2(1.25f, 2f),
-                    new Color(0.1f, 0.8f, 0.95f, 0.9f), 5);
+                    Vector3.zero, new Vector2(2f, 2f),
+                    new Color(0.1f, 0.8f, 0.95f, 0.92f), 5);
                 CreateVisual(root.transform, "PortalField", sprite,
-                    new Vector3(0f, 0.55f, -0.01f), new Vector2(0.72f, 1.55f),
-                    new Color(0.08f, 0.16f, 0.35f, 0.72f), 6);
+                    new Vector3(0f, 0f, -0.01f), new Vector2(1.6f, 1.6f),
+                    new Color(0.08f, 0.16f, 0.35f, 0.78f), 6);
 
                 var portalSo = new SerializedObject(root.GetComponent<EmergencyEscapePortal>());
                 portalSo.FindProperty("inputActions").objectReferenceValue =
@@ -113,12 +114,23 @@ namespace SubTerra.App.Editor.DataValidation
             var visual = new GameObject(name, typeof(SpriteRenderer));
             visual.transform.SetParent(parent, false);
             visual.transform.localPosition = localPosition;
-            visual.transform.localScale = new Vector3(size.x, size.y, 1f);
             var renderer = visual.GetComponent<SpriteRenderer>();
             renderer.sprite = sprite;
             renderer.drawMode = SpriteDrawMode.Simple;
             renderer.color = color;
             renderer.sortingOrder = sortingOrder;
+            // UISprite bounds가 작아 scale=size만 쓰면 점처럼 보이므로 실제 월드 크기로 보정한다.
+            if (sprite != null)
+            {
+                var bounds = sprite.bounds.size;
+                var scaleX = bounds.x > 0.0001f ? size.x / bounds.x : size.x;
+                var scaleY = bounds.y > 0.0001f ? size.y / bounds.y : size.y;
+                visual.transform.localScale = new Vector3(scaleX, scaleY, 1f);
+            }
+            else
+            {
+                visual.transform.localScale = new Vector3(size.x, size.y, 1f);
+            }
         }
 
         private static BuildingData BuildPortalData(GameObject prefab)
@@ -139,7 +151,7 @@ namespace SubTerra.App.Editor.DataValidation
             data.EditorSet(
                 DataIds.Buildings.EmergencyEscapePortal,
                 "긴급 탈출 포탈",
-                "E키로 사용합니다. 100G와 최대 전력의 10%를 소모해 최근 전진기지 코어 또는 엘리베이터로 이동합니다.",
+                "E키로 목적지 선택 창을 엽니다. 100G와 최대 전력의 10%를 소모해 엘리베이터 또는 설치한 전진기지 코어로 이동합니다.",
                 prefab,
                 icon,
                 30,

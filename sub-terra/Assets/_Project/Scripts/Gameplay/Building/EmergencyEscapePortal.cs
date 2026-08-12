@@ -6,7 +6,7 @@ using UnityEngine.InputSystem;
 
 namespace SubTerra.Gameplay.Building
 {
-    /// <summary>통과 가능한 포탈의 E 입력과 전력 상태만 소유한다.</summary>
+    /// <summary>통과 가능한 포탈의 E 입력과 전력 상태만 소유한다. 목적 선택 UI는 App 포트가 연다.</summary>
     [RequireComponent(typeof(Collider2D), typeof(PowerNode))]
     public sealed class EmergencyEscapePortal : MonoBehaviour
     {
@@ -22,7 +22,6 @@ namespace SubTerra.Gameplay.Building
         public bool HasRider => rider != null;
         public bool IsPowered => powerNode != null && powerNode.IsPowered;
         public string LastReason { get; private set; } = string.Empty;
-        public EmergencyEscapeDestination LastDestination { get; private set; }
 
         private void Awake()
         {
@@ -86,6 +85,7 @@ namespace SubTerra.Gameplay.Building
 
         private void OnInteractStarted(InputAction.CallbackContext _) => RequestEscape();
 
+        /// <summary>탑승·전력 조건을 통과하면 목적지 선택 패널을 연다.</summary>
         public bool RequestEscape()
         {
             if (lastRequestFrame == Time.frameCount)
@@ -113,8 +113,7 @@ namespace SubTerra.Gameplay.Building
                 return false;
             }
 
-            var success = escapePort.TryEscape(out var destination, out var reason);
-            LastDestination = destination;
+            var success = escapePort.TryOpenEscapePanel(out var reason);
             LastReason = reason ?? string.Empty;
             return success;
         }
