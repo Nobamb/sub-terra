@@ -40,7 +40,13 @@ namespace SubTerra.App.Tests.UI
             Assert.That(ecoRect.anchorMin, Is.EqualTo(Vector2.zero));
             Assert.That(ecoRect.anchorMax, Is.EqualTo(Vector2.one));
             Assert.That(ecoRect.sizeDelta, Is.EqualTo(Vector2.zero));
-            Assert.That(economy.GetSiblingIndex(), Is.EqualTo(content.childCount - 1), "modal must render last");
+
+            var openSell = content.Find("OpenSellButton") as RectTransform;
+            Assert.That(openSell, Is.Not.Null, "OpenSellButton missing");
+            Assert.That(
+                economy.GetSiblingIndex(),
+                Is.GreaterThan(openSell.GetSiblingIndex()),
+                "sell modal must remain after its opener; the runtime open path raises it above sibling panels");
 
             var canvasGroup = economy.GetComponent<CanvasGroup>();
             Assert.That(canvasGroup, Is.Not.Null);
@@ -48,8 +54,6 @@ namespace SubTerra.App.Tests.UI
             Assert.That(canvasGroup.blocksRaycasts, Is.False);
             Assert.That(economy.GetComponent<Image>().color.a, Is.EqualTo(1f), "modal backdrop must be opaque");
 
-            var openSell = content.Find("OpenSellButton") as RectTransform;
-            Assert.That(openSell, Is.Not.Null, "OpenSellButton missing");
             Assert.That(openSell.anchoredPosition.x, Is.EqualTo(0f).Within(0.5f));
             Assert.That(openSell.anchoredPosition.y, Is.EqualTo(PromptB_SellPanelLayoutBuilder.SellButtonY).Within(0.5f));
 

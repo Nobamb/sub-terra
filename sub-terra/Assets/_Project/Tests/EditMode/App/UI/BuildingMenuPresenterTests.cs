@@ -71,7 +71,7 @@ namespace SubTerra.App.Tests.UI
             Assert.That(menu, Is.Not.Null);
             Assert.That(menu.GetComponent<BuildingMenuView>().HasRequiredReferences(), Is.True);
             Assert.That(menu.GetComponent<BuildingMenuBinder>().HasRequiredReferences(), Is.True);
-            Assert.That(menu.GetComponentsInChildren<BuildingMenuEntryButton>(true).Length, Is.EqualTo(7));
+            Assert.That(menu.GetComponentsInChildren<BuildingMenuEntryButton>(true).Length, Is.EqualTo(8));
             Assert.That(hud, Is.Not.Null);
             Assert.That(hud.GetComponent<SubTerra.App.UI.Hazards.HazardHudView>()
                 .HasRequiredReferences(), Is.True);

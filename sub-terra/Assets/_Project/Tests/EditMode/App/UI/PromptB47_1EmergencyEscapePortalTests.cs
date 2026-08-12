@@ -117,26 +117,40 @@ namespace SubTerra.App.Tests.UI
             var player = new GameObject("PromptB47_Player");
             var elevator = new GameObject("PromptB47_Elevator");
             var host = new GameObject("PromptB47_Bridge");
-            var bridge = host.AddComponent<EmergencyEscapePortalRuntimeBridge>();
-            bridge.Bind(state, player.transform, elevator.transform);
+            GameObject panelHost = null;
 
-            Assert.That(bridge.TryOpenEscapePanel(out var missingReason), Is.False);
-            Assert.That(missingReason, Does.Contain("선택 창"));
+            try
+            {
+                var bridge = host.AddComponent<EmergencyEscapePortalRuntimeBridge>();
+                bridge.Bind(state, player.transform, elevator.transform);
 
-            var panelHost = new GameObject("PromptB47_Panel");
-            var view = panelHost.AddComponent<EmergencyEscapePanelView>();
-            var binder = panelHost.AddComponent<EmergencyEscapePanelBinder>();
-            // dropdown/cost TMP 참조 없이도 Open → SetVisible 경로가 동작하는지 확인한다.
-            SetField(view, "panelRoot", panelHost);
-            SetField(binder, "view", view);
-            bridge.BindPanel(binder);
+                var serializedBridge = new SerializedObject(bridge);
+                Assert.That(
+                    serializedBridge.FindProperty("panelBinder").objectReferenceValue,
+                    Is.Null,
+                    "새 브리지는 직렬화된 패널 Binder 없이 시작해야 한다.");
 
-            Assert.That(bridge.TryOpenEscapePanel(out _), Is.True);
+                panelHost = new GameObject("PromptB47_Panel");
+                var view = panelHost.AddComponent<EmergencyEscapePanelView>();
+                var binder = panelHost.AddComponent<EmergencyEscapePanelBinder>();
+                // dropdown/cost TMP 참조 없이도 Open → SetVisible 경로가 동작하는지 확인한다.
+                SetField(view, "panelRoot", panelHost);
+                SetField(binder, "view", view);
+                bridge.BindPanel(binder);
 
-            Object.DestroyImmediate(panelHost);
-            Object.DestroyImmediate(host);
-            Object.DestroyImmediate(elevator);
-            Object.DestroyImmediate(player);
+                Assert.That(bridge.TryOpenEscapePanel(out _), Is.True);
+            }
+            finally
+            {
+                if (panelHost != null)
+                {
+                    Object.DestroyImmediate(panelHost);
+                }
+
+                Object.DestroyImmediate(host);
+                Object.DestroyImmediate(elevator);
+                Object.DestroyImmediate(player);
+            }
         }
 
         [Test]
