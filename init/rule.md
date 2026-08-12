@@ -124,6 +124,8 @@ Part A. Project Sub-Terra Agent 작업 규칙
 
    3-2. C#과 Unity 직렬화 규칙을 따른다.
    - 신규 런타임 코드는 C#으로 작성한다.
+   - Unity `UnityEngine.Object` 참조에는 C# Null 조건 연산자(`?.`) 대신 `if (obj != null)` 구문을 일관되게 적용한다.
+   - 주요 바인딩 및 초기화 메서드(`WireContracts`, `Start` 등)는 try/catch로 방어하여 예외 발생 시 원인 로그 출력 및 부작용을 최소화한다.
    - 고정 정의 데이터는 ScriptableObject, 실행 중 상태는 일반 C# 객체, 영구 상태는 `[Serializable]` DTO로 분리한다.
    - 구체 구현이 아닌 Shared 인터페이스와 이벤트를 통해 Gameplay와 App 시스템을 연결한다.
    - 새 타입과 필드는 현재 작업에 필요한 범위만 정의한다.
@@ -209,6 +211,15 @@ Part A. Project Sub-Terra Agent 작업 규칙
    - Unity 엔진 버전과 패키지 버전을 작업 중 임의로 올리지 않는다.
    - Shared 계약 변경은 별도 Issue와 별도 PR로 먼저 합의·병합한다.
    - 공용 설정 변경은 두 개발자 환경과 Windows 빌드에서 검증한다.
+
+   5-5. Integration Scene 실행 및 바인딩 검증 규칙
+   - 테스트 재생(`Play`)은 항상 `Bootstrap` 씬부터 시작하며, `Integration` 씬 단독 재생을 금지한다.
+   - 콘솔에 아래 예외/경고 발생 시 입력 장치 버그가 아니라 초기화/시스템 활성화 실패로 진단한다:
+     - `Integration scene opened without the Bootstrap runtime`
+     - `Integration UI kept disabled: IsUiReady never became true`
+     - `MissingReferenceException` / `NullReferenceException` in `IntegrationRuntimeBinder`
+   - UI/레이아웃 빌더 스크립트로 씬·프리팹을 재생성한 후에는 `ApplicationRoot`의 `IntegrationRuntimeBinder` Inspector에서 `hudCanvasGroup`, `deferredInputBehaviours`, 패널 바인더 참조를 직접 확인한 뒤 커밋한다.
+   - `Mine_Demo_Integration.unity` 등 거대 Scene YAML이 변경되는 커밋은 일반 기능 커밋과 씬 재배선 커밋을 분리하고, Pull 직후 담당자가 "Bootstrap → 새 게임 → 탐사" 스모크 테스트를 실시한다.
 
 6. 세이브와 외부 서비스 안전 규칙
    6-1. 로컬 세이브 안전성

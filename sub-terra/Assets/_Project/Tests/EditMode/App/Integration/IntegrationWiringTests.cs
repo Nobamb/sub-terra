@@ -21,7 +21,7 @@ using UnityEngine.Tilemaps;
 
 namespace SubTerra.App.Tests.Integration
 {
-    /// <summary>M-S01~S05 �?Shared 5경계·복원 게이???�위/?�적 검�?</summary>
+    /// <summary>M-S01~S05 �?Shared 5경계·복원 게이???�위/?�적 검�?</summary>
     public sealed class IntegrationWiringTests
     {
         private const string IntegrationPath =
@@ -210,7 +210,7 @@ namespace SubTerra.App.Tests.Integration
                 Assert.That(binder is IMiningRewardReceiver, Is.True);
                 Assert.That(binder is IGameplayEventSink, Is.True);
 
-                // 건설 배치 경로·복원 ?�의
+                // 건설 배치 경로·복원 ?�의
                 var placement = FindInScene<BuildingPlacementSystem>(scene);
                 Assert.That(placement, Is.Not.Null);
                 var placementSo = new SerializedObject(placement);
@@ -227,6 +227,23 @@ namespace SubTerra.App.Tests.Integration
                     ?? FindInScene<GameplayBuildingPlacementBridge>(scene),
                     Is.Not.Null,
                     "GameplayBuildingPlacementBridge required for construction path");
+
+                // HUD/입력 게이트 필수 필드 — 비어 있어도 런타임 재탐색으로 복구되지만
+                // 씬에 대상 오브젝트 자체는 존재해야 작업자 환경이 동일하다.
+                Assert.That(
+                    so.FindProperty("hudCanvasGroup").objectReferenceValue
+                    ?? FindInSceneByName(scene, "HUDCanvas")?.GetComponent<CanvasGroup>(),
+                    Is.Not.Null,
+                    "HUDCanvas CanvasGroup required so all machines can show stats/buttons");
+                var deferred = so.FindProperty("deferredInputBehaviours");
+                Assert.That(deferred, Is.Not.Null);
+                var hasDeferredTarget =
+                    (deferred.arraySize > 0 && deferred.GetArrayElementAtIndex(0).objectReferenceValue != null)
+                    || FindInScene<PlayerMovement>(scene) != null;
+                Assert.That(
+                    hasDeferredTarget,
+                    Is.True,
+                    "Player movement/mining input targets required for consistent shortcuts");
             }
             finally
             {
@@ -369,7 +386,7 @@ namespace SubTerra.App.Tests.Integration
         [Test]
         public void M_F02_BuildingPlacementSystem_WithSetResourceWallet_FailNoSpend_SuccessOnce()
         {
-            // ?�제 BuildingPlacementSystem + EconomyService 지�?경로 (?�합 배선�??�일).
+            // ?�제 BuildingPlacementSystem + EconomyService 지�?경로 (?�합 배선�??�일).
             var catalog = new InMemoryMineralCatalog();
             catalog.Register("mineral.copper", 1f, 10, "Copper");
             var state = GameState.CreateNew();
@@ -427,7 +444,7 @@ namespace SubTerra.App.Tests.Integration
             inventory.TryAddMineral("mineral.copper", 5);
             IResourceWallet wallet = new EconomyService(inventory, catalog, state);
 
-            // host 비활???�태?�서 컴포?�트·참조�?채운 ???�성?�해 OnEnable 구독???�효 참조�??�게 ?�다.
+            // host 비활???�태?�서 컴포?�트·참조�?채운 ???�성?�해 OnEnable 구독???�효 참조�??�게 ?�다.
             var host = new GameObject("M_F04_EditSnapshot");
             host.SetActive(false);
             var tilemapGo = new GameObject("Foreground");
@@ -456,7 +473,7 @@ namespace SubTerra.App.Tests.Integration
             SetPrivateField(snapshot, "worldSeed", 7L);
 
             host.SetActive(true);
-            // 비활??�?주입??참조�??�벤??구독???�시 건다 (?�제 Scene?�서??Inspector 직렬????OnEnable).
+            // 비활??�?주입??참조�??�벤??구독???�시 건다 (?�제 Scene?�서??Inspector 직렬????OnEnable).
             InvokePrivate(snapshot, "OnEnable");
 
             var wired = GetPrivateField(snapshot, "buildingPlacementSystem");
@@ -472,7 +489,7 @@ namespace SubTerra.App.Tests.Integration
             Assert.That(inventory.State.GetQuantity("mineral.copper"), Is.EqualTo(4));
             Assert.That(buildingRoot.transform.childCount, Is.EqualTo(1));
 
-            // ?�벤??구독??EditMode?�서 ?�락?�도 ?�일 ?�들??경로�??�제 메서?�로 구동?�다.
+            // ?�벤??구독??EditMode?�서 ?�락?�도 ?�일 ?�들??경로�??�제 메서?�로 구동?�다.
             InvokePrivate(snapshot, "OnBuildingPlaced", placeResult);
 
             IWorldSnapshotProvider provider = snapshot;

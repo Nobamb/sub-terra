@@ -1,4 +1,6 @@
+using System;
 using System.Collections;
+using System.Collections.Generic;
 using SubTerra.App.Core;
 using SubTerra.App.Core.Data;
 using SubTerra.App.Inventory;
@@ -24,6 +26,7 @@ namespace SubTerra.App.Integration
     /// Mine_Demo_Integration Scene 로컬 binder.
     /// Bootstrap 전역 서비스를 중복 생성하지 않고 Shared 5경계를 A Runtime에 연결한다.
     /// 이어하기 시 HUD/입력은 SaveRuntime이 월드 복원·파생 재계산을 끝낸 뒤에만 활성화한다.
+    /// 씬 재생성·머지로 직렬화 참조가 비거나 stale 이어도 런타임 탐색으로 동일 환경을 복구한다.
     /// </summary>
     public sealed class IntegrationRuntimeBinder :
         MonoBehaviour,
@@ -76,6 +79,8 @@ namespace SubTerra.App.Integration
             activationGate = new IntegrationActivationGate();
             contracts = new IntegrationContractRegistry();
             // 복원 전 HUD/입력을 끈다. 게이트가 열릴 때만 ActivateUi가 성공한다.
+            // 참조가 비어 있어도 끄기 대상(HUD/입력)을 씬에서 먼저 찾는다.
+            ResolveSceneReferences();
             SetHudVisible(false);
             SetDeferredInputEnabled(false);
         }
@@ -87,11 +92,23 @@ namespace SubTerra.App.Integration
             if (runtime == null || bootstrap == null)
             {
                 Debug.LogWarning(
-                    "[SubTerra] Integration scene opened without the Bootstrap runtime.");
+                    "[SubTerra] Integration scene opened without the Bootstrap runtime. " +
+                    "Play from Bootstrap.unity (or enable Bootstrap Play Mode Start Scene) " +
+                    "so HUD/input activate consistently on every machine.");
                 yield break;
             }
 
-            WireContracts();
+            // 개별 바인딩 실패가 Start 코루틴을 죽여 HUD/입력이 영구 비활성 되는 것을 막는다.
+            try
+            {
+                WireContracts();
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError(
+                    "[SubTerra] WireContracts failed; continuing toward UI activation if ready. " +
+                    ex);
+            }
 
             // ContinueRoutine은 월드 복원·재계산 후 IsUiReady=true.
             // 새 게임 탐사는 SurfaceBase 진입 시 이미 true인 경우가 많다.
@@ -113,12 +130,61 @@ namespace SubTerra.App.Integration
 
             // SaveRuntime이 복원 순서를 끝냈거나, 새 세션으로 이미 준비된 상태.
             // NotifyWorldRestored 없이도 IsUiReady=true면 순서가 보장된 것으로 본다.
-            if (!activationGate.IsDerivedRecalculated)
+            if (activationGate != null && !activationGate.IsDerivedRecalculated)
             {
                 activationGate.MarkReadyForNewSession();
             }
 
-            ActivateUi();
+            try
+            {
+                ActivateUi();
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError(
+                    "[SubTerra] ActivateUi failed; forcing HUD/input enable as last resort. " +
+                    ex);
+                ForceEnableHudAndInput();
+            }
+        }
+
+        /// <summary>
+        /// 직렬화 참조가 null/missing/stale 이어도 씬 내 동일 타입 컴포넌트로 채운다.
+        /// 작업자·머지 결과와 무관하게 Integration 진입 환경을 맞춘다.
+        /// </summary>
+        public void ResolveSceneReferences()
+        {
+            buildingPlacementSystem = Resolve(buildingPlacementSystem);
+            hudBinder = Resolve(hudBinder);
+            hazardBridge = Resolve(hazardBridge);
+            depthBridge = Resolve(depthBridge);
+            gasEffectController = Resolve(gasEffectController);
+            outpostBridge = Resolve(outpostBridge);
+            gameplayEventBridge = Resolve(gameplayEventBridge);
+            buildingUiBinder = Resolve(buildingUiBinder);
+            inventoryPanelBinder = Resolve(inventoryPanelBinder, FindObjectsInactive.Include);
+            outpostPanelBinder = Resolve(outpostPanelBinder, FindObjectsInactive.Include);
+            progressionPanelBinder = Resolve(progressionPanelBinder, FindObjectsInactive.Include);
+            placementBridge = Resolve(placementBridge);
+            droneContextAdapter = Resolve(droneContextAdapter);
+            droneSensor = Resolve(droneSensor);
+            tutorialDirector = Resolve(tutorialDirector, FindObjectsInactive.Include);
+            miningSystem = Resolve(miningSystem);
+            playerMovement = Resolve(playerMovement);
+            miningProgressHud = Resolve(miningProgressHud, FindObjectsInactive.Include);
+            runFailureController = Resolve(runFailureController);
+
+            if (worldSnapshotProviderBehaviour == null)
+            {
+                worldSnapshotProviderBehaviour = FindWorldSnapshotProviderBehaviour();
+            }
+
+            if (hudCanvasGroup == null)
+            {
+                hudCanvasGroup = ResolveHudCanvasGroup();
+            }
+
+            ResolveDeferredInputBehaviours();
         }
 
         /// <summary>
@@ -132,98 +198,201 @@ namespace SubTerra.App.Integration
                 return;
             }
 
-            runtime.EnsureGameplayServices();
-            runtime.InventoryService?.BindGameState(bootstrap.State);
+            ResolveSceneReferences();
 
-            if (miningSystem != null)
-            {
-                miningSystem.SetRuntimeServices(
-                    this,
-                    runtime.Progression?.Effects,
-                    runtime);
-            }
+            TryStep("EnsureGameplayServices", () => runtime.EnsureGameplayServices());
+            TryStep(
+                "BindGameState",
+                () =>
+                {
+                    if (runtime.InventoryService != null)
+                    {
+                        runtime.InventoryService.BindGameState(bootstrap.State);
+                    }
+                });
 
-            BindCargoSpeed();
-            BindDroneReadings();
+            TryStep(
+                "MiningRuntimeServices",
+                () =>
+                {
+                    if (miningSystem != null)
+                    {
+                        miningSystem.SetRuntimeServices(
+                            this,
+                            runtime.Progression != null ? runtime.Progression.Effects : null,
+                            runtime);
+                    }
+                });
+
+            TryStep("BindCargoSpeed", BindCargoSpeed);
+            TryStep("BindDroneReadings", BindDroneReadings);
 
             // IResourceWallet: A BuildingPlacementSystem → B EconomyService
-            if (buildingPlacementSystem != null && runtime.Economy != null)
-            {
-                buildingPlacementSystem.SetResourceWallet(runtime.Economy);
-            }
+            TryStep(
+                "ResourceWallet",
+                () =>
+                {
+                    if (buildingPlacementSystem != null && runtime.Economy != null)
+                    {
+                        buildingPlacementSystem.SetResourceWallet(runtime.Economy);
+                    }
+                });
 
             // 전진기지 Consumer (Scene 로컬 서비스, 전역 중복 생성 아님)
-            if (outpostBridge != null && runtime.InventoryService != null)
-            {
-                var catalog = bootstrap.AssignedCatalog as GameDataCatalog;
-                IMineralCatalogLookup mineralLookup = catalog != null
-                    ? (IMineralCatalogLookup)new GameDataCatalogMineralLookup(catalog)
-                    : new InMemoryMineralCatalog();
-                outpostService = new OutpostService(
-                    runtime.InventoryService,
-                    mineralLookup,
-                    bootstrap.State);
-                outpostBridge.BindTo(outpostService);
-                runtime.BindAutoSaveEvents(
-                    runtime.Economy,
-                    runtime.Progression,
-                    outpostService);
-            }
+            TryStep(
+                "OutpostService",
+                () =>
+                {
+                    if (outpostBridge == null || runtime.InventoryService == null)
+                    {
+                        return;
+                    }
 
-            hazardBridge?.BindGameState(bootstrap.State);
+                    var catalog = bootstrap.AssignedCatalog as GameDataCatalog;
+                    IMineralCatalogLookup mineralLookup = catalog != null
+                        ? (IMineralCatalogLookup)new GameDataCatalogMineralLookup(catalog)
+                        : new InMemoryMineralCatalog();
+                    outpostService = new OutpostService(
+                        runtime.InventoryService,
+                        mineralLookup,
+                        bootstrap.State);
+                    outpostBridge.BindTo(outpostService);
+                    runtime.BindAutoSaveEvents(
+                        runtime.Economy,
+                        runtime.Progression,
+                        outpostService);
+                });
+
+            TryStep(
+                "HazardBridge",
+                () =>
+                {
+                    if (hazardBridge != null)
+                    {
+                        hazardBridge.BindGameState(bootstrap.State);
+                    }
+                });
+
             // 플레이어 Y → Run.Depth → HUD 깊이 텍스트 실시간 반영.
-            BindDepthBridge();
-            if (gasEffectController != null)
-            {
-                gasEffectController.FailureInputRaised += OnGasFailureInputRaised;
-                gasEffectController.EffectStateChanged += OnGasEffectStateChanged;
-                gasEffectController.Bind(bootstrap.State, runtime.Progression?.Effects);
-            }
+            TryStep("DepthBridge", BindDepthBridge);
 
-            if (runFailureController != null)
-            {
-                runFailureController.Bind(runtime, bootstrap.State);
-                runFailureController.PlayerRescued += OnPlayerRescued;
-            }
+            TryStep(
+                "GasEffect",
+                () =>
+                {
+                    if (gasEffectController == null)
+                    {
+                        return;
+                    }
+
+                    gasEffectController.FailureInputRaised += OnGasFailureInputRaised;
+                    gasEffectController.EffectStateChanged += OnGasEffectStateChanged;
+                    gasEffectController.Bind(
+                        bootstrap.State,
+                        runtime.Progression != null ? runtime.Progression.Effects : null);
+                });
+
+            TryStep(
+                "RunFailure",
+                () =>
+                {
+                    if (runFailureController == null)
+                    {
+                        return;
+                    }
+
+                    runFailureController.Bind(runtime, bootstrap.State);
+                    runFailureController.PlayerRescued += OnPlayerRescued;
+                });
 
             var dataCatalog = bootstrap.AssignedCatalog as GameDataCatalog;
-            if (placementBridge != null && runtime.Economy != null)
-            {
-                placementBridge.BindWallet(runtime.Economy, dataCatalog);
-            }
+            TryStep(
+                "PlacementBridge",
+                () =>
+                {
+                    if (placementBridge != null && runtime.Economy != null)
+                    {
+                        placementBridge.BindWallet(runtime.Economy, dataCatalog);
+                    }
+                });
 
-            if (buildingUiBinder != null)
-            {
-                buildingUiBinder.BindTo(
-                    runtime.Economy,
-                    runtime.InventoryService,
-                    bootstrap.State);
-            }
+            TryStep(
+                "BuildingUi",
+                () =>
+                {
+                    if (buildingUiBinder != null)
+                    {
+                        buildingUiBinder.BindTo(
+                            runtime.Economy,
+                            runtime.InventoryService,
+                            bootstrap.State);
+                    }
+                });
 
             // IDroneContextProvider: A DroneSensor → B adapter
-            if (droneContextAdapter != null && droneSensor != null)
-            {
-                droneContextAdapter.BindTo(droneSensor);
-            }
+            TryStep(
+                "DroneAdapter",
+                () =>
+                {
+                    if (droneContextAdapter != null && droneSensor != null)
+                    {
+                        droneContextAdapter.BindTo(droneSensor);
+                    }
+                });
 
             // UnityEngine.Object의 null 조건부 연산자는 파괴된 객체를 걸러내지 못한다.
             // 씬 레이아웃 재생성으로 직렬화 참조가 stale 상태여도 활성화가 계속되게 한다.
-            if (inventoryPanelBinder != null)
-            {
-                inventoryPanelBinder.BindTo(runtime.InventoryService);
-            }
-            progressionPanelBinder?.BindTo(
-                runtime.Progression,
-                () => bootstrap?.State?.Progress?.CompletedObjectives ?? 0);
+            TryStep(
+                "InventoryPanel",
+                () =>
+                {
+                    if (inventoryPanelBinder != null && runtime.InventoryService != null)
+                    {
+                        inventoryPanelBinder.BindTo(runtime.InventoryService);
+                    }
+                });
+
+            TryStep(
+                "ProgressionPanel",
+                () =>
+                {
+                    if (progressionPanelBinder == null)
+                    {
+                        return;
+                    }
+
+                    progressionPanelBinder.BindTo(
+                        runtime.Progression,
+                        () => bootstrap != null
+                            && bootstrap.State != null
+                            && bootstrap.State.Progress != null
+                            ? bootstrap.State.Progress.CompletedObjectives
+                            : 0);
+                });
 
             // 인벤토리 변경 시 업그레이드 구매 가능 표시를 즉시 갱신한다.
-            if (runtime.InventoryService != null)
-            {
-                runtime.InventoryService.InventoryChanged -= OnInventoryChangedForProgression;
-                runtime.InventoryService.InventoryChanged += OnInventoryChangedForProgression;
-            }
+            TryStep(
+                "InventoryProgressionHook",
+                () =>
+                {
+                    if (runtime.InventoryService == null)
+                    {
+                        return;
+                    }
 
-            droneSensor?.SetUpgradeEffects(runtime.Progression?.Effects);
+                    runtime.InventoryService.InventoryChanged -= OnInventoryChangedForProgression;
+                    runtime.InventoryService.InventoryChanged += OnInventoryChangedForProgression;
+                });
+
+            TryStep(
+                "DroneUpgradeEffects",
+                () =>
+                {
+                    if (droneSensor != null && runtime.Progression != null)
+                    {
+                        droneSensor.SetUpgradeEffects(runtime.Progression.Effects);
+                    }
+                });
 
             eventFanOut = new IntegrationEventFanOut();
             if (hazardBridge != null)
@@ -243,38 +412,69 @@ namespace SubTerra.App.Integration
 
             if (tutorialDirector == null)
             {
-                tutorialDirector = FindFirstObjectByType<TutorialDirectorBinder>();
+                tutorialDirector = Resolve<TutorialDirectorBinder>(null);
             }
 
-            if (tutorialDirector != null)
-            {
-                eventFanOut.Add(tutorialDirector);
-                tutorialDirector.BindTo(
-                    bootstrap.State,
-                    runtime.InventoryService,
-                    runtime.Economy,
-                    runtime.Progression,
-                    outpostService);
-            }
+            TryStep(
+                "TutorialDirector",
+                () =>
+                {
+                    if (tutorialDirector == null)
+                    {
+                        return;
+                    }
+
+                    eventFanOut.Add(tutorialDirector);
+                    tutorialDirector.BindTo(
+                        bootstrap.State,
+                        runtime.InventoryService,
+                        runtime.Economy,
+                        runtime.Progression,
+                        outpostService);
+                });
 
             // GameplayEventBridge가 초기 전력 스냅샷을 발행하기 전에 모든
             // 전진기지 소비자와 팬아웃을 준비한다. SetInteractionOrigin은
             // 준비가 끝난 뒤 현재 거리 상태를 즉시 다시 발행한다.
-            gameplayEventBridge ??= FindFirstObjectByType<GameplayEventBridge>();
-            gameplayEventBridge?.SetEventSink(this);
-            BindOutpostPanelUi();
+            if (gameplayEventBridge == null)
+            {
+                gameplayEventBridge = Resolve<GameplayEventBridge>(null);
+            }
+
+            TryStep(
+                "EventSink",
+                () =>
+                {
+                    if (gameplayEventBridge != null)
+                    {
+                        gameplayEventBridge.SetEventSink(this);
+                    }
+                });
+
+            TryStep("OutpostPanelUi", BindOutpostPanelUi);
 
             var worldProvider = worldSnapshotProviderBehaviour as IWorldSnapshotProvider
                 ?? runtime.Resolve();
 
-            contracts.Bind(
-                miningRewardReceiver: this,
-                resourceWallet: runtime.Economy,
-                gameplayEventSink: this,
-                worldSnapshotProvider: worldProvider,
-                droneContextProvider: ResolveDroneProvider());
+            TryStep(
+                "ContractsBind",
+                () =>
+                {
+                    contracts.Bind(
+                        miningRewardReceiver: this,
+                        resourceWallet: runtime.Economy,
+                        gameplayEventSink: this,
+                        worldSnapshotProvider: worldProvider,
+                        droneContextProvider: ResolveDroneProvider());
+                });
 
+            // 부분 실패가 있어도 게이트·UI 활성은 계속 진행한다. 환경 차이를 줄이기 위함.
             contractsWired = true;
+            if (activationGate == null)
+            {
+                activationGate = new IntegrationActivationGate();
+            }
+
             activationGate.MarkStateReady();
         }
 
@@ -329,17 +529,43 @@ namespace SubTerra.App.Integration
                 return false;
             }
 
+            ResolveSceneReferences();
+
             if (hudBinder != null && bootstrap != null)
             {
-                hudBinder.BindTo(bootstrap.State);
+                try
+                {
+                    hudBinder.BindTo(bootstrap.State);
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning("[SubTerra] HudBinder.BindTo failed: " + ex.Message);
+                }
             }
 
             // I 키 인벤토리 패널: 전역 InventoryService에 구독만 연결 (중복 생성 없음).
-            BindInventoryPanelUi();
+            try
+            {
+                BindInventoryPanelUi();
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning("[SubTerra] BindInventoryPanelUi failed: " + ex.Message);
+            }
 
-            miningProgressHud?.BindTo(
-                miningSystem,
-                playerMovement != null ? playerMovement.transform : null);
+            if (miningProgressHud != null)
+            {
+                try
+                {
+                    miningProgressHud.BindTo(
+                        miningSystem,
+                        playerMovement != null ? playerMovement.transform : null);
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning("[SubTerra] MiningProgressHud.BindTo failed: " + ex.Message);
+                }
+            }
 
             SetHudVisible(true);
             SetDeferredInputEnabled(true);
@@ -349,15 +575,19 @@ namespace SubTerra.App.Integration
 
         private void BindInventoryPanelUi()
         {
-            if (runtime?.InventoryService == null)
+            if (runtime == null || runtime.InventoryService == null)
             {
                 return;
             }
 
-            var panel = FindFirstObjectByType<InventoryPanelBinder>(FindObjectsInactive.Include);
-            if (panel != null)
+            if (inventoryPanelBinder == null)
             {
-                panel.BindTo(runtime.InventoryService);
+                inventoryPanelBinder = Resolve<InventoryPanelBinder>(null, FindObjectsInactive.Include);
+            }
+
+            if (inventoryPanelBinder != null)
+            {
+                inventoryPanelBinder.BindTo(runtime.InventoryService);
             }
         }
 
@@ -368,24 +598,48 @@ namespace SubTerra.App.Integration
                 return;
             }
 
-            gameplayEventBridge ??= FindFirstObjectByType<GameplayEventBridge>();
-            gameplayEventBridge?.SetInteractionOrigin(
-                playerMovement != null ? playerMovement.transform : null);
+            if (gameplayEventBridge == null)
+            {
+                gameplayEventBridge = Resolve<GameplayEventBridge>(null);
+            }
 
-            outpostPanelBinder ??= FindFirstObjectByType<OutpostPanelBinder>(
-                FindObjectsInactive.Include);
-            outpostPanelBinder?.BindTo(outpostService);
+            if (gameplayEventBridge != null)
+            {
+                gameplayEventBridge.SetInteractionOrigin(
+                    playerMovement != null ? playerMovement.transform : null);
+            }
+
+            if (outpostPanelBinder == null)
+            {
+                outpostPanelBinder = Resolve<OutpostPanelBinder>(null, FindObjectsInactive.Include);
+            }
+
+            if (outpostPanelBinder != null)
+            {
+                outpostPanelBinder.BindTo(outpostService);
+            }
         }
 
         public void AddMineral(string mineralId, int quantity)
         {
-            runtime ??= SaveRuntimeController.Instance;
-            runtime?.InventoryService?.AddMineral(mineralId, quantity);
+            if (runtime == null)
+            {
+                runtime = SaveRuntimeController.Instance;
+            }
+
+            if (runtime != null && runtime.InventoryService != null)
+            {
+                runtime.InventoryService.AddMineral(mineralId, quantity);
+            }
         }
 
         public bool CanAffordEnergy(int energyCost)
         {
-            var state = bootstrap != null ? bootstrap.State : GameBootstrapper.Instance?.State;
+            var state = bootstrap != null
+                ? bootstrap.State
+                : GameBootstrapper.Instance != null
+                    ? GameBootstrapper.Instance.State
+                    : null;
             return state != null && state.Player.Energy >= Mathf.Max(0, energyCost);
         }
 
@@ -394,10 +648,18 @@ namespace SubTerra.App.Integration
             int quantity,
             int energyCost)
         {
-            runtime ??= SaveRuntimeController.Instance;
-            bootstrap ??= GameBootstrapper.Instance;
-            var inventory = runtime?.InventoryService;
-            var state = bootstrap?.State;
+            if (runtime == null)
+            {
+                runtime = SaveRuntimeController.Instance;
+            }
+
+            if (bootstrap == null)
+            {
+                bootstrap = GameBootstrapper.Instance;
+            }
+
+            var inventory = runtime != null ? runtime.InventoryService : null;
+            var state = bootstrap != null ? bootstrap.State : null;
             if (inventory == null || state == null)
             {
                 return new MiningCommitResult(MiningCommitStatus.DependencyMissing);
@@ -434,7 +696,10 @@ namespace SubTerra.App.Integration
 
         private void BindCargoSpeed()
         {
-            if (inventorySpeedBound || runtime?.InventoryService == null || playerMovement == null)
+            if (inventorySpeedBound
+                || runtime == null
+                || runtime.InventoryService == null
+                || playerMovement == null)
             {
                 return;
             }
@@ -451,34 +716,44 @@ namespace SubTerra.App.Integration
 
         private void ApplyCargoSpeed(InventorySnapshot snapshot)
         {
-            playerMovement?.SetCargoSpeedMultiplier(
+            if (playerMovement == null || snapshot == null)
+            {
+                return;
+            }
+
+            playerMovement.SetCargoSpeedMultiplier(
                 CargoSpeedPolicy.Evaluate(snapshot.CurrentWeight, snapshot.MaxCapacity));
         }
 
         private void OnInventoryChangedForProgression(InventorySnapshot _)
         {
-            progressionPanelBinder?.Presenter?.Refresh();
+            if (progressionPanelBinder == null || progressionPanelBinder.Presenter == null)
+            {
+                return;
+            }
+
+            progressionPanelBinder.Presenter.Refresh();
         }
 
         private void OnDestroy()
         {
-            if (inventorySpeedBound && runtime?.InventoryService != null)
+            if (inventorySpeedBound && runtime != null && runtime.InventoryService != null)
             {
                 runtime.InventoryService.InventoryChanged -= OnInventoryChangedForMovement;
             }
 
-            if (runtime?.InventoryService != null)
+            if (runtime != null && runtime.InventoryService != null)
             {
                 runtime.InventoryService.InventoryChanged -= OnInventoryChangedForProgression;
             }
 
             inventorySpeedBound = false;
-            if (droneReadingsBound && bootstrap?.State != null)
+            if (droneReadingsBound && bootstrap != null && bootstrap.State != null)
             {
                 bootstrap.State.EnergyChanged -= OnEnergyChangedForDrone;
             }
 
-            if (droneReadingsBound && runtime?.InventoryService != null)
+            if (droneReadingsBound && runtime != null && runtime.InventoryService != null)
             {
                 runtime.InventoryService.InventoryChanged -= OnInventoryChangedForDrone;
             }
@@ -503,14 +778,14 @@ namespace SubTerra.App.Integration
         /// </summary>
         private void BindDepthBridge()
         {
-            if (bootstrap?.State == null)
+            if (bootstrap == null || bootstrap.State == null)
             {
                 return;
             }
 
             if (depthBridge == null)
             {
-                depthBridge = FindFirstObjectByType<GameplayDepthStatusBridge>();
+                depthBridge = Resolve<GameplayDepthStatusBridge>(null);
             }
 
             if (depthBridge == null)
@@ -536,8 +811,10 @@ namespace SubTerra.App.Integration
         {
             if (droneReadingsBound
                 || droneSensor == null
-                || bootstrap?.State == null
-                || runtime?.InventoryService == null)
+                || bootstrap == null
+                || bootstrap.State == null
+                || runtime == null
+                || runtime.InventoryService == null)
             {
                 return;
             }
@@ -550,7 +827,7 @@ namespace SubTerra.App.Integration
 
         private void OnEnergyChangedForDrone(EnergyReadModel _)
         {
-            if (runtime?.InventoryService != null)
+            if (runtime != null && runtime.InventoryService != null)
             {
                 SyncDroneReadings(runtime.InventoryService.GetSnapshot());
             }
@@ -563,7 +840,7 @@ namespace SubTerra.App.Integration
 
         private void SyncDroneReadings(InventorySnapshot snapshot)
         {
-            if (droneSensor == null || bootstrap?.State == null || snapshot == null)
+            if (droneSensor == null || bootstrap == null || bootstrap.State == null || snapshot == null)
             {
                 return;
             }
@@ -577,7 +854,9 @@ namespace SubTerra.App.Integration
 
         public void Publish(GameplayEventDto gameplayEvent)
         {
-            var state = GameBootstrapper.Instance?.State;
+            var state = GameBootstrapper.Instance != null
+                ? GameBootstrapper.Instance.State
+                : null;
             if (state == null || gameplayEvent == null)
             {
                 return;
@@ -597,10 +876,16 @@ namespace SubTerra.App.Integration
             }
             else if (gameplayEvent.type == GameplayEventType.OutpostStatusChanged)
             {
-                gasEffectController?.ApplyOutpostStatus(gameplayEvent.outpostStatus);
+                if (gasEffectController != null)
+                {
+                    gasEffectController.ApplyOutpostStatus(gameplayEvent.outpostStatus);
+                }
             }
 
-            eventFanOut?.Publish(gameplayEvent);
+            if (eventFanOut != null)
+            {
+                eventFanOut.Publish(gameplayEvent);
+            }
         }
 
         private SubTerra.Shared.IDroneContextProvider ResolveDroneProvider()
@@ -624,7 +909,7 @@ namespace SubTerra.App.Integration
             {
                 type = GameplayEventType.GasExposureThreshold,
                 entityId = "player",
-                instanceId = input?.gasZoneId ?? string.Empty,
+                instanceId = input != null ? input.gasZoneId ?? string.Empty : string.Empty,
                 reasonId = "gas_exposure_threshold",
                 gasExposureFailure = input
             });
@@ -633,7 +918,10 @@ namespace SubTerra.App.Integration
         private void OnGasEffectStateChanged(
             SubTerra.Gameplay.Hazards.GasExposureEffectState effect)
         {
-            droneSensor?.SetAppliedGasRisk(effect.Risk);
+            if (droneSensor != null)
+            {
+                droneSensor.SetAppliedGasRisk(effect.Risk);
+            }
         }
 
         private void OnPlayerRescued(PlayerRescueResultDto rescue)
@@ -643,20 +931,28 @@ namespace SubTerra.App.Integration
                 return;
             }
 
-            eventFanOut?.Publish(new GameplayEventDto
+            if (eventFanOut != null)
             {
-                type = GameplayEventType.PlayerRescued,
-                entityId = "player",
-                instanceId = rescue.failureToken,
-                reasonId = rescue.cause.ToString(),
-                x = rescue.returnX,
-                y = rescue.returnY,
-                playerRescue = rescue
-            });
+                eventFanOut.Publish(new GameplayEventDto
+                {
+                    type = GameplayEventType.PlayerRescued,
+                    entityId = "player",
+                    instanceId = rescue.failureToken,
+                    reasonId = rescue.cause.ToString(),
+                    x = rescue.returnX,
+                    y = rescue.returnY,
+                    playerRescue = rescue
+                });
+            }
         }
 
         private void SetHudVisible(bool visible)
         {
+            if (hudCanvasGroup == null)
+            {
+                hudCanvasGroup = ResolveHudCanvasGroup();
+            }
+
             if (hudCanvasGroup == null)
             {
                 return;
@@ -669,6 +965,7 @@ namespace SubTerra.App.Integration
 
         private void SetDeferredInputEnabled(bool enabled)
         {
+            ResolveDeferredInputBehaviours();
             if (deferredInputBehaviours == null)
             {
                 return;
@@ -680,6 +977,135 @@ namespace SubTerra.App.Integration
                 {
                     deferredInputBehaviours[i].enabled = enabled;
                 }
+            }
+        }
+
+        /// <summary>
+        /// ActivateUi 본문 예외 시에도 최소한 HUD/입력은 동일하게 켠다.
+        /// 게이트를 우회하지 않은 경로에서만 호출한다(게이트는 이미 통과했거나 실패 복구).
+        /// </summary>
+        private void ForceEnableHudAndInput()
+        {
+            ResolveSceneReferences();
+            SetHudVisible(true);
+            SetDeferredInputEnabled(true);
+            uiActivated = true;
+        }
+
+        private void ResolveDeferredInputBehaviours()
+        {
+            if (HasAnyValidDeferredInput())
+            {
+                return;
+            }
+
+            var resolved = new List<Behaviour>(4);
+            if (playerMovement == null)
+            {
+                playerMovement = Resolve<PlayerMovement>(null);
+            }
+
+            if (playerMovement != null)
+            {
+                resolved.Add(playerMovement);
+            }
+
+            var miningController = FindAnyObjectByType<PlayerMiningController>(
+                FindObjectsInactive.Exclude);
+            if (miningController != null)
+            {
+                resolved.Add(miningController);
+            }
+
+            var playerController = FindAnyObjectByType<PlayerController>(
+                FindObjectsInactive.Exclude);
+            if (playerController != null)
+            {
+                resolved.Add(playerController);
+            }
+
+            if (resolved.Count > 0)
+            {
+                deferredInputBehaviours = resolved.ToArray();
+            }
+        }
+
+        private bool HasAnyValidDeferredInput()
+        {
+            if (deferredInputBehaviours == null || deferredInputBehaviours.Length == 0)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < deferredInputBehaviours.Length; i++)
+            {
+                if (deferredInputBehaviours[i] != null)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static CanvasGroup ResolveHudCanvasGroup()
+        {
+            var hudRoot = GameObject.Find("HUDCanvas");
+            if (hudRoot != null)
+            {
+                var group = hudRoot.GetComponent<CanvasGroup>();
+                if (group != null)
+                {
+                    return group;
+                }
+            }
+
+            return FindAnyObjectByType<CanvasGroup>(FindObjectsInactive.Include);
+        }
+
+        private static MonoBehaviour FindWorldSnapshotProviderBehaviour()
+        {
+            var behaviours = FindObjectsByType<MonoBehaviour>(
+                FindObjectsInactive.Include,
+                FindObjectsSortMode.None);
+            for (var i = 0; i < behaviours.Length; i++)
+            {
+                if (behaviours[i] is IWorldSnapshotProvider)
+                {
+                    return behaviours[i];
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// UnityEngine.Object는 C# null 조건부(?. / ??=)가 파괴·Missing 객체를 걸러내지 못한다.
+        /// Unity 오버로드 == null 로 판정한 뒤 씬에서 재탐색한다.
+        /// </summary>
+        private static T Resolve<T>(
+            T current,
+            FindObjectsInactive inactive = FindObjectsInactive.Exclude)
+            where T : UnityEngine.Object
+        {
+            if (current != null)
+            {
+                return current;
+            }
+
+            return FindAnyObjectByType<T>(inactive);
+        }
+
+        private static void TryStep(string stepName, Action action)
+        {
+            try
+            {
+                action();
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning(
+                    "[SubTerra] Integration wire step '" + stepName + "' failed: " + ex.Message);
             }
         }
 

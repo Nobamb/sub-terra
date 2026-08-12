@@ -279,6 +279,84 @@ namespace SubTerra.App.Tests.PlayMode.MineDemo
             yield return null;
         }
 
+        [UnityTest]
+        public IEnumerator M_Activation_SurvivesMissingOptionalPanelBinders_AndRestoresInput()
+        {
+            // 씬 재생성으로 inventory/outpost 패널 직렬 참조가 비어도
+            // HUD·deferred input 활성은 동일하게 성공해야 한다 (작업자 환경 차이 방지).
+            GameBootstrapper.ResetInstanceForTests();
+            if (SaveRuntimeController.Instance != null)
+            {
+                Object.Destroy(SaveRuntimeController.Instance.gameObject);
+            }
+
+            yield return null;
+
+            var bootGo = new GameObject("M_Env_Boot");
+            var boot = bootGo.AddComponent<GameBootstrapper>();
+            Assert.That(
+                boot.Initialize(new NullCatalog(), new EmptySave(), new NoOpSceneLoader()),
+                Is.True);
+
+            var runtimeGo = new GameObject("M_Env_SaveRuntime");
+            var runtime = runtimeGo.AddComponent<SaveRuntimeController>();
+            yield return null;
+            runtime.SetReady(true);
+
+            var playerGo = new GameObject("M_Env_Player");
+            var movement = playerGo.AddComponent<SubTerra.Gameplay.Player.PlayerMovement>();
+            movement.enabled = true;
+
+            var hudGo = new GameObject("HUDCanvas");
+            var canvasGroup = hudGo.AddComponent<CanvasGroup>();
+            canvasGroup.alpha = 1f;
+
+            // inactive로 추가해 Awake/Start 타이밍을 테스트가 제어한다.
+            var host = new GameObject("M_Env_BinderHost");
+            host.SetActive(false);
+            var binder = host.AddComponent<IntegrationRuntimeBinder>();
+            // 의도적으로 optional 패널 참조를 비운다 (stale/missing 직렬화 재현).
+            SetField(binder, "inventoryPanelBinder", null);
+            SetField(binder, "outpostPanelBinder", null);
+            SetField(binder, "progressionPanelBinder", null);
+            SetField(binder, "hudCanvasGroup", canvasGroup);
+            SetField(binder, "deferredInputBehaviours", new Behaviour[] { movement });
+            SetField(binder, "playerMovement", movement);
+            SetField(binder, "runtime", runtime);
+            SetField(binder, "bootstrap", boot);
+
+            host.SetActive(true);
+            // Awake: HUD/입력 비활성
+            yield return null;
+            // Start 코루틴 진행 (IsUiReady 이미 true)
+            yield return null;
+            yield return null;
+
+            Assert.That(binder.AreContractsWired, Is.True, "WireContracts must complete without optional panels");
+            Assert.That(binder.IsUiActivated, Is.True, "UI must activate with IsUiReady");
+            Assert.That(canvasGroup.alpha, Is.EqualTo(1f).Within(0.001f), "HUD must become visible");
+            Assert.That(movement.enabled, Is.True, "deferred movement must re-enable");
+
+            // 수동 경로: 참조 재탐색이 비어 있지 않은지 확인.
+            binder.ResolveSceneReferences();
+            Assert.That(
+                GetField<CanvasGroup>(binder, "hudCanvasGroup"),
+                Is.Not.Null,
+                "HUD CanvasGroup must resolve for consistent visibility");
+            Assert.That(
+                GetField<Behaviour[]>(binder, "deferredInputBehaviours"),
+                Is.Not.Null.And.Not.Empty,
+                "deferred inputs must resolve for consistent movement/shortcuts");
+
+            Object.Destroy(host);
+            Object.Destroy(hudGo);
+            Object.Destroy(playerGo);
+            Object.Destroy(runtimeGo);
+            Object.Destroy(bootGo);
+            GameBootstrapper.ResetInstanceForTests();
+            yield return null;
+        }
+
         private sealed class NoOpSceneLoader : ISceneLoader
         {
             public bool Load(string sceneName) => true;
@@ -291,6 +369,15 @@ namespace SubTerra.App.Tests.PlayMode.MineDemo
                 BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.That(field, Is.Not.Null, "Missing field: " + name);
             field.SetValue(target, value);
+        }
+
+        private static T GetField<T>(object target, string name)
+        {
+            var field = target.GetType().GetField(
+                name,
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(field, Is.Not.Null, "Missing field: " + name);
+            return (T)field.GetValue(target);
         }
 
         private static void SetCosts(BuildingPlacementDefinition definition, string itemId, int quantity)
