@@ -206,7 +206,12 @@ namespace SubTerra.App.Integration
                 droneContextAdapter.BindTo(droneSensor);
             }
 
-            inventoryPanelBinder?.BindTo(runtime.InventoryService);
+            // UnityEngine.Object의 null 조건부 연산자는 파괴된 객체를 걸러내지 못한다.
+            // 씬 레이아웃 재생성으로 직렬화 참조가 stale 상태여도 활성화가 계속되게 한다.
+            if (inventoryPanelBinder != null)
+            {
+                inventoryPanelBinder.BindTo(runtime.InventoryService);
+            }
             progressionPanelBinder?.BindTo(
                 runtime.Progression,
                 () => bootstrap?.State?.Progress?.CompletedObjectives ?? 0);
