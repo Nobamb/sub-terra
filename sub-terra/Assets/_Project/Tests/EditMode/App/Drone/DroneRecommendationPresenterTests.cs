@@ -48,6 +48,48 @@ namespace SubTerra.App.Tests.Drone
             }
         }
 
+        [Test]
+        public void GasGuidanceChange_RefreshesStructuralWarning_WhenRecommendationIsUnchanged()
+        {
+            var settings = ScriptableObject.CreateInstance<DroneAnalysisSettings>();
+            var structuralTemplate = ScriptableObject.CreateInstance<DialogueTemplateData>();
+            try
+            {
+                settings.EditorSetDefaults();
+                structuralTemplate.EditorSet(
+                    DataIds.Dialogue.DroneStructuralWarning,
+                    "Structural",
+                    "structural",
+                    0,
+                    "{safetyGuidance}");
+
+                var provider = new MutableProvider();
+                var overlay = new RecordingDialogueView();
+                var presenter = new DroneRecommendationPresenter(
+                    overlay,
+                    new RecordingReasonView());
+                presenter.Bind(
+                    provider,
+                    new DroneAnalysisService(settings),
+                    new TemplateDialogueGenerator(
+                        new[] { structuralTemplate },
+                        new FixedClock(),
+                        settings));
+
+                var beforeGas = overlay.LastDialogue.Text;
+                provider.GasRisk = 0.5f;
+                presenter.Refresh();
+
+                Assert.That(overlay.LastDialogue.Text, Is.Not.EqualTo(beforeGas));
+                Assert.That(overlay.SetDialogueCount, Is.EqualTo(2));
+            }
+            finally
+            {
+                Object.DestroyImmediate(structuralTemplate);
+                Object.DestroyImmediate(settings);
+            }
+        }
+
         private sealed class FixedProvider : IDroneContextProvider
         {
             public DroneContextDto CreateContext()
@@ -69,6 +111,29 @@ namespace SubTerra.App.Tests.Drone
             }
         }
 
+        private sealed class MutableProvider : IDroneContextProvider
+        {
+            public float GasRisk { get; set; }
+
+            public DroneContextDto CreateContext()
+            {
+                return new DroneContextDto
+                {
+                    depth = 12,
+                    currentEnergy = 100,
+                    returnEnergyEstimate = 20,
+                    structuralIntegrity = 0f,
+                    gasRisk = GasRisk,
+                    unsettledCargoValue = 0,
+                    cargoWeight = 0f,
+                    maxCargoWeight = 50f,
+                    nearestBaseDistance = 10f,
+                    nearbyMineralIds = new List<string>(),
+                    returnPathAvailable = true
+                };
+            }
+        }
+
         private sealed class FixedClock : IDroneClock
         {
             public double Now => 0d;
@@ -77,7 +142,12 @@ namespace SubTerra.App.Tests.Drone
         private sealed class RecordingDialogueView : IDroneDialogueView
         {
             public DroneDialogueResult LastDialogue { get; private set; }
-            public void SetDialogue(DroneDialogueResult dialogue) => LastDialogue = dialogue;
+            public int SetDialogueCount { get; private set; }
+            public void SetDialogue(DroneDialogueResult dialogue)
+            {
+                LastDialogue = dialogue;
+                SetDialogueCount++;
+            }
             public void SetVisible(bool visible) { }
         }
 

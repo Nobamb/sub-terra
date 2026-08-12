@@ -21,6 +21,7 @@ namespace SubTerra.App.UI.Drone
         private CancellationTokenSource bindingCancellation;
         private int bindingVersion;
         private string lastShownTemplateId = string.Empty;
+        private string lastShownSafetyGuidance = string.Empty;
         private DroneAction lastShownAction;
         private bool hasShownDialogue;
 
@@ -69,6 +70,7 @@ namespace SubTerra.App.UI.Drone
             // Presenter는 머리 위 말풍선(World)과 창 텍스트 갱신을 담당한다.
             worldDialogueView?.SetVisible(IsBound);
             lastShownTemplateId = string.Empty;
+            lastShownSafetyGuidance = string.Empty;
             lastShownAction = default;
             hasShownDialogue = false;
             if (IsBound)
@@ -88,6 +90,7 @@ namespace SubTerra.App.UI.Drone
             dialogueGenerator = null;
             cloudDialogueGenerator = null;
             lastShownTemplateId = string.Empty;
+            lastShownSafetyGuidance = string.Empty;
             lastShownAction = default;
             hasShownDialogue = false;
             worldDialogueView?.SetVisible(false);
@@ -110,12 +113,17 @@ namespace SubTerra.App.UI.Drone
                         analysis.Dialogue.TemplateId,
                         lastShownTemplateId,
                         System.StringComparison.Ordinal)
+                    || !string.Equals(
+                        GetSafetyGuidance(analysis),
+                        lastShownSafetyGuidance,
+                        System.StringComparison.Ordinal)
                     || analysis.RecommendedAction != lastShownAction);
 
             var dialogue = dialogueGenerator.Generate(analysis, situationChanged);
             if (!dialogue.IsSuppressed)
             {
                 lastShownTemplateId = dialogue.TemplateId ?? string.Empty;
+                lastShownSafetyGuidance = GetSafetyGuidance(analysis);
                 lastShownAction = analysis != null
                     ? analysis.RecommendedAction
                     : default;
@@ -190,6 +198,14 @@ namespace SubTerra.App.UI.Drone
             }
 
             return analysisService.Analyze(context);
+        }
+
+        private static string GetSafetyGuidance(DroneAnalysisResult analysis)
+        {
+            return analysis?.Dialogue?.Tokens != null
+                && analysis.Dialogue.Tokens.TryGetValue("safetyGuidance", out var guidance)
+                ? guidance ?? string.Empty
+                : string.Empty;
         }
 
         private void ShowIfCurrent(DialogueGenerationResult generated, int version)
