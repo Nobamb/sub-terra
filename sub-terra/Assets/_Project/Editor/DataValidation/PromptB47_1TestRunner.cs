@@ -8,13 +8,13 @@ using UnityEngine;
 
 namespace SubTerra.App.Editor.DataValidation
 {
-    /// <summary>prompt-B 47-1 긴급 탈출 포탈 관련 테스트만 실행한다.</summary>
+    /// <summary>prompt-B 47-1/47-2 긴급 탈출 포탈 관련 테스트만 실행한다.</summary>
     public static class PromptB47_1TestRunner
     {
         private static TestRunnerApi api;
         private static ResultWriter receiver;
 
-        [MenuItem("SubTerra/Tests/Run Prompt-B 47-1 Escape Portal Tests")]
+        [MenuItem("SubTerra/Tests/Run Prompt-B 47 Escape Portal Tests")]
         public static void RunFromMenu()
         {
             RunEditMode();

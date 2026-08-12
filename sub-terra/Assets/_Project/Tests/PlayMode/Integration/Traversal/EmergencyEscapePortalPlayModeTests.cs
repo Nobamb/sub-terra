@@ -19,7 +19,54 @@ namespace SubTerra.App.Tests.PlayMode.Traversal
     public sealed class EmergencyEscapePortalPlayModeTests
     {
         [UnityTest]
-        public IEnumerator PromptB47_1_Portal_RequiresRiderAnd30PoweredDemandBeforeOpenPanel()
+        public IEnumerator PromptB47_2_Portal_OpensPanelWhenNetworkBoundEvenIfCapacityUnpowered()
+        {
+            var networkObject = new GameObject("PromptB47_2_PowerNetwork");
+            var network = networkObject.AddComponent<PowerNetworkSystem>();
+            // 전진기지급 공급 5만 두고 케이블 없이 수요 30 포탈을 등록한다.
+            var sourceObject = new GameObject("PromptB47_2_Source");
+            sourceObject.AddComponent<PowerNode>().Configure(
+                network, true, 5, 0, PowerPriority.Critical);
+
+            var portalObject = new GameObject("PromptB47_2_Portal");
+            portalObject.AddComponent<BoxCollider2D>().isTrigger = true;
+            var portalPower = portalObject.AddComponent<PowerNode>();
+            portalPower.Configure(network, false, 0, 30, PowerPriority.Critical);
+            var portal = portalObject.AddComponent<EmergencyEscapePortal>();
+            network.Rebuild();
+
+            // 용량 기반 PowerNode.IsPowered 는 false여야 한다(공급 5 < 수요 30 + 미연결).
+            Assert.That(portalPower.IsPowered, Is.False);
+
+            var player = new GameObject("PromptB47_2_Rider");
+            player.AddComponent<Rigidbody2D>().gravityScale = 0f;
+            var movement = player.AddComponent<PlayerMovement>();
+            var portObject = new GameObject("PromptB47_2_FakePort");
+            var fakePort = portObject.AddComponent<FakeEscapePort>();
+            SetField(portal, "rider", movement);
+            SetField(portal, "escapePort", fakePort);
+
+            Assert.That(portalPower.Demand, Is.EqualTo(30));
+            Assert.That(portal.IsPowered, Is.True, "망 등록만으로 사용 가능으로 본다.");
+            Assert.That(portal.RequestEscape(), Is.True);
+            Assert.That(fakePort.OpenCount, Is.EqualTo(1));
+            yield return null;
+
+            portalPower.SetNetwork(null);
+            Assert.That(portal.IsPowered, Is.False);
+            Assert.That(portal.RequestEscape(), Is.False);
+            Assert.That(fakePort.OpenCount, Is.EqualTo(1));
+
+            Object.Destroy(portObject);
+            Object.Destroy(player);
+            Object.Destroy(portalObject);
+            Object.Destroy(sourceObject);
+            Object.Destroy(networkObject);
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator PromptB47_1_Portal_RequiresRiderAndPowerNetworkBeforeOpenPanel()
         {
             var networkObject = new GameObject("PromptB47_PowerNetwork");
             var network = networkObject.AddComponent<PowerNetworkSystem>();
@@ -52,7 +99,7 @@ namespace SubTerra.App.Tests.PlayMode.Traversal
             Assert.That(fakePort.OpenCount, Is.EqualTo(1));
             yield return null;
 
-            portalPower.SetDemand(60);
+            portalPower.SetNetwork(null);
             Assert.That(portal.IsPowered, Is.False);
             Assert.That(portal.RequestEscape(), Is.False);
             Assert.That(fakePort.OpenCount, Is.EqualTo(1));

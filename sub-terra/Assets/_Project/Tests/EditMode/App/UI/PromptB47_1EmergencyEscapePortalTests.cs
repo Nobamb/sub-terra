@@ -5,6 +5,7 @@ using SubTerra.App.Integration;
 using SubTerra.App.State;
 using SubTerra.App.UI.EmergencyEscape;
 using SubTerra.Gameplay.Building;
+using SubTerra.Gameplay.Player;
 using SubTerra.Gameplay.Power;
 using SubTerra.Shared;
 using UnityEditor;
@@ -136,6 +137,76 @@ namespace SubTerra.App.Tests.UI
             Object.DestroyImmediate(host);
             Object.DestroyImmediate(elevator);
             Object.DestroyImmediate(player);
+        }
+
+        [Test]
+        public void PromptB47_2_Portal_RequestEscape_OpensWhenNetworkBoundWithoutCapacityPower()
+        {
+            // 전진기지 공급 5 < 포탈 수요 30 이어도 망 등록만 되면 E 상호작용 패널이 열려야 한다.
+            var networkObject = new GameObject("PromptB47_2_Network");
+            var network = networkObject.AddComponent<PowerNetworkSystem>();
+            var portalObject = new GameObject("PromptB47_2_Portal");
+            portalObject.AddComponent<BoxCollider2D>().isTrigger = true;
+            var portalPower = portalObject.AddComponent<PowerNode>();
+            portalPower.Configure(network, false, 0, 30, PowerPriority.Critical);
+            var portal = portalObject.AddComponent<EmergencyEscapePortal>();
+            network.Rebuild();
+
+            Assert.That(portalPower.IsPowered, Is.False, "용량 기반 전력은 부족해야 한다.");
+            Assert.That(portal.IsPowered, Is.True, "망 등록 시 사용 가능으로 본다.");
+
+            var player = new GameObject("PromptB47_2_Rider");
+            player.AddComponent<Rigidbody2D>().gravityScale = 0f;
+            var movement = player.AddComponent<PlayerMovement>();
+            var portObject = new GameObject("PromptB47_2_Port");
+            var fakePort = portObject.AddComponent<FakeEscapePort>();
+            SetField(portal, "rider", movement);
+            SetField(portal, "escapePort", fakePort);
+
+            Assert.That(portal.RequestEscape(), Is.True);
+            Assert.That(fakePort.OpenCount, Is.EqualTo(1));
+
+            portalPower.SetNetwork(null);
+            Assert.That(portal.RequestEscape(), Is.False);
+            Assert.That(fakePort.OpenCount, Is.EqualTo(1));
+
+            Object.DestroyImmediate(portObject);
+            Object.DestroyImmediate(player);
+            Object.DestroyImmediate(portalObject);
+            Object.DestroyImmediate(networkObject);
+        }
+
+        private sealed class FakeEscapePort : MonoBehaviour, IEmergencyEscapePortalPort
+        {
+            public int OpenCount { get; private set; }
+
+            public bool TryOpenEscapePanel(out string reason)
+            {
+                OpenCount++;
+                reason = string.Empty;
+                return true;
+            }
+
+            public System.Collections.Generic.IReadOnlyList<EmergencyEscapeDestinationOption>
+                GetDestinationOptions()
+            {
+                return new[]
+                {
+                    new EmergencyEscapeDestinationOption(
+                        EmergencyEscapeDestination.Elevator,
+                        string.Empty,
+                        "엘리베이터")
+                };
+            }
+
+            public bool TryEscapeTo(
+                EmergencyEscapeDestination kind,
+                string outpostInstanceId,
+                out string reason)
+            {
+                reason = string.Empty;
+                return true;
+            }
         }
 
         private static void SetField(object target, string name, object value)

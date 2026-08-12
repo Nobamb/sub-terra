@@ -7,6 +7,7 @@ using SubTerra.App.Save;
 using SubTerra.App.State;
 using SubTerra.App.UI.EmergencyEscape;
 using SubTerra.Gameplay.Building;
+using SubTerra.Gameplay.Player;
 using SubTerra.Shared;
 using UnityEngine;
 
@@ -27,24 +28,23 @@ namespace SubTerra.App.Integration
 
         private void Start()
         {
-            if (service == null)
-            {
-                Bind(GameBootstrapper.Instance?.State, playerTransform, elevatorCenter);
-            }
-
-            if (panelBinder == null)
-            {
-                panelBinder = FindFirstObjectByType<EmergencyEscapePanelBinder>(FindObjectsInactive.Include);
-            }
-
+            EnsureRuntimeBindings();
             panelBinder?.BindTo(this);
         }
 
         public void Bind(GameState state, Transform player, Transform elevator)
         {
             gameState = state;
-            playerTransform = player;
-            elevatorCenter = elevator;
+            if (player != null)
+            {
+                playerTransform = player;
+            }
+
+            if (elevator != null)
+            {
+                elevatorCenter = elevator;
+            }
+
             service = GameState.IsComplete(state) ? new EmergencyEscapeService(state) : null;
         }
 
@@ -57,10 +57,7 @@ namespace SubTerra.App.Integration
         public bool TryOpenEscapePanel(out string reason)
         {
             reason = string.Empty;
-            if (service == null)
-            {
-                Bind(GameBootstrapper.Instance?.State, playerTransform, elevatorCenter);
-            }
+            EnsureRuntimeBindings();
 
             if (service == null || playerTransform == null)
             {
@@ -70,15 +67,12 @@ namespace SubTerra.App.Integration
 
             if (panelBinder == null)
             {
-                panelBinder = FindFirstObjectByType<EmergencyEscapePanelBinder>(FindObjectsInactive.Include);
-                panelBinder?.BindTo(this);
-            }
-
-            if (panelBinder == null)
-            {
                 reason = "긴급 탈출 선택 창이 준비되지 않았습니다.";
                 return false;
             }
+
+            // 비활성 패널 루트도 Open 전에 다시 붙인다.
+            panelBinder.BindTo(this);
 
             var options = GetDestinationOptions();
             if (options.Count == 0)
@@ -101,9 +95,7 @@ namespace SubTerra.App.Integration
                     "엘리베이터")
             };
 
-            var buildings = FindObjectsByType<BuildingInstance>(
-                FindObjectsInactive.Exclude,
-                FindObjectsSortMode.None);
+            var buildings = FindObjectsByType<BuildingInstance>(FindObjectsInactive.Exclude);
             var outposts = new List<BuildingInstance>();
             for (var i = 0; i < buildings.Length; i++)
             {
@@ -137,10 +129,7 @@ namespace SubTerra.App.Integration
             out string reason)
         {
             reason = string.Empty;
-            if (service == null)
-            {
-                Bind(GameBootstrapper.Instance?.State, playerTransform, elevatorCenter);
-            }
+            EnsureRuntimeBindings();
 
             if (service == null || playerTransform == null)
             {
@@ -168,6 +157,83 @@ namespace SubTerra.App.Integration
             return true;
         }
 
+        private void EnsureRuntimeBindings()
+        {
+            if (service == null)
+            {
+                var state = gameState ?? GameBootstrapper.Instance?.State;
+                Bind(state, playerTransform, elevatorCenter);
+            }
+
+            if (playerTransform == null)
+            {
+                var movement = FindAnyObjectByType<PlayerMovement>(FindObjectsInactive.Exclude);
+                if (movement != null)
+                {
+                    playerTransform = movement.transform;
+                }
+            }
+
+            if (elevatorCenter == null)
+            {
+                elevatorCenter = FindElevatorCenter();
+            }
+
+            if (panelBinder == null)
+            {
+                panelBinder = FindAnyObjectByType<EmergencyEscapePanelBinder>(
+                    FindObjectsInactive.Include);
+            }
+
+            if (panelBinder != null)
+            {
+                panelBinder.BindTo(this);
+            }
+        }
+
+        private static Transform FindElevatorCenter()
+        {
+            var elevators = FindObjectsByType<ElevatorController>(FindObjectsInactive.Exclude);
+            for (var i = 0; i < elevators.Length; i++)
+            {
+                var elevator = elevators[i];
+                if (elevator == null)
+                {
+                    continue;
+                }
+
+                var boarding = FindChildRecursive(elevator.transform, "BoardingAnchor");
+                if (boarding != null)
+                {
+                    return boarding;
+                }
+
+                return elevator.transform;
+            }
+
+            var byName = GameObject.Find("BoardingAnchor");
+            return byName != null ? byName.transform : null;
+        }
+
+        private static Transform FindChildRecursive(Transform root, string name)
+        {
+            if (root == null)
+            {
+                return null;
+            }
+
+            var children = root.GetComponentsInChildren<Transform>(true);
+            for (var i = 0; i < children.Length; i++)
+            {
+                if (children[i] != null && children[i].name == name)
+                {
+                    return children[i];
+                }
+            }
+
+            return null;
+        }
+
         private bool TryResolveDestination(
             EmergencyEscapeDestination kind,
             string outpostInstanceId,
@@ -179,6 +245,11 @@ namespace SubTerra.App.Integration
 
             if (kind == EmergencyEscapeDestination.Elevator)
             {
+                if (elevatorCenter == null)
+                {
+                    elevatorCenter = FindElevatorCenter();
+                }
+
                 if (elevatorCenter == null)
                 {
                     reason = "이동할 엘리베이터를 찾을 수 없습니다.";
@@ -195,9 +266,7 @@ namespace SubTerra.App.Integration
                 return false;
             }
 
-            var buildings = FindObjectsByType<BuildingInstance>(
-                FindObjectsInactive.Exclude,
-                FindObjectsSortMode.None);
+            var buildings = FindObjectsByType<BuildingInstance>(FindObjectsInactive.Exclude);
             for (var i = 0; i < buildings.Length; i++)
             {
                 var candidate = buildings[i];
