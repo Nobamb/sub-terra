@@ -5,6 +5,7 @@ using SubTerra.App.Integration;
 using SubTerra.App.UI;
 using SubTerra.App.UI.Building;
 using SubTerra.App.UI.Inventory;
+using SubTerra.App.UI.Outpost;
 using SubTerra.App.UI.Progression;
 using TMPro;
 using UnityEditor;
@@ -23,6 +24,7 @@ namespace SubTerra.App.Editor.DataValidation
         private const string BuildingPrefabPath = "Assets/_Project/Prefabs/UI/BuildingMenu.prefab";
         private const string InventoryPrefabPath = "Assets/_Project/Prefabs/UI/InventoryPanel.prefab";
         private const string DronePrefabPath = "Assets/_Project/Prefabs/UI/DroneAnalysisUI.prefab";
+        private const string OutpostPrefabPath = "Assets/_Project/Prefabs/UI/OutpostPanel.prefab";
         private const string CatalogPath = "Assets/_Project/Data/Catalog/GameDataCatalog.asset";
 
         [MenuItem("SubTerra/UI/Build Phase Q Panel Layout")]
@@ -35,6 +37,7 @@ namespace SubTerra.App.Editor.DataValidation
         {
             var previousScene = SceneManager.GetActiveScene().path;
             InventoryPanelPrefabBuilder.BuildPrefab();
+            PhaseHOutpostUiPrefabBuilder.BuildPrefab();
             var scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
             var canvas = GameObject.Find("HUDCanvas");
             if (canvas == null)
@@ -59,6 +62,7 @@ namespace SubTerra.App.Editor.DataValidation
             SetSize(building, new Vector2(440f, 500f));
             var inventory = InstantiatePanel(InventoryPrefabPath, layout.transform, "InventoryPanel", new Vector2(0.5f, 0.5f), Vector2.zero);
             var drone = InstantiatePanel(DronePrefabPath, layout.transform, "DiggerBotPanel", new Vector2(0.5f, 0f), new Vector2(0f, 112f));
+            var outpost = InstantiatePanel(OutpostPrefabPath, layout.transform, "OutpostPanel", new Vector2(0.5f, 0.5f), Vector2.zero);
             var upgrade = CreateUpgradePanel(layout.transform);
             var guide = CreateGuidePanel(layout.transform);
 
@@ -73,7 +77,12 @@ namespace SubTerra.App.Editor.DataValidation
             AddCloseButton(guide.transform, controller, "CloseGameGuide", new Vector2(-18f, -18f));
             AddCloseButton(drone.transform, controller, "CloseDiggerBot", new Vector2(-18f, -18f));
             CreateShortcutBar(layout.transform, controller);
-            WireRuntimeBinders(buildingBinder, inventoryBinder, upgradeBinder, drone.GetComponent<SubTerra.App.UI.Drone.DroneUiBinder>());
+            WireRuntimeBinders(
+                buildingBinder,
+                inventoryBinder,
+                upgradeBinder,
+                drone.GetComponent<SubTerra.App.UI.Drone.DroneUiBinder>(),
+                outpost.GetComponent<OutpostPanelBinder>());
 
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);
@@ -268,7 +277,8 @@ namespace SubTerra.App.Editor.DataValidation
             BuildingMenuBinder building,
             InventoryPanelBinder inventory,
             ProgressionPanelBinder progression,
-            SubTerra.App.UI.Drone.DroneUiBinder drone)
+            SubTerra.App.UI.Drone.DroneUiBinder drone,
+            OutpostPanelBinder outpost)
         {
             var runtime = UnityEngine.Object.FindFirstObjectByType<IntegrationRuntimeBinder>();
             if (runtime != null)
@@ -276,6 +286,7 @@ namespace SubTerra.App.Editor.DataValidation
                 var so = new SerializedObject(runtime);
                 so.FindProperty("inventoryPanelBinder").objectReferenceValue = inventory;
                 so.FindProperty("progressionPanelBinder").objectReferenceValue = progression;
+                so.FindProperty("outpostPanelBinder").objectReferenceValue = outpost;
                 so.ApplyModifiedPropertiesWithoutUndo();
             }
 

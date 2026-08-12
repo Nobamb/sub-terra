@@ -19,9 +19,14 @@ namespace SubTerra.Gameplay.Integration
         [SerializeField] private GasHazardSystem gasHazardSystem;
         [SerializeField] private BuildingPlacementSystem buildingPlacementSystem;
         [SerializeField] private PowerNetworkSystem powerNetworkSystem;
+        [SerializeField] private Transform interactionOrigin;
+        [SerializeField, Min(0.1f)] private float facilityInteractionRange = 2f;
         [SerializeField] private string outpostInstanceId = "outpost.demo";
 
         private IGameplayEventSink eventSink;
+        private PowerNetworkSnapshot latestPowerSnapshot;
+        private bool hasPowerSnapshot;
+        private bool lastInteractionRange;
 
         private void Awake() => eventSink = eventSinkBehaviour as IGameplayEventSink;
 
@@ -60,6 +65,30 @@ namespace SubTerra.Gameplay.Integration
         }
 
         public void SetEventSink(IGameplayEventSink sink) => eventSink = sink;
+
+        public void SetInteractionOrigin(Transform origin)
+        {
+            interactionOrigin = origin;
+            PublishOutpostStatusIfAvailable();
+        }
+
+        private void Start()
+        {
+            powerNetworkSystem?.RequestRebuild();
+        }
+
+        private void Update()
+        {
+            if (!hasPowerSnapshot)
+            {
+                return;
+            }
+
+            if (lastInteractionRange != IsInFacilityInteractionRange())
+            {
+                PublishOutpostStatusIfAvailable();
+            }
+        }
 
         private void OnTileMined(Vector3Int cell, MiningTileDto tile)
         {
@@ -104,15 +133,69 @@ namespace SubTerra.Gameplay.Integration
 
         private void OnPowerNetworkRebuilt(PowerNetworkSnapshot snapshot)
         {
+            latestPowerSnapshot = snapshot;
+            hasPowerSnapshot = true;
+            PublishOutpostStatusIfAvailable();
+        }
+
+        private void PublishOutpostStatusIfAvailable()
+        {
+            if (!hasPowerSnapshot)
+            {
+                return;
+            }
+
+            var isInInteractionRange = IsInFacilityInteractionRange();
+            lastInteractionRange = isInInteractionRange;
             var status = new OutpostStatusDto
             {
                 outpostInstanceId = outpostInstanceId,
-                isActive = snapshot.Supply > 0,
-                totalPowerSupply = snapshot.Supply,
-                totalPowerConsumption = snapshot.Demand,
+                isActive = latestPowerSnapshot.Supply > 0,
+                isInInteractionRange = isInInteractionRange,
+                totalPowerSupply = latestPowerSnapshot.Supply,
+                totalPowerConsumption = latestPowerSnapshot.Demand,
                 connectedFacilities = BuildFacilityStatuses()
             };
             Publish(new GameplayEventDto { type = GameplayEventType.OutpostStatusChanged, instanceId = outpostInstanceId, outpostStatus = status });
+        }
+
+        private bool IsInFacilityInteractionRange()
+        {
+            if (interactionOrigin == null || powerNetworkSystem == null)
+            {
+                return false;
+            }
+
+            var squaredRange = facilityInteractionRange * facilityInteractionRange;
+            foreach (PowerNode node in powerNetworkSystem.Nodes)
+            {
+                if (node == null)
+                {
+                    continue;
+                }
+
+                var instance = node.GetComponent<BuildingInstance>();
+                if (instance == null || !IsInteractionFacility(instance.BuildingId))
+                {
+                    continue;
+                }
+
+                var delta = (Vector2)(node.transform.position - interactionOrigin.position);
+                if (delta.sqrMagnitude <= squaredRange)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool IsInteractionFacility(string buildingId)
+        {
+            return buildingId == "building.charger.basic"
+                || buildingId == "building.storage.basic"
+                || buildingId == "building.settlement.basic"
+                || buildingId == "building.outpost_core.basic";
         }
 
         private List<ConnectedFacilityStatusDto> BuildFacilityStatuses()

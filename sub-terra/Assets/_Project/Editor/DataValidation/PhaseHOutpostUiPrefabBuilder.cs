@@ -6,6 +6,7 @@ using TMPro;
 using UnityEditor;
 using UnityEditor.Events;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 namespace SubTerra.App.Editor.DataValidation
@@ -14,6 +15,7 @@ namespace SubTerra.App.Editor.DataValidation
     public static class PhaseHOutpostUiPrefabBuilder
     {
         private const string PrefabPath = "Assets/_Project/Prefabs/UI/OutpostPanel.prefab";
+        private const string InputActionsPath = "Assets/Settings/InputSystem_Actions.inputactions";
         private const string BuildFlagPath = "Temp/subterra-build-phaseh-outpost.flag";
         private const string BuildResultPath = "Temp/subterra-build-phaseh-outpost.done";
 
@@ -152,6 +154,8 @@ namespace SubTerra.App.Editor.DataValidation
             var binderObject = new SerializedObject(binder);
             binderObject.FindProperty("view").objectReferenceValue = view;
             binderObject.FindProperty("quantityInput").objectReferenceValue = quantity;
+            binderObject.FindProperty("inputActions").objectReferenceValue =
+                AssetDatabase.LoadAssetAtPath<InputActionAsset>(InputActionsPath);
             binderObject.ApplyModifiedPropertiesWithoutUndo();
 
             panelRoot.SetActive(false);

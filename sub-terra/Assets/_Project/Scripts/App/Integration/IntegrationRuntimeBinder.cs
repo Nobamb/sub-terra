@@ -7,10 +7,12 @@ using SubTerra.App.Save;
 using SubTerra.App.State;
 using SubTerra.App.UI.HUD;
 using SubTerra.App.UI.Inventory;
+using SubTerra.App.UI.Outpost;
 using SubTerra.App.UI.Progression;
 using SubTerra.App.UI.Tutorial;
 using SubTerra.Gameplay.Building;
 using SubTerra.Gameplay.Drone;
+using SubTerra.Gameplay.Integration;
 using SubTerra.Gameplay.Mining;
 using SubTerra.Gameplay.Player;
 using SubTerra.Shared;
@@ -36,8 +38,10 @@ namespace SubTerra.App.Integration
         [SerializeField] private GameplayDepthStatusBridge depthBridge;
         [SerializeField] private GasExposureEffectController gasEffectController;
         [SerializeField] private OutpostRuntimeBridge outpostBridge;
+        [SerializeField] private GameplayEventBridge gameplayEventBridge;
         [SerializeField] private BuildingUiIntegrationBinder buildingUiBinder;
         [SerializeField] private InventoryPanelBinder inventoryPanelBinder;
+        [SerializeField] private OutpostPanelBinder outpostPanelBinder;
         [SerializeField] private ProgressionPanelBinder progressionPanelBinder;
         [SerializeField] private GameplayBuildingPlacementBridge placementBridge;
         [SerializeField] private DroneContextProviderAdapter droneContextAdapter;
@@ -248,6 +252,13 @@ namespace SubTerra.App.Integration
                     outpostService);
             }
 
+            // GameplayEventBridge가 초기 전력 스냅샷을 발행하기 전에 모든
+            // 전진기지 소비자와 팬아웃을 준비한다. SetInteractionOrigin은
+            // 준비가 끝난 뒤 현재 거리 상태를 즉시 다시 발행한다.
+            gameplayEventBridge ??= FindFirstObjectByType<GameplayEventBridge>();
+            gameplayEventBridge?.SetEventSink(this);
+            BindOutpostPanelUi();
+
             var worldProvider = worldSnapshotProviderBehaviour as IWorldSnapshotProvider
                 ?? runtime.Resolve();
 
@@ -343,6 +354,22 @@ namespace SubTerra.App.Integration
             {
                 panel.BindTo(runtime.InventoryService);
             }
+        }
+
+        private void BindOutpostPanelUi()
+        {
+            if (outpostService == null)
+            {
+                return;
+            }
+
+            gameplayEventBridge ??= FindFirstObjectByType<GameplayEventBridge>();
+            gameplayEventBridge?.SetInteractionOrigin(
+                playerMovement != null ? playerMovement.transform : null);
+
+            outpostPanelBinder ??= FindFirstObjectByType<OutpostPanelBinder>(
+                FindObjectsInactive.Include);
+            outpostPanelBinder?.BindTo(outpostService);
         }
 
         public void AddMineral(string mineralId, int quantity)

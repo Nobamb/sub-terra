@@ -1,6 +1,7 @@
 using SubTerra.App.Outpost;
 using TMPro;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace SubTerra.App.UI.Outpost
 {
@@ -9,9 +10,12 @@ namespace SubTerra.App.UI.Outpost
     {
         [SerializeField] private OutpostPanelView view;
         [SerializeField] private TMP_InputField quantityInput;
+        [SerializeField] private InputActionAsset inputActions;
+        [SerializeField] private string interactActionPath = "Player/Interact";
 
         private OutpostPanelPresenter presenter;
         private string selectedMineralId = string.Empty;
+        private InputAction interactAction;
 
         public OutpostPanelPresenter Presenter => presenter;
         public bool IsBound => presenter != null && presenter.IsBound;
@@ -24,6 +28,23 @@ namespace SubTerra.App.UI.Outpost
             }
 
             presenter = new OutpostPanelPresenter(view);
+        }
+
+        private void OnEnable()
+        {
+            interactAction ??= inputActions?.FindAction(interactActionPath, false);
+            if (interactAction != null)
+            {
+                interactAction.started += OnInteractStarted;
+            }
+        }
+
+        private void OnDisable()
+        {
+            if (interactAction != null)
+            {
+                interactAction.started -= OnInteractStarted;
+            }
         }
 
         private void OnDestroy()
@@ -76,6 +97,14 @@ namespace SubTerra.App.UI.Outpost
         public void DismissTutorial()
         {
             presenter?.DismissTutorial();
+        }
+
+        private void OnInteractStarted(InputAction.CallbackContext context)
+        {
+            if (context.started)
+            {
+                presenter?.ToggleInteractionPanel();
+            }
         }
 
         private int ReadQuantity()

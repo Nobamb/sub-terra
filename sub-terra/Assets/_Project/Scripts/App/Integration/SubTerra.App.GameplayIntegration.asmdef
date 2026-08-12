@@ -11,6 +11,7 @@
     "SubTerra.Gameplay.Drone",
     "SubTerra.Gameplay.Mining",
     "SubTerra.Gameplay.Player",
+    "SubTerra.Gameplay.IntegrationBridge",
     "Unity.TextMeshPro",
     "UnityEngine.UI",
     "Unity.InputSystem"

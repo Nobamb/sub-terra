@@ -12,7 +12,7 @@ namespace SubTerra.App.Tests.Outpost
     public sealed class OutpostPanelPresenterTests
     {
         [Test]
-        public void RuntimeRange_OpensAndClosesPanel_AndDisplaysInactiveReason()
+        public void RuntimeRange_OpensOnlyAfterInteraction_AndClosesWhenLeavingRange()
         {
             var catalog = new InMemoryMineralCatalog();
             catalog.Register(DataIds.Minerals.Copper, 1f, 10, "구리");
@@ -34,13 +34,33 @@ namespace SubTerra.App.Tests.Outpost
                 connectedFacilities = new List<ConnectedFacilityStatusDto>()
             });
 
-            Assert.That(view.Visible, Is.True);
+            Assert.That(view.Visible, Is.False);
             Assert.That(view.Active, Is.False);
             Assert.That(view.Reason, Is.EqualTo("power_disconnected"));
             Assert.That(view.Supply, Is.EqualTo(4f));
             Assert.That(view.Consumption, Is.EqualTo(7f));
 
+            presenter.ToggleInteractionPanel();
+            Assert.That(view.Visible, Is.True);
+
             service.ClearRuntimeStatus();
+            Assert.That(view.Visible, Is.False);
+            presenter.Unbind();
+        }
+
+        [Test]
+        public void ToggleInteractionPanel_OutsideRange_StaysClosed()
+        {
+            var catalog = new InMemoryMineralCatalog();
+            var state = GameState.CreateNew();
+            var inventory = new InventoryService(catalog, 100f, state);
+            var service = new OutpostService(inventory, catalog, state);
+            var view = new RecordingView();
+            var presenter = new OutpostPanelPresenter(view);
+            presenter.Bind(service);
+
+            presenter.ToggleInteractionPanel();
+
             Assert.That(view.Visible, Is.False);
             presenter.Unbind();
         }

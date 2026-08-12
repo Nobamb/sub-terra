@@ -10,6 +10,7 @@ namespace SubTerra.App.UI.Outpost
         private readonly IOutpostPanelView view;
         private OutpostService service;
         private bool busy;
+        private bool interactionPanelRequested;
 
         public bool IsBound => service != null;
 
@@ -45,8 +46,23 @@ namespace SubTerra.App.UI.Outpost
             }
 
             busy = false;
+            interactionPanelRequested = false;
             view?.SetBusy(false);
             view?.SetVisible(false);
+        }
+
+        public void ToggleInteractionPanel()
+        {
+            var snapshot = service?.GetSnapshot();
+            if (snapshot == null || !snapshot.IsInInteractionRange)
+            {
+                interactionPanelRequested = false;
+                view?.SetVisible(false);
+                return;
+            }
+
+            interactionPanelRequested = !interactionPanelRequested;
+            view?.SetVisible(interactionPanelRequested);
         }
 
         public OutpostOperationResult RequestCharge()
@@ -128,11 +144,17 @@ namespace SubTerra.App.UI.Outpost
         {
             if (snapshot == null)
             {
+                interactionPanelRequested = false;
                 view?.SetVisible(false);
                 return;
             }
 
-            view?.SetVisible(snapshot.IsInInteractionRange);
+            if (!snapshot.IsInInteractionRange)
+            {
+                interactionPanelRequested = false;
+            }
+
+            view?.SetVisible(snapshot.IsInInteractionRange && interactionPanelRequested);
             view?.SetPower(
                 snapshot.PowerSupply,
                 snapshot.PowerConsumption,

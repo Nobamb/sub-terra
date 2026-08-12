@@ -9,10 +9,12 @@ namespace SubTerra.Gameplay.Player
         [SerializeField] private InputActionAsset inputActions;
         [SerializeField] private string moveActionPath = "Player/Move";
         [SerializeField] private string jumpActionPath = "Player/Jump";
+        [SerializeField] private string interactActionPath = "Player/Interact";
 
         private PlayerMovement movement;
         private InputAction moveAction;
         private InputAction jumpAction;
+        private InputAction interactAction;
 
         private void Awake()
         {
@@ -35,6 +37,8 @@ namespace SubTerra.Gameplay.Player
                 jumpAction.started += OnJumpStarted;
                 jumpAction.Enable();
             }
+
+            interactAction?.Enable();
         }
 
         private void Update()
@@ -57,6 +61,8 @@ namespace SubTerra.Gameplay.Player
                 jumpAction.Disable();
             }
 
+            interactAction?.Disable();
+
             movement?.SetMoveInput(0f);
             movement?.SetVerticalMoveInput(0f);
         }
@@ -70,6 +76,7 @@ namespace SubTerra.Gameplay.Player
 
             moveAction ??= inputActions.FindAction(moveActionPath, false);
             jumpAction ??= inputActions.FindAction(jumpActionPath, false);
+            interactAction ??= inputActions.FindAction(interactActionPath, false);
         }
 
         private void OnJumpStarted(InputAction.CallbackContext context)
