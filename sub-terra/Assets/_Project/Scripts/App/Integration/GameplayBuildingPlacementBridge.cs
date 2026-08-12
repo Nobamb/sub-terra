@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using SubTerra.App.Core.Data;
 using SubTerra.App.Economy;
 using SubTerra.App.UI;
@@ -47,6 +48,7 @@ namespace SubTerra.App.Integration
         private string lastReason = string.Empty;
         private int lastX = int.MinValue;
         private int lastY = int.MinValue;
+        private readonly List<Vector3Int> footprintPreviewCells = new();
 
         public event Action<BuildingPlacementResultDto> PlacementChanged;
 
@@ -110,8 +112,10 @@ namespace SubTerra.App.Integration
             var screen = Mouse.current.position.ReadValue();
             var world = cameraToUse.ScreenToWorldPoint(
                 new Vector3(screen.x, screen.y, -cameraToUse.transform.position.z));
-            var cell = placementSystem.WorldToCell(world);
-            var canPlace = placementSystem.CanPlaceAt(cell, out var failure);
+            var cursorCell = placementSystem.WorldToCell(world);
+            // 2x2 긴급 탈출 포탈 등: 플레이어 좌/우에 따라 footprint를 펼친 좌하단 origin을 사용한다.
+            var origin = ResolveDirectionalOrigin(cursorCell, world.x);
+            var canPlace = placementSystem.CanPlaceAt(origin, out var failure);
 
             // A는 위치 검사를 먼저 하고 마지막에 비용을 확인한다.
             // CannotAfford는 위치 자체는 유효하므로 B 비용 실패와 분리해 표시한다.
@@ -120,21 +124,64 @@ namespace SubTerra.App.Integration
                 ? BuildingPlacementState.Valid
                 : BuildingPlacementState.Invalid;
             var reason = ToReasonId(failure);
-            PublishIfChanged(state, reason, cell);
+            PublishIfChanged(state, reason, origin);
 
             var sourceRenderer = placementSystem.Selection.RuntimePrefab != null
                 ? placementSystem.Selection.RuntimePrefab.GetComponentInChildren<SpriteRenderer>()
                 : null;
             preview?.Configure(sourceRenderer != null ? sourceRenderer.sprite : null);
-            preview?.SetCell(GetTerrainTilemap(), cell, locationValid && CanAfford(selectedBuildingId));
+            placementSystem.GetFootprintCells(origin, footprintPreviewCells);
+            var previewValid = locationValid && CanAfford(selectedBuildingId);
+            if (footprintPreviewCells.Count > 1)
+            {
+                // 다중 칸: 칸마다 점 4개(2x2) 등 표시.
+                preview?.SetCells(GetTerrainTilemap(), footprintPreviewCells, previewValid);
+            }
+            else
+            {
+                preview?.SetCell(GetTerrainTilemap(), origin, previewValid);
+            }
 
             if (Mouse.current.leftButton.wasPressedThisFrame
                 && locationValid
                 && CanAfford(selectedBuildingId)
                 && (EventSystem.current == null || !EventSystem.current.IsPointerOverGameObject()))
             {
-                placementSystem.TryPlaceAt(cell);
+                placementSystem.TryPlaceAt(origin);
             }
+        }
+
+        /// <summary>
+        /// 커서 하단 앵커 + 플레이어 대비 좌/우 확장으로 footprint 좌하단 origin을 구한다.
+        /// </summary>
+        private Vector3Int ResolveDirectionalOrigin(Vector3Int cursorCell, float cursorWorldX)
+        {
+            var footprint = placementSystem.Selection != null
+                ? placementSystem.Selection.Footprint
+                : Vector2Int.one;
+            float playerWorldX = ResolvePlayerWorldX();
+            return BuildingPlacementSystem.ResolveFootprintOrigin(
+                cursorCell,
+                footprint,
+                playerWorldX,
+                cursorWorldX);
+        }
+
+        private float ResolvePlayerWorldX()
+        {
+            if (playerMovement == null)
+            {
+                playerMovement = FindFirstObjectByType<PlayerMovement>();
+            }
+
+            if (playerMovement != null)
+            {
+                return playerMovement.transform.position.x;
+            }
+
+            return placementSystem != null && placementSystem.transform != null
+                ? placementSystem.transform.position.x
+                : 0f;
         }
 
         /// <summary>

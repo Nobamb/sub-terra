@@ -81,6 +81,39 @@ namespace SubTerra.Gameplay.Building
             return terrainTilemap != null ? terrainTilemap.WorldToCell(worldPosition) : Vector3Int.RoundToInt(worldPosition);
         }
 
+        /// <summary>
+        /// 커서 칸을 하단 앵커로 보고, 플레이어 대비 좌/우로 footprint 가로를 펼친 뒤 위로 높이를 펼친다.
+        /// 반환 origin은 항상 발자국 좌하단(EnumerateFootprint 기준).
+        /// 오른쪽 설치: 커서가 왼쪽 열 → 오른쪽으로 확장. 왼쪽 설치: 커서가 오른쪽 열 → 왼쪽으로 확장.
+        /// </summary>
+        public static Vector3Int ResolveFootprintOrigin(
+            Vector3Int cursorCell,
+            Vector2Int footprint,
+            float playerWorldX,
+            float cursorWorldX)
+        {
+            int width = Mathf.Max(1, footprint.x);
+            int originX = cursorWorldX >= playerWorldX
+                ? cursorCell.x
+                : cursorCell.x - (width - 1);
+            return new Vector3Int(originX, cursorCell.y, cursorCell.z);
+        }
+
+        /// <summary>현재 선택의 footprint 칸 목록. Preview 점 표시용.</summary>
+        public void GetFootprintCells(Vector3Int origin, List<Vector3Int> results)
+        {
+            results.Clear();
+            if (selection == null)
+            {
+                return;
+            }
+
+            foreach (Vector3Int cell in EnumerateFootprint(origin, selection.Footprint))
+            {
+                results.Add(cell);
+            }
+        }
+
         public bool CanPlaceAt(Vector3Int origin, out BuildingPlacementFailure failure)
         {
             if (selection == null) { failure = BuildingPlacementFailure.NoSelection; return false; }
@@ -90,7 +123,9 @@ namespace SubTerra.Gameplay.Building
                 return false;
             }
 
-            Vector3 worldPosition = CellToWorld(origin);
+            Vector2Int footprint = selection.Footprint;
+            // 거리·허용 구역은 footprint 중심 기준으로 검사해 2x2 좌하단 origin 편향을 줄인다.
+            Vector3 worldPosition = FootprintWorldCenter(origin, footprint);
             if (allowedPlacementArea != null && !allowedPlacementArea.OverlapPoint(worldPosition))
             {
                 failure = BuildingPlacementFailure.OutsideAllowedArea;
@@ -105,14 +140,20 @@ namespace SubTerra.Gameplay.Building
                 return false;
             }
 
-            foreach (Vector3Int cell in EnumerateFootprint(origin, selection.Footprint))
+            foreach (Vector3Int cell in EnumerateFootprint(origin, footprint))
             {
                 if (occupiedCells.Contains(cell) || (terrainTilemap != null && terrainTilemap.HasTile(cell)))
                 {
                     failure = BuildingPlacementFailure.Occupied;
                     return false;
                 }
-                if (selection.RequiresGround && (terrainTilemap == null || !terrainTilemap.HasTile(cell + Vector3Int.down)))
+
+                // 지면은 footprint 하단 행만 검사한다.
+                // 높이 2 이상에서 윗칸에 cell+down 타일을 요구하면 빈 공간이 필요한 윗칸이 영원히 MissingGround가 된다.
+                bool isBottomRow = cell.y == origin.y;
+                if (selection.RequiresGround
+                    && isBottomRow
+                    && (terrainTilemap == null || !terrainTilemap.HasTile(cell + Vector3Int.down)))
                 {
                     failure = BuildingPlacementFailure.MissingGround;
                     return false;
@@ -146,7 +187,13 @@ namespace SubTerra.Gameplay.Building
         {
             if (!CanPlaceAt(origin, out BuildingPlacementFailure failure)) return Reject(failure, origin);
             BuildingPlacementDefinition definition = selection;
-            GameObject instanceObject = Instantiate(definition.RuntimePrefab, CellToWorld(origin), Quaternion.identity, buildingRoot);
+            Vector2Int footprint = definition.Footprint;
+            // 2x2 등 다중 칸 시설은 footprint 중심에 생성해 점 표시 공간과 시각 위치를 맞춘다.
+            GameObject instanceObject = Instantiate(
+                definition.RuntimePrefab,
+                FootprintWorldCenter(origin, footprint),
+                Quaternion.identity,
+                buildingRoot);
             if (instanceObject == null) return Reject(BuildingPlacementFailure.InstantiateFailed, origin);
 
             // 비용은 생성에 성공한 뒤에만 차감한다. 실패하면 생성물을 되돌린다.
@@ -163,7 +210,7 @@ namespace SubTerra.Gameplay.Building
             BuildingInstance instance = instanceObject.GetComponent<BuildingInstance>() ?? instanceObject.AddComponent<BuildingInstance>();
             instance.Initialize(instanceId, definition.BuildingId);
             BindPowerNode(instanceObject, instanceId);
-            foreach (Vector3Int cell in EnumerateFootprint(origin, definition.Footprint)) occupiedCells.Add(cell);
+            foreach (Vector3Int cell in EnumerateFootprint(origin, footprint)) occupiedCells.Add(cell);
             StructuralSupport support = instanceObject.GetComponent<StructuralSupport>();
             if (support != null) structuralIntegritySystem?.RegisterSupport(support);
 
@@ -395,11 +442,16 @@ namespace SubTerra.Gameplay.Building
             if (definition == null || definition.RuntimePrefab == null) return false;
 
             var cell = new Vector3Int(snapshot.x, snapshot.y, 0);
-            GameObject instanceObject = Instantiate(definition.RuntimePrefab, CellToWorld(cell), Quaternion.identity, buildingRoot != null ? buildingRoot : transform);
+            Vector2Int footprint = definition.Footprint;
+            GameObject instanceObject = Instantiate(
+                definition.RuntimePrefab,
+                FootprintWorldCenter(cell, footprint),
+                Quaternion.identity,
+                buildingRoot != null ? buildingRoot : transform);
             BuildingInstance instance = instanceObject.GetComponent<BuildingInstance>() ?? instanceObject.AddComponent<BuildingInstance>();
             instance.Initialize(snapshot.instanceId, snapshot.buildingTypeId);
             BindPowerNode(instanceObject, snapshot.instanceId);
-            foreach (Vector3Int occupied in EnumerateFootprint(cell, definition.Footprint)) occupiedCells.Add(occupied);
+            foreach (Vector3Int occupied in EnumerateFootprint(cell, footprint)) occupiedCells.Add(occupied);
             StructuralSupport support = instanceObject.GetComponent<StructuralSupport>();
             if (support != null) structuralIntegritySystem?.RegisterSupport(support);
             restoredInstanceIds.Add(snapshot.instanceId);
@@ -450,10 +502,27 @@ namespace SubTerra.Gameplay.Building
             return terrainTilemap != null ? terrainTilemap.GetCellCenterWorld(cell) : cell;
         }
 
+        /// <summary>발자국 좌하단~우상단 셀 중심의 중간점. 1x1이면 단일 셀 중심과 동일.</summary>
+        private Vector3 FootprintWorldCenter(Vector3Int origin, Vector2Int size)
+        {
+            int width = Mathf.Max(1, size.x);
+            int height = Mathf.Max(1, size.y);
+            if (width == 1 && height == 1)
+            {
+                return CellToWorld(origin);
+            }
+
+            Vector3 min = CellToWorld(origin);
+            Vector3 max = CellToWorld(origin + new Vector3Int(width - 1, height - 1, 0));
+            return (min + max) * 0.5f;
+        }
+
         private static IEnumerable<Vector3Int> EnumerateFootprint(Vector3Int origin, Vector2Int size)
         {
-            for (int x = 0; x < size.x; x++)
-            for (int y = 0; y < size.y; y++)
+            int width = Mathf.Max(1, size.x);
+            int height = Mathf.Max(1, size.y);
+            for (int x = 0; x < width; x++)
+            for (int y = 0; y < height; y++)
                 yield return origin + new Vector3Int(x, y, 0);
         }
 

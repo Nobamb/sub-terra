@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -13,6 +14,9 @@ namespace SubTerra.Gameplay.Building
         [SerializeField] private BuildingPlacementPreview preview;
         [SerializeField] private Camera targetCamera;
         [SerializeField] private float enterFacingDirection = 1f;
+        [SerializeField] private Transform playerOrigin;
+
+        private readonly List<Vector3Int> footprintPreviewCells = new();
 
         private void Update()
         {
@@ -41,10 +45,30 @@ namespace SubTerra.Gameplay.Building
             preview?.Configure(sourceRenderer != null ? sourceRenderer.sprite : null);
             Vector3 screen = Mouse.current.position.ReadValue();
             Vector3 world = cameraToUse.ScreenToWorldPoint(new Vector3(screen.x, screen.y, -cameraToUse.transform.position.z));
-            Vector3Int cell = placementSystem.WorldToCell(world);
-            bool isValid = placementSystem.CanPlaceAt(cell, out _);
-            preview?.SetCell(GetTerrainTilemap(), cell, isValid);
-            if (Mouse.current.leftButton.wasPressedThisFrame && isValid) placementSystem.TryPlaceAt(cell);
+            Vector3Int cursorCell = placementSystem.WorldToCell(world);
+            float playerWorldX = playerOrigin != null
+                ? playerOrigin.position.x
+                : transform.position.x;
+            Vector3Int origin = BuildingPlacementSystem.ResolveFootprintOrigin(
+                cursorCell,
+                placementSystem.Selection.Footprint,
+                playerWorldX,
+                world.x);
+            bool isValid = placementSystem.CanPlaceAt(origin, out _);
+            placementSystem.GetFootprintCells(origin, footprintPreviewCells);
+            if (footprintPreviewCells.Count > 1)
+            {
+                preview?.SetCells(GetTerrainTilemap(), footprintPreviewCells, isValid);
+            }
+            else
+            {
+                preview?.SetCell(GetTerrainTilemap(), origin, isValid);
+            }
+
+            if (Mouse.current.leftButton.wasPressedThisFrame && isValid)
+            {
+                placementSystem.TryPlaceAt(origin);
+            }
         }
 
         private UnityEngine.Tilemaps.Tilemap GetTerrainTilemap()

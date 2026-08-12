@@ -123,6 +123,89 @@ namespace SubTerra.Gameplay.Building.Tests
         }
 
         [Test]
+        public void ResolveFootprintOrigin_ExpandsRightOrLeftFromCursor()
+        {
+            var cursor = new Vector3Int(5, 2, 0);
+            var footprint = new Vector2Int(2, 2);
+
+            // 캐릭터보다 오른쪽 → 커서가 왼쪽 열, 오른쪽으로 확장.
+            Assert.That(
+                BuildingPlacementSystem.ResolveFootprintOrigin(cursor, footprint, playerWorldX: 0f, cursorWorldX: 5f),
+                Is.EqualTo(new Vector3Int(5, 2, 0)));
+
+            // 캐릭터보다 왼쪽 → 커서가 오른쪽 열, 왼쪽으로 확장(origin.x = cursor.x - 1).
+            Assert.That(
+                BuildingPlacementSystem.ResolveFootprintOrigin(cursor, footprint, playerWorldX: 10f, cursorWorldX: 5f),
+                Is.EqualTo(new Vector3Int(4, 2, 0)));
+        }
+
+        [Test]
+        public void CanPlaceAt_TwoByTwo_RequiresGroundOnlyOnBottomRow()
+        {
+            // 긴급 탈출 포탈 2x2: 하단 2칸 지면 + 4칸 공중이면 설치 가능해야 한다.
+            var setup = CreateSetup(
+                maximumDistance: 10f,
+                areaSize: new Vector2(20f, 12f),
+                footprint: new Vector2Int(2, 2));
+            try
+            {
+                setup.Terrain.SetTile(new Vector3Int(0, -1, 0), setup.Tile);
+                setup.Terrain.SetTile(new Vector3Int(1, -1, 0), setup.Tile);
+
+                Assert.That(
+                    setup.Placement.CanPlaceAt(new Vector3Int(0, 0, 0), out var valid),
+                    Is.True,
+                    valid.ToString());
+                Assert.That(valid, Is.EqualTo(BuildingPlacementFailure.None));
+
+                // 하단 한 칸만 지면이면 MissingGround.
+                setup.Terrain.SetTile(new Vector3Int(1, -1, 0), null);
+                Assert.That(
+                    setup.Placement.CanPlaceAt(new Vector3Int(0, 0, 0), out var missing),
+                    Is.False);
+                Assert.That(missing, Is.EqualTo(BuildingPlacementFailure.MissingGround));
+            }
+            finally
+            {
+                setup.Dispose();
+            }
+        }
+
+        [Test]
+        public void TryPlaceAt_TwoByTwo_OccupiesFourCellsAndSpendsOnce()
+        {
+            var setup = CreateSetup(
+                maximumDistance: 10f,
+                areaSize: new Vector2(20f, 12f),
+                footprint: new Vector2Int(2, 2));
+            try
+            {
+                setup.Terrain.SetTile(new Vector3Int(0, -1, 0), setup.Tile);
+                setup.Terrain.SetTile(new Vector3Int(1, -1, 0), setup.Tile);
+
+                var placed = setup.Placement.TryPlaceAt(new Vector3Int(0, 0, 0));
+                Assert.That(placed.IsSuccess, Is.True, placed.Failure.ToString());
+                Assert.That(setup.Wallet.SpendCount, Is.EqualTo(1));
+                Assert.That(setup.BuildingRoot.childCount, Is.EqualTo(1));
+
+                // 동일 footprint 겹치면 Occupied. 선택은 성공 후 해제되므로 다시 Select.
+                setup.Placement.Select(setup.Definition);
+                Assert.That(
+                    setup.Placement.CanPlaceAt(new Vector3Int(0, 0, 0), out var occupied),
+                    Is.False);
+                Assert.That(occupied, Is.EqualTo(BuildingPlacementFailure.Occupied));
+                Assert.That(
+                    setup.Placement.CanPlaceAt(new Vector3Int(1, 0, 0), out var occupiedNeighbor),
+                    Is.False);
+                Assert.That(occupiedNeighbor, Is.EqualTo(BuildingPlacementFailure.Occupied));
+            }
+            finally
+            {
+                setup.Dispose();
+            }
+        }
+
+        [Test]
         public void TryFindBestPlacementCell_PrefersNearestWithinRange()
         {
             BuildingPlacementActivity.ResetForTests();
@@ -241,7 +324,10 @@ namespace SubTerra.Gameplay.Building.Tests
             }
         }
 
-        private static PlacementSetup CreateSetup(float maximumDistance, Vector2 areaSize)
+        private static PlacementSetup CreateSetup(
+            float maximumDistance,
+            Vector2 areaSize,
+            Vector2Int? footprint = null)
         {
             var host = new GameObject("PlacementSetup");
             host.SetActive(false);
@@ -266,7 +352,11 @@ namespace SubTerra.Gameplay.Building.Tests
             prefab.AddComponent<BuildingInstance>();
             prefab.AddComponent<StructuralSupport>();
             var definition = ScriptableObject.CreateInstance<BuildingPlacementDefinition>();
-            definition.EditorSet("building.support.basic", prefab, Vector2Int.one, true);
+            var size = footprint ?? Vector2Int.one;
+            var buildingId = size.x > 1 || size.y > 1
+                ? "building.escape_portal.emergency"
+                : "building.support.basic";
+            definition.EditorSet(buildingId, prefab, size, true);
             var wallet = new RecordingWallet();
             var placement = host.AddComponent<BuildingPlacementSystem>();
             SetField(placement, "terrainTilemap", terrain);
@@ -322,8 +412,8 @@ namespace SubTerra.Gameplay.Building.Tests
             public BoxCollider2D Area { get; }
             public RecordingWallet Wallet { get; }
             public BuildingPlacementSystem Placement { get; }
+            public BuildingPlacementDefinition Definition { get; }
             private readonly GameObject prefab;
-            private readonly BuildingPlacementDefinition definition;
 
             public PlacementSetup(
                 GameObject host,
@@ -342,7 +432,7 @@ namespace SubTerra.Gameplay.Building.Tests
                 BuildingRoot = buildingRoot;
                 Area = area;
                 prefab = runtimePrefab;
-                definition = placementDefinition;
+                Definition = placementDefinition;
                 Wallet = wallet;
                 Placement = placement;
             }
@@ -353,7 +443,7 @@ namespace SubTerra.Gameplay.Building.Tests
                 BuildingPlacementActivity.ResetForTests();
                 Object.DestroyImmediate(Host);
                 Object.DestroyImmediate(prefab);
-                Object.DestroyImmediate(definition);
+                Object.DestroyImmediate(Definition);
                 Object.DestroyImmediate(Tile);
             }
         }
