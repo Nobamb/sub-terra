@@ -77,7 +77,9 @@ namespace SubTerra.App.Tests.UI
 
                     var instance = Object.Instantiate(prefab);
                     created.Add(instance);
-                    var bounds = GetActiveSpriteBounds(instance);
+                    var visualRoot = instance.transform.Find(
+                        PromptB49FacilityVisualBuilder.VisualRootName);
+                    var bounds = GetActiveSpriteBounds(visualRoot.gameObject);
                     Assert.That(bounds.size.x, Is.InRange(0.85f, 1.25f), path + " width");
                     Assert.That(bounds.size.y, Is.InRange(0.85f, 1.25f), path + " height");
                     sizes.Add(new Vector2(bounds.size.x, bounds.size.y));

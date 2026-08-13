@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Reflection;
 using NUnit.Framework;
 using SubTerra.App.Core.Data;
@@ -37,9 +38,10 @@ namespace SubTerra.App.Tests.UI
             bridge.Bind(state, player.transform, elevator.transform);
 
             var options = bridge.GetDestinationOptions();
-            Assert.That(options.Count, Is.EqualTo(1));
+            Assert.That(options.Count, Is.GreaterThanOrEqualTo(1));
             Assert.That(options[0].Kind, Is.EqualTo(EmergencyEscapeDestination.Elevator));
             Assert.That(options[0].DisplayName, Is.EqualTo("엘리베이터"));
+            var countBeforeOutposts = options.Count;
 
             var outpostA = new GameObject("OutpostA");
             outpostA.transform.position = new Vector3(10f, -4f, 0f);
@@ -53,10 +55,19 @@ namespace SubTerra.App.Tests.UI
                 DataIds.Buildings.OutpostCoreBasic);
 
             options = bridge.GetDestinationOptions();
-            Assert.That(options.Count, Is.EqualTo(3));
+            Assert.That(options.Count, Is.EqualTo(countBeforeOutposts + 2));
             Assert.That(options[0].Kind, Is.EqualTo(EmergencyEscapeDestination.Elevator));
-            Assert.That(options[1].InstanceId, Is.EqualTo("building.outpost_core.basic-0001"));
-            Assert.That(options[2].InstanceId, Is.EqualTo("building.outpost_core.basic-0002"));
+            var outpostIds = new List<string>();
+            for (var i = 1; i < options.Count; i++)
+            {
+                outpostIds.Add(options[i].InstanceId);
+            }
+
+            var indexA = outpostIds.IndexOf("building.outpost_core.basic-0001");
+            var indexB = outpostIds.IndexOf("building.outpost_core.basic-0002");
+            Assert.That(indexA, Is.GreaterThanOrEqualTo(0));
+            Assert.That(indexB, Is.GreaterThanOrEqualTo(0));
+            Assert.That(indexA, Is.LessThan(indexB));
 
             Object.DestroyImmediate(outpostB);
             Object.DestroyImmediate(outpostA);

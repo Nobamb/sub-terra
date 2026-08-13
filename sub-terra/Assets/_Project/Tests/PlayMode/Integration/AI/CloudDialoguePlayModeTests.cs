@@ -16,14 +16,14 @@ namespace SubTerra.App.Tests.PlayMode.AI
 {
     public sealed class CloudDialoguePlayModeTests
     {
-        private readonly List<Object> created = new List<Object>();
+        private readonly List<UnityEngine.Object> created = new List<UnityEngine.Object>();
 
         [TearDown]
         public void TearDown()
         {
             for (var i = created.Count - 1; i >= 0; i--)
             {
-                Object.Destroy(created[i]);
+                UnityEngine.Object.Destroy(created[i]);
             }
 
             created.Clear();
@@ -150,7 +150,7 @@ namespace SubTerra.App.Tests.PlayMode.AI
                 dialogueView);
         }
 
-        private T Track<T>(T value) where T : Object
+        private T Track<T>(T value) where T : UnityEngine.Object
         {
             created.Add(value);
             return value;
