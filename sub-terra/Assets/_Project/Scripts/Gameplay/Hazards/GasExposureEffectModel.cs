@@ -231,7 +231,8 @@ namespace SubTerra.Gameplay.Hazards
 
         private bool IsVisuallyExposed()
         {
-            return exposure.IsExposed && !sheltered && !visuallyCleared;
+            // 조명 근처라도 전체 암전은 유지한다. 5칸 구멍은 SpriteMask가 담당한다.
+            return exposure.IsExposed && !sheltered;
         }
 
         private void RefreshVisionFadeTarget()
@@ -240,7 +241,8 @@ namespace SubTerra.Gameplay.Hazards
             var target = visuallyExposed ? settings.MaximumVisionObscuration : 0f;
             if (visuallyExposed && !wasVisuallyExposed)
             {
-                // 접근 직후는 현재(연한) 수준에서 시작해 1초에 걸쳐 70%까지 탁해진다.
+                // 접근 직후는 현재(연한) 수준에서 시작해 1초에 걸쳐 95%까지 탁해진다.
+                // 조명 시야 구멍은 전체 오버레이를 걷지 않고 월드 마스크로 처리한다.
                 var start = Mathf.Max(displayedVision, settings.InitialVisionObscuration);
                 BeginVisionFade(start, target);
             }

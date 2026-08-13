@@ -63,7 +63,9 @@ namespace SubTerra.App.Tests.Integration
             Assert.That(scene, Does.Contain("guid: 2fb6cdf936002d64a91946e92ab9b5b9"));
             Assert.That(scene, Does.Contain("m_Name: GasVisionOverlay"));
             Assert.That(scene, Does.Contain("initialVisionObscuration: 0.35"));
+            Assert.That(scene, Does.Contain("maximumVisionObscuration: 0.95"));
             Assert.That(scene, Does.Contain("approachFadeSeconds: 1"));
+            Assert.That(scene, Does.Contain("m_Name: GasWorldVeil"));
         }
     }
 }

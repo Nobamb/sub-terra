@@ -89,20 +89,21 @@ namespace SubTerra.Gameplay.Hazards.Tests
         }
 
         [Test]
-        public void PromptB50_LightClearanceFadesOverlayButKeepsGameplayDrain()
+        public void PromptB50_LightClearanceKeepsFullOverlayAndGameplayDrain()
         {
             var model = new GasExposureEffectModel();
             model.SetExposure(CriticalExposure(1f), 0f, false, false);
             var exposed = model.Advance(1f).State;
 
             var lit = model.SetExposure(CriticalExposure(1f), 0f, false, true);
-            var faded = model.Advance(1f);
+            var stillExposed = model.Advance(1f);
 
             Assert.That(exposed.VisionObscuration, Is.EqualTo(GasVisualRules.FullApproachOpacity).Within(0.001f));
+            Assert.That(GasVisualRules.FullApproachOpacity, Is.EqualTo(0.95f).Within(0.001f));
             Assert.That(lit.SpeedMultiplier, Is.LessThan(1f));
-            Assert.That(lit.VisionObscuration, Is.GreaterThan(0f));
-            Assert.That(faded.State.VisionObscuration, Is.Zero);
-            Assert.That(faded.EnergyDrain, Is.GreaterThan(0));
+            Assert.That(lit.VisionObscuration, Is.EqualTo(GasVisualRules.FullApproachOpacity).Within(0.001f));
+            Assert.That(stillExposed.State.VisionObscuration, Is.EqualTo(GasVisualRules.FullApproachOpacity).Within(0.001f));
+            Assert.That(stillExposed.EnergyDrain, Is.GreaterThan(0));
         }
 
         [Test]

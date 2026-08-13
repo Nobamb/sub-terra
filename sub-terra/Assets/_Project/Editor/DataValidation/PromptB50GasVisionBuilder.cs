@@ -40,7 +40,7 @@ namespace SubTerra.App.Editor.DataValidation
             ApplyIntegrationScene();
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
-            return "Prompt-B 50 gas vision applied.";
+            return "Prompt-B 50-1 gas vision applied.";
         }
 
         public static void ApplyGasZonePrefab()
@@ -173,7 +173,7 @@ namespace SubTerra.App.Editor.DataValidation
             mask.sprite = knob;
             mask.isCustomRangeActive = true;
             mask.backSortingOrder = 19;
-            mask.frontSortingOrder = 21;
+            mask.frontSortingOrder = GasVisionWorldVeil.SortingOrder;
 
             var source = go.AddComponent<GasVisionClearanceSource>();
             source.SetRadius(GasVisualRules.LightClearRadiusBlocks);
@@ -189,6 +189,7 @@ namespace SubTerra.App.Editor.DataValidation
                 GasHazardSystem hazard = null;
                 GasExposureEffectController effect = null;
                 CanvasGroup overlay = null;
+                Camera mainCamera = null;
 
                 foreach (var root in scene.GetRootGameObjects())
                 {
@@ -205,6 +206,11 @@ namespace SubTerra.App.Editor.DataValidation
                     if (overlay == null)
                     {
                         overlay = FindOverlay(root.transform);
+                    }
+
+                    if (mainCamera == null)
+                    {
+                        mainCamera = root.GetComponentInChildren<Camera>(true);
                     }
                 }
 
@@ -238,6 +244,14 @@ namespace SubTerra.App.Editor.DataValidation
                     }
                 }
 
+                var veil = EnsureWorldVeil(scene, mainCamera);
+                if (effect != null && veil != null)
+                {
+                    var so = new SerializedObject(effect);
+                    so.FindProperty("worldVeil").objectReferenceValue = veil;
+                    so.ApplyModifiedPropertiesWithoutUndo();
+                }
+
                 EditorSceneManager.MarkSceneDirty(scene);
                 EditorSceneManager.SaveScene(scene);
             }
@@ -248,6 +262,42 @@ namespace SubTerra.App.Editor.DataValidation
                     EditorSceneManager.CloseScene(scene, true);
                 }
             }
+        }
+
+        private static GasVisionWorldVeil EnsureWorldVeil(Scene scene, Camera camera)
+        {
+            GasVisionWorldVeil existing = null;
+            foreach (var root in scene.GetRootGameObjects())
+            {
+                existing = root.GetComponentInChildren<GasVisionWorldVeil>(true);
+                if (existing != null)
+                {
+                    break;
+                }
+            }
+
+            if (existing == null)
+            {
+                var go = new GameObject(GasVisionWorldVeil.ObjectName);
+                SceneManager.MoveGameObjectToScene(go, scene);
+                if (camera != null)
+                {
+                    go.transform.SetParent(camera.transform, false);
+                    go.transform.localPosition = Vector3.zero;
+                }
+
+                existing = go.AddComponent<GasVisionWorldVeil>();
+            }
+
+            var renderer = existing.GetComponent<SpriteRenderer>();
+            if (renderer != null)
+            {
+                renderer.maskInteraction = SpriteMaskInteraction.VisibleOutsideMask;
+                renderer.sortingOrder = GasVisionWorldVeil.SortingOrder;
+                renderer.color = new Color(0.04f, 0.05f, 0.05f, 0f);
+            }
+
+            return existing;
         }
 
         private static CanvasGroup FindOverlay(Transform parent)

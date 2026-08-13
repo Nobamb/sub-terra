@@ -17,6 +17,7 @@ namespace SubTerra.App.Integration
         [SerializeField] private GasHazardSystem gasSystem;
         [SerializeField] private PlayerMovement playerMovement;
         [SerializeField] private CanvasGroup visionOverlay;
+        [SerializeField] private GasVisionWorldVeil worldVeil;
         [SerializeField] private GasExposureEffectSettings settings = new();
 
         private GasExposureEffectModel model;
@@ -191,12 +192,32 @@ namespace SubTerra.App.Integration
 
         private void SetVisionObscuration(float value)
         {
+            var clamped = Mathf.Clamp01(value);
+            if (worldVeil == null)
+            {
+                worldVeil = FindFirstObjectByType<GasVisionWorldVeil>();
+            }
+
+            if (worldVeil != null)
+            {
+                worldVeil.SetOpacity(clamped);
+                // 화면 UI 오버레이는 조명 SpriteMask를 가리므로 월드 베일만 사용한다.
+                if (visionOverlay != null)
+                {
+                    visionOverlay.alpha = 0f;
+                    visionOverlay.interactable = false;
+                    visionOverlay.blocksRaycasts = false;
+                }
+
+                return;
+            }
+
             if (visionOverlay == null)
             {
                 return;
             }
 
-            visionOverlay.alpha = Mathf.Clamp01(value);
+            visionOverlay.alpha = clamped;
             visionOverlay.interactable = false;
             visionOverlay.blocksRaycasts = false;
         }

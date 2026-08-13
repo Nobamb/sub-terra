@@ -11,7 +11,7 @@ namespace SubTerra.Gameplay.Hazards
         public const float GasRadiusBlocks = 5f;
         public const float GasVisualOpacity = 0.70f;
         public const float InitialApproachOpacity = 0.35f;
-        public const float FullApproachOpacity = 0.70f;
+        public const float FullApproachOpacity = 0.95f;
         public const float LightClearRadiusBlocks = 5f;
         public const float LightClearRedOpacity = 0.05f;
 
