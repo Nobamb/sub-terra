@@ -1962,9 +1962,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: SubTerra.Gameplay.Hazards::SubTerra.Gameplay.Hazards.GasHazardSystem
   foregroundTilemap: {fileID: 1443727076}
   playerTransform: {fileID: 72969609}
-  gasZonePrefab: {fileID: 0}
+  gasZonePrefab: {fileID: 6982408227089371928, guid: 2fb6cdf936002d64a91946e92ab9b5b9, type: 3}
   defaultIntensity: 0.8
-  defaultRadius: 2
+  defaultRadius: 5
   defaultDuration: 12
 --- !u!114 &279480562
 MonoBehaviour:
@@ -6000,6 +6000,8 @@ MonoBehaviour:
     fullIntensityEnergyDrainPerTick: 2
     minimumSpeedMultiplier: 0.55
     maximumVisionObscuration: 0.7
+    initialVisionObscuration: 0.35
+    approachFadeSeconds: 1
     failureExposureThreshold: 10
     recoveryPerTick: 1
 --- !u!114 &976616840
@@ -8153,7 +8155,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.03, g: 0.16, b: 0.08, a: 0.88}
+  m_Color: {r: 0.04, g: 0.05, b: 0.05, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -9165,7 +9167,7 @@ Canvas:
   m_SortingBucketNormalizedSize: 0
   m_VertexColorAlwaysGammaSpace: 0
   m_UseReflectionProbes: 0
-  m_AdditionalShaderChannelsFlag: 0
+  m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
   m_SortingOrder: 450

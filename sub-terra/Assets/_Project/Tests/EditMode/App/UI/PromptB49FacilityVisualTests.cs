@@ -163,6 +163,11 @@ namespace SubTerra.App.Tests.UI
             var font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(
                 "Assets/_Project/Fonts/NotoSansKR-Regular_SDF.asset");
             Assert.That(font, Is.Not.Null);
+            Assert.That(font.atlasTextures, Is.Not.Null.And.Not.Empty);
+            Assert.That(font.atlasTextures[0], Is.Not.Null);
+            Assert.That(font.atlasTextures[0].width, Is.GreaterThan(1));
+            Assert.That(font.atlasTextures[0].height, Is.GreaterThan(1));
+            Assert.That(font.characterTable.Count, Is.GreaterThan(50));
 
             var hudText = new GameObject("PromptB49_HudText");
             var tmp = hudText.AddComponent<TextMeshProUGUI>();

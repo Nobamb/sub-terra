@@ -13,7 +13,7 @@ namespace SubTerra.Gameplay.Hazards
         [SerializeField] private Transform playerTransform;
         [SerializeField] private GasZone gasZonePrefab;
         [SerializeField, Range(0f, 1f)] private float defaultIntensity = 0.8f;
-        [SerializeField, Min(0.1f)] private float defaultRadius = 2f;
+        [SerializeField, Min(0.1f)] private float defaultRadius = GasVisualRules.GasRadiusBlocks;
         [SerializeField, Min(0.1f)] private float defaultDuration = 12f;
 
         private readonly List<GasZone> zones = new();
@@ -69,7 +69,7 @@ namespace SubTerra.Gameplay.Hazards
                 ? snapshot.remainingDuration
                 : defaultDuration;
             GasZone zone = CreateZone(new Vector3(snapshot.x, snapshot.y, 0f));
-            zone.Activate(id, parsedType, snapshot.concentrationLevel, defaultRadius, duration);
+            zone.Activate(id, parsedType, snapshot.concentrationLevel, defaultRadius, duration, false);
             zones.Add(zone);
             GasZoneActivated?.Invoke(zone);
             ReevaluateExposure();
@@ -106,7 +106,13 @@ namespace SubTerra.Gameplay.Hazards
             GameObject fallback = new("GasZone_Runtime");
             fallback.transform.SetParent(transform);
             fallback.transform.position = position;
-            return fallback.AddComponent<GasZone>();
+            fallback.transform.localScale = Vector3.one;
+            var runtimeZone = fallback.AddComponent<GasZone>();
+            fallback.AddComponent<GasZoneVisual>();
+            var trigger = fallback.AddComponent<CircleCollider2D>();
+            trigger.isTrigger = true;
+            trigger.radius = defaultRadius;
+            return runtimeZone;
         }
 
         private void TickZones(float deltaTime)

@@ -108,11 +108,12 @@ namespace SubTerra.Gameplay.Hazards.Editor
             if (prefab != null) return prefab;
             GameObject source = new("GasZone");
             source.AddComponent<GasZone>();
-            CircleCollider2D trigger = source.AddComponent<CircleCollider2D>(); trigger.isTrigger = true; trigger.radius = 2f;
+            source.AddComponent<GasZoneVisual>();
+            CircleCollider2D trigger = source.AddComponent<CircleCollider2D>(); trigger.isTrigger = true; trigger.radius = GasVisualRules.GasRadiusBlocks;
             SpriteRenderer renderer = source.AddComponent<SpriteRenderer>();
-            renderer.sprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UISprite.psd");
-            renderer.color = new Color(0.2f, 0.95f, 0.4f, 0.35f);
-            source.transform.localScale = new Vector3(4f, 4f, 1f);
+            renderer.sprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Knob.psd");
+            renderer.color = new Color(0.22f, 0.82f, 0.34f, 0f);
+            source.transform.localScale = Vector3.one;
             PrefabUtility.SaveAsPrefabAsset(source, GasZonePrefabPath);
             Object.DestroyImmediate(source);
             return AssetDatabase.LoadAssetAtPath<GasZone>(GasZonePrefabPath);

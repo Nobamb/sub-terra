@@ -92,6 +92,11 @@ namespace SubTerra.App.Editor.DataValidation
                     new Vector2(1.08f, 1.08f),
                     new Color(1f, 1f, 1f, 0.28f),
                     3);
+                if (kind == FacilityVisualKind.Light)
+                {
+                    PromptB50GasVisionBuilder.ApplyLightClearance(powered);
+                }
+
                 powered.gameObject.SetActive(false);
 
                 var facility = root.GetComponent<SubTerra.Gameplay.Power.PowerFacility>();

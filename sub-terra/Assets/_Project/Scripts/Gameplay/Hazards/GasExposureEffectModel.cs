@@ -9,7 +9,9 @@ namespace SubTerra.Gameplay.Hazards
         [SerializeField, Min(0.1f)] private float tickInterval = 1f;
         [SerializeField, Min(0f)] private float fullIntensityEnergyDrainPerTick = 2f;
         [SerializeField, Range(0f, 1f)] private float minimumSpeedMultiplier = 0.55f;
-        [SerializeField, Range(0f, 1f)] private float maximumVisionObscuration = 0.7f;
+        [SerializeField, Range(0f, 1f)] private float maximumVisionObscuration = GasVisualRules.FullApproachOpacity;
+        [SerializeField, Range(0f, 1f)] private float initialVisionObscuration = GasVisualRules.InitialApproachOpacity;
+        [SerializeField, Min(0.1f)] private float approachFadeSeconds = GasVisualRules.ApproachFadeSeconds;
         [SerializeField, Min(0.1f)] private float failureExposureThreshold = 10f;
         [SerializeField, Min(0f)] private float recoveryPerTick = 1f;
 
@@ -17,6 +19,12 @@ namespace SubTerra.Gameplay.Hazards
         public float FullIntensityEnergyDrainPerTick => fullIntensityEnergyDrainPerTick;
         public float MinimumSpeedMultiplier => minimumSpeedMultiplier;
         public float MaximumVisionObscuration => maximumVisionObscuration;
+        public float InitialVisionObscuration => initialVisionObscuration > 0f
+            ? initialVisionObscuration
+            : GasVisualRules.InitialApproachOpacity;
+        public float ApproachFadeSeconds => approachFadeSeconds > 0f
+            ? approachFadeSeconds
+            : GasVisualRules.ApproachFadeSeconds;
         public float FailureExposureThreshold => failureExposureThreshold;
         public float RecoveryPerTick => recoveryPerTick;
 
@@ -119,6 +127,12 @@ namespace SubTerra.Gameplay.Hazards
         private float energyAccumulator;
         private float cumulativeExposure;
         private bool failureLatched;
+        private bool visuallyCleared;
+        private bool wasVisuallyExposed;
+        private float displayedVision;
+        private float visionFadeFrom;
+        private float visionFadeTo;
+        private float visionFadeElapsed;
 
         public GasExposureEffectState CurrentState { get; private set; }
 
@@ -133,20 +147,32 @@ namespace SubTerra.Gameplay.Hazards
             float gasResistance,
             bool isSheltered)
         {
+            return SetExposure(nextExposure, gasResistance, isSheltered, visuallyCleared);
+        }
+
+        public GasExposureEffectState SetExposure(
+            GasExposureState nextExposure,
+            float gasResistance,
+            bool isSheltered,
+            bool isVisuallyCleared)
+        {
             exposure = nextExposure;
             resistance = Mathf.Clamp01(gasResistance);
             sheltered = isSheltered;
+            visuallyCleared = isVisuallyCleared;
             if (!exposure.IsExposed || sheltered)
             {
                 energyAccumulator = 0f;
             }
 
+            RefreshVisionFadeTarget();
             RefreshState();
             return CurrentState;
         }
 
         public GasExposureTickResult Advance(float deltaTime)
         {
+            TickVisionFade(deltaTime);
             tickAccumulator += Mathf.Max(0f, deltaTime);
             var drain = 0;
             var crossed = false;
@@ -190,11 +216,68 @@ namespace SubTerra.Gameplay.Hazards
             exposure = default;
             resistance = 0f;
             sheltered = false;
+            visuallyCleared = false;
+            wasVisuallyExposed = false;
+            displayedVision = 0f;
+            visionFadeFrom = 0f;
+            visionFadeTo = 0f;
+            visionFadeElapsed = settings.ApproachFadeSeconds;
             tickAccumulator = 0f;
             energyAccumulator = 0f;
             cumulativeExposure = 0f;
             failureLatched = false;
             RefreshState();
+        }
+
+        private bool IsVisuallyExposed()
+        {
+            return exposure.IsExposed && !sheltered && !visuallyCleared;
+        }
+
+        private void RefreshVisionFadeTarget()
+        {
+            var visuallyExposed = IsVisuallyExposed();
+            var target = visuallyExposed ? settings.MaximumVisionObscuration : 0f;
+            if (visuallyExposed && !wasVisuallyExposed)
+            {
+                // 접근 직후는 현재(연한) 수준에서 시작해 1초에 걸쳐 70%까지 탁해진다.
+                var start = Mathf.Max(displayedVision, settings.InitialVisionObscuration);
+                BeginVisionFade(start, target);
+            }
+            else if (!visuallyExposed && wasVisuallyExposed)
+            {
+                BeginVisionFade(displayedVision, 0f);
+            }
+            else if (Mathf.Abs(visionFadeTo - target) > 0.0001f)
+            {
+                BeginVisionFade(displayedVision, target);
+            }
+
+            wasVisuallyExposed = visuallyExposed;
+        }
+
+        private void BeginVisionFade(float from, float to)
+        {
+            visionFadeFrom = from;
+            visionFadeTo = to;
+            visionFadeElapsed = 0f;
+            displayedVision = from;
+        }
+
+        private void TickVisionFade(float deltaTime)
+        {
+            var duration = Mathf.Max(0.0001f, settings.ApproachFadeSeconds);
+            if (visionFadeElapsed >= duration)
+            {
+                displayedVision = visionFadeTo;
+                return;
+            }
+
+            visionFadeElapsed += Mathf.Max(0f, deltaTime);
+            displayedVision = Mathf.Lerp(
+                visionFadeFrom,
+                visionFadeTo,
+                Mathf.Clamp01(visionFadeElapsed / duration));
         }
 
         private float ResolveEffectiveIntensity()
@@ -208,7 +291,7 @@ namespace SubTerra.Gameplay.Hazards
         {
             var intensity = ResolveEffectiveIntensity();
             var speed = Mathf.Lerp(1f, settings.MinimumSpeedMultiplier, intensity);
-            var vision = settings.MaximumVisionObscuration * intensity;
+            var vision = displayedVision;
             CurrentState = new GasExposureEffectState(
                 exposure.IsExposed,
                 sheltered && exposure.IsExposed,

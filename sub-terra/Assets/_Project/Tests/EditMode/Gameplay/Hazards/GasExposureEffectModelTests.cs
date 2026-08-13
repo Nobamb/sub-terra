@@ -35,19 +35,21 @@ namespace SubTerra.Gameplay.Hazards.Tests
         }
 
         [Test]
-        public void H_F02_ExitImmediatelyRestoresMovementAndVisionThenRecoversExposure()
+        public void H_F02_ExitImmediatelyRestoresMovementThenFadesVisionInOneSecond()
         {
             var model = new GasExposureEffectModel();
-            model.SetExposure(CriticalExposure(), 0f, false);
+            var entered = model.SetExposure(CriticalExposure(), 0f, false);
             var exposed = model.Advance(2f).State;
 
             var exited = model.SetExposure(default, 0f, false);
             var recovered = model.Advance(1f).State;
 
+            Assert.That(entered.VisionObscuration, Is.EqualTo(GasVisualRules.InitialApproachOpacity).Within(0.001f));
             Assert.That(exposed.SpeedMultiplier, Is.LessThan(1f));
-            Assert.That(exposed.VisionObscuration, Is.GreaterThan(0f));
+            Assert.That(exposed.VisionObscuration, Is.EqualTo(GasVisualRules.FullApproachOpacity).Within(0.001f));
             Assert.That(exited.SpeedMultiplier, Is.EqualTo(1f));
-            Assert.That(exited.VisionObscuration, Is.Zero);
+            Assert.That(exited.VisionObscuration, Is.GreaterThan(0f));
+            Assert.That(recovered.VisionObscuration, Is.Zero);
             Assert.That(recovered.CumulativeExposure, Is.LessThan(exited.CumulativeExposure));
         }
 
@@ -68,7 +70,7 @@ namespace SubTerra.Gameplay.Hazards.Tests
             Assert.That(protectedResult.State.SpeedMultiplier,
                 Is.GreaterThan(raw.State.SpeedMultiplier));
             Assert.That(protectedResult.State.VisionObscuration,
-                Is.LessThan(raw.State.VisionObscuration));
+                Is.EqualTo(raw.State.VisionObscuration).Within(0.001f));
         }
 
         [Test]
@@ -84,6 +86,23 @@ namespace SubTerra.Gameplay.Hazards.Tests
             Assert.That(state.VisionObscuration, Is.Zero);
             Assert.That(tick.EnergyDrain, Is.Zero);
             Assert.That(tick.State.CumulativeExposure, Is.Zero);
+        }
+
+        [Test]
+        public void PromptB50_LightClearanceFadesOverlayButKeepsGameplayDrain()
+        {
+            var model = new GasExposureEffectModel();
+            model.SetExposure(CriticalExposure(1f), 0f, false, false);
+            var exposed = model.Advance(1f).State;
+
+            var lit = model.SetExposure(CriticalExposure(1f), 0f, false, true);
+            var faded = model.Advance(1f);
+
+            Assert.That(exposed.VisionObscuration, Is.EqualTo(GasVisualRules.FullApproachOpacity).Within(0.001f));
+            Assert.That(lit.SpeedMultiplier, Is.LessThan(1f));
+            Assert.That(lit.VisionObscuration, Is.GreaterThan(0f));
+            Assert.That(faded.State.VisionObscuration, Is.Zero);
+            Assert.That(faded.EnergyDrain, Is.GreaterThan(0));
         }
 
         [Test]

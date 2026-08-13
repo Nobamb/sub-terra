@@ -55,6 +55,7 @@ namespace SubTerra.App.Tests.PlayMode.Hazards
                 Is.EqualTo(GameplayGasRiskLevel.Critical));
 
             controller.ApplyExposure(default);
+            controller.Advance(1f);
 
             Assert.That(movement.CurrentSpeedMultiplier, Is.EqualTo(1f));
             Assert.That(overlay.alpha, Is.Zero);

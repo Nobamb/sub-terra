@@ -26,6 +26,7 @@ namespace SubTerra.App.Integration
         private readonly HashSet<string> shelteringOutpostIds = new(StringComparer.Ordinal);
         private bool isOutpostSheltered;
         private float appliedResistance = -1f;
+        private bool lastVisuallyCleared;
         private GasExposureEffectState lastPublishedState;
         private bool hasPublishedState;
 
@@ -73,6 +74,8 @@ namespace SubTerra.App.Integration
             currentExposure = default;
             shelteringOutpostIds.Clear();
             isOutpostSheltered = false;
+            appliedResistance = -1f;
+            lastVisuallyCleared = false;
             playerMovement?.SetHazardSpeedMultiplier(1f);
             SetVisionObscuration(0f);
         }
@@ -150,14 +153,28 @@ namespace SubTerra.App.Integration
         {
             EnsureModel();
             var resistance = Mathf.Clamp01(upgradeEffects?.GetGasResistance() ?? 0f);
-            if (!forcePublish && Mathf.Abs(appliedResistance - resistance) < 0.0001f)
+            var cleared = ResolveVisualClearance();
+            if (!forcePublish
+                && Mathf.Abs(appliedResistance - resistance) < 0.0001f
+                && lastVisuallyCleared == cleared)
             {
                 return;
             }
 
             appliedResistance = resistance;
-            var state = model.SetExposure(currentExposure, resistance, isOutpostSheltered);
+            lastVisuallyCleared = cleared;
+            var state = model.SetExposure(currentExposure, resistance, isOutpostSheltered, cleared);
             ApplyState(state, forcePublish);
+        }
+
+        private bool ResolveVisualClearance()
+        {
+            if (playerMovement == null)
+            {
+                return false;
+            }
+
+            return GasVisionClearanceSource.IsCleared(playerMovement.transform.position);
         }
 
         private void ApplyState(GasExposureEffectState state, bool forcePublish)

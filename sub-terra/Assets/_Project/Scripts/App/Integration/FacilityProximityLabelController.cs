@@ -287,6 +287,10 @@ namespace SubTerra.App.Integration
                 canvas.renderMode = RenderMode.WorldSpace;
                 canvas.sortingOrder = 80;
                 canvas.overrideSorting = true;
+                canvas.additionalShaderChannels =
+                    AdditionalCanvasShaderChannels.TexCoord1
+                    | AdditionalCanvasShaderChannels.Normal
+                    | AdditionalCanvasShaderChannels.Tangent;
 
                 var rect = root.GetComponent<RectTransform>();
                 rect.sizeDelta = new Vector2(180f, 56f);
