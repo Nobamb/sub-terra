@@ -26,6 +26,54 @@ namespace SubTerra.App.Core.Data
             }
         }
 
+        public static string Building(string buildingId)
+        {
+            if (string.IsNullOrEmpty(buildingId))
+            {
+                return string.Empty;
+            }
+
+            switch (buildingId)
+            {
+                case DataIds.Buildings.SupportBasic:
+                    return "버팀목";
+                case DataIds.Buildings.LadderBasic:
+                    return "사다리";
+                case DataIds.Buildings.LightBasic:
+                    return "조명";
+                case DataIds.Buildings.ChargerBasic:
+                    return "충전기";
+                case DataIds.Buildings.StorageBasic:
+                    return "보관함";
+                case DataIds.Buildings.SettlementBasic:
+                    return "정산 콘솔";
+                case DataIds.Buildings.OutpostCoreBasic:
+                    return "전진기지 코어";
+                case DataIds.Buildings.EmergencyEscapePortal:
+                    return "긴급 탈출 포탈";
+                default:
+                    return buildingId;
+            }
+        }
+
+        /// <summary>
+        /// 버팀목·사다리는 근접 말풍선에서 제외한다. 나머지 설치 시설만 시설명을 띄운다.
+        /// </summary>
+        public static bool ShowsProximityName(string buildingId)
+        {
+            if (string.IsNullOrEmpty(buildingId))
+            {
+                return false;
+            }
+
+            return buildingId == DataIds.Buildings.LightBasic
+                || buildingId == DataIds.Buildings.ChargerBasic
+                || buildingId == DataIds.Buildings.StorageBasic
+                || buildingId == DataIds.Buildings.SettlementBasic
+                || buildingId == DataIds.Buildings.OutpostCoreBasic
+                || buildingId == DataIds.Buildings.EmergencyEscapePortal;
+        }
+
         public static string Upgrade(string upgradeId)
         {
             if (string.IsNullOrEmpty(upgradeId))
@@ -120,6 +168,11 @@ namespace SubTerra.App.Core.Data
             if (permanentId != null && permanentId.StartsWith("upgrade."))
             {
                 return Upgrade(permanentId);
+            }
+
+            if (permanentId != null && permanentId.StartsWith("building."))
+            {
+                return Building(permanentId);
             }
 
             return catalogDisplayName ?? permanentId ?? string.Empty;

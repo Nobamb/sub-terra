@@ -275,6 +275,7 @@ namespace SubTerra.App.Integration
 
             // 플레이어 Y → Run.Depth → HUD 깊이 텍스트 실시간 반영.
             TryStep("DepthBridge", BindDepthBridge);
+            TryStep("FacilityProximityLabel", EnsureFacilityProximityLabel);
 
             TryStep(
                 "GasEffect",
@@ -769,6 +770,35 @@ namespace SubTerra.App.Integration
             {
                 runFailureController.PlayerRescued -= OnPlayerRescued;
                 runFailureController.Unbind();
+            }
+        }
+
+        /// <summary>
+        /// 시설 근접 시설명 말풍선. 씬에 없어도 ApplicationRoot에 런타임 생성한다.
+        /// </summary>
+        private void EnsureFacilityProximityLabel()
+        {
+            var controller = GetComponent<FacilityProximityLabelController>();
+            if (controller == null)
+            {
+                controller = Resolve<FacilityProximityLabelController>(null);
+            }
+
+            if (controller == null)
+            {
+                controller = gameObject.AddComponent<FacilityProximityLabelController>();
+            }
+
+            if (playerMovement != null)
+            {
+                controller.SetPlayer(playerMovement.transform);
+            }
+
+            // 런타임 생성 말풍선이 LiberationSans로 한글이 깨지지 않게 HUD 한글 폰트를 넘긴다.
+            var koreanFont = FacilityProximityLabelController.ResolveKoreanFont();
+            if (FacilityProximityLabelController.IsKoreanFont(koreanFont))
+            {
+                controller.SetFont(koreanFont);
             }
         }
 

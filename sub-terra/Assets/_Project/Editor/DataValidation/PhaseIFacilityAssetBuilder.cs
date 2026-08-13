@@ -31,6 +31,7 @@ namespace SubTerra.App.Editor.DataValidation
             UpdateBuildingData("Building_Settlement_Basic.asset", settlement);
             UpdateBuildingData("Building_OutpostCore_Basic.asset", core);
 
+            PromptB49FacilityVisualBuilder.ApplyAllPrefabs();
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
             Debug.Log("[SubTerra] Phase I facility prefabs and BuildingData references are ready.");
