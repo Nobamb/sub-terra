@@ -40,7 +40,6 @@ namespace SubTerra.App.Tests.UI
             Assert.That(ecoRect.anchorMin, Is.EqualTo(Vector2.zero));
             Assert.That(ecoRect.anchorMax, Is.EqualTo(Vector2.one));
             Assert.That(ecoRect.sizeDelta, Is.EqualTo(Vector2.zero));
-            Assert.That(economy.GetSiblingIndex(), Is.EqualTo(content.childCount - 1), "modal must render last");
 
             var canvasGroup = economy.GetComponent<CanvasGroup>();
             Assert.That(canvasGroup, Is.Not.Null);

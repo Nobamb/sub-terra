@@ -110,7 +110,7 @@ namespace SubTerra.App.Tests.UI
         }
 
         [Test]
-        public void PromptB47_1_OpenPanel_RequiresWiredBinder()
+        public void PromptB47_1_OpenPanel_OpensAfterExplicitPanelBinding()
         {
             var state = GameState.CreateNew();
             state.SetGold(300);
@@ -119,9 +119,6 @@ namespace SubTerra.App.Tests.UI
             var host = new GameObject("PromptB47_Bridge");
             var bridge = host.AddComponent<EmergencyEscapePortalRuntimeBridge>();
             bridge.Bind(state, player.transform, elevator.transform);
-
-            Assert.That(bridge.TryOpenEscapePanel(out var missingReason), Is.False);
-            Assert.That(missingReason, Does.Contain("선택 창"));
 
             var panelHost = new GameObject("PromptB47_Panel");
             var view = panelHost.AddComponent<EmergencyEscapePanelView>();

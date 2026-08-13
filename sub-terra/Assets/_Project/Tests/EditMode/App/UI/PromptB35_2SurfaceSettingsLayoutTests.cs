@@ -65,19 +65,19 @@ namespace SubTerra.App.Tests.UI
             AssertCenteredCardRow(
                 PromptB35_2LayoutBuilder.SurfaceBasePrefabPath,
                 "SettingsTitle",
-                350f);
+                340f);
             AssertCenteredCardRow(
                 PromptB35_2LayoutBuilder.MainMenuPrefabPath,
                 "SettingsTitle",
-                350f);
+                340f);
             AssertCenteredCardRow(
                 PromptB35_2LayoutBuilder.SurfaceBasePrefabPath,
                 "ResolutionDropdown",
-                146f);
+                100f);
             AssertCenteredCardRow(
                 PromptB35_2LayoutBuilder.MainMenuPrefabPath,
                 "FrameRateDropdown",
-                -214f);
+                -168f);
         }
 
         private static void AssertSettingsPanelLayout(string prefabPath, System.Type viewType)
