@@ -32,9 +32,7 @@ namespace SubTerra.App.Tests.Integration
                 PromptB50GasVisionBuilder.LightPrefabPath);
             Assert.That(prefab, Is.Not.Null);
 
-            var clearance = prefab.transform.Find(
-                PromptB50GasVisionBuilder.PoweredVisualRootName + "/"
-                + PromptB50GasVisionBuilder.LightClearanceName);
+            var clearance = prefab.transform.Find(PromptB50GasVisionBuilder.LightClearanceName);
             Assert.That(clearance, Is.Not.Null);
 
             var source = clearance.GetComponent<GasVisionClearanceSource>();
@@ -45,7 +43,7 @@ namespace SubTerra.App.Tests.Integration
             Assert.That(renderer, Is.Not.Null);
             Assert.That(renderer.color.r, Is.GreaterThan(0.8f));
             Assert.That(renderer.color.a, Is.EqualTo(GasVisualRules.LightClearRedOpacity).Within(0.001f));
-            Assert.That(clearance.GetComponent<SpriteMask>(), Is.Not.Null);
+            Assert.That(clearance.GetComponent<SpriteMask>(), Is.Null);
         }
 
         [Test]
@@ -66,6 +64,7 @@ namespace SubTerra.App.Tests.Integration
             Assert.That(scene, Does.Contain("maximumVisionObscuration: 0.95"));
             Assert.That(scene, Does.Contain("approachFadeSeconds: 1"));
             Assert.That(scene, Does.Contain("m_Name: GasWorldVeil"));
+            Assert.That(scene, Does.Contain("GasVisionOverlayDriver"));
         }
     }
 }

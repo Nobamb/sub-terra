@@ -17,6 +17,18 @@ namespace SubTerra.Gameplay.Hazards
 
         public static IReadOnlyList<GasVisionClearanceSource> ActiveSources => Active;
 
+        public static IReadOnlyList<GasVisionClearanceSource> ResolveActive()
+        {
+            if (Active.Count > 0)
+            {
+                return Active;
+            }
+
+            return Object.FindObjectsByType<GasVisionClearanceSource>(
+                FindObjectsInactive.Exclude,
+                FindObjectsSortMode.None);
+        }
+
         private void OnEnable()
         {
             if (!Active.Contains(this))
@@ -38,19 +50,7 @@ namespace SubTerra.Gameplay.Hazards
 
         public static bool IsCleared(Vector2 worldPosition)
         {
-            var sources = Object.FindObjectsByType<GasVisionClearanceSource>(
-                FindObjectsInactive.Exclude,
-                FindObjectsSortMode.None);
-            for (var i = 0; i < sources.Length; i++)
-            {
-                var source = sources[i];
-                if (source != null && source.Contains(worldPosition))
-                {
-                    return true;
-                }
-            }
-
-            return false;
+            return GasVisionHoleEvaluator.TryGetNearestLight(worldPosition, out _, out _);
         }
 
         public void SetRadius(float nextRadius)

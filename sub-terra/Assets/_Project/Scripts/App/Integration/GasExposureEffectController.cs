@@ -18,6 +18,7 @@ namespace SubTerra.App.Integration
         [SerializeField] private PlayerMovement playerMovement;
         [SerializeField] private CanvasGroup visionOverlay;
         [SerializeField] private GasVisionWorldVeil worldVeil;
+        [SerializeField] private GasVisionOverlayDriver overlayDriver;
         [SerializeField] private GasExposureEffectSettings settings = new();
 
         private GasExposureEffectModel model;
@@ -193,6 +194,22 @@ namespace SubTerra.App.Integration
         private void SetVisionObscuration(float value)
         {
             var clamped = Mathf.Clamp01(value);
+            if (overlayDriver == null && visionOverlay != null)
+            {
+                overlayDriver = visionOverlay.GetComponent<GasVisionOverlayDriver>();
+            }
+
+            if (overlayDriver != null)
+            {
+                overlayDriver.SetOpacity(clamped);
+                if (worldVeil != null)
+                {
+                    worldVeil.SetOpacity(0f);
+                }
+
+                return;
+            }
+
             if (worldVeil == null)
             {
                 worldVeil = FindFirstObjectByType<GasVisionWorldVeil>();
@@ -201,7 +218,6 @@ namespace SubTerra.App.Integration
             if (worldVeil != null)
             {
                 worldVeil.SetOpacity(clamped);
-                // 화면 UI 오버레이는 조명 SpriteMask를 가리므로 월드 베일만 사용한다.
                 if (visionOverlay != null)
                 {
                     visionOverlay.alpha = 0f;

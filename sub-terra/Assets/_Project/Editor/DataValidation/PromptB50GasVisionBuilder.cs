@@ -74,8 +74,7 @@ namespace SubTerra.App.Editor.DataValidation
             var root = PrefabUtility.LoadPrefabContents(LightPrefabPath);
             try
             {
-                var powered = EnsureChild(root.transform, PoweredVisualRootName);
-                ApplyLightClearance(powered);
+                ApplyLightClearance(root.transform);
                 PrefabUtility.SaveAsPrefabAsset(root, LightPrefabPath);
             }
             finally
@@ -142,22 +141,19 @@ namespace SubTerra.App.Editor.DataValidation
             visualSo.ApplyModifiedPropertiesWithoutUndo();
         }
 
-        public static void ApplyLightClearance(Transform poweredRoot)
+        public static void ApplyLightClearance(Transform lightRoot)
         {
-            if (poweredRoot == null)
+            if (lightRoot == null)
             {
-                throw new ArgumentNullException(nameof(poweredRoot));
+                throw new ArgumentNullException(nameof(lightRoot));
             }
 
-            var existing = poweredRoot.Find(LightClearanceName);
-            if (existing != null)
-            {
-                UnityEngine.Object.DestroyImmediate(existing.gameObject);
-            }
+            DestroyNamedDescendant(lightRoot, LightClearanceName);
 
             var go = new GameObject(LightClearanceName);
-            go.transform.SetParent(poweredRoot, false);
+            go.transform.SetParent(lightRoot, false);
             go.transform.localPosition = Vector3.zero;
+            go.transform.localScale = Vector3.one;
 
             var knob = LoadKnob();
             var renderer = go.AddComponent<SpriteRenderer>();
@@ -169,14 +165,21 @@ namespace SubTerra.App.Editor.DataValidation
                 renderer,
                 GasVisualRules.LightClearRadiusBlocks * 2f);
 
-            var mask = go.AddComponent<SpriteMask>();
-            mask.sprite = knob;
-            mask.isCustomRangeActive = true;
-            mask.backSortingOrder = 19;
-            mask.frontSortingOrder = GasVisionWorldVeil.SortingOrder;
-
             var source = go.AddComponent<GasVisionClearanceSource>();
             source.SetRadius(GasVisualRules.LightClearRadiusBlocks);
+        }
+
+        private static void DestroyNamedDescendant(Transform root, string name)
+        {
+            var matches = root.GetComponentsInChildren<Transform>(true);
+            for (var i = matches.Length - 1; i >= 0; i--)
+            {
+                var match = matches[i];
+                if (match != null && match != root && match.name == name)
+                {
+                    UnityEngine.Object.DestroyImmediate(match.gameObject);
+                }
+            }
         }
 
         private static void ApplyIntegrationScene()
@@ -189,7 +192,6 @@ namespace SubTerra.App.Editor.DataValidation
                 GasHazardSystem hazard = null;
                 GasExposureEffectController effect = null;
                 CanvasGroup overlay = null;
-                Camera mainCamera = null;
 
                 foreach (var root in scene.GetRootGameObjects())
                 {
@@ -206,11 +208,6 @@ namespace SubTerra.App.Editor.DataValidation
                     if (overlay == null)
                     {
                         overlay = FindOverlay(root.transform);
-                    }
-
-                    if (mainCamera == null)
-                    {
-                        mainCamera = root.GetComponentInChildren<Camera>(true);
                     }
                 }
 
@@ -240,11 +237,24 @@ namespace SubTerra.App.Editor.DataValidation
                     var image = overlay.GetComponent<Image>();
                     if (image != null)
                     {
-                        image.color = new Color(0.04f, 0.05f, 0.05f, 1f);
+                        image.color = Color.white;
+                    }
+
+                    var driver = overlay.GetComponent<GasVisionOverlayDriver>();
+                    if (driver == null)
+                    {
+                        driver = overlay.gameObject.AddComponent<GasVisionOverlayDriver>();
+                    }
+
+                    if (effect != null)
+                    {
+                        var so = new SerializedObject(effect);
+                        so.FindProperty("overlayDriver").objectReferenceValue = driver;
+                        so.ApplyModifiedPropertiesWithoutUndo();
                     }
                 }
 
-                var veil = EnsureWorldVeil(scene, mainCamera);
+                var veil = EnsureWorldVeil(scene);
                 if (effect != null && veil != null)
                 {
                     var so = new SerializedObject(effect);
@@ -264,7 +274,7 @@ namespace SubTerra.App.Editor.DataValidation
             }
         }
 
-        private static GasVisionWorldVeil EnsureWorldVeil(Scene scene, Camera camera)
+        private static GasVisionWorldVeil EnsureWorldVeil(Scene scene)
         {
             GasVisionWorldVeil existing = null;
             foreach (var root in scene.GetRootGameObjects())
@@ -280,21 +290,16 @@ namespace SubTerra.App.Editor.DataValidation
             {
                 var go = new GameObject(GasVisionWorldVeil.ObjectName);
                 SceneManager.MoveGameObjectToScene(go, scene);
-                if (camera != null)
-                {
-                    go.transform.SetParent(camera.transform, false);
-                    go.transform.localPosition = Vector3.zero;
-                }
-
                 existing = go.AddComponent<GasVisionWorldVeil>();
             }
 
+            existing.transform.SetParent(null, true);
             var renderer = existing.GetComponent<SpriteRenderer>();
             if (renderer != null)
             {
-                renderer.maskInteraction = SpriteMaskInteraction.VisibleOutsideMask;
+                renderer.maskInteraction = SpriteMaskInteraction.None;
                 renderer.sortingOrder = GasVisionWorldVeil.SortingOrder;
-                renderer.color = new Color(0.04f, 0.05f, 0.05f, 0f);
+                renderer.color = Color.white;
             }
 
             return existing;

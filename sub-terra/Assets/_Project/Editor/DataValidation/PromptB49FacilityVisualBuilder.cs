@@ -94,7 +94,7 @@ namespace SubTerra.App.Editor.DataValidation
                     3);
                 if (kind == FacilityVisualKind.Light)
                 {
-                    PromptB50GasVisionBuilder.ApplyLightClearance(powered);
+                    PromptB50GasVisionBuilder.ApplyLightClearance(root.transform);
                 }
 
                 powered.gameObject.SetActive(false);
