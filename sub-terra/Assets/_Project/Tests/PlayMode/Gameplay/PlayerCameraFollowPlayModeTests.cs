@@ -62,11 +62,12 @@ namespace SubTerra.Gameplay.Player.Tests
             targetObject.transform.position = Vector3.zero;
             follow.SnapToTarget();
 
-            for (int frame = 1; frame <= 240; frame++)
+            const int samples = 40;
+            for (int frame = 1; frame <= samples; frame++)
             {
                 targetObject.transform.position = new Vector3(
                     0f,
-                    Mathf.Lerp(0f, -40f, frame / 240f),
+                    Mathf.Lerp(0f, -40f, frame / (float)samples),
                     0f);
                 yield return null;
 

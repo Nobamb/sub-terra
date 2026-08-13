@@ -349,7 +349,7 @@ namespace SubTerra.Gameplay.Mining.Tests
 
             var tile = ScriptableObject.CreateInstance<Tile>();
             resolver.RegisterRuntime(tile, new MiningTileDto(
-                "tile.copper", "mineral.copper", 1, true, 1f, 0.25f, 0f, false));
+                "tile.copper", "mineral.copper", 1, true, 1f, 0.05f, 0f, false));
             var cell = new Vector3Int(0, 0, 0);
             var completions = 0;
             system.TileMined += (_, _) => completions++;
@@ -372,7 +372,7 @@ namespace SubTerra.Gameplay.Mining.Tests
             SetButtonState(keyboard.enterKey, 0f);
             InvokePrivate(controller, "Update");
             Assert.IsTrue(system.IsMining, "Releasing Enter must not cancel mining.");
-            yield return new WaitForSeconds(0.3f);
+            yield return new WaitForSeconds(0.08f);
 
             Assert.IsNull(tilemap.GetTile(cell));
             Assert.AreEqual(1, completions);
@@ -393,7 +393,7 @@ namespace SubTerra.Gameplay.Mining.Tests
             SetButtonState(mouse.leftButton, 0f);
             InvokePrivate(controller, "Update");
             Assert.IsTrue(system.IsMining, "Releasing the mouse button must not cancel mining.");
-            yield return new WaitForSeconds(0.3f);
+            yield return new WaitForSeconds(0.08f);
 
             Assert.IsNull(tilemap.GetTile(cell));
             Assert.AreEqual(2, completions);

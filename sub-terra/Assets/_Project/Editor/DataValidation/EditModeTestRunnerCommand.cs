@@ -39,6 +39,21 @@ namespace SubTerra.App.Editor.DataValidation
 
         private static void PollFlag()
         {
+            if (File.Exists("Temp/subterra-stop-playmode.flag"))
+            {
+                try
+                {
+                    File.Delete("Temp/subterra-stop-playmode.flag");
+                    ReleaseRunner();
+                    if (EditorApplication.isPlaying)
+                    {
+                        EditorApplication.isPlaying = false;
+                    }
+                    Debug.Log("[SubTerra] Play Mode stopped via flag.");
+                }
+                catch (Exception) { }
+            }
+
             if (File.Exists(FlagPath))
             {
                 try
@@ -403,12 +418,7 @@ namespace SubTerra.App.Editor.DataValidation
         {
             StartTestRun(
                 TestMode.EditMode,
-                new[]
-                {
-                    "SubTerra.App.Tests.EditMode",
-                    "SubTerra.Gameplay.Building.EditModeTests",
-                    "SubTerra.Gameplay.Snapshot.EditModeTests"
-                },
+                DiscoverProjectTestAssemblies(TestMode.EditMode),
                 ResolveProjectPath(resultPath),
                 "Edit Mode");
         }
@@ -417,11 +427,7 @@ namespace SubTerra.App.Editor.DataValidation
         {
             StartTestRun(
                 TestMode.PlayMode,
-                new[]
-                {
-                    "SubTerra.App.Tests.PlayMode",
-                    "SubTerra.Gameplay.Player.PlayModeTests"
-                },
+                DiscoverProjectTestAssemblies(TestMode.PlayMode),
                 ResolveProjectPath(resultPath),
                 "Play Mode");
         }
@@ -438,19 +444,90 @@ namespace SubTerra.App.Editor.DataValidation
             return Path.GetFullPath(Path.Combine(projectRoot, path));
         }
 
+        /// <summary>
+        /// Assets/_Project/Tests 아래 프로젝트 asmdef만 고른다.
+        /// assemblyNames를 비우면 Unity 패키지 테스트까지 포함되어 Play Mode가 크게 늘어난다.
+        /// </summary>
+        private static string[] DiscoverProjectTestAssemblies(TestMode mode)
+        {
+            var folder = mode == TestMode.PlayMode ? "PlayMode" : "EditMode";
+            var testsRoot = Path.Combine(Application.dataPath, "_Project", "Tests", folder);
+            var names = new List<string>();
+            if (!Directory.Exists(testsRoot))
+            {
+                return Array.Empty<string>();
+            }
+
+            foreach (var path in Directory.GetFiles(testsRoot, "*.asmdef", SearchOption.AllDirectories))
+            {
+                var name = ReadAsmdefName(path);
+                if (!string.IsNullOrEmpty(name))
+                {
+                    names.Add(name);
+                }
+            }
+
+            names.Sort(StringComparer.Ordinal);
+            return names.ToArray();
+        }
+
+        private static string ReadAsmdefName(string path)
+        {
+            try
+            {
+                var text = File.ReadAllText(path);
+                const string key = "\"name\"";
+                var keyIndex = text.IndexOf(key, StringComparison.Ordinal);
+                if (keyIndex < 0)
+                {
+                    return null;
+                }
+
+                var colon = text.IndexOf(':', keyIndex + key.Length);
+                var firstQuote = text.IndexOf('"', colon + 1);
+                var secondQuote = firstQuote >= 0 ? text.IndexOf('"', firstQuote + 1) : -1;
+                if (firstQuote < 0 || secondQuote < 0)
+                {
+                    return null;
+                }
+
+                return text.Substring(firstQuote + 1, secondQuote - firstQuote - 1);
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
         private static void StartTestRun(
             TestMode mode,
             string[] assemblyNames,
             string resultPath,
             string label)
         {
-            if (testRunActive)
+            var liveRun = testRunActive && (EditorApplication.isPlaying || activeApi != null);
+            if (liveRun)
             {
                 Debug.LogWarning("[SubTerra] " + label + " tests are already running.");
                 return;
             }
 
+            if (mode == TestMode.PlayMode && EditorApplication.isPlaying)
+            {
+                EditorApplication.isPlaying = false;
+                EditorApplication.delayCall += () =>
+                    StartTestRun(mode, assemblyNames, resultPath, label);
+                return;
+            }
+
             ReleaseRunner();
+            if (assemblyNames == null || assemblyNames.Length == 0)
+            {
+                Debug.LogWarning(
+                    "[SubTerra] No project " + label + " test assemblies found under Assets/_Project/Tests.");
+                return;
+            }
+
             activeApi = ScriptableObject.CreateInstance<TestRunnerApi>();
             var filter = new Filter
             {
@@ -462,7 +539,9 @@ namespace SubTerra.App.Editor.DataValidation
             activeApi.RegisterCallbacks(activeReceiver);
             testRunActive = true;
             activeApi.Execute(new ExecutionSettings(filter));
-            Debug.Log("[SubTerra] " + label + " test run requested → " + resultPath);
+            Debug.Log(
+                "[SubTerra] " + label + " test run requested (" +
+                assemblyNames.Length + " assemblies) → " + resultPath);
         }
 
         private static void ScheduleRunnerRelease(ResultWriter receiver)

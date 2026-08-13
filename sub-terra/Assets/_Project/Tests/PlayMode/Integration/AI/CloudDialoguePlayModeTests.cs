@@ -42,10 +42,7 @@ namespace SubTerra.App.Tests.PlayMode.AI
 
             var task = fixture.Presenter.RequestCloudDialogueAsync(
                 CloudDialogueEvent.GasDetected);
-            while (!task.IsCompleted)
-            {
-                yield return null;
-            }
+            yield return WaitUntilCompleted(task);
 
             Assert.That(task.IsFaulted, Is.False);
             Assert.That(task.Result.UsedCloud, Is.True);
@@ -63,10 +60,7 @@ namespace SubTerra.App.Tests.PlayMode.AI
 
             var task = fixture.Presenter.RequestCloudDialogueAsync(
                 CloudDialogueEvent.GasDetected);
-            while (!task.IsCompleted)
-            {
-                yield return null;
-            }
+            yield return WaitUntilCompleted(task);
 
             Assert.That(task.IsFaulted, Is.False);
             Assert.That(task.Result.UsedCloud, Is.False);
@@ -83,20 +77,31 @@ namespace SubTerra.App.Tests.PlayMode.AI
 
             var task = fixture.Presenter.RequestCloudDialogueAsync(
                 CloudDialogueEvent.ManualAnalysis);
-            while (!transport.Started)
-            {
-                yield return null;
-            }
+            yield return WaitUntil(() => transport.Started);
 
             fixture.Presenter.Unbind();
-            while (!task.IsCompleted)
-            {
-                yield return null;
-            }
+            yield return WaitUntilCompleted(task);
 
             Assert.That(task.IsFaulted, Is.False);
             Assert.That(task.Result.WasCancelled, Is.True);
             Assert.That(fixture.DialogueView.DialogueCount, Is.EqualTo(displayedBeforeRequest));
+        }
+
+        private static IEnumerator WaitUntilCompleted(Task task)
+        {
+            yield return WaitUntil(() => task.IsCompleted);
+        }
+
+        private static IEnumerator WaitUntil(System.Func<bool> condition)
+        {
+            const int maxFrames = 120;
+            var frames = 0;
+            while (!condition())
+            {
+                frames++;
+                Assert.That(frames, Is.LessThanOrEqualTo(maxFrames), "PlayMode wait exceeded 120 frames.");
+                yield return null;
+            }
         }
 
         private Fixture CreateFixture(IDialogueTransport transport)
