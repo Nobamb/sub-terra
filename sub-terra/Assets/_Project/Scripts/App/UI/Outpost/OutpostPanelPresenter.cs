@@ -241,10 +241,7 @@ namespace SubTerra.App.UI.Outpost
                 displayName = storageStack?.DisplayName;
             }
 
-            if (string.IsNullOrEmpty(displayName))
-            {
-                displayName = selectedMineralId;
-            }
+            displayName = ItemDisplayNames.PreferDisplay(selectedMineralId, displayName);
 
             var owned = playerStack?.Quantity ?? 0;
             var stored = storageStack?.Quantity ?? 0;
