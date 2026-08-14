@@ -274,27 +274,32 @@ namespace SubTerra.App.Integration
             for (var i = 0; i < status.connectedFacilities.Count; i++)
             {
                 var facility = status.connectedFacilities[i];
-                if (facility == null)
+                if (facility == null || !IsCurrentInteractionFacility(status, facility))
                 {
                     continue;
-                }
-
-                if (facility.buildingId == DataIds.Buildings.ChargerBasic)
-                {
-                    return facility.isActive
-                        ? "상호작용: 장비 충전"
-                        : "충전기 사용 불가: " + FormatReason(facility.inactiveReasonId);
                 }
 
                 if (facility.buildingId == DataIds.Buildings.SettlementBasic)
                 {
                     return facility.isActive
                         ? "상호작용: 광물 정산"
-                        : "정산 콘솔 사용 불가: " + FormatReason(facility.inactiveReasonId);
+                        : string.Empty;
                 }
             }
 
             return string.Empty;
+        }
+
+        private static bool IsCurrentInteractionFacility(
+            OutpostStatusDto status,
+            ConnectedFacilityStatusDto facility)
+        {
+            if (!string.IsNullOrEmpty(status.interactionFacilityInstanceId))
+            {
+                return facility.instanceId == status.interactionFacilityInstanceId;
+            }
+
+            return facility.buildingId == status.interactionFacilityBuildingId;
         }
 
         private static string FormatReason(string reasonId)

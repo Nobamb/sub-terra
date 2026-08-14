@@ -21,6 +21,8 @@ namespace SubTerra.Gameplay.Integration
         [SerializeField] private PowerNetworkSystem powerNetworkSystem;
         [SerializeField] private Transform interactionOrigin;
         [SerializeField, Min(0.1f)] private float facilityInteractionRange = 2f;
+        [SerializeField, Min(0.1f)] private float facilityPowerConnectionRange = 10f;
+        [SerializeField] private Transform elevatorPowerOrigin;
         [SerializeField] private string outpostInstanceId = "outpost.demo";
 
         private IGameplayEventSink eventSink;
@@ -71,6 +73,12 @@ namespace SubTerra.Gameplay.Integration
         public void SetInteractionOrigin(Transform origin)
         {
             interactionOrigin = origin;
+            PublishOutpostStatusIfAvailable();
+        }
+
+        public void SetElevatorPowerOrigin(Transform origin)
+        {
+            elevatorPowerOrigin = origin;
             PublishOutpostStatusIfAvailable();
         }
 
@@ -246,19 +254,61 @@ namespace SubTerra.Gameplay.Integration
                     continue;
                 }
 
+                var usesProximityPower = IsProximityPoweredFacility(instance.BuildingId);
+                var isActive = usesProximityPower
+                    ? IsWithinPowerSupplyRange(node.transform.position)
+                    : node.IsPowered;
+
                 statuses.Add(new ConnectedFacilityStatusDto
                 {
                     instanceId = instance.InstanceId,
                     buildingId = instance.BuildingId,
-                    isActive = node.IsPowered,
-                    inactiveReasonId = node.IsPowered
+                    isActive = isActive,
+                    inactiveReasonId = isActive
                         ? string.Empty
-                        : powerNetworkSystem.IsReachable(node) ? "insufficient_power" : "power_disconnected"
+                        : usesProximityPower || !powerNetworkSystem.IsReachable(node)
+                            ? "power_disconnected"
+                            : "insufficient_power"
                 });
             }
 
             statuses.Sort((left, right) => string.CompareOrdinal(left.instanceId, right.instanceId));
             return statuses;
+        }
+
+        private bool IsWithinPowerSupplyRange(Vector3 facilityPosition)
+        {
+            var squaredRange = facilityPowerConnectionRange * facilityPowerConnectionRange;
+            if (elevatorPowerOrigin != null)
+            {
+                var elevatorDelta = (Vector2)(facilityPosition - elevatorPowerOrigin.position);
+                if (elevatorDelta.sqrMagnitude <= squaredRange)
+                {
+                    return true;
+                }
+            }
+
+            foreach (PowerNode node in powerNetworkSystem.Nodes)
+            {
+                if (node == null || !node.IsPowerSource)
+                {
+                    continue;
+                }
+
+                var sourceDelta = (Vector2)(facilityPosition - node.transform.position);
+                if (sourceDelta.sqrMagnitude <= squaredRange)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool IsProximityPoweredFacility(string buildingId)
+        {
+            return buildingId == "building.charger.basic"
+                || buildingId == "building.settlement.basic";
         }
 
         private void Publish(GameplayEventDto gameplayEvent) => eventSink?.Publish(gameplayEvent);

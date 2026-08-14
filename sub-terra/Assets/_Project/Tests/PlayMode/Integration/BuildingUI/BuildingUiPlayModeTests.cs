@@ -92,7 +92,7 @@ namespace SubTerra.App.Tests.PlayMode.BuildingUI
             Assert.That(bridge.PowerStatus.IsConnected, Is.True);
             Assert.That(bridge.PowerStatus.Supply, Is.EqualTo(7.5f));
             Assert.That(bridge.PowerStatus.Demand, Is.EqualTo(3.25f));
-            Assert.That(state.InteractionPrompt, Does.Contain("장비 충전"));
+            Assert.That(state.InteractionPrompt, Is.Empty);
             UnityEngine.Object.Destroy(host);
             yield return null;
         }

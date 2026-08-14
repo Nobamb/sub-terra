@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using SubTerra.App.Outpost;
@@ -20,6 +21,10 @@ namespace SubTerra.App.UI.Outpost
         [SerializeField] private TMP_Text resultText;
         [SerializeField] private GameObject tutorialRoot;
         [SerializeField] private Button[] operationButtons;
+
+        private GameObject interactionMessageRoot;
+        private TMP_Text interactionMessageText;
+        private Coroutine hideInteractionMessageRoutine;
 
         public void SetVisible(bool visible)
         {
@@ -112,6 +117,26 @@ namespace SubTerra.App.UI.Outpost
             }
         }
 
+        public void ShowTemporaryMessage(string message, float durationSeconds)
+        {
+            EnsureInteractionMessage();
+            if (interactionMessageRoot == null || interactionMessageText == null)
+            {
+                return;
+            }
+
+            interactionMessageText.text = message ?? string.Empty;
+            interactionMessageRoot.SetActive(true);
+            interactionMessageRoot.transform.SetAsLastSibling();
+            if (hideInteractionMessageRoutine != null)
+            {
+                StopCoroutine(hideInteractionMessageRoutine);
+            }
+
+            hideInteractionMessageRoutine = StartCoroutine(
+                HideInteractionMessageAfter(Mathf.Max(0f, durationSeconds)));
+        }
+
         public void SetTutorialVisible(bool visible)
         {
             if (tutorialRoot != null)
@@ -145,6 +170,70 @@ namespace SubTerra.App.UI.Outpost
                 && storageCargoText != null
                 && checkpointText != null
                 && resultText != null;
+        }
+
+        private void EnsureInteractionMessage()
+        {
+            if (interactionMessageRoot != null && interactionMessageText != null)
+            {
+                return;
+            }
+
+            var canvas = GetComponentInParent<Canvas>(true);
+            var parent = canvas != null ? canvas.transform : transform.parent;
+            if (parent == null)
+            {
+                return;
+            }
+
+            interactionMessageRoot = new GameObject(
+                "FacilityPowerWarning_Runtime",
+                typeof(RectTransform),
+                typeof(CanvasRenderer),
+                typeof(Image));
+            var rootRect = interactionMessageRoot.GetComponent<RectTransform>();
+            rootRect.SetParent(parent, false);
+            rootRect.anchorMin = new Vector2(0.5f, 0.5f);
+            rootRect.anchorMax = new Vector2(0.5f, 0.5f);
+            rootRect.pivot = new Vector2(0.5f, 0.5f);
+            rootRect.anchoredPosition = Vector2.zero;
+            rootRect.sizeDelta = new Vector2(760f, 150f);
+            interactionMessageRoot.GetComponent<Image>().color = new Color(0.06f, 0.08f, 0.12f, 0.94f);
+
+            var labelObject = new GameObject(
+                "Message",
+                typeof(RectTransform),
+                typeof(CanvasRenderer),
+                typeof(TextMeshProUGUI));
+            var labelRect = labelObject.GetComponent<RectTransform>();
+            labelRect.SetParent(rootRect, false);
+            labelRect.anchorMin = Vector2.zero;
+            labelRect.anchorMax = Vector2.one;
+            labelRect.offsetMin = new Vector2(28f, 18f);
+            labelRect.offsetMax = new Vector2(-28f, -18f);
+
+            interactionMessageText = labelObject.GetComponent<TextMeshProUGUI>();
+            interactionMessageText.alignment = TextAlignmentOptions.Center;
+            interactionMessageText.fontSize = 25f;
+            interactionMessageText.color = Color.white;
+            interactionMessageText.enableWordWrapping = true;
+            if (resultText != null && resultText.font != null)
+            {
+                interactionMessageText.font = resultText.font;
+            }
+
+            interactionMessageRoot.SetActive(false);
+        }
+
+        private IEnumerator HideInteractionMessageAfter(float durationSeconds)
+        {
+            yield return new WaitForSecondsRealtime(durationSeconds);
+            if (interactionMessageRoot != null)
+            {
+                interactionMessageRoot.SetActive(false);
+            }
+
+            hideInteractionMessageRoutine = null;
         }
 
         private static string FormatReason(string reasonId)

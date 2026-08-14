@@ -606,6 +606,9 @@ namespace SubTerra.App.Integration
 
             if (gameplayEventBridge != null)
             {
+                var elevator = Resolve<ElevatorController>(null);
+                gameplayEventBridge.SetElevatorPowerOrigin(
+                    elevator != null ? elevator.transform : null);
                 gameplayEventBridge.SetInteractionOrigin(
                     playerMovement != null ? playerMovement.transform : null);
             }

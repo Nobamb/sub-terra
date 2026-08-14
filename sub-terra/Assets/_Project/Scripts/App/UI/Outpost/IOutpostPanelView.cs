@@ -12,6 +12,7 @@ namespace SubTerra.App.UI.Outpost
         void SetCargo(string playerCargo, string storageCargo);
         void SetCheckpoint(string checkpoint);
         void SetResult(string message, bool isError);
+        void ShowTemporaryMessage(string message, float durationSeconds);
         void SetTutorialVisible(bool visible);
         void SetBusy(bool busy);
     }

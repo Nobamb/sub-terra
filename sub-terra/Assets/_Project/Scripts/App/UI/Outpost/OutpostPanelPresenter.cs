@@ -53,6 +53,15 @@ namespace SubTerra.App.UI.Outpost
 
         public void ToggleInteractionPanel()
         {
+            if (service != null
+                && service.TryGetPowerDisconnectedInteractionMessage(out var message))
+            {
+                interactionPanelRequested = false;
+                view?.SetVisible(false);
+                view?.ShowTemporaryMessage(message, 3f);
+                return;
+            }
+
             if (service == null || !service.IsOutpostCoreInteraction)
             {
                 interactionPanelRequested = false;

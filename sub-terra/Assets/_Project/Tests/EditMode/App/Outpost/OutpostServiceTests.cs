@@ -31,6 +31,34 @@ namespace SubTerra.App.Tests.Outpost
         }
 
         [Test]
+        public void PromptB51_ChargerNearElevator_DoesNotRequireOutpostGlobalActiveFlag()
+        {
+            var system = CreateSystem();
+            system.State.SetCurrentEnergy(10);
+            system.Service.ApplyRuntimeStatus(new OutpostStatusDto
+            {
+                isActive = false,
+                isInInteractionRange = true,
+                interactionFacilityInstanceId = "charger.elevator",
+                interactionFacilityBuildingId = DataIds.Buildings.ChargerBasic,
+                connectedFacilities = new List<ConnectedFacilityStatusDto>
+                {
+                    new ConnectedFacilityStatusDto
+                    {
+                        instanceId = "charger.elevator",
+                        buildingId = DataIds.Buildings.ChargerBasic,
+                        isActive = true
+                    }
+                }
+            });
+
+            var result = system.Service.TryCharge();
+
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(system.State.Player.Energy, Is.EqualTo(system.State.Player.MaxEnergy));
+        }
+
+        [Test]
         public void H_F02_InactiveRuntime_ShowsReason_AndDoesNotChangeEnergy()
         {
             var system = CreateSystem();

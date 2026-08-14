@@ -68,6 +68,49 @@ namespace SubTerra.App.Outpost
             RaiseSnapshotChanged();
         }
 
+        public bool TryGetPowerDisconnectedInteractionMessage(out string message)
+        {
+            message = string.Empty;
+            if (runtimeStatus == null || !runtimeStatus.isInInteractionRange)
+            {
+                return false;
+            }
+
+            var buildingId = runtimeStatus.interactionFacilityBuildingId;
+            var facilityName = buildingId == DataIds.Buildings.ChargerBasic
+                ? "충전기"
+                : buildingId == DataIds.Buildings.SettlementBasic
+                    ? "정산 콘솔"
+                    : string.Empty;
+            if (string.IsNullOrEmpty(facilityName) || runtimeStatus.connectedFacilities == null)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < runtimeStatus.connectedFacilities.Count; i++)
+            {
+                var facility = runtimeStatus.connectedFacilities[i];
+                if (facility == null
+                    || facility.buildingId != buildingId
+                    || !IsCurrentInteractionFacility(facility))
+                {
+                    continue;
+                }
+
+                if (facility.isActive || facility.inactiveReasonId != "power_disconnected")
+                {
+                    return false;
+                }
+
+                message = facilityName
+                    + " 사용불가, 전력망 미연결\n"
+                    + " 엘레베이터 또는 전진기지 코어 근처에서 전력망 연결이 가능합니다.";
+                return true;
+            }
+
+            return false;
+        }
+
         public OutpostOperationResult TryCharge()
         {
             if (!TryValidateFacility(
@@ -384,8 +427,8 @@ namespace SubTerra.App.Outpost
             }
 
             if (runtimeStatus == null
-                || !runtimeStatus.isActive
-                || !runtimeStatus.isInInteractionRange)
+                || !runtimeStatus.isInInteractionRange
+                || (!IsProximityPoweredFacility(buildingId) && !runtimeStatus.isActive))
             {
                 failure = Fail(
                     OutpostOperationStatus.OutpostUnavailable,
@@ -433,6 +476,12 @@ namespace SubTerra.App.Outpost
                 kind,
                 "연결된 시설이 없습니다.");
             return false;
+        }
+
+        private static bool IsProximityPoweredFacility(string buildingId)
+        {
+            return buildingId == DataIds.Buildings.ChargerBasic
+                || buildingId == DataIds.Buildings.SettlementBasic;
         }
 
         private bool IsCurrentInteractionFacility(ConnectedFacilityStatusDto facility)

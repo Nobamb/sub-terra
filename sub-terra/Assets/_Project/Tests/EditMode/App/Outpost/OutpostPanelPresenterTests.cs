@@ -72,6 +72,7 @@ namespace SubTerra.App.Tests.Outpost
             presenter.ToggleInteractionPanel();
 
             Assert.That(view.Visible, Is.False);
+            Assert.That(view.TemporaryMessage, Is.Null);
             presenter.Unbind();
         }
 
@@ -127,6 +128,73 @@ namespace SubTerra.App.Tests.Outpost
             presenter.Unbind();
         }
 
+        [Test]
+        public void ToggleInteractionPanel_DisconnectedCharger_ShowsCenteredMessageForThreeSeconds()
+        {
+            var catalog = new InMemoryMineralCatalog();
+            var state = GameState.CreateNew();
+            var service = new OutpostService(new InventoryService(catalog, 100f, state), catalog, state);
+            var view = new RecordingView();
+            var presenter = new OutpostPanelPresenter(view);
+            presenter.Bind(service);
+            service.ApplyRuntimeStatus(new OutpostStatusDto
+            {
+                isInInteractionRange = true,
+                interactionFacilityInstanceId = "charger.1",
+                interactionFacilityBuildingId = DataIds.Buildings.ChargerBasic,
+                connectedFacilities = new List<ConnectedFacilityStatusDto>
+                {
+                    new ConnectedFacilityStatusDto
+                    {
+                        instanceId = "charger.1",
+                        buildingId = DataIds.Buildings.ChargerBasic,
+                        isActive = false,
+                        inactiveReasonId = "power_disconnected"
+                    }
+                }
+            });
+
+            presenter.ToggleInteractionPanel();
+
+            Assert.That(view.Visible, Is.False);
+            Assert.That(view.TemporaryMessage, Is.EqualTo(
+                "충전기 사용불가, 전력망 미연결\n"
+                + " 엘레베이터 또는 전진기지 코어 근처에서 전력망 연결이 가능합니다."));
+            Assert.That(view.TemporaryMessageDuration, Is.EqualTo(3f));
+            presenter.Unbind();
+        }
+
+        [Test]
+        public void ToggleInteractionPanel_DisconnectedSettlement_UsesSettlementName()
+        {
+            var catalog = new InMemoryMineralCatalog();
+            var state = GameState.CreateNew();
+            var service = new OutpostService(new InventoryService(catalog, 100f, state), catalog, state);
+            var view = new RecordingView();
+            var presenter = new OutpostPanelPresenter(view);
+            presenter.Bind(service);
+            service.ApplyRuntimeStatus(new OutpostStatusDto
+            {
+                isInInteractionRange = true,
+                interactionFacilityInstanceId = "settlement.1",
+                interactionFacilityBuildingId = DataIds.Buildings.SettlementBasic,
+                connectedFacilities = new List<ConnectedFacilityStatusDto>
+                {
+                    new ConnectedFacilityStatusDto
+                    {
+                        instanceId = "settlement.1",
+                        buildingId = DataIds.Buildings.SettlementBasic,
+                        inactiveReasonId = "power_disconnected"
+                    }
+                }
+            });
+
+            presenter.ToggleInteractionPanel();
+
+            Assert.That(view.TemporaryMessage, Does.StartWith("정산 콘솔 사용불가"));
+            presenter.Unbind();
+        }
+
         private sealed class RecordingView : IOutpostPanelView
         {
             public bool Visible;
@@ -134,6 +202,8 @@ namespace SubTerra.App.Tests.Outpost
             public string Reason;
             public float Supply;
             public float Consumption;
+            public string TemporaryMessage;
+            public float TemporaryMessageDuration;
 
             public void SetVisible(bool visible) => Visible = visible;
 
@@ -149,6 +219,11 @@ namespace SubTerra.App.Tests.Outpost
             public void SetCargo(string playerCargo, string storageCargo) { }
             public void SetCheckpoint(string checkpoint) { }
             public void SetResult(string message, bool isError) { }
+            public void ShowTemporaryMessage(string message, float durationSeconds)
+            {
+                TemporaryMessage = message;
+                TemporaryMessageDuration = durationSeconds;
+            }
             public void SetTutorialVisible(bool visible) { }
             public void SetBusy(bool busy) { }
         }
