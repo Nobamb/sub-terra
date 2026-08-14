@@ -55,6 +55,42 @@ namespace SubTerra.App.Tests.Outpost
         }
 
         [Test]
+        public void H_F02A_Charge_UsesTheNearbyChargerInsteadOfAnotherActiveCharger()
+        {
+            var system = CreateSystem();
+            var status = CreateActiveStatus();
+            status.interactionFacilityInstanceId = "charger.nearby";
+            status.interactionFacilityBuildingId = DataIds.Buildings.ChargerBasic;
+            status.connectedFacilities.Add(new ConnectedFacilityStatusDto
+            {
+                instanceId = "charger.nearby",
+                buildingId = DataIds.Buildings.ChargerBasic,
+                isActive = false,
+                inactiveReasonId = "power_disconnected"
+            });
+            system.Service.ApplyRuntimeStatus(status);
+
+            var result = system.Service.TryCharge();
+
+            Assert.That(result.Status, Is.EqualTo(OutpostOperationStatus.FacilityUnavailable));
+            Assert.That(result.Message, Is.EqualTo("power_disconnected"));
+        }
+
+        [Test]
+        public void H_F02B_Charge_RejectsWhenTheNearbyFacilityIsNotACharger()
+        {
+            var system = CreateSystem();
+            var status = CreateActiveStatus();
+            status.interactionFacilityInstanceId = "storage.1";
+            status.interactionFacilityBuildingId = DataIds.Buildings.StorageBasic;
+            system.Service.ApplyRuntimeStatus(status);
+
+            var result = system.Service.TryCharge();
+
+            Assert.That(result.Status, Is.EqualTo(OutpostOperationStatus.FacilityUnavailable));
+        }
+
+        [Test]
         public void H_F03_DepositAndWithdraw_PreserveTotals_AndWeights()
         {
             var system = CreateSystem();
