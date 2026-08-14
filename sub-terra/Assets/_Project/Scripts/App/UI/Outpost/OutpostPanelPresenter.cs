@@ -53,8 +53,7 @@ namespace SubTerra.App.UI.Outpost
 
         public void ToggleInteractionPanel()
         {
-            var snapshot = service?.GetSnapshot();
-            if (snapshot == null || !snapshot.IsInInteractionRange)
+            if (service == null || !service.IsOutpostCoreInteraction)
             {
                 interactionPanelRequested = false;
                 view?.SetVisible(false);
@@ -149,12 +148,12 @@ namespace SubTerra.App.UI.Outpost
                 return;
             }
 
-            if (!snapshot.IsInInteractionRange)
+            if (service == null || !service.IsOutpostCoreInteraction)
             {
                 interactionPanelRequested = false;
             }
 
-            view?.SetVisible(snapshot.IsInInteractionRange && interactionPanelRequested);
+            view?.SetVisible(service != null && service.IsOutpostCoreInteraction && interactionPanelRequested);
             view?.SetPower(
                 snapshot.PowerSupply,
                 snapshot.PowerConsumption,

@@ -23,7 +23,16 @@ namespace SubTerra.App.Outpost
         private int settlementSequence;
 
         public OutpostState State => state;
-        public bool IsPanelOpen => runtimeStatus != null && runtimeStatus.isInInteractionRange;
+        public bool IsPanelOpen => IsOutpostCoreInteraction;
+
+        /// <summary>
+        /// The outpost panel is only valid while the player is interacting with an outpost core.
+        /// Other facilities share the proximity range, but must not open this panel.
+        /// </summary>
+        public bool IsOutpostCoreInteraction =>
+            runtimeStatus != null
+            && runtimeStatus.isInInteractionRange
+            && runtimeStatus.interactionFacilityBuildingId == DataIds.Buildings.OutpostCoreBasic;
 
         public event Action<OutpostSnapshot> SnapshotChanged;
         public event Action<OutpostOperationResult> OperationCompleted;
@@ -390,6 +399,16 @@ namespace SubTerra.App.Outpost
                 for (var i = 0; i < runtimeStatus.connectedFacilities.Count; i++)
                 {
                     var facility = runtimeStatus.connectedFacilities[i];
+                    if (facility == null || facility.buildingId != buildingId)
+                    {
+                        continue;
+                    }
+
+                    if (!IsCurrentInteractionFacility(facility))
+                    {
+                        continue;
+                    }
+
                     if (facility != null && facility.buildingId == buildingId)
                     {
                         if (facility.isActive)
@@ -414,6 +433,18 @@ namespace SubTerra.App.Outpost
                 kind,
                 "연결된 시설이 없습니다.");
             return false;
+        }
+
+        private bool IsCurrentInteractionFacility(ConnectedFacilityStatusDto facility)
+        {
+            if (string.IsNullOrEmpty(runtimeStatus.interactionFacilityInstanceId)
+                && string.IsNullOrEmpty(runtimeStatus.interactionFacilityBuildingId))
+            {
+                return true;
+            }
+
+            return facility.instanceId == runtimeStatus.interactionFacilityInstanceId
+                && facility.buildingId == runtimeStatus.interactionFacilityBuildingId;
         }
 
         private bool TryValidateMineralRequest(

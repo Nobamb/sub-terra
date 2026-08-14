@@ -28,6 +28,8 @@ namespace SubTerra.App.Tests.Outpost
                 outpostInstanceId = "outpost.1",
                 isActive = false,
                 isInInteractionRange = true,
+                interactionFacilityInstanceId = "outpost.1",
+                interactionFacilityBuildingId = DataIds.Buildings.OutpostCoreBasic,
                 inactiveReasonId = "power_disconnected",
                 totalPowerSupply = 4f,
                 totalPowerConsumption = 7f,
@@ -44,6 +46,31 @@ namespace SubTerra.App.Tests.Outpost
             Assert.That(view.Visible, Is.True);
 
             service.ClearRuntimeStatus();
+            Assert.That(view.Visible, Is.False);
+            presenter.Unbind();
+        }
+
+        [Test]
+        public void RuntimeRange_NonOutpostFacility_DoesNotOpenOutpostPanel()
+        {
+            var catalog = new InMemoryMineralCatalog();
+            var state = GameState.CreateNew();
+            var inventory = new InventoryService(catalog, 100f, state);
+            var service = new OutpostService(inventory, catalog, state);
+            var view = new RecordingView();
+            var presenter = new OutpostPanelPresenter(view);
+            presenter.Bind(service);
+
+            service.ApplyRuntimeStatus(new OutpostStatusDto
+            {
+                isInInteractionRange = true,
+                interactionFacilityInstanceId = "charger.1",
+                interactionFacilityBuildingId = DataIds.Buildings.ChargerBasic,
+                connectedFacilities = new List<ConnectedFacilityStatusDto>()
+            });
+
+            presenter.ToggleInteractionPanel();
+
             Assert.That(view.Visible, Is.False);
             presenter.Unbind();
         }

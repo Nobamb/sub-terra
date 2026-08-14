@@ -34,6 +34,8 @@ namespace SubTerra.App.Tests.PlayMode.Outpost
                     outpostInstanceId = "outpost.1",
                     isActive = true,
                     isInInteractionRange = true,
+                    interactionFacilityInstanceId = "outpost.1",
+                    interactionFacilityBuildingId = DataIds.Buildings.OutpostCoreBasic,
                     totalPowerSupply = 8f,
                     totalPowerConsumption = 3f,
                     connectedFacilities = new List<ConnectedFacilityStatusDto>()

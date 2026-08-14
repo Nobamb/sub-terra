@@ -27,6 +27,7 @@ namespace SubTerra.Gameplay.Integration
         private PowerNetworkSnapshot latestPowerSnapshot;
         private bool hasPowerSnapshot;
         private bool lastInteractionRange;
+        private string lastInteractionFacilityInstanceId;
 
         private void Awake() => eventSink = eventSinkBehaviour as IGameplayEventSink;
 
@@ -84,7 +85,13 @@ namespace SubTerra.Gameplay.Integration
                 return;
             }
 
-            if (lastInteractionRange != IsInFacilityInteractionRange())
+            var interactionFacility = FindInteractionFacility();
+            var isInInteractionRange = interactionFacility != null;
+            var interactionFacilityInstanceId = interactionFacility != null
+                ? interactionFacility.InstanceId
+                : string.Empty;
+            if (lastInteractionRange != isInInteractionRange
+                || lastInteractionFacilityInstanceId != interactionFacilityInstanceId)
             {
                 PublishOutpostStatusIfAvailable();
             }
@@ -145,13 +152,21 @@ namespace SubTerra.Gameplay.Integration
                 return;
             }
 
-            var isInInteractionRange = IsInFacilityInteractionRange();
+            var interactionFacility = FindInteractionFacility();
+            var isInInteractionRange = interactionFacility != null;
             lastInteractionRange = isInInteractionRange;
+            lastInteractionFacilityInstanceId = interactionFacility != null
+                ? interactionFacility.InstanceId
+                : string.Empty;
             var status = new OutpostStatusDto
             {
                 outpostInstanceId = outpostInstanceId,
                 isActive = latestPowerSnapshot.Supply > 0,
                 isInInteractionRange = isInInteractionRange,
+                interactionFacilityInstanceId = lastInteractionFacilityInstanceId,
+                interactionFacilityBuildingId = interactionFacility != null
+                    ? interactionFacility.BuildingId
+                    : string.Empty,
                 totalPowerSupply = latestPowerSnapshot.Supply,
                 totalPowerConsumption = latestPowerSnapshot.Demand,
                 connectedFacilities = BuildFacilityStatuses()
@@ -159,14 +174,16 @@ namespace SubTerra.Gameplay.Integration
             Publish(new GameplayEventDto { type = GameplayEventType.OutpostStatusChanged, instanceId = outpostInstanceId, outpostStatus = status });
         }
 
-        private bool IsInFacilityInteractionRange()
+        private BuildingInstance FindInteractionFacility()
         {
             if (interactionOrigin == null || powerNetworkSystem == null)
             {
-                return false;
+                return null;
             }
 
             var squaredRange = facilityInteractionRange * facilityInteractionRange;
+            BuildingInstance nearestFacility = null;
+            var nearestSquaredDistance = float.MaxValue;
             foreach (PowerNode node in powerNetworkSystem.Nodes)
             {
                 if (node == null)
@@ -181,13 +198,17 @@ namespace SubTerra.Gameplay.Integration
                 }
 
                 var delta = (Vector2)(node.transform.position - interactionOrigin.position);
-                if (delta.sqrMagnitude <= squaredRange)
+                var squaredDistance = delta.sqrMagnitude;
+                if (squaredDistance > squaredRange || squaredDistance >= nearestSquaredDistance)
                 {
-                    return true;
+                    continue;
                 }
+
+                nearestFacility = instance;
+                nearestSquaredDistance = squaredDistance;
             }
 
-            return false;
+            return nearestFacility;
         }
 
         private static bool IsInteractionFacility(string buildingId)
