@@ -8,14 +8,23 @@ using UnityEngine.UI;
 
 namespace SubTerra.App.UI.Outpost
 {
-    /// <summary>전력, 시설 상태, 화물과 체크포인트를 표시하는 전진기지 View.</summary>
+    /// <summary>시설 역할별 내용을 표시하는 전진기지 상호작용 View.</summary>
     public sealed class OutpostPanelView : MonoBehaviour, IOutpostPanelView
     {
         [SerializeField] private GameObject panelRoot;
+        [SerializeField] private TMP_Text titleText;
+        [SerializeField] private GameObject coreRoot;
+        [SerializeField] private GameObject chargerRoot;
+        [SerializeField] private GameObject settlementRoot;
+        [SerializeField] private GameObject storageRoot;
+        [SerializeField] private GameObject transactionRoot;
+        [SerializeField] private GameObject storageActionsRoot;
+        [SerializeField] private GameObject settlementActionsRoot;
         [SerializeField] private TMP_Text powerText;
         [SerializeField] private TMP_Text facilitiesText;
         [SerializeField] private TMP_Text playerCargoText;
         [SerializeField] private TMP_Text storageCargoText;
+        [SerializeField] private TMP_Text settlementCargoText;
         [SerializeField] private TMP_Text checkpointText;
         [SerializeField] private TMP_Text selectedMineralText;
         [SerializeField] private TMP_Text resultText;
@@ -29,6 +38,43 @@ namespace SubTerra.App.UI.Outpost
         public void SetVisible(bool visible)
         {
             (panelRoot != null ? panelRoot : gameObject).SetActive(visible);
+        }
+
+        public void SetMode(OutpostPanelMode mode)
+        {
+            SetActive(coreRoot, mode == OutpostPanelMode.Core);
+            SetActive(chargerRoot, mode == OutpostPanelMode.Charger);
+            SetActive(settlementRoot, mode == OutpostPanelMode.Settlement);
+            SetActive(storageRoot, mode == OutpostPanelMode.Storage);
+            SetActive(
+                transactionRoot,
+                mode == OutpostPanelMode.Settlement || mode == OutpostPanelMode.Storage);
+            SetActive(storageActionsRoot, mode == OutpostPanelMode.Storage);
+            SetActive(settlementActionsRoot, mode == OutpostPanelMode.Settlement);
+
+            if (titleText == null)
+            {
+                return;
+            }
+
+            switch (mode)
+            {
+                case OutpostPanelMode.Core:
+                    titleText.text = "전진기지 코어";
+                    break;
+                case OutpostPanelMode.Charger:
+                    titleText.text = "충전기";
+                    break;
+                case OutpostPanelMode.Settlement:
+                    titleText.text = "정산 콘솔";
+                    break;
+                case OutpostPanelMode.Storage:
+                    titleText.text = "보관함";
+                    break;
+                default:
+                    titleText.text = string.Empty;
+                    break;
+            }
         }
 
         public void SetPower(
@@ -61,32 +107,46 @@ namespace SubTerra.App.UI.Outpost
             {
                 for (var i = 0; i < facilities.Count; i++)
                 {
-                    if (i > 0)
+                    var facility = facilities[i];
+                    if (!facility.IsActive)
+                    {
+                        continue;
+                    }
+
+                    if (builder.Length > 0)
                     {
                         builder.AppendLine();
                     }
 
-                    var facility = facilities[i];
-                    builder.Append(facility.BuildingId)
-                        .Append(facility.IsActive
-                            ? " - 활성"
-                            : " - 비활성: " + FormatReason(facility.InactiveReasonId));
+                    builder.Append("● ")
+                        .Append(FormatFacilityName(facility.BuildingId))
+                        .Append("  [활성]");
                 }
             }
 
-            facilitiesText.text = builder.Length == 0 ? "연결된 시설 없음" : builder.ToString();
+            facilitiesText.text = builder.Length == 0
+                ? "활성화된 주변 시설 없음"
+                : builder.ToString();
         }
 
         public void SetCargo(string playerCargo, string storageCargo)
         {
             if (playerCargoText != null)
             {
-                playerCargoText.text = "플레이어: " + (playerCargo ?? string.Empty);
+                playerCargoText.text = "보유 자원: " + (playerCargo ?? string.Empty);
             }
 
             if (storageCargoText != null)
             {
-                storageCargoText.text = "보관함: " + (storageCargo ?? string.Empty);
+                storageCargoText.text = "보관 자원: " + (storageCargo ?? string.Empty);
+            }
+        }
+
+        public void SetSettlementCargo(string cargo)
+        {
+            if (settlementCargoText != null)
+            {
+                settlementCargoText.text = cargo ?? string.Empty;
             }
         }
 
@@ -98,11 +158,11 @@ namespace SubTerra.App.UI.Outpost
             }
         }
 
-        public void SetSelectedMineral(string mineralId)
+        public void SetSelectedMineral(string summary)
         {
             if (selectedMineralText != null)
             {
-                selectedMineralText.text = "선택: " + (mineralId ?? string.Empty);
+                selectedMineralText.text = summary ?? string.Empty;
             }
         }
 
@@ -164,12 +224,28 @@ namespace SubTerra.App.UI.Outpost
         public bool HasRequiredReferences()
         {
             return panelRoot != null
+                && titleText != null
+                && coreRoot != null
+                && chargerRoot != null
+                && settlementRoot != null
+                && storageRoot != null
+                && transactionRoot != null
                 && powerText != null
                 && facilitiesText != null
                 && playerCargoText != null
                 && storageCargoText != null
+                && settlementCargoText != null
                 && checkpointText != null
+                && selectedMineralText != null
                 && resultText != null;
+        }
+
+        private static void SetActive(GameObject target, bool active)
+        {
+            if (target != null)
+            {
+                target.SetActive(active);
+            }
         }
 
         private void EnsureInteractionMessage()
@@ -250,6 +326,25 @@ namespace SubTerra.App.UI.Outpost
                     return "전진기지 코어 비활성";
                 default:
                     return string.IsNullOrEmpty(reasonId) ? "원인 정보 없음" : reasonId;
+            }
+        }
+
+        private static string FormatFacilityName(string buildingId)
+        {
+            switch (buildingId)
+            {
+                case "building.charger.basic":
+                    return "충전기";
+                case "building.storage.basic":
+                    return "보관함";
+                case "building.settlement.basic":
+                    return "정산 콘솔";
+                case "building.light.basic":
+                    return "조명";
+                case "building.support.basic":
+                    return "버팀목";
+                default:
+                    return string.IsNullOrEmpty(buildingId) ? "알 수 없는 시설" : buildingId;
             }
         }
     }

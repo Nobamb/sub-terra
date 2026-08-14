@@ -5,6 +5,7 @@ using SubTerra.App.Outpost;
 using SubTerra.App.UI.Outpost;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace SubTerra.App.Tests.Outpost
 {
@@ -52,6 +53,27 @@ namespace SubTerra.App.Tests.Outpost
             var view = prefab.GetComponent<OutpostPanelView>();
             Assert.That(view, Is.Not.Null);
             Assert.That(view.HasRequiredReferences(), Is.True);
+        }
+
+        [Test]
+        public void PromptB52_OutpostPanel_HasSeparateFacilityModesAndScrollableLists()
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                "Assets/_Project/Prefabs/UI/OutpostPanel.prefab");
+
+            Assert.That(prefab, Is.Not.Null);
+            var panelRoot = prefab.transform.Find("PanelRoot");
+            Assert.That(panelRoot, Is.Not.Null);
+            Assert.That(panelRoot.Find("CoreRoot"), Is.Not.Null);
+            Assert.That(panelRoot.Find("ChargerRoot"), Is.Not.Null);
+            Assert.That(panelRoot.Find("SettlementRoot"), Is.Not.Null);
+            Assert.That(panelRoot.Find("StorageRoot"), Is.Not.Null);
+            Assert.That(panelRoot.Find("TransactionRoot"), Is.Not.Null);
+
+            var scrollRects = prefab.GetComponentsInChildren<ScrollRect>(true);
+            Assert.That(scrollRects.Any(scroll => scroll.name == "FacilitiesScroll"), Is.True);
+            Assert.That(scrollRects.Any(scroll => scroll.name == "SettlementCargoScroll"), Is.True);
+            Assert.That(scrollRects.All(scroll => !scroll.horizontal && scroll.vertical), Is.True);
         }
     }
 }

@@ -51,7 +51,7 @@ namespace SubTerra.App.Tests.Outpost
         }
 
         [Test]
-        public void RuntimeRange_NonOutpostFacility_DoesNotOpenOutpostPanel()
+        public void RuntimeRange_Charger_OpensChargerPanel()
         {
             var catalog = new InMemoryMineralCatalog();
             var state = GameState.CreateNew();
@@ -66,12 +66,21 @@ namespace SubTerra.App.Tests.Outpost
                 isInInteractionRange = true,
                 interactionFacilityInstanceId = "charger.1",
                 interactionFacilityBuildingId = DataIds.Buildings.ChargerBasic,
-                connectedFacilities = new List<ConnectedFacilityStatusDto>()
+                connectedFacilities = new List<ConnectedFacilityStatusDto>
+                {
+                    new ConnectedFacilityStatusDto
+                    {
+                        instanceId = "charger.1",
+                        buildingId = DataIds.Buildings.ChargerBasic,
+                        isActive = true
+                    }
+                }
             });
 
             presenter.ToggleInteractionPanel();
 
-            Assert.That(view.Visible, Is.False);
+            Assert.That(view.Visible, Is.True);
+            Assert.That(view.Mode, Is.EqualTo(OutpostPanelMode.Charger));
             Assert.That(view.TemporaryMessage, Is.Null);
             presenter.Unbind();
         }
@@ -107,7 +116,8 @@ namespace SubTerra.App.Tests.Outpost
 
             Assert.That(view.Visible, Is.False);
             presenter.ToggleInteractionPanel();
-            Assert.That(view.Visible, Is.False);
+            Assert.That(view.Visible, Is.True);
+            Assert.That(view.Mode, Is.EqualTo(OutpostPanelMode.Charger));
             presenter.Unbind();
         }
 
@@ -195,6 +205,45 @@ namespace SubTerra.App.Tests.Outpost
             presenter.Unbind();
         }
 
+        [TestCase(DataIds.Buildings.StorageBasic, OutpostPanelMode.Storage)]
+        [TestCase(DataIds.Buildings.SettlementBasic, OutpostPanelMode.Settlement)]
+        public void PromptB52_Interaction_OpensFacilitySpecificPanel(
+            string buildingId,
+            OutpostPanelMode expectedMode)
+        {
+            var catalog = new InMemoryMineralCatalog();
+            var state = GameState.CreateNew();
+            var service = new OutpostService(
+                new InventoryService(catalog, 100f, state),
+                catalog,
+                state);
+            var view = new RecordingView();
+            var presenter = new OutpostPanelPresenter(view);
+            presenter.Bind(service);
+            service.ApplyRuntimeStatus(new OutpostStatusDto
+            {
+                isActive = true,
+                isInInteractionRange = true,
+                interactionFacilityInstanceId = "facility.1",
+                interactionFacilityBuildingId = buildingId,
+                connectedFacilities = new List<ConnectedFacilityStatusDto>
+                {
+                    new ConnectedFacilityStatusDto
+                    {
+                        instanceId = "facility.1",
+                        buildingId = buildingId,
+                        isActive = true
+                    }
+                }
+            });
+
+            presenter.ToggleInteractionPanel();
+
+            Assert.That(view.Visible, Is.True);
+            Assert.That(view.Mode, Is.EqualTo(expectedMode));
+            presenter.Unbind();
+        }
+
         private sealed class RecordingView : IOutpostPanelView
         {
             public bool Visible;
@@ -204,8 +253,10 @@ namespace SubTerra.App.Tests.Outpost
             public float Consumption;
             public string TemporaryMessage;
             public float TemporaryMessageDuration;
+            public OutpostPanelMode Mode;
 
             public void SetVisible(bool visible) => Visible = visible;
+            public void SetMode(OutpostPanelMode mode) => Mode = mode;
 
             public void SetPower(float supply, float consumption, bool active, string inactiveReasonId)
             {
@@ -217,7 +268,9 @@ namespace SubTerra.App.Tests.Outpost
 
             public void SetFacilities(IReadOnlyList<OutpostFacilityReadModel> facilities) { }
             public void SetCargo(string playerCargo, string storageCargo) { }
+            public void SetSettlementCargo(string cargo) { }
             public void SetCheckpoint(string checkpoint) { }
+            public void SetSelectedMineral(string summary) { }
             public void SetResult(string message, bool isError) { }
             public void ShowTemporaryMessage(string message, float durationSeconds)
             {

@@ -28,6 +28,10 @@ namespace SubTerra.App.UI.Outpost
             }
 
             presenter = new OutpostPanelPresenter(view);
+            if (quantityInput != null)
+            {
+                quantityInput.onValueChanged.AddListener(OnQuantityChanged);
+            }
         }
 
         private void OnEnable()
@@ -49,6 +53,11 @@ namespace SubTerra.App.UI.Outpost
 
         private void OnDestroy()
         {
+            if (quantityInput != null)
+            {
+                quantityInput.onValueChanged.RemoveListener(OnQuantityChanged);
+            }
+
             presenter?.Unbind();
             presenter = null;
         }
@@ -66,8 +75,17 @@ namespace SubTerra.App.UI.Outpost
         public void SelectMineral(string mineralId)
         {
             selectedMineralId = mineralId ?? string.Empty;
-            view?.SetSelectedMineral(selectedMineralId);
+            if (quantityInput != null)
+            {
+                quantityInput.text = "1";
+            }
+
+            presenter?.SelectMineral(selectedMineralId);
         }
+
+        public void SetQuantityOne() => SetQuantity(1);
+        public void SetQuantityFive() => SetQuantity(5);
+        public void SetQuantityTen() => SetQuantity(10);
 
         public void Charge()
         {
@@ -82,6 +100,11 @@ namespace SubTerra.App.UI.Outpost
         public void Withdraw()
         {
             presenter?.RequestWithdraw(selectedMineralId, ReadQuantity());
+        }
+
+        public void SellSelected()
+        {
+            presenter?.RequestSellSelected(selectedMineralId, ReadQuantity());
         }
 
         public void SettlePlayerCargo()
@@ -113,6 +136,21 @@ namespace SubTerra.App.UI.Outpost
                 && int.TryParse(quantityInput.text, out var quantity)
                     ? quantity
                     : 0;
+        }
+
+        private void SetQuantity(int quantity)
+        {
+            if (quantityInput != null)
+            {
+                quantityInput.text = quantity.ToString();
+            }
+
+            presenter?.SetQuantity(quantity);
+        }
+
+        private void OnQuantityChanged(string _)
+        {
+            presenter?.SetQuantity(ReadQuantity());
         }
     }
 }

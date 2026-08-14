@@ -23,11 +23,18 @@ namespace SubTerra.App.Outpost
         private int settlementSequence;
 
         public OutpostState State => state;
-        public bool IsPanelOpen => IsOutpostCoreInteraction;
+        public bool IsPanelOpen => IsFacilityInteraction;
+        public string InteractionFacilityInstanceId =>
+            runtimeStatus?.interactionFacilityInstanceId ?? string.Empty;
+        public string InteractionFacilityBuildingId =>
+            runtimeStatus?.interactionFacilityBuildingId ?? string.Empty;
+        public bool IsFacilityInteraction =>
+            runtimeStatus != null
+            && runtimeStatus.isInInteractionRange
+            && !string.IsNullOrEmpty(runtimeStatus.interactionFacilityBuildingId);
 
         /// <summary>
-        /// The outpost panel is only valid while the player is interacting with an outpost core.
-        /// Other facilities share the proximity range, but must not open this panel.
+        /// 전진기지 코어 전용 정보 모드가 유효한 상호작용인지 나타낸다.
         /// </summary>
         public bool IsOutpostCoreInteraction =>
             runtimeStatus != null
@@ -269,6 +276,101 @@ namespace SubTerra.App.Outpost
             return TrySettle(source, "outpost-settlement-" + settlementSequence);
         }
 
+        public OutpostOperationResult TrySettlePlayerCargo(string mineralId, int quantity)
+        {
+            settlementSequence++;
+            return TrySettlePlayerCargo(
+                mineralId,
+                quantity,
+                "outpost-settlement-" + settlementSequence);
+        }
+
+        public OutpostOperationResult TrySettlePlayerCargo(
+            string mineralId,
+            int quantity,
+            string settlementId)
+        {
+            const OutpostOperationKind kind = OutpostOperationKind.SettlePlayerCargo;
+            if (!TryValidateFacility(DataIds.Buildings.SettlementBasic, kind, out var failure))
+            {
+                return Complete(failure);
+            }
+
+            if (!TryValidateMineralRequest(
+                    mineralId,
+                    quantity,
+                    kind,
+                    out var info,
+                    out failure))
+            {
+                return Complete(failure);
+            }
+
+            if (string.IsNullOrEmpty(settlementId))
+            {
+                return Complete(Fail(
+                    OutpostOperationStatus.InvalidRequest,
+                    kind,
+                    "정산 ID가 필요합니다."));
+            }
+
+            if (completedSettlementIds.Contains(settlementId))
+            {
+                return Complete(Fail(
+                    OutpostOperationStatus.AlreadyProcessed,
+                    kind,
+                    "이미 처리된 정산입니다."));
+            }
+
+            if (inventory.State.GetQuantity(mineralId) < quantity)
+            {
+                return Complete(Fail(
+                    OutpostOperationStatus.InsufficientQuantity,
+                    kind,
+                    "보유 수량이 부족합니다."));
+            }
+
+            if (info.UnitPrice > 0 && quantity > int.MaxValue / info.UnitPrice)
+            {
+                return Complete(Fail(
+                    OutpostOperationStatus.OverflowRisk,
+                    kind,
+                    "정산 금액 한도를 초과합니다."));
+            }
+
+            var goldGain = info.UnitPrice * quantity;
+            if (gameState.Player.Gold > int.MaxValue - goldGain)
+            {
+                return Complete(Fail(
+                    OutpostOperationStatus.OverflowRisk,
+                    kind,
+                    "골드 한도를 초과합니다."));
+            }
+
+            var reduction = inventory.TryReduceMineral(mineralId, quantity);
+            if (reduction.Status != InventoryMutationStatus.Success)
+            {
+                return Complete(Fail(
+                    OutpostOperationStatus.InsufficientQuantity,
+                    kind,
+                    "플레이어 화물 정산에 실패했습니다."));
+            }
+
+            gameState.AddGold(goldGain);
+            completedSettlementIds.Add(settlementId);
+            var result = Success(
+                kind,
+                mineralId,
+                quantity,
+                goldGain,
+                "정산이 완료되었습니다. +" + goldGain + "G");
+            RaiseSnapshotChanged();
+            Complete(result);
+            AutoSaveRequested?.Invoke(
+                new OutpostAutoSaveRequest(OutpostAutoSaveReason.Settlement, settlementId));
+            return result;
+        }
+
         public OutpostOperationResult TrySettle(
             OutpostSettlementSource source,
             string settlementId)
@@ -469,6 +571,19 @@ namespace SubTerra.App.Outpost
                         return false;
                     }
                 }
+            }
+
+            if (!runtimeStatus.isActive
+                && (runtimeStatus.connectedFacilities == null
+                    || runtimeStatus.connectedFacilities.Count == 0))
+            {
+                failure = Fail(
+                    OutpostOperationStatus.OutpostUnavailable,
+                    kind,
+                    string.IsNullOrEmpty(runtimeStatus.inactiveReasonId)
+                        ? "전진기지를 사용할 수 없습니다."
+                        : runtimeStatus.inactiveReasonId);
+                return false;
             }
 
             failure = Fail(

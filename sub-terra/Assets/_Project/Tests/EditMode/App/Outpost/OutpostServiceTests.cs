@@ -199,6 +199,48 @@ namespace SubTerra.App.Tests.Outpost
         }
 
         [Test]
+        public void PromptB52_SelectedSettlement_SellsOnlyRequestedQuantity()
+        {
+            var system = CreateSystem();
+            system.Inventory.TryAddMineral(Copper, 12);
+            var status = CreateActiveStatus();
+            status.interactionFacilityInstanceId = "settlement.1";
+            status.interactionFacilityBuildingId = DataIds.Buildings.SettlementBasic;
+            system.Service.ApplyRuntimeStatus(status);
+
+            var result = system.Service.TrySettlePlayerCargo(
+                Copper,
+                5,
+                "prompt-b52-selected");
+
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(result.Quantity, Is.EqualTo(5));
+            Assert.That(result.GoldDelta, Is.EqualTo(50));
+            Assert.That(system.Inventory.State.GetQuantity(Copper), Is.EqualTo(7));
+            Assert.That(system.State.Player.Gold, Is.EqualTo(50));
+        }
+
+        [Test]
+        public void PromptB52_SelectedSettlement_FailureDoesNotPartiallyChangeState()
+        {
+            var system = CreateSystem();
+            system.Inventory.TryAddMineral(Copper, 4);
+            var status = CreateActiveStatus();
+            status.interactionFacilityInstanceId = "settlement.1";
+            status.interactionFacilityBuildingId = DataIds.Buildings.SettlementBasic;
+            system.Service.ApplyRuntimeStatus(status);
+
+            var result = system.Service.TrySettlePlayerCargo(
+                Copper,
+                5,
+                "prompt-b52-insufficient");
+
+            Assert.That(result.Status, Is.EqualTo(OutpostOperationStatus.InsufficientQuantity));
+            Assert.That(system.Inventory.State.GetQuantity(Copper), Is.EqualTo(4));
+            Assert.That(system.State.Player.Gold, Is.Zero);
+        }
+
+        [Test]
         public void H_F05_DuplicateInstallation_UpdatesCheckpointAndRequestsSaveOnce()
         {
             var system = CreateSystem();
