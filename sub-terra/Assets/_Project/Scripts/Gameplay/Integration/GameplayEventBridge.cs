@@ -28,6 +28,7 @@ namespace SubTerra.Gameplay.Integration
         private bool hasPowerSnapshot;
         private bool lastInteractionRange;
         private string lastInteractionFacilityInstanceId;
+        private string lastInteractionFacilityBuildingId;
 
         private void Awake() => eventSink = eventSinkBehaviour as IGameplayEventSink;
 
@@ -90,8 +91,12 @@ namespace SubTerra.Gameplay.Integration
             var interactionFacilityInstanceId = interactionFacility != null
                 ? interactionFacility.InstanceId
                 : string.Empty;
+            var interactionFacilityBuildingId = interactionFacility != null
+                ? interactionFacility.BuildingId
+                : string.Empty;
             if (lastInteractionRange != isInInteractionRange
-                || lastInteractionFacilityInstanceId != interactionFacilityInstanceId)
+                || lastInteractionFacilityInstanceId != interactionFacilityInstanceId
+                || lastInteractionFacilityBuildingId != interactionFacilityBuildingId)
             {
                 PublishOutpostStatusIfAvailable();
             }
@@ -158,15 +163,16 @@ namespace SubTerra.Gameplay.Integration
             lastInteractionFacilityInstanceId = interactionFacility != null
                 ? interactionFacility.InstanceId
                 : string.Empty;
+            lastInteractionFacilityBuildingId = interactionFacility != null
+                ? interactionFacility.BuildingId
+                : string.Empty;
             var status = new OutpostStatusDto
             {
                 outpostInstanceId = outpostInstanceId,
                 isActive = latestPowerSnapshot.Supply > 0,
                 isInInteractionRange = isInInteractionRange,
                 interactionFacilityInstanceId = lastInteractionFacilityInstanceId,
-                interactionFacilityBuildingId = interactionFacility != null
-                    ? interactionFacility.BuildingId
-                    : string.Empty,
+                interactionFacilityBuildingId = lastInteractionFacilityBuildingId,
                 totalPowerSupply = latestPowerSnapshot.Supply,
                 totalPowerConsumption = latestPowerSnapshot.Demand,
                 connectedFacilities = BuildFacilityStatuses()
