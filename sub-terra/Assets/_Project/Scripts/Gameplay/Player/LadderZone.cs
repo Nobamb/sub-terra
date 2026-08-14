@@ -17,12 +17,20 @@ namespace SubTerra.Gameplay.Player
 
         private void OnTriggerEnter2D(Collider2D other)
         {
-            other.GetComponentInParent<PlayerMovement>()?.EnterLadder();
+            var movement = other.GetComponentInParent<PlayerMovement>();
+            if (movement != null)
+            {
+                movement.EnterLadder(this);
+            }
         }
 
         private void OnTriggerExit2D(Collider2D other)
         {
-            other.GetComponentInParent<PlayerMovement>()?.ExitLadder();
+            var movement = other.GetComponentInParent<PlayerMovement>();
+            if (movement != null)
+            {
+                movement.ExitLadder(this);
+            }
         }
     }
 }

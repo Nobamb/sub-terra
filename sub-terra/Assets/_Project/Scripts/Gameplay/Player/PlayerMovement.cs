@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace SubTerra.Gameplay.Player
@@ -39,6 +40,7 @@ namespace SubTerra.Gameplay.Player
         /// </summary>
         private bool jumpUsedUntilLand;
         private float gravityBeforeClimbing;
+        private readonly HashSet<LadderZone> activeLadders = new HashSet<LadderZone>();
         private float cargoSpeedMultiplier = 1f;
         private float hazardSpeedMultiplier = 1f;
 
@@ -102,6 +104,21 @@ namespace SubTerra.Gameplay.Player
 
         public void EnterLadder()
         {
+            EnterLadderMode();
+        }
+
+        public void EnterLadder(LadderZone ladder)
+        {
+            if (ladder == null || !activeLadders.Add(ladder))
+            {
+                return;
+            }
+
+            EnterLadderMode();
+        }
+
+        private void EnterLadderMode()
+        {
             if (IsClimbing || body == null)
             {
                 return;
@@ -117,6 +134,22 @@ namespace SubTerra.Gameplay.Player
         }
 
         public void ExitLadder()
+        {
+            activeLadders.Clear();
+            ExitLadderMode();
+        }
+
+        public void ExitLadder(LadderZone ladder)
+        {
+            if (ladder == null || !activeLadders.Remove(ladder) || activeLadders.Count > 0)
+            {
+                return;
+            }
+
+            ExitLadderMode();
+        }
+
+        private void ExitLadderMode()
         {
             if (!IsClimbing || body == null)
             {

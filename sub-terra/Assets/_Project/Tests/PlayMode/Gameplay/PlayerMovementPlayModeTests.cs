@@ -15,6 +15,8 @@ namespace SubTerra.Gameplay.Player.Tests
         private Rigidbody2D body;
         private GameObject groundObject;
         private GameObject wallObject;
+        private GameObject firstLadderObject;
+        private GameObject secondLadderObject;
         private Tile wallTile;
 
         [SetUp]
@@ -32,6 +34,8 @@ namespace SubTerra.Gameplay.Player.Tests
             Object.DestroyImmediate(playerObject);
             Object.DestroyImmediate(groundObject);
             Object.DestroyImmediate(wallObject);
+            Object.DestroyImmediate(firstLadderObject);
+            Object.DestroyImmediate(secondLadderObject);
             Object.DestroyImmediate(wallTile);
         }
 
@@ -315,6 +319,30 @@ namespace SubTerra.Gameplay.Player.Tests
             Assert.AreEqual(3f, body.gravityScale);
         }
 
+        [UnityTest]
+        public IEnumerator MovingBetweenOverlappingLadders_KeepsClimbingUntilLastExit()
+        {
+            body.gravityScale = 3f;
+            LadderZone firstLadder = CreateLadderZone("FirstLadder", out firstLadderObject);
+            LadderZone secondLadder = CreateLadderZone("SecondLadder", out secondLadderObject);
+
+            movement.EnterLadder(firstLadder);
+            movement.EnterLadder(secondLadder);
+            movement.ExitLadder(firstLadder);
+            movement.SetVerticalMoveInput(1f);
+
+            yield return new WaitForFixedUpdate();
+
+            Assert.IsTrue(movement.IsClimbing, "다른 사다리와 접촉 중이면 등반 상태를 유지해야 한다.");
+            Assert.AreEqual(0f, body.gravityScale);
+            Assert.Greater(body.linearVelocityY, 0f);
+
+            movement.ExitLadder(secondLadder);
+
+            Assert.IsFalse(movement.IsClimbing);
+            Assert.AreEqual(3f, body.gravityScale);
+        }
+
         [Test]
         public void DisablingMovementWhileClimbing_RestoresGravity()
         {
@@ -325,6 +353,14 @@ namespace SubTerra.Gameplay.Player.Tests
 
             Assert.AreEqual(2.5f, body.gravityScale);
             Assert.IsFalse(movement.IsClimbing);
+        }
+
+        private static LadderZone CreateLadderZone(string name, out GameObject ladderObject)
+        {
+            ladderObject = new GameObject(name);
+            var collider = ladderObject.AddComponent<BoxCollider2D>();
+            collider.isTrigger = true;
+            return ladderObject.AddComponent<LadderZone>();
         }
     }
 }
