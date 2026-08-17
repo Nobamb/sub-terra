@@ -13,7 +13,7 @@ namespace SubTerra.App.Tutorial
         LithiumCollected = 4,
         StructuralHazardObserved = 5,
         SupportPlaced = 6,
-        GasHazardObserved = 7,
+        GasHazardResolved = 7,
         OutpostInstalled = 8,
         ReturnRecommendationPresented = 9,
         SettlementSucceeded = 10,

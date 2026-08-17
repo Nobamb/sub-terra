@@ -41,7 +41,6 @@ namespace SubTerra.App.Tests.PlayMode.DemoFlow
             Assert.That(director.CurrentObjectiveId, Is.EqualTo(DemoObjectiveIds.PathGuide));
 
             director.NotifyGuidanceAcknowledged();
-            inventory.TryAddMineral(DataIds.Minerals.Lithium, 1);
             Assert.That(director.CurrentObjectiveId, Is.EqualTo(DemoObjectiveIds.StructuralCrack));
 
             director.OnGameplayEvent(new GameplayEventDto
@@ -59,6 +58,9 @@ namespace SubTerra.App.Tests.PlayMode.DemoFlow
                 type = GameplayEventType.GasTriggered,
                 gasRisk = 1f
             });
+            director.OnGasExposureChanged(GasRiskLevel.Hazard);
+            Assert.That(director.CurrentObjectiveId, Is.EqualTo(DemoObjectiveIds.GasEncounter));
+            director.OnGasExposureChanged(GasRiskLevel.Safe);
             director.OnGameplayEvent(new GameplayEventDto
             {
                 type = GameplayEventType.OutpostActivated,
@@ -74,6 +76,9 @@ namespace SubTerra.App.Tests.PlayMode.DemoFlow
                 "settled"));
             // 심층 조건 충족 알림 → 실제 잠금 커밋 이벤트 (Service DidUnlockNow 경로)
             Assert.That(director.NotifyDeepZonePrerequisitesReady().Advanced, Is.True);
+            Assert.That(director.CurrentObjectiveId, Is.EqualTo(DemoObjectiveIds.MineLithium));
+            inventory.TryAddMineral(DataIds.Minerals.Lithium, 1);
+            Assert.That(director.CurrentObjectiveId, Is.EqualTo(DemoObjectiveIds.DeepSignal));
             director.OnDeepZoneAccessChanged(new ZoneAccessResult(true, true, "deep"));
             director.NotifyDemoEndAcknowledged();
 
@@ -135,7 +140,7 @@ namespace SubTerra.App.Tests.PlayMode.DemoFlow
             Assert.That(restoredDirector.NotifyGuidanceAcknowledged().Advanced, Is.True);
             Assert.That(
                 restoredDirector.CurrentObjectiveId,
-                Is.EqualTo(DemoObjectiveIds.MineLithium));
+                Is.EqualTo(DemoObjectiveIds.StructuralCrack));
             yield return null;
         }
 

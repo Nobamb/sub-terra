@@ -40,6 +40,13 @@ namespace SubTerra.App.Tutorial
                 savedObjectiveId,
                 completedCount);
 
+            // 순서 변경 세이브는 새 목표의 인덱스로 완료 개수도 함께 정규화한다.
+            var resolvedIndex = DemoObjectiveCatalog.IndexOf(currentObjectiveId);
+            if (!isDemoComplete && resolvedIndex >= 0)
+            {
+                completedCount = resolvedIndex;
+            }
+
             if (isDemoComplete)
             {
                 currentObjectiveId = DemoObjectiveIds.DemoEnd;

@@ -33,18 +33,11 @@ namespace SubTerra.App.Tutorial
                 new DemoObjectiveDefinition(
                     DemoObjectiveIds.PathGuide,
                     "경로 안내",
-                    "안전 경로와 위험 구간 안내를 확인하세요.",
-                    "안내를 닫고 리튬이 있는 방향으로 이동하세요",
+                    "안전 경로와 구조 위험 구간 안내를 확인하세요.",
+                    "안내를 닫고 채굴 중 나타나는 균열 경고를 확인하세요",
                     DemoProgressSignal.PathGuidanceAcknowledged,
-                    DemoObjectiveIds.MineLithium,
+                    DemoObjectiveIds.StructuralCrack,
                     showsDismissibleGuidance: true),
-                new DemoObjectiveDefinition(
-                    DemoObjectiveIds.MineLithium,
-                    "리튬 확보",
-                    "리튬을 1개 이상 확보하세요.",
-                    "리튬 광맥을 찾아 채굴하세요",
-                    DemoProgressSignal.LithiumCollected,
-                    DemoObjectiveIds.StructuralCrack),
                 new DemoObjectiveDefinition(
                     DemoObjectiveIds.StructuralCrack,
                     "구조 균열 인지",
@@ -62,9 +55,9 @@ namespace SubTerra.App.Tutorial
                 new DemoObjectiveDefinition(
                     DemoObjectiveIds.GasEncounter,
                     "가스 구간 대응",
-                    "가스 위험을 인지하고 안전 경로로 이동하세요.",
-                    "가스 경고를 확인한 뒤 이탈하세요",
-                    DemoProgressSignal.GasHazardObserved,
+                    "가스 위험 구간에 진입한 뒤 안전 구역으로 이탈하세요.",
+                    "가스 경고가 사라질 때까지 위험 범위에서 벗어나세요",
+                    DemoProgressSignal.GasHazardResolved,
                     DemoObjectiveIds.OutpostInstall),
                 new DemoObjectiveDefinition(
                     DemoObjectiveIds.OutpostInstall,
@@ -88,14 +81,20 @@ namespace SubTerra.App.Tutorial
                     "전진기지에서 정산을 완료하세요",
                     DemoProgressSignal.SettlementSucceeded,
                     DemoObjectiveIds.BatteryUpgrade),
-                // 심층 잠금(DeepZoneUnlockRule.Mvp)과 동일한 조건: 드론 스캔 2·가스 저항 1.
-                // 최대 전력만 사면 심층 신호가 열리지 않는다.
+                // 심층 잠금(DeepZoneUnlockRule.Mvp)과 동일한 조건이다.
                 new DemoObjectiveDefinition(
                     DemoObjectiveIds.BatteryUpgrade,
                     "심층 대비 업그레이드",
-                    "심층 잠금 해제에 필요한 업그레이드(드론 스캔 2레벨, 가스 저항 1레벨)를 구매하세요.",
-                    "업그레이드 패널에서 드론 스캔·가스 저항을 맞추세요",
+                    "리튬 채굴과 심층 진입에 필요한 드릴 속도 2레벨, 드론 스캔 2레벨, 가스 저항 1레벨을 구매하세요.",
+                    "업그레이드 패널에서 드릴·드론 스캔·가스 저항을 맞추세요",
                     DemoProgressSignal.BatteryUpgradeSucceeded,
+                    DemoObjectiveIds.MineLithium),
+                new DemoObjectiveDefinition(
+                    DemoObjectiveIds.MineLithium,
+                    "리튬 확보",
+                    "구조·가스 대응과 장비 준비를 마친 뒤 리튬을 1개 이상 확보하세요.",
+                    "심층 리튬 광맥을 찾아 채굴하세요",
+                    DemoProgressSignal.LithiumCollected,
                     DemoObjectiveIds.DeepSignal),
                 new DemoObjectiveDefinition(
                     DemoObjectiveIds.DeepSignal,
@@ -159,11 +158,6 @@ namespace SubTerra.App.Tutorial
         /// </summary>
         public static string ResolveObjectiveId(string savedObjectiveId, int completedCount)
         {
-            if (TryGet(savedObjectiveId, out _))
-            {
-                return savedObjectiveId;
-            }
-
             if (completedCount < 0)
             {
                 completedCount = 0;
@@ -174,7 +168,41 @@ namespace SubTerra.App.Tutorial
                 return DemoObjectiveIds.DemoEnd;
             }
 
+            if (TryGet(savedObjectiveId, out _))
+            {
+                if (IndexOf(savedObjectiveId) == completedCount)
+                {
+                    return savedObjectiveId;
+                }
+
+                // prompt-B 53 이전 순서의 known ID/count 조합은 같은 의미의 새 단계로 이동한다.
+                if (LegacyIndexOf(savedObjectiveId) == completedCount)
+                {
+                    return savedObjectiveId == DemoObjectiveIds.MineLithium
+                        ? DemoObjectiveIds.StructuralCrack
+                        : savedObjectiveId;
+                }
+            }
+
             return OrderedDefinitions[completedCount].Id;
+        }
+
+        private static int LegacyIndexOf(string objectiveId)
+        {
+            if (objectiveId == DemoObjectiveIds.ExploreStart) return 0;
+            if (objectiveId == DemoObjectiveIds.MineCopperIron) return 1;
+            if (objectiveId == DemoObjectiveIds.PathGuide) return 2;
+            if (objectiveId == DemoObjectiveIds.MineLithium) return 3;
+            if (objectiveId == DemoObjectiveIds.StructuralCrack) return 4;
+            if (objectiveId == DemoObjectiveIds.PlaceSupport) return 5;
+            if (objectiveId == DemoObjectiveIds.GasEncounter) return 6;
+            if (objectiveId == DemoObjectiveIds.OutpostInstall) return 7;
+            if (objectiveId == DemoObjectiveIds.ReturnRecommend) return 8;
+            if (objectiveId == DemoObjectiveIds.Settlement) return 9;
+            if (objectiveId == DemoObjectiveIds.BatteryUpgrade) return 10;
+            if (objectiveId == DemoObjectiveIds.DeepSignal) return 11;
+            if (objectiveId == DemoObjectiveIds.DemoEnd) return 12;
+            return -1;
         }
 
         public static DemoObjectiveReadModel ToReadModel(

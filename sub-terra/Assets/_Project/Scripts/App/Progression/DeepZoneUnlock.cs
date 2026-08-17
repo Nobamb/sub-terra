@@ -29,11 +29,12 @@ namespace SubTerra.App.Progression
             UpgradeRequirements = upgradeRequirements ?? System.Array.Empty<UpgradeLevelRequirement>();
         }
 
-        /// <summary>MVP 심층 예고: 목표 1개, 드론 스캔 2레벨, 가스 저항 1레벨.</summary>
+        /// <summary>MVP 심층 예고: 목표 1개, 드릴 2·드론 스캔 2·가스 저항 1레벨.</summary>
         public static DeepZoneUnlockRule Mvp { get; } = new DeepZoneUnlockRule(
             1,
             new[]
             {
+                new UpgradeLevelRequirement(DataIds.Upgrades.DrillSpeed, 2),
                 new UpgradeLevelRequirement(DataIds.Upgrades.DroneScan, 2),
                 new UpgradeLevelRequirement(DataIds.Upgrades.GasResistance, 1)
             });

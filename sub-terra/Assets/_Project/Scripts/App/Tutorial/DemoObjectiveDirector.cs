@@ -18,6 +18,13 @@ namespace SubTerra.App.Tutorial
         private readonly DemoObjectiveTransitionEngine engine = new DemoObjectiveTransitionEngine();
         private GameState gameState;
         private bool explorationStarted;
+        private bool structuralHazardObserved;
+        private bool supportPlacedAfterHazard;
+        private bool gasHazardEntered;
+        private bool gasHazardResolved;
+        private bool outpostInstalled;
+        private bool settlementSucceeded;
+        private InventorySnapshot latestInventory;
 
         public string CurrentObjectiveId => engine.CurrentObjectiveId;
         public int CompletedCount => engine.CompletedCount;
@@ -37,6 +44,13 @@ namespace SubTerra.App.Tutorial
         {
             engine.Reset();
             explorationStarted = false;
+            structuralHazardObserved = false;
+            supportPlacedAfterHazard = false;
+            gasHazardEntered = false;
+            gasHazardResolved = false;
+            outpostInstalled = false;
+            settlementSucceeded = false;
+            latestInventory = null;
             PushToGameState();
             RaiseChanged();
         }
@@ -55,6 +69,18 @@ namespace SubTerra.App.Tutorial
                 progress.IsDemoComplete);
             explorationStarted = engine.CompletedCount > 0
                 || engine.CurrentObjectiveId != DemoObjectiveIds.ExploreStart;
+            structuralHazardObserved = engine.CompletedCount
+                > DemoObjectiveCatalog.IndexOf(DemoObjectiveIds.StructuralCrack);
+            supportPlacedAfterHazard = engine.CompletedCount
+                > DemoObjectiveCatalog.IndexOf(DemoObjectiveIds.PlaceSupport);
+            gasHazardEntered = false;
+            gasHazardResolved = engine.CompletedCount
+                > DemoObjectiveCatalog.IndexOf(DemoObjectiveIds.GasEncounter);
+            outpostInstalled = engine.CompletedCount
+                > DemoObjectiveCatalog.IndexOf(DemoObjectiveIds.OutpostInstall);
+            settlementSucceeded = engine.CompletedCount
+                > DemoObjectiveCatalog.IndexOf(DemoObjectiveIds.Settlement);
+            latestInventory = null;
             PushToGameState();
             RaiseChanged();
         }
@@ -67,6 +93,8 @@ namespace SubTerra.App.Tutorial
                 PushToGameState();
                 RaiseChanged();
             }
+
+            AdvanceRememberedObjectives();
 
             return result;
         }
@@ -110,18 +138,8 @@ namespace SubTerra.App.Tutorial
                 return;
             }
 
-            var id = engine.CurrentObjectiveId;
-            if (id == DemoObjectiveIds.MineCopperIron
-                && snapshot.GetQuantity(DataIds.Minerals.Copper) > 0
-                && snapshot.GetQuantity(DataIds.Minerals.Iron) > 0)
-            {
-                HandleSignal(DemoProgressSignal.CopperAndIronCollected);
-            }
-            else if (id == DemoObjectiveIds.MineLithium
-                && snapshot.GetQuantity(DataIds.Minerals.Lithium) > 0)
-            {
-                HandleSignal(DemoProgressSignal.LithiumCollected);
-            }
+            latestInventory = snapshot;
+            AdvanceRememberedObjectives();
         }
 
         public void OnGameplayEvent(GameplayEventDto gameplayEvent)
@@ -137,12 +155,13 @@ namespace SubTerra.App.Tutorial
                     // integrity는 A가 확정한 값. 위험 구간이면 관찰 신호만 보낸다.
                     if (gameplayEvent.structuralIntegrity < 0.66f)
                     {
+                        structuralHazardObserved = true;
                         HandleSignal(DemoProgressSignal.StructuralHazardObserved);
                     }
 
                     break;
                 case GameplayEventType.GasTriggered:
-                    HandleSignal(DemoProgressSignal.GasHazardObserved);
+                    // 생성 신호만으로 완료하지 않는다. 실제 노출 후 Safe 복귀를 기다린다.
                     break;
                 case GameplayEventType.BuildingPlaced:
                 {
@@ -152,14 +171,18 @@ namespace SubTerra.App.Tutorial
                         placedId = gameplayEvent.buildingPlacement.buildingId;
                     }
 
-                    if (IsSupportBuilding(placedId))
+                    if (IsSupportBuilding(placedId)
+                        && (structuralHazardObserved
+                            || engine.CurrentObjectiveId == DemoObjectiveIds.PlaceSupport))
                     {
+                        supportPlacedAfterHazard = true;
                         HandleSignal(DemoProgressSignal.SupportPlaced);
                     }
 
                     break;
                 }
                 case GameplayEventType.OutpostActivated:
+                    outpostInstalled = true;
                     HandleSignal(DemoProgressSignal.OutpostInstalled);
                     break;
                 case GameplayEventType.PlayerRescued:
@@ -177,6 +200,7 @@ namespace SubTerra.App.Tutorial
         {
             if (level == StructuralRiskLevel.Caution || level == StructuralRiskLevel.Critical)
             {
+                structuralHazardObserved = true;
                 HandleSignal(DemoProgressSignal.StructuralHazardObserved);
             }
         }
@@ -185,7 +209,14 @@ namespace SubTerra.App.Tutorial
         {
             if (level == GasRiskLevel.Elevated || level == GasRiskLevel.Hazard)
             {
-                HandleSignal(DemoProgressSignal.GasHazardObserved);
+                gasHazardEntered = true;
+                return;
+            }
+
+            if (level == GasRiskLevel.Safe && gasHazardEntered)
+            {
+                gasHazardResolved = true;
+                HandleSignal(DemoProgressSignal.GasHazardResolved);
             }
         }
 
@@ -198,14 +229,23 @@ namespace SubTerra.App.Tutorial
 
             if (result.Kind == OutpostOperationKind.Install)
             {
+                outpostInstalled = true;
                 HandleSignal(DemoProgressSignal.OutpostInstalled);
             }
             else if (result.Kind == OutpostOperationKind.SettlePlayerCargo
                 || result.Kind == OutpostOperationKind.SettleStorage)
             {
                 // 정산은 Service 성공 이후에만 전진한다.
+                settlementSucceeded = true;
                 HandleSignal(DemoProgressSignal.SettlementSucceeded);
             }
+        }
+
+        /// <summary>복원된 OutpostState에 설치 이력이 있을 때 완료 조건을 재평가한다.</summary>
+        public void NotifyOutpostAlreadyInstalled()
+        {
+            outpostInstalled = true;
+            AdvanceRememberedObjectives();
         }
 
         public void OnEconomyTransactionCompleted(EconomyTransactionResult result)
@@ -239,7 +279,7 @@ namespace SubTerra.App.Tutorial
         /// <summary>
         /// ProgressionService.TryUnlockDeepZone 성공(DidUnlockNow) 이벤트.
         /// 조건만 충족(DidUnlockNow=false)한 상태로는 심층 목표를 넘기지 않는다.
-        /// 업그레이드 목표에 있을 때 잠금이 커밋되면 선행 목표를 닫은 뒤 심층 신호까지 전진한다.
+        /// 심층 신호 목표에 있을 때만 실제 잠금 커밋 결과를 반영한다.
         /// </summary>
         public void OnDeepZoneAccessChanged(ZoneAccessResult result)
         {
@@ -248,13 +288,10 @@ namespace SubTerra.App.Tutorial
                 return;
             }
 
-            // Presenter가 TryUnlockDeepZone만 호출해도 battery → deep → end 순서가 깨지지 않게 한다.
-            if (engine.CurrentObjectiveId == DemoObjectiveIds.BatteryUpgrade)
+            if (engine.CurrentObjectiveId == DemoObjectiveIds.DeepSignal)
             {
-                HandleSignal(DemoProgressSignal.BatteryUpgradeSucceeded);
+                HandleSignal(DemoProgressSignal.DeepZoneUnlocked);
             }
-
-            HandleSignal(DemoProgressSignal.DeepZoneUnlocked);
         }
 
         /// <summary>세이브에 이미 zone.deep 이 커밋된 채 심층 목표에 있을 때 전진.</summary>
@@ -303,6 +340,69 @@ namespace SubTerra.App.Tutorial
         private void RaiseChanged()
         {
             ProgressChanged?.Invoke(engine.GetReadModel());
+        }
+
+        /// <summary>
+        /// 현재 목표보다 먼저 충족된 상태형 완료 조건을 버리지 않는다.
+        /// 순서는 TransitionEngine이 그대로 검증하며 만족한 연속 단계만 전진한다.
+        /// </summary>
+        private void AdvanceRememberedObjectives()
+        {
+            for (var guard = 0; guard < 7; guard++)
+            {
+                DemoProgressSignal signal;
+                if (engine.CurrentObjectiveId == DemoObjectiveIds.MineCopperIron
+                    && latestInventory != null
+                    && latestInventory.GetQuantity(DataIds.Minerals.Copper) > 0
+                    && latestInventory.GetQuantity(DataIds.Minerals.Iron) > 0)
+                {
+                    signal = DemoProgressSignal.CopperAndIronCollected;
+                }
+                else if (engine.CurrentObjectiveId == DemoObjectiveIds.StructuralCrack
+                    && structuralHazardObserved)
+                {
+                    signal = DemoProgressSignal.StructuralHazardObserved;
+                }
+                else if (engine.CurrentObjectiveId == DemoObjectiveIds.PlaceSupport
+                    && supportPlacedAfterHazard)
+                {
+                    signal = DemoProgressSignal.SupportPlaced;
+                }
+                else if (engine.CurrentObjectiveId == DemoObjectiveIds.GasEncounter
+                    && gasHazardResolved)
+                {
+                    signal = DemoProgressSignal.GasHazardResolved;
+                }
+                else if (engine.CurrentObjectiveId == DemoObjectiveIds.OutpostInstall
+                    && outpostInstalled)
+                {
+                    signal = DemoProgressSignal.OutpostInstalled;
+                }
+                else if (engine.CurrentObjectiveId == DemoObjectiveIds.Settlement
+                    && settlementSucceeded)
+                {
+                    signal = DemoProgressSignal.SettlementSucceeded;
+                }
+                else if (engine.CurrentObjectiveId == DemoObjectiveIds.MineLithium
+                    && latestInventory != null
+                    && latestInventory.GetQuantity(DataIds.Minerals.Lithium) > 0)
+                {
+                    signal = DemoProgressSignal.LithiumCollected;
+                }
+                else
+                {
+                    return;
+                }
+
+                var result = engine.TryAdvance(signal);
+                if (!result.Advanced)
+                {
+                    return;
+                }
+
+                PushToGameState();
+                RaiseChanged();
+            }
         }
 
         private static bool IsSupportBuilding(string buildingId)

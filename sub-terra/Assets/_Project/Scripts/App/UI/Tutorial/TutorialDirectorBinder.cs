@@ -52,6 +52,8 @@ namespace SubTerra.App.UI.Tutorial
             if (objectiveView != null)
             {
                 objectiveView.DismissRequested += OnDismissRequested;
+                objectiveView.DetailsRequested += OnDetailsRequested;
+                objectiveView.DetailsDismissRequested += OnDetailsDismissRequested;
             }
         }
 
@@ -60,6 +62,8 @@ namespace SubTerra.App.UI.Tutorial
             if (objectiveView != null)
             {
                 objectiveView.DismissRequested -= OnDismissRequested;
+                objectiveView.DetailsRequested -= OnDetailsRequested;
+                objectiveView.DetailsDismissRequested -= OnDetailsDismissRequested;
             }
 
             Unbind();
@@ -141,6 +145,10 @@ namespace SubTerra.App.UI.Tutorial
             if (outpost != null)
             {
                 outpost.OperationCompleted += OnOutpostOperation;
+                if (outpost.State != null && outpost.State.InstalledOutpostIds.Count > 0)
+                {
+                    director.NotifyOutpostAlreadyInstalled();
+                }
             }
 
             if (boundState != null)
@@ -216,6 +224,16 @@ namespace SubTerra.App.UI.Tutorial
             presenter?.DismissGuidance();
         }
 
+        private void OnDetailsRequested()
+        {
+            presenter?.OpenDetails();
+        }
+
+        private void OnDetailsDismissRequested()
+        {
+            presenter?.CloseDetails();
+        }
+
         private void OnInventoryChanged(InventorySnapshot snapshot)
         {
             director?.OnInventoryChanged(snapshot);
@@ -260,8 +278,8 @@ namespace SubTerra.App.UI.Tutorial
 
             var completed = boundState.Progress.CompletedObjectives;
             var access = progression.GetDeepZoneAccess(completed);
-            // 조건 충족(또는 이미 해제)이면 업그레이드 목표를 완료할 수 있다.
-            if (access.IsUnlocked)
+            // 구버전 세이브에 이미 잠금 해제가 기록됐어도 새 장비 조건은 실제 레벨로 확인한다.
+            if (access.IsUnlocked && MeetsDeepZoneUpgradeRequirements())
             {
                 director.NotifyDeepZonePrerequisitesReady();
             }
@@ -276,6 +294,27 @@ namespace SubTerra.App.UI.Tutorial
                 // 세이브에 이미 해제된 경우 이벤트가 없으므로 명시 전진.
                 director.NotifyDeepZoneAlreadyUnlocked();
             }
+        }
+
+        private bool MeetsDeepZoneUpgradeRequirements()
+        {
+            if (progression?.State == null)
+            {
+                return false;
+            }
+
+            var requirements = DeepZoneUnlockRule.Mvp.UpgradeRequirements;
+            for (var i = 0; i < requirements.Count; i++)
+            {
+                var requirement = requirements[i];
+                if (progression.State.GetLevel(requirement.UpgradeId)
+                    < requirement.RequiredLevel)
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         private void OnOutpostOperation(OutpostOperationResult result)

@@ -13,10 +13,12 @@ namespace SubTerra.App.UI.Tutorial
         private DemoObjectiveDirector director;
         private bool hazardActive;
         private bool guidanceOpen;
+        private bool detailsOpen;
         private bool inputLocked;
 
         public bool IsBound => director != null;
         public bool IsGuidanceOpen => guidanceOpen;
+        public bool IsDetailsOpen => detailsOpen;
         public bool IsInputLocked => inputLocked;
         public bool HazardActive => hazardActive;
 
@@ -48,8 +50,10 @@ namespace SubTerra.App.UI.Tutorial
             }
 
             guidanceOpen = false;
+            detailsOpen = false;
             inputLocked = false;
             view?.SetGuidanceVisible(false);
+            view?.SetDetailsVisible(false);
             view?.SetInputLocked(false);
             view?.SetDemoCompleteVisible(false, string.Empty);
         }
@@ -63,7 +67,32 @@ namespace SubTerra.App.UI.Tutorial
         public void SetHazardActive(bool active)
         {
             hazardActive = active;
+            if (hazardActive && detailsOpen)
+            {
+                detailsOpen = false;
+                view?.SetDetailsVisible(false);
+            }
+
             ApplyHazardYield();
+        }
+
+        public void OpenDetails()
+        {
+            if (director == null || hazardActive)
+            {
+                return;
+            }
+
+            var model = director.ReadModel;
+            detailsOpen = true;
+            view?.SetDetailsText(model.Title, model.Description, model.NextActionHint);
+            view?.SetDetailsVisible(true);
+        }
+
+        public void CloseDetails()
+        {
+            detailsOpen = false;
+            view?.SetDetailsVisible(false);
         }
 
         public void DismissGuidance()
@@ -111,6 +140,7 @@ namespace SubTerra.App.UI.Tutorial
         private void Render(DemoObjectiveReadModel model)
         {
             view?.SetObjective(model);
+            view?.SetDetailsText(model.Title, model.Description, model.NextActionHint);
 
             if (model.IsDemoComplete || model.ObjectiveId == DemoObjectiveIds.DemoEnd)
             {

@@ -25,7 +25,6 @@ namespace SubTerra.App.Tutorial
             ExploreStart,
             MineCopperIron,
             PathGuide,
-            MineLithium,
             StructuralCrack,
             PlaceSupport,
             GasEncounter,
@@ -33,6 +32,7 @@ namespace SubTerra.App.Tutorial
             ReturnRecommend,
             Settlement,
             BatteryUpgrade,
+            MineLithium,
             DeepSignal,
             DemoEnd
         };

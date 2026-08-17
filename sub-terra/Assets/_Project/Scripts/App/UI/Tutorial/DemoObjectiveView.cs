@@ -21,6 +21,10 @@ namespace SubTerra.App.UI.Tutorial
         [SerializeField] private TMP_Text demoCompleteText;
         [SerializeField] private Canvas tutorialCanvas;
         [SerializeField] private CanvasGroup guidanceCanvasGroup;
+        [SerializeField] private GameObject detailsRoot;
+        [SerializeField] private TMP_Text detailsTitleText;
+        [SerializeField] private TMP_Text detailsBodyText;
+        [SerializeField] private TMP_Text detailsNextActionText;
 
         private int defaultTutorialSort = UiLayerPriority.TutorialGuidance;
 
@@ -117,6 +121,34 @@ namespace SubTerra.App.UI.Tutorial
             }
         }
 
+        public void SetDetailsVisible(bool visible)
+        {
+            if (detailsRoot != null)
+            {
+                detailsRoot.SetActive(visible);
+            }
+        }
+
+        public void SetDetailsText(string title, string body, string nextAction)
+        {
+            if (detailsTitleText != null)
+            {
+                detailsTitleText.text = title ?? string.Empty;
+            }
+
+            if (detailsBodyText != null)
+            {
+                detailsBodyText.text = body ?? string.Empty;
+            }
+
+            if (detailsNextActionText != null)
+            {
+                detailsNextActionText.text = string.IsNullOrEmpty(nextAction)
+                    ? string.Empty
+                    : "다음 행동: " + nextAction;
+            }
+        }
+
         /// <summary>UI Button OnClick 연결용.</summary>
         public void OnDismissClicked()
         {
@@ -126,9 +158,32 @@ namespace SubTerra.App.UI.Tutorial
 
         public event System.Action DismissRequested;
 
+        /// <summary>좌측 상단 목표 영역 Button OnClick 연결용.</summary>
+        public void OnObjectiveDetailsClicked()
+        {
+            DetailsRequested?.Invoke();
+        }
+
+        /// <summary>중앙 목표 상세창 X Button OnClick 연결용.</summary>
+        public void OnDetailsDismissClicked()
+        {
+            DetailsDismissRequested?.Invoke();
+        }
+
+        public event System.Action DetailsRequested;
+        public event System.Action DetailsDismissRequested;
+
         public bool HasRequiredReferences()
         {
             return objectiveTitleText != null || nextActionText != null;
+        }
+
+        public bool HasDetailsReferences()
+        {
+            return detailsRoot != null
+                && detailsTitleText != null
+                && detailsBodyText != null
+                && detailsNextActionText != null;
         }
     }
 }

@@ -35,6 +35,7 @@ namespace SubTerra.App.Tests.Tutorial
         [Test]
         public void N_DeepSignal_AdvancesOnlyViaRealTryUnlockDeepZone()
         {
+            var drill = CreateUpgrade(DataIds.Upgrades.DrillSpeed, 2, 0.1f);
             var droneScan = CreateUpgrade(DataIds.Upgrades.DroneScan, 2, 1f);
             var gas = CreateUpgrade(DataIds.Upgrades.GasResistance, 1, 0.2f);
             var maxEnergy = CreateUpgrade(DataIds.Upgrades.MaximumEnergy, 1, 20f);
@@ -44,7 +45,7 @@ namespace SubTerra.App.Tests.Tutorial
             var upgradeState = new UpgradeState();
             var service = new ProgressionService(
                 upgradeState,
-                new TestCatalog(droneScan, gas, maxEnergy),
+                new TestCatalog(drill, droneScan, gas, maxEnergy),
                 wallet);
 
             var gameState = GameState.CreateNew();
@@ -102,11 +103,19 @@ namespace SubTerra.App.Tests.Tutorial
             Assert.That(director.CurrentObjectiveId, Is.EqualTo(DemoObjectiveIds.BatteryUpgrade));
             Assert.That(upgradeState.IsZoneUnlocked(DataIds.Zones.Deep), Is.False);
 
-            // 3) 드론 스캔 2 + 가스 저항 1 → 조건 충족 → TryUnlockDeepZone 실호출
+            // 3) 드론 스캔 2 + 가스 저항 1만으로는 드릴 조건이 부족하다.
             Assert.That(presenter.RequestPurchase().IsSuccess, Is.True); // DroneScan L2
             Assert.That(presenter.SelectUpgrade(DataIds.Upgrades.GasResistance), Is.True);
             var gasBuy = presenter.RequestPurchase();
             Assert.That(gasBuy.IsSuccess, Is.True);
+            Assert.That(director.CurrentObjectiveId, Is.EqualTo(DemoObjectiveIds.BatteryUpgrade));
+            Assert.That(upgradeState.IsZoneUnlocked(DataIds.Zones.Deep), Is.False);
+
+            // 4) 리튬 채굴에 필요한 드릴 2레벨까지 구매하면 잠금이 커밋된다.
+            Assert.That(presenter.SelectUpgrade(DataIds.Upgrades.DrillSpeed), Is.True);
+            Assert.That(presenter.RequestPurchase().IsSuccess, Is.True);
+            Assert.That(upgradeState.IsZoneUnlocked(DataIds.Zones.Deep), Is.False);
+            Assert.That(presenter.RequestPurchase().IsSuccess, Is.True);
 
             Assert.That(
                 upgradeState.IsZoneUnlocked(DataIds.Zones.Deep),
@@ -114,14 +123,20 @@ namespace SubTerra.App.Tests.Tutorial
                 "TryUnlockDeepZone must commit zone.deep");
             Assert.That(
                 director.CurrentObjectiveId,
-                Is.EqualTo(DemoObjectiveIds.DemoEnd),
-                "Director must advance deep_signal→end via Service DidUnlockNow, not a faked event");
+                Is.EqualTo(DemoObjectiveIds.MineLithium),
+                "업그레이드 성공이 후반 리튬 목표를 건너뛰면 안 된다.");
+
+            director.HandleSignal(DemoProgressSignal.LithiumCollected);
+            Assert.That(director.CurrentObjectiveId, Is.EqualTo(DemoObjectiveIds.DeepSignal));
+            director.NotifyDeepZoneAlreadyUnlocked();
+            Assert.That(director.CurrentObjectiveId, Is.EqualTo(DemoObjectiveIds.DemoEnd));
             Assert.That(director.IsDemoComplete || director.CurrentObjectiveId == DemoObjectiveIds.DemoEnd, Is.True);
         }
 
         [Test]
         public void N_ProgressionPresenter_CallsTryUnlockOnPurchaseSuccess()
         {
+            var drill = CreateUpgrade(DataIds.Upgrades.DrillSpeed, 2, 0.1f);
             var droneScan = CreateUpgrade(DataIds.Upgrades.DroneScan, 2, 1f);
             var gas = CreateUpgrade(DataIds.Upgrades.GasResistance, 1, 0.2f);
             var wallet = new TestWallet();
@@ -131,13 +146,14 @@ namespace SubTerra.App.Tests.Tutorial
             Assert.That(
                 upgradeState.TryRestore(new[]
                 {
+                    new UpgradeLevelState(DataIds.Upgrades.DrillSpeed, 2),
                     new UpgradeLevelState(DataIds.Upgrades.DroneScan, 2)
                 }),
                 Is.True);
 
             var service = new ProgressionService(
                 upgradeState,
-                new TestCatalog(droneScan, gas),
+                new TestCatalog(drill, droneScan, gas),
                 wallet);
             var unlockedEvents = 0;
             service.DeepZoneAccessChanged += _ => unlockedEvents++;

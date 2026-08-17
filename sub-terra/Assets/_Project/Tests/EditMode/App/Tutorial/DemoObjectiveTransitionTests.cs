@@ -79,14 +79,14 @@ namespace SubTerra.App.Tests.Tutorial
                 DemoProgressSignal.ExplorationStarted,
                 DemoProgressSignal.CopperAndIronCollected,
                 DemoProgressSignal.PathGuidanceAcknowledged,
-                DemoProgressSignal.LithiumCollected,
                 DemoProgressSignal.StructuralHazardObserved,
                 DemoProgressSignal.SupportPlaced,
-                DemoProgressSignal.GasHazardObserved,
+                DemoProgressSignal.GasHazardResolved,
                 DemoProgressSignal.OutpostInstalled,
                 DemoProgressSignal.ReturnRecommendationPresented,
                 DemoProgressSignal.SettlementSucceeded,
                 DemoProgressSignal.BatteryUpgradeSucceeded,
+                DemoProgressSignal.LithiumCollected,
                 DemoProgressSignal.DeepZoneUnlocked,
                 DemoProgressSignal.DemoCompleted
             };
@@ -184,7 +184,7 @@ namespace SubTerra.App.Tests.Tutorial
                 "fail"));
             Assert.That(director.CurrentObjectiveId, Is.EqualTo(DemoObjectiveIds.BatteryUpgrade));
 
-            // MaximumEnergy만으로는 심층 조건(드론 스캔2·가스 저항1)이 아니므로 전진 없음
+            // MaximumEnergy만으로는 심층 조건(드릴2·드론 스캔2·가스 저항1)이 아니므로 전진 없음
             director.OnProgressionPurchaseCompleted(ProgressionPurchaseResult.Success(
                 DataIds.Upgrades.MaximumEnergy,
                 0,
@@ -194,17 +194,20 @@ namespace SubTerra.App.Tests.Tutorial
 
             // 조건 충족 알림 후에만 업그레이드 목표 완료
             Assert.That(director.NotifyDeepZonePrerequisitesReady().Advanced, Is.True);
-            Assert.That(director.CurrentObjectiveId, Is.EqualTo(DemoObjectiveIds.DeepSignal));
+            Assert.That(director.CurrentObjectiveId, Is.EqualTo(DemoObjectiveIds.MineLithium));
 
             director.OnDeepZoneAccessChanged(new ZoneAccessResult(false, false, "locked"));
+            Assert.That(director.CurrentObjectiveId, Is.EqualTo(DemoObjectiveIds.MineLithium));
+
+            // 잠금 커밋이 먼저 발생해도 리튬 목표를 건너뛰지 않는다.
+            director.OnDeepZoneAccessChanged(new ZoneAccessResult(true, true, "unlocked early"));
+            Assert.That(director.CurrentObjectiveId, Is.EqualTo(DemoObjectiveIds.MineLithium));
+
+            director.HandleSignal(DemoProgressSignal.LithiumCollected);
             Assert.That(director.CurrentObjectiveId, Is.EqualTo(DemoObjectiveIds.DeepSignal));
 
-            // 조건만 충족(DidUnlockNow=false)이면 심층 목표는 유지
-            director.OnDeepZoneAccessChanged(new ZoneAccessResult(true, false, "조건 충족"));
-            Assert.That(director.CurrentObjectiveId, Is.EqualTo(DemoObjectiveIds.DeepSignal));
-
-            // 실제 커밋(DidUnlockNow) 후에만 종료 목표로
-            director.OnDeepZoneAccessChanged(new ZoneAccessResult(true, true, "unlocked"));
+            // 이미 커밋된 잠금은 심층 목표에 도달한 뒤 명시적으로 반영한다.
+            director.NotifyDeepZoneAlreadyUnlocked();
             Assert.That(director.CurrentObjectiveId, Is.EqualTo(DemoObjectiveIds.DemoEnd));
         }
 
@@ -216,20 +219,20 @@ namespace SubTerra.App.Tests.Tutorial
             Assert.That(engine.CurrentObjectiveId, Is.EqualTo(DemoObjectiveIds.Ordered[4]));
             Assert.That(engine.CompletedCount, Is.EqualTo(4));
 
-            engine.Restore(DemoObjectiveIds.OutpostInstall, 7);
+            engine.Restore(DemoObjectiveIds.OutpostInstall, 6);
             Assert.That(engine.CurrentObjectiveId, Is.EqualTo(DemoObjectiveIds.OutpostInstall));
 
             var state = GameState.CreateNew();
             var director = new DemoObjectiveDirector();
             director.BindGameState(state);
             director.RestoreFromProgress(new ProgressState(
-                7,
+                6,
                 false,
                 DemoObjectiveIds.OutpostInstall,
                 false));
             Assert.That(director.CurrentObjectiveId, Is.EqualTo(DemoObjectiveIds.OutpostInstall));
             Assert.That(state.Progress.CurrentObjectiveId, Is.EqualTo(DemoObjectiveIds.OutpostInstall));
-            Assert.That(state.Progress.CompletedObjectives, Is.EqualTo(7));
+            Assert.That(state.Progress.CompletedObjectives, Is.EqualTo(6));
 
             // 이미 완료한 단계를 다시 성공 처리해도 중복 전진하지 않음
             director.OnOutpostOperationCompleted(new OutpostOperationResult(
@@ -240,7 +243,7 @@ namespace SubTerra.App.Tests.Tutorial
                 0,
                 "install"));
             Assert.That(director.CurrentObjectiveId, Is.EqualTo(DemoObjectiveIds.ReturnRecommend));
-            Assert.That(director.CompletedCount, Is.EqualTo(8));
+            Assert.That(director.CompletedCount, Is.EqualTo(7));
 
             director.OnOutpostOperationCompleted(new OutpostOperationResult(
                 OutpostOperationStatus.Success,
@@ -250,7 +253,7 @@ namespace SubTerra.App.Tests.Tutorial
                 0,
                 "duplicate install"));
             Assert.That(director.CurrentObjectiveId, Is.EqualTo(DemoObjectiveIds.ReturnRecommend));
-            Assert.That(director.CompletedCount, Is.EqualTo(8));
+            Assert.That(director.CompletedCount, Is.EqualTo(7));
         }
 
         [Test]
@@ -289,7 +292,7 @@ namespace SubTerra.App.Tests.Tutorial
             presenter.DismissGuidance();
             Assert.That(presenter.IsInputLocked, Is.False);
             Assert.That(view.InputLocked, Is.False);
-            Assert.That(director.CurrentObjectiveId, Is.EqualTo(DemoObjectiveIds.MineLithium));
+            Assert.That(director.CurrentObjectiveId, Is.EqualTo(DemoObjectiveIds.StructuralCrack));
         }
 
         [Test]
@@ -348,12 +351,14 @@ namespace SubTerra.App.Tests.Tutorial
             Assert.That(director.CurrentObjectiveId, Is.EqualTo(DemoObjectiveIds.PathGuide));
 
             director.NotifyGuidanceAcknowledged();
+            Assert.That(director.CurrentObjectiveId, Is.EqualTo(DemoObjectiveIds.StructuralCrack));
+            AdvanceTo(director, DemoObjectiveIds.MineLithium);
             stacks = new[]
             {
                 new InventoryStackEntry(DataIds.Minerals.Lithium, "Li", 1, 1f, 8)
             };
             director.OnInventoryChanged(new InventorySnapshot(1f, 100f, 8f, stacks));
-            Assert.That(director.CurrentObjectiveId, Is.EqualTo(DemoObjectiveIds.StructuralCrack));
+            Assert.That(director.CurrentObjectiveId, Is.EqualTo(DemoObjectiveIds.DeepSignal));
         }
 
         [Test]
@@ -381,6 +386,11 @@ namespace SubTerra.App.Tests.Tutorial
                 type = GameplayEventType.GasTriggered,
                 gasRisk = 0.8f
             });
+            Assert.That(director.CurrentObjectiveId, Is.EqualTo(DemoObjectiveIds.GasEncounter));
+
+            director.OnGasExposureChanged(GasRiskLevel.Elevated);
+            Assert.That(director.CurrentObjectiveId, Is.EqualTo(DemoObjectiveIds.GasEncounter));
+            director.OnGasExposureChanged(GasRiskLevel.Safe);
             Assert.That(director.CurrentObjectiveId, Is.EqualTo(DemoObjectiveIds.OutpostInstall));
 
             director.OnGameplayEvent(new GameplayEventDto
@@ -389,6 +399,93 @@ namespace SubTerra.App.Tests.Tutorial
                 instanceId = "outpost.1"
             });
             Assert.That(director.CurrentObjectiveId, Is.EqualTo(DemoObjectiveIds.ReturnRecommend));
+        }
+
+        [Test]
+        public void PromptB53_EarlyStatefulCompletions_AreAppliedWhenTheirStepArrives()
+        {
+            var director = new DemoObjectiveDirector();
+            director.ResetNewGame();
+            director.OnInventoryChanged(new InventorySnapshot(
+                3f,
+                100f,
+                18f,
+                new[]
+                {
+                    new InventoryStackEntry(DataIds.Minerals.Copper, "Cu", 1, 1f, 5),
+                    new InventoryStackEntry(DataIds.Minerals.Iron, "Fe", 1, 1f, 5),
+                    new InventoryStackEntry(DataIds.Minerals.Lithium, "Li", 1, 1f, 8)
+                }));
+            director.NotifyExplorationReady();
+            Assert.That(director.CurrentObjectiveId, Is.EqualTo(DemoObjectiveIds.PathGuide));
+
+            director.OnGameplayEvent(new GameplayEventDto
+            {
+                type = GameplayEventType.StructuralRiskChanged,
+                structuralIntegrity = 0.4f
+            });
+            director.OnGameplayEvent(new GameplayEventDto
+            {
+                type = GameplayEventType.BuildingPlaced,
+                entityId = DataIds.Buildings.SupportBasic
+            });
+            director.OnGasExposureChanged(GasRiskLevel.Elevated);
+            director.OnGasExposureChanged(GasRiskLevel.Safe);
+            director.OnGameplayEvent(new GameplayEventDto
+            {
+                type = GameplayEventType.OutpostActivated,
+                instanceId = "outpost.early"
+            });
+            director.OnOutpostOperationCompleted(new OutpostOperationResult(
+                OutpostOperationStatus.Success,
+                OutpostOperationKind.SettlePlayerCargo,
+                DataIds.Minerals.Copper,
+                1,
+                5,
+                "early settlement"));
+
+            Assert.That(director.CurrentObjectiveId, Is.EqualTo(DemoObjectiveIds.PathGuide));
+            director.NotifyGuidanceAcknowledged();
+            Assert.That(
+                director.CurrentObjectiveId,
+                Is.EqualTo(DemoObjectiveIds.ReturnRecommend),
+                "안내 중 이미 끝낸 균열·버팀목·가스·전진기지를 다시 요구하면 안 된다.");
+
+            director.NotifyReturnRecommendationAcknowledged();
+            Assert.That(
+                director.CurrentObjectiveId,
+                Is.EqualTo(DemoObjectiveIds.BatteryUpgrade),
+                "이미 성공한 정산을 다시 요구하면 안 된다.");
+
+            director.NotifyDeepZonePrerequisitesReady();
+            Assert.That(
+                director.CurrentObjectiveId,
+                Is.EqualTo(DemoObjectiveIds.DeepSignal),
+                "이미 보유한 리튬을 다시 채굴하도록 막으면 안 된다.");
+        }
+
+        [Test]
+        public void PromptB53_QuestDetails_OpenCloseAndYieldToHazard()
+        {
+            var view = new RecordingDemoView();
+            var director = new DemoObjectiveDirector();
+            director.ResetNewGame();
+            var presenter = new DemoObjectivePresenter(view);
+            presenter.Bind(director);
+
+            presenter.OpenDetails();
+            Assert.That(presenter.IsDetailsOpen, Is.True);
+            Assert.That(view.DetailsVisible, Is.True);
+            Assert.That(view.DetailsTitle, Is.EqualTo("탐사 시작"));
+
+            presenter.CloseDetails();
+            Assert.That(presenter.IsDetailsOpen, Is.False);
+            Assert.That(view.DetailsVisible, Is.False);
+
+            presenter.OpenDetails();
+            presenter.SetHazardActive(true);
+            Assert.That(presenter.IsDetailsOpen, Is.False);
+            Assert.That(view.DetailsVisible, Is.False);
         }
 
         private static void AdvanceTo(DemoObjectiveDirector director, string targetId)
@@ -415,6 +512,8 @@ namespace SubTerra.App.Tests.Tutorial
             public bool InputLocked;
             public bool HazardYield;
             public bool DemoCompleteVisible;
+            public bool DetailsVisible;
+            public string DetailsTitle;
 
             public void SetObjective(DemoObjectiveReadModel model) => Model = model;
 
@@ -430,6 +529,16 @@ namespace SubTerra.App.Tests.Tutorial
 
             public void SetDemoCompleteVisible(bool visible, string summary) =>
                 DemoCompleteVisible = visible;
+
+            public void SetDetailsVisible(bool visible)
+            {
+                DetailsVisible = visible;
+            }
+
+            public void SetDetailsText(string title, string body, string nextAction)
+            {
+                DetailsTitle = title;
+            }
         }
     }
 }

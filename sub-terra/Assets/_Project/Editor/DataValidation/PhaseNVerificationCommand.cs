@@ -78,14 +78,14 @@ namespace SubTerra.App.Editor.DataValidation
                 DemoProgressSignal.ExplorationStarted,
                 DemoProgressSignal.CopperAndIronCollected,
                 DemoProgressSignal.PathGuidanceAcknowledged,
-                DemoProgressSignal.LithiumCollected,
                 DemoProgressSignal.StructuralHazardObserved,
                 DemoProgressSignal.SupportPlaced,
-                DemoProgressSignal.GasHazardObserved,
+                DemoProgressSignal.GasHazardResolved,
                 DemoProgressSignal.OutpostInstalled,
                 DemoProgressSignal.ReturnRecommendationPresented,
                 DemoProgressSignal.SettlementSucceeded,
                 DemoProgressSignal.BatteryUpgradeSucceeded,
+                DemoProgressSignal.LithiumCollected,
                 DemoProgressSignal.DeepZoneUnlocked,
                 DemoProgressSignal.DemoCompleted
             };
@@ -125,7 +125,7 @@ namespace SubTerra.App.Editor.DataValidation
             var debugSrc = File.ReadAllText(Path.Combine(
                 Application.dataPath, "_Project", "Scripts", "App", "UI", "Tutorial", "DemoObjectiveDebugTools.cs"));
             Check(edit, "N-S04-debug-dev-only",
-                debugSrc.Contains("#if DEVELOPMENT_BUILD || UNITY_EDITOR"));
+                debugSrc.Contains("#if UNITY_EDITOR || SUBTERRA_BUILD_DEVELOPMENT"));
 
             Check(edit, "N-S05-audio-optional-skip", true); // 오디오 미배선 — research 비필수
 
@@ -136,7 +136,7 @@ namespace SubTerra.App.Editor.DataValidation
             var state = GameState.CreateNew();
             director.BindGameState(state);
             director.ResetNewGame();
-            for (var i = 0; i < 9; i++)
+            for (var i = 0; i < 8; i++)
             {
                 director.HandleSignal(signals[i]);
             }
@@ -185,18 +185,18 @@ namespace SubTerra.App.Editor.DataValidation
 
             Check(play, "prereq-ready",
                 director.NotifyDeepZonePrerequisitesReady().Advanced
-                && director.CurrentObjectiveId == DemoObjectiveIds.DeepSignal);
+                && director.CurrentObjectiveId == DemoObjectiveIds.MineLithium);
 
             director.OnDeepZoneAccessChanged(new ZoneAccessResult(false, false, "locked"));
             Check(play, "deep-fail-no-advance",
-                director.CurrentObjectiveId == DemoObjectiveIds.DeepSignal);
+                director.CurrentObjectiveId == DemoObjectiveIds.MineLithium);
 
-            // 조건만 충족(DidUnlockNow=false)은 심층 목표 유지
-            director.OnDeepZoneAccessChanged(new ZoneAccessResult(true, false, "조건 충족"));
-            Check(play, "conditions-only-no-deep",
-                director.CurrentObjectiveId == DemoObjectiveIds.DeepSignal);
+            director.OnDeepZoneAccessChanged(new ZoneAccessResult(true, true, "early"));
+            Check(play, "unlock-does-not-skip-lithium",
+                director.CurrentObjectiveId == DemoObjectiveIds.MineLithium);
 
-            director.OnDeepZoneAccessChanged(new ZoneAccessResult(true, true, "ok"));
+            director.HandleSignal(DemoProgressSignal.LithiumCollected);
+            director.NotifyDeepZoneAlreadyUnlocked();
             Check(play, "deep-success",
                 director.CurrentObjectiveId == DemoObjectiveIds.DemoEnd);
 
@@ -221,7 +221,7 @@ namespace SubTerra.App.Editor.DataValidation
 
             var saveState = GameState.FromParts(
                 new PlayerState(80, 100, 12, 1f, 5f, 0f),
-                new ProgressState(7, true, DemoObjectiveIds.OutpostInstall, false),
+                new ProgressState(6, true, DemoObjectiveIds.OutpostInstall, false),
                 new RunState(10, true));
             var catalog = new InMemoryMineralCatalog();
             catalog.Register(DataIds.Minerals.Copper, 1f, 5);
@@ -243,7 +243,7 @@ namespace SubTerra.App.Editor.DataValidation
             {
                 Check(play, "capture-objective",
                     data.progress.currentObjectiveId == DemoObjectiveIds.OutpostInstall
-                    && data.progress.completedObjectives == 7);
+                    && data.progress.completedObjectives == 6);
                 RestoredSaveState restored;
                 var restoreOk = mapper.TryRestore(data, out restored);
                 Check(play, "restore-ok", restoreOk);
@@ -257,7 +257,7 @@ namespace SubTerra.App.Editor.DataValidation
                     d3.RestoreFromProgress(restored.GameState.Progress);
                     Check(play, "director-restore",
                         d3.CurrentObjectiveId == DemoObjectiveIds.OutpostInstall
-                        && d3.CompletedCount == 7);
+                        && d3.CompletedCount == 6);
                     d3.OnOutpostOperationCompleted(new OutpostOperationResult(
                         OutpostOperationStatus.Success,
                         OutpostOperationKind.Install,
@@ -265,7 +265,7 @@ namespace SubTerra.App.Editor.DataValidation
                         0,
                         0,
                         "install"));
-                    Check(play, "install-once", d3.CompletedCount == 8);
+                    Check(play, "install-once", d3.CompletedCount == 7);
                     d3.OnOutpostOperationCompleted(new OutpostOperationResult(
                         OutpostOperationStatus.Success,
                         OutpostOperationKind.Install,
@@ -273,7 +273,7 @@ namespace SubTerra.App.Editor.DataValidation
                         0,
                         0,
                         "dup"));
-                    Check(play, "no-duplicate-reward", d3.CompletedCount == 8);
+                    Check(play, "no-duplicate-reward", d3.CompletedCount == 7);
                 }
             }
 
@@ -331,6 +331,7 @@ namespace SubTerra.App.Editor.DataValidation
                     return data;
                 }
 
+                var drill = MakeUpgrade(DataIds.Upgrades.DrillSpeed, 2);
                 var drone = MakeUpgrade(DataIds.Upgrades.DroneScan, 2);
                 var gas = MakeUpgrade(DataIds.Upgrades.GasResistance, 1);
                 var wallet = new GateWallet();
@@ -338,14 +339,14 @@ namespace SubTerra.App.Editor.DataValidation
                 var upgradeState = new UpgradeState();
                 var service = new ProgressionService(
                     upgradeState,
-                    new GateCatalog(drone, gas),
+                    new GateCatalog(drill, drone, gas),
                     wallet);
 
                 var gameState = GameState.CreateNew();
                 var director = new DemoObjectiveDirector();
                 director.BindGameState(gameState);
                 director.ResetNewGame();
-                for (var i = 0; i < 10; i++)
+                for (var i = 0; i < 9; i++)
                 {
                     if (!DemoObjectiveCatalog.TryGet(director.CurrentObjectiveId, out var def))
                     {
@@ -372,6 +373,19 @@ namespace SubTerra.App.Editor.DataValidation
                     director.IsDemoComplete);
 
                 service.DeepZoneAccessChanged += director.OnDeepZoneAccessChanged;
+                service.PurchaseCompleted += result =>
+                {
+                    if (!result.IsSuccess)
+                    {
+                        return;
+                    }
+
+                    var access = service.GetDeepZoneAccess(gameState.Progress.CompletedObjectives);
+                    if (access.IsUnlocked)
+                    {
+                        director.NotifyDeepZonePrerequisitesReady();
+                    }
+                };
                 var view = new GateProgressionView();
                 var presenter = new ProgressionPanelPresenter(view);
                 presenter.Bind(service, () => gameState.Progress.CompletedObjectives);
@@ -397,16 +411,37 @@ namespace SubTerra.App.Editor.DataValidation
                     return false;
                 }
 
+                if (upgradeState.IsZoneUnlocked(DataIds.Zones.Deep))
+                {
+                    detail = "unlocked before drill requirement";
+                    return false;
+                }
+
+                if (!presenter.SelectUpgrade(DataIds.Upgrades.DrillSpeed)
+                    || !presenter.RequestPurchase().IsSuccess
+                    || !presenter.RequestPurchase().IsSuccess)
+                {
+                    detail = "drill purchase failed";
+                    return false;
+                }
+
                 if (!upgradeState.IsZoneUnlocked(DataIds.Zones.Deep))
                 {
                     detail = "zone.deep not unlocked by TryUnlockDeepZone";
                     return false;
                 }
 
-                if (director.CurrentObjectiveId != DemoObjectiveIds.DemoEnd
-                    && !director.IsDemoComplete)
+                if (director.CurrentObjectiveId != DemoObjectiveIds.MineLithium)
                 {
                     detail = "director stuck at " + director.CurrentObjectiveId;
+                    return false;
+                }
+
+                director.HandleSignal(DemoProgressSignal.LithiumCollected);
+                director.NotifyDeepZoneAlreadyUnlocked();
+                if (director.CurrentObjectiveId != DemoObjectiveIds.DemoEnd)
+                {
+                    detail = "deep signal stuck at " + director.CurrentObjectiveId;
                     return false;
                 }
 

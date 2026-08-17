@@ -251,6 +251,7 @@ namespace SubTerra.App.Tests.Progression
                 state.TryRestore(
                     new[]
                     {
+                        new UpgradeLevelState(DataIds.Upgrades.DrillSpeed, 2),
                         new UpgradeLevelState(DataIds.Upgrades.DroneScan, 2),
                         new UpgradeLevelState(DataIds.Upgrades.GasResistance, 1)
                     }),

@@ -11,5 +11,7 @@ namespace SubTerra.App.UI.Tutorial
         void SetInputLocked(bool locked);
         void SetHazardYield(bool yieldToHazard);
         void SetDemoCompleteVisible(bool visible, string summary);
+        void SetDetailsVisible(bool visible);
+        void SetDetailsText(string title, string body, string nextAction);
     }
 }

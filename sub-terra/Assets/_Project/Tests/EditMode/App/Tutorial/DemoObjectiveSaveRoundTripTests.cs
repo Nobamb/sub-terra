@@ -17,7 +17,7 @@ namespace SubTerra.App.Tests.Tutorial
         {
             var game = GameState.FromParts(
                 new PlayerState(80, 100, 12, 1f, 5f, 0f),
-                new ProgressState(7, true, DemoObjectiveIds.OutpostInstall, false),
+                new ProgressState(6, true, DemoObjectiveIds.OutpostInstall, false),
                 new RunState(10, true));
             Assert.That(game, Is.Not.Null);
 
@@ -41,21 +41,21 @@ namespace SubTerra.App.Tests.Tutorial
 
             Assert.That(data, Is.Not.Null);
             Assert.That(data.progress.currentObjectiveId, Is.EqualTo(DemoObjectiveIds.OutpostInstall));
-            Assert.That(data.progress.completedObjectives, Is.EqualTo(7));
+            Assert.That(data.progress.completedObjectives, Is.EqualTo(6));
             Assert.That(data.progress.isDemoComplete, Is.False);
 
             Assert.That(mapper.TryRestore(data, out var restored), Is.True);
             Assert.That(
                 restored.GameState.Progress.CurrentObjectiveId,
                 Is.EqualTo(DemoObjectiveIds.OutpostInstall));
-            Assert.That(restored.GameState.Progress.CompletedObjectives, Is.EqualTo(7));
+            Assert.That(restored.GameState.Progress.CompletedObjectives, Is.EqualTo(6));
             Assert.That(restored.GameState.Progress.IsDemoComplete, Is.False);
 
             var director = new DemoObjectiveDirector();
             director.BindGameState(restored.GameState);
             director.RestoreFromProgress(restored.GameState.Progress);
             Assert.That(director.CurrentObjectiveId, Is.EqualTo(DemoObjectiveIds.OutpostInstall));
-            Assert.That(director.CompletedCount, Is.EqualTo(7));
+            Assert.That(director.CompletedCount, Is.EqualTo(6));
         }
 
         [Test]
@@ -63,7 +63,23 @@ namespace SubTerra.App.Tests.Tutorial
         {
             var resolved = DemoObjectiveCatalog.ResolveObjectiveId(string.Empty, 3);
             Assert.That(resolved, Is.EqualTo(DemoObjectiveIds.Ordered[3]));
-            Assert.That(resolved, Is.EqualTo(DemoObjectiveIds.MineLithium));
+            Assert.That(resolved, Is.EqualTo(DemoObjectiveIds.StructuralCrack));
+
+            var reorderedKnown = DemoObjectiveCatalog.ResolveObjectiveId(
+                DemoObjectiveIds.MineLithium,
+                3);
+            Assert.That(
+                reorderedKnown,
+                Is.EqualTo(DemoObjectiveIds.StructuralCrack),
+                "prompt-B 53 이전 리튬 진행 세이브는 같은 완료 개수의 새 목표로 이동해야 한다.");
+
+            var engine = new DemoObjectiveTransitionEngine();
+            engine.Restore(DemoObjectiveIds.PlaceSupport, 5);
+            Assert.That(engine.CurrentObjectiveId, Is.EqualTo(DemoObjectiveIds.PlaceSupport));
+            Assert.That(
+                engine.CompletedCount,
+                Is.EqualTo(4),
+                "리튬을 뒤로 옮긴 만큼 이후 구버전 진행 개수도 새 인덱스로 정규화해야 한다.");
 
             var unknown = DemoObjectiveCatalog.ResolveObjectiveId("demo.unknown.legacy", 0);
             Assert.That(unknown, Is.EqualTo(DemoObjectiveIds.ExploreStart));
