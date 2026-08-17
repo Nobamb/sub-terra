@@ -34,7 +34,7 @@ namespace SubTerra.App.Tutorial
                     DemoObjectiveIds.PathGuide,
                     "경로 안내",
                     "안전 경로와 구조 위험 구간 안내를 확인하세요.",
-                    "안내를 닫고 채굴 중 나타나는 균열 경고를 확인하세요",
+                    "안내를 닫거나, 채굴 중 균열 경고를 확인하세요",
                     DemoProgressSignal.PathGuidanceAcknowledged,
                     DemoObjectiveIds.StructuralCrack,
                     showsDismissibleGuidance: true),

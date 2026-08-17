@@ -281,13 +281,17 @@ namespace SubTerra.App.Tests.Tutorial
             Assert.That(presenter.IsInputLocked, Is.False);
             presenter.SetHazardActive(true);
             Assert.That(view.HazardYield, Is.True);
-            Assert.That(view.GuidanceVisible, Is.False);
+            Assert.That(
+                view.GuidanceVisible,
+                Is.True,
+                "닫기형 안내는 위험 중에도 보여야 경로 안내가 막히지 않는다.");
 
             presenter.SetHazardActive(false);
             director.NotifyExplorationReady();
             // path guide 단계로 보낸 뒤 안내 dismiss
             AdvanceTo(director, DemoObjectiveIds.PathGuide);
             presenter.Refresh();
+            presenter.SetHazardActive(true);
             Assert.That(view.GuidanceVisible, Is.True);
             presenter.DismissGuidance();
             Assert.That(presenter.IsInputLocked, Is.False);
@@ -444,12 +448,10 @@ namespace SubTerra.App.Tests.Tutorial
                 5,
                 "early settlement"));
 
-            Assert.That(director.CurrentObjectiveId, Is.EqualTo(DemoObjectiveIds.PathGuide));
-            director.NotifyGuidanceAcknowledged();
             Assert.That(
                 director.CurrentObjectiveId,
                 Is.EqualTo(DemoObjectiveIds.ReturnRecommend),
-                "안내 중 이미 끝낸 균열·버팀목·가스·전진기지를 다시 요구하면 안 된다.");
+                "경로 안내 중 균열을 보면 안내를 닫지 않아도 이후 완료 상태를 따라잡아야 한다.");
 
             director.NotifyReturnRecommendationAcknowledged();
             Assert.That(
@@ -486,6 +488,72 @@ namespace SubTerra.App.Tests.Tutorial
             presenter.SetHazardActive(true);
             Assert.That(presenter.IsDetailsOpen, Is.False);
             Assert.That(view.DetailsVisible, Is.False);
+        }
+
+        [Test]
+        public void PathGuide_PriorCrack_DoesNotSkipUntilNewHazardOrDismiss()
+        {
+            var director = new DemoObjectiveDirector();
+            director.ResetNewGame();
+            director.NotifyExplorationReady();
+            director.OnStructuralRiskChanged(StructuralRiskLevel.Caution);
+            Assert.That(director.CurrentObjectiveId, Is.EqualTo(DemoObjectiveIds.MineCopperIron));
+
+            director.OnInventoryChanged(new InventorySnapshot(
+                2f,
+                100f,
+                10f,
+                new[]
+                {
+                    new InventoryStackEntry(DataIds.Minerals.Copper, "Cu", 1, 1f, 5),
+                    new InventoryStackEntry(DataIds.Minerals.Iron, "Fe", 1, 1f, 5)
+                }));
+            Assert.That(
+                director.CurrentObjectiveId,
+                Is.EqualTo(DemoObjectiveIds.PathGuide),
+                "이미 균열이 있어도 경로 안내 창을 먼저 띄울 수 있게 그 단계에 머문다.");
+
+            director.NotifyGuidanceAcknowledged();
+            Assert.That(
+                director.CurrentObjectiveId,
+                Is.EqualTo(DemoObjectiveIds.PlaceSupport),
+                "안내를 닫으면 이미 본 균열 인지는 따라잡는다.");
+        }
+
+        [Test]
+        public void PathGuide_NewOrRestoredHazard_CompletesWithoutDismiss()
+        {
+            var director = new DemoObjectiveDirector();
+            director.ResetNewGame();
+            director.NotifyExplorationReady();
+            director.HandleSignal(DemoProgressSignal.CopperAndIronCollected);
+            Assert.That(director.CurrentObjectiveId, Is.EqualTo(DemoObjectiveIds.PathGuide));
+
+            director.OnStructuralRiskChanged(StructuralRiskLevel.Caution);
+            Assert.That(
+                director.CurrentObjectiveId,
+                Is.EqualTo(DemoObjectiveIds.PlaceSupport),
+                "경로 안내 중 균열이 나면 닫기 없이 균열 인지까지 넘긴다.");
+
+            var restored = new DemoObjectiveDirector();
+            restored.RestoreFromProgress(new ProgressState(
+                2,
+                false,
+                DemoObjectiveIds.PathGuide,
+                false));
+            Assert.That(restored.CurrentObjectiveId, Is.EqualTo(DemoObjectiveIds.PathGuide));
+
+            restored.OnStructuralRiskChanged(StructuralRiskLevel.Safe);
+            Assert.That(
+                restored.CurrentObjectiveId,
+                Is.EqualTo(DemoObjectiveIds.PathGuide),
+                "이어하기인데 안전하면 안내를 다시 보여 주고 자동 완료하지 않는다.");
+
+            restored.OnStructuralRiskChanged(StructuralRiskLevel.Critical);
+            Assert.That(
+                restored.CurrentObjectiveId,
+                Is.EqualTo(DemoObjectiveIds.PlaceSupport),
+                "이어하기 후 위험이 남아 있으면 닫지 않아도 진행한다.");
         }
 
         private static void AdvanceTo(DemoObjectiveDirector director, string targetId)

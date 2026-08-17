@@ -148,14 +148,15 @@ namespace SubTerra.App.UI.Tutorial
                     true,
                     model.Description);
                 guidanceOpen = model.ShowsDismissibleGuidance;
-                view?.SetGuidanceVisible(guidanceOpen && !hazardActive);
+                view?.SetGuidanceVisible(guidanceOpen);
                 view?.SetGuidanceText(model.Title, model.Description);
             }
             else if (model.ShowsDismissibleGuidance)
             {
                 guidanceOpen = true;
                 view?.SetGuidanceText(model.Title, model.Description);
-                view?.SetGuidanceVisible(!hazardActive);
+                // 닫기형 안내는 위험 중에도 켠다. 숨기면 경로 안내가 닫히지 못한다.
+                view?.SetGuidanceVisible(true);
                 view?.SetDemoCompleteVisible(false, string.Empty);
             }
             else
@@ -174,15 +175,24 @@ namespace SubTerra.App.UI.Tutorial
         {
             var yield = UiLayerPriority.ShouldYieldTutorialInput(hazardActive);
             view?.SetHazardYield(yield);
-            if (yield && guidanceOpen)
+            if (!guidanceOpen)
             {
-                // 위험 중에는 일반 안내 패널을 숨겨 경고가 가려지지 않게 한다.
+                return;
+            }
+
+            // 닫기형 안내는 위험 HUD보다 아래 정렬만 하고 패널은 유지한다.
+            if (yield && !ShouldKeepGuidanceVisibleDuringHazard())
+            {
                 view?.SetGuidanceVisible(false);
+                return;
             }
-            else if (!yield && guidanceOpen)
-            {
-                view?.SetGuidanceVisible(true);
-            }
+
+            view?.SetGuidanceVisible(true);
+        }
+
+        private bool ShouldKeepGuidanceVisibleDuringHazard()
+        {
+            return director != null && director.ReadModel.ShowsDismissibleGuidance;
         }
 
         private void SetInputLocked(bool locked)

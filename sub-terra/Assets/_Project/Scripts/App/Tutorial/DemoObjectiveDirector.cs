@@ -155,8 +155,7 @@ namespace SubTerra.App.Tutorial
                     // integrity는 A가 확정한 값. 위험 구간이면 관찰 신호만 보낸다.
                     if (gameplayEvent.structuralIntegrity < 0.66f)
                     {
-                        structuralHazardObserved = true;
-                        HandleSignal(DemoProgressSignal.StructuralHazardObserved);
+                        ObserveStructuralHazard();
                     }
 
                     break;
@@ -200,9 +199,23 @@ namespace SubTerra.App.Tutorial
         {
             if (level == StructuralRiskLevel.Caution || level == StructuralRiskLevel.Critical)
             {
-                structuralHazardObserved = true;
-                HandleSignal(DemoProgressSignal.StructuralHazardObserved);
+                ObserveStructuralHazard();
             }
+        }
+
+        /// <summary>
+        /// 경로 안내 중 균열을 보면 안내를 닫지 않아도 한 단계 넘긴다.
+        /// 이어하기에서 현재 위험이 다시 통지될 때도 같은 경로다.
+        /// </summary>
+        private void ObserveStructuralHazard()
+        {
+            structuralHazardObserved = true;
+            if (engine.CurrentObjectiveId == DemoObjectiveIds.PathGuide)
+            {
+                HandleSignal(DemoProgressSignal.PathGuidanceAcknowledged);
+            }
+
+            HandleSignal(DemoProgressSignal.StructuralHazardObserved);
         }
 
         public void OnGasExposureChanged(GasRiskLevel level)
