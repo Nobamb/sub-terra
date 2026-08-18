@@ -8,7 +8,8 @@ namespace SubTerra.App.State
     {
         Safe = 0,
         Caution = 1,
-        Critical = 2
+        Critical = 2,
+        Imminent = 3
     }
 
     /// <summary>가스 노출 표시 등급. A 계산 결과 수신용이며 UI에서 재계산하지 않는다.</summary>

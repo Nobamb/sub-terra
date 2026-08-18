@@ -29,6 +29,7 @@ namespace SubTerra.Gameplay.Building
         private readonly HashSet<string> restoredInstanceIds = new();
 
         public BuildingPlacementDefinition Selection => selection;
+        public StructuralIntegritySystem StructuralSystem => structuralIntegritySystem;
         public event Action<BuildingPlacementResult> BuildingPlaced;
         public event Action<BuildingPlacementResult> PlacementRejected;
 

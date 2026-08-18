@@ -87,7 +87,7 @@ namespace SubTerra.App.Drone
                     + (structuralCritical ? settings.CriticalRiskBonus : 0);
                 builders[DroneAction.InstallSupport].Add(
                     "structural_integrity",
-                    "구조 안정도 " + Format(context.structuralIntegrity),
+                    FormatStructuralGuidance(context),
                     context.structuralIntegrity,
                     "ratio",
                     score,
@@ -469,11 +469,21 @@ namespace SubTerra.App.Drone
                     guidance += " ";
                 }
 
-                guidance += "구조 안정도 " + Format(context.structuralIntegrity)
-                    + ". 버팀목 설치 지점을 확보하세요.";
+                guidance += FormatStructuralGuidance(context);
             }
 
             return guidance;
+        }
+
+        private static string FormatStructuralGuidance(DroneContextDto context)
+        {
+            if (context.structuralTelegraphing)
+                return "저 빨간 천장이 곧 떨어집니다. 피하거나 버팀목을 설치하세요.";
+            if (string.Equals(context.structuralCauseId, "unsupported", StringComparison.Ordinal))
+                return "이 천장 아래가 비었습니다. 더 파면 균열이 커집니다.";
+            if (string.Equals(context.structuralCauseId, "support_removed", StringComparison.Ordinal))
+                return "버팀목 보호가 사라졌습니다. 다시 보강하세요.";
+            return "채굴 충격이 쌓였습니다. 이 반경에 버팀목 설치를 준비하세요.";
         }
 
         private static bool HasReason(DroneActionScore candidate, string reasonId)

@@ -29,6 +29,7 @@ namespace SubTerra.Gameplay.Structural.Tests
             fixture.System.CollapseTriggered += value => emitted = value;
 
             fixture.Mine(1f);
+            fixture.System.AdvanceSimulation(1f);
 
             Assert.That(fixture.Foreground.HasTile(protectedCell), Is.True);
             Assert.That(emitted, Is.Not.Null);
@@ -162,6 +163,71 @@ namespace SubTerra.Gameplay.Structural.Tests
             Assert.That(fixture.System.CurrentRisk, Is.EqualTo(StructuralRiskLevel.Caution));
             Assert.That(fixture.Overlay.HasTile(ceiling), Is.True);
             Assert.That(fixture.System.EvaluateAt(mineCell), Is.EqualTo(StructuralRiskLevel.Caution));
+            fixture.System.AdvanceSimulation(2f);
+            Assert.That(collapse, Is.Null, "복원 재계산은 시간이 지나도 예고/붕괴를 만들면 안 됩니다.");
+        }
+
+        [Test]
+        public void Collapse_TelegraphsBeforeRemovingTile_AndSupportCancelsIt()
+        {
+            using var fixture = new StructuralFixture(1, true);
+            var ceiling = new Vector3Int(0, 2, 0);
+            StructuralCollapseEventDto emitted = null;
+            fixture.System.CollapseTriggered += value => emitted = value;
+
+            fixture.Mine(1f);
+
+            Assert.That(fixture.Foreground.HasTile(ceiling), Is.True);
+            Assert.That(fixture.System.EvaluateAt(Vector3Int.zero),
+                Is.EqualTo(StructuralRiskLevel.CollapseImminent));
+            Assert.That(emitted, Is.Null);
+
+            GameObject supportObject = new("TelegraphCancelSupport");
+            supportObject.transform.SetParent(fixture.Root.transform);
+            supportObject.transform.position = fixture.Foreground.GetCellCenterWorld(Vector3Int.zero);
+            StructuralSupport support = supportObject.AddComponent<StructuralSupport>();
+            fixture.System.RegisterSupport(support);
+            fixture.System.AdvanceSimulation(2f);
+
+            Assert.That(emitted, Is.Null);
+            Assert.That(fixture.Foreground.HasTile(ceiling), Is.True);
+            Assert.That(fixture.System.CurrentRisk, Is.EqualTo(StructuralRiskLevel.Stable));
+        }
+
+        [Test]
+        public void CrackIntensity_IncreasesWithinSameRiskBand()
+        {
+            using var fixture = new StructuralFixture(1, true);
+            var ceiling = new Vector3Int(0, 2, 0);
+
+            fixture.Mine(0.1f);
+            Assert.That(fixture.System.GetComponent<StructuralCrackOverlay>(), Is.Not.Null);
+            StructuralCrackOverlay overlay = fixture.System.GetComponent<StructuralCrackOverlay>();
+            Assert.That(overlay.TryGetCellIntensity(ceiling, out float first), Is.True);
+
+            fixture.Mine(0.05f);
+            Assert.That(overlay.TryGetCellIntensity(ceiling, out float second), Is.True);
+            Assert.That(second, Is.GreaterThan(first));
+        }
+
+        [Test]
+        public void RemovingSupport_RestoresAccumulatedRiskWithSupportLossCause()
+        {
+            using var fixture = new StructuralFixture(1, true);
+            fixture.Mine(0.3f);
+
+            GameObject supportObject = new("RemovableSupport");
+            supportObject.transform.SetParent(fixture.Root.transform);
+            supportObject.transform.position = fixture.Foreground.GetCellCenterWorld(Vector3Int.zero);
+            StructuralSupport support = supportObject.AddComponent<StructuralSupport>();
+            fixture.System.RegisterSupport(support);
+            Assert.That(fixture.System.CurrentRisk, Is.EqualTo(StructuralRiskLevel.Stable));
+
+            fixture.System.UnregisterSupport(support);
+            StructuralRiskStatus restored = fixture.System.EvaluateStatusAt(Vector3Int.zero);
+
+            Assert.That(restored.Level, Is.EqualTo(StructuralRiskLevel.Caution));
+            Assert.That(restored.Cause, Is.EqualTo(StructuralRiskCause.SupportRemoved));
         }
 
         private static List<CollapseCellDto> RunCollapse(long seed)
@@ -172,6 +238,7 @@ namespace SubTerra.Gameplay.Structural.Tests
             fixture.System.CollapseTriggered += value => emitted = value;
 
             fixture.Mine(1f);
+            fixture.System.AdvanceSimulation(1f);
 
             Assert.That(emitted, Is.Not.Null);
             Assert.That(emitted.worldSeed, Is.EqualTo(seed));

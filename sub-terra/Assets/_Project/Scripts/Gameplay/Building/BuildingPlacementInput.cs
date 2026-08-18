@@ -64,6 +64,7 @@ namespace SubTerra.Gameplay.Building
             {
                 preview?.SetCell(GetTerrainTilemap(), origin, isValid);
             }
+            UpdateSupportRange(origin);
 
             if (Mouse.current.leftButton.wasPressedThisFrame && isValid)
             {
@@ -74,6 +75,25 @@ namespace SubTerra.Gameplay.Building
         private UnityEngine.Tilemaps.Tilemap GetTerrainTilemap()
         {
             return GetComponent<BuildingPlacementSceneReferences>()?.TerrainTilemap;
+        }
+
+        private void UpdateSupportRange(Vector3Int origin)
+        {
+            if (preview == null || placementSystem.Selection == null) return;
+            SubTerra.Gameplay.Structural.StructuralSupport support = placementSystem.Selection.RuntimePrefab != null
+                ? placementSystem.Selection.RuntimePrefab.GetComponent<SubTerra.Gameplay.Structural.StructuralSupport>()
+                : null;
+            if (support == null)
+            {
+                preview.HideSupportRange();
+                return;
+            }
+
+            preview.SetSupportRange(
+                GetTerrainTilemap(),
+                origin,
+                support.Radius,
+                placementSystem.StructuralSystem);
         }
     }
 }

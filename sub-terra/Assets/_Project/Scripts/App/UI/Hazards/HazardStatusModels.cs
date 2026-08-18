@@ -4,7 +4,8 @@ namespace SubTerra.App.UI.Hazards
     {
         Safe = 0,
         Caution = 1,
-        Critical = 2
+        Critical = 2,
+        Imminent = 3
     }
 
     /// <summary>A의 확정 위험 단계와 실제 수치를 UI에 전달하는 읽기 모델.</summary>

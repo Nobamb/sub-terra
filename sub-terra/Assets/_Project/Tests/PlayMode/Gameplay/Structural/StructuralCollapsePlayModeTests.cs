@@ -36,6 +36,7 @@ namespace SubTerra.Gameplay.Structural.Tests
             fixture.System.CollapseTriggered += collapse => received = collapse;
 
             fixture.Mine(1f);
+            yield return new WaitForSecondsRealtime(1f);
 
             Assert.That(received, Is.Not.Null);
             Assert.That(received.cells, Has.Count.EqualTo(3));

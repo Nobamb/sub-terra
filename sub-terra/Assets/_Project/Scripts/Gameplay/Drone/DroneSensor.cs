@@ -100,14 +100,16 @@ namespace SubTerra.Gameplay.Drone
         {
             Vector2 playerPosition = playerTransform != null ? playerTransform.position : transform.position;
             int depth = DroneContextCalculator.CalculateDepth(surfaceY, playerPosition.y);
-            StructuralRiskLevel structuralRisk = structuralSystem != null ? structuralSystem.CurrentRisk : StructuralRiskLevel.Stable;
+            StructuralRiskStatus structuralStatus = structuralSystem != null
+                ? structuralSystem.EvaluateStatusAtWorld(playerPosition)
+                : StructuralRiskStatus.Stable(Vector3Int.zero);
             GasRiskLevel gasRisk = appliedGasRisk
                 ?? (gasHazardSystem != null
                     ? gasHazardSystem.CurrentExposure.Risk
                     : GasRiskLevel.Safe);
             float baseDistance = DroneContextCalculator.FindNearestDistance(playerPosition, outpostCores);
             IReadOnlyList<string> minerals = ScanNearbyMinerals(playerPosition);
-            return new DroneContextDto(depth, currentEnergy, returnEnergyEstimate, structuralRisk, gasRisk, unsettledCargoValue, cargoWeight, maxCargoWeight, baseDistance, minerals, returnPathAvailable);
+            return new DroneContextDto(depth, currentEnergy, returnEnergyEstimate, structuralStatus.Level, gasRisk, unsettledCargoValue, cargoWeight, maxCargoWeight, baseDistance, minerals, returnPathAvailable, structuralStatus.Cause, structuralStatus.IsTelegraphing);
         }
 
         SubTerra.Shared.DroneContextDto SubTerra.Shared.IDroneContextProvider.CreateContext()
@@ -119,6 +121,8 @@ namespace SubTerra.Gameplay.Drone
                 currentEnergy = context.CurrentEnergy,
                 returnEnergyEstimate = context.ReturnEnergyEstimate,
                 structuralIntegrity = ToIntegrityValue(context.StructuralRisk),
+                structuralCauseId = ToCauseId(context.StructuralCause),
+                structuralTelegraphing = context.StructuralTelegraphing,
                 gasRisk = ToRiskValue(context.GasRisk),
                 unsettledCargoValue = context.UnsettledCargoValue,
                 cargoWeight = context.CargoWeight,
@@ -177,6 +181,14 @@ namespace SubTerra.Gameplay.Drone
         private static float ToRiskValue(GasRiskLevel risk)
         {
             return risk switch { GasRiskLevel.Safe => 0f, GasRiskLevel.Caution => 0.5f, _ => 1f };
+        }
+
+        private static string ToCauseId(StructuralRiskCause cause)
+        {
+            return cause == StructuralRiskCause.Unsupported ? "unsupported"
+                : cause == StructuralRiskCause.MiningImpact ? "mining_impact"
+                : cause == StructuralRiskCause.SupportRemoved ? "support_removed"
+                : string.Empty;
         }
     }
 }

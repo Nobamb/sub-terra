@@ -4,6 +4,7 @@ using SubTerra.App.State;
 using SubTerra.App.UI.Hazards;
 using SubTerra.Gameplay.Hazards;
 using SubTerra.Gameplay.Power;
+using SubTerra.Gameplay.Player;
 using SubTerra.Gameplay.Structural;
 using SubTerra.Shared;
 using UnityEngine;
@@ -27,8 +28,12 @@ namespace SubTerra.App.Integration
         [SerializeField] private GasHazardSystem gasSystem;
         [SerializeField] private GasExposureEffectController gasEffectController;
         [SerializeField] private PowerNetworkSystem powerSystem;
+        [SerializeField] private Transform playerTarget;
 
         private GameState gameState;
+        private Vector3Int lastStructuralCell;
+        private bool hasStructuralCell;
+        private bool hasStructuralStatus;
 
         public HazardStatusReadModel StructuralStatus { get; private set; } =
             new(HazardSeverity.Safe, "안전", string.Empty);
@@ -45,8 +50,9 @@ namespace SubTerra.App.Integration
         {
             if (structuralSystem != null)
             {
-                structuralSystem.RiskChanged += OnStructuralRiskChanged;
-                OnStructuralRiskChanged(structuralSystem.CurrentRisk);
+                structuralSystem.StructuralStatusChanged += OnStructuralStatusChanged;
+                ResolvePlayerTarget();
+                RefreshLocalStructuralStatus(true);
             }
 
             if (gasEffectController != null)
@@ -71,7 +77,7 @@ namespace SubTerra.App.Integration
         {
             if (structuralSystem != null)
             {
-                structuralSystem.RiskChanged -= OnStructuralRiskChanged;
+                structuralSystem.StructuralStatusChanged -= OnStructuralStatusChanged;
             }
 
             if (gasEffectController != null)
@@ -87,6 +93,11 @@ namespace SubTerra.App.Integration
             {
                 powerSystem.NetworkRebuilt -= OnPowerNetworkRebuilt;
             }
+        }
+
+        private void Update()
+        {
+            RefreshLocalStructuralStatus(false);
         }
 
         public void BindGameState(GameState state)
@@ -132,21 +143,77 @@ namespace SubTerra.App.Integration
             }
         }
 
-        private void OnStructuralRiskChanged(GameplayStructuralRiskLevel risk)
+        private void OnStructuralStatusChanged()
         {
+            RefreshLocalStructuralStatus(true);
+        }
+
+        private void RefreshLocalStructuralStatus(bool force)
+        {
+            if (structuralSystem == null) return;
+            ResolvePlayerTarget();
+            if (playerTarget == null)
+            {
+                if (!force) return;
+                ApplyStructuralStatus(new StructuralRiskStatus(
+                    Vector3Int.zero,
+                    0f,
+                    structuralSystem.CurrentRisk,
+                    StructuralRiskCause.None,
+                    structuralSystem.CurrentRisk == GameplayStructuralRiskLevel.CollapseImminent));
+                return;
+            }
+
+            Vector3Int cell = structuralSystem.WorldToCell(playerTarget.position);
+            if (!force && hasStructuralCell && cell == lastStructuralCell) return;
+            lastStructuralCell = cell;
+            hasStructuralCell = true;
+            ApplyStructuralStatus(structuralSystem.EvaluateStatusAt(cell));
+        }
+
+        private void ResolvePlayerTarget()
+        {
+            if (playerTarget != null) return;
+            PlayerMovement movement = FindAnyObjectByType<PlayerMovement>();
+            if (movement != null) playerTarget = movement.transform;
+        }
+
+        private void ApplyStructuralStatus(StructuralRiskStatus status)
+        {
+            GameplayStructuralRiskLevel risk = status.Level;
             var severity = risk == GameplayStructuralRiskLevel.CollapseImminent
-                || risk == GameplayStructuralRiskLevel.Danger
+                ? HazardSeverity.Imminent
+                : risk == GameplayStructuralRiskLevel.Danger
                 ? HazardSeverity.Critical
                 : risk == GameplayStructuralRiskLevel.Caution
                     ? HazardSeverity.Caution
                     : HazardSeverity.Safe;
-            StructuralStatus = new HazardStatusReadModel(
+            var next = new HazardStatusReadModel(
                 severity,
                 severity == HazardSeverity.Safe ? "안전"
-                    : severity == HazardSeverity.Caution ? "주의" : "위험",
-                string.Empty);
+                    : severity == HazardSeverity.Caution ? "주의"
+                    : severity == HazardSeverity.Imminent ? "붕괴 임박" : "위험",
+                FormatStructuralCause(status.Cause));
+            if (hasStructuralStatus
+                && StructuralStatus.Severity == next.Severity
+                && StructuralStatus.Label == next.Label
+                && StructuralStatus.ValueText == next.ValueText)
+            {
+                return;
+            }
+
+            StructuralStatus = next;
+            hasStructuralStatus = true;
             gameState?.SetStructuralRisk(ToAppStructuralRisk(risk));
             StructuralStatusChanged?.Invoke(StructuralStatus);
+        }
+
+        private static string FormatStructuralCause(StructuralRiskCause cause)
+        {
+            return cause == StructuralRiskCause.Unsupported ? "천장 아래가 비어 있음"
+                : cause == StructuralRiskCause.MiningImpact ? "채굴 충격 누적"
+                : cause == StructuralRiskCause.SupportRemoved ? "버팀목 보호 상실"
+                : string.Empty;
         }
 
         private void OnGasExposureChanged(GasExposureState exposure)
@@ -213,7 +280,9 @@ namespace SubTerra.App.Integration
                 return;
             }
 
-            gameState.SetStructuralRisk(StructuralStatus.Severity == HazardSeverity.Critical
+            gameState.SetStructuralRisk(StructuralStatus.Severity == HazardSeverity.Imminent
+                ? AppStructuralRiskLevel.Imminent
+                : StructuralStatus.Severity == HazardSeverity.Critical
                 ? AppStructuralRiskLevel.Critical
                 : StructuralStatus.Severity == HazardSeverity.Caution
                     ? AppStructuralRiskLevel.Caution
@@ -228,7 +297,8 @@ namespace SubTerra.App.Integration
         private static AppStructuralRiskLevel ToAppStructuralRisk(GameplayStructuralRiskLevel risk)
         {
             return risk == GameplayStructuralRiskLevel.CollapseImminent
-                || risk == GameplayStructuralRiskLevel.Danger
+                ? AppStructuralRiskLevel.Imminent
+                : risk == GameplayStructuralRiskLevel.Danger
                 ? AppStructuralRiskLevel.Critical
                 : risk == GameplayStructuralRiskLevel.Caution
                     ? AppStructuralRiskLevel.Caution

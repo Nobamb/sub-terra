@@ -142,6 +142,24 @@ namespace SubTerra.App.Tests.Drone
         }
 
         [Test]
+        public void StructuralDialogue_UsesCauseAndTelegraphInsteadOfNormalizedNumber()
+        {
+            var context = SafeContext();
+            context.structuralIntegrity = 0.3f;
+            context.structuralCauseId = "unsupported";
+
+            var warning = service.Analyze(context);
+            Assert.That(warning.Dialogue.Tokens["safetyGuidance"], Does.Contain("천장 아래가 비었습니다"));
+            Assert.That(warning.Dialogue.Tokens["safetyGuidance"], Does.Not.Contain("0.3"));
+
+            context.structuralIntegrity = 0f;
+            context.structuralTelegraphing = true;
+            var imminent = service.Analyze(context);
+            Assert.That(imminent.Dialogue.Tokens["safetyGuidance"], Does.Contain("빨간 천장"));
+            Assert.That(imminent.Dialogue.Tokens["safetyGuidance"], Does.Contain("피하거나"));
+        }
+
+        [Test]
         public void K_F01_InventoryFull_UsesActualCapacityAndReturnTemplate()
         {
             var context = SafeContext();

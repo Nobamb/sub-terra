@@ -197,7 +197,9 @@ namespace SubTerra.App.Tutorial
 
         public void OnStructuralRiskChanged(StructuralRiskLevel level)
         {
-            if (level == StructuralRiskLevel.Caution || level == StructuralRiskLevel.Critical)
+            if (level == StructuralRiskLevel.Caution
+                || level == StructuralRiskLevel.Critical
+                || level == StructuralRiskLevel.Imminent)
             {
                 ObserveStructuralHazard();
             }

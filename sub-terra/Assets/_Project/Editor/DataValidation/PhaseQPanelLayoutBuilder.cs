@@ -201,7 +201,7 @@ namespace SubTerra.App.Editor.DataValidation
             var root = CreatePanel(parent, "GameGuidePanel", new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(1180f, 740f));
             CreateText(root.transform, "Title", new Vector2(28f, -24f), new Vector2(950f, 44f), 30f, "게임 가이드 [G]");
             CreateText(root.transform, "GuideText", new Vector2(28f, -88f), new Vector2(1100f, 580f), 18f,
-                "기본 조작\n이동/점프/채굴 후 B 시설 건설, I 화물, U 장비 업그레이드를 사용합니다.\n\n핵심 메커니즘\n전력·구조 위험·가스 위험을 확인하고, Digger-Bot 권고를 참고하세요.\n\n세부 안내 내용은 다음 UI 작업에서 확장합니다.");
+                "기본 조작\n이동/점프/채굴 후 B 시설 건설, I 화물, U 장비 업그레이드를 사용합니다.\n\n구조 위험\n아래가 빈 천장만 위험합니다. 아래·옆을 더 파면 균열이 짙어집니다. 빨간 칸 중 점멸하는 칸만 곧 떨어지므로 먼저 피하세요. 미리 준비한 버팀목을 점멸 반경에 설치하면 붕괴를 취소할 수 있습니다.\n\n가스·전력 상태와 Digger-Bot 권고도 함께 확인하세요.");
             return root;
         }
 

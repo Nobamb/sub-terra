@@ -326,7 +326,8 @@ namespace SubTerra.App.UI.Tutorial
         {
             director?.OnStructuralRiskChanged(level);
             var active = level == StructuralRiskLevel.Caution
-                || level == StructuralRiskLevel.Critical;
+                || level == StructuralRiskLevel.Critical
+                || level == StructuralRiskLevel.Imminent;
             UpdateHazardYield(active);
         }
 
@@ -345,7 +346,8 @@ namespace SubTerra.App.UI.Tutorial
             }
 
             var structural = boundState.Run.StructuralRisk == StructuralRiskLevel.Caution
-                || boundState.Run.StructuralRisk == StructuralRiskLevel.Critical;
+                || boundState.Run.StructuralRisk == StructuralRiskLevel.Critical
+                || boundState.Run.StructuralRisk == StructuralRiskLevel.Imminent;
             var gas = boundState.Run.GasExposure == GasRiskLevel.Elevated
                 || boundState.Run.GasExposure == GasRiskLevel.Hazard;
             presenter.SetHazardActive(structural || gas || hazardFromLatest);

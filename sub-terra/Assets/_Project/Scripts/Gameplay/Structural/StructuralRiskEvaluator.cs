@@ -23,6 +23,11 @@ namespace SubTerra.Gameplay.Structural
             StructuralRiskSettings settings)
         {
             float score = CalculateScore(miningImpact, unsupportedTiles, supportStrength, settings);
+            return EvaluateScore(score, settings);
+        }
+
+        public static StructuralRiskLevel EvaluateScore(float score, StructuralRiskSettings settings)
+        {
             if (score >= settings.CollapseImminentThreshold)
                 return StructuralRiskLevel.CollapseImminent;
             if (score >= settings.DangerThreshold)

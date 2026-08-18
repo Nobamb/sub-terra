@@ -10,11 +10,15 @@ namespace SubTerra.Gameplay.Structural
         [SerializeField, Min(0f)] private float cautionThreshold = 30f;
         [SerializeField, Min(0f)] private float dangerThreshold = 60f;
         [SerializeField, Min(0f)] private float collapseImminentThreshold = 90f;
+        [SerializeField, Range(0.45f, 0.7f)] private float collapseTelegraphSeconds = 0.6f;
+        [SerializeField, Min(0.05f)] private float collapseFallSeconds = 0.18f;
 
         public float UnsupportedTileWeight => unsupportedTileWeight;
         public float CautionThreshold => cautionThreshold;
         public float DangerThreshold => dangerThreshold;
         public float CollapseImminentThreshold => collapseImminentThreshold;
+        public float CollapseTelegraphSeconds => collapseTelegraphSeconds;
+        public float CollapseFallSeconds => collapseFallSeconds;
 
         private void OnValidate()
         {

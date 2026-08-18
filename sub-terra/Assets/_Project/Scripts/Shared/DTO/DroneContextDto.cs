@@ -13,6 +13,8 @@ namespace SubTerra.Shared
         public int currentEnergy;
         public int returnEnergyEstimate;
         public float structuralIntegrity;
+        public string structuralCauseId = string.Empty;
+        public bool structuralTelegraphing;
         public float gasRisk;
         public long unsettledCargoValue;
         public float cargoWeight;

@@ -11,10 +11,27 @@ namespace SubTerra.Gameplay.Structural
 
         public float Radius => radius;
         public int Strength => strength;
+        private bool isAvailable;
+        private bool availabilityInitialized;
+
+        public bool IsAvailable => availabilityInitialized
+            ? isAvailable
+            : enabled && gameObject.activeInHierarchy;
         public event Action<StructuralSupport> AvailabilityChanged;
 
-        private void OnEnable() => AvailabilityChanged?.Invoke(this);
-        private void OnDisable() => AvailabilityChanged?.Invoke(this);
+        private void OnEnable()
+        {
+            availabilityInitialized = true;
+            isAvailable = true;
+            AvailabilityChanged?.Invoke(this);
+        }
+
+        private void OnDisable()
+        {
+            availabilityInitialized = true;
+            isAvailable = false;
+            AvailabilityChanged?.Invoke(this);
+        }
 
         public bool Supports(Vector3 worldPosition)
         {

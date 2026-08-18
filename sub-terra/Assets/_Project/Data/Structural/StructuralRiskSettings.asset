@@ -16,3 +16,5 @@ MonoBehaviour:
   cautionThreshold: 30
   dangerThreshold: 60
   collapseImminentThreshold: 90
+  collapseTelegraphSeconds: 0.6
+  collapseFallSeconds: 0.18

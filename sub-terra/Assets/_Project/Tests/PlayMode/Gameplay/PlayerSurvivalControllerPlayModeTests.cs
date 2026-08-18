@@ -27,9 +27,9 @@ namespace SubTerra.Gameplay.Player.Tests
                 severity = StructuralCollapseSeverity.Severe,
                 cells = new List<CollapseCellDto> { new CollapseCellDto { x = 0, y = 0 } }
             }), Is.True);
-            Assert.That(failures.Count, Is.EqualTo(1));
-            Assert.That(failures[0].cause, Is.EqualTo(RunFailureCause.StructuralCollapse));
-            Assert.That(controller.State.CanAct, Is.False);
+            Assert.That(failures.Count, Is.Zero);
+            Assert.That(controller.State.Health, Is.EqualTo(75));
+            Assert.That(controller.State.CanAct, Is.True);
 
             controller.RestoreAfterRescue();
             Assert.That(controller.ApplyGasFailure(new GasExposureFailureInputDto
@@ -38,13 +38,13 @@ namespace SubTerra.Gameplay.Player.Tests
                 cumulativeExposureSeconds = 12f,
                 severity = GasExposureFailureSeverity.RescueRequired
             }), Is.True);
-            Assert.That(failures.Count, Is.EqualTo(2));
-            Assert.That(failures[1].cause, Is.EqualTo(RunFailureCause.GasExposure));
+            Assert.That(failures.Count, Is.EqualTo(1));
+            Assert.That(failures[0].cause, Is.EqualTo(RunFailureCause.GasExposure));
 
             controller.RestoreAfterRescue();
             Assert.That(controller.ApplyPowerDepletion(), Is.True);
-            Assert.That(failures.Count, Is.EqualTo(3));
-            Assert.That(failures[2].cause, Is.EqualTo(RunFailureCause.PowerDepleted));
+            Assert.That(failures.Count, Is.EqualTo(2));
+            Assert.That(failures[1].cause, Is.EqualTo(RunFailureCause.PowerDepleted));
 
             Object.Destroy(host);
             Object.Destroy(player);
@@ -71,6 +71,59 @@ namespace SubTerra.Gameplay.Player.Tests
             }), Is.False);
             Assert.That(controller.State.Health, Is.EqualTo(controller.State.MaximumHealth));
             Assert.That(failureCount, Is.Zero);
+
+            Object.Destroy(host);
+            Object.Destroy(player);
+            Object.Destroy(settings);
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator CollapseDamage_CountsOnlyCellsThatActuallyHitPlayer_AndCapsAtFifty()
+        {
+            var player = new GameObject("CollapseHitPlayer");
+            player.transform.position = new Vector3(0.5f, 0.5f, 0f);
+            var host = new GameObject("CollapseHitSurvival");
+            var settings = ScriptableObject.CreateInstance<PlayerSurvivalSettings>();
+            var controller = host.AddComponent<PlayerSurvivalController>();
+            controller.Configure(settings, player.transform);
+
+            Assert.That(controller.ApplyCollapse(new StructuralCollapseEventDto
+            {
+                worldSeed = 9,
+                severity = StructuralCollapseSeverity.Severe,
+                cells = new List<CollapseCellDto>
+                {
+                    new CollapseCellDto { x = 0, y = 0 },
+                    new CollapseCellDto { x = 20, y = 20 },
+                    new CollapseCellDto { x = -20, y = -20 }
+                }
+            }), Is.True);
+            Assert.That(controller.State.Health, Is.EqualTo(75));
+
+            Object.Destroy(host);
+            Object.Destroy(player);
+            Object.Destroy(settings);
+            yield return null;
+
+            player = new GameObject("TwoCollapseHitPlayer");
+            player.transform.position = new Vector3(0.5f, 0.5f, 0f);
+            host = new GameObject("TwoCollapseHitSurvival");
+            settings = ScriptableObject.CreateInstance<PlayerSurvivalSettings>();
+            controller = host.AddComponent<PlayerSurvivalController>();
+            controller.Configure(settings, player.transform);
+            Assert.That(controller.ApplyCollapse(new StructuralCollapseEventDto
+            {
+                worldSeed = 10,
+                severity = StructuralCollapseSeverity.Severe,
+                cells = new List<CollapseCellDto>
+                {
+                    new CollapseCellDto { x = 0, y = 0 },
+                    new CollapseCellDto { x = 0, y = 1 },
+                    new CollapseCellDto { x = 20, y = 20 }
+                }
+            }), Is.True);
+            Assert.That(controller.State.Health, Is.EqualTo(50));
 
             Object.Destroy(host);
             Object.Destroy(player);

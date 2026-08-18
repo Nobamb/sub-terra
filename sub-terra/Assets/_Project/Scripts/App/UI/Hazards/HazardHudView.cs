@@ -114,12 +114,15 @@ namespace SubTerra.App.UI.Hazards
         {
             var symbol = status.Severity == HazardSeverity.Safe
                 ? "✓"
-                : status.Severity == HazardSeverity.Caution ? "⚠" : "!";
+                : status.Severity == HazardSeverity.Caution ? "⚠"
+                : status.Severity == HazardSeverity.Imminent ? "!!" : "!";
             var color = status.Severity == HazardSeverity.Safe
                 ? new Color(0.35f, 0.9f, 0.5f)
                 : status.Severity == HazardSeverity.Caution
                     ? new Color(1f, 0.78f, 0.25f)
-                    : new Color(1f, 0.25f, 0.2f);
+                    : status.Severity == HazardSeverity.Imminent
+                        ? new Color(1f, 0.08f, 0.06f)
+                        : new Color(1f, 0.25f, 0.2f);
 
             if (text != null)
             {

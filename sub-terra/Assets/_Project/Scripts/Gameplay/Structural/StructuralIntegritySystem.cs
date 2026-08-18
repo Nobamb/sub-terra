@@ -35,15 +35,40 @@ namespace SubTerra.Gameplay.Structural
 
         /// <summary>비지지 천장 셀 → 현재 위험 단계(구역 독립).</summary>
         private readonly Dictionary<Vector3Int, StructuralRiskLevel> tileRisks = new();
+        private readonly Dictionary<Vector3Int, float> tileScores = new();
+        private readonly Dictionary<Vector3Int, StructuralRiskCause> tileCauses = new();
+        private readonly HashSet<Vector3Int> deferredCandidates = new();
+        private readonly Dictionary<Vector3Int, float> telegraphRemaining = new();
+        private readonly List<PendingCollapse> pendingCollapses = new();
 
         private StructuralRiskSettings runtimeSettings;
+
+        private sealed class PendingCollapse
+        {
+            public StructuralCollapseEventDto Event;
+            public float Remaining;
+        }
 
         public StructuralRiskLevel CurrentRisk { get; private set; } = StructuralRiskLevel.Stable;
         public long WorldSeed => worldSeed;
         public event Action<StructuralRiskLevel> RiskChanged;
+        public event Action StructuralStatusChanged;
         public event Action<StructuralCollapseEventDto> CollapseTriggered;
 
         public void ConfigureWorldSeed(long seed) => worldSeed = seed;
+
+        private void Update()
+        {
+            AdvanceSimulation(Time.unscaledDeltaTime);
+        }
+
+        /// <summary>예고와 낙하 충돌 시점을 한 경로에서 전진시킨다. 테스트도 동일 경로를 사용한다.</summary>
+        public void AdvanceSimulation(float deltaTime)
+        {
+            if (deltaTime <= 0f) return;
+            AdvanceTelegraphs(deltaTime);
+            AdvancePendingCollapses(deltaTime);
+        }
 
         /// <summary>
         /// prompt-B 36-1: 런타임 충격·위험 타일·균열 표시를 비운다.
@@ -52,6 +77,9 @@ namespace SubTerra.Gameplay.Structural
         public void ClearRuntimeRiskState()
         {
             accumulatedImpact.Clear();
+            deferredCandidates.Clear();
+            telegraphRemaining.Clear();
+            pendingCollapses.Clear();
             if (tileRisks.Count > 0)
             {
                 var tracked = new List<Vector3Int>(tileRisks.Keys);
@@ -67,6 +95,7 @@ namespace SubTerra.Gameplay.Structural
                 CurrentRisk = StructuralRiskLevel.Stable;
                 RiskChanged?.Invoke(CurrentRisk);
             }
+            StructuralStatusChanged?.Invoke();
         }
 
         /// <summary>
@@ -103,7 +132,12 @@ namespace SubTerra.Gameplay.Structural
 
             // 충격 없이도 비지지 천장 개수만으로 주의/위험이 될 수 있으므로
             // 추적된 채굴 주변 천장을 전부 재평가한다.
-            ReevaluateTiles(affected, allowCollapse: false);
+            ReevaluateTiles(
+                affected,
+                allowCollapse: false,
+                Vector3Int.zero,
+                StructuralRiskCause.Unsupported,
+                0f);
         }
 
         public void NotifyTileMined(Vector3Int cell, MiningTileDto tile)
@@ -113,7 +147,12 @@ namespace SubTerra.Gameplay.Structural
             accumulatedImpact[cell] = currentImpact + impact;
 
             var affected = CollectAffectedCeilingTiles(cell);
-            ReevaluateTiles(affected, allowCollapse: true);
+            ReevaluateTiles(
+                affected,
+                allowCollapse: true,
+                cell,
+                StructuralRiskCause.MiningImpact,
+                impact);
         }
 
         public void RegisterSupport(StructuralSupport support)
@@ -122,7 +161,7 @@ namespace SubTerra.Gameplay.Structural
             Array.Resize(ref supports, supports.Length + 1);
             supports[^1] = support;
             support.AvailabilityChanged += OnSupportAvailabilityChanged;
-            ReevaluateAffectedBySupport(support);
+            ReevaluateAffectedBySupport(support, false);
         }
 
         public void UnregisterSupport(StructuralSupport support)
@@ -132,7 +171,7 @@ namespace SubTerra.Gameplay.Structural
             support.AvailabilityChanged -= OnSupportAvailabilityChanged;
             supports[index] = supports[^1];
             Array.Resize(ref supports, supports.Length - 1);
-            ReevaluateAffectedBySupport(support);
+            ReevaluateAffectedBySupport(support, true);
         }
 
         public void RegisterProtectedCell(Vector3Int cell)
@@ -147,14 +186,56 @@ namespace SubTerra.Gameplay.Structural
         /// </summary>
         public StructuralRiskLevel EvaluateAt(Vector3Int center)
         {
-            StructuralRiskLevel highest = StructuralRiskLevel.Stable;
+            return EvaluateStatusAt(center).Level;
+        }
+
+        /// <summary>플레이어 주변의 가장 높은 구조 상태와 그 원인을 반환한다.</summary>
+        public StructuralRiskStatus EvaluateStatusAt(Vector3Int center)
+        {
+            StructuralRiskStatus highest = StructuralRiskStatus.Stable(center);
             foreach (Vector3Int ceiling in EnumerateUnsupportedCeilingsNearMine(center))
             {
-                StructuralRiskLevel risk = ComputeTileRisk(ceiling);
-                if (risk > highest) highest = risk;
+                float score = ComputeTileScore(ceiling);
+                StructuralRiskLevel scoreLevel = StructuralRiskEvaluator.EvaluateScore(score, Settings);
+                bool telegraphing = telegraphRemaining.ContainsKey(ceiling);
+                StructuralRiskLevel displayLevel = ToDisplayRisk(scoreLevel, telegraphing);
+                if (displayLevel < highest.Level
+                    || (displayLevel == highest.Level && score <= highest.Score))
+                {
+                    continue;
+                }
+
+                StructuralRiskCause cause = tileCauses.TryGetValue(ceiling, out StructuralRiskCause value)
+                    ? value
+                    : StructuralRiskCause.Unsupported;
+                highest = new StructuralRiskStatus(
+                    ceiling,
+                    score,
+                    displayLevel,
+                    cause,
+                    telegraphing);
             }
 
             return highest;
+        }
+
+        public StructuralRiskStatus EvaluateStatusAtWorld(Vector3 worldPosition)
+        {
+            return foregroundTilemap == null
+                ? StructuralRiskStatus.Stable(Vector3Int.zero)
+                : EvaluateStatusAt(foregroundTilemap.WorldToCell(worldPosition));
+        }
+
+        public Vector3Int WorldToCell(Vector3 worldPosition)
+        {
+            return foregroundTilemap != null
+                ? foregroundTilemap.WorldToCell(worldPosition)
+                : Vector3Int.FloorToInt(worldPosition);
+        }
+
+        public bool HasRiskAtCell(Vector3Int cell)
+        {
+            return tileRisks.ContainsKey(cell);
         }
 
         private StructuralRiskSettings Settings
@@ -203,19 +284,26 @@ namespace SubTerra.Gameplay.Structural
             return affected;
         }
 
-        private void ReevaluateTiles(HashSet<Vector3Int> affected, bool allowCollapse)
+        private void ReevaluateTiles(
+            HashSet<Vector3Int> affected,
+            bool allowCollapse,
+            Vector3Int actionCell,
+            StructuralRiskCause actionCause,
+            float actionImpact)
         {
-            var collapseCandidates = new List<Vector3Int>();
+            var collapseCandidates = new List<StructuralCollapseCandidate>();
 
             foreach (Vector3Int cell in affected)
             {
+                tileScores.TryGetValue(cell, out float previousScore);
                 if (!IsUnsupportedCeiling(cell))
                 {
                     ClearTileRisk(cell);
                     continue;
                 }
 
-                StructuralRiskLevel risk = ComputeTileRisk(cell);
+                float score = ComputeTileScore(cell);
+                StructuralRiskLevel risk = StructuralRiskEvaluator.EvaluateScore(score, Settings);
                 if (risk == StructuralRiskLevel.Stable)
                 {
                     ClearTileRisk(cell);
@@ -223,67 +311,76 @@ namespace SubTerra.Gameplay.Structural
                 }
 
                 tileRisks[cell] = risk;
-                crackOverlay?.SetCell(cell, risk);
-
-                if (risk == StructuralRiskLevel.CollapseImminent)
+                tileScores[cell] = score;
+                StructuralRiskCause cause = ResolveCause(
+                    cell,
+                    actionCell,
+                    actionCause,
+                    actionImpact,
+                    previousScore);
+                tileCauses[cell] = cause;
+                float intensity = Mathf.InverseLerp(
+                    Settings.CautionThreshold,
+                    Settings.CollapseImminentThreshold,
+                    score);
+                StructuralRiskLevel displayRisk = ToDisplayRisk(
+                    risk,
+                    telegraphRemaining.ContainsKey(cell));
+                crackOverlay?.SetCell(cell, displayRisk, intensity, cause);
+                if (score > previousScore + 0.001f && actionCause != StructuralRiskCause.None)
                 {
-                    collapseCandidates.Add(cell);
+                    crackOverlay?.PulseCell(cell);
+                }
+
+                bool newlyCrossed = previousScore < Settings.CollapseImminentThreshold;
+                if (allowCollapse
+                    && risk == StructuralRiskLevel.CollapseImminent
+                    && !telegraphRemaining.ContainsKey(cell)
+                    && (newlyCrossed || deferredCandidates.Contains(cell)))
+                {
+                    collapseCandidates.Add(new StructuralCollapseCandidate(cell, score));
                 }
             }
 
             PruneOrphanImpacts();
+            PruneDeferredCandidates();
 
             if (allowCollapse && collapseCandidates.Count > 0)
             {
-                collapseCandidates.Sort((left, right) =>
+                List<Vector3Int> selected = telegraphRemaining.Count > 0
+                    ? new List<Vector3Int>()
+                    : DeterministicCollapseSelector.Select(
+                        collapseCandidates,
+                        actionCell,
+                        worldSeed,
+                        Mathf.Min(maximumCollapseTiles, collapseCandidates.Count));
+
+                var selectedSet = new HashSet<Vector3Int>(selected);
+                for (int i = 0; i < collapseCandidates.Count; i++)
                 {
-                    int height = right.y.CompareTo(left.y);
-                    return height != 0 ? height : left.x.CompareTo(right.x);
-                });
-
-                StructuralCollapseEventDto collapse = CollapseUnsupportedCeiling(collapseCandidates);
-                if (collapse.cells.Count > 0)
-                {
-                    CollapseTriggered?.Invoke(collapse);
-
-                    // 붕괴로 바뀐 기하 주변만 한 번 더 정리한다.
-                    var afterCollapse = new HashSet<Vector3Int>();
-                    foreach (CollapseCellDto removed in collapse.cells)
-                    {
-                        var removedCell = new Vector3Int(removed.x, removed.y, 0);
-                        afterCollapse.Add(removedCell);
-                        foreach (Vector3Int nearby in EnumerateUnsupportedCeilingsNearMine(removedCell))
-                        {
-                            afterCollapse.Add(nearby);
-                        }
-
-                        foreach (Vector3Int tracked in tileRisks.Keys)
-                        {
-                            if (Mathf.Abs(tracked.x - removedCell.x) <= localRiskRadius
-                                && Mathf.Abs(tracked.y - removedCell.y) <= localRiskRadius)
-                            {
-                                afterCollapse.Add(tracked);
-                            }
-                        }
-                    }
-
-                    ReevaluateTiles(afterCollapse, allowCollapse: false);
-                    return;
+                    Vector3Int cell = collapseCandidates[i].Cell;
+                    if (selectedSet.Contains(cell)) deferredCandidates.Remove(cell);
+                    else deferredCandidates.Add(cell);
                 }
+
+                BeginTelegraph(selected);
             }
 
             UpdateCurrentRisk();
+            StructuralStatusChanged?.Invoke();
         }
 
         private StructuralRiskLevel ComputeTileRisk(Vector3Int ceiling)
         {
-            float impact = GetLocalImpactForCeiling(ceiling);
-            int unsupported = CountLocalUnsupportedCeilings(ceiling);
-            int supportStrength = GetSupportStrength(ceiling);
-            return StructuralRiskEvaluator.Evaluate(
-                impact,
-                unsupported,
-                supportStrength,
+            return StructuralRiskEvaluator.EvaluateScore(ComputeTileScore(ceiling), Settings);
+        }
+
+        private float ComputeTileScore(Vector3Int ceiling)
+        {
+            return StructuralRiskEvaluator.CalculateScore(
+                GetLocalImpactForCeiling(ceiling),
+                CountLocalUnsupportedCeilings(ceiling),
+                GetSupportStrength(ceiling),
                 Settings);
         }
 
@@ -352,10 +449,39 @@ namespace SubTerra.Gameplay.Structural
 
         private void ClearTileRisk(Vector3Int cell)
         {
-            if (tileRisks.Remove(cell))
+            bool hadRisk = tileRisks.Remove(cell);
+            tileScores.Remove(cell);
+            tileCauses.Remove(cell);
+            deferredCandidates.Remove(cell);
+            telegraphRemaining.Remove(cell);
+            crackOverlay?.SetTelegraphing(cell, false);
+            if (hadRisk)
             {
                 crackOverlay?.ClearCell(cell);
             }
+        }
+
+        private StructuralRiskCause ResolveCause(
+            Vector3Int ceiling,
+            Vector3Int actionCell,
+            StructuralRiskCause actionCause,
+            float actionImpact,
+            float previousScore)
+        {
+            if (actionCause == StructuralRiskCause.SupportRemoved)
+                return StructuralRiskCause.SupportRemoved;
+            if (actionCause != StructuralRiskCause.MiningImpact)
+                return tileCauses.TryGetValue(ceiling, out StructuralRiskCause prior)
+                    ? prior
+                    : StructuralRiskCause.Unsupported;
+
+            float unsupportedDelta = previousScore <= 0f
+                && ceiling + Vector3Int.down == actionCell
+                    ? Settings.UnsupportedTileWeight
+                    : 0f;
+            return unsupportedDelta >= actionImpact && unsupportedDelta > 0f
+                ? StructuralRiskCause.Unsupported
+                : StructuralRiskCause.MiningImpact;
         }
 
         /// <summary>주변에 비지지 천장이 더 이상 없는 채굴 충격을 제거한다.</summary>
@@ -366,14 +492,7 @@ namespace SubTerra.Gameplay.Structural
             var remove = new List<Vector3Int>();
             foreach (Vector3Int mine in accumulatedImpact.Keys)
             {
-                bool hasThreat = false;
-                foreach (Vector3Int _ in EnumerateUnsupportedCeilingsNearMine(mine))
-                {
-                    hasThreat = true;
-                    break;
-                }
-
-                if (!hasThreat) remove.Add(mine);
+                if (!HasPotentialCeilingNearMine(mine)) remove.Add(mine);
             }
 
             for (int i = 0; i < remove.Count; i++)
@@ -382,30 +501,167 @@ namespace SubTerra.Gameplay.Structural
             }
         }
 
-        private StructuralCollapseEventDto CollapseUnsupportedCeiling(
-            IReadOnlyList<Vector3Int> candidates)
+        /// <summary>버팀목은 위험 후보만 끄며 과거 채굴 충격 기록까지 지우지는 않는다.</summary>
+        private bool HasPotentialCeilingNearMine(Vector3Int mine)
         {
-            List<Vector3Int> selected = DeterministicCollapseSelector.Select(
-                candidates,
-                worldSeed,
-                Mathf.Min(maximumCollapseTiles, candidates.Count));
+            if (foregroundTilemap == null) return false;
+            int horizontal = Mathf.Max(0, localRiskRadius);
+            int vertical = Mathf.Max(1, scanRadius);
+            for (int x = mine.x - horizontal; x <= mine.x + horizontal; x++)
+            for (int y = mine.y + 1; y <= mine.y + vertical; y++)
+            {
+                var cell = new Vector3Int(x, y, mine.z);
+                if (foregroundTilemap.HasTile(cell)
+                    && !foregroundTilemap.HasTile(cell + Vector3Int.down)
+                    && !IsProtected(cell))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private void PruneDeferredCandidates()
+        {
+            if (deferredCandidates.Count == 0) return;
+            var remove = new List<Vector3Int>();
+            foreach (Vector3Int cell in deferredCandidates)
+            {
+                if (!IsUnsupportedCeiling(cell)
+                    || ComputeTileScore(cell) < Settings.CollapseImminentThreshold)
+                {
+                    remove.Add(cell);
+                }
+            }
+
+            for (int i = 0; i < remove.Count; i++)
+                deferredCandidates.Remove(remove[i]);
+        }
+
+        private void BeginTelegraph(IReadOnlyList<Vector3Int> selected)
+        {
+            if (selected == null || selected.Count == 0) return;
+            float duration = Mathf.Max(0.01f, Settings.CollapseTelegraphSeconds);
+            for (int i = 0; i < selected.Count; i++)
+            {
+                Vector3Int cell = selected[i];
+                telegraphRemaining[cell] = duration;
+                crackOverlay?.SetTelegraphing(cell, true);
+                if (tileScores.TryGetValue(cell, out float score))
+                {
+                    StructuralRiskCause cause = tileCauses.TryGetValue(cell, out StructuralRiskCause value)
+                        ? value
+                        : StructuralRiskCause.Unsupported;
+                    crackOverlay?.SetCell(cell, StructuralRiskLevel.CollapseImminent, 1f, cause);
+                }
+            }
+
+            UpdateCurrentRisk();
+            StructuralStatusChanged?.Invoke();
+        }
+
+        private void AdvanceTelegraphs(float deltaTime)
+        {
+            if (telegraphRemaining.Count == 0) return;
+            var expired = new List<Vector3Int>();
+            var cancelled = new List<Vector3Int>();
+            var cells = new List<Vector3Int>(telegraphRemaining.Keys);
+            for (int i = 0; i < cells.Count; i++)
+            {
+                Vector3Int cell = cells[i];
+                if (!IsUnsupportedCeiling(cell))
+                {
+                    cancelled.Add(cell);
+                    continue;
+                }
+
+                float remaining = telegraphRemaining[cell] - deltaTime;
+                if (remaining <= 0f) expired.Add(cell);
+                else telegraphRemaining[cell] = remaining;
+            }
+
+            for (int i = 0; i < cancelled.Count; i++)
+                ClearTileRisk(cancelled[i]);
+            for (int i = 0; i < expired.Count; i++)
+            {
+                telegraphRemaining.Remove(expired[i]);
+                crackOverlay?.SetTelegraphing(expired[i], false);
+            }
+
+            if (expired.Count > 0)
+                CollapseUnsupportedCeiling(expired);
+            else if (cancelled.Count > 0)
+            {
+                UpdateCurrentRisk();
+                StructuralStatusChanged?.Invoke();
+            }
+        }
+
+        private StructuralCollapseEventDto CollapseUnsupportedCeiling(
+            IReadOnlyList<Vector3Int> selected)
+        {
             var collapse = new StructuralCollapseEventDto
             {
                 worldSeed = worldSeed,
                 severity = ResolveSeverity(selected.Count)
             };
-            foreach (Vector3Int cell in selected)
+            for (int i = 0; i < selected.Count; i++)
             {
+                Vector3Int cell = selected[i];
+                if (!IsUnsupportedCeiling(cell)) continue;
+                crackOverlay?.PlayCollapse(cell, foregroundTilemap, Settings.CollapseFallSeconds);
                 foregroundTilemap.SetTile(cell, null);
                 collapse.cells.Add(new CollapseCellDto { x = cell.x, y = cell.y });
                 ClearTileRisk(cell);
             }
 
+            if (collapse.cells.Count == 0)
+            {
+                UpdateCurrentRisk();
+                StructuralStatusChanged?.Invoke();
+                return collapse;
+            }
+
+            collapse.severity = ResolveSeverity(collapse.cells.Count);
             foregroundTilemap.RefreshAllTiles();
             TilemapCollider2D collider = foregroundTilemap.GetComponent<TilemapCollider2D>();
             if (collider != null && collider.hasTilemapChanges)
                 collider.ProcessTilemapChanges();
+
+            pendingCollapses.Add(new PendingCollapse
+            {
+                Event = collapse,
+                Remaining = Mathf.Max(0.01f, Settings.CollapseFallSeconds)
+            });
+
+            var affected = new HashSet<Vector3Int>();
+            for (int i = 0; i < collapse.cells.Count; i++)
+            {
+                var removed = new Vector3Int(collapse.cells[i].x, collapse.cells[i].y, 0);
+                affected.Add(removed);
+                foreach (Vector3Int nearby in EnumerateUnsupportedCeilingsNearMine(removed))
+                    affected.Add(nearby);
+            }
+            ReevaluateTiles(
+                affected,
+                allowCollapse: false,
+                Vector3Int.zero,
+                StructuralRiskCause.None,
+                0f);
             return collapse;
+        }
+
+        private void AdvancePendingCollapses(float deltaTime)
+        {
+            for (int i = pendingCollapses.Count - 1; i >= 0; i--)
+            {
+                PendingCollapse pending = pendingCollapses[i];
+                pending.Remaining -= deltaTime;
+                if (pending.Remaining > 0f) continue;
+                pendingCollapses.RemoveAt(i);
+                CollapseTriggered?.Invoke(pending.Event);
+            }
         }
 
         private StructuralCollapseSeverity ResolveSeverity(int collapsedCount)
@@ -431,7 +687,7 @@ namespace SubTerra.Gameplay.Structural
             int total = 0;
             foreach (StructuralSupport support in supports)
             {
-                if (support != null && support.isActiveAndEnabled && support.Supports(worldPosition))
+                if (support != null && support.IsAvailable && support.Supports(worldPosition))
                     total += support.Strength;
             }
 
@@ -440,10 +696,10 @@ namespace SubTerra.Gameplay.Structural
 
         private void OnSupportAvailabilityChanged(StructuralSupport support)
         {
-            ReevaluateAffectedBySupport(support);
+            ReevaluateAffectedBySupport(support, support == null || !support.IsAvailable);
         }
 
-        private void ReevaluateAffectedBySupport(StructuralSupport support)
+        private void ReevaluateAffectedBySupport(StructuralSupport support, bool supportRemoved)
         {
             if (support == null || foregroundTilemap == null)
             {
@@ -488,20 +744,38 @@ namespace SubTerra.Gameplay.Structural
                 }
             }
 
-            ReevaluateTiles(affected, allowCollapse: false);
+            Vector3Int supportActionCell = foregroundTilemap.WorldToCell(support.transform.position);
+            ReevaluateTiles(
+                affected,
+                allowCollapse: supportRemoved,
+                supportActionCell,
+                supportRemoved ? StructuralRiskCause.SupportRemoved : StructuralRiskCause.None,
+                0f);
         }
 
         private void UpdateCurrentRisk()
         {
             StructuralRiskLevel highest = StructuralRiskLevel.Stable;
-            foreach (StructuralRiskLevel risk in tileRisks.Values)
+            foreach (KeyValuePair<Vector3Int, StructuralRiskLevel> pair in tileRisks)
             {
+                StructuralRiskLevel risk = ToDisplayRisk(
+                    pair.Value,
+                    telegraphRemaining.ContainsKey(pair.Key));
                 if (risk > highest) highest = risk;
             }
 
             if (CurrentRisk == highest) return;
             CurrentRisk = highest;
             RiskChanged?.Invoke(highest);
+        }
+
+        private static StructuralRiskLevel ToDisplayRisk(
+            StructuralRiskLevel scoreLevel,
+            bool telegraphing)
+        {
+            return scoreLevel == StructuralRiskLevel.CollapseImminent && !telegraphing
+                ? StructuralRiskLevel.Danger
+                : scoreLevel;
         }
 
         private void OnDestroy()

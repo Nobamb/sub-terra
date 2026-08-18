@@ -37,17 +37,16 @@ namespace SubTerra.Gameplay.Player
 
         public bool ApplyCollapse(StructuralCollapseEventDto collapse)
         {
-            if (collapse == null || !DoesCollapseHitPlayer(collapse))
+            int hitCount = CountCollapseHits(collapse);
+            if (hitCount == 0)
             {
                 return false;
             }
 
-            var damage = collapse.severity switch
-            {
-                StructuralCollapseSeverity.Minor => settings.MinorCollapseDamage,
-                StructuralCollapseSeverity.Major => settings.MajorCollapseDamage,
-                _ => settings.SevereCollapseDamage
-            };
+            // 멀리서 함께 무너진 칸은 피해에 포함하지 않는다. 직접 맞은 2칸 이상도 50으로 제한한다.
+            int damage = hitCount == 1
+                ? settings.MinorCollapseDamage
+                : settings.MajorCollapseDamage;
             var token = "collapse:" + collapse.worldSeed.ToString(CultureInfo.InvariantCulture)
                 + ":" + CollapseCellKey(collapse);
             return ApplyDamage(
@@ -128,28 +127,29 @@ namespace SubTerra.Gameplay.Player
             return true;
         }
 
-        private bool DoesCollapseHitPlayer(StructuralCollapseEventDto collapse)
+        private int CountCollapseHits(StructuralCollapseEventDto collapse)
         {
             if (settings == null
                 || playerTarget == null
                 || collapse.cells == null
                 || collapse.cells.Count == 0)
             {
-                return false;
+                return 0;
             }
 
             var position = (Vector2)playerTarget.position;
             var radius = settings.CollapseHitRadius;
+            int hitCount = 0;
             for (var i = 0; i < collapse.cells.Count; i++)
             {
                 var center = new Vector2(collapse.cells[i].x + 0.5f, collapse.cells[i].y + 0.5f);
                 if (Vector2.Distance(position, center) <= radius)
                 {
-                    return true;
+                    hitCount++;
                 }
             }
 
-            return false;
+            return hitCount;
         }
 
         private static string CollapseCellKey(StructuralCollapseEventDto collapse)

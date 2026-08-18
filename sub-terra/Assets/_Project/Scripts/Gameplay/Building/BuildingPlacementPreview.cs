@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using SubTerra.Gameplay.Structural;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -16,6 +17,7 @@ namespace SubTerra.Gameplay.Building
         [SerializeField, Min(0.05f)] private float multiCellDotScale = 0.28f;
 
         private readonly List<SpriteRenderer> multiCellMarkers = new();
+        private readonly List<SpriteRenderer> supportRangeMarkers = new();
         private Sprite cachedDotSprite;
 
         private void Awake()
@@ -39,6 +41,62 @@ namespace SubTerra.Gameplay.Building
             }
 
             gameObject.SetActive(true);
+        }
+
+        /// <summary>버팀목 선택 중 지지 반경과 설치 즉시 사라질 균열을 함께 표시한다.</summary>
+        public void SetSupportRange(
+            Tilemap tilemap,
+            Vector3Int origin,
+            float radius,
+            StructuralIntegritySystem structuralSystem)
+        {
+            HideSupportRange();
+            if (tilemap == null || radius <= 0f) return;
+
+            int reach = Mathf.CeilToInt(radius);
+            var cells = new List<Vector3Int>();
+            for (int x = origin.x - reach; x <= origin.x + reach; x++)
+            for (int y = origin.y - reach; y <= origin.y + reach; y++)
+            {
+                var cell = new Vector3Int(x, y, origin.z);
+                if (Vector2.Distance(
+                        tilemap.GetCellCenterWorld(origin),
+                        tilemap.GetCellCenterWorld(cell)) <= radius)
+                {
+                    cells.Add(cell);
+                }
+            }
+
+            EnsureSupportRangeMarkers(cells.Count);
+            Sprite dot = GetOrCreateDotSprite();
+            for (int i = 0; i < supportRangeMarkers.Count; i++)
+            {
+                SpriteRenderer marker = supportRangeMarkers[i];
+                if (i >= cells.Count)
+                {
+                    marker.gameObject.SetActive(false);
+                    continue;
+                }
+
+                Vector3Int cell = cells[i];
+                bool clearsCrack = structuralSystem != null && structuralSystem.HasRiskAtCell(cell);
+                marker.transform.position = tilemap.GetCellCenterWorld(cell);
+                marker.transform.localScale = Vector3.one * (clearsCrack ? 0.24f : 0.1f);
+                marker.sprite = dot;
+                marker.color = clearsCrack
+                    ? new Color(0.2f, 1f, 0.95f, 0.9f)
+                    : new Color(0.2f, 0.8f, 1f, 0.3f);
+                marker.gameObject.SetActive(true);
+            }
+        }
+
+        public void HideSupportRange()
+        {
+            for (int i = 0; i < supportRangeMarkers.Count; i++)
+            {
+                if (supportRangeMarkers[i] != null)
+                    supportRangeMarkers[i].gameObject.SetActive(false);
+            }
         }
 
         /// <summary>
@@ -97,6 +155,7 @@ namespace SubTerra.Gameplay.Building
         public void Hide()
         {
             HideMultiCellMarkers();
+            HideSupportRange();
             if (spriteRenderer != null)
             {
                 spriteRenderer.enabled = true;
@@ -125,6 +184,18 @@ namespace SubTerra.Gameplay.Building
                 var renderer = markerObject.AddComponent<SpriteRenderer>();
                 renderer.sortingOrder = 50;
                 multiCellMarkers.Add(renderer);
+            }
+        }
+
+        private void EnsureSupportRangeMarkers(int count)
+        {
+            while (supportRangeMarkers.Count < count)
+            {
+                var markerObject = new GameObject($"SupportRange_{supportRangeMarkers.Count}");
+                markerObject.transform.SetParent(transform, false);
+                var renderer = markerObject.AddComponent<SpriteRenderer>();
+                renderer.sortingOrder = 49;
+                supportRangeMarkers.Add(renderer);
             }
         }
 

@@ -29,6 +29,8 @@ namespace SubTerra.App.Integration
                 currentEnergy = source.CurrentEnergy,
                 returnEnergyEstimate = source.ReturnEnergyEstimate,
                 structuralIntegrity = MapStructuralIntegrity(source.StructuralRisk),
+                structuralCauseId = MapStructuralCause(source.StructuralCause),
+                structuralTelegraphing = source.StructuralTelegraphing,
                 gasRisk = MapGasRisk(source.GasRisk),
                 unsettledCargoValue = source.UnsettledCargoValue,
                 cargoWeight = source.CargoWeight,
@@ -77,6 +79,14 @@ namespace SubTerra.App.Integration
                 default:
                     return 0f;
             }
+        }
+
+        private static string MapStructuralCause(StructuralRiskCause cause)
+        {
+            return cause == StructuralRiskCause.Unsupported ? "unsupported"
+                : cause == StructuralRiskCause.MiningImpact ? "mining_impact"
+                : cause == StructuralRiskCause.SupportRemoved ? "support_removed"
+                : string.Empty;
         }
     }
 }
