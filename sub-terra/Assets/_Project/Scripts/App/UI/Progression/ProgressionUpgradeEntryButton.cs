@@ -26,6 +26,17 @@ namespace SubTerra.App.UI.Progression
 
         public string UpgradeId => upgradeId;
 
+        public void Configure(
+            string permanentId,
+            ProgressionPanelBinder target,
+            TMP_Text targetLabel)
+        {
+            upgradeId = permanentId ?? string.Empty;
+            binder = target;
+            label = targetLabel;
+            EnsureInteractable();
+        }
+
         private Button button;
         private Image background;
         private ProgressionPanelView cachedView;
@@ -211,9 +222,7 @@ namespace SubTerra.App.UI.Progression
 #if UNITY_EDITOR
         public void EditorSet(string permanentId, ProgressionPanelBinder target, TMP_Text targetLabel)
         {
-            upgradeId = permanentId ?? string.Empty;
-            binder = target;
-            label = targetLabel;
+            Configure(permanentId, target, targetLabel);
         }
 #endif
     }

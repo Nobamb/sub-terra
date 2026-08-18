@@ -8,7 +8,7 @@ namespace SubTerra.App.Progression
     /// 현재 레벨의 단계 값을 최종 보너스로 읽는다.
     /// 레벨 0 또는 손상된 범위는 기본값을 반환해 잘못된 세이브가 효과를 만들지 않게 한다.
     /// </summary>
-    public sealed class UpgradeEffectProvider : IUpgradeEffectProvider
+    public sealed class UpgradeEffectProvider : IUpgradeEffectProvider, IPlayerHealthUpgradeProvider
     {
         private readonly UpgradeState state;
         private readonly IUpgradeCatalog catalog;
@@ -46,6 +46,20 @@ namespace SubTerra.App.Progression
         public float GetMaximumCargoWeight(float baseMaximum)
         {
             return AddNonNegative(baseMaximum, GetCurrentEffect(DataIds.Upgrades.MaximumCargo));
+        }
+
+        public int GetMaximumHealth(int baseMaximum)
+        {
+            var safeBase = baseMaximum < 1 ? 1 : baseMaximum;
+            var value = (double)safeBase + GetCurrentEffect(DataIds.Upgrades.MaximumHealth);
+            return value >= int.MaxValue
+                ? int.MaxValue
+                : Math.Max(1, (int)Math.Round(value, MidpointRounding.AwayFromZero));
+        }
+
+        public float GetHealthRegenerationPerSecond()
+        {
+            return GetCurrentEffect(DataIds.Upgrades.HealthRegeneration);
         }
 
         public float GetDroneScanRadius(float baseRadius)

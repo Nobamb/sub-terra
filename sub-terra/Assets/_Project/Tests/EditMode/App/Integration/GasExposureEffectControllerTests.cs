@@ -32,7 +32,7 @@ namespace SubTerra.App.Tests.Integration
         }
 
         [Test]
-        public void H_F05_FailureThresholdProducesSingleRescueInput()
+        public void PromptB55_GasProducesTenHealthDamagePerSecond()
         {
             var gameObject = new GameObject("GasEffectController");
             try
@@ -51,8 +51,9 @@ namespace SubTerra.App.Tests.Integration
                 controller.Advance(10f);
                 controller.Advance(5f);
 
-                Assert.That(count, Is.EqualTo(1));
-                Assert.That(captured.severity, Is.EqualTo(GasExposureFailureSeverity.RescueRequired));
+                Assert.That(count, Is.EqualTo(2));
+                Assert.That(captured.severity, Is.EqualTo(GasExposureFailureSeverity.Damage));
+                Assert.That(captured.damage, Is.EqualTo(50));
                 Assert.That(captured.gasZoneId, Is.EqualTo("gas-controller"));
             }
             finally

@@ -15,7 +15,7 @@ namespace SubTerra.App.Tests.Progression
     public sealed class ProgressionStaticStructureTests
     {
         [Test]
-        public void F_S01_CatalogContainsAllSevenMvpUpgradeDefinitions()
+        public void F_S01_CatalogContainsAllNineMvpUpgradeDefinitions()
         {
             var catalog = AssetDatabase.LoadAssetAtPath<GameDataCatalog>(
                 "Assets/_Project/Data/Catalog/GameDataCatalog.asset");
@@ -29,6 +29,8 @@ namespace SubTerra.App.Tests.Progression
                 DataIds.Upgrades.DrillSpeed,
                 DataIds.Upgrades.DrillEfficiency,
                 DataIds.Upgrades.MaximumEnergy,
+                DataIds.Upgrades.MaximumHealth,
+                DataIds.Upgrades.HealthRegeneration,
                 DataIds.Upgrades.MaximumCargo,
                 DataIds.Upgrades.DroneScan,
                 DataIds.Upgrades.DroneRescue,
@@ -41,7 +43,7 @@ namespace SubTerra.App.Tests.Progression
                 Assert.That(data.Levels.Count, Is.EqualTo(data.MaxLevel), id);
             }
 
-            Assert.That(required.Distinct().Count(), Is.EqualTo(7));
+            Assert.That(required.Distinct().Count(), Is.EqualTo(9));
         }
 
         [Test]

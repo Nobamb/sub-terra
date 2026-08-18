@@ -14,6 +14,9 @@ namespace SubTerra.Gameplay.Player
         [SerializeField, Min(0)] private int majorCollapseDamage = 50;
         [SerializeField, Min(0)] private int severeCollapseDamage = 100;
         [SerializeField, Min(0f)] private float collapseHitRadius = 1.25f;
+        [SerializeField, Min(0f)] private float minimumFallDamageHeight = 10f;
+        [SerializeField, Min(0)] private int fallDamageAtThreshold = 10;
+        [SerializeField, Min(0f)] private float fallDamagePerAdditionalMeter = 1f;
 
         public int MaximumHealth => maximumHealth;
         public float InvulnerabilitySeconds => invulnerabilitySeconds;
@@ -21,5 +24,8 @@ namespace SubTerra.Gameplay.Player
         public int MajorCollapseDamage => majorCollapseDamage;
         public int SevereCollapseDamage => severeCollapseDamage;
         public float CollapseHitRadius => collapseHitRadius;
+        public float MinimumFallDamageHeight => minimumFallDamageHeight;
+        public int FallDamageAtThreshold => fallDamageAtThreshold;
+        public float FallDamagePerAdditionalMeter => fallDamagePerAdditionalMeter;
     }
 }

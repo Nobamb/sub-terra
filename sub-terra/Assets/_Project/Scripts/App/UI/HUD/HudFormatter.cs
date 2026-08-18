@@ -1,4 +1,5 @@
 using SubTerra.App.State;
+using SubTerra.Shared;
 
 namespace SubTerra.App.UI.HUD
 {
@@ -34,6 +35,19 @@ namespace SubTerra.App.UI.HUD
         public static string FormatEnergy(EnergyReadModel model)
         {
             return FormatEnergy(model.Current, model.Max);
+        }
+
+        public static string FormatHealth(float current, int maximum)
+        {
+            var safeMaximum = maximum < 1 ? 1 : maximum;
+            var safeCurrent = float.IsNaN(current) || current < 0f ? 0f : current;
+            safeCurrent = safeCurrent > safeMaximum ? safeMaximum : safeCurrent;
+            return "체력 " + (int)System.Math.Ceiling(safeCurrent) + " / " + safeMaximum;
+        }
+
+        public static string FormatHealth(PlayerHealthReadModel model)
+        {
+            return FormatHealth(model.Current, model.Maximum);
         }
 
         public static string FormatGold(int gold)

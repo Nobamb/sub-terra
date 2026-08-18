@@ -206,13 +206,15 @@ namespace SubTerra.App.Tests.Progression
         }
 
         [Test]
-        public void F_F04_AllSevenEffects_UseCurrentLevelData_AndInvalidLevelUsesBase()
+        public void F_F04_AllNineEffects_UseCurrentLevelData_AndInvalidLevelUsesBase()
         {
             var upgrades = new[]
             {
                 CreateUpgrade(DataIds.Upgrades.DrillSpeed, 1, 0.2f),
                 CreateUpgrade(DataIds.Upgrades.DrillEfficiency, 1, 0.1f),
                 CreateUpgrade(DataIds.Upgrades.MaximumEnergy, 1, 25f),
+                CreateUpgrade(DataIds.Upgrades.MaximumHealth, 1, 30f),
+                CreateUpgrade(DataIds.Upgrades.HealthRegeneration, 1, 0.3f),
                 CreateUpgrade(DataIds.Upgrades.MaximumCargo, 1, 15f),
                 CreateUpgrade(DataIds.Upgrades.DroneScan, 1, 3f),
                 CreateUpgrade(DataIds.Upgrades.DroneRescue, 1, 0.2f),
@@ -232,6 +234,8 @@ namespace SubTerra.App.Tests.Progression
             Assert.That(provider.GetDrillSpeedMultiplier(), Is.EqualTo(1.2f).Within(0.0001f));
             Assert.That(provider.GetEnergyEfficiencyMultiplier(), Is.EqualTo(1.1f).Within(0.0001f));
             Assert.That(provider.GetMaximumEnergy(100), Is.EqualTo(125));
+            Assert.That(provider.GetMaximumHealth(100), Is.EqualTo(130));
+            Assert.That(provider.GetHealthRegenerationPerSecond(), Is.EqualTo(0.3f).Within(0.0001f));
             Assert.That(provider.GetMaximumCargoWeight(50f), Is.EqualTo(65f).Within(0.0001f));
             Assert.That(provider.GetDroneScanRadius(4f), Is.EqualTo(7f).Within(0.0001f));
             Assert.That(provider.GetDroneRescuePreservation(0.1f), Is.EqualTo(0.3f).Within(0.0001f));

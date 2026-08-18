@@ -9,6 +9,7 @@ namespace SubTerra.App.UI.HUD
     public sealed class BasicHudView : MonoBehaviour
     {
         [SerializeField] private TextMeshProUGUI energyText;
+        [SerializeField] private TextMeshProUGUI healthText;
         [SerializeField] private TextMeshProUGUI depthText;
         [SerializeField] private TextMeshProUGUI goldText;
         [SerializeField] private TextMeshProUGUI cargoText;
@@ -17,6 +18,7 @@ namespace SubTerra.App.UI.HUD
         [SerializeField] private TextMeshProUGUI interactionPromptText;
 
         public TextMeshProUGUI EnergyText => energyText;
+        public TextMeshProUGUI HealthText => healthText;
         public TextMeshProUGUI DepthText => depthText;
         public TextMeshProUGUI GoldText => goldText;
         public TextMeshProUGUI CargoText => cargoText;
@@ -27,6 +29,11 @@ namespace SubTerra.App.UI.HUD
         public void SetEnergy(string text)
         {
             SetText(energyText, text);
+        }
+
+        public void SetHealth(string text)
+        {
+            SetText(healthText, text);
         }
 
         public void SetDepth(string text)
@@ -62,6 +69,7 @@ namespace SubTerra.App.UI.HUD
         public bool HasRequiredReferences()
         {
             return energyText != null
+                && healthText != null
                 && depthText != null
                 && goldText != null
                 && cargoText != null

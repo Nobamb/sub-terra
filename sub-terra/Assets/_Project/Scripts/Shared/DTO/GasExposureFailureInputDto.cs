@@ -15,6 +15,7 @@ namespace SubTerra.Shared
         public string gasZoneId;
         public float effectiveIntensity;
         public float cumulativeExposureSeconds;
+        public int damage;
         public GasExposureFailureSeverity severity;
     }
 }

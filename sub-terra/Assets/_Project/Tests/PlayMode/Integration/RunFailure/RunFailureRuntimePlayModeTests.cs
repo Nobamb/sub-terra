@@ -120,12 +120,15 @@ namespace SubTerra.App.Tests.PlayMode.RunFailure
             var playerInput = player.AddComponent<PlayerController>();
             var settings = ScriptableObject.CreateInstance<PlayerSurvivalSettings>();
             var host = new GameObject("L_Runtime_Orchestrator");
+            var elevatorFallback = new GameObject("L_Runtime_ElevatorFallback");
+            elevatorFallback.transform.position = new Vector3(-6.5f, -0.65f, 0f);
             var survival = host.AddComponent<PlayerSurvivalController>();
             survival.Configure(settings, player.transform);
             var controller = host.AddComponent<RunFailureRuntimeController>();
             SetField(controller, "survivalController", survival);
             SetField(controller, "playerMovement", movement);
             SetField(controller, "playerTransform", player.transform);
+            SetField(controller, "localSurfaceFallback", elevatorFallback.transform);
             SetField(controller, "gameplayInputBehaviours", new Behaviour[] { playerInput });
             SetField(controller, "failureDisplaySeconds", 0.05f);
             controller.Bind(runtime, state);
@@ -168,11 +171,10 @@ namespace SubTerra.App.Tests.PlayMode.RunFailure
 
             Assert.That(controller.IsHandling, Is.False);
             Assert.That(rescueCount, Is.EqualTo(1));
-            Assert.That(lastRescue.usedCheckpoint, Is.True);
+            Assert.That(lastRescue.usedCheckpoint, Is.False);
             Assert.That(lastRescue.cause, Is.EqualTo(RunFailureCause.GasExposure));
             Assert.That(inventory.State.GetQuantity("mineral.copper"), Is.EqualTo(6));
-            Assert.That(player.transform.position.x, Is.EqualTo(4.5f).Within(0.001f));
-            Assert.That(player.transform.position.y, Is.EqualTo(-19f).Within(0.001f));
+            Assert.That(player.transform.position, Is.EqualTo(elevatorFallback.transform.position));
             Assert.That(playerInput.enabled, Is.True);
             Assert.That(movement.CanMove, Is.True);
             Assert.That(state.Run.LifecyclePhase, Is.EqualTo(RunLifecyclePhase.Active));
@@ -190,6 +192,7 @@ namespace SubTerra.App.Tests.PlayMode.RunFailure
 
             controller.Unbind();
             Object.Destroy(host);
+            Object.Destroy(elevatorFallback);
             Object.Destroy(player);
             Object.Destroy(settings);
             Object.Destroy(runtimeObject);

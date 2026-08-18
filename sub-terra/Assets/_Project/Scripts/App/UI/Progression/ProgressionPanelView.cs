@@ -40,7 +40,7 @@ namespace SubTerra.App.UI.Progression
         /// </summary>
         [SerializeField] private bool hideUpgradeEntryList;
         /// <summary>
-        /// prompt-B 33-3: Surface Base 하단 목록에 7종 장비 레벨 요약만 표시
+        /// prompt-B 33-3/55: Surface Base 하단 목록에 장비 레벨 요약만 표시
         /// (필요 자원·변화치 제외). true면 구매/상세 카드도 숨긴다.
         /// </summary>
         [SerializeField] private bool levelsOnlySummary;
@@ -94,7 +94,7 @@ namespace SubTerra.App.UI.Progression
 
         public void SetUpgradeList(IReadOnlyList<UpgradeSnapshot> upgrades)
         {
-            // Surface Base: 하단 상태 영역에 7종 레벨만 표시(필요 자원·변화치 없음).
+            // Surface Base: 하단 상태 영역에 장비 레벨만 표시(필요 자원·변화치 없음).
             // levelsOnlySummary면 목록·상세를 레벨 요약으로 고정하고 구매 UI는 숨긴다.
             if (levelsOnlySummary)
             {
@@ -104,6 +104,8 @@ namespace SubTerra.App.UI.Progression
                 RefreshDeepZoneVisibility();
                 return;
             }
+
+            EnsureUpgradeButtons(upgrades);
 
             if (upgradeButtons != null && upgradeButtons.Length > 0)
             {
@@ -164,9 +166,74 @@ namespace SubTerra.App.UI.Progression
                 : "이 탭에 업그레이드가 없습니다.";
         }
 
+        private void EnsureUpgradeButtons(IReadOnlyList<UpgradeSnapshot> upgrades)
+        {
+            if (upgrades == null
+                || hideUpgradeEntryList
+                || upgradeButtons == null
+                || upgradeButtons.Length == 0)
+            {
+                return;
+            }
+
+            ProgressionUpgradeEntryButton template = null;
+            var entries = new List<ProgressionUpgradeEntryButton>();
+            for (var i = 0; i < upgradeButtons.Length; i++)
+            {
+                var entry = upgradeButtons[i];
+                if (entry == null)
+                {
+                    continue;
+                }
+
+                if (template == null)
+                {
+                    template = entry;
+                }
+                entries.Add(entry);
+            }
+
+            if (template == null)
+            {
+                return;
+            }
+
+            var binder = GetComponent<ProgressionPanelBinder>();
+            for (var i = 0; i < upgrades.Count; i++)
+            {
+                var upgradeId = upgrades[i].UpgradeId;
+                if (string.IsNullOrEmpty(upgradeId) || ContainsUpgrade(entries, upgradeId))
+                {
+                    continue;
+                }
+
+                var clone = Instantiate(template, template.transform.parent);
+                clone.name = "UpgradeEntry_" + upgradeId.Replace('.', '_');
+                clone.Configure(upgradeId, binder, clone.GetComponentInChildren<TMP_Text>(true));
+                entries.Add(clone);
+            }
+
+            upgradeButtons = entries.ToArray();
+        }
+
+        private static bool ContainsUpgrade(
+            IReadOnlyList<ProgressionUpgradeEntryButton> entries,
+            string upgradeId)
+        {
+            for (var i = 0; i < entries.Count; i++)
+            {
+                if (entries[i] != null && entries[i].UpgradeId == upgradeId)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         public void SetSelectedUpgrade(UpgradeSnapshot upgrade)
         {
-            // Surface Base: 하단은 7종 레벨 요약만 유지(필요 자원·변화치·구매 없음).
+            // Surface Base: 하단은 장비 레벨 요약만 유지(필요 자원·변화치·구매 없음).
             if (levelsOnlySummary)
             {
                 hasSelection = false;

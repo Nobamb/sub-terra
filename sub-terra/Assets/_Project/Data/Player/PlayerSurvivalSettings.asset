@@ -18,3 +18,6 @@ MonoBehaviour:
   majorCollapseDamage: 50
   severeCollapseDamage: 100
   collapseHitRadius: 1.25
+  minimumFallDamageHeight: 10
+  fallDamageAtThreshold: 10
+  fallDamagePerAdditionalMeter: 1

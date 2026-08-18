@@ -9,7 +9,8 @@ namespace SubTerra.Shared
         Unknown = 0,
         PowerDepleted = 1,
         StructuralCollapse = 2,
-        GasExposure = 3
+        GasExposure = 3,
+        Fall = 4
     }
 
     /// <summary>Gameplay 생존 판정이 App 실패 처리기에 전달하는 Unity 비의존 입력.</summary>
@@ -21,6 +22,7 @@ namespace SubTerra.Shared
         public string sourceId;
         public int damage;
         public int remainingHealth;
+        public bool returnToElevator;
     }
 
     [Serializable]

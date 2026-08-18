@@ -137,14 +137,15 @@ namespace SubTerra.App.Integration
             }
 
             ApplyState(result.State, false);
-            if (result.FailureThresholdCrossed)
+            if (result.ExposureTickCount > 0)
             {
                 FailureInputRaised?.Invoke(new GasExposureFailureInputDto
                 {
                     gasZoneId = result.State.GasZoneId,
                     effectiveIntensity = result.State.EffectiveIntensity,
                     cumulativeExposureSeconds = result.State.CumulativeExposure,
-                    severity = GasExposureFailureSeverity.RescueRequired
+                    damage = result.ExposureTickCount * settings.HealthDamagePerTick,
+                    severity = GasExposureFailureSeverity.Damage
                 });
             }
 

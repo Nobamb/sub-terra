@@ -303,6 +303,10 @@ namespace SubTerra.App.Integration
                     }
 
                     runFailureController.Bind(runtime, bootstrap.State);
+                    if (hudBinder != null)
+                    {
+                        hudBinder.BindHealthSource(runFailureController.SurvivalController);
+                    }
                     runFailureController.PlayerRescued += OnPlayerRescued;
                 });
 
@@ -771,6 +775,10 @@ namespace SubTerra.App.Integration
 
             if (runFailureController != null)
             {
+                if (hudBinder != null)
+                {
+                    hudBinder.BindHealthSource(null);
+                }
                 runFailureController.PlayerRescued -= OnPlayerRescued;
                 runFailureController.Unbind();
             }

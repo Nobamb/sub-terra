@@ -1,5 +1,6 @@
 using SubTerra.App.Core;
 using SubTerra.App.State;
+using SubTerra.Shared;
 using UnityEngine;
 
 namespace SubTerra.App.UI.HUD
@@ -16,6 +17,7 @@ namespace SubTerra.App.UI.HUD
         [SerializeField] private GasWarningPanelView gasWarningPanel;
 
         private HudPresenter presenter;
+        private IPlayerHealthSource healthSource;
 
         public HudPresenter Presenter => presenter;
         public BasicHudView BasicHud => basicHud;
@@ -26,6 +28,7 @@ namespace SubTerra.App.UI.HUD
         {
             EnsurePresenter();
             presenter.Bind(ResolveState());
+            BindHealthEvents();
         }
 
         private void OnDisable()
@@ -34,6 +37,8 @@ namespace SubTerra.App.UI.HUD
             {
                 presenter.Unbind();
             }
+
+            UnbindHealthEvents();
         }
 
         /// <summary>테스트·수동 주입용. 활성 중에 호출하면 즉시 재바인드한다.</summary>
@@ -41,6 +46,13 @@ namespace SubTerra.App.UI.HUD
         {
             EnsurePresenter();
             presenter.Bind(state);
+        }
+
+        public void BindHealthSource(IPlayerHealthSource source)
+        {
+            UnbindHealthEvents();
+            healthSource = source;
+            BindHealthEvents();
         }
 
         public bool HasRequiredReferences()
@@ -68,6 +80,34 @@ namespace SubTerra.App.UI.HUD
         {
             var root = GameBootstrapper.Instance;
             return root != null ? root.State : null;
+        }
+
+        private void BindHealthEvents()
+        {
+            if (healthSource == null || basicHud == null || !isActiveAndEnabled)
+            {
+                return;
+            }
+
+            healthSource.HealthChanged -= OnHealthChanged;
+            healthSource.HealthChanged += OnHealthChanged;
+            OnHealthChanged(healthSource.GetHealth());
+        }
+
+        private void UnbindHealthEvents()
+        {
+            if (healthSource != null)
+            {
+                healthSource.HealthChanged -= OnHealthChanged;
+            }
+        }
+
+        private void OnHealthChanged(PlayerHealthReadModel health)
+        {
+            if (basicHud != null)
+            {
+                basicHud.SetHealth(HudFormatter.FormatHealth(health));
+            }
         }
     }
 }

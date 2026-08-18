@@ -34,6 +34,7 @@ namespace SubTerra.App.Integration
 
         public event Action<PlayerRescueResultDto> PlayerRescued;
         public bool IsHandling => failureService?.IsHandling ?? false;
+        public PlayerSurvivalController SurvivalController => survivalController;
 
         public void Bind(SaveRuntimeController saveRuntime, GameState state)
         {
@@ -53,6 +54,9 @@ namespace SubTerra.App.Integration
             if (survivalController != null)
             {
                 survivalController.BindTarget(playerTransform);
+                survivalController.BindMovement(playerMovement);
+                survivalController.BindUpgradeEffects(
+                    runtime.Progression?.Effects as IPlayerHealthUpgradeProvider);
                 survivalController.FailureRequested += OnFailureRequested;
             }
 
@@ -124,8 +128,11 @@ namespace SubTerra.App.Integration
                 return;
             }
 
+            var returnOutpost = input != null && input.returnToElevator
+                    ? null
+                    : latestOutpostStatus;
             if (failureService == null
-                || !failureService.TryBegin(input, latestOutpostStatus, out var result))
+                || !failureService.TryBegin(input, returnOutpost, out var result))
             {
                 // 실패 Service가 준비되지 않은 경우에도 Player를 영구 행동불능으로 남기지 않는다.
                 survivalController?.RestoreAfterRescue();

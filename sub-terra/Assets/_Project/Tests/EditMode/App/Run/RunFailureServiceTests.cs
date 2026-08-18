@@ -16,6 +16,26 @@ namespace SubTerra.App.Tests.Run
             Assert.That((int)RunFailureCause.PowerDepleted, Is.Not.EqualTo(0));
             Assert.That((int)RunFailureCause.StructuralCollapse, Is.Not.EqualTo(0));
             Assert.That((int)RunFailureCause.GasExposure, Is.Not.EqualTo(0));
+            Assert.That((int)RunFailureCause.Fall, Is.Not.EqualTo(0));
+        }
+
+        [Test]
+        public void PromptB55_HealthRegenerationAndFallDamage_AreDeterministic()
+        {
+            var state = new PlayerSurvivalState(100, 1f);
+            Assert.That(state.TryApplyDamage(
+                RunFailureCause.Fall, 20, 1f, 0f, false, out _), Is.True);
+            Assert.That(state.AdvanceRegeneration(5f), Is.True);
+            Assert.That(state.Health, Is.EqualTo(85f).Within(0.0001f));
+
+            Assert.That(PlayerFallDamageRules.CalculateDamage(9.99f, false), Is.Zero);
+            Assert.That(PlayerFallDamageRules.CalculateDamage(10f, false), Is.EqualTo(10));
+            Assert.That(PlayerFallDamageRules.CalculateDamage(14.9f, false), Is.EqualTo(14));
+            Assert.That(PlayerFallDamageRules.CalculateDamage(30f, true), Is.Zero);
+
+            Assert.That(state.ApplyUpgradeEffects(130, 0.3f), Is.True);
+            Assert.That(state.MaximumHealth, Is.EqualTo(130));
+            Assert.That(state.Health, Is.EqualTo(115f).Within(0.0001f));
         }
 
         [Test]

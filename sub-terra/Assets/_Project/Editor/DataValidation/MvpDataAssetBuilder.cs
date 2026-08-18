@@ -302,6 +302,8 @@ namespace SubTerra.App.Editor.DataValidation
                 EnsureUpgrade("Upgrade_Drill_Speed.asset", DataIds.Upgrades.DrillSpeed, "드릴 속도", 3, 0.1f),
                 EnsureUpgrade("Upgrade_Drill_Efficiency.asset", DataIds.Upgrades.DrillEfficiency, "드릴 전력 효율", 3, 0.05f),
                 EnsureUpgrade("Upgrade_Maximum_Energy.asset", DataIds.Upgrades.MaximumEnergy, "최대 전력", 3, 20f),
+                EnsureHealthUpgrade("Upgrade_Maximum_Health.asset", DataIds.Upgrades.MaximumHealth, "최대 체력", new[] { 30f, 60f, 100f }),
+                EnsureHealthUpgrade("Upgrade_Health_Regeneration.asset", DataIds.Upgrades.HealthRegeneration, "초당 체력 재생", new[] { 0.3f, 0.6f, 1f }),
                 EnsureUpgrade("Upgrade_Maximum_Cargo.asset", DataIds.Upgrades.MaximumCargo, "최대 화물 중량", 3, 10f),
                 EnsureUpgrade("Upgrade_Drone_Scan.asset", DataIds.Upgrades.DroneScan, "드론 스캔 범위", 2, 2f),
                 EnsureUpgrade("Upgrade_Drone_Rescue.asset", DataIds.Upgrades.DroneRescue, "드론 구조 보존", 2, 0.15f),
@@ -329,6 +331,45 @@ namespace SubTerra.App.Editor.DataValidation
             }
 
             asset.EditorSet(id, name, maxLevel, levels);
+            EditorUtility.SetDirty(asset);
+            return asset;
+        }
+
+        private static UpgradeData EnsureHealthUpgrade(
+            string file,
+            string id,
+            string name,
+            IReadOnlyList<float> effects)
+        {
+            var path = Root + "/Upgrades/" + file;
+            var asset = AssetDatabase.LoadAssetAtPath<UpgradeData>(path);
+            if (asset == null)
+            {
+                asset = ScriptableObject.CreateInstance<UpgradeData>();
+                AssetDatabase.CreateAsset(asset, path);
+            }
+
+            asset.EditorSet(
+                id,
+                name,
+                3,
+                new List<UpgradeLevelDefinition>
+                {
+                    new UpgradeLevelDefinition(1, effects[0], new List<ItemCostEntry>
+                    {
+                        new ItemCostEntry(DataIds.Minerals.Copper, 1)
+                    }),
+                    new UpgradeLevelDefinition(2, effects[1], new List<ItemCostEntry>
+                    {
+                        new ItemCostEntry(DataIds.Minerals.Copper, 2),
+                        new ItemCostEntry(DataIds.Minerals.Iron, 1)
+                    }),
+                    new UpgradeLevelDefinition(3, effects[2], new List<ItemCostEntry>
+                    {
+                        new ItemCostEntry(DataIds.Minerals.Copper, 3),
+                        new ItemCostEntry(DataIds.Minerals.Iron, 2)
+                    })
+                });
             EditorUtility.SetDirty(asset);
             return asset;
         }

@@ -6,25 +6,60 @@ using UnityEngine;
 namespace SubTerra.Gameplay.Player
 {
     /// <summary>붕괴·가스·전력 고갈을 하나의 Player 행동불능 입력으로 정규화한다.</summary>
-    public sealed class PlayerSurvivalController : MonoBehaviour
+    public sealed class PlayerSurvivalController : MonoBehaviour, IPlayerHealthSource
     {
         [SerializeField] private PlayerSurvivalSettings settings;
         [SerializeField] private Transform playerTarget;
+        [SerializeField] private PlayerMovement playerMovement;
 
         private int tokenSequence;
+        private IPlayerHealthUpgradeProvider healthUpgrades;
+        private bool wasGrounded;
+        private bool trackingFall;
+        private bool usedLadderDuringFall;
+        private float fallApexY;
 
         public PlayerSurvivalState State { get; private set; }
         public event Action<PlayerSurvivalState> StateChanged;
+        public event Action<PlayerHealthReadModel> HealthChanged;
         public event Action<RunFailureInputDto> FailureRequested;
 
         private void Awake()
         {
             EnsureState();
+            ResetFallTracking();
+        }
+
+        private void Update()
+        {
+            EnsureState();
+            if (State.AdvanceRegeneration(Time.deltaTime))
+            {
+                PublishStateChanged();
+            }
+
+            TrackFall();
         }
 
         public void BindTarget(Transform target)
         {
             playerTarget = target;
+        }
+
+        public void BindMovement(PlayerMovement movement)
+        {
+            playerMovement = movement;
+            ResetFallTracking();
+        }
+
+        public void BindUpgradeEffects(IPlayerHealthUpgradeProvider upgrades)
+        {
+            healthUpgrades = upgrades;
+            EnsureState();
+            if (State.ApplyUpgradeEffects(ResolveMaximumHealth(), ResolveRegeneration()))
+            {
+                PublishStateChanged();
+            }
         }
 
         public void Configure(PlayerSurvivalSettings survivalSettings, Transform target)
@@ -33,6 +68,7 @@ namespace SubTerra.Gameplay.Player
             playerTarget = target;
             State = null;
             EnsureState();
+            ResetFallTracking();
         }
 
         public bool ApplyCollapse(StructuralCollapseEventDto collapse)
@@ -59,7 +95,7 @@ namespace SubTerra.Gameplay.Player
 
         public bool ApplyGasFailure(GasExposureFailureInputDto input)
         {
-            if (input == null || input.severity != GasExposureFailureSeverity.RescueRequired)
+            if (input == null)
             {
                 return false;
             }
@@ -68,10 +104,35 @@ namespace SubTerra.Gameplay.Player
                 + ":" + input.cumulativeExposureSeconds.ToString("0.###", CultureInfo.InvariantCulture);
             return ApplyDamage(
                 RunFailureCause.GasExposure,
-                0,
-                true,
+                input.severity == GasExposureFailureSeverity.Damage
+                    ? Math.Max(1, input.damage)
+                    : 0,
+                input.severity == GasExposureFailureSeverity.RescueRequired,
                 token,
                 input.gasZoneId);
+        }
+
+        public bool ApplyFall(float fallDistance, bool usedLadder = false)
+        {
+            EnsureState();
+            var damage = PlayerFallDamageRules.CalculateDamage(
+                fallDistance,
+                usedLadder,
+                settings.MinimumFallDamageHeight,
+                settings.FallDamageAtThreshold,
+                settings.FallDamagePerAdditionalMeter);
+            if (damage <= 0)
+            {
+                return false;
+            }
+
+            tokenSequence++;
+            return ApplyDamage(
+                RunFailureCause.Fall,
+                damage,
+                false,
+                "fall:" + tokenSequence.ToString(CultureInfo.InvariantCulture),
+                "fall_height");
         }
 
         public bool ApplyPowerDepletion()
@@ -89,7 +150,14 @@ namespace SubTerra.Gameplay.Player
         {
             EnsureState();
             State.RestoreFull();
-            StateChanged?.Invoke(State);
+            PublishStateChanged();
+            ResetFallTracking();
+        }
+
+        public PlayerHealthReadModel GetHealth()
+        {
+            EnsureState();
+            return new PlayerHealthReadModel(State.Health, State.MaximumHealth);
         }
 
         private bool ApplyDamage(
@@ -111,7 +179,7 @@ namespace SubTerra.Gameplay.Player
                 return false;
             }
 
-            StateChanged?.Invoke(State);
+            PublishStateChanged();
             if (becameIncapacitated)
             {
                 FailureRequested?.Invoke(new RunFailureInputDto
@@ -120,7 +188,8 @@ namespace SubTerra.Gameplay.Player
                     cause = cause,
                     sourceId = sourceId ?? string.Empty,
                     damage = damage,
-                    remainingHealth = State.Health
+                    remainingHealth = Mathf.CeilToInt(State.Health),
+                    returnToElevator = cause != RunFailureCause.PowerDepleted
                 });
             }
 
@@ -131,6 +200,7 @@ namespace SubTerra.Gameplay.Player
         {
             if (settings == null
                 || playerTarget == null
+                || collapse == null
                 || collapse.cells == null
                 || collapse.cells.Count == 0)
             {
@@ -177,7 +247,73 @@ namespace SubTerra.Gameplay.Player
                 settings = ScriptableObject.CreateInstance<PlayerSurvivalSettings>();
             }
 
-            State = new PlayerSurvivalState(settings.MaximumHealth);
+            State = new PlayerSurvivalState(ResolveMaximumHealth(), ResolveRegeneration());
+        }
+
+        private int ResolveMaximumHealth()
+        {
+            var baseMaximum = settings != null ? settings.MaximumHealth : 100;
+            return healthUpgrades != null
+                ? healthUpgrades.GetMaximumHealth(baseMaximum)
+                : baseMaximum;
+        }
+
+        private float ResolveRegeneration()
+        {
+            return healthUpgrades != null
+                ? healthUpgrades.GetHealthRegenerationPerSecond()
+                : 0f;
+        }
+
+        private void PublishStateChanged()
+        {
+            StateChanged?.Invoke(State);
+            HealthChanged?.Invoke(GetHealth());
+        }
+
+        private void TrackFall()
+        {
+            if (playerMovement == null || playerTarget == null || State == null || !State.CanAct)
+            {
+                return;
+            }
+
+            var grounded = playerMovement.IsGrounded;
+            var descendingLadder = playerMovement.IsDescendingLadder;
+            var currentY = playerTarget.position.y;
+            if (!grounded)
+            {
+                if (!trackingFall && wasGrounded)
+                {
+                    trackingFall = true;
+                    fallApexY = currentY;
+                    usedLadderDuringFall = descendingLadder;
+                }
+
+                if (trackingFall)
+                {
+                    fallApexY = Mathf.Max(fallApexY, currentY);
+                    usedLadderDuringFall |= descendingLadder;
+                }
+            }
+            else if (trackingFall && !wasGrounded)
+            {
+                var distance = Mathf.Max(0f, fallApexY - currentY);
+                var ladderExempt = usedLadderDuringFall;
+                trackingFall = false;
+                usedLadderDuringFall = false;
+                ApplyFall(distance, ladderExempt);
+            }
+
+            wasGrounded = grounded;
+        }
+
+        private void ResetFallTracking()
+        {
+            trackingFall = false;
+            usedLadderDuringFall = false;
+            fallApexY = playerTarget != null ? playerTarget.position.y : 0f;
+            wasGrounded = playerMovement != null && playerMovement.IsGrounded;
         }
     }
 }

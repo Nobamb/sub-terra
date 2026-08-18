@@ -16,7 +16,7 @@ namespace SubTerra.App.Progression
         public static readonly string[] TabLabels =
         {
             "드릴",
-            "전력·화물",
+            "전력·체력·화물",
             "드론",
             "가스",
             "심층 구역"
@@ -35,6 +35,7 @@ namespace SubTerra.App.Progression
             }
 
             if (upgradeId.StartsWith("upgrade.energy.")
+                || upgradeId.StartsWith("upgrade.health.")
                 || upgradeId.StartsWith("upgrade.cargo."))
             {
                 return UpgradeCategory.Capacity;

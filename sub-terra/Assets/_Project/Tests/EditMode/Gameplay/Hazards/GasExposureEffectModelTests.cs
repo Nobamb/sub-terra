@@ -30,6 +30,7 @@ namespace SubTerra.Gameplay.Hazards.Tests
             Assert.That(beforeTick.EnergyDrain, Is.Zero);
             Assert.That(beforeTick.State.CumulativeExposure, Is.Zero);
             Assert.That(firstTick.EnergyDrain, Is.EqualTo(1));
+            Assert.That(firstTick.ExposureTickCount, Is.EqualTo(1));
             Assert.That(firstTick.State.CumulativeExposure, Is.EqualTo(0.8f).Within(0.001f));
             Assert.That(secondTick.EnergyDrain, Is.EqualTo(2));
         }

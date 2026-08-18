@@ -14,6 +14,14 @@ namespace SubTerra.App.Tests.UI
         }
 
         [Test]
+        public void PromptB55_FormatHealth_UsesCurrentAndMaximum()
+        {
+            Assert.That(HudFormatter.FormatHealth(100f, 100), Is.EqualTo("체력 100 / 100"));
+            Assert.That(HudFormatter.FormatHealth(75.2f, 130), Is.EqualTo("체력 76 / 130"));
+            Assert.That(HudFormatter.FormatHealth(-1f, 0), Is.EqualTo("체력 0 / 1"));
+        }
+
+        [Test]
         public void FormatDefaults_ZeroNullAndNone()
         {
             Assert.That(HudFormatter.FormatGold(0), Is.EqualTo("골드 0"));

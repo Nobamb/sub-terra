@@ -89,6 +89,10 @@ namespace SubTerra.App.Core.Data
                     return "드릴 전력 효율";
                 case DataIds.Upgrades.MaximumEnergy:
                     return "최대 전력";
+                case DataIds.Upgrades.MaximumHealth:
+                    return "최대 체력";
+                case DataIds.Upgrades.HealthRegeneration:
+                    return "초당 체력 재생";
                 case DataIds.Upgrades.MaximumCargo:
                     return "최대 화물 중량";
                 case DataIds.Upgrades.DroneScan:
@@ -121,6 +125,10 @@ namespace SubTerra.App.Core.Data
                     return "채굴 시 소모되는 전력을 줄여 더 오래 탐사할 수 있습니다.";
                 case DataIds.Upgrades.MaximumEnergy:
                     return "휴대 가능한 최대 전력량을 늘려 심층 탐사를 안정적으로 유지합니다.";
+                case DataIds.Upgrades.MaximumHealth:
+                    return "최대 체력을 늘려 붕괴·가스·낙하 피해를 더 오래 버팁니다.";
+                case DataIds.Upgrades.HealthRegeneration:
+                    return "시간이 지날수록 체력을 자동으로 회복합니다.";
                 case DataIds.Upgrades.MaximumCargo:
                     return "한 번에 운반할 수 있는 화물 중량 한도를 늘립니다.";
                 case DataIds.Upgrades.DroneScan:
