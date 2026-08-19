@@ -63,6 +63,7 @@ namespace SubTerra.App.Save
         private string pendingInitialScene = SceneNames.SurfaceBase;
         /// <summary>마지막 유효 Mine world. Surface 저장·엘리베이터 왕복 Restore에 사용.</summary>
         private readonly MineWorldCache mineWorldCache = new MineWorldCache();
+        private readonly IMineResetSeedSource mineResetSeeds = new UtcMineResetSeedSource();
         private bool pendingMineWorldRestore;
 
         public const int MineElevatorEnergyCost = 5;
@@ -256,6 +257,45 @@ namespace SubTerra.App.Save
             // Scene Load 직후 한 프레임 뒤 Restore (Awake 지층 생성 이후 변경점 적용).
             pendingMineWorldRestore = true;
             StartCoroutine(RestoreMineWorldAfterExplorationEntry());
+            return true;
+        }
+
+        /// <summary>
+        /// Surface Base에서 500G를 지불하고 Mine 캐시를 새 시드의 빈 스냅샷으로 교체한다.
+        /// 성공 직후 기존 저장 경로로 골드와 새 월드를 함께 저장한다.
+        /// </summary>
+        public bool TryResetMine(out string reason)
+        {
+            reason = string.Empty;
+            if (SceneManager.GetActiveScene().name != SceneNames.SurfaceBase)
+            {
+                reason = "mine_reset.fail.surface";
+                return false;
+            }
+
+            if (activeSlot == 0
+                || saveInProgress
+                || explorationGuard.IsInFlight
+                || ElevatorState == ElevatorTravelState.Calling
+                || ElevatorState == ElevatorTravelState.Moving)
+            {
+                reason = "mine_reset.fail.busy";
+                return false;
+            }
+
+            if (!MineResetService.TryReset(
+                    boundState,
+                    mineWorldCache,
+                    mineResetSeeds,
+                    out var result))
+            {
+                reason = result.Status == MineResetStatus.InsufficientGold
+                    ? "mine_reset.fail.gold"
+                    : "mine_reset.fail.busy";
+                return false;
+            }
+
+            SaveCurrent(AutoSaveReason.MineReset);
             return true;
         }
 

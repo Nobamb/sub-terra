@@ -51,6 +51,10 @@ namespace SubTerra.App.UI.Economy
         public event Action SellSelectedClicked;
         public event Action SellAllClicked;
 
+        public bool IsVisible => canvasGroup != null
+            ? canvasGroup.alpha > 0.5f && canvasGroup.blocksRaycasts
+            : gameObject.activeSelf;
+
         private void Awake()
         {
             WireButtons(true);

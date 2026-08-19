@@ -5,6 +5,7 @@ using SubTerra.App.UI.Economy;
 using SubTerra.App.UI.MainMenu;
 using SubTerra.App.UI.Progression;
 using SubTerra.Shared;
+using SubTerra.Shared.Localization;
 using UnityEngine;
 
 namespace SubTerra.App.UI.SurfaceBase
@@ -25,6 +26,7 @@ namespace SubTerra.App.UI.SurfaceBase
         private SurfaceBasePresenter presenter;
         private SettingsSession settings;
         private InventoryService boundInventory;
+        private bool mineResetBusy;
 
         public SurfaceBasePresenter Presenter => presenter;
         public bool IsBound => presenter != null;
@@ -92,6 +94,8 @@ namespace SubTerra.App.UI.SurfaceBase
             SettingsRuntimeApplier.Apply(initialSettings, applyResolution: false);
             settings = new SettingsSession(initialSettings);
             view.SetSettingsVisible(false);
+            view.SetMineResetConfirmVisible(false);
+            view.SetMineResetBusy(false);
 
             view.ExploreClicked += OnExploreClicked;
             view.SettingsClicked += OnSettingsClicked;
@@ -100,6 +104,9 @@ namespace SubTerra.App.UI.SurfaceBase
             view.SettingsCancelClicked += OnSettingsCancel;
             view.SettingsDefaultsClicked += OnSettingsDefaults;
             view.MasterVolumePreviewChanged += OnMasterVolumePreview;
+            view.ResetMineClicked += OnResetMineClicked;
+            view.ResetMineConfirmed += OnResetMineConfirmed;
+            view.ResetMineCancelled += OnResetMineCancelled;
 
             presenter.RefreshReadModel();
             if (runtime.ElevatorState == ElevatorTravelState.Arrived)
@@ -119,7 +126,12 @@ namespace SubTerra.App.UI.SurfaceBase
                 view.SettingsCancelClicked -= OnSettingsCancel;
                 view.SettingsDefaultsClicked -= OnSettingsDefaults;
                 view.MasterVolumePreviewChanged -= OnMasterVolumePreview;
+                view.ResetMineClicked -= OnResetMineClicked;
+                view.ResetMineConfirmed -= OnResetMineConfirmed;
+                view.ResetMineCancelled -= OnResetMineCancelled;
                 view.SetSettingsVisible(false);
+                view.SetMineResetConfirmVisible(false);
+                view.SetMineResetBusy(false);
             }
 
             if (presenter != null)
@@ -129,6 +141,7 @@ namespace SubTerra.App.UI.SurfaceBase
             }
 
             settings = null;
+            mineResetBusy = false;
             if (boundInventory != null)
             {
                 boundInventory.InventoryChanged -= OnInventoryChangedForProgression;
@@ -194,6 +207,7 @@ namespace SubTerra.App.UI.SurfaceBase
             settings.Apply();
             view.SetSettingsVisible(false);
             SettingsRuntimeApplier.Apply(settings.Applied, applyResolution: true);
+            view.SetMineResetConfirmVisible(false);
         }
 
         private void OnSettingsCancel()
@@ -222,6 +236,88 @@ namespace SubTerra.App.UI.SurfaceBase
         private void OnMasterVolumePreview(float volume)
         {
             SettingsRuntimeApplier.PreviewMasterVolume(volume);
+        }
+
+        private void OnResetMineClicked()
+        {
+            if (mineResetBusy || presenter == null || view == null)
+            {
+                return;
+            }
+
+            var runtime = SaveRuntimeController.Instance;
+            if (runtime == null
+                || runtime.ActiveSlot == 0
+                || runtime.IsSaveInProgress
+                || runtime.ExplorationGuard.IsInFlight
+                || runtime.ElevatorState == ElevatorTravelState.Calling
+                || runtime.ElevatorState == ElevatorTravelState.Moving
+                || (settings != null && settings.IsOpen)
+                || (economyBinder != null && economyBinder.IsModalVisible))
+            {
+                view.SetMessage(LocalizationService.Get("mine_reset.fail.busy"));
+                return;
+            }
+
+            if (!presenter.TryGetMineResetQuote(out var currentGold, out _))
+            {
+                view.SetMessage(string.Format(
+                    LocalizationService.Get("mine_reset.fail.gold"),
+                    currentGold));
+                return;
+            }
+
+            view.SetMessage(string.Empty);
+            view.SetMineResetConfirmVisible(true, currentGold);
+        }
+
+        private void OnResetMineConfirmed()
+        {
+            if (mineResetBusy || view == null)
+            {
+                return;
+            }
+
+            var runtime = SaveRuntimeController.Instance;
+            var reason = string.Empty;
+            mineResetBusy = true;
+            view.SetMineResetBusy(true);
+            try
+            {
+                if (runtime == null || !runtime.TryResetMine(out reason))
+                {
+                    var key = string.IsNullOrEmpty(reason)
+                        ? "mine_reset.fail.busy"
+                        : reason;
+                    var message = LocalizationService.Get(key);
+                    if (key == "mine_reset.fail.gold")
+                    {
+                        var gold = GameBootstrapper.Instance?.State?.Player?.Gold ?? 0;
+                        message = string.Format(message, gold);
+                    }
+
+                    view.SetMessage(message);
+                    return;
+                }
+
+                view.SetMessage(LocalizationService.Get("mine_reset.success"));
+            }
+            finally
+            {
+                view.SetMineResetConfirmVisible(false);
+                view.SetMineResetBusy(false);
+                mineResetBusy = false;
+            }
+        }
+
+        private void OnResetMineCancelled()
+        {
+            if (mineResetBusy || view == null)
+            {
+                return;
+            }
+
+            view.SetMineResetConfirmVisible(false);
         }
 
         private void OnQuitClicked()

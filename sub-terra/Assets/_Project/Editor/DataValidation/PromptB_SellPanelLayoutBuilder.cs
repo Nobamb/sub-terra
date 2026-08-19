@@ -32,7 +32,7 @@ namespace SubTerra.App.Editor.DataValidation
         public const float RecentRunY = 174f;
         public const float ActionY = 120f;
         public const float SellButtonY = 56f;
-        public const float MessageY = 0f;
+        public const float MessageY = -48f;
         public const float EconomyY = 0f;
         public const float EconomyW = 760f;
         public const float EconomyH = 520f;

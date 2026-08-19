@@ -199,6 +199,14 @@ namespace SubTerra.App.UI.SurfaceBase
             view.SetMessage(string.IsNullOrEmpty(message) ? "탐사 진입 실패" : message);
         }
 
+        /// <summary>확인 팝업에 표시할 현재/차감 후 골드를 계산한다. 상태는 변경하지 않는다.</summary>
+        public bool TryGetMineResetQuote(out int currentGold, out int remainingGold)
+        {
+            currentGold = state?.Player?.Gold ?? 0;
+            remainingGold = Math.Max(0, currentGold - MineResetService.FeeGold);
+            return GameState.IsComplete(state) && currentGold >= MineResetService.FeeGold;
+        }
+
         public void Dispose()
         {
             Unbind();

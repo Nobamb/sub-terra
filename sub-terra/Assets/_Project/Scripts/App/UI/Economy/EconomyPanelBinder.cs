@@ -20,6 +20,7 @@ namespace SubTerra.App.UI.Economy
 
         public EconomyPanelPresenter Presenter => presenter;
         public bool IsBound => presenter != null && presenter.IsBound;
+        public bool IsModalVisible => view != null && view.IsVisible;
 
         private void Awake()
         {

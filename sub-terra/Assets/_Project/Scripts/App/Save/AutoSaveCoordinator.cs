@@ -15,7 +15,8 @@ namespace SubTerra.App.Save
         QuitRequested = 6,
         PeriodicDirty = 7,
         Manual = 8,
-        RunFailure = 9
+        RunFailure = 9,
+        MineReset = 10
     }
 
     /// <summary>

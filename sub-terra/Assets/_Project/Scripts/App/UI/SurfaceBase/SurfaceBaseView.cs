@@ -1,4 +1,5 @@
 using System;
+using SubTerra.App.Save;
 using SubTerra.App.Tutorial;
 using SubTerra.App.UI.MainMenu;
 using SubTerra.Shared.Localization;
@@ -22,6 +23,14 @@ namespace SubTerra.App.UI.SurfaceBase
         [SerializeField] private Button exploreButton;
         [SerializeField] private Button settingsButton;
         [SerializeField] private Button quitButton;
+
+        [Header("Mine reset")]
+        [SerializeField] private Button resetMineButton;
+        [SerializeField] private GameObject resetMineConfirmRoot;
+        [SerializeField] private TMP_Text resetMineConfirmTitleText;
+        [SerializeField] private TMP_Text resetMineConfirmBodyText;
+        [SerializeField] private Button resetMineConfirmYesButton;
+        [SerializeField] private Button resetMineConfirmNoButton;
 
         [Header("Settings")]
         [SerializeField] private GameObject settingsRoot;
@@ -61,6 +70,9 @@ namespace SubTerra.App.UI.SurfaceBase
         public event Action SettingsCancelClicked;
         public event Action SettingsDefaultsClicked;
         public event Action<float> MasterVolumePreviewChanged;
+        public event Action ResetMineClicked;
+        public event Action ResetMineConfirmed;
+        public event Action ResetMineCancelled;
 
         private void OnEnable()
         {
@@ -70,6 +82,9 @@ namespace SubTerra.App.UI.SurfaceBase
             settingsApplyButton?.onClick.AddListener(OnSettingsApply);
             settingsCancelButton?.onClick.AddListener(OnSettingsCancel);
             settingsDefaultsButton?.onClick.AddListener(OnSettingsDefaults);
+            resetMineButton?.onClick.AddListener(OnResetMine);
+            resetMineConfirmYesButton?.onClick.AddListener(OnResetMineConfirm);
+            resetMineConfirmNoButton?.onClick.AddListener(OnResetMineCancel);
             resolutionPrevButton?.onClick.AddListener(OnResolutionPrev);
             resolutionNextButton?.onClick.AddListener(OnResolutionNext);
             languageCycleButton?.onClick.AddListener(OnLanguageCycle);
@@ -118,6 +133,9 @@ namespace SubTerra.App.UI.SurfaceBase
             settingsApplyButton?.onClick.RemoveListener(OnSettingsApply);
             settingsCancelButton?.onClick.RemoveListener(OnSettingsCancel);
             settingsDefaultsButton?.onClick.RemoveListener(OnSettingsDefaults);
+            resetMineButton?.onClick.RemoveListener(OnResetMine);
+            resetMineConfirmYesButton?.onClick.RemoveListener(OnResetMineConfirm);
+            resetMineConfirmNoButton?.onClick.RemoveListener(OnResetMineCancel);
             resolutionPrevButton?.onClick.RemoveListener(OnResolutionPrev);
             resolutionNextButton?.onClick.RemoveListener(OnResolutionNext);
             languageCycleButton?.onClick.RemoveListener(OnLanguageCycle);
@@ -222,6 +240,63 @@ namespace SubTerra.App.UI.SurfaceBase
             if (messageText != null)
             {
                 messageText.text = message ?? string.Empty;
+            }
+        }
+
+        public void SetMineResetConfirmVisible(bool visible, int currentGold = 0)
+        {
+            if (resetMineConfirmRoot == null)
+            {
+                return;
+            }
+
+            if (resetMineConfirmTitleText != null)
+            {
+                resetMineConfirmTitleText.text = LocalizationService.Get(
+                    "mine_reset.confirm.title",
+                    "새 광산 구역");
+            }
+
+            if (resetMineConfirmBodyText != null)
+            {
+                resetMineConfirmBodyText.text = string.Format(
+                    LocalizationService.Get("mine_reset.confirm.body"),
+                    currentGold,
+                    Mathf.Max(0, currentGold - MineResetService.FeeGold));
+            }
+
+            SetButtonLabel(
+                resetMineButton,
+                LocalizationService.Get("mine_reset.button", "새 광산 초기화 (500G)"));
+            SetButtonLabel(
+                resetMineConfirmYesButton,
+                LocalizationService.Get("mine_reset.confirm.yes", "확인"));
+            SetButtonLabel(
+                resetMineConfirmNoButton,
+                LocalizationService.Get("mine_reset.confirm.no", "취소"));
+
+            resetMineConfirmRoot.SetActive(visible);
+            if (visible)
+            {
+                resetMineConfirmRoot.transform.SetAsLastSibling();
+            }
+        }
+
+        public void SetMineResetBusy(bool busy)
+        {
+            if (resetMineButton != null)
+            {
+                resetMineButton.interactable = !busy;
+            }
+
+            if (resetMineConfirmYesButton != null)
+            {
+                resetMineConfirmYesButton.interactable = !busy;
+            }
+
+            if (resetMineConfirmNoButton != null)
+            {
+                resetMineConfirmNoButton.interactable = !busy;
             }
         }
 
@@ -345,7 +420,22 @@ namespace SubTerra.App.UI.SurfaceBase
                 && messageText != null
                 && exploreButton != null
                 && settingsButton != null
-                && quitButton != null;
+                && quitButton != null
+                && resetMineButton != null
+                && resetMineConfirmRoot != null
+                && resetMineConfirmTitleText != null
+                && resetMineConfirmBodyText != null
+                && resetMineConfirmYesButton != null
+                && resetMineConfirmNoButton != null;
+        }
+
+        private static void SetButtonLabel(Button button, string label)
+        {
+            var text = button != null ? button.GetComponentInChildren<TMP_Text>(true) : null;
+            if (text != null)
+            {
+                text.text = label ?? string.Empty;
+            }
         }
 
         private void RefreshSettingsLabels(float volume)
@@ -576,5 +666,8 @@ namespace SubTerra.App.UI.SurfaceBase
         private void OnSettingsApply() => SettingsApplyClicked?.Invoke();
         private void OnSettingsCancel() => SettingsCancelClicked?.Invoke();
         private void OnSettingsDefaults() => SettingsDefaultsClicked?.Invoke();
+        private void OnResetMine() => ResetMineClicked?.Invoke();
+        private void OnResetMineConfirm() => ResetMineConfirmed?.Invoke();
+        private void OnResetMineCancel() => ResetMineCancelled?.Invoke();
     }
 }

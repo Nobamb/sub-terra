@@ -112,6 +112,20 @@ A 쪽 직렬 참조 (통합 시 확인):
 Continue 경로의 월드 복원은 `TryRestoreMineWorld`를 사용한다.
 복원 소스 우선순위: **1) 메모리 캐시 2) 세이브 world**.
 
+## Surface Base 새 광산 초기화
+
+`ResetMineButton`은 Surface Base에서만 노출되며 확인 모달을 거쳐 실행된다.
+
+1. `SurfaceBaseBinder`가 설정·판매 모달과 저장/엘리베이터 Busy를 확인한다.
+2. 골드가 500G 미만이면 상태를 바꾸지 않고 부족 메시지를 표시한다.
+3. 확인 시 `SaveRuntimeController.TryResetMine` → `MineResetService.TryReset`을 호출한다.
+4. 성공하면 골드 500G만 차감하고 `MineWorldCache`를 새 non-zero 시드의 빈 `WorldSnapshotDto`로 교체한다.
+5. `AutoSaveReason.MineReset`으로 즉시 저장한다. 다음 탐사는 기존 `TryRestoreMineWorld` 경로에서 새 시드를 재생성한다.
+
+초기화 대상은 Mine world 변경점(채굴/변경 타일, 붕괴, 시설, 가스, 발견 구역, 전력 케이블)뿐이다.
+인벤토리, 업그레이드, 심층 해금, 진행도, 전진기지, 최대 심도는 유지한다.
+일반 엘리베이터 왕복과 이어하기는 기존 Mine persist 동작을 그대로 유지한다.
+
 ## 중복 방지
 
 - Bootstrap `GameBootstrapper` / `SaveRuntimeController`는 DontDestroyOnLoad 단일 인스턴스

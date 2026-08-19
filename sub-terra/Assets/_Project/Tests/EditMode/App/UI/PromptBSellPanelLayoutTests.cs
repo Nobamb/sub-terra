@@ -93,12 +93,14 @@ namespace SubTerra.App.Tests.UI
 
             // 기본 화면 gap: OpenSell 아래와 Message 위가 겹치지 않는다.
             var message = FindDeep(content, "MessageText") as RectTransform;
+            var resetMine = FindDeep(content, "ResetMineButton") as RectTransform;
             if (message != null)
             {
                 var sellYMin = openSell.anchoredPosition.y - openSell.sizeDelta.y * 0.5f;
                 var msgYMax = message.anchoredPosition.y + message.sizeDelta.y * 0.5f;
                 Assert.That(sellYMin - msgYMax, Is.GreaterThanOrEqualTo(16f));
             }
+            Assert.That(resetMine, Is.Not.Null, "ResetMineButton missing");
 
             var title = FindDeep(content, "Title") as RectTransform;
             var goals = FindDeep(content, "GoalsText") as RectTransform;
@@ -117,8 +119,8 @@ namespace SubTerra.App.Tests.UI
             AssertBelowWithGap(deepZone, recentRun, 16f);
             AssertBelowWithGap(recentRun, explore, 16f);
             AssertBelowWithGap(explore, openSell, 16f);
-            AssertBelowWithGap(openSell, message, 16f);
-            AssertBelowWithGap(message, progression as RectTransform, 16f);
+            Assert.That(openSell.anchoredPosition.y, Is.GreaterThan(resetMine.anchoredPosition.y));
+            AssertBelowWithGap(resetMine, message, 16f);
 
             foreach (var centered in new[]
                      {
@@ -127,6 +129,7 @@ namespace SubTerra.App.Tests.UI
                          deepZone,
                          recentRun,
                          openSell,
+                         resetMine,
                          message,
                          progression as RectTransform
                      })
