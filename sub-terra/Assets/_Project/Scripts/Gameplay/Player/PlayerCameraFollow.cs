@@ -31,6 +31,9 @@ namespace SubTerra.Gameplay.Player
         private float shakeDuration;
         private float shakeAmplitude;
 
+        public bool IsShakeActive => shakeTimeRemaining > 0f
+            && !AccessibilityPreferences.ReduceMotion;
+
         public void SetTarget(Transform newTarget, bool snapImmediately = false)
         {
             target = newTarget;

@@ -6,11 +6,15 @@ using UnityEngine;
 namespace SubTerra.Gameplay.Player
 {
     /// <summary>붕괴·가스·전력 고갈을 하나의 Player 행동불능 입력으로 정규화한다.</summary>
-    public sealed class PlayerSurvivalController : MonoBehaviour, IPlayerHealthSource
+    public sealed class PlayerSurvivalController : MonoBehaviour, IPlayerHealthSource, ICollapseDamageReceiver
     {
+        private const float DamageFlashInterval = 0.08f;
+        private const float DamageFlashAlphaMultiplier = 0.35f;
+
         [SerializeField] private PlayerSurvivalSettings settings;
         [SerializeField] private Transform playerTarget;
         [SerializeField] private PlayerMovement playerMovement;
+        [SerializeField] private PlayerCameraFollow cameraFollow;
 
         private int tokenSequence;
         private IPlayerHealthUpgradeProvider healthUpgrades;
@@ -18,6 +22,10 @@ namespace SubTerra.Gameplay.Player
         private bool trackingFall;
         private bool usedLadderDuringFall;
         private float fallApexY;
+        private SpriteRenderer[] flashRenderers = Array.Empty<SpriteRenderer>();
+        private Color[] flashBaseColors = Array.Empty<Color>();
+        private float damageFlashStartedAt;
+        private float damageFlashUntil;
 
         public PlayerSurvivalState State { get; private set; }
         public event Action<PlayerSurvivalState> StateChanged;
@@ -38,12 +46,25 @@ namespace SubTerra.Gameplay.Player
                 PublishStateChanged();
             }
 
+            UpdateDamageFlash();
             TrackFall();
+        }
+
+        private void OnDisable()
+        {
+            RestoreDamageFlash();
         }
 
         public void BindTarget(Transform target)
         {
+            RestoreDamageFlash();
             playerTarget = target;
+            CacheFlashRenderers();
+        }
+
+        public void BindCameraFollow(PlayerCameraFollow follow)
+        {
+            cameraFollow = follow;
         }
 
         public void BindMovement(PlayerMovement movement)
@@ -91,6 +112,32 @@ namespace SubTerra.Gameplay.Player
                 false,
                 token,
                 "structural_collapse");
+        }
+
+        public bool IsCollapseContact(float fromX, float fromY, float toX, float toY)
+        {
+            if (settings == null || playerTarget == null)
+            {
+                return false;
+            }
+
+            return DistanceToSegment(
+                    playerTarget.position,
+                    new Vector2(fromX, fromY),
+                    new Vector2(toX, toY))
+                <= settings.CollapseHitRadius;
+        }
+
+        public bool ApplyCollapseImpact()
+        {
+            EnsureState();
+            tokenSequence++;
+            return ApplyDamage(
+                RunFailureCause.StructuralCollapse,
+                settings.MinorCollapseDamage,
+                false,
+                "collapse-impact:" + tokenSequence.ToString(CultureInfo.InvariantCulture),
+                "structural_falling_rock");
         }
 
         public bool ApplyGasFailure(GasExposureFailureInputDto input)
@@ -149,6 +196,7 @@ namespace SubTerra.Gameplay.Player
         public void RestoreAfterRescue()
         {
             EnsureState();
+            RestoreDamageFlash();
             State.RestoreFull();
             PublishStateChanged();
             ResetFallTracking();
@@ -168,6 +216,7 @@ namespace SubTerra.Gameplay.Player
             string sourceId)
         {
             EnsureState();
+            float healthBeforeDamage = State.Health;
             if (!State.TryApplyDamage(
                     cause,
                     damage,
@@ -179,6 +228,7 @@ namespace SubTerra.Gameplay.Player
                 return false;
             }
 
+            StartDamageFeedback(healthBeforeDamage - State.Health);
             PublishStateChanged();
             if (becameIncapacitated)
             {
@@ -194,6 +244,129 @@ namespace SubTerra.Gameplay.Player
             }
 
             return true;
+        }
+
+        public static float ResolveDamageShakeAmplitude(float damage, int maximumHealth)
+        {
+            float ratio = Mathf.Clamp01(Mathf.Max(0f, damage) / Mathf.Max(1, maximumHealth));
+            return Mathf.Lerp(0.12f, 0.5f, ratio);
+        }
+
+        private static float ResolveDamageShakeDuration(float damage, int maximumHealth)
+        {
+            float ratio = Mathf.Clamp01(Mathf.Max(0f, damage) / Mathf.Max(1, maximumHealth));
+            return Mathf.Lerp(0.18f, 0.38f, ratio);
+        }
+
+        private void StartDamageFeedback(float appliedDamage)
+        {
+            if (appliedDamage <= 0f)
+            {
+                return;
+            }
+
+            PlayerCameraFollow follow = cameraFollow;
+            if (follow == null)
+            {
+                Camera main = Camera.main;
+                if (main != null)
+                {
+                    follow = main.GetComponent<PlayerCameraFollow>();
+                }
+            }
+
+            if (follow != null)
+            {
+                follow.RequestShake(
+                    ResolveDamageShakeAmplitude(appliedDamage, State.MaximumHealth),
+                    ResolveDamageShakeDuration(appliedDamage, State.MaximumHealth));
+            }
+
+            RestoreDamageFlash();
+            CacheFlashRenderers();
+            damageFlashStartedAt = Time.unscaledTime;
+            damageFlashUntil = damageFlashStartedAt + settings.InvulnerabilitySeconds;
+            UpdateDamageFlash();
+        }
+
+        private void CacheFlashRenderers()
+        {
+            if (playerTarget == null)
+            {
+                flashRenderers = Array.Empty<SpriteRenderer>();
+                flashBaseColors = Array.Empty<Color>();
+                return;
+            }
+
+            flashRenderers = playerTarget.GetComponentsInChildren<SpriteRenderer>(true);
+            flashBaseColors = new Color[flashRenderers.Length];
+            for (var i = 0; i < flashRenderers.Length; i++)
+            {
+                flashBaseColors[i] = flashRenderers[i] != null
+                    ? flashRenderers[i].color
+                    : Color.white;
+            }
+        }
+
+        private void UpdateDamageFlash()
+        {
+            if (damageFlashUntil <= 0f)
+            {
+                return;
+            }
+
+            float now = Time.unscaledTime;
+            if (now >= damageFlashUntil || State == null || !State.IsInvulnerable(now))
+            {
+                RestoreDamageFlash();
+                return;
+            }
+
+            bool dimmed = Mathf.FloorToInt((now - damageFlashStartedAt) / DamageFlashInterval) % 2 == 0;
+            for (var i = 0; i < flashRenderers.Length; i++)
+            {
+                SpriteRenderer renderer = flashRenderers[i];
+                if (renderer == null)
+                {
+                    continue;
+                }
+
+                Color color = flashBaseColors[i];
+                if (dimmed)
+                {
+                    color.a *= DamageFlashAlphaMultiplier;
+                }
+
+                renderer.color = color;
+            }
+        }
+
+        private void RestoreDamageFlash()
+        {
+            int count = Mathf.Min(flashRenderers.Length, flashBaseColors.Length);
+            for (var i = 0; i < count; i++)
+            {
+                if (flashRenderers[i] != null)
+                {
+                    flashRenderers[i].color = flashBaseColors[i];
+                }
+            }
+
+            damageFlashStartedAt = 0f;
+            damageFlashUntil = 0f;
+        }
+
+        private static float DistanceToSegment(Vector2 point, Vector2 start, Vector2 end)
+        {
+            Vector2 segment = end - start;
+            float squaredLength = segment.sqrMagnitude;
+            if (squaredLength <= Mathf.Epsilon)
+            {
+                return Vector2.Distance(point, start);
+            }
+
+            float t = Mathf.Clamp01(Vector2.Dot(point - start, segment) / squaredLength);
+            return Vector2.Distance(point, start + segment * t);
         }
 
         private int CountCollapseHits(StructuralCollapseEventDto collapse)
@@ -248,6 +421,7 @@ namespace SubTerra.Gameplay.Player
             }
 
             State = new PlayerSurvivalState(ResolveMaximumHealth(), ResolveRegeneration());
+            CacheFlashRenderers();
         }
 
         private int ResolveMaximumHealth()

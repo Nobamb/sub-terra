@@ -3,6 +3,7 @@ using System.Linq;
 using System.Reflection;
 using NUnit.Framework;
 using SubTerra.App.UI.HUD;
+using UnityEditor;
 using UnityEngine;
 
 namespace SubTerra.App.Tests.UI
@@ -137,6 +138,34 @@ namespace SubTerra.App.Tests.UI
             foreach (var name in required)
             {
                 Assert.That(File.Exists(Path.Combine(hudDir, name)), Is.True, name);
+            }
+        }
+
+        [Test]
+        public void PromptB55_1_HealthRowMatchesOtherHudTextAlignmentAndSpacing()
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                "Assets/_Project/Prefabs/UI/BasicHUD.prefab");
+            Assert.That(prefab, Is.Not.Null);
+
+            var instance = Object.Instantiate(prefab);
+            try
+            {
+                var view = instance.GetComponent<BasicHudView>();
+                Assert.That(view, Is.Not.Null);
+                view.AlignHealthRow();
+                RectTransform health = view.HealthText.rectTransform;
+                RectTransform energy = view.EnergyText.rectTransform;
+
+                Assert.That(health.anchoredPosition.x, Is.EqualTo(energy.anchoredPosition.x).Within(0.001f));
+                Assert.That(health.sizeDelta.y, Is.EqualTo(energy.sizeDelta.y).Within(0.001f));
+                Assert.That(
+                    health.anchoredPosition.y - energy.anchoredPosition.y,
+                    Is.EqualTo(energy.rect.height).Within(0.001f));
+            }
+            finally
+            {
+                Object.DestroyImmediate(instance);
             }
         }
     }

@@ -57,6 +57,15 @@ namespace SubTerra.App.Tests.Run
             Assert.That(state.CanAct, Is.False);
         }
 
+        [Test]
+        public void PromptB55_1_DamageShakeScalesWithAppliedHealthDamage()
+        {
+            float lightHit = PlayerSurvivalController.ResolveDamageShakeAmplitude(10f, 100);
+            float heavyHit = PlayerSurvivalController.ResolveDamageShakeAmplitude(50f, 100);
+
+            Assert.That(heavyHit, Is.GreaterThan(lightHit));
+        }
+
         [TestCase(RunFailureCause.PowerDepleted)]
         [TestCase(RunFailureCause.StructuralCollapse)]
         [TestCase(RunFailureCause.GasExposure)]

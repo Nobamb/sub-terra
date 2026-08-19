@@ -28,6 +28,7 @@ namespace SubTerra.Gameplay.Structural
         private readonly List<FallingVisual> fallingVisuals = new();
         private readonly List<DustVisual> dustVisuals = new();
         private readonly HashSet<Vector3Int> visibleCells = new();
+        private ICollapseDamageReceiver collapseDamageReceiver;
 
         private Tile runtimeCrackTile;
         private Sprite runtimeCrackSprite;
@@ -43,6 +44,7 @@ namespace SubTerra.Gameplay.Structural
             public Vector3 End;
             public float Elapsed;
             public float Duration;
+            public bool ContactConsumed;
         }
 
         private sealed class DustVisual
@@ -54,6 +56,11 @@ namespace SubTerra.Gameplay.Structural
         }
 
         public Tilemap OverlayTilemap => overlayTilemap;
+
+        public void BindCollapseDamageReceiver(ICollapseDamageReceiver receiver)
+        {
+            collapseDamageReceiver = receiver;
+        }
 
         /// <summary>단일 천장 셀의 균열 표시를 해당 셀 위험 단계로 설정한다.</summary>
         public void SetCell(Vector3Int cell, StructuralRiskLevel risk)
@@ -407,7 +414,20 @@ namespace SubTerra.Gameplay.Structural
 
                 visual.Elapsed += deltaTime;
                 float t = Mathf.Clamp01(visual.Elapsed / visual.Duration);
-                visual.Root.transform.position = Vector3.Lerp(visual.Start, visual.End, t * t);
+                Vector3 previousPosition = visual.Root.transform.position;
+                Vector3 nextPosition = Vector3.Lerp(visual.Start, visual.End, t * t);
+                visual.Root.transform.position = nextPosition;
+                if (!visual.ContactConsumed
+                    && collapseDamageReceiver != null
+                    && collapseDamageReceiver.IsCollapseContact(
+                        previousPosition.x,
+                        previousPosition.y,
+                        nextPosition.x,
+                        nextPosition.y))
+                {
+                    visual.ContactConsumed = true;
+                    collapseDamageReceiver.ApplyCollapseImpact();
+                }
                 if (t < 1f) continue;
 
                 // 충돌 뒤에는 낮고 흐린 비충돌 잔해로 남겨 낙하 결과 위치를 보여 준다.

@@ -303,6 +303,11 @@ namespace SubTerra.App.Integration
                     }
 
                     runFailureController.Bind(runtime, bootstrap.State);
+                    if (gameplayEventBridge != null)
+                    {
+                        gameplayEventBridge.SetCollapseDamageReceiver(
+                            runFailureController.SurvivalController);
+                    }
                     if (hudBinder != null)
                     {
                         hudBinder.BindHealthSource(runFailureController.SurvivalController);
@@ -775,6 +780,10 @@ namespace SubTerra.App.Integration
 
             if (runFailureController != null)
             {
+                if (gameplayEventBridge != null)
+                {
+                    gameplayEventBridge.SetCollapseDamageReceiver(null);
+                }
                 if (hudBinder != null)
                 {
                     hudBinder.BindHealthSource(null);

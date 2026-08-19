@@ -26,6 +26,29 @@ namespace SubTerra.App.UI.HUD
         public TextMeshProUGUI BuildingSelectionText => buildingSelectionText;
         public TextMeshProUGUI InteractionPromptText => interactionPromptText;
 
+        private void Awake()
+        {
+            AlignHealthRow();
+        }
+
+        public void AlignHealthRow()
+        {
+            if (healthText == null || energyText == null)
+            {
+                return;
+            }
+
+            RectTransform health = healthText.rectTransform;
+            RectTransform energy = energyText.rectTransform;
+            health.anchorMin = energy.anchorMin;
+            health.anchorMax = energy.anchorMax;
+            health.pivot = energy.pivot;
+            health.sizeDelta = energy.sizeDelta;
+            health.anchoredPosition = new Vector2(
+                energy.anchoredPosition.x,
+                energy.anchoredPosition.y + energy.rect.height);
+        }
+
         public void SetEnergy(string text)
         {
             SetText(energyText, text);

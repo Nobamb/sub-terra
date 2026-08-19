@@ -54,6 +54,40 @@ namespace SubTerra.Gameplay.Structural.Tests
                 Assert.That(fixture.Foreground.HasTile(new Vector3Int(cell.x, cell.y, 0)), Is.False);
         }
 
+        [UnityTest]
+        public IEnumerator PromptB55_1_EachFallingRockConsumesOnePlayerContact()
+        {
+            using var fixture = new RuntimeFixture(1, true, false);
+            var receiver = new CountingCollapseReceiver();
+            fixture.System.BindCollapseDamageReceiver(receiver);
+
+            fixture.CrackOverlay.PlayCollapse(
+                new Vector3Int(0, 2, 0), fixture.Foreground, 0.1f);
+            yield return new WaitForSecondsRealtime(0.15f);
+            Assert.That(receiver.ImpactCount, Is.EqualTo(1));
+
+            fixture.CrackOverlay.PlayCollapse(
+                new Vector3Int(0, 2, 0), fixture.Foreground, 0.1f);
+            yield return new WaitForSecondsRealtime(0.15f);
+            Assert.That(receiver.ImpactCount, Is.EqualTo(2));
+        }
+
+        private sealed class CountingCollapseReceiver : ICollapseDamageReceiver
+        {
+            public int ImpactCount { get; private set; }
+
+            public bool IsCollapseContact(float fromX, float fromY, float toX, float toY)
+            {
+                return true;
+            }
+
+            public bool ApplyCollapseImpact()
+            {
+                ImpactCount++;
+                return true;
+            }
+        }
+
         private sealed class RuntimeFixture : System.IDisposable
         {
             private readonly Tile tile;
@@ -87,6 +121,7 @@ namespace SubTerra.Gameplay.Structural.Tests
                     StructuralCrackOverlay crackOverlay = Root.AddComponent<StructuralCrackOverlay>();
                     SetField(crackOverlay, "overlayTilemap", Overlay);
                     SetField(System, "crackOverlay", crackOverlay);
+                    CrackOverlay = crackOverlay;
                 }
 
                 if (withSnapshot)
@@ -102,6 +137,7 @@ namespace SubTerra.Gameplay.Structural.Tests
             public GameObject Root { get; }
             public Tilemap Foreground { get; }
             public Tilemap Overlay { get; }
+            public StructuralCrackOverlay CrackOverlay { get; }
             public TilemapCollider2D ForegroundCollider { get; }
             public StructuralIntegritySystem System { get; }
             public WorldSnapshotSystem Snapshot { get; }

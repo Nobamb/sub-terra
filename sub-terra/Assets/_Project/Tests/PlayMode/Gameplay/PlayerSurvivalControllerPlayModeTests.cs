@@ -130,5 +130,49 @@ namespace SubTerra.Gameplay.Player.Tests
             Object.Destroy(settings);
             yield return null;
         }
+
+        [UnityTest]
+        public IEnumerator PromptB55_1_CollapseContactCanDamageAgainAfterInvulnerability()
+        {
+            var player = new GameObject("CollapseContactPlayer");
+            player.transform.position = new Vector3(0.5f, 0.5f, 0f);
+            var renderer = player.AddComponent<SpriteRenderer>();
+            renderer.color = Color.white;
+            var host = new GameObject("CollapseContactSurvival");
+            var cameraObject = new GameObject("DamageFeedbackCamera", typeof(Camera));
+            var cameraFollow = cameraObject.AddComponent<PlayerCameraFollow>();
+            var settings = ScriptableObject.CreateInstance<PlayerSurvivalSettings>();
+            var controller = host.AddComponent<PlayerSurvivalController>();
+            controller.Configure(settings, player.transform);
+            controller.BindCameraFollow(cameraFollow);
+
+            AccessibilityPreferences.ReduceMotion = false;
+            Assert.That(controller.IsCollapseContact(0.5f, 3f, 0.5f, -1f), Is.True);
+            Assert.That(controller.ApplyCollapseImpact(), Is.True);
+            Assert.That(controller.State.Health, Is.EqualTo(75));
+            Assert.That(renderer.color.a, Is.LessThan(1f));
+            Assert.That(cameraFollow.IsShakeActive, Is.True);
+
+            Assert.That(controller.ApplyCollapseImpact(), Is.False);
+            Assert.That(controller.State.Health, Is.EqualTo(75));
+
+            yield return new WaitForSecondsRealtime(0.8f);
+            Assert.That(renderer.color.a, Is.EqualTo(1f).Within(0.001f));
+            Assert.That(controller.ApplyCollapseImpact(), Is.True);
+            Assert.That(controller.State.Health, Is.EqualTo(50));
+
+            AccessibilityPreferences.ReduceMotion = true;
+            controller.RestoreAfterRescue();
+            Assert.That(controller.ApplyCollapseImpact(), Is.True);
+            Assert.That(cameraFollow.IsShakeActive, Is.False);
+            Assert.That(renderer.color.a, Is.LessThan(1f));
+
+            AccessibilityPreferences.ReduceMotion = false;
+            Object.Destroy(host);
+            Object.Destroy(player);
+            Object.Destroy(cameraObject);
+            Object.Destroy(settings);
+            yield return null;
+        }
     }
 }

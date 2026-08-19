@@ -31,6 +31,7 @@ namespace SubTerra.Gameplay.Integration
         private bool lastInteractionRange;
         private string lastInteractionFacilityInstanceId;
         private string lastInteractionFacilityBuildingId;
+        private ICollapseDamageReceiver collapseDamageReceiver;
 
         private void Awake() => eventSink = eventSinkBehaviour as IGameplayEventSink;
 
@@ -39,6 +40,7 @@ namespace SubTerra.Gameplay.Integration
             if (miningSystem != null) miningSystem.TileMined += OnTileMined;
             if (structuralSystem != null)
             {
+                structuralSystem.BindCollapseDamageReceiver(collapseDamageReceiver);
                 structuralSystem.RiskChanged += OnStructuralRiskChanged;
                 structuralSystem.CollapseTriggered += OnStructuralCollapse;
             }
@@ -69,6 +71,15 @@ namespace SubTerra.Gameplay.Integration
         }
 
         public void SetEventSink(IGameplayEventSink sink) => eventSink = sink;
+
+        public void SetCollapseDamageReceiver(ICollapseDamageReceiver receiver)
+        {
+            collapseDamageReceiver = receiver;
+            if (structuralSystem != null)
+            {
+                structuralSystem.BindCollapseDamageReceiver(receiver);
+            }
+        }
 
         public void SetInteractionOrigin(Transform origin)
         {

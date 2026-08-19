@@ -22,6 +22,13 @@ namespace SubTerra.Shared
         PlayerHealthReadModel GetHealth();
     }
 
+    /// <summary>붕괴 낙석이 Player 구현을 직접 알지 않고 접촉 피해를 전달하는 경계.</summary>
+    public interface ICollapseDamageReceiver
+    {
+        bool IsCollapseContact(float fromX, float fromY, float toX, float toY);
+        bool ApplyCollapseImpact();
+    }
+
     /// <summary>체력 관련 진행도 효과만 Gameplay 생존 상태에 제공하는 경계.</summary>
     public interface IPlayerHealthUpgradeProvider
     {

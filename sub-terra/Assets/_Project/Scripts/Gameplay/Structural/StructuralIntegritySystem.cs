@@ -57,6 +57,14 @@ namespace SubTerra.Gameplay.Structural
 
         public void ConfigureWorldSeed(long seed) => worldSeed = seed;
 
+        public void BindCollapseDamageReceiver(ICollapseDamageReceiver receiver)
+        {
+            if (crackOverlay != null)
+            {
+                crackOverlay.BindCollapseDamageReceiver(receiver);
+            }
+        }
+
         private void Update()
         {
             AdvanceSimulation(Time.unscaledDeltaTime);

@@ -202,7 +202,8 @@ namespace SubTerra.App.Editor.DataValidation
                 healthRect.anchorMax = energyRect.anchorMax;
                 healthRect.pivot = energyRect.pivot;
                 healthRect.sizeDelta = energyRect.sizeDelta;
-                healthRect.anchoredPosition = energyRect.anchoredPosition + Vector2.up * 30f;
+                healthRect.anchoredPosition = energyRect.anchoredPosition
+                    + Vector2.up * energyRect.rect.height;
                 health.text = "체력 100 / 100";
 
                 var serialized = new SerializedObject(view);

@@ -75,6 +75,11 @@ namespace SubTerra.Gameplay.Player
             return Math.Abs(Health - previous) > 0.0001f;
         }
 
+        public bool IsInvulnerable(float currentTime)
+        {
+            return CanAct && currentTime < invulnerableUntil;
+        }
+
         public bool ApplyUpgradeEffects(int maximumHealth, float healthRegenerationPerSecond)
         {
             var nextMaximum = Math.Max(1, maximumHealth);

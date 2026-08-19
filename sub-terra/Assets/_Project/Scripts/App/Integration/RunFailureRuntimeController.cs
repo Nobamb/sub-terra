@@ -104,7 +104,7 @@ namespace SubTerra.App.Integration
                     latestOutpostStatus = gameplayEvent.outpostStatus;
                     break;
                 case GameplayEventType.StructuralCollapse:
-                    survivalController.ApplyCollapse(gameplayEvent.structuralCollapse);
+                    // 실제 HP 피해는 낙석 이동 경로와 Player가 접촉한 순간 Gameplay에서 전달한다.
                     break;
                 case GameplayEventType.GasExposureThreshold:
                     survivalController.ApplyGasFailure(gameplayEvent.gasExposureFailure);
