@@ -147,9 +147,8 @@ namespace SubTerra.App.UI.Tutorial
                 view?.SetDemoCompleteVisible(
                     true,
                     model.Description);
-                guidanceOpen = model.ShowsDismissibleGuidance;
-                view?.SetGuidanceVisible(guidanceOpen);
-                view?.SetGuidanceText(model.Title, model.Description);
+                guidanceOpen = false;
+                view?.SetGuidanceVisible(false);
             }
             else if (model.ShowsDismissibleGuidance)
             {

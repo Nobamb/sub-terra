@@ -491,6 +491,22 @@ namespace SubTerra.App.Tests.Tutorial
         }
 
         [Test]
+        public void PromptB58_DemoEnd_ShowsOnlyClosableCompletionWindow()
+        {
+            var view = new RecordingDemoView();
+            var director = new DemoObjectiveDirector();
+            director.ResetNewGame();
+            var presenter = new DemoObjectivePresenter(view);
+            presenter.Bind(director);
+
+            AdvanceTo(director, DemoObjectiveIds.DemoEnd);
+
+            Assert.That(view.DemoCompleteVisible, Is.True);
+            Assert.That(view.GuidanceVisible, Is.False);
+            Assert.That(presenter.IsGuidanceOpen, Is.False);
+        }
+
+        [Test]
         public void PathGuide_PriorCrack_DoesNotSkipUntilNewHazardOrDismiss()
         {
             var director = new DemoObjectiveDirector();
