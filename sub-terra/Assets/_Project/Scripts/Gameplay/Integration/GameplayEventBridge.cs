@@ -153,7 +153,22 @@ namespace SubTerra.Gameplay.Integration
             Publish(new GameplayEventDto { type = GameplayEventType.GasTriggered, entityId = zone.GasZoneId, reasonId = zone.GasType.ToString(), x = Mathf.RoundToInt(zone.transform.position.x), y = Mathf.RoundToInt(zone.transform.position.y), gasRisk = zone.Intensity });
         }
 
-        private void OnBuildingPlaced(BuildingPlacementResult result) => PublishBuildingResult(result, BuildingPlacementState.Placed);
+        private void OnBuildingPlaced(BuildingPlacementResult result)
+        {
+            PublishBuildingResult(result, BuildingPlacementState.Placed);
+
+            if (result.IsSuccess && result.BuildingId == "building.outpost_core.basic")
+            {
+                Publish(new GameplayEventDto
+                {
+                    type = GameplayEventType.OutpostActivated,
+                    entityId = result.InstanceId,
+                    instanceId = result.InstanceId,
+                    x = result.Cell.x,
+                    y = result.Cell.y
+                });
+            }
+        }
         private void OnBuildingRejected(BuildingPlacementResult result) => PublishBuildingResult(result, BuildingPlacementState.Failed);
 
         private void PublishBuildingResult(BuildingPlacementResult result, BuildingPlacementState state)

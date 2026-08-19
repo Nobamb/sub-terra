@@ -7,6 +7,7 @@ using SubTerra.App.Integration;
 using SubTerra.App.Inventory;
 using SubTerra.App.State;
 using SubTerra.Gameplay.Building;
+using SubTerra.Gameplay.Integration;
 using SubTerra.Gameplay.Mining;
 using SubTerra.Gameplay.Player;
 using SubTerra.Gameplay.Snapshot;
@@ -344,6 +345,38 @@ namespace SubTerra.App.Tests.Integration
             Assert.That(a.Events.Count, Is.EqualTo(1));
             Assert.That(b.Events.Count, Is.EqualTo(1));
             Assert.That(a.Events[0].reasonId, Is.EqualTo("mineral.copper"));
+        }
+
+        [Test]
+        public void PromptB57_OutpostCorePlacement_PublishesActivationForQuestAndCheckpoint()
+        {
+            var host = new GameObject("PromptB57_GameplayEventBridge");
+            try
+            {
+                var bridge = host.AddComponent<GameplayEventBridge>();
+                var sink = new RecordingSink();
+                bridge.SetEventSink(sink);
+                var result = new BuildingPlacementResult(
+                    true,
+                    BuildingPlacementFailure.None,
+                    "outpost.placed.1",
+                    "building.outpost_core.basic",
+                    new Vector3Int(12, -7, 0));
+
+                InvokePrivate(bridge, "OnBuildingPlaced", result);
+
+                Assert.That(sink.Events, Has.Count.EqualTo(2));
+                Assert.That(sink.Events[0].type, Is.EqualTo(GameplayEventType.BuildingPlaced));
+                Assert.That(sink.Events[1].type, Is.EqualTo(GameplayEventType.OutpostActivated));
+                Assert.That(sink.Events[1].instanceId, Is.EqualTo("outpost.placed.1"));
+                Assert.That(sink.Events[1].entityId, Is.EqualTo("outpost.placed.1"));
+                Assert.That(sink.Events[1].x, Is.EqualTo(12));
+                Assert.That(sink.Events[1].y, Is.EqualTo(-7));
+            }
+            finally
+            {
+                Object.DestroyImmediate(host);
+            }
         }
 
         [Test]
