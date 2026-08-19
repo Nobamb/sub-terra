@@ -646,15 +646,15 @@ namespace SubTerra.App.UI.Progression
             var builder = new StringBuilder();
             if (access.IsUnlocked)
             {
-                builder.AppendLine("심층 구역: 잠금 해제");
+                builder.AppendLine("심층 구역: 최대 레벨")
+                    .Append("더 이상 업그레이드할 수 없습니다.");
+                return builder.ToString();
             }
-            else
+
+            builder.AppendLine("심층 구역: 잠금");
+            if (!string.IsNullOrEmpty(access.Reason))
             {
-                builder.AppendLine("심층 구역: 잠금");
-                if (!string.IsNullOrEmpty(access.Reason))
-                {
-                    builder.AppendLine(access.Reason);
-                }
+                builder.AppendLine(access.Reason);
             }
 
             builder.AppendLine();

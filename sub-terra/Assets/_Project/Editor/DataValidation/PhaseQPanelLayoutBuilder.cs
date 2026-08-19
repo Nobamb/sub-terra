@@ -137,7 +137,6 @@ namespace SubTerra.App.Editor.DataValidation
             }
 
             var root = CreatePanel(parent, "UpgradePanel", new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(680f, 500f));
-            CreateText(root.transform, "Title", new Vector2(22f, -18f), new Vector2(600f, 34f), 26f, "장비 업그레이드 [U]");
             var list = CreateText(root.transform, "UpgradeList", new Vector2(22f, -70f), new Vector2(280f, 300f), 18f, string.Empty);
             var detail = CreateText(root.transform, "UpgradeDetail", new Vector2(326f, -70f), new Vector2(330f, 175f), 18f, "업그레이드를 선택하세요.");
             var result = CreateText(root.transform, "UpgradeResult", new Vector2(326f, -260f), new Vector2(330f, 60f), 16f, string.Empty);
