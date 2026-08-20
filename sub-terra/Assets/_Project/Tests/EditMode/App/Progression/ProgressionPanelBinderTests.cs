@@ -15,6 +15,7 @@ namespace SubTerra.App.Tests.Progression
             var state = new UpgradeState();
             Assert.That(state.TryRestore(new[]
             {
+                new UpgradeLevelState(DataIds.Upgrades.DrillSpeed, 2),
                 new UpgradeLevelState(DataIds.Upgrades.DroneScan, 2),
                 new UpgradeLevelState(DataIds.Upgrades.GasResistance, 1)
             }), Is.True);
