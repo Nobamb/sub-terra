@@ -76,7 +76,7 @@ namespace SubTerra.App.Integration
         {
             if (placementSystem == null || placementSystem.Selection == null)
             {
-                preview?.Hide();
+                HidePreview();
                 return;
             }
 
@@ -99,7 +99,7 @@ namespace SubTerra.App.Integration
 
             if (Mouse.current == null)
             {
-                preview?.Hide();
+                HidePreview();
                 return;
             }
 
@@ -129,17 +129,26 @@ namespace SubTerra.App.Integration
             var sourceRenderer = placementSystem.Selection.RuntimePrefab != null
                 ? placementSystem.Selection.RuntimePrefab.GetComponentInChildren<SpriteRenderer>()
                 : null;
-            preview?.Configure(sourceRenderer != null ? sourceRenderer.sprite : null);
+            if (preview != null)
+            {
+                preview.Configure(sourceRenderer != null ? sourceRenderer.sprite : null);
+            }
             placementSystem.GetFootprintCells(origin, footprintPreviewCells);
             var previewValid = locationValid && CanAfford(selectedBuildingId);
             if (footprintPreviewCells.Count > 1)
             {
                 // 다중 칸: 칸마다 점 4개(2x2) 등 표시.
-                preview?.SetCells(GetTerrainTilemap(), footprintPreviewCells, previewValid);
+                if (preview != null)
+                {
+                    preview.SetCells(GetTerrainTilemap(), footprintPreviewCells, previewValid);
+                }
             }
             else
             {
-                preview?.SetCell(GetTerrainTilemap(), origin, previewValid);
+                if (preview != null)
+                {
+                    preview.SetCell(GetTerrainTilemap(), origin, previewValid);
+                }
             }
             UpdateSupportRange(origin);
 
@@ -400,9 +409,19 @@ namespace SubTerra.App.Integration
         private void ClearRuntimeSelection()
         {
             placementSystem?.ClearSelection();
-            preview?.Hide();
+            HidePreview();
             selectedBuildingId = string.Empty;
             ResetPublishedState();
+        }
+
+        private void HidePreview()
+        {
+            // UnityEngine.Object의 파괴 후 래퍼는 C# null이 아닐 수 있으므로
+            // null-conditional(?.) 대신 Unity의 null 연산자로 확인한다.
+            if (preview != null)
+            {
+                preview.Hide();
+            }
         }
 
         private void ResetPublishedState()
