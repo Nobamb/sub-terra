@@ -19,6 +19,7 @@ using SubTerra.Gameplay.Mining;
 using SubTerra.Gameplay.Player;
 using SubTerra.Shared;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace SubTerra.App.Integration
 {
@@ -39,6 +40,7 @@ namespace SubTerra.App.Integration
         [SerializeField] private HudBinder hudBinder;
         [SerializeField] private GameplayHazardStatusBridge hazardBridge;
         [SerializeField] private GameplayDepthStatusBridge depthBridge;
+        [SerializeField] private DepthDarknessOverlayController depthDarknessOverlay;
         [SerializeField] private GasExposureEffectController gasEffectController;
         [SerializeField] private OutpostRuntimeBridge outpostBridge;
         [SerializeField] private GameplayEventBridge gameplayEventBridge;
@@ -158,6 +160,7 @@ namespace SubTerra.App.Integration
             hudBinder = Resolve(hudBinder);
             hazardBridge = Resolve(hazardBridge);
             depthBridge = Resolve(depthBridge);
+            depthDarknessOverlay = Resolve(depthDarknessOverlay, FindObjectsInactive.Include);
             gasEffectController = Resolve(gasEffectController);
             outpostBridge = Resolve(outpostBridge);
             gameplayEventBridge = Resolve(gameplayEventBridge);
@@ -275,6 +278,7 @@ namespace SubTerra.App.Integration
 
             // 플레이어 Y → Run.Depth → HUD 깊이 텍스트 실시간 반영.
             TryStep("DepthBridge", BindDepthBridge);
+            TryStep("DepthDarkness", BindDepthDarkness);
             TryStep("FacilityProximityLabel", EnsureFacilityProximityLabel);
 
             TryStep(
@@ -855,6 +859,51 @@ namespace SubTerra.App.Integration
             }
 
             depthBridge.BindGameState(bootstrap.State);
+        }
+
+        private void BindDepthDarkness()
+        {
+            if (bootstrap == null || bootstrap.State == null || playerMovement == null)
+            {
+                return;
+            }
+
+            if (depthDarknessOverlay == null)
+            {
+                depthDarknessOverlay = Resolve<DepthDarknessOverlayController>(
+                    null,
+                    FindObjectsInactive.Include);
+            }
+
+            if (depthDarknessOverlay == null)
+            {
+                if (hudCanvasGroup == null)
+                {
+                    hudCanvasGroup = ResolveHudCanvasGroup();
+                }
+
+                if (hudCanvasGroup == null)
+                {
+                    return;
+                }
+
+                var overlayObject = new GameObject(
+                    "DepthDarknessOverlay",
+                    typeof(RectTransform),
+                    typeof(CanvasRenderer),
+                    typeof(Image),
+                    typeof(CanvasGroup));
+                var rect = overlayObject.GetComponent<RectTransform>();
+                rect.SetParent(hudCanvasGroup.transform, false);
+                rect.anchorMin = Vector2.zero;
+                rect.anchorMax = Vector2.one;
+                rect.offsetMin = Vector2.zero;
+                rect.offsetMax = Vector2.zero;
+                rect.SetAsFirstSibling();
+                depthDarknessOverlay = overlayObject.AddComponent<DepthDarknessOverlayController>();
+            }
+
+            depthDarknessOverlay.Bind(bootstrap.State, playerMovement.transform);
         }
 
         private void BindDroneReadings()
