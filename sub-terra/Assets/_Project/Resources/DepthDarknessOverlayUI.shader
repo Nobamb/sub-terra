@@ -10,6 +10,7 @@ Shader "SubTerra/DepthDarknessOverlayUI"
         _OutlineColor ("Outline Color", Color) = (1,1,1,1)
         _OutlineWidth ("Outline Width Cells", Float) = 0.07
         _BlockDarkAlpha ("Occupied Block Dark Alpha", Float) = 1
+        _Fade ("Boundary Fade", Float) = 0
         _OccupancyTex ("Occupancy", 2D) = "black" {}
         _WorldMin ("World Min", Vector) = (0,0,0,0)
         _WorldMax ("World Max", Vector) = (1,1,0,0)
@@ -75,6 +76,7 @@ Shader "SubTerra/DepthDarknessOverlayUI"
             float _Feather;
             float _OutlineWidth;
             float _BlockDarkAlpha;
+            float _Fade;
             float4 _ClipRect;
 
             v2f vert(appdata_t v)
@@ -114,15 +116,17 @@ Shader "SubTerra/DepthDarknessOverlayUI"
                     outline = occupied * step(edge, _OutlineWidth) * darkMask;
                 }
 
+                float fade = saturate(_Fade);
                 float4 tinted = tex2D(_MainTex, i.texcoord) * i.color;
-                float screenAlpha = _DarkColor.a * tinted.a;
-                float blockAlpha = max(_DarkColor.a, _BlockDarkAlpha) * tinted.a;
+                float screenAlpha = _DarkColor.a * tinted.a * fade;
+                float blockAlpha = max(_DarkColor.a, _BlockDarkAlpha) * tinted.a * fade;
                 float4 darkColor = float4(_DarkColor.rgb, lerp(screenAlpha, blockAlpha, occupied));
                 darkColor.a *= darkMask;
 
                 // 화면 암전을 테두리 위에 덮어 깊이에 따라 테두리 밝기가 달라지게 한다.
+                // 테두리도 10m 진입 페이드에 맞춰 알파가 올라가야 한 번에 나타나지 않는다.
                 float remain = saturate(1.0 - _DarkColor.a);
-                float4 veiledOutline = float4(_OutlineColor.rgb * remain, 1.0);
+                float4 veiledOutline = float4(_OutlineColor.rgb * remain, fade);
                 float4 color = lerp(darkColor, veiledOutline, outline);
                 color.a *= UnityGet2DClipping(i.worldPosition.xy, _ClipRect);
                 return color;

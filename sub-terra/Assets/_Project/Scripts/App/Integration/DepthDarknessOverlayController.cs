@@ -9,6 +9,7 @@ namespace SubTerra.App.Integration
     /// <summary>
     /// 캐릭터 주변을 제외한 화면 암전(10m 50% → 30m 95%)과
     /// 어두운 영역 블록 명도(45% → 0%)·흰 테두리를 함께 표시한다.
+    /// 10m 진입/이탈은 기다렸다가 한 번에 바뀌지 않고, 그 순간부터 1초 동안 서서히 보간한다.
     /// </summary>
     [RequireComponent(typeof(CanvasGroup))]
     [RequireComponent(typeof(Image))]
@@ -22,6 +23,7 @@ namespace SubTerra.App.Integration
         public const float FullLuminance = DepthDarknessBlockVisual.FullLuminance;
         public const float StartOpacity = DepthDarknessBlockVisual.StartScreenOpacity;
         public const float FullOpacity = DepthDarknessBlockVisual.FullScreenOpacity;
+        public const float BoundaryFadeSeconds = DepthDarknessBlockVisual.BoundaryFadeSeconds;
 
         private static readonly int DarkColorId = Shader.PropertyToID("_DarkColor");
         private static readonly int PlayerViewportId = Shader.PropertyToID("_PlayerViewport");
@@ -36,6 +38,7 @@ namespace SubTerra.App.Integration
         private static readonly int OutlineWidthId = Shader.PropertyToID("_OutlineWidth");
         private static readonly int OutlineColorId = Shader.PropertyToID("_OutlineColor");
         private static readonly int BlockDarkAlphaId = Shader.PropertyToID("_BlockDarkAlpha");
+        private static readonly int FadeId = Shader.PropertyToID("_Fade");
 
         [SerializeField] private CanvasGroup canvasGroup;
         [SerializeField] private Image overlayImage;
@@ -50,9 +53,11 @@ namespace SubTerra.App.Integration
         private Texture2D occupancyTexture;
         private Color32[] occupancyPixels;
         private int currentDepth;
+        private float boundaryWeight;
 
         public float CurrentOpacity { get; private set; }
         public float CurrentOccupiedDarkAlpha { get; private set; }
+        public float CurrentBoundaryWeight => boundaryWeight;
         public bool IsClearedByLight { get; private set; }
 
         private void Awake()
@@ -63,6 +68,11 @@ namespace SubTerra.App.Integration
 
         private void LateUpdate()
         {
+            RefreshDepth();
+            boundaryWeight = DepthDarknessBlockVisual.StepBoundaryWeight(
+                boundaryWeight,
+                currentDepth,
+                Time.deltaTime);
             ApplyVisual();
         }
 
@@ -123,6 +133,27 @@ namespace SubTerra.App.Integration
             return DepthDarknessBlockVisual.EvaluateOccupiedDarkAlpha(depth, isInsideLight);
         }
 
+        public static float EvaluateDisplayedOpacity(int depth, bool isInsideLight, float boundaryWeight)
+        {
+            return DepthDarknessBlockVisual.EvaluateDisplayedOpacity(depth, isInsideLight, boundaryWeight);
+        }
+
+        public static float EvaluateDisplayedLuminance(int depth, bool isInsideLight, float boundaryWeight)
+        {
+            return DepthDarknessBlockVisual.EvaluateDisplayedLuminance(depth, isInsideLight, boundaryWeight);
+        }
+
+        public static float EvaluateDisplayedOccupiedDarkAlpha(
+            int depth,
+            bool isInsideLight,
+            float boundaryWeight)
+        {
+            return DepthDarknessBlockVisual.EvaluateDisplayedOccupiedDarkAlpha(
+                depth,
+                isInsideLight,
+                boundaryWeight);
+        }
+
         private void Unbind()
         {
             if (gameState != null)
@@ -138,22 +169,42 @@ namespace SubTerra.App.Integration
             ApplyVisual();
         }
 
-        private void ApplyVisual()
+        private void RefreshDepth()
         {
-            EnsureBindings();
             if (gameState != null)
             {
                 currentDepth = gameState.Run.Depth;
             }
+        }
+
+        private void ApplyVisual()
+        {
+            EnsureBindings();
+            RefreshDepth();
 
             IsClearedByLight = playerTransform != null
                 && GasVisionClearanceSource.IsCleared(playerTransform.position);
-            CurrentOpacity = EvaluateOpacity(currentDepth, IsClearedByLight);
-            CurrentOccupiedDarkAlpha = EvaluateOccupiedDarkAlpha(currentDepth, IsClearedByLight);
+            CurrentOpacity = EvaluateDisplayedOpacity(
+                currentDepth,
+                IsClearedByLight,
+                boundaryWeight);
+            CurrentOccupiedDarkAlpha = EvaluateDisplayedOccupiedDarkAlpha(
+                currentDepth,
+                IsClearedByLight,
+                boundaryWeight);
+
+            var sampleDepth = Mathf.Max(currentDepth, StartDepth);
+            var targetOpacity = IsClearedByLight
+                ? 0f
+                : EvaluateOpacity(sampleDepth, false);
+            var targetOccupiedDark = IsClearedByLight
+                ? 0f
+                : EvaluateOccupiedDarkAlpha(sampleDepth, false);
+            var fade = IsClearedByLight ? 0f : boundaryWeight;
 
             if (canvasGroup != null)
             {
-                canvasGroup.alpha = CurrentOpacity > 0.001f ? 1f : 0f;
+                canvasGroup.alpha = fade > 0.001f ? 1f : 0f;
                 canvasGroup.interactable = false;
                 canvasGroup.blocksRaycasts = false;
             }
@@ -163,12 +214,11 @@ namespace SubTerra.App.Integration
                 return;
             }
 
-            runtimeMaterial.SetColor(DarkColorId, new Color(0f, 0f, 0f, CurrentOpacity));
-            runtimeMaterial.SetFloat(BlockDarkAlphaId, CurrentOccupiedDarkAlpha);
-            runtimeMaterial.SetFloat(PlayerRadiusId, playerVisibleRadius);
-            runtimeMaterial.SetFloat(FeatherId, edgeFeather);
-            runtimeMaterial.SetFloat(OutlineWidthId, DepthDarknessBlockVisual.OutlineWidthCells);
-            runtimeMaterial.SetColor(OutlineColorId, Color.white);
+            ApplyOverlayMaterial(
+                runtimeMaterial,
+                targetOpacity,
+                targetOccupiedDark,
+                fade);
 
             var camera = ResolveCamera();
             var viewport = new Vector2(0.5f, 0.5f);
@@ -187,6 +237,55 @@ namespace SubTerra.App.Integration
                 new Vector4(viewport.x, viewport.y, aspect, 0f));
 
             ApplyOccupancy(camera);
+            PushOverlayMaterialToRenderer(targetOpacity, targetOccupiedDark, fade);
+        }
+
+        private void ApplyOverlayMaterial(
+            Material material,
+            float targetOpacity,
+            float targetOccupiedDark,
+            float fade)
+        {
+            if (material == null)
+            {
+                return;
+            }
+
+            material.SetColor(DarkColorId, new Color(0f, 0f, 0f, targetOpacity));
+            material.SetFloat(BlockDarkAlphaId, targetOccupiedDark);
+            material.SetFloat(FadeId, fade);
+            material.SetFloat(PlayerRadiusId, playerVisibleRadius);
+            material.SetFloat(FeatherId, edgeFeather);
+            material.SetFloat(OutlineWidthId, DepthDarknessBlockVisual.OutlineWidthCells);
+            material.SetColor(OutlineColorId, Color.white);
+        }
+
+        private void PushOverlayMaterialToRenderer(
+            float targetOpacity,
+            float targetOccupiedDark,
+            float fade)
+        {
+            if (overlayImage == null)
+            {
+                return;
+            }
+
+            var rendering = overlayImage.materialForRendering;
+            if (rendering != null && rendering != runtimeMaterial)
+            {
+                ApplyOverlayMaterial(rendering, targetOpacity, targetOccupiedDark, fade);
+                rendering.SetVector(
+                    PlayerViewportId,
+                    runtimeMaterial.GetVector(PlayerViewportId));
+                rendering.SetTexture(OccupancyTexId, occupancyTexture);
+                rendering.SetVector(OccWorldMinId, runtimeMaterial.GetVector(OccWorldMinId));
+                rendering.SetVector(WorldMinId, runtimeMaterial.GetVector(WorldMinId));
+                rendering.SetVector(WorldMaxId, runtimeMaterial.GetVector(WorldMaxId));
+                rendering.SetVector(CellSizeId, runtimeMaterial.GetVector(CellSizeId));
+                rendering.SetVector(OccTexSizeId, runtimeMaterial.GetVector(OccTexSizeId));
+            }
+
+            overlayImage.SetMaterialDirty();
         }
 
         private void ApplyOccupancy(Camera camera)
@@ -196,7 +295,10 @@ namespace SubTerra.App.Integration
                 return;
             }
 
-            if (terrainTilemap == null || camera == null || CurrentOpacity <= 0.001f)
+            if (terrainTilemap == null
+                || camera == null
+                || IsClearedByLight
+                || boundaryWeight <= 0.001f)
             {
                 runtimeMaterial.SetVector(OccTexSizeId, Vector4.zero);
                 return;

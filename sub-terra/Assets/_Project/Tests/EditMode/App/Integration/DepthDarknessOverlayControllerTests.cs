@@ -52,6 +52,22 @@ namespace SubTerra.App.Tests.Integration
         }
 
         [Test]
+        public void OverlayShader_HasFadePropertyForBoundaryBlend()
+        {
+            var shader = Resources.Load<Shader>(DepthDarknessOverlayController.ShaderResourceName);
+            Assert.That(shader, Is.Not.Null);
+            var material = new Material(shader);
+            try
+            {
+                Assert.That(material.HasProperty("_Fade"), Is.True);
+            }
+            finally
+            {
+                Object.DestroyImmediate(material);
+            }
+        }
+
+        [Test]
         public void ShouldDrawOutline_OnlyOnOccupiedDarkCellEdges()
         {
             Assert.That(
@@ -103,6 +119,119 @@ namespace SubTerra.App.Tests.Integration
             Assert.That(
                 DepthDarknessBlockVisual.EvaluateOutlineBrightness(20, false),
                 Is.GreaterThan(DepthDarknessBlockVisual.EvaluateOutlineBrightness(30, false)));
+        }
+
+        [Test]
+        public void BoundaryFadeSeconds_IsOneSecond()
+        {
+            Assert.That(DepthDarknessBlockVisual.BoundaryFadeSeconds, Is.EqualTo(1f));
+            Assert.That(
+                DepthDarknessOverlayController.BoundaryFadeSeconds,
+                Is.EqualTo(DepthDarknessBlockVisual.BoundaryFadeSeconds));
+        }
+
+        [TestCase(0, 0f)]
+        [TestCase(9, 0f)]
+        [TestCase(10, 1f)]
+        [TestCase(30, 1f)]
+        public void TargetBoundaryWeight_SnapsAtTenMeterThreshold(int depth, float expected)
+        {
+            Assert.That(
+                DepthDarknessBlockVisual.TargetBoundaryWeight(depth),
+                Is.EqualTo(expected).Within(0.0001f));
+        }
+
+        [Test]
+        public void StepBoundaryWeight_FadesInOverOneSecondAtTenMeters()
+        {
+            Assert.That(
+                DepthDarknessBlockVisual.StepBoundaryWeight(0f, 10, 0.25f),
+                Is.EqualTo(0.25f).Within(0.0001f));
+            Assert.That(
+                DepthDarknessBlockVisual.StepBoundaryWeight(0f, 10, 1f),
+                Is.EqualTo(1f).Within(0.0001f));
+            Assert.That(
+                DepthDarknessBlockVisual.StepBoundaryWeight(0f, 10, 2f),
+                Is.EqualTo(1f).Within(0.0001f));
+        }
+
+        [Test]
+        public void EvaluateDisplayedOpacity_MidFadeIsPartialNotDelayedSnap()
+        {
+            var quarter = DepthDarknessBlockVisual.StepBoundaryWeight(0f, 10, 0.25f);
+            var half = DepthDarknessBlockVisual.StepBoundaryWeight(0f, 10, 0.5f);
+            var threeQuarter = DepthDarknessBlockVisual.StepBoundaryWeight(0f, 10, 0.75f);
+            Assert.That(
+                DepthDarknessOverlayController.EvaluateDisplayedOpacity(10, false, quarter),
+                Is.EqualTo(0.125f).Within(0.0001f));
+            Assert.That(
+                DepthDarknessOverlayController.EvaluateDisplayedOpacity(10, false, half),
+                Is.EqualTo(0.25f).Within(0.0001f));
+            Assert.That(
+                DepthDarknessOverlayController.EvaluateDisplayedOpacity(10, false, threeQuarter),
+                Is.EqualTo(0.375f).Within(0.0001f));
+        }
+
+        [Test]
+        public void StepBoundaryWeight_FadesOutOverOneSecondAboveTenMeters()
+        {
+            Assert.That(
+                DepthDarknessBlockVisual.StepBoundaryWeight(1f, 9, 0.5f),
+                Is.EqualTo(0.5f).Within(0.0001f));
+            Assert.That(
+                DepthDarknessBlockVisual.StepBoundaryWeight(1f, 9, 1f),
+                Is.EqualTo(0f).Within(0.0001f));
+        }
+
+        [Test]
+        public void StepBoundaryWeight_CanReverseMidFade()
+        {
+            var entering = DepthDarknessBlockVisual.StepBoundaryWeight(0f, 10, 0.4f);
+            var leaving = DepthDarknessBlockVisual.StepBoundaryWeight(entering, 9, 0.2f);
+            Assert.That(entering, Is.EqualTo(0.4f).Within(0.0001f));
+            Assert.That(leaving, Is.EqualTo(0.2f).Within(0.0001f));
+        }
+
+        [Test]
+        public void EvaluateDisplayedOpacity_FadesFromTenMeterValuesWhenLeaving()
+        {
+            Assert.That(
+                DepthDarknessOverlayController.EvaluateDisplayedOpacity(9, false, 1f),
+                Is.EqualTo(0.5f).Within(0.0001f));
+            Assert.That(
+                DepthDarknessOverlayController.EvaluateDisplayedOpacity(9, false, 0.5f),
+                Is.EqualTo(0.25f).Within(0.0001f));
+            Assert.That(
+                DepthDarknessOverlayController.EvaluateDisplayedOpacity(10, false, 0.5f),
+                Is.EqualTo(0.25f).Within(0.0001f));
+            Assert.That(
+                DepthDarknessOverlayController.EvaluateDisplayedOpacity(9, false, 0f),
+                Is.Zero);
+        }
+
+        [Test]
+        public void EvaluateDisplayedLuminance_FadesOccupiedTilesAtBoundary()
+        {
+            Assert.That(
+                DepthDarknessOverlayController.EvaluateDisplayedLuminance(9, false, 0f),
+                Is.EqualTo(1f).Within(0.0001f));
+            Assert.That(
+                DepthDarknessOverlayController.EvaluateDisplayedLuminance(10, false, 0.5f),
+                Is.EqualTo(0.725f).Within(0.0001f));
+            Assert.That(
+                DepthDarknessOverlayController.EvaluateDisplayedOccupiedDarkAlpha(10, false, 0.5f),
+                Is.EqualTo(0.275f).Within(0.0001f));
+        }
+
+        [Test]
+        public void EvaluateDisplayedOpacity_InsideLight_ClearsDuringFade()
+        {
+            Assert.That(
+                DepthDarknessOverlayController.EvaluateDisplayedOpacity(30, true, 1f),
+                Is.Zero);
+            Assert.That(
+                DepthDarknessOverlayController.EvaluateDisplayedLuminance(30, true, 0.4f),
+                Is.EqualTo(1f));
         }
     }
 }
