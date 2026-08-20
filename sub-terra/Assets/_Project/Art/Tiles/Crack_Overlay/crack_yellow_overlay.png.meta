@@ -1,0 +1,1040 @@
+fileFormatVersion: 2
+guid: 324133dec33b2024c94a3b61aeae9cef
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 4586771635743158634
+    second: crack_yellow_overlay_0
+  - first:
+      213: 6066356997352811479
+    second: crack_yellow_overlay_1
+  - first:
+      213: 5312854006679389576
+    second: crack_yellow_overlay_2
+  - first:
+      213: -4639045035516567889
+    second: crack_yellow_overlay_3
+  - first:
+      213: 1176550466411581523
+    second: crack_yellow_overlay_4
+  - first:
+      213: 728276294590561963
+    second: crack_yellow_overlay_5
+  - first:
+      213: -3271918059300171216
+    second: crack_yellow_overlay_6
+  - first:
+      213: 6059665530922177000
+    second: crack_yellow_overlay_7
+  - first:
+      213: -5736341860910442262
+    second: crack_yellow_overlay_8
+  - first:
+      213: -2767069431629127652
+    second: crack_yellow_overlay_9
+  - first:
+      213: 6371154007389761392
+    second: crack_yellow_overlay_10
+  - first:
+      213: -5119027820341250186
+    second: crack_yellow_overlay_11
+  - first:
+      213: 5148441556259653654
+    second: crack_yellow_overlay_12
+  - first:
+      213: 3560360545277527908
+    second: crack_yellow_overlay_13
+  - first:
+      213: 68146118380706194
+    second: crack_yellow_overlay_14
+  - first:
+      213: 4865646096708944186
+    second: crack_yellow_overlay_15
+  - first:
+      213: -4926198067691593644
+    second: crack_yellow_overlay_16
+  - first:
+      213: 6272225223031704684
+    second: crack_yellow_overlay_17
+  - first:
+      213: -7720935721800919274
+    second: crack_yellow_overlay_18
+  - first:
+      213: 5267987616392810206
+    second: crack_yellow_overlay_19
+  - first:
+      213: -8078283232945252553
+    second: crack_yellow_overlay_20
+  - first:
+      213: -7280938949928125633
+    second: crack_yellow_overlay_21
+  - first:
+      213: 2909613371901203847
+    second: crack_yellow_overlay_22
+  - first:
+      213: 3188025733283513667
+    second: crack_yellow_overlay_23
+  - first:
+      213: -2067720807432566477
+    second: crack_yellow_overlay_24
+  - first:
+      213: 6384750697690452685
+    second: crack_yellow_overlay_25
+  - first:
+      213: -7190912553720536382
+    second: crack_yellow_overlay_26
+  - first:
+      213: 8703566481976468292
+    second: crack_yellow_overlay_27
+  - first:
+      213: -645342731881210184
+    second: crack_yellow_overlay_28
+  - first:
+      213: 1454280461053993172
+    second: crack_yellow_overlay_29
+  - first:
+      213: -236431524935887720
+    second: crack_yellow_overlay_30
+  - first:
+      213: 7675278975687939342
+    second: crack_yellow_overlay_31
+  - first:
+      213: -4619195614711639720
+    second: crack_yellow_overlay_32
+  - first:
+      213: -3074560244561776833
+    second: crack_yellow_overlay_33
+  - first:
+      213: 7528737721537967182
+    second: crack_yellow_overlay_34
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 1
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 256
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: crack_yellow_overlay_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 28
+        width: 254
+        height: 228
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a61fe4e308c77af30800000000000000
+      internalID: 4586771635743158634
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: crack_yellow_overlay_1
+      rect:
+        serializedVersion: 2
+        x: 5
+        y: 50
+        width: 14
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7db6be35c87003450800000000000000
+      internalID: 6066356997352811479
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: crack_yellow_overlay_2
+      rect:
+        serializedVersion: 2
+        x: 12
+        y: 38
+        width: 8
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 885c2a3029c0bb940800000000000000
+      internalID: 5312854006679389576
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: crack_yellow_overlay_3
+      rect:
+        serializedVersion: 2
+        x: 20
+        y: 38
+        width: 6
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: faedef07e1dce9fb0800000000000000
+      internalID: -4639045035516567889
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: crack_yellow_overlay_4
+      rect:
+        serializedVersion: 2
+        x: 25
+        y: 38
+        width: 8
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 35058c26a62f35010800000000000000
+      internalID: 1176550466411581523
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: crack_yellow_overlay_5
+      rect:
+        serializedVersion: 2
+        x: 36
+        y: 51
+        width: 12
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bae786d6e6b5b1a00800000000000000
+      internalID: 728276294590561963
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: crack_yellow_overlay_6
+      rect:
+        serializedVersion: 2
+        x: 41
+        y: 33
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0325a354cdfc792d0800000000000000
+      internalID: -3271918059300171216
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: crack_yellow_overlay_7
+      rect:
+        serializedVersion: 2
+        x: 44
+        y: 38
+        width: 11
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8e19b44e1b1481450800000000000000
+      internalID: 6059665530922177000
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: crack_yellow_overlay_8
+      rect:
+        serializedVersion: 2
+        x: 51
+        y: 39
+        width: 8
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ae8da3e487b6460b0800000000000000
+      internalID: -5736341860910442262
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: crack_yellow_overlay_9
+      rect:
+        serializedVersion: 2
+        x: 56
+        y: 66
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c1067e233056999d0800000000000000
+      internalID: -2767069431629127652
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: crack_yellow_overlay_10
+      rect:
+        serializedVersion: 2
+        x: 59
+        y: 44
+        width: 8
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 07fe5cb50d2ea6850800000000000000
+      internalID: 6371154007389761392
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: crack_yellow_overlay_11
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 43
+        width: 6
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 677b735b15f85f8b0800000000000000
+      internalID: -5119027820341250186
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: crack_yellow_overlay_12
+      rect:
+        serializedVersion: 2
+        x: 67
+        y: 37
+        width: 8
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 61847bb5150f27740800000000000000
+      internalID: 5148441556259653654
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: crack_yellow_overlay_13
+      rect:
+        serializedVersion: 2
+        x: 68
+        y: 49
+        width: 6
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 46745956d01f86130800000000000000
+      internalID: 3560360545277527908
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: crack_yellow_overlay_14
+      rect:
+        serializedVersion: 2
+        x: 76
+        y: 38
+        width: 12
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 29957ea988a12f000800000000000000
+      internalID: 68146118380706194
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: crack_yellow_overlay_15
+      rect:
+        serializedVersion: 2
+        x: 98
+        y: 33
+        width: 8
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a314a1d785f368340800000000000000
+      internalID: 4865646096708944186
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: crack_yellow_overlay_16
+      rect:
+        serializedVersion: 2
+        x: 99
+        y: 35
+        width: 21
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 450e60225f0a2abb0800000000000000
+      internalID: -4926198067691593644
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: crack_yellow_overlay_17
+      rect:
+        serializedVersion: 2
+        x: 132
+        y: 30
+        width: 9
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c6ccc02db9b6b0750800000000000000
+      internalID: 6272225223031704684
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: crack_yellow_overlay_18
+      rect:
+        serializedVersion: 2
+        x: 141
+        y: 38
+        width: 12
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6179e684ed9b9d490800000000000000
+      internalID: -7720935721800919274
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: crack_yellow_overlay_19
+      rect:
+        serializedVersion: 2
+        x: 148
+        y: 33
+        width: 9
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ede004c73d6ab1940800000000000000
+      internalID: 5267987616392810206
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: crack_yellow_overlay_20
+      rect:
+        serializedVersion: 2
+        x: 150
+        y: 38
+        width: 9
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 737dd41433c24ef80800000000000000
+      internalID: -8078283232945252553
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: crack_yellow_overlay_21
+      rect:
+        serializedVersion: 2
+        x: 156
+        y: 43
+        width: 6
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f3b7a32e998e4fa90800000000000000
+      internalID: -7280938949928125633
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: crack_yellow_overlay_22
+      rect:
+        serializedVersion: 2
+        x: 161
+        y: 34
+        width: 14
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 785d5e922f5016820800000000000000
+      internalID: 2909613371901203847
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: crack_yellow_overlay_23
+      rect:
+        serializedVersion: 2
+        x: 173
+        y: 39
+        width: 11
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3450b2773842e3c20800000000000000
+      internalID: 3188025733283513667
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: crack_yellow_overlay_24
+      rect:
+        serializedVersion: 2
+        x: 179
+        y: 34
+        width: 6
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3394c4281eafd43e0800000000000000
+      internalID: -2067720807432566477
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: crack_yellow_overlay_25
+      rect:
+        serializedVersion: 2
+        x: 186
+        y: 38
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dc254438ee03b9850800000000000000
+      internalID: 6384750697690452685
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: crack_yellow_overlay_26
+      rect:
+        serializedVersion: 2
+        x: 190
+        y: 38
+        width: 8
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2c22798a12fb43c90800000000000000
+      internalID: -7190912553720536382
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: crack_yellow_overlay_27
+      rect:
+        serializedVersion: 2
+        x: 193
+        y: 43
+        width: 11
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 44324351a9749c870800000000000000
+      internalID: 8703566481976468292
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: crack_yellow_overlay_28
+      rect:
+        serializedVersion: 2
+        x: 200
+        y: 50
+        width: 13
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8be17db54384b07f0800000000000000
+      internalID: -645342731881210184
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: crack_yellow_overlay_29
+      rect:
+        serializedVersion: 2
+        x: 203
+        y: 44
+        width: 8
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4d02aeccf54ae2410800000000000000
+      internalID: 1454280461053993172
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: crack_yellow_overlay_30
+      rect:
+        serializedVersion: 2
+        x: 215
+        y: 31
+        width: 13
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8941e7ed7c608bcf0800000000000000
+      internalID: -236431524935887720
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: crack_yellow_overlay_31
+      rect:
+        serializedVersion: 2
+        x: 232
+        y: 44
+        width: 6
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e0557e12091148a60800000000000000
+      internalID: 7675278975687939342
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: crack_yellow_overlay_32
+      rect:
+        serializedVersion: 2
+        x: 239
+        y: 31
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 851121ddf0255efb0800000000000000
+      internalID: -4619195614711639720
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: crack_yellow_overlay_33
+      rect:
+        serializedVersion: 2
+        x: 241
+        y: 38
+        width: 15
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f3f6b5e4fb7f455d0800000000000000
+      internalID: -3074560244561776833
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: crack_yellow_overlay_34
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 256
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e44ba5b91137b7860800000000000000
+      internalID: 7528737721537967182
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      crack_yellow_overlay_0: 4586771635743158634
+      crack_yellow_overlay_1: 6066356997352811479
+      crack_yellow_overlay_10: 6371154007389761392
+      crack_yellow_overlay_11: -5119027820341250186
+      crack_yellow_overlay_12: 5148441556259653654
+      crack_yellow_overlay_13: 3560360545277527908
+      crack_yellow_overlay_14: 68146118380706194
+      crack_yellow_overlay_15: 4865646096708944186
+      crack_yellow_overlay_16: -4926198067691593644
+      crack_yellow_overlay_17: 6272225223031704684
+      crack_yellow_overlay_18: -7720935721800919274
+      crack_yellow_overlay_19: 5267987616392810206
+      crack_yellow_overlay_2: 5312854006679389576
+      crack_yellow_overlay_20: -8078283232945252553
+      crack_yellow_overlay_21: -7280938949928125633
+      crack_yellow_overlay_22: 2909613371901203847
+      crack_yellow_overlay_23: 3188025733283513667
+      crack_yellow_overlay_24: -2067720807432566477
+      crack_yellow_overlay_25: 6384750697690452685
+      crack_yellow_overlay_26: -7190912553720536382
+      crack_yellow_overlay_27: 8703566481976468292
+      crack_yellow_overlay_28: -645342731881210184
+      crack_yellow_overlay_29: 1454280461053993172
+      crack_yellow_overlay_3: -4639045035516567889
+      crack_yellow_overlay_30: -236431524935887720
+      crack_yellow_overlay_31: 7675278975687939342
+      crack_yellow_overlay_32: -4619195614711639720
+      crack_yellow_overlay_33: -3074560244561776833
+      crack_yellow_overlay_34: 7528737721537967182
+      crack_yellow_overlay_4: 1176550466411581523
+      crack_yellow_overlay_5: 728276294590561963
+      crack_yellow_overlay_6: -3271918059300171216
+      crack_yellow_overlay_7: 6059665530922177000
+      crack_yellow_overlay_8: -5736341860910442262
+      crack_yellow_overlay_9: -2767069431629127652
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

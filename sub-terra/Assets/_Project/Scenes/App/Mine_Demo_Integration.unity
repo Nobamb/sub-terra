@@ -2149,6 +2149,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: SubTerra.Gameplay.Structural::SubTerra.Gameplay.Structural.StructuralCrackOverlay
   overlayTilemap: {fileID: 2140821470}
   crackTile: {fileID: 0}
+  cautionCrackTile: {fileID: 11400000, guid: 8571c4cc413240eb96dff6de58ea8d42, type: 2}
+  dangerCrackTile: {fileID: 11400000, guid: 539ac38c12b34f55a7ee93e18d9fed19, type: 2}
+  imminentCrackTile: {fileID: 11400000, guid: 4125e8bf36af4dff9eff6bd989e87da2, type: 2}
   cautionColor: {r: 1, g: 0.82, b: 0.2, a: 0.55}
   dangerColor: {r: 1, g: 0.38, b: 0.08, a: 0.72}
   imminentColor: {r: 0.95, g: 0.08, b: 0.06, a: 0.9}
