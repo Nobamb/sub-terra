@@ -7,6 +7,16 @@ Shader "SubTerra/DepthDarknessOverlayUI"
         _DarkColor ("Dark Color", Color) = (0,0,0,0.95)
         _PlayerRadius ("Player Visible Radius", Float) = 0.11
         _Feather ("Edge Feather", Float) = 0.04
+        _OutlineColor ("Outline Color", Color) = (1,1,1,1)
+        _OutlineWidth ("Outline Width Cells", Float) = 0.07
+        _BlockDarkAlpha ("Occupied Block Dark Alpha", Float) = 1
+        _OccupancyTex ("Occupancy", 2D) = "black" {}
+        _WorldMin ("World Min", Vector) = (0,0,0,0)
+        _WorldMax ("World Max", Vector) = (1,1,0,0)
+        _OccWorldMin ("Occupancy World Min", Vector) = (0,0,0,0)
+        _CellSize ("Cell Size", Vector) = (1,1,0,0)
+        _OccTexSize ("Occupancy Tex Size", Vector) = (0,0,0,0)
+        _PlayerViewport ("Player Viewport", Vector) = (0.5,0.5,1,0)
     }
 
     SubShader
@@ -51,11 +61,20 @@ Shader "SubTerra/DepthDarknessOverlayUI"
             };
 
             sampler2D _MainTex;
+            sampler2D _OccupancyTex;
             float4 _Color;
             float4 _DarkColor;
             float4 _PlayerViewport;
+            float4 _WorldMin;
+            float4 _WorldMax;
+            float4 _OccWorldMin;
+            float4 _CellSize;
+            float4 _OccTexSize;
+            float4 _OutlineColor;
             float _PlayerRadius;
             float _Feather;
+            float _OutlineWidth;
+            float _BlockDarkAlpha;
             float4 _ClipRect;
 
             v2f vert(appdata_t v)
@@ -72,13 +91,39 @@ Shader "SubTerra/DepthDarknessOverlayUI"
             {
                 float2 delta = i.texcoord - _PlayerViewport.xy;
                 delta.x *= max(_PlayerViewport.z, 0.0001);
-                float visibilityMask = smoothstep(
+                float darkMask = smoothstep(
                     _PlayerRadius,
                     _PlayerRadius + max(_Feather, 0.0001),
                     length(delta));
 
-                float4 color = _DarkColor * tex2D(_MainTex, i.texcoord) * i.color;
-                color.a *= visibilityMask;
+                float occupied = 0;
+                float outline = 0;
+                if (_OccTexSize.x > 0.5 && _CellSize.x > 0.0001)
+                {
+                    float2 world = lerp(_WorldMin.xy, _WorldMax.xy, i.texcoord.xy);
+                    float2 cellFloat = (world - _OccWorldMin.xy) / max(_CellSize.xy, 0.0001);
+                    float2 cellIndex = floor(cellFloat);
+                    float2 cellFrac = cellFloat - cellIndex;
+                    float2 occUV = (cellIndex + 0.5) / max(_OccTexSize.xy, 0.0001);
+                    if (occUV.x >= 0.0 && occUV.x <= 1.0 && occUV.y >= 0.0 && occUV.y <= 1.0)
+                    {
+                        occupied = tex2D(_OccupancyTex, occUV).r;
+                    }
+
+                    float edge = min(min(cellFrac.x, 1.0 - cellFrac.x), min(cellFrac.y, 1.0 - cellFrac.y));
+                    outline = occupied * step(edge, _OutlineWidth) * darkMask;
+                }
+
+                float4 tinted = tex2D(_MainTex, i.texcoord) * i.color;
+                float screenAlpha = _DarkColor.a * tinted.a;
+                float blockAlpha = max(_DarkColor.a, _BlockDarkAlpha) * tinted.a;
+                float4 darkColor = float4(_DarkColor.rgb, lerp(screenAlpha, blockAlpha, occupied));
+                darkColor.a *= darkMask;
+
+                // 화면 암전을 테두리 위에 덮어 깊이에 따라 테두리 밝기가 달라지게 한다.
+                float remain = saturate(1.0 - _DarkColor.a);
+                float4 veiledOutline = float4(_OutlineColor.rgb * remain, 1.0);
+                float4 color = lerp(darkColor, veiledOutline, outline);
                 color.a *= UnityGet2DClipping(i.worldPosition.xy, _ClipRect);
                 return color;
             }

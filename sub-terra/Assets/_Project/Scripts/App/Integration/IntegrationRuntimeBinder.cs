@@ -19,6 +19,7 @@ using SubTerra.Gameplay.Mining;
 using SubTerra.Gameplay.Player;
 using SubTerra.Shared;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 using UnityEngine.UI;
 
 namespace SubTerra.App.Integration
@@ -903,7 +904,23 @@ namespace SubTerra.App.Integration
                 depthDarknessOverlay = overlayObject.AddComponent<DepthDarknessOverlayController>();
             }
 
+            depthDarknessOverlay.SetTerrainTilemap(FindForegroundTilemap());
             depthDarknessOverlay.Bind(bootstrap.State, playerMovement.transform);
+        }
+
+        private static Tilemap FindForegroundTilemap()
+        {
+            var maps = FindObjectsByType<Tilemap>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            for (var i = 0; i < maps.Length; i++)
+            {
+                var map = maps[i];
+                if (map != null && map.name == DepthDarknessBlockVisual.ForegroundTilemapName)
+                {
+                    return map;
+                }
+            }
+
+            return null;
         }
 
         private void BindDroneReadings()
