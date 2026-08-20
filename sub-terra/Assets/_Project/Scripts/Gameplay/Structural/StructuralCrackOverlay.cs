@@ -12,7 +12,11 @@ namespace SubTerra.Gameplay.Structural
     public sealed class StructuralCrackOverlay : MonoBehaviour
     {
         [SerializeField] private Tilemap overlayTilemap;
+        // Legacy fallback for scenes that have not yet received the three authored crack tiles.
         [SerializeField] private TileBase crackTile;
+        [SerializeField] private TileBase cautionCrackTile;
+        [SerializeField] private TileBase dangerCrackTile;
+        [SerializeField] private TileBase imminentCrackTile;
         [SerializeField] private Color cautionColor = new(1f, 0.82f, 0.2f, 0.55f);
         [SerializeField] private Color dangerColor = new(1f, 0.38f, 0.08f, 0.72f);
         [SerializeField] private Color imminentColor = new(0.95f, 0.08f, 0.06f, 0.9f);
@@ -83,7 +87,7 @@ namespace SubTerra.Gameplay.Structural
                 return;
             }
 
-            TileBase tile = ResolveCrackTile();
+            TileBase tile = ResolveCrackTile(risk);
             overlayTilemap.SetTile(cell, tile);
             overlayTilemap.SetTileFlags(cell, TileFlags.None);
             cellRisks[cell] = risk;
@@ -112,7 +116,7 @@ namespace SubTerra.Gameplay.Structural
         {
             if (source == null) return;
             Sprite sprite = source.GetSprite(cell);
-            if (sprite == null) sprite = ResolveCrackTile() is Tile tile ? tile.sprite : null;
+            if (sprite == null) sprite = ResolveCrackTile(StructuralRiskLevel.CollapseImminent) is Tile tile ? tile.sprite : null;
             if (sprite == null) return;
 
             var root = new GameObject("StructuralFallingRock");
@@ -320,9 +324,9 @@ namespace SubTerra.Gameplay.Structural
             if (!cellRisks.TryGetValue(cell, out StructuralRiskLevel risk))
                 return Color.clear;
 
-            Color color = GetColor(risk);
+            Color color = HasAuthoredCrackTile(risk) ? Color.white : GetColor(risk);
             float intensity = cellIntensities.TryGetValue(cell, out float value) ? value : 0f;
-            color.a *= Mathf.Lerp(0.58f, 1f, intensity);
+            color.a = GetColor(risk).a * Mathf.Lerp(0.58f, 1f, intensity);
 
             if (!AccessibilityPreferences.ReduceMotion)
             {
@@ -487,8 +491,26 @@ namespace SubTerra.Gameplay.Structural
                 : risk == StructuralRiskLevel.Danger ? dangerColor : imminentColor;
         }
 
-        private TileBase ResolveCrackTile()
+        private bool HasAuthoredCrackTile(StructuralRiskLevel risk)
         {
+            return risk == StructuralRiskLevel.Caution
+                ? cautionCrackTile != null
+                : risk == StructuralRiskLevel.Danger
+                    ? dangerCrackTile != null
+                    : risk == StructuralRiskLevel.CollapseImminent
+                        && imminentCrackTile != null;
+        }
+
+        private TileBase ResolveCrackTile(StructuralRiskLevel risk)
+        {
+            TileBase authored = risk == StructuralRiskLevel.Caution
+                ? cautionCrackTile
+                : risk == StructuralRiskLevel.Danger
+                    ? dangerCrackTile
+                    : risk == StructuralRiskLevel.CollapseImminent
+                        ? imminentCrackTile
+                        : null;
+            if (authored != null) return authored;
             if (crackTile != null) return crackTile;
             if (runtimeCrackTile != null) return runtimeCrackTile;
 

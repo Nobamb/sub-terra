@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 13312, guid: 0000000000000000e000000000000000, type: 0}
   m_Name: Rock
   m_EditorClassIdentifier: UnityEngine.dll::UnityEngine.Tilemaps.Tile
-  m_Sprite: {fileID: 6825934107385633269, guid: e19c6173021a1aa469705d004062de28, type: 2}
-  m_Color: {r: 0.28, g: 0.3, b: 0.35, a: 1}
+  m_Sprite: {fileID: 21300000, guid: c32df7d851b7e474abe9b14e0a138857, type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_Transform:
     e00: 1
     e01: 0

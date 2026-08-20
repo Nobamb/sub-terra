@@ -22,7 +22,7 @@ namespace SubTerra.Gameplay.Building
         {
             if (placementSystem == null || placementSystem.Selection == null)
             {
-                preview?.Hide();
+                HidePreview();
                 return;
             }
 
@@ -35,14 +35,17 @@ namespace SubTerra.Gameplay.Building
 
             if (Mouse.current == null)
             {
-                preview?.Hide();
+                HidePreview();
                 return;
             }
 
             Camera cameraToUse = targetCamera != null ? targetCamera : Camera.main;
             if (cameraToUse == null) return;
             SpriteRenderer sourceRenderer = placementSystem.Selection.RuntimePrefab.GetComponentInChildren<SpriteRenderer>();
-            preview?.Configure(sourceRenderer != null ? sourceRenderer.sprite : null);
+            if (preview != null)
+            {
+                preview.Configure(sourceRenderer != null ? sourceRenderer.sprite : null);
+            }
             Vector3 screen = Mouse.current.position.ReadValue();
             Vector3 world = cameraToUse.ScreenToWorldPoint(new Vector3(screen.x, screen.y, -cameraToUse.transform.position.z));
             Vector3Int cursorCell = placementSystem.WorldToCell(world);
@@ -58,11 +61,17 @@ namespace SubTerra.Gameplay.Building
             placementSystem.GetFootprintCells(origin, footprintPreviewCells);
             if (footprintPreviewCells.Count > 1)
             {
-                preview?.SetCells(GetTerrainTilemap(), footprintPreviewCells, isValid);
+                if (preview != null)
+                {
+                    preview.SetCells(GetTerrainTilemap(), footprintPreviewCells, isValid);
+                }
             }
             else
             {
-                preview?.SetCell(GetTerrainTilemap(), origin, isValid);
+                if (preview != null)
+                {
+                    preview.SetCell(GetTerrainTilemap(), origin, isValid);
+                }
             }
             UpdateSupportRange(origin);
 
@@ -94,6 +103,16 @@ namespace SubTerra.Gameplay.Building
                 origin,
                 support.Radius,
                 placementSystem.StructuralSystem);
+        }
+
+        private void HidePreview()
+        {
+            // UnityEngine.Object의 파괴 후 래퍼는 C# null이 아닐 수 있으므로
+            // null-conditional(?.) 대신 Unity의 null 연산자로 확인한다.
+            if (preview != null)
+            {
+                preview.Hide();
+            }
         }
     }
 }
