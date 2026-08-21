@@ -51,6 +51,32 @@ namespace SubTerra.App.Tests.Outpost
         }
 
         [Test]
+        public void PromptB60_2_ElevatorInteractionClosesPanel_WhileOtherPositionsCanOpenIt()
+        {
+            var catalog = new InMemoryMineralCatalog();
+            var state = GameState.CreateNew();
+            var inventory = new InventoryService(catalog, 100f, state);
+            var service = new OutpostService(inventory, catalog, state);
+            var view = new RecordingView();
+            var presenter = new OutpostPanelPresenter(view);
+            presenter.Bind(service);
+            service.ApplyRuntimeStatus(new OutpostStatusDto
+            {
+                isInInteractionRange = true,
+                interactionFacilityInstanceId = "outpost.near-elevator",
+                interactionFacilityBuildingId = DataIds.Buildings.OutpostCoreBasic,
+                connectedFacilities = new List<ConnectedFacilityStatusDto>()
+            });
+
+            presenter.ToggleInteractionPanel(primaryInteractionClaimed: false);
+            Assert.That(view.Visible, Is.True, "엘리베이터 밖에서는 전진기지 패널을 열 수 있어야 한다.");
+
+            presenter.ToggleInteractionPanel(primaryInteractionClaimed: true);
+            Assert.That(view.Visible, Is.False, "엘리베이터 이동 입력이 시설 패널보다 우선해야 한다.");
+            presenter.Unbind();
+        }
+
+        [Test]
         public void RuntimeRange_Charger_OpensChargerPanel()
         {
             var catalog = new InMemoryMineralCatalog();

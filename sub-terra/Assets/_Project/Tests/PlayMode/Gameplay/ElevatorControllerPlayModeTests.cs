@@ -83,6 +83,19 @@ namespace SubTerra.Gameplay.Player.Tests
         }
 
         [Test]
+        public void RiderInsideElevator_ClaimsSharedInteractionPriority()
+        {
+            Assert.IsTrue(elevator.TryClaimInteractionPriority());
+
+            SetField<PlayerMovement>(elevator, "riderMovement", null);
+            SetField<Rigidbody2D>(elevator, "riderBody", null);
+            playerObject.transform.position = Vector3.right * 20f;
+            Physics2D.SyncTransforms();
+
+            Assert.IsFalse(elevator.TryClaimInteractionPriority());
+        }
+
+        [Test]
         public void BlockedExit_RejectsBeforeLockOrTravel()
         {
             var exit = new GameObject("Exit").transform;

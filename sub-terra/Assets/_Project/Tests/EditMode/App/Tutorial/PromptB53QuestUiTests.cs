@@ -1,10 +1,13 @@
 using System.Linq;
+using System.Reflection;
 using NUnit.Framework;
 using SubTerra.App.Core.Data;
 using SubTerra.App.Editor.DataValidation;
+using SubTerra.App.Integration;
 using SubTerra.App.Progression;
 using SubTerra.App.Tutorial;
 using SubTerra.App.UI.Tutorial;
+using SubTerra.Gameplay.Player;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -104,6 +107,60 @@ namespace SubTerra.App.Tests.Tutorial
                 Assert.That(detailsRect.anchorMax, Is.EqualTo(new Vector2(0.5f, 0.5f)));
                 Assert.That(detailsRect.sizeDelta.x, Is.GreaterThanOrEqualTo(640f));
                 Assert.That(detailsRect.sizeDelta.y, Is.GreaterThanOrEqualTo(320f));
+
+                var objectiveClone = Object.Instantiate(root);
+                try
+                {
+                    var cloneView = objectiveClone.GetComponent<DemoObjectiveView>();
+                    var cloneGuidance = FindChild(objectiveClone.transform, "GuidancePanel");
+                    cloneView.SetGuidanceVisible(true);
+                    Assert.That(
+                        cloneGuidance.GetSiblingIndex(),
+                        Is.EqualTo(objectiveClone.transform.childCount - 1),
+                        "첫 안내 팝업은 Tutorial Canvas 내부에서 가장 앞에 그려져야 한다.");
+                }
+                finally
+                {
+                    Object.DestroyImmediate(objectiveClone);
+                }
+            }
+            finally
+            {
+                if (closeAfter && scene.IsValid() && scene.isLoaded)
+                {
+                    EditorSceneManager.CloseScene(scene, true);
+                }
+            }
+        }
+
+        [Test]
+        public void PromptB60_2_MineReturnBridgeTracksActualElevatorCenter()
+        {
+            var scene = SceneManager.GetSceneByPath(PromptB53QuestUiBuilder.IntegrationScenePath);
+            var closeAfter = !scene.IsValid() || !scene.isLoaded;
+            if (closeAfter)
+            {
+                scene = EditorSceneManager.OpenScene(
+                    PromptB53QuestUiBuilder.IntegrationScenePath,
+                    OpenSceneMode.Additive);
+            }
+
+            try
+            {
+                var bridge = FindComponent<ElevatorTravelBridge>(scene);
+                var elevator = FindComponent<ElevatorController>(scene);
+                Assert.That(bridge, Is.Not.Null);
+                Assert.That(elevator, Is.Not.Null);
+                Assert.That(bridge.transform.position.x, Is.Not.EqualTo(elevator.transform.position.x));
+
+                typeof(ElevatorTravelBridge)
+                    .GetMethod("ResolveTargets", BindingFlags.Instance | BindingFlags.NonPublic)
+                    ?.Invoke(bridge, null);
+                var resolved = typeof(ElevatorTravelBridge)
+                    .GetField("elevatorTransform", BindingFlags.Instance | BindingFlags.NonPublic)
+                    ?.GetValue(bridge) as Transform;
+
+                Assert.That(resolved, Is.SameAs(elevator.transform));
             }
             finally
             {
@@ -130,6 +187,19 @@ namespace SubTerra.App.Tests.Tutorial
             }
 
             return null;
+        }
+
+        private static Transform FindChild(Transform root, string objectName)
+        {
+            return root.GetComponentsInChildren<Transform>(true)
+                .FirstOrDefault(child => child.name == objectName);
+        }
+
+        private static T FindComponent<T>(Scene scene) where T : Component
+        {
+            return scene.GetRootGameObjects()
+                .SelectMany(root => root.GetComponentsInChildren<T>(true))
+                .FirstOrDefault();
         }
     }
 }

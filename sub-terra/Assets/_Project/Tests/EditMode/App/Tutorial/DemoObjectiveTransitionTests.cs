@@ -33,9 +33,26 @@ namespace SubTerra.App.Tests.Tutorial
             }
 
             Assert.That(DemoObjectiveCatalog.All[16].IsTerminal, Is.True);
-            Assert.That(DemoObjectiveCatalog.GetRequired(DemoObjectiveIds.ReturnToMine).Description, Does.Contain("검은색 블록 3칸 영역을 벗어나"));
+            Assert.That(
+                DemoObjectiveCatalog.GetRequired(DemoObjectiveIds.ReturnToMine).Description,
+                Is.EqualTo("다시 광산으로 돌아온 뒤, 엘리베이터에서 벗어나 채굴을 이어가주세요."));
+            Assert.That(
+                DemoObjectiveCatalog.GetRequired(DemoObjectiveIds.ReturnToMine).NextActionHint,
+                Does.Contain("검은색 블록 3칸에서 벗어나기"));
             Assert.That(DemoObjectiveCatalog.GetRequired(DemoObjectiveIds.PlaceLightAtDepth).Description, Does.Contain("10m"));
             Assert.That(DemoObjectiveCatalog.GetRequired(DemoObjectiveIds.PurifyGasWithOutpost).Description, Does.Contain("리튬 또는 가스"));
+        }
+
+        [Test]
+        public void PromptB60_2_FirstGuidanceUsesRequestedIntroductionWithoutReplacingQuestText()
+        {
+            var first = DemoObjectiveCatalog.GetRequired(DemoObjectiveIds.MineBlock);
+
+            Assert.That(first.Description, Does.Contain("블록 하나를 제거하세요"));
+            Assert.That(first.GuidanceTitle, Is.EqualTo("생존자 브리핑"));
+            Assert.That(first.GuidanceBody, Is.EqualTo(DemoObjectiveCatalog.IntroductionGuidanceBody));
+            Assert.That(first.GuidanceBody, Does.Contain("당신은 재앙 이후, 얼마 남지 않은 생존자입니다."));
+            Assert.That(first.GuidanceBody, Does.Contain("[조작 안내]"));
         }
 
         [Test]

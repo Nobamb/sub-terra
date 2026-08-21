@@ -618,9 +618,9 @@ namespace SubTerra.App.Integration
                 gameplayEventBridge = Resolve<GameplayEventBridge>(null);
             }
 
+            var elevator = Resolve<ElevatorController>(null);
             if (gameplayEventBridge != null)
             {
-                var elevator = Resolve<ElevatorController>(null);
                 gameplayEventBridge.SetElevatorPowerOrigin(
                     elevator != null ? elevator.transform : null);
                 gameplayEventBridge.SetInteractionOrigin(
@@ -634,6 +634,8 @@ namespace SubTerra.App.Integration
 
             if (outpostPanelBinder != null)
             {
+                outpostPanelBinder.SetPrimaryInteractionClaim(
+                    () => elevator != null && elevator.TryClaimInteractionPriority());
                 outpostPanelBinder.BindTo(outpostService);
             }
         }

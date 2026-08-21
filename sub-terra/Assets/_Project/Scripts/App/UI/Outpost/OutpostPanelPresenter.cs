@@ -98,6 +98,23 @@ namespace SubTerra.App.UI.Outpost
             }
         }
 
+        public void ToggleInteractionPanel(bool primaryInteractionClaimed)
+        {
+            if (primaryInteractionClaimed)
+            {
+                YieldInteraction();
+                return;
+            }
+
+            ToggleInteractionPanel();
+        }
+
+        /// <summary>엘리베이터가 공용 Interact 입력을 우선 사용하면 열려 있던 시설 패널도 닫는다.</summary>
+        public void YieldInteraction()
+        {
+            CloseInteractionPanel();
+        }
+
         public void SelectMineral(string mineralId)
         {
             selectedMineralId = mineralId ?? string.Empty;

@@ -68,6 +68,12 @@ namespace SubTerra.App.UI.Tutorial
         {
             if (guidanceRoot != null)
             {
+                if (visible)
+                {
+                    // 같은 Tutorial Canvas 안에서는 첫 안내 팝업이 항상 마지막에 그려진다.
+                    guidanceRoot.transform.SetAsLastSibling();
+                }
+
                 guidanceRoot.SetActive(visible);
             }
         }

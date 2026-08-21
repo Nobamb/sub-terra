@@ -1,3 +1,4 @@
+using System;
 using SubTerra.App.Outpost;
 using TMPro;
 using UnityEngine;
@@ -16,6 +17,7 @@ namespace SubTerra.App.UI.Outpost
         private OutpostPanelPresenter presenter;
         private string selectedMineralId = string.Empty;
         private InputAction interactAction;
+        private Func<bool> primaryInteractionClaim;
 
         public OutpostPanelPresenter Presenter => presenter;
         public bool IsBound => presenter != null && presenter.IsBound;
@@ -72,6 +74,11 @@ namespace SubTerra.App.UI.Outpost
             presenter.Bind(service);
         }
 
+        public void SetPrimaryInteractionClaim(Func<bool> claim)
+        {
+            primaryInteractionClaim = claim;
+        }
+
         public void SelectMineral(string mineralId)
         {
             selectedMineralId = mineralId ?? string.Empty;
@@ -126,7 +133,8 @@ namespace SubTerra.App.UI.Outpost
         {
             if (context.started)
             {
-                presenter?.ToggleInteractionPanel();
+                presenter?.ToggleInteractionPanel(
+                    primaryInteractionClaim != null && primaryInteractionClaim());
             }
         }
 

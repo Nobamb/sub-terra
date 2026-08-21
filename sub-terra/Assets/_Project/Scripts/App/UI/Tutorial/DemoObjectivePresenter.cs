@@ -141,7 +141,7 @@ namespace SubTerra.App.UI.Tutorial
             else if (model.ShowsDismissibleGuidance)
             {
                 guidanceOpen = true;
-                view?.SetGuidanceText(model.Title, model.Description);
+                view?.SetGuidanceText(model.GuidanceTitle, model.GuidanceBody);
                 // 닫기형 안내는 위험 중에도 켠다. 숨기면 경로 안내가 닫히지 못한다.
                 view?.SetGuidanceVisible(true);
                 view?.SetDemoCompleteVisible(false, string.Empty);

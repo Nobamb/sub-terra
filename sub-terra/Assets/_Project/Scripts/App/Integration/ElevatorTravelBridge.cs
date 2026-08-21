@@ -40,6 +40,7 @@ namespace SubTerra.App.Integration
 
         private readonly MineReturnDepartureGate mineReturnGate = new();
         private Transform playerTransform;
+        private Transform elevatorTransform;
         private bool mineReturnCompleted;
 
         public ElevatorTravelState State =>
@@ -61,12 +62,13 @@ namespace SubTerra.App.Integration
                 return;
             }
 
-            ResolvePlayer();
+            ResolveTargets();
             if (playerTransform == null
+                || elevatorTransform == null
                 || !mineReturnGate.Observe(
                     true,
                     playerTransform.position.x,
-                    transform.position.x,
+                    elevatorTransform.position.x,
                     ProtectedAreaHalfWidth))
             {
                 return;
@@ -100,17 +102,24 @@ namespace SubTerra.App.Integration
             return succeeded;
         }
 
-        private void ResolvePlayer()
+        private void ResolveTargets()
         {
-            if (playerTransform != null)
+            if (playerTransform == null)
             {
-                return;
+                var movement = FindAnyObjectByType<PlayerMovement>(FindObjectsInactive.Exclude);
+                if (movement != null)
+                {
+                    playerTransform = movement.transform;
+                }
             }
 
-            var movement = FindAnyObjectByType<PlayerMovement>(FindObjectsInactive.Exclude);
-            if (movement != null)
+            if (elevatorTransform == null)
             {
-                playerTransform = movement.transform;
+                var elevator = FindAnyObjectByType<ElevatorController>(FindObjectsInactive.Exclude);
+                if (elevator != null)
+                {
+                    elevatorTransform = elevator.transform;
+                }
             }
         }
     }
