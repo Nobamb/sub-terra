@@ -16,7 +16,7 @@ namespace SubTerra.App.Tutorial
                 Define(DemoObjectiveIds.MineCopper, "구리 채취", "구리 블록을 직접 채굴해 구리를 획득하세요.", "구리 블록을 찾아 채굴", DemoProgressSignal.CopperMined, DemoObjectiveIds.UpgradeDrillSpeed),
                 Define(DemoObjectiveIds.UpgradeDrillSpeed, "드릴 속도 업그레이드", "업그레이드 창을 열고 드릴 속도를 1회 높이세요.", "업그레이드 창에서 드릴 속도 구매", DemoProgressSignal.DrillSpeedUpgraded, DemoObjectiveIds.TravelToSurface),
                 Define(DemoObjectiveIds.TravelToSurface, "지상으로 이동", "엘리베이터를 이용해 지상 기지로 이동하세요.", "엘리베이터에서 지상 기지 선택", DemoProgressSignal.SurfaceReachedByElevator, DemoObjectiveIds.ReturnToMine),
-                Define(DemoObjectiveIds.ReturnToMine, "광산으로 복귀", "지상 기지의 엘리베이터를 이용해 다시 지하 광산으로 돌아오세요.", "지상 엘리베이터에서 탐사 시작", DemoProgressSignal.MineReachedByElevator, DemoObjectiveIds.MineIron),
+                Define(DemoObjectiveIds.ReturnToMine, "광산 탐사 재개", "엘리베이터를 타고 광산으로 돌아온 뒤, 엘리베이터 아래 검은색 블록 3칸 영역을 벗어나 다시 채굴을 시작하세요.", "광산 도착 후 엘리베이터 보호 블록 영역 벗어나기", DemoProgressSignal.MineReachedByElevator, DemoObjectiveIds.MineIron),
                 Define(DemoObjectiveIds.MineIron, "철 채취", "철 블록을 직접 채굴해 철을 획득하세요.", "철 블록을 찾아 채굴", DemoProgressSignal.IronMined, DemoObjectiveIds.PlaceSupportInDanger),
                 Define(DemoObjectiveIds.PlaceSupportInDanger, "위험 지대 보강", "구조 위험 경고가 활성화된 지대에 버팀목을 설치하세요.", "위험 경고가 표시된 곳에 버팀목 배치", DemoProgressSignal.SupportPlacedInDanger, DemoObjectiveIds.PlaceLadder),
                 Define(DemoObjectiveIds.PlaceLadder, "사다리 설치", "건설 메뉴에서 사다리를 선택해 설치하세요.", "이동할 수직 통로에 사다리 배치", DemoProgressSignal.LadderPlaced, DemoObjectiveIds.PlaceLightAtDepth),

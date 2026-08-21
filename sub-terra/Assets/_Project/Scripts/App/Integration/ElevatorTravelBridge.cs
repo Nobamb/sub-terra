@@ -1,16 +1,81 @@
 using SubTerra.App.Core;
 using SubTerra.App.Save;
 using SubTerra.App.Tutorial;
+using SubTerra.Gameplay.Player;
 using SubTerra.Shared;
 using UnityEngine;
 
 namespace SubTerra.App.Integration
 {
+    public sealed class MineReturnDepartureGate
+    {
+        private bool observedInside;
+
+        public bool Observe(
+            bool arrivedByElevator,
+            float playerX,
+            float elevatorCenterX,
+            float protectedAreaHalfWidth)
+        {
+            if (!arrivedByElevator)
+            {
+                return false;
+            }
+
+            var isInside = Mathf.Abs(playerX - elevatorCenterX) <= protectedAreaHalfWidth;
+            if (isInside)
+            {
+                observedInside = true;
+                return false;
+            }
+
+            return observedInside;
+        }
+    }
+
     /// <summary>Gameplay 정거장의 목적지를 App 저장·Scene 전환 경계에 연결한다.</summary>
     public sealed class ElevatorTravelBridge : MonoBehaviour, IElevatorTravelPort
     {
+        private const float ProtectedAreaHalfWidth = 1.5f;
+
+        private readonly MineReturnDepartureGate mineReturnGate = new();
+        private Transform playerTransform;
+        private bool mineReturnCompleted;
+
         public ElevatorTravelState State =>
             SaveRuntimeController.Instance?.ElevatorState ?? ElevatorTravelState.Idle;
+
+        private void Update()
+        {
+            if (mineReturnCompleted)
+            {
+                return;
+            }
+
+            var runtime = SaveRuntimeController.Instance;
+            var state = GameBootstrapper.Instance?.State;
+            if (runtime == null
+                || runtime.ElevatorState != ElevatorTravelState.Arrived
+                || state?.Progress?.CurrentObjectiveId != DemoObjectiveIds.ReturnToMine)
+            {
+                return;
+            }
+
+            ResolvePlayer();
+            if (playerTransform == null
+                || !mineReturnGate.Observe(
+                    true,
+                    playerTransform.position.x,
+                    transform.position.x,
+                    ProtectedAreaHalfWidth))
+            {
+                return;
+            }
+
+            mineReturnCompleted = DemoObjectiveDirector.AdvancePersistedState(
+                state,
+                DemoProgressSignal.MineReachedByElevator).Advanced;
+        }
 
         public bool TryTravel(ElevatorDestination destination, out string reason)
         {
@@ -25,16 +90,28 @@ namespace SubTerra.App.Integration
             var succeeded = destination == ElevatorDestination.Mine
                 ? runtime.TryStartExploration(out reason)
                 : runtime.TryReturnToSurface(out reason);
-            if (succeeded)
+            if (succeeded && destination == ElevatorDestination.SurfaceBase)
             {
                 DemoObjectiveDirector.AdvancePersistedState(
                     state,
-                    destination == ElevatorDestination.Mine
-                        ? DemoProgressSignal.MineReachedByElevator
-                        : DemoProgressSignal.SurfaceReachedByElevator);
+                    DemoProgressSignal.SurfaceReachedByElevator);
             }
 
             return succeeded;
+        }
+
+        private void ResolvePlayer()
+        {
+            if (playerTransform != null)
+            {
+                return;
+            }
+
+            var movement = FindAnyObjectByType<PlayerMovement>(FindObjectsInactive.Exclude);
+            if (movement != null)
+            {
+                playerTransform = movement.transform;
+            }
         }
     }
 }

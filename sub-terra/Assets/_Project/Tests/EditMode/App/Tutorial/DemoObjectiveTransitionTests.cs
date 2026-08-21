@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using NUnit.Framework;
 using SubTerra.App.Core.Data;
+using SubTerra.App.Integration;
 using SubTerra.App.Outpost;
 using SubTerra.App.Progression;
 using SubTerra.App.State;
@@ -32,8 +33,20 @@ namespace SubTerra.App.Tests.Tutorial
             }
 
             Assert.That(DemoObjectiveCatalog.All[16].IsTerminal, Is.True);
+            Assert.That(DemoObjectiveCatalog.GetRequired(DemoObjectiveIds.ReturnToMine).Description, Does.Contain("검은색 블록 3칸 영역을 벗어나"));
             Assert.That(DemoObjectiveCatalog.GetRequired(DemoObjectiveIds.PlaceLightAtDepth).Description, Does.Contain("10m"));
             Assert.That(DemoObjectiveCatalog.GetRequired(DemoObjectiveIds.PurifyGasWithOutpost).Description, Does.Contain("리튬 또는 가스"));
+        }
+
+        [Test]
+        public void PromptB60_1_MineReturnCompletesOnlyAfterLeavingElevatorProtectedArea()
+        {
+            var gate = new MineReturnDepartureGate();
+
+            Assert.That(gate.Observe(false, -6.5f, -6.5f, 1.5f), Is.False);
+            Assert.That(gate.Observe(true, -6.5f, -6.5f, 1.5f), Is.False);
+            Assert.That(gate.Observe(true, -5f, -6.5f, 1.5f), Is.False);
+            Assert.That(gate.Observe(true, -4.99f, -6.5f, 1.5f), Is.True);
         }
 
         [Test]
