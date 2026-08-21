@@ -29,9 +29,9 @@ namespace SubTerra.App.Progression
             UpgradeRequirements = upgradeRequirements ?? System.Array.Empty<UpgradeLevelRequirement>();
         }
 
-        /// <summary>MVP 심층 예고: 목표 1개, 드릴 2·드론 스캔 2·가스 저항 1레벨.</summary>
+        /// <summary>prompt-B 60 퀘스트 13 진입: 앞선 12개 완료 + 지정 장비 레벨.</summary>
         public static DeepZoneUnlockRule Mvp { get; } = new DeepZoneUnlockRule(
-            1,
+            12,
             new[]
             {
                 new UpgradeLevelRequirement(DataIds.Upgrades.DrillSpeed, 2),

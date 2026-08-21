@@ -12,33 +12,35 @@ using UnityEngine.UI;
 
 namespace SubTerra.App.Tests.Tutorial
 {
-    /// <summary>prompt-B 53 퀘스트 순서·후반 조건·상세창 Scene 연결 회귀 검증.</summary>
+    /// <summary>prompt-B 60 퀘스트 순서와 기존 상세창 Scene 연결 회귀 검증.</summary>
     public sealed class PromptB53QuestUiTests
     {
         [Test]
-        public void PromptB53_CatalogFollowsPlayableDependencyOrder()
+        public void PromptB60_CatalogFollowsRequestedOrder()
         {
             var expected = new[]
             {
-                DemoObjectiveIds.ExploreStart,
-                DemoObjectiveIds.MineCopperIron,
-                DemoObjectiveIds.PathGuide,
-                DemoObjectiveIds.StructuralCrack,
-                DemoObjectiveIds.PlaceSupport,
-                DemoObjectiveIds.GasEncounter,
-                DemoObjectiveIds.OutpostInstall,
-                DemoObjectiveIds.ReturnRecommend,
-                DemoObjectiveIds.Settlement,
-                DemoObjectiveIds.BatteryUpgrade,
+                DemoObjectiveIds.MineBlock,
+                DemoObjectiveIds.MineCopper,
+                DemoObjectiveIds.UpgradeDrillSpeed,
+                DemoObjectiveIds.TravelToSurface,
+                DemoObjectiveIds.ReturnToMine,
+                DemoObjectiveIds.MineIron,
+                DemoObjectiveIds.PlaceSupportInDanger,
+                DemoObjectiveIds.PlaceLadder,
+                DemoObjectiveIds.PlaceLightAtDepth,
+                DemoObjectiveIds.StoreMineral,
+                DemoObjectiveIds.InstallOutpostCore,
+                DemoObjectiveIds.ChargeNearOutpost,
+                DemoObjectiveIds.UnlockDeepZone,
                 DemoObjectiveIds.MineLithium,
-                DemoObjectiveIds.DeepSignal,
-                DemoObjectiveIds.DemoEnd
+                DemoObjectiveIds.PurifyGasWithOutpost,
+                DemoObjectiveIds.SellAtSettlement,
+                DemoObjectiveIds.EmergencyEscapeReturn
             };
 
             Assert.That(DemoObjectiveIds.Ordered, Is.EqualTo(expected));
-            var pathGuide = DemoObjectiveCatalog.GetRequired(DemoObjectiveIds.PathGuide);
-            Assert.That(pathGuide.Description, Does.Not.Contain("리튬"));
-            Assert.That(pathGuide.NextActionHint, Does.Not.Contain("리튬"));
+            Assert.That(DeepZoneUnlockRule.Mvp.RequiredCompletedObjectives, Is.EqualTo(12));
 
             var requirements = DeepZoneUnlockRule.Mvp.UpgradeRequirements;
             Assert.That(

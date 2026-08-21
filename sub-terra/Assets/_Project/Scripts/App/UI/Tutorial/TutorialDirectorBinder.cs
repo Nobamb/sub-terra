@@ -1,6 +1,5 @@
 using SubTerra.App.Core;
 using SubTerra.App.Core.Data;
-using SubTerra.App.Drone;
 using SubTerra.App.Economy;
 using SubTerra.App.Inventory;
 using SubTerra.App.Outpost;
@@ -22,7 +21,6 @@ namespace SubTerra.App.UI.Tutorial
     {
         [SerializeField] private DemoObjectiveView objectiveView;
         [SerializeField] private DroneUiBinder droneUiBinder;
-        [SerializeField, Min(0.25f)] private float dronePollInterval = 1f;
 
         private DemoObjectiveDirector director;
         private DemoObjectivePresenter presenter;
@@ -33,7 +31,6 @@ namespace SubTerra.App.UI.Tutorial
         private ProgressionService progression;
         private OutpostService outpost;
         private GameState boundState;
-        private float nextDronePollAt;
         private bool bound;
 
         public DemoObjectiveDirector Director => director;
@@ -67,27 +64,6 @@ namespace SubTerra.App.UI.Tutorial
             }
 
             Unbind();
-        }
-
-        private void Update()
-        {
-            if (!bound || director == null || director.IsDemoComplete)
-            {
-                return;
-            }
-
-            if (director.CurrentObjectiveId != DemoObjectiveIds.ReturnRecommend)
-            {
-                return;
-            }
-
-            if (Time.unscaledTime < nextDronePollAt)
-            {
-                return;
-            }
-
-            nextDronePollAt = Time.unscaledTime + dronePollInterval;
-            PollReturnRecommendation();
         }
 
         /// <summary>IntegrationRuntimeBinder가 서비스 준비 후 호출한다.</summary>
@@ -125,17 +101,6 @@ namespace SubTerra.App.UI.Tutorial
 
             presenter.Bind(director);
 
-            if (inventory != null)
-            {
-                inventory.InventoryChanged += OnInventoryChanged;
-                director.OnInventoryChanged(inventory.GetSnapshot());
-            }
-
-            if (economy != null)
-            {
-                economy.TransactionCompleted += OnEconomyTransaction;
-            }
-
             if (progression != null)
             {
                 progression.PurchaseCompleted += OnPurchaseCompleted;
@@ -161,24 +126,12 @@ namespace SubTerra.App.UI.Tutorial
             }
 
             bound = true;
-            // 탐사 세션 준비 완료 → 시작 목표 1회 전진
-            director.NotifyExplorationReady();
             // 이어하기 시 이미 업그레이드 조건이 맞으면 잠금·목표를 평가한다.
             EvaluateDeepZoneProgress();
         }
 
         public void Unbind()
         {
-            if (inventory != null)
-            {
-                inventory.InventoryChanged -= OnInventoryChanged;
-            }
-
-            if (economy != null)
-            {
-                economy.TransactionCompleted -= OnEconomyTransaction;
-            }
-
             if (progression != null)
             {
                 progression.PurchaseCompleted -= OnPurchaseCompleted;
@@ -234,16 +187,6 @@ namespace SubTerra.App.UI.Tutorial
             presenter?.CloseDetails();
         }
 
-        private void OnInventoryChanged(InventorySnapshot snapshot)
-        {
-            director?.OnInventoryChanged(snapshot);
-        }
-
-        private void OnEconomyTransaction(EconomyTransactionResult result)
-        {
-            director?.OnEconomyTransactionCompleted(result);
-        }
-
         private void OnPurchaseCompleted(ProgressionPurchaseResult result)
         {
             director?.OnProgressionPurchaseCompleted(result);
@@ -261,7 +204,16 @@ namespace SubTerra.App.UI.Tutorial
 
         private void OnDemoProgressChanged()
         {
-            // 목표 완료 수 증가 직후에도 심층 조건을 다시 본다.
+            // Scene 전환·포탈처럼 State를 직접 전진시킨 경로는 현재 Director에도 동기화한다.
+            if (boundState?.Progress != null
+                && director != null
+                && (director.CurrentObjectiveId != boundState.Progress.CurrentObjectiveId
+                    || director.CompletedCount != boundState.Progress.CompletedObjectives
+                    || director.IsDemoComplete != boundState.Progress.IsDemoComplete))
+            {
+                director.RestoreFromProgress(boundState.Progress);
+            }
+
             EvaluateDeepZoneProgress();
         }
 
@@ -276,15 +228,13 @@ namespace SubTerra.App.UI.Tutorial
                 return;
             }
 
-            var completed = boundState.Progress.CompletedObjectives;
-            var access = progression.GetDeepZoneAccess(completed);
-            // 구버전 세이브에 이미 잠금 해제가 기록됐어도 새 장비 조건은 실제 레벨로 확인한다.
-            if (access.IsUnlocked && MeetsDeepZoneUpgradeRequirements())
+            if (director.CurrentObjectiveId != DemoObjectiveIds.UnlockDeepZone)
             {
-                director.NotifyDeepZonePrerequisitesReady();
+                return;
             }
 
-            // 실제 커밋. DidUnlockNow면 DeepZoneAccessChanged 구독이 Director를 전진시킨다.
+            var completed = boundState.Progress.CompletedObjectives;
+            // 퀘스트 13에 도달한 뒤에만 실제 잠금을 커밋해 선행 행동의 자동 완료를 막는다.
             var unlock = progression.TryUnlockDeepZone(completed);
             if (unlock.IsUnlocked
                 && !unlock.DidUnlockNow
@@ -294,27 +244,6 @@ namespace SubTerra.App.UI.Tutorial
                 // 세이브에 이미 해제된 경우 이벤트가 없으므로 명시 전진.
                 director.NotifyDeepZoneAlreadyUnlocked();
             }
-        }
-
-        private bool MeetsDeepZoneUpgradeRequirements()
-        {
-            if (progression?.State == null)
-            {
-                return false;
-            }
-
-            var requirements = DeepZoneUnlockRule.Mvp.UpgradeRequirements;
-            for (var i = 0; i < requirements.Count; i++)
-            {
-                var requirement = requirements[i];
-                if (progression.State.GetLevel(requirement.UpgradeId)
-                    < requirement.RequiredLevel)
-                {
-                    return false;
-                }
-            }
-
-            return true;
         }
 
         private void OnOutpostOperation(OutpostOperationResult result)
@@ -353,18 +282,5 @@ namespace SubTerra.App.UI.Tutorial
             presenter.SetHazardActive(structural || gas || hazardFromLatest);
         }
 
-        private void PollReturnRecommendation()
-        {
-            if (droneUiBinder == null || !droneUiBinder.IsBound)
-            {
-                return;
-            }
-
-            var analysis = droneUiBinder.AnalyzeNow();
-            if (analysis != null && analysis.RecommendedAction == DroneAction.ReturnToBase)
-            {
-                director?.OnReturnRecommendationPresented();
-            }
-        }
     }
 }

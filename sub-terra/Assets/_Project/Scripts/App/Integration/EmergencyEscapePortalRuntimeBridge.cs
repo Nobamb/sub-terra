@@ -5,6 +5,7 @@ using SubTerra.App.Core.Data;
 using SubTerra.App.Run;
 using SubTerra.App.Save;
 using SubTerra.App.State;
+using SubTerra.App.Tutorial;
 using SubTerra.App.UI.EmergencyEscape;
 using SubTerra.Gameplay.Building;
 using SubTerra.Gameplay.Player;
@@ -149,6 +150,9 @@ namespace SubTerra.App.Integration
             }
 
             TeleportPlayer(targetPosition);
+            DemoObjectiveDirector.AdvancePersistedState(
+                gameState,
+                DemoProgressSignal.EmergencyEscapeSucceeded);
             panelBinder?.Close();
             SaveRuntimeController.Instance?.SaveCurrent(AutoSaveReason.Manual);
             reason = kind == EmergencyEscapeDestination.OutpostCore

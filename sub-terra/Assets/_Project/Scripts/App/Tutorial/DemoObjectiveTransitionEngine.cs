@@ -1,7 +1,7 @@
 namespace SubTerra.App.Tutorial
 {
     /// <summary>
-    /// 이벤트 신호만으로 13단계 목표를 전진시키는 순수 전이 로직.
+    /// 이벤트 신호만으로 17단계 목표를 전진시키는 순수 전이 로직.
     /// 타일·구조·가스·설치 성공을 계산·복제하지 않는다.
     /// </summary>
     public sealed class DemoObjectiveTransitionEngine
@@ -21,7 +21,7 @@ namespace SubTerra.App.Tutorial
 
         public void Reset()
         {
-            currentObjectiveId = DemoObjectiveIds.ExploreStart;
+            currentObjectiveId = DemoObjectiveIds.MineBlock;
             completedCount = 0;
             isDemoComplete = false;
         }

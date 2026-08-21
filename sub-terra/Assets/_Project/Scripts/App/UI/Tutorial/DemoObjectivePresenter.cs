@@ -108,22 +108,10 @@ namespace SubTerra.App.UI.Tutorial
             // dismiss 직후 입력 잠금이 남지 않게 한다.
             SetInputLocked(false);
 
-            if (model.ObjectiveId == DemoObjectiveIds.PathGuide)
-            {
-                director.NotifyGuidanceAcknowledged();
-            }
-            else if (model.ObjectiveId == DemoObjectiveIds.ReturnRecommend)
-            {
-                director.NotifyReturnRecommendationAcknowledged();
-            }
-            else if (model.ObjectiveId == DemoObjectiveIds.DemoEnd
+            if (model.ObjectiveId == DemoObjectiveIds.DemoEnd
                 || model.IsDemoComplete)
             {
                 director.NotifyDemoEndAcknowledged();
-            }
-            else if (model.ObjectiveId == DemoObjectiveIds.ExploreStart)
-            {
-                // 시작 안내는 닫기만 하고, 탐사 준비 신호는 Binder가 보낸다.
             }
         }
 

@@ -262,9 +262,9 @@ namespace SubTerra.App.Tests.Progression
                 Is.True);
             var service = new ProgressionService(state, new Catalog(), new Wallet());
 
-            var before = service.GetDeepZoneAccess(0);
-            var boundary = service.GetDeepZoneAccess(1);
-            var unlocked = service.TryUnlockDeepZone(1);
+            var before = service.GetDeepZoneAccess(11);
+            var boundary = service.GetDeepZoneAccess(12);
+            var unlocked = service.TryUnlockDeepZone(12);
 
             Assert.That(before.IsUnlocked, Is.False);
             Assert.That(before.Reason, Does.Contain("목표"));

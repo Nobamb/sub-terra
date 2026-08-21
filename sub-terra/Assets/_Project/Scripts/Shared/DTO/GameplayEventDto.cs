@@ -19,7 +19,8 @@ namespace SubTerra.Shared
         BuildingPlacementChanged = 9,
         OutpostStatusChanged = 10,
         StructuralCollapse = 11,
-        GasExposureThreshold = 12
+        GasExposureThreshold = 12,
+        GasPurified = 13
     }
 
     /// <summary>

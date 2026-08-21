@@ -1,4 +1,6 @@
+using SubTerra.App.Core;
 using SubTerra.App.Save;
+using SubTerra.App.Tutorial;
 using SubTerra.Shared;
 using UnityEngine;
 
@@ -19,9 +21,20 @@ namespace SubTerra.App.Integration
                 return false;
             }
 
-            return destination == ElevatorDestination.Mine
+            var state = GameBootstrapper.Instance?.State;
+            var succeeded = destination == ElevatorDestination.Mine
                 ? runtime.TryStartExploration(out reason)
                 : runtime.TryReturnToSurface(out reason);
+            if (succeeded)
+            {
+                DemoObjectiveDirector.AdvancePersistedState(
+                    state,
+                    destination == ElevatorDestination.Mine
+                        ? DemoProgressSignal.MineReachedByElevator
+                        : DemoProgressSignal.SurfaceReachedByElevator);
+            }
+
+            return succeeded;
         }
     }
 }

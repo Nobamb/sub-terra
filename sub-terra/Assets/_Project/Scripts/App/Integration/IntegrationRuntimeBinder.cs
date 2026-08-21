@@ -1038,6 +1038,18 @@ namespace SubTerra.App.Integration
             {
                 droneSensor.SetAppliedGasRisk(effect.Risk);
             }
+
+            // 실제 가스 노출과 활성 전진기지 보호가 동시에 확정된 경우만 퀘스트에 전달한다.
+            if (effect.IsExposed && effect.IsSheltered && eventFanOut != null)
+            {
+                eventFanOut.Publish(new GameplayEventDto
+                {
+                    type = GameplayEventType.GasPurified,
+                    entityId = "player",
+                    instanceId = effect.GasZoneId,
+                    reasonId = "outpost_shelter"
+                });
+            }
         }
 
         private void OnPlayerRescued(PlayerRescueResultDto rescue)

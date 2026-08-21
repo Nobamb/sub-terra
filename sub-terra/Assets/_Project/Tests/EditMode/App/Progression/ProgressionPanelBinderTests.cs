@@ -27,13 +27,13 @@ namespace SubTerra.App.Tests.Progression
             popup.SetActive(false);
             SetPrivateField(view, "deepZoneUnlockPopupRoot", popup);
 
-            binder.BindTo(service, () => 1);
+            binder.BindTo(service, () => 12);
 
             Assert.That(state.IsZoneUnlocked(DataIds.Zones.Deep), Is.True);
             Assert.That(popup.activeSelf, Is.True);
 
             popup.SetActive(false);
-            binder.BindTo(service, () => 1);
+            binder.BindTo(service, () => 12);
             Assert.That(popup.activeSelf, Is.False);
 
             Object.DestroyImmediate(root);
