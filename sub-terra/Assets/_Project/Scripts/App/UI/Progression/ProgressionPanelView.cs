@@ -268,6 +268,9 @@ namespace SubTerra.App.UI.Progression
             if (detailText != null)
             {
                 var description = ItemDisplayNames.UpgradeDescription(upgrade.UpgradeId);
+                var unlockDescription = ItemDisplayNames.UpgradeUnlockDescription(
+                    upgrade.UpgradeId,
+                    upgrade.CurrentLevel);
                 var builder = new StringBuilder()
                     .Append(name)
                     .Append("  Lv.")
@@ -299,8 +302,15 @@ namespace SubTerra.App.UI.Progression
                         .Append(delta.ToString("0.##"))
                         .Append(')')
                         .AppendLine()
-                        .Append(description)
-                        .AppendLine()
+                        .Append(description);
+
+                    if (!string.IsNullOrEmpty(unlockDescription))
+                    {
+                        builder.AppendLine()
+                            .Append(unlockDescription);
+                    }
+
+                    builder.AppendLine()
                         .Append("필요 재료: ");
 
                     if (upgrade.NextCosts == null || upgrade.NextCosts.Count == 0)

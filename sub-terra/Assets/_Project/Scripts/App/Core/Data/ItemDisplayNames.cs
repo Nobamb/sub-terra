@@ -120,7 +120,7 @@ namespace SubTerra.App.Core.Data
             switch (upgradeId)
             {
                 case DataIds.Upgrades.DrillSpeed:
-                    return "채굴에 걸리는 시간을 줄여 같은 구간을 더 빠르게 뚫습니다.";
+                    return "채굴에 걸리는 시간을 줄여 같은 구간을 더 빠르게 뚫습니다. 레벨이 오를수록 더 희귀한 자원을 채취할 수 있습니다.";
                 case DataIds.Upgrades.DrillEfficiency:
                     return "채굴 시 소모되는 전력을 줄여 더 오래 탐사할 수 있습니다.";
                 case DataIds.Upgrades.MaximumEnergy:
@@ -140,6 +140,14 @@ namespace SubTerra.App.Core.Data
                 default:
                     return "장비 성능을 한 단계 강화합니다.";
             }
+        }
+
+        /// <summary>현재 단계에서만 새로 해금되는 채취 자원을 안내한다.</summary>
+        public static string UpgradeUnlockDescription(string upgradeId, int currentLevel)
+        {
+            return upgradeId == DataIds.Upgrades.DrillSpeed && currentLevel == 0
+                ? "Lv.1 업그레이드 시 철을 채취할 수 있습니다."
+                : string.Empty;
         }
 
         /// <summary>표시용 이름. 카탈로그 이름이 비어 있거나 ID와 같으면 한국어 폴백.</summary>
