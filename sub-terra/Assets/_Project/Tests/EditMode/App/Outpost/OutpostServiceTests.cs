@@ -172,7 +172,7 @@ namespace SubTerra.App.Tests.Outpost
             system.Service.ApplyRuntimeStatus(status);
 
             var facilities = system.Service.GetSnapshot().Facilities;
-            Assert.That(facilities, Has.Count.EqualTo(2));
+            Assert.That(facilities.Count, Is.EqualTo(2));
             Assert.That(facilities[0].BuildingId, Is.EqualTo(DataIds.Buildings.ChargerBasic));
             Assert.That(facilities[1].BuildingId, Is.EqualTo(DataIds.Buildings.SettlementBasic));
         }

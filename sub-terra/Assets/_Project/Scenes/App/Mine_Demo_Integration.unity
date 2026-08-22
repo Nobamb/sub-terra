@@ -6401,6 +6401,7 @@ MonoBehaviour:
   hudBinder: {fileID: 258569978}
   hazardBridge: {fileID: 976616836}
   depthBridge: {fileID: 0}
+  depthDarknessOverlay: {fileID: 0}
   gasEffectController: {fileID: 976616839}
   outpostBridge: {fileID: 976616835}
   gameplayEventBridge: {fileID: 0}
@@ -44588,7 +44589,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: SubTerra.App::SubTerra.App.UI.Tutorial.TutorialDirectorBinder
   objectiveView: {fileID: 1763463918}
   droneUiBinder: {fileID: 1185730222}
-  dronePollInterval: 1
 --- !u!1 &1766658588
 GameObject:
   m_ObjectHideFlags: 0
