@@ -51,8 +51,9 @@ namespace SubTerra.Gameplay.Structural.Tests
             supportObject.transform.SetParent(fixture.Root.transform);
             supportObject.transform.position = fixture.Foreground.GetCellCenterWorld(Vector3Int.zero);
             StructuralSupport support = supportObject.AddComponent<StructuralSupport>();
-            fixture.System.RegisterSupport(support);
+            bool reducedRisk = fixture.System.RegisterSupport(support);
 
+            Assert.That(reducedRisk, Is.True);
             Assert.That(fixture.System.CurrentRisk, Is.EqualTo(StructuralRiskLevel.Stable));
             Assert.That(fixture.Overlay.HasTile(new Vector3Int(0, 2, 0)), Is.False);
         }

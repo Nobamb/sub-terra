@@ -141,15 +141,16 @@ namespace SubTerra.App.Tests.Tutorial
         }
 
         [Test]
-        public void PromptB60_SupportRequiresActiveStructuralDanger()
+        public void PromptB60_3_SupportRequiresConfirmedStructuralRiskReduction()
         {
             var director = At(DemoObjectiveIds.PlaceSupportInDanger);
-            director.OnStructuralRiskChanged(StructuralRiskLevel.Safe);
             director.OnGameplayEvent(Placed(DataIds.Buildings.SupportBasic, 2, -8));
             Assert.That(director.CurrentObjectiveId, Is.EqualTo(DemoObjectiveIds.PlaceSupportInDanger));
 
+            // 실제 배치 순서처럼 위험 상태가 먼저 안전으로 바뀐 뒤 배치 이벤트가 와도 완료되어야 한다.
             director.OnStructuralRiskChanged(StructuralRiskLevel.Caution);
-            director.OnGameplayEvent(Placed(DataIds.Buildings.SupportBasic, 2, -8));
+            director.OnStructuralRiskChanged(StructuralRiskLevel.Safe);
+            director.OnGameplayEvent(Placed(DataIds.Buildings.SupportBasic, 2, -8, true));
             Assert.That(director.CurrentObjectiveId, Is.EqualTo(DemoObjectiveIds.PlaceLadder));
         }
 
@@ -332,14 +333,26 @@ namespace SubTerra.App.Tests.Tutorial
             };
         }
 
-        private static GameplayEventDto Placed(string buildingId, int x, int y)
+        private static GameplayEventDto Placed(
+            string buildingId,
+            int x,
+            int y,
+            bool reducedStructuralRisk = false)
         {
             return new GameplayEventDto
             {
                 type = GameplayEventType.BuildingPlaced,
                 entityId = buildingId,
                 x = x,
-                y = y
+                y = y,
+                buildingPlacement = new BuildingPlacementResultDto
+                {
+                    state = BuildingPlacementState.Placed,
+                    buildingId = buildingId,
+                    x = x,
+                    y = y,
+                    reducedStructuralRisk = reducedStructuralRisk
+                }
             };
         }
 

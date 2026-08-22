@@ -1,6 +1,7 @@
 using SubTerra.App.Tutorial;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace SubTerra.App.UI.Tutorial
 {
@@ -27,6 +28,7 @@ namespace SubTerra.App.UI.Tutorial
         [SerializeField] private TMP_Text detailsNextActionText;
 
         private int defaultTutorialSort = UiLayerPriority.TutorialGuidance;
+        private Canvas guidanceCanvas;
 
         private void Awake()
         {
@@ -70,12 +72,38 @@ namespace SubTerra.App.UI.Tutorial
             {
                 if (visible)
                 {
+                    guidanceRoot.SetActive(true);
                     // 같은 Tutorial Canvas 안에서는 첫 안내 팝업이 항상 마지막에 그려진다.
                     guidanceRoot.transform.SetAsLastSibling();
+                    EnsureGuidanceCanvas();
                 }
-
-                guidanceRoot.SetActive(visible);
+                else
+                {
+                    guidanceRoot.SetActive(false);
+                }
             }
+        }
+
+        private void EnsureGuidanceCanvas()
+        {
+            if (guidanceCanvas == null)
+            {
+                guidanceCanvas = guidanceRoot.GetComponent<Canvas>();
+                if (guidanceCanvas == null)
+                {
+                    guidanceCanvas = guidanceRoot.AddComponent<Canvas>();
+                }
+            }
+
+            if (guidanceRoot.GetComponent<GraphicRaycaster>() == null)
+            {
+                guidanceRoot.AddComponent<GraphicRaycaster>();
+            }
+
+            // HUD 전체가 아니라 시작 안내만 독립 정렬해 다른 팝업보다 앞에 표시한다.
+            guidanceCanvas.enabled = true;
+            guidanceCanvas.overrideSorting = true;
+            guidanceCanvas.sortingOrder = UiLayerPriority.IntroductionGuidance;
         }
 
         public void SetGuidanceText(string title, string body)

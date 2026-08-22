@@ -109,19 +109,32 @@ namespace SubTerra.App.Tests.Tutorial
                 Assert.That(detailsRect.sizeDelta.y, Is.GreaterThanOrEqualTo(320f));
 
                 var objectiveClone = Object.Instantiate(root);
+                var canvasHost = new GameObject("PromptB60_3_TutorialCanvasHost");
+                canvasHost.AddComponent<Canvas>();
+                objectiveClone.transform.SetParent(canvasHost.transform, false);
                 try
                 {
                     var cloneView = objectiveClone.GetComponent<DemoObjectiveView>();
                     var cloneGuidance = FindChild(objectiveClone.transform, "GuidancePanel");
                     cloneView.SetGuidanceVisible(true);
+                    var guidanceCanvas = cloneGuidance.GetComponent<Canvas>();
                     Assert.That(
                         cloneGuidance.GetSiblingIndex(),
                         Is.EqualTo(objectiveClone.transform.childCount - 1),
                         "첫 안내 팝업은 Tutorial Canvas 내부에서 가장 앞에 그려져야 한다.");
+                    Assert.That(guidanceCanvas, Is.Not.Null);
+                    Assert.That(cloneGuidance.GetComponent<GraphicRaycaster>(), Is.Not.Null);
+                    Assert.That(guidanceCanvas.overrideSorting, Is.True);
+                    Assert.That(
+                        guidanceCanvas.sortingOrder,
+                        Is.EqualTo(UiLayerPriority.IntroductionGuidance));
+                    Assert.That(
+                        UiLayerPriority.IntroductionGuidance,
+                        Is.GreaterThan(UiLayerPriority.ModalPanel));
                 }
                 finally
                 {
-                    Object.DestroyImmediate(objectiveClone);
+                    Object.DestroyImmediate(canvasHost);
                 }
             }
             finally

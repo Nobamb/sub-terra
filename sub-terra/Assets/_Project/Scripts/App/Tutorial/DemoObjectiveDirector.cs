@@ -316,7 +316,8 @@ namespace SubTerra.App.Tutorial
 
             if (CurrentObjectiveId == DemoObjectiveIds.PlaceSupportInDanger
                 && buildingId == DataIds.Buildings.SupportBasic
-                && IsStructuralDanger(structuralRisk))
+                && gameplayEvent.buildingPlacement != null
+                && gameplayEvent.buildingPlacement.reducedStructuralRisk)
             {
                 HandleSignal(DemoProgressSignal.SupportPlacedInDanger);
             }
@@ -464,13 +465,6 @@ namespace SubTerra.App.Tutorial
         private void RaiseChanged()
         {
             ProgressChanged?.Invoke(engine.GetReadModel());
-        }
-
-        private static bool IsStructuralDanger(StructuralRiskLevel level)
-        {
-            return level == StructuralRiskLevel.Caution
-                || level == StructuralRiskLevel.Critical
-                || level == StructuralRiskLevel.Imminent;
         }
 
         private static bool IsWithinRange(

@@ -163,13 +163,16 @@ namespace SubTerra.Gameplay.Structural
                 impact);
         }
 
-        public void RegisterSupport(StructuralSupport support)
+        /// <summary>
+        /// 버팀목을 등록하고, 주의 이상이던 영향 셀의 실제 위험 점수가 낮아졌는지 반환한다.
+        /// </summary>
+        public bool RegisterSupport(StructuralSupport support)
         {
-            if (support == null || Array.IndexOf(supports, support) >= 0) return;
+            if (support == null || Array.IndexOf(supports, support) >= 0) return false;
             Array.Resize(ref supports, supports.Length + 1);
             supports[^1] = support;
             support.AvailabilityChanged += OnSupportAvailabilityChanged;
-            ReevaluateAffectedBySupport(support, false);
+            return ReevaluateAffectedBySupport(support, false);
         }
 
         public void UnregisterSupport(StructuralSupport support)
@@ -707,11 +710,11 @@ namespace SubTerra.Gameplay.Structural
             ReevaluateAffectedBySupport(support, support == null || !support.IsAvailable);
         }
 
-        private void ReevaluateAffectedBySupport(StructuralSupport support, bool supportRemoved)
+        private bool ReevaluateAffectedBySupport(StructuralSupport support, bool supportRemoved)
         {
             if (support == null || foregroundTilemap == null)
             {
-                return;
+                return false;
             }
 
             var affected = new HashSet<Vector3Int>();
@@ -753,12 +756,36 @@ namespace SubTerra.Gameplay.Structural
             }
 
             Vector3Int supportActionCell = foregroundTilemap.WorldToCell(support.transform.position);
+            var previousDangerScores = new Dictionary<Vector3Int, float>();
+            if (!supportRemoved)
+            {
+                foreach (Vector3Int cell in affected)
+                {
+                    if (tileScores.TryGetValue(cell, out float score)
+                        && StructuralRiskEvaluator.EvaluateScore(score, Settings) >= StructuralRiskLevel.Caution)
+                    {
+                        previousDangerScores[cell] = score;
+                    }
+                }
+            }
+
             ReevaluateTiles(
                 affected,
                 allowCollapse: supportRemoved,
                 supportActionCell,
                 supportRemoved ? StructuralRiskCause.SupportRemoved : StructuralRiskCause.None,
                 0f);
+
+            foreach (KeyValuePair<Vector3Int, float> previous in previousDangerScores)
+            {
+                if (!tileScores.TryGetValue(previous.Key, out float current)
+                    || current < previous.Value)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private void UpdateCurrentRisk()

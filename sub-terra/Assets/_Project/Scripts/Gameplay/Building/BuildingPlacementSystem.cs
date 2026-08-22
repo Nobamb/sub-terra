@@ -213,11 +213,19 @@ namespace SubTerra.Gameplay.Building
             BindPowerNode(instanceObject, instanceId);
             foreach (Vector3Int cell in EnumerateFootprint(origin, footprint)) occupiedCells.Add(cell);
             StructuralSupport support = instanceObject.GetComponent<StructuralSupport>();
-            if (support != null) structuralIntegritySystem?.RegisterSupport(support);
+            bool reducedStructuralRisk = support != null
+                && structuralIntegritySystem != null
+                && structuralIntegritySystem.RegisterSupport(support);
 
             // 한 번의 선택은 한 시설만 확정한다. 이벤트 재진입과 같은 프레임 중복 확정을 함께 막는다.
             ClearSelection();
-            var result = new BuildingPlacementResult(true, BuildingPlacementFailure.None, instanceId, definition.BuildingId, origin);
+            var result = new BuildingPlacementResult(
+                true,
+                BuildingPlacementFailure.None,
+                instanceId,
+                definition.BuildingId,
+                origin,
+                reducedStructuralRisk);
             BuildingPlaced?.Invoke(result);
             return result;
         }

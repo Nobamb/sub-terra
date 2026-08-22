@@ -173,7 +173,16 @@ namespace SubTerra.Gameplay.Integration
 
         private void PublishBuildingResult(BuildingPlacementResult result, BuildingPlacementState state)
         {
-            var placement = new BuildingPlacementResultDto { state = state, buildingId = result.BuildingId, instanceId = result.InstanceId, reasonId = result.Failure.ToString(), x = result.Cell.x, y = result.Cell.y };
+            var placement = new BuildingPlacementResultDto
+            {
+                state = state,
+                buildingId = result.BuildingId,
+                instanceId = result.InstanceId,
+                reasonId = result.Failure.ToString(),
+                x = result.Cell.x,
+                y = result.Cell.y,
+                reducedStructuralRisk = result.ReducedStructuralRisk
+            };
             Publish(new GameplayEventDto { type = result.IsSuccess ? GameplayEventType.BuildingPlaced : GameplayEventType.BuildingPlacementChanged, entityId = result.BuildingId, instanceId = result.InstanceId, x = result.Cell.x, y = result.Cell.y, buildingPlacement = placement });
         }
 

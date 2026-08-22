@@ -28,5 +28,6 @@ namespace SubTerra.Shared
         public string reasonId;
         public int x;
         public int y;
+        public bool reducedStructuralRisk;
     }
 }
