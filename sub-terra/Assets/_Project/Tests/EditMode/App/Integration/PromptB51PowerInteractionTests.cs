@@ -79,6 +79,32 @@ namespace SubTerra.App.Tests.Integration
         }
 
         [Test]
+        public void PromptB62_FacilityStatusContainsOnlyChargerAndSettlement()
+        {
+            var root = new GameObject("PromptB62_Root");
+            try
+            {
+                var network = root.AddComponent<PowerNetworkSystem>();
+                var bridge = root.AddComponent<GameplayEventBridge>();
+                SetField(bridge, "powerNetworkSystem", network);
+                CreateNode(root.transform, network, "storage.1", DataIds.Buildings.StorageBasic, Vector3.zero, false);
+                CreateNode(root.transform, network, "light.1", DataIds.Buildings.LightBasic, Vector3.right, false);
+                CreateNode(root.transform, network, "charger.1", DataIds.Buildings.ChargerBasic, Vector3.right * 2f, false);
+                CreateNode(root.transform, network, "settlement.1", DataIds.Buildings.SettlementBasic, Vector3.right * 3f, false);
+
+                var statuses = BuildFacilityStatuses(bridge);
+
+                Assert.That(statuses, Has.Count.EqualTo(2));
+                Assert.That(statuses[0].buildingId, Is.EqualTo(DataIds.Buildings.ChargerBasic));
+                Assert.That(statuses[1].buildingId, Is.EqualTo(DataIds.Buildings.SettlementBasic));
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
         public void InteractionPrompt_UsesOnlyCurrentFacility_AndHidesPassiveFailure()
         {
             var host = new GameObject("PromptB51_HazardBridge");

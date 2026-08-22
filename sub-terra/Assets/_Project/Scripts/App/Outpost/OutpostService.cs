@@ -528,6 +528,16 @@ namespace SubTerra.App.Outpost
                 return false;
             }
 
+            if (buildingId == DataIds.Buildings.StorageBasic
+                && runtimeStatus != null
+                && runtimeStatus.isInInteractionRange
+                && (string.IsNullOrEmpty(runtimeStatus.interactionFacilityBuildingId)
+                    || runtimeStatus.interactionFacilityBuildingId == buildingId))
+            {
+                failure = default;
+                return true;
+            }
+
             if (runtimeStatus == null
                 || !runtimeStatus.isInInteractionRange
                 || (!IsProximityPoweredFacility(buildingId) && !runtimeStatus.isActive))
@@ -761,7 +771,7 @@ namespace SubTerra.App.Outpost
             for (var i = 0; i < status.connectedFacilities.Count; i++)
             {
                 var facility = status.connectedFacilities[i];
-                if (facility == null)
+                if (facility == null || !IsProximityPoweredFacility(facility.buildingId))
                 {
                     continue;
                 }

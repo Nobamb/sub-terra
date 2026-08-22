@@ -141,6 +141,43 @@ namespace SubTerra.App.Tests.Outpost
         }
 
         [Test]
+        public void PromptB62_StorageWorksWithoutOutpostPowerOrConnectedStatus()
+        {
+            var system = CreateSystem();
+            system.Inventory.TryAddMineral(Copper, 2);
+            system.Service.ApplyRuntimeStatus(new OutpostStatusDto
+            {
+                isActive = false,
+                isInInteractionRange = true,
+                interactionFacilityInstanceId = "storage.independent",
+                interactionFacilityBuildingId = DataIds.Buildings.StorageBasic,
+                connectedFacilities = new List<ConnectedFacilityStatusDto>()
+            });
+
+            var deposit = system.Service.TryDeposit(Copper, 2);
+            var withdraw = system.Service.TryWithdraw(Copper, 1);
+
+            Assert.That(deposit.IsSuccess, Is.True);
+            Assert.That(withdraw.IsSuccess, Is.True);
+            Assert.That(system.Inventory.State.GetQuantity(Copper), Is.EqualTo(1));
+            Assert.That(system.Service.State.GetStorageQuantity(Copper), Is.EqualTo(1));
+        }
+
+        [Test]
+        public void PromptB62_ConnectedFacilityListContainsOnlyChargerAndSettlement()
+        {
+            var system = CreateSystem();
+            var status = CreateActiveStatus();
+
+            system.Service.ApplyRuntimeStatus(status);
+
+            var facilities = system.Service.GetSnapshot().Facilities;
+            Assert.That(facilities, Has.Count.EqualTo(2));
+            Assert.That(facilities[0].BuildingId, Is.EqualTo(DataIds.Buildings.ChargerBasic));
+            Assert.That(facilities[1].BuildingId, Is.EqualTo(DataIds.Buildings.SettlementBasic));
+        }
+
+        [Test]
         public void H_S04_FailedWithdraw_IsAtomic()
         {
             var system = CreateSystem(maxCapacity: 8f);

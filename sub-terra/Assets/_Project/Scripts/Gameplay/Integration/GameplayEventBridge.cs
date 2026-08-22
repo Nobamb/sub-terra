@@ -289,10 +289,12 @@ namespace SubTerra.Gameplay.Integration
                     continue;
                 }
 
-                var usesProximityPower = IsProximityPoweredFacility(instance.BuildingId);
-                var isActive = usesProximityPower
-                    ? IsWithinPowerSupplyRange(node.transform.position)
-                    : node.IsPowered;
+                if (!IsProximityPoweredFacility(instance.BuildingId))
+                {
+                    continue;
+                }
+
+                var isActive = IsWithinPowerSupplyRange(node.transform.position);
 
                 statuses.Add(new ConnectedFacilityStatusDto
                 {
@@ -301,9 +303,7 @@ namespace SubTerra.Gameplay.Integration
                     isActive = isActive,
                     inactiveReasonId = isActive
                         ? string.Empty
-                        : usesProximityPower || !powerNetworkSystem.IsReachable(node)
-                            ? "power_disconnected"
-                            : "insufficient_power"
+                        : "power_disconnected"
                 });
             }
 
