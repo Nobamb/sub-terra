@@ -225,6 +225,10 @@ namespace SubTerra.App.Integration
                             this,
                             runtime.Progression != null ? runtime.Progression.Effects : null,
                             runtime);
+                        miningSystem.SetCellProtectionPredicate(
+                            buildingPlacementSystem != null
+                                ? buildingPlacementSystem.IsGroundSupportingBuilding
+                                : null);
                     }
                 });
 

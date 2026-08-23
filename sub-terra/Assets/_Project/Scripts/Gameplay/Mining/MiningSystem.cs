@@ -70,6 +70,7 @@ namespace SubTerra.Gameplay.Mining
         private IMiningTransaction miningTransaction;
         private IUpgradeEffectProvider upgradeEffects;
         private IDeepZoneAccessProvider deepZoneAccess;
+        private Func<Vector3Int, bool> cellProtectionPredicate;
         private Vector3Int activeCell;
         private TileBase activeTileAsset;
         private MiningTileDto activeTile;
@@ -107,6 +108,12 @@ namespace SubTerra.Gameplay.Mining
             }
         }
 
+        /// <summary>시설 배치처럼 런타임에 변하는 채굴 금지 셀 판정을 연결한다.</summary>
+        public void SetCellProtectionPredicate(Func<Vector3Int, bool> predicate)
+        {
+            cellProtectionPredicate = predicate;
+        }
+
         public bool TryStartMining(Vector3Int cell)
         {
             if (IsMining && activeCell == cell)
@@ -127,7 +134,7 @@ namespace SubTerra.Gameplay.Mining
                     : MiningFailureReason.InsufficientEnergy);
             }
 
-            if (Array.IndexOf(protectedCells, cell) >= 0)
+            if (IsCellProtected(cell))
             {
                 return Fail(MiningFailureReason.NotMineable);
             }
@@ -269,6 +276,12 @@ namespace SubTerra.Gameplay.Mining
                 return false;
             }
 
+            if (IsCellProtected(activeCell))
+            {
+                Fail(MiningFailureReason.NotMineable);
+                return false;
+            }
+
             if (foregroundTilemap.GetTile(activeCell) != activeTileAsset)
             {
                 Fail(MiningFailureReason.TargetChanged);
@@ -276,6 +289,12 @@ namespace SubTerra.Gameplay.Mining
             }
 
             return true;
+        }
+
+        private bool IsCellProtected(Vector3Int cell)
+        {
+            return Array.IndexOf(protectedCells, cell) >= 0
+                || (cellProtectionPredicate != null && cellProtectionPredicate(cell));
         }
 
         private bool CompleteMining()

@@ -206,6 +206,35 @@ namespace SubTerra.Gameplay.Building.Tests
         }
 
         [Test]
+        public void PlacedBuilding_ProtectsOnlyItsSupportingGroundCells()
+        {
+            var setup = CreateSetup(
+                maximumDistance: 10f,
+                areaSize: new Vector2(20f, 12f),
+                footprint: new Vector2Int(2, 2));
+            try
+            {
+                var leftGround = new Vector3Int(0, -1, 0);
+                var rightGround = new Vector3Int(1, -1, 0);
+                setup.Terrain.SetTile(leftGround, setup.Tile);
+                setup.Terrain.SetTile(rightGround, setup.Tile);
+
+                Assert.That(setup.Placement.TryPlaceAt(Vector3Int.zero).IsSuccess, Is.True);
+                Assert.That(setup.Placement.IsGroundSupportingBuilding(leftGround), Is.True);
+                Assert.That(setup.Placement.IsGroundSupportingBuilding(rightGround), Is.True);
+                Assert.That(setup.Placement.IsGroundSupportingBuilding(Vector3Int.zero), Is.False);
+
+                setup.Placement.PrepareForWorldRestore();
+                Assert.That(setup.Placement.IsGroundSupportingBuilding(leftGround), Is.False);
+                Assert.That(setup.Placement.IsGroundSupportingBuilding(rightGround), Is.False);
+            }
+            finally
+            {
+                setup.Dispose();
+            }
+        }
+
+        [Test]
         public void TryFindBestPlacementCell_PrefersNearestWithinRange()
         {
             BuildingPlacementActivity.ResetForTests();

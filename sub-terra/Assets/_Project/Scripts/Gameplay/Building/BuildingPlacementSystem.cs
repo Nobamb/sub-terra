@@ -22,6 +22,7 @@ namespace SubTerra.Gameplay.Building
         [SerializeField] private BuildingPlacementDefinition[] restoreDefinitions = Array.Empty<BuildingPlacementDefinition>();
 
         private readonly HashSet<Vector3Int> occupiedCells = new();
+        private readonly HashSet<Vector3Int> supportingGroundCells = new();
         private IBuildingResourceWallet resourceWallet;
         private IResourceWallet sharedResourceWallet;
         private BuildingPlacementDefinition selection;
@@ -76,6 +77,9 @@ namespace SubTerra.Gameplay.Building
 
         /// <summary>Called by App bootstrap to connect the Shared economy contract without a Unity object reference.</summary>
         public void SetResourceWallet(IResourceWallet wallet) => sharedResourceWallet = wallet;
+
+        /// <summary>설치된 시설의 footprint 하단을 실제로 받치고 있는 지반인지 확인한다.</summary>
+        public bool IsGroundSupportingBuilding(Vector3Int cell) => supportingGroundCells.Contains(cell);
 
         public Vector3Int WorldToCell(Vector3 worldPosition)
         {
@@ -212,6 +216,7 @@ namespace SubTerra.Gameplay.Building
             instance.Initialize(instanceId, definition.BuildingId);
             BindPowerNode(instanceObject, instanceId);
             foreach (Vector3Int cell in EnumerateFootprint(origin, footprint)) occupiedCells.Add(cell);
+            RegisterSupportingGround(origin, footprint, definition.RequiresGround);
             StructuralSupport support = instanceObject.GetComponent<StructuralSupport>();
             bool reducedStructuralRisk = support != null
                 && structuralIntegritySystem != null
@@ -439,6 +444,7 @@ namespace SubTerra.Gameplay.Building
             }
 
             occupiedCells.Clear();
+            supportingGroundCells.Clear();
             restoredInstanceIds.Clear();
             nextInstanceSequence = 1;
         }
@@ -461,6 +467,7 @@ namespace SubTerra.Gameplay.Building
             instance.Initialize(snapshot.instanceId, snapshot.buildingTypeId);
             BindPowerNode(instanceObject, snapshot.instanceId);
             foreach (Vector3Int occupied in EnumerateFootprint(cell, footprint)) occupiedCells.Add(occupied);
+            RegisterSupportingGround(cell, footprint, definition.RequiresGround);
             StructuralSupport support = instanceObject.GetComponent<StructuralSupport>();
             if (support != null) structuralIntegritySystem?.RegisterSupport(support);
             restoredInstanceIds.Add(snapshot.instanceId);
@@ -533,6 +540,20 @@ namespace SubTerra.Gameplay.Building
             for (int x = 0; x < width; x++)
             for (int y = 0; y < height; y++)
                 yield return origin + new Vector3Int(x, y, 0);
+        }
+
+        private void RegisterSupportingGround(Vector3Int origin, Vector2Int footprint, bool requiresGround)
+        {
+            if (!requiresGround)
+            {
+                return;
+            }
+
+            int width = Mathf.Max(1, footprint.x);
+            for (int x = 0; x < width; x++)
+            {
+                supportingGroundCells.Add(origin + new Vector3Int(x, -1, 0));
+            }
         }
 
         private static void DestroyRuntime(UnityEngine.Object target)

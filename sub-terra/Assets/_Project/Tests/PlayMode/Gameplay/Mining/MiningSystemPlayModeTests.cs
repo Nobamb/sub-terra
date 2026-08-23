@@ -112,6 +112,48 @@ namespace SubTerra.Gameplay.Mining.Tests
         }
 
         [Test]
+        public void RuntimeProtectedCellCannotBeMined()
+        {
+            CreateSystem(out var root, out var tilemap, out var resolver, out var system);
+            var tile = ScriptableObject.CreateInstance<Tile>();
+            var protectedCell = new Vector3Int(3, -4, 0);
+            resolver.RegisterRuntime(tile, new MiningTileDto(
+                "tile.rock.normal", string.Empty, 0, true, 1f, 0.2f, 0f, false));
+            tilemap.SetTile(protectedCell, tile);
+            system.SetCellProtectionPredicate(cell => cell == protectedCell);
+
+            Assert.That(system.TryMineInstant(protectedCell), Is.False);
+            Assert.That(system.LastFailure, Is.EqualTo(MiningFailureReason.NotMineable));
+            Assert.That(tilemap.GetTile(protectedCell), Is.SameAs(tile));
+
+            Object.DestroyImmediate(root);
+            Object.DestroyImmediate(tile);
+        }
+
+        [Test]
+        public void CellProtectedDuringMiningIsNotRemovedOnCompletion()
+        {
+            CreateSystem(out var root, out var tilemap, out var resolver, out var system);
+            var tile = ScriptableObject.CreateInstance<Tile>();
+            var cell = new Vector3Int(2, -3, 0);
+            var isProtected = false;
+            resolver.RegisterRuntime(tile, new MiningTileDto(
+                "tile.rock.normal", string.Empty, 0, true, 1f, 0.2f, 0f, false));
+            tilemap.SetTile(cell, tile);
+            system.SetCellProtectionPredicate(candidate => isProtected && candidate == cell);
+
+            Assert.That(system.TryStartMining(cell), Is.True);
+            isProtected = true;
+            system.TickMining(1f);
+
+            Assert.That(system.LastFailure, Is.EqualTo(MiningFailureReason.NotMineable));
+            Assert.That(tilemap.GetTile(cell), Is.SameAs(tile));
+
+            Object.DestroyImmediate(root);
+            Object.DestroyImmediate(tile);
+        }
+
+        [Test]
         public void DeepZoneSignal_BlocksBeforeUnlock_AndAllowsInteractionAfterUnlock()
         {
             CreateSystem(out var root, out var tilemap, out var resolver, out var system);
