@@ -181,6 +181,31 @@ namespace SubTerra.Gameplay.Mining.Tests
             Object.DestroyImmediate(tile);
         }
 
+        [Test]
+        public void DeepZoneCells_BlockBeforeUnlock_AndCanBeMinedAfterUnlock()
+        {
+            CreateSystem(out var root, out var tilemap, out var resolver, out var system);
+            var access = new DeepZoneAccess();
+            system.SetRuntimeServices(null, null, access);
+            system.ConfigureDeepZoneBoundary(-2, 36, 40);
+            var tile = ScriptableObject.CreateInstance<Tile>();
+            var deepCell = new Vector3Int(0, -37, 0);
+            resolver.RegisterRuntime(tile, new MiningTileDto(
+                "tile.rock.normal", string.Empty, 0, true, 1f, 0f, 0f, false));
+            tilemap.SetTile(deepCell, tile);
+
+            Assert.That(system.TryMineInstant(deepCell), Is.False);
+            Assert.That(system.LastFailure, Is.EqualTo(MiningFailureReason.DeepZoneLocked));
+            Assert.That(tilemap.GetTile(deepCell), Is.SameAs(tile));
+
+            access.IsDeepZoneUnlocked = true;
+            Assert.That(system.TryMineInstant(deepCell), Is.True);
+            Assert.That(tilemap.GetTile(deepCell), Is.Null);
+
+            Object.DestroyImmediate(root);
+            Object.DestroyImmediate(tile);
+        }
+
 #if UNITY_EDITOR
         [Test]
         public void ResolverRebuildsSerializedEntriesWhenRuntimeCacheIsLost()

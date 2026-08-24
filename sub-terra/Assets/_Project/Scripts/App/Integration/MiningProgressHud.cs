@@ -153,6 +153,7 @@ namespace SubTerra.App.Integration
                 MiningFailureReason.InventoryFull => "화물이 가득 찼습니다.",
                 MiningFailureReason.OutOfRange => "채굴 범위를 벗어났습니다.",
                 MiningFailureReason.NotMineable => "채굴할 수 없는 지형입니다.",
+                MiningFailureReason.DeepZoneLocked => "심층 구역이 해금되어야 채굴할 수 있는 자원입니다.",
                 _ => "채굴할 수 없습니다."
             };
         }

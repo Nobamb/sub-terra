@@ -61,6 +61,15 @@ namespace SubTerra.App.Tests.Integration
             Assert.That(binder, Does.Contain("playerMovement.transform"));
         }
 
+        [Test]
+        public void PromptB65_DeepZoneLockedFailure_UsesRequestedMessage()
+        {
+            var source = Read("Scripts", "App", "Integration", "MiningProgressHud.cs");
+
+            Assert.That(source, Does.Contain(
+                "심층 구역이 해금되어야 채굴할 수 있는 자원입니다."));
+        }
+
         private static string Read(params string[] parts)
         {
             var path = Path.Combine(Application.dataPath, "_Project");

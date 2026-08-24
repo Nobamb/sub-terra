@@ -71,6 +71,10 @@ namespace SubTerra.Gameplay.Mining
         private IUpgradeEffectProvider upgradeEffects;
         private IDeepZoneAccessProvider deepZoneAccess;
         private Func<Vector3Int, bool> cellProtectionPredicate;
+        private int deepZoneTopY;
+        private int deepZoneMinDepth;
+        private int deepZoneMaxDepth;
+        private bool hasDeepZoneBoundary;
         private Vector3Int activeCell;
         private TileBase activeTileAsset;
         private MiningTileDto activeTile;
@@ -114,6 +118,14 @@ namespace SubTerra.Gameplay.Mining
             cellProtectionPredicate = predicate;
         }
 
+        public void ConfigureDeepZoneBoundary(int topY, int minDepth, int maxDepth)
+        {
+            deepZoneTopY = topY;
+            deepZoneMinDepth = Mathf.Max(1, minDepth);
+            deepZoneMaxDepth = Mathf.Max(deepZoneMinDepth, maxDepth);
+            hasDeepZoneBoundary = true;
+        }
+
         public bool TryStartMining(Vector3Int cell)
         {
             if (IsMining && activeCell == cell)
@@ -148,6 +160,11 @@ namespace SubTerra.Gameplay.Mining
             if (definition.tileId == LockedSignalTileId)
             {
                 return TryAccessDeepZoneSignal(cell);
+            }
+
+            if (IsDeepZoneCell(cell) && deepZoneAccess?.IsDeepZoneUnlocked != true)
+            {
+                return Fail(MiningFailureReason.DeepZoneLocked);
             }
 
             if (!definition.isMineable)
@@ -295,6 +312,17 @@ namespace SubTerra.Gameplay.Mining
         {
             return Array.IndexOf(protectedCells, cell) >= 0
                 || (cellProtectionPredicate != null && cellProtectionPredicate(cell));
+        }
+
+        private bool IsDeepZoneCell(Vector3Int cell)
+        {
+            if (!hasDeepZoneBoundary)
+            {
+                return false;
+            }
+
+            int depth = deepZoneTopY - cell.y + 1;
+            return depth >= deepZoneMinDepth && depth <= deepZoneMaxDepth;
         }
 
         private bool CompleteMining()

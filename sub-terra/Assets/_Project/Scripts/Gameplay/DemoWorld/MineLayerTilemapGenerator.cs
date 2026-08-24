@@ -130,9 +130,23 @@ namespace SubTerra.Gameplay.DemoWorld
 
             worldSeed = seed;
             CurrentLayout = layout;
+            ConfigureDeepZoneMiningBoundary();
             snapshotSystem?.ConfigureBaseWorldIdentity(seed, generatorVersion);
             structuralSystem?.ConfigureWorldSeed(seed);
             return true;
+        }
+
+        private void ConfigureDeepZoneMiningBoundary()
+        {
+            MineLayerBandDefinition deepBand = distribution.GetBand(distribution.SignalDepth);
+            MiningSystem miningSystem = GetComponent<MiningSystem>();
+            if (deepBand != null && miningSystem != null)
+            {
+                miningSystem.ConfigureDeepZoneBoundary(
+                    distribution.TopY,
+                    deepBand.MinDepth,
+                    deepBand.MaxDepth);
+            }
         }
 
         private bool HasAllTiles()
