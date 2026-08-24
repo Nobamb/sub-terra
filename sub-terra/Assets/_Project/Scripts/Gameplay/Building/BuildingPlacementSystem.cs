@@ -11,6 +11,8 @@ namespace SubTerra.Gameplay.Building
     /// <summary>Owns grid validation and runtime creation; inventory spending stays behind an adapter.</summary>
     public sealed class BuildingPlacementSystem : MonoBehaviour
     {
+        private const string ElevatorProtectedGroundTileName = "ElevatorProtectedBlock";
+
         [SerializeField] private Tilemap terrainTilemap;
         [SerializeField] private Transform buildingRoot;
         [SerializeField] private MonoBehaviour resourceWalletBehaviour;
@@ -156,9 +158,23 @@ namespace SubTerra.Gameplay.Building
                 // 지면은 footprint 하단 행만 검사한다.
                 // 높이 2 이상에서 윗칸에 cell+down 타일을 요구하면 빈 공간이 필요한 윗칸이 영원히 MissingGround가 된다.
                 bool isBottomRow = cell.y == origin.y;
+                Vector3Int groundCell = cell + Vector3Int.down;
+                TileBase groundTile = terrainTilemap != null ? terrainTilemap.GetTile(groundCell) : null;
+                if (isBottomRow
+                    && (occupiedCells.Contains(groundCell)
+                        || (groundTile != null
+                            && string.Equals(
+                                groundTile.name,
+                                ElevatorProtectedGroundTileName,
+                                StringComparison.Ordinal))))
+                {
+                    failure = BuildingPlacementFailure.Occupied;
+                    return false;
+                }
+
                 if (selection.RequiresGround
                     && isBottomRow
-                    && (terrainTilemap == null || !terrainTilemap.HasTile(cell + Vector3Int.down)))
+                    && groundTile == null)
                 {
                     failure = BuildingPlacementFailure.MissingGround;
                     return false;

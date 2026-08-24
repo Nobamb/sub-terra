@@ -74,6 +74,63 @@ namespace SubTerra.Gameplay.Building.Tests
         }
 
         [Test]
+        public void PromptB64_CannotPlaceDirectlyAboveAnotherBuilding()
+        {
+            var setup = CreateSetup(
+                maximumDistance: 5f,
+                areaSize: new Vector2(12f, 8f),
+                needsGround: false);
+            try
+            {
+                Assert.That(setup.Placement.TryPlaceAt(Vector3Int.zero).IsSuccess, Is.True);
+                setup.Placement.Select(setup.Definition);
+
+                var cellAboveBuilding = Vector3Int.up;
+                Assert.That(
+                    setup.Placement.CanPlaceAt(cellAboveBuilding, out var failure),
+                    Is.False);
+                Assert.That(failure, Is.EqualTo(BuildingPlacementFailure.Occupied));
+
+                var rejected = setup.Placement.TryPlaceAt(cellAboveBuilding);
+                Assert.That(rejected.IsSuccess, Is.False);
+                Assert.That(setup.Wallet.SpendCount, Is.EqualTo(1));
+                Assert.That(setup.BuildingRoot.childCount, Is.EqualTo(1));
+            }
+            finally
+            {
+                setup.Dispose();
+            }
+        }
+
+        [Test]
+        public void PromptB64_CannotPlaceOnElevatorProtectedGround()
+        {
+            var setup = CreateSetup(
+                maximumDistance: 5f,
+                areaSize: new Vector2(12f, 8f),
+                needsGround: false);
+            try
+            {
+                setup.Tile.name = "ElevatorProtectedBlock";
+                setup.Terrain.SetTile(Vector3Int.down, setup.Tile);
+
+                Assert.That(
+                    setup.Placement.CanPlaceAt(Vector3Int.zero, out var failure),
+                    Is.False);
+                Assert.That(failure, Is.EqualTo(BuildingPlacementFailure.Occupied));
+
+                var rejected = setup.Placement.TryPlaceAt(Vector3Int.zero);
+                Assert.That(rejected.IsSuccess, Is.False);
+                Assert.That(setup.Wallet.SpendCount, Is.Zero);
+                Assert.That(setup.BuildingRoot.childCount, Is.Zero);
+            }
+            finally
+            {
+                setup.Dispose();
+            }
+        }
+
+        [Test]
         public void TryPlaceAt_SuccessIsSingleShotAndSpendsExactlyOnce()
         {
             var setup = CreateSetup(maximumDistance: 5f, areaSize: new Vector2(12f, 8f));
@@ -356,7 +413,8 @@ namespace SubTerra.Gameplay.Building.Tests
         private static PlacementSetup CreateSetup(
             float maximumDistance,
             Vector2 areaSize,
-            Vector2Int? footprint = null)
+            Vector2Int? footprint = null,
+            bool needsGround = true)
         {
             var host = new GameObject("PlacementSetup");
             host.SetActive(false);
@@ -385,7 +443,7 @@ namespace SubTerra.Gameplay.Building.Tests
             var buildingId = size.x > 1 || size.y > 1
                 ? "building.escape_portal.emergency"
                 : "building.support.basic";
-            definition.EditorSet(buildingId, prefab, size, true);
+            definition.EditorSet(buildingId, prefab, size, needsGround);
             var wallet = new RecordingWallet();
             var placement = host.AddComponent<BuildingPlacementSystem>();
             SetField(placement, "terrainTilemap", terrain);
