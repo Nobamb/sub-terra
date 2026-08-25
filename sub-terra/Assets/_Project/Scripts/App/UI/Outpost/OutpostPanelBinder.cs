@@ -50,6 +50,8 @@ namespace SubTerra.App.UI.Outpost
             {
                 interactAction.started += OnInteractStarted;
             }
+
+            WireCloseButton();
         }
 
         private void OnDisable()
@@ -57,6 +59,22 @@ namespace SubTerra.App.UI.Outpost
             if (interactAction != null)
             {
                 interactAction.started -= OnInteractStarted;
+            }
+
+            UnwireCloseButton();
+        }
+
+        private void Update()
+        {
+            if (presenter == null || !presenter.IsInteractionPanelOpen)
+            {
+                return;
+            }
+
+            var keyboard = Keyboard.current;
+            if (keyboard != null && keyboard.escapeKey.wasPressedThisFrame)
+            {
+                ClosePanel();
             }
         }
 
@@ -142,6 +160,13 @@ namespace SubTerra.App.UI.Outpost
             presenter?.DismissTutorial();
         }
 
+        /// <summary>우측 상단 X와 ESC가 공유하는 닫기 경로. 시설에서 떨어지지 않아도 창만 숨긴다.</summary>
+        public void ClosePanel()
+        {
+            presenter?.DismissInteractionPanel();
+            UiKeyboardSubmitGuard.ClearSelection();
+        }
+
         private void OnInteractStarted(InputAction.CallbackContext context)
         {
             if (context.started)
@@ -177,6 +202,30 @@ namespace SubTerra.App.UI.Outpost
         private void OnMineralSearchChanged(string query)
         {
             presenter?.SetMineralSearch(query);
+        }
+
+        private void WireCloseButton()
+        {
+            var closeButton = view != null ? view.CloseButton : null;
+            if (closeButton == null)
+            {
+                return;
+            }
+
+            closeButton.onClick.RemoveListener(ClosePanel);
+            closeButton.onClick.AddListener(ClosePanel);
+            UiKeyboardSubmitGuard.ConfigurePointerPreferredButton(closeButton);
+        }
+
+        private void UnwireCloseButton()
+        {
+            var closeButton = view != null ? view.CloseButton : null;
+            if (closeButton == null)
+            {
+                return;
+            }
+
+            closeButton.onClick.RemoveListener(ClosePanel);
         }
     }
 }

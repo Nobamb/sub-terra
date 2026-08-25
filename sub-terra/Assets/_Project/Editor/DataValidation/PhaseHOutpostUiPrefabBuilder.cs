@@ -183,6 +183,7 @@ namespace SubTerra.App.Editor.DataValidation
                 AssetDatabase.LoadAssetAtPath<InputActionAsset>(InputActionsPath);
             binderObject.ApplyModifiedPropertiesWithoutUndo();
             PromptB69StoragePickerBuilder.ApplyTo(root);
+            PromptB70FacilityPanelCloseBuilder.ApplyTo(root);
 
             coreRoot.SetActive(false);
             chargerRoot.SetActive(false);

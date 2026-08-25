@@ -22,6 +22,7 @@ namespace SubTerra.App.UI.Outpost
 
         public bool IsBound => service != null;
         public OutpostPanelMode ActiveMode => activeMode;
+        public bool IsInteractionPanelOpen => interactionPanelRequested;
 
         public OutpostPanelPresenter(IOutpostPanelView view)
         {
@@ -114,6 +115,15 @@ namespace SubTerra.App.UI.Outpost
 
         /// <summary>엘리베이터가 공용 Interact 입력을 우선 사용하면 열려 있던 시설 패널도 닫는다.</summary>
         public void YieldInteraction()
+        {
+            CloseInteractionPanel();
+        }
+
+        /// <summary>
+        /// X 버튼 또는 ESC로 창만 닫는다.
+        /// 시설 범위 안에 있어도 숨기며, 같은 시설에서 E로 다시 열 수 있다.
+        /// </summary>
+        public void DismissInteractionPanel()
         {
             CloseInteractionPanel();
         }

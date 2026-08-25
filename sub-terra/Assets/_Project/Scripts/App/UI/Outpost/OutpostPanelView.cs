@@ -30,7 +30,10 @@ namespace SubTerra.App.UI.Outpost
         [SerializeField] private OutpostMineralPickerView mineralPicker;
         [SerializeField] private TMP_Text resultText;
         [SerializeField] private GameObject tutorialRoot;
+        [SerializeField] private Button closeButton;
         [SerializeField] private Button[] operationButtons;
+
+        public Button CloseButton => closeButton;
 
         private GameObject interactionMessageRoot;
         private TMP_Text interactionMessageText;
@@ -258,7 +261,8 @@ namespace SubTerra.App.UI.Outpost
                 && selectedMineralText != null
                 && mineralPicker != null
                 && mineralPicker.HasRequiredReferences()
-                && resultText != null;
+                && resultText != null
+                && closeButton != null;
         }
 
         private static void SetActive(GameObject target, bool active)

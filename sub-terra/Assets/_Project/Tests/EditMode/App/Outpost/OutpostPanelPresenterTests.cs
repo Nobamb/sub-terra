@@ -306,6 +306,41 @@ namespace SubTerra.App.Tests.Outpost
             presenter.Unbind();
         }
 
+        [Test]
+        public void PromptB70_DismissClosesPanelWhileStillInRange_AndECanReopen()
+        {
+            var catalog = new InMemoryMineralCatalog();
+            var state = GameState.CreateNew();
+            var service = new OutpostService(
+                new InventoryService(catalog, 100f, state),
+                catalog,
+                state);
+            var view = new RecordingView();
+            var presenter = new OutpostPanelPresenter(view);
+            presenter.Bind(service);
+            service.ApplyRuntimeStatus(new OutpostStatusDto
+            {
+                isInInteractionRange = true,
+                interactionFacilityInstanceId = "storage.1",
+                interactionFacilityBuildingId = DataIds.Buildings.StorageBasic,
+                connectedFacilities = new List<ConnectedFacilityStatusDto>()
+            });
+
+            presenter.ToggleInteractionPanel();
+            Assert.That(view.Visible, Is.True);
+            Assert.That(presenter.IsInteractionPanelOpen, Is.True);
+
+            presenter.DismissInteractionPanel();
+            Assert.That(view.Visible, Is.False);
+            Assert.That(presenter.IsInteractionPanelOpen, Is.False);
+            Assert.That(service.IsFacilityInteraction, Is.True, "닫아도 시설 범위에는 남아 있어야 한다.");
+
+            presenter.ToggleInteractionPanel();
+            Assert.That(view.Visible, Is.True);
+            Assert.That(view.Mode, Is.EqualTo(OutpostPanelMode.Storage));
+            presenter.Unbind();
+        }
+
         private sealed class RecordingView : IOutpostPanelView
         {
             public bool Visible;
