@@ -11,6 +11,7 @@ namespace SubTerra.App.UI.Outpost
     {
         [SerializeField] private OutpostPanelView view;
         [SerializeField] private TMP_InputField quantityInput;
+        [SerializeField] private OutpostMineralPickerView mineralPicker;
         [SerializeField] private InputActionAsset inputActions;
         [SerializeField] private string interactActionPath = "Player/Interact";
 
@@ -33,6 +34,12 @@ namespace SubTerra.App.UI.Outpost
             if (quantityInput != null)
             {
                 quantityInput.onValueChanged.AddListener(OnQuantityChanged);
+            }
+
+            if (mineralPicker != null)
+            {
+                mineralPicker.SearchChanged += OnMineralSearchChanged;
+                mineralPicker.MineralSelected += SelectMineral;
             }
         }
 
@@ -58,6 +65,12 @@ namespace SubTerra.App.UI.Outpost
             if (quantityInput != null)
             {
                 quantityInput.onValueChanged.RemoveListener(OnQuantityChanged);
+            }
+
+            if (mineralPicker != null)
+            {
+                mineralPicker.SearchChanged -= OnMineralSearchChanged;
+                mineralPicker.MineralSelected -= SelectMineral;
             }
 
             presenter?.Unbind();
@@ -159,6 +172,11 @@ namespace SubTerra.App.UI.Outpost
         private void OnQuantityChanged(string _)
         {
             presenter?.SetQuantity(ReadQuantity());
+        }
+
+        private void OnMineralSearchChanged(string query)
+        {
+            presenter?.SetMineralSearch(query);
         }
     }
 }

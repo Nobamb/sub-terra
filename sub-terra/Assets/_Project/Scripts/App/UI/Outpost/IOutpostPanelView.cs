@@ -23,6 +23,8 @@ namespace SubTerra.App.UI.Outpost
         void SetSettlementCargo(string cargo);
         void SetCheckpoint(string checkpoint);
         void SetSelectedMineral(string summary);
+        void SetMineralOptions(IReadOnlyList<OutpostMineralOption> options, string selectedMineralId);
+        void ClearMineralSearch();
         void SetResult(string message, bool isError);
         void ShowTemporaryMessage(string message, float durationSeconds);
         void SetTutorialVisible(bool visible);

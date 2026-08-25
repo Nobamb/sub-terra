@@ -163,7 +163,9 @@ namespace SubTerra.App.Outpost
 
             var playerQuantity = inventory.State.GetQuantity(mineralId);
             var storageQuantity = state.GetStorageQuantity(mineralId);
-            if (playerQuantity < quantity)
+            // 10개를 요청해도 8개만 있으면 남은 8개 전부를 보관한다.
+            var transferQuantity = OutpostTransferQuantity.ClampToAvailable(quantity, playerQuantity);
+            if (transferQuantity <= 0)
             {
                 return Complete(Fail(
                     OutpostOperationStatus.InsufficientQuantity,
@@ -171,7 +173,7 @@ namespace SubTerra.App.Outpost
                     "플레이어 화물이 부족합니다."));
             }
 
-            if (storageQuantity > int.MaxValue - quantity)
+            if (storageQuantity > int.MaxValue - transferQuantity)
             {
                 return Complete(Fail(
                     OutpostOperationStatus.OverflowRisk,
@@ -180,7 +182,7 @@ namespace SubTerra.App.Outpost
             }
 
             // 출발지 검증을 모두 마친 뒤 두 상태를 한 경로에서 변경한다.
-            var reduction = inventory.TryReduceMineral(mineralId, quantity);
+            var reduction = inventory.TryReduceMineral(mineralId, transferQuantity);
             if (reduction.Status != InventoryMutationStatus.Success)
             {
                 return Complete(Fail(
@@ -189,13 +191,13 @@ namespace SubTerra.App.Outpost
                     "화물 이동에 실패했습니다."));
             }
 
-            state.SetStorageQuantity(mineralId, storageQuantity + quantity);
+            state.SetStorageQuantity(mineralId, storageQuantity + transferQuantity);
             var result = Success(
                 OutpostOperationKind.Deposit,
                 mineralId,
-                quantity,
+                transferQuantity,
                 0,
-                "보관함에 옮겼습니다.");
+                "보관함에 " + transferQuantity + "개를 옮겼습니다.");
             RaiseSnapshotChanged();
             return Complete(result);
         }
@@ -221,7 +223,9 @@ namespace SubTerra.App.Outpost
             }
 
             var storageQuantity = state.GetStorageQuantity(mineralId);
-            if (storageQuantity < quantity)
+            // 10개를 꺼내도 보관이 8개면 남은 8개 전부를 꺼낸다.
+            var transferQuantity = OutpostTransferQuantity.ClampToAvailable(quantity, storageQuantity);
+            if (transferQuantity <= 0)
             {
                 return Complete(Fail(
                     OutpostOperationStatus.InsufficientQuantity,
@@ -230,7 +234,7 @@ namespace SubTerra.App.Outpost
             }
 
             var playerQuantity = inventory.State.GetQuantity(mineralId);
-            if (playerQuantity > int.MaxValue - quantity)
+            if (playerQuantity > int.MaxValue - transferQuantity)
             {
                 return Complete(Fail(
                     OutpostOperationStatus.OverflowRisk,
@@ -238,7 +242,7 @@ namespace SubTerra.App.Outpost
                     "플레이어 화물 수량 한도를 초과합니다."));
             }
 
-            var addedWeight = info.UnitWeight * quantity;
+            var addedWeight = info.UnitWeight * transferQuantity;
             if (addedWeight < 0f
                 || inventory.CurrentWeight + addedWeight > inventory.MaxCapacity + 0.0001f)
             {
@@ -249,9 +253,9 @@ namespace SubTerra.App.Outpost
             }
 
             // 정확히 전량을 수용할 수 있음을 확인한 뒤 이동한다.
-            var addition = inventory.TryAddMineral(mineralId, quantity);
+            var addition = inventory.TryAddMineral(mineralId, transferQuantity);
             if (addition.Status != InventoryMutationStatus.Success
-                || addition.AcceptedQuantity != quantity)
+                || addition.AcceptedQuantity != transferQuantity)
             {
                 return Complete(Fail(
                     OutpostOperationStatus.CapacityExceeded,
@@ -259,13 +263,13 @@ namespace SubTerra.App.Outpost
                     "플레이어 화물 이동에 실패했습니다."));
             }
 
-            state.SetStorageQuantity(mineralId, storageQuantity - quantity);
+            state.SetStorageQuantity(mineralId, storageQuantity - transferQuantity);
             var result = Success(
                 OutpostOperationKind.Withdraw,
                 mineralId,
-                quantity,
+                transferQuantity,
                 0,
-                "화물로 옮겼습니다.");
+                "화물로 " + transferQuantity + "개를 옮겼습니다.");
             RaiseSnapshotChanged();
             return Complete(result);
         }

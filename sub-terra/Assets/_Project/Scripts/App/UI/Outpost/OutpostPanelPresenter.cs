@@ -16,6 +16,7 @@ namespace SubTerra.App.UI.Outpost
         private string openedFacilityInstanceId = string.Empty;
         private string openedFacilityBuildingId = string.Empty;
         private string selectedMineralId = string.Empty;
+        private string mineralSearchQuery = string.Empty;
         private int selectedQuantity = 1;
         private OutpostPanelMode activeMode;
 
@@ -86,8 +87,10 @@ namespace SubTerra.App.UI.Outpost
             openedFacilityInstanceId = service.InteractionFacilityInstanceId;
             openedFacilityBuildingId = service.InteractionFacilityBuildingId;
             selectedMineralId = string.Empty;
+            mineralSearchQuery = string.Empty;
             selectedQuantity = 1;
             activeMode = mode;
+            view?.ClearMineralSearch();
             view?.SetMode(activeMode);
             view?.SetResult(string.Empty, false);
             Render(service.GetSnapshot());
@@ -119,7 +122,15 @@ namespace SubTerra.App.UI.Outpost
         {
             selectedMineralId = mineralId ?? string.Empty;
             selectedQuantity = 1;
+            mineralSearchQuery = string.Empty;
             RenderSelection();
+            RenderMineralOptions();
+        }
+
+        public void SetMineralSearch(string query)
+        {
+            mineralSearchQuery = query ?? string.Empty;
+            RenderMineralOptions();
         }
 
         public void SetQuantity(int quantity)
@@ -240,6 +251,17 @@ namespace SubTerra.App.UI.Outpost
                 ? "체크포인트 없음"
                 : snapshot.CheckpointId + " (" + snapshot.CheckpointX + ", " + snapshot.CheckpointY + ")");
             RenderSelection();
+            RenderMineralOptions();
+        }
+
+        private void RenderMineralOptions()
+        {
+            var options = OutpostMineralPickerFilter.Build(
+                latestSnapshot?.PlayerCargo,
+                latestSnapshot?.Storage);
+            view?.SetMineralOptions(
+                OutpostMineralPickerFilter.Filter(options, mineralSearchQuery),
+                selectedMineralId);
         }
 
         private void RenderSelection()
@@ -295,8 +317,10 @@ namespace SubTerra.App.UI.Outpost
             openedFacilityInstanceId = string.Empty;
             openedFacilityBuildingId = string.Empty;
             selectedMineralId = string.Empty;
+            mineralSearchQuery = string.Empty;
             selectedQuantity = 1;
             activeMode = OutpostPanelMode.None;
+            view?.ClearMineralSearch();
             view?.SetMode(OutpostPanelMode.None);
             view?.SetVisible(false);
         }

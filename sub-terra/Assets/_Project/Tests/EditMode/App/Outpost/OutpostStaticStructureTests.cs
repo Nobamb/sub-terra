@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using NUnit.Framework;
+using SubTerra.App.Editor.DataValidation;
 using SubTerra.App.Outpost;
 using SubTerra.App.UI.Outpost;
 using UnityEditor;
@@ -74,6 +75,30 @@ namespace SubTerra.App.Tests.Outpost
             Assert.That(scrollRects.Any(scroll => scroll.name == "FacilitiesScroll"), Is.True);
             Assert.That(scrollRects.Any(scroll => scroll.name == "SettlementCargoScroll"), Is.True);
             Assert.That(scrollRects.All(scroll => !scroll.horizontal && scroll.vertical), Is.True);
+        }
+
+        [Test]
+        public void PromptB69_OutpostPanel_HasSearchableMineralDropdown()
+        {
+            PromptB69StoragePickerBuilder.Build();
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                "Assets/_Project/Prefabs/UI/OutpostPanel.prefab");
+
+            Assert.That(prefab, Is.Not.Null);
+            var transaction = prefab.transform.Find("PanelRoot/TransactionRoot");
+            Assert.That(transaction, Is.Not.Null);
+            Assert.That(transaction.Find("Select_mineral.copper"), Is.Null);
+            Assert.That(transaction.Find("Select_mineral.iron"), Is.Null);
+            Assert.That(transaction.Find("Select_mineral.lithium"), Is.Null);
+
+            var picker = transaction.Find("MineralPicker");
+            Assert.That(picker, Is.Not.Null);
+            Assert.That(picker.Find("SearchInput"), Is.Not.Null);
+            Assert.That(picker.Find("CaptionButton"), Is.Not.Null);
+            Assert.That(picker.Find("OptionsPanel"), Is.Not.Null);
+            Assert.That(picker.GetComponent<OutpostMineralPickerView>(), Is.Not.Null);
+            Assert.That(picker.GetComponent<OutpostMineralPickerView>().HasRequiredReferences(), Is.True);
+            Assert.That(prefab.GetComponent<OutpostPanelView>().HasRequiredReferences(), Is.True);
         }
     }
 }

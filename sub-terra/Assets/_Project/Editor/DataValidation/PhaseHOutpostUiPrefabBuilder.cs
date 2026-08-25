@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.IO;
-using SubTerra.App.Core.Data;
 using SubTerra.App.UI.Outpost;
 using TMPro;
 using UnityEditor;
@@ -110,12 +109,6 @@ namespace SubTerra.App.Editor.DataValidation
             var transactionRoot = CreateLayer(panelRoot.transform, "TransactionRoot");
             var selected = CreateText(transactionRoot.transform, "SelectedMineralText",
                 new Vector2(24f, -326f), new Vector2(710f, 36f), 18f, "자원을 선택하세요.");
-            CreateMineralButton(transactionRoot.transform, binder, DataIds.Minerals.Copper, "구리",
-                new Vector2(24f, -374f));
-            CreateMineralButton(transactionRoot.transform, binder, DataIds.Minerals.Iron, "철",
-                new Vector2(148f, -374f));
-            CreateMineralButton(transactionRoot.transform, binder, DataIds.Minerals.Lithium, "리튬",
-                new Vector2(272f, -374f));
 
             var quantity = CreateInputField(transactionRoot.transform, "QuantityInput",
                 new Vector2(24f, -426f), new Vector2(150f, 40f), "직접 입력");
@@ -189,6 +182,7 @@ namespace SubTerra.App.Editor.DataValidation
             binderObject.FindProperty("inputActions").objectReferenceValue =
                 AssetDatabase.LoadAssetAtPath<InputActionAsset>(InputActionsPath);
             binderObject.ApplyModifiedPropertiesWithoutUndo();
+            PromptB69StoragePickerBuilder.ApplyTo(root);
 
             coreRoot.SetActive(false);
             chargerRoot.SetActive(false);
@@ -312,17 +306,6 @@ namespace SubTerra.App.Editor.DataValidation
             scroll.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHideAndExpandViewport;
             scroll.verticalScrollbarSpacing = 4f;
             return text;
-        }
-
-        private static void CreateMineralButton(
-            Transform parent,
-            OutpostPanelBinder binder,
-            string mineralId,
-            string label,
-            Vector2 position)
-        {
-            var button = CreateButton(parent, "Select_" + mineralId, position, new Vector2(110f, 38f), label);
-            button.gameObject.AddComponent<OutpostMineralSelectButton>().EditorSet(mineralId, binder);
         }
 
         private static TMP_InputField CreateInputField(

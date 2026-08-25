@@ -270,6 +270,42 @@ namespace SubTerra.App.Tests.Outpost
             presenter.Unbind();
         }
 
+        [Test]
+        public void PromptB69_Search_FiltersMineralDropdownByPartialName()
+        {
+            var catalog = new InMemoryMineralCatalog();
+            catalog.Register(DataIds.Minerals.Copper, 1.5f, 10, "구리");
+            catalog.Register(DataIds.Minerals.Iron, 2f, 15, "철");
+            catalog.Register(DataIds.Minerals.Lithium, 0.8f, 20, "리튬");
+            var state = GameState.CreateNew();
+            var inventory = new InventoryService(catalog, 100f, state);
+            inventory.TryAddMineral(DataIds.Minerals.Copper, 8);
+            var service = new OutpostService(inventory, catalog, state);
+            var view = new RecordingView();
+            var presenter = new OutpostPanelPresenter(view);
+            presenter.Bind(service);
+            service.ApplyRuntimeStatus(new OutpostStatusDto
+            {
+                isInInteractionRange = true,
+                interactionFacilityInstanceId = "storage.1",
+                interactionFacilityBuildingId = DataIds.Buildings.StorageBasic,
+                connectedFacilities = new List<ConnectedFacilityStatusDto>()
+            });
+
+            presenter.ToggleInteractionPanel();
+            Assert.That(view.MineralOptions, Is.Not.Null);
+            Assert.That(view.MineralOptions.Count, Is.EqualTo(3));
+
+            presenter.SetMineralSearch("구");
+            Assert.That(view.MineralOptions.Count, Is.EqualTo(1));
+            Assert.That(view.MineralOptions[0].MineralId, Is.EqualTo(DataIds.Minerals.Copper));
+
+            presenter.SelectMineral(DataIds.Minerals.Copper);
+            Assert.That(view.PickerSelectedMineralId, Is.EqualTo(DataIds.Minerals.Copper));
+            Assert.That(view.MineralOptions.Count, Is.EqualTo(3));
+            presenter.Unbind();
+        }
+
         private sealed class RecordingView : IOutpostPanelView
         {
             public bool Visible;
@@ -296,7 +332,19 @@ namespace SubTerra.App.Tests.Outpost
             public void SetCargo(string playerCargo, string storageCargo) { }
             public void SetSettlementCargo(string cargo) { }
             public void SetCheckpoint(string checkpoint) { }
+            public IReadOnlyList<OutpostMineralOption> MineralOptions;
+            public string PickerSelectedMineralId;
+
             public void SetSelectedMineral(string summary) { }
+            public void SetMineralOptions(
+                IReadOnlyList<OutpostMineralOption> options,
+                string selectedMineralId)
+            {
+                MineralOptions = options;
+                PickerSelectedMineralId = selectedMineralId;
+            }
+
+            public void ClearMineralSearch() { }
             public void SetResult(string message, bool isError) { }
             public void ShowTemporaryMessage(string message, float durationSeconds)
             {

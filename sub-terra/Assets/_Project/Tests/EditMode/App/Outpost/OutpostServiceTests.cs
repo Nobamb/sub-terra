@@ -178,6 +178,51 @@ namespace SubTerra.App.Tests.Outpost
         }
 
         [Test]
+        public void PromptB69_Deposit_ClampsToOwnedQuantity()
+        {
+            var system = CreateSystem();
+            system.Inventory.TryAddMineral(Copper, 8);
+            system.Service.ApplyRuntimeStatus(CreateStorageStatus());
+
+            var result = system.Service.TryDeposit(Copper, 10);
+
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(result.Quantity, Is.EqualTo(8));
+            Assert.That(system.Inventory.State.GetQuantity(Copper), Is.Zero);
+            Assert.That(system.Service.State.GetStorageQuantity(Copper), Is.EqualTo(8));
+        }
+
+        [Test]
+        public void PromptB69_Withdraw_ClampsToStoredQuantity()
+        {
+            var system = CreateSystem();
+            system.Inventory.TryAddMineral(Copper, 8);
+            system.Service.ApplyRuntimeStatus(CreateStorageStatus());
+            system.Service.TryDeposit(Copper, 8);
+
+            var result = system.Service.TryWithdraw(Copper, 10);
+
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(result.Quantity, Is.EqualTo(8));
+            Assert.That(system.Inventory.State.GetQuantity(Copper), Is.EqualTo(8));
+            Assert.That(system.Service.State.GetStorageQuantity(Copper), Is.Zero);
+        }
+
+        [Test]
+        public void PromptB69_Deposit_ZeroOwned_StillFails()
+        {
+            var system = CreateSystem();
+            system.Service.ApplyRuntimeStatus(CreateStorageStatus());
+            var before = system.Inventory.State.CaptureFingerprint();
+
+            var result = system.Service.TryDeposit(Copper, 10);
+
+            Assert.That(result.Status, Is.EqualTo(OutpostOperationStatus.InsufficientQuantity));
+            Assert.That(system.Inventory.State.CaptureFingerprint().Equals(before), Is.True);
+            Assert.That(system.Service.State.GetStorageQuantity(Copper), Is.Zero);
+        }
+
+        [Test]
         public void H_S04_FailedWithdraw_IsAtomic()
         {
             var system = CreateSystem(maxCapacity: 8f);
@@ -333,6 +378,18 @@ namespace SubTerra.App.Tests.Outpost
             var inventory = new InventoryService(catalog, maxCapacity, state);
             var service = new OutpostService(inventory, catalog, state);
             return new TestSystem(service, inventory, state);
+        }
+
+        private static OutpostStatusDto CreateStorageStatus()
+        {
+            return new OutpostStatusDto
+            {
+                isActive = false,
+                isInInteractionRange = true,
+                interactionFacilityInstanceId = "storage.1",
+                interactionFacilityBuildingId = DataIds.Buildings.StorageBasic,
+                connectedFacilities = new List<ConnectedFacilityStatusDto>()
+            };
         }
 
         private static OutpostStatusDto CreateActiveStatus()

@@ -27,6 +27,7 @@ namespace SubTerra.App.UI.Outpost
         [SerializeField] private TMP_Text settlementCargoText;
         [SerializeField] private TMP_Text checkpointText;
         [SerializeField] private TMP_Text selectedMineralText;
+        [SerializeField] private OutpostMineralPickerView mineralPicker;
         [SerializeField] private TMP_Text resultText;
         [SerializeField] private GameObject tutorialRoot;
         [SerializeField] private Button[] operationButtons;
@@ -166,6 +167,24 @@ namespace SubTerra.App.UI.Outpost
             }
         }
 
+        public void SetMineralOptions(
+            IReadOnlyList<OutpostMineralOption> options,
+            string selectedMineralId)
+        {
+            if (mineralPicker != null)
+            {
+                mineralPicker.SetOptions(options, selectedMineralId);
+            }
+        }
+
+        public void ClearMineralSearch()
+        {
+            if (mineralPicker != null)
+            {
+                mineralPicker.ClearSearch();
+            }
+        }
+
         public void SetResult(string message, bool isError)
         {
             if (resultText != null)
@@ -237,6 +256,8 @@ namespace SubTerra.App.UI.Outpost
                 && settlementCargoText != null
                 && checkpointText != null
                 && selectedMineralText != null
+                && mineralPicker != null
+                && mineralPicker.HasRequiredReferences()
                 && resultText != null;
         }
 
