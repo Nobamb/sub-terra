@@ -26,11 +26,13 @@ namespace SubTerra.Gameplay.Player
         private Color[] flashBaseColors = Array.Empty<Color>();
         private float damageFlashStartedAt;
         private float damageFlashUntil;
+        private float cargoFallImpactMultiplier = 1f;
 
         public PlayerSurvivalState State { get; private set; }
         public event Action<PlayerSurvivalState> StateChanged;
         public event Action<PlayerHealthReadModel> HealthChanged;
         public event Action<RunFailureInputDto> FailureRequested;
+        public float CurrentCargoFallImpactMultiplier => cargoFallImpactMultiplier;
 
         private void Awake()
         {
@@ -81,6 +83,11 @@ namespace SubTerra.Gameplay.Player
             {
                 PublishStateChanged();
             }
+        }
+
+        public void SetCargoFallImpactMultiplier(float multiplier)
+        {
+            cargoFallImpactMultiplier = Mathf.Max(0f, multiplier);
         }
 
         public void Configure(PlayerSurvivalSettings survivalSettings, Transform target)
@@ -162,12 +169,14 @@ namespace SubTerra.Gameplay.Player
         public bool ApplyFall(float fallDistance, bool usedLadder = false)
         {
             EnsureState();
-            var damage = PlayerFallDamageRules.CalculateDamage(
-                fallDistance,
-                usedLadder,
-                settings.MinimumFallDamageHeight,
-                settings.FallDamageAtThreshold,
-                settings.FallDamagePerAdditionalMeter);
+            var damage = PlayerFallDamageRules.ScaleDamage(
+                PlayerFallDamageRules.CalculateDamage(
+                    fallDistance,
+                    usedLadder,
+                    settings.MinimumFallDamageHeight,
+                    settings.FallDamageAtThreshold,
+                    settings.FallDamagePerAdditionalMeter),
+                cargoFallImpactMultiplier);
             if (damage <= 0)
             {
                 return false;

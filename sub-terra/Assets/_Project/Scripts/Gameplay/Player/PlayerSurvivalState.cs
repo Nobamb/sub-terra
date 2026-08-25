@@ -135,5 +135,23 @@ namespace SubTerra.Gameplay.Player
                 ? int.MaxValue
                 : baseDamage + (int)additional;
         }
+
+        public static int ScaleDamage(int damage, float impactMultiplier)
+        {
+            if (damage <= 0 || impactMultiplier <= 0f || float.IsNaN(impactMultiplier))
+            {
+                return 0;
+            }
+
+            if (float.IsPositiveInfinity(impactMultiplier))
+            {
+                return int.MaxValue;
+            }
+
+            var scaled = Math.Round(
+                damage * (double)impactMultiplier,
+                MidpointRounding.AwayFromZero);
+            return scaled >= int.MaxValue ? int.MaxValue : (int)scaled;
+        }
     }
 }

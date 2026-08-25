@@ -42,6 +42,7 @@ namespace SubTerra.Gameplay.Player
         private float gravityBeforeClimbing;
         private readonly HashSet<LadderZone> activeLadders = new HashSet<LadderZone>();
         private float cargoSpeedMultiplier = 1f;
+        private float cargoJumpMultiplier = 1f;
         private float hazardSpeedMultiplier = 1f;
 
         public Vector2 Position => body != null ? body.position : (Vector2)transform.position;
@@ -53,6 +54,7 @@ namespace SubTerra.Gameplay.Player
         public bool IsMovementRequested => Mathf.Abs(moveInput) > 0.01f
             || Mathf.Abs(verticalMoveInput) > 0.01f;
         public float CurrentSpeedMultiplier => cargoSpeedMultiplier * hazardSpeedMultiplier;
+        public float CurrentJumpMultiplier => cargoJumpMultiplier;
 
         private void Awake()
         {
@@ -180,6 +182,11 @@ namespace SubTerra.Gameplay.Player
             cargoSpeedMultiplier = Mathf.Max(0f, multiplier);
         }
 
+        public void SetCargoJumpMultiplier(float multiplier)
+        {
+            cargoJumpMultiplier = Mathf.Clamp01(multiplier);
+        }
+
         public void SetHazardSpeedMultiplier(float multiplier)
         {
             hazardSpeedMultiplier = Mathf.Max(0f, multiplier);
@@ -253,7 +260,9 @@ namespace SubTerra.Gameplay.Player
                 body.linearVelocity = new Vector2(body.linearVelocityX, 0f);
             }
 
-            body.AddForce(Vector2.up * jumpImpulse, ForceMode2D.Impulse);
+            body.AddForce(
+                Vector2.up * jumpImpulse * cargoJumpMultiplier,
+                ForceMode2D.Impulse);
             jumpAirLockRemaining = jumpAirLockDuration;
             jumpUsedUntilLand = true;
             IsGrounded = false;

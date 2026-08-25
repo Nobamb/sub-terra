@@ -747,6 +747,21 @@ namespace SubTerra.App.Integration
 
             playerMovement.SetCargoSpeedMultiplier(
                 CargoSpeedPolicy.Evaluate(snapshot.CurrentWeight, snapshot.MaxCapacity));
+            playerMovement.SetCargoJumpMultiplier(
+                CargoLoadEffectPolicy.EvaluateJumpMultiplier(
+                    snapshot.CurrentWeight,
+                    snapshot.MaxCapacity));
+
+            var survival = runFailureController != null
+                ? runFailureController.SurvivalController
+                : null;
+            if (survival != null)
+            {
+                survival.SetCargoFallImpactMultiplier(
+                    CargoLoadEffectPolicy.EvaluateFallImpactMultiplier(
+                        snapshot.CurrentWeight,
+                        snapshot.MaxCapacity));
+            }
         }
 
         private void OnInventoryChangedForProgression(InventorySnapshot _)

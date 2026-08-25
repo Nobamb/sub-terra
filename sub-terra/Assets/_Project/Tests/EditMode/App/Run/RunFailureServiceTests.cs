@@ -39,6 +39,26 @@ namespace SubTerra.App.Tests.Run
         }
 
         [Test]
+        public void PromptB68_FallDamage_ScalesWithCargoImpactMultiplier()
+        {
+            Assert.That(
+                CargoLoadEffectPolicy.EvaluateJumpMultiplier(10f, 50f),
+                Is.EqualTo(0.95f).Within(0.0001f));
+            Assert.That(
+                CargoLoadEffectPolicy.EvaluateFallImpactMultiplier(10f, 50f),
+                Is.EqualTo(1.1f).Within(0.0001f));
+            Assert.That(
+                CargoLoadEffectPolicy.EvaluateJumpMultiplier(50f, 50f),
+                Is.EqualTo(0.75f).Within(0.0001f));
+            Assert.That(
+                CargoLoadEffectPolicy.EvaluateFallImpactMultiplier(50f, 50f),
+                Is.EqualTo(1.5f).Within(0.0001f));
+            Assert.That(PlayerFallDamageRules.ScaleDamage(10, 1f), Is.EqualTo(10));
+            Assert.That(PlayerFallDamageRules.ScaleDamage(10, 1.1f), Is.EqualTo(11));
+            Assert.That(PlayerFallDamageRules.ScaleDamage(10, 1.5f), Is.EqualTo(15));
+        }
+
+        [Test]
         public void L_S02_PlayerSurvival_UsesHealthActionAndInvulnerability()
         {
             var state = new PlayerSurvivalState(100);

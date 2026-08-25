@@ -96,6 +96,42 @@ namespace SubTerra.Gameplay.Player.Tests
             Assert.AreEqual(expected, CargoSpeedPolicy.Evaluate(current, maximum), 0.0001f);
         }
 
+        [TestCase(0f, 50f, 1f, 1f)]
+        [TestCase(10f, 50f, 0.95f, 1.1f)]
+        [TestCase(50f, 50f, 0.75f, 1.5f)]
+        [TestCase(75f, 50f, 0.75f, 1.5f)]
+        public void PromptB68_CargoLoadEffects_ScaleLinearlyAndClamp(
+            float current,
+            float maximum,
+            float expectedJump,
+            float expectedFallImpact)
+        {
+            Assert.That(
+                CargoLoadEffectPolicy.EvaluateJumpMultiplier(current, maximum),
+                Is.EqualTo(expectedJump).Within(0.0001f));
+            Assert.That(
+                CargoLoadEffectPolicy.EvaluateFallImpactMultiplier(current, maximum),
+                Is.EqualTo(expectedFallImpact).Within(0.0001f));
+        }
+
+        [UnityTest]
+        public IEnumerator PromptB68_FullCargo_AppliesSeventyFivePercentJumpImpulse()
+        {
+            SetupGroundedPlayerWithContacts(airLockDuration: 0.05f);
+            for (int i = 0; i < 3; i++)
+            {
+                yield return new WaitForFixedUpdate();
+            }
+
+            movement.SetCargoJumpMultiplier(
+                CargoLoadEffectPolicy.EvaluateJumpMultiplier(50f, 50f));
+            movement.RequestJump();
+            yield return new WaitForFixedUpdate();
+
+            Assert.That(movement.CurrentJumpMultiplier, Is.EqualTo(0.75f).Within(0.0001f));
+            Assert.That(body.linearVelocityY, Is.EqualTo(8.25f).Within(0.2f));
+        }
+
         [UnityTest]
         public IEnumerator JumpRequestAddsUpwardVelocityWhenGrounded()
         {
