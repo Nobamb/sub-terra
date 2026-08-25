@@ -262,6 +262,27 @@ namespace SubTerra.Gameplay.Player.Tests
         }
 
         [UnityTest]
+        public IEnumerator JumpingFromLadder_CanGrabSameLadderAgainWithoutLanding()
+        {
+            body.gravityScale = 3f;
+            LadderZone ladder = CreateLadderZone("RegrabbableLadder", out firstLadderObject);
+            movement.EnterLadder(ladder);
+
+            movement.RequestJump();
+            yield return new WaitForFixedUpdate();
+
+            Assert.IsFalse(movement.IsClimbing);
+            Assert.Greater(body.linearVelocityY, 0f);
+
+            yield return new WaitForSeconds(0.2f);
+            movement.SetVerticalMoveInput(1f);
+            yield return new WaitForFixedUpdate();
+
+            Assert.IsTrue(movement.IsClimbing, "지면에 착지하지 않아도 사다리 입력으로 다시 탑승해야 한다.");
+            Assert.AreEqual(0f, body.gravityScale);
+        }
+
+        [UnityTest]
         public IEnumerator TilemapWallStopsThePlayerInsteadOfAllowingPassThrough()
         {
             body.position = new Vector2(-1f, 0.5f);

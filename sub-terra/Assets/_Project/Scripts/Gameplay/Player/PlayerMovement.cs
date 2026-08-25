@@ -76,6 +76,10 @@ namespace SubTerra.Gameplay.Player
             {
                 ApplyVerticalMovement();
             }
+            else if (!jumped)
+            {
+                TryResumeLadderAfterJump();
+            }
         }
 
         private void OnDisable()
@@ -223,7 +227,8 @@ namespace SubTerra.Gameplay.Player
 
             if (IsClimbing)
             {
-                ExitLadder();
+                // Trigger 안에 남아 있으면 접촉 정보를 보존해, 공중에서도 다시 사다리를 잡을 수 있다.
+                ExitLadderMode();
                 body.linearVelocity = new Vector2(body.linearVelocityX, 0f);
                 ApplyJumpImpulse();
                 return true;
@@ -260,6 +265,20 @@ namespace SubTerra.Gameplay.Player
                 ? verticalMoveInput * ladderSpeed * CurrentSpeedMultiplier
                 : 0f;
             body.linearVelocity = new Vector2(body.linearVelocityX, verticalVelocity);
+        }
+
+        private void TryResumeLadderAfterJump()
+        {
+            if (body == null
+                || IsClimbing
+                || activeLadders.Count == 0
+                || jumpAirLockRemaining > 0f
+                || Mathf.Abs(verticalMoveInput) <= 0.01f)
+            {
+                return;
+            }
+
+            EnterLadderMode();
         }
 
         private void UpdateGroundedState()
