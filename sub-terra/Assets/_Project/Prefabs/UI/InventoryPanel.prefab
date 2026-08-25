@@ -229,7 +229,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 12, y: -12}
-  m_SizeDelta: {x: 344, y: 32}
+  m_SizeDelta: {x: 300, y: 32}
   m_Pivot: {x: 0, y: 1}
 --- !u!222 &2608030672410325343
 CanvasRenderer:
@@ -543,7 +543,7 @@ MonoBehaviour:
   m_fontColor32:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
+  m_fontColor: {r: 0.04, g: 0.055, b: 0.08, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -560,8 +560,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 21
-  m_fontSizeBase: 21
+  m_fontSize: 23
+  m_fontSizeBase: 23
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 0
@@ -1220,7 +1220,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -12, y: -48}
+  m_AnchoredPosition: {x: -56, y: -48}
   m_SizeDelta: {x: 382, y: 164}
   m_Pivot: {x: 1, y: 1}
 --- !u!222 &1198907076282933832
@@ -2467,6 +2467,7 @@ GameObject:
   - component: {fileID: 2601604536869110583}
   - component: {fileID: 6270539624754262529}
   - component: {fileID: 1232202294347233562}
+  - component: {fileID: 3946473088965764074}
   m_Layer: 0
   m_Name: WeightHelpIcon
   m_TagString: Untagged
@@ -2491,8 +2492,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -12, y: -12}
-  m_SizeDelta: {x: 30, y: 30}
+  m_AnchoredPosition: {x: -56, y: -11}
+  m_SizeDelta: {x: 34, y: 34}
   m_Pivot: {x: 1, y: 1}
 --- !u!222 &2601604536869110583
 CanvasRenderer:
@@ -2515,7 +2516,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.18, g: 0.24, b: 0.32, a: 1}
+  m_Color: {r: 1, g: 0.72, b: 0.2, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -2545,6 +2546,21 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: SubTerra.App::SubTerra.App.UI.Inventory.InventoryWeightTooltip
   tooltipRoot: {fileID: 5339972500321275705}
+--- !u!114 &3946473088965764074
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8702882180719129196}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e19747de3f5aca642ab2be37e372fb86, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Outline
+  m_EffectColor: {r: 0.05, g: 0.075, b: 0.11, a: 1}
+  m_EffectDistance: {x: 2, y: -2}
+  m_UseGraphicAlpha: 1
 --- !u!1 &9210701586094530635
 GameObject:
   m_ObjectHideFlags: 0
