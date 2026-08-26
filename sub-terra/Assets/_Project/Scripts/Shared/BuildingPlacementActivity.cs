@@ -1,8 +1,7 @@
 namespace SubTerra.Shared
 {
     /// <summary>
-    /// 시설 건설 Preview 활성 여부를 입력 계층이 공유하기 위한 게이트.
-    /// Enter가 채굴과 건설 확정에 동시에 쓰이므로, 건설 중에는 채굴이 Enter를 소비하지 않는다.
+    /// 시설 건설 Preview 활성 여부를 UI 입력 계층이 공유하기 위한 게이트.
     /// </summary>
     public static class BuildingPlacementActivity
     {

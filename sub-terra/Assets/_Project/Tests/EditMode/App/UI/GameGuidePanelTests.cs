@@ -243,6 +243,7 @@ namespace SubTerra.App.Tests.UI
                 InvokePrivateAwake(view);
                 Assert.That(body.fontSize, Is.EqualTo(GameGuidePanelView.GuideFontSize).Within(0.1f));
                 Assert.That(body.text, Does.Contain("기본 게임 조작법"));
+                Assert.That(body.text, Does.Contain("시설 건설 확정: C 키"));
 
                 view.SelectTab(GameGuidePanelView.GuideTab.Mechanics);
                 Assert.That(view.ActiveTab, Is.EqualTo(GameGuidePanelView.GuideTab.Mechanics));

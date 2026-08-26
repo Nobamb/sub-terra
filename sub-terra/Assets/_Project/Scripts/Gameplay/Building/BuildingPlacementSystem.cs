@@ -45,7 +45,7 @@ namespace SubTerra.Gameplay.Building
 
         private void OnDisable()
         {
-            // 비활성 시 잔여 Preview가 Enter 채굴 게이트를 붙잡지 않게 한다.
+            // 비활성 시 잔여 Preview 활성 상태를 정리한다.
             if (selection != null)
             {
                 selection = null;
@@ -252,7 +252,7 @@ namespace SubTerra.Gameplay.Building
         }
 
         /// <summary>
-        /// Enter 확정용: 플레이어 기준 배치 반경 안에서 CanPlaceAt을 통과하는 칸 중
+        /// 단축키 확정용: 플레이어 기준 배치 반경 안에서 CanPlaceAt을 통과하는 칸 중
         /// 가장 가까운 칸을 고른다. 거리 동률이면 발밑 → 전방 → 아래/옆 순.
         /// 후보가 없으면 false와 대표 실패 사유를 반환한다.
         /// </summary>
@@ -344,7 +344,7 @@ namespace SubTerra.Gameplay.Building
         }
 
         /// <summary>
-        /// Enter 확정: 최적 칸에 1회 설치한다. 성공 시 비용 1회 차감·선택 해제(좌클릭과 동일).
+        /// 단축키 확정: 최적 칸에 1회 설치한다. 성공 시 비용 1회 차감·선택 해제(좌클릭과 동일).
         /// 후보가 없을 때는 PlacementRejected를 올리지 않고 실패 결과만 반환한다(선택 유지·사유 표시용).
         /// </summary>
         public BuildingPlacementResult TryPlaceNearest(float facingDirection)

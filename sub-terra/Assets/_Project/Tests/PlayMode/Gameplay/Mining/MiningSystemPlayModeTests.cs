@@ -426,15 +426,25 @@ namespace SubTerra.Gameplay.Mining.Tests
             Assert.IsFalse(action.enabled, "The regression must not rely on the shared Attack action.");
 
             tilemap.SetTile(cell, tile);
-            SetButtonState(keyboard.enterKey, 1f);
-            Assert.IsTrue(keyboard.enterKey.isPressed, "The Enter press was not applied.");
-            InvokePrivate(controller, "Update");
-            Assert.IsTrue(
-                system.IsMining,
-                $"Mining did not start. ControllerActive={controller.isActiveAndEnabled}, "
-                + $"Pending={GetPrivate(controller, "startPending")}, "
-                + $"Failure={system.LastFailure}, Position={movement.Position}, "
-                + $"Facing={movement.FacingDirection}, Cell={cell}");
+            BuildingPlacementActivity.ResetForTests();
+            BuildingPlacementActivity.Begin();
+            try
+            {
+                SetButtonState(keyboard.enterKey, 1f);
+                Assert.IsTrue(keyboard.enterKey.isPressed, "The Enter press was not applied.");
+                InvokePrivate(controller, "Update");
+                Assert.IsTrue(
+                    system.IsMining,
+                    $"Enter must start mining while building placement is active. "
+                    + $"ControllerActive={controller.isActiveAndEnabled}, "
+                    + $"Pending={GetPrivate(controller, "startPending")}, "
+                    + $"Failure={system.LastFailure}, Position={movement.Position}, "
+                    + $"Facing={movement.FacingDirection}, Cell={cell}");
+            }
+            finally
+            {
+                BuildingPlacementActivity.End();
+            }
             Assert.IsNotNull(tilemap.GetTile(cell), "Enter must not bypass mining duration.");
             SetButtonState(keyboard.enterKey, 0f);
             InvokePrivate(controller, "Update");

@@ -1,5 +1,4 @@
 using SubTerra.Gameplay.Player;
-using SubTerra.Shared;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -72,10 +71,8 @@ namespace SubTerra.Gameplay.Mining
 
         private bool IsMiningInputPressed()
         {
-            // 시설 건설 Preview 중 Enter는 근접 설치에 쓰이므로 채굴 입력에서 제외한다.
             bool enterMining = Keyboard.current != null
-                && Keyboard.current.enterKey.isPressed
-                && !BuildingPlacementActivity.IsActive;
+                && Keyboard.current.enterKey.isPressed;
             return enterMining
                 || (Mouse.current != null && Mouse.current.leftButton.isPressed)
                 || (mineAction != null && mineAction.IsPressed());

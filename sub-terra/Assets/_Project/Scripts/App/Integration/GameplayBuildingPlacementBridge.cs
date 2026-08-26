@@ -86,14 +86,11 @@ namespace SubTerra.App.Integration
                 return;
             }
 
-            // Enter: 커서 위치가 아니라 플레이어 근접 최적 칸에 1회 설치(prompt-B 35).
-            // prompt-B 35-3: Enter 배치 직전에 UI 선택을 지워 Submit이 가이드 등을 토글하지 않게 한다.
-            if (Keyboard.current != null
-                && (Keyboard.current.enterKey.wasPressedThisFrame
-                    || Keyboard.current.numpadEnterKey.wasPressedThisFrame))
+            // C: 커서 위치가 아니라 플레이어 근접 최적 칸에 1회 설치(prompt-B 71).
+            if (Keyboard.current != null && Keyboard.current.cKey.wasPressedThisFrame)
             {
                 UiKeyboardSubmitGuard.ClearSelection();
-                TryPlaceNearestByEnter();
+                TryPlaceNearestByShortcut();
                 return;
             }
 
@@ -195,11 +192,11 @@ namespace SubTerra.App.Integration
         }
 
         /// <summary>
-        /// Enter 설치: 6칸 이내·CanPlaceAt 통과·최근접(동률 시 발밑→전방→아래/옆).
+        /// C 설치: 6칸 이내·CanPlaceAt 통과·최근접(동률 시 발밑→전방→아래/옆).
         /// 후보 없음 → 설치 없이 사유만 Invalid로 알림(선택 유지).
         /// 성공 → TryPlaceAt과 동일하게 비용 1회·선택 해제.
         /// </summary>
-        private void TryPlaceNearestByEnter()
+        private void TryPlaceNearestByShortcut()
         {
             float facing = ResolveFacingDirection();
             if (!placementSystem.TryFindBestPlacementCell(
