@@ -264,6 +264,32 @@ namespace SubTerra.Gameplay.Mining.Tests
         }
 
         [Test]
+        public void PromptB72_EnergyEfficiency_AccumulatesFractionalCostAcrossMining()
+        {
+            CreateSystem(out var root, out var tilemap, out var resolver, out var system);
+            var transaction = root.AddComponent<MiningTransaction>();
+            var upgrades = root.AddComponent<UpgradeEffects>();
+            upgrades.EnergyEfficiency = 1.25f; // 20% 절감
+            system.SetRuntimeServices(transaction, upgrades);
+            var tile = ScriptableObject.CreateInstance<Tile>();
+            resolver.RegisterRuntime(tile, new MiningTileDto(
+                "tile.copper", "mineral.copper", 1, true, 1f, 0.1f, 0f, false, 0, 2));
+
+            for (var i = 0; i < 10; i++)
+            {
+                var cell = new Vector3Int(i, 0, 0);
+                tilemap.SetTile(cell, tile);
+                Assert.That(system.TryMineInstant(cell), Is.True);
+            }
+
+            Assert.That(transaction.Energy, Is.EqualTo(84));
+            Assert.That(transaction.CommitCalls, Is.EqualTo(10));
+
+            Object.DestroyImmediate(root);
+            Object.DestroyImmediate(tile);
+        }
+
+        [Test]
         public void E_F02_CancelAndMidProgressEnergyLoss_PreserveTileAndChargeNothing()
         {
             CreateSystem(out var root, out var tilemap, out var resolver, out var system);

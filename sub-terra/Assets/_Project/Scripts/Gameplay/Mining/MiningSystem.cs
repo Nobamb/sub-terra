@@ -52,6 +52,33 @@ namespace SubTerra.Gameplay.Mining
         }
     }
 
+    public static class MiningEnergyCostCalculator
+    {
+        public static int Calculate(
+            int baseCost,
+            float efficiencyMultiplier,
+            float currentRemainder,
+            out float nextRemainder)
+        {
+            if (baseCost <= 0)
+            {
+                nextRemainder = currentRemainder;
+                return 0;
+            }
+
+            var efficiency = efficiencyMultiplier;
+            if (efficiency <= 0f || float.IsNaN(efficiency) || float.IsInfinity(efficiency))
+            {
+                efficiency = 1f;
+            }
+
+            var accumulatedCost = currentRemainder + baseCost / efficiency;
+            var chargedCost = Mathf.Max(0, Mathf.CeilToInt(accumulatedCost - 0.0001f));
+            nextRemainder = accumulatedCost - chargedCost;
+            return chargedCost;
+        }
+    }
+
     public sealed class MiningSystem : MonoBehaviour
     {
         private const string LockedSignalTileId = "tile.locked.signal";
@@ -79,6 +106,9 @@ namespace SubTerra.Gameplay.Mining
         private TileBase activeTileAsset;
         private MiningTileDto activeTile;
         private float elapsed;
+        private float energyRoundingRemainder;
+        private float pendingEnergyRoundingRemainder;
+        private float lastEnergyEfficiency = 1f;
 
         public bool IsMining { get; private set; }
         public bool HasMiningPower { get; private set; } = true;
@@ -349,6 +379,9 @@ namespace SubTerra.Gameplay.Mining
                 return Fail(MiningFailureReason.DependencyMissing);
             }
 
+            // 성공한 채굴만 소수점 비용을 다음 채굴로 넘긴다. 취소·실패는 누적값을 바꾸지 않는다.
+            energyRoundingRemainder = pendingEnergyRoundingRemainder;
+
             TileBase tile = foregroundTilemap.GetTile(activeCell);
             if (tile != activeTileAsset)
             {
@@ -475,18 +508,23 @@ namespace SubTerra.Gameplay.Mining
 
         private int CalculateEnergyCost(int baseCost)
         {
-            if (baseCost <= 0)
-            {
-                return 0;
-            }
-
             var efficiency = upgradeEffects?.GetEnergyEfficiencyMultiplier() ?? 1f;
             if (efficiency <= 0f || float.IsNaN(efficiency) || float.IsInfinity(efficiency))
             {
                 efficiency = 1f;
             }
 
-            return Mathf.Max(1, Mathf.CeilToInt(baseCost / efficiency));
+            if (!Mathf.Approximately(efficiency, lastEnergyEfficiency))
+            {
+                energyRoundingRemainder = 0f;
+                lastEnergyEfficiency = efficiency;
+            }
+
+            return MiningEnergyCostCalculator.Calculate(
+                baseCost,
+                efficiency,
+                energyRoundingRemainder,
+                out pendingEnergyRoundingRemainder);
         }
 
         private bool Fail(MiningFailureReason reason)

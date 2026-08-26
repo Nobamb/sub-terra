@@ -232,7 +232,7 @@ namespace SubTerra.App.Tests.Progression
 
             Assert.That(provider.GetDrillLevel(), Is.EqualTo(1));
             Assert.That(provider.GetDrillSpeedMultiplier(), Is.EqualTo(1.2f).Within(0.0001f));
-            Assert.That(provider.GetEnergyEfficiencyMultiplier(), Is.EqualTo(1.1f).Within(0.0001f));
+            Assert.That(provider.GetEnergyEfficiencyMultiplier(), Is.EqualTo(1f / 0.9f).Within(0.0001f));
             Assert.That(provider.GetMaximumEnergy(100), Is.EqualTo(125));
             Assert.That(provider.GetMaximumHealth(100), Is.EqualTo(130));
             Assert.That(provider.GetHealthRegenerationPerSecond(), Is.EqualTo(0.3f).Within(0.0001f));
@@ -255,9 +255,7 @@ namespace SubTerra.App.Tests.Progression
                 state.TryRestore(
                     new[]
                     {
-                        new UpgradeLevelState(DataIds.Upgrades.DrillSpeed, 2),
-                        new UpgradeLevelState(DataIds.Upgrades.DroneScan, 2),
-                        new UpgradeLevelState(DataIds.Upgrades.GasResistance, 1)
+                        new UpgradeLevelState(DataIds.Upgrades.DrillSpeed, 2)
                     }),
                 Is.True);
             var service = new ProgressionService(state, new Catalog(), new Wallet());
@@ -273,7 +271,7 @@ namespace SubTerra.App.Tests.Progression
             Assert.That(state.IsZoneUnlocked(DataIds.Zones.Deep), Is.True);
 
             var json = JsonUtility.ToJson(state);
-            Assert.That(json, Does.Contain(DataIds.Upgrades.DroneScan));
+            Assert.That(json, Does.Contain(DataIds.Upgrades.DrillSpeed));
             Assert.That(json, Does.Contain(DataIds.Zones.Deep));
         }
 

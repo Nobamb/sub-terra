@@ -29,14 +29,12 @@ namespace SubTerra.App.Progression
             UpgradeRequirements = upgradeRequirements ?? System.Array.Empty<UpgradeLevelRequirement>();
         }
 
-        /// <summary>prompt-B 60 퀘스트 13 진입: 앞선 12개 완료 + 지정 장비 레벨.</summary>
+        /// <summary>앞선 목표 완료 + 필수 진행인 드릴 2레벨. 선택 성능 업그레이드는 강제하지 않는다.</summary>
         public static DeepZoneUnlockRule Mvp { get; } = new DeepZoneUnlockRule(
             12,
             new[]
             {
-                new UpgradeLevelRequirement(DataIds.Upgrades.DrillSpeed, 2),
-                new UpgradeLevelRequirement(DataIds.Upgrades.DroneScan, 2),
-                new UpgradeLevelRequirement(DataIds.Upgrades.GasResistance, 1)
+                new UpgradeLevelRequirement(DataIds.Upgrades.DrillSpeed, 2)
             });
     }
 

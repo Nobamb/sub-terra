@@ -31,7 +31,14 @@ namespace SubTerra.App.Progression
 
         public float GetEnergyEfficiencyMultiplier()
         {
-            return 1f + GetCurrentEffect(DataIds.Upgrades.DrillEfficiency);
+            var reduction = GetCurrentEffect(DataIds.Upgrades.DrillEfficiency);
+            if (reduction <= 0f)
+            {
+                return 1f;
+            }
+
+            // 데이터에는 UI에 표시할 절감률을 저장하고, Gameplay에는 비용 나눗셈용 배율을 제공한다.
+            return 1f / Math.Max(0.0001f, 1f - Math.Min(reduction, 0.9999f));
         }
 
         public int GetMaximumEnergy(int baseMaximum)

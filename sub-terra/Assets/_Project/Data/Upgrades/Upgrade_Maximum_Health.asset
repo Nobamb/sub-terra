@@ -19,19 +19,19 @@ MonoBehaviour:
   - level: 1
     costs:
     - itemId: mineral.copper
-      quantity: 1
-    effectValue: 30
+      quantity: 6
+    effectValue: 40
   - level: 2
     costs:
     - itemId: mineral.copper
-      quantity: 2
+      quantity: 6
     - itemId: mineral.iron
-      quantity: 1
-    effectValue: 60
+      quantity: 4
+    effectValue: 80
   - level: 3
     costs:
-    - itemId: mineral.copper
-      quantity: 3
     - itemId: mineral.iron
-      quantity: 2
-    effectValue: 100
+      quantity: 8
+    - itemId: mineral.lithium
+      quantity: 5
+    effectValue: 130

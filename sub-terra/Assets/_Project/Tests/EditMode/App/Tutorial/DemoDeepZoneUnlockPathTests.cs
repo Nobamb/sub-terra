@@ -124,23 +124,20 @@ namespace SubTerra.App.Tests.Tutorial
         public void N_ProgressionPresenter_CallsTryUnlockOnPurchaseSuccess()
         {
             var drill = CreateUpgrade(DataIds.Upgrades.DrillSpeed, 2, 0.1f);
-            var droneScan = CreateUpgrade(DataIds.Upgrades.DroneScan, 2, 1f);
-            var gas = CreateUpgrade(DataIds.Upgrades.GasResistance, 1, 0.2f);
             var wallet = new TestWallet();
             wallet.Set(DataIds.Minerals.Copper, 50);
             var upgradeState = new UpgradeState();
-            // 미리 조건을 거의 맞춤: 스캔 2, 가스 0
+            // 필수 진행인 드릴만 1레벨로 준비한다. 스캔·가스는 선택 계열이다.
             Assert.That(
                 upgradeState.TryRestore(new[]
                 {
-                    new UpgradeLevelState(DataIds.Upgrades.DrillSpeed, 2),
-                    new UpgradeLevelState(DataIds.Upgrades.DroneScan, 2)
+                    new UpgradeLevelState(DataIds.Upgrades.DrillSpeed, 1)
                 }),
                 Is.True);
 
             var service = new ProgressionService(
                 upgradeState,
-                new TestCatalog(drill, droneScan, gas),
+                new TestCatalog(drill),
                 wallet);
             var unlockedEvents = 0;
             service.DeepZoneAccessChanged += _ => unlockedEvents++;
@@ -150,7 +147,7 @@ namespace SubTerra.App.Tests.Tutorial
             // prompt-B 60의 선행 12개 퀘스트를 완료한 경계
             presenter.Bind(service, () => 12);
 
-            Assert.That(presenter.SelectUpgrade(DataIds.Upgrades.GasResistance), Is.True);
+            Assert.That(presenter.SelectUpgrade(DataIds.Upgrades.DrillSpeed), Is.True);
             var result = presenter.RequestPurchase();
             Assert.That(result.IsSuccess, Is.True);
             Assert.That(upgradeState.IsZoneUnlocked(DataIds.Zones.Deep), Is.True);
