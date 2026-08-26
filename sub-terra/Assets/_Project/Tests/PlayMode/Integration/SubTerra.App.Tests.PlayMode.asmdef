@@ -11,6 +11,7 @@
     "SubTerra.Gameplay.Power",
     "SubTerra.Gameplay.Hazards",
     "SubTerra.Gameplay.Drone",
+    "Unity.InputSystem",
     "Unity.TextMeshPro"
   ],
   "optionalUnityReferences": ["TestAssemblies"],
