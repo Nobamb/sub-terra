@@ -18,10 +18,14 @@ namespace SubTerra.Gameplay.Mining
         private bool pendingPointerTarget;
         private Vector2 pendingWorldPoint;
         private bool miningInputPressedLastFrame;
+        private PlayerAnimationController animationController;
+
+        public bool IsMining => miningSystem != null && miningSystem.IsMining;
 
         private void Awake()
         {
             movement = GetComponent<PlayerMovement>();
+            animationController = GetComponentInChildren<PlayerAnimationController>(true);
             if (inputActions != null) mineAction = inputActions.FindAction(mineActionPath, false);
         }
 
@@ -39,6 +43,7 @@ namespace SubTerra.Gameplay.Mining
         {
             if (miningSystem == null)
             {
+                animationController?.SetMining(false);
                 return;
             }
 
@@ -52,6 +57,7 @@ namespace SubTerra.Gameplay.Mining
             if (movement.IsMovementRequested)
             {
                 miningSystem.CancelMining();
+                animationController?.SetMining(false);
                 return;
             }
 
@@ -63,9 +69,11 @@ namespace SubTerra.Gameplay.Mining
 
             if (!miningSystem.IsMining)
             {
+                animationController?.SetMining(false);
                 return;
             }
 
+            animationController?.SetMining(true);
             miningSystem.TickMining(Time.deltaTime, movement.Position, reach);
         }
 

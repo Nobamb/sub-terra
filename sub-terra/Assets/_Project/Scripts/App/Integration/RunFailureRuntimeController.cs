@@ -58,6 +58,8 @@ namespace SubTerra.App.Integration
                 survivalController.BindUpgradeEffects(
                     runtime.Progression?.Effects as IPlayerHealthUpgradeProvider);
                 survivalController.FailureRequested += OnFailureRequested;
+                playerMovement?.GetComponentInChildren<PlayerAnimationController>(true)
+                    ?.BindSurvival(survivalController);
             }
 
             gameState.EnergyChanged += OnEnergyChanged;
