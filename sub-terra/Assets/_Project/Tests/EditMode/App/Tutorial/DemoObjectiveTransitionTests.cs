@@ -6,6 +6,7 @@ using SubTerra.App.Outpost;
 using SubTerra.App.Progression;
 using SubTerra.App.State;
 using SubTerra.App.Tutorial;
+using SubTerra.App.UI.Tutorial;
 using SubTerra.Shared;
 
 namespace SubTerra.App.Tests.Tutorial
@@ -294,6 +295,24 @@ namespace SubTerra.App.Tests.Tutorial
             Assert.That(director.CompletedCount, Is.EqualTo(17));
         }
 
+        [Test]
+        public void PromptB73_EmergencyEscapeQuest_NeverShowsCompletionPopup()
+        {
+            var director = At(DemoObjectiveIds.EmergencyEscapeReturn);
+            var view = new FakeObjectiveView();
+            using var presenter = new DemoObjectivePresenter(view);
+
+            presenter.Bind(director);
+
+            Assert.That(view.DemoCompleteVisible, Is.False,
+                "긴급 탈출 포탈 퀘스트 진입만으로 완료 팝업이 나타나면 안 된다.");
+
+            director.NotifyEmergencyEscapeSucceeded();
+
+            Assert.That(view.DemoCompleteVisible, Is.False,
+                "포탈 사용에 성공한 뒤에도 불필요한 완료 팝업을 표시하지 않는다.");
+        }
+
         private static DemoObjectiveDirector At(string objectiveId, GameState state = null)
         {
             var director = new DemoObjectiveDirector();
@@ -389,6 +408,24 @@ namespace SubTerra.App.Tests.Tutorial
                 type = GameplayEventType.GasPurified,
                 instanceId = gasId
             });
+        }
+
+        private sealed class FakeObjectiveView : IDemoObjectiveView
+        {
+            public bool DemoCompleteVisible { get; private set; }
+
+            public void SetObjective(DemoObjectiveReadModel model) { }
+            public void SetGuidanceVisible(bool visible) { }
+            public void SetGuidanceText(string title, string body) { }
+            public void SetInputLocked(bool locked) { }
+            public void SetHazardYield(bool yieldToHazard) { }
+            public void SetDetailsVisible(bool visible) { }
+            public void SetDetailsText(string title, string body, string nextAction) { }
+
+            public void SetDemoCompleteVisible(bool visible, string summary)
+            {
+                DemoCompleteVisible = visible;
+            }
         }
     }
 }

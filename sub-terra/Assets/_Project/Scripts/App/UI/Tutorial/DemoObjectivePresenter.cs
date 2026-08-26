@@ -130,15 +130,7 @@ namespace SubTerra.App.UI.Tutorial
             view?.SetObjective(model);
             view?.SetDetailsText(model.Title, model.Description, model.NextActionHint);
 
-            if (model.IsDemoComplete || model.ObjectiveId == DemoObjectiveIds.DemoEnd)
-            {
-                view?.SetDemoCompleteVisible(
-                    true,
-                    model.Description);
-                guidanceOpen = false;
-                view?.SetGuidanceVisible(false);
-            }
-            else if (model.ShowsDismissibleGuidance)
+            if (model.ShowsDismissibleGuidance)
             {
                 guidanceOpen = true;
                 view?.SetGuidanceText(model.GuidanceTitle, model.GuidanceBody);
