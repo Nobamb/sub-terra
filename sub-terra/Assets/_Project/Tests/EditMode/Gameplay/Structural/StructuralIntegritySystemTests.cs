@@ -40,6 +40,22 @@ namespace SubTerra.Gameplay.Structural.Tests
         }
 
         [Test]
+        public void Collapse_ExcludesRuntimeProtectedCell()
+        {
+            using var fixture = new StructuralFixture(1);
+            var protectedCell = new Vector3Int(0, 2, 0);
+            fixture.System.SetCellProtectionPredicate(cell => cell == protectedCell);
+            StructuralCollapseEventDto emitted = null;
+            fixture.System.CollapseTriggered += value => emitted = value;
+
+            fixture.Mine(1f);
+            fixture.System.AdvanceSimulation(1f);
+
+            Assert.That(fixture.Foreground.HasTile(protectedCell), Is.True);
+            Assert.That(emitted, Is.Null);
+        }
+
+        [Test]
         public void RegisterSupport_ReevaluatesOnlyChangedArea_AndClearsCrackOverlay()
         {
             using var fixture = new StructuralFixture(1, true);

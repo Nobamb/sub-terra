@@ -40,6 +40,7 @@ namespace SubTerra.Gameplay.Structural
         private readonly HashSet<Vector3Int> deferredCandidates = new();
         private readonly Dictionary<Vector3Int, float> telegraphRemaining = new();
         private readonly List<PendingCollapse> pendingCollapses = new();
+        private Func<Vector3Int, bool> cellProtectionPredicate;
 
         private StructuralRiskSettings runtimeSettings;
 
@@ -190,6 +191,12 @@ namespace SubTerra.Gameplay.Structural
             if (Array.IndexOf(protectedCells, cell) >= 0) return;
             Array.Resize(ref protectedCells, protectedCells.Length + 1);
             protectedCells[^1] = cell;
+        }
+
+        /// <summary>시설 배치처럼 런타임에 변하는 붕괴 금지 셀 판정을 연결한다.</summary>
+        public void SetCellProtectionPredicate(Func<Vector3Int, bool> predicate)
+        {
+            cellProtectionPredicate = predicate;
         }
 
         /// <summary>
@@ -686,6 +693,7 @@ namespace SubTerra.Gameplay.Structural
         private bool IsProtected(Vector3Int cell)
         {
             if (Array.IndexOf(protectedCells, cell) >= 0) return true;
+            if (cellProtectionPredicate != null && cellProtectionPredicate(cell)) return true;
             if (foregroundTilemap == null) return false;
             TileBase tile = foregroundTilemap.GetTile(cell);
             return tile != null && Array.IndexOf(protectedTiles, tile) >= 0;
