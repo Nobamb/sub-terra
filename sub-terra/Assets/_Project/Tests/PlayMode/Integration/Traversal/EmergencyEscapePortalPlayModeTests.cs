@@ -217,7 +217,33 @@ namespace SubTerra.App.Tests.PlayMode.Traversal
             Assert.That(currentState.Player.Gold, Is.EqualTo(200));
             Assert.That(staleState.Player.Gold, Is.EqualTo(300));
 
+            var outpostState = GameState.CreateNew();
+            outpostState.SetGold(300);
+            outpostState.SetDemoProgress(
+                DemoObjectiveIds.EmergencyEscapeReturn,
+                DemoObjectiveIds.RequiredCount - 1,
+                false);
+            Assert.That(bootstrap.TryReplaceState(outpostState), Is.True);
+
+            var outpost = new GameObject("PromptB74_Outpost");
+            outpost.AddComponent<BuildingInstance>().Initialize(
+                "building.outpost_core.basic-prompt-b74",
+                DataIds.Buildings.OutpostCoreBasic);
+
+            Assert.That(
+                bridge.TryEscapeTo(
+                    EmergencyEscapeDestination.OutpostCore,
+                    "building.outpost_core.basic-prompt-b74",
+                    out _),
+                Is.True);
+            Assert.That(outpostState.Progress.IsDemoComplete, Is.True);
+            Assert.That(
+                outpostState.Progress.CompletedObjectives,
+                Is.EqualTo(DemoObjectiveIds.RequiredCount));
+            Assert.That(outpostState.Player.Gold, Is.EqualTo(200));
+
             Object.Destroy(host);
+            Object.Destroy(outpost);
             Object.Destroy(elevator);
             Object.Destroy(player);
             GameBootstrapper.ResetInstanceForTests();
