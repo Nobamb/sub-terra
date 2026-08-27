@@ -2,9 +2,11 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using NUnit.Framework;
+using SubTerra.App.Core;
 using SubTerra.App.Core.Data;
 using SubTerra.App.Integration;
 using SubTerra.App.State;
+using SubTerra.App.Tutorial;
 using SubTerra.App.UI.EmergencyEscape;
 using SubTerra.Gameplay.Building;
 using SubTerra.Gameplay.Player;
@@ -176,6 +178,49 @@ namespace SubTerra.App.Tests.PlayMode.Traversal
             Object.Destroy(outpost);
             Object.Destroy(elevator);
             Object.Destroy(player);
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator PromptB74_EscapeTo_CompletesQuestOnCurrentRuntimeState()
+        {
+            GameBootstrapper.ResetInstanceForTests();
+
+            var staleState = GameState.CreateNew();
+            staleState.SetGold(300);
+            var currentState = GameState.CreateNew();
+            currentState.SetGold(300);
+            currentState.SetDemoProgress(
+                DemoObjectiveIds.EmergencyEscapeReturn,
+                DemoObjectiveIds.RequiredCount - 1,
+                false);
+
+            var bootstrapObject = new GameObject("PromptB74_Bootstrap");
+            var bootstrap = bootstrapObject.AddComponent<GameBootstrapper>();
+            bootstrap.enabled = false;
+            Assert.That(bootstrap.TryReplaceState(currentState), Is.True);
+
+            var player = new GameObject("PromptB74_Player");
+            var elevator = new GameObject("PromptB74_Elevator");
+            elevator.transform.position = new Vector3(5f, -2f, 0f);
+            var host = new GameObject("PromptB74_Bridge");
+            var bridge = host.AddComponent<EmergencyEscapePortalRuntimeBridge>();
+            bridge.Bind(staleState, player.transform, elevator.transform);
+
+            Assert.That(
+                bridge.TryEscapeTo(EmergencyEscapeDestination.Elevator, string.Empty, out _),
+                Is.True);
+            Assert.That(currentState.Progress.IsDemoComplete, Is.True);
+            Assert.That(
+                currentState.Progress.CompletedObjectives,
+                Is.EqualTo(DemoObjectiveIds.RequiredCount));
+            Assert.That(currentState.Player.Gold, Is.EqualTo(200));
+            Assert.That(staleState.Player.Gold, Is.EqualTo(300));
+
+            Object.Destroy(host);
+            Object.Destroy(elevator);
+            Object.Destroy(player);
+            GameBootstrapper.ResetInstanceForTests();
             yield return null;
         }
 
