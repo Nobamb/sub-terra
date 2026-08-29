@@ -12,6 +12,7 @@ namespace SubTerra.Gameplay.Building
     public sealed class BuildingPlacementSystem : MonoBehaviour
     {
         private const string ElevatorProtectedGroundTileName = "ElevatorProtectedBlock";
+        private const string LadderBuildingId = "building.ladder.basic";
 
         [SerializeField] private Tilemap terrainTilemap;
         [SerializeField] private Transform buildingRoot;
@@ -23,7 +24,7 @@ namespace SubTerra.Gameplay.Building
         [SerializeField] private Collider2D allowedPlacementArea;
         [SerializeField] private BuildingPlacementDefinition[] restoreDefinitions = Array.Empty<BuildingPlacementDefinition>();
 
-        private readonly HashSet<Vector3Int> occupiedCells = new();
+        private readonly Dictionary<Vector3Int, string> occupiedBuildings = new();
         private readonly HashSet<Vector3Int> supportingGroundCells = new();
         private IBuildingResourceWallet resourceWallet;
         private IResourceWallet sharedResourceWallet;
@@ -150,7 +151,7 @@ namespace SubTerra.Gameplay.Building
 
             foreach (Vector3Int cell in EnumerateFootprint(origin, footprint))
             {
-                if (occupiedCells.Contains(cell) || (terrainTilemap != null && terrainTilemap.HasTile(cell)))
+                if (occupiedBuildings.ContainsKey(cell) || (terrainTilemap != null && terrainTilemap.HasTile(cell)))
                 {
                     failure = BuildingPlacementFailure.Occupied;
                     return false;
@@ -162,7 +163,8 @@ namespace SubTerra.Gameplay.Building
                 Vector3Int groundCell = cell + Vector3Int.down;
                 TileBase groundTile = terrainTilemap != null ? terrainTilemap.GetTile(groundCell) : null;
                 if (isBottomRow
-                    && (occupiedCells.Contains(groundCell)
+                    && ((occupiedBuildings.ContainsKey(groundCell)
+                         && !CanStackOnBuilding(selection.BuildingId, groundCell))
                         || (groundTile != null
                             && string.Equals(
                                 groundTile.name,
@@ -232,7 +234,10 @@ namespace SubTerra.Gameplay.Building
             BuildingInstance instance = instanceObject.GetComponent<BuildingInstance>() ?? instanceObject.AddComponent<BuildingInstance>();
             instance.Initialize(instanceId, definition.BuildingId);
             BindPowerNode(instanceObject, instanceId);
-            foreach (Vector3Int cell in EnumerateFootprint(origin, footprint)) occupiedCells.Add(cell);
+            foreach (Vector3Int cell in EnumerateFootprint(origin, footprint))
+            {
+                occupiedBuildings[cell] = definition.BuildingId;
+            }
             RegisterSupportingGround(origin, footprint);
             StructuralSupport support = instanceObject.GetComponent<StructuralSupport>();
             bool reducedStructuralRisk = support != null
@@ -460,7 +465,7 @@ namespace SubTerra.Gameplay.Building
                 DestroyRuntime(child.gameObject);
             }
 
-            occupiedCells.Clear();
+            occupiedBuildings.Clear();
             supportingGroundCells.Clear();
             restoredInstanceIds.Clear();
             nextInstanceSequence = 1;
@@ -483,7 +488,10 @@ namespace SubTerra.Gameplay.Building
             BuildingInstance instance = instanceObject.GetComponent<BuildingInstance>() ?? instanceObject.AddComponent<BuildingInstance>();
             instance.Initialize(snapshot.instanceId, snapshot.buildingTypeId);
             BindPowerNode(instanceObject, snapshot.instanceId);
-            foreach (Vector3Int occupied in EnumerateFootprint(cell, footprint)) occupiedCells.Add(occupied);
+            foreach (Vector3Int occupied in EnumerateFootprint(cell, footprint))
+            {
+                occupiedBuildings[occupied] = definition.BuildingId;
+            }
             RegisterSupportingGround(cell, footprint);
             StructuralSupport support = instanceObject.GetComponent<StructuralSupport>();
             if (support != null) structuralIntegritySystem?.RegisterSupport(support);
@@ -511,6 +519,14 @@ namespace SubTerra.Gameplay.Building
 
             powerNode.SetEntityId(instanceId);
             powerNode.SetNetwork(powerNetworkSystem);
+        }
+
+        /// <summary>사다리는 동일한 사다리의 최상단에 이어서 설치할 수 있다.</summary>
+        private bool CanStackOnBuilding(string buildingId, Vector3Int groundCell)
+        {
+            return string.Equals(buildingId, LadderBuildingId, StringComparison.Ordinal)
+                && occupiedBuildings.TryGetValue(groundCell, out string supportingBuildingId)
+                && string.Equals(supportingBuildingId, LadderBuildingId, StringComparison.Ordinal);
         }
 
         private BuildingPlacementResult Reject(BuildingPlacementFailure failure, Vector3Int cell)
