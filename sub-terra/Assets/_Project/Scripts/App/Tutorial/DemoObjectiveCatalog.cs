@@ -6,6 +6,9 @@ namespace SubTerra.App.Tutorial
     public static class DemoObjectiveCatalog
     {
         public const string IntroductionGuidanceTitle = "생존자 브리핑";
+        public const string DemoCompleteTitle = "모든 데모 목표 완료";
+        public const string DemoCompleteDescription =
+            "긴급 탈출 포탈을 통한 귀환까지 완료했습니다.";
         public const string IntroductionGuidanceBody =
             "당신은 재앙 이후, 얼마 남지 않은 생존자입니다. 인류는 정점의 기술력을 가졌지만, 지상의 자원은 모두 사라졌습니다. 남은 것은 지하 광산과, 인간의 유전자가 보존된 배양시설뿐입니다.\n"
             + "광산의 자원으로 배양시설을 다시 가동해야, 인류를 되살릴 수 있습니다.\n"
@@ -119,11 +122,19 @@ namespace SubTerra.App.Tutorial
                 definition = OrderedDefinitions[0];
             }
 
+            // 마지막 퀘스트 완료 뒤에도 같은 영구 ID를 유지하므로, 완료 전 작업 문구를
+            // 그대로 내보내면 실제 State가 완료됐어도 HUD에서는 미완료처럼 보인다.
+            var title = isDemoComplete ? DemoCompleteTitle : definition.Title;
+            var description = isDemoComplete
+                ? DemoCompleteDescription
+                : definition.Description;
+            var nextActionHint = isDemoComplete ? string.Empty : definition.NextActionHint;
+
             return new DemoObjectiveReadModel(
                 definition.Id,
-                definition.Title,
-                definition.Description,
-                definition.NextActionHint,
+                title,
+                description,
+                nextActionHint,
                 completedCount,
                 DemoObjectiveIds.RequiredCount,
                 definition.IsTerminal,

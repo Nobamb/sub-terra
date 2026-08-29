@@ -38,6 +38,28 @@ namespace SubTerra.Gameplay.Power.Tests
             Object.DestroyImmediate(root);
         }
 
+        [Test]
+        public void PromptB77_RangeIndicatorDrawsBlueCircleAndUsesItsRadiusForContainment()
+        {
+            GameObject root = new("PowerRangeTest");
+            try
+            {
+                var indicator = root.AddComponent<PowerSupplyRangeIndicator>();
+                indicator.Configure(10f);
+
+                Assert.That(indicator.RangeLine, Is.Not.Null);
+                Assert.That(indicator.RangeLine.loop, Is.True);
+                Assert.That(indicator.RangeLine.positionCount, Is.GreaterThanOrEqualTo(64));
+                Assert.That(indicator.RangeLine.startColor.b, Is.GreaterThan(indicator.RangeLine.startColor.r));
+                Assert.That(indicator.Contains(new Vector3(10f, 0f)), Is.True);
+                Assert.That(indicator.Contains(new Vector3(10.01f, 0f)), Is.False);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
         private static PowerNode CreateNode(GameObject root, PowerNetworkSystem network, bool source, int supply, int demand, PowerPriority priority)
         {
             PowerNode node = new GameObject("Node").AddComponent<PowerNode>();

@@ -21,7 +21,6 @@ namespace SubTerra.Gameplay.Integration
         [SerializeField] private PowerNetworkSystem powerNetworkSystem;
         [SerializeField] private Transform interactionOrigin;
         [SerializeField, Min(0.1f)] private float facilityInteractionRange = 2f;
-        [SerializeField, Min(0.1f)] private float facilityPowerConnectionRange = 10f;
         [SerializeField] private Transform elevatorPowerOrigin;
         [SerializeField] private string outpostInstanceId = "outpost.demo";
 
@@ -29,6 +28,7 @@ namespace SubTerra.Gameplay.Integration
         private PowerNetworkSnapshot latestPowerSnapshot;
         private bool hasPowerSnapshot;
         private bool lastInteractionRange;
+        private bool lastPurificationRange;
         private string lastInteractionFacilityInstanceId;
         private string lastInteractionFacilityBuildingId;
         private ICollapseDamageReceiver collapseDamageReceiver;
@@ -107,6 +107,8 @@ namespace SubTerra.Gameplay.Integration
 
             var interactionFacility = FindInteractionFacility();
             var isInInteractionRange = interactionFacility != null;
+            var isInPurificationRange = interactionOrigin != null
+                && IsWithinOutpostSupplyRange(interactionOrigin.position);
             var interactionFacilityInstanceId = interactionFacility != null
                 ? interactionFacility.InstanceId
                 : string.Empty;
@@ -115,7 +117,8 @@ namespace SubTerra.Gameplay.Integration
                 : string.Empty;
             if (lastInteractionRange != isInInteractionRange
                 || lastInteractionFacilityInstanceId != interactionFacilityInstanceId
-                || lastInteractionFacilityBuildingId != interactionFacilityBuildingId)
+                || lastInteractionFacilityBuildingId != interactionFacilityBuildingId
+                || lastPurificationRange != isInPurificationRange)
             {
                 PublishOutpostStatusIfAvailable();
             }
@@ -188,6 +191,7 @@ namespace SubTerra.Gameplay.Integration
 
         private void OnPowerNetworkRebuilt(PowerNetworkSnapshot snapshot)
         {
+            EnsureOutpostRangeIndicators();
             latestPowerSnapshot = snapshot;
             hasPowerSnapshot = true;
             PublishOutpostStatusIfAvailable();
@@ -209,11 +213,14 @@ namespace SubTerra.Gameplay.Integration
             lastInteractionFacilityBuildingId = interactionFacility != null
                 ? interactionFacility.BuildingId
                 : string.Empty;
+            lastPurificationRange = interactionOrigin != null
+                && IsWithinOutpostSupplyRange(interactionOrigin.position);
             var status = new OutpostStatusDto
             {
                 outpostInstanceId = outpostInstanceId,
                 isActive = latestPowerSnapshot.Supply > 0,
                 isInInteractionRange = isInInteractionRange,
+                isInPurificationRange = lastPurificationRange,
                 interactionFacilityInstanceId = lastInteractionFacilityInstanceId,
                 interactionFacilityBuildingId = lastInteractionFacilityBuildingId,
                 totalPowerSupply = latestPowerSnapshot.Supply,
@@ -313,7 +320,8 @@ namespace SubTerra.Gameplay.Integration
 
         private bool IsWithinPowerSupplyRange(Vector3 facilityPosition)
         {
-            var squaredRange = facilityPowerConnectionRange * facilityPowerConnectionRange;
+            var squaredRange = PowerSupplyRangeIndicator.DefaultRadius
+                * PowerSupplyRangeIndicator.DefaultRadius;
             if (elevatorPowerOrigin != null)
             {
                 var elevatorDelta = (Vector2)(facilityPosition - elevatorPowerOrigin.position);
@@ -330,14 +338,76 @@ namespace SubTerra.Gameplay.Integration
                     continue;
                 }
 
-                var sourceDelta = (Vector2)(facilityPosition - node.transform.position);
-                if (sourceDelta.sqrMagnitude <= squaredRange)
+                var range = node.GetComponent<PowerSupplyRangeIndicator>();
+                if (range != null
+                    ? range.Contains(facilityPosition)
+                    : ((Vector2)(facilityPosition - node.transform.position)).sqrMagnitude <= squaredRange)
                 {
                     return true;
                 }
             }
 
             return false;
+        }
+
+        private bool IsWithinOutpostSupplyRange(Vector3 worldPosition)
+        {
+            if (powerNetworkSystem == null)
+            {
+                return false;
+            }
+
+            var squaredRange = PowerSupplyRangeIndicator.DefaultRadius
+                * PowerSupplyRangeIndicator.DefaultRadius;
+            foreach (PowerNode node in powerNetworkSystem.Nodes)
+            {
+                if (!IsOutpostCoreSource(node))
+                {
+                    continue;
+                }
+
+                var range = node.GetComponent<PowerSupplyRangeIndicator>();
+                if (range != null
+                    ? range.Contains(worldPosition)
+                    : ((Vector2)(worldPosition - node.transform.position)).sqrMagnitude <= squaredRange)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private void EnsureOutpostRangeIndicators()
+        {
+            if (powerNetworkSystem == null)
+            {
+                return;
+            }
+
+            foreach (PowerNode node in powerNetworkSystem.Nodes)
+            {
+                if (!IsOutpostCoreSource(node)
+                    || node.GetComponent<PowerSupplyRangeIndicator>() != null)
+                {
+                    continue;
+                }
+
+                node.gameObject.AddComponent<PowerSupplyRangeIndicator>()
+                    .Configure(PowerSupplyRangeIndicator.DefaultRadius);
+            }
+        }
+
+        private static bool IsOutpostCoreSource(PowerNode node)
+        {
+            if (node == null || !node.IsPowerSource)
+            {
+                return false;
+            }
+
+            var instance = node.GetComponent<BuildingInstance>();
+            return instance != null
+                && instance.BuildingId == "building.outpost_core.basic";
         }
 
         private static bool IsProximityPoweredFacility(string buildingId)

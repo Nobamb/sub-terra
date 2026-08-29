@@ -17,7 +17,7 @@ namespace SubTerra.App.Tests.Integration
     public sealed class PhaseFSupportStaticTests
     {
         [Test]
-        public void F_S01_SupportPrefab_HasRuntimeColliderSupportAndVisualRoot()
+        public void PromptB76_SupportPrefab_PostIsPassableAndCapIsOneWayPlatform()
         {
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
                 PhaseFSupportBuilder.SupportPrefabPath);
@@ -27,18 +27,20 @@ namespace SubTerra.App.Tests.Integration
             Assert.That(prefab.GetComponent<StructuralSupport>(), Is.Not.Null);
             Assert.That(prefab.GetComponent<BuildingInstance>(), Is.Not.Null);
 
-            // T자 버팀목: 세로 기둥 + 상단 가로 캡 콜라이더 2개.
+            // 세로 기둥은 통과 가능하고 상단 가로 캡만 단방향 발판으로 동작한다.
             var colliders = prefab.GetComponents<BoxCollider2D>();
-            Assert.That(colliders.Length, Is.EqualTo(2));
-            Assert.That(
-                colliders.Any(c => Approximately(c.size, new Vector2(0.4f, 1.8f))
-                    && Approximately(c.offset, Vector2.zero)),
-                Is.True,
-                "세로 기둥 콜라이더(0.4×1.8)가 있어야 한다.");
-            Assert.That(
-                colliders.Any(c => Approximately(c.size, new Vector2(1f, 0.4f))),
-                Is.True,
-                "상단 가로 캡 콜라이더(1.0×0.4, 블록 너비×기둥 너비)가 있어야 한다.");
+            Assert.That(colliders.Length, Is.EqualTo(1));
+            var capCollider = colliders.Single();
+            Assert.That(capCollider.size, Is.EqualTo(new Vector2(1f, 0.4f)));
+            Assert.That(capCollider.offset, Is.EqualTo(new Vector2(0f, 1.1f)));
+            Assert.That(capCollider.usedByEffector, Is.True);
+
+            var platformEffector = prefab.GetComponent<PlatformEffector2D>();
+            Assert.That(platformEffector, Is.Not.Null);
+            Assert.That(platformEffector.useOneWay, Is.True);
+            Assert.That(platformEffector.surfaceArc, Is.EqualTo(180f));
+            Assert.That(platformEffector.useSideFriction, Is.False);
+            Assert.That(platformEffector.useSideBounce, Is.False);
 
             var visualRoot = prefab.transform.Find("VisualRoot");
             Assert.That(visualRoot, Is.Not.Null);
@@ -50,11 +52,6 @@ namespace SubTerra.App.Tests.Integration
             Assert.That(cap.GetComponent<SpriteRenderer>(), Is.Not.Null);
             Assert.That(post.GetComponent<SpriteRenderer>().size, Is.EqualTo(new Vector2(0.4f, 1.8f)));
             Assert.That(cap.GetComponent<SpriteRenderer>().size, Is.EqualTo(new Vector2(1f, 0.4f)));
-        }
-
-        private static bool Approximately(Vector2 a, Vector2 b)
-        {
-            return Mathf.Abs(a.x - b.x) < 0.001f && Mathf.Abs(a.y - b.y) < 0.001f;
         }
 
         [Test]

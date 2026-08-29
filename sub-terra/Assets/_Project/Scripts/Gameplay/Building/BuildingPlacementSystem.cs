@@ -41,6 +41,7 @@ namespace SubTerra.Gameplay.Building
             resourceWallet = resourceWalletBehaviour as IBuildingResourceWallet;
             if (buildingRoot == null) buildingRoot = transform;
             if (powerNetworkSystem == null) powerNetworkSystem = GetComponent<PowerNetworkSystem>();
+            BindSupportingGroundProtection();
         }
 
         private void OnDisable()
@@ -232,7 +233,7 @@ namespace SubTerra.Gameplay.Building
             instance.Initialize(instanceId, definition.BuildingId);
             BindPowerNode(instanceObject, instanceId);
             foreach (Vector3Int cell in EnumerateFootprint(origin, footprint)) occupiedCells.Add(cell);
-            RegisterSupportingGround(origin, footprint, definition.RequiresGround);
+            RegisterSupportingGround(origin, footprint);
             StructuralSupport support = instanceObject.GetComponent<StructuralSupport>();
             bool reducedStructuralRisk = support != null
                 && structuralIntegritySystem != null
@@ -483,7 +484,7 @@ namespace SubTerra.Gameplay.Building
             instance.Initialize(snapshot.instanceId, snapshot.buildingTypeId);
             BindPowerNode(instanceObject, snapshot.instanceId);
             foreach (Vector3Int occupied in EnumerateFootprint(cell, footprint)) occupiedCells.Add(occupied);
-            RegisterSupportingGround(cell, footprint, definition.RequiresGround);
+            RegisterSupportingGround(cell, footprint);
             StructuralSupport support = instanceObject.GetComponent<StructuralSupport>();
             if (support != null) structuralIntegritySystem?.RegisterSupport(support);
             restoredInstanceIds.Add(snapshot.instanceId);
@@ -558,17 +559,28 @@ namespace SubTerra.Gameplay.Building
                 yield return origin + new Vector3Int(x, y, 0);
         }
 
-        private void RegisterSupportingGround(Vector3Int origin, Vector2Int footprint, bool requiresGround)
+        private void RegisterSupportingGround(Vector3Int origin, Vector2Int footprint)
         {
-            if (!requiresGround)
-            {
-                return;
-            }
-
             int width = Mathf.Max(1, footprint.x);
             for (int x = 0; x < width; x++)
             {
-                supportingGroundCells.Add(origin + new Vector3Int(x, -1, 0));
+                Vector3Int groundCell = origin + new Vector3Int(x, -1, 0);
+                // RequiresGround는 배치 허용 조건이다. 사다리처럼 선택 사항인 시설도
+                // 실제 지반 위에 설치됐다면 그 지반은 시설 종류와 관계없이 보호한다.
+                if (terrainTilemap != null && terrainTilemap.HasTile(groundCell))
+                {
+                    supportingGroundCells.Add(groundCell);
+                }
+            }
+
+            BindSupportingGroundProtection();
+        }
+
+        private void BindSupportingGroundProtection()
+        {
+            if (structuralIntegritySystem != null)
+            {
+                structuralIntegritySystem.SetCellProtectionPredicate(IsGroundSupportingBuilding);
             }
         }
 

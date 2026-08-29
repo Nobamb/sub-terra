@@ -313,6 +313,26 @@ namespace SubTerra.App.Tests.Tutorial
                 "포탈 사용에 성공한 뒤에도 불필요한 완료 팝업을 표시하지 않는다.");
         }
 
+        [Test]
+        public void PromptB74_EmergencyEscapeSuccess_ReplacesActiveQuestTextWithCompletionState()
+        {
+            var director = At(DemoObjectiveIds.EmergencyEscapeReturn);
+            var view = new FakeObjectiveView();
+            using var presenter = new DemoObjectivePresenter(view);
+            presenter.Bind(director);
+
+            Assert.That(view.Objective.Title, Is.EqualTo("긴급 탈출 귀환"));
+
+            director.NotifyEmergencyEscapeSucceeded();
+
+            Assert.That(view.Objective.IsDemoComplete, Is.True);
+            Assert.That(view.Objective.CompletedCount, Is.EqualTo(DemoObjectiveIds.RequiredCount));
+            Assert.That(view.Objective.Title, Is.EqualTo(DemoObjectiveCatalog.DemoCompleteTitle));
+            Assert.That(view.Objective.NextActionHint, Is.Empty);
+            Assert.That(view.DemoCompleteVisible, Is.False,
+                "완료 상태는 HUD에 반영하되 제거된 완료 팝업은 다시 표시하지 않는다.");
+        }
+
         private static DemoObjectiveDirector At(string objectiveId, GameState state = null)
         {
             var director = new DemoObjectiveDirector();
@@ -413,8 +433,12 @@ namespace SubTerra.App.Tests.Tutorial
         private sealed class FakeObjectiveView : IDemoObjectiveView
         {
             public bool DemoCompleteVisible { get; private set; }
+            public DemoObjectiveReadModel Objective { get; private set; }
 
-            public void SetObjective(DemoObjectiveReadModel model) { }
+            public void SetObjective(DemoObjectiveReadModel model)
+            {
+                Objective = model;
+            }
             public void SetGuidanceVisible(bool visible) { }
             public void SetGuidanceText(string title, string body) { }
             public void SetInputLocked(bool locked) { }
