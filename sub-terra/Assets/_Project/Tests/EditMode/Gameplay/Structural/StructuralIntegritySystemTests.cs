@@ -247,6 +247,63 @@ namespace SubTerra.Gameplay.Structural.Tests
             Assert.That(restored.Cause, Is.EqualTo(StructuralRiskCause.SupportRemoved));
         }
 
+        [Test]
+        public void PromptB80_RemovingUpperBlock_ForcesIsolatedLowerBlockToCollapse()
+        {
+            using var fixture = new StructuralFixture(1, true);
+            var minedCell = new Vector3Int(0, 2, 0);
+            var isolatedCell = minedCell + Vector3Int.down;
+            fixture.PlaceTile(isolatedCell);
+            StructuralCollapseEventDto emitted = null;
+            fixture.System.CollapseTriggered += value => emitted = value;
+
+            fixture.RemoveAndNotifyMined(minedCell, 0f);
+
+            Assert.That(fixture.Foreground.HasTile(isolatedCell), Is.True, "붕괴 예고 중에는 지형을 유지해야 합니다.");
+            Assert.That(fixture.System.CurrentRisk, Is.EqualTo(StructuralRiskLevel.CollapseImminent));
+            fixture.System.AdvanceSimulation(2f);
+
+            Assert.That(fixture.Foreground.HasTile(isolatedCell), Is.False);
+            Assert.That(emitted, Is.Not.Null);
+            Assert.That(emitted.cells.Exists(cell => cell.x == isolatedCell.x && cell.y == isolatedCell.y), Is.True);
+        }
+
+        [Test]
+        public void PromptB80_RemovingLowerBlock_ForcesIsolatedUpperBlockToCollapse()
+        {
+            using var fixture = new StructuralFixture(1, true);
+            var minedCell = new Vector3Int(0, 2, 0);
+            var isolatedCell = minedCell + Vector3Int.up;
+            fixture.PlaceTile(isolatedCell);
+            StructuralCollapseEventDto emitted = null;
+            fixture.System.CollapseTriggered += value => emitted = value;
+
+            fixture.RemoveAndNotifyMined(minedCell, 0f);
+            fixture.System.AdvanceSimulation(2f);
+
+            Assert.That(fixture.Foreground.HasTile(isolatedCell), Is.False);
+            Assert.That(emitted, Is.Not.Null);
+            Assert.That(emitted.cells.Exists(cell => cell.x == isolatedCell.x && cell.y == isolatedCell.y), Is.True);
+        }
+
+        [Test]
+        public void PromptB80_ProtectedIsolatedBlock_DoesNotCollapse()
+        {
+            using var fixture = new StructuralFixture(1, true);
+            var minedCell = new Vector3Int(0, 2, 0);
+            var isolatedCell = minedCell + Vector3Int.down;
+            fixture.PlaceTile(isolatedCell);
+            fixture.System.RegisterProtectedCell(isolatedCell);
+            StructuralCollapseEventDto emitted = null;
+            fixture.System.CollapseTriggered += value => emitted = value;
+
+            fixture.RemoveAndNotifyMined(minedCell, 0f);
+            fixture.System.AdvanceSimulation(2f);
+
+            Assert.That(fixture.Foreground.HasTile(isolatedCell), Is.True);
+            Assert.That(emitted, Is.Null);
+        }
+
         private static List<CollapseCellDto> RunCollapse(long seed)
         {
             using var fixture = new StructuralFixture(7);
@@ -312,6 +369,27 @@ namespace SubTerra.Gameplay.Structural.Tests
             {
                 System.NotifyTileMined(
                     Vector3Int.zero,
+                    new MiningTileDto(
+                        "tile.test",
+                        string.Empty,
+                        0,
+                        true,
+                        1f,
+                        1f,
+                        structuralImpact,
+                        false));
+            }
+
+            public void PlaceTile(Vector3Int cell)
+            {
+                Foreground.SetTile(cell, tile);
+            }
+
+            public void RemoveAndNotifyMined(Vector3Int cell, float structuralImpact)
+            {
+                Foreground.SetTile(cell, null);
+                System.NotifyTileMined(
+                    cell,
                     new MiningTileDto(
                         "tile.test",
                         string.Empty,

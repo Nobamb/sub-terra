@@ -155,6 +155,7 @@ namespace SubTerra.Gameplay.Structural
             accumulatedImpact.TryGetValue(cell, out float currentImpact);
             accumulatedImpact[cell] = currentImpact + impact;
 
+            List<Vector3Int> verticallyIsolated = CollectVerticallyIsolatedNeighbors(cell);
             var affected = CollectAffectedCeilingTiles(cell);
             ReevaluateTiles(
                 affected,
@@ -162,6 +163,7 @@ namespace SubTerra.Gameplay.Structural
                 cell,
                 StructuralRiskCause.MiningImpact,
                 impact);
+            BeginVerticallyIsolatedCollapses(verticallyIsolated);
         }
 
         /// <summary>
@@ -463,6 +465,72 @@ namespace SubTerra.Gameplay.Structural
             if (IsProtected(cell)) return false;
             if (GetSupportStrength(cell) > 0) return false;
             return true;
+        }
+
+        /// <summary>
+        /// prompt-B 80: 채굴 직후 위·아래가 모두 빈 상태가 된 인접 지형을 찾는다.
+        /// 넓은 영역을 다시 훑지 않고 채굴 셀의 두 수직 이웃만 확인한다.
+        /// </summary>
+        private List<Vector3Int> CollectVerticallyIsolatedNeighbors(Vector3Int minedCell)
+        {
+            var isolated = new List<Vector3Int>(2);
+            AddIfVerticallyIsolated(minedCell + Vector3Int.up, isolated);
+            AddIfVerticallyIsolated(minedCell + Vector3Int.down, isolated);
+            return isolated;
+        }
+
+        private void AddIfVerticallyIsolated(Vector3Int cell, List<Vector3Int> isolated)
+        {
+            if (!IsUnsupportedCeiling(cell)) return;
+            if (foregroundTilemap.HasTile(cell + Vector3Int.up)) return;
+            isolated.Add(cell);
+        }
+
+        /// <summary>
+        /// 수직 고립은 위험 점수 임계값과 무관한 확정 붕괴 조건이다.
+        /// 기존 예고·낙하·피해·스냅샷 경로를 그대로 사용하되 보호 셀과 버팀목은 제외한다.
+        /// </summary>
+        private void BeginVerticallyIsolatedCollapses(IReadOnlyList<Vector3Int> isolated)
+        {
+            if (isolated == null || isolated.Count == 0) return;
+
+            var selected = new List<Vector3Int>(isolated.Count);
+            for (int i = 0; i < isolated.Count; i++)
+            {
+                Vector3Int cell = isolated[i];
+                if (!IsUnsupportedCeiling(cell)
+                    || foregroundTilemap.HasTile(cell + Vector3Int.up)
+                    || telegraphRemaining.ContainsKey(cell))
+                {
+                    continue;
+                }
+
+                float forcedScore = Mathf.Max(
+                    ComputeTileScore(cell),
+                    Settings.CollapseImminentThreshold);
+                tileRisks[cell] = StructuralRiskLevel.CollapseImminent;
+                tileScores[cell] = forcedScore;
+                tileCauses[cell] = StructuralRiskCause.Unsupported;
+                deferredCandidates.Remove(cell);
+
+                float intensity = Mathf.InverseLerp(
+                    Settings.CautionThreshold,
+                    Settings.CollapseImminentThreshold,
+                    forcedScore);
+                if (crackOverlay != null)
+                {
+                    crackOverlay.SetCell(
+                        cell,
+                        StructuralRiskLevel.CollapseImminent,
+                        intensity,
+                        StructuralRiskCause.Unsupported);
+                    crackOverlay.PulseCell(cell);
+                }
+
+                selected.Add(cell);
+            }
+
+            BeginTelegraph(selected);
         }
 
         private void ClearTileRisk(Vector3Int cell)
