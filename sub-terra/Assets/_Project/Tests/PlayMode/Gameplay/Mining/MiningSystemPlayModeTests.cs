@@ -131,6 +131,59 @@ namespace SubTerra.Gameplay.Mining.Tests
         }
 
         [Test]
+        public void PromptB79_MovingToMineableTarget_ClearsPreviousFailureImmediately()
+        {
+            CreateSystem(out var root, out var tilemap, out var resolver, out var system);
+            var mineableTile = ScriptableObject.CreateInstance<Tile>();
+            var blockedTile = ScriptableObject.CreateInstance<Tile>();
+            resolver.RegisterRuntime(mineableTile, new MiningTileDto(
+                "tile.rock.normal", string.Empty, 0, true, 1f, 0.2f, 0f, false));
+            resolver.RegisterRuntime(blockedTile, new MiningTileDto(
+                "tile.boundary", string.Empty, 0, false, 1f, 0.2f, 0f, false));
+            var mineableCell = Vector3Int.zero;
+            var blockedCell = new Vector3Int(2, 0, 0);
+            tilemap.SetTile(mineableCell, mineableTile);
+            tilemap.SetTile(blockedCell, blockedTile);
+            MiningPhase lastPhase = MiningPhase.Idle;
+            system.ProgressChanged += state => lastPhase = state.Phase;
+
+            Assert.That(system.TryStartMining(blockedCell), Is.False);
+            Assert.That(system.LastFailure, Is.EqualTo(MiningFailureReason.NotMineable));
+
+            Assert.That(system.ClearFailureIfDirectionalTargetMineable(
+                Vector2.zero,
+                1f,
+                1.35f), Is.True);
+            Assert.That(system.LastFailure, Is.EqualTo(MiningFailureReason.None));
+            Assert.That(lastPhase, Is.EqualTo(MiningPhase.Idle));
+            Assert.That(tilemap.GetTile(mineableCell), Is.SameAs(mineableTile));
+
+            Object.DestroyImmediate(root);
+            Object.DestroyImmediate(mineableTile);
+            Object.DestroyImmediate(blockedTile);
+        }
+
+        [Test]
+        public void PromptB79_BlockedTarget_DoesNotClearPreviousFailure()
+        {
+            CreateSystem(out var root, out var tilemap, out var resolver, out var system);
+            var blockedTile = ScriptableObject.CreateInstance<Tile>();
+            resolver.RegisterRuntime(blockedTile, new MiningTileDto(
+                "tile.boundary", string.Empty, 0, false, 1f, 0.2f, 0f, false));
+            tilemap.SetTile(Vector3Int.zero, blockedTile);
+
+            Assert.That(system.TryStartMining(Vector3Int.zero), Is.False);
+            Assert.That(system.ClearFailureIfDirectionalTargetMineable(
+                Vector2.zero,
+                1f,
+                1.35f), Is.False);
+            Assert.That(system.LastFailure, Is.EqualTo(MiningFailureReason.NotMineable));
+
+            Object.DestroyImmediate(root);
+            Object.DestroyImmediate(blockedTile);
+        }
+
+        [Test]
         public void CellProtectedDuringMiningIsNotRemovedOnCompletion()
         {
             CreateSystem(out var root, out var tilemap, out var resolver, out var system);

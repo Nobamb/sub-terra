@@ -236,6 +236,32 @@ namespace SubTerra.Gameplay.Mining
                 && TryStartMining(cell);
         }
 
+        /// <summary>
+        /// 실패 후 플레이어가 실제로 채굴 가능한 지형 앞으로 이동했으면 남은 실패 표시 상태를 지운다.
+        /// 입력 없이 상태만 확인하므로 타일, 전력, 화물은 변경하지 않는다.
+        /// </summary>
+        public bool ClearFailureIfDirectionalTargetMineable(
+            Vector2 origin,
+            float facingDirection,
+            float range)
+        {
+            if (IsMining || LastFailure == MiningFailureReason.None)
+            {
+                return false;
+            }
+
+            ResolveServices();
+            if (!TryGetDirectionalCell(origin, facingDirection, range, out var cell)
+                || !IsTargetTerrainMineable(cell))
+            {
+                return false;
+            }
+
+            LastFailure = MiningFailureReason.None;
+            Publish(MiningPhase.Idle);
+            return true;
+        }
+
         public bool TryStartMiningAtWorldPoint(Vector2 worldPoint, Vector2 origin, float range)
         {
             return TryGetWorldPointCell(worldPoint, origin, range, out var cell)
@@ -342,6 +368,34 @@ namespace SubTerra.Gameplay.Mining
         {
             return Array.IndexOf(protectedCells, cell) >= 0
                 || (cellProtectionPredicate != null && cellProtectionPredicate(cell));
+        }
+
+        private bool IsTargetTerrainMineable(Vector3Int cell)
+        {
+            if (foregroundTilemap == null || tileResolver == null || IsCellProtected(cell))
+            {
+                return false;
+            }
+
+            TileBase tile = foregroundTilemap.GetTile(cell);
+            if (tile == null || !tileResolver.TryResolve(tile, out MiningTileDto definition))
+            {
+                return false;
+            }
+
+            if (definition.tileId == LockedSignalTileId)
+            {
+                return deepZoneAccess?.IsDeepZoneUnlocked == true;
+            }
+
+            if (IsDeepZoneCell(cell) && deepZoneAccess?.IsDeepZoneUnlocked != true)
+            {
+                return false;
+            }
+
+            int drillLevel = upgradeEffects?.GetDrillLevel() ?? 0;
+            return definition.isMineable
+                && drillLevel >= Mathf.Max(0, definition.requiredDrillLevel);
         }
 
         private bool IsDeepZoneCell(Vector3Int cell)

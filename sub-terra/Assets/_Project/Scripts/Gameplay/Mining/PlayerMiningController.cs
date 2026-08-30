@@ -52,6 +52,10 @@ namespace SubTerra.Gameplay.Mining
             if (movement.IsMovementRequested)
             {
                 miningSystem.CancelMining();
+                miningSystem.ClearFailureIfDirectionalTargetMineable(
+                    movement.Position,
+                    movement.FacingDirection,
+                    reach);
                 return;
             }
 
