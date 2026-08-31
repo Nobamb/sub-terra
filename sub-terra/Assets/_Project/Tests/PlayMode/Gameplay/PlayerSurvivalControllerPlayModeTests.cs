@@ -10,7 +10,7 @@ namespace SubTerra.Gameplay.Player.Tests
     public sealed class PlayerSurvivalControllerPlayModeTests
     {
         [UnityTest]
-        public IEnumerator L_F01_RuntimeController_NormalizesCollapseGasAndPowerFailures()
+        public IEnumerator PromptB81_PowerDepletion_DoesNotIncapacitateOrRequestFailure()
         {
             var player = new GameObject("L_Player");
             player.transform.position = new Vector3(0.5f, 0.5f, 0f);
@@ -42,9 +42,10 @@ namespace SubTerra.Gameplay.Player.Tests
             Assert.That(failures[0].cause, Is.EqualTo(RunFailureCause.GasExposure));
 
             controller.RestoreAfterRescue();
-            Assert.That(controller.ApplyPowerDepletion(), Is.True);
-            Assert.That(failures.Count, Is.EqualTo(2));
-            Assert.That(failures[1].cause, Is.EqualTo(RunFailureCause.PowerDepleted));
+            Assert.That(controller.ApplyPowerDepletion(), Is.False);
+            Assert.That(failures.Count, Is.EqualTo(1));
+            Assert.That(controller.State.CanAct, Is.True);
+            Assert.That(controller.State.Health, Is.EqualTo(controller.State.MaximumHealth));
 
             Object.Destroy(host);
             Object.Destroy(player);

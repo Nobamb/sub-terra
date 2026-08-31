@@ -60,6 +60,7 @@ namespace SubTerra.App.Integration
         [SerializeField] private PlayerMovement playerMovement;
         [SerializeField] private MiningProgressHud miningProgressHud;
         [SerializeField] private RunFailureRuntimeController runFailureController;
+        private EmergencyRescueRuntimeController emergencyRescueController;
 
         private SaveRuntimeController runtime;
         private GameBootstrapper bootstrap;
@@ -177,6 +178,7 @@ namespace SubTerra.App.Integration
             playerMovement = Resolve(playerMovement);
             miningProgressHud = Resolve(miningProgressHud, FindObjectsInactive.Include);
             runFailureController = Resolve(runFailureController);
+            emergencyRescueController = Resolve(emergencyRescueController, FindObjectsInactive.Include);
 
             if (worldSnapshotProviderBehaviour == null)
             {
@@ -322,6 +324,22 @@ namespace SubTerra.App.Integration
                         hudBinder.BindHealthSource(runFailureController.SurvivalController);
                     }
                     runFailureController.PlayerRescued += OnPlayerRescued;
+                });
+
+            TryStep(
+                "EmergencyRescue",
+                () =>
+                {
+                    if (emergencyRescueController == null)
+                    {
+                        emergencyRescueController = gameObject.AddComponent<EmergencyRescueRuntimeController>();
+                    }
+
+                    emergencyRescueController.Bind(
+                        runtime,
+                        bootstrap.State,
+                        playerMovement != null ? playerMovement.transform : null,
+                        hudBinder);
                 });
 
             var dataCatalog = bootstrap.AssignedCatalog as GameDataCatalog;
@@ -816,6 +834,11 @@ namespace SubTerra.App.Integration
                 }
                 runFailureController.PlayerRescued -= OnPlayerRescued;
                 runFailureController.Unbind();
+            }
+
+            if (emergencyRescueController != null)
+            {
+                emergencyRescueController.Unbind();
             }
         }
 
