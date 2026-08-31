@@ -14,6 +14,7 @@ namespace SubTerra.Gameplay.Player
         [SerializeField] private Sprite[] walkFrames;
         [SerializeField] private Sprite[] jumpFrames;
         [SerializeField] private Sprite[] ladderFrames;
+        [SerializeField] private Sprite[] ladderDownFrames;
         [SerializeField] private Sprite[] miningFrames;
         [SerializeField] private Sprite[] damageFrames;
         [SerializeField] private Sprite[] knockoutFrames;
@@ -88,6 +89,7 @@ namespace SubTerra.Gameplay.Player
             Sprite[] walk,
             Sprite[] jump,
             Sprite[] ladder,
+            Sprite[] ladderDown,
             Sprite[] mining,
             Sprite[] damage,
             Sprite[] knockout)
@@ -98,6 +100,7 @@ namespace SubTerra.Gameplay.Player
             walkFrames = walk;
             jumpFrames = jump;
             ladderFrames = ladder;
+            ladderDownFrames = ladderDown;
             miningFrames = mining;
             damageFrames = damage;
             knockoutFrames = knockout;
@@ -127,7 +130,7 @@ namespace SubTerra.Gameplay.Player
 
             if (movement.IsClimbing)
             {
-                return "Ladder";
+                return movement.IsDescendingLadder ? "LadderDown" : "Ladder";
             }
 
             if (!movement.IsGrounded)
@@ -212,6 +215,7 @@ namespace SubTerra.Gameplay.Player
                 "Walk" => (walkFrames, 10f, true),
                 "Jump" => (jumpFrames, 12f, false),
                 "Ladder" => (ladderFrames, 8f, true),
+                "LadderDown" => (ladderDownFrames, 8f, true),
                 "Mining" => (miningFrames, 10f, true),
                 "Damage" => (damageFrames, 10f, false),
                 "Knockout" => (knockoutFrames, 8f, false),
