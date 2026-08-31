@@ -1819,7 +1819,6 @@ MonoBehaviour:
   powerNetworkSystem: {fileID: 279480552}
   interactionOrigin: {fileID: 0}
   facilityInteractionRange: 2
-  facilityPowerConnectionRange: 10
   elevatorPowerOrigin: {fileID: 0}
   outpostInstanceId: outpost.demo
 --- !u!114 &279480554

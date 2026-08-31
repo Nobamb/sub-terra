@@ -58,6 +58,10 @@ namespace SubTerra.Gameplay.Mining
             {
                 miningSystem.CancelMining();
                 animationController?.SetMining(false);
+                miningSystem.ClearFailureIfDirectionalTargetMineable(
+                    movement.Position,
+                    movement.FacingDirection,
+                    reach);
                 return;
             }
 

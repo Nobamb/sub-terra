@@ -103,6 +103,65 @@ namespace SubTerra.Gameplay.Building.Tests
         }
 
         [Test]
+        public void PromptB78_CanPlaceLadderDirectlyAboveLadder()
+        {
+            var setup = CreateSetup(
+                maximumDistance: 10f,
+                areaSize: new Vector2(12f, 16f),
+                footprint: new Vector2Int(1, 5),
+                needsGround: false,
+                buildingId: "building.ladder.basic");
+            try
+            {
+                Assert.That(setup.Placement.TryPlaceAt(Vector3Int.zero).IsSuccess, Is.True);
+                setup.Placement.Select(setup.Definition);
+
+                var nextLadderOrigin = new Vector3Int(0, 5, 0);
+                Assert.That(
+                    setup.Placement.CanPlaceAt(nextLadderOrigin, out var failure),
+                    Is.True,
+                    failure.ToString());
+
+                var placed = setup.Placement.TryPlaceAt(nextLadderOrigin);
+                Assert.That(placed.IsSuccess, Is.True, placed.Failure.ToString());
+                Assert.That(setup.Wallet.SpendCount, Is.EqualTo(2));
+                Assert.That(setup.BuildingRoot.childCount, Is.EqualTo(2));
+            }
+            finally
+            {
+                setup.Dispose();
+            }
+        }
+
+        [Test]
+        public void PromptB78_LadderCannotStackOnNonLadderBuilding()
+        {
+            var setup = CreateSetup(
+                maximumDistance: 5f,
+                areaSize: new Vector2(12f, 8f),
+                needsGround: false);
+            try
+            {
+                Assert.That(setup.Placement.TryPlaceAt(Vector3Int.zero).IsSuccess, Is.True);
+                setup.Definition.EditorSet(
+                    "building.ladder.basic",
+                    setup.RuntimePrefab,
+                    Vector2Int.one,
+                    false);
+                setup.Placement.Select(setup.Definition);
+
+                Assert.That(
+                    setup.Placement.CanPlaceAt(Vector3Int.up, out var failure),
+                    Is.False);
+                Assert.That(failure, Is.EqualTo(BuildingPlacementFailure.Occupied));
+            }
+            finally
+            {
+                setup.Dispose();
+            }
+        }
+
+        [Test]
         public void PromptB64_CannotPlaceOnElevatorProtectedGround()
         {
             var setup = CreateSetup(
@@ -292,6 +351,50 @@ namespace SubTerra.Gameplay.Building.Tests
         }
 
         [Test]
+        public void PlacedLadder_PreventsExistingSupportingGroundCollapse()
+        {
+            var setup = CreateSetup(
+                maximumDistance: 10f,
+                areaSize: new Vector2(20f, 12f),
+                footprint: new Vector2Int(1, 5),
+                needsGround: false,
+                buildingId: "building.ladder.basic");
+            try
+            {
+                var structural = setup.Host.AddComponent<StructuralIntegritySystem>();
+                SetField(structural, "foregroundTilemap", setup.Terrain);
+                SetField(setup.Placement, "structuralIntegritySystem", structural);
+                Object.DestroyImmediate(setup.Definition.RuntimePrefab.GetComponent<StructuralSupport>());
+
+                var supportingGround = new Vector3Int(0, -1, 0);
+                setup.Terrain.SetTile(supportingGround, setup.Tile);
+                structural.NotifyTileMined(
+                    new Vector3Int(0, -3, 0),
+                    new MiningTileDto(
+                        "tile.test",
+                        string.Empty,
+                        0,
+                        true,
+                        1f,
+                        1f,
+                        1f,
+                        false));
+
+                Assert.That(setup.Placement.TryPlaceAt(Vector3Int.zero).IsSuccess, Is.True);
+                Assert.That(setup.Definition.BuildingId, Is.EqualTo("building.ladder.basic"));
+                Assert.That(setup.Definition.RequiresGround, Is.False);
+                Assert.That(setup.Placement.IsGroundSupportingBuilding(supportingGround), Is.True);
+                structural.AdvanceSimulation(1f);
+
+                Assert.That(setup.Terrain.HasTile(supportingGround), Is.True);
+            }
+            finally
+            {
+                setup.Dispose();
+            }
+        }
+
+        [Test]
         public void TryFindBestPlacementCell_PrefersNearestWithinRange()
         {
             BuildingPlacementActivity.ResetForTests();
@@ -414,7 +517,8 @@ namespace SubTerra.Gameplay.Building.Tests
             float maximumDistance,
             Vector2 areaSize,
             Vector2Int? footprint = null,
-            bool needsGround = true)
+            bool needsGround = true,
+            string buildingId = null)
         {
             var host = new GameObject("PlacementSetup");
             host.SetActive(false);
@@ -440,10 +544,12 @@ namespace SubTerra.Gameplay.Building.Tests
             prefab.AddComponent<StructuralSupport>();
             var definition = ScriptableObject.CreateInstance<BuildingPlacementDefinition>();
             var size = footprint ?? Vector2Int.one;
-            var buildingId = size.x > 1 || size.y > 1
-                ? "building.escape_portal.emergency"
-                : "building.support.basic";
-            definition.EditorSet(buildingId, prefab, size, needsGround);
+            var resolvedBuildingId = !string.IsNullOrWhiteSpace(buildingId)
+                ? buildingId
+                : size.x > 1 || size.y > 1
+                    ? "building.escape_portal.emergency"
+                    : "building.support.basic";
+            definition.EditorSet(resolvedBuildingId, prefab, size, needsGround);
             var wallet = new RecordingWallet();
             var placement = host.AddComponent<BuildingPlacementSystem>();
             SetField(placement, "terrainTilemap", terrain);
@@ -500,6 +606,7 @@ namespace SubTerra.Gameplay.Building.Tests
             public RecordingWallet Wallet { get; }
             public BuildingPlacementSystem Placement { get; }
             public BuildingPlacementDefinition Definition { get; }
+            public GameObject RuntimePrefab => prefab;
             private readonly GameObject prefab;
 
             public PlacementSetup(

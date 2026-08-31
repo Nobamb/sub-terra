@@ -12,6 +12,7 @@ namespace SubTerra.App.Integration
         [SerializeField] private TMP_Text statusText;
         [SerializeField] private Image progressFill;
         [SerializeField] private Vector2 screenOffset = new(0f, 20f);
+        [SerializeField, Min(0f)] private float failureDisplayDuration = 10f;
 
         private MiningSystem boundSystem;
         private Transform playerTarget;
@@ -19,6 +20,8 @@ namespace SubTerra.App.Integration
         private RectTransform statusRect;
         private RectTransform progressFillRect;
         private Canvas parentCanvas;
+        private bool isFailureVisible;
+        private float failureHideAt;
 
         public void BindTo(MiningSystem system, Transform player)
         {
@@ -59,6 +62,12 @@ namespace SubTerra.App.Integration
 
         private void LateUpdate()
         {
+            if (isFailureVisible && Time.unscaledTime >= failureHideAt)
+            {
+                isFailureVisible = false;
+                SetVisible(false);
+            }
+
             if (statusRoot != null && statusRoot.activeSelf)
             {
                 UpdatePosition();
@@ -68,6 +77,13 @@ namespace SubTerra.App.Integration
         private void OnProgressChanged(MiningProgressState state)
         {
             bool isMining = state.Phase == MiningPhase.Mining;
+            isFailureVisible = state.Phase == MiningPhase.Failed;
+            if (isFailureVisible)
+            {
+                // 게임이 일시 정지되어도 안내가 화면에 영구 잔류하지 않도록 실시간을 사용한다.
+                failureHideAt = Time.unscaledTime + failureDisplayDuration;
+            }
+
             if (progressFill != null)
             {
                 float progress = Mathf.Clamp01(state.Progress);

@@ -163,9 +163,15 @@ namespace SubTerra.App.Integration
 
         private void EnsureRuntimeBindings()
         {
-            if (service == null)
+            var currentState = GameBootstrapper.Instance?.State;
+            if (GameState.IsComplete(currentState)
+                && !ReferenceEquals(gameState, currentState))
             {
-                var state = gameState ?? GameBootstrapper.Instance?.State;
+                Bind(currentState, playerTransform, elevatorCenter);
+            }
+            else if (service == null)
+            {
+                var state = gameState ?? currentState;
                 Bind(state, playerTransform, elevatorCenter);
             }
 
