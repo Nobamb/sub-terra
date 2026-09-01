@@ -62,6 +62,7 @@ namespace SubTerra.Gameplay.Structural
         {
             if (crackOverlay != null)
             {
+                crackOverlay.BindSourceTilemap(foregroundTilemap);
                 crackOverlay.BindCollapseDamageReceiver(receiver);
             }
         }
@@ -311,6 +312,9 @@ namespace SubTerra.Gameplay.Structural
             StructuralRiskCause actionCause,
             float actionImpact)
         {
+            if (crackOverlay != null)
+                crackOverlay.BindSourceTilemap(foregroundTilemap);
+
             var collapseCandidates = new List<StructuralCollapseCandidate>();
 
             foreach (Vector3Int cell in affected)
