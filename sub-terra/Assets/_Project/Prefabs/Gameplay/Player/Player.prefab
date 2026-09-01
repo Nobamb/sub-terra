@@ -119,15 +119,11 @@ MonoBehaviour:
   acceleration: 45
   deceleration: 55
   jumpImpulse: 11
-  ladderSpeed: 4
   groundCheck: {fileID: 5911924000846914324}
   groundCheckRadius: 0.08
   groundLayers:
     serializedVersion: 2
     m_Bits: 4294967295
-  jumpAirLockDuration: 0.15
-  groundProbeDistance: 0.12
-  minGroundNormalY: 0.6
 --- !u!114 &8136105684476186582
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -143,7 +139,6 @@ MonoBehaviour:
   inputActions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
   moveActionPath: Player/Move
   jumpActionPath: Player/Jump
-  interactActionPath: Player/Interact
 --- !u!114 &684283865810681452
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -330,7 +325,7 @@ Animator:
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
   m_AnimatePhysics: 0
-  m_WarningMessage: 
+  m_WarningMessage:
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
@@ -345,7 +340,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b2dd89f574b170c4cb8a68367db63f6b, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: SubTerra.Gameplay.Player::SubTerra.Gameplay.Player.PlayerAnimationController
   spriteRenderer: {fileID: 2361650740796772707}
   animator: {fileID: 0}
