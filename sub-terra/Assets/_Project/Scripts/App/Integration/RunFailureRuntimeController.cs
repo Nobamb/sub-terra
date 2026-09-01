@@ -62,12 +62,6 @@ namespace SubTerra.App.Integration
                     ?.BindSurvival(survivalController);
             }
 
-            gameState.EnergyChanged += OnEnergyChanged;
-            if (gameState.Run.LifecyclePhase == RunLifecyclePhase.Active
-                && gameState.Player.Energy <= 0)
-            {
-                survivalController?.ApplyPowerDepletion();
-            }
         }
 
         public void Unbind()
@@ -75,11 +69,6 @@ namespace SubTerra.App.Integration
             if (survivalController != null)
             {
                 survivalController.FailureRequested -= OnFailureRequested;
-            }
-
-            if (gameState != null)
-            {
-                gameState.EnergyChanged -= OnEnergyChanged;
             }
 
             runtime = null;
@@ -111,15 +100,6 @@ namespace SubTerra.App.Integration
                 case GameplayEventType.GasExposureThreshold:
                     survivalController.ApplyGasFailure(gameplayEvent.gasExposureFailure);
                     break;
-            }
-        }
-
-        private void OnEnergyChanged(EnergyReadModel energy)
-        {
-            if (energy.Current <= 0
-                && gameState?.Run?.LifecyclePhase == RunLifecyclePhase.Active)
-            {
-                survivalController?.ApplyPowerDepletion();
             }
         }
 

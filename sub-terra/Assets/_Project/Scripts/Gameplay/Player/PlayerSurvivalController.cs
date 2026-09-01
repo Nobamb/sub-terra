@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace SubTerra.Gameplay.Player
 {
-    /// <summary>붕괴·가스·전력 고갈을 하나의 Player 행동불능 입력으로 정규화한다.</summary>
+    /// <summary>붕괴·가스·체력 피해를 Player 행동불능 입력으로 정규화한다.</summary>
     public sealed class PlayerSurvivalController : MonoBehaviour, IPlayerHealthSource, ICollapseDamageReceiver
     {
         private const float DamageFlashInterval = 0.08f;
@@ -193,13 +193,9 @@ namespace SubTerra.Gameplay.Player
 
         public bool ApplyPowerDepletion()
         {
-            tokenSequence++;
-            return ApplyDamage(
-                RunFailureCause.PowerDepleted,
-                0,
-                true,
-                "power:" + tokenSequence.ToString(CultureInfo.InvariantCulture),
-                "player_energy");
+            // Prompt-B 81: 전력 0은 행동불능/RunFailure가 아니다.
+            // 구버전 바인딩이 남아 호출해도 걷기·점프·사다리 상태를 바꾸지 않는다.
+            return false;
         }
 
         public void RestoreAfterRescue()
