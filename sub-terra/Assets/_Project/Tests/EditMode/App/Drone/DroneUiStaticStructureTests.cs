@@ -94,7 +94,7 @@ namespace SubTerra.App.Tests.Drone
         }
 
         [Test]
-        public void WorldDialogue_ExposesItsViewportAreaToDarknessOverlayWhileVisible()
+        public void WorldDialogue_UsesASeparateOverlayCanvasAboveDarkness()
         {
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
                 "Assets/_Project/Prefabs/UI/ViewSocket.prefab");
@@ -117,15 +117,16 @@ namespace SubTerra.App.Tests.Drone
                     false));
                 socket.RefreshPosition();
 
-                Vector4 bypassRect = Shader.GetGlobalVector(
-                    DroneDialogueSocket.DarknessBypassShaderProperty);
-                Assert.That(bypassRect.z, Is.GreaterThan(bypassRect.x));
-                Assert.That(bypassRect.w, Is.GreaterThan(bypassRect.y));
-
-                socket.SetVisible(false);
-                bypassRect = Shader.GetGlobalVector(
-                    DroneDialogueSocket.DarknessBypassShaderProperty);
-                Assert.That(bypassRect.z, Is.LessThanOrEqualTo(bypassRect.x));
+                var overlay = instance.scene.GetRootGameObjects()
+                    .Single(root => root.name == "DroneDialogueOverlayCanvas");
+                var overlayCanvas = overlay.GetComponent<Canvas>();
+                var dialogueCanvas = overlay.GetComponentsInChildren<Canvas>(true)
+                    .Single(canvas => canvas != overlayCanvas);
+                Assert.That(overlayCanvas.renderMode, Is.EqualTo(RenderMode.ScreenSpaceOverlay));
+                Assert.That(
+                    overlayCanvas.sortingOrder,
+                    Is.EqualTo(DroneDialogueSocket.OverlaySortingOrder));
+                Assert.That(dialogueCanvas.transform.IsChildOf(overlay.transform), Is.True);
             }
             finally
             {

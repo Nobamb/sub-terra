@@ -111,6 +111,7 @@ namespace SubTerra.App.Tests.PlayMode.Drone
             canvasObject.transform.SetParent(socketObject.transform, false);
             var canvas = canvasObject.GetComponent<Canvas>();
             canvas.renderMode = RenderMode.WorldSpace;
+            canvasObject.transform.localScale = Vector3.one * 0.006f;
             var group = canvasObject.GetComponent<CanvasGroup>();
             group.interactable = false;
             group.blocksRaycasts = false;
@@ -134,11 +135,17 @@ namespace SubTerra.App.Tests.PlayMode.Drone
                 true));
             socket.RefreshPosition();
 
-            var viewport = camera.WorldToViewportPoint(canvasObject.transform.position);
+            var viewport = new Vector2(
+                canvasObject.transform.position.x / Screen.width,
+                canvasObject.transform.position.y / Screen.height);
             Assert.That(group.alpha, Is.EqualTo(1f));
             Assert.That(group.blocksRaycasts, Is.False);
             Assert.That(viewport.x, Is.InRange(0.079f, 0.921f));
             Assert.That(viewport.y, Is.InRange(0.119f, 0.881f));
+            Assert.That(canvas.rootCanvas.renderMode, Is.EqualTo(RenderMode.ScreenSpaceOverlay));
+            Assert.That(
+                canvas.rootCanvas.sortingOrder,
+                Is.EqualTo(DroneDialogueSocket.OverlaySortingOrder));
 
             Object.Destroy(socketObject);
             Object.Destroy(cameraObject);

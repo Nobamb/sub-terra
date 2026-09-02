@@ -67,7 +67,6 @@ Shader "SubTerra/DepthDarknessOverlayUI"
             float4 _Color;
             float4 _DarkColor;
             float4 _PlayerViewport;
-            float4 _DroneDialogueViewportRect;
             float4 _WorldMin;
             float4 _WorldMax;
             float4 _OccWorldMin;
@@ -153,13 +152,6 @@ Shader "SubTerra/DepthDarknessOverlayUI"
                 float4 color = lerp(darkColor, veiledOutline, outline);
                 color.a *= 1.0 - saturate(scanGlow);
 
-                float2 dialogueMin = _DroneDialogueViewportRect.xy;
-                float2 dialogueMax = _DroneDialogueViewportRect.zw;
-                float insideDialogue = step(dialogueMin.x, i.texcoord.x)
-                    * step(dialogueMin.y, i.texcoord.y)
-                    * step(i.texcoord.x, dialogueMax.x)
-                    * step(i.texcoord.y, dialogueMax.y);
-                color.a *= 1.0 - insideDialogue;
                 color.a *= UnityGet2DClipping(i.worldPosition.xy, _ClipRect);
                 return color;
             }
