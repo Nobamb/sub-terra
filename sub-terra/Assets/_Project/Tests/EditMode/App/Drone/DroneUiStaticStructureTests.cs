@@ -1,6 +1,7 @@
 using System.Linq;
 using NUnit.Framework;
 using SubTerra.App.Editor.DataValidation;
+using SubTerra.App.Drone.Dialogue;
 using SubTerra.App.Integration;
 using SubTerra.App.UI.Drone;
 using SubTerra.Shared;
@@ -90,6 +91,47 @@ namespace SubTerra.App.Tests.Drone
                 world.GetComponentsInChildren<Graphic>(true).All(item => !item.raycastTarget),
                 Is.True);
             Assert.That(world.GetComponentInChildren<Canvas>().renderMode, Is.EqualTo(RenderMode.WorldSpace));
+        }
+
+        [Test]
+        public void WorldDialogue_ExposesItsViewportAreaToDarknessOverlayWhileVisible()
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                "Assets/_Project/Prefabs/UI/ViewSocket.prefab");
+            var instance = Object.Instantiate(prefab);
+            var cameraObject = new GameObject("Main Camera", typeof(Camera));
+            cameraObject.tag = "MainCamera";
+            cameraObject.transform.position = new Vector3(0f, 0f, -10f);
+            var camera = cameraObject.GetComponent<Camera>();
+            camera.orthographic = true;
+            camera.orthographicSize = 5f;
+            try
+            {
+                var socket = instance.GetComponent<DroneDialogueSocket>();
+                socket.SetVisible(true);
+                socket.SetDialogue(new DroneDialogueResult(
+                    "dialogue.test",
+                    "스캔 결과",
+                    false,
+                    false,
+                    false));
+                socket.RefreshPosition();
+
+                Vector4 bypassRect = Shader.GetGlobalVector(
+                    DroneDialogueSocket.DarknessBypassShaderProperty);
+                Assert.That(bypassRect.z, Is.GreaterThan(bypassRect.x));
+                Assert.That(bypassRect.w, Is.GreaterThan(bypassRect.y));
+
+                socket.SetVisible(false);
+                bypassRect = Shader.GetGlobalVector(
+                    DroneDialogueSocket.DarknessBypassShaderProperty);
+                Assert.That(bypassRect.z, Is.LessThanOrEqualTo(bypassRect.x));
+            }
+            finally
+            {
+                Object.DestroyImmediate(instance);
+                Object.DestroyImmediate(cameraObject);
+            }
         }
 
         [Test]

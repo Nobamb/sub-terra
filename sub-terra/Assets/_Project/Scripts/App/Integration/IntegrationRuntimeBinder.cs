@@ -949,6 +949,7 @@ namespace SubTerra.App.Integration
             }
 
             depthDarknessOverlay.SetTerrainTilemap(FindForegroundTilemap());
+            depthDarknessOverlay.SetDroneSensor(droneSensor);
             depthDarknessOverlay.Bind(bootstrap.State, playerMovement.transform);
         }
 

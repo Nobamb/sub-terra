@@ -18,6 +18,7 @@ Shader "SubTerra/DepthDarknessOverlayUI"
         _CellSize ("Cell Size", Vector) = (1,1,0,0)
         _OccTexSize ("Occupancy Tex Size", Vector) = (0,0,0,0)
         _PlayerViewport ("Player Viewport", Vector) = (0.5,0.5,1,0)
+        _ScanGlowRadius ("Scan Glow Radius Cells", Float) = 1.05
     }
 
     SubShader
@@ -66,6 +67,7 @@ Shader "SubTerra/DepthDarknessOverlayUI"
             float4 _Color;
             float4 _DarkColor;
             float4 _PlayerViewport;
+            float4 _DroneDialogueViewportRect;
             float4 _WorldMin;
             float4 _WorldMax;
             float4 _OccWorldMin;
@@ -77,6 +79,7 @@ Shader "SubTerra/DepthDarknessOverlayUI"
             float _OutlineWidth;
             float _BlockDarkAlpha;
             float _Fade;
+            float _ScanGlowRadius;
             float4 _ClipRect;
 
             v2f vert(appdata_t v)
@@ -100,6 +103,7 @@ Shader "SubTerra/DepthDarknessOverlayUI"
 
                 float occupied = 0;
                 float outline = 0;
+                float scanGlow = 0;
                 if (_OccTexSize.x > 0.5 && _CellSize.x > 0.0001)
                 {
                     float2 world = lerp(_WorldMin.xy, _WorldMax.xy, i.texcoord.xy);
@@ -110,6 +114,25 @@ Shader "SubTerra/DepthDarknessOverlayUI"
                     if (occUV.x >= 0.0 && occUV.x <= 1.0 && occUV.y >= 0.0 && occUV.y <= 1.0)
                     {
                         occupied = tex2D(_OccupancyTex, occUV).r;
+                    }
+
+                    [unroll]
+                    for (int scanY = -1; scanY <= 1; scanY++)
+                    {
+                        [unroll]
+                        for (int scanX = -1; scanX <= 1; scanX++)
+                        {
+                            float2 scanCell = cellIndex + float2(scanX, scanY);
+                            float2 scanUV = (scanCell + 0.5) / max(_OccTexSize.xy, 0.0001);
+                            if (scanUV.x >= 0.0 && scanUV.x <= 1.0
+                                && scanUV.y >= 0.0 && scanUV.y <= 1.0)
+                            {
+                                float target = tex2D(_OccupancyTex, scanUV).g;
+                                float distanceFromTarget = length(cellFloat - (scanCell + 0.5));
+                                float glow = 1.0 - smoothstep(0.42, max(0.43, _ScanGlowRadius), distanceFromTarget);
+                                scanGlow = max(scanGlow, target * glow);
+                            }
+                        }
                     }
 
                     float edge = min(min(cellFrac.x, 1.0 - cellFrac.x), min(cellFrac.y, 1.0 - cellFrac.y));
@@ -128,6 +151,15 @@ Shader "SubTerra/DepthDarknessOverlayUI"
                 float remain = saturate(1.0 - _DarkColor.a);
                 float4 veiledOutline = float4(_OutlineColor.rgb * remain, fade);
                 float4 color = lerp(darkColor, veiledOutline, outline);
+                color.a *= 1.0 - saturate(scanGlow);
+
+                float2 dialogueMin = _DroneDialogueViewportRect.xy;
+                float2 dialogueMax = _DroneDialogueViewportRect.zw;
+                float insideDialogue = step(dialogueMin.x, i.texcoord.x)
+                    * step(dialogueMin.y, i.texcoord.y)
+                    * step(i.texcoord.x, dialogueMax.x)
+                    * step(i.texcoord.y, dialogueMax.y);
+                color.a *= 1.0 - insideDialogue;
                 color.a *= UnityGet2DClipping(i.worldPosition.xy, _ClipRect);
                 return color;
             }

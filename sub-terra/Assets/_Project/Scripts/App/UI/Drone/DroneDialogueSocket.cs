@@ -7,6 +7,11 @@ namespace SubTerra.App.UI.Drone
     /// <summary>드론 ViewSocket을 따라가며 화면 경계 안에 대사를 표시하는 World Space View.</summary>
     public sealed class DroneDialogueSocket : MonoBehaviour, IDroneDialogueView
     {
+        public const string DarknessBypassShaderProperty = "_DroneDialogueViewportRect";
+        private static readonly int DarknessBypassRectId = Shader.PropertyToID(
+            DarknessBypassShaderProperty);
+        private static readonly Vector4 HiddenDarknessBypassRect = new(-1f, -1f, -1f, -1f);
+
         [SerializeField] private Transform anchor;
         [SerializeField] private RectTransform visualRoot;
         [SerializeField] private Canvas worldCanvas;
@@ -111,6 +116,8 @@ namespace SubTerra.App.UI.Drone
             {
                 visualRoot.position = desired;
             }
+
+            UpdateDarknessBypass(camera);
         }
 
         public bool HasRequiredReferences()
@@ -151,6 +158,45 @@ namespace SubTerra.App.UI.Drone
             {
                 canvasGroup.alpha = visible ? 1f : 0f;
             }
+
+            if (!visible)
+            {
+                Shader.SetGlobalVector(DarknessBypassRectId, HiddenDarknessBypassRect);
+            }
+        }
+
+        private void UpdateDarknessBypass(Camera camera)
+        {
+            if (!IsShowing || visualRoot == null || camera == null)
+            {
+                Shader.SetGlobalVector(DarknessBypassRectId, HiddenDarknessBypassRect);
+                return;
+            }
+
+            var corners = new Vector3[4];
+            visualRoot.GetWorldCorners(corners);
+            var min = Vector2.one;
+            var max = Vector2.zero;
+            for (var index = 0; index < corners.Length; index++)
+            {
+                Vector3 viewport = camera.WorldToViewportPoint(corners[index]);
+                min = Vector2.Min(min, viewport);
+                max = Vector2.Max(max, viewport);
+            }
+
+            const float padding = 0.006f;
+            Shader.SetGlobalVector(
+                DarknessBypassRectId,
+                new Vector4(
+                    Mathf.Clamp01(min.x - padding),
+                    Mathf.Clamp01(min.y - padding),
+                    Mathf.Clamp01(max.x + padding),
+                    Mathf.Clamp01(max.y + padding)));
+        }
+
+        private void OnDisable()
+        {
+            Shader.SetGlobalVector(DarknessBypassRectId, HiddenDarknessBypassRect);
         }
     }
 }

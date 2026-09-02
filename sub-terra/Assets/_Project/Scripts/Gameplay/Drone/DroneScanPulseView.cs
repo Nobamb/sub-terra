@@ -10,22 +10,19 @@ namespace SubTerra.Gameplay.Drone
         [SerializeField] private Color mineralColor = new(0.92f, 0.97f, 1f, 1f);
         [SerializeField] private Color hazardColor = new(1f, 0.12f, 0.08f, 1f);
         [SerializeField, Min(0f)] private float lightIntensity = 1.8f;
-        [SerializeField, Min(0.1f)] private float lightRadius = 0.72f;
+        [SerializeField, Min(0.1f)] private float lightRadius = 1.05f;
         [SerializeField, Min(0.1f)] private float ringDuration = 1.5f;
 
         private sealed class PooledMarker
         {
             public GameObject Root;
             public Light2D Light;
-            public SpriteRenderer PrimaryShape;
-            public SpriteRenderer SecondaryShape;
         }
 
         private readonly List<PooledMarker> pool = new();
+        private readonly Dictionary<Vector3Int, DroneScanTargetKind> activeTargets = new();
         private GameObject visualRoot;
         private SpriteRenderer rangeRing;
-        private Texture2D markerTexture;
-        private Sprite markerSprite;
         private Texture2D ringTexture;
         private Sprite ringSprite;
         private float expiresAt;
@@ -44,6 +41,7 @@ namespace SubTerra.Gameplay.Drone
         {
             EnsureVisualRoot();
             activeCount = targets?.Count ?? 0;
+            activeTargets.Clear();
             for (int index = 0; index < activeCount; index++)
             {
                 PooledMarker marker = GetOrCreate(index);
@@ -51,6 +49,7 @@ namespace SubTerra.Gameplay.Drone
                 marker.Root.transform.position = target.WorldPosition + Vector3.back * 0.1f;
                 marker.Root.SetActive(true);
                 ApplyKind(marker, target.Kind);
+                activeTargets[target.Cell] = target.Kind;
             }
 
             for (int index = activeCount; index < pool.Count; index++)
@@ -61,6 +60,11 @@ namespace SubTerra.Gameplay.Drone
             expiresAt = nextExpiresAt;
             ShowRangeRing(center, radius);
             ringExpiresAt = currentTime + Mathf.Max(0.1f, ringDuration);
+        }
+
+        public bool TryGetActiveTarget(Vector3Int cell, out DroneScanTargetKind kind)
+        {
+            return activeTargets.TryGetValue(cell, out kind);
         }
 
         public void Tick(float currentTime)
@@ -90,7 +94,6 @@ namespace SubTerra.Gameplay.Drone
             if (visualRoot != null) return;
             visualRoot = new GameObject("DroneScanPulseVisuals");
             visualRoot.layer = gameObject.layer;
-            CreateMarkerSprite();
             CreateRing();
         }
 
@@ -107,28 +110,13 @@ namespace SubTerra.Gameplay.Drone
             light.pointLightInnerRadius = lightRadius * 0.3f;
             light.pointLightOuterRadius = lightRadius;
 
-            SpriteRenderer primary = CreateShape(root.transform, "PrimaryShape");
-            SpriteRenderer secondary = CreateShape(root.transform, "SecondaryShape");
             var marker = new PooledMarker
             {
                 Root = root,
-                Light = light,
-                PrimaryShape = primary,
-                SecondaryShape = secondary
+                Light = light
             };
             pool.Add(marker);
             return marker;
-        }
-
-        private SpriteRenderer CreateShape(Transform parent, string objectName)
-        {
-            var shape = new GameObject(objectName);
-            shape.layer = gameObject.layer;
-            shape.transform.SetParent(parent, false);
-            SpriteRenderer renderer = shape.AddComponent<SpriteRenderer>();
-            renderer.sprite = markerSprite;
-            renderer.sortingOrder = 95;
-            return renderer;
         }
 
         private void ApplyKind(PooledMarker marker, DroneScanTargetKind kind)
@@ -137,26 +125,6 @@ namespace SubTerra.Gameplay.Drone
             Color color = hazard ? hazardColor : mineralColor;
             marker.Light.color = color;
             marker.Light.intensity = lightIntensity;
-            marker.PrimaryShape.color = color;
-            marker.SecondaryShape.color = color;
-
-            if (hazard)
-            {
-                SetShape(marker.PrimaryShape.transform, new Vector3(0.48f, 0.08f, 1f), 45f, true);
-                SetShape(marker.SecondaryShape.transform, new Vector3(0.48f, 0.08f, 1f), -45f, true);
-            }
-            else
-            {
-                SetShape(marker.PrimaryShape.transform, new Vector3(0.28f, 0.28f, 1f), 45f, true);
-                SetShape(marker.SecondaryShape.transform, Vector3.one, 0f, false);
-            }
-        }
-
-        private static void SetShape(Transform shape, Vector3 scale, float rotation, bool active)
-        {
-            shape.gameObject.SetActive(active);
-            shape.localScale = scale;
-            shape.localRotation = Quaternion.Euler(0f, 0f, rotation);
         }
 
         private void ShowRangeRing(Vector3 center, int radius)
@@ -166,17 +134,6 @@ namespace SubTerra.Gameplay.Drone
             rangeRing.transform.localScale = Vector3.one * radius;
             rangeRing.color = new Color(0.35f, 0.9f, 1f, 0.42f);
             rangeRing.gameObject.SetActive(true);
-        }
-
-        private void CreateMarkerSprite()
-        {
-            markerTexture = new Texture2D(1, 1, TextureFormat.RGBA32, false)
-            {
-                name = "RuntimeDroneScanMarker"
-            };
-            markerTexture.SetPixel(0, 0, Color.white);
-            markerTexture.Apply();
-            markerSprite = Sprite.Create(markerTexture, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f), 1f);
         }
 
         private void CreateRing()
@@ -218,6 +175,7 @@ namespace SubTerra.Gameplay.Drone
                 pool[index].Root.SetActive(false);
             }
             activeCount = 0;
+            activeTargets.Clear();
         }
 
         private void OnDisable()
@@ -228,8 +186,6 @@ namespace SubTerra.Gameplay.Drone
         private void OnDestroy()
         {
             if (visualRoot != null) DestroyRuntimeObject(visualRoot);
-            DestroyRuntimeObject(markerSprite);
-            DestroyRuntimeObject(markerTexture);
             DestroyRuntimeObject(ringSprite);
             DestroyRuntimeObject(ringTexture);
         }

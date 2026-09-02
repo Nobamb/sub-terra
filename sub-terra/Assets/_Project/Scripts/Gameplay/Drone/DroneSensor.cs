@@ -45,6 +45,7 @@ namespace SubTerra.Gameplay.Drone
         public float PulseInterval => pulseInterval;
         public float PulseDuration => pulseDuration;
         public IReadOnlyList<DroneScanTarget> LastPulseTargets => lastPulseTargets;
+        public DroneScanPulseView ScanPulseView => pulseView;
         /// <summary>지표면 기준 Y. HUD 깊이 브리지와 동일 값을 공유할 때 사용한다.</summary>
         public float SurfaceY
         {

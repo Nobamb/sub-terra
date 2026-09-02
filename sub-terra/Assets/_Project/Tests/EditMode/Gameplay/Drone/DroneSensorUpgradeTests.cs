@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Reflection;
 using SubTerra.Gameplay.Drone;
 using SubTerra.Gameplay.Hazards;
@@ -81,9 +82,21 @@ namespace SubTerra.Gameplay.Tests.Drone
             int initialLightCount = view.ActiveLightCount;
             Assert.That(initialLightCount, Is.GreaterThan(0));
             Assert.That(view.IsRingVisible, Is.True);
+            Assert.That(
+                view.GetComponentsInChildren<SpriteRenderer>(true)
+                    .Count(renderer => renderer.gameObject.name.StartsWith("PrimaryShape")
+                        || renderer.gameObject.name.StartsWith("SecondaryShape")),
+                Is.Zero);
+            Assert.That(
+                view.TryGetActiveTarget(new Vector3Int(7, 0, 0), out DroneScanTargetKind kind),
+                Is.True);
+            Assert.That(kind, Is.EqualTo(DroneScanTargetKind.Mineral));
 
             world.Sensor.TickScanPulse(10f);
             Assert.That(view.ActiveLightCount, Is.Zero);
+            Assert.That(
+                view.TryGetActiveTarget(new Vector3Int(7, 0, 0), out _),
+                Is.False);
             Assert.That(view.IsRingVisible, Is.False);
             world.Sensor.TickScanPulse(29f);
             Assert.That(view.ActiveLightCount, Is.Zero);
