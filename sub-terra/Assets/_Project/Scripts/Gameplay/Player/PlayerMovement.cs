@@ -51,6 +51,7 @@ namespace SubTerra.Gameplay.Player
         public bool CanMove { get; private set; } = true;
         public bool IsClimbing { get; private set; }
         public bool IsDescendingLadder => IsClimbing && verticalMoveInput < -0.01f;
+        public bool IsMovingOnLadder => IsClimbing && Mathf.Abs(verticalMoveInput) > 0.01f;
         public bool IsMovementRequested => Mathf.Abs(moveInput) > 0.01f
             || Mathf.Abs(verticalMoveInput) > 0.01f;
         public float CurrentSpeedMultiplier => cargoSpeedMultiplier * hazardSpeedMultiplier;

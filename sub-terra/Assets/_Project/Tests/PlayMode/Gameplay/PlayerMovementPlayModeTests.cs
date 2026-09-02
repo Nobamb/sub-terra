@@ -433,6 +433,52 @@ namespace SubTerra.Gameplay.Player.Tests
         }
 
         [Test]
+        public void LadderAnimation_HoldsSingleFrameWhenStationary()
+        {
+            animationVisualObject = new GameObject("LadderIdleAnimationVisual");
+            animationVisualObject.transform.SetParent(playerObject.transform);
+            var renderer = animationVisualObject.AddComponent<SpriteRenderer>();
+            var animation = animationVisualObject.AddComponent<PlayerAnimationController>();
+            ladderAnimationFrames = new[]
+            {
+                CreateTestSprite(),
+                CreateTestSprite(),
+                CreateTestSprite(),
+                CreateTestSprite()
+            };
+            ladderDownAnimationFrames = new[]
+            {
+                CreateTestSprite(),
+                CreateTestSprite(),
+                CreateTestSprite(),
+                CreateTestSprite()
+            };
+            animation.ConfigureFrames(
+                renderer,
+                movement,
+                ladderAnimationFrames,
+                ladderAnimationFrames,
+                ladderAnimationFrames,
+                ladderAnimationFrames,
+                ladderDownAnimationFrames,
+                ladderAnimationFrames,
+                ladderAnimationFrames,
+                ladderAnimationFrames);
+
+            movement.EnterLadder();
+            movement.SetVerticalMoveInput(0f);
+            InvokePrivate(animation, "LateUpdate");
+            Assert.AreSame(ladderAnimationFrames[0], renderer.sprite);
+
+            SetPrivateField(animation, "stateStartedAt", Time.unscaledTime - 2f);
+            InvokePrivate(animation, "LateUpdate");
+            Assert.AreSame(
+                ladderAnimationFrames[0],
+                renderer.sprite,
+                "사다리에서 정지하면 상승/하강 프레임을 순환하지 않고 단일 프레임을 유지해야 한다.");
+        }
+
+        [Test]
         public void LadderAnimation_UsesDedicatedFramesWhenDescending()
         {
             animationVisualObject = new GameObject("LadderAnimationVisual");
