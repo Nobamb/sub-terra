@@ -130,6 +130,11 @@ namespace SubTerra.Gameplay.Player
 
             if (movement.IsClimbing)
             {
+                if (!movement.IsMovingOnLadder)
+                {
+                    return "LadderIdle";
+                }
+
                 return movement.IsDescendingLadder ? "LadderDown" : "Ladder";
             }
 
@@ -216,6 +221,7 @@ namespace SubTerra.Gameplay.Player
                 "Jump" => (jumpFrames, 12f, false),
                 "Ladder" => (ladderFrames, 8f, true),
                 "LadderDown" => (ladderDownFrames, 8f, true),
+                "LadderIdle" => (ladderFrames, 0f, false),
                 "Mining" => (miningFrames, 10f, true),
                 "Damage" => (damageFrames, 10f, false),
                 "Knockout" => (knockoutFrames, 8f, false),
