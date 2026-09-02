@@ -267,6 +267,7 @@ namespace SubTerra.App.UI.Progression
             var name = ItemDisplayNames.PreferDisplay(upgrade.UpgradeId, upgrade.DisplayName);
             if (detailText != null)
             {
+                bool isDroneScan = upgrade.UpgradeId == DataIds.Upgrades.DroneScan;
                 var description = ItemDisplayNames.UpgradeDescription(upgrade.UpgradeId);
                 var unlockDescription = ItemDisplayNames.UpgradeUnlockDescription(
                     upgrade.UpgradeId,
@@ -281,7 +282,7 @@ namespace SubTerra.App.UI.Progression
                 if (upgrade.IsMaximumLevel)
                 {
                     builder.AppendLine()
-                        .Append("현재 수치 ")
+                        .Append(isDroneScan ? "현재 반경 " : "현재 수치 ")
                         .Append(upgrade.CurrentEffectValue.ToString("0.##"))
                         .AppendLine()
                         .Append(description)
@@ -290,18 +291,23 @@ namespace SubTerra.App.UI.Progression
                 }
                 else
                 {
-                    var delta = upgrade.NextEffectValue - upgrade.CurrentEffectValue;
-                    var deltaSign = delta >= 0f ? "+" : string.Empty;
                     builder.AppendLine()
-                        .Append("현재 ")
+                        .Append(isDroneScan ? "현재 반경 " : "현재 ")
                         .Append(upgrade.CurrentEffectValue.ToString("0.##"))
-                        .Append("  →  다음 ")
-                        .Append(upgrade.NextEffectValue.ToString("0.##"))
-                        .Append(" (")
-                        .Append(deltaSign)
-                        .Append(delta.ToString("0.##"))
-                        .Append(')')
-                        .AppendLine()
+                        .Append(isDroneScan ? "  →  다음 반경 " : "  →  다음 ")
+                        .Append(upgrade.NextEffectValue.ToString("0.##"));
+
+                    if (!isDroneScan)
+                    {
+                        var delta = upgrade.NextEffectValue - upgrade.CurrentEffectValue;
+                        var deltaSign = delta >= 0f ? "+" : string.Empty;
+                        builder.Append(" (")
+                            .Append(deltaSign)
+                            .Append(delta.ToString("0.##"))
+                            .Append(')');
+                    }
+
+                    builder.AppendLine()
                         .Append(description);
 
                     if (!string.IsNullOrEmpty(unlockDescription))

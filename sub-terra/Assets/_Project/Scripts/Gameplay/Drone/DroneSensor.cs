@@ -20,11 +20,14 @@ namespace SubTerra.Gameplay.Drone
         [SerializeField] private GasHazardSystem gasHazardSystem;
         [SerializeField] private PowerNetworkSystem powerNetworkSystem;
         [SerializeField] private Transform[] outpostCores = Array.Empty<Transform>();
-        [SerializeField, Min(1)] private int mineralScanRadius = 4;
+        [SerializeField, Min(0)] private int mineralScanRadius;
         [SerializeField, Min(0.1f)] private float scanInterval = 0.5f;
+        [SerializeField, Min(0.1f)] private float pulseInterval = 30f;
+        [SerializeField, Min(0.1f)] private float pulseDuration = 10f;
         [SerializeField] private float surfaceY;
 
         private float nextScanTime;
+        private float nextPulseTime;
         private int currentEnergy;
         private int returnEnergyEstimate;
         private int unsettledCargoValue;
@@ -33,9 +36,15 @@ namespace SubTerra.Gameplay.Drone
         private bool returnPathAvailable = true;
         private GasRiskLevel? appliedGasRisk;
         private IUpgradeEffectProvider upgradeEffects;
+        private DroneScanPulseView pulseView;
+        private readonly List<DroneScanTarget> lastPulseTargets = new();
 
         public DroneContextDto CurrentContext { get; private set; }
         public int EffectiveMineralScanRadius => ResolveMineralScanRadius();
+        public float ContextScanInterval => scanInterval;
+        public float PulseInterval => pulseInterval;
+        public float PulseDuration => pulseDuration;
+        public IReadOnlyList<DroneScanTarget> LastPulseTargets => lastPulseTargets;
         /// <summary>지표면 기준 Y. HUD 깊이 브리지와 동일 값을 공유할 때 사용한다.</summary>
         public float SurfaceY
         {
@@ -47,14 +56,27 @@ namespace SubTerra.Gameplay.Drone
 
         private void Update()
         {
-            if (Time.time < nextScanTime) return;
-            nextScanTime = Time.time + scanInterval;
-            CaptureAndNotify();
+            float now = Time.time;
+            if (now >= nextScanTime)
+            {
+                nextScanTime = now + scanInterval;
+                CaptureAndNotify();
+            }
+
+            TickScanPulse(now);
         }
 
         public void SetPlayerTransform(Transform target) => playerTransform = target;
 
-        public void SetUpgradeEffects(IUpgradeEffectProvider effects) => upgradeEffects = effects;
+        public void SetUpgradeEffects(IUpgradeEffectProvider effects)
+        {
+            upgradeEffects = effects;
+            nextPulseTime = 0f;
+            if (ResolveMineralScanRadius() <= 0)
+            {
+                ClearScanPulse();
+            }
+        }
 
         /// <summary>효과 적용 계층이 확정한 저항·대피소 반영 위험도를 Drone Context와 공유한다.</summary>
         public void SetAppliedGasRisk(GasRiskLevel risk)
@@ -145,6 +167,7 @@ namespace SubTerra.Gameplay.Drone
             if (foregroundTilemap == null || tileResolver == null) return new List<string>();
             Vector3Int center = foregroundTilemap.WorldToCell(playerPosition);
             var radius = ResolveMineralScanRadius();
+            if (radius <= 0) return new List<string>();
             for (int x = center.x - radius; x <= center.x + radius; x++)
             for (int y = center.y - radius; y <= center.y + radius; y++)
             {
@@ -157,14 +180,141 @@ namespace SubTerra.Gameplay.Drone
 
         private int ResolveMineralScanRadius()
         {
-            var baseRadius = Mathf.Max(1, mineralScanRadius);
-            var effectiveRadius = upgradeEffects?.GetDroneScanRadius(baseRadius) ?? baseRadius;
+            var baseRadius = Mathf.Max(0, mineralScanRadius);
+            var effectiveRadius = upgradeEffects != null
+                ? upgradeEffects.GetDroneScanRadius(baseRadius)
+                : 0f;
             if (float.IsNaN(effectiveRadius) || float.IsInfinity(effectiveRadius))
             {
-                return baseRadius;
+                return 0;
             }
 
-            return Mathf.Max(1, Mathf.CeilToInt(effectiveRadius));
+            return Mathf.Max(0, Mathf.CeilToInt(effectiveRadius));
+        }
+
+        /// <summary>Context 갱신과 독립된 30초 월드 스캔 펄스를 진행한다.</summary>
+        public void TickScanPulse(float currentTime)
+        {
+            if (pulseView != null)
+            {
+                pulseView.Tick(currentTime);
+            }
+
+            int radius = ResolveMineralScanRadius();
+            if (radius <= 0)
+            {
+                if (lastPulseTargets.Count > 0 || pulseView != null)
+                {
+                    ClearScanPulse();
+                }
+                return;
+            }
+
+            if (currentTime < nextPulseTime) return;
+            nextPulseTime = currentTime + Mathf.Max(0.1f, pulseInterval);
+
+            CollectPulseTargets(radius, lastPulseTargets);
+            EnsurePulseView();
+            Vector3 center = foregroundTilemap != null
+                ? foregroundTilemap.GetCellCenterWorld(foregroundTilemap.WorldToCell(GetPlayerPosition()))
+                : GetPlayerPosition();
+            pulseView.Show(
+                lastPulseTargets,
+                center,
+                radius,
+                currentTime + Mathf.Max(0.1f, pulseDuration),
+                currentTime);
+        }
+
+        private void CollectPulseTargets(int radius, List<DroneScanTarget> results)
+        {
+            results.Clear();
+            if (foregroundTilemap == null || radius <= 0) return;
+
+            Vector3Int center = foregroundTilemap.WorldToCell(GetPlayerPosition());
+            var kinds = new Dictionary<Vector3Int, DroneScanTargetKind>();
+            for (int x = center.x - radius; x <= center.x + radius; x++)
+            for (int y = center.y - radius; y <= center.y + radius; y++)
+            {
+                var cell = new Vector3Int(x, y, center.z);
+                TileBase tile = foregroundTilemap.GetTile(cell);
+                if (tile != null
+                    && tileResolver != null
+                    && tileResolver.TryResolve(tile, out MiningTileDto definition)
+                    && !string.IsNullOrWhiteSpace(definition.mineralId))
+                {
+                    kinds[cell] = DroneScanTargetKind.Mineral;
+                }
+
+                // Lv.2의 절대 반경 7부터 활성 가스 구역이 덮는 셀도 위험 표식으로 우선한다.
+                if (radius >= 7 && IsActiveGasCell(cell))
+                {
+                    kinds[cell] = DroneScanTargetKind.GasHazard;
+                }
+            }
+
+            for (int x = center.x - radius; x <= center.x + radius; x++)
+            for (int y = center.y - radius; y <= center.y + radius; y++)
+            {
+                var cell = new Vector3Int(x, y, center.z);
+                if (kinds.TryGetValue(cell, out DroneScanTargetKind kind))
+                {
+                    results.Add(new DroneScanTarget(
+                        cell,
+                        foregroundTilemap.GetCellCenterWorld(cell),
+                        kind));
+                }
+            }
+        }
+
+        private bool IsActiveGasCell(Vector3Int cell)
+        {
+            if (gasHazardSystem == null) return false;
+            Vector2 cellCenter = foregroundTilemap.GetCellCenterWorld(cell);
+            IReadOnlyList<GasZone> zones = gasHazardSystem.ActiveZones;
+            for (int index = 0; index < zones.Count; index++)
+            {
+                GasZone zone = zones[index];
+                if (zone != null
+                    && zone.IsActive
+                    && Vector2.Distance(zone.transform.position, cellCenter) <= zone.Radius)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private Vector3 GetPlayerPosition()
+        {
+            return playerTransform != null ? playerTransform.position : transform.position;
+        }
+
+        private void EnsurePulseView()
+        {
+            if (pulseView != null) return;
+            pulseView = GetComponent<DroneScanPulseView>();
+            if (pulseView == null)
+            {
+                pulseView = gameObject.AddComponent<DroneScanPulseView>();
+            }
+        }
+
+        private void ClearScanPulse()
+        {
+            lastPulseTargets.Clear();
+            if (pulseView != null)
+            {
+                pulseView.Clear();
+            }
+        }
+
+        private void OnDisable()
+        {
+            ClearScanPulse();
+            nextScanTime = 0f;
+            nextPulseTime = 0f;
         }
 
         private static float ToIntegrityValue(StructuralRiskLevel risk)

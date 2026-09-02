@@ -64,9 +64,12 @@
 
 ## 4. 검증 결과 요약
 
-- **상태:** 미실행
-- **모든 항목 통과 시:** Phase T 완료
-- **실패 항목 존재 시:** 레벨, 실제 반경, 펄스 시각, 점등 셀, Context 주기를 기록한다.
+- **상태:** 자동 검증 통과, 수동 QA 미실행
+- **Unity 컴파일:** 오류 0
+- **Edit Mode 전체 회귀:** 648 통과 / 0 실패 / 0 건너뜀
+- **Play Mode 전체 회귀:** Bootstrap/MainMenu 진입 뒤 결과 없이 정지해 약 3분 후 중단. 생성된 임시 Scene·QualitySettings 변경은 제거·원복함
+- **확인 범위:** 절대 반경 `0/3/7`, Lv.0 차단, 체비쇼프 경계, Lv.2 광물·가스 구분, 30초 펄스·10초 유지, 0.5초 Context 주기, 업그레이드 UI 절대 반경 표기
+- **범위 보호:** 테스트가 dirty 처리한 Integration Scene, TMP 폰트, EditorBuildSettings를 원복함
 
 ## 5. 수동 QA
 

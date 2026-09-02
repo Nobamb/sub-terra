@@ -6,7 +6,7 @@ namespace SubTerra.App.Progression
 {
     /// <summary>
     /// 현재 레벨의 단계 값을 최종 보너스로 읽는다.
-    /// 레벨 0 또는 손상된 범위는 기본값을 반환해 잘못된 세이브가 효과를 만들지 않게 한다.
+    /// 레벨 0 또는 손상된 범위는 효과가 없는 값으로 되돌려 잘못된 세이브가 효과를 만들지 않게 한다.
     /// </summary>
     public sealed class UpgradeEffectProvider : IUpgradeEffectProvider, IPlayerHealthUpgradeProvider
     {
@@ -71,7 +71,8 @@ namespace SubTerra.App.Progression
 
         public float GetDroneScanRadius(float baseRadius)
         {
-            return AddNonNegative(baseRadius, GetCurrentEffect(DataIds.Upgrades.DroneScan));
+            // 스캔 단계 값은 보너스가 아니라 절대 반경이다. 구매 전에는 스캔하지 않는다.
+            return GetCurrentEffect(DataIds.Upgrades.DroneScan);
         }
 
         public float GetDroneRescuePreservation(float basePreservation)
