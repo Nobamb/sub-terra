@@ -40,10 +40,15 @@ namespace SubTerra.App.UI.EmergencyRescue
                 "EmergencyRescueOverlay",
                 typeof(RectTransform),
                 typeof(CanvasRenderer),
-                typeof(Image));
+                typeof(Image),
+                typeof(Canvas),
+                typeof(GraphicRaycaster));
             root.transform.SetParent(canvasRoot, false);
             var rootRect = root.GetComponent<RectTransform>();
             Stretch(rootRect);
+            var popupCanvas = root.GetComponent<Canvas>();
+            popupCanvas.overrideSorting = true;
+            popupCanvas.sortingOrder = UiLayerPriority.EmergencyRescueModal;
             var blocker = root.GetComponent<Image>();
             blocker.color = OverlayColor;
             blocker.raycastTarget = true;

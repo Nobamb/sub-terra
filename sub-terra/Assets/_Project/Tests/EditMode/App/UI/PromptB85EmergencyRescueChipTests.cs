@@ -1,6 +1,7 @@
 using System.IO;
 using NUnit.Framework;
 using SubTerra.App.Tutorial;
+using SubTerra.App.UI.Drone;
 using SubTerra.App.UI.EmergencyRescue;
 using TMPro;
 using UnityEngine;
@@ -10,6 +11,35 @@ namespace SubTerra.App.Tests.UI
 {
     public sealed class PromptB85EmergencyRescueChipTests
     {
+        [Test]
+        public void PromptB85_1_RescuePopup_RendersAboveDroneDialogue()
+        {
+            var canvasObject = new GameObject("HudCanvas", typeof(RectTransform), typeof(Canvas));
+            EmergencyRescuePanelView view = null;
+            try
+            {
+                canvasObject.GetComponent<Canvas>().renderMode = RenderMode.ScreenSpaceOverlay;
+                view = EmergencyRescuePanelView.Create(canvasObject.transform, null);
+
+                var popupCanvas = view.GetComponent<Canvas>();
+                Assert.That(popupCanvas, Is.Not.Null);
+                Assert.That(popupCanvas.overrideSorting, Is.True);
+                Assert.That(
+                    popupCanvas.sortingOrder,
+                    Is.GreaterThan(DroneDialogueSocket.OverlaySortingOrder));
+                Assert.That(view.GetComponent<GraphicRaycaster>(), Is.Not.Null);
+            }
+            finally
+            {
+                if (view != null && view.gameObject != null)
+                {
+                    Object.DestroyImmediate(view.gameObject);
+                }
+
+                Object.DestroyImmediate(canvasObject);
+            }
+        }
+
         [Test]
         public void PromptB85_ChipFollowsPlayerHeadOnOverlayCanvas()
         {

@@ -14,6 +14,8 @@ namespace SubTerra.App.Tutorial
         public const int ModalPanel = 1_000;
         public const int HazardWarning = 500;
         public const int CriticalHazard = 600;
+        /// <summary>드론 말풍선을 포함한 모든 게임 HUD보다 앞에 표시하는 긴급 구출 모달.</summary>
+        public const int EmergencyRescueModal = 31_000;
 
         /// <summary>긴급 경고가 일반 튜토리얼 안내보다 위에 와야 하는지.</summary>
         public static bool HazardBeatsTutorial(int hazardSortOrder, int tutorialSortOrder)
