@@ -43,6 +43,8 @@ namespace SubTerra.App.Core.Data
                     return "조명";
                 case DataIds.Buildings.ChargerBasic:
                     return "충전기";
+                case DataIds.Buildings.ClinicBasic:
+                    return "보건소";
                 case DataIds.Buildings.StorageBasic:
                     return "보관함";
                 case DataIds.Buildings.SettlementBasic:
@@ -68,6 +70,7 @@ namespace SubTerra.App.Core.Data
 
             return buildingId == DataIds.Buildings.LightBasic
                 || buildingId == DataIds.Buildings.ChargerBasic
+                || buildingId == DataIds.Buildings.ClinicBasic
                 || buildingId == DataIds.Buildings.StorageBasic
                 || buildingId == DataIds.Buildings.SettlementBasic
                 || buildingId == DataIds.Buildings.OutpostCoreBasic

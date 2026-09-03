@@ -23,6 +23,7 @@ namespace SubTerra.App.Tutorial
         private StructuralRiskLevel structuralRisk;
         private bool storagePlaced;
         private bool chargerPlacedNearCore;
+        private bool clinicPlacedNearCore;
         private bool settlementPlacedNearCore;
         private bool hasTrackedOutpostCore;
         private int outpostCoreX;
@@ -178,6 +179,12 @@ namespace SubTerra.App.Tutorial
             {
                 HandleSignal(DemoProgressSignal.ChargedNearOutpost);
             }
+            else if (CurrentObjectiveId == DemoObjectiveIds.HealNearOutpost
+                && clinicPlacedNearCore
+                && result.Kind == OutpostOperationKind.Heal)
+            {
+                HandleSignal(DemoProgressSignal.HealedNearOutpost);
+            }
             else if (CurrentObjectiveId == DemoObjectiveIds.SellAtSettlement
                 && settlementPlacedNearCore
                 && (result.Kind == OutpostOperationKind.SettlePlayerCargo
@@ -246,6 +253,7 @@ namespace SubTerra.App.Tutorial
         public void NotifyOutpostAlreadyInstalled()
         {
             if (CurrentObjectiveId == DemoObjectiveIds.ChargeNearOutpost
+                || CurrentObjectiveId == DemoObjectiveIds.HealNearOutpost
                 || CurrentObjectiveId == DemoObjectiveIds.SellAtSettlement)
             {
                 hasTrackedOutpostCore = false;
@@ -355,6 +363,18 @@ namespace SubTerra.App.Tutorial
             {
                 chargerPlacedNearCore = true;
             }
+            else if (CurrentObjectiveId == DemoObjectiveIds.HealNearOutpost
+                && buildingId == DataIds.Buildings.ClinicBasic
+                && (!hasTrackedOutpostCore
+                    || IsWithinRange(
+                        outpostCoreX,
+                        outpostCoreY,
+                        gameplayEvent.x,
+                        gameplayEvent.y,
+                        FacilityCoreRange)))
+            {
+                clinicPlacedNearCore = true;
+            }
             else if (CurrentObjectiveId == DemoObjectiveIds.PurifyGasWithOutpost
                 && buildingId == DataIds.Buildings.OutpostCoreBasic)
             {
@@ -428,6 +448,10 @@ namespace SubTerra.App.Tutorial
             {
                 chargerPlacedNearCore = false;
             }
+            else if (objectiveId == DemoObjectiveIds.HealNearOutpost)
+            {
+                clinicPlacedNearCore = false;
+            }
             else if (objectiveId == DemoObjectiveIds.PurifyGasWithOutpost)
             {
                 hasTrackedOutpostCore = false;
@@ -445,6 +469,7 @@ namespace SubTerra.App.Tutorial
         {
             storagePlaced = false;
             chargerPlacedNearCore = false;
+            clinicPlacedNearCore = false;
             settlementPlacedNearCore = false;
             hasTrackedOutpostCore = false;
             outpostCoreX = 0;

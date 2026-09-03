@@ -618,6 +618,8 @@ namespace SubTerra.App.Tests.Data
                     new List<ItemCostEntry> { new ItemCostEntry(DataIds.Minerals.Iron, 1) }),
                 CreateBuilding("Bld_Charger", DataIds.Buildings.ChargerBasic, "Basic Charger", prefab, 3,
                     new List<ItemCostEntry> { new ItemCostEntry(DataIds.Minerals.Copper, 3) }),
+                CreateBuilding("Bld_Clinic", DataIds.Buildings.ClinicBasic, "Clinic", prefab, 3,
+                    new List<ItemCostEntry> { new ItemCostEntry(DataIds.Minerals.Copper, 3) }),
                 CreateBuilding("Bld_Storage", DataIds.Buildings.StorageBasic, "Basic Storage", prefab, 0,
                     new List<ItemCostEntry> { new ItemCostEntry(DataIds.Minerals.Iron, 2) }),
                 CreateBuilding("Bld_Settlement", DataIds.Buildings.SettlementBasic, "Settlement Console", prefab, 1,

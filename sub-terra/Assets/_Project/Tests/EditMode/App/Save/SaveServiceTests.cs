@@ -200,7 +200,9 @@ namespace SubTerra.App.Tests.Save
             Assert.That(migrated.State.TargetSceneName, Is.EqualTo(SceneNames.Integration));
             Assert.That(migrated.State.Drone, Is.Not.Null);
             Assert.That(File.ReadAllText(slotPaths.Normal), Is.EqualTo(oldJson));
-            Assert.That(CreateLoadService(physical).GetSlotMetadata(1).SaveVersion, Is.EqualTo(2));
+            Assert.That(
+                CreateLoadService(physical).GetSlotMetadata(1).SaveVersion,
+                Is.EqualTo(SaveVersions.Current));
 
             var future = mapper.Capture(CreateContext(91));
             future.saveVersion = 99;

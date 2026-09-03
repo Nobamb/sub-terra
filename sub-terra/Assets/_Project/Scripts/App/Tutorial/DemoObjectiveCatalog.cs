@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace SubTerra.App.Tutorial
 {
-    /// <summary>prompt-B 60에서 지정한 데모 퀘스트 17개의 문구와 순서.</summary>
+    /// <summary>prompt-B 60/86에서 지정한 데모 퀘스트 18개의 문구와 순서.</summary>
     public static class DemoObjectiveCatalog
     {
         public const string IntroductionGuidanceTitle = "생존자 브리핑";
@@ -41,7 +41,8 @@ namespace SubTerra.App.Tutorial
                 Define(DemoObjectiveIds.PlaceLightAtDepth, "심부 조명 설치", "지하 10m 이상 내려간 뒤 조명을 설치하세요.", "깊이 표시가 10m 이상일 때 조명 배치", DemoProgressSignal.LightPlacedAtDepth, DemoObjectiveIds.StoreMineral),
                 Define(DemoObjectiveIds.StoreMineral, "광물 보관", "보관함을 설치한 뒤 아무 광물이나 1개 이상 보관하세요.", "보관함 배치 후 보관함에서 광물 맡기기", DemoProgressSignal.MineralStored, DemoObjectiveIds.InstallOutpostCore),
                 Define(DemoObjectiveIds.InstallOutpostCore, "전진기지 코어 설치", "전진기지 코어를 설치해 체크포인트를 활성화하세요.", "건설 메뉴에서 전진기지 코어 배치", DemoProgressSignal.OutpostCoreInstalled, DemoObjectiveIds.ChargeNearOutpost),
-                Define(DemoObjectiveIds.ChargeNearOutpost, "전진기지에서 충전", "방금 설치한 전진기지 코어 근처에 충전기를 설치한 뒤 전력을 충전하세요.", "코어 10칸 안에 충전기 배치 후 충전", DemoProgressSignal.ChargedNearOutpost, DemoObjectiveIds.UnlockDeepZone),
+                Define(DemoObjectiveIds.ChargeNearOutpost, "전진기지에서 충전", "방금 설치한 전진기지 코어 근처에 충전기를 설치한 뒤 전력을 충전하세요.", "코어 10칸 안에 충전기 배치 후 충전", DemoProgressSignal.ChargedNearOutpost, DemoObjectiveIds.HealNearOutpost),
+                Define(DemoObjectiveIds.HealNearOutpost, "전진기지에서 회복", "전진기지 코어 근처에 보건소를 설치한 뒤 체력을 회복하세요.", "코어 10칸 안에 보건소 배치 후 회복", DemoProgressSignal.HealedNearOutpost, DemoObjectiveIds.UnlockDeepZone),
                 Define(DemoObjectiveIds.UnlockDeepZone, "심층 구역 해금", "드릴 속도 2레벨, 드론 스캔 2레벨, 가스 저항 1레벨을 갖춰 심층 구역을 해금하세요.", "필요 업그레이드를 구매해 심층 잠금 해제", DemoProgressSignal.DeepZoneUnlocked, DemoObjectiveIds.MineLithium),
                 Define(DemoObjectiveIds.MineLithium, "리튬 채취", "심층 구역에서 리튬 블록을 직접 채굴하세요.", "심층 리튬 광맥 채굴", DemoProgressSignal.LithiumMined, DemoObjectiveIds.PurifyGasWithOutpost),
                 Define(DemoObjectiveIds.PurifyGasWithOutpost, "가스 정화", "리튬 또는 가스 블록 5칸 안에 전진기지 코어를 먼저 설치하고, 그 블록을 채굴한 뒤 나온 가스에 접근해 코어의 정화 효과를 받으세요.", "코어 설치 → 근처 리튬/가스 블록 채굴 → 정화 범위에서 가스 접근", DemoProgressSignal.GasPurifiedByOutpost, DemoObjectiveIds.SellAtSettlement),

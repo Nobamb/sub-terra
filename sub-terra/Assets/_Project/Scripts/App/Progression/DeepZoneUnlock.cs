@@ -31,7 +31,7 @@ namespace SubTerra.App.Progression
 
         /// <summary>앞선 목표 완료 + 필수 진행인 드릴 2레벨. 선택 성능 업그레이드는 강제하지 않는다.</summary>
         public static DeepZoneUnlockRule Mvp { get; } = new DeepZoneUnlockRule(
-            12,
+            13,
             new[]
             {
                 new UpgradeLevelRequirement(DataIds.Upgrades.DrillSpeed, 2)

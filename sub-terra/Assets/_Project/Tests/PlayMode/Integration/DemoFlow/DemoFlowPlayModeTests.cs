@@ -9,7 +9,7 @@ namespace SubTerra.App.Tests.PlayMode.DemoFlow
     public sealed class DemoFlowPlayModeTests
     {
         [UnityTest]
-        public IEnumerator PromptB60_OrderedSignalsCompleteAllSeventeenQuests()
+        public IEnumerator PromptB86_OrderedSignalsCompleteAllEighteenQuests()
         {
             var state = GameState.CreateNew();
             var director = new DemoObjectiveDirector();
@@ -25,7 +25,7 @@ namespace SubTerra.App.Tests.PlayMode.DemoFlow
 
             Assert.That(director.IsDemoComplete, Is.True);
             Assert.That(state.Progress.IsDemoComplete, Is.True);
-            Assert.That(state.Progress.CompletedObjectives, Is.EqualTo(17));
+            Assert.That(state.Progress.CompletedObjectives, Is.EqualTo(18));
             yield return null;
         }
 

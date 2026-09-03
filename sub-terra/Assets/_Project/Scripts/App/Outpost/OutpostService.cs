@@ -17,6 +17,7 @@ namespace SubTerra.App.Outpost
         private readonly IMineralCatalogLookup catalog;
         private readonly GameState gameState;
         private readonly OutpostState state;
+        private readonly IPlayerHealthCommand healthCommand;
         private readonly HashSet<string> completedSettlementIds = new HashSet<string>();
 
         private OutpostStatusDto runtimeStatus;
@@ -50,12 +51,14 @@ namespace SubTerra.App.Outpost
             InventoryService inventory,
             IMineralCatalogLookup catalog,
             GameState gameState,
-            OutpostState state = null)
+            OutpostState state = null,
+            IPlayerHealthCommand healthCommand = null)
         {
             this.inventory = inventory;
             this.catalog = catalog;
             this.gameState = gameState;
             this.state = state ?? gameState?.Outpost ?? new OutpostState();
+            this.healthCommand = healthCommand;
         }
 
         public void ApplyRuntimeStatus(OutpostStatusDto status)
@@ -86,6 +89,8 @@ namespace SubTerra.App.Outpost
             var buildingId = runtimeStatus.interactionFacilityBuildingId;
             var facilityName = buildingId == DataIds.Buildings.ChargerBasic
                 ? "충전기"
+                : buildingId == DataIds.Buildings.ClinicBasic
+                    ? "보건소"
                 : buildingId == DataIds.Buildings.SettlementBasic
                     ? "정산 콘솔"
                     : string.Empty;
@@ -137,6 +142,35 @@ namespace SubTerra.App.Outpost
                 target - before,
                 0,
                 target == before ? "이미 완전히 충전되었습니다." : "충전이 완료되었습니다.");
+            RaiseSnapshotChanged();
+            return Complete(result);
+        }
+
+        public OutpostOperationResult TryHeal()
+        {
+            if (!TryValidateFacility(
+                    DataIds.Buildings.ClinicBasic,
+                    OutpostOperationKind.Heal,
+                    out var failure))
+            {
+                return Complete(failure);
+            }
+
+            if (healthCommand == null)
+            {
+                return Complete(Fail(
+                    OutpostOperationStatus.DependencyMissing,
+                    OutpostOperationKind.Heal,
+                    "플레이어 체력 상태가 연결되지 않았습니다."));
+            }
+
+            var restored = healthCommand.RestoreFull();
+            var result = Success(
+                OutpostOperationKind.Heal,
+                string.Empty,
+                0,
+                0,
+                restored ? "체력 회복이 완료되었습니다." : "이미 체력이 최대입니다.");
             RaiseSnapshotChanged();
             return Complete(result);
         }
@@ -610,6 +644,7 @@ namespace SubTerra.App.Outpost
         private static bool IsProximityPoweredFacility(string buildingId)
         {
             return buildingId == DataIds.Buildings.ChargerBasic
+                || buildingId == DataIds.Buildings.ClinicBasic
                 || buildingId == DataIds.Buildings.SettlementBasic;
         }
 

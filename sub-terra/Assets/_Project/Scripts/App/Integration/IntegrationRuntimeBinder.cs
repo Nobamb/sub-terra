@@ -265,7 +265,10 @@ namespace SubTerra.App.Integration
                     outpostService = new OutpostService(
                         runtime.InventoryService,
                         mineralLookup,
-                        bootstrap.State);
+                        bootstrap.State,
+                        healthCommand: runFailureController != null
+                            ? runFailureController.SurvivalController
+                            : null);
                     outpostBridge.BindTo(outpostService);
                     runtime.BindAutoSaveEvents(
                         runtime.Economy,

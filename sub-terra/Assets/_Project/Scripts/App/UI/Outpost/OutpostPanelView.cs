@@ -47,7 +47,9 @@ namespace SubTerra.App.UI.Outpost
         public void SetMode(OutpostPanelMode mode)
         {
             SetActive(coreRoot, mode == OutpostPanelMode.Core);
-            SetActive(chargerRoot, mode == OutpostPanelMode.Charger);
+            SetActive(
+                chargerRoot,
+                mode == OutpostPanelMode.Charger || mode == OutpostPanelMode.Clinic);
             SetActive(settlementRoot, mode == OutpostPanelMode.Settlement);
             SetActive(storageRoot, mode == OutpostPanelMode.Storage);
             SetActive(
@@ -68,6 +70,9 @@ namespace SubTerra.App.UI.Outpost
                     break;
                 case OutpostPanelMode.Charger:
                     titleText.text = "충전기";
+                    break;
+                case OutpostPanelMode.Clinic:
+                    titleText.text = "보건소";
                     break;
                 case OutpostPanelMode.Settlement:
                     titleText.text = "정산 콘솔";
@@ -360,6 +365,8 @@ namespace SubTerra.App.UI.Outpost
             {
                 case "building.charger.basic":
                     return "충전기";
+                case "building.clinic.basic":
+                    return "보건소";
                 case "building.storage.basic":
                     return "보관함";
                 case "building.settlement.basic":

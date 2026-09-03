@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0f7fc9d9be322ff4082345b1cb4187a0, type: 3}
+  m_Name: Building_Clinic_Basic
+  m_EditorClassIdentifier: SubTerra.App::SubTerra.App.Core.Data.BuildingData
+  id: building.clinic.basic
+  displayName: "\uBCF4\uAC74\uC18C"
+  description: "\uC804\uB825\uB9DD\uC5D0 \uC5F0\uACB0\uB418\uBA74 \uD50C\uB808\uC774\uC5B4
+    \uCCB4\uB825\uC744 \uCD5C\uB300\uCE58\uAE4C\uC9C0 \uD68C\uBCF5\uD569\uB2C8\uB2E4."
+  runtimePrefab: {fileID: 7664142866433559765, guid: 8e341b353c6234149bc5fd9186b03de0, type: 3}
+  icon: {fileID: 6838030193426678921, guid: 42527be5cf11e3c42871944ebbfd1fd6, type: 2}
+  powerDraw: 3
+  buildCosts:
+  - itemId: mineral.copper
+    quantity: 3

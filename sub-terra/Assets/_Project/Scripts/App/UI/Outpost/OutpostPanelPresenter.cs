@@ -100,6 +100,10 @@ namespace SubTerra.App.UI.Outpost
             {
                 RequestCharge();
             }
+            else if (activeMode == OutpostPanelMode.Clinic)
+            {
+                RequestHeal();
+            }
         }
 
         public void ToggleInteractionPanel(bool primaryInteractionClaimed)
@@ -152,6 +156,11 @@ namespace SubTerra.App.UI.Outpost
         public OutpostOperationResult RequestCharge()
         {
             return Execute(() => service.TryCharge(), OutpostOperationKind.Charge);
+        }
+
+        public OutpostOperationResult RequestHeal()
+        {
+            return Execute(() => service.TryHeal(), OutpostOperationKind.Heal);
         }
 
         public OutpostOperationResult RequestDeposit(string mineralId, int quantity)
@@ -353,6 +362,11 @@ namespace SubTerra.App.UI.Outpost
             if (buildingId == DataIds.Buildings.ChargerBasic)
             {
                 return OutpostPanelMode.Charger;
+            }
+
+            if (buildingId == DataIds.Buildings.ClinicBasic)
+            {
+                return OutpostPanelMode.Clinic;
             }
 
             if (buildingId == DataIds.Buildings.SettlementBasic)

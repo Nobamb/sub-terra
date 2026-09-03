@@ -11,15 +11,15 @@ using SubTerra.Shared;
 
 namespace SubTerra.App.Tests.Tutorial
 {
-    /// <summary>prompt-B 60의 17단계 순서와 실제 행동 판정 회귀 검증.</summary>
+    /// <summary>prompt-B 60/86의 18단계 순서와 실제 행동 판정 회귀 검증.</summary>
     public sealed class DemoObjectiveTransitionTests
     {
         [Test]
-        public void PromptB60_CatalogContainsExactlySeventeenOrderedQuests()
+        public void PromptB86_CatalogContainsExactlyEighteenOrderedQuests()
         {
-            Assert.That(DemoObjectiveIds.Ordered.Length, Is.EqualTo(17));
-            Assert.That(DemoObjectiveCatalog.All.Count, Is.EqualTo(17));
-            Assert.That(DemoObjectiveIds.RequiredCount, Is.EqualTo(17));
+            Assert.That(DemoObjectiveIds.Ordered.Length, Is.EqualTo(18));
+            Assert.That(DemoObjectiveCatalog.All.Count, Is.EqualTo(18));
+            Assert.That(DemoObjectiveIds.RequiredCount, Is.EqualTo(18));
 
             var ids = new HashSet<string>();
             for (var i = 0; i < DemoObjectiveCatalog.All.Count; i++)
@@ -33,7 +33,7 @@ namespace SubTerra.App.Tests.Tutorial
                 Assert.That(definition.NextActionHint, Is.Not.Empty);
             }
 
-            Assert.That(DemoObjectiveCatalog.All[16].IsTerminal, Is.True);
+            Assert.That(DemoObjectiveCatalog.All[17].IsTerminal, Is.True);
             Assert.That(
                 DemoObjectiveCatalog.GetRequired(DemoObjectiveIds.ReturnToMine).Description,
                 Is.EqualTo("다시 광산으로 돌아온 뒤, 엘리베이터에서 벗어나 채굴을 이어가주세요."));
@@ -204,7 +204,7 @@ namespace SubTerra.App.Tests.Tutorial
 
             director.OnGameplayEvent(Placed(DataIds.Buildings.ChargerBasic, 10, -15));
             director.OnOutpostOperationCompleted(Operation(OutpostOperationKind.Charge, 0, 0));
-            Assert.That(director.CurrentObjectiveId, Is.EqualTo(DemoObjectiveIds.UnlockDeepZone));
+            Assert.That(director.CurrentObjectiveId, Is.EqualTo(DemoObjectiveIds.HealNearOutpost));
         }
 
         [Test]
@@ -292,7 +292,7 @@ namespace SubTerra.App.Tests.Tutorial
 
             Assert.That(director.NotifyEmergencyEscapeSucceeded().Advanced, Is.True);
             Assert.That(director.IsDemoComplete, Is.True);
-            Assert.That(director.CompletedCount, Is.EqualTo(17));
+            Assert.That(director.CompletedCount, Is.EqualTo(18));
         }
 
         [Test]

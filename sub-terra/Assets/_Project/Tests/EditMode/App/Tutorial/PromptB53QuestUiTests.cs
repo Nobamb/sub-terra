@@ -35,6 +35,7 @@ namespace SubTerra.App.Tests.Tutorial
                 DemoObjectiveIds.StoreMineral,
                 DemoObjectiveIds.InstallOutpostCore,
                 DemoObjectiveIds.ChargeNearOutpost,
+                DemoObjectiveIds.HealNearOutpost,
                 DemoObjectiveIds.UnlockDeepZone,
                 DemoObjectiveIds.MineLithium,
                 DemoObjectiveIds.PurifyGasWithOutpost,
@@ -43,7 +44,7 @@ namespace SubTerra.App.Tests.Tutorial
             };
 
             Assert.That(DemoObjectiveIds.Ordered, Is.EqualTo(expected));
-            Assert.That(DeepZoneUnlockRule.Mvp.RequiredCompletedObjectives, Is.EqualTo(12));
+            Assert.That(DeepZoneUnlockRule.Mvp.RequiredCompletedObjectives, Is.EqualTo(13));
 
             var requirements = DeepZoneUnlockRule.Mvp.UpgradeRequirements;
             Assert.That(requirements.Count, Is.EqualTo(1));

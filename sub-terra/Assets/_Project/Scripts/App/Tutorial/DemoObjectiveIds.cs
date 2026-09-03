@@ -1,6 +1,6 @@
 namespace SubTerra.App.Tutorial
 {
-    /// <summary>prompt-B 60 데모 퀘스트 17개의 영구 ID와 진행 순서.</summary>
+    /// <summary>prompt-B 60/86 데모 퀘스트 18개의 영구 ID와 진행 순서.</summary>
     public static class DemoObjectiveIds
     {
         public const string MineBlock = "demo.quest.mine_block";
@@ -15,6 +15,7 @@ namespace SubTerra.App.Tutorial
         public const string StoreMineral = "demo.quest.store_mineral";
         public const string InstallOutpostCore = "demo.quest.install_outpost_core";
         public const string ChargeNearOutpost = "demo.quest.charge_near_outpost";
+        public const string HealNearOutpost = "demo.quest.heal_near_outpost";
         public const string UnlockDeepZone = "demo.quest.unlock_deep_zone";
         public const string MineLithium = "demo.quest.mine_lithium";
         public const string PurifyGasWithOutpost = "demo.quest.purify_gas_with_outpost";
@@ -38,6 +39,7 @@ namespace SubTerra.App.Tutorial
             StoreMineral,
             InstallOutpostCore,
             ChargeNearOutpost,
+            HealNearOutpost,
             UnlockDeepZone,
             MineLithium,
             PurifyGasWithOutpost,
@@ -45,6 +47,6 @@ namespace SubTerra.App.Tutorial
             EmergencyEscapeReturn
         };
 
-        public const int RequiredCount = 17;
+        public const int RequiredCount = 18;
     }
 }

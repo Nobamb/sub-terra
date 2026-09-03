@@ -53,9 +53,9 @@ namespace SubTerra.App.Editor.DataValidation
 
             edit.AppendLine("Prompt-B 60 quest gates");
             edit.AppendLine(DateTime.Now.ToString("o"));
-            Check(edit, "quest-count", DemoObjectiveCatalog.All.Count == 17
-                && DemoObjectiveIds.Ordered.Length == 17
-                && DemoObjectiveIds.RequiredCount == 17);
+            Check(edit, "quest-count", DemoObjectiveCatalog.All.Count == 18
+                && DemoObjectiveIds.Ordered.Length == 18
+                && DemoObjectiveIds.RequiredCount == 18);
 
             var chainIsValid = true;
             for (var i = 0; i < DemoObjectiveCatalog.All.Count - 1; i++)
@@ -65,7 +65,7 @@ namespace SubTerra.App.Editor.DataValidation
             }
 
             Check(edit, "quest-chain", chainIsValid);
-            Check(edit, "deep-zone-boundary", DeepZoneUnlockRule.Mvp.RequiredCompletedObjectives == 12);
+            Check(edit, "deep-zone-boundary", DeepZoneUnlockRule.Mvp.RequiredCompletedObjectives == 13);
 
             var engine = new DemoObjectiveTransitionEngine();
             var fullSequence = true;

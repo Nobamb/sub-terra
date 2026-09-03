@@ -99,12 +99,14 @@ namespace SubTerra.Gameplay.Player
             return true;
         }
 
-        public void RestoreFull()
+        public bool RestoreFull()
         {
+            var changed = Health < MaximumHealth || !CanAct;
             Health = MaximumHealth;
             CanAct = true;
             LastDamageCause = RunFailureCause.Unknown;
             invulnerableUntil = 0f;
+            return changed;
         }
     }
 

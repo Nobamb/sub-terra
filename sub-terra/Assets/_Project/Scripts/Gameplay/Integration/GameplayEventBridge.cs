@@ -270,6 +270,7 @@ namespace SubTerra.Gameplay.Integration
         private static bool IsInteractionFacility(string buildingId)
         {
             return buildingId == "building.charger.basic"
+                || buildingId == "building.clinic.basic"
                 || buildingId == "building.storage.basic"
                 || buildingId == "building.settlement.basic"
                 || buildingId == "building.outpost_core.basic";
@@ -413,6 +414,7 @@ namespace SubTerra.Gameplay.Integration
         private static bool IsProximityPoweredFacility(string buildingId)
         {
             return buildingId == "building.charger.basic"
+                || buildingId == "building.clinic.basic"
                 || buildingId == "building.settlement.basic";
         }
 

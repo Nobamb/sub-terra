@@ -22,6 +22,8 @@ namespace SubTerra.App.Editor.DataValidation
             "Assets/_Project/Prefabs/Gameplay/Buildings/SupportPillar.prefab";
         private const string EmergencyEscapePortalPrefabPath =
             "Assets/_Project/Prefabs/Gameplay/Buildings/EmergencyEscapePortal.prefab";
+        private const string ClinicPrefabPath =
+            "Assets/_Project/Prefabs/Gameplay/Power/ClinicFacility.prefab";
         private const string IconPath = Root + "/Icons/DataPlaceholder.asset";
         private const string BootstrapScenePath = "Assets/_Project/Scenes/Bootstrap/Bootstrap.unity";
 
@@ -66,11 +68,14 @@ namespace SubTerra.App.Editor.DataValidation
             var emergencyEscapePortalPrefab =
                 AssetDatabase.LoadAssetAtPath<GameObject>(EmergencyEscapePortalPrefabPath)
                 ?? prefab;
+            var clinicPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(ClinicPrefabPath)
+                ?? prefab;
             var icon = EnsurePlaceholderIcon();
             var minerals = BuildMinerals(icon);
             var buildings = BuildBuildings(
                 prefab,
                 supportPrefab,
+                clinicPrefab,
                 emergencyEscapePortalPrefab,
                 icon);
             var recipes = BuildRecipes();
@@ -213,6 +218,7 @@ namespace SubTerra.App.Editor.DataValidation
         private static List<BuildingData> BuildBuildings(
             GameObject prefab,
             GameObject supportPrefab,
+            GameObject clinicPrefab,
             GameObject emergencyEscapePortalPrefab,
             Sprite icon)
         {
@@ -226,6 +232,9 @@ namespace SubTerra.App.Editor.DataValidation
                     icon, new List<ItemCostEntry> { new ItemCostEntry(DataIds.Minerals.Iron, 1) }),
                 EnsureBuilding("Building_Charger_Basic.asset", DataIds.Buildings.ChargerBasic, "기본 충전기",
                     "전력망에 연결되면 플레이어 장비를 충전합니다.", prefab, 3,
+                    icon, new List<ItemCostEntry> { new ItemCostEntry(DataIds.Minerals.Copper, 3) }),
+                EnsureBuilding("Building_Clinic_Basic.asset", DataIds.Buildings.ClinicBasic, "보건소",
+                    "전력망에 연결되면 플레이어 체력을 최대치까지 회복합니다.", clinicPrefab, 3,
                     icon, new List<ItemCostEntry> { new ItemCostEntry(DataIds.Minerals.Copper, 3) }),
                 EnsureBuilding("Building_Storage_Basic.asset", DataIds.Buildings.StorageBasic, "기본 보관함",
                     "탐사 중 수집한 광물을 임시 보관합니다.", prefab, 0,

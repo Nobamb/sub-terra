@@ -1,6 +1,7 @@
 using NUnit.Framework;
 using SubTerra.App.RuntimeInfo;
 using SubTerra.App.Editor.DataValidation;
+using SubTerra.App.Save;
 using UnityEditor;
 
 namespace SubTerra.App.Tests.Readiness
@@ -39,7 +40,7 @@ namespace SubTerra.App.Tests.Readiness
             var label = BuildVersionInfo.Format("1.0.0");
             Assert.That(label, Does.Contain("Game 1.0.0"));
             Assert.That(label, Does.Contain("Build Editor"));
-            Assert.That(label, Does.Contain("Save v2"));
+            Assert.That(label, Does.Contain("Save v" + SaveVersions.Current));
         }
     }
 }

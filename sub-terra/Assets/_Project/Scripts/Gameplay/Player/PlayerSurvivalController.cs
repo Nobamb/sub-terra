@@ -6,7 +6,11 @@ using UnityEngine;
 namespace SubTerra.Gameplay.Player
 {
     /// <summary>붕괴·가스·체력 피해를 Player 행동불능 입력으로 정규화한다.</summary>
-    public sealed class PlayerSurvivalController : MonoBehaviour, IPlayerHealthSource, ICollapseDamageReceiver
+    public sealed class PlayerSurvivalController :
+        MonoBehaviour,
+        IPlayerHealthSource,
+        IPlayerHealthCommand,
+        ICollapseDamageReceiver
     {
         private const float DamageFlashInterval = 0.08f;
         private const float DamageFlashAlphaMultiplier = 0.35f;
@@ -205,6 +209,19 @@ namespace SubTerra.Gameplay.Player
             State.RestoreFull();
             PublishStateChanged();
             ResetFallTracking();
+        }
+
+        public bool RestoreFull()
+        {
+            EnsureState();
+            RestoreDamageFlash();
+            var changed = State.RestoreFull();
+            if (changed)
+            {
+                PublishStateChanged();
+            }
+
+            return changed;
         }
 
         public PlayerHealthReadModel GetHealth()

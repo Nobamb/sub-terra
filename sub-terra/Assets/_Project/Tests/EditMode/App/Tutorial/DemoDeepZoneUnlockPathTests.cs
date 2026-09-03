@@ -144,8 +144,8 @@ namespace SubTerra.App.Tests.Tutorial
 
             var view = new RecordingProgressionView();
             var presenter = new ProgressionPanelPresenter(view);
-            // prompt-B 60의 선행 12개 퀘스트를 완료한 경계
-            presenter.Bind(service, () => 12);
+            // prompt-B 86의 보건소까지 선행 13개 퀘스트를 완료한 경계
+            presenter.Bind(service, () => 13);
 
             Assert.That(presenter.SelectUpgrade(DataIds.Upgrades.DrillSpeed), Is.True);
             var result = presenter.RequestPurchase();

@@ -1,4 +1,5 @@
 using SubTerra.App.Core;
+using SubTerra.App.Tutorial;
 
 namespace SubTerra.App.Save
 {
@@ -32,6 +33,10 @@ namespace SubTerra.App.Save
                 {
                     case 1:
                         MigrateVersion1To2(data);
+                        migrated = true;
+                        break;
+                    case 2:
+                        MigrateVersion2To3(data);
                         migrated = true;
                         break;
                     default:
@@ -74,6 +79,39 @@ namespace SubTerra.App.Save
             }
 
             data.saveVersion = 2;
+        }
+
+        private static void MigrateVersion2To3(GameSaveData data)
+        {
+            SaveDataValidator.NormalizeMissingCollections(data);
+            var progress = data.progress;
+            if (progress == null)
+            {
+                data.saveVersion = 3;
+                return;
+            }
+
+            if (progress.isDemoComplete)
+            {
+                progress.completedObjectives = DemoObjectiveIds.RequiredCount;
+                progress.currentObjectiveId = DemoObjectiveIds.DemoEnd;
+                data.saveVersion = 3;
+                return;
+            }
+
+            var objectiveIndex = DemoObjectiveCatalog.IndexOf(progress.currentObjectiveId);
+            var isAfterInsertedClinic = objectiveIndex
+                > DemoObjectiveCatalog.IndexOf(DemoObjectiveIds.HealNearOutpost);
+            var chargerWasAlreadyCompleted = progress.completedObjectives
+                > DemoObjectiveCatalog.IndexOf(DemoObjectiveIds.ChargeNearOutpost);
+            if (isAfterInsertedClinic || chargerWasAlreadyCompleted)
+            {
+                progress.completedObjectives = System.Math.Min(
+                    DemoObjectiveIds.RequiredCount,
+                    progress.completedObjectives + 1);
+            }
+
+            data.saveVersion = 3;
         }
     }
 }

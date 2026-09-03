@@ -20,6 +20,7 @@ namespace SubTerra.App.Tutorial
         LithiumMined = 14,
         GasPurifiedByOutpost = 15,
         MineralSoldAtSettlement = 16,
-        EmergencyEscapeSucceeded = 17
+        EmergencyEscapeSucceeded = 17,
+        HealedNearOutpost = 18
     }
 }

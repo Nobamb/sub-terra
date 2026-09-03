@@ -9,7 +9,8 @@ namespace SubTerra.App.UI.Outpost
         Core = 1,
         Charger = 2,
         Settlement = 3,
-        Storage = 4
+        Storage = 4,
+        Clinic = 5
     }
 
     /// <summary>전진기지 패널 표시 계약. 상태 변경 API는 노출하지 않는다.</summary>

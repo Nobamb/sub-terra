@@ -1897,6 +1897,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: c3951343b8709bb4f85fe90c082cd384, type: 2}
   - {fileID: 11400000, guid: b23c820634d53fa4ab091fc336e995ff, type: 2}
   - {fileID: 11400000, guid: 560674f18e68b5d4c8d3b08875c21f6b, type: 2}
+  - {fileID: 11400000, guid: 5fa7c4ad7c1ac45418923b3ae037c181, type: 2}
 --- !u!114 &279480558
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2156,6 +2157,10 @@ MonoBehaviour:
   imminentColor: {r: 0.95, g: 0.08, b: 0.06, a: 0.9}
   pulseSeconds: 0.28
   telegraphFlashSeconds: 0.12
+  unsupportedShakeDistance: 0.1
+  unsupportedShakeInterval: 0.02
+  impactShakeDistance: 0.3
+  impactShakeInterval: 0.01
 --- !u!114 &279480568
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6532,6 +6537,8 @@ MonoBehaviour:
     definition: {fileID: 11400000, guid: b23c820634d53fa4ab091fc336e995ff, type: 2}
   - buildingId: building.escape_portal.emergency
     definition: {fileID: 11400000, guid: 560674f18e68b5d4c8d3b08875c21f6b, type: 2}
+  - buildingId: building.clinic.basic
+    definition: {fileID: 11400000, guid: 5fa7c4ad7c1ac45418923b3ae037c181, type: 2}
 --- !u!114 &976616839
 MonoBehaviour:
   m_ObjectHideFlags: 0
