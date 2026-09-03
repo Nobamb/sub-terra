@@ -1,13 +1,14 @@
 using System;
 using System.Text;
 using SubTerra.App.Run;
+using SubTerra.App.Tutorial;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace SubTerra.App.UI.EmergencyRescue
 {
-    /// <summary>전력 고갈 구출 팝업과 전력 표시 옆의 재호출 칩을 소유하는 런타임 View.</summary>
+    /// <summary>전력 고갈 구출 팝업과 캐릭터 머리 위 재호출 칩을 소유하는 런타임 View.</summary>
     public sealed class EmergencyRescuePanelView : MonoBehaviour
     {
         private static readonly Color OverlayColor = new(0.01f, 0.02f, 0.035f, 0.78f);
@@ -28,7 +29,6 @@ namespace SubTerra.App.UI.EmergencyRescue
 
         public static EmergencyRescuePanelView Create(
             Transform canvasRoot,
-            RectTransform energyAnchor,
             TMP_FontAsset font)
         {
             if (canvasRoot == null)
@@ -51,9 +51,23 @@ namespace SubTerra.App.UI.EmergencyRescue
             var view = root.AddComponent<EmergencyRescuePanelView>();
             view.popupRoot = root;
             view.BuildPopup(font);
-            view.BuildChip(energyAnchor, canvasRoot, font);
+            view.BuildChip(canvasRoot, font);
             root.SetActive(false);
             return view;
+        }
+
+        public void SetFollowTarget(Transform player)
+        {
+            if (rescueChip == null)
+            {
+                return;
+            }
+
+            var follow = rescueChip.GetComponent<EmergencyRescueChipFollow>();
+            if (follow != null)
+            {
+                follow.SetTarget(player);
+            }
         }
 
         public void Bind(Action rescue, Action close, Action reopen)
@@ -210,37 +224,28 @@ namespace SubTerra.App.UI.EmergencyRescue
                 new Vector2(150f, 34f));
         }
 
-        private void BuildChip(RectTransform energyAnchor, Transform fallbackParent, TMP_FontAsset font)
+        private void BuildChip(Transform canvasRoot, TMP_FontAsset font)
         {
-            Transform parent = energyAnchor != null && energyAnchor.parent != null
-                ? energyAnchor.parent
-                : fallbackParent;
+            Transform parent = canvasRoot != null ? canvasRoot : transform;
             var chipImage = CreateImage("EmergencyRescueChip", parent, RescueColor);
             rescueChip = chipImage.gameObject;
             RectTransform rect = chipImage.rectTransform;
-            rect.sizeDelta = new Vector2(88f, 34f);
-            if (energyAnchor != null)
-            {
-                rect.anchorMin = energyAnchor.anchorMin;
-                rect.anchorMax = energyAnchor.anchorMax;
-                rect.pivot = energyAnchor.pivot;
-                float width = energyAnchor.rect.width > 1f
-                    ? energyAnchor.rect.width
-                    : energyAnchor.sizeDelta.x;
-                rect.anchoredPosition = energyAnchor.anchoredPosition
-                    + new Vector2(Mathf.Max(90f, width + 8f), 0f);
-            }
-            else
-            {
-                rect.anchorMin = new Vector2(0f, 1f);
-                rect.anchorMax = new Vector2(0f, 1f);
-                rect.pivot = new Vector2(0f, 1f);
-                rect.anchoredPosition = new Vector2(280f, -18f);
-            }
+            rect.anchorMin = new Vector2(0.5f, 0.5f);
+            rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(0.5f, 0f);
+            rect.sizeDelta = new Vector2(120f, 42f);
+            rect.anchoredPosition = Vector2.zero;
+            chipImage.raycastTarget = true;
+
+            var canvas = rescueChip.AddComponent<Canvas>();
+            canvas.overrideSorting = true;
+            canvas.sortingOrder = UiLayerPriority.CriticalHazard;
+            rescueChip.AddComponent<GraphicRaycaster>();
+            rescueChip.AddComponent<EmergencyRescueChipFollow>();
 
             chipButton = rescueChip.AddComponent<Button>();
             chipButton.targetGraphic = chipImage;
-            TMP_Text label = CreateText("Label", rescueChip.transform, font, 18f, FontStyles.Bold);
+            TMP_Text label = CreateText("Label", rescueChip.transform, font, 20f, FontStyles.Bold);
             Stretch(label.rectTransform);
             label.alignment = TextAlignmentOptions.Center;
             label.text = "구출  R";

@@ -13,13 +13,13 @@ using UnityEngine.InputSystem;
 namespace SubTerra.App.Integration
 {
     /// <summary>
-    /// 전력 0 알림, R/칩 재호출, 비용 결제와 엘리베이터 이동을 조립한다.
+    /// 전력 0 알림, R/머리 위 칩 재호출, 비용 결제와 엘리베이터 이동을 조립한다.
     /// RunFailure 경로를 사용하지 않으므로 이동·점프·사다리 입력을 잠그지 않는다.
     /// </summary>
     public sealed class EmergencyRescueRuntimeController : MonoBehaviour
     {
         private const float DroneReminderDelaySeconds = 18f;
-        private const string ReminderText = "구출이 필요하면 전력 옆 버튼을 누르세요";
+        private const string ReminderText = "구출이 필요하면 머리 위 버튼을 누르거나 R 키를 누르세요";
 
         private SaveRuntimeController runtime;
         private GameState gameState;
@@ -84,6 +84,7 @@ namespace SubTerra.App.Integration
             if (view != null)
             {
                 view.Bind(TryRescue, ClosePanel, OpenPanel);
+                view.SetFollowTarget(player);
             }
 
             if (gameState != null)
@@ -106,6 +107,11 @@ namespace SubTerra.App.Integration
             if (gameState != null)
             {
                 gameState.EnergyChanged -= OnEnergyChanged;
+            }
+
+            if (view != null)
+            {
+                view.SetFollowTarget(null);
             }
 
             runtime = null;
@@ -263,7 +269,6 @@ namespace SubTerra.App.Integration
             var energy = hud.BasicHud.EnergyText;
             view = EmergencyRescuePanelView.Create(
                 canvas.transform,
-                energy != null ? energy.rectTransform : null,
                 energy != null ? energy.font : null);
         }
 

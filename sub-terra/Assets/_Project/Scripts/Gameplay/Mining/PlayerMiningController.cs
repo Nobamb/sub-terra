@@ -1,5 +1,7 @@
+using System.Collections.Generic;
 using SubTerra.Gameplay.Player;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 
 namespace SubTerra.Gameplay.Mining
@@ -19,6 +21,7 @@ namespace SubTerra.Gameplay.Mining
         private Vector2 pendingWorldPoint;
         private bool miningInputPressedLastFrame;
         private PlayerAnimationController animationController;
+        private static readonly List<RaycastResult> PointerHits = new(8);
 
         public bool IsMining => miningSystem != null && miningSystem.IsMining;
 
@@ -85,9 +88,52 @@ namespace SubTerra.Gameplay.Mining
         {
             bool enterMining = Keyboard.current != null
                 && Keyboard.current.enterKey.isPressed;
-            return enterMining
-                || (Mouse.current != null && Mouse.current.leftButton.isPressed)
-                || (mineAction != null && mineAction.IsPressed());
+            if (enterMining)
+            {
+                return true;
+            }
+
+            bool mousePressed = Mouse.current != null && Mouse.current.leftButton.isPressed;
+            bool actionPressed = mineAction != null && mineAction.IsPressed();
+            if (!mousePressed && !actionPressed)
+            {
+                return false;
+            }
+
+            // 머리 위 구출 칩·팝업 등 UI 클릭이 채굴로 통과하지 않게 한다.
+            if (mousePressed && IsPointerOverUi())
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        private static bool IsPointerOverUi()
+        {
+            EventSystem eventSystem = EventSystem.current;
+            if (eventSystem == null)
+            {
+                return false;
+            }
+
+            if (eventSystem.IsPointerOverGameObject())
+            {
+                return true;
+            }
+
+            if (Mouse.current == null)
+            {
+                return false;
+            }
+
+            var eventData = new PointerEventData(eventSystem)
+            {
+                position = Mouse.current.position.ReadValue()
+            };
+            PointerHits.Clear();
+            eventSystem.RaycastAll(eventData, PointerHits);
+            return PointerHits.Count > 0;
         }
 
         private void CaptureCurrentTarget()
