@@ -1,6 +1,8 @@
 using System;
 using System.Collections;
 using SubTerra.App.Core;
+using SubTerra.App.Core.Data;
+using SubTerra.App.Progression;
 using SubTerra.App.Run;
 using SubTerra.App.Save;
 using SubTerra.App.State;
@@ -26,6 +28,7 @@ namespace SubTerra.App.Integration
         [SerializeField, Min(0f)] private float failureDisplaySeconds = 1.25f;
 
         private SaveRuntimeController runtime;
+        private ProgressionService progression;
         private GameState gameState;
         private RunFailureService failureService;
         private OutpostStatusDto latestOutpostStatus;
@@ -40,6 +43,7 @@ namespace SubTerra.App.Integration
         {
             Unbind();
             runtime = saveRuntime;
+            progression = runtime != null ? runtime.Progression : null;
             gameState = state;
             if (runtime == null || !GameState.IsComplete(gameState) || runtime.InventoryService == null)
             {
@@ -49,19 +53,23 @@ namespace SubTerra.App.Integration
             failureService = new RunFailureService(
                 gameState,
                 runtime.InventoryService,
-                runtime.Progression?.Effects,
+                progression?.Effects,
                 baseCargoLossRatio);
             if (survivalController != null)
             {
                 survivalController.BindTarget(playerTransform);
                 survivalController.BindMovement(playerMovement);
                 survivalController.BindUpgradeEffects(
-                    runtime.Progression?.Effects as IPlayerHealthUpgradeProvider);
+                    progression?.Effects as IPlayerHealthUpgradeProvider);
                 survivalController.FailureRequested += OnFailureRequested;
                 playerMovement?.GetComponentInChildren<PlayerAnimationController>(true)
                     ?.BindSurvival(survivalController);
             }
 
+            if (progression != null)
+            {
+                progression.UpgradeChanged += OnUpgradeChanged;
+            }
         }
 
         public void Unbind()
@@ -71,10 +79,32 @@ namespace SubTerra.App.Integration
                 survivalController.FailureRequested -= OnFailureRequested;
             }
 
+            if (progression != null)
+            {
+                progression.UpgradeChanged -= OnUpgradeChanged;
+            }
+
             runtime = null;
+            progression = null;
             gameState = null;
             failureService = null;
             latestOutpostStatus = null;
+        }
+
+        private void OnUpgradeChanged(UpgradeSnapshot upgrade)
+        {
+            if (upgrade.UpgradeId != DataIds.Upgrades.MaximumHealth
+                && upgrade.UpgradeId != DataIds.Upgrades.HealthRegeneration)
+            {
+                return;
+            }
+
+            // 구매 직후 현재 생존 상태를 다시 계산해 씬 전환 없이 체력 효과를 반영한다.
+            if (survivalController != null)
+            {
+                survivalController.BindUpgradeEffects(
+                    progression?.Effects as IPlayerHealthUpgradeProvider);
+            }
         }
 
         private void OnDestroy()
