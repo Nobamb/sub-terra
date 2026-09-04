@@ -1852,6 +1852,7 @@ MonoBehaviour:
   gasHazardSystem: {fileID: 279480561}
   buildingPlacementSystem: {fileID: 279480557}
   powerNetworkSystem: {fileID: 279480552}
+  powerCablePrefab: {fileID: 2394384980537050421, guid: 72867788b7ff57f4c9d10fdf05bda43c, type: 3}
   baseWorldGeneratorBehaviour: {fileID: 279480566}
   worldSeed: 20260731
   generatorVersion: 1

@@ -103,10 +103,10 @@ TextureImporter:
       name: ladder_06_0
       rect:
         serializedVersion: 2
-        x: 58
+        x: 14
         y: 12
-        width: 139
-        height: 229
+        width: 228
+        height: 228
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
