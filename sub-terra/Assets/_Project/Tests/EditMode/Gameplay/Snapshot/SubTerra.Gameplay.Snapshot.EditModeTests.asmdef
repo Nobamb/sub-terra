@@ -4,6 +4,7 @@
   "references": [
     "SubTerra.Gameplay.Snapshot",
     "SubTerra.Gameplay.Building",
+    "SubTerra.Gameplay.Power",
     "SubTerra.Gameplay.Structural",
     "SubTerra.Shared",
     "UnityEngine.TestRunner",
