@@ -1780,6 +1780,7 @@ GameObject:
   - component: {fileID: 279480567}
   - component: {fileID: 279480569}
   - component: {fileID: 279480568}
+  - component: {fileID: 279480570}
   m_Layer: 0
   m_Name: WorldSystems
   m_TagString: Untagged
@@ -2175,8 +2176,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: SubTerra.Gameplay.Structural::SubTerra.Gameplay.Structural.StructuralRiskFeedback
   structuralSystem: {fileID: 279480562}
   audioSource: {fileID: 279480569}
-  explorationBgmSource: {fileID: 1658429422}
-  dangerBgmSource: {fileID: 96866534}
+  explorationBgmSource: {fileID: 0}
+  dangerBgmSource: {fileID: 0}
   warningTone: {fileID: 0}
   reduceMotion: 0
   cameraFollow: {fileID: 0}
@@ -2277,6 +2278,23 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &279480570
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 279480551}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aecf1956ef7df4948b3d4acbe7ae71cc, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: SubTerra.App.GameplayIntegration::SubTerra.App.Integration.ExplorationBgmController
+  healthSource: {fileID: 1557797926}
+  contextProvider: {fileID: 639377408}
+  explorationBgmSource: {fileID: 1658429422}
+  dangerBgmSource: {fileID: 96866534}
+  lowHealthRatio: 0.3
 --- !u!1 &310644884
 GameObject:
   m_ObjectHideFlags: 0
