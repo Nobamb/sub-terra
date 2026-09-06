@@ -35,6 +35,10 @@ namespace SubTerra.Gameplay.Building
         public BuildingPlacementDefinition Selection => selection;
         public StructuralIntegritySystem StructuralSystem => structuralIntegritySystem;
         public event Action<BuildingPlacementResult> BuildingPlaced;
+        /// <summary>저장 데이터로 복원된 시설의 시각 후처리 전용 알림이다. 게임 이벤트·비용 처리에는 사용하지 않는다.</summary>
+        public event Action<BuildingPlacementResult> BuildingRestored;
+        /// <summary>월드 복원 전에 시설에 종속된 시각 레이어를 비울 수 있도록 알린다.</summary>
+        public event Action WorldRestorePreparing;
         public event Action<BuildingPlacementResult> PlacementRejected;
 
         private void Awake()
@@ -453,6 +457,7 @@ namespace SubTerra.Gameplay.Building
         /// </summary>
         public void PrepareForWorldRestore()
         {
+            WorldRestorePreparing?.Invoke();
             Transform root = buildingRoot != null ? buildingRoot : transform;
             for (int index = root.childCount - 1; index >= 0; index--)
             {
@@ -505,6 +510,13 @@ namespace SubTerra.Gameplay.Building
             {
                 nextInstanceSequence = sequence + 1;
             }
+
+            BuildingRestored?.Invoke(new BuildingPlacementResult(
+                true,
+                BuildingPlacementFailure.None,
+                snapshot.instanceId,
+                snapshot.buildingTypeId,
+                cell));
 
             return true;
         }
