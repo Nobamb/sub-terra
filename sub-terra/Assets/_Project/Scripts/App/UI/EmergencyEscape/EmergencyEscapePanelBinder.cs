@@ -27,8 +27,7 @@ namespace SubTerra.App.UI.EmergencyEscape
                     return false;
                 }
 
-                var root = view.gameObject;
-                return root.activeInHierarchy;
+                return view.IsOpen;
             }
         }
 
