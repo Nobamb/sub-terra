@@ -25,6 +25,7 @@ namespace SubTerra.Gameplay.Snapshot
         [SerializeField] private GasHazardSystem gasHazardSystem;
         [SerializeField] private BuildingPlacementSystem buildingPlacementSystem;
         [SerializeField] private PowerNetworkSystem powerNetworkSystem;
+        [SerializeField] private PowerCable powerCablePrefab;
         [SerializeField] private MonoBehaviour baseWorldGeneratorBehaviour;
         [SerializeField] private long worldSeed;
         [SerializeField, Min(1)] private int generatorVersion = 1;
@@ -469,13 +470,25 @@ namespace SubTerra.Gameplay.Snapshot
 
                 if (HasCableBetween(nodeA, nodeB)) continue;
 
-                var cableObject = new GameObject(
+                PowerCable cable = CreateRestoredCable(
                     "PowerCable_Restore_" + connection.nodeAInstanceId + "_" + connection.nodeBInstanceId);
-                cableObject.transform.SetParent(powerNetworkSystem.transform, false);
-                PowerCable cable = cableObject.AddComponent<PowerCable>();
                 cable.Configure(powerNetworkSystem, nodeA, nodeB);
                 powerNetworkSystem.RegisterCable(cable);
             }
+        }
+
+        private PowerCable CreateRestoredCable(string name)
+        {
+            if (powerCablePrefab != null)
+            {
+                PowerCable cable = Instantiate(powerCablePrefab, powerNetworkSystem.transform);
+                cable.name = name;
+                return cable;
+            }
+
+            var cableObject = new GameObject(name);
+            cableObject.transform.SetParent(powerNetworkSystem.transform, false);
+            return cableObject.AddComponent<PowerCable>();
         }
 
         private Dictionary<string, PowerNode> BuildNodeLookup()
