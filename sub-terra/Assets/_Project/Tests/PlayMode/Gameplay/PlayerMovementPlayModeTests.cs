@@ -17,6 +17,9 @@ namespace SubTerra.Gameplay.Player.Tests
         private GameObject wallObject;
         private GameObject firstLadderObject;
         private GameObject secondLadderObject;
+        private GameObject animationVisualObject;
+        private Sprite[] ladderAnimationFrames;
+        private Sprite[] ladderDownAnimationFrames;
         private Tile wallTile;
 
         [SetUp]
@@ -31,11 +34,28 @@ namespace SubTerra.Gameplay.Player.Tests
         [TearDown]
         public void TearDown()
         {
+            Object.DestroyImmediate(animationVisualObject);
             Object.DestroyImmediate(playerObject);
             Object.DestroyImmediate(groundObject);
             Object.DestroyImmediate(wallObject);
             Object.DestroyImmediate(firstLadderObject);
             Object.DestroyImmediate(secondLadderObject);
+            if (ladderAnimationFrames != null)
+            {
+                foreach (var frame in ladderAnimationFrames)
+                {
+                    Object.DestroyImmediate(frame);
+                }
+            }
+
+            if (ladderDownAnimationFrames != null)
+            {
+                foreach (var frame in ladderDownAnimationFrames)
+                {
+                    Object.DestroyImmediate(frame);
+                }
+            }
+
             Object.DestroyImmediate(wallTile);
         }
 
@@ -412,12 +432,137 @@ namespace SubTerra.Gameplay.Player.Tests
             Assert.IsFalse(movement.IsClimbing);
         }
 
+        [Test]
+        public void LadderAnimation_HoldsSingleFrameWhenStationary()
+        {
+            animationVisualObject = new GameObject("LadderIdleAnimationVisual");
+            animationVisualObject.transform.SetParent(playerObject.transform);
+            var renderer = animationVisualObject.AddComponent<SpriteRenderer>();
+            var animation = animationVisualObject.AddComponent<PlayerAnimationController>();
+            ladderAnimationFrames = new[]
+            {
+                CreateTestSprite(),
+                CreateTestSprite(),
+                CreateTestSprite(),
+                CreateTestSprite()
+            };
+            ladderDownAnimationFrames = new[]
+            {
+                CreateTestSprite(),
+                CreateTestSprite(),
+                CreateTestSprite(),
+                CreateTestSprite()
+            };
+            animation.ConfigureFrames(
+                renderer,
+                movement,
+                ladderAnimationFrames,
+                ladderAnimationFrames,
+                ladderAnimationFrames,
+                ladderAnimationFrames,
+                ladderDownAnimationFrames,
+                ladderAnimationFrames,
+                ladderAnimationFrames,
+                ladderAnimationFrames);
+
+            movement.EnterLadder();
+            movement.SetVerticalMoveInput(0f);
+            InvokePrivate(animation, "LateUpdate");
+            Assert.AreSame(ladderAnimationFrames[0], renderer.sprite);
+
+            SetPrivateField(animation, "stateStartedAt", Time.unscaledTime - 2f);
+            InvokePrivate(animation, "LateUpdate");
+            Assert.AreSame(
+                ladderAnimationFrames[0],
+                renderer.sprite,
+                "사다리에서 정지하면 상승/하강 프레임을 순환하지 않고 단일 프레임을 유지해야 한다.");
+        }
+
+        [Test]
+        public void LadderAnimation_UsesDedicatedFramesWhenDescending()
+        {
+            animationVisualObject = new GameObject("LadderAnimationVisual");
+            animationVisualObject.transform.SetParent(playerObject.transform);
+            var renderer = animationVisualObject.AddComponent<SpriteRenderer>();
+            var animation = animationVisualObject.AddComponent<PlayerAnimationController>();
+            ladderAnimationFrames = new[]
+            {
+                CreateTestSprite(),
+                CreateTestSprite(),
+                CreateTestSprite(),
+                CreateTestSprite()
+            };
+            ladderDownAnimationFrames = new[]
+            {
+                CreateTestSprite(),
+                CreateTestSprite(),
+                CreateTestSprite(),
+                CreateTestSprite()
+            };
+            animation.ConfigureFrames(
+                renderer,
+                movement,
+                ladderAnimationFrames,
+                ladderAnimationFrames,
+                ladderAnimationFrames,
+                ladderAnimationFrames,
+                ladderDownAnimationFrames,
+                ladderAnimationFrames,
+                ladderAnimationFrames,
+                ladderAnimationFrames);
+
+            movement.EnterLadder();
+            movement.SetVerticalMoveInput(1f);
+            InvokePrivate(animation, "LateUpdate");
+            Assert.AreSame(ladderAnimationFrames[0], renderer.sprite);
+
+            movement.SetVerticalMoveInput(-1f);
+            InvokePrivate(animation, "LateUpdate");
+            Assert.AreSame(
+                ladderDownAnimationFrames[0],
+                renderer.sprite,
+                "하강 시에는 상승 프레임이 아니라 전용 하강 프레임을 사용해야 한다.");
+
+            SetPrivateField(animation, "stateStartedAt", Time.unscaledTime - 0.25f);
+            InvokePrivate(animation, "LateUpdate");
+            Assert.AreSame(
+                ladderDownAnimationFrames[2],
+                renderer.sprite,
+                "하강 프레임은 별도 시트 순서로 진행되어야 한다.");
+        }
+
         private static LadderZone CreateLadderZone(string name, out GameObject ladderObject)
         {
             ladderObject = new GameObject(name);
             var collider = ladderObject.AddComponent<BoxCollider2D>();
             collider.isTrigger = true;
             return ladderObject.AddComponent<LadderZone>();
+        }
+
+        private static Sprite CreateTestSprite()
+        {
+            return Sprite.Create(
+                Texture2D.whiteTexture,
+                new Rect(0f, 0f, 1f, 1f),
+                new Vector2(0.5f, 0.5f));
+        }
+
+        private static void InvokePrivate(object target, string methodName)
+        {
+            var method = target.GetType().GetMethod(
+                methodName,
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.IsNotNull(method, methodName + " 메서드를 찾을 수 없습니다.");
+            method.Invoke(target, null);
+        }
+
+        private static void SetPrivateField(object target, string fieldName, object value)
+        {
+            var field = target.GetType().GetField(
+                fieldName,
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.IsNotNull(field, fieldName + " 필드를 찾을 수 없습니다.");
+            field.SetValue(target, value);
         }
     }
 }

@@ -12,6 +12,7 @@ namespace SubTerra.Gameplay.Power
         [SerializeField, Min(0)] private int demand;
         [SerializeField] private PowerPriority priority = PowerPriority.Normal;
         [SerializeField] private string entityId;
+        [SerializeField] private Transform cablePortAnchor;
 
         public bool IsPowerSource => isPowerSource;
         public int Supply => supply;
@@ -19,6 +20,10 @@ namespace SubTerra.Gameplay.Power
         public PowerPriority Priority => priority;
         public string EntityId => entityId;
         public PowerNetworkSystem Network => network;
+        /// <summary>Visual cable endpoint. Nodes without a facility port use their own transform.</summary>
+        public Vector3 CablePortPosition => cablePortAnchor != null
+            ? cablePortAnchor.position
+            : transform.position;
         public bool IsPowered { get; private set; }
         public event Action<PowerNode, bool> PowerStateChanged;
 
@@ -66,6 +71,9 @@ namespace SubTerra.Gameplay.Power
             entityId = nextEntityId ?? string.Empty;
             network?.RequestRebuild();
         }
+
+        /// <summary>Assigns the visual socket used by power-cable rendering.</summary>
+        public void SetCablePortAnchor(Transform anchor) => cablePortAnchor = anchor;
 
         internal void SetPowered(bool powered)
         {

@@ -377,6 +377,15 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 99d44e6c23db9234aaf4b37bc366b4d3, type: 3}
   - {fileID: 21300000, guid: 91cbae2b0f79065468ed569170462ee8, type: 3}
   - {fileID: 21300000, guid: 3f8d1b58a6a581544a9611e651fd3757, type: 3}
+  ladderDownFrames:
+  - {fileID: 21300000, guid: 0ab25f22ef028dc48922b51bf117c9d4, type: 3}
+  - {fileID: 21300000, guid: 99da6ab66e5983643be4b4ddbe07e312, type: 3}
+  - {fileID: 21300000, guid: 783c0c6f356694c428c8422cb4602436, type: 3}
+  - {fileID: 21300000, guid: 7548ccdffa815ba4e8737b303312d053, type: 3}
+  - {fileID: 21300000, guid: 1ab082b8759d79848ab1508f4f9f79f0, type: 3}
+  - {fileID: 21300000, guid: 2d4d7b7e66ede7841a71d5c2c14dfbef, type: 3}
+  - {fileID: 21300000, guid: 28a0e05731c48b54da882e710d900a82, type: 3}
+  - {fileID: 21300000, guid: 839630c5012f83f4bb01b3254aa6e72c, type: 3}
   miningFrames:
   - {fileID: 21300000, guid: 41d68100d8c057649a878d33abc361d6, type: 3}
   - {fileID: 21300000, guid: e69f5b9a559592e4cbe0dcd0fe950b11, type: 3}

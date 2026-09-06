@@ -43,6 +43,7 @@ namespace SubTerra.Editor
             new("Walk", "Walk", "walk", 10, 10f, true),
             new("Jump", "Jump", "jump", 10, 12f, false),
             new("Ladder", "Ladder", "ladder", 8, 8f, true),
+            new("LadderDown", "LadderDown", "ladder_down", 8, 8f, true),
             new("Mining", "Mining", "mining", 8, 10f, true),
             new("Damage", "Damage", "damage", 4, 10f, false),
             new("Knockout", "Knockout", "knockout", 8, 8f, false)
@@ -263,6 +264,7 @@ namespace SubTerra.Editor
                     LoadFrames("Walk"),
                     LoadFrames("Jump"),
                     LoadFrames("Ladder"),
+                    LoadFrames("LadderDown"),
                     LoadFrames("Mining"),
                     LoadFrames("Damage"),
                     LoadFrames("Knockout"));
