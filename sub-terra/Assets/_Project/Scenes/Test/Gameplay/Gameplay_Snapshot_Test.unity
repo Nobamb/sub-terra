@@ -417,6 +417,7 @@ MonoBehaviour:
   gasHazardSystem: {fileID: 1645990132}
   buildingPlacementSystem: {fileID: 1645990131}
   powerNetworkSystem: {fileID: 1645990130}
+  powerCablePrefab: {fileID: 2394384980537050421, guid: 72867788b7ff57f4c9d10fdf05bda43c, type: 3}
   worldSeed: 0
 --- !u!114 &1645990130
 MonoBehaviour:
