@@ -43,7 +43,7 @@ namespace SubTerra.App.Tests.Progression
                 new[] { 40f, 80f, 130f },
                 "mineral.copper:6", "mineral.copper:6,mineral.iron:4", "mineral.iron:8,mineral.lithium:5");
             AssertUpgrade(catalog, DataIds.Upgrades.HealthRegeneration,
-                new[] { 1f, 2f, 3f },
+                new[] { 0.3f, 0.5f, 1f },
                 "mineral.copper:6", "mineral.copper:6,mineral.iron:4", "mineral.iron:6,mineral.lithium:5");
         }
 

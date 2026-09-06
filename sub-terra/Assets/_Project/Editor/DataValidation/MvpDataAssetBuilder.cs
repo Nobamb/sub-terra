@@ -321,7 +321,7 @@ namespace SubTerra.App.Editor.DataValidation
                     new[] { 40f, 80f, 130f },
                     Costs(Copper(6), CopperIron(6, 4), IronLithium(8, 5))),
                 EnsureUpgrade("Upgrade_Health_Regeneration.asset", DataIds.Upgrades.HealthRegeneration, "초당 체력 재생",
-                    new[] { 1f, 2f, 3f },
+                    new[] { 0.3f, 0.5f, 1f },
                     Costs(Copper(6), CopperIron(6, 4), IronLithium(6, 5))),
                 EnsureUpgrade("Upgrade_Maximum_Cargo.asset", DataIds.Upgrades.MaximumCargo, "최대 화물 중량",
                     new[] { 30f, 70f, 120f },

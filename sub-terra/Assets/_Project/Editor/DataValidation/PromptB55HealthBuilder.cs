@@ -45,7 +45,7 @@ namespace SubTerra.App.Editor.DataValidation
                 "Upgrade_Health_Regeneration.asset",
                 DataIds.Upgrades.HealthRegeneration,
                 "초당 체력 재생",
-                new[] { 0.3f, 0.6f, 1f });
+                new[] { 0.3f, 0.5f, 1f });
             RegisterUpgrades(maximumHealth, regeneration);
             ConfigureSurvivalSettings();
             BuildBasicHud();
