@@ -30,6 +30,7 @@ namespace SubTerra.App.UI.Progression
         [SerializeField] private TMP_Text deepZoneText;
         [SerializeField] private GameObject deepZoneUnlockPopupRoot;
         [SerializeField] private TMP_Text deepZoneUnlockPopupText;
+        [SerializeField] private Button deepZoneUnlockPopupCloseButton;
         [SerializeField] private Button purchaseButton;
         [SerializeField] private GameObject panelRoot;
         [SerializeField] private ProgressionUpgradeEntryButton[] upgradeButtons;
@@ -61,6 +62,8 @@ namespace SubTerra.App.UI.Progression
         public UpgradeCategory ActiveCategory => activeCategory;
         public bool LevelsOnlySummary => levelsOnlySummary;
         public bool HideDeepZoneTab => hideDeepZoneTab;
+        public bool IsDeepZoneUnlockPopupOpen =>
+            deepZoneUnlockPopupRoot != null && deepZoneUnlockPopupRoot.activeSelf;
 
         private void OnEnable()
         {
@@ -376,6 +379,7 @@ namespace SubTerra.App.UI.Progression
         {
             const string message = "심층 구역 잠금이 해제되었습니다";
             CreateDeepZoneUnlockPopupIfNeeded();
+            EnsureDeepZoneUnlockCloseButton();
             if (deepZoneUnlockPopupText != null)
             {
                 deepZoneUnlockPopupText.text = message;
@@ -397,6 +401,23 @@ namespace SubTerra.App.UI.Progression
             {
                 deepZoneUnlockPopupRoot.SetActive(false);
             }
+
+            UiKeyboardSubmitGuard.ClearSelection();
+        }
+
+        /// <summary>
+        /// 팝업이 열려 있으면 닫기 버튼과 같은 경로로 숨기고 true를 반환한다.
+        /// 이미 닫혀 있으면 아무 것도 하지 않고 false.
+        /// </summary>
+        public bool TryHideDeepZoneUnlockPopup()
+        {
+            if (!IsDeepZoneUnlockPopupOpen)
+            {
+                return false;
+            }
+
+            HideDeepZoneUnlockPopup();
+            return true;
         }
 
         private void CreateDeepZoneUnlockPopupIfNeeded()
@@ -417,14 +438,13 @@ namespace SubTerra.App.UI.Progression
                 typeof(RectTransform),
                 typeof(Image),
                 typeof(Canvas),
-                typeof(GraphicRaycaster),
-                typeof(Button));
+                typeof(GraphicRaycaster));
             root.transform.SetParent(canvases[canvases.Length - 1].transform, false);
             var rect = root.GetComponent<RectTransform>();
             rect.anchorMin = new Vector2(0.5f, 0.5f);
             rect.anchorMax = new Vector2(0.5f, 0.5f);
             rect.pivot = new Vector2(0.5f, 0.5f);
-            rect.sizeDelta = new Vector2(520f, 180f);
+            rect.sizeDelta = new Vector2(520f, 220f);
             root.GetComponent<Image>().color = new Color(0.035f, 0.1f, 0.16f, 0.98f);
             var popupCanvas = root.GetComponent<Canvas>();
             popupCanvas.overrideSorting = true;
@@ -437,15 +457,121 @@ namespace SubTerra.App.UI.Progression
             var labelRect = label.rectTransform;
             labelRect.anchorMin = Vector2.zero;
             labelRect.anchorMax = Vector2.one;
-            labelRect.offsetMin = new Vector2(28f, 28f);
-            labelRect.offsetMax = new Vector2(-28f, -28f);
+            // 하단 닫기 버튼 자리를 남긴다.
+            labelRect.offsetMin = new Vector2(28f, 72f);
+            labelRect.offsetMax = new Vector2(-28f, -24f);
             label.alignment = TextAlignmentOptions.Center;
             label.fontSize = 28f;
 
             deepZoneUnlockPopupRoot = root;
             deepZoneUnlockPopupText = label;
-            root.GetComponent<Button>().onClick.AddListener(HideDeepZoneUnlockPopup);
             root.SetActive(false);
+        }
+
+        private void EnsureDeepZoneUnlockCloseButton()
+        {
+            if (deepZoneUnlockPopupRoot == null)
+            {
+                return;
+            }
+
+            // 예전 전체 클릭 닫기는 전용 닫기 버튼과 겹치므로 제거한다.
+            var rootButton = deepZoneUnlockPopupRoot.GetComponent<Button>();
+            if (rootButton != null)
+            {
+                if (Application.isPlaying)
+                {
+                    Destroy(rootButton);
+                }
+                else
+                {
+                    DestroyImmediate(rootButton);
+                }
+            }
+
+            if (deepZoneUnlockPopupCloseButton == null)
+            {
+                var existing = deepZoneUnlockPopupRoot.transform.Find("CloseButton");
+                if (existing != null)
+                {
+                    deepZoneUnlockPopupCloseButton = existing.GetComponent<Button>();
+                }
+            }
+
+            if (deepZoneUnlockPopupCloseButton == null)
+            {
+                deepZoneUnlockPopupCloseButton = CreateDeepZoneUnlockCloseButton(
+                    deepZoneUnlockPopupRoot.transform);
+            }
+
+            // 런타임 버튼이라 persistent 리스너가 없다. 중복 등록을 막기 위해 비운 뒤 닫기만 연결한다.
+            deepZoneUnlockPopupCloseButton.onClick.RemoveAllListeners();
+            deepZoneUnlockPopupCloseButton.onClick.AddListener(HideDeepZoneUnlockPopup);
+            UiKeyboardSubmitGuard.ConfigurePointerPreferredButton(deepZoneUnlockPopupCloseButton);
+
+            var escClose = deepZoneUnlockPopupRoot.GetComponent<DeepZoneUnlockPopupEscClose>();
+            if (escClose == null)
+            {
+                escClose = deepZoneUnlockPopupRoot.AddComponent<DeepZoneUnlockPopupEscClose>();
+            }
+
+            escClose.Bind(this);
+        }
+
+        private Button CreateDeepZoneUnlockCloseButton(Transform parent)
+        {
+            var go = new GameObject(
+                "CloseButton",
+                typeof(RectTransform),
+                typeof(CanvasRenderer),
+                typeof(Image),
+                typeof(Button));
+            go.transform.SetParent(parent, false);
+            var rect = go.GetComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0.5f, 0f);
+            rect.anchorMax = new Vector2(0.5f, 0f);
+            rect.pivot = new Vector2(0.5f, 0f);
+            rect.anchoredPosition = new Vector2(0f, 18f);
+            rect.sizeDelta = new Vector2(168f, 44f);
+
+            var image = go.GetComponent<Image>();
+            image.color = new Color(0.16f, 0.38f, 0.5f, 1f);
+            image.raycastTarget = true;
+
+            var button = go.GetComponent<Button>();
+            button.targetGraphic = image;
+
+            TMP_Text label;
+            if (deepZoneUnlockPopupText != null)
+            {
+                label = Instantiate(deepZoneUnlockPopupText, go.transform);
+                label.name = "Label";
+            }
+            else if (resultText != null)
+            {
+                label = Instantiate(resultText, go.transform);
+                label.name = "Label";
+            }
+            else
+            {
+                var labelGo = new GameObject("Label", typeof(RectTransform));
+                labelGo.transform.SetParent(go.transform, false);
+                label = labelGo.AddComponent<TextMeshProUGUI>();
+            }
+
+            label.gameObject.SetActive(true);
+            label.raycastTarget = false;
+            label.alignment = TextAlignmentOptions.Center;
+            label.fontSize = 22f;
+            label.text = "닫기";
+            var labelRect = label.rectTransform;
+            labelRect.anchorMin = Vector2.zero;
+            labelRect.anchorMax = Vector2.one;
+            labelRect.offsetMin = Vector2.zero;
+            labelRect.offsetMax = Vector2.zero;
+            labelRect.anchoredPosition = Vector2.zero;
+            labelRect.sizeDelta = Vector2.zero;
+            return button;
         }
 
         public void SetBusy(bool busy)

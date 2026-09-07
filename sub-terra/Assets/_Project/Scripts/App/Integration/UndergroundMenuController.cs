@@ -4,6 +4,7 @@ using SubTerra.App.UI.HUD;
 using SubTerra.App.UI.EmergencyEscape;
 using SubTerra.App.UI.MainMenu;
 using SubTerra.App.UI.Outpost;
+using SubTerra.App.UI.Progression;
 using SubTerra.App.UI.SurfaceBase;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -66,6 +67,12 @@ namespace SubTerra.App.Integration
                 return;
             }
 
+            // 심층 해금 팝업은 닫기 버튼과 동일 경로로 닫고, 설정 창을 열지 않는다.
+            if (TryHideOpenDeepZoneUnlockPopup())
+            {
+                return;
+            }
+
             bool closed = false;
             var rescue = FindFirstObjectByType<EmergencyRescueRuntimeController>();
             if (rescue != null && rescue.IsPanelOpen) { rescue.ClosePanel(); closed = true; }
@@ -105,6 +112,24 @@ namespace SubTerra.App.Integration
             settingsView.SetSettingsVisible(false);
             SettingsRuntimeApplier.RestoreAppliedVolume(settings.Applied);
             UiKeyboardSubmitGuard.ClearSelection();
+        }
+
+        private static bool TryHideOpenDeepZoneUnlockPopup()
+        {
+            var views = FindObjectsByType<ProgressionPanelView>(
+                FindObjectsInactive.Include,
+                FindObjectsSortMode.None);
+            var closed = false;
+            for (var i = 0; i < views.Length; i++)
+            {
+                var view = views[i];
+                if (view != null && view.TryHideDeepZoneUnlockPopup())
+                {
+                    closed = true;
+                }
+            }
+
+            return closed;
         }
 
         private void ApplySettings()
