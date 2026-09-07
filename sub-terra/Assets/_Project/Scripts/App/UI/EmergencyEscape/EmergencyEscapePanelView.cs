@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using SubTerra.Shared;
 using TMPro;
@@ -16,10 +17,29 @@ namespace SubTerra.App.UI.EmergencyEscape
         [SerializeField] private Button confirmButton;
         [SerializeField] private Button closeButton;
 
+        public event Action<int> DestinationSelected;
+
         public int SelectedDestinationIndex =>
             destinationDropdown != null ? destinationDropdown.value : 0;
 
         public bool IsOpen => (panelRoot != null ? panelRoot : gameObject).activeInHierarchy;
+
+        private void OnEnable()
+        {
+            if (destinationDropdown != null)
+            {
+                destinationDropdown.onValueChanged.RemoveListener(HandleDestinationChanged);
+                destinationDropdown.onValueChanged.AddListener(HandleDestinationChanged);
+            }
+        }
+
+        private void OnDisable()
+        {
+            if (destinationDropdown != null)
+            {
+                destinationDropdown.onValueChanged.RemoveListener(HandleDestinationChanged);
+            }
+        }
 
         public void SetVisible(bool visible)
         {
@@ -51,6 +71,22 @@ namespace SubTerra.App.UI.EmergencyEscape
                 destinationDropdown.value = Mathf.Clamp(selectedIndex, 0, labels.Count - 1);
                 destinationDropdown.RefreshShownValue();
             }
+        }
+
+        public void SetSelectedDestinationIndex(int index)
+        {
+            if (destinationDropdown == null)
+            {
+                return;
+            }
+
+            if (destinationDropdown.options.Count == 0)
+            {
+                return;
+            }
+
+            destinationDropdown.value = Mathf.Clamp(index, 0, destinationDropdown.options.Count - 1);
+            destinationDropdown.RefreshShownValue();
         }
 
         public void SetCost(int gold, int energy)
@@ -96,6 +132,11 @@ namespace SubTerra.App.UI.EmergencyEscape
                 && costText != null
                 && confirmButton != null
                 && closeButton != null;
+        }
+
+        private void HandleDestinationChanged(int index)
+        {
+            DestinationSelected?.Invoke(index);
         }
     }
 }

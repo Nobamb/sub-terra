@@ -30,9 +30,16 @@ namespace SubTerra.Gameplay.Player
         private float shakeTimeRemaining;
         private float shakeDuration;
         private float shakeAmplitude;
+        private Transform storedFollowTarget;
+        private Transform previewAnchor;
+        private bool previewActive;
 
         public bool IsShakeActive => shakeTimeRemaining > 0f
             && !AccessibilityPreferences.ReduceMotion;
+
+        public bool IsPreviewActive => previewActive;
+
+        public Vector3 FollowOffset => offset;
 
         public void SetTarget(Transform newTarget, bool snapImmediately = false)
         {
@@ -42,6 +49,41 @@ namespace SubTerra.Gameplay.Player
             {
                 SnapToTarget();
             }
+        }
+
+        /// <summary>
+        /// 월드 좌표를 화면 중앙에 두고 잠시 추적한다.
+        /// 긴급 탈출 목적지처럼 플레이어와 떨어진 위치를 보여 줄 때 사용한다.
+        /// </summary>
+        public void PreviewWorldPosition(Vector3 worldPosition, bool snapImmediately = true)
+        {
+            EnsurePreviewAnchor();
+            if (!previewActive)
+            {
+                storedFollowTarget = target;
+                previewActive = true;
+            }
+
+            // camera = anchor + offset 이므로, XY가 world와 같아지도록 앵커를 보정한다.
+            previewAnchor.position = new Vector3(
+                worldPosition.x - offset.x,
+                worldPosition.y - offset.y,
+                worldPosition.z);
+            SetTarget(previewAnchor, snapImmediately);
+        }
+
+        /// <summary>미리보기를 해제하고 원래 추적 대상으로 되돌린다.</summary>
+        public void ClearPreview(bool snapImmediately = true)
+        {
+            if (!previewActive)
+            {
+                return;
+            }
+
+            previewActive = false;
+            var restore = storedFollowTarget;
+            storedFollowTarget = null;
+            SetTarget(restore, snapImmediately);
         }
 
         public void SetBoundsProvider(
@@ -230,6 +272,42 @@ namespace SubTerra.Gameplay.Player
             cachedBoundsVersion = -1;
             cachedOrthographicSize = -1f;
             cachedAspect = -1f;
+        }
+
+        private void EnsurePreviewAnchor()
+        {
+            if (previewAnchor != null)
+            {
+                return;
+            }
+
+            var anchorObject = new GameObject("PlayerCameraPreviewAnchor");
+            anchorObject.hideFlags = HideFlags.HideAndDontSave;
+            previewAnchor = anchorObject.transform;
+        }
+
+        private void OnDestroy()
+        {
+            if (previewAnchor == null)
+            {
+                return;
+            }
+
+            var anchorObject = previewAnchor.gameObject;
+            previewAnchor = null;
+            if (anchorObject == null)
+            {
+                return;
+            }
+
+            if (Application.isPlaying)
+            {
+                Destroy(anchorObject);
+            }
+            else
+            {
+                DestroyImmediate(anchorObject);
+            }
         }
     }
 }

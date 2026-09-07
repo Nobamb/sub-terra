@@ -17,12 +17,14 @@ namespace SubTerra.App.Integration
     /// <summary>포탈 목적지 목록, 결제, 플레이어 이동과 선택 UI를 한 경로에서 처리한다.</summary>
     public sealed class EmergencyEscapePortalRuntimeBridge :
         MonoBehaviour,
-        IEmergencyEscapePortalPort
+        IEmergencyEscapePortalPort,
+        IEmergencyEscapeDestinationPreview
     {
         [SerializeField] private Transform playerTransform;
         [SerializeField] private Transform elevatorCenter;
         [SerializeField] private Vector2 outpostArrivalOffset = new(0f, 1f);
         [SerializeField] private EmergencyEscapePanelBinder panelBinder;
+        [SerializeField] private PlayerCameraFollow cameraFollow;
 
         private GameState gameState;
         private EmergencyEscapeService service;
@@ -53,6 +55,53 @@ namespace SubTerra.App.Integration
         {
             panelBinder = binder;
             panelBinder?.BindTo(this);
+        }
+
+        public void BindCameraFollow(PlayerCameraFollow follow)
+        {
+            cameraFollow = follow;
+        }
+
+        /// <summary>
+        /// 선택한 엘리베이터/전진기지 코어를 화면 중앙에 둔다.
+        /// 플레이어는 포탈에 그대로 두고 비용도 청구하지 않는다.
+        /// </summary>
+        public bool TryPreviewDestination(
+            EmergencyEscapeDestination kind,
+            string outpostInstanceId,
+            out string reason)
+        {
+            reason = string.Empty;
+            EnsureRuntimeBindings();
+            if (!TryResolveDestination(
+                    kind,
+                    outpostInstanceId,
+                    forArrival: false,
+                    out var previewPosition,
+                    out reason))
+            {
+                return false;
+            }
+
+            var follow = ResolveCameraFollow();
+            if (follow == null)
+            {
+                return true;
+            }
+
+            follow.PreviewWorldPosition(previewPosition, snapImmediately: true);
+            return true;
+        }
+
+        public void ClearDestinationPreview()
+        {
+            var follow = ResolveCameraFollow();
+            if (follow == null)
+            {
+                return;
+            }
+
+            follow.ClearPreview(snapImmediately: true);
         }
 
         public bool TryOpenEscapePanel(out string reason)
@@ -138,7 +187,12 @@ namespace SubTerra.App.Integration
                 return false;
             }
 
-            if (!TryResolveDestination(kind, outpostInstanceId, out var targetPosition, out reason))
+            if (!TryResolveDestination(
+                    kind,
+                    outpostInstanceId,
+                    forArrival: true,
+                    out var targetPosition,
+                    out reason))
             {
                 return false;
             }
@@ -199,6 +253,8 @@ namespace SubTerra.App.Integration
             {
                 panelBinder.BindTo(this);
             }
+
+            ResolveCameraFollow();
         }
 
         private static Transform FindElevatorCenter()
@@ -244,9 +300,35 @@ namespace SubTerra.App.Integration
             return null;
         }
 
+        private PlayerCameraFollow ResolveCameraFollow()
+        {
+            if (cameraFollow != null)
+            {
+                return cameraFollow;
+            }
+
+            var main = Camera.main;
+            if (main != null)
+            {
+                cameraFollow = main.GetComponent<PlayerCameraFollow>();
+                if (cameraFollow != null)
+                {
+                    return cameraFollow;
+                }
+            }
+
+            if (Application.isPlaying)
+            {
+                cameraFollow = FindAnyObjectByType<PlayerCameraFollow>(FindObjectsInactive.Exclude);
+            }
+
+            return cameraFollow;
+        }
+
         private bool TryResolveDestination(
             EmergencyEscapeDestination kind,
             string outpostInstanceId,
+            bool forArrival,
             out Vector3 position,
             out string reason)
         {
@@ -287,7 +369,10 @@ namespace SubTerra.App.Integration
                     continue;
                 }
 
-                position = candidate.transform.position + (Vector3)outpostArrivalOffset;
+                // 미리보기는 코어 자체를 화면 중앙에, 실제 이동은 착지 오프셋을 적용한다.
+                position = forArrival
+                    ? candidate.transform.position + (Vector3)outpostArrivalOffset
+                    : candidate.transform.position;
                 return true;
             }
 

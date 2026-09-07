@@ -14,6 +14,7 @@ namespace SubTerra.App.UI.EmergencyEscape
         [SerializeField] private Button closeButton;
 
         private IEmergencyEscapePortalPort port;
+        private IEmergencyEscapeDestinationPreview preview;
         private IReadOnlyList<EmergencyEscapeDestinationOption> options =
             System.Array.Empty<EmergencyEscapeDestinationOption>();
         private bool busy;
@@ -45,16 +46,19 @@ namespace SubTerra.App.UI.EmergencyEscape
         private void OnEnable()
         {
             WireButtons();
+            WireDestinationEvents();
         }
 
         private void OnDisable()
         {
             UnwireButtons();
+            UnwireDestinationEvents();
         }
 
         public void BindTo(IEmergencyEscapePortalPort escapePort)
         {
             port = escapePort;
+            preview = escapePort as IEmergencyEscapeDestinationPreview;
         }
 
         /// <summary>목적지 목록과 비용을 채운 뒤 패널을 연다. 엘리베이터를 기본 선택한다.</summary>
@@ -75,13 +79,33 @@ namespace SubTerra.App.UI.EmergencyEscape
             view.SetBusy(false);
             busy = false;
             view.SetVisible(true);
+            // 기본 선택(엘리베이터)부터 위치를 보여 준다.
+            PreviewDestinationAt(view.SelectedDestinationIndex);
         }
 
         public void Close()
         {
             busy = false;
+            preview?.ClearDestinationPreview();
             view?.SetBusy(false);
             view?.SetVisible(false);
+        }
+
+        /// <summary>드롭다운 선택 변경 시 해당 목적지로 시점을 옮긴다.</summary>
+        public void PreviewDestinationAt(int index)
+        {
+            if (preview == null || options == null || options.Count == 0)
+            {
+                return;
+            }
+
+            if (index < 0 || index >= options.Count)
+            {
+                index = 0;
+            }
+
+            var selected = options[index];
+            preview.TryPreviewDestination(selected.Kind, selected.InstanceId, out _);
         }
 
         public void ConfirmSelectedDestination()
@@ -157,6 +181,32 @@ namespace SubTerra.App.UI.EmergencyEscape
             {
                 closeButton.onClick.RemoveListener(Close);
             }
+        }
+
+        private void WireDestinationEvents()
+        {
+            if (view == null)
+            {
+                return;
+            }
+
+            view.DestinationSelected -= HandleDestinationSelected;
+            view.DestinationSelected += HandleDestinationSelected;
+        }
+
+        private void UnwireDestinationEvents()
+        {
+            if (view == null)
+            {
+                return;
+            }
+
+            view.DestinationSelected -= HandleDestinationSelected;
+        }
+
+        private void HandleDestinationSelected(int index)
+        {
+            PreviewDestinationAt(index);
         }
     }
 }
