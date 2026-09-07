@@ -66,7 +66,7 @@ namespace SubTerra.App.UI.HUD
 
         public void SetGold(string text)
         {
-            SetText(goldText, text);
+            SetText(goldText, text + "G");
         }
 
         public void SetCargo(string text)
@@ -76,7 +76,7 @@ namespace SubTerra.App.UI.HUD
 
         public void SetUnsettledValue(string text)
         {
-            SetText(unsettledValueText, text);
+            SetText(unsettledValueText, text + "G");
         }
 
         public void SetBuildingSelection(string text)
