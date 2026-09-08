@@ -414,7 +414,9 @@ namespace SubTerra.App.UI.SurfaceBase
             result.ResolutionHeight = draftResolutionHeight;
             result.LanguageCode = draftLanguageCode;
             result.FrameRate = draftFrameRate;
-            if (controlSchemePanel != null) result.Controls = controlSchemePanel.Selected;
+            result.Controls = ControlSchemePanel.PeekSelected(
+                settingsRoot,
+                controlSchemePanel != null ? controlSchemePanel.Selected : result.Controls);
             return result;
         }
 

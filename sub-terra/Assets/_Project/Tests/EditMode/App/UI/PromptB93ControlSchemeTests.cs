@@ -21,12 +21,16 @@ namespace SubTerra.App.Tests.UI
         private Keyboard keyboard;
         private ControlScheme originalScheme;
         private bool originalBlocked;
+        private bool hadControlsPref;
+        private int originalControlsPref;
 
         [SetUp]
         public void SetUp()
         {
             originalScheme = ControlPreferences.Scheme;
             originalBlocked = ControlPreferences.IsSettingsOpen;
+            hadControlsPref = PlayerPrefs.HasKey(SettingsRuntimeApplier.PrefControls);
+            originalControlsPref = PlayerPrefs.GetInt(SettingsRuntimeApplier.PrefControls, 0);
             keyboard = InputSystem.AddDevice<Keyboard>();
         }
 
@@ -39,6 +43,16 @@ namespace SubTerra.App.Tests.UI
             InputSystem.RemoveDevice(keyboard);
             ControlPreferences.Scheme = originalScheme;
             ControlPreferences.IsSettingsOpen = originalBlocked;
+            if (hadControlsPref)
+            {
+                PlayerPrefs.SetInt(SettingsRuntimeApplier.PrefControls, originalControlsPref);
+            }
+            else
+            {
+                PlayerPrefs.DeleteKey(SettingsRuntimeApplier.PrefControls);
+            }
+
+            PlayerPrefs.Save();
         }
 
         [TestCase(ControlScheme.Classic, Key.W, 0, 1, 0, 0)]
@@ -82,6 +96,91 @@ namespace SubTerra.App.Tests.UI
             ControlPreferences.IsSettingsOpen = true;
             typeof(PlayerController).GetMethod("Update", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(controller, null);
             Assert.That(movement.IsMovementRequested, Is.False);
+        }
+
+        [Test]
+        public void PlayerController_HonorsAppliedSchemeWhenMoveActionIncludesArrows()
+        {
+            var player = new GameObject("Player", typeof(Rigidbody2D), typeof(PlayerMovement), typeof(PlayerController));
+            spawned.Add(player);
+            var controller = player.GetComponent<PlayerController>();
+            var movement = player.GetComponent<PlayerMovement>();
+            var asset = CreateWasdAndArrowMoveAsset();
+            spawned.Add(asset);
+            asset.Enable();
+            SetField(controller, "inputActions", asset);
+            Invoke(controller, "Awake");
+            Invoke(controller, "OnEnable");
+
+            var values = SettingsValues.CreateDefaults();
+            values.Controls = ControlScheme.WasdMove;
+            SettingsRuntimeApplier.Apply(values, applyResolution: false);
+            ControlPreferences.IsSettingsOpen = false;
+
+            InputSystem.QueueStateEvent(keyboard, new KeyboardState(Key.RightArrow));
+            InputSystem.Update();
+            Invoke(controller, "Update");
+            Assert.That(movement.IsMovementRequested, Is.False);
+            Assert.That(
+                PlayerKeyboardControls.ReadMiningDirection(ControlPreferences.Scheme),
+                Is.EqualTo(new Vector2(1f, 0f)));
+
+            InputSystem.QueueStateEvent(keyboard, new KeyboardState(Key.D));
+            InputSystem.Update();
+            Invoke(controller, "Update");
+            Assert.That(movement.IsMovementRequested, Is.True);
+
+            values.Controls = ControlScheme.ArrowsMove;
+            SettingsRuntimeApplier.Apply(values, applyResolution: false);
+            InputSystem.QueueStateEvent(keyboard, new KeyboardState(Key.D));
+            InputSystem.Update();
+            Invoke(controller, "Update");
+            Assert.That(movement.IsMovementRequested, Is.False);
+            InputSystem.QueueStateEvent(keyboard, new KeyboardState(Key.RightArrow));
+            InputSystem.Update();
+            Invoke(controller, "Update");
+            Assert.That(movement.IsMovementRequested, Is.True);
+
+            Invoke(controller, "OnDisable");
+        }
+
+        [Test]
+        public void Cycle_SavesImmediately_AndReopenIgnoresStaleSession()
+        {
+            var root = new GameObject("Settings", typeof(RectTransform), typeof(Canvas));
+            spawned.Add(root);
+            var panel = ControlSchemePanel.Attach(root);
+            panel.SetDraft(ControlScheme.Classic);
+            panel.Cycle(1);
+            Assert.That(panel.Selected, Is.EqualTo(ControlScheme.WasdMove));
+            Assert.That(ControlPreferences.Scheme, Is.EqualTo(ControlScheme.WasdMove));
+            Assert.That(SettingsRuntimeApplier.LoadControlScheme(), Is.EqualTo(ControlScheme.WasdMove));
+            panel.Cycle(1);
+            Assert.That(panel.Selected, Is.EqualTo(ControlScheme.ArrowsMove));
+            Assert.That(ControlPreferences.Scheme, Is.EqualTo(ControlScheme.ArrowsMove));
+
+            var stale = new SettingsSession();
+            Assert.That(stale.Applied.Controls, Is.EqualTo(ControlScheme.Classic));
+            stale.Open();
+            Assert.That(stale.Draft.Controls, Is.EqualTo(ControlScheme.ArrowsMove));
+            panel.SetDraft(stale.Draft.Controls);
+            Assert.That(panel.Selected, Is.EqualTo(ControlScheme.ArrowsMove));
+            Assert.That(
+                ControlSchemePanel.PeekSelected(root, ControlScheme.Classic),
+                Is.EqualTo(ControlScheme.ArrowsMove));
+        }
+
+        [Test]
+        public void ApplyPersistedControlScheme_RestoresSavedSelection()
+        {
+            var values = SettingsValues.CreateDefaults();
+            values.Controls = ControlScheme.ArrowsMove;
+            SettingsRuntimeApplier.Apply(values, applyResolution: false);
+            ControlPreferences.Scheme = ControlScheme.Classic;
+            ControlPreferences.IsSettingsOpen = true;
+            SettingsRuntimeApplier.ApplyPersistedControlScheme();
+            Assert.That(ControlPreferences.Scheme, Is.EqualTo(ControlScheme.ArrowsMove));
+            Assert.That(ControlPreferences.IsSettingsOpen, Is.False);
         }
 
         [Test]
@@ -217,6 +316,29 @@ namespace SubTerra.App.Tests.UI
         private static void SetField(object target, string name, object value)
         {
             target.GetType().GetField(name, BindingFlags.NonPublic | BindingFlags.Instance).SetValue(target, value);
+        }
+
+        private static void Invoke(object target, string name)
+        {
+            target.GetType().GetMethod(name, BindingFlags.Instance | BindingFlags.NonPublic).Invoke(target, null);
+        }
+
+        private static InputActionAsset CreateWasdAndArrowMoveAsset()
+        {
+            var asset = ScriptableObject.CreateInstance<InputActionAsset>();
+            var map = asset.AddActionMap("Player");
+            var move = map.AddAction("Move", InputActionType.Value);
+            move.AddCompositeBinding("2DVector")
+                .With("Up", "<Keyboard>/w")
+                .With("Down", "<Keyboard>/s")
+                .With("Left", "<Keyboard>/a")
+                .With("Right", "<Keyboard>/d");
+            move.AddCompositeBinding("2DVector")
+                .With("Up", "<Keyboard>/upArrow")
+                .With("Down", "<Keyboard>/downArrow")
+                .With("Left", "<Keyboard>/leftArrow")
+                .With("Right", "<Keyboard>/rightArrow");
+            return asset;
         }
     }
 }

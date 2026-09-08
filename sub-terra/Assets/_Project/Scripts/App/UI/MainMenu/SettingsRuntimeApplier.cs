@@ -16,7 +16,34 @@ namespace SubTerra.App.UI.MainMenu
         private const string PrefResHeight = "subterra.settings.resHeight";
         private const string PrefLanguage = "subterra.settings.language";
         private const string PrefFrameRate = "subterra.settings.frameRate";
-        private const string PrefControls = "subterra.settings.controls";
+        public const string PrefControls = "subterra.settings.controls";
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        private static void ApplyPersistedControlsOnLoad()
+        {
+            ApplyPersistedControlScheme();
+        }
+
+        /// <summary>저장된 조작 방식을 Gameplay가 읽기 전에 복원한다.</summary>
+        public static void ApplyPersistedControlScheme()
+        {
+            ControlPreferences.Scheme = LoadControlScheme();
+            ControlPreferences.IsSettingsOpen = false;
+        }
+
+        public static ControlScheme LoadControlScheme()
+        {
+            return ControlPreferences.FromIndex(PlayerPrefs.GetInt(PrefControls, 0));
+        }
+
+        /// <summary>키 조작 방식만 즉시 저장한다. 설정 창 적용을 기다리지 않는다.</summary>
+        public static void SaveControlScheme(ControlScheme scheme)
+        {
+            scheme = ControlPreferences.FromIndex((int)scheme);
+            ControlPreferences.Scheme = scheme;
+            PlayerPrefs.SetInt(PrefControls, (int)scheme);
+            PlayerPrefs.Save();
+        }
 
         public static SettingsValues LoadOrDefaults()
         {
@@ -48,7 +75,7 @@ namespace SubTerra.App.UI.MainMenu
                     PlayerPrefs.GetInt(PrefFrameRate, 0));
             }
 
-            values.Controls = ControlPreferences.FromIndex(PlayerPrefs.GetInt(PrefControls, 0));
+            values.Controls = LoadControlScheme();
             return values;
         }
 
@@ -69,8 +96,7 @@ namespace SubTerra.App.UI.MainMenu
                     ? GameLanguageCodes.Korean
                     : values.LanguageCode);
             PlayerPrefs.SetInt(PrefFrameRate, FrameRatePresets.ToIndex(values.FrameRate));
-            PlayerPrefs.SetInt(PrefControls, (int)ControlPreferences.FromIndex((int)values.Controls));
-            PlayerPrefs.Save();
+            SaveControlScheme(values.Controls);
         }
 
         /// <summary>슬라이더 드래그 중 즉시 음량만 미리듣기.</summary>
@@ -89,7 +115,7 @@ namespace SubTerra.App.UI.MainMenu
 
             AudioListener.volume = Mathf.Clamp01(values.MasterVolume);
             AccessibilityPreferences.ReduceMotion = values.ReduceMotion;
-            ControlPreferences.Scheme = ControlPreferences.FromIndex((int)values.Controls);
+            SaveControlScheme(values.Controls);
             LocalizationService.SetLanguageCode(
                 string.IsNullOrEmpty(values.LanguageCode)
                     ? GameLanguageCodes.Korean

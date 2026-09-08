@@ -28,7 +28,9 @@ namespace SubTerra.App.Integration
         private void OnEnable()
         {
             if (settingsView == null) return;
-            settings = new SettingsSession(SettingsRuntimeApplier.LoadOrDefaults());
+            var initial = SettingsRuntimeApplier.LoadOrDefaults();
+            SettingsRuntimeApplier.ApplyPersistedControlScheme();
+            settings = new SettingsSession(initial);
             settingsView.SetSettingsVisible(false);
             settingsView.SettingsApplyClicked += ApplySettings;
             settingsView.SettingsCancelClicked += CloseSettings;
@@ -138,8 +140,8 @@ namespace SubTerra.App.Integration
             if (!IsSettingsOpen || settingsView == null) return;
             settings.Draft.CopyFrom(settingsView.ReadSettingsDraft(settings.Draft));
             settings.Apply();
-            settingsView.SetSettingsVisible(false);
             SettingsRuntimeApplier.Apply(settings.Applied, applyResolution: true);
+            settingsView.SetSettingsVisible(false);
         }
 
         private void ResetDefaults()

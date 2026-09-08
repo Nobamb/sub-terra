@@ -44,14 +44,16 @@ namespace SubTerra.Gameplay.Player
 
         private void Update()
         {
-            var input = moveAction?.ReadValue<Vector2>() ?? Vector2.zero;
-            if (ControlPreferences.Scheme != ControlScheme.Classic)
+            // Move InputAction은 WASD+방향키 한 합성이다. activeControl.device가 null인
+            // 경우가 있어 채굴 전용 키가 이동으로 새어 나간다. 키보드는 항상 선택 방식을 따른다.
+            var input = PlayerKeyboardControls.ReadMovement(ControlPreferences.Scheme);
+            if (input == Vector2.zero
+                && moveAction != null
+                && !PlayerKeyboardControls.IsCompositeMoveKeyPressed())
             {
-                // 키보드 합성 Move의 채굴 키를 제외하되 다른 장치의 입력은 유지한다.
-                var keyboardInput = PlayerKeyboardControls.ReadMovement(Keyboard.current, ControlPreferences.Scheme);
-                input = moveAction?.activeControl?.device is Keyboard || input == Vector2.zero
-                    ? keyboardInput : input;
+                input = moveAction.ReadValue<Vector2>();
             }
+
             if (ControlPreferences.IsSettingsOpen) input = Vector2.zero;
             movement.SetMoveInput(input.x);
             movement.SetVerticalMoveInput(input.y);

@@ -172,8 +172,8 @@ namespace SubTerra.App.UI.MainMenu
             }
 
             settings.Apply();
-            view.SetSettingsVisible(false);
             SettingsApplied?.Invoke(settings.Applied);
+            view.SetSettingsVisible(false);
         }
 
         public void CancelSettings()

@@ -42,7 +42,8 @@ namespace SubTerra.App.UI.MainMenu
                 ResolutionWidth = 1920,
                 ResolutionHeight = 1080,
                 LanguageCode = GameLanguageCodes.Korean,
-                FrameRate = FrameRateMode.Auto
+                FrameRate = FrameRateMode.Auto,
+                Controls = ControlScheme.Classic
             };
         }
 
@@ -232,6 +233,8 @@ namespace SubTerra.App.UI.MainMenu
         public void Open()
         {
             draft.CopyFrom(applied);
+            // 세션 초안이 1번으로 남아 있어도, 이미 저장한 2·3번을 다시 보여 준다.
+            draft.Controls = SettingsRuntimeApplier.LoadControlScheme();
             IsOpen = true;
         }
 

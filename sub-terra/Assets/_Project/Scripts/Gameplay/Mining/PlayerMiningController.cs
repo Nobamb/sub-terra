@@ -64,7 +64,7 @@ namespace SubTerra.Gameplay.Mining
                 return;
             }
 
-            Vector2 direction = PlayerKeyboardControls.ReadMiningDirection(Keyboard.current, ControlPreferences.Scheme);
+            Vector2 direction = PlayerKeyboardControls.ReadMiningDirection(ControlPreferences.Scheme);
             bool miningInputPressed = IsMiningInputPressed();
             if (direction != Vector2.zero && direction != lastMiningDirection)
             {
@@ -108,7 +108,7 @@ namespace SubTerra.Gameplay.Mining
 
         private bool IsMiningInputPressed()
         {
-            if (PlayerKeyboardControls.ReadMiningDirection(Keyboard.current, ControlPreferences.Scheme) != Vector2.zero)
+            if (PlayerKeyboardControls.ReadMiningDirection(ControlPreferences.Scheme) != Vector2.zero)
                 return true;
             bool enterMining = Keyboard.current != null
                 && Keyboard.current.enterKey.isPressed;
@@ -162,7 +162,7 @@ namespace SubTerra.Gameplay.Mining
 
         private void CaptureCurrentTarget()
         {
-            pendingDirection = PlayerKeyboardControls.ReadMiningDirection(Keyboard.current, ControlPreferences.Scheme);
+            pendingDirection = PlayerKeyboardControls.ReadMiningDirection(ControlPreferences.Scheme);
             pendingPointerTarget = Mouse.current != null
                 && Mouse.current.leftButton.isPressed && pendingDirection == Vector2.zero;
             if (pendingPointerTarget && Camera.main != null)

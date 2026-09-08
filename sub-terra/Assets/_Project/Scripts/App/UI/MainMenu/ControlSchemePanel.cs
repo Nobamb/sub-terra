@@ -57,6 +57,7 @@ namespace SubTerra.App.UI.MainMenu
         {
             Selected = ControlPreferences.Cycle(Selected, delta);
             Refresh();
+            SettingsRuntimeApplier.SaveControlScheme(Selected);
         }
 
         public void Open()
@@ -72,8 +73,17 @@ namespace SubTerra.App.UI.MainMenu
         {
             if (!IsOpen) return false;
             overlay.SetActive(false);
+            SettingsRuntimeApplier.SaveControlScheme(Selected);
             UiKeyboardSubmitGuard.ClearSelection();
             return true;
+        }
+
+        public static ControlScheme PeekSelected(GameObject settingsRoot, ControlScheme fallback)
+        {
+            if (settingsRoot == null) return fallback;
+            var panel = settingsRoot.GetComponent<ControlSchemePanel>();
+            if (panel == null) panel = settingsRoot.GetComponentInChildren<ControlSchemePanel>(true);
+            return panel != null ? panel.Selected : fallback;
         }
 
         private void Build()
@@ -87,6 +97,7 @@ namespace SubTerra.App.UI.MainMenu
             backdrop.offsetMin = backdrop.offsetMax = Vector2.zero;
             backdrop.gameObject.AddComponent<Image>().color = new Color(0.005f, 0.012f, 0.02f, 0.96f);
             overlay = backdrop.gameObject;
+            Selected = ControlPreferences.FromIndex((int)ControlPreferences.Scheme);
             var card = Rect(backdrop, "KeyboardCard", 0, 0, 960, 650);
             card.gameObject.AddComponent<Image>().color = new Color(0.035f, 0.07f, 0.105f);
             title = Label(card, "SchemeTitle", "", 0, 272, 700, 45, 30);
@@ -154,7 +165,7 @@ namespace SubTerra.App.UI.MainMenu
                 : (Selected == ControlScheme.WasdMove ? "WASD: 이동 · 방향키: 상하좌우 채굴"
                     : "방향키: 이동 · WASD: 상하좌우 채굴")
                     + "\n캐릭터 위치 기준 인접 블록 채굴 · 마우스 / Enter도 사용 가능";
-            description.text += "\n설정 창의 적용을 눌러 저장합니다.";
+            description.text += "\n< >로 바꾸면 바로 저장됩니다. 돌아가기 후에도 유지됩니다.";
         }
 
         private static RectTransform Rect(Transform parent, string name, float x, float y, float width, float height)
