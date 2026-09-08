@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using SubTerra.Gameplay.Player;
+using SubTerra.Shared;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
@@ -19,6 +20,8 @@ namespace SubTerra.Gameplay.Mining
         private bool startPending;
         private bool pendingPointerTarget;
         private Vector2 pendingWorldPoint;
+        private Vector2 pendingDirection;
+        private Vector2 lastMiningDirection;
         private bool miningInputPressedLastFrame;
         private PlayerAnimationController animationController;
         private static readonly List<RaycastResult> PointerHits = new(8);
@@ -40,6 +43,7 @@ namespace SubTerra.Gameplay.Mining
             miningSystem?.CancelMining();
             startPending = false;
             miningInputPressedLastFrame = false;
+            lastMiningDirection = Vector2.zero;
         }
 
         private void Update()
@@ -50,7 +54,24 @@ namespace SubTerra.Gameplay.Mining
                 return;
             }
 
+            if (ControlPreferences.IsSettingsOpen)
+            {
+                miningSystem.CancelMining();
+                startPending = false;
+                miningInputPressedLastFrame = false;
+                lastMiningDirection = Vector2.zero;
+                if (animationController != null) animationController.SetMining(false);
+                return;
+            }
+
+            Vector2 direction = PlayerKeyboardControls.ReadMiningDirection(Keyboard.current, ControlPreferences.Scheme);
             bool miningInputPressed = IsMiningInputPressed();
+            if (direction != Vector2.zero && direction != lastMiningDirection)
+            {
+                miningSystem.CancelMining();
+                CaptureCurrentTarget();
+            }
+            lastMiningDirection = direction;
             if (miningInputPressed && !miningInputPressedLastFrame && !miningSystem.IsMining)
             {
                 CaptureCurrentTarget();
@@ -59,6 +80,7 @@ namespace SubTerra.Gameplay.Mining
             miningInputPressedLastFrame = miningInputPressed;
             if (movement.IsMovementRequested)
             {
+                startPending = false;
                 miningSystem.CancelMining();
                 animationController?.SetMining(false);
                 miningSystem.ClearFailureIfDirectionalTargetMineable(
@@ -86,6 +108,8 @@ namespace SubTerra.Gameplay.Mining
 
         private bool IsMiningInputPressed()
         {
+            if (PlayerKeyboardControls.ReadMiningDirection(Keyboard.current, ControlPreferences.Scheme) != Vector2.zero)
+                return true;
             bool enterMining = Keyboard.current != null
                 && Keyboard.current.enterKey.isPressed;
             if (enterMining)
@@ -138,8 +162,9 @@ namespace SubTerra.Gameplay.Mining
 
         private void CaptureCurrentTarget()
         {
+            pendingDirection = PlayerKeyboardControls.ReadMiningDirection(Keyboard.current, ControlPreferences.Scheme);
             pendingPointerTarget = Mouse.current != null
-                && Mouse.current.leftButton.isPressed;
+                && Mouse.current.leftButton.isPressed && pendingDirection == Vector2.zero;
             if (pendingPointerTarget && Camera.main != null)
             {
                 Vector3 world = Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
@@ -155,7 +180,11 @@ namespace SubTerra.Gameplay.Mining
 
         private void TryStartPendingTarget()
         {
-            if (pendingPointerTarget)
+            if (pendingDirection != Vector2.zero)
+            {
+                miningSystem.TryStartMiningInDirection(movement.Position, pendingDirection, reach);
+            }
+            else if (pendingPointerTarget)
             {
                 miningSystem.TryStartMiningAtWorldPoint(
                     pendingWorldPoint,

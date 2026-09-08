@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using SubTerra.Shared;
 using SubTerra.Shared.Localization;
 
 namespace SubTerra.App.UI.MainMenu
@@ -30,6 +31,7 @@ namespace SubTerra.App.UI.MainMenu
         public string LanguageCode { get; set; }
         /// <summary>프레임 모드. 기본 Auto(모니터 주사율).</summary>
         public FrameRateMode FrameRate { get; set; }
+        public ControlScheme Controls { get; set; }
 
         public static SettingsValues CreateDefaults()
         {
@@ -53,7 +55,8 @@ namespace SubTerra.App.UI.MainMenu
                 ResolutionWidth = ResolutionWidth,
                 ResolutionHeight = ResolutionHeight,
                 LanguageCode = LanguageCode,
-                FrameRate = FrameRate
+                FrameRate = FrameRate,
+                Controls = Controls
             };
         }
 
@@ -70,6 +73,7 @@ namespace SubTerra.App.UI.MainMenu
             ResolutionHeight = other.ResolutionHeight;
             LanguageCode = other.LanguageCode;
             FrameRate = other.FrameRate;
+            Controls = other.Controls;
         }
     }
 

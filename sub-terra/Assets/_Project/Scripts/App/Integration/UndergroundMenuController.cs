@@ -63,6 +63,7 @@ namespace SubTerra.App.Integration
         {
             if (IsSettingsOpen)
             {
+                if (settingsView != null && settingsView.TryCloseControlSchemePanel()) return;
                 CloseSettings();
                 return;
             }

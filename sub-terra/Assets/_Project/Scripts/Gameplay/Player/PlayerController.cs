@@ -1,3 +1,4 @@
+using SubTerra.Shared;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -44,6 +45,14 @@ namespace SubTerra.Gameplay.Player
         private void Update()
         {
             var input = moveAction?.ReadValue<Vector2>() ?? Vector2.zero;
+            if (ControlPreferences.Scheme != ControlScheme.Classic)
+            {
+                // 키보드 합성 Move의 채굴 키를 제외하되 다른 장치의 입력은 유지한다.
+                var keyboardInput = PlayerKeyboardControls.ReadMovement(Keyboard.current, ControlPreferences.Scheme);
+                input = moveAction?.activeControl?.device is Keyboard || input == Vector2.zero
+                    ? keyboardInput : input;
+            }
+            if (ControlPreferences.IsSettingsOpen) input = Vector2.zero;
             movement.SetMoveInput(input.x);
             movement.SetVerticalMoveInput(input.y);
         }
@@ -81,7 +90,7 @@ namespace SubTerra.Gameplay.Player
 
         private void OnJumpStarted(InputAction.CallbackContext context)
         {
-            if (!context.started)
+            if (!context.started || ControlPreferences.IsSettingsOpen)
             {
                 return;
             }

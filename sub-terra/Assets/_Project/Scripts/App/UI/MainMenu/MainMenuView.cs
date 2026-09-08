@@ -29,6 +29,9 @@ namespace SubTerra.App.UI.MainMenu
 
         [Header("Settings")]
         [SerializeField] private GameObject settingsRoot;
+        private ControlSchemePanel controlSchemePanel;
+
+        public bool TryCloseControlSchemePanel() => controlSchemePanel != null && controlSchemePanel.Close();
         [SerializeField] private Slider masterVolumeSlider;
         [SerializeField] private TMP_Text masterVolumeLabel;
         [SerializeField] private Toggle reduceMotionToggle;
@@ -202,6 +205,7 @@ namespace SubTerra.App.UI.MainMenu
         {
             if (settingsRoot != null)
             {
+                if (visible && controlSchemePanel == null) controlSchemePanel = ControlSchemePanel.Attach(settingsRoot);
                 settingsRoot.SetActive(visible);
                 if (visible)
                 {
@@ -223,6 +227,8 @@ namespace SubTerra.App.UI.MainMenu
                 ? GameLanguageCodes.Korean
                 : values.LanguageCode;
             draftFrameRate = values.FrameRate;
+            if (controlSchemePanel == null) controlSchemePanel = ControlSchemePanel.Attach(settingsRoot);
+            if (controlSchemePanel != null) controlSchemePanel.SetDraft(values.Controls);
 
             if (masterVolumeSlider != null)
             {
@@ -297,6 +303,7 @@ namespace SubTerra.App.UI.MainMenu
             result.ResolutionHeight = draftResolutionHeight;
             result.LanguageCode = draftLanguageCode;
             result.FrameRate = draftFrameRate;
+            if (controlSchemePanel != null) result.Controls = controlSchemePanel.Selected;
             return result;
         }
 

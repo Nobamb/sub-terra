@@ -236,6 +236,18 @@ namespace SubTerra.Gameplay.Mining
                 && TryStartMining(cell);
         }
 
+        /// <summary>캐릭터가 있는 셀의 상하좌우 인접 블록을 기존 거리·채굴 검증으로 처리한다.</summary>
+        public bool TryStartMiningInDirection(Vector2 origin, Vector2 direction, float range)
+        {
+            if (foregroundTilemap == null) return Fail(MiningFailureReason.DependencyMissing);
+            if (direction == Vector2.zero) return Fail(MiningFailureReason.InvalidTarget);
+            var offset = Mathf.Abs(direction.y) >= Mathf.Abs(direction.x)
+                ? new Vector3Int(0, direction.y > 0f ? 1 : -1, 0)
+                : new Vector3Int(direction.x > 0f ? 1 : -1, 0, 0);
+            var cell = foregroundTilemap.WorldToCell(origin) + offset;
+            return TryStartMiningAtWorldPoint(foregroundTilemap.GetCellCenterWorld(cell), origin, range);
+        }
+
         /// <summary>
         /// 실패 후 플레이어가 실제로 채굴 가능한 지형 앞으로 이동했으면 남은 실패 표시 상태를 지운다.
         /// 입력 없이 상태만 확인하므로 타일, 전력, 화물은 변경하지 않는다.

@@ -16,6 +16,7 @@ namespace SubTerra.App.UI.MainMenu
         private const string PrefResHeight = "subterra.settings.resHeight";
         private const string PrefLanguage = "subterra.settings.language";
         private const string PrefFrameRate = "subterra.settings.frameRate";
+        private const string PrefControls = "subterra.settings.controls";
 
         public static SettingsValues LoadOrDefaults()
         {
@@ -47,6 +48,7 @@ namespace SubTerra.App.UI.MainMenu
                     PlayerPrefs.GetInt(PrefFrameRate, 0));
             }
 
+            values.Controls = ControlPreferences.FromIndex(PlayerPrefs.GetInt(PrefControls, 0));
             return values;
         }
 
@@ -67,6 +69,7 @@ namespace SubTerra.App.UI.MainMenu
                     ? GameLanguageCodes.Korean
                     : values.LanguageCode);
             PlayerPrefs.SetInt(PrefFrameRate, FrameRatePresets.ToIndex(values.FrameRate));
+            PlayerPrefs.SetInt(PrefControls, (int)ControlPreferences.FromIndex((int)values.Controls));
             PlayerPrefs.Save();
         }
 
@@ -86,6 +89,7 @@ namespace SubTerra.App.UI.MainMenu
 
             AudioListener.volume = Mathf.Clamp01(values.MasterVolume);
             AccessibilityPreferences.ReduceMotion = values.ReduceMotion;
+            ControlPreferences.Scheme = ControlPreferences.FromIndex((int)values.Controls);
             LocalizationService.SetLanguageCode(
                 string.IsNullOrEmpty(values.LanguageCode)
                     ? GameLanguageCodes.Korean
