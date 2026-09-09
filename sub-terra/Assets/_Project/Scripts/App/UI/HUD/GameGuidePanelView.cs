@@ -283,7 +283,9 @@ namespace SubTerra.App.UI.HUD
             + "· 시설 건설 확정: C 키\n"
             + "· 화물/인벤토리 확인: I 키\n"
             + "· Digger-Bot (드론) & 통합 가이드 창: Tab 키 또는 화면의 Digger-Bot 버튼 클릭\n"
-            + "· 게임 가이드: 우측 '게임 가이드' 버튼";
+            + "· 게임 가이드: 우측 '게임 가이드' 버튼\n"
+            + "· 미니맵 켜기/끄기: M 키\n"
+            + "· 미니맵 불투명 표시: Ctrl + M 키를 누르고 있는 동안 (기본 투명도 50%)";
 
         private const string MechanicsBody =
             "2. 핵심 게임 메커니즘 (Game Mechanics)\n\n"

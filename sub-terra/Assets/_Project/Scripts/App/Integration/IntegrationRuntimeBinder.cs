@@ -61,6 +61,7 @@ namespace SubTerra.App.Integration
         [SerializeField] private MiningProgressHud miningProgressHud;
         [SerializeField] private RunFailureRuntimeController runFailureController;
         private EmergencyRescueRuntimeController emergencyRescueController;
+        private ExplorationMinimap minimap;
 
         private SaveRuntimeController runtime;
         private GameBootstrapper bootstrap;
@@ -527,6 +528,8 @@ namespace SubTerra.App.Integration
             }
 
             activationGate.MarkWorldRestored();
+            if (minimap != null && worldSnapshotProviderBehaviour is IWorldSnapshotProvider provider)
+                minimap.RestoreMining(provider.CaptureSnapshot());
         }
 
         /// <summary>SaveRuntime Continue 경로에서 파생 재계산 직후 호출한다.</summary>
@@ -607,10 +610,30 @@ namespace SubTerra.App.Integration
                 }
             }
 
+            TryStep("BindMinimap", BindMinimap);
             SetHudVisible(true);
             SetDeferredInputEnabled(true);
             uiActivated = true;
             return true;
+        }
+
+        private void BindMinimap()
+        {
+            if (hudCanvasGroup == null || playerMovement == null) return;
+            if (minimap == null)
+            {
+                var root = new GameObject(
+                    "ExplorationMinimap",
+                    typeof(RectTransform),
+                    typeof(CanvasRenderer),
+                    typeof(CanvasGroup));
+                root.transform.SetParent(hudCanvasGroup.transform, false);
+                minimap = root.AddComponent<ExplorationMinimap>();
+            }
+            var snapshot = worldSnapshotProviderBehaviour is IWorldSnapshotProvider provider
+                ? provider.CaptureSnapshot() : null;
+            minimap.Bind(FindForegroundTilemap(), playerMovement.transform, snapshot);
+            minimap.ApplyHudLayout();
         }
 
         private void BindInventoryPanelUi()
@@ -1018,6 +1041,7 @@ namespace SubTerra.App.Integration
 
         public void Publish(GameplayEventDto gameplayEvent)
         {
+            if (minimap != null) minimap.RecordMining(gameplayEvent);
             var state = GameBootstrapper.Instance != null
                 ? GameBootstrapper.Instance.State
                 : null;
