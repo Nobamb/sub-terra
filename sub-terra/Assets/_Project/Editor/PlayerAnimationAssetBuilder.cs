@@ -15,6 +15,10 @@ namespace SubTerra.Editor
         private const string FramesRoot = PlayerRoot + "/Frames";
         private const string AnimationsRoot = PlayerRoot + "/Animations";
         private const string ControllerPath = PlayerRoot + "/PlayerAnimator.controller";
+        private const string LadderRigRoot = PlayerRoot + "/LadderRig";
+        private const string LadderTorsoPath = LadderRigRoot + "/player_ladder_back_torso.png";
+        private const string LadderArmPath = LadderRigRoot + "/player_ladder_back_arm.png";
+        private const string LadderLegPath = LadderRigRoot + "/player_ladder_back_leg.png";
         private const string PlayerPrefabPath = "Assets/_Project/Prefabs/Gameplay/Player/Player.prefab";
 
         private readonly struct AnimationDefinition
@@ -42,8 +46,6 @@ namespace SubTerra.Editor
             new("Idle", "Idle", "player_idle", 1, 4f, true),
             new("Walk", "Walk", "walk", 10, 10f, true),
             new("Jump", "Jump", "jump", 10, 12f, false),
-            new("Ladder", "Ladder", "ladder", 8, 8f, true),
-            new("LadderDown", "LadderDown", "ladder_down", 8, 8f, true),
             new("Mining", "Mining", "mining", 8, 10f, true),
             new("Damage", "Damage", "damage", 4, 10f, false),
             new("Knockout", "Knockout", "knockout", 8, 8f, false)
@@ -55,6 +57,7 @@ namespace SubTerra.Editor
             EnsureFolder(PlayerRoot);
             EnsureFolder(AnimationsRoot);
             ConfigureFrameImports();
+            ConfigureLadderPartImports();
 
             var clips = new Dictionary<string, AnimationClip>();
             foreach (var definition in Definitions)
@@ -64,6 +67,7 @@ namespace SubTerra.Editor
 
             var controller = CreateController(clips);
             ApplyToPlayerPrefab(controller, clips["Idle"]);
+            DeleteLegacyLadderAssets();
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
             Debug.Log("Player animation assets were built successfully.");
@@ -86,8 +90,13 @@ namespace SubTerra.Editor
                 var renderer = visualRoot != null ? visualRoot.GetComponent<SpriteRenderer>() : null;
                 var animator = visualRoot != null ? visualRoot.GetComponent<Animator>() : null;
                 var animationController = visualRoot != null ? visualRoot.GetComponent<PlayerAnimationController>() : null;
+                var ladderPose = visualRoot != null ? visualRoot.GetComponent<PlayerLadderPoseController>() : null;
                 var movement = player != null ? player.GetComponent<PlayerMovement>() : null;
-                if (renderer == null || animator == null || animationController == null || movement == null)
+                if (renderer == null
+                    || animator == null
+                    || animationController == null
+                    || ladderPose == null
+                    || movement == null)
                 {
                     throw new MissingReferenceException("Player animation runtime components are incomplete.");
                 }
@@ -154,6 +163,39 @@ namespace SubTerra.Editor
             }
         }
 
+        private static void ConfigureLadderPartImports()
+        {
+            ConfigureLadderPartImport(LadderTorsoPath, new Vector2(0.5f, 0.5f));
+            ConfigureLadderPartImport(LadderArmPath, new Vector2(0.5f, 0.87f));
+            ConfigureLadderPartImport(LadderLegPath, new Vector2(0.5f, 0.88f));
+        }
+
+        private static void ConfigureLadderPartImport(string path, Vector2 pivot)
+        {
+            var importer = AssetImporter.GetAtPath(path) as TextureImporter;
+            if (importer == null)
+            {
+                throw new FileNotFoundException("Ladder rig sprite is missing.", path);
+            }
+
+            importer.textureType = TextureImporterType.Sprite;
+            importer.spriteImportMode = SpriteImportMode.Single;
+            importer.spritePixelsPerUnit = 1024f;
+            importer.alphaIsTransparency = true;
+            importer.mipmapEnabled = false;
+            importer.wrapMode = TextureWrapMode.Clamp;
+            importer.filterMode = FilterMode.Bilinear;
+            importer.textureCompression = TextureImporterCompression.Uncompressed;
+
+            var spriteSettings = new TextureImporterSettings();
+            importer.ReadTextureSettings(spriteSettings);
+            spriteSettings.spriteMeshType = SpriteMeshType.FullRect;
+            spriteSettings.spriteAlignment = (int)SpriteAlignment.Custom;
+            spriteSettings.spritePivot = pivot;
+            importer.SetTextureSettings(spriteSettings);
+            importer.SaveAndReimport();
+        }
+
         private static AnimationClip CreateOrUpdateClip(AnimationDefinition definition)
         {
             var clipPath = AnimationsRoot + "/Player" + definition.StateName + ".anim";
@@ -199,16 +241,34 @@ namespace SubTerra.Editor
 
         private static AnimatorController CreateController(IReadOnlyDictionary<string, AnimationClip> clips)
         {
-            if (AssetDatabase.LoadAssetAtPath<AnimatorController>(ControllerPath) != null)
+            var controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(ControllerPath);
+            if (controller == null)
             {
-                AssetDatabase.DeleteAsset(ControllerPath);
+                controller = AnimatorController.CreateAnimatorControllerAtPath(ControllerPath);
             }
 
-            var controller = AnimatorController.CreateAnimatorControllerAtPath(ControllerPath);
             var stateMachine = controller.layers[0].stateMachine;
+            foreach (var childState in stateMachine.states)
+            {
+                if (childState.state.name == "Ladder" || childState.state.name == "LadderDown")
+                {
+                    stateMachine.RemoveState(childState.state);
+                }
+            }
+
             foreach (var definition in Definitions)
             {
-                var state = stateMachine.AddState(definition.StateName);
+                AnimatorState state = null;
+                foreach (var childState in stateMachine.states)
+                {
+                    if (childState.state.name == definition.StateName)
+                    {
+                        state = childState.state;
+                        break;
+                    }
+                }
+
+                state ??= stateMachine.AddState(definition.StateName);
                 state.motion = clips[definition.StateName];
                 if (definition.StateName == "Idle")
                 {
@@ -263,17 +323,140 @@ namespace SubTerra.Editor
                     LoadFrames("Idle"),
                     LoadFrames("Walk"),
                     LoadFrames("Jump"),
-                    LoadFrames("Ladder"),
-                    LoadFrames("LadderDown"),
                     LoadFrames("Mining"),
                     LoadFrames("Damage"),
                     LoadFrames("Knockout"));
+
+                var ladderPose = BuildLadderRig(visualRoot, spriteRenderer);
+                animationController.ConfigureLadderPose(ladderPose);
 
                 PrefabUtility.SaveAsPrefabAsset(prefabRoot, PlayerPrefabPath);
             }
             finally
             {
                 PrefabUtility.UnloadPrefabContents(prefabRoot);
+            }
+        }
+
+        private static PlayerLadderPoseController BuildLadderRig(
+            Transform visualRoot,
+            SpriteRenderer sourceRenderer)
+        {
+            var existingRig = visualRoot.Find("LadderRig");
+            if (existingRig != null)
+            {
+                UnityEngine.Object.DestroyImmediate(existingRig.gameObject);
+            }
+
+            var rigRoot = new GameObject("LadderRig");
+            rigRoot.transform.SetParent(visualRoot, false);
+
+            var torso = CreateLadderPart(
+                rigRoot.transform,
+                "Torso",
+                LadderTorsoPath,
+                new Vector3(0f, 0.05f, 0f),
+                new Vector3(0.75f, 0.75f, 1f),
+                sourceRenderer,
+                1);
+            var leftArm = CreateLadderPart(
+                rigRoot.transform,
+                "LeftArm",
+                LadderArmPath,
+                new Vector3(-0.135f, 0.18f, 0f),
+                new Vector3(-0.42f, 0.42f, 1f),
+                sourceRenderer,
+                2);
+            var rightArm = CreateLadderPart(
+                rigRoot.transform,
+                "RightArm",
+                LadderArmPath,
+                new Vector3(0.135f, 0.18f, 0f),
+                new Vector3(0.42f, 0.42f, 1f),
+                sourceRenderer,
+                2);
+            var leftLeg = CreateLadderPart(
+                rigRoot.transform,
+                "LeftLeg",
+                LadderLegPath,
+                new Vector3(-0.11f, -0.205f, 0f),
+                new Vector3(-0.4f, 0.4f, 1f),
+                sourceRenderer,
+                0);
+            var rightLeg = CreateLadderPart(
+                rigRoot.transform,
+                "RightLeg",
+                LadderLegPath,
+                new Vector3(0.11f, -0.205f, 0f),
+                new Vector3(0.4f, 0.4f, 1f),
+                sourceRenderer,
+                0);
+
+            var pose = visualRoot.GetComponent<PlayerLadderPoseController>();
+            if (pose == null)
+            {
+                pose = visualRoot.gameObject.AddComponent<PlayerLadderPoseController>();
+            }
+
+            pose.Configure(
+                rigRoot,
+                torso,
+                leftArm,
+                rightArm,
+                leftLeg,
+                rightLeg);
+            return pose;
+        }
+
+        private static Transform CreateLadderPart(
+            Transform parent,
+            string name,
+            string spritePath,
+            Vector3 localPosition,
+            Vector3 localScale,
+            SpriteRenderer sourceRenderer,
+            int sortingOffset)
+        {
+            var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(spritePath);
+            if (sprite == null)
+            {
+                throw new FileNotFoundException("Ladder rig sprite is missing.", spritePath);
+            }
+
+            var part = new GameObject(name);
+            part.transform.SetParent(parent, false);
+            part.transform.localPosition = localPosition;
+            part.transform.localScale = localScale;
+
+            var renderer = part.AddComponent<SpriteRenderer>();
+            renderer.sprite = sprite;
+            renderer.color = Color.white;
+            renderer.sharedMaterial = sourceRenderer.sharedMaterial;
+            renderer.sortingLayerID = sourceRenderer.sortingLayerID;
+            renderer.sortingOrder = sourceRenderer.sortingOrder + sortingOffset;
+            return part.transform;
+        }
+
+        private static void DeleteLegacyLadderAssets()
+        {
+            var legacyPaths = new[]
+            {
+                FramesRoot + "/Ladder",
+                FramesRoot + "/LadderDown",
+                AnimationsRoot + "/PlayerLadder.anim",
+                AnimationsRoot + "/PlayerLadderDown.anim",
+                PlayerRoot + "/Source/player_ladder_alternate_left_step.png",
+                PlayerRoot + "/Source/player_ladder_alternate_left_step_v2.png",
+                PlayerRoot + "/Source/player_ladder_down_sheet.png"
+            };
+
+            foreach (var path in legacyPaths)
+            {
+                if (AssetDatabase.LoadMainAssetAtPath(path) != null
+                    || AssetDatabase.IsValidFolder(path))
+                {
+                    AssetDatabase.DeleteAsset(path);
+                }
             }
         }
 

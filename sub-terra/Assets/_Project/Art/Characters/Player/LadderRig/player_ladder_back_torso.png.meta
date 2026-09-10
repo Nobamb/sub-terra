@@ -1,10 +1,13 @@
 fileFormatVersion: 2
-guid: 839630c5012f83f4bb01b3254aa6e72c
+guid: 029212708844ada4abb8b95c888476a0
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 6936611924213399314
-    second: ladder_down_08_0
+      213: 2663402892645661418
+    second: player_ladder_back_torso_0
+  - first:
+      213: 3792720834715187209
+    second: player_ladder_back_torso_1
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -49,9 +52,9 @@ TextureImporter:
   spriteMode: 1
   spriteExtrude: 1
   spriteMeshType: 0
-  alignment: 0
+  alignment: 9
   spritePivot: {x: 0.5, y: 0.5}
-  spritePixelsToUnits: 256
+  spritePixelsToUnits: 1024
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
@@ -100,13 +103,35 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: ladder_down_08_0
+      name: player_ladder_back_torso_0
       rect:
         serializedVersion: 2
-        x: 61
-        y: 11
-        width: 133
-        height: 224
+        x: 56
+        y: 55
+        width: 1115
+        height: 1150
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: aea74edc1de46f420800000000000000
+      internalID: 2663402892645661418
+      vertices: []
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: player_ladder_back_torso_1
+      rect:
+        serializedVersion: 2
+        x: 948
+        y: 1013
+        width: 158
+        height: 141
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -115,8 +140,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 21f7a771bcbc34060800000000000000
-      internalID: 6936611924213399314
+      spriteID: 908fb65218372a430800000000000000
+      internalID: 3792720834715187209
       vertices: []
       indices: 
       edges: []
@@ -135,7 +160,8 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      ladder_down_08_0: 6936611924213399314
+      player_ladder_back_torso_0: 2663402892645661418
+      player_ladder_back_torso_1: 3792720834715187209
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
