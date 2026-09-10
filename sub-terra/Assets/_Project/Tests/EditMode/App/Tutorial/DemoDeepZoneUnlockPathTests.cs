@@ -33,7 +33,7 @@ namespace SubTerra.App.Tests.Tutorial
         }
 
         [Test]
-        public void N_DeepSignal_AdvancesOnlyViaRealTryUnlockDeepZone()
+        public void PromptB60_DeepZoneQuestAdvancesOnlyViaRealTryUnlockDeepZone()
         {
             var drill = CreateUpgrade(DataIds.Upgrades.DrillSpeed, 2, 0.1f);
             var droneScan = CreateUpgrade(DataIds.Upgrades.DroneScan, 2, 1f);
@@ -53,8 +53,7 @@ namespace SubTerra.App.Tests.Tutorial
             director.BindGameState(gameState);
             director.ResetNewGame();
 
-            // 정산 직후 업그레이드 목표까지 전진
-            AdvanceTo(director, DemoObjectiveIds.BatteryUpgrade);
+            AdvanceTo(director, DemoObjectiveIds.UnlockDeepZone);
             gameState.SetDemoProgress(
                 director.CurrentObjectiveId,
                 director.CompletedCount,
@@ -75,32 +74,23 @@ namespace SubTerra.App.Tests.Tutorial
                     return;
                 }
 
-                // TutorialDirectorBinder.EvaluateDeepZoneProgress 와 동일 순서
-                var completed = gameState.Progress.CompletedObjectives;
-                var access = service.GetDeepZoneAccess(completed);
-                if (access.IsUnlocked)
+                if (director.CurrentObjectiveId == DemoObjectiveIds.UnlockDeepZone)
                 {
-                    director.NotifyDeepZonePrerequisitesReady();
-                    gameState.SetDemoProgress(
-                        director.CurrentObjectiveId,
-                        director.CompletedCount,
-                        director.IsDemoComplete);
+                    service.TryUnlockDeepZone(gameState.Progress.CompletedObjectives);
                 }
-
-                service.TryUnlockDeepZone(completed);
             };
 
             // 1) MaximumEnergy만 구매 → Mvp 조건 미충족 → 목표·잠금 모두 불변
             Assert.That(presenter.SelectUpgrade(DataIds.Upgrades.MaximumEnergy), Is.True);
             var energyBuy = presenter.RequestPurchase();
             Assert.That(energyBuy.IsSuccess, Is.True);
-            Assert.That(director.CurrentObjectiveId, Is.EqualTo(DemoObjectiveIds.BatteryUpgrade));
+            Assert.That(director.CurrentObjectiveId, Is.EqualTo(DemoObjectiveIds.UnlockDeepZone));
             Assert.That(upgradeState.IsZoneUnlocked(DataIds.Zones.Deep), Is.False);
 
             // 2) 드론 스캔 1 → 아직 부족
             Assert.That(presenter.SelectUpgrade(DataIds.Upgrades.DroneScan), Is.True);
             Assert.That(presenter.RequestPurchase().IsSuccess, Is.True);
-            Assert.That(director.CurrentObjectiveId, Is.EqualTo(DemoObjectiveIds.BatteryUpgrade));
+            Assert.That(director.CurrentObjectiveId, Is.EqualTo(DemoObjectiveIds.UnlockDeepZone));
             Assert.That(upgradeState.IsZoneUnlocked(DataIds.Zones.Deep), Is.False);
 
             // 3) 드론 스캔 2 + 가스 저항 1만으로는 드릴 조건이 부족하다.
@@ -108,7 +98,7 @@ namespace SubTerra.App.Tests.Tutorial
             Assert.That(presenter.SelectUpgrade(DataIds.Upgrades.GasResistance), Is.True);
             var gasBuy = presenter.RequestPurchase();
             Assert.That(gasBuy.IsSuccess, Is.True);
-            Assert.That(director.CurrentObjectiveId, Is.EqualTo(DemoObjectiveIds.BatteryUpgrade));
+            Assert.That(director.CurrentObjectiveId, Is.EqualTo(DemoObjectiveIds.UnlockDeepZone));
             Assert.That(upgradeState.IsZoneUnlocked(DataIds.Zones.Deep), Is.False);
 
             // 4) 리튬 채굴에 필요한 드릴 2레벨까지 구매하면 잠금이 커밋된다.
@@ -126,44 +116,38 @@ namespace SubTerra.App.Tests.Tutorial
                 Is.EqualTo(DemoObjectiveIds.MineLithium),
                 "업그레이드 성공이 후반 리튬 목표를 건너뛰면 안 된다.");
 
-            director.HandleSignal(DemoProgressSignal.LithiumCollected);
-            Assert.That(director.CurrentObjectiveId, Is.EqualTo(DemoObjectiveIds.DeepSignal));
-            director.NotifyDeepZoneAlreadyUnlocked();
-            Assert.That(director.CurrentObjectiveId, Is.EqualTo(DemoObjectiveIds.DemoEnd));
-            Assert.That(director.IsDemoComplete || director.CurrentObjectiveId == DemoObjectiveIds.DemoEnd, Is.True);
+            director.HandleSignal(DemoProgressSignal.LithiumMined);
+            Assert.That(director.CurrentObjectiveId, Is.EqualTo(DemoObjectiveIds.PurifyGasWithOutpost));
         }
 
         [Test]
         public void N_ProgressionPresenter_CallsTryUnlockOnPurchaseSuccess()
         {
             var drill = CreateUpgrade(DataIds.Upgrades.DrillSpeed, 2, 0.1f);
-            var droneScan = CreateUpgrade(DataIds.Upgrades.DroneScan, 2, 1f);
-            var gas = CreateUpgrade(DataIds.Upgrades.GasResistance, 1, 0.2f);
             var wallet = new TestWallet();
             wallet.Set(DataIds.Minerals.Copper, 50);
             var upgradeState = new UpgradeState();
-            // 미리 조건을 거의 맞춤: 스캔 2, 가스 0
+            // 필수 진행인 드릴만 1레벨로 준비한다. 스캔·가스는 선택 계열이다.
             Assert.That(
                 upgradeState.TryRestore(new[]
                 {
-                    new UpgradeLevelState(DataIds.Upgrades.DrillSpeed, 2),
-                    new UpgradeLevelState(DataIds.Upgrades.DroneScan, 2)
+                    new UpgradeLevelState(DataIds.Upgrades.DrillSpeed, 1)
                 }),
                 Is.True);
 
             var service = new ProgressionService(
                 upgradeState,
-                new TestCatalog(drill, droneScan, gas),
+                new TestCatalog(drill),
                 wallet);
             var unlockedEvents = 0;
             service.DeepZoneAccessChanged += _ => unlockedEvents++;
 
             var view = new RecordingProgressionView();
             var presenter = new ProgressionPanelPresenter(view);
-            // completedObjectives >= Mvp required (1)
-            presenter.Bind(service, () => 10);
+            // prompt-B 86의 보건소까지 선행 13개 퀘스트를 완료한 경계
+            presenter.Bind(service, () => 13);
 
-            Assert.That(presenter.SelectUpgrade(DataIds.Upgrades.GasResistance), Is.True);
+            Assert.That(presenter.SelectUpgrade(DataIds.Upgrades.DrillSpeed), Is.True);
             var result = presenter.RequestPurchase();
             Assert.That(result.IsSuccess, Is.True);
             Assert.That(upgradeState.IsZoneUnlocked(DataIds.Zones.Deep), Is.True);

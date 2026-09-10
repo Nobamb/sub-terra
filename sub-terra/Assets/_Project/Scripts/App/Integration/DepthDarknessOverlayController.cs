@@ -1,4 +1,5 @@
 using SubTerra.App.State;
+using SubTerra.Gameplay.Drone;
 using SubTerra.Gameplay.Hazards;
 using UnityEngine;
 using UnityEngine.Tilemaps;
@@ -45,6 +46,7 @@ namespace SubTerra.App.Integration
         [SerializeField] private Transform playerTransform;
         [SerializeField] private Camera targetCamera;
         [SerializeField] private Tilemap terrainTilemap;
+        [SerializeField] private DroneSensor droneSensor;
         [SerializeField, Range(0.01f, 0.5f)] private float playerVisibleRadius = 0.11f;
         [SerializeField, Range(0.001f, 0.2f)] private float edgeFeather = 0.04f;
 
@@ -115,6 +117,12 @@ namespace SubTerra.App.Integration
         public void SetTerrainTilemap(Tilemap tilemap)
         {
             terrainTilemap = tilemap;
+            ApplyVisual();
+        }
+
+        public void SetDroneSensor(DroneSensor sensor)
+        {
+            droneSensor = sensor;
             ApplyVisual();
         }
 
@@ -339,13 +347,21 @@ namespace SubTerra.App.Integration
 
             var bounds = new BoundsInt(minCell.x, minCell.y, z, width, height, 1);
             var tiles = terrainTilemap.GetTilesBlock(bounds);
+            var scanView = droneSensor != null ? droneSensor.ScanPulseView : null;
             var count = width * height;
             for (var i = 0; i < count; i++)
             {
                 var occupied = tiles != null && i < tiles.Length && tiles[i] != null;
-                occupancyPixels[i] = occupied
-                    ? new Color32(255, 255, 255, 255)
-                    : new Color32(0, 0, 0, 0);
+                var x = i % width;
+                var y = i / width;
+                var cell = new Vector3Int(minCell.x + x, minCell.y + y, z);
+                var scanVisible = scanView != null
+                    && scanView.TryGetActiveTarget(cell, out _);
+                occupancyPixels[i] = new Color32(
+                    occupied ? (byte)255 : (byte)0,
+                    scanVisible ? (byte)255 : (byte)0,
+                    0,
+                    255);
             }
 
             occupancyTexture.SetPixels32(occupancyPixels);

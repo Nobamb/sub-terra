@@ -6,7 +6,7 @@ namespace SubTerra.App.UI
 {
     /// <summary>
     /// Enter/Submit가 남아 있는 UI 선택(단축키 버튼 등)에 전달되지 않도록 보호한다.
-    /// prompt-B 35-3: 시설 건설 창이 열린 채 Enter를 누르면 EventSystem Submit이
+    /// 시설 건설 창이 열린 채 채굴 Enter를 누르면 EventSystem Submit이
     /// 게임 가이드 토글 등 의도하지 않은 버튼을 다시 누르는 회귀를 막는다.
     /// </summary>
     public static class UiKeyboardSubmitGuard

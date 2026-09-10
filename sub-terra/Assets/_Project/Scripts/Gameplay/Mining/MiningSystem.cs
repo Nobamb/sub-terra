@@ -52,6 +52,33 @@ namespace SubTerra.Gameplay.Mining
         }
     }
 
+    public static class MiningEnergyCostCalculator
+    {
+        public static int Calculate(
+            int baseCost,
+            float efficiencyMultiplier,
+            float currentRemainder,
+            out float nextRemainder)
+        {
+            if (baseCost <= 0)
+            {
+                nextRemainder = currentRemainder;
+                return 0;
+            }
+
+            var efficiency = efficiencyMultiplier;
+            if (efficiency <= 0f || float.IsNaN(efficiency) || float.IsInfinity(efficiency))
+            {
+                efficiency = 1f;
+            }
+
+            var accumulatedCost = currentRemainder + baseCost / efficiency;
+            var chargedCost = Mathf.Max(0, Mathf.CeilToInt(accumulatedCost - 0.0001f));
+            nextRemainder = accumulatedCost - chargedCost;
+            return chargedCost;
+        }
+    }
+
     public sealed class MiningSystem : MonoBehaviour
     {
         private const string LockedSignalTileId = "tile.locked.signal";
@@ -70,10 +97,18 @@ namespace SubTerra.Gameplay.Mining
         private IMiningTransaction miningTransaction;
         private IUpgradeEffectProvider upgradeEffects;
         private IDeepZoneAccessProvider deepZoneAccess;
+        private Func<Vector3Int, bool> cellProtectionPredicate;
+        private int deepZoneTopY;
+        private int deepZoneMinDepth;
+        private int deepZoneMaxDepth;
+        private bool hasDeepZoneBoundary;
         private Vector3Int activeCell;
         private TileBase activeTileAsset;
         private MiningTileDto activeTile;
         private float elapsed;
+        private float energyRoundingRemainder;
+        private float pendingEnergyRoundingRemainder;
+        private float lastEnergyEfficiency = 1f;
 
         public bool IsMining { get; private set; }
         public bool HasMiningPower { get; private set; } = true;
@@ -107,6 +142,20 @@ namespace SubTerra.Gameplay.Mining
             }
         }
 
+        /// <summary>시설 배치처럼 런타임에 변하는 채굴 금지 셀 판정을 연결한다.</summary>
+        public void SetCellProtectionPredicate(Func<Vector3Int, bool> predicate)
+        {
+            cellProtectionPredicate = predicate;
+        }
+
+        public void ConfigureDeepZoneBoundary(int topY, int minDepth, int maxDepth)
+        {
+            deepZoneTopY = topY;
+            deepZoneMinDepth = Mathf.Max(1, minDepth);
+            deepZoneMaxDepth = Mathf.Max(deepZoneMinDepth, maxDepth);
+            hasDeepZoneBoundary = true;
+        }
+
         public bool TryStartMining(Vector3Int cell)
         {
             if (IsMining && activeCell == cell)
@@ -127,7 +176,7 @@ namespace SubTerra.Gameplay.Mining
                     : MiningFailureReason.InsufficientEnergy);
             }
 
-            if (Array.IndexOf(protectedCells, cell) >= 0)
+            if (IsCellProtected(cell))
             {
                 return Fail(MiningFailureReason.NotMineable);
             }
@@ -141,6 +190,11 @@ namespace SubTerra.Gameplay.Mining
             if (definition.tileId == LockedSignalTileId)
             {
                 return TryAccessDeepZoneSignal(cell);
+            }
+
+            if (IsDeepZoneCell(cell) && deepZoneAccess?.IsDeepZoneUnlocked != true)
+            {
+                return Fail(MiningFailureReason.DeepZoneLocked);
             }
 
             if (!definition.isMineable)
@@ -180,6 +234,44 @@ namespace SubTerra.Gameplay.Mining
         {
             return TryGetDirectionalCell(origin, facingDirection, range, out var cell)
                 && TryStartMining(cell);
+        }
+
+        /// <summary>캐릭터가 있는 셀의 상하좌우 인접 블록을 기존 거리·채굴 검증으로 처리한다.</summary>
+        public bool TryStartMiningInDirection(Vector2 origin, Vector2 direction, float range)
+        {
+            if (foregroundTilemap == null) return Fail(MiningFailureReason.DependencyMissing);
+            if (direction == Vector2.zero) return Fail(MiningFailureReason.InvalidTarget);
+            var offset = Mathf.Abs(direction.y) >= Mathf.Abs(direction.x)
+                ? new Vector3Int(0, direction.y > 0f ? 1 : -1, 0)
+                : new Vector3Int(direction.x > 0f ? 1 : -1, 0, 0);
+            var cell = foregroundTilemap.WorldToCell(origin) + offset;
+            return TryStartMiningAtWorldPoint(foregroundTilemap.GetCellCenterWorld(cell), origin, range);
+        }
+
+        /// <summary>
+        /// 실패 후 플레이어가 실제로 채굴 가능한 지형 앞으로 이동했으면 남은 실패 표시 상태를 지운다.
+        /// 입력 없이 상태만 확인하므로 타일, 전력, 화물은 변경하지 않는다.
+        /// </summary>
+        public bool ClearFailureIfDirectionalTargetMineable(
+            Vector2 origin,
+            float facingDirection,
+            float range)
+        {
+            if (IsMining || LastFailure == MiningFailureReason.None)
+            {
+                return false;
+            }
+
+            ResolveServices();
+            if (!TryGetDirectionalCell(origin, facingDirection, range, out var cell)
+                || !IsTargetTerrainMineable(cell))
+            {
+                return false;
+            }
+
+            LastFailure = MiningFailureReason.None;
+            Publish(MiningPhase.Idle);
+            return true;
         }
 
         public bool TryStartMiningAtWorldPoint(Vector2 worldPoint, Vector2 origin, float range)
@@ -269,6 +361,12 @@ namespace SubTerra.Gameplay.Mining
                 return false;
             }
 
+            if (IsCellProtected(activeCell))
+            {
+                Fail(MiningFailureReason.NotMineable);
+                return false;
+            }
+
             if (foregroundTilemap.GetTile(activeCell) != activeTileAsset)
             {
                 Fail(MiningFailureReason.TargetChanged);
@@ -276,6 +374,51 @@ namespace SubTerra.Gameplay.Mining
             }
 
             return true;
+        }
+
+        private bool IsCellProtected(Vector3Int cell)
+        {
+            return Array.IndexOf(protectedCells, cell) >= 0
+                || (cellProtectionPredicate != null && cellProtectionPredicate(cell));
+        }
+
+        private bool IsTargetTerrainMineable(Vector3Int cell)
+        {
+            if (foregroundTilemap == null || tileResolver == null || IsCellProtected(cell))
+            {
+                return false;
+            }
+
+            TileBase tile = foregroundTilemap.GetTile(cell);
+            if (tile == null || !tileResolver.TryResolve(tile, out MiningTileDto definition))
+            {
+                return false;
+            }
+
+            if (definition.tileId == LockedSignalTileId)
+            {
+                return deepZoneAccess?.IsDeepZoneUnlocked == true;
+            }
+
+            if (IsDeepZoneCell(cell) && deepZoneAccess?.IsDeepZoneUnlocked != true)
+            {
+                return false;
+            }
+
+            int drillLevel = upgradeEffects?.GetDrillLevel() ?? 0;
+            return definition.isMineable
+                && drillLevel >= Mathf.Max(0, definition.requiredDrillLevel);
+        }
+
+        private bool IsDeepZoneCell(Vector3Int cell)
+        {
+            if (!hasDeepZoneBoundary)
+            {
+                return false;
+            }
+
+            int depth = deepZoneTopY - cell.y + 1;
+            return depth >= deepZoneMinDepth && depth <= deepZoneMaxDepth;
         }
 
         private bool CompleteMining()
@@ -301,6 +444,9 @@ namespace SubTerra.Gameplay.Mining
             {
                 return Fail(MiningFailureReason.DependencyMissing);
             }
+
+            // 성공한 채굴만 소수점 비용을 다음 채굴로 넘긴다. 취소·실패는 누적값을 바꾸지 않는다.
+            energyRoundingRemainder = pendingEnergyRoundingRemainder;
 
             TileBase tile = foregroundTilemap.GetTile(activeCell);
             if (tile != activeTileAsset)
@@ -428,18 +574,23 @@ namespace SubTerra.Gameplay.Mining
 
         private int CalculateEnergyCost(int baseCost)
         {
-            if (baseCost <= 0)
-            {
-                return 0;
-            }
-
             var efficiency = upgradeEffects?.GetEnergyEfficiencyMultiplier() ?? 1f;
             if (efficiency <= 0f || float.IsNaN(efficiency) || float.IsInfinity(efficiency))
             {
                 efficiency = 1f;
             }
 
-            return Mathf.Max(1, Mathf.CeilToInt(baseCost / efficiency));
+            if (!Mathf.Approximately(efficiency, lastEnergyEfficiency))
+            {
+                energyRoundingRemainder = 0f;
+                lastEnergyEfficiency = efficiency;
+            }
+
+            return MiningEnergyCostCalculator.Calculate(
+                baseCost,
+                efficiency,
+                energyRoundingRemainder,
+                out pendingEnergyRoundingRemainder);
         }
 
         private bool Fail(MiningFailureReason reason)

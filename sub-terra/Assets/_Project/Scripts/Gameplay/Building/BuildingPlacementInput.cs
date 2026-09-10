@@ -26,8 +26,8 @@ namespace SubTerra.Gameplay.Building
                 return;
             }
 
-            // Enter: 플레이어 근접 최적 칸 1회 설치(prompt-B 35 규칙과 동일 경로).
-            if (Keyboard.current != null && Keyboard.current.enterKey.wasPressedThisFrame)
+            // C: 플레이어 근접 최적 칸 1회 설치(prompt-B 71).
+            if (Keyboard.current != null && Keyboard.current.cKey.wasPressedThisFrame)
             {
                 placementSystem.TryPlaceNearest(enterFacingDirection);
                 return;

@@ -108,23 +108,29 @@ namespace SubTerra.App.Editor.DataValidation
                     new Vector3(0f, capLocalY, 0f),
                     sortingOrder: 4);
 
-                // 구형 단일 콜라이더를 제거하고 T자 두 조각(기둥+캡)으로 재구성한다.
+                // 기둥은 통행을 막지 않으며 상단 캡만 아래에서 통과 가능한 발판으로 사용한다.
                 foreach (var existing in root.GetComponents<BoxCollider2D>())
                 {
                     Object.DestroyImmediate(existing);
                 }
 
-                // 세로 기둥 콜라이더 — 얇게 유지해 인접 버팀목 사이 통행 공간을 확보한다.
-                var postCollider = root.AddComponent<BoxCollider2D>();
-                postCollider.isTrigger = false;
-                postCollider.offset = Vector2.zero;
-                postCollider.size = new Vector2(PostWidth, PostHeight);
-
-                // 가로 캡 콜라이더 — 기둥 상단 발판/보.
+                // 가로 캡 콜라이더 — 아래에서는 통과하고 위에서는 밟을 수 있는 단방향 발판.
                 var capCollider = root.AddComponent<BoxCollider2D>();
                 capCollider.isTrigger = false;
                 capCollider.offset = new Vector2(0f, capLocalY);
                 capCollider.size = new Vector2(BlockWidth, capHeight);
+                capCollider.usedByEffector = true;
+
+                var platformEffector = root.GetComponent<PlatformEffector2D>();
+                if (platformEffector == null)
+                {
+                    platformEffector = root.AddComponent<PlatformEffector2D>();
+                }
+
+                platformEffector.useOneWay = true;
+                platformEffector.useSideFriction = false;
+                platformEffector.useSideBounce = false;
+                platformEffector.surfaceArc = 180f;
 
                 var support = root.GetComponent<StructuralSupport>();
                 if (support == null)

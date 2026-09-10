@@ -68,6 +68,22 @@ namespace SubTerra.App.Tests.Integration
         }
 
         [Test]
+        public void OverlayShader_HasScanGlowRadiusForDarknessBypass()
+        {
+            var shader = Resources.Load<Shader>(DepthDarknessOverlayController.ShaderResourceName);
+            Assert.That(shader, Is.Not.Null);
+            var material = new Material(shader);
+            try
+            {
+                Assert.That(material.HasProperty("_ScanGlowRadius"), Is.True);
+            }
+            finally
+            {
+                Object.DestroyImmediate(material);
+            }
+        }
+
+        [Test]
         public void ShouldDrawOutline_OnlyOnOccupiedDarkCellEdges()
         {
             Assert.That(

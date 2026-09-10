@@ -108,22 +108,10 @@ namespace SubTerra.App.UI.Tutorial
             // dismiss 직후 입력 잠금이 남지 않게 한다.
             SetInputLocked(false);
 
-            if (model.ObjectiveId == DemoObjectiveIds.PathGuide)
-            {
-                director.NotifyGuidanceAcknowledged();
-            }
-            else if (model.ObjectiveId == DemoObjectiveIds.ReturnRecommend)
-            {
-                director.NotifyReturnRecommendationAcknowledged();
-            }
-            else if (model.ObjectiveId == DemoObjectiveIds.DemoEnd
+            if (model.ObjectiveId == DemoObjectiveIds.DemoEnd
                 || model.IsDemoComplete)
             {
                 director.NotifyDemoEndAcknowledged();
-            }
-            else if (model.ObjectiveId == DemoObjectiveIds.ExploreStart)
-            {
-                // 시작 안내는 닫기만 하고, 탐사 준비 신호는 Binder가 보낸다.
             }
         }
 
@@ -142,18 +130,10 @@ namespace SubTerra.App.UI.Tutorial
             view?.SetObjective(model);
             view?.SetDetailsText(model.Title, model.Description, model.NextActionHint);
 
-            if (model.IsDemoComplete || model.ObjectiveId == DemoObjectiveIds.DemoEnd)
-            {
-                view?.SetDemoCompleteVisible(
-                    true,
-                    model.Description);
-                guidanceOpen = false;
-                view?.SetGuidanceVisible(false);
-            }
-            else if (model.ShowsDismissibleGuidance)
+            if (model.ShowsDismissibleGuidance)
             {
                 guidanceOpen = true;
-                view?.SetGuidanceText(model.Title, model.Description);
+                view?.SetGuidanceText(model.GuidanceTitle, model.GuidanceBody);
                 // 닫기형 안내는 위험 중에도 켠다. 숨기면 경로 안내가 닫히지 못한다.
                 view?.SetGuidanceVisible(true);
                 view?.SetDemoCompleteVisible(false, string.Empty);

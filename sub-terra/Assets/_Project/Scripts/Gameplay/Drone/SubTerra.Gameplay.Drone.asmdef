@@ -1,7 +1,7 @@
 {
   "name": "SubTerra.Gameplay.Drone",
   "rootNamespace": "SubTerra.Gameplay.Drone",
-  "references": ["SubTerra.Shared", "SubTerra.Gameplay.Player", "SubTerra.Gameplay.Mining", "SubTerra.Gameplay.Structural", "SubTerra.Gameplay.Hazards", "SubTerra.Gameplay.Power"],
+  "references": ["SubTerra.Shared", "SubTerra.Gameplay.Player", "SubTerra.Gameplay.Mining", "SubTerra.Gameplay.Structural", "SubTerra.Gameplay.Hazards", "SubTerra.Gameplay.Power", "Unity.RenderPipelines.Universal.2D.Runtime"],
   "includePlatforms": [],
   "excludePlatforms": [],
   "allowUnsafeCode": false,

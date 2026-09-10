@@ -51,6 +51,32 @@ namespace SubTerra.App.Tests.Outpost
         }
 
         [Test]
+        public void PromptB60_2_ElevatorInteractionClosesPanel_WhileOtherPositionsCanOpenIt()
+        {
+            var catalog = new InMemoryMineralCatalog();
+            var state = GameState.CreateNew();
+            var inventory = new InventoryService(catalog, 100f, state);
+            var service = new OutpostService(inventory, catalog, state);
+            var view = new RecordingView();
+            var presenter = new OutpostPanelPresenter(view);
+            presenter.Bind(service);
+            service.ApplyRuntimeStatus(new OutpostStatusDto
+            {
+                isInInteractionRange = true,
+                interactionFacilityInstanceId = "outpost.near-elevator",
+                interactionFacilityBuildingId = DataIds.Buildings.OutpostCoreBasic,
+                connectedFacilities = new List<ConnectedFacilityStatusDto>()
+            });
+
+            presenter.ToggleInteractionPanel(primaryInteractionClaimed: false);
+            Assert.That(view.Visible, Is.True, "엘리베이터 밖에서는 전진기지 패널을 열 수 있어야 한다.");
+
+            presenter.ToggleInteractionPanel(primaryInteractionClaimed: true);
+            Assert.That(view.Visible, Is.False, "엘리베이터 이동 입력이 시설 패널보다 우선해야 한다.");
+            presenter.Unbind();
+        }
+
+        [Test]
         public void RuntimeRange_Charger_OpensChargerPanel()
         {
             var catalog = new InMemoryMineralCatalog();
@@ -244,6 +270,77 @@ namespace SubTerra.App.Tests.Outpost
             presenter.Unbind();
         }
 
+        [Test]
+        public void PromptB69_Search_FiltersMineralDropdownByPartialName()
+        {
+            var catalog = new InMemoryMineralCatalog();
+            catalog.Register(DataIds.Minerals.Copper, 1.5f, 10, "구리");
+            catalog.Register(DataIds.Minerals.Iron, 2f, 15, "철");
+            catalog.Register(DataIds.Minerals.Lithium, 0.8f, 20, "리튬");
+            var state = GameState.CreateNew();
+            var inventory = new InventoryService(catalog, 100f, state);
+            inventory.TryAddMineral(DataIds.Minerals.Copper, 8);
+            var service = new OutpostService(inventory, catalog, state);
+            var view = new RecordingView();
+            var presenter = new OutpostPanelPresenter(view);
+            presenter.Bind(service);
+            service.ApplyRuntimeStatus(new OutpostStatusDto
+            {
+                isInInteractionRange = true,
+                interactionFacilityInstanceId = "storage.1",
+                interactionFacilityBuildingId = DataIds.Buildings.StorageBasic,
+                connectedFacilities = new List<ConnectedFacilityStatusDto>()
+            });
+
+            presenter.ToggleInteractionPanel();
+            Assert.That(view.MineralOptions, Is.Not.Null);
+            Assert.That(view.MineralOptions.Count, Is.EqualTo(3));
+
+            presenter.SetMineralSearch("구");
+            Assert.That(view.MineralOptions.Count, Is.EqualTo(1));
+            Assert.That(view.MineralOptions[0].MineralId, Is.EqualTo(DataIds.Minerals.Copper));
+
+            presenter.SelectMineral(DataIds.Minerals.Copper);
+            Assert.That(view.PickerSelectedMineralId, Is.EqualTo(DataIds.Minerals.Copper));
+            Assert.That(view.MineralOptions.Count, Is.EqualTo(3));
+            presenter.Unbind();
+        }
+
+        [Test]
+        public void PromptB70_DismissClosesPanelWhileStillInRange_AndECanReopen()
+        {
+            var catalog = new InMemoryMineralCatalog();
+            var state = GameState.CreateNew();
+            var service = new OutpostService(
+                new InventoryService(catalog, 100f, state),
+                catalog,
+                state);
+            var view = new RecordingView();
+            var presenter = new OutpostPanelPresenter(view);
+            presenter.Bind(service);
+            service.ApplyRuntimeStatus(new OutpostStatusDto
+            {
+                isInInteractionRange = true,
+                interactionFacilityInstanceId = "storage.1",
+                interactionFacilityBuildingId = DataIds.Buildings.StorageBasic,
+                connectedFacilities = new List<ConnectedFacilityStatusDto>()
+            });
+
+            presenter.ToggleInteractionPanel();
+            Assert.That(view.Visible, Is.True);
+            Assert.That(presenter.IsInteractionPanelOpen, Is.True);
+
+            presenter.DismissInteractionPanel();
+            Assert.That(view.Visible, Is.False);
+            Assert.That(presenter.IsInteractionPanelOpen, Is.False);
+            Assert.That(service.IsFacilityInteraction, Is.True, "닫아도 시설 범위에는 남아 있어야 한다.");
+
+            presenter.ToggleInteractionPanel();
+            Assert.That(view.Visible, Is.True);
+            Assert.That(view.Mode, Is.EqualTo(OutpostPanelMode.Storage));
+            presenter.Unbind();
+        }
+
         private sealed class RecordingView : IOutpostPanelView
         {
             public bool Visible;
@@ -270,7 +367,19 @@ namespace SubTerra.App.Tests.Outpost
             public void SetCargo(string playerCargo, string storageCargo) { }
             public void SetSettlementCargo(string cargo) { }
             public void SetCheckpoint(string checkpoint) { }
+            public IReadOnlyList<OutpostMineralOption> MineralOptions;
+            public string PickerSelectedMineralId;
+
             public void SetSelectedMineral(string summary) { }
+            public void SetMineralOptions(
+                IReadOnlyList<OutpostMineralOption> options,
+                string selectedMineralId)
+            {
+                MineralOptions = options;
+                PickerSelectedMineralId = selectedMineralId;
+            }
+
+            public void ClearMineralSearch() { }
             public void SetResult(string message, bool isError) { }
             public void ShowTemporaryMessage(string message, float durationSeconds)
             {

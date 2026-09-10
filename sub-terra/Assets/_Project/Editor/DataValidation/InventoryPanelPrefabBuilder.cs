@@ -122,11 +122,7 @@ namespace SubTerra.App.Editor.DataValidation
             binderSo.FindProperty("catalog").objectReferenceValue = catalog;
             binderSo.ApplyModifiedPropertiesWithoutUndo();
 
-            var existing = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath);
-            if (existing != null)
-            {
-                AssetDatabase.DeleteAsset(PrefabPath);
-            }
+            PromptB68InventoryWeightBuilder.ApplyTo(panelRoot.transform);
 
             PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
             Object.DestroyImmediate(root);

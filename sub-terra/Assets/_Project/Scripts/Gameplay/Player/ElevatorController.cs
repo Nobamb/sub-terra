@@ -35,6 +35,22 @@ namespace SubTerra.Gameplay.Player
         public ElevatorTravelState State { get; private set; } = ElevatorTravelState.Idle;
         public bool HasRider => riderMovement != null;
 
+        /// <summary>공용 Interact 입력에서 시설 UI보다 엘리베이터 이동이 먼저 처리되어야 하는지 확인한다.</summary>
+        public bool TryClaimInteractionPriority()
+        {
+            if (State == ElevatorTravelState.Calling || State == ElevatorTravelState.Moving)
+            {
+                return true;
+            }
+
+            if (riderMovement == null)
+            {
+                TryAcquireRiderFromOverlap();
+            }
+
+            return riderMovement != null;
+        }
+
         private void Awake()
         {
             var zone = GetComponent<Collider2D>();

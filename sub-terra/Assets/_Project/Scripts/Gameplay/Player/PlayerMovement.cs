@@ -42,6 +42,7 @@ namespace SubTerra.Gameplay.Player
         private float gravityBeforeClimbing;
         private readonly HashSet<LadderZone> activeLadders = new HashSet<LadderZone>();
         private float cargoSpeedMultiplier = 1f;
+        private float cargoJumpMultiplier = 1f;
         private float hazardSpeedMultiplier = 1f;
 
         public Vector2 Position => body != null ? body.position : (Vector2)transform.position;
@@ -50,9 +51,11 @@ namespace SubTerra.Gameplay.Player
         public bool CanMove { get; private set; } = true;
         public bool IsClimbing { get; private set; }
         public bool IsDescendingLadder => IsClimbing && verticalMoveInput < -0.01f;
+        public bool IsMovingOnLadder => IsClimbing && Mathf.Abs(verticalMoveInput) > 0.01f;
         public bool IsMovementRequested => Mathf.Abs(moveInput) > 0.01f
             || Mathf.Abs(verticalMoveInput) > 0.01f;
         public float CurrentSpeedMultiplier => cargoSpeedMultiplier * hazardSpeedMultiplier;
+        public float CurrentJumpMultiplier => cargoJumpMultiplier;
 
         private void Awake()
         {
@@ -75,6 +78,10 @@ namespace SubTerra.Gameplay.Player
             if (IsClimbing && !jumped)
             {
                 ApplyVerticalMovement();
+            }
+            else if (!jumped)
+            {
+                TryResumeLadderAfterJump();
             }
         }
 
@@ -176,6 +183,11 @@ namespace SubTerra.Gameplay.Player
             cargoSpeedMultiplier = Mathf.Max(0f, multiplier);
         }
 
+        public void SetCargoJumpMultiplier(float multiplier)
+        {
+            cargoJumpMultiplier = Mathf.Clamp01(multiplier);
+        }
+
         public void SetHazardSpeedMultiplier(float multiplier)
         {
             hazardSpeedMultiplier = Mathf.Max(0f, multiplier);
@@ -223,7 +235,8 @@ namespace SubTerra.Gameplay.Player
 
             if (IsClimbing)
             {
-                ExitLadder();
+                // Trigger 안에 남아 있으면 접촉 정보를 보존해, 공중에서도 다시 사다리를 잡을 수 있다.
+                ExitLadderMode();
                 body.linearVelocity = new Vector2(body.linearVelocityX, 0f);
                 ApplyJumpImpulse();
                 return true;
@@ -248,7 +261,9 @@ namespace SubTerra.Gameplay.Player
                 body.linearVelocity = new Vector2(body.linearVelocityX, 0f);
             }
 
-            body.AddForce(Vector2.up * jumpImpulse, ForceMode2D.Impulse);
+            body.AddForce(
+                Vector2.up * jumpImpulse * cargoJumpMultiplier,
+                ForceMode2D.Impulse);
             jumpAirLockRemaining = jumpAirLockDuration;
             jumpUsedUntilLand = true;
             IsGrounded = false;
@@ -260,6 +275,20 @@ namespace SubTerra.Gameplay.Player
                 ? verticalMoveInput * ladderSpeed * CurrentSpeedMultiplier
                 : 0f;
             body.linearVelocity = new Vector2(body.linearVelocityX, verticalVelocity);
+        }
+
+        private void TryResumeLadderAfterJump()
+        {
+            if (body == null
+                || IsClimbing
+                || activeLadders.Count == 0
+                || jumpAirLockRemaining > 0f
+                || Mathf.Abs(verticalMoveInput) <= 0.01f)
+            {
+                return;
+            }
+
+            EnterLadderMode();
         }
 
         private void UpdateGroundedState()

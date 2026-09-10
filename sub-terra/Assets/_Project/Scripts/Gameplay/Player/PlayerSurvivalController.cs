@@ -5,8 +5,12 @@ using UnityEngine;
 
 namespace SubTerra.Gameplay.Player
 {
-    /// <summary>붕괴·가스·전력 고갈을 하나의 Player 행동불능 입력으로 정규화한다.</summary>
-    public sealed class PlayerSurvivalController : MonoBehaviour, IPlayerHealthSource, ICollapseDamageReceiver
+    /// <summary>붕괴·가스·체력 피해를 Player 행동불능 입력으로 정규화한다.</summary>
+    public sealed class PlayerSurvivalController :
+        MonoBehaviour,
+        IPlayerHealthSource,
+        IPlayerHealthCommand,
+        ICollapseDamageReceiver
     {
         private const float DamageFlashInterval = 0.08f;
         private const float DamageFlashAlphaMultiplier = 0.35f;
@@ -26,11 +30,13 @@ namespace SubTerra.Gameplay.Player
         private Color[] flashBaseColors = Array.Empty<Color>();
         private float damageFlashStartedAt;
         private float damageFlashUntil;
+        private float cargoFallImpactMultiplier = 1f;
 
         public PlayerSurvivalState State { get; private set; }
         public event Action<PlayerSurvivalState> StateChanged;
         public event Action<PlayerHealthReadModel> HealthChanged;
         public event Action<RunFailureInputDto> FailureRequested;
+        public float CurrentCargoFallImpactMultiplier => cargoFallImpactMultiplier;
 
         private void Awake()
         {
@@ -81,6 +87,11 @@ namespace SubTerra.Gameplay.Player
             {
                 PublishStateChanged();
             }
+        }
+
+        public void SetCargoFallImpactMultiplier(float multiplier)
+        {
+            cargoFallImpactMultiplier = Mathf.Max(0f, multiplier);
         }
 
         public void Configure(PlayerSurvivalSettings survivalSettings, Transform target)
@@ -162,12 +173,14 @@ namespace SubTerra.Gameplay.Player
         public bool ApplyFall(float fallDistance, bool usedLadder = false)
         {
             EnsureState();
-            var damage = PlayerFallDamageRules.CalculateDamage(
-                fallDistance,
-                usedLadder,
-                settings.MinimumFallDamageHeight,
-                settings.FallDamageAtThreshold,
-                settings.FallDamagePerAdditionalMeter);
+            var damage = PlayerFallDamageRules.ScaleDamage(
+                PlayerFallDamageRules.CalculateDamage(
+                    fallDistance,
+                    usedLadder,
+                    settings.MinimumFallDamageHeight,
+                    settings.FallDamageAtThreshold,
+                    settings.FallDamagePerAdditionalMeter),
+                cargoFallImpactMultiplier);
             if (damage <= 0)
             {
                 return false;
@@ -184,13 +197,9 @@ namespace SubTerra.Gameplay.Player
 
         public bool ApplyPowerDepletion()
         {
-            tokenSequence++;
-            return ApplyDamage(
-                RunFailureCause.PowerDepleted,
-                0,
-                true,
-                "power:" + tokenSequence.ToString(CultureInfo.InvariantCulture),
-                "player_energy");
+            // Prompt-B 81: 전력 0은 행동불능/RunFailure가 아니다.
+            // 구버전 바인딩이 남아 호출해도 걷기·점프·사다리 상태를 바꾸지 않는다.
+            return false;
         }
 
         public void RestoreAfterRescue()
@@ -200,6 +209,19 @@ namespace SubTerra.Gameplay.Player
             State.RestoreFull();
             PublishStateChanged();
             ResetFallTracking();
+        }
+
+        public bool RestoreFull()
+        {
+            EnsureState();
+            RestoreDamageFlash();
+            var changed = State.RestoreFull();
+            if (changed)
+            {
+                PublishStateChanged();
+            }
+
+            return changed;
         }
 
         public PlayerHealthReadModel GetHealth()

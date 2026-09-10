@@ -1,5 +1,6 @@
 using NUnit.Framework;
 using SubTerra.Gameplay.Building;
+using SubTerra.Gameplay.Power;
 using SubTerra.Gameplay.Structural;
 using SubTerra.Shared;
 using System.Reflection;
@@ -194,6 +195,58 @@ namespace SubTerra.Gameplay.Snapshot.Tests
                 Object.DestroyImmediate(prefab);
                 Object.DestroyImmediate(definition);
                 Object.DestroyImmediate(tile);
+            }
+        }
+
+        [Test]
+        public void RestoreSnapshot_InstantiatesConfiguredCablePrefab()
+        {
+            var host = new GameObject("CableRestore");
+            var prefab = new GameObject("PowerCablePrefab");
+            prefab.AddComponent<SpriteRenderer>();
+            var prefabCable = prefab.AddComponent<PowerCable>();
+
+            try
+            {
+                var network = host.AddComponent<PowerNetworkSystem>();
+                var source = new GameObject("Source").AddComponent<PowerNode>();
+                var facility = new GameObject("Facility").AddComponent<PowerNode>();
+                source.transform.SetParent(host.transform);
+                facility.transform.SetParent(host.transform);
+                source.Configure(network, true, 5, 0, PowerPriority.Critical);
+                facility.Configure(network, false, 0, 1, PowerPriority.Normal);
+                source.SetEntityId("source-0001");
+                facility.SetEntityId("facility-0001");
+
+                var snapshotSystem = host.AddComponent<WorldSnapshotSystem>();
+                SetField(snapshotSystem, "powerNetworkSystem", network);
+                SetField(snapshotSystem, "powerCablePrefab", prefabCable);
+
+                Assert.That(
+                    snapshotSystem.RestoreSnapshot(new WorldSnapshotDto
+                    {
+                        powerState = new PowerSnapshotDto
+                        {
+                            cableConnections = new System.Collections.Generic.List<PowerConnectionSnapshotDto>
+                            {
+                                new()
+                                {
+                                    nodeAInstanceId = "source-0001",
+                                    nodeBInstanceId = "facility-0001"
+                                }
+                            }
+                        }
+                    }),
+                    Is.True);
+
+                PowerCable[] restored = host.GetComponentsInChildren<PowerCable>();
+                Assert.That(restored, Has.Length.EqualTo(1));
+                Assert.That(restored[0].GetComponent<SpriteRenderer>(), Is.Not.Null);
+            }
+            finally
+            {
+                Object.DestroyImmediate(host);
+                Object.DestroyImmediate(prefab);
             }
         }
 

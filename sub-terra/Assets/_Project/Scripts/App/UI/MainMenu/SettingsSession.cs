@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using SubTerra.Shared;
 using SubTerra.Shared.Localization;
 
 namespace SubTerra.App.UI.MainMenu
@@ -30,6 +31,7 @@ namespace SubTerra.App.UI.MainMenu
         public string LanguageCode { get; set; }
         /// <summary>프레임 모드. 기본 Auto(모니터 주사율).</summary>
         public FrameRateMode FrameRate { get; set; }
+        public ControlScheme Controls { get; set; }
 
         public static SettingsValues CreateDefaults()
         {
@@ -40,7 +42,8 @@ namespace SubTerra.App.UI.MainMenu
                 ResolutionWidth = 1920,
                 ResolutionHeight = 1080,
                 LanguageCode = GameLanguageCodes.Korean,
-                FrameRate = FrameRateMode.Auto
+                FrameRate = FrameRateMode.Auto,
+                Controls = ControlScheme.Classic
             };
         }
 
@@ -53,7 +56,8 @@ namespace SubTerra.App.UI.MainMenu
                 ResolutionWidth = ResolutionWidth,
                 ResolutionHeight = ResolutionHeight,
                 LanguageCode = LanguageCode,
-                FrameRate = FrameRate
+                FrameRate = FrameRate,
+                Controls = Controls
             };
         }
 
@@ -70,6 +74,7 @@ namespace SubTerra.App.UI.MainMenu
             ResolutionHeight = other.ResolutionHeight;
             LanguageCode = other.LanguageCode;
             FrameRate = other.FrameRate;
+            Controls = other.Controls;
         }
     }
 
@@ -228,6 +233,8 @@ namespace SubTerra.App.UI.MainMenu
         public void Open()
         {
             draft.CopyFrom(applied);
+            // 세션 초안이 1번으로 남아 있어도, 이미 저장한 2·3번을 다시 보여 준다.
+            draft.Controls = SettingsRuntimeApplier.LoadControlScheme();
             IsOpen = true;
         }
 

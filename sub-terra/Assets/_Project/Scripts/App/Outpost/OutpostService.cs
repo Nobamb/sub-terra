@@ -17,6 +17,7 @@ namespace SubTerra.App.Outpost
         private readonly IMineralCatalogLookup catalog;
         private readonly GameState gameState;
         private readonly OutpostState state;
+        private readonly IPlayerHealthCommand healthCommand;
         private readonly HashSet<string> completedSettlementIds = new HashSet<string>();
 
         private OutpostStatusDto runtimeStatus;
@@ -50,12 +51,14 @@ namespace SubTerra.App.Outpost
             InventoryService inventory,
             IMineralCatalogLookup catalog,
             GameState gameState,
-            OutpostState state = null)
+            OutpostState state = null,
+            IPlayerHealthCommand healthCommand = null)
         {
             this.inventory = inventory;
             this.catalog = catalog;
             this.gameState = gameState;
             this.state = state ?? gameState?.Outpost ?? new OutpostState();
+            this.healthCommand = healthCommand;
         }
 
         public void ApplyRuntimeStatus(OutpostStatusDto status)
@@ -86,6 +89,8 @@ namespace SubTerra.App.Outpost
             var buildingId = runtimeStatus.interactionFacilityBuildingId;
             var facilityName = buildingId == DataIds.Buildings.ChargerBasic
                 ? "충전기"
+                : buildingId == DataIds.Buildings.ClinicBasic
+                    ? "보건소"
                 : buildingId == DataIds.Buildings.SettlementBasic
                     ? "정산 콘솔"
                     : string.Empty;
@@ -141,6 +146,35 @@ namespace SubTerra.App.Outpost
             return Complete(result);
         }
 
+        public OutpostOperationResult TryHeal()
+        {
+            if (!TryValidateFacility(
+                    DataIds.Buildings.ClinicBasic,
+                    OutpostOperationKind.Heal,
+                    out var failure))
+            {
+                return Complete(failure);
+            }
+
+            if (healthCommand == null)
+            {
+                return Complete(Fail(
+                    OutpostOperationStatus.DependencyMissing,
+                    OutpostOperationKind.Heal,
+                    "플레이어 체력 상태가 연결되지 않았습니다."));
+            }
+
+            var restored = healthCommand.RestoreFull();
+            var result = Success(
+                OutpostOperationKind.Heal,
+                string.Empty,
+                0,
+                0,
+                restored ? "체력 회복이 완료되었습니다." : "이미 체력이 최대입니다.");
+            RaiseSnapshotChanged();
+            return Complete(result);
+        }
+
         public OutpostOperationResult TryDeposit(string mineralId, int quantity)
         {
             if (!TryValidateFacility(
@@ -163,7 +197,9 @@ namespace SubTerra.App.Outpost
 
             var playerQuantity = inventory.State.GetQuantity(mineralId);
             var storageQuantity = state.GetStorageQuantity(mineralId);
-            if (playerQuantity < quantity)
+            // 10개를 요청해도 8개만 있으면 남은 8개 전부를 보관한다.
+            var transferQuantity = OutpostTransferQuantity.ClampToAvailable(quantity, playerQuantity);
+            if (transferQuantity <= 0)
             {
                 return Complete(Fail(
                     OutpostOperationStatus.InsufficientQuantity,
@@ -171,7 +207,7 @@ namespace SubTerra.App.Outpost
                     "플레이어 화물이 부족합니다."));
             }
 
-            if (storageQuantity > int.MaxValue - quantity)
+            if (storageQuantity > int.MaxValue - transferQuantity)
             {
                 return Complete(Fail(
                     OutpostOperationStatus.OverflowRisk,
@@ -180,7 +216,7 @@ namespace SubTerra.App.Outpost
             }
 
             // 출발지 검증을 모두 마친 뒤 두 상태를 한 경로에서 변경한다.
-            var reduction = inventory.TryReduceMineral(mineralId, quantity);
+            var reduction = inventory.TryReduceMineral(mineralId, transferQuantity);
             if (reduction.Status != InventoryMutationStatus.Success)
             {
                 return Complete(Fail(
@@ -189,13 +225,13 @@ namespace SubTerra.App.Outpost
                     "화물 이동에 실패했습니다."));
             }
 
-            state.SetStorageQuantity(mineralId, storageQuantity + quantity);
+            state.SetStorageQuantity(mineralId, storageQuantity + transferQuantity);
             var result = Success(
                 OutpostOperationKind.Deposit,
                 mineralId,
-                quantity,
+                transferQuantity,
                 0,
-                "보관함에 옮겼습니다.");
+                "보관함에 " + transferQuantity + "개를 옮겼습니다.");
             RaiseSnapshotChanged();
             return Complete(result);
         }
@@ -221,7 +257,9 @@ namespace SubTerra.App.Outpost
             }
 
             var storageQuantity = state.GetStorageQuantity(mineralId);
-            if (storageQuantity < quantity)
+            // 10개를 꺼내도 보관이 8개면 남은 8개 전부를 꺼낸다.
+            var transferQuantity = OutpostTransferQuantity.ClampToAvailable(quantity, storageQuantity);
+            if (transferQuantity <= 0)
             {
                 return Complete(Fail(
                     OutpostOperationStatus.InsufficientQuantity,
@@ -230,7 +268,7 @@ namespace SubTerra.App.Outpost
             }
 
             var playerQuantity = inventory.State.GetQuantity(mineralId);
-            if (playerQuantity > int.MaxValue - quantity)
+            if (playerQuantity > int.MaxValue - transferQuantity)
             {
                 return Complete(Fail(
                     OutpostOperationStatus.OverflowRisk,
@@ -238,7 +276,7 @@ namespace SubTerra.App.Outpost
                     "플레이어 화물 수량 한도를 초과합니다."));
             }
 
-            var addedWeight = info.UnitWeight * quantity;
+            var addedWeight = info.UnitWeight * transferQuantity;
             if (addedWeight < 0f
                 || inventory.CurrentWeight + addedWeight > inventory.MaxCapacity + 0.0001f)
             {
@@ -249,9 +287,9 @@ namespace SubTerra.App.Outpost
             }
 
             // 정확히 전량을 수용할 수 있음을 확인한 뒤 이동한다.
-            var addition = inventory.TryAddMineral(mineralId, quantity);
+            var addition = inventory.TryAddMineral(mineralId, transferQuantity);
             if (addition.Status != InventoryMutationStatus.Success
-                || addition.AcceptedQuantity != quantity)
+                || addition.AcceptedQuantity != transferQuantity)
             {
                 return Complete(Fail(
                     OutpostOperationStatus.CapacityExceeded,
@@ -259,13 +297,13 @@ namespace SubTerra.App.Outpost
                     "플레이어 화물 이동에 실패했습니다."));
             }
 
-            state.SetStorageQuantity(mineralId, storageQuantity - quantity);
+            state.SetStorageQuantity(mineralId, storageQuantity - transferQuantity);
             var result = Success(
                 OutpostOperationKind.Withdraw,
                 mineralId,
-                quantity,
+                transferQuantity,
                 0,
-                "화물로 옮겼습니다.");
+                "화물로 " + transferQuantity + "개를 옮겼습니다.");
             RaiseSnapshotChanged();
             return Complete(result);
         }
@@ -528,6 +566,16 @@ namespace SubTerra.App.Outpost
                 return false;
             }
 
+            if (buildingId == DataIds.Buildings.StorageBasic
+                && runtimeStatus != null
+                && runtimeStatus.isInInteractionRange
+                && (string.IsNullOrEmpty(runtimeStatus.interactionFacilityBuildingId)
+                    || runtimeStatus.interactionFacilityBuildingId == buildingId))
+            {
+                failure = default;
+                return true;
+            }
+
             if (runtimeStatus == null
                 || !runtimeStatus.isInInteractionRange
                 || (!IsProximityPoweredFacility(buildingId) && !runtimeStatus.isActive))
@@ -596,6 +644,7 @@ namespace SubTerra.App.Outpost
         private static bool IsProximityPoweredFacility(string buildingId)
         {
             return buildingId == DataIds.Buildings.ChargerBasic
+                || buildingId == DataIds.Buildings.ClinicBasic
                 || buildingId == DataIds.Buildings.SettlementBasic;
         }
 
@@ -761,7 +810,7 @@ namespace SubTerra.App.Outpost
             for (var i = 0; i < status.connectedFacilities.Count; i++)
             {
                 var facility = status.connectedFacilities[i];
-                if (facility == null)
+                if (facility == null || !IsProximityPoweredFacility(facility.buildingId))
                 {
                     continue;
                 }

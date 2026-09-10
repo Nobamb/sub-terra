@@ -16,11 +16,13 @@ namespace SubTerra.App.UI.Outpost
         private string openedFacilityInstanceId = string.Empty;
         private string openedFacilityBuildingId = string.Empty;
         private string selectedMineralId = string.Empty;
+        private string mineralSearchQuery = string.Empty;
         private int selectedQuantity = 1;
         private OutpostPanelMode activeMode;
 
         public bool IsBound => service != null;
         public OutpostPanelMode ActiveMode => activeMode;
+        public bool IsInteractionPanelOpen => interactionPanelRequested;
 
         public OutpostPanelPresenter(IOutpostPanelView view)
         {
@@ -86,8 +88,10 @@ namespace SubTerra.App.UI.Outpost
             openedFacilityInstanceId = service.InteractionFacilityInstanceId;
             openedFacilityBuildingId = service.InteractionFacilityBuildingId;
             selectedMineralId = string.Empty;
+            mineralSearchQuery = string.Empty;
             selectedQuantity = 1;
             activeMode = mode;
+            view?.ClearMineralSearch();
             view?.SetMode(activeMode);
             view?.SetResult(string.Empty, false);
             Render(service.GetSnapshot());
@@ -96,13 +100,51 @@ namespace SubTerra.App.UI.Outpost
             {
                 RequestCharge();
             }
+            else if (activeMode == OutpostPanelMode.Clinic)
+            {
+                RequestHeal();
+            }
+        }
+
+        public void ToggleInteractionPanel(bool primaryInteractionClaimed)
+        {
+            if (primaryInteractionClaimed)
+            {
+                YieldInteraction();
+                return;
+            }
+
+            ToggleInteractionPanel();
+        }
+
+        /// <summary>엘리베이터가 공용 Interact 입력을 우선 사용하면 열려 있던 시설 패널도 닫는다.</summary>
+        public void YieldInteraction()
+        {
+            CloseInteractionPanel();
+        }
+
+        /// <summary>
+        /// X 버튼 또는 ESC로 창만 닫는다.
+        /// 시설 범위 안에 있어도 숨기며, 같은 시설에서 E로 다시 열 수 있다.
+        /// </summary>
+        public void DismissInteractionPanel()
+        {
+            CloseInteractionPanel();
         }
 
         public void SelectMineral(string mineralId)
         {
             selectedMineralId = mineralId ?? string.Empty;
             selectedQuantity = 1;
+            mineralSearchQuery = string.Empty;
             RenderSelection();
+            RenderMineralOptions();
+        }
+
+        public void SetMineralSearch(string query)
+        {
+            mineralSearchQuery = query ?? string.Empty;
+            RenderMineralOptions();
         }
 
         public void SetQuantity(int quantity)
@@ -114,6 +156,11 @@ namespace SubTerra.App.UI.Outpost
         public OutpostOperationResult RequestCharge()
         {
             return Execute(() => service.TryCharge(), OutpostOperationKind.Charge);
+        }
+
+        public OutpostOperationResult RequestHeal()
+        {
+            return Execute(() => service.TryHeal(), OutpostOperationKind.Heal);
         }
 
         public OutpostOperationResult RequestDeposit(string mineralId, int quantity)
@@ -223,6 +270,17 @@ namespace SubTerra.App.UI.Outpost
                 ? "체크포인트 없음"
                 : snapshot.CheckpointId + " (" + snapshot.CheckpointX + ", " + snapshot.CheckpointY + ")");
             RenderSelection();
+            RenderMineralOptions();
+        }
+
+        private void RenderMineralOptions()
+        {
+            var options = OutpostMineralPickerFilter.Build(
+                latestSnapshot?.PlayerCargo,
+                latestSnapshot?.Storage);
+            view?.SetMineralOptions(
+                OutpostMineralPickerFilter.Filter(options, mineralSearchQuery),
+                selectedMineralId);
         }
 
         private void RenderSelection()
@@ -278,8 +336,10 @@ namespace SubTerra.App.UI.Outpost
             openedFacilityInstanceId = string.Empty;
             openedFacilityBuildingId = string.Empty;
             selectedMineralId = string.Empty;
+            mineralSearchQuery = string.Empty;
             selectedQuantity = 1;
             activeMode = OutpostPanelMode.None;
+            view?.ClearMineralSearch();
             view?.SetMode(OutpostPanelMode.None);
             view?.SetVisible(false);
         }
@@ -302,6 +362,11 @@ namespace SubTerra.App.UI.Outpost
             if (buildingId == DataIds.Buildings.ChargerBasic)
             {
                 return OutpostPanelMode.Charger;
+            }
+
+            if (buildingId == DataIds.Buildings.ClinicBasic)
+            {
+                return OutpostPanelMode.Clinic;
             }
 
             if (buildingId == DataIds.Buildings.SettlementBasic)

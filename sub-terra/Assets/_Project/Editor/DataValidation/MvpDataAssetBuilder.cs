@@ -22,6 +22,8 @@ namespace SubTerra.App.Editor.DataValidation
             "Assets/_Project/Prefabs/Gameplay/Buildings/SupportPillar.prefab";
         private const string EmergencyEscapePortalPrefabPath =
             "Assets/_Project/Prefabs/Gameplay/Buildings/EmergencyEscapePortal.prefab";
+        private const string ClinicPrefabPath =
+            "Assets/_Project/Prefabs/Gameplay/Power/ClinicFacility.prefab";
         private const string IconPath = Root + "/Icons/DataPlaceholder.asset";
         private const string BootstrapScenePath = "Assets/_Project/Scenes/Bootstrap/Bootstrap.unity";
 
@@ -66,11 +68,14 @@ namespace SubTerra.App.Editor.DataValidation
             var emergencyEscapePortalPrefab =
                 AssetDatabase.LoadAssetAtPath<GameObject>(EmergencyEscapePortalPrefabPath)
                 ?? prefab;
+            var clinicPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(ClinicPrefabPath)
+                ?? prefab;
             var icon = EnsurePlaceholderIcon();
             var minerals = BuildMinerals(icon);
             var buildings = BuildBuildings(
                 prefab,
                 supportPrefab,
+                clinicPrefab,
                 emergencyEscapePortalPrefab,
                 icon);
             var recipes = BuildRecipes();
@@ -213,6 +218,7 @@ namespace SubTerra.App.Editor.DataValidation
         private static List<BuildingData> BuildBuildings(
             GameObject prefab,
             GameObject supportPrefab,
+            GameObject clinicPrefab,
             GameObject emergencyEscapePortalPrefab,
             Sprite icon)
         {
@@ -226,6 +232,9 @@ namespace SubTerra.App.Editor.DataValidation
                     icon, new List<ItemCostEntry> { new ItemCostEntry(DataIds.Minerals.Iron, 1) }),
                 EnsureBuilding("Building_Charger_Basic.asset", DataIds.Buildings.ChargerBasic, "기본 충전기",
                     "전력망에 연결되면 플레이어 장비를 충전합니다.", prefab, 3,
+                    icon, new List<ItemCostEntry> { new ItemCostEntry(DataIds.Minerals.Copper, 3) }),
+                EnsureBuilding("Building_Clinic_Basic.asset", DataIds.Buildings.ClinicBasic, "보건소",
+                    "전력망에 연결되면 플레이어 체력을 최대치까지 회복합니다.", clinicPrefab, 3,
                     icon, new List<ItemCostEntry> { new ItemCostEntry(DataIds.Minerals.Copper, 3) }),
                 EnsureBuilding("Building_Storage_Basic.asset", DataIds.Buildings.StorageBasic, "기본 보관함",
                     "탐사 중 수집한 광물을 임시 보관합니다.", prefab, 0,
@@ -299,19 +308,42 @@ namespace SubTerra.App.Editor.DataValidation
         {
             return new List<UpgradeData>
             {
-                EnsureUpgrade("Upgrade_Drill_Speed.asset", DataIds.Upgrades.DrillSpeed, "드릴 속도", 3, 0.1f),
-                EnsureUpgrade("Upgrade_Drill_Efficiency.asset", DataIds.Upgrades.DrillEfficiency, "드릴 전력 효율", 3, 0.05f),
-                EnsureUpgrade("Upgrade_Maximum_Energy.asset", DataIds.Upgrades.MaximumEnergy, "최대 전력", 3, 20f),
-                EnsureHealthUpgrade("Upgrade_Maximum_Health.asset", DataIds.Upgrades.MaximumHealth, "최대 체력", new[] { 30f, 60f, 100f }),
-                EnsureHealthUpgrade("Upgrade_Health_Regeneration.asset", DataIds.Upgrades.HealthRegeneration, "초당 체력 재생", new[] { 0.3f, 0.6f, 1f }),
-                EnsureUpgrade("Upgrade_Maximum_Cargo.asset", DataIds.Upgrades.MaximumCargo, "최대 화물 중량", 3, 10f),
-                EnsureUpgrade("Upgrade_Drone_Scan.asset", DataIds.Upgrades.DroneScan, "드론 스캔 범위", 2, 2f),
-                EnsureUpgrade("Upgrade_Drone_Rescue.asset", DataIds.Upgrades.DroneRescue, "드론 구조 보존", 2, 0.15f),
-                EnsureUpgrade("Upgrade_Gas_Resistance.asset", DataIds.Upgrades.GasResistance, "가스 저항", 3, 0.1f)
+                EnsureUpgrade("Upgrade_Drill_Speed.asset", DataIds.Upgrades.DrillSpeed, "드릴 속도",
+                    new[] { 0.25f, 2f / 3f, 11f / 9f },
+                    Costs(Copper(8), CopperIron(10, 6), IronLithium(12, 8))),
+                EnsureUpgrade("Upgrade_Drill_Efficiency.asset", DataIds.Upgrades.DrillEfficiency, "드릴 전력 효율",
+                    new[] { 0.2f, 0.35f, 0.5f },
+                    Costs(Copper(6), CopperIron(8, 5), IronLithium(10, 6))),
+                EnsureUpgrade("Upgrade_Maximum_Energy.asset", DataIds.Upgrades.MaximumEnergy, "최대 전력",
+                    new[] { 50f, 110f, 180f },
+                    Costs(Copper(8), CopperIron(8, 6), IronLithium(10, 8))),
+                EnsureUpgrade("Upgrade_Maximum_Health.asset", DataIds.Upgrades.MaximumHealth, "최대 체력",
+                    new[] { 40f, 80f, 130f },
+                    Costs(Copper(6), CopperIron(6, 4), IronLithium(8, 5))),
+                EnsureUpgrade("Upgrade_Health_Regeneration.asset", DataIds.Upgrades.HealthRegeneration, "초당 체력 재생",
+                    new[] { 0.3f, 0.5f, 1f },
+                    Costs(Copper(6), CopperIron(6, 4), IronLithium(6, 5))),
+                EnsureUpgrade("Upgrade_Maximum_Cargo.asset", DataIds.Upgrades.MaximumCargo, "최대 화물 중량",
+                    new[] { 30f, 70f, 120f },
+                    Costs(Copper(6), CopperIron(8, 5), IronLithium(8, 6))),
+                EnsureUpgrade("Upgrade_Drone_Scan.asset", DataIds.Upgrades.DroneScan, "드론 스캔 범위",
+                    new[] { 3f, 7f },
+                    Costs(Copper(6), CopperIron(6, 5))),
+                EnsureUpgrade("Upgrade_Drone_Rescue.asset", DataIds.Upgrades.DroneRescue, "드론 구조 보존",
+                    new[] { 0.35f, 0.7f },
+                    Costs(Copper(8), IronLithium(8, 6))),
+                EnsureUpgrade("Upgrade_Gas_Resistance.asset", DataIds.Upgrades.GasResistance, "가스 저항",
+                    new[] { 0.25f, 0.5f, 0.75f },
+                    Costs(Copper(6), CopperIron(6, 4), IronLithium(8, 6)))
             };
         }
 
-        private static UpgradeData EnsureUpgrade(string file, string id, string name, int maxLevel, float effect)
+        private static UpgradeData EnsureUpgrade(
+            string file,
+            string id,
+            string name,
+            IReadOnlyList<float> effects,
+            IReadOnlyList<List<ItemCostEntry>> costs)
         {
             var path = Root + "/Upgrades/" + file;
             var asset = AssetDatabase.LoadAssetAtPath<UpgradeData>(path);
@@ -322,56 +354,48 @@ namespace SubTerra.App.Editor.DataValidation
             }
 
             var levels = new List<UpgradeLevelDefinition>();
-            for (var i = 1; i <= maxLevel; i++)
+            for (var i = 0; i < effects.Count; i++)
             {
                 levels.Add(new UpgradeLevelDefinition(
-                    i,
-                    effect * i,
-                    new List<ItemCostEntry> { new ItemCostEntry(DataIds.Minerals.Copper, i) }));
+                    i + 1,
+                    effects[i],
+                    costs[i]));
             }
 
-            asset.EditorSet(id, name, maxLevel, levels);
+            asset.EditorSet(id, name, effects.Count, levels);
             EditorUtility.SetDirty(asset);
             return asset;
         }
 
-        private static UpgradeData EnsureHealthUpgrade(
-            string file,
-            string id,
-            string name,
-            IReadOnlyList<float> effects)
+        private static IReadOnlyList<List<ItemCostEntry>> Costs(params List<ItemCostEntry>[] levels)
         {
-            var path = Root + "/Upgrades/" + file;
-            var asset = AssetDatabase.LoadAssetAtPath<UpgradeData>(path);
-            if (asset == null)
-            {
-                asset = ScriptableObject.CreateInstance<UpgradeData>();
-                AssetDatabase.CreateAsset(asset, path);
-            }
+            return levels;
+        }
 
-            asset.EditorSet(
-                id,
-                name,
-                3,
-                new List<UpgradeLevelDefinition>
-                {
-                    new UpgradeLevelDefinition(1, effects[0], new List<ItemCostEntry>
-                    {
-                        new ItemCostEntry(DataIds.Minerals.Copper, 1)
-                    }),
-                    new UpgradeLevelDefinition(2, effects[1], new List<ItemCostEntry>
-                    {
-                        new ItemCostEntry(DataIds.Minerals.Copper, 2),
-                        new ItemCostEntry(DataIds.Minerals.Iron, 1)
-                    }),
-                    new UpgradeLevelDefinition(3, effects[2], new List<ItemCostEntry>
-                    {
-                        new ItemCostEntry(DataIds.Minerals.Copper, 3),
-                        new ItemCostEntry(DataIds.Minerals.Iron, 2)
-                    })
-                });
-            EditorUtility.SetDirty(asset);
-            return asset;
+        private static List<ItemCostEntry> Copper(int copper)
+        {
+            return new List<ItemCostEntry>
+            {
+                new ItemCostEntry(DataIds.Minerals.Copper, copper)
+            };
+        }
+
+        private static List<ItemCostEntry> CopperIron(int copper, int iron)
+        {
+            return new List<ItemCostEntry>
+            {
+                new ItemCostEntry(DataIds.Minerals.Copper, copper),
+                new ItemCostEntry(DataIds.Minerals.Iron, iron)
+            };
+        }
+
+        private static List<ItemCostEntry> IronLithium(int iron, int lithium)
+        {
+            return new List<ItemCostEntry>
+            {
+                new ItemCostEntry(DataIds.Minerals.Iron, iron),
+                new ItemCostEntry(DataIds.Minerals.Lithium, lithium)
+            };
         }
 
         private static List<DialogueTemplateData> BuildDialogues()

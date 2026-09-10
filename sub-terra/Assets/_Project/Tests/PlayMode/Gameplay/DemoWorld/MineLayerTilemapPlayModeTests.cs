@@ -71,6 +71,16 @@ namespace SubTerra.Gameplay.DemoWorld.Tests
             Assert.That(mining.TryMineInstant(boundaryCell), Is.False);
             Assert.That(tilemap.GetTile(boundaryCell), Is.SameAs(boundary));
 
+            Vector3Int lockedDeepCell = new(
+                0,
+                distribution.TopY - distribution.Bands[2].MinDepth + 1,
+                0);
+            TileBase lockedDeepTile = tilemap.GetTile(lockedDeepCell);
+            Assert.That(lockedDeepTile, Is.Not.Null);
+            Assert.That(mining.TryMineInstant(lockedDeepCell), Is.False);
+            Assert.That(mining.LastFailure, Is.EqualTo(MiningFailureReason.DeepZoneLocked));
+            Assert.That(tilemap.GetTile(lockedDeepCell), Is.SameAs(lockedDeepTile));
+
             Object.Destroy(host);
             Object.Destroy(distribution);
             Object.Destroy(rock);

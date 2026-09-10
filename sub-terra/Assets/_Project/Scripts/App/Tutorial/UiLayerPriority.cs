@@ -7,11 +7,15 @@ namespace SubTerra.App.Tutorial
     public static class UiLayerPriority
     {
         public const int TutorialGuidance = 100;
+        /// <summary>새 게임 시작 시 사용자가 먼저 확인해야 하는 조작 안내 팝업.</summary>
+        public const int IntroductionGuidance = 10_000;
         public const int SettingsModal = 800;
         /// <summary>장비 업그레이드·인벤토리 등 플레이어 호출 모달. 일반 HUD/튜토리얼 위.</summary>
         public const int ModalPanel = 1_000;
         public const int HazardWarning = 500;
         public const int CriticalHazard = 600;
+        /// <summary>드론 말풍선을 포함한 모든 게임 HUD보다 앞에 표시하는 긴급 구출 모달.</summary>
+        public const int EmergencyRescueModal = 31_000;
 
         /// <summary>긴급 경고가 일반 튜토리얼 안내보다 위에 와야 하는지.</summary>
         public static bool HazardBeatsTutorial(int hazardSortOrder, int tutorialSortOrder)

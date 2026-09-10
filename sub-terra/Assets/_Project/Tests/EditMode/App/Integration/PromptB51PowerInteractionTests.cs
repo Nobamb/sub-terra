@@ -48,6 +48,61 @@ namespace SubTerra.App.Tests.Integration
         }
 
         [Test]
+        public void PromptB77_CoreCirclePowerAndGasPurificationShareTheSameBoundary()
+        {
+            var root = new GameObject("PromptB77_Root");
+            var player = new GameObject("PromptB77_Player");
+            try
+            {
+                var network = root.AddComponent<PowerNetworkSystem>();
+                var bridge = root.AddComponent<GameplayEventBridge>();
+                bridge.enabled = false;
+                SetField(bridge, "powerNetworkSystem", network);
+                bridge.SetInteractionOrigin(player.transform);
+                var sink = new CapturingSink();
+                bridge.SetEventSink(sink);
+                bridge.enabled = true;
+
+                var core = CreateNode(
+                    root.transform,
+                    network,
+                    "core.1",
+                    DataIds.Buildings.OutpostCoreBasic,
+                    Vector3.zero,
+                    true);
+                var charger = CreateNode(
+                    root.transform,
+                    network,
+                    "charger.1",
+                    DataIds.Buildings.ChargerBasic,
+                    new Vector3(10f, 0f, 0f),
+                    false);
+                player.transform.position = new Vector3(10f, 0f, 0f);
+                network.RequestRebuild();
+                PublishPowerSnapshot(bridge, network.CurrentSnapshot);
+
+                var indicator = core.GetComponent<PowerSupplyRangeIndicator>();
+                Assert.That(indicator, Is.Not.Null);
+                Assert.That(indicator.Radius, Is.EqualTo(10f));
+                Assert.That(sink.Last.outpostStatus.isInPurificationRange, Is.True);
+                Assert.That(sink.Last.outpostStatus.connectedFacilities[0].isActive, Is.True);
+
+                charger.transform.position = new Vector3(10.01f, 0f, 0f);
+                player.transform.position = new Vector3(10.01f, 0f, 0f);
+                network.RequestRebuild();
+                PublishPowerSnapshot(bridge, network.CurrentSnapshot);
+
+                Assert.That(sink.Last.outpostStatus.isInPurificationRange, Is.False);
+                Assert.That(sink.Last.outpostStatus.connectedFacilities[0].isActive, Is.False);
+            }
+            finally
+            {
+                Object.DestroyImmediate(player);
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
         public void FacilityStatus_SettlementAcceptsElevatorAsPowerOrigin()
         {
             var root = new GameObject("PromptB51_Root");
@@ -74,6 +129,32 @@ namespace SubTerra.App.Tests.Integration
             finally
             {
                 Object.DestroyImmediate(elevator);
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
+        public void PromptB62_FacilityStatusContainsOnlyChargerAndSettlement()
+        {
+            var root = new GameObject("PromptB62_Root");
+            try
+            {
+                var network = root.AddComponent<PowerNetworkSystem>();
+                var bridge = root.AddComponent<GameplayEventBridge>();
+                SetField(bridge, "powerNetworkSystem", network);
+                CreateNode(root.transform, network, "storage.1", DataIds.Buildings.StorageBasic, Vector3.zero, false);
+                CreateNode(root.transform, network, "light.1", DataIds.Buildings.LightBasic, Vector3.right, false);
+                CreateNode(root.transform, network, "charger.1", DataIds.Buildings.ChargerBasic, Vector3.right * 2f, false);
+                CreateNode(root.transform, network, "settlement.1", DataIds.Buildings.SettlementBasic, Vector3.right * 3f, false);
+
+                var statuses = BuildFacilityStatuses(bridge);
+
+                Assert.That(statuses, Has.Count.EqualTo(2));
+                Assert.That(statuses[0].buildingId, Is.EqualTo(DataIds.Buildings.ChargerBasic));
+                Assert.That(statuses[1].buildingId, Is.EqualTo(DataIds.Buildings.SettlementBasic));
+            }
+            finally
+            {
                 Object.DestroyImmediate(root);
             }
         }
@@ -160,6 +241,17 @@ namespace SubTerra.App.Tests.Integration
             return (List<ConnectedFacilityStatusDto>)method.Invoke(bridge, null);
         }
 
+        private static void PublishPowerSnapshot(
+            GameplayEventBridge bridge,
+            PowerNetworkSnapshot snapshot)
+        {
+            var method = typeof(GameplayEventBridge).GetMethod(
+                "OnPowerNetworkRebuilt",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(method, Is.Not.Null);
+            method.Invoke(bridge, new object[] { snapshot });
+        }
+
         private static void SetField(object target, string fieldName, object value)
         {
             var field = target.GetType().GetField(
@@ -167,6 +259,16 @@ namespace SubTerra.App.Tests.Integration
                 BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.That(field, Is.Not.Null);
             field.SetValue(target, value);
+        }
+
+        private sealed class CapturingSink : IGameplayEventSink
+        {
+            public GameplayEventDto Last { get; private set; }
+
+            public void Publish(GameplayEventDto gameplayEvent)
+            {
+                Last = gameplayEvent;
+            }
         }
     }
 }

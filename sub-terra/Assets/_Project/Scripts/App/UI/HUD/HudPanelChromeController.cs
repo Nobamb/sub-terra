@@ -12,7 +12,7 @@ namespace SubTerra.App.UI.HUD
     /// 시설 건설·Digger-Bot·게임 가이드·인벤토리 패널의 닫기/토글과
     /// 가이드에 명시된 단축키(B/I/G/Tab)를 담당한다.
     /// prompt-B 34: Tab 또는 드론 클릭으로 digger-bot 창 토글, X로 닫기.
-    /// prompt-B 35-3: 시설 건설 중 Enter가 UI Submit으로 게임 가이드를 토글하지 않게 한다.
+    /// 시설 건설 중 채굴 Enter가 UI Submit으로 게임 가이드를 토글하지 않게 한다.
     /// EventSystem보다 먼저 Enter를 처리해 선택 해제가 Submit보다 앞서 적용되게 한다.
     /// </summary>
     [DefaultExecutionOrder(-200)]
@@ -105,8 +105,8 @@ namespace SubTerra.App.UI.HUD
             var keyboard = Keyboard.current;
             if (keyboard != null)
             {
-                // prompt-B 35-3: 시설 건설 창이 열린 동안 Enter는 배치 전용.
-                // EventSystem Submit이 선택된 단축키(게임 가이드 등)를 다시 누르지 않게
+                // 시설 건설 중 채굴 Enter가 EventSystem Submit으로 선택된
+                // 단축키(게임 가이드 등)를 다시 누르지 않게
                 // 매 프레임(EventSystem보다 먼저) 선택을 해제한다.
                 if (buildingMenuOpen
                     && (keyboard.enterKey.wasPressedThisFrame

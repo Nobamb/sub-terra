@@ -60,6 +60,8 @@ namespace SubTerra.App.Integration
         [SerializeField] private PlayerMovement playerMovement;
         [SerializeField] private MiningProgressHud miningProgressHud;
         [SerializeField] private RunFailureRuntimeController runFailureController;
+        private EmergencyRescueRuntimeController emergencyRescueController;
+        private ExplorationMinimap minimap;
 
         private SaveRuntimeController runtime;
         private GameBootstrapper bootstrap;
@@ -177,6 +179,7 @@ namespace SubTerra.App.Integration
             playerMovement = Resolve(playerMovement);
             miningProgressHud = Resolve(miningProgressHud, FindObjectsInactive.Include);
             runFailureController = Resolve(runFailureController);
+            emergencyRescueController = Resolve(emergencyRescueController, FindObjectsInactive.Include);
 
             if (worldSnapshotProviderBehaviour == null)
             {
@@ -225,6 +228,10 @@ namespace SubTerra.App.Integration
                             this,
                             runtime.Progression != null ? runtime.Progression.Effects : null,
                             runtime);
+                        miningSystem.SetCellProtectionPredicate(
+                            buildingPlacementSystem != null
+                                ? buildingPlacementSystem.IsGroundSupportingBuilding
+                                : null);
                     }
                 });
 
@@ -259,7 +266,10 @@ namespace SubTerra.App.Integration
                     outpostService = new OutpostService(
                         runtime.InventoryService,
                         mineralLookup,
-                        bootstrap.State);
+                        bootstrap.State,
+                        healthCommand: runFailureController != null
+                            ? runFailureController.SurvivalController
+                            : null);
                     outpostBridge.BindTo(outpostService);
                     runtime.BindAutoSaveEvents(
                         runtime.Economy,
@@ -318,6 +328,22 @@ namespace SubTerra.App.Integration
                         hudBinder.BindHealthSource(runFailureController.SurvivalController);
                     }
                     runFailureController.PlayerRescued += OnPlayerRescued;
+                });
+
+            TryStep(
+                "EmergencyRescue",
+                () =>
+                {
+                    if (emergencyRescueController == null)
+                    {
+                        emergencyRescueController = gameObject.AddComponent<EmergencyRescueRuntimeController>();
+                    }
+
+                    emergencyRescueController.Bind(
+                        runtime,
+                        bootstrap.State,
+                        playerMovement != null ? playerMovement.transform : null,
+                        hudBinder);
                 });
 
             var dataCatalog = bootstrap.AssignedCatalog as GameDataCatalog;
@@ -502,6 +528,8 @@ namespace SubTerra.App.Integration
             }
 
             activationGate.MarkWorldRestored();
+            if (minimap != null && worldSnapshotProviderBehaviour is IWorldSnapshotProvider provider)
+                minimap.RestoreMining(provider.CaptureSnapshot());
         }
 
         /// <summary>SaveRuntime Continue 경로에서 파생 재계산 직후 호출한다.</summary>
@@ -582,10 +610,30 @@ namespace SubTerra.App.Integration
                 }
             }
 
+            TryStep("BindMinimap", BindMinimap);
             SetHudVisible(true);
             SetDeferredInputEnabled(true);
             uiActivated = true;
             return true;
+        }
+
+        private void BindMinimap()
+        {
+            if (hudCanvasGroup == null || playerMovement == null) return;
+            if (minimap == null)
+            {
+                var root = new GameObject(
+                    "ExplorationMinimap",
+                    typeof(RectTransform),
+                    typeof(CanvasRenderer),
+                    typeof(CanvasGroup));
+                root.transform.SetParent(hudCanvasGroup.transform, false);
+                minimap = root.AddComponent<ExplorationMinimap>();
+            }
+            var snapshot = worldSnapshotProviderBehaviour is IWorldSnapshotProvider provider
+                ? provider.CaptureSnapshot() : null;
+            minimap.Bind(FindForegroundTilemap(), playerMovement.transform, snapshot);
+            minimap.ApplyHudLayout();
         }
 
         private void BindInventoryPanelUi()
@@ -618,9 +666,9 @@ namespace SubTerra.App.Integration
                 gameplayEventBridge = Resolve<GameplayEventBridge>(null);
             }
 
+            var elevator = Resolve<ElevatorController>(null);
             if (gameplayEventBridge != null)
             {
-                var elevator = Resolve<ElevatorController>(null);
                 gameplayEventBridge.SetElevatorPowerOrigin(
                     elevator != null ? elevator.transform : null);
                 gameplayEventBridge.SetInteractionOrigin(
@@ -634,6 +682,8 @@ namespace SubTerra.App.Integration
 
             if (outpostPanelBinder != null)
             {
+                outpostPanelBinder.SetPrimaryInteractionClaim(
+                    () => elevator != null && elevator.TryClaimInteractionPriority());
                 outpostPanelBinder.BindTo(outpostService);
             }
         }
@@ -741,6 +791,21 @@ namespace SubTerra.App.Integration
 
             playerMovement.SetCargoSpeedMultiplier(
                 CargoSpeedPolicy.Evaluate(snapshot.CurrentWeight, snapshot.MaxCapacity));
+            playerMovement.SetCargoJumpMultiplier(
+                CargoLoadEffectPolicy.EvaluateJumpMultiplier(
+                    snapshot.CurrentWeight,
+                    snapshot.MaxCapacity));
+
+            var survival = runFailureController != null
+                ? runFailureController.SurvivalController
+                : null;
+            if (survival != null)
+            {
+                survival.SetCargoFallImpactMultiplier(
+                    CargoLoadEffectPolicy.EvaluateFallImpactMultiplier(
+                        snapshot.CurrentWeight,
+                        snapshot.MaxCapacity));
+            }
         }
 
         private void OnInventoryChangedForProgression(InventorySnapshot _)
@@ -795,6 +860,11 @@ namespace SubTerra.App.Integration
                 }
                 runFailureController.PlayerRescued -= OnPlayerRescued;
                 runFailureController.Unbind();
+            }
+
+            if (emergencyRescueController != null)
+            {
+                emergencyRescueController.Unbind();
             }
         }
 
@@ -905,6 +975,7 @@ namespace SubTerra.App.Integration
             }
 
             depthDarknessOverlay.SetTerrainTilemap(FindForegroundTilemap());
+            depthDarknessOverlay.SetDroneSensor(droneSensor);
             depthDarknessOverlay.Bind(bootstrap.State, playerMovement.transform);
         }
 
@@ -970,6 +1041,7 @@ namespace SubTerra.App.Integration
 
         public void Publish(GameplayEventDto gameplayEvent)
         {
+            if (minimap != null) minimap.RecordMining(gameplayEvent);
             var state = GameBootstrapper.Instance != null
                 ? GameBootstrapper.Instance.State
                 : null;
@@ -1037,6 +1109,18 @@ namespace SubTerra.App.Integration
             if (droneSensor != null)
             {
                 droneSensor.SetAppliedGasRisk(effect.Risk);
+            }
+
+            // 실제 가스 노출과 활성 전진기지 보호가 동시에 확정된 경우만 퀘스트에 전달한다.
+            if (effect.IsExposed && effect.IsSheltered && eventFanOut != null)
+            {
+                eventFanOut.Publish(new GameplayEventDto
+                {
+                    type = GameplayEventType.GasPurified,
+                    entityId = "player",
+                    instanceId = effect.GasZoneId,
+                    reasonId = "outpost_shelter"
+                });
             }
         }
 

@@ -19,6 +19,7 @@ namespace SubTerra.App.Core.Data
             public const string LadderBasic = "building.ladder.basic";
             public const string LightBasic = "building.light.basic";
             public const string ChargerBasic = "building.charger.basic";
+            public const string ClinicBasic = "building.clinic.basic";
             public const string StorageBasic = "building.storage.basic";
             public const string SettlementBasic = "building.settlement.basic";
             public const string OutpostCoreBasic = "building.outpost_core.basic";

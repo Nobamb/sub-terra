@@ -106,7 +106,7 @@ namespace SubTerra.App.Integration
             var id = string.IsNullOrEmpty(status.outpostInstanceId)
                 ? "outpost-current"
                 : status.outpostInstanceId;
-            if (status.isActive && status.isInInteractionRange)
+            if (status.isActive && status.isInPurificationRange)
             {
                 shelteringOutpostIds.Add(id);
             }

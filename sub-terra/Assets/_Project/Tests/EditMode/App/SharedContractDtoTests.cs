@@ -100,6 +100,7 @@ namespace SubTerra.App.Tests
                     outpostInstanceId = "outpost-01",
                     isActive = true,
                     isInInteractionRange = true,
+                    isInPurificationRange = true,
                     totalPowerSupply = 100f,
                     totalPowerConsumption = 40f,
                     connectedFacilities = new List<ConnectedFacilityStatusDto>
@@ -121,6 +122,7 @@ namespace SubTerra.App.Tests
 
             Assert.That(restored.type, Is.EqualTo(GameplayEventType.OutpostStatusChanged));
             Assert.That(restored.outpostStatus.totalPowerSupply, Is.EqualTo(100f));
+            Assert.That(restored.outpostStatus.isInPurificationRange, Is.True);
             Assert.That(
                 restored.outpostStatus.connectedFacilities[0].instanceId,
                 Is.EqualTo("charger-01"));

@@ -205,8 +205,8 @@ namespace SubTerra.App.UI.SurfaceBase
             var draft = view.ReadSettingsDraft(settings.Draft);
             settings.Draft.CopyFrom(draft);
             settings.Apply();
-            view.SetSettingsVisible(false);
             SettingsRuntimeApplier.Apply(settings.Applied, applyResolution: true);
+            view.SetSettingsVisible(false);
             view.SetMineResetConfirmVisible(false);
         }
 

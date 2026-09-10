@@ -27,9 +27,13 @@ namespace SubTerra.App.UI.Outpost
         [SerializeField] private TMP_Text settlementCargoText;
         [SerializeField] private TMP_Text checkpointText;
         [SerializeField] private TMP_Text selectedMineralText;
+        [SerializeField] private OutpostMineralPickerView mineralPicker;
         [SerializeField] private TMP_Text resultText;
         [SerializeField] private GameObject tutorialRoot;
+        [SerializeField] private Button closeButton;
         [SerializeField] private Button[] operationButtons;
+
+        public Button CloseButton => closeButton;
 
         private GameObject interactionMessageRoot;
         private TMP_Text interactionMessageText;
@@ -43,7 +47,9 @@ namespace SubTerra.App.UI.Outpost
         public void SetMode(OutpostPanelMode mode)
         {
             SetActive(coreRoot, mode == OutpostPanelMode.Core);
-            SetActive(chargerRoot, mode == OutpostPanelMode.Charger);
+            SetActive(
+                chargerRoot,
+                mode == OutpostPanelMode.Charger || mode == OutpostPanelMode.Clinic);
             SetActive(settlementRoot, mode == OutpostPanelMode.Settlement);
             SetActive(storageRoot, mode == OutpostPanelMode.Storage);
             SetActive(
@@ -64,6 +70,9 @@ namespace SubTerra.App.UI.Outpost
                     break;
                 case OutpostPanelMode.Charger:
                     titleText.text = "충전기";
+                    break;
+                case OutpostPanelMode.Clinic:
+                    titleText.text = "보건소";
                     break;
                 case OutpostPanelMode.Settlement:
                     titleText.text = "정산 콘솔";
@@ -166,6 +175,24 @@ namespace SubTerra.App.UI.Outpost
             }
         }
 
+        public void SetMineralOptions(
+            IReadOnlyList<OutpostMineralOption> options,
+            string selectedMineralId)
+        {
+            if (mineralPicker != null)
+            {
+                mineralPicker.SetOptions(options, selectedMineralId);
+            }
+        }
+
+        public void ClearMineralSearch()
+        {
+            if (mineralPicker != null)
+            {
+                mineralPicker.ClearSearch();
+            }
+        }
+
         public void SetResult(string message, bool isError)
         {
             if (resultText != null)
@@ -237,7 +264,10 @@ namespace SubTerra.App.UI.Outpost
                 && settlementCargoText != null
                 && checkpointText != null
                 && selectedMineralText != null
-                && resultText != null;
+                && mineralPicker != null
+                && mineralPicker.HasRequiredReferences()
+                && resultText != null
+                && closeButton != null;
         }
 
         private static void SetActive(GameObject target, bool active)
@@ -335,6 +365,8 @@ namespace SubTerra.App.UI.Outpost
             {
                 case "building.charger.basic":
                     return "충전기";
+                case "building.clinic.basic":
+                    return "보건소";
                 case "building.storage.basic":
                     return "보관함";
                 case "building.settlement.basic":

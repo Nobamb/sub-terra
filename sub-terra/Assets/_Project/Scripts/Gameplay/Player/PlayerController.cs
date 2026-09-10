@@ -1,3 +1,4 @@
+using SubTerra.Shared;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -43,7 +44,17 @@ namespace SubTerra.Gameplay.Player
 
         private void Update()
         {
-            var input = moveAction?.ReadValue<Vector2>() ?? Vector2.zero;
+            // Move InputAction은 WASD+방향키 한 합성이다. activeControl.device가 null인
+            // 경우가 있어 채굴 전용 키가 이동으로 새어 나간다. 키보드는 항상 선택 방식을 따른다.
+            var input = PlayerKeyboardControls.ReadMovement(ControlPreferences.Scheme);
+            if (input == Vector2.zero
+                && moveAction != null
+                && !PlayerKeyboardControls.IsCompositeMoveKeyPressed())
+            {
+                input = moveAction.ReadValue<Vector2>();
+            }
+
+            if (ControlPreferences.IsSettingsOpen) input = Vector2.zero;
             movement.SetMoveInput(input.x);
             movement.SetVerticalMoveInput(input.y);
         }
@@ -81,7 +92,7 @@ namespace SubTerra.Gameplay.Player
 
         private void OnJumpStarted(InputAction.CallbackContext context)
         {
-            if (!context.started)
+            if (!context.started || ControlPreferences.IsSettingsOpen)
             {
                 return;
             }

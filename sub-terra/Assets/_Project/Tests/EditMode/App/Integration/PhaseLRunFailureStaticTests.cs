@@ -1,10 +1,18 @@
+using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using NUnit.Framework;
+using SubTerra.App.Core.Data;
 using SubTerra.App.Integration;
+using SubTerra.App.Inventory;
+using SubTerra.App.Progression;
+using SubTerra.App.Save;
+using SubTerra.App.State;
 using SubTerra.App.UI.RunFailure;
 using SubTerra.Gameplay.Building;
 using SubTerra.Gameplay.Mining;
 using SubTerra.Gameplay.Player;
+using SubTerra.Shared;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -16,6 +24,103 @@ namespace SubTerra.App.Tests.Integration
     {
         private const string ScenePath =
             "Assets/_Project/Scenes/App/Mine_Demo_Integration.unity";
+
+        private sealed class UpgradeCatalog : IUpgradeCatalog
+        {
+            private readonly UpgradeData upgrade;
+
+            public UpgradeCatalog(UpgradeData upgrade)
+            {
+                this.upgrade = upgrade;
+            }
+
+            public IReadOnlyList<UpgradeData> Upgrades => new[] { upgrade };
+
+            public bool TryGetUpgrade(string upgradeId, out UpgradeData data)
+            {
+                data = upgrade != null && upgrade.Id == upgradeId ? upgrade : null;
+                return data != null;
+            }
+        }
+
+        private sealed class AffordableWallet : IResourceWallet
+        {
+            public bool CanAfford(IReadOnlyList<ItemCostDto> costs)
+            {
+                return true;
+            }
+
+            public bool TrySpend(IReadOnlyList<ItemCostDto> costs)
+            {
+                return true;
+            }
+        }
+
+        [Test]
+        public void PromptB84_MaximumHealthPurchase_AppliesImmediately()
+        {
+            if (SaveRuntimeController.Instance != null)
+            {
+                Object.DestroyImmediate(SaveRuntimeController.Instance.gameObject);
+            }
+
+            var state = GameState.CreateNew();
+            var runtimeObject = new GameObject("PromptB84_Save");
+            var runtime = runtimeObject.AddComponent<SaveRuntimeController>();
+            var inventoryState = new InventoryState(100f);
+            var inventory = new InventoryService(
+                new InMemoryMineralCatalog(),
+                inventoryState,
+                state);
+            var upgrade = ScriptableObject.CreateInstance<UpgradeData>();
+            upgrade.EditorSet(
+                DataIds.Upgrades.MaximumHealth,
+                "최대 체력",
+                1,
+                new List<UpgradeLevelDefinition>
+                {
+                    new UpgradeLevelDefinition(
+                        1,
+                        50f,
+                        new List<ItemCostEntry>
+                        {
+                            new ItemCostEntry(DataIds.Minerals.Copper, 1)
+                        })
+                });
+            var progression = new ProgressionService(
+                new UpgradeState(),
+                new UpgradeCatalog(upgrade),
+                new AffordableWallet());
+            SetField(runtime, "inventory", inventoryState);
+            SetField(runtime, "inventoryService", inventory);
+            SetField(runtime, "progression", progression);
+
+            var player = new GameObject("PromptB84_Player");
+            var settings = ScriptableObject.CreateInstance<PlayerSurvivalSettings>();
+            var host = new GameObject("PromptB84_RunFailure");
+            var survival = host.AddComponent<PlayerSurvivalController>();
+            survival.Configure(settings, player.transform);
+            var controller = host.AddComponent<RunFailureRuntimeController>();
+            SetField(controller, "survivalController", survival);
+            SetField(controller, "playerTransform", player.transform);
+            controller.Bind(runtime, state);
+
+            var healthEvents = 0;
+            survival.HealthChanged += _ => healthEvents++;
+            var result = progression.TryPurchase(DataIds.Upgrades.MaximumHealth);
+
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(survival.State.MaximumHealth, Is.EqualTo(150));
+            Assert.That(survival.State.Health, Is.EqualTo(150f));
+            Assert.That(healthEvents, Is.EqualTo(1));
+
+            controller.Unbind();
+            Object.DestroyImmediate(host);
+            Object.DestroyImmediate(player);
+            Object.DestroyImmediate(settings);
+            Object.DestroyImmediate(upgrade);
+            Object.DestroyImmediate(runtimeObject);
+        }
 
         [Test]
         public void L_S03_IntegrationScene_WiresSurvivalFailureUiAndAllGameplayInput()
@@ -76,6 +181,13 @@ namespace SubTerra.App.Tests.Integration
         private static T Find<T>(GameObject[] roots) where T : Component
         {
             return roots.SelectMany(root => root.GetComponentsInChildren<T>(true)).FirstOrDefault();
+        }
+
+        private static void SetField(object target, string name, object value)
+        {
+            var field = target.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(field, Is.Not.Null, "Missing field: " + name);
+            field.SetValue(target, value);
         }
 
         private static bool Contains<T>(SerializedProperty array) where T : Behaviour

@@ -24,6 +24,7 @@ namespace SubTerra.Shared
         public string outpostInstanceId;
         public bool isActive;
         public bool isInInteractionRange;
+        public bool isInPurificationRange;
         public string interactionFacilityInstanceId;
         public string interactionFacilityBuildingId;
         public string inactiveReasonId;

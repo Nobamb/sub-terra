@@ -310,6 +310,7 @@ namespace SubTerra.App.Editor.DataValidation
             Bld(DataIds.Buildings.SupportBasic);
             Bld(DataIds.Buildings.LightBasic);
             Bld(DataIds.Buildings.ChargerBasic);
+            Bld(DataIds.Buildings.ClinicBasic);
             Bld(DataIds.Buildings.StorageBasic);
             Bld(DataIds.Buildings.SettlementBasic);
             Bld(DataIds.Buildings.OutpostCoreBasic);

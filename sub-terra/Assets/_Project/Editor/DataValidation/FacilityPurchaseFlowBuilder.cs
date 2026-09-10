@@ -27,6 +27,7 @@ namespace SubTerra.App.Editor.DataValidation
             DataIds.Buildings.SupportBasic,
             DataIds.Buildings.LightBasic,
             DataIds.Buildings.ChargerBasic,
+            DataIds.Buildings.ClinicBasic,
             DataIds.Buildings.StorageBasic,
             DataIds.Buildings.SettlementBasic,
             DataIds.Buildings.OutpostCoreBasic,

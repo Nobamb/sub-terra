@@ -4,9 +4,11 @@ using UnityEngine;
 
 namespace SubTerra.App.UI.Drone
 {
-    /// <summary>드론 ViewSocket을 따라가며 화면 경계 안에 대사를 표시하는 World Space View.</summary>
+    /// <summary>드론을 따라가되 어둠보다 앞선 별도 Overlay Canvas에 대사를 표시한다.</summary>
     public sealed class DroneDialogueSocket : MonoBehaviour, IDroneDialogueView
     {
+        public const int OverlaySortingOrder = 30_000;
+
         [SerializeField] private Transform anchor;
         [SerializeField] private RectTransform visualRoot;
         [SerializeField] private Canvas worldCanvas;
@@ -21,11 +23,15 @@ namespace SubTerra.App.UI.Drone
         private bool boundVisible;
         private bool hasDialogue;
         private float visibleUntil;
+        private RectTransform overlayRoot;
+        private Canvas overlayCanvas;
+        private Vector3 initialWorldScale;
 
         public bool IsShowing => canvasGroup != null && canvasGroup.alpha > 0f;
 
         private void Awake()
         {
+            EnsureOverlayCanvas();
             ApplyNonBlockingPresentation();
             SetCanvasVisible(false);
         }
@@ -88,7 +94,6 @@ namespace SubTerra.App.UI.Drone
             var camera = worldCamera != null ? worldCamera : Camera.main;
             if (camera == null)
             {
-                visualRoot.position = desired;
                 return;
             }
 
@@ -103,13 +108,11 @@ namespace SubTerra.App.UI.Drone
                     viewport.y,
                     viewportPadding.y,
                     1f - viewportPadding.y);
-                var corrected = camera.ViewportToWorldPoint(viewport);
-                corrected.z = desired.z;
-                visualRoot.position = corrected;
-            }
-            else
-            {
-                visualRoot.position = desired;
+                visualRoot.position = new Vector3(
+                    viewport.x * Screen.width,
+                    viewport.y * Screen.height,
+                    0f);
+                ApplyScreenScale(camera, desired);
             }
         }
 
@@ -126,11 +129,12 @@ namespace SubTerra.App.UI.Drone
 
         private void ApplyNonBlockingPresentation()
         {
+            EnsureOverlayCanvas();
             if (worldCanvas != null)
             {
-                // World UI가 지형 Sprite 뒤로 숨지 않도록 UI 정렬만 최상단으로 고정한다.
+                // 별도 Overlay Canvas 안에서 어둠보다 앞, 위험 경고·모달보다 뒤에 그린다.
                 worldCanvas.overrideSorting = true;
-                worldCanvas.sortingOrder = 100;
+                worldCanvas.sortingOrder = OverlaySortingOrder;
             }
 
             if (canvasGroup != null)
@@ -150,6 +154,57 @@ namespace SubTerra.App.UI.Drone
             if (canvasGroup != null)
             {
                 canvasGroup.alpha = visible ? 1f : 0f;
+            }
+        }
+
+        private void EnsureOverlayCanvas()
+        {
+            if (overlayCanvas != null || visualRoot == null)
+            {
+                return;
+            }
+
+            initialWorldScale = visualRoot.lossyScale;
+            var overlayObject = new GameObject(
+                "DroneDialogueOverlayCanvas",
+                typeof(RectTransform),
+                typeof(Canvas));
+            overlayObject.layer = gameObject.layer;
+            overlayRoot = overlayObject.GetComponent<RectTransform>();
+            overlayCanvas = overlayObject.GetComponent<Canvas>();
+            overlayCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            overlayCanvas.sortingOrder = OverlaySortingOrder;
+
+            visualRoot.SetParent(overlayRoot, false);
+            visualRoot.anchorMin = new Vector2(0.5f, 0.5f);
+            visualRoot.anchorMax = new Vector2(0.5f, 0.5f);
+            visualRoot.pivot = new Vector2(0.5f, 0.5f);
+            visualRoot.localRotation = Quaternion.identity;
+        }
+
+        private void ApplyScreenScale(Camera camera, Vector3 worldPosition)
+        {
+            Vector3 screenOrigin = camera.WorldToScreenPoint(worldPosition);
+            Vector3 screenStep = camera.WorldToScreenPoint(
+                worldPosition + Vector3.up * Mathf.Max(0.0001f, initialWorldScale.y));
+            float pixelScale = Mathf.Max(0.0001f, Mathf.Abs(screenStep.y - screenOrigin.y));
+            visualRoot.localScale = Vector3.one * pixelScale;
+        }
+
+        private void OnDestroy()
+        {
+            if (overlayRoot == null)
+            {
+                return;
+            }
+
+            if (Application.isPlaying)
+            {
+                Destroy(overlayRoot.gameObject);
+            }
+            else
+            {
+                DestroyImmediate(overlayRoot.gameObject);
             }
         }
     }

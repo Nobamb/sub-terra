@@ -40,6 +40,7 @@ namespace SubTerra.Gameplay.Structural
         private readonly HashSet<Vector3Int> deferredCandidates = new();
         private readonly Dictionary<Vector3Int, float> telegraphRemaining = new();
         private readonly List<PendingCollapse> pendingCollapses = new();
+        private Func<Vector3Int, bool> cellProtectionPredicate;
 
         private StructuralRiskSettings runtimeSettings;
 
@@ -61,6 +62,7 @@ namespace SubTerra.Gameplay.Structural
         {
             if (crackOverlay != null)
             {
+                crackOverlay.BindSourceTilemap(foregroundTilemap);
                 crackOverlay.BindCollapseDamageReceiver(receiver);
             }
         }
@@ -154,6 +156,7 @@ namespace SubTerra.Gameplay.Structural
             accumulatedImpact.TryGetValue(cell, out float currentImpact);
             accumulatedImpact[cell] = currentImpact + impact;
 
+            List<Vector3Int> verticallyIsolated = CollectVerticallyIsolatedNeighbors(cell);
             var affected = CollectAffectedCeilingTiles(cell);
             ReevaluateTiles(
                 affected,
@@ -161,15 +164,19 @@ namespace SubTerra.Gameplay.Structural
                 cell,
                 StructuralRiskCause.MiningImpact,
                 impact);
+            BeginVerticallyIsolatedCollapses(verticallyIsolated);
         }
 
-        public void RegisterSupport(StructuralSupport support)
+        /// <summary>
+        /// 버팀목을 등록하고, 주의 이상이던 영향 셀의 실제 위험 점수가 낮아졌는지 반환한다.
+        /// </summary>
+        public bool RegisterSupport(StructuralSupport support)
         {
-            if (support == null || Array.IndexOf(supports, support) >= 0) return;
+            if (support == null || Array.IndexOf(supports, support) >= 0) return false;
             Array.Resize(ref supports, supports.Length + 1);
             supports[^1] = support;
             support.AvailabilityChanged += OnSupportAvailabilityChanged;
-            ReevaluateAffectedBySupport(support, false);
+            return ReevaluateAffectedBySupport(support, false);
         }
 
         public void UnregisterSupport(StructuralSupport support)
@@ -187,6 +194,12 @@ namespace SubTerra.Gameplay.Structural
             if (Array.IndexOf(protectedCells, cell) >= 0) return;
             Array.Resize(ref protectedCells, protectedCells.Length + 1);
             protectedCells[^1] = cell;
+        }
+
+        /// <summary>시설 배치처럼 런타임에 변하는 붕괴 금지 셀 판정을 연결한다.</summary>
+        public void SetCellProtectionPredicate(Func<Vector3Int, bool> predicate)
+        {
+            cellProtectionPredicate = predicate;
         }
 
         /// <summary>
@@ -299,6 +312,9 @@ namespace SubTerra.Gameplay.Structural
             StructuralRiskCause actionCause,
             float actionImpact)
         {
+            if (crackOverlay != null)
+                crackOverlay.BindSourceTilemap(foregroundTilemap);
+
             var collapseCandidates = new List<StructuralCollapseCandidate>();
 
             foreach (Vector3Int cell in affected)
@@ -453,6 +469,72 @@ namespace SubTerra.Gameplay.Structural
             if (IsProtected(cell)) return false;
             if (GetSupportStrength(cell) > 0) return false;
             return true;
+        }
+
+        /// <summary>
+        /// prompt-B 80: 채굴 직후 위·아래가 모두 빈 상태가 된 인접 지형을 찾는다.
+        /// 넓은 영역을 다시 훑지 않고 채굴 셀의 두 수직 이웃만 확인한다.
+        /// </summary>
+        private List<Vector3Int> CollectVerticallyIsolatedNeighbors(Vector3Int minedCell)
+        {
+            var isolated = new List<Vector3Int>(2);
+            AddIfVerticallyIsolated(minedCell + Vector3Int.up, isolated);
+            AddIfVerticallyIsolated(minedCell + Vector3Int.down, isolated);
+            return isolated;
+        }
+
+        private void AddIfVerticallyIsolated(Vector3Int cell, List<Vector3Int> isolated)
+        {
+            if (!IsUnsupportedCeiling(cell)) return;
+            if (foregroundTilemap.HasTile(cell + Vector3Int.up)) return;
+            isolated.Add(cell);
+        }
+
+        /// <summary>
+        /// 수직 고립은 위험 점수 임계값과 무관한 확정 붕괴 조건이다.
+        /// 기존 예고·낙하·피해·스냅샷 경로를 그대로 사용하되 보호 셀과 버팀목은 제외한다.
+        /// </summary>
+        private void BeginVerticallyIsolatedCollapses(IReadOnlyList<Vector3Int> isolated)
+        {
+            if (isolated == null || isolated.Count == 0) return;
+
+            var selected = new List<Vector3Int>(isolated.Count);
+            for (int i = 0; i < isolated.Count; i++)
+            {
+                Vector3Int cell = isolated[i];
+                if (!IsUnsupportedCeiling(cell)
+                    || foregroundTilemap.HasTile(cell + Vector3Int.up)
+                    || telegraphRemaining.ContainsKey(cell))
+                {
+                    continue;
+                }
+
+                float forcedScore = Mathf.Max(
+                    ComputeTileScore(cell),
+                    Settings.CollapseImminentThreshold);
+                tileRisks[cell] = StructuralRiskLevel.CollapseImminent;
+                tileScores[cell] = forcedScore;
+                tileCauses[cell] = StructuralRiskCause.Unsupported;
+                deferredCandidates.Remove(cell);
+
+                float intensity = Mathf.InverseLerp(
+                    Settings.CautionThreshold,
+                    Settings.CollapseImminentThreshold,
+                    forcedScore);
+                if (crackOverlay != null)
+                {
+                    crackOverlay.SetCell(
+                        cell,
+                        StructuralRiskLevel.CollapseImminent,
+                        intensity,
+                        StructuralRiskCause.Unsupported);
+                    crackOverlay.PulseCell(cell);
+                }
+
+                selected.Add(cell);
+            }
+
+            BeginTelegraph(selected);
         }
 
         private void ClearTileRisk(Vector3Int cell)
@@ -683,6 +765,7 @@ namespace SubTerra.Gameplay.Structural
         private bool IsProtected(Vector3Int cell)
         {
             if (Array.IndexOf(protectedCells, cell) >= 0) return true;
+            if (cellProtectionPredicate != null && cellProtectionPredicate(cell)) return true;
             if (foregroundTilemap == null) return false;
             TileBase tile = foregroundTilemap.GetTile(cell);
             return tile != null && Array.IndexOf(protectedTiles, tile) >= 0;
@@ -707,11 +790,11 @@ namespace SubTerra.Gameplay.Structural
             ReevaluateAffectedBySupport(support, support == null || !support.IsAvailable);
         }
 
-        private void ReevaluateAffectedBySupport(StructuralSupport support, bool supportRemoved)
+        private bool ReevaluateAffectedBySupport(StructuralSupport support, bool supportRemoved)
         {
             if (support == null || foregroundTilemap == null)
             {
-                return;
+                return false;
             }
 
             var affected = new HashSet<Vector3Int>();
@@ -753,12 +836,36 @@ namespace SubTerra.Gameplay.Structural
             }
 
             Vector3Int supportActionCell = foregroundTilemap.WorldToCell(support.transform.position);
+            var previousDangerScores = new Dictionary<Vector3Int, float>();
+            if (!supportRemoved)
+            {
+                foreach (Vector3Int cell in affected)
+                {
+                    if (tileScores.TryGetValue(cell, out float score)
+                        && StructuralRiskEvaluator.EvaluateScore(score, Settings) >= StructuralRiskLevel.Caution)
+                    {
+                        previousDangerScores[cell] = score;
+                    }
+                }
+            }
+
             ReevaluateTiles(
                 affected,
                 allowCollapse: supportRemoved,
                 supportActionCell,
                 supportRemoved ? StructuralRiskCause.SupportRemoved : StructuralRiskCause.None,
                 0f);
+
+            foreach (KeyValuePair<Vector3Int, float> previous in previousDangerScores)
+            {
+                if (!tileScores.TryGetValue(previous.Key, out float current)
+                    || current < previous.Value)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private void UpdateCurrentRisk()

@@ -1,6 +1,8 @@
+using System.Collections.Generic;
 using SubTerra.Gameplay.Player;
 using SubTerra.Shared;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 
 namespace SubTerra.Gameplay.Mining
@@ -18,11 +20,18 @@ namespace SubTerra.Gameplay.Mining
         private bool startPending;
         private bool pendingPointerTarget;
         private Vector2 pendingWorldPoint;
+        private Vector2 pendingDirection;
+        private Vector2 lastMiningDirection;
         private bool miningInputPressedLastFrame;
+        private PlayerAnimationController animationController;
+        private static readonly List<RaycastResult> PointerHits = new(8);
+
+        public bool IsMining => miningSystem != null && miningSystem.IsMining;
 
         private void Awake()
         {
             movement = GetComponent<PlayerMovement>();
+            animationController = GetComponentInChildren<PlayerAnimationController>(true);
             if (inputActions != null) mineAction = inputActions.FindAction(mineActionPath, false);
         }
 
@@ -34,16 +43,35 @@ namespace SubTerra.Gameplay.Mining
             miningSystem?.CancelMining();
             startPending = false;
             miningInputPressedLastFrame = false;
+            lastMiningDirection = Vector2.zero;
         }
 
         private void Update()
         {
             if (miningSystem == null)
             {
+                animationController?.SetMining(false);
                 return;
             }
 
+            if (ControlPreferences.IsSettingsOpen)
+            {
+                miningSystem.CancelMining();
+                startPending = false;
+                miningInputPressedLastFrame = false;
+                lastMiningDirection = Vector2.zero;
+                if (animationController != null) animationController.SetMining(false);
+                return;
+            }
+
+            Vector2 direction = PlayerKeyboardControls.ReadMiningDirection(ControlPreferences.Scheme);
             bool miningInputPressed = IsMiningInputPressed();
+            if (direction != Vector2.zero && direction != lastMiningDirection)
+            {
+                miningSystem.CancelMining();
+                CaptureCurrentTarget();
+            }
+            lastMiningDirection = direction;
             if (miningInputPressed && !miningInputPressedLastFrame && !miningSystem.IsMining)
             {
                 CaptureCurrentTarget();
@@ -52,7 +80,13 @@ namespace SubTerra.Gameplay.Mining
             miningInputPressedLastFrame = miningInputPressed;
             if (movement.IsMovementRequested)
             {
+                startPending = false;
                 miningSystem.CancelMining();
+                animationController?.SetMining(false);
+                miningSystem.ClearFailureIfDirectionalTargetMineable(
+                    movement.Position,
+                    movement.FacingDirection,
+                    reach);
                 return;
             }
 
@@ -64,27 +98,73 @@ namespace SubTerra.Gameplay.Mining
 
             if (!miningSystem.IsMining)
             {
+                animationController?.SetMining(false);
                 return;
             }
 
+            animationController?.SetMining(true);
             miningSystem.TickMining(Time.deltaTime, movement.Position, reach);
         }
 
         private bool IsMiningInputPressed()
         {
-            // 시설 건설 Preview 중 Enter는 근접 설치에 쓰이므로 채굴 입력에서 제외한다.
+            if (PlayerKeyboardControls.ReadMiningDirection(ControlPreferences.Scheme) != Vector2.zero)
+                return true;
             bool enterMining = Keyboard.current != null
-                && Keyboard.current.enterKey.isPressed
-                && !BuildingPlacementActivity.IsActive;
-            return enterMining
-                || (Mouse.current != null && Mouse.current.leftButton.isPressed)
-                || (mineAction != null && mineAction.IsPressed());
+                && Keyboard.current.enterKey.isPressed;
+            if (enterMining)
+            {
+                return true;
+            }
+
+            bool mousePressed = Mouse.current != null && Mouse.current.leftButton.isPressed;
+            bool actionPressed = mineAction != null && mineAction.IsPressed();
+            if (!mousePressed && !actionPressed)
+            {
+                return false;
+            }
+
+            // 머리 위 구출 칩·팝업 등 UI 클릭이 채굴로 통과하지 않게 한다.
+            if (mousePressed && IsPointerOverUi())
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        private static bool IsPointerOverUi()
+        {
+            EventSystem eventSystem = EventSystem.current;
+            if (eventSystem == null)
+            {
+                return false;
+            }
+
+            if (eventSystem.IsPointerOverGameObject())
+            {
+                return true;
+            }
+
+            if (Mouse.current == null)
+            {
+                return false;
+            }
+
+            var eventData = new PointerEventData(eventSystem)
+            {
+                position = Mouse.current.position.ReadValue()
+            };
+            PointerHits.Clear();
+            eventSystem.RaycastAll(eventData, PointerHits);
+            return PointerHits.Count > 0;
         }
 
         private void CaptureCurrentTarget()
         {
+            pendingDirection = PlayerKeyboardControls.ReadMiningDirection(ControlPreferences.Scheme);
             pendingPointerTarget = Mouse.current != null
-                && Mouse.current.leftButton.isPressed;
+                && Mouse.current.leftButton.isPressed && pendingDirection == Vector2.zero;
             if (pendingPointerTarget && Camera.main != null)
             {
                 Vector3 world = Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
@@ -100,7 +180,11 @@ namespace SubTerra.Gameplay.Mining
 
         private void TryStartPendingTarget()
         {
-            if (pendingPointerTarget)
+            if (pendingDirection != Vector2.zero)
+            {
+                miningSystem.TryStartMiningInDirection(movement.Position, pendingDirection, reach);
+            }
+            else if (pendingPointerTarget)
             {
                 miningSystem.TryStartMiningAtWorldPoint(
                     pendingWorldPoint,

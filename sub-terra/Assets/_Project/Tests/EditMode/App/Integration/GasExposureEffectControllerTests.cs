@@ -75,7 +75,8 @@ namespace SubTerra.App.Tests.Integration
                 controller.ApplyOutpostStatus(new OutpostStatusDto
                 {
                     isActive = true,
-                    isInInteractionRange = true
+                    isInInteractionRange = false,
+                    isInPurificationRange = true
                 });
 
                 Assert.That(controller.CurrentState.IsSheltered, Is.True);
@@ -101,17 +102,43 @@ namespace SubTerra.App.Tests.Integration
                 {
                     outpostInstanceId = "outpost-a",
                     isActive = true,
-                    isInInteractionRange = true
+                    isInPurificationRange = true
                 });
 
                 controller.ApplyOutpostStatus(new OutpostStatusDto
                 {
                     outpostInstanceId = "outpost-b",
                     isActive = false,
-                    isInInteractionRange = false
+                    isInPurificationRange = false
                 });
 
                 Assert.That(controller.CurrentState.IsSheltered, Is.True);
+            }
+            finally
+            {
+                Object.DestroyImmediate(gameObject);
+            }
+        }
+
+        [Test]
+        public void PromptB77_InteractionRangeAloneDoesNotPurifyGas()
+        {
+            var gameObject = new GameObject("GasEffectController");
+            try
+            {
+                var controller = gameObject.AddComponent<GasExposureEffectController>();
+                controller.Bind(GameState.CreateNew(), new FixedUpgradeEffects(0f));
+                controller.ApplyExposure(CriticalExposure());
+
+                controller.ApplyOutpostStatus(new OutpostStatusDto
+                {
+                    isActive = true,
+                    isInInteractionRange = true,
+                    isInPurificationRange = false
+                });
+
+                Assert.That(controller.CurrentState.IsSheltered, Is.False);
+                Assert.That(controller.CurrentState.Risk, Is.EqualTo(GameplayGasRiskLevel.Critical));
             }
             finally
             {

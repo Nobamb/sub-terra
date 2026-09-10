@@ -11,7 +11,8 @@ namespace SubTerra.App.Outpost
         Withdraw = 2,
         SettlePlayerCargo = 3,
         SettleStorage = 4,
-        Install = 5
+        Install = 5,
+        Heal = 6
     }
 
     public enum OutpostOperationStatus

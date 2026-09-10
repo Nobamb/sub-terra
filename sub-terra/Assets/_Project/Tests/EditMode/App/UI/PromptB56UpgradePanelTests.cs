@@ -1,9 +1,11 @@
 using System.Linq;
 using System.Reflection;
 using NUnit.Framework;
+using SubTerra.App.Core.Data;
 using SubTerra.App.Editor.DataValidation;
 using SubTerra.App.Progression;
 using SubTerra.App.UI.Progression;
+using SubTerra.Shared;
 using TMPro;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -68,6 +70,67 @@ namespace SubTerra.App.Tests.UI
             {
                 Object.DestroyImmediate(root);
             }
+        }
+
+        [Test]
+        public void DrillSpeed_FromLevelZero_ShowsRareResourceAndIronDescriptions()
+        {
+            var root = new GameObject("ProgressionPanel");
+            var detailObject = new GameObject("UpgradeDetail");
+            detailObject.transform.SetParent(root.transform);
+            var detail = detailObject.AddComponent<TextMeshProUGUI>();
+            var view = root.AddComponent<ProgressionPanelView>();
+            SetPrivateField(view, "detailText", detail);
+
+            try
+            {
+                view.SetSelectedUpgrade(CreateDrillSpeedSnapshot(0));
+
+                Assert.That(detail.text, Does.Contain("레벨이 오를수록 더 희귀한 자원을 채취"));
+                Assert.That(detail.text, Does.Contain("Lv.1 업그레이드 시 철을 채취"));
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [TestCase(1)]
+        [TestCase(2)]
+        [TestCase(3)]
+        public void DrillSpeed_AfterLevelZero_HidesIronDescription(int currentLevel)
+        {
+            var root = new GameObject("ProgressionPanel");
+            var detailObject = new GameObject("UpgradeDetail");
+            detailObject.transform.SetParent(root.transform);
+            var detail = detailObject.AddComponent<TextMeshProUGUI>();
+            var view = root.AddComponent<ProgressionPanelView>();
+            SetPrivateField(view, "detailText", detail);
+
+            try
+            {
+                view.SetSelectedUpgrade(CreateDrillSpeedSnapshot(currentLevel));
+
+                Assert.That(detail.text, Does.Contain("레벨이 오를수록 더 희귀한 자원을 채취"));
+                Assert.That(detail.text, Does.Not.Contain("Lv.1 업그레이드 시 철을 채취"));
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        private static UpgradeSnapshot CreateDrillSpeedSnapshot(int currentLevel)
+        {
+            return new UpgradeSnapshot(
+                DataIds.Upgrades.DrillSpeed,
+                "드릴 속도",
+                currentLevel,
+                3,
+                currentLevel * 0.1f,
+                (currentLevel + 1) * 0.1f,
+                new[] { new ItemCostDto(DataIds.Minerals.Copper, 1) },
+                true);
         }
 
         private static void SetPrivateField(object target, string fieldName, object value)

@@ -1,3 +1,4 @@
+using System;
 using SubTerra.App.Outpost;
 using TMPro;
 using UnityEngine;
@@ -10,12 +11,14 @@ namespace SubTerra.App.UI.Outpost
     {
         [SerializeField] private OutpostPanelView view;
         [SerializeField] private TMP_InputField quantityInput;
+        [SerializeField] private OutpostMineralPickerView mineralPicker;
         [SerializeField] private InputActionAsset inputActions;
         [SerializeField] private string interactActionPath = "Player/Interact";
 
         private OutpostPanelPresenter presenter;
         private string selectedMineralId = string.Empty;
         private InputAction interactAction;
+        private Func<bool> primaryInteractionClaim;
 
         public OutpostPanelPresenter Presenter => presenter;
         public bool IsBound => presenter != null && presenter.IsBound;
@@ -32,6 +35,12 @@ namespace SubTerra.App.UI.Outpost
             {
                 quantityInput.onValueChanged.AddListener(OnQuantityChanged);
             }
+
+            if (mineralPicker != null)
+            {
+                mineralPicker.SearchChanged += OnMineralSearchChanged;
+                mineralPicker.MineralSelected += SelectMineral;
+            }
         }
 
         private void OnEnable()
@@ -41,6 +50,8 @@ namespace SubTerra.App.UI.Outpost
             {
                 interactAction.started += OnInteractStarted;
             }
+
+            WireCloseButton();
         }
 
         private void OnDisable()
@@ -49,6 +60,22 @@ namespace SubTerra.App.UI.Outpost
             {
                 interactAction.started -= OnInteractStarted;
             }
+
+            UnwireCloseButton();
+        }
+
+        private void Update()
+        {
+            if (presenter == null || !presenter.IsInteractionPanelOpen)
+            {
+                return;
+            }
+
+            var keyboard = Keyboard.current;
+            if (keyboard != null && keyboard.escapeKey.wasPressedThisFrame)
+            {
+                ClosePanel();
+            }
         }
 
         private void OnDestroy()
@@ -56,6 +83,12 @@ namespace SubTerra.App.UI.Outpost
             if (quantityInput != null)
             {
                 quantityInput.onValueChanged.RemoveListener(OnQuantityChanged);
+            }
+
+            if (mineralPicker != null)
+            {
+                mineralPicker.SearchChanged -= OnMineralSearchChanged;
+                mineralPicker.MineralSelected -= SelectMineral;
             }
 
             presenter?.Unbind();
@@ -70,6 +103,11 @@ namespace SubTerra.App.UI.Outpost
             }
 
             presenter.Bind(service);
+        }
+
+        public void SetPrimaryInteractionClaim(Func<bool> claim)
+        {
+            primaryInteractionClaim = claim;
         }
 
         public void SelectMineral(string mineralId)
@@ -122,11 +160,19 @@ namespace SubTerra.App.UI.Outpost
             presenter?.DismissTutorial();
         }
 
+        /// <summary>우측 상단 X와 ESC가 공유하는 닫기 경로. 시설에서 떨어지지 않아도 창만 숨긴다.</summary>
+        public void ClosePanel()
+        {
+            presenter?.DismissInteractionPanel();
+            UiKeyboardSubmitGuard.ClearSelection();
+        }
+
         private void OnInteractStarted(InputAction.CallbackContext context)
         {
             if (context.started)
             {
-                presenter?.ToggleInteractionPanel();
+                presenter?.ToggleInteractionPanel(
+                    primaryInteractionClaim != null && primaryInteractionClaim());
             }
         }
 
@@ -151,6 +197,35 @@ namespace SubTerra.App.UI.Outpost
         private void OnQuantityChanged(string _)
         {
             presenter?.SetQuantity(ReadQuantity());
+        }
+
+        private void OnMineralSearchChanged(string query)
+        {
+            presenter?.SetMineralSearch(query);
+        }
+
+        private void WireCloseButton()
+        {
+            var closeButton = view != null ? view.CloseButton : null;
+            if (closeButton == null)
+            {
+                return;
+            }
+
+            closeButton.onClick.RemoveListener(ClosePanel);
+            closeButton.onClick.AddListener(ClosePanel);
+            UiKeyboardSubmitGuard.ConfigurePointerPreferredButton(closeButton);
+        }
+
+        private void UnwireCloseButton()
+        {
+            var closeButton = view != null ? view.CloseButton : null;
+            if (closeButton == null)
+            {
+                return;
+            }
+
+            closeButton.onClick.RemoveListener(ClosePanel);
         }
     }
 }

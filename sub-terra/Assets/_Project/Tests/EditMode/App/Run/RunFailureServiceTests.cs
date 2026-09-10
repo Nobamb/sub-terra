@@ -39,6 +39,26 @@ namespace SubTerra.App.Tests.Run
         }
 
         [Test]
+        public void PromptB68_FallDamage_ScalesWithCargoImpactMultiplier()
+        {
+            Assert.That(
+                CargoLoadEffectPolicy.EvaluateJumpMultiplier(10f, 50f),
+                Is.EqualTo(0.95f).Within(0.0001f));
+            Assert.That(
+                CargoLoadEffectPolicy.EvaluateFallImpactMultiplier(10f, 50f),
+                Is.EqualTo(1.1f).Within(0.0001f));
+            Assert.That(
+                CargoLoadEffectPolicy.EvaluateJumpMultiplier(50f, 50f),
+                Is.EqualTo(0.75f).Within(0.0001f));
+            Assert.That(
+                CargoLoadEffectPolicy.EvaluateFallImpactMultiplier(50f, 50f),
+                Is.EqualTo(1.5f).Within(0.0001f));
+            Assert.That(PlayerFallDamageRules.ScaleDamage(10, 1f), Is.EqualTo(10));
+            Assert.That(PlayerFallDamageRules.ScaleDamage(10, 1.1f), Is.EqualTo(11));
+            Assert.That(PlayerFallDamageRules.ScaleDamage(10, 1.5f), Is.EqualTo(15));
+        }
+
+        [Test]
         public void L_S02_PlayerSurvival_UsesHealthActionAndInvulnerability()
         {
             var state = new PlayerSurvivalState(100);
@@ -66,7 +86,6 @@ namespace SubTerra.App.Tests.Run
             Assert.That(heavyHit, Is.GreaterThan(lightHit));
         }
 
-        [TestCase(RunFailureCause.PowerDepleted)]
         [TestCase(RunFailureCause.StructuralCollapse)]
         [TestCase(RunFailureCause.GasExposure)]
         public void L_F01_AllCauses_EnterOneFailureService(RunFailureCause cause)
@@ -117,7 +136,7 @@ namespace SubTerra.App.Tests.Run
         public void L_F04_DuplicateFailureToken_CannotLoseCargoTwice()
         {
             var fixture = CreateFixture();
-            var input = Failure("same-frame", RunFailureCause.PowerDepleted);
+            var input = Failure("same-frame", RunFailureCause.StructuralCollapse);
 
             Assert.That(fixture.Service.TryBegin(input, null, out _), Is.True);
             Assert.That(fixture.Service.Complete(input.failureToken, false), Is.True);
@@ -125,6 +144,22 @@ namespace SubTerra.App.Tests.Run
 
             Assert.That(fixture.Service.TryBegin(input, null, out _), Is.False);
             Assert.That(fixture.Inventory.State.CaptureFingerprint(), Is.EqualTo(afterFirst));
+        }
+
+        [Test]
+        public void PromptB81_PowerDepleted_CannotEnterRunFailureService()
+        {
+            var fixture = CreateFixture();
+            var before = fixture.Inventory.State.CaptureFingerprint();
+
+            Assert.That(
+                fixture.Service.TryBegin(
+                    Failure("power-zero", RunFailureCause.PowerDepleted),
+                    null,
+                    out _),
+                Is.False);
+            Assert.That(fixture.State.Run.LifecyclePhase, Is.EqualTo(RunLifecyclePhase.Active));
+            Assert.That(fixture.Inventory.State.CaptureFingerprint(), Is.EqualTo(before));
         }
 
         [Test]

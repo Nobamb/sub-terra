@@ -16,6 +16,8 @@ namespace SubTerra.App.UI.Building
 
         private Button button;
 
+        public string BuildingId => buildingId;
+
         private void Awake()
         {
             button = GetComponent<Button>();

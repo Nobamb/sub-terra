@@ -26,14 +26,22 @@ namespace SubTerra.Gameplay.Building
         public string InstanceId { get; }
         public string BuildingId { get; }
         public Vector3Int Cell { get; }
+        public bool ReducedStructuralRisk { get; }
 
-        public BuildingPlacementResult(bool isSuccess, BuildingPlacementFailure failure, string instanceId, string buildingId, Vector3Int cell)
+        public BuildingPlacementResult(
+            bool isSuccess,
+            BuildingPlacementFailure failure,
+            string instanceId,
+            string buildingId,
+            Vector3Int cell,
+            bool reducedStructuralRisk = false)
         {
             IsSuccess = isSuccess;
             Failure = failure;
             InstanceId = instanceId ?? string.Empty;
             BuildingId = buildingId ?? string.Empty;
             Cell = cell;
+            ReducedStructuralRisk = reducedStructuralRisk;
         }
     }
 }

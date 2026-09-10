@@ -11,6 +11,8 @@ namespace SubTerra.App.Tutorial
         public string NextObjectiveId { get; }
         public bool IsTerminal { get; }
         public bool ShowsDismissibleGuidance { get; }
+        public string GuidanceTitle { get; }
+        public string GuidanceBody { get; }
 
         public DemoObjectiveDefinition(
             string id,
@@ -20,7 +22,9 @@ namespace SubTerra.App.Tutorial
             DemoProgressSignal requiredSignal,
             string nextObjectiveId,
             bool isTerminal = false,
-            bool showsDismissibleGuidance = false)
+            bool showsDismissibleGuidance = false,
+            string guidanceTitle = "",
+            string guidanceBody = "")
         {
             Id = id ?? string.Empty;
             Title = title ?? string.Empty;
@@ -30,6 +34,8 @@ namespace SubTerra.App.Tutorial
             NextObjectiveId = nextObjectiveId ?? string.Empty;
             IsTerminal = isTerminal;
             ShowsDismissibleGuidance = showsDismissibleGuidance;
+            GuidanceTitle = string.IsNullOrEmpty(guidanceTitle) ? Title : guidanceTitle;
+            GuidanceBody = string.IsNullOrEmpty(guidanceBody) ? Description : guidanceBody;
         }
     }
 
@@ -45,6 +51,8 @@ namespace SubTerra.App.Tutorial
         public bool IsTerminal { get; }
         public bool IsDemoComplete { get; }
         public bool ShowsDismissibleGuidance { get; }
+        public string GuidanceTitle { get; }
+        public string GuidanceBody { get; }
 
         public DemoObjectiveReadModel(
             string objectiveId,
@@ -55,7 +63,9 @@ namespace SubTerra.App.Tutorial
             int totalCount,
             bool isTerminal,
             bool isDemoComplete,
-            bool showsDismissibleGuidance)
+            bool showsDismissibleGuidance,
+            string guidanceTitle,
+            string guidanceBody)
         {
             ObjectiveId = objectiveId ?? string.Empty;
             Title = title ?? string.Empty;
@@ -66,6 +76,8 @@ namespace SubTerra.App.Tutorial
             IsTerminal = isTerminal;
             IsDemoComplete = isDemoComplete;
             ShowsDismissibleGuidance = showsDismissibleGuidance;
+            GuidanceTitle = guidanceTitle ?? string.Empty;
+            GuidanceBody = guidanceBody ?? string.Empty;
         }
     }
 

@@ -22,6 +22,13 @@ namespace SubTerra.Shared
         PlayerHealthReadModel GetHealth();
     }
 
+    /// <summary>App 시설이 Gameplay 구현을 참조하지 않고 플레이어 체력을 회복하는 명령 경계.</summary>
+    public interface IPlayerHealthCommand
+    {
+        /// <returns>체력이 실제로 증가했으면 true, 이미 최대 체력이면 false.</returns>
+        bool RestoreFull();
+    }
+
     /// <summary>붕괴 낙석이 Player 구현을 직접 알지 않고 접촉 피해를 전달하는 경계.</summary>
     public interface ICollapseDamageReceiver
     {

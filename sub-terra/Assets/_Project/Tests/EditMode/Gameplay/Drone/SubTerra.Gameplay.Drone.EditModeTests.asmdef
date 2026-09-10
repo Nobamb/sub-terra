@@ -1,7 +1,7 @@
 {
   "name": "SubTerra.Gameplay.Drone.EditModeTests",
   "rootNamespace": "SubTerra.Gameplay.Drone.Tests",
-  "references": ["SubTerra.Gameplay.Drone", "SubTerra.Shared", "UnityEngine.TestRunner", "UnityEditor.TestRunner"],
+  "references": ["SubTerra.Gameplay.Drone", "SubTerra.Gameplay.Mining", "SubTerra.Gameplay.Hazards", "SubTerra.Shared", "UnityEngine.TestRunner", "UnityEditor.TestRunner"],
   "includePlatforms": ["Editor"],
   "excludePlatforms": [],
   "allowUnsafeCode": false,

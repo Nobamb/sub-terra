@@ -22,23 +22,40 @@ namespace SubTerra.Gameplay.Structural
         [SerializeField] private Color imminentColor = new(0.95f, 0.08f, 0.06f, 0.9f);
         [SerializeField, Min(0.05f)] private float pulseSeconds = 0.28f;
         [SerializeField, Min(0.05f)] private float telegraphFlashSeconds = 0.12f;
+        // 기존 노란 마름모/붉은 직사각형 원인 표식을 같은 조건의 흔들림으로 치환한다.
+        [SerializeField, Min(0f)] private float unsupportedShakeDistance = 0.1f;
+        [SerializeField, Min(0.005f)] private float unsupportedShakeInterval = 0.02f;
+        [SerializeField, Min(0f)] private float impactShakeDistance = 0.3f;
+        [SerializeField, Min(0.005f)] private float impactShakeInterval = 0.01f;
 
         private readonly Dictionary<Vector3Int, StructuralRiskLevel> cellRisks = new();
         private readonly Dictionary<Vector3Int, float> cellIntensities = new();
         private readonly Dictionary<Vector3Int, StructuralRiskCause> cellCauses = new();
         private readonly Dictionary<Vector3Int, float> pulseRemaining = new();
         private readonly HashSet<Vector3Int> telegraphingCells = new();
-        private readonly Dictionary<Vector3Int, SpriteRenderer> causeMarkers = new();
+        private readonly Dictionary<Vector3Int, ShakeVisual> shakeVisuals = new();
         private readonly List<FallingVisual> fallingVisuals = new();
         private readonly List<DustVisual> dustVisuals = new();
         private readonly HashSet<Vector3Int> visibleCells = new();
         private ICollapseDamageReceiver collapseDamageReceiver;
+        private Tilemap sourceTilemap;
 
         private Tile runtimeCrackTile;
         private Sprite runtimeCrackSprite;
         private Texture2D runtimeCrackTexture;
-        private Sprite runtimeCauseSprite;
-        private Texture2D runtimeCauseTexture;
+        private Sprite runtimeEffectSprite;
+        private Texture2D runtimeEffectTexture;
+
+        private sealed class ShakeVisual
+        {
+            public GameObject Root;
+            public SpriteRenderer Renderer;
+            public Color OriginalCellColor;
+            public TileFlags OriginalTileFlags;
+            public Matrix4x4 OriginalOverlayTransform;
+            public StructuralRiskCause Cause;
+            public float Elapsed;
+        }
 
         private sealed class FallingVisual
         {
@@ -60,6 +77,23 @@ namespace SubTerra.Gameplay.Structural
         }
 
         public Tilemap OverlayTilemap => overlayTilemap;
+
+        public void BindSourceTilemap(Tilemap source)
+        {
+            if (sourceTilemap == source) return;
+
+            ClearShakeVisuals();
+            sourceTilemap = source;
+            if (sourceTilemap == null) return;
+
+            var cells = new List<Vector3Int>(visibleCells);
+            for (int i = 0; i < cells.Count; i++)
+            {
+                Vector3Int cell = cells[i];
+                if (cellCauses.TryGetValue(cell, out StructuralRiskCause cause))
+                    UpdateShakeVisual(cell, cause);
+            }
+        }
 
         public void BindCollapseDamageReceiver(ICollapseDamageReceiver receiver)
         {
@@ -95,7 +129,7 @@ namespace SubTerra.Gameplay.Structural
             cellCauses[cell] = cause;
             overlayTilemap.SetColor(cell, ResolveAnimatedColor(cell));
             visibleCells.Add(cell);
-            UpdateCauseMarker(cell, cause);
+            UpdateShakeVisual(cell, cause);
         }
 
         /// <summary>이번 채굴로 약해진 천장만 짧게 펄스한다.</summary>
@@ -163,11 +197,7 @@ namespace SubTerra.Gameplay.Structural
             cellCauses.Remove(cell);
             pulseRemaining.Remove(cell);
             telegraphingCells.Remove(cell);
-            if (causeMarkers.TryGetValue(cell, out SpriteRenderer marker))
-            {
-                causeMarkers.Remove(cell);
-                DestroyRuntimeObject(marker.gameObject);
-            }
+            RemoveShakeVisual(cell);
         }
 
         /// <summary>
@@ -184,6 +214,7 @@ namespace SubTerra.Gameplay.Structural
                 cellCauses.Clear();
                 pulseRemaining.Clear();
                 telegraphingCells.Clear();
+                ClearShakeVisuals();
                 return;
             }
 
@@ -316,6 +347,7 @@ namespace SubTerra.Gameplay.Structural
                 }
 
                 overlayTilemap.SetColor(cell, ResolveAnimatedColor(cell));
+                UpdateShakeAnimation(cell, deltaTime, reduceMotion);
             }
         }
 
@@ -342,67 +374,182 @@ namespace SubTerra.Gameplay.Structural
             return color;
         }
 
-        private void UpdateCauseMarker(Vector3Int cell, StructuralRiskCause cause)
+        private void UpdateShakeVisual(Vector3Int cell, StructuralRiskCause cause)
         {
             if (cause == StructuralRiskCause.None)
             {
-                if (causeMarkers.TryGetValue(cell, out SpriteRenderer removed))
-                {
-                    causeMarkers.Remove(cell);
-                    DestroyRuntimeObject(removed.gameObject);
-                }
+                RemoveShakeVisual(cell);
                 return;
             }
 
-            if (!causeMarkers.TryGetValue(cell, out SpriteRenderer marker) || marker == null)
+            if (sourceTilemap == null || !sourceTilemap.HasTile(cell))
             {
-                var markerObject = new GameObject("StructuralCause_" + cell.x + "_" + cell.y);
-                markerObject.transform.SetParent(transform, false);
-                marker = markerObject.AddComponent<SpriteRenderer>();
-                marker.sprite = ResolveCauseSprite();
-                marker.sortingOrder = 91;
-                causeMarkers[cell] = marker;
+                RemoveShakeVisual(cell);
+                return;
             }
 
-            Vector3 center = overlayTilemap.GetCellCenterWorld(cell);
-            marker.transform.position = center + new Vector3(0.31f, 0.31f, 0f);
-            marker.transform.localScale = cause == StructuralRiskCause.Unsupported
-                ? Vector3.one * 0.22f
-                : cause == StructuralRiskCause.MiningImpact
-                    ? new Vector3(0.3f, 0.12f, 1f)
-                    : new Vector3(0.12f, 0.3f, 1f);
-            marker.transform.rotation = Quaternion.Euler(0f, 0f,
-                cause == StructuralRiskCause.Unsupported ? 45f
-                : cause == StructuralRiskCause.MiningImpact ? 0f : 90f);
-            marker.color = cause == StructuralRiskCause.Unsupported
-                ? new Color(1f, 0.82f, 0.2f)
-                : cause == StructuralRiskCause.MiningImpact
-                    ? new Color(1f, 0.42f, 0.12f)
-                    : new Color(0.8f, 0.3f, 1f);
+            if (shakeVisuals.TryGetValue(cell, out ShakeVisual existing)
+                && existing.Root != null)
+            {
+                if (existing.Cause != cause)
+                    existing.Elapsed = 0f;
+                existing.Cause = cause;
+                return;
+            }
+
+            Sprite sprite = sourceTilemap.GetSprite(cell);
+            if (sprite == null) return;
+
+            var root = new GameObject("StructuralShake_" + cell.x + "_" + cell.y);
+            root.layer = sourceTilemap.gameObject.layer;
+            root.transform.SetParent(transform, true);
+            root.transform.position = sourceTilemap.GetCellCenterWorld(cell);
+
+            var renderer = root.AddComponent<SpriteRenderer>();
+            renderer.sprite = sprite;
+
+            TilemapRenderer sourceRenderer = sourceTilemap.GetComponent<TilemapRenderer>();
+            if (sourceRenderer != null)
+            {
+                renderer.sortingLayerID = sourceRenderer.sortingLayerID;
+                renderer.sortingOrder = sourceRenderer.sortingOrder;
+                renderer.sharedMaterial = sourceRenderer.sharedMaterial;
+            }
+
+            Color originalColor = sourceTilemap.GetColor(cell);
+            renderer.color = originalColor * sourceTilemap.color;
+            TileFlags originalFlags = sourceTilemap.GetTileFlags(cell);
+            // 물리 Tilemap은 제자리에 둔 채 시각 복제본만 이동해 Collider 재생성을 막는다.
+            sourceTilemap.SetTileFlags(cell, originalFlags & ~TileFlags.LockColor);
+            Color hiddenColor = originalColor;
+            hiddenColor.a = 0f;
+            sourceTilemap.SetColor(cell, hiddenColor);
+
+            shakeVisuals[cell] = new ShakeVisual
+            {
+                Root = root,
+                Renderer = renderer,
+                OriginalCellColor = originalColor,
+                OriginalTileFlags = originalFlags,
+                OriginalOverlayTransform = overlayTilemap.GetTransformMatrix(cell),
+                Cause = cause
+            };
         }
 
-        private Sprite ResolveCauseSprite()
+        private void UpdateShakeAnimation(Vector3Int cell, float deltaTime, bool reduceMotion)
         {
-            if (runtimeCauseSprite != null) return runtimeCauseSprite;
-            const int size = 8;
-            runtimeCauseTexture = new Texture2D(size, size, TextureFormat.RGBA32, false)
+            if (!shakeVisuals.TryGetValue(cell, out ShakeVisual visual)
+                || visual.Root == null)
             {
-                name = "RuntimeStructuralCause",
-                filterMode = FilterMode.Point
-            };
-            for (int y = 0; y < size; y++)
-            for (int x = 0; x < size; x++)
-            {
-                bool border = x == 1 || x == size - 2 || y == 1 || y == size - 2;
-                runtimeCauseTexture.SetPixel(x, y, border ? Color.white : Color.clear);
+                return;
             }
-            runtimeCauseTexture.Apply();
-            runtimeCauseSprite = Sprite.Create(
-                runtimeCauseTexture,
-                new Rect(0, 0, size, size),
-                new Vector2(0.5f, 0.5f),
-                size);
-            return runtimeCauseSprite;
+
+            visual.Elapsed += Mathf.Max(0f, deltaTime);
+            float distance = visual.Cause == StructuralRiskCause.Unsupported
+                ? unsupportedShakeDistance
+                : impactShakeDistance;
+            float interval = visual.Cause == StructuralRiskCause.Unsupported
+                ? unsupportedShakeInterval
+                : impactShakeInterval;
+            Vector2 offset = reduceMotion
+                ? Vector2.zero
+                : CalculateShakeOffset(visual.Elapsed, distance, interval, cell);
+            Vector3 center = sourceTilemap != null
+                ? sourceTilemap.GetCellCenterWorld(cell)
+                : overlayTilemap.GetCellCenterWorld(cell);
+            if (sourceTilemap != null && visual.Renderer != null)
+                visual.Renderer.color = visual.OriginalCellColor * sourceTilemap.color;
+            Vector3 worldOffset = new(offset.x, offset.y, 0f);
+            visual.Root.transform.position = center + worldOffset;
+            overlayTilemap.SetTransformMatrix(
+                cell,
+                reduceMotion
+                    ? visual.OriginalOverlayTransform
+                    : Matrix4x4.Translate(worldOffset)
+                        * visual.OriginalOverlayTransform);
+        }
+
+        public static Vector2 CalculateShakeOffset(
+            float elapsedSeconds,
+            float distance,
+            float interval,
+            Vector3Int cell)
+        {
+            if (distance <= 0f || interval <= 0f || elapsedSeconds <= 0f)
+                return Vector2.zero;
+
+            float stepTime = elapsedSeconds / interval;
+            int step = Mathf.FloorToInt(stepTime);
+            float progress = Mathf.SmoothStep(0f, 1f, stepTime - step);
+            Vector2 previous = step <= 0
+                ? Vector2.zero
+                : CalculateShakeTarget(cell, step, distance);
+            Vector2 next = CalculateShakeTarget(cell, step + 1, distance);
+            return Vector2.LerpUnclamped(previous, next, progress);
+        }
+
+        private static Vector2 CalculateShakeTarget(
+            Vector3Int cell,
+            int step,
+            float distance)
+        {
+            uint hash = CalculateShakeHash(cell, step);
+            bool positiveDirection = (hash & 8u) == 0u;
+            if ((step & 1) == 0)
+                return (positiveDirection ? Vector2.up : Vector2.down) * distance;
+            return (positiveDirection ? Vector2.right : Vector2.left) * distance;
+        }
+
+        private static uint CalculateShakeHash(Vector3Int cell, int step)
+        {
+            unchecked
+            {
+                uint hash = (uint)cell.x * 0x9E3779B1u;
+                hash ^= (uint)cell.y * 0x85EBCA77u;
+                hash ^= (uint)cell.z * 0xC2B2AE3Du;
+                hash ^= (uint)step * 0x27D4EB2Fu;
+                hash ^= hash >> 16;
+                hash *= 0x7FEB352Du;
+                hash ^= hash >> 15;
+                hash *= 0x846CA68Bu;
+                hash ^= hash >> 16;
+                return hash;
+            }
+        }
+
+        public bool HasShakeVisual(Vector3Int cell)
+        {
+            return shakeVisuals.TryGetValue(cell, out ShakeVisual visual)
+                && visual.Root != null;
+        }
+
+        private void RemoveShakeVisual(Vector3Int cell)
+        {
+            if (!shakeVisuals.TryGetValue(cell, out ShakeVisual visual)) return;
+            shakeVisuals.Remove(cell);
+
+            if (sourceTilemap != null)
+            {
+                sourceTilemap.SetTileFlags(
+                    cell,
+                    visual.OriginalTileFlags & ~TileFlags.LockColor);
+                sourceTilemap.SetColor(cell, visual.OriginalCellColor);
+                sourceTilemap.SetTileFlags(cell, visual.OriginalTileFlags);
+            }
+
+            if (overlayTilemap != null)
+                overlayTilemap.SetTransformMatrix(cell, visual.OriginalOverlayTransform);
+
+            if (visual.Root != null)
+                DestroyRuntimeObject(visual.Root);
+        }
+
+        private void ClearShakeVisuals()
+        {
+            if (shakeVisuals.Count == 0) return;
+            var cells = new List<Vector3Int>(shakeVisuals.Keys);
+            for (int i = 0; i < cells.Count; i++)
+                RemoveShakeVisual(cells[i]);
         }
 
         private void UpdateFallingVisuals(float deltaTime)
@@ -449,7 +596,7 @@ namespace SubTerra.Gameplay.Structural
             root.transform.SetParent(transform, true);
             root.transform.position = position;
             var renderer = root.AddComponent<SpriteRenderer>();
-            renderer.sprite = ResolveCauseSprite();
+            renderer.sprite = ResolveEffectSprite();
             renderer.color = new Color(0.62f, 0.52f, 0.4f, 0.55f);
             renderer.sortingOrder = 92;
             root.transform.localScale = Vector3.one * 0.12f;
@@ -489,6 +636,30 @@ namespace SubTerra.Gameplay.Structural
             return risk == StructuralRiskLevel.Caution
                 ? cautionColor
                 : risk == StructuralRiskLevel.Danger ? dangerColor : imminentColor;
+        }
+
+        private Sprite ResolveEffectSprite()
+        {
+            if (runtimeEffectSprite != null) return runtimeEffectSprite;
+            const int size = 8;
+            runtimeEffectTexture = new Texture2D(size, size, TextureFormat.RGBA32, false)
+            {
+                name = "RuntimeStructuralEffect",
+                filterMode = FilterMode.Point
+            };
+            for (int y = 0; y < size; y++)
+            for (int x = 0; x < size; x++)
+            {
+                bool border = x == 1 || x == size - 2 || y == 1 || y == size - 2;
+                runtimeEffectTexture.SetPixel(x, y, border ? Color.white : Color.clear);
+            }
+            runtimeEffectTexture.Apply();
+            runtimeEffectSprite = Sprite.Create(
+                runtimeEffectTexture,
+                new Rect(0, 0, size, size),
+                new Vector2(0.5f, 0.5f),
+                size);
+            return runtimeEffectSprite;
         }
 
         private bool HasAuthoredCrackTile(StructuralRiskLevel risk)
@@ -558,11 +729,12 @@ namespace SubTerra.Gameplay.Structural
 
         private void OnDestroy()
         {
+            ClearShakeVisuals();
             DestroyRuntimeObject(runtimeCrackTile);
             DestroyRuntimeObject(runtimeCrackSprite);
             DestroyRuntimeObject(runtimeCrackTexture);
-            DestroyRuntimeObject(runtimeCauseSprite);
-            DestroyRuntimeObject(runtimeCauseTexture);
+            DestroyRuntimeObject(runtimeEffectSprite);
+            DestroyRuntimeObject(runtimeEffectTexture);
         }
 
         private static void DestroyRuntimeObject(Object value)

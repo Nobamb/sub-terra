@@ -112,6 +112,101 @@ namespace SubTerra.Gameplay.Mining.Tests
         }
 
         [Test]
+        public void RuntimeProtectedCellCannotBeMined()
+        {
+            CreateSystem(out var root, out var tilemap, out var resolver, out var system);
+            var tile = ScriptableObject.CreateInstance<Tile>();
+            var protectedCell = new Vector3Int(3, -4, 0);
+            resolver.RegisterRuntime(tile, new MiningTileDto(
+                "tile.rock.normal", string.Empty, 0, true, 1f, 0.2f, 0f, false));
+            tilemap.SetTile(protectedCell, tile);
+            system.SetCellProtectionPredicate(cell => cell == protectedCell);
+
+            Assert.That(system.TryMineInstant(protectedCell), Is.False);
+            Assert.That(system.LastFailure, Is.EqualTo(MiningFailureReason.NotMineable));
+            Assert.That(tilemap.GetTile(protectedCell), Is.SameAs(tile));
+
+            Object.DestroyImmediate(root);
+            Object.DestroyImmediate(tile);
+        }
+
+        [Test]
+        public void PromptB79_MovingToMineableTarget_ClearsPreviousFailureImmediately()
+        {
+            CreateSystem(out var root, out var tilemap, out var resolver, out var system);
+            var mineableTile = ScriptableObject.CreateInstance<Tile>();
+            var blockedTile = ScriptableObject.CreateInstance<Tile>();
+            resolver.RegisterRuntime(mineableTile, new MiningTileDto(
+                "tile.rock.normal", string.Empty, 0, true, 1f, 0.2f, 0f, false));
+            resolver.RegisterRuntime(blockedTile, new MiningTileDto(
+                "tile.boundary", string.Empty, 0, false, 1f, 0.2f, 0f, false));
+            var mineableCell = Vector3Int.zero;
+            var blockedCell = new Vector3Int(2, 0, 0);
+            tilemap.SetTile(mineableCell, mineableTile);
+            tilemap.SetTile(blockedCell, blockedTile);
+            MiningPhase lastPhase = MiningPhase.Idle;
+            system.ProgressChanged += state => lastPhase = state.Phase;
+
+            Assert.That(system.TryStartMining(blockedCell), Is.False);
+            Assert.That(system.LastFailure, Is.EqualTo(MiningFailureReason.NotMineable));
+
+            Assert.That(system.ClearFailureIfDirectionalTargetMineable(
+                Vector2.zero,
+                1f,
+                1.35f), Is.True);
+            Assert.That(system.LastFailure, Is.EqualTo(MiningFailureReason.None));
+            Assert.That(lastPhase, Is.EqualTo(MiningPhase.Idle));
+            Assert.That(tilemap.GetTile(mineableCell), Is.SameAs(mineableTile));
+
+            Object.DestroyImmediate(root);
+            Object.DestroyImmediate(mineableTile);
+            Object.DestroyImmediate(blockedTile);
+        }
+
+        [Test]
+        public void PromptB79_BlockedTarget_DoesNotClearPreviousFailure()
+        {
+            CreateSystem(out var root, out var tilemap, out var resolver, out var system);
+            var blockedTile = ScriptableObject.CreateInstance<Tile>();
+            resolver.RegisterRuntime(blockedTile, new MiningTileDto(
+                "tile.boundary", string.Empty, 0, false, 1f, 0.2f, 0f, false));
+            tilemap.SetTile(Vector3Int.zero, blockedTile);
+
+            Assert.That(system.TryStartMining(Vector3Int.zero), Is.False);
+            Assert.That(system.ClearFailureIfDirectionalTargetMineable(
+                Vector2.zero,
+                1f,
+                1.35f), Is.False);
+            Assert.That(system.LastFailure, Is.EqualTo(MiningFailureReason.NotMineable));
+
+            Object.DestroyImmediate(root);
+            Object.DestroyImmediate(blockedTile);
+        }
+
+        [Test]
+        public void CellProtectedDuringMiningIsNotRemovedOnCompletion()
+        {
+            CreateSystem(out var root, out var tilemap, out var resolver, out var system);
+            var tile = ScriptableObject.CreateInstance<Tile>();
+            var cell = new Vector3Int(2, -3, 0);
+            var isProtected = false;
+            resolver.RegisterRuntime(tile, new MiningTileDto(
+                "tile.rock.normal", string.Empty, 0, true, 1f, 0.2f, 0f, false));
+            tilemap.SetTile(cell, tile);
+            system.SetCellProtectionPredicate(candidate => isProtected && candidate == cell);
+
+            Assert.That(system.TryStartMining(cell), Is.True);
+            isProtected = true;
+            system.TickMining(1f);
+
+            Assert.That(system.LastFailure, Is.EqualTo(MiningFailureReason.NotMineable));
+            Assert.That(tilemap.GetTile(cell), Is.SameAs(tile));
+
+            Object.DestroyImmediate(root);
+            Object.DestroyImmediate(tile);
+        }
+
+        [Test]
         public void DeepZoneSignal_BlocksBeforeUnlock_AndAllowsInteractionAfterUnlock()
         {
             CreateSystem(out var root, out var tilemap, out var resolver, out var system);
@@ -134,6 +229,31 @@ namespace SubTerra.Gameplay.Mining.Tests
             Assert.That(system.LastFailure, Is.EqualTo(MiningFailureReason.None));
             Assert.That(signalAccesses, Is.EqualTo(1));
             Assert.That(tilemap.GetTile(cell), Is.SameAs(tile));
+
+            Object.DestroyImmediate(root);
+            Object.DestroyImmediate(tile);
+        }
+
+        [Test]
+        public void DeepZoneCells_BlockBeforeUnlock_AndCanBeMinedAfterUnlock()
+        {
+            CreateSystem(out var root, out var tilemap, out var resolver, out var system);
+            var access = new DeepZoneAccess();
+            system.SetRuntimeServices(null, null, access);
+            system.ConfigureDeepZoneBoundary(-2, 36, 40);
+            var tile = ScriptableObject.CreateInstance<Tile>();
+            var deepCell = new Vector3Int(0, -37, 0);
+            resolver.RegisterRuntime(tile, new MiningTileDto(
+                "tile.rock.normal", string.Empty, 0, true, 1f, 0f, 0f, false));
+            tilemap.SetTile(deepCell, tile);
+
+            Assert.That(system.TryMineInstant(deepCell), Is.False);
+            Assert.That(system.LastFailure, Is.EqualTo(MiningFailureReason.DeepZoneLocked));
+            Assert.That(tilemap.GetTile(deepCell), Is.SameAs(tile));
+
+            access.IsDeepZoneUnlocked = true;
+            Assert.That(system.TryMineInstant(deepCell), Is.True);
+            Assert.That(tilemap.GetTile(deepCell), Is.Null);
 
             Object.DestroyImmediate(root);
             Object.DestroyImmediate(tile);
@@ -191,6 +311,32 @@ namespace SubTerra.Gameplay.Mining.Tests
             system.TickMining(0.01f);
             Assert.IsNull(tilemap.GetTile(cell));
             Assert.AreEqual(95, transaction.Energy);
+
+            Object.DestroyImmediate(root);
+            Object.DestroyImmediate(tile);
+        }
+
+        [Test]
+        public void PromptB72_EnergyEfficiency_AccumulatesFractionalCostAcrossMining()
+        {
+            CreateSystem(out var root, out var tilemap, out var resolver, out var system);
+            var transaction = root.AddComponent<MiningTransaction>();
+            var upgrades = root.AddComponent<UpgradeEffects>();
+            upgrades.EnergyEfficiency = 1.25f; // 20% 절감
+            system.SetRuntimeServices(transaction, upgrades);
+            var tile = ScriptableObject.CreateInstance<Tile>();
+            resolver.RegisterRuntime(tile, new MiningTileDto(
+                "tile.copper", "mineral.copper", 1, true, 1f, 0.1f, 0f, false, 0, 2));
+
+            for (var i = 0; i < 10; i++)
+            {
+                var cell = new Vector3Int(i, 0, 0);
+                tilemap.SetTile(cell, tile);
+                Assert.That(system.TryMineInstant(cell), Is.True);
+            }
+
+            Assert.That(transaction.Energy, Is.EqualTo(84));
+            Assert.That(transaction.CommitCalls, Is.EqualTo(10));
 
             Object.DestroyImmediate(root);
             Object.DestroyImmediate(tile);
@@ -359,15 +505,25 @@ namespace SubTerra.Gameplay.Mining.Tests
             Assert.IsFalse(action.enabled, "The regression must not rely on the shared Attack action.");
 
             tilemap.SetTile(cell, tile);
-            SetButtonState(keyboard.enterKey, 1f);
-            Assert.IsTrue(keyboard.enterKey.isPressed, "The Enter press was not applied.");
-            InvokePrivate(controller, "Update");
-            Assert.IsTrue(
-                system.IsMining,
-                $"Mining did not start. ControllerActive={controller.isActiveAndEnabled}, "
-                + $"Pending={GetPrivate(controller, "startPending")}, "
-                + $"Failure={system.LastFailure}, Position={movement.Position}, "
-                + $"Facing={movement.FacingDirection}, Cell={cell}");
+            BuildingPlacementActivity.ResetForTests();
+            BuildingPlacementActivity.Begin();
+            try
+            {
+                SetButtonState(keyboard.enterKey, 1f);
+                Assert.IsTrue(keyboard.enterKey.isPressed, "The Enter press was not applied.");
+                InvokePrivate(controller, "Update");
+                Assert.IsTrue(
+                    system.IsMining,
+                    $"Enter must start mining while building placement is active. "
+                    + $"ControllerActive={controller.isActiveAndEnabled}, "
+                    + $"Pending={GetPrivate(controller, "startPending")}, "
+                    + $"Failure={system.LastFailure}, Position={movement.Position}, "
+                    + $"Facing={movement.FacingDirection}, Cell={cell}");
+            }
+            finally
+            {
+                BuildingPlacementActivity.End();
+            }
             Assert.IsNotNull(tilemap.GetTile(cell), "Enter must not bypass mining duration.");
             SetButtonState(keyboard.enterKey, 0f);
             InvokePrivate(controller, "Update");

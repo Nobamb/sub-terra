@@ -137,7 +137,9 @@ namespace SubTerra.App.Run
         {
             return input != null
                 && !string.IsNullOrWhiteSpace(input.failureToken)
-                && input.cause != RunFailureCause.Unknown;
+                && input.cause != RunFailureCause.Unknown
+                // 전력 0은 Prompt-B 81의 선택형 긴급 구출 경로가 소유한다.
+                && input.cause != RunFailureCause.PowerDepleted;
         }
 
         private static float Clamp(float value, float minimum, float maximum)
