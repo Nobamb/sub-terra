@@ -457,7 +457,7 @@ namespace SubTerra.Gameplay.Player.Tests
         }
 
         [Test]
-        public void LadderAnimation_AlternatesLimbsAndReversesWhenDescending()
+        public void LadderAnimation_MovesSameSideLimbsTogetherAndReversesWhenDescending()
         {
             CreateLadderAnimationRig(
                 out _,
@@ -478,8 +478,8 @@ namespace SubTerra.Gameplay.Player.Tests
 
             Assert.Greater(leftArm.localPosition.y, leftArmY);
             Assert.Less(rightArm.localPosition.y, rightArmY);
-            Assert.Less(leftLeg.localPosition.y, leftLegY);
-            Assert.Greater(rightLeg.localPosition.y, rightLegY);
+            Assert.Greater(leftLeg.localPosition.y, leftLegY);
+            Assert.Less(rightLeg.localPosition.y, rightLegY);
             Assert.AreEqual(torsoPosition, torso.localPosition);
 
             pose.Hide();
@@ -487,8 +487,8 @@ namespace SubTerra.Gameplay.Player.Tests
 
             Assert.Less(leftArm.localPosition.y, leftArmY);
             Assert.Greater(rightArm.localPosition.y, rightArmY);
-            Assert.Greater(leftLeg.localPosition.y, leftLegY);
-            Assert.Less(rightLeg.localPosition.y, rightLegY);
+            Assert.Less(leftLeg.localPosition.y, leftLegY);
+            Assert.Greater(rightLeg.localPosition.y, rightLegY);
             Assert.AreEqual(torsoPosition, torso.localPosition);
         }
 

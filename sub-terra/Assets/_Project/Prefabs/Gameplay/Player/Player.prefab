@@ -183,7 +183,7 @@ Transform:
   m_GameObject: {fileID: 2139708743192066274}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.11, y: -0.205, z: 0}
+  m_LocalPosition: {x: -0.085, y: -0.195, z: 0}
   m_LocalScale: {x: -0.4, y: 0.4, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -311,7 +311,7 @@ Transform:
   m_GameObject: {fileID: 4690687143698970786}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.135, y: 0.18, z: 0}
+  m_LocalPosition: {x: 0.12, y: 0.18, z: 0}
   m_LocalScale: {x: 0.42, y: 0.42, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -364,7 +364,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 2
+  m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: 21300000, guid: 305494ed01fd68d4a8f687dce195ce67, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -526,7 +526,7 @@ Transform:
   m_GameObject: {fileID: 6060842971916635295}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.11, y: -0.205, z: 0}
+  m_LocalPosition: {x: 0.085, y: -0.195, z: 0}
   m_LocalScale: {x: 0.4, y: 0.4, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -618,7 +618,7 @@ Transform:
   m_GameObject: {fileID: 6989255892930946677}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.135, y: 0.18, z: 0}
+  m_LocalPosition: {x: -0.12, y: 0.18, z: 0}
   m_LocalScale: {x: -0.42, y: 0.42, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -671,7 +671,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 2
+  m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: 21300000, guid: 305494ed01fd68d4a8f687dce195ce67, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -914,8 +914,8 @@ MonoBehaviour:
   rightArm: {fileID: 6878075972810539119}
   leftLeg: {fileID: 4094393921327556895}
   rightLeg: {fileID: 2730002090975379490}
-  cyclesPerSecond: 1.6
-  armSwingDegrees: 16
-  legSwingDegrees: 10
-  armTravel: 0.045
-  legTravel: 0.035
+  cyclesPerSecond: 1.35
+  armSwingDegrees: 10
+  legSwingDegrees: 7
+  armTravel: 0.02
+  legTravel: 0.015

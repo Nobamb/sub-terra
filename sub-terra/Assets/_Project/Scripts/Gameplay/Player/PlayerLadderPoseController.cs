@@ -12,11 +12,11 @@ namespace SubTerra.Gameplay.Player
         [SerializeField] private Transform rightArm;
         [SerializeField] private Transform leftLeg;
         [SerializeField] private Transform rightLeg;
-        [SerializeField, Min(0f)] private float cyclesPerSecond = 1.6f;
-        [SerializeField, Min(0f)] private float armSwingDegrees = 16f;
-        [SerializeField, Min(0f)] private float legSwingDegrees = 10f;
-        [SerializeField, Min(0f)] private float armTravel = 0.045f;
-        [SerializeField, Min(0f)] private float legTravel = 0.035f;
+        [SerializeField, Min(0f)] private float cyclesPerSecond = 1.35f;
+        [SerializeField, Min(0f)] private float armSwingDegrees = 10f;
+        [SerializeField, Min(0f)] private float legSwingDegrees = 7f;
+        [SerializeField, Min(0f)] private float armTravel = 0.02f;
+        [SerializeField, Min(0f)] private float legTravel = 0.015f;
 
         private Vector3 torsoNeutralPosition;
         private Quaternion torsoNeutralRotation;
@@ -140,17 +140,17 @@ namespace SubTerra.Gameplay.Player
 
             leftArm.localPosition = leftArmNeutralPosition + Vector3.up * (alternatingPhase * armTravel);
             rightArm.localPosition = rightArmNeutralPosition - Vector3.up * (alternatingPhase * armTravel);
-            leftLeg.localPosition = leftLegNeutralPosition - Vector3.up * (alternatingPhase * legTravel);
-            rightLeg.localPosition = rightLegNeutralPosition + Vector3.up * (alternatingPhase * legTravel);
+            leftLeg.localPosition = leftLegNeutralPosition + Vector3.up * (alternatingPhase * legTravel);
+            rightLeg.localPosition = rightLegNeutralPosition - Vector3.up * (alternatingPhase * legTravel);
 
             leftArm.localRotation = leftArmNeutralRotation
                 * Quaternion.Euler(0f, 0f, alternatingPhase * armSwingDegrees);
             rightArm.localRotation = rightArmNeutralRotation
                 * Quaternion.Euler(0f, 0f, -alternatingPhase * armSwingDegrees);
             leftLeg.localRotation = leftLegNeutralRotation
-                * Quaternion.Euler(0f, 0f, -alternatingPhase * legSwingDegrees);
-            rightLeg.localRotation = rightLegNeutralRotation
                 * Quaternion.Euler(0f, 0f, alternatingPhase * legSwingDegrees);
+            rightLeg.localRotation = rightLegNeutralRotation
+                * Quaternion.Euler(0f, 0f, -alternatingPhase * legSwingDegrees);
         }
     }
 }

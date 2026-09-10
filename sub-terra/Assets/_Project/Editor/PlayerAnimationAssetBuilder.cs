@@ -363,23 +363,23 @@ namespace SubTerra.Editor
                 rigRoot.transform,
                 "LeftArm",
                 LadderArmPath,
-                new Vector3(-0.135f, 0.18f, 0f),
+                new Vector3(-0.12f, 0.18f, 0f),
                 new Vector3(-0.42f, 0.42f, 1f),
                 sourceRenderer,
-                2);
+                0);
             var rightArm = CreateLadderPart(
                 rigRoot.transform,
                 "RightArm",
                 LadderArmPath,
-                new Vector3(0.135f, 0.18f, 0f),
+                new Vector3(0.12f, 0.18f, 0f),
                 new Vector3(0.42f, 0.42f, 1f),
                 sourceRenderer,
-                2);
+                0);
             var leftLeg = CreateLadderPart(
                 rigRoot.transform,
                 "LeftLeg",
                 LadderLegPath,
-                new Vector3(-0.11f, -0.205f, 0f),
+                new Vector3(-0.085f, -0.195f, 0f),
                 new Vector3(-0.4f, 0.4f, 1f),
                 sourceRenderer,
                 0);
@@ -387,7 +387,7 @@ namespace SubTerra.Editor
                 rigRoot.transform,
                 "RightLeg",
                 LadderLegPath,
-                new Vector3(0.11f, -0.205f, 0f),
+                new Vector3(0.085f, -0.195f, 0f),
                 new Vector3(0.4f, 0.4f, 1f),
                 sourceRenderer,
                 0);
