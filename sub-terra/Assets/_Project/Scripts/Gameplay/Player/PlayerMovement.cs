@@ -56,7 +56,7 @@ namespace SubTerra.Gameplay.Player
             ? verticalMoveInput * CurrentSpeedMultiplier
             : 0f;
         public bool IsMovementRequested => Mathf.Abs(moveInput) > 0.01f
-            || Mathf.Abs(verticalMoveInput) > 0.01f;
+            || (IsClimbing && Mathf.Abs(verticalMoveInput) > 0.01f);
         public float CurrentSpeedMultiplier => cargoSpeedMultiplier * hazardSpeedMultiplier;
         public float CurrentJumpMultiplier => cargoJumpMultiplier;
 
@@ -75,6 +75,7 @@ namespace SubTerra.Gameplay.Player
 
             // 점프 판정과 같은 물리 틱에서 착지를 갱신한다.
             UpdateGroundedState();
+            ExitLadderAtTopIfGrounded();
             ApplyHorizontalMovement();
 
             var jumped = TryApplyJump();
@@ -121,6 +122,13 @@ namespace SubTerra.Gameplay.Player
         public void EnterLadder(LadderZone ladder)
         {
             if (ladder == null || !activeLadders.Add(ladder))
+            {
+                return;
+            }
+
+            // 꼭대기 발판에서 Trigger만 겹친 경우에는 위/중립 입력으로 다시 사다리를 잡지 않는다.
+            // 아래 입력은 같은 사다리로 다시 내려갈 수 있도록 허용한다.
+            if (verticalMoveInput >= -0.01f && IsAtTopOfActiveLadders())
             {
                 return;
             }
@@ -291,7 +299,56 @@ namespace SubTerra.Gameplay.Player
                 return;
             }
 
+            // 발판 위에서 위 입력을 계속 누르더라도 등반 포즈로 되돌아가지 않는다.
+            // 아래 입력은 사다리 재진입으로 처리한다.
+            if (verticalMoveInput > 0.01f && IsAtTopOfActiveLadders())
+            {
+                return;
+            }
+
             EnterLadderMode();
+        }
+
+        private void ExitLadderAtTopIfGrounded()
+        {
+            // 꼭대기에서 아래를 누른 경우에는 같은 사다리로 다시 내려갈 수 있어야 한다.
+            // 이 입력까지 등반 해제로 처리하면 다음 물리 프레임에 재진입이 즉시 취소된다.
+            if (!IsClimbing
+                || !IsGrounded
+                || verticalMoveInput < -0.01f
+                || !IsAtTopOfActiveLadders())
+            {
+                return;
+            }
+
+            // Trigger를 벗어날 때까지 activeLadders는 보존한다.
+            // 그래야 꼭대기에서 아래 입력으로 자연스럽게 다시 내려갈 수 있다.
+            ExitLadderMode();
+        }
+
+        private bool IsAtTopOfActiveLadders()
+        {
+            if (bodyCollider == null || activeLadders.Count == 0)
+            {
+                return false;
+            }
+
+            bool hasActiveLadder = false;
+            foreach (LadderZone ladder in activeLadders)
+            {
+                if (ladder == null)
+                {
+                    continue;
+                }
+
+                hasActiveLadder = true;
+                if (!ladder.IsAtTopExit(bodyCollider))
+                {
+                    return false;
+                }
+            }
+
+            return hasActiveLadder;
         }
 
         private void UpdateGroundedState()
