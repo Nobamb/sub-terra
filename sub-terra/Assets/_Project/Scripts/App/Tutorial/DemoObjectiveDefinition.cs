@@ -13,6 +13,7 @@ namespace SubTerra.App.Tutorial
         public bool ShowsDismissibleGuidance { get; }
         public string GuidanceTitle { get; }
         public string GuidanceBody { get; }
+        public QuestReward Reward { get; }
 
         public DemoObjectiveDefinition(
             string id,
@@ -24,7 +25,8 @@ namespace SubTerra.App.Tutorial
             bool isTerminal = false,
             bool showsDismissibleGuidance = false,
             string guidanceTitle = "",
-            string guidanceBody = "")
+            string guidanceBody = "",
+            QuestReward reward = default)
         {
             Id = id ?? string.Empty;
             Title = title ?? string.Empty;
@@ -36,6 +38,7 @@ namespace SubTerra.App.Tutorial
             ShowsDismissibleGuidance = showsDismissibleGuidance;
             GuidanceTitle = string.IsNullOrEmpty(guidanceTitle) ? Title : guidanceTitle;
             GuidanceBody = string.IsNullOrEmpty(guidanceBody) ? Description : guidanceBody;
+            Reward = reward;
         }
     }
 

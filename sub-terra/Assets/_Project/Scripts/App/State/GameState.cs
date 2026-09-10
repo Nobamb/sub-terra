@@ -143,6 +143,10 @@ namespace SubTerra.App.State
         /// <summary>현재 데모 목표 영구 ID. 비어 있으면 복원 시 완료 개수로 폴백한다.</summary>
         public string CurrentObjectiveId { get; private set; }
         public bool IsDemoComplete { get; private set; }
+        /// <summary>화물 부족으로 지급을 보류 중인 퀘스트 ID. 없으면 빈 문자열.</summary>
+        public string PendingQuestRewardId { get; private set; }
+        /// <summary>보상을 수령했거나 포기한 퀘스트 개수. 완료 개수보다 클 수 없다.</summary>
+        public int QuestRewardSettledCount { get; private set; }
 
         private ProgressState() { }
 
@@ -150,12 +154,16 @@ namespace SubTerra.App.State
             int completedObjectives,
             bool hasSeenOutpostTutorial = false,
             string currentObjectiveId = null,
-            bool isDemoComplete = false)
+            bool isDemoComplete = false,
+            string pendingQuestRewardId = null,
+            int questRewardSettledCount = 0)
         {
             CompletedObjectives = completedObjectives < 0 ? 0 : completedObjectives;
             HasSeenOutpostTutorial = hasSeenOutpostTutorial;
             CurrentObjectiveId = currentObjectiveId ?? string.Empty;
             IsDemoComplete = isDemoComplete;
+            PendingQuestRewardId = pendingQuestRewardId ?? string.Empty;
+            QuestRewardSettledCount = questRewardSettledCount < 0 ? 0 : questRewardSettledCount;
         }
 
         internal void MarkOutpostTutorialSeen()
@@ -168,6 +176,12 @@ namespace SubTerra.App.State
             CurrentObjectiveId = objectiveId ?? string.Empty;
             CompletedObjectives = completedCount < 0 ? 0 : completedCount;
             IsDemoComplete = isDemoComplete;
+        }
+
+        internal void ApplyQuestRewardSettlement(string pendingQuestRewardId, int settledCount)
+        {
+            PendingQuestRewardId = pendingQuestRewardId ?? string.Empty;
+            QuestRewardSettledCount = settledCount < 0 ? 0 : settledCount;
         }
     }
 
@@ -542,6 +556,25 @@ namespace SubTerra.App.State
 
             Progress.ApplyDemoProgress(id, count, isDemoComplete);
             DemoProgressChanged?.Invoke();
+        }
+
+        /// <summary>퀘스트 보상 수령/포기/보류 상태를 저장 가능한 진행 State에 기록한다.</summary>
+        public void SetQuestRewardSettlement(string pendingQuestRewardId, int settledCount)
+        {
+            if (Progress == null)
+            {
+                return;
+            }
+
+            var pending = pendingQuestRewardId ?? string.Empty;
+            var count = settledCount < 0 ? 0 : settledCount;
+            if (Progress.PendingQuestRewardId == pending
+                && Progress.QuestRewardSettledCount == count)
+            {
+                return;
+            }
+
+            Progress.ApplyQuestRewardSettlement(pending, count);
         }
 
         private static bool Approximately(float a, float b)

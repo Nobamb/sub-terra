@@ -39,6 +39,10 @@ namespace SubTerra.App.Save
                         MigrateVersion2To3(data);
                         migrated = true;
                         break;
+                    case 3:
+                        MigrateVersion3To4(data);
+                        migrated = true;
+                        break;
                     default:
                         return SaveMigrationStatus.InvalidOldVersion;
                 }
@@ -112,6 +116,23 @@ namespace SubTerra.App.Save
             }
 
             data.saveVersion = 3;
+        }
+
+        private static void MigrateVersion3To4(GameSaveData data)
+        {
+            SaveDataValidator.NormalizeMissingCollections(data);
+            var progress = data.progress;
+            if (progress != null)
+            {
+                // 구세이브는 보상을 이미 플레이한 것으로 보고 소급 지급하지 않는다.
+                progress.pendingQuestRewardId ??= string.Empty;
+                if (progress.questRewardSettledCount <= 0)
+                {
+                    progress.questRewardSettledCount = progress.completedObjectives;
+                }
+            }
+
+            data.saveVersion = 4;
         }
     }
 }

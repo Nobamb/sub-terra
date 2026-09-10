@@ -24,6 +24,7 @@ namespace SubTerra.App.UI.Tutorial
 
         private DemoObjectiveDirector director;
         private DemoObjectivePresenter presenter;
+        private QuestRewardService rewards;
         private SaveRuntimeController runtime;
         private GameBootstrapper bootstrap;
         private InventoryService inventory;
@@ -35,6 +36,7 @@ namespace SubTerra.App.UI.Tutorial
 
         public DemoObjectiveDirector Director => director;
         public DemoObjectivePresenter Presenter => presenter;
+        public QuestRewardService Rewards => rewards;
         public bool IsBound => bound;
 
         private void Awake()
@@ -45,12 +47,19 @@ namespace SubTerra.App.UI.Tutorial
             }
 
             director = new DemoObjectiveDirector();
+            rewards = new QuestRewardService();
             presenter = new DemoObjectivePresenter(objectiveView);
             if (objectiveView != null)
             {
                 objectiveView.DismissRequested += OnDismissRequested;
                 objectiveView.DetailsRequested += OnDetailsRequested;
                 objectiveView.DetailsDismissRequested += OnDetailsDismissRequested;
+                objectiveView.DetailsPrevRequested += OnDetailsPrevRequested;
+                objectiveView.DetailsNextRequested += OnDetailsNextRequested;
+                objectiveView.CapacityDumpRequested += OnCapacityDumpRequested;
+                objectiveView.CapacityForfeitRequested += OnCapacityForfeitRequested;
+                objectiveView.DumpClosedRequested += OnDumpClosedRequested;
+                objectiveView.DumpRequested += OnDumpRequested;
             }
         }
 
@@ -61,6 +70,12 @@ namespace SubTerra.App.UI.Tutorial
                 objectiveView.DismissRequested -= OnDismissRequested;
                 objectiveView.DetailsRequested -= OnDetailsRequested;
                 objectiveView.DetailsDismissRequested -= OnDetailsDismissRequested;
+                objectiveView.DetailsPrevRequested -= OnDetailsPrevRequested;
+                objectiveView.DetailsNextRequested -= OnDetailsNextRequested;
+                objectiveView.CapacityDumpRequested -= OnCapacityDumpRequested;
+                objectiveView.CapacityForfeitRequested -= OnCapacityForfeitRequested;
+                objectiveView.DumpClosedRequested -= OnDumpClosedRequested;
+                objectiveView.DumpRequested -= OnDumpRequested;
             }
 
             Unbind();
@@ -84,8 +99,10 @@ namespace SubTerra.App.UI.Tutorial
             bootstrap = GameBootstrapper.Instance;
 
             director ??= new DemoObjectiveDirector();
+            rewards ??= new QuestRewardService();
             presenter ??= new DemoObjectivePresenter(objectiveView);
             director.BindGameState(boundState);
+            rewards.Bind(inventory, boundState);
 
             if (boundState?.Progress != null
                 && (!string.IsNullOrEmpty(boundState.Progress.CurrentObjectiveId)
@@ -97,9 +114,10 @@ namespace SubTerra.App.UI.Tutorial
             else
             {
                 director.ResetNewGame();
+                boundState?.SetQuestRewardSettlement(string.Empty, 0);
             }
 
-            presenter.Bind(director);
+            presenter.Bind(director, rewards);
 
             if (progression != null)
             {
@@ -151,6 +169,7 @@ namespace SubTerra.App.UI.Tutorial
             }
 
             presenter?.Unbind();
+            rewards?.Unbind();
             inventory = null;
             economy = null;
             progression = null;
@@ -187,6 +206,36 @@ namespace SubTerra.App.UI.Tutorial
             presenter?.CloseDetails();
         }
 
+        private void OnDetailsPrevRequested()
+        {
+            presenter?.ShowPreviousQuest();
+        }
+
+        private void OnDetailsNextRequested()
+        {
+            presenter?.ShowNextQuest();
+        }
+
+        private void OnCapacityDumpRequested()
+        {
+            presenter?.ChooseDumpInventory();
+        }
+
+        private void OnCapacityForfeitRequested()
+        {
+            presenter?.ChooseForfeitReward();
+        }
+
+        private void OnDumpClosedRequested()
+        {
+            presenter?.CloseDumpPanel();
+        }
+
+        private void OnDumpRequested(string mineralId, int quantity)
+        {
+            presenter?.DumpMineral(mineralId, quantity);
+        }
+
         private void OnPurchaseCompleted(ProgressionPurchaseResult result)
         {
             director?.OnProgressionPurchaseCompleted(result);
@@ -214,6 +263,7 @@ namespace SubTerra.App.UI.Tutorial
                 director.RestoreFromProgress(boundState.Progress);
             }
 
+            rewards?.SyncFromProgress();
             EvaluateDeepZoneProgress();
         }
 

@@ -57,7 +57,9 @@ namespace SubTerra.App.Save
                     completedObjectives = game.Progress.CompletedObjectives,
                     hasSeenOutpostTutorial = game.Progress.HasSeenOutpostTutorial,
                     currentObjectiveId = game.Progress.CurrentObjectiveId ?? string.Empty,
-                    isDemoComplete = game.Progress.IsDemoComplete
+                    isDemoComplete = game.Progress.IsDemoComplete,
+                    pendingQuestRewardId = game.Progress.PendingQuestRewardId ?? string.Empty,
+                    questRewardSettledCount = game.Progress.QuestRewardSettledCount
                 },
                 run = new RunSaveData
                 {
@@ -97,7 +99,9 @@ namespace SubTerra.App.Save
                 data.progress.completedObjectives,
                 data.progress.hasSeenOutpostTutorial,
                 data.progress.currentObjectiveId,
-                data.progress.isDemoComplete);
+                data.progress.isDemoComplete,
+                data.progress.pendingQuestRewardId,
+                data.progress.questRewardSettledCount);
             var run = new RunState(
                 data.run.depth,
                 data.run.maximumDepth,

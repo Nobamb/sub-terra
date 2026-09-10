@@ -78,6 +78,11 @@ namespace SubTerra.App.Save
             data.player ??= new PlayerSaveData();
             data.progress ??= new ProgressSaveData();
             data.progress.currentObjectiveId ??= string.Empty;
+            data.progress.pendingQuestRewardId ??= string.Empty;
+            if (data.progress.questRewardSettledCount < 0)
+            {
+                data.progress.questRewardSettledCount = 0;
+            }
             data.run ??= new RunSaveData();
             if (data.run.maximumDepth < data.run.depth)
             {

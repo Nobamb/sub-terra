@@ -40,6 +40,8 @@ namespace SubTerra.App.Save
         /// <summary>현재 데모 목표 ID. 구버전 세이브는 빈 문자열 → 완료 개수로 폴백.</summary>
         public string currentObjectiveId = string.Empty;
         public bool isDemoComplete;
+        public string pendingQuestRewardId = string.Empty;
+        public int questRewardSettledCount;
     }
 
     [Serializable]

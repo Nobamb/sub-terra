@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using SubTerra.App.Core.Data;
 using SubTerra.App.Tutorial;
 using TMPro;
 using UnityEngine;
@@ -26,6 +28,25 @@ namespace SubTerra.App.UI.Tutorial
         [SerializeField] private TMP_Text detailsTitleText;
         [SerializeField] private TMP_Text detailsBodyText;
         [SerializeField] private TMP_Text detailsNextActionText;
+        [SerializeField] private TMP_Text detailsRewardText;
+        [SerializeField] private TMP_Text detailsStatusText;
+        [SerializeField] private TMP_Text detailsIndexText;
+        [SerializeField] private Button detailsPrevButton;
+        [SerializeField] private Button detailsNextButton;
+        [SerializeField] private GameObject capacityRoot;
+        [SerializeField] private TMP_Text capacityTitleText;
+        [SerializeField] private TMP_Text capacityBodyText;
+        [SerializeField] private GameObject dumpRoot;
+        [SerializeField] private TMP_Text dumpSummaryText;
+        [SerializeField] private TMP_Text dumpCopperText;
+        [SerializeField] private TMP_Text dumpIronText;
+        [SerializeField] private TMP_Text dumpLithiumText;
+        [SerializeField] private Button dumpCopperOneButton;
+        [SerializeField] private Button dumpCopperAllButton;
+        [SerializeField] private Button dumpIronOneButton;
+        [SerializeField] private Button dumpIronAllButton;
+        [SerializeField] private Button dumpLithiumOneButton;
+        [SerializeField] private Button dumpLithiumAllButton;
 
         private int defaultTutorialSort = UiLayerPriority.TutorialGuidance;
         private Canvas guidanceCanvas;
@@ -183,6 +204,139 @@ namespace SubTerra.App.UI.Tutorial
             }
         }
 
+        public void SetDetailsReward(string rewardText)
+        {
+            if (detailsRewardText != null)
+            {
+                detailsRewardText.text = rewardText ?? string.Empty;
+            }
+        }
+
+        public void SetDetailsStatus(string statusText)
+        {
+            if (detailsStatusText != null)
+            {
+                detailsStatusText.text = statusText ?? string.Empty;
+            }
+        }
+
+        public void SetDetailsIndex(string indexText)
+        {
+            if (detailsIndexText != null)
+            {
+                detailsIndexText.text = indexText ?? string.Empty;
+            }
+        }
+
+        public void SetDetailsNavInteractable(bool previousEnabled, bool nextEnabled)
+        {
+            if (detailsPrevButton != null)
+            {
+                detailsPrevButton.interactable = previousEnabled;
+            }
+
+            if (detailsNextButton != null)
+            {
+                detailsNextButton.interactable = nextEnabled;
+            }
+        }
+
+        public void SetCapacityChoiceVisible(bool visible)
+        {
+            if (capacityRoot != null)
+            {
+                capacityRoot.SetActive(visible);
+                if (visible)
+                {
+                    capacityRoot.transform.SetAsLastSibling();
+                }
+            }
+        }
+
+        public void SetCapacityChoiceText(string title, string body)
+        {
+            if (capacityTitleText != null)
+            {
+                capacityTitleText.text = title ?? string.Empty;
+            }
+
+            if (capacityBodyText != null)
+            {
+                capacityBodyText.text = body ?? string.Empty;
+            }
+        }
+
+        public void SetDumpPanelVisible(bool visible)
+        {
+            if (dumpRoot != null)
+            {
+                dumpRoot.SetActive(visible);
+                if (visible)
+                {
+                    dumpRoot.transform.SetAsLastSibling();
+                }
+            }
+        }
+
+        public void SetDumpSummary(string summary)
+        {
+            if (dumpSummaryText != null)
+            {
+                dumpSummaryText.text = summary ?? string.Empty;
+            }
+        }
+
+        public void SetDumpRows(IReadOnlyList<QuestDumpRow> rows)
+        {
+            SetDumpMineral(DataIds.Minerals.Copper, dumpCopperText, dumpCopperOneButton, dumpCopperAllButton, rows);
+            SetDumpMineral(DataIds.Minerals.Iron, dumpIronText, dumpIronOneButton, dumpIronAllButton, rows);
+            SetDumpMineral(DataIds.Minerals.Lithium, dumpLithiumText, dumpLithiumOneButton, dumpLithiumAllButton, rows);
+        }
+
+        private static void SetDumpMineral(
+            string mineralId,
+            TMP_Text label,
+            Button dumpOne,
+            Button dumpAll,
+            IReadOnlyList<QuestDumpRow> rows)
+        {
+            var quantity = 0;
+            var display = QuestRewardService.DisplayNameOf(mineralId);
+            if (rows != null)
+            {
+                for (var i = 0; i < rows.Count; i++)
+                {
+                    if (rows[i].MineralId != mineralId)
+                    {
+                        continue;
+                    }
+
+                    quantity = rows[i].Quantity;
+                    if (!string.IsNullOrEmpty(rows[i].DisplayName))
+                    {
+                        display = rows[i].DisplayName;
+                    }
+
+                    break;
+                }
+            }
+
+            if (label != null)
+            {
+                label.text = display + "  x" + quantity;
+            }
+
+            if (dumpOne != null)
+            {
+                dumpOne.interactable = quantity > 0;
+            }
+
+            if (dumpAll != null)
+            {
+                dumpAll.interactable = quantity > 0;
+            }
+        }
+
         /// <summary>UI Button OnClick 연결용.</summary>
         public void OnDismissClicked()
         {
@@ -206,6 +360,67 @@ namespace SubTerra.App.UI.Tutorial
 
         public event System.Action DetailsRequested;
         public event System.Action DetailsDismissRequested;
+        public event System.Action DetailsPrevRequested;
+        public event System.Action DetailsNextRequested;
+        public event System.Action CapacityDumpRequested;
+        public event System.Action CapacityForfeitRequested;
+        public event System.Action DumpClosedRequested;
+        public event System.Action<string, int> DumpRequested;
+
+        public void OnDetailsPrevClicked()
+        {
+            DetailsPrevRequested?.Invoke();
+        }
+
+        public void OnDetailsNextClicked()
+        {
+            DetailsNextRequested?.Invoke();
+        }
+
+        public void OnCapacityDumpClicked()
+        {
+            CapacityDumpRequested?.Invoke();
+        }
+
+        public void OnCapacityForfeitClicked()
+        {
+            CapacityForfeitRequested?.Invoke();
+        }
+
+        public void OnDumpClosedClicked()
+        {
+            DumpClosedRequested?.Invoke();
+        }
+
+        public void OnDumpCopperOneClicked()
+        {
+            DumpRequested?.Invoke(DataIds.Minerals.Copper, 1);
+        }
+
+        public void OnDumpCopperAllClicked()
+        {
+            DumpRequested?.Invoke(DataIds.Minerals.Copper, int.MaxValue);
+        }
+
+        public void OnDumpIronOneClicked()
+        {
+            DumpRequested?.Invoke(DataIds.Minerals.Iron, 1);
+        }
+
+        public void OnDumpIronAllClicked()
+        {
+            DumpRequested?.Invoke(DataIds.Minerals.Iron, int.MaxValue);
+        }
+
+        public void OnDumpLithiumOneClicked()
+        {
+            DumpRequested?.Invoke(DataIds.Minerals.Lithium, 1);
+        }
+
+        public void OnDumpLithiumAllClicked()
+        {
+            DumpRequested?.Invoke(DataIds.Minerals.Lithium, int.MaxValue);
+        }
 
         public bool HasRequiredReferences()
         {
@@ -218,6 +433,25 @@ namespace SubTerra.App.UI.Tutorial
                 && detailsTitleText != null
                 && detailsBodyText != null
                 && detailsNextActionText != null;
+        }
+
+        public bool HasRewardLogReferences()
+        {
+            return HasDetailsReferences()
+                && detailsRewardText != null
+                && detailsStatusText != null
+                && detailsIndexText != null
+                && detailsPrevButton != null
+                && detailsNextButton != null;
+        }
+
+        public bool HasOverflowReferences()
+        {
+            return capacityRoot != null
+                && capacityTitleText != null
+                && capacityBodyText != null
+                && dumpRoot != null
+                && dumpSummaryText != null;
         }
     }
 }
