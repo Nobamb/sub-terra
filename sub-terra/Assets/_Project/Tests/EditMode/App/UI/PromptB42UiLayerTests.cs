@@ -17,6 +17,8 @@ namespace SubTerra.App.Tests.UI
             Assert.That(UiLayerPriority.SettingsModal, Is.GreaterThan(UiLayerPriority.TutorialGuidance));
             Assert.That(UiLayerPriority.ModalPanel, Is.GreaterThan(UiLayerPriority.SettingsModal));
             Assert.That(UiLayerPriority.ModalPanel, Is.GreaterThan(UiLayerPriority.CriticalHazard));
+            Assert.That(UiLayerPriority.QuestPopup, Is.GreaterThan(SubTerra.App.UI.Drone.DroneDialogueSocket.OverlaySortingOrder));
+            Assert.That(UiLayerPriority.QuestPopup, Is.LessThan(UiLayerPriority.EmergencyRescueModal));
         }
 
         [Test]

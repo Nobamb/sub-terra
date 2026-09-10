@@ -22,5 +22,7 @@ namespace SubTerra.App.UI.Tutorial
         void SetDumpPanelVisible(bool visible);
         void SetDumpSummary(string summary);
         void SetDumpRows(System.Collections.Generic.IReadOnlyList<SubTerra.App.Tutorial.QuestDumpRow> rows);
+        void SetClaimVisible(bool visible);
+        void SetClaimText(string title, string questTitle, string rewardText, string hint);
     }
 }

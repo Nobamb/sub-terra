@@ -17,6 +17,7 @@ namespace SubTerra.App.UI.Tutorial
         private bool detailsOpen;
         private bool capacityOpen;
         private bool dumpOpen;
+        private bool claimOpen;
         private bool inputLocked;
         private int viewedIndex;
 
@@ -25,6 +26,7 @@ namespace SubTerra.App.UI.Tutorial
         public bool IsDetailsOpen => detailsOpen;
         public bool IsCapacityOpen => capacityOpen;
         public bool IsDumpOpen => dumpOpen;
+        public bool IsClaimOpen => claimOpen;
         public bool IsInputLocked => inputLocked;
         public bool HazardActive => hazardActive;
         public int ViewedIndex => viewedIndex;
@@ -53,6 +55,7 @@ namespace SubTerra.App.UI.Tutorial
             {
                 rewards.CapacityBlocked += OnCapacityBlocked;
                 rewards.GrantResolved += OnGrantResolved;
+                rewards.ClaimOffered += OnClaimOffered;
             }
 
             inputLocked = false;
@@ -74,6 +77,7 @@ namespace SubTerra.App.UI.Tutorial
             {
                 rewards.CapacityBlocked -= OnCapacityBlocked;
                 rewards.GrantResolved -= OnGrantResolved;
+                rewards.ClaimOffered -= OnClaimOffered;
                 rewards = null;
             }
 
@@ -81,12 +85,14 @@ namespace SubTerra.App.UI.Tutorial
             detailsOpen = false;
             capacityOpen = false;
             dumpOpen = false;
+            claimOpen = false;
             inputLocked = false;
             viewedIndex = 0;
             view?.SetGuidanceVisible(false);
             view?.SetDetailsVisible(false);
             view?.SetCapacityChoiceVisible(false);
             view?.SetDumpPanelVisible(false);
+            view?.SetClaimVisible(false);
             view?.SetInputLocked(false);
             view?.SetDemoCompleteVisible(false, string.Empty);
         }
@@ -173,13 +179,40 @@ namespace SubTerra.App.UI.Tutorial
             }
 
             var result = rewards.ForfeitPending();
-            if (rewards.HasPending)
+            if (result.NeedsPlayerChoice)
             {
                 ShowCapacity(result);
                 return;
             }
 
             CloseOverflow();
+            if (result.IsAwaitingClaim)
+            {
+                ShowClaim(result);
+            }
+        }
+
+        /// <summary>클리어 보상 팝업을 닫으면 그때 보상을 지급한다.</summary>
+        public void ConfirmClaim()
+        {
+            if (rewards == null || !rewards.HasPending)
+            {
+                CloseClaim();
+                return;
+            }
+
+            CloseClaim();
+            var result = rewards.ClaimPending();
+            if (result.NeedsPlayerChoice)
+            {
+                ShowCapacity(result);
+                return;
+            }
+
+            if (result.IsAwaitingClaim)
+            {
+                ShowClaim(result);
+            }
         }
 
         public void DumpMineral(string mineralId, int quantity)
@@ -235,6 +268,10 @@ namespace SubTerra.App.UI.Tutorial
             }
 
             CloseOverflow();
+            if (retry.IsAwaitingClaim)
+            {
+                ShowClaim(retry);
+            }
         }
 
         public void DismissGuidance()
@@ -277,6 +314,16 @@ namespace SubTerra.App.UI.Tutorial
             ShowCapacity(result);
         }
 
+        private void OnClaimOffered(QuestRewardGrantResult result)
+        {
+            if (!result.IsAwaitingClaim)
+            {
+                return;
+            }
+
+            ShowClaim(result);
+        }
+
         private void OnGrantResolved(QuestRewardGrantResult result)
         {
             if (result.NeedsPlayerChoice)
@@ -287,6 +334,7 @@ namespace SubTerra.App.UI.Tutorial
             if (!rewards.HasPending)
             {
                 CloseOverflow();
+                CloseClaim();
             }
 
             if (detailsOpen)
@@ -295,16 +343,42 @@ namespace SubTerra.App.UI.Tutorial
             }
         }
 
+        private void ShowClaim(QuestRewardGrantResult result)
+        {
+            dumpOpen = false;
+            capacityOpen = false;
+            claimOpen = true;
+            view?.SetDumpPanelVisible(false);
+            view?.SetCapacityChoiceVisible(false);
+            var questTitle = DemoObjectiveCatalog.TryGet(result.ObjectiveId, out var definition)
+                ? definition.Title
+                : result.ObjectiveId;
+            view?.SetClaimText(
+                "퀘스트 클리어",
+                questTitle,
+                "클리어 보상: " + result.Reward.FormatKorean(),
+                "닫으면 보상이 지급됩니다.");
+            view?.SetClaimVisible(true);
+        }
+
+        private void CloseClaim()
+        {
+            claimOpen = false;
+            view?.SetClaimVisible(false);
+        }
+
         private void ShowCapacity(QuestRewardGrantResult result)
         {
             dumpOpen = false;
+            claimOpen = false;
             capacityOpen = true;
             view?.SetDumpPanelVisible(false);
+            view?.SetClaimVisible(false);
             view?.SetCapacityChoiceText(
                 "화물 공간이 부족합니다",
-                "보상("
+                "기존 자원을 버리고 퀘스트 보상("
                 + result.Reward.FormatKorean()
-                + ")을 받으려면 화물을 버리거나, 퀘스트 보상을 포기하세요.\n"
+                + ")을 받을지, 퀘스트 보상을 버릴지 선택하세요.\n"
                 + "판매가 아니라 버리는 것만 가능합니다.");
             view?.SetCapacityChoiceVisible(true);
         }

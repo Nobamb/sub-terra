@@ -47,9 +47,16 @@ namespace SubTerra.App.UI.Tutorial
         [SerializeField] private Button dumpIronAllButton;
         [SerializeField] private Button dumpLithiumOneButton;
         [SerializeField] private Button dumpLithiumAllButton;
+        [SerializeField] private GameObject claimRoot;
+        [SerializeField] private TMP_Text claimTitleText;
+        [SerializeField] private TMP_Text claimQuestTitleText;
+        [SerializeField] private TMP_Text claimRewardText;
+        [SerializeField] private TMP_Text claimHintText;
 
         private int defaultTutorialSort = UiLayerPriority.TutorialGuidance;
         private Canvas guidanceCanvas;
+        private Canvas detailsCanvas;
+        private Canvas claimCanvas;
 
         private void Awake()
         {
@@ -127,6 +134,35 @@ namespace SubTerra.App.UI.Tutorial
             guidanceCanvas.sortingOrder = UiLayerPriority.IntroductionGuidance;
         }
 
+        private static void EnsurePopupCanvas(GameObject root, ref Canvas canvas)
+        {
+            if (root == null)
+            {
+                return;
+            }
+
+            if (canvas == null)
+            {
+                canvas = root.GetComponent<Canvas>();
+                if (canvas == null)
+                {
+                    canvas = root.AddComponent<Canvas>();
+                }
+            }
+
+            if (root.GetComponent<GraphicRaycaster>() == null)
+            {
+                root.AddComponent<GraphicRaycaster>();
+            }
+
+            canvas.enabled = true;
+            canvas.overrideSorting = true;
+            canvas.sortingOrder = UiLayerPriority.QuestPopup;
+            canvas.additionalShaderChannels = AdditionalCanvasShaderChannels.TexCoord1
+                | AdditionalCanvasShaderChannels.Normal
+                | AdditionalCanvasShaderChannels.Tangent;
+        }
+
         public void SetGuidanceText(string title, string body)
         {
             if (guidanceTitleText != null)
@@ -181,6 +217,11 @@ namespace SubTerra.App.UI.Tutorial
             if (detailsRoot != null)
             {
                 detailsRoot.SetActive(visible);
+                if (visible)
+                {
+                    detailsRoot.transform.SetAsLastSibling();
+                    EnsurePopupCanvas(detailsRoot, ref detailsCanvas);
+                }
             }
         }
 
@@ -293,6 +334,42 @@ namespace SubTerra.App.UI.Tutorial
             SetDumpMineral(DataIds.Minerals.Lithium, dumpLithiumText, dumpLithiumOneButton, dumpLithiumAllButton, rows);
         }
 
+        public void SetClaimVisible(bool visible)
+        {
+            if (claimRoot != null)
+            {
+                claimRoot.SetActive(visible);
+                if (visible)
+                {
+                    claimRoot.transform.SetAsLastSibling();
+                    EnsurePopupCanvas(claimRoot, ref claimCanvas);
+                }
+            }
+        }
+
+        public void SetClaimText(string title, string questTitle, string rewardText, string hint)
+        {
+            if (claimTitleText != null)
+            {
+                claimTitleText.text = title ?? string.Empty;
+            }
+
+            if (claimQuestTitleText != null)
+            {
+                claimQuestTitleText.text = questTitle ?? string.Empty;
+            }
+
+            if (claimRewardText != null)
+            {
+                claimRewardText.text = rewardText ?? string.Empty;
+            }
+
+            if (claimHintText != null)
+            {
+                claimHintText.text = hint ?? string.Empty;
+            }
+        }
+
         private static void SetDumpMineral(
             string mineralId,
             TMP_Text label,
@@ -366,6 +443,7 @@ namespace SubTerra.App.UI.Tutorial
         public event System.Action CapacityForfeitRequested;
         public event System.Action DumpClosedRequested;
         public event System.Action<string, int> DumpRequested;
+        public event System.Action ClaimConfirmRequested;
 
         public void OnDetailsPrevClicked()
         {
@@ -422,6 +500,12 @@ namespace SubTerra.App.UI.Tutorial
             DumpRequested?.Invoke(DataIds.Minerals.Lithium, int.MaxValue);
         }
 
+        /// <summary>클리어 보상 팝업 닫기/확인. 닫는 시점에 보상을 지급한다.</summary>
+        public void OnClaimConfirmClicked()
+        {
+            ClaimConfirmRequested?.Invoke();
+        }
+
         public bool HasRequiredReferences()
         {
             return objectiveTitleText != null || nextActionText != null;
@@ -452,6 +536,15 @@ namespace SubTerra.App.UI.Tutorial
                 && capacityBodyText != null
                 && dumpRoot != null
                 && dumpSummaryText != null;
+        }
+
+        public bool HasClaimReferences()
+        {
+            return claimRoot != null
+                && claimTitleText != null
+                && claimQuestTitleText != null
+                && claimRewardText != null
+                && claimHintText != null;
         }
     }
 }

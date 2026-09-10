@@ -23,6 +23,7 @@ namespace SubTerra.App.Tutorial
 
         public event Action<QuestRewardGrantResult> GrantResolved;
         public event Action<QuestRewardGrantResult> CapacityBlocked;
+        public event Action<QuestRewardGrantResult> ClaimOffered;
 
         public void Bind(InventoryService inventoryService, GameState state)
         {
@@ -40,7 +41,10 @@ namespace SubTerra.App.Tutorial
             SettledCount = 0;
         }
 
-        /// <summary>세이브 복원·목표 전진 후 미정산 보상을 순서대로 처리한다.</summary>
+        /// <summary>
+        /// 세이브 복원·목표 전진 후 미정산 보상을 팝업 확인 대기로 올린다.
+        /// 실제 지급은 팝업을 닫을 때 ClaimPending에서만 수행한다.
+        /// </summary>
         public QuestRewardGrantResult SyncFromProgress()
         {
             PullFromProgress();
@@ -60,23 +64,23 @@ namespace SubTerra.App.Tutorial
                 PushToProgress();
             }
 
-            QuestRewardGrantResult last = new QuestRewardGrantResult(
-                QuestRewardGrantStatus.NothingPending,
-                string.Empty,
-                QuestReward.None,
-                "caught-up");
-
-            while (SettledCount < completed)
+            if (HasPending)
             {
-                var objectiveId = DemoObjectiveIds.Ordered[SettledCount];
-                last = TryGrant(objectiveId);
-                if (last.NeedsPlayerChoice)
-                {
-                    return last;
-                }
+                return OfferClaim(PendingObjectiveId, PendingReward, "awaiting-claim");
             }
 
-            return last;
+            return OfferNextIfNeeded();
+        }
+
+        /// <summary>클리어 팝업을 닫은 뒤에만 보상을 지급하거나 화물 부족 선택을 연다.</summary>
+        public QuestRewardGrantResult ClaimPending()
+        {
+            if (!HasPending)
+            {
+                return SyncFromProgress();
+            }
+
+            return TryGrant(PendingObjectiveId);
         }
 
         public bool CanFitPending()
@@ -122,8 +126,8 @@ namespace SubTerra.App.Tutorial
                 "forfeited");
             GrantResolved?.Invoke(result);
 
-            var followUp = SyncFromProgress();
-            return followUp.NeedsPlayerChoice ? followUp : result;
+            var followUp = OfferNextIfNeeded();
+            return followUp.IsAwaitingClaim || followUp.NeedsPlayerChoice ? followUp : result;
         }
 
         public InventoryMutationResult Dump(string mineralId, int quantity)
@@ -205,11 +209,13 @@ namespace SubTerra.App.Tutorial
                 SettledCount++;
                 ClearPending();
                 PushToProgress();
-                return new QuestRewardGrantResult(
+                var skipped = new QuestRewardGrantResult(
                     QuestRewardGrantStatus.AlreadySettled,
                     objectiveId,
                     QuestReward.None,
                     "unknown-objective");
+                var followUp = OfferNextIfNeeded();
+                return followUp.IsAwaitingClaim ? followUp : skipped;
             }
 
             var reward = definition.Reward;
@@ -257,6 +263,65 @@ namespace SubTerra.App.Tutorial
                 reward,
                 message);
             GrantResolved?.Invoke(result);
+            var followUp = OfferNextIfNeeded();
+            return followUp.IsAwaitingClaim ? followUp : result;
+        }
+
+        private QuestRewardGrantResult OfferNextIfNeeded()
+        {
+            if (gameState?.Progress == null)
+            {
+                return new QuestRewardGrantResult(
+                    QuestRewardGrantStatus.NothingPending,
+                    string.Empty,
+                    QuestReward.None,
+                    "state-missing");
+            }
+
+            var completed = gameState.Progress.CompletedObjectives;
+            while (SettledCount < completed)
+            {
+                if (SettledCount < 0 || SettledCount >= DemoObjectiveIds.Ordered.Length)
+                {
+                    break;
+                }
+
+                var objectiveId = DemoObjectiveIds.Ordered[SettledCount];
+                if (!DemoObjectiveCatalog.TryGet(objectiveId, out var definition))
+                {
+                    SettledCount++;
+                    ClearPending();
+                    PushToProgress();
+                    continue;
+                }
+
+                PendingObjectiveId = objectiveId;
+                PendingReward = definition.Reward;
+                PushToProgress();
+                return OfferClaim(objectiveId, definition.Reward, "awaiting-claim");
+            }
+
+            if (HasPending)
+            {
+                ClearPending();
+                PushToProgress();
+            }
+
+            return new QuestRewardGrantResult(
+                QuestRewardGrantStatus.NothingPending,
+                string.Empty,
+                QuestReward.None,
+                "caught-up");
+        }
+
+        private QuestRewardGrantResult OfferClaim(string objectiveId, QuestReward reward, string message)
+        {
+            var result = new QuestRewardGrantResult(
+                QuestRewardGrantStatus.AwaitingClaim,
+                objectiveId,
+                reward,
+                message);
+            ClaimOffered?.Invoke(result);
             return result;
         }
 

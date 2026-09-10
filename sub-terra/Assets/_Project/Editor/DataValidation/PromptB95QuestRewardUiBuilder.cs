@@ -1,3 +1,4 @@
+using SubTerra.App.Tutorial;
 using SubTerra.App.UI.Tutorial;
 using TMPro;
 using UnityEditor;
@@ -194,6 +195,7 @@ namespace SubTerra.App.Editor.DataValidation
                 new Color(0.12f, 0.22f, 0.32f, 1f),
                 font);
             panel.transform.SetAsLastSibling();
+            ApplyQuestPopupSort(panel.transform);
             return new DetailsRefs(
                 panel,
                 title,
@@ -347,6 +349,38 @@ namespace SubTerra.App.Editor.DataValidation
                 new Color(0.32f, 0.14f, 0.12f, 1f),
                 font);
             return new DumpRowRefs(label, one, all);
+        }
+
+        private static void ApplyQuestPopupSort(Transform panel)
+        {
+            if (panel == null)
+            {
+                return;
+            }
+
+            var canvas = panel.GetComponent<Canvas>();
+            if (canvas == null)
+            {
+                canvas = panel.gameObject.AddComponent<Canvas>();
+            }
+
+            if (panel.GetComponent<GraphicRaycaster>() == null)
+            {
+                panel.gameObject.AddComponent<GraphicRaycaster>();
+            }
+
+            var wasActive = panel.gameObject.activeSelf;
+            panel.gameObject.SetActive(true);
+            canvas.overrideSorting = true;
+            canvas.sortingOrder = UiLayerPriority.QuestPopup;
+            canvas.additionalShaderChannels = AdditionalCanvasShaderChannels.TexCoord1
+                | AdditionalCanvasShaderChannels.Normal
+                | AdditionalCanvasShaderChannels.Tangent;
+            var serialized = new SerializedObject(canvas);
+            serialized.FindProperty("m_OverrideSorting").boolValue = true;
+            serialized.FindProperty("m_SortingOrder").intValue = UiLayerPriority.QuestPopup;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            panel.gameObject.SetActive(wasActive);
         }
 
         private static GameObject EnsurePanel(Transform root, string name, Vector2 size)

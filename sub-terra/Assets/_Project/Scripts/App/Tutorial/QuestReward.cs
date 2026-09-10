@@ -111,7 +111,8 @@ namespace SubTerra.App.Tutorial
         NeedsCapacity = 1,
         Forfeited = 2,
         AlreadySettled = 3,
-        NothingPending = 4
+        NothingPending = 4,
+        AwaitingClaim = 5
     }
 
     public readonly struct QuestRewardGrantResult
@@ -135,6 +136,7 @@ namespace SubTerra.App.Tutorial
 
         public bool DidGrant => Status == QuestRewardGrantStatus.Granted;
         public bool NeedsPlayerChoice => Status == QuestRewardGrantStatus.NeedsCapacity;
+        public bool IsAwaitingClaim => Status == QuestRewardGrantStatus.AwaitingClaim;
     }
 
     public readonly struct QuestDumpRow

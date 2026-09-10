@@ -60,6 +60,7 @@ namespace SubTerra.App.UI.Tutorial
                 objectiveView.CapacityForfeitRequested += OnCapacityForfeitRequested;
                 objectiveView.DumpClosedRequested += OnDumpClosedRequested;
                 objectiveView.DumpRequested += OnDumpRequested;
+                objectiveView.ClaimConfirmRequested += OnClaimConfirmRequested;
             }
         }
 
@@ -76,6 +77,7 @@ namespace SubTerra.App.UI.Tutorial
                 objectiveView.CapacityForfeitRequested -= OnCapacityForfeitRequested;
                 objectiveView.DumpClosedRequested -= OnDumpClosedRequested;
                 objectiveView.DumpRequested -= OnDumpRequested;
+                objectiveView.ClaimConfirmRequested -= OnClaimConfirmRequested;
             }
 
             Unbind();
@@ -234,6 +236,11 @@ namespace SubTerra.App.UI.Tutorial
         private void OnDumpRequested(string mineralId, int quantity)
         {
             presenter?.DumpMineral(mineralId, quantity);
+        }
+
+        private void OnClaimConfirmRequested()
+        {
+            presenter?.ConfirmClaim();
         }
 
         private void OnPurchaseCompleted(ProgressionPurchaseResult result)

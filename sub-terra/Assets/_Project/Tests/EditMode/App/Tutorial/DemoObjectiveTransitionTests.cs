@@ -454,6 +454,8 @@ namespace SubTerra.App.Tests.Tutorial
             public void SetDumpPanelVisible(bool visible) { }
             public void SetDumpSummary(string summary) { }
             public void SetDumpRows(IReadOnlyList<QuestDumpRow> rows) { }
+            public void SetClaimVisible(bool visible) { }
+            public void SetClaimText(string title, string questTitle, string rewardText, string hint) { }
 
             public void SetDemoCompleteVisible(bool visible, string summary)
             {
