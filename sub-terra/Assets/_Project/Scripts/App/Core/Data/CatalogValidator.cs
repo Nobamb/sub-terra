@@ -476,6 +476,108 @@ namespace SubTerra.App.Core.Data
 
                     ValidateCosts(level.Costs, path, $"levels[{l}].costs", result, allowEmpty: false);
                 }
+
+                ValidateMiningYieldBonuses(data, path, result);
+            }
+        }
+
+        private static void ValidateMiningYieldBonuses(
+            UpgradeData data,
+            string path,
+            CatalogValidationResult result)
+        {
+            var isYield = data.Id == DataIds.Upgrades.CargoYield;
+            var previousByMineral = new Dictionary<string, int>();
+
+            for (var l = 0; l < data.Levels.Count; l++)
+            {
+                var level = data.Levels[l];
+                if (level == null)
+                {
+                    continue;
+                }
+
+                var bonuses = level.MiningYieldBonuses;
+                var hasBonuses = bonuses != null && bonuses.Count > 0;
+                if (!isYield)
+                {
+                    if (hasBonuses)
+                    {
+                        result.AddError(
+                            path,
+                            $"levels[{l}].miningYieldBonuses",
+                            "Only upgrade.cargo.yield may define mining yield bonuses.");
+                    }
+
+                    continue;
+                }
+
+                if (!hasBonuses)
+                {
+                    result.AddError(
+                        path,
+                        $"levels[{l}].miningYieldBonuses",
+                        "Mining yield bonuses are empty.");
+                    continue;
+                }
+
+                var seen = new HashSet<string>();
+                for (var b = 0; b < bonuses.Count; b++)
+                {
+                    var entry = bonuses[b];
+                    var field = $"levels[{l}].miningYieldBonuses[{b}]";
+                    if (entry == null)
+                    {
+                        result.AddError(path, field, "Null mining yield bonus entry.");
+                        continue;
+                    }
+
+                    if (string.IsNullOrEmpty(entry.MineralId))
+                    {
+                        result.AddError(path, field + ".mineralId", "Mineral id is empty.");
+                        continue;
+                    }
+
+                    if (entry.Quantity < 1)
+                    {
+                        result.AddError(
+                            path,
+                            field + ".quantity",
+                            "Mining yield bonus must be at least 1.");
+                    }
+
+                    if (!seen.Add(entry.MineralId))
+                    {
+                        result.AddError(
+                            path,
+                            field + ".mineralId",
+                            $"Duplicate mineral id '{entry.MineralId}'.");
+                    }
+
+                    previousByMineral.TryGetValue(entry.MineralId, out var previous);
+                    if (entry.Quantity < previous)
+                    {
+                        result.AddError(
+                            path,
+                            field + ".quantity",
+                            "Mining yield bonuses must be non-decreasing between levels.");
+                    }
+
+                    previousByMineral[entry.MineralId] = entry.Quantity > previous
+                        ? entry.Quantity
+                        : previous;
+                }
+
+                foreach (var pair in previousByMineral)
+                {
+                    if (pair.Value > 0 && !seen.Contains(pair.Key))
+                    {
+                        result.AddError(
+                            path,
+                            $"levels[{l}].miningYieldBonuses",
+                            "Mining yield bonuses must be non-decreasing between levels.");
+                    }
+                }
             }
         }
 
@@ -570,8 +672,44 @@ namespace SubTerra.App.Core.Data
                                 GetPath(data),
                                 $"levels[{level}].costs",
                                 result);
+                            ValidateRegisteredMiningYieldBonuses(
+                                definition.MiningYieldBonuses,
+                                mineralIds,
+                                GetPath(data),
+                                $"levels[{level}].miningYieldBonuses",
+                                result);
                         }
                     }
+                }
+            }
+        }
+
+        private static void ValidateRegisteredMiningYieldBonuses(
+            IReadOnlyList<MineralBonusEntry> bonuses,
+            HashSet<string> registeredIds,
+            string assetPath,
+            string fieldName,
+            CatalogValidationResult result)
+        {
+            if (bonuses == null)
+            {
+                return;
+            }
+
+            for (var i = 0; i < bonuses.Count; i++)
+            {
+                var entry = bonuses[i];
+                if (entry == null || string.IsNullOrEmpty(entry.MineralId))
+                {
+                    continue;
+                }
+
+                if (!registeredIds.Contains(entry.MineralId))
+                {
+                    result.AddError(
+                        assetPath,
+                        $"{fieldName}[{i}].mineralId",
+                        $"Referenced mineral id '{entry.MineralId}' is not registered.");
                 }
             }
         }
@@ -777,6 +915,7 @@ namespace SubTerra.App.Core.Data
                     DataIds.Upgrades.DrillEfficiency,
                     DataIds.Upgrades.MaximumEnergy,
                     DataIds.Upgrades.MaximumCargo,
+                    DataIds.Upgrades.CargoYield,
                     DataIds.Upgrades.DroneScan,
                     DataIds.Upgrades.DroneRescue,
                     DataIds.Upgrades.GasResistance

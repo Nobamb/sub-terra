@@ -13,6 +13,7 @@ namespace SubTerra.App.Integration
         [SerializeField] private Image progressFill;
         [SerializeField] private Vector2 screenOffset = new(0f, 20f);
         [SerializeField, Min(0f)] private float failureDisplayDuration = 10f;
+        [SerializeField, Min(0f)] private float yieldDisplayDuration = 2f;
 
         private MiningSystem boundSystem;
         private Transform playerTarget;
@@ -22,6 +23,9 @@ namespace SubTerra.App.Integration
         private Canvas parentCanvas;
         private bool isFailureVisible;
         private float failureHideAt;
+        private bool isYieldVisible;
+        private float yieldHideAt;
+        private string pendingYieldText;
 
         public void BindTo(MiningSystem system, Transform player)
         {
@@ -51,6 +55,15 @@ namespace SubTerra.App.Integration
 
         public void BindTo(MiningSystem system) => BindTo(system, playerTarget);
 
+        /// <summary>
+        /// 채굴 커밋이 Completed 이벤트를 보내기 전에 수확 문구를 맡겨 둔다.
+        /// Completed에서 게이지를 끄고 이 문구를 잠시 보여 준다.
+        /// </summary>
+        public void SetPendingYieldFeedback(string text)
+        {
+            pendingYieldText = string.IsNullOrEmpty(text) ? null : text;
+        }
+
         private void OnDisable()
         {
             if (boundSystem != null)
@@ -68,6 +81,12 @@ namespace SubTerra.App.Integration
                 SetVisible(false);
             }
 
+            if (isYieldVisible && Time.unscaledTime >= yieldHideAt)
+            {
+                isYieldVisible = false;
+                SetVisible(false);
+            }
+
             if (statusRoot != null && statusRoot.activeSelf)
             {
                 UpdatePosition();
@@ -82,6 +101,33 @@ namespace SubTerra.App.Integration
             {
                 // 게임이 일시 정지되어도 안내가 화면에 영구 잔류하지 않도록 실시간을 사용한다.
                 failureHideAt = Time.unscaledTime + failureDisplayDuration;
+                isYieldVisible = false;
+                pendingYieldText = null;
+            }
+
+            if (state.Phase == MiningPhase.Completed && !string.IsNullOrEmpty(pendingYieldText))
+            {
+                isYieldVisible = true;
+                yieldHideAt = Time.unscaledTime + yieldDisplayDuration;
+                if (progressFill != null)
+                {
+                    progressFill.gameObject.SetActive(false);
+                }
+
+                if (statusText != null)
+                {
+                    statusText.text = pendingYieldText;
+                }
+
+                pendingYieldText = null;
+                SetVisible(true);
+                UpdatePosition();
+                return;
+            }
+
+            if (state.Phase != MiningPhase.Completed)
+            {
+                isYieldVisible = false;
             }
 
             if (progressFill != null)

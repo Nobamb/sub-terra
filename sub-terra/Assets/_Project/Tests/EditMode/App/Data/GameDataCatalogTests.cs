@@ -649,6 +649,7 @@ namespace SubTerra.App.Tests.Data
                 CreateUpgrade("Upg_DrillEff", DataIds.Upgrades.DrillEfficiency, "Drill Efficiency", 3, 0.05f),
                 CreateUpgrade("Upg_MaxEnergy", DataIds.Upgrades.MaximumEnergy, "Maximum Energy", 3, 20f),
                 CreateUpgrade("Upg_MaxCargo", DataIds.Upgrades.MaximumCargo, "Maximum Cargo", 3, 10f),
+                CreateYieldUpgrade("Upg_CargoYield", DataIds.Upgrades.CargoYield, "채굴 수확량"),
                 CreateUpgrade("Upg_DroneScan", DataIds.Upgrades.DroneScan, "Drone Scan", 2, 1f),
                 CreateUpgrade("Upg_DroneRescue", DataIds.Upgrades.DroneRescue, "Drone Rescue", 2, 0.15f),
                 CreateUpgrade("Upg_GasResistance", DataIds.Upgrades.GasResistance, "Gas Resistance", 3, 0.1f)
@@ -716,6 +717,51 @@ namespace SubTerra.App.Tests.Data
             var data = ScriptableObject.CreateInstance<RecipeData>();
             data.name = name;
             data.EditorSet(id, display, buildingId, inputs, outputs);
+            return Track(data);
+        }
+
+        private UpgradeData CreateYieldUpgrade(string name, string id, string display)
+        {
+            var levels = new List<UpgradeLevelDefinition>
+            {
+                new UpgradeLevelDefinition(
+                    1,
+                    1f,
+                    new List<ItemCostEntry> { new ItemCostEntry(DataIds.Minerals.Copper, 10) },
+                    new List<MineralBonusEntry> { new MineralBonusEntry(DataIds.Minerals.Copper, 1) }),
+                new UpgradeLevelDefinition(
+                    2,
+                    2f,
+                    new List<ItemCostEntry>
+                    {
+                        new ItemCostEntry(DataIds.Minerals.Copper, 20),
+                        new ItemCostEntry(DataIds.Minerals.Iron, 10)
+                    },
+                    new List<MineralBonusEntry>
+                    {
+                        new MineralBonusEntry(DataIds.Minerals.Copper, 2),
+                        new MineralBonusEntry(DataIds.Minerals.Iron, 1)
+                    }),
+                new UpgradeLevelDefinition(
+                    3,
+                    3f,
+                    new List<ItemCostEntry>
+                    {
+                        new ItemCostEntry(DataIds.Minerals.Copper, 30),
+                        new ItemCostEntry(DataIds.Minerals.Iron, 20),
+                        new ItemCostEntry(DataIds.Minerals.Lithium, 10)
+                    },
+                    new List<MineralBonusEntry>
+                    {
+                        new MineralBonusEntry(DataIds.Minerals.Copper, 3),
+                        new MineralBonusEntry(DataIds.Minerals.Iron, 2),
+                        new MineralBonusEntry(DataIds.Minerals.Lithium, 1)
+                    })
+            };
+
+            var data = ScriptableObject.CreateInstance<UpgradeData>();
+            data.name = name;
+            data.EditorSet(id, display, 3, levels);
             return Track(data);
         }
 

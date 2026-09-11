@@ -326,6 +326,13 @@ namespace SubTerra.App.Editor.DataValidation
                 EnsureUpgrade("Upgrade_Maximum_Cargo.asset", DataIds.Upgrades.MaximumCargo, "최대 화물 중량",
                     new[] { 30f, 70f, 120f },
                     Costs(Copper(6), CopperIron(8, 5), IronLithium(8, 6))),
+                EnsureUpgrade("Upgrade_Cargo_Yield.asset", DataIds.Upgrades.CargoYield, "채굴 수확량",
+                    new[] { 1f, 2f, 3f },
+                    Costs(Copper(10), CopperIron(20, 10), CopperIronLithium(30, 20, 10)),
+                    Yields(
+                        YieldBonus(CopperBonus(1)),
+                        YieldBonus(CopperBonus(2), IronBonus(1)),
+                        YieldBonus(CopperBonus(3), IronBonus(2), LithiumBonus(1)))),
                 EnsureUpgrade("Upgrade_Drone_Scan.asset", DataIds.Upgrades.DroneScan, "드론 스캔 범위",
                     new[] { 3f, 7f },
                     Costs(Copper(6), CopperIron(6, 5))),
@@ -343,7 +350,8 @@ namespace SubTerra.App.Editor.DataValidation
             string id,
             string name,
             IReadOnlyList<float> effects,
-            IReadOnlyList<List<ItemCostEntry>> costs)
+            IReadOnlyList<List<ItemCostEntry>> costs,
+            IReadOnlyList<List<MineralBonusEntry>> miningYieldBonuses = null)
         {
             var path = Root + "/Upgrades/" + file;
             var asset = AssetDatabase.LoadAssetAtPath<UpgradeData>(path);
@@ -356,10 +364,17 @@ namespace SubTerra.App.Editor.DataValidation
             var levels = new List<UpgradeLevelDefinition>();
             for (var i = 0; i < effects.Count; i++)
             {
+                List<MineralBonusEntry> bonuses = null;
+                if (miningYieldBonuses != null && i < miningYieldBonuses.Count)
+                {
+                    bonuses = miningYieldBonuses[i];
+                }
+
                 levels.Add(new UpgradeLevelDefinition(
                     i + 1,
                     effects[i],
-                    costs[i]));
+                    costs[i],
+                    bonuses));
             }
 
             asset.EditorSet(id, name, effects.Count, levels);
@@ -396,6 +411,42 @@ namespace SubTerra.App.Editor.DataValidation
                 new ItemCostEntry(DataIds.Minerals.Iron, iron),
                 new ItemCostEntry(DataIds.Minerals.Lithium, lithium)
             };
+        }
+
+        private static List<ItemCostEntry> CopperIronLithium(int copper, int iron, int lithium)
+        {
+            return new List<ItemCostEntry>
+            {
+                new ItemCostEntry(DataIds.Minerals.Copper, copper),
+                new ItemCostEntry(DataIds.Minerals.Iron, iron),
+                new ItemCostEntry(DataIds.Minerals.Lithium, lithium)
+            };
+        }
+
+        private static IReadOnlyList<List<MineralBonusEntry>> Yields(
+            params List<MineralBonusEntry>[] levels)
+        {
+            return levels;
+        }
+
+        private static List<MineralBonusEntry> YieldBonus(params MineralBonusEntry[] entries)
+        {
+            return new List<MineralBonusEntry>(entries);
+        }
+
+        private static MineralBonusEntry CopperBonus(int quantity)
+        {
+            return new MineralBonusEntry(DataIds.Minerals.Copper, quantity);
+        }
+
+        private static MineralBonusEntry IronBonus(int quantity)
+        {
+            return new MineralBonusEntry(DataIds.Minerals.Iron, quantity);
+        }
+
+        private static MineralBonusEntry LithiumBonus(int quantity)
+        {
+            return new MineralBonusEntry(DataIds.Minerals.Lithium, quantity);
         }
 
         private static List<DialogueTemplateData> BuildDialogues()

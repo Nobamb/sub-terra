@@ -34,6 +34,7 @@ namespace SubTerra.App.Core.Data
             public const string MaximumHealth = "upgrade.health.maximum";
             public const string HealthRegeneration = "upgrade.health.regeneration";
             public const string MaximumCargo = "upgrade.cargo.maximum";
+            public const string CargoYield = "upgrade.cargo.yield";
             public const string DroneScan = "upgrade.drone.scan";
             public const string DroneRescue = "upgrade.drone.rescue";
             public const string GasResistance = "upgrade.gas.resistance";

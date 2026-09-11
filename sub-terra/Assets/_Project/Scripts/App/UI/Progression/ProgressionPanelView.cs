@@ -19,7 +19,7 @@ namespace SubTerra.App.UI.Progression
     {
         /// <summary>드릴 탭 기준과 동일한 좌측 목록 시작 위치(top-left anchor).</summary>
         private const float EntryListStartY = -120f;
-        private const float EntryListRowHeight = 50f;
+        private const float EntryListRowHeight = 44f;
         private const float EntryListColumnX = 20f;
         private const float EntryListWidth = 340f;
         private const float EntryListHeight = 44f;
@@ -271,6 +271,7 @@ namespace SubTerra.App.UI.Progression
             if (detailText != null)
             {
                 bool isDroneScan = upgrade.UpgradeId == DataIds.Upgrades.DroneScan;
+                bool isMiningYield = upgrade.UpgradeId == DataIds.Upgrades.CargoYield;
                 var description = ItemDisplayNames.UpgradeDescription(upgrade.UpgradeId);
                 var unlockDescription = ItemDisplayNames.UpgradeUnlockDescription(
                     upgrade.UpgradeId,
@@ -282,7 +283,11 @@ namespace SubTerra.App.UI.Progression
                     .Append('/')
                     .Append(upgrade.MaximumLevel);
 
-                if (upgrade.IsMaximumLevel)
+                if (isMiningYield)
+                {
+                    AppendMiningYieldDetail(builder, upgrade, description);
+                }
+                else if (upgrade.IsMaximumLevel)
                 {
                     builder.AppendLine()
                         .Append(isDroneScan ? "현재 반경 " : "현재 수치 ")
@@ -357,6 +362,91 @@ namespace SubTerra.App.UI.Progression
             selectedCanAfford = upgrade.CanAffordNextLevel;
             RefreshPurchaseButton();
             RefreshSelectionHighlight(upgrade.UpgradeId);
+        }
+
+        private static void AppendMiningYieldDetail(
+            StringBuilder builder,
+            UpgradeSnapshot upgrade,
+            string description)
+        {
+            builder.AppendLine()
+                .Append(description);
+
+            if (upgrade.IsMaximumLevel)
+            {
+                builder.AppendLine()
+                    .Append("현재 ")
+                    .Append(FormatMiningYieldLine(upgrade.CurrentMiningYieldBonuses))
+                    .AppendLine()
+                    .Append("최대 레벨입니다.");
+                return;
+            }
+
+            builder.AppendLine()
+                .Append("현재")
+                .AppendLine()
+                .Append(FormatMiningYieldLine(upgrade.CurrentMiningYieldBonuses))
+                .AppendLine()
+                .Append("→ 다음")
+                .AppendLine()
+                .Append(FormatMiningYieldLine(upgrade.NextMiningYieldBonuses))
+                .AppendLine()
+                .Append("같은 타일에서 더 많이 얻지만, 한 번 만재량은 화물 업그레이드가 담당합니다.")
+                .AppendLine()
+                .Append("필요 재료: ");
+
+            if (upgrade.NextCosts == null || upgrade.NextCosts.Count == 0)
+            {
+                builder.Append("없음");
+            }
+            else
+            {
+                for (var i = 0; i < upgrade.NextCosts.Count; i++)
+                {
+                    if (i > 0)
+                    {
+                        builder.Append(", ");
+                    }
+
+                    var cost = upgrade.NextCosts[i];
+                    builder.Append(ItemDisplayNames.Mineral(cost.ItemId))
+                        .Append(" x")
+                        .Append(cost.Quantity);
+                }
+            }
+
+            builder.AppendLine()
+                .Append(upgrade.CanAffordNextLevel
+                    ? "구매 가능"
+                    : "자원 부족 (인벤토리 보유량 기준)");
+        }
+
+        private static string FormatMiningYieldLine(IReadOnlyList<MineralBonusEntry> bonuses)
+        {
+            return "구리 +" + ReadMiningYieldBonus(bonuses, DataIds.Minerals.Copper)
+                + "  철 +" + ReadMiningYieldBonus(bonuses, DataIds.Minerals.Iron)
+                + "  리튬 +" + ReadMiningYieldBonus(bonuses, DataIds.Minerals.Lithium);
+        }
+
+        private static int ReadMiningYieldBonus(
+            IReadOnlyList<MineralBonusEntry> bonuses,
+            string mineralId)
+        {
+            if (bonuses == null)
+            {
+                return 0;
+            }
+
+            for (var i = 0; i < bonuses.Count; i++)
+            {
+                var entry = bonuses[i];
+                if (entry != null && entry.MineralId == mineralId)
+                {
+                    return entry.Quantity < 0 ? 0 : entry.Quantity;
+                }
+            }
+
+            return 0;
         }
 
         public void SetPurchaseResult(string message, string detail)

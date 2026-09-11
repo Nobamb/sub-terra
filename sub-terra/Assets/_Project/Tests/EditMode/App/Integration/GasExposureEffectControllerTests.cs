@@ -174,6 +174,7 @@ namespace SubTerra.App.Tests.Integration
             public float GetDroneScanRadius(float baseRadius) => baseRadius;
             public float GetDroneRescuePreservation(float basePreservation) => basePreservation;
             public float GetGasResistance() => resistance;
+            public int GetMiningYieldBonus(string mineralId) => 0;
         }
     }
 }

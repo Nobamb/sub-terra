@@ -98,6 +98,8 @@ namespace SubTerra.App.Core.Data
                     return "초당 체력 재생";
                 case DataIds.Upgrades.MaximumCargo:
                     return "최대 화물 중량";
+                case DataIds.Upgrades.CargoYield:
+                    return "채굴 수확량";
                 case DataIds.Upgrades.DroneScan:
                     return "드론 스캔 범위";
                 case DataIds.Upgrades.DroneRescue:
@@ -134,6 +136,8 @@ namespace SubTerra.App.Core.Data
                     return "시간이 지날수록 체력을 자동으로 회복합니다.";
                 case DataIds.Upgrades.MaximumCargo:
                     return "한 번에 운반할 수 있는 화물 중량 한도를 늘립니다.";
+                case DataIds.Upgrades.CargoYield:
+                    return "구리 칸을 캘 때 추가로 얻는 광물 수입니다. 추가분도 화물 무게에 포함됩니다.";
                 case DataIds.Upgrades.DroneScan:
                     return "Digger-Bot이 주변 광물·위험을 감지하는 범위를 확장합니다.";
                 case DataIds.Upgrades.DroneRescue:

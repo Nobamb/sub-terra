@@ -21,6 +21,7 @@ MonoBehaviour:
     - itemId: mineral.copper
       quantity: 8
     effectValue: 0.35
+    miningYieldBonuses: []
   - level: 2
     costs:
     - itemId: mineral.iron
@@ -28,3 +29,4 @@ MonoBehaviour:
     - itemId: mineral.lithium
       quantity: 6
     effectValue: 0.7
+    miningYieldBonuses: []
