@@ -21,6 +21,7 @@ namespace SubTerra.App.Tests.UI
         private Camera camera;
         private Tilemap terrain;
         private Transform player;
+        private Tile tileAsset;
 
         [SetUp]
         public void SetUp()
@@ -40,6 +41,8 @@ namespace SubTerra.App.Tests.UI
             terrain = Create("Terrain", typeof(Tilemap)).GetComponent<Tilemap>();
             terrain.transform.SetParent(grid.transform, false);
             player = Create("Player").transform;
+            tileAsset = ScriptableObject.CreateInstance<Tile>();
+            objects.Add(tileAsset);
             map.Bind(terrain, player, null);
             typeof(ExplorationMinimap).GetField("worldCamera", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(map, camera);
             Tick("LateUpdate");
@@ -131,9 +134,9 @@ namespace SubTerra.App.Tests.UI
             Assert.That(map.rectTransform.rect.width * map.rectTransform.rect.height,
                 Is.EqualTo(1920 * 1080 * 0.1f).Within(1));
             int baseline = MeshCount();
-            map.RecordMining(new GameplayEventDto { type = GameplayEventType.TileMined, x = 1, y = 1 });
+            PlaceTile(1, 1);
             Assert.That(MeshCount(), Is.EqualTo(baseline + 4));
-            map.RecordMining(new GameplayEventDto { type = GameplayEventType.TileMined, x = 100, y = 100 });
+            PlaceTile(100, 100);
             Assert.That(MeshCount(), Is.EqualTo(baseline + 4));
             camera.transform.position += new Vector3(100, 100, 0);
             player.position += new Vector3(100, 100, 0);
@@ -145,6 +148,31 @@ namespace SubTerra.App.Tests.UI
             map.ToggleMap();
             Assert.That(MeshCount(), Is.GreaterThan(0));
             Assert.That(map.raycastTarget, Is.False);
+        }
+
+        [Test]
+        public void Mesh_DrawsRemainingTilesAsDots_AndHidesMinedCells()
+        {
+            int empty = MeshCount();
+            PlaceTile(0, 0);
+            PlaceTile(1, 0);
+            int withTwo = MeshCount();
+            Assert.That(withTwo, Is.EqualTo(empty + 8));
+            Assert.That(HasRemainingDotColor(), Is.True);
+
+            terrain.SetTile(new Vector3Int(1, 0, 0), null);
+            map.RecordMining(new GameplayEventDto { type = GameplayEventType.TileMined, x = 1, y = 0 });
+            int afterMine = MeshCount();
+            Assert.That(afterMine, Is.EqualTo(empty + 4));
+
+            map.RecordMining(new GameplayEventDto { type = GameplayEventType.TileMined, x = 3, y = 0 });
+            Assert.That(MeshCount(), Is.EqualTo(afterMine));
+            Assert.That(HasRemainingDotColor(), Is.True);
+
+            terrain.SetTile(new Vector3Int(0, 0, 0), null);
+            map.RecordMining(new GameplayEventDto { type = GameplayEventType.TileMined, x = 0, y = 0 });
+            Assert.That(MeshCount(), Is.EqualTo(empty));
+            Assert.That(HasRemainingDotColor(), Is.False);
         }
 
         [Test]
@@ -232,12 +260,36 @@ namespace SubTerra.App.Tests.UI
 
         private int MeshCount()
         {
-            using var mesh = new VertexHelper();
+            using var mesh = BuildMesh();
+            return mesh.currentVertCount;
+        }
+
+        private bool HasRemainingDotColor()
+        {
+            using var mesh = BuildMesh();
+            var vertex = new UIVertex();
+            Color32 expected = ExplorationMinimap.RemainingTileDot;
+            for (int i = 0; i < mesh.currentVertCount; i++)
+            {
+                mesh.PopulateUIVertex(ref vertex, i);
+                Color32 color = vertex.color;
+                if (color.r == expected.r && color.g == expected.g && color.b == expected.b && color.a == expected.a)
+                    return true;
+            }
+
+            return false;
+        }
+
+        private VertexHelper BuildMesh()
+        {
+            var mesh = new VertexHelper();
             typeof(ExplorationMinimap).GetMethod("OnPopulateMesh", BindingFlags.NonPublic | BindingFlags.Instance,
                 null, new[] { typeof(VertexHelper) }, null)
                 .Invoke(map, new object[] { mesh });
-            return mesh.currentVertCount;
+            return mesh;
         }
+
+        private void PlaceTile(int x, int y) => terrain.SetTile(new Vector3Int(x, y, 0), tileAsset);
 
         private void Tick(string method) => typeof(ExplorationMinimap)
             .GetMethod(method, BindingFlags.NonPublic | BindingFlags.Instance).Invoke(map, null);
