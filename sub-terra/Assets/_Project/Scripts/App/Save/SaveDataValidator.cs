@@ -37,7 +37,11 @@ namespace SubTerra.App.Save
                 || data.run.maximumDepth < data.run.depth
                 || !Enum.IsDefined(typeof(StructuralRiskLevel), data.run.structuralRisk)
                 || !Enum.IsDefined(typeof(GasRiskLevel), data.run.gasExposure)
-                || !Enum.IsDefined(typeof(RunLifecyclePhase), data.run.lifecyclePhase))
+                || !Enum.IsDefined(typeof(RunLifecyclePhase), data.run.lifecyclePhase)
+                || data.mineResetElapsedSeconds < 0d
+                || double.IsNaN(data.mineResetElapsedSeconds)
+                || double.IsInfinity(data.mineResetElapsedSeconds)
+                || data.mineResetPaidCount < 0)
             {
                 reason = "state-range";
                 return false;
@@ -99,6 +103,18 @@ namespace SubTerra.App.Save
             data.outpost.installedOutpostIds ??= new List<string>();
             data.drone ??= new DroneSaveData();
             data.drone.dialogueCooldowns ??= new List<DroneCooldownSaveEntry>();
+            if (data.mineResetElapsedSeconds < 0d
+                || double.IsNaN(data.mineResetElapsedSeconds)
+                || double.IsInfinity(data.mineResetElapsedSeconds))
+            {
+                data.mineResetElapsedSeconds = 0d;
+            }
+
+            if (data.mineResetPaidCount < 0)
+            {
+                data.mineResetPaidCount = 0;
+            }
+
             data.world ??= new SubTerra.Shared.WorldSnapshotDto();
             data.world.version ??= "1.2";
             data.world.miningChanges ??= new List<SubTerra.Shared.MiningSnapshotDto>();

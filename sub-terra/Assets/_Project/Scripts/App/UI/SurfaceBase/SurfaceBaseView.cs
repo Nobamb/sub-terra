@@ -246,11 +246,27 @@ namespace SubTerra.App.UI.SurfaceBase
             }
         }
 
-        public void SetMineResetConfirmVisible(bool visible, int currentGold = 0)
+        public void SetMineResetButtonFee(int feeGold)
+        {
+            var fee = Mathf.Max(0, feeGold);
+            SetButtonLabel(
+                resetMineButton,
+                string.Format(
+                    LocalizationService.Get("mine_reset.button", "새 광산 초기화 ({0}G)"),
+                    fee));
+        }
+
+        public void SetMineResetConfirmVisible(bool visible, int currentGold = 0, int feeGold = -1)
         {
             if (resetMineConfirmRoot == null)
             {
                 return;
+            }
+
+            var fee = feeGold >= 0 ? feeGold : MineResetService.FeeGold;
+            if (feeGold >= 0 || visible)
+            {
+                SetMineResetButtonFee(fee);
             }
 
             if (resetMineConfirmTitleText != null)
@@ -265,12 +281,10 @@ namespace SubTerra.App.UI.SurfaceBase
                 resetMineConfirmBodyText.text = string.Format(
                     LocalizationService.Get("mine_reset.confirm.body"),
                     currentGold,
-                    Mathf.Max(0, currentGold - MineResetService.FeeGold));
+                    Mathf.Max(0, currentGold - fee),
+                    fee);
             }
 
-            SetButtonLabel(
-                resetMineButton,
-                LocalizationService.Get("mine_reset.button", "새 광산 초기화 (500G)"));
             SetButtonLabel(
                 resetMineConfirmYesButton,
                 LocalizationService.Get("mine_reset.confirm.yes", "확인"));

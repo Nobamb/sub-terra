@@ -43,6 +43,10 @@ namespace SubTerra.App.Save
                         MigrateVersion3To4(data);
                         migrated = true;
                         break;
+                    case 4:
+                        MigrateVersion4To5(data);
+                        migrated = true;
+                        break;
                     default:
                         return SaveMigrationStatus.InvalidOldVersion;
                 }
@@ -133,6 +137,16 @@ namespace SubTerra.App.Save
             }
 
             data.saveVersion = 4;
+        }
+
+        private static void MigrateVersion4To5(GameSaveData data)
+        {
+            SaveDataValidator.NormalizeMissingCollections(data);
+            // 구세이브는 새 3시간 주기를 처음부터 시작한다. JsonUtility가 bool을 false로 둔 시계는 켠다.
+            data.mineResetElapsedSeconds = 0d;
+            data.mineResetPaidCount = 0;
+            data.mineResetClockVisible = true;
+            data.saveVersion = 5;
         }
     }
 }

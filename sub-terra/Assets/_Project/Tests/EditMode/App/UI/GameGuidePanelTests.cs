@@ -62,6 +62,8 @@ namespace SubTerra.App.Tests.UI
 
             Assert.That(controls, Does.Contain("좌우 이동"));
             Assert.That(controls, Does.Contain("채굴"));
+            Assert.That(controls, Does.Contain("T 키"));
+            Assert.That(controls, Does.Contain("광산 초기화 시계"));
             Assert.That(mechanics, Does.Contain("독성 가스"));
             Assert.That(mechanics, Does.Contain("버팀목"));
             Assert.That(resources, Does.Contain("리튬"));
@@ -142,6 +144,7 @@ namespace SubTerra.App.Tests.UI
             var controlsBody = GameGuidePanelView.GetTabBody(GameGuidePanelView.GuideTab.Controls);
             Assert.That(controlsBody, Does.Not.Contain("F 키"));
             Assert.That(controlsBody, Does.Contain("E 키"));
+            Assert.That(controlsBody, Does.Contain("T 키"));
         }
 
         [Test]

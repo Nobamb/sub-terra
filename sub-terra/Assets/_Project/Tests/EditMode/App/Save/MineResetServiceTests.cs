@@ -135,6 +135,139 @@ namespace SubTerra.App.Tests.Save
         }
 
         [Test]
+        public void PaidReset_DoublesFeeAndRestartsThreeHourTimer()
+        {
+            var state = GameState.CreateNew();
+            state.SetGold(2000);
+            state.AddMineResetElapsed(90d);
+            var cache = CreatePopulatedCache(41);
+
+            Assert.That(MineResetService.GetFeeGold(state), Is.EqualTo(500));
+            Assert.That(
+                MineResetService.TryReset(state, cache, new FixedSeedSource(99), out var first),
+                Is.True);
+            Assert.That(first.FeeCharged, Is.EqualTo(500));
+            Assert.That(state.Player.Gold, Is.EqualTo(1500));
+            Assert.That(state.MineResetCycle.PaidResetCount, Is.EqualTo(1));
+            Assert.That(state.MineResetCycle.ElapsedSeconds, Is.Zero);
+            Assert.That(MineResetService.GetFeeGold(state), Is.EqualTo(1000));
+            Assert.That(MineResetService.GetRemainingSeconds(state), Is.EqualTo(MineResetService.CycleDurationSeconds));
+
+            Assert.That(
+                MineResetService.TryReset(state, cache, new FixedSeedSource(100), out var second),
+                Is.True);
+            Assert.That(second.FeeCharged, Is.EqualTo(1000));
+            Assert.That(state.Player.Gold, Is.EqualTo(500));
+            Assert.That(state.MineResetCycle.PaidResetCount, Is.EqualTo(2));
+            Assert.That(MineResetService.GetFeeGold(state), Is.EqualTo(2000));
+
+            Assert.That(
+                MineResetService.TryReset(state, cache, new FixedSeedSource(101), out var third),
+                Is.False);
+            Assert.That(third.Status, Is.EqualTo(MineResetStatus.InsufficientGold));
+            Assert.That(state.Player.Gold, Is.EqualTo(500));
+            Assert.That(cache.Peek().worldSeed, Is.EqualTo(100));
+        }
+
+        [Test]
+        public void TimedReset_IsFreeAndRestoresBaseFee()
+        {
+            var state = GameState.CreateNew();
+            state.SetGold(800);
+            state.AddMineResetElapsed(MineResetService.CycleDurationSeconds);
+            Assert.That(
+                MineResetService.TryReset(
+                    state,
+                    CreatePopulatedCache(41),
+                    new FixedSeedSource(99),
+                    out _),
+                Is.True);
+            Assert.That(MineResetService.GetFeeGold(state), Is.EqualTo(1000));
+
+            var cache = CreatePopulatedCache(77);
+            Assert.That(
+                MineResetService.TryTimedReset(state, cache, new FixedSeedSource(201), out var result),
+                Is.True);
+            Assert.That(result.TimedReset, Is.True);
+            Assert.That(result.FeeCharged, Is.Zero);
+            Assert.That(state.Player.Gold, Is.EqualTo(300));
+            Assert.That(state.MineResetCycle.PaidResetCount, Is.Zero);
+            Assert.That(state.MineResetCycle.ElapsedSeconds, Is.Zero);
+            Assert.That(MineResetService.GetFeeGold(state), Is.EqualTo(500));
+            Assert.That(cache.Peek().worldSeed, Is.EqualTo(201));
+            Assert.That(cache.Peek().miningChanges, Is.Empty);
+            Assert.That(cache.Peek().buildings, Is.Empty);
+        }
+
+        [Test]
+        public void CycleClock_FormatsRemainingTimeAndExpiresAtThreeHours()
+        {
+            Assert.That(MineResetService.CycleDurationSeconds, Is.EqualTo(3d * 60d * 60d));
+            Assert.That(MineResetService.FormatClock(MineResetService.CycleDurationSeconds), Is.EqualTo("03:00:00"));
+            Assert.That(MineResetService.FormatClock(0d), Is.EqualTo("00:00:00"));
+            Assert.That(MineResetService.FormatClock(61d), Is.EqualTo("00:01:01"));
+            Assert.That(MineResetService.IsCycleExpired(0d), Is.False);
+            Assert.That(MineResetService.IsCycleExpired(MineResetService.CycleDurationSeconds - 0.01d), Is.False);
+            Assert.That(MineResetService.IsCycleExpired(MineResetService.CycleDurationSeconds), Is.True);
+        }
+
+        [Test]
+        public void SaveMapper_RoundTripsMineResetCycleFields()
+        {
+            var state = GameState.CreateNew();
+            state.SetGold(800);
+            state.AddMineResetElapsed(12.5d);
+            state.SetMineResetClockVisible(false);
+            var cache = CreatePopulatedCache(41);
+            Assert.That(
+                MineResetService.TryReset(state, cache, new FixedSeedSource(99), out _),
+                Is.True);
+
+            var mapper = new SaveDataMapper(new SystemSaveClock());
+            var data = mapper.Capture(new SaveCaptureContext(
+                state,
+                new InventoryState(),
+                new UpgradeState(),
+                null,
+                null,
+                SceneNames.SurfaceBase,
+                "test",
+                cache.Peek()));
+
+            Assert.That(data, Is.Not.Null);
+            Assert.That(data.saveVersion, Is.EqualTo(SaveVersions.Current));
+            Assert.That(data.mineResetPaidCount, Is.EqualTo(1));
+            Assert.That(data.mineResetElapsedSeconds, Is.Zero);
+            Assert.That(data.mineResetClockVisible, Is.False);
+
+            Assert.That(mapper.TryRestore(data, out var restored), Is.True);
+            Assert.That(restored.GameState.MineResetCycle.PaidResetCount, Is.EqualTo(1));
+            Assert.That(restored.GameState.MineResetCycle.ElapsedSeconds, Is.Zero);
+            Assert.That(restored.GameState.MineResetCycle.ClockVisible, Is.False);
+            Assert.That(MineResetService.GetFeeGold(restored.GameState), Is.EqualTo(1000));
+        }
+
+        [Test]
+        public void Migration4To5_StartsFreshCycleWithClockVisible()
+        {
+            var data = new GameSaveData
+            {
+                saveVersion = 4,
+                targetSceneName = SceneNames.SurfaceBase,
+                mineResetElapsedSeconds = 999d,
+                mineResetPaidCount = 4,
+                mineResetClockVisible = false
+            };
+
+            var status = new SaveMigrationService().TryMigrate(data);
+            Assert.That(status, Is.EqualTo(SaveMigrationStatus.Migrated));
+            Assert.That(data.saveVersion, Is.EqualTo(SaveVersions.Current));
+            Assert.That(data.mineResetElapsedSeconds, Is.Zero);
+            Assert.That(data.mineResetPaidCount, Is.Zero);
+            Assert.That(data.mineResetClockVisible, Is.True);
+        }
+
+        [Test]
         public void RuntimeReset_OutsideSurface_FailsWithoutChangingGold()
         {
             Assert.That(

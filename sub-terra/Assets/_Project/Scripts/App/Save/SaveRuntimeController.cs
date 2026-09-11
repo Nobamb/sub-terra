@@ -10,6 +10,7 @@ using SubTerra.App.Inventory;
 using SubTerra.App.Outpost;
 using SubTerra.App.Progression;
 using SubTerra.App.State;
+using SubTerra.App.UI.HUD;
 using SubTerra.App.UI.MainMenu;
 using SubTerra.Shared;
 using UnityEngine;
@@ -65,6 +66,10 @@ namespace SubTerra.App.Save
         private readonly MineWorldCache mineWorldCache = new MineWorldCache();
         private readonly IMineResetSeedSource mineResetSeeds = new UtcMineResetSeedSource();
         private bool pendingMineWorldRestore;
+        private bool pendingTimedMineReset;
+        private bool suppressMineWorldCapture;
+        private float mineResetDirtyAccum;
+        private MineResetClockOverlay mineResetClockOverlay;
 
         public const int MineElevatorEnergyCost = 5;
 
@@ -93,6 +98,10 @@ namespace SubTerra.App.Save
             elevatorTravel?.State ?? ElevatorTravelState.Idle;
         public RunLifecyclePhase RunPhase => runLifecycle?.Phase ?? RunLifecyclePhase.Ready;
         public RunReturnTarget LastReturnTarget { get; private set; }
+        public double MineResetRemainingSeconds => MineResetService.GetRemainingSeconds(boundState);
+        public int CurrentMineResetFee => MineResetService.GetFeeGold(boundState);
+        public bool IsMineResetClockVisible =>
+            boundState?.MineResetCycle == null || boundState.MineResetCycle.ClockVisible;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStatics()
@@ -140,6 +149,8 @@ namespace SubTerra.App.Save
 
         private void Update()
         {
+            TickMineResetCycle();
+
             if (!dirty
                 || autoSave == null
                 || Time.unscaledTime < nextPeriodicSaveAt)
@@ -160,6 +171,12 @@ namespace SubTerra.App.Save
             autoSave?.Dispose();
             progressionDerivedStateSynchronizer?.Dispose();
             progressionDerivedStateSynchronizer = null;
+            if (mineResetClockOverlay != null)
+            {
+                mineResetClockOverlay.DestroyOverlay();
+                mineResetClockOverlay = null;
+            }
+
             if (Instance == this)
             {
                 Instance = null;
@@ -296,7 +313,21 @@ namespace SubTerra.App.Save
             }
 
             SaveCurrent(AutoSaveReason.MineReset);
+            EnsureMineResetClockOverlay();
+            mineResetClockOverlay?.RefreshFromState();
             return true;
+        }
+
+        public void ToggleMineResetClock()
+        {
+            if (!GameState.IsComplete(boundState))
+            {
+                return;
+            }
+
+            boundState.SetMineResetClockVisible(!boundState.MineResetCycle.ClockVisible);
+            dirty = true;
+            mineResetClockOverlay?.RefreshFromState();
         }
 
         /// <summary>Mine 정거장에서 Surface Base로 비상 귀환한다. 귀환에는 전력을 차감하지 않는다.</summary>
@@ -558,6 +589,7 @@ namespace SubTerra.App.Save
 
             RebuildGameplayServices(state, restoredInventory, restoredUpgrades);
             BindStateDirtyEvents(state);
+            mineResetClockOverlay?.RefreshFromState();
             return true;
         }
 
@@ -620,7 +652,7 @@ namespace SubTerra.App.Save
         private SaveCaptureContext CaptureContext()
         {
             var provider = Resolve();
-            if (provider != null)
+            if (provider != null && !suppressMineWorldCapture)
             {
                 // Provider가 살아있는 동안 캡처해 캐시를 최신으로 유지한다.
                 // Surface 저장 시 Provider null이면 이 캐시가 폴백으로 쓰인다.
@@ -632,10 +664,126 @@ namespace SubTerra.App.Save
                 inventory,
                 upgrades,
                 dialogueGenerator,
-                provider,
+                suppressMineWorldCapture ? null : provider,
                 SceneManager.GetActiveScene().name,
                 Application.version,
                 mineWorldCache.Peek());
+        }
+
+        /// <summary>
+        /// Surface Base와 Mine에서만 플레이 시간을 누적한다.
+        /// 3시간에 도달하면 월드 초기화 후 지상으로 강제 이동한다.
+        /// </summary>
+        private void TickMineResetCycle()
+        {
+            if (pendingTimedMineReset)
+            {
+                return;
+            }
+
+            if (activeSlot == 0 || !GameState.IsComplete(boundState))
+            {
+                mineResetClockOverlay?.SetSessionVisible(false);
+                return;
+            }
+
+            var sceneName = SceneManager.GetActiveScene().name;
+            if (sceneName != SceneNames.SurfaceBase && sceneName != SceneNames.Integration)
+            {
+                mineResetClockOverlay?.SetSessionVisible(false);
+                return;
+            }
+
+            EnsureMineResetClockOverlay();
+            boundState.AddMineResetElapsed(Time.unscaledDeltaTime);
+            mineResetDirtyAccum += Time.unscaledDeltaTime;
+            if (mineResetDirtyAccum >= 15f)
+            {
+                mineResetDirtyAccum = 0f;
+                dirty = true;
+            }
+
+            mineResetClockOverlay?.RefreshFromState();
+            if (MineResetService.IsCycleExpired(boundState))
+            {
+                StartCoroutine(ExecuteTimedMineReset());
+            }
+        }
+
+        private IEnumerator ExecuteTimedMineReset()
+        {
+            if (pendingTimedMineReset)
+            {
+                yield break;
+            }
+
+            pendingTimedMineReset = true;
+            suppressMineWorldCapture = true;
+
+            const int maximumWaitFrames = 600;
+            var waited = 0;
+            while ((ElevatorState == ElevatorTravelState.Calling
+                    || ElevatorState == ElevatorTravelState.Moving
+                    || explorationGuard.IsInFlight
+                    || saveInProgress)
+                   && waited < maximumWaitFrames)
+            {
+                waited++;
+                yield return null;
+            }
+
+            var wasInMine = SceneManager.GetActiveScene().name == SceneNames.Integration;
+            if (!MineResetService.TryTimedReset(
+                    boundState,
+                    mineWorldCache,
+                    mineResetSeeds,
+                    out _))
+            {
+                suppressMineWorldCapture = false;
+                pendingTimedMineReset = false;
+                yield break;
+            }
+
+            elevatorTravel?.Reset();
+            explorationGuard.Reset();
+            boundState.SetRunLifecyclePhase(RunLifecyclePhase.Ready);
+
+            if (wasInMine)
+            {
+                if (new UnitySceneLoader().Load(SceneNames.SurfaceBase))
+                {
+                    const int maximumSceneWaitFrames = 300;
+                    var frames = 0;
+                    while (SceneManager.GetActiveScene().name != SceneNames.SurfaceBase
+                           && frames < maximumSceneWaitFrames)
+                    {
+                        frames++;
+                        yield return null;
+                    }
+                }
+            }
+
+            if (activeSlot > 0)
+            {
+                SaveCurrent(AutoSaveReason.MineReset);
+            }
+
+            EnsureMineResetClockOverlay();
+            mineResetClockOverlay?.RefreshFromState();
+            mineResetClockOverlay?.ShowTimedResetPopup(wasInMine);
+            suppressMineWorldCapture = false;
+            pendingTimedMineReset = false;
+        }
+
+        private void EnsureMineResetClockOverlay()
+        {
+            if (mineResetClockOverlay != null)
+            {
+                mineResetClockOverlay.SetSessionVisible(true);
+                return;
+            }
+
+            mineResetClockOverlay = MineResetClockOverlay.Create(transform);
         }
 
         /// <summary>
@@ -826,6 +974,18 @@ namespace SubTerra.App.Save
             if (scene.name == SceneNames.Integration)
             {
                 explorationGuard.Complete();
+            }
+
+            var inPlaySession = scene.name == SceneNames.SurfaceBase
+                || scene.name == SceneNames.Integration;
+            if (inPlaySession && activeSlot > 0)
+            {
+                EnsureMineResetClockOverlay();
+                mineResetClockOverlay?.RefreshFromState();
+            }
+            else
+            {
+                mineResetClockOverlay?.SetSessionVisible(false);
             }
 
             if (!pendingInitialSave || scene.name != pendingInitialScene)

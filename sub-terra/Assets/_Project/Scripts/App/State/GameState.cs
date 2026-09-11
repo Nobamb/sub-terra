@@ -276,6 +276,7 @@ namespace SubTerra.App.State
         public ProgressState Progress { get; private set; }
         public RunState Run { get; private set; }
         public OutpostState Outpost { get; private set; }
+        public MineResetCycleState MineResetCycle { get; private set; }
 
         public string SelectedBuildingId { get; private set; }
         public string SelectedBuildingDisplayName { get; private set; }
@@ -290,6 +291,7 @@ namespace SubTerra.App.State
         public event Action<BuildingSelectionReadModel> BuildingSelectionChanged;
         public event Action<string> InteractionPromptChanged;
         public event Action DemoProgressChanged;
+        public event Action MineResetCycleChanged;
 
         private GameState() { }
 
@@ -302,6 +304,7 @@ namespace SubTerra.App.State
                 Progress = new ProgressState(0),
                 Run = new RunState(0, true, StructuralRiskLevel.Safe, GasRiskLevel.Safe),
                 Outpost = new OutpostState(),
+                MineResetCycle = new MineResetCycleState(),
                 SelectedBuildingId = string.Empty,
                 SelectedBuildingDisplayName = string.Empty,
                 InteractionPrompt = string.Empty
@@ -316,7 +319,8 @@ namespace SubTerra.App.State
             PlayerState player,
             ProgressState progress,
             RunState run,
-            OutpostState outpost = null)
+            OutpostState outpost = null,
+            MineResetCycleState mineResetCycle = null)
         {
             if (player == null || progress == null || run == null)
             {
@@ -329,6 +333,7 @@ namespace SubTerra.App.State
                 Progress = progress,
                 Run = run,
                 Outpost = outpost ?? new OutpostState(),
+                MineResetCycle = mineResetCycle ?? new MineResetCycleState(),
                 SelectedBuildingId = string.Empty,
                 SelectedBuildingDisplayName = string.Empty,
                 InteractionPrompt = string.Empty
@@ -342,7 +347,8 @@ namespace SubTerra.App.State
                 && state.Player != null
                 && state.Progress != null
                 && state.Run != null
-                && state.Outpost != null;
+                && state.Outpost != null
+                && state.MineResetCycle != null;
         }
 
         public EnergyReadModel GetEnergy()
@@ -556,6 +562,30 @@ namespace SubTerra.App.State
 
             Progress.ApplyDemoProgress(id, count, isDemoComplete);
             DemoProgressChanged?.Invoke();
+        }
+
+        /// <summary>광산 초기화 주기 플레이 경과를 누적한다. 음수·비정상 값은 무시한다.</summary>
+        public void AddMineResetElapsed(double deltaSeconds)
+        {
+            MineResetCycle?.AddElapsed(deltaSeconds);
+        }
+
+        /// <summary>상단 전자시계 표시 여부. 동일 값이면 이벤트를 발행하지 않는다.</summary>
+        public void SetMineResetClockVisible(bool visible)
+        {
+            if (MineResetCycle == null || MineResetCycle.ClockVisible == visible)
+            {
+                return;
+            }
+
+            MineResetCycle.SetClockVisible(visible);
+            MineResetCycleChanged?.Invoke();
+        }
+
+        /// <summary>유료/시간 초기화 직후 HUD·지상 버튼이 새 비용과 남은 시간을 읽게 한다.</summary>
+        internal void NotifyMineResetCycleChanged()
+        {
+            MineResetCycleChanged?.Invoke();
         }
 
         /// <summary>퀘스트 보상 수령/포기/보류 상태를 저장 가능한 진행 State에 기록한다.</summary>

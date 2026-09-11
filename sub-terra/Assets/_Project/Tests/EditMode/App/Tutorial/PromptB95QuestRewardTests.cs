@@ -296,6 +296,8 @@ namespace SubTerra.App.Tests.Tutorial
             Assert.That(data.saveVersion, Is.EqualTo(SaveVersions.Current));
             Assert.That(data.progress.questRewardSettledCount, Is.EqualTo(5));
             Assert.That(data.progress.pendingQuestRewardId, Is.Empty);
+            Assert.That(data.mineResetClockVisible, Is.True);
+            Assert.That(data.mineResetPaidCount, Is.Zero);
         }
 
         [Test]

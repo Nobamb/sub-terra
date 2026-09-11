@@ -74,7 +74,10 @@ namespace SubTerra.App.Save
                 upgrades = CaptureUpgrades(context.Upgrades),
                 outpost = CaptureOutpost(game.Outpost),
                 drone = CaptureDrone(context.DialogueGenerator),
-                world = world
+                world = world,
+                mineResetElapsedSeconds = game.MineResetCycle.ElapsedSeconds,
+                mineResetPaidCount = game.MineResetCycle.PaidResetCount,
+                mineResetClockVisible = game.MineResetCycle.ClockVisible
             };
 
             return data;
@@ -110,7 +113,11 @@ namespace SubTerra.App.Save
                 (GasRiskLevel)data.run.gasExposure,
                 (RunLifecyclePhase)data.run.lifecyclePhase);
             var outpost = RestoreOutpost(data.outpost);
-            var game = GameState.FromParts(player, progress, run, outpost);
+            var mineReset = new MineResetCycleState(
+                data.mineResetElapsedSeconds,
+                data.mineResetPaidCount,
+                data.mineResetClockVisible);
+            var game = GameState.FromParts(player, progress, run, outpost, mineReset);
             var inventory = RestoreInventory(data.inventory);
             var upgrades = RestoreUpgrades(data.upgrades);
             if (game == null || inventory == null || upgrades == null)
