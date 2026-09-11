@@ -18,8 +18,7 @@ namespace SubTerra.Gameplay.Player.Tests
         private GameObject firstLadderObject;
         private GameObject secondLadderObject;
         private GameObject animationVisualObject;
-        private Sprite[] ladderAnimationFrames;
-        private Sprite[] ladderDownAnimationFrames;
+        private Sprite[] animationFrames;
         private Tile wallTile;
 
         [SetUp]
@@ -40,17 +39,9 @@ namespace SubTerra.Gameplay.Player.Tests
             Object.DestroyImmediate(wallObject);
             Object.DestroyImmediate(firstLadderObject);
             Object.DestroyImmediate(secondLadderObject);
-            if (ladderAnimationFrames != null)
+            if (animationFrames != null)
             {
-                foreach (var frame in ladderAnimationFrames)
-                {
-                    Object.DestroyImmediate(frame);
-                }
-            }
-
-            if (ladderDownAnimationFrames != null)
-            {
-                foreach (var frame in ladderDownAnimationFrames)
+                foreach (var frame in animationFrames)
                 {
                     Object.DestroyImmediate(frame);
                 }
@@ -433,102 +424,149 @@ namespace SubTerra.Gameplay.Player.Tests
         }
 
         [Test]
-        public void LadderAnimation_HoldsSingleFrameWhenStationary()
+        public void LadderAnimation_HoldsNeutralPoseWhenStationary()
         {
-            animationVisualObject = new GameObject("LadderIdleAnimationVisual");
-            animationVisualObject.transform.SetParent(playerObject.transform);
-            var renderer = animationVisualObject.AddComponent<SpriteRenderer>();
-            var animation = animationVisualObject.AddComponent<PlayerAnimationController>();
-            ladderAnimationFrames = new[]
-            {
-                CreateTestSprite(),
-                CreateTestSprite(),
-                CreateTestSprite(),
-                CreateTestSprite()
-            };
-            ladderDownAnimationFrames = new[]
-            {
-                CreateTestSprite(),
-                CreateTestSprite(),
-                CreateTestSprite(),
-                CreateTestSprite()
-            };
-            animation.ConfigureFrames(
-                renderer,
-                movement,
-                ladderAnimationFrames,
-                ladderAnimationFrames,
-                ladderAnimationFrames,
-                ladderAnimationFrames,
-                ladderDownAnimationFrames,
-                ladderAnimationFrames,
-                ladderAnimationFrames,
-                ladderAnimationFrames);
+            CreateLadderAnimationRig(
+                out var renderer,
+                out var animation,
+                out var pose,
+                out var torso,
+                out var leftArm,
+                out var rightArm,
+                out var leftLeg,
+                out var rightLeg);
+            var visualRootPosition = animationVisualObject.transform.localPosition;
+            var torsoPosition = torso.localPosition;
+            var leftArmPosition = leftArm.localPosition;
+            var rightArmPosition = rightArm.localPosition;
+            var leftLegPosition = leftLeg.localPosition;
+            var rightLegPosition = rightLeg.localPosition;
 
             movement.EnterLadder();
             movement.SetVerticalMoveInput(0f);
             InvokePrivate(animation, "LateUpdate");
-            Assert.AreSame(ladderAnimationFrames[0], renderer.sprite);
 
-            SetPrivateField(animation, "stateStartedAt", Time.unscaledTime - 2f);
-            InvokePrivate(animation, "LateUpdate");
-            Assert.AreSame(
-                ladderAnimationFrames[0],
-                renderer.sprite,
-                "사다리에서 정지하면 상승/하강 프레임을 순환하지 않고 단일 프레임을 유지해야 한다.");
+            Assert.IsFalse(renderer.enabled);
+            Assert.IsTrue(pose.IsVisible);
+            Assert.AreEqual(visualRootPosition, animationVisualObject.transform.localPosition);
+            Assert.AreEqual(torsoPosition, torso.localPosition);
+            Assert.AreEqual(leftArmPosition, leftArm.localPosition);
+            Assert.AreEqual(rightArmPosition, rightArm.localPosition);
+            Assert.AreEqual(leftLegPosition, leftLeg.localPosition);
+            Assert.AreEqual(rightLegPosition, rightLeg.localPosition);
         }
 
         [Test]
-        public void LadderAnimation_UsesDedicatedFramesWhenDescending()
+        public void LadderAnimation_MovesSameSideLimbsTogetherAndReversesWhenDescending()
         {
-            animationVisualObject = new GameObject("LadderAnimationVisual");
-            animationVisualObject.transform.SetParent(playerObject.transform);
-            var renderer = animationVisualObject.AddComponent<SpriteRenderer>();
-            var animation = animationVisualObject.AddComponent<PlayerAnimationController>();
-            ladderAnimationFrames = new[]
-            {
-                CreateTestSprite(),
-                CreateTestSprite(),
-                CreateTestSprite(),
-                CreateTestSprite()
-            };
-            ladderDownAnimationFrames = new[]
-            {
-                CreateTestSprite(),
-                CreateTestSprite(),
-                CreateTestSprite(),
-                CreateTestSprite()
-            };
-            animation.ConfigureFrames(
-                renderer,
-                movement,
-                ladderAnimationFrames,
-                ladderAnimationFrames,
-                ladderAnimationFrames,
-                ladderAnimationFrames,
-                ladderDownAnimationFrames,
-                ladderAnimationFrames,
-                ladderAnimationFrames,
-                ladderAnimationFrames);
+            CreateLadderAnimationRig(
+                out _,
+                out _,
+                out var pose,
+                out var torso,
+                out var leftArm,
+                out var rightArm,
+                out var leftLeg,
+                out var rightLeg);
+            var torsoPosition = torso.localPosition;
+            var leftArmY = leftArm.localPosition.y;
+            var rightArmY = rightArm.localPosition.y;
+            var leftLegY = leftLeg.localPosition.y;
+            var rightLegY = rightLeg.localPosition.y;
+
+            pose.Show(1f, 0.15625f);
+
+            Assert.Greater(leftArm.localPosition.y, leftArmY);
+            Assert.Less(rightArm.localPosition.y, rightArmY);
+            Assert.Greater(leftLeg.localPosition.y, leftLegY);
+            Assert.Less(rightLeg.localPosition.y, rightLegY);
+            Assert.AreEqual(torsoPosition, torso.localPosition);
+
+            pose.Hide();
+            pose.Show(-1f, 0.15625f);
+
+            Assert.Less(leftArm.localPosition.y, leftArmY);
+            Assert.Greater(rightArm.localPosition.y, rightArmY);
+            Assert.Less(leftLeg.localPosition.y, leftLegY);
+            Assert.Greater(rightLeg.localPosition.y, rightLegY);
+            Assert.AreEqual(torsoPosition, torso.localPosition);
+        }
+
+        [Test]
+        public void LadderAnimation_ExitRestoresStandardSprite()
+        {
+            CreateLadderAnimationRig(
+                out var renderer,
+                out var animation,
+                out var pose,
+                out _,
+                out _,
+                out _,
+                out _,
+                out _);
 
             movement.EnterLadder();
             movement.SetVerticalMoveInput(1f);
             InvokePrivate(animation, "LateUpdate");
-            Assert.AreSame(ladderAnimationFrames[0], renderer.sprite);
+            Assert.IsFalse(renderer.enabled);
+            Assert.IsTrue(pose.IsVisible);
 
-            movement.SetVerticalMoveInput(-1f);
+            movement.ExitLadder();
             InvokePrivate(animation, "LateUpdate");
-            Assert.AreSame(
-                ladderDownAnimationFrames[0],
-                renderer.sprite,
-                "하강 시에는 상승 프레임이 아니라 전용 하강 프레임을 사용해야 한다.");
 
-            SetPrivateField(animation, "stateStartedAt", Time.unscaledTime - 0.25f);
-            InvokePrivate(animation, "LateUpdate");
-            Assert.AreSame(
-                ladderDownAnimationFrames[2],
-                renderer.sprite,
-                "하강 프레임은 별도 시트 순서로 진행되어야 한다.");
+            Assert.IsTrue(renderer.enabled);
+            Assert.IsFalse(pose.IsVisible);
+        }
+
+        private void CreateLadderAnimationRig(
+            out SpriteRenderer renderer,
+            out PlayerAnimationController animation,
+            out PlayerLadderPoseController pose,
+            out Transform torso,
+            out Transform leftArm,
+            out Transform rightArm,
+            out Transform leftLeg,
+            out Transform rightLeg)
+        {
+            animationVisualObject = new GameObject("LadderAnimationVisual");
+            animationVisualObject.transform.SetParent(playerObject.transform);
+            renderer = animationVisualObject.AddComponent<SpriteRenderer>();
+            animation = animationVisualObject.AddComponent<PlayerAnimationController>();
+            animationFrames = new[] { CreateTestSprite() };
+            animation.ConfigureFrames(
+                renderer,
+                movement,
+                animationFrames,
+                animationFrames,
+                animationFrames,
+                animationFrames,
+                animationFrames,
+                animationFrames);
+
+            pose = animationVisualObject.AddComponent<PlayerLadderPoseController>();
+            var rigRoot = new GameObject("LadderRig");
+            rigRoot.transform.SetParent(animationVisualObject.transform);
+            torso = CreateRigPart(rigRoot.transform, "Torso", new Vector3(0f, 0.05f, 0f));
+            leftArm = CreateRigPart(rigRoot.transform, "LeftArm", new Vector3(-0.2f, 0.15f, 0f));
+            rightArm = CreateRigPart(rigRoot.transform, "RightArm", new Vector3(0.2f, 0.15f, 0f));
+            leftLeg = CreateRigPart(rigRoot.transform, "LeftLeg", new Vector3(-0.1f, -0.2f, 0f));
+            rightLeg = CreateRigPart(rigRoot.transform, "RightLeg", new Vector3(0.1f, -0.2f, 0f));
+            pose.Configure(
+                rigRoot,
+                torso,
+                leftArm,
+                rightArm,
+                leftLeg,
+                rightLeg);
+            animation.ConfigureLadderPose(pose);
+        }
+
+        private static Transform CreateRigPart(Transform parent, string name, Vector3 localPosition)
+        {
+            var part = new GameObject(name).transform;
+            part.SetParent(parent);
+            part.localPosition = localPosition;
+            return part;
         }
 
         private static LadderZone CreateLadderZone(string name, out GameObject ladderObject)
@@ -556,13 +594,5 @@ namespace SubTerra.Gameplay.Player.Tests
             method.Invoke(target, null);
         }
 
-        private static void SetPrivateField(object target, string fieldName, object value)
-        {
-            var field = target.GetType().GetField(
-                fieldName,
-                BindingFlags.Instance | BindingFlags.NonPublic);
-            Assert.IsNotNull(field, fieldName + " 필드를 찾을 수 없습니다.");
-            field.SetValue(target, value);
-        }
     }
 }
