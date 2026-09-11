@@ -226,6 +226,8 @@ namespace SubTerra.App.Save
             }
 
             cache.ReplaceFromProvider(replacement);
+            // 지하 시설 인스턴스 ID가 다시 발급되므로 충전소/보건소 대기도 함께 비운다.
+            state.Outpost.ClearFacilityCooldowns();
             state.NotifyMineResetCycleChanged();
             result = new MineResetResult(
                 MineResetStatus.Success,

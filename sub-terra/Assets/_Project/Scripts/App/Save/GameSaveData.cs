@@ -99,6 +99,16 @@ namespace SubTerra.App.Save
         public int checkpointY;
         public List<QuantitySaveEntry> storage = new List<QuantitySaveEntry>();
         public List<string> installedOutpostIds = new List<string>();
+        /// <summary>충전소/보건소 인스턴스별 남은 재사용 초. 구세이브는 빈 목록.</summary>
+        public List<FacilityCooldownSaveEntry> facilityCooldowns =
+            new List<FacilityCooldownSaveEntry>();
+    }
+
+    [Serializable]
+    public sealed class FacilityCooldownSaveEntry
+    {
+        public string instanceId = string.Empty;
+        public double remainingSeconds;
     }
 
     [Serializable]

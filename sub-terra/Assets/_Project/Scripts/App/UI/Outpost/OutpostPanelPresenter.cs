@@ -71,6 +71,14 @@ namespace SubTerra.App.UI.Outpost
                 return;
             }
 
+            if (service != null
+                && service.TryGetFacilityCooldownMessage(out var cooldownMessage))
+            {
+                CloseInteractionPanel();
+                view?.ShowTemporaryMessage(cooldownMessage, 3f);
+                return;
+            }
+
             var mode = ResolveMode(service?.InteractionFacilityBuildingId);
             if (service == null || !service.IsFacilityInteraction || mode == OutpostPanelMode.None)
             {

@@ -223,6 +223,25 @@ namespace SubTerra.App.Save
             result.storage.Sort((left, right) => string.CompareOrdinal(left.id, right.id));
             result.installedOutpostIds.AddRange(state.InstalledOutpostIds);
             result.installedOutpostIds.Sort(StringComparer.Ordinal);
+            for (var i = 0; i < state.FacilityCooldowns.Count; i++)
+            {
+                var cooldown = state.FacilityCooldowns[i];
+                if (cooldown == null
+                    || string.IsNullOrEmpty(cooldown.InstanceId)
+                    || cooldown.RemainingSeconds <= 0d)
+                {
+                    continue;
+                }
+
+                result.facilityCooldowns.Add(new FacilityCooldownSaveEntry
+                {
+                    instanceId = cooldown.InstanceId,
+                    remainingSeconds = cooldown.RemainingSeconds
+                });
+            }
+
+            result.facilityCooldowns.Sort(
+                (left, right) => string.CompareOrdinal(left.instanceId, right.instanceId));
             return result;
         }
 
@@ -287,12 +306,31 @@ namespace SubTerra.App.Save
                     data.storage[i].quantity));
             }
 
+            var cooldowns = new List<FacilityCooldownState>(
+                data.facilityCooldowns != null ? data.facilityCooldowns.Count : 0);
+            if (data.facilityCooldowns != null)
+            {
+                for (var i = 0; i < data.facilityCooldowns.Count; i++)
+                {
+                    var entry = data.facilityCooldowns[i];
+                    if (entry == null)
+                    {
+                        continue;
+                    }
+
+                    cooldowns.Add(new FacilityCooldownState(
+                        entry.instanceId,
+                        entry.remainingSeconds));
+                }
+            }
+
             return state.TryRestore(
                 storage,
                 data.installedOutpostIds,
                 data.checkpointId,
                 data.checkpointX,
-                data.checkpointY)
+                data.checkpointY,
+                cooldowns)
                     ? state
                     : null;
         }

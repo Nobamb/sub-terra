@@ -564,10 +564,11 @@ namespace SubTerra.App.State
             DemoProgressChanged?.Invoke();
         }
 
-        /// <summary>광산 초기화 주기 플레이 경과를 누적한다. 음수·비정상 값은 무시한다.</summary>
+        /// <summary>광산 초기화 주기와 충전소/보건소 재사용 대기를 같은 플레이 경과로 줄인다.</summary>
         public void AddMineResetElapsed(double deltaSeconds)
         {
             MineResetCycle?.AddElapsed(deltaSeconds);
+            Outpost?.AddElapsed(deltaSeconds);
         }
 
         /// <summary>상단 전자시계 표시 여부. 동일 값이면 이벤트를 발행하지 않는다.</summary>

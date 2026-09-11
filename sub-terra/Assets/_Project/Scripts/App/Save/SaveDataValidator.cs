@@ -57,8 +57,10 @@ namespace SubTerra.App.Save
                 || !ValidateUpgrades(data.upgrades)
                 || data.outpost.storage == null
                 || data.outpost.installedOutpostIds == null
+                || data.outpost.facilityCooldowns == null
                 || !ValidateQuantities(data.outpost.storage)
                 || !ValidateUniqueIds(data.outpost.installedOutpostIds)
+                || !ValidateFacilityCooldowns(data.outpost.facilityCooldowns)
                 || data.drone.dialogueCooldowns == null
                 || !ValidateCooldowns(data.drone.dialogueCooldowns)
                 || !ValidateWorld(data))
@@ -101,6 +103,7 @@ namespace SubTerra.App.Save
             data.outpost.checkpointId ??= string.Empty;
             data.outpost.storage ??= new List<QuantitySaveEntry>();
             data.outpost.installedOutpostIds ??= new List<string>();
+            data.outpost.facilityCooldowns ??= new List<FacilityCooldownSaveEntry>();
             data.drone ??= new DroneSaveData();
             data.drone.dialogueCooldowns ??= new List<DroneCooldownSaveEntry>();
             if (data.mineResetElapsedSeconds < 0d
@@ -170,6 +173,27 @@ namespace SubTerra.App.Save
             for (var i = 0; i < ids.Count; i++)
             {
                 if (string.IsNullOrEmpty(ids[i]) || !unique.Add(ids[i]))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static bool ValidateFacilityCooldowns(
+            IReadOnlyList<FacilityCooldownSaveEntry> entries)
+        {
+            var ids = new HashSet<string>(StringComparer.Ordinal);
+            for (var i = 0; i < entries.Count; i++)
+            {
+                var entry = entries[i];
+                if (entry == null
+                    || string.IsNullOrEmpty(entry.instanceId)
+                    || entry.remainingSeconds <= 0d
+                    || double.IsNaN(entry.remainingSeconds)
+                    || double.IsInfinity(entry.remainingSeconds)
+                    || !ids.Add(entry.instanceId))
                 {
                     return false;
                 }
