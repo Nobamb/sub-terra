@@ -37,6 +37,7 @@ namespace SubTerra.Shared
         MiningCommitResult TryCommitMining(
             string mineralId,
             int quantity,
-            int energyCost);
+            int energyCost,
+            int goldGrant);
     }
 }

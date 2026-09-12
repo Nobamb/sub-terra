@@ -24,11 +24,12 @@ namespace SubTerra.Gameplay.Mining.Tests
         {
             public int Energy = 100;
             public int CommitCalls;
+            public int Gold;
             public MiningCommitStatus CommitStatus = MiningCommitStatus.Success;
 
             public bool CanAffordEnergy(int energyCost) => Energy >= energyCost;
 
-            public MiningCommitResult TryCommitMining(string mineralId, int quantity, int energyCost)
+            public MiningCommitResult TryCommitMining(string mineralId, int quantity, int energyCost, int goldGrant)
             {
                 CommitCalls++;
                 if (CommitStatus != MiningCommitStatus.Success)
@@ -37,6 +38,7 @@ namespace SubTerra.Gameplay.Mining.Tests
                 }
 
                 Energy -= energyCost;
+                Gold += goldGrant;
                 return MiningCommitResult.Success();
             }
         }
@@ -315,6 +317,32 @@ namespace SubTerra.Gameplay.Mining.Tests
 
             Object.DestroyImmediate(root);
             Object.DestroyImmediate(tile);
+        }
+
+        [TestCase(MiningCommitStatus.Success)]
+        [TestCase(MiningCommitStatus.InventoryFull)]
+        public void PromptB100_GoldCommitsOnceAndFailurePreservesTile(MiningCommitStatus status)
+        {
+            CreateSystem(out var root, out var map, out var resolver, out var system);
+            var tile = ScriptableObject.CreateInstance<Tile>();
+            try
+            {
+                var transaction = root.AddComponent<MiningTransaction>();
+                transaction.CommitStatus = status;
+                system.SetRuntimeServices(transaction, null);
+                resolver.RegisterRuntime(tile, new MiningTileDto("tile.rock.normal.gold", "", 0, true, 1, 0.1f, 0, false, 0, 1, 20));
+                var cell = new Vector3Int(1, 0, 0);
+                map.SetTile(cell, tile);
+                Assert.That(system.TryStartMining(cell), Is.True);
+                system.TickMining(1);
+                system.TickMining(1);
+                bool success = status == MiningCommitStatus.Success;
+                Assert.That(transaction.Gold, Is.EqualTo(success ? 20 : 0));
+                Assert.That(transaction.Energy, Is.EqualTo(success ? 99 : 100));
+                Assert.That(map.GetTile(cell) == null, Is.EqualTo(success));
+                Assert.That(transaction.CommitCalls, Is.EqualTo(1));
+            }
+            finally { Object.DestroyImmediate(root); Object.DestroyImmediate(tile); }
         }
 
         [Test]

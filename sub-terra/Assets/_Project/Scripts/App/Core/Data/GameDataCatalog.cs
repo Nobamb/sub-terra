@@ -10,8 +10,15 @@ namespace SubTerra.App.Core.Data
     /// Phase A IDataCatalogPort를 구현해 Bootstrap 검증 게이트에 연결한다.
     /// </summary>
     [CreateAssetMenu(fileName = "GameDataCatalog", menuName = "SubTerra/Data/Game Data Catalog", order = 1)]
-    public sealed class GameDataCatalog : ScriptableObject, IDataCatalogPort
+    public sealed class GameDataCatalog : ScriptableObject, IDataCatalogPort, SubTerra.Shared.IMineralPriceProvider
     {
+        public bool TryGetMineralUnitPrice(string mineralId, out int unitPrice)
+        {
+            bool found = TryGetMineral(mineralId, out var mineral);
+            unitPrice = found ? mineral.UnitPrice : 0;
+            return found;
+        }
+
         [SerializeField] private List<MineralData> minerals = new List<MineralData>();
         [SerializeField] private List<MiningTileData> miningTiles = new List<MiningTileData>();
         [SerializeField] private List<BuildingData> buildings = new List<BuildingData>();

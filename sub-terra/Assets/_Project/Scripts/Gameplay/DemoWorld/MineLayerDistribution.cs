@@ -119,6 +119,9 @@ namespace SubTerra.Gameplay.DemoWorld
 
     public static class MineLayerTileIds
     {
+        public static bool IsGoldDrop(string tileId) => tileId != null && tileId.EndsWith(".gold", StringComparison.Ordinal);
+        public static string BaseTileId(string tileId) => IsGoldDrop(tileId) ? tileId.Substring(0, tileId.Length - 5) : tileId;
+
         public const string Rock = "tile.rock.normal";
         public const string BoundaryRock = "tile.rock.boundary";
         public const string Copper = "tile.copper";

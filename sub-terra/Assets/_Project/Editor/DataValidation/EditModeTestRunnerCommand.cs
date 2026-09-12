@@ -424,11 +424,11 @@ namespace SubTerra.App.Editor.DataValidation
                 "Edit Mode");
         }
 
-        public static void RunPlayModeTests(string resultPath)
+        public static void RunPlayModeTests(string resultPath, string[] assemblyNames = null)
         {
             StartTestRun(
                 TestMode.PlayMode,
-                DiscoverProjectTestAssemblies(TestMode.PlayMode),
+                assemblyNames ?? DiscoverProjectTestAssemblies(TestMode.PlayMode),
                 ResolveProjectPath(resultPath),
                 "Play Mode");
         }

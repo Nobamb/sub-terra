@@ -92,6 +92,7 @@ namespace SubTerra.Gameplay.DemoWorld.Editor
                 resolver,
                 snapshot,
                 20260731L);
+            GoldDropTileSetup.Configure(generator);
 
             var snapshotSerialized = new SerializedObject(snapshot);
             SetObject(snapshotSerialized, "baseWorldGeneratorBehaviour", generator);

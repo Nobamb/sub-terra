@@ -433,14 +433,15 @@ namespace SubTerra.Gameplay.Mining
                 var commit = miningTransaction.TryCommitMining(
                     activeTile.mineralId,
                     activeTile.quantity,
-                    RequiredEnergy);
+                    RequiredEnergy,
+                    activeTile.goldDrop);
                 if (!commit.Succeeded)
                 {
                     Fail(ToFailureReason(commit.Status));
                     return false;
                 }
             }
-            else if (RequiredEnergy > 0)
+            else if (RequiredEnergy > 0 || activeTile.goldDrop > 0)
             {
                 return Fail(MiningFailureReason.DependencyMissing);
             }

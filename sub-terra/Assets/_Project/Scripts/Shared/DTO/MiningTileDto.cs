@@ -19,6 +19,7 @@ namespace SubTerra.Shared
         public int energyCost;
         public float structuralImpact;
         public bool containsGas;
+        public int goldDrop;
 
         public MiningTileDto(
             string tileId,
@@ -30,7 +31,8 @@ namespace SubTerra.Shared
             float structuralImpact,
             bool containsGas,
             int requiredDrillLevel = 0,
-            int energyCost = 0)
+            int energyCost = 0,
+            int goldDrop = 0)
         {
             this.tileId = tileId;
             this.mineralId = mineralId;
@@ -42,6 +44,7 @@ namespace SubTerra.Shared
             this.energyCost = energyCost;
             this.structuralImpact = structuralImpact;
             this.containsGas = containsGas;
+            this.goldDrop = goldDrop;
         }
     }
 }

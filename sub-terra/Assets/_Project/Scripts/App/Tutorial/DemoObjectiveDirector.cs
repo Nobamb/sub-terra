@@ -302,6 +302,7 @@ namespace SubTerra.App.Tutorial
             else if (CurrentObjectiveId == DemoObjectiveIds.PurifyGasWithOutpost
                 && hasTrackedOutpostCore
                 && (gameplayEvent.entityId == "tile.gas-pocket"
+                    || gameplayEvent.entityId == "tile.gas-pocket.gold"
                     || gameplayEvent.reasonId == DataIds.Minerals.Lithium)
                 && IsWithinRange(
                     outpostCoreX,

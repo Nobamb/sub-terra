@@ -12,16 +12,19 @@ namespace SubTerra.App.Inventory
         public MiningCommitStatus Status { get; }
         public int AcceptedBaseQuantity { get; }
         public int AcceptedBonusQuantity { get; }
+        public int AcceptedGold { get; }
         public bool Succeeded => Status == MiningCommitStatus.Success;
 
         public MiningYieldCommitResult(
             MiningCommitStatus status,
             int acceptedBaseQuantity,
-            int acceptedBonusQuantity)
+            int acceptedBonusQuantity,
+            int acceptedGold = 0)
         {
             Status = status;
             AcceptedBaseQuantity = acceptedBaseQuantity < 0 ? 0 : acceptedBaseQuantity;
             AcceptedBonusQuantity = acceptedBonusQuantity < 0 ? 0 : acceptedBonusQuantity;
+            AcceptedGold = acceptedGold;
         }
 
         public MiningCommitResult ToShared()
@@ -34,9 +37,9 @@ namespace SubTerra.App.Inventory
             return new MiningYieldCommitResult(status, 0, 0);
         }
 
-        public static MiningYieldCommitResult Success(int acceptedBase, int acceptedBonus)
+        public static MiningYieldCommitResult Success(int acceptedBase, int acceptedBonus, int acceptedGold = 0)
         {
-            return new MiningYieldCommitResult(MiningCommitStatus.Success, acceptedBase, acceptedBonus);
+            return new MiningYieldCommitResult(MiningCommitStatus.Success, acceptedBase, acceptedBonus, acceptedGold);
         }
     }
 
@@ -52,7 +55,8 @@ namespace SubTerra.App.Inventory
             IUpgradeEffectProvider effects,
             string mineralId,
             int quantity,
-            int energyCost)
+            int energyCost,
+            int goldGrant = 0)
         {
             if (inventory == null || state == null)
             {
@@ -98,27 +102,32 @@ namespace SubTerra.App.Inventory
                 }
             }
 
+            int acceptedGold = System.Math.Min(System.Math.Max(0, goldGrant), int.MaxValue - state.Player.Gold);
+            if (acceptedGold > 0) state.AddGold(acceptedGold);
             state.SetCurrentEnergy(state.Player.Energy - cost);
-            return MiningYieldCommitResult.Success(acceptedBase, acceptedBonus);
+            return MiningYieldCommitResult.Success(acceptedBase, acceptedBonus, acceptedGold);
         }
 
         public static string FormatHudFeedback(
             string mineralId,
             int acceptedBase,
-            int acceptedBonus)
+            int acceptedBonus,
+            int acceptedGold = 0)
         {
+            string goldText = acceptedGold > 0 ? "골드 +" + acceptedGold + "G" : string.Empty;
             if (string.IsNullOrEmpty(mineralId) || acceptedBase + acceptedBonus <= 0)
             {
-                return string.Empty;
+                return goldText;
             }
 
+            string suffix = acceptedGold > 0 ? "  " + goldText : string.Empty;
             var name = ItemDisplayNames.Mineral(mineralId);
             if (acceptedBonus > 0)
             {
-                return name + " +" + acceptedBase + " (+" + acceptedBonus + " 수확)";
+                return name + " +" + acceptedBase + " (+" + acceptedBonus + " 수확)" + suffix;
             }
 
-            return name + " +" + acceptedBase;
+            return name + " +" + acceptedBase + suffix;
         }
     }
 }

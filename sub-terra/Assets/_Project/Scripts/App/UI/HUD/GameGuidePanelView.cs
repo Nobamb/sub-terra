@@ -310,6 +310,7 @@ namespace SubTerra.App.UI.HUD
         private const string ResourcesBody =
             "3. 자원 종류 및 게임 내 주요 오브젝트 (Resources & Objects)\n\n"
             + "자원 종류 (Minerals & Terrain)\n"
+            + "· 금맥 암석 (Gold Pocket): 암석·가스·광석에 금이 박힌 희귀 칸입니다. 채굴하면 골드를 바로 얻고, 드론 스캔은 노란 빛으로 표시합니다.\n"
             + "· 암반 (Bedrock): 지하의 기본 지형 블록입니다. 채굴하여 이동 동선을 확보합니다.\n"
             + "· 철 (Iron): 주황/은색 광물 블록입니다. 주된 장비 제작, 시설 건설, 기지 보강에 쓰이는 기본 자원입니다.\n"
             + "· 구리 (Copper): 붉은/갈색 광물 블록입니다. 전력 시설 제작 및 정산 시 높은 크레딧으로 환금되는 자원입니다.\n"

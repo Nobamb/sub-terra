@@ -714,7 +714,8 @@ namespace SubTerra.App.Integration
         public MiningCommitResult TryCommitMining(
             string mineralId,
             int quantity,
-            int energyCost)
+            int energyCost,
+            int goldGrant)
         {
             if (runtime == null)
             {
@@ -737,14 +738,16 @@ namespace SubTerra.App.Integration
                 effects,
                 mineralId,
                 quantity,
-                energyCost);
+                energyCost,
+                goldGrant);
             if (result.Succeeded && miningProgressHud != null)
             {
                 miningProgressHud.SetPendingYieldFeedback(
                     MiningYieldCommit.FormatHudFeedback(
                         mineralId,
                         result.AcceptedBaseQuantity,
-                        result.AcceptedBonusQuantity));
+                        result.AcceptedBonusQuantity,
+                        result.AcceptedGold));
             }
 
             return result.ToShared();

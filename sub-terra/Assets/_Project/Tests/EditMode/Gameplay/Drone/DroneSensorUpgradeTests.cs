@@ -104,6 +104,27 @@ namespace SubTerra.Gameplay.Tests.Drone
             Assert.That(view.ActiveLightCount, Is.EqualTo(initialLightCount));
         }
 
+        [Test]
+        public void PromptB100_GoldRockAndOreUseYellowAndOverrideGas()
+        {
+            using var world = new SensorWorld(7f);
+            var goldRock = new Vector3Int(1, 0, 0);
+            var goldOre = new Vector3Int(2, 0, 0);
+            var ordinaryOre = new Vector3Int(-7, -7, 0);
+            world.PlaceGas(goldRock);
+            world.PlaceMineral(goldRock, "", 20);
+            world.PlaceMineral(goldOre, "mineral.copper", 50);
+            world.PlaceMineral(ordinaryOre, "mineral.copper");
+            world.Sensor.TickScanPulse(0);
+            Assert.That(world.Sensor.LastPulseTargets.Single(t => t.Cell == goldRock).Kind, Is.EqualTo(DroneScanTargetKind.GoldDrop));
+            Assert.That(world.Sensor.LastPulseTargets.Single(t => t.Cell == goldOre).Kind, Is.EqualTo(DroneScanTargetKind.GoldDrop));
+            Assert.That(world.Sensor.LastPulseTargets.Single(t => t.Cell == ordinaryOre).Kind, Is.EqualTo(DroneScanTargetKind.Mineral));
+            var view = world.Sensor.GetComponent<DroneScanPulseView>();
+            var visual = typeof(DroneScanPulseView).GetField("visualRoot", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(view) as GameObject;
+            var lights = visual.GetComponentsInChildren<UnityEngine.Rendering.Universal.Light2D>();
+            Assert.That(lights.Count(l => l.color == new Color(1f, 0.82f, 0.18f, 1f)), Is.EqualTo(2));
+        }
+
         private sealed class SensorWorld : System.IDisposable
         {
             private readonly GameObject root;
@@ -143,12 +164,12 @@ namespace SubTerra.Gameplay.Tests.Drone
 
             public DroneSensor Sensor { get; }
 
-            public void PlaceMineral(Vector3Int cell, string mineralId)
+            public void PlaceMineral(Vector3Int cell, string mineralId, int gold = 0)
             {
                 var mineral = ScriptableObject.CreateInstance<Tile>();
                 resolver.RegisterRuntime(
                     mineral,
-                    new MiningTileDto("tile.test", mineralId, 1, true, 1f, 0f, 0f, false));
+                    new MiningTileDto("tile.test", mineralId, 1, true, 1f, 0f, 0f, false, goldDrop: gold));
                 tilemap.SetTile(cell, mineral);
             }
 
