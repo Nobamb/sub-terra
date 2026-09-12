@@ -59,6 +59,7 @@ namespace SubTerra.App.Integration
         [SerializeField] private MiningSystem miningSystem;
         [SerializeField] private PlayerMovement playerMovement;
         [SerializeField] private MiningProgressHud miningProgressHud;
+        [SerializeField] private GoldPickupVfx goldPickupVfx;
         [SerializeField] private RunFailureRuntimeController runFailureController;
         private EmergencyRescueRuntimeController emergencyRescueController;
         private ExplorationMinimap minimap;
@@ -178,6 +179,7 @@ namespace SubTerra.App.Integration
             miningSystem = Resolve(miningSystem);
             playerMovement = Resolve(playerMovement);
             miningProgressHud = Resolve(miningProgressHud, FindObjectsInactive.Include);
+            goldPickupVfx = Resolve(goldPickupVfx, FindObjectsInactive.Include);
             runFailureController = Resolve(runFailureController);
             emergencyRescueController = Resolve(emergencyRescueController, FindObjectsInactive.Include);
 
@@ -610,6 +612,20 @@ namespace SubTerra.App.Integration
                 }
             }
 
+            if (goldPickupVfx != null)
+            {
+                try
+                {
+                    goldPickupVfx.BindTo(
+                        miningSystem,
+                        playerMovement != null ? playerMovement.transform : null);
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning("[SubTerra] GoldPickupVfx.BindTo failed: " + ex.Message);
+                }
+            }
+
             TryStep("BindMinimap", BindMinimap);
             SetHudVisible(true);
             SetDeferredInputEnabled(true);
@@ -748,6 +764,11 @@ namespace SubTerra.App.Integration
                         result.AcceptedBaseQuantity,
                         result.AcceptedBonusQuantity,
                         result.AcceptedGold));
+            }
+
+            if (result.Succeeded && result.AcceptedGold > 0 && goldPickupVfx != null)
+            {
+                goldPickupVfx.SetPendingGold(result.AcceptedGold);
             }
 
             return result.ToShared();

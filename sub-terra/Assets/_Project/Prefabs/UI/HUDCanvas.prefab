@@ -16,6 +16,7 @@ GameObject:
   - component: {fileID: 6383775034364936019}
   - component: {fileID: 8161349510225622106}
   - component: {fileID: 9151752038466753569}
+  - component: {fileID: 7712497667035408078}
   m_Layer: 0
   m_Name: HUDCanvas
   m_TagString: Untagged
@@ -176,6 +177,23 @@ MonoBehaviour:
   statusText: {fileID: 3781225799482535009}
   progressFill: {fileID: 7368201955604203004}
   screenOffset: {x: 0, y: 20}
+--- !u!114 &7712497667035408078
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1984034011081461708}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d06ca69d31ae99b43b1030ac20c1b76e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SubTerra.App.GameplayIntegration::SubTerra.App.Integration.GoldPickupVfx
+  coinSprite: {fileID: 21300000, guid: b4756942b018af840891d886c82f9e52, type: 3}
+  pickupFont: {fileID: 11400000, guid: 786aa4ffc15eb2f4fa2d0881a5c1b163, type: 2}
+  foregroundTilemap: {fileID: 0}
+  coinWorldScale: 0.32
+  textFontSize: 32
 --- !u!1 &2949626884188161198
 GameObject:
   m_ObjectHideFlags: 0

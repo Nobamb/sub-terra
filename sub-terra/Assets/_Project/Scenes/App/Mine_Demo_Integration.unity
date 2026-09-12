@@ -3314,6 +3314,10 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: -22
       objectReference: {fileID: 0}
+    - target: {fileID: 7712497667035408078, guid: 70be12ad7eb4976408ab5dee48e88428, type: 3}
+      propertyPath: foregroundTilemap
+      value: 
+      objectReference: {fileID: 1443727076}
     - target: {fileID: 7756861251065629499, guid: 70be12ad7eb4976408ab5dee48e88428, type: 3}
       propertyPath: m_SizeDelta.x
       value: 380
@@ -13065,6 +13069,7 @@ MonoBehaviour:
   miningSystem: {fileID: 279480560}
   playerMovement: {fileID: 72969612}
   miningProgressHud: {fileID: 1895091422}
+  goldPickupVfx: {fileID: 1391414828}
   runFailureController: {fileID: 1557797925}
 --- !u!4 &976616833
 Transform:
@@ -18823,6 +18828,17 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_IsOn: 1
+--- !u!114 &1391414828 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7712497667035408078, guid: 70be12ad7eb4976408ab5dee48e88428, type: 3}
+  m_PrefabInstance: {fileID: 258569977}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 258569979}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d06ca69d31ae99b43b1030ac20c1b76e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SubTerra.App.GameplayIntegration::SubTerra.App.Integration.GoldPickupVfx
 --- !u!1 &1396935714
 GameObject:
   m_ObjectHideFlags: 0
