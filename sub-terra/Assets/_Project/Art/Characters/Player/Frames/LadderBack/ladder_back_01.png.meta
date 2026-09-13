@@ -1,10 +1,13 @@
 fileFormatVersion: 2
-guid: 1ab082b8759d79848ab1508f4f9f79f0
+guid: bb85e805fdd43b245b40898f814b282c
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 4603255340255548556
-    second: ladder_down_05_0
+      213: -1275030881431340757
+    second: ladder_back_01_0
+  - first:
+      213: 5445336893869185026
+    second: ladder_back_01_1
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -51,7 +54,7 @@ TextureImporter:
   spriteMeshType: 0
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
-  spritePixelsToUnits: 256
+  spritePixelsToUnits: 1254
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
@@ -100,44 +103,67 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: ladder_down_05_0
+      name: ladder_back_01_0
       rect:
         serializedVersion: 2
-        x: 61
-        y: 11
-        width: 133
-        height: 221
+        x: 40
+        y: 25
+        width: 1163
+        height: 1209
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
+      customData:
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: c841a56c75c02ef30800000000000000
-      internalID: 4603255340255548556
+      spriteID: b29b1a23b2e2e4ee0800000000000000
+      internalID: -1275030881431340757
       vertices: []
-      indices: 
+      indices:
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ladder_back_01_1
+      rect:
+        serializedVersion: 2
+        x: 96
+        y: 71
+        width: 12
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData:
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 208d669ed09b19b40800000000000000
+      internalID: 5445336893869185026
+      vertices: []
+      indices:
       edges: []
       weights: []
     outline: []
-    customData: 
+    customData:
     physicsShape: []
     bones: []
     spriteID: 5e97eb03825dee720800000000000000
     internalID: 0
     vertices: []
-    indices: 
+    indices:
     edges: []
     weights: []
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      ladder_down_05_0: 4603255340255548556
-  mipmapLimitGroupName: 
+      ladder_back_01_0: -1275030881431340757
+      ladder_back_01_1: 5445336893869185026
+  mipmapLimitGroupName:
   pSDRemoveMatte: 0
-  userData: 
-  assetBundleName: 
-  assetBundleVariant: 
+  userData:
+  assetBundleName:
+  assetBundleVariant:

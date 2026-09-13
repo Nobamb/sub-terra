@@ -19,7 +19,6 @@ namespace SubTerra.Gameplay.Player.Tests
         private GameObject secondLadderObject;
         private GameObject animationVisualObject;
         private Sprite[] ladderAnimationFrames;
-        private Sprite[] ladderDownAnimationFrames;
         private Tile wallTile;
 
         [SetUp]
@@ -43,14 +42,6 @@ namespace SubTerra.Gameplay.Player.Tests
             if (ladderAnimationFrames != null)
             {
                 foreach (var frame in ladderAnimationFrames)
-                {
-                    Object.DestroyImmediate(frame);
-                }
-            }
-
-            if (ladderDownAnimationFrames != null)
-            {
-                foreach (var frame in ladderDownAnimationFrames)
                 {
                     Object.DestroyImmediate(frame);
                 }
@@ -443,14 +434,6 @@ namespace SubTerra.Gameplay.Player.Tests
             {
                 CreateTestSprite(),
                 CreateTestSprite(),
-                CreateTestSprite(),
-                CreateTestSprite()
-            };
-            ladderDownAnimationFrames = new[]
-            {
-                CreateTestSprite(),
-                CreateTestSprite(),
-                CreateTestSprite(),
                 CreateTestSprite()
             };
             animation.ConfigureFrames(
@@ -460,7 +443,6 @@ namespace SubTerra.Gameplay.Player.Tests
                 ladderAnimationFrames,
                 ladderAnimationFrames,
                 ladderAnimationFrames,
-                ladderDownAnimationFrames,
                 ladderAnimationFrames,
                 ladderAnimationFrames,
                 ladderAnimationFrames);
@@ -479,7 +461,7 @@ namespace SubTerra.Gameplay.Player.Tests
         }
 
         [Test]
-        public void LadderAnimation_UsesDedicatedFramesWhenDescending()
+        public void LadderAnimation_UsesSharedFramesAndReversesWithVerticalDistance()
         {
             animationVisualObject = new GameObject("LadderAnimationVisual");
             animationVisualObject.transform.SetParent(playerObject.transform);
@@ -487,14 +469,6 @@ namespace SubTerra.Gameplay.Player.Tests
             var animation = animationVisualObject.AddComponent<PlayerAnimationController>();
             ladderAnimationFrames = new[]
             {
-                CreateTestSprite(),
-                CreateTestSprite(),
-                CreateTestSprite(),
-                CreateTestSprite()
-            };
-            ladderDownAnimationFrames = new[]
-            {
-                CreateTestSprite(),
                 CreateTestSprite(),
                 CreateTestSprite(),
                 CreateTestSprite()
@@ -506,29 +480,42 @@ namespace SubTerra.Gameplay.Player.Tests
                 ladderAnimationFrames,
                 ladderAnimationFrames,
                 ladderAnimationFrames,
-                ladderDownAnimationFrames,
                 ladderAnimationFrames,
                 ladderAnimationFrames,
                 ladderAnimationFrames);
+            SetPrivateField(animation, "ladderDistancePerFrame", 0.1f);
 
             movement.EnterLadder();
             movement.SetVerticalMoveInput(1f);
             InvokePrivate(animation, "LateUpdate");
             Assert.AreSame(ladderAnimationFrames[0], renderer.sprite);
 
+            body.position = new Vector2(0f, 0.1f);
+            InvokePrivate(animation, "LateUpdate");
+            Assert.AreSame(
+                ladderAnimationFrames[1],
+                renderer.sprite,
+                "실제 상승 거리가 한 단계 누적되면 왼쪽 동작 프레임을 사용해야 한다.");
+
+            movement.ExitLadder();
+            body.position = Vector2.zero;
+            movement.EnterLadder();
             movement.SetVerticalMoveInput(-1f);
             InvokePrivate(animation, "LateUpdate");
-            Assert.AreSame(
-                ladderDownAnimationFrames[0],
-                renderer.sprite,
-                "하강 시에는 상승 프레임이 아니라 전용 하강 프레임을 사용해야 한다.");
 
-            SetPrivateField(animation, "stateStartedAt", Time.unscaledTime - 0.25f);
+            body.position = new Vector2(0f, -0.1f);
             InvokePrivate(animation, "LateUpdate");
             Assert.AreSame(
-                ladderDownAnimationFrames[2],
+                ladderAnimationFrames[2],
                 renderer.sprite,
-                "하강 프레임은 별도 시트 순서로 진행되어야 한다.");
+                "실제 하강 거리가 한 단계 누적되면 같은 배열을 역방향으로 사용해야 한다.");
+
+            movement.SetVerticalMoveInput(0f);
+            InvokePrivate(animation, "LateUpdate");
+            Assert.AreSame(
+                ladderAnimationFrames[0],
+                renderer.sprite,
+                "사다리에서 멈추면 중립 프레임으로 복원되어야 한다.");
         }
 
         private static LadderZone CreateLadderZone(string name, out GameObject ladderObject)

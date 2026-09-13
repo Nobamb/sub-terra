@@ -7,6 +7,8 @@ namespace SubTerra.Gameplay.Player
     public sealed class PlayerAnimationController : MonoBehaviour
     {
         private const float DamageDuration = 0.35f;
+        private const float LadderMovementEpsilon = 0.0001f;
+        private const int LadderSequenceLength = 4;
 
         [SerializeField] private SpriteRenderer spriteRenderer;
         [SerializeField] private Animator animator;
@@ -14,10 +16,11 @@ namespace SubTerra.Gameplay.Player
         [SerializeField] private Sprite[] walkFrames;
         [SerializeField] private Sprite[] jumpFrames;
         [SerializeField] private Sprite[] ladderFrames;
-        [SerializeField] private Sprite[] ladderDownFrames;
         [SerializeField] private Sprite[] miningFrames;
         [SerializeField] private Sprite[] damageFrames;
         [SerializeField] private Sprite[] knockoutFrames;
+        [SerializeField, Min(0.01f)] private float ladderDistancePerFrame = 0.12f;
+        [SerializeField, Min(0f)] private float ladderSettleDelay = 0.08f;
 
         [SerializeField] private PlayerMovement movement;
         private bool isMining;
@@ -27,6 +30,10 @@ namespace SubTerra.Gameplay.Player
         private string currentState;
         private float stateStartedAt;
         private bool survivalEventsBound;
+        private float ladderTravelDistance;
+        private float previousLadderY;
+        private float ladderStillTime;
+        private bool ladderPositionCaptured;
 
         private void Awake()
         {
@@ -57,6 +64,7 @@ namespace SubTerra.Gameplay.Player
         private void OnDisable()
         {
             UnsubscribeSurvivalEvents();
+            ResetLadderPlayback();
         }
 
         public void BindSurvival(PlayerSurvivalController survivalController)
@@ -79,7 +87,15 @@ namespace SubTerra.Gameplay.Player
                 return;
             }
 
-            Play(ResolveStateName());
+            var stateName = ResolveStateName();
+            if (IsLadderState(stateName))
+            {
+                PlayLadder(stateName);
+                return;
+            }
+
+            ResetLadderPlayback();
+            Play(stateName);
         }
 
         public void ConfigureFrames(
@@ -89,7 +105,6 @@ namespace SubTerra.Gameplay.Player
             Sprite[] walk,
             Sprite[] jump,
             Sprite[] ladder,
-            Sprite[] ladderDown,
             Sprite[] mining,
             Sprite[] damage,
             Sprite[] knockout)
@@ -100,10 +115,10 @@ namespace SubTerra.Gameplay.Player
             walkFrames = walk;
             jumpFrames = jump;
             ladderFrames = ladder;
-            ladderDownFrames = ladderDown;
             miningFrames = mining;
             damageFrames = damage;
             knockoutFrames = knockout;
+            ResetLadderPlayback();
         }
 
         public void SetMining(bool value)
@@ -189,11 +204,7 @@ namespace SubTerra.Gameplay.Player
 
         private void Play(string stateName)
         {
-            if (currentState != stateName)
-            {
-                currentState = stateName;
-                stateStartedAt = Time.unscaledTime;
-            }
+            SetCurrentState(stateName);
 
             var (frames, frameRate, loop) = ResolveFrames(stateName);
             if (frames == null || frames.Length == 0)
@@ -219,14 +230,99 @@ namespace SubTerra.Gameplay.Player
             {
                 "Walk" => (walkFrames, 10f, true),
                 "Jump" => (jumpFrames, 12f, false),
-                "Ladder" => (ladderFrames, 8f, true),
-                "LadderDown" => (ladderDownFrames, 8f, true),
-                "LadderIdle" => (ladderFrames, 0f, false),
                 "Mining" => (miningFrames, 10f, true),
                 "Damage" => (damageFrames, 10f, false),
                 "Knockout" => (knockoutFrames, 8f, false),
                 _ => (idleFrames, 4f, true)
             };
+        }
+
+        private void PlayLadder(string stateName)
+        {
+            SetCurrentState(stateName);
+            if (ladderFrames == null || ladderFrames.Length < 3)
+            {
+                return;
+            }
+
+            var currentY = movement.Position.y;
+            if (!ladderPositionCaptured)
+            {
+                previousLadderY = currentY;
+                ladderPositionCaptured = true;
+                SetLadderFrame(0);
+                return;
+            }
+
+            var verticalDistance = currentY - previousLadderY;
+            previousLadderY = currentY;
+            if (stateName == "LadderIdle")
+            {
+                ladderStillTime = 0f;
+                SetLadderFrame(0);
+                return;
+            }
+
+            if (Mathf.Abs(verticalDistance) > LadderMovementEpsilon)
+            {
+                ladderTravelDistance += verticalDistance;
+                ladderStillTime = 0f;
+                SetLadderFrame(ResolveLadderFrameIndex());
+                return;
+            }
+
+            ladderStillTime += Time.unscaledDeltaTime;
+            if (ladderStillTime >= ladderSettleDelay)
+            {
+                SetLadderFrame(0);
+            }
+        }
+
+        private int ResolveLadderFrameIndex()
+        {
+            var distancePerFrame = Mathf.Max(0.01f, ladderDistancePerFrame);
+            var sequenceIndex = Mathf.RoundToInt(ladderTravelDistance / distancePerFrame);
+            sequenceIndex = ((sequenceIndex % LadderSequenceLength) + LadderSequenceLength)
+                % LadderSequenceLength;
+
+            return sequenceIndex switch
+            {
+                1 => 1,
+                3 => 2,
+                _ => 0
+            };
+        }
+
+        private void SetLadderFrame(int frameIndex)
+        {
+            var frame = ladderFrames[frameIndex];
+            if (frame != null)
+            {
+                spriteRenderer.sprite = frame;
+            }
+        }
+
+        private void ResetLadderPlayback()
+        {
+            ladderTravelDistance = 0f;
+            ladderStillTime = 0f;
+            ladderPositionCaptured = false;
+        }
+
+        private void SetCurrentState(string stateName)
+        {
+            if (currentState == stateName)
+            {
+                return;
+            }
+
+            currentState = stateName;
+            stateStartedAt = Time.unscaledTime;
+        }
+
+        private static bool IsLadderState(string stateName)
+        {
+            return stateName == "Ladder" || stateName == "LadderDown" || stateName == "LadderIdle";
         }
     }
 }

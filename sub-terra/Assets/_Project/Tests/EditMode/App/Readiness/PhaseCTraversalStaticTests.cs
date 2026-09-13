@@ -47,6 +47,30 @@ namespace SubTerra.App.Tests.Readiness
         }
 
         [Test]
+        public void PlayerPrefab_UsesThreeSharedLadderFramesInFrontOfLadder()
+        {
+            var player = AssetDatabase.LoadAssetAtPath<GameObject>(
+                "Assets/_Project/Prefabs/Gameplay/Player/Player.prefab");
+            var ladder = AssetDatabase.LoadAssetAtPath<GameObject>(
+                "Assets/_Project/Prefabs/Gameplay/Traversal/Ladder.prefab");
+
+            var visualRoot = player.transform.Find("VisualRoot");
+            var playerRenderer = visualRoot.GetComponent<SpriteRenderer>();
+            var ladderRenderer = ladder.GetComponent<SpriteRenderer>();
+            var animation = visualRoot.GetComponent<PlayerAnimationController>();
+            var serializedAnimation = new SerializedObject(animation);
+            var ladderFrames = serializedAnimation.FindProperty("ladderFrames");
+
+            Assert.Greater(playerRenderer.sortingOrder, ladderRenderer.sortingOrder);
+            Assert.AreEqual(3, ladderFrames.arraySize);
+            Assert.IsNull(serializedAnimation.FindProperty("ladderDownFrames"));
+            for (var index = 0; index < ladderFrames.arraySize; index++)
+            {
+                Assert.NotNull(ladderFrames.GetArrayElementAtIndex(index).objectReferenceValue);
+            }
+        }
+
+        [Test]
         public void IntegrationScene_WiresStationBridgeAndRestorableLadder()
         {
             var scene = EditorSceneManager.OpenScene(
