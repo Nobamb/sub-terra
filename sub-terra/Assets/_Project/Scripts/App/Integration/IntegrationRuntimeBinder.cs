@@ -271,7 +271,8 @@ namespace SubTerra.App.Integration
                         bootstrap.State,
                         healthCommand: runFailureController != null
                             ? runFailureController.SurvivalController
-                            : null);
+                            : null,
+                        effects: runtime.Progression?.Effects);
                     outpostBridge.BindTo(outpostService);
                     runtime.BindAutoSaveEvents(
                         runtime.Economy,
@@ -763,12 +764,12 @@ namespace SubTerra.App.Integration
                         mineralId,
                         result.AcceptedBaseQuantity,
                         result.AcceptedBonusQuantity,
-                        result.AcceptedGold));
+                        result.AcceptedGold, result.AcceptedGoldBonus));
             }
 
             if (result.Succeeded && result.AcceptedGold > 0 && goldPickupVfx != null)
             {
-                goldPickupVfx.SetPendingGold(result.AcceptedGold);
+                goldPickupVfx.SetPendingGold(result.AcceptedGold, result.AcceptedGoldBonus);
             }
 
             return result.ToShared();

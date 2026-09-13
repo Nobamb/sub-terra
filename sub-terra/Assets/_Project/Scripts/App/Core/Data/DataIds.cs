@@ -6,6 +6,11 @@ namespace SubTerra.App.Core.Data
     /// </summary>
     public static class DataIds
     {
+        public static class Currency
+        {
+            public const string Gold = "currency.gold";
+        }
+
         public static class Minerals
         {
             public const string Copper = "mineral.copper";
@@ -35,6 +40,7 @@ namespace SubTerra.App.Core.Data
             public const string HealthRegeneration = "upgrade.health.regeneration";
             public const string MaximumCargo = "upgrade.cargo.maximum";
             public const string CargoYield = "upgrade.cargo.yield";
+            public const string CargoGold = "upgrade.cargo.gold";
             public const string DroneScan = "upgrade.drone.scan";
             public const string DroneRescue = "upgrade.drone.rescue";
             public const string GasResistance = "upgrade.gas.resistance";

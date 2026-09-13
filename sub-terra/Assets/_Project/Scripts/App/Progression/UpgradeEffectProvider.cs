@@ -114,6 +114,12 @@ namespace SubTerra.App.Progression
             return level.GetMiningYieldBonus(mineralId);
         }
 
+        public int GetGoldGainBonusPercent()
+        {
+            var value = GetCurrentEffect(DataIds.Upgrades.CargoGold);
+            return value == 50f || value == 75f || value == 100f ? (int)value : 0;
+        }
+
         public float GetCurrentEffect(string upgradeId)
         {
             if (state == null || catalog == null || string.IsNullOrEmpty(upgradeId))

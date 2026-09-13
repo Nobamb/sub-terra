@@ -211,6 +211,7 @@ namespace SubTerra.Gameplay.Tests.Drone
             public float GetDroneScanRadius(float baseRadius) => scanRadius;
             public float GetDroneRescuePreservation(float basePreservation) => basePreservation;
             public float GetGasResistance() => 0f;
+            public int GetGoldGainBonusPercent() => 0;
             public int GetMiningYieldBonus(string mineralId) => 0;
         }
     }

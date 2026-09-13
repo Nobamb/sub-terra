@@ -6,6 +6,11 @@ namespace SubTerra.App.Core.Data
     /// </summary>
     public static class ItemDisplayNames
     {
+        public static string Cost(string itemId, int quantity)
+        {
+            return itemId == DataIds.Currency.Gold ? quantity + "G" : Mineral(itemId) + " x" + quantity;
+        }
+
         public static string Mineral(string itemId)
         {
             if (string.IsNullOrEmpty(itemId))
@@ -100,6 +105,8 @@ namespace SubTerra.App.Core.Data
                     return "최대 화물 중량";
                 case DataIds.Upgrades.CargoYield:
                     return "채굴 수확량";
+                case DataIds.Upgrades.CargoGold:
+                    return "골드 획득";
                 case DataIds.Upgrades.DroneScan:
                     return "드론 스캔 범위";
                 case DataIds.Upgrades.DroneRescue:
@@ -117,6 +124,8 @@ namespace SubTerra.App.Core.Data
         /// </summary>
         public static string UpgradeDescription(string upgradeId)
         {
+            if (upgradeId == DataIds.Upgrades.CargoGold)
+                return "광물 판매·정산과 골드 블록 채굴로 받는 골드가 늘어납니다. 퀘스트 보상에는 적용되지 않습니다.";
             if (string.IsNullOrEmpty(upgradeId))
             {
                 return string.Empty;

@@ -333,6 +333,7 @@ namespace SubTerra.App.Editor.DataValidation
                         YieldBonus(CopperBonus(1)),
                         YieldBonus(CopperBonus(2), IronBonus(1)),
                         YieldBonus(CopperBonus(3), IronBonus(2), LithiumBonus(1)))),
+                BuildGoldGainUpgrade(),
                 EnsureUpgrade("Upgrade_Drone_Scan.asset", DataIds.Upgrades.DroneScan, "드론 스캔 범위",
                     new[] { 3f, 7f },
                     Costs(Copper(6), CopperIron(6, 5))),
@@ -343,6 +344,15 @@ namespace SubTerra.App.Editor.DataValidation
                     new[] { 0.25f, 0.5f, 0.75f },
                     Costs(Copper(6), CopperIron(6, 4), IronLithium(8, 6)))
             };
+        }
+
+        public static UpgradeData BuildGoldGainUpgrade()
+        {
+            return EnsureUpgrade("Upgrade_Cargo_Gold.asset", DataIds.Upgrades.CargoGold, "골드 획득",
+                new[] { 50f, 75f, 100f }, Costs(
+                    new List<ItemCostEntry> { new ItemCostEntry(DataIds.Currency.Gold, 500), new ItemCostEntry(DataIds.Minerals.Copper, 10) },
+                    new List<ItemCostEntry> { new ItemCostEntry(DataIds.Currency.Gold, 1000), new ItemCostEntry(DataIds.Minerals.Iron, 10) },
+                    new List<ItemCostEntry> { new ItemCostEntry(DataIds.Currency.Gold, 3000), new ItemCostEntry(DataIds.Minerals.Lithium, 10) }));
         }
 
         private static UpgradeData EnsureUpgrade(

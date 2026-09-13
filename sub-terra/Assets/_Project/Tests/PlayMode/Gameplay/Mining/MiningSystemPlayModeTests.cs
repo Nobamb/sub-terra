@@ -57,6 +57,7 @@ namespace SubTerra.Gameplay.Mining.Tests
             public float GetDroneScanRadius(float baseRadius) => baseRadius;
             public float GetDroneRescuePreservation(float basePreservation) => basePreservation;
             public float GetGasResistance() => 0f;
+            public int GetGoldGainBonusPercent() => 0;
             public int GetMiningYieldBonus(string mineralId) => 0;
         }
 

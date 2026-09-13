@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7f504e39312afe1448588a4621c05aeb, type: 3}
+  m_Name: Upgrade_Cargo_Gold
+  m_EditorClassIdentifier: SubTerra.App::SubTerra.App.Core.Data.UpgradeData
+  id: upgrade.cargo.gold
+  displayName: "\uACE8\uB4DC \uD68D\uB4DD"
+  maxLevel: 3
+  levels:
+  - level: 1
+    costs:
+    - itemId: currency.gold
+      quantity: 500
+    - itemId: mineral.copper
+      quantity: 10
+    effectValue: 50
+    miningYieldBonuses: []
+  - level: 2
+    costs:
+    - itemId: currency.gold
+      quantity: 1000
+    - itemId: mineral.iron
+      quantity: 10
+    effectValue: 75
+    miningYieldBonuses: []
+  - level: 3
+    costs:
+    - itemId: currency.gold
+      quantity: 3000
+    - itemId: mineral.lithium
+      quantity: 10
+    effectValue: 100
+    miningYieldBonuses: []

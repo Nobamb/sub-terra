@@ -25,6 +25,7 @@ namespace SubTerra.App.Integration
         private Transform playerTarget;
         private Collider2D playerCollider;
         private int pendingGold;
+        private int pendingGoldBonus;
         private Transform worldRoot;
         private readonly List<CoinAnim> coins = new List<CoinAnim>(5);
         private TextAnim textAnim;
@@ -63,12 +64,13 @@ namespace SubTerra.App.Integration
             }
         }
 
-        public void SetPendingGold(int amount)
+        public void SetPendingGold(int amount, int bonus = 0)
         {
             pendingGold = amount > 0 ? amount : 0;
+            pendingGoldBonus = Mathf.Clamp(bonus, 0, pendingGold);
         }
 
-        public void Play(int goldAmount, Vector3 origin, Vector3 playerHead)
+        public void Play(int goldAmount, Vector3 origin, Vector3 playerHead, int goldBonus = 0)
         {
             if (goldAmount <= 0)
             {
@@ -77,7 +79,7 @@ namespace SubTerra.App.Integration
 
             EnsureWorldRoot();
             SpawnCoins(origin);
-            SpawnText(goldAmount, playerHead);
+            SpawnText(goldAmount, playerHead, goldBonus);
         }
 
         public void Tick(float unscaledDeltaTime)
@@ -125,7 +127,8 @@ namespace SubTerra.App.Integration
 
             int gold = pendingGold;
             pendingGold = 0;
-            Play(gold, CellCenter(cell), HeadPosition());
+            Play(gold, CellCenter(cell), HeadPosition(), pendingGoldBonus);
+            pendingGoldBonus = 0;
         }
 
         private void OnProgressChanged(MiningProgressState state)
@@ -172,10 +175,10 @@ namespace SubTerra.App.Integration
             }
         }
 
-        private void SpawnText(int goldAmount, Vector3 playerHead)
+        private void SpawnText(int goldAmount, Vector3 playerHead, int goldBonus)
         {
             ClearText();
-            string label = GoldPickupPresentation.FormatPickupText(goldAmount);
+            string label = GoldPickupPresentation.FormatPickupText(goldAmount, goldBonus);
             if (string.IsNullOrEmpty(label) || pickupFont == null)
             {
                 return;

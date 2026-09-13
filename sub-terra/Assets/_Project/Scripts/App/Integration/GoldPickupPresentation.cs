@@ -31,14 +31,16 @@ namespace SubTerra.App.Integration
 
         public static readonly Color FillColor = new Color32(0xFF, 0xFB, 0x19, 0xFF);
 
-        public static string FormatPickupText(int acceptedGold)
+        public static string FormatPickupText(int acceptedGold, int acceptedGoldBonus = 0)
         {
             if (acceptedGold <= 0)
             {
                 return string.Empty;
             }
 
-            return acceptedGold + "G 골드 획득!";
+            return acceptedGoldBonus > 0
+                ? (acceptedGold - acceptedGoldBonus) + "G + " + acceptedGoldBonus + "G 보너스!"
+                : acceptedGold + "G 골드 획득!";
         }
 
         public static float CoinAlpha(float normalizedHeight)

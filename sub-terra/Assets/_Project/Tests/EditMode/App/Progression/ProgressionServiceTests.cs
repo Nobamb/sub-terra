@@ -206,7 +206,7 @@ namespace SubTerra.App.Tests.Progression
         }
 
         [Test]
-        public void F_F04_AllTenEffects_UseCurrentLevelData_AndInvalidLevelUsesBase()
+        public void F_F04_AllElevenEffects_UseCurrentLevelData_AndInvalidLevelUsesBase()
         {
             var yield = CreateYieldUpgrade();
             var upgrades = new[]
@@ -218,6 +218,7 @@ namespace SubTerra.App.Tests.Progression
                 CreateUpgrade(DataIds.Upgrades.HealthRegeneration, 1, 0.3f),
                 CreateUpgrade(DataIds.Upgrades.MaximumCargo, 1, 15f),
                 yield,
+                CreateUpgrade(DataIds.Upgrades.CargoGold, 1, 50f),
                 CreateUpgrade(DataIds.Upgrades.DroneScan, 1, 3f),
                 CreateUpgrade(DataIds.Upgrades.DroneRescue, 1, 0.2f),
                 CreateUpgrade(DataIds.Upgrades.GasResistance, 1, 0.3f)
@@ -233,6 +234,7 @@ namespace SubTerra.App.Tests.Progression
             var provider = new UpgradeEffectProvider(state, new Catalog(upgrades));
 
             Assert.That(provider.GetDrillLevel(), Is.EqualTo(1));
+            Assert.That(provider.GetGoldGainBonusPercent(), Is.EqualTo(50));
             Assert.That(provider.GetDrillSpeedMultiplier(), Is.EqualTo(1.2f).Within(0.0001f));
             Assert.That(provider.GetEnergyEfficiencyMultiplier(), Is.EqualTo(1f / 0.9f).Within(0.0001f));
             Assert.That(provider.GetMaximumEnergy(100), Is.EqualTo(125));

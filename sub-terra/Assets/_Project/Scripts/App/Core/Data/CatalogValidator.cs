@@ -478,6 +478,25 @@ namespace SubTerra.App.Core.Data
                 }
 
                 ValidateMiningYieldBonuses(data, path, result);
+                if (data.Id == DataIds.Upgrades.CargoGold)
+                {
+                    var expected = new[] { 50f, 75f, 100f };
+                    if (data.MaxLevel != 3 || data.Levels.Count != 3)
+                        result.AddError(path, "levels", "Gold gain requires three levels.");
+                    for (var l = 0; l < data.Levels.Count; l++)
+                    {
+                        var level = data.Levels[l];
+                        if (level == null) continue;
+                        if (l >= expected.Length || level.EffectValue != expected[l])
+                            result.AddError(path, "effectValue", "Gold gain must be 50/75/100 percent.");
+                        var goldCosts = 0;
+                        if (level.Costs != null)
+                            foreach (var cost in level.Costs)
+                                if (cost.ItemId == DataIds.Currency.Gold) goldCosts++;
+                        if (goldCosts != 1)
+                            result.AddError(path, "costs", "Gold gain requires exactly one gold cost per level.");
+                    }
+                }
             }
         }
 
@@ -668,7 +687,9 @@ namespace SubTerra.App.Core.Data
                         {
                             ValidateRegisteredCosts(
                                 definition.Costs,
-                                mineralIds,
+                                data.Id == DataIds.Upgrades.CargoGold
+                                    ? MergeIds(mineralIds, new HashSet<string> { DataIds.Currency.Gold })
+                                    : mineralIds,
                                 GetPath(data),
                                 $"levels[{level}].costs",
                                 result);
@@ -916,6 +937,7 @@ namespace SubTerra.App.Core.Data
                     DataIds.Upgrades.MaximumEnergy,
                     DataIds.Upgrades.MaximumCargo,
                     DataIds.Upgrades.CargoYield,
+                    DataIds.Upgrades.CargoGold,
                     DataIds.Upgrades.DroneScan,
                     DataIds.Upgrades.DroneRescue,
                     DataIds.Upgrades.GasResistance

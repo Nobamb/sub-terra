@@ -15,5 +15,6 @@ namespace SubTerra.Shared
         float GetDroneRescuePreservation(float basePreservation);
         float GetGasResistance();
         int GetMiningYieldBonus(string mineralId);
+        int GetGoldGainBonusPercent();
     }
 }

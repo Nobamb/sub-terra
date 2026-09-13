@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using SubTerra.App.Core.Data;
 using SubTerra.App.Inventory;
+using SubTerra.App.Economy;
 using SubTerra.App.State;
 using SubTerra.Shared;
 
@@ -18,6 +19,7 @@ namespace SubTerra.App.Outpost
         private readonly GameState gameState;
         private readonly OutpostState state;
         private readonly IPlayerHealthCommand healthCommand;
+        private readonly IUpgradeEffectProvider effects;
         private readonly HashSet<string> completedSettlementIds = new HashSet<string>();
 
         private OutpostStatusDto runtimeStatus;
@@ -55,13 +57,15 @@ namespace SubTerra.App.Outpost
             IMineralCatalogLookup catalog,
             GameState gameState,
             OutpostState state = null,
-            IPlayerHealthCommand healthCommand = null)
+            IPlayerHealthCommand healthCommand = null,
+            IUpgradeEffectProvider effects = null)
         {
             this.inventory = inventory;
             this.catalog = catalog;
             this.gameState = gameState;
             this.state = state ?? gameState?.Outpost ?? new OutpostState();
             this.healthCommand = healthCommand;
+            this.effects = effects;
         }
 
         public void ApplyRuntimeStatus(OutpostStatusDto status)
@@ -454,7 +458,8 @@ namespace SubTerra.App.Outpost
             }
 
             var goldGain = info.UnitPrice * quantity;
-            if (gameState.Player.Gold > int.MaxValue - goldGain)
+            if (!EconomyPricing.TryAddBonus(goldGain, effects?.GetGoldGainBonusPercent() ?? 0,
+                gameState.Player.Gold, out var goldBonus, out goldGain, out _))
             {
                 return Complete(Fail(
                     OutpostOperationStatus.OverflowRisk,
@@ -478,7 +483,7 @@ namespace SubTerra.App.Outpost
                 mineralId,
                 quantity,
                 goldGain,
-                "정산이 완료되었습니다. +" + goldGain + "G");
+                "정산이 완료되었습니다. +" + EconomyPricing.FormatGoldGain(goldGain, goldBonus));
             RaiseSnapshotChanged();
             Complete(result);
             AutoSaveRequested?.Invoke(
@@ -528,7 +533,8 @@ namespace SubTerra.App.Outpost
             }
 
             var beforeGold = gameState.Player.Gold;
-            if (beforeGold > int.MaxValue - goldGain)
+            if (!EconomyPricing.TryAddBonus(goldGain, effects?.GetGoldGainBonusPercent() ?? 0,
+                beforeGold, out var goldBonus, out goldGain, out _))
             {
                 return Complete(Fail(
                     OutpostOperationStatus.OverflowRisk,
@@ -557,7 +563,8 @@ namespace SubTerra.App.Outpost
 
             gameState.AddGold(goldGain);
             completedSettlementIds.Add(settlementId);
-            var result = Success(kind, string.Empty, SumQuantities(reductions), goldGain, "정산이 완료되었습니다.");
+            var result = Success(kind, string.Empty, SumQuantities(reductions), goldGain,
+                "정산이 완료되었습니다. +" + EconomyPricing.FormatGoldGain(goldGain, goldBonus));
             RaiseSnapshotChanged();
             Complete(result);
             AutoSaveRequested?.Invoke(

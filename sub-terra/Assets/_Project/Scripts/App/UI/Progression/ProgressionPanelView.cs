@@ -283,7 +283,27 @@ namespace SubTerra.App.UI.Progression
                     .Append('/')
                     .Append(upgrade.MaximumLevel);
 
-                if (isMiningYield)
+                if (upgrade.UpgradeId == DataIds.Upgrades.CargoGold)
+                {
+                    builder.AppendLine().Append(description).AppendLine()
+                        .Append("현재 +").Append(upgrade.CurrentEffectValue.ToString("0")).Append('%');
+                    if (upgrade.IsMaximumLevel)
+                        builder.Append(" (2배)").AppendLine().Append("최대 레벨입니다.");
+                    else
+                    {
+                        builder.Append(" → 다음 +").Append(upgrade.NextEffectValue.ToString("0")).Append('%')
+                            .AppendLine().Append("필요 재료: ");
+                        for (var i = 0; i < upgrade.NextCosts.Count; i++)
+                        {
+                            if (i > 0) builder.Append(", ");
+                            var cost = upgrade.NextCosts[i];
+                            builder.Append(ItemDisplayNames.Cost(cost.ItemId, cost.Quantity));
+                        }
+                        builder.AppendLine().Append(upgrade.CanAffordNextLevel
+                            ? "구매 가능" : "자원 부족 (골드·인벤토리 보유량 기준)");
+                    }
+                }
+                else if (isMiningYield)
                 {
                     AppendMiningYieldDetail(builder, upgrade, description);
                 }

@@ -614,7 +614,8 @@ namespace SubTerra.App.Save
             inventoryService = new InventoryService(mineralLookup, inventoryState, state);
             // 기본 deny. Surface Base Binder만 IsSellAllowed=true. null gate 아님 — 런타임 경로 방어.
             sellGate = new SceneSellGate { IsSellAllowed = false };
-            economy = new EconomyService(inventoryService, mineralLookup, state, sellGate);
+            economy = new EconomyService(inventoryService, mineralLookup, state, sellGate,
+                new UpgradeEffectProvider(upgradeState, upgradeCatalog));
             crafting = new CraftingService(economy);
             progression = upgradeCatalog != null
                 ? new ProgressionService(upgradeState, upgradeCatalog, economy)

@@ -1,4 +1,5 @@
 using SubTerra.App.Core.Data;
+using SubTerra.App.Economy;
 using SubTerra.App.State;
 using SubTerra.Shared;
 
@@ -13,18 +14,20 @@ namespace SubTerra.App.Inventory
         public int AcceptedBaseQuantity { get; }
         public int AcceptedBonusQuantity { get; }
         public int AcceptedGold { get; }
+        public int AcceptedGoldBonus { get; }
         public bool Succeeded => Status == MiningCommitStatus.Success;
 
         public MiningYieldCommitResult(
             MiningCommitStatus status,
             int acceptedBaseQuantity,
             int acceptedBonusQuantity,
-            int acceptedGold = 0)
+            int acceptedGold = 0, int acceptedGoldBonus = 0)
         {
             Status = status;
             AcceptedBaseQuantity = acceptedBaseQuantity < 0 ? 0 : acceptedBaseQuantity;
             AcceptedBonusQuantity = acceptedBonusQuantity < 0 ? 0 : acceptedBonusQuantity;
             AcceptedGold = acceptedGold;
+            AcceptedGoldBonus = acceptedGoldBonus;
         }
 
         public MiningCommitResult ToShared()
@@ -37,9 +40,9 @@ namespace SubTerra.App.Inventory
             return new MiningYieldCommitResult(status, 0, 0);
         }
 
-        public static MiningYieldCommitResult Success(int acceptedBase, int acceptedBonus, int acceptedGold = 0)
+        public static MiningYieldCommitResult Success(int acceptedBase, int acceptedBonus, int acceptedGold = 0, int acceptedGoldBonus = 0)
         {
-            return new MiningYieldCommitResult(MiningCommitStatus.Success, acceptedBase, acceptedBonus, acceptedGold);
+            return new MiningYieldCommitResult(MiningCommitStatus.Success, acceptedBase, acceptedBonus, acceptedGold, acceptedGoldBonus);
         }
     }
 
@@ -102,19 +105,24 @@ namespace SubTerra.App.Inventory
                 }
             }
 
-            int acceptedGold = System.Math.Min(System.Math.Max(0, goldGrant), int.MaxValue - state.Player.Gold);
+            int baseGold = System.Math.Max(0, goldGrant);
+            int bonusGold = EconomyPricing.ComputeGoldBonus(baseGold, effects?.GetGoldGainBonusPercent() ?? 0);
+            // 타일 커밋은 판매와 달리 잔액 한도까지 지급한다. 연출도 실제 지급분만 표시한다.
+            int acceptedGold = (int)System.Math.Min((long)baseGold + bonusGold, int.MaxValue - state.Player.Gold);
+            int acceptedGoldBonus = System.Math.Max(0, acceptedGold - baseGold);
             if (acceptedGold > 0) state.AddGold(acceptedGold);
             state.SetCurrentEnergy(state.Player.Energy - cost);
-            return MiningYieldCommitResult.Success(acceptedBase, acceptedBonus, acceptedGold);
+            return MiningYieldCommitResult.Success(acceptedBase, acceptedBonus, acceptedGold, acceptedGoldBonus);
         }
 
         public static string FormatHudFeedback(
             string mineralId,
             int acceptedBase,
             int acceptedBonus,
-            int acceptedGold = 0)
+            int acceptedGold = 0, int acceptedGoldBonus = 0)
         {
             string goldText = acceptedGold > 0 ? "골드 +" + acceptedGold + "G" : string.Empty;
+            if (acceptedGoldBonus > 0) goldText += " (+" + acceptedGoldBonus + "G 보너스)";
             if (string.IsNullOrEmpty(mineralId) || acceptedBase + acceptedBonus <= 0)
             {
                 return goldText;
