@@ -8,6 +8,7 @@ namespace SubTerra.Gameplay.Player
     {
         private const float DamageDuration = 0.35f;
         private const float LadderMovementEpsilon = 0.0001f;
+        private const float LadderVisualGraceDuration = 0.1f;
         private const int LadderSequenceLength = 4;
 
         [SerializeField] private SpriteRenderer spriteRenderer;
@@ -35,6 +36,7 @@ namespace SubTerra.Gameplay.Player
         private float previousLadderY;
         private float ladderStillTime;
         private bool ladderPositionCaptured;
+        private float ladderVisualGraceUntil;
 
         private void Awake()
         {
@@ -91,7 +93,14 @@ namespace SubTerra.Gameplay.Player
             var stateName = ResolveStateName();
             if (IsLadderState(stateName))
             {
+                ladderVisualGraceUntil = Time.unscaledTime + LadderVisualGraceDuration;
                 PlayLadder(stateName);
+                return;
+            }
+
+            if (ShouldHoldLadderVisual(stateName))
+            {
+                HoldLadderVisual();
                 return;
             }
 
@@ -316,6 +325,29 @@ namespace SubTerra.Gameplay.Player
             ResetLadderPhase();
             ladderStillTime = 0f;
             ladderPositionCaptured = false;
+            ladderVisualGraceUntil = 0f;
+        }
+
+        private bool ShouldHoldLadderVisual(string nextStateName)
+        {
+            if (!IsLadderState(currentState)
+                || movement.IsTouchingLadder
+                || movement.IsJumpInProgress
+                || Time.unscaledTime >= ladderVisualGraceUntil)
+            {
+                return false;
+            }
+
+            return nextStateName != "Mining"
+                && nextStateName != "Damage"
+                && nextStateName != "Knockout";
+        }
+
+        private void HoldLadderVisual()
+        {
+            // 접촉이 한 틱 끊겨도 낙하 거리를 등반 프레임 진행량으로 누적하지 않는다.
+            previousLadderY = movement.Position.y;
+            ladderPositionCaptured = true;
         }
 
         private void ResetLadderPhase()

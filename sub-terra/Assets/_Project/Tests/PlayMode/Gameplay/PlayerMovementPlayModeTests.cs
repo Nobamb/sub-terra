@@ -588,6 +588,149 @@ namespace SubTerra.Gameplay.Player.Tests
             }
         }
 
+        [Test]
+        public void LadderAnimation_TransientContactGap_HoldsLadderFrameAndResumes()
+        {
+            animationVisualObject = new GameObject("LadderContactGapVisual");
+            animationVisualObject.transform.SetParent(playerObject.transform);
+            var renderer = animationVisualObject.AddComponent<SpriteRenderer>();
+            var animation = animationVisualObject.AddComponent<PlayerAnimationController>();
+            ladderAnimationFrames = new[]
+            {
+                CreateTestSprite(),
+                CreateTestSprite(),
+                CreateTestSprite()
+            };
+            otherAnimationFrames = new[]
+            {
+                CreateTestSprite(),
+                CreateTestSprite()
+            };
+            animation.ConfigureFrames(
+                renderer,
+                movement,
+                otherAnimationFrames,
+                otherAnimationFrames,
+                otherAnimationFrames,
+                ladderAnimationFrames,
+                otherAnimationFrames,
+                otherAnimationFrames,
+                otherAnimationFrames);
+
+            LadderZone firstLadder = CreateLadderZone("ContactGapFirst", out firstLadderObject);
+            LadderZone secondLadder = CreateLadderZone("ContactGapSecond", out secondLadderObject);
+            movement.EnterLadder(firstLadder);
+            movement.SetVerticalMoveInput(1f);
+            InvokePrivate(animation, "LateUpdate");
+            body.position = new Vector2(0f, 0.51f);
+            InvokePrivate(animation, "LateUpdate");
+            var frameBeforeGap = renderer.sprite;
+
+            movement.ExitLadder(firstLadder);
+            SetPrivateField(movement, "<IsGrounded>k__BackingField", true);
+            movement.SetMoveInput(1f);
+            InvokePrivate(animation, "LateUpdate");
+
+            Assert.AreSame(
+                frameBeforeGap,
+                renderer.sprite,
+                "사다리 접촉이 순간적으로 끊겨도 Walk 프레임으로 바뀌면 안 된다.");
+            CollectionAssert.DoesNotContain(otherAnimationFrames, renderer.sprite);
+
+            movement.EnterLadder(secondLadder);
+            movement.SetVerticalMoveInput(1f);
+            InvokePrivate(animation, "LateUpdate");
+            CollectionAssert.Contains(
+                ladderAnimationFrames,
+                renderer.sprite,
+                "짧은 접촉 공백 안에 재진입하면 사다리 프레임을 이어가야 한다.");
+        }
+
+        [Test]
+        public void LadderAnimation_GraceExpires_RestoresNormalAnimation()
+        {
+            animationVisualObject = new GameObject("LadderGraceExpiryVisual");
+            animationVisualObject.transform.SetParent(playerObject.transform);
+            var renderer = animationVisualObject.AddComponent<SpriteRenderer>();
+            var animation = animationVisualObject.AddComponent<PlayerAnimationController>();
+            ladderAnimationFrames = new[]
+            {
+                CreateTestSprite(),
+                CreateTestSprite(),
+                CreateTestSprite()
+            };
+            otherAnimationFrames = new[] { CreateTestSprite() };
+            animation.ConfigureFrames(
+                renderer,
+                movement,
+                otherAnimationFrames,
+                otherAnimationFrames,
+                otherAnimationFrames,
+                ladderAnimationFrames,
+                otherAnimationFrames,
+                otherAnimationFrames,
+                otherAnimationFrames);
+
+            LadderZone ladder = CreateLadderZone("GraceExpiryLadder", out firstLadderObject);
+            movement.EnterLadder(ladder);
+            movement.SetVerticalMoveInput(1f);
+            InvokePrivate(animation, "LateUpdate");
+            movement.ExitLadder(ladder);
+            SetPrivateField(movement, "<IsGrounded>k__BackingField", true);
+            movement.SetMoveInput(1f);
+            SetPrivateField(animation, "ladderVisualGraceUntil", Time.unscaledTime - 1f);
+
+            InvokePrivate(animation, "LateUpdate");
+
+            Assert.AreSame(
+                otherAnimationFrames[0],
+                renderer.sprite,
+                "유예 시간이 끝나면 일반 Walk 표시가 복원되어야 한다.");
+        }
+
+        [Test]
+        public void LadderAnimation_LadderJump_BypassesVisualGrace()
+        {
+            animationVisualObject = new GameObject("LadderJumpVisual");
+            animationVisualObject.transform.SetParent(playerObject.transform);
+            var renderer = animationVisualObject.AddComponent<SpriteRenderer>();
+            var animation = animationVisualObject.AddComponent<PlayerAnimationController>();
+            ladderAnimationFrames = new[]
+            {
+                CreateTestSprite(),
+                CreateTestSprite(),
+                CreateTestSprite()
+            };
+            otherAnimationFrames = new[] { CreateTestSprite() };
+            animation.ConfigureFrames(
+                renderer,
+                movement,
+                otherAnimationFrames,
+                otherAnimationFrames,
+                otherAnimationFrames,
+                ladderAnimationFrames,
+                otherAnimationFrames,
+                otherAnimationFrames,
+                otherAnimationFrames);
+
+            LadderZone ladder = CreateLadderZone("JumpLadder", out firstLadderObject);
+            movement.EnterLadder(ladder);
+            movement.SetVerticalMoveInput(1f);
+            InvokePrivate(animation, "LateUpdate");
+
+            movement.RequestJump();
+            InvokePrivate(movement, "FixedUpdate");
+            movement.ExitLadder(ladder);
+            InvokePrivate(animation, "LateUpdate");
+
+            Assert.IsFalse(movement.IsClimbing);
+            Assert.IsTrue(movement.IsJumpInProgress);
+            Assert.AreSame(
+                otherAnimationFrames[0],
+                renderer.sprite,
+                "의도적으로 사다리에서 점프하면 유예 없이 Jump 표시로 전환되어야 한다.");
+        }
+
         private static LadderZone CreateLadderZone(string name, out GameObject ladderObject)
         {
             ladderObject = new GameObject(name);
