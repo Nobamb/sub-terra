@@ -19,6 +19,7 @@ namespace SubTerra.Gameplay.Player.Tests
         private GameObject secondLadderObject;
         private GameObject animationVisualObject;
         private Sprite[] ladderAnimationFrames;
+        private Sprite[] otherAnimationFrames;
         private Tile wallTile;
 
         [SetUp]
@@ -42,6 +43,14 @@ namespace SubTerra.Gameplay.Player.Tests
             if (ladderAnimationFrames != null)
             {
                 foreach (var frame in ladderAnimationFrames)
+                {
+                    Object.DestroyImmediate(frame);
+                }
+            }
+
+            if (otherAnimationFrames != null)
+            {
+                foreach (var frame in otherAnimationFrames)
                 {
                     Object.DestroyImmediate(frame);
                 }
@@ -490,7 +499,14 @@ namespace SubTerra.Gameplay.Player.Tests
             InvokePrivate(animation, "LateUpdate");
             Assert.AreSame(ladderAnimationFrames[0], renderer.sprite);
 
-            body.position = new Vector2(0f, 0.1f);
+            body.position = new Vector2(0f, 0.09f);
+            InvokePrivate(animation, "LateUpdate");
+            Assert.AreSame(
+                ladderAnimationFrames[0],
+                renderer.sprite,
+                "설정 거리 미만에서는 다음 사다리 프레임으로 넘어가면 안 된다.");
+
+            body.position = new Vector2(0f, 0.11f);
             InvokePrivate(animation, "LateUpdate");
             Assert.AreSame(
                 ladderAnimationFrames[1],
@@ -503,7 +519,14 @@ namespace SubTerra.Gameplay.Player.Tests
             movement.SetVerticalMoveInput(-1f);
             InvokePrivate(animation, "LateUpdate");
 
-            body.position = new Vector2(0f, -0.1f);
+            body.position = new Vector2(0f, -0.09f);
+            InvokePrivate(animation, "LateUpdate");
+            Assert.AreSame(
+                ladderAnimationFrames[0],
+                renderer.sprite,
+                "하강도 설정 거리 미만에서는 중립 프레임을 유지해야 한다.");
+
+            body.position = new Vector2(0f, -0.11f);
             InvokePrivate(animation, "LateUpdate");
             Assert.AreSame(
                 ladderAnimationFrames[2],
@@ -516,6 +539,53 @@ namespace SubTerra.Gameplay.Player.Tests
                 ladderAnimationFrames[0],
                 renderer.sprite,
                 "사다리에서 멈추면 중립 프레임으로 복원되어야 한다.");
+        }
+
+        [Test]
+        public void LadderAnimation_DoesNotSelectWalkFramesDuringContinuousClimb()
+        {
+            animationVisualObject = new GameObject("LadderWalkIsolationVisual");
+            animationVisualObject.transform.SetParent(playerObject.transform);
+            var renderer = animationVisualObject.AddComponent<SpriteRenderer>();
+            var animation = animationVisualObject.AddComponent<PlayerAnimationController>();
+            ladderAnimationFrames = new[]
+            {
+                CreateTestSprite(),
+                CreateTestSprite(),
+                CreateTestSprite()
+            };
+            otherAnimationFrames = new[]
+            {
+                CreateTestSprite(),
+                CreateTestSprite()
+            };
+            animation.ConfigureFrames(
+                renderer,
+                movement,
+                otherAnimationFrames,
+                otherAnimationFrames,
+                otherAnimationFrames,
+                ladderAnimationFrames,
+                otherAnimationFrames,
+                otherAnimationFrames,
+                otherAnimationFrames);
+
+            movement.EnterLadder();
+            movement.SetMoveInput(1f);
+            movement.SetVerticalMoveInput(1f);
+            InvokePrivate(animation, "LateUpdate");
+
+            for (var sample = 1; sample <= 80; sample++)
+            {
+                body.position = new Vector2(sample * 0.01f, sample * 0.02f);
+                InvokePrivate(animation, "LateUpdate");
+
+                CollectionAssert.Contains(
+                    ladderAnimationFrames,
+                    renderer.sprite,
+                    $"연속 등반 중 {sample}번째 표본에서 일반 이동 프레임이 표시되었다.");
+                CollectionAssert.DoesNotContain(otherAnimationFrames, renderer.sprite);
+            }
         }
 
         private static LadderZone CreateLadderZone(string name, out GameObject ladderObject)

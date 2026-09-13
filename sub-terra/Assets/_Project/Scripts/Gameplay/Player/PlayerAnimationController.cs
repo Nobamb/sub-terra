@@ -19,7 +19,7 @@ namespace SubTerra.Gameplay.Player
         [SerializeField] private Sprite[] miningFrames;
         [SerializeField] private Sprite[] damageFrames;
         [SerializeField] private Sprite[] knockoutFrames;
-        [SerializeField, Min(0.01f)] private float ladderDistancePerFrame = 0.12f;
+        [SerializeField, Min(0.01f)] private float ladderDistancePerFrame = 0.5f;
         [SerializeField, Min(0f)] private float ladderSettleDelay = 0.08f;
 
         [SerializeField] private PlayerMovement movement;
@@ -31,6 +31,7 @@ namespace SubTerra.Gameplay.Player
         private float stateStartedAt;
         private bool survivalEventsBound;
         private float ladderTravelDistance;
+        private int ladderSequenceIndex;
         private float previousLadderY;
         private float ladderStillTime;
         private bool ladderPositionCaptured;
@@ -258,6 +259,7 @@ namespace SubTerra.Gameplay.Player
             previousLadderY = currentY;
             if (stateName == "LadderIdle")
             {
+                ResetLadderPhase();
                 ladderStillTime = 0f;
                 SetLadderFrame(0);
                 return;
@@ -274,6 +276,7 @@ namespace SubTerra.Gameplay.Player
             ladderStillTime += Time.unscaledDeltaTime;
             if (ladderStillTime >= ladderSettleDelay)
             {
+                ResetLadderPhase();
                 SetLadderFrame(0);
             }
         }
@@ -281,11 +284,17 @@ namespace SubTerra.Gameplay.Player
         private int ResolveLadderFrameIndex()
         {
             var distancePerFrame = Mathf.Max(0.01f, ladderDistancePerFrame);
-            var sequenceIndex = Mathf.RoundToInt(ladderTravelDistance / distancePerFrame);
-            sequenceIndex = ((sequenceIndex % LadderSequenceLength) + LadderSequenceLength)
-                % LadderSequenceLength;
+            var steps = Mathf.FloorToInt(Mathf.Abs(ladderTravelDistance) / distancePerFrame);
+            if (steps > 0)
+            {
+                var direction = ladderTravelDistance > 0f ? 1 : -1;
+                ladderSequenceIndex += direction * steps;
+                ladderSequenceIndex = ((ladderSequenceIndex % LadderSequenceLength) + LadderSequenceLength)
+                    % LadderSequenceLength;
+                ladderTravelDistance -= direction * steps * distancePerFrame;
+            }
 
-            return sequenceIndex switch
+            return ladderSequenceIndex switch
             {
                 1 => 1,
                 3 => 2,
@@ -304,9 +313,15 @@ namespace SubTerra.Gameplay.Player
 
         private void ResetLadderPlayback()
         {
-            ladderTravelDistance = 0f;
+            ResetLadderPhase();
             ladderStillTime = 0f;
             ladderPositionCaptured = false;
+        }
+
+        private void ResetLadderPhase()
+        {
+            ladderTravelDistance = 0f;
+            ladderSequenceIndex = 0;
         }
 
         private void SetCurrentState(string stateName)

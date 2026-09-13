@@ -395,6 +395,6 @@ MonoBehaviour:
   - {fileID: 21300000, guid: c9c69db55a0a1a64ca0e5c8dca94dd60, type: 3}
   - {fileID: 21300000, guid: bce68305ec2a97845908bd04f20f22a2, type: 3}
   - {fileID: 21300000, guid: 8929d86159727894ca38875d1efd626e, type: 3}
-  ladderDistancePerFrame: 0.12
+  ladderDistancePerFrame: 0.5
   ladderSettleDelay: 0.08
   movement: {fileID: 3152244689760817088}
