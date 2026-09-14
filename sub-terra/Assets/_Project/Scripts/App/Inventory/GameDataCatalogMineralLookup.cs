@@ -23,7 +23,7 @@ namespace SubTerra.App.Inventory
                 return false;
             }
 
-            if (!catalog.TryGetMineral(mineralId, out var data) || data == null)
+            if (!catalog.TryGetInventoryItem(mineralId, out var data) || data == null)
             {
                 return false;
             }

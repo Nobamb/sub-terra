@@ -154,7 +154,12 @@ namespace SubTerra.App.Editor.DataValidation
                 }
                 else if (tileId == "tile.locked.signal")
                 {
-                    energy = 0;
+                    level = 2;
+                    energy = 3;
+                    definition.FindPropertyRelative("isMineable").boolValue = true;
+                    definition.FindPropertyRelative("mineralId").stringValue = "item.rare.engine_fuel";
+                    definition.FindPropertyRelative("quantity").intValue = 1;
+                    definition.FindPropertyRelative("miningTime").floatValue = 1.2f;
                 }
 
                 definition.FindPropertyRelative("requiredDrillLevel").intValue = level;

@@ -8,6 +8,7 @@
     "SubTerra.Gameplay.Building",
     "SubTerra.Gameplay.Structural",
     "SubTerra.Gameplay.Mining",
+    "SubTerra.Gameplay.Drone",
     "SubTerra.Gameplay.Player",
     "SubTerra.Gameplay.Power",
     "SubTerra.Gameplay.Hazards",

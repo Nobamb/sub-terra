@@ -26,9 +26,18 @@ namespace SubTerra.App.Core.Data
                     return "철";
                 case DataIds.Minerals.Lithium:
                     return "리튬";
+                case DataIds.RareItems.EngineFuel:
+                    return "엔진 연료";
                 default:
                     return itemId;
             }
+        }
+
+        /// <summary>인벤·판매 목록용. 희귀 품목은 희귀 라벨을 붙인다.</summary>
+        public static string Inventory(string itemId)
+        {
+            var name = Mineral(itemId);
+            return DataIds.RareItems.IsRare(itemId) ? name + " (희귀)" : name;
         }
 
         public static string Building(string buildingId)
@@ -192,7 +201,8 @@ namespace SubTerra.App.Core.Data
                 return catalogDisplayName;
             }
 
-            if (permanentId != null && permanentId.StartsWith("mineral."))
+            if (permanentId != null
+                && (permanentId.StartsWith("mineral.") || permanentId.StartsWith("item.")))
             {
                 return Mineral(permanentId);
             }

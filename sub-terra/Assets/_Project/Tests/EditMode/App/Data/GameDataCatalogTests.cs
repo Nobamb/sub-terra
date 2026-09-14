@@ -36,6 +36,31 @@ namespace SubTerra.App.Tests.Data
         }
 
         [Test]
+        public void RareEngineFuel_IsLookedUpOutsideMineralNamespace()
+        {
+            var catalog = CreateValidMvpCatalog();
+            var fuel = CreateMineral("Rare_EngineFuel", DataIds.RareItems.EngineFuel, "엔진 연료", 1f, 100);
+            catalog.EditorSetLists(
+                catalog.Minerals.ToList(),
+                catalog.MiningTiles.ToList(),
+                catalog.Buildings.ToList(),
+                catalog.Recipes.ToList(),
+                catalog.Upgrades.ToList(),
+                catalog.Dialogues.ToList(),
+                new List<MineralData> { fuel });
+
+            var validation = catalog.ValidateAll();
+            Assert.That(validation.IsValid, Is.True, validation.FormatAll());
+            Assert.That(catalog.TryGetMineral(DataIds.RareItems.EngineFuel, out _), Is.False);
+            Assert.That(catalog.TryGetRareItem(DataIds.RareItems.EngineFuel, out var rare), Is.True);
+            Assert.That(rare.UnitPrice, Is.EqualTo(100));
+            Assert.That(catalog.TryGetInventoryItem(DataIds.RareItems.EngineFuel, out var item), Is.True);
+            Assert.That(item, Is.SameAs(fuel));
+            Assert.That(catalog.TryGetMineralUnitPrice(DataIds.RareItems.EngineFuel, out var price), Is.True);
+            Assert.That(price, Is.EqualTo(100));
+        }
+
+        [Test]
         public void MiningRewardReceiver_KeepsAgreedSignature()
         {
             var method = typeof(IMiningRewardReceiver).GetMethod(nameof(IMiningRewardReceiver.AddMineral));

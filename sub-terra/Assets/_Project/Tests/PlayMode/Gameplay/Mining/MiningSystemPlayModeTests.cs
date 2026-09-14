@@ -211,16 +211,29 @@ namespace SubTerra.Gameplay.Mining.Tests
         }
 
         [Test]
-        public void DeepZoneSignal_BlocksBeforeUnlock_AndAllowsInteractionAfterUnlock()
+        public void DeepZoneSignal_BlocksBeforeUnlock_AndMinesEngineFuelAfterUnlock()
         {
             CreateSystem(out var root, out var tilemap, out var resolver, out var system);
             var access = new DeepZoneAccess();
-            system.SetRuntimeServices(null, null, access);
+            var effects = root.AddComponent<UpgradeEffects>();
+            effects.DrillLevel = 2;
+            system.SetRuntimeServices(null, effects, access);
+            var receiver = root.AddComponent<RewardReceiver>();
+            SetPrivate(system, "rewardReceiverBehaviour", receiver);
             var tile = ScriptableObject.CreateInstance<Tile>();
             var cell = new Vector3Int(14, -7, 0);
             var signalAccesses = 0;
             resolver.RegisterRuntime(tile, new MiningTileDto(
-                "tile.locked.signal", string.Empty, 0, false, 1f, 0f, 0f, false));
+                "tile.locked.signal",
+                "item.rare.engine_fuel",
+                1,
+                true,
+                1f,
+                0f,
+                0f,
+                false,
+                2,
+                0));
             tilemap.SetTile(cell, tile);
             system.DeepZoneSignalAccessed += _ => signalAccesses++;
 
@@ -229,9 +242,51 @@ namespace SubTerra.Gameplay.Mining.Tests
             Assert.That(tilemap.GetTile(cell), Is.SameAs(tile));
 
             access.IsDeepZoneUnlocked = true;
+            effects.DrillLevel = 0;
+            Assert.That(system.TryMineInstant(cell), Is.False);
+            Assert.That(system.LastFailure, Is.EqualTo(MiningFailureReason.DrillLevelTooLow));
+            Assert.That(tilemap.GetTile(cell), Is.SameAs(tile));
+
+            effects.DrillLevel = 2;
             Assert.That(system.TryMineInstant(cell), Is.True);
             Assert.That(system.LastFailure, Is.EqualTo(MiningFailureReason.None));
             Assert.That(signalAccesses, Is.EqualTo(1));
+            Assert.That(tilemap.GetTile(cell), Is.Null);
+            Assert.That(receiver.Calls, Is.EqualTo(1));
+            Assert.That(receiver.MineralId, Is.EqualTo("item.rare.engine_fuel"));
+            Assert.That(receiver.Quantity, Is.EqualTo(1));
+
+            Object.DestroyImmediate(root);
+            Object.DestroyImmediate(tile);
+        }
+
+        [Test]
+        public void DeepZoneSignal_InventoryFullKeepsTile()
+        {
+            CreateSystem(out var root, out var tilemap, out var resolver, out var system);
+            var access = new DeepZoneAccess { IsDeepZoneUnlocked = true };
+            var effects = root.AddComponent<UpgradeEffects>();
+            effects.DrillLevel = 2;
+            var transaction = root.AddComponent<MiningTransaction>();
+            transaction.CommitStatus = MiningCommitStatus.InventoryFull;
+            system.SetRuntimeServices(transaction, effects, access);
+            var tile = ScriptableObject.CreateInstance<Tile>();
+            var cell = new Vector3Int(14, -7, 0);
+            resolver.RegisterRuntime(tile, new MiningTileDto(
+                "tile.locked.signal",
+                "item.rare.engine_fuel",
+                1,
+                true,
+                1f,
+                0f,
+                0f,
+                false,
+                2,
+                0));
+            tilemap.SetTile(cell, tile);
+
+            Assert.That(system.TryMineInstant(cell), Is.False);
+            Assert.That(system.LastFailure, Is.EqualTo(MiningFailureReason.InventoryFull));
             Assert.That(tilemap.GetTile(cell), Is.SameAs(tile));
 
             Object.DestroyImmediate(root);

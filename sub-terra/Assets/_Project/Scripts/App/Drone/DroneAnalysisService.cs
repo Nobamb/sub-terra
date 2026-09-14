@@ -67,6 +67,9 @@ namespace SubTerra.App.Drone
             var lithiumNearby = ContainsOrdinal(
                 context.nearbyMineralIds,
                 DataIds.Minerals.Lithium);
+            var engineFuelNearby = ContainsOrdinal(
+                context.nearbyMineralIds,
+                DataIds.RareItems.EngineFuel);
 
             if (gasWarning)
             {
@@ -157,7 +160,17 @@ namespace SubTerra.App.Drone
                     100);
             }
 
-            if (lithiumNearby)
+            if (engineFuelNearby)
+            {
+                builders[DroneAction.MineNearbyMineral].Add(
+                    "rare_signal",
+                    "희귀 신호 / 엔진 연료 후보",
+                    1,
+                    "detected",
+                    settings.LithiumScore + 5,
+                    0);
+            }
+            else if (lithiumNearby)
             {
                 builders[DroneAction.MineNearbyMineral].Add(
                     "nearby_lithium",
@@ -231,7 +244,8 @@ namespace SubTerra.App.Drone
                 gasWarning,
                 lowEnergy,
                 cargoFull,
-                lithiumNearby);
+                lithiumNearby,
+                engineFuelNearby);
             return new DroneAnalysisResult(recommendation, candidates, dialogue, usedFallback);
         }
 
@@ -321,7 +335,8 @@ namespace SubTerra.App.Drone
             bool gasWarning,
             bool lowEnergy,
             bool cargoFull,
-            bool lithiumNearby)
+            bool lithiumNearby,
+            bool engineFuelNearby)
         {
             string templateId;
             var urgent = false;
@@ -362,6 +377,10 @@ namespace SubTerra.App.Drone
             else if (recommendation.Action == DroneAction.ReturnToBase)
             {
                 templateId = DataIds.Dialogue.DroneReturn;
+            }
+            else if (engineFuelNearby)
+            {
+                templateId = DataIds.Dialogue.DroneExplore;
             }
             else if (lithiumNearby)
             {
@@ -442,7 +461,11 @@ namespace SubTerra.App.Drone
                 tokens["depth"] = context.depth.ToString(CultureInfo.InvariantCulture);
             }
 
-            if (lithiumNearby)
+            if (engineFuelNearby)
+            {
+                tokens["mineralId"] = DataIds.RareItems.EngineFuel;
+            }
+            else if (lithiumNearby)
             {
                 tokens["mineralId"] = DataIds.Minerals.Lithium;
             }

@@ -14,12 +14,13 @@ namespace SubTerra.App.Core.Data
     {
         public bool TryGetMineralUnitPrice(string mineralId, out int unitPrice)
         {
-            bool found = TryGetMineral(mineralId, out var mineral);
+            bool found = TryGetInventoryItem(mineralId, out var mineral);
             unitPrice = found ? mineral.UnitPrice : 0;
             return found;
         }
 
         [SerializeField] private List<MineralData> minerals = new List<MineralData>();
+        [SerializeField] private List<MineralData> rareItems = new List<MineralData>();
         [SerializeField] private List<MiningTileData> miningTiles = new List<MiningTileData>();
         [SerializeField] private List<BuildingData> buildings = new List<BuildingData>();
         [SerializeField] private List<RecipeData> recipes = new List<RecipeData>();
@@ -27,6 +28,7 @@ namespace SubTerra.App.Core.Data
         [SerializeField] private List<DialogueTemplateData> dialogues = new List<DialogueTemplateData>();
 
         private Dictionary<string, MineralData> mineralById;
+        private Dictionary<string, MineralData> rareItemById;
         private Dictionary<string, MiningTileData> miningTileById;
         private Dictionary<TileBase, MiningTileData> miningTileByAsset;
         private Dictionary<string, BuildingData> buildingById;
@@ -37,6 +39,7 @@ namespace SubTerra.App.Core.Data
         private bool lookupsValid;
 
         public IReadOnlyList<MineralData> Minerals => minerals;
+        public IReadOnlyList<MineralData> RareItems => rareItems;
         public IReadOnlyList<MiningTileData> MiningTiles => miningTiles;
         public IReadOnlyList<BuildingData> Buildings => buildings;
         public IReadOnlyList<RecipeData> Recipes => recipes;
@@ -83,6 +86,29 @@ namespace SubTerra.App.Core.Data
             }
 
             return mineralById.TryGetValue(id, out data);
+        }
+
+        public bool TryGetRareItem(string id, out MineralData data)
+        {
+            EnsureLookups();
+            data = null;
+            if (!lookupsValid || string.IsNullOrEmpty(id) || rareItemById == null)
+            {
+                return false;
+            }
+
+            return rareItemById.TryGetValue(id, out data);
+        }
+
+        /// <summary>광물과 희귀 품목을 같은 인벤 조회로 연다. 제작 레시피는 Minerals만 순회한다.</summary>
+        public bool TryGetInventoryItem(string id, out MineralData data)
+        {
+            if (TryGetMineral(id, out data))
+            {
+                return true;
+            }
+
+            return TryGetRareItem(id, out data);
         }
 
         public bool TryGetMiningTile(string id, out MiningTileData data)
@@ -184,12 +210,32 @@ namespace SubTerra.App.Core.Data
             List<UpgradeData> upgradeList,
             List<DialogueTemplateData> dialogueList)
         {
+            EditorSetLists(
+                mineralList,
+                miningTileList,
+                buildingList,
+                recipeList,
+                upgradeList,
+                dialogueList,
+                rareItems);
+        }
+
+        public void EditorSetLists(
+            List<MineralData> mineralList,
+            List<MiningTileData> miningTileList,
+            List<BuildingData> buildingList,
+            List<RecipeData> recipeList,
+            List<UpgradeData> upgradeList,
+            List<DialogueTemplateData> dialogueList,
+            List<MineralData> rareItemList)
+        {
             minerals = mineralList ?? new List<MineralData>();
             miningTiles = miningTileList ?? new List<MiningTileData>();
             buildings = buildingList ?? new List<BuildingData>();
             recipes = recipeList ?? new List<RecipeData>();
             upgrades = upgradeList ?? new List<UpgradeData>();
             dialogues = dialogueList ?? new List<DialogueTemplateData>();
+            rareItems = rareItemList ?? new List<MineralData>();
             ClearLookups();
         }
 #endif
@@ -220,6 +266,7 @@ namespace SubTerra.App.Core.Data
             ClearLookups();
 
             mineralById = new Dictionary<string, MineralData>();
+            rareItemById = new Dictionary<string, MineralData>();
             miningTileById = new Dictionary<string, MiningTileData>();
             miningTileByAsset = new Dictionary<TileBase, MiningTileData>();
             buildingById = new Dictionary<string, BuildingData>();
@@ -229,6 +276,7 @@ namespace SubTerra.App.Core.Data
 
             var ok = true;
             ok &= Fill(mineralById, minerals, m => m != null ? m.Id : null);
+            ok &= Fill(rareItemById, rareItems, m => m != null ? m.Id : null);
             ok &= Fill(miningTileById, miningTiles, t => t != null ? t.Id : null);
             ok &= FillMiningTileAssets(miningTileByAsset, miningTiles);
             ok &= Fill(buildingById, buildings, b => b != null ? b.Id : null);
@@ -314,6 +362,7 @@ namespace SubTerra.App.Core.Data
         private void ClearLookups()
         {
             mineralById = null;
+            rareItemById = null;
             miningTileById = null;
             miningTileByAsset = null;
             buildingById = null;

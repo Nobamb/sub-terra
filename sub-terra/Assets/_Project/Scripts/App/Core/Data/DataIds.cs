@@ -18,6 +18,16 @@ namespace SubTerra.App.Core.Data
             public const string Lithium = "mineral.lithium";
         }
 
+        public static class RareItems
+        {
+            public const string EngineFuel = "item.rare.engine_fuel";
+
+            public static bool IsRare(string itemId)
+            {
+                return itemId == EngineFuel;
+            }
+        }
+
         public static class Buildings
         {
             public const string SupportBasic = "building.support.basic";

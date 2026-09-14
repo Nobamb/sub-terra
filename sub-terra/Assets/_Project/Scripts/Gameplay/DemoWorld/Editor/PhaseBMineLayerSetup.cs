@@ -131,7 +131,6 @@ namespace SubTerra.Gameplay.DemoWorld.Editor
             tilemap.SetTile(new Vector3Int(-3, -3, 0), LoadTile("Iron"));
             tilemap.SetTile(new Vector3Int(2, -5, 0), LoadTile("Lithium"));
             tilemap.SetTile(new Vector3Int(8, -4, 0), LoadTile("GasPocket"));
-            tilemap.SetTile(new Vector3Int(14, -7, 0), LoadTile("LockedSignal"));
             tilemap.RefreshAllTiles();
             EditorUtility.SetDirty(tilemap);
         }

@@ -187,9 +187,11 @@ namespace SubTerra.Gameplay.Mining
                 return Fail(MiningFailureReason.InvalidTarget);
             }
 
-            if (definition.tileId == LockedSignalTileId)
+            // 해금 전에는 신호 칸을 캐지 못한다. 해금 후에는 일반 채굴 경로로 엔진 연료를 준다.
+            if (definition.tileId == LockedSignalTileId
+                && deepZoneAccess?.IsDeepZoneUnlocked != true)
             {
-                return TryAccessDeepZoneSignal(cell);
+                return Fail(MiningFailureReason.DeepZoneLocked);
             }
 
             if (IsDeepZoneCell(cell) && deepZoneAccess?.IsDeepZoneUnlocked != true)
@@ -395,9 +397,10 @@ namespace SubTerra.Gameplay.Mining
                 return false;
             }
 
-            if (definition.tileId == LockedSignalTileId)
+            if (definition.tileId == LockedSignalTileId
+                && deepZoneAccess?.IsDeepZoneUnlocked != true)
             {
-                return deepZoneAccess?.IsDeepZoneUnlocked == true;
+                return false;
             }
 
             if (IsDeepZoneCell(cell) && deepZoneAccess?.IsDeepZoneUnlocked != true)
@@ -477,6 +480,11 @@ namespace SubTerra.Gameplay.Mining
             IsMining = false;
             Progress = 1f;
             LastFailure = MiningFailureReason.None;
+            if (activeTile.tileId == LockedSignalTileId)
+            {
+                DeepZoneSignalAccessed?.Invoke(activeCell);
+            }
+
             TileMined?.Invoke(activeCell, activeTile);
             Publish(MiningPhase.Completed);
             return true;
@@ -601,18 +609,6 @@ namespace SubTerra.Gameplay.Mining
             LastFailure = reason;
             Publish(MiningPhase.Failed);
             return false;
-        }
-
-        private bool TryAccessDeepZoneSignal(Vector3Int cell)
-        {
-            if (deepZoneAccess?.IsDeepZoneUnlocked != true)
-            {
-                return Fail(MiningFailureReason.DeepZoneLocked);
-            }
-
-            LastFailure = MiningFailureReason.None;
-            DeepZoneSignalAccessed?.Invoke(cell);
-            return true;
         }
 
         private void Publish(MiningPhase phase)

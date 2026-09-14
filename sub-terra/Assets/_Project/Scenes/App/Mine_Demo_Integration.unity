@@ -3762,13 +3762,13 @@ MonoBehaviour:
   - tile: {fileID: 11400000, guid: c845a78b501b4b546915dcd7e6f970a7, type: 2}
     definition:
       tileId: tile.locked.signal
-      mineralId: 
-      quantity: 0
-      isMineable: 0
+      mineralId: item.rare.engine_fuel
+      quantity: 1
+      isMineable: 1
       durability: 1
-      miningTime: 1
-      requiredDrillLevel: 0
-      energyCost: 0
+      miningTime: 1.2
+      requiredDrillLevel: 2
+      energyCost: 3
       structuralImpact: 0
       containsGas: 0
       goldDrop: 0
@@ -8726,7 +8726,10 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 1393739106351802791, guid: 336bfb36ffad41340865d185e785cc0a, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1421518540}
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 229335625933458386, guid: 336bfb36ffad41340865d185e785cc0a, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 639377410}
   m_SourcePrefab: {fileID: 100100000, guid: 336bfb36ffad41340865d185e785cc0a, type: 3}
 --- !u!4 &639377407 stripped
 Transform:
@@ -8738,12 +8741,34 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 1976287301159655517, guid: 336bfb36ffad41340865d185e785cc0a, type: 3}
   m_PrefabInstance: {fileID: 639377406}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
+  m_GameObject: {fileID: 639377409}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1293e75837e78e7448992664f4e15fef, type: 3}
   m_Name: 
   m_EditorClassIdentifier: SubTerra.Gameplay.Drone::SubTerra.Gameplay.Drone.DroneSensor
+--- !u!1 &639377409 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 229335625933458386, guid: 336bfb36ffad41340865d185e785cc0a, type: 3}
+  m_PrefabInstance: {fileID: 639377406}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &639377410
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 639377409}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e05931abbe198ff41aaedcc7b8a742a7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SubTerra.Gameplay.Drone::SubTerra.Gameplay.Drone.SealedGlyphScanVisual
+  foregroundTilemap: {fileID: 1443727076}
+  tileResolver: {fileID: 279480563}
+  droneSensor: {fileID: 639377408}
+  glyphSprite: {fileID: 21300000, guid: 99074cce5b704f53863458fe35f08711, type: 3}
+  sortingOrder: 2
 --- !u!1 &643765924
 GameObject:
   m_ObjectHideFlags: 0
@@ -21600,9 +21625,9 @@ Tilemap:
     second:
       serializedVersion: 2
       m_TileIndex: 6
-      m_TileSpriteIndex: 5
+      m_TileSpriteIndex: 13
       m_TileMatrixIndex: 0
-      m_TileColorIndex: 6
+      m_TileColorIndex: 7
       m_TileObjectToInstantiateIndex: 65535
       dummyAlignment: 0
       m_AllTileFlags: 2147483649
@@ -47520,9 +47545,9 @@ Tilemap:
     second:
       serializedVersion: 2
       m_TileIndex: 6
-      m_TileSpriteIndex: 5
+      m_TileSpriteIndex: 13
       m_TileMatrixIndex: 0
-      m_TileColorIndex: 6
+      m_TileColorIndex: 7
       m_TileObjectToInstantiateIndex: 65535
       dummyAlignment: 0
       m_AllTileFlags: 2147483649
@@ -52034,7 +52059,7 @@ Tilemap:
     m_RefCount: 2
     m_Data: {fileID: 21300000, guid: 3e43b9a9e27b601469720196caeacf7e, type: 3}
   - serializedVersion: 2
-    m_RefCount: 2
+    m_RefCount: 0
     m_Data: {fileID: -1349651928315979372, guid: f90bd8fc92d23294ca0c24631e99a455, type: 2}
   - serializedVersion: 2
     m_RefCount: 3
@@ -52057,6 +52082,9 @@ Tilemap:
   - serializedVersion: 2
     m_RefCount: 10
     m_Data: {fileID: 21300000, guid: 6c7a379ad3df98c4a8d0e9acef561702, type: 3}
+  - serializedVersion: 2
+    m_RefCount: 2
+    m_Data: {fileID: 21300000, guid: 4f6a2f3801d340828999d7f8ad4562b3, type: 3}
   m_TileMatrixArray:
   - serializedVersion: 2
     m_RefCount: 3254
@@ -52097,10 +52125,10 @@ Tilemap:
     m_RefCount: 0
     m_Data: {r: 0.3, g: 0.88, b: 0.84, a: 1}
   - serializedVersion: 2
-    m_RefCount: 2
+    m_RefCount: 0
     m_Data: {r: 0.9, g: 0.32, b: 0.95, a: 1}
   - serializedVersion: 2
-    m_RefCount: 3079
+    m_RefCount: 3081
     m_Data: {r: 1, g: 1, b: 1, a: 1}
   m_TileObjectToInstantiateArray: []
   m_AnimationFrameRate: 1

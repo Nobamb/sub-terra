@@ -16,6 +16,8 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 3313a39c6e1d3214abef4f85690256a3, type: 2}
   - {fileID: 11400000, guid: e62f915cba55fdd44b43858421c18c38, type: 2}
   - {fileID: 11400000, guid: d8109f2553adf114a9b7c225a6968318, type: 2}
+  rareItems:
+  - {fileID: 11400000, guid: 6e6ac6794f3469a4890db57d5bfa86a9, type: 2}
   miningTiles: []
   buildings:
   - {fileID: 11400000, guid: 8b806f92e14a7da478d52e2e042a57e5, type: 2}

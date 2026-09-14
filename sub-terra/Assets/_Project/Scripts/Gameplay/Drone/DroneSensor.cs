@@ -241,15 +241,25 @@ namespace SubTerra.Gameplay.Drone
                 TileBase tile = foregroundTilemap.GetTile(cell);
                 if (tile != null
                     && tileResolver != null
-                    && tileResolver.TryResolve(tile, out MiningTileDto definition)
-                    && (definition.goldDrop > 0 || !string.IsNullOrWhiteSpace(definition.mineralId)))
+                    && tileResolver.TryResolve(tile, out MiningTileDto definition))
                 {
-                    kinds[cell] = definition.goldDrop > 0 ? DroneScanTargetKind.GoldDrop : DroneScanTargetKind.Mineral;
+                    if (definition.tileId == "tile.locked.signal")
+                    {
+                        kinds[cell] = DroneScanTargetKind.SealedGlyph;
+                    }
+                    else if (definition.goldDrop > 0 || !string.IsNullOrWhiteSpace(definition.mineralId))
+                    {
+                        kinds[cell] = definition.goldDrop > 0
+                            ? DroneScanTargetKind.GoldDrop
+                            : DroneScanTargetKind.Mineral;
+                    }
                 }
 
                 // Lv.2의 절대 반경 7부터 활성 가스 구역이 덮는 셀도 위험 표식으로 우선한다.
                 if (radius >= 7 && IsActiveGasCell(cell)
-                    && (!kinds.TryGetValue(cell, out var existing) || existing != DroneScanTargetKind.GoldDrop))
+                    && (!kinds.TryGetValue(cell, out var existing)
+                        || (existing != DroneScanTargetKind.GoldDrop
+                            && existing != DroneScanTargetKind.SealedGlyph)))
                 {
                     kinds[cell] = DroneScanTargetKind.GasHazard;
                 }

@@ -94,7 +94,12 @@ namespace SubTerra.App.UI.Inventory
                 }
 
                 var entry = stacks[i];
-                var name = string.IsNullOrEmpty(entry.DisplayName) ? entry.MineralId : entry.DisplayName;
+                var name = ItemDisplayNames.Inventory(entry.MineralId);
+                if (string.IsNullOrEmpty(name) || name == entry.MineralId)
+                {
+                    name = string.IsNullOrEmpty(entry.DisplayName) ? entry.MineralId : entry.DisplayName;
+                }
+
                 sb.Append(name);
                 sb.Append(" x");
                 sb.Append(entry.Quantity);
@@ -108,21 +113,8 @@ namespace SubTerra.App.UI.Inventory
             var result = new List<InventoryStackReadModel>();
             if (catalog != null && catalog.Minerals != null)
             {
-                for (var i = 0; i < catalog.Minerals.Count; i++)
-                {
-                    var mineral = catalog.Minerals[i];
-                    if (mineral == null || string.IsNullOrEmpty(mineral.Id))
-                    {
-                        continue;
-                    }
-
-                    result.Add(new InventoryStackReadModel(
-                        mineral.Id,
-                        mineral.DisplayName,
-                        mineral.Icon,
-                        snapshot.GetQuantity(mineral.Id)));
-                }
-
+                AppendCatalogRows(result, catalog.Minerals, snapshot);
+                AppendCatalogRows(result, catalog.RareItems, snapshot);
                 return result;
             }
 
@@ -138,6 +130,32 @@ namespace SubTerra.App.UI.Inventory
             }
 
             return result;
+        }
+
+        private static void AppendCatalogRows(
+            List<InventoryStackReadModel> result,
+            IReadOnlyList<MineralData> items,
+            InventorySnapshot snapshot)
+        {
+            if (items == null)
+            {
+                return;
+            }
+
+            for (var i = 0; i < items.Count; i++)
+            {
+                var item = items[i];
+                if (item == null || string.IsNullOrEmpty(item.Id))
+                {
+                    continue;
+                }
+
+                result.Add(new InventoryStackReadModel(
+                    item.Id,
+                    ItemDisplayNames.Inventory(item.Id),
+                    item.Icon,
+                    snapshot.GetQuantity(item.Id)));
+            }
         }
     }
 }

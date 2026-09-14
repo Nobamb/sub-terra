@@ -72,6 +72,7 @@ namespace SubTerra.App.Editor.DataValidation
                 ?? prefab;
             var icon = EnsurePlaceholderIcon();
             var minerals = BuildMinerals(icon);
+            var rareItems = BuildRareItems(icon);
             var buildings = BuildBuildings(
                 prefab,
                 supportPrefab,
@@ -83,7 +84,16 @@ namespace SubTerra.App.Editor.DataValidation
             var dialogues = BuildDialogues();
 
             var catalog = EnsureCatalog();
-            catalog.EditorSetLists(minerals, buildings, recipes, upgrades, dialogues);
+            catalog.EditorSetLists(
+                minerals,
+                catalog.MiningTiles != null
+                    ? new List<MiningTileData>(catalog.MiningTiles)
+                    : new List<MiningTileData>(),
+                buildings,
+                recipes,
+                upgrades,
+                dialogues,
+                rareItems);
             EditorUtility.SetDirty(catalog);
             AssetDatabase.SaveAssets();
 
@@ -94,7 +104,7 @@ namespace SubTerra.App.Editor.DataValidation
 
             return
                 $"Catalog={CatalogPath}; valid={validation.IsValid}; errors={validation.ErrorCount}; " +
-                $"minerals={minerals.Count}; buildings={buildings.Count}; recipes={recipes.Count}; " +
+                $"minerals={minerals.Count}; rareItems={rareItems.Count}; buildings={buildings.Count}; recipes={recipes.Count}; " +
                 $"upgrades={upgrades.Count}; dialogues={dialogues.Count}; dictInit={validation.DictionaryInitialized}";
         }
 
@@ -102,6 +112,7 @@ namespace SubTerra.App.Editor.DataValidation
         {
             EnsureFolder("Assets/_Project", "Data");
             EnsureFolder(Root, "Minerals");
+            EnsureFolder(Root, "RareItems");
             EnsureFolder(Root, "Buildings");
             EnsureFolder(Root, "Recipes");
             EnsureFolder(Root, "Upgrades");
@@ -192,6 +203,57 @@ namespace SubTerra.App.Editor.DataValidation
                 EnsureMineral("Mineral_Iron.asset", DataIds.Minerals.Iron, "Iron", 2f, 15, icon),
                 EnsureMineral("Mineral_Lithium.asset", DataIds.Minerals.Lithium, "Lithium", 0.8f, 40, icon)
             };
+        }
+
+        private static List<MineralData> BuildRareItems(Sprite icon)
+        {
+            var glyphIcon = LoadEngineFuelIcon() ?? icon;
+            return new List<MineralData>
+            {
+                EnsureRareItem(
+                    "RareItem_EngineFuel.asset",
+                    DataIds.RareItems.EngineFuel,
+                    "엔진 연료",
+                    1f,
+                    100,
+                    glyphIcon)
+            };
+        }
+
+        private static Sprite LoadEngineFuelIcon()
+        {
+            var path = "Assets/_Project/Art/Icons/icon_engine_fuel.png";
+            var sprites = AssetDatabase.LoadAllAssetsAtPath(path);
+            for (var i = 0; i < sprites.Length; i++)
+            {
+                if (sprites[i] is Sprite sprite)
+                {
+                    return sprite;
+                }
+            }
+
+            return AssetDatabase.LoadAssetAtPath<Sprite>(path);
+        }
+
+        private static MineralData EnsureRareItem(
+            string file,
+            string id,
+            string name,
+            float weight,
+            int price,
+            Sprite icon)
+        {
+            var path = Root + "/RareItems/" + file;
+            var asset = AssetDatabase.LoadAssetAtPath<MineralData>(path);
+            if (asset == null)
+            {
+                asset = ScriptableObject.CreateInstance<MineralData>();
+                AssetDatabase.CreateAsset(asset, path);
+            }
+
+            asset.EditorSet(id, name, weight, price, icon);
+            EditorUtility.SetDirty(asset);
+            return asset;
         }
 
         private static MineralData EnsureMineral(

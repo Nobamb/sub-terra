@@ -14,6 +14,7 @@ namespace SubTerra.App.UI.Economy
         public int LinePreviewCredits { get; }
         public bool IsSelected { get; }
         public Sprite Icon { get; }
+        public bool IsRare { get; }
 
         public SellMineralRowReadModel(
             string mineralId,
@@ -22,7 +23,8 @@ namespace SubTerra.App.UI.Economy
             int unitPrice,
             int linePreviewCredits,
             bool isSelected,
-            Sprite icon)
+            Sprite icon,
+            bool isRare = false)
         {
             MineralId = mineralId ?? string.Empty;
             DisplayName = displayName ?? string.Empty;
@@ -31,6 +33,7 @@ namespace SubTerra.App.UI.Economy
             LinePreviewCredits = linePreviewCredits < 0 ? 0 : linePreviewCredits;
             IsSelected = isSelected;
             Icon = icon;
+            IsRare = isRare;
         }
     }
 }

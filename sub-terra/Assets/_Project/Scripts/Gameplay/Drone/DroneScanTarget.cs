@@ -6,7 +6,8 @@ namespace SubTerra.Gameplay.Drone
     {
         Mineral = 0,
         GasHazard = 1,
-        GoldDrop = 2
+        GoldDrop = 2,
+        SealedGlyph = 3
     }
 
     /// <summary>한 번의 스캔 펄스가 월드에 강조할 타일 좌표와 종류.</summary>

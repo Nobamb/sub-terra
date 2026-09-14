@@ -97,7 +97,9 @@ namespace SubTerra.App.Inventory
                 }
 
                 acceptedBase = reward.AcceptedQuantity;
-                var bonus = effects != null ? effects.GetMiningYieldBonus(mineralId) : 0;
+                var bonus = DataIds.RareItems.IsRare(mineralId)
+                    ? 0
+                    : effects != null ? effects.GetMiningYieldBonus(mineralId) : 0;
                 if (bonus > 0)
                 {
                     var bonusResult = inventory.TryAddMineral(mineralId, bonus);
