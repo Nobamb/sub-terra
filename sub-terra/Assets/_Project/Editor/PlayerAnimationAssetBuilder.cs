@@ -255,7 +255,9 @@ namespace SubTerra.Editor
                 }
 
                 animator.runtimeAnimatorController = controller;
-                animator.enabled = true;
+                // 런타임 SpriteRenderer의 소유자는 PlayerAnimationController 하나다.
+                // Animator Controller는 에셋 미리보기/확장용으로만 보존한다.
+                animator.enabled = false;
                 var animationController = visualRoot.GetComponent<PlayerAnimationController>();
                 if (animationController == null)
                 {

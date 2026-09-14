@@ -689,6 +689,49 @@ namespace SubTerra.Gameplay.Player.Tests
         }
 
         [Test]
+        public void LadderAnimation_ActiveTriggerContact_PrioritizesLadderFrames()
+        {
+            animationVisualObject = new GameObject("LadderContactPriorityVisual");
+            animationVisualObject.transform.SetParent(playerObject.transform);
+            var renderer = animationVisualObject.AddComponent<SpriteRenderer>();
+            var animation = animationVisualObject.AddComponent<PlayerAnimationController>();
+            ladderAnimationFrames = new[]
+            {
+                CreateTestSprite(),
+                CreateTestSprite(),
+                CreateTestSprite()
+            };
+            otherAnimationFrames = new[] { CreateTestSprite() };
+            animation.ConfigureFrames(
+                renderer,
+                movement,
+                otherAnimationFrames,
+                otherAnimationFrames,
+                otherAnimationFrames,
+                ladderAnimationFrames,
+                otherAnimationFrames,
+                otherAnimationFrames,
+                otherAnimationFrames);
+
+            LadderZone ladder = CreateLadderZone("ContactPriorityLadder", out firstLadderObject);
+            movement.EnterLadder(ladder);
+            movement.SetVerticalMoveInput(1f);
+            InvokePrivate(animation, "LateUpdate");
+
+            InvokePrivate(movement, "ExitLadderMode");
+            SetPrivateField(movement, "<IsGrounded>k__BackingField", true);
+            movement.SetMoveInput(1f);
+            InvokePrivate(animation, "LateUpdate");
+
+            Assert.IsFalse(movement.IsClimbing);
+            Assert.IsTrue(movement.IsTouchingLadder);
+            CollectionAssert.Contains(
+                ladderAnimationFrames,
+                renderer.sprite,
+                "사다리 Trigger 접촉이 유지되는 동안 Walk 프레임으로 바뀌면 안 된다.");
+        }
+
+        [Test]
         public void LadderAnimation_LadderJump_BypassesVisualGrace()
         {
             animationVisualObject = new GameObject("LadderJumpVisual");
