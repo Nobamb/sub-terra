@@ -47,6 +47,41 @@ namespace SubTerra.App.Tests.Readiness
         }
 
         [Test]
+        public void PlayerPrefab_UsesThreeSharedLadderFramesInFrontOfLadder()
+        {
+            var player = AssetDatabase.LoadAssetAtPath<GameObject>(
+                "Assets/_Project/Prefabs/Gameplay/Player/Player.prefab");
+            var ladder = AssetDatabase.LoadAssetAtPath<GameObject>(
+                "Assets/_Project/Prefabs/Gameplay/Traversal/Ladder.prefab");
+
+            var visualRoot = player.transform.Find("VisualRoot");
+            var playerRenderer = visualRoot.GetComponent<SpriteRenderer>();
+            var ladderRenderer = ladder.GetComponent<SpriteRenderer>();
+            var animation = visualRoot.GetComponent<PlayerAnimationController>();
+            var serializedAnimation = new SerializedObject(animation);
+            var ladderFrames = serializedAnimation.FindProperty("ladderFrames");
+
+            Assert.Greater(playerRenderer.sortingOrder, ladderRenderer.sortingOrder);
+            Assert.IsNull(visualRoot.Find("LadderRig"), "보존 파츠 리그가 Player 프리팹에서 활성화되면 안 된다.");
+            Assert.IsNull(
+                visualRoot.GetComponent<PlayerLadderPoseController>(),
+                "런타임은 파츠 컨트롤러가 아니라 전체 프레임을 사용해야 한다.");
+            Assert.AreEqual(3, ladderFrames.arraySize);
+            Assert.IsNull(serializedAnimation.FindProperty("ladderDownFrames"));
+            for (var index = 0; index < ladderFrames.arraySize; index++)
+            {
+                Assert.NotNull(ladderFrames.GetArrayElementAtIndex(index).objectReferenceValue);
+            }
+
+            Assert.NotNull(AssetDatabase.LoadAssetAtPath<Sprite>(
+                "Assets/_Project/Art/Characters/Player/LadderRig/player_ladder_back_torso.png"));
+            Assert.NotNull(AssetDatabase.LoadAssetAtPath<Sprite>(
+                "Assets/_Project/Art/Characters/Player/LadderRig/player_ladder_back_arm.png"));
+            Assert.NotNull(AssetDatabase.LoadAssetAtPath<Sprite>(
+                "Assets/_Project/Art/Characters/Player/LadderRig/player_ladder_back_leg.png"));
+        }
+
+        [Test]
         public void IntegrationScene_WiresStationBridgeAndRestorableLadder()
         {
             var scene = EditorSceneManager.OpenScene(

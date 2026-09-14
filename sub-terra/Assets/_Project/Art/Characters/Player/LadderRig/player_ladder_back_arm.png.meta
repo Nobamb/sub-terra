@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 3f8d1b58a6a581544a9611e651fd3757
+guid: 305494ed01fd68d4a8f687dce195ce67
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 7849250792536301000
-    second: ladder_08_0
+      213: -3853887563715221046
+    second: player_ladder_back_arm_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -49,9 +49,9 @@ TextureImporter:
   spriteMode: 1
   spriteExtrude: 1
   spriteMeshType: 0
-  alignment: 0
-  spritePivot: {x: 0.5, y: 0.5}
-  spritePixelsToUnits: 256
+  alignment: 9
+  spritePivot: {x: 0.5, y: 0.87}
+  spritePixelsToUnits: 1024
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
@@ -100,44 +100,44 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: ladder_08_0
+      name: player_ladder_back_arm_0
       rect:
         serializedVersion: 2
-        x: 14
-        y: 12
-        width: 228
-        height: 228
+        x: 48
+        y: 153
+        width: 1145
+        height: 999
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
+      customData:
       outline: []
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 8cd541a32042eec60800000000000000
-      internalID: 7849250792536301000
+      spriteID: ac96578fdad348ac0800000000000000
+      internalID: -3853887563715221046
       vertices: []
-      indices: 
+      indices:
       edges: []
       weights: []
     outline: []
-    customData: 
+    customData:
     physicsShape: []
     bones: []
     spriteID: 5e97eb03825dee720800000000000000
     internalID: 0
     vertices: []
-    indices: 
+    indices:
     edges: []
     weights: []
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      ladder_08_0: 7849250792536301000
-  mipmapLimitGroupName: 
+      player_ladder_back_arm_0: -3853887563715221046
+  mipmapLimitGroupName:
   pSDRemoveMatte: 0
-  userData: 
-  assetBundleName: 
-  assetBundleVariant: 
+  userData:
+  assetBundleName:
+  assetBundleVariant:
