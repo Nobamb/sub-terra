@@ -47,6 +47,31 @@ namespace SubTerra.App.Tests.Readiness
         }
 
         [Test]
+        public void PlayerPrefab_UsesPartBasedLadderRigWithoutLegacyFrameAssets()
+        {
+            var player = AssetDatabase.LoadAssetAtPath<GameObject>(
+                "Assets/_Project/Prefabs/Gameplay/Player/Player.prefab");
+
+            Assert.NotNull(player);
+            var pose = player.GetComponentInChildren<PlayerLadderPoseController>(true);
+            Assert.NotNull(pose);
+            Assert.NotNull(pose.transform.Find("LadderRig/Torso"));
+            Assert.NotNull(pose.transform.Find("LadderRig/LeftArm"));
+            Assert.NotNull(pose.transform.Find("LadderRig/RightArm"));
+            Assert.NotNull(pose.transform.Find("LadderRig/LeftLeg"));
+            Assert.NotNull(pose.transform.Find("LadderRig/RightLeg"));
+
+            Assert.IsFalse(AssetDatabase.IsValidFolder(
+                "Assets/_Project/Art/Characters/Player/Frames/Ladder"));
+            Assert.IsFalse(AssetDatabase.IsValidFolder(
+                "Assets/_Project/Art/Characters/Player/Frames/LadderDown"));
+            Assert.IsNull(AssetDatabase.LoadAssetAtPath<AnimationClip>(
+                "Assets/_Project/Art/Characters/Player/Animations/PlayerLadder.anim"));
+            Assert.IsNull(AssetDatabase.LoadAssetAtPath<AnimationClip>(
+                "Assets/_Project/Art/Characters/Player/Animations/PlayerLadderDown.anim"));
+        }
+
+        [Test]
         public void IntegrationScene_WiresStationBridgeAndRestorableLadder()
         {
             var scene = EditorSceneManager.OpenScene(
