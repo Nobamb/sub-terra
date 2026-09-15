@@ -4,6 +4,7 @@ using SubTerra.App.RuntimeInfo;
 using SubTerra.Shared.Localization;
 using TMPro;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 namespace SubTerra.App.UI.MainMenu
@@ -189,8 +190,12 @@ namespace SubTerra.App.UI.MainMenu
             }
         }
 
+        private int currentSelectedSlotId = 1;
+        public int CurrentSelectedSlotId => currentSelectedSlotId;
+
         public void SetSelectedSlot(int slotId, bool canContinue, string message)
         {
+            currentSelectedSlotId = slotId;
             if (continueButton != null)
             {
                 continueButton.interactable = canContinue;
@@ -202,6 +207,50 @@ namespace SubTerra.App.UI.MainMenu
             }
 
             RefreshSlotSelection(slotId);
+        }
+
+        /// <summary>
+        /// 메인 메뉴에서 위/아래 방향키 조작을 통해 세이브 슬롯을 선택한다.
+        /// direction &lt; 0: 위 방향키 (상단 슬롯 방향으로 이동, 최소 1)
+        /// direction &gt; 0: 아래 방향키 (하단 슬롯 방향으로 이동, 최대 3)
+        /// </summary>
+        public void NavigateSlot(int direction)
+        {
+            var targetSlot = Mathf.Clamp(currentSelectedSlotId + direction, 1, 3);
+            if (targetSlot != currentSelectedSlotId)
+            {
+                SlotSelected?.Invoke(targetSlot);
+            }
+        }
+
+        private void Update()
+        {
+            HandleKeyboardNavigation();
+        }
+
+        private void HandleKeyboardNavigation()
+        {
+            // 설정 창이나 덮어쓰기 확인창이 열려 있으면 슬롯 키보드 탐색을 차단한다.
+            if ((settingsRoot != null && settingsRoot.activeSelf) ||
+                (overwriteConfirmRoot != null && overwriteConfirmRoot.activeSelf))
+            {
+                return;
+            }
+
+            var keyboard = Keyboard.current;
+            if (keyboard == null)
+            {
+                return;
+            }
+
+            if (keyboard.upArrowKey.wasPressedThisFrame)
+            {
+                NavigateSlot(-1);
+            }
+            else if (keyboard.downArrowKey.wasPressedThisFrame)
+            {
+                NavigateSlot(1);
+            }
         }
 
         public void SetOverwriteConfirmVisible(bool visible, int slotId)

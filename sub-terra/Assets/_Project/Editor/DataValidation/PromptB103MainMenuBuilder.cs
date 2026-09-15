@@ -62,14 +62,27 @@ namespace SubTerra.App.Editor.DataValidation
                     if (oldTmp != null) Object.DestroyImmediate(oldTmp);
                 }
 
+                // 타이틀 청록 그림자/글로우 (로고 정중앙 위치, 592x120 로고 전체를 조금 감싸는 648x150 크기)
+                var shadowRect = Rect(titleRect, "TitleShadow", 0, 0, 648, 150);
+                var shadowRaw = Get<RawImage>(shadowRect);
+                shadowRaw.texture = AssetDatabase.LoadAssetAtPath<Texture2D>(TitleGlowPath);
+                shadowRaw.color = Hex("19D2E6", 0.40f);
+                shadowRaw.raycastTarget = false;
+                Get<MenuTitleAura>(shadowRect);
+
                 // 타이틀 글로우 아우라 (로고 뒤)
                 var glowRect = Rect(titleRect, "TitleGlow", 0, 0, 660, 140);
-                glowRect.SetAsFirstSibling();
                 var glowRaw = Get<RawImage>(glowRect);
                 glowRaw.texture = AssetDatabase.LoadAssetAtPath<Texture2D>(TitleGlowPath);
                 glowRaw.color = Hex("A0F0FF", 0.45f);
                 glowRaw.raycastTarget = false;
                 Get<MenuTitleAura>(glowRect);
+
+                // 타이틀 글로우에 부착된 청록색 그림자 효과
+                var glowShadow = Get<Shadow>(glowRect);
+                glowShadow.effectColor = Hex("1BE7FF", 0.55f);
+                glowShadow.effectDistance = Vector2.zero;
+                glowShadow.useGraphicAlpha = true;
 
                 // 타이틀 메인 로고 이미지
                 var logoRect = Rect(titleRect, "TitleLogo", 0, 0, 592, 120);
@@ -77,6 +90,11 @@ namespace SubTerra.App.Editor.DataValidation
                 logoRaw.texture = AssetDatabase.LoadAssetAtPath<Texture2D>(TitlePath);
                 logoRaw.color = Color.white;
                 logoRaw.raycastTarget = false;
+
+                // 계층 순서: TitleShadow(맨 아래) -> TitleGlow -> TitleLogo
+                shadowRect.SetSiblingIndex(0);
+                glowRect.SetSiblingIndex(1);
+                logoRect.SetSiblingIndex(2);
 
                 // 타이틀 파티클 (글자 주변에서 위로 피어오르는 청록색 파티클)
                 Get<MenuTitleParticles>(titleRect);
@@ -135,8 +153,8 @@ namespace SubTerra.App.Editor.DataValidation
                     // 기본 1px 테두리
                     Border(selection, Hex("39D8EA"), 1);
 
-                    // 추가: 기본 외곽선보다 1px 더 두꺼운(2px) 4개 모서리 L-브라켓
-                    AddCornerBrackets(selection, Hex("39D8EA"), 2f, 20f, 400f, 53f);
+                    // 프롬프트 103-2: 모서리 끝을 감싸는 외곽선 두께 3px
+                    AddCornerBrackets(selection, Hex("39D8EA"), 3f, 20f, 400f, 53f);
 
                     // 왼쪽 선택 화살표: 텍스트 기호가 아닌 정삼각형 도형
                     var oldSelector = selection.Find("Selector");
@@ -251,6 +269,9 @@ namespace SubTerra.App.Editor.DataValidation
 
             var button = rect.GetComponent<Button>();
             button.targetGraphic = image;
+            var nav = button.navigation;
+            nav.mode = Navigation.Mode.None;
+            button.navigation = nav;
             var colors = button.colors;
             colors.normalColor = Hex("102630", 0.50f);
             colors.highlightedColor = Hex("1C4252", 0.65f);
@@ -368,6 +389,29 @@ namespace SubTerra.App.Editor.DataValidation
             ColorUtility.TryParseHtmlString("#" + value, out var color);
             color.a = alpha;
             return color;
+        }
+
+        [InitializeOnLoadMethod]
+        private static void WatchBuildFlag()
+        {
+            EditorApplication.update += PollBuildFlag;
+        }
+
+        private static void PollBuildFlag()
+        {
+            if (System.IO.File.Exists("Temp/subterra-build-103-menu.flag"))
+            {
+                try
+                {
+                    System.IO.File.Delete("Temp/subterra-build-103-menu.flag");
+                    Build();
+                    System.IO.File.WriteAllText("Temp/subterra-build-103-menu.done", System.DateTime.Now.ToString("o"));
+                }
+                catch (System.Exception ex)
+                {
+                    Debug.LogError("[PromptB103MainMenuBuilder] Build flag failed: " + ex);
+                }
+            }
         }
     }
 }

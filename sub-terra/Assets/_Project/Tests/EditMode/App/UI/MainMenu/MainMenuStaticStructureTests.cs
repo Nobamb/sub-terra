@@ -152,6 +152,156 @@ namespace SubTerra.App.Tests.UI.MainMenu
         }
 
         [Test]
+        public void Prompt103_2_VisualsAndNavigationVerified()
+        {
+            PromptB103MainMenuBuilder.Build();
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PromptB103MainMenuBuilder.PrefabPath);
+            Assert.That(prefab, Is.Not.Null);
+            var content = prefab.transform.Find("MenuContent");
+            Assert.That(content, Is.Not.Null);
+
+            // 1. 슬롯 코너 브라켓 두께 3px 및 Navigation.Mode.None 검증
+            for (var i = 1; i <= 3; i++)
+            {
+                var slot = content.Find("Slot" + i);
+                Assert.That(slot, Is.Not.Null);
+                var btn = slot.GetComponent<UnityEngine.UI.Button>();
+                Assert.That(btn.navigation.mode, Is.EqualTo(UnityEngine.UI.Navigation.Mode.None));
+
+                var selection = slot.Find("Selection");
+                Assert.That(selection, Is.Not.Null);
+                var brackets = selection.Find("CornerBrackets");
+                Assert.That(brackets, Is.Not.Null);
+
+                var tlH = brackets.Find("TL_H") as RectTransform;
+                var tlV = brackets.Find("TL_V") as RectTransform;
+                var trH = brackets.Find("TR_H") as RectTransform;
+                var trV = brackets.Find("TR_V") as RectTransform;
+                var blH = brackets.Find("BL_H") as RectTransform;
+                var blV = brackets.Find("BL_V") as RectTransform;
+                var brH = brackets.Find("BR_H") as RectTransform;
+                var brV = brackets.Find("BR_V") as RectTransform;
+
+                Assert.That(tlH.sizeDelta.y, Is.EqualTo(3f));
+                Assert.That(tlV.sizeDelta.x, Is.EqualTo(3f));
+                Assert.That(trH.sizeDelta.y, Is.EqualTo(3f));
+                Assert.That(trV.sizeDelta.x, Is.EqualTo(3f));
+                Assert.That(blH.sizeDelta.y, Is.EqualTo(3f));
+                Assert.That(blV.sizeDelta.x, Is.EqualTo(3f));
+                Assert.That(brH.sizeDelta.y, Is.EqualTo(3f));
+                Assert.That(brV.sizeDelta.x, Is.EqualTo(3f));
+            }
+
+            // 2. Sub-Terra 타이틀: 중앙 청록색 그림자 레이어 & TitleGlow Shadow 컴포넌트 검증
+            var title = content.Find("Title");
+            Assert.That(title, Is.Not.Null);
+            var titleShadow = title.Find("TitleShadow") as RectTransform;
+            Assert.That(titleShadow, Is.Not.Null);
+            Assert.That(titleShadow.anchoredPosition, Is.EqualTo(Vector2.zero));
+            Assert.That(titleShadow.sizeDelta.x, Is.GreaterThan(592f));
+            Assert.That(titleShadow.sizeDelta.y, Is.GreaterThan(120f));
+            Assert.That(titleShadow.GetComponent<MenuTitleAura>(), Is.Not.Null);
+
+            var titleGlow = title.Find("TitleGlow") as RectTransform;
+            Assert.That(titleGlow, Is.Not.Null);
+            var shadowComponent = titleGlow.GetComponent<UnityEngine.UI.Shadow>();
+            Assert.That(shadowComponent, Is.Not.Null);
+            Assert.That(shadowComponent.effectDistance, Is.EqualTo(Vector2.zero));
+
+            var titleLogo = title.Find("TitleLogo");
+            Assert.That(titleLogo, Is.Not.Null);
+            Assert.That(titleShadow.GetSiblingIndex(), Is.EqualTo(0));
+            Assert.That(titleGlow.GetSiblingIndex(), Is.EqualTo(1));
+            Assert.That(titleLogo.GetSiblingIndex(), Is.EqualTo(2));
+
+            // 3. 위/아래 방향키를 통한 세이브 파일 선택 (NavigateSlot) 로직 검증
+            var instance = Object.Instantiate(prefab);
+            try
+            {
+                var view = instance.GetComponent<MainMenuView>();
+                Assert.That(view, Is.Not.Null);
+
+                int lastSelectedSlot = 0;
+                view.SlotSelected += s => lastSelectedSlot = s;
+
+                // 초기 상태: 슬롯 1
+                view.SetSelectedSlot(1, true, "메시지");
+                Assert.That(view.CurrentSelectedSlotId, Is.EqualTo(1));
+
+                // 1번에서 위로 이동 시 최소 1번 유지
+                view.NavigateSlot(-1);
+                Assert.That(lastSelectedSlot, Is.EqualTo(0));
+
+                // 1번에서 아래로 이동 -> 2번 슬롯 이벤트 발생
+                view.NavigateSlot(1);
+                Assert.That(lastSelectedSlot, Is.EqualTo(2));
+                view.SetSelectedSlot(2, true, "메시지 2");
+                Assert.That(view.CurrentSelectedSlotId, Is.EqualTo(2));
+
+                // 2번에서 아래로 이동 -> 3번 슬롯 이벤트 발생
+                view.NavigateSlot(1);
+                Assert.That(lastSelectedSlot, Is.EqualTo(3));
+                view.SetSelectedSlot(3, true, "메시지 3");
+                Assert.That(view.CurrentSelectedSlotId, Is.EqualTo(3));
+
+                // 3번에서 아래로 이동 시 최대 3번 유지
+                lastSelectedSlot = 0;
+                view.NavigateSlot(1);
+                Assert.That(lastSelectedSlot, Is.EqualTo(0));
+
+                // 3번에서 위로 이동 -> 2번 슬롯 이벤트 발생
+                view.NavigateSlot(-1);
+                Assert.That(lastSelectedSlot, Is.EqualTo(2));
+            }
+            finally
+            {
+                Object.DestroyImmediate(instance);
+            }
+
+            // 4. 최종 스냅샷 렌더링 캡처
+            var renderInstance = Object.Instantiate(prefab);
+            var camGo = new GameObject("TestCamera", typeof(Camera));
+            var camera = camGo.GetComponent<Camera>();
+            var canvas = renderInstance.GetComponent<Canvas>();
+            if (canvas == null) canvas = renderInstance.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceCamera;
+            canvas.worldCamera = camera;
+            camera.clearFlags = CameraClearFlags.SolidColor;
+            camera.backgroundColor = new Color(0.02f, 0.06f, 0.09f);
+
+            var rt = new RenderTexture(1920, 1080, 24);
+            camera.targetTexture = rt;
+            var renderView = renderInstance.GetComponent<MainMenuView>();
+            if (renderView != null)
+            {
+                renderView.RefreshLayout();
+                renderView.SetSelectedSlot(1, true, "탐사 기록 01 — 이어하기 가능");
+            }
+            Canvas.ForceUpdateCanvases();
+            camera.Render();
+
+            var prev = RenderTexture.active;
+            try
+            {
+                RenderTexture.active = rt;
+                var tex = new Texture2D(1920, 1080, TextureFormat.RGB24, false);
+                tex.ReadPixels(new Rect(0, 0, 1920, 1080), 0, 0);
+                tex.Apply();
+                var outPath = Path.Combine(Application.dataPath, "../../work_process/MVP2/103-main-menu/main-menu-103-2-final.png");
+                File.WriteAllBytes(outPath, tex.EncodeToPNG());
+                Object.DestroyImmediate(tex);
+            }
+            finally
+            {
+                RenderTexture.active = prev;
+                camera.targetTexture = null;
+                Object.DestroyImmediate(rt);
+                Object.DestroyImmediate(camGo);
+                Object.DestroyImmediate(renderInstance);
+            }
+        }
+
+        [Test]
         public void L_S01_MainMenu_ExposesNewContinueSlotsSettingsQuitVersion()
         {
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
