@@ -109,6 +109,84 @@ namespace SubTerra.App.Tests.Save
         }
 
         [Test]
+        public void Prompt103_ThumbnailUpdatesOnlyAfterSuccessfulSave_AndIsIndependentOfLoad()
+        {
+            var thumbnails = new SaveThumbnailService(paths);
+            var texture = new Texture2D(SaveThumbnailService.Width, SaveThumbnailService.Height);
+            created.Add(texture);
+            var png = texture.EncodeToPNG();
+            var save = CreateSaveService(physical);
+            var callbacks = 0;
+            save.Saved += slot =>
+            {
+                Assert.That(CreateLoadService(physical).Load(slot).IsSuccess, Is.True);
+                callbacks++;
+                Assert.That(thumbnails.Write(slot, png), Is.True);
+            };
+            Assert.That(save.Save(1, CreateContext(20)).IsSuccess, Is.True);
+            Assert.That(callbacks, Is.EqualTo(1));
+            var decoded = thumbnails.Load(1);
+            Assert.That(decoded, Is.Not.Null);
+            created.Add(decoded);
+            Assert.That(decoded.width, Is.EqualTo(512));
+            Assert.That(decoded.height, Is.EqualTo(288));
+            Assert.That(thumbnails.Load(2), Is.Null);
+
+            var failing = CreateSaveService(new FaultingFileSystem(physical, FaultStage.TemporaryWrite));
+            failing.Saved += slot => thumbnails.Write(slot, new byte[] { 1, 2, 3 });
+            Assert.That(failing.Save(1, CreateContext(30)).IsSuccess, Is.False);
+            Assert.That(File.ReadAllBytes(thumbnails.GetPath(1)), Is.EqualTo(png));
+
+            File.WriteAllBytes(thumbnails.GetPath(1), new byte[] { 1, 2, 3 });
+            Assert.That(thumbnails.Load(1), Is.Null);
+            Assert.That(CreateLoadService(physical).GetSlotMetadata(1).CanContinue, Is.True);
+            thumbnails.Delete(1);
+            Assert.That(thumbnails.Load(1), Is.Null);
+            Assert.That(CreateLoadService(physical).Load(1).IsSuccess, Is.True);
+            Assert.That(thumbnails.Write(0, png), Is.False);
+        }
+
+        [Test]
+        public void Prompt103_FailedThumbnailCallback_DoesNotChangeSaveSuccess()
+        {
+            var save = CreateSaveService(physical);
+            save.Saved += _ => throw new IOException("Preview write failed");
+            UnityEngine.TestTools.LogAssert.Expect(LogType.Warning,
+                "Save completed; optional save preview could not be updated.");
+            Assert.That(save.Save(3, CreateContext(42)).IsSuccess, Is.True);
+            Assert.That(CreateLoadService(physical).Load(3).State.GameState.Player.Gold, Is.EqualTo(42));
+        }
+
+        [Test]
+        public void Prompt103_CameraCapture_UpdatesPerSlotAndRestoresRenderState()
+        {
+            var cameraObject = new GameObject("ThumbnailTestCamera", typeof(Camera));
+            created.Add(cameraObject);
+            var camera = cameraObject.GetComponent<Camera>();
+            camera.enabled = false;
+            camera.clearFlags = CameraClearFlags.SolidColor;
+            camera.cullingMask = 0;
+            camera.backgroundColor = Color.red;
+            camera.aspect = 2;
+            var previous = RenderTexture.active;
+            var thumbnails = new SaveThumbnailService(paths);
+            Assert.That(thumbnails.Capture(1, camera), Is.True);
+            Assert.That(camera.targetTexture, Is.Null);
+            Assert.That(camera.aspect, Is.EqualTo(2));
+            Assert.That(RenderTexture.active, Is.SameAs(previous));
+            var first = File.ReadAllBytes(thumbnails.GetPath(1));
+            camera.backgroundColor = Color.blue;
+            Assert.That(thumbnails.Capture(2, camera), Is.True);
+            var second = File.ReadAllBytes(thumbnails.GetPath(2));
+            Assert.That(second, Is.Not.EqualTo(first));
+            Assert.That(thumbnails.Capture(1, camera), Is.True);
+            Assert.That(File.ReadAllBytes(thumbnails.GetPath(1)), Is.EqualTo(second));
+            Assert.That(File.ReadAllBytes(thumbnails.GetPath(2)), Is.EqualTo(second));
+            Assert.That(thumbnails.Capture(1, null), Is.False);
+            Assert.That(File.ReadAllBytes(thumbnails.GetPath(1)), Is.EqualTo(second));
+        }
+
+        [Test]
         public void K_F02_CorruptNormal_LoadsValidBackupWithoutOverwritingCorruptSource()
         {
             var save = CreateSaveService(physical);

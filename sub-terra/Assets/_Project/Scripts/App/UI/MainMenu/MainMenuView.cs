@@ -12,6 +12,7 @@ namespace SubTerra.App.UI.MainMenu
     public sealed class MainMenuView : MonoBehaviour, IMainMenuView
     {
         [SerializeField] private GameObject panelRoot;
+        [SerializeField] private RectTransform menuContent;
         [SerializeField] private Button[] slotButtons = new Button[3];
         [SerializeField] private TMP_Text[] slotTexts = new TMP_Text[3];
         [SerializeField] private Button continueButton;
@@ -75,6 +76,7 @@ namespace SubTerra.App.UI.MainMenu
 
         private void OnEnable()
         {
+            RefreshLayout();
             WireSlot(0, SelectSlot1);
             WireSlot(1, SelectSlot2);
             WireSlot(2, SelectSlot3);
@@ -118,6 +120,16 @@ namespace SubTerra.App.UI.MainMenu
             {
                 masterVolumeSlider.onValueChanged.AddListener(OnMasterVolumeChanged);
             }
+        }
+
+        private void OnRectTransformDimensionsChange() => RefreshLayout();
+
+        public void RefreshLayout()
+        {
+            if (menuContent == null) return;
+            var rect = (RectTransform)transform;
+            var scale = Mathf.Min(1f, rect.rect.height / 1080f, rect.rect.width / 1040f);
+            menuContent.localScale = Vector3.one * Mathf.Max(0.01f, scale);
         }
 
         private void OnDisable()
@@ -166,6 +178,11 @@ namespace SubTerra.App.UI.MainMenu
             }
 
             var index = slotId - 1;
+            if (slotButtons != null && index < slotButtons.Length && slotButtons[index] != null)
+            {
+                var card = slotButtons[index].GetComponent<SaveSlotCardView>();
+                if (card != null) card.ShowThumbnail(slotId, canContinue);
+            }
             if (slotTexts != null && index < slotTexts.Length && slotTexts[index] != null)
             {
                 slotTexts[index].text = label ?? string.Empty;
@@ -544,6 +561,8 @@ namespace SubTerra.App.UI.MainMenu
                 }
 
                 var colors = button.colors;
+                var card = button.GetComponent<SaveSlotCardView>();
+                if (card != null) card.SetSelected(i == selectedSlotId - 1);
                 if (!hasSlotDefaultColor[i])
                 {
                     slotDefaultColors[i] = colors.normalColor;
@@ -551,7 +570,7 @@ namespace SubTerra.App.UI.MainMenu
                 }
 
                 colors.normalColor = i == selectedSlotId - 1
-                    ? colors.pressedColor
+                    ? (card != null ? new Color(0.10f, 0.23f, 0.28f, 0.97f) : colors.pressedColor)
                     : slotDefaultColors[i];
                 button.colors = colors;
             }

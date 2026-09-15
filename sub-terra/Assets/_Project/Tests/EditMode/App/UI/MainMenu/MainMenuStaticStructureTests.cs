@@ -25,6 +25,42 @@ namespace SubTerra.App.Tests.UI.MainMenu
             PhaseOUiPolishBuilder.Build();
         }
 
+        [TestCase(1920, 1080)]
+        [TestCase(2560, 1440)]
+        [TestCase(1366, 768)]
+        [TestCase(2560, 1080)]
+        public void Prompt103_MenuFitsScreen_AndDecorationsDoNotBlockButtons(int width, int height)
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PromptB103MainMenuBuilder.PrefabPath);
+            var instance = Object.Instantiate(prefab);
+            try
+            {
+                var scale = Mathf.Sqrt(width / 1920f * height / 1080f);
+                var root = instance.GetComponent<RectTransform>();
+                root.sizeDelta = new Vector2(width / scale, height / scale);
+                instance.GetComponent<MainMenuView>().RefreshLayout();
+                var content = (RectTransform)root.Find("MenuContent");
+                foreach (Transform child in content)
+                {
+                    var rect = (RectTransform)child;
+                    var extent = rect.sizeDelta * 0.5f;
+                    var position = rect.anchoredPosition;
+                    Assert.That((Mathf.Abs(position.x) + extent.x) * content.localScale.x,
+                        Is.LessThanOrEqualTo(root.rect.width * 0.5f), child.name);
+                    Assert.That((Mathf.Abs(position.y) + extent.y) * content.localScale.y,
+                        Is.LessThanOrEqualTo(root.rect.height * 0.5f), child.name);
+                }
+                Assert.That(instance.GetComponentsInChildren<SaveSlotCardView>(true).Length, Is.EqualTo(3));
+                Assert.That(root.Find("Background").GetComponent<UnityEngine.UI.RawImage>().raycastTarget, Is.False);
+                Assert.That(root.Find("Background").GetComponent<UnityEngine.UI.AspectRatioFitter>().aspectMode,
+                    Is.EqualTo(UnityEngine.UI.AspectRatioFitter.AspectMode.EnvelopeParent));
+                foreach (var graphic in content.GetComponentsInChildren<UnityEngine.UI.Graphic>(true))
+                    if (graphic.GetComponent<UnityEngine.UI.Button>() == null)
+                        Assert.That(graphic.raycastTarget, Is.False, graphic.name);
+            }
+            finally { Object.DestroyImmediate(instance); }
+        }
+
         [Test]
         public void L_S01_MainMenu_ExposesNewContinueSlotsSettingsQuitVersion()
         {
