@@ -23,6 +23,8 @@ namespace SubTerra.App.Integration
         public const string CloseHintLabel = "닫기: M";
         /// <summary>우측 최하단 구석 앵커·피벗.</summary>
         public static readonly Vector2 BottomRightCorner = new(1f, 0f);
+        /// <summary>아직 남아 있는 지형 도트 색. 제거된 칸은 그리지 않는다.</summary>
+        public static readonly Color32 RemainingTileDot = new(165, 204, 213, 255);
 
         private const float HintBarHeight = 20f;
         private const string CloseHintName = "CloseHint";
@@ -140,23 +142,22 @@ namespace SubTerra.App.Integration
             Vector3 top = worldCamera.ViewportToWorldPoint(new Vector3(1, 1, distance));
             Vector3Int first = terrain.WorldToCell(bottom);
             Vector3Int last = terrain.WorldToCell(top);
-            // 전체 월드 스캔 대신 화면 안의 셀만 그린다. 이동·채굴·붕괴가 바로 반영된다.
+            // 화면 안의 셀만 그린다. 제거된 칸은 비우고, 남은 타일만 밝은 네모 도트로 표시한다.
             for (int y = first.y; y <= last.y; y++)
                 for (int x = first.x; x <= last.x; x++)
                 {
                     var cell = new Vector3Int(x, y, 0);
-                    bool occupied = terrain.HasTile(cell);
-                    if (!occupied && !minedCells.Contains(cell)) continue;
+                    if (!terrain.HasTile(cell)) continue;
                     Vector3 a = worldCamera.WorldToViewportPoint(terrain.CellToWorld(cell));
                     Vector3 b = worldCamera.WorldToViewportPoint(terrain.CellToWorld(cell + new Vector3Int(1, 1, 0)));
                     Vector2 center = Project(area, (a + b) * 0.5f);
                     float side = Mathf.Min(Mathf.Abs(b.x - a.x) * area.width,
-                        Mathf.Abs(b.y - a.y) * area.height) * (occupied ? 0.94f : 0.6f);
+                        Mathf.Abs(b.y - a.y) * area.height) * 0.72f;
                     Rect dot = Rect.MinMaxRect(Mathf.Max(area.xMin, center.x - side / 2),
                         Mathf.Max(area.yMin, center.y - side / 2), Mathf.Min(area.xMax, center.x + side / 2),
                         Mathf.Min(area.yMax, center.y + side / 2));
                     if (dot.width > 0 && dot.height > 0)
-                        AddRect(mesh, dot, occupied ? new Color32(50, 65, 76, 255) : new Color32(165, 204, 213, 255));
+                        AddRect(mesh, dot, RemainingTileDot);
                 }
 
             Vector3 position = worldCamera.WorldToViewportPoint(player.position);

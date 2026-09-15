@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using SubTerra.App.Inventory;
+using SubTerra.App.Core.Data;
 using SubTerra.App.State;
 using SubTerra.Shared;
 using UnityEngine;
@@ -18,6 +19,8 @@ namespace SubTerra.App.Economy
         private readonly IMineralCatalogLookup catalog;
         private readonly GameState gameState;
         private readonly ISellGate sellGate;
+        private readonly IUpgradeEffectProvider effects;
+        public int GoldGainBonusPercent => effects?.GetGoldGainBonusPercent() ?? 0;
 
         /// <summary>성공·실패 모두 발행. 실패는 상태 이벤트를 동반하지 않는다.</summary>
         public event Action<EconomyTransactionResult> TransactionCompleted;
@@ -34,12 +37,14 @@ namespace SubTerra.App.Economy
             InventoryService inventory,
             IMineralCatalogLookup catalog,
             GameState gameState,
-            ISellGate sellGate = null)
+            ISellGate sellGate = null,
+            IUpgradeEffectProvider effects = null)
         {
             this.inventory = inventory;
             this.catalog = catalog;
             this.gameState = gameState;
             this.sellGate = sellGate;
+            this.effects = effects;
             LastResult = EconomyTransactionResult.Fail(
                 EconomyTransactionStatus.InvalidRequest,
                 EconomyTransactionKind.Sell,
@@ -133,7 +138,8 @@ namespace SubTerra.App.Economy
             }
 
             var currentGold = gameState.Player.Gold;
-            if (currentGold > int.MaxValue - goldGain)
+            if (!EconomyPricing.TryAddBonus(goldGain, GoldGainBonusPercent, currentGold,
+                out var goldBonus, out goldGain, out _))
             {
                 return CompleteFail(
                     EconomyTransactionStatus.GoldOverflow,
@@ -156,7 +162,8 @@ namespace SubTerra.App.Economy
 
             gameState.AddGold(goldGain);
 
-            var result = EconomyTransactionResult.OkSell(mineralId, quantity, goldGain);
+            var result = EconomyTransactionResult.OkSell(mineralId, quantity, goldGain,
+                goldBonus > 0 ? "판매 완료  " + EconomyPricing.FormatGoldGain(goldGain, goldBonus) : null);
             LastResult = result;
             TransactionCompleted?.Invoke(result);
             // 성공 시 자동 저장 요청 1회.
@@ -201,15 +208,19 @@ namespace SubTerra.App.Economy
             }
 
             var pairs = new List<KeyValuePair<string, int>>(normalized.Count);
+            var goldCost = 0;
             var totalQty = 0;
             for (var i = 0; i < normalized.Count; i++)
             {
-                pairs.Add(new KeyValuePair<string, int>(normalized[i].ItemId, normalized[i].Quantity));
+                if (normalized[i].ItemId == DataIds.Currency.Gold)
+                    goldCost = normalized[i].Quantity;
+                else
+                    pairs.Add(new KeyValuePair<string, int>(normalized[i].ItemId, normalized[i].Quantity));
                 totalQty += normalized[i].Quantity;
             }
 
-            var reduce = inventory.TryReduceMany(pairs);
-            if (reduce.Status != InventoryMutationStatus.Success || !reduce.DidChange)
+            var reduce = pairs.Count > 0 ? inventory.TryReduceMany(pairs) : default;
+            if (pairs.Count > 0 && (reduce.Status != InventoryMutationStatus.Success || !reduce.DidChange))
             {
                 // 사전 검증 후 실패는 경합. 부분 차감은 TryReduceMany가 막는다.
                 var spendFail = EconomyTransactionResult.Fail(
@@ -221,6 +232,8 @@ namespace SubTerra.App.Economy
                 TransactionCompleted?.Invoke(spendFail);
                 return false;
             }
+
+            if (goldCost > 0) gameState.AddGold(-goldCost);
 
             var primaryId = normalized[0].ItemId;
             var result = EconomyTransactionResult.OkSpend(primaryId, totalQty);
@@ -265,7 +278,12 @@ namespace SubTerra.App.Economy
             {
                 var entry = normalized[i];
                 // 비용 아이템은 MVP에서 광물 카탈로그로 검증한다.
-                if (!catalog.TryGetMineral(entry.ItemId, out _))
+                if (entry.ItemId == DataIds.Currency.Gold && gameState == null)
+                {
+                    return EconomyTransactionResult.Fail(EconomyTransactionStatus.DependencyMissing,
+                        EconomyTransactionKind.Spend, "골드 지갑이 없습니다.");
+                }
+                if (entry.ItemId != DataIds.Currency.Gold && !catalog.TryGetMineral(entry.ItemId, out _))
                 {
                     diagnostic = "Unknown cost item id=" + entry.ItemId;
                     return EconomyTransactionResult.Fail(
@@ -275,7 +293,8 @@ namespace SubTerra.App.Economy
                         diagnostic);
                 }
 
-                var owned = inventory.State.GetQuantity(entry.ItemId);
+                var owned = entry.ItemId == DataIds.Currency.Gold
+                    ? gameState.Player.Gold : inventory.State.GetQuantity(entry.ItemId);
                 if (owned < entry.Quantity)
                 {
                     diagnostic = "Insufficient id=" + entry.ItemId

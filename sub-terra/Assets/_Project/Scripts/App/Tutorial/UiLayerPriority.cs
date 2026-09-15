@@ -14,6 +14,8 @@ namespace SubTerra.App.Tutorial
         public const int ModalPanel = 1_000;
         public const int HazardWarning = 500;
         public const int CriticalHazard = 600;
+        /// <summary>드론 말풍선(30_000)보다 앞, 긴급 구출보다 뒤에 두는 퀘스트 목록/클리어 팝업.</summary>
+        public const int QuestPopup = 30_500;
         /// <summary>드론 말풍선을 포함한 모든 게임 HUD보다 앞에 표시하는 긴급 구출 모달.</summary>
         public const int EmergencyRescueModal = 31_000;
 

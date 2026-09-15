@@ -37,7 +37,11 @@ namespace SubTerra.App.Save
                 || data.run.maximumDepth < data.run.depth
                 || !Enum.IsDefined(typeof(StructuralRiskLevel), data.run.structuralRisk)
                 || !Enum.IsDefined(typeof(GasRiskLevel), data.run.gasExposure)
-                || !Enum.IsDefined(typeof(RunLifecyclePhase), data.run.lifecyclePhase))
+                || !Enum.IsDefined(typeof(RunLifecyclePhase), data.run.lifecyclePhase)
+                || data.mineResetElapsedSeconds < 0d
+                || double.IsNaN(data.mineResetElapsedSeconds)
+                || double.IsInfinity(data.mineResetElapsedSeconds)
+                || data.mineResetPaidCount < 0)
             {
                 reason = "state-range";
                 return false;
@@ -53,8 +57,10 @@ namespace SubTerra.App.Save
                 || !ValidateUpgrades(data.upgrades)
                 || data.outpost.storage == null
                 || data.outpost.installedOutpostIds == null
+                || data.outpost.facilityCooldowns == null
                 || !ValidateQuantities(data.outpost.storage)
                 || !ValidateUniqueIds(data.outpost.installedOutpostIds)
+                || !ValidateFacilityCooldowns(data.outpost.facilityCooldowns)
                 || data.drone.dialogueCooldowns == null
                 || !ValidateCooldowns(data.drone.dialogueCooldowns)
                 || !ValidateWorld(data))
@@ -78,6 +84,11 @@ namespace SubTerra.App.Save
             data.player ??= new PlayerSaveData();
             data.progress ??= new ProgressSaveData();
             data.progress.currentObjectiveId ??= string.Empty;
+            data.progress.pendingQuestRewardId ??= string.Empty;
+            if (data.progress.questRewardSettledCount < 0)
+            {
+                data.progress.questRewardSettledCount = 0;
+            }
             data.run ??= new RunSaveData();
             if (data.run.maximumDepth < data.run.depth)
             {
@@ -92,8 +103,21 @@ namespace SubTerra.App.Save
             data.outpost.checkpointId ??= string.Empty;
             data.outpost.storage ??= new List<QuantitySaveEntry>();
             data.outpost.installedOutpostIds ??= new List<string>();
+            data.outpost.facilityCooldowns ??= new List<FacilityCooldownSaveEntry>();
             data.drone ??= new DroneSaveData();
             data.drone.dialogueCooldowns ??= new List<DroneCooldownSaveEntry>();
+            if (data.mineResetElapsedSeconds < 0d
+                || double.IsNaN(data.mineResetElapsedSeconds)
+                || double.IsInfinity(data.mineResetElapsedSeconds))
+            {
+                data.mineResetElapsedSeconds = 0d;
+            }
+
+            if (data.mineResetPaidCount < 0)
+            {
+                data.mineResetPaidCount = 0;
+            }
+
             data.world ??= new SubTerra.Shared.WorldSnapshotDto();
             data.world.version ??= "1.2";
             data.world.miningChanges ??= new List<SubTerra.Shared.MiningSnapshotDto>();
@@ -149,6 +173,27 @@ namespace SubTerra.App.Save
             for (var i = 0; i < ids.Count; i++)
             {
                 if (string.IsNullOrEmpty(ids[i]) || !unique.Add(ids[i]))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static bool ValidateFacilityCooldowns(
+            IReadOnlyList<FacilityCooldownSaveEntry> entries)
+        {
+            var ids = new HashSet<string>(StringComparer.Ordinal);
+            for (var i = 0; i < entries.Count; i++)
+            {
+                var entry = entries[i];
+                if (entry == null
+                    || string.IsNullOrEmpty(entry.instanceId)
+                    || entry.remainingSeconds <= 0d
+                    || double.IsNaN(entry.remainingSeconds)
+                    || double.IsInfinity(entry.remainingSeconds)
+                    || !ids.Add(entry.instanceId))
                 {
                     return false;
                 }

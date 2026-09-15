@@ -127,18 +127,29 @@ namespace SubTerra.Shared.Localization
             Add("economy.sell.partial", "부분 판매: {0}/{1} 성공 · +{2}G", "Partial sell: {0}/{1} ok · +{2}G");
             Add("economy.sell.all_ok", "{0}종 판매 · +{1}G", "Sold {0} kinds · +{1}G");
             Add("economy.sell.credits", "골드 {0}", "Credits {0}");
-            Add("mine_reset.button", "새 광산 초기화 (500G)", "New Mine (500G)");
+            Add("mine_reset.button", "새 광산 초기화 ({0}G)", "New Mine ({0}G)");
             Add("mine_reset.confirm.title", "새 광산 구역", "New Mine Area");
             Add(
                 "mine_reset.confirm.body",
-                "이용료 500G를 내고 지하를 새로 배치합니다.\n캔 타일, 지하 시설, 붕괴와 가스 상태가 사라집니다.\n업그레이드, 심층 해금, 보유 광물, 남은 골드는 유지됩니다.\n현재 골드 {0} → {1}",
-                "Pay 500G to lay out a new underground area.\nMined tiles, underground structures, collapses, and gas states will be removed.\nUpgrades, deep-zone access, minerals, and remaining gold are kept.\nCurrent gold {0} → {1}");
+                "이용료 {2}G를 내고 지하를 새로 배치합니다.\n캔 타일, 지하 시설, 붕괴와 가스 상태가 사라집니다.\n업그레이드, 심층 해금, 보유 광물, 남은 골드는 유지됩니다.\n3시간 타이머가 처음부터 다시 시작됩니다.\n현재 골드 {0} → {1}",
+                "Pay {2}G to lay out a new underground area.\nMined tiles, underground structures, collapses, and gas states will be removed.\nUpgrades, deep-zone access, minerals, and remaining gold are kept.\nThe 3-hour timer restarts from the beginning.\nCurrent gold {0} → {1}");
             Add("mine_reset.confirm.yes", "확인", "Confirm");
             Add("mine_reset.confirm.no", "취소", "Cancel");
-            Add("mine_reset.success", "새 광산이 배치되었습니다. 이용료 500G.", "New mine laid out. Fee 500G.");
-            Add("mine_reset.fail.gold", "골드가 부족합니다. 500G 필요 (보유 {0}G).", "Not enough gold. Need 500G (have {0}G).");
+            Add("mine_reset.success", "새 광산이 배치되었습니다. 이용료 {0}G.", "New mine laid out. Fee {0}G.");
+            Add("mine_reset.fail.gold", "골드가 부족합니다. {0}G 필요 (보유 {1}G).", "Not enough gold. Need {0}G (have {1}G).");
             Add("mine_reset.fail.busy", "지금은 새 광산을 열 수 없습니다.", "Cannot open a new mine right now.");
             Add("mine_reset.fail.surface", "지상 기지에서만 새 광산을 열 수 있습니다.", "New mines can only be opened at Surface Base.");
+            Add("mine_reset.clock.label", "광산 초기화", "Mine Reset");
+            Add("mine_reset.timed.title", "광산 초기화", "Mine Reset");
+            Add(
+                "mine_reset.timed.body.mine",
+                "플레이 시간 3시간이 지나 광산이 초기화되었습니다.\n지상 기지로 이동하며, 캔 지형과 설치한 시설이 모두 사라집니다.\n다음 유료 초기화 비용은 500G입니다.",
+                "3 hours of play have passed, so the mine was reset.\nYou are returned to Surface Base. Mined terrain and placed facilities are cleared.\nThe next paid reset costs 500G.");
+            Add(
+                "mine_reset.timed.body.surface",
+                "플레이 시간 3시간이 지나 광산이 초기화되었습니다.\n캔 지형과 설치한 시설이 모두 사라집니다.\n다음 유료 초기화 비용은 500G입니다.",
+                "3 hours of play have passed, so the mine was reset.\nMined terrain and placed facilities are cleared.\nThe next paid reset costs 500G.");
+            Add("mine_reset.timed.ok", "확인", "OK");
         }
 
         public static string FormatFrameRateOption(int optionIndex)

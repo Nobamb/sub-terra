@@ -48,12 +48,12 @@ namespace SubTerra.App.Tests.UI
             try
             {
                 LocalizationService.SetLanguage(GameLanguage.Korean);
-                Assert.That(LocalizationService.Get("mine_reset.button"), Does.Contain("500G"));
-                Assert.That(LocalizationService.Get("mine_reset.confirm.body"), Does.Contain("{0}"));
-                Assert.That(LocalizationService.Get("mine_reset.success"), Does.Contain("500G"));
+                Assert.That(LocalizationService.Get("mine_reset.button"), Does.Contain("{0}G"));
+                Assert.That(LocalizationService.Get("mine_reset.confirm.body"), Does.Contain("{2}G"));
+                Assert.That(LocalizationService.Get("mine_reset.success"), Does.Contain("{0}G"));
 
                 LocalizationService.SetLanguage(GameLanguage.English);
-                Assert.That(LocalizationService.Get("mine_reset.button"), Is.EqualTo("New Mine (500G)"));
+                Assert.That(LocalizationService.Get("mine_reset.button"), Is.EqualTo("New Mine ({0}G)"));
                 Assert.That(LocalizationService.Get("mine_reset.fail.surface"), Does.Contain("Surface Base"));
             }
             finally
@@ -71,7 +71,7 @@ namespace SubTerra.App.Tests.UI
                 "SurfaceBasePresenter.cs");
             var presenterText = File.ReadAllText(presenterPath);
             Assert.That(presenterText, Does.Not.Contain("SetGold"));
-            Assert.That(presenterText, Does.Contain("MineResetService.FeeGold"));
+            Assert.That(presenterText, Does.Contain("MineResetService.GetFeeGold"));
         }
 
         [Test]

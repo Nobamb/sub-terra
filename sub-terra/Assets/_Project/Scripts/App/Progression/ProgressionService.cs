@@ -228,6 +228,26 @@ namespace SubTerra.App.Progression
             }
 
             var displayName = ItemDisplayNames.PreferDisplay(data.Id, data.DisplayName);
+            IReadOnlyList<MineralBonusEntry> currentBonuses = System.Array.Empty<MineralBonusEntry>();
+            IReadOnlyList<MineralBonusEntry> nextBonuses = System.Array.Empty<MineralBonusEntry>();
+            if (data.Id == DataIds.Upgrades.CargoYield && data.Levels != null)
+            {
+                if (current > 0 && current <= data.Levels.Count && data.Levels[current - 1] != null)
+                {
+                    currentBonuses = data.Levels[current - 1].MiningYieldBonuses
+                        ?? System.Array.Empty<MineralBonusEntry>();
+                }
+
+                if (current >= 0
+                    && current < data.MaxLevel
+                    && current < data.Levels.Count
+                    && data.Levels[current] != null)
+                {
+                    nextBonuses = data.Levels[current].MiningYieldBonuses
+                        ?? System.Array.Empty<MineralBonusEntry>();
+                }
+            }
+
             snapshot = new UpgradeSnapshot(
                 data.Id,
                 displayName,
@@ -236,7 +256,9 @@ namespace SubTerra.App.Progression
                 currentEffect,
                 nextEffect,
                 nextCosts,
-                canAffordNextLevel);
+                canAffordNextLevel,
+                currentBonuses,
+                nextBonuses);
             return true;
         }
 

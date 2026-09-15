@@ -51,6 +51,9 @@ namespace SubTerra.App.UI.Economy
             if (nameText != null)
             {
                 nameText.text = string.IsNullOrEmpty(row.DisplayName) ? row.MineralId : row.DisplayName;
+                nameText.color = row.IsRare
+                    ? new Color(0.45f, 0.92f, 0.88f, 1f)
+                    : Color.white;
             }
 
             if (ownedText != null)

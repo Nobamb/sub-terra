@@ -39,6 +39,14 @@ namespace SubTerra.App.Save
                         MigrateVersion2To3(data);
                         migrated = true;
                         break;
+                    case 3:
+                        MigrateVersion3To4(data);
+                        migrated = true;
+                        break;
+                    case 4:
+                        MigrateVersion4To5(data);
+                        migrated = true;
+                        break;
                     default:
                         return SaveMigrationStatus.InvalidOldVersion;
                 }
@@ -112,6 +120,33 @@ namespace SubTerra.App.Save
             }
 
             data.saveVersion = 3;
+        }
+
+        private static void MigrateVersion3To4(GameSaveData data)
+        {
+            SaveDataValidator.NormalizeMissingCollections(data);
+            var progress = data.progress;
+            if (progress != null)
+            {
+                // 구세이브는 보상을 이미 플레이한 것으로 보고 소급 지급하지 않는다.
+                progress.pendingQuestRewardId ??= string.Empty;
+                if (progress.questRewardSettledCount <= 0)
+                {
+                    progress.questRewardSettledCount = progress.completedObjectives;
+                }
+            }
+
+            data.saveVersion = 4;
+        }
+
+        private static void MigrateVersion4To5(GameSaveData data)
+        {
+            SaveDataValidator.NormalizeMissingCollections(data);
+            // 구세이브는 새 3시간 주기를 처음부터 시작한다. JsonUtility가 bool을 false로 둔 시계는 켠다.
+            data.mineResetElapsedSeconds = 0d;
+            data.mineResetPaidCount = 0;
+            data.mineResetClockVisible = true;
+            data.saveVersion = 5;
         }
     }
 }

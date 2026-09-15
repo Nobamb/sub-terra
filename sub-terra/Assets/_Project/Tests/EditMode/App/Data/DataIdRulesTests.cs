@@ -8,6 +8,7 @@ namespace SubTerra.App.Tests.Data
         [TestCase("mineral.copper")]
         [TestCase("building.outpost_core.basic")]
         [TestCase("upgrade.drill.speed")]
+        [TestCase("item.rare.engine_fuel")]
         public void ValidIds_Pass(string id)
         {
             Assert.That(DataIdRules.IsValidPermanentId(id), Is.True);

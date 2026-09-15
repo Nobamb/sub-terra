@@ -143,6 +143,10 @@ namespace SubTerra.App.State
         /// <summary>현재 데모 목표 영구 ID. 비어 있으면 복원 시 완료 개수로 폴백한다.</summary>
         public string CurrentObjectiveId { get; private set; }
         public bool IsDemoComplete { get; private set; }
+        /// <summary>화물 부족으로 지급을 보류 중인 퀘스트 ID. 없으면 빈 문자열.</summary>
+        public string PendingQuestRewardId { get; private set; }
+        /// <summary>보상을 수령했거나 포기한 퀘스트 개수. 완료 개수보다 클 수 없다.</summary>
+        public int QuestRewardSettledCount { get; private set; }
 
         private ProgressState() { }
 
@@ -150,12 +154,16 @@ namespace SubTerra.App.State
             int completedObjectives,
             bool hasSeenOutpostTutorial = false,
             string currentObjectiveId = null,
-            bool isDemoComplete = false)
+            bool isDemoComplete = false,
+            string pendingQuestRewardId = null,
+            int questRewardSettledCount = 0)
         {
             CompletedObjectives = completedObjectives < 0 ? 0 : completedObjectives;
             HasSeenOutpostTutorial = hasSeenOutpostTutorial;
             CurrentObjectiveId = currentObjectiveId ?? string.Empty;
             IsDemoComplete = isDemoComplete;
+            PendingQuestRewardId = pendingQuestRewardId ?? string.Empty;
+            QuestRewardSettledCount = questRewardSettledCount < 0 ? 0 : questRewardSettledCount;
         }
 
         internal void MarkOutpostTutorialSeen()
@@ -168,6 +176,12 @@ namespace SubTerra.App.State
             CurrentObjectiveId = objectiveId ?? string.Empty;
             CompletedObjectives = completedCount < 0 ? 0 : completedCount;
             IsDemoComplete = isDemoComplete;
+        }
+
+        internal void ApplyQuestRewardSettlement(string pendingQuestRewardId, int settledCount)
+        {
+            PendingQuestRewardId = pendingQuestRewardId ?? string.Empty;
+            QuestRewardSettledCount = settledCount < 0 ? 0 : settledCount;
         }
     }
 
@@ -262,6 +276,7 @@ namespace SubTerra.App.State
         public ProgressState Progress { get; private set; }
         public RunState Run { get; private set; }
         public OutpostState Outpost { get; private set; }
+        public MineResetCycleState MineResetCycle { get; private set; }
 
         public string SelectedBuildingId { get; private set; }
         public string SelectedBuildingDisplayName { get; private set; }
@@ -276,6 +291,7 @@ namespace SubTerra.App.State
         public event Action<BuildingSelectionReadModel> BuildingSelectionChanged;
         public event Action<string> InteractionPromptChanged;
         public event Action DemoProgressChanged;
+        public event Action MineResetCycleChanged;
 
         private GameState() { }
 
@@ -288,6 +304,7 @@ namespace SubTerra.App.State
                 Progress = new ProgressState(0),
                 Run = new RunState(0, true, StructuralRiskLevel.Safe, GasRiskLevel.Safe),
                 Outpost = new OutpostState(),
+                MineResetCycle = new MineResetCycleState(),
                 SelectedBuildingId = string.Empty,
                 SelectedBuildingDisplayName = string.Empty,
                 InteractionPrompt = string.Empty
@@ -302,7 +319,8 @@ namespace SubTerra.App.State
             PlayerState player,
             ProgressState progress,
             RunState run,
-            OutpostState outpost = null)
+            OutpostState outpost = null,
+            MineResetCycleState mineResetCycle = null)
         {
             if (player == null || progress == null || run == null)
             {
@@ -315,6 +333,7 @@ namespace SubTerra.App.State
                 Progress = progress,
                 Run = run,
                 Outpost = outpost ?? new OutpostState(),
+                MineResetCycle = mineResetCycle ?? new MineResetCycleState(),
                 SelectedBuildingId = string.Empty,
                 SelectedBuildingDisplayName = string.Empty,
                 InteractionPrompt = string.Empty
@@ -328,7 +347,8 @@ namespace SubTerra.App.State
                 && state.Player != null
                 && state.Progress != null
                 && state.Run != null
-                && state.Outpost != null;
+                && state.Outpost != null
+                && state.MineResetCycle != null;
         }
 
         public EnergyReadModel GetEnergy()
@@ -542,6 +562,50 @@ namespace SubTerra.App.State
 
             Progress.ApplyDemoProgress(id, count, isDemoComplete);
             DemoProgressChanged?.Invoke();
+        }
+
+        /// <summary>광산 초기화 주기와 충전소/보건소 재사용 대기를 같은 플레이 경과로 줄인다.</summary>
+        public void AddMineResetElapsed(double deltaSeconds)
+        {
+            MineResetCycle?.AddElapsed(deltaSeconds);
+            Outpost?.AddElapsed(deltaSeconds);
+        }
+
+        /// <summary>상단 전자시계 표시 여부. 동일 값이면 이벤트를 발행하지 않는다.</summary>
+        public void SetMineResetClockVisible(bool visible)
+        {
+            if (MineResetCycle == null || MineResetCycle.ClockVisible == visible)
+            {
+                return;
+            }
+
+            MineResetCycle.SetClockVisible(visible);
+            MineResetCycleChanged?.Invoke();
+        }
+
+        /// <summary>유료/시간 초기화 직후 HUD·지상 버튼이 새 비용과 남은 시간을 읽게 한다.</summary>
+        internal void NotifyMineResetCycleChanged()
+        {
+            MineResetCycleChanged?.Invoke();
+        }
+
+        /// <summary>퀘스트 보상 수령/포기/보류 상태를 저장 가능한 진행 State에 기록한다.</summary>
+        public void SetQuestRewardSettlement(string pendingQuestRewardId, int settledCount)
+        {
+            if (Progress == null)
+            {
+                return;
+            }
+
+            var pending = pendingQuestRewardId ?? string.Empty;
+            var count = settledCount < 0 ? 0 : settledCount;
+            if (Progress.PendingQuestRewardId == pending
+                && Progress.QuestRewardSettledCount == count)
+            {
+                return;
+            }
+
+            Progress.ApplyQuestRewardSettlement(pending, count);
         }
 
         private static bool Approximately(float a, float b)

@@ -487,16 +487,7 @@ namespace SubTerra.App.Editor.DataValidation
                     continue;
                 }
 
-                MineralData mineral = null;
-                for (var i = 0; i < catalog.Minerals.Count; i++)
-                {
-                    if (catalog.Minerals[i] != null
-                        && catalog.Minerals[i].Id == row.MineralId)
-                    {
-                        mineral = catalog.Minerals[i];
-                        break;
-                    }
-                }
+                MineralData mineral = FindInventoryItem(catalog, row.MineralId);
 
                 if (mineral == null || mineral.Icon == null)
                 {
@@ -521,6 +512,34 @@ namespace SubTerra.App.Editor.DataValidation
                 iconImage.preserveAspect = true;
                 EditorUtility.SetDirty(iconImage);
             }
+        }
+
+        private static MineralData FindInventoryItem(GameDataCatalog catalog, string itemId)
+        {
+            if (catalog == null || string.IsNullOrEmpty(itemId))
+            {
+                return null;
+            }
+
+            return FindById(catalog.Minerals, itemId) ?? FindById(catalog.RareItems, itemId);
+        }
+
+        private static MineralData FindById(System.Collections.Generic.IReadOnlyList<MineralData> items, string itemId)
+        {
+            if (items == null)
+            {
+                return null;
+            }
+
+            for (var i = 0; i < items.Count; i++)
+            {
+                if (items[i] != null && items[i].Id == itemId)
+                {
+                    return items[i];
+                }
+            }
+
+            return null;
         }
 
         private static void ApplyBuildingSizeAndLayout(GameObject buildingRoot)

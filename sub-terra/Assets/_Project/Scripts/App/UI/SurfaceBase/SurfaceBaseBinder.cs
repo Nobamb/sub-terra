@@ -1,6 +1,7 @@
 using SubTerra.App.Core;
 using SubTerra.App.Inventory;
 using SubTerra.App.Save;
+using SubTerra.App.State;
 using SubTerra.App.UI.Economy;
 using SubTerra.App.UI.MainMenu;
 using SubTerra.App.UI.Progression;
@@ -26,6 +27,7 @@ namespace SubTerra.App.UI.SurfaceBase
         private SurfaceBasePresenter presenter;
         private SettingsSession settings;
         private InventoryService boundInventory;
+        private GameState boundCycleState;
         private bool mineResetBusy;
 
         public SurfaceBasePresenter Presenter => presenter;
@@ -90,12 +92,19 @@ namespace SubTerra.App.UI.SurfaceBase
                 bootstrap.State,
                 runtime.Progression,
                 SaveRuntimeController.MineElevatorEnergyCost);
+            boundCycleState = bootstrap.State;
+            if (boundCycleState != null)
+            {
+                boundCycleState.MineResetCycleChanged += OnMineResetCycleChanged;
+            }
+
             var initialSettings = SettingsRuntimeApplier.LoadOrDefaults();
             SettingsRuntimeApplier.Apply(initialSettings, applyResolution: false);
             settings = new SettingsSession(initialSettings);
             view.SetSettingsVisible(false);
             view.SetMineResetConfirmVisible(false);
             view.SetMineResetBusy(false);
+            RefreshMineResetFeeLabel();
 
             view.ExploreClicked += OnExploreClicked;
             view.SettingsClicked += OnSettingsClicked;
@@ -132,6 +141,12 @@ namespace SubTerra.App.UI.SurfaceBase
                 view.SetSettingsVisible(false);
                 view.SetMineResetConfirmVisible(false);
                 view.SetMineResetBusy(false);
+            }
+
+            if (boundCycleState != null)
+            {
+                boundCycleState.MineResetCycleChanged -= OnMineResetCycleChanged;
+                boundCycleState = null;
             }
 
             if (presenter != null)
@@ -259,16 +274,17 @@ namespace SubTerra.App.UI.SurfaceBase
                 return;
             }
 
-            if (!presenter.TryGetMineResetQuote(out var currentGold, out _))
+            if (!presenter.TryGetMineResetQuote(out var currentGold, out _, out var feeGold))
             {
                 view.SetMessage(string.Format(
                     LocalizationService.Get("mine_reset.fail.gold"),
+                    feeGold,
                     currentGold));
                 return;
             }
 
             view.SetMessage(string.Empty);
-            view.SetMineResetConfirmVisible(true, currentGold);
+            view.SetMineResetConfirmVisible(true, currentGold, feeGold);
         }
 
         private void OnResetMineConfirmed()
@@ -280,6 +296,9 @@ namespace SubTerra.App.UI.SurfaceBase
 
             var runtime = SaveRuntimeController.Instance;
             var reason = string.Empty;
+            var feeGold = presenter != null && presenter.TryGetMineResetQuote(out _, out _, out var quotedFee)
+                ? quotedFee
+                : MineResetService.GetFeeGold(GameBootstrapper.Instance?.State);
             mineResetBusy = true;
             view.SetMineResetBusy(true);
             try
@@ -293,14 +312,17 @@ namespace SubTerra.App.UI.SurfaceBase
                     if (key == "mine_reset.fail.gold")
                     {
                         var gold = GameBootstrapper.Instance?.State?.Player?.Gold ?? 0;
-                        message = string.Format(message, gold);
+                        message = string.Format(message, feeGold, gold);
                     }
 
                     view.SetMessage(message);
                     return;
                 }
 
-                view.SetMessage(LocalizationService.Get("mine_reset.success"));
+                view.SetMessage(string.Format(
+                    LocalizationService.Get("mine_reset.success"),
+                    feeGold));
+                RefreshMineResetFeeLabel();
             }
             finally
             {
@@ -318,6 +340,22 @@ namespace SubTerra.App.UI.SurfaceBase
             }
 
             view.SetMineResetConfirmVisible(false);
+        }
+
+        private void OnMineResetCycleChanged()
+        {
+            RefreshMineResetFeeLabel();
+        }
+
+        private void RefreshMineResetFeeLabel()
+        {
+            if (view == null)
+            {
+                return;
+            }
+
+            view.SetMineResetButtonFee(
+                MineResetService.GetFeeGold(GameBootstrapper.Instance?.State));
         }
 
         private void OnQuitClicked()

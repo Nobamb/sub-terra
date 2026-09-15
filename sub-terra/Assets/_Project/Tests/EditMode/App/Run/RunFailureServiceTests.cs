@@ -251,6 +251,8 @@ namespace SubTerra.App.Tests.Run
             public float GetDroneRescuePreservation(float basePreservation) =>
                 basePreservation + rescueBonus;
             public float GetGasResistance() => 0f;
+            public int GetGoldGainBonusPercent() => 0;
+            public int GetMiningYieldBonus(string mineralId) => 0;
         }
     }
 }

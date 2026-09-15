@@ -206,8 +206,9 @@ namespace SubTerra.App.Tests.Progression
         }
 
         [Test]
-        public void F_F04_AllNineEffects_UseCurrentLevelData_AndInvalidLevelUsesBase()
+        public void F_F04_AllElevenEffects_UseCurrentLevelData_AndInvalidLevelUsesBase()
         {
+            var yield = CreateYieldUpgrade();
             var upgrades = new[]
             {
                 CreateUpgrade(DataIds.Upgrades.DrillSpeed, 1, 0.2f),
@@ -216,6 +217,8 @@ namespace SubTerra.App.Tests.Progression
                 CreateUpgrade(DataIds.Upgrades.MaximumHealth, 1, 30f),
                 CreateUpgrade(DataIds.Upgrades.HealthRegeneration, 1, 0.3f),
                 CreateUpgrade(DataIds.Upgrades.MaximumCargo, 1, 15f),
+                yield,
+                CreateUpgrade(DataIds.Upgrades.CargoGold, 1, 50f),
                 CreateUpgrade(DataIds.Upgrades.DroneScan, 1, 3f),
                 CreateUpgrade(DataIds.Upgrades.DroneRescue, 1, 0.2f),
                 CreateUpgrade(DataIds.Upgrades.GasResistance, 1, 0.3f)
@@ -231,6 +234,7 @@ namespace SubTerra.App.Tests.Progression
             var provider = new UpgradeEffectProvider(state, new Catalog(upgrades));
 
             Assert.That(provider.GetDrillLevel(), Is.EqualTo(1));
+            Assert.That(provider.GetGoldGainBonusPercent(), Is.EqualTo(50));
             Assert.That(provider.GetDrillSpeedMultiplier(), Is.EqualTo(1.2f).Within(0.0001f));
             Assert.That(provider.GetEnergyEfficiencyMultiplier(), Is.EqualTo(1f / 0.9f).Within(0.0001f));
             Assert.That(provider.GetMaximumEnergy(100), Is.EqualTo(125));
@@ -241,6 +245,9 @@ namespace SubTerra.App.Tests.Progression
             Assert.That(provider.GetDroneScanRadius(0f), Is.EqualTo(3f).Within(0.0001f));
             Assert.That(provider.GetDroneRescuePreservation(0.1f), Is.EqualTo(0.3f).Within(0.0001f));
             Assert.That(provider.GetGasResistance(), Is.EqualTo(0.3f).Within(0.0001f));
+            Assert.That(provider.GetMiningYieldBonus(DataIds.Minerals.Copper), Is.EqualTo(1));
+            Assert.That(provider.GetMiningYieldBonus(DataIds.Minerals.Iron), Is.Zero);
+            Assert.That(provider.GetMiningYieldBonus(string.Empty), Is.Zero);
 
             var invalidState = new UpgradeState();
             invalidState.TryRestore(new[] { new UpgradeLevelState(DataIds.Upgrades.DrillSpeed, 99) });
@@ -350,6 +357,31 @@ namespace SubTerra.App.Tests.Progression
             Assert.That(result, Is.False);
             Assert.That(state.GetLevel(DataIds.Upgrades.DrillSpeed), Is.EqualTo(1));
             Assert.That(state.GetLevel(DataIds.Upgrades.DroneScan), Is.Zero);
+        }
+
+        private UpgradeData CreateYieldUpgrade()
+        {
+            var data = ScriptableObject.CreateInstance<UpgradeData>();
+            created.Add(data);
+            data.EditorSet(
+                DataIds.Upgrades.CargoYield,
+                "채굴 수확량",
+                1,
+                new List<UpgradeLevelDefinition>
+                {
+                    new UpgradeLevelDefinition(
+                        1,
+                        1f,
+                        new List<ItemCostEntry>
+                        {
+                            new ItemCostEntry(DataIds.Minerals.Copper, 10)
+                        },
+                        new List<MineralBonusEntry>
+                        {
+                            new MineralBonusEntry(DataIds.Minerals.Copper, 1)
+                        })
+                });
+            return data;
         }
 
         private UpgradeData CreateUpgrade(string id, int maximumLevel, float effectPerLevel)

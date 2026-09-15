@@ -19,6 +19,12 @@ namespace SubTerra.Gameplay.DemoWorld
         [SerializeField] private TileBase lithiumTile;
         [SerializeField] private TileBase gasPocketTile;
         [SerializeField] private TileBase lockedSignalTile;
+        [SerializeField] private GoldDropSettings goldDropSettings;
+        [SerializeField] private TileBase rockGoldTile;
+        [SerializeField] private TileBase gasGoldTile;
+        [SerializeField] private TileBase copperGoldTile;
+        [SerializeField] private TileBase ironGoldTile;
+        [SerializeField] private TileBase lithiumGoldTile;
         [SerializeField] private MiningTileResolver tileResolver;
         [SerializeField] private WorldSnapshotSystem snapshotSystem;
         [SerializeField] private StructuralIntegritySystem structuralSystem;
@@ -82,12 +88,13 @@ namespace SubTerra.Gameplay.DemoWorld
             }
 
             MineLayerLayout layout = new MineLayerGenerator().Generate(seed, distribution);
+            RegisterGoldTiles();
             foregroundTilemap.ClearAllTiles();
             foreach (MineLayerCell cell in layout.EnumerateCells())
             {
                 foregroundTilemap.SetTile(
                     new Vector3Int(cell.X, cell.Y, 0),
-                    ResolveTile(cell.Kind));
+                    ResolveCellTile(seed, cell));
             }
 
             // 지표면에서도 좌우 경계를 빠져나가지 않도록 같은 비채굴 타일을 연장한다.
@@ -147,6 +154,43 @@ namespace SubTerra.Gameplay.DemoWorld
                     deepBand.MinDepth,
                     deepBand.MaxDepth);
             }
+        }
+
+        private TileBase ResolveCellTile(long seed, MineLayerCell cell)
+        {
+            // 고정 튜토리얼 칸은 런타임 재생성에서도 잭팟으로 바뀌지 않는다.
+            bool tutorial = (cell.X == -7 && cell.Y == -3) || (cell.X == -3 && cell.Y == -3)
+                || (cell.X == 2 && cell.Y == -5) || (cell.X == 8 && cell.Y == -4);
+            if (!tutorial && goldDropSettings != null && goldDropSettings.IsGold(seed, cell.X, cell.Y, cell.Kind))
+            {
+                TileBase gold = cell.Kind switch
+                {
+                    MineLayerCellKind.Rock => rockGoldTile,
+                    MineLayerCellKind.GasPocket => gasGoldTile,
+                    MineLayerCellKind.Copper => copperGoldTile,
+                    MineLayerCellKind.Iron => ironGoldTile,
+                    MineLayerCellKind.Lithium => lithiumGoldTile,
+                    _ => null
+                };
+                if (gold != null) return gold;
+            }
+            return ResolveTile(cell.Kind);
+        }
+
+        private void RegisterGoldTiles()
+        {
+            if (goldDropSettings == null || tileResolver == null) return;
+            RegisterGoldTile(rockTile, rockGoldTile);
+            RegisterGoldTile(gasPocketTile, gasGoldTile);
+            RegisterGoldTile(copperTile, copperGoldTile);
+            RegisterGoldTile(ironTile, ironGoldTile);
+            RegisterGoldTile(lithiumTile, lithiumGoldTile);
+        }
+
+        private void RegisterGoldTile(TileBase original, TileBase gold)
+        {
+            if (gold != null && tileResolver.TryResolve(original, out MiningTileDto definition))
+                tileResolver.RegisterRuntime(gold, goldDropSettings.CreateVariant(definition));
         }
 
         private bool HasAllTiles()

@@ -24,11 +24,12 @@ namespace SubTerra.Gameplay.Mining.Tests
         {
             public int Energy = 100;
             public int CommitCalls;
+            public int Gold;
             public MiningCommitStatus CommitStatus = MiningCommitStatus.Success;
 
             public bool CanAffordEnergy(int energyCost) => Energy >= energyCost;
 
-            public MiningCommitResult TryCommitMining(string mineralId, int quantity, int energyCost)
+            public MiningCommitResult TryCommitMining(string mineralId, int quantity, int energyCost, int goldGrant)
             {
                 CommitCalls++;
                 if (CommitStatus != MiningCommitStatus.Success)
@@ -37,6 +38,7 @@ namespace SubTerra.Gameplay.Mining.Tests
                 }
 
                 Energy -= energyCost;
+                Gold += goldGrant;
                 return MiningCommitResult.Success();
             }
         }
@@ -55,6 +57,8 @@ namespace SubTerra.Gameplay.Mining.Tests
             public float GetDroneScanRadius(float baseRadius) => baseRadius;
             public float GetDroneRescuePreservation(float basePreservation) => basePreservation;
             public float GetGasResistance() => 0f;
+            public int GetGoldGainBonusPercent() => 0;
+            public int GetMiningYieldBonus(string mineralId) => 0;
         }
 
         private sealed class DeepZoneAccess : IDeepZoneAccessProvider
@@ -207,16 +211,29 @@ namespace SubTerra.Gameplay.Mining.Tests
         }
 
         [Test]
-        public void DeepZoneSignal_BlocksBeforeUnlock_AndAllowsInteractionAfterUnlock()
+        public void DeepZoneSignal_BlocksBeforeUnlock_AndMinesEngineFuelAfterUnlock()
         {
             CreateSystem(out var root, out var tilemap, out var resolver, out var system);
             var access = new DeepZoneAccess();
-            system.SetRuntimeServices(null, null, access);
+            var effects = root.AddComponent<UpgradeEffects>();
+            effects.DrillLevel = 2;
+            system.SetRuntimeServices(null, effects, access);
+            var receiver = root.AddComponent<RewardReceiver>();
+            SetPrivate(system, "rewardReceiverBehaviour", receiver);
             var tile = ScriptableObject.CreateInstance<Tile>();
             var cell = new Vector3Int(14, -7, 0);
             var signalAccesses = 0;
             resolver.RegisterRuntime(tile, new MiningTileDto(
-                "tile.locked.signal", string.Empty, 0, false, 1f, 0f, 0f, false));
+                "tile.locked.signal",
+                "item.rare.engine_fuel",
+                1,
+                true,
+                1f,
+                0f,
+                0f,
+                false,
+                2,
+                0));
             tilemap.SetTile(cell, tile);
             system.DeepZoneSignalAccessed += _ => signalAccesses++;
 
@@ -225,9 +242,51 @@ namespace SubTerra.Gameplay.Mining.Tests
             Assert.That(tilemap.GetTile(cell), Is.SameAs(tile));
 
             access.IsDeepZoneUnlocked = true;
+            effects.DrillLevel = 0;
+            Assert.That(system.TryMineInstant(cell), Is.False);
+            Assert.That(system.LastFailure, Is.EqualTo(MiningFailureReason.DrillLevelTooLow));
+            Assert.That(tilemap.GetTile(cell), Is.SameAs(tile));
+
+            effects.DrillLevel = 2;
             Assert.That(system.TryMineInstant(cell), Is.True);
             Assert.That(system.LastFailure, Is.EqualTo(MiningFailureReason.None));
             Assert.That(signalAccesses, Is.EqualTo(1));
+            Assert.That(tilemap.GetTile(cell), Is.Null);
+            Assert.That(receiver.Calls, Is.EqualTo(1));
+            Assert.That(receiver.MineralId, Is.EqualTo("item.rare.engine_fuel"));
+            Assert.That(receiver.Quantity, Is.EqualTo(1));
+
+            Object.DestroyImmediate(root);
+            Object.DestroyImmediate(tile);
+        }
+
+        [Test]
+        public void DeepZoneSignal_InventoryFullKeepsTile()
+        {
+            CreateSystem(out var root, out var tilemap, out var resolver, out var system);
+            var access = new DeepZoneAccess { IsDeepZoneUnlocked = true };
+            var effects = root.AddComponent<UpgradeEffects>();
+            effects.DrillLevel = 2;
+            var transaction = root.AddComponent<MiningTransaction>();
+            transaction.CommitStatus = MiningCommitStatus.InventoryFull;
+            system.SetRuntimeServices(transaction, effects, access);
+            var tile = ScriptableObject.CreateInstance<Tile>();
+            var cell = new Vector3Int(14, -7, 0);
+            resolver.RegisterRuntime(tile, new MiningTileDto(
+                "tile.locked.signal",
+                "item.rare.engine_fuel",
+                1,
+                true,
+                1f,
+                0f,
+                0f,
+                false,
+                2,
+                0));
+            tilemap.SetTile(cell, tile);
+
+            Assert.That(system.TryMineInstant(cell), Is.False);
+            Assert.That(system.LastFailure, Is.EqualTo(MiningFailureReason.InventoryFull));
             Assert.That(tilemap.GetTile(cell), Is.SameAs(tile));
 
             Object.DestroyImmediate(root);
@@ -314,6 +373,32 @@ namespace SubTerra.Gameplay.Mining.Tests
 
             Object.DestroyImmediate(root);
             Object.DestroyImmediate(tile);
+        }
+
+        [TestCase(MiningCommitStatus.Success)]
+        [TestCase(MiningCommitStatus.InventoryFull)]
+        public void PromptB100_GoldCommitsOnceAndFailurePreservesTile(MiningCommitStatus status)
+        {
+            CreateSystem(out var root, out var map, out var resolver, out var system);
+            var tile = ScriptableObject.CreateInstance<Tile>();
+            try
+            {
+                var transaction = root.AddComponent<MiningTransaction>();
+                transaction.CommitStatus = status;
+                system.SetRuntimeServices(transaction, null);
+                resolver.RegisterRuntime(tile, new MiningTileDto("tile.rock.normal.gold", "", 0, true, 1, 0.1f, 0, false, 0, 1, 20));
+                var cell = new Vector3Int(1, 0, 0);
+                map.SetTile(cell, tile);
+                Assert.That(system.TryStartMining(cell), Is.True);
+                system.TickMining(1);
+                system.TickMining(1);
+                bool success = status == MiningCommitStatus.Success;
+                Assert.That(transaction.Gold, Is.EqualTo(success ? 20 : 0));
+                Assert.That(transaction.Energy, Is.EqualTo(success ? 99 : 100));
+                Assert.That(map.GetTile(cell) == null, Is.EqualTo(success));
+                Assert.That(transaction.CommitCalls, Is.EqualTo(1));
+            }
+            finally { Object.DestroyImmediate(root); Object.DestroyImmediate(tile); }
         }
 
         [Test]

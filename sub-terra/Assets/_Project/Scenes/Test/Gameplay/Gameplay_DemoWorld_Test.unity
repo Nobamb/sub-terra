@@ -33265,13 +33265,13 @@ MonoBehaviour:
   - tile: {fileID: 11400000, guid: c845a78b501b4b546915dcd7e6f970a7, type: 2}
     definition:
       tileId: tile.locked.signal
-      mineralId: 
-      quantity: 0
-      isMineable: 0
+      mineralId: item.rare.engine_fuel
+      quantity: 1
+      isMineable: 1
       durability: 1
-      miningTime: 1
-      requiredDrillLevel: 0
-      energyCost: 0
+      miningTime: 1.2
+      requiredDrillLevel: 2
+      energyCost: 3
       structuralImpact: 0
       containsGas: 0
 --- !u!4 &650792617

@@ -16,6 +16,10 @@ namespace SubTerra.Editor
         private const string AnimationsRoot = PlayerRoot + "/Animations";
         private const string ControllerPath = PlayerRoot + "/PlayerAnimator.controller";
         private const string PlayerPrefabPath = "Assets/_Project/Prefabs/Gameplay/Player/Player.prefab";
+        private const string LadderFramesFolder = "LadderBack";
+        private const string LadderFramePrefix = "ladder_back";
+        private const int LadderFrameCount = 3;
+        private const int PlayerSortingOrder = 5;
 
         private readonly struct AnimationDefinition
         {
@@ -42,8 +46,6 @@ namespace SubTerra.Editor
             new("Idle", "Idle", "player_idle", 1, 4f, true),
             new("Walk", "Walk", "walk", 10, 10f, true),
             new("Jump", "Jump", "jump", 10, 12f, false),
-            new("Ladder", "Ladder", "ladder", 8, 8f, true),
-            new("LadderDown", "LadderDown", "ladder_down", 8, 8f, true),
             new("Mining", "Mining", "mining", 8, 10f, true),
             new("Damage", "Damage", "damage", 4, 10f, false),
             new("Knockout", "Knockout", "knockout", 8, 8f, false)
@@ -141,7 +143,9 @@ namespace SubTerra.Editor
 
                 importer.textureType = TextureImporterType.Sprite;
                 importer.spriteImportMode = SpriteImportMode.Single;
-                importer.spritePixelsPerUnit = 256f;
+                importer.spritePixelsPerUnit = path.Contains("/" + LadderFramesFolder + "/")
+                    ? 1254f
+                    : 256f;
                 var spriteSettings = new TextureImporterSettings();
                 importer.ReadTextureSettings(spriteSettings);
                 spriteSettings.spriteMeshType = SpriteMeshType.FullRect;
@@ -242,6 +246,7 @@ namespace SubTerra.Editor
                     : null;
                 spriteRenderer.drawMode = SpriteDrawMode.Simple;
                 spriteRenderer.color = Color.white;
+                spriteRenderer.sortingOrder = PlayerSortingOrder;
 
                 var animator = visualRoot.GetComponent<Animator>();
                 if (animator == null)
@@ -250,7 +255,9 @@ namespace SubTerra.Editor
                 }
 
                 animator.runtimeAnimatorController = controller;
-                animator.enabled = true;
+                // 런타임 SpriteRenderer의 소유자는 PlayerAnimationController 하나다.
+                // Animator Controller는 에셋 미리보기/확장용으로만 보존한다.
+                animator.enabled = false;
                 var animationController = visualRoot.GetComponent<PlayerAnimationController>();
                 if (animationController == null)
                 {
@@ -263,8 +270,7 @@ namespace SubTerra.Editor
                     LoadFrames("Idle"),
                     LoadFrames("Walk"),
                     LoadFrames("Jump"),
-                    LoadFrames("Ladder"),
-                    LoadFrames("LadderDown"),
+                    LoadLadderFrames(),
                     LoadFrames("Mining"),
                     LoadFrames("Damage"),
                     LoadFrames("Knockout"));
@@ -302,6 +308,23 @@ namespace SubTerra.Editor
             }
 
             throw new System.ArgumentOutOfRangeException(nameof(stateName), stateName, "Unknown player animation state.");
+        }
+
+        private static Sprite[] LoadLadderFrames()
+        {
+            var frames = new Sprite[LadderFrameCount];
+            for (var index = 0; index < LadderFrameCount; index++)
+            {
+                var spritePath = FramesRoot + "/" + LadderFramesFolder + "/"
+                    + LadderFramePrefix + "_" + (index + 1).ToString("D2") + ".png";
+                frames[index] = AssetDatabase.LoadAssetAtPath<Sprite>(spritePath);
+                if (frames[index] == null)
+                {
+                    throw new FileNotFoundException("Player ladder animation sprite is missing.", spritePath);
+                }
+            }
+
+            return frames;
         }
 
         private static void EnsureFolder(string assetPath)

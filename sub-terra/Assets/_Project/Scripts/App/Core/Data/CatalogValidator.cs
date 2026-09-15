@@ -20,6 +20,7 @@ namespace SubTerra.App.Core.Data
             }
 
             var minerals = catalog.Minerals;
+            var rareItems = catalog.RareItems;
             var miningTiles = catalog.MiningTiles;
             var buildings = catalog.Buildings;
             var recipes = catalog.Recipes;
@@ -27,16 +28,18 @@ namespace SubTerra.App.Core.Data
             var dialogues = catalog.Dialogues;
 
             ValidateMinerals(minerals, result);
+            ValidateRareItems(rareItems, result);
             ValidateMiningTiles(miningTiles, result);
             ValidateBuildings(buildings, result);
             ValidateRecipes(recipes, result);
             ValidateUpgrades(upgrades, result);
             ValidateDialogues(dialogues, result);
-            ValidateReferences(minerals, miningTiles, buildings, recipes, upgrades, result);
+            ValidateReferences(minerals, rareItems, miningTiles, buildings, recipes, upgrades, result);
             ValidateRequiredMvpIds(minerals, buildings, recipes, upgrades, dialogues, result);
 
             // 중복을 포함한 검증 오류가 하나라도 있으면 조회 Dictionary를 성공 상태로 공개하지 않는다.
-            var hasDuplicate = HasAnyDuplicateIds(minerals, miningTiles, buildings, recipes, upgrades, dialogues, result);
+            var hasDuplicate = HasAnyDuplicateIds(
+                minerals, rareItems, miningTiles, buildings, recipes, upgrades, dialogues, result);
             result.SetDictionaryInitialized(!hasDuplicate && result.ErrorCount == 0);
 
             return result;
@@ -44,6 +47,7 @@ namespace SubTerra.App.Core.Data
 
         private static bool HasAnyDuplicateIds(
             IReadOnlyList<MineralData> minerals,
+            IReadOnlyList<MineralData> rareItems,
             IReadOnlyList<MiningTileData> miningTiles,
             IReadOnlyList<BuildingData> buildings,
             IReadOnlyList<RecipeData> recipes,
@@ -53,17 +57,20 @@ namespace SubTerra.App.Core.Data
         {
             var found = false;
             found |= ReportDuplicates(CollectIds(minerals, m => m != null ? m.Id : null, GetPath), result, "mineral");
+            found |= ReportDuplicates(CollectIds(rareItems, m => m != null ? m.Id : null, GetPath), result, "rareItem");
             found |= ReportDuplicates(CollectIds(miningTiles, t => t != null ? t.Id : null, GetPath), result, "miningTile");
             found |= ReportDuplicates(CollectIds(buildings, b => b != null ? b.Id : null, GetPath), result, "building");
             found |= ReportDuplicates(CollectIds(recipes, r => r != null ? r.Id : null, GetPath), result, "recipe");
             found |= ReportDuplicates(CollectIds(upgrades, u => u != null ? u.Id : null, GetPath), result, "upgrade");
             found |= ReportDuplicates(CollectIds(dialogues, d => d != null ? d.Id : null, GetPath), result, "dialogue");
-            found |= ReportCrossTypeDuplicates(minerals, miningTiles, buildings, recipes, upgrades, dialogues, result);
+            found |= ReportCrossTypeDuplicates(
+                minerals, rareItems, miningTiles, buildings, recipes, upgrades, dialogues, result);
             return found;
         }
 
         private static bool ReportCrossTypeDuplicates(
             IReadOnlyList<MineralData> minerals,
+            IReadOnlyList<MineralData> rareItems,
             IReadOnlyList<MiningTileData> miningTiles,
             IReadOnlyList<BuildingData> buildings,
             IReadOnlyList<RecipeData> recipes,
@@ -73,6 +80,7 @@ namespace SubTerra.App.Core.Data
         {
             var entries = new List<(string Id, string Type, string Path)>();
             AddTypedIds(entries, minerals, m => m != null ? m.Id : null, "mineral");
+            AddTypedIds(entries, rareItems, m => m != null ? m.Id : null, "rareItem");
             AddTypedIds(entries, miningTiles, t => t != null ? t.Id : null, "miningTile");
             AddTypedIds(entries, buildings, b => b != null ? b.Id : null, "building");
             AddTypedIds(entries, recipes, r => r != null ? r.Id : null, "recipe");
@@ -247,6 +255,46 @@ namespace SubTerra.App.Core.Data
                 if (data.Icon == null)
                 {
                     result.AddError(path, "icon", "Required mineral icon is missing.");
+                }
+            }
+        }
+
+        private static void ValidateRareItems(IReadOnlyList<MineralData> rareItems, CatalogValidationResult result)
+        {
+            if (rareItems == null)
+            {
+                return;
+            }
+
+            for (var i = 0; i < rareItems.Count; i++)
+            {
+                var data = rareItems[i];
+                if (data == null)
+                {
+                    result.AddError(string.Empty, $"rareItems[{i}]", "Null rare item entry in catalog list.");
+                    continue;
+                }
+
+                var path = GetPath(data);
+                ValidateIdField(data.Id, "item.", path, result);
+                if (string.IsNullOrWhiteSpace(data.DisplayName))
+                {
+                    result.AddError(path, "displayName", "Display name is empty.");
+                }
+
+                if (data.UnitWeight <= 0f)
+                {
+                    result.AddError(path, "unitWeight", "Unit weight must be greater than 0.");
+                }
+
+                if (data.UnitPrice < 0)
+                {
+                    result.AddError(path, "unitPrice", "Unit price must not be negative.");
+                }
+
+                if (data.Icon == null)
+                {
+                    result.AddError(path, "icon", "Required rare item icon is missing.");
                 }
             }
         }
@@ -476,11 +524,133 @@ namespace SubTerra.App.Core.Data
 
                     ValidateCosts(level.Costs, path, $"levels[{l}].costs", result, allowEmpty: false);
                 }
+
+                ValidateMiningYieldBonuses(data, path, result);
+                if (data.Id == DataIds.Upgrades.CargoGold)
+                {
+                    var expected = new[] { 50f, 75f, 100f };
+                    if (data.MaxLevel != 3 || data.Levels.Count != 3)
+                        result.AddError(path, "levels", "Gold gain requires three levels.");
+                    for (var l = 0; l < data.Levels.Count; l++)
+                    {
+                        var level = data.Levels[l];
+                        if (level == null) continue;
+                        if (l >= expected.Length || level.EffectValue != expected[l])
+                            result.AddError(path, "effectValue", "Gold gain must be 50/75/100 percent.");
+                        var goldCosts = 0;
+                        if (level.Costs != null)
+                            foreach (var cost in level.Costs)
+                                if (cost.ItemId == DataIds.Currency.Gold) goldCosts++;
+                        if (goldCosts != 1)
+                            result.AddError(path, "costs", "Gold gain requires exactly one gold cost per level.");
+                    }
+                }
+            }
+        }
+
+        private static void ValidateMiningYieldBonuses(
+            UpgradeData data,
+            string path,
+            CatalogValidationResult result)
+        {
+            var isYield = data.Id == DataIds.Upgrades.CargoYield;
+            var previousByMineral = new Dictionary<string, int>();
+
+            for (var l = 0; l < data.Levels.Count; l++)
+            {
+                var level = data.Levels[l];
+                if (level == null)
+                {
+                    continue;
+                }
+
+                var bonuses = level.MiningYieldBonuses;
+                var hasBonuses = bonuses != null && bonuses.Count > 0;
+                if (!isYield)
+                {
+                    if (hasBonuses)
+                    {
+                        result.AddError(
+                            path,
+                            $"levels[{l}].miningYieldBonuses",
+                            "Only upgrade.cargo.yield may define mining yield bonuses.");
+                    }
+
+                    continue;
+                }
+
+                if (!hasBonuses)
+                {
+                    result.AddError(
+                        path,
+                        $"levels[{l}].miningYieldBonuses",
+                        "Mining yield bonuses are empty.");
+                    continue;
+                }
+
+                var seen = new HashSet<string>();
+                for (var b = 0; b < bonuses.Count; b++)
+                {
+                    var entry = bonuses[b];
+                    var field = $"levels[{l}].miningYieldBonuses[{b}]";
+                    if (entry == null)
+                    {
+                        result.AddError(path, field, "Null mining yield bonus entry.");
+                        continue;
+                    }
+
+                    if (string.IsNullOrEmpty(entry.MineralId))
+                    {
+                        result.AddError(path, field + ".mineralId", "Mineral id is empty.");
+                        continue;
+                    }
+
+                    if (entry.Quantity < 1)
+                    {
+                        result.AddError(
+                            path,
+                            field + ".quantity",
+                            "Mining yield bonus must be at least 1.");
+                    }
+
+                    if (!seen.Add(entry.MineralId))
+                    {
+                        result.AddError(
+                            path,
+                            field + ".mineralId",
+                            $"Duplicate mineral id '{entry.MineralId}'.");
+                    }
+
+                    previousByMineral.TryGetValue(entry.MineralId, out var previous);
+                    if (entry.Quantity < previous)
+                    {
+                        result.AddError(
+                            path,
+                            field + ".quantity",
+                            "Mining yield bonuses must be non-decreasing between levels.");
+                    }
+
+                    previousByMineral[entry.MineralId] = entry.Quantity > previous
+                        ? entry.Quantity
+                        : previous;
+                }
+
+                foreach (var pair in previousByMineral)
+                {
+                    if (pair.Value > 0 && !seen.Contains(pair.Key))
+                    {
+                        result.AddError(
+                            path,
+                            $"levels[{l}].miningYieldBonuses",
+                            "Mining yield bonuses must be non-decreasing between levels.");
+                    }
+                }
             }
         }
 
         private static void ValidateReferences(
             IReadOnlyList<MineralData> minerals,
+            IReadOnlyList<MineralData> rareItems,
             IReadOnlyList<MiningTileData> miningTiles,
             IReadOnlyList<BuildingData> buildings,
             IReadOnlyList<RecipeData> recipes,
@@ -488,6 +658,7 @@ namespace SubTerra.App.Core.Data
             CatalogValidationResult result)
         {
             var mineralIds = CollectIdSet(minerals, m => m != null ? m.Id : null);
+            var inventoryIds = MergeIds(mineralIds, CollectIdSet(rareItems, m => m != null ? m.Id : null));
             var buildingIds = CollectIdSet(buildings, b => b != null ? b.Id : null);
 
             if (miningTiles != null)
@@ -495,7 +666,7 @@ namespace SubTerra.App.Core.Data
                 for (var i = 0; i < miningTiles.Count; i++)
                 {
                     var data = miningTiles[i];
-                    if (data != null && !string.IsNullOrEmpty(data.MineralId) && !mineralIds.Contains(data.MineralId))
+                    if (data != null && !string.IsNullOrEmpty(data.MineralId) && !inventoryIds.Contains(data.MineralId))
                     {
                         result.AddError(GetPath(data), "mineralId", $"Referenced mineral id '{data.MineralId}' is not registered.");
                     }
@@ -566,12 +737,50 @@ namespace SubTerra.App.Core.Data
                         {
                             ValidateRegisteredCosts(
                                 definition.Costs,
-                                mineralIds,
+                                data.Id == DataIds.Upgrades.CargoGold
+                                    ? MergeIds(mineralIds, new HashSet<string> { DataIds.Currency.Gold })
+                                    : mineralIds,
                                 GetPath(data),
                                 $"levels[{level}].costs",
                                 result);
+                            ValidateRegisteredMiningYieldBonuses(
+                                definition.MiningYieldBonuses,
+                                mineralIds,
+                                GetPath(data),
+                                $"levels[{level}].miningYieldBonuses",
+                                result);
                         }
                     }
+                }
+            }
+        }
+
+        private static void ValidateRegisteredMiningYieldBonuses(
+            IReadOnlyList<MineralBonusEntry> bonuses,
+            HashSet<string> registeredIds,
+            string assetPath,
+            string fieldName,
+            CatalogValidationResult result)
+        {
+            if (bonuses == null)
+            {
+                return;
+            }
+
+            for (var i = 0; i < bonuses.Count; i++)
+            {
+                var entry = bonuses[i];
+                if (entry == null || string.IsNullOrEmpty(entry.MineralId))
+                {
+                    continue;
+                }
+
+                if (!registeredIds.Contains(entry.MineralId))
+                {
+                    result.AddError(
+                        assetPath,
+                        $"{fieldName}[{i}].mineralId",
+                        $"Referenced mineral id '{entry.MineralId}' is not registered.");
                 }
             }
         }
@@ -777,6 +986,8 @@ namespace SubTerra.App.Core.Data
                     DataIds.Upgrades.DrillEfficiency,
                     DataIds.Upgrades.MaximumEnergy,
                     DataIds.Upgrades.MaximumCargo,
+                    DataIds.Upgrades.CargoYield,
+                    DataIds.Upgrades.CargoGold,
                     DataIds.Upgrades.DroneScan,
                     DataIds.Upgrades.DroneRescue,
                     DataIds.Upgrades.GasResistance

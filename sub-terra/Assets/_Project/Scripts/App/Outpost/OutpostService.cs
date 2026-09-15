@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using SubTerra.App.Core.Data;
 using SubTerra.App.Inventory;
+using SubTerra.App.Economy;
 using SubTerra.App.State;
 using SubTerra.Shared;
 
@@ -18,10 +19,14 @@ namespace SubTerra.App.Outpost
         private readonly GameState gameState;
         private readonly OutpostState state;
         private readonly IPlayerHealthCommand healthCommand;
+        private readonly IUpgradeEffectProvider effects;
         private readonly HashSet<string> completedSettlementIds = new HashSet<string>();
 
         private OutpostStatusDto runtimeStatus;
         private int settlementSequence;
+
+        /// <summary>충전소/보건소 인스턴스별 재사용 대기. 성공 사용 후 5분.</summary>
+        public const double FacilityUseCooldownSeconds = 5d * 60d;
 
         public OutpostState State => state;
         public bool IsPanelOpen => IsFacilityInteraction;
@@ -52,13 +57,15 @@ namespace SubTerra.App.Outpost
             IMineralCatalogLookup catalog,
             GameState gameState,
             OutpostState state = null,
-            IPlayerHealthCommand healthCommand = null)
+            IPlayerHealthCommand healthCommand = null,
+            IUpgradeEffectProvider effects = null)
         {
             this.inventory = inventory;
             this.catalog = catalog;
             this.gameState = gameState;
             this.state = state ?? gameState?.Outpost ?? new OutpostState();
             this.healthCommand = healthCommand;
+            this.effects = effects;
         }
 
         public void ApplyRuntimeStatus(OutpostStatusDto status)
@@ -123,6 +130,60 @@ namespace SubTerra.App.Outpost
             return false;
         }
 
+        public bool TryGetFacilityCooldownMessage(out string message)
+        {
+            message = string.Empty;
+            if (runtimeStatus == null || !runtimeStatus.isInInteractionRange)
+            {
+                return false;
+            }
+
+            var buildingId = runtimeStatus.interactionFacilityBuildingId;
+            if (!IsCooldownFacility(buildingId))
+            {
+                return false;
+            }
+
+            if (!TryResolveActiveFacilityInstanceId(buildingId, out var instanceId)
+                || !state.TryGetFacilityCooldownRemaining(instanceId, out var remaining)
+                || remaining <= 0d)
+            {
+                return false;
+            }
+
+            message = FormatFacilityCooldownMessage(buildingId, remaining);
+            return true;
+        }
+
+        public static string FormatFacilityCooldownMessage(string buildingId, double remainingSeconds)
+        {
+            var facilityName = buildingId == DataIds.Buildings.ClinicBasic ? "보건소" : "충전기";
+            var total = (int)Math.Ceiling(Math.Max(0d, remainingSeconds) - 0.0000001d);
+            if (total < 1)
+            {
+                total = 1;
+            }
+
+            var minutes = total / 60;
+            var seconds = total % 60;
+            if (minutes > 0 && seconds == 0)
+            {
+                return facilityName + " 재사용까지 " + minutes + "분 남았습니다.";
+            }
+
+            if (minutes > 0)
+            {
+                return facilityName
+                    + " 재사용까지 "
+                    + minutes
+                    + "분 "
+                    + seconds
+                    + "초 남았습니다.";
+            }
+
+            return facilityName + " 재사용까지 " + seconds + "초 남았습니다.";
+        }
+
         public OutpostOperationResult TryCharge()
         {
             if (!TryValidateFacility(
@@ -133,9 +194,19 @@ namespace SubTerra.App.Outpost
                 return Complete(failure);
             }
 
+            if (!TryEnsureFacilityCooldownReady(
+                    DataIds.Buildings.ChargerBasic,
+                    OutpostOperationKind.Charge,
+                    out var instanceId,
+                    out failure))
+            {
+                return Complete(failure);
+            }
+
             var before = gameState.Player.Energy;
             var target = gameState.Player.MaxEnergy;
             gameState.SetCurrentEnergy(target);
+            state.RecordFacilityUse(instanceId, FacilityUseCooldownSeconds);
             var result = Success(
                 OutpostOperationKind.Charge,
                 string.Empty,
@@ -156,6 +227,15 @@ namespace SubTerra.App.Outpost
                 return Complete(failure);
             }
 
+            if (!TryEnsureFacilityCooldownReady(
+                    DataIds.Buildings.ClinicBasic,
+                    OutpostOperationKind.Heal,
+                    out var instanceId,
+                    out failure))
+            {
+                return Complete(failure);
+            }
+
             if (healthCommand == null)
             {
                 return Complete(Fail(
@@ -165,6 +245,7 @@ namespace SubTerra.App.Outpost
             }
 
             var restored = healthCommand.RestoreFull();
+            state.RecordFacilityUse(instanceId, FacilityUseCooldownSeconds);
             var result = Success(
                 OutpostOperationKind.Heal,
                 string.Empty,
@@ -377,7 +458,8 @@ namespace SubTerra.App.Outpost
             }
 
             var goldGain = info.UnitPrice * quantity;
-            if (gameState.Player.Gold > int.MaxValue - goldGain)
+            if (!EconomyPricing.TryAddBonus(goldGain, effects?.GetGoldGainBonusPercent() ?? 0,
+                gameState.Player.Gold, out var goldBonus, out goldGain, out _))
             {
                 return Complete(Fail(
                     OutpostOperationStatus.OverflowRisk,
@@ -401,7 +483,7 @@ namespace SubTerra.App.Outpost
                 mineralId,
                 quantity,
                 goldGain,
-                "정산이 완료되었습니다. +" + goldGain + "G");
+                "정산이 완료되었습니다. +" + EconomyPricing.FormatGoldGain(goldGain, goldBonus));
             RaiseSnapshotChanged();
             Complete(result);
             AutoSaveRequested?.Invoke(
@@ -451,7 +533,8 @@ namespace SubTerra.App.Outpost
             }
 
             var beforeGold = gameState.Player.Gold;
-            if (beforeGold > int.MaxValue - goldGain)
+            if (!EconomyPricing.TryAddBonus(goldGain, effects?.GetGoldGainBonusPercent() ?? 0,
+                beforeGold, out var goldBonus, out goldGain, out _))
             {
                 return Complete(Fail(
                     OutpostOperationStatus.OverflowRisk,
@@ -480,7 +563,8 @@ namespace SubTerra.App.Outpost
 
             gameState.AddGold(goldGain);
             completedSettlementIds.Add(settlementId);
-            var result = Success(kind, string.Empty, SumQuantities(reductions), goldGain, "정산이 완료되었습니다.");
+            var result = Success(kind, string.Empty, SumQuantities(reductions), goldGain,
+                "정산이 완료되었습니다. +" + EconomyPricing.FormatGoldGain(goldGain, goldBonus));
             RaiseSnapshotChanged();
             Complete(result);
             AutoSaveRequested?.Invoke(
@@ -639,6 +723,78 @@ namespace SubTerra.App.Outpost
                 kind,
                 "연결된 시설이 없습니다.");
             return false;
+        }
+
+        private bool TryEnsureFacilityCooldownReady(
+            string buildingId,
+            OutpostOperationKind kind,
+            out string instanceId,
+            out OutpostOperationResult failure)
+        {
+            if (!TryResolveActiveFacilityInstanceId(buildingId, out instanceId))
+            {
+                failure = Fail(
+                    OutpostOperationStatus.FacilityUnavailable,
+                    kind,
+                    "연결된 시설이 없습니다.");
+                return false;
+            }
+
+            if (state.TryGetFacilityCooldownRemaining(instanceId, out var remaining)
+                && remaining > 0d)
+            {
+                failure = Fail(
+                    OutpostOperationStatus.FacilityUnavailable,
+                    kind,
+                    FormatFacilityCooldownMessage(buildingId, remaining));
+                return false;
+            }
+
+            failure = default;
+            return true;
+        }
+
+        private bool TryResolveActiveFacilityInstanceId(string buildingId, out string instanceId)
+        {
+            instanceId = string.Empty;
+            if (runtimeStatus == null)
+            {
+                return false;
+            }
+
+            if (runtimeStatus.connectedFacilities != null)
+            {
+                for (var i = 0; i < runtimeStatus.connectedFacilities.Count; i++)
+                {
+                    var facility = runtimeStatus.connectedFacilities[i];
+                    if (facility == null
+                        || facility.buildingId != buildingId
+                        || !facility.isActive
+                        || !IsCurrentInteractionFacility(facility)
+                        || string.IsNullOrEmpty(facility.instanceId))
+                    {
+                        continue;
+                    }
+
+                    instanceId = facility.instanceId;
+                    return true;
+                }
+            }
+
+            if (runtimeStatus.interactionFacilityBuildingId == buildingId
+                && !string.IsNullOrEmpty(runtimeStatus.interactionFacilityInstanceId))
+            {
+                instanceId = runtimeStatus.interactionFacilityInstanceId;
+                return true;
+            }
+
+            return false;
+        }
+
+        private static bool IsCooldownFacility(string buildingId)
+        {
+            return buildingId == DataIds.Buildings.ChargerBasic
+                || buildingId == DataIds.Buildings.ClinicBasic;
         }
 
         private static bool IsProximityPoweredFacility(string buildingId)

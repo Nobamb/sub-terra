@@ -76,9 +76,13 @@ namespace SubTerra.App.Tests
             health.Changed = false;
             var alreadyFull = service.TryHeal();
 
-            Assert.That(alreadyFull.IsSuccess, Is.True);
-            Assert.That(alreadyFull.Message, Is.EqualTo("이미 체력이 최대입니다."));
-            Assert.That(health.CallCount, Is.EqualTo(2));
+            Assert.That(alreadyFull.IsSuccess, Is.False);
+            Assert.That(alreadyFull.Status, Is.EqualTo(OutpostOperationStatus.FacilityUnavailable));
+            Assert.That(alreadyFull.Message, Is.EqualTo(
+                OutpostService.FormatFacilityCooldownMessage(
+                    DataIds.Buildings.ClinicBasic,
+                    OutpostService.FacilityUseCooldownSeconds)));
+            Assert.That(health.CallCount, Is.EqualTo(1));
         }
 
         [Test]

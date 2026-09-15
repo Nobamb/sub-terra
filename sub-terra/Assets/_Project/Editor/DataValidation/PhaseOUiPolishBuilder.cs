@@ -84,6 +84,21 @@ namespace SubTerra.App.Editor.DataValidation
                     throw new System.InvalidOperationException("Terrain tile missing: " + path);
                 }
 
+                if (names[i] == "LockedSignal")
+                {
+                    var stone = AssetDatabase.LoadAssetAtPath<Sprite>(
+                        "Assets/_Project/Art/Tiles/SealedGlyph/sealed_glyph_stone_01.png");
+                    if (stone != null)
+                    {
+                        tile.sprite = stone;
+                        tile.color = Color.white;
+                        tile.colliderType = Tile.ColliderType.Grid;
+                        EditorUtility.SetDirty(tile);
+                        result[i] = tile;
+                        continue;
+                    }
+                }
+
                 tile.sprite = sprites[i];
                 tile.colliderType = Tile.ColliderType.Grid;
                 EditorUtility.SetDirty(tile);
@@ -125,7 +140,7 @@ namespace SubTerra.App.Editor.DataValidation
                 tilemap.SetTile(new Vector3Int(-3, -3, 0), tiles[2]); // Iron
                 tilemap.SetTile(new Vector3Int(2, -5, 0), tiles[3]); // Lithium
                 tilemap.SetTile(new Vector3Int(8, -4, 0), tiles[4]); // GasPocket
-                tilemap.SetTile(new Vector3Int(14, -7, 0), tiles[5]); // LockedSignal
+                // 봉인 신호는 생성기가 38m에 1칸만 둔다. 얕은 튜토리얼 마커로 복제하지 않는다.
             }
 
             tilemap.RefreshAllTiles();

@@ -162,17 +162,33 @@ namespace SubTerra.App.UI.Economy
                     var preview = 0;
                     if (EconomyPricing.TryComputeGoldGain(stack.UnitPrice, stack.Quantity, out var line, out _))
                     {
-                        preview = line;
+                        EconomyPricing.TryAddBonus(line, economy?.GoldGainBonusPercent ?? 0, 0,
+                            out _, out preview, out _);
+                    }
+
+                    var isRare = DataIds.RareItems.IsRare(stack.MineralId);
+                    var displayName = ItemDisplayNames.Inventory(
+                        stack.MineralId);
+                    if (string.IsNullOrEmpty(displayName) || displayName == stack.MineralId)
+                    {
+                        displayName = string.IsNullOrEmpty(stack.DisplayName)
+                            ? stack.MineralId
+                            : stack.DisplayName;
+                        if (isRare && displayName.IndexOf("희귀", System.StringComparison.Ordinal) < 0)
+                        {
+                            displayName += " (희귀)";
+                        }
                     }
 
                     rows.Add(new SellMineralRowReadModel(
                         stack.MineralId,
-                        string.IsNullOrEmpty(stack.DisplayName) ? stack.MineralId : stack.DisplayName,
+                        displayName,
                         stack.Quantity,
                         stack.UnitPrice,
                         preview,
                         isSelected,
-                        ResolveIcon(stack.MineralId)));
+                        ResolveIcon(stack.MineralId),
+                        isRare));
                 }
             }
 
@@ -219,7 +235,7 @@ namespace SubTerra.App.UI.Economy
             PushPreviewToView();
             view.SetSellActionsEnabled(
                 !busy && !string.IsNullOrEmpty(selectedMineralId) && sellQuantity >= 1 && selectedOwned >= sellQuantity,
-                !busy && rows.Count > 0);
+                !busy && HasBulkOwned(rows));
         }
 
         public void RefreshCreditsLabel()
@@ -340,7 +356,8 @@ namespace SubTerra.App.UI.Economy
             {
                 for (var i = 0; i < snapshot.Stacks.Count; i++)
                 {
-                    if (snapshot.Stacks[i].Quantity > 0)
+                    if (snapshot.Stacks[i].Quantity > 0
+                        && !DataIds.RareItems.IsRare(snapshot.Stacks[i].MineralId))
                     {
                         targets.Add(snapshot.Stacks[i]);
                     }
@@ -363,6 +380,7 @@ namespace SubTerra.App.UI.Economy
 
             var successKinds = 0;
             var goldTotal = 0;
+            var bonusTotal = 0;
             var attempted = targets.Count;
             var lastFailDetail = string.Empty;
 
@@ -377,6 +395,8 @@ namespace SubTerra.App.UI.Economy
                     {
                         successKinds++;
                         goldTotal += result.GoldDelta;
+                        if (EconomyPricing.TryComputeGoldGain(stack.UnitPrice, stack.Quantity, out var baseGold, out _))
+                            bonusTotal += result.GoldDelta - baseGold;
                     }
                     else
                     {
@@ -403,12 +423,12 @@ namespace SubTerra.App.UI.Economy
             }
             else if (successKinds < attempted)
             {
-                view?.SetStatusMessage($"부분 판매: {successKinds}/{attempted} 성공 · +{goldTotal}G");
+                view?.SetStatusMessage($"부분 판매: {successKinds}/{attempted} 성공 · +{EconomyPricing.FormatGoldGain(goldTotal, bonusTotal)}");
                 view?.SetStatusDetail(string.Empty);
             }
             else
             {
-                view?.SetStatusMessage($"{successKinds}종 판매 · +{goldTotal}G");
+                view?.SetStatusMessage($"{successKinds}종 판매 · +{EconomyPricing.FormatGoldGain(goldTotal, bonusTotal)}");
                 view?.SetStatusDetail(string.Empty);
             }
         }
@@ -588,7 +608,15 @@ namespace SubTerra.App.UI.Economy
                 return;
             }
 
-            view.SetPreviewCredits(gain, "예상 골드 +" + gain);
+            if (!EconomyPricing.TryAddBonus(gain, economy?.GoldGainBonusPercent ?? 0,
+                gameState.Player.Gold, out var bonus, out var total, out _))
+            {
+                view.SetPreviewCredits(0, "골드 한도를 초과합니다.");
+                return;
+            }
+            view.SetPreviewCredits(total, bonus > 0
+                ? "예상 골드 " + EconomyPricing.FormatGoldGain(total, bonus)
+                : "예상 골드 +" + total);
         }
 
         private int ResolveUnitPrice(string mineralId, InventorySnapshot snapshot)
@@ -614,7 +642,25 @@ namespace SubTerra.App.UI.Economy
                 return null;
             }
 
-            return catalog.TryGetMineral(mineralId, out var data) ? data.Icon : null;
+            return catalog.TryGetInventoryItem(mineralId, out var data) ? data.Icon : null;
+        }
+
+        private static bool HasBulkOwned(IReadOnlyList<SellMineralRowReadModel> rows)
+        {
+            if (rows == null)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < rows.Count; i++)
+            {
+                if (rows[i].OwnedQuantity > 0 && !rows[i].IsRare)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private bool HasAnyOwned()
@@ -632,7 +678,8 @@ namespace SubTerra.App.UI.Economy
 
             for (var i = 0; i < snapshot.Stacks.Count; i++)
             {
-                if (snapshot.Stacks[i].Quantity > 0)
+                if (snapshot.Stacks[i].Quantity > 0
+                    && !DataIds.RareItems.IsRare(snapshot.Stacks[i].MineralId))
                 {
                     return true;
                 }

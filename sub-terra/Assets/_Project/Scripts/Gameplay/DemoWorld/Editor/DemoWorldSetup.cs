@@ -55,7 +55,17 @@ namespace SubTerra.Gameplay.DemoWorld.Editor
                     new MiningTileDto("tile.iron", "mineral.iron", 1, true, 1f, 0.8f, 0.18f, false),
                     new MiningTileDto("tile.lithium", "mineral.lithium", 1, true, 1f, 1.2f, 0.3f, true),
                     new MiningTileDto("tile.gas-pocket", string.Empty, 0, true, 1f, 0.5f, 0.8f, true),
-                    new MiningTileDto("tile.locked.signal", string.Empty, 0, false, 1f, 1f, 0f, false)
+                    new MiningTileDto(
+                        "tile.locked.signal",
+                        "item.rare.engine_fuel",
+                        1,
+                        true,
+                        1f,
+                        1.2f,
+                        0f,
+                        false,
+                        2,
+                        3)
                 });
             MiningSystem mining = systems.AddComponent<MiningSystem>();
             SetReference(mining, "foregroundTilemap", tilemap); SetReference(mining, "tileResolver", resolver);
@@ -108,7 +118,6 @@ namespace SubTerra.Gameplay.DemoWorld.Editor
             tilemap.SetTile(new Vector3Int(-3, -3, 0), iron);
             tilemap.SetTile(new Vector3Int(2, -5, 0), lithium);
             tilemap.SetTile(new Vector3Int(8, -4, 0), gasPocket);
-            tilemap.SetTile(new Vector3Int(14, -7, 0), lockedSignal);
         }
 
         private static Tilemap CreateTilemap(Transform root)

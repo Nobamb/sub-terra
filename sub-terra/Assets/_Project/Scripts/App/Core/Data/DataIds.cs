@@ -6,11 +6,26 @@ namespace SubTerra.App.Core.Data
     /// </summary>
     public static class DataIds
     {
+        public static class Currency
+        {
+            public const string Gold = "currency.gold";
+        }
+
         public static class Minerals
         {
             public const string Copper = "mineral.copper";
             public const string Iron = "mineral.iron";
             public const string Lithium = "mineral.lithium";
+        }
+
+        public static class RareItems
+        {
+            public const string EngineFuel = "item.rare.engine_fuel";
+
+            public static bool IsRare(string itemId)
+            {
+                return itemId == EngineFuel;
+            }
         }
 
         public static class Buildings
@@ -34,6 +49,8 @@ namespace SubTerra.App.Core.Data
             public const string MaximumHealth = "upgrade.health.maximum";
             public const string HealthRegeneration = "upgrade.health.regeneration";
             public const string MaximumCargo = "upgrade.cargo.maximum";
+            public const string CargoYield = "upgrade.cargo.yield";
+            public const string CargoGold = "upgrade.cargo.gold";
             public const string DroneScan = "upgrade.drone.scan";
             public const string DroneRescue = "upgrade.drone.rescue";
             public const string GasResistance = "upgrade.gas.resistance";

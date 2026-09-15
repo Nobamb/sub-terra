@@ -57,7 +57,9 @@ namespace SubTerra.App.Save
                     completedObjectives = game.Progress.CompletedObjectives,
                     hasSeenOutpostTutorial = game.Progress.HasSeenOutpostTutorial,
                     currentObjectiveId = game.Progress.CurrentObjectiveId ?? string.Empty,
-                    isDemoComplete = game.Progress.IsDemoComplete
+                    isDemoComplete = game.Progress.IsDemoComplete,
+                    pendingQuestRewardId = game.Progress.PendingQuestRewardId ?? string.Empty,
+                    questRewardSettledCount = game.Progress.QuestRewardSettledCount
                 },
                 run = new RunSaveData
                 {
@@ -72,7 +74,10 @@ namespace SubTerra.App.Save
                 upgrades = CaptureUpgrades(context.Upgrades),
                 outpost = CaptureOutpost(game.Outpost),
                 drone = CaptureDrone(context.DialogueGenerator),
-                world = world
+                world = world,
+                mineResetElapsedSeconds = game.MineResetCycle.ElapsedSeconds,
+                mineResetPaidCount = game.MineResetCycle.PaidResetCount,
+                mineResetClockVisible = game.MineResetCycle.ClockVisible
             };
 
             return data;
@@ -97,7 +102,9 @@ namespace SubTerra.App.Save
                 data.progress.completedObjectives,
                 data.progress.hasSeenOutpostTutorial,
                 data.progress.currentObjectiveId,
-                data.progress.isDemoComplete);
+                data.progress.isDemoComplete,
+                data.progress.pendingQuestRewardId,
+                data.progress.questRewardSettledCount);
             var run = new RunState(
                 data.run.depth,
                 data.run.maximumDepth,
@@ -106,7 +113,11 @@ namespace SubTerra.App.Save
                 (GasRiskLevel)data.run.gasExposure,
                 (RunLifecyclePhase)data.run.lifecyclePhase);
             var outpost = RestoreOutpost(data.outpost);
-            var game = GameState.FromParts(player, progress, run, outpost);
+            var mineReset = new MineResetCycleState(
+                data.mineResetElapsedSeconds,
+                data.mineResetPaidCount,
+                data.mineResetClockVisible);
+            var game = GameState.FromParts(player, progress, run, outpost, mineReset);
             var inventory = RestoreInventory(data.inventory);
             var upgrades = RestoreUpgrades(data.upgrades);
             if (game == null || inventory == null || upgrades == null)
@@ -212,6 +223,25 @@ namespace SubTerra.App.Save
             result.storage.Sort((left, right) => string.CompareOrdinal(left.id, right.id));
             result.installedOutpostIds.AddRange(state.InstalledOutpostIds);
             result.installedOutpostIds.Sort(StringComparer.Ordinal);
+            for (var i = 0; i < state.FacilityCooldowns.Count; i++)
+            {
+                var cooldown = state.FacilityCooldowns[i];
+                if (cooldown == null
+                    || string.IsNullOrEmpty(cooldown.InstanceId)
+                    || cooldown.RemainingSeconds <= 0d)
+                {
+                    continue;
+                }
+
+                result.facilityCooldowns.Add(new FacilityCooldownSaveEntry
+                {
+                    instanceId = cooldown.InstanceId,
+                    remainingSeconds = cooldown.RemainingSeconds
+                });
+            }
+
+            result.facilityCooldowns.Sort(
+                (left, right) => string.CompareOrdinal(left.instanceId, right.instanceId));
             return result;
         }
 
@@ -276,12 +306,31 @@ namespace SubTerra.App.Save
                     data.storage[i].quantity));
             }
 
+            var cooldowns = new List<FacilityCooldownState>(
+                data.facilityCooldowns != null ? data.facilityCooldowns.Count : 0);
+            if (data.facilityCooldowns != null)
+            {
+                for (var i = 0; i < data.facilityCooldowns.Count; i++)
+                {
+                    var entry = data.facilityCooldowns[i];
+                    if (entry == null)
+                    {
+                        continue;
+                    }
+
+                    cooldowns.Add(new FacilityCooldownState(
+                        entry.instanceId,
+                        entry.remainingSeconds));
+                }
+            }
+
             return state.TryRestore(
                 storage,
                 data.installedOutpostIds,
                 data.checkpointId,
                 data.checkpointX,
-                data.checkpointY)
+                data.checkpointY,
+                cooldowns)
                     ? state
                     : null;
         }

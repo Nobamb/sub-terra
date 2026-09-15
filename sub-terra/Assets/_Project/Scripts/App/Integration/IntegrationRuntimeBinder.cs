@@ -59,6 +59,7 @@ namespace SubTerra.App.Integration
         [SerializeField] private MiningSystem miningSystem;
         [SerializeField] private PlayerMovement playerMovement;
         [SerializeField] private MiningProgressHud miningProgressHud;
+        [SerializeField] private GoldPickupVfx goldPickupVfx;
         [SerializeField] private RunFailureRuntimeController runFailureController;
         private EmergencyRescueRuntimeController emergencyRescueController;
         private ExplorationMinimap minimap;
@@ -178,6 +179,7 @@ namespace SubTerra.App.Integration
             miningSystem = Resolve(miningSystem);
             playerMovement = Resolve(playerMovement);
             miningProgressHud = Resolve(miningProgressHud, FindObjectsInactive.Include);
+            goldPickupVfx = Resolve(goldPickupVfx, FindObjectsInactive.Include);
             runFailureController = Resolve(runFailureController);
             emergencyRescueController = Resolve(emergencyRescueController, FindObjectsInactive.Include);
 
@@ -269,7 +271,8 @@ namespace SubTerra.App.Integration
                         bootstrap.State,
                         healthCommand: runFailureController != null
                             ? runFailureController.SurvivalController
-                            : null);
+                            : null,
+                        effects: runtime.Progression?.Effects);
                     outpostBridge.BindTo(outpostService);
                     runtime.BindAutoSaveEvents(
                         runtime.Economy,
@@ -610,6 +613,20 @@ namespace SubTerra.App.Integration
                 }
             }
 
+            if (goldPickupVfx != null)
+            {
+                try
+                {
+                    goldPickupVfx.BindTo(
+                        miningSystem,
+                        playerMovement != null ? playerMovement.transform : null);
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning("[SubTerra] GoldPickupVfx.BindTo failed: " + ex.Message);
+                }
+            }
+
             TryStep("BindMinimap", BindMinimap);
             SetHudVisible(true);
             SetDeferredInputEnabled(true);
@@ -714,7 +731,8 @@ namespace SubTerra.App.Integration
         public MiningCommitResult TryCommitMining(
             string mineralId,
             int quantity,
-            int energyCost)
+            int energyCost,
+            int goldGrant)
         {
             if (runtime == null)
             {
@@ -728,38 +746,33 @@ namespace SubTerra.App.Integration
 
             var inventory = runtime != null ? runtime.InventoryService : null;
             var state = bootstrap != null ? bootstrap.State : null;
-            if (inventory == null || state == null)
+            var effects = runtime != null && runtime.Progression != null
+                ? runtime.Progression.Effects
+                : null;
+            var result = MiningYieldCommit.TryCommit(
+                inventory,
+                state,
+                effects,
+                mineralId,
+                quantity,
+                energyCost,
+                goldGrant);
+            if (result.Succeeded && miningProgressHud != null)
             {
-                return new MiningCommitResult(MiningCommitStatus.DependencyMissing);
+                miningProgressHud.SetPendingYieldFeedback(
+                    MiningYieldCommit.FormatHudFeedback(
+                        mineralId,
+                        result.AcceptedBaseQuantity,
+                        result.AcceptedBonusQuantity,
+                        result.AcceptedGold, result.AcceptedGoldBonus));
             }
 
-            var cost = Mathf.Max(0, energyCost);
-            if (state.Player.Energy < cost)
+            if (result.Succeeded && result.AcceptedGold > 0 && goldPickupVfx != null)
             {
-                return new MiningCommitResult(MiningCommitStatus.InsufficientEnergy);
+                goldPickupVfx.SetPendingGold(result.AcceptedGold, result.AcceptedGoldBonus);
             }
 
-            var hasReward = !string.IsNullOrEmpty(mineralId) || quantity != 0;
-            if (hasReward)
-            {
-                if (string.IsNullOrEmpty(mineralId) || quantity <= 0)
-                {
-                    return new MiningCommitResult(MiningCommitStatus.InvalidReward);
-                }
-
-                // 전량 수락을 먼저 확정한다. 실패하면 전력과 월드 타일은 그대로 남는다.
-                var reward = inventory.TryAddMineralExact(mineralId, quantity);
-                if (reward.Status != InventoryMutationStatus.Success)
-                {
-                    return new MiningCommitResult(
-                        reward.Status == InventoryMutationStatus.CapacityFull
-                            ? MiningCommitStatus.InventoryFull
-                            : MiningCommitStatus.InvalidReward);
-                }
-            }
-
-            state.SetCurrentEnergy(state.Player.Energy - cost);
-            return MiningCommitResult.Success();
+            return result.ToShared();
         }
 
         private void BindCargoSpeed()

@@ -19,7 +19,7 @@ namespace SubTerra.Gameplay.Player.Tests
         private GameObject secondLadderObject;
         private GameObject animationVisualObject;
         private Sprite[] ladderAnimationFrames;
-        private Sprite[] ladderDownAnimationFrames;
+        private Sprite[] otherAnimationFrames;
         private Tile wallTile;
 
         [SetUp]
@@ -48,9 +48,9 @@ namespace SubTerra.Gameplay.Player.Tests
                 }
             }
 
-            if (ladderDownAnimationFrames != null)
+            if (otherAnimationFrames != null)
             {
-                foreach (var frame in ladderDownAnimationFrames)
+                foreach (var frame in otherAnimationFrames)
                 {
                     Object.DestroyImmediate(frame);
                 }
@@ -443,14 +443,6 @@ namespace SubTerra.Gameplay.Player.Tests
             {
                 CreateTestSprite(),
                 CreateTestSprite(),
-                CreateTestSprite(),
-                CreateTestSprite()
-            };
-            ladderDownAnimationFrames = new[]
-            {
-                CreateTestSprite(),
-                CreateTestSprite(),
-                CreateTestSprite(),
                 CreateTestSprite()
             };
             animation.ConfigureFrames(
@@ -460,7 +452,6 @@ namespace SubTerra.Gameplay.Player.Tests
                 ladderAnimationFrames,
                 ladderAnimationFrames,
                 ladderAnimationFrames,
-                ladderDownAnimationFrames,
                 ladderAnimationFrames,
                 ladderAnimationFrames,
                 ladderAnimationFrames);
@@ -479,7 +470,7 @@ namespace SubTerra.Gameplay.Player.Tests
         }
 
         [Test]
-        public void LadderAnimation_UsesDedicatedFramesWhenDescending()
+        public void LadderAnimation_UsesSharedFramesAndReversesWithVerticalDistance()
         {
             animationVisualObject = new GameObject("LadderAnimationVisual");
             animationVisualObject.transform.SetParent(playerObject.transform);
@@ -487,14 +478,6 @@ namespace SubTerra.Gameplay.Player.Tests
             var animation = animationVisualObject.AddComponent<PlayerAnimationController>();
             ladderAnimationFrames = new[]
             {
-                CreateTestSprite(),
-                CreateTestSprite(),
-                CreateTestSprite(),
-                CreateTestSprite()
-            };
-            ladderDownAnimationFrames = new[]
-            {
-                CreateTestSprite(),
                 CreateTestSprite(),
                 CreateTestSprite(),
                 CreateTestSprite()
@@ -506,29 +489,289 @@ namespace SubTerra.Gameplay.Player.Tests
                 ladderAnimationFrames,
                 ladderAnimationFrames,
                 ladderAnimationFrames,
-                ladderDownAnimationFrames,
                 ladderAnimationFrames,
                 ladderAnimationFrames,
                 ladderAnimationFrames);
+            SetPrivateField(animation, "ladderDistancePerFrame", 0.1f);
 
             movement.EnterLadder();
             movement.SetVerticalMoveInput(1f);
             InvokePrivate(animation, "LateUpdate");
             Assert.AreSame(ladderAnimationFrames[0], renderer.sprite);
 
+            body.position = new Vector2(0f, 0.09f);
+            InvokePrivate(animation, "LateUpdate");
+            Assert.AreSame(
+                ladderAnimationFrames[0],
+                renderer.sprite,
+                "설정 거리 미만에서는 다음 사다리 프레임으로 넘어가면 안 된다.");
+
+            body.position = new Vector2(0f, 0.11f);
+            InvokePrivate(animation, "LateUpdate");
+            Assert.AreSame(
+                ladderAnimationFrames[1],
+                renderer.sprite,
+                "실제 상승 거리가 한 단계 누적되면 왼쪽 동작 프레임을 사용해야 한다.");
+
+            movement.ExitLadder();
+            body.position = Vector2.zero;
+            movement.EnterLadder();
             movement.SetVerticalMoveInput(-1f);
             InvokePrivate(animation, "LateUpdate");
-            Assert.AreSame(
-                ladderDownAnimationFrames[0],
-                renderer.sprite,
-                "하강 시에는 상승 프레임이 아니라 전용 하강 프레임을 사용해야 한다.");
 
-            SetPrivateField(animation, "stateStartedAt", Time.unscaledTime - 0.25f);
+            body.position = new Vector2(0f, -0.09f);
             InvokePrivate(animation, "LateUpdate");
             Assert.AreSame(
-                ladderDownAnimationFrames[2],
+                ladderAnimationFrames[0],
                 renderer.sprite,
-                "하강 프레임은 별도 시트 순서로 진행되어야 한다.");
+                "하강도 설정 거리 미만에서는 중립 프레임을 유지해야 한다.");
+
+            body.position = new Vector2(0f, -0.11f);
+            InvokePrivate(animation, "LateUpdate");
+            Assert.AreSame(
+                ladderAnimationFrames[2],
+                renderer.sprite,
+                "실제 하강 거리가 한 단계 누적되면 같은 배열을 역방향으로 사용해야 한다.");
+
+            movement.SetVerticalMoveInput(0f);
+            InvokePrivate(animation, "LateUpdate");
+            Assert.AreSame(
+                ladderAnimationFrames[0],
+                renderer.sprite,
+                "사다리에서 멈추면 중립 프레임으로 복원되어야 한다.");
+        }
+
+        [Test]
+        public void LadderAnimation_DoesNotSelectWalkFramesDuringContinuousClimb()
+        {
+            animationVisualObject = new GameObject("LadderWalkIsolationVisual");
+            animationVisualObject.transform.SetParent(playerObject.transform);
+            var renderer = animationVisualObject.AddComponent<SpriteRenderer>();
+            var animation = animationVisualObject.AddComponent<PlayerAnimationController>();
+            ladderAnimationFrames = new[]
+            {
+                CreateTestSprite(),
+                CreateTestSprite(),
+                CreateTestSprite()
+            };
+            otherAnimationFrames = new[]
+            {
+                CreateTestSprite(),
+                CreateTestSprite()
+            };
+            animation.ConfigureFrames(
+                renderer,
+                movement,
+                otherAnimationFrames,
+                otherAnimationFrames,
+                otherAnimationFrames,
+                ladderAnimationFrames,
+                otherAnimationFrames,
+                otherAnimationFrames,
+                otherAnimationFrames);
+
+            movement.EnterLadder();
+            movement.SetMoveInput(1f);
+            movement.SetVerticalMoveInput(1f);
+            InvokePrivate(animation, "LateUpdate");
+
+            for (var sample = 1; sample <= 80; sample++)
+            {
+                body.position = new Vector2(sample * 0.01f, sample * 0.02f);
+                InvokePrivate(animation, "LateUpdate");
+
+                CollectionAssert.Contains(
+                    ladderAnimationFrames,
+                    renderer.sprite,
+                    $"연속 등반 중 {sample}번째 표본에서 일반 이동 프레임이 표시되었다.");
+                CollectionAssert.DoesNotContain(otherAnimationFrames, renderer.sprite);
+            }
+        }
+
+        [Test]
+        public void LadderAnimation_TransientContactGap_HoldsLadderFrameAndResumes()
+        {
+            animationVisualObject = new GameObject("LadderContactGapVisual");
+            animationVisualObject.transform.SetParent(playerObject.transform);
+            var renderer = animationVisualObject.AddComponent<SpriteRenderer>();
+            var animation = animationVisualObject.AddComponent<PlayerAnimationController>();
+            ladderAnimationFrames = new[]
+            {
+                CreateTestSprite(),
+                CreateTestSprite(),
+                CreateTestSprite()
+            };
+            otherAnimationFrames = new[]
+            {
+                CreateTestSprite(),
+                CreateTestSprite()
+            };
+            animation.ConfigureFrames(
+                renderer,
+                movement,
+                otherAnimationFrames,
+                otherAnimationFrames,
+                otherAnimationFrames,
+                ladderAnimationFrames,
+                otherAnimationFrames,
+                otherAnimationFrames,
+                otherAnimationFrames);
+
+            LadderZone firstLadder = CreateLadderZone("ContactGapFirst", out firstLadderObject);
+            LadderZone secondLadder = CreateLadderZone("ContactGapSecond", out secondLadderObject);
+            movement.EnterLadder(firstLadder);
+            movement.SetVerticalMoveInput(1f);
+            InvokePrivate(animation, "LateUpdate");
+            body.position = new Vector2(0f, 0.51f);
+            InvokePrivate(animation, "LateUpdate");
+            var frameBeforeGap = renderer.sprite;
+
+            movement.ExitLadder(firstLadder);
+            SetPrivateField(movement, "<IsGrounded>k__BackingField", true);
+            movement.SetMoveInput(1f);
+            InvokePrivate(animation, "LateUpdate");
+
+            Assert.AreSame(
+                frameBeforeGap,
+                renderer.sprite,
+                "사다리 접촉이 순간적으로 끊겨도 Walk 프레임으로 바뀌면 안 된다.");
+            CollectionAssert.DoesNotContain(otherAnimationFrames, renderer.sprite);
+
+            movement.EnterLadder(secondLadder);
+            movement.SetVerticalMoveInput(1f);
+            InvokePrivate(animation, "LateUpdate");
+            CollectionAssert.Contains(
+                ladderAnimationFrames,
+                renderer.sprite,
+                "짧은 접촉 공백 안에 재진입하면 사다리 프레임을 이어가야 한다.");
+        }
+
+        [Test]
+        public void LadderAnimation_GraceExpires_RestoresNormalAnimation()
+        {
+            animationVisualObject = new GameObject("LadderGraceExpiryVisual");
+            animationVisualObject.transform.SetParent(playerObject.transform);
+            var renderer = animationVisualObject.AddComponent<SpriteRenderer>();
+            var animation = animationVisualObject.AddComponent<PlayerAnimationController>();
+            ladderAnimationFrames = new[]
+            {
+                CreateTestSprite(),
+                CreateTestSprite(),
+                CreateTestSprite()
+            };
+            otherAnimationFrames = new[] { CreateTestSprite() };
+            animation.ConfigureFrames(
+                renderer,
+                movement,
+                otherAnimationFrames,
+                otherAnimationFrames,
+                otherAnimationFrames,
+                ladderAnimationFrames,
+                otherAnimationFrames,
+                otherAnimationFrames,
+                otherAnimationFrames);
+
+            LadderZone ladder = CreateLadderZone("GraceExpiryLadder", out firstLadderObject);
+            movement.EnterLadder(ladder);
+            movement.SetVerticalMoveInput(1f);
+            InvokePrivate(animation, "LateUpdate");
+            movement.ExitLadder(ladder);
+            SetPrivateField(movement, "<IsGrounded>k__BackingField", true);
+            movement.SetMoveInput(1f);
+            SetPrivateField(animation, "ladderVisualGraceUntil", Time.unscaledTime - 1f);
+
+            InvokePrivate(animation, "LateUpdate");
+
+            Assert.AreSame(
+                otherAnimationFrames[0],
+                renderer.sprite,
+                "유예 시간이 끝나면 일반 Walk 표시가 복원되어야 한다.");
+        }
+
+        [Test]
+        public void LadderAnimation_ActiveTriggerContact_PrioritizesLadderFrames()
+        {
+            animationVisualObject = new GameObject("LadderContactPriorityVisual");
+            animationVisualObject.transform.SetParent(playerObject.transform);
+            var renderer = animationVisualObject.AddComponent<SpriteRenderer>();
+            var animation = animationVisualObject.AddComponent<PlayerAnimationController>();
+            ladderAnimationFrames = new[]
+            {
+                CreateTestSprite(),
+                CreateTestSprite(),
+                CreateTestSprite()
+            };
+            otherAnimationFrames = new[] { CreateTestSprite() };
+            animation.ConfigureFrames(
+                renderer,
+                movement,
+                otherAnimationFrames,
+                otherAnimationFrames,
+                otherAnimationFrames,
+                ladderAnimationFrames,
+                otherAnimationFrames,
+                otherAnimationFrames,
+                otherAnimationFrames);
+
+            LadderZone ladder = CreateLadderZone("ContactPriorityLadder", out firstLadderObject);
+            movement.EnterLadder(ladder);
+            movement.SetVerticalMoveInput(1f);
+            InvokePrivate(animation, "LateUpdate");
+
+            InvokePrivate(movement, "ExitLadderMode");
+            SetPrivateField(movement, "<IsGrounded>k__BackingField", true);
+            movement.SetMoveInput(1f);
+            InvokePrivate(animation, "LateUpdate");
+
+            Assert.IsFalse(movement.IsClimbing);
+            Assert.IsTrue(movement.IsTouchingLadder);
+            CollectionAssert.Contains(
+                ladderAnimationFrames,
+                renderer.sprite,
+                "사다리 Trigger 접촉이 유지되는 동안 Walk 프레임으로 바뀌면 안 된다.");
+        }
+
+        [Test]
+        public void LadderAnimation_LadderJump_BypassesVisualGrace()
+        {
+            animationVisualObject = new GameObject("LadderJumpVisual");
+            animationVisualObject.transform.SetParent(playerObject.transform);
+            var renderer = animationVisualObject.AddComponent<SpriteRenderer>();
+            var animation = animationVisualObject.AddComponent<PlayerAnimationController>();
+            ladderAnimationFrames = new[]
+            {
+                CreateTestSprite(),
+                CreateTestSprite(),
+                CreateTestSprite()
+            };
+            otherAnimationFrames = new[] { CreateTestSprite() };
+            animation.ConfigureFrames(
+                renderer,
+                movement,
+                otherAnimationFrames,
+                otherAnimationFrames,
+                otherAnimationFrames,
+                ladderAnimationFrames,
+                otherAnimationFrames,
+                otherAnimationFrames,
+                otherAnimationFrames);
+
+            LadderZone ladder = CreateLadderZone("JumpLadder", out firstLadderObject);
+            movement.EnterLadder(ladder);
+            movement.SetVerticalMoveInput(1f);
+            InvokePrivate(animation, "LateUpdate");
+
+            movement.RequestJump();
+            InvokePrivate(movement, "FixedUpdate");
+            movement.ExitLadder(ladder);
+            InvokePrivate(animation, "LateUpdate");
+
+            Assert.IsFalse(movement.IsClimbing);
+            Assert.IsTrue(movement.IsJumpInProgress);
+            Assert.AreSame(
+                otherAnimationFrames[0],
+                renderer.sprite,
+                "의도적으로 사다리에서 점프하면 유예 없이 Jump 표시로 전환되어야 한다.");
         }
 
         private static LadderZone CreateLadderZone(string name, out GameObject ladderObject)

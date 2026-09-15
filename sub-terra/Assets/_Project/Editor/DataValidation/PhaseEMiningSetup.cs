@@ -133,6 +133,8 @@ namespace SubTerra.App.Editor.DataValidation
             {
                 var definition = entries.GetArrayElementAtIndex(index).FindPropertyRelative("definition");
                 var tileId = definition.FindPropertyRelative("tileId").stringValue;
+                if (tileId.EndsWith(".gold", System.StringComparison.Ordinal))
+                    tileId = tileId.Substring(0, tileId.Length - 5);
                 var level = 0;
                 var energy = 1;
                 if (tileId == "tile.iron")
@@ -152,7 +154,12 @@ namespace SubTerra.App.Editor.DataValidation
                 }
                 else if (tileId == "tile.locked.signal")
                 {
-                    energy = 0;
+                    level = 2;
+                    energy = 3;
+                    definition.FindPropertyRelative("isMineable").boolValue = true;
+                    definition.FindPropertyRelative("mineralId").stringValue = "item.rare.engine_fuel";
+                    definition.FindPropertyRelative("quantity").intValue = 1;
+                    definition.FindPropertyRelative("miningTime").floatValue = 1.2f;
                 }
 
                 definition.FindPropertyRelative("requiredDrillLevel").intValue = level;

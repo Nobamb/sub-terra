@@ -9,6 +9,8 @@ namespace SubTerra.Gameplay.Drone
     {
         [SerializeField] private Color mineralColor = new(0.92f, 0.97f, 1f, 1f);
         [SerializeField] private Color hazardColor = new(1f, 0.12f, 0.08f, 1f);
+        [SerializeField] private Color goldColor = new(1f, 0.82f, 0.18f, 1f);
+        [SerializeField] private Color sealedGlyphColor = new(0.18f, 0.92f, 0.88f, 1f);
         [SerializeField, Min(0f)] private float lightIntensity = 1.8f;
         [SerializeField, Min(0.1f)] private float lightRadius = 1.05f;
         [SerializeField, Min(0.1f)] private float ringDuration = 1.5f;
@@ -121,8 +123,13 @@ namespace SubTerra.Gameplay.Drone
 
         private void ApplyKind(PooledMarker marker, DroneScanTargetKind kind)
         {
-            bool hazard = kind == DroneScanTargetKind.GasHazard;
-            Color color = hazard ? hazardColor : mineralColor;
+            Color color = kind switch
+            {
+                DroneScanTargetKind.GasHazard => hazardColor,
+                DroneScanTargetKind.GoldDrop => goldColor,
+                DroneScanTargetKind.SealedGlyph => sealedGlyphColor,
+                _ => mineralColor
+            };
             marker.Light.color = color;
             marker.Light.intensity = lightIntensity;
         }

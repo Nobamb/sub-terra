@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using SubTerra.App.State;
 using SubTerra.Shared;
 using UnityEngine;
@@ -17,6 +18,7 @@ namespace SubTerra.App.Inventory
         private GameState gameState;
 
         public InventoryState State => state;
+        public IMineralCatalogLookup CatalogLookup => catalog;
         public InventoryMutationResult LastResult { get; private set; }
 
         /// <summary>성공 변이 후 전체 스냅샷. InventoryPanel이 구독한다.</summary>
@@ -76,6 +78,151 @@ namespace SubTerra.App.Inventory
         public InventoryMutationResult TryAddMineralExact(string mineralId, int quantity)
         {
             return TryAddMineralInternal(mineralId, quantity, allowPartial: false);
+        }
+
+        /// <summary>
+        /// 여러 광물을 전량 사전 검증한 뒤 한 트랜잭션으로 추가한다.
+        /// 하나라도 용량 부족·무효면 상태를 바꾸지 않으며, 성공 시 InventoryChanged는 1회만 발행한다.
+        /// </summary>
+        public InventoryMutationResult TryAddManyExact(
+            IReadOnlyList<KeyValuePair<string, int>> additions)
+        {
+            if (catalog == null)
+            {
+                return Fail(InventoryMutationStatus.CatalogMissing, string.Empty, 0, "Catalog missing.");
+            }
+
+            if (additions == null || additions.Count == 0)
+            {
+                LastResult = InventoryMutationResult.Accepted(
+                    InventoryMutationStatus.Success,
+                    string.Empty,
+                    0,
+                    0,
+                    "Empty addition list.");
+                return LastResult;
+            }
+
+            var remaining = state.MaxCapacity - state.CurrentWeight;
+            if (remaining < 0f)
+            {
+                remaining = 0f;
+            }
+
+            var totalRequested = 0;
+            var firstId = additions[0].Key;
+            for (var i = 0; i < additions.Count; i++)
+            {
+                var mineralId = additions[i].Key;
+                var quantity = additions[i].Value;
+                if (string.IsNullOrEmpty(mineralId))
+                {
+                    return Fail(InventoryMutationStatus.InvalidId, mineralId, quantity, "Empty mineral id.");
+                }
+
+                if (quantity <= 0)
+                {
+                    return Fail(
+                        InventoryMutationStatus.InvalidQuantity,
+                        mineralId,
+                        quantity,
+                        "Quantity must be positive.");
+                }
+
+                if (!catalog.TryGetMineral(mineralId, out var info) || info.UnitWeight <= 0f)
+                {
+                    return Fail(InventoryMutationStatus.InvalidId, mineralId, quantity, "Unknown mineral id.");
+                }
+
+                var existing = state.GetQuantity(mineralId);
+                if (existing > int.MaxValue - quantity)
+                {
+                    return Fail(InventoryMutationStatus.OverflowRisk, mineralId, quantity, "Quantity overflow risk.");
+                }
+
+                var maxFit = InventoryCalculator.MaxFittingUnits(remaining, info.UnitWeight);
+                if (quantity > maxFit)
+                {
+                    LastResult = InventoryMutationResult.Accepted(
+                        InventoryMutationStatus.CapacityFull,
+                        mineralId,
+                        quantity,
+                        0,
+                        "Insufficient capacity for the complete reward.");
+                    return LastResult;
+                }
+
+                remaining -= quantity * info.UnitWeight;
+                totalRequested += quantity;
+                if (i == 0)
+                {
+                    firstId = mineralId;
+                }
+            }
+
+            for (var i = 0; i < additions.Count; i++)
+            {
+                var mineralId = additions[i].Key;
+                var quantity = additions[i].Value;
+                var existing = state.GetQuantity(mineralId);
+                state.SetQuantity(mineralId, existing + quantity);
+            }
+
+            RecomputeAggregates();
+            RaiseChangedOnce();
+            LastResult = InventoryMutationResult.Accepted(
+                InventoryMutationStatus.Success,
+                firstId,
+                totalRequested,
+                totalRequested);
+            return LastResult;
+        }
+
+        /// <summary>요청 광물 전량을 현재 잔여 적재량에 넣을 수 있는지 상태 변경 없이 확인한다.</summary>
+        public bool CanFitExact(IReadOnlyList<KeyValuePair<string, int>> additions)
+        {
+            if (catalog == null || additions == null)
+            {
+                return false;
+            }
+
+            if (additions.Count == 0)
+            {
+                return true;
+            }
+
+            var remaining = state.MaxCapacity - state.CurrentWeight;
+            if (remaining < 0f)
+            {
+                remaining = 0f;
+            }
+
+            for (var i = 0; i < additions.Count; i++)
+            {
+                var mineralId = additions[i].Key;
+                var quantity = additions[i].Value;
+                if (quantity <= 0)
+                {
+                    continue;
+                }
+
+                if (string.IsNullOrEmpty(mineralId)
+                    || !catalog.TryGetMineral(mineralId, out var info)
+                    || info.UnitWeight <= 0f)
+                {
+                    return false;
+                }
+
+                var maxFit = InventoryCalculator.MaxFittingUnits(remaining, info.UnitWeight);
+                if (quantity > maxFit)
+                {
+                    return false;
+                }
+
+                remaining -= quantity * info.UnitWeight;
+            }
+
+            return true;
         }
 
         private InventoryMutationResult TryAddMineralInternal(

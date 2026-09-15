@@ -72,6 +72,7 @@ namespace SubTerra.App.Editor.DataValidation
                 ?? prefab;
             var icon = EnsurePlaceholderIcon();
             var minerals = BuildMinerals(icon);
+            var rareItems = BuildRareItems(icon);
             var buildings = BuildBuildings(
                 prefab,
                 supportPrefab,
@@ -83,7 +84,16 @@ namespace SubTerra.App.Editor.DataValidation
             var dialogues = BuildDialogues();
 
             var catalog = EnsureCatalog();
-            catalog.EditorSetLists(minerals, buildings, recipes, upgrades, dialogues);
+            catalog.EditorSetLists(
+                minerals,
+                catalog.MiningTiles != null
+                    ? new List<MiningTileData>(catalog.MiningTiles)
+                    : new List<MiningTileData>(),
+                buildings,
+                recipes,
+                upgrades,
+                dialogues,
+                rareItems);
             EditorUtility.SetDirty(catalog);
             AssetDatabase.SaveAssets();
 
@@ -94,7 +104,7 @@ namespace SubTerra.App.Editor.DataValidation
 
             return
                 $"Catalog={CatalogPath}; valid={validation.IsValid}; errors={validation.ErrorCount}; " +
-                $"minerals={minerals.Count}; buildings={buildings.Count}; recipes={recipes.Count}; " +
+                $"minerals={minerals.Count}; rareItems={rareItems.Count}; buildings={buildings.Count}; recipes={recipes.Count}; " +
                 $"upgrades={upgrades.Count}; dialogues={dialogues.Count}; dictInit={validation.DictionaryInitialized}";
         }
 
@@ -102,6 +112,7 @@ namespace SubTerra.App.Editor.DataValidation
         {
             EnsureFolder("Assets/_Project", "Data");
             EnsureFolder(Root, "Minerals");
+            EnsureFolder(Root, "RareItems");
             EnsureFolder(Root, "Buildings");
             EnsureFolder(Root, "Recipes");
             EnsureFolder(Root, "Upgrades");
@@ -192,6 +203,57 @@ namespace SubTerra.App.Editor.DataValidation
                 EnsureMineral("Mineral_Iron.asset", DataIds.Minerals.Iron, "Iron", 2f, 15, icon),
                 EnsureMineral("Mineral_Lithium.asset", DataIds.Minerals.Lithium, "Lithium", 0.8f, 40, icon)
             };
+        }
+
+        private static List<MineralData> BuildRareItems(Sprite icon)
+        {
+            var glyphIcon = LoadEngineFuelIcon() ?? icon;
+            return new List<MineralData>
+            {
+                EnsureRareItem(
+                    "RareItem_EngineFuel.asset",
+                    DataIds.RareItems.EngineFuel,
+                    "엔진 연료",
+                    1f,
+                    100,
+                    glyphIcon)
+            };
+        }
+
+        private static Sprite LoadEngineFuelIcon()
+        {
+            var path = "Assets/_Project/Art/Icons/icon_engine_fuel.png";
+            var sprites = AssetDatabase.LoadAllAssetsAtPath(path);
+            for (var i = 0; i < sprites.Length; i++)
+            {
+                if (sprites[i] is Sprite sprite)
+                {
+                    return sprite;
+                }
+            }
+
+            return AssetDatabase.LoadAssetAtPath<Sprite>(path);
+        }
+
+        private static MineralData EnsureRareItem(
+            string file,
+            string id,
+            string name,
+            float weight,
+            int price,
+            Sprite icon)
+        {
+            var path = Root + "/RareItems/" + file;
+            var asset = AssetDatabase.LoadAssetAtPath<MineralData>(path);
+            if (asset == null)
+            {
+                asset = ScriptableObject.CreateInstance<MineralData>();
+                AssetDatabase.CreateAsset(asset, path);
+            }
+
+            asset.EditorSet(id, name, weight, price, icon);
+            EditorUtility.SetDirty(asset);
+            return asset;
         }
 
         private static MineralData EnsureMineral(
@@ -326,6 +388,14 @@ namespace SubTerra.App.Editor.DataValidation
                 EnsureUpgrade("Upgrade_Maximum_Cargo.asset", DataIds.Upgrades.MaximumCargo, "최대 화물 중량",
                     new[] { 30f, 70f, 120f },
                     Costs(Copper(6), CopperIron(8, 5), IronLithium(8, 6))),
+                EnsureUpgrade("Upgrade_Cargo_Yield.asset", DataIds.Upgrades.CargoYield, "채굴 수확량",
+                    new[] { 1f, 2f, 3f },
+                    Costs(Copper(10), CopperIron(20, 10), CopperIronLithium(30, 20, 10)),
+                    Yields(
+                        YieldBonus(CopperBonus(1)),
+                        YieldBonus(CopperBonus(2), IronBonus(1)),
+                        YieldBonus(CopperBonus(3), IronBonus(2), LithiumBonus(1)))),
+                BuildGoldGainUpgrade(),
                 EnsureUpgrade("Upgrade_Drone_Scan.asset", DataIds.Upgrades.DroneScan, "드론 스캔 범위",
                     new[] { 3f, 7f },
                     Costs(Copper(6), CopperIron(6, 5))),
@@ -338,12 +408,22 @@ namespace SubTerra.App.Editor.DataValidation
             };
         }
 
+        public static UpgradeData BuildGoldGainUpgrade()
+        {
+            return EnsureUpgrade("Upgrade_Cargo_Gold.asset", DataIds.Upgrades.CargoGold, "골드 획득",
+                new[] { 50f, 75f, 100f }, Costs(
+                    new List<ItemCostEntry> { new ItemCostEntry(DataIds.Currency.Gold, 500), new ItemCostEntry(DataIds.Minerals.Copper, 10) },
+                    new List<ItemCostEntry> { new ItemCostEntry(DataIds.Currency.Gold, 1000), new ItemCostEntry(DataIds.Minerals.Iron, 10) },
+                    new List<ItemCostEntry> { new ItemCostEntry(DataIds.Currency.Gold, 3000), new ItemCostEntry(DataIds.Minerals.Lithium, 10) }));
+        }
+
         private static UpgradeData EnsureUpgrade(
             string file,
             string id,
             string name,
             IReadOnlyList<float> effects,
-            IReadOnlyList<List<ItemCostEntry>> costs)
+            IReadOnlyList<List<ItemCostEntry>> costs,
+            IReadOnlyList<List<MineralBonusEntry>> miningYieldBonuses = null)
         {
             var path = Root + "/Upgrades/" + file;
             var asset = AssetDatabase.LoadAssetAtPath<UpgradeData>(path);
@@ -356,10 +436,17 @@ namespace SubTerra.App.Editor.DataValidation
             var levels = new List<UpgradeLevelDefinition>();
             for (var i = 0; i < effects.Count; i++)
             {
+                List<MineralBonusEntry> bonuses = null;
+                if (miningYieldBonuses != null && i < miningYieldBonuses.Count)
+                {
+                    bonuses = miningYieldBonuses[i];
+                }
+
                 levels.Add(new UpgradeLevelDefinition(
                     i + 1,
                     effects[i],
-                    costs[i]));
+                    costs[i],
+                    bonuses));
             }
 
             asset.EditorSet(id, name, effects.Count, levels);
@@ -396,6 +483,42 @@ namespace SubTerra.App.Editor.DataValidation
                 new ItemCostEntry(DataIds.Minerals.Iron, iron),
                 new ItemCostEntry(DataIds.Minerals.Lithium, lithium)
             };
+        }
+
+        private static List<ItemCostEntry> CopperIronLithium(int copper, int iron, int lithium)
+        {
+            return new List<ItemCostEntry>
+            {
+                new ItemCostEntry(DataIds.Minerals.Copper, copper),
+                new ItemCostEntry(DataIds.Minerals.Iron, iron),
+                new ItemCostEntry(DataIds.Minerals.Lithium, lithium)
+            };
+        }
+
+        private static IReadOnlyList<List<MineralBonusEntry>> Yields(
+            params List<MineralBonusEntry>[] levels)
+        {
+            return levels;
+        }
+
+        private static List<MineralBonusEntry> YieldBonus(params MineralBonusEntry[] entries)
+        {
+            return new List<MineralBonusEntry>(entries);
+        }
+
+        private static MineralBonusEntry CopperBonus(int quantity)
+        {
+            return new MineralBonusEntry(DataIds.Minerals.Copper, quantity);
+        }
+
+        private static MineralBonusEntry IronBonus(int quantity)
+        {
+            return new MineralBonusEntry(DataIds.Minerals.Iron, quantity);
+        }
+
+        private static MineralBonusEntry LithiumBonus(int quantity)
+        {
+            return new MineralBonusEntry(DataIds.Minerals.Lithium, quantity);
         }
 
         private static List<DialogueTemplateData> BuildDialogues()

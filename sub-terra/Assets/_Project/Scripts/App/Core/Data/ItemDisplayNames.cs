@@ -6,6 +6,11 @@ namespace SubTerra.App.Core.Data
     /// </summary>
     public static class ItemDisplayNames
     {
+        public static string Cost(string itemId, int quantity)
+        {
+            return itemId == DataIds.Currency.Gold ? quantity + "G" : Mineral(itemId) + " x" + quantity;
+        }
+
         public static string Mineral(string itemId)
         {
             if (string.IsNullOrEmpty(itemId))
@@ -21,9 +26,18 @@ namespace SubTerra.App.Core.Data
                     return "철";
                 case DataIds.Minerals.Lithium:
                     return "리튬";
+                case DataIds.RareItems.EngineFuel:
+                    return "엔진 연료";
                 default:
                     return itemId;
             }
+        }
+
+        /// <summary>인벤·판매 목록용. 희귀 품목은 희귀 라벨을 붙인다.</summary>
+        public static string Inventory(string itemId)
+        {
+            var name = Mineral(itemId);
+            return DataIds.RareItems.IsRare(itemId) ? name + " (희귀)" : name;
         }
 
         public static string Building(string buildingId)
@@ -98,6 +112,10 @@ namespace SubTerra.App.Core.Data
                     return "초당 체력 재생";
                 case DataIds.Upgrades.MaximumCargo:
                     return "최대 화물 중량";
+                case DataIds.Upgrades.CargoYield:
+                    return "채굴 수확량";
+                case DataIds.Upgrades.CargoGold:
+                    return "골드 획득";
                 case DataIds.Upgrades.DroneScan:
                     return "드론 스캔 범위";
                 case DataIds.Upgrades.DroneRescue:
@@ -115,6 +133,8 @@ namespace SubTerra.App.Core.Data
         /// </summary>
         public static string UpgradeDescription(string upgradeId)
         {
+            if (upgradeId == DataIds.Upgrades.CargoGold)
+                return "광물 판매·정산과 골드 블록 채굴로 받는 골드가 늘어납니다. 퀘스트 보상에는 적용되지 않습니다.";
             if (string.IsNullOrEmpty(upgradeId))
             {
                 return string.Empty;
@@ -134,6 +154,8 @@ namespace SubTerra.App.Core.Data
                     return "시간이 지날수록 체력을 자동으로 회복합니다.";
                 case DataIds.Upgrades.MaximumCargo:
                     return "한 번에 운반할 수 있는 화물 중량 한도를 늘립니다.";
+                case DataIds.Upgrades.CargoYield:
+                    return "구리 칸을 캘 때 추가로 얻는 광물 수입니다. 추가분도 화물 무게에 포함됩니다.";
                 case DataIds.Upgrades.DroneScan:
                     return "Digger-Bot이 주변 광물·위험을 감지하는 범위를 확장합니다.";
                 case DataIds.Upgrades.DroneRescue:
@@ -179,7 +201,8 @@ namespace SubTerra.App.Core.Data
                 return catalogDisplayName;
             }
 
-            if (permanentId != null && permanentId.StartsWith("mineral."))
+            if (permanentId != null
+                && (permanentId.StartsWith("mineral.") || permanentId.StartsWith("item.")))
             {
                 return Mineral(permanentId);
             }

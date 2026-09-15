@@ -22,6 +22,10 @@ namespace SubTerra.App.Tests
             Assert.That(state.Run.StructuralRisk, Is.EqualTo(StructuralRiskLevel.Safe));
             Assert.That(state.Run.GasExposure, Is.EqualTo(GasRiskLevel.Safe));
             Assert.That(state.Progress.CompletedObjectives, Is.Zero);
+            Assert.That(state.MineResetCycle, Is.Not.Null);
+            Assert.That(state.MineResetCycle.ElapsedSeconds, Is.Zero);
+            Assert.That(state.MineResetCycle.PaidResetCount, Is.Zero);
+            Assert.That(state.MineResetCycle.ClockVisible, Is.True);
         }
 
         [Test]

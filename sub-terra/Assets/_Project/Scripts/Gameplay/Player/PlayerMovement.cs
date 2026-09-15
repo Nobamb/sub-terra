@@ -50,6 +50,8 @@ namespace SubTerra.Gameplay.Player
         public bool IsGrounded { get; private set; }
         public bool CanMove { get; private set; } = true;
         public bool IsClimbing { get; private set; }
+        public bool IsTouchingLadder => activeLadders.Count > 0;
+        public bool IsJumpInProgress => jumpUsedUntilLand && !IsGrounded;
         public bool IsDescendingLadder => IsClimbing && verticalMoveInput < -0.01f;
         public bool IsMovingOnLadder => IsClimbing && Mathf.Abs(verticalMoveInput) > 0.01f;
         public bool IsMovementRequested => Mathf.Abs(moveInput) > 0.01f

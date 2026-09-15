@@ -19,6 +19,12 @@ namespace SubTerra.App.Save
         public OutpostSaveData outpost = new OutpostSaveData();
         public DroneSaveData drone = new DroneSaveData();
         public WorldSnapshotDto world = new WorldSnapshotDto();
+        /// <summary>마지막 광산 초기화 이후 누적 플레이 초. 3시간(10800)에 도달하면 자동 초기화.</summary>
+        public double mineResetElapsedSeconds;
+        /// <summary>연속 유료 초기화 횟수. 비용은 500G × 2^count. 시간 초기화 시 0.</summary>
+        public int mineResetPaidCount;
+        /// <summary>상단 전자시계 표시. 구세이브 마이그레이션에서 true로 채운다.</summary>
+        public bool mineResetClockVisible = true;
     }
 
     [Serializable]
@@ -40,6 +46,8 @@ namespace SubTerra.App.Save
         /// <summary>현재 데모 목표 ID. 구버전 세이브는 빈 문자열 → 완료 개수로 폴백.</summary>
         public string currentObjectiveId = string.Empty;
         public bool isDemoComplete;
+        public string pendingQuestRewardId = string.Empty;
+        public int questRewardSettledCount;
     }
 
     [Serializable]
@@ -91,6 +99,16 @@ namespace SubTerra.App.Save
         public int checkpointY;
         public List<QuantitySaveEntry> storage = new List<QuantitySaveEntry>();
         public List<string> installedOutpostIds = new List<string>();
+        /// <summary>충전소/보건소 인스턴스별 남은 재사용 초. 구세이브는 빈 목록.</summary>
+        public List<FacilityCooldownSaveEntry> facilityCooldowns =
+            new List<FacilityCooldownSaveEntry>();
+    }
+
+    [Serializable]
+    public sealed class FacilityCooldownSaveEntry
+    {
+        public string instanceId = string.Empty;
+        public double remainingSeconds;
     }
 
     [Serializable]

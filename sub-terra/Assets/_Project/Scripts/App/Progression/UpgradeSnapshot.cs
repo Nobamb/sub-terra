@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using SubTerra.App.Core.Data;
 using SubTerra.Shared;
 
 namespace SubTerra.App.Progression
@@ -14,6 +15,8 @@ namespace SubTerra.App.Progression
         public float NextEffectValue { get; }
         public IReadOnlyList<ItemCostDto> NextCosts { get; }
         public bool CanAffordNextLevel { get; }
+        public IReadOnlyList<MineralBonusEntry> CurrentMiningYieldBonuses { get; }
+        public IReadOnlyList<MineralBonusEntry> NextMiningYieldBonuses { get; }
 
         public bool IsMaximumLevel => CurrentLevel >= MaximumLevel;
 
@@ -25,7 +28,9 @@ namespace SubTerra.App.Progression
             float currentEffectValue,
             float nextEffectValue,
             IReadOnlyList<ItemCostDto> nextCosts,
-            bool canAffordNextLevel)
+            bool canAffordNextLevel,
+            IReadOnlyList<MineralBonusEntry> currentMiningYieldBonuses = null,
+            IReadOnlyList<MineralBonusEntry> nextMiningYieldBonuses = null)
         {
             UpgradeId = upgradeId ?? string.Empty;
             DisplayName = displayName ?? string.Empty;
@@ -35,6 +40,10 @@ namespace SubTerra.App.Progression
             NextEffectValue = nextEffectValue;
             NextCosts = nextCosts ?? System.Array.Empty<ItemCostDto>();
             CanAffordNextLevel = canAffordNextLevel;
+            CurrentMiningYieldBonuses = currentMiningYieldBonuses
+                ?? System.Array.Empty<MineralBonusEntry>();
+            NextMiningYieldBonuses = nextMiningYieldBonuses
+                ?? System.Array.Empty<MineralBonusEntry>();
         }
     }
 }

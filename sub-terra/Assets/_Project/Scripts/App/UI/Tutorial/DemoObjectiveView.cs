@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using SubTerra.App.Core.Data;
 using SubTerra.App.Tutorial;
 using TMPro;
 using UnityEngine;
@@ -26,9 +28,35 @@ namespace SubTerra.App.UI.Tutorial
         [SerializeField] private TMP_Text detailsTitleText;
         [SerializeField] private TMP_Text detailsBodyText;
         [SerializeField] private TMP_Text detailsNextActionText;
+        [SerializeField] private TMP_Text detailsRewardText;
+        [SerializeField] private TMP_Text detailsStatusText;
+        [SerializeField] private TMP_Text detailsIndexText;
+        [SerializeField] private Button detailsPrevButton;
+        [SerializeField] private Button detailsNextButton;
+        [SerializeField] private GameObject capacityRoot;
+        [SerializeField] private TMP_Text capacityTitleText;
+        [SerializeField] private TMP_Text capacityBodyText;
+        [SerializeField] private GameObject dumpRoot;
+        [SerializeField] private TMP_Text dumpSummaryText;
+        [SerializeField] private TMP_Text dumpCopperText;
+        [SerializeField] private TMP_Text dumpIronText;
+        [SerializeField] private TMP_Text dumpLithiumText;
+        [SerializeField] private Button dumpCopperOneButton;
+        [SerializeField] private Button dumpCopperAllButton;
+        [SerializeField] private Button dumpIronOneButton;
+        [SerializeField] private Button dumpIronAllButton;
+        [SerializeField] private Button dumpLithiumOneButton;
+        [SerializeField] private Button dumpLithiumAllButton;
+        [SerializeField] private GameObject claimRoot;
+        [SerializeField] private TMP_Text claimTitleText;
+        [SerializeField] private TMP_Text claimQuestTitleText;
+        [SerializeField] private TMP_Text claimRewardText;
+        [SerializeField] private TMP_Text claimHintText;
 
         private int defaultTutorialSort = UiLayerPriority.TutorialGuidance;
         private Canvas guidanceCanvas;
+        private Canvas detailsCanvas;
+        private Canvas claimCanvas;
 
         private void Awake()
         {
@@ -106,6 +134,35 @@ namespace SubTerra.App.UI.Tutorial
             guidanceCanvas.sortingOrder = UiLayerPriority.IntroductionGuidance;
         }
 
+        private static void EnsurePopupCanvas(GameObject root, ref Canvas canvas)
+        {
+            if (root == null)
+            {
+                return;
+            }
+
+            if (canvas == null)
+            {
+                canvas = root.GetComponent<Canvas>();
+                if (canvas == null)
+                {
+                    canvas = root.AddComponent<Canvas>();
+                }
+            }
+
+            if (root.GetComponent<GraphicRaycaster>() == null)
+            {
+                root.AddComponent<GraphicRaycaster>();
+            }
+
+            canvas.enabled = true;
+            canvas.overrideSorting = true;
+            canvas.sortingOrder = UiLayerPriority.QuestPopup;
+            canvas.additionalShaderChannels = AdditionalCanvasShaderChannels.TexCoord1
+                | AdditionalCanvasShaderChannels.Normal
+                | AdditionalCanvasShaderChannels.Tangent;
+        }
+
         public void SetGuidanceText(string title, string body)
         {
             if (guidanceTitleText != null)
@@ -160,6 +217,11 @@ namespace SubTerra.App.UI.Tutorial
             if (detailsRoot != null)
             {
                 detailsRoot.SetActive(visible);
+                if (visible)
+                {
+                    detailsRoot.transform.SetAsLastSibling();
+                    EnsurePopupCanvas(detailsRoot, ref detailsCanvas);
+                }
             }
         }
 
@@ -180,6 +242,175 @@ namespace SubTerra.App.UI.Tutorial
                 detailsNextActionText.text = string.IsNullOrEmpty(nextAction)
                     ? string.Empty
                     : "다음 행동: " + nextAction;
+            }
+        }
+
+        public void SetDetailsReward(string rewardText)
+        {
+            if (detailsRewardText != null)
+            {
+                detailsRewardText.text = rewardText ?? string.Empty;
+            }
+        }
+
+        public void SetDetailsStatus(string statusText)
+        {
+            if (detailsStatusText != null)
+            {
+                detailsStatusText.text = statusText ?? string.Empty;
+            }
+        }
+
+        public void SetDetailsIndex(string indexText)
+        {
+            if (detailsIndexText != null)
+            {
+                detailsIndexText.text = indexText ?? string.Empty;
+            }
+        }
+
+        public void SetDetailsNavInteractable(bool previousEnabled, bool nextEnabled)
+        {
+            if (detailsPrevButton != null)
+            {
+                detailsPrevButton.interactable = previousEnabled;
+            }
+
+            if (detailsNextButton != null)
+            {
+                detailsNextButton.interactable = nextEnabled;
+            }
+        }
+
+        public void SetCapacityChoiceVisible(bool visible)
+        {
+            if (capacityRoot != null)
+            {
+                capacityRoot.SetActive(visible);
+                if (visible)
+                {
+                    capacityRoot.transform.SetAsLastSibling();
+                }
+            }
+        }
+
+        public void SetCapacityChoiceText(string title, string body)
+        {
+            if (capacityTitleText != null)
+            {
+                capacityTitleText.text = title ?? string.Empty;
+            }
+
+            if (capacityBodyText != null)
+            {
+                capacityBodyText.text = body ?? string.Empty;
+            }
+        }
+
+        public void SetDumpPanelVisible(bool visible)
+        {
+            if (dumpRoot != null)
+            {
+                dumpRoot.SetActive(visible);
+                if (visible)
+                {
+                    dumpRoot.transform.SetAsLastSibling();
+                }
+            }
+        }
+
+        public void SetDumpSummary(string summary)
+        {
+            if (dumpSummaryText != null)
+            {
+                dumpSummaryText.text = summary ?? string.Empty;
+            }
+        }
+
+        public void SetDumpRows(IReadOnlyList<QuestDumpRow> rows)
+        {
+            SetDumpMineral(DataIds.Minerals.Copper, dumpCopperText, dumpCopperOneButton, dumpCopperAllButton, rows);
+            SetDumpMineral(DataIds.Minerals.Iron, dumpIronText, dumpIronOneButton, dumpIronAllButton, rows);
+            SetDumpMineral(DataIds.Minerals.Lithium, dumpLithiumText, dumpLithiumOneButton, dumpLithiumAllButton, rows);
+        }
+
+        public void SetClaimVisible(bool visible)
+        {
+            if (claimRoot != null)
+            {
+                claimRoot.SetActive(visible);
+                if (visible)
+                {
+                    claimRoot.transform.SetAsLastSibling();
+                    EnsurePopupCanvas(claimRoot, ref claimCanvas);
+                }
+            }
+        }
+
+        public void SetClaimText(string title, string questTitle, string rewardText, string hint)
+        {
+            if (claimTitleText != null)
+            {
+                claimTitleText.text = title ?? string.Empty;
+            }
+
+            if (claimQuestTitleText != null)
+            {
+                claimQuestTitleText.text = questTitle ?? string.Empty;
+            }
+
+            if (claimRewardText != null)
+            {
+                claimRewardText.text = rewardText ?? string.Empty;
+            }
+
+            if (claimHintText != null)
+            {
+                claimHintText.text = hint ?? string.Empty;
+            }
+        }
+
+        private static void SetDumpMineral(
+            string mineralId,
+            TMP_Text label,
+            Button dumpOne,
+            Button dumpAll,
+            IReadOnlyList<QuestDumpRow> rows)
+        {
+            var quantity = 0;
+            var display = QuestRewardService.DisplayNameOf(mineralId);
+            if (rows != null)
+            {
+                for (var i = 0; i < rows.Count; i++)
+                {
+                    if (rows[i].MineralId != mineralId)
+                    {
+                        continue;
+                    }
+
+                    quantity = rows[i].Quantity;
+                    if (!string.IsNullOrEmpty(rows[i].DisplayName))
+                    {
+                        display = rows[i].DisplayName;
+                    }
+
+                    break;
+                }
+            }
+
+            if (label != null)
+            {
+                label.text = display + "  x" + quantity;
+            }
+
+            if (dumpOne != null)
+            {
+                dumpOne.interactable = quantity > 0;
+            }
+
+            if (dumpAll != null)
+            {
+                dumpAll.interactable = quantity > 0;
             }
         }
 
@@ -206,6 +437,74 @@ namespace SubTerra.App.UI.Tutorial
 
         public event System.Action DetailsRequested;
         public event System.Action DetailsDismissRequested;
+        public event System.Action DetailsPrevRequested;
+        public event System.Action DetailsNextRequested;
+        public event System.Action CapacityDumpRequested;
+        public event System.Action CapacityForfeitRequested;
+        public event System.Action DumpClosedRequested;
+        public event System.Action<string, int> DumpRequested;
+        public event System.Action ClaimConfirmRequested;
+
+        public void OnDetailsPrevClicked()
+        {
+            DetailsPrevRequested?.Invoke();
+        }
+
+        public void OnDetailsNextClicked()
+        {
+            DetailsNextRequested?.Invoke();
+        }
+
+        public void OnCapacityDumpClicked()
+        {
+            CapacityDumpRequested?.Invoke();
+        }
+
+        public void OnCapacityForfeitClicked()
+        {
+            CapacityForfeitRequested?.Invoke();
+        }
+
+        public void OnDumpClosedClicked()
+        {
+            DumpClosedRequested?.Invoke();
+        }
+
+        public void OnDumpCopperOneClicked()
+        {
+            DumpRequested?.Invoke(DataIds.Minerals.Copper, 1);
+        }
+
+        public void OnDumpCopperAllClicked()
+        {
+            DumpRequested?.Invoke(DataIds.Minerals.Copper, int.MaxValue);
+        }
+
+        public void OnDumpIronOneClicked()
+        {
+            DumpRequested?.Invoke(DataIds.Minerals.Iron, 1);
+        }
+
+        public void OnDumpIronAllClicked()
+        {
+            DumpRequested?.Invoke(DataIds.Minerals.Iron, int.MaxValue);
+        }
+
+        public void OnDumpLithiumOneClicked()
+        {
+            DumpRequested?.Invoke(DataIds.Minerals.Lithium, 1);
+        }
+
+        public void OnDumpLithiumAllClicked()
+        {
+            DumpRequested?.Invoke(DataIds.Minerals.Lithium, int.MaxValue);
+        }
+
+        /// <summary>클리어 보상 팝업 닫기/확인. 닫는 시점에 보상을 지급한다.</summary>
+        public void OnClaimConfirmClicked()
+        {
+            ClaimConfirmRequested?.Invoke();
+        }
 
         public bool HasRequiredReferences()
         {
@@ -218,6 +517,34 @@ namespace SubTerra.App.UI.Tutorial
                 && detailsTitleText != null
                 && detailsBodyText != null
                 && detailsNextActionText != null;
+        }
+
+        public bool HasRewardLogReferences()
+        {
+            return HasDetailsReferences()
+                && detailsRewardText != null
+                && detailsStatusText != null
+                && detailsIndexText != null
+                && detailsPrevButton != null
+                && detailsNextButton != null;
+        }
+
+        public bool HasOverflowReferences()
+        {
+            return capacityRoot != null
+                && capacityTitleText != null
+                && capacityBodyText != null
+                && dumpRoot != null
+                && dumpSummaryText != null;
+        }
+
+        public bool HasClaimReferences()
+        {
+            return claimRoot != null
+                && claimTitleText != null
+                && claimQuestTitleText != null
+                && claimRewardText != null
+                && claimHintText != null;
         }
     }
 }

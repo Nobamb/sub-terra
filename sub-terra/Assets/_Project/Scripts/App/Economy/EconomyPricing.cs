@@ -6,6 +6,35 @@ namespace SubTerra.App.Economy
     /// </summary>
     public static class EconomyPricing
     {
+        public static int ComputeGoldBonus(int baseGold, int percent)
+        {
+            if (baseGold <= 0 || percent <= 0 || percent > 100) return 0;
+            return (int)System.Math.Round(baseGold * (percent / 100.0),
+                System.MidpointRounding.AwayFromZero);
+        }
+
+        public static bool TryAddBonus(int baseGold, int percent, int currentBalance,
+            out int bonus, out int total, out string diagnostic)
+        {
+            bonus = ComputeGoldBonus(baseGold, percent);
+            long sum = (long)baseGold + bonus;
+            total = 0;
+            diagnostic = string.Empty;
+            if (baseGold < 0 || sum > (long)int.MaxValue - currentBalance)
+            {
+                diagnostic = "Gold balance overflow.";
+                return false;
+            }
+
+            total = (int)sum;
+            return true;
+        }
+
+        public static string FormatGoldGain(int total, int bonus)
+        {
+            return bonus > 0 ? (total - bonus) + "G + " + bonus + "G 보너스" : total + "G";
+        }
+
         /// <summary>단가 × 수량. 오버플로 시 false.</summary>
         public static bool TryComputeGoldGain(
             int unitPrice,

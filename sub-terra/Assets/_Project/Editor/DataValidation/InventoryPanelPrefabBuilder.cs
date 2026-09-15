@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.IO;
 using SubTerra.App.Core.Data;
 using SubTerra.App.UI.Inventory;
@@ -57,7 +58,7 @@ namespace SubTerra.App.Editor.DataValidation
             rootRect.anchorMin = new Vector2(0.5f, 0.5f);
             rootRect.anchorMax = new Vector2(0.5f, 0.5f);
             rootRect.pivot = new Vector2(0.5f, 0.5f);
-            rootRect.sizeDelta = new Vector2(420f, 320f);
+            rootRect.sizeDelta = new Vector2(420f, 390f);
             rootRect.anchoredPosition = Vector2.zero;
 
             var panelRoot = new GameObject("PanelRoot", typeof(RectTransform), typeof(Image));
@@ -83,14 +84,21 @@ namespace SubTerra.App.Editor.DataValidation
             rowsRect.offsetMax = new Vector2(-12f, -84f);
 
             var catalog = AssetDatabase.LoadAssetAtPath<GameDataCatalog>(CatalogPath);
-            var rows = new InventoryStackRowView[catalog != null ? catalog.Minerals.Count : 0];
+            var rowSources = new List<MineralData>();
+            if (catalog != null)
+            {
+                AppendCatalogItems(rowSources, catalog.Minerals);
+                AppendCatalogItems(rowSources, catalog.RareItems);
+            }
+
+            var rows = new InventoryStackRowView[rowSources.Count];
             for (var i = 0; i < rows.Length; i++)
             {
-                var mineral = catalog.Minerals[i];
+                var mineral = rowSources[i];
                 rows[i] = CreateStackRow(
                     rowsRoot.transform,
                     mineral != null ? mineral.Id : string.Empty,
-                    mineral != null ? mineral.DisplayName : string.Empty,
+                    mineral != null ? ItemDisplayNames.Inventory(mineral.Id) : string.Empty,
                     mineral != null ? mineral.Icon : null,
                     i);
             }
@@ -214,6 +222,22 @@ namespace SubTerra.App.Editor.DataValidation
             var row = root.AddComponent<InventoryStackRowView>();
             row.EditorSetReferences(mineralId, iconImage, name, quantity);
             return row;
+        }
+
+        private static void AppendCatalogItems(List<MineralData> target, IReadOnlyList<MineralData> source)
+        {
+            if (source == null)
+            {
+                return;
+            }
+
+            for (var i = 0; i < source.Count; i++)
+            {
+                if (source[i] != null)
+                {
+                    target.Add(source[i]);
+                }
+            }
         }
 
         private static void StretchFull(RectTransform rect)

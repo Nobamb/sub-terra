@@ -87,6 +87,39 @@ namespace SubTerra.App.Progression
             return result > 1f ? 1f : result;
         }
 
+        public int GetMiningYieldBonus(string mineralId)
+        {
+            if (string.IsNullOrEmpty(mineralId) || state == null || catalog == null)
+            {
+                return 0;
+            }
+
+            var currentLevel = state.GetLevel(DataIds.Upgrades.CargoYield);
+            if (currentLevel <= 0
+                || !catalog.TryGetUpgrade(DataIds.Upgrades.CargoYield, out var data)
+                || data == null
+                || data.Levels == null
+                || currentLevel > data.MaxLevel
+                || currentLevel > data.Levels.Count)
+            {
+                return 0;
+            }
+
+            var level = data.Levels[currentLevel - 1];
+            if (level == null || level.Level != currentLevel)
+            {
+                return 0;
+            }
+
+            return level.GetMiningYieldBonus(mineralId);
+        }
+
+        public int GetGoldGainBonusPercent()
+        {
+            var value = GetCurrentEffect(DataIds.Upgrades.CargoGold);
+            return value == 50f || value == 75f || value == 100f ? (int)value : 0;
+        }
+
         public float GetCurrentEffect(string upgradeId)
         {
             if (state == null || catalog == null || string.IsNullOrEmpty(upgradeId))
