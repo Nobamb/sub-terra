@@ -27,7 +27,9 @@ namespace SubTerra.App.Tests.PlayMode.MineDemo
             var systemObject = new GameObject("MiningSystem");
             var system = systemObject.AddComponent<MiningSystem>();
             var hudObject = new GameObject("MiningProgressHud");
-            var statusRoot = new GameObject("StatusRoot");
+            var statusRoot = new GameObject("StatusRoot", typeof(RectTransform));
+            var statusRect = statusRoot.GetComponent<RectTransform>();
+            statusRect.sizeDelta = new Vector2(150f, 18f);
             statusRoot.transform.SetParent(hudObject.transform, false);
             var hud = hudObject.AddComponent<MiningProgressHud>();
             SetPrivate(hud, "statusRoot", statusRoot);
@@ -36,10 +38,19 @@ namespace SubTerra.App.Tests.PlayMode.MineDemo
 
             Assert.That(system.TryStartMining(Vector3Int.zero), Is.False);
             Assert.That(statusRoot.activeSelf, Is.True);
+            Assert.That(statusRect.sizeDelta, Is.EqualTo(new Vector2(360f, 44f)));
+            hud.enabled = false;
+            hud.enabled = true;
+            hud.BindTo(system);
+            Assert.That(statusRoot.activeSelf, Is.False);
+            Assert.That(statusRect.sizeDelta, Is.EqualTo(new Vector2(150f, 18f)));
+            Assert.That(system.TryStartMining(Vector3Int.zero), Is.False);
+            Assert.That(statusRect.sizeDelta, Is.EqualTo(new Vector2(360f, 44f)));
 
             yield return new WaitForSecondsRealtime(0.08f);
 
             Assert.That(statusRoot.activeSelf, Is.False);
+            Assert.That(statusRect.sizeDelta, Is.EqualTo(new Vector2(150f, 18f)));
             Object.Destroy(systemObject);
             Object.Destroy(hudObject);
         }

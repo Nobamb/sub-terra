@@ -19,6 +19,7 @@ namespace SubTerra.App.Integration
         private Transform playerTarget;
         private Collider2D playerCollider;
         private RectTransform statusRect;
+        private Vector2 normalStatusSize;
         private RectTransform progressFillRect;
         private Canvas parentCanvas;
         private bool isFailureVisible;
@@ -157,6 +158,12 @@ namespace SubTerra.App.Integration
 
         private void SetVisible(bool visible)
         {
+            if (statusRect != null)
+            {
+                statusRect.sizeDelta = visible && isFailureVisible
+                    ? new Vector2(Mathf.Max(normalStatusSize.x, 360f), Mathf.Max(normalStatusSize.y, 44f))
+                    : normalStatusSize;
+            }
             if (statusRoot != null)
             {
                 statusRoot.SetActive(visible);
@@ -165,9 +172,14 @@ namespace SubTerra.App.Integration
 
         private void CacheUiReferences()
         {
-            statusRect = statusRoot != null
+            var nextStatusRect = statusRoot != null
                 ? statusRoot.GetComponent<RectTransform>()
                 : null;
+            if (nextStatusRect != statusRect && nextStatusRect != null)
+            {
+                normalStatusSize = nextStatusRect.sizeDelta;
+            }
+            statusRect = nextStatusRect;
             parentCanvas = GetComponentInParent<Canvas>();
             if (progressFill != null)
             {
@@ -210,9 +222,9 @@ namespace SubTerra.App.Integration
         {
             return reason switch
             {
-                MiningFailureReason.DrillLevelTooLow => "드릴 레벨이 부족합니다.",
+                MiningFailureReason.DrillLevelTooLow => "드릴 레벨이 부족합니다. 지상에서 업그레이드하세요.",
                 MiningFailureReason.InsufficientEnergy => "채굴 전력이 부족합니다.",
-                MiningFailureReason.InventoryFull => "화물이 가득 찼습니다.",
+                MiningFailureReason.InventoryFull => "화물이 가득 찼습니다. 귀환해 화물을 비우세요.",
                 MiningFailureReason.OutOfRange => "채굴 범위를 벗어났습니다.",
                 MiningFailureReason.NotMineable => "채굴할 수 없는 지형입니다.",
                 MiningFailureReason.DeepZoneLocked => "심층 구역이 해금되어야 채굴할 수 있는 자원입니다.",

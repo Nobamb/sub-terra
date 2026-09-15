@@ -189,6 +189,54 @@ namespace SubTerra.App.Tests.Save
             Assert.That(loaded.State.TargetSceneName, Is.EqualTo(SceneNames.Integration));
         }
 
+        [TestCase(SceneNames.Integration)]
+        [TestCase(SceneNames.SurfaceBase)]
+        public void EngineFuel_SaveReloadKeepsCargoAndMinedSignalRemoved(string targetScene)
+        {
+            var host = Track(new GameObject("EngineFuelSaveWorld"));
+            host.AddComponent<Grid>();
+            var mapObject = new GameObject("Foreground");
+            mapObject.transform.SetParent(host.transform);
+            var tilemap = mapObject.AddComponent<Tilemap>();
+            mapObject.AddComponent<TilemapRenderer>();
+            var tile = Track(ScriptableObject.CreateInstance<Tile>());
+            tile.name = "tile.locked.signal";
+            var generator = host.AddComponent<RecordingBaseGenerator>();
+            generator.Tilemap = tilemap;
+            generator.BaseTile = tile;
+            var snapshot = host.AddComponent<WorldSnapshotSystem>();
+            SetField(snapshot, "foregroundTilemap", tilemap);
+            SetField(snapshot, "baseWorldGeneratorBehaviour", generator);
+            snapshot.ConfigureBaseWorldIdentity(42L, 1);
+            Assert.That(generator.Regenerate(42L, 1), Is.True);
+            var minedCell = new Vector3Int(1, 0, 0);
+            tilemap.SetTile(minedCell, null);
+            snapshot.RecordMinedCell(1, 0, true, 0f);
+            var original = CreateFullContext(100, snapshot);
+            var catalog = new InMemoryMineralCatalog();
+            catalog.Register(DataIds.Minerals.Copper, 2f, 10);
+            catalog.Register(DataIds.RareItems.EngineFuel, 1f, 100);
+            var inventory = new InventoryService(catalog, original.Inventory, original.GameState);
+            Assert.That(inventory.TryAddMineral(DataIds.RareItems.EngineFuel, 1).Status,
+                Is.EqualTo(InventoryMutationStatus.Success));
+            var context = new SaveCaptureContext(original.GameState, inventory.State,
+                original.Upgrades, original.DialogueGenerator,
+                targetScene == SceneNames.Integration ? snapshot : null,
+                targetScene, original.GameVersion, snapshot.CaptureSnapshot());
+            Assert.That(CreateSaveService().Save(1, context).IsSuccess, Is.True);
+            var loaded = CreateLoadService().Load(1);
+            Assert.That(loaded.IsSuccess, Is.True);
+            Assert.That(loaded.State.Inventory.GetQuantity(DataIds.RareItems.EngineFuel), Is.EqualTo(1));
+            Assert.That(loaded.State.Inventory.CurrentWeight, Is.EqualTo(7f));
+            Assert.That(loaded.State.Upgrades.IsZoneUnlocked("zone.deep.1"), Is.True);
+            Assert.That(loaded.State.TargetSceneName, Is.EqualTo(targetScene));
+            Assert.That(generator.Regenerate(42L, 1), Is.True);
+            Assert.That(tilemap.GetTile(minedCell), Is.Not.Null);
+            Assert.That(snapshot.RestoreSnapshot(loaded.State.World), Is.True);
+            Assert.That(tilemap.GetTile(minedCell), Is.Null);
+            Assert.That(tilemap.GetTile(Vector3Int.zero), Is.Not.Null);
+        }
+
         [Test]
         public void M_F02_SeedPlusDeltas_ProduceMatchingOccupiedTileHash()
         {

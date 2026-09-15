@@ -1,5 +1,6 @@
 using System.Linq;
 using System.Reflection;
+using UnityEditor;
 using NUnit.Framework;
 using SubTerra.Gameplay.Drone;
 using SubTerra.Gameplay.Mining;
@@ -66,6 +67,26 @@ namespace SubTerra.Gameplay.Tests.Drone
                     .GetValue(view) as GameObject;
                 var lights = visualRoot.GetComponentsInChildren<UnityEngine.Rendering.Universal.Light2D>();
                 Assert.That(lights.Any(light => ColorsMatch(light.color, new Color(0.18f, 0.92f, 0.88f, 1f))), Is.True);
+                var glyph = AssetDatabase.LoadAssetAtPath<Sprite>(
+                    "Assets/_Project/Art/Tiles/SealedGlyph/sealed_glyph_awakened_01.png");
+                Assert.That(glyph, Is.Not.Null);
+                var presentation = root.AddComponent<SealedGlyphScanVisual>();
+                presentation.Configure(tilemap, resolver, sensor, glyph);
+                TickVisual(presentation);
+                var overlay = root.GetComponentsInChildren<SpriteRenderer>(true)
+                    .Single(renderer => renderer.gameObject.name == "SealedGlyphOverlay");
+                Assert.That(overlay.enabled, Is.True);
+                Assert.That(overlay.sprite, Is.SameAs(glyph));
+                Assert.That(tilemap.GetTile(new Vector3Int(1, 0, 0)), Is.SameAs(tile));
+                view.Tick(sensor.PulseDuration + 0.1f);
+                TickVisual(presentation);
+                Assert.That(overlay.enabled, Is.False);
+                sensor.TickScanPulse(sensor.PulseInterval);
+                TickVisual(presentation);
+                Assert.That(overlay.enabled, Is.True);
+                tilemap.SetTile(new Vector3Int(1, 0, 0), null);
+                TickVisual(presentation);
+                Assert.That(overlay.enabled, Is.False);
             }
             finally
             {
@@ -78,6 +99,14 @@ namespace SubTerra.Gameplay.Tests.Drone
             return Mathf.Abs(actual.r - expected.r) < 0.001f
                 && Mathf.Abs(actual.g - expected.g) < 0.001f
                 && Mathf.Abs(actual.b - expected.b) < 0.001f;
+        }
+
+        private static void TickVisual(SealedGlyphScanVisual visual)
+        {
+            var method = typeof(SealedGlyphScanVisual).GetMethod(
+                "LateUpdate", BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(method, Is.Not.Null);
+            method.Invoke(visual, null);
         }
 
         private static void SetField(object target, string name, object value)

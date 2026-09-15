@@ -369,11 +369,59 @@ namespace SubTerra.App.Tests.Outpost
             Assert.That(snapshot.PowerConsumption, Is.EqualTo(99f));
         }
 
+        [TestCase(OutpostSettlementSource.PlayerCargo)]
+        [TestCase(OutpostSettlementSource.Storage)]
+        public void BulkSettlement_PreservesRareFuel(OutpostSettlementSource source)
+        {
+            var system = CreateSystem();
+            var fuel = DataIds.RareItems.EngineFuel;
+            system.Service.ApplyRuntimeStatus(CreateActiveStatus());
+            if (source == OutpostSettlementSource.PlayerCargo)
+            {
+                system.Inventory.TryAddMineral(Copper, 2);
+                system.Inventory.TryAddMineral(fuel, 1);
+            }
+            else
+            {
+                system.Inventory.TryAddMineral(Copper, 2);
+                system.Inventory.TryAddMineral(fuel, 1);
+                system.Service.ApplyRuntimeStatus(CreateStorageStatus());
+                Assert.That(system.Service.TryDeposit(Copper, 2).IsSuccess, Is.True);
+                Assert.That(system.Service.TryDeposit(fuel, 1).IsSuccess, Is.True);
+                system.Service.ApplyRuntimeStatus(CreateActiveStatus());
+            }
+            Assert.That(system.Service.TrySettle(source).IsSuccess, Is.True);
+            Assert.That(system.State.Player.Gold, Is.EqualTo(20));
+            Assert.That(source == OutpostSettlementSource.PlayerCargo
+                ? system.Inventory.State.GetQuantity(fuel)
+                : system.Service.State.GetStorageQuantity(fuel), Is.EqualTo(1));
+            Assert.That(system.Service.TrySettle(source).IsSuccess, Is.False);
+            Assert.That(system.State.Player.Gold, Is.EqualTo(20));
+            Assert.That(source == OutpostSettlementSource.PlayerCargo
+                ? system.Inventory.State.GetQuantity(fuel)
+                : system.Service.State.GetStorageQuantity(fuel), Is.EqualTo(1));
+        }
+
+        [Test]
+        public void SelectedFuelSettlement_RequiresSurfaceBase()
+        {
+            var system = CreateSystem();
+            var fuel = DataIds.RareItems.EngineFuel;
+            system.Inventory.TryAddMineral(fuel, 1);
+            system.Service.ApplyRuntimeStatus(CreateActiveStatus());
+            var result = system.Service.TrySettlePlayerCargo(fuel, 1);
+            Assert.That(result.IsSuccess, Is.False);
+            Assert.That(result.Message, Does.Contain("지상 기지"));
+            Assert.That(system.State.Player.Gold, Is.Zero);
+            Assert.That(system.Inventory.State.GetQuantity(fuel), Is.EqualTo(1));
+        }
+
         private static TestSystem CreateSystem(float maxCapacity = 100f)
         {
             var catalog = new InMemoryMineralCatalog();
             catalog.Register(Copper, 1.5f, 10, "구리");
             catalog.Register(Iron, 2f, 15, "철");
+            catalog.Register(DataIds.RareItems.EngineFuel, 1f, 100, "엔진 연료");
             var state = GameState.CreateNew();
             var inventory = new InventoryService(catalog, maxCapacity, state);
             var service = new OutpostService(inventory, catalog, state);
