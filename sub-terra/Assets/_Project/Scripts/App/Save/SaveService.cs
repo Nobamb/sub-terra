@@ -125,7 +125,7 @@ namespace SubTerra.App.Save
 
             // 썸네일 등 부가 작업의 실패가 이미 완료된 저장 결과를 바꾸지 않는다.
             try { Saved?.Invoke(slotId); }
-            catch (Exception) { Debug.LogWarning("Save completed; optional save preview could not be updated."); }
+            catch (Exception) { Debug.unityLogger.Log(LogType.Warning, "Save completed; optional save preview could not be updated."); }
             return new SaveResult(SaveStatus.Success, slotId);
         }
 

@@ -62,6 +62,96 @@ namespace SubTerra.App.Tests.UI.MainMenu
         }
 
         [Test]
+        public void Prompt103_1_VisualsAndEffectsVerified()
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PromptB103MainMenuBuilder.PrefabPath);
+            Assert.That(prefab, Is.Not.Null);
+            var content = prefab.transform.Find("MenuContent");
+            Assert.That(content, Is.Not.Null);
+
+            // 1. "지금은 40미터다...", "봉인 너머에서..." 텍스트 삭제 검증
+            Assert.That(content.Find("DepthCopy"), Is.Null);
+            Assert.That(content.Find("SignalCopy"), Is.Null);
+
+            // 2. 타이틀: 로고 이미지, 글로우 아우라, 파티클 연출 검증
+            var title = content.Find("Title");
+            Assert.That(title, Is.Not.Null);
+            Assert.That(title.Find("TitleLogo"), Is.Not.Null);
+            Assert.That(title.Find("TitleGlow"), Is.Not.Null);
+            Assert.That(title.GetComponent<MenuTitleParticles>(), Is.Not.Null);
+            Assert.That(title.Find("TitleGlow").GetComponent<MenuTitleAura>(), Is.Not.Null);
+
+            // 3. 청록 실선 디바이더 검증
+            var divider = content.Find("TitleDivider");
+            Assert.That(divider, Is.Not.Null);
+            Assert.That(divider.GetComponent<UnityEngine.UI.RawImage>().raycastTarget, Is.False);
+
+            // 4. 슬롯 구성 (반투명, 모서리 컷, 이너 글로우, 코너 브라켓, 삼각형 화살표) 검증
+            for (var i = 1; i <= 3; i++)
+            {
+                var slot = content.Find("Slot" + i);
+                Assert.That(slot, Is.Not.Null);
+                var btnImg = slot.GetComponent<UnityEngine.UI.Image>();
+                Assert.That(btnImg.color.a, Is.InRange(0.45f, 0.55f));
+                Assert.That(btnImg.sprite, Is.Not.Null);
+
+                // 텍스트 & 썸네일 불투명도 검증
+                var label = slot.Find("Label").GetComponent<TMP_Text>();
+                Assert.That(label.color.a, Is.EqualTo(1f));
+                var thumbnail = slot.Find("Thumbnail").GetComponent<UnityEngine.UI.RawImage>();
+                Assert.That(thumbnail.color.a, Is.EqualTo(1f));
+
+                var selection = slot.Find("Selection");
+                Assert.That(selection, Is.Not.Null);
+                Assert.That(selection.Find("InnerGlow"), Is.Not.Null);
+                Assert.That(selection.Find("CornerBrackets"), Is.Not.Null);
+                Assert.That(selection.Find("TriangleSelector"), Is.Not.Null);
+            }
+
+            // Visual Snapshot Capture for verification
+            var instance = Object.Instantiate(prefab);
+            var camGo = new GameObject("TestCamera", typeof(Camera));
+            var camera = camGo.GetComponent<Camera>();
+            var canvas = instance.GetComponent<Canvas>();
+            if (canvas == null) canvas = instance.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceCamera;
+            canvas.worldCamera = camera;
+            camera.clearFlags = CameraClearFlags.SolidColor;
+            camera.backgroundColor = new Color(0.02f, 0.06f, 0.09f);
+
+            var rt = new RenderTexture(1920, 1080, 24);
+            camera.targetTexture = rt;
+            var view = instance.GetComponent<MainMenuView>();
+            if (view != null)
+            {
+                view.RefreshLayout();
+                view.SetSelectedSlot(1, true, "탐사 기록 01 — 이어하기 가능");
+            }
+            Canvas.ForceUpdateCanvases();
+            camera.Render();
+
+            var prev = RenderTexture.active;
+            try
+            {
+                RenderTexture.active = rt;
+                var tex = new Texture2D(1920, 1080, TextureFormat.RGB24, false);
+                tex.ReadPixels(new Rect(0, 0, 1920, 1080), 0, 0);
+                tex.Apply();
+                var outPath = Path.Combine(Application.dataPath, "../../work_process/MVP2/103-main-menu/main-menu-103-1-final.png");
+                File.WriteAllBytes(outPath, tex.EncodeToPNG());
+                Object.DestroyImmediate(tex);
+            }
+            finally
+            {
+                RenderTexture.active = prev;
+                camera.targetTexture = null;
+                Object.DestroyImmediate(rt);
+                Object.DestroyImmediate(camGo);
+                Object.DestroyImmediate(instance);
+            }
+        }
+
+        [Test]
         public void L_S01_MainMenu_ExposesNewContinueSlotsSettingsQuitVersion()
         {
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(

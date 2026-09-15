@@ -570,7 +570,7 @@ namespace SubTerra.App.UI.MainMenu
                 }
 
                 colors.normalColor = i == selectedSlotId - 1
-                    ? (card != null ? new Color(0.10f, 0.23f, 0.28f, 0.97f) : colors.pressedColor)
+                    ? colors.pressedColor
                     : slotDefaultColors[i];
                 button.colors = colors;
             }
