@@ -8,7 +8,7 @@
 
 - `Assets/_Project/Art/Icons/icon_copper.png`: 주황빛 구리 덩어리.
 - `Assets/_Project/Art/Icons/icon_iron.png`: 은회색 철 주괴.
-- `Assets/_Project/Art/Icons/icon_lithium.png`: 연보라·백색 결정.
+- `Assets/_Project/Art/Icons/icon_lithium.png`: 기존 리튬 타일과 맞춘 시안·청록 결정.
 - `Assets/_Project/Art/Icons/icon_engine_fuel.png`: 청록 결정이 들어 있는 연료 캡슐.
 - 각 PNG의 `.meta`와 `Data/Minerals/Mineral_Copper.asset`, `Mineral_Iron.asset`, `Mineral_Lithium.asset`의 `icon` 참조.
 
@@ -28,6 +28,14 @@
 팀원 확인 순서: 최신 PR 적용 → Bootstrap에서 시작 → 인벤토리 열기 → 네 품목의 이미지·이름·수량 확인. 엔진 연료는 원래 각성 문양 석재와 같은 이미지를 사용했으므로, 이제 블록 대신 캡슐로 보이는 것이 정상이다.
 
 원본 파일은 작업자 로컬 `backups/inventory-icons-20260915`에 SHA256 검증 후 보관했다. 고해상도 생성본과 검수 중간 파일은 Assets 밖에 보관하며 PR에는 최종 게임용 PNG와 문서 미리보기만 포함한다.
+
+## 리튬 색상 후속 수정
+
+팀원 피드백에 따라 연보라 리튬 아이콘을 실제 `ore_lithium_01.png` 타일의 시안·청록 팔레트로 수정했다. 결정 군집의 형태와 인벤토리 스타일은 유지했다. 리튬 PNG와 문서 미리보기만 교체하며 다른 아이콘·타일·메타·품목 데이터는 유지한다. 256px 크기, RGBA, 모서리 알파 0 및 34px 가독성을 재검수했다.
+
+내장 image_gen 편집 프롬프트:
+
+> Use case: precise-object-edit. Image 1 is the EDIT TARGET: existing lithium inventory crystal cluster. Image 2 is COLOR REFERENCE ONLY: actual in-game lithium ore tile, turquoise cyan crystals in dark stone. Change ONLY the color/material palette of Image 1 to closely match the crystals in Image 2. Replace ALL lavender, purple and lilac faces with saturated turquoise/cyan, bright icy cyan edge highlights and dark teal facet shadows. Preserve the existing three-crystal cluster composition, exact silhouette, facets, 3/4 camera, charcoal outlines, texture detail, size and padding. Keep a standalone crystal item, do not copy the tile stone or repeating pattern. No capsule, no metal housing, no added glow or particles. Genuine transparent alpha background, no black backdrop, checkerboard, floor, cast shadow, UI, frame, or text. Crisp readable inventory icon at 34px.
 
 ## 제작 방식과 최종 프롬프트 세트
 
