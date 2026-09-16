@@ -65,19 +65,19 @@ namespace SubTerra.App.Tests.UI
             AssertCenteredCardRow(
                 PromptB35_2LayoutBuilder.SurfaceBasePrefabPath,
                 "SettingsTitle",
-                340f);
+                365f);
             AssertCenteredCardRow(
                 PromptB35_2LayoutBuilder.MainMenuPrefabPath,
                 "SettingsTitle",
-                340f);
+                365f);
             AssertCenteredCardRow(
                 PromptB35_2LayoutBuilder.SurfaceBasePrefabPath,
                 "ResolutionDropdown",
-                100f);
+                86f, 165f);
             AssertCenteredCardRow(
                 PromptB35_2LayoutBuilder.MainMenuPrefabPath,
                 "FrameRateDropdown",
-                -168f);
+                35f, 165f);
         }
 
         private static void AssertSettingsPanelLayout(string prefabPath, System.Type viewType)
@@ -99,8 +99,8 @@ namespace SubTerra.App.Tests.UI
             Assert.That(card, Is.Not.Null, prefabPath + " SettingsCard");
             Assert.That(card.anchorMin, Is.EqualTo(new Vector2(0.5f, 0.5f)));
             Assert.That(card.anchorMax, Is.EqualTo(new Vector2(0.5f, 0.5f)));
-            Assert.That(card.anchoredPosition, Is.EqualTo(Vector2.zero));
-            Assert.That(card.sizeDelta, Is.EqualTo(new Vector2(680f, 800f)));
+            Assert.That(card.anchoredPosition, Is.EqualTo(new Vector2(0, -50)));
+            Assert.That(card.sizeDelta, Is.EqualTo(PromptB104SettingsMenuBuilder.CardSize));
             var view = prefab.GetComponent(viewType);
             Assert.That(view, Is.Not.Null, viewType.Name);
 
@@ -125,9 +125,9 @@ namespace SubTerra.App.Tests.UI
             var settings = FindChild(prefab.transform, "SettingsPanel");
             Assert.That(settings, Is.Not.Null);
 
-            var resolution = settings.Find("ResolutionDropdown");
-            var frame = settings.Find("FrameRateDropdown");
-            var language = settings.Find("LanguageDropdown");
+            var resolution = FindChild(settings, "ResolutionDropdown");
+            var frame = FindChild(settings, "FrameRateDropdown");
+            var language = FindChild(settings, "LanguageDropdown");
             Assert.That(resolution, Is.Not.Null, prefabPath + " ResolutionDropdown");
             Assert.That(frame, Is.Not.Null, prefabPath + " FrameRateDropdown");
             Assert.That(language, Is.Not.Null, prefabPath + " LanguageDropdown");
@@ -139,16 +139,17 @@ namespace SubTerra.App.Tests.UI
         private static void AssertCenteredCardRow(
             string prefabPath,
             string childName,
-            float expectedY)
+            float expectedY,
+            float expectedX = 0)
         {
             var prefab = LoadPrefab(prefabPath);
             var settings = FindChild(prefab.transform, "SettingsPanel");
             Assert.That(settings, Is.Not.Null);
-            var child = settings.Find(childName) as RectTransform;
+            var child = settings.Find("SettingsCard/" + childName) as RectTransform;
             Assert.That(child, Is.Not.Null, prefabPath + " " + childName);
             Assert.That(child.anchorMin, Is.EqualTo(new Vector2(0.5f, 0.5f)));
             Assert.That(child.anchorMax, Is.EqualTo(new Vector2(0.5f, 0.5f)));
-            Assert.That(child.anchoredPosition.x, Is.EqualTo(0f).Within(0.001f));
+            Assert.That(child.anchoredPosition.x, Is.EqualTo(expectedX).Within(0.001f));
             Assert.That(child.anchoredPosition.y, Is.EqualTo(expectedY).Within(0.001f));
         }
 

@@ -400,7 +400,7 @@ namespace SubTerra.App.UI.MainMenu
         {
             if (masterVolumeLabel != null)
             {
-                masterVolumeLabel.text = LocalizationService.FormatMasterVolume(volume);
+                masterVolumeLabel.text = SettingsMenuSkin.FormatVolume(settingsRoot, volume);
             }
 
             if (resolutionLabel != null)
@@ -569,7 +569,7 @@ namespace SubTerra.App.UI.MainMenu
         {
             if (masterVolumeLabel != null)
             {
-                masterVolumeLabel.text = LocalizationService.FormatMasterVolume(value);
+                masterVolumeLabel.text = SettingsMenuSkin.FormatVolume(settingsRoot, value);
             }
 
             MasterVolumePreviewChanged?.Invoke(value);
