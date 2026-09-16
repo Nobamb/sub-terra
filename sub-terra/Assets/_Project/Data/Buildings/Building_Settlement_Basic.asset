@@ -17,7 +17,7 @@ MonoBehaviour:
   description: "\uBCF4\uAD00\uD55C \uAD11\uBB3C\uC744 \uC815\uC0B0\uD574 \uACE8\uB4DC\uB85C
     \uC804\uD658\uD569\uB2C8\uB2E4."
   runtimePrefab: {fileID: 6594216637482197258, guid: d7137e45dafeedb42a9a6d5244367863, type: 3}
-  icon: {fileID: 6838030193426678921, guid: 42527be5cf11e3c42871944ebbfd1fd6, type: 2}
+  icon: {fileID: 21300000, guid: 902999309caf02d4e915990fbc9922e4, type: 3}
   powerDraw: 1
   buildCosts:
   - itemId: mineral.lithium

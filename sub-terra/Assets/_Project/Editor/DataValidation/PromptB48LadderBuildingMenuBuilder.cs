@@ -120,7 +120,7 @@ namespace SubTerra.App.Editor.DataValidation
                 "기본 사다리",
                 "깊은 수직 갱도에서 중력 없이 오르내릴 수 있습니다. 철 1개·구리 3개로 세로 5칸 설치합니다.",
                 buildable,
-                AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Knob.psd"),
+                AssetDatabase.LoadAssetAtPath<Sprite>(PhaseCElevatorLadderBuilder.LadderArtPath),
                 0,
                 new List<ItemCostEntry>
                 {
@@ -190,8 +190,11 @@ namespace SubTerra.App.Editor.DataValidation
                 var renderer = contents.GetComponent<SpriteRenderer>();
                 if (renderer != null)
                 {
-                    renderer.drawMode = SpriteDrawMode.Sliced;
-                    renderer.size = new Vector2(0.65f, height);
+                    renderer.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(
+                        PhaseCElevatorLadderBuilder.LadderArtPath);
+                    renderer.color = Color.white;
+                    renderer.drawMode = SpriteDrawMode.Tiled;
+                    renderer.size = new Vector2(1f, height);
                 }
 
                 var zone = contents.GetComponent<BoxCollider2D>();

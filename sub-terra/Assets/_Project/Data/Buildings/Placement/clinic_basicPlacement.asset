@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: SubTerra.Gameplay.Building::SubTerra.Gameplay.Building.BuildingPlacementDefinition
   buildingId: building.clinic.basic
   runtimePrefab: {fileID: 7664142866433559765, guid: 8e341b353c6234149bc5fd9186b03de0, type: 3}
-  footprint: {x: 1, y: 1}
+  footprint: {x: 2, y: 2}
   requiresGround: 1
   costs:
   - itemId: mineral.copper

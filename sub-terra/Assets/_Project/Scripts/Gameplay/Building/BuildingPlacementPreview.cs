@@ -19,6 +19,9 @@ namespace SubTerra.Gameplay.Building
         private readonly List<SpriteRenderer> multiCellMarkers = new();
         private readonly List<SpriteRenderer> supportRangeMarkers = new();
         private Sprite cachedDotSprite;
+        private Vector3 visualOffset = Vector3.zero;
+        private Quaternion visualRotation = Quaternion.identity;
+        private Vector3 visualScale = Vector3.one;
 
         private void Awake()
         {
@@ -27,13 +30,65 @@ namespace SubTerra.Gameplay.Building
 
         public void Configure(Sprite sprite)
         {
+            EnsureRenderer();
+            visualOffset = Vector3.zero;
+            visualRotation = Quaternion.identity;
+            visualScale = Vector3.one;
             if (spriteRenderer != null) spriteRenderer.sprite = sprite;
+        }
+
+        /// <summary>
+        /// 실제 시설 프리팹의 대표 아트와 로컬 배치를 그대로 사용한다.
+        /// 설치 미리보기와 설치 완료 후 모습의 크기·바닥 접점이 달라지는 일을 막는다.
+        /// </summary>
+        public void ConfigureFromPrefab(GameObject prefab)
+        {
+            EnsureRenderer();
+            if (prefab == null)
+            {
+                Configure((Sprite)null);
+                return;
+            }
+
+            Transform visualRoot = prefab.transform.Find("VisualRoot");
+            SpriteRenderer source = FindPrimaryRenderer(visualRoot != null
+                ? visualRoot
+                : prefab.transform);
+            if (source == null)
+            {
+                Configure((Sprite)null);
+                return;
+            }
+
+            if (spriteRenderer != null)
+            {
+                spriteRenderer.sprite = source.sprite;
+                spriteRenderer.drawMode = source.drawMode;
+                spriteRenderer.size = source.size;
+                spriteRenderer.sortingLayerID = source.sortingLayerID;
+                spriteRenderer.sortingOrder = Mathf.Max(source.sortingOrder, 50);
+                spriteRenderer.flipX = source.flipX;
+                spriteRenderer.flipY = source.flipY;
+            }
+
+            Transform prefabRoot = prefab.transform;
+            visualOffset = prefabRoot.InverseTransformPoint(source.transform.position);
+            visualRotation = Quaternion.Inverse(prefabRoot.rotation) * source.transform.rotation;
+            Vector3 rootScale = prefabRoot.lossyScale;
+            Vector3 sourceScale = source.transform.lossyScale;
+            visualScale = new Vector3(
+                SafeDivide(sourceScale.x, rootScale.x),
+                SafeDivide(sourceScale.y, rootScale.y),
+                SafeDivide(sourceScale.z, rootScale.z));
         }
 
         public void SetCell(Tilemap tilemap, Vector3Int cell, bool isValid)
         {
             HideMultiCellMarkers();
-            transform.position = tilemap != null ? tilemap.GetCellCenterWorld(cell) : cell;
+            Vector3 center = tilemap != null ? tilemap.GetCellCenterWorld(cell) : cell;
+            transform.position = center + visualOffset;
+            transform.rotation = visualRotation;
+            transform.localScale = visualScale;
             if (spriteRenderer != null)
             {
                 spriteRenderer.enabled = true;
@@ -81,7 +136,7 @@ namespace SubTerra.Gameplay.Building
                 Vector3Int cell = cells[i];
                 bool clearsCrack = structuralSystem != null && structuralSystem.HasRiskAtCell(cell);
                 marker.transform.position = tilemap.GetCellCenterWorld(cell);
-                marker.transform.localScale = Vector3.one * (clearsCrack ? 0.24f : 0.1f);
+                SetWorldScale(marker.transform, clearsCrack ? 0.24f : 0.1f);
                 marker.sprite = dot;
                 marker.color = clearsCrack
                     ? new Color(0.2f, 1f, 0.95f, 0.9f)
@@ -100,8 +155,8 @@ namespace SubTerra.Gameplay.Building
         }
 
         /// <summary>
-        /// footprint 전체 칸에 점 마커를 표시한다(긴급 탈출 포탈 2x2 = 4점).
-        /// 단일 칸이면 SetCell과 동일하게 본 스프라이트를 사용한다.
+        /// footprint 전체 칸에 점 마커와 실제 프리팹 아트를 함께 표시한다.
+        /// 여러 칸도 완성 형태와 실제 배치 중심을 미리 볼 수 있어야 한다.
         /// </summary>
         public void SetCells(Tilemap tilemap, IReadOnlyList<Vector3Int> cells, bool isValid)
         {
@@ -120,17 +175,28 @@ namespace SubTerra.Gameplay.Building
             gameObject.SetActive(true);
             if (spriteRenderer != null)
             {
-                // 다중 칸은 점 마커만 쓰고 본 스프라이트는 끈다.
-                spriteRenderer.enabled = false;
+                spriteRenderer.enabled = spriteRenderer.sprite != null;
+                spriteRenderer.color = isValid ? validColor : invalidColor;
             }
 
             EnsureMultiCellMarkers(cells.Count);
             Color color = isValid ? validColor : invalidColor;
             Sprite dot = GetOrCreateDotSprite();
-            Vector3 anchor = tilemap != null
+            Vector3 min = tilemap != null
                 ? tilemap.GetCellCenterWorld(cells[0])
                 : (Vector3)cells[0];
-            transform.position = anchor;
+            Vector3 max = min;
+            for (int i = 1; i < cells.Count; i++)
+            {
+                Vector3 world = tilemap != null
+                    ? tilemap.GetCellCenterWorld(cells[i])
+                    : (Vector3)cells[i];
+                min = Vector3.Min(min, world);
+                max = Vector3.Max(max, world);
+            }
+            transform.position = (min + max) * 0.5f + visualOffset;
+            transform.rotation = visualRotation;
+            transform.localScale = visualScale;
 
             for (int i = 0; i < multiCellMarkers.Count; i++)
             {
@@ -147,7 +213,7 @@ namespace SubTerra.Gameplay.Building
                 marker.transform.position = world;
                 marker.sprite = dot;
                 marker.color = color;
-                marker.transform.localScale = Vector3.one * multiCellDotScale;
+                SetWorldScale(marker.transform, multiCellDotScale);
                 marker.gameObject.SetActive(true);
             }
         }
@@ -162,6 +228,47 @@ namespace SubTerra.Gameplay.Building
             }
 
             gameObject.SetActive(false);
+        }
+
+        private static SpriteRenderer FindPrimaryRenderer(Transform root)
+        {
+            if (root == null) return null;
+
+            SpriteRenderer[] renderers = root.GetComponentsInChildren<SpriteRenderer>(true);
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                SpriteRenderer candidate = renderers[i];
+                if (candidate != null && candidate.enabled && candidate.sprite != null)
+                {
+                    return candidate;
+                }
+            }
+
+            return null;
+        }
+
+        private static float SafeDivide(float value, float divisor)
+        {
+            return Mathf.Abs(divisor) > 0.0001f ? value / divisor : value;
+        }
+
+        private void EnsureRenderer()
+        {
+            if (spriteRenderer == null)
+            {
+                spriteRenderer = GetComponent<SpriteRenderer>();
+            }
+        }
+
+        private static void SetWorldScale(Transform target, float scale)
+        {
+            Vector3 parentScale = target.parent != null
+                ? target.parent.lossyScale
+                : Vector3.one;
+            target.localScale = new Vector3(
+                SafeDivide(scale, Mathf.Abs(parentScale.x)),
+                SafeDivide(scale, Mathf.Abs(parentScale.y)),
+                1f);
         }
 
         private void HideMultiCellMarkers()
