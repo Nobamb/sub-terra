@@ -272,6 +272,15 @@ namespace SubTerra.App.UI.MainMenu
             if (settingsRoot != null)
             {
                 if (visible && controlSchemePanel == null) controlSchemePanel = ControlSchemePanel.Attach(settingsRoot);
+                if (!visible)
+                {
+                    var skin = settingsRoot.GetComponent<SettingsMenuSkin>();
+                    if (skin != null && skin.isActiveAndEnabled && Application.isPlaying)
+                    {
+                        skin.PlayCloseAnimation(() => settingsRoot.SetActive(false));
+                        return;
+                    }
+                }
                 settingsRoot.SetActive(visible);
                 if (visible)
                 {

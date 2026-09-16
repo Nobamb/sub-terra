@@ -33,15 +33,15 @@ namespace SubTerra.App.Tests.UI
             Assert.That(card, Is.Not.Null);
             Assert.That(card.sizeDelta.x, Is.GreaterThanOrEqualTo(640f));
             Assert.That(card.sizeDelta.y, Is.GreaterThanOrEqualTo(780f));
-            Assert.That(card.GetComponent<Image>().color.a, Is.EqualTo(1f).Within(0.001f));
+            Assert.That(card.GetComponent<Image>().color.a, Is.EqualTo(0.90f).Within(0.001f));
         }
 
         [TestCase(SurfaceBasePrefabPath, "ResolutionDropdown", false)]
         [TestCase(SurfaceBasePrefabPath, "LanguageDropdown", false)]
-        [TestCase(SurfaceBasePrefabPath, "FrameRateDropdown", true)]
+        [TestCase(SurfaceBasePrefabPath, "FrameRateDropdown", false)]
         [TestCase(MainMenuPrefabPath, "ResolutionDropdown", false)]
         [TestCase(MainMenuPrefabPath, "LanguageDropdown", false)]
-        [TestCase(MainMenuPrefabPath, "FrameRateDropdown", true)]
+        [TestCase(MainMenuPrefabPath, "FrameRateDropdown", false)]
         public void DropdownTemplate_UsesExpectedDirectionAndOpaquePopup(
             string prefabPath,
             string dropdownName,

@@ -12,13 +12,19 @@ using UnityEngine.UI;
 
 namespace SubTerra.App.Editor.DataValidation
 {
-    /// <summary>104번: 지정된 세 위치의 Settings 하위만 수정한다.</summary>
+    /// <summary>104-1번: 설정창 배경 10% 투명도, 둥근 토글 트랙, 슬라이더 노브/글로우, 버튼 청록 호버 트랜지션, X버튼 전용 에셋 배선</summary>
     public static class PromptB104SettingsMenuBuilder
     {
         public const string MainPrefab = "Assets/_Project/Prefabs/UI/MainMenuPanel.prefab";
         public const string SurfacePrefab = "Assets/_Project/Prefabs/UI/SurfaceBasePanel.prefab";
         public const string ScenePath = "Assets/_Project/Scenes/App/Mine_Demo_Integration.unity";
         public const string ArtPath = "Assets/_Project/Art/UI/MainMenu/Settings/setting-menu-asset.png";
+        public const string CloseNormalPath = "Assets/_Project/Art/UI/MainMenu/Settings/setting-close-normal.png";
+        public const string CloseHoverPath = "Assets/_Project/Art/UI/MainMenu/Settings/setting-close-hover.png";
+        public const string TogglePillPath = "Assets/_Project/Art/UI/MainMenu/Settings/toggle-pill-track.png";
+        public const string SliderKnobPath = "Assets/_Project/Art/UI/MainMenu/Settings/slider-knob.png";
+        public const string SliderGlowPath = "Assets/_Project/Art/UI/MainMenu/Settings/slider-glow.png";
+
         public static readonly Vector2 CardSize = new Vector2(1080, 810);
         public const float SwitchOnX = 18f;
         public const float SwitchOffX = -18f;
@@ -45,6 +51,11 @@ namespace SubTerra.App.Editor.DataValidation
             if (EditorApplication.isCompiling || EditorApplication.isUpdating) return;
             if (File.Exists(BuildFlag))
             {
+                if (EditorApplication.isPlaying)
+                {
+                    EditorApplication.isPlaying = false;
+                    return;
+                }
                 File.Delete(BuildFlag);
                 try
                 {
@@ -91,20 +102,8 @@ namespace SubTerra.App.Editor.DataValidation
         public static void Build()
         {
             if (EditorApplication.isPlaying) throw new InvalidOperationException("Stop Play Mode first.");
-            var importer = (TextureImporter)AssetImporter.GetAtPath(ArtPath);
-            if (importer == null) throw new InvalidOperationException("Missing settings layout asset: " + ArtPath);
-            importer.textureType = TextureImporterType.Sprite;
-            importer.spriteImportMode = SpriteImportMode.Single;
-            importer.alphaIsTransparency = true;
-            importer.mipmapEnabled = false;
-            importer.textureCompression = TextureImporterCompression.Uncompressed;
-            importer.filterMode = FilterMode.Bilinear;
-            importer.maxTextureSize = 2048;
-            var textureSettings = new TextureImporterSettings();
-            importer.ReadTextureSettings(textureSettings);
-            textureSettings.spriteMeshType = SpriteMeshType.FullRect;
-            importer.SetTextureSettings(textureSettings);
-            importer.SaveAndReimport();
+            SetupTextureImporters();
+
             foreach (string path in new[] { MainPrefab, SurfacePrefab })
             {
                 var prefab = PrefabUtility.LoadPrefabContents(path);
@@ -133,8 +132,50 @@ namespace SubTerra.App.Editor.DataValidation
             {
                 if (opened) EditorSceneManager.CloseScene(scene, true);
                 if (previous.IsValid() && previous.isLoaded) SceneManager.SetActiveScene(previous);
+                if (!SceneManager.GetActiveScene().IsValid() || !SceneManager.GetActiveScene().isLoaded)
+                    EditorSceneManager.OpenScene("Assets/_Project/Scenes/App/MainMenu.unity", OpenSceneMode.Single);
             }
             Debug.Log("[PromptB104] Settings menu updated in two prefabs and UndergroundSettings only.");
+        }
+
+        private static void SetupTextureImporters()
+        {
+            var importer = (TextureImporter)AssetImporter.GetAtPath(ArtPath);
+            if (importer != null)
+            {
+                importer.textureType = TextureImporterType.Sprite;
+                importer.spriteImportMode = SpriteImportMode.Single;
+                importer.alphaIsTransparency = true;
+                importer.mipmapEnabled = false;
+                importer.textureCompression = TextureImporterCompression.Uncompressed;
+                importer.filterMode = FilterMode.Bilinear;
+                importer.maxTextureSize = 2048;
+                var textureSettings = new TextureImporterSettings();
+                importer.ReadTextureSettings(textureSettings);
+                textureSettings.spriteMeshType = SpriteMeshType.FullRect;
+                importer.SetTextureSettings(textureSettings);
+                importer.SaveAndReimport();
+            }
+
+            SetAsSprite(CloseNormalPath, Vector4.zero);
+            SetAsSprite(CloseHoverPath, Vector4.zero);
+            SetAsSprite(TogglePillPath, new Vector4(30, 10, 30, 10));
+            SetAsSprite(SliderKnobPath, Vector4.zero);
+            SetAsSprite(SliderGlowPath, new Vector4(16, 16, 16, 16));
+            AssetDatabase.Refresh();
+        }
+
+        private static void SetAsSprite(string path, Vector4 border)
+        {
+            var importer = AssetImporter.GetAtPath(path) as TextureImporter;
+            if (importer == null) return;
+            bool dirty = false;
+            if (importer.textureType != TextureImporterType.Sprite) { importer.textureType = TextureImporterType.Sprite; dirty = true; }
+            if (importer.spriteBorder != border) { importer.spriteBorder = border; dirty = true; }
+            if (!importer.alphaIsTransparency) { importer.alphaIsTransparency = true; dirty = true; }
+            if (importer.textureCompression != TextureImporterCompression.Uncompressed) { importer.textureCompression = TextureImporterCompression.Uncompressed; dirty = true; }
+            if (importer.filterMode != FilterMode.Bilinear) { importer.filterMode = FilterMode.Bilinear; dirty = true; }
+            if (dirty) importer.SaveAndReimport();
         }
 
         private static void Apply(Component view)
@@ -149,7 +190,7 @@ namespace SubTerra.App.Editor.DataValidation
             art.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(ArtPath);
             art.type = Image.Type.Simple;
             art.preserveAspect = true;
-            art.color = Color.white;
+            art.color = new Color(1f, 1f, 1f, 0.90f); // 104-1번: 투명도 10% 은은한 반투명 연출
             art.raycastTarget = true;
 
             var title = Find(root, "SettingsTitle").GetComponent<TMP_Text>();
@@ -171,6 +212,8 @@ namespace SubTerra.App.Editor.DataValidation
             StyleText(volume, 21, TextAlignmentOptions.Right);
             volume.text = "50%";
             volume.color = Cyan;
+
+            // 슬라이더 설정: 2px 흰색 외곽선 청록 노브 + 활성 트랙 청록 글로우
             var slider = Reference<Slider>(serialized, "masterVolumeSlider");
             Move(slider.transform, card, 113, 210, 362, 30);
             var track = slider.transform.Find("Background").GetComponent<Image>();
@@ -179,12 +222,24 @@ namespace SubTerra.App.Editor.DataValidation
             Stroke(track.gameObject, new Color(0.17f, 0.38f, 0.43f));
             Stretch((RectTransform)slider.fillRect.parent, 3, 11, 3, 11);
             slider.fillRect.GetComponent<Image>().color = Cyan;
+
+            // 활성화 된 영역 은은한 청록 글로우
+            var fillGlowRect = Rect(slider.fillRect, "FillGlow", 0, 0, 0, 0);
+            Stretch(fillGlowRect, -2, -4, 2, 4);
+            var fillGlowImg = Get<Image>(fillGlowRect.gameObject);
+            fillGlowImg.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(SliderGlowPath);
+            fillGlowImg.type = Image.Type.Sliced;
+            fillGlowImg.color = new Color(0.29f, 0.88f, 0.95f, 0.45f);
+            fillGlowImg.raycastTarget = false;
+
+            // 슬라이더 노브 핸들: 청록색 내부 + 2px 순백색 테두리 에셋 적용
             var handle = slider.handleRect.GetComponent<Image>();
-            handle.sprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Knob.psd");
-            handle.color = new Color(0.86f, 0.97f, 1f);
+            handle.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(SliderKnobPath);
+            handle.color = Color.white;
             Stretch((RectTransform)slider.handleRect.parent, 12, 3, 12, 3);
-            slider.handleRect.sizeDelta = new Vector2(22, 0);
-            Stroke(handle.gameObject, Ink);
+            slider.handleRect.sizeDelta = new Vector2(22, 22);
+            var handleOutline = handle.GetComponent<Outline>();
+            if (handleOutline != null) UnityEngine.Object.DestroyImmediate(handleOutline);
 
             Label(serialized, "resolutionLabel", card, -252, 86);
             Label(serialized, "frameRateLabel", card, -252, 35);
@@ -193,6 +248,7 @@ namespace SubTerra.App.Editor.DataValidation
             Dropdown(Reference<TMP_Dropdown>(serialized, "frameRateDropdown"), card, 35);
             Dropdown(Reference<TMP_Dropdown>(serialized, "languageDropdown"), card, -144);
 
+            // 토글 스위치 설정: 둥근 캡슐형 트랙 + 글로우 + 0.5초 애니메이션
             var group = Find(root, "ReduceMotionGroup");
             Move(group, card, 0, -17, 760, 36);
             var motionLabel = Reference<TMP_Text>(serialized, "reduceMotionLabel");
@@ -201,31 +257,46 @@ namespace SubTerra.App.Editor.DataValidation
             var toggle = Reference<Toggle>(serialized, "reduceMotionToggle");
             Move(toggle.transform, group, 347, 0, 72, 30);
             toggle.transition = Selectable.Transition.None;
+
+            // 스위치 글로우 레이어 (토글 활성화 시 청록빛 발산)
+            var switchGlowRect = Rect(toggle.transform, "SwitchGlow", 0, 0, 84, 42);
+            switchGlowRect.SetAsFirstSibling();
+            var switchGlowImg = Get<Image>(switchGlowRect.gameObject);
+            switchGlowImg.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(SliderGlowPath);
+            switchGlowImg.type = Image.Type.Sliced;
+            switchGlowImg.color = Color.clear;
+            switchGlowImg.raycastTarget = false;
+
             var switchTrack = toggle.targetGraphic as Image;
             Place(switchTrack.rectTransform, 0, 0, 72, 30);
-            switchTrack.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(PromptB103MainMenuBuilder.CutCornerPlatePath);
+            switchTrack.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(TogglePillPath);
             switchTrack.type = Image.Type.Sliced;
             switchTrack.pixelsPerUnitMultiplier = 1f;
             switchTrack.color = new Color(0.05f, 0.18f, 0.22f, 1f);
-            Stroke(switchTrack.gameObject, Cyan);
+            var switchTrackOutline = switchTrack.GetComponent<Outline>();
+            if (switchTrackOutline != null) UnityEngine.Object.DestroyImmediate(switchTrackOutline);
+
             if (toggle.graphic != null) toggle.graphic.gameObject.SetActive(false);
             toggle.graphic = null;
             var knob = Rect(switchTrack.transform, "SwitchHandle", SwitchOffX, 0, 22, 22);
             var knobImage = Get<Image>(knob.gameObject);
             knobImage.sprite = handle.sprite;
-            knobImage.color = new Color(0.55f, 0.82f, 0.88f);
+            knobImage.color = Color.white;
             knobImage.raycastTarget = false;
 
+            // 버튼 스킨: 투명 배경 + 청록 외곽선 + 가장자리 약한 청록빛 + 호버 시 50% 반투명 청록 물들임
             Button(card, "ChangeControls", "키 조작 변경", 129, -231, 520, 50, font);
             SkinButton(Reference<Button>(serialized, "settingsDefaultsButton"), card, -300, -348, 218, 56);
             SkinButton(Reference<Button>(serialized, "settingsCancelButton"), card, 30, -348, 234, 56);
             SkinButton(Reference<Button>(serialized, "settingsApplyButton"), card, 300, -348, 234, 56, true);
             var close = CloseButton(card, font);
+
             foreach (var name in new[] { "BgmHint", "ResolutionPrev", "ResolutionNext", "LanguageCycle" })
             {
                 var old = Find(root, name);
                 if (old != null) old.gameObject.SetActive(false);
             }
+
             var skin = Get<SettingsMenuSkin>(root.gameObject);
             var skinData = new SerializedObject(skin);
             Set(skinData, "card", card);
@@ -234,6 +305,9 @@ namespace SubTerra.App.Editor.DataValidation
             Set(skinData, "reduceMotion", toggle);
             Set(skinData, "switchHandle", knob);
             Set(skinData, "switchTrack", switchTrack);
+            Set(skinData, "switchGlow", switchGlowImg);
+            Set(skinData, "volumeSlider", slider);
+            Set(skinData, "volumeFillGlow", fillGlowImg);
             Set(skinData, "volumeCaption", caption);
             var titles = skinData.FindProperty("sectionTitles");
             titles.arraySize = headings.Length;
@@ -277,6 +351,13 @@ namespace SubTerra.App.Editor.DataValidation
         private static void StyleDropdownList(TMP_Dropdown dropdown)
         {
             if (dropdown.template == null) return;
+
+            // 104-1번: 드롭다운(프레임 포함) 템플릿이 아래 방향으로 펼쳐지도록 설정
+            dropdown.template.anchorMin = new Vector2(0f, 0f);
+            dropdown.template.anchorMax = new Vector2(1f, 0f);
+            dropdown.template.pivot = new Vector2(0.5f, 1f);
+            dropdown.template.anchoredPosition = new Vector2(0f, -2f);
+
             var image = dropdown.template.GetComponent<Image>();
             if (image != null)
             {
@@ -296,26 +377,36 @@ namespace SubTerra.App.Editor.DataValidation
         private static Button CloseButton(RectTransform card, TMP_FontAsset font)
         {
             var rect = Rect(card, "SettingsClose", 429, 358, 46, 46);
-            foreach (var name in new[] { "EdgeTop", "EdgeBottom", "EdgeLeft", "EdgeRight" })
+            foreach (var name in new[] { "EdgeTop", "EdgeBottom", "EdgeLeft", "EdgeRight", "Label" })
                 DestroyChild(rect, name);
             var outline = rect.GetComponent<Outline>();
             if (outline != null) UnityEngine.Object.DestroyImmediate(outline);
+
+            // 104-1번: setting-menu.png의 X버튼 전용 노멀 에셋 적용
             var image = Get<Image>(rect.gameObject);
-            image.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(PromptB103MainMenuBuilder.CutCornerPlatePath);
-            image.type = Image.Type.Sliced;
+            image.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(CloseNormalPath);
+            image.type = Image.Type.Simple;
             image.color = Color.white;
+
+            // 호버 시 50% 반투명 청록 발광 X버튼 에셋 크로스페이드 오버레이
+            var hoverOverlay = Rect(rect, "HoverOverlay", 0, 0, 46, 46);
+            var hoverImg = Get<Image>(hoverOverlay.gameObject);
+            hoverImg.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(CloseHoverPath);
+            hoverImg.type = Image.Type.Simple;
+            hoverImg.raycastTarget = false;
+
             var button = Get<Button>(rect.gameObject);
-            button.targetGraphic = image;
+            button.targetGraphic = hoverImg;
             button.transition = Selectable.Transition.ColorTint;
             var colors = button.colors;
             colors.normalColor = new Color(1f, 1f, 1f, 0f);
-            colors.highlightedColor = new Color(0.22f, 0.72f, 0.8f, 0.22f);
-            colors.selectedColor = colors.highlightedColor;
-            colors.pressedColor = new Color(0.18f, 0.55f, 0.62f, 0.12f);
+            colors.highlightedColor = new Color(1f, 1f, 1f, 1f);
+            colors.selectedColor = new Color(1f, 1f, 1f, 1f);
+            colors.pressedColor = new Color(0.85f, 0.95f, 1f, 1f);
             colors.disabledColor = new Color(1f, 1f, 1f, 0f);
+            colors.fadeDuration = 0.15f; // 호버 시 이미지 변경시간
             button.colors = colors;
-            var label = Text(rect, "Label", "×", 0, 2, 46, 46, 30, font, TextAlignmentOptions.Center);
-            label.color = Cyan;
+
             return button;
         }
 
@@ -339,15 +430,27 @@ namespace SubTerra.App.Editor.DataValidation
             image.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(PromptB103MainMenuBuilder.CutCornerPlatePath);
             image.type = Image.Type.Sliced;
             image.color = Color.white;
+
+            // 104-1번: 투명 배경 + 호버 시 50% 반투명 청록 물들임 트랜지션
             var colors = button.colors;
-            colors.normalColor = primary ? new Color(0.05f, 0.38f, 0.46f, 0.98f) : new Color(0.04f, 0.11f, 0.15f, 0.88f);
-            colors.highlightedColor = new Color(0.1f, 0.42f, 0.5f, 1f);
-            colors.selectedColor = colors.highlightedColor;
-            colors.pressedColor = new Color(0.02f, 0.16f, 0.2f, 1f);
-            colors.disabledColor = new Color(0.12f, 0.16f, 0.18f, 0.45f);
+            colors.normalColor = new Color(0.18f, 0.72f, 0.85f, 0f); // 투명
+            colors.highlightedColor = new Color(0.18f, 0.72f, 0.85f, 0.50f); // 50% 반투명 청록
+            colors.selectedColor = new Color(0.18f, 0.72f, 0.85f, 0.40f);
+            colors.pressedColor = new Color(0.12f, 0.55f, 0.68f, 0.65f);
+            colors.disabledColor = new Color(0.12f, 0.16f, 0.18f, 0.20f);
+            colors.fadeDuration = 0.15f;
             button.colors = colors;
             button.transition = Selectable.Transition.ColorTint;
-            Stroke(image.gameObject, primary ? Cyan : MutedCyan);
+
+            // 1px 청록 외곽선
+            Stroke(image.gameObject, primary ? Cyan : new Color(0.29f, 0.88f, 0.95f, 0.75f));
+
+            // 가장자리 약한 청록빛 글로우
+            var shadow = Get<Shadow>(button.gameObject);
+            shadow.effectColor = new Color(0.29f, 0.88f, 0.95f, primary ? 0.45f : 0.28f);
+            shadow.effectDistance = Vector2.zero;
+            shadow.useGraphicAlpha = false;
+
             var text = button.GetComponentInChildren<TMP_Text>(true);
             Place(text.rectTransform, 0, 0, w - 12, h - 4);
             StyleText(text, 22, TextAlignmentOptions.Center);

@@ -325,6 +325,15 @@ namespace SubTerra.App.UI.SurfaceBase
             }
 
             if (visible && controlSchemePanel == null) controlSchemePanel = ControlSchemePanel.Attach(settingsRoot);
+            if (!visible)
+            {
+                var skin = settingsRoot.GetComponent<SubTerra.App.UI.MainMenu.SettingsMenuSkin>();
+                if (skin != null && skin.isActiveAndEnabled && Application.isPlaying)
+                {
+                    skin.PlayCloseAnimation(() => settingsRoot.SetActive(false));
+                    return;
+                }
+            }
             settingsRoot.SetActive(visible);
             if (visible)
             {
