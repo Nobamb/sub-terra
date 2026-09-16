@@ -1,0 +1,278 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="37" result="Passed" total="37" passed="37" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-09-15 05:42:11Z" end-time="2026-09-15 05:42:13Z" duration="1.9390605">
+  <test-suite type="TestSuite" id="1000" name="sub-terra" fullname="sub-terra" runstate="Runnable" testcasecount="830" result="Passed" start-time="2026-09-15 05:42:11Z" end-time="2026-09-15 05:42:13Z" duration="1.939061" total="37" passed="37" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1882" name="SubTerra.App.Tests.EditMode.dll" fullname="C:/Users/USER/Desktop/develop/sub-terra/sub-terra/Library/ScriptAssemblies/SubTerra.App.Tests.EditMode.dll" runstate="Runnable" testcasecount="734" result="Passed" start-time="2026-09-15 05:42:11Z" end-time="2026-09-15 05:42:13Z" duration="1.831012" total="37" passed="37" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="45576" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1883" name="SubTerra" fullname="SubTerra" runstate="Runnable" testcasecount="734" result="Passed" start-time="2026-09-15 05:42:11Z" end-time="2026-09-15 05:42:13Z" duration="1.723924" total="37" passed="37" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1886" name="App" fullname="SubTerra.App" runstate="Runnable" testcasecount="733" result="Passed" start-time="2026-09-15 05:42:11Z" end-time="2026-09-15 05:42:13Z" duration="1.615498" total="37" passed="37" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1887" name="Tests" fullname="SubTerra.App.Tests" runstate="Runnable" testcasecount="733" result="Passed" start-time="2026-09-15 05:42:11Z" end-time="2026-09-15 05:42:13Z" duration="1.503093" total="37" passed="37" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestSuite" id="1891" name="Save" fullname="SubTerra.App.Tests.Save" runstate="Runnable" testcasecount="54" result="Passed" start-time="2026-09-15 05:42:12Z" end-time="2026-09-15 05:42:12Z" duration="0.954801" total="16" passed="16" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-suite type="TestFixture" id="1418" name="SaveServiceTests" fullname="SubTerra.App.Tests.Save.SaveServiceTests" classname="SubTerra.App.Tests.Save.SaveServiceTests" runstate="Runnable" testcasecount="16" result="Passed" start-time="2026-09-15 05:42:12Z" end-time="2026-09-15 05:42:12Z" duration="0.844452" total="16" passed="16" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1433" name="DeleteSlot_WhenAnyDeleteFails_ReturnsFalse" fullname="SubTerra.App.Tests.Save.SaveServiceTests.DeleteSlot_WhenAnyDeleteFails_ReturnsFalse" methodname="DeleteSlot_WhenAnyDeleteFails_ReturnsFalse" classname="SubTerra.App.Tests.Save.SaveServiceTests" runstate="Runnable" seed="1339828821" result="Passed" start-time="2026-09-15 05:42:12Z" end-time="2026-09-15 05:42:12Z" duration="0.064767" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1419" name="K_F01_AllBStateAndWorldSnapshot_RoundTrip" fullname="SubTerra.App.Tests.Save.SaveServiceTests.K_F01_AllBStateAndWorldSnapshot_RoundTrip" methodname="K_F01_AllBStateAndWorldSnapshot_RoundTrip" classname="SubTerra.App.Tests.Save.SaveServiceTests" runstate="Runnable" seed="1926971258" result="Passed" start-time="2026-09-15 05:42:12Z" end-time="2026-09-15 05:42:12Z" duration="0.014295" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1423" name="K_F02_CorruptNormal_LoadsValidBackupWithoutOverwritingCorruptSource" fullname="SubTerra.App.Tests.Save.SaveServiceTests.K_F02_CorruptNormal_LoadsValidBackupWithoutOverwritingCorruptSource" methodname="K_F02_CorruptNormal_LoadsValidBackupWithoutOverwritingCorruptSource" classname="SubTerra.App.Tests.Save.SaveServiceTests" runstate="Runnable" seed="1816158730" result="Passed" start-time="2026-09-15 05:42:12Z" end-time="2026-09-15 05:42:12Z" duration="0.012878" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1424" name="K_F03_BothCopiesCorrupt_ReturnsRecoveryChoicesAndPreservesFiles" fullname="SubTerra.App.Tests.Save.SaveServiceTests.K_F03_BothCopiesCorrupt_ReturnsRecoveryChoicesAndPreservesFiles" methodname="K_F03_BothCopiesCorrupt_ReturnsRecoveryChoicesAndPreservesFiles" classname="SubTerra.App.Tests.Save.SaveServiceTests" runstate="Runnable" seed="1241194958" result="Passed" start-time="2026-09-15 05:42:12Z" end-time="2026-09-15 05:42:12Z" duration="0.003668" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-suite type="ParameterizedMethod" id="1430" name="K_F04_MoveFailures_PreserveRecoverablePreviousSave" fullname="SubTerra.App.Tests.Save.SaveServiceTests.K_F04_MoveFailures_PreserveRecoverablePreviousSave" classname="SubTerra.App.Tests.Save.SaveServiceTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-09-15 05:42:12Z" end-time="2026-09-15 05:42:12Z" duration="0.015433" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="1428" name="K_F04_MoveFailures_PreserveRecoverablePreviousSave(BackupMove,BackupFailed)" fullname="SubTerra.App.Tests.Save.SaveServiceTests.K_F04_MoveFailures_PreserveRecoverablePreviousSave(BackupMove,BackupFailed)" methodname="K_F04_MoveFailures_PreserveRecoverablePreviousSave" classname="SubTerra.App.Tests.Save.SaveServiceTests" runstate="Runnable" seed="151613367" result="Passed" start-time="2026-09-15 05:42:12Z" end-time="2026-09-15 05:42:12Z" duration="0.007122" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1429" name="K_F04_MoveFailures_PreserveRecoverablePreviousSave(PromoteMove,PromoteFailed)" fullname="SubTerra.App.Tests.Save.SaveServiceTests.K_F04_MoveFailures_PreserveRecoverablePreviousSave(PromoteMove,PromoteFailed)" methodname="K_F04_MoveFailures_PreserveRecoverablePreviousSave" classname="SubTerra.App.Tests.Save.SaveServiceTests" runstate="Runnable" seed="1827687012" result="Passed" start-time="2026-09-15 05:42:12Z" end-time="2026-09-15 05:42:12Z" duration="0.005712" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                </test-suite>
+                <test-suite type="ParameterizedMethod" id="1427" name="K_F04_TemporaryFailures_DoNotCreateNormalSave" fullname="SubTerra.App.Tests.Save.SaveServiceTests.K_F04_TemporaryFailures_DoNotCreateNormalSave" classname="SubTerra.App.Tests.Save.SaveServiceTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-09-15 05:42:12Z" end-time="2026-09-15 05:42:12Z" duration="0.105318" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="1425" name="K_F04_TemporaryFailures_DoNotCreateNormalSave(TemporaryWrite,TemporaryWriteFailed)" fullname="SubTerra.App.Tests.Save.SaveServiceTests.K_F04_TemporaryFailures_DoNotCreateNormalSave(TemporaryWrite,TemporaryWriteFailed)" methodname="K_F04_TemporaryFailures_DoNotCreateNormalSave" classname="SubTerra.App.Tests.Save.SaveServiceTests" runstate="Runnable" seed="271815001" result="Passed" start-time="2026-09-15 05:42:12Z" end-time="2026-09-15 05:42:12Z" duration="0.003591" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1426" name="K_F04_TemporaryFailures_DoNotCreateNormalSave(TemporaryValidation,TemporaryValidationFailed)" fullname="SubTerra.App.Tests.Save.SaveServiceTests.K_F04_TemporaryFailures_DoNotCreateNormalSave(TemporaryValidation,TemporaryValidationFailed)" methodname="K_F04_TemporaryFailures_DoNotCreateNormalSave" classname="SubTerra.App.Tests.Save.SaveServiceTests" runstate="Runnable" seed="1768155681" result="Passed" start-time="2026-09-15 05:42:12Z" end-time="2026-09-15 05:42:12Z" duration="0.004331" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                </test-suite>
+                <test-case id="1432" name="K_F05_DuplicateIdsAndNegativeLevels_AreRejected" fullname="SubTerra.App.Tests.Save.SaveServiceTests.K_F05_DuplicateIdsAndNegativeLevels_AreRejected" methodname="K_F05_DuplicateIdsAndNegativeLevels_AreRejected" classname="SubTerra.App.Tests.Save.SaveServiceTests" runstate="Runnable" seed="100543564" result="Passed" start-time="2026-09-15 05:42:12Z" end-time="2026-09-15 05:42:12Z" duration="0.001181" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1431" name="K_F05_OldVersionMigratesInMemory_FutureVersionIsPreservedAndRejected" fullname="SubTerra.App.Tests.Save.SaveServiceTests.K_F05_OldVersionMigratesInMemory_FutureVersionIsPreservedAndRejected" methodname="K_F05_OldVersionMigratesInMemory_FutureVersionIsPreservedAndRejected" classname="SubTerra.App.Tests.Save.SaveServiceTests" runstate="Runnable" seed="637424379" result="Passed" start-time="2026-09-15 05:42:12Z" end-time="2026-09-15 05:42:12Z" duration="0.019176" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1436" name="K_F06_AutoSaveRequests_AreSerializedAndMergedToLatestDirtyState" fullname="SubTerra.App.Tests.Save.SaveServiceTests.K_F06_AutoSaveRequests_AreSerializedAndMergedToLatestDirtyState" methodname="K_F06_AutoSaveRequests_AreSerializedAndMergedToLatestDirtyState" classname="SubTerra.App.Tests.Save.SaveServiceTests" runstate="Runnable" seed="1101464467" result="Passed" start-time="2026-09-15 05:42:12Z" end-time="2026-09-15 05:42:12Z" duration="0.404135" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1434" name="K_S02_SaveDtos_DoNotContainUnityObjects" fullname="SubTerra.App.Tests.Save.SaveServiceTests.K_S02_SaveDtos_DoNotContainUnityObjects" methodname="K_S02_SaveDtos_DoNotContainUnityObjects" classname="SubTerra.App.Tests.Save.SaveServiceTests" runstate="Runnable" seed="1828644120" result="Passed" start-time="2026-09-15 05:42:12Z" end-time="2026-09-15 05:42:12Z" duration="0.000855" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1435" name="K_S05_OnlyIntegerSlotsOneThroughThreeCanResolvePaths" fullname="SubTerra.App.Tests.Save.SaveServiceTests.K_S05_OnlyIntegerSlotsOneThroughThreeCanResolvePaths" methodname="K_S05_OnlyIntegerSlotsOneThroughThreeCanResolvePaths" classname="SubTerra.App.Tests.Save.SaveServiceTests" runstate="Runnable" seed="1635480825" result="Passed" start-time="2026-09-15 05:42:12Z" end-time="2026-09-15 05:42:12Z" duration="0.000878" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1422" name="Prompt103_CameraCapture_UpdatesPerSlotAndRestoresRenderState" fullname="SubTerra.App.Tests.Save.SaveServiceTests.Prompt103_CameraCapture_UpdatesPerSlotAndRestoresRenderState" methodname="Prompt103_CameraCapture_UpdatesPerSlotAndRestoresRenderState" classname="SubTerra.App.Tests.Save.SaveServiceTests" runstate="Runnable" seed="1801621258" result="Passed" start-time="2026-09-15 05:42:12Z" end-time="2026-09-15 05:42:12Z" duration="0.056750" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1421" name="Prompt103_FailedThumbnailCallback_DoesNotChangeSaveSuccess" fullname="SubTerra.App.Tests.Save.SaveServiceTests.Prompt103_FailedThumbnailCallback_DoesNotChangeSaveSuccess" methodname="Prompt103_FailedThumbnailCallback_DoesNotChangeSaveSuccess" classname="SubTerra.App.Tests.Save.SaveServiceTests" runstate="Runnable" seed="723483151" result="Passed" start-time="2026-09-15 05:42:12Z" end-time="2026-09-15 05:42:12Z" duration="0.007432" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                  <output><![CDATA[Save completed; optional save preview could not be updated.
+]]></output>
+                </test-case>
+                <test-case id="1420" name="Prompt103_ThumbnailUpdatesOnlyAfterSuccessfulSave_AndIsIndependentOfLoad" fullname="SubTerra.App.Tests.Save.SaveServiceTests.Prompt103_ThumbnailUpdatesOnlyAfterSuccessfulSave_AndIsIndependentOfLoad" methodname="Prompt103_ThumbnailUpdatesOnlyAfterSuccessfulSave_AndIsIndependentOfLoad" classname="SubTerra.App.Tests.Save.SaveServiceTests" runstate="Runnable" seed="157388731" result="Passed" start-time="2026-09-15 05:42:12Z" end-time="2026-09-15 05:42:12Z" duration="0.018173" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+              </test-suite>
+            </test-suite>
+            <test-suite type="TestSuite" id="1888" name="UI" fullname="SubTerra.App.Tests.UI" runstate="Runnable" testcasecount="207" result="Passed" start-time="2026-09-15 05:42:12Z" end-time="2026-09-15 05:42:13Z" duration="0.442892" total="21" passed="21" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-suite type="TestSuite" id="1889" name="MainMenu" fullname="SubTerra.App.Tests.UI.MainMenu" runstate="Runnable" testcasecount="26" result="Passed" start-time="2026-09-15 05:42:13Z" end-time="2026-09-15 05:42:13Z" duration="0.421991" total="21" passed="21" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-suite type="TestFixture" id="1303" name="MainMenuLogicTests" fullname="SubTerra.App.Tests.UI.MainMenu.MainMenuLogicTests" classname="SubTerra.App.Tests.UI.MainMenu.MainMenuLogicTests" runstate="Runnable" testcasecount="15" result="Passed" start-time="2026-09-15 05:42:13Z" end-time="2026-09-15 05:42:13Z" duration="0.181252" total="15" passed="15" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="1306" name="L_F01_EmptySlotNewGame_ReadyWithoutConfirm" fullname="SubTerra.App.Tests.UI.MainMenu.MainMenuLogicTests.L_F01_EmptySlotNewGame_ReadyWithoutConfirm" methodname="L_F01_EmptySlotNewGame_ReadyWithoutConfirm" classname="SubTerra.App.Tests.UI.MainMenu.MainMenuLogicTests" runstate="Runnable" seed="1282563271" result="Passed" start-time="2026-09-15 05:42:13Z" end-time="2026-09-15 05:42:13Z" duration="0.003553" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1305" name="L_F02_OverwriteCancel_LeavesSaveBytesAndDoesNotStart" fullname="SubTerra.App.Tests.UI.MainMenu.MainMenuLogicTests.L_F02_OverwriteCancel_LeavesSaveBytesAndDoesNotStart" methodname="L_F02_OverwriteCancel_LeavesSaveBytesAndDoesNotStart" classname="SubTerra.App.Tests.UI.MainMenu.MainMenuLogicTests" runstate="Runnable" seed="825358336" result="Passed" start-time="2026-09-15 05:42:13Z" end-time="2026-09-15 05:42:13Z" duration="0.011192" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1304" name="L_F03_ContinueEligibility_MatchesLoadServiceResults" fullname="SubTerra.App.Tests.UI.MainMenu.MainMenuLogicTests.L_F03_ContinueEligibility_MatchesLoadServiceResults" methodname="L_F03_ContinueEligibility_MatchesLoadServiceResults" classname="SubTerra.App.Tests.UI.MainMenu.MainMenuLogicTests" runstate="Runnable" seed="207534289" result="Passed" start-time="2026-09-15 05:42:13Z" end-time="2026-09-15 05:42:13Z" duration="0.029506" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1310" name="L_F04_SurfaceBasePresenter_DoesNotImplementEconomyTransactions" fullname="SubTerra.App.Tests.UI.MainMenu.MainMenuLogicTests.L_F04_SurfaceBasePresenter_DoesNotImplementEconomyTransactions" methodname="L_F04_SurfaceBasePresenter_DoesNotImplementEconomyTransactions" classname="SubTerra.App.Tests.UI.MainMenu.MainMenuLogicTests" runstate="Runnable" seed="1818096096" result="Passed" start-time="2026-09-15 05:42:13Z" end-time="2026-09-15 05:42:13Z" duration="0.005641" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1307" name="L_F05_ExplorationStart_PreparesAndLoadsOnceOnMultiInvoke" fullname="SubTerra.App.Tests.UI.MainMenu.MainMenuLogicTests.L_F05_ExplorationStart_PreparesAndLoadsOnceOnMultiInvoke" methodname="L_F05_ExplorationStart_PreparesAndLoadsOnceOnMultiInvoke" classname="SubTerra.App.Tests.UI.MainMenu.MainMenuLogicTests" runstate="Runnable" seed="1113611897" result="Passed" start-time="2026-09-15 05:42:13Z" end-time="2026-09-15 05:42:13Z" duration="0.001375" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1308" name="L_F05_RequestExplorationStart_FailedStart_ReenablesExploreAndDoesNotClaimSuccess" fullname="SubTerra.App.Tests.UI.MainMenu.MainMenuLogicTests.L_F05_RequestExplorationStart_FailedStart_ReenablesExploreAndDoesNotClaimSuccess" methodname="L_F05_RequestExplorationStart_FailedStart_ReenablesExploreAndDoesNotClaimSuccess" classname="SubTerra.App.Tests.UI.MainMenu.MainMenuLogicTests" runstate="Runnable" seed="1083424946" result="Passed" start-time="2026-09-15 05:42:13Z" end-time="2026-09-15 05:42:13Z" duration="0.001718" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1309" name="L_F05_RequestExplorationStart_SuccessKeepsBusy_MultiStartDelegatesToCaller" fullname="SubTerra.App.Tests.UI.MainMenu.MainMenuLogicTests.L_F05_RequestExplorationStart_SuccessKeepsBusy_MultiStartDelegatesToCaller" methodname="L_F05_RequestExplorationStart_SuccessKeepsBusy_MultiStartDelegatesToCaller" classname="SubTerra.App.Tests.UI.MainMenu.MainMenuLogicTests" runstate="Runnable" seed="625682467" result="Passed" start-time="2026-09-15 05:42:13Z" end-time="2026-09-15 05:42:13Z" duration="0.001617" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1318" name="QuitPolicy_DefersWhileSaving_AndSavesWhenDirty" fullname="SubTerra.App.Tests.UI.MainMenu.MainMenuLogicTests.QuitPolicy_DefersWhileSaving_AndSavesWhenDirty" methodname="QuitPolicy_DefersWhileSaving_AndSavesWhenDirty" classname="SubTerra.App.Tests.UI.MainMenu.MainMenuLogicTests" runstate="Runnable" seed="876241296" result="Passed" start-time="2026-09-15 05:42:13Z" end-time="2026-09-15 05:42:13Z" duration="0.001111" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1313" name="RequestQuit_Source_HasEditorAndPlayerPaths" fullname="SubTerra.App.Tests.UI.MainMenu.MainMenuLogicTests.RequestQuit_Source_HasEditorAndPlayerPaths" methodname="RequestQuit_Source_HasEditorAndPlayerPaths" classname="SubTerra.App.Tests.UI.MainMenu.MainMenuLogicTests" runstate="Runnable" seed="531659620" result="Passed" start-time="2026-09-15 05:42:13Z" end-time="2026-09-15 05:42:13Z" duration="0.002499" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1316" name="ResolutionPresets_BuildOptionLabels_MatchesAllPresets" fullname="SubTerra.App.Tests.UI.MainMenu.MainMenuLogicTests.ResolutionPresets_BuildOptionLabels_MatchesAllPresets" methodname="ResolutionPresets_BuildOptionLabels_MatchesAllPresets" classname="SubTerra.App.Tests.UI.MainMenu.MainMenuLogicTests" runstate="Runnable" seed="757689296" result="Passed" start-time="2026-09-15 05:42:13Z" end-time="2026-09-15 05:42:13Z" duration="0.002224" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1315" name="ResolutionPresets_CycleWrapsAndFindsKnownModes" fullname="SubTerra.App.Tests.UI.MainMenu.MainMenuLogicTests.ResolutionPresets_CycleWrapsAndFindsKnownModes" methodname="ResolutionPresets_CycleWrapsAndFindsKnownModes" classname="SubTerra.App.Tests.UI.MainMenu.MainMenuLogicTests" runstate="Runnable" seed="1683385509" result="Passed" start-time="2026-09-15 05:42:13Z" end-time="2026-09-15 05:42:13Z" duration="0.001129" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1317" name="SafeAreaFitter_MapsPixelSafeAreaToNormalizedAnchors" fullname="SubTerra.App.Tests.UI.MainMenu.MainMenuLogicTests.SafeAreaFitter_MapsPixelSafeAreaToNormalizedAnchors" methodname="SafeAreaFitter_MapsPixelSafeAreaToNormalizedAnchors" classname="SubTerra.App.Tests.UI.MainMenu.MainMenuLogicTests" runstate="Runnable" seed="696088447" result="Passed" start-time="2026-09-15 05:42:13Z" end-time="2026-09-15 05:42:13Z" duration="0.002938" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1314" name="SettingsSession_ApplyCancelDefaults" fullname="SubTerra.App.Tests.UI.MainMenu.MainMenuLogicTests.SettingsSession_ApplyCancelDefaults" methodname="SettingsSession_ApplyCancelDefaults" classname="SubTerra.App.Tests.UI.MainMenu.MainMenuLogicTests" runstate="Runnable" seed="637142555" result="Passed" start-time="2026-09-15 05:42:13Z" end-time="2026-09-15 05:42:13Z" duration="0.002255" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1312" name="SurfaceBasePresenter_ConsumesCompletedRunResult_WithoutChangingRunLifecycle" fullname="SubTerra.App.Tests.UI.MainMenu.MainMenuLogicTests.SurfaceBasePresenter_ConsumesCompletedRunResult_WithoutChangingRunLifecycle" methodname="SurfaceBasePresenter_ConsumesCompletedRunResult_WithoutChangingRunLifecycle" classname="SubTerra.App.Tests.UI.MainMenu.MainMenuLogicTests" runstate="Runnable" seed="1253941000" result="Passed" start-time="2026-09-15 05:42:13Z" end-time="2026-09-15 05:42:13Z" duration="0.001684" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1311" name="SurfaceBasePresenter_ShowsEnergyAndDepartureCost_AndRefreshesOnChange" fullname="SubTerra.App.Tests.UI.MainMenu.MainMenuLogicTests.SurfaceBasePresenter_ShowsEnergyAndDepartureCost_AndRefreshesOnChange" methodname="SurfaceBasePresenter_ShowsEnergyAndDepartureCost_AndRefreshesOnChange" classname="SubTerra.App.Tests.UI.MainMenu.MainMenuLogicTests" runstate="Runnable" seed="710968848" result="Passed" start-time="2026-09-15 05:42:13Z" end-time="2026-09-15 05:42:13Z" duration="0.001228" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                </test-suite>
+                <test-suite type="TestFixture" id="1319" name="MainMenuStaticStructureTests" fullname="SubTerra.App.Tests.UI.MainMenu.MainMenuStaticStructureTests" classname="SubTerra.App.Tests.UI.MainMenu.MainMenuStaticStructureTests" runstate="Runnable" testcasecount="11" result="Passed" start-time="2026-09-15 05:42:13Z" end-time="2026-09-15 05:42:13Z" duration="0.238153" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="1325" name="L_S01_MainMenu_ExposesNewContinueSlotsSettingsQuitVersion" fullname="SubTerra.App.Tests.UI.MainMenu.MainMenuStaticStructureTests.L_S01_MainMenu_ExposesNewContinueSlotsSettingsQuitVersion" methodname="L_S01_MainMenu_ExposesNewContinueSlotsSettingsQuitVersion" classname="SubTerra.App.Tests.UI.MainMenu.MainMenuStaticStructureTests" runstate="Runnable" seed="1330738706" result="Passed" start-time="2026-09-15 05:42:13Z" end-time="2026-09-15 05:42:13Z" duration="0.078511" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-suite type="ParameterizedMethod" id="1324" name="Prompt103_MenuFitsScreen_AndDecorationsDoNotBlockButtons" fullname="SubTerra.App.Tests.UI.MainMenu.MainMenuStaticStructureTests.Prompt103_MenuFitsScreen_AndDecorationsDoNotBlockButtons" classname="SubTerra.App.Tests.UI.MainMenu.MainMenuStaticStructureTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-09-15 05:42:13Z" end-time="2026-09-15 05:42:13Z" duration="0.119263" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+                    <properties />
+                    <test-case id="1320" name="Prompt103_MenuFitsScreen_AndDecorationsDoNotBlockButtons(1920,1080)" fullname="SubTerra.App.Tests.UI.MainMenu.MainMenuStaticStructureTests.Prompt103_MenuFitsScreen_AndDecorationsDoNotBlockButtons(1920,1080)" methodname="Prompt103_MenuFitsScreen_AndDecorationsDoNotBlockButtons" classname="SubTerra.App.Tests.UI.MainMenu.MainMenuStaticStructureTests" runstate="Runnable" seed="2063852648" result="Passed" start-time="2026-09-15 05:42:13Z" end-time="2026-09-15 05:42:13Z" duration="0.014756" asserts="0">
+                      <properties>
+                        <property name="retryIteration" value="0" />
+                        <property name="repeatIteration" value="0" />
+                      </properties>
+                    </test-case>
+                    <test-case id="1321" name="Prompt103_MenuFitsScreen_AndDecorationsDoNotBlockButtons(2560,1440)" fullname="SubTerra.App.Tests.UI.MainMenu.MainMenuStaticStructureTests.Prompt103_MenuFitsScreen_AndDecorationsDoNotBlockButtons(2560,1440)" methodname="Prompt103_MenuFitsScreen_AndDecorationsDoNotBlockButtons" classname="SubTerra.App.Tests.UI.MainMenu.MainMenuStaticStructureTests" runstate="Runnable" seed="261731291" result="Passed" start-time="2026-09-15 05:42:13Z" end-time="2026-09-15 05:42:13Z" duration="0.017823" asserts="0">
+                      <properties>
+                        <property name="retryIteration" value="0" />
+                        <property name="repeatIteration" value="0" />
+                      </properties>
+                    </test-case>
+                    <test-case id="1322" name="Prompt103_MenuFitsScreen_AndDecorationsDoNotBlockButtons(1366,768)" fullname="SubTerra.App.Tests.UI.MainMenu.MainMenuStaticStructureTests.Prompt103_MenuFitsScreen_AndDecorationsDoNotBlockButtons(1366,768)" methodname="Prompt103_MenuFitsScreen_AndDecorationsDoNotBlockButtons" classname="SubTerra.App.Tests.UI.MainMenu.MainMenuStaticStructureTests" runstate="Runnable" seed="1387159988" result="Passed" start-time="2026-09-15 05:42:13Z" end-time="2026-09-15 05:42:13Z" duration="0.019872" asserts="0">
+                      <properties>
+                        <property name="retryIteration" value="0" />
+                        <property name="repeatIteration" value="0" />
+                      </properties>
+                    </test-case>
+                    <test-case id="1323" name="Prompt103_MenuFitsScreen_AndDecorationsDoNotBlockButtons(2560,1080)" fullname="SubTerra.App.Tests.UI.MainMenu.MainMenuStaticStructureTests.Prompt103_MenuFitsScreen_AndDecorationsDoNotBlockButtons(2560,1080)" methodname="Prompt103_MenuFitsScreen_AndDecorationsDoNotBlockButtons" classname="SubTerra.App.Tests.UI.MainMenu.MainMenuStaticStructureTests" runstate="Runnable" seed="285492196" result="Passed" start-time="2026-09-15 05:42:13Z" end-time="2026-09-15 05:42:13Z" duration="0.034019" asserts="0">
+                      <properties>
+                        <property name="retryIteration" value="0" />
+                        <property name="repeatIteration" value="0" />
+                      </properties>
+                    </test-case>
+                  </test-suite>
+                  <test-case id="1329" name="Prompt16_MainMenuAndOverwriteDialog_AreCenteredAndEnlarged" fullname="SubTerra.App.Tests.UI.MainMenu.MainMenuStaticStructureTests.Prompt16_MainMenuAndOverwriteDialog_AreCenteredAndEnlarged" methodname="Prompt16_MainMenuAndOverwriteDialog_AreCenteredAndEnlarged" classname="SubTerra.App.Tests.UI.MainMenu.MainMenuStaticStructureTests" runstate="Runnable" seed="397957227" result="Passed" start-time="2026-09-15 05:42:13Z" end-time="2026-09-15 05:42:13Z" duration="0.001838" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                    <output><![CDATA[Saving results to: C:/Users/USER/AppData/LocalLow/DefaultCompany/sub-terra\TestResults.xml
+]]></output>
+                  </test-case>
+                </test-suite>
+              </test-suite>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

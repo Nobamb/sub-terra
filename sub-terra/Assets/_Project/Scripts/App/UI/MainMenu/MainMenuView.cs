@@ -4,6 +4,7 @@ using SubTerra.App.RuntimeInfo;
 using SubTerra.Shared.Localization;
 using TMPro;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 namespace SubTerra.App.UI.MainMenu
@@ -12,6 +13,7 @@ namespace SubTerra.App.UI.MainMenu
     public sealed class MainMenuView : MonoBehaviour, IMainMenuView
     {
         [SerializeField] private GameObject panelRoot;
+        [SerializeField] private RectTransform menuContent;
         [SerializeField] private Button[] slotButtons = new Button[3];
         [SerializeField] private TMP_Text[] slotTexts = new TMP_Text[3];
         [SerializeField] private Button continueButton;
@@ -75,6 +77,7 @@ namespace SubTerra.App.UI.MainMenu
 
         private void OnEnable()
         {
+            RefreshLayout();
             WireSlot(0, SelectSlot1);
             WireSlot(1, SelectSlot2);
             WireSlot(2, SelectSlot3);
@@ -118,6 +121,16 @@ namespace SubTerra.App.UI.MainMenu
             {
                 masterVolumeSlider.onValueChanged.AddListener(OnMasterVolumeChanged);
             }
+        }
+
+        private void OnRectTransformDimensionsChange() => RefreshLayout();
+
+        public void RefreshLayout()
+        {
+            if (menuContent == null) return;
+            var rect = (RectTransform)transform;
+            var scale = Mathf.Min(1f, rect.rect.height / 1080f, rect.rect.width / 1040f);
+            menuContent.localScale = Vector3.one * Mathf.Max(0.01f, scale);
         }
 
         private void OnDisable()
@@ -166,14 +179,23 @@ namespace SubTerra.App.UI.MainMenu
             }
 
             var index = slotId - 1;
+            if (slotButtons != null && index < slotButtons.Length && slotButtons[index] != null)
+            {
+                var card = slotButtons[index].GetComponent<SaveSlotCardView>();
+                if (card != null) card.ShowThumbnail(slotId, canContinue);
+            }
             if (slotTexts != null && index < slotTexts.Length && slotTexts[index] != null)
             {
                 slotTexts[index].text = label ?? string.Empty;
             }
         }
 
+        private int currentSelectedSlotId = 1;
+        public int CurrentSelectedSlotId => currentSelectedSlotId;
+
         public void SetSelectedSlot(int slotId, bool canContinue, string message)
         {
+            currentSelectedSlotId = slotId;
             if (continueButton != null)
             {
                 continueButton.interactable = canContinue;
@@ -185,6 +207,50 @@ namespace SubTerra.App.UI.MainMenu
             }
 
             RefreshSlotSelection(slotId);
+        }
+
+        /// <summary>
+        /// 메인 메뉴에서 위/아래 방향키 조작을 통해 세이브 슬롯을 선택한다.
+        /// direction &lt; 0: 위 방향키 (상단 슬롯 방향으로 이동, 최소 1)
+        /// direction &gt; 0: 아래 방향키 (하단 슬롯 방향으로 이동, 최대 3)
+        /// </summary>
+        public void NavigateSlot(int direction)
+        {
+            var targetSlot = Mathf.Clamp(currentSelectedSlotId + direction, 1, 3);
+            if (targetSlot != currentSelectedSlotId)
+            {
+                SlotSelected?.Invoke(targetSlot);
+            }
+        }
+
+        private void Update()
+        {
+            HandleKeyboardNavigation();
+        }
+
+        private void HandleKeyboardNavigation()
+        {
+            // 설정 창이나 덮어쓰기 확인창이 열려 있으면 슬롯 키보드 탐색을 차단한다.
+            if ((settingsRoot != null && settingsRoot.activeSelf) ||
+                (overwriteConfirmRoot != null && overwriteConfirmRoot.activeSelf))
+            {
+                return;
+            }
+
+            var keyboard = Keyboard.current;
+            if (keyboard == null)
+            {
+                return;
+            }
+
+            if (keyboard.upArrowKey.wasPressedThisFrame)
+            {
+                NavigateSlot(-1);
+            }
+            else if (keyboard.downArrowKey.wasPressedThisFrame)
+            {
+                NavigateSlot(1);
+            }
         }
 
         public void SetOverwriteConfirmVisible(bool visible, int slotId)
@@ -544,6 +610,8 @@ namespace SubTerra.App.UI.MainMenu
                 }
 
                 var colors = button.colors;
+                var card = button.GetComponent<SaveSlotCardView>();
+                if (card != null) card.SetSelected(i == selectedSlotId - 1);
                 if (!hasSlotDefaultColor[i])
                 {
                     slotDefaultColors[i] = colors.normalColor;

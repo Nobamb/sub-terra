@@ -82,6 +82,7 @@ namespace SubTerra.App.Save
         public bool IsDirty => dirty;
         public bool IsSaveInProgress => saveInProgress;
         public SaveResult LastSaveResult => lastSaveResult;
+        public SaveThumbnailService Thumbnails { get; private set; }
         public ContinueResult LastContinueResult => lastContinueResult;
         public InventoryState Inventory => inventory;
         public UpgradeState Upgrades => upgrades;
@@ -124,6 +125,8 @@ namespace SubTerra.App.Save
             var json = new SaveJsonCodec(migrations);
             var fileSystem = new PhysicalSaveFileSystem();
             saveService = new SaveService(fileSystem, paths, mapper, json);
+            Thumbnails = new SaveThumbnailService(paths);
+            saveService.Saved += CaptureThumbnail;
             loadService = new LoadService(fileSystem, paths, mapper, json);
             SceneManager.sceneLoaded += OnSceneLoaded;
         }
@@ -165,6 +168,7 @@ namespace SubTerra.App.Save
 
         private void OnDestroy()
         {
+            if (saveService != null) saveService.Saved -= CaptureThumbnail;
             SceneManager.sceneLoaded -= OnSceneLoaded;
             UnbindStateDirtyEvents();
             eventBinder?.Dispose();
@@ -499,6 +503,13 @@ namespace SubTerra.App.Save
             {
                 saveInProgress = false;
             }
+        }
+
+        private void CaptureThumbnail(int slotId)
+        {
+            var camera = Camera.main;
+            if (camera != null && camera.gameObject.scene.name == SceneNames.Integration)
+                Thumbnails.Capture(slotId, camera);
         }
 
         /// <summary>경제·진행·전진기지 성공 이벤트를 현재 슬롯 자동 저장에 연결한다.</summary>
@@ -997,6 +1008,7 @@ namespace SubTerra.App.Save
             pendingInitialSave = false;
             uiReady = true;
             lastSaveResult = SaveCurrent(AutoSaveReason.Manual);
+            if (lastSaveResult.IsSuccess) Thumbnails.Delete(activeSlot);
         }
 
         private IEnumerator ContinueRoutine(

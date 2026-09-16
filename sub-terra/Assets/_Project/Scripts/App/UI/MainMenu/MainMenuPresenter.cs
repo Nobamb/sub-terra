@@ -220,18 +220,24 @@ namespace SubTerra.App.UI.MainMenu
 
             if (eligibility == SlotContinueEligibility.Empty)
             {
-                return "Slot " + metadata.SlotId + "  Empty";
+                return "탐사 기록 " + metadata.SlotId.ToString("00")
+                    + "\n<size=75%><color=#91A7AE>— 기록 없음 —  새 탐사를 시작할 수 있습니다.</color></size>";
             }
 
             if (eligibility == SlotContinueEligibility.Unrecoverable)
             {
-                return "Slot " + metadata.SlotId + "  [Damaged]";
+                return "탐사 기록 " + metadata.SlotId.ToString("00")
+                    + "\n<size=75%><color=#E6A23C>기록 손상 · 이어하기 불가</color></size>";
             }
 
-            return "Slot " + metadata.SlotId
-                + "  Gold " + metadata.Gold
-                + "  Depth " + metadata.Depth
-                + (metadata.IsRecoverableFromBackup ? "  [Backup]" : string.Empty);
+            var savedAt = metadata.SavedAtUtc > 0
+                ? DateTimeOffset.FromUnixTimeSeconds(metadata.SavedAtUtc).ToLocalTime().ToString("yyyy.MM.dd  HH:mm")
+                : "—";
+            return "탐사 기록 " + metadata.SlotId.ToString("00")
+                + "   Gold " + metadata.Gold + "   Depth " + metadata.Depth + "m"
+                + "\n<size=70%><color=#91A7AE>마지막 저장  " + savedAt
+                + (metadata.IsRecoverableFromBackup ? "  [Backup]" : string.Empty)
+                + "</color></size>";
         }
     }
 }
