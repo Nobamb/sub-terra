@@ -41,10 +41,9 @@ namespace SubTerra.Gameplay.Building
 
             Camera cameraToUse = targetCamera != null ? targetCamera : Camera.main;
             if (cameraToUse == null) return;
-            SpriteRenderer sourceRenderer = placementSystem.Selection.RuntimePrefab.GetComponentInChildren<SpriteRenderer>();
             if (preview != null)
             {
-                preview.Configure(sourceRenderer != null ? sourceRenderer.sprite : null);
+                preview.ConfigureFromPrefab(placementSystem.Selection.RuntimePrefab);
             }
             Vector3 screen = Mouse.current.position.ReadValue();
             Vector3 world = cameraToUse.ScreenToWorldPoint(new Vector3(screen.x, screen.y, -cameraToUse.transform.position.z));

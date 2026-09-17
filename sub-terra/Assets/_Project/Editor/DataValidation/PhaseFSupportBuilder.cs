@@ -22,6 +22,8 @@ namespace SubTerra.App.Editor.DataValidation
             "Assets/_Project/Data/Buildings/Building_Support_Basic.asset";
         public const string IntegrationScenePath =
             "Assets/_Project/Scenes/App/Mine_Demo_Integration.unity";
+        public const string SupportArtPath =
+            "Assets/_Project/Art/Facilities/MVP/support_pillar_mine.png";
 
         [MenuItem("SubTerra/MVP2/Build Phase F Support")]
         public static void BuildFromMenu()
@@ -60,11 +62,9 @@ namespace SubTerra.App.Editor.DataValidation
 
                 // 루트에 남은 구형 단일 스프라이트는 VisualRoot 하위로 이관한다.
                 var oldRenderer = root.GetComponent<SpriteRenderer>();
-                var sprite = AssetDatabase.GetBuiltinExtraResource<Sprite>(
-                    "UI/Skin/UISprite.psd");
-                var color = oldRenderer != null
-                    ? oldRenderer.color
-                    : new Color(0.95f, 0.7f, 0.2f);
+                var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(SupportArtPath);
+                if (sprite == null)
+                    throw new System.InvalidOperationException("Support sprite is missing: " + SupportArtPath);
                 if (oldRenderer != null)
                 {
                     Object.DestroyImmediate(oldRenderer);
@@ -89,24 +89,21 @@ namespace SubTerra.App.Editor.DataValidation
                     Object.DestroyImmediate(visualRenderer);
                 }
 
-                // 가로 캡: 일반 블록 너비 × 세로 기둥 너비, 기둥 맨 위에 올려 T자 형성.
+                // 원본 구조와 발판 충돌은 유지하고 완성된 T자 아트 한 장으로 그린다.
                 float capHeight = PostWidth;
                 float capLocalY = (PostHeight * 0.5f) + (capHeight * 0.5f);
-
-                ConfigureSlicedSprite(
-                    EnsureChild(visual, "Post"),
-                    sprite,
-                    color,
-                    new Vector2(PostWidth, PostHeight),
-                    Vector3.zero,
-                    sortingOrder: 3);
-                ConfigureSlicedSprite(
-                    EnsureChild(visual, "Cap"),
-                    sprite,
-                    color,
-                    new Vector2(BlockWidth, capHeight),
-                    new Vector3(0f, capLocalY, 0f),
-                    sortingOrder: 4);
+                Transform post = EnsureChild(visual, "Post");
+                post.localPosition = new Vector3(0f, 0.2f, 0f);
+                post.localRotation = Quaternion.identity;
+                post.localScale = Vector3.one;
+                var postRenderer = post.GetComponent<SpriteRenderer>() ?? post.gameObject.AddComponent<SpriteRenderer>();
+                postRenderer.sprite = sprite;
+                postRenderer.color = Color.white;
+                postRenderer.drawMode = SpriteDrawMode.Simple;
+                postRenderer.sortingOrder = 4;
+                Transform cap = EnsureChild(visual, "Cap");
+                var capRenderer = cap.GetComponent<SpriteRenderer>();
+                if (capRenderer != null) capRenderer.enabled = false;
 
                 // 기둥은 통행을 막지 않으며 상단 캡만 아래에서 통과 가능한 발판으로 사용한다.
                 foreach (var existing in root.GetComponents<BoxCollider2D>())
@@ -170,31 +167,6 @@ namespace SubTerra.App.Editor.DataValidation
             return childObject.transform;
         }
 
-        private static void ConfigureSlicedSprite(
-            Transform target,
-            Sprite sprite,
-            Color color,
-            Vector2 size,
-            Vector3 localPosition,
-            int sortingOrder)
-        {
-            target.localPosition = localPosition;
-            target.localRotation = Quaternion.identity;
-            target.localScale = Vector3.one;
-
-            var renderer = target.GetComponent<SpriteRenderer>();
-            if (renderer == null)
-            {
-                renderer = target.gameObject.AddComponent<SpriteRenderer>();
-            }
-
-            renderer.sprite = sprite;
-            renderer.color = color;
-            renderer.drawMode = SpriteDrawMode.Sliced;
-            renderer.size = size;
-            renderer.sortingOrder = sortingOrder;
-        }
-
         private static BuildingPlacementDefinition BuildDefinition(GameObject prefab)
         {
             var definition = AssetDatabase.LoadAssetAtPath<BuildingPlacementDefinition>(
@@ -224,7 +196,7 @@ namespace SubTerra.App.Editor.DataValidation
                 data.DisplayName,
                 data.Description,
                 prefab,
-                data.Icon,
+                AssetDatabase.LoadAssetAtPath<Sprite>(SupportArtPath),
                 data.PowerDraw,
                 new System.Collections.Generic.List<ItemCostEntry>(data.BuildCosts));
             EditorUtility.SetDirty(data);

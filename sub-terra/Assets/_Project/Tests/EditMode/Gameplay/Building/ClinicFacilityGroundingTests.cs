@@ -9,23 +9,24 @@ namespace SubTerra.Gameplay.Building.Tests
         private const string ClinicPrefabPath = "Assets/_Project/Prefabs/Gameplay/Power/ClinicFacility.prefab";
 
         [Test]
-        public void ClinicVisuals_ShareTheGroundingOffset()
+        public void ClinicArtwork_OverlapsFirstRockRowWithoutChangingItsShape()
         {
             GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(ClinicPrefabPath);
             Assert.That(prefab, Is.Not.Null);
 
-            Transform socketVisual = prefab.transform.Find("VisualRoot/FacilitySocketVisual");
+            Transform visualRoot = prefab.transform.Find("VisualRoot");
             Transform poweredVisual = prefab.transform.Find("PoweredVisualRoot");
 
-            Assert.That(socketVisual, Is.Not.Null);
+            Assert.That(visualRoot, Is.Not.Null);
             Assert.That(poweredVisual, Is.Not.Null);
-            Assert.That(socketVisual.localPosition.y, Is.EqualTo(0.23f).Within(0.001f));
-            Assert.That(poweredVisual.localPosition.y, Is.EqualTo(0.23f).Within(0.001f));
-            Assert.That(prefab.transform.Find("VisualRoot/FacilitySocketVisual/FacilityAlcove"), Is.Null);
-            Assert.That(
-                prefab.transform.Find("VisualRoot/FacilitySocketVisual/MVP_Grounding/FacilitySocket/FoundationTile").gameObject.activeSelf,
-                Is.False,
-                "시설 타일 레이어가 바닥 표현을 맡으므로 본체의 큰 기초판은 표시하지 않는다.");
+            SpriteRenderer[] renderers = visualRoot.GetComponentsInChildren<SpriteRenderer>(true);
+            SpriteRenderer artwork = System.Array.Find(
+                renderers,
+                renderer => renderer != null && renderer.enabled && renderer.sprite != null);
+            Assert.That(artwork, Is.Not.Null);
+            Assert.That(artwork.bounds.size.x, Is.EqualTo(1.8f).Within(0.02f));
+            Assert.That(artwork.bounds.min.y, Is.EqualTo(-1.2f).Within(0.015f));
+            Assert.That(poweredVisual.localPosition.y, Is.EqualTo(artwork.bounds.center.y).Within(0.015f));
         }
     }
 }

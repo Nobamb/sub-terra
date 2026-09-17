@@ -126,6 +126,11 @@ namespace SubTerra.Gameplay.Building.Tests
                 Assert.That(placed.IsSuccess, Is.True, placed.Failure.ToString());
                 Assert.That(setup.Wallet.SpendCount, Is.EqualTo(2));
                 Assert.That(setup.BuildingRoot.childCount, Is.EqualTo(2));
+                Transform lower = setup.BuildingRoot.GetChild(0);
+                Transform upper = setup.BuildingRoot.GetChild(1);
+                Assert.That(upper.position.x, Is.EqualTo(lower.position.x));
+                Assert.That(upper.position.y - lower.position.y, Is.EqualTo(5f).Within(0.0001f),
+                    "Stacked 1x5 ladders must share a continuous five-cell visual pitch.");
             }
             finally
             {

@@ -82,6 +82,40 @@ namespace SubTerra.Gameplay.Player.Tests
             Assert.AreEqual(0, port.CallCount);
         }
 
+        [UnityTest]
+        public IEnumerator DoorVisual_ClosesDuringCallAndReopensAfterArrival()
+        {
+            var left = new GameObject("LeftDoor", typeof(SpriteRenderer)).GetComponent<SpriteRenderer>();
+            var right = new GameObject("RightDoor", typeof(SpriteRenderer)).GetComponent<SpriteRenderer>();
+            left.transform.SetParent(elevatorObject.transform, false);
+            right.transform.SetParent(elevatorObject.transform, false);
+            var visual = elevatorObject.AddComponent<ElevatorDoorVisual>();
+            SetVisualField(visual, "leftDoor", left);
+            SetVisualField(visual, "rightDoor", right);
+            visual.enabled = false;
+            visual.enabled = true;
+            Assert.That(left.enabled, Is.False);
+            Assert.That(right.enabled, Is.False);
+
+            SetField(elevator, "callDelaySeconds", 0.35f);
+            SetField(elevator, "travelDelaySeconds", 0.35f);
+            Assert.That(elevator.RequestTravel(), Is.True);
+
+            yield return new WaitForSecondsRealtime(0.18f);
+            Assert.That(elevator.State, Is.EqualTo(ElevatorTravelState.Calling));
+            Assert.That(visual.ClosedFraction, Is.GreaterThan(0f).And.LessThan(1f));
+            Assert.That(left.enabled && right.enabled, Is.True);
+            Assert.That(left.transform.localPosition.x, Is.GreaterThan(-0.9f));
+
+            yield return new WaitForSecondsRealtime(0.22f);
+            Assert.That(visual.ClosedFraction, Is.EqualTo(1f).Within(0.01f));
+
+            yield return new WaitForSecondsRealtime(0.7f);
+            Assert.That(elevator.State, Is.EqualTo(ElevatorTravelState.Arrived));
+            Assert.That(visual.ClosedFraction, Is.EqualTo(0f).Within(0.01f));
+            Assert.That(left.enabled || right.enabled, Is.False);
+        }
+
         [Test]
         public void RiderInsideElevator_ClaimsSharedInteractionPriority()
         {
@@ -119,6 +153,13 @@ namespace SubTerra.Gameplay.Player.Tests
         private static void SetField<T>(object target, string name, T value)
         {
             typeof(ElevatorController)
+                .GetField(name, BindingFlags.Instance | BindingFlags.NonPublic)
+                ?.SetValue(target, value);
+        }
+
+        private static void SetVisualField<T>(ElevatorDoorVisual target, string name, T value)
+        {
+            typeof(ElevatorDoorVisual)
                 .GetField(name, BindingFlags.Instance | BindingFlags.NonPublic)
                 ?.SetValue(target, value);
         }

@@ -10,8 +10,8 @@ using UnityEngine.SceneManagement;
 namespace SubTerra.App.Editor.DataValidation
 {
     /// <summary>
-    /// prompt-B 49: 조명·충전기·보관함·정산 콘솔·전진기지 코어를 1칸 블록 형태로 구분한다.
-    /// 대상: Power 시설 Prefab 5개와 Integration 씬의 OutpostCore_Demo.
+    /// 시설 6종의 원본 아트를 유지하면서 지형 상단에 얕게 겹치도록 배치한다.
+    /// 보건소는 2x2 점유 영역을 쓰고 나머지 시설은 기존 1x1 점유 영역을 유지한다.
     /// </summary>
     public static class PromptB49FacilityVisualBuilder
     {
@@ -25,13 +25,15 @@ namespace SubTerra.App.Editor.DataValidation
             "Assets/_Project/Prefabs/Gameplay/Power/SettlementFacility.prefab";
         public const string OutpostPrefabPath =
             "Assets/_Project/Prefabs/Gameplay/Power/OutpostCore.prefab";
+        public const string ClinicPrefabPath =
+            "Assets/_Project/Prefabs/Gameplay/Power/ClinicFacility.prefab";
         public const string IntegrationScenePath =
             "Assets/_Project/Scenes/App/Mine_Demo_Integration.unity";
 
         public const string VisualRootName = "VisualRoot";
         public const string PoweredVisualRootName = "PoweredVisualRoot";
 
-        [MenuItem("SubTerra/UI/Build Prompt-B 49 Facility 1-Tile Visuals")]
+        [MenuItem("SubTerra/UI/Build Facility Grounded Visuals")]
         public static void BuildFromMenu()
         {
             Debug.Log("[SubTerra] " + Build());
@@ -43,7 +45,7 @@ namespace SubTerra.App.Editor.DataValidation
             ApplyDemoOutpostInIntegration();
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
-            return "Prompt-B 49 facility 1-tile visuals applied.";
+            return "Facility grounded visuals applied.";
         }
 
         public static void ApplyAllPrefabs()
@@ -53,6 +55,7 @@ namespace SubTerra.App.Editor.DataValidation
             ApplyPrefab(StoragePrefabPath, FacilityVisualKind.Storage, keepPoweredVisual: true);
             ApplyPrefab(SettlementPrefabPath, FacilityVisualKind.Settlement, keepPoweredVisual: true);
             ApplyPrefab(OutpostPrefabPath, FacilityVisualKind.OutpostCore, keepPoweredVisual: false);
+            ApplyPrefab(ClinicPrefabPath, FacilityVisualKind.Clinic, keepPoweredVisual: true);
         }
 
         public static void ApplyVisual(GameObject root, FacilityVisualKind kind, bool keepPoweredVisual)
@@ -62,34 +65,37 @@ namespace SubTerra.App.Editor.DataValidation
                 throw new ArgumentNullException(nameof(root));
             }
 
-            var box = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UISprite.psd");
-            var knob = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Knob.psd");
-            if (box == null || knob == null)
+            Sprite box = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UISprite.psd");
+            Sprite artwork = GetArtworkSprite(kind);
+            if (box == null || artwork == null)
             {
-                throw new InvalidOperationException("Built-in UI sprites are required for facility visuals.");
+                throw new InvalidOperationException("Facility artwork or preview sprite is missing: " + kind);
             }
 
             var rootRenderer = root.GetComponent<SpriteRenderer>();
             if (rootRenderer != null)
             {
-                // 루트 점 스프라이트는 끄고 VisualRoot가 1칸 본체를 담당한다.
+                // 루트 점 스프라이트는 끄고 원본 시설 아트만 표시한다.
                 rootRenderer.enabled = false;
             }
 
             var visualRoot = EnsureChild(root.transform, VisualRootName);
             ClearChildren(visualRoot);
-            BuildKind(visualRoot, kind, box, knob);
+            Transform artworkTransform = CreateGroundedArtwork(visualRoot, artwork, kind);
 
             if (keepPoweredVisual)
             {
                 var powered = EnsureChild(root.transform, PoweredVisualRootName);
                 ClearChildren(powered);
+                powered.localPosition = artworkTransform.localPosition;
+                powered.localRotation = Quaternion.identity;
+                powered.localScale = Vector3.one;
                 CreatePart(
                     powered,
                     "PowerGlow",
                     box,
                     Vector3.zero,
-                    new Vector2(1.08f, 1.08f),
+                    new Vector2(1.02f, 1.02f),
                     new Color(1f, 1f, 1f, 0.28f),
                     3);
                 if (kind == FacilityVisualKind.Light)
@@ -111,6 +117,11 @@ namespace SubTerra.App.Editor.DataValidation
             }
         }
 
+        public static Sprite GetArtworkSprite(FacilityVisualKind kind)
+        {
+            return AssetDatabase.LoadAssetAtPath<Sprite>(GetArtworkPath(kind));
+        }
+
         private static void ApplyPrefab(string path, FacilityVisualKind kind, bool keepPoweredVisual)
         {
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
@@ -124,6 +135,7 @@ namespace SubTerra.App.Editor.DataValidation
             {
                 ApplyVisual(root, kind, keepPoweredVisual);
                 PrefabUtility.SaveAsPrefabAsset(root, path);
+                UpdateBuildingDataIcon(kind);
             }
             finally
             {
@@ -151,7 +163,18 @@ namespace SubTerra.App.Editor.DataValidation
                     return;
                 }
 
-                ApplyVisual(demo, FacilityVisualKind.OutpostCore, keepPoweredVisual: false);
+                // 기존 씬 오브젝트의 자식/fileID를 보존한다. 과거 빌더가 붙인
+                // Diamond 아트의 바닥만 새 규격으로 내리고, 없는 경우에만 재구성한다.
+                Transform existingArt = demo.transform.Find("VisualRoot/Diamond");
+                if (existingArt != null && existingArt.GetComponent<SpriteRenderer>() != null)
+                {
+                    Vector3 local = existingArt.localPosition;
+                    existingArt.localPosition = new Vector3(local.x, -0.227492f, local.z);
+                }
+                else
+                {
+                    ApplyVisual(demo, FacilityVisualKind.OutpostCore, keepPoweredVisual: false);
+                }
                 var instance = demo.GetComponent<BuildingInstance>();
                 if (instance == null)
                 {
@@ -176,49 +199,68 @@ namespace SubTerra.App.Editor.DataValidation
             }
         }
 
-        private static void BuildKind(
-            Transform visualRoot,
-            FacilityVisualKind kind,
-            Sprite box,
-            Sprite knob)
+        private static Transform CreateGroundedArtwork(
+            Transform visualRoot, Sprite sprite, FacilityVisualKind kind)
         {
-            switch (kind)
+            // 점유 영역 아래 암석의 윗면보다 약 0.2칸 내려 놓는다.
+            // SpriteRenderer가 지형보다 앞에 그려져 시설 실루엣은 가리지 않는다.
+            bool isClinic = kind == FacilityVisualKind.Clinic;
+            float maxWidth = isClinic ? 1.8f : 0.96f;
+            float maxHeight = isClinic ? 1.6f : 0.96f;
+            float groundY = isClinic ? -1.2f : -0.68f;
+            Vector2 spriteSize = sprite.bounds.size;
+            float scale = Mathf.Min(
+                maxWidth / Mathf.Max(spriteSize.x, 0.0001f),
+                maxHeight / Mathf.Max(spriteSize.y, 0.0001f));
+            float height = spriteSize.y * scale;
+            var position = new Vector3(0f, groundY + height * 0.5f, 0f);
+            return CreatePart(
+                visualRoot,
+                "Artwork",
+                sprite,
+                position,
+                spriteSize * scale,
+                Color.white,
+                4);
+        }
+
+        private static string GetArtworkPath(FacilityVisualKind kind)
+        {
+            return kind switch
             {
-                case FacilityVisualKind.Light:
-                    CreatePart(visualRoot, "LampGlow", knob, Vector3.zero, new Vector2(1f, 1f), new Color(1f, 0.93f, 0.45f, 0.32f), 3);
-                    CreatePart(visualRoot, "LampHead", knob, Vector3.zero, new Vector2(0.78f, 0.78f), new Color(1f, 0.86f, 0.25f, 1f), 5);
-                    CreatePart(visualRoot, "LampStem", box, new Vector3(0f, -0.28f, 0f), new Vector2(0.16f, 0.36f), new Color(0.42f, 0.34f, 0.12f, 1f), 4);
-                    break;
-                case FacilityVisualKind.Charger:
-                    CreatePart(visualRoot, "Body", box, Vector3.zero, new Vector2(1f, 1f), new Color(0.18f, 0.72f, 0.36f, 1f), 4);
-                    CreatePart(visualRoot, "PlusV", box, Vector3.zero, new Vector2(0.18f, 0.62f), new Color(0.08f, 0.22f, 0.12f, 1f), 6);
-                    CreatePart(visualRoot, "PlusH", box, Vector3.zero, new Vector2(0.62f, 0.18f), new Color(0.08f, 0.22f, 0.12f, 1f), 6);
-                    break;
-                case FacilityVisualKind.Storage:
-                    CreatePart(visualRoot, "Chest", box, new Vector3(0f, -0.08f, 0f), new Vector2(1f, 0.76f), new Color(0.28f, 0.52f, 0.92f, 1f), 4);
-                    CreatePart(visualRoot, "Lid", box, new Vector3(0f, 0.34f, 0f), new Vector2(1f, 0.22f), new Color(0.16f, 0.32f, 0.68f, 1f), 5);
-                    CreatePart(visualRoot, "Handle", knob, new Vector3(0f, 0.16f, 0f), new Vector2(0.2f, 0.12f), new Color(0.92f, 0.78f, 0.28f, 1f), 6);
-                    break;
-                case FacilityVisualKind.Settlement:
-                    CreatePart(visualRoot, "Stand", box, new Vector3(0f, -0.4f, 0f), new Vector2(0.32f, 0.2f), new Color(0.38f, 0.16f, 0.46f, 1f), 4);
-                    CreatePart(visualRoot, "Console", box, new Vector3(0f, 0.08f, 0f), new Vector2(1f, 0.72f), new Color(0.78f, 0.38f, 0.88f, 1f), 5);
-                    CreatePart(visualRoot, "Screen", box, new Vector3(0f, 0.14f, 0f), new Vector2(0.72f, 0.32f), new Color(0.18f, 0.08f, 0.26f, 1f), 6);
-                    break;
-                case FacilityVisualKind.OutpostCore:
-                    var diamond = CreatePart(
-                        visualRoot,
-                        "Diamond",
-                        box,
-                        Vector3.zero,
-                        new Vector2(0.7f, 0.7f),
-                        new Color(0.18f, 0.72f, 1f, 1f),
-                        4);
-                    diamond.localRotation = Quaternion.Euler(0f, 0f, 45f);
-                    CreatePart(visualRoot, "Core", knob, Vector3.zero, new Vector2(0.34f, 0.34f), new Color(0.85f, 0.97f, 1f, 1f), 6);
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(kind));
-            }
+                FacilityVisualKind.Light => "Assets/_Project/Art/Facilities/MVP/light_basic_cartoon_v3.png",
+                FacilityVisualKind.Charger => "Assets/_Project/Art/Facilities/MVP/charger_basic_cartoon_v2.png",
+                FacilityVisualKind.Storage => "Assets/_Project/Art/Facilities/MVP/storage_basic_cartoon_v2.png",
+                FacilityVisualKind.Settlement => "Assets/_Project/Art/Facilities/MVP/settlement_console_cartoon_v3.png",
+                FacilityVisualKind.OutpostCore => "Assets/_Project/Art/Facilities/MVP/outpost_core_cartoon_v3.png",
+                FacilityVisualKind.Clinic => "Assets/_Project/Art/Facilities/MVP/clinic_basic_cartoon_v3.png",
+                _ => throw new ArgumentOutOfRangeException(nameof(kind))
+            };
+        }
+
+        private static string GetBuildingDataPath(FacilityVisualKind kind)
+        {
+            return kind switch
+            {
+                FacilityVisualKind.Light => "Assets/_Project/Data/Buildings/Building_Light_Basic.asset",
+                FacilityVisualKind.Charger => "Assets/_Project/Data/Buildings/Building_Charger_Basic.asset",
+                FacilityVisualKind.Storage => "Assets/_Project/Data/Buildings/Building_Storage_Basic.asset",
+                FacilityVisualKind.Settlement => "Assets/_Project/Data/Buildings/Building_Settlement_Basic.asset",
+                FacilityVisualKind.OutpostCore => "Assets/_Project/Data/Buildings/Building_OutpostCore_Basic.asset",
+                FacilityVisualKind.Clinic => "Assets/_Project/Data/Buildings/Building_Clinic_Basic.asset",
+                _ => throw new ArgumentOutOfRangeException(nameof(kind))
+            };
+        }
+
+        private static void UpdateBuildingDataIcon(FacilityVisualKind kind)
+        {
+            BuildingData data = AssetDatabase.LoadAssetAtPath<BuildingData>(GetBuildingDataPath(kind));
+            if (data == null) return;
+
+            var serialized = new SerializedObject(data);
+            serialized.FindProperty("icon").objectReferenceValue = GetArtworkSprite(kind);
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(data);
         }
 
         private static Transform CreatePart(
@@ -300,7 +342,8 @@ namespace SubTerra.App.Editor.DataValidation
         Charger = 1,
         Storage = 2,
         Settlement = 3,
-        OutpostCore = 4
+        OutpostCore = 4,
+        Clinic = 5
     }
 }
 #endif
