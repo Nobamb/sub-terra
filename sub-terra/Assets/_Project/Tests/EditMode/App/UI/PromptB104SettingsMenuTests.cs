@@ -83,9 +83,12 @@ namespace SubTerra.App.Tests.UI
                 var close = card.Find("SettingsClose").GetComponent<UnityEngine.UI.Button>();
                 Assert.That(card.Find("SettingsClose").GetComponent<UnityEngine.UI.Image>().sprite.name.StartsWith("setting-close-normal"), Is.True, "X버튼 노멀 에셋");
                 Assert.That(card.Find("SettingsClose/HoverOverlay").GetComponent<UnityEngine.UI.Image>().sprite.name.StartsWith("setting-close-hover"), Is.True, "X버튼 호버 에셋");
-                Assert.That(card.Find("SettingsDefaults").GetComponent<UnityEngine.UI.Button>().colors.highlightedColor.a, Is.EqualTo(0.50f).Within(0.01f), "버튼 50% 반투명 청록 호버");
-                Assert.That(card.Find("SettingsDefaults/Edge0"), Is.Not.Null, "버튼 상시 1px 청록 테두리");
-                Assert.That(card.Find("SettingsDefaults/InnerGlow"), Is.Not.Null, "버튼 내부 가장자리 은은한 불빛");
+                Assert.That(card.Find("SettingsDefaults").GetComponent<UnityEngine.UI.Image>().sprite.name.StartsWith("button-active-off"), Is.True, "버튼 기본 off 스프라이트");
+                Assert.That(card.Find("SettingsDefaults/HoverOverlay").GetComponent<UnityEngine.UI.Image>().sprite.name.StartsWith("button-active-on"), Is.True, "버튼 호버 on 스프라이트");
+                Assert.That(card.Find("ChangeControls").GetComponent<UnityEngine.UI.Image>().sprite.name.StartsWith("button-wide-off"), Is.True, "키 조작 변경 와이드 off");
+                Assert.That(card.Find("ChangeControls/HoverOverlay").GetComponent<UnityEngine.UI.Image>().sprite.name.StartsWith("button-wide-on"), Is.True, "키 조작 변경 와이드 on");
+                Assert.That(((RectTransform)card.Find("ChangeControls")).sizeDelta.x,
+                    Is.GreaterThan(((RectTransform)card.Find("SettingsDefaults")).sizeDelta.x), "키 조작 변경 버튼이 더 넓다");
 
                 close.onClick.Invoke();
                 root.gameObject.SetActive(false);
@@ -99,11 +102,12 @@ namespace SubTerra.App.Tests.UI
                 Assert.That(card.Find("ResolutionDropdown/ChevronLeft"), Is.Null);
                 Assert.That(card.Find("ResolutionDropdown/DropdownArrow"), Is.Not.Null);
 
-                var toggle = card.GetComponentInChildren<UnityEngine.UI.Toggle>();
+                var toggle = card.Find("ReduceMotionGroup").GetComponentInChildren<UnityEngine.UI.Toggle>(true);
                 var toggleTrack = toggle.targetGraphic as UnityEngine.UI.Image;
                 Assert.That(toggleTrack, Is.Not.Null);
-                Assert.That(toggleTrack.sprite.name.StartsWith("toggle-pill-track"), Is.True, "캡슐형 토글 트랙");
-                Assert.That(toggleTrack.rectTransform.sizeDelta, Is.EqualTo(new Vector2(60, 30)), "토글 스위치 2:1 비율");
+                Assert.That(toggleTrack.sprite.name.StartsWith("toggle-active-off"), Is.True, "토글 비활성 회색 스프라이트");
+                Assert.That(toggleTrack.transform.Find("SwitchOn").GetComponent<UnityEngine.UI.Image>().sprite.name.StartsWith("toggle-active-on"), Is.True, "토글 활성 청록 스프라이트");
+                Assert.That(toggleTrack.rectTransform.sizeDelta, Is.EqualTo(new Vector2(62, 30)), "토글 컨셉 에셋 크기");
 
                 var handle = card.GetComponentsInChildren<RectTransform>(true)
                     .First(t => t.name == "SwitchHandle");

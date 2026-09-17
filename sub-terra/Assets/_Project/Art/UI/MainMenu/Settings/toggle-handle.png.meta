@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 646912ba8dc02664a819dd78afed8052
+guid: 63870b8b781e5cb4a9c66be45bedbd68
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 4227273147056942269
-    second: slider-knob_0
+      213: -3732819658703607435
+    second: toggle-handle_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -113,13 +113,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: slider-knob_0
+      name: toggle-handle_0
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 64
-        height: 64
+        width: 22
+        height: 21
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -128,8 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: dbc60eab78a4aaa30800000000000000
-      internalID: 4227273147056942269
+      spriteID: 57960683c4c523cc0800000000000000
+      internalID: -3732819658703607435
       vertices: []
       indices: 
       edges: []
@@ -148,7 +148,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      slider-knob_0: 4227273147056942269
+      toggle-handle_0: -3732819658703607435
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

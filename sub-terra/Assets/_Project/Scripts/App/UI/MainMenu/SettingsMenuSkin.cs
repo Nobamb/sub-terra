@@ -7,7 +7,7 @@ using UnityEngine.UI;
 
 namespace SubTerra.App.UI.MainMenu
 {
-    /// <summary>104-1번: 설정창 등장/퇴장 바운스, 토글 0.5초 애니메이션 및 파티클, 슬라이더 글로우/파티클 및 스킨 관리</summary>
+    /// <summary>104-3번: 토글 on/off 스프라이트, 버튼 호버 스프라이트, 원형 파티클, 끊김 없는 닫기 상승</summary>
     public sealed class SettingsMenuSkin : MonoBehaviour
     {
         [SerializeField] private RectTransform card;
@@ -16,11 +16,15 @@ namespace SubTerra.App.UI.MainMenu
         [SerializeField] private Toggle reduceMotion;
         [SerializeField] private RectTransform switchHandle;
         [SerializeField] private Image switchTrack;
+        [SerializeField] private Image switchOnImage;
         [SerializeField] private Image switchGlow;
         [SerializeField] private Slider volumeSlider;
         [SerializeField] private Image volumeFillGlow;
         [SerializeField] private TMP_Text volumeCaption;
         [SerializeField] private TMP_Text[] sectionTitles;
+        [SerializeField] private Sprite particleSprite;
+        [SerializeField] private float switchOnX = 16f;
+        [SerializeField] private float switchOffX = -16f;
 
         private bool lastSwitchState;
         private float currentScale = 1f;
@@ -28,6 +32,7 @@ namespace SubTerra.App.UI.MainMenu
         private Coroutine closeRoutine;
         private Coroutine toggleRoutine;
         private bool isClosing;
+        private Action closeComplete;
 
         private struct UIParticle
         {
@@ -47,6 +52,7 @@ namespace SubTerra.App.UI.MainMenu
         private void OnEnable()
         {
             isClosing = false;
+            closeComplete = null;
             if (closeButton != null)
             {
                 closeButton.onClick.RemoveListener(Cancel);
@@ -81,6 +87,7 @@ namespace SubTerra.App.UI.MainMenu
             if (closeRoutine != null) { StopCoroutine(closeRoutine); closeRoutine = null; }
             if (toggleRoutine != null) { StopCoroutine(toggleRoutine); toggleRoutine = null; }
             isClosing = false;
+            closeComplete = null;
         }
 
         private void Cancel()
@@ -99,20 +106,24 @@ namespace SubTerra.App.UI.MainMenu
 
         public void PlayCloseAnimation(Action onComplete)
         {
-            if (!gameObject.activeInHierarchy || !Application.isPlaying || isClosing)
+            if (!gameObject.activeInHierarchy || !Application.isPlaying)
             {
                 onComplete?.Invoke();
                 return;
             }
 
+            // 이미 닫히는 중이면 콜백만 이어 붙여 중간에서 애니메이션이 재시작되지 않게 한다.
+            if (isClosing)
+            {
+                closeComplete += onComplete;
+                return;
+            }
+
             isClosing = true;
+            closeComplete = onComplete;
             if (openRoutine != null) { StopCoroutine(openRoutine); openRoutine = null; }
             if (closeRoutine != null) StopCoroutine(closeRoutine);
-            closeRoutine = StartCoroutine(AnimateClose(() =>
-            {
-                isClosing = false;
-                onComplete?.Invoke();
-            }));
+            closeRoutine = StartCoroutine(AnimateClose());
         }
 
         private IEnumerator AnimateOpen()
@@ -139,34 +150,46 @@ namespace SubTerra.App.UI.MainMenu
             openRoutine = null;
         }
 
-        private IEnumerator AnimateClose(Action onComplete)
+        private IEnumerator AnimateClose()
         {
             if (card == null)
             {
-                onComplete?.Invoke();
+                FinishClose();
                 yield break;
             }
 
             float startY = card.anchoredPosition.y;
             float endY = 850f;
-            float duration = 0.28f;
+            float duration = 0.38f;
             float elapsed = 0f;
+            float dip = 8f * currentScale;
 
             while (elapsed < duration)
             {
                 elapsed += Time.unscaledDeltaTime;
                 float t = Mathf.Clamp01(elapsed / duration);
-                // 104-2번: 중간에 멈추거나 끊김 없이 부드럽게 상승하는 단일 연속 이징
-                float dip = Mathf.Sin(t * Mathf.PI) * (1f - t) * (14f * currentScale);
-                float rise = t * t * t;
-                float y = Mathf.Lerp(startY, endY, rise) - dip;
+                // 초속 0이 되는 t^3 대신 ease-out으로 바로 상승하고, 약한 바운스는 같은 곡선에 섞는다.
+                float ease = 1f - (1f - t) * (1f - t);
+                float bounce = dip * t * (1f - t) * (1f - t);
+                float y = Mathf.Lerp(startY, endY, ease) - bounce;
                 card.anchoredPosition = new Vector2(0, y);
                 yield return null;
             }
 
             card.anchoredPosition = new Vector2(0, endY);
             closeRoutine = null;
-            onComplete?.Invoke();
+            FinishClose();
+        }
+
+        private void FinishClose()
+        {
+            var cb = closeComplete;
+            closeComplete = null;
+            cb?.Invoke();
+            var extra = closeComplete;
+            closeComplete = null;
+            extra?.Invoke();
+            isClosing = false;
         }
 
         private void LateUpdate()
@@ -188,7 +211,7 @@ namespace SubTerra.App.UI.MainMenu
             currentScale = Mathf.Max(0.01f, currentScale);
             card.localScale = Vector3.one * currentScale;
 
-            if (!Application.isPlaying || (openRoutine == null && closeRoutine == null))
+            if (!isClosing && (!Application.isPlaying || (openRoutine == null && closeRoutine == null)))
             {
                 card.anchoredPosition = new Vector2(0, -50f * currentScale);
             }
@@ -198,14 +221,7 @@ namespace SubTerra.App.UI.MainMenu
         {
             if (reduceMotion == null || switchHandle == null || switchTrack == null) return;
             lastSwitchState = reduceMotion.isOn;
-            float targetX = lastSwitchState ? 15f : -15f;
-
-            if (switchGlow != null)
-            {
-                switchGlow.color = lastSwitchState
-                    ? new Color(0.29f, 0.88f, 0.95f, 0.45f)
-                    : new Color(0.29f, 0.88f, 0.95f, 0.12f);
-            }
+            float targetX = lastSwitchState ? switchOnX : switchOffX;
 
             if (instant || !Application.isPlaying)
             {
@@ -234,18 +250,16 @@ namespace SubTerra.App.UI.MainMenu
                 float currentX = Mathf.Lerp(startX, targetX, s);
                 switchHandle.anchoredPosition = new Vector2(currentX, 0);
 
-                float stateRatio = Mathf.InverseLerp(-15f, 15f, currentX);
+                float stateRatio = Mathf.InverseLerp(switchOffX, switchOnX, currentX);
                 ApplySwitchVisuals(stateRatio);
 
-                // 104-2번: 토글 움직일 때 외부에서 은은하게 빛 방출
                 if (switchGlow != null)
                 {
                     float motionGlow = Mathf.Sin(t * Mathf.PI) * 0.55f;
-                    float baseGlow = Mathf.Lerp(0.12f, 0.45f, stateRatio);
+                    float baseGlow = Mathf.Lerp(0.08f, 0.40f, stateRatio);
                     switchGlow.color = new Color(0.29f, 0.88f, 0.95f, Mathf.Max(baseGlow, motionGlow));
                 }
 
-                // 104-2번: 토글 파티클 1.5배 증가 (스폰 주기 단축 0.08f -> 0.05f)
                 particleTimer += Time.unscaledDeltaTime;
                 if (particleTimer >= 0.05f)
                 {
@@ -258,34 +272,29 @@ namespace SubTerra.App.UI.MainMenu
             }
 
             switchHandle.anchoredPosition = new Vector2(targetX, 0);
-            ApplySwitchVisuals(lastSwitchState ? 1f : 0f);
-            if (switchGlow != null)
-            {
-                switchGlow.color = lastSwitchState
-                    ? new Color(0.29f, 0.88f, 0.95f, 0.45f)
-                    : new Color(0.29f, 0.88f, 0.95f, 0.12f);
-            }
             toggleRoutine = null;
+            ApplySwitchVisuals(lastSwitchState ? 1f : 0f);
         }
 
         private void ApplySwitchVisuals(float onRatio)
         {
-            // 104-2번: 기본 상태에서도 은은한 내부 청록 빛 유지
             if (switchTrack != null)
+                switchTrack.color = Color.white;
+            if (switchOnImage != null)
             {
-                switchTrack.color = Color.Lerp(
-                    new Color(0.08f, 0.28f, 0.35f, 0.85f),
-                    new Color(0.18f, 0.78f, 0.86f, 1f),
-                    onRatio);
+                var c = Color.white;
+                c.a = onRatio;
+                switchOnImage.color = c;
             }
+
+            if (switchGlow != null && toggleRoutine == null)
+            {
+                switchGlow.color = new Color(0.29f, 0.88f, 0.95f, Mathf.Lerp(0.08f, 0.40f, onRatio));
+            }
+
             var handleImage = switchHandle != null ? switchHandle.GetComponent<Image>() : null;
             if (handleImage != null)
-            {
-                handleImage.color = Color.Lerp(
-                    new Color(0.65f, 0.88f, 0.92f),
-                    new Color(0.95f, 1f, 1f),
-                    onRatio);
-            }
+                handleImage.color = Color.white;
         }
 
         private void OnVolumeChanged(float val)
@@ -302,7 +311,6 @@ namespace SubTerra.App.UI.MainMenu
         {
             if (volumeFillGlow == null) return;
             float val = volumeSlider != null ? volumeSlider.value : 0.5f;
-            // 104-2번: 활성화 부분 은은하고 선명한 청록빛
             volumeFillGlow.color = val > 0.005f
                 ? new Color(0.35f, 0.95f, 1f, 0.75f)
                 : Color.clear;
@@ -311,15 +319,19 @@ namespace SubTerra.App.UI.MainMenu
         private void EnsureParticlePool()
         {
             if (particlePool != null && particlePool.Length > 0) return;
-            var container = new GameObject("SettingsParticles", typeof(RectTransform));
-            // 104-2번: SettingsCard 하위 최상단으로 배치하여 z-index 우선순위 확보
-            container.transform.SetParent(card != null ? card : (RectTransform)transform, false);
+            var parent = card != null ? card : (RectTransform)transform;
+            var container = new GameObject("SettingsParticles", typeof(RectTransform), typeof(Canvas));
+            container.transform.SetParent(parent, false);
             particleRoot = container.GetComponent<RectTransform>();
             particleRoot.anchorMin = Vector2.zero;
             particleRoot.anchorMax = Vector2.one;
             particleRoot.offsetMin = Vector2.zero;
             particleRoot.offsetMax = Vector2.zero;
             particleRoot.SetAsLastSibling();
+
+            var canvas = container.GetComponent<Canvas>();
+            canvas.overrideSorting = true;
+            canvas.sortingOrder = 80;
 
             int count = 40;
             particlePool = new UIParticle[count];
@@ -330,6 +342,8 @@ namespace SubTerra.App.UI.MainMenu
                 var rt = go.GetComponent<RectTransform>();
                 var img = go.GetComponent<Image>();
                 img.raycastTarget = false;
+                img.preserveAspect = true;
+                if (particleSprite != null) img.sprite = particleSprite;
                 go.SetActive(false);
                 particlePool[i] = new UIParticle
                 {
@@ -344,7 +358,6 @@ namespace SubTerra.App.UI.MainMenu
         {
             EnsureParticlePool();
             if (particleRoot == null || particlePool == null) return;
-            // 슬라이더 및 기타 컨트롤보다 항상 앞(위)에 그려지도록 z-index 보장
             particleRoot.SetAsLastSibling();
             for (int i = 0; i < particlePool.Length; i++)
             {
@@ -352,23 +365,28 @@ namespace SubTerra.App.UI.MainMenu
                 {
                     particlePool[i].Active = true;
                     particlePool[i].Img.gameObject.SetActive(true);
+                    if (particleSprite != null) particlePool[i].Img.sprite = particleSprite;
+                    particlePool[i].Img.preserveAspect = true;
+
+                    Canvas rootCanvas = particleRoot.GetComponentInParent<Canvas>();
+                    Camera cam = null;
+                    if (rootCanvas != null && rootCanvas.renderMode != RenderMode.ScreenSpaceOverlay)
+                        cam = rootCanvas.worldCamera;
 
                     RectTransformUtility.ScreenPointToLocalPointInRectangle(
                         particleRoot,
-                        RectTransformUtility.WorldToScreenPoint(null, worldPos),
-                        null,
+                        RectTransformUtility.WorldToScreenPoint(cam, worldPos),
+                        cam,
                         out Vector2 localPos);
 
-                    // 104-2번: 좀 더 작은 알갱이 크기 (1.5f ~ 2.8f)
-                    float size = UnityEngine.Random.Range(1.5f, 2.8f);
+                    float size = UnityEngine.Random.Range(1.6f, 3.2f);
                     particlePool[i].Rect.sizeDelta = new Vector2(size, size);
                     particlePool[i].Pos = localPos;
                     particlePool[i].Rect.anchoredPosition = localPos;
                     particlePool[i].Vel = vel;
                     particlePool[i].Life = 0f;
                     particlePool[i].MaxLife = UnityEngine.Random.Range(0.45f, 0.75f);
-                    // 104-2번: 불투명도 10% 상향 (0.7f ~ 1.0f)
-                    particlePool[i].BaseAlpha = UnityEngine.Random.Range(0.70f, 1.0f);
+                    particlePool[i].BaseAlpha = UnityEngine.Random.Range(0.28f, 1.0f);
 
                     Color c = Color.Lerp(new Color(0.35f, 0.92f, 1f), Color.white, UnityEngine.Random.value * 0.35f);
                     particlePool[i].Img.color = new Color(c.r, c.g, c.b, particlePool[i].BaseAlpha);
