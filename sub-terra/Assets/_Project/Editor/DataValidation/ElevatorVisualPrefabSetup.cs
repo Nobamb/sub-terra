@@ -89,6 +89,8 @@ namespace SubTerra.App.Editor
             var serialized = new SerializedObject(motion);
             serialized.FindProperty("leftDoor").objectReferenceValue = leftRenderer;
             serialized.FindProperty("rightDoor").objectReferenceValue = rightRenderer;
+            serialized.FindProperty("artwork").objectReferenceValue = artwork;
+            serialized.FindProperty("openingMask").objectReferenceValue = maskObject;
             serialized.ApplyModifiedPropertiesWithoutUndo();
         }
 

@@ -83,8 +83,15 @@ namespace SubTerra.Gameplay.Player.Tests
         }
 
         [UnityTest]
-        public IEnumerator DoorVisual_ClosesDuringCallAndReopensAfterArrival()
+        public IEnumerator MineArrival_OpensTheInitiallyClosedDoors()
         {
+            Object.DestroyImmediate(elevatorObject);
+            port.State = ElevatorTravelState.Arrived;
+            elevatorObject = new GameObject("ArrivingElevator");
+            elevatorObject.AddComponent<BoxCollider2D>();
+            elevator = elevatorObject.AddComponent<ElevatorController>();
+            Assert.That(elevator.State, Is.EqualTo(ElevatorTravelState.Arrived));
+
             var left = new GameObject("LeftDoor", typeof(SpriteRenderer)).GetComponent<SpriteRenderer>();
             var right = new GameObject("RightDoor", typeof(SpriteRenderer)).GetComponent<SpriteRenderer>();
             left.transform.SetParent(elevatorObject.transform, false);
@@ -94,11 +101,42 @@ namespace SubTerra.Gameplay.Player.Tests
             SetVisualField(visual, "rightDoor", right);
             visual.enabled = false;
             visual.enabled = true;
+
+            Assert.That(left.enabled && right.enabled, Is.True);
+            Assert.That(visual.ClosedFraction, Is.EqualTo(1f).Within(0.01f));
+            yield return new WaitForSecondsRealtime(0.35f);
+            Assert.That(left.enabled || right.enabled, Is.False);
+            Assert.That(visual.ClosedFraction, Is.EqualTo(0f).Within(0.01f));
+        }
+
+        [UnityTest]
+        public IEnumerator DoorVisual_ClosesDuringCallAndReopensAfterArrival()
+        {
+            var left = new GameObject("LeftDoor", typeof(SpriteRenderer)).GetComponent<SpriteRenderer>();
+            var right = new GameObject("RightDoor", typeof(SpriteRenderer)).GetComponent<SpriteRenderer>();
+            var artwork = new GameObject("Artwork").transform;
+            var openingMask = new GameObject("OpeningMask").transform;
+            var riderVisual = new GameObject(
+                "VisualRoot", typeof(SpriteRenderer), typeof(PlayerAnimationController)).transform;
+            left.transform.SetParent(elevatorObject.transform, false);
+            right.transform.SetParent(elevatorObject.transform, false);
+            artwork.SetParent(elevatorObject.transform, false);
+            openingMask.SetParent(elevatorObject.transform, false);
+            riderVisual.SetParent(playerObject.transform, false);
+            artwork.localPosition = new Vector3(0f, -0.35f, 0f);
+            openingMask.localPosition = new Vector3(0f, -0.55f, 0f);
+            var visual = elevatorObject.AddComponent<ElevatorDoorVisual>();
+            SetVisualField(visual, "leftDoor", left);
+            SetVisualField(visual, "rightDoor", right);
+            SetVisualField(visual, "artwork", artwork);
+            SetVisualField(visual, "openingMask", openingMask);
+            visual.enabled = false;
+            visual.enabled = true;
             Assert.That(left.enabled, Is.False);
             Assert.That(right.enabled, Is.False);
 
             SetField(elevator, "callDelaySeconds", 0.35f);
-            SetField(elevator, "travelDelaySeconds", 0.35f);
+            SetField(elevator, "travelDelaySeconds", 0.65f);
             Assert.That(elevator.RequestTravel(), Is.True);
 
             yield return new WaitForSecondsRealtime(0.18f);
@@ -106,14 +144,30 @@ namespace SubTerra.Gameplay.Player.Tests
             Assert.That(visual.ClosedFraction, Is.GreaterThan(0f).And.LessThan(1f));
             Assert.That(left.enabled && right.enabled, Is.True);
             Assert.That(left.transform.localPosition.x, Is.GreaterThan(-0.9f));
+            Assert.That(artwork.localPosition.y, Is.EqualTo(-0.35f).Within(0.01f));
+            Assert.That(riderVisual.localPosition.y, Is.EqualTo(0f).Within(0.01f));
 
             yield return new WaitForSecondsRealtime(0.22f);
             Assert.That(visual.ClosedFraction, Is.EqualTo(1f).Within(0.01f));
+            Assert.That(elevator.State, Is.EqualTo(ElevatorTravelState.Moving));
+            Assert.That(artwork.localPosition.y, Is.GreaterThan(-0.35f));
+            Assert.That(riderVisual.localPosition.y, Is.GreaterThan(0f));
 
-            yield return new WaitForSecondsRealtime(0.7f);
+            yield return new WaitForSecondsRealtime(0.4f);
+            Assert.That(elevator.State, Is.EqualTo(ElevatorTravelState.Moving));
+            Assert.That(artwork.localPosition.y, Is.GreaterThan(0.2f));
+            Assert.That(openingMask.localPosition.y - artwork.localPosition.y,
+                Is.EqualTo(-0.2f).Within(0.01f));
+            Assert.That(riderVisual.localPosition.y - artwork.localPosition.y,
+                Is.EqualTo(0.35f).Within(0.01f));
+
+            yield return new WaitForSecondsRealtime(1.2f);
             Assert.That(elevator.State, Is.EqualTo(ElevatorTravelState.Arrived));
             Assert.That(visual.ClosedFraction, Is.EqualTo(0f).Within(0.01f));
             Assert.That(left.enabled || right.enabled, Is.False);
+            Assert.That(artwork.localPosition.y, Is.EqualTo(-0.35f).Within(0.01f));
+            Assert.That(openingMask.localPosition.y, Is.EqualTo(-0.55f).Within(0.01f));
+            Assert.That(riderVisual.localPosition.y, Is.EqualTo(0f).Within(0.01f));
         }
 
         [Test]
@@ -167,7 +221,7 @@ namespace SubTerra.Gameplay.Player.Tests
         public sealed class RecordingTravelPort : MonoBehaviour, IElevatorTravelPort
         {
             public int CallCount { get; private set; }
-            public ElevatorTravelState State => ElevatorTravelState.Idle;
+            public ElevatorTravelState State { get; set; } = ElevatorTravelState.Idle;
 
             public bool TryTravel(ElevatorDestination destination, out string reason)
             {

@@ -951,7 +951,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: SubTerra.Gameplay.Player::SubTerra.Gameplay.Player.ElevatorDoorVisual
   leftDoor: {fileID: 8053576313513174170}
   rightDoor: {fileID: 7592178900222283033}
+  artwork: {fileID: 5862703031475864627}
+  openingMask: {fileID: 1929853418715509937}
   slideDuration: 0.28
+  riseDuration: 0.55
+  riseDistance: 1.4
   openOffset: 0.9
   closedOffset: 0.29
   doorCenterY: -0.55

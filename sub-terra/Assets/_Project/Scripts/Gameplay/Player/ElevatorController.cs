@@ -36,6 +36,7 @@ namespace SubTerra.Gameplay.Player
         public ElevatorTravelState State { get; private set; } = ElevatorTravelState.Idle;
         public event Action<ElevatorTravelState> StateChanged;
         public bool HasRider => riderMovement != null;
+        public Transform RiderTransform => riderMovement != null ? riderMovement.transform : null;
 
         /// <summary>공용 Interact 입력에서 시설 UI보다 엘리베이터 이동이 먼저 처리되어야 하는지 확인한다.</summary>
         public bool TryClaimInteractionPriority()
@@ -59,7 +60,7 @@ namespace SubTerra.Gameplay.Player
             zone.isTrigger = true;
             ResolveInput();
             ResolvePort();
-            SetState(ElevatorTravelState.Idle);
+            RefreshStatus();
         }
 
         private void OnEnable()
@@ -130,7 +131,14 @@ namespace SubTerra.Gameplay.Player
 
             riderMovement = null;
             riderBody = null;
-            RefreshStatus();
+            if (State == ElevatorTravelState.Arrived)
+            {
+                SetState(ElevatorTravelState.Idle);
+            }
+            else
+            {
+                RefreshStatus();
+            }
         }
 
         private void OnInteractStarted(InputAction.CallbackContext _)
@@ -264,7 +272,7 @@ namespace SubTerra.Gameplay.Player
 
             riderMovement = movement;
             riderBody = movement.GetComponent<Rigidbody2D>();
-            if (State == ElevatorTravelState.Arrived || State == ElevatorTravelState.Blocked)
+            if (State == ElevatorTravelState.Blocked)
             {
                 SetState(ElevatorTravelState.Idle);
             }
