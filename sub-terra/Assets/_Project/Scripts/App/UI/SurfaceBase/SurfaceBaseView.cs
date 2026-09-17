@@ -83,6 +83,7 @@ namespace SubTerra.App.UI.SurfaceBase
             settingsButton?.onClick.AddListener(OnSettings);
             quitButton?.onClick.AddListener(OnQuit);
             settingsApplyButton?.onClick.AddListener(OnSettingsApply);
+            settingsCancelButton?.onClick.RemoveListener(OnSettingsCancel);
             settingsCancelButton?.onClick.AddListener(OnSettingsCancel);
             settingsDefaultsButton?.onClick.AddListener(OnSettingsDefaults);
             resetMineButton?.onClick.AddListener(OnResetMine);

@@ -47,8 +47,16 @@ namespace SubTerra.App.UI.MainMenu
         private void OnEnable()
         {
             isClosing = false;
-            if (closeButton != null) closeButton.onClick.AddListener(Cancel);
-            if (volumeSlider != null) volumeSlider.onValueChanged.AddListener(OnVolumeChanged);
+            if (closeButton != null)
+            {
+                closeButton.onClick.RemoveListener(Cancel);
+                closeButton.onClick.AddListener(Cancel);
+            }
+            if (volumeSlider != null)
+            {
+                volumeSlider.onValueChanged.RemoveListener(OnVolumeChanged);
+                volumeSlider.onValueChanged.AddListener(OnVolumeChanged);
+            }
 
             RefreshScale();
             RefreshSwitch(instant: true);
@@ -148,18 +156,10 @@ namespace SubTerra.App.UI.MainMenu
             {
                 elapsed += Time.unscaledDeltaTime;
                 float t = Mathf.Clamp01(elapsed / duration);
-                float y;
-                if (t < 0.2f)
-                {
-                    float sub = t / 0.2f;
-                    y = Mathf.Lerp(startY, startY - 12f * currentScale, Mathf.Sin(sub * Mathf.PI * 0.5f));
-                }
-                else
-                {
-                    float sub = (t - 0.2f) / 0.8f;
-                    float easeIn = sub * sub * sub;
-                    y = Mathf.Lerp(startY - 12f * currentScale, endY, easeIn);
-                }
+                // 104-2번: 중간에 멈추거나 끊김 없이 부드럽게 상승하는 단일 연속 이징
+                float dip = Mathf.Sin(t * Mathf.PI) * (1f - t) * (14f * currentScale);
+                float rise = t * t * t;
+                float y = Mathf.Lerp(startY, endY, rise) - dip;
                 card.anchoredPosition = new Vector2(0, y);
                 yield return null;
             }
@@ -198,13 +198,13 @@ namespace SubTerra.App.UI.MainMenu
         {
             if (reduceMotion == null || switchHandle == null || switchTrack == null) return;
             lastSwitchState = reduceMotion.isOn;
-            float targetX = lastSwitchState ? 18f : -18f;
+            float targetX = lastSwitchState ? 15f : -15f;
 
             if (switchGlow != null)
             {
                 switchGlow.color = lastSwitchState
                     ? new Color(0.29f, 0.88f, 0.95f, 0.45f)
-                    : Color.clear;
+                    : new Color(0.29f, 0.88f, 0.95f, 0.12f);
             }
 
             if (instant || !Application.isPlaying)
@@ -234,11 +234,20 @@ namespace SubTerra.App.UI.MainMenu
                 float currentX = Mathf.Lerp(startX, targetX, s);
                 switchHandle.anchoredPosition = new Vector2(currentX, 0);
 
-                float stateRatio = Mathf.InverseLerp(-18f, 18f, currentX);
+                float stateRatio = Mathf.InverseLerp(-15f, 15f, currentX);
                 ApplySwitchVisuals(stateRatio);
 
+                // 104-2번: 토글 움직일 때 외부에서 은은하게 빛 방출
+                if (switchGlow != null)
+                {
+                    float motionGlow = Mathf.Sin(t * Mathf.PI) * 0.55f;
+                    float baseGlow = Mathf.Lerp(0.12f, 0.45f, stateRatio);
+                    switchGlow.color = new Color(0.29f, 0.88f, 0.95f, Mathf.Max(baseGlow, motionGlow));
+                }
+
+                // 104-2번: 토글 파티클 1.5배 증가 (스폰 주기 단축 0.08f -> 0.05f)
                 particleTimer += Time.unscaledDeltaTime;
-                if (particleTimer >= 0.08f)
+                if (particleTimer >= 0.05f)
                 {
                     particleTimer = 0f;
                     Vector2 spawnPos = switchHandle.TransformPoint(Vector3.zero);
@@ -250,15 +259,22 @@ namespace SubTerra.App.UI.MainMenu
 
             switchHandle.anchoredPosition = new Vector2(targetX, 0);
             ApplySwitchVisuals(lastSwitchState ? 1f : 0f);
+            if (switchGlow != null)
+            {
+                switchGlow.color = lastSwitchState
+                    ? new Color(0.29f, 0.88f, 0.95f, 0.45f)
+                    : new Color(0.29f, 0.88f, 0.95f, 0.12f);
+            }
             toggleRoutine = null;
         }
 
         private void ApplySwitchVisuals(float onRatio)
         {
+            // 104-2번: 기본 상태에서도 은은한 내부 청록 빛 유지
             if (switchTrack != null)
             {
                 switchTrack.color = Color.Lerp(
-                    new Color(0.05f, 0.18f, 0.22f, 1f),
+                    new Color(0.08f, 0.28f, 0.35f, 0.85f),
                     new Color(0.18f, 0.78f, 0.86f, 1f),
                     onRatio);
             }
@@ -266,8 +282,8 @@ namespace SubTerra.App.UI.MainMenu
             if (handleImage != null)
             {
                 handleImage.color = Color.Lerp(
-                    new Color(0.55f, 0.82f, 0.88f),
-                    new Color(0.92f, 0.99f, 1f),
+                    new Color(0.65f, 0.88f, 0.92f),
+                    new Color(0.95f, 1f, 1f),
                     onRatio);
             }
         }
@@ -286,8 +302,9 @@ namespace SubTerra.App.UI.MainMenu
         {
             if (volumeFillGlow == null) return;
             float val = volumeSlider != null ? volumeSlider.value : 0.5f;
+            // 104-2번: 활성화 부분 은은하고 선명한 청록빛
             volumeFillGlow.color = val > 0.005f
-                ? new Color(0.29f, 0.88f, 0.95f, 0.45f)
+                ? new Color(0.35f, 0.95f, 1f, 0.75f)
                 : Color.clear;
         }
 
@@ -295,14 +312,16 @@ namespace SubTerra.App.UI.MainMenu
         {
             if (particlePool != null && particlePool.Length > 0) return;
             var container = new GameObject("SettingsParticles", typeof(RectTransform));
-            container.transform.SetParent(transform, false);
+            // 104-2번: SettingsCard 하위 최상단으로 배치하여 z-index 우선순위 확보
+            container.transform.SetParent(card != null ? card : (RectTransform)transform, false);
             particleRoot = container.GetComponent<RectTransform>();
             particleRoot.anchorMin = Vector2.zero;
             particleRoot.anchorMax = Vector2.one;
             particleRoot.offsetMin = Vector2.zero;
             particleRoot.offsetMax = Vector2.zero;
+            particleRoot.SetAsLastSibling();
 
-            int count = 20;
+            int count = 40;
             particlePool = new UIParticle[count];
             for (int i = 0; i < count; i++)
             {
@@ -325,6 +344,8 @@ namespace SubTerra.App.UI.MainMenu
         {
             EnsureParticlePool();
             if (particleRoot == null || particlePool == null) return;
+            // 슬라이더 및 기타 컨트롤보다 항상 앞(위)에 그려지도록 z-index 보장
+            particleRoot.SetAsLastSibling();
             for (int i = 0; i < particlePool.Length; i++)
             {
                 if (!particlePool[i].Active)
@@ -338,14 +359,16 @@ namespace SubTerra.App.UI.MainMenu
                         null,
                         out Vector2 localPos);
 
-                    float size = UnityEngine.Random.Range(2.5f, 4f);
+                    // 104-2번: 좀 더 작은 알갱이 크기 (1.5f ~ 2.8f)
+                    float size = UnityEngine.Random.Range(1.5f, 2.8f);
                     particlePool[i].Rect.sizeDelta = new Vector2(size, size);
                     particlePool[i].Pos = localPos;
                     particlePool[i].Rect.anchoredPosition = localPos;
                     particlePool[i].Vel = vel;
                     particlePool[i].Life = 0f;
                     particlePool[i].MaxLife = UnityEngine.Random.Range(0.45f, 0.75f);
-                    particlePool[i].BaseAlpha = UnityEngine.Random.Range(0.6f, 0.9f);
+                    // 104-2번: 불투명도 10% 상향 (0.7f ~ 1.0f)
+                    particlePool[i].BaseAlpha = UnityEngine.Random.Range(0.70f, 1.0f);
 
                     Color c = Color.Lerp(new Color(0.35f, 0.92f, 1f), Color.white, UnityEngine.Random.value * 0.35f);
                     particlePool[i].Img.color = new Color(c.r, c.g, c.b, particlePool[i].BaseAlpha);

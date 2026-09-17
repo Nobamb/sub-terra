@@ -88,6 +88,7 @@ namespace SubTerra.App.UI.MainMenu
             overwriteConfirmButton?.onClick.AddListener(OnOverwriteConfirm);
             overwriteCancelButton?.onClick.AddListener(OnOverwriteCancel);
             settingsApplyButton?.onClick.AddListener(OnSettingsApply);
+            settingsCancelButton?.onClick.RemoveListener(OnSettingsCancel);
             settingsCancelButton?.onClick.AddListener(OnSettingsCancel);
             settingsDefaultsButton?.onClick.AddListener(OnSettingsDefaults);
             resolutionPrevButton?.onClick.AddListener(OnResolutionPrev);

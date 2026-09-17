@@ -64,6 +64,7 @@ namespace SubTerra.App.Tests.UI
                 Assert.That(card.Find("MasterVolumeLabel").GetComponent<TMP_Text>().text, Is.EqualTo("62%"));
                 Assert.That(slider.fillRect.Find("FillGlow"), Is.Not.Null, "슬라이더 활성 영역 청록 글로우");
                 Assert.That(slider.handleRect.GetComponent<UnityEngine.UI.Image>().sprite.name.StartsWith("slider-knob"), Is.True, "슬라이더 2px 흰색 테두리 청록 노브");
+                Assert.That(slider.handleRect.GetComponent<UnityEngine.UI.Image>().preserveAspect, Is.True, "슬라이더 핸들 원형 비율 보존");
 
                 foreach (var dropdown in card.GetComponentsInChildren<TMP_Dropdown>())
                 {
@@ -83,6 +84,8 @@ namespace SubTerra.App.Tests.UI
                 Assert.That(card.Find("SettingsClose").GetComponent<UnityEngine.UI.Image>().sprite.name.StartsWith("setting-close-normal"), Is.True, "X버튼 노멀 에셋");
                 Assert.That(card.Find("SettingsClose/HoverOverlay").GetComponent<UnityEngine.UI.Image>().sprite.name.StartsWith("setting-close-hover"), Is.True, "X버튼 호버 에셋");
                 Assert.That(card.Find("SettingsDefaults").GetComponent<UnityEngine.UI.Button>().colors.highlightedColor.a, Is.EqualTo(0.50f).Within(0.01f), "버튼 50% 반투명 청록 호버");
+                Assert.That(card.Find("SettingsDefaults/Edge0"), Is.Not.Null, "버튼 상시 1px 청록 테두리");
+                Assert.That(card.Find("SettingsDefaults/InnerGlow"), Is.Not.Null, "버튼 내부 가장자리 은은한 불빛");
 
                 close.onClick.Invoke();
                 root.gameObject.SetActive(false);
@@ -100,6 +103,7 @@ namespace SubTerra.App.Tests.UI
                 var toggleTrack = toggle.targetGraphic as UnityEngine.UI.Image;
                 Assert.That(toggleTrack, Is.Not.Null);
                 Assert.That(toggleTrack.sprite.name.StartsWith("toggle-pill-track"), Is.True, "캡슐형 토글 트랙");
+                Assert.That(toggleTrack.rectTransform.sizeDelta, Is.EqualTo(new Vector2(60, 30)), "토글 스위치 2:1 비율");
 
                 var handle = card.GetComponentsInChildren<RectTransform>(true)
                     .First(t => t.name == "SwitchHandle");

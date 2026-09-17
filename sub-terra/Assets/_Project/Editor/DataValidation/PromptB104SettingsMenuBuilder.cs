@@ -26,8 +26,8 @@ namespace SubTerra.App.Editor.DataValidation
         public const string SliderGlowPath = "Assets/_Project/Art/UI/MainMenu/Settings/slider-glow.png";
 
         public static readonly Vector2 CardSize = new Vector2(1080, 810);
-        public const float SwitchOnX = 18f;
-        public const float SwitchOffX = -18f;
+        public const float SwitchOnX = 15f;
+        public const float SwitchOffX = -15f;
         private const string BuildFlag = "Temp/prompt-b104-build.flag";
         private const string BuildDone = "Temp/prompt-b104-build.done";
         private const string CaptureFlag = "Temp/prompt-b104-capture.flag";
@@ -70,6 +70,59 @@ namespace SubTerra.App.Editor.DataValidation
                 return;
             }
 
+            const string StopFlag = "Temp/prompt-b104-stop.flag";
+            if (File.Exists(StopFlag))
+            {
+                File.Delete(StopFlag);
+                EditorApplication.isPlaying = false;
+                File.WriteAllText("Temp/prompt-b104-stop.done", "stopped " + DateTime.Now.ToString("o"));
+                return;
+            }
+
+            const string TestFlag = "Temp/prompt-b104-test.flag";
+            const string TestDone = "Temp/prompt-b104-test.done";
+            if (File.Exists(TestFlag))
+            {
+                File.Delete(TestFlag);
+                if (EditorApplication.isPlaying)
+                {
+                    EditorApplication.isPlaying = false;
+                    File.WriteAllText(TestFlag, "wait");
+                    return;
+                }
+                try
+                {
+                    var testType = AppDomain.CurrentDomain.GetAssemblies()
+                        .SelectMany(a => a.GetTypes())
+                        .FirstOrDefault(t => t.FullName == "SubTerra.App.Tests.UI.PromptB104SettingsMenuTests");
+                    if (testType == null) throw new InvalidOperationException("Test type not found");
+                    var instance = Activator.CreateInstance(testType);
+                    var method = testType.GetMethod("Skin_PreservesExistingDraftControlsAndCancelEvents");
+                    method.Invoke(instance, new object[] { MainPrefab });
+                    method.Invoke(instance, new object[] { SurfacePrefab });
+
+                    var templateTestType = AppDomain.CurrentDomain.GetAssemblies()
+                        .SelectMany(a => a.GetTypes())
+                        .FirstOrDefault(t => t.FullName == "SubTerra.App.Tests.UI.SurfaceBaseSettingsDropdownTemplateTests");
+                    if (templateTestType != null)
+                    {
+                        var tInst = Activator.CreateInstance(templateTestType);
+                        var blockerMethod = templateTestType.GetMethod("SettingsPanel_IsAFullScreenInputBlocker_WithAnOpaqueCentralCard");
+                        blockerMethod.Invoke(tInst, new object[] { MainPrefab });
+                        blockerMethod.Invoke(tInst, new object[] { SurfacePrefab });
+                    }
+
+                    File.WriteAllText(TestDone, "PASS: all edit mode tests passed " + DateTime.Now.ToString("o"));
+                }
+                catch (Exception ex)
+                {
+                    var actual = ex.InnerException ?? ex;
+                    File.WriteAllText(TestDone, "FAIL: " + actual.GetType().Name + ": " + actual.Message + "\n" + actual.StackTrace);
+                    Debug.LogException(actual);
+                }
+                return;
+            }
+
             if (!File.Exists(CaptureFlag)) return;
             if (captureStarted <= 0d) captureStarted = EditorApplication.timeSinceStartup;
             if (EditorApplication.timeSinceStartup - captureStarted > 90d)
@@ -95,6 +148,7 @@ namespace SubTerra.App.Editor.DataValidation
             {
                 ScreenCapture.CaptureScreenshot("Assets/Temp/prompt-b104-final.png");
                 File.WriteAllText(CaptureDone, "ok " + DateTime.Now.ToString("o"));
+                EditorApplication.isPlaying = false;
             };
         }
 
@@ -225,19 +279,20 @@ namespace SubTerra.App.Editor.DataValidation
 
             // 활성화 된 영역 은은한 청록 글로우
             var fillGlowRect = Rect(slider.fillRect, "FillGlow", 0, 0, 0, 0);
-            Stretch(fillGlowRect, -2, -4, 2, 4);
+            Stretch(fillGlowRect, -6, -6, 6, 6);
             var fillGlowImg = Get<Image>(fillGlowRect.gameObject);
             fillGlowImg.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(SliderGlowPath);
             fillGlowImg.type = Image.Type.Sliced;
-            fillGlowImg.color = new Color(0.29f, 0.88f, 0.95f, 0.45f);
+            fillGlowImg.color = new Color(0.35f, 0.95f, 1f, 0.75f);
             fillGlowImg.raycastTarget = false;
 
-            // 슬라이더 노브 핸들: 청록색 내부 + 2px 순백색 테두리 에셋 적용
+            // 슬라이더 노브 핸들: 가로/세로 동일한 1:1 원형(22x22)
             var handle = slider.handleRect.GetComponent<Image>();
             handle.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(SliderKnobPath);
             handle.color = Color.white;
-            Stretch((RectTransform)slider.handleRect.parent, 12, 3, 12, 3);
-            slider.handleRect.sizeDelta = new Vector2(22, 22);
+            handle.preserveAspect = true;
+            Stretch((RectTransform)slider.handleRect.parent, 11, 4, 11, 4);
+            slider.handleRect.sizeDelta = new Vector2(22, 0);
             var handleOutline = handle.GetComponent<Outline>();
             if (handleOutline != null) UnityEngine.Object.DestroyImmediate(handleOutline);
 
@@ -248,33 +303,34 @@ namespace SubTerra.App.Editor.DataValidation
             Dropdown(Reference<TMP_Dropdown>(serialized, "frameRateDropdown"), card, 35);
             Dropdown(Reference<TMP_Dropdown>(serialized, "languageDropdown"), card, -144);
 
-            // 토글 스위치 설정: 둥근 캡슐형 트랙 + 글로우 + 0.5초 애니메이션
+            // 토글 스위치 설정: 컨셉 이미지 비율(60x30, 2:1) 캡슐형 트랙 + 글로우 + 0.5초 애니메이션
             var group = Find(root, "ReduceMotionGroup");
             Move(group, card, 0, -17, 760, 36);
             var motionLabel = Reference<TMP_Text>(serialized, "reduceMotionLabel");
             Move(motionLabel.transform, group, -252, 0, 260, 34);
             StyleText(motionLabel, 22, TextAlignmentOptions.MidlineLeft);
             var toggle = Reference<Toggle>(serialized, "reduceMotionToggle");
-            Move(toggle.transform, group, 347, 0, 72, 30);
+            Move(toggle.transform, group, 347, 0, 60, 30);
             toggle.transition = Selectable.Transition.None;
 
-            // 스위치 글로우 레이어 (토글 활성화 시 청록빛 발산)
-            var switchGlowRect = Rect(toggle.transform, "SwitchGlow", 0, 0, 84, 42);
+            // 스위치 글로우 레이어 (토글 외곽 청록빛 발산)
+            var switchGlowRect = Rect(toggle.transform, "SwitchGlow", 0, 0, 72, 42);
             switchGlowRect.SetAsFirstSibling();
             var switchGlowImg = Get<Image>(switchGlowRect.gameObject);
             switchGlowImg.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(SliderGlowPath);
             switchGlowImg.type = Image.Type.Sliced;
-            switchGlowImg.color = Color.clear;
+            switchGlowImg.color = new Color(0.29f, 0.88f, 0.95f, 0.12f);
             switchGlowImg.raycastTarget = false;
 
             var switchTrack = toggle.targetGraphic as Image;
-            Place(switchTrack.rectTransform, 0, 0, 72, 30);
+            Place(switchTrack.rectTransform, 0, 0, 60, 30);
             switchTrack.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(TogglePillPath);
             switchTrack.type = Image.Type.Sliced;
             switchTrack.pixelsPerUnitMultiplier = 1f;
-            switchTrack.color = new Color(0.05f, 0.18f, 0.22f, 1f);
+            switchTrack.color = new Color(0.08f, 0.28f, 0.35f, 0.85f);
             var switchTrackOutline = switchTrack.GetComponent<Outline>();
             if (switchTrackOutline != null) UnityEngine.Object.DestroyImmediate(switchTrackOutline);
+            Stroke(switchTrack.gameObject, new Color(0.29f, 0.88f, 0.95f, 0.90f));
 
             if (toggle.graphic != null) toggle.graphic.gameObject.SetActive(false);
             toggle.graphic = null;
@@ -282,6 +338,7 @@ namespace SubTerra.App.Editor.DataValidation
             var knobImage = Get<Image>(knob.gameObject);
             knobImage.sprite = handle.sprite;
             knobImage.color = Color.white;
+            knobImage.preserveAspect = true;
             knobImage.raycastTarget = false;
 
             // 버튼 스킨: 투명 배경 + 청록 외곽선 + 가장자리 약한 청록빛 + 호버 시 50% 반투명 청록 물들임
@@ -382,17 +439,19 @@ namespace SubTerra.App.Editor.DataValidation
             var outline = rect.GetComponent<Outline>();
             if (outline != null) UnityEngine.Object.DestroyImmediate(outline);
 
-            // 104-1번: setting-menu.png의 X버튼 전용 노멀 에셋 적용
+            // 104-2번: setting-menu.png의 사실적인 SF 메탈 질감 X버튼 전용 노멀 에셋 적용
             var image = Get<Image>(rect.gameObject);
             image.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(CloseNormalPath);
             image.type = Image.Type.Simple;
+            image.preserveAspect = true;
             image.color = Color.white;
 
-            // 호버 시 50% 반투명 청록 발광 X버튼 에셋 크로스페이드 오버레이
+            // 호버 시 중앙에서부터 은은하게 퍼지는 청록 발광 X버튼 에셋 크로스페이드 오버레이
             var hoverOverlay = Rect(rect, "HoverOverlay", 0, 0, 46, 46);
             var hoverImg = Get<Image>(hoverOverlay.gameObject);
             hoverImg.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(CloseHoverPath);
             hoverImg.type = Image.Type.Simple;
+            hoverImg.preserveAspect = true;
             hoverImg.raycastTarget = false;
 
             var button = Get<Button>(rect.gameObject);
@@ -431,29 +490,54 @@ namespace SubTerra.App.Editor.DataValidation
             image.type = Image.Type.Sliced;
             image.color = Color.white;
 
-            // 104-1번: 투명 배경 + 호버 시 50% 반투명 청록 물들임 트랜지션
+            // 104-2번: 메인 메뉴 스타일 버튼
+            // 1. 기본 배경 50% 반투명 다크 청록
+            // 2. 호버 시 50% 반투명 청록 발광
             var colors = button.colors;
-            colors.normalColor = new Color(0.18f, 0.72f, 0.85f, 0f); // 투명
-            colors.highlightedColor = new Color(0.18f, 0.72f, 0.85f, 0.50f); // 50% 반투명 청록
-            colors.selectedColor = new Color(0.18f, 0.72f, 0.85f, 0.40f);
-            colors.pressedColor = new Color(0.12f, 0.55f, 0.68f, 0.65f);
-            colors.disabledColor = new Color(0.12f, 0.16f, 0.18f, 0.20f);
+            colors.normalColor = primary ? new Color(0.10f, 0.27f, 0.32f, 0.75f) : new Color(0.06f, 0.16f, 0.20f, 0.50f);
+            colors.highlightedColor = new Color(0.18f, 0.72f, 0.85f, 0.50f); // 50% 청록 발광
+            colors.selectedColor = new Color(0.18f, 0.72f, 0.85f, 0.45f);
+            colors.pressedColor = new Color(0.10f, 0.45f, 0.55f, 0.70f);
+            colors.disabledColor = new Color(0.06f, 0.10f, 0.12f, 0.30f);
             colors.fadeDuration = 0.15f;
+            colors.colorMultiplier = 1;
             button.colors = colors;
             button.transition = Selectable.Transition.ColorTint;
 
-            // 1px 청록 외곽선
-            Stroke(image.gameObject, primary ? Cyan : new Color(0.29f, 0.88f, 0.95f, 0.75f));
+            // 104-2번: 항상 선명하게 나타나는 1px 청록 윤곽선 (Edge0..3)
+            Border(button.transform as RectTransform, primary ? Cyan : new Color(0.29f, 0.88f, 0.95f, 0.85f), 1f);
 
-            // 가장자리 약한 청록빛 글로우
-            var shadow = Get<Shadow>(button.gameObject);
-            shadow.effectColor = new Color(0.29f, 0.88f, 0.95f, primary ? 0.45f : 0.28f);
-            shadow.effectDistance = Vector2.zero;
-            shadow.useGraphicAlpha = false;
+            // 104-2번: 내부 가장자리에 은은한 청록 불빛 (InnerGlow)
+            var innerGlow = Rect(button.transform, "InnerGlow", 0, 0, w, h);
+            innerGlow.SetAsFirstSibling();
+            var glowImg = Get<Image>(innerGlow.gameObject);
+            glowImg.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(SliderGlowPath);
+            glowImg.type = Image.Type.Sliced;
+            glowImg.color = new Color(0.29f, 0.88f, 0.95f, primary ? 0.35f : 0.20f);
+            glowImg.raycastTarget = false;
+
+            var oldOutline = button.GetComponent<Outline>();
+            if (oldOutline != null) UnityEngine.Object.DestroyImmediate(oldOutline);
+            var oldShadow = button.GetComponent<Shadow>();
+            if (oldShadow != null) UnityEngine.Object.DestroyImmediate(oldShadow);
 
             var text = button.GetComponentInChildren<TMP_Text>(true);
             Place(text.rectTransform, 0, 0, w - 12, h - 4);
             StyleText(text, 22, TextAlignmentOptions.Center);
+        }
+
+        private static void Border(RectTransform parent, Color color, float width)
+        {
+            for (var i = 0; i < 4; i++)
+            {
+                var edge = Rect(parent, "Edge" + i, 0, 0, 0, 0);
+                edge.anchorMin = i == 0 ? new Vector2(0, 1) : i == 3 ? new Vector2(1, 0) : Vector2.zero;
+                edge.anchorMax = i == 1 ? new Vector2(1, 0) : i == 2 ? new Vector2(0, 1) : Vector2.one;
+                edge.sizeDelta = i < 2 ? new Vector2(0, width) : new Vector2(width, 0);
+                var image = Get<Image>(edge.gameObject);
+                image.color = color;
+                image.raycastTarget = false;
+            }
         }
 
         private static TMP_Text Text(Transform parent, string name, string value, float x, float y,
