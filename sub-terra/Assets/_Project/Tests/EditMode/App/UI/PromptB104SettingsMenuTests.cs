@@ -62,15 +62,18 @@ namespace SubTerra.App.Tests.UI
                 var slider = card.GetComponentInChildren<UnityEngine.UI.Slider>();
                 slider.value = 0.62f;
                 Assert.That(card.Find("MasterVolumeLabel").GetComponent<TMP_Text>().text, Is.EqualTo("62%"));
-                Assert.That(slider.fillRect.Find("FillGlow"), Is.Null, "슬라이더 빛은 필 이미지가 아니다");
-                var sliderShadow = slider.transform.Find("SliderShadow") as RectTransform;
-                Assert.That(sliderShadow, Is.Not.Null, "슬라이더 중앙 그림자 글로우");
-                Assert.That(sliderShadow.anchoredPosition, Is.EqualTo(Vector2.zero));
-                Assert.That(sliderShadow.sizeDelta.x, Is.GreaterThan(362f), "그림자가 슬라이더를 조금 덮는다");
-                Assert.That(sliderShadow.sizeDelta.y, Is.GreaterThan(30f), "그림자가 슬라이더를 조금 덮는다");
-                var shadowFx = sliderShadow.GetComponent<UnityEngine.UI.Shadow>();
-                Assert.That(shadowFx, Is.Not.Null, "슬라이더 빛은 Shadow 컴포넌트");
-                Assert.That(shadowFx.effectDistance, Is.EqualTo(Vector2.zero), "그림자 위치는 슬라이드 중앙");
+                Assert.That(slider.transform.Find("SliderShadow"), Is.Null, "전체 트랙 그림자 글로우는 제거한다");
+                var fillGlow = slider.fillRect.Find("FillGlow") as RectTransform;
+                Assert.That(fillGlow, Is.Not.Null, "필 영역 글로우");
+                Assert.That(fillGlow.anchorMin.x, Is.EqualTo(0f));
+                Assert.That(fillGlow.anchorMax.x, Is.EqualTo(1f), "글로우 너비는 필을 따른다");
+                Assert.That(fillGlow.sizeDelta.y, Is.GreaterThan(slider.fillRect.rect.height), "위아래로 필보다 넓게 빛난다");
+                Assert.That(fillGlow.GetComponent<UnityEngine.UI.Image>().sprite.name.StartsWith("slider-fill-glow"), Is.True);
+                Assert.That(fillGlow.GetComponent<UnityEngine.UI.Image>().color.a, Is.EqualTo(1f).Within(0.001f));
+                slider.value = 0.25f;
+                float narrow = slider.fillRect.rect.width;
+                slider.value = 1f;
+                Assert.That(slider.fillRect.rect.width, Is.GreaterThan(narrow), "필 너비가 값에 따라 변한다");
                 Assert.That(slider.handleRect.GetComponent<UnityEngine.UI.Image>().sprite.name.StartsWith("slider-knob"), Is.True, "슬라이더 2px 흰색 테두리 청록 노브");
                 Assert.That(slider.handleRect.GetComponent<UnityEngine.UI.Image>().preserveAspect, Is.True, "슬라이더 핸들 원형 비율 보존");
 
@@ -93,6 +96,11 @@ namespace SubTerra.App.Tests.UI
                 Assert.That(card.Find("SettingsClose/HoverOverlay").GetComponent<UnityEngine.UI.Image>().sprite.name.StartsWith("setting-close-hover"), Is.True, "X버튼 호버 에셋");
                 Assert.That(card.Find("SettingsDefaults").GetComponent<UnityEngine.UI.Image>().sprite.name.StartsWith("button-active-off"), Is.True, "버튼 기본 off 스프라이트");
                 Assert.That(card.Find("SettingsDefaults/HoverOverlay").GetComponent<UnityEngine.UI.Image>().sprite.name.StartsWith("button-active-on"), Is.True, "버튼 호버 on 스프라이트");
+                Assert.That(card.Find("SettingsDefaults").GetComponent<MenuSpriteButtonSkin>(), Is.Not.Null, "설정 버튼 페이드 스킨");
+                Assert.That(card.Find("SettingsCancel").GetComponent<MenuSpriteButtonSkin>(), Is.Not.Null);
+                Assert.That(card.Find("SettingsApply").GetComponent<MenuSpriteButtonSkin>(), Is.Not.Null);
+                Assert.That(card.Find("SettingsDefaults").GetComponent<UnityEngine.UI.Button>().transition,
+                    Is.EqualTo(UnityEngine.UI.Selectable.Transition.None));
                 Assert.That(card.Find("ChangeControls").GetComponent<UnityEngine.UI.Image>().sprite.name.StartsWith("button-wide-off"), Is.True, "키 조작 변경 와이드 off");
                 Assert.That(card.Find("ChangeControls/HoverOverlay").GetComponent<UnityEngine.UI.Image>().sprite.name.StartsWith("button-wide-on"), Is.True, "키 조작 변경 와이드 on");
                 Assert.That(((RectTransform)card.Find("ChangeControls")).sizeDelta.x,
@@ -167,8 +175,12 @@ namespace SubTerra.App.Tests.UI
                     Assert.That(label, Is.Not.Null, names[i] + " text");
                     Assert.That(label.text, Does.Contain(labels[i]).IgnoreCase, names[i] + " label");
                     Assert.That(button.GetComponent<MenuSpriteButtonSkin>(), Is.Not.Null, names[i] + " skin");
+                    Assert.That(MenuSpriteButtonSkin.HighlightDurationSeconds, Is.EqualTo(0.2f),
+                        "세이브 슬롯 선택과 같은 페이드 시간");
                     Assert.That(button.GetComponent<UnityEngine.UI.Button>().navigation.mode,
                         Is.EqualTo(UnityEngine.UI.Navigation.Mode.None));
+                    Assert.That(button.GetComponent<UnityEngine.UI.Button>().transition,
+                        Is.EqualTo(UnityEngine.UI.Selectable.Transition.None));
                 }
 
                 var view = instance.GetComponent<MainMenuView>();
@@ -202,6 +214,69 @@ namespace SubTerra.App.Tests.UI
                 Assert.That(quits, Is.EqualTo(1));
 
                 Invoke(view, "OnDisable");
+            }
+            finally
+            {
+                Object.DestroyImmediate(instance);
+            }
+        }
+
+        [TestCase(PromptB104SettingsMenuBuilder.MainPrefab)]
+        [TestCase(PromptB104SettingsMenuBuilder.SurfacePrefab)]
+        public void Prompt104_4_SettingsFooterNavAndFillGlow(string path)
+        {
+            var instance = Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(path));
+            try
+            {
+                var root = instance.transform.Find("SettingsPanel");
+                var card = root.Find("SettingsCard");
+                var skin = root.GetComponent<SettingsMenuSkin>();
+                Invoke(skin, "OnEnable");
+
+                Assert.That(skin.CurrentFooterButtonIndex, Is.EqualTo(-1));
+                var defaults = card.Find("SettingsDefaults").GetComponent<MenuSpriteButtonSkin>();
+                var cancel = card.Find("SettingsCancel").GetComponent<MenuSpriteButtonSkin>();
+                var apply = card.Find("SettingsApply").GetComponent<MenuSpriteButtonSkin>();
+                Assert.That(defaults.IsHighlighted, Is.False);
+                Assert.That(cancel.IsHighlighted, Is.False);
+                Assert.That(apply.IsHighlighted, Is.False);
+
+                skin.NavigateFooterButton(1);
+                Assert.That(skin.CurrentFooterButtonIndex, Is.EqualTo(0));
+                Assert.That(defaults.IsHighlighted, Is.True);
+                Assert.That(cancel.IsHighlighted, Is.False);
+                Assert.That(apply.IsHighlighted, Is.False);
+
+                skin.NavigateFooterButton(1);
+                Assert.That(skin.CurrentFooterButtonIndex, Is.EqualTo(1));
+                Assert.That(cancel.IsHighlighted, Is.True);
+                Assert.That(defaults.IsHighlighted, Is.False);
+
+                skin.NavigateFooterButton(1);
+                Assert.That(skin.CurrentFooterButtonIndex, Is.EqualTo(2));
+                skin.NavigateFooterButton(1);
+                Assert.That(skin.CurrentFooterButtonIndex, Is.EqualTo(0), "오른쪽 끝에서 기본값으로 순환");
+                skin.NavigateFooterButton(-1);
+                Assert.That(skin.CurrentFooterButtonIndex, Is.EqualTo(2), "왼쪽 끝에서 적용으로 순환");
+
+                int applied = 0;
+                var main = instance.GetComponent<MainMenuView>();
+                var surface = instance.GetComponent<SurfaceBaseView>();
+                if (main != null) main.SettingsApplyClicked += () => applied++;
+                else surface.SettingsApplyClicked += () => applied++;
+                if (main != null) Invoke(main, "OnEnable");
+                else Invoke(surface, "OnEnable");
+                skin.ActivateFocusedFooterButton();
+                Assert.That(applied, Is.EqualTo(1));
+
+                var change = card.Find("ChangeControls");
+                Assert.That(change.GetComponent<MenuSpriteButtonSkin>(), Is.Not.Null, "키 조작 변경도 호버 페이드");
+                Assert.That(change.GetComponent<MenuSpriteButtonSkin>().IsHighlighted, Is.False,
+                    "좌우 키는 하단 세 버튼만 활성화");
+
+                Invoke(skin, "OnDisable");
+                if (main != null) Invoke(main, "OnDisable");
+                else Invoke(surface, "OnDisable");
             }
             finally
             {

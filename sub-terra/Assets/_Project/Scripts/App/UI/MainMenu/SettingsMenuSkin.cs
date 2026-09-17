@@ -4,16 +4,21 @@ using SubTerra.Shared.Localization;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 namespace SubTerra.App.UI.MainMenu
 {
-    /// <summary>104-4번: 슬라이더 중앙 그림자 글로우, 토글/슬라이더 조작 시 위로 퍼지는 원형 파티클, 끊김 없는 닫기 상승</summary>
+    /// <summary>
+    /// 104-4번: 하단 기본값/취소/적용 좌우 키 포커스, 슬라이더 필 영역만 그라데이션 글로우,
+    /// 토글/슬라이더 원형 파티클, 끊김 없는 닫기 상승.
+    /// </summary>
     public sealed class SettingsMenuSkin : MonoBehaviour
     {
         [SerializeField] private RectTransform card;
         [SerializeField] private Button closeButton;
         [SerializeField] private Button cancelButton;
+        [SerializeField] private Button[] footerButtons;
         [SerializeField] private Toggle reduceMotion;
         [SerializeField] private RectTransform switchHandle;
         [SerializeField] private Image switchTrack;
@@ -21,12 +26,14 @@ namespace SubTerra.App.UI.MainMenu
         [SerializeField] private Image switchGlow;
         [SerializeField] private Slider volumeSlider;
         [SerializeField] private Image volumeFillGlow;
-        [SerializeField] private Shadow volumeShadow;
         [SerializeField] private TMP_Text volumeCaption;
         [SerializeField] private TMP_Text[] sectionTitles;
         [SerializeField] private Sprite particleSprite;
         [SerializeField] private float switchOnX = 16f;
         [SerializeField] private float switchOffX = -16f;
+
+        private int footerIndex = -1;
+        public int CurrentFooterButtonIndex => footerIndex;
 
         private bool lastSwitchState;
         private float currentScale = 1f;
@@ -58,6 +65,7 @@ namespace SubTerra.App.UI.MainMenu
         {
             isClosing = false;
             closeComplete = null;
+            footerIndex = -1;
             if (closeButton != null)
             {
                 closeButton.onClick.RemoveListener(Cancel);
@@ -72,6 +80,7 @@ namespace SubTerra.App.UI.MainMenu
             RefreshScale();
             RefreshSwitch(instant: true);
             RefreshVolumeGlow();
+            RefreshFooterHighlight();
             WireParticleTriggers();
 
             if (Application.isPlaying)
@@ -94,6 +103,13 @@ namespace SubTerra.App.UI.MainMenu
             if (toggleRoutine != null) { StopCoroutine(toggleRoutine); toggleRoutine = null; }
             isClosing = false;
             closeComplete = null;
+            footerIndex = -1;
+            RefreshFooterHighlight();
+        }
+
+        private void Update()
+        {
+            HandleFooterKeyboard();
         }
 
         private void Cancel()
@@ -312,13 +328,86 @@ namespace SubTerra.App.UI.MainMenu
 
         private void RefreshVolumeGlow()
         {
-            // 104-4번: 필 영역 이미지가 아니라 슬라이더 중앙 그림자 글로우를 유지한다.
-            if (volumeFillGlow != null)
-                volumeFillGlow.color = new Color(0.29f, 0.88f, 0.95f, 0.30f);
-            if (volumeShadow != null)
+            if (volumeFillGlow == null) return;
+            volumeFillGlow.color = Color.white;
+            volumeFillGlow.raycastTarget = false;
+            volumeFillGlow.transform.SetAsLastSibling();
+            volumeFillGlow.enabled = volumeSlider == null || volumeSlider.normalizedValue > 0.001f;
+        }
+
+        /// <summary>
+        /// 하단 기본값/취소/적용만 좌우로 순환한다.
+        /// direction &lt; 0: 왼쪽, direction &gt; 0: 오른쪽.
+        /// </summary>
+        public void NavigateFooterButton(int direction)
+        {
+            int count = FooterCount();
+            if (direction == 0 || count <= 0) return;
+            if (footerIndex < 0)
+                footerIndex = direction > 0 ? 0 : count - 1;
+            else
+                footerIndex = (footerIndex + (direction > 0 ? 1 : -1) + count) % count;
+            RefreshFooterHighlight();
+        }
+
+        public void ActivateFocusedFooterButton()
+        {
+            var button = GetFooterButton(footerIndex);
+            if (button == null || !button.interactable) return;
+            button.onClick.Invoke();
+        }
+
+        private void HandleFooterKeyboard()
+        {
+            if (!Application.isPlaying) return;
+            var keyboard = Keyboard.current;
+            if (keyboard == null) return;
+            bool left = keyboard.leftArrowKey.wasPressedThisFrame;
+            bool right = keyboard.rightArrowKey.wasPressedThisFrame;
+            bool activate = footerIndex >= 0
+                && (keyboard.spaceKey.wasPressedThisFrame
+                    || keyboard.enterKey.wasPressedThisFrame
+                    || keyboard.numpadEnterKey.wasPressedThisFrame);
+            if (!left && !right && !activate) return;
+            if (BlocksFooterNav()) return;
+
+            if (left) NavigateFooterButton(-1);
+            else if (right) NavigateFooterButton(1);
+            else ActivateFocusedFooterButton();
+        }
+
+        private bool BlocksFooterNav()
+        {
+            var scheme = GetComponent<ControlSchemePanel>();
+            if (scheme != null && scheme.IsOpen) return true;
+            var dropdowns = GetComponentsInChildren<TMP_Dropdown>(false);
+            for (int i = 0; i < dropdowns.Length; i++)
             {
-                volumeShadow.effectColor = new Color(0.22f, 0.85f, 0.95f, 0.55f);
-                volumeShadow.effectDistance = Vector2.zero;
+                if (dropdowns[i] != null && dropdowns[i].IsExpanded) return true;
+            }
+            return false;
+        }
+
+        private int FooterCount()
+        {
+            return footerButtons == null ? 0 : footerButtons.Length;
+        }
+
+        private Button GetFooterButton(int index)
+        {
+            if (footerButtons == null || index < 0 || index >= footerButtons.Length)
+                return null;
+            return footerButtons[index];
+        }
+
+        private void RefreshFooterHighlight()
+        {
+            if (footerButtons == null) return;
+            for (int i = 0; i < footerButtons.Length; i++)
+            {
+                if (footerButtons[i] == null) continue;
+                var skin = footerButtons[i].GetComponent<MenuSpriteButtonSkin>();
+                if (skin != null) skin.SetKeyboardActive(i == footerIndex);
             }
         }
 

@@ -12,7 +12,7 @@ using UnityEngine.UI;
 
 namespace SubTerra.App.Editor.DataValidation
 {
-    /// <summary>104-4번: 메인 메뉴 액션 버튼 스프라이트, 슬라이더 중앙 그림자 글로우, 설정 토글/슬라이더 파티클</summary>
+    /// <summary>104-4번: 메인/설정 버튼 페이드, 하단 버튼 좌우 키, 슬라이더 필 영역 그라데이션 글로우</summary>
     public static class PromptB104SettingsMenuBuilder
     {
         public const string MainPrefab = "Assets/_Project/Prefabs/UI/MainMenuPanel.prefab";
@@ -31,6 +31,7 @@ namespace SubTerra.App.Editor.DataValidation
         public const string ParticleDotPath = "Assets/_Project/Art/UI/MainMenu/Settings/particle-dot.png";
         public const string SliderKnobPath = "Assets/_Project/Art/UI/MainMenu/Settings/slider-knob.png";
         public const string SliderGlowPath = "Assets/_Project/Art/UI/MainMenu/Settings/slider-glow.png";
+        public const string SliderFillGlowPath = "Assets/_Project/Art/UI/MainMenu/Settings/slider-fill-glow.png";
 
         public static readonly Vector2 CardSize = new Vector2(1080, 810);
         public const float SwitchOnX = 16f;
@@ -111,6 +112,12 @@ namespace SubTerra.App.Editor.DataValidation
                     method.Invoke(instance, new object[] { SurfacePrefab });
                     var navMethod = testType.GetMethod("Prompt104_4_MainMenuActionButtonsUseOffOnSpritesAndKeyboardNav");
                     if (navMethod != null) navMethod.Invoke(instance, null);
+                    var footerMethod = testType.GetMethod("Prompt104_4_SettingsFooterNavAndFillGlow");
+                    if (footerMethod != null)
+                    {
+                        footerMethod.Invoke(instance, new object[] { MainPrefab });
+                        footerMethod.Invoke(instance, new object[] { SurfacePrefab });
+                    }
 
                     var templateTestType = AppDomain.CurrentDomain.GetAssemblies()
                         .SelectMany(a => a.GetTypes())
@@ -205,6 +212,7 @@ namespace SubTerra.App.Editor.DataValidation
 
         private static void SetupTextureImporters()
         {
+            WriteFillGlowTexture();
             var importer = (TextureImporter)AssetImporter.GetAtPath(ArtPath);
             if (importer != null)
             {
@@ -226,7 +234,7 @@ namespace SubTerra.App.Editor.DataValidation
             {
                 CloseNormalPath, CloseHoverPath, ToggleOnPath, ToggleOffPath, ToggleHandlePath,
                 ButtonOffPath, ButtonOnPath, ButtonWideOffPath, ButtonWideOnPath, ParticleDotPath,
-                SliderKnobPath, SliderGlowPath
+                SliderKnobPath, SliderGlowPath, SliderFillGlowPath
             })
             {
                 if (File.Exists(path)) AssetDatabase.ImportAsset(path);
@@ -247,6 +255,7 @@ namespace SubTerra.App.Editor.DataValidation
             if (importer.mipmapEnabled) { importer.mipmapEnabled = false; dirty = true; }
             if (importer.textureCompression != TextureImporterCompression.Uncompressed) { importer.textureCompression = TextureImporterCompression.Uncompressed; dirty = true; }
             if (importer.filterMode != FilterMode.Bilinear) { importer.filterMode = FilterMode.Bilinear; dirty = true; }
+            if (importer.wrapMode != TextureWrapMode.Clamp) { importer.wrapMode = TextureWrapMode.Clamp; dirty = true; }
             var textureSettings = new TextureImporterSettings();
             importer.ReadTextureSettings(textureSettings);
             if (textureSettings.spriteMeshType != SpriteMeshType.FullRect)
@@ -293,7 +302,7 @@ namespace SubTerra.App.Editor.DataValidation
             volume.text = "50%";
             volume.color = Cyan;
 
-            // 슬라이더 설정: 2px 흰색 외곽선 청록 노브. 빛은 필 이미지가 아니라 중앙 그림자로 깐다.
+            // 슬라이더: 필 영역만 위아래로 그라데이션 글로우. 안쪽 50% → 바깥 0%.
             var slider = Reference<Slider>(serialized, "masterVolumeSlider");
             Move(slider.transform, card, 113, 210, 362, 30);
             var track = slider.transform.Find("Background").GetComponent<Image>();
@@ -302,27 +311,30 @@ namespace SubTerra.App.Editor.DataValidation
             Stroke(track.gameObject, new Color(0.17f, 0.38f, 0.43f));
             Stretch((RectTransform)slider.fillRect.parent, 3, 11, 3, 11);
             slider.fillRect.GetComponent<Image>().color = Cyan;
-            DestroyChild(slider.fillRect, "FillGlow");
+            DestroyChild(slider.transform, "SliderShadow");
 
-            // 104-4번: 슬라이더 중앙 그림자 글로우. slider-glow.png를 쓰지 않고 전방향으로 은은히 덮는다.
-            var sliderShadow = Rect(slider.transform, "SliderShadow", 0, 0, 410, 52);
-            sliderShadow.SetAsFirstSibling();
-            var sliderShadowImg = Get<Image>(sliderShadow.gameObject);
-            sliderShadowImg.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(ParticleDotPath);
-            sliderShadowImg.type = Image.Type.Simple;
-            sliderShadowImg.preserveAspect = false;
-            sliderShadowImg.color = new Color(0.29f, 0.88f, 0.95f, 0.30f);
-            sliderShadowImg.raycastTarget = false;
-            foreach (var oldFx in sliderShadow.GetComponents<Shadow>())
+            var fillGlow = slider.fillRect.Find("FillGlow") as RectTransform;
+            if (fillGlow == null)
+                fillGlow = new GameObject("FillGlow", typeof(RectTransform)).GetComponent<RectTransform>();
+            fillGlow.SetParent(slider.fillRect, false);
+            fillGlow.anchorMin = new Vector2(0f, 0.5f);
+            fillGlow.anchorMax = new Vector2(1f, 0.5f);
+            fillGlow.pivot = new Vector2(0.5f, 0.5f);
+            fillGlow.anchoredPosition = Vector2.zero;
+            fillGlow.sizeDelta = new Vector2(0f, 40f);
+            fillGlow.localScale = Vector3.one;
+            fillGlow.localRotation = Quaternion.identity;
+            fillGlow.SetAsLastSibling();
+            var fillGlowImg = Get<Image>(fillGlow.gameObject);
+            fillGlowImg.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(SliderFillGlowPath);
+            fillGlowImg.type = Image.Type.Simple;
+            fillGlowImg.preserveAspect = false;
+            fillGlowImg.color = Color.white;
+            fillGlowImg.raycastTarget = false;
+            foreach (var oldFx in fillGlow.GetComponents<Shadow>())
                 UnityEngine.Object.DestroyImmediate(oldFx);
-            var sliderShadowFx = sliderShadow.gameObject.AddComponent<Shadow>();
-            sliderShadowFx.effectColor = new Color(0.22f, 0.85f, 0.95f, 0.55f);
-            sliderShadowFx.effectDistance = Vector2.zero;
-            sliderShadowFx.useGraphicAlpha = true;
-            var sliderOutline = Get<Outline>(sliderShadow.gameObject);
-            sliderOutline.effectColor = new Color(0.29f, 0.88f, 0.95f, 0.32f);
-            sliderOutline.effectDistance = new Vector2(12f, -8f);
-            sliderOutline.useGraphicAlpha = true;
+            var oldOutline = fillGlow.GetComponent<Outline>();
+            if (oldOutline != null) UnityEngine.Object.DestroyImmediate(oldOutline);
 
             // 슬라이더 노브 핸들: 가로/세로 동일한 1:1 원형(22x22)
             var handle = slider.handleRect.GetComponent<Image>();
@@ -414,9 +426,14 @@ namespace SubTerra.App.Editor.DataValidation
             Set(skinData, "switchOnImage", switchOnImg);
             Set(skinData, "switchGlow", switchGlowImg);
             Set(skinData, "volumeSlider", slider);
-            Set(skinData, "volumeFillGlow", sliderShadowImg);
+            Set(skinData, "volumeFillGlow", fillGlowImg);
             var shadowProp = skinData.FindProperty("volumeShadow");
-            if (shadowProp != null) shadowProp.objectReferenceValue = sliderShadowFx;
+            if (shadowProp != null) shadowProp.objectReferenceValue = null;
+            var footer = skinData.FindProperty("footerButtons");
+            footer.arraySize = 3;
+            footer.GetArrayElementAtIndex(0).objectReferenceValue = Reference<Button>(serialized, "settingsDefaultsButton");
+            footer.GetArrayElementAtIndex(1).objectReferenceValue = Reference<Button>(serialized, "settingsCancelButton");
+            footer.GetArrayElementAtIndex(2).objectReferenceValue = Reference<Button>(serialized, "settingsApplyButton");
             Set(skinData, "volumeCaption", caption);
             skinData.FindProperty("particleSprite").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Sprite>(ParticleDotPath);
             skinData.FindProperty("switchOnX").floatValue = SwitchOnX;
@@ -442,17 +459,6 @@ namespace SubTerra.App.Editor.DataValidation
                 var button = Get<Button>(buttonTransform.gameObject);
                 var rect = (RectTransform)buttonTransform;
                 SkinSpriteButton(button, ButtonOffPath, ButtonOnPath, rect.sizeDelta.x, rect.sizeDelta.y);
-                button.transition = Selectable.Transition.None;
-                var nav = button.navigation;
-                nav.mode = Navigation.Mode.None;
-                button.navigation = nav;
-
-                var overlay = buttonTransform.Find("HoverOverlay") as RectTransform;
-                var overlayImg = overlay != null ? overlay.GetComponent<Image>() : null;
-                var skin = Get<MenuSpriteButtonSkin>(button.gameObject);
-                var skinData = new SerializedObject(skin);
-                skinData.FindProperty("overlay").objectReferenceValue = overlayImg;
-                skinData.ApplyModifiedPropertiesWithoutUndo();
             }
         }
 
@@ -592,30 +598,60 @@ namespace SubTerra.App.Editor.DataValidation
             image.raycastTarget = true;
 
             var hover = Rect(button.transform, "HoverOverlay", 0, 0, w, h);
-            hover.SetAsFirstSibling();
             var hoverImg = Get<Image>(hover.gameObject);
             hoverImg.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(onPath);
             hoverImg.type = Image.Type.Simple;
             hoverImg.preserveAspect = false;
             hoverImg.color = new Color(1f, 1f, 1f, 0f);
             hoverImg.raycastTarget = false;
-
-            button.targetGraphic = hoverImg;
-            button.transition = Selectable.Transition.ColorTint;
-            var colors = button.colors;
-            colors.normalColor = new Color(1f, 1f, 1f, 0f);
-            colors.highlightedColor = Color.white;
-            colors.selectedColor = Color.white;
-            colors.pressedColor = new Color(0.85f, 0.95f, 1f, 1f);
-            colors.disabledColor = new Color(1f, 1f, 1f, 0f);
-            colors.fadeDuration = 0.15f;
-            colors.colorMultiplier = 1;
-            button.colors = colors;
+            hover.SetAsLastSibling();
 
             var text = button.GetComponentInChildren<TMP_Text>(true);
             text.transform.SetAsLastSibling();
             Place(text.rectTransform, 0, 0, w - 12, h - 4);
             StyleText(text, 22, TextAlignmentOptions.Center);
+
+            button.targetGraphic = image;
+            button.transition = Selectable.Transition.None;
+            var nav = button.navigation;
+            nav.mode = Navigation.Mode.None;
+            button.navigation = nav;
+
+            var skin = Get<MenuSpriteButtonSkin>(button.gameObject);
+            var skinData = new SerializedObject(skin);
+            skinData.FindProperty("overlay").objectReferenceValue = hoverImg;
+            skinData.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        private static void WriteFillGlowTexture()
+        {
+            const int width = 64;
+            const int height = 64;
+            var texture = new Texture2D(width, height, TextureFormat.RGBA32, false)
+            {
+                wrapMode = TextureWrapMode.Clamp,
+                filterMode = FilterMode.Bilinear
+            };
+            var pixels = new Color32[width * height];
+            for (int y = 0; y < height; y++)
+            {
+                float vertical = Mathf.Abs(((y + 0.5f) / height) - 0.5f) * 2f;
+                float verticalAlpha = 0.5f * 0.5f * (1f + Mathf.Cos(Mathf.Clamp01(vertical) * Mathf.PI));
+                for (int x = 0; x < width; x++)
+                {
+                    float nx = (x + 0.5f) / width;
+                    float edge = Mathf.Clamp01(Mathf.Min(nx, 1f - nx) / 0.08f);
+                    float alpha = verticalAlpha * edge;
+                    byte a = (byte)Mathf.RoundToInt(alpha * 255f);
+                    pixels[y * width + x] = new Color32(74, 224, 242, a);
+                }
+            }
+
+            texture.SetPixels32(pixels);
+            texture.Apply(false, false);
+            File.WriteAllBytes(SliderFillGlowPath, texture.EncodeToPNG());
+            UnityEngine.Object.DestroyImmediate(texture);
+            AssetDatabase.ImportAsset(SliderFillGlowPath);
         }
 
         private static void Border(RectTransform parent, Color color, float width)
