@@ -410,6 +410,13 @@ namespace SubTerra.App.Outpost
             string settlementId)
         {
             const OutpostOperationKind kind = OutpostOperationKind.SettlePlayerCargo;
+            if (DataIds.RareItems.IsRare(mineralId))
+            {
+                return Complete(Fail(
+                    OutpostOperationStatus.InvalidRequest,
+                    kind,
+                    "희귀 품목은 지상 기지에서 개별 선택 판매하세요."));
+            }
             if (!TryValidateFacility(DataIds.Buildings.SettlementBasic, kind, out var failure))
             {
                 return Complete(failure);
@@ -858,6 +865,7 @@ namespace SubTerra.App.Outpost
                 var stacks = inventory.GetSnapshot().Stacks;
                 for (var i = 0; i < stacks.Count; i++)
                 {
+                    if (DataIds.RareItems.IsRare(stacks[i].MineralId)) continue;
                     reductions.Add(new KeyValuePair<string, int>(
                         stacks[i].MineralId,
                         stacks[i].Quantity));
@@ -868,6 +876,7 @@ namespace SubTerra.App.Outpost
                 var stacks = state.Storage;
                 for (var i = 0; i < stacks.Count; i++)
                 {
+                    if (DataIds.RareItems.IsRare(stacks[i].MineralId)) continue;
                     reductions.Add(new KeyValuePair<string, int>(
                         stacks[i].MineralId,
                         stacks[i].Quantity));
