@@ -62,7 +62,15 @@ namespace SubTerra.App.Tests.UI
                 var slider = card.GetComponentInChildren<UnityEngine.UI.Slider>();
                 slider.value = 0.62f;
                 Assert.That(card.Find("MasterVolumeLabel").GetComponent<TMP_Text>().text, Is.EqualTo("62%"));
-                Assert.That(slider.fillRect.Find("FillGlow"), Is.Not.Null, "슬라이더 활성 영역 청록 글로우");
+                Assert.That(slider.fillRect.Find("FillGlow"), Is.Null, "슬라이더 빛은 필 이미지가 아니다");
+                var sliderShadow = slider.transform.Find("SliderShadow") as RectTransform;
+                Assert.That(sliderShadow, Is.Not.Null, "슬라이더 중앙 그림자 글로우");
+                Assert.That(sliderShadow.anchoredPosition, Is.EqualTo(Vector2.zero));
+                Assert.That(sliderShadow.sizeDelta.x, Is.GreaterThan(362f), "그림자가 슬라이더를 조금 덮는다");
+                Assert.That(sliderShadow.sizeDelta.y, Is.GreaterThan(30f), "그림자가 슬라이더를 조금 덮는다");
+                var shadowFx = sliderShadow.GetComponent<UnityEngine.UI.Shadow>();
+                Assert.That(shadowFx, Is.Not.Null, "슬라이더 빛은 Shadow 컴포넌트");
+                Assert.That(shadowFx.effectDistance, Is.EqualTo(Vector2.zero), "그림자 위치는 슬라이드 중앙");
                 Assert.That(slider.handleRect.GetComponent<UnityEngine.UI.Image>().sprite.name.StartsWith("slider-knob"), Is.True, "슬라이더 2px 흰색 테두리 청록 노브");
                 Assert.That(slider.handleRect.GetComponent<UnityEngine.UI.Image>().preserveAspect, Is.True, "슬라이더 핸들 원형 비율 보존");
 
@@ -108,6 +116,8 @@ namespace SubTerra.App.Tests.UI
                 Assert.That(toggleTrack.sprite.name.StartsWith("toggle-active-off"), Is.True, "토글 비활성 회색 스프라이트");
                 Assert.That(toggleTrack.transform.Find("SwitchOn").GetComponent<UnityEngine.UI.Image>().sprite.name.StartsWith("toggle-active-on"), Is.True, "토글 활성 청록 스프라이트");
                 Assert.That(toggleTrack.rectTransform.sizeDelta, Is.EqualTo(new Vector2(62, 30)), "토글 컨셉 에셋 크기");
+                Assert.That(slider.GetComponent<UnityEngine.EventSystems.EventTrigger>(), Is.Not.Null, "슬라이더 파티클 트리거");
+                Assert.That(toggle.GetComponent<UnityEngine.EventSystems.EventTrigger>(), Is.Not.Null, "토글 파티클 트리거");
 
                 var handle = card.GetComponentsInChildren<RectTransform>(true)
                     .First(t => t.name == "SwitchHandle");
@@ -128,6 +138,74 @@ namespace SubTerra.App.Tests.UI
                 if (hadControls) PlayerPrefs.SetInt(SettingsRuntimeApplier.PrefControls, savedControls);
                 else PlayerPrefs.DeleteKey(SettingsRuntimeApplier.PrefControls);
                 PlayerPrefs.Save();
+            }
+        }
+
+        [Test]
+        public void Prompt104_4_MainMenuActionButtonsUseOffOnSpritesAndKeyboardNav()
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PromptB104SettingsMenuBuilder.MainPrefab);
+            var instance = Object.Instantiate(prefab);
+            try
+            {
+                var content = instance.transform.Find("MenuContent");
+                Assert.That(content, Is.Not.Null);
+                var names = new[] { "ContinueButton", "NewGameButton", "SettingsButton", "QuitButton" };
+                var labels = new[] { "이어하기", "새 게임", "설정", "종료" };
+                for (var i = 0; i < names.Length; i++)
+                {
+                    var button = content.Find(names[i]);
+                    Assert.That(button, Is.Not.Null, names[i]);
+                    Assert.That(button.GetComponent<UnityEngine.UI.Image>().sprite.name.StartsWith("button-active-off"),
+                        Is.True, names[i] + " off");
+                    var overlay = button.Find("HoverOverlay");
+                    Assert.That(overlay, Is.Not.Null, names[i] + " overlay");
+                    Assert.That(overlay.GetComponent<UnityEngine.UI.Image>().sprite.name.StartsWith("button-active-on"),
+                        Is.True, names[i] + " on");
+                    Assert.That(overlay.GetComponent<UnityEngine.UI.Image>().raycastTarget, Is.False);
+                    var label = button.GetComponentInChildren<TMP_Text>(true);
+                    Assert.That(label, Is.Not.Null, names[i] + " text");
+                    Assert.That(label.text, Does.Contain(labels[i]).IgnoreCase, names[i] + " label");
+                    Assert.That(button.GetComponent<MenuSpriteButtonSkin>(), Is.Not.Null, names[i] + " skin");
+                    Assert.That(button.GetComponent<UnityEngine.UI.Button>().navigation.mode,
+                        Is.EqualTo(UnityEngine.UI.Navigation.Mode.None));
+                }
+
+                var view = instance.GetComponent<MainMenuView>();
+                int continues = 0, news = 0, settings = 0, quits = 0;
+                view.ContinueClicked += () => continues++;
+                view.NewGameClicked += () => news++;
+                view.SettingsClicked += () => settings++;
+                view.QuitClicked += () => quits++;
+                Invoke(view, "OnEnable");
+
+                Assert.That(view.CurrentActionButtonIndex, Is.EqualTo(-1));
+                view.NavigateActionButton(1);
+                Assert.That(view.CurrentActionButtonIndex, Is.EqualTo(0));
+                Assert.That(content.Find("ContinueButton").GetComponent<MenuSpriteButtonSkin>().IsHighlighted, Is.True);
+                Assert.That(content.Find("NewGameButton").GetComponent<MenuSpriteButtonSkin>().IsHighlighted, Is.False);
+
+                view.NavigateActionButton(1);
+                Assert.That(view.CurrentActionButtonIndex, Is.EqualTo(1));
+                view.ActivateFocusedActionButton();
+                Assert.That(news, Is.EqualTo(1));
+                Assert.That(continues, Is.EqualTo(0));
+
+                view.NavigateActionButton(1);
+                view.NavigateActionButton(1);
+                Assert.That(view.CurrentActionButtonIndex, Is.EqualTo(3));
+                view.NavigateActionButton(1);
+                Assert.That(view.CurrentActionButtonIndex, Is.EqualTo(0), "오른쪽 끝에서 이어하기로 순환");
+                view.NavigateActionButton(-1);
+                Assert.That(view.CurrentActionButtonIndex, Is.EqualTo(3), "왼쪽 끝에서 종료로 순환");
+                view.ActivateFocusedActionButton();
+                Assert.That(quits, Is.EqualTo(1));
+
+                Invoke(view, "OnDisable");
+            }
+            finally
+            {
+                Object.DestroyImmediate(instance);
             }
         }
 

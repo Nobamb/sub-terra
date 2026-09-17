@@ -194,6 +194,10 @@ namespace SubTerra.App.UI.MainMenu
         private int currentSelectedSlotId = 1;
         public int CurrentSelectedSlotId => currentSelectedSlotId;
 
+        // 104-4번: 세이브 슬롯 외 이어하기/새게임/설정/종료 좌우 키 포커스. -1이면 아직 없음.
+        private int actionButtonIndex = -1;
+        public int CurrentActionButtonIndex => actionButtonIndex;
+
         public void SetSelectedSlot(int slotId, bool canContinue, string message)
         {
             currentSelectedSlotId = slotId;
@@ -224,6 +228,34 @@ namespace SubTerra.App.UI.MainMenu
             }
         }
 
+        /// <summary>
+        /// 이어하기/새게임/설정/종료를 좌우로 순환한다.
+        /// direction &lt; 0: 왼쪽, direction &gt; 0: 오른쪽.
+        /// </summary>
+        public void NavigateActionButton(int direction)
+        {
+            if (direction == 0) return;
+            int count = 4;
+            if (actionButtonIndex < 0)
+            {
+                actionButtonIndex = direction > 0 ? 0 : count - 1;
+            }
+            else
+            {
+                actionButtonIndex = (actionButtonIndex + (direction > 0 ? 1 : -1) + count) % count;
+            }
+
+            RefreshActionButtonHighlight();
+        }
+
+        /// <summary>좌우 키로 활성화된 액션 버튼을 스페이스/엔터와 동일하게 실행한다.</summary>
+        public void ActivateFocusedActionButton()
+        {
+            var button = GetActionButton(actionButtonIndex);
+            if (button == null || !button.interactable) return;
+            button.onClick.Invoke();
+        }
+
         private void Update()
         {
             HandleKeyboardNavigation();
@@ -231,7 +263,7 @@ namespace SubTerra.App.UI.MainMenu
 
         private void HandleKeyboardNavigation()
         {
-            // 설정 창이나 덮어쓰기 확인창이 열려 있으면 슬롯 키보드 탐색을 차단한다.
+            // 설정 창이나 덮어쓰기 확인창이 열려 있으면 슬롯/액션 키보드 탐색을 차단한다.
             if ((settingsRoot != null && settingsRoot.activeSelf) ||
                 (overwriteConfirmRoot != null && overwriteConfirmRoot.activeSelf))
             {
@@ -251,6 +283,43 @@ namespace SubTerra.App.UI.MainMenu
             else if (keyboard.downArrowKey.wasPressedThisFrame)
             {
                 NavigateSlot(1);
+            }
+            else if (keyboard.leftArrowKey.wasPressedThisFrame)
+            {
+                NavigateActionButton(-1);
+            }
+            else if (keyboard.rightArrowKey.wasPressedThisFrame)
+            {
+                NavigateActionButton(1);
+            }
+            else if (keyboard.spaceKey.wasPressedThisFrame
+                || keyboard.enterKey.wasPressedThisFrame
+                || keyboard.numpadEnterKey.wasPressedThisFrame)
+            {
+                ActivateFocusedActionButton();
+            }
+        }
+
+        private Button GetActionButton(int index)
+        {
+            switch (index)
+            {
+                case 0: return continueButton;
+                case 1: return newGameButton;
+                case 2: return settingsButton;
+                case 3: return quitButton;
+                default: return null;
+            }
+        }
+
+        private void RefreshActionButtonHighlight()
+        {
+            for (var i = 0; i < 4; i++)
+            {
+                var button = GetActionButton(i);
+                if (button == null) continue;
+                var skin = button.GetComponent<MenuSpriteButtonSkin>();
+                if (skin != null) skin.SetKeyboardActive(i == actionButtonIndex);
             }
         }
 

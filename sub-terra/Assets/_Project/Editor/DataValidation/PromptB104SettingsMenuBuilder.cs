@@ -12,7 +12,7 @@ using UnityEngine.UI;
 
 namespace SubTerra.App.Editor.DataValidation
 {
-    /// <summary>104-1번: 설정창 배경 10% 투명도, 둥근 토글 트랙, 슬라이더 노브/글로우, 버튼 청록 호버 트랜지션, X버튼 전용 에셋 배선</summary>
+    /// <summary>104-4번: 메인 메뉴 액션 버튼 스프라이트, 슬라이더 중앙 그림자 글로우, 설정 토글/슬라이더 파티클</summary>
     public static class PromptB104SettingsMenuBuilder
     {
         public const string MainPrefab = "Assets/_Project/Prefabs/UI/MainMenuPanel.prefab";
@@ -109,6 +109,8 @@ namespace SubTerra.App.Editor.DataValidation
                     var method = testType.GetMethod("Skin_PreservesExistingDraftControlsAndCancelEvents");
                     method.Invoke(instance, new object[] { MainPrefab });
                     method.Invoke(instance, new object[] { SurfacePrefab });
+                    var navMethod = testType.GetMethod("Prompt104_4_MainMenuActionButtonsUseOffOnSpritesAndKeyboardNav");
+                    if (navMethod != null) navMethod.Invoke(instance, null);
 
                     var templateTestType = AppDomain.CurrentDomain.GetAssemblies()
                         .SelectMany(a => a.GetTypes())
@@ -291,7 +293,7 @@ namespace SubTerra.App.Editor.DataValidation
             volume.text = "50%";
             volume.color = Cyan;
 
-            // 슬라이더 설정: 2px 흰색 외곽선 청록 노브 + 활성 트랙 청록 글로우
+            // 슬라이더 설정: 2px 흰색 외곽선 청록 노브. 빛은 필 이미지가 아니라 중앙 그림자로 깐다.
             var slider = Reference<Slider>(serialized, "masterVolumeSlider");
             Move(slider.transform, card, 113, 210, 362, 30);
             var track = slider.transform.Find("Background").GetComponent<Image>();
@@ -300,15 +302,27 @@ namespace SubTerra.App.Editor.DataValidation
             Stroke(track.gameObject, new Color(0.17f, 0.38f, 0.43f));
             Stretch((RectTransform)slider.fillRect.parent, 3, 11, 3, 11);
             slider.fillRect.GetComponent<Image>().color = Cyan;
+            DestroyChild(slider.fillRect, "FillGlow");
 
-            // 활성화 된 영역 은은한 청록 글로우
-            var fillGlowRect = Rect(slider.fillRect, "FillGlow", 0, 0, 0, 0);
-            Stretch(fillGlowRect, -6, -6, 6, 6);
-            var fillGlowImg = Get<Image>(fillGlowRect.gameObject);
-            fillGlowImg.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(SliderGlowPath);
-            fillGlowImg.type = Image.Type.Sliced;
-            fillGlowImg.color = new Color(0.35f, 0.95f, 1f, 0.75f);
-            fillGlowImg.raycastTarget = false;
+            // 104-4번: 슬라이더 중앙 그림자 글로우. slider-glow.png를 쓰지 않고 전방향으로 은은히 덮는다.
+            var sliderShadow = Rect(slider.transform, "SliderShadow", 0, 0, 410, 52);
+            sliderShadow.SetAsFirstSibling();
+            var sliderShadowImg = Get<Image>(sliderShadow.gameObject);
+            sliderShadowImg.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(ParticleDotPath);
+            sliderShadowImg.type = Image.Type.Simple;
+            sliderShadowImg.preserveAspect = false;
+            sliderShadowImg.color = new Color(0.29f, 0.88f, 0.95f, 0.30f);
+            sliderShadowImg.raycastTarget = false;
+            foreach (var oldFx in sliderShadow.GetComponents<Shadow>())
+                UnityEngine.Object.DestroyImmediate(oldFx);
+            var sliderShadowFx = sliderShadow.gameObject.AddComponent<Shadow>();
+            sliderShadowFx.effectColor = new Color(0.22f, 0.85f, 0.95f, 0.55f);
+            sliderShadowFx.effectDistance = Vector2.zero;
+            sliderShadowFx.useGraphicAlpha = true;
+            var sliderOutline = Get<Outline>(sliderShadow.gameObject);
+            sliderOutline.effectColor = new Color(0.29f, 0.88f, 0.95f, 0.32f);
+            sliderOutline.effectDistance = new Vector2(12f, -8f);
+            sliderOutline.useGraphicAlpha = true;
 
             // 슬라이더 노브 핸들: 가로/세로 동일한 1:1 원형(22x22)
             var handle = slider.handleRect.GetComponent<Image>();
@@ -400,7 +414,9 @@ namespace SubTerra.App.Editor.DataValidation
             Set(skinData, "switchOnImage", switchOnImg);
             Set(skinData, "switchGlow", switchGlowImg);
             Set(skinData, "volumeSlider", slider);
-            Set(skinData, "volumeFillGlow", fillGlowImg);
+            Set(skinData, "volumeFillGlow", sliderShadowImg);
+            var shadowProp = skinData.FindProperty("volumeShadow");
+            if (shadowProp != null) shadowProp.objectReferenceValue = sliderShadowFx;
             Set(skinData, "volumeCaption", caption);
             skinData.FindProperty("particleSprite").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Sprite>(ParticleDotPath);
             skinData.FindProperty("switchOnX").floatValue = SwitchOnX;
@@ -409,6 +425,35 @@ namespace SubTerra.App.Editor.DataValidation
             titles.arraySize = headings.Length;
             for (int i = 0; i < headings.Length; i++) titles.GetArrayElementAtIndex(i).objectReferenceValue = headings[i];
             skinData.ApplyModifiedPropertiesWithoutUndo();
+
+            if (view is MainMenuView)
+                SkinMainMenuActionButtons(view.transform);
+        }
+
+        private static void SkinMainMenuActionButtons(Transform root)
+        {
+            var content = root.Find("MenuContent");
+            if (content == null) return;
+            var names = new[] { "ContinueButton", "NewGameButton", "SettingsButton", "QuitButton" };
+            foreach (var name in names)
+            {
+                var buttonTransform = content.Find(name);
+                if (buttonTransform == null) continue;
+                var button = Get<Button>(buttonTransform.gameObject);
+                var rect = (RectTransform)buttonTransform;
+                SkinSpriteButton(button, ButtonOffPath, ButtonOnPath, rect.sizeDelta.x, rect.sizeDelta.y);
+                button.transition = Selectable.Transition.None;
+                var nav = button.navigation;
+                nav.mode = Navigation.Mode.None;
+                button.navigation = nav;
+
+                var overlay = buttonTransform.Find("HoverOverlay") as RectTransform;
+                var overlayImg = overlay != null ? overlay.GetComponent<Image>() : null;
+                var skin = Get<MenuSpriteButtonSkin>(button.gameObject);
+                var skinData = new SerializedObject(skin);
+                skinData.FindProperty("overlay").objectReferenceValue = overlayImg;
+                skinData.ApplyModifiedPropertiesWithoutUndo();
+            }
         }
 
         private static void Label(SerializedObject view, string field, RectTransform card, float x, float y)
@@ -552,6 +597,7 @@ namespace SubTerra.App.Editor.DataValidation
             hoverImg.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(onPath);
             hoverImg.type = Image.Type.Simple;
             hoverImg.preserveAspect = false;
+            hoverImg.color = new Color(1f, 1f, 1f, 0f);
             hoverImg.raycastTarget = false;
 
             button.targetGraphic = hoverImg;

@@ -3,11 +3,12 @@ using System.Collections;
 using SubTerra.Shared.Localization;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace SubTerra.App.UI.MainMenu
 {
-    /// <summary>104-3번: 토글 on/off 스프라이트, 버튼 호버 스프라이트, 원형 파티클, 끊김 없는 닫기 상승</summary>
+    /// <summary>104-4번: 슬라이더 중앙 그림자 글로우, 토글/슬라이더 조작 시 위로 퍼지는 원형 파티클, 끊김 없는 닫기 상승</summary>
     public sealed class SettingsMenuSkin : MonoBehaviour
     {
         [SerializeField] private RectTransform card;
@@ -20,6 +21,7 @@ namespace SubTerra.App.UI.MainMenu
         [SerializeField] private Image switchGlow;
         [SerializeField] private Slider volumeSlider;
         [SerializeField] private Image volumeFillGlow;
+        [SerializeField] private Shadow volumeShadow;
         [SerializeField] private TMP_Text volumeCaption;
         [SerializeField] private TMP_Text[] sectionTitles;
         [SerializeField] private Sprite particleSprite;
@@ -48,6 +50,9 @@ namespace SubTerra.App.UI.MainMenu
 
         private UIParticle[] particlePool;
         private RectTransform particleRoot;
+        private Sprite fallbackParticleSprite;
+        private float particleCooldown;
+        private bool particleTriggersWired;
 
         private void OnEnable()
         {
@@ -67,6 +72,7 @@ namespace SubTerra.App.UI.MainMenu
             RefreshScale();
             RefreshSwitch(instant: true);
             RefreshVolumeGlow();
+            WireParticleTriggers();
 
             if (Application.isPlaying)
             {
@@ -194,6 +200,8 @@ namespace SubTerra.App.UI.MainMenu
 
         private void LateUpdate()
         {
+            if (particleCooldown > 0f)
+                particleCooldown = Mathf.Max(0f, particleCooldown - Time.unscaledDeltaTime);
             if (reduceMotion != null && reduceMotion.isOn != lastSwitchState)
             {
                 RefreshSwitch(instant: !Application.isPlaying);
@@ -261,11 +269,10 @@ namespace SubTerra.App.UI.MainMenu
                 }
 
                 particleTimer += Time.unscaledDeltaTime;
-                if (particleTimer >= 0.05f)
+                if (particleTimer >= 0.04f)
                 {
                     particleTimer = 0f;
-                    Vector2 spawnPos = switchHandle.TransformPoint(Vector3.zero);
-                    SpawnParticle(spawnPos, new Vector2(UnityEngine.Random.Range(-8f, 8f), UnityEngine.Random.Range(18f, 32f)));
+                    BurstAt(switchHandle, 3);
                 }
 
                 yield return null;
@@ -300,27 +307,107 @@ namespace SubTerra.App.UI.MainMenu
         private void OnVolumeChanged(float val)
         {
             RefreshVolumeGlow();
-            if (Application.isPlaying && volumeSlider != null && volumeSlider.handleRect != null)
-            {
-                Vector2 spawnPos = volumeSlider.handleRect.TransformPoint(Vector3.zero);
-                SpawnParticle(spawnPos, new Vector2(UnityEngine.Random.Range(-10f, 10f), UnityEngine.Random.Range(20f, 40f)));
-            }
+            EmitSliderParticles(4, respectCooldown: true);
         }
 
         private void RefreshVolumeGlow()
         {
-            if (volumeFillGlow == null) return;
-            float val = volumeSlider != null ? volumeSlider.value : 0.5f;
-            volumeFillGlow.color = val > 0.005f
-                ? new Color(0.35f, 0.95f, 1f, 0.75f)
-                : Color.clear;
+            // 104-4번: 필 영역 이미지가 아니라 슬라이더 중앙 그림자 글로우를 유지한다.
+            if (volumeFillGlow != null)
+                volumeFillGlow.color = new Color(0.29f, 0.88f, 0.95f, 0.30f);
+            if (volumeShadow != null)
+            {
+                volumeShadow.effectColor = new Color(0.22f, 0.85f, 0.95f, 0.55f);
+                volumeShadow.effectDistance = Vector2.zero;
+            }
+        }
+
+        private void WireParticleTriggers()
+        {
+            if (particleTriggersWired) return;
+            particleTriggersWired = true;
+            WireBurst(volumeSlider != null ? volumeSlider.gameObject : null, OnSliderParticleEvent);
+            WireBurst(reduceMotion != null ? reduceMotion.gameObject : null, OnToggleParticleEvent);
+        }
+
+        private void WireBurst(GameObject target, UnityEngine.Events.UnityAction<BaseEventData> handler)
+        {
+            if (target == null) return;
+            var trigger = target.GetComponent<EventTrigger>();
+            if (trigger == null) trigger = target.AddComponent<EventTrigger>();
+            AddTrigger(trigger, EventTriggerType.PointerDown, handler);
+            AddTrigger(trigger, EventTriggerType.Drag, handler);
+        }
+
+        private static void AddTrigger(EventTrigger trigger, EventTriggerType type,
+            UnityEngine.Events.UnityAction<BaseEventData> handler)
+        {
+            for (int i = 0; i < trigger.triggers.Count; i++)
+            {
+                if (trigger.triggers[i] != null && trigger.triggers[i].eventID == type)
+                    return;
+            }
+
+            var entry = new EventTrigger.Entry { eventID = type };
+            entry.callback.AddListener(handler);
+            trigger.triggers.Add(entry);
+        }
+
+        private void OnSliderParticleEvent(BaseEventData data)
+        {
+            var pointer = data as PointerEventData;
+            bool down = pointer != null && !pointer.dragging;
+            EmitSliderParticles(down ? 12 : 5, respectCooldown: !down);
+        }
+
+        private void OnToggleParticleEvent(BaseEventData _)
+        {
+            if (!Application.isPlaying) return;
+            var origin = switchHandle != null
+                ? switchHandle
+                : reduceMotion != null ? reduceMotion.transform as RectTransform : null;
+            BurstAt(origin, 12);
+            particleCooldown = 0.04f;
+        }
+
+        private void EmitSliderParticles(int count, bool respectCooldown)
+        {
+            if (!Application.isPlaying) return;
+            if (respectCooldown && particleCooldown > 0f) return;
+            particleCooldown = 0.04f;
+            BurstAt(volumeSlider != null ? volumeSlider.handleRect : null, count);
+        }
+
+        private void BurstAt(RectTransform origin, int count)
+        {
+            if (origin == null) return;
+            Vector3 world = origin.TransformPoint(Vector3.zero);
+            for (int i = 0; i < count; i++)
+            {
+                var spread = origin.TransformVector(new Vector3(
+                    UnityEngine.Random.Range(-16f, 16f),
+                    UnityEngine.Random.Range(-4f, 4f),
+                    0f));
+                SpawnParticle(
+                    world + spread,
+                    new Vector2(UnityEngine.Random.Range(-14f, 14f), UnityEngine.Random.Range(22f, 48f)));
+            }
+        }
+
+        private Sprite ParticleSpriteOrFallback()
+        {
+            if (particleSprite != null) return particleSprite;
+            if (fallbackParticleSprite != null) return fallbackParticleSprite;
+            var tex = Texture2D.whiteTexture;
+            fallbackParticleSprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f), 100f);
+            return fallbackParticleSprite;
         }
 
         private void EnsureParticlePool()
         {
             if (particlePool != null && particlePool.Length > 0) return;
             var parent = card != null ? card : (RectTransform)transform;
-            var container = new GameObject("SettingsParticles", typeof(RectTransform), typeof(Canvas));
+            var container = new GameObject("SettingsParticles", typeof(RectTransform));
             container.transform.SetParent(parent, false);
             particleRoot = container.GetComponent<RectTransform>();
             particleRoot.anchorMin = Vector2.zero;
@@ -329,21 +416,19 @@ namespace SubTerra.App.UI.MainMenu
             particleRoot.offsetMax = Vector2.zero;
             particleRoot.SetAsLastSibling();
 
-            var canvas = container.GetComponent<Canvas>();
-            canvas.overrideSorting = true;
-            canvas.sortingOrder = 80;
-
-            int count = 40;
+            int count = 72;
             particlePool = new UIParticle[count];
+            var sprite = ParticleSpriteOrFallback();
             for (int i = 0; i < count; i++)
             {
                 var go = new GameObject("P_" + i, typeof(RectTransform), typeof(Image));
                 go.transform.SetParent(particleRoot, false);
                 var rt = go.GetComponent<RectTransform>();
+                rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(0.5f, 0.5f);
                 var img = go.GetComponent<Image>();
                 img.raycastTarget = false;
                 img.preserveAspect = true;
-                if (particleSprite != null) img.sprite = particleSprite;
+                img.sprite = sprite;
                 go.SetActive(false);
                 particlePool[i] = new UIParticle
                 {
@@ -359,36 +444,27 @@ namespace SubTerra.App.UI.MainMenu
             EnsureParticlePool();
             if (particleRoot == null || particlePool == null) return;
             particleRoot.SetAsLastSibling();
+            var sprite = ParticleSpriteOrFallback();
+            Vector2 localPos = particleRoot.InverseTransformPoint(worldPos);
             for (int i = 0; i < particlePool.Length; i++)
             {
                 if (!particlePool[i].Active)
                 {
                     particlePool[i].Active = true;
                     particlePool[i].Img.gameObject.SetActive(true);
-                    if (particleSprite != null) particlePool[i].Img.sprite = particleSprite;
+                    particlePool[i].Img.sprite = sprite;
                     particlePool[i].Img.preserveAspect = true;
 
-                    Canvas rootCanvas = particleRoot.GetComponentInParent<Canvas>();
-                    Camera cam = null;
-                    if (rootCanvas != null && rootCanvas.renderMode != RenderMode.ScreenSpaceOverlay)
-                        cam = rootCanvas.worldCamera;
-
-                    RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                        particleRoot,
-                        RectTransformUtility.WorldToScreenPoint(cam, worldPos),
-                        cam,
-                        out Vector2 localPos);
-
-                    float size = UnityEngine.Random.Range(1.6f, 3.2f);
+                    float size = UnityEngine.Random.Range(2.2f, 4.4f);
                     particlePool[i].Rect.sizeDelta = new Vector2(size, size);
                     particlePool[i].Pos = localPos;
                     particlePool[i].Rect.anchoredPosition = localPos;
                     particlePool[i].Vel = vel;
                     particlePool[i].Life = 0f;
-                    particlePool[i].MaxLife = UnityEngine.Random.Range(0.45f, 0.75f);
-                    particlePool[i].BaseAlpha = UnityEngine.Random.Range(0.28f, 1.0f);
+                    particlePool[i].MaxLife = UnityEngine.Random.Range(0.45f, 0.85f);
+                    particlePool[i].BaseAlpha = UnityEngine.Random.Range(0.25f, 1.0f);
 
-                    Color c = Color.Lerp(new Color(0.35f, 0.92f, 1f), Color.white, UnityEngine.Random.value * 0.35f);
+                    Color c = Color.Lerp(new Color(0.29f, 0.88f, 0.95f), Color.white, UnityEngine.Random.value * 0.35f);
                     particlePool[i].Img.color = new Color(c.r, c.g, c.b, particlePool[i].BaseAlpha);
                     return;
                 }
