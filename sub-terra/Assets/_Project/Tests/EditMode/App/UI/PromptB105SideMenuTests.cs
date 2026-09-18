@@ -1,0 +1,56 @@
+using System.Linq;
+using NUnit.Framework;
+using SubTerra.App.Editor.DataValidation;
+using SubTerra.App.UI.HUD;
+using UnityEditor;
+using UnityEditor.SceneManagement;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+namespace SubTerra.App.Tests.UI
+{
+    public sealed class PromptB105SideMenuTests
+    {
+        [Test]
+        public void Scene_PreservesSixActionsAndUsesOnlySuppliedSprites()
+        {
+            var scene = EditorSceneManager.OpenScene(PromptB105SideMenuBuilder.ScenePath, OpenSceneMode.Additive);
+            try
+            {
+                var menu = scene.GetRootGameObjects().SelectMany(r => r.GetComponentsInChildren<GameplaySideMenuController>(true)).Single();
+                var open = menu.transform.Find("OpenMenuRoot");
+                var closed = menu.transform.Find("ClosedMenuRoot");
+                Assert.That(open.gameObject.activeSelf, Is.True);
+                Assert.That(closed.gameObject.activeSelf, Is.False);
+                Assert.That(open.GetComponentsInChildren<UnityEngine.UI.Button>(true).Length, Is.EqualTo(7));
+                Assert.That(closed.GetComponentsInChildren<UnityEngine.UI.Button>(true).Length, Is.EqualTo(1));
+                var names = new[] { "Open0", "Open1", "Open2", "Open3", "SettingsShortcut", "QuitShortcut" };
+                var methods = new[] { "ToggleBuildingMenu", "ToggleInventoryPanel", "ToggleUpgrade", "ToggleGameGuide", "OpenSettings", "RequestQuit" };
+                var bar = open.Find("PanelShortcutBar");
+                for (int i = 0; i < names.Length; i++)
+                {
+                    var button = bar.Find(names[i]).GetComponent<UnityEngine.UI.Button>();
+                    Assert.That(button.onClick.GetPersistentEventCount(), Is.EqualTo(1), names[i]);
+                    Assert.That(button.onClick.GetPersistentTarget(0), Is.Not.Null, names[i]);
+                    Assert.That(button.onClick.GetPersistentMethodName(0), Is.EqualTo(methods[i]), names[i]);
+                    Assert.That(((RectTransform)button.transform).sizeDelta, Is.EqualTo(new Vector2(270, 70)));
+                    Assert.That(button.GetComponent<SideMenuButtonView>(), Is.Not.Null);
+                    Assert.That(button.transform.Find("MenuIcon").GetComponent<SideMenuIcon>(), Is.Not.Null);
+                    Assert.That(button.transform.Find("NormalImage").GetComponent<UnityEngine.UI.Image>().sprite.name,
+                        Is.EqualTo("menu-button-active-off"));
+                }
+                foreach (var image in menu.GetComponentsInChildren<UnityEngine.UI.Image>(true).Where(i => i.sprite != null))
+                    Assert.That(AssetDatabase.GetAssetPath(image.sprite), Does.StartWith(PromptB105SideMenuBuilder.ArtFolder));
+                foreach (var panel in new[] { open, closed })
+                {
+                    var rect = (RectTransform)panel;
+                    Assert.That(rect.anchorMin, Is.EqualTo(Vector2.one));
+                    Assert.That(rect.anchorMax, Is.EqualTo(Vector2.one));
+                    Assert.That(rect.pivot, Is.EqualTo(Vector2.one));
+                    Assert.That(rect.anchoredPosition.x, Is.Zero);
+                }
+            }
+            finally { EditorSceneManager.CloseScene(scene, true); }
+        }
+    }
+}
