@@ -14,6 +14,7 @@ namespace SubTerra.Gameplay.Drone.Editor
         private const string ScenePath = "Assets/_Project/Scenes/Test/Gameplay/Gameplay_Drone_Test.unity";
         private const string TileFolder = "Assets/_Project/Tilemaps/DroneTest";
         private const string DronePrefabPath = "Assets/_Project/Prefabs/Gameplay/Drone/DiggerBot_Runtime.prefab";
+        private const string DroneSpritePath = "Assets/_Project/Art/Characters/Drone/digger_bot_idle.png";
         private const string PlayerPrefabPath = "Assets/_Project/Prefabs/Gameplay/Player/Player.prefab";
 
         [MenuItem("Tools/SubTerra/Setup Drone Test Scene")]
@@ -93,8 +94,14 @@ namespace SubTerra.Gameplay.Drone.Editor
             GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(DronePrefabPath);
             if (prefab != null) return prefab;
             GameObject source = new("DiggerBot_Runtime");
-            SpriteRenderer renderer = source.AddComponent<SpriteRenderer>(); renderer.sprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UISprite.psd"); renderer.color = new Color(0.32f, 0.9f, 0.95f);
-            source.transform.localScale = new Vector3(0.55f, 0.55f, 1f);
+            SpriteRenderer renderer = source.AddComponent<SpriteRenderer>();
+            Sprite droneSprite = AssetDatabase.LoadAssetAtPath<Sprite>(DroneSpritePath);
+            renderer.sprite = droneSprite != null
+                ? droneSprite
+                : AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UISprite.psd");
+            renderer.color = droneSprite != null ? Color.white : new Color(0.32f, 0.9f, 0.95f);
+            renderer.sortingOrder = 9;
+            source.transform.localScale = droneSprite != null ? Vector3.one : new Vector3(0.55f, 0.55f, 1f);
             source.AddComponent<DroneFollower>(); source.AddComponent<DroneSensor>();
             PrefabUtility.SaveAsPrefabAsset(source, DronePrefabPath);
             Object.DestroyImmediate(source);

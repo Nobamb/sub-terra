@@ -34006,18 +34006,6 @@ PrefabInstance:
       propertyPath: 'outpostCores.Array.data[0]'
       value: 
       objectReference: {fileID: 1926833543}
-    - target: {fileID: 4786436145163997268, guid: 336bfb36ffad41340865d185e785cc0a, type: 3}
-      propertyPath: m_Size.x
-      value: 0.45
-      objectReference: {fileID: 0}
-    - target: {fileID: 4786436145163997268, guid: 336bfb36ffad41340865d185e785cc0a, type: 3}
-      propertyPath: m_Size.y
-      value: 0.35
-      objectReference: {fileID: 0}
-    - target: {fileID: 4786436145163997268, guid: 336bfb36ffad41340865d185e785cc0a, type: 3}
-      propertyPath: m_DrawMode
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 6025003441264763184, guid: 336bfb36ffad41340865d185e785cc0a, type: 3}
       propertyPath: target
       value: 
