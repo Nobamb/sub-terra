@@ -24,13 +24,20 @@ namespace SubTerra.App.UI.HUD
             var keyboard = Keyboard.current;
             if (keyboard == null || !keyboard.slashKey.wasPressedThisFrame) return;
             if (IsTypingInField()) return;
-            CloseIfOpen();
+            Toggle();
         }
 
         /// <summary>열린 우측 메뉴를 닫는다. 이미 닫혀 있거나 전환 중이면 무시한다.</summary>
         public void CloseIfOpen()
         {
             if (!IsOpen || IsTransitioning) return;
+            Toggle();
+        }
+
+        /// <summary>닫힌 우측 메뉴를 연다. 이미 열려 있거나 전환 중이면 무시한다.</summary>
+        public void OpenIfClosed()
+        {
+            if (IsOpen || IsTransitioning) return;
             Toggle();
         }
 

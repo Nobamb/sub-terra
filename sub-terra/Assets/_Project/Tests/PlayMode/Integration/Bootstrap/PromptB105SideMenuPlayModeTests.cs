@@ -146,8 +146,7 @@ namespace SubTerra.App.Tests.PlayMode
             yield return null;
             InputSystem.QueueStateEvent(keyboard, new KeyboardState());
             yield return null;
-            Assert.That(menu.IsOpen, Is.False);
-            menu.Toggle();
+            Assert.That(menu.IsTransitioning, Is.True);
             float reopenDeadline = Time.realtimeSinceStartup + 1.2f;
             while (menu.IsTransitioning && Time.realtimeSinceStartup < reopenDeadline)
                 yield return null;
@@ -176,7 +175,7 @@ namespace SubTerra.App.Tests.PlayMode
                     Assert.That(menu.IsOpen, Is.False);
                     ScreenCapture.CaptureScreenshot(Path.Combine(evidence, "menu-closed.png"));
                     yield return new WaitForSecondsRealtime(0.2f);
-                    foreach (var key in new[] { Key.B, Key.I, Key.U, Key.G, Key.Escape, Key.Slash })
+                    foreach (var key in new[] { Key.B, Key.I, Key.U, Key.G, Key.Escape })
                     {
                         InputSystem.QueueStateEvent(keyboard, new KeyboardState(key));
                         yield return null;
