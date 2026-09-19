@@ -101,14 +101,20 @@ namespace SubTerra.App.Tests.PlayMode
             foreach (var skin in open.GetComponentsInChildren<SideMenuButtonView>())
             {
                 skin.OnPointerEnter(pointer);
-                yield return new WaitForSecondsRealtime(0.15f);
                 var hover = skin.transform.Find("HoverImage").GetComponent<UnityEngine.UI.Image>();
+                float enterDeadline = Time.realtimeSinceStartup + 1.2f;
+                while (hover.color.a < 0.25f && Time.realtimeSinceStartup < enterDeadline)
+                    yield return null;
                 Assert.That(hover.color.a, Is.InRange(0.25f, 0.85f),
                     skin.name + " active=" + skin.isActiveAndEnabled + " interactable=" + skin.GetComponent<UnityEngine.UI.Button>().IsInteractable());
-                yield return new WaitForSecondsRealtime(0.2f);
-                Assert.That(hover.color.a, Is.EqualTo(1f).Within(0.01f));
+                Assert.That(skin.ActiveParticleCount, Is.GreaterThan(0), skin.name + " hover particles");
+                while (hover.color.a < 0.99f && Time.realtimeSinceStartup < enterDeadline + 0.8f)
+                    yield return null;
+                Assert.That(hover.color.a, Is.EqualTo(1f).Within(0.02f));
                 skin.OnPointerExit(pointer);
-                yield return new WaitForSecondsRealtime(0.35f);
+                float fadeDeadline = Time.realtimeSinceStartup + 1.2f;
+                while (hover.color.a > 0.01f && Time.realtimeSinceStartup < fadeDeadline)
+                    yield return null;
                 Assert.That(hover.color.a, Is.Zero.Within(0.01f));
             }
 

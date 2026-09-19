@@ -38,7 +38,21 @@ namespace SubTerra.App.Tests.UI
                     Assert.That(button.transform.Find("MenuIcon").GetComponent<SideMenuIcon>(), Is.Not.Null);
                     Assert.That(button.transform.Find("NormalImage").GetComponent<UnityEngine.UI.Image>().sprite.name,
                         Is.EqualTo("menu-button-active-off"));
+                    Assert.That(GetSprite(button.GetComponent<SideMenuButtonView>(), "particleSprite"), Is.Not.Null);
                 }
+                var openToggle = open.Find("MenuToggleButton");
+                var closedToggle = closed.Find("MenuToggleButton");
+                Assert.That(openToggle.Find("NormalImage").GetComponent<UnityEngine.UI.Image>().sprite.name,
+                    Is.EqualTo("menu-collapse-off"));
+                Assert.That(openToggle.Find("HoverImage").GetComponent<UnityEngine.UI.Image>().sprite.name,
+                    Is.EqualTo("menu-collapse-on"));
+                Assert.That(closedToggle.Find("NormalImage").GetComponent<UnityEngine.UI.Image>().sprite.name,
+                    Is.EqualTo("menu-close-off"));
+                Assert.That(closedToggle.Find("HoverImage").GetComponent<UnityEngine.UI.Image>().sprite.name,
+                    Is.EqualTo("menu-close-on"));
+                Assert.That(((RectTransform)closedToggle).anchoredPosition,
+                    Is.EqualTo(PromptB105SideMenuBuilder.ClosedTogglePosition));
+                Assert.That(((RectTransform)closedToggle).anchoredPosition.y, Is.GreaterThan(-40f));
                 foreach (var image in menu.GetComponentsInChildren<UnityEngine.UI.Image>(true).Where(i => i.sprite != null))
                     Assert.That(AssetDatabase.GetAssetPath(image.sprite), Does.StartWith(PromptB105SideMenuBuilder.ArtFolder));
                 foreach (var panel in new[] { open, closed })
@@ -51,6 +65,12 @@ namespace SubTerra.App.Tests.UI
                 }
             }
             finally { EditorSceneManager.CloseScene(scene, true); }
+        }
+
+        private static UnityEngine.Object GetSprite(SideMenuButtonView view, string field)
+        {
+            var serialized = new SerializedObject(view);
+            return serialized.FindProperty(field).objectReferenceValue;
         }
     }
 }

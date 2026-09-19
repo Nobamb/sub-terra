@@ -16,6 +16,8 @@ namespace SubTerra.App.Editor.DataValidation
     {
         public const string ScenePath = "Assets/_Project/Scenes/App/Mine_Demo_Integration.unity";
         public const string ArtFolder = "Assets/_Project/Art/UI/Gameplay/SideMenu/";
+        public const string ParticleDotPath = ArtFolder + "particle-dot.png";
+        public static readonly Vector2 ClosedTogglePosition = new Vector2(-14f, -18f);
         private static readonly string[] Names = { "Open0", "Open1", "Open2", "Open3", "SettingsShortcut", "QuitShortcut" };
         private static readonly string[] Labels = { "시설 [B]", "인벤토리 [I]", "업그레이드 [U]", "게임 가이드 [G]", "설정 (Esc)", "게임 종료 (O)" };
 
@@ -105,8 +107,8 @@ namespace SubTerra.App.Editor.DataValidation
                     iconSo.ApplyModifiedPropertiesWithoutUndo();
                     label.transform.SetAsLastSibling();
                 }
-                Toggle(open, host, new Vector2(0, 0), 52);
-                Toggle(closed, host, new Vector2(-14, -126), 54);
+                Toggle(open, host, new Vector2(0, 0), 52, "menu-collapse-off.png", "menu-collapse-on.png");
+                Toggle(closed, host, ClosedTogglePosition, 54, "menu-close-off.png", "menu-close-on.png");
                 Set(host, "openRoot", open); Set(host, "closedRoot", closed); Set(host, "inputGroup", group);
                 open.gameObject.SetActive(true);
                 closed.gameObject.SetActive(false);
@@ -120,13 +122,14 @@ namespace SubTerra.App.Editor.DataValidation
             }
         }
 
-        private static void Toggle(RectTransform parent, GameplaySideMenuController host, Vector2 position, float size)
+        private static void Toggle(RectTransform parent, GameplaySideMenuController host, Vector2 position, float size,
+            string off, string on)
         {
             var rect = Rect("MenuToggleButton", parent);
             Place(rect, new Vector2(size, size), position, Vector2.one);
             var button = rect.GetComponent<UnityEngine.UI.Button>();
             if (button == null) button = rect.gameObject.AddComponent<UnityEngine.UI.Button>();
-            Skin(button, "menu-close-off.png", "menu-close-on.png");
+            Skin(button, off, on);
             button.onClick = new UnityEngine.UI.Button.ButtonClickedEvent();
             UnityEventTools.AddPersistentListener(button.onClick, host.Toggle);
         }
@@ -150,13 +153,18 @@ namespace SubTerra.App.Editor.DataValidation
             normal.transform.SetAsFirstSibling();
             var skin = button.GetComponent<SideMenuButtonView>();
             if (skin == null) skin = button.gameObject.AddComponent<SideMenuButtonView>();
-            Set(skin, "normal", normal); Set(skin, "hover", overlay);
+            var serialized = new SerializedObject(skin);
+            serialized.FindProperty("normal").objectReferenceValue = normal;
+            serialized.FindProperty("hover").objectReferenceValue = overlay;
+            serialized.FindProperty("particleSprite").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Sprite>(ParticleDotPath);
+            serialized.ApplyModifiedPropertiesWithoutUndo();
         }
 
         private static void ImportSprites()
         {
             foreach (var file in new[] { "game-menu.png", "menu-close-state.png", "menu-button-active-off.png",
-                "menu-button-active-on.png", "menu-close-off.png", "menu-close-on.png" })
+                "menu-button-active-on.png", "menu-close-off.png", "menu-close-on.png",
+                "menu-collapse-off.png", "menu-collapse-on.png", "particle-dot.png" })
             {
                 string path = ArtFolder + file;
                 AssetDatabase.ImportAsset(path);

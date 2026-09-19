@@ -2183,6 +2183,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: SubTerra.App::SubTerra.App.UI.HUD.SideMenuButtonView
   normal: {fileID: 2024529260}
   hover: {fileID: 1057429718}
+  particleSprite: {fileID: 21300000, guid: c71838743d0192b4db5a1e5dbb9b8c53, type: 3}
 --- !u!1 &183341436
 GameObject:
   m_ObjectHideFlags: 0
@@ -6014,6 +6015,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: SubTerra.App::SubTerra.App.UI.HUD.SideMenuButtonView
   normal: {fileID: 1073593171}
   hover: {fileID: 1210771736}
+  particleSprite: {fileID: 21300000, guid: c71838743d0192b4db5a1e5dbb9b8c53, type: 3}
 --- !u!1 &427267207
 GameObject:
   m_ObjectHideFlags: 0
@@ -11475,6 +11477,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: SubTerra.App::SubTerra.App.UI.HUD.SideMenuButtonView
   normal: {fileID: 1453470387}
   hover: {fileID: 871693586}
+  particleSprite: {fileID: 21300000, guid: c71838743d0192b4db5a1e5dbb9b8c53, type: 3}
 --- !u!1 &780300491
 GameObject:
   m_ObjectHideFlags: 0
@@ -17894,6 +17897,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: SubTerra.App::SubTerra.App.UI.HUD.SideMenuButtonView
   normal: {fileID: 271926558}
   hover: {fileID: 2131280941}
+  particleSprite: {fileID: 21300000, guid: c71838743d0192b4db5a1e5dbb9b8c53, type: 3}
 --- !u!1 &1096936280
 GameObject:
   m_ObjectHideFlags: 0
@@ -56852,7 +56856,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: e3d18d2a00cac1246871ad22c62b7854, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 3fe6ee156d8152d4288da3d312471e50, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -58809,6 +58813,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: SubTerra.App::SubTerra.App.UI.HUD.SideMenuButtonView
   normal: {fileID: 1071337334}
   hover: {fileID: 1748531482}
+  particleSprite: {fileID: 21300000, guid: c71838743d0192b4db5a1e5dbb9b8c53, type: 3}
 --- !u!1 &1686703430
 GameObject:
   m_ObjectHideFlags: 0
@@ -58919,7 +58924,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -14, y: -126}
+  m_AnchoredPosition: {x: -14, y: -18}
   m_SizeDelta: {x: 54, y: 54}
   m_Pivot: {x: 1, y: 1}
 --- !u!114 &1693073121
@@ -58936,6 +58941,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: SubTerra.App::SubTerra.App.UI.HUD.SideMenuButtonView
   normal: {fileID: 1007845038}
   hover: {fileID: 798203354}
+  particleSprite: {fileID: 21300000, guid: c71838743d0192b4db5a1e5dbb9b8c53, type: 3}
 --- !u!114 &1693073122
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -60577,6 +60583,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: SubTerra.App::SubTerra.App.UI.HUD.SideMenuButtonView
   normal: {fileID: 2014448798}
   hover: {fileID: 1545809657}
+  particleSprite: {fileID: 21300000, guid: c71838743d0192b4db5a1e5dbb9b8c53, type: 3}
 --- !u!114 &1770717037
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -62306,6 +62313,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: SubTerra.App::SubTerra.App.UI.HUD.SideMenuButtonView
   normal: {fileID: 1831750895}
   hover: {fileID: 516513603}
+  particleSprite: {fileID: 21300000, guid: c71838743d0192b4db5a1e5dbb9b8c53, type: 3}
 --- !u!1 &1929342142
 GameObject:
   m_ObjectHideFlags: 0
@@ -63651,7 +63659,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 4f5d189e201a30343b511d884da99c96, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 55af47f81a9d56c4290341e198a470f3, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
