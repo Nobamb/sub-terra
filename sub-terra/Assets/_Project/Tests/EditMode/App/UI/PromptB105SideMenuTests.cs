@@ -26,6 +26,7 @@ namespace SubTerra.App.Tests.UI
                 Assert.That(closed.GetComponentsInChildren<UnityEngine.UI.Button>(true).Length, Is.EqualTo(1));
                 var names = new[] { "Open0", "Open1", "Open2", "Open3", "SettingsShortcut", "QuitShortcut" };
                 var methods = new[] { "ToggleBuildingMenu", "ToggleInventoryPanel", "ToggleUpgrade", "ToggleGameGuide", "OpenSettings", "RequestQuit" };
+                var icons = new[] { "icon-facility", "icon-inventory", "icon-upgrade", "icon-guide", "icon-settings", "icon-quit" };
                 var bar = open.Find("PanelShortcutBar");
                 for (int i = 0; i < names.Length; i++)
                 {
@@ -35,7 +36,15 @@ namespace SubTerra.App.Tests.UI
                     Assert.That(button.onClick.GetPersistentMethodName(0), Is.EqualTo(methods[i]), names[i]);
                     Assert.That(((RectTransform)button.transform).sizeDelta, Is.EqualTo(new Vector2(270, 70)));
                     Assert.That(button.GetComponent<SideMenuButtonView>(), Is.Not.Null);
-                    Assert.That(button.transform.Find("MenuIcon").GetComponent<SideMenuIcon>(), Is.Not.Null);
+                    var icon = button.transform.Find("MenuIcon");
+                    Assert.That(icon.GetComponent<SideMenuIcon>(), Is.Not.Null);
+                    var iconImage = icon.GetComponent<UnityEngine.UI.Image>();
+                    Assert.That(iconImage.sprite, Is.Not.Null, names[i]);
+                    Assert.That(iconImage.sprite.name, Is.EqualTo(icons[i]));
+                    Assert.That(AssetDatabase.GetAssetPath(iconImage.sprite),
+                        Does.StartWith(PromptB105SideMenuBuilder.ArtFolder));
+                    Assert.That(((RectTransform)icon).anchorMin.x, Is.EqualTo(0f));
+                    Assert.That(((RectTransform)icon).anchoredPosition.x, Is.InRange(16f, 28f));
                     Assert.That(button.transform.Find("NormalImage").GetComponent<UnityEngine.UI.Image>().sprite.name,
                         Is.EqualTo("menu-button-active-off"));
                     Assert.That(GetSprite(button.GetComponent<SideMenuButtonView>(), "particleSprite"), Is.Not.Null);

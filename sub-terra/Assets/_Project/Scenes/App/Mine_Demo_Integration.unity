@@ -366,8 +366,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 82, y: 0}
-  m_SizeDelta: {x: -90, y: 0}
+  m_AnchoredPosition: {x: 64, y: 0}
+  m_SizeDelta: {x: -72, y: 0}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &35116476
 MonoBehaviour:
@@ -1407,8 +1407,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 82, y: 0}
-  m_SizeDelta: {x: -90, y: 0}
+  m_AnchoredPosition: {x: 64, y: 0}
+  m_SizeDelta: {x: -72, y: 0}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &111523957
 MonoBehaviour:
@@ -4800,8 +4800,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 82, y: 0}
-  m_SizeDelta: {x: -90, y: 0}
+  m_AnchoredPosition: {x: 64, y: 0}
+  m_SizeDelta: {x: -72, y: 0}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &306815354
 MonoBehaviour:
@@ -6154,6 +6154,8 @@ GameObject:
   m_Component:
   - component: {fileID: 428815645}
   - component: {fileID: 428815646}
+  - component: {fileID: 428815648}
+  - component: {fileID: 428815647}
   m_Layer: 0
   m_Name: MenuIcon
   m_TagString: Untagged
@@ -6175,11 +6177,11 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1920842977}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 32, y: -19}
-  m_SizeDelta: {x: 32, y: 32}
-  m_Pivot: {x: 0, y: 1}
+  m_AnchorMin: {x: 0, y: 0.5}
+  m_AnchorMax: {x: 0, y: 0.5}
+  m_AnchoredPosition: {x: 22, y: 0}
+  m_SizeDelta: {x: 36, y: 36}
+  m_Pivot: {x: 0, y: 0.5}
 --- !u!114 &428815646
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6192,15 +6194,46 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8553943767a15f049bb6e4960b3ca811, type: 3}
   m_Name: 
   m_EditorClassIdentifier: SubTerra.App::SubTerra.App.UI.HUD.SideMenuIcon
+  kind: 0
+  image: {fileID: 428815647}
+--- !u!114 &428815647
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 428815644}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.25, g: 0.94, b: 0.98, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  kind: 0
+  m_Sprite: {fileID: 21300000, guid: 4e017a3425f720b42bdc7894ba8bedb0, type: 3}
+  m_Type: 0
+  m_PreserveAspect: 1
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!222 &428815648
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 428815644}
+  m_CullTransparentMesh: 1
 --- !u!1 &434090302
 GameObject:
   m_ObjectHideFlags: 0
@@ -7936,6 +7969,8 @@ GameObject:
   m_Component:
   - component: {fileID: 544880533}
   - component: {fileID: 544880534}
+  - component: {fileID: 544880536}
+  - component: {fileID: 544880535}
   m_Layer: 0
   m_Name: MenuIcon
   m_TagString: Untagged
@@ -7957,11 +7992,11 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 170901632}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 32, y: -19}
-  m_SizeDelta: {x: 32, y: 32}
-  m_Pivot: {x: 0, y: 1}
+  m_AnchorMin: {x: 0, y: 0.5}
+  m_AnchorMax: {x: 0, y: 0.5}
+  m_AnchoredPosition: {x: 22, y: 0}
+  m_SizeDelta: {x: 36, y: 36}
+  m_Pivot: {x: 0, y: 0.5}
 --- !u!114 &544880534
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7974,15 +8009,46 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8553943767a15f049bb6e4960b3ca811, type: 3}
   m_Name: 
   m_EditorClassIdentifier: SubTerra.App::SubTerra.App.UI.HUD.SideMenuIcon
+  kind: 2
+  image: {fileID: 544880535}
+--- !u!114 &544880535
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 544880532}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.25, g: 0.94, b: 0.98, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  kind: 2
+  m_Sprite: {fileID: 21300000, guid: f4c576fb68fff7043bbbe5c631262c7a, type: 3}
+  m_Type: 0
+  m_PreserveAspect: 1
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!222 &544880536
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 544880532}
+  m_CullTransparentMesh: 1
 --- !u!1 &546888668
 GameObject:
   m_ObjectHideFlags: 0
@@ -13628,6 +13694,8 @@ GameObject:
   m_Component:
   - component: {fileID: 872604021}
   - component: {fileID: 872604022}
+  - component: {fileID: 872604024}
+  - component: {fileID: 872604023}
   m_Layer: 0
   m_Name: MenuIcon
   m_TagString: Untagged
@@ -13649,11 +13717,11 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 769667448}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 32, y: -19}
-  m_SizeDelta: {x: 32, y: 32}
-  m_Pivot: {x: 0, y: 1}
+  m_AnchorMin: {x: 0, y: 0.5}
+  m_AnchorMax: {x: 0, y: 0.5}
+  m_AnchoredPosition: {x: 22, y: 0}
+  m_SizeDelta: {x: 36, y: 36}
+  m_Pivot: {x: 0, y: 0.5}
 --- !u!114 &872604022
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -13666,15 +13734,46 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8553943767a15f049bb6e4960b3ca811, type: 3}
   m_Name: 
   m_EditorClassIdentifier: SubTerra.App::SubTerra.App.UI.HUD.SideMenuIcon
+  kind: 5
+  image: {fileID: 872604023}
+--- !u!114 &872604023
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 872604020}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.25, g: 0.94, b: 0.98, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  kind: 5
+  m_Sprite: {fileID: 21300000, guid: a1acfe2bb7c71324ea6426b2a6a2047c, type: 3}
+  m_Type: 0
+  m_PreserveAspect: 1
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!222 &872604024
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 872604020}
+  m_CullTransparentMesh: 1
 --- !u!1 &879686158
 GameObject:
   m_ObjectHideFlags: 0
@@ -14545,8 +14644,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 82, y: 0}
-  m_SizeDelta: {x: -90, y: 0}
+  m_AnchoredPosition: {x: 64, y: 0}
+  m_SizeDelta: {x: -72, y: 0}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &951479945
 MonoBehaviour:
@@ -20224,8 +20323,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 82, y: 0}
-  m_SizeDelta: {x: -90, y: 0}
+  m_AnchoredPosition: {x: 64, y: 0}
+  m_SizeDelta: {x: -72, y: 0}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &1287994970
 MonoBehaviour:
@@ -21007,6 +21106,8 @@ GameObject:
   m_Component:
   - component: {fileID: 1361630859}
   - component: {fileID: 1361630860}
+  - component: {fileID: 1361630862}
+  - component: {fileID: 1361630861}
   m_Layer: 0
   m_Name: MenuIcon
   m_TagString: Untagged
@@ -21028,11 +21129,11 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1668775356}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 32, y: -19}
-  m_SizeDelta: {x: 32, y: 32}
-  m_Pivot: {x: 0, y: 1}
+  m_AnchorMin: {x: 0, y: 0.5}
+  m_AnchorMax: {x: 0, y: 0.5}
+  m_AnchoredPosition: {x: 22, y: 0}
+  m_SizeDelta: {x: 36, y: 36}
+  m_Pivot: {x: 0, y: 0.5}
 --- !u!114 &1361630860
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -21045,15 +21146,46 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8553943767a15f049bb6e4960b3ca811, type: 3}
   m_Name: 
   m_EditorClassIdentifier: SubTerra.App::SubTerra.App.UI.HUD.SideMenuIcon
+  kind: 1
+  image: {fileID: 1361630861}
+--- !u!114 &1361630861
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1361630858}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.25, g: 0.94, b: 0.98, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  kind: 1
+  m_Sprite: {fileID: 21300000, guid: bf369556d420818459ab7c5337a2ce5c, type: 3}
+  m_Type: 0
+  m_PreserveAspect: 1
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!222 &1361630862
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1361630858}
+  m_CullTransparentMesh: 1
 --- !u!1 &1362531153
 GameObject:
   m_ObjectHideFlags: 0
@@ -57914,8 +58046,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 82, y: 0}
-  m_SizeDelta: {x: -90, y: 0}
+  m_AnchoredPosition: {x: 64, y: 0}
+  m_SizeDelta: {x: -72, y: 0}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &1611280823
 MonoBehaviour:
@@ -61240,6 +61372,8 @@ GameObject:
   m_Component:
   - component: {fileID: 1795205159}
   - component: {fileID: 1795205160}
+  - component: {fileID: 1795205162}
+  - component: {fileID: 1795205161}
   m_Layer: 0
   m_Name: MenuIcon
   m_TagString: Untagged
@@ -61261,11 +61395,11 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1093794157}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 32, y: -19}
-  m_SizeDelta: {x: 32, y: 32}
-  m_Pivot: {x: 0, y: 1}
+  m_AnchorMin: {x: 0, y: 0.5}
+  m_AnchorMax: {x: 0, y: 0.5}
+  m_AnchoredPosition: {x: 22, y: 0}
+  m_SizeDelta: {x: 36, y: 36}
+  m_Pivot: {x: 0, y: 0.5}
 --- !u!114 &1795205160
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -61278,15 +61412,46 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8553943767a15f049bb6e4960b3ca811, type: 3}
   m_Name: 
   m_EditorClassIdentifier: SubTerra.App::SubTerra.App.UI.HUD.SideMenuIcon
+  kind: 3
+  image: {fileID: 1795205161}
+--- !u!114 &1795205161
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1795205158}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.25, g: 0.94, b: 0.98, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  kind: 3
+  m_Sprite: {fileID: 21300000, guid: 67f1f7e8b5c67414290407c841c0ffe1, type: 3}
+  m_Type: 0
+  m_PreserveAspect: 1
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!222 &1795205162
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1795205158}
+  m_CullTransparentMesh: 1
 --- !u!1 &1818123478
 GameObject:
   m_ObjectHideFlags: 0
@@ -63281,6 +63446,8 @@ GameObject:
   m_Component:
   - component: {fileID: 1994729744}
   - component: {fileID: 1994729745}
+  - component: {fileID: 1994729747}
+  - component: {fileID: 1994729746}
   m_Layer: 0
   m_Name: MenuIcon
   m_TagString: Untagged
@@ -63302,11 +63469,11 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 417307828}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 32, y: -19}
-  m_SizeDelta: {x: 32, y: 32}
-  m_Pivot: {x: 0, y: 1}
+  m_AnchorMin: {x: 0, y: 0.5}
+  m_AnchorMax: {x: 0, y: 0.5}
+  m_AnchoredPosition: {x: 22, y: 0}
+  m_SizeDelta: {x: 36, y: 36}
+  m_Pivot: {x: 0, y: 0.5}
 --- !u!114 &1994729745
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -63319,15 +63486,46 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8553943767a15f049bb6e4960b3ca811, type: 3}
   m_Name: 
   m_EditorClassIdentifier: SubTerra.App::SubTerra.App.UI.HUD.SideMenuIcon
+  kind: 4
+  image: {fileID: 1994729746}
+--- !u!114 &1994729746
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1994729743}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.25, g: 0.94, b: 0.98, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  kind: 4
+  m_Sprite: {fileID: 21300000, guid: e3b61676e9dd4a840a7143e656016505, type: 3}
+  m_Type: 0
+  m_PreserveAspect: 1
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!222 &1994729747
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1994729743}
+  m_CullTransparentMesh: 1
 --- !u!1 &1995759522
 GameObject:
   m_ObjectHideFlags: 0

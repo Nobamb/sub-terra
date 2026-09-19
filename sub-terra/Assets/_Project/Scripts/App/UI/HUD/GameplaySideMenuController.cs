@@ -1,5 +1,8 @@
 using System.Collections;
+using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 
 namespace SubTerra.App.UI.HUD
 {
@@ -15,6 +18,29 @@ namespace SubTerra.App.UI.HUD
         public bool IsTransitioning { get; private set; }
 
         private void OnEnable() => ResetOpen();
+
+        private void Update()
+        {
+            var keyboard = Keyboard.current;
+            if (keyboard == null || !keyboard.slashKey.wasPressedThisFrame) return;
+            if (IsTypingInField()) return;
+            CloseIfOpen();
+        }
+
+        /// <summary>열린 우측 메뉴를 닫는다. 이미 닫혀 있거나 전환 중이면 무시한다.</summary>
+        public void CloseIfOpen()
+        {
+            if (!IsOpen || IsTransitioning) return;
+            Toggle();
+        }
+
+        private static bool IsTypingInField()
+        {
+            var selected = EventSystem.current;
+            return selected != null
+                && selected.currentSelectedGameObject != null
+                && selected.currentSelectedGameObject.GetComponent<TMP_InputField>() != null;
+        }
 
         private void OnDisable()
         {

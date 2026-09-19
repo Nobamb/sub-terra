@@ -20,6 +20,11 @@ namespace SubTerra.App.Editor.DataValidation
         public static readonly Vector2 ClosedTogglePosition = new Vector2(-14f, -18f);
         private static readonly string[] Names = { "Open0", "Open1", "Open2", "Open3", "SettingsShortcut", "QuitShortcut" };
         private static readonly string[] Labels = { "시설 [B]", "인벤토리 [I]", "업그레이드 [U]", "게임 가이드 [G]", "설정 (Esc)", "게임 종료 (O)" };
+        private static readonly string[] IconFiles =
+        {
+            "icon-facility.png", "icon-inventory.png", "icon-upgrade.png",
+            "icon-guide.png", "icon-settings.png", "icon-quit.png"
+        };
 
         [InitializeOnLoadMethod]
         private static void WatchRequest()
@@ -94,17 +99,26 @@ namespace SubTerra.App.Editor.DataValidation
                     label.color = new Color(0.9f, 0.98f, 1f);
                     label.raycastTarget = false;
                     Stretch(label.rectTransform);
-                    label.rectTransform.offsetMin = new Vector2(82, 0);
+                    label.rectTransform.offsetMin = new Vector2(64, 0);
                     label.rectTransform.offsetMax = new Vector2(-8, 0);
                     var iconRect = Rect("MenuIcon", button.transform);
-                    Place(iconRect, new Vector2(32, 32), new Vector2(32, -19), new Vector2(0, 1));
+                    Place(iconRect, new Vector2(36, 36), new Vector2(22, 0), new Vector2(0, 0.5f));
+                    GameObjectUtility.RemoveMonoBehavioursWithMissingScript(iconRect.gameObject);
+                    var picture = iconRect.GetComponent<UnityEngine.UI.Image>();
+                    if (picture == null) picture = iconRect.gameObject.AddComponent<UnityEngine.UI.Image>();
+                    picture.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(ArtFolder + IconFiles[i]);
+                    if (picture.sprite == null)
+                        throw new InvalidOperationException("Missing side-menu icon sprite: " + IconFiles[i]);
+                    picture.color = Color.white;
+                    picture.preserveAspect = true;
+                    picture.raycastTarget = false;
                     var icon = iconRect.GetComponent<SideMenuIcon>();
                     if (icon == null) icon = iconRect.gameObject.AddComponent<SideMenuIcon>();
-                    icon.color = new Color(0.25f, 0.94f, 0.98f);
-                    icon.raycastTarget = false;
                     var iconSo = new SerializedObject(icon);
                     iconSo.FindProperty("kind").intValue = i;
+                    iconSo.FindProperty("image").objectReferenceValue = picture;
                     iconSo.ApplyModifiedPropertiesWithoutUndo();
+                    iconRect.SetAsLastSibling();
                     label.transform.SetAsLastSibling();
                 }
                 Toggle(open, host, new Vector2(0, 0), 52, "menu-collapse-off.png", "menu-collapse-on.png");
@@ -164,7 +178,9 @@ namespace SubTerra.App.Editor.DataValidation
         {
             foreach (var file in new[] { "game-menu.png", "menu-close-state.png", "menu-button-active-off.png",
                 "menu-button-active-on.png", "menu-close-off.png", "menu-close-on.png",
-                "menu-collapse-off.png", "menu-collapse-on.png", "particle-dot.png" })
+                "menu-collapse-off.png", "menu-collapse-on.png", "particle-dot.png",
+                "icon-facility.png", "icon-inventory.png", "icon-upgrade.png",
+                "icon-guide.png", "icon-settings.png", "icon-quit.png" })
             {
                 string path = ArtFolder + file;
                 AssetDatabase.ImportAsset(path);

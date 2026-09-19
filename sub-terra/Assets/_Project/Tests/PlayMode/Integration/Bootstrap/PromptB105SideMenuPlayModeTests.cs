@@ -76,6 +76,14 @@ namespace SubTerra.App.Tests.PlayMode
             var open = (RectTransform)menu.transform.Find("OpenMenuRoot");
             var closed = (RectTransform)menu.transform.Find("ClosedMenuRoot");
             var bar = open.Find("PanelShortcutBar");
+            var iconNames = new[] { "icon-facility", "icon-inventory", "icon-upgrade", "icon-guide", "icon-settings", "icon-quit" };
+            var buttonNames = new[] { "Open0", "Open1", "Open2", "Open3", "SettingsShortcut", "QuitShortcut" };
+            for (int i = 0; i < buttonNames.Length; i++)
+            {
+                var iconImage = bar.Find(buttonNames[i]).Find("MenuIcon").GetComponent<UnityEngine.UI.Image>();
+                Assert.That(iconImage.sprite, Is.Not.Null, buttonNames[i]);
+                Assert.That(iconImage.sprite.name, Is.EqualTo(iconNames[i]));
+            }
             var chrome = menu.GetComponentInParent<HudPanelChromeController>();
             var panels = menu.GetComponentInParent<PanelToggleController>();
             var underground = menu.GetComponentInParent<UndergroundMenuController>();
@@ -97,6 +105,7 @@ namespace SubTerra.App.Tests.PlayMode
             Assert.That(quit.onClick.GetPersistentMethodName(0), Is.EqualTo("RequestQuit"));
 
             Time.timeScale = 0f;
+            keyboard = InputSystem.AddDevice<Keyboard>();
             var pointer = new PointerEventData(EventSystem.current);
             foreach (var skin in open.GetComponentsInChildren<SideMenuButtonView>())
             {
@@ -118,10 +127,31 @@ namespace SubTerra.App.Tests.PlayMode
                 Assert.That(hover.color.a, Is.Zero.Within(0.01f));
             }
 
-            string evidence = Path.GetFullPath("../work_process/MVP2/UI-fix-markdown-document/evidence/prompt-b105");
+            string evidence = Path.GetFullPath("../work_process/MVP2/UI-fix-markdown-document/evidence/prompt-b105-2");
             Directory.CreateDirectory(evidence);
             ScreenCapture.CaptureScreenshot(Path.Combine(evidence, "menu-open.png"));
             yield return new WaitForSecondsRealtime(0.2f);
+            InputSystem.QueueStateEvent(keyboard, new KeyboardState(Key.Slash));
+            yield return null;
+            InputSystem.QueueStateEvent(keyboard, new KeyboardState());
+            yield return null;
+            Assert.That(menu.IsTransitioning, Is.True);
+            float slashDeadline = Time.realtimeSinceStartup + 1.2f;
+            while (menu.IsTransitioning && Time.realtimeSinceStartup < slashDeadline)
+                yield return null;
+            Assert.That(menu.IsOpen, Is.False);
+            ScreenCapture.CaptureScreenshot(Path.Combine(evidence, "menu-closed-slash.png"));
+            yield return new WaitForSecondsRealtime(0.2f);
+            InputSystem.QueueStateEvent(keyboard, new KeyboardState(Key.Slash));
+            yield return null;
+            InputSystem.QueueStateEvent(keyboard, new KeyboardState());
+            yield return null;
+            Assert.That(menu.IsOpen, Is.False);
+            menu.Toggle();
+            float reopenDeadline = Time.realtimeSinceStartup + 1.2f;
+            while (menu.IsTransitioning && Time.realtimeSinceStartup < reopenDeadline)
+                yield return null;
+            Assert.That(menu.IsOpen, Is.True);
             for (int pass = 0; pass < 2; pass++)
             {
                 var outgoing = pass == 0 ? open : closed;
@@ -146,8 +176,7 @@ namespace SubTerra.App.Tests.PlayMode
                     Assert.That(menu.IsOpen, Is.False);
                     ScreenCapture.CaptureScreenshot(Path.Combine(evidence, "menu-closed.png"));
                     yield return new WaitForSecondsRealtime(0.2f);
-                    keyboard = InputSystem.AddDevice<Keyboard>();
-                    foreach (var key in new[] { Key.B, Key.I, Key.U, Key.G, Key.Escape })
+                    foreach (var key in new[] { Key.B, Key.I, Key.U, Key.G, Key.Escape, Key.Slash })
                     {
                         InputSystem.QueueStateEvent(keyboard, new KeyboardState(key));
                         yield return null;
