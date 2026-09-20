@@ -4,7 +4,7 @@ using UnityEngine;
 namespace SubTerra.App.UI.HUD
 {
     /// <summary>
-    /// 기본 HUD View. TextMeshPro 참조만 보유하고 State를 읽거나 쓰지 않는다.
+    /// 기본 HUD View. 전달받은 값으로 텍스트/게이지만 표시하며 State를 읽거나 쓰지 않는다.
     /// </summary>
     public sealed class BasicHudView : MonoBehaviour
     {
@@ -16,6 +16,8 @@ namespace SubTerra.App.UI.HUD
         [SerializeField] private TextMeshProUGUI unsettledValueText;
         [SerializeField] private TextMeshProUGUI buildingSelectionText;
         [SerializeField] private TextMeshProUGUI interactionPromptText;
+        [SerializeField] private HudGaugeView energyGauge;
+        [SerializeField] private HudGaugeView healthGauge;
 
         public TextMeshProUGUI EnergyText => energyText;
         public TextMeshProUGUI HealthText => healthText;
@@ -33,6 +35,7 @@ namespace SubTerra.App.UI.HUD
 
         public void AlignHealthRow()
         {
+            if (healthGauge != null) return;
             if (healthText == null || energyText == null)
             {
                 return;
@@ -51,12 +54,22 @@ namespace SubTerra.App.UI.HUD
 
         public void SetEnergy(string text)
         {
-            SetText(energyText, text);
+            SetText(energyText, energyGauge != null ? text.Replace("전력 ", "") : text);
+        }
+
+        public void SetEnergyLevel(float current, int maximum)
+        {
+            if (energyGauge != null) energyGauge.SetValue(current, maximum);
+        }
+
+        public void SetHealthLevel(float current, int maximum)
+        {
+            if (healthGauge != null) healthGauge.SetValue(current, maximum);
         }
 
         public void SetHealth(string text)
         {
-            SetText(healthText, text);
+            SetText(healthText, healthGauge != null ? text.Replace("체력 ", "") : text);
         }
 
         public void SetDepth(string text)
