@@ -6,7 +6,7 @@ using UnityEngine.UI;
 namespace SubTerra.App.UI.Tutorial
 {
     /// <summary>
-    /// 퀘스트 ID에 연결된 기존 스프라이트를 썸네일로 보여 준다.
+    /// 퀘스트 ID에 연결된 게임 장면을 썸네일 영역 전체에 보여 준다.
     /// 스프라이트가 없으면 자리 표시 문구만 남긴다.
     /// </summary>
     public sealed class QuestThumbnailView : MonoBehaviour
@@ -35,43 +35,16 @@ namespace SubTerra.App.UI.Tutorial
             }
 
             var primary = match != null ? match.primary : null;
-            var secondary = match != null ? match.secondary : null;
-            var tertiary = match != null ? match.tertiary : null;
-            var count = 0;
-            if (primary != null)
-            {
-                count++;
-            }
-
-            if (secondary != null)
-            {
-                count++;
-            }
-
-            if (tertiary != null)
-            {
-                count++;
-            }
-
-            var height = 150f;
-            var rect = transform as RectTransform;
-            if (rect != null && rect.rect.height > 40f)
-            {
-                height = Mathf.Clamp(rect.rect.height * 0.72f, 96f, 168f);
-            }
-
-            var gap = count >= 3 ? height * 1.35f : height * 0.95f;
-            var floor = 18f;
-            Place(secondaryImage, secondary, count >= 2 ? -gap : 0f, height, floor);
-            Place(primaryImage, primary, 0f, height, floor);
-            Place(tertiaryImage, tertiary, gap, height, floor);
+            if (secondaryImage != null) secondaryImage.gameObject.SetActive(false);
+            if (tertiaryImage != null) tertiaryImage.gameObject.SetActive(false);
+            Place(primaryImage, primary);
             if (placeholderText != null)
             {
                 placeholderText.gameObject.SetActive(primary == null);
             }
         }
 
-        private static void Place(Image image, Sprite sprite, float x, float size, float floor)
+        private static void Place(Image image, Sprite sprite)
         {
             if (image == null)
             {
@@ -89,10 +62,11 @@ namespace SubTerra.App.UI.Tutorial
             image.preserveAspect = true;
             image.raycastTarget = false;
             var rect = image.rectTransform;
-            rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0f);
-            rect.pivot = new Vector2(0.5f, 0f);
-            rect.sizeDelta = new Vector2(size, size);
-            rect.anchoredPosition = new Vector2(x, floor);
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.offsetMin = new Vector2(6f, 6f);
+            rect.offsetMax = new Vector2(-6f, -6f);
         }
     }
 
@@ -101,7 +75,5 @@ namespace SubTerra.App.UI.Tutorial
     {
         public string objectiveId;
         public Sprite primary;
-        public Sprite secondary;
-        public Sprite tertiary;
     }
 }

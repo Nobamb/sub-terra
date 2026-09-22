@@ -16356,77 +16356,41 @@ MonoBehaviour:
   placeholderText: {fileID: 1052622956}
   entries:
   - objectiveId: demo.quest.mine_block
-    primary: {fileID: 21300000, guid: 41d68100d8c057649a878d33abc361d6, type: 3}
-    secondary: {fileID: 21300000, guid: c32df7d851b7e474abe9b14e0a138857, type: 3}
-    tertiary: {fileID: 0}
+    primary: {fileID: 21300000, guid: c9af34c12d97a3f4484813119a96f44c, type: 3}
   - objectiveId: demo.quest.mine_copper
-    primary: {fileID: 21300000, guid: 8a551a0e3063e4c4bba8e024004ff3b6, type: 3}
-    secondary: {fileID: 21300000, guid: 41d68100d8c057649a878d33abc361d6, type: 3}
-    tertiary: {fileID: 0}
+    primary: {fileID: 21300000, guid: 1edf6fa396030fa4bbf73cbd8dbbf87c, type: 3}
   - objectiveId: demo.quest.upgrade_drill_speed
-    primary: {fileID: 21300000, guid: 41d68100d8c057649a878d33abc361d6, type: 3}
-    secondary: {fileID: 0}
-    tertiary: {fileID: 0}
+    primary: {fileID: 21300000, guid: 8e5246c9454d97b4a98266ed95eacadf, type: 3}
   - objectiveId: demo.quest.travel_to_surface
-    primary: {fileID: 21300000, guid: bb9bc858f4325d640b126ed119354035, type: 3}
-    secondary: {fileID: 21300000, guid: 648dc7a3882a93c4fa7b0f0d130f2bb8, type: 3}
-    tertiary: {fileID: 0}
+    primary: {fileID: 21300000, guid: 5e93609273e8e0642987ccf70312c46e, type: 3}
   - objectiveId: demo.quest.return_to_mine
-    primary: {fileID: 21300000, guid: bb9bc858f4325d640b126ed119354035, type: 3}
-    secondary: {fileID: 21300000, guid: c32df7d851b7e474abe9b14e0a138857, type: 3}
-    tertiary: {fileID: 0}
+    primary: {fileID: 21300000, guid: 69d8eb9cd2d54ca44a6ebe4810ff20e8, type: 3}
   - objectiveId: demo.quest.mine_iron
-    primary: {fileID: 21300000, guid: 2b44d05062c391a46b74b23e6dd0855f, type: 3}
-    secondary: {fileID: 21300000, guid: 41d68100d8c057649a878d33abc361d6, type: 3}
-    tertiary: {fileID: 0}
+    primary: {fileID: 21300000, guid: 15595679d1fe14243bbe2640417928a7, type: 3}
   - objectiveId: demo.quest.place_support_in_danger
-    primary: {fileID: 21300000, guid: 0f69f3d75d45e3240995a176aac8d034, type: 3}
-    secondary: {fileID: 21300000, guid: 132fd1c0ef8765040a4de59ff3bd51c8, type: 3}
-    tertiary: {fileID: 0}
+    primary: {fileID: 21300000, guid: b7d03dde46e84ba4da31bb077cee7e7a, type: 3}
   - objectiveId: demo.quest.place_ladder
-    primary: {fileID: 21300000, guid: b78f477124e25d74a9afc401286816a2, type: 3}
-    secondary: {fileID: 21300000, guid: 648dc7a3882a93c4fa7b0f0d130f2bb8, type: 3}
-    tertiary: {fileID: 0}
+    primary: {fileID: 21300000, guid: b00e74c055d2dab4585296ec39d953c1, type: 3}
   - objectiveId: demo.quest.place_light_at_depth
-    primary: {fileID: 21300000, guid: 993a4ff7f9ba1254d8a13eafc0898091, type: 3}
-    secondary: {fileID: 21300000, guid: 42a40888b7e02d84f8cd208ccc0b98f8, type: 3}
-    tertiary: {fileID: 0}
+    primary: {fileID: 21300000, guid: f61ff21834067054b8227669b535d5ba, type: 3}
   - objectiveId: demo.quest.store_mineral
-    primary: {fileID: 21300000, guid: 0d077ad1b89f0f64b870e9ae79697b9f, type: 3}
-    secondary: {fileID: 21300000, guid: 8a551a0e3063e4c4bba8e024004ff3b6, type: 3}
-    tertiary: {fileID: 0}
+    primary: {fileID: 21300000, guid: d8626bed7ab56504a8798a9e20556d62, type: 3}
   - objectiveId: demo.quest.install_outpost_core
-    primary: {fileID: 21300000, guid: 606582aba17a0ef42b0789c8f6a27410, type: 3}
-    secondary: {fileID: 21300000, guid: 648dc7a3882a93c4fa7b0f0d130f2bb8, type: 3}
-    tertiary: {fileID: 0}
+    primary: {fileID: 21300000, guid: 052552c9c6bb50d41b9bbcbb148b04b9, type: 3}
   - objectiveId: demo.quest.charge_near_outpost
-    primary: {fileID: 21300000, guid: baf2dfa10df1fe343996cf284ab29981, type: 3}
-    secondary: {fileID: 21300000, guid: 606582aba17a0ef42b0789c8f6a27410, type: 3}
-    tertiary: {fileID: 0}
+    primary: {fileID: 21300000, guid: ad4919b86f2975e439e95918015269d6, type: 3}
   - objectiveId: demo.quest.heal_near_outpost
-    primary: {fileID: 21300000, guid: b4e7bcebdc11085498948bce7407a5e8, type: 3}
-    secondary: {fileID: 21300000, guid: 648dc7a3882a93c4fa7b0f0d130f2bb8, type: 3}
-    tertiary: {fileID: 0}
+    primary: {fileID: 21300000, guid: 94548bd247c784648bc26aa01ae3211d, type: 3}
   - objectiveId: demo.quest.unlock_deep_zone
-    primary: {fileID: 21300000, guid: 4f6a2f3801d340828999d7f8ad4562b3, type: 3}
-    secondary: {fileID: 21300000, guid: 42a40888b7e02d84f8cd208ccc0b98f8, type: 3}
-    tertiary: {fileID: 0}
+    primary: {fileID: 21300000, guid: fd8a35b047e3f2845a26fc56663d4771, type: 3}
   - objectiveId: demo.quest.mine_lithium
-    primary: {fileID: 21300000, guid: 3731f6988ff72d142b104d9ee9a8f526, type: 3}
-    secondary: {fileID: 21300000, guid: 42a40888b7e02d84f8cd208ccc0b98f8, type: 3}
-    tertiary: {fileID: 0}
+    primary: {fileID: 21300000, guid: be3885340d00dea478488af981ed3c23, type: 3}
   - objectiveId: demo.quest.purify_gas_with_outpost
-    primary: {fileID: 21300000, guid: d24c5b12ba5eade4abade88b360b0e60, type: 3}
-    secondary: {fileID: 21300000, guid: 606582aba17a0ef42b0789c8f6a27410, type: 3}
-    tertiary: {fileID: 0}
+    primary: {fileID: 21300000, guid: 9e45804c1d7d1ac48bba2e111b782383, type: 3}
   - objectiveId: demo.quest.sell_at_settlement
-    primary: {fileID: 21300000, guid: 902999309caf02d4e915990fbc9922e4, type: 3}
-    secondary: {fileID: 21300000, guid: 2b44d05062c391a46b74b23e6dd0855f, type: 3}
-    tertiary: {fileID: 0}
+    primary: {fileID: 21300000, guid: 9445ce53f5598144290be7798a2e1e24, type: 3}
   - objectiveId: demo.quest.emergency_escape_return
-    primary: {fileID: 21300000, guid: 648dc7a3882a93c4fa7b0f0d130f2bb8, type: 3}
-    secondary: {fileID: 21300000, guid: bb9bc858f4325d640b126ed119354035, type: 3}
-    tertiary: {fileID: 21300000, guid: 606582aba17a0ef42b0789c8f6a27410, type: 3}
+    primary: {fileID: 21300000, guid: f86a3360edc6b32478ea623ddcc1eb99, type: 3}
 --- !u!224 &902033032
 RectTransform:
   m_ObjectHideFlags: 0

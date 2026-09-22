@@ -212,7 +212,24 @@ namespace SubTerra.App.Tests.Tutorial
                     Assert.That(FindChild(clone.transform, "QuestClearBadge").gameObject.activeSelf, Is.True);
                     Assert.That(FindChild(clone.transform, "QuestThumbnail").Find("Primary").GetComponent<Image>().sprite,
                         Is.Not.Null);
-                    Assert.That(FindChild(clone.transform, "QuestThumbnail").Find("Tertiary").gameObject.activeSelf, Is.True);
+                    Assert.That(FindChild(clone.transform, "QuestThumbnail").Find("Tertiary").gameObject.activeSelf, Is.False);
+                    var thumbnailView = FindChild(clone.transform, "QuestThumbnail").GetComponent<QuestThumbnailView>();
+                    var image = FindChild(clone.transform, "QuestThumbnail").Find("Primary").GetComponent<UnityEngine.UI.Image>();
+                    foreach (var id in DemoObjectiveIds.Ordered)
+                    {
+                        thumbnailView.Show(id);
+                        Assert.That(AssetDatabase.GetAssetPath(image.sprite), Is.EqualTo(PromptB1072QuestThumbnailBuilder.PathFor(id)));
+                        Assert.That(image.sprite.rect.width, Is.EqualTo(1448f));
+                        Assert.That(image.sprite.rect.height, Is.EqualTo(472f));
+                        Assert.That(image.rectTransform.anchorMin, Is.EqualTo(Vector2.zero));
+                        Assert.That(image.rectTransform.anchorMax, Is.EqualTo(Vector2.one));
+                        Assert.That(image.preserveAspect, Is.True);
+                        Assert.That(image.raycastTarget, Is.False);
+                    }
+                    thumbnailView.Show("unknown.quest");
+                    Assert.That(image.gameObject.activeSelf, Is.False);
+                    Assert.That(FindChild(clone.transform, "QuestThumbnail").Find("Placeholder").gameObject.activeSelf, Is.True);
+                    thumbnailView.Show(escape.Id);
 
                     Capture(clone, "quest-basic.png", false, false);
                     Capture(clone, "quest-hover.png", true, false);
@@ -291,7 +308,7 @@ namespace SubTerra.App.Tests.Tutorial
                     "MVP2",
                     "UI-fix-markdown-document",
                     "evidence",
-                    "prompt-b107");
+                    "prompt-b107-2");
                 Directory.CreateDirectory(directory);
                 File.WriteAllBytes(Path.Combine(directory, fileName), image.EncodeToPNG());
                 Object.DestroyImmediate(image);

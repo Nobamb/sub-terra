@@ -34,47 +34,6 @@ namespace SubTerra.App.Editor.DataValidation
         private const float DetailsW = 880f;
         private const float DetailsH = 718f;
 
-        private static readonly Thumb[] Thumbs =
-        {
-            new Thumb(DemoObjectiveIds.MineBlock, Mining, GroundNormal),
-            new Thumb(DemoObjectiveIds.MineCopper, OreCopper, Mining),
-            new Thumb(DemoObjectiveIds.UpgradeDrillSpeed, Mining),
-            new Thumb(DemoObjectiveIds.TravelToSurface, Elevator, Idle),
-            new Thumb(DemoObjectiveIds.ReturnToMine, Elevator, GroundNormal),
-            new Thumb(DemoObjectiveIds.MineIron, OreIron, Mining),
-            new Thumb(DemoObjectiveIds.PlaceSupportInDanger, Support, Crack),
-            new Thumb(DemoObjectiveIds.PlaceLadder, Ladder, Idle),
-            new Thumb(DemoObjectiveIds.PlaceLightAtDepth, Light, GroundDeep),
-            new Thumb(DemoObjectiveIds.StoreMineral, Storage, OreCopper),
-            new Thumb(DemoObjectiveIds.InstallOutpostCore, Outpost, Idle),
-            new Thumb(DemoObjectiveIds.ChargeNearOutpost, Charger, Outpost),
-            new Thumb(DemoObjectiveIds.HealNearOutpost, Clinic, Idle),
-            new Thumb(DemoObjectiveIds.UnlockDeepZone, Glyph, GroundDeep),
-            new Thumb(DemoObjectiveIds.MineLithium, OreLithium, GroundDeep),
-            new Thumb(DemoObjectiveIds.PurifyGasWithOutpost, GroundGas, Outpost),
-            new Thumb(DemoObjectiveIds.SellAtSettlement, Settlement, OreIron),
-            new Thumb(DemoObjectiveIds.EmergencyEscapeReturn, Idle, Elevator, Outpost)
-        };
-
-        private const string Mining = "Assets/_Project/Art/Characters/Player/Frames/Mining/mining_01.png";
-        private const string Idle = "Assets/_Project/Art/Characters/Player/Frames/Idle/player_idle_01.png";
-        private const string GroundNormal = "Assets/_Project/Art/Tiles/Ground/ground_normal_01.png";
-        private const string GroundDeep = "Assets/_Project/Art/Tiles/Ground/ground_deep_01.png";
-        private const string GroundGas = "Assets/_Project/Art/Tiles/Ground/ground_gas_01.png";
-        private const string OreCopper = "Assets/_Project/Art/Tiles/Ore/ore_copper_01.png";
-        private const string OreIron = "Assets/_Project/Art/Tiles/Ore/ore_iron_01.png";
-        private const string OreLithium = "Assets/_Project/Art/Tiles/Ore/ore_lithium_01.png";
-        private const string Crack = "Assets/_Project/Art/Tiles/Crack_Overlay/crack_orange_overlay.png";
-        private const string Elevator = "Assets/_Project/Art/Facilities/MVP/elevator_station_mine.png";
-        private const string Support = "Assets/_Project/Art/Facilities/MVP/support_pillar_mine.png";
-        private const string Ladder = "Assets/_Project/Art/Facilities/MVP/ladder_segment_mine.png";
-        private const string Light = "Assets/_Project/Art/Facilities/MVP/light_basic_cartoon_v3.png";
-        private const string Storage = "Assets/_Project/Art/Facilities/MVP/storage_basic_cartoon_v2.png";
-        private const string Outpost = "Assets/_Project/Art/Facilities/MVP/outpost_core_cartoon_v3.png";
-        private const string Charger = "Assets/_Project/Art/Facilities/MVP/charger_basic_cartoon_v2.png";
-        private const string Clinic = "Assets/_Project/Art/Facilities/MVP/clinic_basic_cartoon_v3.png";
-        private const string Settlement = "Assets/_Project/Art/Facilities/MVP/settlement_console_cartoon_v3.png";
-        private const string Glyph = "Assets/_Project/Art/Tiles/SealedGlyph/sealed_glyph_stone_01.png";
         private const string IconCopper = "Assets/_Project/Art/Icons/icon_copper.png";
         private const string IconIron = "Assets/_Project/Art/Icons/icon_iron.png";
         private const string IconLithium = "Assets/_Project/Art/Icons/icon_lithium.png";
@@ -475,18 +434,8 @@ namespace SubTerra.App.Editor.DataValidation
             serialized.FindProperty("secondaryImage").objectReferenceValue = secondary;
             serialized.FindProperty("tertiaryImage").objectReferenceValue = tertiary;
             serialized.FindProperty("placeholderText").objectReferenceValue = placeholder;
-            var entries = serialized.FindProperty("entries");
-            entries.arraySize = Thumbs.Length;
-            for (var i = 0; i < Thumbs.Length; i++)
-            {
-                var element = entries.GetArrayElementAtIndex(i);
-                element.FindPropertyRelative("objectiveId").stringValue = Thumbs[i].Id;
-                element.FindPropertyRelative("primary").objectReferenceValue = SpriteAt(Thumbs[i].Primary);
-                element.FindPropertyRelative("secondary").objectReferenceValue = SpriteAt(Thumbs[i].Secondary);
-                element.FindPropertyRelative("tertiary").objectReferenceValue = SpriteAt(Thumbs[i].Tertiary);
-            }
-
             serialized.ApplyModifiedPropertiesWithoutUndo();
+            PromptB1072QuestThumbnailBuilder.Configure(view);
             return rect.gameObject;
         }
 
@@ -869,21 +818,5 @@ namespace SubTerra.App.Editor.DataValidation
         }
 
         private static readonly Color Cyan = new Color(0.45f, 0.95f, 1f, 1f);
-
-        private readonly struct Thumb
-        {
-            public readonly string Id;
-            public readonly string Primary;
-            public readonly string Secondary;
-            public readonly string Tertiary;
-
-            public Thumb(string id, string primary, string secondary = null, string tertiary = null)
-            {
-                Id = id;
-                Primary = primary;
-                Secondary = secondary;
-                Tertiary = tertiary;
-            }
-        }
     }
 }

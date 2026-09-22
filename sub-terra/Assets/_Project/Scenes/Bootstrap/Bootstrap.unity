@@ -564,6 +564,7 @@ MonoBehaviour:
   elevatorCenter: {fileID: 970141271}
   outpostArrivalOffset: {x: 0, y: 1}
   panelBinder: {fileID: 0}
+  cameraFollow: {fileID: 0}
 --- !u!4 &1148886586
 Transform:
   m_ObjectHideFlags: 0
@@ -1248,6 +1249,7 @@ MonoBehaviour:
   demand: 1
   priority: 1
   entityId: 
+  cablePortAnchor: {fileID: 0}
 --- !u!114 &1998118892
 MonoBehaviour:
   m_ObjectHideFlags: 0
