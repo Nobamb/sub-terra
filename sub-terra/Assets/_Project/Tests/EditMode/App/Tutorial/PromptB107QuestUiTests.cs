@@ -90,15 +90,21 @@ namespace SubTerra.App.Tests.Tutorial
                 Assert.That(summary.transform.Find("ObjectiveTitle"), Is.Not.Null);
                 var mission = summary.transform.Find("QuestMissionLabel").GetComponent<RectTransform>();
                 var progress = summary.transform.Find("ProgressCount").GetComponent<RectTransform>();
+                var missionText = mission.GetComponent<TMP_Text>();
+                var progressText = progress.GetComponent<TMP_Text>();
                 Assert.That(mission.anchoredPosition.x, Is.GreaterThanOrEqualTo(48f));
                 Assert.That(progress.anchoredPosition.x, Is.LessThanOrEqualTo(-48f));
+                Assert.That(missionText.fontSize, Is.EqualTo(21f).Within(0.1f));
+                Assert.That(progressText.fontSize, Is.EqualTo(21f).Within(0.1f));
                 Assert.That(summary.transform.Find("QuestMissionMarks").gameObject.activeSelf, Is.False);
                 var statusIcon = summary.transform.Find("QuestStatusIcon").GetComponent<RectTransform>();
                 var titleRect = summary.transform.Find("ObjectiveTitle").GetComponent<RectTransform>();
-                var bodyRect = summary.transform.Find("ObjectiveBody").GetComponent<RectTransform>();
+                var bodyText = summary.transform.Find("ObjectiveBody").GetComponent<TMP_Text>();
                 var titleCenter = titleRect.anchoredPosition.y - titleRect.sizeDelta.y * 0.5f;
-                var bodyCenter = bodyRect.anchoredPosition.y - bodyRect.sizeDelta.y * 0.5f;
+                var bodyCenter = bodyText.rectTransform.anchoredPosition.y - bodyText.fontSize * 0.55f;
                 var iconCenter = statusIcon.anchoredPosition.y - statusIcon.sizeDelta.y * 0.5f;
+                Assert.That(titleRect.anchoredPosition.y, Is.LessThan(-64f));
+                Assert.That(bodyText.rectTransform.anchoredPosition.y, Is.LessThan(-100f));
                 Assert.That(iconCenter, Is.EqualTo((titleCenter + bodyCenter) * 0.5f).Within(1f));
                 Assert.That(summary.GetComponent<Button>().onClick.GetPersistentMethodName(0),
                     Is.EqualTo(nameof(DemoObjectiveView.OnObjectiveDetailsClicked)));

@@ -153,20 +153,21 @@ namespace SubTerra.App.Editor.DataValidation
             Adopt(button.transform, root, "ObjectiveTitle");
             Adopt(button.transform, root, "ObjectiveBody");
 
+            const float headerFont = 21f;
             var mission = EnsureLabel(button.transform, "QuestMissionLabel", font);
-            Style(mission, 17f, Cyan, TextAlignmentOptions.MidlineLeft, false);
+            Style(mission, headerFont, Cyan, TextAlignmentOptions.MidlineLeft, false);
             mission.fontStyle = FontStyles.Bold;
             mission.characterSpacing = 4f;
             mission.text = "MISSION";
-            Place(mission.rectTransform, SummaryHeaderInset, -14f, 140f, 26f, new Vector2(0f, 1f), new Vector2(0f, 1f));
+            Place(mission.rectTransform, SummaryHeaderInset, -11f, 170f, 32f, new Vector2(0f, 1f), new Vector2(0f, 1f));
 
             var marks = EnsureLabel(button.transform, "QuestMissionMarks", font);
             marks.text = string.Empty;
             marks.gameObject.SetActive(false);
 
             var progress = button.transform.Find("ProgressCount").GetComponent<TMP_Text>();
-            Style(progress, 17f, Color.white, TextAlignmentOptions.MidlineRight, false);
-            Place(progress.rectTransform, -SummaryHeaderInset, -14f, 220f, 26f, new Vector2(1f, 1f), new Vector2(1f, 1f));
+            Style(progress, headerFont, Color.white, TextAlignmentOptions.MidlineRight, false);
+            Place(progress.rectTransform, -SummaryHeaderInset, -11f, 240f, 32f, new Vector2(1f, 1f), new Vector2(1f, 1f));
 
             const float iconSize = 44f;
             var icon = EnsureImage(button.transform, "QuestStatusIcon", QuestSprite("quest-status-ring"));
@@ -179,13 +180,13 @@ namespace SubTerra.App.Editor.DataValidation
             Style(title, 22f, Color.white, TextAlignmentOptions.MidlineLeft, false);
             title.fontStyle = FontStyles.Bold;
             title.overflowMode = TextOverflowModes.Ellipsis;
-            Place(title.rectTransform, titleX, -58f, titleWidth, 32f, new Vector2(0f, 1f), new Vector2(0f, 1f));
+            Place(title.rectTransform, titleX, -66f, titleWidth, 32f, new Vector2(0f, 1f), new Vector2(0f, 1f));
 
             var body = button.transform.Find("ObjectiveBody").GetComponent<TMP_Text>();
             Style(body, 16f, new Color(0.85f, 0.93f, 0.96f), TextAlignmentOptions.TopLeft, true);
             body.overflowMode = TextOverflowModes.Ellipsis;
-            Place(body.rectTransform, titleX, -94f, titleWidth, 48f, new Vector2(0f, 1f), new Vector2(0f, 1f));
-            CenterBetween(icon.rectTransform, title.rectTransform, body.rectTransform);
+            Place(body.rectTransform, titleX, -102f, titleWidth, 44f, new Vector2(0f, 1f), new Vector2(0f, 1f));
+            CenterOnFirstLines(icon.rectTransform, title.rectTransform, body);
 
             var nextAction = root.Find("NextAction");
             if (nextAction != null)
@@ -507,10 +508,10 @@ namespace SubTerra.App.Editor.DataValidation
             dots.gameObject.SetActive(false);
         }
 
-        private static void CenterBetween(RectTransform icon, RectTransform title, RectTransform body)
+        private static void CenterOnFirstLines(RectTransform icon, RectTransform title, TMP_Text body)
         {
             var titleCenter = title.anchoredPosition.y - title.sizeDelta.y * 0.5f;
-            var bodyCenter = body.anchoredPosition.y - body.sizeDelta.y * 0.5f;
+            var bodyCenter = body.rectTransform.anchoredPosition.y - body.fontSize * 0.55f;
             var mid = (titleCenter + bodyCenter) * 0.5f;
             icon.anchoredPosition = new Vector2(icon.anchoredPosition.x, mid + icon.sizeDelta.y * 0.5f);
             EditorUtility.SetDirty(icon);
