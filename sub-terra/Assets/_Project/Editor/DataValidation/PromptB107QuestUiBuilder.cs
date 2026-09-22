@@ -22,11 +22,14 @@ namespace SubTerra.App.Editor.DataValidation
         public const string IntegrationScenePath =
             "Assets/_Project/Scenes/App/Mine_Demo_Integration.unity";
 
-        // 누끼 후 프레임 비율. 카드 하단은 시설 창(-426)보다 위.
-        private const float CardX = 16f;
-        private const float CardY = -268f;
-        private const float CardW = 460f;
-        private const float CardH = 136f;
+        // 가로는 기존 460의 25%. 세로는 HUD 프레임 하단(-264)과 시설 창 상단(-426) 사이만 쓸 수 있어
+        // 170(25%)이면 시설 창을 덮으므로, 그 틈에 들어가는 154로 둔다.
+        public const float SummaryCardX = 16f;
+        public const float SummaryCardY = -268f;
+        public const float SummaryCardWidth = 575f;
+        public const float SummaryCardHeight = 154f;
+        public const float SummaryHeaderInset = 56f;
+        public const float ThumbnailHeight = 236f;
         private const float DetailsW = 880f;
         private const float DetailsH = 718f;
 
@@ -136,37 +139,53 @@ namespace SubTerra.App.Editor.DataValidation
         {
             var button = EnsureButton(root, "QuestSummaryButton");
             var rect = button.GetComponent<RectTransform>();
-            Place(rect, CardX, CardY, CardW, CardH, new Vector2(0f, 1f), new Vector2(0f, 1f));
+            Place(rect, SummaryCardX, SummaryCardY, SummaryCardWidth, SummaryCardHeight, new Vector2(0f, 1f), new Vector2(0f, 1f));
             var hit = ClearHit(button);
             var fade = EnsureFade(button, "quest-active-off", "quest-active-on");
             button.transform.SetAsFirstSibling();
             Wire(button, view.OnObjectiveDetailsClicked);
 
-            var mission = EnsureLabel(root, "QuestMissionLabel", font);
-            Style(mission, 16f, Cyan, TextAlignmentOptions.MidlineLeft, false);
+            // 글자를 카드 자식으로 넣어 프레임 밖으로 나가지 않게 한다.
+            // 프레임의 가로 구분선은 높이의 약 34% 지점이다.
+            Adopt(button.transform, root, "QuestMissionLabel");
+            Adopt(button.transform, root, "ProgressCount");
+            Adopt(button.transform, root, "QuestStatusIcon");
+            Adopt(button.transform, root, "ObjectiveTitle");
+            Adopt(button.transform, root, "ObjectiveBody");
+
+            var mission = EnsureLabel(button.transform, "QuestMissionLabel", font);
+            Style(mission, 17f, Cyan, TextAlignmentOptions.MidlineLeft, false);
             mission.fontStyle = FontStyles.Bold;
-            mission.characterSpacing = 5f;
+            mission.characterSpacing = 4f;
             mission.text = "MISSION";
-            Place(mission.rectTransform, CardX + 26f, CardY - 14f, 140f, 24f, new Vector2(0f, 1f), new Vector2(0f, 1f));
+            Place(mission.rectTransform, SummaryHeaderInset, -14f, 140f, 26f, new Vector2(0f, 1f), new Vector2(0f, 1f));
 
-            var progress = Required(root, "ProgressCount").GetComponent<TMP_Text>();
-            Style(progress, 16f, Color.white, TextAlignmentOptions.MidlineRight, false);
-            Place(progress.rectTransform, CardX + 240f, CardY - 14f, 194f, 24f, new Vector2(0f, 1f), new Vector2(0f, 1f));
+            var marks = EnsureLabel(button.transform, "QuestMissionMarks", font);
+            marks.text = string.Empty;
+            marks.gameObject.SetActive(false);
 
-            var icon = EnsureImage(root, "QuestStatusIcon", QuestSprite("quest-status-ring"));
+            var progress = button.transform.Find("ProgressCount").GetComponent<TMP_Text>();
+            Style(progress, 17f, Color.white, TextAlignmentOptions.MidlineRight, false);
+            Place(progress.rectTransform, -SummaryHeaderInset, -14f, 220f, 26f, new Vector2(1f, 1f), new Vector2(1f, 1f));
+
+            const float iconSize = 44f;
+            var icon = EnsureImage(button.transform, "QuestStatusIcon", QuestSprite("quest-status-ring"));
             icon.preserveAspect = true;
-            Place(icon.rectTransform, CardX + 24f, CardY - 48f, 34f, 34f, new Vector2(0f, 1f), new Vector2(0f, 1f));
+            Place(icon.rectTransform, SummaryHeaderInset - 4f, -74f, iconSize, iconSize, new Vector2(0f, 1f), new Vector2(0f, 1f));
 
-            var title = Required(root, "ObjectiveTitle").GetComponent<TMP_Text>();
-            Style(title, 20f, Color.white, TextAlignmentOptions.MidlineLeft, false);
+            var titleX = SummaryHeaderInset - 4f + iconSize + 14f;
+            var titleWidth = SummaryCardWidth - titleX - SummaryHeaderInset;
+            var title = button.transform.Find("ObjectiveTitle").GetComponent<TMP_Text>();
+            Style(title, 22f, Color.white, TextAlignmentOptions.MidlineLeft, false);
             title.fontStyle = FontStyles.Bold;
-            title.overflowMode = TextOverflowModes.Overflow;
-            Place(title.rectTransform, CardX + 66f, CardY - 48f, 368f, 32f, new Vector2(0f, 1f), new Vector2(0f, 1f));
+            title.overflowMode = TextOverflowModes.Ellipsis;
+            Place(title.rectTransform, titleX, -58f, titleWidth, 32f, new Vector2(0f, 1f), new Vector2(0f, 1f));
 
-            var body = Required(root, "ObjectiveBody").GetComponent<TMP_Text>();
-            Style(body, 15f, new Color(0.85f, 0.93f, 0.96f), TextAlignmentOptions.TopLeft, true);
-            body.overflowMode = TextOverflowModes.Overflow;
-            Place(body.rectTransform, CardX + 66f, CardY - 82f, 368f, 44f, new Vector2(0f, 1f), new Vector2(0f, 1f));
+            var body = button.transform.Find("ObjectiveBody").GetComponent<TMP_Text>();
+            Style(body, 16f, new Color(0.85f, 0.93f, 0.96f), TextAlignmentOptions.TopLeft, true);
+            body.overflowMode = TextOverflowModes.Ellipsis;
+            Place(body.rectTransform, titleX, -94f, titleWidth, 48f, new Vector2(0f, 1f), new Vector2(0f, 1f));
+            CenterBetween(icon.rectTransform, title.rectTransform, body.rectTransform);
 
             var nextAction = root.Find("NextAction");
             if (nextAction != null)
@@ -174,9 +193,9 @@ namespace SubTerra.App.Editor.DataValidation
                 nextAction.gameObject.SetActive(false);
             }
 
-            // 새 장식은 프레임 바로 위, 팝업보다 아래에 둔다.
-            mission.transform.SetSiblingIndex(1);
-            icon.transform.SetSiblingIndex(2);
+            mission.transform.SetSiblingIndex(2);
+            marks.transform.SetSiblingIndex(3);
+            icon.transform.SetSiblingIndex(4);
 
             Assign(view, "objectiveTitleText", title);
             Assign(view, "objectiveBodyText", body);
@@ -209,11 +228,14 @@ namespace SubTerra.App.Editor.DataValidation
             frame.preserveAspect = false;
             frame.raycastTarget = true;
 
-            var canvas = panel.GetComponent<Canvas>();
-            if (canvas != null)
+            if (panel.GetComponent<Canvas>() == null)
             {
-                canvas.overrideSorting = true;
-                canvas.sortingOrder = UiLayerPriority.QuestPopup;
+                panel.gameObject.AddComponent<Canvas>();
+            }
+
+            if (panel.GetComponent<GraphicRaycaster>() == null)
+            {
+                panel.gameObject.AddComponent<GraphicRaycaster>();
             }
 
             var log = EnsureLabel(panel, "QuestMissionLogLabel", font);
@@ -263,32 +285,31 @@ namespace SubTerra.App.Editor.DataValidation
 
             var body = StyleExisting(panel, "QuestDetailsBody", 16f, new Color(0.88f, 0.95f, 0.98f), TextAlignmentOptions.TopLeft, true);
             body.overflowMode = TextOverflowModes.Overflow;
-            Place(body.rectTransform, 78f, -232f, 724f, 48f, new Vector2(0f, 1f), new Vector2(0f, 1f));
+            Place(body.rectTransform, 78f, -228f, 724f, 42f, new Vector2(0f, 1f), new Vector2(0f, 1f));
             var next = StyleExisting(panel, "QuestDetailsNextAction", 14f, new Color(0.65f, 0.88f, 0.95f), TextAlignmentOptions.TopLeft, true);
-            Place(next.rectTransform, 78f, -282f, 724f, 26f, new Vector2(0f, 1f), new Vector2(0f, 1f));
+            Place(next.rectTransform, 78f, -270f, 724f, 22f, new Vector2(0f, 1f), new Vector2(0f, 1f));
 
             var thumbnail = EnsureThumbnail(panel, font);
-            Place(thumbnail.GetComponent<RectTransform>(), 78f, -312f, 724f, 188f, new Vector2(0f, 1f), new Vector2(0f, 1f));
-
-            EnsureDots(panel, 78f, -506f, 724f);
+            Place(thumbnail.GetComponent<RectTransform>(), 78f, -296f, 724f, ThumbnailHeight, new Vector2(0f, 1f), new Vector2(0f, 1f));
+            HideThumbnailDots(panel);
 
             var rewardIcon = EnsureImage(panel, "QuestRewardIcon", QuestSprite("quest-icon-reward"));
             rewardIcon.preserveAspect = true;
-            Place(rewardIcon.rectTransform, 78f, -526f, 24f, 24f, new Vector2(0f, 1f), new Vector2(0f, 1f));
+            Place(rewardIcon.rectTransform, 78f, -536f, 24f, 24f, new Vector2(0f, 1f), new Vector2(0f, 1f));
             var rewardHeader = EnsureLabel(panel, "QuestRewardHeader", font);
             Style(rewardHeader, 17f, Color.white, TextAlignmentOptions.MidlineLeft, false);
             rewardHeader.fontStyle = FontStyles.Bold;
             rewardHeader.text = "클리어 보상";
-            Place(rewardHeader.rectTransform, 108f, -524f, 96f, 26f, new Vector2(0f, 1f), new Vector2(0f, 1f));
+            Place(rewardHeader.rectTransform, 108f, -534f, 120f, 26f, new Vector2(0f, 1f), new Vector2(0f, 1f));
 
-            EnsureDivider(panel, "QuestRewardDivider", 208f, -536f, 594f);
+            EnsureDivider(panel, "QuestRewardDivider", 232f, -546f, 570f);
 
             var legacyReward = StyleExisting(panel, "QuestDetailsReward", 16f, Color.white, TextAlignmentOptions.MidlineLeft, false);
-            Place(legacyReward.rectTransform, 78f, -554f, 400f, 28f, new Vector2(0f, 1f), new Vector2(0f, 1f));
+            Place(legacyReward.rectTransform, 78f, -564f, 400f, 28f, new Vector2(0f, 1f), new Vector2(0f, 1f));
             legacyReward.gameObject.SetActive(false);
 
             var row = EnsureRect(panel, "QuestRewardRow");
-            Place(row, 78f, -554f, 724f, 76f, new Vector2(0f, 1f), new Vector2(0f, 1f));
+            Place(row, 78f, -564f, 724f, 72f, new Vector2(0f, 1f), new Vector2(0f, 1f));
             var copper = EnsureSlot(row, "RewardSlotCopper", font, "구리", SpriteAt(IconCopper), 0f);
             var iron = EnsureSlot(row, "RewardSlotIron", font, "철", SpriteAt(IconIron), 330f);
             var lithium = EnsureSlot(row, "RewardSlotLithium", font, "리튬", SpriteAt(IconLithium), 0f);
@@ -304,14 +325,14 @@ namespace SubTerra.App.Editor.DataValidation
             Place(brand.rectTransform, 550f, -654f, 252f, 20f, new Vector2(0f, 1f), new Vector2(0f, 1f));
 
             var close = EnsureButton(panel, "QuestDetailsCloseButton");
-            Place(close.GetComponent<RectTransform>(), -40f, -48f, 52f, 52f, new Vector2(1f, 1f), new Vector2(1f, 1f));
+            Place(close.GetComponent<RectTransform>(), -42f, -40f, 68f, 68f, new Vector2(1f, 1f), new Vector2(0.5f, 0.5f));
             ClearHit(close);
             HideLabel(close.transform);
             EnsureFade(close, "quest-close-button-active-off", "quest-close-button-active-on");
             Wire(close, view.OnDetailsDismissClicked);
 
             var prev = EnsureButton(panel, "QuestDetailsPrevButton");
-            Place(prev.GetComponent<RectTransform>(), 0f, 0f, 54f, 218f, new Vector2(0f, 0.5f), new Vector2(0.5f, 0.5f));
+            Place(prev.GetComponent<RectTransform>(), 18f, 12f, 64f, 258f, new Vector2(0f, 0.5f), new Vector2(0.5f, 0.5f));
             ClearHit(prev);
             HideLabel(prev.transform);
             EnsureFade(prev, "quest-particular-button-active-off", "quest-particular-button-active-on");
@@ -319,7 +340,7 @@ namespace SubTerra.App.Editor.DataValidation
             Wire(prev, view.OnDetailsPrevClicked);
 
             var nextButton = EnsureButton(panel, "QuestDetailsNextButton");
-            Place(nextButton.GetComponent<RectTransform>(), 0f, 0f, 54f, 218f, new Vector2(1f, 0.5f), new Vector2(0.5f, 0.5f));
+            Place(nextButton.GetComponent<RectTransform>(), -18f, 12f, 64f, 258f, new Vector2(1f, 0.5f), new Vector2(0.5f, 0.5f));
             ClearHit(nextButton);
             HideLabel(nextButton.transform);
             EnsureFade(nextButton, "quest-particular-button-active-off", "quest-particular-button-active-on");
@@ -344,6 +365,12 @@ namespace SubTerra.App.Editor.DataValidation
             Assign(view, "thumbnailView", thumbnail.GetComponent<QuestThumbnailView>());
             badge.SetActive(false);
             panel.gameObject.SetActive(false);
+            // 켜진 상태에서는 부모 HUD 캔버스에 중첩되어 Render Mode 대입이 무시된다.
+            // 꺼진 뒤에 루트 캔버스가 되므로, 그때 Overlay로 저장해야 화면 밖에 남지 않는다.
+            var canvas = panel.GetComponent<Canvas>();
+            canvas.overrideSorting = true;
+            canvas.sortingOrder = UiLayerPriority.QuestPopup;
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
         }
 
         private static GameObject EnsureBadge(Transform parent, TMP_FontAsset font)
@@ -379,8 +406,9 @@ namespace SubTerra.App.Editor.DataValidation
             float x)
         {
             var rect = EnsureRect(row, name);
-            Place(rect, x, 0f, 310f, 76f, new Vector2(0f, 1f), new Vector2(0f, 1f));
+            Place(rect, x, 0f, 310f, 72f, new Vector2(0f, 1f), new Vector2(0f, 1f));
             var plate = EnsureImage(rect, "Plate", QuestSprite("quest-reward-plate"));
+            plate.type = Image.Type.Sliced;
             Stretch(plate.rectTransform);
             var iconImage = EnsureImage(rect, "Icon", icon);
             iconImage.preserveAspect = true;
@@ -468,22 +496,24 @@ namespace SubTerra.App.Editor.DataValidation
             return line;
         }
 
-        private static void EnsureDots(Transform parent, float x, float y, float width)
+        private static void HideThumbnailDots(Transform parent)
         {
-            var dotsRect = EnsureRect(parent, "QuestThumbnailDots");
-            Place(dotsRect, x, y, width, 16f, new Vector2(0f, 1f), new Vector2(0f, 1f));
+            var dots = parent.Find("QuestThumbnailDots");
+            if (dots == null)
+            {
+                dots = EnsureRect(parent, "QuestThumbnailDots");
+            }
 
-            var dot1 = EnsureImage(dotsRect, "Dot1", QuestSprite("quest-dot-dim"));
-            dot1.preserveAspect = true;
-            Place(dot1.rectTransform, width * 0.5f - 18f, -2f, 12f, 12f, new Vector2(0f, 1f), new Vector2(0f, 1f));
+            dots.gameObject.SetActive(false);
+        }
 
-            var dot2 = EnsureImage(dotsRect, "Dot2", QuestSprite("quest-dot-active"));
-            dot2.preserveAspect = true;
-            Place(dot2.rectTransform, width * 0.5f, -2f, 12f, 12f, new Vector2(0f, 1f), new Vector2(0f, 1f));
-
-            var dot3 = EnsureImage(dotsRect, "Dot3", QuestSprite("quest-dot-dim"));
-            dot3.preserveAspect = true;
-            Place(dot3.rectTransform, width * 0.5f + 18f, -2f, 12f, 12f, new Vector2(0f, 1f), new Vector2(0f, 1f));
+        private static void CenterBetween(RectTransform icon, RectTransform title, RectTransform body)
+        {
+            var titleCenter = title.anchoredPosition.y - title.sizeDelta.y * 0.5f;
+            var bodyCenter = body.anchoredPosition.y - body.sizeDelta.y * 0.5f;
+            var mid = (titleCenter + bodyCenter) * 0.5f;
+            icon.anchoredPosition = new Vector2(icon.anchoredPosition.x, mid + icon.sizeDelta.y * 0.5f);
+            EditorUtility.SetDirty(icon);
         }
 
         private static QuestSpriteCrossfade EnsureFade(Button button, string off, string on)
@@ -493,7 +523,9 @@ namespace SubTerra.App.Editor.DataValidation
             Stretch(normal.rectTransform);
             Stretch(hover.rectTransform);
             normal.color = Color.white;
+            normal.raycastTarget = true;
             hover.color = new Color(1f, 1f, 1f, 0f);
+            hover.raycastTarget = false;
             normal.transform.SetAsFirstSibling();
             hover.transform.SetSiblingIndex(1);
             var fade = button.GetComponent<QuestSpriteCrossfade>();
@@ -522,6 +554,12 @@ namespace SubTerra.App.Editor.DataValidation
             hit.type = Image.Type.Simple;
             hit.color = new Color(1f, 1f, 1f, 0f);
             hit.raycastTarget = true;
+            var renderer = button.GetComponent<CanvasRenderer>();
+            if (renderer != null)
+            {
+                renderer.cullTransparentMesh = false;
+            }
+
             button.targetGraphic = hit;
             button.transition = Selectable.Transition.None;
             return hit;
@@ -704,6 +742,12 @@ namespace SubTerra.App.Editor.DataValidation
         private static TMP_FontAsset FontOf(Transform root)
         {
             var source = root.Find("ObjectiveTitle");
+            if (source == null)
+            {
+                var button = root.Find("QuestSummaryButton");
+                source = button != null ? button.Find("ObjectiveTitle") : null;
+            }
+
             var text = source != null ? source.GetComponent<TMP_Text>() : null;
             if (text == null || text.font == null)
             {
@@ -750,9 +794,55 @@ namespace SubTerra.App.Editor.DataValidation
                 var settings = new TextureImporterSettings();
                 importer.ReadTextureSettings(settings);
                 settings.spriteMeshType = SpriteMeshType.FullRect;
+                var border = SliceBorder(Path.GetFileName(file));
+                if (border > 0f)
+                {
+                    settings.spriteBorder = new Vector4(border, border, border, border);
+                }
+
                 importer.SetTextureSettings(settings);
                 importer.SaveAndReimport();
             }
+        }
+
+        private static float SliceBorder(string fileName)
+        {
+            switch (fileName)
+            {
+                case "quest-thumbnail-frame.png":
+                    return 14f;
+                case "quest-status-plate.png":
+                    return 18f;
+                case "quest-reward-plate.png":
+                    return 28f;
+                case "quest-clear-badge.png":
+                    return 20f;
+                default:
+                    return 0f;
+            }
+        }
+
+        private static Transform Adopt(Transform parent, Transform previousParent, string name)
+        {
+            var here = parent.Find(name);
+            if (here != null)
+            {
+                return here;
+            }
+
+            if (previousParent == null)
+            {
+                return null;
+            }
+
+            var there = previousParent.Find(name);
+            if (there == null)
+            {
+                return null;
+            }
+
+            there.SetParent(parent, false);
+            return there;
         }
 
         private static Sprite QuestSprite(string name)

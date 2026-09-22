@@ -5,12 +5,12 @@ using UnityEngine.UI;
 namespace SubTerra.App.UI.Tutorial
 {
     /// <summary>
-    /// 같은 자리의 두 스프라이트를 0.5초 알파 크로스페이드한다.
-    /// 클릭 판정은 이 오브젝트의 투명 Image가 맡고, 그림은 자식만 그린다.
+    /// 같은 자리의 두 스프라이트를 0.3초 알파 크로스페이드한다.
+    /// 클릭은 불투명한 기본 스프라이트가 받고, 호버 그림은 그 위에만 겹친다.
     /// </summary>
     public sealed class QuestSpriteCrossfade : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
-        public const float DurationSeconds = 0.5f;
+        public const float DurationSeconds = 0.3f;
 
         [SerializeField] private Image normalImage;
         [SerializeField] private Image hoverImage;
@@ -23,6 +23,30 @@ namespace SubTerra.App.UI.Tutorial
 
         private void OnEnable()
         {
+            // 알파 0인 히트 이미지는 Cull Transparent Mesh 때문에 레이캐스트에서 빠진다.
+            // 보이는 기본 스프라이트가 클릭과 호버를 받아야 상세창이 열린다.
+            var hit = GetComponent<CanvasRenderer>();
+            if (hit != null)
+            {
+                hit.cullTransparentMesh = false;
+            }
+
+            var graphic = GetComponent<Graphic>();
+            if (graphic != null)
+            {
+                graphic.raycastTarget = true;
+            }
+
+            if (normalImage != null)
+            {
+                normalImage.raycastTarget = true;
+            }
+
+            if (hoverImage != null)
+            {
+                hoverImage.raycastTarget = false;
+            }
+
             pointed = false;
             alpha = 0f;
             Apply();
@@ -61,7 +85,7 @@ namespace SubTerra.App.UI.Tutorial
             Tick(Time.unscaledDeltaTime);
         }
 
-        /// <summary>호버 알파를 deltaTime만큼 목표로 이동한다. 0.5초면 끝이 난다.</summary>
+        /// <summary>호버 알파를 deltaTime만큼 목표로 이동한다. 0.3초면 끝이 난다.</summary>
         public void Tick(float deltaTime)
         {
             var target = pointed && IsInteractable() ? 1f : 0f;

@@ -15,7 +15,7 @@ namespace SubTerra.App.Tests.Tutorial
     public sealed class PromptB107QuestUiTests
     {
         [Test]
-        public void Crossfade_FadesAcrossHalfASecondAndBack()
+        public void Crossfade_FadesAcrossPointThreeSecondsAndBack()
         {
             var root = new GameObject("fade", typeof(RectTransform), typeof(Button));
             var normal = ChildImage(root.transform, "NormalImage");
@@ -28,22 +28,22 @@ namespace SubTerra.App.Tests.Tutorial
             serialized.FindProperty("selectable").objectReferenceValue = button;
             serialized.ApplyModifiedPropertiesWithoutUndo();
 
-            Assert.That(QuestSpriteCrossfade.DurationSeconds, Is.EqualTo(0.5f));
+            Assert.That(QuestSpriteCrossfade.DurationSeconds, Is.EqualTo(0.3f));
             fade.SetPointed(true);
-            fade.Tick(0.25f);
+            fade.Tick(0.15f);
             Assert.That(hover.color.a, Is.EqualTo(0.5f).Within(0.001f));
             Assert.That(normal.color.a, Is.EqualTo(1f).Within(0.001f));
-            fade.Tick(0.25f);
+            fade.Tick(0.15f);
             Assert.That(hover.color.a, Is.EqualTo(1f).Within(0.001f));
             Assert.That(normal.color.a, Is.EqualTo(1f).Within(0.001f));
             fade.SetPointed(false);
-            fade.Tick(0.5f);
+            fade.Tick(0.3f);
             Assert.That(hover.color.a, Is.EqualTo(0f).Within(0.001f));
             Assert.That(normal.color.a, Is.EqualTo(1f).Within(0.001f));
 
             button.interactable = false;
             fade.SetPointed(true);
-            fade.Tick(0.5f);
+            fade.Tick(0.3f);
             Assert.That(hover.color.a, Is.EqualTo(0f).Within(0.001f));
             Object.DestroyImmediate(root);
         }
@@ -73,16 +73,33 @@ namespace SubTerra.App.Tests.Tutorial
                 Assert.That(view.HasDetailsReferences(), Is.True);
                 Assert.That(view.HasRewardLogReferences(), Is.True);
                 Assert.That(details.activeSelf, Is.False);
-                Assert.That(summaryRect.anchoredPosition.y, Is.LessThan(-260f));
+                Assert.That(summaryRect.anchoredPosition.y, Is.LessThan(-264f));
                 Assert.That(bottom, Is.GreaterThan(-426f));
-                Assert.That(summaryRect.sizeDelta.x, Is.EqualTo(460f));
-                Assert.That(summaryRect.sizeDelta.y, Is.EqualTo(136f));
+                Assert.That(summaryRect.sizeDelta.x, Is.EqualTo(PromptB107QuestUiBuilder.SummaryCardWidth));
+                Assert.That(summaryRect.sizeDelta.y, Is.EqualTo(PromptB107QuestUiBuilder.SummaryCardHeight));
+                Assert.That(summaryRect.sizeDelta.x, Is.EqualTo(460f * 1.25f).Within(0.1f));
 
                 var summaryFade = summary.GetComponent<QuestSpriteCrossfade>();
                 Assert.That(summaryFade, Is.Not.Null);
                 Assert.That(Image(summary.transform, "NormalImage").sprite.name, Is.EqualTo("quest-active-off"));
                 Assert.That(Image(summary.transform, "HoverImage").sprite.name, Is.EqualTo("quest-active-on"));
                 Assert.That(Image(summary.transform, "HoverImage").color.a, Is.EqualTo(0f));
+                Assert.That(Image(summary.transform, "NormalImage").raycastTarget, Is.True);
+                Assert.That(Image(summary.transform, "HoverImage").raycastTarget, Is.False);
+                Assert.That(summary.GetComponent<CanvasRenderer>().cullTransparentMesh, Is.False);
+                Assert.That(summary.transform.Find("ObjectiveTitle"), Is.Not.Null);
+                var mission = summary.transform.Find("QuestMissionLabel").GetComponent<RectTransform>();
+                var progress = summary.transform.Find("ProgressCount").GetComponent<RectTransform>();
+                Assert.That(mission.anchoredPosition.x, Is.GreaterThanOrEqualTo(48f));
+                Assert.That(progress.anchoredPosition.x, Is.LessThanOrEqualTo(-48f));
+                Assert.That(summary.transform.Find("QuestMissionMarks").gameObject.activeSelf, Is.False);
+                var statusIcon = summary.transform.Find("QuestStatusIcon").GetComponent<RectTransform>();
+                var titleRect = summary.transform.Find("ObjectiveTitle").GetComponent<RectTransform>();
+                var bodyRect = summary.transform.Find("ObjectiveBody").GetComponent<RectTransform>();
+                var titleCenter = titleRect.anchoredPosition.y - titleRect.sizeDelta.y * 0.5f;
+                var bodyCenter = bodyRect.anchoredPosition.y - bodyRect.sizeDelta.y * 0.5f;
+                var iconCenter = statusIcon.anchoredPosition.y - statusIcon.sizeDelta.y * 0.5f;
+                Assert.That(iconCenter, Is.EqualTo((titleCenter + bodyCenter) * 0.5f).Within(1f));
                 Assert.That(summary.GetComponent<Button>().onClick.GetPersistentMethodName(0),
                     Is.EqualTo(nameof(DemoObjectiveView.OnObjectiveDetailsClicked)));
 
@@ -102,13 +119,20 @@ namespace SubTerra.App.Tests.Tutorial
                 Assert.That(prev.transform.localScale.x, Is.EqualTo(1f));
                 Assert.That(Image(close.transform, "NormalImage").sprite.name, Is.EqualTo("quest-close-button-active-off"));
                 Assert.That(Image(close.transform, "HoverImage").sprite.name, Is.EqualTo("quest-close-button-active-on"));
+                Assert.That(Image(close.transform, "NormalImage").raycastTarget, Is.True);
+                Assert.That(Image(prev.transform, "NormalImage").raycastTarget, Is.True);
+                Assert.That(Image(next.transform, "NormalImage").raycastTarget, Is.True);
+                Assert.That(details.GetComponent<Canvas>().renderMode, Is.EqualTo(RenderMode.ScreenSpaceOverlay));
                 Assert.That(prev.GetComponent<Button>().onClick.GetPersistentMethodName(0),
                     Is.EqualTo(nameof(DemoObjectiveView.OnDetailsPrevClicked)));
                 Assert.That(next.GetComponent<Button>().onClick.GetPersistentMethodName(0),
                     Is.EqualTo(nameof(DemoObjectiveView.OnDetailsNextClicked)));
                 Assert.That(close.GetComponent<Button>().onClick.GetPersistentMethodName(0),
                     Is.EqualTo(nameof(DemoObjectiveView.OnDetailsDismissClicked)));
-                Assert.That(Find(scene, "QuestThumbnail").GetComponent<QuestThumbnailView>().EntryCount, Is.EqualTo(18));
+                var thumbnail = Find(scene, "QuestThumbnail").GetComponent<RectTransform>();
+                Assert.That(thumbnail.GetComponent<QuestThumbnailView>().EntryCount, Is.EqualTo(18));
+                Assert.That(thumbnail.sizeDelta.y, Is.EqualTo(PromptB107QuestUiBuilder.ThumbnailHeight));
+                Assert.That(Find(scene, "QuestThumbnailDots").activeSelf, Is.False);
                 Assert.That(Find(scene, "RewardSlotCopper"), Is.Not.Null);
                 Assert.That(Find(scene, "RewardSlotIron"), Is.Not.Null);
                 Assert.That(Find(scene, "RewardSlotLithium"), Is.Not.Null);
@@ -150,6 +174,7 @@ namespace SubTerra.App.Tests.Tutorial
 
                     // 진행 중 퀘스트 상세 테스트: 3번째 퀘스트 탐색 시 3 / 18 표시 확인
                     cloneView.ApplyQuestDetailsVisual(current.Id, current.Reward, false, true, 3, 18, false);
+                    var widthForThree = AssertRewardsFill(clone.transform, 3);
                     Assert.That(FindChild(clone.transform, "QuestDetailsProgress").GetComponent<TMP_Text>().text,
                         Is.EqualTo("3 / 18"));
                     Assert.That(FindChild(clone.transform, "QuestDetailsStatus").GetComponent<TMP_Text>().text,
@@ -159,6 +184,8 @@ namespace SubTerra.App.Tests.Tutorial
                     var escape = DemoObjectiveCatalog.GetRequired(DemoObjectiveIds.EmergencyEscapeReturn);
                     cloneView.SetDetailsText(escape.Title, escape.Description, string.Empty);
                     cloneView.ApplyQuestDetailsVisual(escape.Id, escape.Reward, true, false, 18, 18, true);
+                    var widthForTwo = AssertRewardsFill(clone.transform, 2);
+                    Assert.That(widthForTwo, Is.GreaterThan(widthForThree));
                     Assert.That(FindChild(clone.transform, "QuestDetailsTitle").GetComponent<TMP_Text>().text,
                         Is.EqualTo(escape.Title));
                     Assert.That(FindChild(clone.transform, "QuestDetailsBody").GetComponent<TMP_Text>().text,
@@ -233,7 +260,7 @@ namespace SubTerra.App.Tests.Tutorial
 
             var summary = FindChild(placed.transform, "QuestSummaryButton").GetComponent<QuestSpriteCrossfade>();
             summary.SetPointed(hover);
-            summary.Tick(hover ? 0.5f : 0f);
+            summary.Tick(hover ? QuestSpriteCrossfade.DurationSeconds : 0f);
             FindChild(placed.transform, "QuestDetailsPanel").gameObject.SetActive(details);
             foreach (var tmp in placed.GetComponentsInChildren<TMP_Text>(true))
             {
@@ -269,6 +296,42 @@ namespace SubTerra.App.Tests.Tutorial
                 Object.DestroyImmediate(cameraObject);
                 Object.DestroyImmediate(host);
             }
+        }
+
+        private static float AssertRewardsFill(Transform root, int visibleCount)
+        {
+            var row = FindChild(root, "QuestRewardRow").GetComponent<RectTransform>();
+            var names = new[] { "RewardSlotCopper", "RewardSlotIron", "RewardSlotLithium", "RewardSlotGold" };
+            RectTransform first = null;
+            RectTransform last = null;
+            var count = 0;
+            var width = 0f;
+            for (var i = 0; i < names.Length; i++)
+            {
+                var slot = FindChild(root, names[i]);
+                if (!slot.gameObject.activeSelf)
+                {
+                    continue;
+                }
+
+                var rect = slot.GetComponent<RectTransform>();
+                if (first == null)
+                {
+                    first = rect;
+                    width = rect.sizeDelta.x;
+                }
+
+                Assert.That(rect.sizeDelta.x, Is.EqualTo(width).Within(0.5f));
+                Assert.That(rect.anchoredPosition.x + rect.sizeDelta.x, Is.LessThanOrEqualTo(row.sizeDelta.x + 0.5f));
+                last = rect;
+                count++;
+            }
+
+            Assert.That(count, Is.EqualTo(visibleCount));
+            Assert.That(first.anchoredPosition.x, Is.EqualTo(0f).Within(0.5f));
+            var right = last.anchoredPosition.x + last.sizeDelta.x;
+            Assert.That(right, Is.EqualTo(row.sizeDelta.x).Within(1f));
+            return width;
         }
 
         private static Image ChildImage(Transform parent, string name)

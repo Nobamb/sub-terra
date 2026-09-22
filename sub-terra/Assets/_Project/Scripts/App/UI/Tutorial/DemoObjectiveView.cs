@@ -179,6 +179,12 @@ namespace SubTerra.App.UI.Tutorial
             canvas.enabled = true;
             canvas.overrideSorting = true;
             canvas.sortingOrder = UiLayerPriority.QuestPopup;
+            // World Space로 저장된 중첩 캔버스는 게임 화면 밖으로 빠져 상세창이 안 보인다.
+            if (canvas.isRootCanvas && canvas.renderMode != RenderMode.ScreenSpaceOverlay)
+            {
+                canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+                canvas.worldCamera = null;
+            }
             canvas.additionalShaderChannels = AdditionalCanvasShaderChannels.TexCoord1
                 | AdditionalCanvasShaderChannels.Normal
                 | AdditionalCanvasShaderChannels.Tangent;
@@ -320,11 +326,7 @@ namespace SubTerra.App.UI.Tutorial
                 thumbnailView.Show(objectiveId);
             }
 
-            var rewardCursor = 0f;
-            LayoutRewardSlot(copperSlot, reward.Copper, ref rewardCursor);
-            LayoutRewardSlot(ironSlot, reward.Iron, ref rewardCursor);
-            LayoutRewardSlot(lithiumSlot, reward.Lithium, ref rewardCursor);
-            LayoutRewardSlot(goldSlot, reward.Gold, ref rewardCursor);
+            LayoutRewardSlots(reward);
 
             if (detailsStatusIcon != null)
             {
@@ -371,22 +373,54 @@ namespace SubTerra.App.UI.Tutorial
             }
         }
 
-        private static void LayoutRewardSlot(QuestRewardSlotView slot, int amount, ref float cursor)
+        private void LayoutRewardSlots(QuestReward reward)
         {
-            if (slot == null)
+            var slots = new[]
             {
-                return;
+                (slot: copperSlot, amount: reward.Copper),
+                (slot: ironSlot, amount: reward.Iron),
+                (slot: lithiumSlot, amount: reward.Lithium),
+                (slot: goldSlot, amount: reward.Gold)
+            };
+
+            var visible = 0;
+            for (var i = 0; i < slots.Length; i++)
+            {
+                if (slots[i].slot != null && slots[i].amount > 0)
+                {
+                    visible++;
+                }
             }
 
-            slot.SetAmount(amount);
-            if (amount <= 0)
+            var rowWidth = 724f;
+            var sample = copperSlot != null ? copperSlot.transform.parent as RectTransform : null;
+            if (sample != null && sample.sizeDelta.x > 1f)
             {
-                return;
+                rowWidth = sample.sizeDelta.x;
             }
 
-            var rect = slot.GetComponent<RectTransform>();
-            rect.anchoredPosition = new Vector2(cursor, rect.anchoredPosition.y);
-            cursor += rect.sizeDelta.x + 12f;
+            // 1개도 2개짜리 긴 칸을 쓴다. 2개·3개는 그 개수만으로 행 너비를 채운다.
+            const float gap = 12f;
+            var columns = visible <= 1 ? 2 : visible;
+            var width = (rowWidth - gap * (columns - 1)) / columns;
+            var cursor = 0f;
+            for (var i = 0; i < slots.Length; i++)
+            {
+                var slot = slots[i].slot;
+                if (slot == null)
+                {
+                    continue;
+                }
+
+                slot.SetAmount(slots[i].amount);
+                if (slots[i].amount <= 0)
+                {
+                    continue;
+                }
+
+                slot.PlaceInRow(cursor, width);
+                cursor += width + gap;
+            }
         }
 
         private static void ApplyNav(Button button, bool enabled)

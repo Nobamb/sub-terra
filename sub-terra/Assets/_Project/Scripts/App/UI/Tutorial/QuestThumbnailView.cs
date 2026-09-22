@@ -53,18 +53,25 @@ namespace SubTerra.App.UI.Tutorial
                 count++;
             }
 
-            var size = count >= 3 ? 110f : count == 2 ? 130f : 150f;
-            var gap = count >= 3 ? 160f : 110f;
-            Place(secondaryImage, secondary, count >= 2 ? -gap : 0f, size);
-            Place(primaryImage, primary, 0f, size);
-            Place(tertiaryImage, tertiary, gap, size);
+            var height = 150f;
+            var rect = transform as RectTransform;
+            if (rect != null && rect.rect.height > 40f)
+            {
+                height = Mathf.Clamp(rect.rect.height * 0.72f, 96f, 168f);
+            }
+
+            var gap = count >= 3 ? height * 1.35f : height * 0.95f;
+            var floor = 18f;
+            Place(secondaryImage, secondary, count >= 2 ? -gap : 0f, height, floor);
+            Place(primaryImage, primary, 0f, height, floor);
+            Place(tertiaryImage, tertiary, gap, height, floor);
             if (placeholderText != null)
             {
                 placeholderText.gameObject.SetActive(primary == null);
             }
         }
 
-        private static void Place(Image image, Sprite sprite, float x, float size)
+        private static void Place(Image image, Sprite sprite, float x, float size, float floor)
         {
             if (image == null)
             {
@@ -80,11 +87,12 @@ namespace SubTerra.App.UI.Tutorial
 
             image.sprite = sprite;
             image.preserveAspect = true;
+            image.raycastTarget = false;
             var rect = image.rectTransform;
-            rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
-            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0f);
+            rect.pivot = new Vector2(0.5f, 0f);
             rect.sizeDelta = new Vector2(size, size);
-            rect.anchoredPosition = new Vector2(x, 0f);
+            rect.anchoredPosition = new Vector2(x, floor);
         }
     }
 

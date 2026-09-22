@@ -106,18 +106,12 @@ namespace SubTerra.App.UI.Tutorial
         public void SetHazardActive(bool active)
         {
             hazardActive = active;
-            if (hazardActive && detailsOpen)
-            {
-                detailsOpen = false;
-                view?.SetDetailsVisible(false);
-            }
-
             ApplyHazardYield();
         }
 
         public void OpenDetails()
         {
-            if (director == null || hazardActive)
+            if (director == null)
             {
                 return;
             }
