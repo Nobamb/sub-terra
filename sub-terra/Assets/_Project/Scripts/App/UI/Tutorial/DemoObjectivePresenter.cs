@@ -417,6 +417,16 @@ namespace SubTerra.App.UI.Tutorial
             view?.SetDetailsNavInteractable(
                 viewedIndex > 0,
                 viewedIndex < DemoObjectiveIds.RequiredCount - 1);
+            if (view is DemoObjectiveView questView)
+            {
+                questView.ApplyQuestDetailsVisual(
+                    definition.Id,
+                    definition.Reward,
+                    isCleared,
+                    isCurrent,
+                    completed,
+                    DemoObjectiveIds.RequiredCount);
+            }
         }
 
         private void RenderDump()

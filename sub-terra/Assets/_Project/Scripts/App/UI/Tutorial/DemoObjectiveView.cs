@@ -52,6 +52,19 @@ namespace SubTerra.App.UI.Tutorial
         [SerializeField] private TMP_Text claimQuestTitleText;
         [SerializeField] private TMP_Text claimRewardText;
         [SerializeField] private TMP_Text claimHintText;
+        [SerializeField] private Image basicStatusIcon;
+        [SerializeField] private Sprite basicStatusClearSprite;
+        [SerializeField] private Sprite basicStatusRingSprite;
+        [SerializeField] private Image detailsStatusIcon;
+        [SerializeField] private Sprite detailsStatusClearSprite;
+        [SerializeField] private Sprite detailsStatusRingSprite;
+        [SerializeField] private GameObject detailsClearBadge;
+        [SerializeField] private TMP_Text detailsProgressText;
+        [SerializeField] private QuestRewardSlotView copperSlot;
+        [SerializeField] private QuestRewardSlotView ironSlot;
+        [SerializeField] private QuestRewardSlotView lithiumSlot;
+        [SerializeField] private QuestRewardSlotView goldSlot;
+        [SerializeField] private QuestThumbnailView thumbnailView;
 
         private int defaultTutorialSort = UiLayerPriority.TutorialGuidance;
         private Canvas guidanceCanvas;
@@ -90,7 +103,15 @@ namespace SubTerra.App.UI.Tutorial
 
             if (progressCountText != null)
             {
-                progressCountText.text = model.CompletedCount + " / " + model.TotalCount;
+                progressCountText.text = "진행도 " + model.CompletedCount + " / " + model.TotalCount;
+            }
+
+            // 기본 카드는 지금 목표만 보여 준다. 체크는 데모 목표를 모두 끝낸 뒤에만 켠다.
+            var cleared = model.IsDemoComplete
+                || (model.TotalCount > 0 && model.CompletedCount >= model.TotalCount);
+            if (basicStatusIcon != null)
+            {
+                basicStatusIcon.sprite = cleared ? basicStatusClearSprite : basicStatusRingSprite;
             }
         }
 
@@ -265,21 +286,110 @@ namespace SubTerra.App.UI.Tutorial
         {
             if (detailsIndexText != null)
             {
-                detailsIndexText.text = indexText ?? string.Empty;
+                detailsIndexText.text = string.IsNullOrEmpty(indexText)
+                    ? string.Empty
+                    : indexText.Replace("/", " / ");
             }
         }
 
         public void SetDetailsNavInteractable(bool previousEnabled, bool nextEnabled)
         {
-            if (detailsPrevButton != null)
+            ApplyNav(detailsPrevButton, previousEnabled);
+            ApplyNav(detailsNextButton, nextEnabled);
+        }
+
+        /// <summary>상세창의 썸네일, 보상 아이콘, 상태 표시를 기존 퀘스트 데이터로 갱신한다.</summary>
+        public void ApplyQuestDetailsVisual(
+            string objectiveId,
+            QuestReward reward,
+            bool cleared,
+            bool current,
+            int completedCount,
+            int totalCount)
+        {
+            if (thumbnailView != null)
             {
-                detailsPrevButton.interactable = previousEnabled;
+                thumbnailView.Show(objectiveId);
             }
 
-            if (detailsNextButton != null)
+            var rewardCursor = 0f;
+            LayoutRewardSlot(copperSlot, reward.Copper, ref rewardCursor);
+            LayoutRewardSlot(ironSlot, reward.Iron, ref rewardCursor);
+            LayoutRewardSlot(lithiumSlot, reward.Lithium, ref rewardCursor);
+            LayoutRewardSlot(goldSlot, reward.Gold, ref rewardCursor);
+
+            if (detailsStatusIcon != null)
             {
-                detailsNextButton.interactable = nextEnabled;
+                detailsStatusIcon.sprite = cleared ? detailsStatusClearSprite : detailsStatusRingSprite;
             }
+
+            if (detailsClearBadge != null)
+            {
+                detailsClearBadge.SetActive(cleared);
+            }
+
+            if (detailsProgressText != null)
+            {
+                detailsProgressText.text = completedCount + " / " + totalCount;
+            }
+
+            if (detailsStatusText != null)
+            {
+                var demoFinished = cleared && totalCount > 0 && completedCount >= totalCount
+                    && objectiveId == DemoObjectiveIds.EmergencyEscapeReturn;
+                detailsStatusText.text = demoFinished
+                    ? "모든 목표 완료"
+                    : cleared
+                        ? "클리어"
+                        : current
+                            ? "진행 중"
+                            : "미완료";
+            }
+
+            if (detailsRewardText != null)
+            {
+                var anyReward = !reward.IsEmpty;
+                detailsRewardText.gameObject.SetActive(!anyReward);
+                if (!anyReward)
+                {
+                    detailsRewardText.text = "없음";
+                }
+            }
+
+            if (detailsNextActionText != null)
+            {
+                detailsNextActionText.gameObject.SetActive(
+                    !string.IsNullOrEmpty(detailsNextActionText.text));
+            }
+        }
+
+        private static void LayoutRewardSlot(QuestRewardSlotView slot, int amount, ref float cursor)
+        {
+            if (slot == null)
+            {
+                return;
+            }
+
+            slot.SetAmount(amount);
+            if (amount <= 0)
+            {
+                return;
+            }
+
+            var rect = slot.GetComponent<RectTransform>();
+            rect.anchoredPosition = new Vector2(cursor, rect.anchoredPosition.y);
+            cursor += rect.sizeDelta.x + 12f;
+        }
+
+        private static void ApplyNav(Button button, bool enabled)
+        {
+            if (button == null)
+            {
+                return;
+            }
+
+            button.interactable = enabled;
+            button.gameObject.SetActive(enabled);
         }
 
         public void SetCapacityChoiceVisible(bool visible)
