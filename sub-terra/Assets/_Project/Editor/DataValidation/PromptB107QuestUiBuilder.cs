@@ -29,6 +29,7 @@ namespace SubTerra.App.Editor.DataValidation
         public const float SummaryCardWidth = 575f;
         public const float SummaryCardHeight = 154f;
         public const float SummaryHeaderInset = 56f;
+        public const float SummaryHeaderY = -19f;
         public const float ThumbnailHeight = 236f;
         private const float DetailsW = 880f;
         private const float DetailsH = 718f;
@@ -159,7 +160,7 @@ namespace SubTerra.App.Editor.DataValidation
             mission.fontStyle = FontStyles.Bold;
             mission.characterSpacing = 4f;
             mission.text = "MISSION";
-            Place(mission.rectTransform, SummaryHeaderInset, -11f, 170f, 32f, new Vector2(0f, 1f), new Vector2(0f, 1f));
+            Place(mission.rectTransform, SummaryHeaderInset, SummaryHeaderY, 170f, 32f, new Vector2(0f, 1f), new Vector2(0f, 1f));
 
             var marks = EnsureLabel(button.transform, "QuestMissionMarks", font);
             marks.text = string.Empty;
@@ -167,7 +168,7 @@ namespace SubTerra.App.Editor.DataValidation
 
             var progress = button.transform.Find("ProgressCount").GetComponent<TMP_Text>();
             Style(progress, headerFont, Color.white, TextAlignmentOptions.MidlineRight, false);
-            Place(progress.rectTransform, -SummaryHeaderInset, -11f, 240f, 32f, new Vector2(1f, 1f), new Vector2(1f, 1f));
+            Place(progress.rectTransform, -SummaryHeaderInset, SummaryHeaderY, 240f, 32f, new Vector2(1f, 1f), new Vector2(1f, 1f));
 
             const float iconSize = 44f;
             var icon = EnsureImage(button.transform, "QuestStatusIcon", QuestSprite("quest-status-ring"));

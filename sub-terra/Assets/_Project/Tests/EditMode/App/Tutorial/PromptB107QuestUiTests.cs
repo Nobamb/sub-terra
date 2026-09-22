@@ -94,6 +94,8 @@ namespace SubTerra.App.Tests.Tutorial
                 var progressText = progress.GetComponent<TMP_Text>();
                 Assert.That(mission.anchoredPosition.x, Is.GreaterThanOrEqualTo(48f));
                 Assert.That(progress.anchoredPosition.x, Is.LessThanOrEqualTo(-48f));
+                Assert.That(mission.anchoredPosition.y, Is.EqualTo(PromptB107QuestUiBuilder.SummaryHeaderY).Within(0.5f));
+                Assert.That(progress.anchoredPosition.y, Is.EqualTo(PromptB107QuestUiBuilder.SummaryHeaderY).Within(0.5f));
                 Assert.That(missionText.fontSize, Is.EqualTo(21f).Within(0.1f));
                 Assert.That(progressText.fontSize, Is.EqualTo(21f).Within(0.1f));
                 Assert.That(summary.transform.Find("QuestMissionMarks").gameObject.activeSelf, Is.False);
