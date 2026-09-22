@@ -140,8 +140,10 @@ namespace SubTerra.App.Tests.Save
             File.WriteAllBytes(thumbnails.GetPath(1), new byte[] { 1, 2, 3 });
             Assert.That(thumbnails.Load(1), Is.Null);
             Assert.That(CreateLoadService(physical).GetSlotMetadata(1).CanContinue, Is.True);
+            File.WriteAllBytes(thumbnails.GetPath(1) + ".tmp", new byte[] { 9, 9 });
             thumbnails.Delete(1);
             Assert.That(thumbnails.Load(1), Is.Null);
+            Assert.That(File.Exists(thumbnails.GetPath(1) + ".tmp"), Is.False);
             Assert.That(CreateLoadService(physical).Load(1).IsSuccess, Is.True);
             Assert.That(thumbnails.Write(0, png), Is.False);
         }

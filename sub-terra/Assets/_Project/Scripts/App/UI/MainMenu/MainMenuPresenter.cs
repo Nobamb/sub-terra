@@ -5,9 +5,10 @@ namespace SubTerra.App.UI.MainMenu
 {
     public interface IMainMenuView
     {
-        void SetSlotDisplay(int slotId, string label, bool canContinue, string statusText);
+        void SetSlotDisplay(int slotId, string label, bool canContinue, bool canDelete, string statusText);
         void SetSelectedSlot(int slotId, bool canContinue, string message);
         void SetOverwriteConfirmVisible(bool visible, int slotId);
+        void SetDeleteConfirmVisible(bool visible, int slotId);
         void SetSettingsVisible(bool visible);
         void SetSettingsDraft(SettingsValues values);
         void SetVersionLabel(string version);
@@ -28,9 +29,11 @@ namespace SubTerra.App.UI.MainMenu
         private readonly SettingsSession settings;
         private readonly string gameVersion;
         private int selectedSlot = SavePathPolicy.MinimumSlot;
+        private int pendingDeleteSlot;
 
         public event Action<int> ContinueRequested;
         public event Action<int> StartNewGameConfirmed;
+        public event Action<int> DeleteSlotConfirmed;
         public event Action QuitConfirmed;
         public event Action<SettingsValues> SettingsApplied;
 
@@ -66,6 +69,7 @@ namespace SubTerra.App.UI.MainMenu
                     slot,
                     label,
                     canContinue,
+                    loader.HasSlotFiles(slot),
                     SlotContinuePolicy.Describe(eligibility));
             }
 
@@ -157,6 +161,57 @@ namespace SubTerra.App.UI.MainMenu
             return status;
         }
 
+        /// <summary>저장 삭제는 명시 확인 전까지 파일을 건드리지 않는다.</summary>
+        public void RequestDeleteSlot(int slotId)
+        {
+            if (slotId < SavePathPolicy.MinimumSlot || slotId > SavePathPolicy.MaximumSlot)
+            {
+                view.SetMessage("삭제할 저장 슬롯이 올바르지 않습니다.");
+                return;
+            }
+
+            if (!loader.HasSlotFiles(slotId))
+            {
+                view.SetMessage("슬롯 " + slotId + "에는 삭제할 세이브가 없습니다.");
+                return;
+            }
+
+            pendingDeleteSlot = slotId;
+            view.SetDeleteConfirmVisible(true, slotId);
+        }
+
+        public void ConfirmDeleteSlot()
+        {
+            var slotId = pendingDeleteSlot;
+            pendingDeleteSlot = 0;
+            view.SetDeleteConfirmVisible(false, slotId);
+            if (slotId >= SavePathPolicy.MinimumSlot && slotId <= SavePathPolicy.MaximumSlot)
+            {
+                DeleteSlotConfirmed?.Invoke(slotId);
+            }
+        }
+
+        public void CancelDeleteSlot()
+        {
+            var slotId = pendingDeleteSlot;
+            pendingDeleteSlot = 0;
+            view.SetDeleteConfirmVisible(false, slotId);
+            view.SetMessage("세이브 삭제를 취소했습니다.");
+        }
+
+        public void CompleteDeleteSlot(int slotId, bool success)
+        {
+            if (!success)
+            {
+                view.SetMessage("슬롯 " + slotId + " 삭제에 실패했습니다.");
+                return;
+            }
+
+            Refresh();
+            SelectSlot(slotId);
+            view.SetMessage("슬롯 " + slotId + "의 세이브를 삭제했습니다.");
+        }
+
         public void OpenSettings()
         {
             settings.Open();
@@ -205,6 +260,7 @@ namespace SubTerra.App.UI.MainMenu
         {
             ContinueRequested = null;
             StartNewGameConfirmed = null;
+            DeleteSlotConfirmed = null;
             QuitConfirmed = null;
             SettingsApplied = null;
         }

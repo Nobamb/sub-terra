@@ -159,6 +159,15 @@ namespace SubTerra.App.Save
             }
         }
 
+        /// <summary>손상된 저장도 사용자가 메인 메뉴에서 정리할 수 있도록 파일 존재만 확인한다.</summary>
+        public bool HasSlotFiles(int slotId)
+        {
+            return paths.TryGetPaths(slotId, out var slotPaths)
+                && (fileSystem.FileExists(slotPaths.Normal)
+                    || fileSystem.FileExists(slotPaths.Backup)
+                    || fileSystem.FileExists(slotPaths.Temporary));
+        }
+
         private FileLoadStatus TryLoadFile(string path, out RestoredSaveState state)
         {
             state = null;

@@ -117,7 +117,12 @@ namespace SubTerra.App.Save
         public void Delete(int slotId)
         {
             var path = GetPath(slotId);
-            try { if (path != null && File.Exists(path)) File.Delete(path); }
+            try
+            {
+                if (path == null) return;
+                if (File.Exists(path)) File.Delete(path);
+                if (File.Exists(path + ".tmp")) File.Delete(path + ".tmp");
+            }
             catch (Exception) { /* 썸네일 삭제 실패는 새 게임 저장 결과와 무관하다. */ }
         }
 

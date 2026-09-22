@@ -159,6 +159,33 @@ namespace SubTerra.App.Tests.UI.MainMenu
         }
 
         [Test]
+        public void SaveDeletion_RequiresExplicitConfirmation_AndRefreshesTheSelectedSlot()
+        {
+            var save = CreateSave();
+            var load = CreateLoad();
+            Assert.That(save.Save(2, CreateContext(22)).IsSuccess, Is.True);
+
+            var view = new RecordingMenuView();
+            var presenter = new MainMenuPresenter(view, load, "1.0.0-test");
+            var deletedSlot = 0;
+            presenter.DeleteSlotConfirmed += slot => deletedSlot = slot;
+
+            presenter.RequestDeleteSlot(2);
+            Assert.That(view.DeleteVisible, Is.True);
+            Assert.That(view.DeleteSlot, Is.EqualTo(2));
+            Assert.That(deletedSlot, Is.EqualTo(0), "확인 전에는 파일 삭제 요청을 내보내지 않는다.");
+
+            presenter.ConfirmDeleteSlot();
+            Assert.That(view.DeleteVisible, Is.False);
+            Assert.That(deletedSlot, Is.EqualTo(2));
+
+            Assert.That(save.DeleteSlot(2), Is.True);
+            presenter.CompleteDeleteSlot(2, true);
+            Assert.That(load.HasSlotFiles(2), Is.False);
+            Assert.That(view.Message, Does.Contain("삭제했습니다"));
+        }
+
+        [Test]
         public void L_F05_ExplorationStart_PreparesAndLoadsOnceOnMultiInvoke()
         {
             // 런타임이 쓰는 단일 가드: 연타 시 prepare/load 각 1회.
@@ -477,11 +504,18 @@ namespace SubTerra.App.Tests.UI.MainMenu
         private sealed class RecordingMenuView : IMainMenuView
         {
             public bool OverwriteVisible;
+            public bool DeleteVisible;
+            public int DeleteSlot;
             public string Message;
 
-            public void SetSlotDisplay(int slotId, string label, bool canContinue, string statusText) { }
+            public void SetSlotDisplay(int slotId, string label, bool canContinue, bool canDelete, string statusText) { }
             public void SetSelectedSlot(int slotId, bool canContinue, string message) => Message = message;
             public void SetOverwriteConfirmVisible(bool visible, int slotId) => OverwriteVisible = visible;
+            public void SetDeleteConfirmVisible(bool visible, int slotId)
+            {
+                DeleteVisible = visible;
+                DeleteSlot = slotId;
+            }
             public void SetSettingsVisible(bool visible) { }
             public void SetSettingsDraft(SettingsValues values) { }
             public void SetVersionLabel(string version) { }

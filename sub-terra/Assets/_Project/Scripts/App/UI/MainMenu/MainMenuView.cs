@@ -29,6 +29,13 @@ namespace SubTerra.App.UI.MainMenu
         [SerializeField] private Button overwriteConfirmButton;
         [SerializeField] private Button overwriteCancelButton;
 
+        [Header("Delete Save Confirm")]
+        private GameObject deleteConfirmRoot;
+        private TMP_Text deleteConfirmMessageText;
+        private Button deleteConfirmButton;
+        private Button deleteCancelButton;
+        private Button[] deleteButtons;
+
         [Header("Settings")]
         [SerializeField] private GameObject settingsRoot;
         private ControlSchemePanel controlSchemePanel;
@@ -69,6 +76,9 @@ namespace SubTerra.App.UI.MainMenu
         public event Action QuitClicked;
         public event Action OverwriteConfirmClicked;
         public event Action OverwriteCancelClicked;
+        public event Action<int> DeleteClicked;
+        public event Action DeleteConfirmClicked;
+        public event Action DeleteCancelClicked;
         public event Action SettingsApplyClicked;
         public event Action SettingsCancelClicked;
         public event Action SettingsDefaultsClicked;
@@ -78,6 +88,7 @@ namespace SubTerra.App.UI.MainMenu
         private void OnEnable()
         {
             RefreshLayout();
+            EnsureDeleteControls();
             WireSlot(0, SelectSlot1);
             WireSlot(1, SelectSlot2);
             WireSlot(2, SelectSlot3);
@@ -87,6 +98,11 @@ namespace SubTerra.App.UI.MainMenu
             quitButton?.onClick.AddListener(OnQuit);
             overwriteConfirmButton?.onClick.AddListener(OnOverwriteConfirm);
             overwriteCancelButton?.onClick.AddListener(OnOverwriteCancel);
+            WireDeleteButton(0, OnDeleteSlot1);
+            WireDeleteButton(1, OnDeleteSlot2);
+            WireDeleteButton(2, OnDeleteSlot3);
+            deleteConfirmButton?.onClick.AddListener(OnDeleteConfirm);
+            deleteCancelButton?.onClick.AddListener(OnDeleteCancel);
             settingsApplyButton?.onClick.AddListener(OnSettingsApply);
             settingsCancelButton?.onClick.AddListener(OnSettingsCancel);
             settingsDefaultsButton?.onClick.AddListener(OnSettingsDefaults);
@@ -144,6 +160,11 @@ namespace SubTerra.App.UI.MainMenu
             quitButton?.onClick.RemoveListener(OnQuit);
             overwriteConfirmButton?.onClick.RemoveListener(OnOverwriteConfirm);
             overwriteCancelButton?.onClick.RemoveListener(OnOverwriteCancel);
+            UnwireDeleteButton(0, OnDeleteSlot1);
+            UnwireDeleteButton(1, OnDeleteSlot2);
+            UnwireDeleteButton(2, OnDeleteSlot3);
+            deleteConfirmButton?.onClick.RemoveListener(OnDeleteConfirm);
+            deleteCancelButton?.onClick.RemoveListener(OnDeleteCancel);
             settingsApplyButton?.onClick.RemoveListener(OnSettingsApply);
             settingsCancelButton?.onClick.RemoveListener(OnSettingsCancel);
             settingsDefaultsButton?.onClick.RemoveListener(OnSettingsDefaults);
@@ -171,7 +192,7 @@ namespace SubTerra.App.UI.MainMenu
             }
         }
 
-        public void SetSlotDisplay(int slotId, string label, bool canContinue, string statusText)
+        public void SetSlotDisplay(int slotId, string label, bool canContinue, bool canDelete, string statusText)
         {
             if (slotId < 1 || slotId > 3)
             {
@@ -183,6 +204,10 @@ namespace SubTerra.App.UI.MainMenu
             {
                 var card = slotButtons[index].GetComponent<SaveSlotCardView>();
                 if (card != null) card.ShowThumbnail(slotId, canContinue);
+            }
+            if (deleteButtons != null && index < deleteButtons.Length && deleteButtons[index] != null)
+            {
+                deleteButtons[index].gameObject.SetActive(canDelete);
             }
             if (slotTexts != null && index < slotTexts.Length && slotTexts[index] != null)
             {
@@ -232,7 +257,8 @@ namespace SubTerra.App.UI.MainMenu
         {
             // 설정 창이나 덮어쓰기 확인창이 열려 있으면 슬롯 키보드 탐색을 차단한다.
             if ((settingsRoot != null && settingsRoot.activeSelf) ||
-                (overwriteConfirmRoot != null && overwriteConfirmRoot.activeSelf))
+                (overwriteConfirmRoot != null && overwriteConfirmRoot.activeSelf) ||
+                (deleteConfirmRoot != null && deleteConfirmRoot.activeSelf))
             {
                 return;
             }
@@ -264,6 +290,22 @@ namespace SubTerra.App.UI.MainMenu
             {
                 overwriteMessageText.text =
                     "슬롯 " + slotId + " 세이브를 덮어쓰시겠습니까?";
+            }
+        }
+
+        public void SetDeleteConfirmVisible(bool visible, int slotId)
+        {
+            EnsureDeleteControls();
+            if (deleteConfirmRoot != null)
+            {
+                deleteConfirmRoot.SetActive(visible);
+            }
+
+            if (visible && deleteConfirmMessageText != null)
+            {
+                deleteConfirmMessageText.text =
+                    "탐사 기록 " + slotId.ToString("00") + "을 삭제할까요?\n"
+                    + "저장 데이터와 미리보기 이미지는 복구할 수 없습니다.";
             }
         }
 
@@ -394,6 +436,130 @@ namespace SubTerra.App.UI.MainMenu
                 && settingsApplyButton != null
                 && settingsCancelButton != null
                 && settingsDefaultsButton != null;
+        }
+
+        private void EnsureDeleteControls()
+        {
+            if (deleteButtons == null || deleteButtons.Length != 3)
+            {
+                deleteButtons = new Button[3];
+            }
+
+            for (var i = 0; i < 3; i++)
+            {
+                if (deleteButtons[i] != null || slotButtons == null || i >= slotButtons.Length || slotButtons[i] == null)
+                {
+                    continue;
+                }
+
+                var existing = slotButtons[i].transform.Find("DeleteButton");
+                deleteButtons[i] = existing != null
+                    ? existing.GetComponent<Button>()
+                    : CreateDeleteButton(slotButtons[i].transform);
+            }
+
+            if (deleteConfirmRoot != null)
+            {
+                return;
+            }
+
+            var overlay = new GameObject(
+                "DeleteSaveConfirmOverlay",
+                typeof(RectTransform),
+                typeof(Image),
+                typeof(Canvas),
+                typeof(GraphicRaycaster));
+            overlay.transform.SetParent(transform, false);
+            var overlayRect = overlay.GetComponent<RectTransform>();
+            overlayRect.anchorMin = Vector2.zero;
+            overlayRect.anchorMax = Vector2.one;
+            overlayRect.offsetMin = Vector2.zero;
+            overlayRect.offsetMax = Vector2.zero;
+            overlay.GetComponent<Image>().color = new Color(0f, 0.02f, 0.04f, 0.82f);
+            var overlayCanvas = overlay.GetComponent<Canvas>();
+            overlayCanvas.overrideSorting = true;
+            overlayCanvas.sortingOrder = UiLayerPriority.SettingsModal + 20;
+
+            var card = new GameObject("Card", typeof(RectTransform), typeof(Image));
+            card.transform.SetParent(overlay.transform, false);
+            var cardRect = card.GetComponent<RectTransform>();
+            cardRect.anchorMin = cardRect.anchorMax = new Vector2(0.5f, 0.5f);
+            cardRect.pivot = new Vector2(0.5f, 0.5f);
+            cardRect.sizeDelta = new Vector2(560f, 250f);
+            cardRect.anchoredPosition = Vector2.zero;
+            card.GetComponent<Image>().color = new Color(0.035f, 0.10f, 0.14f, 0.98f);
+
+            var title = CreateText(card.transform, "Title", "탐사 기록 삭제", 27f, new Vector2(0f, 76f), new Vector2(500f, 40f));
+            title.color = new Color(1f, 0.72f, 0.42f);
+            deleteConfirmMessageText = CreateText(card.transform, "Message", string.Empty, 19f, new Vector2(0f, 10f), new Vector2(500f, 90f));
+            deleteConfirmMessageText.color = new Color(0.90f, 0.95f, 0.96f);
+
+            deleteCancelButton = CreateModalButton(card.transform, "CancelButton", "취소", new Vector2(-112f, -82f), new Color(0.15f, 0.25f, 0.29f));
+            deleteConfirmButton = CreateModalButton(card.transform, "ConfirmButton", "삭제", new Vector2(112f, -82f), new Color(0.60f, 0.20f, 0.16f));
+            deleteConfirmRoot = overlay;
+            deleteConfirmRoot.SetActive(false);
+        }
+
+        private Button CreateDeleteButton(Transform parent)
+        {
+            var root = new GameObject("DeleteButton", typeof(RectTransform), typeof(Image), typeof(Button));
+            root.transform.SetParent(parent, false);
+            var rect = root.GetComponent<RectTransform>();
+            rect.anchorMin = rect.anchorMax = new Vector2(1f, 1f);
+            rect.pivot = new Vector2(1f, 1f);
+            rect.sizeDelta = new Vector2(34f, 34f);
+            rect.anchoredPosition = new Vector2(-11f, -10f);
+            var image = root.GetComponent<Image>();
+            image.color = new Color(0.32f, 0.10f, 0.10f, 0.96f);
+            var button = root.GetComponent<Button>();
+            button.targetGraphic = image;
+            var colors = button.colors;
+            colors.normalColor = Color.white;
+            colors.highlightedColor = new Color(1f, 0.70f, 0.70f);
+            colors.pressedColor = new Color(1f, 0.45f, 0.45f);
+            button.colors = colors;
+            var label = CreateText(root.transform, "Label", "×", 27f, Vector2.zero, new Vector2(30f, 30f));
+            label.raycastTarget = false;
+            label.color = Color.white;
+            root.transform.SetAsLastSibling();
+            return button;
+        }
+
+        private Button CreateModalButton(Transform parent, string name, string label, Vector2 position, Color color)
+        {
+            var root = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button));
+            root.transform.SetParent(parent, false);
+            var rect = root.GetComponent<RectTransform>();
+            rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.sizeDelta = new Vector2(184f, 46f);
+            rect.anchoredPosition = position;
+            var image = root.GetComponent<Image>();
+            image.color = color;
+            var button = root.GetComponent<Button>();
+            button.targetGraphic = image;
+            var text = CreateText(root.transform, "Label", label, 20f, Vector2.zero, new Vector2(170f, 38f));
+            text.raycastTarget = false;
+            text.color = Color.white;
+            return button;
+        }
+
+        private TMP_Text CreateText(Transform parent, string name, string value, float fontSize, Vector2 position, Vector2 size)
+        {
+            var root = new GameObject(name, typeof(RectTransform), typeof(TextMeshProUGUI));
+            root.transform.SetParent(parent, false);
+            var rect = root.GetComponent<RectTransform>();
+            rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.sizeDelta = size;
+            rect.anchoredPosition = position;
+            var text = root.GetComponent<TextMeshProUGUI>();
+            text.font = messageText != null ? messageText.font : TMP_Settings.defaultFontAsset;
+            text.text = value;
+            text.fontSize = fontSize;
+            text.alignment = TextAlignmentOptions.Center;
+            text.enableWordWrapping = true;
+            return text;
         }
 
         private void RefreshSettingsLabels(float volume)
@@ -680,15 +846,36 @@ namespace SubTerra.App.UI.MainMenu
             }
         }
 
+        private void WireDeleteButton(int index, UnityEngine.Events.UnityAction action)
+        {
+            if (deleteButtons != null && index >= 0 && index < deleteButtons.Length)
+            {
+                deleteButtons[index]?.onClick.AddListener(action);
+            }
+        }
+
+        private void UnwireDeleteButton(int index, UnityEngine.Events.UnityAction action)
+        {
+            if (deleteButtons != null && index >= 0 && index < deleteButtons.Length)
+            {
+                deleteButtons[index]?.onClick.RemoveListener(action);
+            }
+        }
+
         private void SelectSlot1() => SlotSelected?.Invoke(1);
         private void SelectSlot2() => SlotSelected?.Invoke(2);
         private void SelectSlot3() => SlotSelected?.Invoke(3);
+        private void OnDeleteSlot1() => DeleteClicked?.Invoke(1);
+        private void OnDeleteSlot2() => DeleteClicked?.Invoke(2);
+        private void OnDeleteSlot3() => DeleteClicked?.Invoke(3);
         private void OnContinue() => ContinueClicked?.Invoke();
         private void OnNewGame() => NewGameClicked?.Invoke();
         private void OnSettings() => SettingsClicked?.Invoke();
         private void OnQuit() => QuitClicked?.Invoke();
         private void OnOverwriteConfirm() => OverwriteConfirmClicked?.Invoke();
         private void OnOverwriteCancel() => OverwriteCancelClicked?.Invoke();
+        private void OnDeleteConfirm() => DeleteConfirmClicked?.Invoke();
+        private void OnDeleteCancel() => DeleteCancelClicked?.Invoke();
         private void OnSettingsApply() => SettingsApplyClicked?.Invoke();
         private void OnSettingsCancel() => SettingsCancelClicked?.Invoke();
         private void OnSettingsDefaults() => SettingsDefaultsClicked?.Invoke();

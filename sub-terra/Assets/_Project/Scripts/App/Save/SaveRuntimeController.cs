@@ -505,6 +505,33 @@ namespace SubTerra.App.Save
             }
         }
 
+        /// <summary>메인 메뉴에서만 호출되는 슬롯 삭제. JSON 두 사본·임시본·미리보기를 함께 제거한다.</summary>
+        public bool DeleteSlot(int slotId)
+        {
+            if (!IsAllowedSlot(slotId) || saveInProgress || saveService == null)
+            {
+                return false;
+            }
+
+            if (!saveService.DeleteSlot(slotId))
+            {
+                return false;
+            }
+
+            Thumbnails?.Delete(slotId);
+            if (activeSlot == slotId)
+            {
+                activeSlot = 0;
+                dirty = false;
+                eventBinder?.Dispose();
+                eventBinder = null;
+                autoSave?.Dispose();
+                autoSave = null;
+            }
+
+            return true;
+        }
+
         private void CaptureThumbnail(int slotId)
         {
             var camera = Camera.main;

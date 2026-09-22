@@ -39,6 +39,7 @@ namespace SubTerra.App.UI.MainMenu
                 initialSettings);
             presenter.ContinueRequested += OnContinue;
             presenter.StartNewGameConfirmed += OnStartNewGame;
+            presenter.DeleteSlotConfirmed += OnDeleteSlot;
             presenter.QuitConfirmed += OnQuit;
             presenter.SettingsApplied += OnSettingsApplied;
 
@@ -49,6 +50,9 @@ namespace SubTerra.App.UI.MainMenu
             view.QuitClicked += OnQuitClicked;
             view.OverwriteConfirmClicked += OnOverwriteConfirm;
             view.OverwriteCancelClicked += OnOverwriteCancel;
+            view.DeleteClicked += OnDeleteClicked;
+            view.DeleteConfirmClicked += OnDeleteConfirm;
+            view.DeleteCancelClicked += OnDeleteCancel;
             view.SettingsApplyClicked += OnSettingsApply;
             view.SettingsCancelClicked += OnSettingsCancel;
             view.SettingsDefaultsClicked += presenter.ResetSettingsDefaults;
@@ -68,6 +72,9 @@ namespace SubTerra.App.UI.MainMenu
                 view.QuitClicked -= OnQuitClicked;
                 view.OverwriteConfirmClicked -= OnOverwriteConfirm;
                 view.OverwriteCancelClicked -= OnOverwriteCancel;
+                view.DeleteClicked -= OnDeleteClicked;
+                view.DeleteConfirmClicked -= OnDeleteConfirm;
+                view.DeleteCancelClicked -= OnDeleteCancel;
                 view.SettingsApplyClicked -= OnSettingsApply;
                 view.SettingsCancelClicked -= OnSettingsCancel;
                 view.SettingsDefaultsClicked -= presenter.ResetSettingsDefaults;
@@ -78,6 +85,7 @@ namespace SubTerra.App.UI.MainMenu
             {
                 presenter.ContinueRequested -= OnContinue;
                 presenter.StartNewGameConfirmed -= OnStartNewGame;
+                presenter.DeleteSlotConfirmed -= OnDeleteSlot;
                 presenter.QuitConfirmed -= OnQuit;
                 presenter.SettingsApplied -= OnSettingsApplied;
                 presenter.Dispose();
@@ -104,6 +112,18 @@ namespace SubTerra.App.UI.MainMenu
         {
             // 취소 경로: 파일·State 보존. Presenter 게이트만 닫힌다.
             presenter?.CancelOverwriteNewGame();
+        }
+
+        private void OnDeleteClicked(int slotId) => presenter?.RequestDeleteSlot(slotId);
+
+        private void OnDeleteConfirm() => presenter?.ConfirmDeleteSlot();
+
+        private void OnDeleteCancel() => presenter?.CancelDeleteSlot();
+
+        private void OnDeleteSlot(int slotId)
+        {
+            var runtime = SaveRuntimeController.Instance;
+            presenter?.CompleteDeleteSlot(slotId, runtime != null && runtime.DeleteSlot(slotId));
         }
 
         private void OnSettingsApply()
