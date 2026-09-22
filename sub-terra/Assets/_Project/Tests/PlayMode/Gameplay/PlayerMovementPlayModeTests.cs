@@ -87,6 +87,35 @@ namespace SubTerra.Gameplay.Player.Tests
         }
 
         [Test]
+        public void FacingDirection_MirrorsSpriteAndKeepsLastDirectionWhenInputStops()
+        {
+            animationVisualObject = new GameObject("FacingVisual");
+            animationVisualObject.transform.SetParent(playerObject.transform);
+            animationVisualObject.transform.localScale = new Vector3(0.95f, 0.95f, 1f);
+            var renderer = animationVisualObject.AddComponent<SpriteRenderer>();
+            var facing = playerObject.AddComponent<PlayerFacing>();
+            SetPrivateField(facing, "visualRoot", animationVisualObject.transform);
+            InvokePrivate(facing, "Awake");
+
+            movement.SetMoveInput(-1f);
+            InvokePrivate(facing, "LateUpdate");
+
+            Assert.IsTrue(renderer.flipX, "왼쪽 이동 시 캐릭터가 왼쪽을 바라봐야 한다.");
+            Assert.Greater(animationVisualObject.transform.localScale.x, 0f);
+
+            movement.SetMoveInput(0f);
+            InvokePrivate(facing, "LateUpdate");
+
+            Assert.IsTrue(renderer.flipX, "입력을 놓아도 마지막으로 바라본 방향을 유지해야 한다.");
+
+            movement.SetMoveInput(1f);
+            InvokePrivate(facing, "LateUpdate");
+
+            Assert.IsFalse(renderer.flipX, "오른쪽 이동 시 캐릭터가 오른쪽을 바라봐야 한다.");
+            Assert.Greater(animationVisualObject.transform.localScale.x, 0f);
+        }
+
+        [Test]
         public void SpeedMultipliersAreCombined()
         {
             movement.SetCargoSpeedMultiplier(0.8f);
