@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "skills": {
+    "ui": {
+      "source": "Unity-Technologies/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ui/SKILL.md",
+      "computedHash": "cb756622fd3a2135b85320622262451db77bf8effa4d253a7e3fa4bfbb57b527"
+    },
+    "ui-ugui": {
+      "source": "Unity-Technologies/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ui-ugui/SKILL.md",
+      "computedHash": "a4d308dcd121fa214a1b28325c3e23030a010c095565a23a48dd38cf05bead26"
+    }
+  }
+}
