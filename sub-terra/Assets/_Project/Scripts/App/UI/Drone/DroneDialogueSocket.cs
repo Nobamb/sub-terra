@@ -9,6 +9,11 @@ namespace SubTerra.App.UI.Drone
     {
         public const int OverlaySortingOrder = 30_000;
 
+        private const string AnalysisHeader =
+            "<color=#4AE0F2><size=65%><b>DIGGER-BOT // ANALYSIS</b></size></color>";
+        private const string AlertHeader =
+            "<color=#FFB347><size=65%><b>DIGGER-BOT // ALERT</b></size></color>";
+
         [SerializeField] private Transform anchor;
         [SerializeField] private RectTransform visualRoot;
         [SerializeField] private Canvas worldCanvas;
@@ -62,7 +67,7 @@ namespace SubTerra.App.UI.Drone
                 return;
             }
 
-            dialogueText.text = dialogue.Text;
+            dialogueText.text = FormatDialogue(dialogue.Text, dialogue.IsUrgent);
             hasDialogue = true;
             // 바인딩 전이라도 대사가 오면 표시 가능하게 둔다(Bind SetVisible 레이스 방지).
             if (!boundVisible)
@@ -145,8 +150,14 @@ namespace SubTerra.App.UI.Drone
 
             if (dialogueText != null)
             {
+                dialogueText.richText = true;
                 dialogueText.raycastTarget = false;
             }
+        }
+
+        private static string FormatDialogue(string text, bool isUrgent)
+        {
+            return (isUrgent ? AlertHeader : AnalysisHeader) + "\n" + text;
         }
 
         private void SetCanvasVisible(bool visible)

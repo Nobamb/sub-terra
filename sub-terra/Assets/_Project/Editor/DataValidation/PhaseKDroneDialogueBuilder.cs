@@ -22,6 +22,8 @@ namespace SubTerra.App.Editor.DataValidation
             "Assets/_Project/Prefabs/UI/DroneAnalysisUI.prefab";
         private const string IntegrationScenePath =
             "Assets/_Project/Scenes/App/Mine_Demo_Integration.unity";
+        private const string DialogueFramePath =
+            "Assets/_Project/Art/UI/Gameplay/SideMenu/menu-button-active-off.png";
 
         [MenuItem("SubTerra/UI/Build Phase K Drone Dialogue")]
         public static void BuildFromMenu()
@@ -56,7 +58,7 @@ namespace SubTerra.App.Editor.DataValidation
             canvasObject.transform.SetParent(root.transform, false);
             var canvasRect = canvasObject.GetComponent<RectTransform>();
             // 드론 말풍선을 기존보다 20% 크게 표시한다.
-            canvasRect.sizeDelta = new Vector2(456f, 132f);
+            canvasRect.sizeDelta = new Vector2(456f, 138f);
             canvasRect.localScale = Vector3.one * 0.006f;
             var canvas = canvasObject.GetComponent<Canvas>();
             canvas.renderMode = RenderMode.WorldSpace;
@@ -71,7 +73,10 @@ namespace SubTerra.App.Editor.DataValidation
             panel.transform.SetParent(canvasObject.transform, false);
             StretchFull(panel.GetComponent<RectTransform>());
             var image = panel.GetComponent<Image>();
-            image.color = new Color(0.025f, 0.07f, 0.1f, 0.96f);
+            image.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(DialogueFramePath);
+            image.color = Color.white;
+            image.type = Image.Type.Simple;
+            image.preserveAspect = false;
             image.raycastTarget = false;
 
             var textObject = new GameObject("DialogueText", typeof(RectTransform));
@@ -79,8 +84,8 @@ namespace SubTerra.App.Editor.DataValidation
             var textRect = textObject.GetComponent<RectTransform>();
             textRect.anchorMin = Vector2.zero;
             textRect.anchorMax = Vector2.one;
-            textRect.offsetMin = new Vector2(18f, 12f);
-            textRect.offsetMax = new Vector2(-18f, -12f);
+            textRect.offsetMin = new Vector2(28f, 18f);
+            textRect.offsetMax = new Vector2(-28f, -20f);
             var text = textObject.AddComponent<TextMeshProUGUI>();
             var font = KoreanFontAssetUtility.GetOrCreateKoreanFontAsset();
             if (font != null)
@@ -88,10 +93,13 @@ namespace SubTerra.App.Editor.DataValidation
                 text.font = font;
             }
 
-            text.text = "분석 대기 중";
-            text.fontSize = 22f;
+            text.text =
+                "<color=#4AE0F2><size=65%><b>DIGGER-BOT // ANALYSIS</b></size></color>\n분석 대기 중";
+            text.fontSize = 20f;
             text.color = Color.white;
-            text.alignment = TextAlignmentOptions.Center;
+            text.alignment = TextAlignmentOptions.TopLeft;
+            text.lineSpacing = 4f;
+            text.richText = true;
             text.textWrappingMode = TextWrappingModes.Normal;
             text.raycastTarget = false;
 

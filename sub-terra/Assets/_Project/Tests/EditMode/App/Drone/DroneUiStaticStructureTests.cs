@@ -5,6 +5,7 @@ using SubTerra.App.Drone.Dialogue;
 using SubTerra.App.Integration;
 using SubTerra.App.UI.Drone;
 using SubTerra.Shared;
+using TMPro;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -91,6 +92,38 @@ namespace SubTerra.App.Tests.Drone
                 world.GetComponentsInChildren<Graphic>(true).All(item => !item.raycastTarget),
                 Is.True);
             Assert.That(world.GetComponentInChildren<Canvas>().renderMode, Is.EqualTo(RenderMode.WorldSpace));
+        }
+
+        [Test]
+        public void WorldDialogue_UsesGameplayUiFrameAndIdentifiesDiggerBotMessages()
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                "Assets/_Project/Prefabs/UI/ViewSocket.prefab");
+            var panel = prefab.transform
+                .Find("WorldDialogueCanvas/VisualRoot")
+                .GetComponent<Image>();
+            Assert.That(panel.sprite, Is.Not.Null);
+            Assert.That(panel.sprite.name, Does.StartWith("menu-button-active-off"));
+
+            var instance = Object.Instantiate(prefab);
+            try
+            {
+                var socket = instance.GetComponent<DroneDialogueSocket>();
+                socket.SetDialogue(new DroneDialogueResult(
+                    "dialogue.test",
+                    "스캔 결과",
+                    false,
+                    false,
+                    false));
+
+                var text = instance.GetComponentInChildren<TMP_Text>(true);
+                Assert.That(text.text, Does.Contain("DIGGER-BOT // ANALYSIS"));
+                Assert.That(text.text, Does.Contain("스캔 결과"));
+            }
+            finally
+            {
+                Object.DestroyImmediate(instance);
+            }
         }
 
         [Test]
