@@ -17,10 +17,12 @@ namespace SubTerra.App.Tests.UI
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
             var settingsPanel = prefab.transform.Find("SettingsPanel");
             var slider = settingsPanel.GetComponentInChildren<Slider>(true);
-            var label = settingsPanel.Find("MasterVolumeLabel").GetComponent<TMP_Text>();
+            var label = settingsPanel.Find("SettingsCard/MasterVolumeLabel").GetComponent<TMP_Text>();
 
             Assert.That(slider.value, Is.EqualTo(0.5f));
-            Assert.That(label.text, Is.EqualTo("마스터 음량: 50%"));
+            Assert.That(label.text, Is.EqualTo("50%"));
+            Assert.That(settingsPanel.Find("SettingsCard/VolumeCaption").GetComponent<TMP_Text>().text,
+                Is.EqualTo("마스터 음량"));
         }
 
         [Test]

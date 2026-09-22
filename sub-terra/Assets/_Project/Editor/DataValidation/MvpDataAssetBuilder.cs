@@ -284,29 +284,36 @@ namespace SubTerra.App.Editor.DataValidation
             GameObject emergencyEscapePortalPrefab,
             Sprite icon)
         {
+            Sprite lightIcon = LoadFacilityIcon("light_basic_cartoon_v3.png", icon);
+            Sprite chargerIcon = LoadFacilityIcon("charger_basic_cartoon_v2.png", icon);
+            Sprite clinicIcon = LoadFacilityIcon("clinic_basic_cartoon_v3.png", icon);
+            Sprite storageIcon = LoadFacilityIcon("storage_basic_cartoon_v2.png", icon);
+            Sprite settlementIcon = LoadFacilityIcon("settlement_console_cartoon_v3.png", icon);
+            Sprite outpostIcon = LoadFacilityIcon("outpost_core_cartoon_v3.png", icon);
             return new List<BuildingData>
             {
                 EnsureBuilding("Building_Support_Basic.asset", DataIds.Buildings.SupportBasic, "기본 버팀목",
                     "주변 지형을 보강해 구조 위험을 낮춥니다.", supportPrefab, 0,
-                    icon, new List<ItemCostEntry> { new ItemCostEntry(DataIds.Minerals.Copper, 2) }),
+                    LoadFacilityIcon("support_pillar_mine.png", icon),
+                    new List<ItemCostEntry> { new ItemCostEntry(DataIds.Minerals.Copper, 2) }),
                 EnsureBuilding("Building_Light_Basic.asset", DataIds.Buildings.LightBasic, "기본 조명",
                     "전력이 연결된 지하 구역을 밝힙니다.", prefab, 1,
-                    icon, new List<ItemCostEntry> { new ItemCostEntry(DataIds.Minerals.Iron, 1) }),
+                    lightIcon, new List<ItemCostEntry> { new ItemCostEntry(DataIds.Minerals.Iron, 1) }),
                 EnsureBuilding("Building_Charger_Basic.asset", DataIds.Buildings.ChargerBasic, "기본 충전기",
                     "전력망에 연결되면 플레이어 장비를 충전합니다.", prefab, 3,
-                    icon, new List<ItemCostEntry> { new ItemCostEntry(DataIds.Minerals.Copper, 3) }),
+                    chargerIcon, new List<ItemCostEntry> { new ItemCostEntry(DataIds.Minerals.Copper, 3) }),
                 EnsureBuilding("Building_Clinic_Basic.asset", DataIds.Buildings.ClinicBasic, "보건소",
                     "전력망에 연결되면 플레이어 체력을 최대치까지 회복합니다.", clinicPrefab, 3,
-                    icon, new List<ItemCostEntry> { new ItemCostEntry(DataIds.Minerals.Copper, 3) }),
+                    clinicIcon, new List<ItemCostEntry> { new ItemCostEntry(DataIds.Minerals.Copper, 3) }),
                 EnsureBuilding("Building_Storage_Basic.asset", DataIds.Buildings.StorageBasic, "기본 보관함",
                     "탐사 중 수집한 광물을 임시 보관합니다.", prefab, 0,
-                    icon, new List<ItemCostEntry> { new ItemCostEntry(DataIds.Minerals.Iron, 2) }),
+                    storageIcon, new List<ItemCostEntry> { new ItemCostEntry(DataIds.Minerals.Iron, 2) }),
                 EnsureBuilding("Building_Settlement_Basic.asset", DataIds.Buildings.SettlementBasic, "정산 콘솔",
                     "보관한 광물을 정산해 골드로 전환합니다.", prefab, 1,
-                    icon, new List<ItemCostEntry> { new ItemCostEntry(DataIds.Minerals.Lithium, 1) }),
+                    settlementIcon, new List<ItemCostEntry> { new ItemCostEntry(DataIds.Minerals.Lithium, 1) }),
                 EnsureBuilding("Building_OutpostCore_Basic.asset", DataIds.Buildings.OutpostCoreBasic, "전진기지 코어",
                     "연결된 시설에 전력을 공급하고 유독 가스 정화 안전지대를 형성하며 탐사 체크포인트 역할을 합니다.", prefab, 5,
-                    icon, new List<ItemCostEntry>
+                    outpostIcon, new List<ItemCostEntry>
                     {
                         new ItemCostEntry(DataIds.Minerals.Copper, 5),
                         new ItemCostEntry(DataIds.Minerals.Iron, 5)
@@ -321,6 +328,13 @@ namespace SubTerra.App.Editor.DataValidation
                         new ItemCostEntry(DataIds.Minerals.Lithium, 3)
                     })
             };
+        }
+
+        private static Sprite LoadFacilityIcon(string fileName, Sprite fallback)
+        {
+            return AssetDatabase.LoadAssetAtPath<Sprite>(
+                       "Assets/_Project/Art/Facilities/MVP/" + fileName)
+                   ?? fallback;
         }
 
         private static BuildingData EnsureBuilding(

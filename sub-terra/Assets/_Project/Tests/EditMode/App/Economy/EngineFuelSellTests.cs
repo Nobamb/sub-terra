@@ -4,6 +4,8 @@ using SubTerra.App.Economy;
 using SubTerra.App.Inventory;
 using SubTerra.App.State;
 using SubTerra.App.UI.Economy;
+using TMPro;
+using UnityEngine;
 
 namespace SubTerra.App.Tests.Economy
 {
@@ -47,6 +49,49 @@ namespace SubTerra.App.Tests.Economy
             Assert.That(view.Rows.Count, Is.EqualTo(1));
             Assert.That(view.Rows[0].MineralId, Is.EqualTo(EngineFuel));
             Assert.That(view.Rows[0].IsRare, Is.True);
+        }
+
+        [Test]
+        public void FuelSelectedSale_OutsideSurfaceBaseKeepsCargoAndGold()
+        {
+            var catalog = new InMemoryMineralCatalog();
+            catalog.Register(EngineFuel, 1f, 100);
+            var state = GameState.CreateNew();
+            var inventory = new InventoryService(catalog, 100f, state);
+            inventory.TryAddMineral(EngineFuel, 1);
+            var gate = new SceneSellGate { IsSellAllowed = false };
+            var economy = new EconomyService(inventory, catalog, state, gate);
+            var presenter = new EconomyPanelPresenter(new RecordingView());
+            presenter.Bind(economy, null, inventory, state);
+            presenter.SelectMineral(EngineFuel);
+            Assert.That(presenter.RequestSellSelected().IsSuccess, Is.False);
+            Assert.That(inventory.State.GetQuantity(EngineFuel), Is.EqualTo(1));
+            Assert.That(state.Player.Gold, Is.Zero);
+            gate.IsSellAllowed = true;
+            Assert.That(presenter.RequestSellSelected().IsSuccess, Is.True);
+            Assert.That(state.Player.Gold, Is.EqualTo(100));
+            Assert.That(inventory.State.GetQuantity(EngineFuel), Is.Zero);
+            presenter.Unbind();
+        }
+
+        [Test]
+        public void SaleNotice_RemainsVisibleAfterTransactionDetailAndReset()
+        {
+            var root = new GameObject("FuelSaleNotice");
+            try
+            {
+                var detailObject = new GameObject("Detail", typeof(RectTransform));
+                detailObject.transform.SetParent(root.transform);
+                var detail = detailObject.AddComponent<TextMeshProUGUI>();
+                var view = root.AddComponent<EconomyPanelView>();
+                view.EditorBind(null, detail, null, null);
+                view.SetStatusDetail("100G 판매 완료");
+                Assert.That(detail.text, Does.Contain(EconomyPanelView.RareSellNotice));
+                Assert.That(detail.text, Does.Contain("100G 판매 완료"));
+                view.SetStatusDetail(null);
+                Assert.That(detail.text, Is.EqualTo(EconomyPanelView.RareSellNotice));
+            }
+            finally { Object.DestroyImmediate(root); }
         }
 
         private static (

@@ -123,12 +123,9 @@ namespace SubTerra.App.Integration
             var reason = ToReasonId(failure);
             PublishIfChanged(state, reason, origin);
 
-            var sourceRenderer = placementSystem.Selection.RuntimePrefab != null
-                ? placementSystem.Selection.RuntimePrefab.GetComponentInChildren<SpriteRenderer>()
-                : null;
             if (preview != null)
             {
-                preview.Configure(sourceRenderer != null ? sourceRenderer.sprite : null);
+                preview.ConfigureFromPrefab(placementSystem.Selection.RuntimePrefab);
             }
             placementSystem.GetFootprintCells(origin, footprintPreviewCells);
             var previewValid = locationValid && CanAfford(selectedBuildingId);

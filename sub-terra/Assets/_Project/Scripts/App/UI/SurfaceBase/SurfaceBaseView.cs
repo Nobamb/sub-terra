@@ -83,6 +83,7 @@ namespace SubTerra.App.UI.SurfaceBase
             settingsButton?.onClick.AddListener(OnSettings);
             quitButton?.onClick.AddListener(OnQuit);
             settingsApplyButton?.onClick.AddListener(OnSettingsApply);
+            settingsCancelButton?.onClick.RemoveListener(OnSettingsCancel);
             settingsCancelButton?.onClick.AddListener(OnSettingsCancel);
             settingsDefaultsButton?.onClick.AddListener(OnSettingsDefaults);
             resetMineButton?.onClick.AddListener(OnResetMine);
@@ -325,6 +326,15 @@ namespace SubTerra.App.UI.SurfaceBase
             }
 
             if (visible && controlSchemePanel == null) controlSchemePanel = ControlSchemePanel.Attach(settingsRoot);
+            if (!visible)
+            {
+                var skin = settingsRoot.GetComponent<SubTerra.App.UI.MainMenu.SettingsMenuSkin>();
+                if (skin != null && skin.isActiveAndEnabled && Application.isPlaying)
+                {
+                    skin.PlayCloseAnimation(() => settingsRoot.SetActive(false));
+                    return;
+                }
+            }
             settingsRoot.SetActive(visible);
             if (visible)
             {
@@ -465,7 +475,7 @@ namespace SubTerra.App.UI.SurfaceBase
         {
             if (masterVolumeLabel != null)
             {
-                masterVolumeLabel.text = LocalizationService.FormatMasterVolume(volume);
+                masterVolumeLabel.text = SettingsMenuSkin.FormatVolume(settingsRoot, volume);
             }
 
             if (resolutionLabel != null)
@@ -639,7 +649,7 @@ namespace SubTerra.App.UI.SurfaceBase
         {
             if (masterVolumeLabel != null)
             {
-                masterVolumeLabel.text = LocalizationService.FormatMasterVolume(value);
+                masterVolumeLabel.text = SettingsMenuSkin.FormatVolume(settingsRoot, value);
             }
 
             MasterVolumePreviewChanged?.Invoke(value);

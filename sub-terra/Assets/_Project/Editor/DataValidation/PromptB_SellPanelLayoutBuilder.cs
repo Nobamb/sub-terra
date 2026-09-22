@@ -424,7 +424,7 @@ namespace SubTerra.App.Editor.DataValidation
             var sellAll = EnsureButton(card, "SellAllButton", new Vector2(150f, -91f), new Vector2(220f, 42f), "전체 판매");
 
             var ecoStatus = EnsureTmp(card, "EcoStatus", new Vector2(0f, -145f), new Vector2(680f, 30f), 15f, string.Empty);
-            var ecoDetail = EnsureTmp(card, "EcoDetail", new Vector2(0f, -181f), new Vector2(680f, 34f), 13f, string.Empty);
+            var ecoDetail = EnsureTmp(card, "EcoDetail", new Vector2(0f, -181f), new Vector2(680f, 34f), 13f, EconomyPanelView.RareSellNotice);
             ecoStatus.alignment = TextAlignmentOptions.Center;
             ecoDetail.alignment = TextAlignmentOptions.Center;
             ecoStatus.textWrappingMode = TextWrappingModes.Normal;

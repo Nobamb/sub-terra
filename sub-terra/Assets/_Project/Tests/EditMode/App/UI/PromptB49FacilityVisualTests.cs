@@ -21,7 +21,18 @@ namespace SubTerra.App.Tests.UI
             PromptB49FacilityVisualBuilder.ChargerPrefabPath,
             PromptB49FacilityVisualBuilder.StoragePrefabPath,
             PromptB49FacilityVisualBuilder.SettlementPrefabPath,
-            PromptB49FacilityVisualBuilder.OutpostPrefabPath
+            PromptB49FacilityVisualBuilder.OutpostPrefabPath,
+            PromptB49FacilityVisualBuilder.ClinicPrefabPath
+        };
+
+        private static readonly string[] TargetBuildingDataPaths =
+        {
+            "Assets/_Project/Data/Buildings/Building_Light_Basic.asset",
+            "Assets/_Project/Data/Buildings/Building_Charger_Basic.asset",
+            "Assets/_Project/Data/Buildings/Building_Storage_Basic.asset",
+            "Assets/_Project/Data/Buildings/Building_Settlement_Basic.asset",
+            "Assets/_Project/Data/Buildings/Building_OutpostCore_Basic.asset",
+            "Assets/_Project/Data/Buildings/Building_Clinic_Basic.asset"
         };
 
         [Test]
@@ -59,13 +70,12 @@ namespace SubTerra.App.Tests.UI
         }
 
         [Test]
-        public void PromptB49_Prefabs_AreOneTileBlocksWithDistinctShapes()
+        public void PromptB49_Prefabs_UseDistinctAuthoredArtWithShallowRockOverlap()
         {
             var created = new List<GameObject>();
             try
             {
-                var sizes = new List<Vector2>();
-                var signatures = new HashSet<string>();
+                var artworkPaths = new HashSet<string>();
                 foreach (var path in TargetPrefabPaths)
                 {
                     var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
@@ -80,31 +90,22 @@ namespace SubTerra.App.Tests.UI
                     var visualRoot = instance.transform.Find(
                         PromptB49FacilityVisualBuilder.VisualRootName);
                     var bounds = GetActiveSpriteBounds(visualRoot.gameObject);
-                    Assert.That(bounds.size.x, Is.InRange(0.85f, 1.25f), path + " width");
-                    Assert.That(bounds.size.y, Is.InRange(0.85f, 1.25f), path + " height");
-                    sizes.Add(new Vector2(bounds.size.x, bounds.size.y));
-                    signatures.Add(BuildSignature(instance));
+                    bool clinic = path == PromptB49FacilityVisualBuilder.ClinicPrefabPath;
+                    Assert.That(bounds.size.x,
+                        clinic ? Is.InRange(1.75f, 1.82f) : Is.InRange(0.80f, 0.98f),
+                        path + " width");
+                    Assert.That(bounds.min.y,
+                        Is.EqualTo(clinic ? -1.2f : -0.68f).Within(0.015f),
+                        path + " rock overlap");
+
+                    SpriteRenderer artwork = FindPrimaryRenderer(visualRoot);
+                    Assert.That(artwork, Is.Not.Null, path + " authored artwork");
+                    string artworkPath = AssetDatabase.GetAssetPath(artwork.sprite);
+                    Assert.That(artworkPath, Does.StartWith("Assets/_Project/Art/Facilities/MVP/"));
+                    artworkPaths.Add(artworkPath);
                 }
 
-                Assert.That(signatures.Count, Is.EqualTo(TargetPrefabPaths.Length));
-                Assert.That(
-                    created[0].transform.Find("VisualRoot/LampHead"),
-                    Is.Not.Null);
-                Assert.That(
-                    created[1].transform.Find("VisualRoot/PlusV"),
-                    Is.Not.Null);
-                Assert.That(
-                    created[2].transform.Find("VisualRoot/Lid"),
-                    Is.Not.Null);
-                Assert.That(
-                    created[3].transform.Find("VisualRoot/Screen"),
-                    Is.Not.Null);
-                Assert.That(
-                    created[4].transform.Find("VisualRoot/Diamond"),
-                    Is.Not.Null);
-                Assert.That(
-                    created[4].transform.Find("VisualRoot/Diamond").localEulerAngles.z,
-                    Is.EqualTo(45f).Within(0.1f));
+                Assert.That(artworkPaths.Count, Is.EqualTo(TargetPrefabPaths.Length));
             }
             finally
             {
@@ -112,6 +113,22 @@ namespace SubTerra.App.Tests.UI
                 {
                     Object.DestroyImmediate(created[i]);
                 }
+            }
+        }
+
+        [Test]
+        public void PromptB49_BuildingMenuIcons_MatchEachFacilityArtwork()
+        {
+            Assert.That(TargetBuildingDataPaths.Length, Is.EqualTo(TargetPrefabPaths.Length));
+            for (int i = 0; i < TargetBuildingDataPaths.Length; i++)
+            {
+                BuildingData data = AssetDatabase.LoadAssetAtPath<BuildingData>(TargetBuildingDataPaths[i]);
+                GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(TargetPrefabPaths[i]);
+                Assert.That(data, Is.Not.Null, TargetBuildingDataPaths[i]);
+                Assert.That(prefab, Is.Not.Null, TargetPrefabPaths[i]);
+                SpriteRenderer artwork = FindPrimaryRenderer(prefab.transform.Find("VisualRoot"));
+                Assert.That(artwork, Is.Not.Null, TargetPrefabPaths[i]);
+                Assert.That(data.Icon, Is.SameAs(artwork.sprite), TargetBuildingDataPaths[i]);
             }
         }
 
@@ -222,20 +239,19 @@ namespace SubTerra.App.Tests.UI
             return bounds;
         }
 
-        private static string BuildSignature(GameObject root)
+        private static SpriteRenderer FindPrimaryRenderer(Transform visualRoot)
         {
-            var visual = root.transform.Find(PromptB49FacilityVisualBuilder.VisualRootName);
-            Assert.That(visual, Is.Not.Null);
-            var parts = new List<string>();
-            for (var i = 0; i < visual.childCount; i++)
+            if (visualRoot == null) return null;
+            var renderers = visualRoot.GetComponentsInChildren<SpriteRenderer>(true);
+            for (var i = 0; i < renderers.Length; i++)
             {
-                var child = visual.GetChild(i);
-                var renderer = child.GetComponent<SpriteRenderer>();
-                var color = renderer != null ? renderer.color.ToString() : "none";
-                parts.Add(child.name + ":" + Mathf.RoundToInt(child.localEulerAngles.z) + ":" + color);
+                if (renderers[i] != null && renderers[i].enabled && renderers[i].sprite != null)
+                {
+                    return renderers[i];
+                }
             }
 
-            return string.Join("|", parts);
+            return null;
         }
     }
 }

@@ -97,29 +97,14 @@ namespace SubTerra.App.Editor.DataValidation
             var node = root.AddComponent<PowerNode>();
             node.Configure(null, false, 0, 3, PowerPriority.Normal);
 
-            var visualRoot = new GameObject("VisualRoot");
-            visualRoot.transform.SetParent(root.transform, false);
-            CreateVisual(visualRoot.transform, "WhiteBody", sprite, Color.white,
-                new Vector3(5.5f, 5.5f, 1f), 4);
-            CreateVisual(visualRoot.transform, "RedCrossHorizontal", sprite,
-                new Color(0.85f, 0.08f, 0.1f, 1f), new Vector3(3.2f, 0.85f, 1f), 6);
-            CreateVisual(visualRoot.transform, "RedCrossVertical", sprite,
-                new Color(0.85f, 0.08f, 0.1f, 1f), new Vector3(0.85f, 3.2f, 1f), 6);
-            body.enabled = false;
-
-            var poweredRoot = new GameObject("PoweredVisualRoot");
-            poweredRoot.transform.SetParent(root.transform, false);
-            CreateVisual(poweredRoot.transform, "PowerGlow", sprite,
-                new Color(0.35f, 1f, 0.75f, 0.22f), new Vector3(6.1f, 6.1f, 1f), 3);
-            poweredRoot.SetActive(false);
-
             var facility = root.AddComponent<PowerFacility>();
             var serialized = new SerializedObject(facility);
             serialized.FindProperty("powerNode").objectReferenceValue = node;
-            var visuals = serialized.FindProperty("poweredVisuals");
-            visuals.arraySize = 1;
-            visuals.GetArrayElementAtIndex(0).objectReferenceValue = poweredRoot;
             serialized.ApplyModifiedPropertiesWithoutUndo();
+            PromptB49FacilityVisualBuilder.ApplyVisual(
+                root,
+                FacilityVisualKind.Clinic,
+                keepPoweredVisual: true);
 
             var saved = PrefabUtility.SaveAsPrefabAsset(root, ClinicPrefabPath);
             UnityEngine.Object.DestroyImmediate(root);
@@ -168,7 +153,7 @@ namespace SubTerra.App.Editor.DataValidation
                 "보건소",
                 "전력망에 연결되면 플레이어 체력을 최대치까지 회복합니다.",
                 prefab,
-                charger.Icon,
+                PromptB49FacilityVisualBuilder.GetArtworkSprite(FacilityVisualKind.Clinic),
                 3,
                 new List<ItemCostEntry>
                 {
@@ -188,7 +173,7 @@ namespace SubTerra.App.Editor.DataValidation
                 AssetDatabase.CreateAsset(placement, ClinicPlacementPath);
             }
 
-            placement.EditorSet(data.Id, data.RuntimePrefab, Vector2Int.one, true);
+            placement.EditorSet(data.Id, data.RuntimePrefab, new Vector2Int(2, 2), true);
             placement.EditorSetCosts(new ItemCostDto(DataIds.Minerals.Copper, 3));
             EditorUtility.SetDirty(placement);
             return placement;

@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using SubTerra.Shared;
 using TMPro;
@@ -33,6 +34,7 @@ namespace SubTerra.Gameplay.Player
         private Coroutine travelRoutine;
 
         public ElevatorTravelState State { get; private set; } = ElevatorTravelState.Idle;
+        public event Action<ElevatorTravelState> StateChanged;
         public bool HasRider => riderMovement != null;
 
         /// <summary>공용 Interact 입력에서 시설 UI보다 엘리베이터 이동이 먼저 처리되어야 하는지 확인한다.</summary>
@@ -87,6 +89,10 @@ namespace SubTerra.Gameplay.Player
             }
 
             ReleaseRider();
+            if (State == ElevatorTravelState.Calling || State == ElevatorTravelState.Moving)
+            {
+                SetState(ElevatorTravelState.Idle);
+            }
         }
 
         private void Update()
@@ -331,8 +337,13 @@ namespace SubTerra.Gameplay.Player
 
         private void SetState(ElevatorTravelState state)
         {
+            bool changed = State != state;
             State = state;
             RefreshStatus();
+            if (changed)
+            {
+                StateChanged?.Invoke(state);
+            }
         }
 
         private void RefreshStatus()

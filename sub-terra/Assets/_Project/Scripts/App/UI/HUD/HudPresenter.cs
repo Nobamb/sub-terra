@@ -9,11 +9,13 @@ namespace SubTerra.App.UI.HUD
     public sealed class HudPresenter
     {
         private readonly IHudView view;
+        private readonly System.Action<EnergyReadModel> renderEnergyGauge;
         private GameState boundState;
 
-        public HudPresenter(IHudView view)
+        public HudPresenter(IHudView view, System.Action<EnergyReadModel> renderEnergyGauge = null)
         {
             this.view = view;
+            this.renderEnergyGauge = renderEnergyGauge;
         }
 
         public bool IsBound => boundState != null;
@@ -67,6 +69,7 @@ namespace SubTerra.App.UI.HUD
         {
             var energy = boundState.GetEnergy();
             view.SetEnergy(HudFormatter.FormatEnergy(energy));
+            renderEnergyGauge?.Invoke(energy);
             view.SetDepth(HudFormatter.FormatDepth(boundState.Run.Depth));
             view.SetGold(HudFormatter.FormatGold(boundState.Player.Gold));
             var inv = boundState.GetInventory();
@@ -83,6 +86,7 @@ namespace SubTerra.App.UI.HUD
         private void RenderDefaults()
         {
             view.SetEnergy(HudFormatter.FormatEnergy(0, 0));
+            renderEnergyGauge?.Invoke(default);
             view.SetDepth(HudFormatter.FormatDepth(0));
             view.SetGold(HudFormatter.FormatGold(0));
             view.SetCargo(HudFormatter.FormatCargo(0f));
@@ -97,6 +101,7 @@ namespace SubTerra.App.UI.HUD
         private void OnEnergyChanged(EnergyReadModel model)
         {
             view.SetEnergy(HudFormatter.FormatEnergy(model));
+            renderEnergyGauge?.Invoke(model);
         }
 
         private void OnCreditsChanged(int gold)

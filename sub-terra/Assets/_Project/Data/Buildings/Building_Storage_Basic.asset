@@ -17,7 +17,7 @@ MonoBehaviour:
   description: "\uD0D0\uC0AC \uC911 \uC218\uC9D1\uD55C \uAD11\uBB3C\uC744 \uC784\uC2DC
     \uBCF4\uAD00\uD569\uB2C8\uB2E4."
   runtimePrefab: {fileID: 8399673546014846682, guid: d0c7a301147833d46a0eda454df6de31, type: 3}
-  icon: {fileID: 6838030193426678921, guid: 42527be5cf11e3c42871944ebbfd1fd6, type: 2}
+  icon: {fileID: 21300000, guid: 0d077ad1b89f0f64b870e9ae79697b9f, type: 3}
   powerDraw: 0
   buildCosts:
   - itemId: mineral.iron

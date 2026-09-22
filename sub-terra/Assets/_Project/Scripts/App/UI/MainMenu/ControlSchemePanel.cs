@@ -90,7 +90,11 @@ namespace SubTerra.App.UI.MainMenu
         {
             var sample = GetComponentInChildren<TMP_Text>(true);
             font = sample != null ? sample.font : TMP_Settings.defaultFontAsset;
-            Button(transform, "ChangeControls", "키 조작 변경", 0, -366, 280, 40, Open);
+            var authoredButton = transform.Find("SettingsCard/ChangeControls");
+            if (authoredButton != null)
+                authoredButton.GetComponent<Button>().onClick.AddListener(Open);
+            else
+                Button(transform, "ChangeControls", "키 조작 변경", 0, -366, 280, 40, Open);
             var backdrop = Rect(transform, "ControlSchemeOverlay", 0, 0, 0, 0);
             backdrop.anchorMin = Vector2.zero;
             backdrop.anchorMax = Vector2.one;

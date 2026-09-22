@@ -40,9 +40,14 @@ namespace SubTerra.App.Tests.UI
                 Assert.That(Directory.Exists(root), Is.True, "HUD source folder missing: " + root);
                 foreach (var file in Directory.GetFiles(root, "*.cs"))
                 {
-                    if (Path.GetFileName(file) == "HudPanelChromeController.cs")
+                    // 상태 바인딩/텍스트 표시 계층만 검사한다. 같은 폴더의 입력·시계·보간은 별도 수명주기다.
+                    var bindingSources = new[]
                     {
-                        // 패널 단축키/월드 클릭 입력만 처리하며 HUD Text 바인딩과 무관하다.
+                        "BasicHudView.cs", "StructuralHudView.cs", "GasWarningPanelView.cs",
+                        "CompositeHudView.cs", "HudPresenter.cs", "HudBinder.cs", "HudFormatter.cs"
+                    };
+                    if (!bindingSources.Contains(Path.GetFileName(file)))
+                    {
                         continue;
                     }
 
@@ -142,7 +147,7 @@ namespace SubTerra.App.Tests.UI
         }
 
         [Test]
-        public void PromptB55_1_HealthRowMatchesOtherHudTextAlignmentAndSpacing()
+        public void PromptB106_HealthAndEnergyRowsMatchGaugeAlignmentAndSpacing()
         {
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
                 "Assets/_Project/Prefabs/UI/BasicHUD.prefab");
@@ -161,7 +166,7 @@ namespace SubTerra.App.Tests.UI
                 Assert.That(health.sizeDelta.y, Is.EqualTo(energy.sizeDelta.y).Within(0.001f));
                 Assert.That(
                     health.anchoredPosition.y - energy.anchoredPosition.y,
-                    Is.EqualTo(energy.rect.height).Within(0.001f));
+                    Is.EqualTo(45f).Within(0.001f));
             }
             finally
             {

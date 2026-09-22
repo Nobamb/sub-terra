@@ -8,8 +8,14 @@ namespace SubTerra.Gameplay.Building.Tests
 {
     public sealed class FacilityTilemapVisualTests
     {
-        [Test]
-        public void ClinicPlacementAndRestore_DrawsBackWallAndSurfaceWithoutChangingTerrain()
+        [TestCase("building.light.basic")]
+        [TestCase("building.charger.basic")]
+        [TestCase("building.storage.basic")]
+        [TestCase("building.settlement.basic")]
+        [TestCase("building.outpost.core.basic")]
+        [TestCase("building.clinic.basic")]
+        public void FacilityPlacementAndRestore_LeavesCaveBlackAndOriginalTerrainUnchanged(
+            string buildingId)
         {
             var host = new GameObject("FacilityTilemapVisualSetup");
             host.SetActive(false);
@@ -23,10 +29,10 @@ namespace SubTerra.Gameplay.Building.Tests
             var buildingRoot = new GameObject("RuntimeBuildings").transform;
             buildingRoot.SetParent(host.transform);
 
-            var prefab = new GameObject("ClinicPrefab");
+            var prefab = new GameObject("FacilityPrefab");
             prefab.AddComponent<BuildingInstance>();
             var definition = ScriptableObject.CreateInstance<BuildingPlacementDefinition>();
-            definition.EditorSet("building.clinic.basic", prefab, Vector2Int.one, true);
+            definition.EditorSet(buildingId, prefab, Vector2Int.one, true);
             TileBase rock = ScriptableObject.CreateInstance<Tile>();
             var placement = host.AddComponent<BuildingPlacementSystem>();
             var visuals = host.AddComponent<FacilityTilemapVisualSystem>();
@@ -42,32 +48,33 @@ namespace SubTerra.Gameplay.Building.Tests
 
             try
             {
-                Vector3Int clinicCell = new(3, 2, 0);
-                Vector3Int groundCell = clinicCell + Vector3Int.down;
+                Vector3Int facilityCell = new(3, 2, 0);
+                Vector3Int groundCell = facilityCell + Vector3Int.down;
                 terrain.SetTile(groundCell, rock);
                 host.SetActive(true);
                 InvokePrivate(visuals, "OnEnable");
                 placement.Select(definition);
 
-                Assert.That(placement.TryPlaceAt(clinicCell).IsSuccess, Is.True);
-                Assert.That(backWall.GetTile(clinicCell), Is.SameAs(rock));
-                Assert.That(surface.GetTile(groundCell), Is.SameAs(rock));
+                Assert.That(placement.TryPlaceAt(facilityCell).IsSuccess, Is.True);
+                Assert.That(backWall.HasTile(facilityCell), Is.False);
+                Assert.That(surface.HasTile(groundCell), Is.False);
                 Assert.That(terrain.GetTile(groundCell), Is.SameAs(rock));
-                Assert.That(foreground.HasTile(clinicCell), Is.False);
+                Assert.That(foreground.HasTile(facilityCell), Is.False);
 
                 placement.PrepareForWorldRestore();
-                Assert.That(backWall.HasTile(clinicCell), Is.False);
+                Assert.That(backWall.HasTile(facilityCell), Is.False);
                 Assert.That(surface.HasTile(groundCell), Is.False);
 
                 Assert.That(placement.TryRestoreBuilding(new BuildingSnapshotDto
                 {
-                    instanceId = "building.clinic.basic-0001",
-                    buildingTypeId = "building.clinic.basic",
-                    x = clinicCell.x,
-                    y = clinicCell.y
+                    instanceId = buildingId + "-0001",
+                    buildingTypeId = buildingId,
+                    x = facilityCell.x,
+                    y = facilityCell.y
                 }), Is.True);
-                Assert.That(backWall.GetTile(clinicCell), Is.SameAs(rock));
-                Assert.That(surface.GetTile(groundCell), Is.SameAs(rock));
+                Assert.That(backWall.HasTile(facilityCell), Is.False);
+                Assert.That(surface.HasTile(groundCell), Is.False);
+                Assert.That(terrain.GetTile(groundCell), Is.SameAs(rock));
             }
             finally
             {

@@ -12,6 +12,7 @@ namespace SubTerra.App.UI.Economy
     /// </summary>
     public sealed class EconomyPanelView : MonoBehaviour, IEconomyPanelView
     {
+        public const string RareSellNotice = "전체 판매에서 희귀 품목 제외 · 엔진 연료는 개별 선택 판매";
         [SerializeField] private TMP_Text statusMessageText;
         [SerializeField] private TMP_Text statusDetailText;
         [SerializeField] private CanvasGroup canvasGroup;
@@ -57,6 +58,7 @@ namespace SubTerra.App.UI.Economy
 
         private void Awake()
         {
+            SetStatusDetail(string.Empty);
             WireButtons(true);
             if (canvasGroup != null)
             {
@@ -82,7 +84,9 @@ namespace SubTerra.App.UI.Economy
         {
             if (statusDetailText != null)
             {
-                statusDetailText.text = detail ?? string.Empty;
+                statusDetailText.text = string.IsNullOrEmpty(detail)
+                    ? RareSellNotice
+                    : RareSellNotice + "\n" + detail;
             }
         }
 

@@ -33,6 +33,10 @@ namespace SubTerra.App.Editor
             "Assets/_Project/Data/Buildings/Building_Ladder_Basic.asset";
         public const string LadderPlacementPath =
             "Assets/_Project/Data/Buildings/LadderPlacement.asset";
+        public const string LadderArtPath =
+            "Assets/_Project/Art/Facilities/MVP/ladder_segment_mine.png";
+        public const string ElevatorArtPath =
+            "Assets/_Project/Art/Facilities/MVP/elevator_station_mine.png";
 
         private const string LadderId = "building.ladder.basic";
         private const string InputActionsPath = "Assets/Settings/InputSystem_Actions.inputactions";
@@ -63,10 +67,13 @@ namespace SubTerra.App.Editor
                 typeof(BoxCollider2D),
                 typeof(LadderZone));
             var renderer = root.GetComponent<SpriteRenderer>();
-            renderer.sprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UISprite.psd");
-            renderer.color = new Color(0.95f, 0.67f, 0.18f, 0.9f);
-            renderer.size = new Vector2(0.65f, height);
-            renderer.drawMode = SpriteDrawMode.Sliced;
+            renderer.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(LadderArtPath);
+            if (renderer.sprite == null)
+                throw new InvalidOperationException("Ladder sprite is missing: " + LadderArtPath);
+            renderer.color = Color.white;
+            // 텍스처는 투명 여백을 포함한 1칸 폭이다. 0.65로 자르면 우측 레일이 잘린다.
+            renderer.size = new Vector2(1f, height);
+            renderer.drawMode = SpriteDrawMode.Tiled;
             renderer.sortingOrder = 4;
 
             var zone = root.GetComponent<BoxCollider2D>();
@@ -87,13 +94,6 @@ namespace SubTerra.App.Editor
                 typeof(ElevatorController));
             // Collider size is local; non-1 scale shrinks the boarding trigger below usable size.
             root.transform.localScale = Vector3.one;
-            var renderer = root.GetComponent<SpriteRenderer>();
-            renderer.sprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UISprite.psd");
-            renderer.color = new Color(0.16f, 0.52f, 0.62f, 0.95f);
-            renderer.size = new Vector2(2.2f, 2.8f);
-            renderer.drawMode = SpriteDrawMode.Sliced;
-            renderer.sortingOrder = 3;
-
             var zone = root.GetComponent<BoxCollider2D>();
             zone.isTrigger = true;
             zone.size = new Vector2(2.2f, 2.8f);
@@ -129,6 +129,8 @@ namespace SubTerra.App.Editor
             serialized.FindProperty("statusText").objectReferenceValue = status;
             serialized.ApplyModifiedPropertiesWithoutUndo();
 
+            ElevatorVisualPrefabSetup.Configure(root);
+
             var saved = PrefabUtility.SaveAsPrefabAsset(root, ElevatorPrefabPath);
             UnityEngine.Object.DestroyImmediate(root);
             return saved;
@@ -142,7 +144,7 @@ namespace SubTerra.App.Editor
                 "기본 사다리",
                 "깊은 수직 갱도에서 중력 없이 오르내릴 수 있습니다. 철 1개·구리 3개로 세로 5칸 설치합니다.",
                 prefab,
-                AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Knob.psd"),
+                AssetDatabase.LoadAssetAtPath<Sprite>(LadderArtPath),
                 0,
                 new List<ItemCostEntry>
                 {
@@ -203,12 +205,14 @@ namespace SubTerra.App.Editor
             elevator.transform.position = new Vector3(-6.5f, 0f, 0f);
 
             // 시작 세로 통로를 채굴하면 즉시 6칸 이상 사다리를 검증할 수 있는 데모 구간.
-            // 기본 Ladder Prefab(높이 1)을 y=7로 스케일해 이전 세로 길이를 유지한다.
+            // Transform을 늘리면 가로대 2개가 7배 벌어진다. 렌더러만 반복하고 등반 영역을 맞춘다.
             var demoLadder = (GameObject)PrefabUtility.InstantiatePrefab(ladderPrefab, scene);
             demoLadder.name = "LadderTrainingShaft_6m";
             demoLadder.transform.SetParent(traversal.transform, false);
             demoLadder.transform.position = new Vector3(-9.5f, -5f, 0f);
-            demoLadder.transform.localScale = new Vector3(1f, 7f, 1f);
+            demoLadder.transform.localScale = Vector3.one;
+            demoLadder.GetComponent<SpriteRenderer>().size = new Vector2(1f, 7f);
+            demoLadder.GetComponent<BoxCollider2D>().size = new Vector2(0.7f, 7f);
 
             var bridgeHost = new GameObject("ElevatorTravelBridge");
             bridgeHost.transform.SetParent(traversal.transform, false);

@@ -16,4 +16,4 @@ MonoBehaviour:
   displayName: "\uCCA0"
   unitWeight: 2
   unitPrice: 15
-  icon: {fileID: -5349939458896161623, guid: a24b9605246fd964190756219d2b0ebf, type: 2}
+  icon: {fileID: 21300000, guid: 34ba4cb5b0ec9184ab1c42bf27bde632, type: 3}

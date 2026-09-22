@@ -73,7 +73,10 @@ namespace SubTerra.App.UI.HUD
             }
 
             var composite = new CompositeHudView(basicHud, structuralHud, gasWarningPanel);
-            presenter = new HudPresenter(composite);
+            presenter = new HudPresenter(composite, model =>
+            {
+                if (basicHud != null) basicHud.SetEnergyLevel(model.Current, model.Max);
+            });
         }
 
         private static GameState ResolveState()
@@ -107,6 +110,7 @@ namespace SubTerra.App.UI.HUD
             if (basicHud != null)
             {
                 basicHud.SetHealth(HudFormatter.FormatHealth(health));
+                basicHud.SetHealthLevel(health.Current, health.Maximum);
             }
         }
     }
