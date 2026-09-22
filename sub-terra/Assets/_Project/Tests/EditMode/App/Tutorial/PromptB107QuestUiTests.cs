@@ -32,13 +32,14 @@ namespace SubTerra.App.Tests.Tutorial
             fade.SetPointed(true);
             fade.Tick(0.25f);
             Assert.That(hover.color.a, Is.EqualTo(0.5f).Within(0.001f));
-            Assert.That(normal.color.a, Is.EqualTo(0.5f).Within(0.001f));
+            Assert.That(normal.color.a, Is.EqualTo(1f).Within(0.001f));
             fade.Tick(0.25f);
             Assert.That(hover.color.a, Is.EqualTo(1f).Within(0.001f));
-            Assert.That(normal.color.a, Is.EqualTo(0f).Within(0.001f));
+            Assert.That(normal.color.a, Is.EqualTo(1f).Within(0.001f));
             fade.SetPointed(false);
             fade.Tick(0.5f);
             Assert.That(hover.color.a, Is.EqualTo(0f).Within(0.001f));
+            Assert.That(normal.color.a, Is.EqualTo(1f).Within(0.001f));
 
             button.interactable = false;
             fade.SetPointed(true);
@@ -74,8 +75,8 @@ namespace SubTerra.App.Tests.Tutorial
                 Assert.That(details.activeSelf, Is.False);
                 Assert.That(summaryRect.anchoredPosition.y, Is.LessThan(-260f));
                 Assert.That(bottom, Is.GreaterThan(-426f));
-                Assert.That(summaryRect.sizeDelta.x, Is.EqualTo(442f));
-                Assert.That(summaryRect.sizeDelta.y, Is.EqualTo(130f));
+                Assert.That(summaryRect.sizeDelta.x, Is.EqualTo(460f));
+                Assert.That(summaryRect.sizeDelta.y, Is.EqualTo(136f));
 
                 var summaryFade = summary.GetComponent<QuestSpriteCrossfade>();
                 Assert.That(summaryFade, Is.Not.Null);
@@ -112,6 +113,12 @@ namespace SubTerra.App.Tests.Tutorial
                 Assert.That(Find(scene, "RewardSlotIron"), Is.Not.Null);
                 Assert.That(Find(scene, "RewardSlotLithium"), Is.Not.Null);
                 Assert.That(Find(scene, "RewardSlotGold"), Is.Not.Null);
+                Assert.That(Find(scene, "QuestStatusPlate"), Is.Not.Null);
+                Assert.That(Find(scene, "QuestStatusDivider"), Is.Not.Null);
+                Assert.That(Find(scene, "QuestMissionDivider"), Is.Not.Null);
+                Assert.That(Find(scene, "QuestRewardDivider"), Is.Not.Null);
+                Assert.That(Find(scene, "QuestThumbnailDots"), Is.Not.Null);
+                Assert.That(Find(scene, "QuestBrandText"), Is.Not.Null);
                 var facility = Find(scene, "BuildingPanel").GetComponent<RectTransform>();
                 Assert.That(facility.anchoredPosition.y, Is.EqualTo(-426f));
 
@@ -134,12 +141,28 @@ namespace SubTerra.App.Tests.Tutorial
                         string.Empty));
                     Assert.That(FindChild(clone.transform, "ProgressCount").GetComponent<TMP_Text>().text,
                         Is.EqualTo("진행도 6 / 18"));
+                    Assert.That(FindChild(clone.transform, "ObjectiveTitle").GetComponent<TMP_Text>().text,
+                        Is.EqualTo(current.Title));
+                    Assert.That(FindChild(clone.transform, "ObjectiveBody").GetComponent<TMP_Text>().text,
+                        Is.EqualTo(current.Description));
                     Assert.That(FindChild(clone.transform, "QuestStatusIcon").GetComponent<Image>().sprite.name,
                         Is.EqualTo("quest-status-ring"));
 
+                    // 진행 중 퀘스트 상세 테스트: 3번째 퀘스트 탐색 시 3 / 18 표시 확인
+                    cloneView.ApplyQuestDetailsVisual(current.Id, current.Reward, false, true, 3, 18, false);
+                    Assert.That(FindChild(clone.transform, "QuestDetailsProgress").GetComponent<TMP_Text>().text,
+                        Is.EqualTo("3 / 18"));
+                    Assert.That(FindChild(clone.transform, "QuestDetailsStatus").GetComponent<TMP_Text>().text,
+                        Is.EqualTo("진행 중"));
+                    Assert.That(FindChild(clone.transform, "QuestClearBadge").gameObject.activeSelf, Is.False);
+
                     var escape = DemoObjectiveCatalog.GetRequired(DemoObjectiveIds.EmergencyEscapeReturn);
                     cloneView.SetDetailsText(escape.Title, escape.Description, string.Empty);
-                    cloneView.ApplyQuestDetailsVisual(escape.Id, escape.Reward, true, false, 18, 18);
+                    cloneView.ApplyQuestDetailsVisual(escape.Id, escape.Reward, true, false, 18, 18, true);
+                    Assert.That(FindChild(clone.transform, "QuestDetailsTitle").GetComponent<TMP_Text>().text,
+                        Is.EqualTo(escape.Title));
+                    Assert.That(FindChild(clone.transform, "QuestDetailsBody").GetComponent<TMP_Text>().text,
+                        Is.EqualTo(escape.Description));
                     Assert.That(FindChild(clone.transform, "RewardSlotLithium").gameObject.activeSelf, Is.True);
                     Assert.That(FindChild(clone.transform, "RewardSlotGold").gameObject.activeSelf, Is.True);
                     Assert.That(FindChild(clone.transform, "RewardSlotCopper").gameObject.activeSelf, Is.False);
@@ -149,6 +172,8 @@ namespace SubTerra.App.Tests.Tutorial
                         Is.EqualTo("300"));
                     Assert.That(FindChild(clone.transform, "QuestDetailsStatus").GetComponent<TMP_Text>().text,
                         Is.EqualTo("모든 목표 완료"));
+                    Assert.That(FindChild(clone.transform, "QuestDetailsProgress").GetComponent<TMP_Text>().text,
+                        Is.EqualTo("18 / 18"));
                     Assert.That(FindChild(clone.transform, "QuestClearBadge").gameObject.activeSelf, Is.True);
                     Assert.That(FindChild(clone.transform, "QuestThumbnail").Find("Primary").GetComponent<Image>().sprite,
                         Is.Not.Null);
@@ -210,6 +235,10 @@ namespace SubTerra.App.Tests.Tutorial
             summary.SetPointed(hover);
             summary.Tick(hover ? 0.5f : 0f);
             FindChild(placed.transform, "QuestDetailsPanel").gameObject.SetActive(details);
+            foreach (var tmp in placed.GetComponentsInChildren<TMP_Text>(true))
+            {
+                tmp.ForceMeshUpdate();
+            }
             Canvas.ForceUpdateCanvases();
             camera.Render();
             var previous = RenderTexture.active;

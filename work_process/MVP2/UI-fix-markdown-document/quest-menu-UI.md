@@ -465,3 +465,32 @@ Hover 상태
 ```
 
 을 각각 확인한다.
+
+---
+
+## 8. 후속 개선 및 컨셉트 리워크 (프롬프트 B-107-1)
+
+### 8.1 주요 개선 사항
+1. **기본 퀘스트창 가독성 및 여백 조정**:
+   - 폰트 크기 확대: `MISSION` (16pt Bold), 타이틀 (20pt Bold), 본문 설명 (15pt).
+   - 카드 크기 및 배치 비례 확장: 폭 `460px`, 높이 `136px`로 확장하고, 하단 시설 패널(`Y = -426`)과 안전 간격(`22px`)을 유지하여 겹침 방지.
+2. **호버 시 중간 투명화 제거**:
+   - `QuestSpriteCrossfade.cs`에서 `normalImage`의 알파를 1.0으로 고정하고, `hoverImage`만 알파 0 → 1로 페이드 오버레이하여 중간에 배경이 비치거나 투명해지는 현상 완벽 제거.
+3. **퀘스트 상세창 컨셉트 레이아웃 리워크 (`quest-particular-concept.png` 반영)**:
+   - 상단 헤더: `MISSION LOG` (사용자 피드백에 따라 `////` 제외하고 깔끔하게 적용).
+   - 목표 타이틀: 32pt Bold 화이트로 상단 강조 배치.
+   - 상태 표시 행: `quest-status-plate` 슬라이스드 컨테이너 플레이트 도입, 상태 텍스트 시안색 적용, 수평 구분선 배치.
+   - 임무 내용: 섹션 우측 수평 구분선 및 임무 아이콘 배치.
+   - 썸네일: `quest-thumbnail-frame` 시안 글로우 외곽선 프레임 및 하단 캐러셀 인디케이터 점(`• • •`) 연동.
+   - 클리어 보상: 보상 슬롯 카드 너비 310px 확장, 골드 아이콘을 컨셉트의 골드바(`quest-icon-gold.png`)로 전면 교체.
+   - 우측 하단 브랜딩: `PROJECT SUB-TERRA` 텍스트 추가.
+4. **퀘스트 상황 0/18 고정 버그 수정**:
+   - `DemoObjectivePresenter`에서 `ApplyQuestDetailsVisual` 호출 시 `completed` 대신 `viewedIndex + 1`을 전달하도록 수정하여, 퀘스트를 탐색할 때마다 `1 / 18`, `2 / 18`, ... `18 / 18`로 정확히 반영.
+
+### 8.2 검증 결과
+- **EditMode 테스트 통과**: `PromptB107QuestUiTests` 2개 테스트 전부 PASS (`Pass: 2, Fail: 0`).
+- **증빙 스냅샷**:
+  - 기본 상태: `work_process/MVP2/UI-fix-markdown-document/evidence/prompt-b107/quest-basic.png`
+  - 호버 상태: `work_process/MVP2/UI-fix-markdown-document/evidence/prompt-b107/quest-hover.png`
+  - 상세창 상태: `work_process/MVP2/UI-fix-markdown-document/evidence/prompt-b107/quest-details.png`
+

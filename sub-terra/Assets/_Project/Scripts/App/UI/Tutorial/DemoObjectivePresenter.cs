@@ -424,8 +424,9 @@ namespace SubTerra.App.UI.Tutorial
                     definition.Reward,
                     isCleared,
                     isCurrent,
-                    completed,
-                    DemoObjectiveIds.RequiredCount);
+                    viewedIndex + 1,
+                    DemoObjectiveIds.RequiredCount,
+                    isDemoComplete || completed >= DemoObjectiveIds.RequiredCount);
             }
         }
 

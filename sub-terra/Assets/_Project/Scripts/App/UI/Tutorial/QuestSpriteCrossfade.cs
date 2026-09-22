@@ -77,7 +77,7 @@ namespace SubTerra.App.UI.Tutorial
 
         private void Apply()
         {
-            SetAlpha(normalImage, 1f - alpha);
+            SetAlpha(normalImage, 1f);
             SetAlpha(hoverImage, alpha);
         }
 

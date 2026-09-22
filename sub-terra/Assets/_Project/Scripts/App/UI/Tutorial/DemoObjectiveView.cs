@@ -284,11 +284,18 @@ namespace SubTerra.App.UI.Tutorial
 
         public void SetDetailsIndex(string indexText)
         {
+            var formatted = string.IsNullOrEmpty(indexText)
+                ? string.Empty
+                : indexText.Replace("/", " / ");
+
             if (detailsIndexText != null)
             {
-                detailsIndexText.text = string.IsNullOrEmpty(indexText)
-                    ? string.Empty
-                    : indexText.Replace("/", " / ");
+                detailsIndexText.text = formatted;
+            }
+
+            if (detailsProgressText != null)
+            {
+                detailsProgressText.text = formatted;
             }
         }
 
@@ -304,8 +311,9 @@ namespace SubTerra.App.UI.Tutorial
             QuestReward reward,
             bool cleared,
             bool current,
-            int completedCount,
-            int totalCount)
+            int questNumber,
+            int totalCount,
+            bool isAllComplete = false)
         {
             if (thumbnailView != null)
             {
@@ -330,12 +338,12 @@ namespace SubTerra.App.UI.Tutorial
 
             if (detailsProgressText != null)
             {
-                detailsProgressText.text = completedCount + " / " + totalCount;
+                detailsProgressText.text = questNumber + " / " + totalCount;
             }
 
             if (detailsStatusText != null)
             {
-                var demoFinished = cleared && totalCount > 0 && completedCount >= totalCount
+                var demoFinished = isAllComplete
                     && objectiveId == DemoObjectiveIds.EmergencyEscapeReturn;
                 detailsStatusText.text = demoFinished
                     ? "모든 목표 완료"

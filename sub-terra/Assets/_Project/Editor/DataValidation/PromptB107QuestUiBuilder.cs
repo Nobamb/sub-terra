@@ -25,8 +25,8 @@ namespace SubTerra.App.Editor.DataValidation
         // 누끼 후 프레임 비율. 카드 하단은 시설 창(-426)보다 위.
         private const float CardX = 16f;
         private const float CardY = -268f;
-        private const float CardW = 442f;
-        private const float CardH = 130f;
+        private const float CardW = 460f;
+        private const float CardH = 136f;
         private const float DetailsW = 880f;
         private const float DetailsH = 718f;
 
@@ -74,7 +74,7 @@ namespace SubTerra.App.Editor.DataValidation
         private const string IconCopper = "Assets/_Project/Art/Icons/icon_copper.png";
         private const string IconIron = "Assets/_Project/Art/Icons/icon_iron.png";
         private const string IconLithium = "Assets/_Project/Art/Icons/icon_lithium.png";
-        private const string IconGold = "Assets/_Project/Art/FX/gold_coin_01.png";
+        private const string IconGold = Art + "quest-icon-gold.png";
 
         [MenuItem("SubTerra/UI/Build Prompt-B 107 Quest Window")]
         public static void BuildFromMenu()
@@ -143,28 +143,30 @@ namespace SubTerra.App.Editor.DataValidation
             Wire(button, view.OnObjectiveDetailsClicked);
 
             var mission = EnsureLabel(root, "QuestMissionLabel", font);
-            Style(mission, 13f, Cyan, TextAlignmentOptions.MidlineLeft, false);
-            mission.characterSpacing = 6f;
+            Style(mission, 16f, Cyan, TextAlignmentOptions.MidlineLeft, false);
+            mission.fontStyle = FontStyles.Bold;
+            mission.characterSpacing = 5f;
             mission.text = "MISSION";
-            Place(mission.rectTransform, CardX + 28f, CardY - 12f, 150f, 24f, new Vector2(0f, 1f), new Vector2(0f, 1f));
+            Place(mission.rectTransform, CardX + 26f, CardY - 14f, 140f, 24f, new Vector2(0f, 1f), new Vector2(0f, 1f));
 
             var progress = Required(root, "ProgressCount").GetComponent<TMP_Text>();
-            Style(progress, 13f, Color.white, TextAlignmentOptions.MidlineRight, false);
-            Place(progress.rectTransform, CardX + 240f, CardY - 12f, 174f, 24f, new Vector2(0f, 1f), new Vector2(0f, 1f));
+            Style(progress, 16f, Color.white, TextAlignmentOptions.MidlineRight, false);
+            Place(progress.rectTransform, CardX + 240f, CardY - 14f, 194f, 24f, new Vector2(0f, 1f), new Vector2(0f, 1f));
 
             var icon = EnsureImage(root, "QuestStatusIcon", QuestSprite("quest-status-ring"));
             icon.preserveAspect = true;
-            Place(icon.rectTransform, CardX + 26f, CardY - 52f, 30f, 30f, new Vector2(0f, 1f), new Vector2(0f, 1f));
+            Place(icon.rectTransform, CardX + 24f, CardY - 48f, 34f, 34f, new Vector2(0f, 1f), new Vector2(0f, 1f));
 
             var title = Required(root, "ObjectiveTitle").GetComponent<TMP_Text>();
-            Style(title, 15f, Color.white, TextAlignmentOptions.MidlineLeft, false);
+            Style(title, 20f, Color.white, TextAlignmentOptions.MidlineLeft, false);
             title.fontStyle = FontStyles.Bold;
-            title.overflowMode = TextOverflowModes.Ellipsis;
-            Place(title.rectTransform, CardX + 64f, CardY - 50f, 352f, 26f, new Vector2(0f, 1f), new Vector2(0f, 1f));
+            title.overflowMode = TextOverflowModes.Overflow;
+            Place(title.rectTransform, CardX + 66f, CardY - 48f, 368f, 32f, new Vector2(0f, 1f), new Vector2(0f, 1f));
 
             var body = Required(root, "ObjectiveBody").GetComponent<TMP_Text>();
-            Style(body, 12f, new Color(0.82f, 0.91f, 0.94f), TextAlignmentOptions.TopLeft, true);
-            Place(body.rectTransform, CardX + 64f, CardY - 78f, 352f, 40f, new Vector2(0f, 1f), new Vector2(0f, 1f));
+            Style(body, 15f, new Color(0.85f, 0.93f, 0.96f), TextAlignmentOptions.TopLeft, true);
+            body.overflowMode = TextOverflowModes.Overflow;
+            Place(body.rectTransform, CardX + 66f, CardY - 82f, 368f, 44f, new Vector2(0f, 1f), new Vector2(0f, 1f));
 
             var nextAction = root.Find("NextAction");
             if (nextAction != null)
@@ -176,6 +178,9 @@ namespace SubTerra.App.Editor.DataValidation
             mission.transform.SetSiblingIndex(1);
             icon.transform.SetSiblingIndex(2);
 
+            Assign(view, "objectiveTitleText", title);
+            Assign(view, "objectiveBodyText", body);
+            Assign(view, "progressCountText", progress);
             Assign(view, "basicStatusIcon", icon);
             Assign(view, "basicStatusClearSprite", QuestSprite("quest-status-check"));
             Assign(view, "basicStatusRingSprite", QuestSprite("quest-status-ring"));
@@ -212,66 +217,91 @@ namespace SubTerra.App.Editor.DataValidation
             }
 
             var log = EnsureLabel(panel, "QuestMissionLogLabel", font);
-            Style(log, 14f, Cyan, TextAlignmentOptions.MidlineLeft, false);
+            Style(log, 15f, Cyan, TextAlignmentOptions.MidlineLeft, false);
+            log.fontStyle = FontStyles.Bold;
             log.characterSpacing = 4f;
             log.text = "MISSION LOG";
-            Place(log.rectTransform, 78f, -62f, 300f, 26f, new Vector2(0f, 1f), new Vector2(0f, 1f));
+            Place(log.rectTransform, 78f, -60f, 300f, 26f, new Vector2(0f, 1f), new Vector2(0f, 1f));
 
-            var title = StyleExisting(panel, "QuestDetailsTitle", 28f, Color.white, TextAlignmentOptions.MidlineLeft, false);
+            var title = StyleExisting(panel, "QuestDetailsTitle", 32f, Color.white, TextAlignmentOptions.MidlineLeft, false);
             title.fontStyle = FontStyles.Bold;
-            Place(title.rectTransform, 78f, -94f, 640f, 46f, new Vector2(0f, 1f), new Vector2(0f, 1f));
+            title.overflowMode = TextOverflowModes.Overflow;
+            Place(title.rectTransform, 78f, -92f, 640f, 46f, new Vector2(0f, 1f), new Vector2(0f, 1f));
+
+            var statusPlate = EnsureImage(panel, "QuestStatusPlate", QuestSprite("quest-status-plate"));
+            statusPlate.type = Image.Type.Sliced;
+            Place(statusPlate.rectTransform, 74f, -142f, 732f, 44f, new Vector2(0f, 1f), new Vector2(0f, 1f));
 
             var statusIcon = EnsureImage(panel, "QuestDetailsStatusIcon", QuestSprite("quest-status-ring"));
             statusIcon.preserveAspect = true;
-            Place(statusIcon.rectTransform, 78f, -150f, 32f, 32f, new Vector2(0f, 1f), new Vector2(0f, 1f));
+            Place(statusIcon.rectTransform, 86f, -148f, 32f, 32f, new Vector2(0f, 1f), new Vector2(0f, 1f));
 
-            var status = StyleExisting(panel, "QuestDetailsStatus", 16f, Color.white, TextAlignmentOptions.MidlineLeft, false);
-            Place(status.rectTransform, 118f, -148f, 260f, 34f, new Vector2(0f, 1f), new Vector2(0f, 1f));
+            var status = StyleExisting(panel, "QuestDetailsStatus", 18f, Cyan, TextAlignmentOptions.MidlineLeft, false);
+            status.fontStyle = FontStyles.Bold;
+            Place(status.rectTransform, 126f, -148f, 260f, 34f, new Vector2(0f, 1f), new Vector2(0f, 1f));
 
             var progress = EnsureLabel(panel, "QuestDetailsProgress", font);
-            Style(progress, 18f, Color.white, TextAlignmentOptions.MidlineRight, false);
-            Place(progress.rectTransform, 420f, -148f, 180f, 34f, new Vector2(0f, 1f), new Vector2(0f, 1f));
+            Style(progress, 20f, Color.white, TextAlignmentOptions.MidlineRight, false);
+            progress.fontStyle = FontStyles.Bold;
+            Place(progress.rectTransform, 440f, -148f, 160f, 34f, new Vector2(0f, 1f), new Vector2(0f, 1f));
 
             var badge = EnsureBadge(panel, font);
-            Place(badge.GetComponent<RectTransform>(), 630f, -150f, 128f, 34f, new Vector2(0f, 1f), new Vector2(0f, 1f));
+            Place(badge.GetComponent<RectTransform>(), 630f, -147f, 128f, 34f, new Vector2(0f, 1f), new Vector2(0f, 1f));
+
+            EnsureDivider(panel, "QuestStatusDivider", 78f, -192f, 724f);
 
             var missionIcon = EnsureImage(panel, "QuestMissionIcon", QuestSprite("quest-icon-mission"));
             missionIcon.preserveAspect = true;
-            Place(missionIcon.rectTransform, 78f, -198f, 22f, 22f, new Vector2(0f, 1f), new Vector2(0f, 1f));
+            Place(missionIcon.rectTransform, 78f, -202f, 24f, 24f, new Vector2(0f, 1f), new Vector2(0f, 1f));
             var missionHeader = EnsureLabel(panel, "QuestMissionHeader", font);
-            Style(missionHeader, 16f, Color.white, TextAlignmentOptions.MidlineLeft, false);
+            Style(missionHeader, 17f, Color.white, TextAlignmentOptions.MidlineLeft, false);
+            missionHeader.fontStyle = FontStyles.Bold;
             missionHeader.text = "임무 내용";
-            Place(missionHeader.rectTransform, 108f, -196f, 240f, 26f, new Vector2(0f, 1f), new Vector2(0f, 1f));
+            Place(missionHeader.rectTransform, 108f, -200f, 80f, 26f, new Vector2(0f, 1f), new Vector2(0f, 1f));
 
-            var body = StyleExisting(panel, "QuestDetailsBody", 16f, new Color(0.86f, 0.93f, 0.95f), TextAlignmentOptions.TopLeft, true);
-            Place(body.rectTransform, 78f, -228f, 724f, 52f, new Vector2(0f, 1f), new Vector2(0f, 1f));
-            var next = StyleExisting(panel, "QuestDetailsNextAction", 14f, new Color(0.65f, 0.86f, 0.9f), TextAlignmentOptions.TopLeft, true);
-            Place(next.rectTransform, 78f, -280f, 724f, 28f, new Vector2(0f, 1f), new Vector2(0f, 1f));
+            EnsureDivider(panel, "QuestMissionDivider", 192f, -212f, 610f);
+
+            var body = StyleExisting(panel, "QuestDetailsBody", 16f, new Color(0.88f, 0.95f, 0.98f), TextAlignmentOptions.TopLeft, true);
+            body.overflowMode = TextOverflowModes.Overflow;
+            Place(body.rectTransform, 78f, -232f, 724f, 48f, new Vector2(0f, 1f), new Vector2(0f, 1f));
+            var next = StyleExisting(panel, "QuestDetailsNextAction", 14f, new Color(0.65f, 0.88f, 0.95f), TextAlignmentOptions.TopLeft, true);
+            Place(next.rectTransform, 78f, -282f, 724f, 26f, new Vector2(0f, 1f), new Vector2(0f, 1f));
 
             var thumbnail = EnsureThumbnail(panel, font);
-            Place(thumbnail.GetComponent<RectTransform>(), 78f, -314f, 724f, 190f, new Vector2(0f, 1f), new Vector2(0f, 1f));
+            Place(thumbnail.GetComponent<RectTransform>(), 78f, -312f, 724f, 188f, new Vector2(0f, 1f), new Vector2(0f, 1f));
+
+            EnsureDots(panel, 78f, -506f, 724f);
 
             var rewardIcon = EnsureImage(panel, "QuestRewardIcon", QuestSprite("quest-icon-reward"));
             rewardIcon.preserveAspect = true;
-            Place(rewardIcon.rectTransform, 78f, -516f, 22f, 22f, new Vector2(0f, 1f), new Vector2(0f, 1f));
+            Place(rewardIcon.rectTransform, 78f, -526f, 24f, 24f, new Vector2(0f, 1f), new Vector2(0f, 1f));
             var rewardHeader = EnsureLabel(panel, "QuestRewardHeader", font);
-            Style(rewardHeader, 16f, Color.white, TextAlignmentOptions.MidlineLeft, false);
+            Style(rewardHeader, 17f, Color.white, TextAlignmentOptions.MidlineLeft, false);
+            rewardHeader.fontStyle = FontStyles.Bold;
             rewardHeader.text = "클리어 보상";
-            Place(rewardHeader.rectTransform, 108f, -514f, 240f, 26f, new Vector2(0f, 1f), new Vector2(0f, 1f));
+            Place(rewardHeader.rectTransform, 108f, -524f, 96f, 26f, new Vector2(0f, 1f), new Vector2(0f, 1f));
+
+            EnsureDivider(panel, "QuestRewardDivider", 208f, -536f, 594f);
 
             var legacyReward = StyleExisting(panel, "QuestDetailsReward", 16f, Color.white, TextAlignmentOptions.MidlineLeft, false);
-            Place(legacyReward.rectTransform, 78f, -546f, 400f, 28f, new Vector2(0f, 1f), new Vector2(0f, 1f));
+            Place(legacyReward.rectTransform, 78f, -554f, 400f, 28f, new Vector2(0f, 1f), new Vector2(0f, 1f));
             legacyReward.gameObject.SetActive(false);
 
             var row = EnsureRect(panel, "QuestRewardRow");
-            Place(row, 78f, -546f, 724f, 72f, new Vector2(0f, 1f), new Vector2(0f, 1f));
+            Place(row, 78f, -554f, 724f, 76f, new Vector2(0f, 1f), new Vector2(0f, 1f));
             var copper = EnsureSlot(row, "RewardSlotCopper", font, "구리", SpriteAt(IconCopper), 0f);
-            var iron = EnsureSlot(row, "RewardSlotIron", font, "철", SpriteAt(IconIron), 192f);
-            var lithium = EnsureSlot(row, "RewardSlotLithium", font, "리튬", SpriteAt(IconLithium), 384f);
-            var gold = EnsureSlot(row, "RewardSlotGold", font, "골드", SpriteAt(IconGold), 576f);
+            var iron = EnsureSlot(row, "RewardSlotIron", font, "철", SpriteAt(IconIron), 330f);
+            var lithium = EnsureSlot(row, "RewardSlotLithium", font, "리튬", SpriteAt(IconLithium), 0f);
+            var gold = EnsureSlot(row, "RewardSlotGold", font, "골드", SpriteAt(IconGold), 330f);
 
             var index = StyleExisting(panel, "QuestDetailsIndex", 14f, new Color(0.7f, 0.9f, 0.93f), TextAlignmentOptions.Center, false);
             Place(index.rectTransform, 330f, -636f, 220f, 28f, new Vector2(0f, 1f), new Vector2(0f, 1f));
+            index.gameObject.SetActive(false);
+
+            var brand = EnsureLabel(panel, "QuestBrandText", font);
+            Style(brand, 12f, new Color(0.3f, 0.65f, 0.75f, 0.7f), TextAlignmentOptions.MidlineRight, false);
+            brand.text = "PROJECT SUB-TERRA";
+            Place(brand.rectTransform, 550f, -654f, 252f, 20f, new Vector2(0f, 1f), new Vector2(0f, 1f));
 
             var close = EnsureButton(panel, "QuestDetailsCloseButton");
             Place(close.GetComponent<RectTransform>(), -40f, -48f, 52f, 52f, new Vector2(1f, 1f), new Vector2(1f, 1f));
@@ -293,7 +323,6 @@ namespace SubTerra.App.Editor.DataValidation
             ClearHit(nextButton);
             HideLabel(nextButton.transform);
             EnsureFade(nextButton, "quest-particular-button-active-off", "quest-particular-button-active-on");
-            // 오른쪽 버튼은 왼쪽과 같은 스프라이트를 뒤집어서 쓴다.
             nextButton.transform.localScale = new Vector3(-1f, 1f, 1f);
             Wire(nextButton, view.OnDetailsNextClicked);
 
@@ -301,6 +330,8 @@ namespace SubTerra.App.Editor.DataValidation
             prev.transform.SetAsLastSibling();
             nextButton.transform.SetAsLastSibling();
 
+            Assign(view, "detailsTitleText", title);
+            Assign(view, "detailsBodyText", body);
             Assign(view, "detailsStatusIcon", statusIcon);
             Assign(view, "detailsStatusClearSprite", QuestSprite("quest-status-check"));
             Assign(view, "detailsStatusRingSprite", QuestSprite("quest-status-ring"));
@@ -348,21 +379,21 @@ namespace SubTerra.App.Editor.DataValidation
             float x)
         {
             var rect = EnsureRect(row, name);
-            Place(rect, x, 0f, 184f, 72f, new Vector2(0f, 1f), new Vector2(0f, 1f));
+            Place(rect, x, 0f, 310f, 76f, new Vector2(0f, 1f), new Vector2(0f, 1f));
             var plate = EnsureImage(rect, "Plate", QuestSprite("quest-reward-plate"));
             Stretch(plate.rectTransform);
             var iconImage = EnsureImage(rect, "Icon", icon);
             iconImage.preserveAspect = true;
-            Place(iconImage.rectTransform, 10f, -12f, 48f, 48f, new Vector2(0f, 1f), new Vector2(0f, 1f));
+            Place(iconImage.rectTransform, 16f, -12f, 52f, 52f, new Vector2(0f, 1f), new Vector2(0f, 1f));
             var nameText = EnsureLabel(rect, "Name", font);
-            Style(nameText, 13f, new Color(0.75f, 0.9f, 0.93f), TextAlignmentOptions.MidlineLeft, false);
+            Style(nameText, 15f, new Color(0.75f, 0.9f, 0.95f), TextAlignmentOptions.MidlineLeft, false);
             nameText.text = label;
-            Place(nameText.rectTransform, 66f, -8f, 108f, 24f, new Vector2(0f, 1f), new Vector2(0f, 1f));
+            Place(nameText.rectTransform, 78f, -12f, 210f, 24f, new Vector2(0f, 1f), new Vector2(0f, 1f));
             var amount = EnsureLabel(rect, "Amount", font);
-            Style(amount, 22f, Color.white, TextAlignmentOptions.MidlineLeft, false);
+            Style(amount, 24f, Color.white, TextAlignmentOptions.MidlineLeft, false);
             amount.fontStyle = FontStyles.Bold;
             amount.text = "0";
-            Place(amount.rectTransform, 66f, -32f, 108f, 32f, new Vector2(0f, 1f), new Vector2(0f, 1f));
+            Place(amount.rectTransform, 78f, -38f, 210f, 28f, new Vector2(0f, 1f), new Vector2(0f, 1f));
             var slot = rect.GetComponent<QuestRewardSlotView>();
             if (slot == null)
             {
@@ -381,8 +412,13 @@ namespace SubTerra.App.Editor.DataValidation
         {
             var rect = EnsureRect(parent, "QuestThumbnail");
             var backdrop = EnsureImage(rect, "Backdrop", null);
-            backdrop.color = new Color(0.03f, 0.07f, 0.1f, 0.94f);
+            backdrop.color = new Color(0.02f, 0.05f, 0.08f, 0.95f);
             Stretch(backdrop.rectTransform);
+
+            var frame = EnsureImage(rect, "Frame", QuestSprite("quest-thumbnail-frame"));
+            frame.type = Image.Type.Sliced;
+            Stretch(frame.rectTransform);
+
             var secondary = EnsureImage(rect, "Secondary", null);
             var primary = EnsureImage(rect, "Primary", null);
             var tertiary = EnsureImage(rect, "Tertiary", null);
@@ -422,6 +458,32 @@ namespace SubTerra.App.Editor.DataValidation
 
             serialized.ApplyModifiedPropertiesWithoutUndo();
             return rect.gameObject;
+        }
+
+        private static Image EnsureDivider(Transform parent, string name, float x, float y, float width)
+        {
+            var line = EnsureImage(parent, name, null);
+            line.color = new Color(0f, 0.85f, 1f, 0.35f);
+            Place(line.rectTransform, x, y, width, 1.5f, new Vector2(0f, 1f), new Vector2(0f, 1f));
+            return line;
+        }
+
+        private static void EnsureDots(Transform parent, float x, float y, float width)
+        {
+            var dotsRect = EnsureRect(parent, "QuestThumbnailDots");
+            Place(dotsRect, x, y, width, 16f, new Vector2(0f, 1f), new Vector2(0f, 1f));
+
+            var dot1 = EnsureImage(dotsRect, "Dot1", QuestSprite("quest-dot-dim"));
+            dot1.preserveAspect = true;
+            Place(dot1.rectTransform, width * 0.5f - 18f, -2f, 12f, 12f, new Vector2(0f, 1f), new Vector2(0f, 1f));
+
+            var dot2 = EnsureImage(dotsRect, "Dot2", QuestSprite("quest-dot-active"));
+            dot2.preserveAspect = true;
+            Place(dot2.rectTransform, width * 0.5f, -2f, 12f, 12f, new Vector2(0f, 1f), new Vector2(0f, 1f));
+
+            var dot3 = EnsureImage(dotsRect, "Dot3", QuestSprite("quest-dot-dim"));
+            dot3.preserveAspect = true;
+            Place(dot3.rectTransform, width * 0.5f + 18f, -2f, 12f, 12f, new Vector2(0f, 1f), new Vector2(0f, 1f));
         }
 
         private static QuestSpriteCrossfade EnsureFade(Button button, string off, string on)
@@ -500,7 +562,8 @@ namespace SubTerra.App.Editor.DataValidation
             text.alignment = alignment;
             text.textWrappingMode = wrap ? TextWrappingModes.Normal : TextWrappingModes.NoWrap;
             text.raycastTarget = false;
-            text.overflowMode = TextOverflowModes.Ellipsis;
+            text.overflowMode = TextOverflowModes.Overflow;
+            EditorUtility.SetDirty(text);
         }
 
         private static TMP_Text EnsureLabel(Transform parent, string name, TMP_FontAsset font)
@@ -513,6 +576,7 @@ namespace SubTerra.App.Editor.DataValidation
             }
 
             text.font = font;
+            EditorUtility.SetDirty(text);
             return text;
         }
 
@@ -529,6 +593,7 @@ namespace SubTerra.App.Editor.DataValidation
             image.color = Color.white;
             image.raycastTarget = false;
             image.type = Image.Type.Simple;
+            EditorUtility.SetDirty(image);
             return image;
         }
 
@@ -556,6 +621,7 @@ namespace SubTerra.App.Editor.DataValidation
             }
 
             go.layer = parent.gameObject.layer;
+            EditorUtility.SetDirty(go);
             return go.GetComponent<Button>();
         }
 
@@ -570,6 +636,7 @@ namespace SubTerra.App.Editor.DataValidation
             var rect = new GameObject(name, typeof(RectTransform)).GetComponent<RectTransform>();
             rect.SetParent(parent, false);
             rect.gameObject.layer = parent.gameObject.layer;
+            EditorUtility.SetDirty(rect.gameObject);
             return rect;
         }
 
@@ -599,6 +666,7 @@ namespace SubTerra.App.Editor.DataValidation
             rect.sizeDelta = new Vector2(width, height);
             rect.localScale = Vector3.one;
             rect.localRotation = Quaternion.identity;
+            EditorUtility.SetDirty(rect);
         }
 
         private static void Stretch(RectTransform rect)
