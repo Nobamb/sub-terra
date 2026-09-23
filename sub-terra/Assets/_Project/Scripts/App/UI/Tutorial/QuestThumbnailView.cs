@@ -40,7 +40,8 @@ namespace SubTerra.App.UI.Tutorial
             Place(primaryImage, primary);
             if (primaryImage != null)
             {
-                primaryImage.color = isCurrent ? Color.white : new Color(0.9f, 0.9f, 0.9f, 1f);
+                primaryImage.color = isCurrent ? Color.white : new Color(0.7f, 0.7f, 0.7f, 1f);
+                primaryImage.transform.SetAsLastSibling();
             }
             if (placeholderText != null)
             {

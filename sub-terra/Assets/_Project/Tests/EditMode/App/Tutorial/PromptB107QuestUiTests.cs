@@ -227,7 +227,7 @@ namespace SubTerra.App.Tests.Tutorial
                     }
                     Assert.That(image.color, Is.EqualTo(Color.white));
                     thumbnailView.Show(escape.Id, false);
-                    Assert.That(image.color.r, Is.EqualTo(0.9f).Within(0.001f));
+                    Assert.That(image.color.r, Is.EqualTo(0.7f).Within(0.001f));
                     thumbnailView.Show("unknown.quest", false);
                     Assert.That(image.gameObject.activeSelf, Is.False);
                     Assert.That(FindChild(clone.transform, "QuestThumbnail").Find("Placeholder").gameObject.activeSelf, Is.True);
