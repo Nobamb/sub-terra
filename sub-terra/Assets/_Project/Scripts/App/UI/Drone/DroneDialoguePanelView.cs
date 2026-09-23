@@ -193,16 +193,16 @@ namespace SubTerra.App.UI.Drone
                 speaker.fontStyle = FontStyles.Bold;
                 speaker.color = AccentCyan;
                 speaker.alignment = TextAlignmentOptions.MidlineLeft;
-                SetAnchors(speaker.rectTransform, new Vector2(0f, 1f), new Vector2(1f, 1f),
-                    new Vector2(18f, -34f), new Vector2(-190f, -2f));
+                SetAnchors(speaker.rectTransform, new Vector2(0f, 1f), new Vector2(0.68f, 1f),
+                    new Vector2(18f, -34f), new Vector2(0f, -2f));
             }
 
             terminalStatus = FindOrCreateText("TerminalStatus", header.rectTransform);
             terminalStatus.fontSize = 14f;
             terminalStatus.fontStyle = FontStyles.Bold;
             terminalStatus.alignment = TextAlignmentOptions.MidlineRight;
-            SetAnchors(terminalStatus.rectTransform, Vector2.zero, Vector2.one,
-                new Vector2(360f, 0f), new Vector2(-58f, 0f));
+            SetAnchors(terminalStatus.rectTransform, new Vector2(0.7f, 0f), Vector2.one,
+                Vector2.zero, new Vector2(-50f, 0f));
             SetTerminalStatus(false);
 
             StyleText(dialogueText, new Color(0.92f, 0.98f, 1f, 1f));
@@ -220,7 +220,7 @@ namespace SubTerra.App.UI.Drone
             }
 
             terminalStatus.color = urgent ? AlertAmber : AccentCyan;
-            terminalStatus.text = urgent ? "[ ! ] PRIORITY" : "[ ● ] LINK LIVE";
+            terminalStatus.text = urgent ? "ALERT: HIGH" : "LINK: LIVE";
         }
 
         private void StyleText(TMP_Text text, Color color)
@@ -247,9 +247,22 @@ namespace SubTerra.App.UI.Drone
                 image.color = new Color(0.07f, 0.18f, 0.22f, 0.98f);
             }
 
+            var rect = closeButton.GetComponent<RectTransform>();
+            if (rect != null)
+            {
+                rect.anchorMin = Vector2.one;
+                rect.anchorMax = Vector2.one;
+                rect.pivot = Vector2.one;
+                rect.anchoredPosition = new Vector2(-12f, -5f);
+                rect.sizeDelta = new Vector2(32f, 26f);
+            }
+
             var label = closeButton.GetComponentInChildren<TMP_Text>(true);
             if (label != null)
             {
+                label.text = "X";
+                label.fontSize = 18f;
+                label.alignment = TextAlignmentOptions.Center;
                 label.color = AccentCyan;
                 label.fontStyle = FontStyles.Bold;
                 label.raycastTarget = false;

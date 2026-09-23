@@ -232,15 +232,15 @@ namespace SubTerra.App.UI.Drone
             terminalTitle.fontStyle = FontStyles.Bold;
             terminalTitle.color = AccentCyan;
             terminalTitle.alignment = TextAlignmentOptions.MidlineLeft;
-            SetAnchors(terminalTitle.rectTransform, Vector2.zero, Vector2.one,
-                new Vector2(14f, 0f), new Vector2(-150f, 0f));
+            SetAnchors(terminalTitle.rectTransform, Vector2.zero, new Vector2(0.66f, 1f),
+                new Vector2(14f, 0f), Vector2.zero);
 
             terminalStatus = FindOrCreateText("Status", terminalHeader.rectTransform);
             terminalStatus.fontSize = 11f;
             terminalStatus.fontStyle = FontStyles.Bold;
             terminalStatus.alignment = TextAlignmentOptions.MidlineRight;
-            SetAnchors(terminalStatus.rectTransform, Vector2.zero, Vector2.one,
-                new Vector2(150f, 0f), new Vector2(-14f, 0f));
+            SetAnchors(terminalStatus.rectTransform, new Vector2(0.68f, 0f), Vector2.one,
+                Vector2.zero, new Vector2(-14f, 0f));
 
             var terminalFooter = FindOrCreateText("TerminalFooter", terminalPanel);
             terminalFooter.text = "ANALYSIS STREAM  //  RX-01";
@@ -293,7 +293,7 @@ namespace SubTerra.App.UI.Drone
             if (terminalStatus != null)
             {
                 terminalStatus.color = accent;
-                terminalStatus.text = urgent ? "[ ! ] ALERT" : "[ ● ] LIVE";
+                terminalStatus.text = urgent ? "ALERT: HIGH" : "LINK: LIVE";
             }
         }
 
