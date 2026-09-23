@@ -24,12 +24,10 @@ namespace SubTerra.App.UI.Drone
         [SerializeField] private Button closeButton;
 
         private bool terminalSkinApplied;
-        private TextMeshProUGUI terminalStatus;
 
         private static readonly Color TerminalBackground = new Color(0.012f, 0.035f, 0.055f, 0.975f);
         private static readonly Color TerminalHeader = new Color(0.018f, 0.12f, 0.16f, 0.99f);
         private static readonly Color AccentCyan = new Color(0.18f, 0.84f, 0.92f, 1f);
-        private static readonly Color AlertAmber = new Color(1f, 0.66f, 0.16f, 1f);
 
         /// <summary>닫기(X) 버튼. HudPanelChromeController가 배선한다.</summary>
         public Button CloseButton => closeButton;
@@ -65,7 +63,6 @@ namespace SubTerra.App.UI.Drone
             dialogueText.text = dialogue.Text;
             // 창 제목과 같은 크기의 본문 글자 크기를 유지한다.
             dialogueText.fontSize = PanelDialogueFontSize;
-            SetTerminalStatus(dialogue.IsUrgent);
         }
 
         public void SetAnalysis(DroneAnalysisResult analysis)
@@ -197,30 +194,11 @@ namespace SubTerra.App.UI.Drone
                     new Vector2(18f, -34f), new Vector2(0f, -2f));
             }
 
-            terminalStatus = FindOrCreateText("TerminalStatus", header.rectTransform);
-            terminalStatus.fontSize = 14f;
-            terminalStatus.fontStyle = FontStyles.Bold;
-            terminalStatus.alignment = TextAlignmentOptions.MidlineRight;
-            SetAnchors(terminalStatus.rectTransform, new Vector2(0.7f, 0f), Vector2.one,
-                Vector2.zero, new Vector2(-50f, 0f));
-            SetTerminalStatus(false);
-
             StyleText(dialogueText, new Color(0.92f, 0.98f, 1f, 1f));
             StyleText(actionText, new Color(0.34f, 0.94f, 0.84f, 1f));
             StyleText(reasonText, new Color(0.7f, 0.86f, 0.9f, 1f));
-            StyleCloseButton();
+            StyleCloseButton(header.rectTransform);
             terminalSkinApplied = true;
-        }
-
-        private void SetTerminalStatus(bool urgent)
-        {
-            if (terminalStatus == null)
-            {
-                return;
-            }
-
-            terminalStatus.color = urgent ? AlertAmber : AccentCyan;
-            terminalStatus.text = urgent ? "ALERT: HIGH" : "LINK: LIVE";
         }
 
         private void StyleText(TMP_Text text, Color color)
@@ -234,16 +212,23 @@ namespace SubTerra.App.UI.Drone
             text.raycastTarget = false;
         }
 
-        private void StyleCloseButton()
+        private void StyleCloseButton(RectTransform header)
         {
-            if (closeButton == null)
+            if (closeButton == null || header == null)
             {
                 return;
+            }
+
+            if (closeButton.transform.parent != header)
+            {
+                closeButton.transform.SetParent(header, false);
             }
 
             var image = closeButton.GetComponent<Image>();
             if (image != null)
             {
+                image.sprite = null;
+                image.type = Image.Type.Simple;
                 image.color = new Color(0.07f, 0.18f, 0.22f, 0.98f);
             }
 
@@ -253,8 +238,8 @@ namespace SubTerra.App.UI.Drone
                 rect.anchorMin = Vector2.one;
                 rect.anchorMax = Vector2.one;
                 rect.pivot = Vector2.one;
-                rect.anchoredPosition = new Vector2(-12f, -5f);
-                rect.sizeDelta = new Vector2(32f, 26f);
+                rect.anchoredPosition = new Vector2(-5f, -3f);
+                rect.sizeDelta = new Vector2(28f, 28f);
             }
 
             var label = closeButton.GetComponentInChildren<TMP_Text>(true);
@@ -283,34 +268,6 @@ namespace SubTerra.App.UI.Drone
             var image = element.GetComponent<Image>();
             image.raycastTarget = false;
             return image;
-        }
-
-        private TextMeshProUGUI FindOrCreateText(string name, RectTransform parent)
-        {
-            var existing = parent.Find(name)?.GetComponent<TextMeshProUGUI>();
-            if (existing != null)
-            {
-                CopyTextStyle(existing);
-                return existing;
-            }
-
-            var element = new GameObject(name, typeof(RectTransform), typeof(TextMeshProUGUI));
-            element.transform.SetParent(parent, false);
-            var text = element.GetComponent<TextMeshProUGUI>();
-            CopyTextStyle(text);
-            return text;
-        }
-
-        private void CopyTextStyle(TextMeshProUGUI target)
-        {
-            if (dialogueText == null)
-            {
-                return;
-            }
-
-            target.font = dialogueText.font;
-            target.fontSharedMaterial = dialogueText.fontSharedMaterial;
-            target.raycastTarget = false;
         }
 
         private static void SetAnchors(
