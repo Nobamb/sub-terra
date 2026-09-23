@@ -5,6 +5,7 @@ using SubTerra.Gameplay.Structural;
 using UnityEngine;
 using SharedContext = SubTerra.Shared.DroneContextDto;
 using SharedProvider = SubTerra.Shared.IDroneContextProvider;
+using SharedScanStateProvider = SubTerra.Shared.IDroneScanStateProvider;
 
 namespace SubTerra.App.Integration
 {
@@ -13,7 +14,7 @@ namespace SubTerra.App.Integration
     /// </summary>
     public sealed class DroneContextProviderAdapter : MonoBehaviour,
         SharedProvider,
-        IDroneScanStateProvider
+        SharedScanStateProvider
     {
         [SerializeField] private DroneSensor sensor;
 
