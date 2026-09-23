@@ -262,6 +262,9 @@ namespace SubTerra.App.UI.Drone
                 image.color = new Color(0.07f, 0.18f, 0.22f, 0.98f);
             }
 
+            // ColorTint는 전용 피드백의 0.12초 전환과 경쟁하므로 사용하지 않는다.
+            closeButton.transition = Selectable.Transition.None;
+
             var rect = closeButton.GetComponent<RectTransform>();
             if (rect != null)
             {
@@ -282,6 +285,14 @@ namespace SubTerra.App.UI.Drone
                 label.fontStyle = FontStyles.Bold;
                 label.raycastTarget = false;
             }
+
+            var feedback = closeButton.GetComponent<DroneTerminalCloseButtonFeedback>();
+            if (feedback == null)
+            {
+                feedback = closeButton.gameObject.AddComponent<DroneTerminalCloseButtonFeedback>();
+            }
+
+            feedback.Configure(image, label);
         }
 
         private Image FindOrCreateImage(string name, RectTransform parent)

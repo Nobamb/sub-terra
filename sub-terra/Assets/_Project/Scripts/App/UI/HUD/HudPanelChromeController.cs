@@ -240,8 +240,18 @@ namespace SubTerra.App.UI.HUD
 
             if (diggerCloseButton != null)
             {
+                // 터미널 닫기 버튼은 0.08초 눌림 피드백 뒤에 닫힌다.
+                // 기존 영속 리스너가 즉시 닫아 효과를 건너뛰지 않도록 이 버튼의 클릭 이벤트를 전용 처리한다.
+                diggerCloseButton.onClick = new Button.ButtonClickedEvent();
                 diggerCloseButton.onClick.RemoveListener(CloseDiggerBot);
-                diggerCloseButton.onClick.AddListener(CloseDiggerBot);
+                var feedback = diggerCloseButton.GetComponent<DroneTerminalCloseButtonFeedback>();
+                if (feedback == null)
+                {
+                    feedback = diggerCloseButton.gameObject.AddComponent<DroneTerminalCloseButtonFeedback>();
+                }
+
+                feedback.SetCloseAction(CloseDiggerBot);
+                diggerCloseButton.onClick.AddListener(feedback.RequestClose);
             }
 
             // 드론 재오픈 버튼은 제거 대상. 남아 있어도 숨기고 연결하지 않는다.
@@ -335,6 +345,12 @@ namespace SubTerra.App.UI.HUD
             if (diggerCloseButton != null)
             {
                 diggerCloseButton.onClick.RemoveListener(CloseDiggerBot);
+                var feedback = diggerCloseButton.GetComponent<DroneTerminalCloseButtonFeedback>();
+                if (feedback != null)
+                {
+                    diggerCloseButton.onClick.RemoveListener(feedback.RequestClose);
+                    feedback.SetCloseAction(null);
+                }
             }
 
             if (diggerOpenButton != null)
