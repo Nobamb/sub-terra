@@ -8,6 +8,7 @@ namespace SubTerra.Gameplay.Drone
     {
         [SerializeField] private Transform target;
         [SerializeField] private SpriteRenderer visualRenderer;
+        [SerializeField] private Sprite rightFacingSprite;
         [SerializeField] private Vector2 followOffset = new(-1.2f, 1f);
         [SerializeField, Min(0.01f)] private float smoothTime = 0.25f;
         [SerializeField, Min(0f)] private float minimumDistance = 0.5f;
@@ -19,10 +20,8 @@ namespace SubTerra.Gameplay.Drone
 
         private void Awake()
         {
-            if (visualRenderer == null)
-            {
-                visualRenderer = GetComponent<SpriteRenderer>();
-            }
+            CacheVisualRenderer();
+            ApplyFacingSprite();
         }
 
         private void LateUpdate()
@@ -39,13 +38,34 @@ namespace SubTerra.Gameplay.Drone
 
         private void UpdateFacing(float horizontalDelta)
         {
-            if (visualRenderer == null || Mathf.Abs(horizontalDelta) <= facingDeadZone)
+            if (!CacheVisualRenderer())
             {
                 return;
             }
 
+            ApplyFacingSprite();
+            if (Mathf.Abs(horizontalDelta) <= facingDeadZone) return;
+
             bool facesRight = horizontalDelta > 0f;
             visualRenderer.flipX = unflippedSpriteFacesRight ? !facesRight : facesRight;
+        }
+
+        private void ApplyFacingSprite()
+        {
+            if (visualRenderer != null && rightFacingSprite != null && visualRenderer.sprite != rightFacingSprite)
+            {
+                visualRenderer.sprite = rightFacingSprite;
+            }
+        }
+
+        private bool CacheVisualRenderer()
+        {
+            if (visualRenderer == null)
+            {
+                visualRenderer = GetComponent<SpriteRenderer>();
+            }
+
+            return visualRenderer != null;
         }
     }
 }
