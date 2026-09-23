@@ -28,10 +28,15 @@ namespace SubTerra.App.UI.Drone
         private Canvas overlayCanvas;
         private Vector3 initialWorldScale;
         private bool bubbleThemeApplied;
+        private RectTransform terminalPanel;
+        private Image terminalSignalLine;
+        private TextMeshProUGUI terminalTitle;
+        private TextMeshProUGUI terminalStatus;
 
-        private static readonly Color BubbleBackground = new Color(0.018f, 0.06f, 0.075f, 0.97f);
-        private static readonly Color BubbleHeader = new Color(0.035f, 0.18f, 0.22f, 0.98f);
+        private static readonly Color TerminalBackground = new Color(0.012f, 0.035f, 0.055f, 0.975f);
+        private static readonly Color TerminalHeader = new Color(0.018f, 0.12f, 0.16f, 0.99f);
         private static readonly Color AccentCyan = new Color(0.18f, 0.84f, 0.92f, 1f);
+        private static readonly Color AlertAmber = new Color(1f, 0.66f, 0.16f, 1f);
 
         public bool IsShowing => canvasGroup != null && canvasGroup.alpha > 0f;
 
@@ -68,7 +73,7 @@ namespace SubTerra.App.UI.Drone
                 return;
             }
 
-            dialogueText.text = dialogue.Text;
+            dialogueText.text = "> " + dialogue.Text;
             hasDialogue = true;
             // 바인딩 전이라도 대사가 오면 표시 가능하게 둔다(Bind SetVisible 레이스 방지).
             if (!boundVisible)
@@ -79,7 +84,8 @@ namespace SubTerra.App.UI.Drone
             visibleUntil = Time.unscaledTime
                 + (dialogue.IsUrgent ? urgentVisibleSeconds : regularVisibleSeconds);
             ApplyNonBlockingPresentation();
-            ApplyBubbleTheme();
+            ApplyTerminalTheme();
+            ApplyTerminalState(dialogue.IsUrgent);
             SetCanvasVisible(true);
             RefreshPosition();
         }
@@ -157,93 +163,103 @@ namespace SubTerra.App.UI.Drone
         }
 
         /// <summary>
-        /// 월드 말풍선도 HUD와 같은 청록색 정보 패널 언어를 사용한다.
+        /// 월드 대사를 TAB 상세창과 같은 AI 터미널 패널로 표현한다.
         /// 프리팹의 대사·추적 참조는 유지하고, 표시 요소만 런타임에 보강한다.
         /// </summary>
-        private void ApplyBubbleTheme()
+        private void ApplyTerminalTheme()
         {
             if (bubbleThemeApplied || visualRoot == null || dialogueText == null)
             {
                 return;
             }
 
-            var background = visualRoot.GetComponent<Image>();
+            terminalPanel = FindTerminalPanel();
+            var background = terminalPanel.GetComponent<Image>();
             if (background == null)
             {
-                background = visualRoot.gameObject.AddComponent<Image>();
+                background = terminalPanel.gameObject.AddComponent<Image>();
             }
 
-            background.color = BubbleBackground;
+            background.color = TerminalBackground;
             background.raycastTarget = false;
 
-            var outline = visualRoot.GetComponent<Outline>();
+            var outline = terminalPanel.GetComponent<Outline>();
             if (outline == null)
             {
-                outline = visualRoot.gameObject.AddComponent<Outline>();
+                outline = terminalPanel.gameObject.AddComponent<Outline>();
             }
 
             outline.effectColor = new Color(AccentCyan.r, AccentCyan.g, AccentCyan.b, 0.72f);
             outline.effectDistance = new Vector2(1.5f, -1.5f);
             outline.useGraphicAlpha = true;
 
-            var shadow = visualRoot.GetComponent<Shadow>();
+            var shadow = terminalPanel.GetComponent<Shadow>();
             if (shadow == null)
             {
-                shadow = visualRoot.gameObject.AddComponent<Shadow>();
+                shadow = terminalPanel.gameObject.AddComponent<Shadow>();
             }
 
             shadow.effectColor = new Color(0f, 0f, 0f, 0.55f);
             shadow.effectDistance = new Vector2(3f, -4f);
             shadow.useGraphicAlpha = true;
 
-            CreateAccentLine();
-            CreateHeader();
-            CreateTail();
+            CreateTerminalFrame();
             StyleDialogueText();
             bubbleThemeApplied = true;
         }
 
-        private void CreateAccentLine()
+        private RectTransform FindTerminalPanel()
         {
-            var line = CreateVisualElement("SignalLine", visualRoot);
-            SetAnchors(line.rectTransform, new Vector2(0f, 1f), new Vector2(1f, 1f),
-                new Vector2(10f, -4f), new Vector2(-10f, 0f));
-            line.color = AccentCyan;
+            var panel = visualRoot.Find("VisualRoot") as RectTransform;
+            return panel != null ? panel : visualRoot;
         }
 
-        private void CreateHeader()
+        private void CreateTerminalFrame()
         {
-            var header = CreateVisualElement("Header", visualRoot);
-            SetAnchors(header.rectTransform, new Vector2(0f, 1f), new Vector2(1f, 1f),
-                new Vector2(0f, -34f), Vector2.zero);
-            header.color = BubbleHeader;
+            terminalSignalLine = FindOrCreateImage("SignalLine", terminalPanel);
+            SetAnchors(terminalSignalLine.rectTransform, new Vector2(0f, 1f), new Vector2(1f, 1f),
+                new Vector2(10f, -3f), new Vector2(-10f, 0f));
+            terminalSignalLine.color = AccentCyan;
 
-            var titleObject = new GameObject("Title", typeof(RectTransform));
-            titleObject.transform.SetParent(header.transform, false);
-            var title = titleObject.AddComponent<TextMeshProUGUI>();
-            CopyTextStyle(title);
-            title.text = "DIGGER-BOT  //  SCAN LINK";
-            title.fontSize = 14f;
-            title.fontStyle = FontStyles.Bold;
-            title.color = AccentCyan;
-            title.alignment = TextAlignmentOptions.MidlineLeft;
-            title.raycastTarget = false;
-            SetAnchors(title.rectTransform, Vector2.zero, Vector2.one,
-                new Vector2(16f, 0f), new Vector2(-16f, 0f));
-        }
+            var terminalHeader = FindOrCreateImage("TerminalHeader", terminalPanel);
+            SetAnchors(terminalHeader.rectTransform, new Vector2(0f, 1f), new Vector2(1f, 1f),
+                new Vector2(0f, -30f), Vector2.zero);
+            terminalHeader.color = TerminalHeader;
 
-        private void CreateTail()
-        {
-            var tail = CreateVisualElement("Tail", visualRoot);
-            tail.rectTransform.anchorMin = new Vector2(0.22f, 0f);
-            tail.rectTransform.anchorMax = new Vector2(0.22f, 0f);
-            tail.rectTransform.pivot = new Vector2(0.5f, 0.5f);
-            tail.rectTransform.anchoredPosition = new Vector2(0f, -7f);
-            tail.rectTransform.sizeDelta = new Vector2(16f, 16f);
-            tail.rectTransform.localRotation = Quaternion.Euler(0f, 0f, 45f);
-            tail.color = BubbleBackground;
-            tail.raycastTarget = false;
-            tail.transform.SetAsFirstSibling();
+            terminalTitle = FindOrCreateText("Title", terminalHeader.rectTransform);
+            terminalTitle.text = "DIGGER-BOT  //  AI LINK";
+            terminalTitle.fontSize = 13f;
+            terminalTitle.fontStyle = FontStyles.Bold;
+            terminalTitle.color = AccentCyan;
+            terminalTitle.alignment = TextAlignmentOptions.MidlineLeft;
+            SetAnchors(terminalTitle.rectTransform, Vector2.zero, Vector2.one,
+                new Vector2(14f, 0f), new Vector2(-150f, 0f));
+
+            terminalStatus = FindOrCreateText("Status", terminalHeader.rectTransform);
+            terminalStatus.fontSize = 11f;
+            terminalStatus.fontStyle = FontStyles.Bold;
+            terminalStatus.alignment = TextAlignmentOptions.MidlineRight;
+            SetAnchors(terminalStatus.rectTransform, Vector2.zero, Vector2.one,
+                new Vector2(150f, 0f), new Vector2(-14f, 0f));
+
+            var terminalFooter = FindOrCreateText("TerminalFooter", terminalPanel);
+            terminalFooter.text = "ANALYSIS STREAM  //  RX-01";
+            terminalFooter.fontSize = 10f;
+            terminalFooter.fontStyle = FontStyles.Bold;
+            terminalFooter.color = new Color(0.42f, 0.72f, 0.78f, 0.92f);
+            terminalFooter.alignment = TextAlignmentOptions.MidlineLeft;
+            SetAnchors(terminalFooter.rectTransform, new Vector2(0f, 0f), new Vector2(1f, 0f),
+                new Vector2(14f, 4f), new Vector2(-14f, 20f));
+
+            var terminalTail = FindOrCreateImage("SignalPointer", terminalPanel);
+            terminalTail.rectTransform.anchorMin = new Vector2(0.2f, 0f);
+            terminalTail.rectTransform.anchorMax = new Vector2(0.2f, 0f);
+            terminalTail.rectTransform.pivot = new Vector2(0.5f, 0.5f);
+            terminalTail.rectTransform.anchoredPosition = new Vector2(0f, -6f);
+            terminalTail.rectTransform.sizeDelta = new Vector2(12f, 12f);
+            terminalTail.rectTransform.localRotation = Quaternion.Euler(0f, 0f, 45f);
+            terminalTail.color = TerminalBackground;
+            terminalTail.transform.SetAsFirstSibling();
         }
 
         private void StyleDialogueText()
@@ -255,16 +271,62 @@ namespace SubTerra.App.UI.Drone
             dialogueText.textWrappingMode = TextWrappingModes.Normal;
             dialogueText.raycastTarget = false;
             SetAnchors(dialogueText.rectTransform, Vector2.zero, Vector2.one,
-                new Vector2(18f, 12f), new Vector2(-18f, -42f));
+                new Vector2(16f, 23f), new Vector2(-16f, -36f));
         }
 
-        private Image CreateVisualElement(string name, RectTransform parent)
+        private void ApplyTerminalState(bool urgent)
         {
+            var accent = urgent ? AlertAmber : AccentCyan;
+            if (terminalSignalLine != null)
+            {
+                terminalSignalLine.color = accent;
+            }
+
+            if (terminalTitle != null)
+            {
+                terminalTitle.color = accent;
+                terminalTitle.text = urgent
+                    ? "DIGGER-BOT  //  PRIORITY LINK"
+                    : "DIGGER-BOT  //  AI LINK";
+            }
+
+            if (terminalStatus != null)
+            {
+                terminalStatus.color = accent;
+                terminalStatus.text = urgent ? "[ ! ] ALERT" : "[ ● ] LIVE";
+            }
+        }
+
+        private Image FindOrCreateImage(string name, RectTransform parent)
+        {
+            var existing = parent.Find(name) as RectTransform;
+            if (existing != null && existing.TryGetComponent<Image>(out var existingImage))
+            {
+                existingImage.raycastTarget = false;
+                return existingImage;
+            }
+
             var element = new GameObject(name, typeof(RectTransform), typeof(Image));
             element.transform.SetParent(parent, false);
             var image = element.GetComponent<Image>();
             image.raycastTarget = false;
             return image;
+        }
+
+        private TextMeshProUGUI FindOrCreateText(string name, RectTransform parent)
+        {
+            var existing = parent.Find(name)?.GetComponent<TextMeshProUGUI>();
+            if (existing != null)
+            {
+                CopyTextStyle(existing);
+                return existing;
+            }
+
+            var element = new GameObject(name, typeof(RectTransform), typeof(TextMeshProUGUI));
+            element.transform.SetParent(parent, false);
+            var text = element.GetComponent<TextMeshProUGUI>();
+            CopyTextStyle(text);
+            return text;
         }
 
         private void CopyTextStyle(TextMeshProUGUI target)
