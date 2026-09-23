@@ -12,7 +12,10 @@ namespace SubTerra.App.UI.Drone
     /// Digger-Bot 창: 템플릿 대사와 (통합된) 추천 행동·근거를 함께 표시한다.
     /// 드론 머리 위 말풍선보다 큰 글자로 같은 대사를 하단 중앙에 보여 준다.
     /// </summary>
-    public sealed class DroneDialoguePanelView : MonoBehaviour, IDroneDialogueView, IDroneReasonView
+    public sealed class DroneDialoguePanelView : MonoBehaviour,
+        IDroneDialogueView,
+        IDroneReasonView,
+        IDroneOperationalStateView
     {
         /// <summary>하단 digger-bot 창 대사 기본 글자 크기.</summary>
         public const float PanelDialogueFontSize = 20f;
@@ -24,10 +27,13 @@ namespace SubTerra.App.UI.Drone
         [SerializeField] private Button closeButton;
 
         private bool terminalSkinApplied;
+        private DroneOperationalState operationalState = DroneOperationalState.Idle;
+        private TMP_Text speakerText;
 
         private static readonly Color TerminalBackground = new Color(0.012f, 0.035f, 0.055f, 0.975f);
         private static readonly Color TerminalHeader = new Color(0.018f, 0.12f, 0.16f, 0.99f);
         private static readonly Color AccentCyan = new Color(0.18f, 0.84f, 0.92f, 1f);
+        private static readonly Color AlertAmber = new Color(1f, 0.66f, 0.16f, 1f);
 
         /// <summary>닫기(X) 버튼. HudPanelChromeController가 배선한다.</summary>
         public Button CloseButton => closeButton;
@@ -126,6 +132,12 @@ namespace SubTerra.App.UI.Drone
             return actionText != null && reasonText != null;
         }
 
+        public void SetOperationalState(DroneOperationalState state)
+        {
+            operationalState = state;
+            ApplyHeaderState();
+        }
+
         private void ApplyTerminalSkin()
         {
             if (terminalSkinApplied)
@@ -181,16 +193,14 @@ namespace SubTerra.App.UI.Drone
             header.color = TerminalHeader;
             header.transform.SetAsFirstSibling();
 
-            var speaker = root.GetComponentsInChildren<TMP_Text>(true)
+            speakerText = root.GetComponentsInChildren<TMP_Text>(true)
                 .FirstOrDefault(text => text.name == "SpeakerText");
-            if (speaker != null)
+            if (speakerText != null)
             {
-                speaker.text = "DIGGER-BOT  //  AI ANALYSIS CONSOLE";
-                speaker.fontSize = 18f;
-                speaker.fontStyle = FontStyles.Bold;
-                speaker.color = AccentCyan;
-                speaker.alignment = TextAlignmentOptions.MidlineLeft;
-                SetAnchors(speaker.rectTransform, new Vector2(0f, 1f), new Vector2(0.68f, 1f),
+                speakerText.fontSize = 18f;
+                speakerText.fontStyle = FontStyles.Bold;
+                speakerText.alignment = TextAlignmentOptions.MidlineLeft;
+                SetAnchors(speakerText.rectTransform, new Vector2(0f, 1f), new Vector2(0.82f, 1f),
                     new Vector2(18f, -34f), new Vector2(0f, -2f));
             }
 
@@ -199,6 +209,26 @@ namespace SubTerra.App.UI.Drone
             StyleText(reasonText, new Color(0.7f, 0.86f, 0.9f, 1f));
             StyleCloseButton(header.rectTransform);
             terminalSkinApplied = true;
+            ApplyHeaderState();
+        }
+
+        private void ApplyHeaderState()
+        {
+            if (speakerText == null)
+            {
+                return;
+            }
+
+            var label = operationalState switch
+            {
+                DroneOperationalState.Scanning => "SCANNING",
+                DroneOperationalState.Priority => "PRIORITY",
+                _ => "IDLE"
+            };
+            speakerText.text = "DIGGER-BOT  //  AI ANALYSIS  //  " + label;
+            speakerText.color = operationalState == DroneOperationalState.Priority
+                ? AlertAmber
+                : AccentCyan;
         }
 
         private void StyleText(TMP_Text text, Color color)

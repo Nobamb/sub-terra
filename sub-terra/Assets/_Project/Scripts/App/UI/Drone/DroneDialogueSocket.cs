@@ -1,3 +1,4 @@
+using SubTerra.App.Drone;
 using SubTerra.App.Drone.Dialogue;
 using TMPro;
 using UnityEngine;
@@ -6,7 +7,9 @@ using UnityEngine.UI;
 namespace SubTerra.App.UI.Drone
 {
     /// <summary>드론을 따라가되 어둠보다 앞선 별도 Overlay Canvas에 대사를 표시한다.</summary>
-    public sealed class DroneDialogueSocket : MonoBehaviour, IDroneDialogueView
+    public sealed class DroneDialogueSocket : MonoBehaviour,
+        IDroneDialogueView,
+        IDroneOperationalStateView
     {
         public const int OverlaySortingOrder = 30_000;
 
@@ -32,6 +35,7 @@ namespace SubTerra.App.UI.Drone
         private Image terminalSignalLine;
         private TextMeshProUGUI terminalTitle;
         private TextMeshProUGUI terminalStatus;
+        private DroneOperationalState operationalState = DroneOperationalState.Idle;
 
         private static readonly Color TerminalBackground = new Color(0.012f, 0.035f, 0.055f, 0.975f);
         private static readonly Color TerminalHeader = new Color(0.018f, 0.12f, 0.16f, 0.99f);
@@ -84,8 +88,13 @@ namespace SubTerra.App.UI.Drone
             visibleUntil = Time.unscaledTime
                 + (dialogue.IsUrgent ? urgentVisibleSeconds : regularVisibleSeconds);
             ApplyNonBlockingPresentation();
+            if (dialogue.IsUrgent)
+            {
+                operationalState = DroneOperationalState.Priority;
+            }
+
             ApplyTerminalTheme();
-            ApplyTerminalState(dialogue.IsUrgent);
+            ApplyTerminalState(operationalState);
             SetCanvasVisible(true);
             RefreshPosition();
         }
@@ -94,6 +103,15 @@ namespace SubTerra.App.UI.Drone
         {
             boundVisible = visible;
             SetCanvasVisible(visible && hasDialogue && Time.unscaledTime < visibleUntil);
+        }
+
+        public void SetOperationalState(DroneOperationalState state)
+        {
+            operationalState = state;
+            if (bubbleThemeApplied)
+            {
+                ApplyTerminalState(state);
+            }
         }
 
         public void RefreshPosition()
@@ -206,6 +224,7 @@ namespace SubTerra.App.UI.Drone
             CreateTerminalFrame();
             StyleDialogueText();
             bubbleThemeApplied = true;
+            ApplyTerminalState(operationalState);
         }
 
         private RectTransform FindTerminalPanel()
@@ -274,9 +293,9 @@ namespace SubTerra.App.UI.Drone
                 new Vector2(16f, 23f), new Vector2(-16f, -36f));
         }
 
-        private void ApplyTerminalState(bool urgent)
+        private void ApplyTerminalState(DroneOperationalState state)
         {
-            var accent = urgent ? AlertAmber : AccentCyan;
+            var accent = state == DroneOperationalState.Priority ? AlertAmber : AccentCyan;
             if (terminalSignalLine != null)
             {
                 terminalSignalLine.color = accent;
@@ -285,15 +304,21 @@ namespace SubTerra.App.UI.Drone
             if (terminalTitle != null)
             {
                 terminalTitle.color = accent;
-                terminalTitle.text = urgent
+                terminalTitle.text = state == DroneOperationalState.Priority
                     ? "DIGGER-BOT  //  PRIORITY LINK"
-                    : "DIGGER-BOT  //  AI LINK";
+                    : state == DroneOperationalState.Scanning
+                        ? "DIGGER-BOT  //  SCAN LINK"
+                        : "DIGGER-BOT  //  AI LINK";
             }
 
             if (terminalStatus != null)
             {
                 terminalStatus.color = accent;
-                terminalStatus.text = urgent ? "ALERT: HIGH" : "LINK: LIVE";
+                terminalStatus.text = state == DroneOperationalState.Priority
+                    ? "PRIORITY"
+                    : state == DroneOperationalState.Scanning
+                        ? "SCANNING"
+                        : "IDLE";
             }
         }
 

@@ -13,6 +13,8 @@ namespace SubTerra.App.UI.Drone
         private readonly IDroneDialogueView dialogueView;
         private readonly IDroneDialogueView worldDialogueView;
         private readonly IDroneReasonView reasonView;
+        private readonly IDroneOperationalStateView dialogueStateView;
+        private readonly IDroneOperationalStateView worldStateView;
 
         private IDroneContextProvider contextProvider;
         private DroneAnalysisService analysisService;
@@ -42,6 +44,8 @@ namespace SubTerra.App.UI.Drone
             dialogueView = droneDialogueView;
             worldDialogueView = droneWorldDialogueView;
             reasonView = droneReasonView;
+            dialogueStateView = droneDialogueView as IDroneOperationalStateView;
+            worldStateView = droneWorldDialogueView as IDroneOperationalStateView;
         }
 
         public void Bind(
@@ -90,10 +94,11 @@ namespace SubTerra.App.UI.Drone
             lastShownTemplateId = string.Empty;
             lastShownAction = default;
             hasShownDialogue = false;
+            PublishOperationalState(DroneOperationalState.Idle);
             worldDialogueView?.SetVisible(false);
         }
 
-        public DroneAnalysisResult Refresh()
+        public DroneAnalysisResult Refresh(bool isScanPulseActive = false)
         {
             if (!IsBound)
             {
@@ -101,6 +106,9 @@ namespace SubTerra.App.UI.Drone
             }
 
             var analysis = AnalyzeCurrentContext();
+            PublishOperationalState(DroneOperationalStateResolver.Resolve(
+                analysis != null && analysis.Dialogue != null && analysis.Dialogue.IsUrgent,
+                isScanPulseActive));
             reasonView?.SetAnalysis(analysis);
 
             // 상황(추천 행동·템플릿)이 바뀌면 쿨다운을 무시하고 말풍선/창 대사를 즉시 갱신한다.
@@ -190,6 +198,15 @@ namespace SubTerra.App.UI.Drone
             }
 
             return analysisService.Analyze(context);
+        }
+
+        private void PublishOperationalState(DroneOperationalState state)
+        {
+            dialogueStateView?.SetOperationalState(state);
+            if (worldStateView != null && !object.ReferenceEquals(worldStateView, dialogueStateView))
+            {
+                worldStateView.SetOperationalState(state);
+            }
         }
 
         private void ShowIfCurrent(DialogueGenerationResult generated, int version)

@@ -11,9 +11,13 @@ namespace SubTerra.App.Integration
     /// <summary>
     /// A의 Runtime Sensor를 수정하지 않고 B가 합의된 Shared DTO로 읽게 하는 경계 어댑터.
     /// </summary>
-    public sealed class DroneContextProviderAdapter : MonoBehaviour, SharedProvider
+    public sealed class DroneContextProviderAdapter : MonoBehaviour,
+        SharedProvider,
+        IDroneScanStateProvider
     {
         [SerializeField] private DroneSensor sensor;
+
+        public bool IsScanPulseActive => sensor != null && sensor.IsScanPulseActive;
 
         public SharedContext CreateContext()
         {

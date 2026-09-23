@@ -40,6 +40,10 @@ namespace SubTerra.App.Tests.Drone
                 Assert.That(overlay.LastDialogue, Is.Not.Null);
                 Assert.That(world.LastDialogue, Is.SameAs(overlay.LastDialogue));
                 Assert.That(reason.LastAnalysis.RecommendedAction, Is.EqualTo(DroneAction.ContinueDescending));
+
+                presenter.Refresh(isScanPulseActive: true);
+                Assert.That(overlay.LastOperationalState, Is.EqualTo(DroneOperationalState.Scanning));
+                Assert.That(world.LastOperationalState, Is.EqualTo(DroneOperationalState.Scanning));
             }
             finally
             {
@@ -74,10 +78,12 @@ namespace SubTerra.App.Tests.Drone
             public double Now => 0d;
         }
 
-        private sealed class RecordingDialogueView : IDroneDialogueView
+        private sealed class RecordingDialogueView : IDroneDialogueView, IDroneOperationalStateView
         {
             public DroneDialogueResult LastDialogue { get; private set; }
+            public DroneOperationalState LastOperationalState { get; private set; }
             public void SetDialogue(DroneDialogueResult dialogue) => LastDialogue = dialogue;
+            public void SetOperationalState(DroneOperationalState state) => LastOperationalState = state;
             public void SetVisible(bool visible) { }
         }
 

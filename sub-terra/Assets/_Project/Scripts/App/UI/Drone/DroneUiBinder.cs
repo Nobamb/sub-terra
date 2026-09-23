@@ -52,7 +52,7 @@ namespace SubTerra.App.UI.Drone
             }
 
             nextRefreshAt = Time.unscaledTime + refreshInterval;
-            presenter.Refresh();
+            presenter.Refresh(IsScanPulseActive());
         }
 
         public void BindTo(
@@ -98,7 +98,7 @@ namespace SubTerra.App.UI.Drone
 
         public DroneAnalysisResult AnalyzeNow()
         {
-            return presenter?.Refresh();
+            return presenter?.Refresh(IsScanPulseActive());
         }
 
         public Task<DialogueGenerationResult> RequestCloudDialogueAsync(
@@ -176,6 +176,12 @@ namespace SubTerra.App.UI.Drone
             }
 
             return dialogueView as IDroneReasonView;
+        }
+
+        private bool IsScanPulseActive()
+        {
+            return contextProviderBehaviour is IDroneScanStateProvider stateProvider
+                && stateProvider.IsScanPulseActive;
         }
     }
 }
