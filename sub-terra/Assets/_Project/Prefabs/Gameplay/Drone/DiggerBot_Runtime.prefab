@@ -107,6 +107,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: SubTerra.Gameplay.Drone::SubTerra.Gameplay.Drone.DroneFollower
   target: {fileID: 0}
+  visualRenderer: {fileID: 4786436145163997268}
+  rightFacingSprite: {fileID: 21300000, guid: 8a2644d1aba64285acd28cf710cba290, type: 3}
   followOffset: {x: -1.2, y: 1}
   smoothTime: 0.25
   minimumDistance: 0.5
