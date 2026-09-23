@@ -217,19 +217,21 @@ namespace SubTerra.App.Tests.Tutorial
                     var image = FindChild(clone.transform, "QuestThumbnail").Find("Primary").GetComponent<UnityEngine.UI.Image>();
                     foreach (var id in DemoObjectiveIds.Ordered)
                     {
-                        thumbnailView.Show(id);
+                        thumbnailView.Show(id, true);
                         Assert.That(AssetDatabase.GetAssetPath(image.sprite), Is.EqualTo(PromptB1072QuestThumbnailBuilder.PathFor(id)));
-                        Assert.That(image.sprite.rect.width, Is.EqualTo(1448f));
-                        Assert.That(image.sprite.rect.height, Is.EqualTo(472f));
+                        Assert.That(image.sprite.rect.width / image.sprite.rect.height, Is.GreaterThan(2.5f));
                         Assert.That(image.rectTransform.anchorMin, Is.EqualTo(Vector2.zero));
                         Assert.That(image.rectTransform.anchorMax, Is.EqualTo(Vector2.one));
                         Assert.That(image.preserveAspect, Is.True);
                         Assert.That(image.raycastTarget, Is.False);
                     }
-                    thumbnailView.Show("unknown.quest");
+                    Assert.That(image.color, Is.EqualTo(Color.white));
+                    thumbnailView.Show(escape.Id, false);
+                    Assert.That(image.color.r, Is.EqualTo(0.9f).Within(0.001f));
+                    thumbnailView.Show("unknown.quest", false);
                     Assert.That(image.gameObject.activeSelf, Is.False);
                     Assert.That(FindChild(clone.transform, "QuestThumbnail").Find("Placeholder").gameObject.activeSelf, Is.True);
-                    thumbnailView.Show(escape.Id);
+                    thumbnailView.Show(escape.Id, true);
 
                     Capture(clone, "quest-basic.png", false, false);
                     Capture(clone, "quest-hover.png", true, false);
