@@ -19,7 +19,7 @@ namespace SubTerra.App.UI.Tutorial
 
         public int EntryCount => entries == null ? 0 : entries.Length;
 
-        public void Show(string objectiveId)
+        public void Show(string objectiveId, bool isCurrent)
         {
             QuestThumbnailEntry match = null;
             if (entries != null && !string.IsNullOrEmpty(objectiveId))
@@ -38,6 +38,11 @@ namespace SubTerra.App.UI.Tutorial
             if (secondaryImage != null) secondaryImage.gameObject.SetActive(false);
             if (tertiaryImage != null) tertiaryImage.gameObject.SetActive(false);
             Place(primaryImage, primary);
+            if (primaryImage != null)
+            {
+                primaryImage.color = isCurrent ? Color.white : new Color(0.7f, 0.7f, 0.7f, 1f);
+                primaryImage.transform.SetAsLastSibling();
+            }
             if (placeholderText != null)
             {
                 placeholderText.gameObject.SetActive(primary == null);

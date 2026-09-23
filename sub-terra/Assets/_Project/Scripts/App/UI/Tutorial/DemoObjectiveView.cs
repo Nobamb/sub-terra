@@ -323,7 +323,7 @@ namespace SubTerra.App.UI.Tutorial
         {
             if (thumbnailView != null)
             {
-                thumbnailView.Show(objectiveId);
+                thumbnailView.Show(objectiveId, current);
             }
 
             LayoutRewardSlots(reward);
