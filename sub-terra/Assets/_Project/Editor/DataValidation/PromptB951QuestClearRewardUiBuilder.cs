@@ -13,6 +13,8 @@ namespace SubTerra.App.Editor.DataValidation
     /// <summary>prompt-B 95-1 퀘스트 클리어 보상 팝업만 Integration Scene에 연결한다.</summary>
     public static class PromptB951QuestClearRewardUiBuilder
     {
+        private const string Art = "Assets/_Project/Art/UI/Gameplay/Quest/Clear/";
+        private const string Icons = "Assets/_Project/Art/Icons/";
         public const string IntegrationScenePath =
             "Assets/_Project/Scenes/App/Mine_Demo_Integration.unity";
 
@@ -24,6 +26,7 @@ namespace SubTerra.App.Editor.DataValidation
 
         public static string Build()
         {
+            ImportArt();
             var scene = SceneManager.GetSceneByPath(IntegrationScenePath);
             var closeAfterBuild = !scene.IsValid() || !scene.isLoaded;
             if (closeAfterBuild)
@@ -51,8 +54,6 @@ namespace SubTerra.App.Editor.DataValidation
 
                 var font = FindFont(root.transform);
                 var claim = EnsureClaimPanel(root.transform, font);
-                RelabelCapacityButtons(root.transform, font);
-                ApplyQuestPopupSort(root.transform.Find("QuestDetailsPanel"));
                 ApplyQuestPopupSort(claim.Root.transform);
 
                 var serialized = new SerializedObject(view);
@@ -61,10 +62,11 @@ namespace SubTerra.App.Editor.DataValidation
                 Assign(serialized, "claimQuestTitleText", claim.QuestTitle);
                 Assign(serialized, "claimRewardText", claim.Reward);
                 Assign(serialized, "claimHintText", claim.Hint);
+                Assign(serialized, "claimProgressText", claim.Progress);
+                Assign(serialized, "claimRewardRow", claim.RewardRow);
                 serialized.ApplyModifiedPropertiesWithoutUndo();
 
                 Wire(claim.CloseButton, view.OnClaimConfirmClicked);
-                Wire(claim.ConfirmButton, view.OnClaimConfirmClicked);
 
                 claim.Root.SetActive(false);
 
@@ -89,61 +91,174 @@ namespace SubTerra.App.Editor.DataValidation
 
         private static ClaimRefs EnsureClaimPanel(Transform root, TMP_FontAsset font)
         {
-            var panel = EnsurePanel(root, "QuestClearRewardPanel", new Vector2(720f, 400f));
+            var panel = EnsurePanel(root, "QuestClearRewardPanel", new Vector2(900f, 450f));
+            var background = panel.GetComponent<Image>();
+            background.sprite = SpriteAt("quest-clear-popup-frame.png");
+            background.color = Color.white;
+            background.raycastTarget = true;
+            var motion = panel.GetComponent<QuestClearPopupMotion>();
+            if (motion == null) motion = panel.AddComponent<QuestClearPopupMotion>();
             var title = EnsureText(
                 panel.transform,
                 "ClaimTitle",
-                new Vector2(28f, -24f),
-                new Vector2(620f, 44f),
-                26f,
-                TextAlignmentOptions.TopLeft,
+                new Vector2(125f, -90f),
+                new Vector2(365f, 40f),
+                28f,
+                TextAlignmentOptions.MidlineLeft,
                 font);
             title.text = "퀘스트 클리어";
+            title.color = new Color(0.4f, 1f, 1f, 1f);
             var quest = EnsureText(
                 panel.transform,
                 "ClaimQuestTitle",
-                new Vector2(28f, -78f),
-                new Vector2(664f, 40f),
-                22f,
+                new Vector2(246f, -174f),
+                new Vector2(555f, 42f),
+                29f,
                 TextAlignmentOptions.TopLeft,
                 font);
             var reward = EnsureText(
                 panel.transform,
                 "ClaimReward",
-                new Vector2(28f, -128f),
-                new Vector2(664f, 80f),
-                20f,
+                new Vector2(225f, -320f),
+                new Vector2(550f, 40f),
+                19f,
                 TextAlignmentOptions.TopLeft,
                 font);
             var hint = EnsureText(
                 panel.transform,
                 "ClaimHint",
-                new Vector2(28f, -220f),
-                new Vector2(664f, 48f),
-                16f,
-                TextAlignmentOptions.TopLeft,
+                new Vector2(520f, -270f),
+                new Vector2(273f, 20f),
+                12f,
+                TextAlignmentOptions.TopRight,
                 font);
             hint.text = "닫으면 보상이 지급됩니다.";
-            var close = EnsureButton(
-                panel.transform,
-                "ClaimCloseButton",
-                "X",
-                new Vector2(1f, 1f),
-                new Vector2(-18f, -18f),
-                new Vector2(44f, 44f),
-                new Color(0.38f, 0.12f, 0.14f, 1f),
-                font);
-            var confirm = EnsureButton(
-                panel.transform,
-                "ClaimConfirmButton",
-                "확인",
-                new Vector2(0.5f, 0f),
-                new Vector2(0f, 28f),
-                new Vector2(240f, 52f),
-                new Color(0.16f, 0.32f, 0.22f, 1f),
-                font);
+            hint.color = new Color(0.62f, 0.78f, 0.82f, 1f);
+            var progress = EnsureText(panel.transform, "ClaimProgress", new Vector2(550f, -100f),
+                new Vector2(180f, 34f), 18f, TextAlignmentOptions.MidlineRight, font);
+            progress.color = new Color(0.45f, 1f, 1f, 1f);
+            var oldMission = panel.transform.Find("ClaimMission");
+            if (oldMission != null) Object.DestroyImmediate(oldMission.gameObject);
+            var description = EnsureText(panel.transform, "ClaimDescription", new Vector2(248f, -226f),
+                new Vector2(545f, 34f), 18f, TextAlignmentOptions.TopLeft, font);
+            description.text = "퀘스트 목표를 달성했습니다.";
+            description.color = new Color(0.83f, 0.94f, 0.96f, 1f);
+            var rewardLabel = EnsureText(panel.transform, "ClaimRewardLabel", new Vector2(104f, -324f),
+                new Vector2(100f, 38f), 22f, TextAlignmentOptions.TopLeft, font);
+            rewardLabel.text = "보상";
+            rewardLabel.color = new Color(0.4f, 1f, 1f, 1f);
+            var check = EnsureImage(panel.transform, "ClaimCheckSign", SpriteAt("check-sign.png"),
+                new Vector2(0f, 1f), new Vector2(104f, -171f), new Vector2(106f, 106f));
+            var oldRewardIcon = panel.transform.Find("ClaimRewardIcon");
+            if (oldRewardIcon != null) Object.DestroyImmediate(oldRewardIcon.gameObject);
+            var rewardRow = EnsureRect(panel.transform, "ClaimRewardRow",
+                new Vector2(0f, 1f), new Vector2(225f, -315f), new Vector2(570f, 52f));
+            EnsureRewardItem(rewardRow, "Copper", "icon_copper.png", font);
+            EnsureRewardItem(rewardRow, "Iron", "icon_iron.png", font);
+            EnsureRewardItem(rewardRow, "Lithium", "icon_lithium.png", font);
+            EnsureRewardItem(rewardRow, "Gold", "quest-icon-gold.png", font);
+            reward.gameObject.SetActive(false);
+            var close = EnsureImage(panel.transform, "ClaimCloseButton", SpriteAt("x-button.png"),
+                new Vector2(1f, 1f), new Vector2(-102f, -104f), new Vector2(36f, 36f));
+            close.rectTransform.pivot = new Vector2(0.5f, 0.5f);
+            close.raycastTarget = true;
+            var closeButton = close.GetComponent<Button>();
+            if (closeButton == null) closeButton = close.gameObject.AddComponent<Button>();
+            closeButton.transition = Selectable.Transition.None;
+            if (close.GetComponent<QuestClearCloseHover>() == null)
+                close.gameObject.AddComponent<QuestClearCloseHover>();
+            var oldLabel = close.transform.Find("Label");
+            if (oldLabel != null) Object.DestroyImmediate(oldLabel.gameObject);
+            var confirm = panel.transform.Find("ClaimConfirmButton");
+            if (confirm != null) Object.DestroyImmediate(confirm.gameObject);
+            var glint = EnsureImage(panel.transform, "ClaimBorderGlint", null,
+                new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(62f, 5f));
+            glint.color = new Color(0.2f, 1f, 0.95f, 0.95f);
+            glint.raycastTarget = false;
+            glint.gameObject.SetActive(false);
+            var motionSerialized = new SerializedObject(motion);
+            Assign(motionSerialized, "checkSign", check.rectTransform);
+            Assign(motionSerialized, "borderGlint", glint.rectTransform);
+            Assign(motionSerialized, "borderGlintImage", glint);
+            motionSerialized.ApplyModifiedPropertiesWithoutUndo();
             panel.transform.SetAsLastSibling();
-            return new ClaimRefs(panel, title, quest, reward, hint, close, confirm);
+            return new ClaimRefs(panel, title, quest, reward, hint, progress, rewardRow, closeButton);
+        }
+
+        private static RectTransform EnsureRect(Transform parent, string name,
+            Vector2 anchor, Vector2 position, Vector2 size)
+        {
+            var child = parent.Find(name);
+            var go = child != null ? child.gameObject : new GameObject(name, typeof(RectTransform));
+            if (child == null) go.transform.SetParent(parent, false);
+            var rect = (RectTransform)go.transform;
+            rect.anchorMin = anchor;
+            rect.anchorMax = anchor;
+            rect.pivot = anchor;
+            rect.anchoredPosition = position;
+            rect.sizeDelta = size;
+            return rect;
+        }
+
+        private static void EnsureRewardItem(RectTransform row, string name, string iconFile, TMP_FontAsset font)
+        {
+            var item = EnsureRect(row, name, new Vector2(0f, 1f), Vector2.zero, new Vector2(145f, 52f));
+            var iconPath = iconFile == "quest-icon-gold.png"
+                ? "Assets/_Project/Art/UI/Gameplay/Quest/" + iconFile
+                : Icons + iconFile;
+            var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(iconPath);
+            if (sprite == null) throw new System.InvalidOperationException("Missing reward icon: " + iconPath);
+            var icon = EnsureImage(item, "Icon", sprite, new Vector2(0f, 1f),
+                new Vector2(0f, -3f), new Vector2(44f, 44f));
+            icon.preserveAspect = true;
+            var label = EnsureText(item, "Amount", new Vector2(50f, -9f),
+                new Vector2(95f, 32f), 18f, TextAlignmentOptions.MidlineLeft, font);
+            label.textWrappingMode = TextWrappingModes.NoWrap;
+            label.fontStyle = FontStyles.Bold;
+        }
+
+        private static Image EnsureImage(Transform parent, string name, Sprite sprite,
+            Vector2 anchor, Vector2 position, Vector2 size)
+        {
+            var child = parent.Find(name);
+            var go = child != null ? child.gameObject : new GameObject(name, typeof(RectTransform), typeof(Image));
+            if (child == null) go.transform.SetParent(parent, false);
+            var rect = (RectTransform)go.transform;
+            rect.anchorMin = anchor;
+            rect.anchorMax = anchor;
+            rect.pivot = anchor;
+            rect.anchoredPosition = position;
+            rect.sizeDelta = size;
+            var image = go.GetComponent<Image>();
+            image.sprite = sprite;
+            image.color = Color.white;
+            image.raycastTarget = false;
+            return image;
+        }
+
+        private static Sprite SpriteAt(string name)
+        {
+            var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(Art + name);
+            if (sprite == null) throw new System.InvalidOperationException("Missing quest clear art: " + name);
+            return sprite;
+        }
+
+        private static void ImportArt()
+        {
+            var files = new[] { "quest-clear-popup-frame.png", "x-button.png", "check-sign.png" };
+            foreach (var file in files)
+            {
+                var path = Art + file;
+                AssetDatabase.ImportAsset(path);
+                var importer = (TextureImporter)AssetImporter.GetAtPath(path);
+                importer.textureType = TextureImporterType.Sprite;
+                importer.spriteImportMode = SpriteImportMode.Single;
+                importer.alphaIsTransparency = true;
+                importer.mipmapEnabled = false;
+                importer.textureCompression = TextureImporterCompression.Uncompressed;
+                importer.maxTextureSize = 2048;
+                importer.SaveAndReimport();
+            }
         }
 
         private static void ApplyQuestPopupSort(Transform panel)
@@ -176,34 +291,6 @@ namespace SubTerra.App.Editor.DataValidation
             serialized.FindProperty("m_SortingOrder").intValue = UiLayerPriority.QuestPopup;
             serialized.ApplyModifiedPropertiesWithoutUndo();
             panel.gameObject.SetActive(wasActive);
-        }
-
-        private static void RelabelCapacityButtons(Transform root, TMP_FontAsset font)
-        {
-            var capacity = root.Find("QuestRewardCapacityPanel");
-            if (capacity == null)
-            {
-                return;
-            }
-
-            EnsureButton(
-                capacity,
-                "CapacityDumpButton",
-                "기존 자원 버리기",
-                new Vector2(0.5f, 0f),
-                new Vector2(-160f, 28f),
-                new Vector2(280f, 52f),
-                new Color(0.16f, 0.32f, 0.22f, 1f),
-                font);
-            EnsureButton(
-                capacity,
-                "CapacityForfeitButton",
-                "퀘스트 보상 버리기",
-                new Vector2(0.5f, 0f),
-                new Vector2(160f, 28f),
-                new Vector2(280f, 52f),
-                new Color(0.38f, 0.12f, 0.14f, 1f),
-                font);
         }
 
         private static GameObject EnsurePanel(Transform root, string name, Vector2 size)
@@ -276,63 +363,6 @@ namespace SubTerra.App.Editor.DataValidation
             return text;
         }
 
-        private static Button EnsureButton(
-            Transform parent,
-            string name,
-            string label,
-            Vector2 anchor,
-            Vector2 position,
-            Vector2 size,
-            Color color,
-            TMP_FontAsset font)
-        {
-            var existing = parent.Find(name);
-            GameObject go;
-            if (existing == null)
-            {
-                go = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button));
-                go.transform.SetParent(parent, false);
-            }
-            else
-            {
-                go = existing.gameObject;
-                if (go.GetComponent<Image>() == null)
-                {
-                    go.AddComponent<Image>();
-                }
-
-                if (go.GetComponent<Button>() == null)
-                {
-                    go.AddComponent<Button>();
-                }
-            }
-
-            var rect = go.GetComponent<RectTransform>();
-            rect.anchorMin = anchor;
-            rect.anchorMax = anchor;
-            rect.pivot = anchor;
-            rect.anchoredPosition = position;
-            rect.sizeDelta = size;
-            go.GetComponent<Image>().color = color;
-
-            var text = EnsureText(
-                go.transform,
-                "Label",
-                Vector2.zero,
-                size,
-                20f,
-                TextAlignmentOptions.Center,
-                font);
-            var labelRect = text.rectTransform;
-            labelRect.anchorMin = Vector2.zero;
-            labelRect.anchorMax = Vector2.one;
-            labelRect.pivot = new Vector2(0.5f, 0.5f);
-            labelRect.anchoredPosition = Vector2.zero;
-            labelRect.sizeDelta = Vector2.zero;
-            text.text = label;
-            return go.GetComponent<Button>();
-        }
-
         private static void Wire(Button button, UnityEngine.Events.UnityAction action)
         {
             while (button.onClick.GetPersistentEventCount() > 0)
@@ -345,10 +375,15 @@ namespace SubTerra.App.Editor.DataValidation
 
         private static TMP_FontAsset FindFont(Transform root)
         {
-            var sourceTransform = root.Find("ObjectiveTitle");
-            var source = sourceTransform != null
-                ? sourceTransform.GetComponent<TMP_Text>()
-                : null;
+            TMP_Text source = null;
+            foreach (var text in root.GetComponentsInChildren<TMP_Text>(true))
+            {
+                if (text.name == "ObjectiveTitle")
+                {
+                    source = text;
+                    break;
+                }
+            }
             if (source == null || source.font == null)
             {
                 throw new System.InvalidOperationException(
@@ -395,8 +430,9 @@ namespace SubTerra.App.Editor.DataValidation
             public TMP_Text QuestTitle { get; }
             public TMP_Text Reward { get; }
             public TMP_Text Hint { get; }
+            public TMP_Text Progress { get; }
+            public RectTransform RewardRow { get; }
             public Button CloseButton { get; }
-            public Button ConfirmButton { get; }
 
             public ClaimRefs(
                 GameObject root,
@@ -404,16 +440,18 @@ namespace SubTerra.App.Editor.DataValidation
                 TMP_Text questTitle,
                 TMP_Text reward,
                 TMP_Text hint,
-                Button closeButton,
-                Button confirmButton)
+                TMP_Text progress,
+                RectTransform rewardRow,
+                Button closeButton)
             {
                 Root = root;
                 Title = title;
                 QuestTitle = questTitle;
                 Reward = reward;
                 Hint = hint;
+                Progress = progress;
+                RewardRow = rewardRow;
                 CloseButton = closeButton;
-                ConfirmButton = confirmButton;
             }
         }
     }
