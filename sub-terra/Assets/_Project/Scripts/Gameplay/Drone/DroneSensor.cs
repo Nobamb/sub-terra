@@ -11,7 +11,10 @@ using UnityEngine.Tilemaps;
 namespace SubTerra.Gameplay.Drone
 {
     /// <summary>Samples real gameplay facts periodically; it never chooses a recommendation or updates UI.</summary>
-    public sealed class DroneSensor : MonoBehaviour, IDroneContextProvider, SubTerra.Shared.IDroneContextProvider
+    public sealed class DroneSensor : MonoBehaviour,
+        IDroneContextProvider,
+        SubTerra.Shared.IDroneContextProvider,
+        IDroneScanStateProvider
     {
         [SerializeField] private Transform playerTransform;
         [SerializeField] private Tilemap foregroundTilemap;
@@ -46,6 +49,7 @@ namespace SubTerra.Gameplay.Drone
         public float PulseDuration => pulseDuration;
         public IReadOnlyList<DroneScanTarget> LastPulseTargets => lastPulseTargets;
         public DroneScanPulseView ScanPulseView => pulseView;
+        public bool IsScanPulseActive => pulseView != null && pulseView.IsRingVisible;
         /// <summary>지표면 기준 Y. HUD 깊이 브리지와 동일 값을 공유할 때 사용한다.</summary>
         public float SurfaceY
         {

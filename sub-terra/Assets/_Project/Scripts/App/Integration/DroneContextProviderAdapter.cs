@@ -5,15 +5,20 @@ using SubTerra.Gameplay.Structural;
 using UnityEngine;
 using SharedContext = SubTerra.Shared.DroneContextDto;
 using SharedProvider = SubTerra.Shared.IDroneContextProvider;
+using SharedScanStateProvider = SubTerra.Shared.IDroneScanStateProvider;
 
 namespace SubTerra.App.Integration
 {
     /// <summary>
     /// A의 Runtime Sensor를 수정하지 않고 B가 합의된 Shared DTO로 읽게 하는 경계 어댑터.
     /// </summary>
-    public sealed class DroneContextProviderAdapter : MonoBehaviour, SharedProvider
+    public sealed class DroneContextProviderAdapter : MonoBehaviour,
+        SharedProvider,
+        SharedScanStateProvider
     {
         [SerializeField] private DroneSensor sensor;
+
+        public bool IsScanPulseActive => sensor != null && sensor.IsScanPulseActive;
 
         public SharedContext CreateContext()
         {
