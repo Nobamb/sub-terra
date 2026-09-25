@@ -174,7 +174,8 @@ namespace SubTerra.App.UI.Building
                     costs.Add(new BuildingCostReadModel(
                         cost.ItemId,
                         cost.Quantity,
-                        snapshot?.GetQuantity(cost.ItemId) ?? 0));
+                        snapshot?.GetQuantity(cost.ItemId) ?? 0,
+                        ResolveItemIcon(cost.ItemId)));
                 }
             }
 
@@ -185,6 +186,15 @@ namespace SubTerra.App.UI.Building
                 data.Icon,
                 data.PowerDraw,
                 costs);
+        }
+
+        private UnityEngine.Sprite ResolveItemIcon(string itemId)
+        {
+            return catalog != null
+                && catalog.TryGetInventoryItem(itemId, out var mineral)
+                && mineral != null
+                    ? mineral.Icon
+                    : null;
         }
 
         private void OnInventoryChanged(InventorySnapshot _)

@@ -11,13 +11,15 @@ namespace SubTerra.App.UI.Building
         public string ItemId { get; }
         public int Required { get; }
         public int Owned { get; }
+        public Sprite Icon { get; }
         public bool IsEnough => Owned >= Required;
 
-        public BuildingCostReadModel(string itemId, int required, int owned)
+        public BuildingCostReadModel(string itemId, int required, int owned, Sprite icon = null)
         {
             ItemId = itemId ?? string.Empty;
             Required = required;
             Owned = owned < 0 ? 0 : owned;
+            Icon = icon;
         }
     }
 

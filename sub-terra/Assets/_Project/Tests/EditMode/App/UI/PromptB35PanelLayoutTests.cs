@@ -64,10 +64,11 @@ namespace SubTerra.App.Tests.UI
             float leftEdge = left.anchoredPosition.x + left.sizeDelta.x;
             float rightStart = selection.anchoredPosition.x;
             float gap = rightStart - leftEdge;
+            // prompt-B 110: 목록/상세 2단 구조로 재설계되어 간격 기준이 B110 빌더로 이동했다.
             Assert.That(
                 gap,
-                Is.EqualTo(PromptB35LayoutBuilder.LeftRightGap).Within(1f),
-                "좌우 컨텐츠 간격이 +10% 반영되어야 합니다.");
+                Is.EqualTo(PromptB110BuildingMenuBuilder.LeftRightGap).Within(1f),
+                "좌측 목록과 우측 상세 사이 간격이 유지되어야 합니다.");
         }
 
         [Test]

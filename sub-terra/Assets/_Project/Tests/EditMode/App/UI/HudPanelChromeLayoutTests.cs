@@ -121,10 +121,10 @@ namespace SubTerra.App.Tests.UI
                 ?? building.Find("SelectionText") as RectTransform;
             if (selection != null)
             {
-                // 좌측 버튼(20+132) + 10px 간격 = 162.
+                // prompt-B 110: 좌측 목록(16+200) + 24px 간격 = 240.
                 Assert.That(
                     selection.anchoredPosition.x,
-                    Is.EqualTo(PromptB35LayoutBuilder.RightColumnX).Within(0.5f));
+                    Is.EqualTo(PromptB110BuildingMenuBuilder.RightColumnX).Within(0.5f));
             }
 
             var inventory = FindTransform(scene, "InventoryPanel");

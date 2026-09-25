@@ -1,6 +1,7 @@
 using System.Linq;
 using NUnit.Framework;
 using SubTerra.App.Core.Data;
+using SubTerra.App.Editor.DataValidation;
 using SubTerra.App.Integration;
 using SubTerra.App.UI.Building;
 using SubTerra.Gameplay.Building;
@@ -29,8 +30,9 @@ namespace SubTerra.App.Tests.UI
         private const string IntegrationPath =
             "Assets/_Project/Scenes/App/Mine_Demo_Integration.unity";
 
-        private const float FirstButtonY = -246f;
-        private const float LastButtonY = -498f;
+        // prompt-B 110: 목록이 헤더 바로 아래에서 시작하는 행 구조로 바뀌었다.
+        private static readonly float FirstButtonY = PromptB110BuildingMenuBuilder.EntryY(0);
+        private static readonly float LastButtonY = PromptB110BuildingMenuBuilder.EntryY(8);
         private const float PanelHeight = 560f;
 
         [Test]
