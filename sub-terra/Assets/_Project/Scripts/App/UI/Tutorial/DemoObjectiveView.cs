@@ -52,6 +52,8 @@ namespace SubTerra.App.UI.Tutorial
         [SerializeField] private TMP_Text claimQuestTitleText;
         [SerializeField] private TMP_Text claimRewardText;
         [SerializeField] private TMP_Text claimHintText;
+        [SerializeField] private TMP_Text claimProgressText;
+        [SerializeField] private RectTransform claimRewardRow;
         [SerializeField] private Image basicStatusIcon;
         [SerializeField] private Sprite basicStatusClearSprite;
         [SerializeField] private Sprite basicStatusRingSprite;
@@ -490,13 +492,62 @@ namespace SubTerra.App.UI.Tutorial
         {
             if (claimRoot != null)
             {
-                claimRoot.SetActive(visible);
                 if (visible)
                 {
+                    if (claimRoot.activeSelf)
+                    {
+                        var motion = claimRoot.GetComponent<QuestClearPopupMotion>();
+                        if (motion != null && motion.IsClosing) motion.Open();
+                    }
+                    claimRoot.SetActive(true);
                     claimRoot.transform.SetAsLastSibling();
                     EnsurePopupCanvas(claimRoot, ref claimCanvas);
                 }
+                else if (claimRoot.activeSelf)
+                {
+                    var motion = claimRoot.GetComponent<QuestClearPopupMotion>();
+                    if (motion != null) motion.Close();
+                    else claimRoot.SetActive(false);
+                }
             }
+        }
+
+        public void SetClaimProgress(int index, int count)
+        {
+            if (claimProgressText != null)
+            {
+                claimProgressText.text = "진행도  " + index + " / " + count;
+            }
+        }
+
+        public void SetClaimRewards(QuestReward reward)
+        {
+            if (claimRewardRow == null) return;
+
+            var names = new[] { "Copper", "Iron", "Lithium", "Gold" };
+            var labels = new[] { "구리", "철", "리튬", "골드" };
+            var amounts = new[] { reward.Copper, reward.Iron, reward.Lithium, reward.Gold };
+            var visible = 0;
+            for (var i = 0; i < amounts.Length; i++)
+            {
+                if (amounts[i] > 0) visible++;
+            }
+
+            var stride = visible >= 4 ? 145f : visible == 3 ? 185f : 235f;
+            var position = 0f;
+            for (var i = 0; i < names.Length; i++)
+            {
+                var item = claimRewardRow.Find(names[i]) as RectTransform;
+                if (item == null) continue;
+                item.gameObject.SetActive(amounts[i] > 0);
+                if (amounts[i] <= 0) continue;
+                item.anchoredPosition = new Vector2(position, 0f);
+                var label = item.GetComponentInChildren<TMP_Text>(true);
+                if (label != null) label.text = labels[i] + " × " + amounts[i];
+                position += stride;
+            }
+
+            if (claimRewardText != null) claimRewardText.gameObject.SetActive(visible == 0);
         }
 
         public void SetClaimText(string title, string questTitle, string rewardText, string hint)
@@ -696,7 +747,9 @@ namespace SubTerra.App.UI.Tutorial
                 && claimTitleText != null
                 && claimQuestTitleText != null
                 && claimRewardText != null
-                && claimHintText != null;
+                && claimHintText != null
+                && claimProgressText != null
+                && claimRewardRow != null;
         }
     }
 }

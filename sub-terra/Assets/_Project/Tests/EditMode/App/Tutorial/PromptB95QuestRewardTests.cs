@@ -8,6 +8,7 @@ using SubTerra.App.Save;
 using SubTerra.App.State;
 using SubTerra.App.Tutorial;
 using SubTerra.App.UI.Tutorial;
+using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using TMPro;
@@ -343,7 +344,7 @@ namespace SubTerra.App.Tests.Tutorial
                 var dump = Find(scene, "QuestRewardDumpPanel");
                 var dumpAll = Find(scene, "DumpAll");
                 var claim = Find(scene, "QuestClearRewardPanel");
-                var claimConfirm = Find(scene, "ClaimConfirmButton");
+                var claimClose = Find(scene, "ClaimCloseButton");
                 var dumpExisting = Find(scene, "CapacityDumpButton");
                 var forfeitReward = Find(scene, "CapacityForfeitButton");
                 Assert.That(root, Is.Not.Null);
@@ -356,7 +357,23 @@ namespace SubTerra.App.Tests.Tutorial
                 Assert.That(dump, Is.Not.Null);
                 Assert.That(dumpAll, Is.Not.Null);
                 Assert.That(claim, Is.Not.Null);
-                Assert.That(claimConfirm, Is.Not.Null);
+                Assert.That(claimClose, Is.Not.Null);
+                Assert.That(Find(scene, "ClaimConfirmButton"), Is.Null);
+                Assert.That(claim.GetComponent<QuestClearPopupMotion>(), Is.Not.Null);
+                Assert.That(claimClose.GetComponent<QuestClearCloseHover>(), Is.Not.Null);
+                Assert.That(Find(scene, "ClaimRewardIcon"), Is.Null);
+                Assert.That(
+                    AssetDatabase.GetAssetPath(claim.transform.Find("ClaimRewardRow/Copper/Icon").GetComponent<UnityEngine.UI.Image>().sprite),
+                    Is.EqualTo("Assets/_Project/Art/Icons/icon_copper.png"));
+                Assert.That(
+                    AssetDatabase.GetAssetPath(claim.transform.Find("ClaimRewardRow/Iron/Icon").GetComponent<UnityEngine.UI.Image>().sprite),
+                    Is.EqualTo("Assets/_Project/Art/Icons/icon_iron.png"));
+                Assert.That(
+                    AssetDatabase.GetAssetPath(claim.transform.Find("ClaimRewardRow/Lithium/Icon").GetComponent<UnityEngine.UI.Image>().sprite),
+                    Is.EqualTo("Assets/_Project/Art/Icons/icon_lithium.png"));
+                Assert.That(
+                    AssetDatabase.GetAssetPath(claim.transform.Find("ClaimRewardRow/Gold/Icon").GetComponent<UnityEngine.UI.Image>().sprite),
+                    Is.EqualTo("Assets/_Project/Art/UI/Gameplay/Quest/quest-icon-gold.png"));
 
                 var view = root.GetComponent<DemoObjectiveView>();
                 Assert.That(view, Is.Not.Null);
@@ -385,7 +402,7 @@ namespace SubTerra.App.Tests.Tutorial
                     forfeitReward.GetComponentInChildren<TMP_Text>(true).text,
                     Is.EqualTo("퀘스트 보상 버리기"));
                 Assert.That(
-                    claimConfirm.GetComponent<Button>().onClick.GetPersistentMethodName(0),
+                    claimClose.GetComponent<Button>().onClick.GetPersistentMethodName(0),
                     Is.EqualTo(nameof(DemoObjectiveView.OnClaimConfirmClicked)));
                 Assert.That(
                     prev.GetComponent<Button>().onClick.GetPersistentMethodName(0),

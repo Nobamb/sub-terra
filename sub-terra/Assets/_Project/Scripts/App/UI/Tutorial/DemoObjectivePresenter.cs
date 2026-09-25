@@ -350,8 +350,15 @@ namespace SubTerra.App.UI.Tutorial
             view?.SetClaimText(
                 "퀘스트 클리어",
                 questTitle,
-                "클리어 보상: " + result.Reward.FormatKorean(),
+                result.Reward.FormatKorean(),
                 "닫으면 보상이 지급됩니다.");
+            if (view is DemoObjectiveView questView)
+            {
+                questView.SetClaimProgress(
+                    DemoObjectiveCatalog.IndexOf(result.ObjectiveId) + 1,
+                    DemoObjectiveIds.RequiredCount);
+                questView.SetClaimRewards(result.Reward);
+            }
             view?.SetClaimVisible(true);
         }
 
