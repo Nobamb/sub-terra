@@ -98,7 +98,7 @@ namespace SubTerra.App.UI.Building
 
         public static string AvailabilityText(BuildingAvailabilityDisplayKind kind, string message)
         {
-            return "<b>" + Title(kind) + "</b>\n<size=85%>" + Detail(kind, message) + "</size>";
+            return "<b>" + Title(kind) + "</b>\n<size=90%>" + Detail(kind, message) + "</size>";
         }
 
         public static string PowerLabel(int powerDraw)
@@ -193,8 +193,8 @@ namespace SubTerra.App.UI.Building
         public static string CostAmount(BuildingCostReadModel cost)
         {
             var color = cost.IsEnough ? EnoughColorHex : MissingColorHex;
-            return "<size=80%>보유</size> <color=" + color + "><b>" + cost.Owned + "</b></color>"
-                + " <size=80%>/ 필요</size> <b>" + cost.Required + "</b>";
+            return "<size=85%>보유</size> <color=" + color + "><b>" + cost.Owned + "</b></color>"
+                + " <size=85%>/ 필요</size> <b>" + cost.Required + "</b>";
         }
 
         public static string CostState(BuildingCostReadModel cost)

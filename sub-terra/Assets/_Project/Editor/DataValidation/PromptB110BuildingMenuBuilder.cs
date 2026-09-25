@@ -38,7 +38,7 @@ namespace SubTerra.App.Editor.DataValidation
         private static readonly Color CyanLine = new Color(0f, 0.85f, 1f, 0.4f);
         private static readonly Color CyanFaint = new Color(0.2f, 0.8f, 0.95f, 0.2f);
         private static readonly Color EntryNormal = new Color(0.06f, 0.11f, 0.145f, 1f);
-        private static readonly Color EntryHover = new Color(0.1f, 0.21f, 0.26f, 1f);
+        private static readonly Color EntryHover = new Color(0.09f, 0.17f, 0.21f, 1f);
         private static readonly Color EntryPressed = new Color(0.08f, 0.3f, 0.36f, 1f);
         private static readonly Color BodyText = new Color(0.8f, 0.89f, 0.93f, 1f);
         private static readonly Color SubText = new Color(0.6f, 0.78f, 0.85f, 1f);
@@ -182,13 +182,13 @@ namespace SubTerra.App.Editor.DataValidation
         private static void BuildSectionLabels(Transform panel, TMP_FontAsset font, int entryCount)
         {
             var list = EnsureText(panel, "ListSectionLabel", font);
-            Style(list, 11f, Cyan, TextAlignmentOptions.MidlineLeft, FontStyles.Bold);
+            Style(list, 12.5f, Cyan, TextAlignmentOptions.MidlineLeft, FontStyles.Bold);
             list.characterSpacing = 3f;
             list.text = "FACILITIES <color=#6B8C99>· " + entryCount + "</color>";
             PlaceTopLeft(list.rectTransform, LeftColumnX, -62f, EntryWidth, 18f);
 
             var detail = EnsureText(panel, "DetailSectionLabel", font);
-            Style(detail, 11f, Cyan, TextAlignmentOptions.MidlineLeft, FontStyles.Bold);
+            Style(detail, 12.5f, Cyan, TextAlignmentOptions.MidlineLeft, FontStyles.Bold);
             detail.characterSpacing = 3f;
             detail.text = "DETAILS";
             PlaceTopLeft(detail.rectTransform, RightColumnX, -62f, RightColumnWidth, 18f);
@@ -229,7 +229,7 @@ namespace SubTerra.App.Editor.DataValidation
                 EnsureOutline(go, new Color(0.3f, 0.85f, 1f, 0.22f), 1f);
 
                 // Outline은 면 사본을 뒤에 그리므로 강조 면은 불투명해야 테두리만 보인다.
-                var highlight = EnsureImage(go.transform, "SelectedHighlight", new Color(0.05f, 0.22f, 0.28f, 1f));
+                var highlight = EnsureImage(go.transform, "SelectedHighlight", new Color(0.045f, 0.24f, 0.3f, 1f));
                 Stretch(highlight.rectTransform);
                 EnsureOutline(highlight.gameObject, new Color(0.45f, 0.95f, 1f, 0.95f), 1.5f);
                 var bar = EnsureImage(highlight.transform, "SelectedBar", Cyan);
@@ -237,7 +237,7 @@ namespace SubTerra.App.Editor.DataValidation
                 bar.rectTransform.anchorMax = new Vector2(0f, 1f);
                 bar.rectTransform.pivot = new Vector2(0f, 0.5f);
                 bar.rectTransform.anchoredPosition = Vector2.zero;
-                bar.rectTransform.sizeDelta = new Vector2(4f, 0f);
+                bar.rectTransform.sizeDelta = new Vector2(5f, 0f);
                 highlight.gameObject.SetActive(false);
 
                 var icon = EnsureImage(go.transform, "Icon", Color.white);
@@ -245,19 +245,19 @@ namespace SubTerra.App.Editor.DataValidation
                 PlaceTopLeft(icon.rectTransform, 9f, -6f, 34f, 34f);
 
                 var label = EnsureText(go.transform, "Label", font);
-                Style(label, 16f, Color.white, TextAlignmentOptions.MidlineLeft, FontStyles.Bold);
+                Style(label, 17f, Color.white, TextAlignmentOptions.MidlineLeft, FontStyles.Bold);
                 label.enableAutoSizing = true;
-                label.fontSizeMin = 12f;
-                label.fontSizeMax = 16f;
+                label.fontSizeMin = 14f;
+                label.fontSizeMax = 17f;
                 PlaceTopLeft(label.rectTransform, 50f, -2f, 104f, 24f);
 
                 var cost = EnsureText(go.transform, "CostSummary", font);
-                Style(cost, 12f, SubText, TextAlignmentOptions.MidlineLeft, FontStyles.Normal);
+                Style(cost, 13f, SubText, TextAlignmentOptions.MidlineLeft, FontStyles.Normal);
                 cost.text = string.Empty;
                 PlaceTopLeft(cost.rectTransform, 50f, -25f, 142f, 19f);
 
                 var state = EnsureText(go.transform, "EntryState", font);
-                Style(state, 12f, new Color(0.56f, 0.96f, 0.78f, 1f), TextAlignmentOptions.MidlineRight, FontStyles.Bold);
+                Style(state, 13f, new Color(0.56f, 0.96f, 0.78f, 1f), TextAlignmentOptions.MidlineRight, FontStyles.Bold);
                 state.text = string.Empty;
                 PlaceTopRight(state.rectTransform, -8f, -2f, 42f, 24f);
 
@@ -330,11 +330,11 @@ namespace SubTerra.App.Editor.DataValidation
             chip.gameObject.SetActive(false);
 
             var body = panel.Find("SelectionText").GetComponent<TMP_Text>();
-            Style(body, 15f, BodyText, TextAlignmentOptions.TopLeft, FontStyles.Normal);
+            Style(body, 16.5f, BodyText, TextAlignmentOptions.TopLeft, FontStyles.Normal);
             body.enableAutoSizing = true;
-            body.fontSizeMin = 12f;
-            body.fontSizeMax = 15f;
-            body.lineSpacing = 4f;
+            body.fontSizeMin = 14f;
+            body.fontSizeMax = 16.5f;
+            body.lineSpacing = 5f;
             body.textWrappingMode = TextWrappingModes.Normal;
             body.overflowMode = TextOverflowModes.Ellipsis;
             PlaceTopLeft(body.rectTransform, RightColumnX, -172f, RightColumnWidth, 76f);
@@ -363,7 +363,7 @@ namespace SubTerra.App.Editor.DataValidation
             PlaceTopLeft(divider.rectTransform, 0f, 0f, RightColumnWidth, 1.5f);
 
             var label = EnsureText(section, "CostLabel", font);
-            Style(label, 11f, Cyan, TextAlignmentOptions.MidlineLeft, FontStyles.Bold);
+            Style(label, 12.5f, Cyan, TextAlignmentOptions.MidlineLeft, FontStyles.Bold);
             label.characterSpacing = 3f;
             label.text = "REQUIRED <color=#6B8C99>· 필요 자원</color>";
             PlaceTopLeft(label.rectTransform, 0f, -7f, RightColumnWidth, 18f);
@@ -379,15 +379,15 @@ namespace SubTerra.App.Editor.DataValidation
                 PlaceTopLeft(icon.rectTransform, 8f, -5f, 24f, 24f);
 
                 var name = EnsureText(bg.transform, "Name", font);
-                Style(name, 15f, Color.white, TextAlignmentOptions.MidlineLeft, FontStyles.Bold);
-                PlaceTopLeft(name.rectTransform, 40f, -1f, 60f, 32f);
+                Style(name, 16f, Color.white, TextAlignmentOptions.MidlineLeft, FontStyles.Bold);
+                PlaceTopLeft(name.rectTransform, 40f, -1f, 58f, 32f);
 
                 var amount = EnsureText(bg.transform, "Amount", font);
-                Style(amount, 15f, BodyText, TextAlignmentOptions.MidlineLeft, FontStyles.Normal);
-                PlaceTopLeft(amount.rectTransform, 100f, -1f, 136f, 32f);
+                Style(amount, 16f, BodyText, TextAlignmentOptions.MidlineLeft, FontStyles.Normal);
+                PlaceTopLeft(amount.rectTransform, 104f, -1f, 124f, 32f);
 
                 var state = EnsureText(bg.transform, "State", font);
-                Style(state, 13f, new Color(0.56f, 0.96f, 0.78f, 1f), TextAlignmentOptions.MidlineRight, FontStyles.Bold);
+                Style(state, 14f, new Color(0.56f, 0.96f, 0.78f, 1f), TextAlignmentOptions.MidlineRight, FontStyles.Bold);
                 PlaceTopRight(state.rectTransform, -8f, -1f, 84f, 32f);
 
                 var track = EnsureImage(bg.transform, "FillTrack", new Color(1f, 1f, 1f, 0.08f));
@@ -464,10 +464,10 @@ namespace SubTerra.App.Editor.DataValidation
             Stretch(glyph.rectTransform);
 
             var text = panel.Find("AvailabilityText").GetComponent<TMP_Text>();
-            Style(text, 15f, new Color(0.72f, 0.84f, 0.9f, 1f), TextAlignmentOptions.MidlineLeft, FontStyles.Normal);
+            Style(text, 16f, new Color(0.72f, 0.84f, 0.9f, 1f), TextAlignmentOptions.MidlineLeft, FontStyles.Normal);
             text.enableAutoSizing = true;
-            text.fontSizeMin = 11f;
-            text.fontSizeMax = 15f;
+            text.fontSizeMin = 13f;
+            text.fontSizeMax = 16f;
             text.textWrappingMode = TextWrappingModes.Normal;
             text.overflowMode = TextOverflowModes.Ellipsis;
             text.lineSpacing = 2f;
@@ -492,10 +492,10 @@ namespace SubTerra.App.Editor.DataValidation
             PlaceTopLeft(divider.rectTransform, RightColumnX, -512f, RightColumnWidth, 1f);
 
             var hint = EnsureText(panel, "ControlsHint", font);
-            Style(hint, 12f, SubText, TextAlignmentOptions.MidlineLeft, FontStyles.Normal);
+            Style(hint, 14f, SubText, TextAlignmentOptions.MidlineLeft, FontStyles.Normal);
             hint.enableAutoSizing = true;
-            hint.fontSizeMin = 10f;
-            hint.fontSizeMax = 12f;
+            hint.fontSizeMin = 12f;
+            hint.fontSizeMax = 14f;
             hint.text = "<color=#73F0FF>좌클릭</color> 설치   <color=#73F0FF>C</color> 근접 설치   <color=#73F0FF>B</color> 닫기";
             PlaceTopLeft(hint.rectTransform, RightColumnX, -518f, RightColumnWidth, 24f);
         }

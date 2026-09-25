@@ -92,12 +92,12 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 16
-  m_fontSizeBase: 16
+  m_fontSize: 17
+  m_fontSizeBase: 17
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 12
-  m_fontSizeMax: 16
+  m_fontSizeMin: 14
+  m_fontSizeMax: 17
   m_fontStyle: 1
   m_HorizontalAlignment: 1
   m_VerticalAlignment: 4096
@@ -229,12 +229,12 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 16
-  m_fontSizeBase: 16
+  m_fontSize: 17
+  m_fontSizeBase: 17
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 12
-  m_fontSizeMax: 16
+  m_fontSizeMin: 14
+  m_fontSizeMax: 17
   m_fontStyle: 1
   m_HorizontalAlignment: 1
   m_VerticalAlignment: 4096
@@ -366,8 +366,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 11
-  m_fontSizeBase: 11
+  m_fontSize: 12.5
+  m_fontSizeBase: 12.5
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -640,8 +640,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 12
-  m_fontSizeBase: 12
+  m_fontSize: 13
+  m_fontSizeBase: 13
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -720,7 +720,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 40, y: -1}
-  m_SizeDelta: {x: 60, y: 32}
+  m_SizeDelta: {x: 58, y: 32}
   m_Pivot: {x: 0, y: 1}
 --- !u!222 &6297724720179297521
 CanvasRenderer:
@@ -777,8 +777,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 15
-  m_fontSizeBase: 15
+  m_fontSize: 16
+  m_fontSizeBase: 16
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -931,8 +931,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 100, y: -1}
-  m_SizeDelta: {x: 136, y: 32}
+  m_AnchoredPosition: {x: 104, y: -1}
+  m_SizeDelta: {x: 124, y: 32}
   m_Pivot: {x: 0, y: 1}
 --- !u!222 &1614052890101316548
 CanvasRenderer:
@@ -989,8 +989,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 15
-  m_fontSizeBase: 15
+  m_fontSize: 16
+  m_fontSizeBase: 16
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -1242,8 +1242,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 12
-  m_fontSizeBase: 12
+  m_fontSize: 13
+  m_fontSizeBase: 13
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -1379,8 +1379,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 12
-  m_fontSizeBase: 12
+  m_fontSize: 13
+  m_fontSizeBase: 13
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -1484,7 +1484,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.05, g: 0.22, b: 0.28, a: 1}
+  m_Color: {r: 0.045, g: 0.24, b: 0.3, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -1683,12 +1683,12 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 15
-  m_fontSizeBase: 15
+  m_fontSize: 16.5
+  m_fontSizeBase: 16.5
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 12
-  m_fontSizeMax: 15
+  m_fontSizeMin: 14
+  m_fontSizeMax: 16.5
   m_fontStyle: 0
   m_HorizontalAlignment: 1
   m_VerticalAlignment: 256
@@ -1696,7 +1696,7 @@ MonoBehaviour:
   m_characterSpacing: 0
   m_characterHorizontalScale: 1
   m_wordSpacing: 0
-  m_lineSpacing: 4
+  m_lineSpacing: 5
   m_lineSpacingMax: 0
   m_paragraphSpacing: 0
   m_charWidthMaxAdj: 0
@@ -1955,7 +1955,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.05, g: 0.22, b: 0.28, a: 1}
+  m_Color: {r: 0.045, g: 0.24, b: 0.3, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -2047,7 +2047,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.05, g: 0.22, b: 0.28, a: 1}
+  m_Color: {r: 0.045, g: 0.24, b: 0.3, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -2326,7 +2326,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 4, y: 0}
+  m_SizeDelta: {x: 5, y: 0}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!222 &295250131803840609
 CanvasRenderer:
@@ -2401,7 +2401,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 4, y: 0}
+  m_SizeDelta: {x: 5, y: 0}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!222 &3495963761501649091
 CanvasRenderer:
@@ -2533,8 +2533,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 11
-  m_fontSizeBase: 11
+  m_fontSize: 12.5
+  m_fontSizeBase: 12.5
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -2670,12 +2670,12 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 16
-  m_fontSizeBase: 16
+  m_fontSize: 17
+  m_fontSizeBase: 17
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 12
-  m_fontSizeMax: 16
+  m_fontSizeMin: 14
+  m_fontSizeMax: 17
   m_fontStyle: 1
   m_HorizontalAlignment: 1
   m_VerticalAlignment: 4096
@@ -2807,8 +2807,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 12
-  m_fontSizeBase: 12
+  m_fontSize: 13
+  m_fontSizeBase: 13
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -2958,7 +2958,7 @@ MonoBehaviour:
   m_Transition: 1
   m_Colors:
     m_NormalColor: {r: 0.06, g: 0.11, b: 0.145, a: 1}
-    m_HighlightedColor: {r: 0.1, g: 0.21, b: 0.26, a: 1}
+    m_HighlightedColor: {r: 0.09, g: 0.17, b: 0.21, a: 1}
     m_PressedColor: {r: 0.08, g: 0.3, b: 0.36, a: 1}
     m_SelectedColor: {r: 0.06, g: 0.11, b: 0.145, a: 1}
     m_DisabledColor: {r: 0.08, g: 0.09, b: 0.1, a: 0.7}
@@ -3065,7 +3065,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 4, y: 0}
+  m_SizeDelta: {x: 5, y: 0}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!222 &9161971566764055459
 CanvasRenderer:
@@ -3298,8 +3298,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 12
-  m_fontSizeBase: 12
+  m_fontSize: 13
+  m_fontSizeBase: 13
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -3585,8 +3585,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 12
-  m_fontSizeBase: 12
+  m_fontSize: 13
+  m_fontSizeBase: 13
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -3665,7 +3665,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 4, y: 0}
+  m_SizeDelta: {x: 5, y: 0}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!222 &8218107014511187168
 CanvasRenderer:
@@ -3811,7 +3811,7 @@ MonoBehaviour:
   m_Transition: 1
   m_Colors:
     m_NormalColor: {r: 0.06, g: 0.11, b: 0.145, a: 1}
-    m_HighlightedColor: {r: 0.1, g: 0.21, b: 0.26, a: 1}
+    m_HighlightedColor: {r: 0.09, g: 0.17, b: 0.21, a: 1}
     m_PressedColor: {r: 0.08, g: 0.3, b: 0.36, a: 1}
     m_SelectedColor: {r: 0.06, g: 0.11, b: 0.145, a: 1}
     m_DisabledColor: {r: 0.08, g: 0.09, b: 0.1, a: 0.7}
@@ -3975,12 +3975,12 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 16
-  m_fontSizeBase: 16
+  m_fontSize: 17
+  m_fontSizeBase: 17
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 12
-  m_fontSizeMax: 16
+  m_fontSizeMin: 14
+  m_fontSizeMax: 17
   m_fontStyle: 1
   m_HorizontalAlignment: 1
   m_VerticalAlignment: 4096
@@ -4187,8 +4187,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 13
-  m_fontSizeBase: 13
+  m_fontSize: 14
+  m_fontSizeBase: 14
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -4703,8 +4703,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 12
-  m_fontSizeBase: 12
+  m_fontSize: 13
+  m_fontSizeBase: 13
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -4840,8 +4840,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 12
-  m_fontSizeBase: 12
+  m_fontSize: 13
+  m_fontSizeBase: 13
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -4978,12 +4978,12 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 12
-  m_fontSizeBase: 12
+  m_fontSize: 14
+  m_fontSizeBase: 14
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 10
-  m_fontSizeMax: 12
+  m_fontSizeMin: 12
+  m_fontSizeMax: 14
   m_fontStyle: 0
   m_HorizontalAlignment: 1
   m_VerticalAlignment: 4096
@@ -5270,7 +5270,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 4, y: 0}
+  m_SizeDelta: {x: 5, y: 0}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!222 &6705603165924471992
 CanvasRenderer:
@@ -5477,12 +5477,12 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 16
-  m_fontSizeBase: 16
+  m_fontSize: 17
+  m_fontSizeBase: 17
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 12
-  m_fontSizeMax: 16
+  m_fontSizeMin: 14
+  m_fontSizeMax: 17
   m_fontStyle: 1
   m_HorizontalAlignment: 1
   m_VerticalAlignment: 4096
@@ -5734,7 +5734,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 40, y: -1}
-  m_SizeDelta: {x: 60, y: 32}
+  m_SizeDelta: {x: 58, y: 32}
   m_Pivot: {x: 0, y: 1}
 --- !u!222 &1554955766723063062
 CanvasRenderer:
@@ -5791,8 +5791,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 15
-  m_fontSizeBase: 15
+  m_fontSize: 16
+  m_fontSizeBase: 16
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -5942,7 +5942,7 @@ MonoBehaviour:
   m_Transition: 1
   m_Colors:
     m_NormalColor: {r: 0.06, g: 0.11, b: 0.145, a: 1}
-    m_HighlightedColor: {r: 0.1, g: 0.21, b: 0.26, a: 1}
+    m_HighlightedColor: {r: 0.09, g: 0.17, b: 0.21, a: 1}
     m_PressedColor: {r: 0.08, g: 0.3, b: 0.36, a: 1}
     m_SelectedColor: {r: 0.06, g: 0.11, b: 0.145, a: 1}
     m_DisabledColor: {r: 0.08, g: 0.09, b: 0.1, a: 0.7}
@@ -6106,8 +6106,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 13
-  m_fontSizeBase: 13
+  m_fontSize: 14
+  m_fontSizeBase: 14
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -6243,8 +6243,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 12
-  m_fontSizeBase: 12
+  m_fontSize: 13
+  m_fontSizeBase: 13
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -6348,7 +6348,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.05, g: 0.22, b: 0.28, a: 1}
+  m_Color: {r: 0.045, g: 0.24, b: 0.3, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -6698,8 +6698,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 12
-  m_fontSizeBase: 12
+  m_fontSize: 13
+  m_fontSizeBase: 13
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -6835,8 +6835,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 12
-  m_fontSizeBase: 12
+  m_fontSize: 13
+  m_fontSizeBase: 13
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -7073,8 +7073,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 13
-  m_fontSizeBase: 13
+  m_fontSize: 14
+  m_fontSizeBase: 14
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -7325,7 +7325,7 @@ MonoBehaviour:
   m_Transition: 1
   m_Colors:
     m_NormalColor: {r: 0.06, g: 0.11, b: 0.145, a: 1}
-    m_HighlightedColor: {r: 0.1, g: 0.21, b: 0.26, a: 1}
+    m_HighlightedColor: {r: 0.09, g: 0.17, b: 0.21, a: 1}
     m_PressedColor: {r: 0.08, g: 0.3, b: 0.36, a: 1}
     m_SelectedColor: {r: 0.06, g: 0.11, b: 0.145, a: 1}
     m_DisabledColor: {r: 0.08, g: 0.09, b: 0.1, a: 0.7}
@@ -7644,7 +7644,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 40, y: -1}
-  m_SizeDelta: {x: 60, y: 32}
+  m_SizeDelta: {x: 58, y: 32}
   m_Pivot: {x: 0, y: 1}
 --- !u!222 &5598956197675165612
 CanvasRenderer:
@@ -7701,8 +7701,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 15
-  m_fontSizeBase: 15
+  m_fontSize: 16
+  m_fontSizeBase: 16
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -7913,8 +7913,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 12
-  m_fontSizeBase: 12
+  m_fontSize: 13
+  m_fontSizeBase: 13
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -8125,8 +8125,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 12
-  m_fontSizeBase: 12
+  m_fontSize: 13
+  m_fontSizeBase: 13
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -8279,8 +8279,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 100, y: -1}
-  m_SizeDelta: {x: 136, y: 32}
+  m_AnchoredPosition: {x: 104, y: -1}
+  m_SizeDelta: {x: 124, y: 32}
   m_Pivot: {x: 0, y: 1}
 --- !u!222 &9077794311908201067
 CanvasRenderer:
@@ -8337,8 +8337,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 15
-  m_fontSizeBase: 15
+  m_fontSize: 16
+  m_fontSizeBase: 16
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -8488,7 +8488,7 @@ MonoBehaviour:
   m_Transition: 1
   m_Colors:
     m_NormalColor: {r: 0.06, g: 0.11, b: 0.145, a: 1}
-    m_HighlightedColor: {r: 0.1, g: 0.21, b: 0.26, a: 1}
+    m_HighlightedColor: {r: 0.09, g: 0.17, b: 0.21, a: 1}
     m_PressedColor: {r: 0.08, g: 0.3, b: 0.36, a: 1}
     m_SelectedColor: {r: 0.06, g: 0.11, b: 0.145, a: 1}
     m_DisabledColor: {r: 0.08, g: 0.09, b: 0.1, a: 0.7}
@@ -8757,7 +8757,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.05, g: 0.22, b: 0.28, a: 1}
+  m_Color: {r: 0.045, g: 0.24, b: 0.3, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -8823,8 +8823,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 100, y: -1}
-  m_SizeDelta: {x: 136, y: 32}
+  m_AnchoredPosition: {x: 104, y: -1}
+  m_SizeDelta: {x: 124, y: 32}
   m_Pivot: {x: 0, y: 1}
 --- !u!222 &3778802955478613450
 CanvasRenderer:
@@ -8881,8 +8881,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 15
-  m_fontSizeBase: 15
+  m_fontSize: 16
+  m_fontSizeBase: 16
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -8961,7 +8961,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 4, y: 0}
+  m_SizeDelta: {x: 5, y: 0}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!222 &2891458828862739753
 CanvasRenderer:
@@ -9107,7 +9107,7 @@ MonoBehaviour:
   m_Transition: 1
   m_Colors:
     m_NormalColor: {r: 0.06, g: 0.11, b: 0.145, a: 1}
-    m_HighlightedColor: {r: 0.1, g: 0.21, b: 0.26, a: 1}
+    m_HighlightedColor: {r: 0.09, g: 0.17, b: 0.21, a: 1}
     m_PressedColor: {r: 0.08, g: 0.3, b: 0.36, a: 1}
     m_SelectedColor: {r: 0.06, g: 0.11, b: 0.145, a: 1}
     m_DisabledColor: {r: 0.08, g: 0.09, b: 0.1, a: 0.7}
@@ -9585,7 +9585,7 @@ MonoBehaviour:
   m_Transition: 1
   m_Colors:
     m_NormalColor: {r: 0.06, g: 0.11, b: 0.145, a: 1}
-    m_HighlightedColor: {r: 0.1, g: 0.21, b: 0.26, a: 1}
+    m_HighlightedColor: {r: 0.09, g: 0.17, b: 0.21, a: 1}
     m_PressedColor: {r: 0.08, g: 0.3, b: 0.36, a: 1}
     m_SelectedColor: {r: 0.06, g: 0.11, b: 0.145, a: 1}
     m_DisabledColor: {r: 0.08, g: 0.09, b: 0.1, a: 0.7}
@@ -9824,8 +9824,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 12
-  m_fontSizeBase: 12
+  m_fontSize: 13
+  m_fontSizeBase: 13
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -9975,7 +9975,7 @@ MonoBehaviour:
   m_Transition: 1
   m_Colors:
     m_NormalColor: {r: 0.06, g: 0.11, b: 0.145, a: 1}
-    m_HighlightedColor: {r: 0.1, g: 0.21, b: 0.26, a: 1}
+    m_HighlightedColor: {r: 0.09, g: 0.17, b: 0.21, a: 1}
     m_PressedColor: {r: 0.08, g: 0.3, b: 0.36, a: 1}
     m_SelectedColor: {r: 0.06, g: 0.11, b: 0.145, a: 1}
     m_DisabledColor: {r: 0.08, g: 0.09, b: 0.1, a: 0.7}
@@ -10139,12 +10139,12 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 16
-  m_fontSizeBase: 16
+  m_fontSize: 17
+  m_fontSizeBase: 17
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 12
-  m_fontSizeMax: 16
+  m_fontSizeMin: 14
+  m_fontSizeMax: 17
   m_fontStyle: 1
   m_HorizontalAlignment: 1
   m_VerticalAlignment: 4096
@@ -10249,7 +10249,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "<b>\uC2DC\uC124 \uBBF8\uC120\uD0DD</b>\n<size=85%>\uBAA9\uB85D\uC5D0\uC11C
+  m_text: "<b>\uC2DC\uC124 \uBBF8\uC120\uD0DD</b>\n<size=90%>\uBAA9\uB85D\uC5D0\uC11C
     \uC2DC\uC124\uC744 \uACE0\uB974\uBA74 \uC124\uCE58 \uC870\uAC74\uC744 \uD655\uC778\uD569\uB2C8\uB2E4.</size>"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 48b6c44ff06b5b84d81cbfcf3342d6f0, type: 2}
@@ -10277,12 +10277,12 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 15
-  m_fontSizeBase: 15
+  m_fontSize: 16
+  m_fontSizeBase: 16
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 11
-  m_fontSizeMax: 15
+  m_fontSizeMin: 13
+  m_fontSizeMax: 16
   m_fontStyle: 0
   m_HorizontalAlignment: 1
   m_VerticalAlignment: 4096
@@ -10414,8 +10414,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 11
-  m_fontSizeBase: 11
+  m_fontSize: 12.5
+  m_fontSizeBase: 12.5
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -10551,12 +10551,12 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 16
-  m_fontSizeBase: 16
+  m_fontSize: 17
+  m_fontSizeBase: 17
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 12
-  m_fontSizeMax: 16
+  m_fontSizeMin: 14
+  m_fontSizeMax: 17
   m_fontStyle: 1
   m_HorizontalAlignment: 1
   m_VerticalAlignment: 4096
@@ -10763,12 +10763,12 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 16
-  m_fontSizeBase: 16
+  m_fontSize: 17
+  m_fontSizeBase: 17
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 12
-  m_fontSizeMax: 16
+  m_fontSizeMin: 14
+  m_fontSizeMax: 17
   m_fontStyle: 1
   m_HorizontalAlignment: 1
   m_VerticalAlignment: 4096
@@ -10900,12 +10900,12 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 16
-  m_fontSizeBase: 16
+  m_fontSize: 17
+  m_fontSizeBase: 17
   m_fontWeight: 400
   m_enableAutoSizing: 1
-  m_fontSizeMin: 12
-  m_fontSizeMax: 16
+  m_fontSizeMin: 14
+  m_fontSizeMax: 17
   m_fontStyle: 1
   m_HorizontalAlignment: 1
   m_VerticalAlignment: 4096
@@ -11400,7 +11400,7 @@ MonoBehaviour:
   m_Transition: 1
   m_Colors:
     m_NormalColor: {r: 0.06, g: 0.11, b: 0.145, a: 1}
-    m_HighlightedColor: {r: 0.1, g: 0.21, b: 0.26, a: 1}
+    m_HighlightedColor: {r: 0.09, g: 0.17, b: 0.21, a: 1}
     m_PressedColor: {r: 0.08, g: 0.3, b: 0.36, a: 1}
     m_SelectedColor: {r: 0.06, g: 0.11, b: 0.145, a: 1}
     m_DisabledColor: {r: 0.08, g: 0.09, b: 0.1, a: 0.7}
@@ -11564,8 +11564,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 12
-  m_fontSizeBase: 12
+  m_fontSize: 13
+  m_fontSizeBase: 13
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -11881,7 +11881,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.05, g: 0.22, b: 0.28, a: 1}
+  m_Color: {r: 0.045, g: 0.24, b: 0.3, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -12080,8 +12080,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 12
-  m_fontSizeBase: 12
+  m_fontSize: 13
+  m_fontSizeBase: 13
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -12311,7 +12311,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 4, y: 0}
+  m_SizeDelta: {x: 5, y: 0}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!222 &4496730452729532332
 CanvasRenderer:
@@ -12443,8 +12443,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 12
-  m_fontSizeBase: 12
+  m_fontSize: 13
+  m_fontSizeBase: 13
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -12548,7 +12548,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.05, g: 0.22, b: 0.28, a: 1}
+  m_Color: {r: 0.045, g: 0.24, b: 0.3, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -12767,7 +12767,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 4, y: 0}
+  m_SizeDelta: {x: 5, y: 0}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!222 &7695201468928561601
 CanvasRenderer:
@@ -12942,7 +12942,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.05, g: 0.22, b: 0.28, a: 1}
+  m_Color: {r: 0.045, g: 0.24, b: 0.3, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -13274,7 +13274,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 4, y: 0}
+  m_SizeDelta: {x: 5, y: 0}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!222 &7159721682616706527
 CanvasRenderer:
@@ -13374,7 +13374,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.05, g: 0.22, b: 0.28, a: 1}
+  m_Color: {r: 0.045, g: 0.24, b: 0.3, a: 1}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -13573,8 +13573,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 12
-  m_fontSizeBase: 12
+  m_fontSize: 13
+  m_fontSizeBase: 13
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
