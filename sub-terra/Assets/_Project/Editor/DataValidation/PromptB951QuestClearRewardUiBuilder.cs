@@ -159,7 +159,7 @@ namespace SubTerra.App.Editor.DataValidation
             EnsureRewardItem(rewardRow, "Gold", "quest-icon-gold.png", font);
             reward.gameObject.SetActive(false);
             var close = EnsureImage(panel.transform, "ClaimCloseButton", SpriteAt("x-button.png"),
-                new Vector2(1f, 1f), new Vector2(-102f, -104f), new Vector2(36f, 36f));
+                new Vector2(1f, 1f), new Vector2(-102f, -111f), new Vector2(36f, 36f));
             close.rectTransform.pivot = new Vector2(0.5f, 0.5f);
             close.raycastTarget = true;
             var closeButton = close.GetComponent<Button>();
