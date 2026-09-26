@@ -125,6 +125,24 @@ namespace SubTerra.Gameplay.Tests.Drone
             Assert.That(lights.Count(l => l.color == new Color(1f, 0.82f, 0.18f, 1f)), Is.EqualTo(2));
         }
 
+        [TestCase(3f)]
+        [TestCase(7f)]
+        public void PromptB111_OrdinaryBlocksAreNotScanTargets(float radius)
+        {
+            using var world = new SensorWorld(radius);
+            var ordinary = new Vector3Int(1, 0, 0);
+            var mineral = new Vector3Int(2, 0, 0);
+            world.PlaceMineral(ordinary, string.Empty);
+            world.PlaceMineral(mineral, "mineral.copper");
+
+            world.Sensor.TickScanPulse(0f);
+
+            Assert.That(world.Sensor.LastPulseTargets.Select(target => target.Cell),
+                Is.EquivalentTo(new[] { mineral }));
+            Assert.That(world.Sensor.ScanPulseView.TryGetActiveTarget(ordinary, out _), Is.False);
+            Assert.That(world.Sensor.ScanPulseView.ActiveLightCount, Is.EqualTo(1));
+        }
+
         private sealed class SensorWorld : System.IDisposable
         {
             private readonly GameObject root;

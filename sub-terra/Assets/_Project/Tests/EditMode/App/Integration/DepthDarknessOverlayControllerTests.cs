@@ -84,6 +84,93 @@ namespace SubTerra.App.Tests.Integration
         }
 
         [Test]
+        public void PromptB111_ScanGlow_RevealsTargetAndEmptySpaceButNotAdjacentOrdinaryBlocks()
+        {
+            var shader = Resources.Load<Shader>(DepthDarknessOverlayController.ShaderResourceName);
+            Assert.That(shader, Is.Not.Null);
+            Assert.That(shader.isSupported, Is.True);
+            var material = new Material(shader);
+            var occupancy = new Texture2D(3, 3, TextureFormat.RGBA32, false, true)
+            {
+                filterMode = FilterMode.Point,
+                wrapMode = TextureWrapMode.Clamp
+            };
+            var target = RenderTexture.GetTemporary(96, 96, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear);
+            var before = new Texture2D(96, 96, TextureFormat.RGBA32, false, true);
+            var after = new Texture2D(96, 96, TextureFormat.RGBA32, false, true);
+            var previous = RenderTexture.active;
+            try
+            {
+                var pixels = new Color32[9];
+                for (int i = 0; i < pixels.Length; i++) pixels[i] = new Color32(255, 0, 0, 255);
+                pixels[3] = new Color32(0, 0, 0, 255);
+                occupancy.SetPixels32(pixels);
+                occupancy.Apply();
+                material.SetTexture("_OccupancyTex", occupancy);
+                material.SetVector("_OccTexSize", new Vector4(3, 3, 0, 0));
+                material.SetVector("_CellSize", Vector4.one);
+                material.SetVector("_OccWorldMin", Vector4.zero);
+                material.SetVector("_WorldMin", Vector4.zero);
+                material.SetVector("_WorldMax", new Vector4(3, 3, 0, 0));
+                material.SetVector("_PlayerViewport", new Vector4(-10, -10, 1, 0));
+                material.SetVector("_ClipRect", new Vector4(-1000, -1000, 1000, 1000));
+                material.SetColor("_DarkColor", new Color(0, 0, 0, 0.95f));
+                material.SetFloat("_BlockDarkAlpha", 1f);
+                material.SetFloat("_Fade", 1f);
+                material.SetFloat("_OutlineWidth", 0f);
+                RenderOverlay(material, target, before);
+
+                pixels[4].g = 255;
+                occupancy.SetPixels32(pixels);
+                occupancy.Apply();
+                RenderOverlay(material, target, after);
+
+                // 대상과 맞닿은 일반 블록의 변·모서리는 스캔 전후 같은 암부를 유지한다.
+                var ordinarySamples = new[]
+                {
+                    new Vector2(2.05f, 1.5f), new Vector2(1.5f, 2.05f),
+                    new Vector2(1.5f, 0.95f), new Vector2(2.05f, 2.05f),
+                    new Vector2(0.95f, 2.05f), new Vector2(2.05f, 0.95f),
+                    new Vector2(0.95f, 0.95f)
+                };
+                foreach (var sample in ordinarySamples)
+                {
+                    Assert.That(SampleCell(after, sample), Is.EqualTo(SampleCell(before, sample)).Within(0.02f),
+                        "Ordinary block was revealed at " + sample);
+                }
+                var detected = new Vector2(1.5f, 1.5f);
+                var empty = new Vector2(0.95f, 1.5f);
+                Assert.That(SampleCell(after, detected), Is.GreaterThan(SampleCell(before, detected) + 0.5f));
+                Assert.That(SampleCell(after, empty), Is.GreaterThan(SampleCell(before, empty) + 0.5f));
+            }
+            finally
+            {
+                RenderTexture.active = previous;
+                RenderTexture.ReleaseTemporary(target);
+                Object.DestroyImmediate(after);
+                Object.DestroyImmediate(before);
+                Object.DestroyImmediate(occupancy);
+                Object.DestroyImmediate(material);
+            }
+        }
+
+        private static void RenderOverlay(Material material, RenderTexture target, Texture2D capture)
+        {
+            RenderTexture.active = target;
+            GL.Clear(true, true, Color.white);
+            Graphics.Blit(Texture2D.whiteTexture, target, material);
+            capture.ReadPixels(new Rect(0, 0, target.width, target.height), 0, 0);
+            capture.Apply();
+        }
+
+        private static float SampleCell(Texture2D capture, Vector2 cellPosition)
+        {
+            return capture.GetPixel(
+                Mathf.FloorToInt(cellPosition.x / 3f * capture.width),
+                Mathf.FloorToInt(cellPosition.y / 3f * capture.height)).r;
+        }
+
+        [Test]
         public void ShouldDrawOutline_OnlyOnOccupiedDarkCellEdges()
         {
             Assert.That(

@@ -103,6 +103,7 @@ Shader "SubTerra/DepthDarknessOverlayUI"
                 float occupied = 0;
                 float outline = 0;
                 float scanGlow = 0;
+                float scanTarget = 0;
                 if (_OccTexSize.x > 0.5 && _CellSize.x > 0.0001)
                 {
                     float2 world = lerp(_WorldMin.xy, _WorldMax.xy, i.texcoord.xy);
@@ -112,7 +113,9 @@ Shader "SubTerra/DepthDarknessOverlayUI"
                     float2 occUV = (cellIndex + 0.5) / max(_OccTexSize.xy, 0.0001);
                     if (occUV.x >= 0.0 && occUV.x <= 1.0 && occUV.y >= 0.0 && occUV.y <= 1.0)
                     {
-                        occupied = tex2D(_OccupancyTex, occUV).r;
+                        float2 cellState = tex2D(_OccupancyTex, occUV).rg;
+                        occupied = cellState.r;
+                        scanTarget = cellState.g;
                     }
 
                     [unroll]
@@ -133,6 +136,9 @@ Shader "SubTerra/DepthDarknessOverlayUI"
                             }
                         }
                     }
+
+                    // 주변 광원은 빈 공간에만 퍼지고, 감지되지 않은 블록의 암부는 유지한다.
+                    scanGlow *= max(1.0 - occupied, scanTarget);
 
                     float edge = min(min(cellFrac.x, 1.0 - cellFrac.x), min(cellFrac.y, 1.0 - cellFrac.y));
                     outline = occupied * step(edge, _OutlineWidth) * darkMask;
