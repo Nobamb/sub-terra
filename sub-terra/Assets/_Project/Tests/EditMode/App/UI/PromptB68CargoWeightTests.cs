@@ -44,22 +44,25 @@ namespace SubTerra.App.Tests.UI
             Assert.That(iconLabel.text, Is.EqualTo("?"));
             Assert.That(iconLabel.color, Is.Not.EqualTo(iconImage.color));
 
-            var iconRect = (RectTransform)icon;
-            var cargoRect = (RectTransform)cargo;
-            var closeRect = (RectTransform)close;
+            // prompt-B 112: 앵커가 달라도 같은 패널 좌표계에서 가로 범위를 비교한다.
             var panelWidth = ((RectTransform)prefab.transform).sizeDelta.x;
-            var cargoRight = cargoRect.anchoredPosition.x + cargoRect.sizeDelta.x;
-            var iconLeft = panelWidth + iconRect.anchoredPosition.x - iconRect.sizeDelta.x;
-            var iconRight = panelWidth + iconRect.anchoredPosition.x;
-            var closeLeft = panelWidth + closeRect.anchoredPosition.x - closeRect.sizeDelta.x;
-            Assert.That(cargoRight, Is.LessThan(iconLeft), "중량 텍스트와 도움말 아이콘이 겹칩니다.");
-            Assert.That(iconRight, Is.LessThan(closeLeft), "도움말 아이콘이 닫기 버튼에 가려집니다.");
+            var cargoRange = HorizontalRange((RectTransform)cargo, panelWidth);
+            var iconRange = HorizontalRange((RectTransform)icon, panelWidth);
+            var closeRange = HorizontalRange((RectTransform)close, panelWidth);
+            Assert.That(cargoRange.y, Is.LessThan(iconRange.x), "중량 텍스트와 도움말 아이콘이 겹칩니다.");
+            Assert.That(iconRange.y, Is.LessThan(closeRange.x), "도움말 아이콘이 닫기 버튼에 가려집니다.");
 
             var description = tooltip.GetComponentInChildren<TMP_Text>(true);
             Assert.That(description.text, Does.Contain("이동 속도"));
             Assert.That(description.text, Does.Contain("더 이상 자원을 채굴할 수 없습니다"));
             Assert.That(description.text, Does.Contain("75%"));
             Assert.That(description.text, Does.Contain("1.5배"));
+        }
+
+        private static Vector2 HorizontalRange(RectTransform rect, float parentWidth)
+        {
+            var left = rect.anchorMin.x * parentWidth + rect.anchoredPosition.x - rect.pivot.x * rect.sizeDelta.x;
+            return new Vector2(left, left + rect.sizeDelta.x);
         }
 
         [Test]

@@ -20,6 +20,8 @@ namespace SubTerra.App.Editor.DataValidation
             {
                 var panelRoot = root.transform.Find("PanelRoot");
                 ApplyTo(panelRoot);
+                // prompt-B 112: 도움말 위치를 개편된 적재량 카드 기준으로 다시 맞춘다.
+                PromptB112InventoryPanelBuilder.ApplyTo(root);
 
                 PrefabUtility.SaveAsPrefabAsset(root, InventoryPanelPrefabPath);
                 return "Prompt-B 68 inventory weight help built: " + InventoryPanelPrefabPath;

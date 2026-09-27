@@ -65,6 +65,7 @@ namespace SubTerra.App.UI.Inventory
             view.SetCargoSummary(
                 HudFormatter.FormatCargoSummary(snapshot.CurrentWeight, snapshot.MaxCapacity));
             view.SetUnsettledValue(HudFormatter.FormatUnsettledValue(snapshot.UnsettledValue));
+            RenderDetail(snapshot.CurrentWeight, snapshot.MaxCapacity, snapshot.UnsettledValue);
             view.SetStacksText(FormatStacks(snapshot));
             view.SetStacks(CreateStackReadModels(snapshot));
         }
@@ -73,8 +74,19 @@ namespace SubTerra.App.UI.Inventory
         {
             view.SetCargoSummary(HudFormatter.FormatCargoSummary(0f, 0f));
             view.SetUnsettledValue(HudFormatter.FormatUnsettledValue(0f));
+            RenderDetail(0f, 0f, 0f);
             view.SetStacksText(string.Empty);
             view.SetStacks(System.Array.Empty<InventoryStackReadModel>());
+        }
+
+        private void RenderDetail(float currentWeight, float maxCapacity, float unsettledValue)
+        {
+            // prompt-B 112: 스냅샷 수치를 그대로 넘겨 게이지·가치 카드를 갱신한다.
+            if (view is IInventoryPanelDetailView detail)
+            {
+                detail.SetCargoLoad(currentWeight, maxCapacity);
+                detail.SetUnsettledAmount(unsettledValue);
+            }
         }
 
         private static string FormatStacks(InventorySnapshot snapshot)
@@ -126,7 +138,8 @@ namespace SubTerra.App.UI.Inventory
                     stack.MineralId,
                     stack.DisplayName,
                     null,
-                    stack.Quantity));
+                    stack.Quantity,
+                    stack.UnitWeight));
             }
 
             return result;
@@ -154,7 +167,8 @@ namespace SubTerra.App.UI.Inventory
                     item.Id,
                     ItemDisplayNames.Inventory(item.Id),
                     item.Icon,
-                    snapshot.GetQuantity(item.Id)));
+                    snapshot.GetQuantity(item.Id),
+                    item.UnitWeight));
             }
         }
     }

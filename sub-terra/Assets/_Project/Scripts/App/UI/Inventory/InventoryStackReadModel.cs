@@ -9,13 +9,20 @@ namespace SubTerra.App.UI.Inventory
         public string DisplayName { get; }
         public Sprite Icon { get; }
         public int Quantity { get; }
+        public float UnitWeight { get; }
 
-        public InventoryStackReadModel(string mineralId, string displayName, Sprite icon, int quantity)
+        public InventoryStackReadModel(
+            string mineralId,
+            string displayName,
+            Sprite icon,
+            int quantity,
+            float unitWeight = 0f)
         {
             MineralId = mineralId ?? string.Empty;
             DisplayName = displayName ?? string.Empty;
             Icon = icon;
             Quantity = quantity < 0 ? 0 : quantity;
+            UnitWeight = unitWeight < 0f ? 0f : unitWeight;
         }
     }
 }

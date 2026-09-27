@@ -131,6 +131,8 @@ namespace SubTerra.App.Editor.DataValidation
             binderSo.ApplyModifiedPropertiesWithoutUndo();
 
             PromptB68InventoryWeightBuilder.ApplyTo(panelRoot.transform);
+            // prompt-B 112: 재생성 시에도 개편된 인벤토리 레이아웃을 유지한다.
+            PromptB112InventoryPanelBuilder.ApplyTo(root);
 
             PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
             Object.DestroyImmediate(root);
