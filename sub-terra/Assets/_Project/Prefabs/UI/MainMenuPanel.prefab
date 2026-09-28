@@ -10551,6 +10551,7 @@ GameObject:
   - component: {fileID: 1652642792204084650}
   - component: {fileID: 1635346002291948272}
   - component: {fileID: 2529553451745572042}
+  - component: {fileID: 6765514372782871421}
   m_Layer: 0
   m_Name: SettingsCard
   m_TagString: Untagged
@@ -10636,6 +10637,19 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &6765514372782871421
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5780932102811186493}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7c8d6dab3c159b2459235f3ad99ede1f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SubTerra.App::SubTerra.App.UI.PopupWindowDrag
+  window: {fileID: 1652642792204084650}
 --- !u!1 &5794256529164090450
 GameObject:
   m_ObjectHideFlags: 0
@@ -12644,6 +12658,7 @@ GameObject:
   - component: {fileID: 2662497846110519795}
   - component: {fileID: 8735069284134540350}
   - component: {fileID: 8444791182342737178}
+  - component: {fileID: 1993519075010329232}
   m_Layer: 0
   m_Name: OverwriteConfirm
   m_TagString: Untagged
@@ -12711,6 +12726,19 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &1993519075010329232
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6995365920040170128}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7c8d6dab3c159b2459235f3ad99ede1f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SubTerra.App::SubTerra.App.UI.PopupWindowDrag
+  window: {fileID: 2662497846110519795}
 --- !u!1 &7009079394341531047
 GameObject:
   m_ObjectHideFlags: 0

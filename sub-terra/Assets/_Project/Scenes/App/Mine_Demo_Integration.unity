@@ -16692,6 +16692,7 @@ GameObject:
   - component: {fileID: 880354466}
   - component: {fileID: 880354465}
   - component: {fileID: 880354464}
+  - component: {fileID: 880354467}
   m_Layer: 0
   m_Name: GuidancePanel
   m_TagString: Untagged
@@ -16771,6 +16772,19 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 880354462}
   m_CullTransparentMesh: 1
+--- !u!114 &880354467
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 880354462}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7c8d6dab3c159b2459235f3ad99ede1f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SubTerra.App::SubTerra.App.UI.PopupWindowDrag
+  window: {fileID: 880354463}
 --- !u!1 &887666008
 GameObject:
   m_ObjectHideFlags: 0
@@ -17323,6 +17337,7 @@ GameObject:
   - component: {fileID: 912696532}
   - component: {fileID: 912696534}
   - component: {fileID: 912696533}
+  - component: {fileID: 912696535}
   m_Layer: 0
   m_Name: VisualRoot
   m_TagString: Untagged
@@ -17389,6 +17404,19 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 912696531}
   m_CullTransparentMesh: 1
+--- !u!114 &912696535
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 912696531}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7c8d6dab3c159b2459235f3ad99ede1f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SubTerra.App::SubTerra.App.UI.PopupWindowDrag
+  window: {fileID: 912696532}
 --- !u!1 &918384805
 GameObject:
   m_ObjectHideFlags: 0
@@ -26476,6 +26504,7 @@ GameObject:
   - component: {fileID: 1384950349}
   - component: {fileID: 1384950355}
   - component: {fileID: 1384950354}
+  - component: {fileID: 1384950356}
   m_Layer: 0
   m_Name: UpgradePanel
   m_TagString: Untagged
@@ -26650,6 +26679,19 @@ Canvas:
   m_SortingLayerID: 0
   m_SortingOrder: 450
   m_TargetDisplay: 0
+--- !u!114 &1384950356
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1384950348}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7c8d6dab3c159b2459235f3ad99ede1f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SubTerra.App::SubTerra.App.UI.PopupWindowDrag
+  window: {fileID: 1384950353}
 --- !u!1 &1389926552
 GameObject:
   m_ObjectHideFlags: 0
@@ -63732,6 +63774,7 @@ GameObject:
   - component: {fileID: 1637760858}
   - component: {fileID: 1637760860}
   - component: {fileID: 1637760859}
+  - component: {fileID: 1637760861}
   m_Layer: 0
   m_Name: SettingsCard
   m_TagString: Untagged
@@ -63817,6 +63860,19 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1637760857}
   m_CullTransparentMesh: 1
+--- !u!114 &1637760861
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1637760857}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7c8d6dab3c159b2459235f3ad99ede1f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SubTerra.App::SubTerra.App.UI.PopupWindowDrag
+  window: {fileID: 1637760858}
 --- !u!1 &1641722645
 GameObject:
   m_ObjectHideFlags: 0
@@ -71913,6 +71969,7 @@ GameObject:
   - component: {fileID: 2114819295}
   - component: {fileID: 2114819297}
   - component: {fileID: 2114819296}
+  - component: {fileID: 2114819298}
   m_Layer: 0
   m_Name: DemoCompletePanel
   m_TagString: Untagged
@@ -71978,6 +72035,19 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2114819294}
   m_CullTransparentMesh: 1
+--- !u!114 &2114819298
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2114819294}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7c8d6dab3c159b2459235f3ad99ede1f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SubTerra.App::SubTerra.App.UI.PopupWindowDrag
+  window: {fileID: 2114819295}
 --- !u!1 &2131280939
 GameObject:
   m_ObjectHideFlags: 0

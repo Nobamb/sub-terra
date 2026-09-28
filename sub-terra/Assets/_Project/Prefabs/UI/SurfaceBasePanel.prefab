@@ -1455,6 +1455,7 @@ GameObject:
   - component: {fileID: 2550881127899141167}
   - component: {fileID: 432013165275533656}
   - component: {fileID: 4727978252887215963}
+  - component: {fileID: 5542895139273354891}
   m_Layer: 0
   m_Name: ResetMineCard
   m_TagString: Untagged
@@ -1523,6 +1524,19 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &5542895139273354891
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 715258694461083519}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7c8d6dab3c159b2459235f3ad99ede1f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SubTerra.App::SubTerra.App.UI.PopupWindowDrag
+  window: {fileID: 2550881127899141167}
 --- !u!1 &775228886498068263
 GameObject:
   m_ObjectHideFlags: 0
@@ -5098,6 +5112,7 @@ GameObject:
   - component: {fileID: 1707772939140728194}
   - component: {fileID: 6087192869698026650}
   - component: {fileID: 7731267571140676634}
+  - component: {fileID: 2243142776426772486}
   m_Layer: 0
   m_Name: SettingsCard
   m_TagString: Untagged
@@ -5183,6 +5198,19 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &2243142776426772486
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2079918013989524712}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7c8d6dab3c159b2459235f3ad99ede1f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SubTerra.App::SubTerra.App.UI.PopupWindowDrag
+  window: {fileID: 1707772939140728194}
 --- !u!1 &2215089456799231797
 GameObject:
   m_ObjectHideFlags: 0
@@ -11957,6 +11985,7 @@ GameObject:
   - component: {fileID: 1245116231429364267}
   - component: {fileID: 28048317919663527}
   - component: {fileID: 5122977737524910358}
+  - component: {fileID: 2968594224772400601}
   m_Layer: 0
   m_Name: SellModalCard
   m_TagString: Untagged
@@ -12081,6 +12110,19 @@ MonoBehaviour:
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &2968594224772400601
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5453603009521499034}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7c8d6dab3c159b2459235f3ad99ede1f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SubTerra.App::SubTerra.App.UI.PopupWindowDrag
+  window: {fileID: 4951447805515432231}
 --- !u!1 &5516636722107114357
 GameObject:
   m_ObjectHideFlags: 0

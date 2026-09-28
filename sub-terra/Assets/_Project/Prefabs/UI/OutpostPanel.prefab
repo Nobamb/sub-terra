@@ -4182,6 +4182,7 @@ GameObject:
   - component: {fileID: 1142862817074518297}
   - component: {fileID: 118022409597733399}
   - component: {fileID: 8842591793617772156}
+  - component: {fileID: 4040620821552519764}
   m_Layer: 0
   m_Name: PanelRoot
   m_TagString: Untagged
@@ -4255,6 +4256,19 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &4040620821552519764
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6503939507571161290}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7c8d6dab3c159b2459235f3ad99ede1f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SubTerra.App::SubTerra.App.UI.PopupWindowDrag
+  window: {fileID: 1976307378894776669}
 --- !u!1 &6753453313972136350
 GameObject:
   m_ObjectHideFlags: 0

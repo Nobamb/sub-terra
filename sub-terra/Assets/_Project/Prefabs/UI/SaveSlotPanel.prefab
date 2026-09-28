@@ -1424,6 +1424,7 @@ GameObject:
   - component: {fileID: 3779998921892518467}
   - component: {fileID: 260319719892079674}
   - component: {fileID: 7840102357030677843}
+  - component: {fileID: 3498775120736254107}
   m_Layer: 0
   m_Name: SaveSlotPanel
   m_TagString: Untagged
@@ -1534,6 +1535,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: SubTerra.App::SubTerra.App.UI.Save.SaveSlotPanelBinder
   view: {fileID: 260319719892079674}
+--- !u!114 &3498775120736254107
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7234134554973900093}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7c8d6dab3c159b2459235f3ad99ede1f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SubTerra.App::SubTerra.App.UI.PopupWindowDrag
+  window: {fileID: 9064902692760645824}
 --- !u!1 &7952952772807876259
 GameObject:
   m_ObjectHideFlags: 0
