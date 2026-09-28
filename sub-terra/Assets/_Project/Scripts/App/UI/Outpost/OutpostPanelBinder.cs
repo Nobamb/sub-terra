@@ -22,6 +22,8 @@ namespace SubTerra.App.UI.Outpost
 
         public OutpostPanelPresenter Presenter => presenter;
         public bool IsBound => presenter != null && presenter.IsBound;
+        public bool IsTopWindow(Canvas canvas) => view != null
+            && PopupWindowSorting.Contains(canvas, view.PanelRoot);
 
         private void Awake()
         {
@@ -62,20 +64,6 @@ namespace SubTerra.App.UI.Outpost
             }
 
             UnwireCloseButton();
-        }
-
-        private void Update()
-        {
-            if (presenter == null || !presenter.IsInteractionPanelOpen)
-            {
-                return;
-            }
-
-            var keyboard = Keyboard.current;
-            if (keyboard != null && keyboard.escapeKey.wasPressedThisFrame)
-            {
-                ClosePanel();
-            }
         }
 
         private void OnDestroy()

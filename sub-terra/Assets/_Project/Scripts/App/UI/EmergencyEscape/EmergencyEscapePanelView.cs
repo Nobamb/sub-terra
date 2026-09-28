@@ -23,6 +23,7 @@ namespace SubTerra.App.UI.EmergencyEscape
             destinationDropdown != null ? destinationDropdown.value : 0;
 
         public bool IsOpen => (panelRoot != null ? panelRoot : gameObject).activeInHierarchy;
+        public GameObject PanelRoot => panelRoot != null ? panelRoot : gameObject;
 
         private void OnEnable()
         {

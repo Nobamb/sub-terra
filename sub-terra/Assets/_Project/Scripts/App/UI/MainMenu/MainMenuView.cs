@@ -34,6 +34,9 @@ namespace SubTerra.App.UI.MainMenu
         private ControlSchemePanel controlSchemePanel;
 
         public bool TryCloseControlSchemePanel() => controlSchemePanel != null && controlSchemePanel.Close();
+        public bool IsOverwriteConfirmVisible => overwriteConfirmRoot != null && overwriteConfirmRoot.activeSelf;
+        public bool IsTopOverwriteWindow(Canvas canvas) =>
+            IsOverwriteConfirmVisible && PopupWindowSorting.Contains(canvas, overwriteConfirmRoot);
         [SerializeField] private Slider masterVolumeSlider;
         [SerializeField] private TMP_Text masterVolumeLabel;
         [SerializeField] private Toggle reduceMotionToggle;
@@ -78,6 +81,8 @@ namespace SubTerra.App.UI.MainMenu
         private void OnEnable()
         {
             RefreshLayout();
+            var settingsLabel = settingsButton != null ? settingsButton.GetComponentInChildren<TMP_Text>(true) : null;
+            if (settingsLabel != null) settingsLabel.text = "설정(esc)";
             WireSlot(0, SelectSlot1);
             WireSlot(1, SelectSlot2);
             WireSlot(2, SelectSlot3);
@@ -357,6 +362,13 @@ namespace SubTerra.App.UI.MainMenu
                     BringSettingsToFront();
                 }
             }
+        }
+
+        public void RaiseSettingsAbovePopups()
+        {
+            if (settingsRoot == null) return;
+            var canvas = settingsRoot.GetComponent<Canvas>();
+            if (canvas != null) canvas.sortingOrder = PopupWindowSorting.SettingsSortOrder;
         }
 
         public void SetSettingsDraft(SettingsValues values)

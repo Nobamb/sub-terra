@@ -49,13 +49,6 @@ namespace SubTerra.App.Integration
                 OpenPanel();
             }
 
-            if (keyboard != null
-                && keyboard.escapeKey.wasPressedThisFrame
-                && IsPanelOpen)
-            {
-                ClosePanel();
-            }
-
             if (!IsPanelOpen
                 && !reminderShown
                 && closedAt >= 0f

@@ -21,6 +21,12 @@ namespace SubTerra.App.UI.Economy
         public EconomyPanelPresenter Presenter => presenter;
         public bool IsBound => presenter != null && presenter.IsBound;
         public bool IsModalVisible => view != null && view.IsVisible;
+        public bool IsTopWindow(Canvas canvas) => IsModalVisible
+            && PopupWindowSorting.Contains(canvas, view.gameObject);
+        public void CloseModal()
+        {
+            if (view != null && view.IsVisible) view.SetVisible(false);
+        }
 
         private void Awake()
         {

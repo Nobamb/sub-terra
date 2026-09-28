@@ -4,10 +4,12 @@ using SubTerra.App.Save;
 using SubTerra.App.State;
 using SubTerra.App.UI.Economy;
 using SubTerra.App.UI.MainMenu;
+using SubTerra.App.UI.HUD;
 using SubTerra.App.UI.Progression;
 using SubTerra.Shared;
 using SubTerra.Shared.Localization;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace SubTerra.App.UI.SurfaceBase
 {
@@ -174,6 +176,44 @@ namespace SubTerra.App.UI.SurfaceBase
             progressionBinder?.Presenter?.Unbind();
         }
 
+        private void Update()
+        {
+            var keyboard = Keyboard.current;
+            if (settings == null || view == null || keyboard == null) return;
+            if (keyboard.escapeKey.wasPressedThisFrame)
+            {
+                if (settings.IsOpen) OnSettingsCancel();
+                else OnSettingsClicked();
+            }
+            if (!keyboard.xKey.wasPressedThisFrame) return;
+            var selected = UnityEngine.EventSystems.EventSystem.current;
+            if (selected != null && selected.currentSelectedGameObject != null
+                && selected.currentSelectedGameObject.GetComponent<TMPro.TMP_InputField>() != null) return;
+            if (settings.IsOpen)
+            {
+                if (!view.TryCloseControlSchemePanel()) OnSettingsCancel();
+                return;
+            }
+            var topWindow = PopupWindowSorting.Top;
+            if (topWindow != null)
+            {
+                var deepZone = topWindow.GetComponent<DeepZoneUnlockPopupEscClose>();
+                if (deepZone != null) { deepZone.Close(); return; }
+                var clock = topWindow.GetComponentInParent<MineResetClockOverlay>();
+                if (clock != null && clock.TryClosePopup(topWindow)) return;
+                if (view.IsTopMineResetConfirmWindow(topWindow))
+                { OnResetMineCancelled(); return; }
+                if (economyBinder != null && economyBinder.IsTopWindow(topWindow))
+                { economyBinder.CloseModal(); return; }
+                return;
+            }
+            var progressionView = progressionBinder != null
+                ? progressionBinder.GetComponentInChildren<ProgressionPanelView>(true) : null;
+            if (progressionView != null && progressionView.TryHideDeepZoneUnlockPopup()) return;
+            if (view.IsMineResetConfirmVisible) { OnResetMineCancelled(); return; }
+            if (economyBinder != null && economyBinder.IsModalVisible) economyBinder.CloseModal();
+        }
+
         private void OnInventoryChangedForProgression(InventorySnapshot _)
         {
             progressionBinder?.Presenter?.Refresh();
@@ -208,6 +248,7 @@ namespace SubTerra.App.UI.SurfaceBase
             settings.Open();
             view.SetSettingsDraft(settings.Draft);
             view.SetSettingsVisible(true);
+            view.RaiseSettingsAbovePopups();
         }
 
         private void OnSettingsApply()

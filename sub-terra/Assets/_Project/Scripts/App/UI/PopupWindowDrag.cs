@@ -264,7 +264,24 @@ namespace SubTerra.App.UI
     {
         // The reset clock popup is the highest fixed UI layer (32,000).
         private const int FirstPopupSortOrder = 32_100;
+        public const int SettingsSortOrder = 32_760;
         private static readonly List<Canvas> OpenWindows = new List<Canvas>();
+
+        public static Canvas Top
+        {
+            get
+            {
+                Refresh();
+                return OpenWindows.Count > 0 ? OpenWindows[OpenWindows.Count - 1] : null;
+            }
+        }
+
+        public static bool Contains(Canvas canvas, GameObject root)
+        {
+            return canvas != null && root != null
+                && (canvas.transform.IsChildOf(root.transform)
+                    || root.transform.IsChildOf(canvas.transform));
+        }
 
         public static void BringToFront(Canvas canvas)
         {

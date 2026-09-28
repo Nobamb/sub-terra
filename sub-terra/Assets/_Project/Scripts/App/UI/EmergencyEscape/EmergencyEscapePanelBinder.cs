@@ -31,6 +31,8 @@ namespace SubTerra.App.UI.EmergencyEscape
                 return view.IsOpen;
             }
         }
+        public bool IsTopWindow(Canvas canvas) => view != null
+            && PopupWindowSorting.Contains(canvas, view.PanelRoot);
 
         private void Awake()
         {

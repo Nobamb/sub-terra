@@ -1,7 +1,6 @@
 using SubTerra.Shared;
 using TMPro;
 using UnityEngine;
-using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 namespace SubTerra.App.UI.MainMenu
@@ -39,12 +38,6 @@ namespace SubTerra.App.UI.MainMenu
         {
             ControlPreferences.IsSettingsOpen = false;
             Close();
-        }
-
-        private void Update()
-        {
-            if (IsOpen && Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
-                Close();
         }
 
         public void SetDraft(ControlScheme scheme)

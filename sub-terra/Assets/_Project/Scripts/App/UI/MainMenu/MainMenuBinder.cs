@@ -1,5 +1,7 @@
 using SubTerra.App.Save;
+using SubTerra.App.UI.HUD;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace SubTerra.App.UI.MainMenu
 {
@@ -45,7 +47,7 @@ namespace SubTerra.App.UI.MainMenu
             view.SlotSelected += presenter.SelectSlot;
             view.ContinueClicked += presenter.RequestContinue;
             view.NewGameClicked += OnNewGameClicked;
-            view.SettingsClicked += presenter.OpenSettings;
+            view.SettingsClicked += OnSettingsClicked;
             view.QuitClicked += OnQuitClicked;
             view.OverwriteConfirmClicked += OnOverwriteConfirm;
             view.OverwriteCancelClicked += OnOverwriteCancel;
@@ -64,7 +66,7 @@ namespace SubTerra.App.UI.MainMenu
                 view.SlotSelected -= presenter.SelectSlot;
                 view.ContinueClicked -= presenter.RequestContinue;
                 view.NewGameClicked -= OnNewGameClicked;
-                view.SettingsClicked -= presenter.OpenSettings;
+                view.SettingsClicked -= OnSettingsClicked;
                 view.QuitClicked -= OnQuitClicked;
                 view.OverwriteConfirmClicked -= OnOverwriteConfirm;
                 view.OverwriteCancelClicked -= OnOverwriteCancel;
@@ -85,6 +87,34 @@ namespace SubTerra.App.UI.MainMenu
             }
         }
 
+        private void Update()
+        {
+            if (presenter == null || view == null || Keyboard.current == null) return;
+            if (Keyboard.current.escapeKey.wasPressedThisFrame)
+            {
+                if (presenter.Settings.IsOpen) OnSettingsCancel();
+                else OnSettingsClicked();
+            }
+            if (Keyboard.current.xKey.wasPressedThisFrame)
+            {
+                var selected = UnityEngine.EventSystems.EventSystem.current;
+                if (selected != null && selected.currentSelectedGameObject != null
+                    && selected.currentSelectedGameObject.GetComponent<TMPro.TMP_InputField>() != null) return;
+                if (presenter.Settings.IsOpen)
+                {
+                    if (!view.TryCloseControlSchemePanel()) OnSettingsCancel();
+                }
+                else if (PopupWindowSorting.Top != null)
+                {
+                    var topWindow = PopupWindowSorting.Top;
+                    var clock = topWindow.GetComponentInParent<MineResetClockOverlay>();
+                    if (clock != null && clock.TryClosePopup(topWindow)) return;
+                    if (view.IsTopOverwriteWindow(topWindow)) OnOverwriteCancel();
+                }
+                else if (view.IsOverwriteConfirmVisible) OnOverwriteCancel();
+            }
+        }
+
         public bool HasRequiredReferences()
         {
             return view != null && view.HasRequiredReferences();
@@ -93,6 +123,13 @@ namespace SubTerra.App.UI.MainMenu
         private void OnNewGameClicked()
         {
             presenter?.RequestNewGame();
+        }
+
+        private void OnSettingsClicked()
+        {
+            if (presenter == null || view == null) return;
+            presenter.OpenSettings();
+            view.RaiseSettingsAbovePopups();
         }
 
         private void OnOverwriteConfirm()

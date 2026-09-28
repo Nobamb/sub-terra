@@ -74,7 +74,7 @@ namespace SubTerra.App.Editor.DataValidation
                 Set(controller, "outpost", Find<OutpostPanelBinder>(scene));
                 Set(controller, "escape", Find<EmergencyEscapePanelBinder>(scene));
                 var template = bar.GetComponentsInChildren<Button>(true).First();
-                var settingsButton = MakeButton(bar, template, "SettingsShortcut", "설정(Esc)");
+                var settingsButton = MakeButton(bar, template, "SettingsShortcut", "설정(esc)");
                 var quitButton = MakeButton(bar, template, "QuitShortcut", "게임 종료(O)");
                 UnityEventTools.AddPersistentListener(settingsButton.onClick, controller.OpenSettings);
                 UnityEventTools.AddPersistentListener(quitButton.onClick, controller.RequestQuit);

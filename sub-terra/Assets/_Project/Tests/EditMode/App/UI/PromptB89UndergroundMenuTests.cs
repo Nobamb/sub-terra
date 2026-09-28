@@ -42,6 +42,7 @@ namespace SubTerra.App.Tests.UI
             var bar = menu.GetComponentsInChildren<Transform>(true).Single(t => t.name == "PanelShortcutBar");
             var settings = bar.Find("SettingsShortcut").GetComponent<Button>();
             var quit = bar.Find("QuitShortcut").GetComponent<Button>();
+            Assert.That(settings.GetComponentInChildren<TMPro.TMP_Text>(true).text, Is.EqualTo("설정(esc)"));
             Assert.That(settings.onClick.GetPersistentEventCount(), Is.EqualTo(1));
             Assert.That(settings.onClick.GetPersistentTarget(0), Is.EqualTo(menu));
             Assert.That(settings.onClick.GetPersistentMethodName(0), Is.EqualTo("OpenSettings"));
@@ -56,16 +57,29 @@ namespace SubTerra.App.Tests.UI
         }
 
         [Test]
-        public void Escape_ClosesExistingPanelBeforeOpeningSettings()
+        public void Escape_TogglesSettingsWithoutClosingOtherPanels()
         {
             var chrome = menu.GetComponent<HudPanelChromeController>();
             chrome.OpenBuildingMenu();
             menu.HandleEscape();
-            Assert.That(chrome.IsBuildingMenuOpen, Is.False);
-            Assert.That(menu.IsSettingsOpen, Is.False);
-            menu.HandleEscape();
+            Assert.That(chrome.IsBuildingMenuOpen, Is.True);
             Assert.That(menu.IsSettingsOpen, Is.True);
             menu.HandleEscape();
+            Assert.That(menu.IsSettingsOpen, Is.False);
+            Assert.That(chrome.IsBuildingMenuOpen, Is.True);
+        }
+
+        [Test]
+        public void X_ClosesOnePanelAtATimeWithoutOpeningSettings()
+        {
+            var chrome = menu.GetComponent<HudPanelChromeController>();
+            chrome.OpenBuildingMenu();
+            chrome.OpenInventoryPanel();
+            menu.HandleCloseTopPopup();
+            Assert.That(chrome.IsInventoryPanelOpen, Is.False);
+            Assert.That(chrome.IsBuildingMenuOpen, Is.True);
+            menu.HandleCloseTopPopup();
+            Assert.That(chrome.IsBuildingMenuOpen || chrome.IsInventoryPanelOpen, Is.False);
             Assert.That(menu.IsSettingsOpen, Is.False);
         }
 

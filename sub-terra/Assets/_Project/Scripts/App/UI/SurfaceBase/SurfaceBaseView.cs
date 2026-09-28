@@ -37,6 +37,9 @@ namespace SubTerra.App.UI.SurfaceBase
         private ControlSchemePanel controlSchemePanel;
 
         public bool TryCloseControlSchemePanel() => controlSchemePanel != null && controlSchemePanel.Close();
+        public bool IsMineResetConfirmVisible => resetMineConfirmRoot != null && resetMineConfirmRoot.activeSelf;
+        public bool IsTopMineResetConfirmWindow(Canvas canvas) =>
+            IsMineResetConfirmVisible && PopupWindowSorting.Contains(canvas, resetMineConfirmRoot);
         [SerializeField] private Slider masterVolumeSlider;
         [SerializeField] private TMP_Text masterVolumeLabel;
         [SerializeField] private Toggle reduceMotionToggle;
@@ -79,6 +82,7 @@ namespace SubTerra.App.UI.SurfaceBase
 
         private void OnEnable()
         {
+            SetButtonLabel(settingsButton, "설정(esc)");
             exploreButton?.onClick.AddListener(OnExplore);
             settingsButton?.onClick.AddListener(OnSettings);
             quitButton?.onClick.AddListener(OnQuit);
@@ -341,6 +345,13 @@ namespace SubTerra.App.UI.SurfaceBase
                 // prompt-B 44: 설정창을 Surface Base 본문(레벨 요약 포함)보다 상위 레이어로 올린다.
                 BringSettingsToFront();
             }
+        }
+
+        public void RaiseSettingsAbovePopups()
+        {
+            if (settingsRoot == null) return;
+            var canvas = settingsRoot.GetComponent<Canvas>();
+            if (canvas != null) canvas.sortingOrder = PopupWindowSorting.SettingsSortOrder;
         }
 
         /// <summary>

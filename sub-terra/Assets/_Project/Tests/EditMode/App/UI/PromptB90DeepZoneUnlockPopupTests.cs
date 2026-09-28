@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 namespace SubTerra.App.Tests.UI
 {
-    /// <summary>prompt-B 90: 심층 해금 팝업 닫기 버튼과 ESC가 같은 Hide 경로를 탄다.</summary>
+    /// <summary>심층 해금 팝업 닫기 버튼과 X가 같은 Hide 경로를 탄다.</summary>
     public sealed class PromptB90DeepZoneUnlockPopupTests
     {
         private GameObject canvasRoot;
@@ -65,7 +65,7 @@ namespace SubTerra.App.Tests.UI
         }
 
         [Test]
-        public void EscapePath_MatchesCloseButton_AndDoesNotOpenSettings()
+        public void XPath_MatchesCloseButton_AndDoesNotOpenSettings()
         {
             view.ShowDeepZoneUnlockPopup();
             Assert.That(view.IsDeepZoneUnlockPopupOpen, Is.True);
@@ -75,7 +75,7 @@ namespace SubTerra.App.Tests.UI
 
             try
             {
-                menu.HandleEscape();
+                menu.HandleCloseTopPopup();
 
                 Assert.That(view.IsDeepZoneUnlockPopupOpen, Is.False);
                 Assert.That(menu.IsSettingsOpen, Is.False);

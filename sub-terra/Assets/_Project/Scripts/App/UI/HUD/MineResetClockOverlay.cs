@@ -79,6 +79,14 @@ namespace SubTerra.App.UI.HUD
             RefreshFromState();
         }
 
+        public bool TryClosePopup(Canvas canvas)
+        {
+            if (popupRoot == null || !popupRoot.activeSelf
+                || popupRoot.GetComponent<Canvas>() != canvas) return false;
+            HidePopup();
+            return true;
+        }
+
         public void RefreshFromState()
         {
             if (clockRoot == null)

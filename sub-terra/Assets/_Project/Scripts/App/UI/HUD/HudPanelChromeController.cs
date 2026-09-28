@@ -60,6 +60,64 @@ namespace SubTerra.App.UI.HUD
         public bool IsGameGuideOpen => gameGuideOpen;
         public bool IsInventoryPanelOpen => inventoryPanelOpen;
 
+        public bool CloseTopPanel()
+        {
+            GameObject top = null;
+            System.Action close = null;
+            Consider(buildingMenuOpen, buildingMenuRoot, CloseBuildingMenu, ref top, ref close);
+            Consider(diggerBotOpen, diggerBotRoot, CloseDiggerBot, ref top, ref close);
+            Consider(gameGuideOpen, gameGuideRoot, CloseGameGuide, ref top, ref close);
+            Consider(inventoryPanelOpen, inventoryPanelRoot, CloseInventoryPanel, ref top, ref close);
+            if (close == null) return false;
+            close();
+            return true;
+        }
+
+        public bool CloseTopPanel(Canvas canvas)
+        {
+            if (buildingMenuOpen && PopupWindowSorting.Contains(canvas, buildingMenuRoot))
+            { CloseBuildingMenu(); return true; }
+            if (diggerBotOpen && PopupWindowSorting.Contains(canvas, diggerBotRoot))
+            { CloseDiggerBot(); return true; }
+            if (gameGuideOpen && PopupWindowSorting.Contains(canvas, gameGuideRoot))
+            { CloseGameGuide(); return true; }
+            if (inventoryPanelOpen && PopupWindowSorting.Contains(canvas, inventoryPanelRoot))
+            { CloseInventoryPanel(); return true; }
+            return false;
+        }
+
+        private static void Consider(bool open, GameObject root, System.Action action,
+            ref GameObject top, ref System.Action close)
+        {
+            if (!open || root == null || !root.activeInHierarchy) return;
+            if (top != null && !IsAbove(root.transform, top.transform)) return;
+            top = root;
+            close = action;
+        }
+
+        private static bool IsAbove(Transform candidate, Transform current)
+        {
+            var candidateCanvas = candidate.GetComponentInParent<Canvas>();
+            var currentCanvas = current.GetComponentInParent<Canvas>();
+            var candidateOrder = candidateCanvas != null ? candidateCanvas.sortingOrder : 0;
+            var currentOrder = currentCanvas != null ? currentCanvas.sortingOrder : 0;
+            if (candidateOrder != currentOrder) return candidateOrder > currentOrder;
+
+            var candidatePath = new System.Collections.Generic.List<Transform>();
+            var currentPath = new System.Collections.Generic.List<Transform>();
+            for (var node = candidate; node != null; node = node.parent) candidatePath.Add(node);
+            for (var node = current; node != null; node = node.parent) currentPath.Add(node);
+            candidatePath.Reverse();
+            currentPath.Reverse();
+            var count = Mathf.Min(candidatePath.Count, currentPath.Count);
+            for (var i = 0; i < count; i++)
+            {
+                if (candidatePath[i] != currentPath[i])
+                    return candidatePath[i].GetSiblingIndex() > currentPath[i].GetSiblingIndex();
+            }
+            return candidatePath.Count > currentPath.Count;
+        }
+
         private void Awake()
         {
             ResolveDiggerWorldTargetIfNeeded();

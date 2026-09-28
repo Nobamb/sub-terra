@@ -512,6 +512,21 @@ namespace SubTerra.App.UI.Tutorial
             }
         }
 
+        public bool TryCloseTopPopup()
+        {
+            if (detailsRoot != null && detailsRoot.activeInHierarchy
+                && claimRoot != null && claimRoot.activeInHierarchy
+                && claimRoot.transform.GetSiblingIndex() > detailsRoot.transform.GetSiblingIndex())
+            { OnClaimConfirmClicked(); return true; }
+            if (detailsRoot != null && detailsRoot.activeInHierarchy)
+            { OnDetailsDismissClicked(); return true; }
+            if (claimRoot != null && claimRoot.activeInHierarchy)
+            { OnClaimConfirmClicked(); return true; }
+            if (dumpRoot != null && dumpRoot.activeInHierarchy)
+            { OnDumpClosedClicked(); return true; }
+            return false;
+        }
+
         public void SetClaimProgress(int index, int count)
         {
             if (claimProgressText != null)

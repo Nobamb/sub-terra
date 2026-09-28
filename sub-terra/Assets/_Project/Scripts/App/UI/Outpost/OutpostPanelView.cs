@@ -34,6 +34,7 @@ namespace SubTerra.App.UI.Outpost
         [SerializeField] private Button[] operationButtons;
 
         public Button CloseButton => closeButton;
+        public GameObject PanelRoot => panelRoot != null ? panelRoot : gameObject;
 
         private GameObject interactionMessageRoot;
         private TMP_Text interactionMessageText;

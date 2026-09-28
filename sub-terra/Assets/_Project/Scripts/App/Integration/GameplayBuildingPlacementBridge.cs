@@ -80,12 +80,6 @@ namespace SubTerra.App.Integration
                 return;
             }
 
-            if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
-            {
-                CancelPreview();
-                return;
-            }
-
             // C: 커서 위치가 아니라 플레이어 근접 최적 칸에 1회 설치(prompt-B 71).
             if (Keyboard.current != null && Keyboard.current.cKey.wasPressedThisFrame)
             {

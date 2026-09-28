@@ -2,16 +2,18 @@ using SubTerra.App.Save;
 using SubTerra.App.UI;
 using SubTerra.App.UI.HUD;
 using SubTerra.App.UI.EmergencyEscape;
+using SubTerra.App.UI.EmergencyRescue;
 using SubTerra.App.UI.MainMenu;
 using SubTerra.App.UI.Outpost;
 using SubTerra.App.UI.Progression;
 using SubTerra.App.UI.SurfaceBase;
+using SubTerra.App.UI.Tutorial;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 namespace SubTerra.App.Integration
 {
-    // 기존 패널의 Update보다 먼저 Esc를 처리해 닫기와 설정 열기가 겹치지 않게 한다.
+    // 기존 패널의 Update보다 먼저 설정/팝업 단축키를 처리한다.
     [DefaultExecutionOrder(-300)]
     public sealed class UndergroundMenuController : MonoBehaviour
     {
@@ -27,6 +29,14 @@ namespace SubTerra.App.Integration
 
         private void OnEnable()
         {
+            var shortcuts = GetComponentsInChildren<UnityEngine.UI.Button>(true);
+            for (var i = 0; i < shortcuts.Length; i++)
+            {
+                if (shortcuts[i].name != "SettingsShortcut") continue;
+                var label = shortcuts[i].GetComponentInChildren<TMPro.TMP_Text>(true);
+                if (label != null) label.text = "설정(esc)";
+                break;
+            }
             if (settingsView == null) return;
             var initial = SettingsRuntimeApplier.LoadOrDefaults();
             SettingsRuntimeApplier.ApplyPersistedControlScheme();
@@ -54,14 +64,25 @@ namespace SubTerra.App.Integration
             var keyboard = Keyboard.current;
             if (keyboard == null) return;
             if (keyboard.escapeKey.wasPressedThisFrame) HandleEscape();
-            // 검색창에 입력하는 O는 종료 단축키로 취급하지 않는다.
             var selected = UnityEngine.EventSystems.EventSystem.current;
             if (selected != null && selected.currentSelectedGameObject != null
                 && selected.currentSelectedGameObject.GetComponent<TMPro.TMP_InputField>() != null) return;
+            if (keyboard.xKey.wasPressedThisFrame) HandleCloseTopPopup();
             if (keyboard.oKey.wasPressedThisFrame) RequestQuit();
         }
 
         public void HandleEscape()
+        {
+            if (IsSettingsOpen)
+            {
+                CloseSettings();
+                return;
+            }
+
+            OpenSettings();
+        }
+
+        public void HandleCloseTopPopup()
         {
             if (IsSettingsOpen)
             {
@@ -70,30 +91,49 @@ namespace SubTerra.App.Integration
                 return;
             }
 
-            // 심층 해금 팝업은 닫기 버튼과 동일 경로로 닫고, 설정 창을 열지 않는다.
-            if (TryHideOpenDeepZoneUnlockPopup())
+            var topWindow = PopupWindowSorting.Top;
+            if (topWindow != null)
             {
+                var deepZone = topWindow.GetComponent<DeepZoneUnlockPopupEscClose>();
+                if (deepZone != null) { deepZone.Close(); return; }
+                var rescueView = topWindow.GetComponent<EmergencyRescuePanelView>();
+                if (rescueView != null)
+                {
+                    var rescueController = FindFirstObjectByType<EmergencyRescueRuntimeController>();
+                    if (rescueController != null) rescueController.ClosePanel();
+                    return;
+                }
+                var clock = topWindow.GetComponentInParent<MineResetClockOverlay>();
+                if (clock != null && clock.TryClosePopup(topWindow)) return;
+                if (outpost != null && outpost.IsTopWindow(topWindow))
+                { outpost.ClosePanel(); return; }
+                if (escape != null && escape.IsTopWindow(topWindow))
+                { escape.Close(); return; }
+                if (chrome != null && chrome.CloseTopPanel(topWindow)) return;
+                if (panels != null && panels.IsVisible(RuntimePanelId.Upgrade)
+                    && topWindow.GetComponentInChildren<ProgressionPanelView>(true) != null)
+                { panels.CloseUpgrade(); return; }
                 return;
             }
 
-            bool closed = false;
+            if (TryHideOpenDeepZoneUnlockPopup()) return;
+
+            var objectives = FindFirstObjectByType<DemoObjectiveView>();
+            if (objectives != null && objectives.TryCloseTopPopup()) return;
+
             var rescue = FindFirstObjectByType<EmergencyRescueRuntimeController>();
-            if (rescue != null && rescue.IsPanelOpen) { rescue.ClosePanel(); closed = true; }
+            if (rescue != null && rescue.IsPanelOpen) { rescue.ClosePanel(); return; }
             if (outpost != null && outpost.Presenter != null && outpost.Presenter.IsInteractionPanelOpen)
-            { outpost.ClosePanel(); closed = true; }
-            if (escape != null && escape.IsOpen) { escape.Close(); closed = true; }
-            if (chrome != null)
-            {
-                closed |= chrome.IsBuildingMenuOpen || chrome.IsInventoryPanelOpen
-                    || chrome.IsGameGuideOpen || chrome.IsDiggerBotOpen;
-                chrome.CloseBuildingMenu();
-                chrome.CloseInventoryPanel();
-                chrome.CloseGameGuide();
-                chrome.CloseDiggerBot();
-            }
+            { outpost.ClosePanel(); return; }
+            if (escape != null && escape.IsOpen) { escape.Close(); return; }
+            if (chrome != null && chrome.CloseTopPanel()) return;
             if (panels != null && panels.IsVisible(RuntimePanelId.Upgrade))
-            { panels.CloseUpgrade(); closed = true; }
-            if (!closed) OpenSettings();
+            {
+                panels.CloseUpgrade();
+                return;
+            }
+            var placement = FindFirstObjectByType<GameplayBuildingPlacementBridge>();
+            if (placement != null) placement.CancelPreview();
         }
 
         public void OpenSettings()
@@ -104,7 +144,7 @@ namespace SubTerra.App.Integration
             settingsView.SetSettingsVisible(true);
             // 지하 드론 말풍선과 다른 모달 위에서도 설정 조작이 가능해야 한다.
             if (settingsRoot != null)
-                settingsRoot.GetComponent<Canvas>().sortingOrder = SubTerra.App.Tutorial.UiLayerPriority.EmergencyRescueModal + 1;
+                settingsRoot.GetComponent<Canvas>().sortingOrder = PopupWindowSorting.SettingsSortOrder;
             UiKeyboardSubmitGuard.ClearSelection();
         }
 
@@ -122,17 +162,14 @@ namespace SubTerra.App.Integration
             var views = FindObjectsByType<ProgressionPanelView>(
                 FindObjectsInactive.Include,
                 FindObjectsSortMode.None);
-            var closed = false;
             for (var i = 0; i < views.Length; i++)
             {
                 var view = views[i];
                 if (view != null && view.TryHideDeepZoneUnlockPopup())
-                {
-                    closed = true;
-                }
+                    return true;
             }
 
-            return closed;
+            return false;
         }
 
         private void ApplySettings()
