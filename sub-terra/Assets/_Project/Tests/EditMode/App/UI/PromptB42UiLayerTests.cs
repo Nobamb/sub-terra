@@ -6,6 +6,7 @@ using SubTerra.App.UI.Progression;
 using SubTerra.App.UI.SurfaceBase;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace SubTerra.App.Tests.UI
@@ -63,6 +64,41 @@ namespace SubTerra.App.Tests.UI
                 PopupWindowSorting.Remove(runtimeCanvas);
                 runtimePopup.SetActive(false);
                 Assert.That(second.GetComponent<Canvas>().sortingOrder, Is.EqualTo(firstOrder + 2));
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
+        public void DragWindow_DoesNotSwallowClicksThroughHiddenParentOrButtonPress()
+        {
+            var root = new GameObject(
+                "Root",
+                typeof(RectTransform),
+                typeof(Canvas),
+                typeof(CanvasGroup));
+            try
+            {
+                var group = root.GetComponent<CanvasGroup>();
+                group.alpha = 0f;
+                group.blocksRaycasts = false;
+
+                var windowObject = new GameObject("Window", typeof(RectTransform), typeof(UnityEngine.UI.Image));
+                windowObject.SetActive(false);
+                windowObject.transform.SetParent(root.transform, false);
+                var drag = windowObject.AddComponent<PopupWindowDrag>();
+                windowObject.SetActive(true);
+
+                var gate = windowObject.GetComponent<PopupWindowRaycastGate>();
+                Assert.That(gate, Is.Not.Null);
+                Assert.That(gate.IsRaycastLocationValid(Vector2.zero, null), Is.False);
+
+                group.blocksRaycasts = true;
+                Assert.That(gate.IsRaycastLocationValid(Vector2.zero, null), Is.True);
+                Assert.That(drag is IDragHandler, Is.False);
+                Assert.That(drag is IPointerDownHandler, Is.True);
             }
             finally
             {

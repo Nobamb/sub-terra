@@ -1,18 +1,27 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
+using UnityEngine.UI;
 
 namespace SubTerra.App.UI
 {
-    /// <summary>팝업의 빈 프레임을 드래그해 Canvas 안에서 창을 이동한다.</summary>
-    public sealed class PopupWindowDrag : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
+    /// <summary>
+    /// 팝업의 빈 프레임을 드래그해 Canvas 안에서 창을 이동한다.
+    /// 버튼·슬라이더 위에서는 드래그를 시작하지 않는다.
+    /// IDragHandler로 두면 입력 모듈이 조금만 움직여도 버튼 클릭을 취소한다.
+    /// </summary>
+    public sealed class PopupWindowDrag : MonoBehaviour, IPointerDownHandler
     {
         [SerializeField] private RectTransform window;
 
         private Canvas popupCanvas;
         private RectTransform canvasRect;
+        private Camera pressCamera;
+        private Vector2 pressScreen;
         private Vector3 pointerStart;
         private Vector3 windowStart;
+        private bool tracking;
         private bool dragging;
         private readonly Vector3[] corners = new Vector3[4];
 
@@ -34,23 +43,39 @@ namespace SubTerra.App.UI
                 popupCanvas = window.gameObject.AddComponent<Canvas>();
             }
 
-            if (window.GetComponent<UnityEngine.UI.GraphicRaycaster>() == null)
+            if (window.GetComponent<GraphicRaycaster>() == null)
             {
-                window.gameObject.AddComponent<UnityEngine.UI.GraphicRaycaster>();
+                window.gameObject.AddComponent<GraphicRaycaster>();
             }
 
+            // overrideSorting 캔버스는 부모 CanvasGroup.blocksRaycasts를 무시한다.
+            // 닫힌 창이 투명한 채로 클릭을 삼키지 않도록 같은 오브젝트에서 한 번 더 거른다.
+            if (window.GetComponent<PopupWindowRaycastGate>() == null)
+            {
+                window.gameObject.AddComponent<PopupWindowRaycastGate>();
+            }
+
+            ReleaseScrollRectFromButtons();
             PopupWindowSorting.BringToFront(popupCanvas);
         }
 
         private void OnDisable()
         {
+            tracking = false;
+            dragging = false;
             PopupWindowSorting.Remove(popupCanvas);
         }
 
-        public void OnBeginDrag(PointerEventData eventData)
+        public void OnPointerDown(PointerEventData eventData)
         {
+            tracking = false;
             dragging = false;
-            if (eventData.button != PointerEventData.InputButton.Left || window == null || IsInteractiveChild(eventData.pointerPressRaycast.gameObject))
+            if (eventData.button != PointerEventData.InputButton.Left || window == null)
+            {
+                return;
+            }
+
+            if (IsInteractiveControl(eventData.pointerPressRaycast.gameObject))
             {
                 return;
             }
@@ -62,43 +87,120 @@ namespace SubTerra.App.UI
             }
 
             canvasRect = canvas.rootCanvas.transform as RectTransform;
-            if (canvasRect == null || !RectTransformUtility.ScreenPointToWorldPointInRectangle(
-                    canvasRect, eventData.position, eventData.pressEventCamera, out pointerStart))
+            pressCamera = eventData.pressEventCamera;
+            pressScreen = eventData.position;
+            if (canvasRect == null || !TryGetPointerWorld(pressScreen, out pointerStart))
             {
                 return;
             }
 
             windowStart = window.position;
-            dragging = true;
+            tracking = true;
         }
 
-        public void OnDrag(PointerEventData eventData)
+        private void Update()
         {
-            if (!dragging || window == null || canvasRect == null)
+            if (!tracking || window == null)
             {
                 return;
             }
 
-            if (RectTransformUtility.ScreenPointToWorldPointInRectangle(
-                    canvasRect, eventData.position, eventData.pressEventCamera, out var pointerNow))
+            var mouse = Mouse.current;
+            if (mouse == null || !mouse.leftButton.isPressed)
             {
-                window.position = windowStart + pointerNow - pointerStart;
-                ClampToCanvas();
+                tracking = false;
+                dragging = false;
+                return;
             }
-        }
 
-        public void OnEndDrag(PointerEventData eventData)
-        {
-            dragging = false;
-        }
-
-        private bool IsInteractiveChild(GameObject hit)
-        {
-            for (var current = hit != null ? hit.transform : null; current != null && current != transform; current = current.parent)
+            var screen = mouse.position.ReadValue();
+            if (!dragging)
             {
-                if (current.GetComponent<UnityEngine.UI.Selectable>() != null || current.GetComponent<UnityEngine.UI.ScrollRect>() != null)
+                var threshold = EventSystem.current != null
+                    ? EventSystem.current.pixelDragThreshold
+                    : 10;
+                var delta = screen - pressScreen;
+                if (delta.sqrMagnitude < threshold * threshold)
+                {
+                    return;
+                }
+
+                dragging = true;
+            }
+
+            if (canvasRect == null || !TryGetPointerWorld(screen, out var pointerNow))
+            {
+                return;
+            }
+
+            window.position = windowStart + pointerNow - pointerStart;
+            ClampToCanvas();
+        }
+
+        private bool TryGetPointerWorld(Vector2 screen, out Vector3 world)
+        {
+            return RectTransformUtility.ScreenPointToWorldPointInRectangle(
+                canvasRect,
+                screen,
+                pressCamera,
+                out world);
+        }
+
+        /// <summary>
+        /// 카드 전체에 붙은 ScrollRect는 형제 버튼의 클릭까지 드래그로 취소한다.
+        /// 스크롤은 뷰포트 쪽으로 옮겨 목록 바깥 버튼은 클릭이 유지되게 한다.
+        /// </summary>
+        private void ReleaseScrollRectFromButtons()
+        {
+            if (!Application.isPlaying || window == null)
+            {
+                return;
+            }
+
+            var scroll = window.GetComponent<ScrollRect>();
+            if (scroll == null || scroll.viewport == null || scroll.viewport == window)
+            {
+                return;
+            }
+
+            var host = scroll.viewport.gameObject;
+            var moved = host.GetComponent<ScrollRect>();
+            if (moved == null)
+            {
+                moved = host.AddComponent<ScrollRect>();
+            }
+
+            moved.content = scroll.content;
+            moved.viewport = scroll.viewport;
+            moved.horizontal = scroll.horizontal;
+            moved.vertical = scroll.vertical;
+            moved.movementType = scroll.movementType;
+            moved.elasticity = scroll.elasticity;
+            moved.inertia = scroll.inertia;
+            moved.decelerationRate = scroll.decelerationRate;
+            moved.scrollSensitivity = scroll.scrollSensitivity;
+            moved.horizontalScrollbar = scroll.horizontalScrollbar;
+            moved.verticalScrollbar = scroll.verticalScrollbar;
+            moved.horizontalScrollbarVisibility = scroll.horizontalScrollbarVisibility;
+            moved.verticalScrollbarVisibility = scroll.verticalScrollbarVisibility;
+            moved.horizontalScrollbarSpacing = scroll.horizontalScrollbarSpacing;
+            moved.verticalScrollbarSpacing = scroll.verticalScrollbarSpacing;
+            // 부모에 남겨 두면 형제 버튼 클릭이 다시 드래그로 취소된다.
+            scroll.enabled = false;
+        }
+
+        private bool IsInteractiveControl(GameObject hit)
+        {
+            for (var current = hit != null ? hit.transform : null; current != null; current = current.parent)
+            {
+                if (current.GetComponent<Selectable>() != null)
                 {
                     return true;
+                }
+
+                if (current == transform)
+                {
+                    break;
                 }
             }
 
@@ -125,6 +227,36 @@ namespace SubTerra.App.UI
                 ? bounds.center.y - (min.y + max.y) * 0.5f
                 : min.y < bounds.yMin ? bounds.yMin - min.y : max.y > bounds.yMax ? bounds.yMax - max.y : 0f;
             window.position += canvasRect.TransformVector(new Vector3(x, y, 0f));
+        }
+    }
+
+    /// <summary>
+    /// overrideSorting 중첩 캔버스에서도 부모 CanvasGroup의 레이캐스트 차단을 따른다.
+    /// </summary>
+    public sealed class PopupWindowRaycastGate : MonoBehaviour, ICanvasRaycastFilter
+    {
+        public bool IsRaycastLocationValid(Vector2 sp, Camera eventCamera)
+        {
+            for (var current = transform; current != null; current = current.parent)
+            {
+                var group = current.GetComponent<CanvasGroup>();
+                if (group == null || !group.enabled)
+                {
+                    continue;
+                }
+
+                if (!group.blocksRaycasts)
+                {
+                    return false;
+                }
+
+                if (group.ignoreParentGroups)
+                {
+                    break;
+                }
+            }
+
+            return true;
         }
     }
 
