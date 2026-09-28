@@ -29,7 +29,7 @@ namespace SubTerra.App.Editor.DataValidation
         private const string EditModeDonePath = "Temp/subterra-prompt-b100-1-editmode.done";
         private const string PlayModeFlagPath = "Temp/subterra-prompt-b100-1-playmode.flag";
         private const string PlayModeDonePath = "Temp/subterra-prompt-b100-1-playmode.done";
-        private const string SeedCharacters = "0123456789G 골드획득!";
+        private const string SeedCharacters = "0123456789G 골드획득!+BONUS";
         private static TestRunnerApi activeApi;
 
         [InitializeOnLoadMethod]
@@ -197,6 +197,30 @@ namespace SubTerra.App.Editor.DataValidation
             Debug.Log("[SubTerra] " + Build());
         }
 
+        /// <summary>
+        /// prompt-B 114: 골드 연출 전용 폰트에 "+BONUS" 글리프만 추가한다.
+        /// 다른 dirty 에셋이 함께 저장되지 않도록 이 폰트만 저장하며 Prefab·Scene은 건드리지 않는다.
+        /// </summary>
+        [MenuItem("SubTerra/UI/Build Prompt-B 114 Gold Pickup Vfx")]
+        public static void BuildB114FromMenu()
+        {
+            Debug.Log("[SubTerra] " + BuildB114());
+        }
+
+        public static string BuildB114()
+        {
+            var font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(FontSdfPath);
+            if (font == null)
+            {
+                throw new InvalidOperationException("골드 연출 전용 폰트가 없습니다: " + FontSdfPath);
+            }
+
+            font.TryAddCharacters(SeedCharacters, out string missing);
+            EditorUtility.SetDirty(font);
+            AssetDatabase.SaveAssetIfDirty(font);
+            return "Prompt-B 114 gold pickup vfx updated. missing glyphs=" + (string.IsNullOrEmpty(missing) ? "none" : missing);
+        }
+
         public static string Build()
         {
             ConfigureCoinSprite();
@@ -313,8 +337,8 @@ namespace SubTerra.App.Editor.DataValidation
                 var serialized = new SerializedObject(vfx);
                 serialized.FindProperty("coinSprite").objectReferenceValue = coin;
                 serialized.FindProperty("pickupFont").objectReferenceValue = font;
-                serialized.FindProperty("coinWorldScale").floatValue = GoldPickupPresentation.CoinWorldScale;
-                serialized.FindProperty("textFontSize").floatValue = 32f;
+                serialized.FindProperty("coinScaleMultiplier").floatValue = 1f;
+                serialized.FindProperty("mainFontSize").floatValue = GoldPickupPresentation.MainFontSize;
                 serialized.ApplyModifiedPropertiesWithoutUndo();
                 EditorUtility.SetDirty(vfx);
                 PrefabUtility.SaveAsPrefabAsset(root, HudPrefabPath);

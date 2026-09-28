@@ -124,7 +124,8 @@ namespace SubTerra.App.Tests.Progression
             var mined = MiningYieldCommit.TryCommit(inventory, state, effects, "", 0, 0, 20);
             Assert.That(mined.AcceptedGold, Is.EqualTo(25));
             Assert.That(mined.AcceptedGoldBonus, Is.EqualTo(5));
-            Assert.That(GoldPickupPresentation.FormatPickupText(25, 5), Is.EqualTo("20G + 5G 보너스!"));
+            Assert.That(GoldPickupPresentation.FormatMainText(mined.AcceptedGold, mined.AcceptedGoldBonus), Is.EqualTo("+20G"));
+            Assert.That(GoldPickupPresentation.FormatBonusText(mined.AcceptedGold, mined.AcceptedGoldBonus), Is.EqualTo("BONUS +5G"));
             Assert.That(MiningYieldCommit.FormatHudFeedback("", 0, 0, 25, 5), Is.EqualTo("골드 +25G (+5G 보너스)"));
         }
 
