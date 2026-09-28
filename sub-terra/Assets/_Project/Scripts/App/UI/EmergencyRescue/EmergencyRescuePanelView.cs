@@ -96,6 +96,7 @@ namespace SubTerra.App.UI.EmergencyRescue
             {
                 popupRoot.SetActive(true);
                 popupRoot.transform.SetAsLastSibling();
+                PopupWindowSorting.BringToFront(popupRoot.GetComponent<Canvas>());
             }
         }
 
@@ -111,6 +112,7 @@ namespace SubTerra.App.UI.EmergencyRescue
         {
             if (popupRoot != null)
             {
+                PopupWindowSorting.Remove(popupRoot.GetComponent<Canvas>());
                 popupRoot.SetActive(false);
             }
         }

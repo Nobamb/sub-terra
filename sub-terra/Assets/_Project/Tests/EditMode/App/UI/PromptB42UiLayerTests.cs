@@ -1,5 +1,6 @@
 using NUnit.Framework;
 using SubTerra.App.Tutorial;
+using SubTerra.App.UI;
 using SubTerra.App.UI.MainMenu;
 using SubTerra.App.UI.Progression;
 using SubTerra.App.UI.SurfaceBase;
@@ -19,6 +20,63 @@ namespace SubTerra.App.Tests.UI
             Assert.That(UiLayerPriority.ModalPanel, Is.GreaterThan(UiLayerPriority.CriticalHazard));
             Assert.That(UiLayerPriority.QuestPopup, Is.GreaterThan(SubTerra.App.UI.Drone.DroneDialogueSocket.OverlaySortingOrder));
             Assert.That(UiLayerPriority.QuestPopup, Is.LessThan(UiLayerPriority.EmergencyRescueModal));
+        }
+
+        [Test]
+        public void DraggablePopups_StayAboveFixedUiAndReuseClosedTopOrder()
+        {
+            var root = new GameObject("Canvas", typeof(RectTransform), typeof(Canvas));
+            try
+            {
+                var first = CreatePopup(root.transform, "First");
+                var second = CreatePopup(root.transform, "Second");
+                var third = CreatePopup(root.transform, "Third");
+
+                first.SetActive(true);
+                second.SetActive(true);
+                third.SetActive(true);
+
+                var firstOrder = first.GetComponent<Canvas>().sortingOrder;
+                Assert.That(firstOrder, Is.GreaterThan(32_000));
+                Assert.That(second.GetComponent<Canvas>().sortingOrder, Is.EqualTo(firstOrder + 1));
+                Assert.That(third.GetComponent<Canvas>().sortingOrder, Is.EqualTo(firstOrder + 2));
+                Assert.That(first.GetComponent<GraphicRaycaster>(), Is.Not.Null);
+
+                third.SetActive(false);
+                var fourth = CreatePopup(root.transform, "Fourth");
+                fourth.SetActive(true);
+
+                Assert.That(fourth.GetComponent<Canvas>().sortingOrder, Is.EqualTo(firstOrder + 2));
+                Assert.That(second.GetComponent<Canvas>().sortingOrder, Is.EqualTo(firstOrder + 1));
+
+                second.SetActive(false);
+                Assert.That(fourth.GetComponent<Canvas>().sortingOrder, Is.EqualTo(firstOrder + 1));
+                second.SetActive(true);
+                Assert.That(second.GetComponent<Canvas>().sortingOrder, Is.EqualTo(firstOrder + 2));
+
+                var runtimePopup = new GameObject("RuntimePopup", typeof(RectTransform), typeof(Canvas));
+                runtimePopup.transform.SetParent(root.transform, false);
+                var runtimeCanvas = runtimePopup.GetComponent<Canvas>();
+                PopupWindowSorting.BringToFront(runtimeCanvas);
+                Assert.That(runtimeCanvas.sortingOrder, Is.EqualTo(firstOrder + 3));
+
+                PopupWindowSorting.Remove(runtimeCanvas);
+                runtimePopup.SetActive(false);
+                Assert.That(second.GetComponent<Canvas>().sortingOrder, Is.EqualTo(firstOrder + 2));
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        private static GameObject CreatePopup(Transform parent, string name)
+        {
+            var popup = new GameObject(name, typeof(RectTransform));
+            popup.SetActive(false);
+            popup.transform.SetParent(parent, false);
+            popup.AddComponent<PopupWindowDrag>();
+            return popup;
         }
 
         [Test]

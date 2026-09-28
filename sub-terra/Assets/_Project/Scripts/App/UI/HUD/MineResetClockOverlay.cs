@@ -72,6 +72,7 @@ namespace SubTerra.App.UI.HUD
             sessionVisible = visible;
             if (!visible && popupRoot != null)
             {
+                PopupWindowSorting.Remove(popupRoot.GetComponent<Canvas>());
                 popupRoot.SetActive(false);
             }
 
@@ -143,6 +144,7 @@ namespace SubTerra.App.UI.HUD
 
             popupRoot.SetActive(true);
             popupRoot.transform.SetAsLastSibling();
+            PopupWindowSorting.BringToFront(popupRoot.GetComponent<Canvas>());
         }
 
         public void DestroyOverlay()
@@ -327,6 +329,7 @@ namespace SubTerra.App.UI.HUD
         {
             if (popupRoot != null)
             {
+                PopupWindowSorting.Remove(popupRoot.GetComponent<Canvas>());
                 popupRoot.SetActive(false);
             }
         }

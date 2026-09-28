@@ -499,6 +499,7 @@ namespace SubTerra.App.UI.Progression
             {
                 deepZoneUnlockPopupRoot.SetActive(true);
                 deepZoneUnlockPopupRoot.transform.SetAsLastSibling();
+                PopupWindowSorting.BringToFront(deepZoneUnlockPopupRoot.GetComponent<Canvas>());
                 return;
             }
 
@@ -509,6 +510,7 @@ namespace SubTerra.App.UI.Progression
         {
             if (deepZoneUnlockPopupRoot != null)
             {
+                PopupWindowSorting.Remove(deepZoneUnlockPopupRoot.GetComponent<Canvas>());
                 deepZoneUnlockPopupRoot.SetActive(false);
             }
 
