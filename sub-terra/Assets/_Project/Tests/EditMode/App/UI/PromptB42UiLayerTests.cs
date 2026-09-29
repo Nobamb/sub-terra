@@ -142,6 +142,40 @@ namespace SubTerra.App.Tests.UI
             }
         }
 
+        [TestCase("Assets/_Project/Prefabs/UI/MainMenuPanel.prefab")]
+        [TestCase("Assets/_Project/Prefabs/UI/SurfaceBasePanel.prefab")]
+        public void SettingsCard_UsesModalCanvasSoItsControlsReceiveClicks(string prefabPath)
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+            var instance = Object.Instantiate(prefab);
+            try
+            {
+                var main = instance.GetComponent<MainMenuView>();
+                if (main != null)
+                {
+                    main.SetSettingsVisible(true);
+                    main.RaiseSettingsAbovePopups();
+                }
+                else
+                {
+                    var surface = instance.GetComponent<SurfaceBaseView>();
+                    surface.SetSettingsVisible(true);
+                    surface.RaiseSettingsAbovePopups();
+                }
+
+                var settings = FindChild(instance.transform, "SettingsPanel");
+                var card = settings.Find("SettingsCard");
+                Assert.That(settings.GetComponent<GraphicRaycaster>(), Is.Not.Null);
+                Assert.That(card.GetComponent<PopupWindowDrag>(), Is.Not.Null);
+                Assert.That(card.GetComponent<Canvas>(), Is.Null,
+                    "A separate card canvas falls behind the modal blocker and loses clicks.");
+            }
+            finally
+            {
+                Object.DestroyImmediate(instance);
+            }
+        }
+
         [Test]
         public void SurfaceBaseSettings_StaysAboveLevelSummaryPanel()
         {

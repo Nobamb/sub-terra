@@ -212,7 +212,7 @@ namespace SubTerra.App.Editor.DataValidation
 
         private static void SetupTextureImporters()
         {
-            WriteFillGlowTexture();
+            SettingsVolumeFillGlowBuilder.WriteTexture();
             var importer = (TextureImporter)AssetImporter.GetAtPath(ArtPath);
             if (importer != null)
             {
@@ -234,7 +234,7 @@ namespace SubTerra.App.Editor.DataValidation
             {
                 CloseNormalPath, CloseHoverPath, ToggleOnPath, ToggleOffPath, ToggleHandlePath,
                 ButtonOffPath, ButtonOnPath, ButtonWideOffPath, ButtonWideOnPath, ParticleDotPath,
-                SliderKnobPath, SliderGlowPath, SliderFillGlowPath
+                SliderKnobPath, SliderGlowPath
             })
             {
                 if (File.Exists(path)) AssetDatabase.ImportAsset(path);
@@ -302,7 +302,7 @@ namespace SubTerra.App.Editor.DataValidation
             volume.text = "50%";
             volume.color = Cyan;
 
-            // 슬라이더: 필 영역만 위아래로 그라데이션 글로우. 안쪽 50% → 바깥 0%.
+            // 슬라이더: 필 영역만 캡슐형 그라데이션 글로우(SettingsVolumeFillGlowBuilder).
             var slider = Reference<Slider>(serialized, "masterVolumeSlider");
             Move(slider.transform, card, 113, 210, 362, 30);
             var track = slider.transform.Find("Background").GetComponent<Image>();
@@ -313,28 +313,7 @@ namespace SubTerra.App.Editor.DataValidation
             slider.fillRect.GetComponent<Image>().color = Cyan;
             DestroyChild(slider.transform, "SliderShadow");
 
-            var fillGlow = slider.fillRect.Find("FillGlow") as RectTransform;
-            if (fillGlow == null)
-                fillGlow = new GameObject("FillGlow", typeof(RectTransform)).GetComponent<RectTransform>();
-            fillGlow.SetParent(slider.fillRect, false);
-            fillGlow.anchorMin = new Vector2(0f, 0.5f);
-            fillGlow.anchorMax = new Vector2(1f, 0.5f);
-            fillGlow.pivot = new Vector2(0.5f, 0.5f);
-            fillGlow.anchoredPosition = Vector2.zero;
-            fillGlow.sizeDelta = new Vector2(0f, 40f);
-            fillGlow.localScale = Vector3.one;
-            fillGlow.localRotation = Quaternion.identity;
-            fillGlow.SetAsLastSibling();
-            var fillGlowImg = Get<Image>(fillGlow.gameObject);
-            fillGlowImg.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(SliderFillGlowPath);
-            fillGlowImg.type = Image.Type.Simple;
-            fillGlowImg.preserveAspect = false;
-            fillGlowImg.color = Color.white;
-            fillGlowImg.raycastTarget = false;
-            foreach (var oldFx in fillGlow.GetComponents<Shadow>())
-                UnityEngine.Object.DestroyImmediate(oldFx);
-            var oldOutline = fillGlow.GetComponent<Outline>();
-            if (oldOutline != null) UnityEngine.Object.DestroyImmediate(oldOutline);
+            var fillGlowImg = SettingsVolumeFillGlowBuilder.ApplyTo(slider);
 
             // 슬라이더 노브 핸들: 가로/세로 동일한 1:1 원형(22x22)
             var handle = slider.handleRect.GetComponent<Image>();
@@ -621,37 +600,6 @@ namespace SubTerra.App.Editor.DataValidation
             var skinData = new SerializedObject(skin);
             skinData.FindProperty("overlay").objectReferenceValue = hoverImg;
             skinData.ApplyModifiedPropertiesWithoutUndo();
-        }
-
-        private static void WriteFillGlowTexture()
-        {
-            const int width = 64;
-            const int height = 64;
-            var texture = new Texture2D(width, height, TextureFormat.RGBA32, false)
-            {
-                wrapMode = TextureWrapMode.Clamp,
-                filterMode = FilterMode.Bilinear
-            };
-            var pixels = new Color32[width * height];
-            for (int y = 0; y < height; y++)
-            {
-                float vertical = Mathf.Abs(((y + 0.5f) / height) - 0.5f) * 2f;
-                float verticalAlpha = 0.5f * 0.5f * (1f + Mathf.Cos(Mathf.Clamp01(vertical) * Mathf.PI));
-                for (int x = 0; x < width; x++)
-                {
-                    float nx = (x + 0.5f) / width;
-                    float edge = Mathf.Clamp01(Mathf.Min(nx, 1f - nx) / 0.08f);
-                    float alpha = verticalAlpha * edge;
-                    byte a = (byte)Mathf.RoundToInt(alpha * 255f);
-                    pixels[y * width + x] = new Color32(74, 224, 242, a);
-                }
-            }
-
-            texture.SetPixels32(pixels);
-            texture.Apply(false, false);
-            File.WriteAllBytes(SliderFillGlowPath, texture.EncodeToPNG());
-            UnityEngine.Object.DestroyImmediate(texture);
-            AssetDatabase.ImportAsset(SliderFillGlowPath);
         }
 
         private static void Border(RectTransform parent, Color color, float width)

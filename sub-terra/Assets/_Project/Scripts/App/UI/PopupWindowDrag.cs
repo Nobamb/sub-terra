@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using SubTerra.App.UI.MainMenu;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
@@ -23,6 +24,7 @@ namespace SubTerra.App.UI
         private Vector3 windowStart;
         private bool tracking;
         private bool dragging;
+        private bool usesSettingsCanvas;
         private readonly Vector3[] corners = new Vector3[4];
 
         private void OnEnable()
@@ -37,33 +39,48 @@ namespace SubTerra.App.UI
                 return;
             }
 
-            popupCanvas = window.GetComponent<Canvas>();
-            if (popupCanvas == null)
+            usesSettingsCanvas = window.parent != null
+                && window.parent.GetComponent<SettingsMenuSkin>() != null;
+            if (usesSettingsCanvas)
             {
-                popupCanvas = window.gameObject.AddComponent<Canvas>();
+                popupCanvas = window.parent.GetComponent<Canvas>();
             }
-
-            if (window.GetComponent<GraphicRaycaster>() == null)
+            else
             {
-                window.gameObject.AddComponent<GraphicRaycaster>();
-            }
+                popupCanvas = window.GetComponent<Canvas>();
+                if (popupCanvas == null)
+                {
+                    popupCanvas = window.gameObject.AddComponent<Canvas>();
+                }
 
-            // overrideSorting 캔버스는 부모 CanvasGroup.blocksRaycasts를 무시한다.
-            // 닫힌 창이 투명한 채로 클릭을 삼키지 않도록 같은 오브젝트에서 한 번 더 거른다.
-            if (window.GetComponent<PopupWindowRaycastGate>() == null)
-            {
-                window.gameObject.AddComponent<PopupWindowRaycastGate>();
+                if (window.GetComponent<GraphicRaycaster>() == null)
+                {
+                    window.gameObject.AddComponent<GraphicRaycaster>();
+                }
+
+                // overrideSorting 캔버스는 부모 CanvasGroup.blocksRaycasts를 무시한다.
+                // 닫힌 창이 투명한 채로 클릭을 삼키지 않도록 같은 오브젝트에서 한 번 더 거른다.
+                if (window.GetComponent<PopupWindowRaycastGate>() == null)
+                {
+                    window.gameObject.AddComponent<PopupWindowRaycastGate>();
+                }
             }
 
             ReleaseScrollRectFromButtons();
-            PopupWindowSorting.BringToFront(popupCanvas);
+            if (!usesSettingsCanvas)
+            {
+                PopupWindowSorting.BringToFront(popupCanvas);
+            }
         }
 
         private void OnDisable()
         {
             tracking = false;
             dragging = false;
-            PopupWindowSorting.Remove(popupCanvas);
+            if (!usesSettingsCanvas)
+            {
+                PopupWindowSorting.Remove(popupCanvas);
+            }
         }
 
         public void OnPointerDown(PointerEventData eventData)

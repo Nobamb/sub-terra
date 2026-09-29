@@ -70,6 +70,8 @@ namespace SubTerra.App.Tests.UI
                 Assert.That(fillGlow.sizeDelta.y, Is.GreaterThan(slider.fillRect.rect.height), "위아래로 필보다 넓게 빛난다");
                 Assert.That(fillGlow.GetComponent<UnityEngine.UI.Image>().sprite.name.StartsWith("slider-fill-glow"), Is.True);
                 Assert.That(fillGlow.GetComponent<UnityEngine.UI.Image>().color.a, Is.EqualTo(1f).Within(0.001f));
+                Assert.That(fillGlow.GetComponent<UnityEngine.UI.Image>().type, Is.EqualTo(UnityEngine.UI.Image.Type.Sliced), "필 길이와 무관하게 끝이 둥근 캡슐형 글로우");
+                Assert.That(fillGlow.GetComponent<UnityEngine.UI.Image>().sprite.border.x, Is.GreaterThan(0f), "좌우 캡 보더");
                 slider.value = 0.25f;
                 float narrow = slider.fillRect.rect.width;
                 slider.value = 1f;
