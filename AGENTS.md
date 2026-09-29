@@ -17,7 +17,7 @@ sub-terra/Assets/\_Project/
 
 Before making changes, use these documents as authoritative:
 
-- `init/rule.md` — binding agent/work rules
+- `init/rules` — binding agent/work rules
 - `init/PRD.md` — game design and gameplay values
 - `docs/INTEGRATION_GUIDE.md` — runtime integration architecture
 - relevant files under `work_process/` — feature-specific requirements

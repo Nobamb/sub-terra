@@ -60,6 +60,8 @@ namespace SubTerra.App.UI.MainMenu
         private Sprite fallbackParticleSprite;
         private float particleCooldown;
         private bool particleTriggersWired;
+        private bool dropdownTriggersWired;
+        private TMP_Dropdown[] dropdowns;
 
         private void OnEnable()
         {
@@ -82,6 +84,7 @@ namespace SubTerra.App.UI.MainMenu
             RefreshVolumeGlow();
             RefreshFooterHighlight();
             WireParticleTriggers();
+            WireDropdownTriggers();
 
             if (Application.isPlaying)
             {
@@ -96,6 +99,7 @@ namespace SubTerra.App.UI.MainMenu
 
         private void OnDisable()
         {
+            HideDropdowns();
             if (closeButton != null) closeButton.onClick.RemoveListener(Cancel);
             if (volumeSlider != null) volumeSlider.onValueChanged.RemoveListener(OnVolumeChanged);
             if (openRoutine != null) { StopCoroutine(openRoutine); openRoutine = null; }
@@ -128,6 +132,7 @@ namespace SubTerra.App.UI.MainMenu
 
         public void PlayCloseAnimation(Action onComplete)
         {
+            HideDropdowns();
             if (!gameObject.activeInHierarchy || !Application.isPlaying)
             {
                 onComplete?.Invoke();
@@ -216,6 +221,7 @@ namespace SubTerra.App.UI.MainMenu
 
         private void LateUpdate()
         {
+            RaiseDropdownLists();
             if (particleCooldown > 0f)
                 particleCooldown = Mathf.Max(0f, particleCooldown - Time.unscaledDeltaTime);
             if (reduceMotion != null && reduceMotion.isOn != lastSwitchState)
@@ -386,6 +392,63 @@ namespace SubTerra.App.UI.MainMenu
                 if (dropdowns[i] != null && dropdowns[i].IsExpanded) return true;
             }
             return false;
+        }
+
+        private void WireDropdownTriggers()
+        {
+            if (dropdownTriggersWired) return;
+            dropdownTriggersWired = true;
+            dropdowns = GetComponentsInChildren<TMP_Dropdown>(true);
+            foreach (var dropdown in dropdowns)
+            {
+                if (dropdown == null) continue;
+                if (dropdown.name == "ResolutionDropdown" || dropdown.name == "LanguageDropdown")
+                {
+                    var template = dropdown.template;
+                    if (template != null)
+                    {
+                        template.anchorMin = new Vector2(0f, 1f);
+                        template.anchorMax = new Vector2(1f, 1f);
+                        template.pivot = new Vector2(0.5f, 0f);
+                        template.anchoredPosition = new Vector2(0f, 2f);
+                    }
+                }
+
+                var trigger = dropdown.GetComponent<EventTrigger>();
+                if (trigger == null) trigger = dropdown.gameObject.AddComponent<EventTrigger>();
+                var entry = new EventTrigger.Entry { eventID = EventTriggerType.PointerDown };
+                var selected = dropdown;
+                entry.callback.AddListener(_ => HideDropdownsExcept(selected));
+                trigger.triggers.Add(entry);
+            }
+        }
+
+        private void HideDropdownsExcept(TMP_Dropdown selected)
+        {
+            if (dropdowns == null) return;
+            foreach (var dropdown in dropdowns)
+                if (dropdown != null && dropdown != selected && dropdown.IsExpanded) dropdown.Hide();
+        }
+
+        private void HideDropdowns() => HideDropdownsExcept(null);
+
+        private void RaiseDropdownLists()
+        {
+            if (dropdowns == null) return;
+            var settingsCanvas = GetComponent<Canvas>();
+            if (settingsCanvas == null) return;
+            // TMP의 기본 차단막(29999)은 설정창 아래에 두고, 목록(기본 30000)만 설정창 위로 올린다.
+            if (settingsCanvas.sortingOrder < PopupWindowSorting.SettingsSortOrder)
+                settingsCanvas.sortingOrder = PopupWindowSorting.SettingsSortOrder;
+            foreach (var dropdown in dropdowns)
+            {
+                if (dropdown == null || !dropdown.IsExpanded) continue;
+                var list = dropdown.transform.Find("Dropdown List");
+                if (list == null) continue;
+                var canvas = list.GetComponent<Canvas>();
+                int order = settingsCanvas.sortingOrder + 2;
+                if (canvas != null && canvas.sortingOrder != order) canvas.sortingOrder = order;
+            }
         }
 
         private int FooterCount()
