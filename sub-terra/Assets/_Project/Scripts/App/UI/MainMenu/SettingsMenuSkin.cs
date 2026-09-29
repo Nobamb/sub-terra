@@ -222,6 +222,7 @@ namespace SubTerra.App.UI.MainMenu
         private void LateUpdate()
         {
             RaiseDropdownLists();
+            FitDropdownTemplates();
             if (particleCooldown > 0f)
                 particleCooldown = Mathf.Max(0f, particleCooldown - Time.unscaledDeltaTime);
             if (reduceMotion != null && reduceMotion.isOn != lastSwitchState)
@@ -402,17 +403,9 @@ namespace SubTerra.App.UI.MainMenu
             foreach (var dropdown in dropdowns)
             {
                 if (dropdown == null) continue;
-                if (dropdown.name == "ResolutionDropdown" || dropdown.name == "LanguageDropdown")
-                {
-                    var template = dropdown.template;
-                    if (template != null)
-                    {
-                        template.anchorMin = new Vector2(0f, 1f);
-                        template.anchorMax = new Vector2(1f, 1f);
-                        template.pivot = new Vector2(0.5f, 0f);
-                        template.anchoredPosition = new Vector2(0f, 2f);
-                    }
-                }
+                SetDropdownDirection(dropdown, dropdown.name == "LanguageDropdown");
+                if (dropdown.GetComponent<SettingsDropdownToggleClose>() == null)
+                    dropdown.gameObject.AddComponent<SettingsDropdownToggleClose>();
 
                 var trigger = dropdown.GetComponent<EventTrigger>();
                 if (trigger == null) trigger = dropdown.gameObject.AddComponent<EventTrigger>();
@@ -420,6 +413,51 @@ namespace SubTerra.App.UI.MainMenu
                 var selected = dropdown;
                 entry.callback.AddListener(_ => HideDropdownsExcept(selected));
                 trigger.triggers.Add(entry);
+            }
+        }
+
+        private static void SetDropdownDirection(TMP_Dropdown dropdown, bool upward)
+        {
+            var template = dropdown.template;
+            if (template == null) return;
+            if (upward)
+            {
+                template.anchorMin = new Vector2(0f, 1f);
+                template.anchorMax = new Vector2(1f, 1f);
+                template.pivot = new Vector2(0.5f, 0f);
+                template.anchoredPosition = new Vector2(0f, 2f);
+                return;
+            }
+
+            template.anchorMin = new Vector2(0f, 0f);
+            template.anchorMax = new Vector2(1f, 0f);
+            template.pivot = new Vector2(0.5f, 1f);
+            template.anchoredPosition = new Vector2(0f, -2f);
+        }
+
+        private void FitDropdownTemplates()
+        {
+            if (dropdowns == null) return;
+            for (int i = 0; i < dropdowns.Length; i++)
+            {
+                var dropdown = dropdowns[i];
+                if (dropdown == null || dropdown.IsExpanded) continue;
+                if (dropdown.name != "ResolutionDropdown" && dropdown.name != "FrameRateDropdown")
+                    continue;
+                var template = dropdown.template;
+                if (template == null || dropdown.options == null || dropdown.options.Count <= 0)
+                    continue;
+                float itemHeight = 28f;
+                var toggle = template.GetComponentInChildren<Toggle>(true);
+                if (toggle != null)
+                {
+                    float measured = ((RectTransform)toggle.transform).sizeDelta.y;
+                    if (measured > 1f) itemHeight = measured;
+                }
+
+                float height = dropdown.options.Count * itemHeight;
+                if (Mathf.Abs(template.sizeDelta.y - height) > 0.5f)
+                    template.sizeDelta = new Vector2(template.sizeDelta.x, height);
             }
         }
 

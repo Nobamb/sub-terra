@@ -110,7 +110,11 @@ namespace SubTerra.Shared.Localization
             Add("settings.frame.60", "60", "60");
             Add("settings.frame.120", "120", "120");
             Add("settings.frame.144", "144", "144");
+            Add("settings.frame.165", "165", "165");
+            Add("settings.frame.180", "180", "180");
+            Add("settings.frame.240", "240", "240");
             Add("settings.frame.unlimited", "제한없음", "Unlimited");
+            Add("settings.resolution.auto", "자동(기본값)", "Auto (Default)");
             Add("settings.apply", "적용", "Apply");
             Add("settings.cancel", "취소", "Cancel");
             Add("settings.defaults", "기본값", "Defaults");
@@ -165,6 +169,12 @@ namespace SubTerra.Shared.Localization
                 case 4:
                     return Get("settings.frame.144", "144");
                 case 5:
+                    return Get("settings.frame.165", "165");
+                case 6:
+                    return Get("settings.frame.180", "180");
+                case 7:
+                    return Get("settings.frame.240", "240");
+                case 8:
                     return Get("settings.frame.unlimited", "제한없음");
                 default:
                     return Get("settings.frame.auto", "자동(기본값)");

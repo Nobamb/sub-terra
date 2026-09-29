@@ -12,6 +12,7 @@ namespace SubTerra.App.UI.MainMenu
     {
         private const string PrefMasterVolume = "subterra.settings.masterVolume";
         private const string PrefReduceMotion = "subterra.settings.reduceMotion";
+        private const string PrefResAuto = "subterra.settings.resAuto";
         private const string PrefResWidth = "subterra.settings.resWidth";
         private const string PrefResHeight = "subterra.settings.resHeight";
         private const string PrefLanguage = "subterra.settings.language";
@@ -58,11 +59,13 @@ namespace SubTerra.App.UI.MainMenu
                 values.ReduceMotion = PlayerPrefs.GetInt(PrefReduceMotion, 0) != 0;
             }
 
-            if (PlayerPrefs.HasKey(PrefResWidth) && PlayerPrefs.HasKey(PrefResHeight))
-            {
-                values.ResolutionWidth = PlayerPrefs.GetInt(PrefResWidth, 1920);
-                values.ResolutionHeight = PlayerPrefs.GetInt(PrefResHeight, 1080);
-            }
+            ResolutionPresets.ApplyStored(
+                values,
+                PlayerPrefs.HasKey(PrefResAuto),
+                PlayerPrefs.GetInt(PrefResAuto, 1) != 0,
+                PlayerPrefs.HasKey(PrefResWidth) && PlayerPrefs.HasKey(PrefResHeight),
+                PlayerPrefs.GetInt(PrefResWidth, 1920),
+                PlayerPrefs.GetInt(PrefResHeight, 1080));
 
             if (PlayerPrefs.HasKey(PrefLanguage))
             {
@@ -71,7 +74,7 @@ namespace SubTerra.App.UI.MainMenu
 
             if (PlayerPrefs.HasKey(PrefFrameRate))
             {
-                values.FrameRate = FrameRatePresets.FromIndex(
+                values.FrameRate = FrameRatePresets.FromSavedValue(
                     PlayerPrefs.GetInt(PrefFrameRate, 0));
             }
 
@@ -88,6 +91,7 @@ namespace SubTerra.App.UI.MainMenu
 
             PlayerPrefs.SetFloat(PrefMasterVolume, Mathf.Clamp01(values.MasterVolume));
             PlayerPrefs.SetInt(PrefReduceMotion, values.ReduceMotion ? 1 : 0);
+            PlayerPrefs.SetInt(PrefResAuto, values.ResolutionAutomatic ? 1 : 0);
             PlayerPrefs.SetInt(PrefResWidth, values.ResolutionWidth);
             PlayerPrefs.SetInt(PrefResHeight, values.ResolutionHeight);
             PlayerPrefs.SetString(
@@ -95,7 +99,7 @@ namespace SubTerra.App.UI.MainMenu
                 string.IsNullOrEmpty(values.LanguageCode)
                     ? GameLanguageCodes.Korean
                     : values.LanguageCode);
-            PlayerPrefs.SetInt(PrefFrameRate, FrameRatePresets.ToIndex(values.FrameRate));
+            PlayerPrefs.SetInt(PrefFrameRate, FrameRatePresets.ToSavedValue(values.FrameRate));
             SaveControlScheme(values.Controls);
         }
 
@@ -123,21 +127,72 @@ namespace SubTerra.App.UI.MainMenu
 
             ApplyFrameRate(values.FrameRate);
 
-            if (applyResolution
-                && values.ResolutionWidth > 0
-                && values.ResolutionHeight > 0)
+            // 에디터 Game 뷰 해상도는 바꾸지 않는다. 플레이어 빌드에서만 적용한다.
+            if (applyResolution && !Application.isEditor)
             {
-                // Editor Game 뷰 해상도는 건드리지 않는다. 플레이어 빌드에서만 실제 변경.
-                if (!Application.isEditor)
+                int nativeWidth;
+                int nativeHeight;
+                ReadNativeResolution(out nativeWidth, out nativeHeight);
+                int width;
+                int height;
+                ResolveAppliedResolution(values, nativeWidth, nativeHeight, out width, out height);
+                if (width > 0 && height > 0)
                 {
-                    Screen.SetResolution(
-                        values.ResolutionWidth,
-                        values.ResolutionHeight,
-                        Screen.fullScreenMode);
+                    Screen.SetResolution(width, height, Screen.fullScreenMode);
                 }
             }
 
             Save(values);
+        }
+
+        /// <summary>자동이면 모니터 크기, 아니면 저장한 고정 크기를 고른다.</summary>
+        public static void ResolveAppliedResolution(
+            SettingsValues values,
+            int nativeWidth,
+            int nativeHeight,
+            out int width,
+            out int height)
+        {
+            if (values != null && values.ResolutionAutomatic && nativeWidth > 0 && nativeHeight > 0)
+            {
+                width = nativeWidth;
+                height = nativeHeight;
+                return;
+            }
+
+            if (values != null
+                && !values.ResolutionAutomatic
+                && values.ResolutionWidth > 0
+                && values.ResolutionHeight > 0)
+            {
+                width = values.ResolutionWidth;
+                height = values.ResolutionHeight;
+                return;
+            }
+
+            width = 1920;
+            height = 1080;
+        }
+
+        private static void ReadNativeResolution(out int width, out int height)
+        {
+            width = 0;
+            height = 0;
+            var display = Display.main;
+            if (display != null)
+            {
+                width = display.systemWidth;
+                height = display.systemHeight;
+            }
+
+            if (width > 0 && height > 0)
+            {
+                return;
+            }
+
+            var current = Screen.currentResolution;
+            width = current.width;
+            height = current.height;
         }
 
         /// <summary>

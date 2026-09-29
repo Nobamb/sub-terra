@@ -18,7 +18,7 @@ namespace SubTerra.App.Editor.DataValidation
     /// <summary>
     /// prompt-B 33-2:
     /// - 설정창 세로 50%·상하 간격 확대, 드롭다운 흰 네모(Arrow) 제거
-    /// - 프레임 드롭다운(자동/30/60/120/144/제한없음)
+    /// - 프레임 드롭다운(자동/30/60/120/144/165/180/240/제한없음)
     /// - Surface Base 단일 영역·크기 +10%, 업그레이드 목록/상세 통합(겹침 제거)
     /// - 장비 업그레이드 창 화면의 40% 크기
     /// </summary>
@@ -917,13 +917,7 @@ namespace SubTerra.App.Editor.DataValidation
 
         private static List<string> BuildFrameOptionLabels()
         {
-            var list = new List<string>(6);
-            for (var i = 0; i < 6; i++)
-            {
-                list.Add(LocalizationService.FormatFrameRateOption(i));
-            }
-
-            return list;
+            return FrameRatePresets.BuildOptionLabels();
         }
 
         private static TMP_Dropdown CreateDropdown(

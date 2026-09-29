@@ -32,7 +32,7 @@ namespace SubTerra.App.UI.MainMenu
             }
 
             var initialSettings = SettingsRuntimeApplier.LoadOrDefaults();
-            SettingsRuntimeApplier.Apply(initialSettings, applyResolution: false);
+            SettingsRuntimeApplier.Apply(initialSettings, applyResolution: true);
 
             presenter = new MainMenuPresenter(
                 view,

@@ -60,6 +60,7 @@ namespace SubTerra.App.UI.MainMenu
 
         private int draftResolutionWidth = 1920;
         private int draftResolutionHeight = 1080;
+        private bool draftResolutionAutomatic = true;
         private string draftLanguageCode = GameLanguageCodes.Korean;
         private FrameRateMode draftFrameRate = FrameRateMode.Auto;
         private readonly Color[] slotDefaultColors = new Color[3];
@@ -378,6 +379,7 @@ namespace SubTerra.App.UI.MainMenu
                 return;
             }
 
+            draftResolutionAutomatic = values.ResolutionAutomatic;
             draftResolutionWidth = values.ResolutionWidth > 0 ? values.ResolutionWidth : 1920;
             draftResolutionHeight = values.ResolutionHeight > 0 ? values.ResolutionHeight : 1080;
             draftLanguageCode = string.IsNullOrEmpty(values.LanguageCode)
@@ -439,9 +441,7 @@ namespace SubTerra.App.UI.MainMenu
 
             if (resolutionDropdown != null)
             {
-                var preset = ResolutionPresets.Get(resolutionDropdown.value);
-                draftResolutionWidth = preset.width;
-                draftResolutionHeight = preset.height;
+                ApplyResolutionIndex(resolutionDropdown.value);
             }
 
             if (languageDropdown != null)
@@ -456,6 +456,7 @@ namespace SubTerra.App.UI.MainMenu
                 draftFrameRate = FrameRatePresets.FromIndex(frameRateDropdown.value);
             }
 
+            result.ResolutionAutomatic = draftResolutionAutomatic;
             result.ResolutionWidth = draftResolutionWidth;
             result.ResolutionHeight = draftResolutionHeight;
             result.LanguageCode = draftLanguageCode;
@@ -553,7 +554,10 @@ namespace SubTerra.App.UI.MainMenu
 
             EnsureResolutionDropdownOptions();
             resolutionDropdown.SetValueWithoutNotify(
-                ResolutionPresets.FindIndex(draftResolutionWidth, draftResolutionHeight));
+                ResolutionPresets.IndexFor(
+                    draftResolutionAutomatic,
+                    draftResolutionWidth,
+                    draftResolutionHeight));
         }
 
         private void SyncLanguageDropdown()
@@ -619,22 +623,29 @@ namespace SubTerra.App.UI.MainMenu
                 return;
             }
 
-            if (frameRateDropdown.options == null || frameRateDropdown.options.Count < 6)
+            if (frameRateDropdown.options == null
+                || frameRateDropdown.options.Count != FrameRatePresets.All.Length)
             {
                 frameRateDropdown.ClearOptions();
-                var options = new System.Collections.Generic.List<string>(6);
-                for (var i = 0; i < 6; i++)
-                {
-                    options.Add(LocalizationService.FormatFrameRateOption(i));
-                }
-
-                frameRateDropdown.AddOptions(options);
+                frameRateDropdown.AddOptions(FrameRatePresets.BuildOptionLabels());
             }
         }
 
         private void OnResolutionDropdownChanged(int index)
         {
+            ApplyResolutionIndex(index);
+        }
+
+        private void ApplyResolutionIndex(int index)
+        {
+            if (ResolutionPresets.IsAutomaticIndex(index))
+            {
+                draftResolutionAutomatic = true;
+                return;
+            }
+
             var preset = ResolutionPresets.Get(index);
+            draftResolutionAutomatic = false;
             draftResolutionWidth = preset.width;
             draftResolutionHeight = preset.height;
         }
@@ -718,28 +729,29 @@ namespace SubTerra.App.UI.MainMenu
 
         private void OnResolutionPrev()
         {
-            var next = ResolutionPresets.Cycle(draftResolutionWidth, draftResolutionHeight, -1);
-            draftResolutionWidth = next.width;
-            draftResolutionHeight = next.height;
-            if (resolutionLabel != null)
-            {
-                resolutionLabel.text = LocalizationService.FormatResolution(
-                    draftResolutionWidth,
-                    draftResolutionHeight);
-            }
+            CycleResolution(-1);
         }
 
         private void OnResolutionNext()
         {
-            var next = ResolutionPresets.Cycle(draftResolutionWidth, draftResolutionHeight, 1);
-            draftResolutionWidth = next.width;
-            draftResolutionHeight = next.height;
-            if (resolutionLabel != null)
+            CycleResolution(1);
+        }
+
+        private void CycleResolution(int delta)
+        {
+            var next = ResolutionPresets.Cycle(
+                draftResolutionAutomatic,
+                draftResolutionWidth,
+                draftResolutionHeight,
+                delta);
+            draftResolutionAutomatic = next.automatic;
+            if (!next.automatic)
             {
-                resolutionLabel.text = LocalizationService.FormatResolution(
-                    draftResolutionWidth,
-                    draftResolutionHeight);
+                draftResolutionWidth = next.width;
+                draftResolutionHeight = next.height;
             }
+
+            SyncResolutionDropdown();
         }
 
         private void OnLanguageCycle()

@@ -387,11 +387,15 @@ namespace SubTerra.App.Tests.UI.MainMenu
         [Test]
         public void ResolutionPresets_CycleWrapsAndFindsKnownModes()
         {
-            Assert.That(ResolutionPresets.FindIndex(1920, 1080), Is.EqualTo(2));
-            var next = ResolutionPresets.Cycle(1920, 1080, 1);
+            Assert.That(ResolutionPresets.FindIndex(1920, 1080), Is.EqualTo(6));
+            var next = ResolutionPresets.Cycle(false, 1920, 1080, 1);
+            Assert.That(next.automatic, Is.False);
             Assert.That(next.width, Is.EqualTo(2560));
-            var prev = ResolutionPresets.Cycle(1280, 720, -1);
-            Assert.That(prev.width, Is.EqualTo(2560));
+            var wrapped = ResolutionPresets.Cycle(false, 3440, 1440, 1);
+            Assert.That(wrapped.automatic, Is.True);
+            var prev = ResolutionPresets.Cycle(true, 1920, 1080, -1);
+            Assert.That(prev.automatic, Is.False);
+            Assert.That(prev.width, Is.EqualTo(3440));
         }
 
         [Test]
@@ -399,7 +403,11 @@ namespace SubTerra.App.Tests.UI.MainMenu
         {
             var labels = ResolutionPresets.BuildOptionLabels();
             Assert.That(labels.Count, Is.EqualTo(ResolutionPresets.All.Count));
-            Assert.That(labels[2], Is.EqualTo("1920 x 1080"));
+            Assert.That(labels[0], Is.EqualTo(
+                SubTerra.Shared.Localization.LocalizationService.Get(
+                    "settings.resolution.auto",
+                    "자동(기본값)")));
+            Assert.That(labels[6], Is.EqualTo("1920 x 1080"));
             var byIndex = ResolutionPresets.Get(1);
             Assert.That(labels[1], Is.EqualTo(byIndex.width + " x " + byIndex.height));
         }

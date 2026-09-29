@@ -23,7 +23,14 @@ namespace SubTerra.App.Tests.UI
             Assert.That(FrameRatePresets.ToTargetFrameRate(FrameRateMode.Fps60), Is.EqualTo(60));
             Assert.That(FrameRatePresets.ToTargetFrameRate(FrameRateMode.Fps120), Is.EqualTo(120));
             Assert.That(FrameRatePresets.ToTargetFrameRate(FrameRateMode.Fps144), Is.EqualTo(144));
+            Assert.That(FrameRatePresets.ToTargetFrameRate(FrameRateMode.Fps165), Is.EqualTo(165));
+            Assert.That(FrameRatePresets.ToTargetFrameRate(FrameRateMode.Fps180), Is.EqualTo(180));
+            Assert.That(FrameRatePresets.ToTargetFrameRate(FrameRateMode.Fps240), Is.EqualTo(240));
             Assert.That(FrameRatePresets.ToTargetFrameRate(FrameRateMode.Unlimited), Is.EqualTo(-1));
+            Assert.That(FrameRatePresets.ToSavedValue(FrameRateMode.Unlimited), Is.EqualTo(5));
+            Assert.That(FrameRatePresets.FromSavedValue(5), Is.EqualTo(FrameRateMode.Unlimited));
+            Assert.That(FrameRatePresets.ToIndex(FrameRateMode.Unlimited), Is.EqualTo(8));
+            Assert.That(FrameRatePresets.FromIndex(5), Is.EqualTo(FrameRateMode.Fps165));
             Assert.That(FrameRatePresets.UsesVSync(FrameRateMode.Unlimited), Is.False);
             Assert.That(FrameRatePresets.UsesVSync(FrameRateMode.Fps60), Is.False);
         }
