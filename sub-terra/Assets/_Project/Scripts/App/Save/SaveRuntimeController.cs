@@ -683,7 +683,8 @@ namespace SubTerra.App.Save
         }
 
         /// <summary>
-        /// Surface Base와 Mine에서만 플레이 시간을 누적한다.
+        /// Mine 탐사 중에만 광산 초기화 시간을 누적한다.
+        /// Surface Base로 귀환하면 타이머는 멈추고 전자시계도 숨긴다.
         /// 3시간에 도달하면 월드 초기화 후 지상으로 강제 이동한다.
         /// </summary>
         private void TickMineResetCycle()
@@ -700,7 +701,7 @@ namespace SubTerra.App.Save
             }
 
             var sceneName = SceneManager.GetActiveScene().name;
-            if (sceneName != SceneNames.SurfaceBase && sceneName != SceneNames.Integration)
+            if (!IsMineResetSessionScene(sceneName))
             {
                 mineResetClockOverlay?.SetSessionVisible(false);
                 return;
@@ -789,13 +790,21 @@ namespace SubTerra.App.Save
 
         private void EnsureMineResetClockOverlay()
         {
+            bool shouldShow = activeSlot > 0
+                && IsMineResetSessionScene(SceneManager.GetActiveScene().name);
             if (mineResetClockOverlay != null)
             {
-                mineResetClockOverlay.SetSessionVisible(true);
+                mineResetClockOverlay.SetSessionVisible(shouldShow);
                 return;
             }
 
             mineResetClockOverlay = MineResetClockOverlay.Create(transform);
+            mineResetClockOverlay.SetSessionVisible(shouldShow);
+        }
+
+        private static bool IsMineResetSessionScene(string sceneName)
+        {
+            return sceneName == SceneNames.Integration;
         }
 
         /// <summary>
@@ -988,9 +997,8 @@ namespace SubTerra.App.Save
                 explorationGuard.Complete();
             }
 
-            var inPlaySession = scene.name == SceneNames.SurfaceBase
-                || scene.name == SceneNames.Integration;
-            if (inPlaySession && activeSlot > 0)
+            var inMineResetSession = IsMineResetSessionScene(scene.name);
+            if (inMineResetSession && activeSlot > 0)
             {
                 EnsureMineResetClockOverlay();
                 mineResetClockOverlay?.RefreshFromState();

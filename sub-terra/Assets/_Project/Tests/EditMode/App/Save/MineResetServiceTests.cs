@@ -211,6 +211,18 @@ namespace SubTerra.App.Tests.Save
             Assert.That(MineResetService.IsCycleExpired(MineResetService.CycleDurationSeconds), Is.True);
         }
 
+        [TestCase(SceneNames.Integration, true)]
+        [TestCase(SceneNames.SurfaceBase, false)]
+        public void ResetClockSession_OnlyRunsInMineScene(string sceneName, bool expected)
+        {
+            var policy = typeof(SaveRuntimeController).GetMethod(
+                "IsMineResetSessionScene",
+                BindingFlags.Static | BindingFlags.NonPublic);
+
+            Assert.That(policy, Is.Not.Null);
+            Assert.That(policy.Invoke(null, new object[] { sceneName }), Is.EqualTo(expected));
+        }
+
         [Test]
         public void SaveMapper_RoundTripsMineResetCycleFields()
         {

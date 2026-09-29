@@ -147,12 +147,12 @@ namespace SubTerra.Shared.Localization
             Add("mine_reset.timed.title", "광산 초기화", "Mine Reset");
             Add(
                 "mine_reset.timed.body.mine",
-                "플레이 시간 3시간이 지나 광산이 초기화되었습니다.\n지상 기지로 이동하며, 캔 지형과 설치한 시설이 모두 사라집니다.\n다음 유료 초기화 비용은 500G입니다.",
-                "3 hours of play have passed, so the mine was reset.\nYou are returned to Surface Base. Mined terrain and placed facilities are cleared.\nThe next paid reset costs 500G.");
+                "지하 탐사 시간 3시간이 지나 광산이 초기화되었습니다.\n지상 기지로 이동하며, 캔 지형과 설치한 시설이 모두 사라집니다.\n다음 유료 초기화 비용은 500G입니다.",
+                "3 hours of underground exploration have passed, so the mine was reset.\nYou are returned to Surface Base. Mined terrain and placed facilities are cleared.\nThe next paid reset costs 500G.");
             Add(
                 "mine_reset.timed.body.surface",
-                "플레이 시간 3시간이 지나 광산이 초기화되었습니다.\n캔 지형과 설치한 시설이 모두 사라집니다.\n다음 유료 초기화 비용은 500G입니다.",
-                "3 hours of play have passed, so the mine was reset.\nMined terrain and placed facilities are cleared.\nThe next paid reset costs 500G.");
+                "지하 탐사 시간 3시간이 지나 광산이 초기화되었습니다.\n캔 지형과 설치한 시설이 모두 사라집니다.\n다음 유료 초기화 비용은 500G입니다.",
+                "3 hours of underground exploration have passed, so the mine was reset.\nMined terrain and placed facilities are cleared.\nThe next paid reset costs 500G.");
             Add("mine_reset.timed.ok", "확인", "OK");
         }
 
