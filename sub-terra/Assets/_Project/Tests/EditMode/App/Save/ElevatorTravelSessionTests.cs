@@ -42,6 +42,23 @@ namespace SubTerra.App.Tests.Save
         }
 
         [Test]
+        public void Call_ZeroDepartureCost_DoesNotSpendEnergy()
+        {
+            var state = GameState.CreateNew();
+            state.SetCurrentEnergy(20);
+            var session = new ElevatorTravelSession(state);
+
+            Assert.That(SaveRuntimeController.MineElevatorEnergyCost, Is.EqualTo(0));
+            Assert.IsTrue(session.TryCall(
+                SceneNames.Integration,
+                SaveRuntimeController.MineElevatorEnergyCost,
+                true,
+                out var failure));
+            Assert.AreEqual(ElevatorTravelFailure.None, failure);
+            Assert.AreEqual(20, state.Player.Energy);
+        }
+
+        [Test]
         public void Call_BlockedExitOrInsufficientEnergy_DoesNotCharge()
         {
             var state = GameState.CreateNew();

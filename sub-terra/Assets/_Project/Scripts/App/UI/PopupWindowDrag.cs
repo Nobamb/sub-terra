@@ -53,6 +53,15 @@ namespace SubTerra.App.UI
                     popupCanvas = window.gameObject.AddComponent<Canvas>();
                 }
 
+                var parentCanvas = window.parent != null
+                    ? window.parent.GetComponentInParent<Canvas>()
+                    : null;
+                if (parentCanvas != null)
+                {
+                    popupCanvas.additionalShaderChannels |=
+                        parentCanvas.rootCanvas.additionalShaderChannels;
+                }
+
                 if (window.GetComponent<GraphicRaycaster>() == null)
                 {
                     window.gameObject.AddComponent<GraphicRaycaster>();

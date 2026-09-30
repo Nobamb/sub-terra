@@ -172,13 +172,13 @@ namespace SubTerra.App.Editor.DataValidation
                 new Vector2(0f, 315f),
                 new Vector2(840f, 48f),
                 22f,
-                "전력 100 / 100  ·  지하행 5 소모  ·  도착 예상 95");
+                "전력 100 / 100  ·  지하행 0 소모  ·  도착 예상 100");
             var goals = CreateText(content.transform, "GoalsText", new Vector2(0f, 255f), new Vector2(800f, 52f), 22f, "목표");
             var deep = CreateText(content.transform, "DeepZoneText", new Vector2(0f, 205f), new Vector2(800f, 46f), 21f, "심층");
             var recent = CreateText(content.transform, "RecentRunText", new Vector2(0f, 155f), new Vector2(800f, 46f), 21f, "최근 탐사");
             var message = CreateText(content.transform, "MessageText", new Vector2(0f, 105f), new Vector2(800f, 46f), 19f, string.Empty);
             var explore = CreateButton(
-                content.transform, "ExploreButton", new Vector2(0f, 35f), new Vector2(360f, 73f), "지하 탐사 시작 · 전력 5", out _, 21f);
+                content.transform, "ExploreButton", new Vector2(0f, 35f), new Vector2(360f, 73f), "지하 탐사 시작", out _, 21f);
             // prompt-B 31-1: 새로고침 제거 → Main Menu와 동일한 설정·종료.
             var settingsButton = CreateButton(
                 content.transform, "SettingsButton", new Vector2(-130f, -45f), new Vector2(220f, 57f), "설정", out _, 20f);

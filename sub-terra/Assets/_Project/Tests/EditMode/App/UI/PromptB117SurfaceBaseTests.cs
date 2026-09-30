@@ -1,6 +1,7 @@
 using System.Reflection;
 using NUnit.Framework;
 using SubTerra.App.State;
+using SubTerra.App.UI;
 using SubTerra.App.UI.SurfaceBase;
 using TMPro;
 using UnityEditor;
@@ -114,6 +115,47 @@ namespace SubTerra.App.Tests.UI
                 float turn = SurfaceBaseButtonFeedback.SpinTurn(t);
                 Assert.That(turn, Is.GreaterThanOrEqualTo(previous - 1e-5f));
                 previous = turn;
+            }
+        }
+
+        [Test]
+        public void HeaderResourceText_IsTwentyThreePoint()
+        {
+            var content = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath).transform.Find("SurfaceBaseContent");
+            Assert.That(content.Find("CargoText").GetComponent<TMP_Text>().fontSize, Is.EqualTo(23f));
+            Assert.That(content.Find("GoldText").GetComponent<TMP_Text>().fontSize, Is.EqualTo(23f));
+        }
+
+        [Test]
+        public void UpgradeModal_KeepsCardCanvasAboveDimmer()
+        {
+            var instance = Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath));
+            var flags = BindingFlags.Instance | BindingFlags.NonPublic;
+            try
+            {
+                var view = instance.GetComponent<SurfaceBaseView>();
+                var modal = instance.transform.Find("SurfaceBaseContent/UpgradeModal").gameObject;
+                modal.SetActive(true);
+                var drag = modal.GetComponentInChildren<PopupWindowDrag>(true);
+                // Edit Mode에서는 SetActive만으로 OnEnable이 돌지 않는다.
+                typeof(PopupWindowDrag).GetMethod("OnEnable", flags).Invoke(drag, null);
+                view.SetUpgradeVisible(true);
+                var dimmer = modal.GetComponent<Canvas>();
+                var card = drag.GetComponent<Canvas>();
+                Assert.That(card, Is.Not.Null);
+                Assert.That(card.overrideSorting, Is.True);
+                Assert.That(card.sortingOrder, Is.GreaterThan(dimmer.sortingOrder));
+            }
+            finally
+            {
+                var drag = instance.GetComponentInChildren<PopupWindowDrag>(true);
+                if (drag != null)
+                {
+                    typeof(PopupWindowDrag).GetMethod("OnDisable", flags).Invoke(drag, null);
+                }
+
+                instance.GetComponent<SurfaceBaseView>().SetUpgradeVisible(false);
+                Object.DestroyImmediate(instance);
             }
         }
 

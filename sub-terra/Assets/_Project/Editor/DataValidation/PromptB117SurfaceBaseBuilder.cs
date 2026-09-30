@@ -152,11 +152,11 @@ namespace SubTerra.App.Editor.DataValidation
 
             // 헤더 우측 패널(약 x 1214~1848, 모서리 사선 제외 안전폭 ~1810)에 맞춘 중심 x(1920 기준 px).
             const float cargoX = 1262f, goldX = 1455f, settingsX = 1690f, quitX = 1772f;
-            var cargo = Text(content, "CargoText", font, "화물 0", 27f);
-            TextStyle(cargo, 27f, TextAlignmentOptions.MidlineLeft);
+            var cargo = Text(content, "CargoText", font, "화물 0", 23f);
+            TextStyle(cargo, 23f, TextAlignmentOptions.MidlineLeft);
             Place(cargo.rectTransform, new Vector2(cargoX / 1920f, 1f), new Vector2(35f, -66f), new Vector2(145f, 48f), new Vector2(0f, 0.5f));
-            var gold = Text(content, "GoldText", font, "골드 <color=#FFE66B>0G</color>", 27f);
-            TextStyle(gold, 27f, TextAlignmentOptions.MidlineLeft);
+            var gold = Text(content, "GoldText", font, "골드 <color=#FFE66B>0G</color>", 23f);
+            TextStyle(gold, 23f, TextAlignmentOptions.MidlineLeft);
             Place(gold.rectTransform, new Vector2(goldX / 1920f, 1f), new Vector2(35f, -66f), new Vector2(145f, 48f), new Vector2(0f, 0.5f));
             var cargoIcon = Image(content, "CargoIcon", Sprite(ArtPath + "Icons/icon-cargo.png"));
             Place(cargoIcon.rectTransform, new Vector2(cargoX / 1920f, 1f), new Vector2(0f, -66f), new Vector2(46f, 46f));
@@ -253,6 +253,9 @@ namespace SubTerra.App.Editor.DataValidation
             var canvas = Ensure<Canvas>(modal);
             canvas.overrideSorting = true;
             canvas.sortingOrder = UiLayerPriority.ModalPanel;
+            canvas.additionalShaderChannels |= AdditionalCanvasShaderChannels.TexCoord1
+                | AdditionalCanvasShaderChannels.Normal
+                | AdditionalCanvasShaderChannels.Tangent;
             Ensure<UnityEngine.UI.GraphicRaycaster>(modal);
             var card = content.Find("ProgressionPanel") ?? backdrop.transform.Find("ProgressionPanel");
             card.SetParent(backdrop.transform, false);

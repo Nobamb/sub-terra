@@ -44,13 +44,27 @@ namespace SubTerra.App.UI.SurfaceBase
         public void SetUpgradeVisible(bool visible)
         {
             if (upgradeRoot == null) return;
-            var canvas = upgradeRoot.GetComponent<Canvas>();
-            if (!visible) PopupWindowSorting.Remove(canvas);
-            upgradeRoot.SetActive(visible);
-            if (visible)
+            var dimmer = upgradeRoot.GetComponent<Canvas>();
+            if (!visible)
             {
-                upgradeRoot.transform.SetAsLastSibling();
-                PopupWindowSorting.BringToFront(canvas);
+                PopupWindowSorting.Remove(dimmer);
+                upgradeRoot.SetActive(false);
+                return;
+            }
+
+            upgradeRoot.SetActive(true);
+            upgradeRoot.transform.SetAsLastSibling();
+            // 딤 이미지가 카드 캔버스보다 앞에 있으면 반투명 검은 막이 업그레이드 클릭을 전부 삼킨다.
+            var card = upgradeRoot.GetComponentInChildren<PopupWindowDrag>(true);
+            var cardCanvas = card != null ? card.GetComponent<Canvas>() : null;
+            if (cardCanvas != null && cardCanvas != dimmer)
+            {
+                PopupWindowSorting.BringToFront(dimmer);
+                PopupWindowSorting.BringToFront(cardCanvas);
+            }
+            else
+            {
+                PopupWindowSorting.BringToFront(dimmer);
             }
         }
 
