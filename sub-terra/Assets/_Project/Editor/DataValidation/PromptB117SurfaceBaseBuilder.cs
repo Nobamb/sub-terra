@@ -150,61 +150,90 @@ namespace SubTerra.App.Editor.DataValidation
             var subtitle = Text(content, "EnglishTitle", font, "S U R F A C E   B A S E", 22f);
             Place(subtitle.rectTransform, new Vector2(398f / 1920f, 1f), new Vector2(0f, -65f), new Vector2(370f, 44f), new Vector2(0f, 0.5f));
 
+            // 헤더 우측 패널(약 x 1214~1848, 모서리 사선 제외 안전폭 ~1810)에 맞춘 중심 x(1920 기준 px).
+            const float cargoX = 1262f, goldX = 1455f, settingsX = 1690f, quitX = 1772f;
             var cargo = Text(content, "CargoText", font, "화물 0", 27f);
             TextStyle(cargo, 27f, TextAlignmentOptions.MidlineLeft);
-            Place(cargo.rectTransform, new Vector2(1220f / 1920f, 1f), new Vector2(35f, -66f), new Vector2(145f, 48f), new Vector2(0f, 0.5f));
+            Place(cargo.rectTransform, new Vector2(cargoX / 1920f, 1f), new Vector2(35f, -66f), new Vector2(145f, 48f), new Vector2(0f, 0.5f));
             var gold = Text(content, "GoldText", font, "골드 <color=#FFE66B>0G</color>", 27f);
             TextStyle(gold, 27f, TextAlignmentOptions.MidlineLeft);
-            Place(gold.rectTransform, new Vector2(1472f / 1920f, 1f), new Vector2(35f, -66f), new Vector2(145f, 48f), new Vector2(0f, 0.5f));
+            Place(gold.rectTransform, new Vector2(goldX / 1920f, 1f), new Vector2(35f, -66f), new Vector2(145f, 48f), new Vector2(0f, 0.5f));
             var cargoIcon = Image(content, "CargoIcon", Sprite(ArtPath + "Icons/icon-cargo.png"));
-            Place(cargoIcon.rectTransform, new Vector2(1220f / 1920f, 1f), new Vector2(0f, -66f), new Vector2(46f, 46f));
+            Place(cargoIcon.rectTransform, new Vector2(cargoX / 1920f, 1f), new Vector2(0f, -66f), new Vector2(46f, 46f));
             cargoIcon.preserveAspect = true;
             var goldIcon = Image(content, "GoldIcon", Sprite(ArtPath + "Icons/icon-gold.png"));
-            Place(goldIcon.rectTransform, new Vector2(1472f / 1920f, 1f), new Vector2(0f, -66f), new Vector2(46f, 46f));
+            Place(goldIcon.rectTransform, new Vector2(goldX / 1920f, 1f), new Vector2(0f, -66f), new Vector2(46f, 46f));
             goldIcon.preserveAspect = true;
 
             var explore = content.Find("ExploreButton").GetComponent<UnityEngine.UI.Button>();
             Place((RectTransform)explore.transform, new Vector2(0.5f, 0.5f), new Vector2(0f, 40f), new Vector2(850f, 210f));
-            StyleButton(explore, ArtPath + "Exploration-button.png", ArtPath + "Exploration-button.png", new Vector2(850f, 287f));
+            var exploreIcon = Image(explore.transform, "Icon", Sprite(ArtPath + "Icons/icon-mine.png"));
+            StyleButton(explore, ArtPath + "Exploration-button.png", ArtPath + "Exploration-button.png", new Vector2(850f, 287f),
+                exploreIcon, bright: true, glowColor: new Color(0.45f, 0.9f, 1f));
             Label(explore, "지하 탐사 시작", 62f);
             var exploreLabel = explore.GetComponentInChildren<TMP_Text>();
             exploreLabel.fontStyle = FontStyles.Bold;
-            exploreLabel.alignment = TextAlignmentOptions.MidlineLeft;
-            Place(exploreLabel.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(-110f, 0f), new Vector2(470f, 126f), new Vector2(0f, 0.5f));
-            var mineIcon = Image(explore.transform, "Icon", Sprite(ArtPath + "Icons/icon-mine.png"));
-            Place(mineIcon.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(-245f, 0f), new Vector2(154f, 134f));
-            mineIcon.preserveAspect = true;
+            exploreLabel.horizontalAlignment = HorizontalAlignmentOptions.Left;
+            // 글리프 실측 영역 기준으로 세로 중앙을 맞추고, 프레임 안쪽 패널 중심(이미지 중심보다 약 6px 아래)에 둔다.
+            exploreLabel.verticalAlignment = VerticalAlignmentOptions.Geometry;
+            Place(exploreLabel.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(-110f, -6f), new Vector2(470f, 126f), new Vector2(0f, 0.5f));
+            Place(exploreIcon.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(-245f, 0f), new Vector2(154f, 134f));
+            exploreIcon.preserveAspect = true;
 
             var sell = content.Find("OpenSellButton").GetComponent<UnityEngine.UI.Button>();
             Place((RectTransform)sell.transform, new Vector2(0.5f, 0.5f), new Vector2(-213f, -145f), new Vector2(386f, 98f));
-            StyleButton(sell, SettingsArt + "button-active-off.png", SettingsArt + "button-active-on.png", new Vector2(386f, 98f));
+            var sellIcon = Image(sell.transform, "Icon", Sprite(ArtPath + "Icons/icon-sell.png"));
+            StyleButton(sell, SettingsArt + "button-active-off.png", SettingsArt + "button-active-on.png", new Vector2(386f, 98f), sellIcon);
             Label(sell, "자원 판매", 30f);
-            ButtonIcon(sell, ArtPath + "Icons/icon-sell.png");
+            ButtonIcon(sell, sellIcon);
             var upgrade = Button(content, "UpgradeButton");
             Place((RectTransform)upgrade.transform, new Vector2(0.5f, 0.5f), new Vector2(213f, -145f), new Vector2(386f, 98f));
-            StyleButton(upgrade, SettingsArt + "button-active-off.png", SettingsArt + "button-active-on.png", new Vector2(386f, 98f));
+            var upgradeIcon = Image(upgrade.transform, "Icon", Sprite(ArtPath + "Icons/icon-upgrade.png"));
+            StyleButton(upgrade, SettingsArt + "button-active-off.png", SettingsArt + "button-active-on.png", new Vector2(386f, 98f), upgradeIcon);
             Label(upgrade, "업그레이드", 30f, font);
-            ButtonIcon(upgrade, ArtPath + "Icons/icon-upgrade.png");
+            ButtonIcon(upgrade, upgradeIcon);
 
             var reset = content.Find("ResetMineButton").GetComponent<UnityEngine.UI.Button>();
             Place((RectTransform)reset.transform, new Vector2(0.5f, 0.5f), new Vector2(0f, -282f), new Vector2(530f, 112f));
-            StyleButton(reset, ArtPath + "mine-init-button.png", ArtPath + "mine-init-button.png", new Vector2(530f, 177f));
+            var resetIcon = Image(reset.transform, "Icon", Sprite(ArtPath + "Icons/icon-reset.png"));
+            StyleButton(reset, ArtPath + "mine-init-button.png", ArtPath + "mine-init-button.png", new Vector2(530f, 177f),
+                resetIcon, bright: true, glowColor: new Color(0.5f, 1f, 0.6f), spin: true);
             Label(reset, "새 광산 초기화", 29f);
             var resetLabel = reset.transform.Find("Label").GetComponent<TMP_Text>();
-            Place(resetLabel.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(-132f, 0f), new Vector2(244f, 58f), new Vector2(0f, 0.5f));
-            resetLabel.alignment = TextAlignmentOptions.MidlineLeft;
+            resetLabel.alignment = TextAlignmentOptions.Center;
+            resetLabel.verticalAlignment = VerticalAlignmentOptions.Geometry;
+            resetLabel.enableAutoSizing = false;
+            resetLabel.fontSize = 29f;
             resetLabel.color = new Color(0.35f, 0.97f, 0.97f);
-            var resetIcon = Image(reset.transform, "Icon", Sprite(ArtPath + "Icons/icon-reset.png"));
-            Place(resetIcon.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(-185f, 0f), new Vector2(46f, 46f));
             resetIcon.preserveAspect = true;
             var fee = Text(reset.transform, "FeeLabel", font, "500G", 29f);
-            Place(fee.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(172f, 0f), new Vector2(98f, 58f));
-            fee.alignment = TextAlignmentOptions.MidlineRight;
+            fee.alignment = TextAlignmentOptions.Center;
+            fee.verticalAlignment = VerticalAlignmentOptions.Geometry;
+            fee.enableAutoSizing = false;
+            fee.fontSize = 29f;
             fee.color = new Color(1f, 0.9f, 0.42f);
+            // 아이콘·이름·비용을 같은 간격으로 묶어 버튼 중앙에 둔다(언어가 바뀌어도 유지).
+            resetIcon.rectTransform.sizeDelta = new Vector2(46f, 46f);
+            resetIcon.transform.SetSiblingIndex(resetIcon.transform.parent.childCount - 1);
+            resetLabel.transform.SetAsLastSibling();
             fee.transform.SetAsLastSibling();
+            var resetRow = Ensure<UnityEngine.UI.HorizontalLayoutGroup>(reset.gameObject);
+            resetRow.childAlignment = TextAnchor.MiddleCenter;
+            resetRow.spacing = 16f;
+            // 프레임 그림의 안쪽 패널 중심이 버튼 중심보다 약 3px 위라 아래 여백으로 내용 중심을 맞춘다.
+            resetRow.padding = new RectOffset(0, 0, 0, 6);
+            resetRow.childControlWidth = true;
+            resetRow.childControlHeight = false;
+            resetRow.childForceExpandWidth = false;
+            resetRow.childForceExpandHeight = false;
+            Ensure<UnityEngine.UI.LayoutElement>(resetIcon.gameObject).preferredWidth = 46f;
+            resetLabel.rectTransform.pivot = new Vector2(0.5f, 0.5f);
+            foreach (var name in new[] { "Frame", "HoverFrame", "InnerLight", "HoverParticles" })
+                Ensure<UnityEngine.UI.LayoutElement>(reset.transform.Find(name).gameObject).ignoreLayout = true;
+            UnityEngine.UI.LayoutRebuilder.ForceRebuildLayoutImmediate((RectTransform)reset.transform);
 
-            IconButton(content.Find("SettingsButton").GetComponent<UnityEngine.UI.Button>(), -188f, ArtPath + "Icons/icon-settings.png");
-            IconButton(content.Find("QuitButton").GetComponent<UnityEngine.UI.Button>(), -100f, ArtPath + "Icons/icon-quit.png");
+            IconButton(content.Find("SettingsButton").GetComponent<UnityEngine.UI.Button>(), settingsX - 1920f, ArtPath + "Icons/icon-settings.png");
+            IconButton(content.Find("QuitButton").GetComponent<UnityEngine.UI.Button>(), quitX - 1920f, ArtPath + "Icons/icon-quit.png");
             var view = new SerializedObject(root.GetComponent<SurfaceBaseView>());
             Ref(view, "cargoText", cargo);
             Ref(view, "goldText", gold);
@@ -280,17 +309,34 @@ namespace SubTerra.App.Editor.DataValidation
             image.preserveAspect = true;
         }
 
-        private static void ButtonIcon(UnityEngine.UI.Button button, string path)
+        private static void ButtonIcon(UnityEngine.UI.Button button, UnityEngine.UI.Image icon)
         {
-            var icon = Image(button.transform, "Icon", Sprite(path));
-            Place(icon.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(-104f, 0f), new Vector2(50f, 50f));
             icon.preserveAspect = true;
+            icon.rectTransform.sizeDelta = new Vector2(50f, 50f);
+            Ensure<UnityEngine.UI.LayoutElement>(icon.gameObject).preferredWidth = 50f;
             var label = button.GetComponentInChildren<TMP_Text>(true);
-            Place(label.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(-47f, 0f), new Vector2(205f, 66f), new Vector2(0f, 0.5f));
-            label.alignment = TextAlignmentOptions.MidlineLeft;
+            label.alignment = TextAlignmentOptions.Center;
+            label.verticalAlignment = VerticalAlignmentOptions.Geometry;
+            label.rectTransform.pivot = new Vector2(0.5f, 0.5f);
+            label.rectTransform.sizeDelta = new Vector2(label.rectTransform.sizeDelta.x, 66f);
+            icon.transform.SetAsLastSibling();
+            label.transform.SetAsLastSibling();
+            // 아이콘과 글자의 간격(32px)은 기존 그대로 두고 둘을 한 묶음으로 버튼 중앙에 둔다.
+            var row = Ensure<UnityEngine.UI.HorizontalLayoutGroup>(button.gameObject);
+            row.childAlignment = TextAnchor.MiddleCenter;
+            row.spacing = 32f;
+            row.padding = new RectOffset();
+            row.childControlWidth = true;
+            row.childControlHeight = false;
+            row.childForceExpandWidth = false;
+            row.childForceExpandHeight = false;
+            foreach (var name in new[] { "Frame", "HoverFrame", "InnerLight", "HoverParticles" })
+                Ensure<UnityEngine.UI.LayoutElement>(button.transform.Find(name).gameObject).ignoreLayout = true;
+            UnityEngine.UI.LayoutRebuilder.ForceRebuildLayoutImmediate((RectTransform)button.transform);
         }
 
-        private static void StyleButton(UnityEngine.UI.Button button, string normal, string hover, Vector2 frameSize)
+        private static void StyleButton(UnityEngine.UI.Button button, string normal, string hover, Vector2 frameSize,
+            UnityEngine.UI.Image icon = null, bool bright = false, Color? glowColor = null, bool spin = false)
         {
             var hit = Ensure<UnityEngine.UI.Image>(button.gameObject);
             hit.color = Color.clear;
@@ -315,12 +361,37 @@ namespace SubTerra.App.Editor.DataValidation
             Stretch(sweep.rectTransform);
             sweep.rectTransform.anchorMin = new Vector2(0.5f, 0f);
             sweep.rectTransform.anchorMax = new Vector2(0.5f, 1f);
-            sweep.rectTransform.sizeDelta = new Vector2(90f, 0f);
+            sweep.rectTransform.sizeDelta = new Vector2(bright ? 180f : 90f, 0f);
             sweep.color = Color.clear;
+            UnityEngine.UI.Image glow = null;
+            if (bright)
+            {
+                glow = Image(mask, "HoverGlow", null);
+                Stretch(glow.rectTransform);
+                glow.color = Color.clear;
+                glow.transform.SetSiblingIndex(0);
+            }
+            var particles = Child(button.transform, "HoverParticles");
+            Stretch(particles);
+            particles.offsetMin = new Vector2(35f, 15f);
+            particles.offsetMax = new Vector2(-35f, -15f);
+            particles.SetSiblingIndex(3);
+            if (icon != null)
+            {
+                float idle = 0.45f;
+                icon.color = new Color(idle, idle, idle, 1f);
+            }
             var skin = new SerializedObject(Ensure<SurfaceBaseButtonFeedback>(button.gameObject));
             Ref(skin, "plate", plate);
             Ref(skin, "highlight", highlight);
             Ref(skin, "sweep", sweep);
+            Ref(skin, "icon", icon);
+            Ref(skin, "glow", glow);
+            Ref(skin, "particleRoot", particles);
+            Ref(skin, "particleSprite", Sprite(SettingsArt + "particle-dot.png"));
+            skin.FindProperty("glowColor").colorValue = glowColor ?? Color.white;
+            skin.FindProperty("hoverBoost").floatValue = bright ? 1f : 0f;
+            skin.FindProperty("spinIconOnHover").boolValue = spin;
             skin.ApplyModifiedPropertiesWithoutUndo();
         }
 
