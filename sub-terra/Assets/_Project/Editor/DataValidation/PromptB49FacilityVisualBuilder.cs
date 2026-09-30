@@ -11,7 +11,7 @@ namespace SubTerra.App.Editor.DataValidation
 {
     /// <summary>
     /// 시설 6종의 원본 아트를 유지하면서 지형 상단에 얕게 겹치도록 배치한다.
-    /// 보건소는 2x2 점유 영역을 쓰고 나머지 시설은 기존 1x1 점유 영역을 유지한다.
+    /// 전진기지 코어는 보건소와 같은 2x2 설치·대형 시각 규격을 쓴다.
     /// </summary>
     public static class PromptB49FacilityVisualBuilder
     {
@@ -27,6 +27,8 @@ namespace SubTerra.App.Editor.DataValidation
             "Assets/_Project/Prefabs/Gameplay/Power/OutpostCore.prefab";
         public const string ClinicPrefabPath =
             "Assets/_Project/Prefabs/Gameplay/Power/ClinicFacility.prefab";
+        public const string OutpostPlacementPath =
+            "Assets/_Project/Data/Buildings/Placement/outpost_core_basicPlacement.asset";
         public const string IntegrationScenePath =
             "Assets/_Project/Scenes/App/Mine_Demo_Integration.unity";
 
@@ -39,9 +41,27 @@ namespace SubTerra.App.Editor.DataValidation
             Debug.Log("[SubTerra] " + Build());
         }
 
+        [MenuItem("SubTerra/MVP2/Refresh Elevator And Outpost Polish")]
+        public static void RefreshElevatorAndOutpostPolish()
+        {
+            SubTerra.App.Editor.ElevatorVisualPrefabSetup.RefreshExistingPrefab();
+            RefreshOutpostVisual();
+            Debug.Log("[SubTerra] Elevator lift motion and grounded outpost visual refreshed.");
+        }
+
+        public static void RefreshOutpostVisual()
+        {
+            ApplyPrefab(OutpostPrefabPath, FacilityVisualKind.OutpostCore, keepPoweredVisual: false);
+            ApplyOutpostFootprint();
+            ApplyDemoOutpostInIntegration();
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+        }
+
         public static string Build()
         {
             ApplyAllPrefabs();
+            ApplyOutpostFootprint();
             ApplyDemoOutpostInIntegration();
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
@@ -168,8 +188,10 @@ namespace SubTerra.App.Editor.DataValidation
                 Transform existingArt = demo.transform.Find("VisualRoot/Diamond");
                 if (existingArt != null && existingArt.GetComponent<SpriteRenderer>() != null)
                 {
-                    Vector3 local = existingArt.localPosition;
-                    existingArt.localPosition = new Vector3(local.x, -0.227492f, local.z);
+                    ApplyGroundedArtworkGeometry(
+                        existingArt,
+                        existingArt.GetComponent<SpriteRenderer>().sprite,
+                        FacilityVisualKind.OutpostCore);
                 }
                 else
                 {
@@ -204,24 +226,51 @@ namespace SubTerra.App.Editor.DataValidation
         {
             // 점유 영역 아래 암석의 윗면보다 약 0.2칸 내려 놓는다.
             // SpriteRenderer가 지형보다 앞에 그려져 시설 실루엣은 가리지 않는다.
-            bool isClinic = kind == FacilityVisualKind.Clinic;
-            float maxWidth = isClinic ? 1.8f : 0.96f;
-            float maxHeight = isClinic ? 1.6f : 0.96f;
-            float groundY = isClinic ? -1.2f : -0.68f;
+            Transform artwork = CreatePart(
+                visualRoot,
+                "Artwork",
+                sprite,
+                Vector3.zero,
+                sprite.bounds.size,
+                Color.white,
+                4);
+            ApplyGroundedArtworkGeometry(artwork, sprite, kind);
+            return artwork;
+        }
+
+        private static void ApplyOutpostFootprint()
+        {
+            BuildingPlacementDefinition definition =
+                AssetDatabase.LoadAssetAtPath<BuildingPlacementDefinition>(OutpostPlacementPath);
+            if (definition == null)
+            {
+                throw new InvalidOperationException(
+                    "Missing outpost placement definition: " + OutpostPlacementPath);
+            }
+
+            var serialized = new SerializedObject(definition);
+            serialized.FindProperty("footprint").vector2IntValue = new Vector2Int(2, 2);
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(definition);
+        }
+
+        private static void ApplyGroundedArtworkGeometry(
+            Transform artwork, Sprite sprite, FacilityVisualKind kind)
+        {
+            bool isLargeFacility = kind == FacilityVisualKind.Clinic
+                || kind == FacilityVisualKind.OutpostCore;
+            float maxWidth = isLargeFacility ? 1.8f : 0.96f;
+            float maxHeight = kind == FacilityVisualKind.OutpostCore
+                ? 1.7f
+                : isLargeFacility ? 1.6f : 0.96f;
+            float groundY = isLargeFacility ? -1.2f : -0.68f;
             Vector2 spriteSize = sprite.bounds.size;
             float scale = Mathf.Min(
                 maxWidth / Mathf.Max(spriteSize.x, 0.0001f),
                 maxHeight / Mathf.Max(spriteSize.y, 0.0001f));
             float height = spriteSize.y * scale;
-            var position = new Vector3(0f, groundY + height * 0.5f, 0f);
-            return CreatePart(
-                visualRoot,
-                "Artwork",
-                sprite,
-                position,
-                spriteSize * scale,
-                Color.white,
-                4);
+            artwork.localPosition = new Vector3(0f, groundY + height * 0.5f, 0f);
+            artwork.localScale = new Vector3(scale, scale, 1f);
         }
 
         private static string GetArtworkPath(FacilityVisualKind kind)

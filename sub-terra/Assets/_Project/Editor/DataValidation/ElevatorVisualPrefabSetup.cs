@@ -44,7 +44,12 @@ namespace SubTerra.App.Editor
             SpriteRenderer oldRenderer = root.GetComponent<SpriteRenderer>();
             if (oldRenderer != null) oldRenderer.enabled = false;
 
-            Transform artwork = Child(root.transform, "ElevatorArtwork");
+            Transform cabin = Child(root.transform, "ElevatorCabin");
+            cabin.localPosition = Vector3.zero;
+            cabin.localRotation = Quaternion.identity;
+            cabin.localScale = Vector3.one;
+
+            Transform artwork = CabinChild(root.transform, cabin, "ElevatorArtwork");
             artwork.localPosition = new Vector3(0f, -0.35f, 0f);
             artwork.localScale = Vector3.one;
             SpriteRenderer artworkRenderer = Renderer(artwork, artworkSprite, Color.white, 3);
@@ -78,15 +83,15 @@ namespace SubTerra.App.Editor
                 }
             }
 
-            Transform maskObject = Child(root.transform, "DoorOpeningMask");
+            Transform maskObject = CabinChild(root.transform, cabin, "DoorOpeningMask");
             maskObject.localPosition = new Vector3(0f, DoorCenterY, 0f);
             maskObject.localScale = new Vector3(OpeningMaskSize.x, OpeningMaskSize.y, 1f);
             SpriteMask mask = maskObject.GetComponent<SpriteMask>();
             if (mask == null) mask = maskObject.gameObject.AddComponent<SpriteMask>();
             mask.sprite = solidSprite;
 
-            Transform left = Child(root.transform, "LeftDoor");
-            Transform right = Child(root.transform, "RightDoor");
+            Transform left = CabinChild(root.transform, cabin, "LeftDoor");
+            Transform right = CabinChild(root.transform, cabin, "RightDoor");
             SpriteRenderer leftRenderer = ConfigureDoor(left, doorSprite, -OpenOffset, true);
             SpriteRenderer rightRenderer = ConfigureDoor(right, doorSprite, OpenOffset, false);
 
@@ -96,6 +101,7 @@ namespace SubTerra.App.Editor
             serialized.FindProperty("leftDoor").objectReferenceValue = leftRenderer;
             serialized.FindProperty("rightDoor").objectReferenceValue = rightRenderer;
             serialized.FindProperty("doorOpeningMask").objectReferenceValue = mask;
+            serialized.FindProperty("cabinRoot").objectReferenceValue = cabin;
             serialized.FindProperty("openDoorOffset").floatValue = OpenOffset;
             serialized.FindProperty("closedDoorOffset").floatValue = ClosedOffset;
             serialized.FindProperty("doorCenterY").floatValue = DoorCenterY;
@@ -146,6 +152,27 @@ namespace SubTerra.App.Editor
             var created = new GameObject(name).transform;
             created.SetParent(parent, false);
             return created;
+        }
+
+        private static Transform CabinChild(Transform root, Transform cabin, string name)
+        {
+            Transform child = cabin.Find(name);
+            if (child == null)
+            {
+                child = root.Find(name);
+            }
+
+            if (child == null)
+            {
+                child = new GameObject(name).transform;
+            }
+
+            if (child.parent != cabin)
+            {
+                child.SetParent(cabin, false);
+            }
+
+            return child;
         }
 
         private static Sprite RequireSprite(string path)

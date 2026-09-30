@@ -10,9 +10,12 @@ namespace SubTerra.Gameplay.Player
         [SerializeField] private SpriteRenderer leftDoor;
         [SerializeField] private SpriteRenderer rightDoor;
         [SerializeField] private SpriteMask doorOpeningMask;
+        [SerializeField] private Transform cabinRoot;
         [SerializeField, Min(0.01f)] private float slideDuration = 0.28f;
         [SerializeField, Min(0.01f)] private float openingDuration = 0.52f;
         [SerializeField, Min(0f)] private float initialOpenDelay = 0.16f;
+        [SerializeField, Min(0.01f)] private float liftDuration = 0.55f;
+        [SerializeField, Min(0f)] private float liftDistance = 1.8f;
         [SerializeField] private float openDoorOffset = 1.05f;
         [SerializeField] private float closedDoorOffset = 0.34f;
         [SerializeField] private float doorCenterY = -0.55f;
@@ -27,14 +30,22 @@ namespace SubTerra.Gameplay.Player
         private float transitionDuration;
         private float openingDelayRemaining;
         private bool transitionActive;
+        private float liftFraction;
+        private float liftTargetFraction;
+        private float liftStartFraction;
+        private float liftElapsed;
+        private float liftTransitionDuration;
+        private bool liftTransitionActive;
 
         public float ClosedFraction => closedFraction;
+        public float LiftFraction => liftFraction;
 
         private void OnEnable()
         {
             elevator = GetComponent<ElevatorController>();
             elevator.StateChanged += OnStateChanged;
             ApplyGeometry();
+            SnapLiftTo(0f);
 
             if (ShouldClose(elevator.State))
             {
@@ -64,6 +75,12 @@ namespace SubTerra.Gameplay.Player
         }
 
         private void Update()
+        {
+            UpdateDoor();
+            UpdateLift();
+        }
+
+        private void UpdateDoor()
         {
             if (openingDelayRemaining > 0f)
             {
@@ -97,10 +114,42 @@ namespace SubTerra.Gameplay.Player
             }
         }
 
+        private void UpdateLift()
+        {
+            if (!liftTransitionActive)
+            {
+                return;
+            }
+
+            liftElapsed += Time.unscaledDeltaTime;
+            float progress = liftTransitionDuration <= 0f
+                ? 1f
+                : Mathf.Clamp01(liftElapsed / liftTransitionDuration);
+            float eased = progress * progress * progress;
+            liftFraction = Mathf.Lerp(liftStartFraction, liftTargetFraction, eased);
+            ApplyLiftPose();
+
+            if (progress >= 1f)
+            {
+                liftFraction = liftTargetFraction;
+                liftTransitionActive = false;
+                ApplyLiftPose();
+            }
+        }
+
         private void OnStateChanged(ElevatorTravelState state)
         {
             openingDelayRemaining = 0f;
             BeginTransition(ShouldClose(state) ? 1f : 0f);
+
+            if (state == ElevatorTravelState.Moving)
+            {
+                BeginLift(1f);
+            }
+            else
+            {
+                SnapLiftTo(0f);
+            }
         }
 
         private static bool ShouldClose(ElevatorTravelState state)
@@ -139,6 +188,33 @@ namespace SubTerra.Gameplay.Player
             ApplyPose();
         }
 
+        private void BeginLift(float target)
+        {
+            liftTargetFraction = Mathf.Clamp01(target);
+            float distance = Mathf.Abs(liftTargetFraction - liftFraction);
+            if (distance <= 0.0001f || cabinRoot == null || liftDistance <= 0f)
+            {
+                SnapLiftTo(liftTargetFraction);
+                return;
+            }
+
+            liftStartFraction = liftFraction;
+            liftElapsed = 0f;
+            liftTransitionDuration = Mathf.Max(0.01f, liftDuration * distance);
+            liftTransitionActive = true;
+        }
+
+        private void SnapLiftTo(float target)
+        {
+            liftTargetFraction = Mathf.Clamp01(target);
+            liftFraction = liftTargetFraction;
+            liftStartFraction = liftFraction;
+            liftElapsed = 0f;
+            liftTransitionDuration = 0f;
+            liftTransitionActive = false;
+            ApplyLiftPose();
+        }
+
         private static float SmootherStep(float value)
         {
             float t = Mathf.Clamp01(value);
@@ -147,6 +223,11 @@ namespace SubTerra.Gameplay.Player
 
         private void ApplyGeometry()
         {
+            if (cabinRoot == null)
+            {
+                cabinRoot = transform.Find("ElevatorCabin");
+            }
+
             if (leftDoor != null)
             {
                 leftDoor.transform.localScale = new Vector3(doorScale.x, doorScale.y, 1f);
@@ -189,6 +270,16 @@ namespace SubTerra.Gameplay.Player
                 rightDoor.transform.localPosition = new Vector3(offset, doorCenterY, 0f);
                 rightDoor.enabled = visible;
             }
+        }
+
+        private void ApplyLiftPose()
+        {
+            if (cabinRoot == null)
+            {
+                return;
+            }
+
+            cabinRoot.localPosition = Vector3.up * Mathf.Lerp(0f, liftDistance, liftFraction);
         }
     }
 }
