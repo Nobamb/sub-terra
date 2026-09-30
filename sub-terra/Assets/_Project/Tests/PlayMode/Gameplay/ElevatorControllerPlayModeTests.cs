@@ -83,7 +83,7 @@ namespace SubTerra.Gameplay.Player.Tests
         }
 
         [UnityTest]
-        public IEnumerator DoorVisual_ClosesDuringCallAndReopensAfterArrival()
+        public IEnumerator DoorVisual_OpensOnEntryClosesForTravelAndReopensAfterArrival()
         {
             var left = new GameObject("LeftDoor", typeof(SpriteRenderer)).GetComponent<SpriteRenderer>();
             var right = new GameObject("RightDoor", typeof(SpriteRenderer)).GetComponent<SpriteRenderer>();
@@ -92,22 +92,33 @@ namespace SubTerra.Gameplay.Player.Tests
             var visual = elevatorObject.AddComponent<ElevatorDoorVisual>();
             SetVisualField(visual, "leftDoor", left);
             SetVisualField(visual, "rightDoor", right);
+            SetVisualField(visual, "initialOpenDelay", 0.04f);
+            SetVisualField(visual, "openingDuration", 0.18f);
+            SetVisualField(visual, "slideDuration", 0.22f);
             visual.enabled = false;
             visual.enabled = true;
-            Assert.That(left.enabled, Is.False);
-            Assert.That(right.enabled, Is.False);
+            Assert.That(visual.ClosedFraction, Is.EqualTo(1f).Within(0.01f));
+            Assert.That(left.enabled && right.enabled, Is.True);
+
+            yield return new WaitForSecondsRealtime(0.12f);
+            Assert.That(visual.ClosedFraction, Is.GreaterThan(0f).And.LessThan(1f));
+            Assert.That(left.transform.localPosition.x, Is.LessThan(-0.29f));
+
+            yield return new WaitForSecondsRealtime(0.18f);
+            Assert.That(visual.ClosedFraction, Is.EqualTo(0f).Within(0.01f));
+            Assert.That(left.enabled || right.enabled, Is.False);
 
             SetField(elevator, "callDelaySeconds", 0.35f);
             SetField(elevator, "travelDelaySeconds", 0.35f);
             Assert.That(elevator.RequestTravel(), Is.True);
 
-            yield return new WaitForSecondsRealtime(0.18f);
+            yield return new WaitForSecondsRealtime(0.11f);
             Assert.That(elevator.State, Is.EqualTo(ElevatorTravelState.Calling));
             Assert.That(visual.ClosedFraction, Is.GreaterThan(0f).And.LessThan(1f));
             Assert.That(left.enabled && right.enabled, Is.True);
             Assert.That(left.transform.localPosition.x, Is.GreaterThan(-0.9f));
 
-            yield return new WaitForSecondsRealtime(0.22f);
+            yield return new WaitForSecondsRealtime(0.25f);
             Assert.That(visual.ClosedFraction, Is.EqualTo(1f).Within(0.01f));
 
             yield return new WaitForSecondsRealtime(0.7f);

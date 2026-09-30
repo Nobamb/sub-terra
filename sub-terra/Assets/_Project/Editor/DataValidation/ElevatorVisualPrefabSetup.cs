@@ -8,6 +8,12 @@ namespace SubTerra.App.Editor
     /// <summary>Keeps the authored lift art, sliding doors and long hoist rails on the same prefab.</summary>
     public static class ElevatorVisualPrefabSetup
     {
+        private static readonly Vector2 DoorScale = new(1.9f, 0.87f);
+        private static readonly Vector2 OpeningMaskSize = new(1.36f, 1.16f);
+        private const float DoorCenterY = -0.55f;
+        private const float OpenOffset = 1.05f;
+        private const float ClosedOffset = 0.34f;
+
         private const string DoorArtPath =
             "Assets/_Project/Art/Facilities/MVP/elevator_door_panel_mine.png";
         private const string SolidArtPath =
@@ -73,30 +79,36 @@ namespace SubTerra.App.Editor
             }
 
             Transform maskObject = Child(root.transform, "DoorOpeningMask");
-            maskObject.localPosition = new Vector3(0f, -0.55f, 0f);
-            maskObject.localScale = new Vector3(1.22f, 1.24f, 1f);
+            maskObject.localPosition = new Vector3(0f, DoorCenterY, 0f);
+            maskObject.localScale = new Vector3(OpeningMaskSize.x, OpeningMaskSize.y, 1f);
             SpriteMask mask = maskObject.GetComponent<SpriteMask>();
             if (mask == null) mask = maskObject.gameObject.AddComponent<SpriteMask>();
             mask.sprite = solidSprite;
 
             Transform left = Child(root.transform, "LeftDoor");
             Transform right = Child(root.transform, "RightDoor");
-            SpriteRenderer leftRenderer = ConfigureDoor(left, doorSprite, -0.9f, true);
-            SpriteRenderer rightRenderer = ConfigureDoor(right, doorSprite, 0.9f, false);
+            SpriteRenderer leftRenderer = ConfigureDoor(left, doorSprite, -OpenOffset, true);
+            SpriteRenderer rightRenderer = ConfigureDoor(right, doorSprite, OpenOffset, false);
 
             ElevatorDoorVisual motion = root.GetComponent<ElevatorDoorVisual>();
             if (motion == null) motion = root.AddComponent<ElevatorDoorVisual>();
             var serialized = new SerializedObject(motion);
             serialized.FindProperty("leftDoor").objectReferenceValue = leftRenderer;
             serialized.FindProperty("rightDoor").objectReferenceValue = rightRenderer;
+            serialized.FindProperty("doorOpeningMask").objectReferenceValue = mask;
+            serialized.FindProperty("openDoorOffset").floatValue = OpenOffset;
+            serialized.FindProperty("closedDoorOffset").floatValue = ClosedOffset;
+            serialized.FindProperty("doorCenterY").floatValue = DoorCenterY;
+            serialized.FindProperty("doorScale").vector2Value = DoorScale;
+            serialized.FindProperty("openingMaskSize").vector2Value = OpeningMaskSize;
             serialized.ApplyModifiedPropertiesWithoutUndo();
         }
 
         private static SpriteRenderer ConfigureDoor(
             Transform target, Sprite sprite, float x, bool flipX)
         {
-            target.localPosition = new Vector3(x, -0.55f, 0f);
-            target.localScale = new Vector3(1.55f, 1f, 1f);
+            target.localPosition = new Vector3(x, DoorCenterY, 0f);
+            target.localScale = new Vector3(DoorScale.x, DoorScale.y, 1f);
             SpriteRenderer renderer = Renderer(target, sprite, Color.white, 12);
             renderer.flipX = flipX;
             renderer.maskInteraction = SpriteMaskInteraction.VisibleInsideMask;
