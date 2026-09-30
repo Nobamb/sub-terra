@@ -42,6 +42,36 @@ namespace SubTerra.App.Tests.UI
         }
 
         [Test]
+        public void ResetFee_UpdatesSeparateCostWithoutDuplicatingItInLocalizedTitle()
+        {
+            var previous = LocalizationService.Current;
+            var instance = Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(
+                MineResetSurfaceBaseLayoutBuilder.SurfaceBasePrefabPath));
+            try
+            {
+                var view = instance.GetComponent<SurfaceBaseView>();
+                var reset = instance.transform.Find("SurfaceBaseContent/ResetMineButton");
+                var label = reset.Find("Label").GetComponent<TMP_Text>();
+                var fee = reset.Find("FeeLabel").GetComponent<TMP_Text>();
+                LocalizationService.SetLanguage(GameLanguage.Korean);
+                view.SetMineResetButtonFee(875);
+                Assert.That(label.text, Is.EqualTo("새 광산 초기화"));
+                Assert.That(fee.text, Is.EqualTo("875G"));
+                LocalizationService.SetLanguage(GameLanguage.English);
+                view.SetMineResetButtonFee(1250);
+                Assert.That(label.text, Is.EqualTo("New Mine"));
+                Assert.That(fee.text, Is.EqualTo("1250G"));
+                view.SetMineResetButtonFee(-1);
+                Assert.That(fee.text, Is.EqualTo("0G"));
+            }
+            finally
+            {
+                Object.DestroyImmediate(instance);
+                LocalizationService.SetLanguage(previous);
+            }
+        }
+
+        [Test]
         public void ResetUi_UsesLocalizedLabelsAndPresenterDoesNotMutateGold()
         {
             var previous = LocalizationService.Current;

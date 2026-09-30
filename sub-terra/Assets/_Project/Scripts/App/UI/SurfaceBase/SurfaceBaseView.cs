@@ -56,6 +56,7 @@ namespace SubTerra.App.UI.SurfaceBase
 
         [Header("Mine reset")]
         [SerializeField] private Button resetMineButton;
+        [SerializeField] private TMP_Text resetMineFeeText;
         [SerializeField] private GameObject resetMineConfirmRoot;
         [SerializeField] private TMP_Text resetMineConfirmTitleText;
         [SerializeField] private TMP_Text resetMineConfirmBodyText;
@@ -289,6 +290,14 @@ namespace SubTerra.App.UI.SurfaceBase
         public void SetMineResetButtonFee(int feeGold)
         {
             var fee = Mathf.Max(0, feeGold);
+            if (resetMineFeeText != null)
+            {
+                SetButtonLabel(resetMineButton,
+                    LocalizationService.Get("mine_reset.button", "새 광산 초기화 ({0}G)")
+                        .Replace(" ({0}G)", string.Empty));
+                resetMineFeeText.text = fee + "G";
+                return;
+            }
             SetButtonLabel(
                 resetMineButton,
                 string.Format(

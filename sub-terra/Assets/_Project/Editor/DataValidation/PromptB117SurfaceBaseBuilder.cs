@@ -16,7 +16,6 @@ namespace SubTerra.App.Editor.DataValidation
         public const string PrefabPath = "Assets/_Project/Prefabs/UI/SurfaceBasePanel.prefab";
         public const string ArtPath = "Assets/_Project/Art/UI/SurfaceBase/";
         private const string SettingsArt = "Assets/_Project/Art/UI/MainMenu/Settings/";
-        private const string Icons = "Assets/_Project/Art/UI/Gameplay/SideMenu/";
 
         [MenuItem("SubTerra/UI/Build Prompt-B 117 Surface Base")]
         public static void BuildFromMenu() => Debug.Log(Build());
@@ -24,6 +23,7 @@ namespace SubTerra.App.Editor.DataValidation
         public static string Build()
         {
             ImportArt();
+            ImportIcons();
             var root = PrefabUtility.LoadPrefabContents(PrefabPath);
             try
             {
@@ -32,6 +32,43 @@ namespace SubTerra.App.Editor.DataValidation
             }
             finally { PrefabUtility.UnloadPrefabContents(root); }
             return "Prompt-B 117 SurfaceBasePanel updated";
+        }
+
+        [MenuItem("SubTerra/UI/Refine Surface Base Header and Action Icons")]
+        public static void RefineFromMenu() => Debug.Log(Refine());
+
+        public static string Refine()
+        {
+            ImportIcons();
+            var root = PrefabUtility.LoadPrefabContents(PrefabPath);
+            try
+            {
+                ApplyMainControls(root);
+                PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
+            }
+            finally { PrefabUtility.UnloadPrefabContents(root); }
+            return "Surface Base header and action icons updated";
+        }
+
+        private static void ImportIcons()
+        {
+            foreach (var name in new[] { "cargo", "gold", "mine", "sell", "upgrade", "reset", "settings", "quit" })
+            {
+                var path = ArtPath + "Icons/icon-" + name + ".png";
+                AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);
+                var importer = (TextureImporter)AssetImporter.GetAtPath(path);
+                importer.textureType = TextureImporterType.Sprite;
+                importer.spriteImportMode = SpriteImportMode.Single;
+                importer.alphaIsTransparency = true;
+                importer.mipmapEnabled = false;
+                importer.maxTextureSize = 512;
+                importer.textureCompression = TextureImporterCompression.Uncompressed;
+                var settings = new TextureImporterSettings();
+                importer.ReadTextureSettings(settings);
+                settings.spriteMeshType = SpriteMeshType.FullRect;
+                importer.SetTextureSettings(settings);
+                importer.SaveAndReimport();
+            }
         }
 
         private static void ImportArt()
@@ -80,43 +117,7 @@ namespace SubTerra.App.Editor.DataValidation
             var header = Image(content, "TopFrame", Sprite(ArtPath + "surface-base-top-frame-basic.png"));
             Place(header.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -320f), new Vector2(1920f, 640f));
             header.transform.SetAsFirstSibling();
-            var title = content.Find("Title").GetComponent<TMP_Text>();
-            title.text = "지상 기지";
-            TextStyle(title, 46f, TextAlignmentOptions.MidlineLeft);
-            Place(title.rectTransform, new Vector2(0f, 1f), new Vector2(128f, -62f), new Vector2(260f, 70f), new Vector2(0f, 0.5f));
-            var subtitle = Text(content, "EnglishTitle", font, "S U R F A C E   B A S E", 22f);
-            Place(subtitle.rectTransform, new Vector2(0f, 1f), new Vector2(398f, -65f), new Vector2(370f, 44f), new Vector2(0f, 0.5f));
-
-            var cargo = Text(content, "CargoText", font, "화물 0", 27f);
-            Place(cargo.rectTransform, new Vector2(1f, 1f), new Vector2(-555f, -62f), new Vector2(185f, 48f));
-            var gold = Text(content, "GoldText", font, "골드 <color=#FFE66B>0G</color>", 27f);
-            Place(gold.rectTransform, new Vector2(1f, 1f), new Vector2(-320f, -62f), new Vector2(205f, 48f));
-            var cargoIcon = Image(content, "CargoIcon", Sprite(Icons + "icon-inventory.png"));
-            Place(cargoIcon.rectTransform, new Vector2(1f, 1f), new Vector2(-685f, -62f), new Vector2(48f, 48f));
-            var goldIcon = Image(content, "GoldIcon", Sprite("Assets/_Project/Art/FX/gold_coin_01.png"));
-            Place(goldIcon.rectTransform, new Vector2(1f, 1f), new Vector2(-442f, -62f), new Vector2(42f, 42f));
-
-            var explore = content.Find("ExploreButton").GetComponent<UnityEngine.UI.Button>();
-            Place((RectTransform)explore.transform, new Vector2(0.5f, 0.5f), new Vector2(0f, 40f), new Vector2(850f, 210f));
-            StyleButton(explore, ArtPath + "Exploration-button.png", ArtPath + "Exploration-button.png", new Vector2(850f, 287f));
-            Label(explore, "지하 탐사 시작", 49f);
-            explore.GetComponentInChildren<TMP_Text>().fontStyle = FontStyles.Bold;
-
-            var sell = content.Find("OpenSellButton").GetComponent<UnityEngine.UI.Button>();
-            Place((RectTransform)sell.transform, new Vector2(0.5f, 0.5f), new Vector2(-213f, -145f), new Vector2(386f, 98f));
-            StyleButton(sell, SettingsArt + "button-active-off.png", SettingsArt + "button-active-on.png", new Vector2(386f, 98f));
-            Label(sell, "자원 판매", 30f);
-            ButtonIcon(sell, "Assets/_Project/Art/FX/gold_coin_01.png");
-            var upgrade = Button(content, "UpgradeButton");
-            Place((RectTransform)upgrade.transform, new Vector2(0.5f, 0.5f), new Vector2(213f, -145f), new Vector2(386f, 98f));
-            StyleButton(upgrade, SettingsArt + "button-active-off.png", SettingsArt + "button-active-on.png", new Vector2(386f, 98f));
-            Label(upgrade, "업그레이드", 30f, font);
-            ButtonIcon(upgrade, Icons + "icon-upgrade.png");
-
-            var reset = content.Find("ResetMineButton").GetComponent<UnityEngine.UI.Button>();
-            Place((RectTransform)reset.transform, new Vector2(0.5f, 0.5f), new Vector2(0f, -282f), new Vector2(530f, 112f));
-            StyleButton(reset, ArtPath + "mine-init-button.png", ArtPath + "mine-init-button.png", new Vector2(530f, 177f));
-            Label(reset, "새 광산 초기화 (500G)", 27f);
+            ApplyMainControls(root);
 
             foreach (var name in new[] { "GoalsText", "EnergyText", "DeepZoneText", "RecentRunText" })
                 content.Find(name).gameObject.SetActive(false);
@@ -124,19 +125,93 @@ namespace SubTerra.App.Editor.DataValidation
             Place(message.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0f, -375f), new Vector2(1000f, 44f));
             TextStyle(message, 22f, TextAlignmentOptions.Center);
 
-            IconButton(content.Find("SettingsButton").GetComponent<UnityEngine.UI.Button>(), -165f, Icons + "icon-settings.png");
-            IconButton(content.Find("QuitButton").GetComponent<UnityEngine.UI.Button>(), -69f, Icons + "icon-quit.png");
             BuildUpgradeModal(content, font, out var modal, out var close);
             var economy = new SerializedObject(content.Find("EconomyPanel").GetComponent<SubTerra.App.UI.Economy.EconomyPanelView>());
             Ref(economy, "levelSummaryRoot", null);
             economy.ApplyModifiedPropertiesWithoutUndo();
             var view = new SerializedObject(root.GetComponent<SurfaceBaseView>());
-            Ref(view, "cargoText", cargo);
-            Ref(view, "goldText", gold);
-            Ref(view, "upgradeButton", upgrade);
             Ref(view, "upgradeCloseButton", close);
             Ref(view, "upgradeRoot", modal);
             view.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        private static void ApplyMainControls(GameObject root)
+        {
+            var content = root.transform.Find("SurfaceBaseContent");
+            var font = content.Find("Title").GetComponent<TMP_Text>().font;
+            var header = (RectTransform)content.Find("TopFrame");
+            header.anchorMin = new Vector2(0f, 1f);
+            header.anchorMax = Vector2.one;
+            header.sizeDelta = new Vector2(0f, 640f);
+            var title = content.Find("Title").GetComponent<TMP_Text>();
+            title.text = "지상 기지";
+            TextStyle(title, 46f, TextAlignmentOptions.MidlineLeft);
+            Place(title.rectTransform, new Vector2(128f / 1920f, 1f), new Vector2(0f, -70f), new Vector2(260f, 70f), new Vector2(0f, 0.5f));
+            var subtitle = Text(content, "EnglishTitle", font, "S U R F A C E   B A S E", 22f);
+            Place(subtitle.rectTransform, new Vector2(398f / 1920f, 1f), new Vector2(0f, -65f), new Vector2(370f, 44f), new Vector2(0f, 0.5f));
+
+            var cargo = Text(content, "CargoText", font, "화물 0", 27f);
+            TextStyle(cargo, 27f, TextAlignmentOptions.MidlineLeft);
+            Place(cargo.rectTransform, new Vector2(1220f / 1920f, 1f), new Vector2(35f, -66f), new Vector2(145f, 48f), new Vector2(0f, 0.5f));
+            var gold = Text(content, "GoldText", font, "골드 <color=#FFE66B>0G</color>", 27f);
+            TextStyle(gold, 27f, TextAlignmentOptions.MidlineLeft);
+            Place(gold.rectTransform, new Vector2(1472f / 1920f, 1f), new Vector2(35f, -66f), new Vector2(145f, 48f), new Vector2(0f, 0.5f));
+            var cargoIcon = Image(content, "CargoIcon", Sprite(ArtPath + "Icons/icon-cargo.png"));
+            Place(cargoIcon.rectTransform, new Vector2(1220f / 1920f, 1f), new Vector2(0f, -66f), new Vector2(46f, 46f));
+            cargoIcon.preserveAspect = true;
+            var goldIcon = Image(content, "GoldIcon", Sprite(ArtPath + "Icons/icon-gold.png"));
+            Place(goldIcon.rectTransform, new Vector2(1472f / 1920f, 1f), new Vector2(0f, -66f), new Vector2(46f, 46f));
+            goldIcon.preserveAspect = true;
+
+            var explore = content.Find("ExploreButton").GetComponent<UnityEngine.UI.Button>();
+            Place((RectTransform)explore.transform, new Vector2(0.5f, 0.5f), new Vector2(0f, 40f), new Vector2(850f, 210f));
+            StyleButton(explore, ArtPath + "Exploration-button.png", ArtPath + "Exploration-button.png", new Vector2(850f, 287f));
+            Label(explore, "지하 탐사 시작", 62f);
+            var exploreLabel = explore.GetComponentInChildren<TMP_Text>();
+            exploreLabel.fontStyle = FontStyles.Bold;
+            exploreLabel.alignment = TextAlignmentOptions.MidlineLeft;
+            Place(exploreLabel.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(-110f, 0f), new Vector2(470f, 126f), new Vector2(0f, 0.5f));
+            var mineIcon = Image(explore.transform, "Icon", Sprite(ArtPath + "Icons/icon-mine.png"));
+            Place(mineIcon.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(-245f, 0f), new Vector2(154f, 134f));
+            mineIcon.preserveAspect = true;
+
+            var sell = content.Find("OpenSellButton").GetComponent<UnityEngine.UI.Button>();
+            Place((RectTransform)sell.transform, new Vector2(0.5f, 0.5f), new Vector2(-213f, -145f), new Vector2(386f, 98f));
+            StyleButton(sell, SettingsArt + "button-active-off.png", SettingsArt + "button-active-on.png", new Vector2(386f, 98f));
+            Label(sell, "자원 판매", 30f);
+            ButtonIcon(sell, ArtPath + "Icons/icon-sell.png");
+            var upgrade = Button(content, "UpgradeButton");
+            Place((RectTransform)upgrade.transform, new Vector2(0.5f, 0.5f), new Vector2(213f, -145f), new Vector2(386f, 98f));
+            StyleButton(upgrade, SettingsArt + "button-active-off.png", SettingsArt + "button-active-on.png", new Vector2(386f, 98f));
+            Label(upgrade, "업그레이드", 30f, font);
+            ButtonIcon(upgrade, ArtPath + "Icons/icon-upgrade.png");
+
+            var reset = content.Find("ResetMineButton").GetComponent<UnityEngine.UI.Button>();
+            Place((RectTransform)reset.transform, new Vector2(0.5f, 0.5f), new Vector2(0f, -282f), new Vector2(530f, 112f));
+            StyleButton(reset, ArtPath + "mine-init-button.png", ArtPath + "mine-init-button.png", new Vector2(530f, 177f));
+            Label(reset, "새 광산 초기화", 29f);
+            var resetLabel = reset.transform.Find("Label").GetComponent<TMP_Text>();
+            Place(resetLabel.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(-132f, 0f), new Vector2(244f, 58f), new Vector2(0f, 0.5f));
+            resetLabel.alignment = TextAlignmentOptions.MidlineLeft;
+            resetLabel.color = new Color(0.35f, 0.97f, 0.97f);
+            var resetIcon = Image(reset.transform, "Icon", Sprite(ArtPath + "Icons/icon-reset.png"));
+            Place(resetIcon.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(-185f, 0f), new Vector2(46f, 46f));
+            resetIcon.preserveAspect = true;
+            var fee = Text(reset.transform, "FeeLabel", font, "500G", 29f);
+            Place(fee.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(172f, 0f), new Vector2(98f, 58f));
+            fee.alignment = TextAlignmentOptions.MidlineRight;
+            fee.color = new Color(1f, 0.9f, 0.42f);
+            fee.transform.SetAsLastSibling();
+
+            IconButton(content.Find("SettingsButton").GetComponent<UnityEngine.UI.Button>(), -188f, ArtPath + "Icons/icon-settings.png");
+            IconButton(content.Find("QuitButton").GetComponent<UnityEngine.UI.Button>(), -100f, ArtPath + "Icons/icon-quit.png");
+            var view = new SerializedObject(root.GetComponent<SurfaceBaseView>());
+            Ref(view, "cargoText", cargo);
+            Ref(view, "goldText", gold);
+            Ref(view, "upgradeButton", upgrade);
+            Ref(view, "resetMineFeeText", fee);
+            view.ApplyModifiedPropertiesWithoutUndo();
+            root.GetComponent<SurfaceBaseView>().SetMineResetButtonFee(SubTerra.App.Save.MineResetService.FeeGold);
         }
 
         private static void BuildUpgradeModal(Transform content, TMP_FontAsset font, out GameObject modal, out UnityEngine.UI.Button close)
@@ -197,19 +272,22 @@ namespace SubTerra.App.Editor.DataValidation
 
         private static void IconButton(UnityEngine.UI.Button button, float x, string icon)
         {
-            Place((RectTransform)button.transform, new Vector2(1f, 1f), new Vector2(x, -62f), new Vector2(80f, 70f));
-            StyleButton(button, SettingsArt + "button-active-off.png", SettingsArt + "button-active-on.png", new Vector2(80f, 70f));
+            Place((RectTransform)button.transform, new Vector2(1f + x / 1920f, 1f), new Vector2(0f, -66f), new Vector2(72f, 62f));
+            StyleButton(button, SettingsArt + "button-active-off.png", SettingsArt + "button-active-on.png", new Vector2(72f, 62f));
             button.GetComponentInChildren<TMP_Text>(true).gameObject.SetActive(false);
             var image = Image(button.transform, "Icon", Sprite(icon));
-            Place(image.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(47f, 47f));
+            Place(image.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(38f, 38f));
+            image.preserveAspect = true;
         }
 
         private static void ButtonIcon(UnityEngine.UI.Button button, string path)
         {
             var icon = Image(button.transform, "Icon", Sprite(path));
-            Place(icon.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(-115f, 0f), new Vector2(44f, 44f));
+            Place(icon.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(-104f, 0f), new Vector2(50f, 50f));
+            icon.preserveAspect = true;
             var label = button.GetComponentInChildren<TMP_Text>(true);
-            label.rectTransform.anchoredPosition = new Vector2(28f, 0f);
+            Place(label.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(-47f, 0f), new Vector2(205f, 66f), new Vector2(0f, 0.5f));
+            label.alignment = TextAlignmentOptions.MidlineLeft;
         }
 
         private static void StyleButton(UnityEngine.UI.Button button, string normal, string hover, Vector2 frameSize)
