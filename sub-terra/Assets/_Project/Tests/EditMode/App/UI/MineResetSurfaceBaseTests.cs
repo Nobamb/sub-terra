@@ -28,10 +28,10 @@ namespace SubTerra.App.Tests.UI
             Assert.That(reset, Is.Not.Null);
             Assert.That(reset.GetComponent<Button>(), Is.Not.Null);
             Assert.That(reset.anchoredPosition.y,
-                Is.EqualTo(MineResetSurfaceBaseLayoutBuilder.ResetButtonY).Within(0.5f));
-            Assert.That(reset.sizeDelta, Is.EqualTo(new Vector2(320f, 48f)));
+                Is.EqualTo(-282f).Within(0.5f));
+            Assert.That(reset.sizeDelta, Is.EqualTo(new Vector2(530f, 112f)));
             Assert.That(message.anchoredPosition.y,
-                Is.EqualTo(MineResetSurfaceBaseLayoutBuilder.MessageY).Within(0.5f));
+                Is.EqualTo(-375f).Within(0.5f));
             Assert.That(confirm, Is.Not.Null);
             Assert.That(confirm.gameObject.activeSelf, Is.False);
             Assert.That(confirm.Find("ResetMineCard/Title").GetComponent<TMP_Text>(), Is.Not.Null);

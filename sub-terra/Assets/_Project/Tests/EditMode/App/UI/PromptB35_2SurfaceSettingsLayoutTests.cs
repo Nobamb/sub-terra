@@ -20,20 +20,15 @@ namespace SubTerra.App.Tests.UI
         }
 
         [Test]
-        public void SurfaceBaseContent_MatchesMainSizePlusTenPercent()
+        public void SurfaceBaseContent_FillsScreenForPrompt117()
         {
             var prefab = LoadPrefab(PromptB35_2LayoutBuilder.SurfaceBasePrefabPath);
             var content = prefab.transform.Find("SurfaceBaseContent") as RectTransform;
             Assert.That(content, Is.Not.Null);
-            Assert.That(content.anchorMin, Is.EqualTo(new Vector2(0.5f, 0.5f)));
-            Assert.That(content.anchorMax, Is.EqualTo(new Vector2(0.5f, 0.5f)));
+            Assert.That(content.anchorMin, Is.EqualTo(Vector2.zero));
+            Assert.That(content.anchorMax, Is.EqualTo(Vector2.one));
             Assert.That(content.anchoredPosition, Is.EqualTo(Vector2.zero));
-            Assert.That(
-                content.sizeDelta.x,
-                Is.EqualTo(PromptB35_2LayoutBuilder.SurfaceBaseContentWidth).Within(0.5f));
-            Assert.That(
-                content.sizeDelta.y,
-                Is.EqualTo(PromptB35_2LayoutBuilder.SurfaceBaseContentHeight).Within(0.5f));
+            Assert.That(content.sizeDelta, Is.EqualTo(Vector2.zero));
         }
 
         [Test]

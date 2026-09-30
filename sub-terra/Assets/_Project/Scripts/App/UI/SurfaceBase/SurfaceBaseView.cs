@@ -23,6 +23,36 @@ namespace SubTerra.App.UI.SurfaceBase
         [SerializeField] private Button exploreButton;
         [SerializeField] private Button settingsButton;
         [SerializeField] private Button quitButton;
+        [SerializeField] private TMP_Text cargoText;
+        [SerializeField] private TMP_Text goldText;
+        [SerializeField] private Button upgradeButton;
+        [SerializeField] private Button upgradeCloseButton;
+        [SerializeField] private GameObject upgradeRoot;
+
+        public bool IsUpgradeVisible => upgradeRoot != null && upgradeRoot.activeSelf;
+        public bool IsTopUpgradeWindow(Canvas canvas) =>
+            IsUpgradeVisible && PopupWindowSorting.Contains(canvas, upgradeRoot);
+        public event Action UpgradeClicked;
+        public event Action UpgradeCloseClicked;
+
+        public void SetResources(float cargo, int gold)
+        {
+            if (cargoText != null) cargoText.text = "화물 " + cargo.ToString("0.##");
+            if (goldText != null) goldText.text = "골드 <color=#FFE66B>" + gold + "G</color>";
+        }
+
+        public void SetUpgradeVisible(bool visible)
+        {
+            if (upgradeRoot == null) return;
+            var canvas = upgradeRoot.GetComponent<Canvas>();
+            if (!visible) PopupWindowSorting.Remove(canvas);
+            upgradeRoot.SetActive(visible);
+            if (visible)
+            {
+                upgradeRoot.transform.SetAsLastSibling();
+                PopupWindowSorting.BringToFront(canvas);
+            }
+        }
 
         [Header("Mine reset")]
         [SerializeField] private Button resetMineButton;
@@ -84,6 +114,8 @@ namespace SubTerra.App.UI.SurfaceBase
         private void OnEnable()
         {
             SetButtonLabel(settingsButton, "설정(esc)");
+            if (upgradeButton != null) upgradeButton.onClick.AddListener(OnUpgrade);
+            if (upgradeCloseButton != null) upgradeCloseButton.onClick.AddListener(OnUpgradeClose);
             exploreButton?.onClick.AddListener(OnExplore);
             settingsButton?.onClick.AddListener(OnSettings);
             quitButton?.onClick.AddListener(OnQuit);
@@ -136,6 +168,8 @@ namespace SubTerra.App.UI.SurfaceBase
 
         private void OnDisable()
         {
+            if (upgradeButton != null) upgradeButton.onClick.RemoveListener(OnUpgrade);
+            if (upgradeCloseButton != null) upgradeCloseButton.onClick.RemoveListener(OnUpgradeClose);
             exploreButton?.onClick.RemoveListener(OnExplore);
             settingsButton?.onClick.RemoveListener(OnSettings);
             quitButton?.onClick.RemoveListener(OnQuit);
@@ -331,6 +365,7 @@ namespace SubTerra.App.UI.SurfaceBase
             }
 
             if (visible && controlSchemePanel == null) controlSchemePanel = ControlSchemePanel.Attach(settingsRoot);
+            if (visible) SetUpgradeVisible(false);
             if (!visible)
             {
                 var skin = settingsRoot.GetComponent<SubTerra.App.UI.MainMenu.SettingsMenuSkin>();
@@ -717,6 +752,8 @@ namespace SubTerra.App.UI.SurfaceBase
         }
 
         private void OnExplore() => ExploreClicked?.Invoke();
+        private void OnUpgrade() => UpgradeClicked?.Invoke();
+        private void OnUpgradeClose() => UpgradeCloseClicked?.Invoke();
         private void OnSettings() => SettingsClicked?.Invoke();
         private void OnQuit() => QuitClicked?.Invoke();
         private void OnSettingsApply() => SettingsApplyClicked?.Invoke();

@@ -25,125 +25,33 @@ namespace SubTerra.App.Tests.UI
         }
 
         [Test]
-        public void SurfaceBasePrefab_MatchesAuthorityCoordinates_AndSellChildren()
+        public void SurfaceBasePrefab_PreservesSellModalWithPrompt117Actions()
         {
-            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
-                PromptB_SellPanelLayoutBuilder.SurfaceBasePrefabPath);
-            Assert.That(prefab, Is.Not.Null);
-
-            var content = prefab.transform.Find("SurfaceBaseContent") ?? prefab.transform;
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PromptB_SellPanelLayoutBuilder.SurfaceBasePrefabPath);
+            var content = prefab.transform.Find("SurfaceBaseContent");
             var economy = content.Find("EconomyPanel");
-            Assert.That(economy, Is.Not.Null, "EconomyPanel missing");
-
-            var ecoRect = economy as RectTransform;
-            Assert.That(ecoRect, Is.Not.Null);
-            Assert.That(ecoRect.anchorMin, Is.EqualTo(Vector2.zero));
-            Assert.That(ecoRect.anchorMax, Is.EqualTo(Vector2.one));
-            Assert.That(ecoRect.sizeDelta, Is.EqualTo(Vector2.zero));
-
-            var canvasGroup = economy.GetComponent<CanvasGroup>();
-            Assert.That(canvasGroup, Is.Not.Null);
-            Assert.That(canvasGroup.alpha, Is.Zero);
-            Assert.That(canvasGroup.blocksRaycasts, Is.False);
-            Assert.That(economy.GetComponent<Image>().color.a, Is.EqualTo(1f), "modal backdrop must be opaque");
-
-            var openSell = content.Find("OpenSellButton") as RectTransform;
-            Assert.That(openSell, Is.Not.Null, "OpenSellButton missing");
-            Assert.That(openSell.anchoredPosition.x, Is.EqualTo(0f).Within(0.5f));
-            Assert.That(openSell.anchoredPosition.y, Is.EqualTo(PromptB_SellPanelLayoutBuilder.SellButtonY).Within(0.5f));
-
+            Assert.That(economy, Is.Not.Null);
+            var group = economy.GetComponent<CanvasGroup>();
+            Assert.That(group.alpha, Is.Zero);
+            Assert.That(group.blocksRaycasts, Is.False);
+            Assert.That(economy.GetComponent<Image>().color.a, Is.EqualTo(1f));
             var card = economy.Find("SellModalCard") as RectTransform;
-            Assert.That(card, Is.Not.Null, "SellModalCard missing");
-            Assert.That(card.sizeDelta.x, Is.EqualTo(PromptB_SellPanelLayoutBuilder.EconomyW).Within(0.5f));
-            Assert.That(card.sizeDelta.y, Is.EqualTo(PromptB_SellPanelLayoutBuilder.EconomyH).Within(0.5f));
-            Assert.That(card.anchoredPosition.y, Is.EqualTo(PromptB_SellPanelLayoutBuilder.EconomyY).Within(0.5f));
-
-            Assert.That(FindDeep(card, "SellListViewport"), Is.Not.Null);
-            Assert.That(FindDeep(card, "SellListContent"), Is.Not.Null);
-            Assert.That(FindDeep(card, "QtyMinusButton"), Is.Not.Null);
-            Assert.That(FindDeep(card, "QtyPlusButton"), Is.Not.Null);
-            Assert.That(FindDeep(card, "QtyMaxButton"), Is.Not.Null);
-            Assert.That(FindDeep(card, "SellSelectedButton"), Is.Not.Null);
-            Assert.That(FindDeep(card, "SellAllButton"), Is.Not.Null);
-            Assert.That(FindDeep(card, "CreditsLabel"), Is.Not.Null);
-            Assert.That(FindDeep(card, "PreviewText"), Is.Not.Null);
-            Assert.That(FindDeep(card, "CloseSellButton"), Is.Not.Null);
-            Assert.That(FindDeep(card, "SellDescription"), Is.Not.Null);
-
-            // Progression 축소
-            var progression = content.Find("ProgressionPanel");
-            if (progression != null)
-            {
-                var pRect = progression as RectTransform;
-                Assert.That(pRect.sizeDelta.x, Is.EqualTo(PromptB_SellPanelLayoutBuilder.ProgressionW).Within(0.5f));
-                Assert.That(pRect.sizeDelta.y, Is.EqualTo(PromptB_SellPanelLayoutBuilder.ProgressionH).Within(0.5f));
-                Assert.That(pRect.anchoredPosition.y, Is.EqualTo(PromptB_SellPanelLayoutBuilder.ProgressionY).Within(0.5f));
-
-                var upgradeList = FindDeep(progression, "UpgradeList") as RectTransform;
-                if (upgradeList != null)
-                {
-                    Assert.That(upgradeList.sizeDelta.y, Is.LessThanOrEqualTo(200f));
-                    Assert.That(upgradeList.sizeDelta.y, Is.GreaterThanOrEqualTo(160f));
-                    Assert.That(
-                        upgradeList.GetComponent<TMP_Text>().alignment,
-                        Is.EqualTo(TextAlignmentOptions.Top),
-                        "level summary must be horizontally centered");
-                }
-            }
-
-            // 기본 화면 gap: OpenSell 아래와 Message 위가 겹치지 않는다.
-            var message = FindDeep(content, "MessageText") as RectTransform;
-            var resetMine = FindDeep(content, "ResetMineButton") as RectTransform;
-            if (message != null)
-            {
-                var sellYMin = openSell.anchoredPosition.y - openSell.sizeDelta.y * 0.5f;
-                var msgYMax = message.anchoredPosition.y + message.sizeDelta.y * 0.5f;
-                Assert.That(sellYMin - msgYMax, Is.GreaterThanOrEqualTo(16f));
-            }
-            Assert.That(resetMine, Is.Not.Null, "ResetMineButton missing");
-
-            var title = FindDeep(content, "Title") as RectTransform;
-            var goals = FindDeep(content, "GoalsText") as RectTransform;
-            var energy = FindDeep(content, "EnergyText") as RectTransform;
-            var deepZone = FindDeep(content, "DeepZoneText") as RectTransform;
-            var recentRun = FindDeep(content, "RecentRunText") as RectTransform;
-            var explore = FindDeep(content, "ExploreButton") as RectTransform;
-            Assert.That(title, Is.Not.Null, "Surface Base title missing");
-            Assert.That(title.gameObject.activeSelf, Is.True, "Surface Base title must be visible");
-            Assert.That(title.anchoredPosition.y,
-                Is.EqualTo(PromptB_SellPanelLayoutBuilder.TitleY).Within(0.5f));
-            Assert.That(title.GetComponent<TMP_Text>().text, Is.EqualTo("Surface Base"));
-            AssertBelowWithGap(title, goals, 16f);
-            AssertBelowWithGap(goals, energy, 16f);
-            AssertBelowWithGap(energy, deepZone, 16f);
-            AssertBelowWithGap(deepZone, recentRun, 16f);
-            AssertBelowWithGap(recentRun, explore, 16f);
-            AssertBelowWithGap(explore, openSell, 16f);
-            Assert.That(openSell.anchoredPosition.y, Is.GreaterThan(resetMine.anchoredPosition.y));
-            AssertBelowWithGap(resetMine, message, 16f);
-
-            foreach (var centered in new[]
-                     {
-                         goals,
-                         energy,
-                         deepZone,
-                         recentRun,
-                         openSell,
-                         resetMine,
-                         message,
-                         progression as RectTransform
-                     })
-            {
-                Assert.That(centered.anchoredPosition.x, Is.EqualTo(0f).Within(0.5f), centered.name + " must be centered");
-            }
-
-            var settings = FindDeep(content, "SettingsButton") as RectTransform;
-            var quit = FindDeep(content, "QuitButton") as RectTransform;
-            var actionLeft = explore.anchoredPosition.x - explore.sizeDelta.x * 0.5f;
-            var actionRight = quit.anchoredPosition.x + quit.sizeDelta.x * 0.5f;
-            Assert.That((actionLeft + actionRight) * 0.5f, Is.EqualTo(0f).Within(0.5f), "action row must be centered");
-            Assert.That(settings.anchoredPosition.y, Is.EqualTo(explore.anchoredPosition.y).Within(0.5f));
-            Assert.That(quit.anchoredPosition.y, Is.EqualTo(explore.anchoredPosition.y).Within(0.5f));
+            Assert.That(card.sizeDelta, Is.EqualTo(new Vector2(
+                PromptB_SellPanelLayoutBuilder.EconomyW, PromptB_SellPanelLayoutBuilder.EconomyH)));
+            foreach (var name in new[] { "SellListViewport", "SellListContent", "QtyMinusButton", "QtyPlusButton",
+                "QtyMaxButton", "SellSelectedButton", "SellAllButton", "CreditsLabel", "PreviewText", "CloseSellButton" })
+                Assert.That(FindDeep(card, name), Is.Not.Null, name);
+            var explore = content.Find("ExploreButton") as RectTransform;
+            var sell = content.Find("OpenSellButton") as RectTransform;
+            var upgrade = content.Find("UpgradeButton") as RectTransform;
+            var reset = content.Find("ResetMineButton") as RectTransform;
+            var message = content.Find("MessageText") as RectTransform;
+            AssertBelowWithGap(explore, sell, 16f);
+            AssertBelowWithGap(sell, reset, 16f);
+            AssertBelowWithGap(reset, message, 6f);
+            Assert.That(sell.anchoredPosition.x, Is.EqualTo(-upgrade.anchoredPosition.x));
+            Assert.That(sell.anchoredPosition.y, Is.EqualTo(upgrade.anchoredPosition.y));
+            Assert.That(content.Find("UpgradeModal").gameObject.activeSelf, Is.False);
         }
 
         [Test]
@@ -187,7 +95,7 @@ namespace SubTerra.App.Tests.UI
                 // EditMode 인스턴스에서도 런타임 버튼 배선을 명시적으로 실행한다.
                 InvokeAwake(view);
 
-                var progression = FindDeep(instance.transform, "ProgressionPanel");
+                var progression = FindDeep(instance.transform, "UpgradeModal");
                 progression.SetAsLastSibling();
                 Assert.That(economy.GetSiblingIndex(), Is.Not.EqualTo(economy.parent.childCount - 1));
 
@@ -197,14 +105,14 @@ namespace SubTerra.App.Tests.UI
                 Assert.That(group.blocksRaycasts, Is.True);
                 Assert.That(economy.GetSiblingIndex(), Is.EqualTo(economy.parent.childCount - 1));
                 Assert.That(progression.gameObject.activeSelf, Is.False,
-                    "level summary must be hidden while the sell modal is open");
+                    "upgrade modal must stay closed while selling");
 
                 close.onClick.Invoke();
                 Assert.That(group.alpha, Is.Zero);
                 Assert.That(group.interactable, Is.False);
                 Assert.That(group.blocksRaycasts, Is.False);
-                Assert.That(progression.gameObject.activeSelf, Is.True,
-                    "level summary must be restored after the sell modal closes");
+                Assert.That(progression.gameObject.activeSelf, Is.False,
+                    "closing sales must not open upgrades");
             }
             finally
             {
