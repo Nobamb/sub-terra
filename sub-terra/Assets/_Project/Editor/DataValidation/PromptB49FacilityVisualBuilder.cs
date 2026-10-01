@@ -11,7 +11,7 @@ namespace SubTerra.App.Editor.DataValidation
 {
     /// <summary>
     /// 시설 6종의 원본 아트를 유지하면서 지형 상단에 얕게 겹치도록 배치한다.
-    /// 전진기지 코어는 보건소와 같은 2x2 설치·대형 시각 규격을 쓴다.
+    /// 전진기지 코어는 엘리베이터 옆 설치를 위해 1x2 세로 설치 규격을 쓴다.
     /// </summary>
     public static class PromptB49FacilityVisualBuilder
     {
@@ -249,7 +249,7 @@ namespace SubTerra.App.Editor.DataValidation
             }
 
             var serialized = new SerializedObject(definition);
-            serialized.FindProperty("footprint").vector2IntValue = new Vector2Int(2, 2);
+            serialized.FindProperty("footprint").vector2IntValue = new Vector2Int(1, 2);
             serialized.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(definition);
         }
@@ -259,7 +259,9 @@ namespace SubTerra.App.Editor.DataValidation
         {
             bool isLargeFacility = kind == FacilityVisualKind.Clinic
                 || kind == FacilityVisualKind.OutpostCore;
-            float maxWidth = isLargeFacility ? 1.8f : 0.96f;
+            float maxWidth = kind == FacilityVisualKind.OutpostCore
+                ? 0.92f
+                : isLargeFacility ? 1.8f : 0.96f;
             float maxHeight = kind == FacilityVisualKind.OutpostCore
                 ? 1.7f
                 : isLargeFacility ? 1.6f : 0.96f;

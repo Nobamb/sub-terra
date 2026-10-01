@@ -208,12 +208,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 466182068461357469}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: -0.65, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 7826523798770445540}
+  m_Father: {fileID: 7246620122804740290}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &582349419977748473
 GameObject:
@@ -797,7 +797,6 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 3556966428175814365}
   - {fileID: 3254879029808765541}
   - {fileID: 1645242951626583730}
   - {fileID: 162481721585221570}
@@ -933,7 +932,7 @@ MonoBehaviour:
     m_Bits: 0
   statusText: {fileID: 1538970431593604627}
   callDelaySeconds: 0.35
-  travelDelaySeconds: 0.65
+  travelDelaySeconds: 0.22
 --- !u!114 &1342572698996275504
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -953,6 +952,7 @@ MonoBehaviour:
   slideDuration: 0.28
   openingDuration: 0.52
   initialOpenDelay: 0.16
+  departurePause: 0.18
   liftDuration: 0.55
   liftDistance: 1.8
   openDoorOffset: 1.05
@@ -3010,6 +3010,7 @@ Transform:
   - {fileID: 1929853418715509937}
   - {fileID: 8305772491551413781}
   - {fileID: 471190160387105675}
+  - {fileID: 3556966428175814365}
   m_Father: {fileID: 7826523798770445540}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &8684702765723535205

@@ -36,14 +36,14 @@ namespace SubTerra.App.Tests.UI
         };
 
         [Test]
-        public void PromptB49_OutpostPlacement_UsesTwoByTwoFootprint()
+        public void PromptB49_OutpostPlacement_UsesNarrowVerticalFootprint()
         {
             BuildingPlacementDefinition definition =
                 AssetDatabase.LoadAssetAtPath<BuildingPlacementDefinition>(
                     PromptB49FacilityVisualBuilder.OutpostPlacementPath);
 
             Assert.That(definition, Is.Not.Null);
-            Assert.That(definition.Footprint, Is.EqualTo(new Vector2Int(2, 2)));
+            Assert.That(definition.Footprint, Is.EqualTo(new Vector2Int(1, 2)));
         }
 
         [Test]
@@ -101,13 +101,15 @@ namespace SubTerra.App.Tests.UI
                     var visualRoot = instance.transform.Find(
                         PromptB49FacilityVisualBuilder.VisualRootName);
                     var bounds = GetActiveSpriteBounds(visualRoot.gameObject);
-                    bool largeFacility = path == PromptB49FacilityVisualBuilder.ClinicPrefabPath
-                        || path == PromptB49FacilityVisualBuilder.OutpostPrefabPath;
+                    bool outpost = path == PromptB49FacilityVisualBuilder.OutpostPrefabPath;
+                    bool largeFacility = path == PromptB49FacilityVisualBuilder.ClinicPrefabPath;
                     Assert.That(bounds.size.x,
-                        largeFacility ? Is.InRange(1.70f, 1.82f) : Is.InRange(0.80f, 0.98f),
+                        outpost ? Is.InRange(0.85f, 0.97f)
+                            : largeFacility ? Is.InRange(1.70f, 1.82f)
+                                : Is.InRange(0.80f, 0.98f),
                         path + " width");
                     Assert.That(bounds.min.y,
-                        Is.EqualTo(largeFacility ? -1.2f : -0.68f).Within(0.015f),
+                        Is.EqualTo(largeFacility || outpost ? -1.2f : -0.68f).Within(0.015f),
                         path + " rock overlap");
 
                     SpriteRenderer artwork = FindPrimaryRenderer(visualRoot);

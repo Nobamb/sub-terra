@@ -14,6 +14,7 @@ namespace SubTerra.Gameplay.Player
         [SerializeField, Min(0.01f)] private float slideDuration = 0.28f;
         [SerializeField, Min(0.01f)] private float openingDuration = 0.52f;
         [SerializeField, Min(0f)] private float initialOpenDelay = 0.16f;
+        [SerializeField, Min(0f)] private float departurePause = 0.18f;
         [SerializeField, Min(0.01f)] private float liftDuration = 0.55f;
         [SerializeField, Min(0f)] private float liftDistance = 1.8f;
         [SerializeField] private float openDoorOffset = 1.05f;
@@ -36,9 +37,18 @@ namespace SubTerra.Gameplay.Player
         private float liftElapsed;
         private float liftTransitionDuration;
         private bool liftTransitionActive;
+        private float departurePauseRemaining;
+        private bool liftStartPending;
 
         public float ClosedFraction => closedFraction;
         public float LiftFraction => liftFraction;
+        public Transform CabinRoot => cabinRoot;
+        public bool IsLiftAtTop => !liftTransitionActive
+            && !liftStartPending
+            && liftFraction >= 0.999f;
+        public bool IsLiftAtGround => !liftTransitionActive
+            && !liftStartPending
+            && liftFraction <= 0.001f;
 
         private void OnEnable()
         {
@@ -116,6 +126,23 @@ namespace SubTerra.Gameplay.Player
 
         private void UpdateLift()
         {
+            if (liftStartPending)
+            {
+                if (closedFraction < 0.999f)
+                {
+                    return;
+                }
+
+                departurePauseRemaining -= Time.unscaledDeltaTime;
+                if (departurePauseRemaining <= 0f)
+                {
+                    liftStartPending = false;
+                    BeginLift(1f);
+                }
+
+                return;
+            }
+
             if (!liftTransitionActive)
             {
                 return;
@@ -144,17 +171,38 @@ namespace SubTerra.Gameplay.Player
 
             if (state == ElevatorTravelState.Moving)
             {
+                ScheduleDepartureLift();
+            }
+            else if (state == ElevatorTravelState.Idle && IsLiftAtGround)
+            {
+                BeginTransition(0f);
+            }
+        }
+
+        private void ScheduleDepartureLift()
+        {
+            liftTargetFraction = 1f;
+            liftStartPending = departurePause > 0f;
+            departurePauseRemaining = departurePause;
+            if (!liftStartPending)
+            {
                 BeginLift(1f);
             }
-            else
-            {
-                SnapLiftTo(0f);
-            }
+        }
+
+        /// <summary>여행 실패 시 탑승자와 함께 객실을 출발 위치로 되돌린다.</summary>
+        public void ReturnCabinToGround()
+        {
+            liftStartPending = false;
+            departurePauseRemaining = 0f;
+            BeginLift(0f);
         }
 
         private static bool ShouldClose(ElevatorTravelState state)
         {
-            return state == ElevatorTravelState.Calling || state == ElevatorTravelState.Moving;
+            return state == ElevatorTravelState.Calling
+                || state == ElevatorTravelState.Moving
+                || state == ElevatorTravelState.Arrived;
         }
 
         private void BeginTransition(float target)
@@ -206,6 +254,8 @@ namespace SubTerra.Gameplay.Player
 
         private void SnapLiftTo(float target)
         {
+            liftStartPending = false;
+            departurePauseRemaining = 0f;
             liftTargetFraction = Mathf.Clamp01(target);
             liftFraction = liftTargetFraction;
             liftStartFraction = liftFraction;

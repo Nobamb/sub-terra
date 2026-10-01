@@ -49,6 +49,13 @@ namespace SubTerra.App.Editor
             cabin.localRotation = Quaternion.identity;
             cabin.localScale = Vector3.one;
 
+            // 탑승 위치를 객실에 묶어 승강기 이동과 플레이어 발 위치가 일치하게 한다.
+            Transform boardingAnchor = root.transform.Find("BoardingAnchor");
+            if (boardingAnchor != null && boardingAnchor.parent != cabin)
+            {
+                boardingAnchor.SetParent(cabin, true);
+            }
+
             Transform artwork = CabinChild(root.transform, cabin, "ElevatorArtwork");
             artwork.localPosition = new Vector3(0f, -0.35f, 0f);
             artwork.localScale = Vector3.one;
@@ -107,7 +114,16 @@ namespace SubTerra.App.Editor
             serialized.FindProperty("doorCenterY").floatValue = DoorCenterY;
             serialized.FindProperty("doorScale").vector2Value = DoorScale;
             serialized.FindProperty("openingMaskSize").vector2Value = OpeningMaskSize;
+            serialized.FindProperty("departurePause").floatValue = 0.18f;
             serialized.ApplyModifiedPropertiesWithoutUndo();
+
+            ElevatorController controller = root.GetComponent<ElevatorController>();
+            if (controller != null)
+            {
+                var controllerSerialized = new SerializedObject(controller);
+                controllerSerialized.FindProperty("travelDelaySeconds").floatValue = 0.22f;
+                controllerSerialized.ApplyModifiedPropertiesWithoutUndo();
+            }
         }
 
         private static SpriteRenderer ConfigureDoor(
