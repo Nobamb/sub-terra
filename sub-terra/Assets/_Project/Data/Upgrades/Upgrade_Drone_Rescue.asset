@@ -30,3 +30,6 @@ MonoBehaviour:
       quantity: 6
     effectValue: 0.7
     miningYieldBonuses: []
+  unlockRequirementUpgradeId: upgrade.drill.speed
+  unlockRequiredLevel: 3
+  treeParentId: upgrade.drone.scan

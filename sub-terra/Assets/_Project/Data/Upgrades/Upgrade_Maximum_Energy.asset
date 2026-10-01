@@ -38,3 +38,6 @@ MonoBehaviour:
       quantity: 8
     effectValue: 180
     miningYieldBonuses: []
+  unlockRequirementUpgradeId: upgrade.drill.speed
+  unlockRequiredLevel: 1
+  treeParentId: upgrade.drill.speed

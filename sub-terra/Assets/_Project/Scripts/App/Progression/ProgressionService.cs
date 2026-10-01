@@ -92,6 +92,18 @@ namespace SubTerra.App.Progression
                     "Invalid maximum level, level count, or restored level.");
             }
 
+            // prompt-B 118: 비용 검증·차감보다 먼저 해금 여부를 본다. UI 표시와 같은 규칙을 쓴다.
+            if (!UpgradeUnlockRules.IsUnlocked(data, state))
+            {
+                return CompleteFailure(
+                    ProgressionPurchaseStatus.Locked,
+                    upgradeId,
+                    currentLevel,
+                    UpgradeUnlockRules.BuildLockedReason(data, catalog, state),
+                    "Upgrade locked: requires " + data.UnlockRequirementUpgradeId
+                        + " Lv." + data.UnlockRequiredLevel);
+            }
+
             if (currentLevel == data.MaxLevel)
             {
                 return CompleteFailure(
@@ -154,13 +166,31 @@ namespace SubTerra.App.Progression
                     "Wallet spend failed after affordability check.");
             }
 
+            var unlockedBefore = new HashSet<string>();
+            UpgradeUnlockRules.CollectUnlocked(catalog, state, unlockedBefore);
+
             state.ApplyPurchasedLevel(upgradeId, nextLevelNumber);
+
+            // 신규 해금은 UI 연출용 결과일 뿐 저장하지 않는다. 해금 여부는 항상 레벨에서 다시 계산한다.
+            var unlockedAfter = new HashSet<string>();
+            UpgradeUnlockRules.CollectUnlocked(catalog, state, unlockedAfter);
+            var newlyUnlocked = new List<string>();
+            foreach (var id in unlockedAfter)
+            {
+                if (!unlockedBefore.Contains(id))
+                {
+                    newlyUnlocked.Add(id);
+                }
+            }
+
+            newlyUnlocked.Sort(StringComparer.Ordinal);
 
             var result = ProgressionPurchaseResult.Success(
                 upgradeId,
                 currentLevel,
                 nextLevelNumber,
-                nextLevel.EffectValue);
+                nextLevel.EffectValue,
+                newlyUnlocked);
             LastPurchaseResult = result;
             PurchaseCompleted?.Invoke(result);
             if (TryGetSnapshot(upgradeId, out var snapshot))
@@ -210,6 +240,8 @@ namespace SubTerra.App.Progression
             var nextEffect = 0f;
             IReadOnlyList<ItemCostDto> nextCosts = Array.Empty<ItemCostDto>();
             var canAffordNextLevel = false;
+            var isUnlocked = UpgradeUnlockRules.IsUnlocked(data, state);
+            var shortages = new List<ItemCostDto>();
             if (current >= 0
                 && current < data.MaxLevel
                 && data.Levels != null
@@ -223,7 +255,9 @@ namespace SubTerra.App.Progression
                     && normalized.Count > 0)
                 {
                     nextCosts = normalized;
-                    canAffordNextLevel = wallet != null && wallet.CanAfford(normalized);
+                    // 잠긴 항목은 구매할 수 없으므로 구매 가능으로 표시하지 않는다.
+                    canAffordNextLevel = isUnlocked && wallet != null && wallet.CanAfford(normalized);
+                    CollectShortages(normalized, shortages);
                 }
             }
 
@@ -258,8 +292,33 @@ namespace SubTerra.App.Progression
                 nextCosts,
                 canAffordNextLevel,
                 currentBonuses,
-                nextBonuses);
+                nextBonuses,
+                isUnlocked,
+                isUnlocked ? string.Empty : UpgradeUnlockRules.BuildLockedReason(data, catalog, state),
+                data.TreeParentId,
+                shortages,
+                data.UnlockRequirementUpgradeId,
+                data.UnlockRequiredLevel);
             return true;
+        }
+
+        // 지갑이 보유량을 알려 줄 때만 부족량을 계산한다. 구매 판정(CanAfford)과는 별개의 표시용 값이다.
+        private void CollectShortages(IReadOnlyList<ItemCostDto> costs, List<ItemCostDto> output)
+        {
+            var balances = wallet as IResourceBalanceProvider;
+            if (balances == null || costs == null)
+            {
+                return;
+            }
+
+            for (var i = 0; i < costs.Count; i++)
+            {
+                var missing = costs[i].Quantity - balances.GetOwnedQuantity(costs[i].ItemId);
+                if (missing > 0)
+                {
+                    output.Add(new ItemCostDto(costs[i].ItemId, missing));
+                }
+            }
         }
 
         /// <summary>현재 진행도로 심층 접근 가능 여부와 첫 미충족 이유를 읽는다.</summary>

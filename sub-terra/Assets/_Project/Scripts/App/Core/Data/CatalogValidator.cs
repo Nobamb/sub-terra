@@ -463,6 +463,13 @@ namespace SubTerra.App.Core.Data
                 return;
             }
 
+            // prompt-B 118: 알 수 없는 해금 조건·순환 조건은 진행 불가를 만들 수 있어 오류로 처리한다.
+            var unlockDiagnostic = SubTerra.App.Progression.UpgradeUnlockRules.Validate(upgrades);
+            if (!string.IsNullOrEmpty(unlockDiagnostic))
+            {
+                result.AddError(string.Empty, "upgrades.unlock", unlockDiagnostic);
+            }
+
             for (var i = 0; i < upgrades.Count; i++)
             {
                 var data = upgrades[i];

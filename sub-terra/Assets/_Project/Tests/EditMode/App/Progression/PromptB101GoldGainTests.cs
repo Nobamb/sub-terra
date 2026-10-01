@@ -69,6 +69,8 @@ namespace SubTerra.App.Tests.Progression
         [TestCase(500, 9)]
         public void FailedPurchaseChangesNeitherWalletNorLevel(int gold, int copper)
         {
+            // 해금 상태에서 비용 부족만 검증한다(prompt-B 118).
+            upgrades.TryRestore(new[] { new UpgradeLevelState(DataIds.Upgrades.DrillSpeed, 3) });
             state.AddGold(gold);
             inventory.TryAddMineral(DataIds.Minerals.Copper, copper);
             Assert.That(progression.TryPurchase(DataIds.Upgrades.CargoGold).IsSuccess, Is.False);
@@ -80,6 +82,8 @@ namespace SubTerra.App.Tests.Progression
         [Test]
         public void PurchasesAllLevelsAndJsonRestoresEffectWithoutNewSaveFields()
         {
+            // prompt-B 118: 골드 획득은 드릴 속도 Lv.3에서 해금된다.
+            upgrades.TryRestore(new[] { new UpgradeLevelState(DataIds.Upgrades.DrillSpeed, 3) });
             state.AddGold(4500);
             foreach (var id in new[] { DataIds.Minerals.Copper, DataIds.Minerals.Iron, DataIds.Minerals.Lithium })
                 inventory.TryAddMineral(id, 10);
