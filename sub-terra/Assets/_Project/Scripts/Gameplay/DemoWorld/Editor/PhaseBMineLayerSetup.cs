@@ -164,7 +164,7 @@ namespace SubTerra.Gameplay.DemoWorld.Editor
             if (rock != null)
             {
                 tile.sprite = rock.sprite;
-                tile.color = rock.color * 0.65f;
+                tile.color = new Color(0.35f, 0.36f, 0.38f, 1f);
             }
 
             tile.colliderType = Tile.ColliderType.Grid;

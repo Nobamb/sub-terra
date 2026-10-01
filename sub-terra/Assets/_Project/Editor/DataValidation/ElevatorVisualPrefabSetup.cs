@@ -116,6 +116,7 @@ namespace SubTerra.App.Editor
             serialized.FindProperty("openingMaskSize").vector2Value = OpeningMaskSize;
             serialized.FindProperty("departurePause").floatValue = 0.18f;
             serialized.ApplyModifiedPropertiesWithoutUndo();
+            motion.RefreshFixedShaftGeometry();
 
             ElevatorController controller = root.GetComponent<ElevatorController>();
             if (controller != null)

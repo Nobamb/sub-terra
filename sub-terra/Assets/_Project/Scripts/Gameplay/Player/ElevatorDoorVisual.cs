@@ -326,6 +326,7 @@ namespace SubTerra.Gameplay.Player
 
         private void ApplyGeometry()
         {
+            RefreshFixedShaftGeometry();
             if (cabinRoot == null)
             {
                 cabinRoot = transform.Find("ElevatorCabin");
@@ -356,6 +357,75 @@ namespace SubTerra.Gameplay.Player
                 doorOpeningMask.transform.localScale =
                     new Vector3(openingMaskSize.x, openingMaskSize.y, 1f);
             }
+        }
+
+        /// <summary>Keep the shaft attached to the ground while only the cabin travels.</summary>
+        public void RefreshFixedShaftGeometry()
+        {
+            Transform rails = transform.Find("HoistRails");
+            if (rails == null) return;
+            Transform channel = rails.Find("LeftChannel");
+            SpriteRenderer template = channel != null ? channel.GetComponent<SpriteRenderer>() : null;
+            if (template == null || template.sprite == null) return;
+
+            // The three protected ground cells end at local Y = -1.
+            // Extend the existing rails downward without changing their upper endpoint.
+            const float bottom = -1f;
+            foreach (string side in new[] { "Left", "Right" })
+            {
+                foreach (string part in new[] { "Channel", "Face", "Highlight", "Cable" })
+                {
+                    Transform rail = rails.Find(side + part);
+                    if (rail == null) continue;
+                    SpriteRenderer renderer = rail.GetComponent<SpriteRenderer>();
+                    if (renderer == null || renderer.sprite == null) continue;
+                    float spriteHeight = renderer.sprite.bounds.size.y;
+                    if (spriteHeight <= 0f) continue;
+                    float top = rail.localPosition.y + spriteHeight * rail.localScale.y * 0.5f;
+                    Vector3 position = rail.localPosition;
+                    position.y = (top + bottom) * 0.5f;
+                    rail.localPosition = position;
+                    Vector3 scale = rail.localScale;
+                    scale.y = (top - bottom) / spriteHeight;
+                    rail.localScale = scale;
+                }
+            }
+
+            FixedShaftPart(rails, template, "GroundPlate", new Vector2(0f, -0.96f),
+                new Vector2(1.76f, 0.08f), new Color(0.20f, 0.23f, 0.26f), 2);
+            FixedShaftPart(rails, template, "GroundPlateEdge", new Vector2(0f, -0.915f),
+                new Vector2(1.76f, 0.025f), new Color(0.46f, 0.50f, 0.53f), 2);
+            for (int side = -1; side <= 1; side += 2)
+            {
+                string name = side < 0 ? "Left" : "Right";
+                FixedShaftPart(rails, template, name + "Foot", new Vector2(side * 0.67f, -0.90f),
+                    new Vector2(0.30f, 0.16f), new Color(0.32f, 0.35f, 0.39f), 2);
+                FixedShaftPart(rails, template, name + "FootBolt", new Vector2(side * 0.67f, -0.88f),
+                    new Vector2(0.055f, 0.055f), new Color(0.94f, 0.55f, 0.08f), 2);
+            }
+        }
+
+        private static void FixedShaftPart(Transform rails, SpriteRenderer template, string name,
+            Vector2 position, Vector2 size, Color color, int order)
+        {
+            Transform part = rails.Find(name);
+            if (part == null)
+            {
+                part = new GameObject(name).transform;
+                part.SetParent(rails, false);
+            }
+
+            part.localPosition = new Vector3(position.x, position.y, 0f);
+            part.localScale = new Vector3(size.x / template.sprite.bounds.size.x,
+                size.y / template.sprite.bounds.size.y, 1f);
+            SpriteRenderer renderer = part.GetComponent<SpriteRenderer>();
+            if (renderer == null) renderer = part.gameObject.AddComponent<SpriteRenderer>();
+            renderer.sprite = template.sprite;
+            renderer.sharedMaterial = template.sharedMaterial;
+            renderer.drawMode = SpriteDrawMode.Simple;
+            renderer.color = color;
+            renderer.sortingLayerID = template.sortingLayerID;
+            renderer.sortingOrder = order;
         }
 
         private void ApplyPose()
