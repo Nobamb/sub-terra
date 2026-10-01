@@ -6,6 +6,7 @@ using SubTerra.App.Tutorial;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace SubTerra.App.UI.Progression
@@ -15,7 +16,7 @@ namespace SubTerra.App.UI.Progression
     /// prompt-B 33-3: 탭별 좌측 목록 시작 Y 고정, 심층 구역 전용 탭, Surface 레벨 요약 모드.
     /// prompt-B 33-4/후속: 하위 탭 런타임 배선, 심층 안내 단일 텍스트.
     /// </summary>
-    public sealed class ProgressionPanelView : MonoBehaviour, IProgressionPanelView, IProgressionPurchaseFeedbackView
+    public sealed class ProgressionPanelView : MonoBehaviour, IProgressionPanelView, IProgressionPurchaseFeedbackView, IScrollHandler
     {
         /// <summary>드릴 탭 기준과 동일한 좌측 목록 시작 위치(top-left anchor).</summary>
         private const float EntryListStartY = -120f;
@@ -96,6 +97,20 @@ namespace SubTerra.App.UI.Progression
         public void BindPresenter(ProgressionPanelPresenter target)
         {
             presenter = target;
+        }
+
+        /// <summary>
+        /// prompt-B 118-1: 창 위 어디서든 스크롤하면 트리를 확대(위)/축소(아래)한다.
+        /// 창 안의 하위 요소에서 올라온 스크롤 이벤트도 여기서 받는다.
+        /// </summary>
+        public void OnScroll(PointerEventData eventData)
+        {
+            if (treeView == null || eventData == null)
+            {
+                return;
+            }
+
+            treeView.HandleScroll(eventData.position, eventData.scrollDelta.y, eventData.enterEventCamera);
         }
 
         /// <summary>구매 결과를 트리 연출로 표현한다. 확정은 이미 ProgressionService가 끝낸 뒤다.</summary>

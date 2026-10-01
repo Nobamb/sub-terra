@@ -58,8 +58,19 @@ namespace SubTerra.App.UI.Progression
         private Vector2 lastViewportSize;
         private Coroutine flashRoutine;
         private float shortageFlash;
+        private float fitScale = 1f;
+        private float zoom = 1f;
+        private float zoomTarget = 1f;
+        private Vector2 pan;
+        private Vector2 panTarget;
+
+        private const float ZoomSharpness = 14f;
 
         public string SelectedId => selectedId;
+        public float ZoomTarget => zoomTarget;
+        public Vector2 PanTarget => panTarget;
+        public RectTransform Viewport => viewport;
+        public RectTransform Content => content;
         public IReadOnlyList<UpgradeTreeNodeView> Nodes => nodes;
         public IReadOnlyList<UpgradeTreeConnector> Connectors => connectors;
         public bool PurchaseButtonVisible => purchaseButton != null && purchaseButton.gameObject.activeSelf;
@@ -76,8 +87,12 @@ namespace SubTerra.App.UI.Progression
             }
 
             lastViewportSize = Vector2.zero;
+            // 다시 열 때는 기본 배율·가운데 정렬로 시작한다.
+            zoom = zoomTarget = 1f;
+            pan = panTarget = Vector2.zero;
             StopFlash();
             FitContent();
+            ApplyZoom();
         }
 
         private void OnDisable()
@@ -96,6 +111,13 @@ namespace SubTerra.App.UI.Progression
         private void LateUpdate()
         {
             FitContent();
+            if (!Mathf.Approximately(zoom, zoomTarget) || pan != panTarget)
+            {
+                var k = 1f - Mathf.Exp(-Time.unscaledDeltaTime * ZoomSharpness);
+                zoom = Mathf.Abs(zoomTarget - zoom) < 0.001f ? zoomTarget : Mathf.Lerp(zoom, zoomTarget, k);
+                pan = (panTarget - pan).sqrMagnitude < 0.01f ? panTarget : Vector2.Lerp(pan, panTarget, k);
+                ApplyZoom();
+            }
         }
 
         // 패널 크기가 달라도 트리가 잘리지 않고 읽히도록 균일 비율로 맞춘다.
@@ -113,8 +135,62 @@ namespace SubTerra.App.UI.Progression
             }
 
             lastViewportSize = size;
-            var scale = Mathf.Clamp(Mathf.Min(size.x / contentSize.x, size.y / contentSize.y), 0.4f, 1.3f);
+            fitScale = Mathf.Clamp(Mathf.Min(size.x / contentSize.x, size.y / contentSize.y), 0.4f, 1.3f);
+            panTarget = UpgradeTreeZoom.ClampPan(panTarget, contentSize, fitScale * zoomTarget, size);
+            pan = UpgradeTreeZoom.ClampPan(pan, contentSize, fitScale * zoom, size);
+            ApplyZoom();
+        }
+
+        /// <summary>
+        /// prompt-B 118-1: 업그레이드 창 위에서 위로 스크롤하면 확대, 아래로 스크롤하면 축소한다.
+        /// 포인터가 트리 영역 안이면 그 지점을 기준으로, 밖이면 현재 화면 가운데를 기준으로 배율을 바꾼다.
+        /// </summary>
+        public void HandleScroll(Vector2 screenPosition, float scrollY, Camera eventCamera)
+        {
+            if (viewport == null || content == null || Mathf.Approximately(scrollY, 0f))
+            {
+                return;
+            }
+
+            FitContent();
+            var next = UpgradeTreeZoom.NextZoom(zoomTarget, scrollY);
+            if (Mathf.Approximately(next, zoomTarget))
+            {
+                return;
+            }
+
+            var pivot = Vector2.zero;
+            if (RectTransformUtility.ScreenPointToLocalPointInRectangle(viewport, screenPosition, eventCamera, out var local)
+                && viewport.rect.Contains(local))
+            {
+                pivot = local - viewport.rect.center;
+            }
+
+            var moved = UpgradeTreeZoom.PanAround(panTarget, fitScale * zoomTarget, fitScale * next, pivot);
+            zoomTarget = next;
+            panTarget = UpgradeTreeZoom.ClampPan(moved, contentSize, fitScale * zoomTarget, viewport.rect.size);
+        }
+
+        /// <summary>보간 없이 현재 목표 배율·위치로 즉시 맞춘다(창 크기 변경 직후, 테스트용).</summary>
+        public void SnapLayout()
+        {
+            lastViewportSize = Vector2.zero;
+            FitContent();
+            zoom = zoomTarget;
+            pan = panTarget;
+            ApplyZoom();
+        }
+
+        private void ApplyZoom()
+        {
+            if (content == null)
+            {
+                return;
+            }
+
+            var scale = fitScale * zoom;
             content.localScale = new Vector3(scale, scale, 1f);
+            content.anchoredPosition = pan;
         }
 
         public UpgradeTreeNodeView FindNode(string upgradeId)

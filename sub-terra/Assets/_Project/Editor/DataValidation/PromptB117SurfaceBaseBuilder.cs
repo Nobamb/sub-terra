@@ -338,7 +338,7 @@ namespace SubTerra.App.Editor.DataValidation
             UnityEngine.UI.LayoutRebuilder.ForceRebuildLayoutImmediate((RectTransform)button.transform);
         }
 
-        private static void StyleButton(UnityEngine.UI.Button button, string normal, string hover, Vector2 frameSize,
+        internal static void StyleButton(UnityEngine.UI.Button button, string normal, string hover, Vector2 frameSize,
             UnityEngine.UI.Image icon = null, bool bright = false, Color? glowColor = null, bool spin = false)
         {
             var hit = Ensure<UnityEngine.UI.Image>(button.gameObject);

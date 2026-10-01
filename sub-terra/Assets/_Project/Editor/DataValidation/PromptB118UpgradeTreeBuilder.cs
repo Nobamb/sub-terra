@@ -140,7 +140,8 @@ namespace SubTerra.App.Editor.DataValidation
 
                 // 카드 크기만 키운다. 제목·닫기 버튼은 같은 오브젝트를 그대로 쓴다.
                 var card = (RectTransform)panel;
-                card.sizeDelta = new Vector2(1500f, 820f);
+                card.sizeDelta = PromptB1181UpgradeWindowBuilder.WindowSize;
+                PromptB1181UpgradeWindowBuilder.ApplyWindowChrome(card, false);
                 var title = panel.Find("UpgradeTitle") as RectTransform;
                 if (title != null)
                 {
@@ -198,6 +199,8 @@ namespace SubTerra.App.Editor.DataValidation
                 return "FAIL: UpgradePanel not found";
             }
 
+            // prompt-B 118-1: 지하 창도 지상 기지 창과 같은 크기·프레임·닫기·구매 버튼으로 통일한다.
+            PromptB1181UpgradeWindowBuilder.ApplyWindowChrome((RectTransform)panel, true);
             BuildTree(panel, true);
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);
@@ -270,6 +273,8 @@ namespace SubTerra.App.Editor.DataValidation
             var backdrop = NewImage("TreeBackdrop", viewport, plate, new Color(0.015f, 0.04f, 0.055f, 0.7f));
             Stretch(backdrop.rectTransform);
             backdrop.type = Image.Type.Sliced;
+            // prompt-B 118-1: 확대했을 때 트리가 상세 패널·프레임 밖으로 넘치지 않게 자른다.
+            viewport.gameObject.AddComponent<RectMask2D>();
 
             var content = NewRect("TreeContent", viewport);
             SetRect(content, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, ContentSize);
@@ -299,11 +304,7 @@ namespace SubTerra.App.Editor.DataValidation
                 nodeList.Add(BuildNode(nodesRoot, Nodes[i], plate, glow, font));
             }
 
-            // 심층 구역 상태 한 줄 (기존 심층 탭을 대신한다)
-            var deepZone = NewText("DeepZoneText", treeRoot, font, 18f, UpgradeTreeTween.TextDim, TextAlignmentOptions.MidlineLeft);
-            SetRect(deepZone.rectTransform, new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(0f, 0f),
-                new Vector2(margin + 8f, 12f), new Vector2(900f, 34f));
-
+            // prompt-B 118-1: 하단 "심층 구역 · 해금됨" 한 줄은 만들지 않는다(요청으로 제거).
             var detail = BuildDetail(treeRoot, panel, font, plate, topInset, margin, detailWidth, treeView);
 
             if (addTitle && panel.Find("UpgradeTreeTitle") == null)
@@ -322,7 +323,7 @@ namespace SubTerra.App.Editor.DataValidation
             AssignArray(so.FindProperty("nodes"), nodeList);
             AssignArray(so.FindProperty("connectors"), connectorList);
             detail.Apply(so);
-            so.FindProperty("deepZoneText").objectReferenceValue = deepZone;
+            so.FindProperty("deepZoneText").objectReferenceValue = null;
             so.ApplyModifiedPropertiesWithoutUndo();
 
             // ProgressionPanelView가 트리 View를 사용하도록 연결
@@ -461,9 +462,16 @@ namespace SubTerra.App.Editor.DataValidation
             bars.Add(EdgeBar(body, "EdgeBottom", true, 0f));
             bars.Add(EdgeBar(body, "EdgeLeft", false, 0f));
 
+            // prompt-B 118-1: 호버 빛(아이콘 뒤) → 뒤쪽 연출층 → 아이콘 → 앞쪽 연출층 순서.
+            var hoverGlow = PromptB1181UpgradeWindowBuilder.AddHoverGlow(body, glowSprite);
+            var fxBack = PromptB1181UpgradeWindowBuilder.AddIconLayer(body, "FxBack");
+
+            // 회전 연출이 아이콘 중심을 기준으로 돌도록 pivot을 가운데에 둔다(위치는 이전과 같다).
             var icon = NewImage("Icon", body, LoadIcon(def.IconKey), Color.white);
             icon.preserveAspect = true;
-            SetRect(icon.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -12f), new Vector2(60f, 60f));
+            SetRect(icon.rectTransform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f),
+                PromptB1181UpgradeWindowBuilder.IconCenter, PromptB1181UpgradeWindowBuilder.IconSize);
+            var fxFront = PromptB1181UpgradeWindowBuilder.AddIconLayer(body, "FxFront");
 
             var nameLabel = NewText("NameLabel", body, font, 16f, UpgradeTreeTween.TextMain, TextAlignmentOptions.Center);
             SetRect(nameLabel.rectTransform, new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 30f), new Vector2(-8f, 26f));
@@ -493,6 +501,8 @@ namespace SubTerra.App.Editor.DataValidation
             var blindGroup = blindRect.gameObject.AddComponent<CanvasGroup>();
             blindGroup.blocksRaycasts = false;
             blindGroup.interactable = false;
+            var blindGlow = PromptB1181UpgradeWindowBuilder.AddHoverGlow(blindRect, glowSprite);
+            blindGlow.name = "BlindHoverGlow";
 
             var question = NewText("Question", blindRect, font, 54f, new Color(0.27f, 0.5f, 0.56f, 1f), TextAlignmentOptions.Center);
             question.text = "?";
@@ -537,6 +547,8 @@ namespace SubTerra.App.Editor.DataValidation
             AssignArray(so.FindProperty("lockParts"), lockParts);
             AssignArray(so.FindProperty("fragments"), fragments);
             so.ApplyModifiedPropertiesWithoutUndo();
+
+            PromptB1181UpgradeWindowBuilder.AddHoverFx(root, def.Id, icon, hoverGlow, blindGlow, fxBack, fxFront, glowSprite);
             return nodeView;
         }
 
@@ -776,6 +788,7 @@ namespace SubTerra.App.Editor.DataValidation
             EnsurePlate();
             EnsureGlow();
             EnsureHudIconCrops();
+            PromptB1181UpgradeWindowBuilder.EnsureArt();
             AssetDatabase.Refresh();
         }
 
@@ -878,7 +891,7 @@ namespace SubTerra.App.Editor.DataValidation
             }
         }
 
-        private static void ImportSprite(string path, Vector4 border)
+        internal static void ImportSprite(string path, Vector4 border)
         {
             AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);
             var importer = AssetImporter.GetAtPath(path) as TextureImporter;
@@ -897,7 +910,7 @@ namespace SubTerra.App.Editor.DataValidation
             importer.SaveAndReimport();
         }
 
-        private static Sprite LoadSprite(string path)
+        internal static Sprite LoadSprite(string path)
         {
             return AssetDatabase.LoadAssetAtPath<Sprite>(path);
         }
@@ -911,7 +924,8 @@ namespace SubTerra.App.Editor.DataValidation
                 case "reset":
                     return LoadSprite("Assets/_Project/Art/UI/SurfaceBase/Icons/icon-reset.png");
                 case "gas":
-                    return LoadSprite("Assets/_Project/Art/Tiles/Ground/ground_gas_01.png");
+                    // prompt-B 118-1: 가스 속 캐릭터 전용 아이콘(지형 타일 재사용 대체).
+                    return LoadSprite(PromptB1181UpgradeWindowBuilder.GasIconPath);
                 case "drone":
                     return LoadSprite("Assets/_Project/Art/Characters/Drone/digger_bot_idle.png");
                 case "rescue":
@@ -937,14 +951,14 @@ namespace SubTerra.App.Editor.DataValidation
             return TMP_Settings.defaultFontAsset;
         }
 
-        private static RectTransform NewRect(string name, Transform parent)
+        internal static RectTransform NewRect(string name, Transform parent)
         {
             var go = new GameObject(name, typeof(RectTransform));
             go.transform.SetParent(parent, false);
             return (RectTransform)go.transform;
         }
 
-        private static Image NewImage(string name, Transform parent, Sprite sprite, Color color)
+        internal static Image NewImage(string name, Transform parent, Sprite sprite, Color color)
         {
             var rect = NewRect(name, parent);
             var image = rect.gameObject.AddComponent<Image>();
@@ -971,7 +985,7 @@ namespace SubTerra.App.Editor.DataValidation
             return text;
         }
 
-        private static void Stretch(RectTransform rect)
+        internal static void Stretch(RectTransform rect)
         {
             rect.anchorMin = Vector2.zero;
             rect.anchorMax = Vector2.one;
@@ -980,7 +994,7 @@ namespace SubTerra.App.Editor.DataValidation
             rect.offsetMax = Vector2.zero;
         }
 
-        private static void SetRect(RectTransform rect, Vector2 anchorMin, Vector2 anchorMax, Vector2 pivot, Vector2 position, Vector2 size)
+        internal static void SetRect(RectTransform rect, Vector2 anchorMin, Vector2 anchorMax, Vector2 pivot, Vector2 position, Vector2 size)
         {
             rect.anchorMin = anchorMin;
             rect.anchorMax = anchorMax;
