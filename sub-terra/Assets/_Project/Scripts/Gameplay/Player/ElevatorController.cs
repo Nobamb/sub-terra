@@ -32,6 +32,7 @@ namespace SubTerra.Gameplay.Player
         private float riderGravity;
         private bool riderLocked;
         private bool travelCommitted;
+        private PlayerCameraFollow departureCameraFollow;
         private IElevatorTravelPort travelPort;
         private Coroutine travelRoutine;
 
@@ -95,6 +96,7 @@ namespace SubTerra.Gameplay.Player
             // 이 시점에 탑승자를 원위치에 복구하면 상승 연출이 되감겨 보인다.
             if (travelCommitted)
             {
+                RestoreCameraFollow();
                 return;
             }
 
@@ -253,6 +255,17 @@ namespace SubTerra.Gameplay.Player
         {
             riderMovement.SetCanMove(false);
             riderLocked = true;
+            Camera travelCamera = Camera.main;
+            if (doorVisual != null && doorVisual.isActiveAndEnabled && travelCamera != null)
+            {
+                var follow = travelCamera.GetComponent<PlayerCameraFollow>();
+                if (follow != null && follow.enabled)
+                {
+                    // 탑승자를 추적하면 객실이 계속 화면 중앙에 남으므로 출발 구도를 유지한다.
+                    departureCameraFollow = follow;
+                    departureCameraFollow.enabled = false;
+                }
+            }
             if (riderBody == null)
             {
                 return;
@@ -272,6 +285,7 @@ namespace SubTerra.Gameplay.Player
 
         private void ReleaseRider()
         {
+            RestoreCameraFollow();
             if (!riderLocked)
             {
                 return;
@@ -286,6 +300,15 @@ namespace SubTerra.Gameplay.Player
 
             riderMovement?.SetCanMove(true);
             riderLocked = false;
+        }
+
+        private void RestoreCameraFollow()
+        {
+            if (departureCameraFollow != null)
+            {
+                departureCameraFollow.enabled = true;
+                departureCameraFollow = null;
+            }
         }
 
         private bool IsExitClear()

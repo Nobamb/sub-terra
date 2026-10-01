@@ -105,6 +105,7 @@ namespace SubTerra.Gameplay.Player.Tests
             SetVisualField(visual, "slideDuration", 0.22f);
             SetVisualField(visual, "liftDuration", 0.18f);
             SetVisualField(visual, "liftDistance", 1.4f);
+            SetVisualField(visual, "liftToExit", false);
             SetField(elevator, "doorVisual", visual);
             visual.enabled = false;
             visual.enabled = true;
@@ -150,6 +151,59 @@ namespace SubTerra.Gameplay.Player.Tests
         }
 
         [UnityTest]
+        public IEnumerator Departure_ReachesHoistEndBeforeTravelling()
+        {
+            var cabin = new GameObject("ElevatorCabin").transform;
+            cabin.SetParent(elevatorObject.transform, false);
+            var anchor = new GameObject("BoardingAnchor").transform;
+            anchor.SetParent(cabin, false);
+            SetField(elevator, "boardingAnchor", anchor);
+
+            var rails = new GameObject("HoistRails", typeof(SpriteRenderer));
+            rails.transform.SetParent(elevatorObject.transform, false);
+            rails.transform.localPosition = Vector3.up * 4f;
+            rails.transform.localScale = new Vector3(0.1f, 8f, 1f);
+            var sprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0f, 0f, 1f, 1f),
+                new Vector2(0.5f, 0.5f), 1f);
+            var railRenderer = rails.GetComponent<SpriteRenderer>();
+            railRenderer.sprite = sprite;
+            var artwork = new GameObject("Artwork", typeof(SpriteRenderer));
+            artwork.transform.SetParent(cabin, false);
+            var artworkRenderer = artwork.GetComponent<SpriteRenderer>();
+            artworkRenderer.sprite = sprite;
+
+            var visual = elevatorObject.AddComponent<ElevatorDoorVisual>();
+            SetVisualField(visual, "cabinRoot", cabin);
+            SetVisualField(visual, "initialOpenDelay", 0f);
+            SetVisualField(visual, "slideDuration", 0.01f);
+            SetVisualField(visual, "departurePause", 0.01f);
+            SetField(elevator, "doorVisual", visual);
+            SetField(elevator, "callDelaySeconds", 0f);
+            SetField(elevator, "travelDelaySeconds", 0f);
+
+            try
+            {
+                Assert.IsTrue(elevator.RequestTravel());
+                float timeout = Time.realtimeSinceStartup + 4f;
+                while (port.CallCount == 0 && Time.realtimeSinceStartup < timeout)
+                {
+                    Assert.AreEqual(ElevatorTravelState.Moving, elevator.State);
+                    yield return null;
+                }
+
+                Assert.AreEqual(1, port.CallCount);
+                Assert.That(artworkRenderer.bounds.min.y,
+                    Is.GreaterThanOrEqualTo(railRenderer.bounds.max.y + 0.34f));
+                Assert.That(body.position.y, Is.EqualTo(anchor.position.y).Within(0.02f));
+                Assert.That(visual.LiftFraction, Is.EqualTo(1f));
+            }
+            finally
+            {
+                Object.DestroyImmediate(sprite);
+            }
+        }
+
+        [UnityTest]
         public IEnumerator FailedTravel_ReturnsCabinAndRiderBeforeOpeningDoors()
         {
             var cabin = new GameObject("ElevatorCabin").transform;
@@ -172,6 +226,7 @@ namespace SubTerra.Gameplay.Player.Tests
             SetVisualField(visual, "slideDuration", 0.01f);
             SetVisualField(visual, "liftDuration", 0.05f);
             SetVisualField(visual, "liftDistance", 1.4f);
+            SetVisualField(visual, "liftToExit", false);
             SetField(elevator, "doorVisual", visual);
             SetField(elevator, "callDelaySeconds", 0f);
             SetField(elevator, "travelDelaySeconds", 0f);

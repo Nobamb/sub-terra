@@ -17,6 +17,7 @@ namespace SubTerra.Gameplay.Player
         [SerializeField, Min(0f)] private float departurePause = 0.18f;
         [SerializeField, Min(0.01f)] private float liftDuration = 0.55f;
         [SerializeField, Min(0f)] private float liftDistance = 1.8f;
+        [SerializeField] private bool liftToExit = true;
         [SerializeField] private float openDoorOffset = 1.05f;
         [SerializeField] private float closedDoorOffset = 0.34f;
         [SerializeField] private float doorCenterY = -0.55f;
@@ -39,6 +40,8 @@ namespace SubTerra.Gameplay.Player
         private bool liftTransitionActive;
         private float departurePauseRemaining;
         private bool liftStartPending;
+        private float departureDistance;
+        private float departureDuration;
 
         public float ClosedFraction => closedFraction;
         public float LiftFraction => liftFraction;
@@ -55,6 +58,8 @@ namespace SubTerra.Gameplay.Player
             elevator = GetComponent<ElevatorController>();
             elevator.StateChanged += OnStateChanged;
             ApplyGeometry();
+            departureDistance = liftDistance;
+            departureDuration = liftDuration;
             SnapLiftTo(0f);
 
             if (ShouldClose(elevator.State))
@@ -181,6 +186,7 @@ namespace SubTerra.Gameplay.Player
 
         private void ScheduleDepartureLift()
         {
+            ResolveDepartureEndpoint();
             liftTargetFraction = 1f;
             liftStartPending = departurePause > 0f;
             departurePauseRemaining = departurePause;
@@ -188,6 +194,53 @@ namespace SubTerra.Gameplay.Player
             {
                 BeginLift(1f);
             }
+        }
+
+        private void ResolveDepartureEndpoint()
+        {
+            departureDistance = liftDistance;
+            departureDuration = liftDuration;
+            if (!liftToExit || cabinRoot == null)
+            {
+                return;
+            }
+
+            // 종점은 레일 끝과 출발 화면 상단 중 더 높은 곳이다.
+            // 객실 바닥까지 화면 밖으로 나간 뒤에만 Scene 전환을 승인한다.
+            float topY = cabinRoot.position.y;
+            Transform rails = transform.Find("HoistRails");
+            if (rails != null)
+            {
+                foreach (SpriteRenderer renderer in rails.GetComponentsInChildren<SpriteRenderer>())
+                {
+                    if (renderer.enabled && renderer.sprite != null)
+                    {
+                        topY = Mathf.Max(topY, renderer.bounds.max.y);
+                    }
+                }
+            }
+
+            Camera travelCamera = Camera.main;
+            if (travelCamera != null)
+            {
+                float depth = travelCamera.WorldToViewportPoint(cabinRoot.position).z;
+                topY = Mathf.Max(topY,
+                    travelCamera.ViewportToWorldPoint(new Vector3(0.5f, 1f, depth)).y);
+            }
+
+            float bottomY = cabinRoot.position.y;
+            foreach (SpriteRenderer renderer in cabinRoot.GetComponentsInChildren<SpriteRenderer>())
+            {
+                if (renderer.sprite != null)
+                {
+                    bottomY = Mathf.Min(bottomY, renderer.bounds.min.y);
+                }
+            }
+
+            Vector3 endpoint = cabinRoot.position;
+            endpoint.y = topY + (cabinRoot.position.y - bottomY) + 0.35f;
+            departureDistance = Mathf.Max(liftDistance, transform.InverseTransformPoint(endpoint).y);
+            departureDuration = Mathf.Max(liftDuration, Mathf.Clamp(departureDistance / 8f, 1.1f, 2.4f));
         }
 
         /// <summary>여행 실패 시 탑승자와 함께 객실을 출발 위치로 되돌린다.</summary>
@@ -240,7 +293,7 @@ namespace SubTerra.Gameplay.Player
         {
             liftTargetFraction = Mathf.Clamp01(target);
             float distance = Mathf.Abs(liftTargetFraction - liftFraction);
-            if (distance <= 0.0001f || cabinRoot == null || liftDistance <= 0f)
+            if (distance <= 0.0001f || cabinRoot == null || departureDistance <= 0f)
             {
                 SnapLiftTo(liftTargetFraction);
                 return;
@@ -248,7 +301,7 @@ namespace SubTerra.Gameplay.Player
 
             liftStartFraction = liftFraction;
             liftElapsed = 0f;
-            liftTransitionDuration = Mathf.Max(0.01f, liftDuration * distance);
+            liftTransitionDuration = Mathf.Max(0.01f, departureDuration * distance);
             liftTransitionActive = true;
         }
 
@@ -329,7 +382,7 @@ namespace SubTerra.Gameplay.Player
                 return;
             }
 
-            cabinRoot.localPosition = Vector3.up * Mathf.Lerp(0f, liftDistance, liftFraction);
+            cabinRoot.localPosition = Vector3.up * Mathf.Lerp(0f, departureDistance, liftFraction);
         }
     }
 }
