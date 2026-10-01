@@ -13,7 +13,7 @@ namespace SubTerra.App.Economy
     /// 가격은 UI가 아니라 카탈로그 unitPrice만 사용하며,
     /// 판매·차감은 사전 전량 검증 후 한 성공 경로에서만 커밋한다(부분 적용 분기 없음).
     /// </summary>
-    public sealed class EconomyService : IResourceWallet
+    public sealed class EconomyService : IResourceWallet, IResourceBalanceProvider
     {
         private readonly InventoryService inventory;
         private readonly IMineralCatalogLookup catalog;
@@ -179,6 +179,22 @@ namespace SubTerra.App.Economy
         public bool CanAfford(IReadOnlyList<ItemCostDto> costs)
         {
             return TryValidateSpend(costs, out _, out _) == null;
+        }
+
+        /// <summary>골드는 GameState, 그 외는 인벤토리 보유량. 상태를 바꾸지 않는다.</summary>
+        public int GetOwnedQuantity(string itemId)
+        {
+            if (string.IsNullOrEmpty(itemId))
+            {
+                return 0;
+            }
+
+            if (itemId == DataIds.Currency.Gold)
+            {
+                return gameState != null ? gameState.Player.Gold : 0;
+            }
+
+            return inventory != null ? inventory.State.GetQuantity(itemId) : 0;
         }
 
         /// <summary>

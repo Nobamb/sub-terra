@@ -90,13 +90,30 @@ namespace SubTerra.App.Core.Data
         [SerializeField] private string displayName;
         [SerializeField] private int maxLevel = 1;
         [SerializeField] private List<UpgradeLevelDefinition> levels = new List<UpgradeLevelDefinition>();
+        // prompt-B 118: 트리 해금 조건. 비어 있으면(기존 에셋 기본값) 처음부터 해금 상태다.
+        [SerializeField] private string unlockRequirementUpgradeId;
+        [SerializeField, Min(0)] private int unlockRequiredLevel;
+        [SerializeField] private string treeParentId;
 
         public string Id => id;
         public string DisplayName => displayName;
         public int MaxLevel => maxLevel;
         public IReadOnlyList<UpgradeLevelDefinition> Levels => levels;
+        /// <summary>해금에 필요한 업그레이드 ID. 비어 있으면 조건 없음.</summary>
+        public string UnlockRequirementUpgradeId => unlockRequirementUpgradeId ?? string.Empty;
+        /// <summary>해금에 필요한 위 업그레이드의 최소 레벨.</summary>
+        public int UnlockRequiredLevel => unlockRequiredLevel < 0 ? 0 : unlockRequiredLevel;
+        /// <summary>트리 UI에서 연결선이 이어지는 상위 노드 ID. 비어 있으면 루트.</summary>
+        public string TreeParentId => treeParentId ?? string.Empty;
 
 #if UNITY_EDITOR
+        public void EditorSetUnlock(string requirementUpgradeId, int requiredLevel, string parentId)
+        {
+            unlockRequirementUpgradeId = requirementUpgradeId ?? string.Empty;
+            unlockRequiredLevel = requiredLevel < 0 ? 0 : requiredLevel;
+            treeParentId = parentId ?? string.Empty;
+        }
+
         public void EditorSet(
             string permanentId,
             string name,

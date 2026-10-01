@@ -6,6 +6,7 @@ using SubTerra.App.Tutorial;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace SubTerra.App.UI.Progression
@@ -15,7 +16,7 @@ namespace SubTerra.App.UI.Progression
     /// prompt-B 33-3: 탭별 좌측 목록 시작 Y 고정, 심층 구역 전용 탭, Surface 레벨 요약 모드.
     /// prompt-B 33-4/후속: 하위 탭 런타임 배선, 심층 안내 단일 텍스트.
     /// </summary>
-    public sealed class ProgressionPanelView : MonoBehaviour, IProgressionPanelView
+    public sealed class ProgressionPanelView : MonoBehaviour, IProgressionPanelView, IProgressionPurchaseFeedbackView, IScrollHandler
     {
         /// <summary>드릴 탭 기준과 동일한 좌측 목록 시작 위치(top-left anchor).</summary>
         private const float EntryListStartY = -120f;
@@ -49,6 +50,10 @@ namespace SubTerra.App.UI.Progression
         /// prompt-B 33-3: 심층 구역 탭을 숨긴다(Surface Base). 업그레이드 창에서는 false.
         /// </summary>
         [SerializeField] private bool hideDeepZoneTab;
+        /// <summary>
+        /// prompt-B 118: 연결되면 탭·목록 대신 트리 UI가 표시를 맡는다. 비어 있으면 기존 동작 그대로다.
+        /// </summary>
+        [SerializeField] private UpgradeTreeView treeView;
 
         private bool hasSelection;
         private bool selectedAtMaximum;
@@ -62,11 +67,19 @@ namespace SubTerra.App.UI.Progression
         public UpgradeCategory ActiveCategory => activeCategory;
         public bool LevelsOnlySummary => levelsOnlySummary;
         public bool HideDeepZoneTab => hideDeepZoneTab;
+        public bool IsTreeMode => treeView != null;
+        public UpgradeTreeView TreeView => treeView;
         public bool IsDeepZoneUnlockPopupOpen =>
             deepZoneUnlockPopupRoot != null && deepZoneUnlockPopupRoot.activeSelf;
 
         private void OnEnable()
         {
+            // 트리 모드는 탭·목록을 쓰지 않는다(기존 오브젝트는 비활성으로 남는다).
+            if (treeView != null)
+            {
+                return;
+            }
+
             // 직렬화 리스너가 깨져 있어도 탭·하위 탭 선택이 동작하도록 런타임 배선.
             RebuildEntryButtonCacheIfNeeded();
             WireCategoryTabsRuntime();
@@ -86,9 +99,37 @@ namespace SubTerra.App.UI.Progression
             presenter = target;
         }
 
+        /// <summary>
+        /// prompt-B 118-1: 창 위 어디서든 스크롤하면 트리를 확대(위)/축소(아래)한다.
+        /// 창 안의 하위 요소에서 올라온 스크롤 이벤트도 여기서 받는다.
+        /// </summary>
+        public void OnScroll(PointerEventData eventData)
+        {
+            if (treeView == null || eventData == null)
+            {
+                return;
+            }
+
+            treeView.HandleScroll(eventData.position, eventData.scrollDelta.y, eventData.enterEventCamera);
+        }
+
+        /// <summary>구매 결과를 트리 연출로 표현한다. 확정은 이미 ProgressionService가 끝낸 뒤다.</summary>
+        public void OnPurchaseCompleted(ProgressionPurchaseResult result)
+        {
+            if (treeView != null)
+            {
+                treeView.PlayPurchaseFeedback(result);
+            }
+        }
+
         public void SetActiveCategory(UpgradeCategory category)
         {
             activeCategory = category;
+            if (treeView != null)
+            {
+                return;
+            }
+
             RefreshCategoryTabs();
             ApplyCategoryFilterToButtons();
             RefreshDeepZoneVisibility();
@@ -97,6 +138,12 @@ namespace SubTerra.App.UI.Progression
 
         public void SetUpgradeList(IReadOnlyList<UpgradeSnapshot> upgrades)
         {
+            if (treeView != null)
+            {
+                treeView.Render(upgrades);
+                return;
+            }
+
             // Surface Base: 하단 상태 영역에 장비 레벨만 표시(필요 자원·변화치 없음).
             // levelsOnlySummary면 목록·상세를 레벨 요약으로 고정하고 구매 UI는 숨긴다.
             if (levelsOnlySummary)
@@ -236,6 +283,15 @@ namespace SubTerra.App.UI.Progression
 
         public void SetSelectedUpgrade(UpgradeSnapshot upgrade)
         {
+            if (treeView != null)
+            {
+                hasSelection = !string.IsNullOrEmpty(upgrade.UpgradeId);
+                selectedAtMaximum = upgrade.IsMaximumLevel;
+                selectedCanAfford = upgrade.CanAffordNextLevel;
+                treeView.ShowDetail(upgrade);
+                return;
+            }
+
             // Surface Base: 하단은 장비 레벨 요약만 유지(필요 자원·변화치·구매 없음).
             if (levelsOnlySummary)
             {
@@ -471,6 +527,13 @@ namespace SubTerra.App.UI.Progression
 
         public void SetPurchaseResult(string message, string detail)
         {
+            if (treeView != null)
+            {
+                // 진단 문구는 사용자에게 보이지 않는다.
+                treeView.SetMessage(message);
+                return;
+            }
+
             if (resultText != null)
             {
                 resultText.text = string.IsNullOrEmpty(detail)
@@ -482,6 +545,12 @@ namespace SubTerra.App.UI.Progression
         public void SetDeepZoneAccess(ZoneAccessResult access)
         {
             lastDeepZoneAccess = access;
+            if (treeView != null)
+            {
+                treeView.SetDeepZoneStatus(access);
+                return;
+            }
+
             ApplyDeepZoneDisplay();
         }
 
@@ -689,6 +758,12 @@ namespace SubTerra.App.UI.Progression
         public void SetBusy(bool busy)
         {
             this.busy = busy;
+            if (treeView != null)
+            {
+                treeView.SetBusy(busy);
+                return;
+            }
+
             RefreshPurchaseButton();
         }
 
@@ -936,6 +1011,11 @@ namespace SubTerra.App.UI.Progression
 
         private void RefreshPurchaseButton()
         {
+            if (treeView != null)
+            {
+                return;
+            }
+
             if (purchaseButton != null)
             {
                 purchaseButton.interactable = hasSelection
@@ -949,7 +1029,7 @@ namespace SubTerra.App.UI.Progression
 
         private void RefreshPurchaseVisibility()
         {
-            if (purchaseButton == null)
+            if (purchaseButton == null || treeView != null)
             {
                 return;
             }
@@ -971,6 +1051,11 @@ namespace SubTerra.App.UI.Progression
         /// </summary>
         private void ApplyDeepZoneDisplay()
         {
+            if (treeView != null)
+            {
+                return;
+            }
+
             var show = !levelsOnlySummary && UpgradeCategoryRules.IsDeepZoneTab(activeCategory);
             if (!show)
             {
@@ -1056,6 +1141,11 @@ namespace SubTerra.App.UI.Progression
         /// <summary>직렬화 배열이 비었거나 null 항목이 있으면 자식 엔트리로 재구성한다.</summary>
         private void RebuildEntryButtonCacheIfNeeded()
         {
+            if (treeView != null)
+            {
+                return;
+            }
+
             var found = GetComponentsInChildren<ProgressionUpgradeEntryButton>(true);
             if (found == null || found.Length == 0)
             {
@@ -1143,7 +1233,7 @@ namespace SubTerra.App.UI.Progression
         /// </summary>
         private void ApplyCategoryFilterToButtons()
         {
-            if (upgradeButtons == null)
+            if (upgradeButtons == null || treeView != null)
             {
                 return;
             }

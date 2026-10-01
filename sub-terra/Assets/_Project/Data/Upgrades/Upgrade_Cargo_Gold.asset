@@ -40,3 +40,6 @@ MonoBehaviour:
       quantity: 10
     effectValue: 100
     miningYieldBonuses: []
+  unlockRequirementUpgradeId: upgrade.drill.speed
+  unlockRequiredLevel: 3
+  treeParentId: upgrade.cargo.maximum

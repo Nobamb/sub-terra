@@ -38,3 +38,6 @@ MonoBehaviour:
       quantity: 8
     effectValue: 1.2222222
     miningYieldBonuses: []
+  unlockRequirementUpgradeId: 
+  unlockRequiredLevel: 0
+  treeParentId: 

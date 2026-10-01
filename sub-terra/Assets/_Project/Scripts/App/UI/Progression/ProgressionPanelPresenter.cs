@@ -1,4 +1,5 @@
 using System;
+using SubTerra.App.Core.Data;
 using SubTerra.App.Progression;
 
 namespace SubTerra.App.UI.Progression
@@ -206,6 +207,24 @@ namespace SubTerra.App.UI.Progression
             var snapshots = service.GetSnapshots();
             view?.SetUpgradeList(snapshots);
 
+            // 트리 모드: 분야 탭이 없으므로 선택을 유지하고, 처음에는 중심 노드(드릴 속도)를 고른다.
+            if (view is ProgressionPanelView treePanel && treePanel.IsTreeMode)
+            {
+                if (!string.IsNullOrEmpty(selectedUpgradeId)
+                    && service.TryGetSnapshot(selectedUpgradeId, out var keep))
+                {
+                    view.SetSelectedUpgrade(keep);
+                    return;
+                }
+
+                if (!SelectUpgrade(DataIds.Upgrades.DrillSpeed) && snapshots.Count > 0)
+                {
+                    SelectUpgrade(snapshots[0].UpgradeId);
+                }
+
+                return;
+            }
+
             // Surface 레벨 요약·심층 탭은 장비 자동 선택을 하지 않는다.
             if (view is ProgressionPanelView panel && panel.LevelsOnlySummary)
             {
@@ -251,6 +270,12 @@ namespace SubTerra.App.UI.Progression
         private void OnPurchaseCompleted(ProgressionPurchaseResult result)
         {
             ApplyResult(result);
+            // 서비스가 확정한 결과(성공·부족·잠금)를 연출로만 표현한다.
+            if (view is IProgressionPurchaseFeedbackView feedback)
+            {
+                feedback.OnPurchaseCompleted(result);
+            }
+
             if (result.IsSuccess)
             {
                 // 구매 성공 직후 실제 Service 경로로 심층 잠금을 시도한다.
