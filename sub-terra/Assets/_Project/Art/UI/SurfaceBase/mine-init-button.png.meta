@@ -1,0 +1,1794 @@
+fileFormatVersion: 2
+guid: debdf7759b4e11249b353687ccb9a720
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 3070074767343194569
+    second: mine-init-button_0
+  - first:
+      213: 5234003085500956062
+    second: mine-init-button_1
+  - first:
+      213: 3823019728656559088
+    second: mine-init-button_2
+  - first:
+      213: 7575345147802467749
+    second: mine-init-button_3
+  - first:
+      213: 8637365590852110186
+    second: mine-init-button_4
+  - first:
+      213: -3409235331509655588
+    second: mine-init-button_5
+  - first:
+      213: 7112780796950368880
+    second: mine-init-button_6
+  - first:
+      213: -5296589056427425799
+    second: mine-init-button_7
+  - first:
+      213: 8151857185199313958
+    second: mine-init-button_8
+  - first:
+      213: -1245444389091385549
+    second: mine-init-button_9
+  - first:
+      213: 6422244134890431631
+    second: mine-init-button_10
+  - first:
+      213: 6230774992936001684
+    second: mine-init-button_11
+  - first:
+      213: -1447250932165845026
+    second: mine-init-button_12
+  - first:
+      213: 5794272421945554752
+    second: mine-init-button_13
+  - first:
+      213: -6286583438023505308
+    second: mine-init-button_14
+  - first:
+      213: -5702813462822184593
+    second: mine-init-button_15
+  - first:
+      213: -4703684475758854228
+    second: mine-init-button_16
+  - first:
+      213: 1203047765821406207
+    second: mine-init-button_17
+  - first:
+      213: 1183443685379333439
+    second: mine-init-button_18
+  - first:
+      213: 6625421462255413491
+    second: mine-init-button_19
+  - first:
+      213: 944469337056277432
+    second: mine-init-button_20
+  - first:
+      213: 2158098585699651485
+    second: mine-init-button_21
+  - first:
+      213: 9127146042894144295
+    second: mine-init-button_22
+  - first:
+      213: 4582772762195061698
+    second: mine-init-button_23
+  - first:
+      213: -5753615679456766933
+    second: mine-init-button_24
+  - first:
+      213: -971924044644088691
+    second: mine-init-button_25
+  - first:
+      213: -9161409255502726660
+    second: mine-init-button_26
+  - first:
+      213: 5074995480600302569
+    second: mine-init-button_27
+  - first:
+      213: 981375833860278352
+    second: mine-init-button_28
+  - first:
+      213: 163384202322414479
+    second: mine-init-button_29
+  - first:
+      213: -1025337574732545161
+    second: mine-init-button_30
+  - first:
+      213: 7101157494536535927
+    second: mine-init-button_31
+  - first:
+      213: 2103467836299638276
+    second: mine-init-button_32
+  - first:
+      213: 9152923169714175757
+    second: mine-init-button_33
+  - first:
+      213: 6187248703322496607
+    second: mine-init-button_34
+  - first:
+      213: -2947436897957455315
+    second: mine-init-button_35
+  - first:
+      213: 679708149401155851
+    second: mine-init-button_36
+  - first:
+      213: -4778316454337888851
+    second: mine-init-button_37
+  - first:
+      213: 8936063865397527287
+    second: mine-init-button_38
+  - first:
+      213: -1499441966602269875
+    second: mine-init-button_39
+  - first:
+      213: 2342914706472109835
+    second: mine-init-button_40
+  - first:
+      213: 7067182226426464623
+    second: mine-init-button_41
+  - first:
+      213: -4019661245300656041
+    second: mine-init-button_42
+  - first:
+      213: -6757258555083496294
+    second: mine-init-button_43
+  - first:
+      213: -1764649685461956611
+    second: mine-init-button_44
+  - first:
+      213: 8828820477025582789
+    second: mine-init-button_45
+  - first:
+      213: 2411736827656320434
+    second: mine-init-button_46
+  - first:
+      213: 7425588988155567817
+    second: mine-init-button_47
+  - first:
+      213: -838358313998527688
+    second: mine-init-button_48
+  - first:
+      213: -5872245065535754920
+    second: mine-init-button_49
+  - first:
+      213: -1396309568156614135
+    second: mine-init-button_50
+  - first:
+      213: -6810979965712451701
+    second: mine-init-button_51
+  - first:
+      213: -9092123501485885398
+    second: mine-init-button_52
+  - first:
+      213: -3561922934118283464
+    second: mine-init-button_53
+  - first:
+      213: -1459978943642928589
+    second: mine-init-button_54
+  - first:
+      213: 7990078496851828751
+    second: mine-init-button_55
+  - first:
+      213: 3389032731347705265
+    second: mine-init-button_56
+  - first:
+      213: 8381063948017289516
+    second: mine-init-button_57
+  - first:
+      213: -2713944447205174176
+    second: mine-init-button_58
+  - first:
+      213: -6405140505255001428
+    second: mine-init-button_59
+  - first:
+      213: 852933987491938976
+    second: mine-init-button_60
+  - first:
+      213: -1363347990724064508
+    second: mine-init-button_61
+  - first:
+      213: -7499153831648642012
+    second: mine-init-button_62
+  - first:
+      213: -2909169072849278576
+    second: mine-init-button_63
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 1
+  spriteExtrude: 1
+  spriteMeshType: 0
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 4096
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: mine-init-button_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 2133
+        height: 700
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9c191652cb81b9a20800000000000000
+      internalID: 3070074767343194569
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mine-init-button_1
+      rect:
+        serializedVersion: 2
+        x: 635
+        y: 671
+        width: 24
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e9d3598431ae2a840800000000000000
+      internalID: 5234003085500956062
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mine-init-button_2
+      rect:
+        serializedVersion: 2
+        x: 1046
+        y: 651
+        width: 25
+        height: 65
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0fb62ef10381e0530800000000000000
+      internalID: 3823019728656559088
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mine-init-button_3
+      rect:
+        serializedVersion: 2
+        x: 1281
+        y: 687
+        width: 35
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5adbeb9a648012960800000000000000
+      internalID: 7575345147802467749
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mine-init-button_4
+      rect:
+        serializedVersion: 2
+        x: 1438
+        y: 659
+        width: 25
+        height: 57
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a670cedfd361ed770800000000000000
+      internalID: 8637365590852110186
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mine-init-button_5
+      rect:
+        serializedVersion: 2
+        x: 579
+        y: 665
+        width: 13
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cd7e7a56786ffa0d0800000000000000
+      internalID: -3409235331509655588
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mine-init-button_6
+      rect:
+        serializedVersion: 2
+        x: 1826
+        y: 642
+        width: 7
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 072527f137ca5b260800000000000000
+      internalID: 7112780796950368880
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mine-init-button_7
+      rect:
+        serializedVersion: 2
+        x: 772
+        y: 634
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9fffb62d05cbe76b0800000000000000
+      internalID: -5296589056427425799
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mine-init-button_8
+      rect:
+        serializedVersion: 2
+        x: 537
+        y: 118
+        width: 9
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 62455876be6312170800000000000000
+      internalID: 8151857185199313958
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mine-init-button_9
+      rect:
+        serializedVersion: 2
+        x: 557
+        y: 116
+        width: 7
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 33f54b04dea47bee0800000000000000
+      internalID: -1245444389091385549
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mine-init-button_10
+      rect:
+        serializedVersion: 2
+        x: 600
+        y: 110
+        width: 10
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f84eaf0a305602950800000000000000
+      internalID: 6422244134890431631
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mine-init-button_11
+      rect:
+        serializedVersion: 2
+        x: 611
+        y: 81
+        width: 100
+        height: 50
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 490665118d8287650800000000000000
+      internalID: 6230774992936001684
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mine-init-button_12
+      rect:
+        serializedVersion: 2
+        x: 746
+        y: 114
+        width: 11
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: edfd66fe1f45aebe0800000000000000
+      internalID: -1447250932165845026
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mine-init-button_13
+      rect:
+        serializedVersion: 2
+        x: 770
+        y: 101
+        width: 17
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 04738e18114696050800000000000000
+      internalID: 5794272421945554752
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mine-init-button_14
+      rect:
+        serializedVersion: 2
+        x: 911
+        y: 93
+        width: 37
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 46a41cdbba191c8a0800000000000000
+      internalID: -6286583438023505308
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mine-init-button_15
+      rect:
+        serializedVersion: 2
+        x: 1539
+        y: 114
+        width: 6
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f691b20de598bd0b0800000000000000
+      internalID: -5702813462822184593
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mine-init-button_16
+      rect:
+        serializedVersion: 2
+        x: 1552
+        y: 112
+        width: 16
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cafbfd6f3e729beb0800000000000000
+      internalID: -4703684475758854228
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mine-init-button_17
+      rect:
+        serializedVersion: 2
+        x: 426
+        y: 91
+        width: 42
+        height: 26
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ffbbc99a19512b010800000000000000
+      internalID: 1203047765821406207
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mine-init-button_18
+      rect:
+        serializedVersion: 2
+        x: 531
+        y: 90
+        width: 9
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f3dd6bef2cf6c6010800000000000000
+      internalID: 1183443685379333439
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mine-init-button_19
+      rect:
+        serializedVersion: 2
+        x: 539
+        y: 93
+        width: 7
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3f8abf887b932fb50800000000000000
+      internalID: 6625421462255413491
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mine-init-button_20
+      rect:
+        serializedVersion: 2
+        x: 569
+        y: 94
+        width: 11
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8b3fc78abdd6b1d00800000000000000
+      internalID: 944469337056277432
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mine-init-button_21
+      rect:
+        serializedVersion: 2
+        x: 724
+        y: 95
+        width: 15
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d9f86e6ca3b13fd10800000000000000
+      internalID: 2158098585699651485
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mine-init-button_22
+      rect:
+        serializedVersion: 2
+        x: 750
+        y: 77
+        width: 76
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 72351d3e7f22aae70800000000000000
+      internalID: 9127146042894144295
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mine-init-button_23
+      rect:
+        serializedVersion: 2
+        x: 812
+        y: 104
+        width: 8
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2cbe8f0fb87499f30800000000000000
+      internalID: 4582772762195061698
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mine-init-button_24
+      rect:
+        serializedVersion: 2
+        x: 833
+        y: 97
+        width: 19
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b249cd3060d0720b0800000000000000
+      internalID: -5753615679456766933
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mine-init-button_25
+      rect:
+        serializedVersion: 2
+        x: 851
+        y: 97
+        width: 7
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d84045a1b380382f0800000000000000
+      internalID: -971924044644088691
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mine-init-button_26
+      rect:
+        serializedVersion: 2
+        x: 856
+        y: 99
+        width: 8
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cf9b8c342d22cd080800000000000000
+      internalID: -9161409255502726660
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mine-init-button_27
+      rect:
+        serializedVersion: 2
+        x: 979
+        y: 97
+        width: 20
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9e3d4e940810e6640800000000000000
+      internalID: 5074995480600302569
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mine-init-button_28
+      rect:
+        serializedVersion: 2
+        x: 996
+        y: 99
+        width: 9
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 05805601f1c8e9d00800000000000000
+      internalID: 981375833860278352
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mine-init-button_29
+      rect:
+        serializedVersion: 2
+        x: 1004
+        y: 98
+        width: 25
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f8b865df015744200800000000000000
+      internalID: 163384202322414479
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mine-init-button_30
+      rect:
+        serializedVersion: 2
+        x: 1054
+        y: 103
+        width: 7
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 773c43388e445c1f0800000000000000
+      internalID: -1025337574732545161
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mine-init-button_31
+      rect:
+        serializedVersion: 2
+        x: 1138
+        y: 97
+        width: 19
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 77ff3f32e116c8260800000000000000
+      internalID: 7101157494536535927
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mine-init-button_32
+      rect:
+        serializedVersion: 2
+        x: 1203
+        y: 83
+        width: 73
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 406791b3ad4013d10800000000000000
+      internalID: 2103467836299638276
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mine-init-button_33
+      rect:
+        serializedVersion: 2
+        x: 1275
+        y: 93
+        width: 27
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d0f714be027b50f70800000000000000
+      internalID: 9152923169714175757
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mine-init-button_34
+      rect:
+        serializedVersion: 2
+        x: 1301
+        y: 95
+        width: 8
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f5e988a0ae58dd550800000000000000
+      internalID: 6187248703322496607
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mine-init-button_35
+      rect:
+        serializedVersion: 2
+        x: 1378
+        y: 93
+        width: 21
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d2add5be1c99817d0800000000000000
+      internalID: -2947436897957455315
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mine-init-button_36
+      rect:
+        serializedVersion: 2
+        x: 1422
+        y: 85
+        width: 29
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b097efbe5fece6900800000000000000
+      internalID: 679708149401155851
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mine-init-button_37
+      rect:
+        serializedVersion: 2
+        x: 1480
+        y: 76
+        width: 17
+        height: 33
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dad39ca508200bdb0800000000000000
+      internalID: -4778316454337888851
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mine-init-button_38
+      rect:
+        serializedVersion: 2
+        x: 1504
+        y: 76
+        width: 42
+        height: 34
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7f249338db6430c70800000000000000
+      internalID: 8936063865397527287
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mine-init-button_39
+      rect:
+        serializedVersion: 2
+        x: 1556
+        y: 75
+        width: 100
+        height: 36
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d4bcb5bc979e03be0800000000000000
+      internalID: -1499441966602269875
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mine-init-button_40
+      rect:
+        serializedVersion: 2
+        x: 1679
+        y: 91
+        width: 9
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b070f422384b38020800000000000000
+      internalID: 2342914706472109835
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mine-init-button_41
+      rect:
+        serializedVersion: 2
+        x: 1721
+        y: 85
+        width: 24
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f698a199acca31260800000000000000
+      internalID: 7067182226426464623
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mine-init-button_42
+      rect:
+        serializedVersion: 2
+        x: 1744
+        y: 93
+        width: 9
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 758337cf46b4738c0800000000000000
+      internalID: -4019661245300656041
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mine-init-button_43
+      rect:
+        serializedVersion: 2
+        x: 1004
+        y: 95
+        width: 7
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a9467c845256932a0800000000000000
+      internalID: -6757258555083496294
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mine-init-button_44
+      rect:
+        serializedVersion: 2
+        x: 1670
+        y: 85
+        width: 12
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: df70909e574b287e0800000000000000
+      internalID: -1764649685461956611
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mine-init-button_45
+      rect:
+        serializedVersion: 2
+        x: 615
+        y: 75
+        width: 6
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5cefdce5275468a70800000000000000
+      internalID: 8828820477025582789
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mine-init-button_46
+      rect:
+        serializedVersion: 2
+        x: 1231
+        y: 81
+        width: 7
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2b5be28edd5387120800000000000000
+      internalID: 2411736827656320434
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mine-init-button_47
+      rect:
+        serializedVersion: 2
+        x: 1277
+        y: 63
+        width: 37
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9ce901f97ddfc0760800000000000000
+      internalID: 7425588988155567817
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mine-init-button_48
+      rect:
+        serializedVersion: 2
+        x: 1382
+        y: 71
+        width: 11
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8335f932e8d8d54f0800000000000000
+      internalID: -838358313998527688
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mine-init-button_49
+      rect:
+        serializedVersion: 2
+        x: 1526
+        y: 59
+        width: 36
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 85d63b2b938918ea0800000000000000
+      internalID: -5872245065535754920
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mine-init-button_50
+      rect:
+        serializedVersion: 2
+        x: 1547
+        y: 77
+        width: 7
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 902cb8188df4f9ce0800000000000000
+      internalID: -1396309568156614135
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mine-init-button_51
+      rect:
+        serializedVersion: 2
+        x: 1713
+        y: 81
+        width: 10
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b87386baec98a71a0800000000000000
+      internalID: -6810979965712451701
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mine-init-button_52
+      rect:
+        serializedVersion: 2
+        x: 1725
+        y: 79
+        width: 10
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a28f3f7f8d942d180800000000000000
+      internalID: -9092123501485885398
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mine-init-button_53
+      rect:
+        serializedVersion: 2
+        x: 617
+        y: 63
+        width: 12
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 837009a96f1819ec0800000000000000
+      internalID: -3561922934118283464
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mine-init-button_54
+      rect:
+        serializedVersion: 2
+        x: 1231
+        y: 63
+        width: 7
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 33afc94d2ec1dbbe0800000000000000
+      internalID: -1459978943642928589
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mine-init-button_55
+      rect:
+        serializedVersion: 2
+        x: 1345
+        y: 65
+        width: 12
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f0027544f0672ee60800000000000000
+      internalID: 7990078496851828751
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mine-init-button_56
+      rect:
+        serializedVersion: 2
+        x: 1261
+        y: 46
+        width: 9
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1bdd6243053480f20800000000000000
+      internalID: 3389032731347705265
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mine-init-button_57
+      rect:
+        serializedVersion: 2
+        x: 1536
+        y: 49
+        width: 10
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c29476581458f4470800000000000000
+      internalID: 8381063948017289516
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mine-init-button_58
+      rect:
+        serializedVersion: 2
+        x: 1536
+        y: 41
+        width: 12
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 064113487e1265ad0800000000000000
+      internalID: -2713944447205174176
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mine-init-button_59
+      rect:
+        serializedVersion: 2
+        x: 481
+        y: 37
+        width: 11
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ca24fc775ae5c17a0800000000000000
+      internalID: -6405140505255001428
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mine-init-button_60
+      rect:
+        serializedVersion: 2
+        x: 1003
+        y: 37
+        width: 8
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0a2805d41fa36db00800000000000000
+      internalID: 852933987491938976
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mine-init-button_61
+      rect:
+        serializedVersion: 2
+        x: 1006
+        y: 34
+        width: 7
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 40b46abc93a641de0800000000000000
+      internalID: -1363347990724064508
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mine-init-button_62
+      rect:
+        serializedVersion: 2
+        x: 372
+        y: 23
+        width: 7
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 42cb2948257ade790800000000000000
+      internalID: -7499153831648642012
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: mine-init-button_63
+      rect:
+        serializedVersion: 2
+        x: 515
+        y: 15
+        width: 9
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0992445442e80a7d0800000000000000
+      internalID: -2909169072849278576
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      mine-init-button_0: 3070074767343194569
+      mine-init-button_1: 5234003085500956062
+      mine-init-button_10: 6422244134890431631
+      mine-init-button_11: 6230774992936001684
+      mine-init-button_12: -1447250932165845026
+      mine-init-button_13: 5794272421945554752
+      mine-init-button_14: -6286583438023505308
+      mine-init-button_15: -5702813462822184593
+      mine-init-button_16: -4703684475758854228
+      mine-init-button_17: 1203047765821406207
+      mine-init-button_18: 1183443685379333439
+      mine-init-button_19: 6625421462255413491
+      mine-init-button_2: 3823019728656559088
+      mine-init-button_20: 944469337056277432
+      mine-init-button_21: 2158098585699651485
+      mine-init-button_22: 9127146042894144295
+      mine-init-button_23: 4582772762195061698
+      mine-init-button_24: -5753615679456766933
+      mine-init-button_25: -971924044644088691
+      mine-init-button_26: -9161409255502726660
+      mine-init-button_27: 5074995480600302569
+      mine-init-button_28: 981375833860278352
+      mine-init-button_29: 163384202322414479
+      mine-init-button_3: 7575345147802467749
+      mine-init-button_30: -1025337574732545161
+      mine-init-button_31: 7101157494536535927
+      mine-init-button_32: 2103467836299638276
+      mine-init-button_33: 9152923169714175757
+      mine-init-button_34: 6187248703322496607
+      mine-init-button_35: -2947436897957455315
+      mine-init-button_36: 679708149401155851
+      mine-init-button_37: -4778316454337888851
+      mine-init-button_38: 8936063865397527287
+      mine-init-button_39: -1499441966602269875
+      mine-init-button_4: 8637365590852110186
+      mine-init-button_40: 2342914706472109835
+      mine-init-button_41: 7067182226426464623
+      mine-init-button_42: -4019661245300656041
+      mine-init-button_43: -6757258555083496294
+      mine-init-button_44: -1764649685461956611
+      mine-init-button_45: 8828820477025582789
+      mine-init-button_46: 2411736827656320434
+      mine-init-button_47: 7425588988155567817
+      mine-init-button_48: -838358313998527688
+      mine-init-button_49: -5872245065535754920
+      mine-init-button_5: -3409235331509655588
+      mine-init-button_50: -1396309568156614135
+      mine-init-button_51: -6810979965712451701
+      mine-init-button_52: -9092123501485885398
+      mine-init-button_53: -3561922934118283464
+      mine-init-button_54: -1459978943642928589
+      mine-init-button_55: 7990078496851828751
+      mine-init-button_56: 3389032731347705265
+      mine-init-button_57: 8381063948017289516
+      mine-init-button_58: -2713944447205174176
+      mine-init-button_59: -6405140505255001428
+      mine-init-button_6: 7112780796950368880
+      mine-init-button_60: 852933987491938976
+      mine-init-button_61: -1363347990724064508
+      mine-init-button_62: -7499153831648642012
+      mine-init-button_63: -2909169072849278576
+      mine-init-button_7: -5296589056427425799
+      mine-init-button_8: 8151857185199313958
+      mine-init-button_9: -1245444389091385549
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

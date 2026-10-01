@@ -58,8 +58,9 @@ namespace SubTerra.App.Editor.DataValidation
             {
                 try
                 {
+                    var requested = File.ReadAllText(FlagPath);
                     File.Delete(FlagPath);
-                    RunEditModeTests(DefaultResultPath);
+                    RunEditModeTests(DefaultResultPath, requested);
                 }
                 catch (Exception exception)
                 {
@@ -415,13 +416,14 @@ namespace SubTerra.App.Editor.DataValidation
             Debug.Log("[SubTerra] Phase B evidence captured under " + EvidenceDir);
         }
 
-        public static void RunEditModeTests(string resultPath)
+        public static void RunEditModeTests(string resultPath, string groupNames = null)
         {
             StartTestRun(
                 TestMode.EditMode,
                 DiscoverProjectTestAssemblies(TestMode.EditMode),
                 ResolveProjectPath(resultPath),
-                "Edit Mode");
+                "Edit Mode",
+                SplitGroups(groupNames));
         }
 
         public static void RunPlayModeTests(string resultPath, string[] assemblyNames = null)
@@ -500,11 +502,28 @@ namespace SubTerra.App.Editor.DataValidation
             }
         }
 
+        private static string[] SplitGroups(string groupNames)
+        {
+            if (string.IsNullOrWhiteSpace(groupNames))
+            {
+                return null;
+            }
+
+            var groups = groupNames.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+            for (var i = 0; i < groups.Length; i++)
+            {
+                groups[i] = groups[i].Trim();
+            }
+
+            return groups;
+        }
+
         private static void StartTestRun(
             TestMode mode,
             string[] assemblyNames,
             string resultPath,
-            string label)
+            string label,
+            string[] groupNames = null)
         {
             var liveRun = testRunActive && (EditorApplication.isPlaying || activeApi != null);
             if (liveRun)
@@ -533,7 +552,8 @@ namespace SubTerra.App.Editor.DataValidation
             var filter = new Filter
             {
                 testMode = mode,
-                assemblyNames = assemblyNames
+                assemblyNames = assemblyNames,
+                groupNames = groupNames
             };
 
             activeReceiver = new ResultWriter(resultPath);

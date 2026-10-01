@@ -177,7 +177,7 @@ namespace SubTerra.App.Tests.UI
         }
 
         [Test]
-        public void SurfaceBaseSettings_StaysAboveLevelSummaryPanel()
+        public void SurfaceBaseSettings_ClosesUpgradeModalBeforeOpening()
         {
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
                 "Assets/_Project/Prefabs/UI/SurfaceBasePanel.prefab");
@@ -191,17 +191,12 @@ namespace SubTerra.App.Tests.UI
 
                 var progression = instance.GetComponentInChildren<ProgressionPanelView>(true);
                 Assert.That(progression, Is.Not.Null);
-                Assert.That(progression.LevelsOnlySummary, Is.True);
+                Assert.That(progression.LevelsOnlySummary, Is.False);
 
-                // 레벨 요약이 모달 sorting을 올리지 않는지 확인.
-                progression.BringToFront();
-                var levelCanvas = progression.GetComponent<Canvas>();
-                Assert.That(
-                    levelCanvas == null || !levelCanvas.overrideSorting
-                    || levelCanvas.sortingOrder < UiLayerPriority.SettingsModal,
-                    Is.True);
-
+                view.SetUpgradeVisible(true);
+                Assert.That(view.IsUpgradeVisible, Is.True);
                 view.SetSettingsVisible(true);
+                Assert.That(view.IsUpgradeVisible, Is.False);
                 var settings = FindChild(instance.transform, "SettingsPanel");
                 Assert.That(settings, Is.Not.Null);
                 Assert.That(settings.GetSiblingIndex(), Is.GreaterThan(
@@ -212,7 +207,7 @@ namespace SubTerra.App.Tests.UI
                 Assert.That(settingsCanvas.overrideSorting, Is.True);
                 Assert.That(settingsCanvas.sortingOrder, Is.EqualTo(UiLayerPriority.SettingsModal));
 
-                // 레벨 요약은 SurfaceBaseContent 하위에 묶여 있어야 한다.
+                // 업그레이드 서비스 View는 기지 화면 계층 안에서 유지한다.
                 var content = FindChild(instance.transform, "SurfaceBaseContent");
                 Assert.That(progression.transform.IsChildOf(content), Is.True);
             }

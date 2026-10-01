@@ -98,6 +98,9 @@ namespace SubTerra.App.UI.SurfaceBase
             if (boundCycleState != null)
             {
                 boundCycleState.MineResetCycleChanged += OnMineResetCycleChanged;
+                boundCycleState.CreditsChanged += OnCreditsChanged;
+                boundCycleState.InventoryChanged += OnCargoChanged;
+                RefreshResources();
             }
 
             var initialSettings = SettingsRuntimeApplier.LoadOrDefaults();
@@ -106,9 +109,12 @@ namespace SubTerra.App.UI.SurfaceBase
             view.SetSettingsVisible(false);
             view.SetMineResetConfirmVisible(false);
             view.SetMineResetBusy(false);
+            view.SetUpgradeVisible(false);
             RefreshMineResetFeeLabel();
 
             view.ExploreClicked += OnExploreClicked;
+            view.UpgradeClicked += OnUpgradeClicked;
+            view.UpgradeCloseClicked += OnUpgradeCloseClicked;
             view.SettingsClicked += OnSettingsClicked;
             view.QuitClicked += OnQuitClicked;
             view.SettingsApplyClicked += OnSettingsApply;
@@ -131,6 +137,9 @@ namespace SubTerra.App.UI.SurfaceBase
             if (view != null)
             {
                 view.ExploreClicked -= OnExploreClicked;
+                view.UpgradeClicked -= OnUpgradeClicked;
+                view.UpgradeCloseClicked -= OnUpgradeCloseClicked;
+                view.SetUpgradeVisible(false);
                 view.SettingsClicked -= OnSettingsClicked;
                 view.QuitClicked -= OnQuitClicked;
                 view.SettingsApplyClicked -= OnSettingsApply;
@@ -148,6 +157,8 @@ namespace SubTerra.App.UI.SurfaceBase
             if (boundCycleState != null)
             {
                 boundCycleState.MineResetCycleChanged -= OnMineResetCycleChanged;
+                boundCycleState.CreditsChanged -= OnCreditsChanged;
+                boundCycleState.InventoryChanged -= OnCargoChanged;
                 boundCycleState = null;
             }
 
@@ -183,6 +194,7 @@ namespace SubTerra.App.UI.SurfaceBase
             if (keyboard.escapeKey.wasPressedThisFrame)
             {
                 if (settings.IsOpen) OnSettingsCancel();
+                else if (view.IsUpgradeVisible) OnUpgradeCloseClicked();
                 else OnSettingsClicked();
             }
             if (!keyboard.xKey.wasPressedThisFrame) return;
@@ -203,6 +215,8 @@ namespace SubTerra.App.UI.SurfaceBase
                 if (clock != null && clock.TryClosePopup(topWindow)) return;
                 if (view.IsTopMineResetConfirmWindow(topWindow))
                 { OnResetMineCancelled(); return; }
+                if (view.IsTopUpgradeWindow(topWindow))
+                { OnUpgradeCloseClicked(); return; }
                 if (economyBinder != null && economyBinder.IsTopWindow(topWindow))
                 { economyBinder.CloseModal(); return; }
                 return;
@@ -211,6 +225,7 @@ namespace SubTerra.App.UI.SurfaceBase
                 ? progressionBinder.GetComponentInChildren<ProgressionPanelView>(true) : null;
             if (progressionView != null && progressionView.TryHideDeepZoneUnlockPopup()) return;
             if (view.IsMineResetConfirmVisible) { OnResetMineCancelled(); return; }
+            if (view.IsUpgradeVisible) { OnUpgradeCloseClicked(); return; }
             if (economyBinder != null && economyBinder.IsModalVisible) economyBinder.CloseModal();
         }
 
@@ -224,6 +239,29 @@ namespace SubTerra.App.UI.SurfaceBase
         public bool HasRequiredReferences()
         {
             return view != null && view.HasRequiredReferences();
+        }
+
+        private void OnCreditsChanged(int _) => RefreshResources();
+        private void OnCargoChanged(InventoryReadModel _) => RefreshResources();
+
+        private void RefreshResources()
+        {
+            if (view != null && boundCycleState != null)
+                view.SetResources(boundCycleState.Player.Cargo, boundCycleState.Player.Gold);
+        }
+
+        private void OnUpgradeClicked()
+        {
+            if (view == null || progressionBinder == null || settings == null
+                || settings.IsOpen || view.IsMineResetConfirmVisible
+                || (economyBinder != null && economyBinder.IsModalVisible)) return;
+            view.SetUpgradeVisible(true);
+            if (progressionBinder.Presenter != null) progressionBinder.Presenter.Refresh();
+        }
+
+        private void OnUpgradeCloseClicked()
+        {
+            if (view != null) view.SetUpgradeVisible(false);
         }
 
         private void OnExploreClicked()
@@ -309,6 +347,7 @@ namespace SubTerra.App.UI.SurfaceBase
                 || runtime.ElevatorState == ElevatorTravelState.Calling
                 || runtime.ElevatorState == ElevatorTravelState.Moving
                 || (settings != null && settings.IsOpen)
+                || view.IsUpgradeVisible
                 || (economyBinder != null && economyBinder.IsModalVisible))
             {
                 view.SetMessage(LocalizationService.Get("mine_reset.fail.busy"));

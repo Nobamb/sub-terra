@@ -71,7 +71,8 @@ namespace SubTerra.App.Save
         private float mineResetDirtyAccum;
         private MineResetClockOverlay mineResetClockOverlay;
 
-        public const int MineElevatorEnergyCost = 5;
+        /// <summary>지상 → 지하 탐사 출발 전력. 0이면 차감하지 않는다.</summary>
+        public const int MineElevatorEnergyCost = 0;
 
         /// <summary>테스트·진단용. 현재 Mine world 캐시 복사본.</summary>
         public WorldSnapshotDto PeekMineWorldCache() => mineWorldCache.Peek();
@@ -965,7 +966,8 @@ namespace SubTerra.App.Save
             return failure switch
             {
                 ElevatorTravelFailure.Busy => "엘리베이터가 이미 이동 중입니다.",
-                ElevatorTravelFailure.InsufficientEnergy => "엘리베이터 전력이 부족합니다. (필요 전력 5)",
+                ElevatorTravelFailure.InsufficientEnergy =>
+                    "엘리베이터 전력이 부족합니다. (필요 전력 " + MineElevatorEnergyCost + ")",
                 ElevatorTravelFailure.BlockedExit => "도착 지점이 막혀 이동할 수 없습니다.",
                 ElevatorTravelFailure.SceneLoadFailed => "목적지 Scene 로드에 실패했습니다.",
                 ElevatorTravelFailure.InvalidDestination => "엘리베이터 목적지가 올바르지 않습니다.",

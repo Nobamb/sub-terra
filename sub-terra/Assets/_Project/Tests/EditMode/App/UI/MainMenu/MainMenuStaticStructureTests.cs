@@ -472,39 +472,18 @@ namespace SubTerra.App.Tests.UI.MainMenu
         }
 
         [Test]
-        public void Prompt16_SurfaceBaseInformation_IsOneCenteredGroup()
+        public void Prompt117_SurfaceBase_HasHeaderAndCenteredPrimaryAction()
         {
-            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
-                PhaseLMenuSceneBuilder.SurfaceBasePrefabPath);
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PhaseLMenuSceneBuilder.SurfaceBasePrefabPath);
             var content = prefab.transform.Find("SurfaceBaseContent") as RectTransform;
-            Assert.That(content, Is.Not.Null);
-            Assert.That(content.anchorMin, Is.EqualTo(new Vector2(0.5f, 0.5f)));
-            Assert.That(content.anchorMax, Is.EqualTo(new Vector2(0.5f, 0.5f)));
-            Assert.That(content.anchoredPosition, Is.EqualTo(Vector2.zero));
-
-            var centeredPaths = new[]
-            {
-                "EnergyText",
-                "GoalsText",
-                "DeepZoneText",
-                "RecentRunText",
-                "EconomyPanel/SellModalCard/EcoStatus",
-                "ProgressionPanel/UpgradeList",
-                "ProgressionPanel/ProgDeep"
-            };
-            // prompt-B 31-1: 새로고침 제거, 설정·종료 추가.
-            Assert.That(content.Find("RefreshButton"), Is.Null);
-            Assert.That(content.Find("SettingsButton"), Is.Not.Null);
-            Assert.That(content.Find("QuitButton"), Is.Not.Null);
-            var explore = content.Find("ExploreButton") as RectTransform;
-            Assert.That(explore, Is.Not.Null);
-            Assert.That(explore.anchoredPosition.x, Is.EqualTo(-160f).Within(0.1f));
-            foreach (var path in centeredPaths)
-            {
-                var rect = content.Find(path) as RectTransform;
-                Assert.That(rect, Is.Not.Null, path);
-                Assert.That(rect.anchoredPosition.x, Is.EqualTo(0f).Within(0.1f), path);
-            }
+            Assert.That(content.anchorMin, Is.EqualTo(Vector2.zero));
+            Assert.That(content.anchorMax, Is.EqualTo(Vector2.one));
+            Assert.That(content.Find("Title").GetComponent<TMP_Text>().text, Is.EqualTo("지상 기지"));
+            foreach (var name in new[] { "SettingsButton", "QuitButton", "CargoText", "GoldText" })
+                Assert.That(((RectTransform)content.Find(name)).anchorMax.y, Is.EqualTo(1f), name);
+            Assert.That(((RectTransform)content.Find("ExploreButton")).anchoredPosition.x, Is.Zero);
+            foreach (var name in new[] { "EnergyText", "GoalsText", "DeepZoneText", "RecentRunText" })
+                Assert.That(content.Find(name).gameObject.activeSelf, Is.False, name);
         }
 
         [Test]
