@@ -111,6 +111,8 @@ namespace SubTerra.Gameplay.Mining
         private float lastEnergyEfficiency = 1f;
 
         public bool IsMining { get; private set; }
+        public Vector3Int ActiveCell => activeCell;
+        public Tilemap ForegroundTilemap => foregroundTilemap;
         public bool HasMiningPower { get; private set; } = true;
         public float Progress { get; private set; }
         public float EffectiveDuration { get; private set; }

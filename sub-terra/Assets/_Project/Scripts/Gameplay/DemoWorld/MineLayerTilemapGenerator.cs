@@ -134,6 +134,8 @@ namespace SubTerra.Gameplay.DemoWorld
                     0f,
                     false));
             foregroundTilemap.RefreshAllTiles();
+            if (Application.isPlaying && foregroundTilemap.GetComponent<MineTileCornerVisual>() == null)
+                foregroundTilemap.gameObject.AddComponent<MineTileCornerVisual>();
 
             worldSeed = seed;
             CurrentLayout = layout;

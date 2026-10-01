@@ -24,6 +24,8 @@ namespace SubTerra.Gameplay.Mining
         private Vector2 lastMiningDirection;
         private bool miningInputPressedLastFrame;
         private PlayerAnimationController animationController;
+        private MiningDebrisVisual debrisVisual;
+        private MiningSystem debrisMiningSystem;
         private static readonly List<RaycastResult> PointerHits = new(8);
 
         public bool IsMining => miningSystem != null && miningSystem.IsMining;
@@ -33,6 +35,7 @@ namespace SubTerra.Gameplay.Mining
             movement = GetComponent<PlayerMovement>();
             animationController = GetComponentInChildren<PlayerAnimationController>(true);
             if (inputActions != null) mineAction = inputActions.FindAction(mineActionPath, false);
+            EnsureDebrisVisual();
         }
 
         private void OnEnable() => mineAction?.Enable();
@@ -48,6 +51,7 @@ namespace SubTerra.Gameplay.Mining
 
         private void Update()
         {
+            EnsureDebrisVisual();
             if (miningSystem == null)
             {
                 animationController?.SetMining(false);
@@ -104,6 +108,16 @@ namespace SubTerra.Gameplay.Mining
 
             animationController?.SetMining(true);
             miningSystem.TickMining(Time.deltaTime, movement.Position, reach);
+        }
+
+        private void EnsureDebrisVisual()
+        {
+            // Integration may supply the mining system after this controller's Awake.
+            if (miningSystem == null || debrisMiningSystem == miningSystem) return;
+            if (debrisVisual == null) debrisVisual = GetComponent<MiningDebrisVisual>();
+            if (debrisVisual == null) debrisVisual = gameObject.AddComponent<MiningDebrisVisual>();
+            debrisVisual.Configure(miningSystem, transform);
+            debrisMiningSystem = miningSystem;
         }
 
         private bool IsMiningInputPressed()
