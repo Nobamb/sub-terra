@@ -2,6 +2,7 @@ using SubTerra.App.Drone.Dialogue;
 using SubTerra.App.Run;
 using SubTerra.App.Save;
 using SubTerra.App.State;
+using SubTerra.App.UI;
 using SubTerra.App.UI.Drone;
 using SubTerra.App.UI.EmergencyRescue;
 using SubTerra.App.UI.HUD;
@@ -38,7 +39,7 @@ namespace SubTerra.App.Integration
 
         private void Update()
         {
-            if (!IsRescueAvailable)
+            if (!IsRescueAvailable || UiPauseGate.IsHeld)
             {
                 return;
             }

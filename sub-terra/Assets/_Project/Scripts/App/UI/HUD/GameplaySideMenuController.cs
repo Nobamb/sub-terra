@@ -21,6 +21,7 @@ namespace SubTerra.App.UI.HUD
 
         private void Update()
         {
+            if (UiPauseGate.IsHeld) return;
             var keyboard = Keyboard.current;
             if (keyboard == null || !keyboard.slashKey.wasPressedThisFrame) return;
             if (IsTypingInField()) return;

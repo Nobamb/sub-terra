@@ -105,6 +105,7 @@ namespace SubTerra.App.Integration
 
         private void Update()
         {
+            if (SubTerra.App.UI.UiPauseGate.IsHeld) return;
             var selected = EventSystem.current != null ? EventSystem.current.currentSelectedGameObject : null;
             bool typing = selected != null && (selected.GetComponentInParent<TMP_InputField>() != null
                 || selected.GetComponentInParent<InputField>() != null);

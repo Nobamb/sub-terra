@@ -709,6 +709,17 @@ namespace SubTerra.App.Save
             }
 
             EnsureMineResetClockOverlay();
+            // 시작 브리핑 등 정지 게이트가 잡힌 동안은 실시간 시계도 누적하지 않는다.
+            if (SubTerra.App.UI.UiPauseGate.IsHeld)
+            {
+                if (mineResetClockOverlay != null)
+                {
+                    mineResetClockOverlay.RefreshFromState();
+                }
+
+                return;
+            }
+
             boundState.AddMineResetElapsed(Time.unscaledDeltaTime);
             mineResetDirtyAccum += Time.unscaledDeltaTime;
             if (mineResetDirtyAccum >= 15f)

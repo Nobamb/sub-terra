@@ -63,12 +63,14 @@ namespace SubTerra.App.Integration
         {
             var keyboard = Keyboard.current;
             if (keyboard == null) return;
-            if (keyboard.escapeKey.wasPressedThisFrame) HandleEscape();
+            // 시작 브리핑처럼 진행을 멈춘 동안에는 설정·종료 단축키를 막고 X(닫기)만 허용한다.
+            var paused = UiPauseGate.IsHeld;
+            if (!paused && keyboard.escapeKey.wasPressedThisFrame) HandleEscape();
             var selected = UnityEngine.EventSystems.EventSystem.current;
             if (selected != null && selected.currentSelectedGameObject != null
                 && selected.currentSelectedGameObject.GetComponent<TMPro.TMP_InputField>() != null) return;
             if (keyboard.xKey.wasPressedThisFrame) HandleCloseTopPopup();
-            if (keyboard.oKey.wasPressedThisFrame) RequestQuit();
+            if (!paused && keyboard.oKey.wasPressedThisFrame) RequestQuit();
         }
 
         public void HandleEscape()
@@ -90,6 +92,10 @@ namespace SubTerra.App.Integration
                 CloseSettings();
                 return;
             }
+
+            // 시작 브리핑은 가장 위에 뜨는 모달이므로 다른 팝업보다 먼저 닫는다.
+            var briefing = FindFirstObjectByType<DemoObjectiveView>();
+            if (briefing != null && briefing.TryCloseGuidance()) return;
 
             var topWindow = PopupWindowSorting.Top;
             if (topWindow != null)

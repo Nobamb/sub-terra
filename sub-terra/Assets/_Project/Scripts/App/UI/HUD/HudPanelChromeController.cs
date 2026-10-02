@@ -159,6 +159,7 @@ namespace SubTerra.App.UI.HUD
 
         private void Update()
         {
+            if (UiPauseGate.IsHeld) return;
             // 게임 가이드 조작법: B=시설 건설, I=화물/인벤토리, G=게임 가이드, Tab=Digger-Bot
             var keyboard = Keyboard.current;
             if (keyboard != null)

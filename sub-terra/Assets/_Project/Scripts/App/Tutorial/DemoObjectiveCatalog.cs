@@ -10,9 +10,13 @@ namespace SubTerra.App.Tutorial
         public const string DemoCompleteDescription =
             "긴급 탈출 포탈을 통한 귀환까지 완료했습니다.";
         public const string IntroductionGuidanceBody =
-            "당신은 재앙 이후, 얼마 남지 않은 생존자입니다. 인류는 정점의 기술력을 가졌지만, 지상의 자원은 모두 사라졌습니다. 남은 것은 지하 광산과, 인간의 유전자가 보존된 배양시설뿐입니다.\n"
-            + "광산의 자원으로 배양시설을 다시 가동해야, 인류를 되살릴 수 있습니다.\n"
-            + "[조작 안내] 자원 근처에서 Enter 또는 마우스 클릭으로 채굴할 수 있습니다. 희귀 자원을 모으고 장비를 업그레이드해, 더 깊은 곳으로 나아가십시오.";
+            "지상에는 더 이상 캘 것이 남지 않았습니다.\n"
+            + "배양시설에는 인류의 유전 정보가 보존되어 있습니다.\n"
+            + "유전자 개량에 성공하면, 인류를 다시 태어나게 할 수 있습니다.\n"
+            + "시설을 가동할 자원은 이제 땅 아래에 있습니다.\n"
+            + "\n"
+            + "내려가십시오. 캐고, 버티고, 살아서 돌아오십시오.";
+        public const string IntroductionGuidanceConfirmLabel = "작업 시작";
 
         private static readonly Dictionary<string, DemoObjectiveDefinition> ById;
         private static readonly DemoObjectiveDefinition[] OrderedDefinitions;

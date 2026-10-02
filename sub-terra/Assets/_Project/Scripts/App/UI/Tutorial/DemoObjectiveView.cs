@@ -25,6 +25,7 @@ namespace SubTerra.App.UI.Tutorial
         [SerializeField] private TMP_Text demoCompleteText;
         [SerializeField] private Canvas tutorialCanvas;
         [SerializeField] private CanvasGroup guidanceCanvasGroup;
+        [SerializeField] private StartBriefingPopupMotion guidanceMotion;
         [SerializeField] private GameObject detailsRoot;
         [SerializeField] private TMP_Text detailsTitleText;
         [SerializeField] private TMP_Text detailsBodyText;
@@ -536,6 +537,8 @@ namespace SubTerra.App.UI.Tutorial
 
         public bool TryCloseTopPopup()
         {
+            if (TryCloseGuidance())
+            { return true; }
             if (detailsRoot != null && detailsRoot.activeInHierarchy
                 && claimRoot != null && claimRoot.activeInHierarchy
                 && claimRoot.transform.GetSiblingIndex() > detailsRoot.transform.GetSiblingIndex())
@@ -657,8 +660,43 @@ namespace SubTerra.App.UI.Tutorial
         /// <summary>UI Button OnClick 연결용.</summary>
         public void OnDismissClicked()
         {
+            // 연출이 있는 시작 브리핑은 닫기 연출이 끝난 뒤에 종료 처리를 한 번만 알린다.
+            var motion = ResolveGuidanceMotion();
+            if (motion != null && guidanceRoot != null && guidanceRoot.activeInHierarchy)
+            {
+                motion.RequestClose(RaiseDismissRequested);
+                return;
+            }
+
             // Presenter 연결은 Binder가 담당. View 단독 dismiss는 이벤트만 남긴다.
+            RaiseDismissRequested();
+        }
+
+        /// <summary>X 단축키용. 시작 브리핑이 떠 있으면 닫기를 요청하고 true를 돌려 다른 팝업을 건드리지 않게 한다.</summary>
+        public bool TryCloseGuidance()
+        {
+            if (guidanceRoot == null || !guidanceRoot.activeInHierarchy)
+            {
+                return false;
+            }
+
+            OnDismissClicked();
+            return true;
+        }
+
+        private void RaiseDismissRequested()
+        {
             DismissRequested?.Invoke();
+        }
+
+        private StartBriefingPopupMotion ResolveGuidanceMotion()
+        {
+            if (guidanceMotion == null && guidanceRoot != null)
+            {
+                guidanceMotion = guidanceRoot.GetComponent<StartBriefingPopupMotion>();
+            }
+
+            return guidanceMotion;
         }
 
         public event System.Action DismissRequested;

@@ -7,8 +7,11 @@ namespace SubTerra.App.Tutorial
     public static class UiLayerPriority
     {
         public const int TutorialGuidance = 100;
-        /// <summary>새 게임 시작 시 사용자가 먼저 확인해야 하는 조작 안내 팝업.</summary>
-        public const int IntroductionGuidance = 10_000;
+        /// <summary>
+        /// 새 게임 시작 시 먼저 확인해야 하는 시작 브리핑 모달.
+        /// 팝업 창 정렬(32_100~)보다 위, 설정창(32_760)보다 아래에 둔다.
+        /// </summary>
+        public const int IntroductionGuidance = 32_700;
         public const int SettingsModal = 800;
         /// <summary>장비 업그레이드·인벤토리 등 플레이어 호출 모달. 일반 HUD/튜토리얼 위.</summary>
         public const int ModalPanel = 1_000;

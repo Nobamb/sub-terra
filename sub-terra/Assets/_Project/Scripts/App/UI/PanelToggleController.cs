@@ -52,6 +52,11 @@ namespace SubTerra.App.UI
 
         private void Update()
         {
+            if (UiPauseGate.IsHeld)
+            {
+                return;
+            }
+
             var keyboard = Keyboard.current;
             if (keyboard == null)
             {

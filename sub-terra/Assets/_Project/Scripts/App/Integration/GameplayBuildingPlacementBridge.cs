@@ -74,6 +74,11 @@ namespace SubTerra.App.Integration
 
         private void Update()
         {
+            if (UiPauseGate.IsHeld)
+            {
+                return;
+            }
+
             if (placementSystem == null || placementSystem.Selection == null)
             {
                 HidePreview();

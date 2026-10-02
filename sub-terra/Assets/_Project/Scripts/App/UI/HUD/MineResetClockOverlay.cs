@@ -174,7 +174,7 @@ namespace SubTerra.App.UI.HUD
 
         private void Update()
         {
-            if (!sessionVisible)
+            if (!sessionVisible || UiPauseGate.IsHeld)
             {
                 return;
             }

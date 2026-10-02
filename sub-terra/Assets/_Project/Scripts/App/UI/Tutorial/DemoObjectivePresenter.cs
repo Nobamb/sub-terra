@@ -20,6 +20,8 @@ namespace SubTerra.App.UI.Tutorial
         private bool claimOpen;
         private bool inputLocked;
         private int viewedIndex;
+        // 닫은 시작 브리핑이 같은 바인딩 안에서 진행 이벤트마다 다시 뜨지 않게 한다.
+        private string dismissedGuidanceObjectiveId = string.Empty;
 
         public bool IsBound => director != null;
         public bool IsGuidanceOpen => guidanceOpen;
@@ -88,6 +90,7 @@ namespace SubTerra.App.UI.Tutorial
             claimOpen = false;
             inputLocked = false;
             viewedIndex = 0;
+            dismissedGuidanceObjectiveId = string.Empty;
             view?.SetGuidanceVisible(false);
             view?.SetDetailsVisible(false);
             view?.SetCapacityChoiceVisible(false);
@@ -277,6 +280,7 @@ namespace SubTerra.App.UI.Tutorial
 
             var model = director.ReadModel;
             guidanceOpen = false;
+            dismissedGuidanceObjectiveId = model.ObjectiveId ?? string.Empty;
             view?.SetGuidanceVisible(false);
             // dismiss 직후 입력 잠금이 남지 않게 한다.
             SetInputLocked(false);
@@ -485,7 +489,8 @@ namespace SubTerra.App.UI.Tutorial
                 view?.SetDetailsText(model.Title, model.Description, model.NextActionHint);
             }
 
-            if (model.ShowsDismissibleGuidance)
+            if (model.ShowsDismissibleGuidance
+                && model.ObjectiveId != dismissedGuidanceObjectiveId)
             {
                 guidanceOpen = true;
                 view?.SetGuidanceText(model.GuidanceTitle, model.GuidanceBody);

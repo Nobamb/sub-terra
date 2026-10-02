@@ -237,6 +237,17 @@ namespace SubTerra.App.Integration
                     }
                 });
 
+            // 시작 브리핑처럼 진행을 멈추는 팝업이 뜨면 월드 입력을 끈다.
+            TryStep(
+                "PauseInputSuspender",
+                () =>
+                {
+                    if (GetComponent<PauseInputSuspender>() == null)
+                    {
+                        gameObject.AddComponent<PauseInputSuspender>();
+                    }
+                });
+
             TryStep("BindCargoSpeed", BindCargoSpeed);
             TryStep("BindDroneReadings", BindDroneReadings);
 

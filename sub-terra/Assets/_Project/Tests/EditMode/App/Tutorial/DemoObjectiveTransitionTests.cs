@@ -52,8 +52,8 @@ namespace SubTerra.App.Tests.Tutorial
             Assert.That(first.Description, Does.Contain("블록 하나를 제거하세요"));
             Assert.That(first.GuidanceTitle, Is.EqualTo("생존자 브리핑"));
             Assert.That(first.GuidanceBody, Is.EqualTo(DemoObjectiveCatalog.IntroductionGuidanceBody));
-            Assert.That(first.GuidanceBody, Does.Contain("당신은 재앙 이후, 얼마 남지 않은 생존자입니다."));
-            Assert.That(first.GuidanceBody, Does.Contain("[조작 안내]"));
+            Assert.That(first.GuidanceBody, Does.StartWith("지상에는 더 이상 캘 것이 남지 않았습니다."));
+            Assert.That(first.GuidanceBody, Does.Not.Contain("[조작 안내]"));
         }
 
         [Test]
