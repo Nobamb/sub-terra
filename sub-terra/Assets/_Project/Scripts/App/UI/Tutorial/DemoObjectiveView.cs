@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using SubTerra.App.Core.Data;
 using SubTerra.App.Tutorial;
+using SubTerra.App.UI;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -243,15 +244,27 @@ namespace SubTerra.App.UI.Tutorial
 
         public void SetDetailsVisible(bool visible)
         {
-            if (detailsRoot != null)
+            if (detailsRoot == null)
             {
-                detailsRoot.SetActive(visible);
-                if (visible)
-                {
-                    detailsRoot.transform.SetAsLastSibling();
-                    EnsurePopupCanvas(detailsRoot, ref detailsCanvas);
-                }
+                return;
             }
+
+            if (!visible)
+            {
+                if (detailsCanvas != null)
+                {
+                    PopupWindowSorting.Remove(detailsCanvas);
+                }
+
+                detailsRoot.SetActive(false);
+                return;
+            }
+
+            detailsRoot.SetActive(true);
+            detailsRoot.transform.SetAsLastSibling();
+            EnsurePopupCanvas(detailsRoot, ref detailsCanvas);
+            // 인벤토리·시설처럼 방금 연 창이 이미 떠 있는 팝업보다 앞에 온다.
+            PopupWindowSorting.BringToFront(detailsCanvas);
         }
 
         public void SetDetailsText(string title, string body, string nextAction)
@@ -502,12 +515,21 @@ namespace SubTerra.App.UI.Tutorial
                     claimRoot.SetActive(true);
                     claimRoot.transform.SetAsLastSibling();
                     EnsurePopupCanvas(claimRoot, ref claimCanvas);
+                    PopupWindowSorting.BringToFront(claimCanvas);
                 }
                 else if (claimRoot.activeSelf)
                 {
                     var motion = claimRoot.GetComponent<QuestClearPopupMotion>();
                     if (motion != null) motion.Close();
-                    else claimRoot.SetActive(false);
+                    else
+                    {
+                        if (claimCanvas != null)
+                        {
+                            PopupWindowSorting.Remove(claimCanvas);
+                        }
+
+                        claimRoot.SetActive(false);
+                    }
                 }
             }
         }

@@ -1,4 +1,5 @@
 using System.Collections;
+using SubTerra.App.UI;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -45,6 +46,7 @@ namespace SubTerra.App.UI.Tutorial
         {
             if (motion != null) StopCoroutine(motion);
             motion = null;
+            PopupWindowSorting.Remove(GetComponent<Canvas>());
         }
 
         public void Close()

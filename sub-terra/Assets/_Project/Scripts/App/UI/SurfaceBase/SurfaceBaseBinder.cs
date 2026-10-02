@@ -126,10 +126,6 @@ namespace SubTerra.App.UI.SurfaceBase
             view.ResetMineCancelled += OnResetMineCancelled;
 
             presenter.RefreshReadModel();
-            if (runtime.ElevatorState == ElevatorTravelState.Arrived)
-            {
-                view.SetMessage("Arrived · Surface Base 도착");
-            }
         }
 
         private void OnDisable()
