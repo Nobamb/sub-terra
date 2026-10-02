@@ -573,21 +573,18 @@ namespace SubTerra.App.UI.Tutorial
                 if (amounts[i] > 0) visible++;
             }
 
-            var stride = visible >= 4 ? 145f : visible == 3 ? 185f : 235f;
-            var position = 0f;
             for (var i = 0; i < names.Length; i++)
             {
                 var item = claimRewardRow.Find(names[i]) as RectTransform;
                 if (item == null) continue;
                 item.gameObject.SetActive(amounts[i] > 0);
                 if (amounts[i] <= 0) continue;
-                item.anchoredPosition = new Vector2(position, 0f);
                 var label = item.GetComponentInChildren<TMP_Text>(true);
                 if (label != null) label.text = labels[i] + " × " + amounts[i];
-                position += stride;
             }
 
             if (claimRewardText != null) claimRewardText.gameObject.SetActive(visible == 0);
+            UnityEngine.UI.LayoutRebuilder.ForceRebuildLayoutImmediate(claimRewardRow);
         }
 
         public void SetClaimText(string title, string questTitle, string rewardText, string hint)

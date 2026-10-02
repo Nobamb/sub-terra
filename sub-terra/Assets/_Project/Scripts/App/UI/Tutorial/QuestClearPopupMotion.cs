@@ -7,12 +7,12 @@ namespace SubTerra.App.UI.Tutorial
 {
     public sealed class QuestClearPopupMotion : MonoBehaviour
     {
-        private const float HiddenY = -900f;
         [SerializeField] private RectTransform checkSign;
         [SerializeField] private RectTransform borderGlint;
         [SerializeField] private Image borderGlintImage;
 
         private RectTransform panel;
+        private StartBriefingPopupMotion transition;
         private Coroutine motion;
         private bool closing;
         public bool IsClosing => closing;
@@ -20,6 +20,9 @@ namespace SubTerra.App.UI.Tutorial
         private void Awake()
         {
             panel = (RectTransform)transform;
+            transition = gameObject.AddComponent<StartBriefingPopupMotion>();
+            transition.enabled = false;
+            transition.ConfigureQuestClear(borderGlint);
         }
 
         private void OnEnable()
@@ -36,9 +39,11 @@ namespace SubTerra.App.UI.Tutorial
 
             if (motion != null) StopCoroutine(motion);
             closing = false;
-            panel.anchoredPosition = new Vector2(0f, HiddenY);
+            panel.anchoredPosition = Vector2.zero;
             if (checkSign != null) checkSign.localScale = Vector3.zero;
             if (borderGlint != null) borderGlint.gameObject.SetActive(false);
+            transition.enabled = false;
+            transition.enabled = true;
             motion = StartCoroutine(Enter());
         }
 
@@ -57,12 +62,13 @@ namespace SubTerra.App.UI.Tutorial
             if (checkSign != null) checkSign.localScale = Vector3.one;
             if (borderGlint != null) borderGlint.gameObject.SetActive(false);
             panel.anchoredPosition = Vector2.zero;
-            motion = StartCoroutine(Exit());
+            transition.RequestQuestClose();
+            motion = null;
         }
 
         private IEnumerator Enter()
         {
-            yield return Move(HiddenY, 0f, 0.3f, true);
+            while (!transition.IsShown) yield return null;
             if (checkSign != null)
             {
                 yield return ScaleCheck(0f, 1.1f, 0.2f);
@@ -84,28 +90,6 @@ namespace SubTerra.App.UI.Tutorial
             }
 
             motion = null;
-        }
-
-        private IEnumerator Exit()
-        {
-            yield return Move(0f, HiddenY, 0.3f, true);
-            motion = null;
-            gameObject.SetActive(false);
-        }
-
-        private IEnumerator Move(float from, float to, float duration, bool smooth)
-        {
-            var elapsed = 0f;
-            while (elapsed < duration)
-            {
-                elapsed += Time.unscaledDeltaTime;
-                var t = Mathf.Clamp01(elapsed / duration);
-                if (smooth) t = t * t * (3f - 2f * t);
-                panel.anchoredPosition = new Vector2(0f, Mathf.Lerp(from, to, t));
-                yield return null;
-            }
-
-            panel.anchoredPosition = new Vector2(0f, to);
         }
 
         private IEnumerator ScaleCheck(float from, float to, float duration)
@@ -150,7 +134,9 @@ namespace SubTerra.App.UI.Tutorial
                 rotation = 90f;
             }
 
-            borderGlint.anchoredPosition = position;
+            borderGlint.anchoredPosition = new Vector2(
+                position.x * panel.rect.width / 900f,
+                position.y * panel.rect.height / 450f);
             borderGlint.localRotation = Quaternion.Euler(0f, 0f, rotation);
             if (borderGlintImage != null) borderGlintImage.color = new Color(0.18f, 1f, 0.96f, 0.95f);
         }

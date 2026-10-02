@@ -65,6 +65,7 @@ namespace SubTerra.App.UI.Tutorial
         private bool captureStarted;
         private bool openGlitchDone;
         private bool holdsPause;
+        private bool pauseOnOpen = true;
         private int activeBurst = -1;
         private float phaseTime;
         private float clock;
@@ -82,6 +83,83 @@ namespace SubTerra.App.UI.Tutorial
         public BriefingPhase Phase => lifecycle.Phase;
         public bool IsClosing => lifecycle.Phase == BriefingPhase.Closing;
         public bool IsShown => lifecycle.Phase == BriefingPhase.Shown;
+
+        internal void ConfigureQuestClear(RectTransform glint)
+        {
+            pauseOnOpen = false;
+            var panel = (RectTransform)transform;
+            var source = GetComponent<UnityEngine.UI.Image>();
+            windowSize = panel.sizeDelta;
+            frameHalfExtent = new Vector2(395f * windowSize.x / 900f, 155f * windowSize.y / 450f);
+
+            var children = new Transform[panel.childCount];
+            for (var i = 0; i < children.Length; i++) children[i] = panel.GetChild(i);
+            var contentRect = new GameObject("ClaimContent", typeof(RectTransform), typeof(CanvasGroup))
+                .GetComponent<RectTransform>();
+            contentRect.SetParent(panel, false);
+            contentRect.sizeDelta = windowSize;
+            content = contentRect.GetComponent<CanvasGroup>();
+            foreach (var child in children)
+            {
+                if (child != glint) child.SetParent(contentRect, false);
+            }
+
+            window = new GameObject("ClaimTransition", typeof(RectTransform)).GetComponent<RectTransform>();
+            window.SetParent(panel, false);
+            window.sizeDelta = windowSize;
+            window.SetAsFirstSibling();
+            frameGlow = CreateQuestImage(window, "FrameGlow", source.sprite);
+            ghostFrames = new[]
+            {
+                CreateQuestImage(window, "FrameGhostA", source.sprite),
+                CreateQuestImage(window, "FrameGhostB", source.sprite)
+            };
+            frameImage = CreateQuestImage(window, "Frame", source.sprite);
+            frameImage.raycastTarget = source.raycastTarget;
+            frame = frameImage.rectTransform;
+            frameGlow.rectTransform.sizeDelta = windowSize;
+            frame.sizeDelta = windowSize;
+            foreach (var ghost in ghostFrames) ghost.rectTransform.sizeDelta = windowSize;
+            source.enabled = false;
+
+            edgeBars = new Image[10];
+            for (var i = 0; i < edgeBars.Length; i++)
+                edgeBars[i] = CreateQuestImage(window, "EdgeNoise" + i, null);
+            signalLine = CreateQuestImage(window, "SignalLine", null);
+            signalMotes = new Image[8];
+            for (var i = 0; i < signalMotes.Length; i++)
+            {
+                signalMotes[i] = CreateQuestImage(window, "SignalMote" + i, null);
+                signalMotes[i].rectTransform.sizeDelta = new Vector2(10f, 10f);
+            }
+
+            if (glint != null) glint.SetParent(window, false);
+            screenGlitchRoot = new GameObject("ClaimGlitch", typeof(RectTransform)).GetComponent<RectTransform>();
+            screenGlitchRoot.SetParent(panel, false);
+            screenGlitchRoot.sizeDelta = windowSize;
+            screenBars = new Image[8];
+            for (var i = 0; i < screenBars.Length; i++)
+                screenBars[i] = CreateQuestImage(screenGlitchRoot, "NoiseBar" + i, null);
+            rootGroup = GetComponent<CanvasGroup>();
+            if (rootGroup == null) rootGroup = gameObject.AddComponent<CanvasGroup>();
+        }
+
+        private static Image CreateQuestImage(RectTransform parent, string name, Sprite sprite)
+        {
+            var image = new GameObject(name, typeof(RectTransform), typeof(UnityEngine.UI.Image))
+                .GetComponent<UnityEngine.UI.Image>();
+            image.rectTransform.SetParent(parent, false);
+            image.sprite = sprite;
+            image.raycastTarget = false;
+            return image;
+        }
+
+        internal void RequestQuestClose()
+        {
+            if (lifecycle.Phase == BriefingPhase.Waiting) lifecycle.TryStartIntro();
+            if (lifecycle.Phase == BriefingPhase.Intro) lifecycle.TryFinishIntro();
+            RequestClose(null);
+        }
 
         private void Awake()
         {
@@ -227,8 +305,11 @@ namespace SubTerra.App.UI.Tutorial
             if (lifecycle.TryStartIntro())
             {
                 phaseTime = 0f;
-                UiPauseGate.Acquire(PauseOwner);
-                holdsPause = true;
+                if (pauseOnOpen)
+                {
+                    UiPauseGate.Acquire(PauseOwner);
+                    holdsPause = true;
+                }
             }
         }
 

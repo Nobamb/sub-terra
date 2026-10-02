@@ -91,7 +91,7 @@ namespace SubTerra.App.Editor.DataValidation
 
         private static ClaimRefs EnsureClaimPanel(Transform root, TMP_FontAsset font)
         {
-            var panel = EnsurePanel(root, "QuestClearRewardPanel", new Vector2(900f, 450f));
+            var panel = EnsurePanel(root, "QuestClearRewardPanel", new Vector2(1125f, 562.5f));
             var background = panel.GetComponent<Image>();
             background.sprite = SpriteAt("quest-clear-popup-frame.png");
             background.color = Color.white;
@@ -101,9 +101,9 @@ namespace SubTerra.App.Editor.DataValidation
             var title = EnsureText(
                 panel.transform,
                 "ClaimTitle",
-                new Vector2(125f, -90f),
-                new Vector2(365f, 40f),
-                28f,
+                new Vector2(155f, -127f),
+                new Vector2(450f, 48f),
+                32f,
                 TextAlignmentOptions.MidlineLeft,
                 font);
             title.text = "퀘스트 클리어";
@@ -111,55 +111,69 @@ namespace SubTerra.App.Editor.DataValidation
             var quest = EnsureText(
                 panel.transform,
                 "ClaimQuestTitle",
-                new Vector2(246f, -174f),
-                new Vector2(555f, 42f),
+                new Vector2(330f, -226f),
+                new Vector2(620f, 48f),
                 29f,
-                TextAlignmentOptions.TopLeft,
+                TextAlignmentOptions.MidlineLeft,
                 font);
             var reward = EnsureText(
                 panel.transform,
                 "ClaimReward",
-                new Vector2(225f, -320f),
-                new Vector2(550f, 40f),
+                new Vector2(440f, -398f),
+                new Vector2(360f, 44f),
                 19f,
-                TextAlignmentOptions.TopLeft,
+                TextAlignmentOptions.MidlineLeft,
                 font);
             var hint = EnsureText(
                 panel.transform,
                 "ClaimHint",
-                new Vector2(520f, -270f),
-                new Vector2(273f, 20f),
+                new Vector2(142.5f, -446f),
+                new Vector2(840f, 24f),
                 12f,
-                TextAlignmentOptions.TopRight,
+                TextAlignmentOptions.Midline,
                 font);
             hint.text = "닫으면 보상이 지급됩니다.";
             hint.color = new Color(0.62f, 0.78f, 0.82f, 1f);
-            var progress = EnsureText(panel.transform, "ClaimProgress", new Vector2(550f, -100f),
-                new Vector2(180f, 34f), 18f, TextAlignmentOptions.MidlineRight, font);
+            var progress = EnsureText(panel.transform, "ClaimProgress", new Vector2(725f, -127f),
+                new Vector2(180f, 48f), 18f, TextAlignmentOptions.MidlineRight, font);
             progress.color = new Color(0.45f, 1f, 1f, 1f);
             var oldMission = panel.transform.Find("ClaimMission");
             if (oldMission != null) Object.DestroyImmediate(oldMission.gameObject);
-            var description = EnsureText(panel.transform, "ClaimDescription", new Vector2(248f, -226f),
-                new Vector2(545f, 34f), 18f, TextAlignmentOptions.TopLeft, font);
+            var description = EnsureText(panel.transform, "ClaimDescription", new Vector2(330f, -278f),
+                new Vector2(620f, 36f), 18f, TextAlignmentOptions.MidlineLeft, font);
             description.text = "퀘스트 목표를 달성했습니다.";
             description.color = new Color(0.83f, 0.94f, 0.96f, 1f);
-            var rewardLabel = EnsureText(panel.transform, "ClaimRewardLabel", new Vector2(104f, -324f),
-                new Vector2(100f, 38f), 22f, TextAlignmentOptions.TopLeft, font);
+            var rewardRow = EnsureRect(panel.transform, "ClaimRewardRow",
+                new Vector2(0.5f, 1f), new Vector2(0f, -420f), new Vector2(870f, 44f));
+            rewardRow.pivot = new Vector2(0.5f, 0.5f);
+            var existingRewardLabel = panel.transform.Find("ClaimRewardLabel");
+            if (existingRewardLabel != null) existingRewardLabel.SetParent(rewardRow, false);
+            var rewardLabel = EnsureText(rewardRow, "ClaimRewardLabel", Vector2.zero,
+                new Vector2(100f, 44f), 32f, TextAlignmentOptions.MidlineLeft, font);
+            rewardLabel.transform.SetAsFirstSibling();
             rewardLabel.text = "보상";
             rewardLabel.color = new Color(0.4f, 1f, 1f, 1f);
             var check = EnsureImage(panel.transform, "ClaimCheckSign", SpriteAt("check-sign.png"),
-                new Vector2(0f, 1f), new Vector2(104f, -171f), new Vector2(106f, 106f));
+                new Vector2(0f, 1f), new Vector2(230f, -270f), new Vector2(112f, 112f));
+            check.rectTransform.pivot = new Vector2(0.5f, 0.5f);
             var oldRewardIcon = panel.transform.Find("ClaimRewardIcon");
             if (oldRewardIcon != null) Object.DestroyImmediate(oldRewardIcon.gameObject);
-            var rewardRow = EnsureRect(panel.transform, "ClaimRewardRow",
-                new Vector2(0f, 1f), new Vector2(225f, -315f), new Vector2(570f, 52f));
             EnsureRewardItem(rewardRow, "Copper", "icon_copper.png", font);
             EnsureRewardItem(rewardRow, "Iron", "icon_iron.png", font);
             EnsureRewardItem(rewardRow, "Lithium", "icon_lithium.png", font);
             EnsureRewardItem(rewardRow, "Gold", "quest-icon-gold.png", font);
+            var rewardLayout = rewardRow.GetComponent<UnityEngine.UI.HorizontalLayoutGroup>();
+            if (rewardLayout == null)
+                rewardLayout = rewardRow.gameObject.AddComponent<UnityEngine.UI.HorizontalLayoutGroup>();
+            rewardLayout.childAlignment = TextAnchor.MiddleCenter;
+            rewardLayout.spacing = 24f;
+            rewardLayout.childControlWidth = false;
+            rewardLayout.childControlHeight = false;
+            rewardLayout.childForceExpandWidth = false;
+            rewardLayout.childForceExpandHeight = false;
             reward.gameObject.SetActive(false);
             var close = EnsureImage(panel.transform, "ClaimCloseButton", SpriteAt("x-button.png"),
-                new Vector2(1f, 1f), new Vector2(-102f, -111f), new Vector2(36f, 36f));
+                new Vector2(1f, 1f), new Vector2(-162.5f, -151f), new Vector2(40f, 40f));
             close.rectTransform.pivot = new Vector2(0.5f, 0.5f);
             close.raycastTarget = true;
             var closeButton = close.GetComponent<Button>();
@@ -202,17 +216,17 @@ namespace SubTerra.App.Editor.DataValidation
 
         private static void EnsureRewardItem(RectTransform row, string name, string iconFile, TMP_FontAsset font)
         {
-            var item = EnsureRect(row, name, new Vector2(0f, 1f), Vector2.zero, new Vector2(145f, 52f));
+            var item = EnsureRect(row, name, new Vector2(0f, 1f), Vector2.zero, new Vector2(165f, 44f));
             var iconPath = iconFile == "quest-icon-gold.png"
                 ? "Assets/_Project/Art/UI/Gameplay/Quest/" + iconFile
                 : Icons + iconFile;
             var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(iconPath);
             if (sprite == null) throw new System.InvalidOperationException("Missing reward icon: " + iconPath);
             var icon = EnsureImage(item, "Icon", sprite, new Vector2(0f, 1f),
-                new Vector2(0f, -3f), new Vector2(44f, 44f));
+                new Vector2(0f, -2f), new Vector2(40f, 40f));
             icon.preserveAspect = true;
-            var label = EnsureText(item, "Amount", new Vector2(50f, -9f),
-                new Vector2(95f, 32f), 18f, TextAlignmentOptions.MidlineLeft, font);
+            var label = EnsureText(item, "Amount", new Vector2(48f, 0f),
+                new Vector2(117f, 44f), 18f, TextAlignmentOptions.MidlineLeft, font);
             label.textWrappingMode = TextWrappingModes.NoWrap;
             label.fontStyle = FontStyles.Bold;
         }
