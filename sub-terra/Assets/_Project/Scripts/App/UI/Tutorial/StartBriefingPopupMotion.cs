@@ -7,7 +7,7 @@ namespace SubTerra.App.UI.Tutorial
 {
     /// <summary>
     /// 시작 브리핑 팝업 연출: 화면 글리치 → 신호 집결·확산 → 프레임 개방 → 본문 페이드인,
-    /// 표시 중 약한 가장자리 간섭, 닫을 때 글리치 감쇠·페이드아웃.
+    /// 표시 중 약한 가장자리 간섭, 닫을 때 프레임 축소·신호 수축·화면 글리치.
     /// 글리치는 프레임/장식 레이어에만 적용하고 본문(content)은 알파만 바꾼다.
     /// 모든 시간은 비스케일이라 정지(UiPauseGate) 중에도 재생된다.
     /// </summary>
@@ -128,6 +128,9 @@ namespace SubTerra.App.UI.Tutorial
 
             onClosed = closed;
             phaseTime = 0f;
+            glitchTimer = 0f;
+            TriggerGlitch(BriefingGlitchKind.FrameShift, 1f);
+            TriggerGlitch(BriefingGlitchKind.EdgeBurst, 1f);
             // 선택이 남은 버튼에 Enter/Submit이 다시 들어가 중복 종료되지 않게 한다.
             UiKeyboardSubmitGuard.ClearSelection();
             if (content != null)
@@ -232,7 +235,7 @@ namespace SubTerra.App.UI.Tutorial
         private void FinishIntro()
         {
             lifecycle.TryFinishIntro();
-            ReleaseSnapshot();
+            // 정지된 배경 복사본을 닫기 화면 글리치에도 재사용한다.
             HideScreenGlitch();
             if (content != null)
             {
@@ -252,6 +255,8 @@ namespace SubTerra.App.UI.Tutorial
                 return;
             }
 
+            HideScreenGlitch();
+            ReleaseSnapshot();
             ReleasePause();
             var callback = onClosed;
             onClosed = null;
@@ -500,6 +505,22 @@ namespace SubTerra.App.UI.Tutorial
 
         private void UpdateClosing(float t, float dt)
         {
+            ApplyBackdrop(1f - StartBriefingTimeline.Progress(t,
+                StartBriefingTimeline.CloseContentFadeEnd, StartBriefingTimeline.CloseSignalEnd));
+            if (t >= StartBriefingTimeline.CloseGlitchStart)
+            {
+                UpdateScreenBursts(StartBriefingTimeline.CloseScreenTime(t));
+            }
+
+            if (t >= StartBriefingTimeline.CloseFrameEnd && t < StartBriefingTimeline.CloseSignalEnd)
+            {
+                ApplySignal(StartBriefingTimeline.CloseSignalTime(t));
+            }
+            else
+            {
+                ApplySignal(StartBriefingTimeline.IntroDuration);
+            }
+
             if (content != null)
             {
                 content.alpha = StartBriefingTimeline.ContentAlphaClose(t);
@@ -511,7 +532,7 @@ namespace SubTerra.App.UI.Tutorial
             }
 
             UpdateFrameEffects(
-                1f,
+                StartBriefingTimeline.CloseFrameOpen(t),
                 StartBriefingTimeline.CloseLight(t),
                 StartBriefingTimeline.CloseIntensity(t),
                 dt);

@@ -23,13 +23,14 @@ namespace SubTerra.App.Editor.DataValidation
         public const string FramePath =
             "Assets/_Project/Art/UI/Gameplay/Quest/Clear/quest-clear-popup-frame.png";
         private const string SettingsArt = "Assets/_Project/Art/UI/MainMenu/Settings/";
+        public const string BriefingFontPath = "Assets/_Project/Fonts/StartBriefingNotoSansKR_SDF.asset";
 
         // 프레임 그림(1774x887)의 보이는 외곽선과 가로 구분선 위치를 이 창 크기로 환산한 값.
-        public static readonly Vector2 WindowSize = new Vector2(1700f, 850f);
-        public static readonly Vector2 FrameHalfExtent = new Vector2(783f, 311f);
-        private const float TitleY = 236f;
-        private const float BodyY = 13f;
-        private const float ButtonY = -222f;
+        public static readonly Vector2 WindowSize = new Vector2(1700f, 950f);
+        public static readonly Vector2 FrameHalfExtent = new Vector2(783f, 348f);
+        private const float TitleY = 240f;
+        private const float BodyY = 14f;
+        private const float ButtonY = -248f;
 
         private static readonly Color Cyan = new Color(0.20f, 1f, 0.96f, 1f);
 
@@ -73,8 +74,15 @@ namespace SubTerra.App.Editor.DataValidation
                     throw new InvalidOperationException("DemoObjectiveView 또는 GuidancePanel이 없습니다.");
                 }
 
-                var font = ResolveFont(root.transform, guidance);
-                Rebuild(guidance, view, font);
+                var font = ResolveFont();
+                if (guidance.Find("Window") != null)
+                {
+                    UpdateLayout(guidance, font);
+                }
+                else
+                {
+                    Rebuild(guidance, view, font);
+                }
 
                 EditorUtility.SetDirty(view);
                 EditorSceneManager.MarkSceneDirty(scene);
@@ -170,8 +178,8 @@ namespace SubTerra.App.Editor.DataValidation
             var content = contentRect.gameObject.AddComponent<CanvasGroup>();
 
             var title = NewText(contentRect, "GuidanceTitle", font, 36f, FontStyles.Bold,
-                new Color(0.4f, 1f, 1f, 1f), TextAlignmentOptions.MidlineLeft);
-            Place(title.rectTransform, new Vector2(-680f + 550f, TitleY), new Vector2(1100f, 60f));
+                new Color(0.4f, 1f, 1f, 1f), TextAlignmentOptions.Center);
+            Place(title.rectTransform, new Vector2(0f, TitleY), new Vector2(1100f, 60f));
             title.text = DemoObjectiveCatalog.IntroductionGuidanceTitle;
             title.characterSpacing = 4f;
 
@@ -259,30 +267,82 @@ namespace SubTerra.App.Editor.DataValidation
             guidance.gameObject.SetActive(false);
         }
 
-        private static TMP_FontAsset ResolveFont(Transform root, Transform guidance)
+        private static void UpdateLayout(RectTransform guidance, TMP_FontAsset font)
         {
-            var body = guidance.Find("GuidanceBody");
-            var text = body != null ? body.GetComponent<TMP_Text>() : null;
-            if (text != null && text.font != null)
+            var window = guidance.Find("Window") as RectTransform;
+            var title = window.Find("Content/GuidanceTitle").GetComponent<TMP_Text>();
+            var body = window.Find("Content/GuidanceBody").GetComponent<TMP_Text>();
+            var button = window.Find("Content/DismissButton") as RectTransform;
+            var label = button.Find("Label").GetComponent<TMP_Text>();
+            var motion = guidance.GetComponent<StartBriefingPopupMotion>();
+            if (title == null || body == null || label == null || motion == null)
             {
-                return text.font;
+                throw new InvalidOperationException("기존 브리핑 참조가 누락되었습니다.");
             }
 
-            var title = root.Find("ObjectiveTitle");
-            text = title != null ? title.GetComponent<TMP_Text>() : null;
-            if (text == null || text.font == null)
+            window.sizeDelta = WindowSize;
+            Place(title.rectTransform, new Vector2(0f, TitleY), new Vector2(1100f, 60f));
+            title.alignment = TextAlignmentOptions.Center;
+            title.text = DemoObjectiveCatalog.IntroductionGuidanceTitle;
+            Place(body.rectTransform, new Vector2(0f, BodyY), new Vector2(1360f, 292f));
+            body.text = DemoObjectiveCatalog.IntroductionGuidanceBody;
+            body.overflowMode = TextOverflowModes.Overflow;
+            body.maxVisibleCharacters = int.MaxValue;
+            body.maxVisibleLines = int.MaxValue;
+            Place(button, new Vector2(0f, ButtonY), new Vector2(380f, 78f));
+            label.text = DemoObjectiveCatalog.IntroductionGuidanceConfirmLabel;
+            foreach (var text in new[] { title, body, label })
             {
-                var button = root.Find("QuestSummaryButton");
-                var nested = button != null ? button.Find("ObjectiveTitle") : null;
-                text = nested != null ? nested.GetComponent<TMP_Text>() : null;
+                text.font = font;
+                text.fontSharedMaterial = font.material;
+                EditorUtility.SetDirty(text);
             }
 
-            if (text == null || text.font == null)
+            var motionSo = new SerializedObject(motion);
+            motionSo.FindProperty("windowSize").vector2Value = WindowSize;
+            motionSo.FindProperty("frameHalfExtent").vector2Value = FrameHalfExtent;
+            motionSo.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        private static TMP_FontAsset ResolveFont()
+        {
+            var characters = DemoObjectiveCatalog.IntroductionGuidanceTitle
+                + DemoObjectiveCatalog.IntroductionGuidanceBody
+                + DemoObjectiveCatalog.IntroductionGuidanceConfirmLabel;
+            var font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(BriefingFontPath);
+            if (font != null)
             {
-                throw new InvalidOperationException("브리핑에 쓸 한글 TMP 폰트를 찾지 못했습니다.");
+                if (!font.HasCharacters(characters))
+                {
+                    throw new InvalidOperationException("브리핑 전용 폰트에 필요한 글자가 누락되었습니다.");
+                }
+
+                return font;
             }
 
-            return text.font;
+            // 공용 동적 아틀라스의 빈 글리프를 사용하지 않도록 확정 문구만 별도로 굽는다.
+            var source = AssetDatabase.LoadAssetAtPath<Font>(KoreanFontAssetUtility.NotoTtfPath);
+            font = TMP_FontAsset.CreateFontAsset(source, 36, 4,
+                UnityEngine.TextCore.LowLevel.GlyphRenderMode.SDFAA, 1024, 1024,
+                AtlasPopulationMode.Dynamic);
+            if (font == null || !font.TryAddCharacters(characters, out _))
+            {
+                throw new InvalidOperationException("브리핑 전용 폰트 생성에 실패했습니다.");
+            }
+
+            font.name = "StartBriefingNotoSansKR_SDF";
+            font.atlasPopulationMode = AtlasPopulationMode.Static;
+            AssetDatabase.CreateAsset(font, BriefingFontPath);
+            font.material.name = font.name + " Material";
+            AssetDatabase.AddObjectToAsset(font.material, font);
+            foreach (var atlas in font.atlasTextures)
+            {
+                atlas.name = font.name + " Atlas";
+                AssetDatabase.AddObjectToAsset(atlas, font);
+            }
+
+            AssetDatabase.SaveAssetIfDirty(font);
+            return font;
         }
 
         private static GameObject FindInScene(Scene scene, string name)

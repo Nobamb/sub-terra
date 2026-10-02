@@ -146,9 +146,12 @@ namespace SubTerra.App.UI.Tutorial
         public const float ContentFadeEnd = 1.28f;
         public const float IntroDuration = ContentFadeEnd;
 
-        public const float CloseDuration = 0.40f;
-        public const float CloseContentFadeEnd = 0.24f;
-        public const float CloseFadeOutStart = 0.28f;
+        public const float CloseDuration = 0.48f;
+        public const float CloseContentFadeEnd = 0.10f;
+        public const float CloseFrameEnd = 0.31f;
+        public const float CloseSignalEnd = 0.38f;
+        public const float CloseGlitchStart = 0.27f;
+        public const float CloseFadeOutStart = 0.44f;
 
         public static int BurstCount => BurstStarts.Length;
 
@@ -183,9 +186,22 @@ namespace SubTerra.App.UI.Tutorial
 
         public static float CloseIntensity(float t)
         {
-            var remaining = 1f - Progress(t, 0f, CloseDuration);
-            return SustainIntensity * remaining * remaining;
+            if (t <= CloseContentFadeEnd)
+            {
+                return Lerp(SustainIntensity, 1f, Progress(t, 0f, CloseContentFadeEnd));
+            }
+
+            return 1f - Progress(t, CloseFrameEnd, CloseDuration);
         }
+
+        public static float CloseFrameOpen(float t) => FrameOpen(
+            Lerp(FrameOpenEnd, FrameOpenStart, Progress(t, CloseContentFadeEnd, CloseFrameEnd)));
+
+        public static float CloseSignalTime(float t) =>
+            Lerp(FrameOpenStart, GatherEnd, Progress(t, CloseFrameEnd, CloseSignalEnd));
+
+        public static float CloseScreenTime(float t) =>
+            Progress(t, CloseGlitchStart, CloseDuration) * GatherStart;
 
         /// <summary>어두운 배경의 목표 알파 비율(0~1). 화면 글리치가 끝난 뒤 올라온다.</summary>
         public static float BackdropAmount(float t) => Smooth(Progress(t, 0.30f, FrameOpenStart));
@@ -213,8 +229,8 @@ namespace SubTerra.App.UI.Tutorial
         public static float ContentAlphaIntro(float t) => Progress(t, FrameOpenEnd, ContentFadeEnd);
         public static float ContentAlphaClose(float t) => 1f - Progress(t, 0f, CloseContentFadeEnd);
 
-        /// <summary>닫을 때 프레임 청록빛(1→0).</summary>
-        public static float CloseLight(float t) => 1f - Smooth(Progress(t, 0.04f, CloseDuration * 0.9f));
+        /// <summary>접히는 프레임의 청록빛을 유지한 뒤 소등한다.</summary>
+        public static float CloseLight(float t) => 1f - Smooth(Progress(t, CloseFrameEnd, CloseDuration));
 
         public static float CloseOverallAlpha(float t) => 1f - Progress(t, CloseFadeOutStart, CloseDuration);
 

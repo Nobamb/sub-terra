@@ -10,7 +10,7 @@ namespace SubTerra.App.Tutorial
         public const string DemoCompleteDescription =
             "긴급 탈출 포탈을 통한 귀환까지 완료했습니다.";
         public const string IntroductionGuidanceBody =
-            "지상에는 더 이상 캘 것이 남지 않았습니다.\n"
+            "지상에는 더 이상 자원이 남지 않았습니다.\n"
             + "배양시설에는 인류의 유전 정보가 보존되어 있습니다.\n"
             + "유전자 개량에 성공하면, 인류를 다시 태어나게 할 수 있습니다.\n"
             + "시설을 가동할 자원은 이제 땅 아래에 있습니다.\n"

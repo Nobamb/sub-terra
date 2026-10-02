@@ -3,13 +3,15 @@ using NUnit.Framework;
 using SubTerra.App.Tutorial;
 using SubTerra.App.UI;
 using SubTerra.App.UI.Tutorial;
+using TMPro;
+using UnityEditor;
 
 namespace SubTerra.App.Tests.UI
 {
     public sealed class PromptB120StartBriefingTests
     {
         private const string ExpectedBody =
-            "지상에는 더 이상 캘 것이 남지 않았습니다.\n"
+            "지상에는 더 이상 자원이 남지 않았습니다.\n"
             + "배양시설에는 인류의 유전 정보가 보존되어 있습니다.\n"
             + "유전자 개량에 성공하면, 인류를 다시 태어나게 할 수 있습니다.\n"
             + "시설을 가동할 자원은 이제 땅 아래에 있습니다.\n"
@@ -21,6 +23,39 @@ namespace SubTerra.App.Tests.UI
         {
             Assert.That(DemoObjectiveCatalog.IntroductionGuidanceBody, Is.EqualTo(ExpectedBody));
             Assert.That(DemoObjectiveCatalog.IntroductionGuidanceConfirmLabel, Is.EqualTo("작업 시작"));
+        }
+
+        [Test]
+        public void BriefingFontHasVisibleGlyphsForEveryPrintedCharacter()
+        {
+            var font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(
+                "Assets/_Project/Fonts/StartBriefingNotoSansKR_SDF.asset");
+            Assert.That(font, Is.Not.Null);
+            Assert.That(font.atlasPopulationMode, Is.EqualTo(AtlasPopulationMode.Static));
+            var atlas = font.atlasTextures[0];
+            var pixels = atlas.GetPixels32();
+            var characters = DemoObjectiveCatalog.IntroductionGuidanceTitle
+                + ExpectedBody + DemoObjectiveCatalog.IntroductionGuidanceConfirmLabel;
+            foreach (var c in new System.Collections.Generic.HashSet<char>(characters))
+            {
+                if (char.IsWhiteSpace(c)) continue;
+                Assert.That(font.characterLookupTable.ContainsKey(c), Is.True, c.ToString());
+                var glyph = font.characterLookupTable[c].glyph;
+                Assert.That(glyph.atlasIndex, Is.EqualTo(0), c.ToString());
+                var rect = glyph.glyphRect;
+                var visible = false;
+                for (var y = rect.y; y < rect.y + rect.height && !visible; y++)
+                {
+                    for (var x = rect.x; x < rect.x + rect.width; x++)
+                    {
+                        if (pixels[y * atlas.width + x].a <= 25) continue;
+                        visible = true;
+                        break;
+                    }
+                }
+
+                Assert.That(visible, Is.True, "빈 글리프: " + c);
+            }
         }
 
         [Test]
@@ -67,7 +102,7 @@ namespace SubTerra.App.Tests.UI
         }
 
         [Test]
-        public void CloseTakesPointThreeToPointFiveSecondsAndFadesGlitchBodyAndLight()
+        public void CloseTakesPointThreeToPointFiveSecondsAndFadesBodyBeforeScreenGlitch()
         {
             Assert.That(StartBriefingTimeline.CloseDuration, Is.InRange(0.3f, 0.5f));
             var d = StartBriefingTimeline.CloseDuration;
@@ -75,12 +110,40 @@ namespace SubTerra.App.Tests.UI
             Assert.That(StartBriefingTimeline.CloseIntensity(d), Is.EqualTo(0f).Within(1e-4f));
             Assert.That(
                 StartBriefingTimeline.CloseIntensity(d * 0.5f),
-                Is.LessThan(StartBriefingTimeline.CloseIntensity(d * 0.25f)));
+                Is.GreaterThan(StartBriefingTimeline.SustainIntensity));
             Assert.That(StartBriefingTimeline.ContentAlphaClose(0f), Is.EqualTo(1f));
             Assert.That(StartBriefingTimeline.ContentAlphaClose(d), Is.EqualTo(0f));
             Assert.That(StartBriefingTimeline.CloseLight(0f), Is.EqualTo(1f).Within(1e-4f));
             Assert.That(StartBriefingTimeline.CloseLight(d), Is.EqualTo(0f).Within(1e-4f));
             Assert.That(StartBriefingTimeline.CloseOverallAlpha(d), Is.EqualTo(0f));
+            Assert.That(StartBriefingTimeline.ContentAlphaClose(StartBriefingTimeline.CloseGlitchStart), Is.EqualTo(0f));
+        }
+
+        [Test]
+        public void CloseCollapsesFrameThenSignalAndReplaysAllEntranceBursts()
+        {
+            Assert.That(StartBriefingTimeline.CloseFrameOpen(0f), Is.EqualTo(1f).Within(1e-4f));
+            Assert.That(StartBriefingTimeline.CloseFrameOpen(StartBriefingTimeline.CloseFrameEnd), Is.EqualTo(0f));
+            var previous = 1f;
+            for (var i = 0; i <= 48; i++)
+            {
+                var open = StartBriefingTimeline.CloseFrameOpen(i * 0.01f);
+                Assert.That(open, Is.InRange(0f, previous));
+                previous = open;
+            }
+
+            Assert.That(StartBriefingTimeline.Spread(StartBriefingTimeline.CloseSignalTime(StartBriefingTimeline.CloseFrameEnd)), Is.EqualTo(1f));
+            Assert.That(StartBriefingTimeline.Spread(StartBriefingTimeline.CloseSignalTime(StartBriefingTimeline.CloseSignalEnd)), Is.EqualTo(0f));
+            for (var i = 0; i < StartBriefingTimeline.BurstCount; i++)
+            {
+                var introTime = StartBriefingTimeline.BurstStarts[i] + StartBriefingTimeline.BurstLength * 0.5f;
+                var closeTime = StartBriefingTimeline.CloseGlitchStart
+                    + introTime / StartBriefingTimeline.GatherStart
+                    * (StartBriefingTimeline.CloseDuration - StartBriefingTimeline.CloseGlitchStart);
+                Assert.That(StartBriefingTimeline.ActiveBurst(StartBriefingTimeline.CloseScreenTime(closeTime)), Is.EqualTo(i));
+            }
+
+            Assert.That(StartBriefingTimeline.ActiveBurst(StartBriefingTimeline.CloseScreenTime(StartBriefingTimeline.CloseDuration)), Is.EqualTo(-1));
         }
 
         [Test]
