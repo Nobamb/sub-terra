@@ -7222,7 +7222,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 13}
+  m_AnchoredPosition: {x: 0, y: 14}
   m_SizeDelta: {x: 1360, y: 292}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &189256841
@@ -7253,7 +7253,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\uC9C0\uC0C1\uC5D0\uB294 \uB354 \uC774\uC0C1 \uCE98 \uAC83\uC774 \uB0A8\uC9C0
+  m_text: "\uC9C0\uC0C1\uC5D0\uB294 \uB354 \uC774\uC0C1 \uC790\uC6D0\uC774 \uB0A8\uC9C0
     \uC54A\uC558\uC2B5\uB2C8\uB2E4.\n\uBC30\uC591\uC2DC\uC124\uC5D0\uB294 \uC778\uB958\uC758
     \uC720\uC804 \uC815\uBCF4\uAC00 \uBCF4\uC874\uB418\uC5B4 \uC788\uC2B5\uB2C8\uB2E4.\n\uC720\uC804\uC790
     \uAC1C\uB7C9\uC5D0 \uC131\uACF5\uD558\uBA74, \uC778\uB958\uB97C \uB2E4\uC2DC
@@ -7262,8 +7262,8 @@ MonoBehaviour:
     \uC788\uC2B5\uB2C8\uB2E4.\n\n\uB0B4\uB824\uAC00\uC2ED\uC2DC\uC624. \uCE90\uACE0,
     \uBC84\uD2F0\uACE0, \uC0B4\uC544\uC11C \uB3CC\uC544\uC624\uC2ED\uC2DC\uC624."
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 48b6c44ff06b5b84d81cbfcf3342d6f0, type: 2}
-  m_sharedMaterial: {fileID: 1283237503404649690, guid: 48b6c44ff06b5b84d81cbfcf3342d6f0, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 4e47050591bde29468964b019e0f4a3c, type: 2}
+  m_sharedMaterial: {fileID: 7281674977822517900, guid: 4e47050591bde29468964b019e0f4a3c, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -31514,8 +31514,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: "\uC791\uC5C5 \uC2DC\uC791"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 48b6c44ff06b5b84d81cbfcf3342d6f0, type: 2}
-  m_sharedMaterial: {fileID: 1283237503404649690, guid: 48b6c44ff06b5b84d81cbfcf3342d6f0, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 4e47050591bde29468964b019e0f4a3c, type: 2}
+  m_sharedMaterial: {fileID: 7281674977822517900, guid: 4e47050591bde29468964b019e0f4a3c, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -38978,8 +38978,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: SubTerra.App::SubTerra.App.UI.Tutorial.StartBriefingPopupMotion
   window: {fileID: 1214255083}
-  windowSize: {x: 1700, y: 850}
-  frameHalfExtent: {x: 783, y: 311}
+  windowSize: {x: 1700, y: 950}
+  frameHalfExtent: {x: 783, y: 348}
   backdropAlpha: 0.78
   frame: {fileID: 1782974611}
   frameImage: {fileID: 1782974612}
@@ -53620,7 +53620,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 1700, y: 850}
+  m_SizeDelta: {x: 1700, y: 950}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1215884856
 GameObject:
@@ -106511,7 +106511,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -130, y: 236}
+  m_AnchoredPosition: {x: 0, y: 240}
   m_SizeDelta: {x: 1100, y: 60}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1696264643
@@ -106544,8 +106544,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: "\uC0DD\uC874\uC790 \uBE0C\uB9AC\uD551"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 48b6c44ff06b5b84d81cbfcf3342d6f0, type: 2}
-  m_sharedMaterial: {fileID: 1283237503404649690, guid: 48b6c44ff06b5b84d81cbfcf3342d6f0, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 4e47050591bde29468964b019e0f4a3c, type: 2}
+  m_sharedMaterial: {fileID: 7281674977822517900, guid: 4e47050591bde29468964b019e0f4a3c, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -106576,8 +106576,8 @@ MonoBehaviour:
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 1
-  m_HorizontalAlignment: 1
-  m_VerticalAlignment: 4096
+  m_HorizontalAlignment: 2
+  m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 4
   m_characterHorizontalScale: 1
@@ -115038,7 +115038,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -222}
+  m_AnchoredPosition: {x: 0, y: -248}
   m_SizeDelta: {x: 380, y: 78}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1859708751
