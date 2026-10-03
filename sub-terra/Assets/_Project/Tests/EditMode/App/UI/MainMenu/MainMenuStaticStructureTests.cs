@@ -456,19 +456,75 @@ namespace SubTerra.App.Tests.UI.MainMenu
             var overwrite = prefab.transform.Find("OverwriteConfirm") as RectTransform;
             Assert.That(overwrite, Is.Not.Null);
             Assert.That(overwrite.anchoredPosition, Is.EqualTo(Vector2.zero));
-            Assert.That(overwrite.sizeDelta.x, Is.EqualTo(624f).Within(0.1f));
-            Assert.That(overwrite.sizeDelta.y, Is.EqualTo(286f).Within(0.1f));
+            // 원본 프레임의 투명 여백을 포함한 크기. 실제 창 외곽은 약 662×292.
+            Assert.That(overwrite.sizeDelta, Is.EqualTo(new Vector2(720f, 400f)));
+            Assert.That(AssetDatabase.GetAssetPath(overwrite.GetComponent<UnityEngine.UI.Image>().sprite),
+                Is.EqualTo(PromptB120StartBriefingBuilder.FramePath));
 
             var message = overwrite.Find("OverwriteMessage").GetComponent<TMP_Text>();
             var yes = overwrite.Find("OverwriteYes").GetComponent<RectTransform>();
             var no = overwrite.Find("OverwriteNo").GetComponent<RectTransform>();
             Assert.That(message.fontSize, Is.EqualTo(23.4f).Within(0.1f));
-            Assert.That(message.rectTransform.sizeDelta, Is.EqualTo(new Vector2(546f, 78f)));
-            Assert.That(message.rectTransform.anchoredPosition.y, Is.EqualTo(28.6f).Within(0.1f));
-            Assert.That(yes.sizeDelta, Is.EqualTo(new Vector2(182f, 57.2f)));
-            Assert.That(no.sizeDelta, Is.EqualTo(new Vector2(182f, 57.2f)));
-            Assert.That(yes.anchoredPosition.y, Is.EqualTo(-28.6f).Within(0.1f));
-            Assert.That(no.anchoredPosition.y, Is.EqualTo(-28.6f).Within(0.1f));
+            Assert.That(message.rectTransform.sizeDelta, Is.EqualTo(new Vector2(564f, 60f)));
+            Assert.That(message.rectTransform.anchoredPosition, Is.EqualTo(Vector2.zero));
+            Assert.That(yes.sizeDelta, Is.EqualTo(new Vector2(184f, 50f)));
+            Assert.That(no.sizeDelta, Is.EqualTo(yes.sizeDelta));
+            Assert.That(yes.anchoredPosition, Is.EqualTo(new Vector2(-112f, -104f)));
+            Assert.That(no.anchoredPosition, Is.EqualTo(new Vector2(112f, -104f)));
+            var title = overwrite.Find("OverwriteTitle").GetComponent<TMP_Text>();
+            var close = overwrite.Find("OverwriteClose").GetComponent<RectTransform>();
+            Assert.That(title.text, Is.EqualTo("덮어쓰기?"));
+            Assert.That(close.sizeDelta, Is.EqualTo(new Vector2(46f, 46f)));
+            Assert.That(close.anchoredPosition.y, Is.EqualTo(title.rectTransform.anchoredPosition.y));
+            foreach (var button in new[] { yes, no })
+            {
+                Assert.That(AssetDatabase.GetAssetPath(button.GetComponent<UnityEngine.UI.Image>().sprite),
+                    Is.EqualTo(PromptB104SettingsMenuBuilder.ButtonOffPath));
+                Assert.That(AssetDatabase.GetAssetPath(button.Find("HoverOverlay").GetComponent<UnityEngine.UI.Image>().sprite),
+                    Is.EqualTo(PromptB104SettingsMenuBuilder.ButtonOnPath));
+                Assert.That(button.GetComponent<MenuSpriteButtonSkin>(), Is.Not.Null);
+            }
+        }
+
+        [TestCase(1920, 1080)]
+        [TestCase(1280, 1024)]
+        public void Issue119_OverwriteFitsFrameAndScreen_WithoutTextOverflow(int width, int height)
+        {
+            var canvas = new GameObject("OverwriteLayoutCanvas", typeof(RectTransform), typeof(Canvas));
+            canvas.GetComponent<Canvas>().renderMode = RenderMode.WorldSpace;
+            var instance = Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(
+                PhaseLMenuSceneBuilder.MainMenuPrefabPath), canvas.transform);
+            try
+            {
+                var scale = Mathf.Sqrt(width / 1920f * height / 1080f);
+                canvas.GetComponent<RectTransform>().sizeDelta = new Vector2(width / scale, height / scale);
+                var root = instance.GetComponent<RectTransform>();
+                root.sizeDelta = Vector2.zero;
+                var view = instance.GetComponent<MainMenuView>();
+                view.SetOverwriteConfirmVisible(true, 3);
+                Canvas.ForceUpdateCanvases();
+                var window = (RectTransform)root.Find("OverwriteConfirm");
+                Assert.That(window.rect.width, Is.LessThan(root.rect.width));
+                Assert.That(window.rect.height, Is.LessThan(root.rect.height));
+                // 프레임 이미지의 보이는 안쪽 경계(투명 여백 및 금속 모서리 제외).
+                foreach (var name in new[] { "OverwriteTitle", "OverwriteMessage", "OverwriteYes", "OverwriteNo", "OverwriteClose" })
+                {
+                    var rect = (RectTransform)window.Find(name);
+                    Assert.That(Mathf.Abs(rect.anchoredPosition.x) + rect.rect.width / 2f, Is.LessThan(312f), name);
+                    Assert.That(Mathf.Abs(rect.anchoredPosition.y) + rect.rect.height / 2f, Is.LessThan(136f), name);
+                }
+                var body = window.Find("OverwriteMessage").GetComponent<TMP_Text>();
+                for (var slot = 1; slot <= 3; slot++)
+                {
+                    view.SetOverwriteConfirmVisible(true, slot);
+                    body.ForceMeshUpdate();
+                    Assert.That(body.text, Is.EqualTo("슬롯 " + slot + " 세이브를 덮어쓰시겠습니까?"));
+                    Assert.That(body.isTextOverflowing, Is.False);
+                    Assert.That(body.textInfo.lineCount, Is.EqualTo(1));
+                    Assert.That(body.preferredWidth, Is.LessThanOrEqualTo(body.rectTransform.rect.width));
+                }
+            }
+            finally { Object.DestroyImmediate(canvas); }
         }
 
         [Test]

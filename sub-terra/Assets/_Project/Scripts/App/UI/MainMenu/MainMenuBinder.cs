@@ -14,6 +14,7 @@ namespace SubTerra.App.UI.MainMenu
         [SerializeField] private MainMenuView view;
 
         private MainMenuPresenter presenter;
+        private bool startingNewGame;
 
         public MainMenuPresenter Presenter => presenter;
         public bool IsBound => presenter != null;
@@ -122,6 +123,7 @@ namespace SubTerra.App.UI.MainMenu
 
         private void OnNewGameClicked()
         {
+            if (startingNewGame) return;
             presenter?.RequestNewGame();
         }
 
@@ -207,7 +209,11 @@ namespace SubTerra.App.UI.MainMenu
         private void OnStartNewGame(int slotId)
         {
             // 덮어쓰기 확인을 통과한 경로만 여기에 온다.
-            SaveRuntimeController.Instance?.StartNewGame(slotId, confirmOverwrite: true);
+            if (startingNewGame) return;
+            var runtime = SaveRuntimeController.Instance;
+            if (runtime == null) return;
+            startingNewGame = true;
+            if (!runtime.StartNewGame(slotId, confirmOverwrite: true)) startingNewGame = false;
         }
 
         private void OnQuit()

@@ -28,6 +28,7 @@ namespace SubTerra.App.UI.MainMenu
         [SerializeField] private TMP_Text overwriteMessageText;
         [SerializeField] private Button overwriteConfirmButton;
         [SerializeField] private Button overwriteCancelButton;
+        [SerializeField] private Button overwriteCloseButton;
 
         [Header("Settings")]
         [SerializeField] private GameObject settingsRoot;
@@ -93,6 +94,7 @@ namespace SubTerra.App.UI.MainMenu
             quitButton?.onClick.AddListener(OnQuit);
             overwriteConfirmButton?.onClick.AddListener(OnOverwriteConfirm);
             overwriteCancelButton?.onClick.AddListener(OnOverwriteCancel);
+            if (overwriteCloseButton != null) overwriteCloseButton.onClick.AddListener(OnOverwriteCancel);
             settingsApplyButton?.onClick.AddListener(OnSettingsApply);
             settingsCancelButton?.onClick.RemoveListener(OnSettingsCancel);
             settingsCancelButton?.onClick.AddListener(OnSettingsCancel);
@@ -151,6 +153,7 @@ namespace SubTerra.App.UI.MainMenu
             quitButton?.onClick.RemoveListener(OnQuit);
             overwriteConfirmButton?.onClick.RemoveListener(OnOverwriteConfirm);
             overwriteCancelButton?.onClick.RemoveListener(OnOverwriteCancel);
+            if (overwriteCloseButton != null) overwriteCloseButton.onClick.RemoveListener(OnOverwriteCancel);
             settingsApplyButton?.onClick.RemoveListener(OnSettingsApply);
             settingsCancelButton?.onClick.RemoveListener(OnSettingsCancel);
             settingsDefaultsButton?.onClick.RemoveListener(OnSettingsDefaults);

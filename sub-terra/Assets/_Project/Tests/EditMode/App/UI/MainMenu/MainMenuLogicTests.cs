@@ -159,6 +159,25 @@ namespace SubTerra.App.Tests.UI.MainMenu
         }
 
         [Test]
+        public void Issue119_OverwriteConfirm_ConsumesGateOnceAndUsesPendingSlot()
+        {
+            Assert.That(CreateSave().Save(1, CreateContext(777)).IsSuccess, Is.True);
+            var view = new RecordingMenuView();
+            using (var presenter = new MainMenuPresenter(view, CreateLoad(), "test"))
+            {
+                var starts = new List<int>();
+                presenter.StartNewGameConfirmed += starts.Add;
+                Assert.That(presenter.RequestNewGame(), Is.EqualTo(NewGameRequestStatus.AwaitingOverwriteConfirm));
+                presenter.SelectSlot(2);
+                Assert.That(presenter.ConfirmOverwriteNewGame(), Is.EqualTo(NewGameRequestStatus.ReadyToStart));
+                Assert.That(presenter.ConfirmOverwriteNewGame(), Is.EqualTo(NewGameRequestStatus.Failed));
+                Assert.That(presenter.ConfirmOverwriteNewGame(), Is.EqualTo(NewGameRequestStatus.Failed));
+                Assert.That(starts, Is.EqualTo(new[] { 1 }));
+                Assert.That(view.OverwriteVisible, Is.False);
+            }
+        }
+
+        [Test]
         public void L_F05_ExplorationStart_PreparesAndLoadsOnceOnMultiInvoke()
         {
             // 런타임이 쓰는 단일 가드: 연타 시 prepare/load 각 1회.

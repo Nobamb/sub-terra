@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Text;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEditor.TestTools.TestRunner.Api;
 using UnityEngine;
 
@@ -12,6 +13,7 @@ namespace SubTerra.App.Editor.DataValidation
     {
         private static TestRunnerApi api;
         private static ResultWriter receiver;
+        private static SceneAsset overwriteTestStartScene;
 
         [MenuItem("SubTerra/Tests/Run Phase L Edit Mode")]
         public static void RunEditMode()
@@ -43,6 +45,20 @@ namespace SubTerra.App.Editor.DataValidation
                     "SubTerra.App.Tests.PlayMode.RunFailure.RunFailureRuntimePlayModeTests"
                 },
                 "phase-l-playmode-results.txt");
+        }
+
+        [MenuItem("SubTerra/Tests/Run Main Menu Overwrite Popup Play Mode")]
+        public static void RunMainMenuOverwritePlayMode()
+        {
+            const string preference = "SubTerra.BootstrapPlayModeStartScene.Enabled";
+            SessionState.SetBool("SubTerra.Issue119.RestoreStart", true);
+            SessionState.SetBool("SubTerra.Issue119.PreviousStart", EditorPrefs.GetBool(preference, true));
+            EditorPrefs.SetBool(preference, false);
+            overwriteTestStartScene = EditorSceneManager.playModeStartScene;
+            EditorSceneManager.playModeStartScene = null;
+            Run(TestMode.PlayMode, new[] { "SubTerra.App.Tests.PlayMode" },
+                new[] { "SubTerra.App.Tests.PlayMode.Issue119OverwritePopupPlayModeTests" },
+                "issue119-playmode.txt");
         }
 
         public static void RunAllAppEditMode()
@@ -148,6 +164,18 @@ namespace SubTerra.App.Editor.DataValidation
                 output.AppendLine("DurationSec: " + result.Duration);
                 File.WriteAllText(path, output.ToString());
                 File.WriteAllText(path + ".done", result.TestStatus.ToString());
+                if (SessionState.GetBool("SubTerra.Issue119.RestoreStart", false))
+                {
+                    TestRunnerApi.SaveResultToFile(result, path + ".xml");
+                    EditorPrefs.SetBool("SubTerra.BootstrapPlayModeStartScene.Enabled",
+                        SessionState.GetBool("SubTerra.Issue119.PreviousStart", true));
+                    SessionState.EraseBool("SubTerra.Issue119.RestoreStart");
+                }
+                if (overwriteTestStartScene != null)
+                {
+                    EditorSceneManager.playModeStartScene = overwriteTestStartScene;
+                    overwriteTestStartScene = null;
+                }
                 Debug.Log("[SubTerra] Phase L finished Pass=" + passed + " Fail=" + failed);
                 EditorApplication.delayCall += () => ReleaseRunner(this);
             }

@@ -109,15 +109,14 @@ namespace SubTerra.App.Editor.DataValidation
             overwriteRect.anchorMin = overwriteRect.anchorMax = new Vector2(0.5f, 0.5f);
             overwriteRect.pivot = new Vector2(0.5f, 0.5f);
             overwriteRect.anchoredPosition = Vector2.zero;
-            overwriteRect.sizeDelta = new Vector2(624f, 286f);
-            overwriteRoot.GetComponent<Image>().color = new Color(0.1f, 0.05f, 0.05f, 0.98f);
+            overwriteRect.sizeDelta = new Vector2(720f, 400f);
             overwriteRoot.SetActive(false);
             var overwriteMsg = CreateText(
-                overwriteRoot.transform, "OverwriteMessage", new Vector2(0f, 28.6f), new Vector2(546f, 78f), 23.4f, "덮어쓰기?");
+                overwriteRoot.transform, "OverwriteMessage", Vector2.zero, new Vector2(564f, 60f), 23.4f, "슬롯 1 세이브를 덮어쓰시겠습니까?");
             var overwriteYes = CreateButton(
-                overwriteRoot.transform, "OverwriteYes", new Vector2(-120f, -28.6f), new Vector2(182f, 57.2f), "확인", out _, 23.4f);
+                overwriteRoot.transform, "OverwriteYes", new Vector2(-112f, -104f), new Vector2(184f, 50f), "확인", out _, 23.4f);
             var overwriteNo = CreateButton(
-                overwriteRoot.transform, "OverwriteNo", new Vector2(120f, -28.6f), new Vector2(182f, 57.2f), "취소", out _, 23.4f);
+                overwriteRoot.transform, "OverwriteNo", new Vector2(112f, -104f), new Vector2(184f, 50f), "취소", out _, 23.4f);
 
             var settings = BuildSettingsPanel(root.transform);
 
@@ -139,6 +138,7 @@ namespace SubTerra.App.Editor.DataValidation
             AssignSettingsToView(so, settings);
             so.ApplyModifiedPropertiesWithoutUndo();
 
+            ApplyOverwriteConfirmLayout(root);
             var binder = root.AddComponent<MainMenuBinder>();
             var binderSo = new SerializedObject(binder);
             binderSo.FindProperty("view").objectReferenceValue = view;
@@ -147,6 +147,139 @@ namespace SubTerra.App.Editor.DataValidation
             PrefabUtility.SaveAsPrefabAsset(root, MainMenuPrefabPath);
             Object.DestroyImmediate(root);
             return MainMenuPrefabPath;
+        }
+
+        [MenuItem("SubTerra/UI/Build Main Menu Overwrite Confirm Layout")]
+        public static void BuildOverwriteConfirmLayout()
+        {
+            var root = PrefabUtility.LoadPrefabContents(MainMenuPrefabPath);
+            try
+            {
+                ApplyOverwriteConfirmLayout(root);
+                PrefabUtility.SaveAsPrefabAsset(root, MainMenuPrefabPath);
+            }
+            finally
+            {
+                PrefabUtility.UnloadPrefabContents(root);
+            }
+        }
+
+        private static void ApplyOverwriteConfirmLayout(GameObject root)
+        {
+            var window = (RectTransform)root.transform.Find("OverwriteConfirm");
+            PlaceOverwriteElement(window, Vector2.zero, new Vector2(720f, 400f));
+            var frame = window.GetComponent<UnityEngine.UI.Image>();
+            frame.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(PromptB120StartBriefingBuilder.FramePath);
+            frame.type = UnityEngine.UI.Image.Type.Simple;
+            frame.preserveAspect = false;
+            frame.color = new Color(0.68f, 0.83f, 0.85f, 1f);
+            frame.raycastTarget = true;
+            if (window.GetComponent<PopupWindowDrag>() == null) window.gameObject.AddComponent<PopupWindowDrag>();
+
+            var body = window.Find("OverwriteMessage").GetComponent<TMP_Text>();
+            PlaceOverwriteElement(body.rectTransform, Vector2.zero, new Vector2(564f, 60f));
+            body.fontSize = 23.4f;
+            body.enableAutoSizing = false;
+            body.textWrappingMode = TextWrappingModes.NoWrap;
+            body.overflowMode = TextOverflowModes.Overflow;
+            body.margin = new Vector4(8f, 4f, 8f, 4f);
+            body.alignment = TextAlignmentOptions.Center;
+            body.color = new Color(0.91f, 0.96f, 0.97f, 1f);
+            body.raycastTarget = false;
+            body.text = "슬롯 1 세이브를 덮어쓰시겠습니까?";
+
+            var titleRect = OverwriteElement(window, "OverwriteTitle", new Vector2(0f, 105f), new Vector2(460f, 46f));
+            var title = titleRect.GetComponent<TextMeshProUGUI>();
+            if (title == null) title = titleRect.gameObject.AddComponent<TextMeshProUGUI>();
+            title.font = body.font;
+            title.text = "덮어쓰기?";
+            title.fontSize = 25f;
+            title.alignment = TextAlignmentOptions.Center;
+            title.textWrappingMode = TextWrappingModes.NoWrap;
+            title.color = new Color(0.6f, 0.92f, 0.94f, 1f);
+            title.raycastTarget = false;
+
+            var yes = window.Find("OverwriteYes").GetComponent<UnityEngine.UI.Button>();
+            var no = window.Find("OverwriteNo").GetComponent<UnityEngine.UI.Button>();
+            PlaceOverwriteElement((RectTransform)yes.transform, new Vector2(-112f, -104f), new Vector2(184f, 50f));
+            PlaceOverwriteElement((RectTransform)no.transform, new Vector2(112f, -104f), new Vector2(184f, 50f));
+            SkinOverwriteButton(yes, PromptB104SettingsMenuBuilder.ButtonOffPath, PromptB104SettingsMenuBuilder.ButtonOnPath);
+            SkinOverwriteButton(no, PromptB104SettingsMenuBuilder.ButtonOffPath, PromptB104SettingsMenuBuilder.ButtonOnPath);
+
+            var closeRect = OverwriteElement(window, "OverwriteClose", new Vector2(264f, 105f), new Vector2(46f, 46f));
+            var close = closeRect.GetComponent<UnityEngine.UI.Button>();
+            if (close == null) close = closeRect.gameObject.AddComponent<UnityEngine.UI.Button>();
+            SkinOverwriteButton(close, PromptB104SettingsMenuBuilder.CloseNormalPath, PromptB104SettingsMenuBuilder.CloseHoverPath);
+            var hover = closeRect.Find("HoverOverlay").GetComponent<UnityEngine.UI.Image>();
+            // 설정창 X와 같은 0.15초 이미지 전환.
+            close.targetGraphic = hover;
+            close.transition = UnityEngine.UI.Selectable.Transition.ColorTint;
+            var colors = close.colors;
+            colors.normalColor = colors.disabledColor = new Color(1f, 1f, 1f, 0f);
+            colors.highlightedColor = colors.selectedColor = Color.white;
+            colors.pressedColor = new Color(0.85f, 0.95f, 1f, 1f);
+            colors.fadeDuration = 0.15f;
+            close.colors = colors;
+            var closeSkin = close.GetComponent<MenuSpriteButtonSkin>();
+            Object.DestroyImmediate(closeSkin);
+
+            var view = new SerializedObject(root.GetComponent<MainMenuView>());
+            view.FindProperty("overwriteCloseButton").objectReferenceValue = close;
+            view.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        private static void SkinOverwriteButton(UnityEngine.UI.Button button, string offPath, string onPath)
+        {
+            var image = button.GetComponent<UnityEngine.UI.Image>();
+            if (image == null) image = button.gameObject.AddComponent<UnityEngine.UI.Image>();
+            image.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(offPath);
+            image.color = Color.white;
+            image.type = UnityEngine.UI.Image.Type.Simple;
+            image.raycastTarget = true;
+            var overlayRect = OverwriteElement(button.transform, "HoverOverlay", Vector2.zero, ((RectTransform)button.transform).sizeDelta);
+            var overlay = overlayRect.GetComponent<UnityEngine.UI.Image>();
+            if (overlay == null) overlay = overlayRect.gameObject.AddComponent<UnityEngine.UI.Image>();
+            overlay.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(onPath);
+            overlay.color = new Color(1f, 1f, 1f, 0f);
+            overlay.raycastTarget = false;
+            button.targetGraphic = image;
+            button.transition = UnityEngine.UI.Selectable.Transition.None;
+            var navigation = button.navigation;
+            navigation.mode = UnityEngine.UI.Navigation.Mode.None;
+            button.navigation = navigation;
+            var skin = button.GetComponent<MenuSpriteButtonSkin>();
+            if (skin == null) skin = button.gameObject.AddComponent<MenuSpriteButtonSkin>();
+            var skinData = new SerializedObject(skin);
+            skinData.FindProperty("overlay").objectReferenceValue = overlay;
+            skinData.ApplyModifiedPropertiesWithoutUndo();
+            var label = button.GetComponentInChildren<TMP_Text>(true);
+            if (label != null)
+            {
+                PlaceOverwriteElement(label.rectTransform, Vector2.zero, ((RectTransform)button.transform).sizeDelta - new Vector2(16f, 8f));
+                label.fontSize = 23.4f;
+                label.raycastTarget = false;
+                label.transform.SetAsLastSibling();
+            }
+        }
+
+        private static RectTransform OverwriteElement(Transform parent, string name, Vector2 position, Vector2 size)
+        {
+            var rect = parent.Find(name) as RectTransform;
+            if (rect == null)
+            {
+                rect = new GameObject(name, typeof(RectTransform)).GetComponent<RectTransform>();
+                rect.SetParent(parent, false);
+            }
+            PlaceOverwriteElement(rect, position, size);
+            return rect;
+        }
+
+        private static void PlaceOverwriteElement(RectTransform rect, Vector2 position, Vector2 size)
+        {
+            rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = position;
+            rect.sizeDelta = size;
+            rect.localScale = Vector3.one;
         }
 
         public static string BuildSurfaceBasePrefab()

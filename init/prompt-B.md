@@ -1044,3 +1044,47 @@ UI 및 건설/가이드 조작
 상단: 퀘스트 클리어 제목과 진행도 2 / 18, X 버튼을 같은 높이에 배치. X는 장식 테두리에서 조금 안쪽으로 넣기.
 중앙: 체크 아이콘 옆에 퀘스트 이름과 완료 설명을 묶기. 아이콘은 두 줄 텍스트 전체의 가운데에 맞추기.
 하단: 보상 아래에 자원 아이콘·이름·수량을 일정한 간격으로 배치. 지급 안내는 보상 아래에 작은 글씨로 두기.
+
+122. 메인 메뉴에서 새 게임을 눌렀을 때 뜨는 세이브 덮어쓰기 확인 팝업 레이아웃을 고쳐줘. 이슈 #119의 「새 게임 선택시 나타나는 팝업창 레이아웃 수정」이다.
+
+작업 전에 CLAUDE.md, init/rule.md를 읽고, 아래를 직접 확인해줘. 새 게임 덮어쓰기 전용 UI 리워크 문서는 work_process/MVP2/UI-fix-markdown-document에 없다. 없는 문서를 가정하지 말고, 현재 프리팹·빌더와 이미 개편된 팝업을 기준으로 맞춰줘.
+
+- 프리팹: Assets/\_Project/Prefabs/UI/MainMenuPanel.prefab 의 OverwriteConfirm
+- 씬: Assets/\_Project/Scenes/App/MainMenu.unity
+- 빌더: Assets/\_Project/Editor/DataValidation/PhaseLMenuSceneBuilder.cs
+- 표시/문구: MainMenuView.SetOverwriteConfirmVisible
+- 확인 게이트: NewGameOverwriteGate, MainMenuPresenter.RequestNewGame / ConfirmOverwriteNewGame / CancelOverwriteNewGame
+- 입력: MainMenuBinder의 X키 처리
+- 시각 기준: 설정창, 퀘스트 클리어창, 시작 브리핑(B-120). 프레임은 Assets/\_Project/Art/UI/Gameplay/Quest/Clear/quest-clear-popup-frame.png, 버튼은 Assets/\_Project/Art/UI/MainMenu/Settings/button-active-off.png 와 button-active-on.png 를 재사용해줘. 분위기 참고는 work_process/MVP2/UI-fix-markdown-document/concept-image/setting/setting-menu.png (필요하면 setting-menu-asset.png). 없는 컨셉 이미지나 에셋 파일명은 만들지 말아줘.
+
+### 1. 현재 문제
+
+지금 창은 스프라이트 없는 어두운 붉은 단색 패널(624×286)이고, 자식은 OverwriteMessage, OverwriteYes, OverwriteNo뿐이다. 프롬프트 16에서 크기·글자(23.4)·버튼 위치(확인 x -120 / 취소 x 120, y -28.6)를 키운 상태라, 그 숫자만 다시 30% 키우는 작업은 하지 말아줘. 텍스트가 프레임 밖으로 나가지 않게, 버튼은 패널 안에서 가로 중앙으로 짝을 맞춰줘.
+
+### 2. 레이아웃
+
+화면 중앙의 작은 확인창으로 유지해줘. 시작 브리핑처럼 크게 키우거나 글리치 연출을 넣지는 말아줘.
+
+- 어두운 금속 패널 + 각진 청록 프레임. 두꺼운 테두리와 강한 글로우를 반복하지 말아줘.
+- 상단: 짧은 제목(기존 의미 유지. 문구를 새로 지어내지 말 것)과 X 버튼을 같은 높이에. X는 프레임 장식 안쪽. 형태·크기는 설정창 닫기 버튼과 맞추고, 정사각형으로.
+- 본문: 지금 런타임 문구 「슬롯 {n} 세이브를 덮어쓰시겠습니까?」를 유지. TMP, 프레임 안쪽 여백, 줄바꿈·넘침 없음.
+- 하단: 확인 / 취소. 문구 유지. 같은 크기, 패널 가로 중앙 기준 좌우 대칭, 프레임에 붙거나 밖으로 나가지 않게.
+- 호버는 설정창 버튼과 같은 짧은 전환(button-active-off → button-active-on, 약한 청록). 과한 확대는 금지.
+- 빈 슬롯은 지금처럼 팝업 없이 바로 시작.
+
+### 3. 동작 유지
+
+- 확인만 덮어쓰기 후 새 게임. 취소·X 버튼·기존 X키는 세이브와 런타임 상태를 바꾸지 않고 창만 닫기.
+- 연속 클릭으로 시작이 두 번 나가지 않게.
+- 설정창이 위에 있을 때의 정렬·닫기 우선순위(PopupWindowSorting)를 깨지 말아줘.
+- 메뉴 드래그가 버튼·X 클릭을 가로막지 않게. 이 창을 드래그 대상으로 둘지는 기존 PopupWindowDrag를 본 뒤, 버튼 입력이 되면 유지하고 아니면 이 창에서만 빼줘.
+- PhaseLMenuSceneBuilder를 다시 돌려도 옛 단색 패널로 되돌아가지 않게 빌더도 같이 수정해줘.
+- Prompt16_MainMenuAndOverwriteDialog_AreCenteredAndEnlarged 가 624×286을 고정한다. 크기를 바꾸면 그 테스트를 새 레이아웃 기준으로 고쳐줘. 옛 픽셀 값을 맞추려고 디자인을 되돌리지 말아줘.
+
+### 4. 검증
+
+1920×1080과 다른 비율 하나 이상에서, 점유 슬롯(팝업)과 빈 슬롯(팝업 없음)을 확인해줘. 본문 넘침, 버튼·X 중앙/안쪽 배치, 확인 시 새 게임 1회, 취소·X 버튼·X키 시 세이브 유지, 설정창과 겹칠 때의 닫기 순서.
+
+### 5. 결과
+
+변경한 Prefab / Scene / Builder / Script / 테스트, 재사용한 스프라이트, 확인·취소에 연결된 기존 동작, 검증 결과, 남은 제한을 정리해줘.
