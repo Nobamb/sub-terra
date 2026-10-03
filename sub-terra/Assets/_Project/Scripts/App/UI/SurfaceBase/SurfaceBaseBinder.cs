@@ -352,15 +352,8 @@ namespace SubTerra.App.UI.SurfaceBase
                 return;
             }
 
-            if (!presenter.TryGetMineResetQuote(out var currentGold, out _, out var feeGold))
-            {
-                view.SetMessage(string.Format(
-                    LocalizationService.Get("mine_reset.fail.gold"),
-                    feeGold,
-                    currentGold));
-                return;
-            }
-
+            // 골드가 모자라도 팝업은 열어 부족분을 보여 준다. 실행은 팝업의 버튼 비활성과 MineResetService 검사가 막는다.
+            presenter.TryGetMineResetQuote(out var currentGold, out _, out var feeGold);
             view.SetMessage(string.Empty);
             view.SetMineResetConfirmVisible(true, currentGold, feeGold);
         }
@@ -376,6 +369,12 @@ namespace SubTerra.App.UI.SurfaceBase
                 || (economyBinder != null && economyBinder.IsModalVisible))
             {
                 view.SetMessage(LocalizationService.Get("mine_reset.fail.busy"));
+                return;
+            }
+
+            // 골드 부족 상태에서는 버튼이 꺼져 있지만, 다른 입력 경로로도 차감 시도가 가지 않게 한 번 더 막는다.
+            if (presenter != null && !presenter.TryGetMineResetQuote(out _, out _, out _))
+            {
                 return;
             }
 

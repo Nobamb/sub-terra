@@ -77,7 +77,14 @@ namespace SubTerra.App.UI.SurfaceBase
         [SerializeField] private TMP_Text resetMineConfirmBodyText;
         [SerializeField] private Button resetMineConfirmYesButton;
         [SerializeField] private Button resetMineConfirmNoButton;
-        [SerializeField] private UnityEngine.UI.Button resetMineConfirmCloseButton;
+        [SerializeField] private TMP_Text resetMineConfirmCostText;
+        [SerializeField] private TMP_Text resetMineConfirmBalanceText;
+        [SerializeField] private TMP_Text[] resetMineConfirmRowTitleTexts;
+        [SerializeField] private TMP_Text[] resetMineConfirmRowDescTexts;
+        // 실행 버튼의 청록 강조·호버 오버레이. 골드 부족 시 함께 끈다.
+        [SerializeField] private GameObject resetMineConfirmAccentRoot;
+        private bool mineResetBusy;
+        private bool mineResetAffordable = true;
 
         [Header("Settings")]
         [SerializeField] private GameObject settingsRoot;
@@ -141,9 +148,10 @@ namespace SubTerra.App.UI.SurfaceBase
             settingsCancelButton?.onClick.AddListener(OnSettingsCancel);
             settingsDefaultsButton?.onClick.AddListener(OnSettingsDefaults);
             resetMineButton?.onClick.AddListener(OnResetMine);
+            resetMineConfirmYesButton?.onClick.RemoveListener(OnResetMineConfirm);
             resetMineConfirmYesButton?.onClick.AddListener(OnResetMineConfirm);
+            resetMineConfirmNoButton?.onClick.RemoveListener(OnResetMineCancel);
             resetMineConfirmNoButton?.onClick.AddListener(OnResetMineCancel);
-            resetMineConfirmCloseButton?.onClick.AddListener(OnResetMineCancel);
             resolutionPrevButton?.onClick.AddListener(OnResolutionPrev);
             resolutionNextButton?.onClick.AddListener(OnResolutionNext);
             languageCycleButton?.onClick.AddListener(OnLanguageCycle);
@@ -197,7 +205,6 @@ namespace SubTerra.App.UI.SurfaceBase
             resetMineButton?.onClick.RemoveListener(OnResetMine);
             resetMineConfirmYesButton?.onClick.RemoveListener(OnResetMineConfirm);
             resetMineConfirmNoButton?.onClick.RemoveListener(OnResetMineCancel);
-            resetMineConfirmCloseButton?.onClick.RemoveListener(OnResetMineCancel);
             resolutionPrevButton?.onClick.RemoveListener(OnResolutionPrev);
             resolutionNextButton?.onClick.RemoveListener(OnResolutionNext);
             languageCycleButton?.onClick.RemoveListener(OnLanguageCycle);
@@ -336,28 +343,10 @@ namespace SubTerra.App.UI.SurfaceBase
                 SetMineResetButtonFee(fee);
             }
 
-            if (resetMineConfirmTitleText != null)
+            if (visible)
             {
-                resetMineConfirmTitleText.text = LocalizationService.Get(
-                    "mine_reset.confirm.title",
-                    "새 광산 구역");
+                RefreshMineResetConfirmContent(Mathf.Max(0, currentGold), fee);
             }
-
-            if (resetMineConfirmBodyText != null)
-            {
-                resetMineConfirmBodyText.text = string.Format(
-                    LocalizationService.Get("mine_reset.confirm.body"),
-                    currentGold,
-                    Mathf.Max(0, currentGold - fee),
-                    fee);
-            }
-
-            SetButtonLabel(
-                resetMineConfirmYesButton,
-                LocalizationService.Get("mine_reset.confirm.yes", "확인"));
-            SetButtonLabel(
-                resetMineConfirmNoButton,
-                LocalizationService.Get("mine_reset.confirm.no", "취소"));
 
             resetMineConfirmRoot.SetActive(visible);
             if (visible)
@@ -372,26 +361,109 @@ namespace SubTerra.App.UI.SurfaceBase
             }
         }
 
+        private void RefreshMineResetConfirmContent(int currentGold, int fee)
+        {
+            // 골드가 모자라면 실행 버튼을 막고, 차감 후 잔액 대신 부족분을 보여 준다(음수 표기 없음).
+            mineResetAffordable = currentGold >= fee;
+
+            if (resetMineConfirmTitleText != null)
+            {
+                resetMineConfirmTitleText.text = LocalizationService.Get(
+                    "mine_reset.confirm.title",
+                    "새 광산 구역");
+            }
+
+            if (resetMineConfirmBodyText != null)
+            {
+                resetMineConfirmBodyText.text = LocalizationService.Get("mine_reset.confirm.desc");
+            }
+
+            if (resetMineConfirmCostText != null)
+            {
+                resetMineConfirmCostText.text = string.Format(
+                    LocalizationService.Get("mine_reset.confirm.cost"), fee);
+                resetMineConfirmCostText.color = mineResetAffordable ? CostColor : ShortageColor;
+            }
+
+            if (resetMineConfirmBalanceText != null)
+            {
+                resetMineConfirmBalanceText.text = mineResetAffordable
+                    ? string.Format(
+                        LocalizationService.Get("mine_reset.confirm.balance"), currentGold, currentGold - fee)
+                    : string.Format(
+                        LocalizationService.Get("mine_reset.confirm.shortage"), currentGold, fee - currentGold);
+                resetMineConfirmBalanceText.color = mineResetAffordable ? BalanceColor : ShortageColor;
+            }
+
+            var hours = Mathf.RoundToInt((float)(MineResetService.CycleDurationSeconds / 3600d));
+            SetConfirmRow(0, "mine_reset.confirm.reset.title", "mine_reset.confirm.reset.desc", null);
+            SetConfirmRow(1, "mine_reset.confirm.keep.title", "mine_reset.confirm.keep.desc", null);
+            SetConfirmRow(2, "mine_reset.confirm.timer.title", "mine_reset.confirm.timer.desc", hours);
+
+            SetButtonLabel(
+                resetMineConfirmYesButton,
+                string.Format(LocalizationService.Get("mine_reset.confirm.create"), fee));
+            SetButtonLabel(
+                resetMineConfirmNoButton,
+                LocalizationService.Get("mine_reset.confirm.no", "취소"));
+            ApplyMineResetConfirmInteractable();
+        }
+
+        private void SetConfirmRow(int index, string titleKey, string descKey, object arg)
+        {
+            if (resetMineConfirmRowTitleTexts != null
+                && index < resetMineConfirmRowTitleTexts.Length
+                && resetMineConfirmRowTitleTexts[index] != null)
+            {
+                resetMineConfirmRowTitleTexts[index].text = LocalizationService.Get(titleKey);
+            }
+
+            if (resetMineConfirmRowDescTexts != null
+                && index < resetMineConfirmRowDescTexts.Length
+                && resetMineConfirmRowDescTexts[index] != null)
+            {
+                var desc = LocalizationService.Get(descKey);
+                resetMineConfirmRowDescTexts[index].text = arg != null ? string.Format(desc, arg) : desc;
+            }
+        }
+
+        private static readonly Color CostColor = new Color(1f, 0.9f, 0.42f, 1f);
+        private static readonly Color BalanceColor = new Color(0.78f, 0.88f, 0.9f, 1f);
+        private static readonly Color ShortageColor = new Color(1f, 0.5f, 0.45f, 1f);
+        private static readonly Color DisabledLabelColor = new Color(0.55f, 0.62f, 0.65f, 1f);
+
+        private void ApplyMineResetConfirmInteractable()
+        {
+            if (resetMineConfirmYesButton != null)
+            {
+                resetMineConfirmYesButton.interactable = !mineResetBusy && mineResetAffordable;
+                var label = resetMineConfirmYesButton.GetComponentInChildren<TMP_Text>(true);
+                if (label != null)
+                {
+                    label.color = mineResetAffordable ? Color.white : DisabledLabelColor;
+                }
+            }
+
+            if (resetMineConfirmAccentRoot != null)
+            {
+                resetMineConfirmAccentRoot.SetActive(mineResetAffordable);
+            }
+
+            if (resetMineConfirmNoButton != null)
+            {
+                resetMineConfirmNoButton.interactable = !mineResetBusy;
+            }
+        }
+
         public void SetMineResetBusy(bool busy)
         {
+            mineResetBusy = busy;
             if (resetMineButton != null)
             {
                 resetMineButton.interactable = !busy;
             }
 
-            if (resetMineConfirmYesButton != null)
-            {
-                resetMineConfirmYesButton.interactable = !busy;
-            }
-
-            if (resetMineConfirmNoButton != null)
-            {
-                resetMineConfirmNoButton.interactable = !busy;
-            }
-            if (resetMineConfirmCloseButton != null)
-            {
-                resetMineConfirmCloseButton.interactable = !busy;
-            }
+            ApplyMineResetConfirmInteractable();
         }
 
         public void SetSettingsVisible(bool visible)
