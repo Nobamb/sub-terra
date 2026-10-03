@@ -13,7 +13,6 @@ namespace SubTerra.App.Editor.DataValidation
     public static class MineResetTimedPopupSkinBuilder
     {
         public const string SkinAssetPath = "Assets/_Project/Resources/UI/MineResetTimedPopupSkin.asset";
-        private const string CloseButtonPath = "Assets/_Project/Art/UI/Gameplay/Quest/Clear/x-button.png";
         private const string ArtFolder = MineResetSurfaceBaseLayoutBuilder.ArtFolder;
 
         [MenuItem("SubTerra/UI/Build Prompt-B 124 Timed Reset Popup Skin")]
@@ -52,11 +51,8 @@ namespace SubTerra.App.Editor.DataValidation
             skin.coreGlow = Load(MineResetSurfaceBaseLayoutBuilder.CoreGlowPath);
             skin.scanLine = Load(MineResetSurfaceBaseLayoutBuilder.ScanLinePath);
             skin.titleDivider = Load(MineResetSurfaceBaseLayoutBuilder.TitleDividerPath);
-            skin.timerPlate = Load(MineResetSurfaceBaseLayoutBuilder.TimerPlatePath);
-            skin.clockIcon = Load(MineResetSurfaceBaseLayoutBuilder.TimerIconPath);
             skin.buttonConfirm = Load(MineResetSurfaceBaseLayoutBuilder.ButtonConfirmPath);
             skin.buttonConfirmHover = Load(MineResetSurfaceBaseLayoutBuilder.ButtonConfirmHoverPath);
-            skin.closeButton = Load(CloseButtonPath);
             skin.mote = Load(MineResetSurfaceBaseLayoutBuilder.MotePath);
             skin.titleGlowMaterial = AssetDatabase.LoadAssetAtPath<Material>(MineResetSurfaceBaseLayoutBuilder.TitleMaterialPath);
             skin.font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(MineResetSurfaceBaseLayoutBuilder.FontPath);

@@ -21,6 +21,8 @@ namespace SubTerra.App.UI.SurfaceBase
         [SerializeField] private CanvasGroup rootGroup;
         [SerializeField] private Image backdrop;
         [SerializeField] private float backdropAlpha = 0.82f;
+        // 열기 동안 딤이 이 비율 아래로 내려가지 않는다. 앞 연출(시계)이 깔아 둔 딤을 이어받을 때만 쓰며 기본 0이다.
+        [SerializeField] private float backdropFloor;
         [SerializeField] private RectTransform card;
         [SerializeField] private RectTransform body;
         [SerializeField] private Image scanLine;
@@ -109,6 +111,11 @@ namespace SubTerra.App.UI.SurfaceBase
             coreGlow = layers.CoreGlow;
             caveGlows = layers.CaveGlows;
             motes = layers.Motes;
+        }
+
+        public void SetBackdropFloor(float floor)
+        {
+            backdropFloor = Mathf.Clamp01(floor);
         }
 
         public void PlayOpen()
@@ -256,7 +263,7 @@ namespace SubTerra.App.UI.SurfaceBase
             }
 
             if (rootGroup != null) rootGroup.alpha = alpha;
-            SetAlpha(backdrop, backdropAlpha * pose.Backdrop);
+            SetAlpha(backdrop, backdropAlpha * (folding ? pose.Backdrop : Mathf.Max(pose.Backdrop, backdropFloor)));
 
             var cardSize = card != null ? card.sizeDelta : new Vector2(1332f, 1021f);
             if (scanLine != null)

@@ -26,11 +26,8 @@ namespace SubTerra.App.UI.HUD
         public Sprite coreGlow;
         public Sprite scanLine;
         public Sprite titleDivider;
-        public Sprite timerPlate;
-        public Sprite clockIcon;
         public Sprite buttonConfirm;
         public Sprite buttonConfirmHover;
-        public Sprite closeButton;
         public Sprite mote;
         public Material titleGlowMaterial;
         public TMP_FontAsset font;

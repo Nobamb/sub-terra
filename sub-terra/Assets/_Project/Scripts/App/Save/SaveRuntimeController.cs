@@ -704,7 +704,11 @@ namespace SubTerra.App.Save
             var sceneName = SceneManager.GetActiveScene().name;
             if (!IsMineResetSessionScene(sceneName))
             {
-                mineResetClockOverlay?.SetSessionVisible(false);
+                // 지상에서는 시계만 이미 숨겨져 있으며, 초기화 완료 알림은 확인할 때까지 유지한다.
+                if (sceneName != SceneNames.SurfaceBase)
+                {
+                    mineResetClockOverlay?.SetSessionVisible(false);
+                }
                 return;
             }
 

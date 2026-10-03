@@ -159,15 +159,25 @@ namespace SubTerra.Shared.Localization
             Add("mine_reset.fail.busy", "지금은 새 광산을 열 수 없습니다.", "Cannot open a new mine right now.");
             Add("mine_reset.fail.surface", "지상 기지에서만 새 광산을 열 수 있습니다.", "New mines can only be opened at Surface Base.");
             Add("mine_reset.clock.label", "광산 초기화", "Mine Reset");
-            Add("mine_reset.timed.title", "광산 초기화", "Mine Reset");
+            Add("mine_reset.timed.title", "탐사 시간 종료", "Exploration Time Over");
+            Add(
+                "mine_reset.timed.highlight",
+                "새로운 광산 구역이 생성되었습니다.",
+                "A new mine area has been generated.");
+            // {0}은 MineResetService.CycleDurationSeconds에서 계산한 시간 수다.
             Add(
                 "mine_reset.timed.body.mine",
-                "지하 탐사 시간 3시간이 지나 광산이 초기화되었습니다.\n지상 기지로 이동하며, 캔 지형과 설치한 시설이 모두 사라집니다.\n다음 유료 초기화 비용은 500G입니다.",
-                "3 hours of underground exploration have passed, so the mine was reset.\nYou are returned to Surface Base. Mined terrain and placed facilities are cleared.\nThe next paid reset costs 500G.");
+                "탐사 시간 {0}시간이 만료되어 지상 기지로 이동했습니다.\n채굴한 타일과 설치한 지하 시설이 초기화되었습니다.",
+                "The {0}-hour exploration time expired and you were moved to Surface Base.\nMined tiles and placed underground facilities were reset.");
             Add(
                 "mine_reset.timed.body.surface",
-                "지하 탐사 시간 3시간이 지나 광산이 초기화되었습니다.\n캔 지형과 설치한 시설이 모두 사라집니다.\n다음 유료 초기화 비용은 500G입니다.",
-                "3 hours of underground exploration have passed, so the mine was reset.\nMined terrain and placed facilities are cleared.\nThe next paid reset costs 500G.");
+                "탐사 시간 {0}시간이 만료되어 광산이 초기화되었습니다.\n채굴한 타일과 설치한 지하 시설이 초기화되었습니다.",
+                "The {0}-hour exploration time expired and the mine was reset.\nMined tiles and placed underground facilities were reset.");
+            // {0}은 다음 유료 초기화 비용(G)이다.
+            Add(
+                "mine_reset.timed.footer",
+                "다음 유료 초기화 비용: {0:N0} G",
+                "Next paid reset cost: {0:N0} G");
             Add("mine_reset.timed.ok", "확인", "OK");
         }
 
