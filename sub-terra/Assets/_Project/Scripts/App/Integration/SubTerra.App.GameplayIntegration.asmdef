@@ -10,6 +10,7 @@
     "SubTerra.Gameplay.Power",
     "SubTerra.Gameplay.Drone",
     "SubTerra.Gameplay.Mining",
+    "SubTerra.Gameplay.Snapshot",
     "SubTerra.Gameplay.Player",
     "SubTerra.Gameplay.IntegrationBridge",
     "Unity.TextMeshPro",

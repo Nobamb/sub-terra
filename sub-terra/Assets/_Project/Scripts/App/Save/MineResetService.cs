@@ -110,6 +110,22 @@ namespace SubTerra.App.Save
             return GetFeeGold(state?.MineResetCycle?.PaidResetCount ?? 0);
         }
 
+#if UNITY_EDITOR || SUBTERRA_BUILD_DEVELOPMENT
+        /// <summary>
+        /// 다음 유료 초기화 1회의 요금. 0은 공짜.
+        /// 성공한 TryReset만 소비하고 PaidResetCount는 그대로 증가한다.
+        /// </summary>
+        public static void SetNextPaidResetFeeOverride(GameState state, int feeGold)
+        {
+            if (state == null)
+            {
+                return;
+            }
+
+            state.SetNextPaidResetFeeOverride(feeGold);
+        }
+#endif
+
         public static double GetRemainingSeconds(double elapsedSeconds)
         {
             var elapsed = elapsedSeconds < 0d || double.IsNaN(elapsedSeconds) || double.IsInfinity(elapsedSeconds)
@@ -183,6 +199,12 @@ namespace SubTerra.App.Save
             var previous = cache.Peek();
             var previousSeed = previous?.worldSeed ?? 0;
             var fee = paid ? GetFeeGold(state) : 0;
+#if UNITY_EDITOR || SUBTERRA_BUILD_DEVELOPMENT
+            if (paid && state.TryPeekNextPaidResetFeeOverride(out var overrideFee))
+            {
+                fee = overrideFee;
+            }
+#endif
             if (paid && gold < fee)
             {
                 result = new MineResetResult(
@@ -217,6 +239,9 @@ namespace SubTerra.App.Save
             // 모든 실패 조건을 먼저 확인한 뒤 골드·월드·주기를 연속 커밋한다.
             if (paid)
             {
+#if UNITY_EDITOR || SUBTERRA_BUILD_DEVELOPMENT
+                state.ConsumeNextPaidResetFeeOverride();
+#endif
                 state.SetGold(gold - fee);
                 state.MineResetCycle.ApplyPaidReset();
             }

@@ -108,6 +108,21 @@ namespace SubTerra.Gameplay.Player
             invulnerableUntil = 0f;
             return changed;
         }
+
+#if UNITY_EDITOR || SUBTERRA_BUILD_DEVELOPMENT
+        /// <summary>피해·실패 경로를 타지 않고 체력과 행동 가능 여부만 맞춘다.</summary>
+        internal void SetHealthAbsolute(int health)
+        {
+            var clamped = health < 0 ? 0 : health;
+            if (clamped > MaximumHealth)
+            {
+                clamped = MaximumHealth;
+            }
+
+            Health = clamped;
+            CanAct = clamped > 0;
+        }
+#endif
     }
 
     public static class PlayerFallDamageRules

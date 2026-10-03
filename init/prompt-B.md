@@ -1357,3 +1357,147 @@ B-123-2처럼 어두운 금속과 각진 청록 프레임 안에 광산이 보�
 1920×1080과 다른 비율 하나에서, 초기화가 끝난 뒤에만 창이 뜨는지. 본문이 프레임 안에 있는지. 확인·X 버튼·X키 후 창만 사라지고 골드·시드·요금·씬이 그대로인지. 연타로 초기화가 한 번 더 돌지 않는지. 유료 확인창을 열었을 때 123-2 레이아웃과 연출이 그대로인지. 전자시계 생김새와 T키 토글이 그대로인지.
 
 완료 후 등장 → 유지 발광 → 닫기를 실제 화면에서 확인해 줘. 변경 파일, 재사용한 스프라이트, 숨기기만 하는 입력, 시계와 확인창을 안 바꿨다는 점을 정리해 줘.
+
+125. 작업 전 AGENTS.md와 init/rules를 읽고, 이번 단계에 해당하는 코드만 확인해 줘.
+     (이슈: https://github.com/Nobamb/sub-terra/issues/145)
+     공통 규칙
+
+- 켜는 조건은 `#if UNITY_EDITOR || SUBTERRA_BUILD_DEVELOPMENT` 만 사용. DemoObjectiveDebugTools(F9)와 같은 방식.
+- `Debug.isDebugBuild`, `DEVELOPMENT_BUILD`, `SUBTERRA_BUILD_QA` 로 켜지 마. QA 프로필은 Development Build지만 치트는 꺼야 한다.
+- QA/Release에는 터미널 타입과 치트 API가 컴파일되지 않게 해 줘. 호출부도 같은 #if 안에 둬.
+- ProjectSettings/\*, Packages/manifest.json, packages-lock.json, 씬/프리팹 YAML은 수정하지 마.
+- 이번 단계 범위 밖 파일은 수정하지 마. 게임 UI(#119 팝업), 유료/타임드 광산 초기화 연출, 시계(T), ResetMineConfirm(123-2), TimedResetPopup(124)은 건드리지 마.
+- 커밋/푸시/파괴적 Git 명령 금지.
+- 조사는 이번 단계에 필요한 파일로 한정해. 프로젝트 전체를 훑지 마.
+- 완료 후 git status, 관련 diff, 가장 좁은 범위의 테스트 결과, 변경 파일, 미해결 사항을 보고해 줘.
+
+125-1. 개발자 터미널(#145)이 쓸 디버그 API만 추가해 줘. 터미널 UI와 명령어 파서는 만들지 마. 이후 단계가 이 API를 호출한다.
+
+추가할 API (모두 게이트 `#if` 안, 기존 동작은 바꾸지 마)
+
+1. 체력 절대값 세터 (PlayerSurvivalController 또는 IPlayerHealthCommand 계약)
+   - `SetHealthAbsolute(int)`: [0, MaximumHealth] 클램프, CanAct = health > 0, HealthChanged 발행.
+   - ApplyDamage/FailureRequested를 호출하지 마. hp 0이 런 실패 팝업을 띄우면 안 된다.
+2. 업그레이드 세터 (ProgressionService)
+   - 레벨을 0..UpgradeData.MaxLevel로 클램프해서 쓰고 UpgradeChanged를 반드시 발행.
+   - TryPurchase를 쓰지 마(골드·재료 소모).
+   - UpgradeState의 존 해금 ID는 지우지 마. 존 클리어 API는 만들지 마.
+3. 심층 강제 해금 (ProgressionService)
+   - drill.speed ≥ 2, drone.scan ≥ 2, gas resist ≥ 1로 올리고(이미 더 높으면 유지) zone.deep 해금.
+   - UpgradeChanged와 DeepZoneAccessChanged 발행. 퀘스트 13개는 강제로 깨지 마.
+4. 광산 요금 일회성 오버라이드 (MineResetService)
+   - TryReset이 오버라이드를 한 번 소비. 오버라이드로 free 처리해도 PaidResetCount는 기존처럼 증가.
+   - 500에서 공짜로 한 번 하면 다음 요금은 1000. PaidResetCount를 바꿔서 free를 흉내 내지 마.
+5. 경과 시간 세터 (SaveRuntimeController)
+   - 기존 AddMineResetElapsed는 delta <= 0을 무시하고 일시정지 중에는 틱도 멈춘다. 그것과 별개로 경과 시간을 직접 쓰는 세터를 추가.
+   - 남은 시간이 0 이하가 되면 기존 만료 경로(ExecuteTimedMineReset + ShowTimedResetPopup)로 처리.
+6. 팝업 없는 광산 초기화 경로 (SaveRuntimeController)
+   - ExecuteTimedMineReset 경로를 재사용하되 ShowTimedResetPopup은 호출하지 마.
+   - suppressMineWorldCapture = true → TryTimedReset → SurfaceBase 로드 → SaveCurrent(MineReset).
+   - TryReset(유료)은 쓰지 마. TryTimedReset을 씬 밖에서 단독 호출하지 마(옛 광산이 다시 캡처됨).
+   - 결과: PaidResetCount = 0, 요금 500G, 타이머 리셋.
+7. 설정 열림 가드
+   - SurfaceBaseBinder.Update, MainMenuBinder.Update가 UiPauseGate를 보지 않는다. "debug-terminal" owner가 게이트를 잡고 있으면 Escape로 설정이 열리지 않게 가드를 추가해 줘.
+
+검증
+
+- EditMode 테스트로: hp 0 세터가 FailureRequested를 안 내는지, 업그레이드 세터 클램프와 이벤트 발행, 오버라이드 후 다음 요금 1000, 심층 강제 해금 후 IsZoneUnlocked(Deep).
+- QA/Release 심볼에서 새 API가 노출되지 않는지.
+
+완료 후: 추가·수정한 파일, 새 API 시그니처 목록을 정리해 줘. (다음 단계에서 그대로 사용)
+
+125-2. 개발자 디버그 터미널 UI와 입력 처리, 단순 명령을 만들어 줘. 125-1에서 만든 API는 아직 연결하지 마.
+사용 가능한 API 목록: [125-1 완료 보고에서 붙여 넣기]
+
+배치
+
+- 새 MonoBehaviour는 `SubTerra.App.Integration` 어셈블리(SubTerra.App.GameplayIntegration.asmdef)에 둬.
+- GameBootstrapper의 DontDestroyOnLoad 루트(GameBootstrapper.ClaimInstance가 지키는 쪽) 자식으로 붙여. 광산 씬에만 두지 마.
+- 오버레이는 코드로 생성. 참고: MineResetClockOverlay.Create (Canvas + CanvasScaler(Scale With Screen Size) + TMP_Settings.defaultFontAsset + overrideSorting). 스크롤·애니메이션은 Time.unscaledDeltaTime.
+- 상태 접근: GameBootstrapper.Instance.State. 그 외 서비스는 Instance에서 읽어.
+
+UI · 입력
+
+- 화면 중앙, 검은 단색 패널, 모노스페이스에 가까운 TMP. 메탈 프레임·글리치 금지.
+- 상단 출력(스크롤) + 하단 입력줄. 결과·에러·help는 출력에 Append.
+- 단축키 Ctrl + `: Keyboard.current에서 leftCtrl 또는 rightCtrl + backquoteKey.wasPressedThisFrame. 토글.
+- 열릴 때 UiPauseGate.Acquire("debug-terminal"), UiKeyboardSubmitGuard.ClearSelection(). 닫힐 때 Release.
+- 열린 동안 이동·채굴 불가(PauseInputSuspender가 담당). F9는 막지 마.
+- Enter 동작: 자동완성 후보가 떠 있으면 후보 확정만, 한 번 더 Enter가 실행.
+
+자동완성
+
+- 한글·영문 별칭 모두 인식. 후보에는 명령 이름과 짧은 인자 힌트만. ↑↓로 고르고 Enter로 확정.
+- 알 수 없는 명령/인자는 에러 한 줄. 예외로 게임을 죽이지 마.
+
+명령 (인자는 공백 분리, 영문 대소문자 무시, 수량은 int. 실패 시 상태 변경 없이 메시지)
+
+- gold / 골드 `<n>`: GameState.SetGold(현재 + n). 음수여도 0 미만이 안 되게(100G에서 -1000 → 0). EconomyService.TrySpend는 쓰지 마.
+- 화물 (구리/copper, 철/iron, 리튬/lithium, 엔진연료/engine_fuel) `<n>`
+  - ID: mineral.copper, mineral.iron, mineral.lithium, item.rare.engine_fuel (DataIds.Minerals).
+  - 양수: InventoryService.TryAddMineral. 용량 초과분은 버리고 담긴 개수만 보고.
+  - 음수: min(보유량, |n|)만 차감. (10개에서 copper -20 → 0). 모르는 ID는 에러.
+- energy / 전력 `<n|full|가득>`: GameState.SetCurrentEnergy. full은 Player.MaxEnergy.
+- hp / 체력 `<n|full|가득>`: full은 RestoreFull(), 숫자는 125-A의 SetHealthAbsolute. 플레이어는 FindFirstObjectByType<PlayerSurvivalController>(), 없으면 에러.
+- questclear / qc / 퀘스트클리어 / 퀘클: TutorialDirectorBinder.DebugForceAdvanceObjective → DemoObjectiveDirector.DebugForceAdvance. 데모 완료면 no-op 메시지. 보상 팝업 흐름은 유지.
+- help / 도움말 / h: 현재 등록된 모든 명령의 별칭·인자·예시를 출력. 영어 명령 기준으로 한 벌 이상. Localization 키는 새로 만들지 마(하드코드 OK).
+
+명령 등록 구조는 이후 단계(C, D)가 명령을 추가할 수 있게 명령 이름·별칭·인자 힌트·핸들러를 한곳에 등록하는 방식으로 만들어 줘.
+
+검증 (Editor Play)
+
+- Ctrl+` 토글, 열리면 이동/채굴 불가, 닫으면 복구, Escape로 설정이 안 열림.
+- 위 단순 명령 각각, 기존 F9·시계(T) 회귀 없음.
+
+완료 후: 추가 파일, 게이트 define, 등록된 명령 목록, 명령을 추가하는 방법을 정리해 줘.
+
+[공통 헤더]
+
+125-3. 125-2의 명령 등록 구조에 아래 명령을 추가해 줘. 125-1, 125-2의 API를 호출만 하고 새 코어 API는 만들지 마.
+사용 가능한 API / 등록 방법: [125-1, 125-2 완료 보고에서 붙여 넣기]
+
+- upgrade / 업그레이드 `[n|full|fullall|clear|clearall]`
+  - 선택 대상: ProgressionPanelBinder → Presenter.SelectedUpgradeId. 비어 있고 fullall/clearall이 아니면 "업그레이드 창에서 항목을 선택" 에러.
+  - n 생략 = +1. 최대 초과 금지(lv2에서 upgrade 2, max3 → 3).
+  - full = 선택 항목 MaxLevel. fullall = 각 에셋 MaxLevel (드론 스캔/구조는 2, 나머지는 데이터 기준 3. 전부 3으로 밀지 마).
+  - clear = 선택 0. clearall = 드릴 포함 전부 0. 심층 존 해금 플래그는 유지.
+- deepunlock / 심층지역해금: 125-A의 강제 해금 API 호출.
+- initmine / 광산초기화: 125-A의 팝업 없는 초기화 경로 호출.
+- timer / 타이머 `<n> [sec|s|초 | min|m|분(기본) | hour|h|시간]` 또는 `end|종료`
+  - 부호: `timer -10` → 남은 시간 10분 증가(경과 감소). `timer 2h` → 2시간 감소(경과 증가).
+  - 남은 시간이 0 이하면 즉시 타임드 초기화(팝업 있는 기존 만료 경로). `end`도 같은 경로.
+- minecost / 광산비용 `<n|free|공짜>`: 125-A의 오버라이드 설정. PaidResetCount는 건드리지 마.
+- minepayment / 광산지불 `[N] [costfree]`
+  - N회 유료 TryResetMine 반복(소수 또는 1 미만 → 1). costfree면 각 회차 오버라이드 0.
+  - InsufficientGold면 중단 메시지. SurfaceBase에서만 동작하고, 광산에서 호출하면 에러 메시지.
+
+검증
+
+- upgrade fullall이 드론 max 2를 지키고 존 해금을 유지. clearall 후에도 IsZoneUnlocked(Deep) 유지.
+- initmine: 팝업 없이 지상 복귀, 맵 리셋, 요금 500.
+- timer end: 팝업 있음. minecost free 후 다음 요금이 이전 배수 규칙(1000).
+- deepunlock 후 심층 접근 가능. 기존 ResetMineConfirm(123-2), TimedResetPopup(124) 회귀 없음.
+
+완료 후: 추가·수정 파일과 추가된 명령 목록을 정리해 줘.
+
+[공통 헤더]
+
+125-4. 125-2의 명령 등록 구조에 블록 스폰 명령을 추가해 줘.
+사용 가능한 API / 등록 방법: [이전 단계 완료 보고에서 붙여 넣기]
+
+- 생성/spawn + (일반/normal | 구리/copper | 철/iron | 리튬/lithium | 가스/gas | 엔진연료/engine_fuel) + 선택 골드/gold
+- Mine_Demo_Integration(SceneNames.Integration)에서만 동작. Surface/MainMenu면 에러.
+- 타일 ID (MineLayerTileIds 문자열을 Integration에 복제해도 됨. DemoWorld asmdef는 직접 참조하지 마)
+  - normal → tile.rock.normal / tile.rock.normal.gold
+  - copper/iron/lithium → tile.copper 등 / 뒤에 `.gold`
+  - gas → tile.gas-pocket / tile.gas-pocket.gold
+  - engine_fuel → tile.locked.signal (골드 변형 없음. gold 붙이면 에러)
+- 조회와 설치: MiningTileResolver.TryFindTileById 후 foregroundTilemap.SetTile. 앞에 타일이 있으면 교체.
+- 셀: PlayerMovement.FacingDirection 기준 가로 한 칸. MiningSystem.TryGetDirectionalCell의 로직을 복제(그 메서드는 private이고 빈 칸을 거절하므로 호출하지 마).
+- 반드시 WorldSnapshotSystem.RecordChangedTile(x, y, tileId, durability)를 호출. minedCells에 있어도 변경 기록으로 복원되게.
+- TilemapCollider2D 갱신. 가스 타일은 설치만으로 ActivateAt 하지 마.
+- tile.locked.signal은 심층 해금 전 채굴 불가인 기존 규칙 유지.
+
+검증: 앞칸 스폰 후 저장·로드 또는 리젠에서도 타일이 유지되는지, 공중 스폰이 실패하지 않는지.
+
+완료 후: 추가 파일과 스폰 명령 사용법을 정리해 줘.

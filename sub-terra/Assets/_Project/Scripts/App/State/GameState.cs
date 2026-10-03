@@ -589,6 +589,29 @@ namespace SubTerra.App.State
             MineResetCycleChanged?.Invoke();
         }
 
+#if UNITY_EDITOR || SUBTERRA_BUILD_DEVELOPMENT
+        private bool hasNextPaidResetFeeOverride;
+        private int nextPaidResetFeeOverride;
+
+        internal void SetNextPaidResetFeeOverride(int feeGold)
+        {
+            hasNextPaidResetFeeOverride = true;
+            nextPaidResetFeeOverride = feeGold < 0 ? 0 : feeGold;
+        }
+
+        internal bool TryPeekNextPaidResetFeeOverride(out int feeGold)
+        {
+            feeGold = nextPaidResetFeeOverride;
+            return hasNextPaidResetFeeOverride;
+        }
+
+        internal void ConsumeNextPaidResetFeeOverride()
+        {
+            hasNextPaidResetFeeOverride = false;
+            nextPaidResetFeeOverride = 0;
+        }
+#endif
+
         /// <summary>퀘스트 보상 수령/포기/보류 상태를 저장 가능한 진행 State에 기록한다.</summary>
         public void SetQuestRewardSettlement(string pendingQuestRewardId, int settledCount)
         {

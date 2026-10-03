@@ -191,7 +191,7 @@ namespace SubTerra.App.UI.SurfaceBase
             {
                 if (settings.IsOpen) OnSettingsCancel();
                 else if (view.IsUpgradeVisible) OnUpgradeCloseClicked();
-                else OnSettingsClicked();
+                else if (CanOpenSettingsFromEscape()) OnSettingsClicked();
             }
             if (!keyboard.xKey.wasPressedThisFrame) return;
             var selected = UnityEngine.EventSystems.EventSystem.current;
@@ -272,6 +272,18 @@ namespace SubTerra.App.UI.SurfaceBase
             // 단일 진입점: 런타임 가드+Scene 로드 결과만 Presenter에 전달한다.
             // Presenter가 자체 가드로 선점 성공 처리하지 않는다.
             presenter.RequestExplorationStart(TryStartExplorationViaRuntime);
+        }
+
+        private static bool CanOpenSettingsFromEscape()
+        {
+#if UNITY_EDITOR || SUBTERRA_BUILD_DEVELOPMENT
+            if (SubTerra.App.UI.UiPauseGate.IsHeldBy(
+                    SaveRuntimeController.DebugTerminalPauseOwner))
+            {
+                return false;
+            }
+#endif
+            return true;
         }
 
         private void OnSettingsClicked()

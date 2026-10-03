@@ -735,7 +735,7 @@ namespace SubTerra.App.Save
             }
         }
 
-        private IEnumerator ExecuteTimedMineReset()
+        private IEnumerator ExecuteTimedMineReset(bool showPopup = true)
         {
             if (pendingTimedMineReset)
             {
@@ -795,10 +795,55 @@ namespace SubTerra.App.Save
 
             EnsureMineResetClockOverlay();
             mineResetClockOverlay?.RefreshFromState();
-            mineResetClockOverlay?.ShowTimedResetPopup(wasInMine);
+            if (showPopup)
+            {
+                mineResetClockOverlay?.ShowTimedResetPopup(wasInMine);
+            }
+
             suppressMineWorldCapture = false;
             pendingTimedMineReset = false;
         }
+
+#if UNITY_EDITOR || SUBTERRA_BUILD_DEVELOPMENT
+        public const string DebugTerminalPauseOwner = "debug-terminal";
+
+        /// <summary>
+        /// AddMineResetElapsed와 달리 일시정지 중에도 경과 시간을 직접 쓴다.
+        /// 남은 시간이 0 이하면 기존 만료 경로로 팝업까지 연다.
+        /// </summary>
+        public void SetMineResetElapsedSeconds(double elapsedSeconds)
+        {
+            if (boundState == null || boundState.MineResetCycle == null)
+            {
+                return;
+            }
+
+            if (!boundState.MineResetCycle.SetElapsedSeconds(elapsedSeconds))
+            {
+                return;
+            }
+
+            dirty = true;
+            boundState.NotifyMineResetCycleChanged();
+            if (mineResetClockOverlay != null)
+            {
+                mineResetClockOverlay.RefreshFromState();
+            }
+
+            if (MineResetService.IsCycleExpired(boundState))
+            {
+                StartCoroutine(ExecuteTimedMineReset());
+            }
+        }
+
+        /// <summary>
+        /// 타임드 초기화의 월드 교체·지상 이동·저장만 수행하고 완료 팝업은 띄우지 않는다.
+        /// </summary>
+        public void ResetMineWithoutPopup()
+        {
+            StartCoroutine(ExecuteTimedMineReset(false));
+        }
+#endif
 
         private void EnsureMineResetClockOverlay()
         {

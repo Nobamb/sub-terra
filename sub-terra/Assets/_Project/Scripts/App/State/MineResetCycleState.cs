@@ -37,6 +37,20 @@ namespace SubTerra.App.State
             ElapsedSeconds += deltaSeconds;
         }
 
+#if UNITY_EDITOR || SUBTERRA_BUILD_DEVELOPMENT
+        /// <summary>일시정지·양수 델타 규칙과 별개로 경과 시간을 직접 쓴다.</summary>
+        internal bool SetElapsedSeconds(double elapsedSeconds)
+        {
+            if (double.IsNaN(elapsedSeconds) || double.IsInfinity(elapsedSeconds))
+            {
+                return false;
+            }
+
+            ElapsedSeconds = elapsedSeconds < 0d ? 0d : elapsedSeconds;
+            return true;
+        }
+#endif
+
         internal void ApplyPaidReset()
         {
             ElapsedSeconds = 0d;

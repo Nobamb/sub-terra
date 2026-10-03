@@ -224,6 +224,15 @@ namespace SubTerra.Gameplay.Player
             return changed;
         }
 
+#if UNITY_EDITOR || SUBTERRA_BUILD_DEVELOPMENT
+        public void SetHealthAbsolute(int health)
+        {
+            EnsureState();
+            State.SetHealthAbsolute(health);
+            PublishStateChanged();
+        }
+#endif
+
         public PlayerHealthReadModel GetHealth()
         {
             EnsureState();

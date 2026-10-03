@@ -94,7 +94,7 @@ namespace SubTerra.App.UI.MainMenu
             if (Keyboard.current.escapeKey.wasPressedThisFrame)
             {
                 if (presenter.Settings.IsOpen) OnSettingsCancel();
-                else OnSettingsClicked();
+                else if (CanOpenSettingsFromEscape()) OnSettingsClicked();
             }
             if (Keyboard.current.xKey.wasPressedThisFrame)
             {
@@ -125,6 +125,18 @@ namespace SubTerra.App.UI.MainMenu
         {
             if (startingNewGame) return;
             presenter?.RequestNewGame();
+        }
+
+        private static bool CanOpenSettingsFromEscape()
+        {
+#if UNITY_EDITOR || SUBTERRA_BUILD_DEVELOPMENT
+            if (SubTerra.App.UI.UiPauseGate.IsHeldBy(
+                    SaveRuntimeController.DebugTerminalPauseOwner))
+            {
+                return false;
+            }
+#endif
+            return true;
         }
 
         private void OnSettingsClicked()

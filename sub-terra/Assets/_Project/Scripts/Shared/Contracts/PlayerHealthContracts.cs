@@ -27,6 +27,11 @@ namespace SubTerra.Shared
     {
         /// <returns>체력이 실제로 증가했으면 true, 이미 최대 체력이면 false.</returns>
         bool RestoreFull();
+
+#if UNITY_EDITOR || SUBTERRA_BUILD_DEVELOPMENT
+        /// <summary>절대 체력. 0이어도 런 실패를 요청하지 않는다.</summary>
+        void SetHealthAbsolute(int health);
+#endif
     }
 
     /// <summary>붕괴 낙석이 Player 구현을 직접 알지 않고 접촉 피해를 전달하는 경계.</summary>

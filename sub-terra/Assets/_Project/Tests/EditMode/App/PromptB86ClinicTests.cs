@@ -323,6 +323,12 @@ namespace SubTerra.App.Tests
                 CallCount++;
                 return Changed;
             }
+
+#if UNITY_EDITOR || SUBTERRA_BUILD_DEVELOPMENT
+            public void SetHealthAbsolute(int health)
+            {
+            }
+#endif
         }
     }
 }

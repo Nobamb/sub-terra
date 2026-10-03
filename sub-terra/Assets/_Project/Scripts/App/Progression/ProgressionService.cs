@@ -388,6 +388,72 @@ namespace SubTerra.App.Progression
             return result;
         }
 
+#if UNITY_EDITOR || SUBTERRA_BUILD_DEVELOPMENT
+        /// <summary>
+        /// 비용 없이 레벨을 0..MaxLevel로 맞춘다. 존 해금 ID는 유지한다.
+        /// </summary>
+        public bool SetUpgradeLevelAbsolute(string upgradeId, int level)
+        {
+            if (state == null
+                || catalog == null
+                || string.IsNullOrEmpty(upgradeId)
+                || !catalog.TryGetUpgrade(upgradeId, out var data)
+                || data == null
+                || data.MaxLevel <= 0)
+            {
+                return false;
+            }
+
+            var clamped = level < 0 ? 0 : level;
+            if (clamped > data.MaxLevel)
+            {
+                clamped = data.MaxLevel;
+            }
+
+            state.ApplyPurchasedLevel(upgradeId, clamped);
+            if (TryGetSnapshot(upgradeId, out var snapshot))
+            {
+                UpgradeChanged?.Invoke(snapshot);
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// 퀘스트 완료 수를 바꾸지 않고 심층 해금 레벨과 zone.deep만 맞춘다.
+        /// </summary>
+        public void ForceUnlockDeepZone()
+        {
+            if (state == null)
+            {
+                return;
+            }
+
+            RaiseUpgradeAtLeast(DataIds.Upgrades.DrillSpeed, 2);
+            RaiseUpgradeAtLeast(DataIds.Upgrades.DroneScan, 2);
+            RaiseUpgradeAtLeast(DataIds.Upgrades.GasResistance, 1);
+            var didUnlock = state.ApplyZoneUnlock(DataIds.Zones.Deep);
+            DeepZoneAccessChanged?.Invoke(
+                new ZoneAccessResult(true, didUnlock, "심층 구역 잠금 해제됨"));
+        }
+
+        private void RaiseUpgradeAtLeast(string upgradeId, int minimumLevel)
+        {
+            var current = state.GetLevel(upgradeId);
+            if (current >= minimumLevel)
+            {
+                if (TryGetSnapshot(upgradeId, out var snapshot))
+                {
+                    UpgradeChanged?.Invoke(snapshot);
+                }
+
+                return;
+            }
+
+            SetUpgradeLevelAbsolute(upgradeId, minimumLevel);
+        }
+#endif
+
         private ProgressionPurchaseResult CompleteFailure(
             ProgressionPurchaseStatus status,
             string upgradeId,
