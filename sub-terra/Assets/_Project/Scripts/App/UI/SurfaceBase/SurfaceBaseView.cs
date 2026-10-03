@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using SubTerra.App.Core;
 using SubTerra.App.Save;
 using SubTerra.App.Tutorial;
@@ -83,6 +84,8 @@ namespace SubTerra.App.UI.SurfaceBase
         [SerializeField] private TMP_Text[] resetMineConfirmRowDescTexts;
         // 실행 버튼의 청록 강조·호버 오버레이. 골드 부족 시 함께 끈다.
         [SerializeField] private GameObject resetMineConfirmAccentRoot;
+        // 등장(TV 켜짐)·유지 발광·닫기 연출. 없으면 즉시 켜고 끈다.
+        [SerializeField] private MineResetPopupMotion resetMineConfirmMotion;
         private bool mineResetBusy;
         private bool mineResetAffordable = true;
 
@@ -91,7 +94,9 @@ namespace SubTerra.App.UI.SurfaceBase
         private ControlSchemePanel controlSchemePanel;
 
         public bool TryCloseControlSchemePanel() => controlSchemePanel != null && controlSchemePanel.Close();
-        public bool IsMineResetConfirmVisible => resetMineConfirmRoot != null && resetMineConfirmRoot.activeSelf;
+        // 닫히는 연출 중에는 이미 닫힌 것으로 본다. 실행 버튼 연타가 두 번째 차감으로 이어지지 않는다.
+        public bool IsMineResetConfirmVisible => resetMineConfirmRoot != null && resetMineConfirmRoot.activeSelf
+            && (resetMineConfirmMotion == null || !resetMineConfirmMotion.IsClosing);
         public bool IsTopMineResetConfirmWindow(Canvas canvas) =>
             IsMineResetConfirmVisible && PopupWindowSorting.Contains(canvas, resetMineConfirmRoot);
         [SerializeField] private Slider masterVolumeSlider;
@@ -343,22 +348,55 @@ namespace SubTerra.App.UI.SurfaceBase
                 SetMineResetButtonFee(fee);
             }
 
-            if (visible)
+            if (!visible)
             {
-                RefreshMineResetConfirmContent(Mathf.Max(0, currentGold), fee);
+                HideMineResetConfirm();
+                return;
             }
 
-            resetMineConfirmRoot.SetActive(visible);
-            if (visible)
+            RefreshMineResetConfirmContent(Mathf.Max(0, currentGold), fee);
+            resetMineConfirmRoot.SetActive(true);
+            var canvas = resetMineConfirmRoot.GetComponent<Canvas>();
+            if (canvas != null)
             {
-                var canvas = resetMineConfirmRoot.GetComponent<Canvas>();
-                if (canvas != null)
-                {
-                    canvas.overrideSorting = true;
-                    canvas.sortingOrder = 700;
-                }
-                resetMineConfirmRoot.transform.SetAsLastSibling();
+                canvas.overrideSorting = true;
+                canvas.sortingOrder = 700;
             }
+            resetMineConfirmRoot.transform.SetAsLastSibling();
+
+            if (resetMineConfirmMotion != null)
+            {
+                if (Application.isPlaying && resetMineConfirmMotion.isActiveAndEnabled)
+                {
+                    resetMineConfirmMotion.PlayOpen();
+                }
+                else
+                {
+                    resetMineConfirmMotion.SnapOpen();
+                }
+            }
+        }
+
+        private void HideMineResetConfirm()
+        {
+            if (resetMineConfirmMotion != null
+                && Application.isPlaying
+                && resetMineConfirmMotion.isActiveAndEnabled)
+            {
+                var root = resetMineConfirmRoot;
+                resetMineConfirmMotion.PlayClose(() =>
+                {
+                    if (root != null) root.SetActive(false);
+                });
+                return;
+            }
+
+            if (resetMineConfirmMotion != null)
+            {
+                resetMineConfirmMotion.ResetHidden();
+            }
+
+            resetMineConfirmRoot.SetActive(false);
         }
 
         private void RefreshMineResetConfirmContent(int currentGold, int fee)
@@ -380,18 +418,15 @@ namespace SubTerra.App.UI.SurfaceBase
 
             if (resetMineConfirmCostText != null)
             {
-                resetMineConfirmCostText.text = string.Format(
-                    LocalizationService.Get("mine_reset.confirm.cost"), fee);
+                resetMineConfirmCostText.text = FormatGold("mine_reset.confirm.cost", fee);
                 resetMineConfirmCostText.color = mineResetAffordable ? CostColor : ShortageColor;
             }
 
             if (resetMineConfirmBalanceText != null)
             {
                 resetMineConfirmBalanceText.text = mineResetAffordable
-                    ? string.Format(
-                        LocalizationService.Get("mine_reset.confirm.balance"), currentGold, currentGold - fee)
-                    : string.Format(
-                        LocalizationService.Get("mine_reset.confirm.shortage"), currentGold, fee - currentGold);
+                    ? FormatGold("mine_reset.confirm.balance", currentGold, currentGold - fee)
+                    : FormatGold("mine_reset.confirm.shortage", currentGold, fee - currentGold);
                 resetMineConfirmBalanceText.color = mineResetAffordable ? BalanceColor : ShortageColor;
             }
 
@@ -400,13 +435,17 @@ namespace SubTerra.App.UI.SurfaceBase
             SetConfirmRow(1, "mine_reset.confirm.keep.title", "mine_reset.confirm.keep.desc", null);
             SetConfirmRow(2, "mine_reset.confirm.timer.title", "mine_reset.confirm.timer.desc", hours);
 
-            SetButtonLabel(
-                resetMineConfirmYesButton,
-                string.Format(LocalizationService.Get("mine_reset.confirm.create"), fee));
+            SetButtonLabel(resetMineConfirmYesButton, FormatGold("mine_reset.confirm.create", fee));
             SetButtonLabel(
                 resetMineConfirmNoButton,
                 LocalizationService.Get("mine_reset.confirm.no", "취소"));
             ApplyMineResetConfirmInteractable();
+        }
+
+        /// <summary>골드는 언어와 무관하게 천 단위 쉼표로 표기한다(예: 3,000 G).</summary>
+        public static string FormatGold(string key, params object[] values)
+        {
+            return string.Format(CultureInfo.InvariantCulture, LocalizationService.Get(key), values);
         }
 
         private void SetConfirmRow(int index, string titleKey, string descKey, object arg)

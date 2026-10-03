@@ -137,22 +137,22 @@ namespace SubTerra.Shared.Localization
                 "mine_reset.confirm.desc",
                 "기존 광산을 초기화하고 새로운 구역을 생성합니다.",
                 "Resets the current mine and generates a new area.");
-            Add("mine_reset.confirm.cost", "{0} G", "{0} G");
-            Add("mine_reset.confirm.balance", "보유 {0} G → 이용 후 {1} G", "Owned {0} G → After {1} G");
-            Add("mine_reset.confirm.shortage", "보유 {0} G · {1} G 부족", "Owned {0} G · {1} G short");
+            Add("mine_reset.confirm.cost", "{0:N0} G", "{0:N0} G");
+            Add("mine_reset.confirm.balance", "보유 {0:N0} G → 이용 후 {1:N0} G", "Owned {0:N0} G → After {1:N0} G");
+            Add("mine_reset.confirm.shortage", "보유 {0:N0} G · {1:N0} G 부족", "Owned {0:N0} G · {1:N0} G short");
             Add("mine_reset.confirm.reset.title", "초기화", "Reset");
             Add(
                 "mine_reset.confirm.reset.desc",
-                "채굴한 타일, 지하 시설, 붕괴·가스 상태",
-                "Mined tiles, facilities, collapse & gas");
+                "채굴한 타일 · 지하 시설 · 붕괴 · 가스",
+                "Mined tiles · Facilities · Collapse · Gas");
             Add("mine_reset.confirm.keep.title", "유지", "Kept");
             Add(
                 "mine_reset.confirm.keep.desc",
-                "업그레이드, 심층 해금, 보유 광물, 남은 골드",
-                "Upgrades, deep access, minerals, gold left");
+                "업그레이드 · 심층 해금 · 보유 광물",
+                "Upgrades · Deep access · Minerals");
             Add("mine_reset.confirm.timer.title", "탐사 시간", "Timer");
             Add("mine_reset.confirm.timer.desc", "{0}시간으로 다시 시작", "Restarts at {0} hours");
-            Add("mine_reset.confirm.create", "새 광산 생성 · {0} G", "Create New Mine · {0} G");
+            Add("mine_reset.confirm.create", "새 광산 생성 · {0:N0} G", "Create New Mine · {0:N0} G");
             Add("mine_reset.confirm.no", "취소", "Cancel");
             Add("mine_reset.success", "새 광산이 배치되었습니다. 이용료 {0}G.", "New mine laid out. Fee {0}G.");
             Add("mine_reset.fail.gold", "골드가 부족합니다. {0}G 필요 (보유 {1}G).", "Not enough gold. Need {0}G (have {1}G).");
