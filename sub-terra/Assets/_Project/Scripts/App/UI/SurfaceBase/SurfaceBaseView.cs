@@ -1,4 +1,5 @@
 using System;
+using SubTerra.App.Core;
 using SubTerra.App.Save;
 using SubTerra.App.Tutorial;
 using SubTerra.App.UI.MainMenu;
@@ -76,6 +77,7 @@ namespace SubTerra.App.UI.SurfaceBase
         [SerializeField] private TMP_Text resetMineConfirmBodyText;
         [SerializeField] private Button resetMineConfirmYesButton;
         [SerializeField] private Button resetMineConfirmNoButton;
+        [SerializeField] private UnityEngine.UI.Button resetMineConfirmCloseButton;
 
         [Header("Settings")]
         [SerializeField] private GameObject settingsRoot;
@@ -141,6 +143,7 @@ namespace SubTerra.App.UI.SurfaceBase
             resetMineButton?.onClick.AddListener(OnResetMine);
             resetMineConfirmYesButton?.onClick.AddListener(OnResetMineConfirm);
             resetMineConfirmNoButton?.onClick.AddListener(OnResetMineCancel);
+            resetMineConfirmCloseButton?.onClick.AddListener(OnResetMineCancel);
             resolutionPrevButton?.onClick.AddListener(OnResolutionPrev);
             resolutionNextButton?.onClick.AddListener(OnResolutionNext);
             languageCycleButton?.onClick.AddListener(OnLanguageCycle);
@@ -194,6 +197,7 @@ namespace SubTerra.App.UI.SurfaceBase
             resetMineButton?.onClick.RemoveListener(OnResetMine);
             resetMineConfirmYesButton?.onClick.RemoveListener(OnResetMineConfirm);
             resetMineConfirmNoButton?.onClick.RemoveListener(OnResetMineCancel);
+            resetMineConfirmCloseButton?.onClick.RemoveListener(OnResetMineCancel);
             resolutionPrevButton?.onClick.RemoveListener(OnResolutionPrev);
             resolutionNextButton?.onClick.RemoveListener(OnResolutionNext);
             languageCycleButton?.onClick.RemoveListener(OnLanguageCycle);
@@ -326,7 +330,7 @@ namespace SubTerra.App.UI.SurfaceBase
                 return;
             }
 
-            var fee = feeGold >= 0 ? feeGold : MineResetService.FeeGold;
+            var fee = feeGold >= 0 ? feeGold : MineResetService.GetFeeGold(GameBootstrapper.Instance?.State);
             if (feeGold >= 0 || visible)
             {
                 SetMineResetButtonFee(fee);
@@ -358,6 +362,12 @@ namespace SubTerra.App.UI.SurfaceBase
             resetMineConfirmRoot.SetActive(visible);
             if (visible)
             {
+                var canvas = resetMineConfirmRoot.GetComponent<Canvas>();
+                if (canvas != null)
+                {
+                    canvas.overrideSorting = true;
+                    canvas.sortingOrder = 700;
+                }
                 resetMineConfirmRoot.transform.SetAsLastSibling();
             }
         }
@@ -377,6 +387,10 @@ namespace SubTerra.App.UI.SurfaceBase
             if (resetMineConfirmNoButton != null)
             {
                 resetMineConfirmNoButton.interactable = !busy;
+            }
+            if (resetMineConfirmCloseButton != null)
+            {
+                resetMineConfirmCloseButton.interactable = !busy;
             }
         }
 

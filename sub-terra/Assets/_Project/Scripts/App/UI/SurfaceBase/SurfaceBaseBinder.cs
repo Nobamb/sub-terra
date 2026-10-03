@@ -209,7 +209,9 @@ namespace SubTerra.App.UI.SurfaceBase
                 if (deepZone != null) { deepZone.Close(); return; }
                 var clock = topWindow.GetComponentInParent<MineResetClockOverlay>();
                 if (clock != null && clock.TryClosePopup(topWindow)) return;
-                if (view.IsTopMineResetConfirmWindow(topWindow))
+                if (view.IsTopMineResetConfirmWindow(topWindow)
+                    || (view.IsMineResetConfirmVisible && !view.IsUpgradeVisible
+                        && !(economyBinder != null && economyBinder.IsModalVisible)))
                 { OnResetMineCancelled(); return; }
                 if (view.IsTopUpgradeWindow(topWindow))
                 { OnUpgradeCloseClicked(); return; }
@@ -330,13 +332,13 @@ namespace SubTerra.App.UI.SurfaceBase
 
         private void OnResetMineClicked()
         {
-            if (mineResetBusy || presenter == null || view == null)
+            if (presenter == null || view == null)
             {
                 return;
             }
 
             var runtime = SaveRuntimeController.Instance;
-            if (runtime == null
+            if (mineResetBusy || runtime == null
                 || runtime.ActiveSlot == 0
                 || runtime.IsSaveInProgress
                 || runtime.ExplorationGuard.IsInFlight
@@ -365,8 +367,15 @@ namespace SubTerra.App.UI.SurfaceBase
 
         private void OnResetMineConfirmed()
         {
-            if (mineResetBusy || view == null)
+            if (mineResetBusy || view == null || !view.IsMineResetConfirmVisible)
             {
+                return;
+            }
+
+            if ((settings != null && settings.IsOpen) || view.IsUpgradeVisible
+                || (economyBinder != null && economyBinder.IsModalVisible))
+            {
+                view.SetMessage(LocalizationService.Get("mine_reset.fail.busy"));
                 return;
             }
 

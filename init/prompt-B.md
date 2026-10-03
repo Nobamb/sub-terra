@@ -1088,3 +1088,50 @@ UI 및 건설/가이드 조작
 ### 5. 결과
 
 변경한 Prefab / Scene / Builder / Script / 테스트, 재사용한 스프라이트, 확인·취소에 연결된 기존 동작, 검증 결과, 남은 제한을 정리해줘.
+
+123. 지상 기지에서 유료 광산 초기화를 누르기 전에 뜨는 확인 팝업만 새 UI로 맞춰 줘. 이슈 #119의 “광산 초기화 전, 나타나는 팝업”이다. 3시간 만료 팝업(B-124)과 상단 전자시계는 건드리지 마.
+
+### 대상
+
+- 프리팹: Assets/\_Project/Prefabs/UI/SurfaceBasePanel.prefab의 ResetMineConfirm / ResetMineCard
+- 빌더: Assets/\_Project/Editor/DataValidation/MineResetSurfaceBaseLayoutBuilder.cs (ResetButtonY, MessageY, 버튼 이름 유지)
+- 표시: SurfaceBaseView.SetMineResetConfirmVisible, SetMineResetBusy
+- 입력: SurfaceBaseBinder의 OnResetMineClicked / OnResetMineConfirmed / OnResetMineCancelled와 X 키 닫기
+- 문구: LocalizationService의 mine_reset.confirm.title, mine_reset.confirm.body, mine_reset.confirm.yes, mine_reset.confirm.no
+- 테스트: MineResetSurfaceBaseTests (Title / Body / ConfirmButton / CancelButton, 기본 비활성)
+
+### 재사용할 에셋 (새 스프라이트 금지)
+
+- 청록 프레임: Assets/\_Project/Art/UI/Gameplay/Quest/Clear/quest-clear-popup-frame.png
+- 우상단 X: Assets/\_Project/Art/UI/Gameplay/Quest/Clear/x-button.png
+- 금속 패널: Assets/\_Project/Art/UI/MainMenu/Settings/setting-menu-asset.png
+- 확인/취소: Assets/\_Project/Art/UI/MainMenu/Settings/button-active-off.png, button-active-on.png
+- 퀘스트 클리어의 QuestClearPopupMotion, 글리치, 체크 아이콘은 넣지 마. 이 팝업에는 원래 글리치가 없다.
+
+### 레이아웃
+
+- 카드는 화면 중앙. 프레임은 퀘스트 클리어와 같이 흰 틴트 Image. 금속 패널은 프레임 안쪽 인셋에만 두고, 프레임이 금속을 통째로 덮으면 프레임을 테두리로 쓰고 금속은 그 안에 둔다.
+- 제목 「새 광산 구역」은 프레임 안쪽 상단. X는 장식 테두리보다 안쪽 (퀘스트 클리어 ClaimCloseButton과 같은 여백 감각, 40×40).
+- 본문은 프레임 패딩 안에서 줄바꿈. Overflow로 프레임 밖으로 나가지 않게. 왼쪽 정렬 유지.
+- 하단 확인(왼쪽) / 취소(오른쪽). 설정 버튼 스프라이트 SpriteSwap (off → on). 플랫 녹색 Image.color 버튼은 제거. 청록 파티클 기둥은 넣지 마 (그건 B-117 지상 버튼 호버다).
+- ResetMineButton(mine-init-button.png, 아이콘 회전, 호버 명도)은 그대로 둬.
+
+### 동작 유지
+
+- 골드가 이용료 미만이거나 busy/설정/판매/업그레이드/탐사/엘리베이터 중이면 팝업을 열지 말고 기존 mine_reset.fail.gold / fail.busy만.
+- 이용료는 MineResetService.GetFeeGold (500G에서 유료 성공마다 2배). 본문 {2}와 버튼 요금 라벨에 그 값을 쓰고, 레이아웃에 500G를 박지 마. 빌더의 옛 플레이스홀더 문구도 로컬라이즈 키와 같게.
+- 확인은 TryResetMine 한 번. busy 중 확인/취소/리셋 비활성. 성공 시 팝업을 닫고 mine_reset.success. 취소·우상단 X·X 키는 골드·월드·타이머 불변, 팝업만 닫기.
+- Escape는 지금처럼 설정을 열며 이 팝업을 확정하거나 취소하지 마.
+- 설정 모달보다 아래 (sortingOrder 700 유지). 판매/업그레이드 위에 뚫고 나오지 마.
+
+### 검증
+
+- 500G 이상에서 본문에 실제 이용료와 「현재 골드 N → M」, 3시간 타이머 재시작 문장이 프레임 안에 들어가는지.
+- 한 번 유료 초기화 후 다음 확인이 1000G인지. 499G에서는 팝업이 안 열리는지.
+- 취소/X/X 키 후 골드·시드 불변. 확인 연타로 2배가 한 번에 두 번 빠지지 않는지.
+- 설정·판매가 열린 동안 리셋 확인이 그 위에 없는지.
+- EditMode: 기존 노드 이름과 기본 비활성. 추가 Close는 ResetMineCard 자식으로만.
+
+### 결과
+
+변경 파일, 스프라이트 경로, 인셋, 동작이 그대로인 입력(확인/취소/X/Escape/부족 골드)을 정리해 줘.
