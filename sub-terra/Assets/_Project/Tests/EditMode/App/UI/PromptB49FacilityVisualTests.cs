@@ -12,7 +12,7 @@ using UnityEngine;
 
 namespace SubTerra.App.Tests.UI
 {
-    /// <summary>prompt-B 49: 1칸 시설 비주얼·근접 말풍선·가이드 E키 안내.</summary>
+    /// <summary>prompt-B 49: 시설 비주얼·근접 말풍선·가이드 E키 안내.</summary>
     public sealed class PromptB49FacilityVisualTests
     {
         private static readonly string[] TargetPrefabPaths =
@@ -34,6 +34,17 @@ namespace SubTerra.App.Tests.UI
             "Assets/_Project/Data/Buildings/Building_OutpostCore_Basic.asset",
             "Assets/_Project/Data/Buildings/Building_Clinic_Basic.asset"
         };
+
+        [Test]
+        public void PromptB49_OutpostPlacement_UsesTwoByTwoFootprint()
+        {
+            BuildingPlacementDefinition definition =
+                AssetDatabase.LoadAssetAtPath<BuildingPlacementDefinition>(
+                    PromptB49FacilityVisualBuilder.OutpostPlacementPath);
+
+            Assert.That(definition, Is.Not.Null);
+            Assert.That(definition.Footprint, Is.EqualTo(new Vector2Int(2, 2)));
+        }
 
         [Test]
         public void PromptB49_GuideControls_ExplainsNearbyEKeyAndNameBubble()
@@ -90,12 +101,13 @@ namespace SubTerra.App.Tests.UI
                     var visualRoot = instance.transform.Find(
                         PromptB49FacilityVisualBuilder.VisualRootName);
                     var bounds = GetActiveSpriteBounds(visualRoot.gameObject);
-                    bool clinic = path == PromptB49FacilityVisualBuilder.ClinicPrefabPath;
+                    bool largeFacility = path == PromptB49FacilityVisualBuilder.ClinicPrefabPath
+                        || path == PromptB49FacilityVisualBuilder.OutpostPrefabPath;
                     Assert.That(bounds.size.x,
-                        clinic ? Is.InRange(1.75f, 1.82f) : Is.InRange(0.80f, 0.98f),
+                        largeFacility ? Is.InRange(1.70f, 1.82f) : Is.InRange(0.80f, 0.98f),
                         path + " width");
                     Assert.That(bounds.min.y,
-                        Is.EqualTo(clinic ? -1.2f : -0.68f).Within(0.015f),
+                        Is.EqualTo(largeFacility ? -1.2f : -0.68f).Within(0.015f),
                         path + " rock overlap");
 
                     SpriteRenderer artwork = FindPrimaryRenderer(visualRoot);
