@@ -62,6 +62,55 @@ namespace SubTerra.App.UI.SurfaceBase
         public bool IsAnimatingOpen => phase == Phase.Opening && openTime < MineResetPopupTimeline.OpenDuration;
         public float OpenTime => openTime;
 
+        /// <summary>코드로 만든 창(프리팹이 아닌 알림)이 직렬화 필드 대신 참조를 채울 때 쓴다. 재생 로직은 그대로다.</summary>
+        public struct Layers
+        {
+            public CanvasGroup RootGroup;
+            public Image Backdrop;
+            public float BackdropAlpha;
+            public RectTransform Card;
+            public RectTransform Body;
+            public Image ScanLine;
+            public Image EdgeTop;
+            public Image EdgeBottom;
+            public Image FrameFlash;
+            public CanvasGroup Content;
+            public RectTransform HexScale;
+            public Image HexMine;
+            public Image HexBorder;
+            public Image HexBorderGlow;
+            public Image HexCrystalGlow;
+            public Image HexTunnelGlow;
+            public Image HexRings;
+            public Image CoreGlow;
+            public Image[] CaveGlows;
+            public Image[] Motes;
+        }
+
+        public void Bind(Layers layers)
+        {
+            rootGroup = layers.RootGroup;
+            backdrop = layers.Backdrop;
+            backdropAlpha = layers.BackdropAlpha;
+            card = layers.Card;
+            body = layers.Body;
+            scanLine = layers.ScanLine;
+            edgeTop = layers.EdgeTop;
+            edgeBottom = layers.EdgeBottom;
+            frameFlash = layers.FrameFlash;
+            content = layers.Content;
+            hexScale = layers.HexScale;
+            hexMine = layers.HexMine;
+            hexBorder = layers.HexBorder;
+            hexBorderGlow = layers.HexBorderGlow;
+            hexCrystalGlow = layers.HexCrystalGlow;
+            hexTunnelGlow = layers.HexTunnelGlow;
+            hexRings = layers.HexRings;
+            coreGlow = layers.CoreGlow;
+            caveGlows = layers.CaveGlows;
+            motes = layers.Motes;
+        }
+
         public void PlayOpen()
         {
             if (phase == Phase.Opening)

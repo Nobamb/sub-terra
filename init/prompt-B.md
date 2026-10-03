@@ -1271,3 +1271,89 @@ UI 및 건설/가이드 조작
 - 실행 버튼 연타로 골드가 중복 차감되지 않도록 해줘.
 
 완료 후 정지 화면뿐 아니라 등장 → 유지 발광 → 닫기 과정을 실제 게임에서 확인해줘. 첨부 이미지와 비교해 배치·비율·가독성을 검토하고, 가능하면 짧은 영상으로 연출도 확인할 수 있게 해줘.
+
+124. 3시간 탐사 시간이 끝나 광산이 이미 초기화된 뒤에 뜨는 알림만, B-123-2 ‘새 광산 구역’과 같은 금속·청록·광산 입구 느낌으로 바꿔 줘. 유료 확인창(ResetMineConfirm, B-123-2)과 상단 전자시계는 건드리지 마.
+
+작업 전에 CLAUDE.md, init/rule.md를 읽고, 지금 알림이 어디서 만들어지고 언제 뜨는지 확인해 줘. 이 창은 프리팹이 아니다. MineResetClockOverlay.BuildPopup이 런타임에 TimedResetPopup을 만든다. 보여 주는 곳은 SaveRuntimeController.ExecuteTimedMineReset이고, MineResetService.TryTimedReset이 성공하고(광산이면 SurfaceBase로 옮긴 뒤) 저장한 다음 ShowTimedResetPopup(wasInMine)을 호출한다. 확인을 묻는 창이 아니다.
+
+### 대상
+
+- 스크립트: Assets/\_Project/Scripts/App/UI/HUD/MineResetClockOverlay.cs 의 TimedResetPopup / Card / Title / Body / OkButton. 시계(ClockRoot, Label, Digits)는 제외.
+- 호출: SaveRuntimeController.ShowTimedResetPopup. 초기화·씬 이동·저장 순서는 바꾸지 마.
+- 닫기: OkButton → HidePopup. X키는 이미 SurfaceBaseBinder와 UndergroundMenuController가 최상단 캔버스일 때 TryClosePopup으로 같은 HidePopup을 탄다. 그 경로를 유지해 줘.
+- 문구: LocalizationService의 mine_reset.timed.title, mine_reset.timed.body.mine, mine_reset.timed.body.surface, mine_reset.timed.ok. 키를 새로 만들거나 문장을 지어내지 마.
+- 연출 시간표는 MineResetPopupTimeline / MineResetPopupMotion을 재사용해 줘. 확인창 재생 시간이나 ResetMineConfirm 계층은 바꾸지 마. 이 알림에 붙이려면 코드에서 참조를 채우고, 확인창 전용으로 꼬이면 같은 시간표를 쓰는 별도 드라이버를 둬 줘.
+
+### 1. 느낌
+
+지금 창은 640×320 단색 카드와 녹색 단색 확인 버튼뿐이다. 그 플랫 패널을 키우거나 색만 바꾸는 작업은 하지 마.
+
+B-123-2처럼 어두운 금속과 각진 청록 프레임 안에 광산이 보이게 해 줘. 다만 그 창의 축소 복사는 하지 마. 비용, 보유 골드, ‘초기화/유지’ 선택, ‘취소’, ‘새 광산 생성’은 넣지 마. 이미 끝난 일의 알림이다. 확인창(1332×1021)보다 작게, 지금의 납작한 카드보다는 제목·광산·본문·버튼이 숨 쉴 여백으로.
+
+지상 화면이나 광산 씬 배경을 이 팝업 그림으로 바꾸지 마.
+
+### 2. 레이아웃
+
+화면 중앙. 딤은 뒤 클릭만 막고, 딤을 눌러 닫거나 초기화를 되돌리지는 마.
+
+- 외곽: mine-reset-frame.png, 안쪽 금속은 mine-reset-panel.png. 프레임이 금속을 통째로 덮지 않게.
+- 상단: mine_reset.timed.title. 제목 장식은 mine-reset-title-divider.png. 우상단 X는 Assets/\_Project/Art/UI/Gameplay/Quest/Clear/x-button.png, 프레임 장식 안쪽, 정사각형(확인창에 X를 넣던 40×40 감각). 빈 장식 버튼은 남기지 마.
+- 중앙: 팝업 안의 광산(mine-reset-cave.png)과 그 위 육각형 입구(mine-reset-hex-mine.png, mine-reset-hex-border.png). 존재감은 살리되 확인창의 큰 히어로보다는 작게.
+- 본문: fromMine이면 mine_reset.timed.body.mine, 아니면 mine_reset.timed.body.surface. TMP, 프레임 안쪽 여백, 줄바꿈은 키의 개행을 유지. 넘침 없음. 비용 숫자를 따로 크게 뽑지 마. ‘다음 유료 초기화 비용은 500G’는 타임드 리셋이 요금을 500G로 되돌리는 기존 문장이다.
+- 하단: 버튼은 mine_reset.timed.ok 하나. mine-reset-button-confirm.png / mine-reset-button-confirm-hover.png. 프레임에 붙지 않게, 가로 중앙. 취소 버튼 그림은 쓰지 마.
+- 3시간이 지났다는 점은 mine-reset-icon-clock.png와 mine-reset-timer-plate.png 정도로만 보조해 줘. 시계 숫자를 세거나 남은 시간을 보여 주지 마.
+
+### 3. 레이어
+
+첨부 확인창이나 컨셉 한 장을 배경으로 깔고 글자만 올리지 마. 프레임, 패널, 광산, 육각 테두리·발광, 본문, 버튼을 나눠 줘. 텍스트는 TMP.
+
+재사용 (새 스프라이트 금지):
+
+- Assets/\_Project/Art/UI/SurfaceBase/MineReset/mine-reset-frame.png
+- mine-reset-frame-glow.png
+- mine-reset-panel.png
+- mine-reset-cave.png, mine-reset-cave-glow-0.png, mine-reset-cave-glow-1.png, mine-reset-cave-glow-2.png
+- mine-reset-hex-mine.png, mine-reset-hex-border.png, mine-reset-hex-border-glow.png
+- mine-reset-hex-glow-crystals.png, mine-reset-hex-glow-tunnel.png, mine-reset-hex-rings.png, mine-reset-core-glow.png
+- mine-reset-scanline.png
+- mine-reset-title-divider.png
+- mine-reset-icon-clock.png, mine-reset-timer-plate.png
+- mine-reset-button-confirm.png, mine-reset-button-confirm-hover.png
+- Assets/\_Project/Art/UI/MainMenu/Settings/particle-dot.png
+- 제목 발광은 MineResetTitleGlow.mat. 폰트 에셋은 수정하지 마.
+
+쓰지 마: mine-reset-cost-plate.png, mine-reset-icon-gold.png, mine-reset-badge-reset.png, mine-reset-badge-keep.png, mine-reset-info-plate.png, mine-reset-button-cancel.png. 발광·장식이 버튼과 X의 클릭을 가로채지 않게 raycastTarget을 꺼 줘.
+
+### 4. 등장 — TV가 켜지는 연출
+
+확인창과 같은 결로, 더 짧게 느껴져도 된다. 시작 기준 0.45~0.65초.
+
+- 중앙의 얇은 청록 가로 빛이 좌우로 짧게 뻗는다.
+- 이어서 위아래로 펼쳐지며 패널과 프레임이 드러난다. 마스크는 높이만. 탄성 없음.
+- 다 펼쳐질 때 테두리가 짧게 밝아진 뒤 정상 밝기.
+- 제목·본문·버튼은 후반에 알파만 페이드인. 글자를 납작하게 눌렀다 늘리지 마.
+- 강한 글리치, 반복 깜박임, 브리핑 연출은 넣지 마.
+
+펼쳐지는 후반에 육각형이 이어진다. 작은 청록 빛, 테두리가 비율을 유지한 채 커지고, 입구는 마스크나 페이드로 같이 드러난다. 완성 순간 한 번 밝아진 뒤 은은하게 고정. 입구 이미지가 찌그러지면 안 된다. 연출 때문에 확인을 오래 기다리게 하지 마.
+
+### 5. 열린 동안
+
+광물과 육각 테두리만 2~4초 호흡. 광물 시점은 조금씩 어긋나게. 필요하면 particle-dot으로 느린 입자를 조금만. 첫 등장보다 약하게. 배경 전체 알파를 반복하지 마. 제목·본문·확인 버튼에는 밝기 변화를 주지 마.
+
+닫을 때는 발광과 입자가 빠르게 잦아지고 패널이 페이드된 다음 비활성화. 게임 시간이 멈춘 상태에서도 unscaled로 재생. 다시 열면 이전 연출이 겹치지 않게 정리해 줘.
+
+### 6. 동작
+
+- 이 창은 커밋 이후의 알림이다. 열 때 TryTimedReset, TryResetMine, 골드 차감, 씬 로드, 타이머 재시작을 다시 호출하지 마.
+- 확인 버튼, 우상단 X, 기존 X키는 HidePopup만. 월드·골드·시드·요금·경과 시간·씬을 되돌리지 마. 취소 의미의 버튼을 만들지 마.
+- Escape는 지금처럼 이 창을 확정하거나 되돌리지 마. 설정이 열리던 동작이 있으면 그대로.
+- 딤·연출 레이어가 확인과 X를 막지 않게.
+- 시계(T키 토글, 숫자, 최상단 위치, sorting 900)와 ResetMineConfirm(sorting 700, 123-2 모션)은 수정하지 마.
+- 팝업 캔버스는 지금처럼 다른 UI 위에 둔다. 설정이나 판매창 아래로 내리지 마.
+- 지상으로 보낸 뒤의 문장(body.mine)과 그렇지 않을 때의 문장(body.surface)을 바꾸지 마.
+
+### 7. 검증
+
+1920×1080과 다른 비율 하나에서, 초기화가 끝난 뒤에만 창이 뜨는지. 본문이 프레임 안에 있는지. 확인·X 버튼·X키 후 창만 사라지고 골드·시드·요금·씬이 그대로인지. 연타로 초기화가 한 번 더 돌지 않는지. 유료 확인창을 열었을 때 123-2 레이아웃과 연출이 그대로인지. 전자시계 생김새와 T키 토글이 그대로인지.
+
+완료 후 등장 → 유지 발광 → 닫기를 실제 화면에서 확인해 줘. 변경 파일, 재사용한 스프라이트, 숨기기만 하는 입력, 시계와 확인창을 안 바꿨다는 점을 정리해 줘.

@@ -20,6 +20,12 @@ namespace SubTerra.App.UI.MainMenu
         public bool IsHighlighted => hovered || keyboardActive;
         public float OverlayAlpha => overlay != null ? overlay.color.a : 0f;
 
+        /// <summary>코드로 만든 버튼이 hover 오버레이를 연결할 때 쓴다.</summary>
+        public void SetOverlay(Image target)
+        {
+            overlay = target;
+        }
+
         public void SetKeyboardActive(bool active)
         {
             keyboardActive = active;
