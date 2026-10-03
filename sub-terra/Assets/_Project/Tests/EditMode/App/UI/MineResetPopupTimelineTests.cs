@@ -83,12 +83,43 @@ namespace SubTerra.App.Tests.UI
         {
             var early = MineResetPopupTimeline.EvaluateClose(MineResetPopupTimeline.GlowFadeDuration);
             Assert.That(early.Glow, Is.Zero.Within(1e-5f));
-            Assert.That(early.Alpha, Is.GreaterThan(0.3f));
+            Assert.That(early.Alpha, Is.EqualTo(1f));
             Assert.That(early.Finished, Is.False);
             var done = MineResetPopupTimeline.EvaluateClose(MineResetPopupTimeline.CloseDuration);
             Assert.That(done.Alpha, Is.Zero.Within(1e-5f));
             Assert.That(done.Finished, Is.True);
-            Assert.That(MineResetPopupTimeline.CloseDuration, Is.LessThanOrEqualTo(0.35f));
+            Assert.That(MineResetPopupTimeline.CloseDuration, Is.LessThanOrEqualTo(0.45f));
+        }
+
+        [Test]
+        public void Close_FoldsPanelBackToCenterLineByReversingOpen()
+        {
+            var start = MineResetPopupTimeline.EvaluateClose(0f);
+            Assert.That(start.FoldTime, Is.EqualTo(MineResetPopupTimeline.SettleTime));
+            Assert.That(MineResetPopupTimeline.EvaluateOpen(start.FoldTime).Reveal, Is.EqualTo(1f));
+
+            var previous = 1f;
+            for (var t = 0f; t <= MineResetPopupTimeline.CloseDuration; t += 0.02f)
+            {
+                var reveal = MineResetPopupTimeline.EvaluateOpen(MineResetPopupTimeline.EvaluateClose(t).FoldTime).Reveal;
+                Assert.That(reveal, Is.LessThanOrEqualTo(previous + 1e-5f));
+                previous = reveal;
+            }
+
+            var end = MineResetPopupTimeline.EvaluateClose(MineResetPopupTimeline.CloseDuration);
+            Assert.That(end.FoldTime, Is.Zero);
+            Assert.That(MineResetPopupTimeline.EvaluateOpen(end.FoldTime).Reveal, Is.Zero);
+        }
+
+        [Test]
+        public void Close_ContinuesFromPartiallyOpenState()
+        {
+            var openedFor = MineResetPopupTimeline.RevealStart + 0.1f;
+            var first = MineResetPopupTimeline.EvaluateClose(0f, openedFor);
+            Assert.That(first.FoldTime, Is.EqualTo(openedFor).Within(1e-5f));
+            Assert.That(MineResetPopupTimeline.EvaluateClose(0f, openedFor).Finished, Is.False);
+            var full = MineResetPopupTimeline.EvaluateClose(MineResetPopupTimeline.CloseDuration, openedFor);
+            Assert.That(full.Finished, Is.True);
         }
 
         [Test]

@@ -79,8 +79,8 @@ namespace SubTerra.App.Editor.DataValidation
         public static readonly Vector4 ResetPlateRect = new Vector4(-300.9f, -203.8f, 592.5f, 133.2f);
         public static readonly Vector4 KeepPlateRect = new Vector4(300.9f, -203.8f, 592.5f, 133.2f);
         public static readonly Vector4 TimerPlateRect = new Vector4(0f, -314.1f, 1192f, 82.7f);
-        public static readonly Vector4 CancelButtonRect = new Vector4(-275.6f, -414f, 523.6f, 110.2f);
-        public static readonly Vector4 ConfirmButtonRect = new Vector4(274.4f, -414f, 539.7f, 114.8f);
+        public static readonly Vector4 CancelButtonRect = new Vector4(-275.6f, -414f, 445.1f, 93.7f);
+        public static readonly Vector4 ConfirmButtonRect = new Vector4(274.4f, -414f, 458.7f, 97.6f);
         public static readonly Vector2 GoldIconSize = new Vector2(110.2f, 73.5f);
         public static readonly Vector2 BadgeSize = new Vector2(112.5f, 101.1f);
 
@@ -93,7 +93,7 @@ namespace SubTerra.App.Editor.DataValidation
         public const float RowTitleFontSize = 29f;
         public const float RowDescFontSize = 25f;
         public const float TimerTitleFontSize = 30f;
-        public const float ButtonFontSize = 33f;
+        public const float ButtonFontSize = 28f;
         // 안내 패널 안 글자 시작점(패널 중심 기준)과 줄 간격
         public const float RowTextLeft = -144.5f;
         public const float RowTextWidth = 410f;

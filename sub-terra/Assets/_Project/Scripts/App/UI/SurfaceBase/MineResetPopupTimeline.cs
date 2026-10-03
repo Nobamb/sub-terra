@@ -5,7 +5,7 @@ namespace SubTerra.App.UI.SurfaceBase
     /// <summary>
     /// '새 광산 구역' 팝업 연출 시간표. 순수 계산이라 Edit Mode에서 시점별 값을 검사할 수 있다.
     /// 열기: 중앙 가로 빛 → 좌우로 뻗음 → 위아래로 펼침 → 테두리 섬광 → 본문 페이드, 후반부에 육각형이 겹쳐 등장.
-    /// 닫기: 발광이 먼저 잦아들고 창 전체가 부드럽게 사라진다.
+    /// 닫기: 발광이 먼저 잦아들고, 열기를 거꾸로 감아 창이 위아래에서 가운데 선으로 접힌 뒤 사라진다.
     /// </summary>
     public static class MineResetPopupTimeline
     {
@@ -29,8 +29,11 @@ namespace SubTerra.App.UI.SurfaceBase
         public const float OpenDuration = HexFlashEnd;
 
         public const float GlowFadeDuration = 0.12f;
-        public const float CloseFadeStart = 0.04f;
-        public const float CloseDuration = 0.26f;
+        /// <summary>닫기는 열기 시간표를 이 배율로 거꾸로 감는다(1보다 크면 열 때보다 빠르다).</summary>
+        public const float CloseSpeed = 1.6f;
+        /// <summary>다 접힌 뒤 남는 선을 지우는 마지막 페이드 시간(초).</summary>
+        public const float CloseTail = 0.05f;
+        public const float CloseDuration = SettleTime / CloseSpeed + CloseTail;
 
         public const float RevealMinHeight = 6f;
         public const float HexStartScale = 0.12f;
@@ -60,6 +63,8 @@ namespace SubTerra.App.UI.SurfaceBase
         {
             public float Glow;
             public float Alpha;
+            /// <summary>EvaluateOpen에 넣을 시각. 닫는 동안 SettleTime에서 0으로 줄어든다.</summary>
+            public float FoldTime;
             public bool Finished;
         }
 
@@ -94,11 +99,24 @@ namespace SubTerra.App.UI.SurfaceBase
 
         public static ClosePose EvaluateClose(float t)
         {
+            return EvaluateClose(t, SettleTime);
+        }
+
+        /// <summary>
+        /// 닫기: 발광이 먼저 잦아들고, 열기 연출을 거꾸로 감아 창이 위아래에서 가운데 선으로 접힌다.
+        /// foldStart는 접기를 시작하는 열기 시각이며, 아직 덜 열린 상태에서 닫아도 끊김 없이 이어진다.
+        /// </summary>
+        public static ClosePose EvaluateClose(float t, float foldStart)
+        {
+            var start = Math.Min(Math.Max(foldStart, 0f), SettleTime);
+            var foldDuration = start / CloseSpeed;
+            var total = foldDuration + CloseTail;
             return new ClosePose
             {
                 Glow = 1f - EaseOutCubic(Progress(t, 0f, GlowFadeDuration)),
-                Alpha = 1f - EaseInOutSine(Progress(t, CloseFadeStart, CloseDuration)),
-                Finished = t >= CloseDuration
+                Alpha = 1f - Progress(t, foldDuration, total),
+                FoldTime = Math.Max(0f, start - t * CloseSpeed),
+                Finished = t >= total
             };
         }
 

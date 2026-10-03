@@ -54,6 +54,7 @@ namespace SubTerra.App.UI.SurfaceBase
         private Phase phase = Phase.Hidden;
         private float openTime;
         private float closeTime;
+        private float foldStart;
         private Action onClosed;
         private bool closedWhileDisabled;
 
@@ -74,7 +75,7 @@ namespace SubTerra.App.UI.SurfaceBase
             onClosed = null;
             closedWhileDisabled = false;
             ApplyFit();
-            Apply(0f, 1f, 1f);
+            Apply(0f, 1f, 1f, 0f);
             SetGroups(interactableRoot: true);
         }
 
@@ -86,7 +87,7 @@ namespace SubTerra.App.UI.SurfaceBase
             closeTime = 0f;
             onClosed = null;
             ApplyFit();
-            Apply(openTime, 1f, 1f);
+            Apply(openTime, 1f, 1f, openTime);
             SetGroups(interactableRoot: true);
         }
 
@@ -105,6 +106,8 @@ namespace SubTerra.App.UI.SurfaceBase
 
             phase = Phase.Closing;
             closeTime = 0f;
+            // 덜 열린 채로 닫아도 지금 모습에서 이어서 접는다.
+            foldStart = Mathf.Min(openTime, MineResetPopupTimeline.SettleTime);
             onClosed = closed;
             SetGroups(interactableRoot: false);
         }
@@ -150,14 +153,14 @@ namespace SubTerra.App.UI.SurfaceBase
             if (phase == Phase.Opening)
             {
                 openTime += dt;
-                Apply(openTime, 1f, 1f);
+                Apply(openTime, 1f, 1f, openTime);
             }
             else if (phase == Phase.Closing)
             {
                 openTime += dt;
                 closeTime += dt;
-                var pose = MineResetPopupTimeline.EvaluateClose(closeTime);
-                Apply(openTime, pose.Glow, pose.Alpha);
+                var pose = MineResetPopupTimeline.EvaluateClose(closeTime, foldStart);
+                Apply(openTime, pose.Glow, pose.Alpha, pose.FoldTime, true);
                 if (pose.Finished)
                 {
                     FinishClose();
@@ -193,9 +196,16 @@ namespace SubTerra.App.UI.SurfaceBase
             card.localScale = new Vector3(scale, scale, 1f);
         }
 
-        private void Apply(float t, float glow, float alpha)
+        /// <summary>t는 호흡·떠다니는 입자용 경과 시간, poseT는 열기 시간표를 읽는 시각(닫을 때는 거꾸로 줄어든다).</summary>
+        private void Apply(float t, float glow, float alpha, float poseT, bool folding = false)
         {
-            var pose = MineResetPopupTimeline.EvaluateOpen(t);
+            var pose = MineResetPopupTimeline.EvaluateOpen(poseT);
+            if (folding)
+            {
+                // 거꾸로 감을 때 완성 섬광이 다시 터지지 않게 한다.
+                pose.HexFlash = 0f;
+            }
+
             if (rootGroup != null) rootGroup.alpha = alpha;
             SetAlpha(backdrop, backdropAlpha * pose.Backdrop);
 
