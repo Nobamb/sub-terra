@@ -36,9 +36,12 @@ namespace SubTerra.App.Integration
         private TMP_InputField inputField;
         private ScrollRect outputScroll;
         private RectTransform outputContent;
+        private RectTransform candidateRect;
         private bool isOpen;
         private bool handlingSubmit;
+        private bool changingInput;
         private bool stripGrave;
+        private bool hasShownGuide;
 
         public bool IsOpen => isOpen;
         public string Transcript => outputText != null ? outputText.text : string.Empty;
@@ -147,11 +150,8 @@ namespace SubTerra.App.Integration
             handlingSubmit = true;
             try
             {
-                if (session.TryConfirm(out var confirmed))
+                if (CompleteCandidate())
                 {
-                    inputField.SetTextWithoutNotify(confirmed);
-                    RefreshCandidates();
-                    FocusInput(confirmed.Length);
                     return;
                 }
 
@@ -162,6 +162,50 @@ namespace SubTerra.App.Integration
             {
                 handlingSubmit = false;
             }
+        }
+
+        public bool CompleteCandidate()
+        {
+            if (!isOpen || inputField == null || session == null || !session.TryConfirm(out var confirmed))
+            {
+                return false;
+            }
+
+            SetInputWithoutNotify(confirmed);
+            RefreshCandidates();
+            FocusInput(confirmed.Length);
+            return true;
+        }
+
+        public void RecallHistory(int delta)
+        {
+            if (!isOpen || inputField == null || session == null
+                || !session.TryRecallHistory(delta, inputField.text, out var recalled))
+            {
+                return;
+            }
+
+            SetInputWithoutNotify(recalled);
+            RefreshCandidates();
+            FocusInput(recalled.Length);
+        }
+
+        public void HandleArrowKey(int delta, bool shiftHeld)
+        {
+            if (!shiftHeld)
+            {
+                RecallHistory(delta);
+                return;
+            }
+
+            if (!isOpen || inputField == null || session == null || session.CandidateCount == 0)
+            {
+                return;
+            }
+
+            session.Move(delta);
+            RefreshCandidates();
+            FocusInput(inputField.text.Length);
         }
 
         private void Awake()
@@ -204,31 +248,34 @@ namespace SubTerra.App.Integration
                 stripGrave = true;
                 return;
             }
-
-            if (!isOpen)
-            {
-                return;
-            }
-
-            if (keyboard.upArrowKey.wasPressedThisFrame)
-            {
-                MoveCandidate(-1);
-            }
-            else if (keyboard.downArrowKey.wasPressedThisFrame)
-            {
-                MoveCandidate(1);
-            }
         }
 
         private void LateUpdate()
         {
-            if (!stripGrave)
+            if (stripGrave)
+            {
+                stripGrave = false;
+                StripGrave();
+            }
+
+            var keyboard = Keyboard.current;
+            if (!isOpen || inputField == null || !inputField.isFocused || keyboard == null)
             {
                 return;
             }
 
-            stripGrave = false;
-            StripGrave();
+            if (keyboard.tabKey.wasPressedThisFrame)
+            {
+                CompleteCandidate();
+            }
+            else if (keyboard.upArrowKey.wasPressedThisFrame)
+            {
+                HandleArrowKey(-1, keyboard.leftShiftKey.isPressed || keyboard.rightShiftKey.isPressed);
+            }
+            else if (keyboard.downArrowKey.wasPressedThisFrame)
+            {
+                HandleArrowKey(1, keyboard.leftShiftKey.isPressed || keyboard.rightShiftKey.isPressed);
+            }
         }
 
         private void Open()
@@ -243,6 +290,17 @@ namespace SubTerra.App.Integration
             UiKeyboardSubmitGuard.ClearSelection();
             canvasRoot.SetActive(true);
             ApplyCanvasSort();
+            if (!hasShownGuide)
+            {
+                hasShownGuide = true;
+                Append("help 또는 도움말을 입력하면 명령어 설명을 볼 수 있습니다.\n"
+                    + "↑ / ↓: 이전 / 이후 명령어 히스토리 탐색\n"
+                    + "Shift + ↑ / ↓: 추천 명령어 선택\n"
+                    + "Tab: 선택한 명령어 자동완성\n"
+                    + "Enter: 추천 명령어 확정, 완성된 명령어 실행\n"
+                    + "Ctrl + `: 터미널 열기 / 닫기");
+            }
+
             var caret = inputField != null && inputField.text != null ? inputField.text.Length : 0;
             FocusInput(caret);
         }
@@ -268,7 +326,7 @@ namespace SubTerra.App.Integration
         {
             var line = inputField.text;
             var trimmed = string.IsNullOrWhiteSpace(line) ? string.Empty : line.Trim();
-            inputField.SetTextWithoutNotify(string.Empty);
+            SetInputWithoutNotify(string.Empty);
             session.NotifyTextChanged(string.Empty);
             RefreshCandidates();
             if (trimmed.Length == 0)
@@ -312,17 +370,6 @@ namespace SubTerra.App.Integration
                 () => FindAnyObjectByType<TutorialDirectorBinder>());
         }
 
-        private void MoveCandidate(int delta)
-        {
-            if (session == null || session.CandidateCount == 0)
-            {
-                return;
-            }
-
-            session.Move(delta);
-            RefreshCandidates();
-        }
-
         private void RefreshCandidates()
         {
             if (candidateText == null || session == null)
@@ -331,6 +378,12 @@ namespace SubTerra.App.Integration
             }
 
             candidateText.text = session.FormatCandidates();
+            var height = string.IsNullOrEmpty(candidateText.text) ? 0f : candidateText.preferredHeight;
+            candidateRect.sizeDelta = new Vector2(candidateRect.sizeDelta.x, height);
+            candidateRect.gameObject.SetActive(height > 0f);
+            var scrollRect = outputScroll.GetComponent<RectTransform>();
+            scrollRect.offsetMin = new Vector2(16f, 66f + (height > 0f ? height + 10f : 0f));
+            RebuildOutput();
         }
 
         private void Append(string line)
@@ -392,7 +445,7 @@ namespace SubTerra.App.Integration
                 return;
             }
 
-            inputField.SetTextWithoutNotify(text.Substring(0, text.Length - 1));
+            SetInputWithoutNotify(text.Substring(0, text.Length - 1));
             if (session != null)
             {
                 session.NotifyTextChanged(inputField.text);
@@ -460,7 +513,7 @@ namespace SubTerra.App.Integration
             var scrollRect = scrollGo.GetComponent<RectTransform>();
             scrollRect.anchorMin = Vector2.zero;
             scrollRect.anchorMax = Vector2.one;
-            scrollRect.offsetMin = new Vector2(16f, 284f);
+            scrollRect.offsetMin = new Vector2(16f, 66f);
             scrollRect.offsetMax = new Vector2(-16f, -16f);
 
             var viewportGo = new GameObject("Viewport", typeof(RectTransform), typeof(Image), typeof(Mask));
@@ -524,11 +577,12 @@ namespace SubTerra.App.Integration
             var candidateGo = new GameObject("Candidates", typeof(RectTransform));
             candidateGo.transform.SetParent(panel, false);
             var rect = candidateGo.GetComponent<RectTransform>();
+            candidateRect = rect;
             rect.anchorMin = new Vector2(0f, 0f);
             rect.anchorMax = new Vector2(1f, 0f);
             rect.pivot = new Vector2(0.5f, 0f);
-            rect.offsetMin = new Vector2(16f, 64f);
-            rect.offsetMax = new Vector2(-16f, 274f);
+            rect.offsetMin = new Vector2(16f, 66f);
+            rect.offsetMax = new Vector2(-16f, 66f);
 
             candidateText = CreateText(candidateGo.transform, "CandidateText", 18f, font, new Color(0.75f, 0.86f, 0.72f, 1f));
             var textRect = candidateText.rectTransform;
@@ -593,9 +647,22 @@ namespace SubTerra.App.Integration
             inputField.onValueChanged.AddListener(OnInputChanged);
         }
 
+        private void SetInputWithoutNotify(string value)
+        {
+            changingInput = true;
+            try
+            {
+                inputField.SetTextWithoutNotify(value);
+            }
+            finally
+            {
+                changingInput = false;
+            }
+        }
+
         private void OnInputChanged(string value)
         {
-            if (handlingSubmit || session == null)
+            if (handlingSubmit || changingInput || session == null)
             {
                 return;
             }

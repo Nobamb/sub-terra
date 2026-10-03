@@ -365,6 +365,223 @@ namespace SubTerra.App.Tests.Debug
             AssertForbidden(terminal);
         }
 
+        [Test]
+        public void History_PreservesOrderDuplicatesAndErrors_AndRestoresDraft()
+        {
+            var session = new DeveloperDebugCommandSession(DeveloperDebugCommandRegistry.CreateIsolated());
+            Assert.That(session.TryRecallHistory(-1, "draft", out _), Is.False);
+            session.Execute("  help  ", null);
+            session.Execute("nope", null);
+            session.Execute("help", null);
+            session.Execute("   ", null);
+            session.NotifyTextChanged("go");
+
+            Assert.That(session.TryRecallHistory(-1, "go", out var latest), Is.True);
+            Assert.That(latest, Is.EqualTo("help"));
+            Assert.That(session.CandidateCount, Is.Zero);
+            Assert.That(session.TryRecallHistory(-1, latest, out var previous), Is.True);
+            Assert.That(previous, Is.EqualTo("nope"));
+            Assert.That(session.TryRecallHistory(-1, previous, out var oldest), Is.True);
+            Assert.That(oldest, Is.EqualTo("help"));
+            Assert.That(session.TryRecallHistory(-1, oldest, out _), Is.False);
+            Assert.That(session.TryRecallHistory(1, oldest, out previous), Is.True);
+            Assert.That(previous, Is.EqualTo("nope"));
+            Assert.That(session.TryRecallHistory(1, previous, out latest), Is.True);
+            Assert.That(latest, Is.EqualTo("help"));
+            Assert.That(session.TryRecallHistory(1, latest, out var draft), Is.True);
+            Assert.That(draft, Is.EqualTo("go"));
+            Assert.That(session.CandidateCount, Is.EqualTo(1));
+            Assert.That(session.TryRecallHistory(1, draft, out _), Is.False);
+        }
+
+        [Test]
+        public void History_EditingAndExecutionRestartAtLatest()
+        {
+            var session = new DeveloperDebugCommandSession(DeveloperDebugCommandRegistry.CreateIsolated());
+            session.Execute("gold 1", null);
+            session.Execute("gold 2", null);
+            session.TryRecallHistory(-1, string.Empty, out _);
+            session.TryRecallHistory(-1, "gold 2", out _);
+            session.NotifyTextChanged("gold 3");
+
+            Assert.That(session.TryRecallHistory(-1, "gold 3", out var latest), Is.True);
+            Assert.That(latest, Is.EqualTo("gold 2"));
+            Assert.That(session.TryRecallHistory(1, latest, out var draft), Is.True);
+            Assert.That(draft, Is.EqualTo("gold 3"));
+            session.Execute(draft, null);
+            Assert.That(session.TryRecallHistory(-1, string.Empty, out latest), Is.True);
+            Assert.That(latest, Is.EqualTo("gold 3"));
+            Assert.That(session.TryRecallHistory(1, latest, out draft), Is.True);
+            Assert.That(draft, Is.Empty);
+        }
+
+        [TestCase("go", "gold ")]
+        [TestCase("골", "gold ")]
+        [TestCase("hel", "help")]
+        public void Terminal_CompletesCandidateWithoutExecuting(string prefix, string completed)
+        {
+            var terminal = CreateTerminal();
+            terminal.SetInput(prefix);
+            Assert.That(terminal.CompleteCandidate(), Is.False);
+            terminal.Toggle();
+            var transcript = terminal.Transcript;
+
+            Assert.That(terminal.CompleteCandidate(), Is.True);
+            Assert.That(terminal.CurrentInput, Is.EqualTo(completed));
+            Assert.That(terminal.CandidateText, Is.Empty);
+            Assert.That(terminal.Transcript, Is.EqualTo(transcript));
+            Assert.That(terminal.CompleteCandidate(), Is.False);
+        }
+
+        [Test]
+        public void Terminal_FirstOpenShowsHelpAndControlsOnce_WithoutAddingHistory()
+        {
+            var terminal = CreateTerminal();
+            Assert.That(terminal.Transcript, Is.Empty);
+            terminal.Toggle();
+            var guide = terminal.Transcript;
+
+            Assert.That(guide, Does.Contain("help 또는 도움말"));
+            Assert.That(guide, Does.Contain("↑ / ↓: 이전 / 이후 명령어 히스토리 탐색"));
+            Assert.That(guide, Does.Contain("Shift + ↑ / ↓: 추천 명령어 선택"));
+            Assert.That(guide, Does.Contain("Tab: 선택한 명령어 자동완성"));
+            Assert.That(guide, Does.Contain("Enter:"));
+            Assert.That(guide, Does.Contain("Ctrl + `:"));
+            terminal.SetInput("draft");
+            terminal.HandleArrowKey(-1, false);
+            Assert.That(terminal.CurrentInput, Is.EqualTo("draft"));
+            terminal.Toggle();
+            terminal.Toggle();
+            Assert.That(terminal.Transcript, Is.EqualTo(guide));
+        }
+
+        [TestCase(true)]
+        [TestCase(false)]
+        public void Terminal_ShiftArrowsSelectAndWrapCandidates_ForTabOrEnter(bool useTab)
+        {
+            var terminal = CreateTerminal();
+            terminal.Toggle();
+            var guide = terminal.Transcript;
+            terminal.SetInput("h");
+            Assert.That(terminal.CandidateText, Does.StartWith("> hp "));
+
+            terminal.HandleArrowKey(1, true);
+            Assert.That(terminal.CandidateText, Does.Contain("\n> help"));
+            Assert.That(terminal.CurrentInput, Is.EqualTo("h"));
+            terminal.HandleArrowKey(1, true);
+            Assert.That(terminal.CandidateText, Does.StartWith("> hp "));
+            terminal.HandleArrowKey(-1, true);
+            Assert.That(terminal.CandidateText, Does.Contain("\n> help"));
+            Assert.That(terminal.Transcript, Is.EqualTo(guide));
+
+            if (useTab)
+            {
+                Assert.That(terminal.CompleteCandidate(), Is.True);
+            }
+            else
+            {
+                terminal.Submit();
+            }
+
+            Assert.That(terminal.CurrentInput, Is.EqualTo("help"));
+            Assert.That(terminal.CandidateText, Is.Empty);
+            Assert.That(terminal.Transcript, Is.EqualTo(guide));
+            terminal.Submit();
+            Assert.That(terminal.Transcript, Does.Contain("> help\n"));
+        }
+
+        [Test]
+        public void Terminal_ShiftArrowsPreserveHistoryAndDraft_AndIgnoreClosedTerminal()
+        {
+            var terminal = CreateTerminal();
+            terminal.Toggle();
+            terminal.SetInput("help ");
+            terminal.Submit();
+            terminal.SetInput("h");
+            terminal.HandleArrowKey(1, true);
+            terminal.HandleArrowKey(-1, false);
+            Assert.That(terminal.CurrentInput, Is.EqualTo("help"));
+            Assert.That(terminal.CandidateText, Is.Empty);
+            terminal.HandleArrowKey(-1, true);
+            Assert.That(terminal.CurrentInput, Is.EqualTo("help"));
+            terminal.HandleArrowKey(1, false);
+            Assert.That(terminal.CurrentInput, Is.EqualTo("h"));
+            Assert.That(terminal.CandidateText, Does.StartWith("> hp "));
+
+            terminal.Toggle();
+            terminal.HandleArrowKey(1, true);
+            terminal.HandleArrowKey(-1, false);
+            Assert.That(terminal.CurrentInput, Is.EqualTo("h"));
+            Assert.That(terminal.CandidateText, Does.StartWith("> hp "));
+        }
+
+        [Test]
+        public void Terminal_RecallsCommandWithArguments_AndExecutesRecalledHelpOnce()
+        {
+            var state = GameState.CreateNew();
+            var terminal = CreateTerminal();
+            terminal.BindContext(Context(state, null, null, null));
+            terminal.Toggle();
+            terminal.SetInput("gold 20");
+            terminal.Submit();
+            terminal.SetInput("hel");
+            terminal.CompleteCandidate();
+            terminal.Submit();
+            terminal.SetInput("draft");
+
+            terminal.RecallHistory(-1);
+            Assert.That(terminal.CurrentInput, Is.EqualTo("help"));
+            terminal.RecallHistory(-1);
+            Assert.That(terminal.CurrentInput, Is.EqualTo("gold 20"));
+            terminal.RecallHistory(1);
+            Assert.That(terminal.CurrentInput, Is.EqualTo("help"));
+            terminal.RecallHistory(1);
+            Assert.That(terminal.CurrentInput, Is.EqualTo("draft"));
+            terminal.RecallHistory(-1);
+            terminal.Submit();
+            Assert.That(terminal.CurrentInput, Is.Empty);
+            Assert.That(terminal.Transcript.Split(new[] { "> help" }, StringSplitOptions.None).Length, Is.EqualTo(3));
+            Assert.That(state.Player.Gold, Is.EqualTo(20));
+            terminal.Toggle();
+            terminal.RecallHistory(-1);
+            Assert.That(terminal.CurrentInput, Is.Empty);
+            terminal.Toggle();
+            terminal.RecallHistory(-1);
+            Assert.That(terminal.CurrentInput, Is.EqualTo("help"));
+        }
+
+        [Test]
+        public void Terminal_OutputUsesFullHeight_AndCandidatesOnlyReserveTheirTextHeight()
+        {
+            var terminal = CreateTerminal();
+            terminal.Toggle();
+            terminal.SetInput("hel");
+            terminal.CompleteCandidate();
+            terminal.Submit();
+            Canvas.ForceUpdateCanvases();
+            var panel = terminal.GetComponentInChildren<Canvas>(true).transform.Find("Panel");
+            var scroll = panel.Find("OutputScroll").GetComponent<RectTransform>();
+            var input = panel.Find("InputLine").GetComponent<RectTransform>();
+            var candidates = panel.Find("Candidates").GetComponent<RectTransform>();
+            var output = scroll.GetComponent<ScrollRect>();
+
+            Assert.That(candidates.gameObject.activeSelf, Is.False);
+            Assert.That(scroll.offsetMin.y - input.offsetMax.y, Is.EqualTo(10f));
+            Assert.That(scroll.rect.height, Is.GreaterThan(panel.GetComponent<RectTransform>().rect.height * 0.8f));
+            Assert.That(output.viewport.rect.height, Is.EqualTo(scroll.rect.height).Within(0.01f));
+            Assert.That(output.content.rect.height, Is.GreaterThan(output.viewport.rect.height));
+            Assert.That(output.verticalNormalizedPosition, Is.EqualTo(0f).Within(0.01f));
+
+            terminal.SetInput("h");
+            Canvas.ForceUpdateCanvases();
+            Assert.That(candidates.gameObject.activeSelf, Is.True);
+            Assert.That(candidates.rect.height, Is.EqualTo(candidates.GetComponentInChildren<TMP_Text>().preferredHeight).Within(0.01f));
+            Assert.That(candidates.offsetMin.y - input.offsetMax.y, Is.EqualTo(10f));
+            Assert.That(scroll.offsetMin.y - candidates.offsetMax.y, Is.EqualTo(10f).Within(0.01f));
+            terminal.SetInput(string.Empty);
+            Assert.That(scroll.offsetMin.y - input.offsetMax.y, Is.EqualTo(10f));
+        }
+
         private DeveloperDebugTerminal CreateTerminal()
         {
             var go = new GameObject("PromptB125Terminal");

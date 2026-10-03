@@ -686,7 +686,10 @@ namespace SubTerra.App.Integration
     {
         private readonly DeveloperDebugCommandRegistry registry;
         private readonly List<DeveloperDebugCommandInfo> candidates = new List<DeveloperDebugCommandInfo>();
+        private readonly List<string> history = new List<string>();
         private int selected;
+        private int historyIndex;
+        private string historyDraft = string.Empty;
 
         public DeveloperDebugCommandSession(DeveloperDebugCommandRegistry registry)
         {
@@ -716,6 +719,8 @@ namespace SubTerra.App.Integration
 
         public void NotifyTextChanged(string text)
         {
+            historyIndex = history.Count;
+            historyDraft = text ?? string.Empty;
             selected = 0;
             candidates.Clear();
             var token = CommandToken(text);
@@ -725,6 +730,37 @@ namespace SubTerra.App.Integration
             }
 
             registry.CollectPrefix(token, candidates);
+        }
+
+        public bool TryRecallHistory(int delta, string currentInput, out string recalled)
+        {
+            recalled = null;
+            if (history.Count == 0 || delta == 0)
+            {
+                return false;
+            }
+
+            if (historyIndex == history.Count)
+            {
+                historyDraft = currentInput ?? string.Empty;
+            }
+
+            var next = Math.Max(0, Math.Min(history.Count, historyIndex + delta));
+            if (next == historyIndex)
+            {
+                return false;
+            }
+
+            historyIndex = next;
+            recalled = historyIndex == history.Count ? historyDraft : history[historyIndex];
+            candidates.Clear();
+            selected = 0;
+            if (historyIndex == history.Count)
+            {
+                NotifyTextChanged(recalled);
+            }
+
+            return true;
         }
 
         public void Move(int delta)
@@ -797,6 +833,13 @@ namespace SubTerra.App.Integration
 
         public string Execute(string line, DeveloperDebugCommandContext context)
         {
+            if (!string.IsNullOrWhiteSpace(line))
+            {
+                history.Add(line.Trim());
+            }
+
+            historyIndex = history.Count;
+            historyDraft = string.Empty;
             if (registry == null)
             {
                 return "명령 실행 실패";
