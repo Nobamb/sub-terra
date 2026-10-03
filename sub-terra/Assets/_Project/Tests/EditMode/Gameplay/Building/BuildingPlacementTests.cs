@@ -327,6 +327,33 @@ namespace SubTerra.Gameplay.Building.Tests
         }
 
         [Test]
+        public void CanPlaceAt_OneByTwo_RejectsBlockedUpperCell()
+        {
+            var setup = CreateSetup(
+                maximumDistance: 10f,
+                areaSize: new Vector2(20f, 12f),
+                footprint: new Vector2Int(1, 2));
+            try
+            {
+                setup.Terrain.SetTile(new Vector3Int(0, -1, 0), setup.Tile);
+                Assert.That(
+                    setup.Placement.CanPlaceAt(Vector3Int.zero, out var clear),
+                    Is.True,
+                    clear.ToString());
+
+                setup.Terrain.SetTile(new Vector3Int(0, 1, 0), setup.Tile);
+                Assert.That(
+                    setup.Placement.CanPlaceAt(Vector3Int.zero, out var blocked),
+                    Is.False);
+                Assert.That(blocked, Is.EqualTo(BuildingPlacementFailure.Occupied));
+            }
+            finally
+            {
+                setup.Dispose();
+            }
+        }
+
+        [Test]
         public void PlacedBuilding_ProtectsOnlyItsSupportingGroundCells()
         {
             var setup = CreateSetup(

@@ -91,8 +91,9 @@ namespace SubTerra.App.Editor.DataValidation
             Label(view.UnsettledValueText, 257, 154, 159, 31, 19);
             view.DepthText.text = "깊이 0m"; view.GoldText.text = "골드 0G";
             view.CargoText.text = "화물 0"; view.UnsettledValueText.text = "미정산 0G";
-            // 컨셉 바깥의 기존 안내는 제거하지 않고 호출 시 표시되는 보조 행으로 보존한다.
+            // 시설 선택 안내는 건설창에서 표시하고 HUD의 퀘스트 영역에서는 숨긴다.
             Label(view.BuildingSelectionText, 16, 251, 404, 22, 15);
+            view.SetBuildingSelection(string.Empty);
             Label(view.InteractionPromptText, 450, 12, 404, 22, 15);
             for (int i = 0; i < 7; i++)
             {
