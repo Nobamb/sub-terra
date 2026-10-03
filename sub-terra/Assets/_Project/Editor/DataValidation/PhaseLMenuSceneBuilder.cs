@@ -7,6 +7,7 @@ using SubTerra.App.UI.MainMenu;
 using SubTerra.App.UI.Progression;
 using SubTerra.App.UI.Save;
 using SubTerra.App.UI.SurfaceBase;
+using SubTerra.App.UI.Tutorial;
 using SubTerra.App.Tutorial;
 using TMPro;
 using UnityEditor;
@@ -164,10 +165,18 @@ namespace SubTerra.App.Editor.DataValidation
             }
         }
 
+        // 프레임 그림(1774x887)의 가로선 사이 구간 중심을 이 창 크기로 환산한 값.
+        // 상단: 안쪽 라인~구분선, 하단: 구분선~하단 라인. 각 구간 안에서 위아래 여백이 같다.
+        public static readonly Vector2 OverwriteWindowSize = new Vector2(864f, 480f);
+        public const float OverwriteTopRowY = 121f;
+        public const float OverwriteBottomRowY = -120f;
+        public const float OverwriteCloseX = 341f;
+        public const float OverwriteButtonX = 112f;
+
         private static void ApplyOverwriteConfirmLayout(GameObject root)
         {
             var window = (RectTransform)root.transform.Find("OverwriteConfirm");
-            PlaceOverwriteElement(window, Vector2.zero, new Vector2(720f, 400f));
+            PlaceOverwriteElement(window, Vector2.zero, OverwriteWindowSize);
             var frame = window.GetComponent<UnityEngine.UI.Image>();
             frame.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(PromptB120StartBriefingBuilder.FramePath);
             frame.type = UnityEngine.UI.Image.Type.Simple;
@@ -188,7 +197,7 @@ namespace SubTerra.App.Editor.DataValidation
             body.raycastTarget = false;
             body.text = "슬롯 1 세이브를 덮어쓰시겠습니까?";
 
-            var titleRect = OverwriteElement(window, "OverwriteTitle", new Vector2(0f, 105f), new Vector2(460f, 46f));
+            var titleRect = OverwriteElement(window, "OverwriteTitle", new Vector2(0f, OverwriteTopRowY), new Vector2(460f, 46f));
             var title = titleRect.GetComponent<TextMeshProUGUI>();
             if (title == null) title = titleRect.gameObject.AddComponent<TextMeshProUGUI>();
             title.font = body.font;
@@ -201,17 +210,18 @@ namespace SubTerra.App.Editor.DataValidation
 
             var yes = window.Find("OverwriteYes").GetComponent<UnityEngine.UI.Button>();
             var no = window.Find("OverwriteNo").GetComponent<UnityEngine.UI.Button>();
-            PlaceOverwriteElement((RectTransform)yes.transform, new Vector2(-112f, -104f), new Vector2(184f, 50f));
-            PlaceOverwriteElement((RectTransform)no.transform, new Vector2(112f, -104f), new Vector2(184f, 50f));
+            PlaceOverwriteElement((RectTransform)yes.transform, new Vector2(-OverwriteButtonX, OverwriteBottomRowY), new Vector2(184f, 50f));
+            PlaceOverwriteElement((RectTransform)no.transform, new Vector2(OverwriteButtonX, OverwriteBottomRowY), new Vector2(184f, 50f));
             SkinOverwriteButton(yes, PromptB104SettingsMenuBuilder.ButtonOffPath, PromptB104SettingsMenuBuilder.ButtonOnPath);
             SkinOverwriteButton(no, PromptB104SettingsMenuBuilder.ButtonOffPath, PromptB104SettingsMenuBuilder.ButtonOnPath);
 
-            var closeRect = OverwriteElement(window, "OverwriteClose", new Vector2(264f, 105f), new Vector2(46f, 46f));
+            var closeRect = OverwriteElement(window, "OverwriteClose", new Vector2(OverwriteCloseX, OverwriteTopRowY), new Vector2(46f, 46f));
             var close = closeRect.GetComponent<UnityEngine.UI.Button>();
             if (close == null) close = closeRect.gameObject.AddComponent<UnityEngine.UI.Button>();
             SkinOverwriteButton(close, PromptB104SettingsMenuBuilder.CloseNormalPath, PromptB104SettingsMenuBuilder.CloseHoverPath);
             var hover = closeRect.Find("HoverOverlay").GetComponent<UnityEngine.UI.Image>();
             // 설정창 X와 같은 0.15초 이미지 전환.
+            hover.color = Color.white;
             close.targetGraphic = hover;
             close.transition = UnityEngine.UI.Selectable.Transition.ColorTint;
             var colors = close.colors;
@@ -222,6 +232,8 @@ namespace SubTerra.App.Editor.DataValidation
             close.colors = colors;
             var closeSkin = close.GetComponent<MenuSpriteButtonSkin>();
             Object.DestroyImmediate(closeSkin);
+            var closeHover = close.GetComponent<QuestClearCloseHover>();
+            if (closeHover != null) Object.DestroyImmediate(closeHover);
 
             var view = new SerializedObject(root.GetComponent<MainMenuView>());
             view.FindProperty("overwriteCloseButton").objectReferenceValue = close;

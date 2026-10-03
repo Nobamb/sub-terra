@@ -456,8 +456,8 @@ namespace SubTerra.App.Tests.UI.MainMenu
             var overwrite = prefab.transform.Find("OverwriteConfirm") as RectTransform;
             Assert.That(overwrite, Is.Not.Null);
             Assert.That(overwrite.anchoredPosition, Is.EqualTo(Vector2.zero));
-            // 원본 프레임의 투명 여백을 포함한 크기. 실제 창 외곽은 약 662×292.
-            Assert.That(overwrite.sizeDelta, Is.EqualTo(new Vector2(720f, 400f)));
+            // 원본 프레임의 투명 여백을 포함한 크기(이전 720×400의 120%).
+            Assert.That(overwrite.sizeDelta, Is.EqualTo(PhaseLMenuSceneBuilder.OverwriteWindowSize));
             Assert.That(AssetDatabase.GetAssetPath(overwrite.GetComponent<UnityEngine.UI.Image>().sprite),
                 Is.EqualTo(PromptB120StartBriefingBuilder.FramePath));
 
@@ -469,13 +469,27 @@ namespace SubTerra.App.Tests.UI.MainMenu
             Assert.That(message.rectTransform.anchoredPosition, Is.EqualTo(Vector2.zero));
             Assert.That(yes.sizeDelta, Is.EqualTo(new Vector2(184f, 50f)));
             Assert.That(no.sizeDelta, Is.EqualTo(yes.sizeDelta));
-            Assert.That(yes.anchoredPosition, Is.EqualTo(new Vector2(-112f, -104f)));
-            Assert.That(no.anchoredPosition, Is.EqualTo(new Vector2(112f, -104f)));
+            Assert.That(yes.anchoredPosition, Is.EqualTo(new Vector2(-PhaseLMenuSceneBuilder.OverwriteButtonX, PhaseLMenuSceneBuilder.OverwriteBottomRowY)));
+            Assert.That(no.anchoredPosition, Is.EqualTo(new Vector2(PhaseLMenuSceneBuilder.OverwriteButtonX, PhaseLMenuSceneBuilder.OverwriteBottomRowY)));
             var title = overwrite.Find("OverwriteTitle").GetComponent<TMP_Text>();
             var close = overwrite.Find("OverwriteClose").GetComponent<RectTransform>();
             Assert.That(title.text, Is.EqualTo("덮어쓰기?"));
             Assert.That(close.sizeDelta, Is.EqualTo(new Vector2(46f, 46f)));
             Assert.That(close.anchoredPosition.y, Is.EqualTo(title.rectTransform.anchoredPosition.y));
+            Assert.That(close.anchoredPosition.x, Is.EqualTo(PhaseLMenuSceneBuilder.OverwriteCloseX));
+            // 상단/하단 행은 프레임 가로선 사이 중심에 놓여 위아래 대칭에 가깝다.
+            Assert.That(title.rectTransform.anchoredPosition.y, Is.EqualTo(PhaseLMenuSceneBuilder.OverwriteTopRowY));
+            Assert.That(Mathf.Abs(PhaseLMenuSceneBuilder.OverwriteTopRowY + PhaseLMenuSceneBuilder.OverwriteBottomRowY), Is.LessThanOrEqualTo(2f));
+            Assert.That(close.GetComponent<SubTerra.App.UI.Tutorial.QuestClearCloseHover>(), Is.Null);
+            var closeButton = close.GetComponent<UnityEngine.UI.Button>();
+            var settingsClose = prefab.transform.Find("SettingsPanel/SettingsCard/SettingsClose").GetComponent<UnityEngine.UI.Button>();
+            Assert.That(closeButton.transition, Is.EqualTo(settingsClose.transition));
+            Assert.That(closeButton.colors, Is.EqualTo(settingsClose.colors));
+            Assert.That(closeButton.targetGraphic, Is.EqualTo(close.Find("HoverOverlay").GetComponent<UnityEngine.UI.Image>()));
+            Assert.That(closeButton.targetGraphic.color, Is.EqualTo(settingsClose.targetGraphic.color));
+            Assert.That(closeButton.targetGraphic.color.a, Is.EqualTo(1f));
+            Assert.That(close.GetComponent<UnityEngine.UI.Image>().sprite, Is.EqualTo(settingsClose.GetComponent<UnityEngine.UI.Image>().sprite));
+            Assert.That(((UnityEngine.UI.Image)closeButton.targetGraphic).sprite, Is.EqualTo(((UnityEngine.UI.Image)settingsClose.targetGraphic).sprite));
             foreach (var button in new[] { yes, no })
             {
                 Assert.That(AssetDatabase.GetAssetPath(button.GetComponent<UnityEngine.UI.Image>().sprite),
@@ -510,8 +524,8 @@ namespace SubTerra.App.Tests.UI.MainMenu
                 foreach (var name in new[] { "OverwriteTitle", "OverwriteMessage", "OverwriteYes", "OverwriteNo", "OverwriteClose" })
                 {
                     var rect = (RectTransform)window.Find(name);
-                    Assert.That(Mathf.Abs(rect.anchoredPosition.x) + rect.rect.width / 2f, Is.LessThan(312f), name);
-                    Assert.That(Mathf.Abs(rect.anchoredPosition.y) + rect.rect.height / 2f, Is.LessThan(136f), name);
+                    Assert.That(Mathf.Abs(rect.anchoredPosition.x) + rect.rect.width / 2f, Is.LessThan(374f), name);
+                    Assert.That(Mathf.Abs(rect.anchoredPosition.y) + rect.rect.height / 2f, Is.LessThan(163f), name);
                 }
                 var body = window.Find("OverwriteMessage").GetComponent<TMP_Text>();
                 for (var slot = 1; slot <= 3; slot++)
