@@ -47,13 +47,24 @@ namespace SubTerra.App.Tests.PlayMode.MineDemo
             yield return WaitFor(() => SceneManager.GetActiveScene().name == "Mine_Demo_Integration");
             yield return WaitFor(() => SaveRuntimeController.Instance.IsUiReady);
             Debug.Log("[Ladder Bootstrap QA] Integration UI ready.");
-            movement = UnityEngine.Object.FindFirstObjectByType<PlayerMovement>();
+            // 최신 main의 시작 브리핑은 물리를 일시 정지한다. 실제 닫기 경로로 해제한다.
+            var briefing = UnityEngine.Object.FindAnyObjectByType<SubTerra.App.UI.Tutorial.StartBriefingPopupMotion>();
+            if (briefing != null && briefing.isActiveAndEnabled)
+            {
+                var view = UnityEngine.Object.FindAnyObjectByType<SubTerra.App.UI.Tutorial.DemoObjectiveView>();
+                Assert.That(view, Is.Not.Null);
+                yield return WaitFor(() => briefing.IsShown);
+                Assert.That(view.TryCloseGuidance(), Is.True);
+                yield return WaitFor(() => Time.timeScale > 0f);
+            }
+            Assert.That(Time.timeScale, Is.GreaterThan(0f), "Gameplay must be resumed before physics checks.");
+            movement = UnityEngine.Object.FindAnyObjectByType<PlayerMovement>();
             Assert.That(movement, Is.Not.Null);
             var input = movement.GetComponent<PlayerController>();
             if (input != null) input.enabled = false;
             movement.SetCanMove(true);
             visual = movement.transform.Find("VisualRoot").GetComponent<SpriteRenderer>();
-            frames = new Sprite[3];
+            frames = new Sprite[5];
             for (var i = 0; i < frames.Length; i++)
             {
                 frames[i] = AssetDatabase.LoadAssetAtPath<Sprite>(Frames + "ladder_back_0" + (i + 1) + ".png");
@@ -83,7 +94,7 @@ namespace SubTerra.App.Tests.PlayMode.MineDemo
             yield return null;
             Assert.That(visual.sprite, Is.SameAs(frames[0]));
             yield return Travel(-1f, "descending");
-            Debug.Log("[Ladder Bootstrap QA] Ascending and descending selected all three frames.");
+            Debug.Log("[Ladder Bootstrap QA] Ascending and descending selected all five frames.");
             Assert.That(visual.transform.localPosition, Is.EqualTo(visualPosition), "VisualRoot must not bob.");
             movement.SetVerticalMoveInput(0f);
             body.position += Vector2.right * 2f;
@@ -100,14 +111,14 @@ namespace SubTerra.App.Tests.PlayMode.MineDemo
             var startY = movement.Position.y;
             movement.SetVerticalMoveInput(direction);
             var deadline = Time.realtimeSinceStartup + 4f;
-            while (Mathf.Abs(movement.Position.y - startY) < 1.7f && Time.realtimeSinceStartup < deadline)
+            while (Mathf.Abs(movement.Position.y - startY) < 2.1f && Time.realtimeSinceStartup < deadline)
             {
                 yield return null;
                 Assert.That(Array.IndexOf(frames, visual.sprite), Is.GreaterThanOrEqualTo(0), "Walk/parts must not appear during climb.");
                 observed.Add(visual.sprite);
             }
-            Assert.That(Mathf.Abs(movement.Position.y - startY), Is.GreaterThanOrEqualTo(1.7f));
-            Assert.That(observed.Count, Is.EqualTo(3), "Both crossing poses and neutral must be displayed.");
+            Assert.That(Mathf.Abs(movement.Position.y - startY), Is.GreaterThanOrEqualTo(2.1f), label);
+            Assert.That(observed.Count, Is.EqualTo(5), "Both intermediate/full poses and neutral must be displayed.");
         }
 
         private static IEnumerator WaitFor(Func<bool> condition)

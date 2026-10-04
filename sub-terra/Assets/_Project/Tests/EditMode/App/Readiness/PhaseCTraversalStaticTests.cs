@@ -47,7 +47,7 @@ namespace SubTerra.App.Tests.Readiness
         }
 
         [Test]
-        public void PlayerPrefab_UsesThreeSharedLadderFramesInFrontOfLadder()
+        public void PlayerPrefab_UsesFiveSharedLadderFramesInFrontOfLadder()
         {
             var player = AssetDatabase.LoadAssetAtPath<GameObject>(
                 "Assets/_Project/Prefabs/Gameplay/Player/Player.prefab");
@@ -66,11 +66,15 @@ namespace SubTerra.App.Tests.Readiness
             Assert.IsNull(
                 visualRoot.GetComponent<PlayerLadderPoseController>(),
                 "런타임은 파츠 컨트롤러가 아니라 전체 프레임을 사용해야 한다.");
-            Assert.AreEqual(3, ladderFrames.arraySize);
+            Assert.AreEqual(5, ladderFrames.arraySize);
+            Assert.AreEqual(0.25f, serializedAnimation.FindProperty("ladderDistancePerFrame").floatValue);
             Assert.IsNull(serializedAnimation.FindProperty("ladderDownFrames"));
             for (var index = 0; index < ladderFrames.arraySize; index++)
             {
                 Assert.NotNull(ladderFrames.GetArrayElementAtIndex(index).objectReferenceValue);
+                Assert.AreEqual(
+                    "Assets/_Project/Art/Characters/Player/Frames/LadderBack/ladder_back_" + (index + 1).ToString("D2") + ".png",
+                    AssetDatabase.GetAssetPath(ladderFrames.GetArrayElementAtIndex(index).objectReferenceValue));
             }
 
             Assert.NotNull(AssetDatabase.LoadAssetAtPath<Sprite>(
