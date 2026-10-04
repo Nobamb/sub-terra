@@ -32,17 +32,16 @@ namespace SubTerra.App.Tests.PlayMode
         private Mouse mouse;
         private int starts;
         private int surfaceLoads;
-#if UNITY_EDITOR
-        private UnityEditor.EditorWindow gameView;
-        private object sizeGroup;
-        private PropertyInfo selectedSize;
-        private int previousSize;
-        private int customSizeCount;
-#endif
+        private UiTestResolution resolution;
+        private UiTestEnvironment environment;
 
         [UnitySetUp]
         public IEnumerator SetUp()
         {
+            environment = new UiTestEnvironment();
+            resolution = environment.Resolution;
+            keyboard = environment.Keyboard;
+            mouse = environment.Mouse;
             starts = 0;
             surfaceLoads = 0;
             testRoot = Path.Combine(Path.GetTempPath(), "subterra-issue119-" + Guid.NewGuid().ToString("N"));
@@ -52,17 +51,13 @@ namespace SubTerra.App.Tests.PlayMode
             var mapper = new SaveDataMapper(new SystemSaveClock());
             var codec = new SaveJsonCodec(new SaveMigrationService());
             save = new SaveService(fileSystem, paths, mapper, codec);
-            keyboard = InputSystem.AddDevice<Keyboard>();
-            mouse = InputSystem.AddDevice<Mouse>();
             GameBootstrapper.ResetInstanceForTests();
             SceneManager.LoadScene(SceneNames.Bootstrap);
-            for (var frame = 0; frame < 120; frame++)
+            yield return UiTestWait.Until(() =>
             {
-                yield return null;
-                binder = UnityEngine.Object.FindFirstObjectByType<MainMenuBinder>();
-                if (binder != null && binder.IsBound) break;
-            }
-            Assert.That(binder, Is.Not.Null);
+                binder = UnityEngine.Object.FindAnyObjectByType<MainMenuBinder>();
+                return binder != null && binder.IsBound && SaveRuntimeController.Instance != null;
+            }, "MainMenuBinder.IsBound and SaveRuntimeController");
             binder.enabled = false;
             var runtime = SaveRuntimeController.Instance;
             Assert.That(runtime.ActiveSlot, Is.Zero);
@@ -71,6 +66,7 @@ namespace SubTerra.App.Tests.PlayMode
             SetField(runtime, "<Thumbnails>k__BackingField", new SaveThumbnailService(paths));
             binder.enabled = true;
             view = binder.GetComponent<MainMenuView>();
+            environment.BindInput();
             binder.Presenter.StartNewGameConfirmed += _ => starts++;
             SceneManager.sceneLoaded += OnSceneLoaded;
         }
@@ -79,29 +75,24 @@ namespace SubTerra.App.Tests.PlayMode
         public IEnumerator TearDown()
         {
             SceneManager.sceneLoaded -= OnSceneLoaded;
-            if (keyboard != null) InputSystem.RemoveDevice(keyboard);
-            if (mouse != null) InputSystem.RemoveDevice(mouse);
-            GameBootstrapper.ResetInstanceForTests();
-            if (SaveRuntimeController.Instance != null)
-                UnityEngine.Object.Destroy(SaveRuntimeController.Instance.gameObject);
+            try { if (environment != null) environment.Dispose(); }
+            finally { if (Directory.Exists(testRoot)) Directory.Delete(testRoot, true); }
             yield return null;
-#if UNITY_EDITOR
-            if (gameView != null)
-            {
-                selectedSize.SetValue(gameView, previousSize);
-                var added = (int)sizeGroup.GetType().GetMethod("GetCustomCount").Invoke(sizeGroup, null) - customSizeCount;
-                for (var i = 0; i < added; i++)
-                {
-                    var total = (int)sizeGroup.GetType().GetMethod("GetTotalCount").Invoke(sizeGroup, null);
-                    sizeGroup.GetType().GetMethod("RemoveCustomSize").Invoke(sizeGroup, new object[] { total - 1 });
-                }
-            }
-#endif
-            if (Directory.Exists(testRoot)) Directory.Delete(testRoot, true);
         }
 
         [UnityTest]
-        public IEnumerator OccupiedSlot_CancelCloseKeySortingAndConfirm_AtTwoAspectRatios()
+        public IEnumerator OccupiedSlot_CancelCloseKeySortingAndConfirm()
+        {
+            yield return VerifyOccupiedSlot(new[] { new Vector2Int(1920, 1080) }, false);
+        }
+
+        [UnityTest, Category("Visual")]
+        public IEnumerator OccupiedSlot_LayoutAndInput_AtTwoAspectRatios()
+        {
+            yield return VerifyOccupiedSlot(new[] { new Vector2Int(1920, 1080), new Vector2Int(1280, 1024) }, true);
+        }
+
+        private IEnumerator VerifyOccupiedSlot(Vector2Int[] sizes, bool visual)
         {
             var state = GameState.CreateNew();
             state.SetGold(777);
@@ -114,10 +105,9 @@ namespace SubTerra.App.Tests.PlayMode
             var backup = File.ReadAllBytes(slot.Backup);
             var runtimeState = GameBootstrapper.Instance.State;
             var window = (RectTransform)view.transform.Find("OverwriteConfirm");
-            foreach (var size in new[] { new Vector2Int(1920, 1080), new Vector2Int(1280, 1024) })
+            foreach (var size in sizes)
             {
-                SetGameViewSize(size.x, size.y);
-                yield return new WaitForSecondsRealtime(0.2f);
+                yield return resolution.Set(size.x, size.y);
                 Assert.That(Screen.width, Is.EqualTo(size.x));
                 Assert.That(Screen.height, Is.EqualTo(size.y));
                 binder.Presenter.SelectSlot(1);
@@ -133,12 +123,12 @@ namespace SubTerra.App.Tests.PlayMode
                 Assert.That(corners[0].y, Is.GreaterThan(0));
                 Assert.That(corners[2].x, Is.LessThan(Screen.width));
                 Assert.That(corners[2].y, Is.LessThan(Screen.height));
-                ScreenCapture.CaptureScreenshot(Path.Combine(Application.dataPath,
+                if (visual) yield return UiTestWait.Capture(Path.Combine(Application.dataPath,
                     "../Temp/issue119-" + size.x + "x" + size.y + ".png"));
                 var yes = window.Find("OverwriteYes").GetComponent<UnityEngine.UI.Button>();
                 var skin = yes.GetComponent<MenuSpriteButtonSkin>();
                 skin.OnPointerEnter(new PointerEventData(EventSystem.current));
-                yield return new WaitForSecondsRealtime(0.25f);
+                yield return UiTestWait.Until(() => skin.OverlayAlpha >= 0.99f, "overwrite confirm hover animation", stage: "animation");
                 Assert.That(skin.OverlayAlpha, Is.EqualTo(1f).Within(0.01f));
                 Assert.That(yes.transform.localScale, Is.EqualTo(Vector3.one));
                 skin.OnPointerExit(new PointerEventData(EventSystem.current));
@@ -160,12 +150,16 @@ namespace SubTerra.App.Tests.PlayMode
                 binder.Presenter.RequestNewGame();
                 binder.Presenter.OpenSettings();
                 view.RaiseSettingsAbovePopups();
-                yield return new WaitForSecondsRealtime(0.5f);
                 var settingsRoot = (GameObject)GetField(view, "settingsRoot");
+                yield return UiTestWait.Until(() => settingsRoot.activeInHierarchy, "settings popup open");
+                var settingsSkin = settingsRoot.GetComponent<SettingsMenuSkin>();
+                yield return UiTestWait.Until(() => GetField(settingsSkin, "openRoutine") == null,
+                    "settings opening animation", stage: "animation");
                 Assert.That(settingsRoot.GetComponent<Canvas>().sortingOrder,
                     Is.GreaterThan(window.GetComponent<Canvas>().sortingOrder));
                 yield return PressX();
-                yield return new WaitForSecondsRealtime(0.5f);
+                yield return UiTestWait.Until(() => !binder.Presenter.Settings.IsOpen && !settingsRoot.activeInHierarchy,
+                    "settings close animation", stage: "animation");
                 Assert.That(binder.Presenter.Settings.IsOpen, Is.False);
                 Assert.That(view.IsOverwriteConfirmVisible, Is.True);
                 yield return PressX();
@@ -180,7 +174,7 @@ namespace SubTerra.App.Tests.PlayMode
             confirm.onClick.Invoke();
             confirm.onClick.Invoke();
             presenter.ConfirmOverwriteNewGame();
-            yield return new WaitForSecondsRealtime(0.5f);
+            yield return UiTestWait.Until(() => surfaceLoads == 1 && SaveRuntimeController.Instance.IsUiReady, "SurfaceBase ready after new game", stage: "scene");
             Assert.That(starts, Is.EqualTo(1));
             Assert.That(surfaceLoads, Is.EqualTo(1));
             Assert.That(SaveRuntimeController.Instance.ActiveSlot, Is.EqualTo(1));
@@ -193,7 +187,7 @@ namespace SubTerra.App.Tests.PlayMode
             yield return StartEmptySlot(1920, 1080);
         }
 
-        [UnityTest]
+        [UnityTest, Category("Visual")]
         public IEnumerator EmptySlot_StartsWithoutPopup_AtFiveByFourAspectRatio()
         {
             yield return StartEmptySlot(1280, 1024);
@@ -201,8 +195,7 @@ namespace SubTerra.App.Tests.PlayMode
 
         private IEnumerator StartEmptySlot(int width, int height)
         {
-            SetGameViewSize(width, height);
-            yield return new WaitForSecondsRealtime(0.2f);
+            yield return resolution.Set(width, height);
             Assert.That(Screen.width, Is.EqualTo(width));
             Assert.That(Screen.height, Is.EqualTo(height));
             binder.Presenter.SelectSlot(2);
@@ -210,7 +203,7 @@ namespace SubTerra.App.Tests.PlayMode
             button.onClick.Invoke();
             button.onClick.Invoke();
             Assert.That(view.IsOverwriteConfirmVisible, Is.False);
-            yield return new WaitForSecondsRealtime(0.5f);
+            yield return UiTestWait.Until(() => surfaceLoads == 1 && SaveRuntimeController.Instance.IsUiReady, "SurfaceBase ready after new game", stage: "scene");
             Assert.That(starts, Is.EqualTo(1));
             Assert.That(surfaceLoads, Is.EqualTo(1));
             Assert.That(SaveRuntimeController.Instance.ActiveSlot, Is.EqualTo(2));
@@ -218,6 +211,7 @@ namespace SubTerra.App.Tests.PlayMode
 
         private IEnumerator Click(GameObject target)
         {
+            mouse.MakeCurrent();
             var position = (Vector2)target.transform.position;
             var pointer = new PointerEventData(EventSystem.current) { position = position };
             var hits = new List<RaycastResult>();
@@ -228,11 +222,19 @@ namespace SubTerra.App.Tests.PlayMode
             pointer.pointerPressRaycast = hits[0];
             window.OnPointerDown(pointer);
             Assert.That(GetField(window, "tracking"), Is.False);
+            InputSystem.QueueStateEvent(mouse, new MouseState { position = position });
+            yield return null;
+            mouse.MakeCurrent();
             InputSystem.QueueStateEvent(mouse, new MouseState { position = position, buttons = 1 });
             yield return null;
+            yield return null;
+            mouse.MakeCurrent();
             InputSystem.QueueStateEvent(mouse, new MouseState { position = position + Vector2.one * 2f, buttons = 1 });
             yield return null;
+            yield return null;
+            mouse.MakeCurrent();
             InputSystem.QueueStateEvent(mouse, new MouseState { position = position + Vector2.one * 2f });
+            yield return null;
             yield return null;
         }
 
@@ -255,30 +257,5 @@ namespace SubTerra.App.Tests.PlayMode
         private static object GetField(object target, string name) =>
             target.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic).GetValue(target);
 
-        private void SetGameViewSize(int width, int height)
-        {
-#if UNITY_EDITOR
-            var assembly = typeof(UnityEditor.Editor).Assembly;
-            var viewType = assembly.GetType("UnityEditor.GameView");
-            if (gameView == null)
-            {
-                gameView = UnityEditor.EditorWindow.GetWindow(viewType);
-                selectedSize = viewType.GetProperty("selectedSizeIndex", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-                previousSize = (int)selectedSize.GetValue(gameView);
-                var sizesType = assembly.GetType("UnityEditor.GameViewSizes");
-                var singleton = typeof(UnityEditor.ScriptableSingleton<>).MakeGenericType(sizesType);
-                var sizes = singleton.GetProperty("instance").GetValue(null);
-                sizeGroup = sizesType.GetMethod("GetGroup").Invoke(sizes, new[] { Enum.Parse(assembly.GetType("UnityEditor.GameViewSizeGroupType"), "Standalone") });
-                customSizeCount = (int)sizeGroup.GetType().GetMethod("GetCustomCount").Invoke(sizeGroup, null);
-            }
-            var size = Activator.CreateInstance(assembly.GetType("UnityEditor.GameViewSize"), new[] {
-                Enum.Parse(assembly.GetType("UnityEditor.GameViewSizeType"), "FixedResolution"), (object)width, height, "Issue119 QA" });
-            sizeGroup.GetType().GetMethod("AddCustomSize").Invoke(sizeGroup, new[] { size });
-            var count = (int)sizeGroup.GetType().GetMethod("GetTotalCount").Invoke(sizeGroup, null);
-            selectedSize.SetValue(gameView, count - 1);
-            gameView.Focus();
-            gameView.Repaint();
-#endif
-        }
     }
 }

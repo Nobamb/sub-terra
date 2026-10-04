@@ -428,6 +428,15 @@ namespace SubTerra.App.Editor.DataValidation
 
         public static void RunPlayModeTests(string resultPath, string[] assemblyNames = null)
         {
+            if (assemblyNames == null)
+            {
+                TestValidationRunner.Run(new TestValidationRunner.Request
+                {
+                    scope = "daily", mode = "PlayMode", output = "Temp/validation",
+                    legacyResultPath = ResolveProjectPath(resultPath), quit = Application.isBatchMode
+                });
+                return;
+            }
             StartTestRun(
                 TestMode.PlayMode,
                 assemblyNames ?? DiscoverProjectTestAssemblies(TestMode.PlayMode),

@@ -1,76 +1,36 @@
 using System.Collections;
 using System.IO;
-using System.Reflection;
 using NUnit.Framework;
-using SubTerra.App.Core;
 using SubTerra.App.Integration;
-using SubTerra.App.Save;
-using SubTerra.App.State;
 using SubTerra.App.UI;
 using SubTerra.App.UI.HUD;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.LowLevel;
-using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 
 namespace SubTerra.App.Tests.PlayMode
 {
     public sealed class PromptB105SideMenuPlayModeTests
     {
+        private UiTestEnvironment environment;
         private Keyboard keyboard;
-        private float originalTimeScale;
-#if UNITY_EDITOR
-        private UnityEditor.EditorWindow gameView;
-        private object sizeGroup;
-        private PropertyInfo selectedSize;
-        private int previousSize;
-        private int customSizeCount;
-#endif
 
         [UnityTearDown]
         public IEnumerator TearDown()
         {
-            Time.timeScale = originalTimeScale;
-            if (keyboard != null) InputSystem.RemoveDevice(keyboard);
-            GameBootstrapper.ResetInstanceForTests();
-#if UNITY_EDITOR
-            if (gameView != null)
-            {
-                selectedSize.SetValue(gameView, previousSize);
-                int builtin = (int)sizeGroup.GetType().GetMethod("GetBuiltinCount").Invoke(sizeGroup, null);
-                while ((int)sizeGroup.GetType().GetMethod("GetCustomCount").Invoke(sizeGroup, null) > customSizeCount)
-                {
-                    int total = (int)sizeGroup.GetType().GetMethod("GetTotalCount").Invoke(sizeGroup, null);
-                    sizeGroup.GetType().GetMethod("RemoveCustomSize").Invoke(sizeGroup, new object[] { total - builtin - 1 });
-                }
-            }
-#endif
+            if (environment != null) environment.Dispose();
             yield return null;
         }
 
         [UnityTest]
         public IEnumerator InGameMenu_ActionsHoverTransitionsAndHiddenShortcuts()
         {
-            originalTimeScale = Time.timeScale;
-            GameBootstrapper.ResetInstanceForTests();
-            var runtimeRoot = new GameObject("PromptB105_TestRuntime");
-            var bootstrap = runtimeRoot.AddComponent<GameBootstrapper>();
-            bootstrap.enabled = false;
-            var state = GameState.CreateNew();
-            state.BeginRun();
-            bootstrap.TryReplaceState(state);
-            var save = runtimeRoot.AddComponent<SaveRuntimeController>();
-            yield return null;
-            yield return null;
-            // 슬롯을 시작/불러오지 않아 실제 사용자 저장 파일에 쓰지 않는다.
-            Assert.That(save.ActiveSlot, Is.Zero);
-            save.SetReady(true);
-            SceneManager.LoadScene(SceneNames.Integration);
-            yield return null;
-            yield return null;
-            yield return new WaitForSecondsRealtime(1f);
+            environment = new UiTestEnvironment();
+            keyboard = environment.Keyboard;
+            yield return environment.LoadIntegration(false);
+            var save = environment.Save;
             var menu = Object.FindFirstObjectByType<GameplaySideMenuController>();
             Assert.That(menu, Is.Not.Null);
             var open = (RectTransform)menu.transform.Find("OpenMenuRoot");
@@ -90,66 +50,55 @@ namespace SubTerra.App.Tests.PlayMode
             Assert.That(menu.IsOpen, Is.True);
 
             chrome.CloseBuildingMenu();
-            Click(bar, "Open0"); Assert.That(chrome.IsBuildingMenuOpen, Is.True);
-            Click(bar, "Open0"); Assert.That(chrome.IsBuildingMenuOpen, Is.False);
-            Click(bar, "Open1"); Assert.That(chrome.IsInventoryPanelOpen, Is.True);
-            Click(bar, "Open1"); Assert.That(chrome.IsInventoryPanelOpen, Is.False);
-            Click(bar, "Open2"); Assert.That(panels.IsVisible(RuntimePanelId.Upgrade), Is.True);
-            Click(bar, "Open2"); Assert.That(panels.IsVisible(RuntimePanelId.Upgrade), Is.False);
-            Click(bar, "Open3"); Assert.That(chrome.IsGameGuideOpen, Is.True);
-            Click(bar, "Open3"); Assert.That(chrome.IsGameGuideOpen, Is.False);
-            Click(bar, "SettingsShortcut"); Assert.That(underground.IsSettingsOpen, Is.True);
+            yield return Click(bar, "Open0"); Assert.That(chrome.IsBuildingMenuOpen, Is.True);
+            yield return Click(bar, "Open0"); Assert.That(chrome.IsBuildingMenuOpen, Is.False);
+            yield return Click(bar, "Open1"); Assert.That(chrome.IsInventoryPanelOpen, Is.True);
+            yield return Click(bar, "Open1"); Assert.That(chrome.IsInventoryPanelOpen, Is.False);
+            yield return Click(bar, "Open2"); Assert.That(panels.IsVisible(RuntimePanelId.Upgrade), Is.True);
+            yield return Click(bar, "Open2"); Assert.That(panels.IsVisible(RuntimePanelId.Upgrade), Is.False);
+            yield return Click(bar, "Open3"); Assert.That(chrome.IsGameGuideOpen, Is.True);
+            yield return Click(bar, "Open3"); Assert.That(chrome.IsGameGuideOpen, Is.False);
+            yield return Click(bar, "SettingsShortcut"); Assert.That(underground.IsSettingsOpen, Is.True);
             underground.CloseSettings();
-            yield return new WaitForSecondsRealtime(1f);
+            yield return UiTestWait.Until(() => !underground.IsSettingsOpen, "underground settings closed");
             var quit = bar.Find("QuitShortcut").GetComponent<UnityEngine.UI.Button>();
             Assert.That(quit.onClick.GetPersistentMethodName(0), Is.EqualTo("RequestQuit"));
 
             Time.timeScale = 0f;
-            keyboard = InputSystem.AddDevice<Keyboard>();
+            InputSystem.QueueStateEvent(environment.Mouse, new MouseState { position = Vector2.zero });
+            yield return null;
+            yield return null;
             var pointer = new PointerEventData(EventSystem.current);
             foreach (var skin in open.GetComponentsInChildren<SideMenuButtonView>())
             {
-                skin.OnPointerEnter(pointer);
                 var hover = skin.transform.Find("HoverImage").GetComponent<UnityEngine.UI.Image>();
-                float enterDeadline = Time.realtimeSinceStartup + 1.2f;
-                while (hover.color.a < 0.25f && Time.realtimeSinceStartup < enterDeadline)
-                    yield return null;
+                skin.OnPointerExit(pointer);
+                yield return UiTestWait.Until(() => hover.color.a <= 0.01f, skin.name + " initial hover fade", 1.2f, "animation");
+                skin.OnPointerEnter(pointer);
+                yield return UiTestWait.Until(() => hover.color.a >= 0.25f, skin.name + " hover intermediate alpha", 1.2f, "animation");
                 Assert.That(hover.color.a, Is.InRange(0.25f, 0.85f),
                     skin.name + " active=" + skin.isActiveAndEnabled + " interactable=" + skin.GetComponent<UnityEngine.UI.Button>().IsInteractable());
                 Assert.That(skin.ActiveParticleCount, Is.GreaterThan(0), skin.name + " hover particles");
-                while (hover.color.a < 0.99f && Time.realtimeSinceStartup < enterDeadline + 0.8f)
-                    yield return null;
+                yield return UiTestWait.Until(() => hover.color.a >= 0.99f, skin.name + " hover completion", 0.8f, "animation");
                 Assert.That(hover.color.a, Is.EqualTo(1f).Within(0.02f));
                 skin.OnPointerExit(pointer);
-                float fadeDeadline = Time.realtimeSinceStartup + 1.2f;
-                while (hover.color.a > 0.01f && Time.realtimeSinceStartup < fadeDeadline)
-                    yield return null;
+                yield return UiTestWait.Until(() => hover.color.a <= 0.01f, skin.name + " hover fade completion", 1.2f, "animation");
                 Assert.That(hover.color.a, Is.Zero.Within(0.01f));
             }
 
-            string evidence = Path.GetFullPath("../work_process/MVP2/UI-fix-markdown-document/evidence/prompt-b105-2");
-            Directory.CreateDirectory(evidence);
-            ScreenCapture.CaptureScreenshot(Path.Combine(evidence, "menu-open.png"));
-            yield return new WaitForSecondsRealtime(0.2f);
             InputSystem.QueueStateEvent(keyboard, new KeyboardState(Key.Slash));
             yield return null;
             InputSystem.QueueStateEvent(keyboard, new KeyboardState());
             yield return null;
             Assert.That(menu.IsTransitioning, Is.True);
-            float slashDeadline = Time.realtimeSinceStartup + 1.2f;
-            while (menu.IsTransitioning && Time.realtimeSinceStartup < slashDeadline)
-                yield return null;
+            yield return UiTestWait.Until(() => !menu.IsTransitioning, "side menu slash close", 1.2f, "animation");
             Assert.That(menu.IsOpen, Is.False);
-            ScreenCapture.CaptureScreenshot(Path.Combine(evidence, "menu-closed-slash.png"));
-            yield return new WaitForSecondsRealtime(0.2f);
             InputSystem.QueueStateEvent(keyboard, new KeyboardState(Key.Slash));
             yield return null;
             InputSystem.QueueStateEvent(keyboard, new KeyboardState());
             yield return null;
             Assert.That(menu.IsTransitioning, Is.True);
-            float reopenDeadline = Time.realtimeSinceStartup + 1.2f;
-            while (menu.IsTransitioning && Time.realtimeSinceStartup < reopenDeadline)
-                yield return null;
+            yield return UiTestWait.Until(() => !menu.IsTransitioning, "side menu slash reopen", 1.2f, "animation");
             Assert.That(menu.IsOpen, Is.True);
             for (int pass = 0; pass < 2; pass++)
             {
@@ -158,23 +107,20 @@ namespace SubTerra.App.Tests.PlayMode
                 menu.Toggle();
                 menu.Toggle(); // 전환 중 중복 입력을 무시한다.
                 Assert.That(menu.IsTransitioning, Is.True);
-                yield return new WaitForSecondsRealtime(0.25f);
+                yield return UiTestWait.Delay(0.25f, "animation-midpoint");
                 Assert.That(outgoing.anchoredPosition.x, Is.GreaterThan(0));
                 Assert.That(incoming.gameObject.activeSelf, Is.False);
-                float deadline = Time.realtimeSinceStartup + 1f;
-                while (menu.IsTransitioning && Time.realtimeSinceStartup < deadline)
+                yield return UiTestWait.Until(() =>
                 {
                     Assert.That(open.gameObject.activeSelf && closed.gameObject.activeSelf, Is.False);
-                    yield return null;
-                }
+                    return !menu.IsTransitioning;
+                }, "side menu transition completion", 1f, "animation");
                 Assert.That(menu.IsTransitioning, Is.False);
                 Assert.That(incoming.anchoredPosition.x, Is.Zero.Within(0.01f));
                 Assert.That(outgoing.anchoredPosition.x, Is.GreaterThan(outgoing.rect.width));
                 if (pass == 0)
                 {
                     Assert.That(menu.IsOpen, Is.False);
-                    ScreenCapture.CaptureScreenshot(Path.Combine(evidence, "menu-closed.png"));
-                    yield return new WaitForSecondsRealtime(0.2f);
                     foreach (var key in new[] { Key.B, Key.I, Key.U, Key.G, Key.Escape })
                     {
                         InputSystem.QueueStateEvent(keyboard, new KeyboardState(key));
@@ -201,62 +147,61 @@ namespace SubTerra.App.Tests.PlayMode
             Assert.That(menu.IsTransitioning, Is.False);
             Assert.That(open.anchoredPosition.x, Is.Zero);
             Assert.That(save.ActiveSlot, Is.Zero);
+            AssertSideInsideScreen(menu, open);
+            UiTestWait.AssertClickTarget(bar.Find("Open0").GetComponent<UnityEngine.UI.Button>());
+        }
+
+        [UnityTest, Category("Visual")]
+        public IEnumerator InGameMenu_OpenClosedLayout_AtThreeResolutions()
+        {
+            environment = new UiTestEnvironment();
+            keyboard = environment.Keyboard;
+            yield return environment.LoadIntegration(false);
+            var menu = Object.FindAnyObjectByType<GameplaySideMenuController>();
+            var open = (RectTransform)menu.transform.Find("OpenMenuRoot");
+            var closed = (RectTransform)menu.transform.Find("ClosedMenuRoot");
+            var evidence = Path.GetFullPath("Temp/visual/prompt-b105-2");
+            yield return UiTestWait.Capture(Path.Combine(evidence, "menu-open.png"));
+            yield return UiTestWait.Press(keyboard, Key.Slash);
+            yield return UiTestWait.Until(() => !menu.IsTransitioning, "side menu slash close", stage: "animation");
+            Assert.That(menu.IsOpen, Is.False);
+            yield return UiTestWait.Capture(Path.Combine(evidence, "menu-closed-slash.png"));
+            yield return UiTestWait.Press(keyboard, Key.Slash);
+            yield return UiTestWait.Until(() => !menu.IsTransitioning, "side menu slash reopen", stage: "animation");
+            Assert.That(menu.IsOpen, Is.True);
+            menu.Toggle();
+            yield return UiTestWait.Until(() => !menu.IsTransitioning, "side menu close", stage: "animation");
+            Assert.That(menu.IsOpen, Is.False);
+            yield return UiTestWait.Capture(Path.Combine(evidence, "menu-closed.png"));
+            menu.Toggle();
+            yield return UiTestWait.Until(() => !menu.IsTransitioning, "side menu reopen", stage: "animation");
             foreach (var resolution in new[] { new Vector2Int(1920, 1080), new Vector2Int(2560, 1440), new Vector2Int(1366, 768) })
             {
-                SetGameViewSize(resolution.x, resolution.y);
-                yield return new WaitForSecondsRealtime(0.3f);
-                Canvas.ForceUpdateCanvases();
-                Assert.That(Screen.width, Is.EqualTo(resolution.x));
-                Assert.That(Screen.height, Is.EqualTo(resolution.y));
-                var corners = new Vector3[4];
-                open.GetWorldCorners(corners);
-                var canvas = menu.GetComponentInParent<Canvas>().rootCanvas;
-                var camera = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
-                Assert.That(RectTransformUtility.WorldToScreenPoint(camera, corners[2]).x, Is.EqualTo(Screen.width).Within(2f));
-                Assert.That(RectTransformUtility.WorldToScreenPoint(camera, corners[0]).y, Is.GreaterThan(0));
-                ScreenCapture.CaptureScreenshot(Path.Combine(evidence, $"menu-open-{resolution.x}x{resolution.y}.png"));
-                yield return new WaitForSecondsRealtime(0.15f);
+                yield return environment.Resolution.Set(resolution.x, resolution.y);
+                AssertSideInsideScreen(menu, open);
+                yield return UiTestWait.Capture(Path.Combine(evidence, $"menu-open-{resolution.x}x{resolution.y}.png"));
                 menu.Toggle();
-                yield return new WaitForSecondsRealtime(0.9f);
+                yield return UiTestWait.Until(() => !menu.IsTransitioning, "side menu close at " + resolution, stage: "animation");
                 Assert.That(menu.IsOpen, Is.False);
-                closed.GetWorldCorners(corners);
-                Assert.That(RectTransformUtility.WorldToScreenPoint(camera, corners[2]).x, Is.EqualTo(Screen.width).Within(2f));
-                Assert.That(RectTransformUtility.WorldToScreenPoint(camera, corners[0]).y, Is.GreaterThan(0));
-                ScreenCapture.CaptureScreenshot(Path.Combine(evidence, $"menu-closed-{resolution.x}x{resolution.y}.png"));
-                yield return new WaitForSecondsRealtime(0.15f);
+                AssertSideInsideScreen(menu, closed);
+                yield return UiTestWait.Capture(Path.Combine(evidence, $"menu-closed-{resolution.x}x{resolution.y}.png"));
                 menu.Toggle();
-                yield return new WaitForSecondsRealtime(0.9f);
+                yield return UiTestWait.Until(() => !menu.IsTransitioning, "side menu reopen at " + resolution, stage: "animation");
                 Assert.That(menu.IsOpen, Is.True);
             }
         }
 
-        private static void Click(Transform parent, string name) => parent.Find(name).GetComponent<UnityEngine.UI.Button>().onClick.Invoke();
-
-        private void SetGameViewSize(int width, int height)
+        private static void AssertSideInsideScreen(GameplaySideMenuController menu, RectTransform root)
         {
-#if UNITY_EDITOR
-            var editorAssembly = typeof(UnityEditor.Editor).Assembly;
-            var viewType = editorAssembly.GetType("UnityEditor.GameView");
-            if (gameView == null)
-            {
-                gameView = UnityEditor.EditorWindow.GetWindow(viewType);
-                selectedSize = viewType.GetProperty("selectedSizeIndex", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-                previousSize = (int)selectedSize.GetValue(gameView);
-                var sizesType = editorAssembly.GetType("UnityEditor.GameViewSizes");
-                var singleton = typeof(UnityEditor.ScriptableSingleton<>).MakeGenericType(sizesType);
-                var sizes = singleton.GetProperty("instance").GetValue(null);
-                var groupType = editorAssembly.GetType("UnityEditor.GameViewSizeGroupType");
-                sizeGroup = sizesType.GetMethod("GetGroup").Invoke(sizes, new[] { System.Enum.Parse(groupType, "Standalone") });
-                customSizeCount = (int)sizeGroup.GetType().GetMethod("GetCustomCount").Invoke(sizeGroup, null);
-            }
-            var sizeType = editorAssembly.GetType("UnityEditor.GameViewSize");
-            var modeType = editorAssembly.GetType("UnityEditor.GameViewSizeType");
-            var size = System.Activator.CreateInstance(sizeType, new[] { System.Enum.Parse(modeType, "FixedResolution"), (object)width, height, "PromptB105 QA" });
-            sizeGroup.GetType().GetMethod("AddCustomSize").Invoke(sizeGroup, new[] { size });
-            int count = (int)sizeGroup.GetType().GetMethod("GetTotalCount").Invoke(sizeGroup, null);
-            selectedSize.SetValue(gameView, count - 1);
-            gameView.Repaint();
-#endif
+            var corners = new Vector3[4];
+            root.GetWorldCorners(corners);
+            var canvas = menu.GetComponentInParent<Canvas>().rootCanvas;
+            var camera = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
+            Assert.That(RectTransformUtility.WorldToScreenPoint(camera, corners[2]).x, Is.EqualTo(Screen.width).Within(2f));
+            Assert.That(RectTransformUtility.WorldToScreenPoint(camera, corners[0]).y, Is.GreaterThan(0));
         }
+
+        private IEnumerator Click(Transform parent, string name) => UiTestWait.Click(environment.Mouse, parent.Find(name).GetComponent<UnityEngine.UI.Button>());
+
     }
 }

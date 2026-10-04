@@ -49,6 +49,8 @@ namespace SubTerra.App.Editor
 
         private static void ApplyPreference()
         {
+            if (DataValidation.TestValidationRunner.IsRunning) return;
+
             if (!IsEnabled())
             {
                 if (EditorSceneManager.playModeStartScene != null
