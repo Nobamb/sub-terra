@@ -10999,7 +10999,7 @@ MonoBehaviour:
       m_Calls: []
   m_Sprite: {fileID: 21300000, guid: ad649475b79687e439f2a5171f1d61cb, type: 3}
   m_Type: 0
-  m_PreserveAspect: 0
+  m_PreserveAspect: 1
   m_FillCenter: 1
   m_FillMethod: 4
   m_FillAmount: 1
@@ -17744,6 +17744,7 @@ MonoBehaviour:
   rootGroup: {fileID: 77349997111836180}
   backdrop: {fileID: 946725637866715149}
   backdropAlpha: 0.78
+  backdropFloor: 0
   card: {fileID: 7117241264924850418}
   body: {fileID: 893457307763868838}
   scanLine: {fileID: 1615392208421717708}
@@ -21577,9 +21578,9 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 5ddef231baeb1de4aad3e4837dbbec48, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 2ba47d2d36450b94dae478dba45895b3, type: 3}
   m_Type: 0
-  m_PreserveAspect: 0
+  m_PreserveAspect: 1
   m_FillCenter: 1
   m_FillMethod: 4
   m_FillAmount: 1

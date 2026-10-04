@@ -40,7 +40,7 @@ namespace SubTerra.App.Editor.DataValidation
         public const string CostPlatePath = ArtFolder + "mine-reset-cost-plate.png";
         public const string InfoPlatePath = ArtFolder + "mine-reset-info-plate.png";
         public const string TimerPlatePath = ArtFolder + "mine-reset-timer-plate.png";
-        public const string GoldIconPath = ArtFolder + "mine-reset-icon-gold.png";
+        public const string GoldIconPath = "Assets/_Project/Art/UI/Upgrade/Icons/upgrade-icon-coins.png";
         public const string ResetIconPath = ArtFolder + "mine-reset-badge-reset.png";
         public const string KeepIconPath = ArtFolder + "mine-reset-badge-keep.png";
         public const string TimerIconPath = ArtFolder + "mine-reset-icon-clock.png";
@@ -205,7 +205,7 @@ namespace SubTerra.App.Editor.DataValidation
             {
                 FramePath, FrameGlowPath, PanelPath, CavePath, HexMinePath, HexBorderPath, HexBorderGlowPath,
                 HexCrystalGlowPath, HexTunnelGlowPath, HexRingsPath, CoreGlowPath, ScanLinePath, TitleDividerPath,
-                CostPlatePath, InfoPlatePath, TimerPlatePath, GoldIconPath, ResetIconPath, KeepIconPath,
+                CostPlatePath, InfoPlatePath, TimerPlatePath, ResetIconPath, KeepIconPath,
                 TimerIconPath, TimerDividerPath, ButtonCancelPath, ButtonCancelHoverPath, ButtonConfirmPath,
                 ButtonConfirmHoverPath
             };
@@ -409,6 +409,7 @@ namespace SubTerra.App.Editor.DataValidation
             layout.childForceExpandHeight = false;
 
             var gold = AddImage(amountRow, "GoldIcon", GoldIconPath, Vector2.zero, GoldIconSize);
+            gold.preserveAspect = true;
             var goldLayout = gold.gameObject.AddComponent<LayoutElement>();
             goldLayout.preferredWidth = GoldIconSize.x;
             goldLayout.preferredHeight = GoldIconSize.y;
@@ -443,7 +444,8 @@ namespace SubTerra.App.Editor.DataValidation
             {
                 var r = plates[i];
                 var row = AddImage(content, names[i], InfoPlatePath, new Vector2(r.x, r.y), new Vector2(r.z, r.w)).rectTransform;
-                AddImage(row, "Icon", badges[i], new Vector2(-214.7f, -1.2f), BadgeSize);
+                var badge = AddImage(row, "Icon", badges[i], new Vector2(-214.7f, -1.2f), BadgeSize);
+                if (i == 1) badge.preserveAspect = true;
 
                 var title = EnsureText(row, "Title", new Vector2(RowTextLeft + RowTextWidth / 2f, RowTitleOffsetY),
                     new Vector2(RowTextWidth, 46f), RowTitleFontSize, LocalizationService.Get(titleKeys[i]));
