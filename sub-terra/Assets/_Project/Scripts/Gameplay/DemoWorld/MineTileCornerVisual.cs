@@ -19,6 +19,7 @@ namespace SubTerra.Gameplay.DemoWorld
         private static readonly int CornerMap = Shader.PropertyToID("_CornerMap");
         private static readonly int CornerBounds = Shader.PropertyToID("_CornerBounds");
         private static readonly int WorldToCell = Shader.PropertyToID("_WorldToCell");
+        private static readonly int CornerRadius = Shader.PropertyToID("_CornerRadius");
 
         private void OnEnable()
         {
@@ -34,6 +35,8 @@ namespace SubTerra.Gameplay.DemoWorld
                 material.CopyPropertiesFromMaterial(originalMaterial);
                 material.SetFloat("_UseLighting", originalMaterial.shader.name.Contains("Sprite-Lit") ? 1f : 0f);
             }
+            // 기존 Sprite 재질의 속성을 복사한 뒤에도 모서리 반경이 실제 재질에 남도록 보장한다.
+            material.SetFloat(CornerRadius, shader.GetPropertyDefaultFloatValue(shader.FindPropertyIndex("_CornerRadius")));
             mapRenderer.sharedMaterial = material;
             rebuild = true;
             Tilemap.tilemapTileChanged += OnTilesChanged;
