@@ -49,18 +49,7 @@ namespace SubTerra.App.Editor.DataValidation
             {
                 var hud = scene.GetRootGameObjects().SelectMany(r => r.GetComponentsInChildren<BasicHudView>(true)).Single();
                 Layout(hud);
-                var hazard = scene.GetRootGameObjects().SelectMany(r => r.GetComponentsInChildren<HazardHudView>(true)).Single();
-                var so = new SerializedObject(hazard);
-                var power = (TMP_Text)so.FindProperty("powerText").objectReferenceValue;
-                // HUDCanvas의 기존 전력망 텍스트/바인딩을 유지한 채 프레임 하단에 맞춘다.
-                Place(power.rectTransform, 68, 221, 360, 30);
-                power.fontSize = 17;
-                power.enableAutoSizing = true;
-                power.fontSizeMin = 13;
-                power.fontSizeMax = 17;
-                power.raycastTarget = false;
-                PrefabUtility.RecordPrefabInstancePropertyModifications(power);
-                PrefabUtility.RecordPrefabInstancePropertyModifications(power.rectTransform);
+                // 하단 행은 Prompt-B 131 빌더가 만든 구조 상태 행(StructuralStatusRow)이 차지한다.
                 EditorSceneManager.MarkSceneDirty(scene);
                 EditorSceneManager.SaveScene(scene);
             }
@@ -95,10 +84,10 @@ namespace SubTerra.App.Editor.DataValidation
             Label(view.BuildingSelectionText, 16, 251, 404, 22, 15);
             view.SetBuildingSelection(string.Empty);
             Label(view.InteractionPromptText, 450, 12, 404, 22, 15);
-            for (int i = 0; i < 7; i++)
+            for (int i = 0; i < 6; i++)
             {
-                float[] xs = { 22, 22, 22, 22, 219, 219, 22 };
-                float[] ys = { 23, 68, 122, 157, 122, 157, 211 };
+                float[] xs = { 22, 22, 22, 22, 219, 219 };
+                float[] ys = { 23, 68, 122, 157, 122, 157 };
                 Icon(root, i, xs[i], ys[i]);
             }
             Line(root, "TopSeparator", 18, 108, 394, 1);

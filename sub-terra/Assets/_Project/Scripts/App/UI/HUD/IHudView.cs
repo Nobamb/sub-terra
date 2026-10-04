@@ -10,7 +10,7 @@ namespace SubTerra.App.UI.HUD
         void SetGold(string text);
         void SetCargo(string text);
         void SetUnsettledValue(string text);
-        void SetStructuralRisk(string text);
+        void SetStructuralRisk(string text, StructuralStatusKind kind);
         void SetGasRisk(string text);
         void SetGasWarningVisible(bool visible);
         void SetBuildingSelection(string text);

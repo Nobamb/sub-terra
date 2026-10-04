@@ -155,23 +155,14 @@ namespace SubTerra.App.Editor.DataValidation
                     Object.DestroyImmediate(oldBinder);
                 }
 
-                var structuralText = FindText(root.transform, "StructuralRiskText");
                 var gasText = FindText(root.transform, "GasRiskText");
                 var gasRoot = FindTransform(root.transform, "WarningRoot")?.gameObject;
-                var powerText = FindText(root.transform, "PowerConnectionText");
-                if (powerText == null)
-                {
-                    powerText = CreateText(root.transform, "PowerConnectionText",
-                        new Vector2(20f, -238f), new Vector2(440f, 60f), 19, "전력 X 미연결");
-                }
 
                 var view = root.AddComponent<HazardHudView>();
                 var binder = root.AddComponent<HazardHudBinder>();
                 var viewSo = new SerializedObject(view);
-                viewSo.FindProperty("structuralText").objectReferenceValue = structuralText;
                 viewSo.FindProperty("gasText").objectReferenceValue = gasText;
                 viewSo.FindProperty("gasWarningRoot").objectReferenceValue = gasRoot;
-                viewSo.FindProperty("powerText").objectReferenceValue = powerText;
                 viewSo.ApplyModifiedPropertiesWithoutUndo();
 
                 var binderSo = new SerializedObject(binder);

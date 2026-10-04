@@ -110,7 +110,7 @@ namespace SubTerra.App.Tests
 
             public void SetCargo(string text) { }
             public void SetUnsettledValue(string text) { }
-            public void SetStructuralRisk(string text) { }
+            public void SetStructuralRisk(string text, StructuralStatusKind kind) { }
             public void SetGasRisk(string text) { }
             public void SetGasWarningVisible(bool visible) { }
             public void SetBuildingSelection(string text) { }

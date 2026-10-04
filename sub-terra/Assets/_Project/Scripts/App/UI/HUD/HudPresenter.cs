@@ -75,7 +75,7 @@ namespace SubTerra.App.UI.HUD
             var inv = boundState.GetInventory();
             view.SetCargo(HudFormatter.FormatCargo(inv.CargoWeight));
             view.SetUnsettledValue(HudFormatter.FormatUnsettledValue(inv.UnsettledValue));
-            view.SetStructuralRisk(HudFormatter.FormatStructuralRisk(boundState.Run.StructuralRisk));
+            RenderStructuralRisk(boundState.Run.StructuralRisk);
             var gas = boundState.Run.GasExposure;
             view.SetGasRisk(HudFormatter.FormatGasRisk(gas));
             view.SetGasWarningVisible(HudFormatter.ShouldShowGasWarning(gas));
@@ -91,7 +91,7 @@ namespace SubTerra.App.UI.HUD
             view.SetGold(HudFormatter.FormatGold(0));
             view.SetCargo(HudFormatter.FormatCargo(0f));
             view.SetUnsettledValue(HudFormatter.FormatUnsettledValue(0f));
-            view.SetStructuralRisk(HudFormatter.FormatStructuralRisk(StructuralRiskLevel.Safe));
+            RenderStructuralRisk(StructuralRiskLevel.Safe);
             view.SetGasRisk(HudFormatter.FormatGasRisk(GasRiskLevel.Safe));
             view.SetGasWarningVisible(false);
             view.SetBuildingSelection(HudFormatter.FormatBuildingSelection(string.Empty, string.Empty));
@@ -122,7 +122,14 @@ namespace SubTerra.App.UI.HUD
 
         private void OnStructuralRiskChanged(StructuralRiskLevel level)
         {
-            view.SetStructuralRisk(HudFormatter.FormatStructuralRisk(level));
+            RenderStructuralRisk(level);
+        }
+
+        private void RenderStructuralRisk(StructuralRiskLevel level)
+        {
+            view.SetStructuralRisk(
+                HudFormatter.FormatStructuralRisk(level),
+                StructuralStatusPresentation.ToKind(level));
         }
 
         private void OnGasExposureChanged(GasRiskLevel level)

@@ -22,6 +22,7 @@ namespace SubTerra.App.Tests.UI
         public string Cargo;
         public string UnsettledValue;
         public string Structural;
+        public StructuralStatusKind StructuralKind;
         public string GasRisk;
         public bool GasVisible;
         public string Building;
@@ -71,9 +72,10 @@ namespace SubTerra.App.Tests.UI
             UnsettledValueCount++;
         }
 
-        public void SetStructuralRisk(string text)
+        public void SetStructuralRisk(string text, StructuralStatusKind kind)
         {
             Structural = text;
+            StructuralKind = kind;
             StructuralCount++;
         }
 

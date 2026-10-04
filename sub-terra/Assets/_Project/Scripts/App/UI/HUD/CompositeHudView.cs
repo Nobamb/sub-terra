@@ -57,11 +57,11 @@ namespace SubTerra.App.UI.HUD
             }
         }
 
-        public void SetStructuralRisk(string text)
+        public void SetStructuralRisk(string text, StructuralStatusKind kind)
         {
             if (structural != null)
             {
-                structural.SetStructuralRisk(text);
+                structural.SetStructuralRisk(text, kind);
             }
         }
 

@@ -12,13 +12,9 @@ namespace SubTerra.App.UI.Hazards
     /// </summary>
     public sealed class HazardHudView : MonoBehaviour, IHazardStatusView
     {
-        [SerializeField] private TMP_Text structuralText;
-        [SerializeField] private Image structuralIcon;
         [SerializeField] private TMP_Text gasText;
         [SerializeField] private Image gasIcon;
         [SerializeField] private GameObject gasWarningRoot;
-        [SerializeField] private TMP_Text powerText;
-        [SerializeField] private Image powerIcon;
         [SerializeField] private Canvas hazardCanvas;
 
         private void Awake()
@@ -28,7 +24,7 @@ namespace SubTerra.App.UI.Hazards
 
         public void SetStructuralStatus(HazardStatusReadModel status)
         {
-            ApplyHazard(structuralText, structuralIcon, "구조", status);
+            // 구조 상태는 좌측 상단 HUD 하단 행(StructuralHudView)이 GameState로 표시한다.
         }
 
         public void SetGasStatus(HazardStatusReadModel status)
@@ -42,27 +38,8 @@ namespace SubTerra.App.UI.Hazards
 
         public void SetPowerStatus(PowerStatusReadModel status)
         {
-            var connectedLabel = status.IsConnected ? "✓ 연결" : "X 미연결";
-            if (powerText != null)
-            {
-                powerText.text = "전력 " + connectedLabel
-                    + "  " + status.Supply.ToString("0.#")
-                    + "/" + status.Demand.ToString("0.#")
-                    + "  활성 " + status.ActiveFacilityCount
-                    + (string.IsNullOrEmpty(status.Reason) ? string.Empty : "\n" + status.Reason);
-            }
-
-            var color = status.IsConnected
-                ? new Color(0.35f, 0.9f, 0.5f)
-                : new Color(1f, 0.42f, 0.3f);
-            if (powerText != null)
-            {
-                powerText.color = color;
-            }
-            if (powerIcon != null)
-            {
-                powerIcon.color = color;
-            }
+            // HUD 하단의 전력·연결·활성 요약은 구조 상태 행으로 대체되어 표시하지 않는다.
+            // 전력망 계산과 PowerStatus 전달은 Bridge/Presenter에서 그대로 유지된다.
         }
 
         public void SetGasPriority(bool isPriority)
@@ -100,10 +77,8 @@ namespace SubTerra.App.UI.Hazards
 
         public bool HasRequiredReferences()
         {
-            return structuralText != null
-                && gasText != null
-                && gasWarningRoot != null
-                && powerText != null;
+            return gasText != null
+                && gasWarningRoot != null;
         }
 
         private static void ApplyHazard(

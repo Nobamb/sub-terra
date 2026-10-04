@@ -25,7 +25,8 @@ namespace SubTerra.App.Tests.UI
                 Assert.That(gauge.Find("Empty").GetSiblingIndex(), Is.LessThan(fill.transform.GetSiblingIndex()));
                 Assert.That(gauge.Find("Frame").GetSiblingIndex(), Is.GreaterThan(fill.transform.GetSiblingIndex()));
             }
-            Assert.That(root.GetComponentsInChildren<UnityEngine.UI.RawImage>().Length, Is.EqualTo(7));
+            // 하단 전력·연결·활성 아이콘은 구조 상태 행(Image)으로 대체되어 RawImage는 6개다.
+            Assert.That(root.GetComponentsInChildren<UnityEngine.UI.RawImage>().Length, Is.EqualTo(6));
         }
 
         [Test]

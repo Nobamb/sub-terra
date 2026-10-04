@@ -117,7 +117,7 @@ namespace SubTerra.App.Tests
                 UnsettledCount++;
             }
 
-            public void SetStructuralRisk(string text) { }
+            public void SetStructuralRisk(string text, SubTerra.App.UI.HUD.StructuralStatusKind kind) { }
             public void SetGasRisk(string text) { }
             public void SetGasWarningVisible(bool visible) { }
             public void SetBuildingSelection(string text) { }
