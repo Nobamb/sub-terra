@@ -113,17 +113,21 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f6e7ecaae4428114ba17bba0d2c401ba, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: SubTerra.Gameplay.Player::SubTerra.Gameplay.Player.PlayerMovement
   moveSpeed: 6
   acceleration: 45
   deceleration: 55
   jumpImpulse: 11
+  ladderSpeed: 4
   groundCheck: {fileID: 5911924000846914324}
   groundCheckRadius: 0.08
   groundLayers:
     serializedVersion: 2
     m_Bits: 4294967295
+  jumpAirLockDuration: 0.15
+  groundProbeDistance: 0.12
+  minGroundNormalY: 0.6
 --- !u!114 &8136105684476186582
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -134,11 +138,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7ff2ce7158389cb4db9c755e9f9f0068, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: SubTerra.Gameplay.Player::SubTerra.Gameplay.Player.PlayerController
   inputActions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
   moveActionPath: Player/Move
   jumpActionPath: Player/Jump
+  interactActionPath: Player/Interact
 --- !u!114 &684283865810681452
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -149,7 +154,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 172d40fc955e3ab438080591514c0723, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: SubTerra.Gameplay.Player::SubTerra.Gameplay.Player.PlayerFacing
   visualRoot: {fileID: 2512023523249785305}
 --- !u!1 &5870049948892212564
@@ -372,6 +377,8 @@ MonoBehaviour:
   - {fileID: 21300000, guid: bb85e805fdd43b245b40898f814b282c, type: 3}
   - {fileID: 21300000, guid: cfd3c7b1ca12c544082278093115c0a6, type: 3}
   - {fileID: 21300000, guid: 84cf35c7552c0584496c15e9a1482280, type: 3}
+  - {fileID: 21300000, guid: e6f90e5e65c19da4e842720f92d2037b, type: 3}
+  - {fileID: 21300000, guid: b426acd5297fd8e42ac8900ff892a169, type: 3}
   miningFrames:
   - {fileID: 21300000, guid: 41d68100d8c057649a878d33abc361d6, type: 3}
   - {fileID: 21300000, guid: e69f5b9a559592e4cbe0dcd0fe950b11, type: 3}
@@ -395,6 +402,6 @@ MonoBehaviour:
   - {fileID: 21300000, guid: c9c69db55a0a1a64ca0e5c8dca94dd60, type: 3}
   - {fileID: 21300000, guid: bce68305ec2a97845908bd04f20f22a2, type: 3}
   - {fileID: 21300000, guid: 8929d86159727894ca38875d1efd626e, type: 3}
-  ladderDistancePerFrame: 0.5
+  ladderDistancePerFrame: 0.25
   ladderSettleDelay: 0.08
   movement: {fileID: 3152244689760817088}

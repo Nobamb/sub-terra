@@ -541,6 +541,36 @@ namespace SubTerra.Gameplay.Player.Tests
                 "사다리에서 멈추면 중립 프레임으로 복원되어야 한다.");
         }
 
+        [TestCase(1)]
+        [TestCase(-1)]
+        public void LadderAnimation_FiveFrames_UsesApprovedSequenceAndStops(int direction)
+        {
+            animationVisualObject = new GameObject("FiveFrameLadderVisual");
+            animationVisualObject.transform.SetParent(playerObject.transform);
+            var renderer = animationVisualObject.AddComponent<SpriteRenderer>();
+            var animation = animationVisualObject.AddComponent<PlayerAnimationController>();
+            ladderAnimationFrames = new[] { CreateTestSprite(), CreateTestSprite(), CreateTestSprite(), CreateTestSprite(), CreateTestSprite() };
+            otherAnimationFrames = new[] { CreateTestSprite() };
+            animation.ConfigureFrames(renderer, movement, otherAnimationFrames,
+                otherAnimationFrames, null, ladderAnimationFrames, null, null, null);
+            SetPrivateField(animation, "ladderDistancePerFrame", 0.1f);
+            movement.EnterLadder();
+            movement.SetVerticalMoveInput(direction);
+            InvokePrivate(animation, "LateUpdate");
+            var sequence = direction > 0 ? new[] { 1, 2, 1, 0, 3, 4, 3, 0 } : new[] { 3, 4, 3, 0, 1, 2, 1, 0 };
+            for (var i = 0; i < sequence.Length; i++)
+            {
+                body.position = new Vector2(0f, direction * ((i + 1) * 0.1f + 0.001f));
+                InvokePrivate(animation, "LateUpdate");
+                Assert.AreSame(ladderAnimationFrames[sequence[i]], renderer.sprite, "Approved sequence step " + i);
+            }
+            movement.SetVerticalMoveInput(0f);
+            InvokePrivate(animation, "LateUpdate");
+            Assert.AreSame(ladderAnimationFrames[0], renderer.sprite);
+            InvokePrivate(animation, "LateUpdate");
+            Assert.AreSame(ladderAnimationFrames[0], renderer.sprite, "Stopped climb must not keep cycling.");
+        }
+
         [Test]
         public void LadderAnimation_DoesNotSelectWalkFramesDuringContinuousClimb()
         {
