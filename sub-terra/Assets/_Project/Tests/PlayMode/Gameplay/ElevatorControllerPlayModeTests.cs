@@ -87,14 +87,19 @@ namespace SubTerra.Gameplay.Player.Tests
         {
             var left = new GameObject("LeftDoor", typeof(SpriteRenderer)).GetComponent<SpriteRenderer>();
             var right = new GameObject("RightDoor", typeof(SpriteRenderer)).GetComponent<SpriteRenderer>();
+            var cabin = new GameObject("ElevatorCabin").transform;
             left.transform.SetParent(elevatorObject.transform, false);
             right.transform.SetParent(elevatorObject.transform, false);
+            cabin.SetParent(elevatorObject.transform, false);
             var visual = elevatorObject.AddComponent<ElevatorDoorVisual>();
             SetVisualField(visual, "leftDoor", left);
             SetVisualField(visual, "rightDoor", right);
+            SetVisualField(visual, "cabinRoot", cabin);
             SetVisualField(visual, "initialOpenDelay", 0.04f);
             SetVisualField(visual, "openingDuration", 0.18f);
             SetVisualField(visual, "slideDuration", 0.22f);
+            SetVisualField(visual, "liftDuration", 0.18f);
+            SetVisualField(visual, "liftDistance", 1.4f);
             visual.enabled = false;
             visual.enabled = true;
             Assert.That(visual.ClosedFraction, Is.EqualTo(1f).Within(0.01f));
@@ -121,9 +126,16 @@ namespace SubTerra.Gameplay.Player.Tests
             yield return new WaitForSecondsRealtime(0.25f);
             Assert.That(visual.ClosedFraction, Is.EqualTo(1f).Within(0.01f));
 
-            yield return new WaitForSecondsRealtime(0.7f);
+            yield return new WaitForSecondsRealtime(0.12f);
+            Assert.That(elevator.State, Is.EqualTo(ElevatorTravelState.Moving));
+            Assert.That(visual.LiftFraction, Is.GreaterThan(0f).And.LessThan(1f));
+            Assert.That(cabin.localPosition.y, Is.GreaterThan(0f).And.LessThan(1.4f));
+
+            yield return new WaitForSecondsRealtime(0.58f);
             Assert.That(elevator.State, Is.EqualTo(ElevatorTravelState.Arrived));
             Assert.That(visual.ClosedFraction, Is.EqualTo(0f).Within(0.01f));
+            Assert.That(visual.LiftFraction, Is.EqualTo(0f).Within(0.01f));
+            Assert.That(cabin.localPosition.y, Is.EqualTo(0f).Within(0.01f));
             Assert.That(left.enabled || right.enabled, Is.False);
         }
 
