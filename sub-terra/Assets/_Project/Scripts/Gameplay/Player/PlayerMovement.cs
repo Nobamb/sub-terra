@@ -51,6 +51,8 @@ namespace SubTerra.Gameplay.Player
         public bool CanMove { get; private set; } = true;
         public bool IsClimbing { get; private set; }
         public bool IsTouchingLadder => activeLadders.Count > 0;
+        public bool IsApproachingLadderFromAbove => IsClimbing && body != null
+            && TryGetLadderTop(out var top) && PlayerTop > top + 0.001f;
         public bool IsJumpInProgress => jumpUsedUntilLand && !IsGrounded;
         public bool IsDescendingLadder => IsClimbing && verticalMoveInput < -0.01f;
         public bool IsMovingOnLadder => IsClimbing && Mathf.Abs(verticalMoveInput) > 0.01f;
@@ -58,6 +60,7 @@ namespace SubTerra.Gameplay.Player
             || Mathf.Abs(verticalMoveInput) > 0.01f;
         public float CurrentSpeedMultiplier => cargoSpeedMultiplier * hazardSpeedMultiplier;
         public float CurrentJumpMultiplier => cargoJumpMultiplier;
+        private float PlayerTop => bodyCollider != null ? bodyCollider.bounds.max.y : body.position.y;
 
         private void Awake()
         {
@@ -276,7 +279,41 @@ namespace SubTerra.Gameplay.Player
             var verticalVelocity = CanMove
                 ? verticalMoveInput * ladderSpeed * CurrentSpeedMultiplier
                 : 0f;
+            if (TryGetLadderTop(out var top))
+            {
+                var playerTop = PlayerTop;
+                if (playerTop > top + 0.001f)
+                {
+                    // 위에서 걸친 경우 손을 댈 수 있는 높이까지 입력과 무관하게 내려온다.
+                    // 마지막 틱의 이동만 제한해 순간 위치 보정이나 아래쪽 초과 이동을 피한다.
+                    verticalVelocity = CanMove
+                        ? -Mathf.Min(ladderSpeed * CurrentSpeedMultiplier,
+                            (playerTop - top) / Time.fixedDeltaTime)
+                        : 0f;
+                }
+                else if (verticalVelocity > 0f)
+                {
+                    // 여러 사다리에 접촉 중이면 가장 높은 끝을 사용해 연결 구간은 통과한다.
+                    var remaining = Mathf.Max(0f, top - playerTop);
+                    verticalVelocity = Mathf.Min(verticalVelocity, remaining / Time.fixedDeltaTime);
+                }
+            }
             body.linearVelocity = new Vector2(body.linearVelocityX, verticalVelocity);
+        }
+
+        private bool TryGetLadderTop(out float top)
+        {
+            top = float.NegativeInfinity;
+            var found = false;
+            foreach (var ladder in activeLadders)
+            {
+                if (ladder != null && ladder.TryGetTop(out var ladderTop))
+                {
+                    top = Mathf.Max(top, ladderTop);
+                    found = true;
+                }
+            }
+            return found;
         }
 
         private void TryResumeLadderAfterJump()

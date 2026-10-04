@@ -77,7 +77,7 @@ namespace SubTerra.App.Tests.PlayMode.MineDemo
             var ladderPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/Prefabs/Gameplay/Traversal/Ladder_Buildable.prefab");
             Assert.That(ladderPrefab, Is.Not.Null);
             var origin = movement.transform.position + Vector3.up * 4f;
-            UnityEngine.Object.Instantiate(ladderPrefab, origin, Quaternion.identity);
+            var ladder = UnityEngine.Object.Instantiate(ladderPrefab, origin, Quaternion.identity);
             var body = movement.GetComponent<Rigidbody2D>();
             body.position = origin;
             body.linearVelocity = Vector2.zero;
@@ -96,6 +96,14 @@ namespace SubTerra.App.Tests.PlayMode.MineDemo
             yield return Travel(-1f, "descending");
             Debug.Log("[Ladder Bootstrap QA] Ascending and descending selected all five frames.");
             Assert.That(visual.transform.localPosition, Is.EqualTo(visualPosition), "VisualRoot must not bob.");
+            movement.SetVerticalMoveInput(1f);
+            yield return new WaitForSeconds(1.5f);
+            var playerCollider = movement.GetComponent<Collider2D>();
+            var ladderCollider = ladder.GetComponent<Collider2D>();
+            Assert.That(playerCollider.bounds.max.y, Is.LessThanOrEqualTo(ladderCollider.bounds.max.y + 0.001f));
+            Assert.That(body.linearVelocityY, Is.EqualTo(0f).Within(0.001f));
+            Assert.That(movement.IsClimbing, Is.True);
+            Assert.That(visual.sprite, Is.SameAs(frames[0]), "Top stop must settle to the neutral pose.");
             movement.SetVerticalMoveInput(0f);
             body.position += Vector2.right * 2f;
             Physics2D.SyncTransforms();
@@ -103,6 +111,24 @@ namespace SubTerra.App.Tests.PlayMode.MineDemo
             yield return new WaitForSeconds(0.15f);
             Assert.That(movement.IsClimbing, Is.False);
             Assert.That(Array.IndexOf(frames, visual.sprite), Is.EqualTo(-1), "Normal sprite must be restored on exit.");
+
+            // 실제 Trigger 위에서 낙하 진입: 입력 없이 지원 높이까지 자동 하강해야 한다.
+            body.position = new Vector2(origin.x, ladderCollider.bounds.max.y + 0.2f);
+            body.linearVelocity = Vector2.down * 5f;
+            Physics2D.SyncTransforms();
+            yield return WaitFor(() => movement.IsApproachingLadderFromAbove && body.linearVelocityY < 0f);
+            yield return null;
+            Assert.That(movement.IsApproachingLadderFromAbove, Is.True);
+            Assert.That(body.linearVelocityY, Is.LessThan(0f));
+            Assert.That(Array.IndexOf(frames, visual.sprite), Is.EqualTo(-1), "Unsupported entry must not grasp thin air.");
+            yield return new WaitForSeconds(0.3f);
+            Assert.That(movement.IsApproachingLadderFromAbove, Is.False);
+            Assert.That(playerCollider.bounds.max.y, Is.EqualTo(ladderCollider.bounds.max.y).Within(0.001f));
+            Assert.That(body.linearVelocityY, Is.EqualTo(0f).Within(0.001f));
+            Assert.That(visual.sprite, Is.SameAs(frames[0]));
+            movement.SetVerticalMoveInput(-1f);
+            yield return new WaitForFixedUpdate();
+            Assert.That(body.linearVelocityY, Is.LessThan(0f), "Supported entry must return control to descent input.");
         }
 
         private IEnumerator Travel(float direction, string label)

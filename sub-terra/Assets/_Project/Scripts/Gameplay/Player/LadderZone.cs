@@ -6,6 +6,21 @@ namespace SubTerra.Gameplay.Player
     [RequireComponent(typeof(Collider2D))]
     public sealed class LadderZone : MonoBehaviour
     {
+        private Collider2D zone;
+
+        private void Awake()
+        {
+            zone = GetComponent<Collider2D>();
+        }
+
+        public bool TryGetTop(out float top)
+        {
+            top = 0f;
+            if (zone == null || !zone.enabled || !isActiveAndEnabled) return false;
+            top = zone.bounds.max.y;
+            return true;
+        }
+
         private void Reset()
         {
             var zone = GetComponent<Collider2D>();
