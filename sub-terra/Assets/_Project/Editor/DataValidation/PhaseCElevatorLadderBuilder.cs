@@ -130,6 +130,7 @@ namespace SubTerra.App.Editor
             serialized.ApplyModifiedPropertiesWithoutUndo();
 
             ElevatorVisualPrefabSetup.Configure(root);
+            ElevatorHologramPrefabSetup.Configure(root);
 
             var saved = PrefabUtility.SaveAsPrefabAsset(root, ElevatorPrefabPath);
             UnityEngine.Object.DestroyImmediate(root);

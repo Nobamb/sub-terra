@@ -21,6 +21,8 @@ namespace SubTerra.Gameplay.Player
         [SerializeField] private Vector2 safeExitSize = new(0.8f, 1.2f);
         [SerializeField] private LayerMask exitBlockerLayers;
         [SerializeField] private TMP_Text statusText;
+        // 개발자용 상태 문구. 플레이 중에는 월드 홀로그램 안내만 노출한다.
+        [SerializeField] private bool showDebugStatus;
         [SerializeField, Min(0f)] private float callDelaySeconds = 0.35f;
         [SerializeField, Min(0f)] private float travelDelaySeconds = 0.22f;
 
@@ -38,7 +40,11 @@ namespace SubTerra.Gameplay.Player
 
         public ElevatorTravelState State { get; private set; } = ElevatorTravelState.Idle;
         public event Action<ElevatorTravelState> StateChanged;
+        /// <summary>상태·탑승자 변화로 홀로그램 안내 종류가 바뀔 수 있을 때 발생한다.</summary>
+        public event Action PromptChanged;
         public bool HasRider => riderMovement != null;
+        public ElevatorPromptKind PromptKind => ElevatorPromptResolver.Resolve(
+            State, HasRider, riderLocked || travelCommitted, destination);
 
         /// <summary>공용 Interact 입력에서 시설 UI보다 엘리베이터 이동이 먼저 처리되어야 하는지 확인한다.</summary>
         public bool TryClaimInteractionPriority()
@@ -237,7 +243,7 @@ namespace SubTerra.Gameplay.Player
                 }
 
                 SetState(ElevatorTravelState.Blocked);
-                if (statusText != null && !string.IsNullOrWhiteSpace(reason))
+                if (showDebugStatus && statusText != null && !string.IsNullOrWhiteSpace(reason))
                 {
                     statusText.text = "Blocked · " + reason;
                 }
@@ -419,9 +425,25 @@ namespace SubTerra.Gameplay.Player
 
         private void RefreshStatus()
         {
+            PromptChanged?.Invoke();
             if (statusText == null)
             {
                 return;
+            }
+
+            if (!showDebugStatus)
+            {
+                if (statusText.gameObject.activeSelf)
+                {
+                    statusText.gameObject.SetActive(false);
+                }
+
+                return;
+            }
+
+            if (!statusText.gameObject.activeSelf)
+            {
+                statusText.gameObject.SetActive(true);
             }
 
             statusText.text = State switch
