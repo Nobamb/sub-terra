@@ -9,8 +9,7 @@ namespace SubTerra.Gameplay.Player
         private const float DamageDuration = 0.35f;
         private const float LadderMovementEpsilon = 0.0001f;
         private const float LadderVisualGraceDuration = 0.1f;
-        // 중립 → 오른쪽 중간/상승/중간 → 중립 → 왼쪽 중간/상승/중간.
-        private static readonly int[] FiveFrameLadderSequence = { 0, 1, 2, 1, 0, 3, 4, 3 };
+        private const int LadderSequenceLength = 4;
 
         [SerializeField] private SpriteRenderer spriteRenderer;
         [SerializeField] private Animator animator;
@@ -297,23 +296,16 @@ namespace SubTerra.Gameplay.Player
         private int ResolveLadderFrameIndex()
         {
             var distancePerFrame = Mathf.Max(0.01f, ladderDistancePerFrame);
-            var sequenceLength = ladderFrames.Length >= 5 ? FiveFrameLadderSequence.Length : 4;
             var steps = Mathf.FloorToInt(Mathf.Abs(ladderTravelDistance) / distancePerFrame);
             if (steps > 0)
             {
                 var direction = ladderTravelDistance > 0f ? 1 : -1;
                 ladderSequenceIndex += direction * steps;
-                ladderSequenceIndex = ((ladderSequenceIndex % sequenceLength) + sequenceLength)
-                    % sequenceLength;
+                ladderSequenceIndex = ((ladderSequenceIndex % LadderSequenceLength) + LadderSequenceLength)
+                    % LadderSequenceLength;
                 ladderTravelDistance -= direction * steps * distancePerFrame;
             }
 
-            if (ladderFrames.Length >= 5)
-            {
-                return FiveFrameLadderSequence[ladderSequenceIndex];
-            }
-
-            // 기존 3프레임을 사용하는 테스트/프리팹도 안전하게 유지한다.
             return ladderSequenceIndex switch
             {
                 1 => 1,

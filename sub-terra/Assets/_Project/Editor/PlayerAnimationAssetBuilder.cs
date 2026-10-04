@@ -18,7 +18,7 @@ namespace SubTerra.Editor
         private const string PlayerPrefabPath = "Assets/_Project/Prefabs/Gameplay/Player/Player.prefab";
         private const string LadderFramesFolder = "LadderBack";
         private const string LadderFramePrefix = "ladder_back";
-        private const int LadderFrameCount = 5;
+        private const int LadderFrameCount = 3;
         private const int PlayerSortingOrder = 5;
 
         private readonly struct AnimationDefinition
@@ -69,54 +69,6 @@ namespace SubTerra.Editor
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
             Debug.Log("Player animation assets were built successfully.");
-        }
-
-        [MenuItem("SubTerra/Apply Approved Ladder Five Frames")]
-        public static void ApplyApprovedLadderFiveFrames()
-        {
-            // 일반 애니메이션/컨트롤러와 통합 씬은 재생성하지 않는다.
-            for (var index = 0; index < LadderFrameCount; index++)
-            {
-                var path = FramesRoot + "/" + LadderFramesFolder + "/"
-                    + LadderFramePrefix + "_" + (index + 1).ToString("D2") + ".png";
-                AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);
-                var importer = AssetImporter.GetAtPath(path) as TextureImporter;
-                if (importer == null) throw new FileNotFoundException("Ladder texture missing.", path);
-                importer.textureType = TextureImporterType.Sprite;
-                importer.spriteImportMode = SpriteImportMode.Single;
-                importer.spritePixelsPerUnit = 1254f;
-                var settings = new TextureImporterSettings();
-                importer.ReadTextureSettings(settings);
-                settings.spriteAlignment = (int)SpriteAlignment.Center;
-                settings.spritePivot = new Vector2(0.5f, 0.5f);
-                settings.spriteMeshType = SpriteMeshType.FullRect;
-                importer.SetTextureSettings(settings);
-                importer.mipmapEnabled = false;
-                importer.alphaIsTransparency = true;
-                importer.wrapMode = TextureWrapMode.Clamp;
-                importer.filterMode = FilterMode.Bilinear;
-                importer.textureCompression = TextureImporterCompression.Uncompressed;
-                importer.SaveAndReimport();
-            }
-
-            var root = PrefabUtility.LoadPrefabContents(PlayerPrefabPath);
-            try
-            {
-                var animation = root.transform.Find("VisualRoot").GetComponent<PlayerAnimationController>();
-                if (animation == null) throw new MissingReferenceException("Player animation controller missing.");
-                var serialized = new SerializedObject(animation);
-                var array = serialized.FindProperty("ladderFrames");
-                var frames = LoadLadderFrames();
-                array.arraySize = frames.Length;
-                for (var i = 0; i < frames.Length; i++) array.GetArrayElementAtIndex(i).objectReferenceValue = frames[i];
-                // 4단계에서 8단계로 늘어나도 한 사이클의 이동 거리는 2m로 유지한다.
-                serialized.FindProperty("ladderDistancePerFrame").floatValue = 0.25f;
-                serialized.ApplyModifiedPropertiesWithoutUndo();
-                PrefabUtility.SaveAsPrefabAsset(root, PlayerPrefabPath);
-            }
-            finally { PrefabUtility.UnloadPrefabContents(root); }
-            AssetDatabase.SaveAssets();
-            Debug.Log("Approved ladder five frames applied to Player prefab only.");
         }
 
         [MenuItem("SubTerra/Validate Player Animation Runtime")]
