@@ -184,6 +184,7 @@ namespace SubTerra.App.Editor.DataValidation
             binderObject.ApplyModifiedPropertiesWithoutUndo();
             PromptB69StoragePickerBuilder.ApplyTo(root);
             PromptB70FacilityPanelCloseBuilder.ApplyTo(root);
+            FacilityServicePopupBuilder.ApplyTo(root);
 
             coreRoot.SetActive(false);
             chargerRoot.SetActive(false);

@@ -30,5 +30,13 @@ namespace SubTerra.App.UI.Outpost
         void ShowTemporaryMessage(string message, float durationSeconds);
         void SetTutorialVisible(bool visible);
         void SetBusy(bool busy);
+
+        /// <summary>
+        /// 충전기·보건소 팝업 게이지의 실제 사용 전후 값. 표시 전용이며 처리 결과는 이미 반영된 뒤다.
+        /// 기존 View 구현이 깨지지 않도록 기본 구현은 아무 일도 하지 않는다.
+        /// </summary>
+        void SetServiceVital(OutpostOperationKind kind, float before, float after, float maximum)
+        {
+        }
     }
 }

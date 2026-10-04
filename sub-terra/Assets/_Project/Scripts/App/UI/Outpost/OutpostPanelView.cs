@@ -32,25 +32,100 @@ namespace SubTerra.App.UI.Outpost
         [SerializeField] private GameObject tutorialRoot;
         [SerializeField] private Button closeButton;
         [SerializeField] private Button[] operationButtons;
+        [SerializeField] private FacilityServicePopupView servicePopup;
 
         public Button CloseButton => closeButton;
         public GameObject PanelRoot => panelRoot != null ? panelRoot : gameObject;
+        public FacilityServicePopupView ServicePopup => servicePopup;
+        public Button ServiceCloseButton => servicePopup != null ? servicePopup.CloseButton : null;
+
+        /// <summary>지금 화면에 올라와 있는(또는 올라올) 창의 루트. 충전기·보건소는 서비스 팝업이다.</summary>
+        public GameObject ActiveWindowRoot =>
+            servicePopup != null && FacilityServicePopupTimeline.IsServiceMode(currentMode)
+                ? servicePopup.gameObject
+                : PanelRoot;
 
         private GameObject interactionMessageRoot;
         private TMP_Text interactionMessageText;
         private Coroutine hideInteractionMessageRoutine;
+        private bool currentVisible;
+        private OutpostPanelMode currentMode;
+        // 루트가 꺼졌다 켜져 팝업이 다시 열릴 때 값 없는 빈 게이지가 뜨지 않도록 마지막 표시값을 기억한다.
+        private bool hasServiceVital;
+        private float serviceVitalBefore;
+        private float serviceVitalAfter;
+        private float serviceVitalMaximum;
+        private string serviceResult = string.Empty;
+        private bool serviceResultIsError;
 
         public void SetVisible(bool visible)
         {
-            (panelRoot != null ? panelRoot : gameObject).SetActive(visible);
+            currentVisible = visible;
+            ApplyWindowVisibility();
+        }
+
+        /// <summary>
+        /// 충전기·보건소는 기존 큰 패널 대신 서비스 팝업을 쓴다.
+        /// Presenter가 스냅샷마다 호출하므로 표시 전환이 있을 때만 연출을 시작·종료한다.
+        /// </summary>
+        private void ApplyWindowVisibility(bool fromModeChange = false)
+        {
+            var useService = servicePopup != null
+                && currentVisible
+                && FacilityServicePopupTimeline.IsServiceMode(currentMode);
+            // 닫는 중 SetMode(None)이 먼저 불려도 예전 큰 패널이 잠깐 켜지지 않게 한다.
+            if (!fromModeChange || currentMode != OutpostPanelMode.None)
+            {
+                (panelRoot != null ? panelRoot : gameObject).SetActive(currentVisible && !useService);
+            }
+
+            if (servicePopup == null)
+            {
+                return;
+            }
+
+            if (useService)
+            {
+                var wasShown = servicePopup.IsShown;
+                servicePopup.Show(currentMode);
+                if (!wasShown)
+                {
+                    if (hasServiceVital)
+                    {
+                        servicePopup.SetVital(serviceVitalBefore, serviceVitalAfter, serviceVitalMaximum);
+                    }
+
+                    servicePopup.SetResult(serviceResult, serviceResultIsError);
+                }
+            }
+            else
+            {
+                servicePopup.Hide();
+            }
+        }
+
+        public void SetServiceVital(OutpostOperationKind kind, float before, float after, float maximum)
+        {
+            hasServiceVital = true;
+            serviceVitalBefore = before;
+            serviceVitalAfter = after;
+            serviceVitalMaximum = maximum;
+            if (servicePopup != null)
+            {
+                servicePopup.SetVital(before, after, maximum);
+            }
         }
 
         public void SetMode(OutpostPanelMode mode)
         {
+            currentMode = mode;
+            ApplyWindowVisibility(true);
             SetActive(coreRoot, mode == OutpostPanelMode.Core);
+            // 충전기·보건소 안내는 서비스 팝업이 맡는다. 팝업이 없는 구 프리팹만 예전 안내 레이어를 쓴다.
             SetActive(
                 chargerRoot,
-                mode == OutpostPanelMode.Charger || mode == OutpostPanelMode.Clinic);
+                servicePopup == null
+                    && (mode == OutpostPanelMode.Charger || mode == OutpostPanelMode.Clinic));
             SetActive(settlementRoot, mode == OutpostPanelMode.Settlement);
             SetActive(storageRoot, mode == OutpostPanelMode.Storage);
             SetActive(
@@ -202,6 +277,13 @@ namespace SubTerra.App.UI.Outpost
                 resultText.color = isError
                     ? new Color(1f, 0.45f, 0.35f)
                     : new Color(0.45f, 1f, 0.65f);
+            }
+
+            serviceResult = message ?? string.Empty;
+            serviceResultIsError = isError;
+            if (servicePopup != null)
+            {
+                servicePopup.SetResult(message, isError);
             }
         }
 

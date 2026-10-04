@@ -19,6 +19,7 @@ namespace SubTerra.App.Outpost
         private readonly GameState gameState;
         private readonly OutpostState state;
         private readonly IPlayerHealthCommand healthCommand;
+        private readonly IPlayerHealthSource healthSource;
         private readonly IUpgradeEffectProvider effects;
         private readonly HashSet<string> completedSettlementIds = new HashSet<string>();
 
@@ -58,7 +59,8 @@ namespace SubTerra.App.Outpost
             GameState gameState,
             OutpostState state = null,
             IPlayerHealthCommand healthCommand = null,
-            IUpgradeEffectProvider effects = null)
+            IUpgradeEffectProvider effects = null,
+            IPlayerHealthSource healthSource = null)
         {
             this.inventory = inventory;
             this.catalog = catalog;
@@ -66,6 +68,32 @@ namespace SubTerra.App.Outpost
             this.state = state ?? gameState?.Outpost ?? new OutpostState();
             this.healthCommand = healthCommand;
             this.effects = effects;
+            this.healthSource = healthSource ?? healthCommand as IPlayerHealthSource;
+        }
+
+        /// <summary>
+        /// 충전기(전력)·보건소(체력) 팝업 게이지용 현재/최대 값. 읽기 전용이며 상태를 바꾸지 않는다.
+        /// </summary>
+        public bool TryGetPlayerVital(OutpostOperationKind kind, out float current, out float maximum)
+        {
+            current = 0f;
+            maximum = 0f;
+            if (kind == OutpostOperationKind.Charge && gameState != null && gameState.Player != null)
+            {
+                current = gameState.Player.Energy;
+                maximum = gameState.Player.MaxEnergy;
+                return maximum > 0f;
+            }
+
+            if (kind == OutpostOperationKind.Heal && healthSource != null)
+            {
+                var health = healthSource.GetHealth();
+                current = health.Current;
+                maximum = health.Maximum;
+                return true;
+            }
+
+            return false;
         }
 
         public void ApplyRuntimeStatus(OutpostStatusDto status)

@@ -3,6 +3,7 @@ using SubTerra.App.Outpost;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
 
 namespace SubTerra.App.UI.Outpost
 {
@@ -23,7 +24,7 @@ namespace SubTerra.App.UI.Outpost
         public OutpostPanelPresenter Presenter => presenter;
         public bool IsBound => presenter != null && presenter.IsBound;
         public bool IsTopWindow(Canvas canvas) => view != null
-            && PopupWindowSorting.Contains(canvas, view.PanelRoot);
+            && PopupWindowSorting.Contains(canvas, view.ActiveWindowRoot);
 
         private void Awake()
         {
@@ -194,7 +195,12 @@ namespace SubTerra.App.UI.Outpost
 
         private void WireCloseButton()
         {
-            var closeButton = view != null ? view.CloseButton : null;
+            WireCloseButton(view != null ? view.CloseButton : null);
+            WireCloseButton(view != null ? view.ServiceCloseButton : null);
+        }
+
+        private void WireCloseButton(Button closeButton)
+        {
             if (closeButton == null)
             {
                 return;
@@ -207,13 +213,16 @@ namespace SubTerra.App.UI.Outpost
 
         private void UnwireCloseButton()
         {
-            var closeButton = view != null ? view.CloseButton : null;
-            if (closeButton == null)
-            {
-                return;
-            }
+            UnwireCloseButton(view != null ? view.CloseButton : null);
+            UnwireCloseButton(view != null ? view.ServiceCloseButton : null);
+        }
 
-            closeButton.onClick.RemoveListener(ClosePanel);
+        private void UnwireCloseButton(Button closeButton)
+        {
+            if (closeButton != null)
+            {
+                closeButton.onClick.RemoveListener(ClosePanel);
+            }
         }
     }
 }

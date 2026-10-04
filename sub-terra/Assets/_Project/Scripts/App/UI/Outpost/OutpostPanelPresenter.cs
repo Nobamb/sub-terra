@@ -163,12 +163,32 @@ namespace SubTerra.App.UI.Outpost
 
         public OutpostOperationResult RequestCharge()
         {
-            return Execute(() => service.TryCharge(), OutpostOperationKind.Charge);
+            return ExecuteWithVital(() => service.TryCharge(), OutpostOperationKind.Charge);
         }
 
         public OutpostOperationResult RequestHeal()
         {
-            return Execute(() => service.TryHeal(), OutpostOperationKind.Heal);
+            return ExecuteWithVital(() => service.TryHeal(), OutpostOperationKind.Heal);
+        }
+
+        /// <summary>
+        /// 처리는 평소처럼 즉시 끝나고, 팝업 게이지에는 실제 처리 전후 값을 따로 넘긴다.
+        /// 연출이 끝나길 기다리지 않는다.
+        /// </summary>
+        private OutpostOperationResult ExecuteWithVital(
+            System.Func<OutpostOperationResult> operation,
+            OutpostOperationKind kind)
+        {
+            float before = 0f;
+            float maximum = 0f;
+            var hasBefore = service != null && service.TryGetPlayerVital(kind, out before, out maximum);
+            var result = Execute(operation, kind);
+            if (hasBefore && service != null && service.TryGetPlayerVital(kind, out var after, out var maximumAfter))
+            {
+                view?.SetServiceVital(kind, before, after, maximumAfter);
+            }
+
+            return result;
         }
 
         public OutpostOperationResult RequestDeposit(string mineralId, int quantity)
