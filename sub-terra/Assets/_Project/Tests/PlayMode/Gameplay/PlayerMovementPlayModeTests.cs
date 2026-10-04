@@ -97,6 +97,65 @@ namespace SubTerra.Gameplay.Player.Tests
         }
 
         [UnityTest]
+        public IEnumerator LadderTop_FallingEntryDescendsToSupportBeforeShowingClimb()
+        {
+            var collider = playerObject.AddComponent<BoxCollider2D>();
+            collider.size = new Vector2(0.6f, 0.7f);
+            SetPrivateField(movement, "bodyCollider", collider);
+            var ladder = CreateLadderZone("FallingEntryLadder", out firstLadderObject);
+            firstLadderObject.GetComponent<BoxCollider2D>().size = new Vector2(0.7f, 5f);
+            animationVisualObject = new GameObject("EntryVisual");
+            var renderer = animationVisualObject.AddComponent<SpriteRenderer>();
+            var animation = animationVisualObject.AddComponent<PlayerAnimationController>();
+            ladderAnimationFrames = new[] { CreateTestSprite(), CreateTestSprite(), CreateTestSprite() };
+            otherAnimationFrames = new[] { CreateTestSprite() };
+            animation.ConfigureFrames(renderer, movement, otherAnimationFrames,
+                otherAnimationFrames, otherAnimationFrames, ladderAnimationFrames, null, null, null);
+            body.position = new Vector2(0f, 2.7f);
+            body.linearVelocity = Vector2.down * 5f;
+            Physics2D.SyncTransforms();
+            movement.EnterLadder(ladder);
+            InvokePrivate(animation, "LateUpdate");
+            Assert.AreSame(otherAnimationFrames[0], renderer.sprite, "Unsupported entry must not show a grasp pose.");
+            yield return new WaitForFixedUpdate();
+            Assert.Less(body.linearVelocityY, 0f, "Falling entry must descend even without input.");
+            for (var i = 0; i < 12; i++) yield return new WaitForFixedUpdate();
+            Assert.That(collider.bounds.max.y, Is.EqualTo(2.5f).Within(0.001f));
+            Assert.That(body.linearVelocityY, Is.EqualTo(0f).Within(0.001f));
+            InvokePrivate(animation, "LateUpdate");
+            Assert.AreSame(ladderAnimationFrames[0], renderer.sprite);
+            movement.SetVerticalMoveInput(-1f);
+            yield return new WaitForFixedUpdate();
+            Assert.Less(body.linearVelocityY, 0f, "Manual descent must resume once supported.");
+        }
+
+        [UnityTest]
+        public IEnumerator LadderTop_AutomaticEntryRespectsMovementGateAndJump()
+        {
+            var collider = playerObject.AddComponent<BoxCollider2D>();
+            collider.size = new Vector2(0.6f, 0.7f);
+            SetPrivateField(movement, "bodyCollider", collider);
+            var ladder = CreateLadderZone("GatedEntryLadder", out firstLadderObject);
+            firstLadderObject.GetComponent<BoxCollider2D>().size = new Vector2(0.7f, 5f);
+            body.position = new Vector2(0f, 2.7f);
+            Physics2D.SyncTransforms();
+            movement.EnterLadder(ladder);
+            movement.SetVerticalMoveInput(1f);
+            movement.SetCanMove(false);
+            yield return new WaitForFixedUpdate();
+            Assert.That(body.linearVelocityY, Is.EqualTo(0f).Within(0.001f));
+            Assert.IsTrue(movement.IsApproachingLadderFromAbove);
+            movement.SetCanMove(true);
+            yield return new WaitForFixedUpdate();
+            Assert.Less(body.linearVelocityY, 0f, "Up input must not interrupt automatic entry.");
+            movement.RequestJump();
+            yield return new WaitForFixedUpdate();
+            Assert.IsFalse(movement.IsClimbing);
+            Assert.IsFalse(movement.IsApproachingLadderFromAbove);
+            Assert.Greater(body.linearVelocityY, 0f);
+        }
+
+        [UnityTest]
         public IEnumerator LadderTop_ConnectedZonesAllowCrossingTheirSeam()
         {
             var collider = playerObject.AddComponent<BoxCollider2D>();
@@ -694,6 +753,9 @@ namespace SubTerra.Gameplay.Player.Tests
 
             LadderZone firstLadder = CreateLadderZone("ContactGapFirst", out firstLadderObject);
             LadderZone secondLadder = CreateLadderZone("ContactGapSecond", out secondLadderObject);
+            // 접촉 공백 테스트의 이동 위치가 실제 사다리 범위 안에 있도록 구성한다.
+            firstLadderObject.GetComponent<BoxCollider2D>().size = new Vector2(0.7f, 5f);
+            secondLadderObject.GetComponent<BoxCollider2D>().size = new Vector2(0.7f, 5f);
             movement.EnterLadder(firstLadder);
             movement.SetVerticalMoveInput(1f);
             InvokePrivate(animation, "LateUpdate");

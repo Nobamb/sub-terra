@@ -154,6 +154,11 @@ namespace SubTerra.Gameplay.Player
                 return "Mining";
             }
 
+            if (movement.IsApproachingLadderFromAbove)
+            {
+                return "Jump";
+            }
+
             // Trigger 접촉이 아직 남아 있는 동안에는 물리 상태 전환 한 틱 때문에
             // 일반 Walk/Jump 프레임이 사다리 표시를 덮어쓰지 않게 한다.
             if (movement.IsClimbing
