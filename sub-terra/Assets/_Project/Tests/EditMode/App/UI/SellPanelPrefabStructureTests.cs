@@ -64,8 +64,8 @@ namespace SubTerra.App.Tests.UI
             Assert.That(text, Does.Contain("openSellButton:"));
             Assert.That(text, Does.Contain("closeSellButton:"));
             Assert.That(text, Does.Contain("m_SizeDelta: {x: 760, y: 520}"));
-            Assert.That(text, Does.Contain("m_SizeDelta: {x: 760, y: 220}"));
-            Assert.That(text, Does.Contain("m_AnchoredPosition: {x: 0, y: -146}"));
+            Assert.That(text, Does.Contain("m_Name: ProgressionPanel"));
+            Assert.That(text, Does.Contain("m_SizeDelta: {x: 1500, y: 820}"));
         }
 
         [Test]

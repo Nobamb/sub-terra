@@ -6,6 +6,7 @@ using SubTerra.App.State;
 using SubTerra.App.UI.HUD;
 using SubTerra.App.UI.SurfaceBase;
 using TMPro;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -139,12 +140,19 @@ namespace SubTerra.App.Tests.UI
         [TestCase(SceneNames.MainMenu, false)]
         public void RuntimeTicks_KeepCompletedPopupOnSurfaceOnly(string sceneName, bool remainsVisible)
         {
-            var scene = SceneManager.GetActiveScene();
-            var previousSceneName = scene.name;
+            var previous = SceneManager.GetActiveScene();
+            var probe = OpenRenameableScene(previous);
+            var createdProbe = probe != previous;
+            var previousProbeName = probe.name;
             var runtimeHost = new GameObject("TimedPopupRuntimeTestHost");
             try
             {
-                scene.name = sceneName;
+                if (previous.IsValid() && previous != probe)
+                {
+                    EditorSceneManager.SetActiveScene(probe);
+                }
+
+                probe.name = sceneName;
                 var runtime = runtimeHost.AddComponent<SaveRuntimeController>();
                 var flags = BindingFlags.Instance | BindingFlags.NonPublic;
                 var state = GameState.CreateNew();
@@ -172,8 +180,32 @@ namespace SubTerra.App.Tests.UI
             finally
             {
                 Object.DestroyImmediate(runtimeHost);
-                scene.name = previousSceneName;
+                if (probe.IsValid())
+                {
+                    probe.name = previousProbeName;
+                }
+
+                if (previous.IsValid() && previous != probe)
+                {
+                    EditorSceneManager.SetActiveScene(previous);
+                }
+
+                if (createdProbe && probe.IsValid())
+                {
+                    EditorSceneManager.CloseScene(probe, true);
+                }
             }
+        }
+
+        private static Scene OpenRenameableScene(Scene previous)
+        {
+            // 저장된 Scene의 name은 Unity 6에서 바꿀 수 없다. 비어 있는 임시 Scene만 이름을 바꾼다.
+            if (previous.IsValid() && string.IsNullOrEmpty(previous.path))
+            {
+                return previous;
+            }
+
+            return EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
         }
     }
 }

@@ -33,11 +33,7 @@ namespace SubTerra.App.Tests.UI
             Assert.That(canvas, Is.Not.Null);
 
             var shortcutBar = FindTransform(scene, "PanelShortcutBar");
-            Assert.That(
-                IsRemovedOrNonLegacyShortcut(
-                    canvas.transform.Find("OpenGameGuideButton"),
-                    shortcutBar),
-                Is.True);
+            // 가이드 열기 버튼은 B-31 배치가 씬에 남아 있고 GameGuidePanelTests가 그 버튼을 요구한다.
             Assert.That(
                 IsRemovedOrNonLegacyShortcut(
                     canvas.transform.Find("OpenBuildingMenuButton"),

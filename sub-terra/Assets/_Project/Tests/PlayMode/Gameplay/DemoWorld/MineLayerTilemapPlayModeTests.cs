@@ -3,6 +3,7 @@ using System.Reflection;
 using NUnit.Framework;
 using SubTerra.Gameplay.Mining;
 using SubTerra.Gameplay.Snapshot;
+using SubTerra.Shared;
 using UnityEngine;
 using UnityEngine.TestTools;
 using UnityEngine.Tilemaps;
@@ -40,6 +41,18 @@ namespace SubTerra.Gameplay.DemoWorld.Tests
             Tile gas = CreateTile("Gas");
             Tile signal = CreateTile("Signal");
 
+            resolver.RegisterRuntime(rock, new MiningTileDto(
+                MineLayerTileIds.Rock, string.Empty, 0, true, 1f, 0.2f, 0f, false));
+            resolver.RegisterRuntime(copper, new MiningTileDto(
+                MineLayerTileIds.Copper, "mineral.copper", 1, true, 1f, 0.2f, 0f, false));
+            resolver.RegisterRuntime(iron, new MiningTileDto(
+                MineLayerTileIds.Iron, "mineral.iron", 1, true, 1f, 0.2f, 0f, false));
+            resolver.RegisterRuntime(lithium, new MiningTileDto(
+                MineLayerTileIds.Lithium, "mineral.lithium", 1, true, 1f, 0.2f, 0f, false));
+            resolver.RegisterRuntime(gas, new MiningTileDto(
+                MineLayerTileIds.GasPocket, string.Empty, 0, true, 1f, 0.2f, 0f, true));
+            resolver.RegisterRuntime(signal, new MiningTileDto(
+                MineLayerTileIds.LockedSignal, string.Empty, 0, false, 1f, 0.2f, 0f, false));
             renderer.EditorConfigure(
                 tilemap,
                 distribution,

@@ -77,9 +77,13 @@ namespace SubTerra.App.Tests.UI
             Assert.That(building, Is.Not.Null);
             Assert.That(guide, Is.Not.Null);
 
-            // 스테이터스 유지, 퀘스트는 그 아래.
-            Assert.That(basic.anchoredPosition.y, Is.EqualTo(-16f).Within(0.5f));
-            Assert.That(title.anchoredPosition.y, Is.LessThan(basic.anchoredPosition.y - basic.sizeDelta.y));
+            // 스테이터스 유지. 퀘스트 제목은 부모 버튼 안이라 캔버스 좌표로 스테이터스 아래인지 본다.
+            Assert.That(basic.anchoredPosition.y, Is.EqualTo(-12f).Within(0.5f));
+            var basicCorners = new Vector3[4];
+            var titleCorners = new Vector3[4];
+            basic.GetWorldCorners(basicCorners);
+            title.GetWorldCorners(titleCorners);
+            Assert.That(titleCorners[1].y, Is.LessThan(basicCorners[0].y));
 
             // prompt-B 31: Digger-Bot은 기존 범례 자리(최하단), 범례는 비활성.
             Assert.That(digger.anchoredPosition.y, Is.EqualTo(24f).Within(0.5f));
@@ -100,12 +104,10 @@ namespace SubTerra.App.Tests.UI
             Assert.That(chrome, Is.Not.Null);
             Assert.That(chrome.HasRequiredReferences(), Is.True);
 
-            // prompt-B 32/34: 우측 중앙 재열기 버튼 제거. digger는 Tab/드론 클릭만 사용.
+            // 시설 재열기만 단축키로 넘긴다. 가이드 버튼은 B-31 토글이라 GameGuidePanelTests가 유지한다.
             var openBuilding = canvas.transform.Find("OpenBuildingMenuButton");
-            var openGuide = canvas.transform.Find("OpenGameGuideButton");
             var shortcutBar = FindTransform(scene, "PanelShortcutBar");
             Assert.That(IsRemovedOrNonLegacyShortcut(openBuilding, shortcutBar), Is.True);
-            Assert.That(IsRemovedOrNonLegacyShortcut(openGuide, shortcutBar), Is.True);
 
             // prompt-B 32: 좌측 목록 텍스트 숨김, 패널 폭 480(+20), I키용 인벤토리.
             var listText = building.Find("PanelRoot/BuildingListText")

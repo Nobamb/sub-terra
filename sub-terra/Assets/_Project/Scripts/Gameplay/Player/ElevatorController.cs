@@ -124,6 +124,11 @@ namespace SubTerra.Gameplay.Player
 
         private void LateUpdate()
         {
+            SyncLockedRider();
+        }
+
+        internal void SyncLockedRider()
+        {
             if (!riderLocked || riderBody == null || boardingAnchor == null)
             {
                 return;

@@ -107,43 +107,66 @@ namespace SubTerra.Gameplay.Player.Tests
             SetVisualField(visual, "liftDistance", 1.4f);
             SetVisualField(visual, "liftToExit", false);
             SetField(elevator, "doorVisual", visual);
+            body.bodyType = RigidbodyType2D.Kinematic;
+            body.gravityScale = 0f;
+            body.position = elevatorObject.transform.position;
             visual.enabled = false;
             visual.enabled = true;
             Assert.That(visual.ClosedFraction, Is.EqualTo(1f).Within(0.01f));
             Assert.That(left.enabled && right.enabled, Is.True);
 
-            yield return new WaitForSecondsRealtime(0.12f);
-            Assert.That(visual.ClosedFraction, Is.GreaterThan(0f).And.LessThan(1f));
+            yield return WaitUntil(
+                () => visual.ClosedFraction > 0.05f && visual.ClosedFraction < 0.95f,
+                3f,
+                "doors did not reach a partial open");
             Assert.That(left.transform.localPosition.x, Is.LessThan(-0.29f));
 
-            yield return new WaitForSecondsRealtime(0.18f);
-            Assert.That(visual.ClosedFraction, Is.EqualTo(0f).Within(0.01f));
+            // 문 렌더러는 closedFraction이 0.001 이하일 때만 꺼진다.
+            yield return WaitUntil(
+                () => visual.ClosedFraction <= 0.001f,
+                3f,
+                "doors did not finish opening");
             Assert.That(left.enabled || right.enabled, Is.False);
 
             SetField(elevator, "callDelaySeconds", 0.35f);
             SetField(elevator, "travelDelaySeconds", 0.05f);
+            SetField(elevator, "riderMovement", movement);
+            SetField(elevator, "riderBody", body);
             Assert.That(elevator.RequestTravel(), Is.True);
 
-            yield return new WaitForSecondsRealtime(0.11f);
-            Assert.That(elevator.State, Is.EqualTo(ElevatorTravelState.Calling));
-            Assert.That(visual.ClosedFraction, Is.GreaterThan(0f).And.LessThan(1f));
+            // 닫힘 시작 직후는 아직 열린 위치다. 문이 안쪽으로 들어온 뒤를 본다.
+            yield return WaitUntil(
+                () => elevator.State == ElevatorTravelState.Calling
+                    && visual.ClosedFraction > 0.25f
+                    && visual.ClosedFraction < 0.95f,
+                3f,
+                "doors did not start closing during the call");
             Assert.That(left.enabled && right.enabled, Is.True);
             Assert.That(left.transform.localPosition.x, Is.GreaterThan(-0.9f));
 
-            yield return new WaitForSecondsRealtime(0.25f);
-            Assert.That(visual.ClosedFraction, Is.EqualTo(1f).Within(0.01f));
+            yield return WaitUntil(
+                () => visual.ClosedFraction >= 0.99f,
+                3f,
+                "doors did not close before departure");
 
-            yield return new WaitForSecondsRealtime(0.22f);
-            Assert.That(elevator.State, Is.EqualTo(ElevatorTravelState.Moving));
-            Assert.That(visual.LiftFraction, Is.GreaterThanOrEqualTo(0f).And.LessThan(1f));
+            yield return WaitUntil(
+                () => elevator.State == ElevatorTravelState.Moving
+                    && visual.LiftFraction > 0.05f
+                    && visual.LiftFraction < 0.95f,
+                3f,
+                "cabin did not start lifting");
 
-            yield return new WaitForSecondsRealtime(0.24f);
-            Assert.That(visual.LiftFraction, Is.EqualTo(1f).Within(0.01f));
-            Assert.That(cabin.localPosition.y, Is.EqualTo(1.4f).Within(0.01f));
+            yield return WaitUntil(
+                () => visual.LiftFraction >= 0.99f
+                    && Mathf.Abs(cabin.localPosition.y - 1.4f) <= 0.02f,
+                3f,
+                "cabin did not finish lifting");
             Assert.That(body.position.y, Is.EqualTo(boardingAnchor.position.y).Within(0.02f));
 
-            yield return new WaitForSecondsRealtime(0.24f);
-            Assert.That(elevator.State, Is.EqualTo(ElevatorTravelState.Arrived));
+            yield return WaitUntil(
+                () => elevator.State == ElevatorTravelState.Arrived,
+                3f,
+                "travel did not arrive");
             Assert.That(visual.ClosedFraction, Is.EqualTo(1f).Within(0.01f));
             Assert.That(visual.LiftFraction, Is.EqualTo(1f).Within(0.01f));
             Assert.That(cabin.localPosition.y, Is.EqualTo(1.4f).Within(0.01f));
@@ -277,6 +300,17 @@ namespace SubTerra.Gameplay.Player.Tests
             Assert.IsTrue(movement.CanMove);
             Assert.AreEqual(0, port.CallCount);
             Object.DestroyImmediate(obstacle);
+        }
+
+        private static IEnumerator WaitUntil(System.Func<bool> condition, float timeoutSeconds, string message)
+        {
+            var deadline = Time.realtimeSinceStartup + timeoutSeconds;
+            while (!condition() && Time.realtimeSinceStartup < deadline)
+            {
+                yield return null;
+            }
+
+            Assert.That(condition(), Is.True, message);
         }
 
         private static void SetField<T>(object target, string name, T value)

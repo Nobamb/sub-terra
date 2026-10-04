@@ -63,6 +63,7 @@ namespace SubTerra.App.Tests.PlayMode.RunFailure
             controller.Bind(runtime, state);
 
             state.SetCurrentEnergy(0);
+            Assert.That(survival.ApplyFall(100f), Is.True);
             yield return null;
 
             Assert.That(controller.IsHandling, Is.False);

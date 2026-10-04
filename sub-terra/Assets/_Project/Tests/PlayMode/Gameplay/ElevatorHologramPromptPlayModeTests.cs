@@ -26,7 +26,10 @@ namespace SubTerra.Gameplay.Player.Tests
             port = portObject.AddComponent<ElevatorControllerPlayModeTests.RecordingTravelPort>();
 
             playerObject = new GameObject("Player");
+            playerObject.transform.position = new Vector3(30f, 0f, 0f);
             body = playerObject.AddComponent<Rigidbody2D>();
+            body.bodyType = RigidbodyType2D.Kinematic;
+            body.gravityScale = 0f;
             playerObject.AddComponent<CapsuleCollider2D>();
             movement = playerObject.AddComponent<PlayerMovement>();
 
@@ -41,6 +44,8 @@ namespace SubTerra.Gameplay.Player.Tests
             hologram.transform.SetParent(elevatorObject.transform, false);
             panel = new GameObject("Panel").transform;
             panel.SetParent(hologram.transform, false);
+            // 프리팹과 같이 패널은 꺼진 채로 시작하고, 근접할 때만 켜진다.
+            panel.gameObject.SetActive(false);
             var sprite = new GameObject("Frame", typeof(SpriteRenderer)).GetComponent<SpriteRenderer>();
             sprite.transform.SetParent(panel, false);
             prompt = hologram.AddComponent<ElevatorHologramPrompt>();
@@ -74,14 +79,14 @@ namespace SubTerra.Gameplay.Player.Tests
             EnterRange();
             Assert.IsTrue(prompt.IsShown);
 
-            yield return new WaitForSecondsRealtime(0.5f);
+            yield return WaitUntil(() => prompt.Visibility >= 0.999f, 3f);
             Assert.That(prompt.Visibility, Is.EqualTo(1f).Within(0.001f));
             Assert.IsTrue(panel.gameObject.activeSelf);
 
             LeaveRange();
             Assert.IsFalse(prompt.IsShown);
 
-            yield return new WaitForSecondsRealtime(0.4f);
+            yield return WaitUntil(() => panel.gameObject.activeSelf == false, 3f);
             Assert.IsFalse(panel.gameObject.activeSelf);
         }
 
@@ -114,6 +119,15 @@ namespace SubTerra.Gameplay.Player.Tests
             Assert.AreEqual(ElevatorTravelState.Blocked, elevator.State);
             Assert.IsFalse(prompt.IsShown);
             Assert.IsFalse(panel.gameObject.activeSelf);
+        }
+
+        private static IEnumerator WaitUntil(System.Func<bool> condition, float timeoutSeconds)
+        {
+            var deadline = Time.realtimeSinceStartup + timeoutSeconds;
+            while (!condition() && Time.realtimeSinceStartup < deadline)
+            {
+                yield return null;
+            }
         }
 
         private void EnterRange()

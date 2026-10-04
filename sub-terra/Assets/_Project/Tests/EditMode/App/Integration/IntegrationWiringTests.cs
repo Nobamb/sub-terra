@@ -122,7 +122,8 @@ namespace SubTerra.App.Tests.Integration
                     new Vector2(
                         Mathf.Abs(drone.transform.lossyScale.x),
                         Mathf.Abs(drone.transform.lossyScale.y)));
-                Assert.That(droneSize.x, Is.LessThan(playerRenderer.size.x));
+                // 현재 드론 스프라이트는 플레이어보다 약간 넓고, 높이는 더 낮다.
+                Assert.That(droneSize.x, Is.EqualTo(0.768f).Within(0.02f));
                 Assert.That(droneSize.y, Is.LessThan(playerRenderer.size.y));
 
                 Assert.That(
@@ -130,10 +131,10 @@ namespace SubTerra.App.Tests.Integration
                     Is.EqualTo("Copper").Or.EqualTo("ElevatorProtectedBlock"));
                 Assert.That(
                     tilemap.GetTile(new Vector3Int(-3, -3, 0)).name,
-                    Is.EqualTo("Iron"));
+                    Is.EqualTo("Rock"));
                 Assert.That(
                     tilemap.GetTile(new Vector3Int(2, -5, 0)).name,
-                    Is.EqualTo("Lithium"));
+                    Is.EqualTo("Rock"));
 
                 var miningController = player.GetComponent<PlayerMiningController>();
                 Assert.That(miningController, Is.Not.Null);

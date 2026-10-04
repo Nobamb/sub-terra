@@ -1,3 +1,4 @@
+using System.Reflection;
 using NUnit.Framework;
 using SubTerra.App.Tutorial;
 using SubTerra.App.UI;
@@ -33,9 +34,9 @@ namespace SubTerra.App.Tests.UI
                 var second = CreatePopup(root.transform, "Second");
                 var third = CreatePopup(root.transform, "Third");
 
-                first.SetActive(true);
-                second.SetActive(true);
-                third.SetActive(true);
+                SetPopupActive(first, true);
+                SetPopupActive(second, true);
+                SetPopupActive(third, true);
 
                 var firstOrder = first.GetComponent<Canvas>().sortingOrder;
                 Assert.That(firstOrder, Is.GreaterThan(32_000));
@@ -43,16 +44,16 @@ namespace SubTerra.App.Tests.UI
                 Assert.That(third.GetComponent<Canvas>().sortingOrder, Is.EqualTo(firstOrder + 2));
                 Assert.That(first.GetComponent<GraphicRaycaster>(), Is.Not.Null);
 
-                third.SetActive(false);
+                SetPopupActive(third, false);
                 var fourth = CreatePopup(root.transform, "Fourth");
-                fourth.SetActive(true);
+                SetPopupActive(fourth, true);
 
                 Assert.That(fourth.GetComponent<Canvas>().sortingOrder, Is.EqualTo(firstOrder + 2));
                 Assert.That(second.GetComponent<Canvas>().sortingOrder, Is.EqualTo(firstOrder + 1));
 
-                second.SetActive(false);
+                SetPopupActive(second, false);
                 Assert.That(fourth.GetComponent<Canvas>().sortingOrder, Is.EqualTo(firstOrder + 1));
-                second.SetActive(true);
+                SetPopupActive(second, true);
                 Assert.That(second.GetComponent<Canvas>().sortingOrder, Is.EqualTo(firstOrder + 2));
 
                 var runtimePopup = new GameObject("RuntimePopup", typeof(RectTransform), typeof(Canvas));
@@ -89,7 +90,7 @@ namespace SubTerra.App.Tests.UI
                 windowObject.SetActive(false);
                 windowObject.transform.SetParent(root.transform, false);
                 var drag = windowObject.AddComponent<PopupWindowDrag>();
-                windowObject.SetActive(true);
+                SetPopupActive(windowObject, true);
 
                 var gate = windowObject.GetComponent<PopupWindowRaycastGate>();
                 Assert.That(gate, Is.Not.Null);
@@ -104,6 +105,22 @@ namespace SubTerra.App.Tests.UI
             {
                 Object.DestroyImmediate(root);
             }
+        }
+
+        private static void SetPopupActive(GameObject popup, bool active)
+        {
+            popup.SetActive(active);
+            var drag = popup.GetComponent<PopupWindowDrag>();
+            if (drag == null)
+            {
+                return;
+            }
+
+            // Edit Mode는 OnEnable/OnDisable을 호출하지 않는다.
+            typeof(PopupWindowDrag).GetMethod(
+                    active ? "OnEnable" : "OnDisable",
+                    BindingFlags.Instance | BindingFlags.NonPublic)
+                .Invoke(drag, null);
         }
 
         private static GameObject CreatePopup(Transform parent, string name)

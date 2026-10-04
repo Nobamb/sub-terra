@@ -675,6 +675,7 @@ namespace SubTerra.App.Tests.Data
                 CreateUpgrade("Upg_MaxEnergy", DataIds.Upgrades.MaximumEnergy, "Maximum Energy", 3, 20f),
                 CreateUpgrade("Upg_MaxCargo", DataIds.Upgrades.MaximumCargo, "Maximum Cargo", 3, 10f),
                 CreateYieldUpgrade("Upg_CargoYield", DataIds.Upgrades.CargoYield, "채굴 수확량"),
+                CreateCargoGoldUpgrade(),
                 CreateUpgrade("Upg_DroneScan", DataIds.Upgrades.DroneScan, "Drone Scan", 2, 1f),
                 CreateUpgrade("Upg_DroneRescue", DataIds.Upgrades.DroneRescue, "Drone Rescue", 2, 0.15f),
                 CreateUpgrade("Upg_GasResistance", DataIds.Upgrades.GasResistance, "Gas Resistance", 3, 0.1f)
@@ -787,6 +788,28 @@ namespace SubTerra.App.Tests.Data
             var data = ScriptableObject.CreateInstance<UpgradeData>();
             data.name = name;
             data.EditorSet(id, display, 3, levels);
+            return Track(data);
+        }
+
+        private UpgradeData CreateCargoGoldUpgrade()
+        {
+            var effects = new[] { 50f, 75f, 100f };
+            var levels = new List<UpgradeLevelDefinition>();
+            for (var i = 0; i < effects.Length; i++)
+            {
+                levels.Add(new UpgradeLevelDefinition(
+                    i + 1,
+                    effects[i],
+                    new List<ItemCostEntry>
+                    {
+                        new ItemCostEntry(DataIds.Currency.Gold, (i + 1) * 10),
+                        new ItemCostEntry(DataIds.Minerals.Copper, i + 1)
+                    }));
+            }
+
+            var data = ScriptableObject.CreateInstance<UpgradeData>();
+            data.name = "Upg_CargoGold";
+            data.EditorSet(DataIds.Upgrades.CargoGold, "Gold Gain", effects.Length, levels);
             return Track(data);
         }
 

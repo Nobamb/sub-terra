@@ -4,6 +4,7 @@ using SubTerra.Gameplay.Mining;
 using SubTerra.Gameplay.Player;
 using SubTerra.Shared;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Controls;
 using UnityEngine.InputSystem.LowLevel;
@@ -620,20 +621,42 @@ namespace SubTerra.Gameplay.Mining.Tests
 
             tilemap.SetTile(cell, tile);
             var screen = (Vector2)camera.WorldToScreenPoint(tilemap.GetCellCenterWorld(cell));
-            InputSystem.QueueStateEvent(mouse, new MouseState { position = screen });
-            InputSystem.Update();
-            SetButtonState(mouse.leftButton, 1f);
-            InvokePrivate(controller, "Update");
-            Assert.IsTrue(
-                system.IsMining,
-                $"Mouse mining did not start. Button={mouse.leftButton.isPressed}, "
-                + $"Pointer={mouse.position.ReadValue()}, Screen={screen}, "
-                + $"Pending={GetPrivate(controller, "startPending")}, "
-                + $"Failure={system.LastFailure}");
-            Assert.IsNotNull(tilemap.GetTile(cell), "Mouse click must not bypass mining duration.");
-            SetButtonState(mouse.leftButton, 0f);
-            InvokePrivate(controller, "Update");
-            Assert.IsTrue(system.IsMining, "Releasing the mouse button must not cancel mining.");
+            var eventSystems = Object.FindObjectsByType<EventSystem>(FindObjectsInactive.Include);
+            var eventSystemEnabled = new bool[eventSystems.Length];
+            for (var i = 0; i < eventSystems.Length; i++)
+            {
+                eventSystemEnabled[i] = eventSystems[i].enabled;
+                eventSystems[i].enabled = false;
+            }
+
+            try
+            {
+                InputSystem.QueueStateEvent(mouse, new MouseState { position = screen });
+                InputSystem.Update();
+                SetButtonState(mouse.leftButton, 1f);
+                InvokePrivate(controller, "Update");
+                Assert.IsTrue(
+                    system.IsMining,
+                    $"Mouse mining did not start. Button={mouse.leftButton.isPressed}, "
+                    + $"Pointer={mouse.position.ReadValue()}, Screen={screen}, "
+                    + $"Pending={GetPrivate(controller, "startPending")}, "
+                    + $"Failure={system.LastFailure}");
+                Assert.IsNotNull(tilemap.GetTile(cell), "Mouse click must not bypass mining duration.");
+                SetButtonState(mouse.leftButton, 0f);
+                InvokePrivate(controller, "Update");
+                Assert.IsTrue(system.IsMining, "Releasing the mouse button must not cancel mining.");
+            }
+            finally
+            {
+                for (var i = 0; i < eventSystems.Length; i++)
+                {
+                    if (eventSystems[i] != null)
+                    {
+                        eventSystems[i].enabled = eventSystemEnabled[i];
+                    }
+                }
+            }
+
             yield return new WaitForSeconds(0.08f);
 
             Assert.IsNull(tilemap.GetTile(cell));

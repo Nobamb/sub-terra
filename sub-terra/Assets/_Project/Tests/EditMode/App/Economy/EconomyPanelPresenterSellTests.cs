@@ -132,7 +132,7 @@ namespace SubTerra.App.Tests.Economy
 
             Assert.That(view.Rows.Count, Is.EqualTo(2));
             Assert.That(view.Rows[0].MineralId, Is.EqualTo(Copper));
-            Assert.That(view.Rows[0].DisplayName, Is.EqualTo("Copper"));
+            Assert.That(view.Rows[0].DisplayName, Is.EqualTo("구리"));
             Assert.That(view.Rows[0].OwnedQuantity, Is.EqualTo(3));
             Assert.That(view.Rows[0].UnitPrice, Is.EqualTo(10));
             Assert.That(view.Rows[1].MineralId, Is.EqualTo(Lithium));

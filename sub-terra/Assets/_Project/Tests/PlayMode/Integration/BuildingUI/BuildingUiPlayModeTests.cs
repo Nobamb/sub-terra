@@ -104,10 +104,13 @@ namespace SubTerra.App.Tests.PlayMode.BuildingUI
                 Assert.That(wallet.SpendCount, Is.EqualTo(0));
                 Assert.That(buildingRoot.transform.childCount, Is.EqualTo(0));
 
+                // 에디터 키보드가 current로 남아 있으면 C 이벤트가 다른 장치로 들어간다.
+                keyboard.MakeCurrent();
                 InputSystem.QueueStateEvent(keyboard, new KeyboardState());
                 InputSystem.Update();
                 InputSystem.QueueStateEvent(keyboard, new KeyboardState(Key.C));
                 InputSystem.Update();
+                keyboard.MakeCurrent();
                 InvokePrivate(bridge, "Update");
 
                 Assert.That(placement.Selection, Is.Null);

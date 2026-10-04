@@ -166,8 +166,10 @@ namespace SubTerra.App.Tests.UI
                 {
                     var button = content.Find(names[i]);
                     Assert.That(button, Is.Not.Null, names[i]);
-                    Assert.That(button.GetComponent<UnityEngine.UI.Image>().sprite.name.StartsWith("button-active-off"),
-                        Is.True, names[i] + " off");
+                    // 메인 메뉴 버튼 판은 컷코너 플레이트다. on 스프라이트는 HoverOverlay가 담당한다.
+                    var plate = button.GetComponent<UnityEngine.UI.Image>().sprite;
+                    Assert.That(plate, Is.Not.Null, names[i] + " plate");
+                    Assert.That(plate.name, Does.StartWith("UI_CutCorner_Plate"), names[i] + " plate");
                     var overlay = button.Find("HoverOverlay");
                     Assert.That(overlay, Is.Not.Null, names[i] + " overlay");
                     Assert.That(overlay.GetComponent<UnityEngine.UI.Image>().sprite.name.StartsWith("button-active-on"),

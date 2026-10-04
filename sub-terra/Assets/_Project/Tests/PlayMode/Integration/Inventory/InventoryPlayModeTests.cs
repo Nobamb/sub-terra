@@ -52,8 +52,8 @@ namespace SubTerra.App.Tests
             Assert.That(hudView.Cargo, Is.EqualTo(HudFormatter.FormatCargo(expectedWeight)));
             Assert.That(hudView.Unsettled, Is.EqualTo(HudFormatter.FormatUnsettledValue(expectedValue)));
             Assert.That(panelView.Value, Is.EqualTo(HudFormatter.FormatUnsettledValue(expectedValue)));
-            Assert.That(panelView.Stacks, Does.Contain("Copper x3"));
-            Assert.That(panelView.Stacks, Does.Contain("Lithium x2"));
+            Assert.That(panelView.Stacks, Does.Contain("구리 x3"));
+            Assert.That(panelView.Stacks, Does.Contain("리튬 x2"));
             Assert.That(state.GetInventory().CargoWeight, Is.EqualTo(service.CurrentWeight).Within(0.0001f));
 
             // Unbind 후 추가 지급은 UI에 반영되지 않음

@@ -24,6 +24,8 @@ namespace SubTerra.Gameplay.Player
         [SerializeField] private Vector2 doorScale = new(1.9f, 0.87f);
         [SerializeField] private Vector2 openingMaskSize = new(1.36f, 1.16f);
 
+        private const float MaxVisualStep = 0.05f;
+
         private ElevatorController elevator;
         private float closedFraction;
         private float targetFraction;
@@ -97,9 +99,12 @@ namespace SubTerra.Gameplay.Player
 
         private void UpdateDoor()
         {
+            float remaining = Mathf.Min(Time.unscaledDeltaTime, MaxVisualStep);
             if (openingDelayRemaining > 0f)
             {
-                openingDelayRemaining -= Time.unscaledDeltaTime;
+                float used = Mathf.Min(remaining, openingDelayRemaining);
+                openingDelayRemaining -= used;
+                remaining -= used;
                 if (openingDelayRemaining > 0f)
                 {
                     return;
@@ -108,12 +113,12 @@ namespace SubTerra.Gameplay.Player
                 BeginTransition(targetFraction);
             }
 
-            if (!transitionActive)
+            if (!transitionActive || remaining <= 0f)
             {
                 return;
             }
 
-            transitionElapsed += Time.unscaledDeltaTime;
+            transitionElapsed += remaining;
             float progress = transitionDuration <= 0f
                 ? 1f
                 : Mathf.Clamp01(transitionElapsed / transitionDuration);
@@ -131,6 +136,7 @@ namespace SubTerra.Gameplay.Player
 
         private void UpdateLift()
         {
+            float step = Mathf.Min(Time.unscaledDeltaTime, MaxVisualStep);
             if (liftStartPending)
             {
                 if (closedFraction < 0.999f)
@@ -138,7 +144,7 @@ namespace SubTerra.Gameplay.Player
                     return;
                 }
 
-                departurePauseRemaining -= Time.unscaledDeltaTime;
+                departurePauseRemaining -= step;
                 if (departurePauseRemaining <= 0f)
                 {
                     liftStartPending = false;
@@ -153,7 +159,7 @@ namespace SubTerra.Gameplay.Player
                 return;
             }
 
-            liftElapsed += Time.unscaledDeltaTime;
+            liftElapsed += step;
             float progress = liftTransitionDuration <= 0f
                 ? 1f
                 : Mathf.Clamp01(liftElapsed / liftTransitionDuration);
@@ -453,6 +459,10 @@ namespace SubTerra.Gameplay.Player
             }
 
             cabinRoot.localPosition = Vector3.up * Mathf.Lerp(0f, departureDistance, liftFraction);
+            if (elevator != null)
+            {
+                elevator.SyncLockedRider();
+            }
         }
     }
 }
