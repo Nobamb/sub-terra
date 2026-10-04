@@ -208,12 +208,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 466182068461357469}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: -0.65, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 7826523798770445540}
+  m_Father: {fileID: 7246620122804740290}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &582349419977748473
 GameObject:
@@ -241,11 +241,11 @@ Transform:
   m_GameObject: {fileID: 582349419977748473}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.9, y: -0.55, z: 0}
-  m_LocalScale: {x: 1.55, y: 1, z: 1}
+  m_LocalPosition: {x: -1.05, y: -0.55, z: 0}
+  m_LocalScale: {x: 1.9, y: 0.87, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 7826523798770445540}
+  m_Father: {fileID: 7246620122804740290}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &8053576313513174170
 SpriteRenderer:
@@ -403,7 +403,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9541d86e2fd84c1d9990edf0852d74ab, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshPro
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -606,11 +606,11 @@ Transform:
   m_GameObject: {fileID: 1811688775880169176}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.9, y: -0.55, z: 0}
-  m_LocalScale: {x: 1.55, y: 1, z: 1}
+  m_LocalPosition: {x: 1.05, y: -0.55, z: 0}
+  m_LocalScale: {x: 1.9, y: 0.87, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 7826523798770445540}
+  m_Father: {fileID: 7246620122804740290}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &7592178900222283033
 SpriteRenderer:
@@ -797,14 +797,10 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 3556966428175814365}
   - {fileID: 3254879029808765541}
   - {fileID: 1645242951626583730}
-  - {fileID: 5862703031475864627}
   - {fileID: 162481721585221570}
-  - {fileID: 1929853418715509937}
-  - {fileID: 8305772491551413781}
-  - {fileID: 471190160387105675}
+  - {fileID: 7246620122804740290}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &1042571081315699638
@@ -923,7 +919,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b133b86c80242eb45881e9dcc6e76662, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: SubTerra.Gameplay.Player::SubTerra.Gameplay.Player.ElevatorController
   inputActions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
   interactActionPath: Player/Interact
@@ -936,7 +932,7 @@ MonoBehaviour:
     m_Bits: 0
   statusText: {fileID: 1538970431593604627}
   callDelaySeconds: 0.35
-  travelDelaySeconds: 0.65
+  travelDelaySeconds: 0.22
 --- !u!114 &1342572698996275504
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -947,14 +943,23 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 325242854bd868d4a88770f0dbdeeda5, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: SubTerra.Gameplay.Player::SubTerra.Gameplay.Player.ElevatorDoorVisual
   leftDoor: {fileID: 8053576313513174170}
   rightDoor: {fileID: 7592178900222283033}
+  doorOpeningMask: {fileID: 1780158579311648043}
+  cabinRoot: {fileID: 7246620122804740290}
   slideDuration: 0.28
-  openOffset: 0.9
-  closedOffset: 0.29
+  openingDuration: 0.52
+  initialOpenDelay: 0.16
+  departurePause: 0.18
+  liftDuration: 0.55
+  liftDistance: 1.8
+  openDoorOffset: 1.05
+  closedDoorOffset: 0.34
   doorCenterY: -0.55
+  doorScale: {x: 1.9, y: 0.87}
+  openingMaskSize: {x: 1.36, y: 1.16}
 --- !u!1 &1912177938304543708
 GameObject:
   m_ObjectHideFlags: 0
@@ -1988,10 +1993,10 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: -0.55, z: 0}
-  m_LocalScale: {x: 1.22, y: 1.24, z: 1}
+  m_LocalScale: {x: 1.36, y: 1.16, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 7826523798770445540}
+  m_Father: {fileID: 7246620122804740290}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!331 &1780158579311648043
 SpriteMask:
@@ -2450,7 +2455,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 7826523798770445540}
+  m_Father: {fileID: 7246620122804740290}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &8508410333957414490
 SpriteRenderer:
@@ -2972,6 +2977,42 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
   m_BlendShapeWeights: []
+--- !u!1 &8632797068850455589
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7246620122804740290}
+  m_Layer: 0
+  m_Name: ElevatorCabin
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7246620122804740290
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8632797068850455589}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 5862703031475864627}
+  - {fileID: 1929853418715509937}
+  - {fileID: 8305772491551413781}
+  - {fileID: 471190160387105675}
+  - {fileID: 3556966428175814365}
+  m_Father: {fileID: 7826523798770445540}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &8684702765723535205
 GameObject:
   m_ObjectHideFlags: 0

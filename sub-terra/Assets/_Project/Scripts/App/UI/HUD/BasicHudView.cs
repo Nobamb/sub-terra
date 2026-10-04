@@ -31,6 +31,7 @@ namespace SubTerra.App.UI.HUD
         private void Awake()
         {
             AlignHealthRow();
+            HideBuildingSelection();
         }
 
         public void AlignHealthRow()
@@ -94,7 +95,16 @@ namespace SubTerra.App.UI.HUD
 
         public void SetBuildingSelection(string text)
         {
-            SetText(buildingSelectionText, text);
+            // The construction panel owns this guidance; the HUD row overlaps the mission panel.
+            HideBuildingSelection();
+        }
+
+        private void HideBuildingSelection()
+        {
+            if (buildingSelectionText == null) return;
+            buildingSelectionText.text = string.Empty;
+            buildingSelectionText.enabled = false;
+            buildingSelectionText.raycastTarget = false;
         }
 
         public void SetInteractionPrompt(string text)

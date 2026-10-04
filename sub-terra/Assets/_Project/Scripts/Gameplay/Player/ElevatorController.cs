@@ -22,14 +22,17 @@ namespace SubTerra.Gameplay.Player
         [SerializeField] private LayerMask exitBlockerLayers;
         [SerializeField] private TMP_Text statusText;
         [SerializeField, Min(0f)] private float callDelaySeconds = 0.35f;
-        [SerializeField, Min(0f)] private float travelDelaySeconds = 0.65f;
+        [SerializeField, Min(0f)] private float travelDelaySeconds = 0.22f;
 
         private InputAction interactAction;
+        private ElevatorDoorVisual doorVisual;
         private PlayerMovement riderMovement;
         private Rigidbody2D riderBody;
         private RigidbodyType2D riderBodyType;
         private float riderGravity;
         private bool riderLocked;
+        private bool travelCommitted;
+        private PlayerCameraFollow departureCameraFollow;
         private IElevatorTravelPort travelPort;
         private Coroutine travelRoutine;
 
@@ -59,6 +62,7 @@ namespace SubTerra.Gameplay.Player
             zone.isTrigger = true;
             ResolveInput();
             ResolvePort();
+            doorVisual = GetComponent<ElevatorDoorVisual>();
             SetState(ElevatorTravelState.Idle);
         }
 
@@ -88,6 +92,14 @@ namespace SubTerra.Gameplay.Player
                 travelRoutine = null;
             }
 
+            // Scene 전환이 이미 승인된 경우 플레이어와 객실은 함께 언로드된다.
+            // 이 시점에 탑승자를 원위치에 복구하면 상승 연출이 되감겨 보인다.
+            if (travelCommitted)
+            {
+                RestoreCameraFollow();
+                return;
+            }
+
             ReleaseRider();
             if (State == ElevatorTravelState.Calling || State == ElevatorTravelState.Moving)
             {
@@ -102,6 +114,18 @@ namespace SubTerra.Gameplay.Player
             {
                 RequestTravel();
             }
+        }
+
+        private void LateUpdate()
+        {
+            if (!riderLocked || riderBody == null || boardingAnchor == null)
+            {
+                return;
+            }
+
+            // 엘리베이터 객실과 동일한 위치를 유지해 이동 중에도 발이 바닥에 붙게 한다.
+            riderBody.position = boardingAnchor.position;
+            riderBody.rotation = boardingAnchor.eulerAngles.z;
         }
 
         private void OnTriggerEnter2D(Collider2D other)
@@ -179,13 +203,39 @@ namespace SubTerra.Gameplay.Player
             }
 
             SetState(ElevatorTravelState.Moving);
-            if (travelDelaySeconds > 0f)
+            bool animateCabin = doorVisual != null && doorVisual.isActiveAndEnabled;
+            if (animateCabin)
             {
+                while (!doorVisual.IsLiftAtTop)
+                {
+                    yield return null;
+                }
+            }
+            else if (travelDelaySeconds > 0f)
+            {
+                // 비주얼이 없는 테스트/대체 엘리베이터도 기존 이동 대기 시간을 유지한다.
                 yield return new WaitForSecondsRealtime(travelDelaySeconds);
             }
 
+            if (animateCabin && travelDelaySeconds > 0f)
+            {
+                // 상승이 끝난 뒤 짧게 정지해 문과 승강기 동작을 읽을 시간을 준다.
+                yield return new WaitForSecondsRealtime(travelDelaySeconds);
+            }
+
+            travelCommitted = true;
             if (!travelPort.TryTravel(destination, out var reason))
             {
+                travelCommitted = false;
+                if (animateCabin)
+                {
+                    doorVisual.ReturnCabinToGround();
+                    while (!doorVisual.IsLiftAtGround)
+                    {
+                        yield return null;
+                    }
+                }
+
                 SetState(ElevatorTravelState.Blocked);
                 if (statusText != null && !string.IsNullOrWhiteSpace(reason))
                 {
@@ -197,7 +247,7 @@ namespace SubTerra.Gameplay.Player
             }
 
             SetState(ElevatorTravelState.Arrived);
-            ReleaseRider();
+            // 성공 시 기존 씬의 엘리베이터와 탑승자는 언로드까지 상단에서 유지한다.
             travelRoutine = null;
         }
 
@@ -205,6 +255,17 @@ namespace SubTerra.Gameplay.Player
         {
             riderMovement.SetCanMove(false);
             riderLocked = true;
+            Camera travelCamera = Camera.main;
+            if (doorVisual != null && doorVisual.isActiveAndEnabled && travelCamera != null)
+            {
+                var follow = travelCamera.GetComponent<PlayerCameraFollow>();
+                if (follow != null && follow.enabled)
+                {
+                    // 탑승자를 추적하면 객실이 계속 화면 중앙에 남으므로 출발 구도를 유지한다.
+                    departureCameraFollow = follow;
+                    departureCameraFollow.enabled = false;
+                }
+            }
             if (riderBody == null)
             {
                 return;
@@ -224,6 +285,7 @@ namespace SubTerra.Gameplay.Player
 
         private void ReleaseRider()
         {
+            RestoreCameraFollow();
             if (!riderLocked)
             {
                 return;
@@ -238,6 +300,15 @@ namespace SubTerra.Gameplay.Player
 
             riderMovement?.SetCanMove(true);
             riderLocked = false;
+        }
+
+        private void RestoreCameraFollow()
+        {
+            if (departureCameraFollow != null)
+            {
+                departureCameraFollow.enabled = true;
+                departureCameraFollow = null;
+            }
         }
 
         private bool IsExitClear()

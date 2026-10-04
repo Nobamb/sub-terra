@@ -105,15 +105,16 @@ namespace SubTerra.App.Editor.DataValidation
                 result[i] = tile;
             }
 
-            // BoundaryRock keeps a darker Rock-pattern look so edges stay visually distinct.
-            var boundaryPath = "Assets/_Project/Tilemaps/DemoWorld/BoundaryRock.asset";
-            var boundary = AssetDatabase.LoadAssetAtPath<Tile>(boundaryPath);
-            if (boundary != null && sprites.Length > 0)
+            // Keep map borders and the three protected elevator blocks visually identical.
+            foreach (var name in new[] { "BoundaryRock", "ElevatorProtectedBlock" })
             {
-                boundary.sprite = sprites[0];
-                boundary.color = new Color(0.45f, 0.48f, 0.55f, 1f);
-                boundary.colliderType = Tile.ColliderType.Grid;
-                EditorUtility.SetDirty(boundary);
+                var tile = AssetDatabase.LoadAssetAtPath<Tile>(
+                    "Assets/_Project/Tilemaps/DemoWorld/" + name + ".asset");
+                if (tile == null || sprites.Length == 0) continue;
+                tile.sprite = sprites[0];
+                tile.color = new Color(0.35f, 0.36f, 0.38f, 1f);
+                tile.colliderType = Tile.ColliderType.Grid;
+                EditorUtility.SetDirty(tile);
             }
 
             return result;
