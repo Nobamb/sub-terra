@@ -276,7 +276,30 @@ namespace SubTerra.Gameplay.Player
             var verticalVelocity = CanMove
                 ? verticalMoveInput * ladderSpeed * CurrentSpeedMultiplier
                 : 0f;
+            if (verticalVelocity > 0f && TryGetLadderTop(out var top))
+            {
+                // 몸의 위쪽이 마지막 사다리 끝을 넘지 않도록 남은 거리만 이동한다.
+                // 여러 사다리에 접촉 중이면 가장 높은 끝을 사용해 연결 구간은 통과한다.
+                var playerTop = bodyCollider != null ? bodyCollider.bounds.max.y : body.position.y;
+                var remaining = Mathf.Max(0f, top - playerTop);
+                verticalVelocity = Mathf.Min(verticalVelocity, remaining / Time.fixedDeltaTime);
+            }
             body.linearVelocity = new Vector2(body.linearVelocityX, verticalVelocity);
+        }
+
+        private bool TryGetLadderTop(out float top)
+        {
+            top = float.NegativeInfinity;
+            var found = false;
+            foreach (var ladder in activeLadders)
+            {
+                if (ladder != null && ladder.TryGetTop(out var ladderTop))
+                {
+                    top = Mathf.Max(top, ladderTop);
+                    found = true;
+                }
+            }
+            return found;
         }
 
         private void TryResumeLadderAfterJump()

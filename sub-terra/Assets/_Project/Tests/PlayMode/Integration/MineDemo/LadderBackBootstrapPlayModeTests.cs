@@ -77,7 +77,7 @@ namespace SubTerra.App.Tests.PlayMode.MineDemo
             var ladderPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/Prefabs/Gameplay/Traversal/Ladder_Buildable.prefab");
             Assert.That(ladderPrefab, Is.Not.Null);
             var origin = movement.transform.position + Vector3.up * 4f;
-            UnityEngine.Object.Instantiate(ladderPrefab, origin, Quaternion.identity);
+            var ladder = UnityEngine.Object.Instantiate(ladderPrefab, origin, Quaternion.identity);
             var body = movement.GetComponent<Rigidbody2D>();
             body.position = origin;
             body.linearVelocity = Vector2.zero;
@@ -96,6 +96,14 @@ namespace SubTerra.App.Tests.PlayMode.MineDemo
             yield return Travel(-1f, "descending");
             Debug.Log("[Ladder Bootstrap QA] Ascending and descending selected all five frames.");
             Assert.That(visual.transform.localPosition, Is.EqualTo(visualPosition), "VisualRoot must not bob.");
+            movement.SetVerticalMoveInput(1f);
+            yield return new WaitForSeconds(1.5f);
+            var playerCollider = movement.GetComponent<Collider2D>();
+            var ladderCollider = ladder.GetComponent<Collider2D>();
+            Assert.That(playerCollider.bounds.max.y, Is.LessThanOrEqualTo(ladderCollider.bounds.max.y + 0.001f));
+            Assert.That(body.linearVelocityY, Is.EqualTo(0f).Within(0.001f));
+            Assert.That(movement.IsClimbing, Is.True);
+            Assert.That(visual.sprite, Is.SameAs(frames[0]), "Top stop must settle to the neutral pose.");
             movement.SetVerticalMoveInput(0f);
             body.position += Vector2.right * 2f;
             Physics2D.SyncTransforms();
