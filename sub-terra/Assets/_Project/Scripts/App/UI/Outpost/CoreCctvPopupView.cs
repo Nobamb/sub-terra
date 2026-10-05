@@ -1323,6 +1323,10 @@ namespace SubTerra.App.UI.Outpost
 
         private void EnsureArt()
         {
+            if (closeButton != null)
+            {
+                SetSprite(closeButton.targetGraphic as Image, CoreCctvArt.Soft());
+            }
             SetSprite(flashGlow, CoreCctvArt.Soft());
             SetSprite(panelGlow, CoreCctvArt.Soft());
             SetSprite(vignette, CoreCctvArt.Vignette());

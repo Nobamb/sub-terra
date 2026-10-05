@@ -391,7 +391,37 @@ namespace SubTerra.App.Editor.DataValidation
             labelRect.offsetMin = Vector2.zero;
             labelRect.offsetMax = Vector2.zero;
             label.text = "×";
+            ApplyCloseButtonHover(button);
             return button;
+        }
+
+        public static void ApplyCloseButtonHover(Button button)
+        {
+            var existing = button.transform.Find("HoverOverlay");
+            var rect = existing != null
+                ? (RectTransform)existing
+                : NewRect("HoverOverlay", button.transform, Vector2.zero, Vector2.zero);
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
+            rect.SetAsFirstSibling();
+            var image = rect.GetComponent<Image>();
+            if (image == null)
+            {
+                image = AddImage(rect, null, Cyan, false);
+            }
+            image.raycastTarget = false;
+            button.targetGraphic = image;
+            button.transition = Selectable.Transition.ColorTint;
+            var colors = button.colors;
+            colors.normalColor = new Color(1f, 1f, 1f, 0f);
+            colors.highlightedColor = new Color(1f, 1f, 1f, 0.18f);
+            colors.selectedColor = colors.highlightedColor;
+            colors.pressedColor = new Color(0.85f, 0.95f, 1f, 0.24f);
+            colors.disabledColor = new Color(1f, 1f, 1f, 0f);
+            colors.fadeDuration = 0.15f;
+            button.colors = colors;
         }
 
         private static RawImage BuildEdgeStrip(
