@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using SubTerra.App.Outpost;
+using SubTerra.App.UI.Sell;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -42,13 +43,64 @@ namespace SubTerra.App.UI.Outpost
         public CoreCctvPopupView CorePopup => corePopup;
         public Button CoreCloseButton => corePopup != null ? corePopup.CloseButton : null;
 
-        /// <summary>지금 화면에 올라와 있는(또는 올라올) 창의 루트. 충전기·보건소는 서비스 팝업, 코어는 CCTV 팝업이다.</summary>
+        /// <summary>
+        /// 지금 화면에 올라와 있는(또는 올라올) 창의 루트. 충전기·보건소는 서비스 팝업, 코어는 CCTV 팝업,
+        /// 정산 콘솔은 지상 판매창과 같은 공통 판매 팝업이다(B-136).
+        /// </summary>
         public GameObject ActiveWindowRoot =>
             servicePopup != null && FacilityServicePopupTimeline.IsServiceMode(currentMode)
                 ? servicePopup.gameObject
                 : corePopup != null && currentMode == OutpostPanelMode.Core
                     ? corePopup.gameObject
-                    : PanelRoot;
+                    : sellPopup != null && (currentMode == OutpostPanelMode.Settlement || sellPopup.IsVisible)
+                        ? sellPopup.gameObject
+                        : PanelRoot;
+
+        public ResourceSellPopupView SellPopup => sellPopup;
+
+        /// <summary>판매 팝업의 X 버튼. Binder가 기존 닫기 경로(ClosePanel)에 연결한다.</summary>
+        public event System.Action SellCloseRequested;
+
+        private ResourceSellPopupView sellPopup;
+
+        /// <summary>공통 판매 팝업에 판매 상태를 연결한다. 플레이 중에만 팝업을 만든다.</summary>
+        public void AttachSellSession(ResourceSellSession session)
+        {
+            if (session != null && sellPopup == null && Application.isPlaying)
+            {
+                var canvases = GetComponentsInParent<Canvas>(true);
+                if (canvases != null && canvases.Length > 0)
+                {
+                    // 월드 클릭(채굴·건설)을 막지 않도록 창 영역만 입력을 받는다.
+                    sellPopup = ResourceSellPopupView.Create(canvases[canvases.Length - 1].transform, false);
+                    if (sellPopup != null)
+                    {
+                        sellPopup.CloseRequested += OnSellCloseRequested;
+                    }
+                }
+            }
+
+            if (sellPopup != null)
+            {
+                sellPopup.Attach(session);
+            }
+        }
+
+        private void OnSellCloseRequested()
+        {
+            SellCloseRequested?.Invoke();
+        }
+
+        private void OnDestroy()
+        {
+            if (sellPopup != null)
+            {
+                sellPopup.CloseRequested -= OnSellCloseRequested;
+                sellPopup.Attach(null);
+                Destroy(sellPopup.gameObject);
+                sellPopup = null;
+            }
+        }
 
         private GameObject interactionMessageRoot;
         private TMP_Text interactionMessageText;
@@ -98,10 +150,27 @@ namespace SubTerra.App.UI.Outpost
             var useCore = corePopup != null
                 && currentVisible
                 && currentMode == OutpostPanelMode.Core;
+            var useSell = sellPopup != null
+                && currentVisible
+                && currentMode == OutpostPanelMode.Settlement;
             // 닫는 중 SetMode(None)이 먼저 불려도 예전 큰 패널이 잠깐 켜지지 않게 한다.
             if (!fromModeChange || currentMode != OutpostPanelMode.None)
             {
-                (panelRoot != null ? panelRoot : gameObject).SetActive(currentVisible && !useService && !useCore);
+                (panelRoot != null ? panelRoot : gameObject).SetActive(
+                    currentVisible && !useService && !useCore && !useSell);
+            }
+
+            if (sellPopup != null)
+            {
+                // Presenter가 스냅샷마다 불러도 Show는 이미 열려 있으면 아무것도 하지 않는다.
+                if (useSell)
+                {
+                    sellPopup.Show();
+                }
+                else if (sellPopup.IsOpen)
+                {
+                    sellPopup.BeginClose();
+                }
             }
 
             if (corePopup != null)

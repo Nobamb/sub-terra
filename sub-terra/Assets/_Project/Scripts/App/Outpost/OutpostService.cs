@@ -526,6 +526,137 @@ namespace SubTerra.App.Outpost
             return result;
         }
 
+        public OutpostOperationResult TrySettlePlayerCargoBatch(
+            IReadOnlyList<KeyValuePair<string, int>> items)
+        {
+            settlementSequence++;
+            return TrySettlePlayerCargoBatch(items, "outpost-settlement-" + settlementSequence);
+        }
+
+        /// <summary>
+        /// 정산 콘솔에서 고른 여러 광물을 한 번에 정산한다(B-136).
+        /// 희귀 품목 거부·시설 검증·정산 ID 중복 방지는 기존 정산과 같고,
+        /// 보너스는 기존 화물 전체 정산(TrySettle)처럼 합계에 한 번 적용한다.
+        /// 전 항목 사전 검증 후 TryReduceMany 한 번으로 차감하므로 일부만 정산되는 일이 없다.
+        /// </summary>
+        public OutpostOperationResult TrySettlePlayerCargoBatch(
+            IReadOnlyList<KeyValuePair<string, int>> items,
+            string settlementId)
+        {
+            const OutpostOperationKind kind = OutpostOperationKind.SettlePlayerCargo;
+            if (items == null || items.Count == 0)
+            {
+                return Complete(Fail(OutpostOperationStatus.InvalidRequest, kind, "판매할 자원을 선택하세요."));
+            }
+
+            for (var i = 0; i < items.Count; i++)
+            {
+                if (DataIds.RareItems.IsRare(items[i].Key))
+                {
+                    return Complete(Fail(
+                        OutpostOperationStatus.InvalidRequest,
+                        kind,
+                        "희귀 품목은 지상 기지에서 개별 선택 판매하세요."));
+                }
+            }
+
+            if (!TryValidateFacility(DataIds.Buildings.SettlementBasic, kind, out var failure))
+            {
+                return Complete(failure);
+            }
+
+            if (string.IsNullOrEmpty(settlementId))
+            {
+                return Complete(Fail(OutpostOperationStatus.InvalidRequest, kind, "정산 ID가 필요합니다."));
+            }
+
+            if (completedSettlementIds.Contains(settlementId))
+            {
+                return Complete(Fail(OutpostOperationStatus.AlreadyProcessed, kind, "이미 처리된 정산입니다."));
+            }
+
+            var merged = new List<KeyValuePair<string, int>>(items.Count);
+            for (var i = 0; i < items.Count; i++)
+            {
+                if (!TryValidateMineralRequest(items[i].Key, items[i].Value, kind, out _, out failure))
+                {
+                    return Complete(failure);
+                }
+
+                var index = -1;
+                for (var j = 0; j < merged.Count; j++)
+                {
+                    if (merged[j].Key == items[i].Key)
+                    {
+                        index = j;
+                        break;
+                    }
+                }
+
+                if (index < 0)
+                {
+                    merged.Add(items[i]);
+                }
+                else if (merged[index].Value > int.MaxValue - items[i].Value)
+                {
+                    return Complete(Fail(OutpostOperationStatus.OverflowRisk, kind, "정산 수량 한도를 초과합니다."));
+                }
+                else
+                {
+                    merged[index] = new KeyValuePair<string, int>(
+                        items[i].Key, merged[index].Value + items[i].Value);
+                }
+            }
+
+            long baseGold = 0;
+            for (var i = 0; i < merged.Count; i++)
+            {
+                catalog.TryGetMineral(merged[i].Key, out var info);
+                if (inventory.State.GetQuantity(merged[i].Key) < merged[i].Value)
+                {
+                    return Complete(Fail(OutpostOperationStatus.InsufficientQuantity, kind, "보유 수량이 부족합니다."));
+                }
+
+                baseGold += (long)info.UnitPrice * merged[i].Value;
+                if (baseGold > int.MaxValue)
+                {
+                    return Complete(Fail(OutpostOperationStatus.OverflowRisk, kind, "정산 금액 한도를 초과합니다."));
+                }
+            }
+
+            if (!EconomyPricing.TryAddBonus((int)baseGold, effects?.GetGoldGainBonusPercent() ?? 0,
+                gameState.Player.Gold, out var goldBonus, out var goldGain, out _))
+            {
+                return Complete(Fail(OutpostOperationStatus.OverflowRisk, kind, "골드 한도를 초과합니다."));
+            }
+
+            var reduction = inventory.TryReduceMany(merged);
+            if (reduction.Status != InventoryMutationStatus.Success)
+            {
+                return Complete(Fail(OutpostOperationStatus.InsufficientQuantity, kind, "플레이어 화물 정산에 실패했습니다."));
+            }
+
+            gameState.AddGold(goldGain);
+            completedSettlementIds.Add(settlementId);
+            var result = Success(
+                kind,
+                merged.Count == 1 ? merged[0].Key : string.Empty,
+                SumQuantities(merged),
+                goldGain,
+                "정산이 완료되었습니다. +" + EconomyPricing.FormatGoldGain(goldGain, goldBonus));
+            RaiseSnapshotChanged();
+            Complete(result);
+            AutoSaveRequested?.Invoke(
+                new OutpostAutoSaveRequest(OutpostAutoSaveReason.Settlement, settlementId));
+            return result;
+        }
+
+        /// <summary>판매 창 표시용 현재 골드. 읽기 전용.</summary>
+        public int PlayerGold => gameState != null && gameState.Player != null ? gameState.Player.Gold : 0;
+
+        /// <summary>판매 창 예상 금액 계산용 골드 보너스 비율. 읽기 전용.</summary>
+        public int GoldGainBonusPercent => effects != null ? effects.GetGoldGainBonusPercent() : 0;
+
         public OutpostOperationResult TrySettle(
             OutpostSettlementSource source,
             string settlementId)

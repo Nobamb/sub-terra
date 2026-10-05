@@ -212,6 +212,15 @@ namespace SubTerra.App.UI.Outpost
                 OutpostOperationKind.SettlePlayerCargo);
         }
 
+        /// <summary>판매 창(B-136) 일괄 정산. 같은 busy 가드·결과 표시 경로를 쓴다.</summary>
+        public OutpostOperationResult RequestSellBatch(
+            System.Collections.Generic.IReadOnlyList<System.Collections.Generic.KeyValuePair<string, int>> items)
+        {
+            return Execute(
+                () => service.TrySettlePlayerCargoBatch(items),
+                OutpostOperationKind.SettlePlayerCargo);
+        }
+
         public OutpostOperationResult RequestSettlement(OutpostSettlementSource source)
         {
             var kind = source == OutpostSettlementSource.PlayerCargo

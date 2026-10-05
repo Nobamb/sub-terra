@@ -167,18 +167,7 @@ namespace SubTerra.App.UI.Economy
                     }
 
                     var isRare = DataIds.RareItems.IsRare(stack.MineralId);
-                    var displayName = ItemDisplayNames.Inventory(
-                        stack.MineralId);
-                    if (string.IsNullOrEmpty(displayName) || displayName == stack.MineralId)
-                    {
-                        displayName = string.IsNullOrEmpty(stack.DisplayName)
-                            ? stack.MineralId
-                            : stack.DisplayName;
-                        if (isRare && displayName.IndexOf("희귀", System.StringComparison.Ordinal) < 0)
-                        {
-                            displayName += " (희귀)";
-                        }
-                    }
+                    var displayName = ResolveSellDisplayName(stack);
 
                     rows.Add(new SellMineralRowReadModel(
                         stack.MineralId,
@@ -472,6 +461,63 @@ namespace SubTerra.App.UI.Economy
                 busy = false;
                 view?.SetBusy(false);
             }
+        }
+
+        /// <summary>
+        /// 판매 창(B-136) 일괄 판매. 같은 busy 가드를 쓰고 거래는 EconomyService 한 번의 트랜잭션으로 처리한다.
+        /// </summary>
+        public EconomyTransactionResult RequestSellBatch(IReadOnlyList<KeyValuePair<string, int>> items)
+        {
+            if (busy)
+            {
+                var busyResult = EconomyTransactionResult.Fail(
+                    EconomyTransactionStatus.Busy,
+                    EconomyTransactionKind.Sell,
+                    "처리 중입니다.",
+                    "Presenter re-entry blocked.");
+                ApplyResultToView(busyResult);
+                return busyResult;
+            }
+
+            if (economy == null)
+            {
+                var missing = EconomyTransactionResult.Fail(
+                    EconomyTransactionStatus.DependencyMissing,
+                    EconomyTransactionKind.Sell,
+                    "경제 서비스가 없습니다.",
+                    "EconomyService not bound.");
+                ApplyResultToView(missing);
+                return missing;
+            }
+
+            busy = true;
+            view?.SetBusy(true);
+            try
+            {
+                return economy.TrySellMinerals(items);
+            }
+            finally
+            {
+                busy = false;
+                view?.SetBusy(false);
+            }
+        }
+
+        /// <summary>판매 목록 표시 이름. 희귀 품목은 이름에 '(희귀)'를 붙인다.</summary>
+        public static string ResolveSellDisplayName(InventoryStackEntry stack)
+        {
+            var isRare = DataIds.RareItems.IsRare(stack.MineralId);
+            var displayName = ItemDisplayNames.Inventory(stack.MineralId);
+            if (string.IsNullOrEmpty(displayName) || displayName == stack.MineralId)
+            {
+                displayName = string.IsNullOrEmpty(stack.DisplayName) ? stack.MineralId : stack.DisplayName;
+                if (isRare && displayName.IndexOf("희귀", System.StringComparison.Ordinal) < 0)
+                {
+                    displayName += " (희귀)";
+                }
+            }
+
+            return displayName;
         }
 
         /// <summary>

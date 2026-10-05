@@ -197,6 +197,36 @@ namespace SubTerra.App.Tests.PlayMode
             UiTestWait.Record("setup-total", "isolated Integration runtime", timer.Elapsed.TotalSeconds);
         }
 
+        /// <summary>LoadIntegration과 같은 격리 런타임(슬롯 0, 플레이어 세이브 미사용)으로 지상 기지 Scene을 연다.</summary>
+        public IEnumerator LoadSurfaceBase(Func<bool> ready)
+        {
+            var timer = Stopwatch.StartNew();
+            GameBootstrapper.ResetInstanceForTests();
+            var root = new GameObject("UI_TestRuntime");
+            var bootstrap = root.AddComponent<GameBootstrapper>();
+            bootstrap.enabled = false;
+#if UNITY_EDITOR
+            var serialized = new UnityEditor.SerializedObject(bootstrap);
+            serialized.FindProperty("gameDataCatalog").objectReferenceValue =
+                UnityEditor.AssetDatabase.LoadAssetAtPath<ScriptableObject>("Assets/_Project/Data/Catalog/GameDataCatalog.asset");
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+#endif
+            var state = GameState.CreateNew();
+            state.SetDemoProgress(DemoObjectiveIds.MineCopper, 1, false);
+            state.SetQuestRewardSettlement(string.Empty, 1);
+            bootstrap.TryReplaceState(state);
+            Save = root.AddComponent<SaveRuntimeController>();
+            yield return UiTestWait.Until(() => Save.InventoryService != null, "SaveRuntime inventory services");
+            Assert.That(Save.ActiveSlot, Is.Zero, "Tests must not use player saves");
+            Save.SetReady(true);
+            var load = SceneManager.LoadSceneAsync(SceneNames.SurfaceBase);
+            yield return UiTestWait.Until(() => load.isDone, "SurfaceBase scene load", stage: "scene");
+            yield return UiTestWait.Until(ready, "SurfaceBase panels bound");
+            yield return Resolution.Set(1920, 1080);
+            BindInput();
+            UiTestWait.Record("setup-total", "isolated SurfaceBase runtime", timer.Elapsed.TotalSeconds);
+        }
+
         internal static IEnumerator DismissBriefing()
         {
             var view = Object.FindAnyObjectByType<DemoObjectiveView>();

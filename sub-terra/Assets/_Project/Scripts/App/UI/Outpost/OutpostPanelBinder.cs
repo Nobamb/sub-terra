@@ -1,5 +1,6 @@
 using System;
 using SubTerra.App.Outpost;
+using SubTerra.App.UI.Sell;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -20,8 +21,13 @@ namespace SubTerra.App.UI.Outpost
         private string selectedMineralId = string.Empty;
         private InputAction interactAction;
         private Func<bool> primaryInteractionClaim;
+        private ResourceSellSession sellSession;
+        private SettlementSellBackend sellBackend;
+        private Func<string, Sprite> itemIconResolver;
 
         public OutpostPanelPresenter Presenter => presenter;
+        public ResourceSellSession SellSession => sellSession;
+        public OutpostPanelView View => view;
         public bool IsBound => presenter != null && presenter.IsBound;
         public bool IsTopWindow(Canvas canvas) => view != null
             && PopupWindowSorting.Contains(canvas, view.ActiveWindowRoot);
@@ -55,6 +61,11 @@ namespace SubTerra.App.UI.Outpost
             }
 
             WireCloseButton();
+            if (view != null)
+            {
+                view.SellCloseRequested -= ClosePanel;
+                view.SellCloseRequested += ClosePanel;
+            }
         }
 
         private void OnDisable()
@@ -65,6 +76,10 @@ namespace SubTerra.App.UI.Outpost
             }
 
             UnwireCloseButton();
+            if (view != null)
+            {
+                view.SellCloseRequested -= ClosePanel;
+            }
         }
 
         private void OnDestroy()
@@ -80,6 +95,7 @@ namespace SubTerra.App.UI.Outpost
                 mineralPicker.MineralSelected -= SelectMineral;
             }
 
+            ReleaseSellSession();
             presenter?.Unbind();
             presenter = null;
         }
@@ -92,6 +108,42 @@ namespace SubTerra.App.UI.Outpost
             }
 
             presenter.Bind(service);
+
+            // B-136: 정산 콘솔도 지상 판매창과 같은 공통 판매 팝업을 쓴다.
+            // 정산 규칙(희귀 품목 판매 불가·합계 보너스)은 어댑터가 데이터로 넘긴다.
+            ReleaseSellSession();
+            if (view != null && service != null)
+            {
+                sellBackend = new SettlementSellBackend(presenter, service, itemIconResolver);
+                sellSession = new ResourceSellSession(sellBackend);
+                view.AttachSellSession(sellSession);
+            }
+        }
+
+        /// <summary>판매 창 자원 아이콘 조회(카탈로그의 기존 아이콘). 표시 전용.</summary>
+        public void SetItemIconResolver(Func<string, Sprite> resolver)
+        {
+            itemIconResolver = resolver;
+            if (sellBackend != null)
+            {
+                sellBackend.SetIconResolver(resolver);
+            }
+        }
+
+        private void ReleaseSellSession()
+        {
+            if (view != null)
+            {
+                view.AttachSellSession(null);
+            }
+
+            if (sellSession != null)
+            {
+                sellSession.Dispose();
+                sellSession = null;
+            }
+
+            sellBackend = null;
         }
 
         public void SetPrimaryInteractionClaim(Func<bool> claim)

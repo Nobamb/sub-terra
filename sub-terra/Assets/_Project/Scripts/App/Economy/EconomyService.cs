@@ -173,6 +173,162 @@ namespace SubTerra.App.Economy
         }
 
         /// <summary>
+        /// 여러 광물 일괄 판매(B-136). 보너스는 단건 판매와 같은 규칙으로 광물별로 계산해 합산한다.
+        /// 전 항목을 사전 검증한 뒤 TryReduceMany 한 번으로 차감하고 골드를 한 번에 지급한다.
+        /// 하나라도 실패하면 인벤토리·골드 모두 불변이며 자동 저장 요청은 성공 시 1회만 발행한다.
+        /// </summary>
+        public EconomyTransactionResult TrySellMinerals(IReadOnlyList<KeyValuePair<string, int>> items)
+        {
+            if (inventory == null || catalog == null || gameState == null)
+            {
+                return CompleteFail(
+                    EconomyTransactionStatus.DependencyMissing,
+                    EconomyTransactionKind.Sell,
+                    "필수 서비스가 없습니다.",
+                    "Inventory, catalog, or GameState missing.");
+            }
+
+            if (sellGate != null && !sellGate.IsSellAllowed)
+            {
+                var deny = string.IsNullOrEmpty(sellGate.DenyReason)
+                    ? "Surface Base에서만 판매할 수 있습니다."
+                    : sellGate.DenyReason;
+                return CompleteFail(
+                    EconomyTransactionStatus.InvalidRequest,
+                    EconomyTransactionKind.Sell,
+                    deny,
+                    "SellGate denied.");
+            }
+
+            if (items == null || items.Count == 0)
+            {
+                return CompleteFail(
+                    EconomyTransactionStatus.InvalidRequest,
+                    EconomyTransactionKind.Sell,
+                    "판매할 자원을 선택하세요.",
+                    "Empty sell list.");
+            }
+
+            // 같은 ID는 합산한다. 순서는 첫 등장 순서를 유지한다.
+            var merged = new List<KeyValuePair<string, int>>(items.Count);
+            for (var i = 0; i < items.Count; i++)
+            {
+                var id = items[i].Key;
+                var quantity = items[i].Value;
+                if (string.IsNullOrEmpty(id) || quantity <= 0)
+                {
+                    return CompleteFail(
+                        EconomyTransactionStatus.InvalidRequest,
+                        EconomyTransactionKind.Sell,
+                        "판매 수량은 1 이상이어야 합니다.",
+                        "Invalid id or quantity in batch.");
+                }
+
+                var found = false;
+                for (var j = 0; j < merged.Count; j++)
+                {
+                    if (merged[j].Key != id)
+                    {
+                        continue;
+                    }
+
+                    if (merged[j].Value > int.MaxValue - quantity)
+                    {
+                        return CompleteFail(
+                            EconomyTransactionStatus.InvalidRequest,
+                            EconomyTransactionKind.Sell,
+                            "판매 수량이 너무 큽니다.",
+                            "Batch quantity overflow.");
+                    }
+
+                    merged[j] = new KeyValuePair<string, int>(id, merged[j].Value + quantity);
+                    found = true;
+                    break;
+                }
+
+                if (!found)
+                {
+                    merged.Add(new KeyValuePair<string, int>(id, quantity));
+                }
+            }
+
+            long total = 0;
+            long bonusTotal = 0;
+            var totalQuantity = 0;
+            var bonusPercent = GoldGainBonusPercent;
+            for (var i = 0; i < merged.Count; i++)
+            {
+                var id = merged[i].Key;
+                var quantity = merged[i].Value;
+                // 가격 원천: 카탈로그만.
+                if (!catalog.TryGetMineral(id, out var info) || info.UnitPrice < 0)
+                {
+                    return CompleteFail(
+                        EconomyTransactionStatus.InvalidRequest,
+                        EconomyTransactionKind.Sell,
+                        "판매할 수 없는 광물이 있습니다.",
+                        "Unknown or unsellable id=" + id);
+                }
+
+                var owned = inventory.State.GetQuantity(id);
+                if (owned < quantity)
+                {
+                    return CompleteFail(
+                        EconomyTransactionStatus.InsufficientResources,
+                        EconomyTransactionKind.Sell,
+                        "보유 수량이 부족합니다.",
+                        "id=" + id + " owned=" + owned + " need=" + quantity);
+                }
+
+                if (!EconomyPricing.TryComputeGoldGain(info.UnitPrice, quantity, out var lineGold, out var lineDiag))
+                {
+                    return CompleteFail(
+                        EconomyTransactionStatus.GoldOverflow,
+                        EconomyTransactionKind.Sell,
+                        "골드 한도를 초과합니다.",
+                        lineDiag);
+                }
+
+                var lineBonus = EconomyPricing.ComputeGoldBonus(lineGold, bonusPercent);
+                total += (long)lineGold + lineBonus;
+                bonusTotal += lineBonus;
+                totalQuantity = totalQuantity > int.MaxValue - quantity ? int.MaxValue : totalQuantity + quantity;
+            }
+
+            if (total > (long)int.MaxValue - gameState.Player.Gold)
+            {
+                return CompleteFail(
+                    EconomyTransactionStatus.GoldOverflow,
+                    EconomyTransactionKind.Sell,
+                    "골드 한도를 초과합니다.",
+                    "Gold balance overflow.");
+            }
+
+            // 커밋: 일괄 차감 → 골드 증가. 차감이 실패하면 골드를 건드리지 않는다.
+            var reduce = inventory.TryReduceMany(merged);
+            if (!reduce.DidChange || reduce.Status != InventoryMutationStatus.Success)
+            {
+                return CompleteFail(
+                    EconomyTransactionStatus.SpendFailed,
+                    EconomyTransactionKind.Sell,
+                    "판매에 실패했습니다.",
+                    "TryReduceMany failed after pre-check: " + reduce.Status);
+            }
+
+            var goldGain = (int)total;
+            gameState.AddGold(goldGain);
+
+            var primaryId = merged.Count == 1 ? merged[0].Key : string.Empty;
+            var result = EconomyTransactionResult.OkSell(primaryId, totalQuantity, goldGain,
+                merged.Count + "종 판매 완료  +" + EconomyPricing.FormatGoldGain(goldGain, (int)bonusTotal));
+            LastResult = result;
+            TransactionCompleted?.Invoke(result);
+            AutoSaveRequested?.Invoke(
+                new EconomyAutoSaveRequest(EconomyTransactionKind.Sell, merged[0].Key, totalQuantity, goldGain));
+            return result;
+        }
+
+        /// <summary>
         /// 읽기 전용 지불 가능 검사. 동일 ID 비용을 합산한 뒤 보유량과 비교한다.
         /// State·이벤트·예약을 변경하지 않는다.
         /// </summary>

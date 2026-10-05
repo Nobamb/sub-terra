@@ -720,6 +720,11 @@ namespace SubTerra.App.Integration
                         && catalog.TryGetBuilding(buildingId, out var building)
                         ? building.Icon
                         : null);
+                outpostPanelBinder.SetItemIconResolver(
+                    itemId => catalog != null
+                        && catalog.TryGetInventoryItem(itemId, out var item)
+                        ? item.Icon
+                        : null);
             }
         }
 

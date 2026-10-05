@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using SubTerra.App.UI.Sell;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -52,9 +53,19 @@ namespace SubTerra.App.UI.Economy
         public event Action SellSelectedClicked;
         public event Action SellAllClicked;
 
-        public bool IsVisible => canvasGroup != null
-            ? canvasGroup.alpha > 0.5f && canvasGroup.blocksRaycasts
-            : gameObject.activeSelf;
+        // B-136: 판매 화면은 정산 콘솔과 같은 공통 판매 팝업이 맡는다. 예전 모달 내용은 숨긴 채 둔다.
+        private ResourceSellPopupView sellPopup;
+
+        public bool IsVisible => sellPopup != null
+            ? sellPopup.IsVisible
+            : canvasGroup != null
+                ? canvasGroup.alpha > 0.5f && canvasGroup.blocksRaycasts
+                : gameObject.activeSelf;
+
+        public ResourceSellPopupView SellPopup => sellPopup;
+
+        /// <summary>지금 화면에 올라와 있는 판매 창 루트(정렬·단축키 닫기 판정용).</summary>
+        public GameObject ActiveWindowRoot => sellPopup != null ? sellPopup.gameObject : gameObject;
 
         private void Awake()
         {
@@ -70,6 +81,60 @@ namespace SubTerra.App.UI.Economy
         {
             WireButtons(false);
             ClearRows();
+            if (sellPopup != null)
+            {
+                sellPopup.CloseRequested -= OnCloseSell;
+                sellPopup.Attach(null);
+                Destroy(sellPopup.gameObject);
+                sellPopup = null;
+            }
+        }
+
+        /// <summary>공통 판매 팝업에 판매 상태를 연결한다. null이면 팝업을 즉시 숨긴다. 플레이 중에만 팝업을 만든다.</summary>
+        public void AttachSellSession(ResourceSellSession session)
+        {
+            if (session != null)
+            {
+                EnsureSellPopup();
+            }
+
+            if (sellPopup != null)
+            {
+                sellPopup.Attach(session);
+            }
+        }
+
+        private void EnsureSellPopup()
+        {
+            if (sellPopup != null || !Application.isPlaying)
+            {
+                return;
+            }
+
+            var canvases = GetComponentsInParent<Canvas>(true);
+            if (canvases == null || canvases.Length == 0)
+            {
+                return;
+            }
+
+            sellPopup = ResourceSellPopupView.Create(canvases[canvases.Length - 1].transform, true);
+            if (sellPopup == null)
+            {
+                return;
+            }
+
+            sellPopup.CloseRequested += OnCloseSell;
+            HideLegacyModal();
+        }
+
+        private void HideLegacyModal()
+        {
+            if (canvasGroup != null)
+            {
+                canvasGroup.alpha = 0f;
+                canvasGroup.interactable = false;
+                canvasGroup.blocksRaycasts = false;
+            }
         }
 
         public void SetStatusMessage(string message)
@@ -112,6 +177,23 @@ namespace SubTerra.App.UI.Economy
 
         public void SetVisible(bool visible)
         {
+            if (sellPopup != null)
+            {
+                HideLegacyModal();
+                if (visible)
+                {
+                    HideLevelSummary();
+                    sellPopup.Show();
+                }
+                else
+                {
+                    RestoreLevelSummary();
+                    sellPopup.BeginClose();
+                }
+
+                return;
+            }
+
             if (visible)
             {
                 // 레벨 요약 패널이 활성화되며 sibling 순서를 바꿔도 판매 모달이 항상 위를 덮는다.

@@ -2,6 +2,7 @@ using SubTerra.App.Core.Data;
 using SubTerra.App.Economy;
 using SubTerra.App.Inventory;
 using SubTerra.App.State;
+using SubTerra.App.UI.Sell;
 using UnityEngine;
 
 namespace SubTerra.App.UI.Economy
@@ -16,13 +17,16 @@ namespace SubTerra.App.UI.Economy
         [SerializeField] private EconomyPanelView view;
 
         private EconomyPanelPresenter presenter;
+        private ResourceSellSession sellSession;
         private bool viewWired;
 
         public EconomyPanelPresenter Presenter => presenter;
+        public ResourceSellSession SellSession => sellSession;
+        public EconomyPanelView View => view;
         public bool IsBound => presenter != null && presenter.IsBound;
         public bool IsModalVisible => view != null && view.IsVisible;
         public bool IsTopWindow(Canvas canvas) => IsModalVisible
-            && PopupWindowSorting.Contains(canvas, view.gameObject);
+            && PopupWindowSorting.Contains(canvas, view.ActiveWindowRoot);
         public void CloseModal()
         {
             if (view != null && view.IsVisible) view.SetVisible(false);
@@ -43,6 +47,7 @@ namespace SubTerra.App.UI.Economy
         {
             // 파괴된 UI가 이벤트에 남지 않도록 대칭 Unbind.
             WireViewEvents(false);
+            ReleaseSellSession();
             presenter?.Unbind();
             presenter = null;
         }
@@ -70,11 +75,35 @@ namespace SubTerra.App.UI.Economy
             }
 
             presenter.Bind(economy, crafting, inventory, gameState, catalog);
+
+            // B-136: 공통 판매 팝업. 지상 규칙(희귀 품목 최대 선택 제외·행 단위 보너스)은 어댑터가 데이터로 넘긴다.
+            ReleaseSellSession();
+            if (view != null && economy != null && inventory != null && gameState != null)
+            {
+                sellSession = new ResourceSellSession(
+                    new SurfaceSellBackend(presenter, economy, inventory, gameState, catalog));
+                view.AttachSellSession(sellSession);
+            }
         }
 
         public void Unbind()
         {
+            ReleaseSellSession();
             presenter?.Unbind();
+        }
+
+        private void ReleaseSellSession()
+        {
+            if (view != null)
+            {
+                view.AttachSellSession(null);
+            }
+
+            if (sellSession != null)
+            {
+                sellSession.Dispose();
+                sellSession = null;
+            }
         }
 
         private void WireViewEvents(bool add)
