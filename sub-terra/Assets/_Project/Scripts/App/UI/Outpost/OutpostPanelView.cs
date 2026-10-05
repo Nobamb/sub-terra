@@ -33,17 +33,22 @@ namespace SubTerra.App.UI.Outpost
         [SerializeField] private Button closeButton;
         [SerializeField] private Button[] operationButtons;
         [SerializeField] private FacilityServicePopupView servicePopup;
+        [SerializeField] private CoreCctvPopupView corePopup;
 
         public Button CloseButton => closeButton;
         public GameObject PanelRoot => panelRoot != null ? panelRoot : gameObject;
         public FacilityServicePopupView ServicePopup => servicePopup;
         public Button ServiceCloseButton => servicePopup != null ? servicePopup.CloseButton : null;
+        public CoreCctvPopupView CorePopup => corePopup;
+        public Button CoreCloseButton => corePopup != null ? corePopup.CloseButton : null;
 
-        /// <summary>지금 화면에 올라와 있는(또는 올라올) 창의 루트. 충전기·보건소는 서비스 팝업이다.</summary>
+        /// <summary>지금 화면에 올라와 있는(또는 올라올) 창의 루트. 충전기·보건소는 서비스 팝업, 코어는 CCTV 팝업이다.</summary>
         public GameObject ActiveWindowRoot =>
             servicePopup != null && FacilityServicePopupTimeline.IsServiceMode(currentMode)
                 ? servicePopup.gameObject
-                : PanelRoot;
+                : corePopup != null && currentMode == OutpostPanelMode.Core
+                    ? corePopup.gameObject
+                    : PanelRoot;
 
         private GameObject interactionMessageRoot;
         private TMP_Text interactionMessageText;
@@ -64,6 +69,23 @@ namespace SubTerra.App.UI.Outpost
             ApplyWindowVisibility();
         }
 
+        /// <summary>CCTV 관찰 위치 조회. 연결하지 않으면 영상은 켜지지만 카메라는 움직이지 않는다.</summary>
+        public void SetFacilityLocator(IFacilityWorldLocator locator)
+        {
+            if (corePopup != null)
+            {
+                corePopup.SetFacilityLocator(locator);
+            }
+        }
+
+        public void SetFacilityIconResolver(System.Func<string, Sprite> resolver)
+        {
+            if (corePopup != null)
+            {
+                corePopup.SetIconResolver(resolver);
+            }
+        }
+
         /// <summary>
         /// 충전기·보건소는 기존 큰 패널 대신 서비스 팝업을 쓴다.
         /// Presenter가 스냅샷마다 호출하므로 표시 전환이 있을 때만 연출을 시작·종료한다.
@@ -73,10 +95,25 @@ namespace SubTerra.App.UI.Outpost
             var useService = servicePopup != null
                 && currentVisible
                 && FacilityServicePopupTimeline.IsServiceMode(currentMode);
+            var useCore = corePopup != null
+                && currentVisible
+                && currentMode == OutpostPanelMode.Core;
             // 닫는 중 SetMode(None)이 먼저 불려도 예전 큰 패널이 잠깐 켜지지 않게 한다.
             if (!fromModeChange || currentMode != OutpostPanelMode.None)
             {
-                (panelRoot != null ? panelRoot : gameObject).SetActive(currentVisible && !useService);
+                (panelRoot != null ? panelRoot : gameObject).SetActive(currentVisible && !useService && !useCore);
+            }
+
+            if (corePopup != null)
+            {
+                if (useCore)
+                {
+                    corePopup.Show();
+                }
+                else
+                {
+                    corePopup.Hide();
+                }
             }
 
             if (servicePopup == null)
@@ -120,7 +157,8 @@ namespace SubTerra.App.UI.Outpost
         {
             currentMode = mode;
             ApplyWindowVisibility(true);
-            SetActive(coreRoot, mode == OutpostPanelMode.Core);
+            // 코어 정보는 CCTV 팝업이 맡는다. 팝업이 없는 구 프리팹만 예전 코어 레이어를 쓴다.
+            SetActive(coreRoot, corePopup == null && mode == OutpostPanelMode.Core);
             // 충전기·보건소 안내는 서비스 팝업이 맡는다. 팝업이 없는 구 프리팹만 예전 안내 레이어를 쓴다.
             SetActive(
                 chargerRoot,
@@ -182,6 +220,11 @@ namespace SubTerra.App.UI.Outpost
 
         public void SetFacilities(IReadOnlyList<OutpostFacilityReadModel> facilities)
         {
+            if (corePopup != null)
+            {
+                corePopup.SetFacilities(facilities);
+            }
+
             if (facilitiesText == null)
             {
                 return;

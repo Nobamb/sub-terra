@@ -354,16 +354,31 @@ namespace SubTerra.App.Tests.Outpost
         }
 
         [Test]
-        public void CoreMode_UsesLegacyPanel_AndPopupStaysHidden()
+        public void SettlementMode_UsesLegacyPanel_AndPopupsStayHidden()
+        {
+            var view = Spawn();
+
+            view.SetMode(OutpostPanelMode.Settlement);
+            view.SetVisible(true);
+
+            Assert.That(view.PanelRoot.activeSelf, Is.True);
+            Assert.That(view.ServicePopup.State, Is.EqualTo(FacilityServicePopupView.PlayState.Hidden));
+            Assert.That(view.CorePopup.State, Is.EqualTo(CoreCctvPopupView.PlayState.Hidden));
+            Assert.That(view.ActiveWindowRoot, Is.EqualTo(view.PanelRoot));
+        }
+
+        [Test]
+        public void CoreMode_UsesCoreCctvPopup_NotServicePopupOrLegacyPanel()
         {
             var view = Spawn();
 
             view.SetMode(OutpostPanelMode.Core);
             view.SetVisible(true);
 
-            Assert.That(view.PanelRoot.activeSelf, Is.True);
+            Assert.That(view.PanelRoot.activeSelf, Is.False);
             Assert.That(view.ServicePopup.State, Is.EqualTo(FacilityServicePopupView.PlayState.Hidden));
-            Assert.That(view.ActiveWindowRoot, Is.EqualTo(view.PanelRoot));
+            Assert.That(view.CorePopup.IsShown, Is.True);
+            Assert.That(view.ActiveWindowRoot, Is.EqualTo(view.CorePopup.gameObject));
         }
 
         [Test]

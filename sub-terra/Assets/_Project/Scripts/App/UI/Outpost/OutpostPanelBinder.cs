@@ -99,6 +99,18 @@ namespace SubTerra.App.UI.Outpost
             primaryInteractionClaim = claim;
         }
 
+        /// <summary>코어 CCTV가 시설 위치와 아이콘을 찾는 방법. 표시 전용이며 접근 판정과 무관하다.</summary>
+        public void SetFacilityPresentation(IFacilityWorldLocator locator, Func<string, Sprite> iconResolver)
+        {
+            if (view == null)
+            {
+                return;
+            }
+
+            view.SetFacilityLocator(locator);
+            view.SetFacilityIconResolver(iconResolver);
+        }
+
         public void SelectMineral(string mineralId)
         {
             selectedMineralId = mineralId ?? string.Empty;
@@ -197,6 +209,7 @@ namespace SubTerra.App.UI.Outpost
         {
             WireCloseButton(view != null ? view.CloseButton : null);
             WireCloseButton(view != null ? view.ServiceCloseButton : null);
+            WireCloseButton(view != null ? view.CoreCloseButton : null);
         }
 
         private void WireCloseButton(Button closeButton)
@@ -215,6 +228,7 @@ namespace SubTerra.App.UI.Outpost
         {
             UnwireCloseButton(view != null ? view.CloseButton : null);
             UnwireCloseButton(view != null ? view.ServiceCloseButton : null);
+            UnwireCloseButton(view != null ? view.CoreCloseButton : null);
         }
 
         private void UnwireCloseButton(Button closeButton)

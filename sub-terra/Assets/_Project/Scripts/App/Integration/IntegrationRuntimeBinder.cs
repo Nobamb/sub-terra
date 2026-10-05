@@ -713,6 +713,13 @@ namespace SubTerra.App.Integration
                 outpostPanelBinder.SetPrimaryInteractionClaim(
                     () => elevator != null && elevator.TryClaimInteractionPriority());
                 outpostPanelBinder.BindTo(outpostService);
+                var catalog = bootstrap != null ? bootstrap.AssignedCatalog as GameDataCatalog : null;
+                outpostPanelBinder.SetFacilityPresentation(
+                    new BuildingInstanceFacilityLocator(),
+                    buildingId => catalog != null
+                        && catalog.TryGetBuilding(buildingId, out var building)
+                        ? building.Icon
+                        : null);
             }
         }
 
