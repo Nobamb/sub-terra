@@ -21,9 +21,16 @@ namespace SubTerra.App.Tests.Run
             Assert.That(Find(cost, "mineral.iron").Charged, Is.EqualTo(12));
             Assert.That(Find(cost, "mineral.lithium").Charged, Is.EqualTo(6));
 
-            string display = EmergencyRescuePanelView.FormatCost(cost);
-            Assert.That(display, Does.Contain("골드 250G  (500→250)"));
-            Assert.That(display, Does.Contain("구리 8  (10→2)"));
+            // B-135: 비용 문장 대신 열이 나뉜 표 행으로 같은 계산 결과를 보여 준다.
+            var rows = EmergencyRescueCostRows.Build(cost);
+            Assert.That(rows.Count, Is.EqualTo(4));
+            Assert.That(rows[0].Deduct, Is.EqualTo("-250G"));
+            Assert.That(rows[0].Before, Is.EqualTo("500G"));
+            Assert.That(rows[0].After, Is.EqualTo("250G"));
+            Assert.That(rows[1].Name, Is.EqualTo("구리"));
+            Assert.That(rows[1].Deduct, Is.EqualTo("-8개"));
+            Assert.That(rows[1].Before, Is.EqualTo("10개"));
+            Assert.That(rows[1].After, Is.EqualTo("2개"));
         }
 
         [Test]

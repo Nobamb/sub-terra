@@ -1,3 +1,5 @@
+using SubTerra.App.Core;
+using SubTerra.App.Core.Data;
 using SubTerra.App.Drone.Dialogue;
 using SubTerra.App.Run;
 using SubTerra.App.Save;
@@ -31,9 +33,12 @@ namespace SubTerra.App.Integration
         private bool initialPopupShown;
         private bool rescueCompleted;
         private bool reminderShown;
+        // 닫는 연출 도중 재열기 입력이 들어오면 닫기가 끝난 직후 같은 팝업을 다시 연다.
+        private bool pendingReopen;
         private float closedAt = -1f;
 
-        public bool IsPanelOpen => view != null && view.IsOpen;
+        /// <summary>팝업이 화면에 있음(등장·열림·닫는 중). Esc 닫기 경로가 이 값을 본다.</summary>
+        public bool IsPanelOpen => view != null && view.IsPopupVisible;
         public bool IsChipVisible => view != null && view.IsChipVisible;
         public bool IsRescueAvailable => service != null && service.IsAvailable && !rescueCompleted;
 
@@ -47,10 +52,12 @@ namespace SubTerra.App.Integration
             Keyboard keyboard = Keyboard.current;
             if (keyboard != null && keyboard.rKey.wasPressedThisFrame)
             {
+                // R은 팝업을 다시 여는 입력일 뿐이다. 구출 확정은 팝업의 버튼만 한다.
                 OpenPanel();
             }
 
             if (!IsPanelOpen
+                && !pendingReopen
                 && !reminderShown
                 && closedAt >= 0f
                 && Time.unscaledTime - closedAt >= DroneReminderDelaySeconds)
@@ -79,6 +86,7 @@ namespace SubTerra.App.Integration
             {
                 view.Bind(TryRescue, ClosePanel, OpenPanel);
                 view.SetFollowTarget(player);
+                view.SetIconResolver(ResolveIcon);
             }
 
             if (gameState != null)
@@ -106,6 +114,8 @@ namespace SubTerra.App.Integration
             if (view != null)
             {
                 view.SetFollowTarget(null);
+                // 씬 전환·재바인딩 때 이전 서비스를 가리키는 버튼 이벤트를 남기지 않는다.
+                view.Bind(null, null, null);
             }
 
             runtime = null;
@@ -128,27 +138,64 @@ namespace SubTerra.App.Integration
                 return;
             }
 
+            if (view.IsClosing)
+            {
+                // 닫는 도중 재열기 입력: 전환을 끊지 않고 닫기가 끝난 직후 한 번만 다시 연다.
+                pendingReopen = true;
+                return;
+            }
+
+            if (view.IsOpen)
+            {
+                // 등장 중이거나 이미 열림: 중복 생성·재생 없이 무시한다.
+                return;
+            }
+
             initialPopupShown = true;
             closedAt = -1f;
-            view.SetChipVisible(false);
+            pendingReopen = false;
+            // 안내 버튼은 키캡 눌림 피드백과 함께 짧게 사라지지만, 팝업 열기는 그것을 기다리지 않는다.
+            view.DismissChip(true);
             view.SetInteractable(true);
+            // 다시 열 때마다 현재 비용을 새로 읽어 표시한다.
             view.Show(service.GetCurrentCost());
         }
 
         public void ClosePanel()
+        {
+            if (view == null || !view.IsOpen)
+            {
+                return;
+            }
+
+            pendingReopen = false;
+            view.BeginClose(OnPopupClosed);
+        }
+
+        // 강한 글리치 종료 연출이 끝난 뒤에만 플레이어 위 안내를 보여 준다.
+        private void OnPopupClosed()
         {
             if (view == null)
             {
                 return;
             }
 
-            view.Close();
-            bool showChip = IsRescueAvailable;
-            view.SetChipVisible(showChip);
-            if (showChip)
+            if (!IsRescueAvailable)
             {
-                closedAt = Time.unscaledTime;
+                pendingReopen = false;
+                HideAll();
+                return;
             }
+
+            if (pendingReopen)
+            {
+                pendingReopen = false;
+                OpenPanel();
+                return;
+            }
+
+            view.SetChipVisible(true);
+            closedAt = Time.unscaledTime;
         }
 
         private void OnEnergyChanged(EnergyReadModel energy)
@@ -173,7 +220,8 @@ namespace SubTerra.App.Integration
                 return;
             }
 
-            if (view != null && !view.IsOpen)
+            // 이미 한 번 보여 준 고갈 상황: 팝업을 자동으로 다시 열지 않고, 팝업이 없을 때만 안내 버튼을 둔다.
+            if (view != null && !view.IsPopupVisible)
             {
                 view.SetChipVisible(true);
             }
@@ -181,7 +229,8 @@ namespace SubTerra.App.Integration
 
         private void TryRescue()
         {
-            if (!IsRescueAvailable || view == null)
+            // 등장·종료 도중이나 같은 입력으로 막 열린 팝업에서는 확정하지 않는다. 확정은 안정된 팝업의 버튼뿐이다.
+            if (!IsRescueAvailable || view == null || !view.IsStable)
             {
                 return;
             }
@@ -189,6 +238,14 @@ namespace SubTerra.App.Integration
             if (!HasElevatorDestination())
             {
                 view.SetMessage("엘리베이터 위치를 찾지 못했습니다. 잠시 후 다시 시도해 주세요.");
+                return;
+            }
+
+            // 표시한 비용과 지금 적용될 비용이 다르면 결제하지 않고 최신 값을 먼저 보여 준다.
+            EmergencyRescueCost current = service.GetCurrentCost();
+            if (!EmergencyRescueCostRows.AreSame(view.DisplayedCost, current))
+            {
+                view.Show(current, "화물 상태가 변경되었습니다. 최신 비용을 다시 확인해 주세요.");
                 return;
             }
 
@@ -206,8 +263,8 @@ namespace SubTerra.App.Integration
 
             MoveToResolvedElevator();
             rescueCompleted = true;
-            view.Close();
-            view.SetChipVisible(false);
+            pendingReopen = false;
+            HideAll();
             runtime?.SaveCurrent(AutoSaveReason.Manual);
         }
 
@@ -293,17 +350,33 @@ namespace SubTerra.App.Integration
             initialPopupShown = false;
             rescueCompleted = false;
             reminderShown = false;
+            pendingReopen = false;
             closedAt = -1f;
             HideAll();
         }
 
+        // 더 이상 필요 없는 안내를 연출 없이 즉시 치운다(대기 중인 닫기 콜백도 버려진다).
         private void HideAll()
         {
             if (view != null)
             {
-                view.Close();
+                view.HideImmediate();
                 view.SetChipVisible(false);
             }
+        }
+
+        private static Sprite ResolveIcon(string resourceId)
+        {
+            GameBootstrapper bootstrap = GameBootstrapper.Instance;
+            var catalog = bootstrap != null ? bootstrap.AssignedCatalog as GameDataCatalog : null;
+            if (catalog == null || string.IsNullOrEmpty(resourceId))
+            {
+                return null;
+            }
+
+            return catalog.TryGetInventoryItem(resourceId, out MineralData data) && data != null
+                ? data.Icon
+                : null;
         }
 
         private static Transform FindElevatorCenter()

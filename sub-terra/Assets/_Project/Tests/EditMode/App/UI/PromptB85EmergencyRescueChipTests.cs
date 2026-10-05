@@ -43,7 +43,8 @@ namespace SubTerra.App.Tests.UI
         [Test]
         public void PromptB85_ChipFollowsPlayerHeadOnOverlayCanvas()
         {
-            string view = Read("Scripts", "App", "UI", "EmergencyRescue", "EmergencyRescuePanelView.cs");
+            // B-135에서 머리 위 안내 생성 코드가 EmergencyRescueChipView로 옮겨졌다.
+            string view = Read("Scripts", "App", "UI", "EmergencyRescue", "EmergencyRescueChipView.cs");
             string follow = Read("Scripts", "App", "UI", "EmergencyRescue", "EmergencyRescueChipFollow.cs");
             string controller = Read("Scripts", "App", "Integration", "EmergencyRescueRuntimeController.cs");
 

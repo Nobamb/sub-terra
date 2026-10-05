@@ -1,5 +1,4 @@
 using System;
-using System.Text;
 using SubTerra.App.Run;
 using SubTerra.App.Tutorial;
 using TMPro;
@@ -8,24 +7,26 @@ using UnityEngine.UI;
 
 namespace SubTerra.App.UI.EmergencyRescue
 {
-    /// <summary>전력 고갈 구출 팝업과 캐릭터 머리 위 재호출 칩을 소유하는 런타임 View.</summary>
+    /// <summary>
+    /// 전력 고갈 구출 UI의 진입점. 팝업(EmergencyRescuePopupView)과 머리 위 홀로그램 안내(EmergencyRescueChipView)를
+    /// 묶어 컨트롤러에 표시·닫기·재열기 API만 보여 준다. 구출 규칙·비용 계산·입력 처리는 여기에 없다.
+    /// </summary>
     public sealed class EmergencyRescuePanelView : MonoBehaviour
     {
-        private static readonly Color OverlayColor = new(0.01f, 0.02f, 0.035f, 0.78f);
-        private static readonly Color CardColor = new(0.055f, 0.075f, 0.105f, 0.98f);
-        private static readonly Color RescueColor = new(0.72f, 0.12f, 0.12f, 1f);
-        private static readonly Color CloseColor = new(0.18f, 0.22f, 0.28f, 1f);
+        private EmergencyRescuePopupView popup;
+        private EmergencyRescueChipView chip;
 
-        private GameObject popupRoot;
-        private GameObject rescueChip;
-        private TMP_Text costText;
-        private TMP_Text messageText;
-        private Button rescueButton;
-        private Button closeButton;
-        private Button chipButton;
-
-        public bool IsOpen => popupRoot != null && popupRoot.activeSelf;
-        public bool IsChipVisible => rescueChip != null && rescueChip.activeSelf;
+        /// <summary>등장 중이거나 열려 있음. 닫는 중은 포함하지 않는다.</summary>
+        public bool IsOpen => popup != null && popup.IsOpen;
+        public bool IsClosing => popup != null && popup.IsClosing;
+        /// <summary>팝업이 화면에 있음(등장·열림·닫는 중).</summary>
+        public bool IsPopupVisible => popup != null && popup.IsVisible;
+        /// <summary>등장이 끝나 입력을 받을 수 있음.</summary>
+        public bool IsStable => popup != null && popup.IsStable;
+        public bool IsChipVisible => chip != null && chip.IsShown;
+        public EmergencyRescuePopupView Popup => popup;
+        public EmergencyRescueChipView Chip => chip;
+        public EmergencyRescueCost DisplayedCost => popup != null ? popup.DisplayedCost : null;
 
         public static EmergencyRescuePanelView Create(
             Transform canvasRoot,
@@ -44,280 +45,136 @@ namespace SubTerra.App.UI.EmergencyRescue
                 typeof(Canvas),
                 typeof(GraphicRaycaster));
             root.transform.SetParent(canvasRoot, false);
-            var rootRect = root.GetComponent<RectTransform>();
-            Stretch(rootRect);
+            EmergencyRescueUi.Stretch(root.GetComponent<RectTransform>());
             var popupCanvas = root.GetComponent<Canvas>();
             popupCanvas.overrideSorting = true;
             popupCanvas.sortingOrder = UiLayerPriority.EmergencyRescueModal;
+            // 딤 면은 뒤쪽 클릭만 막고, 알파는 팝업 연출이 정한다.
             var blocker = root.GetComponent<Image>();
-            blocker.color = OverlayColor;
             blocker.raycastTarget = true;
 
             var view = root.AddComponent<EmergencyRescuePanelView>();
-            view.popupRoot = root;
-            view.BuildPopup(font);
-            view.BuildChip(canvasRoot, font);
-            root.SetActive(false);
+            view.popup = root.AddComponent<EmergencyRescuePopupView>();
+            view.popup.Build(font);
+            view.chip = EmergencyRescueChipView.Create(canvasRoot, font);
             return view;
         }
 
         public void SetFollowTarget(Transform player)
         {
-            if (rescueChip == null)
+            if (chip == null)
             {
                 return;
             }
 
-            var follow = rescueChip.GetComponent<EmergencyRescueChipFollow>();
+            var follow = chip.GetComponent<EmergencyRescueChipFollow>();
             if (follow != null)
             {
                 follow.SetTarget(player);
             }
         }
 
-        public void Bind(Action rescue, Action close, Action reopen)
+        public void SetIconResolver(Func<string, Sprite> resolver)
         {
-            ReplaceListener(rescueButton, rescue);
-            ReplaceListener(closeButton, close);
-            ReplaceListener(chipButton, reopen);
+            if (popup != null)
+            {
+                popup.SetIconResolver(resolver);
+            }
         }
 
-        public void Show(EmergencyRescueCost cost, string message = null)
+        public void Bind(Action rescue, Action close, Action reopen)
         {
-            if (costText != null)
+            if (popup != null)
             {
-                costText.text = FormatCost(cost);
+                ReplaceListener(popup.RescueButton, rescue);
+                ReplaceListener(popup.CloseButton, close);
             }
 
-            SetMessage(string.IsNullOrWhiteSpace(message)
-                ? "현재 위치에서 엘리베이터로 즉시 구출됩니다."
-                : message);
-            if (popupRoot != null)
+            if (chip != null)
             {
-                popupRoot.SetActive(true);
-                popupRoot.transform.SetAsLastSibling();
-                PopupWindowSorting.BringToFront(popupRoot.GetComponent<Canvas>());
+                ReplaceListener(chip.Button, reopen);
             }
+        }
+
+        /// <summary>팝업을 연다(이미 열려 있으면 내용만 갱신). 닫는 중이면 false.</summary>
+        public bool Show(EmergencyRescueCost cost, string message = null)
+        {
+            return popup != null && popup.Show(cost, message);
         }
 
         public void SetMessage(string message)
         {
-            if (messageText != null)
+            if (popup != null)
             {
-                messageText.text = message ?? string.Empty;
+                popup.SetMessage(message);
             }
         }
 
-        public void Close()
+        /// <summary>강한 글리치 종료 연출 뒤 숨기고 onClosed를 부른다.</summary>
+        public bool BeginClose(Action onClosed)
         {
-            if (popupRoot != null)
+            return popup != null && popup.BeginClose(onClosed);
+        }
+
+        /// <summary>연출 없이 팝업을 즉시 숨긴다. 대기 중인 닫기 콜백은 버려진다.</summary>
+        public void HideImmediate()
+        {
+            if (popup != null)
             {
-                PopupWindowSorting.Remove(popupRoot.GetComponent<Canvas>());
-                popupRoot.SetActive(false);
+                popup.HideImmediate();
             }
         }
 
         public void SetChipVisible(bool visible)
         {
-            if (rescueChip != null)
+            if (chip == null)
             {
-                rescueChip.SetActive(visible);
-                if (visible)
-                {
-                    rescueChip.transform.SetAsLastSibling();
-                }
+                return;
+            }
+
+            if (visible)
+            {
+                chip.Show();
+            }
+            else
+            {
+                chip.HideImmediate();
+            }
+        }
+
+        /// <summary>입력으로 팝업이 열릴 때 안내를 정리한다. 키캡이 눌렸다가 짧게 사라진다.</summary>
+        public void DismissChip(bool withPress)
+        {
+            if (chip != null)
+            {
+                chip.Dismiss(withPress);
             }
         }
 
         public void SetInteractable(bool interactable)
         {
-            if (rescueButton != null)
+            if (popup != null)
             {
-                rescueButton.interactable = interactable;
+                popup.SetInteractable(interactable);
             }
         }
 
         private void OnDestroy()
         {
-            if (rescueChip != null)
+            if (chip == null)
             {
-                Destroy(rescueChip);
-            }
-        }
-
-        public static string FormatCost(EmergencyRescueCost cost)
-        {
-            if (cost == null)
-            {
-                return "비용 정보를 불러올 수 없습니다.";
+                return;
             }
 
-            var builder = new StringBuilder();
-            builder.Append("골드 ")
-                .Append(cost.GoldCharged)
-                .Append("G  (")
-                .Append(cost.GoldBefore)
-                .Append('→')
-                .Append(cost.GoldAfter)
-                .Append(')');
-
-            for (var i = 0; i < cost.Minerals.Count; i++)
+            // 칩은 팝업과 다른 부모 아래에 있어 따로 정리한다. 에디트 모드 테스트에서는 즉시 파괴한다.
+            if (Application.isPlaying)
             {
-                EmergencyRescueMineralCost mineral = cost.Minerals[i];
-                builder.AppendLine()
-                    .Append(string.IsNullOrWhiteSpace(mineral.DisplayName)
-                        ? mineral.MineralId
-                        : mineral.DisplayName)
-                    .Append(' ')
-                    .Append(mineral.Charged)
-                    .Append("  (")
-                    .Append(mineral.Before)
-                    .Append('→')
-                    .Append(mineral.After)
-                    .Append(')');
-            }
-
-            if (cost.IsFree)
-            {
-                builder.AppendLine().Append("보유 골드와 미정산 화물이 없어 무료로 구출됩니다.");
+                Destroy(chip.gameObject);
             }
             else
             {
-                builder.AppendLine().Append("※ 미정산 광물은 종류별 80%가 차감됩니다.");
+                DestroyImmediate(chip.gameObject);
             }
-
-            return builder.ToString();
-        }
-
-        private void BuildPopup(TMP_FontAsset font)
-        {
-            var card = CreateImage("Card", transform, CardColor);
-            RectTransform cardRect = card.rectTransform;
-            cardRect.anchorMin = new Vector2(0.5f, 0.5f);
-            cardRect.anchorMax = new Vector2(0.5f, 0.5f);
-            cardRect.pivot = new Vector2(0.5f, 0.5f);
-            cardRect.sizeDelta = new Vector2(680f, 440f);
-            cardRect.anchoredPosition = Vector2.zero;
-
-            TMP_Text title = CreateText("Title", card.transform, font, 32f, FontStyles.Bold);
-            SetRect(title.rectTransform, new Vector2(28f, -28f), new Vector2(-28f, -82f));
-            title.alignment = TextAlignmentOptions.Center;
-            title.text = "전력이 바닥났습니다";
-            title.color = new Color(1f, 0.48f, 0.43f, 1f);
-
-            messageText = CreateText("Message", card.transform, font, 20f, FontStyles.Normal);
-            SetRect(messageText.rectTransform, new Vector2(34f, -92f), new Vector2(-34f, -142f));
-            messageText.alignment = TextAlignmentOptions.Center;
-
-            costText = CreateText("Cost", card.transform, font, 21f, FontStyles.Normal);
-            SetRect(costText.rectTransform, new Vector2(56f, -154f), new Vector2(-56f, -330f));
-            costText.alignment = TextAlignmentOptions.TopLeft;
-            costText.color = new Color(0.93f, 0.96f, 1f, 1f);
-            costText.textWrappingMode = TextWrappingModes.Normal;
-
-            rescueButton = CreateButton(
-                "RescueButton",
-                card.transform,
-                font,
-                "구출 요청",
-                RescueColor,
-                new Vector2(-150f, 34f));
-            closeButton = CreateButton(
-                "CloseButton",
-                card.transform,
-                font,
-                "닫기",
-                CloseColor,
-                new Vector2(150f, 34f));
-        }
-
-        private void BuildChip(Transform canvasRoot, TMP_FontAsset font)
-        {
-            Transform parent = canvasRoot != null ? canvasRoot : transform;
-            var chipImage = CreateImage("EmergencyRescueChip", parent, RescueColor);
-            rescueChip = chipImage.gameObject;
-            RectTransform rect = chipImage.rectTransform;
-            rect.anchorMin = new Vector2(0.5f, 0.5f);
-            rect.anchorMax = new Vector2(0.5f, 0.5f);
-            rect.pivot = new Vector2(0.5f, 0f);
-            rect.sizeDelta = new Vector2(120f, 42f);
-            rect.anchoredPosition = Vector2.zero;
-            chipImage.raycastTarget = true;
-
-            var canvas = rescueChip.AddComponent<Canvas>();
-            canvas.overrideSorting = true;
-            canvas.sortingOrder = UiLayerPriority.CriticalHazard;
-            rescueChip.AddComponent<GraphicRaycaster>();
-            rescueChip.AddComponent<EmergencyRescueChipFollow>();
-
-            chipButton = rescueChip.AddComponent<Button>();
-            chipButton.targetGraphic = chipImage;
-            TMP_Text label = CreateText("Label", rescueChip.transform, font, 20f, FontStyles.Bold);
-            Stretch(label.rectTransform);
-            label.alignment = TextAlignmentOptions.Center;
-            label.text = "구출  R";
-            label.raycastTarget = false;
-            rescueChip.SetActive(false);
-        }
-
-        private static Image CreateImage(string name, Transform parent, Color color)
-        {
-            var gameObject = new GameObject(
-                name,
-                typeof(RectTransform),
-                typeof(CanvasRenderer),
-                typeof(Image));
-            gameObject.transform.SetParent(parent, false);
-            var image = gameObject.GetComponent<Image>();
-            image.color = color;
-            return image;
-        }
-
-        private static TMP_Text CreateText(
-            string name,
-            Transform parent,
-            TMP_FontAsset font,
-            float size,
-            FontStyles style)
-        {
-            var gameObject = new GameObject(name, typeof(RectTransform));
-            gameObject.transform.SetParent(parent, false);
-            var text = gameObject.AddComponent<TextMeshProUGUI>();
-            if (font != null)
-            {
-                text.font = font;
-            }
-
-            text.fontSize = size;
-            text.fontStyle = style;
-            text.color = Color.white;
-            text.raycastTarget = false;
-            text.overflowMode = TextOverflowModes.Ellipsis;
-            return text;
-        }
-
-        private static Button CreateButton(
-            string name,
-            Transform parent,
-            TMP_FontAsset font,
-            string label,
-            Color color,
-            Vector2 position)
-        {
-            Image image = CreateImage(name, parent, color);
-            RectTransform rect = image.rectTransform;
-            rect.anchorMin = new Vector2(0.5f, 0f);
-            rect.anchorMax = new Vector2(0.5f, 0f);
-            rect.pivot = new Vector2(0.5f, 0f);
-            rect.sizeDelta = new Vector2(220f, 58f);
-            rect.anchoredPosition = position;
-            var button = image.gameObject.AddComponent<Button>();
-            button.targetGraphic = image;
-            TMP_Text text = CreateText("Label", image.transform, font, 21f, FontStyles.Bold);
-            Stretch(text.rectTransform);
-            text.alignment = TextAlignmentOptions.Center;
-            text.text = label;
-            return button;
         }
 
         private static void ReplaceListener(Button button, Action action)
@@ -332,23 +189,6 @@ namespace SubTerra.App.UI.EmergencyRescue
             {
                 button.onClick.AddListener(() => action());
             }
-        }
-
-        private static void Stretch(RectTransform rect)
-        {
-            rect.anchorMin = Vector2.zero;
-            rect.anchorMax = Vector2.one;
-            rect.offsetMin = Vector2.zero;
-            rect.offsetMax = Vector2.zero;
-        }
-
-        private static void SetRect(RectTransform rect, Vector2 topLeft, Vector2 bottomRight)
-        {
-            rect.anchorMin = new Vector2(0f, 1f);
-            rect.anchorMax = new Vector2(1f, 1f);
-            rect.pivot = new Vector2(0.5f, 1f);
-            rect.offsetMin = new Vector2(topLeft.x, bottomRight.y);
-            rect.offsetMax = new Vector2(bottomRight.x, topLeft.y);
         }
     }
 }
