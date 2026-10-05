@@ -674,6 +674,556 @@ namespace SubTerra.App.Tests.PlayMode
             }
         }
 
+        // ---- 시설 이름표 (홀로그램) ----
+
+        [UnityTest]
+        public IEnumerator NameTag_FirstSelection_OpensAboveFacilityWhenVideoTurnsOn()
+        {
+            yield return Load();
+            scene.SpawnCore();
+            var charger = scene.SpawnFacility(DataIds.Buildings.ChargerBasic, new Vector3(5f, 0f, 0f));
+            scene.SpawnFacility(DataIds.Buildings.ClinicBasic, new Vector3(-6f, 0f, 0f));
+            yield return scene.WaitForStatus();
+
+            scene.Open();
+            var popup = scene.Popup;
+            popup.ManualTick = true;
+            Assert.That(popup.NameTagVisible, Is.False, "검은 CCTV가 먼저 나타난다.");
+
+            var sawBeforeVideo = false;
+            var wantedAtVideo = VideoSnapshot.None;
+            for (var i = 0; i < 240 && !popup.NameTagWanted; i++)
+            {
+                popup.Tick(Frame);
+                sawBeforeVideo |= popup.NameTagVisible && popup.Video == CoreCctvPopupView.VideoState.Off;
+                yield return null;
+            }
+
+            wantedAtVideo = new VideoSnapshot(popup.Video, popup.VideoLevel, popup.Rig != null && popup.Rig.IsRendering);
+            Assert.That(sawBeforeVideo, Is.False, "영상이 켜지기 전에는 이름표가 없다.");
+            Assert.That(popup.NameTagWanted, Is.True, "영상이 켜지면 이름표가 열린다.");
+            Assert.That(wantedAtVideo.Video, Is.Not.EqualTo(CoreCctvPopupView.VideoState.Off));
+            Assert.That(wantedAtVideo.Level, Is.GreaterThan(0f));
+            Assert.That(wantedAtVideo.Rendering, Is.True);
+            Assert.That(popup.NameTagFacilityId, Is.EqualTo(popup.List.Items[0].InstanceId), "첫 시설이 자동 선택돼 있다.");
+
+            yield return Advance(popup, 1.5f);
+            Assert.That(popup.NameTagLevel, Is.EqualTo(1f));
+            Assert.That(popup.NameTagText, Is.EqualTo(ItemDisplayNames.Building(DataIds.Buildings.ChargerBasic)));
+            Assert.That(popup.GhostsVisible, Is.False);
+            AssertTagAboveFacility(popup, charger);
+            AssertTagInsideCctvScreen(popup);
+            AssertMainTagsHiddenFromCctv(popup);
+            AssertOnlyOneTagObject(popup);
+            yield return Capture("nametag-first-selection-1920x1080");
+        }
+
+        [UnityTest]
+        public IEnumerator NameTag_Switch_FoldsOldHidesWhileMovingAndOpensOnArrival()
+        {
+            yield return Load();
+            scene.SpawnCore();
+            var a = scene.SpawnFacility(DataIds.Buildings.ChargerBasic, new Vector3(-8f, 0f, 0f));
+            var b = scene.SpawnFacility(DataIds.Buildings.ClinicBasic, new Vector3(8f, 0f, 0f));
+            yield return scene.WaitForStatus();
+
+            scene.Open();
+            var popup = scene.Popup;
+            popup.ManualTick = true;
+            yield return Advance(popup, 2f);
+            var idA = a.GetComponent<BuildingInstance>().InstanceId;
+            var idB = b.GetComponent<BuildingInstance>().InstanceId;
+            Assert.That(popup.NameTagFacilityId, Is.EqualTo(idA));
+            Assert.That(popup.NameTagLevel, Is.EqualTo(1f));
+
+            popup.SelectFacility(idB);
+            Assert.That(popup.Rig.IsMoving, Is.True);
+            var foldPosition = popup.NameTag.Rect.anchoredPosition;
+            var movingTicks = 0;
+            var oldFoldedWhileMoving = false;
+            var shownWhileMoving = false;
+            var oldWanted = false;
+            while (popup.Rig.IsMoving && movingTicks < 60)
+            {
+                yield return Capture("nametag-switch-" + movingTicks.ToString("D3"));
+                popup.Tick(Frame);
+                if (popup.NameTagVisible && popup.NameTagFacilityId == idA)
+                {
+                    Assert.That(popup.NameTag.Rect.anchoredPosition, Is.EqualTo(foldPosition), "접히는 이름표는 제자리에서 접힌다.");
+                }
+
+                if (popup.Rig.IsMoving)
+                {
+                    shownWhileMoving |= popup.NameTagWanted;
+                    oldWanted |= popup.NameTagWanted && popup.NameTagFacilityId == idA;
+                    oldFoldedWhileMoving |= !popup.NameTagVisible;
+                }
+
+                movingTicks++;
+            }
+
+            Assert.That(shownWhileMoving, Is.False, "카메라가 이동하는 동안에는 이름표를 열지 않는다.");
+            Assert.That(oldWanted, Is.False, "기존 이름표는 선택이 바뀌는 즉시 접힌다.");
+            Assert.That(oldFoldedWhileMoving, Is.True, "도착 전에 기존 이름표가 완전히 사라진다.");
+            Assert.That(popup.GhostsVisible, Is.False, "도착하면 모션블러가 풀린다.");
+
+            // 도착 후 새 시설 위에 펼쳐진다. 그때 CCTV는 선명하다.
+            var arrivedTicks = 0;
+            while (!popup.NameTagWanted && arrivedTicks < 30)
+            {
+                popup.Tick(Frame);
+                yield return null;
+                arrivedTicks++;
+            }
+
+            Assert.That(popup.NameTagWanted, Is.True);
+            Assert.That(popup.NameTagFacilityId, Is.EqualTo(idB));
+            Assert.That(popup.GhostsVisible, Is.False);
+            Assert.That(popup.Rig.IsMoving, Is.False);
+            var steps = 0;
+            while (popup.NameTagLevel < 1f && steps < 30)
+            {
+                yield return Capture("nametag-switch-open-" + steps.ToString("D3"));
+                popup.Tick(Frame);
+                steps++;
+            }
+
+            Assert.That(popup.NameTagLevel, Is.EqualTo(1f));
+            Assert.That(popup.NameTagText, Is.EqualTo(ItemDisplayNames.Building(DataIds.Buildings.ClinicBasic)));
+            Assert.That(steps * Frame, Is.InRange(0.15f, 0.34f), "펼침은 약 0.2~0.3초.");
+            AssertTagAboveFacility(popup, b);
+            AssertOnlyOneTagObject(popup);
+        }
+
+        [UnityTest]
+        public IEnumerator NameTag_ReselectingSameFacility_DoesNotReplayTheAnimation()
+        {
+            yield return Load();
+            scene.SpawnCore();
+            scene.SpawnFacility(DataIds.Buildings.ChargerBasic, new Vector3(-8f, 0f, 0f));
+            scene.SpawnFacility(DataIds.Buildings.ClinicBasic, new Vector3(8f, 0f, 0f));
+            yield return scene.WaitForStatus();
+
+            scene.Open();
+            var popup = scene.Popup;
+            popup.ManualTick = true;
+            yield return Advance(popup, 2f);
+            var id = popup.SelectedInstanceId;
+            var minLevel = 1f;
+            for (var i = 0; i < 40; i++)
+            {
+                popup.SelectFacility(id);
+                popup.Tick(Frame);
+                minLevel = Mathf.Min(minLevel, popup.NameTagLevel);
+                yield return null;
+            }
+
+            Assert.That(minLevel, Is.EqualTo(1f), "이미 선택한 항목을 다시 눌러도 이름표가 다시 펼쳐지지 않는다.");
+            Assert.That(popup.Rig.IsMoving, Is.False);
+            Assert.That(popup.NameTagFacilityId, Is.EqualTo(id));
+        }
+
+        [UnityTest]
+        public IEnumerator NameTag_RapidSelection_ShowsOnlyTheFinalFacility_AndCloseDuringMoveLeavesNothing()
+        {
+            yield return Load();
+            scene.SpawnCore();
+            var first = scene.SpawnFacility(DataIds.Buildings.ChargerBasic, new Vector3(-8f, 0f, 0f));
+            scene.SpawnFacility(DataIds.Buildings.ClinicBasic, new Vector3(-2f, 0f, 0f));
+            scene.SpawnFacility(DataIds.Buildings.ChargerBasic, new Vector3(4f, 0f, 0f));
+            var last = scene.SpawnFacility(DataIds.Buildings.ClinicBasic, new Vector3(9f, 0f, 0f));
+            yield return scene.WaitForStatus();
+
+            scene.Open();
+            var popup = scene.Popup;
+            popup.ManualTick = true;
+            yield return Advance(popup, 2f);
+            Assert.That(popup.NameTagFacilityId, Is.EqualTo(first.GetComponent<BuildingInstance>().InstanceId));
+
+            var seenIds = new HashSet<string>();
+            for (var i = 1; i < popup.ItemCount; i++)
+            {
+                popup.SelectFacility(popup.List.Items[i].InstanceId);
+                popup.Tick(Frame * 2f);
+                if (popup.NameTagWanted)
+                {
+                    seenIds.Add(popup.NameTagFacilityId);
+                }
+
+                yield return null;
+            }
+
+            var lastId = last.GetComponent<BuildingInstance>().InstanceId;
+            Assert.That(popup.SelectedInstanceId, Is.EqualTo(lastId));
+            yield return Advance(popup, 1f);
+            Assert.That(seenIds, Is.Empty, "연속 선택 중에는 중간 시설의 이름표가 열리지 않는다.");
+            Assert.That(popup.NameTagFacilityId, Is.EqualTo(lastId));
+            Assert.That(popup.NameTagLevel, Is.EqualTo(1f));
+            AssertTagAboveFacility(popup, last);
+            AssertOnlyOneTagObject(popup);
+
+            // 카메라 이동 도중 닫으면 이름표도 함께 정리된다.
+            popup.SelectFacility(popup.List.Items[0].InstanceId);
+            popup.Tick(Frame * 3f);
+            Assert.That(popup.Rig.IsMoving, Is.True);
+            popup.CloseButton.onClick.Invoke();
+            var ticks = 0;
+            while (popup.State == CoreCctvPopupView.PlayState.Exiting && ticks < 60)
+            {
+                popup.Tick(Frame);
+                Assert.That(popup.NameTagWanted, Is.False, "닫는 중에는 새 이름표를 열지 않는다.");
+                yield return null;
+                ticks++;
+            }
+
+            AssertFullyClosed(popup);
+            Assert.That(popup.NameTagVisible, Is.False);
+            Assert.That(popup.NameTagFacilityId, Is.Empty);
+            AssertNoTagObjectActive(popup);
+        }
+
+        [UnityTest]
+        public IEnumerator NameTag_SameKindFacilities_FollowTheSelectedInstance()
+        {
+            yield return Load();
+            scene.SpawnCore();
+            var a = scene.SpawnFacility(DataIds.Buildings.ChargerBasic, new Vector3(-8f, 0f, 0f));
+            var b = scene.SpawnFacility(DataIds.Buildings.ChargerBasic, new Vector3(3f, 0f, 0f));
+            var c = scene.SpawnFacility(DataIds.Buildings.ChargerBasic, new Vector3(8f, 0f, 0f));
+            yield return scene.WaitForStatus();
+
+            scene.Open();
+            var popup = scene.Popup;
+            popup.ManualTick = true;
+            yield return Advance(popup, 2f);
+            AssertTagAboveFacility(popup, a);
+
+            foreach (var target in new[] { c, b, a })
+            {
+                popup.SelectFacility(target.GetComponent<BuildingInstance>().InstanceId);
+                yield return Advance(popup, 1f);
+                Assert.That(popup.NameTagFacilityId, Is.EqualTo(target.GetComponent<BuildingInstance>().InstanceId));
+                Assert.That(popup.NameTagText, Is.EqualTo(ItemDisplayNames.Building(DataIds.Buildings.ChargerBasic)));
+                AssertTagAboveFacility(popup, target);
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator NameTag_RemovedOrDisconnectedSelection_FollowsPopupSelection_AndEmptyListShowsNone()
+        {
+            yield return Load();
+            scene.SpawnCore();
+            var first = scene.SpawnFacility(DataIds.Buildings.ChargerBasic, new Vector3(-6f, 0f, 0f));
+            var second = scene.SpawnFacility(DataIds.Buildings.ClinicBasic, new Vector3(6f, 0f, 0f));
+            yield return scene.WaitForStatus();
+
+            scene.Open();
+            var popup = scene.Popup;
+            popup.ManualTick = true;
+            yield return Advance(popup, 2f);
+            Assert.That(popup.NameTagVisible, Is.True);
+
+            // 선택한 시설이 제거되면 기존 이름표는 정리되고 새 선택을 따라간다.
+            Object.Destroy(first);
+            yield return scene.WaitForStatus();
+            yield return Advance(popup, 1.2f);
+            Assert.That(popup.NameTagFacilityId, Is.EqualTo(second.GetComponent<BuildingInstance>().InstanceId));
+            Assert.That(popup.NameTagText, Is.EqualTo(ItemDisplayNames.Building(DataIds.Buildings.ClinicBasic)));
+            AssertTagAboveFacility(popup, second);
+            AssertOnlyOneTagObject(popup);
+
+            // 연결이 끊겨 목록이 비면 검은 화면을 유지하고 이름표는 없다.
+            scene.Disconnect(second);
+            yield return scene.WaitForStatus();
+            yield return Advance(popup, 0.8f);
+            Assert.That(popup.ItemCount, Is.Zero);
+            Assert.That(popup.NameTagVisible, Is.False);
+            Assert.That(popup.NameTagFacilityId, Is.Empty);
+            AssertNoTagObjectActive(popup);
+            yield return Capture("nametag-empty-list-1920x1080");
+
+            // 다시 연결되면 그 시설에 이름표가 열린다.
+            scene.Reconnect(second);
+            yield return scene.WaitForStatus();
+            yield return Advance(popup, 1.5f);
+            Assert.That(popup.NameTagFacilityId, Is.EqualTo(second.GetComponent<BuildingInstance>().InstanceId));
+            Assert.That(popup.NameTagLevel, Is.EqualTo(1f));
+        }
+
+        [UnityTest]
+        public IEnumerator NameTag_ClosingAndReopeningPopup_LeavesNoTagOrAnimationBehind()
+        {
+            yield return Load();
+            scene.SpawnCore();
+            scene.SpawnFacility(DataIds.Buildings.ChargerBasic, new Vector3(5f, 0f, 0f));
+            yield return scene.WaitForStatus();
+
+            scene.Open();
+            var popup = scene.Popup;
+            popup.ManualTick = true;
+            yield return Advance(popup, 2f);
+            Assert.That(popup.NameTagLevel, Is.EqualTo(1f));
+
+            popup.CloseButton.onClick.Invoke();
+            yield return Advance(popup, 0.5f);
+            AssertFullyClosed(popup);
+            Assert.That(popup.NameTagVisible, Is.False);
+            Assert.That(popup.NameTagLevel, Is.Zero);
+            AssertNoTagObjectActive(popup);
+
+            scene.Open();
+            popup.ManualTick = true;
+            Assert.That(popup.NameTagVisible, Is.False, "다시 열 때 이전 이름표가 남아 있지 않다.");
+            yield return Advance(popup, 2f);
+            Assert.That(popup.NameTagLevel, Is.EqualTo(1f));
+            AssertOnlyOneTagObject(popup);
+
+            // 플레이어가 코어 범위를 벗어나면 이름표도 종료 연출로 정리된다.
+            scene.MovePlayer(new Vector3(12f, 0f, 0f));
+            yield return null;
+            yield return null;
+            yield return Advance(popup, 0.6f);
+            AssertFullyClosed(popup);
+            Assert.That(popup.NameTagVisible, Is.False);
+            AssertNoTagObjectActive(popup);
+        }
+
+        [UnityTest]
+        public IEnumerator NameTag_MainScreenAndCctv_AreIndependent()
+        {
+            yield return Load();
+            scene.SpawnCore();
+            var near = scene.SpawnFacility(DataIds.Buildings.ChargerBasic, new Vector3(1.2f, 0f, 0f));
+            var far = scene.SpawnFacility(DataIds.Buildings.ClinicBasic, new Vector3(-9f, 0f, 0f));
+            yield return scene.WaitForStatus();
+            var labels = Object.FindAnyObjectByType<FacilityProximityLabelController>();
+            Assert.That(labels, Is.Not.Null);
+
+            scene.Open();
+            var popup = scene.Popup;
+            popup.ManualTick = true;
+            yield return Advance(popup, 2f);
+            yield return WaitSeconds(0.6f);
+
+            // 플레이어 근처의 충전기: 일반 화면에는 이름표가 있고, CCTV 카메라는 그 레이어를 그리지 않는다.
+            Assert.That(labels.TryGetVisibleLabel(DataIds.Buildings.ChargerBasic, out _), Is.True, "일반 화면 접근 표시는 그대로 유지된다.");
+            AssertMainTagsHiddenFromCctv(popup);
+            Assert.That(popup.NameTagFacilityId, Is.EqualTo(near.GetComponent<BuildingInstance>().InstanceId));
+            AssertOnlyOneTagObject(popup);
+
+            // CCTV로 멀리 있는 시설을 골라도 일반 화면에는 그 이름표가 생기지 않는다.
+            popup.SelectFacility(far.GetComponent<BuildingInstance>().InstanceId);
+            yield return Advance(popup, 1f);
+            yield return WaitSeconds(0.4f);
+
+            Assert.That(popup.NameTagFacilityId, Is.EqualTo(far.GetComponent<BuildingInstance>().InstanceId));
+            Assert.That(labels.TryGetVisibleLabel(DataIds.Buildings.ClinicBasic, out _), Is.False, "CCTV 선택이 일반 화면 이름표를 만들지 않는다.");
+            Assert.That(labels.TryGetVisibleLabel(DataIds.Buildings.ChargerBasic, out _), Is.True, "접근 이름표는 CCTV 선택과 무관하다.");
+            AssertMainTagsHiddenFromCctv(popup);
+
+            // CCTV 이름표는 팝업 안의 화면 영역에만 있다(월드 캔버스가 아니다).
+            Assert.That(popup.NameTag.Root.GetComponentInParent<Canvas>().renderMode, Is.EqualTo(RenderMode.ScreenSpaceOverlay));
+            Assert.That(popup.NameTag.Root.GetComponentInParent<RectMask2D>(), Is.Not.Null, "CCTV 화면 영역에서 잘린다.");
+            yield return Capture("nametag-main-and-cctv-1920x1080");
+        }
+
+        [UnityTest]
+        public IEnumerator NameTag_MainScreen_ShowsOnApproachAndFoldsOnLeave_WithoutDuplicates()
+        {
+            yield return Load();
+            var charger = scene.SpawnFacility(DataIds.Buildings.ChargerBasic, new Vector3(1.5f, 0f, 0f));
+            yield return scene.WaitForStatus();
+            var labels = Object.FindAnyObjectByType<FacilityProximityLabelController>();
+            Assert.That(labels, Is.Not.Null);
+            var root = labels.transform.Find("FacilityNameBubbles");
+
+            scene.MovePlayer(new Vector3(8f, 0f, 0f));
+            yield return WaitSeconds(0.3f);
+            Assert.That(labels.TryGetVisibleLabel(DataIds.Buildings.ChargerBasic, out _), Is.False, "멀면 이름표가 없다.");
+
+            scene.MovePlayer(new Vector3(1.5f, 0f, 0f));
+            for (var i = 0; i < 24; i++)
+            {
+                yield return Capture("nametag-main-show-" + i.ToString("D3"));
+            }
+
+            Assert.That(labels.TryGetVisibleLabel(DataIds.Buildings.ChargerBasic, out var label), Is.True);
+            Assert.That(label, Is.EqualTo(ItemDisplayNames.Building(DataIds.Buildings.ChargerBasic)));
+            yield return Capture("nametag-main-final-1920x1080");
+            var baseline = root.childCount;
+
+            // 접근·이탈을 빠르게 반복해도 이름표는 하나만 쓰고 계속 살아 있다.
+            for (var i = 0; i < 12; i++)
+            {
+                scene.MovePlayer(new Vector3(i % 2 == 0 ? 8f : 1.5f, 0f, 0f));
+                yield return null;
+                yield return null;
+            }
+
+            Assert.That(root.childCount, Is.EqualTo(baseline), "접근·이탈을 반복해도 이름표가 늘어나지 않는다.");
+
+            scene.MovePlayer(new Vector3(8f, 0f, 0f));
+            for (var i = 0; i < 24; i++)
+            {
+                yield return Capture("nametag-main-hide-" + i.ToString("D3"));
+            }
+
+            yield return WaitSeconds(0.4f);
+
+            Assert.That(labels.TryGetVisibleLabel(DataIds.Buildings.ChargerBasic, out _), Is.False);
+            var active = 0;
+            for (var i = 0; i < root.childCount; i++)
+            {
+                active += root.GetChild(i).gameObject.activeSelf ? 1 : 0;
+            }
+
+            Assert.That(active, Is.EqualTo(labels.VisibleBubbleCount), "이탈 후 접힌 이름표가 남지 않는다.");
+
+            // 시설이 사라지면 이름표도 남지 않는다.
+            scene.MovePlayer(new Vector3(1.5f, 0f, 0f));
+            yield return WaitSeconds(0.6f);
+            var beforeRemoval = root.childCount;
+            Object.Destroy(charger);
+            yield return WaitSeconds(0.6f);
+            Assert.That(root.childCount, Is.EqualTo(beforeRemoval - 1), "시설이 사라지면 그 이름표도 정리된다.");
+        }
+
+        [UnityTest]
+        public IEnumerator NameTag_Representative_Resolutions_StayReadableAndInsideTheCctvScreen()
+        {
+            yield return Load();
+            scene.SpawnCore();
+            scene.SpawnFacility(DataIds.Buildings.ChargerBasic, new Vector3(5f, 0f, 0f));
+            yield return scene.WaitForStatus();
+
+            scene.Open();
+            var popup = scene.Popup;
+            popup.ManualTick = true;
+            yield return Advance(popup, 2f);
+
+            foreach (var size in new[] { new Vector2Int(1280, 720), new Vector2Int(1920, 1080), new Vector2Int(2560, 1440) })
+            {
+                yield return env.Resolution.Set(size.x, size.y);
+                yield return Frames(2);
+                yield return Advance(popup, 0.5f);
+                AssertTagInsideCctvScreen(popup);
+                var fontPixels = popup.NameTag.TextComponent.fontSize * popup.NameTag.Rect.lossyScale.y;
+                Assert.That(fontPixels, Is.GreaterThanOrEqualTo(14f), size + " 글자 크기(px)");
+                yield return Capture("nametag-resolution-" + size.x + "x" + size.y);
+            }
+        }
+
+        // ---- 이름표 검증 도우미 ----
+
+        private readonly struct VideoSnapshot
+        {
+            public readonly CoreCctvPopupView.VideoState Video;
+            public readonly float Level;
+            public readonly bool Rendering;
+
+            public static VideoSnapshot None => default;
+
+            public VideoSnapshot(CoreCctvPopupView.VideoState video, float level, bool rendering)
+            {
+                Video = video;
+                Level = level;
+                Rendering = rendering;
+            }
+        }
+
+        // 이름표 연출은 실제(unscaled) 시간으로 진행되므로 프레임 수가 아니라 시간으로 기다린다.
+        private static IEnumerator WaitSeconds(float seconds)
+        {
+            var end = Time.realtimeSinceStartup + seconds;
+            while (Time.realtimeSinceStartup < end)
+            {
+                yield return null;
+            }
+        }
+
+        private static IEnumerator Frames(int count)
+        {
+            for (var i = 0; i < count; i++)
+            {
+                yield return null;
+            }
+        }
+
+        // 이름표 아래 가장자리가 선택한 시설 그림의 윗면 위에 있고, 시설 위에 정확히 얹혀 있다.
+        private static void AssertTagAboveFacility(CoreCctvPopupView popup, GameObject facility)
+        {
+            Assert.That(popup.NameTagFacilityId, Is.EqualTo(facility.GetComponent<BuildingInstance>().InstanceId));
+            var anchor = FacilityNameTagAnchor.Compute(facility.GetComponent<BuildingInstance>());
+            var renderer = facility.GetComponentInChildren<SpriteRenderer>();
+            if (renderer != null && renderer.sprite != null)
+            {
+                Assert.That(anchor.y, Is.GreaterThanOrEqualTo(renderer.bounds.max.y), "이름표는 시설 그림 위에 놓인다.");
+            }
+
+            var camera = popup.Rig.Camera;
+            var overlay = popup.NameTagOverlay;
+            var size = overlay.rect.size;
+            var viewport = camera.WorldToViewportPoint(new Vector3(anchor.x, anchor.y, 0f));
+            var position = popup.NameTag.Rect.anchoredPosition;
+            var texture = popup.Rig.Texture;
+            var tolerance = 1.5f / texture.width * size.x + 0.01f;
+            Assert.That(position.x, Is.EqualTo(viewport.x * size.x).Within(tolerance), "미리보기 카메라 기준 가로 위치");
+            Assert.That(position.y, Is.EqualTo(viewport.y * size.y).Within(1.5f / texture.height * size.y + 0.01f), "미리보기 카메라 기준 세로 위치");
+        }
+
+        private static void AssertTagInsideCctvScreen(CoreCctvPopupView popup)
+        {
+            var screen = ScreenRect(popup.NameTagOverlay);
+            var tag = ScreenRect(popup.NameTag.Rect);
+            Assert.That(tag.xMin, Is.GreaterThanOrEqualTo(screen.xMin - 1f), "왼쪽");
+            Assert.That(tag.xMax, Is.LessThanOrEqualTo(screen.xMax + 1f), "오른쪽");
+            Assert.That(tag.yMin, Is.GreaterThanOrEqualTo(screen.yMin - 1f), "아래");
+            Assert.That(tag.yMax, Is.LessThanOrEqualTo(screen.yMax + 1f), "위");
+        }
+
+        // 일반 화면 이름표는 CCTV 카메라가 그리지 않는 레이어에 있다.
+        private static void AssertMainTagsHiddenFromCctv(CoreCctvPopupView popup)
+        {
+            var mask = popup.Rig.Camera.cullingMask;
+            var labels = Object.FindAnyObjectByType<FacilityProximityLabelController>();
+            Assert.That(labels, Is.Not.Null);
+            var root = labels.transform.Find("FacilityNameBubbles");
+            if (root == null)
+            {
+                return;
+            }
+
+            var transforms = root.GetComponentsInChildren<Transform>(true);
+            for (var i = 0; i < transforms.Length; i++)
+            {
+                if (transforms[i] == root)
+                {
+                    continue;
+                }
+
+                Assert.That(mask & (1 << transforms[i].gameObject.layer), Is.Zero, transforms[i].name + " 이 CCTV에 그려진다.");
+            }
+        }
+
+        private static void AssertOnlyOneTagObject(CoreCctvPopupView popup)
+        {
+            Assert.That(popup.NameTagOverlay.childCount, Is.EqualTo(1), "CCTV 이름표는 하나만 있다.");
+            Assert.That(popup.NameTag.Root.activeSelf, Is.True);
+        }
+
+        private static void AssertNoTagObjectActive(CoreCctvPopupView popup)
+        {
+            if (popup.NameTagOverlay == null)
+            {
+                return;
+            }
+
+            for (var i = 0; i < popup.NameTagOverlay.childCount; i++)
+            {
+                Assert.That(popup.NameTagOverlay.GetChild(i).gameObject.activeSelf, Is.False, "남은 이름표");
+            }
+        }
+
         // ---- 환경 ----
 
         private IEnumerator Load()

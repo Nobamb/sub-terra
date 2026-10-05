@@ -1,16 +1,16 @@
 using System;
 using System.Collections.Generic;
 using SubTerra.App.Core.Data;
+using SubTerra.App.UI.FacilityNameTag;
 using SubTerra.Gameplay.Building;
 using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace SubTerra.App.Integration
 {
     /// <summary>
-    /// 플레이어가 시설에 가까워지면 시설명 말풍선을 띄운다.
-    /// 버팀목·사다리는 제외한다.
+    /// 플레이어가 시설에 가까워지면 시설명 홀로그램 이름표를 띄운다.
+    /// 버팀목·사다리는 제외한다. 이름표는 시설마다 하나만 만들어 재사용하고, 등장·퇴장 연출은 상태가 바뀔 때만 진행한다.
     /// </summary>
     public sealed class FacilityProximityLabelController : MonoBehaviour
     {
@@ -19,13 +19,28 @@ namespace SubTerra.App.Integration
         [SerializeField] private Transform player;
         [SerializeField] private TMP_FontAsset koreanFont;
         [SerializeField, Min(0.1f)] private float range = DefaultRange;
-        [SerializeField] private Vector3 bubbleOffset = new Vector3(0f, 1.15f, 0f);
 
         private readonly Dictionary<EntityId, NameBubble> bubbles = new Dictionary<EntityId, NameBubble>();
+        private readonly List<Candidate> candidates = new List<Candidate>();
+        private readonly List<Rect> accepted = new List<Rect>();
         private Transform bubbleRoot;
 
         public int VisibleBubbleCount { get; private set; }
         public TMP_FontAsset ActiveFont => koreanFont;
+        /// <summary>등장·표시·퇴장 중으로 화면에 그려지는 이름표 수. 접히는 중인 것도 포함한다.</summary>
+        public int ActiveTagCount
+        {
+            get
+            {
+                var count = 0;
+                foreach (var pair in bubbles)
+                {
+                    count += pair.Value != null && pair.Value.IsVisible ? 1 : 0;
+                }
+
+                return count;
+            }
+        }
 
         public void SetPlayer(Transform origin)
         {
@@ -53,6 +68,7 @@ namespace SubTerra.App.Integration
             if (player == null)
             {
                 HideAll();
+                TickBubbles();
                 return;
             }
 
@@ -60,6 +76,7 @@ namespace SubTerra.App.Integration
                 FindObjectsInactive.Exclude,
                 FindObjectsSortMode.None);
             var seen = new HashSet<EntityId>();
+            candidates.Clear();
             var squaredRange = range * range;
 
             for (var i = 0; i < instances.Length; i++)
@@ -73,21 +90,44 @@ namespace SubTerra.App.Integration
                 var id = instance.GetEntityId();
                 seen.Add(id);
                 var delta = (Vector2)(instance.transform.position - player.position);
-                var inRange = delta.sqrMagnitude <= squaredRange;
-                var bubble = GetOrCreateBubble(id);
-                if (!inRange)
+                if (delta.sqrMagnitude <= squaredRange)
                 {
-                    bubble.SetVisible(false);
+                    candidates.Add(new Candidate(id, instance, delta.sqrMagnitude));
+                }
+            }
+
+            // 가까운 시설부터 확정하고, 이미 확정된 이름표와 겹치는 먼 시설의 이름표는 숨겨 가독성을 지킨다.
+            candidates.Sort(CompareByDistance);
+            accepted.Clear();
+            var wantedIds = new HashSet<EntityId>();
+            for (var i = 0; i < candidates.Count; i++)
+            {
+                var candidate = candidates[i];
+                var bubble = GetOrCreateBubble(candidate.Id);
+                bubble.SetLabel(ItemDisplayNames.Building(candidate.Instance.BuildingId));
+                var anchor = FacilityNameTagAnchor.Compute(candidate.Instance);
+                var rect = TagRect(anchor, bubble.Width);
+                if (Overlaps(rect))
+                {
                     continue;
                 }
 
-                bubble.SetLabel(ItemDisplayNames.Building(instance.BuildingId));
-                bubble.Follow(instance.transform.position + bubbleOffset);
-                bubble.SetVisible(true);
+                accepted.Add(rect);
+                wantedIds.Add(candidate.Id);
+                bubble.Follow(anchor);
                 VisibleBubbleCount++;
             }
 
+            foreach (var pair in bubbles)
+            {
+                if (pair.Value != null)
+                {
+                    pair.Value.SetWanted(wantedIds.Contains(pair.Key) && seen.Contains(pair.Key));
+                }
+            }
+
             RemoveStale(seen);
+            TickBubbles();
         }
 
         public bool TryGetVisibleLabel(string buildingId, out string label)
@@ -95,7 +135,7 @@ namespace SubTerra.App.Integration
             label = string.Empty;
             foreach (var pair in bubbles)
             {
-                if (!pair.Value.IsVisible)
+                if (!pair.Value.IsWanted)
                 {
                     continue;
                 }
@@ -117,7 +157,16 @@ namespace SubTerra.App.Integration
 
         private void OnDisable()
         {
-            HideAll();
+            // 비활성화·씬 전환 때 남은 이름표와 연출을 모두 정리한다.
+            foreach (var pair in bubbles)
+            {
+                if (pair.Value != null)
+                {
+                    pair.Value.Destroy();
+                }
+            }
+
+            bubbles.Clear();
             VisibleBubbleCount = 0;
         }
 
@@ -231,23 +280,43 @@ namespace SubTerra.App.Integration
             {
                 if (pair.Value != null)
                 {
-                    pair.Value.SetVisible(false);
+                    pair.Value.SetWanted(false);
                 }
             }
         }
 
+        private void TickBubbles()
+        {
+            var step = Time.unscaledDeltaTime;
+            foreach (var pair in bubbles)
+            {
+                if (pair.Value != null)
+                {
+                    pair.Value.Tick(step);
+                }
+            }
+        }
+
+        // 이미 사라진 시설의 이름표는 접힌 뒤 지운다.
         private void RemoveStale(HashSet<EntityId> seen)
         {
             var stale = new List<EntityId>();
             foreach (var pair in bubbles)
             {
-                if (seen.Contains(pair.Key) && pair.Value != null && pair.Value.IsAlive)
+                var alive = pair.Value != null && pair.Value.IsAlive;
+                if (alive && seen.Contains(pair.Key))
                 {
                     continue;
                 }
 
-                if (pair.Value != null)
+                if (alive)
                 {
+                    pair.Value.SetWanted(false);
+                    if (pair.Value.IsVisible)
+                    {
+                        continue;
+                    }
+
                     pair.Value.Destroy();
                 }
 
@@ -260,142 +329,97 @@ namespace SubTerra.App.Integration
             }
         }
 
+        private static int CompareByDistance(Candidate left, Candidate right)
+        {
+            return left.SquaredDistance.CompareTo(right.SquaredDistance);
+        }
+
+        private static Rect TagRect(Vector2 anchor, float widthPixels)
+        {
+            var width = widthPixels * FacilityNameTagVisual.WorldPerPixel;
+            var height = FacilityNameTagVisual.Height * FacilityNameTagVisual.WorldPerPixel;
+            return new Rect(anchor.x - width * 0.5f, anchor.y, width, height);
+        }
+
+        private bool Overlaps(Rect rect)
+        {
+            for (var i = 0; i < accepted.Count; i++)
+            {
+                if (accepted[i].Overlaps(rect))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private readonly struct Candidate
+        {
+            public readonly EntityId Id;
+            public readonly BuildingInstance Instance;
+            public readonly float SquaredDistance;
+
+            public Candidate(EntityId id, BuildingInstance instance, float squaredDistance)
+            {
+                Id = id;
+                Instance = instance;
+                SquaredDistance = squaredDistance;
+            }
+        }
+
         private sealed class NameBubble
         {
-            private readonly GameObject root;
-            private readonly TMP_Text text;
+            private readonly FacilityNameTagVisual visual;
 
-            public string Label { get; private set; } = string.Empty;
-            public bool IsVisible { get; private set; }
-            public bool IsAlive => root != null;
+            public string Label => visual.LabelText;
+            public bool IsWanted => visual.Wanted;
+            public bool IsVisible => visual.IsVisible;
+            public bool IsAlive => visual.IsAlive;
+            public float Width => visual.Width;
 
-            private NameBubble(GameObject root, TMP_Text text)
+            private NameBubble(FacilityNameTagVisual visual)
             {
-                this.root = root;
-                this.text = text;
+                this.visual = visual;
             }
 
             public static NameBubble Create(Transform parent, TMP_FontAsset font)
             {
-                var root = new GameObject("FacilityNameBubble", typeof(RectTransform));
-                if (parent != null)
-                {
-                    root.transform.SetParent(parent, false);
-                }
-
-                var canvas = root.AddComponent<Canvas>();
-                canvas.renderMode = RenderMode.WorldSpace;
-                canvas.sortingOrder = 80;
-                canvas.overrideSorting = true;
-                canvas.additionalShaderChannels =
-                    AdditionalCanvasShaderChannels.TexCoord1
-                    | AdditionalCanvasShaderChannels.Normal
-                    | AdditionalCanvasShaderChannels.Tangent;
-
-                var rect = root.GetComponent<RectTransform>();
-                rect.sizeDelta = new Vector2(180f, 56f);
-                root.transform.localScale = new Vector3(0.01f, 0.01f, 0.01f);
-
-                var body = new GameObject("Body", typeof(RectTransform), typeof(Image));
-                body.transform.SetParent(root.transform, false);
-                var bodyRect = body.GetComponent<RectTransform>();
-                bodyRect.anchorMin = Vector2.zero;
-                bodyRect.anchorMax = Vector2.one;
-                bodyRect.offsetMin = new Vector2(0f, 10f);
-                bodyRect.offsetMax = Vector2.zero;
-                var bodyImage = body.GetComponent<Image>();
-                bodyImage.color = new Color(0.06f, 0.09f, 0.13f, 0.92f);
-                bodyImage.raycastTarget = false;
-
-                var tail = new GameObject("Tail", typeof(RectTransform), typeof(Image));
-                tail.transform.SetParent(root.transform, false);
-                var tailRect = tail.GetComponent<RectTransform>();
-                tailRect.anchorMin = new Vector2(0.5f, 0f);
-                tailRect.anchorMax = new Vector2(0.5f, 0f);
-                tailRect.pivot = new Vector2(0.5f, 1f);
-                tailRect.anchoredPosition = new Vector2(0f, 12f);
-                tailRect.sizeDelta = new Vector2(14f, 12f);
-                tailRect.localRotation = Quaternion.Euler(0f, 0f, 45f);
-                var tailImage = tail.GetComponent<Image>();
-                tailImage.color = new Color(0.06f, 0.09f, 0.13f, 0.92f);
-                tailImage.raycastTarget = false;
-
-                var textGo = new GameObject("Label", typeof(RectTransform));
-                textGo.transform.SetParent(body.transform, false);
-                var textRect = textGo.GetComponent<RectTransform>();
-                textRect.anchorMin = Vector2.zero;
-                textRect.anchorMax = Vector2.one;
-                textRect.offsetMin = new Vector2(8f, 4f);
-                textRect.offsetMax = new Vector2(-8f, -4f);
-                var tmp = textGo.AddComponent<TextMeshProUGUI>();
-                tmp.fontSize = 22f;
-                tmp.alignment = TextAlignmentOptions.Center;
-                tmp.color = new Color(0.96f, 0.98f, 1f, 1f);
-                tmp.raycastTarget = false;
-                tmp.textWrappingMode = TextWrappingModes.NoWrap;
-                tmp.overflowMode = TextOverflowModes.Ellipsis;
-                ApplyFont(tmp, font);
-
-                root.SetActive(false);
-                return new NameBubble(root, tmp);
+                return new NameBubble(FacilityNameTagVisual.CreateWorld(
+                    parent, font, FacilityNameTagLayers.MainScreen, "FacilityNameTag"));
             }
 
             public void SetFont(TMP_FontAsset font)
             {
-                ApplyFont(text, font);
-            }
-
-            private static void ApplyFont(TMP_Text target, TMP_FontAsset font)
-            {
-                if (target == null || font == null)
-                {
-                    return;
-                }
-
-                target.font = font;
+                visual.SetFont(font);
             }
 
             public void SetLabel(string label)
             {
-                Label = label ?? string.Empty;
-                if (text != null)
+                visual.SetLabel(label);
+            }
+
+            public void Follow(Vector2 anchor)
+            {
+                if (visual.IsAlive)
                 {
-                    text.text = Label;
+                    visual.Rect.position = new Vector3(anchor.x, anchor.y, 0f);
                 }
             }
 
-            public void Follow(Vector3 worldPosition)
+            public void SetWanted(bool wanted)
             {
-                if (root != null)
-                {
-                    root.transform.position = worldPosition;
-                }
+                visual.SetWanted(wanted);
             }
 
-            public void SetVisible(bool visible)
+            public void Tick(float deltaSeconds)
             {
-                IsVisible = visible;
-                if (root != null && root.activeSelf != visible)
-                {
-                    root.SetActive(visible);
-                }
+                visual.Tick(deltaSeconds);
             }
 
             public void Destroy()
             {
-                if (root == null)
-                {
-                    return;
-                }
-
-                if (Application.isPlaying)
-                {
-                    UnityEngine.Object.Destroy(root);
-                }
-                else
-                {
-                    UnityEngine.Object.DestroyImmediate(root);
-                }
+                visual.Destroy();
             }
         }
     }

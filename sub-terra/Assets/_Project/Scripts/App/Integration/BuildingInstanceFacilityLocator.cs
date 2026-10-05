@@ -9,7 +9,7 @@ namespace SubTerra.App.Integration
     /// 시설 인스턴스 ID로 실제 설치된 시설의 월드 위치를 찾는다. 코어 CCTV 관찰 전용이다.
     /// 시설을 선택할 때만 조회하며, 한 번 찾은 시설은 보관해 두고 사라지면 다시 찾는다.
     /// </summary>
-    public sealed class BuildingInstanceFacilityLocator : IFacilityWorldLocator
+    public sealed class BuildingInstanceFacilityLocator : IFacilityWorldLocator, IFacilityNameTagAnchorLocator
     {
         private readonly Dictionary<string, BuildingInstance> cache = new Dictionary<string, BuildingInstance>();
 
@@ -34,6 +34,30 @@ namespace SubTerra.App.Integration
             }
 
             center = VisualCenter(instance);
+            return true;
+        }
+
+        public bool TryGetNameTagAnchor(string instanceId, out Vector2 anchor)
+        {
+            anchor = Vector2.zero;
+            if (string.IsNullOrEmpty(instanceId))
+            {
+                return false;
+            }
+
+            if (!cache.TryGetValue(instanceId, out var instance) || instance == null)
+            {
+                instance = Find(instanceId);
+                if (instance == null)
+                {
+                    cache.Remove(instanceId);
+                    return false;
+                }
+
+                cache[instanceId] = instance;
+            }
+
+            anchor = FacilityNameTagAnchor.Compute(instance);
             return true;
         }
 

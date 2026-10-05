@@ -62,7 +62,8 @@ namespace SubTerra.App.UI.Outpost
             camera.orthographic = true;
             camera.clearFlags = CameraClearFlags.SolidColor;
             camera.backgroundColor = new Color(0.02f, 0.035f, 0.05f, 1f);
-            camera.cullingMask = ~0;
+            // 일반 화면 이름표 레이어는 제외한다. CCTV 이름표는 팝업이 따로 그린다.
+            camera.cullingMask = SubTerra.App.UI.FacilityNameTag.FacilityNameTagLayers.CctvCullingMask;
             camera.depth = CameraDepth;
             camera.nearClipPlane = 0.3f;
             camera.farClipPlane = 1000f;

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using SubTerra.App.Outpost;
+using SubTerra.App.UI.FacilityNameTag;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -51,6 +52,9 @@ namespace SubTerra.App.UI.Outpost
         private const float GhostFarDistance = 28f;
         private const float ScanlineAlpha = 0.16f;
         private const float NoiseBaseAlpha = 0.01f;
+        // 영상이 실제로 켜지기 시작한 뒤 이름표를 펼치기까지의 시간.
+        private const float NameTagVideoDelay = 0.06f;
+        private const float NameTagRetrySeconds = 0.3f;
 
         private static readonly Color Cyan = new Color(0.42f, 0.94f, 1f, 1f);
         private static readonly Color RecRed = new Color(1f, 0.22f, 0.2f, 1f);
@@ -103,6 +107,14 @@ namespace SubTerra.App.UI.Outpost
 
         private CoreCctvCameraRig rig;
         private IFacilityWorldLocator locator;
+        private IFacilityNameTagAnchorLocator anchorLocator;
+        private FacilityNameTagVisual nameTag;
+        private RectTransform nameTagOverlay;
+        private string nameTagFacilityId = string.Empty;
+        private Vector2 nameTagAnchor;
+        private Vector2 desiredAnchor;
+        private string anchorFailedId = string.Empty;
+        private float anchorRetry;
         private Func<string, Sprite> iconResolver;
 
         private PlayState state;
@@ -160,6 +172,14 @@ namespace SubTerra.App.UI.Outpost
         public bool GhostsVisible => ghostsActive;
         public float TerminalAlpha => terminalGroup != null ? terminalGroup.alpha : 0f;
         public float WindowOpen => lastOpen;
+        /// <summary>CCTV 이름표가 지금 가리키는(펼치는 중이거나 접히는 중인) 시설 인스턴스. 없으면 빈 문자열.</summary>
+        public string NameTagFacilityId => nameTagFacilityId;
+        public bool NameTagWanted => nameTag != null && nameTag.Wanted;
+        public bool NameTagVisible => nameTag != null && nameTag.IsVisible;
+        public float NameTagLevel => nameTag != null ? nameTag.Level : 0f;
+        public string NameTagText => nameTag != null ? nameTag.LabelText : string.Empty;
+        public FacilityNameTagVisual NameTag => nameTag;
+        public RectTransform NameTagOverlay => nameTagOverlay;
 
         public CoreCctvFacilityItem ItemAt(int index)
         {
@@ -169,6 +189,7 @@ namespace SubTerra.App.UI.Outpost
         public void SetFacilityLocator(IFacilityWorldLocator worldLocator)
         {
             locator = worldLocator;
+            anchorLocator = worldLocator as IFacilityNameTagAnchorLocator;
         }
 
         public void SetIconResolver(Func<string, Sprite> resolver)
@@ -179,6 +200,7 @@ namespace SubTerra.App.UI.Outpost
         private void Awake()
         {
             EnsureArt();
+            EnsureNameTag();
             if (itemTemplate != null)
             {
                 itemTemplate.gameObject.SetActive(false);
@@ -215,6 +237,12 @@ namespace SubTerra.App.UI.Outpost
             {
                 rig.Dispose();
                 rig = null;
+            }
+
+            if (nameTag != null)
+            {
+                nameTag.Destroy();
+                nameTag = null;
             }
         }
 
@@ -382,6 +410,7 @@ namespace SubTerra.App.UI.Outpost
 
             ApplyGhosts();
             TickRenderSize();
+            TickNameTag(deltaSeconds);
             TickNoise(deltaSeconds);
             HandleKeyboard();
         }
@@ -410,6 +439,7 @@ namespace SubTerra.App.UI.Outpost
         private void BeginIntro()
         {
             EnsureArt();
+            EnsureNameTag();
             StopVideoImmediate();
             ResetRuntimeState();
             ResetVisuals();
@@ -1034,6 +1064,174 @@ namespace SubTerra.App.UI.Outpost
             }
         }
 
+        // ---- 시설 이름표 ----
+        // 이름표는 CCTV 화면 안에서만 그리는 전용 오버레이다. 미리보기 카메라 기준 위치를 따라가고
+        // 화면 영역에서 잘리며, 메인 화면의 이름표(별도 레이어)는 CCTV 카메라가 그리지 않는다.
+
+        private void EnsureNameTag()
+        {
+            if (nameTag != null && nameTag.IsAlive)
+            {
+                return;
+            }
+
+            if (video == null || !(video.transform.parent is RectTransform screen))
+            {
+                return;
+            }
+
+            var overlayObject = new GameObject("NameTagOverlay", typeof(RectTransform));
+            overlayObject.layer = screen.gameObject.layer;
+            overlayObject.transform.SetParent(screen, false);
+            nameTagOverlay = (RectTransform)overlayObject.transform;
+            nameTagOverlay.anchorMin = Vector2.zero;
+            nameTagOverlay.anchorMax = Vector2.one;
+            nameTagOverlay.offsetMin = Vector2.zero;
+            nameTagOverlay.offsetMax = Vector2.zero;
+            overlayObject.AddComponent<RectMask2D>();
+            // 스캔라인·노이즈 위, 비네트 아래: 이름표만 선명하게 읽히고 가장자리 어둠은 그대로 받는다.
+            var index = noise != null && noise.transform.parent == screen
+                ? noise.transform.GetSiblingIndex() + 1
+                : screen.childCount - 1;
+            nameTagOverlay.SetSiblingIndex(index);
+
+            var font = emptyLabel != null ? emptyLabel.font : (connectedText != null ? connectedText.font : null);
+            nameTag = FacilityNameTagVisual.CreateOverlay(nameTagOverlay, font, "FacilityNameTag");
+        }
+
+        private void TickNameTag(float deltaSeconds)
+        {
+            if (nameTag == null)
+            {
+                return;
+            }
+
+            anchorRetry = Mathf.Max(0f, anchorRetry - deltaSeconds);
+            var desired = ResolveDesiredNameTag();
+
+            // 보고 있던 시설이 바뀌었으면 먼저 접고, 완전히 사라진 뒤에 새 이름표를 연다.
+            if (!string.IsNullOrEmpty(nameTagFacilityId) && desired != nameTagFacilityId)
+            {
+                nameTag.SetWanted(false);
+            }
+
+            if (!nameTag.IsVisible)
+            {
+                nameTagFacilityId = string.Empty;
+                if (!string.IsNullOrEmpty(desired))
+                {
+                    nameTagFacilityId = desired;
+                    nameTag.SetLabel(SelectedDisplayName());
+                    nameTagAnchor = desiredAnchor;
+                    nameTag.SetWanted(true);
+                }
+            }
+            else if (!string.IsNullOrEmpty(desired) && desired == nameTagFacilityId)
+            {
+                nameTagAnchor = desiredAnchor;
+                nameTag.SetWanted(true);
+            }
+
+            PlaceNameTag();
+            nameTag.Tick(deltaSeconds);
+        }
+
+        // 창이 닫히는 동안에는 새 이름표를 열지 않고 남은 것만 접는다.
+        private void FoldNameTag(float deltaSeconds)
+        {
+            if (nameTag == null)
+            {
+                return;
+            }
+
+            nameTag.SetWanted(false);
+            PlaceNameTag();
+            nameTag.Tick(deltaSeconds);
+        }
+
+        private void ResetNameTag()
+        {
+            nameTagFacilityId = string.Empty;
+            anchorFailedId = string.Empty;
+            anchorRetry = 0f;
+            if (nameTag != null)
+            {
+                nameTag.ResetImmediate();
+            }
+        }
+
+        /// <summary>선택 시설에 이름표를 펼칠 수 있는 상태인지 판단한다. 아니면 빈 문자열.</summary>
+        private string ResolveDesiredNameTag()
+        {
+            if (!revealStarted || list.Count == 0 || anchorLocator == null)
+            {
+                return string.Empty;
+            }
+
+            var videoReady = videoState == VideoState.On
+                || (videoState == VideoState.PoweringOn && videoClock >= NameTagVideoDelay);
+            // 카메라가 움직이는 동안에는 표시하지 않는다. 도착해서 모션블러가 풀린 뒤에 펼친다.
+            if (!videoReady || rig == null || !rig.IsCreated || !rig.HasPosition || rig.IsMoving)
+            {
+                return string.Empty;
+            }
+
+            var selected = list.SelectedInstanceId;
+            if (string.IsNullOrEmpty(selected) || selected != cameraTargetId)
+            {
+                return string.Empty;
+            }
+
+            if (anchorRetry > 0f && anchorFailedId == selected)
+            {
+                return string.Empty;
+            }
+
+            if (!anchorLocator.TryGetNameTagAnchor(selected, out var anchor))
+            {
+                // 시설이 사라졌다. 매 프레임 찾지 않도록 잠시 쉰다.
+                anchorFailedId = selected;
+                anchorRetry = NameTagRetrySeconds;
+                return string.Empty;
+            }
+
+            anchorFailedId = string.Empty;
+            desiredAnchor = anchor;
+            return selected;
+        }
+
+        private string SelectedDisplayName()
+        {
+            var index = list.SelectedIndex;
+            return index >= 0 ? list.Items[index].DisplayName : string.Empty;
+        }
+
+        private void PlaceNameTag()
+        {
+            // 접히는 동안은 카메라가 움직여도 화면 위치를 그대로 둬, 이름표가 시설에 끌려 미끄러지지 않고 제자리에서 접힌다.
+            if (nameTag == null || nameTagOverlay == null || !nameTag.IsVisible || !nameTag.Wanted)
+            {
+                return;
+            }
+
+            if (rig == null || rig.Camera == null || rig.Texture == null)
+            {
+                return;
+            }
+
+            var size = nameTagOverlay.rect.size;
+            var viewport = rig.Camera.WorldToViewportPoint(new Vector3(nameTagAnchor.x, nameTagAnchor.y, 0f));
+            var texture = rig.Texture;
+            // 화면 픽셀에 맞춰 위치를 고정해 글자가 흐려지지 않게 한다.
+            var x = Mathf.Round(viewport.x * texture.width) / texture.width * size.x;
+            var y = Mathf.Round(viewport.y * texture.height) / texture.height * size.y;
+            var canvasScale = Mathf.Max(0.0001f, Mathf.Abs(nameTagOverlay.lossyScale.x));
+            // 일반 화면 이름표와 같은 화면 크기가 되도록 월드 배율을 캔버스 단위로 옮긴다.
+            var scale = rig.PixelsPerUnit * FacilityNameTagVisual.WorldPerPixel / canvasScale;
+            nameTag.Rect.anchoredPosition = new Vector2(x, y);
+            nameTag.Rect.localScale = new Vector3(scale, scale, 1f);
+        }
+
         // ---- 입력 ----
 
         private void HandleKeyboard()
@@ -1106,6 +1304,7 @@ namespace SubTerra.App.UI.Outpost
             }
 
             ClearGhosts();
+            FoldNameTag(deltaSeconds);
             if (exitClock >= CoreCctvTimeline.ExitDuration)
             {
                 FinishExit();
@@ -1117,6 +1316,7 @@ namespace SubTerra.App.UI.Outpost
             state = PlayState.Hidden;
             showRequested = false;
             StopVideoImmediate();
+            ResetNameTag();
             if (gameObject.activeSelf)
             {
                 gameObject.SetActive(false);
@@ -1258,6 +1458,7 @@ namespace SubTerra.App.UI.Outpost
             noiseTimer = 0f;
             barStep = -1;
             appearAt.Clear();
+            ResetNameTag();
             activeItemCount = 0;
             for (var i = 0; i < items.Count; i++)
             {
