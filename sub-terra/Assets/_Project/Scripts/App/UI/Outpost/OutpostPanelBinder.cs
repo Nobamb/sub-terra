@@ -3,6 +3,7 @@ using SubTerra.App.Outpost;
 using SubTerra.App.UI.Sell;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
@@ -24,6 +25,7 @@ namespace SubTerra.App.UI.Outpost
         private ResourceSellSession sellSession;
         private SettlementSellBackend sellBackend;
         private Func<string, Sprite> itemIconResolver;
+        private StoragePopupView storagePopup;
 
         public OutpostPanelPresenter Presenter => presenter;
         public ResourceSellSession SellSession => sellSession;
@@ -96,6 +98,7 @@ namespace SubTerra.App.UI.Outpost
             }
 
             ReleaseSellSession();
+            UnwireStoragePopup();
             presenter?.Unbind();
             presenter = null;
         }
@@ -105,6 +108,14 @@ namespace SubTerra.App.UI.Outpost
             if (presenter == null)
             {
                 presenter = new OutpostPanelPresenter(view);
+            }
+
+            // B-138: 보관함은 판매창과 같은 껍데기의 전용 팝업을 쓴다. 이동은 기존 Presenter → Service 경로 그대로다.
+            // 첫 스냅샷부터 팝업에 그려지도록 Presenter 연결 전에 만든다.
+            if (view != null && service != null && storagePopup == null)
+            {
+                storagePopup = view.AttachStoragePopup(itemIconResolver);
+                WireStoragePopup();
             }
 
             presenter.Bind(service);
@@ -120,6 +131,62 @@ namespace SubTerra.App.UI.Outpost
             }
         }
 
+        private void WireStoragePopup()
+        {
+            if (storagePopup == null)
+            {
+                return;
+            }
+
+            storagePopup.CloseRequested += ClosePanel;
+            storagePopup.MineralSelected += SelectMineral;
+            storagePopup.QuantityChanged += OnStorageQuantityChanged;
+            storagePopup.DepositRequested += DepositQuantity;
+            storagePopup.WithdrawRequested += WithdrawQuantity;
+            if (storagePopup.Picker != null)
+            {
+                storagePopup.Picker.SearchChanged += OnMineralSearchChanged;
+                storagePopup.Picker.MineralSelected += SelectMineral;
+            }
+        }
+
+        private void UnwireStoragePopup()
+        {
+            if (storagePopup == null)
+            {
+                return;
+            }
+
+            storagePopup.CloseRequested -= ClosePanel;
+            storagePopup.MineralSelected -= SelectMineral;
+            storagePopup.QuantityChanged -= OnStorageQuantityChanged;
+            storagePopup.DepositRequested -= DepositQuantity;
+            storagePopup.WithdrawRequested -= WithdrawQuantity;
+            if (storagePopup.Picker != null)
+            {
+                storagePopup.Picker.SearchChanged -= OnMineralSearchChanged;
+                storagePopup.Picker.MineralSelected -= SelectMineral;
+            }
+
+            storagePopup = null;
+        }
+
+        private void OnStorageQuantityChanged(int quantity)
+        {
+            presenter?.SetQuantity(quantity);
+        }
+
+        /// <summary>보관함 팝업의 보관 버튼. 실제 이동량(보유보다 많으면 전부)은 Service가 판정한다.</summary>
+        public void DepositQuantity(int quantity)
+        {
+            presenter?.RequestDeposit(selectedMineralId, quantity);
+        }
+
+        public void WithdrawQuantity(int quantity)
+        {
+            presenter?.RequestWithdraw(selectedMineralId, quantity);
+        }
+
         /// <summary>판매 창 자원 아이콘 조회(카탈로그의 기존 아이콘). 표시 전용.</summary>
         public void SetItemIconResolver(Func<string, Sprite> resolver)
         {
@@ -127,6 +194,11 @@ namespace SubTerra.App.UI.Outpost
             if (sellBackend != null)
             {
                 sellBackend.SetIconResolver(resolver);
+            }
+
+            if (storagePopup != null)
+            {
+                storagePopup.SetIconResolver(resolver);
             }
         }
 
@@ -222,11 +294,20 @@ namespace SubTerra.App.UI.Outpost
 
         private void OnInteractStarted(InputAction.CallbackContext context)
         {
-            if (context.started)
+            // 보관함 검색·수량 칸에 글자를 입력하는 중에는 같은 키로 창이 닫히지 않게 한다.
+            if (context.started && !IsTypingInPanel())
             {
                 presenter?.ToggleInteractionPanel(
                     primaryInteractionClaim != null && primaryInteractionClaim());
             }
+        }
+
+        private bool IsTypingInPanel()
+        {
+            var system = EventSystem.current;
+            var selected = system != null ? system.currentSelectedGameObject : null;
+            var input = selected != null ? selected.GetComponent<TMP_InputField>() : null;
+            return input != null && input.isFocused && storagePopup != null && input.transform.IsChildOf(storagePopup.transform);
         }
 
         private int ReadQuantity()

@@ -341,8 +341,87 @@ namespace SubTerra.App.Tests.Outpost
             presenter.Unbind();
         }
 
+        [Test]
+        public void PromptB138_StoragePopup_ReceivesCargoAndSelection_AndTransfersGoThroughService()
+        {
+            var catalog = new InMemoryMineralCatalog();
+            catalog.Register(DataIds.Minerals.Copper, 1.5f, 10, "구리");
+            var state = GameState.CreateNew();
+            var inventory = new InventoryService(catalog, 100f, state);
+            inventory.TryAddMineral(DataIds.Minerals.Copper, 8);
+            var service = new OutpostService(inventory, catalog, state);
+            var view = new RecordingView();
+            var presenter = new OutpostPanelPresenter(view);
+            presenter.Bind(service);
+            service.ApplyRuntimeStatus(new OutpostStatusDto
+            {
+                isInInteractionRange = true,
+                interactionFacilityInstanceId = "storage.1",
+                interactionFacilityBuildingId = DataIds.Buildings.StorageBasic,
+                connectedFacilities = new List<ConnectedFacilityStatusDto>()
+            });
+
+            presenter.ToggleInteractionPanel();
+            Assert.That(view.StoragePlayerCargo.GetQuantity(DataIds.Minerals.Copper), Is.EqualTo(8));
+            Assert.That(view.StorageSelectionId, Is.Empty, "열 때는 미선택");
+
+            presenter.SelectMineral(DataIds.Minerals.Copper);
+            Assert.That(view.StorageSelectionId, Is.EqualTo(DataIds.Minerals.Copper));
+            Assert.That(view.StorageSelectionName, Is.EqualTo("구리"));
+            Assert.That(view.StorageOwned, Is.EqualTo(8));
+            Assert.That(view.StorageStored, Is.Zero);
+            Assert.That(view.StorageQuantity, Is.EqualTo(1));
+
+            presenter.SetQuantity(5);
+            Assert.That(view.StorageQuantity, Is.EqualTo(5));
+
+            // 요청이 보유보다 많으면 Service가 가진 전부만 옮긴다.
+            var deposit = presenter.RequestDeposit(DataIds.Minerals.Copper, 20);
+            Assert.That(deposit.IsSuccess, Is.True);
+            Assert.That(deposit.Quantity, Is.EqualTo(8));
+            Assert.That(view.StorageStorage.GetQuantity(DataIds.Minerals.Copper), Is.EqualTo(8));
+            Assert.That(view.StorageOwned, Is.Zero);
+            Assert.That(view.StorageStored, Is.EqualTo(8));
+            Assert.That(view.LastResultIsError, Is.False);
+
+            var zero = presenter.RequestWithdraw(DataIds.Minerals.Copper, 0);
+            Assert.That(zero.IsSuccess, Is.False);
+            Assert.That(view.LastResultIsError, Is.True);
+            Assert.That(service.State.GetStorageQuantity(DataIds.Minerals.Copper), Is.EqualTo(8));
+
+            var withdraw = presenter.RequestWithdraw(DataIds.Minerals.Copper, 3);
+            Assert.That(withdraw.Quantity, Is.EqualTo(3));
+            Assert.That(view.StorageOwned, Is.EqualTo(3));
+            Assert.That(view.StorageStored, Is.EqualTo(5));
+            presenter.Unbind();
+        }
+
         private sealed class RecordingView : IOutpostPanelView
         {
+            public InventorySnapshot StoragePlayerCargo;
+            public InventorySnapshot StorageStorage;
+            public string StorageSelectionId;
+            public string StorageSelectionName;
+            public int StorageOwned;
+            public int StorageStored;
+            public int StorageQuantity;
+            public bool LastResultIsError;
+
+            public void SetStorageCargo(InventorySnapshot playerCargo, InventorySnapshot storage)
+            {
+                StoragePlayerCargo = playerCargo;
+                StorageStorage = storage;
+            }
+
+            public void SetStorageSelection(string mineralId, string displayName, int owned, int stored, int quantity)
+            {
+                StorageSelectionId = mineralId;
+                StorageSelectionName = displayName;
+                StorageOwned = owned;
+                StorageStored = stored;
+                StorageQuantity = quantity;
+            }
+
             public bool Visible;
             public bool Active;
             public string Reason;
@@ -380,7 +459,7 @@ namespace SubTerra.App.Tests.Outpost
             }
 
             public void ClearMineralSearch() { }
-            public void SetResult(string message, bool isError) { }
+            public void SetResult(string message, bool isError) => LastResultIsError = isError;
             public void ShowTemporaryMessage(string message, float durationSeconds)
             {
                 TemporaryMessage = message;

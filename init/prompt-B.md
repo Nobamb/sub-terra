@@ -2688,3 +2688,117 @@ Codex는 관련 컴파일·테스트와 실제 PlayMode에서 다음을 확인�
 Codex 완료 후 너는 추가 구현 계획, 실제 diff, 완료 보고와 검증 증거를 리뷰해줘. 문제가 있으면 필요한 수정만 Correction Delta로 전달하고 재검증해줘.
 
 최종 보고에는 변경 파일, 프레임 구현 방식, 등장·퇴장 연결 방법, 검증 결과와 미검증 사항을 간결하게 정리해줘.
+
+138. Sub-Terra의 전진기지 보관함 팝업을 자원 판매창과 비슷한 레이아웃·조작감으로 개편하고, 등장·종료만 Showbox 개봉 연출로 차별화해줘. Claude가 직접 구현·검증까지 수행해.
+     작업 전에 CLAUDE.md, init/rule.md와 관련 세부 규칙을 읽고, 아래 파일을 우선 확인해줘.
+
+우선 확인(보관 동작·UI):
+
+Assets/\_Project/Scripts/App/UI/Outpost/OutpostPanelView.cs
+Assets/\_Project/Scripts/App/UI/Outpost/OutpostPanelPresenter.cs
+Assets/\_Project/Scripts/App/UI/Outpost/OutpostPanelBinder.cs
+Assets/\_Project/Scripts/App/UI/Outpost/IOutpostPanelView.cs
+Assets/\_Project/Scripts/App/UI/Outpost/OutpostMineralPickerView.cs
+Assets/\_Project/Scripts/App/UI/Outpost/OutpostMineralOption.cs
+Assets/\_Project/Scripts/App/Outpost/OutpostService.cs
+Assets/\_Project/Scripts/App/Outpost/OutpostTransferQuantity.cs
+Assets/\_Project/Scripts/App/Outpost/OutpostModels.cs
+Assets/\_Project/Prefabs/UI/OutpostPanel.prefab
+연출·아트 참고(판매창 B-136 패턴):
+
+Assets/\_Project/Scripts/App/UI/Sell/ResourceSellTimeline.cs
+Assets/\_Project/Scripts/App/UI/Sell/ResourceSellPopupView.cs
+Assets/\_Project/Scripts/App/UI/Sell/ResourceSellArt.cs
+Assets/\_Project/Scripts/App/UI/Outpost/FacilityServicePopupTimeline.cs
+Assets/\_Project/Scripts/App/UI/Outpost/FacilityServicePopupView.cs
+필요 시 Builder: PromptB69StoragePickerBuilder.cs, PhaseHOutpostUiPrefabBuilder.cs, PromptB_SellPanelLayoutBuilder.cs
+
+### 1. 범위와 유지 규칙
+
+대상은 OutpostPanelMode.Storage(제목 보관함, building.storage.basic)만. 충전기·보건소는 기존 FacilityServicePopupView 흐름을 유지하고, 이번 작업에서 합치거나 바꾸지 마.
+열기/닫기 진입점은 유지: 시설 근처 Interact로 토글, X/ESC → OutpostPanelBinder.ClosePanel → DismissInteractionPanel. 범위 이탈·재오픈 규칙도 기존과 같게.
+이체 규칙 유지:
+OutpostTransferQuantity.ClampToAvailable — 요청량 > 보유량이면 가진 전부, ≤0이면 0.
+OutpostService.TryDeposit / TryWithdraw 경로만 사용. 직접 인벤/스토리지 필드를 우회 수정하지 마.
+인출 시 플레이어 용량·무게 검사 유지.
+검색·드롭다운(OutpostMineralPickerView / OutpostMineralPickerFilter) 동작 유지.
+판매창의 거래·골드·일괄 판매 규칙을 보관함에 이식하지 마. 레이아웃·버튼 톤·수량 UX 감각만 맞추고, 기능은 보관/꺼내기.
+
+### 2. 최종 레이아웃 (판매창과 비슷한 조작감)
+
+어두운 남색 패널, 각진 금속 모서리, 얇은 청록색 테두리. 최근 개선된 팝업(판매창·퀘스트·새 광산 등)과 폰트·간격·발광을 맞춰줘. 컨셉 이미지를 통째로 붙이지 말고 조작 가능한 UGUI로 구성해.
+
+상단
+왼쪽: 보관함 제목.
+오른쪽: 작은 X (프레임과 겹치지 않게).
+탭이 이미 있으면 보관함 활성 / 충전기는 기존 충전기 흐름으로만 연결하거나, 이번 범위에서 탭 UI를 건드리지 않을 거면 현행 유지. 임의로 충전기 팝업을 이 패널 안에 재구현하지 마.
+본문 — 두 영역 요약 + 거래 조작
+판매창처럼 한 화면에서 상태를 읽고 수량을 고른 뒤 확정하게 해줘.
+
+보유 자원: 플레이어 화물 요약(종류·수량·총 무게). 긴 목록이면 스크롤.
+보관 자원: 스토리지 요약(종류·수량·총 무게). 긴 목록이면 스크롤.
+가능하면 판매창 자원 행처럼 종류별 행(아이콘·이름·수량·무게)으로 정리하되, 기존 요약 텍스트만으로도 가독성이 되면 행 UI로 단계적으로 올려도 됨. 핵심은 간격·정렬·가독성.
+안내 문구: 미선택 시 자원을 선택하세요. 등 기존 톤 유지.
+자원 선택: 검색(자원 이름 검색) + 드롭다운(자원 선택) 유지·정돈.
+수량: 숫자 입력 + 1개 / 5개 / 10개. 범위는 선택 자원의 “보관 시 플레이어 보유량 / 꺼내기 시 보관량”에 클램프.
+하단 주 행동(판매 버튼처럼 테두리·발광을 조금 더 강조):
+선택 수량 보관 (Deposit)
+선택 수량 꺼내기 (Withdraw)
+텍스트·버튼이 프레임에 붙거나 겹치지 않게 간격을 넉넉히. 대표 해상도에서 열 정렬과 글자 가독성을 확인해.
+
+### 3. 버튼 상태 (판매창과 통일)
+
+기본: 진한 남색 배경, 흰 텍스트, 얇은 청록 테두리.
+호버: 밝은 청록 배경, 짙은 남색 텍스트, 테두리 발광 약간 강화. 해제 시 0.1~0.15초 복귀.
+클릭: 짧은 눌림 + 즉시 기능. 애니 끝날 때까지 입력 대기 금지.
+비활성: 채도·밝기 낮춤, 호버로 활성처럼 밝아지지 않음.
+빠른 호버/수량 변경으로 색·스케일이 누적되거나 잘못된 상태에 남지 않게.
+
+### 4. 등장 연출 — Showbox 개봉 (판매창과 다른 개성)
+
+판매창의 동전→접근→아코디언 펼침(ResourceSellTimeline)을 재사용·복붙하지 마. 은유는 수납 상자 개봉.
+
+ResourceSellTimeline처럼 순수 계산 타임테이블 + View Tick 패턴을 권장해. DOTween 필수 금지. 예: StorageBoxTimeline (static, EditMode 테스트 가능) + 보관 팝업 View의 Opening/Open/Closing 상태.
+
+목표 타이밍: 등장 약 1.0~1.1초, 종료 약 0.4~0.5초. 이징은 ease-out / ease-in, 과한 바운스·반복 출렁임 금지.
+
+Open 페이즈
+닫힌 상자 상승
+화면 아래에서 중앙으로. 초반 빠르게, 중앙 근처에서 감속(ease-out).
+형태: 3D처럼 보이는 정사각 상자 — 면은 청록색 채움, 외곽은 흰색 선(와이어/아웃라인). 처음엔 닫힌 상태.
+개봉
+중앙 도착 직후 뚜껑/플랩이 열리거나 상단이 갈라지며 열림. 짧은 청록 발광만, 화면 전체 섬광·글리치 금지.
+광물 팝
+열린 상자에서 광물(또는 자원 아이콘)이 하나씩 빠르게 튀어나옴(짧은 스태거). 실제 인벤 수치를 바꾸지 않는 연출 전용.
+패널 정착
+마지막에 보관함 UI 패널이 나타나 조작 가능 상태로 정착.
+연출 중에는 내용 입력 잠금(interactable false 등). 패널 정착(또는 footer/액션 영역 공개 시점) 이후에만 보관/꺼내기·검색·수량 입력 허용.
+스킵: 연출 중 다시 Interact/ESC/X로 닫으면 즉시 Closing으로 전환하고 Opening 잔여 이펙트를 정리.
+
+Close 페이즈 (역순)
+패널·광물 아이콘이 빠르게 상자로 다시 담김(역순 스태거).
+상자 닫힘.
+닫힌 상자가 아래로 하강하며 사라짐(ease-in).
+남은 이펙트·이벤트·입력 차단·raycast 정리. HideImmediate 경로도 잔존 없이.
+빈 보관/빈 화물: 광물 팝은 0~소량 장식만 하거나 생략하고, 상자→개봉→패널 흐름은 유지.
+
+### 5. 구현 지침
+
+기존 Outpost Presenter/Binder/Service 계약을 깨지 마. 연출은 View(+Timeline/Art) 쪽에 두고, Deposit/Withdraw 성공 판정은 Service에 남겨.
+절차적 스프라이트(상자 면·흰 아웃라인·광물 아이콘)가 필요하면 ResourceSellArt처럼 연출 전용 Art 헬퍼로 분리. 런타임에 컨셉 PNG를 패널로 하드코딩하지 마.
+Prefab 수정이 필요하면 기존 Outpost/PromptB Builder 패턴을 따르고, 범위 밖 Scene·공용 Canvas·Font·카메라 설정을 임의 변경하지 마.
+한국어 주석은 프로젝트 규칙에 맞게.
+
+### 6. 검증과 완료 보고
+
+PlayMode에서 보관함 시설로 열어 확인해.
+
+보유/보관 요약·검색·드롭다운·1/5/10·직접 입력.
+보관/꺼내기 성공, 요청량>보유 시 전량 이체, 0·용량 부족 실패.
+등장 전 구간 입력 불가, 정착 후 입력 가능.
+반복 열기·닫기, 연출 도중 닫기, X/ESC/DismissInteractionPanel.
+충전기·보건소·판매창 회귀 없음.
+대표 해상도 가독성, 닫힌 뒤 잔존 이펙트·입력 차단 없음.
+관련 테스트 보강 권장: OutpostTransferQuantityTests, OutpostMineralPickerFilterTests, OutpostPanelPresenterTests, OutpostServiceTests + 새 Timeline 순수 계산 테스트(판매창 PromptB136ResourceSellTests 참고).
+
+완료 보고에는 변경 파일, 레이아웃 정렬 방식, Showbox 타임라인 수치(오픈/클로즈 키타임), 유지한 이체 규칙, 검증 결과와 남은 제한을 짧게 정리해줘.

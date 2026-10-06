@@ -1170,8 +1170,14 @@ namespace SubTerra.App.UI.Sell
             return new Piece { Mask = mask, Shade = shade };
         }
 
-        // 어두운 남색 패널 + 절제된 육각형 무늬 + 위쪽 옅은 청록 번짐 + 각진 금속 모서리 프레임.
         private static void BuildPanelLayers(RectTransform parent, MineResetTimedPopupSkin skin)
+        {
+            BuildPanelLayers(parent, skin, CardSize);
+        }
+
+        // 어두운 남색 패널 + 절제된 육각형 무늬 + 위쪽 옅은 청록 번짐 + 각진 금속 모서리 프레임.
+        // 보관함 팝업(B-138)도 같은 껍데기를 쓴다.
+        internal static void BuildPanelLayers(RectTransform parent, MineResetTimedPopupSkin skin, Vector2 cardSize)
         {
             var inset = ResourceSellUi.Image(parent, "PanelBase", null, ResourceSellUi.Card);
             inset.rectTransform.offsetMin = new Vector2(10f, 10f);
@@ -1190,7 +1196,7 @@ namespace SubTerra.App.UI.Sell
             hex.rectTransform.offsetMax = new Vector2(-24f, -24f);
 
             var wash = ResourceSellUi.AddImage(
-                ResourceSellUi.Centered(parent, "TopWash", new Vector2(0f, CardSize.y * 0.5f - 120f), new Vector2(CardSize.x * 0.8f, 240f)),
+                ResourceSellUi.Centered(parent, "TopWash", new Vector2(0f, cardSize.y * 0.5f - 120f), new Vector2(cardSize.x * 0.8f, 240f)),
                 ResourceSellArt.Soft(), ResourceSellUi.WithAlpha(ResourceSellUi.Teal, 0.06f));
             wash.raycastTarget = false;
 
