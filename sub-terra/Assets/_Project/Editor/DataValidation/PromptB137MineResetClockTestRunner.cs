@@ -20,7 +20,7 @@ namespace SubTerra.App.Editor.DataValidation
                 if (EditorApplication.isCompiling || EditorApplication.isPlayingOrWillChangePlaymode || !File.Exists(flag)) return;
                 var mode = File.ReadAllText(flag).Trim();
                 File.Delete(flag);
-                Run(mode == "play" || mode == "playall", mode == "playall");
+                Run(mode == "play" || mode == "playall" || mode == "frame", mode == "playall", mode == "frame");
             };
         }
 
@@ -40,7 +40,7 @@ namespace SubTerra.App.Editor.DataValidation
             Run(true);
         }
 
-        private static void Run(bool runPlayMode, bool allPlayMode = false)
+        private static void Run(bool runPlayMode, bool allPlayMode = false, bool frameOnly = false)
         {
             ReleaseRunner();
             if (runPlayMode)
@@ -72,10 +72,11 @@ namespace SubTerra.App.Editor.DataValidation
                 groupNames = runPlayMode && allPlayMode
                     ? null
                     : runPlayMode
-                    ? new[] { "SubTerra.App.Tests.PlayMode.PromptB137MineResetClockPlayModeTests" }
+                    ? new[] { frameOnly ? "SubTerra.App.Tests.PlayMode.PromptB137MineResetClockPlayModeTests.Clock_ThreeResolutions_FiveStates_WithHud" : "SubTerra.App.Tests.PlayMode.PromptB137MineResetClockPlayModeTests" }
                     : new[]
                     {
                         "SubTerra.App.Tests.UI.MineResetClockStyleTests",
+                        "SubTerra.App.Tests.UI.MineResetClockPowerTimelineTests",
                         "SubTerra.App.Tests.UI.MineResetClockViewTests",
                         "SubTerra.App.Tests.UI.MineResetTimedPopupTests",
                         "SubTerra.App.Tests.UI.MineResetClockIntroTests",

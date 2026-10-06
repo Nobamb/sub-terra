@@ -200,7 +200,9 @@ namespace SubTerra.App.Integration
                 yield break;
             }
 
-            if (!new UnitySceneLoader().Load(SceneNames.SurfaceBase))
+            // 광산 시계는 지상 Scene 로드 전에 먼저 꺼진다.
+            var surfaceLoader = runtime != null ? runtime.CreateSurfaceSceneLoader() : new UnitySceneLoader();
+            if (!surfaceLoader.Load(SceneNames.SurfaceBase))
             {
                 // Build 설정 이상에도 플레이어가 영구 행동불능이 되지 않도록 Mine 안전 지점으로 폴백한다.
                 gameState?.SetRunLifecyclePhase(RunLifecyclePhase.Active);

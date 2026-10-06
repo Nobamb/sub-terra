@@ -83,6 +83,10 @@ namespace SubTerra.App.UI.HUD
         private RectTransform popupCard;
         private Image popupBlocker;
         private bool sessionVisible;
+        private bool departing;
+
+        /// <summary>시계가 켜져 있거나 꺼지는 연출 중이면 true. 지상 이동 전에 꺼질 때까지 기다릴지 판단한다.</summary>
+        public bool IsClockOnScreen => clockRoot != null && clockRoot.activeSelf;
 
         public static MineResetClockOverlay Create(Transform parent)
         {
@@ -120,11 +124,28 @@ namespace SubTerra.App.UI.HUD
         public void SetSessionVisible(bool visible)
         {
             sessionVisible = visible;
+            // 세션이 끝나면 이동 예약은 의미가 없다.
+            if (!visible) departing = false;
             if (!visible && popupRoot != null)
             {
                 CloseImmediately();
             }
 
+            RefreshFromState();
+        }
+
+        /// <summary>지상으로 떠나기 직전에 호출한다. 씬이 바뀌기 전에 전원 OFF 연출을 시작한다.</summary>
+        public void BeginDeparture()
+        {
+            departing = true;
+            RefreshFromState();
+        }
+
+        /// <summary>이동이 취소·실패했을 때 호출한다. 광산 안이면 시계가 다시 켜진다.</summary>
+        public void EndDeparture()
+        {
+            if (!departing) return;
+            departing = false;
             RefreshFromState();
         }
 
@@ -147,14 +168,16 @@ namespace SubTerra.App.UI.HUD
 
             var runtime = SaveRuntimeController.Instance;
             var clockOn = sessionVisible
+                && !departing
                 && runtime != null
                 && runtime.ActiveSlot > 0
                 && runtime.IsMineResetClockVisible;
-            clockRoot.SetActive(clockOn);
             if (!clockOn)
             {
+                if (clockRoot.activeSelf && clockView != null) clockView.SetPowered(false);
                 return;
             }
+            if (!clockRoot.activeSelf) clockRoot.SetActive(true);
 
             if (labelText != null)
             {
@@ -174,6 +197,7 @@ namespace SubTerra.App.UI.HUD
                 }
                 clockView.SetFormattedClock(MineResetService.FormatClock(
                     runtime.MineResetRemainingSeconds));
+                clockView.SetPowered(true, !Application.isPlaying);
             }
         }
 
@@ -351,7 +375,7 @@ namespace SubTerra.App.UI.HUD
 
             clockView = clockRoot.AddComponent<MineResetClockView>();
             clockView.Build();
-            labelText = CreateText(clockRoot.transform, "Label", new Vector2(0f, -9f),
+            labelText = CreateText(clockRoot.transform.Find("Window/Content/Readout"), "Label", new Vector2(0f, -9f),
                 new Vector2(260f, 22f), 16f, font, LabelColor, FontStyles.Normal);
             labelText.alignment = TextAlignmentOptions.Center;
             labelText.text = LocalizationService.Get("mine_reset.clock.label", "광산 초기화까지");
