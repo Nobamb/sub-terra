@@ -13,6 +13,14 @@ Project code and assets primarily live under:
 
 sub-terra/Assets/\_Project/
 
+## Primary checkout preference
+
+- The user wants Unity Hub's first project to show ongoing work and latest main.
+- Use this primary repository checkout and its `sub-terra/` Unity project by default.
+- Do not move new work into a separate worktree unless the user requests it.
+- Before syncing main, preserve local changes and verify the actual project path.
+- See `work_process/primary_project_20261006.md` for the preserved local work and current setup.
+
 ## Sources of truth
 
 Before making changes, use these documents as authoritative:

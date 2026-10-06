@@ -7,7 +7,7 @@ Shader "SubTerra/MineRoundedCorners"
         _NormalMap ("Normal map", 2D) = "bump" {}
         _Color ("Tint", Color) = (1,1,1,1)
         _CornerMap ("Exposed corners", 2D) = "black" {}
-        _CornerRadius ("Corner radius in cells", Range(0,0.15)) = 0.065
+        _CornerRadius ("Corner radius in cells", Range(0,0.15)) = 0.10
         _UseLighting ("Use 2D lights", Float) = 0
     }
     SubShader
