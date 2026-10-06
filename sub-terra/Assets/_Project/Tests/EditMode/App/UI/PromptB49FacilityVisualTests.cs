@@ -23,9 +23,7 @@ namespace SubTerra.App.Tests.UI
             Assert.That(FacilityGroundedVisual.ResolveArtwork(null, DataIds.Buildings.OutpostCoreBasic), Is.SameAs(sprite));
             Assert.That(FacilityGroundedVisual.TryGetGeometry(sprite, DataIds.Buildings.OutpostCoreBasic,
                 new Vector2Int(1, 2), out _, out var scale), Is.True);
-            Vector2[] vertices = sprite.vertices;
-            var bounds = new Bounds(vertices[0], Vector3.zero);
-            foreach (var vertex in vertices) bounds.Encapsulate(vertex);
+            var bounds = FacilityGroundedVisual.GetVisibleBounds(sprite);
             Assert.That(bounds.size.x * scale.x, Is.LessThanOrEqualTo(0.93f));
             Assert.That(bounds.size.y * scale.y, Is.InRange(1.55f, 1.79f));
             Assert.That(scale.x, Is.EqualTo(scale.y));
@@ -40,6 +38,40 @@ namespace SubTerra.App.Tests.UI
             PromptB49FacilityVisualBuilder.OutpostPrefabPath,
             PromptB49FacilityVisualBuilder.ClinicPrefabPath
         };
+
+        [TestCase("Charger", "ChargerGrounded", 2, 2)]
+        [TestCase("Storage", "StorageGrounded", 1, 1)]
+        [TestCase("OutpostCore", "OutpostCoreTall", 1, 2)]
+        public void GroundedFacility_MenuPreviewAndPlacedArtworkMatch(string dataName, string spriteName, int width, int height)
+        {
+            var data = AssetDatabase.LoadAssetAtPath<BuildingData>(
+                "Assets/_Project/Data/Buildings/Building_" + dataName + "_Basic.asset");
+            var expected = Resources.Load<Sprite>("Facilities/" + spriteName);
+            Assert.That(data, Is.Not.Null);
+            Assert.That(data.Icon, Is.SameAs(expected), "Menu list and details use the catalog icon.");
+            var scene = UnityEditor.SceneManagement.EditorSceneManager.NewPreviewScene();
+            GameObject placed = null;
+            GameObject previewRoot = null;
+            try
+            {
+                placed = (GameObject)PrefabUtility.InstantiatePrefab(data.RuntimePrefab, scene);
+                var footprint = new Vector2Int(width, height);
+                FacilityGroundedVisual.Apply(placed.transform, data.Id, footprint);
+                var artwork = placed.transform.Find("VisualRoot/Artwork").GetComponent<SpriteRenderer>();
+                previewRoot = new GameObject("GroundedPreview", typeof(SpriteRenderer), typeof(BuildingPlacementPreview));
+                UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(previewRoot, scene);
+                var preview = previewRoot.GetComponent<BuildingPlacementPreview>();
+                preview.ConfigureFromPrefab(data.RuntimePrefab, data.Id, footprint);
+                Assert.That(artwork.sprite, Is.SameAs(expected));
+                Assert.That(previewRoot.GetComponent<SpriteRenderer>().sprite, Is.SameAs(expected));
+            }
+            finally
+            {
+                if (placed != null) Object.DestroyImmediate(placed);
+                if (previewRoot != null) Object.DestroyImmediate(previewRoot);
+                UnityEditor.SceneManagement.EditorSceneManager.ClosePreviewScene(scene);
+            }
+        }
 
         private static readonly string[] TargetBuildingDataPaths =
         {
@@ -57,9 +89,10 @@ namespace SubTerra.App.Tests.UI
         [TestCase("ChargerGrounded", 2, 2)]
         [TestCase("ChargerGrounded", 1, 1)]
         [TestCase("StorageGrounded", 1, 1)]
+        [TestCase("OutpostCoreTall", 1, 2)]
         public void Facility_ActualOpaquePixelsTouchFoundation(string name, int width, int height)
         {
-            bool replacement = name.EndsWith("Grounded");
+            bool replacement = name.EndsWith("Grounded") || name == "OutpostCoreTall";
             string pngPath = replacement ? "Assets/_Project/Resources/Facilities/" + name + ".png"
                 : "Assets/_Project/Art/Facilities/MVP/" + name + "_basic_cartoon_v2.png";
             var texture = new Texture2D(2, 2);
@@ -76,13 +109,15 @@ namespace SubTerra.App.Tests.UI
                     for (int x = 0; x < texture.width; x++)
                         if (pixels[y * texture.width + x].a >= 64) bottom = Mathf.Min(bottom, y);
                 Assert.That(bottom, Is.GreaterThan(0), "This source PNG has transparent space below its feet.");
-                string kind = name == "ChargerGrounded" ? "charger" : name == "StorageGrounded" ? "storage" : name;
+                string kind = name == "ChargerGrounded" ? "charger" : name == "StorageGrounded" ? "storage"
+                    : name == "OutpostCoreTall" ? "outpost_core" : name;
                 string id = "building." + kind + ".basic";
                 Assert.That(FacilityGroundedVisual.TryGetGeometry(sprite, id, new Vector2Int(width, height),
                     out var position, out var scale), Is.True);
                 float actualFeet = position.y + (bottom - sprite.pivot.y) / sprite.pixelsPerUnit * scale.y;
                 float ground = -height * 0.5f;
-                Assert.That(actualFeet, Is.EqualTo(ground + FacilityFoundationVisual.ArtworkContactHeight).Within(0.002f));
+                float contact = name == "OutpostCoreTall" ? -0.08f : FacilityFoundationVisual.ArtworkContactHeight;
+                Assert.That(actualFeet, Is.EqualTo(ground + contact).Within(0.002f));
                 Assert.That(actualFeet, Is.LessThan(ground + 0.04f), "Feet must overlap the top of the plate.");
             }
             finally { if (sprite != null) Object.DestroyImmediate(sprite); Object.DestroyImmediate(texture); }
@@ -257,7 +292,7 @@ namespace SubTerra.App.Tests.UI
                 Assert.That(prefab, Is.Not.Null, TargetPrefabPaths[i]);
                 SpriteRenderer artwork = FindPrimaryRenderer(prefab.transform.Find("VisualRoot"));
                 Assert.That(artwork, Is.Not.Null, TargetPrefabPaths[i]);
-                Assert.That(data.Icon, Is.SameAs(artwork.sprite), TargetBuildingDataPaths[i]);
+                Assert.That(data.Icon, Is.SameAs(FacilityGroundedVisual.ResolveArtwork(artwork.sprite, data.Id)), TargetBuildingDataPaths[i]);
             }
         }
 

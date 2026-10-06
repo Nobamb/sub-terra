@@ -18,7 +18,7 @@ MonoBehaviour:
     \uC720\uB3C5 \uAC00\uC2A4 \uC815\uD654 \uC548\uC804\uC9C0\uB300\uB97C \uD615\uC131\uD558\uBA70
     \uD0D0\uC0AC \uCCB4\uD06C\uD3EC\uC778\uD2B8 \uC5ED\uD560\uC744 \uD569\uB2C8\uB2E4."
   runtimePrefab: {fileID: 5310527296871149544, guid: f78e346ee8ac03c4e9a60a46a532574a, type: 3}
-  icon: {fileID: 21300000, guid: 606582aba17a0ef42b0789c8f6a27410, type: 3}
+  icon: {fileID: 21300000, guid: 534ad73f2a9f4223b7bb1087e76db9fd, type: 3}
   powerDraw: 5
   buildCosts:
   - itemId: mineral.copper

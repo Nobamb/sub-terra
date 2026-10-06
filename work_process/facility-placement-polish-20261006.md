@@ -6,6 +6,17 @@
 - 모서리 10% PR #161은 별도로 유지한다. 로컬 폰트 변경은 복원해 두었지만 시설 커밋에는 제외한다. 백업·사다리 개인 작업 파일도 제외한다.
 - 후속 범위: 건설 목록·상세 아이콘과 실제 설치 미리보기의 그림을 일치시키고, 전진기지의 불투명 바닥 경계를 측정해 접점을 확인한다. 설치 규격과 원본 시설 그림은 유지한다.
 
+### 건설 메뉴·전진기지 후속 보완
+
+- PR #162: https://github.com/Nobamb/sub-terra/pull/162
+- `Refresh Grounded Building Menu Icons` 메뉴는 충전기·보관함·전진기지 `BuildingData`의 icon만 새 Resources Sprite로 갱신하고 각 에셋만 저장한다. 공용 SaveAssets, UI 프리팹 재생성, 다른 씬 저장은 하지 않는다.
+- 건설 목록과 상세 아이콘은 같은 `BuildingData.Icon`을 사용하며 `preserveAspect`를 활성화한다. 설치 미리보기·설치·복원은 기존 `FacilityGroundedVisual.ResolveArtwork`를 공유한다.
+- 전진기지 PNG 948×1659의 알파 64 이상 경계는 좌하단 좌표 `(58,55)-(891,1596)`이다. 투명 하단 55px를 제외하고 실제 발끝을 지면 -0.08칸에 정렬한다. 그림·1×2 점유·설치 비용·저장 규칙은 변경하지 않는다.
+- 원격 main 기반 PR 분리 전 폰트 변경은 stash `dd632e5ba2527a3b5114e7d19be2ec6979577d9d`에 추가 보존했고, 동일 변경을 작업 폴더에 재적용했다. 폰트는 PR에서 제외한다.
+- 후속 검증: Unity Editor에서 아이콘 3종의 메뉴·미리보기·설치 그림 일치, 전진기지 원본 PNG의 불투명 발끝 접점, 1×2 내부 외형 크기, 6종 시설 아이콘 연결, 건설창 기존 구조 검사 등 테스트 메서드 7개를 직접 실행해 통과했다. 정식 Test Runner 실행 결과로 확대하지 않는다.
+- 실제 불투명 발끝 월드 높이: 충전기·보관함 `-0.03999996`, 전진기지 `-0.08000004`. 임시 PreviewScene 렌더는 `work_process/images/facility_menu_outpost_20261006.png`, 검사 기록은 `work_process/facility-followup-verification-20261006.txt`에 보존한다. 활성 씬의 dirty 상태는 검사 전후 모두 false였으며 씬·프리팹은 저장하지 않았다.
+- 이번 임시 검증 스크립트와 메타는 모두 삭제했다. 전체 테스트·PlayMode 완주·Windows 빌드는 실행하지 않았다. Unity의 기존 Library를 유지했으며 검증을 위해 캐시를 삭제하거나 전체 재생성하지 않았다.
+
 첫 번째 Unity Hub 프로젝트 `C:\Users\jeone\sub-terra\sub-terra`에서 작업한다.
 
 ## 적용 범위

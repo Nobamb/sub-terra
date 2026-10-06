@@ -94,6 +94,8 @@ namespace SubTerra.Gameplay.Building
                 pixels = Rect.MinMaxRect(173f, 84f, 1067f, 1220f);
             else if (texture.name == "StorageGrounded" && texture.width == 1315 && texture.height == 1196)
                 pixels = Rect.MinMaxRect(57f, 89f, 1258f, 1101f);
+            else if (texture.name == "OutpostCoreTall" && texture.width == 948 && texture.height == 1659)
+                pixels = Rect.MinMaxRect(58f, 55f, 891f, 1596f);
             if (pixels.width > 0f)
             {
                 Vector2 min = (Vector2.Max(pixels.min, sprite.rect.min) - sprite.rect.min - sprite.pivot) / sprite.pixelsPerUnit;

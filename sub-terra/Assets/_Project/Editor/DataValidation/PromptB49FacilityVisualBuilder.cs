@@ -76,6 +76,16 @@ namespace SubTerra.App.Editor.DataValidation
             AssetDatabase.SaveAssets();
         }
 
+        [MenuItem("SubTerra/Facilities/Refresh Grounded Building Menu Icons")]
+        public static void RefreshGroundedBuildingMenuIcons()
+        {
+            foreach (var kind in new[] { FacilityVisualKind.Charger, FacilityVisualKind.Storage, FacilityVisualKind.OutpostCore })
+            {
+                UpdateBuildingDataIcon(kind);
+                AssetDatabase.SaveAssetIfDirty(AssetDatabase.LoadAssetAtPath<BuildingData>(GetBuildingDataPath(kind)));
+            }
+        }
+
         private static void RefreshGeometryOnly(string path, string id, Vector2Int footprint)
         {
             GameObject root = PrefabUtility.LoadPrefabContents(path);
