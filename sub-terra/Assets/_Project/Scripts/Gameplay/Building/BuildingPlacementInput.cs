@@ -43,7 +43,8 @@ namespace SubTerra.Gameplay.Building
             if (cameraToUse == null) return;
             if (preview != null)
             {
-                preview.ConfigureFromPrefab(placementSystem.Selection.RuntimePrefab);
+                preview.ConfigureFromPrefab(placementSystem.Selection.RuntimePrefab,
+                    placementSystem.Selection.BuildingId, placementSystem.Selection.Footprint);
             }
             Vector3 screen = Mouse.current.position.ReadValue();
             Vector3 world = cameraToUse.ScreenToWorldPoint(new Vector3(screen.x, screen.y, -cameraToUse.transform.position.z));

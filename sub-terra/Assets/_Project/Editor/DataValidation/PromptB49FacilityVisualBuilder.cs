@@ -58,6 +58,35 @@ namespace SubTerra.App.Editor.DataValidation
             AssetDatabase.Refresh();
         }
 
+        [MenuItem("SubTerra/Facilities/Refresh Charger Storage And Outpost")]
+        public static void RefreshChargerStorageAndOutpost()
+        {
+            RefreshGeometryOnly(ChargerPrefabPath, "building.charger.basic", new Vector2Int(2, 2));
+            RefreshGeometryOnly(StoragePrefabPath, "building.storage.basic", Vector2Int.one);
+            RefreshGeometryOnly(OutpostPrefabPath, "building.outpost_core.basic", new Vector2Int(1, 2));
+            UpdateBuildingDataIcon(FacilityVisualKind.Charger);
+            UpdateBuildingDataIcon(FacilityVisualKind.Storage);
+            UpdateBuildingDataIcon(FacilityVisualKind.OutpostCore);
+            var definition = AssetDatabase.LoadAssetAtPath<BuildingPlacementDefinition>(
+                "Assets/_Project/Data/Buildings/Placement/charger_basicPlacement.asset");
+            var serialized = new SerializedObject(definition);
+            serialized.FindProperty("footprint").vector2IntValue = new Vector2Int(2, 2);
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(definition);
+            AssetDatabase.SaveAssets();
+        }
+
+        private static void RefreshGeometryOnly(string path, string id, Vector2Int footprint)
+        {
+            GameObject root = PrefabUtility.LoadPrefabContents(path);
+            try
+            {
+                FacilityGroundedVisual.Apply(root.transform, id, footprint);
+                PrefabUtility.SaveAsPrefabAsset(root, path);
+            }
+            finally { PrefabUtility.UnloadPrefabContents(root); }
+        }
+
         public static string Build()
         {
             ApplyAllPrefabs();
@@ -257,6 +286,17 @@ namespace SubTerra.App.Editor.DataValidation
         private static void ApplyGroundedArtworkGeometry(
             Transform artwork, Sprite sprite, FacilityVisualKind kind)
         {
+            string id = kind == FacilityVisualKind.Charger ? "building.charger.basic"
+                : kind == FacilityVisualKind.Storage ? "building.storage.basic"
+                : kind == FacilityVisualKind.OutpostCore ? "building.outpost_core.basic" : null;
+            Vector2Int footprint = kind == FacilityVisualKind.Charger ? new Vector2Int(2, 2)
+                : kind == FacilityVisualKind.OutpostCore ? new Vector2Int(1, 2) : Vector2Int.one;
+            if (FacilityGroundedVisual.TryGetGeometry(sprite, id, footprint, out var position, out var size))
+            {
+                artwork.localPosition = position;
+                artwork.localScale = size;
+                return;
+            }
             bool isLargeFacility = kind == FacilityVisualKind.Clinic
                 || kind == FacilityVisualKind.OutpostCore;
             float maxWidth = kind == FacilityVisualKind.OutpostCore
@@ -280,10 +320,10 @@ namespace SubTerra.App.Editor.DataValidation
             return kind switch
             {
                 FacilityVisualKind.Light => "Assets/_Project/Art/Facilities/MVP/light_basic_cartoon_v3.png",
-                FacilityVisualKind.Charger => "Assets/_Project/Art/Facilities/MVP/charger_basic_cartoon_v2.png",
-                FacilityVisualKind.Storage => "Assets/_Project/Art/Facilities/MVP/storage_basic_cartoon_v2.png",
+                FacilityVisualKind.Charger => "Assets/_Project/Resources/Facilities/ChargerGrounded.png",
+                FacilityVisualKind.Storage => "Assets/_Project/Resources/Facilities/StorageGrounded.png",
                 FacilityVisualKind.Settlement => "Assets/_Project/Art/Facilities/MVP/settlement_console_cartoon_v3.png",
-                FacilityVisualKind.OutpostCore => "Assets/_Project/Art/Facilities/MVP/outpost_core_cartoon_v3.png",
+                FacilityVisualKind.OutpostCore => "Assets/_Project/Resources/Facilities/OutpostCoreTall.png",
                 FacilityVisualKind.Clinic => "Assets/_Project/Art/Facilities/MVP/clinic_basic_cartoon_v3.png",
                 _ => throw new ArgumentOutOfRangeException(nameof(kind))
             };

@@ -15,6 +15,22 @@ namespace SubTerra.App.Tests.UI
     /// <summary>prompt-B 49: 시설 비주얼·근접 말풍선·가이드 E키 안내.</summary>
     public sealed class PromptB49FacilityVisualTests
     {
+        [Test]
+        public void OutpostTallArtwork_UsesMostOfTwoCellHeightWithoutExceedingOneCellWidth()
+        {
+            Sprite sprite = Resources.Load<Sprite>("Facilities/OutpostCoreTall");
+            Assert.That(sprite, Is.Not.Null);
+            Assert.That(FacilityGroundedVisual.ResolveArtwork(null, DataIds.Buildings.OutpostCoreBasic), Is.SameAs(sprite));
+            Assert.That(FacilityGroundedVisual.TryGetGeometry(sprite, DataIds.Buildings.OutpostCoreBasic,
+                new Vector2Int(1, 2), out _, out var scale), Is.True);
+            Vector2[] vertices = sprite.vertices;
+            var bounds = new Bounds(vertices[0], Vector3.zero);
+            foreach (var vertex in vertices) bounds.Encapsulate(vertex);
+            Assert.That(bounds.size.x * scale.x, Is.LessThanOrEqualTo(0.93f));
+            Assert.That(bounds.size.y * scale.y, Is.InRange(1.55f, 1.79f));
+            Assert.That(scale.x, Is.EqualTo(scale.y));
+        }
+
         private static readonly string[] TargetPrefabPaths =
         {
             PromptB49FacilityVisualBuilder.LightPrefabPath,
@@ -34,6 +50,82 @@ namespace SubTerra.App.Tests.UI
             "Assets/_Project/Data/Buildings/Building_OutpostCore_Basic.asset",
             "Assets/_Project/Data/Buildings/Building_Clinic_Basic.asset"
         };
+
+        [TestCase("charger", 2, 2)]
+        [TestCase("charger", 1, 1)]
+        [TestCase("storage", 1, 1)]
+        [TestCase("ChargerGrounded", 2, 2)]
+        [TestCase("ChargerGrounded", 1, 1)]
+        [TestCase("StorageGrounded", 1, 1)]
+        public void Facility_ActualOpaquePixelsTouchFoundation(string name, int width, int height)
+        {
+            bool replacement = name.EndsWith("Grounded");
+            string pngPath = replacement ? "Assets/_Project/Resources/Facilities/" + name + ".png"
+                : "Assets/_Project/Art/Facilities/MVP/" + name + "_basic_cartoon_v2.png";
+            var texture = new Texture2D(2, 2);
+            Sprite sprite = null;
+            try
+            {
+                Assert.That(texture.LoadImage(System.IO.File.ReadAllBytes(pngPath)), Is.True);
+                texture.name = replacement ? name : name + "_basic_cartoon_v2";
+                sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height),
+                    new Vector2(0.2f, 0.8f), 100f, 0, SpriteMeshType.FullRect);
+                Color32[] pixels = texture.GetPixels32();
+                int bottom = texture.height;
+                for (int y = 0; y < texture.height; y++)
+                    for (int x = 0; x < texture.width; x++)
+                        if (pixels[y * texture.width + x].a >= 64) bottom = Mathf.Min(bottom, y);
+                Assert.That(bottom, Is.GreaterThan(0), "This source PNG has transparent space below its feet.");
+                string kind = name == "ChargerGrounded" ? "charger" : name == "StorageGrounded" ? "storage" : name;
+                string id = "building." + kind + ".basic";
+                Assert.That(FacilityGroundedVisual.TryGetGeometry(sprite, id, new Vector2Int(width, height),
+                    out var position, out var scale), Is.True);
+                float actualFeet = position.y + (bottom - sprite.pivot.y) / sprite.pixelsPerUnit * scale.y;
+                float ground = -height * 0.5f;
+                Assert.That(actualFeet, Is.EqualTo(ground + FacilityFoundationVisual.ArtworkContactHeight).Within(0.002f));
+                Assert.That(actualFeet, Is.LessThan(ground + 0.04f), "Feet must overlap the top of the plate.");
+            }
+            finally { if (sprite != null) Object.DestroyImmediate(sprite); Object.DestroyImmediate(texture); }
+        }
+
+        [TestCase("ChargerGrounded", "building.charger.basic", 2)]
+        [TestCase("StorageGrounded", "building.storage.basic", 1)]
+        public void Facility_ReplacementBaseIsLevelAndNeedsNoSeparatePlate(string name, string id, int size)
+        {
+            var texture = new Texture2D(2, 2);
+            Sprite sprite = null;
+            var root = new GameObject("GroundedBaseTest");
+            try
+            {
+                texture.LoadImage(System.IO.File.ReadAllBytes("Assets/_Project/Resources/Facilities/" + name + ".png"));
+                texture.name = name;
+                sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f), 100f);
+                var source = root.AddComponent<SpriteRenderer>();
+                source.sprite = sprite;
+                Bounds bounds = FacilityGroundedVisual.GetVisibleBounds(sprite);
+                FacilityGroundedVisual.TryGetGeometry(sprite, id, new Vector2Int(size, size), out _, out var scale);
+                var pixels = texture.GetPixels32();
+                int lowest = texture.height, highest = 0;
+                foreach (float fraction in new[] { 0.15f, 0.3f, 0.5f, 0.7f, 0.85f })
+                {
+                    int x = Mathf.RoundToInt((bounds.min.x + bounds.size.x * fraction) * 100f + sprite.pivot.x);
+                    int bottom = texture.height;
+                    for (int y = 0; y < texture.height; y++)
+                        if (pixels[y * texture.width + x].a >= 64) { bottom = y; break; }
+                    Assert.That(bottom, Is.LessThan(texture.height));
+                    lowest = Mathf.Min(lowest, bottom);
+                    highest = Mathf.Max(highest, bottom);
+                }
+                Assert.That((highest - lowest) / 100f * scale.y, Is.LessThan(0.035f), "The full base must be level, not one diagonal foot.");
+                var foundation = FacilityGroundedVisual.ApplyFoundation(root.transform, source, id, new Vector2Int(size, size));
+                foundation.BuildVisuals();
+                Assert.That(foundation.transform.Find("ContactShadow").GetComponent<SpriteRenderer>().enabled, Is.True);
+                Assert.That(foundation.transform.Find("PlateOutline").GetComponent<SpriteRenderer>().enabled, Is.False);
+                Assert.That(foundation.transform.Find("PlateBody").GetComponent<SpriteRenderer>().enabled, Is.False);
+                Assert.That(FacilityGroundedVisual.ResolveArtwork(null, id), Is.Not.Null);
+            }
+            finally { Object.DestroyImmediate(root); if (sprite != null) Object.DestroyImmediate(sprite); Object.DestroyImmediate(texture); }
+        }
 
         [Test]
         public void PromptB49_OutpostPlacement_UsesNarrowVerticalFootprint()
@@ -98,24 +190,47 @@ namespace SubTerra.App.Tests.UI
 
                     var instance = Object.Instantiate(prefab);
                     created.Add(instance);
+                    string facilityId = path == PromptB49FacilityVisualBuilder.ChargerPrefabPath ? DataIds.Buildings.ChargerBasic
+                        : path == PromptB49FacilityVisualBuilder.StoragePrefabPath ? DataIds.Buildings.StorageBasic
+                        : path == PromptB49FacilityVisualBuilder.OutpostPrefabPath ? DataIds.Buildings.OutpostCoreBasic : null;
+                    if (facilityId != null)
+                        FacilityGroundedVisual.Apply(instance.transform, facilityId,
+                            path == PromptB49FacilityVisualBuilder.ChargerPrefabPath ? new Vector2Int(2, 2)
+                                : path == PromptB49FacilityVisualBuilder.OutpostPrefabPath ? new Vector2Int(1, 2) : Vector2Int.one);
                     var visualRoot = instance.transform.Find(
                         PromptB49FacilityVisualBuilder.VisualRootName);
                     var bounds = GetActiveSpriteBounds(visualRoot.gameObject);
+                    if (facilityId != null)
+                    {
+                        SpriteRenderer visibleArt = FindPrimaryRenderer(visualRoot);
+                        Bounds localBounds = FacilityGroundedVisual.GetVisibleBounds(visibleArt.sprite);
+                        bounds = new Bounds(visibleArt.transform.TransformPoint(localBounds.center),
+                            Vector3.Scale(localBounds.size, visibleArt.transform.lossyScale));
+                    }
                     bool outpost = path == PromptB49FacilityVisualBuilder.OutpostPrefabPath;
-                    bool largeFacility = path == PromptB49FacilityVisualBuilder.ClinicPrefabPath;
+                    bool largeFacility = path == PromptB49FacilityVisualBuilder.ClinicPrefabPath
+                        || path == PromptB49FacilityVisualBuilder.ChargerPrefabPath;
                     Assert.That(bounds.size.x,
                         outpost ? Is.InRange(0.85f, 0.97f)
+                            : path == PromptB49FacilityVisualBuilder.ChargerPrefabPath ? Is.InRange(1.30f, 1.82f)
                             : largeFacility ? Is.InRange(1.70f, 1.82f)
                                 : Is.InRange(0.80f, 0.98f),
                         path + " width");
                     Assert.That(bounds.min.y,
-                        Is.EqualTo(largeFacility || outpost ? -1.2f : -0.68f).Within(0.015f),
+                        Is.EqualTo(path == PromptB49FacilityVisualBuilder.ClinicPrefabPath ? -1.2f
+                            : path == PromptB49FacilityVisualBuilder.ChargerPrefabPath ? -1.040f
+                                : outpost ? -1.08f : path == PromptB49FacilityVisualBuilder.StoragePrefabPath ? -0.540f : -0.68f).Within(0.015f),
                         path + " rock overlap");
 
                     SpriteRenderer artwork = FindPrimaryRenderer(visualRoot);
                     Assert.That(artwork, Is.Not.Null, path + " authored artwork");
                     string artworkPath = AssetDatabase.GetAssetPath(artwork.sprite);
-                    Assert.That(artworkPath, Does.StartWith("Assets/_Project/Art/Facilities/MVP/"));
+                    string replacementName = path == PromptB49FacilityVisualBuilder.OutpostPrefabPath ? "OutpostCoreTall"
+                        : path == PromptB49FacilityVisualBuilder.ChargerPrefabPath ? "ChargerGrounded"
+                            : path == PromptB49FacilityVisualBuilder.StoragePrefabPath ? "StorageGrounded" : null;
+                    Assert.That(artworkPath, replacementName != null
+                        ? Is.EqualTo("Assets/_Project/Resources/Facilities/" + replacementName + ".png")
+                        : Does.StartWith("Assets/_Project/Art/Facilities/MVP/"));
                     artworkPaths.Add(artworkPath);
                 }
 

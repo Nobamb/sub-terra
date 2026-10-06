@@ -275,7 +275,9 @@ namespace SubTerra.App.UI.Building
             switch (reasonId)
             {
                 case "occupied":
-                    return "다른 시설이나 지형이 차지한 위치입니다.";
+                    return "다른 시설이나 지형과 겹쳐 설치할 수 없습니다.";
+                case "elevator_space":
+                    return "엘리베이터 이동 공간에는 설치할 수 없습니다.";
                 case "missing_ground":
                     return "시설을 지지할 지면이 없습니다.";
                 case "invalid_definition":

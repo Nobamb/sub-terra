@@ -52,6 +52,9 @@ namespace SubTerra.Shared
         public int rotation;
         public int level;
         public float health;
+        // Optional in old saves (zero); records the actual installed footprint.
+        public int footprintWidth;
+        public int footprintHeight;
     }
 
     /// <summary>
