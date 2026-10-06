@@ -1,0 +1,99 @@
+Prompt-B 137 EditMode
+Started: 2026-10-06T15:06:13.3564458+09:00
+RunStarted: sub-terra
+PASS: SubTerra.App.Tests.Save.MineResetServiceTests.CycleClock_FormatsRemainingTimeAndExpiresAtThreeHours
+PASS: SubTerra.App.Tests.Save.MineResetServiceTests.ExactFee_ResetAllowsZeroBalance
+PASS: SubTerra.App.Tests.Save.MineResetServiceTests.Gold800_Reset_SpendsFeeAndReplacesWorldWithEmptyNewSeed
+PASS: SubTerra.App.Tests.Save.MineResetServiceTests.GoldBelowFee_ResetFailsWithoutChangingGoldOrWorld
+PASS: SubTerra.App.Tests.Save.MineResetServiceTests.Migration4To5_StartsFreshCycleWithClockVisible
+PASS: SubTerra.App.Tests.Save.MineResetServiceTests.PaidReset_DoublesFeeAndRestartsThreeHourTimer
+PASS: SubTerra.App.Tests.Save.MineResetServiceTests.Reset_DoesNotMutateInventoryOrUpgrades
+PASS: SubTerra.App.Tests.Save.MineResetServiceTests.ResetClockSession_OnlyRunsInMineScene("Mine_Demo_Integration",True)
+PASS: SubTerra.App.Tests.Save.MineResetServiceTests.ResetClockSession_OnlyRunsInMineScene("SurfaceBase",False)
+PASS: SubTerra.App.Tests.Save.MineResetServiceTests.RuntimeReset_OutsideSurface_FailsWithoutChangingGold
+PASS: SubTerra.App.Tests.Save.MineResetServiceTests.SameOrZeroSeeds_ExhaustRetries_WithoutChangingState
+PASS: SubTerra.App.Tests.Save.MineResetServiceTests.SaveMapper_RoundTripsMineResetCycleFields
+PASS: SubTerra.App.Tests.Save.MineResetServiceTests.TimedReset_IsFreeAndRestoresBaseFee
+PASS: SubTerra.App.Tests.UI.MineResetClockIntroTests.Apply_RotatesOnlyTheHand_AndShakesTheWholeClock
+PASS: SubTerra.App.Tests.UI.MineResetClockIntroTests.Clock_HasRingAndSingleHandOnly_WithSharedCenter
+PASS: SubTerra.App.Tests.UI.MineResetClockIntroTests.Clock_RaycastsAreOff_SoOnlyTheBlockerStopsClicks
+PASS: SubTerra.App.Tests.UI.MineResetClockIntroTests.ClockIntro_PlayFinishesOnce_AndStopNeverInvokesCallback
+PASS: SubTerra.App.Tests.UI.MineResetClockIntroTests.EditMode_ShowSkipsClockAndOpensCard_RepeatedShowKeepsSingleBlocker
+PASS: SubTerra.App.Tests.UI.MineResetClockIntroTests.Timeline_DurationIsAboutOneToOnePointThreeSeconds
+PASS: SubTerra.App.Tests.UI.MineResetClockIntroTests.Timeline_HandTurnsOnceClockwise_ThenWholeClockShakes_ThenFades
+PASS: SubTerra.App.Tests.UI.MineResetClockIntroTests.Timeline_StartsAtZeroScale_PeaksAtOnePointTwo_AndSettlesAtOne
+PASS: SubTerra.App.Tests.UI.MineResetClockStyleTests.FinalPulse_HasOnePointSevenFiveSecondPeriod_AndDoesNotChangeDigits
+PASS: SubTerra.App.Tests.UI.MineResetClockStyleTests.FirstObservation_SnapsToDisplayedBoundary(1801,Normal)
+PASS: SubTerra.App.Tests.UI.MineResetClockStyleTests.FirstObservation_SnapsToDisplayedBoundary(1800,Warning)
+PASS: SubTerra.App.Tests.UI.MineResetClockStyleTests.FirstObservation_SnapsToDisplayedBoundary(1799,Warning)
+PASS: SubTerra.App.Tests.UI.MineResetClockStyleTests.FirstObservation_SnapsToDisplayedBoundary(301,Warning)
+PASS: SubTerra.App.Tests.UI.MineResetClockStyleTests.FirstObservation_SnapsToDisplayedBoundary(300,Critical)
+PASS: SubTerra.App.Tests.UI.MineResetClockStyleTests.FirstObservation_SnapsToDisplayedBoundary(299,Critical)
+PASS: SubTerra.App.Tests.UI.MineResetClockStyleTests.FirstObservation_SnapsToDisplayedBoundary(61,Critical)
+PASS: SubTerra.App.Tests.UI.MineResetClockStyleTests.FirstObservation_SnapsToDisplayedBoundary(60,Final)
+PASS: SubTerra.App.Tests.UI.MineResetClockStyleTests.FirstObservation_SnapsToDisplayedBoundary(59,Final)
+PASS: SubTerra.App.Tests.UI.MineResetClockStyleTests.FirstObservation_SnapsToDisplayedBoundary(1,Final)
+PASS: SubTerra.App.Tests.UI.MineResetClockStyleTests.FirstObservation_SnapsToDisplayedBoundary(0,Final)
+PASS: SubTerra.App.Tests.UI.MineResetClockStyleTests.FirstObservation_SnapsToDisplayedBoundary(10800,Normal)
+PASS: SubTerra.App.Tests.UI.MineResetClockStyleTests.Glyph_UsesStandardSevenSegmentMask(0,63)
+PASS: SubTerra.App.Tests.UI.MineResetClockStyleTests.Glyph_UsesStandardSevenSegmentMask(1,6)
+PASS: SubTerra.App.Tests.UI.MineResetClockStyleTests.Glyph_UsesStandardSevenSegmentMask(2,91)
+PASS: SubTerra.App.Tests.UI.MineResetClockStyleTests.Glyph_UsesStandardSevenSegmentMask(3,79)
+PASS: SubTerra.App.Tests.UI.MineResetClockStyleTests.Glyph_UsesStandardSevenSegmentMask(4,102)
+PASS: SubTerra.App.Tests.UI.MineResetClockStyleTests.Glyph_UsesStandardSevenSegmentMask(5,109)
+PASS: SubTerra.App.Tests.UI.MineResetClockStyleTests.Glyph_UsesStandardSevenSegmentMask(6,125)
+PASS: SubTerra.App.Tests.UI.MineResetClockStyleTests.Glyph_UsesStandardSevenSegmentMask(7,7)
+PASS: SubTerra.App.Tests.UI.MineResetClockStyleTests.Glyph_UsesStandardSevenSegmentMask(8,127)
+PASS: SubTerra.App.Tests.UI.MineResetClockStyleTests.Glyph_UsesStandardSevenSegmentMask(9,111)
+PASS: SubTerra.App.Tests.UI.MineResetClockStyleTests.NaturalBoundary_TransitionsOnceOverOnePointFiveSeconds(1801,1800)
+PASS: SubTerra.App.Tests.UI.MineResetClockStyleTests.NaturalBoundary_TransitionsOnceOverOnePointFiveSeconds(301,300)
+PASS: SubTerra.App.Tests.UI.MineResetClockStyleTests.NaturalBoundary_TransitionsOnceOverOnePointFiveSeconds(61,60)
+PASS: SubTerra.App.Tests.UI.MineResetClockStyleTests.NaturalBoundary_TransitionsOnceOverOnePointFiveSeconds(1802,1799)
+PASS: SubTerra.App.Tests.UI.MineResetClockStyleTests.RepeatedBoundaryAfterInterruptedTransition_UsesCurrentColor
+PASS: SubTerra.App.Tests.UI.MineResetClockStyleTests.ResetIncreaseAndJump_ClearOldAnimation
+PASS: SubTerra.App.Tests.UI.MineResetClockViewTests.DigitCarry_UsesExistingClockFloor("00:10:00","00:09:59")
+PASS: SubTerra.App.Tests.UI.MineResetClockViewTests.DigitCarry_UsesExistingClockFloor("00:01:00","00:00:59")
+PASS: SubTerra.App.Tests.UI.MineResetClockViewTests.Display_HasCorrectLitMasksAndFixedPositions("00:00:00")
+PASS: SubTerra.App.Tests.UI.MineResetClockViewTests.Display_HasCorrectLitMasksAndFixedPositions("03:00:00")
+PASS: SubTerra.App.Tests.UI.MineResetClockViewTests.Display_HasCorrectLitMasksAndFixedPositions("02:59:59")
+PASS: SubTerra.App.Tests.UI.MineResetClockViewTests.Display_HasCorrectLitMasksAndFixedPositions("00:09:09")
+PASS: SubTerra.App.Tests.UI.MineResetClockViewTests.InvalidClock_PreservesPreviousDisplay(null)
+PASS: SubTerra.App.Tests.UI.MineResetClockViewTests.InvalidClock_PreservesPreviousDisplay("")
+PASS: SubTerra.App.Tests.UI.MineResetClockViewTests.InvalidClock_PreservesPreviousDisplay("0:00:00")
+PASS: SubTerra.App.Tests.UI.MineResetClockViewTests.InvalidClock_PreservesPreviousDisplay("00:60:00")
+PASS: SubTerra.App.Tests.UI.MineResetClockViewTests.InvalidClock_PreservesPreviousDisplay("00:00:60")
+PASS: SubTerra.App.Tests.UI.MineResetClockViewTests.InvalidClock_PreservesPreviousDisplay("xx:00:00")
+PASS: SubTerra.App.Tests.UI.MineResetClockViewTests.Overlay_PreservesTopPlacementAndCanvas_AndUsesSmallLocalizedTitle
+FAIL: SubTerra.App.Tests.UI.MineResetClockViewTests.Pulse_ChangesOnlyFrameAndGlow_NotSegmentsOrColons
+  Expected: 1.0f
+  But was:  0.450000018f
+
+at SubTerra.App.Tests.UI.MineResetClockViewTests.Pulse_ChangesOnlyFrameAndGlow_NotSegmentsOrColons () [0x0012f] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Tests\EditMode\App\UI\MineResetClockViewTests.cs:112
+
+FAIL: SubTerra.App.Tests.UI.MineResetClockViewTests.RepeatedRefresh_DoesNotAdvanceTransition_AndDisableClearsIt
+  Expected: False
+  But was:  True
+
+at SubTerra.App.Tests.UI.MineResetClockViewTests.RepeatedRefresh_DoesNotAdvanceTransition_AndDisableClearsIt () [0x000be] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Tests\EditMode\App\UI\MineResetClockViewTests.cs:85
+
+PASS: SubTerra.App.Tests.UI.MineResetPopupTimelineTests.Breath_IsPeriodicAndBounded
+PASS: SubTerra.App.Tests.UI.MineResetPopupTimelineTests.Close_ContinuesFromPartiallyOpenState
+PASS: SubTerra.App.Tests.UI.MineResetPopupTimelineTests.Close_FoldsPanelBackToCenterLineByReversingOpen
+PASS: SubTerra.App.Tests.UI.MineResetPopupTimelineTests.Close_GlowFadesBeforePanelAndFinishes
+PASS: SubTerra.App.Tests.UI.MineResetPopupTimelineTests.FitScale_ShrinksOnlyWhenScreenIsTooShort
+PASS: SubTerra.App.Tests.UI.MineResetPopupTimelineTests.Open_ContentFadesInLateHalfAndHexOverlapsPanel
+PASS: SubTerra.App.Tests.UI.MineResetPopupTimelineTests.Open_FlashesOnceThenSettlesToIdle
+PASS: SubTerra.App.Tests.UI.MineResetPopupTimelineTests.Open_SettlesWithinRequestedWindowWithoutOvershoot
+PASS: SubTerra.App.Tests.UI.MineResetPopupTimelineTests.Open_StartsAsThinLineThenWidthThenHeight
+PASS: SubTerra.App.Tests.UI.MineResetTimedPopupTests.Background_FillsInsideFrameOnly_WithoutDistortingCaveArt
+PASS: SubTerra.App.Tests.UI.MineResetTimedPopupTests.Hex_IsAboutOnePointFourTimesLargerThanConfirmPopup
+PASS: SubTerra.App.Tests.UI.MineResetTimedPopupTests.Popup_HasOnlyConfirmButton_AndNoClockPlateOrCloseX
+PASS: SubTerra.App.Tests.UI.MineResetTimedPopupTests.Popup_OnlyBlockerAndOkReceiveRaycasts
+PASS: SubTerra.App.Tests.UI.MineResetTimedPopupTests.Popup_StartsHiddenAndUsesSharedMotion
+PASS: SubTerra.App.Tests.UI.MineResetTimedPopupTests.RuntimeTicks_KeepCompletedPopupOnSurfaceOnly("SurfaceBase",True)
+PASS: SubTerra.App.Tests.UI.MineResetTimedPopupTests.RuntimeTicks_KeepCompletedPopupOnSurfaceOnly("MainMenu",False)
+PASS: SubTerra.App.Tests.UI.MineResetTimedPopupTests.ShowThenClose_UsesCommittedTextKeysAndOnlyHidesPopup
+PASS: SubTerra.App.Tests.UI.MineResetTimedPopupTests.SkinAsset_ReferencesExistingArtOnly
+RunFinished: Failed
+Pass: 81 Fail: 2 Skip: 0
+DurationSec: 2.4250328

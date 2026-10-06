@@ -1,0 +1,14 @@
+Prompt-B 137 PlayMode
+Started: 2026-10-06T15:11:18.2558775+09:00
+RunStarted: sub-terra
+FAIL: SubTerra.App.Tests.PlayMode.PromptB137MineResetClockPlayModeTests.Bootstrap_MemorySaveLoad_Reentry_Boundaries_AndSingleExpiry
+  Expected: False
+  But was:  True
+
+at SubTerra.App.Tests.PlayMode.PromptB137MineResetClockPlayModeTests+<Bootstrap_MemorySaveLoad_Reentry_Boundaries_AndSingleExpiry>d__11.MoveNext () [0x0010b] in C:\Users\USER\Desktop\develop\sub-terra\sub-terra\Assets\_Project\Tests\PlayMode\Integration\Bootstrap\PromptB137MineResetClockPlayModeTests.cs:99
+at UnityEngine.TestTools.TestEnumerator+<Execute>d__7.MoveNext () [0x0003a] in .\Library\PackageCache\com.unity.test-framework@1405238725ab\UnityEngine.TestRunner\NUnitExtensions\Attributes\TestEnumerator.cs:44
+
+PASS: SubTerra.App.Tests.PlayMode.PromptB137MineResetClockPlayModeTests.Clock_ThreeResolutions_FiveStates_WithHud
+RunFinished: Failed
+Pass: 1 Fail: 1 Skip: 0
+DurationSec: 7.8343223
