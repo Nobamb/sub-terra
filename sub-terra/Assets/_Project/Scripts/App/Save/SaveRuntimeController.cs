@@ -1214,6 +1214,7 @@ namespace SubTerra.App.Save
                 yield break;
             }
 
+            var previousSceneHandle = SceneManager.GetActiveScene().handle;
             if (!new UnitySceneLoader().Load(load.State.TargetSceneName))
             {
                 CompleteContinue(
@@ -1224,14 +1225,18 @@ namespace SubTerra.App.Save
 
             const int maximumSceneWaitFrames = 300;
             var waitedFrames = 0;
-            while (SceneManager.GetActiveScene().name != load.State.TargetSceneName
+            // LoadScene finishes on a later frame. A same-scene continue must not
+            // restore the outgoing world's provider before its replacement loads.
+            while ((SceneManager.GetActiveScene().name != load.State.TargetSceneName
+                || SceneManager.GetActiveScene().handle == previousSceneHandle)
                 && waitedFrames < maximumSceneWaitFrames)
             {
                 waitedFrames++;
                 yield return null;
             }
 
-            if (SceneManager.GetActiveScene().name != load.State.TargetSceneName)
+            if (SceneManager.GetActiveScene().name != load.State.TargetSceneName
+                || SceneManager.GetActiveScene().handle == previousSceneHandle)
             {
                 CompleteContinue(
                     new ContinueResult(ContinueStatus.SceneLoadFailed, load),

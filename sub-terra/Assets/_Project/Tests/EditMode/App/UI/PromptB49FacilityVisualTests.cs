@@ -304,19 +304,20 @@ namespace SubTerra.App.Tests.UI
         {
             var host = new GameObject("PromptB49_LabelHost");
             var player = new GameObject("PromptB49_Player");
-            var light = CreateBuilding("Light", DataIds.Buildings.LightBasic, Vector3.zero);
-            var support = CreateBuilding("Support", DataIds.Buildings.SupportBasic, new Vector3(0.4f, 0f, 0f));
-            var ladder = CreateBuilding("Ladder", DataIds.Buildings.LadderBasic, new Vector3(-0.4f, 0f, 0f));
+            var testOrigin = new Vector3(1000f, 1000f, 0f);
+            var light = CreateBuilding("Light", DataIds.Buildings.LightBasic, testOrigin);
+            var support = CreateBuilding("Support", DataIds.Buildings.SupportBasic, testOrigin + new Vector3(0.4f, 0f, 0f));
+            var ladder = CreateBuilding("Ladder", DataIds.Buildings.LadderBasic, testOrigin + new Vector3(-0.4f, 0f, 0f));
             var farCharger = CreateBuilding(
                 "FarCharger",
                 DataIds.Buildings.ChargerBasic,
-                new Vector3(20f, 0f, 0f));
+                testOrigin + new Vector3(20f, 0f, 0f));
             try
             {
                 var controller = host.AddComponent<FacilityProximityLabelController>();
                 controller.SetPlayer(player.transform);
 
-                player.transform.position = Vector3.zero;
+                player.transform.position = testOrigin;
                 controller.Refresh();
                 Assert.That(controller.VisibleBubbleCount, Is.EqualTo(1));
                 Assert.That(controller.TryGetVisibleLabel(DataIds.Buildings.LightBasic, out var lightName), Is.True);
@@ -338,6 +339,47 @@ namespace SubTerra.App.Tests.UI
                 Object.DestroyImmediate(ladder);
                 Object.DestroyImmediate(support);
                 Object.DestroyImmediate(light);
+                Object.DestroyImmediate(player);
+                Object.DestroyImmediate(host);
+            }
+        }
+
+        [Test]
+        public void ProximityLabel_RepeatedRefreshDropsDestroyedAndDisabledFacilities()
+        {
+            var host = new GameObject("RefreshLifecycleHost");
+            var player = new GameObject("RefreshLifecyclePlayer");
+            player.transform.position = new Vector3(1000f, 1000f, 0f);
+            var light = CreateBuilding("RefreshLifecycleLight", DataIds.Buildings.LightBasic, player.transform.position);
+            try
+            {
+                var controller = host.AddComponent<FacilityProximityLabelController>();
+                controller.SetPlayer(player.transform);
+                controller.Refresh();
+                controller.Refresh();
+                Assert.That(controller.VisibleBubbleCount, Is.EqualTo(1));
+
+                light.SetActive(false);
+                controller.Refresh();
+                Assert.That(controller.VisibleBubbleCount, Is.Zero);
+                Assert.That(controller.TryGetVisibleLabel(DataIds.Buildings.LightBasic, out _), Is.False);
+
+                light.SetActive(true);
+                controller.Refresh();
+                Assert.That(controller.VisibleBubbleCount, Is.EqualTo(1));
+                Object.DestroyImmediate(light);
+                controller.Refresh();
+                Assert.That(controller.VisibleBubbleCount, Is.Zero);
+                Assert.That(controller.TryGetVisibleLabel(DataIds.Buildings.LightBasic, out _), Is.False);
+
+                host.SetActive(false);
+                host.SetActive(true);
+                controller.Refresh();
+                Assert.That(controller.VisibleBubbleCount, Is.Zero);
+            }
+            finally
+            {
+                if (light != null) Object.DestroyImmediate(light);
                 Object.DestroyImmediate(player);
                 Object.DestroyImmediate(host);
             }

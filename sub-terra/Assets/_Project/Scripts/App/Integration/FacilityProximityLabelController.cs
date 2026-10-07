@@ -23,6 +23,9 @@ namespace SubTerra.App.Integration
         private readonly Dictionary<EntityId, NameBubble> bubbles = new Dictionary<EntityId, NameBubble>();
         private readonly List<Candidate> candidates = new List<Candidate>();
         private readonly List<Rect> accepted = new List<Rect>();
+        private readonly HashSet<EntityId> seen = new HashSet<EntityId>();
+        private readonly HashSet<EntityId> wantedIds = new HashSet<EntityId>();
+        private readonly List<EntityId> stale = new List<EntityId>();
         private Transform bubbleRoot;
 
         public int VisibleBubbleCount { get; private set; }
@@ -75,7 +78,7 @@ namespace SubTerra.App.Integration
             var instances = FindObjectsByType<BuildingInstance>(
                 FindObjectsInactive.Exclude,
                 FindObjectsSortMode.None);
-            var seen = new HashSet<EntityId>();
+            seen.Clear();
             candidates.Clear();
             var squaredRange = range * range;
 
@@ -99,7 +102,7 @@ namespace SubTerra.App.Integration
             // 가까운 시설부터 확정하고, 이미 확정된 이름표와 겹치는 먼 시설의 이름표는 숨겨 가독성을 지킨다.
             candidates.Sort(CompareByDistance);
             accepted.Clear();
-            var wantedIds = new HashSet<EntityId>();
+            wantedIds.Clear();
             for (var i = 0; i < candidates.Count; i++)
             {
                 var candidate = candidates[i];
@@ -167,6 +170,11 @@ namespace SubTerra.App.Integration
             }
 
             bubbles.Clear();
+            candidates.Clear();
+            accepted.Clear();
+            seen.Clear();
+            wantedIds.Clear();
+            stale.Clear();
             VisibleBubbleCount = 0;
         }
 
@@ -300,7 +308,7 @@ namespace SubTerra.App.Integration
         // 이미 사라진 시설의 이름표는 접힌 뒤 지운다.
         private void RemoveStale(HashSet<EntityId> seen)
         {
-            var stale = new List<EntityId>();
+            stale.Clear();
             foreach (var pair in bubbles)
             {
                 var alive = pair.Value != null && pair.Value.IsAlive;
