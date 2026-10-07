@@ -1307,6 +1307,12 @@ namespace SubTerra.App.UI.Outpost
             var navigation = input.navigation;
             navigation.mode = Navigation.Mode.None;
             input.navigation = navigation;
+            // 한글 조합 중 TMP는 표시 문자열에 <u>를 넣는다. 글자 컴포넌트는 리치 텍스트가 꺼져 있어 태그가 글자로 남는다.
+            // 아틀라스가 갱신되면 포커스가 없는 칸의 UpdateLabel도 돌아, 검색 중인 조합 문자가 수량 칸에도 붙는다.
+            input.richText = false;
+            input.readOnly = true;
+            input.onSelect.AddListener(_ => input.readOnly = false);
+            input.onDeselect.AddListener(_ => input.readOnly = true);
             rect.gameObject.SetActive(wasActive);
             return input;
         }

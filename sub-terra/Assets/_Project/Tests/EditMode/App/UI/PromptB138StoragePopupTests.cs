@@ -2,7 +2,9 @@ using NUnit.Framework;
 using SubTerra.App.Inventory;
 using SubTerra.App.Outpost;
 using SubTerra.App.UI.Outpost;
+using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 namespace SubTerra.App.Tests.UI
 {
@@ -281,6 +283,42 @@ namespace SubTerra.App.Tests.UI
             Assert.That(ids, Is.EqualTo(new[] { "mineral.copper", "mineral.iron" }), "중복 없이 화물 → 보관 순");
             Assert.That(StorageTransferPreview.PopIds(cargo, storage, 1).Count, Is.EqualTo(1));
             Assert.That(StorageTransferPreview.PopIds(null, null, 5), Is.Empty);
+        }
+
+        [Test]
+        public void SearchAndQuantityInputs_DoNotRenderImeUnderlineTags()
+        {
+            var root = new GameObject("Canvas", typeof(RectTransform), typeof(Canvas));
+            var events = new GameObject("EventSystem", typeof(EventSystem));
+            try
+            {
+                var popup = StoragePopupView.Create(root.transform);
+                popup.gameObject.SetActive(true);
+                popup.transform.Find("Card").gameObject.SetActive(true);
+                var eventData = new BaseEventData(events.GetComponent<EventSystem>());
+
+                AssertPlainInput(popup, "Card/Content/Controls/MineralPicker/SearchInput", eventData);
+                AssertPlainInput(popup, "Card/Content/Controls/QuantityInput", eventData);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(root);
+                UnityEngine.Object.DestroyImmediate(events);
+            }
+        }
+
+        private static void AssertPlainInput(StoragePopupView popup, string path, BaseEventData eventData)
+        {
+            var input = popup.transform.Find(path).GetComponent<TMP_InputField>();
+            Assert.That(input.richText, Is.False, path + " 리치 텍스트");
+            Assert.That(input.textComponent.richText, Is.False, path + " 글자 리치 텍스트");
+            Assert.That(input.readOnly, Is.True, path + "는 포커스 전에 조합 문자열을 받지 않는다");
+
+            input.OnSelect(eventData);
+            Assert.That(input.readOnly, Is.False, path + "는 포커스 중 입력된다");
+
+            input.OnDeselect(eventData);
+            Assert.That(input.readOnly, Is.True, path + "는 포커스를 잃으면 다시 조합 문자열을 막는다");
         }
 
         private static void AssertMonotonic01(System.Func<float, float> curve, float from, float to, string label)

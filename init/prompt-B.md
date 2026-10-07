@@ -2802,3 +2802,5 @@ PlayMode에서 보관함 시설로 열어 확인해.
 관련 테스트 보강 권장: OutpostTransferQuantityTests, OutpostMineralPickerFilterTests, OutpostPanelPresenterTests, OutpostServiceTests + 새 Timeline 순수 계산 테스트(판매창 PromptB136ResourceSellTests 참고).
 
 완료 보고에는 변경 파일, 레이아웃 정렬 방식, Showbox 타임라인 수치(오픈/클로즈 키타임), 유지한 이체 규칙, 검증 결과와 남은 제한을 짧게 정리해줘.
+
+138-1. 보관함 창에서 특점 자원을 검색하면 검색 입력창과 수량에 "<u></u>"와 같은 글자가 같이 나타나는 버그가 존재하는데 그 문제 수정해줘
