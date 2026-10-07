@@ -25,8 +25,7 @@ namespace SubTerra.App.UI.Building
         [SerializeField] private BuildingMenuEntryVisual[] entries = new BuildingMenuEntryVisual[0];
         [SerializeField] private Image detailIcon;
         [SerializeField] private TMP_Text detailNameText;
-        [SerializeField] private TMP_Text detailPowerText;
-        [SerializeField] private GameObject detailPowerChip;
+        [SerializeField] private TMP_Text detailOperatingConditionText;
         [SerializeField] private GameObject costSection;
         [SerializeField] private BuildingMenuCostRowView[] costRows = new BuildingMenuCostRowView[0];
         [SerializeField] private Image availabilityBanner;
@@ -63,7 +62,7 @@ namespace SubTerra.App.UI.Building
                 return;
             }
 
-            // 필요 전력은 우측 상세(selection)에 이미 표시하므로 목록에는 이름만.
+            // 목록에는 시설 이름만 표시한다.
             var builder = new StringBuilder();
             if (items != null)
             {
@@ -120,7 +119,7 @@ namespace SubTerra.App.UI.Building
             if (selectionText != null)
             {
                 selectionText.text = UsesStructuredLayout
-                    ? "왼쪽 목록에서 설치할 시설을 선택하세요.\n용도, 전력, 필요 자원과 설치 조건이 여기에 표시됩니다."
+                    ? "왼쪽 목록에서 설치할 시설을 선택하세요.\n용도, 필요 자원과 설치 조건이 여기에 표시됩니다."
                     : "시설을 선택하세요.";
             }
 
@@ -141,7 +140,11 @@ namespace SubTerra.App.UI.Building
                 detailNameText.text = "시설 미선택";
             }
 
-            SetActive(detailPowerChip, false);
+            if (detailOperatingConditionText != null)
+            {
+                detailOperatingConditionText.text = string.Empty;
+                SetActive(detailOperatingConditionText.gameObject, false);
+            }
             SetActive(costSection, false);
             HideCostRows(0);
         }
@@ -232,8 +235,7 @@ namespace SubTerra.App.UI.Building
         {
             if (!UsesStructuredLayout
                 || detailIcon == null
-                || detailPowerText == null
-                || detailPowerChip == null
+                || detailOperatingConditionText == null
                 || costSection == null
                 || costRows == null
                 || costRows.Length == 0
@@ -320,12 +322,11 @@ namespace SubTerra.App.UI.Building
 
             selectedCosts = item.Costs;
             detailNameText.text = item.DisplayName;
-            if (detailPowerText != null)
+            if (detailOperatingConditionText != null)
             {
-                detailPowerText.text = BuildingMenuDisplayFormatter.PowerLabel(item.PowerDraw);
+                detailOperatingConditionText.text = BuildingMenuDisplayFormatter.OperatingCondition(item.BuildingId);
+                SetActive(detailOperatingConditionText.gameObject, !string.IsNullOrEmpty(detailOperatingConditionText.text));
             }
-
-            SetActive(detailPowerChip, true);
 
             if (selectionText != null)
             {
@@ -426,11 +427,15 @@ namespace SubTerra.App.UI.Building
         {
             var builder = new StringBuilder()
                 .Append(item.DisplayName)
-                .AppendLine()
+                .AppendLine();
+            var operatingCondition = BuildingMenuDisplayFormatter.OperatingCondition(item.BuildingId);
+            if (!string.IsNullOrEmpty(operatingCondition))
+            {
+                builder.AppendLine(operatingCondition);
+            }
+
+            builder
                 .Append(item.Description)
-                .AppendLine()
-                .Append("전력 소비: ")
-                .Append(item.PowerDraw)
                 .AppendLine()
                 .Append("비용: ");
 

@@ -1,9 +1,11 @@
 using System.Collections;
 using System.IO;
 using NUnit.Framework;
+using SubTerra.App.Core;
 using SubTerra.App.Core.Data;
 using SubTerra.App.UI.Building;
 using SubTerra.App.UI.HUD;
+using SubTerra.Gameplay.Building;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -38,6 +40,34 @@ namespace SubTerra.App.Tests.PlayMode
         public IEnumerator BuildingMenu_StatesAndLayout_AtThreeResolutions()
         {
             yield return VerifyStatesAndInput(true);
+        }
+
+        [UnityTest]
+        public IEnumerator BuildingMenu_ConstructingPoweredFacilityDoesNotSpendPlayerPower()
+        {
+            environment = new UiTestEnvironment();
+            yield return environment.LoadIntegration();
+            var state = GameBootstrapper.Instance.State;
+            var inventory = environment.Save.InventoryService;
+            Assert.That(inventory.TryAddMineralExact(DataIds.Minerals.Copper, 10).DidChange, Is.True);
+            var chrome = Object.FindAnyObjectByType<HudPanelChromeController>();
+            chrome.OpenBuildingMenu();
+            yield return null;
+            var view = Object.FindAnyObjectByType<BuildingMenuView>();
+            var binder = view.GetComponent<BuildingMenuBinder>();
+            Assert.That(binder.SelectBuilding(DataIds.Buildings.ChargerBasic), Is.True);
+            var placement = Object.FindAnyObjectByType<BuildingPlacementSystem>();
+            Assert.That(placement.TryFindBestPlacementCell(1f, out var cell, out var failure), Is.True, failure.ToString());
+            var energyBefore = state.Player.Energy;
+            var copperBefore = inventory.State.GetQuantity(DataIds.Minerals.Copper);
+            var copperCost = placement.Selection.Costs[0].Quantity;
+            var result = placement.TryPlaceAt(cell);
+
+            Assert.That(result.IsSuccess, Is.True, result.Failure.ToString());
+            Assert.That(state.Player.Energy, Is.EqualTo(energyBefore), "건설 자체는 플레이어 전력을 차감하지 않는다.");
+            Assert.That(inventory.State.GetQuantity(DataIds.Minerals.Copper), Is.EqualTo(copperBefore - copperCost));
+            Assert.That(view.transform.Find("PanelRoot/DetailOperatingCondition").gameObject.activeSelf, Is.False);
+            Assert.That(environment.Save.ActiveSlot, Is.Zero);
         }
 
         private IEnumerator VerifyStatesAndInput(bool visual)
@@ -108,6 +138,20 @@ namespace SubTerra.App.Tests.PlayMode
             AssertNotTruncated(panel);
             if (visual) yield return UiTestWait.Capture(Path.Combine(evidence, "building-partial-1920x1080.png"));
 
+            var condition = panel.Find("DetailOperatingCondition").GetComponent<TMP_Text>();
+            Assert.That(panel.Find("DetailPowerChip"), Is.Null);
+            foreach (var id in new[]
+            {
+                DataIds.Buildings.ChargerBasic, DataIds.Buildings.ClinicBasic, DataIds.Buildings.SettlementBasic
+            })
+            {
+                Entry(panel, id).GetComponent<Button>().onClick.Invoke();
+                yield return null;
+                Assert.That(condition.gameObject.activeSelf, Is.True, id);
+                Assert.That(condition.text, Is.EqualTo("전진기지 코어 영역 내에서만 작동합니다."), id);
+                AssertNotTruncated(panel);
+            }
+
             if (visual)
             foreach (var resolution in new[] { new Vector2Int(2560, 1440), new Vector2Int(1366, 768), new Vector2Int(1920, 1080) })
             {
@@ -118,6 +162,10 @@ namespace SubTerra.App.Tests.PlayMode
                 if (visual) yield return UiTestWait.Capture(Path.Combine(evidence, $"building-selected-{resolution.x}x{resolution.y}.png"));
             }
 
+            core.GetComponent<Button>().onClick.Invoke();
+            yield return null;
+            Assert.That(condition.gameObject.activeSelf, Is.False);
+
             // B 단축키: 닫으면 선택이 취소되고, 다시 열면 미선택 상태로 시작한다.
             yield return PressB();
             Assert.That(chrome.IsBuildingMenuOpen, Is.False);
@@ -125,6 +173,7 @@ namespace SubTerra.App.Tests.PlayMode
             yield return PressB();
             Assert.That(chrome.IsBuildingMenuOpen, Is.True);
             Assert.That(detailName.text, Is.EqualTo("시설 미선택"));
+            Assert.That(condition.gameObject.activeSelf, Is.False);
             AssertOnlySelected(panel, string.Empty);
 
             // X 버튼 닫기.

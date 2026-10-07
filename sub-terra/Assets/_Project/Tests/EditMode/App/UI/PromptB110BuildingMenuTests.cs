@@ -81,7 +81,7 @@ namespace SubTerra.App.Tests.UI
             var panel = menu.transform.Find("PanelRoot");
             var names = new[]
             {
-                "DetailIconFrame", "DetailName", "DetailPowerChip", "SelectionText", "CostSection",
+                "DetailIconFrame", "DetailName", "DetailOperatingCondition", "SelectionText", "CostSection",
                 "AvailabilityBanner", "AvailabilityText", "StatusText", "ControlsHint"
             };
             var listRight = PromptB110BuildingMenuBuilder.LeftColumnX + PromptB110BuildingMenuBuilder.EntryWidth;
@@ -166,8 +166,6 @@ namespace SubTerra.App.Tests.UI
             Assert.That(BuildingMenuDisplayFormatter.CostFill(costs[1]), Is.EqualTo(0.4f).Within(0.001f));
             Assert.That(BuildingMenuDisplayFormatter.ShortageDetail(costs), Is.EqualTo("철 3개가 더 필요합니다."));
             Assert.That(BuildingMenuDisplayFormatter.ShortageDetail(new[] { costs[0] }), Is.Empty);
-            Assert.That(BuildingMenuDisplayFormatter.PowerLabel(0), Is.EqualTo("전력 불필요"));
-            Assert.That(BuildingMenuDisplayFormatter.PowerLabel(3), Is.EqualTo("전력 소비 3"));
         }
 
         [Test]
@@ -198,7 +196,8 @@ namespace SubTerra.App.Tests.UI
                 Assert.That(entry.IsSelected, Is.True);
                 Assert.That(entry.transform.Find("EntryState").GetComponent<TMP_Text>().text, Is.EqualTo("부족"));
                 Assert.That(panel.Find("DetailName").GetComponent<TMP_Text>().text, Is.EqualTo("전진기지 코어"));
-                Assert.That(panel.Find("DetailPowerChip/DetailPowerText").GetComponent<TMP_Text>().text, Is.EqualTo("전력 소비 5"));
+                Assert.That(panel.Find("DetailPowerChip"), Is.Null);
+                Assert.That(panel.Find("DetailOperatingCondition").gameObject.activeSelf, Is.False);
                 Assert.That(panel.Find("CostSection").gameObject.activeSelf, Is.True);
                 Assert.That(panel.Find("CostSection/CostRow_1").gameObject.activeSelf, Is.True);
                 Assert.That(panel.Find("CostSection/CostRow_2").gameObject.activeSelf, Is.False);
@@ -211,11 +210,81 @@ namespace SubTerra.App.Tests.UI
                 view.ClearSelection();
                 Assert.That(entry.IsSelected, Is.False);
                 Assert.That(panel.Find("CostSection").gameObject.activeSelf, Is.False);
-                Assert.That(panel.Find("DetailPowerChip").gameObject.activeSelf, Is.False);
+                Assert.That(panel.Find("DetailOperatingCondition").gameObject.activeSelf, Is.False);
             }
             finally
             {
                 Object.DestroyImmediate(menu);
+            }
+        }
+
+        [Test]
+        public void View_ShowsCoreAreaConditionOnlyForRestrictedFacilitiesAndClearsIt()
+        {
+            var menu = Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(MenuPath));
+            try
+            {
+                var view = menu.GetComponent<BuildingMenuView>();
+                var panel = menu.transform.Find("PanelRoot");
+                var condition = panel.Find("DetailOperatingCondition").GetComponent<TMP_Text>();
+                var name = panel.Find("DetailName").GetComponent<TMP_Text>();
+                Assert.That(condition.rectTransform.anchoredPosition.y,
+                    Is.LessThanOrEqualTo(name.rectTransform.anchoredPosition.y - name.rectTransform.sizeDelta.y));
+                Assert.That(condition.raycastTarget, Is.False);
+
+                var catalog = AssetDatabase.LoadAssetAtPath<GameDataCatalog>(CatalogPath);
+                foreach (var data in catalog.Buildings.Where(b => b != null))
+                {
+                    var restricted = data.Id == DataIds.Buildings.ChargerBasic
+                        || data.Id == DataIds.Buildings.ClinicBasic
+                        || data.Id == DataIds.Buildings.SettlementBasic;
+                    view.SetSelection(new BuildingMenuItemReadModel(
+                        data.Id, data.DisplayName, data.Description, data.Icon, data.PowerDraw, null));
+                    Assert.That(condition.gameObject.activeSelf, Is.EqualTo(restricted), data.Id);
+                    Assert.That(condition.text, Is.EqualTo(restricted
+                        ? "전진기지 코어 영역 내에서만 작동합니다."
+                        : string.Empty), data.Id);
+                }
+
+                view.ClearSelection();
+                Assert.That(condition.gameObject.activeSelf, Is.False);
+                Assert.That(condition.text, Is.Empty);
+                Assert.That(panel.Find("SelectionText").GetComponent<TMP_Text>().text, Does.Not.Contain("전력"));
+            }
+            finally
+            {
+                Object.DestroyImmediate(menu);
+            }
+        }
+
+        [Test]
+        public void LegacyView_ShowsConditionBelowNameWithoutPowerConsumption()
+        {
+            var host = new GameObject("LegacyBuildingMenu", typeof(RectTransform));
+            try
+            {
+                var view = host.AddComponent<BuildingMenuView>();
+                var textObject = new GameObject("SelectionText", typeof(RectTransform), typeof(TextMeshProUGUI));
+                textObject.transform.SetParent(host.transform, false);
+                var text = textObject.GetComponent<TMP_Text>();
+                var so = new SerializedObject(view);
+                so.FindProperty("selectionText").objectReferenceValue = text;
+                so.ApplyModifiedPropertiesWithoutUndo();
+
+                view.SetSelection(new BuildingMenuItemReadModel(
+                    DataIds.Buildings.ChargerBasic, "충전기", "설명", null, 3, null));
+                Assert.That(text.text.Replace("\r\n", "\n"), Does.StartWith(
+                    "충전기\n전진기지 코어 영역 내에서만 작동합니다.\n설명"));
+                Assert.That(text.text, Does.Not.Contain("전력 소비"));
+
+                view.SetSelection(new BuildingMenuItemReadModel(
+                    DataIds.Buildings.OutpostCoreBasic, "전진기지 코어", "설명", null, 5, null));
+                Assert.That(text.text, Does.Not.Contain("영역 내에서만"));
+                Assert.That(text.text, Does.Not.Contain("전력 소비"));
+            }
+            finally
+            {
+                Object.DestroyImmediate(host);
             }
         }
     }

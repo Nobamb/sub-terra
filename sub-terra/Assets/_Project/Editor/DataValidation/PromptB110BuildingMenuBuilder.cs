@@ -125,8 +125,7 @@ namespace SubTerra.App.Editor.DataValidation
 
             so.FindProperty("detailIcon").objectReferenceValue = detail.Icon;
             so.FindProperty("detailNameText").objectReferenceValue = detail.Name;
-            so.FindProperty("detailPowerText").objectReferenceValue = detail.PowerText;
-            so.FindProperty("detailPowerChip").objectReferenceValue = detail.PowerChip;
+            so.FindProperty("detailOperatingConditionText").objectReferenceValue = detail.OperatingCondition;
             so.FindProperty("costSection").objectReferenceValue = costs.Section;
             so.FindProperty("costRows").arraySize = costs.Rows.Count;
             for (var i = 0; i < costs.Rows.Count; i++)
@@ -287,15 +286,13 @@ namespace SubTerra.App.Editor.DataValidation
         {
             public readonly Image Icon;
             public readonly TMP_Text Name;
-            public readonly TMP_Text PowerText;
-            public readonly GameObject PowerChip;
+            public readonly TMP_Text OperatingCondition;
 
-            public DetailRefs(Image icon, TMP_Text name, TMP_Text powerText, GameObject powerChip)
+            public DetailRefs(Image icon, TMP_Text name, TMP_Text operatingCondition)
             {
                 Icon = icon;
                 Name = name;
-                PowerText = powerText;
-                PowerChip = powerChip;
+                OperatingCondition = operatingCondition;
             }
         }
 
@@ -320,14 +317,7 @@ namespace SubTerra.App.Editor.DataValidation
             name.text = "시설 미선택";
             PlaceTopLeft(name.rectTransform, RightColumnX + 88f, -86f, RightColumnWidth - 88f, 34f);
 
-            var chip = EnsureImage(panel, "DetailPowerChip", new Color(0.04f, 0.17f, 0.21f, 1f));
-            PlaceTopLeft(chip.rectTransform, RightColumnX + 88f, -126f, 132f, 24f);
-            EnsureOutline(chip.gameObject, new Color(0.3f, 0.85f, 1f, 0.4f), 1f);
-            var power = EnsureText(chip.transform, "DetailPowerText", font);
-            Style(power, 13f, new Color(0.7f, 0.95f, 1f, 1f), TextAlignmentOptions.Center, FontStyles.Bold);
-            power.text = string.Empty;
-            Stretch(power.rectTransform);
-            chip.gameObject.SetActive(false);
+            var operatingCondition = BuildOperatingCondition(panel, font);
 
             var body = panel.Find("SelectionText").GetComponent<TMP_Text>();
             Style(body, 16.5f, BodyText, TextAlignmentOptions.TopLeft, FontStyles.Normal);
@@ -339,7 +329,50 @@ namespace SubTerra.App.Editor.DataValidation
             body.overflowMode = TextOverflowModes.Ellipsis;
             PlaceTopLeft(body.rectTransform, RightColumnX, -172f, RightColumnWidth, 76f);
 
-            return new DetailRefs(icon, name, power, chip.gameObject);
+            return new DetailRefs(icon, name, operatingCondition);
+        }
+
+        [MenuItem("SubTerra/UI/Update Building Menu Operating Condition")]
+        public static void UpdateOperatingCondition()
+        {
+            if (EditorApplication.isPlaying)
+            {
+                throw new InvalidOperationException("Stop Play Mode first.");
+            }
+
+            var root = PrefabUtility.LoadPrefabContents(BuildingMenuPrefabPath);
+            try
+            {
+                var panel = root.transform.Find("PanelRoot");
+                var name = panel.Find("DetailName").GetComponent<TMP_Text>();
+                var condition = BuildOperatingCondition(panel, name.font);
+                condition.transform.SetSiblingIndex(name.transform.GetSiblingIndex() + 1);
+                var so = new SerializedObject(root.GetComponent<BuildingMenuView>());
+                so.FindProperty("detailOperatingConditionText").objectReferenceValue = condition;
+                so.ApplyModifiedPropertiesWithoutUndo();
+                PrefabUtility.SaveAsPrefabAsset(root, BuildingMenuPrefabPath);
+            }
+            finally
+            {
+                PrefabUtility.UnloadPrefabContents(root);
+            }
+        }
+
+        private static TMP_Text BuildOperatingCondition(Transform panel, TMP_FontAsset font)
+        {
+            var oldChip = panel.Find("DetailPowerChip");
+            if (oldChip != null)
+            {
+                UnityEngine.Object.DestroyImmediate(oldChip.gameObject);
+            }
+
+            var text = EnsureText(panel, "DetailOperatingCondition", font);
+            Style(text, 13f, new Color(0.7f, 0.95f, 1f, 1f), TextAlignmentOptions.TopLeft, FontStyles.Normal);
+            text.textWrappingMode = TextWrappingModes.Normal;
+            text.text = string.Empty;
+            PlaceTopLeft(text.rectTransform, RightColumnX + 88f, -126f, RightColumnWidth - 88f, 42f);
+            text.gameObject.SetActive(false);
+            return text;
         }
 
         private readonly struct CostRefs
@@ -575,7 +608,7 @@ namespace SubTerra.App.Editor.DataValidation
             order.AddRange(entries.Select(e => e.name));
             order.AddRange(new[]
             {
-                "DetailIconFrame", "DetailName", "DetailPowerChip", "SelectionText", "CostSection",
+                "DetailIconFrame", "DetailName", "DetailOperatingCondition", "SelectionText", "CostSection",
                 "AvailabilityBanner", "AvailabilityText", "StatusText", "ControlsDivider", "ControlsHint",
                 "CornerTL_H", "CornerTL_V", "CornerTR_H", "CornerTR_V",
                 "CornerBL_H", "CornerBL_V", "CornerBR_H", "CornerBR_V"
