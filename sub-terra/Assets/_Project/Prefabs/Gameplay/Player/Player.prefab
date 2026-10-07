@@ -113,7 +113,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f6e7ecaae4428114ba17bba0d2c401ba, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: SubTerra.Gameplay.Player::SubTerra.Gameplay.Player.PlayerMovement
   moveSpeed: 6
   acceleration: 45
@@ -138,7 +138,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7ff2ce7158389cb4db9c755e9f9f0068, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: SubTerra.Gameplay.Player::SubTerra.Gameplay.Player.PlayerController
   inputActions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
   moveActionPath: Player/Move
@@ -154,7 +154,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 172d40fc955e3ab438080591514c0723, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: SubTerra.Gameplay.Player::SubTerra.Gameplay.Player.PlayerFacing
   visualRoot: {fileID: 2512023523249785305}
 --- !u!1 &5870049948892212564
@@ -330,7 +330,7 @@ Animator:
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
   m_AnimatePhysics: 0
-  m_WarningMessage:
+  m_WarningMessage: 
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
@@ -345,7 +345,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b2dd89f574b170c4cb8a68367db63f6b, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: SubTerra.Gameplay.Player::SubTerra.Gameplay.Player.PlayerAnimationController
   spriteRenderer: {fileID: 2361650740796772707}
   animator: {fileID: 0}
@@ -374,11 +374,11 @@ MonoBehaviour:
   - {fileID: 21300000, guid: e0733d26e0a45324186e5e3328118fc9, type: 3}
   - {fileID: 21300000, guid: aec51c5d338232c45a7ea1bb12bda5ad, type: 3}
   ladderFrames:
-  - {fileID: 21300000, guid: bb85e805fdd43b245b40898f814b282c, type: 3}
-  - {fileID: 21300000, guid: cfd3c7b1ca12c544082278093115c0a6, type: 3}
-  - {fileID: 21300000, guid: 84cf35c7552c0584496c15e9a1482280, type: 3}
-  - {fileID: 21300000, guid: e6f90e5e65c19da4e842720f92d2037b, type: 3}
-  - {fileID: 21300000, guid: b426acd5297fd8e42ac8900ff892a169, type: 3}
+  - {fileID: 21300000, guid: 86bb9ae731578a74fa39b2464a75ed46, type: 3}
+  - {fileID: 21300000, guid: fa4f29abc4a63ff4bada3dd0a9cb5237, type: 3}
+  - {fileID: 21300000, guid: c70489b371526cb428e8a81d61071184, type: 3}
+  - {fileID: 21300000, guid: b9dcfaa001a35f046b0b76c28df0c63d, type: 3}
+  - {fileID: 21300000, guid: 5912301cac5a9a04c851fc6aa6800fdd, type: 3}
   miningFrames:
   - {fileID: 21300000, guid: 41d68100d8c057649a878d33abc361d6, type: 3}
   - {fileID: 21300000, guid: e69f5b9a559592e4cbe0dcd0fe950b11, type: 3}

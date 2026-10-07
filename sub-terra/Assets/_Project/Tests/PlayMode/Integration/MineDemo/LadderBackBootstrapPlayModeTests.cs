@@ -64,13 +64,24 @@ namespace SubTerra.App.Tests.PlayMode.MineDemo
             if (input != null) input.enabled = false;
             movement.SetCanMove(true);
             visual = movement.transform.Find("VisualRoot").GetComponent<SpriteRenderer>();
+            var configuredFrames = new SerializedObject(
+                visual.GetComponent<PlayerAnimationController>()).FindProperty("ladderFrames");
+            Assert.That(configuredFrames.arraySize, Is.EqualTo(5));
             frames = new Sprite[5];
+            bool styled = AssetDatabase.GetAssetPath(configuredFrames.GetArrayElementAtIndex(0).objectReferenceValue)
+                .EndsWith("ladder_back_neutral_v2.png");
             for (var i = 0; i < frames.Length; i++)
             {
-                frames[i] = AssetDatabase.LoadAssetAtPath<Sprite>(Frames + "ladder_back_0" + (i + 1) + ".png");
+                frames[i] = configuredFrames.GetArrayElementAtIndex(i).objectReferenceValue as Sprite;
                 Assert.That(frames[i], Is.Not.Null);
+                string framePath = AssetDatabase.GetAssetPath(frames[i]);
+                if (i == 0)
+                    Assert.That(framePath, Is.EqualTo(Frames + "ladder_back_neutral_v2.png")
+                        .Or.EqualTo(Frames + "ladder_back_01.png"));
+                else
+                    Assert.That(framePath, Is.EqualTo(Frames + "ladder_back_" + (styled ? "style_" : "") + "0" + (i + 1) + ".png"));
                 Assert.That(frames[i].texture.width, Is.EqualTo(1254));
-                Assert.That(frames[i].pixelsPerUnit, Is.EqualTo(1254));
+                Assert.That(frames[i].pixelsPerUnit, Is.EqualTo(styled ? 1084f : 1254f));
             }
 
             // 실제 5칸 시설 프리팹으로 연결과 물리 등반을 검증한다.

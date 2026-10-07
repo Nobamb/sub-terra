@@ -7,8 +7,6 @@ namespace SubTerra.Gameplay.Building
     public static class FacilityGroundedVisual
     {
         private static readonly Dictionary<Sprite, Bounds> meshBounds = new();
-        private static Sprite outpostArtwork;
-        private static bool outpostArtworkLoaded;
         private static Sprite chargerArtwork;
         private static bool chargerArtworkLoaded;
         private static Sprite storageArtwork;
@@ -18,8 +16,6 @@ namespace SubTerra.Gameplay.Building
         private static void ResetCache()
         {
             meshBounds.Clear();
-            outpostArtwork = null;
-            outpostArtworkLoaded = false;
             chargerArtwork = storageArtwork = null;
             chargerArtworkLoaded = storageArtworkLoaded = false;
         }
@@ -44,13 +40,7 @@ namespace SubTerra.Gameplay.Building
                 }
                 return storageArtwork != null ? storageArtwork : original;
             }
-            if (buildingId != "building.outpost_core.basic") return original;
-            if (!outpostArtworkLoaded)
-            {
-                outpostArtwork = Resources.Load<Sprite>("Facilities/OutpostCoreTall");
-                outpostArtworkLoaded = true;
-            }
-            return outpostArtwork != null ? outpostArtwork : original;
+            return original;
         }
 
         public static bool TryGetGeometry(Sprite sprite, string buildingId, Vector2Int footprint,
@@ -64,7 +54,8 @@ namespace SubTerra.Gameplay.Building
             bool outpost = buildingId == "building.outpost_core.basic";
             if (!charger && !storage && !outpost) return false;
             bool largeCharger = charger && footprint.x != 1;
-            float width = outpost ? 0.92f : largeCharger ? 1.8f : 0.96f;
+            // Explicit legacy 1x2 saves keep their narrow occupied area; new outposts use 2x2.
+            float width = outpost ? footprint.x == 1 ? 0.92f : 1.8f : largeCharger ? 1.8f : 0.96f;
             float height = outpost ? 1.78f : largeCharger ? 1.82f : 0.96f;
             int rows = outpost || largeCharger ? 2 : 1;
             bool hasFoundation = FacilityFoundationVisual.Supports(buildingId);
@@ -96,6 +87,9 @@ namespace SubTerra.Gameplay.Building
                 pixels = Rect.MinMaxRect(57f, 89f, 1258f, 1101f);
             else if (texture.name == "OutpostCoreTall" && texture.width == 948 && texture.height == 1659)
                 pixels = Rect.MinMaxRect(58f, 55f, 891f, 1596f);
+            else if (texture.name == "outpost_core_cartoon_v3" && texture.width == 1292 && texture.height == 1218)
+                // PNG top-left bounds (74,0)-(1216,1132), converted to Unity bottom-left pixels.
+                pixels = Rect.MinMaxRect(74f, 86f, 1216f, 1218f);
             if (pixels.width > 0f)
             {
                 Vector2 min = (Vector2.Max(pixels.min, sprite.rect.min) - sprite.rect.min - sprite.pivot) / sprite.pixelsPerUnit;
