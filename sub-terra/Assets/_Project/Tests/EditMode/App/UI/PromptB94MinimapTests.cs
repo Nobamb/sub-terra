@@ -233,10 +233,14 @@ namespace SubTerra.App.Tests.UI
         [Test]
         public void Guide_DocumentsMinimapShortcuts()
         {
-            var controls = GameGuidePanelView.GetTabBody(GameGuidePanelView.GuideTab.Controls);
-            Assert.That(controls, Does.Contain("미니맵 켜기/끄기"));
-            Assert.That(controls, Does.Contain("M 키"));
+            // B-140: 글 본문이 카드(미니맵)로 바뀌었다. 같은 단축키 안내를 카드 내용에서 확인한다.
+            var card = SubTerra.App.UI.Guide.GameGuideCatalog.Get("ctrl.minimap");
+            Assert.That(card.Keys, Is.EqualTo("M / Ctrl + M"));
+            var controls = SubTerra.App.UI.Guide.GuideDetailBuilder.ToPlainText(
+                SubTerra.App.UI.Guide.GuideDetailBuilder.Build(card, null));
+            Assert.That(controls, Does.Contain("켜거나 끕니다"));
             Assert.That(controls, Does.Contain("Ctrl + M"));
+            Assert.That(controls, Does.Contain("누르고 있는 동안"));
             Assert.That(controls, Does.Contain("50%"));
         }
 

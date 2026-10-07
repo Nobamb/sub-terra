@@ -49,9 +49,12 @@ namespace SubTerra.App.Tests.UI
         [Test]
         public void PromptB49_GuideControls_ExplainsNearbyEKeyAndNameBubble()
         {
-            var controls = GameGuidePanelView.GetTabBody(GameGuidePanelView.GuideTab.Controls);
-            Assert.That(controls, Does.Contain("E 키"));
-            Assert.That(controls, Does.Contain("근처에서 E 키"));
+            // B-140: 글 본문이 카드(시설 상호작용)로 바뀌었다. 같은 규칙을 카드 내용에서 확인한다.
+            var card = SubTerra.App.UI.Guide.GameGuideCatalog.Get("ctrl.interact");
+            Assert.That(card.Keys, Is.EqualTo("E"));
+            var controls = SubTerra.App.UI.Guide.GuideDetailBuilder.ToPlainText(
+                SubTerra.App.UI.Guide.GuideDetailBuilder.Build(card, null));
+            Assert.That(controls, Does.Contain("가까이"));
             Assert.That(controls, Does.Contain("충전기"));
             Assert.That(controls, Does.Contain("보관함"));
             Assert.That(controls, Does.Contain("정산 콘솔"));

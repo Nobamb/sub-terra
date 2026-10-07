@@ -1,0 +1,163 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e566d209cb4919f43981dcf9e771bdf6, type: 3}
+  m_Name: GameGuideSkin
+  m_EditorClassIdentifier: SubTerra.App::SubTerra.App.UI.Guide.GameGuideSkin
+  sprites:
+  - key: player.idle
+    sprite: {fileID: 21300000, guid: 648dc7a3882a93c4fa7b0f0d130f2bb8, type: 3}
+  - key: player.walk.1
+    sprite: {fileID: 21300000, guid: a7ba634b42619ad4597fdfe014c820d2, type: 3}
+  - key: player.walk.2
+    sprite: {fileID: 21300000, guid: e157f86e44b5f5547b7418d2852905ca, type: 3}
+  - key: player.walk.3
+    sprite: {fileID: 21300000, guid: f306a52c8a0683d48902eb4d7fe873d2, type: 3}
+  - key: player.walk.4
+    sprite: {fileID: 21300000, guid: 54be5b843240e9049b96d7b27fbf83bd, type: 3}
+  - key: player.walk.5
+    sprite: {fileID: 21300000, guid: 3865aefb6fa54d54ca5fe7fd9d77da9d, type: 3}
+  - key: player.walk.6
+    sprite: {fileID: 21300000, guid: 3d5e009256dafae46887702db38dbfcd, type: 3}
+  - key: player.walk.7
+    sprite: {fileID: 21300000, guid: f0a03356ee81aa846ba12cf9b96a00e9, type: 3}
+  - key: player.walk.8
+    sprite: {fileID: 21300000, guid: 60a10697e5f89d44da1f992fde8ce673, type: 3}
+  - key: player.walk.9
+    sprite: {fileID: 21300000, guid: 2de78f070f6f1de4587f76fa5fe9b028, type: 3}
+  - key: player.walk.10
+    sprite: {fileID: 21300000, guid: 4346acbe586013d4faa86e7741c5d46e, type: 3}
+  - key: player.mine.1
+    sprite: {fileID: 21300000, guid: 41d68100d8c057649a878d33abc361d6, type: 3}
+  - key: player.mine.2
+    sprite: {fileID: 21300000, guid: e69f5b9a559592e4cbe0dcd0fe950b11, type: 3}
+  - key: player.mine.3
+    sprite: {fileID: 21300000, guid: c5246c41f76ed87488c6149e0448e219, type: 3}
+  - key: player.mine.4
+    sprite: {fileID: 21300000, guid: 05fec1abc994d06408bcce073dabdf9e, type: 3}
+  - key: player.mine.5
+    sprite: {fileID: 21300000, guid: 86b033cff81760948886d6fc02240ced, type: 3}
+  - key: player.mine.6
+    sprite: {fileID: 21300000, guid: 8636abf880aeb28498bf573604aaab7f, type: 3}
+  - key: player.mine.7
+    sprite: {fileID: 21300000, guid: 22228916432d41e45abdb75332cb8227, type: 3}
+  - key: player.mine.8
+    sprite: {fileID: 21300000, guid: b46497afc4d19e74885cf9a0e56e3379, type: 3}
+  - key: player.ladder.1
+    sprite: {fileID: 21300000, guid: bb85e805fdd43b245b40898f814b282c, type: 3}
+  - key: player.ladder.2
+    sprite: {fileID: 21300000, guid: cfd3c7b1ca12c544082278093115c0a6, type: 3}
+  - key: player.ladder.3
+    sprite: {fileID: 21300000, guid: 84cf35c7552c0584496c15e9a1482280, type: 3}
+  - key: player.ladder.4
+    sprite: {fileID: 21300000, guid: e6f90e5e65c19da4e842720f92d2037b, type: 3}
+  - key: player.ladder.5
+    sprite: {fileID: 21300000, guid: b426acd5297fd8e42ac8900ff892a169, type: 3}
+  - key: player.jump.4
+    sprite: {fileID: 21300000, guid: bfb9c9b4b6c3df747841882eede38b6c, type: 3}
+  - key: player.damage.1
+    sprite: {fileID: 21300000, guid: 63c487259e5d9ee48a01f2a58768e44f, type: 3}
+  - key: player.knockout.1
+    sprite: {fileID: 21300000, guid: 4264a6d6b577572489d8cfdb3ae4c42a, type: 3}
+  - key: tile.ground
+    sprite: {fileID: 21300000, guid: c32df7d851b7e474abe9b14e0a138857, type: 3}
+  - key: tile.ground.2
+    sprite: {fileID: 21300000, guid: 2a195d7edd224dc3bed3bcac62305b42, type: 3}
+  - key: tile.hard
+    sprite: {fileID: 21300000, guid: d2a93291e1287ea4bb99f947dfc64a4f, type: 3}
+  - key: tile.gas
+    sprite: {fileID: 21300000, guid: d24c5b12ba5eade4abade88b360b0e60, type: 3}
+  - key: tile.gold
+    sprite: {fileID: 21300000, guid: 2e11fea31b818f749a7e70662877b672, type: 3}
+  - key: tile.ore.copper
+    sprite: {fileID: 21300000, guid: 8a551a0e3063e4c4bba8e024004ff3b6, type: 3}
+  - key: tile.ore.iron
+    sprite: {fileID: 21300000, guid: 2b44d05062c391a46b74b23e6dd0855f, type: 3}
+  - key: tile.ore.lithium
+    sprite: {fileID: 21300000, guid: 3731f6988ff72d142b104d9ee9a8f526, type: 3}
+  - key: tile.crack.yellow
+    sprite: {fileID: 21300000, guid: 324133dec33b2024c94a3b61aeae9cef, type: 3}
+  - key: tile.crack.orange
+    sprite: {fileID: 21300000, guid: 132fd1c0ef8765040a4de59ff3bd51c8, type: 3}
+  - key: tile.crack.red
+    sprite: {fileID: 21300000, guid: d3ca376b70851c348847e8faf78f6267, type: 3}
+  - key: fac.charger
+    sprite: {fileID: 21300000, guid: baf2dfa10df1fe343996cf284ab29981, type: 3}
+  - key: fac.clinic
+    sprite: {fileID: 21300000, guid: b4e7bcebdc11085498948bce7407a5e8, type: 3}
+  - key: fac.elevator
+    sprite: {fileID: 21300000, guid: bb9bc858f4325d640b126ed119354035, type: 3}
+  - key: fac.elevator.door
+    sprite: {fileID: 21300000, guid: 1332702d099c2284c93114f40aa09aa7, type: 3}
+  - key: fac.ladder
+    sprite: {fileID: 21300000, guid: b78f477124e25d74a9afc401286816a2, type: 3}
+  - key: fac.light
+    sprite: {fileID: 21300000, guid: 993a4ff7f9ba1254d8a13eafc0898091, type: 3}
+  - key: fac.core
+    sprite: {fileID: 21300000, guid: 606582aba17a0ef42b0789c8f6a27410, type: 3}
+  - key: fac.settlement
+    sprite: {fileID: 21300000, guid: 902999309caf02d4e915990fbc9922e4, type: 3}
+  - key: fac.storage
+    sprite: {fileID: 21300000, guid: 0d077ad1b89f0f64b870e9ae79697b9f, type: 3}
+  - key: fac.support
+    sprite: {fileID: 21300000, guid: 0f69f3d75d45e3240995a176aac8d034, type: 3}
+  - key: drone.idle
+    sprite: {fileID: 21300000, guid: e2c96caaa6b742c88c0cab01e9ef6fe0, type: 3}
+  - key: fx.coin
+    sprite: {fileID: 21300000, guid: b4756942b018af840891d886c82f9e52, type: 3}
+  - key: hud.hp.bar
+    sprite: {fileID: 21300000, guid: ea4565038711aaf4698b72707616d9f4, type: 3}
+  - key: hud.hp.empty
+    sprite: {fileID: 21300000, guid: 06f44acc266a53b4e8f4df9b7825addc, type: 3}
+  - key: hud.energy.bar
+    sprite: {fileID: 21300000, guid: e749c7c94731dcb44a2abf747b1d1563, type: 3}
+  - key: hud.energy.empty
+    sprite: {fileID: 21300000, guid: d287c7e870cf42b40bf1f13285602145, type: 3}
+  - key: hud.bar.frame
+    sprite: {fileID: 21300000, guid: 5a9d158ef8512a5419769c9979696f4c, type: 3}
+  - key: hud.icons
+    sprite: {fileID: 21300000, guid: 03bad6380d6785743938bfb72bde6647, type: 3}
+  - key: hud.structural.safe
+    sprite: {fileID: 21300000, guid: 56c4f617adb20364ea518bd88ee84e05, type: 3}
+  - key: hud.structural.caution
+    sprite: {fileID: 21300000, guid: 23bac876bd8f6c346bb2c2d3eeacd311, type: 3}
+  - key: hud.structural.critical
+    sprite: {fileID: 21300000, guid: bc8d3816ac9eb4b49bbfef40b4b3ddd7, type: 3}
+  - key: hud.structural.imminent
+    sprite: {fileID: 21300000, guid: ddd4e22792356e5489d2029c058d8f00, type: 3}
+  - key: icon.mine
+    sprite: {fileID: 21300000, guid: ffb7f6e103f879749aebd1f871f79c90, type: 3}
+  - key: icon.cargo
+    sprite: {fileID: 21300000, guid: fa2dc4867aeca6e44a115532295b160a, type: 3}
+  - key: icon.sell
+    sprite: {fileID: 21300000, guid: 94f94f505c95937448a592bdaab79953, type: 3}
+  - key: icon.upgrade
+    sprite: {fileID: 21300000, guid: 87e8a9a2a79eb864b9c703219ee53ea9, type: 3}
+  - key: icon.gold
+    sprite: {fileID: 21300000, guid: ded4609832358ec4998249f71b7d4708, type: 3}
+  - key: icon.reset
+    sprite: {fileID: 21300000, guid: 356e15eba9b51a041a5ce632bf08bd12, type: 3}
+  - key: icon.guide
+    sprite: {fileID: 21300000, guid: 67f1f7e8b5c67414290407c841c0ffe1, type: 3}
+  - key: icon.inventory
+    sprite: {fileID: 21300000, guid: bf369556d420818459ab7c5337a2ce5c, type: 3}
+  - key: icon.facility
+    sprite: {fileID: 21300000, guid: 4e017a3425f720b42bdc7894ba8bedb0, type: 3}
+  - key: icon.explore
+    sprite: {fileID: 21300000, guid: fa614303105a0364fba14a30fe600671, type: 3}
+  - key: fallback.mineral.copper
+    sprite: {fileID: 21300000, guid: b04dcad5b2a6d2543bfa42f613131519, type: 3}
+  - key: fallback.mineral.iron
+    sprite: {fileID: 21300000, guid: 34ba4cb5b0ec9184ab1c42bf27bde632, type: 3}
+  - key: fallback.mineral.lithium
+    sprite: {fileID: 21300000, guid: 4739d2da586ca2f4e94db06a4fb22491, type: 3}
+  - key: fallback.item.rare.engine_fuel
+    sprite: {fileID: 21300000, guid: b97d22ced5eb4bc090ba27f26b5fb37b, type: 3}
