@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="21" result="Passed" total="21" passed="21" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-10-08 10:06:15Z" end-time="2026-10-08 10:06:29Z" duration="14.0562239">
+  <test-suite type="TestSuite" id="1000" name="sub-terra" fullname="sub-terra" runstate="Runnable" testcasecount="1411" result="Passed" start-time="2026-10-08 10:06:15Z" end-time="2026-10-08 10:06:29Z" duration="14.056224" total="21" passed="21" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="2470" name="SubTerra.App.Tests.EditMode.dll" fullname="C:/Users/jeone/sub-terra/sub-terra/Library/ScriptAssemblies/SubTerra.App.Tests.EditMode.dll" runstate="Runnable" testcasecount="1256" result="Passed" start-time="2026-10-08 10:06:15Z" end-time="2026-10-08 10:06:29Z" duration="13.806076" total="21" passed="21" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="22536" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="2471" name="SubTerra" fullname="SubTerra" runstate="Runnable" testcasecount="1256" result="Passed" start-time="2026-10-08 10:06:15Z" end-time="2026-10-08 10:06:29Z" duration="13.354370" total="21" passed="21" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="2477" name="App" fullname="SubTerra.App" runstate="Runnable" testcasecount="1246" result="Passed" start-time="2026-10-08 10:06:18Z" end-time="2026-10-08 10:06:29Z" duration="11.210866" total="21" passed="21" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="2478" name="Tests" fullname="SubTerra.App.Tests" runstate="Runnable" testcasecount="1246" result="Passed" start-time="2026-10-08 10:06:18Z" end-time="2026-10-08 10:06:29Z" duration="11.102297" total="21" passed="21" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestSuite" id="2481" name="Tutorial" fullname="SubTerra.App.Tests.Tutorial" runstate="Runnable" testcasecount="53" result="Passed" start-time="2026-10-08 10:06:18Z" end-time="2026-10-08 10:06:28Z" duration="9.756574" total="11" passed="11" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-suite type="TestFixture" id="1692" name="PromptB107QuestUiTests" fullname="SubTerra.App.Tests.Tutorial.PromptB107QuestUiTests" classname="SubTerra.App.Tests.Tutorial.PromptB107QuestUiTests" runstate="Runnable" testcasecount="13" result="Passed" start-time="2026-10-08 10:06:18Z" end-time="2026-10-08 10:06:28Z" duration="9.696807" total="11" passed="11" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-suite type="ParameterizedMethod" id="1703" name="FacilityQuestImages_UseBuildingMenuArtwork" fullname="SubTerra.App.Tests.Tutorial.PromptB107QuestUiTests.FacilityQuestImages_UseBuildingMenuArtwork" classname="SubTerra.App.Tests.Tutorial.PromptB107QuestUiTests" runstate="Runnable" testcasecount="10" result="Passed" start-time="2026-10-08 10:06:18Z" end-time="2026-10-08 10:06:20Z" duration="1.570696" total="10" passed="10" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="1693" name="FacilityQuestImages_UseBuildingMenuArtwork(&quot;demo.quest.place_support_in_danger&quot;,&quot;Support&quot;)" fullname="SubTerra.App.Tests.Tutorial.PromptB107QuestUiTests.FacilityQuestImages_UseBuildingMenuArtwork(&quot;demo.quest.place_support_in_danger&quot;,&quot;Support&quot;)" methodname="FacilityQuestImages_UseBuildingMenuArtwork" classname="SubTerra.App.Tests.Tutorial.PromptB107QuestUiTests" runstate="Runnable" seed="1645061502" result="Passed" start-time="2026-10-08 10:06:18Z" end-time="2026-10-08 10:06:19Z" duration="1.198156" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1694" name="FacilityQuestImages_UseBuildingMenuArtwork(&quot;demo.quest.place_ladder&quot;,&quot;Ladder&quot;)" fullname="SubTerra.App.Tests.Tutorial.PromptB107QuestUiTests.FacilityQuestImages_UseBuildingMenuArtwork(&quot;demo.quest.place_ladder&quot;,&quot;Ladder&quot;)" methodname="FacilityQuestImages_UseBuildingMenuArtwork" classname="SubTerra.App.Tests.Tutorial.PromptB107QuestUiTests" runstate="Runnable" seed="1047748968" result="Passed" start-time="2026-10-08 10:06:19Z" end-time="2026-10-08 10:06:20Z" duration="0.029154" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1695" name="FacilityQuestImages_UseBuildingMenuArtwork(&quot;demo.quest.place_light_at_depth&quot;,&quot;Light&quot;)" fullname="SubTerra.App.Tests.Tutorial.PromptB107QuestUiTests.FacilityQuestImages_UseBuildingMenuArtwork(&quot;demo.quest.place_light_at_depth&quot;,&quot;Light&quot;)" methodname="FacilityQuestImages_UseBuildingMenuArtwork" classname="SubTerra.App.Tests.Tutorial.PromptB107QuestUiTests" runstate="Runnable" seed="1026675076" result="Passed" start-time="2026-10-08 10:06:20Z" end-time="2026-10-08 10:06:20Z" duration="0.028693" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1696" name="FacilityQuestImages_UseBuildingMenuArtwork(&quot;demo.quest.store_mineral&quot;,&quot;Storage&quot;)" fullname="SubTerra.App.Tests.Tutorial.PromptB107QuestUiTests.FacilityQuestImages_UseBuildingMenuArtwork(&quot;demo.quest.store_mineral&quot;,&quot;Storage&quot;)" methodname="FacilityQuestImages_UseBuildingMenuArtwork" classname="SubTerra.App.Tests.Tutorial.PromptB107QuestUiTests" runstate="Runnable" seed="2086811154" result="Passed" start-time="2026-10-08 10:06:20Z" end-time="2026-10-08 10:06:20Z" duration="0.039875" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1697" name="FacilityQuestImages_UseBuildingMenuArtwork(&quot;demo.quest.install_outpost_core&quot;,&quot;OutpostCore&quot;)" fullname="SubTerra.App.Tests.Tutorial.PromptB107QuestUiTests.FacilityQuestImages_UseBuildingMenuArtwork(&quot;demo.quest.install_outpost_core&quot;,&quot;OutpostCore&quot;)" methodname="FacilityQuestImages_UseBuildingMenuArtwork" classname="SubTerra.App.Tests.Tutorial.PromptB107QuestUiTests" runstate="Runnable" seed="1017176810" result="Passed" start-time="2026-10-08 10:06:20Z" end-time="2026-10-08 10:06:20Z" duration="0.030143" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1698" name="FacilityQuestImages_UseBuildingMenuArtwork(&quot;demo.quest.charge_near_outpost&quot;,&quot;Charger&quot;)" fullname="SubTerra.App.Tests.Tutorial.PromptB107QuestUiTests.FacilityQuestImages_UseBuildingMenuArtwork(&quot;demo.quest.charge_near_outpost&quot;,&quot;Charger&quot;)" methodname="FacilityQuestImages_UseBuildingMenuArtwork" classname="SubTerra.App.Tests.Tutorial.PromptB107QuestUiTests" runstate="Runnable" seed="1329509768" result="Passed" start-time="2026-10-08 10:06:20Z" end-time="2026-10-08 10:06:20Z" duration="0.040438" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1699" name="FacilityQuestImages_UseBuildingMenuArtwork(&quot;demo.quest.heal_near_outpost&quot;,&quot;Clinic&quot;)" fullname="SubTerra.App.Tests.Tutorial.PromptB107QuestUiTests.FacilityQuestImages_UseBuildingMenuArtwork(&quot;demo.quest.heal_near_outpost&quot;,&quot;Clinic&quot;)" methodname="FacilityQuestImages_UseBuildingMenuArtwork" classname="SubTerra.App.Tests.Tutorial.PromptB107QuestUiTests" runstate="Runnable" seed="2135380664" result="Passed" start-time="2026-10-08 10:06:20Z" end-time="2026-10-08 10:06:20Z" duration="0.024545" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1700" name="FacilityQuestImages_UseBuildingMenuArtwork(&quot;demo.quest.purify_gas_with_outpost&quot;,&quot;OutpostCore&quot;)" fullname="SubTerra.App.Tests.Tutorial.PromptB107QuestUiTests.FacilityQuestImages_UseBuildingMenuArtwork(&quot;demo.quest.purify_gas_with_outpost&quot;,&quot;OutpostCore&quot;)" methodname="FacilityQuestImages_UseBuildingMenuArtwork" classname="SubTerra.App.Tests.Tutorial.PromptB107QuestUiTests" runstate="Runnable" seed="617849618" result="Passed" start-time="2026-10-08 10:06:20Z" end-time="2026-10-08 10:06:20Z" duration="0.022105" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1701" name="FacilityQuestImages_UseBuildingMenuArtwork(&quot;demo.quest.sell_at_settlement&quot;,&quot;Settlement&quot;)" fullname="SubTerra.App.Tests.Tutorial.PromptB107QuestUiTests.FacilityQuestImages_UseBuildingMenuArtwork(&quot;demo.quest.sell_at_settlement&quot;,&quot;Settlement&quot;)" methodname="FacilityQuestImages_UseBuildingMenuArtwork" classname="SubTerra.App.Tests.Tutorial.PromptB107QuestUiTests" runstate="Runnable" seed="109989505" result="Passed" start-time="2026-10-08 10:06:20Z" end-time="2026-10-08 10:06:20Z" duration="0.018008" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1702" name="FacilityQuestImages_UseBuildingMenuArtwork(&quot;demo.quest.emergency_escape_return&quot;,&quot;EmergencyEscapePortal&quot;)" fullname="SubTerra.App.Tests.Tutorial.PromptB107QuestUiTests.FacilityQuestImages_UseBuildingMenuArtwork(&quot;demo.quest.emergency_escape_return&quot;,&quot;EmergencyEscapePortal&quot;)" methodname="FacilityQuestImages_UseBuildingMenuArtwork" classname="SubTerra.App.Tests.Tutorial.PromptB107QuestUiTests" runstate="Runnable" seed="1621667472" result="Passed" start-time="2026-10-08 10:06:20Z" end-time="2026-10-08 10:06:20Z" duration="0.020127" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                </test-suite>
+                <test-case id="1704" name="SavedScene_FacilityQuestEntriesMatchBuildingMenuArtwork" fullname="SubTerra.App.Tests.Tutorial.PromptB107QuestUiTests.SavedScene_FacilityQuestEntriesMatchBuildingMenuArtwork" methodname="SavedScene_FacilityQuestEntriesMatchBuildingMenuArtwork" classname="SubTerra.App.Tests.Tutorial.PromptB107QuestUiTests" runstate="Runnable" seed="375433967" result="Passed" start-time="2026-10-08 10:06:20Z" end-time="2026-10-08 10:06:28Z" duration="7.970162" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+              </test-suite>
+            </test-suite>
+            <test-suite type="TestSuite" id="2479" name="UI" fullname="SubTerra.App.Tests.UI" runstate="Runnable" testcasecount="495" result="Passed" start-time="2026-10-08 10:06:28Z" end-time="2026-10-08 10:06:29Z" duration="1.066332" total="10" passed="10" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-suite type="TestFixture" id="1473" name="PromptB46EmergencyEscapePortalTests" fullname="SubTerra.App.Tests.UI.PromptB46EmergencyEscapePortalTests" classname="SubTerra.App.Tests.UI.PromptB46EmergencyEscapePortalTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-10-08 10:06:28Z" end-time="2026-10-08 10:06:28Z" duration="0.292927" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1474" name="PortalArtwork_MenuPreviewAndRestoredFacilityUseTheSameGroundedSprite" fullname="SubTerra.App.Tests.UI.PromptB46EmergencyEscapePortalTests.PortalArtwork_MenuPreviewAndRestoredFacilityUseTheSameGroundedSprite" methodname="PortalArtwork_MenuPreviewAndRestoredFacilityUseTheSameGroundedSprite" classname="SubTerra.App.Tests.UI.PromptB46EmergencyEscapePortalTests" runstate="Runnable" seed="1516743563" result="Passed" start-time="2026-10-08 10:06:28Z" end-time="2026-10-08 10:06:28Z" duration="0.179609" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1475" name="PromptB46_CatalogAndPrefab_HaveRequestedCostsPowerAndPassableTrigger" fullname="SubTerra.App.Tests.UI.PromptB46EmergencyEscapePortalTests.PromptB46_CatalogAndPrefab_HaveRequestedCostsPowerAndPassableTrigger" methodname="PromptB46_CatalogAndPrefab_HaveRequestedCostsPowerAndPassableTrigger" classname="SubTerra.App.Tests.UI.PromptB46EmergencyEscapePortalTests" runstate="Runnable" seed="708513992" result="Passed" start-time="2026-10-08 10:06:28Z" end-time="2026-10-08 10:06:28Z" duration="0.097650" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+              </test-suite>
+              <test-suite type="TestFixture" id="1478" name="PromptB47_1EmergencyEscapePortalTests" fullname="SubTerra.App.Tests.UI.PromptB47_1EmergencyEscapePortalTests" classname="SubTerra.App.Tests.UI.PromptB47_1EmergencyEscapePortalTests" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-10-08 10:06:28Z" end-time="2026-10-08 10:06:29Z" duration="0.251810" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1480" name="PromptB47_1_EscapeTo_SelectedDestination_PaysAndTeleports" fullname="SubTerra.App.Tests.UI.PromptB47_1EmergencyEscapePortalTests.PromptB47_1_EscapeTo_SelectedDestination_PaysAndTeleports" methodname="PromptB47_1_EscapeTo_SelectedDestination_PaysAndTeleports" classname="SubTerra.App.Tests.UI.PromptB47_1EmergencyEscapePortalTests" runstate="Runnable" seed="990261711" result="Passed" start-time="2026-10-08 10:06:28Z" end-time="2026-10-08 10:06:29Z" duration="0.061296" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1483" name="PromptB47_1_PortalPrefab_FitsTwoByTwoAndIsGroundedAndPassable" fullname="SubTerra.App.Tests.UI.PromptB47_1EmergencyEscapePortalTests.PromptB47_1_PortalPrefab_FitsTwoByTwoAndIsGroundedAndPassable" methodname="PromptB47_1_PortalPrefab_FitsTwoByTwoAndIsGroundedAndPassable" classname="SubTerra.App.Tests.UI.PromptB47_1EmergencyEscapePortalTests" runstate="Runnable" seed="533282963" result="Passed" start-time="2026-10-08 10:06:29Z" end-time="2026-10-08 10:06:29Z" duration="0.027879" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1482" name="PromptB47_2_Portal_RequestEscape_OpensWhenNetworkBoundWithoutCapacityPower" fullname="SubTerra.App.Tests.UI.PromptB47_1EmergencyEscapePortalTests.PromptB47_2_Portal_RequestEscape_OpensWhenNetworkBoundWithoutCapacityPower" methodname="PromptB47_2_Portal_RequestEscape_OpensWhenNetworkBoundWithoutCapacityPower" classname="SubTerra.App.Tests.UI.PromptB47_1EmergencyEscapePortalTests" runstate="Runnable" seed="898279759" result="Passed" start-time="2026-10-08 10:06:29Z" end-time="2026-10-08 10:06:29Z" duration="0.143705" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+              </test-suite>
+              <test-suite type="TestFixture" id="1490" name="PromptB49FacilityVisualTests" fullname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests" classname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests" runstate="Runnable" testcasecount="28" result="Passed" start-time="2026-10-08 10:06:29Z" end-time="2026-10-08 10:06:29Z" duration="0.096323" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-suite type="ParameterizedMethod" id="1497" name="GroundedFacility_MenuPreviewAndPlacedArtworkMatch" fullname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests.GroundedFacility_MenuPreviewAndPlacedArtworkMatch" classname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests" runstate="Runnable" testcasecount="5" result="Passed" start-time="2026-10-08 10:06:29Z" end-time="2026-10-08 10:06:29Z" duration="0.067959" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="1492" name="GroundedFacility_MenuPreviewAndPlacedArtworkMatch(&quot;Light&quot;,&quot;light_basic_cartoon_v3&quot;,1,2)" fullname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests.GroundedFacility_MenuPreviewAndPlacedArtworkMatch(&quot;Light&quot;,&quot;light_basic_cartoon_v3&quot;,1,2)" methodname="GroundedFacility_MenuPreviewAndPlacedArtworkMatch" classname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests" runstate="Runnable" seed="875587023" result="Passed" start-time="2026-10-08 10:06:29Z" end-time="2026-10-08 10:06:29Z" duration="0.029188" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1493" name="GroundedFacility_MenuPreviewAndPlacedArtworkMatch(&quot;Settlement&quot;,&quot;settlement_console_cartoon_v3&quot;,1,2)" fullname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests.GroundedFacility_MenuPreviewAndPlacedArtworkMatch(&quot;Settlement&quot;,&quot;settlement_console_cartoon_v3&quot;,1,2)" methodname="GroundedFacility_MenuPreviewAndPlacedArtworkMatch" classname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests" runstate="Runnable" seed="1486955627" result="Passed" start-time="2026-10-08 10:06:29Z" end-time="2026-10-08 10:06:29Z" duration="0.003333" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1494" name="GroundedFacility_MenuPreviewAndPlacedArtworkMatch(&quot;Charger&quot;,&quot;ChargerGrounded&quot;,2,2)" fullname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests.GroundedFacility_MenuPreviewAndPlacedArtworkMatch(&quot;Charger&quot;,&quot;ChargerGrounded&quot;,2,2)" methodname="GroundedFacility_MenuPreviewAndPlacedArtworkMatch" classname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests" runstate="Runnable" seed="1730696467" result="Passed" start-time="2026-10-08 10:06:29Z" end-time="2026-10-08 10:06:29Z" duration="0.007752" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1495" name="GroundedFacility_MenuPreviewAndPlacedArtworkMatch(&quot;Storage&quot;,&quot;StorageGrounded&quot;,1,1)" fullname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests.GroundedFacility_MenuPreviewAndPlacedArtworkMatch(&quot;Storage&quot;,&quot;StorageGrounded&quot;,1,1)" methodname="GroundedFacility_MenuPreviewAndPlacedArtworkMatch" classname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests" runstate="Runnable" seed="37673142" result="Passed" start-time="2026-10-08 10:06:29Z" end-time="2026-10-08 10:06:29Z" duration="0.006147" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1496" name="GroundedFacility_MenuPreviewAndPlacedArtworkMatch(&quot;OutpostCore&quot;,&quot;outpost_core_cartoon_v3&quot;,2,2)" fullname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests.GroundedFacility_MenuPreviewAndPlacedArtworkMatch(&quot;OutpostCore&quot;,&quot;outpost_core_cartoon_v3&quot;,2,2)" methodname="GroundedFacility_MenuPreviewAndPlacedArtworkMatch" classname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests" runstate="Runnable" seed="1608505512" result="Passed" start-time="2026-10-08 10:06:29Z" end-time="2026-10-08 10:06:29Z" duration="0.005311" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                    <output><![CDATA[Saving results to: C:/Users/jeone/AppData/LocalLow/DefaultCompany/sub-terra\TestResults.xml
+]]></output>
+                  </test-case>
+                </test-suite>
+              </test-suite>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

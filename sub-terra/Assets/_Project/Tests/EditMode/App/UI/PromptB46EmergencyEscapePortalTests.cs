@@ -1,6 +1,7 @@
 using System.Linq;
 using NUnit.Framework;
 using SubTerra.App.Core.Data;
+using SubTerra.App.Editor.DataValidation;
 using SubTerra.App.Integration;
 using SubTerra.App.UI.Building;
 using SubTerra.App.UI.HUD;
@@ -10,11 +11,47 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.Tilemaps;
 
 namespace SubTerra.App.Tests.UI
 {
     public sealed class PromptB46EmergencyEscapePortalTests
     {
+        [Test]
+        public void PortalArtwork_MenuPreviewAndRestoredFacilityUseTheSameGroundedSprite()
+        {
+            var data = AssetDatabase.LoadAssetAtPath<BuildingData>(PromptB46EmergencyEscapePortalBuilder.PortalDataPath);
+            var expected = AssetDatabase.LoadAssetAtPath<Sprite>(PromptB46EmergencyEscapePortalBuilder.PortalArtworkPath);
+            Assert.That(data.Icon, Is.SameAs(expected));
+            Assert.That(expected, Is.Not.Null);
+            var scene = EditorSceneManager.NewPreviewScene();
+            try
+            {
+                var placed = (GameObject)PrefabUtility.InstantiatePrefab(data.RuntimePrefab, scene);
+                placed.transform.position = new Vector3(1f, 1f, 0f);
+                placed.GetComponent<BuildingInstance>().Initialize("restored-portal", data.Id, new Vector2Int(2, 2));
+                var art = placed.transform.Find("VisualRoot/Artwork").GetComponent<SpriteRenderer>();
+                var grid = new GameObject("PreviewGrid", typeof(Grid));
+                SceneManager.MoveGameObjectToScene(grid, scene);
+                var map = new GameObject("PreviewMap", typeof(Tilemap)).GetComponent<Tilemap>();
+                map.transform.SetParent(grid.transform, false);
+                var previewRoot = new GameObject("Preview", typeof(SpriteRenderer), typeof(BuildingPlacementPreview));
+                SceneManager.MoveGameObjectToScene(previewRoot, scene);
+                var preview = previewRoot.GetComponent<BuildingPlacementPreview>();
+                preview.ConfigureFromPrefab(data.RuntimePrefab, data.Id, new Vector2Int(2, 2));
+                preview.SetCells(map, new System.Collections.Generic.List<Vector3Int>
+                    { Vector3Int.zero, Vector3Int.right, Vector3Int.up, new Vector3Int(1, 1, 0) }, true);
+                Assert.That(art.sprite, Is.SameAs(expected));
+                Assert.That(previewRoot.GetComponent<SpriteRenderer>().sprite, Is.SameAs(expected));
+                Assert.That(previewRoot.transform.localScale, Is.EqualTo(art.transform.localScale));
+                Assert.That(Vector3.Distance(previewRoot.transform.position, art.transform.position), Is.LessThan(0.001f));
+                var bounds = FacilityGroundedVisual.GetVisibleBounds(expected);
+                Assert.That(art.transform.TransformPoint(new Vector3(bounds.center.x, bounds.min.y, 0f)).y,
+                    Is.EqualTo(-0.04f).Within(0.001f));
+            }
+            finally { EditorSceneManager.ClosePreviewScene(scene); }
+        }
+
         private const string CatalogPath =
             "Assets/_Project/Data/Catalog/GameDataCatalog.asset";
         private const string MenuPath =

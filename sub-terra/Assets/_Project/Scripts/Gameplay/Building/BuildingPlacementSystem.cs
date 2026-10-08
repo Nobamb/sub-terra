@@ -31,6 +31,7 @@ namespace SubTerra.Gameplay.Building
         private BuildingPlacementDefinition selection;
         private int nextInstanceSequence = 1;
         private readonly HashSet<string> restoredInstanceIds = new();
+        private readonly Dictionary<Vector3Int, string> savedBuildingCells = new();
         private SubTerra.Gameplay.Player.ElevatorController[] placementElevators;
         private readonly Dictionary<BuildingInstance, SpriteRenderer[]> authoredBuildingRenderers = new();
 
@@ -515,12 +516,31 @@ namespace SubTerra.Gameplay.Building
             occupiedBuildings.Clear();
             supportingGroundCells.Clear();
             restoredInstanceIds.Clear();
+            savedBuildingCells.Clear();
             nextInstanceSequence = 1;
         }
 
         /// <summary>Restores a previously placed building without querying or spending the App-owned wallet.</summary>
         public bool TryRestoreBuilding(BuildingSnapshotDto snapshot)
+            => TryRestoreBuilding(snapshot, out _);
+
+        /// <summary>Reserve original save areas before enlarging any facility, independently of restore order.</summary>
+        public void ReserveSavedBuildingAreas(IEnumerable<BuildingSnapshotDto> snapshots)
         {
+            savedBuildingCells.Clear();
+            foreach (var snapshot in snapshots)
+            {
+                var definition = FindDefinition(snapshot.buildingTypeId);
+                if (definition == null) continue;
+                var origin = new Vector3Int(snapshot.x, snapshot.y, 0);
+                foreach (var cell in EnumerateFootprint(origin, SavedFootprint(snapshot, definition)))
+                    savedBuildingCells[cell] = snapshot.instanceId;
+            }
+        }
+
+        public bool TryRestoreBuilding(BuildingSnapshotDto snapshot, out BuildingSnapshotDto restoredSnapshot)
+        {
+            restoredSnapshot = snapshot;
             if (string.IsNullOrWhiteSpace(snapshot.instanceId) || restoredInstanceIds.Contains(snapshot.instanceId)) return false;
             BuildingPlacementDefinition definition = FindDefinition(snapshot.buildingTypeId);
             if (definition == null || definition.RuntimePrefab == null) return false;
@@ -529,13 +549,18 @@ namespace SubTerra.Gameplay.Building
             // Missing charger dimensions are legacy 1x1. Outposts originally used 2x2;
             // retain explicitly saved 1x2 outposts instead of expanding into adjacent facilities.
             // Only known footprints are accepted, never arbitrary save dimensions.
-            Vector2Int footprint = snapshot.buildingTypeId == "building.charger.basic"
-                ? snapshot.footprintWidth == 2 && snapshot.footprintHeight == 2 ? new Vector2Int(2, 2) : Vector2Int.one
-                : snapshot.buildingTypeId == "building.outpost_core.basic"
-                    ? snapshot.footprintWidth == 1 && snapshot.footprintHeight == 2 ? new Vector2Int(1, 2) : new Vector2Int(2, 2)
-                : snapshot.buildingTypeId == "building.light.basic" || snapshot.buildingTypeId == "building.settlement.basic"
-                    ? snapshot.footprintWidth == 1 && snapshot.footprintHeight == 2 ? new Vector2Int(1, 2) : Vector2Int.one
-                : definition.Footprint;
+            Vector2Int footprint = SavedFootprint(snapshot, definition);
+            bool tallUtility = snapshot.buildingTypeId == "building.light.basic"
+                || snapshot.buildingTypeId == "building.settlement.basic";
+            if (tallUtility && footprint != definition.Footprint)
+            {
+                if (CanExpandSavedBuilding(snapshot, cell, footprint, definition.Footprint))
+                    footprint = definition.Footprint;
+                else
+                    Debug.LogWarning($"[SubTerra] Saved facility {snapshot.instanceId} could not expand because its new area is blocked; its original position and size were preserved.");
+            }
+            restoredSnapshot.footprintWidth = footprint.x;
+            restoredSnapshot.footprintHeight = footprint.y;
             GameObject instanceObject = Instantiate(
                 definition.RuntimePrefab,
                 FootprintWorldCenter(cell, footprint),
@@ -570,6 +595,46 @@ namespace SubTerra.Gameplay.Building
                 cell,
                 footprint: footprint));
 
+            return true;
+        }
+
+        private static Vector2Int SavedFootprint(BuildingSnapshotDto snapshot, BuildingPlacementDefinition definition)
+        {
+            if (snapshot.buildingTypeId == "building.charger.basic")
+                return snapshot.footprintWidth == 2 && snapshot.footprintHeight == 2 ? new Vector2Int(2, 2) : Vector2Int.one;
+            if (snapshot.buildingTypeId == "building.outpost_core.basic")
+                return snapshot.footprintWidth == 1 && snapshot.footprintHeight == 2 ? new Vector2Int(1, 2) : new Vector2Int(2, 2);
+            if (snapshot.buildingTypeId == "building.light.basic" || snapshot.buildingTypeId == "building.settlement.basic")
+                return snapshot.footprintWidth == 1 && snapshot.footprintHeight == 2 ? new Vector2Int(1, 2) : Vector2Int.one;
+            return definition.Footprint;
+        }
+
+        private bool CanExpandSavedBuilding(BuildingSnapshotDto snapshot, Vector3Int origin, Vector2Int original, Vector2Int enlarged)
+        {
+            if (allowedPlacementArea != null && !allowedPlacementArea.OverlapPoint(FootprintWorldCenter(origin, enlarged)))
+                return false;
+            foreach (var cell in EnumerateFootprint(origin, enlarged))
+            {
+                if (cell.x < origin.x + original.x && cell.y < origin.y + original.y) continue;
+                if (occupiedBuildings.ContainsKey(cell) || (terrainTilemap != null && terrainTilemap.HasTile(cell)))
+                    return false;
+                if (savedBuildingCells.TryGetValue(cell, out var owner) && owner != snapshot.instanceId)
+                    return false;
+                var center = terrainTilemap != null ? terrainTilemap.GetCellCenterWorld(cell) : (Vector3)cell;
+                var size = terrainTilemap != null ? terrainTilemap.layoutGrid.cellSize : Vector3.one;
+                var bounds = new Bounds(center, new Vector3(size.x * 0.98f, size.y * 0.98f, 1f));
+                if (placementElevators != null)
+                    foreach (var elevator in placementElevators)
+                        if (elevator != null && elevator.isActiveAndEnabled && elevator.GetPlacementExclusionBounds().Intersects(bounds))
+                            return false;
+                foreach (var entry in authoredBuildingRenderers)
+                {
+                    if (entry.Key == null || !entry.Key.gameObject.activeInHierarchy || string.IsNullOrEmpty(entry.Key.InstanceId)) continue;
+                    foreach (var renderer in entry.Value)
+                        if (renderer != null && renderer.enabled && renderer.sprite != null && renderer.bounds.Intersects(bounds))
+                            return false;
+                }
+            }
             return true;
         }
 

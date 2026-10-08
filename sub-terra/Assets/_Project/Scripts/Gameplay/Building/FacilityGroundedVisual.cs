@@ -52,16 +52,17 @@ namespace SubTerra.Gameplay.Building
             bool charger = buildingId == "building.charger.basic";
             bool storage = buildingId == "building.storage.basic";
             bool outpost = buildingId == "building.outpost_core.basic";
+            bool portal = buildingId == "building.escape_portal.emergency";
             bool utility = buildingId == "building.light.basic" || buildingId == "building.settlement.basic";
-            if (!charger && !storage && !outpost && !utility) return false;
+            if (!charger && !storage && !outpost && !utility && !portal) return false;
             bool tallUtility = utility && footprint.y != 1;
             bool largeCharger = charger && footprint.x != 1;
             // Explicit legacy 1x2 saves keep their narrow occupied area; new outposts use 2x2.
-            float width = outpost ? footprint.x == 1 ? 0.92f : 1.8f : largeCharger ? 1.8f : 0.96f;
-            float height = outpost ? 1.78f : largeCharger || tallUtility ? 1.82f : 0.96f;
-            int rows = outpost || largeCharger || tallUtility ? 2 : 1;
+            float width = portal ? 1.84f : outpost ? footprint.x == 1 ? 0.92f : 1.8f : largeCharger ? 1.8f : 0.96f;
+            float height = outpost ? 1.78f : largeCharger || tallUtility || portal ? 1.82f : 0.96f;
+            int rows = outpost || largeCharger || tallUtility || portal ? 2 : 1;
             bool hasFoundation = FacilityFoundationVisual.Supports(buildingId);
-            float contactHeight = hasFoundation ? FacilityFoundationVisual.ArtworkContactHeight : -0.08f;
+            float contactHeight = portal ? -0.04f : hasFoundation ? FacilityFoundationVisual.ArtworkContactHeight : -0.08f;
             height = Mathf.Min(height, rows - Mathf.Max(0f, contactHeight) - 0.02f);
             Bounds bounds = GetVisibleBounds(sprite);
             float factor = Mathf.Min(width / Mathf.Max(bounds.size.x, 0.0001f),
@@ -79,7 +80,9 @@ namespace SubTerra.Gameplay.Building
             // Sprite vertices can include transparent margins. Never align those margins to the floor.
             Rect pixels = default;
             Texture2D texture = sprite.texture;
-            if (texture.name == "charger_basic_cartoon_v2" && texture.width == 1240 && texture.height == 1269)
+            if (texture.name == "emergency_escape_portal_v1" && texture.width == 1254 && texture.height == 1254)
+                pixels = Rect.MinMaxRect(49f, 140f, 1205f, 1112f);
+            else if (texture.name == "charger_basic_cartoon_v2" && texture.width == 1240 && texture.height == 1269)
                 pixels = Rect.MinMaxRect(184f, 79f, 1073f, 1227f);
             else if (texture.name == "storage_basic_cartoon_v2" && texture.width == 1312 && texture.height == 1199)
                 pixels = Rect.MinMaxRect(74f, 96f, 1257f, 1098f);

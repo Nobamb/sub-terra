@@ -66,23 +66,7 @@ namespace SubTerra.App.Editor.DataValidation
                 var power = root.GetComponent<PowerNode>();
                 power.Configure(null, false, 0, 30, PowerPriority.Critical);
 
-                var sprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UISprite.psd");
-                CreateVisual(
-                    root.transform,
-                    "OuterFrame",
-                    sprite,
-                    Vector3.zero,
-                    new Vector2(2f, 2f),
-                    new Color(0.1f, 0.8f, 0.95f, 0.92f),
-                    5);
-                CreateVisual(
-                    root.transform,
-                    "PortalField",
-                    sprite,
-                    new Vector3(0f, 0f, -0.01f),
-                    new Vector2(1.6f, 1.6f),
-                    new Color(0.08f, 0.16f, 0.35f, 0.78f),
-                    6);
+                PromptB46EmergencyEscapePortalBuilder.ApplyPortalArtwork(root);
 
                 var portalSo = new SerializedObject(root.GetComponent<EmergencyEscapePortal>());
                 portalSo.FindProperty("inputActions").objectReferenceValue =

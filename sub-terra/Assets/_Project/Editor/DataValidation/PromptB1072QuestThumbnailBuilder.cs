@@ -1,6 +1,7 @@
 using System;
 using SubTerra.App.Tutorial;
 using SubTerra.App.UI.Tutorial;
+using SubTerra.App.Core.Data;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -54,7 +55,8 @@ namespace SubTerra.App.Editor.DataValidation
             for (int i = 0; i < DemoObjectiveIds.Ordered.Length; i++)
             {
                 var id = DemoObjectiveIds.Ordered[i];
-                var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(PathFor(id));
+                var facility = FacilityFor(id);
+                var sprite = facility != null ? facility.Icon : AssetDatabase.LoadAssetAtPath<Sprite>(PathFor(id));
                 if (sprite == null) throw new InvalidOperationException("Thumbnail missing: " + id);
                 var entry = entries.GetArrayElementAtIndex(i);
                 entry.FindPropertyRelative("objectiveId").stringValue = id;
@@ -62,6 +64,26 @@ namespace SubTerra.App.Editor.DataValidation
             }
             serialized.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(view);
+        }
+
+        public static BuildingData FacilityFor(string objectiveId)
+        {
+            string name = objectiveId switch
+            {
+                DemoObjectiveIds.PlaceSupportInDanger => "Support",
+                DemoObjectiveIds.PlaceLadder => "Ladder",
+                DemoObjectiveIds.PlaceLightAtDepth => "Light",
+                DemoObjectiveIds.StoreMineral => "Storage",
+                DemoObjectiveIds.InstallOutpostCore => "OutpostCore",
+                DemoObjectiveIds.ChargeNearOutpost => "Charger",
+                DemoObjectiveIds.HealNearOutpost => "Clinic",
+                DemoObjectiveIds.PurifyGasWithOutpost => "OutpostCore",
+                DemoObjectiveIds.SellAtSettlement => "Settlement",
+                DemoObjectiveIds.EmergencyEscapeReturn => "EmergencyEscapePortal",
+                _ => null
+            };
+            return name == null ? null : AssetDatabase.LoadAssetAtPath<BuildingData>(
+                "Assets/_Project/Data/Buildings/Building_" + name + (name == "EmergencyEscapePortal" ? ".asset" : "_Basic.asset"));
         }
 
         private static void Import()
