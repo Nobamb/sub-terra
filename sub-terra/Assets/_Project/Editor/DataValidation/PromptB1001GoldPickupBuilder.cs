@@ -29,7 +29,8 @@ namespace SubTerra.App.Editor.DataValidation
         private const string EditModeDonePath = "Temp/subterra-prompt-b100-1-editmode.done";
         private const string PlayModeFlagPath = "Temp/subterra-prompt-b100-1-playmode.flag";
         private const string PlayModeDonePath = "Temp/subterra-prompt-b100-1-playmode.done";
-        private const string SeedCharacters = "0123456789G 골드획득!+BONUS";
+        /// <summary>골드 연출 전용 폰트 시드. 142번 팝업 문구("+120 G", "추가 골드 +30 G")의 한글 "추가"를 더했다.</summary>
+        public const string SeedCharacters = "0123456789G 골드획득!+BONUS추가";
         private static TestRunnerApi activeApi;
 
         [InitializeOnLoadMethod]
@@ -207,6 +208,21 @@ namespace SubTerra.App.Editor.DataValidation
             Debug.Log("[SubTerra] " + BuildB114());
         }
 
+        /// <summary>
+        /// prompt-B 142: 골드 팝업 문구에 필요한 글리프("추가")를 전용 폰트에만 추가한다.
+        /// BuildB114와 같은 폰트 한 개만 저장하며 Prefab·Scene·다른 폰트는 건드리지 않는다.
+        /// </summary>
+        [MenuItem("SubTerra/UI/Build Prompt-B 142 Gold Pickup Popup Font")]
+        public static void BuildB142FromMenu()
+        {
+            Debug.Log("[SubTerra] " + BuildB142());
+        }
+
+        public static string BuildB142()
+        {
+            return BuildB114().Replace("Prompt-B 114 gold pickup vfx", "Prompt-B 142 gold pickup popup font");
+        }
+
         public static string BuildB114()
         {
             var font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(FontSdfPath);
@@ -338,7 +354,6 @@ namespace SubTerra.App.Editor.DataValidation
                 serialized.FindProperty("coinSprite").objectReferenceValue = coin;
                 serialized.FindProperty("pickupFont").objectReferenceValue = font;
                 serialized.FindProperty("coinScaleMultiplier").floatValue = 1f;
-                serialized.FindProperty("mainFontSize").floatValue = GoldPickupPresentation.MainFontSize;
                 serialized.ApplyModifiedPropertiesWithoutUndo();
                 EditorUtility.SetDirty(vfx);
                 PrefabUtility.SaveAsPrefabAsset(root, HudPrefabPath);

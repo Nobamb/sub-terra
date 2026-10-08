@@ -10,24 +10,20 @@ using UnityEngine.UI;
 namespace SubTerra.App.Integration
 {
     /// <summary>
-    /// 골드 지급이 확정된 채굴 칸에서 금화·금빛 가루를 튀기고,
-    /// 플레이어 머리 위에 +금액 / BONUS 문구를 띄운다. 끝 무렵 작은 입자가 Gold HUD로 날아간다.
+    /// 골드 지급이 확정되면 채굴 칸에 금빛 가루를 튀기고, 플레이어 머리 위에 금색 홀로그램 팝업 하나를 띄운다
+    /// (prompt-B 142). 연속 획득은 살아 있는 팝업에 합산하고, 퇴장 시작에 작은 입자가 Gold HUD로 날아간다.
     /// 골드 데이터는 이미 지급된 뒤이며 이 컴포넌트는 시각 피드백만 담당한다.
     /// </summary>
     public sealed class GoldPickupVfx : MonoBehaviour
     {
         public const int WorldSortingOrder = 120;
         private const int MaxHudParticles = 9;
-        private const float BonusFontRatio = 0.58f;
-        private const float MainLineHeight = 46f;
-        private const float BonusLineHeight = 28f;
 
         [SerializeField] private Sprite coinSprite;
         [SerializeField] private TMP_FontAsset pickupFont;
         [SerializeField] private Tilemap foregroundTilemap;
-        // B-114에서 기준 크기를 Presentation으로 옮기고 배율만 노출한다.
+        // 금빛 가루 스프라이트 배율. 팝업 금화 크기는 GoldPickupPopupTimeline이 정한다.
         [SerializeField] private float coinScaleMultiplier = 1f;
-        [SerializeField] private float mainFontSize = GoldPickupPresentation.MainFontSize;
         [SerializeField] private BasicHudView hudView;
 
         private MiningSystem boundSystem;
@@ -36,19 +32,21 @@ namespace SubTerra.App.Integration
         private int pendingGold;
         private int pendingGoldBonus;
         private Transform worldRoot;
-        private readonly List<CoinAnim> coins = new List<CoinAnim>(6);
         private readonly List<DustAnim> dusts = new List<DustAnim>(2);
-        private readonly List<TextAnim> texts = new List<TextAnim>(GoldPickupPresentation.MaxActiveTexts + 1);
+        private PopupRuntime popup;
+        private Material dustMaterial;
         private readonly List<HudParticle> hudParticles = new List<HudParticle>(MaxHudParticles);
         private readonly List<PulseTarget> pulseTargets = new List<PulseTarget>(2);
         private float pulseElapsed = -1f;
 
         public int PendingGold => pendingGold;
-        public int ActiveCoinCount => coins.Count;
+        public int ActiveCoinCount => popup != null && popup.Visual != null ? popup.Visual.ActiveCoinCount : 0;
         public int ActiveDustCount => dusts.Count;
-        public int ActiveTextCount => texts.Count;
+        public int ActivePopupCount => IsPopupAlive() ? 1 : 0;
         public int ActiveHudParticleCount => hudParticles.Count;
-        public bool IsTextPlaying => texts.Count > 0;
+        public bool IsPopupPlaying => IsPopupAlive();
+        public GoldPickupPopupState PopupState => IsPopupAlive() ? popup.State : null;
+        public GoldPickupPopupVisual PopupVisual => IsPopupAlive() ? popup.Visual : null;
         public bool IsPulsing => pulseElapsed >= 0f;
 
         public void BindTo(MiningSystem system, Transform player, Tilemap tilemap = null)
@@ -106,9 +104,11 @@ namespace SubTerra.App.Integration
             }
 
             EnsureWorldRoot();
-            SpawnCoins(origin);
             SpawnDust(origin);
-            SpawnText(goldAmount, playerHead, goldBonus);
+            ShowPopup(
+                GoldPickupPresentation.BaseGold(goldAmount, goldBonus),
+                GoldPickupPresentation.ClampBonus(goldAmount, goldBonus),
+                playerHead);
         }
 
         public void Tick(float unscaledDeltaTime)
@@ -118,11 +118,16 @@ namespace SubTerra.App.Integration
                 unscaledDeltaTime = 0f;
             }
 
-            TickCoins(unscaledDeltaTime);
+            TickPopup(unscaledDeltaTime);
             TickDust(unscaledDeltaTime);
-            TickTexts(unscaledDeltaTime);
             TickHudParticles(unscaledDeltaTime);
             TickPulse(unscaledDeltaTime);
+        }
+
+        /// <summary>남은 팝업·금빛 가루·HUD 입자를 즉시 지우고 HUD 크기를 원복한다.</summary>
+        public void ClearEffects()
+        {
+            ClearAll();
         }
 
         private void Update()
@@ -176,39 +181,6 @@ namespace SubTerra.App.Integration
             }
         }
 
-        private void SpawnCoins(Vector3 origin)
-        {
-            if (coinSprite == null)
-            {
-                return;
-            }
-
-            float scaleRatio = coinScaleMultiplier > 0f ? coinScaleMultiplier : 1f;
-            for (var index = 0; index < GoldPickupPresentation.CoinCount; index++)
-            {
-                var coinObject = new GameObject("GoldPickupCoin");
-                coinObject.transform.SetParent(worldRoot, false);
-                var renderer = coinObject.AddComponent<SpriteRenderer>();
-                renderer.sprite = coinSprite;
-                renderer.sortingOrder = WorldSortingOrder + GoldPickupPresentation.CoinSortingBias(index);
-                renderer.color = new Color(1f, 1f, 1f, 0f);
-                float scale = GoldPickupPresentation.CoinScale(index) * scaleRatio;
-                coinObject.transform.localScale = new Vector3(scale, scale, 1f);
-                coinObject.transform.position = GoldPickupPresentation.CoinStart(origin, index);
-
-                coins.Add(new CoinAnim
-                {
-                    Renderer = renderer,
-                    Index = index,
-                    Origin = origin,
-                    BaseScale = scale,
-                    Delay = GoldPickupPresentation.CoinDelay(index),
-                    Duration = GoldPickupPresentation.CoinFlightDuration(index),
-                    Elapsed = 0f
-                });
-            }
-        }
-
         private void SpawnDust(Vector3 origin)
         {
             if (coinSprite == null)
@@ -216,9 +188,7 @@ namespace SubTerra.App.Integration
                 return;
             }
 
-            Material material = coins.Count > 0 && coins[coins.Count - 1].Renderer != null
-                ? coins[coins.Count - 1].Renderer.sharedMaterial
-                : null;
+            Material material = GetDustMaterial();
             if (material == null)
             {
                 return;
@@ -239,7 +209,8 @@ namespace SubTerra.App.Integration
             main.maxParticles = GoldPickupPresentation.DustCount + 4;
             main.startLifetime = new ParticleSystem.MinMaxCurve(0.3f, GoldPickupPresentation.DustLifetimeMax);
             main.startSpeed = new ParticleSystem.MinMaxCurve(1.1f, 2.4f);
-            main.startSize = new ParticleSystem.MinMaxCurve(0.035f, 0.075f);
+            float sizeRatio = coinScaleMultiplier > 0f ? coinScaleMultiplier : 1f;
+            main.startSize = new ParticleSystem.MinMaxCurve(0.035f * sizeRatio, 0.075f * sizeRatio);
             main.startRotation = new ParticleSystem.MinMaxCurve(0f, Mathf.PI * 2f);
             main.startColor = new ParticleSystem.MinMaxGradient(
                 GoldPickupPresentation.DustBrightColor,
@@ -283,198 +254,6 @@ namespace SubTerra.App.Integration
             dusts.Add(new DustAnim { Particles = system, Elapsed = 0f });
         }
 
-        private void SpawnText(int goldAmount, Vector3 playerHead, int goldBonus)
-        {
-            string mainLabel = GoldPickupPresentation.FormatMainText(goldAmount, goldBonus);
-            string bonusLabel = GoldPickupPresentation.FormatBonusText(goldAmount, goldBonus);
-            if (string.IsNullOrEmpty(mainLabel) || pickupFont == null)
-            {
-                return;
-            }
-
-            bool hasBonus = !string.IsNullOrEmpty(bonusLabel);
-            float fontSize = mainFontSize > 0f ? mainFontSize : GoldPickupPresentation.MainFontSize;
-
-            // 연속 획득: 이전 문구를 새 문구 높이만큼 위로 밀고, 너무 많으면 가장 오래된 것부터 빠르게 지운다.
-            float push = GoldPickupPresentation.StackStep(hasBonus);
-            int alive = 0;
-            for (var index = texts.Count - 1; index >= 0; index--)
-            {
-                TextAnim previous = texts[index];
-                previous.StackTarget += push;
-                if (previous.EvictElapsed < 0f)
-                {
-                    alive++;
-                    if (alive >= GoldPickupPresentation.MaxActiveTexts)
-                    {
-                        previous.EvictElapsed = 0f;
-                    }
-                }
-            }
-
-            var root = new GameObject("GoldPickupText", typeof(RectTransform), typeof(Canvas), typeof(CanvasGroup));
-            root.transform.SetParent(worldRoot, false);
-            var canvas = root.GetComponent<Canvas>();
-            canvas.renderMode = RenderMode.WorldSpace;
-            canvas.overrideSorting = true;
-            canvas.sortingOrder = WorldSortingOrder + 20;
-            canvas.additionalShaderChannels =
-                AdditionalCanvasShaderChannels.TexCoord1
-                | AdditionalCanvasShaderChannels.Normal
-                | AdditionalCanvasShaderChannels.Tangent;
-
-            var rootGroup = root.GetComponent<CanvasGroup>();
-            rootGroup.interactable = false;
-            rootGroup.blocksRaycasts = false;
-
-            float bonusBlock = hasBonus ? BonusLineHeight : 0f;
-            var rect = root.GetComponent<RectTransform>();
-            rect.pivot = new Vector2(0.5f, 0f);
-            rect.sizeDelta = new Vector2(480f, MainLineHeight + bonusBlock);
-            root.transform.localScale = new Vector3(0.01f, 0.01f, 0.01f);
-            root.transform.position = playerHead;
-
-            var anim = new TextAnim
-            {
-                Root = root,
-                Anchor = playerHead,
-                HasBonus = hasBonus,
-                EvictElapsed = -1f
-            };
-
-            anim.MainLine = CreateLine(
-                root.transform,
-                "MainLine",
-                mainLabel,
-                fontSize,
-                bonusBlock + MainLineHeight * 0.5f,
-                MainLineHeight,
-                true,
-                out anim.MainGroup);
-            if (hasBonus)
-            {
-                anim.BonusLine = CreateLine(
-                    root.transform,
-                    "BonusLine",
-                    bonusLabel,
-                    fontSize * BonusFontRatio,
-                    BonusLineHeight * 0.5f,
-                    BonusLineHeight,
-                    false,
-                    out anim.BonusGroup);
-            }
-
-            texts.Add(anim);
-            ApplyText(anim);
-        }
-
-        private RectTransform CreateLine(
-            Transform parent,
-            string name,
-            string label,
-            float fontSize,
-            float centerY,
-            float height,
-            bool isMain,
-            out CanvasGroup group)
-        {
-            var line = new GameObject(name, typeof(RectTransform), typeof(CanvasGroup));
-            line.transform.SetParent(parent, false);
-            var lineRect = line.GetComponent<RectTransform>();
-            lineRect.anchorMin = new Vector2(0.5f, 0f);
-            lineRect.anchorMax = new Vector2(0.5f, 0f);
-            lineRect.pivot = new Vector2(0.5f, 0.5f);
-            lineRect.sizeDelta = new Vector2(480f, height);
-            lineRect.anchoredPosition = new Vector2(0f, centerY);
-            group = line.GetComponent<CanvasGroup>();
-            group.alpha = 0f;
-            group.interactable = false;
-            group.blocksRaycasts = false;
-
-            // 외곽선 머티리얼 인스턴스를 만들지 않도록 어두운 복제 글자를 그림자로 깐다.
-            var shadow = CreateLabel(line.transform, "Shadow", label, fontSize, new Vector2(2f, -3f));
-            shadow.color = GoldPickupPresentation.ShadowColor;
-
-            var fill = CreateLabel(line.transform, "Fill", label, fontSize, Vector2.zero);
-            if (isMain)
-            {
-                fill.color = Color.white;
-                fill.enableVertexGradient = true;
-                fill.colorGradient = new VertexGradient(
-                    GoldPickupPresentation.MainTopColor,
-                    GoldPickupPresentation.MainTopColor,
-                    GoldPickupPresentation.MainBottomColor,
-                    GoldPickupPresentation.MainBottomColor);
-            }
-            else
-            {
-                fill.color = GoldPickupPresentation.BonusColor;
-                fill.characterSpacing = 4f;
-                shadow.characterSpacing = 4f;
-            }
-
-            return lineRect;
-        }
-
-        private TextMeshProUGUI CreateLabel(Transform parent, string name, string label, float fontSize, Vector2 offset)
-        {
-            var textObject = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
-            textObject.transform.SetParent(parent, false);
-            var textRect = textObject.GetComponent<RectTransform>();
-            textRect.anchorMin = Vector2.zero;
-            textRect.anchorMax = Vector2.one;
-            textRect.offsetMin = offset;
-            textRect.offsetMax = offset;
-            var text = textObject.GetComponent<TextMeshProUGUI>();
-            text.font = pickupFont;
-            text.fontSize = fontSize;
-            text.alignment = TextAlignmentOptions.Center;
-            text.textWrappingMode = TextWrappingModes.NoWrap;
-            text.overflowMode = TextOverflowModes.Overflow;
-            text.raycastTarget = false;
-            text.outlineWidth = 0f;
-            text.text = label;
-            return text;
-        }
-
-        private void TickCoins(float dt)
-        {
-            for (var index = coins.Count - 1; index >= 0; index--)
-            {
-                CoinAnim anim = coins[index];
-                if (anim.Renderer == null)
-                {
-                    coins.RemoveAt(index);
-                    continue;
-                }
-
-                anim.Elapsed += dt;
-                float local = anim.Elapsed - anim.Delay;
-                if (local < 0f)
-                {
-                    continue;
-                }
-
-                float duration = anim.Duration > 0f
-                    ? anim.Duration
-                    : GoldPickupPresentation.CoinFlightDuration(anim.Index);
-                Transform coin = anim.Renderer.transform;
-                coin.position = GoldPickupPresentation.EvaluateCoinPosition(anim.Origin, anim.Index, local);
-                float spin = GoldPickupPresentation.CoinSpinScaleX(anim.Index, local);
-                coin.localScale = new Vector3(anim.BaseScale * spin, anim.BaseScale, 1f);
-                Color color = anim.Renderer.color;
-                color.a = GoldPickupPresentation.CoinFadeIn(local)
-                    * GoldPickupPresentation.CoinAlpha(local / duration);
-                anim.Renderer.color = color;
-
-                if (local >= duration)
-                {
-                    DestroyHelper(anim.Renderer.gameObject);
-                    coins.RemoveAt(index);
-                }
-            }
-        }
-
         private void TickDust(float dt)
         {
             for (var index = dusts.Count - 1; index >= 0; index--)
@@ -493,98 +272,122 @@ namespace SubTerra.App.Integration
             }
         }
 
-        private void TickTexts(float dt)
+        private bool IsPopupAlive()
         {
-            for (var index = texts.Count - 1; index >= 0; index--)
+            return popup != null && popup.Visual != null && popup.Visual.IsAlive;
+        }
+
+        private void ShowPopup(int baseGold, int bonusGold, Vector3 playerHead)
+        {
+            if (pickupFont == null)
             {
-                TextAnim anim = texts[index];
-                if (anim.Root == null)
+                return;
+            }
+
+            if (popup != null && !IsPopupAlive())
+            {
+                popup = null;
+            }
+
+            // 살아 있는 팝업(퇴장 중 포함)이 있으면 새로 만들지 않고 확정값만 합산한다.
+            if (popup != null && !popup.State.Finished)
+            {
+                int increase = popup.State.Merge(baseGold, bonusGold);
+                if (increase > 0)
                 {
-                    texts.RemoveAt(index);
-                    continue;
+                    popup.Visual.SpawnBurst(GoldPickupPopupTimeline.MergeCoinCount(increase), -18f);
+                    popup.Anchor = playerHead;
                 }
 
-                anim.Elapsed += dt;
-                if (anim.EvictElapsed >= 0f)
-                {
-                    anim.EvictElapsed += dt;
-                }
+                return;
+            }
 
-                float follow = 1f - Mathf.Exp(-GoldPickupPresentation.TextStackFollowSpeed * dt);
-                anim.StackOffset = Mathf.Lerp(anim.StackOffset, anim.StackTarget, follow);
-                TryLaunchHudParticles(anim);
-                ApplyText(anim);
+            DestroyPopup();
+            var state = new GoldPickupPopupState(baseGold, bonusGold);
+            var visual = GoldPickupPopupVisual.Create(worldRoot, pickupFont, coinSprite);
+            popup = new PopupRuntime { State = state, Visual = visual, Anchor = playerHead };
+            visual.SetWorldPosition(playerHead + Vector3.up * GoldPickupPresentation.TextBaseLift, 0f);
+            visual.Tick(0f, state);
+        }
 
-                bool expired = anim.Elapsed >= GoldPickupPresentation.TextDuration
-                    || anim.EvictElapsed >= GoldPickupPresentation.TextEvictSeconds;
-                if (expired)
-                {
-                    DestroyHelper(anim.Root);
-                    texts.RemoveAt(index);
-                }
+        private void TickPopup(float dt)
+        {
+            if (popup == null)
+            {
+                return;
+            }
+
+            if (!IsPopupAlive())
+            {
+                popup = null;
+                return;
+            }
+
+            GoldPickupPopupState state = popup.State;
+            GoldPickupPopupVisual visual = popup.Visual;
+            state.Advance(dt);
+            if (state.TakeBaseLanding())
+            {
+                visual.SpawnBurst(GoldPickupPopupTimeline.BaseLandingCoinCount(state.BaseTotal));
+                visual.FlashEdge();
+            }
+
+            if (state.TakeBonusLanding())
+            {
+                visual.SpawnBurst(GoldPickupPopupTimeline.BonusLandingCoinCount(state.BonusTotal), 18f);
+                visual.StartSweep();
+            }
+
+            visual.Tick(dt, state);
+            Vector3 head = playerTarget != null ? HeadPosition() : popup.Anchor;
+            visual.SetWorldPosition(
+                head + Vector3.up * GoldPickupPresentation.TextBaseLift,
+                GoldPickupPopupTimeline.ExitRiseWorld(state.ExitAmount));
+            TryLaunchHudParticles(popup);
+
+            bool hudDone = popup.HudLaunched >= GoldPickupPresentation.HudParticleCount;
+            if (state.Finished && hudDone)
+            {
+                DestroyPopup();
             }
         }
 
-        private void ApplyText(TextAnim anim)
+        private void DestroyPopup()
         {
-            GoldPickupPresentation.EvaluateText(anim.Elapsed, out float alpha, out float yOffset, out float scale);
-            float evict = anim.EvictElapsed >= 0f
-                ? 1f - Mathf.Clamp01(anim.EvictElapsed / GoldPickupPresentation.TextEvictSeconds)
-                : 1f;
-
-            if (anim.MainGroup != null)
+            if (popup != null && popup.Visual != null)
             {
-                anim.MainGroup.alpha = alpha * evict;
+                popup.Visual.Destroy();
             }
 
-            if (anim.MainLine != null)
-            {
-                anim.MainLine.localScale = new Vector3(scale, scale, 1f);
-            }
-
-            if (anim.HasBonus)
-            {
-                GoldPickupPresentation.EvaluateBonus(anim.Elapsed, out float bonusAlpha, out float bonusScale);
-                if (anim.BonusGroup != null)
-                {
-                    anim.BonusGroup.alpha = bonusAlpha * evict;
-                }
-
-                if (anim.BonusLine != null)
-                {
-                    anim.BonusLine.localScale = new Vector3(bonusScale, bonusScale, 1f);
-                }
-            }
-
-            Vector3 head = playerTarget != null ? HeadPosition() : anim.Anchor;
-            anim.Root.transform.position = head
-                + Vector3.up * (GoldPickupPresentation.TextBaseLift + yOffset + anim.StackOffset);
+            popup = null;
         }
 
-        private void TryLaunchHudParticles(TextAnim anim)
+        private void TryLaunchHudParticles(PopupRuntime target)
         {
-            if (anim.EvictElapsed >= 0f || anim.Launched >= GoldPickupPresentation.HudParticleCount)
+            // 퇴장이 처음 시작될 때만 발사한다. 퇴장이 취소·재개돼도 같은 팝업은 다시 발사하지 않는다.
+            if (!target.State.HudSequenceStarted
+                || target.HudLaunched >= GoldPickupPresentation.HudParticleCount)
             {
                 return;
             }
 
             if (coinSprite == null || !TryGetHudLayer(out RectTransform layer, out _))
             {
-                anim.Launched = GoldPickupPresentation.HudParticleCount;
+                target.HudLaunched = GoldPickupPresentation.HudParticleCount;
                 return;
             }
 
-            while (anim.Launched < GoldPickupPresentation.HudParticleCount
-                && anim.Elapsed >= GoldPickupPresentation.HudLaunchTime(anim.Launched))
+            while (target.HudLaunched < GoldPickupPresentation.HudParticleCount
+                && target.State.HudClock >= GoldPickupPresentation.HudLaunchTime(target.HudLaunched))
             {
-                int particleIndex = anim.Launched;
-                anim.Launched++;
+                int particleIndex = target.HudLaunched;
+                target.HudLaunched++;
                 if (hudParticles.Count >= MaxHudParticles)
                 {
                     continue;
                 }
 
-                Vector3 start = anim.MainLine != null ? anim.MainLine.position : anim.Root.transform.position;
+                Vector3 start = target.Visual.MainLineWorldPosition;
                 var particleObject = new GameObject("GoldPickupHudParticle", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
                 particleObject.transform.SetParent(layer, false);
                 particleObject.transform.SetAsLastSibling();
@@ -610,6 +413,23 @@ namespace SubTerra.App.Integration
                 hudParticles.Add(particle);
                 UpdateHudParticle(particle, layer);
             }
+        }
+
+        private Material GetDustMaterial()
+        {
+            if (dustMaterial != null)
+            {
+                return dustMaterial;
+            }
+
+            // 기본 스프라이트 머티리얼을 SpriteRenderer에서 한 번만 빌려 온다.
+            var probe = new GameObject("GoldPickupDustProbe");
+            probe.transform.SetParent(worldRoot, false);
+            var renderer = probe.AddComponent<SpriteRenderer>();
+            dustMaterial = renderer.sharedMaterial;
+            // 같은 프레임에 SpriteRenderer가 남지 않도록 즉시 지운다.
+            DestroyImmediate(probe);
+            return dustMaterial;
         }
 
         private void TickHudParticles(float dt)
@@ -832,15 +652,7 @@ namespace SubTerra.App.Integration
 
         private void ClearAll()
         {
-            for (var index = 0; index < coins.Count; index++)
-            {
-                if (coins[index].Renderer != null)
-                {
-                    DestroyHelper(coins[index].Renderer.gameObject);
-                }
-            }
-
-            coins.Clear();
+            DestroyPopup();
             for (var index = 0; index < dusts.Count; index++)
             {
                 if (dusts[index].Particles != null)
@@ -850,15 +662,6 @@ namespace SubTerra.App.Integration
             }
 
             dusts.Clear();
-            for (var index = 0; index < texts.Count; index++)
-            {
-                if (texts[index].Root != null)
-                {
-                    DestroyHelper(texts[index].Root);
-                }
-            }
-
-            texts.Clear();
             ClearHudParticles();
             RestorePulseTargets();
         }
@@ -895,37 +698,18 @@ namespace SubTerra.App.Integration
             }
         }
 
-        private sealed class CoinAnim
-        {
-            public SpriteRenderer Renderer;
-            public int Index;
-            public Vector3 Origin;
-            public float BaseScale;
-            public float Delay;
-            public float Duration;
-            public float Elapsed;
-        }
-
         private sealed class DustAnim
         {
             public ParticleSystem Particles;
             public float Elapsed;
         }
 
-        private sealed class TextAnim
+        private sealed class PopupRuntime
         {
-            public GameObject Root;
-            public RectTransform MainLine;
-            public RectTransform BonusLine;
-            public CanvasGroup MainGroup;
-            public CanvasGroup BonusGroup;
+            public GoldPickupPopupState State;
+            public GoldPickupPopupVisual Visual;
             public Vector3 Anchor;
-            public bool HasBonus;
-            public float Elapsed;
-            public float StackOffset;
-            public float StackTarget;
-            public float EvictElapsed;
-            public int Launched;
+            public int HudLaunched;
         }
 
         private sealed class HudParticle
