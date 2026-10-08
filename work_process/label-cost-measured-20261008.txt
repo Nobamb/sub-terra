@@ -1,0 +1,13 @@
+Editor Play, real TryPlaceAt charger installations=1; facilities=1; position=(-38.50, -0.50, 0.00); active tags=1; screen=1180x491. Player held stationary. No synthetic facility objects or debris. Not standalone Windows FPS.
+30 seconds frames=2090; mean=14.363ms; p95=31.163ms.
+SubTerra.FacilityLabels.Refresh: valid=True; samples=2090; unit=TimeNanoseconds; mean=317618.9; max=27272600
+SubTerra.FacilityLabels.Discovery: valid=True; samples=2090; unit=TimeNanoseconds; mean=228895.9; max=2899200
+SubTerra.FacilityLabels.Layout: valid=True; samples=2090; unit=TimeNanoseconds; mean=24663.7; max=100100
+SubTerra.FacilityLabels.Anchor: valid=True; samples=2090; unit=TimeNanoseconds; mean=19292.0; max=89000
+SubTerra.FacilityLabels.Animation: valid=True; samples=2090; unit=TimeNanoseconds; mean=4649.8; max=210100
+Canvas.BuildBatch: valid=True; samples=2090; unit=TimeNanoseconds; mean=47720.0; max=11729300
+Canvas.SendWillRenderCanvases: valid=False; samples=0; unit=TimeNanoseconds; mean=0.0; max=0
+GC Allocated In Frame: valid=True; samples=2090; unit=Bytes; mean=30663.3; max=63299
+PASS direct existing test: PromptB49_ProximityLabel_ShowsNameExceptSupportAndLadder
+PASS direct existing test: PromptB49_ProximityLabel_UsesNotoSansKoreanFont
+PASS direct existing test: ProximityLabel_RepeatedRefreshDropsDestroyedAndDisabledFacilities

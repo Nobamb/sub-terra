@@ -3,6 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 using NUnit.Framework;
 using SubTerra.App.Core;
 using SubTerra.App.Save;
@@ -64,13 +65,24 @@ namespace SubTerra.App.Tests.PlayMode.MineDemo
             if (input != null) input.enabled = false;
             movement.SetCanMove(true);
             visual = movement.transform.Find("VisualRoot").GetComponent<SpriteRenderer>();
+            var configuredFrames = new SerializedObject(
+                visual.GetComponent<PlayerAnimationController>()).FindProperty("ladderFrames");
+            Assert.That(configuredFrames.arraySize, Is.EqualTo(5));
             frames = new Sprite[5];
+            bool styled = AssetDatabase.GetAssetPath(configuredFrames.GetArrayElementAtIndex(0).objectReferenceValue)
+                .EndsWith("ladder_back_neutral_v2.png");
             for (var i = 0; i < frames.Length; i++)
             {
-                frames[i] = AssetDatabase.LoadAssetAtPath<Sprite>(Frames + "ladder_back_0" + (i + 1) + ".png");
+                frames[i] = configuredFrames.GetArrayElementAtIndex(i).objectReferenceValue as Sprite;
                 Assert.That(frames[i], Is.Not.Null);
+                string framePath = AssetDatabase.GetAssetPath(frames[i]);
+                if (i == 0)
+                    Assert.That(framePath, Is.EqualTo(Frames + "ladder_back_neutral_v2.png")
+                        .Or.EqualTo(Frames + "ladder_back_01.png"));
+                else
+                    Assert.That(framePath, Is.EqualTo(Frames + "ladder_back_" + (styled ? "style_" : "") + "0" + (i + 1) + ".png"));
                 Assert.That(frames[i].texture.width, Is.EqualTo(1254));
-                Assert.That(frames[i].pixelsPerUnit, Is.EqualTo(1254));
+                Assert.That(frames[i].pixelsPerUnit, Is.EqualTo(styled ? 1084f : 1254f));
             }
 
             // 실제 5칸 시설 프리팹으로 연결과 물리 등반을 검증한다.
@@ -88,13 +100,15 @@ namespace SubTerra.App.Tests.PlayMode.MineDemo
             Assert.That(visual.sprite, Is.SameAs(frames[0]));
             Debug.Log("[Ladder Bootstrap QA] Neutral imported frame selected.");
             var visualPosition = visual.transform.localPosition;
+            VerifyDistanceSteppedPoses(1f);
+            VerifyDistanceSteppedPoses(-1f);
             yield return Travel(1f, "ascending");
             movement.SetVerticalMoveInput(0f);
             yield return new WaitForFixedUpdate();
             yield return null;
             Assert.That(visual.sprite, Is.SameAs(frames[0]));
             yield return Travel(-1f, "descending");
-            Debug.Log("[Ladder Bootstrap QA] Ascending and descending selected all five frames.");
+            Debug.Log("[Ladder Bootstrap QA] Distance-stepped poses and physical ascending/descending passed.");
             Assert.That(visual.transform.localPosition, Is.EqualTo(visualPosition), "VisualRoot must not bob.");
             movement.SetVerticalMoveInput(1f);
             yield return new WaitForSeconds(1.5f);
@@ -108,7 +122,8 @@ namespace SubTerra.App.Tests.PlayMode.MineDemo
             body.position += Vector2.right * 2f;
             Physics2D.SyncTransforms();
             yield return new WaitForFixedUpdate();
-            yield return new WaitForSeconds(0.15f);
+            yield return WaitFor(() => !movement.IsClimbing);
+            yield return WaitFor(() => Array.IndexOf(frames, visual.sprite) < 0);
             Assert.That(movement.IsClimbing, Is.False);
             Assert.That(Array.IndexOf(frames, visual.sprite), Is.EqualTo(-1), "Normal sprite must be restored on exit.");
 
@@ -144,7 +159,43 @@ namespace SubTerra.App.Tests.PlayMode.MineDemo
                 observed.Add(visual.sprite);
             }
             Assert.That(Mathf.Abs(movement.Position.y - startY), Is.GreaterThanOrEqualTo(2.1f), label);
-            Assert.That(observed.Count, Is.EqualTo(5), "Both intermediate/full poses and neutral must be displayed.");
+            Assert.That(observed.Count, Is.GreaterThan(0), "Physical travel must display valid ladder poses.");
+        }
+
+        private void VerifyDistanceSteppedPoses(float direction)
+        {
+            // 렌더 FPS가 낮아 중간 자세를 놓쳐도 거리 기반 순서는 빠짐없이 검사한다.
+            var animation = visual.GetComponent<PlayerAnimationController>();
+            var body = movement.GetComponent<Rigidbody2D>();
+            var start = body.position;
+            var wasSimulated = body.simulated;
+            var wasEnabled = animation.enabled;
+            var localPosition = visual.transform.localPosition;
+            var step = new SerializedObject(animation).FindProperty("ladderDistancePerFrame").floatValue;
+            var tick = typeof(PlayerAnimationController).GetMethod("LateUpdate", BindingFlags.Instance | BindingFlags.NonPublic);
+            var sequence = direction > 0f
+                ? new[] { 0, 1, 2, 1, 0, 3, 4, 3, 0 }
+                : new[] { 0, 3, 4, 3, 0, 1, 2, 1, 0 };
+            try
+            {
+                animation.enabled = false;
+                body.simulated = false;
+                movement.SetVerticalMoveInput(direction);
+                for (var i = 0; i < sequence.Length; i++)
+                {
+                    body.position = start + Vector2.up * (direction * i * (step + 0.0001f));
+                    tick.Invoke(animation, null);
+                    Assert.That(visual.sprite, Is.SameAs(frames[sequence[i]]), "Distance step " + i + ", direction " + direction);
+                    Assert.That(visual.transform.localPosition, Is.EqualTo(localPosition), "Climb poses must not shift VisualRoot.");
+                }
+            }
+            finally
+            {
+                movement.SetVerticalMoveInput(0f);
+                body.position = start;
+                body.simulated = wasSimulated;
+                animation.enabled = wasEnabled;
+            }
         }
 
         private static IEnumerator WaitFor(Func<bool> condition)

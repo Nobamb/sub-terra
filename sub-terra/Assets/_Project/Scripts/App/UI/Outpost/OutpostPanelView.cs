@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
+using SubTerra.App.Inventory;
 using SubTerra.App.Outpost;
 using SubTerra.App.UI.Sell;
 using TMPro;
@@ -52,16 +53,42 @@ namespace SubTerra.App.UI.Outpost
                 ? servicePopup.gameObject
                 : corePopup != null && currentMode == OutpostPanelMode.Core
                     ? corePopup.gameObject
-                    : sellPopup != null && (currentMode == OutpostPanelMode.Settlement || sellPopup.IsVisible)
-                        ? sellPopup.gameObject
-                        : PanelRoot;
+                    : storagePopup != null && (currentMode == OutpostPanelMode.Storage || storagePopup.IsVisible)
+                        ? storagePopup.gameObject
+                        : sellPopup != null && (currentMode == OutpostPanelMode.Settlement || sellPopup.IsVisible)
+                            ? sellPopup.gameObject
+                            : PanelRoot;
 
         public ResourceSellPopupView SellPopup => sellPopup;
+
+        /// <summary>보관함 팝업(B-138). 플레이 중 Binder가 붙인 뒤에만 존재하며, 없으면 예전 큰 패널을 쓴다.</summary>
+        public StoragePopupView StoragePopup => storagePopup;
 
         /// <summary>판매 팝업의 X 버튼. Binder가 기존 닫기 경로(ClosePanel)에 연결한다.</summary>
         public event System.Action SellCloseRequested;
 
         private ResourceSellPopupView sellPopup;
+        private StoragePopupView storagePopup;
+
+        /// <summary>보관함 팝업을 만든다(플레이 중 1회). 보관 판정은 Service, 입력은 Binder가 연결한다.</summary>
+        public StoragePopupView AttachStoragePopup(System.Func<string, Sprite> iconResolver)
+        {
+            if (storagePopup == null && Application.isPlaying)
+            {
+                var canvases = GetComponentsInParent<Canvas>(true);
+                if (canvases != null && canvases.Length > 0)
+                {
+                    storagePopup = StoragePopupView.Create(canvases[canvases.Length - 1].transform);
+                }
+            }
+
+            if (storagePopup != null)
+            {
+                storagePopup.SetIconResolver(iconResolver);
+            }
+
+            return storagePopup;
+        }
 
         /// <summary>공통 판매 팝업에 판매 상태를 연결한다. 플레이 중에만 팝업을 만든다.</summary>
         public void AttachSellSession(ResourceSellSession session)
@@ -93,6 +120,12 @@ namespace SubTerra.App.UI.Outpost
 
         private void OnDestroy()
         {
+            if (storagePopup != null)
+            {
+                Destroy(storagePopup.gameObject);
+                storagePopup = null;
+            }
+
             if (sellPopup != null)
             {
                 sellPopup.CloseRequested -= OnSellCloseRequested;
@@ -153,11 +186,27 @@ namespace SubTerra.App.UI.Outpost
             var useSell = sellPopup != null
                 && currentVisible
                 && currentMode == OutpostPanelMode.Settlement;
+            var useStorage = storagePopup != null
+                && currentVisible
+                && currentMode == OutpostPanelMode.Storage;
             // 닫는 중 SetMode(None)이 먼저 불려도 예전 큰 패널이 잠깐 켜지지 않게 한다.
             if (!fromModeChange || currentMode != OutpostPanelMode.None)
             {
                 (panelRoot != null ? panelRoot : gameObject).SetActive(
-                    currentVisible && !useService && !useCore && !useSell);
+                    currentVisible && !useService && !useCore && !useSell && !useStorage);
+            }
+
+            if (storagePopup != null)
+            {
+                // Show는 이미 열려 있으면 아무것도 하지 않는다(스냅샷마다 불려도 안전).
+                if (useStorage)
+                {
+                    storagePopup.Show();
+                }
+                else if (storagePopup.IsOpen)
+                {
+                    storagePopup.BeginClose();
+                }
             }
 
             if (sellPopup != null)
@@ -371,6 +420,27 @@ namespace SubTerra.App.UI.Outpost
             {
                 mineralPicker.SetOptions(options, selectedMineralId);
             }
+
+            if (storagePopup != null)
+            {
+                storagePopup.SetMineralOptions(options, selectedMineralId);
+            }
+        }
+
+        public void SetStorageCargo(InventorySnapshot playerCargo, InventorySnapshot storage)
+        {
+            if (storagePopup != null)
+            {
+                storagePopup.SetCargo(playerCargo, storage);
+            }
+        }
+
+        public void SetStorageSelection(string mineralId, string displayName, int owned, int stored, int quantity)
+        {
+            if (storagePopup != null)
+            {
+                storagePopup.SetSelection(mineralId, displayName, owned, stored, quantity);
+            }
         }
 
         public void ClearMineralSearch()
@@ -378,6 +448,11 @@ namespace SubTerra.App.UI.Outpost
             if (mineralPicker != null)
             {
                 mineralPicker.ClearSearch();
+            }
+
+            if (storagePopup != null)
+            {
+                storagePopup.ClearSearch();
             }
         }
 
@@ -396,6 +471,11 @@ namespace SubTerra.App.UI.Outpost
             if (servicePopup != null)
             {
                 servicePopup.SetResult(message, isError);
+            }
+
+            if (storagePopup != null)
+            {
+                storagePopup.SetStatus(message, isError);
             }
         }
 
@@ -429,6 +509,11 @@ namespace SubTerra.App.UI.Outpost
 
         public void SetBusy(bool busy)
         {
+            if (storagePopup != null)
+            {
+                storagePopup.SetBusy(busy);
+            }
+
             if (operationButtons == null)
             {
                 return;

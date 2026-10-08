@@ -101,9 +101,13 @@ namespace SubTerra.App.UI.Building
             return "<b>" + Title(kind) + "</b>\n<size=90%>" + Detail(kind, message) + "</size>";
         }
 
-        public static string PowerLabel(int powerDraw)
+        public static string OperatingCondition(string buildingId)
         {
-            return powerDraw > 0 ? "전력 소비 " + powerDraw : "전력 불필요";
+            return buildingId == DataIds.Buildings.ChargerBasic
+                || buildingId == DataIds.Buildings.ClinicBasic
+                || buildingId == DataIds.Buildings.SettlementBasic
+                    ? "전진기지 코어 영역 내에서만 작동합니다."
+                    : string.Empty;
         }
 
         public static bool HasAllCosts(IReadOnlyList<BuildingCostReadModel> costs)

@@ -73,6 +73,7 @@ namespace SubTerra.App.Save
 
         /// <summary>지상 → 지하 탐사 출발 전력. 0이면 차감하지 않는다.</summary>
         public const int MineElevatorEnergyCost = 0;
+        private const float ClockPowerOffMaxWaitSeconds = 1f;
 
         /// <summary>테스트·진단용. 현재 Mine world 캐시 복사본.</summary>
         public WorldSnapshotDto PeekMineWorldCache() => mineWorldCache.Peek();
@@ -749,6 +750,13 @@ namespace SubTerra.App.Save
             pendingTimedMineReset = true;
             suppressMineWorldCapture = true;
 
+            // 지상으로 이동하기 전에 시계 전원부터 끈다(월드 교체·씬 이동은 꺼진 뒤에 진행).
+            if (mineResetClockOverlay != null
+                && IsMineResetSessionScene(SceneManager.GetActiveScene().name))
+            {
+                mineResetClockOverlay.BeginDeparture();
+            }
+
             const int maximumWaitFrames = 600;
             var waited = 0;
             while ((ElevatorState == ElevatorTravelState.Calling
@@ -768,6 +776,11 @@ namespace SubTerra.App.Save
                     mineResetSeeds,
                     out _))
             {
+                if (mineResetClockOverlay != null)
+                {
+                    mineResetClockOverlay.EndDeparture();
+                }
+
                 suppressMineWorldCapture = false;
                 pendingTimedMineReset = false;
                 yield break;
@@ -779,6 +792,8 @@ namespace SubTerra.App.Save
 
             if (wasInMine)
             {
+                // 전원 OFF 연출이 끝난 뒤에 지상 Scene을 로드한다.
+                yield return WaitForClockPowerOff();
                 if (new UnitySceneLoader().Load(SceneNames.SurfaceBase))
                 {
                     const int maximumSceneWaitFrames = 300;
@@ -1001,20 +1016,101 @@ namespace SubTerra.App.Save
                 TryCaptureMineWorldIntoCache();
             }
 
-            if (!elevatorTravel.TryDepart(new UnitySceneLoader(), out var departFailure))
+            var toSurface = destinationScene == SceneNames.SurfaceBase;
+            var sceneLoader = toSurface ? CreateSurfaceSceneLoader() : new UnitySceneLoader();
+            if (!elevatorTravel.TryDepart(sceneLoader, out var departFailure))
             {
                 reason = DescribeElevatorFailure(departFailure);
                 return false;
             }
 
             // 목적지 Scene 시스템의 Start가 끝난 다음 프레임에 저장해 생성 seed와 위치를 함께 잡는다.
-            StartCoroutine(SaveAfterElevatorArrival(arrivalSaveReason));
+            StartCoroutine(SaveAfterElevatorArrival(
+                arrivalSaveReason,
+                sceneLoader is ClockOffSceneLoader ? destinationScene : null));
             return true;
         }
 
-        private IEnumerator SaveAfterElevatorArrival(AutoSaveReason reason)
+        /// <summary>
+        /// 지상으로 가는 Scene 로더. 광산 시계가 켜져 있으면 전원 OFF 연출이 끝난 뒤에 Scene을 로드해
+        /// 시계가 지상 도착 이전에 꺼지게 한다. 시계가 없으면 즉시 로드한다.
+        /// </summary>
+        public ISceneLoader CreateSurfaceSceneLoader()
+        {
+            if (Application.isPlaying
+                && mineResetClockOverlay != null
+                && mineResetClockOverlay.IsClockOnScreen
+                && IsMineResetSessionScene(SceneManager.GetActiveScene().name))
+            {
+                return new ClockOffSceneLoader(this);
+            }
+
+            return new UnitySceneLoader();
+        }
+
+        private sealed class ClockOffSceneLoader : ISceneLoader
+        {
+            private readonly SaveRuntimeController owner;
+
+            public ClockOffSceneLoader(SaveRuntimeController owner)
+            {
+                this.owner = owner;
+            }
+
+            public bool Load(string sceneName)
+            {
+                // 잘못된 이름은 연출을 시작하기 전에 기존 로더로 걸러 같은 실패 경로를 탄다.
+                if (string.IsNullOrWhiteSpace(sceneName) || !Application.CanStreamedLevelBeLoaded(sceneName))
+                {
+                    return new UnitySceneLoader().Load(sceneName);
+                }
+
+                owner.StartCoroutine(owner.LoadAfterClockOff(sceneName));
+                return true;
+            }
+        }
+
+        private IEnumerator LoadAfterClockOff(string sceneName)
+        {
+            yield return WaitForClockPowerOff();
+            if (!new UnitySceneLoader().Load(sceneName) && mineResetClockOverlay != null)
+            {
+                mineResetClockOverlay.EndDeparture();
+            }
+        }
+
+        // 시계 전원 OFF 연출을 시작하고 끝날 때까지 기다린다. 연출이 멈춰도 이동이 막히지 않게 상한을 둔다.
+        private IEnumerator WaitForClockPowerOff()
+        {
+            var overlay = mineResetClockOverlay;
+            if (overlay == null || !overlay.IsClockOnScreen)
+            {
+                yield break;
+            }
+
+            overlay.BeginDeparture();
+            var deadline = Time.unscaledTime + ClockPowerOffMaxWaitSeconds;
+            while (overlay != null && overlay.IsClockOnScreen && Time.unscaledTime < deadline)
+            {
+                yield return null;
+            }
+        }
+
+        private IEnumerator SaveAfterElevatorArrival(AutoSaveReason reason, string waitForScene = null)
         {
             yield return null;
+            if (!string.IsNullOrEmpty(waitForScene))
+            {
+                // 시계가 꺼진 뒤에 로드되는 경로는 도착 Scene이 활성화된 다음에 저장한다.
+                var deadline = Time.unscaledTime + ClockPowerOffMaxWaitSeconds + 3f;
+                while (SceneManager.GetActiveScene().name != waitForScene && Time.unscaledTime < deadline)
+                {
+                    yield return null;
+                }
+
+                yield return null;
+            }
+
             if (activeSlot > 0)
             {
                 NotifyAutoSave(reason);
@@ -1062,6 +1158,11 @@ namespace SubTerra.App.Save
             var inMineResetSession = IsMineResetSessionScene(scene.name);
             if (inMineResetSession && activeSlot > 0)
             {
+                if (mineResetClockOverlay != null)
+                {
+                    mineResetClockOverlay.EndDeparture();
+                }
+
                 EnsureMineResetClockOverlay();
                 mineResetClockOverlay?.RefreshFromState();
             }
@@ -1113,6 +1214,7 @@ namespace SubTerra.App.Save
                 yield break;
             }
 
+            var previousSceneHandle = SceneManager.GetActiveScene().handle;
             if (!new UnitySceneLoader().Load(load.State.TargetSceneName))
             {
                 CompleteContinue(
@@ -1123,14 +1225,18 @@ namespace SubTerra.App.Save
 
             const int maximumSceneWaitFrames = 300;
             var waitedFrames = 0;
-            while (SceneManager.GetActiveScene().name != load.State.TargetSceneName
+            // LoadScene finishes on a later frame. A same-scene continue must not
+            // restore the outgoing world's provider before its replacement loads.
+            while ((SceneManager.GetActiveScene().name != load.State.TargetSceneName
+                || SceneManager.GetActiveScene().handle == previousSceneHandle)
                 && waitedFrames < maximumSceneWaitFrames)
             {
                 waitedFrames++;
                 yield return null;
             }
 
-            if (SceneManager.GetActiveScene().name != load.State.TargetSceneName)
+            if (SceneManager.GetActiveScene().name != load.State.TargetSceneName
+                || SceneManager.GetActiveScene().handle == previousSceneHandle)
             {
                 CompleteContinue(
                     new ContinueResult(ContinueStatus.SceneLoadFailed, load),

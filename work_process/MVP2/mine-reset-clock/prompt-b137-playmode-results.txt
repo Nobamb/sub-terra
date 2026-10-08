@@ -1,0 +1,8 @@
+Prompt-B 137 PlayMode
+Started: 2026-10-06T15:12:46.5614069+09:00
+RunStarted: sub-terra
+PASS: SubTerra.App.Tests.PlayMode.PromptB137MineResetClockPlayModeTests.Bootstrap_MemorySaveLoad_Reentry_Boundaries_AndSingleExpiry
+PASS: SubTerra.App.Tests.PlayMode.PromptB137MineResetClockPlayModeTests.Clock_ThreeResolutions_FiveStates_WithHud
+RunFinished: Passed
+Pass: 2 Fail: 0 Skip: 0
+DurationSec: 14.8792352

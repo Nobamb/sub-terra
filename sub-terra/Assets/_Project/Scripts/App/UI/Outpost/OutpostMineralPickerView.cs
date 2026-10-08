@@ -35,6 +35,29 @@ namespace SubTerra.App.UI.Outpost
                 && optionTemplate != null;
         }
 
+        /// <summary>
+        /// 코드로 만든 창(보관함 팝업 B-138)이 참조를 넣는다. Awake 전에(비활성 상태에서) 호출해야 한다.
+        /// </summary>
+        internal void Configure(
+            TMP_InputField search,
+            Button caption,
+            TMP_Text captionLabel,
+            GameObject options,
+            Transform content,
+            Button template,
+            TMP_Text empty)
+        {
+            searchInput = search;
+            captionButton = caption;
+            captionText = captionLabel;
+            optionsPanel = options;
+            optionsContent = content;
+            optionTemplate = template;
+            emptyLabel = empty;
+        }
+
+        public bool IsOptionsOpen => optionsPanel != null && optionsPanel.activeSelf;
+
         private void Awake()
         {
             originalSiblingIndex = transform.GetSiblingIndex();

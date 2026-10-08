@@ -302,6 +302,7 @@ namespace SubTerra.App.UI.Outpost
             view?.SetCargo(
                 FormatInventory(snapshot.PlayerCargo),
                 FormatInventory(snapshot.Storage));
+            view?.SetStorageCargo(snapshot.PlayerCargo, snapshot.Storage);
             view?.SetSettlementCargo(FormatSettlementInventory(snapshot.PlayerCargo));
             view?.SetCheckpoint(string.IsNullOrEmpty(snapshot.CheckpointId)
                 ? "체크포인트 없음"
@@ -325,6 +326,7 @@ namespace SubTerra.App.UI.Outpost
             if (string.IsNullOrEmpty(selectedMineralId) || latestSnapshot == null)
             {
                 view?.SetSelectedMineral("자원을 선택하세요.");
+                view?.SetStorageSelection(string.Empty, string.Empty, 0, 0, selectedQuantity);
                 return;
             }
 
@@ -340,6 +342,7 @@ namespace SubTerra.App.UI.Outpost
 
             var owned = playerStack?.Quantity ?? 0;
             var stored = storageStack?.Quantity ?? 0;
+            view?.SetStorageSelection(selectedMineralId, displayName, owned, stored, selectedQuantity);
             if (activeMode == OutpostPanelMode.Settlement)
             {
                 var unitPrice = playerStack?.UnitPrice ?? 0;

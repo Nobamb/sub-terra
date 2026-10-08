@@ -1,4 +1,5 @@
 using System.Globalization;
+using SubTerra.App.Core;
 using SubTerra.App.Save;
 using SubTerra.App.Tutorial;
 using SubTerra.App.UI.MainMenu;
@@ -22,10 +23,7 @@ namespace SubTerra.App.UI.HUD
     {
         private const int ClockSortingOrder = 900;
         private const int PopupSortingOrder = 32_000;
-        private static readonly Color ClockPanelColor = new Color(0.02f, 0.04f, 0.03f, 0.92f);
-        private static readonly Color ClockBorderColor = new Color(0.12f, 0.28f, 0.16f, 1f);
-        private static readonly Color DigitColor = new Color(0.25f, 1f, 0.42f, 1f);
-        private static readonly Color LabelColor = new Color(0.45f, 0.85f, 0.55f, 1f);
+        private static readonly Color LabelColor = new Color(0.62f, 0.8f, 0.86f, 1f);
         private static readonly Color CardColor = new Color(0.02f, 0.035f, 0.05f, 0.98f);
         private static readonly Color PopupTitleColor = new Color(0.84f, 0.98f, 1f, 1f);
         private static readonly Color PopupBodyColor = new Color(0.8f, 0.88f, 0.92f, 1f);
@@ -72,7 +70,8 @@ namespace SubTerra.App.UI.HUD
 
         private GameObject clockRoot;
         private TMP_Text labelText;
-        private TMP_Text clockText;
+        private MineResetClockView clockView;
+        private object observedClockState;
         private GameObject popupRoot;
         private TMP_Text popupTitle;
         private TMP_Text popupHighlight;
@@ -84,6 +83,10 @@ namespace SubTerra.App.UI.HUD
         private RectTransform popupCard;
         private Image popupBlocker;
         private bool sessionVisible;
+        private bool departing;
+
+        /// <summary>시계가 켜져 있거나 꺼지는 연출 중이면 true. 지상 이동 전에 꺼질 때까지 기다릴지 판단한다.</summary>
+        public bool IsClockOnScreen => clockRoot != null && clockRoot.activeSelf;
 
         public static MineResetClockOverlay Create(Transform parent)
         {
@@ -121,11 +124,28 @@ namespace SubTerra.App.UI.HUD
         public void SetSessionVisible(bool visible)
         {
             sessionVisible = visible;
+            // 세션이 끝나면 이동 예약은 의미가 없다.
+            if (!visible) departing = false;
             if (!visible && popupRoot != null)
             {
                 CloseImmediately();
             }
 
+            RefreshFromState();
+        }
+
+        /// <summary>지상으로 떠나기 직전에 호출한다. 씬이 바뀌기 전에 전원 OFF 연출을 시작한다.</summary>
+        public void BeginDeparture()
+        {
+            departing = true;
+            RefreshFromState();
+        }
+
+        /// <summary>이동이 취소·실패했을 때 호출한다. 광산 안이면 시계가 다시 켜진다.</summary>
+        public void EndDeparture()
+        {
+            if (!departing) return;
+            departing = false;
             RefreshFromState();
         }
 
@@ -148,26 +168,36 @@ namespace SubTerra.App.UI.HUD
 
             var runtime = SaveRuntimeController.Instance;
             var clockOn = sessionVisible
+                && !departing
                 && runtime != null
                 && runtime.ActiveSlot > 0
                 && runtime.IsMineResetClockVisible;
-            clockRoot.SetActive(clockOn);
             if (!clockOn)
             {
+                if (clockRoot.activeSelf && clockView != null) clockView.SetPowered(false);
                 return;
             }
+            if (!clockRoot.activeSelf) clockRoot.SetActive(true);
 
             if (labelText != null)
             {
                 labelText.text = LocalizationService.Get(
                     "mine_reset.clock.label",
-                    "광산 초기화");
+                    "광산 초기화까지");
             }
 
-            if (clockText != null)
+            if (clockView != null)
             {
-                clockText.text = MineResetService.FormatClock(
-                    runtime.MineResetRemainingSeconds);
+                var bootstrap = GameBootstrapper.Instance;
+                var state = bootstrap != null ? bootstrap.State : null;
+                if (!ReferenceEquals(observedClockState, state))
+                {
+                    observedClockState = state;
+                    clockView.ResetObservation();
+                }
+                clockView.SetFormattedClock(MineResetService.FormatClock(
+                    runtime.MineResetRemainingSeconds));
+                clockView.SetPowered(true, !Application.isPlaying);
             }
         }
 
@@ -314,7 +344,8 @@ namespace SubTerra.App.UI.HUD
                 && keyboard.tKey.wasPressedThisFrame
                 && !IsTypingInInputField())
             {
-                SaveRuntimeController.Instance?.ToggleMineResetClock();
+                var runtime = SaveRuntimeController.Instance;
+                if (runtime != null) runtime.ToggleMineResetClock();
             }
 
             if (clockRoot != null && clockRoot.activeSelf)
@@ -333,7 +364,7 @@ namespace SubTerra.App.UI.HUD
 
         private void BuildClock(TMP_FontAsset font)
         {
-            clockRoot = new GameObject("ClockRoot", typeof(RectTransform), typeof(Image));
+            clockRoot = new GameObject("ClockRoot", typeof(RectTransform));
             clockRoot.transform.SetParent(transform, false);
             var rootRect = clockRoot.GetComponent<RectTransform>();
             rootRect.anchorMin = new Vector2(0.5f, 1f);
@@ -342,46 +373,12 @@ namespace SubTerra.App.UI.HUD
             rootRect.anchoredPosition = new Vector2(0f, -12f);
             rootRect.sizeDelta = new Vector2(280f, 78f);
 
-            var border = clockRoot.GetComponent<Image>();
-            border.color = ClockBorderColor;
-            border.raycastTarget = false;
-
-            var inner = new GameObject("Inner", typeof(RectTransform), typeof(Image));
-            inner.transform.SetParent(clockRoot.transform, false);
-            var innerRect = inner.GetComponent<RectTransform>();
-            innerRect.anchorMin = Vector2.zero;
-            innerRect.anchorMax = Vector2.one;
-            innerRect.offsetMin = new Vector2(3f, 3f);
-            innerRect.offsetMax = new Vector2(-3f, -3f);
-            var innerImage = inner.GetComponent<Image>();
-            innerImage.color = ClockPanelColor;
-            innerImage.raycastTarget = false;
-
-            labelText = CreateText(
-                inner.transform,
-                "Label",
-                new Vector2(0f, -6f),
-                new Vector2(260f, 22f),
-                16f,
-                font,
-                LabelColor,
-                FontStyles.Normal);
+            clockView = clockRoot.AddComponent<MineResetClockView>();
+            clockView.Build();
+            labelText = CreateText(clockRoot.transform.Find("Window/Content/Readout"), "Label", new Vector2(0f, -9f),
+                new Vector2(260f, 22f), 16f, font, LabelColor, FontStyles.Normal);
             labelText.alignment = TextAlignmentOptions.Center;
-            labelText.text = LocalizationService.Get("mine_reset.clock.label", "광산 초기화");
-
-            clockText = CreateText(
-                inner.transform,
-                "Digits",
-                new Vector2(0f, -32f),
-                new Vector2(260f, 42f),
-                34f,
-                font,
-                DigitColor,
-                FontStyles.Bold);
-            clockText.alignment = TextAlignmentOptions.Center;
-            clockText.characterSpacing = 6f;
-            clockText.fontStyle = FontStyles.Bold;
-            clockText.text = "03:00:00";
+            labelText.text = LocalizationService.Get("mine_reset.clock.label", "광산 초기화까지");
         }
 
         private void BuildPopup(TMP_FontAsset defaultFont)

@@ -15,7 +15,8 @@ namespace SubTerra.Gameplay.Building
         SpendFailed = 7,
         InstantiateFailed = 8,
         OutOfRange = 9,
-        OutsideAllowedArea = 10
+        OutsideAllowedArea = 10,
+        ElevatorSpace = 11
     }
 
     [Serializable]
@@ -27,6 +28,7 @@ namespace SubTerra.Gameplay.Building
         public string BuildingId { get; }
         public Vector3Int Cell { get; }
         public bool ReducedStructuralRisk { get; }
+        public Vector2Int Footprint { get; }
 
         public BuildingPlacementResult(
             bool isSuccess,
@@ -34,7 +36,8 @@ namespace SubTerra.Gameplay.Building
             string instanceId,
             string buildingId,
             Vector3Int cell,
-            bool reducedStructuralRisk = false)
+            bool reducedStructuralRisk = false,
+            Vector2Int footprint = default)
         {
             IsSuccess = isSuccess;
             Failure = failure;
@@ -42,6 +45,7 @@ namespace SubTerra.Gameplay.Building
             BuildingId = buildingId ?? string.Empty;
             Cell = cell;
             ReducedStructuralRisk = reducedStructuralRisk;
+            Footprint = footprint;
         }
     }
 }

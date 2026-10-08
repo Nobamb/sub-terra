@@ -60,14 +60,15 @@ namespace SubTerra.App.Tests.UI
             var mechanics = GameGuidePanelView.GetTabBody(GameGuidePanelView.GuideTab.Mechanics);
             var resources = GameGuidePanelView.GetTabBody(GameGuidePanelView.GuideTab.Resources);
 
+            // B-140: 글 본문이 카드 정의(GameGuideCatalog)로 바뀌었다. 세 탭의 핵심 항목이 모두 있는지 본다.
             Assert.That(controls, Does.Contain("좌우 이동"));
             Assert.That(controls, Does.Contain("채굴"));
-            Assert.That(controls, Does.Contain("T 키"));
-            Assert.That(controls, Does.Contain("광산 초기화 시계"));
-            Assert.That(mechanics, Does.Contain("독성 가스"));
-            Assert.That(mechanics, Does.Contain("버팀목"));
+            Assert.That(controls, Does.Contain("[T]"));
+            Assert.That(controls, Does.Contain("광산 초기화 타이머"));
+            Assert.That(mechanics, Does.Contain("가스 지대"));
+            Assert.That(mechanics, Does.Contain("구조 위험"));
             Assert.That(resources, Does.Contain("리튬"));
-            Assert.That(resources, Does.Contain("Digger-Bot"));
+            Assert.That(resources, Does.Contain("엘리베이터"));
         }
 
         [Test]
@@ -142,9 +143,9 @@ namespace SubTerra.App.Tests.UI
             Assert.That(cancel, Is.Null);
 
             var controlsBody = GameGuidePanelView.GetTabBody(GameGuidePanelView.GuideTab.Controls);
-            Assert.That(controlsBody, Does.Not.Contain("F 키"));
-            Assert.That(controlsBody, Does.Contain("E 키"));
-            Assert.That(controlsBody, Does.Contain("T 키"));
+            Assert.That(controlsBody, Does.Not.Contain("[F]"));
+            Assert.That(controlsBody, Does.Contain("[E]"));
+            Assert.That(controlsBody, Does.Contain("[T]"));
         }
 
         [Test]
@@ -205,37 +206,24 @@ namespace SubTerra.App.Tests.UI
         }
 
         [Test]
-        public void GuideView_SelectsTabsAndKeepsFontSize()
+        public void GuideView_SelectsTabsThroughSessionState()
         {
+            // B-140: 호스트 뷰는 탭 선택을 세션 상태(GameGuideState)에 위임하고 기존 참조 계약을 유지한다.
+            SubTerra.App.UI.Guide.GameGuideState.ResetSessionForTests();
             var root = new GameObject("GuideRuntime");
-            root.SetActive(false);
-            var panel = new GameObject("PanelRoot");
-            panel.transform.SetParent(root.transform);
-            var bodyGo = new GameObject("BodyText", typeof(RectTransform));
-            bodyGo.transform.SetParent(panel.transform);
-            var body = bodyGo.AddComponent<TextMeshProUGUI>();
-            body.font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(
-                "Assets/_Project/Fonts/NotoSansKR-Regular_SDF.asset");
-            Assert.That(body.font, Is.Not.Null);
-            body.fontSize = 12f;
-
-            var contentGo = new GameObject("Content", typeof(RectTransform));
-            var content = contentGo.GetComponent<RectTransform>();
-            content.sizeDelta = new Vector2(800f, 100f);
-
             var tab0 = CreateButton("Tab0");
             var tab1 = CreateButton("Tab1");
             var tab2 = CreateButton("Tab2");
             var close = CreateButton("Close");
+            var bodyGo = new GameObject("BodyText", typeof(RectTransform));
+            var body = bodyGo.AddComponent<TextMeshProUGUI>();
 
             try
             {
                 var view = root.AddComponent<GameGuidePanelView>();
                 var so = new SerializedObject(view);
-                so.FindProperty("panelRoot").objectReferenceValue = panel;
                 so.FindProperty("closeButton").objectReferenceValue = close;
                 so.FindProperty("bodyText").objectReferenceValue = body;
-                so.FindProperty("contentRoot").objectReferenceValue = content;
                 var tabs = so.FindProperty("tabButtons");
                 tabs.arraySize = 3;
                 tabs.GetArrayElementAtIndex(0).objectReferenceValue = tab0;
@@ -243,22 +231,18 @@ namespace SubTerra.App.Tests.UI
                 tabs.GetArrayElementAtIndex(2).objectReferenceValue = tab2;
                 so.ApplyModifiedPropertiesWithoutUndo();
 
-                InvokePrivateAwake(view);
-                Assert.That(body.fontSize, Is.EqualTo(GameGuidePanelView.GuideFontSize).Within(0.1f));
-                Assert.That(body.text, Does.Contain("기본 게임 조작법"));
-                Assert.That(body.text, Does.Contain("시설 건설 확정: C 키"));
-
+                Assert.That(view.HasRequiredReferences(), Is.True);
+                Assert.That(view.ActiveTab, Is.EqualTo(GameGuidePanelView.GuideTab.Controls));
                 view.SelectTab(GameGuidePanelView.GuideTab.Mechanics);
                 Assert.That(view.ActiveTab, Is.EqualTo(GameGuidePanelView.GuideTab.Mechanics));
-                Assert.That(body.text, Does.Contain("핵심 게임 메커니즘"));
-                Assert.That(body.fontSize, Is.EqualTo(GameGuidePanelView.GuideFontSize).Within(0.1f));
-
                 view.SelectTab(GameGuidePanelView.GuideTab.Resources);
-                Assert.That(body.text, Does.Contain("리튬"));
+                Assert.That(GameGuidePanelView.GetTabBody(view.ActiveTab), Does.Contain("리튬"));
             }
             finally
             {
+                SubTerra.App.UI.Guide.GameGuideState.ResetSessionForTests();
                 Object.DestroyImmediate(root);
+                Object.DestroyImmediate(bodyGo);
                 Object.DestroyImmediate(tab0.gameObject);
                 Object.DestroyImmediate(tab1.gameObject);
                 Object.DestroyImmediate(tab2.gameObject);

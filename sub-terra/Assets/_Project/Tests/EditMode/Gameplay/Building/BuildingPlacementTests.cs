@@ -10,6 +10,236 @@ namespace SubTerra.Gameplay.Building.Tests
     public sealed class BuildingPlacementTests
     {
         [Test]
+        public void Charger_SuccessRecordsFourCellsAndSpendsOnce()
+        {
+            var setup = CreateSetup(10f, new Vector2(20f, 20f), buildingId: "building.charger.basic");
+            try
+            {
+                setup.Terrain.SetTile(new Vector3Int(0, -1, 0), setup.Tile);
+                setup.Terrain.SetTile(new Vector3Int(1, -1, 0), setup.Tile);
+                var result = setup.Placement.TryPlaceAt(Vector3Int.zero);
+                Assert.That(result.IsSuccess, Is.True);
+                Assert.That(result.Footprint, Is.EqualTo(new Vector2Int(2, 2)));
+                Assert.That(setup.Wallet.SpendCount, Is.EqualTo(1));
+                setup.Placement.Select(setup.Definition);
+                Assert.That(setup.Placement.CanPlaceAt(new Vector3Int(1, 1, 0), out var failure), Is.False);
+                Assert.That(failure, Is.EqualTo(BuildingPlacementFailure.Occupied));
+            }
+            finally { setup.Dispose(); }
+        }
+
+        [Test]
+        public void Elevator_ShaftSpaceRejectsWithoutSpending()
+        {
+            var setup = CreateSetup(10f, new Vector2(20f, 20f), needsGround: false);
+            var elevatorRoot = new GameObject("Elevator");
+            try
+            {
+                elevatorRoot.SetActive(false);
+                elevatorRoot.transform.position = new Vector3(0.5f, 0.5f, 0f);
+                elevatorRoot.AddComponent<BoxCollider2D>().size = Vector2.one;
+                var elevatorType = System.Type.GetType("SubTerra.Gameplay.Player.ElevatorController, SubTerra.Gameplay.Player", true);
+                var elevator = elevatorRoot.AddComponent(elevatorType);
+                elevatorRoot.SetActive(true);
+                Physics2D.SyncTransforms();
+                var elevators = System.Array.CreateInstance(elevatorType, 1);
+                elevators.SetValue(elevator, 0);
+                SetField(setup.Placement, "placementElevators", elevators);
+                Assert.That(setup.Placement.TryPlaceAt(Vector3Int.zero).Failure,
+                    Is.EqualTo(BuildingPlacementFailure.ElevatorSpace));
+                Assert.That(setup.Wallet.SpendCount, Is.Zero);
+            }
+            finally { Object.DestroyImmediate(elevatorRoot); setup.Dispose(); }
+        }
+
+        [TestCase(0, 0)]
+        [TestCase(1, 0)]
+        [TestCase(0, 1)]
+        [TestCase(1, 1)]
+        public void Charger_BlockedFootprintCellRejectsWithoutSpending(int x, int y)
+        {
+            var setup = CreateSetup(10f, new Vector2(20f, 20f),
+                buildingId: "building.charger.basic");
+            try
+            {
+                Assert.That(setup.Definition.Footprint, Is.EqualTo(new Vector2Int(2, 2)));
+                setup.Terrain.SetTile(new Vector3Int(0, -1, 0), setup.Tile);
+                setup.Terrain.SetTile(new Vector3Int(1, -1, 0), setup.Tile);
+                setup.Terrain.SetTile(new Vector3Int(x, y, 0), setup.Tile);
+                var result = setup.Placement.TryPlaceAt(Vector3Int.zero);
+                Assert.That(result.Failure, Is.EqualTo(BuildingPlacementFailure.Occupied));
+                Assert.That(setup.Wallet.SpendCount, Is.Zero);
+                Assert.That(setup.BuildingRoot.childCount, Is.Zero);
+            }
+            finally { setup.Dispose(); }
+        }
+
+        [TestCase(0, 0, 1)]
+        [TestCase(2, 2, 2)]
+        public void Charger_RestoreKeepsLegacyOrRecordedFootprint(int width, int height, int expectedSize)
+        {
+            var setup = CreateSetup(10f, new Vector2(20f, 20f),
+                buildingId: "building.charger.basic");
+            try
+            {
+                // Only existing ground is protected; legacy width must not protect the next column.
+                setup.Terrain.SetTile(new Vector3Int(0, -1, 0), setup.Tile);
+                setup.Terrain.SetTile(new Vector3Int(1, -1, 0), setup.Tile);
+                Assert.That(setup.Placement.TryRestoreBuilding(new BuildingSnapshotDto
+                {
+                    instanceId = "charger-saved", buildingTypeId = "building.charger.basic",
+                    footprintWidth = width, footprintHeight = height
+                }), Is.True);
+                Assert.That(setup.Wallet.SpendCount, Is.Zero);
+                Assert.That(setup.BuildingRoot.GetChild(0).position,
+                    Is.EqualTo(new Vector3(expectedSize * 0.5f, expectedSize * 0.5f, 0f)));
+                Assert.That(setup.Placement.IsGroundSupportingBuilding(new Vector3Int(0, -1, 0)), Is.True);
+                Assert.That(setup.Placement.IsGroundSupportingBuilding(new Vector3Int(1, -1, 0)),
+                    Is.EqualTo(expectedSize == 2));
+                Assert.That(setup.Placement.TryRestoreBuilding(new BuildingSnapshotDto
+                { instanceId = "charger-saved", buildingTypeId = "building.charger.basic" }), Is.False);
+            }
+            finally { setup.Dispose(); }
+        }
+
+        [TestCase(0, 0)]
+        [TestCase(1, 0)]
+        [TestCase(0, 1)]
+        [TestCase(1, 1)]
+        public void Outpost_BlockedFootprintCellRejectsWithoutSpending(int x, int y)
+        {
+            var setup = CreateSetup(10f, new Vector2(20f, 20f), new Vector2Int(2, 2),
+                buildingId: "building.outpost_core.basic");
+            try
+            {
+                setup.Terrain.SetTile(new Vector3Int(0, -1, 0), setup.Tile);
+                setup.Terrain.SetTile(new Vector3Int(1, -1, 0), setup.Tile);
+                setup.Terrain.SetTile(new Vector3Int(x, y, 0), setup.Tile);
+                Assert.That(setup.Placement.TryPlaceAt(Vector3Int.zero).Failure, Is.EqualTo(BuildingPlacementFailure.Occupied));
+                Assert.That(setup.Wallet.SpendCount, Is.Zero);
+                Assert.That(setup.BuildingRoot.childCount, Is.Zero);
+            }
+            finally { setup.Dispose(); }
+        }
+
+        [TestCase(0, 0, 2)]
+        [TestCase(1, 2, 1)]
+        [TestCase(2, 2, 2)]
+        public void Outpost_RestoreKeepsLegacyNarrowOrOriginalFootprint(int width, int height, int expectedWidth)
+        {
+            var setup = CreateSetup(10f, new Vector2(20f, 20f), new Vector2Int(2, 2),
+                buildingId: "building.outpost_core.basic");
+            try
+            {
+                setup.Terrain.SetTile(new Vector3Int(0, -1, 0), setup.Tile);
+                setup.Terrain.SetTile(new Vector3Int(1, -1, 0), setup.Tile);
+                Assert.That(setup.Placement.TryRestoreBuilding(new BuildingSnapshotDto
+                {
+                    instanceId = "outpost-saved", buildingTypeId = "building.outpost_core.basic",
+                    footprintWidth = width, footprintHeight = height
+                }), Is.True);
+                Assert.That(setup.Wallet.SpendCount, Is.Zero);
+                Assert.That(setup.BuildingRoot.GetChild(0).position, Is.EqualTo(new Vector3(expectedWidth * 0.5f, 1f, 0f)));
+                Assert.That(setup.Placement.IsGroundSupportingBuilding(new Vector3Int(1, -1, 0)), Is.EqualTo(expectedWidth == 2));
+                Assert.That(setup.Placement.CanPlaceAt(new Vector3Int(0, 1, 0), out var failure), Is.False);
+                Assert.That(failure, Is.EqualTo(BuildingPlacementFailure.Occupied));
+            }
+            finally { setup.Dispose(); }
+        }
+
+        [TestCase("building.charger.basic", 2, 2, -1.040f)]
+        [TestCase("building.storage.basic", 1, 1, -0.540f)]
+        [TestCase("building.outpost_core.basic", 1, 2, -1.08f)]
+        [TestCase("building.outpost_core.basic", 2, 2, -1.08f)]
+        public void Facility_GroundContactIgnoresSpritePivot(string id, int width, int height, float bottom)
+        {
+            var texture = new Texture2D(32, 32);
+            var sprite = Sprite.Create(texture, new Rect(0, 0, 32, 32), new Vector2(0.2f, 0.8f),
+                32f, 0, SpriteMeshType.FullRect);
+            try
+            {
+                Assert.That(FacilityGroundedVisual.TryGetGeometry(sprite, id, new Vector2Int(width, height),
+                    out var position, out var scale), Is.True);
+                Assert.That(position.y + sprite.bounds.min.y * scale.y, Is.EqualTo(bottom).Within(0.001f));
+                Assert.That(position.x + sprite.bounds.center.x * scale.x, Is.EqualTo(0f).Within(0.001f));
+                Assert.That(scale.x, Is.EqualTo(scale.y));
+            }
+            finally { Object.DestroyImmediate(sprite); Object.DestroyImmediate(texture); }
+        }
+
+        [Test]
+        public void Foundation_ReconfigureKeepsOneBaseAndDoesNotAddColliders()
+        {
+            var root = new GameObject("Storage");
+            var texture = new Texture2D(32, 32);
+            var sprite = Sprite.Create(texture, new Rect(0, 0, 32, 32), new Vector2(0.5f, 0.5f), 32f);
+            try
+            {
+                var visualRoot = new GameObject("VisualRoot").transform;
+                visualRoot.SetParent(root.transform, false);
+                var art = new GameObject("Artwork").AddComponent<SpriteRenderer>();
+                art.transform.SetParent(visualRoot, false);
+                art.sprite = sprite;
+                var grounding = new GameObject("MVP_Grounding").transform;
+                grounding.SetParent(root.transform, false);
+                var oldBase = new GameObject("FoundationTile").AddComponent<SpriteRenderer>();
+                oldBase.transform.SetParent(grounding, false);
+                var port = new GameObject("PowerPortAnchor").transform;
+                port.SetParent(grounding, false);
+                FacilityGroundedVisual.Apply(root.transform, "building.storage.basic", Vector2Int.one);
+                var foundation = root.transform.Find("FacilityFoundation").GetComponent<FacilityFoundationVisual>();
+                foundation.BuildVisuals();
+                FacilityGroundedVisual.Apply(root.transform, "building.storage.basic", Vector2Int.one);
+                foundation.BuildVisuals();
+                Assert.That(foundation.transform.childCount, Is.EqualTo(6));
+                Assert.That(root.GetComponentsInChildren<Collider2D>(), Is.Empty);
+                Assert.That(oldBase.enabled, Is.False);
+                Assert.That(port.gameObject.activeInHierarchy, Is.True);
+                var plate = foundation.transform.Find("PlateOutline").GetComponent<SpriteRenderer>();
+                Assert.That(plate.bounds.min.y, Is.EqualTo(-0.530f).Within(0.001f));
+                Assert.That(plate.bounds.size.x, Is.LessThanOrEqualTo(0.96f));
+                Bounds visible = FacilityGroundedVisual.GetVisibleBounds(art.sprite);
+                Assert.That(art.transform.TransformPoint(new Vector3(visible.center.x, visible.min.y, 0f)).y,
+                    Is.EqualTo(-0.540f).Within(0.001f));
+                Assert.That(FacilityFoundationVisual.Supports("building.clinic.basic"), Is.False);
+                Assert.That(FacilityFoundationVisual.Supports("building.outpost_core.basic"), Is.False);
+            }
+            finally { Object.DestroyImmediate(root); Object.DestroyImmediate(sprite); Object.DestroyImmediate(texture); }
+        }
+
+        [Test]
+        public void Foundation_PreviewPlateStaysAtFootprintCenterDespiteArtworkScaleAndOffset()
+        {
+            var root = new GameObject("Preview");
+            var prefab = new GameObject("StoragePrefab");
+            var texture = new Texture2D(32, 32);
+            var sprite = Sprite.Create(texture, new Rect(0, 0, 32, 32), new Vector2(0.2f, 0.8f), 32f);
+            try
+            {
+                var visualRoot = new GameObject("VisualRoot").transform;
+                visualRoot.SetParent(prefab.transform, false);
+                var art = new GameObject("Artwork").AddComponent<SpriteRenderer>();
+                art.transform.SetParent(visualRoot, false);
+                art.sprite = sprite;
+                root.AddComponent<SpriteRenderer>();
+                var preview = root.AddComponent<BuildingPlacementPreview>();
+                preview.ConfigureFromPrefab(prefab, "building.storage.basic", Vector2Int.one);
+                preview.SetCell(null, new Vector3Int(4, 2, 0), true);
+                var foundation = root.transform.Find("FacilityFoundation").GetComponent<FacilityFoundationVisual>();
+                foundation.BuildVisuals();
+                Assert.That(foundation.transform.position, Is.EqualTo(new Vector3(4, 2, 0)));
+                var plate = foundation.transform.Find("PlateOutline").GetComponent<SpriteRenderer>();
+                Assert.That(plate.bounds.min.y, Is.EqualTo(1.470f).Within(0.001f));
+                preview.SetCell(null, new Vector3Int(5, 3, 0), false);
+                Assert.That(plate.bounds.min.y, Is.EqualTo(2.470f).Within(0.001f));
+                Assert.That(plate.color.r, Is.GreaterThan(plate.color.g));
+                preview.Configure((Sprite)null);
+                Assert.That(foundation.gameObject.activeSelf, Is.False);
+            }
+            finally { Object.DestroyImmediate(root); Object.DestroyImmediate(prefab); Object.DestroyImmediate(sprite); Object.DestroyImmediate(texture); }
+        }
+
+        [Test]
         public void TestWallet_DoesNotSpendWhenEmpty()
         {
             GameObject host = new("Wallet");

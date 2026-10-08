@@ -49,6 +49,7 @@ namespace SubTerra.App.UI.Building
             if (icon != null)
             {
                 icon.sprite = item.Icon;
+                icon.preserveAspect = true;
                 icon.enabled = item.Icon != null;
             }
 

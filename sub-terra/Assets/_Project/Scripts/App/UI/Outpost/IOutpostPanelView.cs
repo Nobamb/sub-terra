@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using SubTerra.App.Inventory;
 using SubTerra.App.Outpost;
 
 namespace SubTerra.App.UI.Outpost
@@ -36,6 +37,16 @@ namespace SubTerra.App.UI.Outpost
         /// 기존 View 구현이 깨지지 않도록 기본 구현은 아무 일도 하지 않는다.
         /// </summary>
         void SetServiceVital(OutpostOperationKind kind, float before, float after, float maximum)
+        {
+        }
+
+        /// <summary>보관함 팝업(B-138) 목록용 화물·보관 스냅샷. 표시 전용.</summary>
+        void SetStorageCargo(InventorySnapshot playerCargo, InventorySnapshot storage)
+        {
+        }
+
+        /// <summary>보관함 팝업의 선택 자원·보유·보관·요청 수량. 빈 ID면 미선택이다.</summary>
+        void SetStorageSelection(string mineralId, string displayName, int owned, int stored, int quantity)
         {
         }
     }

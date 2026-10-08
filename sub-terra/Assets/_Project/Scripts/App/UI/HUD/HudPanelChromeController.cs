@@ -79,7 +79,8 @@ namespace SubTerra.App.UI.HUD
             { CloseBuildingMenu(); return true; }
             if (diggerBotOpen && PopupWindowSorting.Contains(canvas, diggerBotRoot))
             { CloseDiggerBot(); return true; }
-            if (gameGuideOpen && PopupWindowSorting.Contains(canvas, gameGuideRoot))
+            if (gameGuideOpen && (PopupWindowSorting.Contains(canvas, gameGuideRoot)
+                    || (gameGuideView != null && gameGuideView.OwnsCanvas(canvas))))
             { CloseGameGuide(); return true; }
             if (inventoryPanelOpen && PopupWindowSorting.Contains(canvas, inventoryPanelRoot))
             { CloseInventoryPanel(); return true; }
@@ -326,6 +327,13 @@ namespace SubTerra.App.UI.HUD
                 gameGuideCloseButton.onClick.AddListener(CloseGameGuide);
             }
 
+            // B-140: 새 가이드 창의 X 버튼도 같은 닫기 경로를 쓴다.
+            if (gameGuideView != null)
+            {
+                gameGuideView.CloseRequested -= CloseGameGuide;
+                gameGuideView.CloseRequested += CloseGameGuide;
+            }
+
             if (gameGuideOpenButton != null)
             {
                 gameGuideOpenButton.onClick.RemoveListener(ToggleGameGuide);
@@ -420,6 +428,11 @@ namespace SubTerra.App.UI.HUD
             if (gameGuideCloseButton != null)
             {
                 gameGuideCloseButton.onClick.RemoveListener(CloseGameGuide);
+            }
+
+            if (gameGuideView != null)
+            {
+                gameGuideView.CloseRequested -= CloseGameGuide;
             }
 
             if (gameGuideOpenButton != null)

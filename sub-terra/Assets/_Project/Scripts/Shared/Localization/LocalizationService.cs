@@ -158,7 +158,7 @@ namespace SubTerra.Shared.Localization
             Add("mine_reset.fail.gold", "골드가 부족합니다. {0}G 필요 (보유 {1}G).", "Not enough gold. Need {0}G (have {1}G).");
             Add("mine_reset.fail.busy", "지금은 새 광산을 열 수 없습니다.", "Cannot open a new mine right now.");
             Add("mine_reset.fail.surface", "지상 기지에서만 새 광산을 열 수 있습니다.", "New mines can only be opened at Surface Base.");
-            Add("mine_reset.clock.label", "광산 초기화", "Mine Reset");
+            Add("mine_reset.clock.label", "광산 초기화까지", "Mine Reset In");
             Add("mine_reset.timed.title", "탐사 시간 종료", "Exploration Time Over");
             Add(
                 "mine_reset.timed.highlight",
