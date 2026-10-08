@@ -1,0 +1,23 @@
+PASS: permanent ladder coroutine, actual entry/exit, distance-stepped poses, fixed VisualRoot and upper stop.
+Editor Play, real TryPlaceAt charger installations=6; facilities=6; position=(-28.50, -0.50, 0.00); active tags=2; screen=1180x491. Player held stationary. No synthetic facility objects or debris. Not standalone Windows FPS.
+phase=facilities only; mined=0; mining frames=0; last failure=None; energy=100; 30 seconds frames=1698; mean=17.670ms; p95=46.961ms.
+SubTerra.FacilityLabels.Refresh: valid=True; samples=1698; unit=TimeNanoseconds; mean=300372.6; max=2746500
+SubTerra.FacilityLabels.Discovery: valid=True; samples=1698; unit=TimeNanoseconds; mean=240047.6; max=2583100
+SubTerra.FacilityLabels.Layout: valid=True; samples=1698; unit=TimeNanoseconds; mean=27868.3; max=596400
+SubTerra.FacilityLabels.Anchor: valid=True; samples=1698; unit=TimeNanoseconds; mean=21354.5; max=576300
+SubTerra.FacilityLabels.Animation: valid=True; samples=1698; unit=TimeNanoseconds; mean=4724.7; max=46000
+Canvas.BuildBatch: valid=True; samples=1698; unit=TimeNanoseconds; mean=53199.1; max=1195300
+Canvas.SendWillRenderCanvases: valid=False; samples=0; unit=TimeNanoseconds; mean=0.0; max=0
+GC Allocated In Frame: valid=True; samples=1698; unit=Bytes; mean=31407.4; max=142444
+phase=actual mining; mined=78; mining frames=2103; last failure=None; energy=22; 30 seconds frames=2103; mean=14.273ms; p95=20.651ms.
+SubTerra.FacilityLabels.Refresh: valid=True; samples=2103; unit=TimeNanoseconds; mean=307073.7; max=2983100
+SubTerra.FacilityLabels.Discovery: valid=True; samples=2103; unit=TimeNanoseconds; mean=274149.7; max=2870000
+SubTerra.FacilityLabels.Layout: valid=True; samples=2103; unit=TimeNanoseconds; mean=414.7; max=28800
+SubTerra.FacilityLabels.Anchor: valid=True; samples=2103; unit=TimeNanoseconds; mean=174.9; max=20000
+SubTerra.FacilityLabels.Animation: valid=True; samples=2103; unit=TimeNanoseconds; mean=2243.0; max=1118000
+Canvas.BuildBatch: valid=True; samples=2103; unit=TimeNanoseconds; mean=33456.9; max=585700
+Canvas.SendWillRenderCanvases: valid=False; samples=0; unit=TimeNanoseconds; mean=0.0; max=0
+GC Allocated In Frame: valid=True; samples=2103; unit=Bytes; mean=32102.9; max=246634
+PASS direct existing test: PromptB49_ProximityLabel_ShowsNameExceptSupportAndLadder
+PASS direct existing test: PromptB49_ProximityLabel_UsesNotoSansKoreanFont
+PASS direct existing test: ProximityLabel_RepeatedRefreshDropsDestroyedAndDisabledFacilities
