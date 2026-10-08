@@ -1,0 +1,2 @@
+mode=regression Unity=6000.5.4f1 development=True API=Null GPU=Null Device screen=640x480
+PASS actual inactive BindTo -> Awake activation -> Unbind -> destroyed view -> inventory change

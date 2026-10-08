@@ -1,0 +1,28 @@
+mode=heavy Unity=6000.5.4f1 development=True API=Direct3D11 GPU=AMD Radeon (TM) Graphics screen=1280x720
+2D Animation fallback valid=True count=64 stride=64 existing deformation manager=False
+real facilities=6 scene facilities=6 camera=(-32.50, -2.00, -10.00) size=8 isolated save; controlled player; normal event/reward mining
+facilities frame=n=3460 mean=8.6718 p95=11.1585 max=64.4409 CPU timing=n=3460 mean=8.6816 p95=11.1661 max=65.0691 GPU timing=n=3374 mean=5.8020 p95=6.7424 max=41.7953 GC0=4
+facilities Main Thread valid=True unit=TimeNanoseconds n=3460 mean=8651469.4798 p95=11137700.0000 max=65049900.0000
+facilities Render Thread valid=False unit=unavailable unavailable
+facilities CPU Main Thread Frame Time valid=True unit=TimeNanoseconds n=3460 mean=8598353.0685 p95=11063600.0000 max=65033199.0000
+facilities CPU Render Thread Frame Time valid=True unit=TimeNanoseconds n=3460 mean=948066.6249 p95=1289900.0000 max=6751100.0000
+facilities GPU Frame Time valid=True unit=TimeNanoseconds n=3460 mean=5657822.5656 p95=6735680.0000 max=41795320.0000
+facilities PlayerLoop valid=True unit=TimeNanoseconds n=3460 mean=8649071.1561 p95=11135300.0000 max=65047700.0000
+facilities RenderPipelineManager.DoRenderLoop_Internal valid=False unit=unavailable unavailable
+facilities Gfx.WaitForPresentOnGfxThread valid=True unit=TimeNanoseconds n=3460 mean=6621.2717 p95=8900.0000 max=268100.0000
+facilities GC Allocated In Frame valid=True unit=Bytes n=3460 mean=2277.4775 p95=2086.0000 max=1499198.0000
+facilities SubTerra.FacilityLabels.Refresh valid=True unit=TimeNanoseconds n=3460 mean=411874.7399 p95=672400.0000 max=6897700.0000
+facilities QA.Driver valid=True unit=TimeNanoseconds n=3460 mean=0.0000 p95=0.0000 max=0.0000
+mining frame=n=2531 mean=11.8556 p95=21.2074 max=89.8118 CPU timing=n=2531 mean=11.8697 p95=21.2541 max=84.8195 GPU timing=n=2343 mean=7.2653 p95=9.6026 max=43.7019 GC0=2
+mining Main Thread valid=True unit=TimeNanoseconds n=2531 mean=11823361.4382 p95=21163600.0000 max=84800200.0000
+mining Render Thread valid=False unit=unavailable unavailable
+mining CPU Main Thread Frame Time valid=True unit=TimeNanoseconds n=2531 mean=11635648.1731 p95=20426700.0000 max=84785500.0000
+mining CPU Render Thread Frame Time valid=True unit=TimeNanoseconds n=2531 mean=1618691.0494 p95=4837700.0000 max=22970400.0000
+mining GPU Frame Time valid=True unit=TimeNanoseconds n=2531 mean=6724941.9569 p95=9523520.0000 max=43701850.0000
+mining PlayerLoop valid=True unit=TimeNanoseconds n=2531 mean=11820285.3418 p95=21160400.0000 max=84798200.0000
+mining RenderPipelineManager.DoRenderLoop_Internal valid=False unit=unavailable unavailable
+mining Gfx.WaitForPresentOnGfxThread valid=True unit=TimeNanoseconds n=2531 mean=30337.5346 p95=9000.0000 max=12543900.0000
+mining GC Allocated In Frame valid=True unit=Bytes n=2531 mean=2886.4721 p95=2934.0000 max=1937642.0000
+mining SubTerra.FacilityLabels.Refresh valid=True unit=TimeNanoseconds n=2531 mean=625656.5784 p95=1600200.0000 max=18336200.0000
+mining QA.Driver valid=True unit=TimeNanoseconds n=2531 mean=212450.2173 p95=577400.0000 max=74514200.0000
+actual mined=78 failure=None energy=22

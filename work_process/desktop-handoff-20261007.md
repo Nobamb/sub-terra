@@ -77,3 +77,16 @@ Bootstrap → 새 게임/별도 QA 슬롯 이어하기 → 탐사로 시작한�
 
 ## 2026-10-08 후속 진행
 시설 이름표에 Refresh/Discovery/Layout/Anchor/Animation Profiler marker를 추가했다. 첫 번째 Unity 프로젝트에서 실제 충전기 1개 설치 장면을 30초 측정했고 기존 이름표 검사 3개를 직접 호출해 통과했다. 평균 전체 0.318ms, 시설 탐색 0.229ms. 시설 다수·실제 채굴·Windows 성능 검증은 이번 표본에 포함되지 않는다. 성능 병목 확정 없이 동작/품질 최적화는 추가하지 않았다. 상세 기록은 work_process/facility-label-profile-20261008.md, 원본은 work_process/label-cost-measured-20261008.txt. 제품 코드 두 파일과 이 기록도 2026-10-08 후속 게시 범위에 포함한다. 원격 main 0fdef13c는 현재 기능 브랜치에 병합되지 않았다. Assets 임시 검사 도구는 제거했고 사용자 폰트와 사다리 검사 변경은 보존했다.
+
+## 2026-10-08 최신 후속 상태 (위 이전 상태보다 우선)
+PR #162와 #163은 이전 사용자 요청으로 이미 병합됐고 첫 번째 프로젝트를 main dc2bc06c와 동일하게 동기화했다. 이후 사용자 정정으로 추가 병합은 하지 않는다. 후속 브랜치는 codex/facility-mining-profile이며 제품 파일 변경은 없고 기존 사용자 폰트만 변경 상태다. 정상 설치 충전기 6개와 실제 채굴 78개 구간을 각 30초 Editor Play에서 측정했고 사다리 및 이름표 검사도 통과했다. 정상 Windows QA 종료 코드 0에서도 ComputeBuffer 경고가 재현됐다. 명시적 누수 추적 모드에서도 할당 위치가 나오지 않아 버퍼 소유자는 미확정이며 해결 완료가 아니다. 상세 결과는 work_process/heavy-scene-ladder-quit-20261008.md, 원본은 work_process/heavy-scene-measured-20261008.txt와 normal-quit-*.log다. 임시 Assets 코드·빌드·남은 QA 슬롯은 제거했다. 사용자 요청으로 후속 결과 문서·측정 수치·빌드 결과·종료 로그 발췌를 codex/facility-mining-profile에 커밋/푸시한다. 데스크탑에서는 이 브랜치를 받아 기록을 확인한다. PR은 다음 작업 후 게시한다. 공유용 종료 근거는 work_process/normal-quit-evidence-20261008.txt이며 원본 로그와 임시 진단 도구는 로컬에만 보존한다.
+
+## 2026-10-08 Windows 실제 설치·채굴 후속 결과 (최종 상태)
+
+- 같은 Windows Development 빌드에서 실제 설치 충전기 6개 및 실제 채굴 78개 구간을 각 30초씩 두 번 측정했다. 시설 평균 프레임 시간 8.67~9.25ms, 채굴 11.86~12.08ms. CPU 지연과 순간 끊김은 남지만 특정 제품 기능의 병목은 확정되지 않았다. 추가 성능 최적화는 하지 않았다.
+- 측정 중 판매창의 비활성 상태 BindTo 이후 Awake가 presenter를 교체하여 구독을 누수시키는 오류를 발견했다. EconomyPanelBinder.cs에서 기존 presenter를 보존하도록 수정하고 EconomyPanelBinderLifecycleTests.cs 및 .meta를 추가했다. 동일 회귀 검사 코루틴은 정상 Editor Play에서 직접 실행해 통과했고, 수정한 Windows 빌드의 두 측정도 예외 없이 종료했다. 게시 준비에서 Test Runner XML과 결과 저장 로그를 확인했다. 선택한 회귀 검사 1개가 Passed이며 XML이 없다는 이전 기록을 정정한다. 전체 테스트 실행 결과는 아니다.
+- ComputeBuffer 경고는 빈 장면에서도 재현됐다. Unity 2D Animation 15.1.0의 GpuDeformationSystem 초기화가 생성한 fallback 버퍼를 임시 진단에서 해제하면 경고가 사라져 소유자와 누락된 해제 경로를 확인했다. 패키지·버전·제품 종료 코드는 변경하지 않았으므로 제품 경고 자체는 아직 수정되지 않았다.
+- 임시 Assets 진단 코드·씬·프리팹, Windows QA 빌드 및 별도 QA 슬롯을 제거했다. ProjectSettings/Packages와 자동 변경 렌더링 설정은 작업 전 상태로 복원했고 사용자 폰트 변경은 보존했다. 기존 추적 중인 InitTestScene은 보존한다.
+- 상세 근거: work_process/windows-performance-buffer-followup-20261008.md. 공유 가능한 수치: windows-profile-measured-20261008.txt, windows-profile-repeat-measured-20261008.txt, economy-lifecycle-direct-result-20261008.txt, windows-profile-build-20261008.txt. 원본 로그·CSV와 임시 도구는 로컬 자료이며 일괄 게시하지 않는다.
+- 사용자 승인으로 이번 판매창 수정과 새 기록을 codex/facility-mining-profile에 커밋·푸시하고 main 대상 PR로 공유한다. 이전 기록 커밋은 4dabfe44이다. 데스크탑에서는 이 브랜치의 최신 커밋을 가져오고 기존 사용자 폰트 변경을 보존한다. PR 병합은 팀원이 진행한다.
+- 다음 단계는 같은 장면의 CPU 타임라인에서 실제 채굴 처리와 측정용 이동·물리 동기화 비용을 분리하는 것이다. 패키지 버퍼 해제는 별도 범위로 안전한 해결책을 검토한다. 사다리 크기·접점은 이번 작업에서 변경하지 않았다.

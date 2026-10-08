@@ -1,0 +1,21 @@
+Windows QA 종료 검사 근거 (2026-10-08)
+Unity 6000.5.4f1 / Windows / Direct3D 11 / AMD Radeon (TM) Graphics
+각 실행은 별도 QA 슬롯으로 SurfaceBase 진입·저장 후 Application.Quit. 종료 코드 모두 0.
+아래는 로컬 원본에서 관련 줄만 발췌했다. 네트워크 주소와 컴퓨터 식별 정보는 공유하지 않는다.
+
+1. normal-quit-baseline-20261008.log (런타임 진단 도구 없는 빌드)
+CodeReloadManager destroyed
+GarbageCollector disposing of ComputeBuffer. Please use ComputeBuffer.Release() or .Dispose() to manually release the buffer.
+
+2. normal-quit-trace-20261008.log (CLI -native-leak-detection EnabledWithStackTrace)
+CodeReloadManager destroyed
+GarbageCollector disposing of ComputeBuffer. Please use ComputeBuffer.Release() or .Dispose() to manually release the buffer.
+
+3. normal-quit-explicit-trace-20261008.log (임시 런타임 코드로 모드 지정)
+[Buffer trace] previous native leak mode=Enabled
+[Buffer trace] active native leak mode=EnabledWithStackTrace
+CodeReloadManager destroyed
+GarbageCollector disposing of ComputeBuffer. Please use ComputeBuffer.Release() or .Dispose() to manually release the buffer.
+
+세 실행 모두 해당 경고 1회. 명시적 모드 설정에서도 ComputeBuffer 생성 위치는 출력되지 않았다.
+정확한 버퍼 소유자는 미확정이며 경고 해결 완료가 아니다. 임시 추적 코드와 QA 빌드는 제거했다.
