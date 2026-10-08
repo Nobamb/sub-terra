@@ -29,7 +29,7 @@ namespace SubTerra.App.Editor.DataValidation
         private const string EditModeDonePath = "Temp/subterra-prompt-b100-1-editmode.done";
         private const string PlayModeFlagPath = "Temp/subterra-prompt-b100-1-playmode.flag";
         private const string PlayModeDonePath = "Temp/subterra-prompt-b100-1-playmode.done";
-        private const string SeedCharacters = "0123456789G 골드획득!+BONUS";
+        private const string SeedCharacters = "0123456789G 골드획득!+BONUS추가";
         private static TestRunnerApi activeApi;
 
         [InitializeOnLoadMethod]
@@ -198,7 +198,7 @@ namespace SubTerra.App.Editor.DataValidation
         }
 
         /// <summary>
-        /// prompt-B 114: 골드 연출 전용 폰트에 "+BONUS" 글리프만 추가한다.
+        /// prompt-B 114: 골드 연출 전용 폰트에 팝업 문구("추가 골드")에 필요한 글리프만 추가한다.
         /// 다른 dirty 에셋이 함께 저장되지 않도록 이 폰트만 저장하며 Prefab·Scene은 건드리지 않는다.
         /// </summary>
         [MenuItem("SubTerra/UI/Build Prompt-B 114 Gold Pickup Vfx")]
@@ -338,7 +338,6 @@ namespace SubTerra.App.Editor.DataValidation
                 serialized.FindProperty("coinSprite").objectReferenceValue = coin;
                 serialized.FindProperty("pickupFont").objectReferenceValue = font;
                 serialized.FindProperty("coinScaleMultiplier").floatValue = 1f;
-                serialized.FindProperty("mainFontSize").floatValue = GoldPickupPresentation.MainFontSize;
                 serialized.ApplyModifiedPropertiesWithoutUndo();
                 EditorUtility.SetDirty(vfx);
                 PrefabUtility.SaveAsPrefabAsset(root, HudPrefabPath);
