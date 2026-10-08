@@ -43,7 +43,7 @@ namespace SubTerra.App.Integration
             registry.Register(new DeveloperDebugCommandSpec(
                 "timer",
                 new[] { "timer", "타이머" },
-                "<n> [sec|min|hour] | end",
+                "<n> [sec|min|hour] | end | reuse [hp|energy] [<n>s|m|h]",
                 "timer -10",
                 HandleTimer));
             registry.Register(new DeveloperDebugCommandSpec(
@@ -190,8 +190,60 @@ namespace SubTerra.App.Integration
             return "광산 초기화";
         }
 
+        private static string HandleTimerReuse(string[] tokens, DeveloperDebugCommandContext context)
+        {
+            const string usage = "timer reuse 인자 오류. 예: timer reuse hp 10s";
+            if (!TryTimerReuse(tokens, out var target, out var seconds))
+            {
+                return usage;
+            }
+
+            if (context == null || context.State == null || context.State.Outpost == null)
+            {
+                return "GameState 없음";
+            }
+
+            var label = target == ReuseTarget.Clinic ? "보건소" : target == ReuseTarget.Charger ? "충전기" : "보건소·충전기";
+            var changed = context.State.Outpost.ReduceFacilityCooldowns(id => MatchesReuseTarget(id, target), seconds);
+            var action = double.IsInfinity(seconds)
+                ? "초기화"
+                : "-" + seconds.ToString("0.###", CultureInfo.InvariantCulture) + "초";
+            if (changed == 0)
+            {
+                return "timer reuse " + label + " 재사용 대기 중인 시설 없음";
+            }
+
+            return "timer reuse " + label + " " + action + " " + changed.ToString(CultureInfo.InvariantCulture) + "곳";
+        }
+
+        // 시설 인스턴스 ID는 "{buildingId}-{순번}" 형태라 접두어로 종류를 가른다.
+        private static bool MatchesReuseTarget(string instanceId, ReuseTarget target)
+        {
+            if (string.IsNullOrEmpty(instanceId))
+            {
+                return false;
+            }
+
+            var clinic = instanceId.StartsWith(DataIds.Buildings.ClinicBasic + "-", StringComparison.Ordinal);
+            var charger = instanceId.StartsWith(DataIds.Buildings.ChargerBasic + "-", StringComparison.Ordinal);
+            switch (target)
+            {
+                case ReuseTarget.Clinic:
+                    return clinic;
+                case ReuseTarget.Charger:
+                    return charger;
+                default:
+                    return clinic || charger;
+            }
+        }
+
         private static string HandleTimer(string[] tokens, DeveloperDebugCommandContext context)
         {
+            if (tokens != null && tokens.Length >= 2 && IsReuse(tokens[1]))
+            {
+                return HandleTimerReuse(tokens, context);
+            }
+
             if (!TryTimer(tokens, out var deltaSeconds, out var end))
             {
                 return "timer 인자 오류. 예: timer -10";
@@ -391,6 +443,104 @@ namespace SubTerra.App.Integration
             return true;
         }
 
+        /// <summary>
+        /// timer reuse [hp|energy] [양]. 양이 없으면 초기화(seconds = 무한대),
+        /// 있으면 그만큼 감소. 양은 "10s"처럼 붙이거나 "10 s"처럼 띄우며 단위가 없으면 분이다.
+        /// hp/energy는 양의 앞뒤 어디에 와도 된다.
+        /// </summary>
+        private static bool TryTimerReuse(string[] tokens, out ReuseTarget target, out double seconds)
+        {
+            target = ReuseTarget.Both;
+            seconds = double.PositiveInfinity;
+            if (tokens == null || tokens.Length < 2 || tokens.Length > 5)
+            {
+                return false;
+            }
+
+            var rest = new System.Collections.Generic.List<string>();
+            var targetSeen = false;
+            for (var i = 2; i < tokens.Length; i++)
+            {
+                if (TryReuseTarget(tokens[i], out var parsed))
+                {
+                    if (targetSeen)
+                    {
+                        return false;
+                    }
+
+                    target = parsed;
+                    targetSeen = true;
+                    continue;
+                }
+
+                rest.Add(tokens[i]);
+            }
+
+            if (rest.Count == 0)
+            {
+                return true;
+            }
+
+            if (rest.Count > 2)
+            {
+                return false;
+            }
+
+            string unit = null;
+            int amount;
+            if (rest.Count == 1)
+            {
+                if (!TryParseAmountUnit(rest[0], out amount, out unit))
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                if (!TryParseInt(rest[0], out amount))
+                {
+                    return false;
+                }
+
+                unit = rest[1];
+            }
+
+            if (amount <= 0 || !TryUnitSeconds(unit, out var unitSeconds))
+            {
+                return false;
+            }
+
+            seconds = amount * unitSeconds;
+            return true;
+        }
+
+        private static bool TryReuseTarget(string token, out ReuseTarget target)
+        {
+            target = ReuseTarget.Both;
+            if (IsWord(token, "hp") || IsWord(token, "clinic")
+                || string.Equals(token, "체력", StringComparison.Ordinal)
+                || string.Equals(token, "보건소", StringComparison.Ordinal))
+            {
+                target = ReuseTarget.Clinic;
+                return true;
+            }
+
+            if (IsWord(token, "energy") || IsWord(token, "charger")
+                || string.Equals(token, "전력", StringComparison.Ordinal)
+                || string.Equals(token, "충전기", StringComparison.Ordinal))
+            {
+                target = ReuseTarget.Charger;
+                return true;
+            }
+
+            return false;
+        }
+
+        private static bool IsReuse(string token)
+        {
+            return IsWord(token, "reuse") || string.Equals(token, "재사용", StringComparison.Ordinal);
+        }
+
         private static bool TryMineCost(string[] tokens, out int fee)
         {
             fee = 0;
@@ -563,6 +713,13 @@ namespace SubTerra.App.Integration
                 NumberStyles.Integer,
                 CultureInfo.InvariantCulture,
                 out amount);
+        }
+
+        private enum ReuseTarget
+        {
+            Both = 0,
+            Clinic = 1,
+            Charger = 2
         }
 
         private enum UpgradeMode

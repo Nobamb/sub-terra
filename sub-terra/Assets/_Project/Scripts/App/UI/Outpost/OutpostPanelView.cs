@@ -11,7 +11,7 @@ using UnityEngine.UI;
 namespace SubTerra.App.UI.Outpost
 {
     /// <summary>시설 역할별 내용을 표시하는 전진기지 상호작용 View.</summary>
-    public sealed class OutpostPanelView : MonoBehaviour, IOutpostPanelView
+    public sealed class OutpostPanelView : MonoBehaviour, IOutpostPanelView, IFacilityCooldownPopupView
     {
         [SerializeField] private GameObject panelRoot;
         [SerializeField] private TMP_Text titleText;
@@ -118,8 +118,47 @@ namespace SubTerra.App.UI.Outpost
             SellCloseRequested?.Invoke();
         }
 
+        /// <summary>재사용 대기 팝업(플레이 중 첫 표시 때 생성). 프리팹을 바꾸지 않는다.</summary>
+        private FacilityCooldownPopupView cooldownPopup;
+        private System.Func<string, Sprite> facilityIconResolver;
+
+        public bool ShowFacilityCooldown(string buildingId, string instanceId, System.Func<string, double> remainingProvider)
+        {
+            if (cooldownPopup == null && Application.isPlaying)
+            {
+                var canvases = GetComponentsInParent<Canvas>(true);
+                if (canvases != null && canvases.Length > 0)
+                {
+                    cooldownPopup = FacilityCooldownPopupView.Create(
+                        canvases[canvases.Length - 1].transform,
+                        resultText != null ? resultText.font : null);
+                    if (cooldownPopup != null)
+                    {
+                        cooldownPopup.SetIconResolver(facilityIconResolver);
+                    }
+                }
+            }
+
+            return cooldownPopup != null
+                && cooldownPopup.ShowFacilityCooldown(buildingId, instanceId, remainingProvider);
+        }
+
+        public void HideFacilityCooldown()
+        {
+            if (cooldownPopup != null)
+            {
+                cooldownPopup.HideFacilityCooldown();
+            }
+        }
+
         private void OnDestroy()
         {
+            if (cooldownPopup != null)
+            {
+                Destroy(cooldownPopup.gameObject);
+                cooldownPopup = null;
+            }
+
             if (storagePopup != null)
             {
                 Destroy(storagePopup.gameObject);
@@ -165,6 +204,12 @@ namespace SubTerra.App.UI.Outpost
 
         public void SetFacilityIconResolver(System.Func<string, Sprite> resolver)
         {
+            facilityIconResolver = resolver;
+            if (cooldownPopup != null)
+            {
+                cooldownPopup.SetIconResolver(resolver);
+            }
+
             if (corePopup != null)
             {
                 corePopup.SetIconResolver(resolver);

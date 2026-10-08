@@ -183,14 +183,22 @@ namespace SubTerra.App.Outpost
             return true;
         }
 
+        /// <summary>남은 재사용 시간을 표시용 정수 초로 바꾼다. 0보다 남았으면 최소 1초(올림), 아니면 0.</summary>
+        public static int GetCooldownDisplaySeconds(double remainingSeconds)
+        {
+            if (remainingSeconds <= 0d)
+            {
+                return 0;
+            }
+
+            var total = (int)Math.Ceiling(remainingSeconds - 0.0000001d);
+            return total < 1 ? 1 : total;
+        }
+
         public static string FormatFacilityCooldownMessage(string buildingId, double remainingSeconds)
         {
             var facilityName = buildingId == DataIds.Buildings.ClinicBasic ? "보건소" : "충전기";
-            var total = (int)Math.Ceiling(Math.Max(0d, remainingSeconds) - 0.0000001d);
-            if (total < 1)
-            {
-                total = 1;
-            }
+            var total = Math.Max(1, GetCooldownDisplaySeconds(remainingSeconds));
 
             var minutes = total / 60;
             var seconds = total % 60;
