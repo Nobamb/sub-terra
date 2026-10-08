@@ -22,6 +22,10 @@ namespace SubTerra.Gameplay.Building
         private Vector3 visualOffset = Vector3.zero;
         private Quaternion visualRotation = Quaternion.identity;
         private Vector3 visualScale = Vector3.one;
+        private FacilityFoundationVisual foundation;
+        private Sprite foundationArtwork;
+        private string foundationBuildingId;
+        private Vector2Int foundationFootprint;
 
         private void Awake()
         {
@@ -31,6 +35,7 @@ namespace SubTerra.Gameplay.Building
         public void Configure(Sprite sprite)
         {
             EnsureRenderer();
+            if (foundation != null) foundation.gameObject.SetActive(false);
             visualOffset = Vector3.zero;
             visualRotation = Quaternion.identity;
             visualScale = Vector3.one;
@@ -41,7 +46,7 @@ namespace SubTerra.Gameplay.Building
         /// 실제 시설 프리팹의 대표 아트와 로컬 배치를 그대로 사용한다.
         /// 설치 미리보기와 설치 완료 후 모습의 크기·바닥 접점이 달라지는 일을 막는다.
         /// </summary>
-        public void ConfigureFromPrefab(GameObject prefab)
+        public void ConfigureFromPrefab(GameObject prefab, string buildingId = null, Vector2Int footprint = default)
         {
             EnsureRenderer();
             if (prefab == null)
@@ -59,10 +64,11 @@ namespace SubTerra.Gameplay.Building
                 Configure((Sprite)null);
                 return;
             }
+            Sprite visibleSprite = FacilityGroundedVisual.ResolveArtwork(source.sprite, buildingId);
 
             if (spriteRenderer != null)
             {
-                spriteRenderer.sprite = source.sprite;
+                spriteRenderer.sprite = visibleSprite;
                 spriteRenderer.drawMode = source.drawMode;
                 spriteRenderer.size = source.size;
                 spriteRenderer.sortingLayerID = source.sortingLayerID;
@@ -80,6 +86,25 @@ namespace SubTerra.Gameplay.Building
                 SafeDivide(sourceScale.x, rootScale.x),
                 SafeDivide(sourceScale.y, rootScale.y),
                 SafeDivide(sourceScale.z, rootScale.z));
+            if (FacilityGroundedVisual.TryGetGeometry(visibleSprite, buildingId, footprint,
+                out var groundedPosition, out var groundedScale))
+            {
+                visualOffset = groundedPosition;
+                visualScale = groundedScale;
+            }
+            if (FacilityFoundationVisual.Supports(buildingId) && spriteRenderer != null)
+            {
+                if (foundation == null || foundationArtwork != visibleSprite || foundationBuildingId != buildingId
+                    || foundationFootprint != footprint)
+                {
+                    foundation = FacilityGroundedVisual.ApplyFoundation(transform, spriteRenderer, buildingId, footprint);
+                    foundationArtwork = visibleSprite;
+                    foundationBuildingId = buildingId;
+                    foundationFootprint = footprint;
+                }
+                if (foundation != null) foundation.gameObject.SetActive(true);
+            }
+            else if (foundation != null) foundation.gameObject.SetActive(false);
         }
 
         public void SetCell(Tilemap tilemap, Vector3Int cell, bool isValid)
@@ -89,6 +114,7 @@ namespace SubTerra.Gameplay.Building
             transform.position = center + visualOffset;
             transform.rotation = visualRotation;
             transform.localScale = visualScale;
+            PositionFoundation(center, isValid);
             if (spriteRenderer != null)
             {
                 spriteRenderer.enabled = true;
@@ -197,6 +223,7 @@ namespace SubTerra.Gameplay.Building
             transform.position = (min + max) * 0.5f + visualOffset;
             transform.rotation = visualRotation;
             transform.localScale = visualScale;
+            PositionFoundation((min + max) * 0.5f, isValid);
 
             for (int i = 0; i < multiCellMarkers.Count; i++)
             {
@@ -228,6 +255,16 @@ namespace SubTerra.Gameplay.Building
             }
 
             gameObject.SetActive(false);
+        }
+
+        private void PositionFoundation(Vector3 footprintCenter, bool isValid)
+        {
+            if (foundation == null || !foundation.gameObject.activeSelf) return;
+            // Preview root follows the artwork's scaled pivot, but the plate stays in grid/world space.
+            Vector3 parentScale = transform.lossyScale;
+            foundation.transform.localScale = new Vector3(SafeDivide(1f, parentScale.x), SafeDivide(1f, parentScale.y), 1f);
+            foundation.transform.SetPositionAndRotation(footprintCenter, Quaternion.identity);
+            foundation.SetTint(isValid ? validColor : invalidColor);
         }
 
         private static SpriteRenderer FindPrimaryRenderer(Transform root)

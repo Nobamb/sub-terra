@@ -10,10 +10,14 @@ namespace SubTerra.Gameplay.Building
         public string InstanceId => instanceId;
         public string BuildingId => buildingId;
 
-        public void Initialize(string nextInstanceId, string nextBuildingId)
+        private void Awake() => FacilityGroundedVisual.Apply(transform, buildingId,
+            buildingId == "building.charger.basic" ? new Vector2Int(2, 2) : default);
+
+        public void Initialize(string nextInstanceId, string nextBuildingId, Vector2Int footprint = default)
         {
             instanceId = nextInstanceId;
             buildingId = nextBuildingId;
+            FacilityGroundedVisual.Apply(transform, buildingId, footprint);
         }
     }
 }

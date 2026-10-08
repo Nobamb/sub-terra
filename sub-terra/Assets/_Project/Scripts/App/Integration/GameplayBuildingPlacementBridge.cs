@@ -124,7 +124,8 @@ namespace SubTerra.App.Integration
 
             if (preview != null)
             {
-                preview.ConfigureFromPrefab(placementSystem.Selection.RuntimePrefab);
+                preview.ConfigureFromPrefab(placementSystem.Selection.RuntimePrefab,
+                    placementSystem.Selection.BuildingId, placementSystem.Selection.Footprint);
             }
             placementSystem.GetFootprintCells(origin, footprintPreviewCells);
             var previewValid = locationValid && CanAfford(selectedBuildingId);
@@ -431,6 +432,8 @@ namespace SubTerra.App.Integration
             {
                 case BuildingPlacementFailure.Occupied:
                     return "occupied";
+                case BuildingPlacementFailure.ElevatorSpace:
+                    return "elevator_space";
                 case BuildingPlacementFailure.MissingGround:
                     return "missing_ground";
                 case BuildingPlacementFailure.InvalidDefinition:

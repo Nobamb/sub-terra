@@ -1,0 +1,7 @@
+Saved only Charger, Storage and OutpostCore BuildingData icons. No scene or prefab saved.
+PASS 7 focused Editor checks (direct method invocation, not Test Runner).
+Charger actual opaque feet y=-0.03999996
+Storage actual opaque feet y=-0.03999996
+OutpostCore actual opaque feet y=-0.08000004
+PASS PreviewScene render saved: charger / storage / outpost. Full gameplay and builds not run.
+Active scene not saved. Dirty before=False after=False

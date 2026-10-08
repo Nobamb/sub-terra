@@ -305,7 +305,9 @@ namespace SubTerra.Gameplay.Snapshot
                 y = result.Cell.y,
                 rotation = 0,
                 level = 1,
-                health = 1f
+                health = 1f,
+                footprintWidth = result.Footprint.x,
+                footprintHeight = result.Footprint.y
             };
         }
 
