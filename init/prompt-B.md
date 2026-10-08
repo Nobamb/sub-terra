@@ -3198,3 +3198,166 @@ Sonnet은 계획, 완료 보고, 실제 diff와 검증 결과를 기준으로 �
 141-1. 기존 충전기/보건소 사용 후 재사용 팝업 효과 수정해줘 파티클이 30초 전에는 재사용 팝업창 바깥에서 생겨나면서 팝업창 프레임 바깥에서도 점점 청록색 빛이 감돌도록 수정해줘 그리고 5초전에는 파티클이 점점 강해지면서 팝업창 프레임 바깥에서는 더욱 강한 빛이 나타나고 프레임 안쪽 기준으로도 중앙으로부터 먼 부분에서 글자를 가리지는 않는 선에서 옅은 빛이 감돌게 해주고 0초가 되면 바로 안쪽 프레임의 중앙까지도 빠르게 환해지면서 티비가 꺼지는 연출이 나오도록 수정해줘 그리고 터미널에서도 재사용 타이머 용 명령어를 추가해주면 좋겠어 기존 timer는 기본값 그대로 광산 타이머를 쓰고 timer reuse에서는 기존에 있던 보건소, 충전기 재사용 시간을 초기화하는거야 그리고 timer reuse hp는 보건소 재사용 초기화, timer reuse energy는 충전기 재사용 초기화, tiemr reuse 3m는 충전기, 보건소 모두 재사용 초기화고 m은 분단위라 충전기랑 보건소 모두 3분만 감소, tiemr reuse [hp|energy] 10s는 보건소 또는 충전기만 감소고 10s에서 s는 초단위니까 10초만 감소하는거야
 
 141-2. 지금 재사용 초기화 팝업 내에 있는 타이머는 7-segment 형태의 숫자 표시로 바꿔줘 광산 초기화 타이머에 있는 숫자처럼 그리고 30초 전에 팝업 프레임 바깥에서 빛이 생길 때 좀 끊기듯이 밝아지는 느낌이 있거든 가능하면 조금 부드럽게 밝아지도록 해주고 30초전에도 안쪽 프레임의 가장 바깥 부분도 5초보다는 더 작은 영역만 밝은 느낌을 주도록 해줘
+
+142. 
+
+Claude Sonnet 5.5가 조사·설계·구현·검증을 직접 수행해줘. PlayMode 테스트 코드는 필요한 만큼 추가·수정해줘. “PlayMode 생략”은 테스트 작성 생략이 아니라 실행 생략이야.
+이번 작업 중·완료 후 Editor PlayMode 진입, PlayMode 테스트 실행, batchmode PlayMode 실행, 수동 플레이는 하지 마.
+컴파일 및 관련 EditMode 테스트는 실행하고, PlayMode 테스트 코드는 컴파일·정적 검토까지만 확인해줘.
+자동 검증·메뉴·스크립트가 PlayMode를 함께 실행하지 않도록 확인하고, 런타임 미검증 사항을 보고해줘.
+커밋은 사용자 확인 없이 하지 마.
+
+## 1. Context와 조사 범위
+
+CLAUDE.md, init/rule.md 및 실제 라우팅에 따른 init/rules/ui-ugui.md, testing-qa.md, code.md를 먼저 읽어줘.
+저장소 루트와 Unity 프로젝트 루트를 구분해줘. Unity 프로젝트는 저장소의 sub-terra/이며 아래 Assets 경로는 그 기준이야.
+전체 프로젝트를 처음부터 탐색하지 말고 다음 파일부터 조사해줘.
+- Assets/_Project/Scripts/App/Integration/GoldPickupVfx.cs
+- Assets/_Project/Scripts/App/Integration/GoldPickupPresentation.cs
+- Assets/_Project/Scripts/App/Integration/IntegrationRuntimeBinder.cs
+- Assets/_Project/Scripts/App/Inventory/MiningYieldCommit.cs
+- Assets/_Project/Editor/DataValidation/PromptB1001GoldPickupBuilder.cs
+- Assets/_Project/Tests/EditMode/App/Integration/PromptB1001GoldPickupTests.cs
+- Assets/_Project/Tests/PlayMode/Integration/MineDemo/PromptB1001GoldPickupPlayModeTests.cs
+- work_process/MVP2/UI-fix-markdown-document/gold-pickup-vfx-b114.md
+- Assets/_Project/Scripts/App/UI/FacilityNameTag/FacilityNameTagVisual.cs
+- Assets/_Project/Scripts/App/UI/FacilityNameTag/FacilityNameTagTimeline.cs
+- Assets/_Project/Scripts/App/UI/FacilityNameTag/FacilityNameTagLayers.cs
+- Assets/_Project/Scripts/App/Integration/FacilityProximityLabelController.cs
+- work_process/MVP2/facility-name-tag/prompt-b134-result.md
+- Assets/_Project/Scripts/App/UI/Sell/ResourceSellTimeline.cs
+work_process 경로는 저장소 루트 기준이야. 경로·API가 다르면 실제 코드 기준으로 보정하고 보고해줘.
+기존 PlayMode 테스트로 계약을 파악하고 새 계약에 필요한 테스트를 추가·수정하되 실행하지 마.
+
+## 2. 목표와 유지할 계약
+
+플레이어 위의 ‘+20G’, ‘BONUS +15G’를 시설 이름표와 같은 모양 언어의 금색 홀로그램 팝업 하나로 바꿔줘.
+오른쪽 슬롯머신 레버가 내려갔다 복귀하면 기본·추가 골드가 낙하하며 나타나게 해줘.
+금화는 채굴 칸 대신 팝업에서 분출하고, 연속 획득은 살아 있는 팝업 하나에 합쳐줘.
+- 실제 골드 지급량·시점, 보너스 계산, EconomyPricing, 저장 흐름을 유지해줘.
+- AcceptedGold / AcceptedGoldBonus와 BaseGold / ClampBonus 의미를 확인해 확정 표시값을 분리해줘.
+- 기본·추가 분리 시 보너스를 재계산하거나 중복 포함하지 마.
+- SetPendingGold → TileMined 재생 계약과 실패·취소 시 pending 초기화를 유지해줘.
+- HUD Gold 숫자는 기존 이벤트 시점에 즉시 갱신하며 연출 완료를 기다리지 않아.
+- 기존 HUD 입자 비행·Pulse·HUD 크기 원복, unscaled 시간, disable / destroy 정리를 유지해줘.
+- MiningProgressHud의 채굴 결과 문구는 변경하지 마.
+
+## 3. 팝업 디자인·레이어·폰트
+
+시설 이름표의 어두운 배경·얇은 테두리·모서리 브래킷 8개·약한 외곽 발광을 참고해줘.
+등장은 작은 모서리 빛 → 프레임 좌우 펼침으로 구성해줘.
+FacilityNameTagTimeline의 Spread / FrameAlpha / Flare는 읽기 전용 재사용을 검토하고 시설 이름표 자체는 변경하지 마.
+- 배경은 어두운 갈색·금색 반투명, 테두리는 금색 약 1.5 디자인 px로 해줘.
+- 브래킷·강조는 밝은 금색, 외곽 발광은 절제해줘. 청록색·표시 중 테두리 호흡 효과는 넣지 마.
+- 기본 글자는 기존 MainTopColor / MainBottomColor 그라데이션과 어두운 그림자를 유지해줘.
+- 추가 글자는 기존 BonusColor 계열로 기본보다 작게 해줘.
+플레이어 머리 위에서 추적하고, 월드 캔버스와 시설 이름표의 디자인 픽셀 비율을 활용해줘.
+FacilityNameTagLayers.MainScreen을 사용해 CCTV에 보이지 않게 하고 시설 이름표보다 위에 그려줘.
+HUD 전체 정렬 정책은 변경하지 마. 모든 그래픽은 raycastTarget=false, GraphicRaycaster 없이 구성해줘.
+프레임 폭은 금액과 무관하게 고정하고 오른쪽 레버 공간을 별도로 확보해줘.
+본문은 기본만 약 200×44, 추가 포함 약 200×72 디자인 px를 기준으로 조정해줘.
+추가 골드 최초 발생 시 약 0.1초 ease-out으로 높이를 한 번 확장해줘.
+긴 숫자는 TMP 자동 크기 범위로 맞추고 프레임 폭·레버 위치를 바꾸지 마.
+문구는 ‘+120 G’, ‘추가 골드 +30 G’로 하고 BONUS는 제거해줘. 천 단위 구분자는 현재 HUD Gold와 맞춰줘.
+SeoulAlrimTTF-Heavy_SDF를 유지하고 필요한 한글만 Builder SeedCharacters에 최소 추가해 해당 폰트만 저장해줘.
+불가능하면 ResolveKoreanFont의 기존 폰트를 활용하고 이유를 보고해줘. 다른 폰트·Prefab을 함께 dirty 저장하지 마.
+
+## 4. 오른쪽 슬롯머신 레버
+
+프레임 오른쪽에 작은 금속 막대와 금색 손잡이를 기본 UGUI 그래픽·기존 에셋으로 구성해줘.
+클릭 버튼으로 만들지 마. 프레임과 함께 등장하고 손잡이가 아래로 당겨졌다가 위로 복귀하게 해줘.
+고정 축 회전 또는 연결 구조를 유지하는 이동을 사용하고, 레버 전체가 프레임에서 떨어져 움직이지 않게 해줘.
+숫자·금화와 겹치지 않게 배치하고 복귀에 짧은 탄성 정착만 주며 반복 바운스는 넣지 마.
+레버가 올라오기 시작할 때 기본 낙하를 시작하고 추가는 약 0.15초 늦게 시작해줘.
+레버는 최초 등장에만 작동하며 Merge에는 다시 당기지 마.
+
+## 5. 숫자 낙하·모션블러
+
+프레임 내부 RectMask2D 슬롯의 위쪽 밖에서 숫자가 빠르게 내려오며 진입할 때 드러나게 해줘.
+낙하는 ease-in, 착지 후 2~4px overshoot와 짧은 복귀만 사용해줘.
+정착 후 위치는 정확히 기준점, scale은 정확히 1로 복원해줘.
+- 같은 문구의 복제 TMP 2~3개로 위쪽 잔상을 표현해줘.
+- 잔상 간격·알파는 낙하 속도에 비례하고 단계적으로 감소해줘.
+- 낙하 중 scaleY 약 1.3, scaleX 약 0.94로 제한적으로 늘려줘.
+- 착지 후 약 0.05초 안에 블러 제거, 약 0.06초 안에 정착 위치로 복귀해줘.
+- 블러가 0이면 잔상 오브젝트를 비활성화해줘.
+- 같은 폰트·공유 머티리얼을 사용하고 새 머티리얼 인스턴스·셰이더는 만들지 마.
+추가 줄에도 같은 방식을 적용하되 작은 글자에 맞춰 잔상 간격을 줄여줘.
+추가가 0이면 추가 줄·두 번째 분출·프레임 훑는 빛을 모두 생략해줘.
+
+## 6. 팝업 금화·HUD 연출
+
+기존 채굴 칸 SpawnCoins는 제거하고 작은 금빛 가루는 유지해줘.
+gold_coin_01 Image를 슬롯 마스크 밖 팝업 레이어에 배치해줘.
+각 줄 착지 순간 위쪽 가장자리에서 부채꼴 분출 → 중력 낙하 → 마지막 구간 페이드로 연출해줘.
+CoinSpinScaleX 방식의 회전감을 유지하고 수명은 약 0.5초로 해줘.
+기본 착지에는 테두리를 짧게 밝히고 추가 착지에는 프레임을 따라 약 0.18초 금빛을 흐르게 해줘.
+금화 수량은 다음 순수 함수 규칙으로 계산해줘.
+- 기본 함수 F(amount) = Clamp(3 + 2 × floor(log10(max(amount, 1))), 3, 8).
+- 기본 착지: F(기본 금액), 추가 착지: Clamp(F(bonus) + 2, 4, 10).
+- Merge: Clamp(F(유효 증가분) - 1, 2, 5). 유효 증가분이 0 이하이면 분출하지 마.
+- 동시에 살아 있는 팝업 금화는 최대 24개. 초과 생성은 생략하고 기존 금화는 유지해줘.
+- 궤적·속도·지연은 인덱스 기반 결정적 패턴으로 구성해줘.
+퇴장 시작에 기존 HUD 입자 2~4개를 팝업에서 Gold HUD로 보내고 도착 시 기존 Pulse를 실행해줘.
+Merge로 퇴장이 취소·재개되어도 같은 팝업의 HUD 비행을 중복 발사하지 마.
+HUD 입자는 시각 효과이며 실제 지급·HUD 숫자 갱신과 분리해줘.
+
+## 7. 타이밍·퇴장
+
+합치기 없는 경우 기본 약 0.90초, 추가 포함 약 1.05초를 기준으로 해줘.
+- 0.00~0.14초: 프레임 등장.
+- 0.04~0.13초: 레버 하강. 0.13~0.22초: 레버 복귀·정착.
+- 0.13~0.25초: 기본 낙하. 0.25초: 기본 착지·금화 분출.
+- 0.28~0.40초: 추가 낙하. 0.40초: 추가 착지·금화 분출·금빛 훑기.
+- 기본만 있으면 0.68초, 추가가 있으면 0.83초부터 퇴장.
+- 마지막 0.22초: 전체가 위로 약 0.15 월드 단위 떠오르며 페이드아웃.
+중앙으로 접히는 이름표식 퇴장은 사용하지 마.
+플레이어 추적 위치와 퇴장 상승 오프셋을 분리하고 이동 중에도 자연스럽게 보여줘.
+퇴장 완료 시 프레임·레버·잔상·금화를 정리해 잔여물이 남지 않게 해줘.
+
+## 8. 연속 획득 Merge
+
+기존 문구 쌓기·StackStep / MaxActiveTexts / Evict 동작을 제거해줘.
+팝업이 살아 있으면 퇴장 중에도 기본·추가 확정값을 각각 합산해줘.
+프레임·레버 등장은 재시작하지 않고 현재 표시값에서 새 목표까지 약 0.22초 ease-out 롤업해줘.
+정수 표시·단조 증가·목표 초과 금지·연속 Merge·합산 오버플로 방지를 처리해줘.
+Merge 증가분 기준으로 작은 금화 분출을 추가해줘.
+추가 최초 발생 시 높이 확장·추가 줄 낙하를 한 번만 수행하고 이미 추가 줄이 있으면 롤업만 해줘.
+퇴장 시작은 마지막 Merge 후 최소 0.45초 및 진행 중인 숫자 정착 이후로 미뤄줘.
+퇴장 중 Merge는 약 0.06초로 알파를 복원하고 현재 높이에서 끊김 없이 이어가게 해줘.
+실제 획득 이벤트·골드를 다시 지급하지 마. 표시 합계는 받은 확정값의 합이야.
+
+## 9. 구조·성능·변경 범위
+
+ResourceSellTimeline처럼 순수 계산 Timeline·순수 State·얇은 View로 분리해줘.
+- Timeline: 프레임·레버·낙하·블러·정착·퇴장·금화 궤적·수량 계산.
+- State: 합계·표시값·Merge·Advance·퇴장 예약·추가 줄 확장 상태.
+- View: GoldPickupVfx와 별도 Visual에서 생성·Tick·표시·정리.
+실제 어셈블리 의존성을 유지하고 App에서 Gameplay를 새로 참조하지 마.
+미사용 GoldPickupPresentation 상수는 정리하고 필요한 색·HUD 값은 재사용해줘.
+프레임마다 오브젝트·머티리얼·로그를 생성하지 마. 숫자 문자열은 표시값 변경 시에만 갱신해줘.
+UnityEngine.Object는 명시적 null 비교를 사용하고 주석은 짧은 한국어로 작성해줘.
+새 패키지·DOTween·URP 후처리·공용 설정 변경은 금지해줘.
+주 변경은 GoldPickup 코드·새 팝업 클래스·관련 EditMode/PlayMode 테스트·필요한 전용 폰트 시드로 제한해줘.
+배선 변경이 필요할 때만 관련 Builder를 사용하고 불필요한 Scene·Prefab 재저장은 하지 마.
+지급·저장·채굴 판정·HUD 레이아웃·시설 이름표·CCTV·판매창은 변경하지 마.
+사용자 기존 변경을 보존하고 자신의 의도하지 않은 변경만 정리해줘.
+
+## 10. 테스트 작성·검증·완료 보고
+
+관련 EditMode 테스트를 추가·수정하고 컴파일 및 EditMode 실행을 수행해줘.
+관련 PlayMode 테스트도 새 계약에 맞춰 추가·수정해줘. 기존 파일을 참고만 하고 끝내지 마.
+순수 계산·State는 EditMode로, 실제 View·라이프사이클·이벤트 배선 계약은 필요한 PlayMode 테스트로 작성해줘.
+PlayMode 테스트는 테스트 어셈블리 컴파일·정적 검토까지만 수행하고 이번에는 실행하지 마.
+- 확정값 분리·문구·0/음수, 레버 하강·복귀, 줄별 시차, 블러 제거·scale 복원을 검증해줘.
+- Merge 합계·롤업·추가 최초 확장·퇴장 취소·HUD 비행 중복 방지를 검증해줘.
+- 금화 수량 경계·상한 24·결정적 궤적, 종료·disable·destroy 정리를 검증해줘.
+- MainScreen 레이어·raycast 차단 없음·pending 초기화·HUD 크기 원복 계약을 확인해줘.
+- 폰트 글리프 및 기존 FacilityNameTagTests / PromptB136ResourceSellTests의 관련 EditMode 회귀를 확인해줘.
+기존 테스트는 새 계약에 맞춰 수정하고 단순 구현 복제 테스트는 피하며, 실행 확인과 정적 검토를 구분해줘.
+검증 환경이 없거나 컴파일·EditMode 실행이 막히면 시도·원인·미수행 범위를 정확히 보고하고 통과로 쓰지 마.
+마지막에 git status, git diff --stat 및 실제 diff를 검토해줘.
+변경 파일, 레버·블러 구현, 최종 타이밍, 금화·Merge 규칙, 폰트 처리, 범위 밖 변경 여부·남은 위험을 보고해줘.
+컴파일·EditMode 실행 결과와 PlayMode 테스트 추가·수정 내역 및 컴파일 확인 여부를 각각 보고해줘.
+PlayMode 테스트 실행·수동 플레이·실제 화면 가독성·CCTV 렌더링·Profiler 검증은 미수행으로 명시해줘.
+PlayMode가 필요한 GIF·실플레이 캡처를 만들지 말고, 작성한 PlayMode 테스트를 실행·통과했다고 보고하지 마.
