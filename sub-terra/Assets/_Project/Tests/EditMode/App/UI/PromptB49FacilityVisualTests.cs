@@ -16,15 +16,15 @@ namespace SubTerra.App.Tests.UI
     public sealed class PromptB49FacilityVisualTests
     {
         [Test]
-        public void OutpostTallArtwork_UsesMostOfTwoCellHeightWithoutExceedingOneCellWidth()
+        public void OutpostOriginalArtwork_FitsTwoByTwoWithoutDistortion()
         {
-            Sprite sprite = Resources.Load<Sprite>("Facilities/OutpostCoreTall");
+            Sprite sprite = PromptB49FacilityVisualBuilder.GetArtworkSprite(FacilityVisualKind.OutpostCore);
             Assert.That(sprite, Is.Not.Null);
-            Assert.That(FacilityGroundedVisual.ResolveArtwork(null, DataIds.Buildings.OutpostCoreBasic), Is.SameAs(sprite));
+            Assert.That(FacilityGroundedVisual.ResolveArtwork(sprite, DataIds.Buildings.OutpostCoreBasic), Is.SameAs(sprite));
             Assert.That(FacilityGroundedVisual.TryGetGeometry(sprite, DataIds.Buildings.OutpostCoreBasic,
-                new Vector2Int(1, 2), out _, out var scale), Is.True);
+                new Vector2Int(2, 2), out _, out var scale), Is.True);
             var bounds = FacilityGroundedVisual.GetVisibleBounds(sprite);
-            Assert.That(bounds.size.x * scale.x, Is.LessThanOrEqualTo(0.93f));
+            Assert.That(bounds.size.x * scale.x, Is.InRange(1.7f, 1.81f));
             Assert.That(bounds.size.y * scale.y, Is.InRange(1.55f, 1.79f));
             Assert.That(scale.x, Is.EqualTo(scale.y));
         }
@@ -41,12 +41,13 @@ namespace SubTerra.App.Tests.UI
 
         [TestCase("Charger", "ChargerGrounded", 2, 2)]
         [TestCase("Storage", "StorageGrounded", 1, 1)]
-        [TestCase("OutpostCore", "OutpostCoreTall", 1, 2)]
+        [TestCase("OutpostCore", "outpost_core_cartoon_v3", 2, 2)]
         public void GroundedFacility_MenuPreviewAndPlacedArtworkMatch(string dataName, string spriteName, int width, int height)
         {
             var data = AssetDatabase.LoadAssetAtPath<BuildingData>(
                 "Assets/_Project/Data/Buildings/Building_" + dataName + "_Basic.asset");
-            var expected = Resources.Load<Sprite>("Facilities/" + spriteName);
+            var expected = dataName == "OutpostCore" ? PromptB49FacilityVisualBuilder.GetArtworkSprite(FacilityVisualKind.OutpostCore)
+                : Resources.Load<Sprite>("Facilities/" + spriteName);
             Assert.That(data, Is.Not.Null);
             Assert.That(data.Icon, Is.SameAs(expected), "Menu list and details use the catalog icon.");
             var scene = UnityEditor.SceneManagement.EditorSceneManager.NewPreviewScene();
@@ -89,18 +90,21 @@ namespace SubTerra.App.Tests.UI
         [TestCase("ChargerGrounded", 2, 2)]
         [TestCase("ChargerGrounded", 1, 1)]
         [TestCase("StorageGrounded", 1, 1)]
-        [TestCase("OutpostCoreTall", 1, 2)]
+        [TestCase("outpost_core_cartoon_v3", 2, 2)]
+        [TestCase("outpost_core_cartoon_v3", 1, 2)]
         public void Facility_ActualOpaquePixelsTouchFoundation(string name, int width, int height)
         {
-            bool replacement = name.EndsWith("Grounded") || name == "OutpostCoreTall";
-            string pngPath = replacement ? "Assets/_Project/Resources/Facilities/" + name + ".png"
+            bool outpost = name == "outpost_core_cartoon_v3";
+            bool replacement = name.EndsWith("Grounded");
+            string pngPath = outpost ? "Assets/_Project/Art/Facilities/MVP/outpost_core_cartoon_v3.png"
+                : replacement ? "Assets/_Project/Resources/Facilities/" + name + ".png"
                 : "Assets/_Project/Art/Facilities/MVP/" + name + "_basic_cartoon_v2.png";
             var texture = new Texture2D(2, 2);
             Sprite sprite = null;
             try
             {
                 Assert.That(texture.LoadImage(System.IO.File.ReadAllBytes(pngPath)), Is.True);
-                texture.name = replacement ? name : name + "_basic_cartoon_v2";
+                texture.name = replacement || outpost ? name : name + "_basic_cartoon_v2";
                 sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height),
                     new Vector2(0.2f, 0.8f), 100f, 0, SpriteMeshType.FullRect);
                 Color32[] pixels = texture.GetPixels32();
@@ -110,13 +114,13 @@ namespace SubTerra.App.Tests.UI
                         if (pixels[y * texture.width + x].a >= 64) bottom = Mathf.Min(bottom, y);
                 Assert.That(bottom, Is.GreaterThan(0), "This source PNG has transparent space below its feet.");
                 string kind = name == "ChargerGrounded" ? "charger" : name == "StorageGrounded" ? "storage"
-                    : name == "OutpostCoreTall" ? "outpost_core" : name;
+                    : outpost ? "outpost_core" : name;
                 string id = "building." + kind + ".basic";
                 Assert.That(FacilityGroundedVisual.TryGetGeometry(sprite, id, new Vector2Int(width, height),
                     out var position, out var scale), Is.True);
                 float actualFeet = position.y + (bottom - sprite.pivot.y) / sprite.pixelsPerUnit * scale.y;
                 float ground = -height * 0.5f;
-                float contact = name == "OutpostCoreTall" ? -0.08f : FacilityFoundationVisual.ArtworkContactHeight;
+                float contact = outpost ? -0.08f : FacilityFoundationVisual.ArtworkContactHeight;
                 Assert.That(actualFeet, Is.EqualTo(ground + contact).Within(0.002f));
                 Assert.That(actualFeet, Is.LessThan(ground + 0.04f), "Feet must overlap the top of the plate.");
             }
@@ -163,14 +167,14 @@ namespace SubTerra.App.Tests.UI
         }
 
         [Test]
-        public void PromptB49_OutpostPlacement_UsesNarrowVerticalFootprint()
+        public void PromptB49_OutpostPlacement_UsesOriginalTwoByTwoFootprint()
         {
             BuildingPlacementDefinition definition =
                 AssetDatabase.LoadAssetAtPath<BuildingPlacementDefinition>(
                     PromptB49FacilityVisualBuilder.OutpostPlacementPath);
 
             Assert.That(definition, Is.Not.Null);
-            Assert.That(definition.Footprint, Is.EqualTo(new Vector2Int(1, 2)));
+            Assert.That(definition.Footprint, Is.EqualTo(new Vector2Int(2, 2)));
         }
 
         [Test]
@@ -231,7 +235,7 @@ namespace SubTerra.App.Tests.UI
                     if (facilityId != null)
                         FacilityGroundedVisual.Apply(instance.transform, facilityId,
                             path == PromptB49FacilityVisualBuilder.ChargerPrefabPath ? new Vector2Int(2, 2)
-                                : path == PromptB49FacilityVisualBuilder.OutpostPrefabPath ? new Vector2Int(1, 2) : Vector2Int.one);
+                                : path == PromptB49FacilityVisualBuilder.OutpostPrefabPath ? new Vector2Int(2, 2) : Vector2Int.one);
                     var visualRoot = instance.transform.Find(
                         PromptB49FacilityVisualBuilder.VisualRootName);
                     var bounds = GetActiveSpriteBounds(visualRoot.gameObject);
@@ -246,7 +250,7 @@ namespace SubTerra.App.Tests.UI
                     bool largeFacility = path == PromptB49FacilityVisualBuilder.ClinicPrefabPath
                         || path == PromptB49FacilityVisualBuilder.ChargerPrefabPath;
                     Assert.That(bounds.size.x,
-                        outpost ? Is.InRange(0.85f, 0.97f)
+                        outpost ? Is.InRange(1.70f, 1.82f)
                             : path == PromptB49FacilityVisualBuilder.ChargerPrefabPath ? Is.InRange(1.30f, 1.82f)
                             : largeFacility ? Is.InRange(1.70f, 1.82f)
                                 : Is.InRange(0.80f, 0.98f),
@@ -260,8 +264,7 @@ namespace SubTerra.App.Tests.UI
                     SpriteRenderer artwork = FindPrimaryRenderer(visualRoot);
                     Assert.That(artwork, Is.Not.Null, path + " authored artwork");
                     string artworkPath = AssetDatabase.GetAssetPath(artwork.sprite);
-                    string replacementName = path == PromptB49FacilityVisualBuilder.OutpostPrefabPath ? "OutpostCoreTall"
-                        : path == PromptB49FacilityVisualBuilder.ChargerPrefabPath ? "ChargerGrounded"
+                    string replacementName = path == PromptB49FacilityVisualBuilder.ChargerPrefabPath ? "ChargerGrounded"
                             : path == PromptB49FacilityVisualBuilder.StoragePrefabPath ? "StorageGrounded" : null;
                     Assert.That(artworkPath, replacementName != null
                         ? Is.EqualTo("Assets/_Project/Resources/Facilities/" + replacementName + ".png")
@@ -301,19 +304,20 @@ namespace SubTerra.App.Tests.UI
         {
             var host = new GameObject("PromptB49_LabelHost");
             var player = new GameObject("PromptB49_Player");
-            var light = CreateBuilding("Light", DataIds.Buildings.LightBasic, Vector3.zero);
-            var support = CreateBuilding("Support", DataIds.Buildings.SupportBasic, new Vector3(0.4f, 0f, 0f));
-            var ladder = CreateBuilding("Ladder", DataIds.Buildings.LadderBasic, new Vector3(-0.4f, 0f, 0f));
+            var testOrigin = new Vector3(1000f, 1000f, 0f);
+            var light = CreateBuilding("Light", DataIds.Buildings.LightBasic, testOrigin);
+            var support = CreateBuilding("Support", DataIds.Buildings.SupportBasic, testOrigin + new Vector3(0.4f, 0f, 0f));
+            var ladder = CreateBuilding("Ladder", DataIds.Buildings.LadderBasic, testOrigin + new Vector3(-0.4f, 0f, 0f));
             var farCharger = CreateBuilding(
                 "FarCharger",
                 DataIds.Buildings.ChargerBasic,
-                new Vector3(20f, 0f, 0f));
+                testOrigin + new Vector3(20f, 0f, 0f));
             try
             {
                 var controller = host.AddComponent<FacilityProximityLabelController>();
                 controller.SetPlayer(player.transform);
 
-                player.transform.position = Vector3.zero;
+                player.transform.position = testOrigin;
                 controller.Refresh();
                 Assert.That(controller.VisibleBubbleCount, Is.EqualTo(1));
                 Assert.That(controller.TryGetVisibleLabel(DataIds.Buildings.LightBasic, out var lightName), Is.True);
@@ -335,6 +339,47 @@ namespace SubTerra.App.Tests.UI
                 Object.DestroyImmediate(ladder);
                 Object.DestroyImmediate(support);
                 Object.DestroyImmediate(light);
+                Object.DestroyImmediate(player);
+                Object.DestroyImmediate(host);
+            }
+        }
+
+        [Test]
+        public void ProximityLabel_RepeatedRefreshDropsDestroyedAndDisabledFacilities()
+        {
+            var host = new GameObject("RefreshLifecycleHost");
+            var player = new GameObject("RefreshLifecyclePlayer");
+            player.transform.position = new Vector3(1000f, 1000f, 0f);
+            var light = CreateBuilding("RefreshLifecycleLight", DataIds.Buildings.LightBasic, player.transform.position);
+            try
+            {
+                var controller = host.AddComponent<FacilityProximityLabelController>();
+                controller.SetPlayer(player.transform);
+                controller.Refresh();
+                controller.Refresh();
+                Assert.That(controller.VisibleBubbleCount, Is.EqualTo(1));
+
+                light.SetActive(false);
+                controller.Refresh();
+                Assert.That(controller.VisibleBubbleCount, Is.Zero);
+                Assert.That(controller.TryGetVisibleLabel(DataIds.Buildings.LightBasic, out _), Is.False);
+
+                light.SetActive(true);
+                controller.Refresh();
+                Assert.That(controller.VisibleBubbleCount, Is.EqualTo(1));
+                Object.DestroyImmediate(light);
+                controller.Refresh();
+                Assert.That(controller.VisibleBubbleCount, Is.Zero);
+                Assert.That(controller.TryGetVisibleLabel(DataIds.Buildings.LightBasic, out _), Is.False);
+
+                host.SetActive(false);
+                host.SetActive(true);
+                controller.Refresh();
+                Assert.That(controller.VisibleBubbleCount, Is.Zero);
+            }
+            finally
+            {
+                if (light != null) Object.DestroyImmediate(light);
                 Object.DestroyImmediate(player);
                 Object.DestroyImmediate(host);
             }

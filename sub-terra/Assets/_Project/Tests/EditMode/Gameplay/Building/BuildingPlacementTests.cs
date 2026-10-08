@@ -82,6 +82,9 @@ namespace SubTerra.Gameplay.Building.Tests
                 buildingId: "building.charger.basic");
             try
             {
+                // Only existing ground is protected; legacy width must not protect the next column.
+                setup.Terrain.SetTile(new Vector3Int(0, -1, 0), setup.Tile);
+                setup.Terrain.SetTile(new Vector3Int(1, -1, 0), setup.Tile);
                 Assert.That(setup.Placement.TryRestoreBuilding(new BuildingSnapshotDto
                 {
                     instanceId = "charger-saved", buildingTypeId = "building.charger.basic",
@@ -99,9 +102,55 @@ namespace SubTerra.Gameplay.Building.Tests
             finally { setup.Dispose(); }
         }
 
+        [TestCase(0, 0)]
+        [TestCase(1, 0)]
+        [TestCase(0, 1)]
+        [TestCase(1, 1)]
+        public void Outpost_BlockedFootprintCellRejectsWithoutSpending(int x, int y)
+        {
+            var setup = CreateSetup(10f, new Vector2(20f, 20f), new Vector2Int(2, 2),
+                buildingId: "building.outpost_core.basic");
+            try
+            {
+                setup.Terrain.SetTile(new Vector3Int(0, -1, 0), setup.Tile);
+                setup.Terrain.SetTile(new Vector3Int(1, -1, 0), setup.Tile);
+                setup.Terrain.SetTile(new Vector3Int(x, y, 0), setup.Tile);
+                Assert.That(setup.Placement.TryPlaceAt(Vector3Int.zero).Failure, Is.EqualTo(BuildingPlacementFailure.Occupied));
+                Assert.That(setup.Wallet.SpendCount, Is.Zero);
+                Assert.That(setup.BuildingRoot.childCount, Is.Zero);
+            }
+            finally { setup.Dispose(); }
+        }
+
+        [TestCase(0, 0, 2)]
+        [TestCase(1, 2, 1)]
+        [TestCase(2, 2, 2)]
+        public void Outpost_RestoreKeepsLegacyNarrowOrOriginalFootprint(int width, int height, int expectedWidth)
+        {
+            var setup = CreateSetup(10f, new Vector2(20f, 20f), new Vector2Int(2, 2),
+                buildingId: "building.outpost_core.basic");
+            try
+            {
+                setup.Terrain.SetTile(new Vector3Int(0, -1, 0), setup.Tile);
+                setup.Terrain.SetTile(new Vector3Int(1, -1, 0), setup.Tile);
+                Assert.That(setup.Placement.TryRestoreBuilding(new BuildingSnapshotDto
+                {
+                    instanceId = "outpost-saved", buildingTypeId = "building.outpost_core.basic",
+                    footprintWidth = width, footprintHeight = height
+                }), Is.True);
+                Assert.That(setup.Wallet.SpendCount, Is.Zero);
+                Assert.That(setup.BuildingRoot.GetChild(0).position, Is.EqualTo(new Vector3(expectedWidth * 0.5f, 1f, 0f)));
+                Assert.That(setup.Placement.IsGroundSupportingBuilding(new Vector3Int(1, -1, 0)), Is.EqualTo(expectedWidth == 2));
+                Assert.That(setup.Placement.CanPlaceAt(new Vector3Int(0, 1, 0), out var failure), Is.False);
+                Assert.That(failure, Is.EqualTo(BuildingPlacementFailure.Occupied));
+            }
+            finally { setup.Dispose(); }
+        }
+
         [TestCase("building.charger.basic", 2, 2, -1.040f)]
         [TestCase("building.storage.basic", 1, 1, -0.540f)]
         [TestCase("building.outpost_core.basic", 1, 2, -1.08f)]
+        [TestCase("building.outpost_core.basic", 2, 2, -1.08f)]
         public void Facility_GroundContactIgnoresSpritePivot(string id, int width, int height, float bottom)
         {
             var texture = new Texture2D(32, 32);

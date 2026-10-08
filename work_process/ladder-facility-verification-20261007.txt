@@ -1,0 +1,13 @@
+PASS new charger occupies 2x2 and spends once.
+PASS blocked charger cell 0,0; no spend.
+PASS blocked charger cell 0,1; no spend.
+PASS blocked charger cell 1,0; no spend.
+PASS blocked charger cell 1,1; no spend.
+PASS legacy 1x1 and recorded 2x2 charger restore without spend.
+PASS elevator shaft collision; no spend.
+PASS real charger/storage/outpost prefab placement -> JSON -> clear -> restore, identity/position/occupancy retained; no duplicate/spend.
+PASS Player prefab: five consistent miner-style poses; 1254 PPU; original 0.25m distance unchanged.
+PASS isolated Unity PreviewScene render: standing / original ladder neutral / new ladder neutral.
+Direct Editor method checks passed: 12. Not a Test Runner result or a full gameplay QA.
+Active scene saved: no. Dirty before=False, after=False
+Manual visual inspection: ladder-five-style-20261007.png shows the standing miner and all five new poses. The initial three-column capture omitted miner sprites and was discarded; it is not visual QA evidence. Temporary Editor runner and its meta were removed.

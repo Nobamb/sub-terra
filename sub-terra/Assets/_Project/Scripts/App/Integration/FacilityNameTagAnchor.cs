@@ -1,4 +1,5 @@
 using SubTerra.Gameplay.Building;
+using Unity.Profiling;
 using UnityEngine;
 
 namespace SubTerra.App.Integration
@@ -8,18 +9,22 @@ namespace SubTerra.App.Integration
     {
         public const float Gap = 0.1f;
         public const float FallbackHeight = 0.5f;
+        private static readonly ProfilerMarker ComputeMarker = new ProfilerMarker("SubTerra.FacilityLabels.Anchor");
 
         public static Vector2 Compute(BuildingInstance instance)
         {
-            var renderer = FindPrimary(instance.transform);
-            if (renderer != null)
+            using (ComputeMarker.Auto())
             {
-                var bounds = renderer.bounds;
-                return new Vector2(bounds.center.x, bounds.max.y + Gap);
-            }
+                var renderer = FindPrimary(instance.transform);
+                if (renderer != null)
+                {
+                    var bounds = renderer.bounds;
+                    return new Vector2(bounds.center.x, bounds.max.y + Gap);
+                }
 
-            var position = instance.transform.position;
-            return new Vector2(position.x, position.y + FallbackHeight + Gap);
+                var position = instance.transform.position;
+                return new Vector2(position.x, position.y + FallbackHeight + Gap);
+            }
         }
 
         // VisualRoot의 첫 그림을 시설 본체로 본다. 없으면 자식 중 첫 그림.

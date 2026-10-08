@@ -1,0 +1,7 @@
+Unity=6000.5.4f1 editor=False GPU=AMD Radeon (TM) Graphics CPU=AMD Ryzen 3 7330U with Radeon Graphics
+PASS real trigger entry; distance-stepped five sprite poses; local visual position invariant. Ladder height=1.098985
+PASS top stop and physical side exit restoring normal sprite.
+Fixture: 12 visible chargers + 128 lookup objects, physics locked, same camera, 1280x720, vSync disabled and FPS unlimited for diagnosis.
+facilities: n=3188 mean=9.41ms p95=12.03ms FPS=106.3; CPU n=3188 mean=9.41ms p95=12.35ms FPS=106.2; GPU n=3157 mean=5.88ms p95=7.01ms FPS=170.1; GC0=8; heap delta=-626688
+facilities+debris: n=2771 mean=10.83ms p95=15.43ms FPS=92.4; CPU n=2771 mean=10.83ms p95=15.47ms FPS=92.3; GPU n=2739 mean=6.03ms p95=7.26ms FPS=165.9; GC0=6; heap delta=1138688
+facilities+debris; label disabled diagnostic: n=3442 mean=8.72ms p95=10.77ms FPS=114.7; CPU n=3442 mean=8.72ms p95=11.09ms FPS=114.7; GPU n=3408 mean=5.79ms p95=6.77ms FPS=172.8; GC0=3; heap delta=-147456

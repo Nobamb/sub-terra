@@ -526,10 +526,13 @@ namespace SubTerra.Gameplay.Building
             if (definition == null || definition.RuntimePrefab == null) return false;
 
             var cell = new Vector3Int(snapshot.x, snapshot.y, 0);
-            // Only charger dimensions changed. Missing dimensions are legacy 1x1;
-            // never let malformed save dimensions allocate an unbounded occupied region.
+            // Missing charger dimensions are legacy 1x1. Outposts originally used 2x2;
+            // retain explicitly saved 1x2 outposts instead of expanding into adjacent facilities.
+            // Only known footprints are accepted, never arbitrary save dimensions.
             Vector2Int footprint = snapshot.buildingTypeId == "building.charger.basic"
                 ? snapshot.footprintWidth == 2 && snapshot.footprintHeight == 2 ? new Vector2Int(2, 2) : Vector2Int.one
+                : snapshot.buildingTypeId == "building.outpost_core.basic"
+                    ? snapshot.footprintWidth == 1 && snapshot.footprintHeight == 2 ? new Vector2Int(1, 2) : new Vector2Int(2, 2)
                 : definition.Footprint;
             GameObject instanceObject = Instantiate(
                 definition.RuntimePrefab,

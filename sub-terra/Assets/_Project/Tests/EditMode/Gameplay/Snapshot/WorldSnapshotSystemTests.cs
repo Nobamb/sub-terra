@@ -4,6 +4,7 @@ using SubTerra.Gameplay.Power;
 using SubTerra.Gameplay.Structural;
 using SubTerra.Shared;
 using System.Reflection;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -248,6 +249,118 @@ namespace SubTerra.Gameplay.Snapshot.Tests
                 Object.DestroyImmediate(host);
                 Object.DestroyImmediate(prefab);
             }
+        }
+
+        [TestCase("charger_basic", 2, 2)]
+        [TestCase("storage_basic", 1, 1)]
+        [TestCase("outpost_core_basic", 2, 2)]
+        public void PlacedFacility_JsonRoundTripPreservesIdentityFootprintAndOccupancy(
+            string assetName, int width, int height)
+        {
+            var definition = AssetDatabase.LoadAssetAtPath<BuildingPlacementDefinition>(
+                "Assets/_Project/Data/Buildings/Placement/" + assetName + "Placement.asset");
+            Assert.That(definition, Is.Not.Null);
+            Assert.That(definition.RuntimePrefab, Is.Not.Null);
+            var footprint = new Vector2Int(width, height);
+            Assert.That(definition.Footprint, Is.EqualTo(footprint));
+
+            var host = new GameObject("FacilitySnapshotRoundTrip");
+            host.SetActive(false);
+            var gridObject = new GameObject("Grid", typeof(Grid));
+            gridObject.transform.SetParent(host.transform);
+            var terrainObject = new GameObject("Terrain", typeof(Tilemap), typeof(TilemapRenderer));
+            terrainObject.transform.SetParent(gridObject.transform);
+            var terrain = terrainObject.GetComponent<Tilemap>();
+            var buildingRoot = new GameObject("Buildings").transform;
+            buildingRoot.SetParent(host.transform);
+            var area = host.AddComponent<BoxCollider2D>();
+            area.isTrigger = true;
+            area.size = Vector2.one * 30f;
+            var ground = ScriptableObject.CreateInstance<Tile>();
+            var wallet = new RecordingWallet();
+            var placement = host.AddComponent<BuildingPlacementSystem>();
+            SetField(placement, "terrainTilemap", terrain);
+            SetField(placement, "buildingRoot", buildingRoot);
+            SetField(placement, "placementOrigin", host.transform);
+            SetField(placement, "allowedPlacementArea", area);
+            SetField(placement, "restoreDefinitions", new[] { definition });
+            var snapshots = host.AddComponent<WorldSnapshotSystem>();
+            SetField(snapshots, "buildingPlacementSystem", placement);
+
+            try
+            {
+                host.SetActive(true);
+                // Direct EditMode calls do not rely on a running scene lifecycle.
+                InvokeLifecycle(snapshots, "OnDisable");
+                InvokeLifecycle(snapshots, "OnEnable");
+                placement.SetResourceWallet(wallet);
+                for (int x = 0; x < width; x++)
+                    terrain.SetTile(new Vector3Int(x, -1, 0), ground);
+                Physics2D.SyncTransforms();
+                placement.Select(definition);
+                var result = placement.TryPlaceAt(Vector3Int.zero);
+                Assert.That(result.IsSuccess, Is.True, result.Failure.ToString());
+                Assert.That(wallet.SpendCount, Is.EqualTo(1));
+                var original = buildingRoot.GetComponentInChildren<BuildingInstance>();
+                Assert.That(original, Is.Not.Null);
+                Vector3 position = original.transform.position;
+
+                var encoded = JsonUtility.ToJson(snapshots.CaptureSnapshot());
+                var saved = JsonUtility.FromJson<WorldSnapshotDto>(encoded);
+                Assert.That(saved.buildings, Has.Count.EqualTo(1));
+                var record = saved.buildings[0];
+                Assert.That(record.instanceId, Is.EqualTo(result.InstanceId));
+                Assert.That(record.buildingTypeId, Is.EqualTo(definition.BuildingId));
+                Assert.That(record.footprintWidth, Is.EqualTo(width));
+                Assert.That(record.footprintHeight, Is.EqualTo(height));
+                Assert.That(record.x, Is.EqualTo(0));
+                Assert.That(record.y, Is.EqualTo(0));
+
+                // Includes clearing the original instance; restoration must never spend again.
+                Assert.That(snapshots.RestoreSnapshot(saved), Is.True);
+                var restored = buildingRoot.GetComponentsInChildren<BuildingInstance>();
+                Assert.That(restored, Has.Length.EqualTo(1));
+                Assert.That(restored[0].InstanceId, Is.EqualTo(result.InstanceId));
+                Assert.That(restored[0].BuildingId, Is.EqualTo(definition.BuildingId));
+                Assert.That(restored[0].transform.position, Is.EqualTo(position));
+                Assert.That(wallet.SpendCount, Is.EqualTo(1));
+                placement.Select(definition);
+                for (int x = 0; x < width; x++)
+                for (int y = 0; y < height; y++)
+                {
+                    Assert.That(placement.CanPlaceAt(new Vector3Int(x, y, 0), out var failure), Is.False);
+                    Assert.That(failure, Is.EqualTo(BuildingPlacementFailure.Occupied));
+                }
+                var recaptured = snapshots.CaptureSnapshot().buildings;
+                Assert.That(recaptured, Has.Count.EqualTo(1));
+                Assert.That(recaptured[0].footprintWidth, Is.EqualTo(width));
+                Assert.That(recaptured[0].footprintHeight, Is.EqualTo(height));
+            }
+            finally
+            {
+                InvokeLifecycle(snapshots, "OnDisable");
+                placement.ClearSelection();
+                Object.DestroyImmediate(host);
+                Object.DestroyImmediate(ground);
+            }
+        }
+
+        private sealed class RecordingWallet : IResourceWallet
+        {
+            public int SpendCount { get; private set; }
+            public bool CanAfford(System.Collections.Generic.IReadOnlyList<ItemCostDto> costs) => true;
+            public bool TrySpend(System.Collections.Generic.IReadOnlyList<ItemCostDto> costs)
+            {
+                SpendCount++;
+                return true;
+            }
+        }
+
+        private static void InvokeLifecycle(object target, string name)
+        {
+            MethodInfo method = target.GetType().GetMethod(name, BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(method, Is.Not.Null);
+            method.Invoke(target, null);
         }
 
         private static void SetField(object target, string name, object value)
