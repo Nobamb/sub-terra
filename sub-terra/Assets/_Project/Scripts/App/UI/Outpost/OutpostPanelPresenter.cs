@@ -15,6 +15,8 @@ namespace SubTerra.App.UI.Outpost
         private bool interactionPanelRequested;
         private string openedFacilityInstanceId = string.Empty;
         private string openedFacilityBuildingId = string.Empty;
+        private string cooldownTargetInstanceId = string.Empty;
+        private string cooldownTargetBuildingId = string.Empty;
         private string selectedMineralId = string.Empty;
         private string mineralSearchQuery = string.Empty;
         private int selectedQuantity = 1;
@@ -74,11 +76,17 @@ namespace SubTerra.App.UI.Outpost
             if (service != null
                 && service.TryGetFacilityCooldownMessage(out var cooldownMessage))
             {
-                CloseInteractionPanel();
-                view?.ShowTemporaryMessage(cooldownMessage, 3f);
+                CloseServicePanel();
+                if (!TryShowFacilityCooldown())
+                {
+                    view?.ShowTemporaryMessage(cooldownMessage, 3f);
+                }
+
                 return;
             }
 
+            // 쿨타임 팝업은 시설 상호작용이 아닌 경로(일반 열기·닫기)로 넘어갈 때 퇴장시킨다.
+            HideFacilityCooldown();
             var mode = ResolveMode(service?.InteractionFacilityBuildingId);
             if (service == null || !service.IsFacilityInteraction || mode == OutpostPanelMode.None)
             {
@@ -291,6 +299,11 @@ namespace SubTerra.App.UI.Outpost
                 CloseInteractionPanel();
             }
 
+            if (cooldownTargetInstanceId.Length > 0 && !IsCooldownTarget())
+            {
+                HideFacilityCooldown();
+            }
+
             view?.SetVisible(interactionPanelRequested);
             view?.SetMode(interactionPanelRequested ? activeMode : OutpostPanelMode.None);
             view?.SetPower(
@@ -372,6 +385,12 @@ namespace SubTerra.App.UI.Outpost
 
         private void CloseInteractionPanel()
         {
+            CloseServicePanel();
+            HideFacilityCooldown();
+        }
+
+        private void CloseServicePanel()
+        {
             interactionPanelRequested = false;
             openedFacilityInstanceId = string.Empty;
             openedFacilityBuildingId = string.Empty;
@@ -382,6 +401,56 @@ namespace SubTerra.App.UI.Outpost
             view?.ClearMineralSearch();
             view?.SetMode(OutpostPanelMode.None);
             view?.SetVisible(false);
+        }
+
+        /// <summary>
+        /// 재사용 대기 팝업을 연다. 남은 시간은 쿨타임 저장값을 그대로 읽어 표시하며 팝업이 시간을 소유하지 않는다.
+        /// 선택 인터페이스가 없으면 false를 돌려 기존 3초 문구로 대신 안내한다.
+        /// </summary>
+        private bool TryShowFacilityCooldown()
+        {
+            var cooldownView = view as IFacilityCooldownPopupView;
+            if (cooldownView == null || service == null)
+            {
+                return false;
+            }
+
+            var instanceId = service.InteractionFacilityInstanceId;
+            var buildingId = service.InteractionFacilityBuildingId;
+            if (string.IsNullOrEmpty(instanceId))
+            {
+                return false;
+            }
+
+            var state = service.State;
+            if (!cooldownView.ShowFacilityCooldown(buildingId, instanceId, id =>
+                    state.TryGetFacilityCooldownRemaining(id, out var remaining) ? remaining : -1d))
+            {
+                return false;
+            }
+
+            cooldownTargetInstanceId = instanceId;
+            cooldownTargetBuildingId = buildingId;
+            return true;
+        }
+
+        private void HideFacilityCooldown()
+        {
+            cooldownTargetInstanceId = string.Empty;
+            cooldownTargetBuildingId = string.Empty;
+            var cooldownView = view as IFacilityCooldownPopupView;
+            if (cooldownView != null)
+            {
+                cooldownView.HideFacilityCooldown();
+            }
+        }
+
+        private bool IsCooldownTarget()
+        {
+            return service != null
+                && service.IsFacilityInteraction
+                && service.InteractionFacilityInstanceId == cooldownTargetInstanceId
+                && service.InteractionFacilityBuildingId == cooldownTargetBuildingId;
         }
 
         private bool IsCurrentTarget()

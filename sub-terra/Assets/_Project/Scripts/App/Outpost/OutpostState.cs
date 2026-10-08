@@ -265,6 +265,42 @@ namespace SubTerra.App.Outpost
             }
         }
 
+        /// <summary>
+        /// 개발자 터미널용. match에 맞는 시설의 재사용 대기를 seconds만큼 줄이고 0이 되면 제거한다.
+        /// seconds가 무한대면 맞는 시설의 대기를 모두 초기화한다. 바뀐 시설 수를 돌려준다.
+        /// </summary>
+        public int ReduceFacilityCooldowns(Predicate<string> match, double seconds)
+        {
+            if (double.IsNaN(seconds) || seconds <= 0d)
+            {
+                return 0;
+            }
+
+            var changed = 0;
+            for (var i = facilityCooldowns.Count - 1; i >= 0; i--)
+            {
+                if (match != null && !match(facilityCooldowns[i].InstanceId))
+                {
+                    continue;
+                }
+
+                changed++;
+                if (double.IsInfinity(seconds))
+                {
+                    facilityCooldowns.RemoveAt(i);
+                    continue;
+                }
+
+                facilityCooldowns[i].AddElapsed(seconds);
+                if (facilityCooldowns[i].RemainingSeconds <= 0d)
+                {
+                    facilityCooldowns.RemoveAt(i);
+                }
+            }
+
+            return changed;
+        }
+
         /// <summary>광산 초기화 시 인스턴스 ID가 다시 쓰이므로 대기 기록을 비운다.</summary>
         internal void ClearFacilityCooldowns()
         {
