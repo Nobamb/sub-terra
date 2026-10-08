@@ -533,6 +533,8 @@ namespace SubTerra.Gameplay.Building
                 ? snapshot.footprintWidth == 2 && snapshot.footprintHeight == 2 ? new Vector2Int(2, 2) : Vector2Int.one
                 : snapshot.buildingTypeId == "building.outpost_core.basic"
                     ? snapshot.footprintWidth == 1 && snapshot.footprintHeight == 2 ? new Vector2Int(1, 2) : new Vector2Int(2, 2)
+                : snapshot.buildingTypeId == "building.light.basic" || snapshot.buildingTypeId == "building.settlement.basic"
+                    ? snapshot.footprintWidth == 1 && snapshot.footprintHeight == 2 ? new Vector2Int(1, 2) : Vector2Int.one
                 : definition.Footprint;
             GameObject instanceObject = Instantiate(
                 definition.RuntimePrefab,

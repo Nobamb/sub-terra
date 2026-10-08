@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: SubTerra.Gameplay.Building::SubTerra.Gameplay.Building.BuildingPlacementDefinition
   buildingId: building.light.basic
   runtimePrefab: {fileID: 7593593327156216058, guid: 57b1560617d7d9a4da00b172c189a363, type: 3}
-  footprint: {x: 1, y: 1}
+  footprint: {x: 1, y: 2}
   requiresGround: 1
   costs:
   - itemId: mineral.iron

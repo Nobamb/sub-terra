@@ -147,6 +147,10 @@ namespace SubTerra.Gameplay.Building.Tests
             finally { setup.Dispose(); }
         }
 
+        [TestCase("building.light.basic", 1, 2, -1.040f)]
+        [TestCase("building.settlement.basic", 1, 2, -1.040f)]
+        [TestCase("building.light.basic", 1, 1, -0.540f)]
+        [TestCase("building.settlement.basic", 1, 1, -0.540f)]
         [TestCase("building.charger.basic", 2, 2, -1.040f)]
         [TestCase("building.storage.basic", 1, 1, -0.540f)]
         [TestCase("building.outpost_core.basic", 1, 2, -1.08f)]
@@ -165,6 +169,69 @@ namespace SubTerra.Gameplay.Building.Tests
                 Assert.That(scale.x, Is.EqualTo(scale.y));
             }
             finally { Object.DestroyImmediate(sprite); Object.DestroyImmediate(texture); }
+        }
+
+        [TestCase("building.light.basic")]
+        [TestCase("building.settlement.basic")]
+        public void TallUtility_SuccessOccupiesBothCellsAndSpendsOnce(string id)
+        {
+            var setup = CreateSetup(10f, new Vector2(20f, 20f), buildingId: id);
+            try
+            {
+                setup.Terrain.SetTile(new Vector3Int(0, -1, 0), setup.Tile);
+                var result = setup.Placement.TryPlaceAt(Vector3Int.zero);
+                Assert.That(result.IsSuccess, Is.True);
+                Assert.That(result.Footprint, Is.EqualTo(new Vector2Int(1, 2)));
+                Assert.That(setup.Wallet.SpendCount, Is.EqualTo(1));
+                Assert.That(setup.BuildingRoot.GetChild(0).position, Is.EqualTo(new Vector3(0.5f, 1f, 0f)));
+                setup.Placement.Select(setup.Definition);
+                Assert.That(setup.Placement.CanPlaceAt(new Vector3Int(0, 1, 0), out var failure), Is.False);
+                Assert.That(failure, Is.EqualTo(BuildingPlacementFailure.Occupied));
+            }
+            finally { setup.Dispose(); }
+        }
+
+        [TestCase("building.light.basic", 0)]
+        [TestCase("building.light.basic", 1)]
+        [TestCase("building.settlement.basic", 0)]
+        [TestCase("building.settlement.basic", 1)]
+        public void TallUtility_BlockedEitherCellRejectsWithoutSpending(string id, int row)
+        {
+            var setup = CreateSetup(10f, new Vector2(20f, 20f), buildingId: id);
+            try
+            {
+                setup.Terrain.SetTile(new Vector3Int(0, -1, 0), setup.Tile);
+                setup.Terrain.SetTile(new Vector3Int(0, row, 0), setup.Tile);
+                Assert.That(setup.Placement.TryPlaceAt(Vector3Int.zero).Failure, Is.EqualTo(BuildingPlacementFailure.Occupied));
+                Assert.That(setup.Wallet.SpendCount, Is.Zero);
+                Assert.That(setup.BuildingRoot.childCount, Is.Zero);
+            }
+            finally { setup.Dispose(); }
+        }
+
+        [TestCase("building.light.basic", 0, 0, 1)]
+        [TestCase("building.light.basic", 1, 1, 1)]
+        [TestCase("building.light.basic", 1, 2, 2)]
+        [TestCase("building.settlement.basic", 0, 0, 1)]
+        [TestCase("building.settlement.basic", 1, 1, 1)]
+        [TestCase("building.settlement.basic", 1, 2, 2)]
+        public void TallUtility_RestorePreservesLegacyAndRecordedArea(string id, int width, int height, int rows)
+        {
+            var setup = CreateSetup(10f, new Vector2(20f, 20f), buildingId: id);
+            try
+            {
+                Assert.That(setup.Placement.TryRestoreBuilding(new BuildingSnapshotDto
+                {
+                    instanceId = "utility-saved", buildingTypeId = id,
+                    footprintWidth = width, footprintHeight = height
+                }), Is.True);
+                Assert.That(setup.Wallet.SpendCount, Is.Zero);
+                Assert.That(setup.BuildingRoot.GetChild(0).position, Is.EqualTo(new Vector3(0.5f, rows * 0.5f, 0f)));
+                // 두 칸 위에서 검사해야 구형의 빈 상단과 신형의 점유 상단을 구분할 수 있다.
+                Assert.That(setup.Placement.CanPlaceAt(new Vector3Int(0, 2, 0), out var failure), Is.False);
+                Assert.That(failure, Is.EqualTo(rows == 2 ? BuildingPlacementFailure.Occupied : BuildingPlacementFailure.MissingGround));
+            }
+            finally { setup.Dispose(); }
         }
 
         [Test]

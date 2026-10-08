@@ -1,0 +1,593 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="84" result="Passed" total="84" passed="84" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-10-08 08:00:16Z" end-time="2026-10-08 08:00:28Z" duration="12.6213428">
+  <test-suite type="TestSuite" id="1000" name="sub-terra" fullname="sub-terra" runstate="Runnable" testcasecount="1393" result="Passed" start-time="2026-10-08 08:00:16Z" end-time="2026-10-08 08:00:28Z" duration="12.621343" total="84" passed="84" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="2457" name="SubTerra.App.Tests.EditMode.dll" fullname="C:/Users/jeone/sub-terra/sub-terra/Library/ScriptAssemblies/SubTerra.App.Tests.EditMode.dll" runstate="Runnable" testcasecount="1244" result="Passed" start-time="2026-10-08 08:00:16Z" end-time="2026-10-08 08:00:28Z" duration="12.135141" total="28" passed="28" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="24076" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="2458" name="SubTerra" fullname="SubTerra" runstate="Runnable" testcasecount="1244" result="Passed" start-time="2026-10-08 08:00:16Z" end-time="2026-10-08 08:00:28Z" duration="12.092814" total="28" passed="28" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="2464" name="App" fullname="SubTerra.App" runstate="Runnable" testcasecount="1234" result="Passed" start-time="2026-10-08 08:00:16Z" end-time="2026-10-08 08:00:28Z" duration="11.975159" total="28" passed="28" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="2465" name="Tests" fullname="SubTerra.App.Tests" runstate="Runnable" testcasecount="1234" result="Passed" start-time="2026-10-08 08:00:16Z" end-time="2026-10-08 08:00:28Z" duration="11.796735" total="28" passed="28" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestSuite" id="2466" name="UI" fullname="SubTerra.App.Tests.UI" runstate="Runnable" testcasecount="494" result="Passed" start-time="2026-10-08 08:00:16Z" end-time="2026-10-08 08:00:28Z" duration="11.755546" total="28" passed="28" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-suite type="TestFixture" id="1489" name="PromptB49FacilityVisualTests" fullname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests" classname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests" runstate="Runnable" testcasecount="28" result="Passed" start-time="2026-10-08 08:00:16Z" end-time="2026-10-08 08:00:28Z" duration="11.731473" total="28" passed="28" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-suite type="ParameterizedMethod" id="1509" name="Facility_ActualOpaquePixelsTouchFoundation" fullname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests.Facility_ActualOpaquePixelsTouchFoundation" classname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests" runstate="Runnable" testcasecount="12" result="Passed" start-time="2026-10-08 08:00:16Z" end-time="2026-10-08 08:00:19Z" duration="2.435948" total="12" passed="12" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="1497" name="Facility_ActualOpaquePixelsTouchFoundation(&quot;light_basic_cartoon_v3&quot;,1,2)" fullname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests.Facility_ActualOpaquePixelsTouchFoundation(&quot;light_basic_cartoon_v3&quot;,1,2)" methodname="Facility_ActualOpaquePixelsTouchFoundation" classname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests" runstate="Runnable" seed="1792657470" result="Passed" start-time="2026-10-08 08:00:16Z" end-time="2026-10-08 08:00:17Z" duration="0.388026" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1498" name="Facility_ActualOpaquePixelsTouchFoundation(&quot;settlement_console_cartoon_v3&quot;,1,2)" fullname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests.Facility_ActualOpaquePixelsTouchFoundation(&quot;settlement_console_cartoon_v3&quot;,1,2)" methodname="Facility_ActualOpaquePixelsTouchFoundation" classname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests" runstate="Runnable" seed="167805746" result="Passed" start-time="2026-10-08 08:00:17Z" end-time="2026-10-08 08:00:17Z" duration="0.102570" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1499" name="Facility_ActualOpaquePixelsTouchFoundation(&quot;light_basic_cartoon_v3&quot;,1,1)" fullname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests.Facility_ActualOpaquePixelsTouchFoundation(&quot;light_basic_cartoon_v3&quot;,1,1)" methodname="Facility_ActualOpaquePixelsTouchFoundation" classname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests" runstate="Runnable" seed="490534382" result="Passed" start-time="2026-10-08 08:00:17Z" end-time="2026-10-08 08:00:17Z" duration="0.088053" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1500" name="Facility_ActualOpaquePixelsTouchFoundation(&quot;settlement_console_cartoon_v3&quot;,1,1)" fullname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests.Facility_ActualOpaquePixelsTouchFoundation(&quot;settlement_console_cartoon_v3&quot;,1,1)" methodname="Facility_ActualOpaquePixelsTouchFoundation" classname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests" runstate="Runnable" seed="675442493" result="Passed" start-time="2026-10-08 08:00:17Z" end-time="2026-10-08 08:00:17Z" duration="0.088320" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1501" name="Facility_ActualOpaquePixelsTouchFoundation(&quot;charger&quot;,2,2)" fullname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests.Facility_ActualOpaquePixelsTouchFoundation(&quot;charger&quot;,2,2)" methodname="Facility_ActualOpaquePixelsTouchFoundation" classname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests" runstate="Runnable" seed="2111275160" result="Passed" start-time="2026-10-08 08:00:17Z" end-time="2026-10-08 08:00:17Z" duration="0.090297" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1502" name="Facility_ActualOpaquePixelsTouchFoundation(&quot;charger&quot;,1,1)" fullname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests.Facility_ActualOpaquePixelsTouchFoundation(&quot;charger&quot;,1,1)" methodname="Facility_ActualOpaquePixelsTouchFoundation" classname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests" runstate="Runnable" seed="597002328" result="Passed" start-time="2026-10-08 08:00:17Z" end-time="2026-10-08 08:00:17Z" duration="0.086981" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1503" name="Facility_ActualOpaquePixelsTouchFoundation(&quot;storage&quot;,1,1)" fullname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests.Facility_ActualOpaquePixelsTouchFoundation(&quot;storage&quot;,1,1)" methodname="Facility_ActualOpaquePixelsTouchFoundation" classname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests" runstate="Runnable" seed="1516108882" result="Passed" start-time="2026-10-08 08:00:17Z" end-time="2026-10-08 08:00:17Z" duration="0.087253" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1504" name="Facility_ActualOpaquePixelsTouchFoundation(&quot;ChargerGrounded&quot;,2,2)" fullname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests.Facility_ActualOpaquePixelsTouchFoundation(&quot;ChargerGrounded&quot;,2,2)" methodname="Facility_ActualOpaquePixelsTouchFoundation" classname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests" runstate="Runnable" seed="364073117" result="Passed" start-time="2026-10-08 08:00:17Z" end-time="2026-10-08 08:00:17Z" duration="0.090899" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1505" name="Facility_ActualOpaquePixelsTouchFoundation(&quot;ChargerGrounded&quot;,1,1)" fullname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests.Facility_ActualOpaquePixelsTouchFoundation(&quot;ChargerGrounded&quot;,1,1)" methodname="Facility_ActualOpaquePixelsTouchFoundation" classname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests" runstate="Runnable" seed="822252444" result="Passed" start-time="2026-10-08 08:00:17Z" end-time="2026-10-08 08:00:17Z" duration="0.097411" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1506" name="Facility_ActualOpaquePixelsTouchFoundation(&quot;StorageGrounded&quot;,1,1)" fullname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests.Facility_ActualOpaquePixelsTouchFoundation(&quot;StorageGrounded&quot;,1,1)" methodname="Facility_ActualOpaquePixelsTouchFoundation" classname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests" runstate="Runnable" seed="1923480783" result="Passed" start-time="2026-10-08 08:00:17Z" end-time="2026-10-08 08:00:17Z" duration="0.084799" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1507" name="Facility_ActualOpaquePixelsTouchFoundation(&quot;outpost_core_cartoon_v3&quot;,2,2)" fullname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests.Facility_ActualOpaquePixelsTouchFoundation(&quot;outpost_core_cartoon_v3&quot;,2,2)" methodname="Facility_ActualOpaquePixelsTouchFoundation" classname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests" runstate="Runnable" seed="751853145" result="Passed" start-time="2026-10-08 08:00:17Z" end-time="2026-10-08 08:00:18Z" duration="0.153037" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1508" name="Facility_ActualOpaquePixelsTouchFoundation(&quot;outpost_core_cartoon_v3&quot;,1,2)" fullname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests.Facility_ActualOpaquePixelsTouchFoundation(&quot;outpost_core_cartoon_v3&quot;,1,2)" methodname="Facility_ActualOpaquePixelsTouchFoundation" classname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests" runstate="Runnable" seed="894773098" result="Passed" start-time="2026-10-08 08:00:18Z" end-time="2026-10-08 08:00:18Z" duration="0.140047" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                </test-suite>
+                <test-suite type="ParameterizedMethod" id="1512" name="Facility_ReplacementBaseIsLevelAndNeedsNoSeparatePlate" fullname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests.Facility_ReplacementBaseIsLevelAndNeedsNoSeparatePlate" classname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-10-08 08:00:19Z" end-time="2026-10-08 08:00:26Z" duration="6.932571" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="1510" name="Facility_ReplacementBaseIsLevelAndNeedsNoSeparatePlate(&quot;ChargerGrounded&quot;,&quot;building.charger.basic&quot;,2)" fullname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests.Facility_ReplacementBaseIsLevelAndNeedsNoSeparatePlate(&quot;ChargerGrounded&quot;,&quot;building.charger.basic&quot;,2)" methodname="Facility_ReplacementBaseIsLevelAndNeedsNoSeparatePlate" classname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests" runstate="Runnable" seed="2051899649" result="Passed" start-time="2026-10-08 08:00:19Z" end-time="2026-10-08 08:00:26Z" duration="6.272553" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1511" name="Facility_ReplacementBaseIsLevelAndNeedsNoSeparatePlate(&quot;StorageGrounded&quot;,&quot;building.storage.basic&quot;,1)" fullname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests.Facility_ReplacementBaseIsLevelAndNeedsNoSeparatePlate(&quot;StorageGrounded&quot;,&quot;building.storage.basic&quot;,1)" methodname="Facility_ReplacementBaseIsLevelAndNeedsNoSeparatePlate" classname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests" runstate="Runnable" seed="2010836216" result="Passed" start-time="2026-10-08 08:00:26Z" end-time="2026-10-08 08:00:26Z" duration="0.147345" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                </test-suite>
+                <test-suite type="ParameterizedMethod" id="1496" name="GroundedFacility_MenuPreviewAndPlacedArtworkMatch" fullname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests.GroundedFacility_MenuPreviewAndPlacedArtworkMatch" classname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests" runstate="Runnable" testcasecount="5" result="Passed" start-time="2026-10-08 08:00:26Z" end-time="2026-10-08 08:00:26Z" duration="0.639934" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="1491" name="GroundedFacility_MenuPreviewAndPlacedArtworkMatch(&quot;Light&quot;,&quot;light_basic_cartoon_v3&quot;,1,2)" fullname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests.GroundedFacility_MenuPreviewAndPlacedArtworkMatch(&quot;Light&quot;,&quot;light_basic_cartoon_v3&quot;,1,2)" methodname="GroundedFacility_MenuPreviewAndPlacedArtworkMatch" classname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests" runstate="Runnable" seed="1525130464" result="Passed" start-time="2026-10-08 08:00:26Z" end-time="2026-10-08 08:00:26Z" duration="0.399216" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1492" name="GroundedFacility_MenuPreviewAndPlacedArtworkMatch(&quot;Settlement&quot;,&quot;settlement_console_cartoon_v3&quot;,1,2)" fullname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests.GroundedFacility_MenuPreviewAndPlacedArtworkMatch(&quot;Settlement&quot;,&quot;settlement_console_cartoon_v3&quot;,1,2)" methodname="GroundedFacility_MenuPreviewAndPlacedArtworkMatch" classname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests" runstate="Runnable" seed="1352234625" result="Passed" start-time="2026-10-08 08:00:26Z" end-time="2026-10-08 08:00:26Z" duration="0.073074" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1493" name="GroundedFacility_MenuPreviewAndPlacedArtworkMatch(&quot;Charger&quot;,&quot;ChargerGrounded&quot;,2,2)" fullname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests.GroundedFacility_MenuPreviewAndPlacedArtworkMatch(&quot;Charger&quot;,&quot;ChargerGrounded&quot;,2,2)" methodname="GroundedFacility_MenuPreviewAndPlacedArtworkMatch" classname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests" runstate="Runnable" seed="1083480701" result="Passed" start-time="2026-10-08 08:00:26Z" end-time="2026-10-08 08:00:26Z" duration="0.066586" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1494" name="GroundedFacility_MenuPreviewAndPlacedArtworkMatch(&quot;Storage&quot;,&quot;StorageGrounded&quot;,1,1)" fullname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests.GroundedFacility_MenuPreviewAndPlacedArtworkMatch(&quot;Storage&quot;,&quot;StorageGrounded&quot;,1,1)" methodname="GroundedFacility_MenuPreviewAndPlacedArtworkMatch" classname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests" runstate="Runnable" seed="2000943701" result="Passed" start-time="2026-10-08 08:00:26Z" end-time="2026-10-08 08:00:26Z" duration="0.038167" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1495" name="GroundedFacility_MenuPreviewAndPlacedArtworkMatch(&quot;OutpostCore&quot;,&quot;outpost_core_cartoon_v3&quot;,2,2)" fullname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests.GroundedFacility_MenuPreviewAndPlacedArtworkMatch(&quot;OutpostCore&quot;,&quot;outpost_core_cartoon_v3&quot;,2,2)" methodname="GroundedFacility_MenuPreviewAndPlacedArtworkMatch" classname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests" runstate="Runnable" seed="864361081" result="Passed" start-time="2026-10-08 08:00:26Z" end-time="2026-10-08 08:00:26Z" duration="0.040194" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                </test-suite>
+                <test-case id="1490" name="OutpostOriginalArtwork_FitsTwoByTwoWithoutDistortion" fullname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests.OutpostOriginalArtwork_FitsTwoByTwoWithoutDistortion" methodname="OutpostOriginalArtwork_FitsTwoByTwoWithoutDistortion" classname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests" runstate="Runnable" seed="574605300" result="Passed" start-time="2026-10-08 08:00:26Z" end-time="2026-10-08 08:00:27Z" duration="0.006003" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1517" name="PromptB49_BuildingMenuIcons_MatchEachFacilityArtwork" fullname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests.PromptB49_BuildingMenuIcons_MatchEachFacilityArtwork" methodname="PromptB49_BuildingMenuIcons_MatchEachFacilityArtwork" classname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests" runstate="Runnable" seed="1917884332" result="Passed" start-time="2026-10-08 08:00:27Z" end-time="2026-10-08 08:00:27Z" duration="0.040247" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1515" name="PromptB49_DisplayNames_ExcludeSupportAndLadderFromProximity" fullname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests.PromptB49_DisplayNames_ExcludeSupportAndLadderFromProximity" methodname="PromptB49_DisplayNames_ExcludeSupportAndLadderFromProximity" classname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests" runstate="Runnable" seed="301858467" result="Passed" start-time="2026-10-08 08:00:27Z" end-time="2026-10-08 08:00:27Z" duration="0.021329" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1514" name="PromptB49_GuideControls_ExplainsNearbyEKeyAndNameBubble" fullname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests.PromptB49_GuideControls_ExplainsNearbyEKeyAndNameBubble" methodname="PromptB49_GuideControls_ExplainsNearbyEKeyAndNameBubble" classname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests" runstate="Runnable" seed="1581115271" result="Passed" start-time="2026-10-08 08:00:27Z" end-time="2026-10-08 08:00:27Z" duration="0.018747" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1513" name="PromptB49_OutpostPlacement_UsesOriginalTwoByTwoFootprint" fullname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests.PromptB49_OutpostPlacement_UsesOriginalTwoByTwoFootprint" methodname="PromptB49_OutpostPlacement_UsesOriginalTwoByTwoFootprint" classname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests" runstate="Runnable" seed="997927087" result="Passed" start-time="2026-10-08 08:00:27Z" end-time="2026-10-08 08:00:27Z" duration="0.016620" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1516" name="PromptB49_Prefabs_UseDistinctAuthoredArtWithShallowRockOverlap" fullname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests.PromptB49_Prefabs_UseDistinctAuthoredArtWithShallowRockOverlap" methodname="PromptB49_Prefabs_UseDistinctAuthoredArtWithShallowRockOverlap" classname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests" runstate="Runnable" seed="595916466" result="Passed" start-time="2026-10-08 08:00:27Z" end-time="2026-10-08 08:00:27Z" duration="0.195808" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1518" name="PromptB49_ProximityLabel_ShowsNameExceptSupportAndLadder" fullname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests.PromptB49_ProximityLabel_ShowsNameExceptSupportAndLadder" methodname="PromptB49_ProximityLabel_ShowsNameExceptSupportAndLadder" classname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests" runstate="Runnable" seed="1093878376" result="Passed" start-time="2026-10-08 08:00:27Z" end-time="2026-10-08 08:00:28Z" duration="0.932495" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1520" name="PromptB49_ProximityLabel_UsesNotoSansKoreanFont" fullname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests.PromptB49_ProximityLabel_UsesNotoSansKoreanFont" methodname="PromptB49_ProximityLabel_UsesNotoSansKoreanFont" classname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests" runstate="Runnable" seed="369861974" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.014704" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1519" name="ProximityLabel_RepeatedRefreshDropsDestroyedAndDisabledFacilities" fullname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests.ProximityLabel_RepeatedRefreshDropsDestroyedAndDisabledFacilities" methodname="ProximityLabel_RepeatedRefreshDropsDestroyedAndDisabledFacilities" classname="SubTerra.App.Tests.UI.PromptB49FacilityVisualTests" runstate="Runnable" seed="750048457" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.010216" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+              </test-suite>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+    <test-suite type="Assembly" id="2562" name="SubTerra.Gameplay.Building.EditModeTests.dll" fullname="C:/Users/jeone/sub-terra/sub-terra/Library/ScriptAssemblies/SubTerra.Gameplay.Building.EditModeTests.dll" runstate="Runnable" testcasecount="66" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.386670" total="56" passed="56" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="24076" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="2563" name="SubTerra" fullname="SubTerra" runstate="Runnable" testcasecount="66" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.373742" total="56" passed="56" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="2564" name="Gameplay" fullname="SubTerra.Gameplay" runstate="Runnable" testcasecount="66" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.370364" total="56" passed="56" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="2565" name="Building" fullname="SubTerra.Gameplay.Building" runstate="Runnable" testcasecount="66" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.365675" total="56" passed="56" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestSuite" id="2566" name="Tests" fullname="SubTerra.Gameplay.Building.Tests" runstate="Runnable" testcasecount="66" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.362138" total="56" passed="56" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-suite type="TestFixture" id="2483" name="BuildingPlacementTests" fullname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests" classname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests" runstate="Runnable" testcasecount="56" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.357382" total="56" passed="56" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="2541" name="CanPlaceAt_OneByTwo_RejectsBlockedUpperCell" fullname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests.CanPlaceAt_OneByTwo_RejectsBlockedUpperCell" methodname="CanPlaceAt_OneByTwo_RejectsBlockedUpperCell" classname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests" runstate="Runnable" seed="1473952943" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.091112" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="2531" name="CanPlaceAt_ReportsAreaDistanceGroundAndOccupiedFailures" fullname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests.CanPlaceAt_ReportsAreaDistanceGroundAndOccupiedFailures" methodname="CanPlaceAt_ReportsAreaDistanceGroundAndOccupiedFailures" classname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests" runstate="Runnable" seed="920988861" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.001827" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="2539" name="CanPlaceAt_TwoByTwo_RequiresGroundOnlyOnBottomRow" fullname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests.CanPlaceAt_TwoByTwo_RequiresGroundOnlyOnBottomRow" methodname="CanPlaceAt_TwoByTwo_RequiresGroundOnlyOnBottomRow" classname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests" runstate="Runnable" seed="1087883325" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.002418" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-suite type="ParameterizedMethod" id="2490" name="Charger_BlockedFootprintCellRejectsWithoutSpending" fullname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests.Charger_BlockedFootprintCellRejectsWithoutSpending" classname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.014540" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="2486" name="Charger_BlockedFootprintCellRejectsWithoutSpending(0,0)" fullname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests.Charger_BlockedFootprintCellRejectsWithoutSpending(0,0)" methodname="Charger_BlockedFootprintCellRejectsWithoutSpending" classname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests" runstate="Runnable" seed="588272221" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.007219" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="2487" name="Charger_BlockedFootprintCellRejectsWithoutSpending(1,0)" fullname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests.Charger_BlockedFootprintCellRejectsWithoutSpending(1,0)" methodname="Charger_BlockedFootprintCellRejectsWithoutSpending" classname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests" runstate="Runnable" seed="1542373909" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.000910" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="2488" name="Charger_BlockedFootprintCellRejectsWithoutSpending(0,1)" fullname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests.Charger_BlockedFootprintCellRejectsWithoutSpending(0,1)" methodname="Charger_BlockedFootprintCellRejectsWithoutSpending" classname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests" runstate="Runnable" seed="1782337529" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.000658" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="2489" name="Charger_BlockedFootprintCellRejectsWithoutSpending(1,1)" fullname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests.Charger_BlockedFootprintCellRejectsWithoutSpending(1,1)" methodname="Charger_BlockedFootprintCellRejectsWithoutSpending" classname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests" runstate="Runnable" seed="610880366" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.001101" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                </test-suite>
+                <test-suite type="ParameterizedMethod" id="2493" name="Charger_RestoreKeepsLegacyOrRecordedFootprint" fullname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests.Charger_RestoreKeepsLegacyOrRecordedFootprint" classname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.023983" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="2491" name="Charger_RestoreKeepsLegacyOrRecordedFootprint(0,0,1)" fullname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests.Charger_RestoreKeepsLegacyOrRecordedFootprint(0,0,1)" methodname="Charger_RestoreKeepsLegacyOrRecordedFootprint" classname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests" runstate="Runnable" seed="908204007" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.018850" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="2492" name="Charger_RestoreKeepsLegacyOrRecordedFootprint(2,2,2)" fullname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests.Charger_RestoreKeepsLegacyOrRecordedFootprint(2,2,2)" methodname="Charger_RestoreKeepsLegacyOrRecordedFootprint" classname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests" runstate="Runnable" seed="846792269" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.001748" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                </test-suite>
+                <test-case id="2484" name="Charger_SuccessRecordsFourCellsAndSpendsOnce" fullname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests.Charger_SuccessRecordsFourCellsAndSpendsOnce" methodname="Charger_SuccessRecordsFourCellsAndSpendsOnce" classname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests" runstate="Runnable" seed="1442690072" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.002654" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="2485" name="Elevator_ShaftSpaceRejectsWithoutSpending" fullname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests.Elevator_ShaftSpaceRejectsWithoutSpending" methodname="Elevator_ShaftSpaceRejectsWithoutSpending" classname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests" runstate="Runnable" seed="1981908956" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.009552" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-suite type="ParameterizedMethod" id="2511" name="Facility_GroundContactIgnoresSpritePivot" fullname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests.Facility_GroundContactIgnoresSpritePivot" classname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests" runstate="Runnable" testcasecount="8" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.011923" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="2503" name="Facility_GroundContactIgnoresSpritePivot(&quot;building.light.basic&quot;,1,2,-1.04f)" fullname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests.Facility_GroundContactIgnoresSpritePivot(&quot;building.light.basic&quot;,1,2,-1.04f)" methodname="Facility_GroundContactIgnoresSpritePivot" classname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests" runstate="Runnable" seed="277900883" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.002325" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="2504" name="Facility_GroundContactIgnoresSpritePivot(&quot;building.settlement.basic&quot;,1,2,-1.04f)" fullname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests.Facility_GroundContactIgnoresSpritePivot(&quot;building.settlement.basic&quot;,1,2,-1.04f)" methodname="Facility_GroundContactIgnoresSpritePivot" classname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests" runstate="Runnable" seed="1630664690" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.000430" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="2505" name="Facility_GroundContactIgnoresSpritePivot(&quot;building.light.basic&quot;,1,1,-0.54f)" fullname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests.Facility_GroundContactIgnoresSpritePivot(&quot;building.light.basic&quot;,1,1,-0.54f)" methodname="Facility_GroundContactIgnoresSpritePivot" classname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests" runstate="Runnable" seed="1732097616" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.000342" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="2506" name="Facility_GroundContactIgnoresSpritePivot(&quot;building.settlement.basic&quot;,1,1,-0.54f)" fullname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests.Facility_GroundContactIgnoresSpritePivot(&quot;building.settlement.basic&quot;,1,1,-0.54f)" methodname="Facility_GroundContactIgnoresSpritePivot" classname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests" runstate="Runnable" seed="1723303328" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.000672" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="2507" name="Facility_GroundContactIgnoresSpritePivot(&quot;building.charger.basic&quot;,2,2,-1.04f)" fullname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests.Facility_GroundContactIgnoresSpritePivot(&quot;building.charger.basic&quot;,2,2,-1.04f)" methodname="Facility_GroundContactIgnoresSpritePivot" classname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests" runstate="Runnable" seed="644176639" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.000333" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="2508" name="Facility_GroundContactIgnoresSpritePivot(&quot;building.storage.basic&quot;,1,1,-0.54f)" fullname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests.Facility_GroundContactIgnoresSpritePivot(&quot;building.storage.basic&quot;,1,1,-0.54f)" methodname="Facility_GroundContactIgnoresSpritePivot" classname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests" runstate="Runnable" seed="419954343" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.000270" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="2509" name="Facility_GroundContactIgnoresSpritePivot(&quot;building.outpost_core.basic&quot;,1,2,-1.08f)" fullname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests.Facility_GroundContactIgnoresSpritePivot(&quot;building.outpost_core.basic&quot;,1,2,-1.08f)" methodname="Facility_GroundContactIgnoresSpritePivot" classname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests" runstate="Runnable" seed="273460567" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.000509" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="2510" name="Facility_GroundContactIgnoresSpritePivot(&quot;building.outpost_core.basic&quot;,2,2,-1.08f)" fullname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests.Facility_GroundContactIgnoresSpritePivot(&quot;building.outpost_core.basic&quot;,2,2,-1.08f)" methodname="Facility_GroundContactIgnoresSpritePivot" classname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests" runstate="Runnable" seed="703707997" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.000214" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                </test-suite>
+                <test-case id="2528" name="Foundation_PreviewPlateStaysAtFootprintCenterDespiteArtworkScaleAndOffset" fullname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests.Foundation_PreviewPlateStaysAtFootprintCenterDespiteArtworkScaleAndOffset" methodname="Foundation_PreviewPlateStaysAtFootprintCenterDespiteArtworkScaleAndOffset" classname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests" runstate="Runnable" seed="1690074888" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.004039" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="2527" name="Foundation_ReconfigureKeepsOneBaseAndDoesNotAddColliders" fullname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests.Foundation_ReconfigureKeepsOneBaseAndDoesNotAddColliders" methodname="Foundation_ReconfigureKeepsOneBaseAndDoesNotAddColliders" classname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests" runstate="Runnable" seed="1956644281" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.004392" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-suite type="ParameterizedMethod" id="2498" name="Outpost_BlockedFootprintCellRejectsWithoutSpending" fullname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests.Outpost_BlockedFootprintCellRejectsWithoutSpending" classname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.007643" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="2494" name="Outpost_BlockedFootprintCellRejectsWithoutSpending(0,0)" fullname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests.Outpost_BlockedFootprintCellRejectsWithoutSpending(0,0)" methodname="Outpost_BlockedFootprintCellRejectsWithoutSpending" classname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests" runstate="Runnable" seed="22978196" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.001677" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="2495" name="Outpost_BlockedFootprintCellRejectsWithoutSpending(1,0)" fullname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests.Outpost_BlockedFootprintCellRejectsWithoutSpending(1,0)" methodname="Outpost_BlockedFootprintCellRejectsWithoutSpending" classname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests" runstate="Runnable" seed="972316262" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.000702" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="2496" name="Outpost_BlockedFootprintCellRejectsWithoutSpending(0,1)" fullname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests.Outpost_BlockedFootprintCellRejectsWithoutSpending(0,1)" methodname="Outpost_BlockedFootprintCellRejectsWithoutSpending" classname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests" runstate="Runnable" seed="477446883" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.000695" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="2497" name="Outpost_BlockedFootprintCellRejectsWithoutSpending(1,1)" fullname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests.Outpost_BlockedFootprintCellRejectsWithoutSpending(1,1)" methodname="Outpost_BlockedFootprintCellRejectsWithoutSpending" classname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests" runstate="Runnable" seed="84553819" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.000552" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                </test-suite>
+                <test-suite type="ParameterizedMethod" id="2502" name="Outpost_RestoreKeepsLegacyNarrowOrOriginalFootprint" fullname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests.Outpost_RestoreKeepsLegacyNarrowOrOriginalFootprint" classname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.006622" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="2499" name="Outpost_RestoreKeepsLegacyNarrowOrOriginalFootprint(0,0,2)" fullname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests.Outpost_RestoreKeepsLegacyNarrowOrOriginalFootprint(0,0,2)" methodname="Outpost_RestoreKeepsLegacyNarrowOrOriginalFootprint" classname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests" runstate="Runnable" seed="337223366" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.001608" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="2500" name="Outpost_RestoreKeepsLegacyNarrowOrOriginalFootprint(1,2,1)" fullname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests.Outpost_RestoreKeepsLegacyNarrowOrOriginalFootprint(1,2,1)" methodname="Outpost_RestoreKeepsLegacyNarrowOrOriginalFootprint" classname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests" runstate="Runnable" seed="2034492477" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.000999" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="2501" name="Outpost_RestoreKeepsLegacyNarrowOrOriginalFootprint(2,2,2)" fullname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests.Outpost_RestoreKeepsLegacyNarrowOrOriginalFootprint(2,2,2)" methodname="Outpost_RestoreKeepsLegacyNarrowOrOriginalFootprint" classname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests" runstate="Runnable" seed="1966300739" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.000778" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                </test-suite>
+                <test-case id="2542" name="PlacedBuilding_ProtectsOnlyItsSupportingGroundCells" fullname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests.PlacedBuilding_ProtectsOnlyItsSupportingGroundCells" methodname="PlacedBuilding_ProtectsOnlyItsSupportingGroundCells" classname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests" runstate="Runnable" seed="2118484403" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.004295" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="2543" name="PlacedLadder_PreventsExistingSupportingGroundCollapse" fullname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests.PlacedLadder_PreventsExistingSupportingGroundCollapse" methodname="PlacedLadder_PreventsExistingSupportingGroundCollapse" classname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests" runstate="Runnable" seed="2001664123" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.054730" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="2547" name="PlacedSupport_ReducesRiskOnlyInsideItsRadius" fullname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests.PlacedSupport_ReducesRiskOnlyInsideItsRadius" methodname="PlacedSupport_ReducesRiskOnlyInsideItsRadius" classname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests" runstate="Runnable" seed="309802548" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.016324" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="2530" name="PlacementResult_PreservesFailureAndCell" fullname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests.PlacementResult_PreservesFailureAndCell" methodname="PlacementResult_PreservesFailureAndCell" classname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests" runstate="Runnable" seed="242142607" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.003539" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="2532" name="PromptB64_CannotPlaceDirectlyAboveAnotherBuilding" fullname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests.PromptB64_CannotPlaceDirectlyAboveAnotherBuilding" methodname="PromptB64_CannotPlaceDirectlyAboveAnotherBuilding" classname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests" runstate="Runnable" seed="956003881" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.007475" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="2535" name="PromptB64_CannotPlaceOnElevatorProtectedGround" fullname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests.PromptB64_CannotPlaceOnElevatorProtectedGround" methodname="PromptB64_CannotPlaceOnElevatorProtectedGround" classname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests" runstate="Runnable" seed="7138113" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.001549" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="2533" name="PromptB78_CanPlaceLadderDirectlyAboveLadder" fullname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests.PromptB78_CanPlaceLadderDirectlyAboveLadder" methodname="PromptB78_CanPlaceLadderDirectlyAboveLadder" classname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests" runstate="Runnable" seed="846801444" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.002221" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="2534" name="PromptB78_LadderCannotStackOnNonLadderBuilding" fullname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests.PromptB78_LadderCannotStackOnNonLadderBuilding" methodname="PromptB78_LadderCannotStackOnNonLadderBuilding" classname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests" runstate="Runnable" seed="324582894" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.001620" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="2537" name="RankPlacementPreference_UnderFeetThenFacingThenDownSide" fullname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests.RankPlacementPreference_UnderFeetThenFacingThenDownSide" methodname="RankPlacementPreference_UnderFeetThenFacingThenDownSide" classname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests" runstate="Runnable" seed="477053304" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.001314" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="2538" name="ResolveFootprintOrigin_ExpandsRightOrLeftFromCursor" fullname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests.ResolveFootprintOrigin_ExpandsRightOrLeftFromCursor" methodname="ResolveFootprintOrigin_ExpandsRightOrLeftFromCursor" classname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests" runstate="Runnable" seed="966245534" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.002967" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-suite type="ParameterizedMethod" id="2519" name="TallUtility_BlockedEitherCellRejectsWithoutSpending" fullname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests.TallUtility_BlockedEitherCellRejectsWithoutSpending" classname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.014947" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="2515" name="TallUtility_BlockedEitherCellRejectsWithoutSpending(&quot;building.light.basic&quot;,0)" fullname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests.TallUtility_BlockedEitherCellRejectsWithoutSpending(&quot;building.light.basic&quot;,0)" methodname="TallUtility_BlockedEitherCellRejectsWithoutSpending" classname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests" runstate="Runnable" seed="1822068847" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.001581" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="2516" name="TallUtility_BlockedEitherCellRejectsWithoutSpending(&quot;building.light.basic&quot;,1)" fullname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests.TallUtility_BlockedEitherCellRejectsWithoutSpending(&quot;building.light.basic&quot;,1)" methodname="TallUtility_BlockedEitherCellRejectsWithoutSpending" classname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests" runstate="Runnable" seed="522769960" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.000967" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="2517" name="TallUtility_BlockedEitherCellRejectsWithoutSpending(&quot;building.settlement.basic&quot;,0)" fullname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests.TallUtility_BlockedEitherCellRejectsWithoutSpending(&quot;building.settlement.basic&quot;,0)" methodname="TallUtility_BlockedEitherCellRejectsWithoutSpending" classname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests" runstate="Runnable" seed="1190240985" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.000909" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="2518" name="TallUtility_BlockedEitherCellRejectsWithoutSpending(&quot;building.settlement.basic&quot;,1)" fullname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests.TallUtility_BlockedEitherCellRejectsWithoutSpending(&quot;building.settlement.basic&quot;,1)" methodname="TallUtility_BlockedEitherCellRejectsWithoutSpending" classname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests" runstate="Runnable" seed="788244712" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.001131" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                </test-suite>
+                <test-suite type="ParameterizedMethod" id="2526" name="TallUtility_RestorePreservesLegacyAndRecordedArea" fullname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests.TallUtility_RestorePreservesLegacyAndRecordedArea" classname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.014823" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="2520" name="TallUtility_RestorePreservesLegacyAndRecordedArea(&quot;building.light.basic&quot;,0,0,1)" fullname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests.TallUtility_RestorePreservesLegacyAndRecordedArea(&quot;building.light.basic&quot;,0,0,1)" methodname="TallUtility_RestorePreservesLegacyAndRecordedArea" classname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests" runstate="Runnable" seed="1031978907" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.001555" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="2521" name="TallUtility_RestorePreservesLegacyAndRecordedArea(&quot;building.light.basic&quot;,1,1,1)" fullname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests.TallUtility_RestorePreservesLegacyAndRecordedArea(&quot;building.light.basic&quot;,1,1,1)" methodname="TallUtility_RestorePreservesLegacyAndRecordedArea" classname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests" runstate="Runnable" seed="1122021482" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.000649" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="2522" name="TallUtility_RestorePreservesLegacyAndRecordedArea(&quot;building.light.basic&quot;,1,2,2)" fullname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests.TallUtility_RestorePreservesLegacyAndRecordedArea(&quot;building.light.basic&quot;,1,2,2)" methodname="TallUtility_RestorePreservesLegacyAndRecordedArea" classname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests" runstate="Runnable" seed="1352180652" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.000696" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="2523" name="TallUtility_RestorePreservesLegacyAndRecordedArea(&quot;building.settlement.basic&quot;,0,0,1)" fullname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests.TallUtility_RestorePreservesLegacyAndRecordedArea(&quot;building.settlement.basic&quot;,0,0,1)" methodname="TallUtility_RestorePreservesLegacyAndRecordedArea" classname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests" runstate="Runnable" seed="1550631215" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.000844" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="2524" name="TallUtility_RestorePreservesLegacyAndRecordedArea(&quot;building.settlement.basic&quot;,1,1,1)" fullname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests.TallUtility_RestorePreservesLegacyAndRecordedArea(&quot;building.settlement.basic&quot;,1,1,1)" methodname="TallUtility_RestorePreservesLegacyAndRecordedArea" classname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests" runstate="Runnable" seed="603502777" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.000696" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="2525" name="TallUtility_RestorePreservesLegacyAndRecordedArea(&quot;building.settlement.basic&quot;,1,2,2)" fullname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests.TallUtility_RestorePreservesLegacyAndRecordedArea(&quot;building.settlement.basic&quot;,1,2,2)" methodname="TallUtility_RestorePreservesLegacyAndRecordedArea" classname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests" runstate="Runnable" seed="1035638476" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.000757" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                </test-suite>
+                <test-suite type="ParameterizedMethod" id="2514" name="TallUtility_SuccessOccupiesBothCellsAndSpendsOnce" fullname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests.TallUtility_SuccessOccupiesBothCellsAndSpendsOnce" classname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.007662" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="2512" name="TallUtility_SuccessOccupiesBothCellsAndSpendsOnce(&quot;building.light.basic&quot;)" fullname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests.TallUtility_SuccessOccupiesBothCellsAndSpendsOnce(&quot;building.light.basic&quot;)" methodname="TallUtility_SuccessOccupiesBothCellsAndSpendsOnce" classname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests" runstate="Runnable" seed="1582520010" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.002730" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="2513" name="TallUtility_SuccessOccupiesBothCellsAndSpendsOnce(&quot;building.settlement.basic&quot;)" fullname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests.TallUtility_SuccessOccupiesBothCellsAndSpendsOnce(&quot;building.settlement.basic&quot;)" methodname="TallUtility_SuccessOccupiesBothCellsAndSpendsOnce" classname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests" runstate="Runnable" seed="1450383934" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.001189" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                </test-suite>
+                <test-case id="2529" name="TestWallet_DoesNotSpendWhenEmpty" fullname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests.TestWallet_DoesNotSpendWhenEmpty" methodname="TestWallet_DoesNotSpendWhenEmpty" classname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests" runstate="Runnable" seed="1129498899" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.002906" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="2546" name="TryFindBestPlacementCell_NoCandidate_ReportsReasonWithoutPlacing" fullname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests.TryFindBestPlacementCell_NoCandidate_ReportsReasonWithoutPlacing" methodname="TryFindBestPlacementCell_NoCandidate_ReportsReasonWithoutPlacing" classname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests" runstate="Runnable" seed="916253706" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.003896" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="2544" name="TryFindBestPlacementCell_PrefersNearestWithinRange" fullname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests.TryFindBestPlacementCell_PrefersNearestWithinRange" methodname="TryFindBestPlacementCell_PrefersNearestWithinRange" classname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests" runstate="Runnable" seed="1547486165" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.001557" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="2536" name="TryPlaceAt_SuccessIsSingleShotAndSpendsExactlyOnce" fullname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests.TryPlaceAt_SuccessIsSingleShotAndSpendsExactlyOnce" methodname="TryPlaceAt_SuccessIsSingleShotAndSpendsExactlyOnce" classname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests" runstate="Runnable" seed="25565463" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.001877" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="2540" name="TryPlaceAt_TwoByTwo_OccupiesFourCellsAndSpendsOnce" fullname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests.TryPlaceAt_TwoByTwo_OccupiesFourCellsAndSpendsOnce" methodname="TryPlaceAt_TwoByTwo_OccupiesFourCellsAndSpendsOnce" classname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests" runstate="Runnable" seed="1271116565" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.001755" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="2545" name="TryPlaceNearest_SpendsOnceAndClearsSelection" fullname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests.TryPlaceNearest_SpendsOnceAndClearsSelection" methodname="TryPlaceNearest_SpendsOnceAndClearsSelection" classname="SubTerra.Gameplay.Building.Tests.BuildingPlacementTests" runstate="Runnable" seed="305651159" result="Passed" start-time="2026-10-08 08:00:28Z" end-time="2026-10-08 08:00:28Z" duration="0.002435" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                  <output><![CDATA[Saving results to: C:/Users/jeone/AppData/LocalLow/DefaultCompany/sub-terra\TestResults.xml
+]]></output>
+                </test-case>
+              </test-suite>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>
