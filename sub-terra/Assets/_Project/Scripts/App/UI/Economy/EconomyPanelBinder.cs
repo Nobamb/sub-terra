@@ -34,12 +34,12 @@ namespace SubTerra.App.UI.Economy
 
         private void Awake()
         {
-            if (view == null)
+            EnsureView();
+            // 비활성 판매창은 BindTo가 Awake보다 먼저 호출될 수 있다.
+            if (presenter == null)
             {
-                view = GetComponent<EconomyPanelView>();
+                presenter = new EconomyPanelPresenter(view);
             }
-
-            presenter = new EconomyPanelPresenter(view);
             WireViewEvents(true);
         }
 
@@ -68,6 +68,7 @@ namespace SubTerra.App.UI.Economy
             GameState gameState,
             GameDataCatalog catalog = null)
         {
+            EnsureView();
             if (presenter == null)
             {
                 presenter = new EconomyPanelPresenter(view);
@@ -90,6 +91,14 @@ namespace SubTerra.App.UI.Economy
         {
             ReleaseSellSession();
             presenter?.Unbind();
+        }
+
+        private void EnsureView()
+        {
+            if (view == null)
+            {
+                view = GetComponent<EconomyPanelView>();
+            }
         }
 
         private void ReleaseSellSession()
