@@ -12,6 +12,43 @@ namespace SubTerra.Gameplay.Snapshot.Tests
 {
     public sealed class WorldSnapshotSystemTests
     {
+        [TestCase("light_basic")]
+        [TestCase("settlement_basic")]
+        public void LegacyUtility_RestoreAndRecaptureSaveCanonicalSizeAndKeepIdentity(string assetName)
+        {
+            var definition = AssetDatabase.LoadAssetAtPath<BuildingPlacementDefinition>(
+                "Assets/_Project/Data/Buildings/Placement/" + assetName + "Placement.asset");
+            var host = new GameObject("LegacyUtilitySave");
+            try
+            {
+                var placement = host.AddComponent<BuildingPlacementSystem>();
+                SetField(placement, "restoreDefinitions", new[] { definition });
+                var system = host.AddComponent<WorldSnapshotSystem>();
+                SetField(system, "buildingPlacementSystem", placement);
+                var original = new BuildingSnapshotDto { instanceId = "saved-0099",
+                    buildingTypeId = definition.BuildingId, x = 3, y = -2, rotation = 1,
+                    level = 4, health = 0.65f, footprintWidth = 1, footprintHeight = 1 };
+                var save = new WorldSnapshotDto { buildings = new System.Collections.Generic.List<BuildingSnapshotDto> { original } };
+                Assert.That(system.RestoreSnapshot(save), Is.True);
+                var captured = system.CaptureSnapshot();
+                Assert.That(captured.buildings, Has.Count.EqualTo(1));
+                var restored = captured.buildings[0];
+                Assert.That(restored.footprintWidth, Is.EqualTo(1));
+                Assert.That(restored.footprintHeight, Is.EqualTo(2));
+                Assert.That(restored.instanceId, Is.EqualTo(original.instanceId));
+                Assert.That(restored.x, Is.EqualTo(original.x));
+                Assert.That(restored.y, Is.EqualTo(original.y));
+                Assert.That(restored.level, Is.EqualTo(original.level));
+                Assert.That(restored.health, Is.EqualTo(original.health));
+                Assert.That(restored.rotation, Is.EqualTo(original.rotation));
+                Assert.That(save.buildings[0].footprintHeight, Is.EqualTo(1));
+                Assert.That(system.RestoreSnapshot(JsonUtility.FromJson<WorldSnapshotDto>(JsonUtility.ToJson(captured))), Is.True);
+                Assert.That(host.GetComponentsInChildren<BuildingInstance>(), Has.Length.EqualTo(1));
+                Assert.That(system.CaptureSnapshot().buildings[0].footprintHeight, Is.EqualTo(2));
+            }
+            finally { Object.DestroyImmediate(host); }
+        }
+
         [Test]
         public void CaptureSnapshot_ReturnsInitializedChangeCollections()
         {

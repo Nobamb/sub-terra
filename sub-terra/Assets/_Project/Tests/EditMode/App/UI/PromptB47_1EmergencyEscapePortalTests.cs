@@ -227,7 +227,7 @@ namespace SubTerra.App.Tests.UI
         }
 
         [Test]
-        public void PromptB47_1_PortalPrefab_IsTwoByTwoSquareVisualAndPassable()
+        public void PromptB47_1_PortalPrefab_FitsTwoByTwoAndIsGroundedAndPassable()
         {
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PortalPrefabPath);
             Assert.That(prefab, Is.Not.Null);
@@ -240,14 +240,21 @@ namespace SubTerra.App.Tests.UI
             Assert.That(collider.size.x, Is.EqualTo(2f).Within(0.05f));
             Assert.That(collider.size.y, Is.EqualTo(2f).Within(0.05f));
 
-            var outer = prefab.transform.Find("OuterFrame");
+            var outer = prefab.transform.Find("VisualRoot/Artwork");
             Assert.That(outer, Is.Not.Null);
             var renderer = outer.GetComponent<SpriteRenderer>();
             Assert.That(renderer, Is.Not.Null);
             Assert.That(renderer.sprite, Is.Not.Null);
-            var worldSize = Vector2.Scale(renderer.sprite.bounds.size, outer.localScale);
-            Assert.That(worldSize.x, Is.EqualTo(2f).Within(0.1f));
-            Assert.That(worldSize.y, Is.EqualTo(2f).Within(0.1f));
+            var visible = FacilityGroundedVisual.GetVisibleBounds(renderer.sprite);
+            var worldSize = Vector2.Scale(visible.size, outer.localScale);
+            Assert.That(worldSize.x, Is.LessThanOrEqualTo(1.84f + 0.001f));
+            Assert.That(worldSize.y, Is.InRange(1.5f, 1.82f));
+            Assert.That(outer.localScale.x, Is.EqualTo(outer.localScale.y));
+            Assert.That(outer.TransformPoint(new Vector3(visible.center.x, visible.min.y, 0f)).y,
+                Is.EqualTo(-1.04f).Within(0.001f));
+            Assert.That(renderer.sortingOrder, Is.LessThan(5), "Player stays visible inside the portal.");
+            Assert.That(prefab.transform.Find("OuterFrame"), Is.Null);
+            Assert.That(prefab.transform.Find("PortalField"), Is.Null);
 
             Assert.That(
                 prefab.GetComponentsInChildren<Collider2D>(true),

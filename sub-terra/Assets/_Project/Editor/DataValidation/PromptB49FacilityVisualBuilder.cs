@@ -106,11 +106,21 @@ namespace SubTerra.App.Editor.DataValidation
         [MenuItem("SubTerra/Facilities/Refresh Grounded Building Menu Icons")]
         public static void RefreshGroundedBuildingMenuIcons()
         {
-            foreach (var kind in new[] { FacilityVisualKind.Charger, FacilityVisualKind.Storage, FacilityVisualKind.OutpostCore })
+            foreach (var kind in new[] { FacilityVisualKind.Light, FacilityVisualKind.Charger, FacilityVisualKind.Storage,
+                FacilityVisualKind.Settlement, FacilityVisualKind.OutpostCore, FacilityVisualKind.Clinic })
             {
                 UpdateBuildingDataIcon(kind);
                 AssetDatabase.SaveAssetIfDirty(AssetDatabase.LoadAssetAtPath<BuildingData>(GetBuildingDataPath(kind)));
             }
+        }
+
+        [MenuItem("SubTerra/Facilities/Sync Menu And Quest Facility Artwork")]
+        public static void SyncMenuAndQuestArtwork()
+        {
+            RefreshLightAndSettlement();
+            RefreshGroundedBuildingMenuIcons();
+            PromptB1072QuestThumbnailBuilder.Apply();
+            Debug.Log("[SubTerra] Facility prefab, building-menu and quest artwork references synchronized.");
         }
 
         private static void RefreshGeometryOnly(string path, string id, Vector2Int footprint)

@@ -1,0 +1,1586 @@
+fileFormatVersion: 2
+guid: 8703b75e6b43ee240a3a98be1973d0b4
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -629260555699412099
+    second: emergency_escape_portal_v1_0
+  - first:
+      213: 3535682383483680253
+    second: emergency_escape_portal_v1_1
+  - first:
+      213: 8163960237381568736
+    second: emergency_escape_portal_v1_2
+  - first:
+      213: -5879803932053985449
+    second: emergency_escape_portal_v1_3
+  - first:
+      213: -6822183285918075146
+    second: emergency_escape_portal_v1_4
+  - first:
+      213: 5490464253432320455
+    second: emergency_escape_portal_v1_5
+  - first:
+      213: 452902918666977208
+    second: emergency_escape_portal_v1_6
+  - first:
+      213: 3398506645707633146
+    second: emergency_escape_portal_v1_7
+  - first:
+      213: 3187857231829900964
+    second: emergency_escape_portal_v1_8
+  - first:
+      213: 6915677613479800636
+    second: emergency_escape_portal_v1_9
+  - first:
+      213: -1053753243253554346
+    second: emergency_escape_portal_v1_10
+  - first:
+      213: 1732396953570577779
+    second: emergency_escape_portal_v1_11
+  - first:
+      213: 808963582041855006
+    second: emergency_escape_portal_v1_12
+  - first:
+      213: -3012146485735102450
+    second: emergency_escape_portal_v1_13
+  - first:
+      213: 5419624985328352328
+    second: emergency_escape_portal_v1_14
+  - first:
+      213: 3971900368683599814
+    second: emergency_escape_portal_v1_15
+  - first:
+      213: 2067298608446091573
+    second: emergency_escape_portal_v1_16
+  - first:
+      213: -5510451322336085472
+    second: emergency_escape_portal_v1_17
+  - first:
+      213: -7745831933918647437
+    second: emergency_escape_portal_v1_18
+  - first:
+      213: 6205341183848571230
+    second: emergency_escape_portal_v1_19
+  - first:
+      213: -8472845211414155264
+    second: emergency_escape_portal_v1_20
+  - first:
+      213: 6558260447932234712
+    second: emergency_escape_portal_v1_21
+  - first:
+      213: 7596438339845494334
+    second: emergency_escape_portal_v1_22
+  - first:
+      213: 2411689373765328992
+    second: emergency_escape_portal_v1_23
+  - first:
+      213: -7977983000946878243
+    second: emergency_escape_portal_v1_24
+  - first:
+      213: 6843120054024357220
+    second: emergency_escape_portal_v1_25
+  - first:
+      213: -735743534439817088
+    second: emergency_escape_portal_v1_26
+  - first:
+      213: 5595379693458910335
+    second: emergency_escape_portal_v1_27
+  - first:
+      213: 4465396407220094980
+    second: emergency_escape_portal_v1_28
+  - first:
+      213: 4824048929959387145
+    second: emergency_escape_portal_v1_29
+  - first:
+      213: 6968432755966205929
+    second: emergency_escape_portal_v1_30
+  - first:
+      213: 4403611886753075109
+    second: emergency_escape_portal_v1_31
+  - first:
+      213: -4244903535122460114
+    second: emergency_escape_portal_v1_32
+  - first:
+      213: 5505706822331148479
+    second: emergency_escape_portal_v1_33
+  - first:
+      213: 5022026659923823474
+    second: emergency_escape_portal_v1_34
+  - first:
+      213: -455802187344491582
+    second: emergency_escape_portal_v1_35
+  - first:
+      213: -6613467500339256173
+    second: emergency_escape_portal_v1_36
+  - first:
+      213: -440434000727472173
+    second: emergency_escape_portal_v1_37
+  - first:
+      213: -4934579529344272090
+    second: emergency_escape_portal_v1_38
+  - first:
+      213: 3238338523808213313
+    second: emergency_escape_portal_v1_39
+  - first:
+      213: 8038852269115064114
+    second: emergency_escape_portal_v1_40
+  - first:
+      213: 7636653472037544142
+    second: emergency_escape_portal_v1_41
+  - first:
+      213: 8320989243332559676
+    second: emergency_escape_portal_v1_42
+  - first:
+      213: -489846893785588681
+    second: emergency_escape_portal_v1_43
+  - first:
+      213: 8159838541973813787
+    second: emergency_escape_portal_v1_44
+  - first:
+      213: -3974769726534396513
+    second: emergency_escape_portal_v1_45
+  - first:
+      213: -6887238317811605087
+    second: emergency_escape_portal_v1_46
+  - first:
+      213: -3608732105884587459
+    second: emergency_escape_portal_v1_47
+  - first:
+      213: 54021745993583612
+    second: emergency_escape_portal_v1_48
+  - first:
+      213: -8529079811016095261
+    second: emergency_escape_portal_v1_49
+  - first:
+      213: -8365590346287014842
+    second: emergency_escape_portal_v1_50
+  - first:
+      213: -358286261477691396
+    second: emergency_escape_portal_v1_51
+  - first:
+      213: -4833930513235999179
+    second: emergency_escape_portal_v1_52
+  - first:
+      213: -3246817383126775476
+    second: emergency_escape_portal_v1_53
+  - first:
+      213: 7735113135470595045
+    second: emergency_escape_portal_v1_54
+  - first:
+      213: 201350975510060967
+    second: emergency_escape_portal_v1_55
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 1
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: emergency_escape_portal_v1_0
+      rect:
+        serializedVersion: 2
+        x: 336
+        y: 1189
+        width: 99
+        height: 45
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d732f5acbda6447f0800000000000000
+      internalID: -629260555699412099
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: emergency_escape_portal_v1_1
+      rect:
+        serializedVersion: 2
+        x: 464
+        y: 1229
+        width: 44
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: df5b62a1564411130800000000000000
+      internalID: 3535682383483680253
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: emergency_escape_portal_v1_2
+      rect:
+        serializedVersion: 2
+        x: 536
+        y: 1229
+        width: 12
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0e8ca85d4963c4170800000000000000
+      internalID: 8163960237381568736
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: emergency_escape_portal_v1_3
+      rect:
+        serializedVersion: 2
+        x: 591
+        y: 1189
+        width: 65
+        height: 57
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7572af0f97db66ea0800000000000000
+      internalID: -5879803932053985449
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: emergency_escape_portal_v1_4
+      rect:
+        serializedVersion: 2
+        x: 667
+        y: 1189
+        width: 74
+        height: 59
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6f6fe3a627cb251a0800000000000000
+      internalID: -6822183285918075146
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: emergency_escape_portal_v1_5
+      rect:
+        serializedVersion: 2
+        x: 735
+        y: 1195
+        width: 94
+        height: 54
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7c150d5162c023c40800000000000000
+      internalID: 5490464253432320455
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: emergency_escape_portal_v1_6
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 1249
+        height: 1192
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8bff1e01ec8094600800000000000000
+      internalID: 452902918666977208
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: emergency_escape_portal_v1_7
+      rect:
+        serializedVersion: 2
+        x: 155
+        y: 1160
+        width: 7
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: af13538c9cbe92f20800000000000000
+      internalID: 3398506645707633146
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: emergency_escape_portal_v1_8
+      rect:
+        serializedVersion: 2
+        x: 161
+        y: 1158
+        width: 7
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4ae91e9234b8d3c20800000000000000
+      internalID: 3187857231829900964
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: emergency_escape_portal_v1_9
+      rect:
+        serializedVersion: 2
+        x: 98
+        y: 1122
+        width: 16
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c3fa59c062c69ff50800000000000000
+      internalID: 6915677613479800636
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: emergency_escape_portal_v1_10
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 809
+        width: 5
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 653c4fe12015061f0800000000000000
+      internalID: -1053753243253554346
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: emergency_escape_portal_v1_11
+      rect:
+        serializedVersion: 2
+        x: 18
+        y: 704
+        width: 11
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 37d0b83c9d5ba0810800000000000000
+      internalID: 1732396953570577779
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: emergency_escape_portal_v1_12
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 660
+        width: 21
+        height: 30
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e1415df77140a3b00800000000000000
+      internalID: 808963582041855006
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: emergency_escape_portal_v1_13
+      rect:
+        serializedVersion: 2
+        x: 22
+        y: 664
+        width: 17
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e086152fab4b236d0800000000000000
+      internalID: -3012146485735102450
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: emergency_escape_portal_v1_14
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 479
+        width: 15
+        height: 57
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 84cf352b530663b40800000000000000
+      internalID: 5419624985328352328
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: emergency_escape_portal_v1_15
+      rect:
+        serializedVersion: 2
+        x: 143
+        y: 67
+        width: 27
+        height: 40
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6c701ae57560f1730800000000000000
+      internalID: 3971900368683599814
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: emergency_escape_portal_v1_16
+      rect:
+        serializedVersion: 2
+        x: 394
+        y: 79
+        width: 34
+        height: 24
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 531b611a12580bc10800000000000000
+      internalID: 2067298608446091573
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: emergency_escape_portal_v1_17
+      rect:
+        serializedVersion: 2
+        x: 432
+        y: 81
+        width: 11
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 02a731cc7b1f683b0800000000000000
+      internalID: -5510451322336085472
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: emergency_escape_portal_v1_18
+      rect:
+        serializedVersion: 2
+        x: 683
+        y: 79
+        width: 23
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 37be6e035e6418490800000000000000
+      internalID: -7745831933918647437
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: emergency_escape_portal_v1_19
+      rect:
+        serializedVersion: 2
+        x: 741
+        y: 69
+        width: 38
+        height: 32
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e51656dedeccd1650800000000000000
+      internalID: 6205341183848571230
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: emergency_escape_portal_v1_20
+      rect:
+        serializedVersion: 2
+        x: 802
+        y: 81
+        width: 13
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0003ac8db286a6a80800000000000000
+      internalID: -8472845211414155264
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: emergency_escape_portal_v1_21
+      rect:
+        serializedVersion: 2
+        x: 835
+        y: 93
+        width: 6
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8dbbe77512f930b50800000000000000
+      internalID: 6558260447932234712
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: emergency_escape_portal_v1_22
+      rect:
+        serializedVersion: 2
+        x: 839
+        y: 95
+        width: 8
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e3616a42c68fb6960800000000000000
+      internalID: 7596438339845494334
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: emergency_escape_portal_v1_23
+      rect:
+        serializedVersion: 2
+        x: 474
+        y: 63
+        width: 28
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 060eddf25ba087120800000000000000
+      internalID: 2411689373765328992
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: emergency_escape_portal_v1_24
+      rect:
+        serializedVersion: 2
+        x: 500
+        y: 41
+        width: 62
+        height: 50
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dd8d474dab2884190800000000000000
+      internalID: -7977983000946878243
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: emergency_escape_portal_v1_25
+      rect:
+        serializedVersion: 2
+        x: 609
+        y: 47
+        width: 65
+        height: 46
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4654977ce65a7fe50800000000000000
+      internalID: 6843120054024357220
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: emergency_escape_portal_v1_26
+      rect:
+        serializedVersion: 2
+        x: 788
+        y: 79
+        width: 9
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 080acef472d1ac5f0800000000000000
+      internalID: -735743534439817088
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: emergency_escape_portal_v1_27
+      rect:
+        serializedVersion: 2
+        x: 834
+        y: 81
+        width: 9
+        height: 8
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f7c6d048f28c6ad40800000000000000
+      internalID: 5595379693458910335
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: emergency_escape_portal_v1_28
+      rect:
+        serializedVersion: 2
+        x: 866
+        y: 61
+        width: 25
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 408c8a9af5648fd30800000000000000
+      internalID: 4465396407220094980
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: emergency_escape_portal_v1_29
+      rect:
+        serializedVersion: 2
+        x: 159
+        y: 61
+        width: 11
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 900255161f672f240800000000000000
+      internalID: 4824048929959387145
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: emergency_escape_portal_v1_30
+      rect:
+        serializedVersion: 2
+        x: 448
+        y: 45
+        width: 17
+        height: 29
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9efdf84dba8d4b060800000000000000
+      internalID: 6968432755966205929
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: emergency_escape_portal_v1_31
+      rect:
+        serializedVersion: 2
+        x: 577
+        y: 63
+        width: 17
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5afca9efda5cc1d30800000000000000
+      internalID: 4403611886753075109
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: emergency_escape_portal_v1_32
+      rect:
+        serializedVersion: 2
+        x: 673
+        y: 63
+        width: 7
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e22d93ba9b21715c0800000000000000
+      internalID: -4244903535122460114
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: emergency_escape_portal_v1_33
+      rect:
+        serializedVersion: 2
+        x: 697
+        y: 63
+        width: 15
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fb82e763f23386c40800000000000000
+      internalID: 5505706822331148479
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: emergency_escape_portal_v1_34
+      rect:
+        serializedVersion: 2
+        x: 729
+        y: 63
+        width: 8
+        height: 6
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 27b0d4da3a2d1b540800000000000000
+      internalID: 5022026659923823474
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: emergency_escape_portal_v1_35
+      rect:
+        serializedVersion: 2
+        x: 754
+        y: 49
+        width: 29
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2cb4c77535aaca9f0800000000000000
+      internalID: -455802187344491582
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: emergency_escape_portal_v1_36
+      rect:
+        serializedVersion: 2
+        x: 1059
+        y: 45
+        width: 13
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 39420bc195e3834a0800000000000000
+      internalID: -6613467500339256173
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: emergency_escape_portal_v1_37
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 40
+        width: 7
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3d782af1c9343e9f0800000000000000
+      internalID: -440434000727472173
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: emergency_escape_portal_v1_38
+      rect:
+        serializedVersion: 2
+        x: 163
+        y: 31
+        width: 25
+        height: 23
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6293585001ad48bb0800000000000000
+      internalID: -4934579529344272090
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: emergency_escape_portal_v1_39
+      rect:
+        serializedVersion: 2
+        x: 185
+        y: 47
+        width: 19
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1492d0edab3e0fc20800000000000000
+      internalID: 3238338523808213313
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: emergency_escape_portal_v1_40
+      rect:
+        serializedVersion: 2
+        x: 400
+        y: 49
+        width: 11
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 23f327e0c8dbf8f60800000000000000
+      internalID: 8038852269115064114
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: emergency_escape_portal_v1_41
+      rect:
+        serializedVersion: 2
+        x: 637
+        y: 47
+        width: 14
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ec02d814fd7daf960800000000000000
+      internalID: 7636653472037544142
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: emergency_escape_portal_v1_42
+      rect:
+        serializedVersion: 2
+        x: 665
+        y: 47
+        width: 9
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c330fac51a71a7370800000000000000
+      internalID: 8320989243332559676
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: emergency_escape_portal_v1_43
+      rect:
+        serializedVersion: 2
+        x: 673
+        y: 47
+        width: 9
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 73cd49d68d6b339f0800000000000000
+      internalID: -489846893785588681
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: emergency_escape_portal_v1_44
+      rect:
+        serializedVersion: 2
+        x: 732
+        y: 47
+        width: 17
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b1af3e6dbe19d3170800000000000000
+      internalID: 8159838541973813787
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: emergency_escape_portal_v1_45
+      rect:
+        serializedVersion: 2
+        x: 746
+        y: 49
+        width: 9
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f95d0f13ef7c6d8c0800000000000000
+      internalID: -3974769726534396513
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: emergency_escape_portal_v1_46
+      rect:
+        serializedVersion: 2
+        x: 844
+        y: 49
+        width: 7
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1a161677d3d9b60a0800000000000000
+      internalID: -6887238317811605087
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: emergency_escape_portal_v1_47
+      rect:
+        serializedVersion: 2
+        x: 849
+        y: 43
+        width: 20
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d3aa33305453bedc0800000000000000
+      internalID: -3608732105884587459
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: emergency_escape_portal_v1_48
+      rect:
+        serializedVersion: 2
+        x: 876
+        y: 49
+        width: 7
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cfb0814ed7cefb000800000000000000
+      internalID: 54021745993583612
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: emergency_escape_portal_v1_49
+      rect:
+        serializedVersion: 2
+        x: 1021
+        y: 31
+        width: 23
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3e90e63d91f92a980800000000000000
+      internalID: -8529079811016095261
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: emergency_escape_portal_v1_50
+      rect:
+        serializedVersion: 2
+        x: 129
+        y: 17
+        width: 17
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 64c102127e377eb80800000000000000
+      internalID: -8365590346287014842
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: emergency_escape_portal_v1_51
+      rect:
+        serializedVersion: 2
+        x: 177
+        y: 15
+        width: 31
+        height: 27
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cff28b02b8c170bf0800000000000000
+      internalID: -358286261477691396
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: emergency_escape_portal_v1_52
+      rect:
+        serializedVersion: 2
+        x: 938
+        y: 33
+        width: 6
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 53685a93fcd6aecb0800000000000000
+      internalID: -4833930513235999179
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: emergency_escape_portal_v1_53
+      rect:
+        serializedVersion: 2
+        x: 1103
+        y: 0
+        width: 29
+        height: 34
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c494a2cdaccf0f2d0800000000000000
+      internalID: -3246817383126775476
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: emergency_escape_portal_v1_54
+      rect:
+        serializedVersion: 2
+        x: 153
+        y: 17
+        width: 11
+        height: 9
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5ebce211a64a85b60800000000000000
+      internalID: 7735113135470595045
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: emergency_escape_portal_v1_55
+      rect:
+        serializedVersion: 2
+        x: 1091
+        y: 15
+        width: 15
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7af947a35a75bc200800000000000000
+      internalID: 201350975510060967
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      emergency_escape_portal_v1_0: -629260555699412099
+      emergency_escape_portal_v1_1: 3535682383483680253
+      emergency_escape_portal_v1_10: -1053753243253554346
+      emergency_escape_portal_v1_11: 1732396953570577779
+      emergency_escape_portal_v1_12: 808963582041855006
+      emergency_escape_portal_v1_13: -3012146485735102450
+      emergency_escape_portal_v1_14: 5419624985328352328
+      emergency_escape_portal_v1_15: 3971900368683599814
+      emergency_escape_portal_v1_16: 2067298608446091573
+      emergency_escape_portal_v1_17: -5510451322336085472
+      emergency_escape_portal_v1_18: -7745831933918647437
+      emergency_escape_portal_v1_19: 6205341183848571230
+      emergency_escape_portal_v1_2: 8163960237381568736
+      emergency_escape_portal_v1_20: -8472845211414155264
+      emergency_escape_portal_v1_21: 6558260447932234712
+      emergency_escape_portal_v1_22: 7596438339845494334
+      emergency_escape_portal_v1_23: 2411689373765328992
+      emergency_escape_portal_v1_24: -7977983000946878243
+      emergency_escape_portal_v1_25: 6843120054024357220
+      emergency_escape_portal_v1_26: -735743534439817088
+      emergency_escape_portal_v1_27: 5595379693458910335
+      emergency_escape_portal_v1_28: 4465396407220094980
+      emergency_escape_portal_v1_29: 4824048929959387145
+      emergency_escape_portal_v1_3: -5879803932053985449
+      emergency_escape_portal_v1_30: 6968432755966205929
+      emergency_escape_portal_v1_31: 4403611886753075109
+      emergency_escape_portal_v1_32: -4244903535122460114
+      emergency_escape_portal_v1_33: 5505706822331148479
+      emergency_escape_portal_v1_34: 5022026659923823474
+      emergency_escape_portal_v1_35: -455802187344491582
+      emergency_escape_portal_v1_36: -6613467500339256173
+      emergency_escape_portal_v1_37: -440434000727472173
+      emergency_escape_portal_v1_38: -4934579529344272090
+      emergency_escape_portal_v1_39: 3238338523808213313
+      emergency_escape_portal_v1_4: -6822183285918075146
+      emergency_escape_portal_v1_40: 8038852269115064114
+      emergency_escape_portal_v1_41: 7636653472037544142
+      emergency_escape_portal_v1_42: 8320989243332559676
+      emergency_escape_portal_v1_43: -489846893785588681
+      emergency_escape_portal_v1_44: 8159838541973813787
+      emergency_escape_portal_v1_45: -3974769726534396513
+      emergency_escape_portal_v1_46: -6887238317811605087
+      emergency_escape_portal_v1_47: -3608732105884587459
+      emergency_escape_portal_v1_48: 54021745993583612
+      emergency_escape_portal_v1_49: -8529079811016095261
+      emergency_escape_portal_v1_5: 5490464253432320455
+      emergency_escape_portal_v1_50: -8365590346287014842
+      emergency_escape_portal_v1_51: -358286261477691396
+      emergency_escape_portal_v1_52: -4833930513235999179
+      emergency_escape_portal_v1_53: -3246817383126775476
+      emergency_escape_portal_v1_54: 7735113135470595045
+      emergency_escape_portal_v1_55: 201350975510060967
+      emergency_escape_portal_v1_6: 452902918666977208
+      emergency_escape_portal_v1_7: 3398506645707633146
+      emergency_escape_portal_v1_8: 3187857231829900964
+      emergency_escape_portal_v1_9: 6915677613479800636
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
