@@ -39,6 +39,8 @@ namespace SubTerra.App.Tests.UI
             PromptB49FacilityVisualBuilder.ClinicPrefabPath
         };
 
+        [TestCase("Light", "light_basic_cartoon_v3", 1, 2)]
+        [TestCase("Settlement", "settlement_console_cartoon_v3", 1, 2)]
         [TestCase("Charger", "ChargerGrounded", 2, 2)]
         [TestCase("Storage", "StorageGrounded", 1, 1)]
         [TestCase("OutpostCore", "outpost_core_cartoon_v3", 2, 2)]
@@ -46,7 +48,9 @@ namespace SubTerra.App.Tests.UI
         {
             var data = AssetDatabase.LoadAssetAtPath<BuildingData>(
                 "Assets/_Project/Data/Buildings/Building_" + dataName + "_Basic.asset");
-            var expected = dataName == "OutpostCore" ? PromptB49FacilityVisualBuilder.GetArtworkSprite(FacilityVisualKind.OutpostCore)
+            var expected = dataName == "Light" ? PromptB49FacilityVisualBuilder.GetArtworkSprite(FacilityVisualKind.Light)
+                : dataName == "Settlement" ? PromptB49FacilityVisualBuilder.GetArtworkSprite(FacilityVisualKind.Settlement)
+                : dataName == "OutpostCore" ? PromptB49FacilityVisualBuilder.GetArtworkSprite(FacilityVisualKind.OutpostCore)
                 : Resources.Load<Sprite>("Facilities/" + spriteName);
             Assert.That(data, Is.Not.Null);
             Assert.That(data.Icon, Is.SameAs(expected), "Menu list and details use the catalog icon.");
@@ -63,8 +67,13 @@ namespace SubTerra.App.Tests.UI
                 UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(previewRoot, scene);
                 var preview = previewRoot.GetComponent<BuildingPlacementPreview>();
                 preview.ConfigureFromPrefab(data.RuntimePrefab, data.Id, footprint);
+                var cells = new List<Vector3Int>();
+                for (int x = 0; x < width; x++)
+                    for (int y = 0; y < height; y++) cells.Add(new Vector3Int(x, y, 0));
+                preview.SetCells(null, cells, true);
                 Assert.That(artwork.sprite, Is.SameAs(expected));
                 Assert.That(previewRoot.GetComponent<SpriteRenderer>().sprite, Is.SameAs(expected));
+                Assert.That(previewRoot.transform.localScale, Is.EqualTo(artwork.transform.localScale));
             }
             finally
             {
@@ -84,6 +93,10 @@ namespace SubTerra.App.Tests.UI
             "Assets/_Project/Data/Buildings/Building_Clinic_Basic.asset"
         };
 
+        [TestCase("light_basic_cartoon_v3", 1, 2)]
+        [TestCase("settlement_console_cartoon_v3", 1, 2)]
+        [TestCase("light_basic_cartoon_v3", 1, 1)]
+        [TestCase("settlement_console_cartoon_v3", 1, 1)]
         [TestCase("charger", 2, 2)]
         [TestCase("charger", 1, 1)]
         [TestCase("storage", 1, 1)]
@@ -95,8 +108,9 @@ namespace SubTerra.App.Tests.UI
         public void Facility_ActualOpaquePixelsTouchFoundation(string name, int width, int height)
         {
             bool outpost = name == "outpost_core_cartoon_v3";
+            bool utility = name == "light_basic_cartoon_v3" || name == "settlement_console_cartoon_v3";
             bool replacement = name.EndsWith("Grounded");
-            string pngPath = outpost ? "Assets/_Project/Art/Facilities/MVP/outpost_core_cartoon_v3.png"
+            string pngPath = outpost || utility ? "Assets/_Project/Art/Facilities/MVP/" + name + ".png"
                 : replacement ? "Assets/_Project/Resources/Facilities/" + name + ".png"
                 : "Assets/_Project/Art/Facilities/MVP/" + name + "_basic_cartoon_v2.png";
             var texture = new Texture2D(2, 2);
@@ -104,7 +118,7 @@ namespace SubTerra.App.Tests.UI
             try
             {
                 Assert.That(texture.LoadImage(System.IO.File.ReadAllBytes(pngPath)), Is.True);
-                texture.name = replacement || outpost ? name : name + "_basic_cartoon_v2";
+                texture.name = replacement || outpost || utility ? name : name + "_basic_cartoon_v2";
                 sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height),
                     new Vector2(0.2f, 0.8f), 100f, 0, SpriteMeshType.FullRect);
                 Color32[] pixels = texture.GetPixels32();
@@ -114,7 +128,8 @@ namespace SubTerra.App.Tests.UI
                         if (pixels[y * texture.width + x].a >= 64) bottom = Mathf.Min(bottom, y);
                 Assert.That(bottom, Is.GreaterThan(0), "This source PNG has transparent space below its feet.");
                 string kind = name == "ChargerGrounded" ? "charger" : name == "StorageGrounded" ? "storage"
-                    : outpost ? "outpost_core" : name;
+                    : outpost ? "outpost_core" : name == "light_basic_cartoon_v3" ? "light"
+                    : name == "settlement_console_cartoon_v3" ? "settlement" : name;
                 string id = "building." + kind + ".basic";
                 Assert.That(FacilityGroundedVisual.TryGetGeometry(sprite, id, new Vector2Int(width, height),
                     out var position, out var scale), Is.True);
@@ -229,13 +244,17 @@ namespace SubTerra.App.Tests.UI
 
                     var instance = Object.Instantiate(prefab);
                     created.Add(instance);
-                    string facilityId = path == PromptB49FacilityVisualBuilder.ChargerPrefabPath ? DataIds.Buildings.ChargerBasic
+                    string facilityId = path == PromptB49FacilityVisualBuilder.LightPrefabPath ? DataIds.Buildings.LightBasic
+                        : path == PromptB49FacilityVisualBuilder.SettlementPrefabPath ? DataIds.Buildings.SettlementBasic
+                        : path == PromptB49FacilityVisualBuilder.ChargerPrefabPath ? DataIds.Buildings.ChargerBasic
                         : path == PromptB49FacilityVisualBuilder.StoragePrefabPath ? DataIds.Buildings.StorageBasic
                         : path == PromptB49FacilityVisualBuilder.OutpostPrefabPath ? DataIds.Buildings.OutpostCoreBasic : null;
                     if (facilityId != null)
                         FacilityGroundedVisual.Apply(instance.transform, facilityId,
                             path == PromptB49FacilityVisualBuilder.ChargerPrefabPath ? new Vector2Int(2, 2)
-                                : path == PromptB49FacilityVisualBuilder.OutpostPrefabPath ? new Vector2Int(2, 2) : Vector2Int.one);
+                                : path == PromptB49FacilityVisualBuilder.OutpostPrefabPath ? new Vector2Int(2, 2)
+                                : path == PromptB49FacilityVisualBuilder.LightPrefabPath || path == PromptB49FacilityVisualBuilder.SettlementPrefabPath
+                                    ? new Vector2Int(1, 2) : Vector2Int.one);
                     var visualRoot = instance.transform.Find(
                         PromptB49FacilityVisualBuilder.VisualRootName);
                     var bounds = GetActiveSpriteBounds(visualRoot.gameObject);
@@ -257,7 +276,8 @@ namespace SubTerra.App.Tests.UI
                         path + " width");
                     Assert.That(bounds.min.y,
                         Is.EqualTo(path == PromptB49FacilityVisualBuilder.ClinicPrefabPath ? -1.2f
-                            : path == PromptB49FacilityVisualBuilder.ChargerPrefabPath ? -1.040f
+                            : path == PromptB49FacilityVisualBuilder.ChargerPrefabPath
+                                || path == PromptB49FacilityVisualBuilder.LightPrefabPath || path == PromptB49FacilityVisualBuilder.SettlementPrefabPath ? -1.040f
                                 : outpost ? -1.08f : path == PromptB49FacilityVisualBuilder.StoragePrefabPath ? -0.540f : -0.68f).Within(0.015f),
                         path + " rock overlap");
 
