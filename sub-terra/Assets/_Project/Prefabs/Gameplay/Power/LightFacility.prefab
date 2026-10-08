@@ -150,7 +150,7 @@ Transform:
   m_GameObject: {fileID: 2187949829751350289}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.20000002, z: 0}
+  m_LocalPosition: {x: 0.021994619, y: -0.25013486, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -217,6 +217,56 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
   m_BlendShapeWeights: []
+--- !u!1 &2426087888839137555
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 9113496755136878569}
+  - component: {fileID: 1718250374874815157}
+  m_Layer: 0
+  m_Name: FacilityFoundation
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &9113496755136878569
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2426087888839137555}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7227115051487169514}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1718250374874815157
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2426087888839137555}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5eb7b0c715664d8dad89914015a874e6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SubTerra.Gameplay.Building::SubTerra.Gameplay.Building.FacilityFoundationVisual
+  rows: 2
+  plateWidth: 0.96
+  sourceMaterial: {fileID: 2100000, guid: a97c105638bdf8b4a8650670310a4cd3, type: 2}
+  sortingLayer: 0
+  sortingOrder: 4
+  integratedBase: 1
 --- !u!1 &5281815754313688057
 GameObject:
   m_ObjectHideFlags: 0
@@ -538,7 +588,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fd84643b2a25edf48b31efb5312288e8, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: SubTerra.Gameplay.Hazards::SubTerra.Gameplay.Hazards.GasVisionClearanceSource
   radius: 5
 --- !u!1 &7393821298788891273
@@ -567,8 +617,8 @@ Transform:
   m_GameObject: {fileID: 7393821298788891273}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.20000002, z: 0}
-  m_LocalScale: {x: 0.071163826, y: 0.071163826, z: 1}
+  m_LocalPosition: {x: 0.021994619, y: -0.25013486, z: 0}
+  m_LocalScale: {x: 0.12938005, y: 0.12938005, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 598344163793478932}
@@ -670,6 +720,7 @@ Transform:
   - {fileID: 598344163793478932}
   - {fileID: 6646152512666754975}
   - {fileID: 7809686471940670134}
+  - {fileID: 9113496755136878569}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &6135283370762737270
@@ -742,7 +793,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6621eff82699a8f4aa0462cd3f338ecb, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: SubTerra.Gameplay.Building::SubTerra.Gameplay.Building.BuildingInstance
   instanceId: 
   buildingId: 
@@ -756,7 +807,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 25ddba09f808918468964e468aba2b80, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: SubTerra.Gameplay.Power::SubTerra.Gameplay.Power.PowerNode
   network: {fileID: 0}
   isPowerSource: 0
@@ -775,7 +826,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9c2b7a4b6b54c9b4388ed296738a2c34, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: SubTerra.Gameplay.Power::SubTerra.Gameplay.Power.PowerFacility
   powerNode: {fileID: 912888686967745480}
   poweredVisuals:
@@ -788,9 +839,21 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 6646152512666754975}
     m_Modifications:
+    - target: {fileID: 1237839741484502308, guid: 8b24ec695c086ac4d96d4c0fe380c699, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 1275560762127306566, guid: 8b24ec695c086ac4d96d4c0fe380c699, type: 3}
       propertyPath: m_Name
       value: FoundationTile
+      objectReference: {fileID: 0}
+    - target: {fileID: 1855620719904455239, guid: 8b24ec695c086ac4d96d4c0fe380c699, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1892764463478267546, guid: 8b24ec695c086ac4d96d4c0fe380c699, type: 3}
+      propertyPath: m_Enabled
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3908755760605107206, guid: 8b24ec695c086ac4d96d4c0fe380c699, type: 3}
       propertyPath: m_LocalScale.x
@@ -834,6 +897,26 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3908755760605107206, guid: 8b24ec695c086ac4d96d4c0fe380c699, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4287709983837018120, guid: 8b24ec695c086ac4d96d4c0fe380c699, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4560194783363262953, guid: 8b24ec695c086ac4d96d4c0fe380c699, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6387800680472226743, guid: 8b24ec695c086ac4d96d4c0fe380c699, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7742707262930304577, guid: 8b24ec695c086ac4d96d4c0fe380c699, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8080809997781874759, guid: 8b24ec695c086ac4d96d4c0fe380c699, type: 3}
+      propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []

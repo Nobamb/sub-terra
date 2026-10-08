@@ -26,13 +26,15 @@ namespace SubTerra.Gameplay.Building
             new(0.95f, 0.56f, 0.09f), new(0.95f, 0.56f, 0.09f)
         };
 
-        public static bool Supports(string id) => id == "building.storage.basic" || id == "building.charger.basic";
+        public static bool Supports(string id) => id == "building.storage.basic" || id == "building.charger.basic"
+            || id == "building.light.basic" || id == "building.settlement.basic";
 
         public void Configure(SpriteRenderer source, int footprintRows, int footprintWidth, float visibleWidth)
         {
             float nextWidth = Mathf.Min(footprintWidth - 0.04f, visibleWidth + 0.06f);
             bool nextIntegratedBase = source.sprite != null && (source.sprite.texture.name == "ChargerGrounded"
-                || source.sprite.texture.name == "StorageGrounded");
+                || source.sprite.texture.name == "StorageGrounded" || source.sprite.texture.name == "light_basic_cartoon_v3"
+                || source.sprite.texture.name == "settlement_console_cartoon_v3");
             bool changed = rows != footprintRows || !Mathf.Approximately(plateWidth, nextWidth)
                 || sourceMaterial != source.sharedMaterial || sortingLayer != source.sortingLayerID
                 || sortingOrder != source.sortingOrder || integratedBase != nextIntegratedBase;

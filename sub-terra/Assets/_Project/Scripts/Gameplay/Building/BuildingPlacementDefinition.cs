@@ -27,6 +27,8 @@ namespace SubTerra.Gameplay.Building
         // Also covers existing authored definitions until the scoped builder is run.
         public Vector2Int Footprint => buildingId == "building.charger.basic"
             ? new Vector2Int(2, 2)
+            : buildingId == "building.light.basic" || buildingId == "building.settlement.basic"
+                ? new Vector2Int(1, 2)
             : new Vector2Int(Mathf.Max(1, footprint.x), Mathf.Max(1, footprint.y));
         public bool RequiresGround => requiresGround;
         public IReadOnlyList<ItemCostDto> Costs

@@ -124,6 +124,24 @@ namespace SubTerra.App.Editor.DataValidation
             finally { PrefabUtility.UnloadPrefabContents(root); }
         }
 
+        [MenuItem("SubTerra/Facilities/Refresh Light And Settlement One By Two")]
+        public static void RefreshLightAndSettlement()
+        {
+            if (EditorApplication.isPlayingOrWillChangePlaymode)
+                throw new InvalidOperationException("Exit Play Mode before refreshing facility assets.");
+            foreach (string kind in new[] { "light", "settlement" })
+            {
+                string path = kind == "light" ? LightPrefabPath : SettlementPrefabPath;
+                RefreshGeometryOnly(path, "building." + kind + ".basic", new Vector2Int(1, 2));
+                var definition = AssetDatabase.LoadAssetAtPath<BuildingPlacementDefinition>(
+                    "Assets/_Project/Data/Buildings/Placement/" + kind + "_basicPlacement.asset");
+                var serialized = new SerializedObject(definition);
+                serialized.FindProperty("footprint").vector2IntValue = new Vector2Int(1, 2);
+                serialized.ApplyModifiedPropertiesWithoutUndo();
+                AssetDatabase.SaveAssetIfDirty(definition);
+            }
+        }
+
         public static string Build()
         {
             ApplyAllPrefabs();
@@ -322,9 +340,12 @@ namespace SubTerra.App.Editor.DataValidation
         {
             string id = kind == FacilityVisualKind.Charger ? "building.charger.basic"
                 : kind == FacilityVisualKind.Storage ? "building.storage.basic"
-                : kind == FacilityVisualKind.OutpostCore ? "building.outpost_core.basic" : null;
+                : kind == FacilityVisualKind.OutpostCore ? "building.outpost_core.basic"
+                : kind == FacilityVisualKind.Light ? "building.light.basic"
+                : kind == FacilityVisualKind.Settlement ? "building.settlement.basic" : null;
             Vector2Int footprint = kind == FacilityVisualKind.Charger ? new Vector2Int(2, 2)
-                : kind == FacilityVisualKind.OutpostCore ? new Vector2Int(2, 2) : Vector2Int.one;
+                : kind == FacilityVisualKind.OutpostCore ? new Vector2Int(2, 2)
+                : kind == FacilityVisualKind.Light || kind == FacilityVisualKind.Settlement ? new Vector2Int(1, 2) : Vector2Int.one;
             if (FacilityGroundedVisual.TryGetGeometry(sprite, id, footprint, out var position, out var size))
             {
                 artwork.localPosition = position;

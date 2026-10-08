@@ -52,12 +52,14 @@ namespace SubTerra.Gameplay.Building
             bool charger = buildingId == "building.charger.basic";
             bool storage = buildingId == "building.storage.basic";
             bool outpost = buildingId == "building.outpost_core.basic";
-            if (!charger && !storage && !outpost) return false;
+            bool utility = buildingId == "building.light.basic" || buildingId == "building.settlement.basic";
+            if (!charger && !storage && !outpost && !utility) return false;
+            bool tallUtility = utility && footprint.y != 1;
             bool largeCharger = charger && footprint.x != 1;
             // Explicit legacy 1x2 saves keep their narrow occupied area; new outposts use 2x2.
             float width = outpost ? footprint.x == 1 ? 0.92f : 1.8f : largeCharger ? 1.8f : 0.96f;
-            float height = outpost ? 1.78f : largeCharger ? 1.82f : 0.96f;
-            int rows = outpost || largeCharger ? 2 : 1;
+            float height = outpost ? 1.78f : largeCharger || tallUtility ? 1.82f : 0.96f;
+            int rows = outpost || largeCharger || tallUtility ? 2 : 1;
             bool hasFoundation = FacilityFoundationVisual.Supports(buildingId);
             float contactHeight = hasFoundation ? FacilityFoundationVisual.ArtworkContactHeight : -0.08f;
             height = Mathf.Min(height, rows - Mathf.Max(0f, contactHeight) - 0.02f);
@@ -90,6 +92,10 @@ namespace SubTerra.Gameplay.Building
             else if (texture.name == "outpost_core_cartoon_v3" && texture.width == 1292 && texture.height == 1218)
                 // PNG top-left bounds (74,0)-(1216,1132), converted to Unity bottom-left pixels.
                 pixels = Rect.MinMaxRect(74f, 86f, 1216f, 1218f);
+            else if (texture.name == "light_basic_cartoon_v3" && texture.width == 1166 && texture.height == 1349)
+                pixels = Rect.MinMaxRect(195f, 64f, 937f, 1304f);
+            else if (texture.name == "settlement_console_cartoon_v3" && texture.width == 1230 && texture.height == 1278)
+                pixels = Rect.MinMaxRect(177f, 64f, 1108f, 1274f);
             if (pixels.width > 0f)
             {
                 Vector2 min = (Vector2.Max(pixels.min, sprite.rect.min) - sprite.rect.min - sprite.pivot) / sprite.pixelsPerUnit;
@@ -112,6 +118,8 @@ namespace SubTerra.Gameplay.Building
             if (!FacilityFoundationVisual.Supports(buildingId)) return null;
             if (!TryGetGeometry(source.sprite, buildingId, footprint, out _, out var scale)) return null;
             bool large = buildingId == "building.charger.basic" && footprint.x != 1;
+            bool tallUtility = (buildingId == "building.light.basic" || buildingId == "building.settlement.basic")
+                && footprint.y != 1;
             Transform baseRoot = root.Find("FacilityFoundation");
             if (baseRoot == null)
             {
@@ -119,7 +127,7 @@ namespace SubTerra.Gameplay.Building
                 baseRoot.SetParent(root, false);
             }
             var foundation = baseRoot.GetComponent<FacilityFoundationVisual>() ?? baseRoot.gameObject.AddComponent<FacilityFoundationVisual>();
-            foundation.Configure(source, large ? 2 : 1, large ? 2 : 1, meshBounds[source.sprite].size.x * scale.x);
+            foundation.Configure(source, large || tallUtility ? 2 : 1, large ? 2 : 1, meshBounds[source.sprite].size.x * scale.x);
             return foundation;
         }
 
@@ -142,10 +150,11 @@ namespace SubTerra.Gameplay.Building
             }
             Transform powered = root.Find("PoweredVisualRoot");
             if (powered != null) powered.localPosition = position + Vector3.Scale(renderer.sprite.bounds.center, scale);
-            if (buildingId == "building.charger.basic")
+            if (buildingId == "building.charger.basic" || buildingId == "building.light.basic" || buildingId == "building.settlement.basic")
             {
                 Transform grounding = root.Find("MVP_Grounding");
-                if (grounding != null) grounding.localPosition = footprint.x != 1 ? new Vector3(0f, -0.5f, 0f) : Vector3.zero;
+                bool tall = buildingId == "building.charger.basic" ? footprint.x != 1 : footprint.y != 1;
+                if (grounding != null) grounding.localPosition = tall ? new Vector3(0f, -0.5f, 0f) : Vector3.zero;
             }
         }
     }
