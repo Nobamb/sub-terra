@@ -4,6 +4,7 @@ using SubTerra.App.Core.Data;
 using SubTerra.App.UI.FacilityNameTag;
 using SubTerra.Gameplay.Building;
 using TMPro;
+using Unity.Profiling;
 using UnityEngine;
 
 namespace SubTerra.App.Integration
@@ -15,6 +16,11 @@ namespace SubTerra.App.Integration
     public sealed class FacilityProximityLabelController : MonoBehaviour
     {
         public const float DefaultRange = 2f;
+
+        private static readonly ProfilerMarker RefreshMarker = new ProfilerMarker("SubTerra.FacilityLabels.Refresh");
+        private static readonly ProfilerMarker DiscoveryMarker = new ProfilerMarker("SubTerra.FacilityLabels.Discovery");
+        private static readonly ProfilerMarker LayoutMarker = new ProfilerMarker("SubTerra.FacilityLabels.Layout");
+        private static readonly ProfilerMarker AnimationMarker = new ProfilerMarker("SubTerra.FacilityLabels.Animation");
 
         [SerializeField] private Transform player;
         [SerializeField] private TMP_FontAsset koreanFont;
@@ -63,6 +69,14 @@ namespace SubTerra.App.Integration
 
         public void Refresh()
         {
+            using (RefreshMarker.Auto())
+            {
+                RefreshCore();
+            }
+        }
+
+        private void RefreshCore()
+        {
             ResolvePlayer();
             EnsureKoreanFont();
             EnsureBubbleRoot();
@@ -75,9 +89,13 @@ namespace SubTerra.App.Integration
                 return;
             }
 
-            var instances = FindObjectsByType<BuildingInstance>(
-                FindObjectsInactive.Exclude,
-                FindObjectsSortMode.None);
+            BuildingInstance[] instances;
+            using (DiscoveryMarker.Auto())
+            {
+                instances = FindObjectsByType<BuildingInstance>(
+                    FindObjectsInactive.Exclude,
+                    FindObjectsSortMode.None);
+            }
             seen.Clear();
             candidates.Clear();
             var squaredRange = range * range;
@@ -103,22 +121,25 @@ namespace SubTerra.App.Integration
             candidates.Sort(CompareByDistance);
             accepted.Clear();
             wantedIds.Clear();
-            for (var i = 0; i < candidates.Count; i++)
+            using (LayoutMarker.Auto())
             {
-                var candidate = candidates[i];
-                var bubble = GetOrCreateBubble(candidate.Id);
-                bubble.SetLabel(ItemDisplayNames.Building(candidate.Instance.BuildingId));
-                var anchor = FacilityNameTagAnchor.Compute(candidate.Instance);
-                var rect = TagRect(anchor, bubble.Width);
-                if (Overlaps(rect))
+                for (var i = 0; i < candidates.Count; i++)
                 {
-                    continue;
-                }
+                    var candidate = candidates[i];
+                    var bubble = GetOrCreateBubble(candidate.Id);
+                    bubble.SetLabel(ItemDisplayNames.Building(candidate.Instance.BuildingId));
+                    var anchor = FacilityNameTagAnchor.Compute(candidate.Instance);
+                    var rect = TagRect(anchor, bubble.Width);
+                    if (Overlaps(rect))
+                    {
+                        continue;
+                    }
 
-                accepted.Add(rect);
-                wantedIds.Add(candidate.Id);
-                bubble.Follow(anchor);
-                VisibleBubbleCount++;
+                    accepted.Add(rect);
+                    wantedIds.Add(candidate.Id);
+                    bubble.Follow(anchor);
+                    VisibleBubbleCount++;
+                }
             }
 
             foreach (var pair in bubbles)
@@ -295,12 +316,15 @@ namespace SubTerra.App.Integration
 
         private void TickBubbles()
         {
-            var step = Time.unscaledDeltaTime;
-            foreach (var pair in bubbles)
+            using (AnimationMarker.Auto())
             {
-                if (pair.Value != null)
+                var step = Time.unscaledDeltaTime;
+                foreach (var pair in bubbles)
                 {
-                    pair.Value.Tick(step);
+                    if (pair.Value != null)
+                    {
+                        pair.Value.Tick(step);
+                    }
                 }
             }
         }
