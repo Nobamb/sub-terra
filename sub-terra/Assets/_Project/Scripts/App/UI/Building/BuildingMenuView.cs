@@ -317,6 +317,7 @@ namespace SubTerra.App.UI.Building
             if (detailIcon != null)
             {
                 detailIcon.sprite = item.Icon;
+                detailIcon.preserveAspect = true;
                 detailIcon.enabled = item.Icon != null;
             }
 

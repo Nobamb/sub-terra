@@ -37,6 +37,24 @@ namespace SubTerra.Gameplay.Player
         private PlayerCameraFollow departureCameraFollow;
         private IElevatorTravelPort travelPort;
         private Coroutine travelRoutine;
+        private Bounds? placementExclusionBounds;
+
+        /// <summary>Fixed shaft envelope; remains reserved even after the cabin departs.</summary>
+        public Bounds GetPlacementExclusionBounds()
+        {
+            if (placementExclusionBounds.HasValue) return placementExclusionBounds.Value;
+            Bounds bounds = GetComponent<Collider2D>().bounds;
+            Transform rails = transform.Find("HoistRails");
+            if (rails != null)
+                foreach (var renderer in rails.GetComponentsInChildren<SpriteRenderer>(true))
+                    bounds.Encapsulate(renderer.bounds);
+            Transform cabin = transform.Find("ElevatorCabin/ElevatorArtwork");
+            if (cabin != null && cabin.TryGetComponent<SpriteRenderer>(out var artwork))
+                bounds.Encapsulate(artwork.bounds);
+            bounds.size = new Vector3(bounds.size.x, bounds.size.y, 2f);
+            placementExclusionBounds = bounds;
+            return bounds;
+        }
 
         public ElevatorTravelState State { get; private set; } = ElevatorTravelState.Idle;
         public event Action<ElevatorTravelState> StateChanged;

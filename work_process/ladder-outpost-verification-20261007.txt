@@ -1,0 +1,20 @@
+Unity 6000.5.4f1 normal Editor: direct focused checks, not Test Runner XML.
+PASS StyledLadderFrames_KeepStandingMinerHeightAndFootLevel 
+PASS PlayerPrefab_UsesFiveSharedLadderFramesInFrontOfLadder 
+PASS Outpost_BlockedFootprintCellRejectsWithoutSpending 0,0
+PASS Outpost_BlockedFootprintCellRejectsWithoutSpending 1,0
+PASS Outpost_BlockedFootprintCellRejectsWithoutSpending 0,1
+PASS Outpost_BlockedFootprintCellRejectsWithoutSpending 1,1
+PASS Outpost_RestoreKeepsLegacyNarrowOrOriginalFootprint 0,0,2
+PASS Outpost_RestoreKeepsLegacyNarrowOrOriginalFootprint 1,2,1
+PASS Outpost_RestoreKeepsLegacyNarrowOrOriginalFootprint 2,2,2
+PASS PlacedFacility_JsonRoundTripPreservesIdentityFootprintAndOccupancy outpost_core_basic,2,2
+PASS OutpostOriginalArtwork_FitsTwoByTwoWithoutDistortion 
+PASS Facility_ActualOpaquePixelsTouchFoundation outpost_core_cartoon_v3,2,2
+PASS Facility_ActualOpaquePixelsTouchFoundation outpost_core_cartoon_v3,1,2
+PASS PromptB49_OutpostPlacement_UsesOriginalTwoByTwoFootprint 
+PASS GroundedFacility_MenuPreviewAndPlacedArtworkMatch OutpostCore,outpost_core_cartoon_v3,2,2
+PASS IntegrationScene_RemovesDemoCoreButPreservesStartingSupplyAndDroneAnchor 
+DONE 16 focused checks passed; two isolated Unity preview renders. No full test suite or build.
+PASS read-only scene comparison: all 8 Tilemaps retain cells, Tile indices, flags, matrices and objects. Unity refreshed existing display caches only.
+Preview teardown warned about releasing Camera.targetTexture; both PNGs were viewed and valid. Temporary runner and meta removed. No full gameplay validation.

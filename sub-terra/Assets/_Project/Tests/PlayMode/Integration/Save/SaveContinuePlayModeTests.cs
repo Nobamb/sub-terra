@@ -27,6 +27,53 @@ namespace SubTerra.App.Tests.PlayMode.Save
         }
 
         [UnityTest]
+        public IEnumerator RuntimeSameSceneContinue_WaitsForReplacementScene()
+        {
+            var args = Environment.GetCommandLineArgs();
+            var rootArgument = Array.IndexOf(args, "-subterra-save-root");
+            if (rootArgument < 0 || rootArgument + 1 >= args.Length)
+                Assert.Ignore("Requires an isolated -subterra-save-root under the project's Temp directory.");
+            var root = Path.GetFullPath(args[rootArgument + 1]);
+            var projectTemp = Path.GetFullPath(Path.Combine(Application.dataPath, "../Temp"));
+            Assert.That(root.StartsWith(projectTemp + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase), Is.True);
+
+            GameBootstrapper.ResetInstanceForTests();
+            yield return SceneManager.LoadSceneAsync("Assets/_Project/Scenes/Bootstrap/Bootstrap.unity");
+            yield return WaitForRuntimeCondition(() => SceneManager.GetActiveScene().name == "MainMenu");
+            var runtime = SaveRuntimeController.Instance;
+            Assert.That(runtime, Is.Not.Null);
+            try
+            {
+                Assert.That(runtime.StartNewGame(3, confirmOverwrite: true), Is.True);
+                yield return WaitForRuntimeCondition(() => SceneManager.GetActiveScene().name == "SurfaceBase" && runtime.IsUiReady);
+                Assert.That(runtime.SaveCurrent().IsSuccess, Is.True);
+                var originalScene = SceneManager.GetActiveScene().handle;
+                bool completed = false;
+                bool succeeded = false;
+                runtime.BeginContinue(3, result => { completed = true; succeeded = result.IsSuccess; });
+                Assert.That(completed, Is.False, "Continue must not finish against the outgoing scene.");
+                yield return WaitForRuntimeCondition(() => completed);
+                Assert.That(succeeded, Is.True);
+                Assert.That(SceneManager.GetActiveScene().name, Is.EqualTo("SurfaceBase"));
+                Assert.That(SceneManager.GetActiveScene().handle, Is.Not.EqualTo(originalScene));
+                Assert.That(runtime.IsUiReady, Is.True);
+            }
+            finally
+            {
+                if (runtime != null) UnityEngine.Object.Destroy(runtime.gameObject);
+                GameBootstrapper.ResetInstanceForTests();
+            }
+            yield return null;
+        }
+
+        private static IEnumerator WaitForRuntimeCondition(Func<bool> condition)
+        {
+            var deadline = Time.realtimeSinceStartup + 25f;
+            while (!condition() && Time.realtimeSinceStartup < deadline) yield return null;
+            Assert.That(condition(), Is.True, "Runtime scene transition timed out.");
+        }
+
+        [UnityTest]
         public IEnumerator K_F07_NewSession_RestoresStateSceneWorldDerivedAndUiInOrder()
         {
             var root = Path.Combine(

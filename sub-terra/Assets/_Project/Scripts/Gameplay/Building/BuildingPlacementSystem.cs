@@ -31,6 +31,8 @@ namespace SubTerra.Gameplay.Building
         private BuildingPlacementDefinition selection;
         private int nextInstanceSequence = 1;
         private readonly HashSet<string> restoredInstanceIds = new();
+        private SubTerra.Gameplay.Player.ElevatorController[] placementElevators;
+        private readonly Dictionary<BuildingInstance, SpriteRenderer[]> authoredBuildingRenderers = new();
 
         public BuildingPlacementDefinition Selection => selection;
         public StructuralIntegritySystem StructuralSystem => structuralIntegritySystem;
@@ -47,6 +49,13 @@ namespace SubTerra.Gameplay.Building
             if (buildingRoot == null) buildingRoot = transform;
             if (powerNetworkSystem == null) powerNetworkSystem = GetComponent<PowerNetworkSystem>();
             BindSupportingGroundProtection();
+            placementElevators = FindObjectsByType<SubTerra.Gameplay.Player.ElevatorController>(FindObjectsSortMode.None);
+            foreach (var authored in FindObjectsByType<BuildingInstance>(FindObjectsSortMode.None))
+            {
+                Transform visualRoot = authored.transform.Find("VisualRoot");
+                if (visualRoot != null && !authored.transform.IsChildOf(buildingRoot))
+                    authoredBuildingRenderers[authored] = visualRoot.GetComponentsInChildren<SpriteRenderer>(true);
+            }
         }
 
         private void OnDisable()
@@ -155,6 +164,37 @@ namespace SubTerra.Gameplay.Building
 
             foreach (Vector3Int cell in EnumerateFootprint(origin, footprint))
             {
+                Vector3 cellCenter = terrainTilemap != null ? terrainTilemap.GetCellCenterWorld(cell) : (Vector3)cell;
+                Vector3 cellSize = terrainTilemap != null ? terrainTilemap.layoutGrid.cellSize : Vector3.one;
+                var cellBounds = new Bounds(cellCenter, new Vector3(cellSize.x * 0.98f, cellSize.y * 0.98f, 1f));
+                foreach (var entry in authoredBuildingRenderers)
+                {
+                    var authored = entry.Key;
+                    if (authored == null || !authored.gameObject.activeInHierarchy
+                        || string.IsNullOrEmpty(authored.InstanceId)) continue;
+                    // Scene-authored demo facilities are not in the runtime placement dictionary.
+                    foreach (var renderer in entry.Value)
+                    {
+                        if (renderer == null || !renderer.enabled || renderer.sprite == null) continue;
+                        Bounds bounds = renderer.bounds;
+                        bounds.size = new Vector3(bounds.size.x, bounds.size.y, 1f);
+                        if (!bounds.Intersects(cellBounds)) continue;
+                        failure = BuildingPlacementFailure.Occupied;
+                        return false;
+                    }
+                }
+                if (placementElevators != null)
+                {
+                    foreach (var elevator in placementElevators)
+                    {
+                        if (elevator != null && elevator.isActiveAndEnabled
+                            && elevator.GetPlacementExclusionBounds().Intersects(cellBounds))
+                        {
+                            failure = BuildingPlacementFailure.ElevatorSpace;
+                            return false;
+                        }
+                    }
+                }
                 if (occupiedBuildings.ContainsKey(cell) || (terrainTilemap != null && terrainTilemap.HasTile(cell)))
                 {
                     failure = BuildingPlacementFailure.Occupied;
@@ -236,7 +276,7 @@ namespace SubTerra.Gameplay.Building
 
             string instanceId = $"{definition.BuildingId}-{nextInstanceSequence++:D4}";
             BuildingInstance instance = instanceObject.GetComponent<BuildingInstance>() ?? instanceObject.AddComponent<BuildingInstance>();
-            instance.Initialize(instanceId, definition.BuildingId);
+            instance.Initialize(instanceId, definition.BuildingId, footprint);
             BindPowerNode(instanceObject, instanceId);
             foreach (Vector3Int cell in EnumerateFootprint(origin, footprint))
             {
@@ -256,7 +296,8 @@ namespace SubTerra.Gameplay.Building
                 instanceId,
                 definition.BuildingId,
                 origin,
-                reducedStructuralRisk);
+                reducedStructuralRisk,
+                footprint);
             BuildingPlaced?.Invoke(result);
             return result;
         }
@@ -437,6 +478,7 @@ namespace SubTerra.Gameplay.Building
                 case BuildingPlacementFailure.MissingGround:
                     return 1;
                 case BuildingPlacementFailure.Occupied:
+                case BuildingPlacementFailure.ElevatorSpace:
                     return 2;
                 case BuildingPlacementFailure.OutsideAllowedArea:
                     return 3;
@@ -484,14 +526,21 @@ namespace SubTerra.Gameplay.Building
             if (definition == null || definition.RuntimePrefab == null) return false;
 
             var cell = new Vector3Int(snapshot.x, snapshot.y, 0);
-            Vector2Int footprint = definition.Footprint;
+            // Missing charger dimensions are legacy 1x1. Outposts originally used 2x2;
+            // retain explicitly saved 1x2 outposts instead of expanding into adjacent facilities.
+            // Only known footprints are accepted, never arbitrary save dimensions.
+            Vector2Int footprint = snapshot.buildingTypeId == "building.charger.basic"
+                ? snapshot.footprintWidth == 2 && snapshot.footprintHeight == 2 ? new Vector2Int(2, 2) : Vector2Int.one
+                : snapshot.buildingTypeId == "building.outpost_core.basic"
+                    ? snapshot.footprintWidth == 1 && snapshot.footprintHeight == 2 ? new Vector2Int(1, 2) : new Vector2Int(2, 2)
+                : definition.Footprint;
             GameObject instanceObject = Instantiate(
                 definition.RuntimePrefab,
                 FootprintWorldCenter(cell, footprint),
                 Quaternion.identity,
                 buildingRoot != null ? buildingRoot : transform);
             BuildingInstance instance = instanceObject.GetComponent<BuildingInstance>() ?? instanceObject.AddComponent<BuildingInstance>();
-            instance.Initialize(snapshot.instanceId, snapshot.buildingTypeId);
+            instance.Initialize(snapshot.instanceId, snapshot.buildingTypeId, footprint);
             BindPowerNode(instanceObject, snapshot.instanceId);
             foreach (Vector3Int occupied in EnumerateFootprint(cell, footprint))
             {
@@ -516,7 +565,8 @@ namespace SubTerra.Gameplay.Building
                 BuildingPlacementFailure.None,
                 snapshot.instanceId,
                 snapshot.buildingTypeId,
-                cell));
+                cell,
+                footprint: footprint));
 
             return true;
         }

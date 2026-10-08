@@ -4,6 +4,7 @@ using SubTerra.App.Core.Data;
 using SubTerra.App.UI.FacilityNameTag;
 using SubTerra.Gameplay.Building;
 using TMPro;
+using Unity.Profiling;
 using UnityEngine;
 
 namespace SubTerra.App.Integration
@@ -16,6 +17,11 @@ namespace SubTerra.App.Integration
     {
         public const float DefaultRange = 2f;
 
+        private static readonly ProfilerMarker RefreshMarker = new ProfilerMarker("SubTerra.FacilityLabels.Refresh");
+        private static readonly ProfilerMarker DiscoveryMarker = new ProfilerMarker("SubTerra.FacilityLabels.Discovery");
+        private static readonly ProfilerMarker LayoutMarker = new ProfilerMarker("SubTerra.FacilityLabels.Layout");
+        private static readonly ProfilerMarker AnimationMarker = new ProfilerMarker("SubTerra.FacilityLabels.Animation");
+
         [SerializeField] private Transform player;
         [SerializeField] private TMP_FontAsset koreanFont;
         [SerializeField, Min(0.1f)] private float range = DefaultRange;
@@ -23,6 +29,9 @@ namespace SubTerra.App.Integration
         private readonly Dictionary<EntityId, NameBubble> bubbles = new Dictionary<EntityId, NameBubble>();
         private readonly List<Candidate> candidates = new List<Candidate>();
         private readonly List<Rect> accepted = new List<Rect>();
+        private readonly HashSet<EntityId> seen = new HashSet<EntityId>();
+        private readonly HashSet<EntityId> wantedIds = new HashSet<EntityId>();
+        private readonly List<EntityId> stale = new List<EntityId>();
         private Transform bubbleRoot;
 
         public int VisibleBubbleCount { get; private set; }
@@ -60,6 +69,14 @@ namespace SubTerra.App.Integration
 
         public void Refresh()
         {
+            using (RefreshMarker.Auto())
+            {
+                RefreshCore();
+            }
+        }
+
+        private void RefreshCore()
+        {
             ResolvePlayer();
             EnsureKoreanFont();
             EnsureBubbleRoot();
@@ -72,10 +89,14 @@ namespace SubTerra.App.Integration
                 return;
             }
 
-            var instances = FindObjectsByType<BuildingInstance>(
-                FindObjectsInactive.Exclude,
-                FindObjectsSortMode.None);
-            var seen = new HashSet<EntityId>();
+            BuildingInstance[] instances;
+            using (DiscoveryMarker.Auto())
+            {
+                instances = FindObjectsByType<BuildingInstance>(
+                    FindObjectsInactive.Exclude,
+                    FindObjectsSortMode.None);
+            }
+            seen.Clear();
             candidates.Clear();
             var squaredRange = range * range;
 
@@ -99,23 +120,26 @@ namespace SubTerra.App.Integration
             // 가까운 시설부터 확정하고, 이미 확정된 이름표와 겹치는 먼 시설의 이름표는 숨겨 가독성을 지킨다.
             candidates.Sort(CompareByDistance);
             accepted.Clear();
-            var wantedIds = new HashSet<EntityId>();
-            for (var i = 0; i < candidates.Count; i++)
+            wantedIds.Clear();
+            using (LayoutMarker.Auto())
             {
-                var candidate = candidates[i];
-                var bubble = GetOrCreateBubble(candidate.Id);
-                bubble.SetLabel(ItemDisplayNames.Building(candidate.Instance.BuildingId));
-                var anchor = FacilityNameTagAnchor.Compute(candidate.Instance);
-                var rect = TagRect(anchor, bubble.Width);
-                if (Overlaps(rect))
+                for (var i = 0; i < candidates.Count; i++)
                 {
-                    continue;
-                }
+                    var candidate = candidates[i];
+                    var bubble = GetOrCreateBubble(candidate.Id);
+                    bubble.SetLabel(ItemDisplayNames.Building(candidate.Instance.BuildingId));
+                    var anchor = FacilityNameTagAnchor.Compute(candidate.Instance);
+                    var rect = TagRect(anchor, bubble.Width);
+                    if (Overlaps(rect))
+                    {
+                        continue;
+                    }
 
-                accepted.Add(rect);
-                wantedIds.Add(candidate.Id);
-                bubble.Follow(anchor);
-                VisibleBubbleCount++;
+                    accepted.Add(rect);
+                    wantedIds.Add(candidate.Id);
+                    bubble.Follow(anchor);
+                    VisibleBubbleCount++;
+                }
             }
 
             foreach (var pair in bubbles)
@@ -167,6 +191,11 @@ namespace SubTerra.App.Integration
             }
 
             bubbles.Clear();
+            candidates.Clear();
+            accepted.Clear();
+            seen.Clear();
+            wantedIds.Clear();
+            stale.Clear();
             VisibleBubbleCount = 0;
         }
 
@@ -287,12 +316,15 @@ namespace SubTerra.App.Integration
 
         private void TickBubbles()
         {
-            var step = Time.unscaledDeltaTime;
-            foreach (var pair in bubbles)
+            using (AnimationMarker.Auto())
             {
-                if (pair.Value != null)
+                var step = Time.unscaledDeltaTime;
+                foreach (var pair in bubbles)
                 {
-                    pair.Value.Tick(step);
+                    if (pair.Value != null)
+                    {
+                        pair.Value.Tick(step);
+                    }
                 }
             }
         }
@@ -300,7 +332,7 @@ namespace SubTerra.App.Integration
         // 이미 사라진 시설의 이름표는 접힌 뒤 지운다.
         private void RemoveStale(HashSet<EntityId> seen)
         {
-            var stale = new List<EntityId>();
+            stale.Clear();
             foreach (var pair in bubbles)
             {
                 var alive = pair.Value != null && pair.Value.IsAlive;

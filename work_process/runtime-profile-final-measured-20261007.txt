@@ -1,0 +1,4 @@
+PASS: actual isolated slot install/save/continue, outpost ID/position and four occupied cells. Origin=(-13, -1, 0)
+MEASURE: 128 additional facilities, label Refresh 1000 calls: 538.49 ms, 2514944 managed heap growth bytes; collections=0. Heap growth is net, not an allocation counter.
+MEASURE: Editor Play facilities, 222 frames, mean=22.63 ms, p95=29.03 ms. Hidden Editor; no standalone GPU claim.
+MEASURE: Editor Play facilities + mining burst 14/100ms, 64-particle pool: 178 frames, mean=28.14 ms, p95=35.52 ms.
