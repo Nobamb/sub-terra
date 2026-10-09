@@ -20,8 +20,8 @@ namespace SubTerra.App.UI.Guide
         public const string FirstExploreHint = "각 단계를 선택하면 관련 안내를 볼 수 있습니다.";
         public const string FirstExploreCollapsedLabel = "첫 탐사 안내";
 
-        /// <summary>미니맵 기본(반투명) 불투명도 %. ExplorationMinimap.PanelOpacity와 같아야 하며 테스트가 대조한다.</summary>
-        public const int MinimapIdleOpacityPercent = 50;
+        /// <summary>미니맵 단축키. ExplorationMinimap은 M 하나로 닫힘 → 가로형 → 정사각형을 순환한다.</summary>
+        public const string MinimapKeys = "M";
 
         private static List<GuideCardDef> cards;
         private static Dictionary<string, GuideCardDef> byId;
@@ -237,11 +237,10 @@ namespace SubTerra.App.UI.Guide
                 .Tip("창을 닫아도 Digger-Bot의 분석과 경고 말풍선은 계속 동작합니다.")
                 .Link("mech.structure", "mech.gas");
 
-            Control("ctrl.minimap", "미니맵", "M으로 켜고 끄고, Ctrl+M으로 선명하게 봅니다.", "M / Ctrl + M", "minimap")
-                .Step("M", "미니맵을 켜거나 끕니다.")
-                .Step("Ctrl + M", "미니맵이 켜져 있을 때 두 키를 누르고 있는 동안만 불투명하게 보입니다. 손을 떼면 다시 기본 투명도(" + MinimapIdleOpacityPercent + "%)로 돌아갑니다.")
-                .Data("표시 내용", "화면 주변에 남은 블록과 내 위치(빨간 점)를 보여 줍니다.")
-                .Tip("Ctrl+M은 토글이 아닙니다. Ctrl을 누른 채 M을 눌러도 켜기·끄기는 바뀌지 않습니다.");
+            Control("ctrl.minimap", "미니맵", "M으로 광산 관측판을 열고, 작게 줄이고, 닫습니다.", MinimapKeys, "minimap")
+                .Step("M", "M을 누를 때마다 닫힘 → 가로형 → 작은 정사각형 → 닫힘으로 한 단계만 전환됩니다. 길게 눌러도 한 번만 전환됩니다.")
+                .Data("표시 내용", "화면에 보이는 범위의 남은 블록, 채굴한 빈 공간, 내 위치(밝은 인물 표시)와 시설의 실제 위치·크기를 표시합니다.")
+                .Tip("코어(6각형)·충전기(번개)·보건소(십자)·엘리베이터(위·아래 화살표)는 색과 모양으로 구분합니다.");
 
             Control("ctrl.clock", "광산 초기화 타이머", "남은 탐사 시간을 화면 상단 시계로 확인합니다.", "T", "clock")
                 .Step("T", "화면 상단 중앙의 전자시계를 켜고 끕니다.")

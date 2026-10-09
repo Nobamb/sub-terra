@@ -172,11 +172,11 @@ namespace SubTerra.App.Tests.UI
             Assert.That(Plain("fac.ladder"), Does.Contain("E 키는 쓰지 않습니다"));
             Assert.That(GameGuideCatalog.Get("fac.ladder").Keys, Is.EqualTo("W S"));
 
-            // Ctrl+M은 누르고 있는 동안만 불투명한 방식이다(토글이 아니다).
+            // B-142: 미니맵은 M 하나로 닫힘 → 가로형 → 정사각형 → 닫힘을 순환한다.
             var minimap = Plain("ctrl.minimap");
-            Assert.That(minimap, Does.Contain("누르고 있는 동안"));
-            Assert.That(minimap, Does.Contain("토글이 아닙니다"));
-            Assert.That(GameGuideCatalog.Get("ctrl.minimap").Keys, Is.EqualTo("M / Ctrl + M"));
+            Assert.That(minimap, Does.Contain("한 단계만 전환됩니다"));
+            Assert.That(minimap, Does.Not.Contain("Ctrl"));
+            Assert.That(GameGuideCatalog.Get("ctrl.minimap").Keys, Is.EqualTo("M"));
 
             // 건설은 B로 열고 C로 설치한다.
             Assert.That(Plain("ctrl.build"), Does.Contain("B 키로 시설 건설 창을 열고"));
@@ -188,14 +188,19 @@ namespace SubTerra.App.Tests.UI
         [Test]
         public void Controls_MinimapTextMatchesActualBehaviour()
         {
-            Assert.That(GameGuideCatalog.MinimapIdleOpacityPercent,
-                Is.EqualTo(Mathf.RoundToInt(SubTerra.App.Integration.ExplorationMinimap.PanelOpacity * 100f)),
-                "가이드의 기본 투명도 문구는 ExplorationMinimap.PanelOpacity와 같다");
-            Assert.That(SubTerra.App.Integration.ExplorationMinimap.OpaqueOpacity, Is.EqualTo(1f));
+            // 가이드 문구의 순환 순서는 실제 상태 기계 순서와 같아야 한다.
+            Assert.That(GameGuideCatalog.MinimapKeys, Is.EqualTo("M"));
+            var mode = SubTerra.App.Integration.MinimapBoardMode.Closed;
+            mode = SubTerra.App.Integration.MinimapBoardTimeline.Next(mode);
+            Assert.That(mode, Is.EqualTo(SubTerra.App.Integration.MinimapBoardMode.Wide));
+            mode = SubTerra.App.Integration.MinimapBoardTimeline.Next(mode);
+            Assert.That(mode, Is.EqualTo(SubTerra.App.Integration.MinimapBoardMode.Square));
+            Assert.That(SubTerra.App.Integration.MinimapBoardTimeline.Next(mode),
+                Is.EqualTo(SubTerra.App.Integration.MinimapBoardMode.Closed));
             var text = Plain("ctrl.minimap");
-            Assert.That(text, Does.Contain("켜거나 끕니다"));
-            Assert.That(text, Does.Contain("Ctrl + M"));
-            Assert.That(text, Does.Contain("50%"));
+            Assert.That(text, Does.Contain("닫힘 → 가로형 → 작은 정사각형 → 닫힘"));
+            Assert.That(text, Does.Contain("길게 눌러도 한 번만"));
+            Assert.That(text, Does.Not.Contain("50%"));
         }
 
         [Test]

@@ -366,7 +366,8 @@ namespace SubTerra.App.UI.Guide
             Backdrop(c);
             Floor(c);
             Player(c, -92f);
-            var a = S(0f, 0f, 0.5f, 0f, 0.7f, 0.5f, 1.9f, 0.5f, 2.15f, 1f, 3.3f, 1f, 3.55f, 0.5f, 4f, 0.5f);
+            // M: 닫힘 → 가로형 → 정사각형 → 닫힘. 관측판은 불투명한 남색 전광판이다.
+            var a = S(0f, 0f, 0.3f, 0f, 0.52f, 1f, 3.3f, 1f, 3.46f, 0f, 4f, 0f);
             PanelBox(c, 98f, 14f, 100f, 76f, a, Teal);
             var rng = new System.Random(7);
             for (var gx = 0; gx < 7; gx++)
@@ -378,13 +379,12 @@ namespace SubTerra.App.UI.Guide
                         continue;
                     }
 
-                    Box(c, 8f, 8f, 66f + gx * 11f, 32f - gy * 11f, new Color(0.7f, 0.82f, 0.9f, 0.9f)).Fade(a);
+                    Box(c, 8f, 8f, 66f + gx * 11f, 32f - gy * 11f, new Color(0.2f, 0.33f, 0.37f, 1f)).Fade(a);
                 }
             }
 
-            Box(c, 7f, 7f, 88f, 21f, new Color(1f, 0.25f, 0.27f, 1f)).Fade(a);
-            Key(c, "M", -97f, 42f, DemoTrack.Pulses(0.3f, 0.6f, 2.0f, 3.4f));
-            Key(c, "Ctrl", -135f, 42f, DemoTrack.Pulse(2.0f, 3.4f));
+            Box(c, 5f, 9f, 88f, 22f, new Color(0.93f, 0.99f, 1f, 1f)).Fade(a);
+            Key(c, "M", -97f, 42f, DemoTrack.Pulses(0.3f, 0.55f, 1.9f, 2.15f, 3.3f, 3.55f));
             return c;
         }
 

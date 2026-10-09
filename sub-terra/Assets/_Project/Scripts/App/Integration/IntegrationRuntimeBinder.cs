@@ -661,6 +661,8 @@ namespace SubTerra.App.Integration
             var snapshot = worldSnapshotProviderBehaviour is IWorldSnapshotProvider provider
                 ? provider.CaptureSnapshot() : null;
             minimap.Bind(FindForegroundTilemap(), playerMovement.transform, snapshot);
+            // 시설은 건설/복원 이벤트와 엘리베이터 승강로 범위로만 관측한다.
+            minimap.BindFacilities(buildingPlacementSystem, Resolve<ElevatorController>(null));
             minimap.ApplyHudLayout();
         }
 

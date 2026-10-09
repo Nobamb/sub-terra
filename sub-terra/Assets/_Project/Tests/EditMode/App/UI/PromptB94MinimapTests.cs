@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using System.Reflection;
 using NUnit.Framework;
 using SubTerra.App.Integration;
-using SubTerra.App.UI.HUD;
 using SubTerra.Shared;
 using TMPro;
 using UnityEngine;
@@ -14,6 +13,10 @@ using UnityEngine.UI;
 
 namespace SubTerra.App.Tests.UI
 {
+    /// <summary>
+    /// 미니맵 View 계약(B-94 → B-142 광산 관측 전광판으로 갱신).
+    /// 실제 Tilemap·Camera·Canvas 위에서 지형/플레이어/시설 좌표, M키 순환, 레이아웃을 검증한다.
+    /// </summary>
     public sealed class PromptB94MinimapTests
     {
         private readonly List<Object> objects = new();
@@ -28,25 +31,32 @@ namespace SubTerra.App.Tests.UI
         {
             var canvas = Create("Canvas", typeof(RectTransform), typeof(Canvas));
             canvas.GetComponent<RectTransform>().sizeDelta = new Vector2(1920, 1080);
-            var root = Create("Minimap", typeof(RectTransform), typeof(CanvasRenderer), typeof(CanvasGroup));
+            var root = Create("ExplorationMinimap", typeof(RectTransform), typeof(CanvasRenderer), typeof(CanvasGroup));
             root.transform.SetParent(canvas.transform, false);
             map = root.AddComponent<ExplorationMinimap>();
-            map.enabled = false;
             camera = Create("Camera", typeof(Camera)).GetComponent<Camera>();
             camera.orthographic = true;
             camera.orthographicSize = 5;
-            camera.aspect = 1.6f;
+            camera.aspect = 16f / 9f;
             camera.transform.position = new Vector3(0, 0, -10);
             var grid = Create("Grid", typeof(Grid));
             terrain = Create("Terrain", typeof(Tilemap)).GetComponent<Tilemap>();
             terrain.transform.SetParent(grid.transform, false);
-            player = Create("Player").transform;
             tileAsset = ScriptableObject.CreateInstance<Tile>();
             objects.Add(tileAsset);
+            // 바닥: y = -3..-1 세 층, x = -12..12. 플레이어는 y = 0(맨 윗층 윗면)에 선다.
+            for (int y = -3; y <= -1; y++)
+                for (int x = -12; x <= 12; x++)
+                    PlaceTile(x, y);
+            PlaceTile(-12, 6);
+            player = Create("Player").transform;
             map.Bind(terrain, player, null);
-            typeof(ExplorationMinimap).GetField("worldCamera", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(map, camera);
-            Tick("LateUpdate");
+            UseTestCamera();
+            map.Advance(0f);
         }
+
+        private void UseTestCamera() => typeof(ExplorationMinimap)
+            .GetField("worldCamera", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(map, camera);
 
         [TearDown]
         public void TearDown()
@@ -57,240 +67,319 @@ namespace SubTerra.App.Tests.UI
         }
 
         [Test]
-        public void RestoreAndEvents_OnlyDestroyedCellsAndNoDuplicates()
+        public void Initial_IsClosed_RendersNothing_AndNeverBlocksInput()
         {
-            map.RestoreMining(new WorldSnapshotDto { miningChanges = new List<MiningSnapshotDto>
-            {
-                new() { x = 1, y = 1, isDestroyed = true },
-                new() { x = 2, y = 1, isDestroyed = false }
-            }});
-            map.RecordMining(new GameplayEventDto { type = GameplayEventType.TileMined, x = 1, y = 1 });
-            map.RecordMining(new GameplayEventDto { type = GameplayEventType.GasTriggered, x = 3 });
-            Assert.That(map.MinedCellCount, Is.EqualTo(1));
-            map.RecordMining(new GameplayEventDto { type = GameplayEventType.TileMined, x = -1, y = -2 });
-            Assert.That(map.MinedCellCount, Is.EqualTo(2));
-            map.RestoreMining(new WorldSnapshotDto());
-            Assert.That(map.MinedCellCount, Is.Zero);
+            Assert.That(map.Mode, Is.EqualTo(MinimapBoardMode.Closed));
+            Assert.That(map.IsMapVisible, Is.False);
+            Assert.That(map.IsBoardRendered, Is.False);
+            Assert.That(map.GetComponent<CanvasGroup>().blocksRaycasts, Is.False);
+            Open(MinimapBoardMode.Wide);
+            foreach (var graphic in map.GetComponentsInChildren<Graphic>(true))
+                Assert.That(graphic.raycastTarget, Is.False, graphic.name + "은 표시 전용");
+            Assert.That(map.GetComponentInChildren<GraphicRaycaster>(true), Is.Null);
         }
 
         [Test]
-        public void Layout_UsesBottomRightCornerAndHalfOpacity()
-        {
-            map.rectTransform.anchorMin = map.rectTransform.anchorMax = Vector2.one;
-            map.rectTransform.pivot = Vector2.one;
-            map.rectTransform.anchoredPosition = new Vector2(-220, -100);
-            map.color = Color.white;
-            Tick("LateUpdate");
-            Assert.That(map.rectTransform.anchorMin, Is.EqualTo(ExplorationMinimap.BottomRightCorner));
-            Assert.That(map.rectTransform.anchorMax, Is.EqualTo(ExplorationMinimap.BottomRightCorner));
-            Assert.That(map.rectTransform.pivot, Is.EqualTo(ExplorationMinimap.BottomRightCorner));
-            Assert.That(map.rectTransform.anchoredPosition, Is.EqualTo(Vector2.zero));
-            Assert.That(map.color.a, Is.EqualTo(1f).Within(0.01f));
-            Assert.That(map.DisplayOpacity, Is.EqualTo(ExplorationMinimap.PanelOpacity).Within(0.01f));
-            Assert.That(map.rectTransform.rect.width * map.rectTransform.rect.height,
-                Is.EqualTo(1920 * 1080 * ExplorationMinimap.ScreenAreaRatio).Within(1));
-        }
-
-        [Test]
-        public void Opacity_StaysHalfWithoutCtrlM_AndIgnoresGraphicTint()
-        {
-            map.color = new Color(1f, 1f, 1f, 0.2f);
-            Tick("LateUpdate");
-            Assert.That(map.color.a, Is.EqualTo(1f).Within(0.01f));
-            Assert.That(map.DisplayOpacity, Is.EqualTo(ExplorationMinimap.PanelOpacity).Within(0.01f));
-            Assert.That(map.GetComponent<CanvasGroup>().ignoreParentGroups, Is.False);
-        }
-
-        [Test]
-        public void CloseHint_ShowsMShortcutOnMap()
-        {
-            Assert.That(map.CloseHintText, Is.EqualTo(ExplorationMinimap.CloseHintLabel));
-            Assert.That(map.CloseHintText, Does.Contain("M"));
-            var hint = map.transform.Find("CloseHint");
-            Assert.That(hint, Is.Not.Null);
-            Assert.That(hint.GetComponent<TMP_Text>(), Is.Not.Null);
-            map.ToggleMap();
-            Tick("LateUpdate");
-            Assert.That(map.DisplayOpacity, Is.EqualTo(0f).Within(0.01f));
-            map.ToggleMap();
-            Tick("LateUpdate");
-            Assert.That(map.DisplayOpacity, Is.EqualTo(ExplorationMinimap.PanelOpacity).Within(0.01f));
-            Assert.That(map.CloseHintText, Is.EqualTo(ExplorationMinimap.CloseHintLabel));
-        }
-
-        [Test]
-        public void Layout_SitsAboveDarknessOverlay()
+        public void Layout_BottomRightCorner_AboveDarknessOverlay()
         {
             var overlay = Create("DepthDarknessOverlay", typeof(RectTransform));
-            overlay.transform.SetParent(map.rectTransform.parent, false);
+            overlay.transform.SetParent(map.transform.parent, false);
             overlay.transform.SetAsFirstSibling();
-            Tick("LateUpdate");
+            map.transform.SetAsFirstSibling();
+            var rect = (RectTransform)map.transform;
+            rect.anchorMin = rect.anchorMax = Vector2.one;
+            map.Advance(0f);
+            Assert.That(rect.anchorMin, Is.EqualTo(ExplorationMinimap.BottomRightCorner));
+            Assert.That(rect.pivot, Is.EqualTo(ExplorationMinimap.BottomRightCorner), "우하단 고정: 정사각형은 오른쪽 가장자리 기준으로 줄어든다");
             Assert.That(map.transform.GetSiblingIndex(), Is.EqualTo(overlay.transform.GetSiblingIndex() + 1));
         }
 
         [Test]
-        public void Mesh_TracksCameraMiningAndPlayer_AndUsesTenPercentArea()
+        public void Frame_WideTwoToOne_SquareOneToOne_SameCellSizeAndHeight()
         {
-            Assert.That(map.rectTransform.rect.width * map.rectTransform.rect.height,
-                Is.EqualTo(1920 * 1080 * 0.1f).Within(1));
-            int baseline = MeshCount();
-            PlaceTile(1, 1);
-            Assert.That(MeshCount(), Is.EqualTo(baseline + 4));
-            PlaceTile(100, 100);
-            Assert.That(MeshCount(), Is.EqualTo(baseline + 4));
-            camera.transform.position += new Vector3(100, 100, 0);
-            player.position += new Vector3(100, 100, 0);
-            Assert.That(MeshCount(), Is.EqualTo(baseline + 4));
-            player.position = Vector3.zero;
-            Assert.That(MeshCount(), Is.LessThan(baseline));
-            map.ToggleMap();
-            Assert.That(MeshCount(), Is.Zero);
-            map.ToggleMap();
-            Assert.That(MeshCount(), Is.GreaterThan(0));
-            Assert.That(map.raycastTarget, Is.False);
+            Open(MinimapBoardMode.Wide);
+            Vector2 wide = map.FrameRect.rect.size;
+            float wideCell = map.Window.CellPixels;
+            float wideViewportHeight = map.ViewportRect.rect.height;
+            Vector2 wideWindow = map.Window.Size;
+            Assert.That(wide.x / wide.y, Is.EqualTo(2f).Within(0.001f));
+            Assert.That(map.HintText, Is.EqualTo(ExplorationMinimap.ShrinkHintLabel));
+
+            Open(MinimapBoardMode.Square);
+            Vector2 square = map.FrameRect.rect.size;
+            Assert.That(square.x / square.y, Is.EqualTo(1f).Within(0.001f));
+            Assert.That(square.y, Is.EqualTo(wide.y));
+            Assert.That(map.Window.CellPixels, Is.EqualTo(wideCell), "셀 크기·시설 배율은 두 모드가 같다");
+            Assert.That(map.ViewportRect.rect.height, Is.EqualTo(wideViewportHeight));
+            Assert.That(map.Window.Size.y, Is.EqualTo(wideWindow.y).Within(0.001f));
+            Assert.That(map.Window.Size.x, Is.LessThan(wideWindow.x));
+            Assert.That(map.HintText, Is.EqualTo(ExplorationMinimap.CloseHintLabel));
+            Assert.That(map.TitleText, Is.EqualTo(ExplorationMinimap.TitleLabel));
+            Assert.That(map.FrameRect.localScale, Is.EqualTo(Vector3.one), "지도 자체를 늘이거나 압축하지 않는다");
+            Assert.That(map.ContentRect.localScale, Is.EqualTo(Vector3.one));
         }
 
         [Test]
-        public void Mesh_DrawsRemainingTilesAsDots_AndHidesMinedCells()
+        public void Legend_FitsBeforeHint_InBothModes()
         {
-            int empty = MeshCount();
-            PlaceTile(0, 0);
-            PlaceTile(1, 0);
-            int withTwo = MeshCount();
-            Assert.That(withTwo, Is.EqualTo(empty + 8));
-            Assert.That(HasRemainingDotColor(), Is.True);
-
-            terrain.SetTile(new Vector3Int(1, 0, 0), null);
-            map.RecordMining(new GameplayEventDto { type = GameplayEventType.TileMined, x = 1, y = 0 });
-            int afterMine = MeshCount();
-            Assert.That(afterMine, Is.EqualTo(empty + 4));
-
-            map.RecordMining(new GameplayEventDto { type = GameplayEventType.TileMined, x = 3, y = 0 });
-            Assert.That(MeshCount(), Is.EqualTo(afterMine));
-            Assert.That(HasRemainingDotColor(), Is.True);
-
-            terrain.SetTile(new Vector3Int(0, 0, 0), null);
-            map.RecordMining(new GameplayEventDto { type = GameplayEventType.TileMined, x = 0, y = 0 });
-            Assert.That(MeshCount(), Is.EqualTo(empty));
-            Assert.That(HasRemainingDotColor(), Is.False);
+            Open(MinimapBoardMode.Wide);
+            Assert.That(map.LegendRightEdge, Is.LessThanOrEqualTo(map.HintLeftEdge));
+            Open(MinimapBoardMode.Square);
+            Assert.That(map.LegendRightEdge, Is.LessThanOrEqualTo(map.HintLeftEdge + 0.5f), "정사각형에서도 범례가 안내와 겹치지 않는다");
         }
 
         [Test]
-        public void MKey_ReopensHiddenMap_AndIgnoresTextInput()
+        public void Window_StaysInsideCameraView_SoHiddenAreaIsNotRevealed()
+        {
+            Open(MinimapBoardMode.Wide);
+            float halfHeight = camera.orthographicSize;
+            float halfWidth = halfHeight * camera.aspect;
+            var window = map.Window;
+            Assert.That(window.Min.x, Is.GreaterThanOrEqualTo(-halfWidth - 0.001f));
+            Assert.That(window.Max.x, Is.LessThanOrEqualTo(halfWidth + 0.001f));
+            Assert.That(window.Min.y, Is.GreaterThanOrEqualTo(-halfHeight - 0.001f));
+            Assert.That(window.Max.y, Is.LessThanOrEqualTo(halfHeight + 0.001f));
+            // 카메라 밖 타일(-12, 6)은 셀 범위에 들어오지 않는다.
+            Assert.That(window.BaseCell.x, Is.GreaterThan(-12));
+        }
+
+        [Test]
+        public void Terrain_SeparatesBlocksEmptyAndUnobserved_AndMiningIsImmediate()
+        {
+            Open(MinimapBoardMode.Wide);
+            int blocks = Terrain(out int empty, out int unobserved);
+            Assert.That(blocks, Is.GreaterThan(0));
+            Assert.That(empty, Is.GreaterThan(0), "블록 위 공기 = 셀 없는 빈 공간");
+            Assert.That(map.Sample(-12, 6), Is.EqualTo(MinimapCellKind.Block));
+            Assert.That(map.Sample(0, 0), Is.EqualTo(MinimapCellKind.Empty));
+            Assert.That(map.Sample(100, 0), Is.EqualTo(MinimapCellKind.Void), "월드 밖 = 미관측");
+            Assert.That(unobserved, Is.GreaterThanOrEqualTo(0));
+
+            terrain.SetTile(new Vector3Int(0, -1, 0), null);
+            map.RecordMining(new GameplayEventDto { type = GameplayEventType.TileMined, x = 0, y = -1 });
+            map.Advance(0f);
+            Assert.That(Terrain(out _, out _), Is.EqualTo(blocks - 1), "채굴 셀은 지연 없이 빈 공간");
+            Assert.That(map.TerrainGraphic.FlashCount, Is.EqualTo(1), "가장자리 점등만 짧게");
+            Assert.That(map.Sample(0, -1), Is.EqualTo(MinimapCellKind.Empty));
+            Assert.That(map.MinedCellCount, Is.EqualTo(1));
+
+            map.RecordMining(new GameplayEventDto { type = GameplayEventType.GasTriggered, x = 3, y = -1 });
+            Assert.That(map.MinedCellCount, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void ResetAndRestore_ClearsPreviousMiningAndFacilities()
+        {
+            map.RecordMining(new GameplayEventDto { type = GameplayEventType.TileMined, x = 1, y = -1 });
+            map.Facilities.Upsert("old-1", "building.charger.basic", MinimapFacilityRegistry.FootprintCells(2, 0, 1, 1), false, 0f);
+            map.RestoreMining(new WorldSnapshotDto
+            {
+                miningChanges = new List<MiningSnapshotDto> { new() { x = 4, y = -1, isDestroyed = true }, new() { x = 5, y = -1 } },
+                buildings = new List<BuildingSnapshotDto>
+                {
+                    new() { instanceId = "core-9", buildingTypeId = "building.outpost_core.basic", x = -3, y = 0, footprintWidth = 2, footprintHeight = 2 }
+                }
+            });
+            Assert.That(map.MinedCellCount, Is.EqualTo(1));
+            Assert.That(map.Facilities.Count, Is.EqualTo(1), "이전 시설 잔상 없음");
+            Assert.That(map.Facilities.TryGet("core-9", out var core), Is.True);
+            Assert.That(core.Cells, Is.EqualTo(new Rect(-3f, 0f, 2f, 2f)));
+            map.RestoreMining(new WorldSnapshotDto());
+            Assert.That(map.MinedCellCount, Is.Zero);
+            Assert.That(map.Facilities.Count, Is.Zero);
+        }
+
+        [TestCase(1, 1)]
+        [TestCase(2, 2)]
+        [TestCase(1, 2)]
+        [TestCase(2, 1)]
+        public void Facility_DrawsActualFootprint_StandingOnBlockTop(int width, int height)
+        {
+            map.Facilities.Upsert("f-1", "building.clinic.basic", MinimapFacilityRegistry.FootprintCells(-2, 0, width, height), false, 0f);
+            Open(MinimapBoardMode.Wide);
+            var window = map.Window;
+            FillFacilities();
+            Assert.That(map.FacilityGraphic.TryGetDrawnFootprint("f-1", out var drawn), Is.True);
+            Assert.That(drawn.width, Is.EqualTo(width * window.CellPixels).Within(0.01f));
+            Assert.That(drawn.height, Is.EqualTo(height * window.CellPixels).Within(0.01f));
+            // 시설 하단 = y 0 = 아래 블록(y -1) 윗면.
+            float blockTop = (0 - window.BaseCell.y) * window.CellPixels;
+            Assert.That(drawn.yMin, Is.EqualTo(blockTop).Within(0.01f));
+            Assert.That(map.FacilityGraphic.DrawnCount, Is.EqualTo(1), "점유 셀마다 중복 아이콘을 만들지 않는다");
+        }
+
+        [Test]
+        public void Facility_OutsideWindowIsNotDrawn_EdgeFacilityIsDrawnAndMasked()
+        {
+            map.Facilities.Upsert("far", "building.charger.basic", MinimapFacilityRegistry.FootprintCells(40, 0, 1, 1), false, 0f);
+            Open(MinimapBoardMode.Wide);
+            var window = map.Window;
+            int edgeX = Mathf.CeilToInt(window.Max.x) - 1;
+            map.Facilities.Upsert("edge", "building.charger.basic", MinimapFacilityRegistry.FootprintCells(edgeX, 0, 2, 1), false, 0f);
+            map.Advance(0f);
+            FillFacilities();
+            Assert.That(map.FacilityGraphic.TryGetDrawnFootprint("far", out _), Is.False);
+            Assert.That(map.FacilityGraphic.TryGetDrawnFootprint("edge", out _), Is.True);
+            Assert.That(map.ViewportRect.GetComponent<RectMask2D>(), Is.Not.Null, "경계 시설은 실제 위치에서 마스크로 잘린다");
+        }
+
+        [Test]
+        public void Player_FeetFollowRealHeight_NotSnappedToGround()
+        {
+            var body = player.gameObject.AddComponent<BoxCollider2D>();
+            body.size = new Vector2(0.8f, 1.8f);
+            body.offset = new Vector2(0f, 0.9f);
+            Physics2D.SyncTransforms();
+            map.Bind(terrain, player, null);
+            UseTestCamera();
+            Open(MinimapBoardMode.Wide);
+            var window = map.Window;
+            float groundY = window.CellToViewport(new Vector2(0f, 0f)).y;
+            Assert.That(map.PlayerMarker.anchoredPosition.y, Is.EqualTo(groundY).Within(0.01f), "발이 블록 윗면에 닿는다");
+            Assert.That(map.PlayerMarker.sizeDelta.y, Is.EqualTo(1.8f * window.CellPixels).Within(0.01f));
+
+            player.position = new Vector3(0.3f, 1.25f, 0f);
+            map.Advance(0f);
+            window = map.Window;
+            Vector2 expected = window.CellToViewport(new Vector2(0.3f, 1.25f));
+            Assert.That(map.PlayerMarker.anchoredPosition.x, Is.EqualTo(expected.x).Within(0.01f));
+            Assert.That(map.PlayerMarker.anchoredPosition.y, Is.EqualTo(expected.y).Within(0.01f), "떠 있는 높이·이동을 그대로 반영");
+        }
+
+        [Test]
+        public void Opening_UsesMaskAperture_NotScale()
+        {
+            map.PressMapKey();
+            map.Advance(MinimapBoardTimeline.OpenDuration * 0.25f);
+            Assert.That(map.Pose.Open, Is.InRange(0.01f, 0.99f));
+            var aperture = (RectTransform)map.transform.Find(ExplorationMinimap.ApertureName);
+            Assert.That(aperture.GetComponent<RectMask2D>(), Is.Not.Null);
+            Assert.That(aperture.rect.height, Is.LessThan(map.FrameRect.rect.height));
+            Assert.That(map.FrameRect.rect.size, Is.EqualTo(new Vector2(MinimapBoardLayout.WideWidth, MinimapBoardLayout.FrameHeight)),
+                "프레임·지도는 처음부터 원래 크기, 마스크만 열린다");
+            Assert.That(map.FrameRect.lossyScale.y, Is.EqualTo(map.FrameRect.lossyScale.x));
+        }
+
+        [Test]
+        public void ScanLine_OnlyWhileShown_AndMovesTopToBottom()
+        {
+            Assert.That(map.IsScanLineVisible, Is.False);
+            Open(MinimapBoardMode.Wide);
+            Assert.That(map.IsScanLineVisible, Is.True);
+            float first = map.ScanLine.anchoredPosition.y;
+            map.Advance(0.5f);
+            Assert.That(map.ScanLine.anchoredPosition.y, Is.LessThan(first), "위 → 아래");
+            map.PressMapKey();
+            map.PressMapKey();
+            map.Advance(0.001f);
+            Assert.That(map.IsScanLineVisible, Is.False, "닫히는 순간 스캔선 제거");
+            map.Advance(1f);
+            Assert.That(map.IsBoardRendered, Is.False);
+        }
+
+        [Test]
+        public void MKey_OneStepPerPress_HoldDoesNotRepeat()
         {
             var keyboard = InputSystem.AddDevice<Keyboard>();
             try
             {
-                PressKeys(keyboard, Key.M);
-                Assert.That(map.IsMapVisible, Is.False);
-                PressKeys(keyboard, Key.M);
-                Assert.That(map.IsMapVisible, Is.True);
-                var events = Create("Events", typeof(EventSystem)).GetComponent<EventSystem>();
-                typeof(EventSystem).GetMethod("OnEnable", BindingFlags.NonPublic | BindingFlags.Instance)
-                    .Invoke(events, null);
+                Hold(keyboard, Key.M);
+                Tick("Update");
+                Tick("Update");
+                Assert.That(map.Mode, Is.EqualTo(MinimapBoardMode.Wide), "길게 눌러도 한 단계");
+                Release(keyboard);
+                Hold(keyboard, Key.M);
+                Assert.That(map.Mode, Is.EqualTo(MinimapBoardMode.Square));
+                Release(keyboard);
+                Hold(keyboard, Key.M);
+                Assert.That(map.Mode, Is.EqualTo(MinimapBoardMode.Closed));
+                Release(keyboard);
+                Hold(keyboard, Key.LeftCtrl, Key.M);
+                Assert.That(map.Mode, Is.EqualTo(MinimapBoardMode.Closed), "Ctrl 조합은 무시");
+                Release(keyboard);
+            }
+            finally
+            {
+                InputSystem.RemoveDevice(keyboard);
+            }
+        }
+
+        [Test]
+        public void MKey_IgnoredWhileTyping()
+        {
+            var keyboard = InputSystem.AddDevice<Keyboard>();
+            var events = Create("Events", typeof(EventSystem)).GetComponent<EventSystem>();
+            try
+            {
+                typeof(EventSystem).GetMethod("OnEnable", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(events, null);
                 var input = Create("Search", typeof(RectTransform), typeof(TMP_InputField));
                 input.GetComponent<TMP_InputField>().enabled = false;
                 EventSystem.current = events;
                 events.SetSelectedGameObject(input);
-                Assert.That(EventSystem.current.currentSelectedGameObject, Is.SameAs(input));
-                PressKeys(keyboard, Key.M);
-                Assert.That(map.IsMapVisible, Is.True);
+                Hold(keyboard, Key.M);
+                Assert.That(map.Mode, Is.EqualTo(MinimapBoardMode.Closed), "텍스트 입력 중 무시");
+                Release(keyboard);
                 events.SetSelectedGameObject(null);
-                typeof(EventSystem).GetMethod("OnDisable", BindingFlags.NonPublic | BindingFlags.Instance)
-                    .Invoke(events, null);
+                Hold(keyboard, Key.M);
+                Assert.That(map.Mode, Is.EqualTo(MinimapBoardMode.Wide), "선택 해제 후 정상 동작");
             }
             finally
             {
+                typeof(EventSystem).GetMethod("OnDisable", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(events, null);
                 InputSystem.RemoveDevice(keyboard);
             }
         }
 
         [Test]
-        public void CtrlM_HoldMakesOpaqueWithoutToggling()
+        public void MinimapNeverTouchesTimeScaleOrTiles()
         {
-            var keyboard = InputSystem.AddDevice<Keyboard>();
-            try
-            {
-                Assert.That(map.IsMapVisible, Is.True);
-                Assert.That(map.DisplayOpacity, Is.EqualTo(ExplorationMinimap.PanelOpacity).Within(0.01f));
-                PressKeys(keyboard, Key.LeftCtrl, Key.M);
-                Tick("LateUpdate");
-                Assert.That(map.IsMapVisible, Is.True);
-                Assert.That(map.IsOpaqueHold, Is.True);
-                Assert.That(map.DisplayOpacity, Is.EqualTo(ExplorationMinimap.OpaqueOpacity).Within(0.01f));
-                ReleaseKeys(keyboard);
-                Tick("LateUpdate");
-                Assert.That(map.IsOpaqueHold, Is.False);
-                Assert.That(map.IsMapVisible, Is.True);
-                Assert.That(map.DisplayOpacity, Is.EqualTo(ExplorationMinimap.PanelOpacity).Within(0.01f));
-            }
-            finally
-            {
-                InputSystem.RemoveDevice(keyboard);
-            }
+            float scale = Time.timeScale;
+            int tiles = terrain.GetUsedTilesCount();
+            Open(MinimapBoardMode.Wide);
+            Open(MinimapBoardMode.Square);
+            map.PressMapKey();
+            map.Advance(1f);
+            Assert.That(Time.timeScale, Is.EqualTo(scale));
+            Assert.That(terrain.GetUsedTilesCount(), Is.EqualTo(tiles));
         }
 
-        [Test]
-        public void Guide_DocumentsMinimapShortcuts()
+        private void Open(MinimapBoardMode target)
         {
-            // B-140: 글 본문이 카드(미니맵)로 바뀌었다. 같은 단축키 안내를 카드 내용에서 확인한다.
-            var card = SubTerra.App.UI.Guide.GameGuideCatalog.Get("ctrl.minimap");
-            Assert.That(card.Keys, Is.EqualTo("M / Ctrl + M"));
-            var controls = SubTerra.App.UI.Guide.GuideDetailBuilder.ToPlainText(
-                SubTerra.App.UI.Guide.GuideDetailBuilder.Build(card, null));
-            Assert.That(controls, Does.Contain("켜거나 끕니다"));
-            Assert.That(controls, Does.Contain("Ctrl + M"));
-            Assert.That(controls, Does.Contain("누르고 있는 동안"));
-            Assert.That(controls, Does.Contain("50%"));
+            for (int i = 0; i < 3 && map.Mode != target; i++) map.PressMapKey();
+            map.Advance(1f);
+            map.Advance(0f);
+            Assert.That(map.Mode, Is.EqualTo(target));
         }
 
-        private void PressKeys(Keyboard keyboard, params Key[] keys)
+        private int Terrain(out int empty, out int unobserved)
         {
-            InputSystem.QueueStateEvent(keyboard, new KeyboardState());
-            InputSystem.Update();
-            Tick("Update");
+            using var mesh = new VertexHelper();
+            map.TerrainGraphic.Fill(mesh);
+            empty = map.TerrainGraphic.EmptyCount;
+            unobserved = map.TerrainGraphic.VoidCount;
+            return map.TerrainGraphic.BlockCount;
+        }
+
+        private void FillFacilities()
+        {
+            using var mesh = new VertexHelper();
+            map.FacilityGraphic.Fill(mesh);
+            Assert.That(mesh.currentVertCount, Is.GreaterThan(0));
+        }
+
+        private void Hold(Keyboard keyboard, params Key[] keys)
+        {
             InputSystem.QueueStateEvent(keyboard, new KeyboardState(keys));
             InputSystem.Update();
             keyboard.MakeCurrent();
             Tick("Update");
         }
 
-        private void ReleaseKeys(Keyboard keyboard)
+        private void Release(Keyboard keyboard)
         {
             InputSystem.QueueStateEvent(keyboard, new KeyboardState());
             InputSystem.Update();
             Tick("Update");
-        }
-
-        private int MeshCount()
-        {
-            using var mesh = BuildMesh();
-            return mesh.currentVertCount;
-        }
-
-        private bool HasRemainingDotColor()
-        {
-            using var mesh = BuildMesh();
-            var vertex = new UIVertex();
-            Color32 expected = ExplorationMinimap.RemainingTileDot;
-            for (int i = 0; i < mesh.currentVertCount; i++)
-            {
-                mesh.PopulateUIVertex(ref vertex, i);
-                Color32 color = vertex.color;
-                if (color.r == expected.r && color.g == expected.g && color.b == expected.b && color.a == expected.a)
-                    return true;
-            }
-
-            return false;
-        }
-
-        private VertexHelper BuildMesh()
-        {
-            var mesh = new VertexHelper();
-            typeof(ExplorationMinimap).GetMethod("OnPopulateMesh", BindingFlags.NonPublic | BindingFlags.Instance,
-                null, new[] { typeof(VertexHelper) }, null)
-                .Invoke(map, new object[] { mesh });
-            return mesh;
         }
 
         private void PlaceTile(int x, int y) => terrain.SetTile(new Vector3Int(x, y, 0), tileAsset);
