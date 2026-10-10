@@ -271,7 +271,11 @@ namespace SubTerra.App.Tests.UI
         [TestCase("elevator", MinimapFacilityKind.Elevator)]
         [TestCase("building.ladder.basic", MinimapFacilityKind.Ladder)]
         [TestCase("building.support.basic", MinimapFacilityKind.Support)]
-        [TestCase("building.storage.basic", MinimapFacilityKind.Generic)]
+        [TestCase("building.storage.basic", MinimapFacilityKind.Storage)]
+        [TestCase("building.light.basic", MinimapFacilityKind.Light)]
+        [TestCase("building.settlement.basic", MinimapFacilityKind.Settlement)]
+        [TestCase("building.escape_portal.emergency", MinimapFacilityKind.Portal)]
+        [TestCase("building.unknown.basic", MinimapFacilityKind.Generic)]
         [TestCase(null, MinimapFacilityKind.Generic)]
         public void Kind_ClassifiesStableIds(string id, MinimapFacilityKind expected)
         {
@@ -281,13 +285,92 @@ namespace SubTerra.App.Tests.UI
         [Test]
         public void Kinds_DifferInShapeAndColour()
         {
-            var kinds = new[] { MinimapFacilityKind.Core, MinimapFacilityKind.Charger, MinimapFacilityKind.Clinic, MinimapFacilityKind.Elevator };
+            var kinds = ExplorationMinimap.LegendKinds;
+            Assert.That(kinds.Length, Is.EqualTo(8));
             for (int a = 0; a < kinds.Length; a++)
             for (int b = a + 1; b < kinds.Length; b++)
             {
                 Assert.That(MinimapPalette.GlyphForKind(kinds[a]), Is.Not.EqualTo(MinimapPalette.GlyphForKind(kinds[b])));
                 Assert.That(MinimapPalette.ForKind(kinds[a]), Is.Not.EqualTo(MinimapPalette.ForKind(kinds[b])));
             }
+        }
+
+        [Test]
+        public void NewFacilityGlyphs_MatchRequestedShapes()
+        {
+            Assert.That(MinimapPalette.GlyphForKind(MinimapFacilityKind.Light), Is.EqualTo(MinimapGlyph.Lamp));
+            Assert.That(MinimapPalette.GlyphForKind(MinimapFacilityKind.Storage), Is.EqualTo(MinimapGlyph.Cube));
+            Assert.That(MinimapPalette.GlyphForKind(MinimapFacilityKind.Settlement), Is.EqualTo(MinimapGlyph.Calculator));
+            Assert.That(MinimapPalette.GlyphForKind(MinimapFacilityKind.Portal), Is.EqualTo(MinimapGlyph.Wormhole));
+            Assert.That(MinimapPalette.GlyphForKind(MinimapFacilityKind.Elevator), Is.EqualTo(MinimapGlyph.Arrows));
+        }
+
+        [Test]
+        public void EveryGlyph_DrawsInsideItsRect_AndPortalSpinMovesOnlyTheInside()
+        {
+            var rect = new Rect(0f, 0f, 20f, 40f);
+            foreach (var glyph in new[] { MinimapGlyph.Lamp, MinimapGlyph.Cube, MinimapGlyph.Calculator, MinimapGlyph.Wormhole, MinimapGlyph.Beacon })
+            {
+                using var mesh = new UnityEngine.UI.VertexHelper();
+                MinimapMeshKit.Glyph(mesh, glyph, rect, Color.white);
+                Assert.That(mesh.currentVertCount, Is.GreaterThan(0), glyph + " 정점");
+                var vertex = new UIVertex();
+                for (int i = 0; i < mesh.currentVertCount; i++)
+                {
+                    mesh.PopulateUIVertex(ref vertex, i);
+                    Assert.That(vertex.position.x, Is.InRange(rect.xMin - 0.5f, rect.xMax + 0.5f), glyph + " x 영역 밖");
+                    Assert.That(vertex.position.y, Is.InRange(rect.yMin - 0.5f, rect.yMax + 0.5f), glyph + " y 영역 밖");
+                }
+            }
+
+            using var still = new UnityEngine.UI.VertexHelper();
+            using var turned = new UnityEngine.UI.VertexHelper();
+            var square = new Rect(0f, 0f, 20f, 20f);
+            MinimapMeshKit.Glyph(still, MinimapGlyph.Wormhole, square, Color.white, 0f);
+            MinimapMeshKit.Glyph(turned, MinimapGlyph.Wormhole, square, Color.white, 1f);
+            Assert.That(turned.currentVertCount, Is.EqualTo(still.currentVertCount));
+            Assert.That(MinimapFacilityGraphic.PortalSpin(0f), Is.EqualTo(0f).Within(1e-4f));
+            Assert.That(MinimapFacilityGraphic.PortalSpin(MinimapFacilityGraphic.PortalSpinSeconds * 0.5f), Is.EqualTo(Mathf.PI).Within(1e-3f));
+            Assert.That(MinimapFacilityGraphic.PortalSpinSeconds, Is.GreaterThanOrEqualTo(6f), "천천히 돈다");
+        }
+
+        [Test]
+        public void Beacon_BlinksBetweenDimAndFull()
+        {
+            float min = 2f;
+            float max = -1f;
+            for (float t = 0f; t < MinimapBoardTimeline.BeaconPeriod; t += 0.01f)
+            {
+                float v = MinimapBoardTimeline.BeaconBrightness(t);
+                min = Mathf.Min(min, v);
+                max = Mathf.Max(max, v);
+            }
+
+            Assert.That(max, Is.EqualTo(1f).Within(0.01f));
+            Assert.That(min, Is.LessThan(0.2f), "충분히 어두워져 깜빡임이 보인다");
+            Assert.That(min, Is.GreaterThanOrEqualTo(MinimapBoardTimeline.BeaconMinimum - 0.001f));
+        }
+
+        [Test]
+        public void Opacity_DefaultsToHalf_AndFadesInPointThreeSeconds()
+        {
+            var opacity = new MinimapOpacity();
+            Assert.That(opacity.Alpha, Is.EqualTo(0.5f));
+            Assert.That(opacity.IsOpaque, Is.False);
+            opacity.Toggle();
+            opacity.Advance(MinimapOpacity.FadeSeconds * 0.5f);
+            Assert.That(opacity.Alpha, Is.InRange(0.51f, 0.99f));
+            Assert.That(opacity.IsFading, Is.True);
+            opacity.Advance(MinimapOpacity.FadeSeconds * 0.5f);
+            Assert.That(opacity.Alpha, Is.EqualTo(1f).Within(1e-4f));
+            Assert.That(MinimapOpacity.FadeSeconds, Is.EqualTo(0.3f));
+            // 전환 도중 다시 누르면 현재 값에서 이어서 돌아간다.
+            opacity.Toggle();
+            opacity.Advance(0.1f);
+            float mid = opacity.Alpha;
+            Assert.That(mid, Is.InRange(0.5f, 0.999f));
+            opacity.Advance(1f);
+            Assert.That(opacity.Alpha, Is.EqualTo(0.5f).Within(1e-4f));
         }
 
         [Test]

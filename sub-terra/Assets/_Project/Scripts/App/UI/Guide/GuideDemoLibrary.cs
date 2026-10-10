@@ -383,7 +383,10 @@ namespace SubTerra.App.UI.Guide
                 }
             }
 
-            Box(c, 5f, 9f, 88f, 22f, new Color(0.93f, 0.99f, 1f, 1f)).Fade(a);
+            // 내 위치는 사람 모양 대신 깜빡이는 붉은 불빛으로 표시한다.
+            Box(c, 6f, 6f, 88f, 22f, new Color(1f, 0.16f, 0.14f, 1f))
+                .Fade(S(0f, 0f, 0.5f, 0f, 0.6f, 1f, 0.85f, 0.15f, 1.1f, 1f, 1.35f, 0.15f, 1.6f, 1f, 1.85f, 0.15f,
+                    2.1f, 1f, 2.35f, 0.15f, 2.6f, 1f, 2.85f, 0.15f, 3.1f, 1f, 3.3f, 0.6f, 3.46f, 0f, 4f, 0f));
             Key(c, "M", -97f, 42f, DemoTrack.Pulses(0.3f, 0.55f, 1.9f, 2.15f, 3.3f, 3.55f));
             return c;
         }

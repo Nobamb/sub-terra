@@ -44,6 +44,8 @@ namespace SubTerra.App.Integration
         public const float CloseDuration = 0.16f;
         public const float ScanPeriod = 3f;
         public const float RingPeriod = 2.4f;
+        public const float BeaconPeriod = 1.1f;
+        public const float BeaconMinimum = 0.12f;
 
         private MinimapBoardPose start;
         private float elapsed;
@@ -59,6 +61,15 @@ namespace SubTerra.App.Integration
         public float ScanPhase => Mathf.Repeat(DisplayClock, ScanPeriod) / ScanPeriod;
         /// <summary>위치 링 맥동 0~1.</summary>
         public float RingPulse => 0.5f + 0.5f * Mathf.Sin(DisplayClock * Mathf.PI * 2f / RingPeriod);
+        /// <summary>플레이어 위치 표시등의 깜빡임 밝기(최소~1).</summary>
+        public float BeaconBlink => BeaconBrightness(DisplayClock);
+
+        public static float BeaconBrightness(float clock)
+        {
+            float wave = Mathf.Sin(clock * Mathf.PI * 2f / BeaconPeriod);
+            float on = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(0.5f + 1.2f * wave));
+            return Mathf.Lerp(BeaconMinimum, 1f, on);
+        }
 
         public static MinimapBoardMode Next(MinimapBoardMode mode) => mode switch
         {

@@ -175,7 +175,8 @@ namespace SubTerra.App.Tests.UI
             // B-142: 미니맵은 M 하나로 닫힘 → 가로형 → 정사각형 → 닫힘을 순환한다.
             var minimap = Plain("ctrl.minimap");
             Assert.That(minimap, Does.Contain("한 단계만 전환됩니다"));
-            Assert.That(minimap, Does.Not.Contain("Ctrl"));
+            // 반투명(50%) 기본, Ctrl+M으로 불투명과 번갈아 전환한다.
+            Assert.That(minimap, Does.Contain("Ctrl+M"));
             Assert.That(GameGuideCatalog.Get("ctrl.minimap").Keys, Is.EqualTo("M"));
 
             // 건설은 B로 열고 C로 설치한다.
@@ -200,7 +201,21 @@ namespace SubTerra.App.Tests.UI
             var text = Plain("ctrl.minimap");
             Assert.That(text, Does.Contain("닫힘 → 가로형 → 작은 정사각형 → 닫힘"));
             Assert.That(text, Does.Contain("길게 눌러도 한 번만"));
-            Assert.That(text, Does.Not.Contain("50%"));
+            Assert.That(text, Does.Contain("50%"));
+            Assert.That(text, Does.Contain("0.3초"));
+            Assert.That(text, Does.Contain("깜빡이는 붉은 불빛"));
+        }
+
+        [Test]
+        public void Facilities_ExplainMinimapIcons()
+        {
+            foreach (var id in new[] { "fac.core", "fac.charger", "fac.clinic", "fac.elevator", "fac.light", "fac.storage", "fac.settlement", "fac.portal" })
+                Assert.That(Plain(id), Does.Contain("미니맵 아이콘"), id);
+            Assert.That(Plain("fac.storage"), Does.Contain("정육면체"));
+            Assert.That(Plain("fac.settlement"), Does.Contain("계산기"));
+            Assert.That(Plain("fac.light"), Does.Contain("전구"));
+            Assert.That(Plain("fac.portal"), Does.Contain("웜홀"));
+            Assert.That(Plain("fac.elevator"), Does.Contain("화살표"));
         }
 
         [Test]

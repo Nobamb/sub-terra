@@ -11,6 +11,8 @@ namespace SubTerra.App.Integration
     public sealed class MinimapFacilityGraphic : MaskableGraphic
     {
         public const float InactiveAlpha = 0.4f;
+        /// <summary>긴급 탈출 포탈 내부 아이콘이 한 바퀴 도는 시간(초).</summary>
+        public const float PortalSpinSeconds = 8f;
 
         private readonly Dictionary<string, Rect> drawnFootprints = new();
         private MinimapFacilityRegistry registry;
@@ -60,12 +62,15 @@ namespace SubTerra.App.Integration
                     if ((pass == 0) != background || !window.Overlaps(record.Cells)) continue;
                     Rect footprint = window.CellRectToContent(record.Cells);
                     drawnFootprints[record.Id] = footprint;
-                    Draw(mesh, record, footprint, window.CellPixels, MinimapFacilityRegistry.FlashProgress(record, now));
+                    Draw(mesh, record, footprint, window.CellPixels, MinimapFacilityRegistry.FlashProgress(record, now), now);
                 }
             }
         }
 
-        private static void Draw(VertexHelper mesh, MinimapFacilityRecord record, Rect footprint, float px, float flash)
+        /// <summary>포탈 내부 소용돌이의 현재 회전각(라디안). unscaled 시간 기준으로 천천히 한 방향으로 돈다.</summary>
+        public static float PortalSpin(float time) => Mathf.Repeat(time / PortalSpinSeconds, 1f) * Mathf.PI * 2f;
+
+        private static void Draw(VertexHelper mesh, MinimapFacilityRecord record, Rect footprint, float px, float flash, float time)
         {
             float alpha = record.Active ? 1f : InactiveAlpha;
             Color tint = MinimapPalette.ForKind(record.Kind);
@@ -78,6 +83,23 @@ namespace SubTerra.App.Integration
                 float side = Mathf.Max(1f, px * 0.12f);
                 MinimapMeshKit.Glyph(mesh, glyph, Rect.MinMaxRect(footprint.xMin + side, footprint.yMin, footprint.xMax - side, footprint.yMax), MinimapPalette.WithAlpha(tint, 0.7f));
                 if (flash >= 0f) DrawFlash(mesh, footprint, px, flash);
+                return;
+            }
+
+            if (record.Kind == MinimapFacilityKind.Elevator)
+            {
+                DrawElevator(mesh, footprint, px, tint);
+                if (flash >= 0f) DrawFlash(mesh, footprint, px, flash);
+                return;
+            }
+
+            if (record.Kind == MinimapFacilityKind.Light)
+            {
+                // 조명은 상자 없이 전구 모양 자체로 그린다. 바닥이 점유 하단에 닿는다.
+                float side = Mathf.Max(1f, px * 0.1f);
+                var lamp = Rect.MinMaxRect(footprint.xMin + side, footprint.yMin, footprint.xMax - side, footprint.yMax - px * 0.05f);
+                MinimapMeshKit.Glyph(mesh, glyph, lamp, tint);
+                if (flash >= 0f) DrawFlash(mesh, lamp, px, flash);
                 return;
             }
 
@@ -100,10 +122,44 @@ namespace SubTerra.App.Integration
                 MinimapMeshKit.Quad(mesh, Rect.MinMaxRect(body.xMax - tab * 2f, body.yMax, body.xMax - tab, body.yMax + tabHeight), tint);
             }
 
-            float size = Mathf.Min(body.width, body.height) * 0.62f;
-            var glyphRect = new Rect(body.center.x - size * 0.5f, body.center.y - size * 0.5f, size, size);
-            MinimapMeshKit.Glyph(mesh, glyph, glyphRect, tint);
+            Rect glyphRect;
+            if (record.Kind == MinimapFacilityKind.Settlement)
+            {
+                // 1x2 계산기: 세로로 긴 영역을 그대로 쓴다.
+                float gw = body.width * 0.72f;
+                float gh = body.height * 0.76f;
+                glyphRect = new Rect(body.center.x - gw * 0.5f, body.center.y - gh * 0.5f, gw, gh);
+            }
+            else
+            {
+                float ratio = record.Kind == MinimapFacilityKind.Storage ? 0.74f
+                    : record.Kind == MinimapFacilityKind.Portal ? 0.72f
+                    : 0.62f;
+                float size = Mathf.Min(body.width, body.height) * ratio;
+                glyphRect = new Rect(body.center.x - size * 0.5f, body.center.y - size * 0.5f, size, size);
+            }
+
+            float spin = record.Kind == MinimapFacilityKind.Portal ? PortalSpin(time) : 0f;
+            MinimapMeshKit.Glyph(mesh, glyph, glyphRect, tint, spin);
             if (flash >= 0f) DrawFlash(mesh, body, px, flash);
+        }
+
+        /// <summary>승강로를 사각형 대신 위·아래 화살표 아이콘을 세로로 늘어놓아 표시한다.</summary>
+        private static void DrawElevator(VertexHelper mesh, Rect footprint, float px, Color tint)
+        {
+            float side = Mathf.Clamp(footprint.width * 0.7f, 6f, Mathf.Max(6f, px * 2.2f));
+            float pitch = side * 1.5f;
+            int count = Mathf.Clamp(Mathf.FloorToInt(footprint.height / pitch), 1, 40);
+            float rail = Mathf.Max(1f, px * 0.06f);
+            float cx = footprint.center.x;
+            MinimapMeshKit.Quad(mesh, Rect.MinMaxRect(cx - rail * 0.5f, footprint.yMin, cx + rail * 0.5f, footprint.yMax),
+                MinimapPalette.WithAlpha(tint, 0.22f));
+            float start = footprint.yMin + (footprint.height - count * pitch) * 0.5f + (pitch - side) * 0.5f;
+            for (int i = 0; i < count; i++)
+            {
+                var icon = new Rect(cx - side * 0.5f, start + i * pitch, side, side);
+                MinimapMeshKit.Glyph(mesh, MinimapGlyph.Arrows, icon, tint);
+            }
         }
 
         private static void DrawFlash(VertexHelper mesh, Rect rect, float px, float progress)

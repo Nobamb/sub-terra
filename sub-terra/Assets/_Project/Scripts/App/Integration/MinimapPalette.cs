@@ -34,6 +34,13 @@ namespace SubTerra.App.Integration
         public static readonly Color Clinic = new(0.32f, 1f, 0.58f, 1f);
         public static readonly Color Elevator = new(0.42f, 0.8f, 1f, 1f);
         public static readonly Color Generic = new(0.72f, 0.82f, 0.86f, 1f);
+        public static readonly Color Light = new(1f, 0.93f, 0.45f, 1f);
+        public static readonly Color Storage = new(1f, 0.62f, 0.3f, 1f);
+        public static readonly Color Settlement = new(0.78f, 0.62f, 1f, 1f);
+        public static readonly Color Portal = new(1f, 0.42f, 0.86f, 1f);
+        /// <summary>플레이어 위치 표시등. 깜빡이는 붉은 불빛.</summary>
+        public static readonly Color Beacon = new(1f, 0.16f, 0.14f, 1f);
+        public static readonly Color BeaconGlow = new(1f, 0.2f, 0.16f, 0.4f);
 
         public static Color ForKind(MinimapFacilityKind kind) => kind switch
         {
@@ -41,6 +48,10 @@ namespace SubTerra.App.Integration
             MinimapFacilityKind.Charger => Charger,
             MinimapFacilityKind.Clinic => Clinic,
             MinimapFacilityKind.Elevator => Elevator,
+            MinimapFacilityKind.Light => Light,
+            MinimapFacilityKind.Storage => Storage,
+            MinimapFacilityKind.Settlement => Settlement,
+            MinimapFacilityKind.Portal => Portal,
             _ => Generic
         };
 
@@ -52,6 +63,10 @@ namespace SubTerra.App.Integration
             MinimapFacilityKind.Elevator => MinimapGlyph.Arrows,
             MinimapFacilityKind.Ladder => MinimapGlyph.Ladder,
             MinimapFacilityKind.Support => MinimapGlyph.Support,
+            MinimapFacilityKind.Light => MinimapGlyph.Lamp,
+            MinimapFacilityKind.Storage => MinimapGlyph.Cube,
+            MinimapFacilityKind.Settlement => MinimapGlyph.Calculator,
+            MinimapFacilityKind.Portal => MinimapGlyph.Wormhole,
             _ => MinimapGlyph.Generic
         };
 

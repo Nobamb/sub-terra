@@ -19,7 +19,11 @@ namespace SubTerra.App.Integration
         Clinic = 3,
         Elevator = 4,
         Ladder = 5,
-        Support = 6
+        Support = 6,
+        Light = 7,
+        Storage = 8,
+        Settlement = 9,
+        Portal = 10
     }
 
     /// <summary>지형 셀 조회. 타일 상태를 읽기만 한다.</summary>
@@ -72,6 +76,10 @@ namespace SubTerra.App.Integration
             if (buildingId.StartsWith("building.clinic")) return MinimapFacilityKind.Clinic;
             if (buildingId.StartsWith("building.ladder")) return MinimapFacilityKind.Ladder;
             if (buildingId.StartsWith("building.support")) return MinimapFacilityKind.Support;
+            if (buildingId.StartsWith("building.light")) return MinimapFacilityKind.Light;
+            if (buildingId.StartsWith("building.storage")) return MinimapFacilityKind.Storage;
+            if (buildingId.StartsWith("building.settlement")) return MinimapFacilityKind.Settlement;
+            if (buildingId.StartsWith("building.escape_portal")) return MinimapFacilityKind.Portal;
             if (buildingId.StartsWith("elevator")) return MinimapFacilityKind.Elevator;
             return MinimapFacilityKind.Generic;
         }
@@ -165,6 +173,17 @@ namespace SubTerra.App.Integration
             if (record == null || record.BuiltAt < 0f) return -1f;
             float t = (now - record.BuiltAt) / BuildFlashDuration;
             return t >= 0f && t < 1f ? t : -1f;
+        }
+
+        /// <summary>창 안에 보이는 포탈이 있으면 내부 회전 때문에 매 프레임 다시 그려야 한다.</summary>
+        public bool AnyAnimatedVisible(MinimapWindow window)
+        {
+            for (int i = 0; i < records.Count; i++)
+            {
+                if (records[i].Kind == MinimapFacilityKind.Portal && window.Overlaps(records[i].Cells)) return true;
+            }
+
+            return false;
         }
 
         public bool AnyFlashActive(float now)

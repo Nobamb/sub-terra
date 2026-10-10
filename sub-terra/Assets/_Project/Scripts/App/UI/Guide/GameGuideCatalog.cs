@@ -239,8 +239,9 @@ namespace SubTerra.App.UI.Guide
 
             Control("ctrl.minimap", "미니맵", "M으로 광산 관측판을 열고, 작게 줄이고, 닫습니다.", MinimapKeys, "minimap")
                 .Step("M", "M을 누를 때마다 닫힘 → 가로형 → 작은 정사각형 → 닫힘으로 한 단계만 전환됩니다. 길게 눌러도 한 번만 전환됩니다.")
-                .Data("표시 내용", "화면에 보이는 범위의 남은 블록, 채굴한 빈 공간, 내 위치(밝은 인물 표시)와 시설의 실제 위치·크기를 표시합니다.")
-                .Tip("코어(6각형)·충전기(번개)·보건소(십자)·엘리베이터(위·아래 화살표)는 색과 모양으로 구분합니다.");
+                .Step("Ctrl+M", "미니맵은 기본적으로 반투명(50%)입니다. Ctrl+M을 누를 때마다 0.3초 만에 불투명과 반투명이 번갈아 바뀝니다.")
+                .Data("표시 내용", "화면에 보이는 범위의 남은 블록, 채굴한 빈 공간, 내 위치(깜빡이는 붉은 불빛)와 시설의 실제 위치·크기를 표시합니다.")
+                .Tip("미니맵 아래의 아이콘은 이름 없이 모양과 색으로 시설을 구분합니다. 각 아이콘의 설명은 '자원·시설' 탭의 시설 항목에서 볼 수 있습니다.");
 
             Control("ctrl.clock", "광산 초기화 타이머", "남은 탐사 시간을 화면 상단 시계로 확인합니다.", "T", "clock")
                 .Step("T", "화면 상단 중앙의 전자시계를 켜고 끕니다.")
@@ -355,29 +356,34 @@ namespace SubTerra.App.UI.Guide
                 .Data("연결 조건", "전력망 연결 없이 가까이에서 쓸 수 있습니다.")
                 .Data("수량", "요청한 수량이 가진·보관한 수량보다 많으면 있는 만큼만 옮깁니다. 꺼낼 때 화물 무게 한도를 넘으면 꺼내지 못합니다.")
                 .Tip("보관함의 자원은 탐사 실패·구출 비용에서 제외됩니다.")
+                .Data("미니맵 아이콘", "주황색 정육면체 모양으로, 1×1칸 크기로 표시됩니다.")
                 .Link("mech.cargo", "ctrl.interact");
 
             Facility("fac.charger", charger, "탐사 전력 충전", "E", DataIds.Buildings.ChargerBasic)
                 .Data("효과", "전력을 가득 채웁니다.")
                 .Data("연결 조건", "엘리베이터나 " + core + "의 전력 공급 범위 안에서만 쓸 수 있습니다.")
                 .Data("재사용", "한 번 쓰면 " + cooldown + " 동안 다시 쓸 수 없습니다.")
+                .Data("미니맵 아이콘", "노란색 번개 모양입니다. 전력을 받지 못하면 흐리게 표시됩니다.")
                 .Link("ctrl.interact", "mech.grid", "mech.power");
 
             Facility("fac.clinic", clinic, "체력 회복", "E", DataIds.Buildings.ClinicBasic)
                 .Data("효과", "체력을 최대치까지 회복합니다.")
                 .Data("연결 조건", "엘리베이터나 " + core + "의 전력 공급 범위 안에서만 쓸 수 있습니다.")
                 .Data("재사용", "한 번 쓰면 " + cooldown + " 동안 다시 쓸 수 없습니다.")
+                .Data("미니맵 아이콘", "초록색 십자 모양입니다. 전력을 받지 못하면 흐리게 표시됩니다.")
                 .Link("ctrl.interact", "mech.grid", "mech.health");
 
             Facility("fac.settlement", settlement, "보유 자원 판매", "E", DataIds.Buildings.SettlementBasic)
                 .Data("효과", "가진 광물을 골드로 정산합니다. 정산할 자원을 고르는 판매 창이 열립니다.")
                 .Data("연결 조건", "엘리베이터나 " + core + "의 전력 공급 범위 안에서만 쓸 수 있습니다.")
                 .Data("제외", ItemDisplayNames.Mineral(DataIds.RareItems.EngineFuel) + " 같은 희귀 품목은 정산할 수 없고 지상 기지에서 판매합니다.")
+                .Data("미니맵 아이콘", "보라색 계산기 모양으로, 가로 1칸 × 세로 2칸 크기로 표시됩니다. 전력을 받지 못하면 흐리게 표시됩니다.")
                 .Link("ctrl.interact", "res.fuel", "mech.grid");
 
             Facility("fac.core", core, "기지 핵심 시설", "E", DataIds.Buildings.OutpostCoreBasic)
                 .Data("효과", "주변 시설에 전력을 공급하고 유독 가스 정화 안전지대를 만들며 탐사 체크포인트가 됩니다.")
                 .Data("사용", "가까이에서 E 키로 CCTV 창을 열어 연결된 시설을 확인합니다.")
+                .Data("미니맵 아이콘", "청록색 육각형 모양입니다.")
                 .Link("mech.core", "mech.grid", "mech.gas");
 
             Facility("fac.ladder", ladder, "다른 높이로 이동", "W S", DataIds.Buildings.LadderBasic)
@@ -390,6 +396,7 @@ namespace SubTerra.App.UI.Guide
 
             Facility("fac.light", light, "지하 구역을 밝힘", string.Empty, DataIds.Buildings.LightBasic)
                 .Data("효과", "전력이 연결된 구역을 밝힙니다.")
+                .Data("미니맵 아이콘", "노란색 전구 모양으로, 세로로 긴 1×2칸 크기로 표시됩니다. 전력을 받지 못하면 흐리게 표시됩니다.")
                 .Link("ctrl.build", "mech.grid");
 
             Facility("fac.portal", portal, "긴급 이동 시설", "E", DataIds.Buildings.EmergencyEscapePortal)
@@ -398,11 +405,13 @@ namespace SubTerra.App.UI.Guide
                 .Step("비용 확인 후 이동", "비용을 확인하고 실행하면 선택한 곳으로 이동합니다.")
                 .Data("비용", "골드 " + EmergencyEscapeService.GoldCost + "G와 최대 전력의 "
                     + Math.Round(EmergencyEscapeService.MaximumEnergyCostRatio * 100d).ToString("0", CultureInfo.InvariantCulture) + "%")
+                .Data("미니맵 아이콘", "분홍색 웜홀 모양으로, 안쪽 소용돌이가 천천히 돕니다. 2×2칸 크기로 표시됩니다.")
                 .Link("ctrl.interact", "mech.core");
 
             Add(new GuideCardDef("fac.elevator", GuideTabKind.Resources, GuideCardKind.Facility, "엘리베이터", "지상 기지로 귀환", "E", "fac.elevator"))
                 .Data("사용", "광산의 엘리베이터 안에서 E 키를 누르면 지상 기지로 귀환합니다. " + elevatorEnergyText)
                 .Data("전력 공급", "엘리베이터 주변에는 전력이 공급됩니다. " + charger + "·" + clinic + "·" + settlement + "을 가까이 두면 쓸 수 있습니다.")
+                .Data("미니맵 아이콘", "하늘색 위·아래 화살표 모양입니다. 승강로를 따라 화살표가 세로로 늘어서 표시됩니다.")
                 .Link("ctrl.elevator", "mech.grid");
 
             // ---------------------------------------------------------------- 첫 탐사 안내

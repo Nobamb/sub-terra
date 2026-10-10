@@ -129,6 +129,55 @@ namespace SubTerra.App.Tests.UI
         }
 
         [Test]
+        public void Legend_ShowsIconsOnly_WithoutFacilityNames()
+        {
+            Open(MinimapBoardMode.Wide);
+            Assert.That(map.LegendIconCount, Is.EqualTo(ExplorationMinimap.LegendKinds.Length));
+            foreach (var name in new[] { "코어", "충전기", "보건소", "엘리베이터", "조명", "보관함", "정산 콘솔", "긴급 탈출 포탈" })
+            {
+                foreach (var text in map.GetComponentsInChildren<TMPro.TMP_Text>(true))
+                    Assert.That(text.text, Does.Not.Contain(name), "하단에 시설 이름을 쓰지 않는다");
+            }
+        }
+
+        [Test]
+        public void PlayerMarker_IsBlinkingRedLight_NotPersonSilhouette()
+        {
+            Open(MinimapBoardMode.Wide);
+            Assert.That(map.BeaconRect, Is.Not.Null);
+            var glyphs = map.PlayerMarker.GetComponentsInChildren<MinimapGlyphGraphic>(true);
+            Assert.That(glyphs.Length, Is.GreaterThan(0));
+            foreach (var glyph in glyphs) Assert.That(glyph.Glyph, Is.Not.EqualTo(MinimapGlyph.Person), "사람 모양은 쓰지 않는다");
+            var beacon = map.BeaconRect.GetComponent<MinimapGlyphGraphic>();
+            Assert.That(beacon.Glyph, Is.EqualTo(MinimapGlyph.Beacon));
+            Assert.That(beacon.color, Is.EqualTo(Color.white), "색은 정점색(붉은색)으로 그린다");
+            Assert.That(MinimapPalette.Beacon.r, Is.GreaterThan(0.9f));
+            Assert.That(MinimapPalette.Beacon.g, Is.LessThan(0.3f));
+            Assert.That(MinimapPalette.Beacon.b, Is.LessThan(0.3f));
+        }
+
+        [Test]
+        public void Opacity_DefaultsToHalf_AndCtrlMTogglesOpaqueInPointThreeSeconds()
+        {
+            Assert.That(map.IsOpaque, Is.False);
+            Assert.That(map.CurrentAlpha, Is.EqualTo(0.5f).Within(0.001f), "기본 50% 투명도");
+            map.Advance(1f);
+            Assert.That(map.CurrentAlpha, Is.EqualTo(0.5f).Within(0.001f), "시간이 지나도 기본값 유지");
+
+            Assert.That(map.PressOpacityKey(), Is.True);
+            map.Advance(0.1f);
+            Assert.That(map.CurrentAlpha, Is.InRange(0.51f, 0.99f), "전환 중");
+            map.Advance(0.2f);
+            Assert.That(map.CurrentAlpha, Is.EqualTo(1f).Within(0.001f), "0.3초 뒤 불투명");
+            Assert.That(map.IsOpaque, Is.True);
+
+            Assert.That(map.PressOpacityKey(), Is.False);
+            map.Advance(0.3f);
+            Assert.That(map.CurrentAlpha, Is.EqualTo(0.5f).Within(0.001f), "다시 누르면 반투명");
+            Assert.That(map.Mode, Is.EqualTo(MinimapBoardMode.Closed), "투명도 전환은 지도 단계를 바꾸지 않는다");
+        }
+
+        [Test]
         public void Window_StaysInsideCameraView_SoHiddenAreaIsNotRevealed()
         {
             Open(MinimapBoardMode.Wide);

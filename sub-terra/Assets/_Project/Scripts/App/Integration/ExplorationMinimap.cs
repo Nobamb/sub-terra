@@ -27,11 +27,12 @@ namespace SubTerra.App.Integration
         /// <summary>바깥 화면 쪽 이벤트를 놓쳐도 표시 중 이 주기로 지형을 다시 읽는다.</summary>
         public const float TerrainSafetyRefreshSeconds = 1f;
         public static readonly Vector2 BottomRightCorner = new(1f, 0f);
+        /// <summary>하단 범례는 이름 없이 아이콘만 둔다. 설명은 게임 가이드 시설 항목에 있다.</summary>
         public static readonly MinimapFacilityKind[] LegendKinds =
         {
-            MinimapFacilityKind.Core, MinimapFacilityKind.Charger, MinimapFacilityKind.Clinic, MinimapFacilityKind.Elevator
+            MinimapFacilityKind.Core, MinimapFacilityKind.Charger, MinimapFacilityKind.Clinic, MinimapFacilityKind.Elevator,
+            MinimapFacilityKind.Light, MinimapFacilityKind.Storage, MinimapFacilityKind.Settlement, MinimapFacilityKind.Portal
         };
-        public static readonly string[] LegendLabels = { "코어", "충전기", "보건소", "엘리베이터" };
 
         public const string ApertureName = "Aperture";
         public const string BoardName = "Board";
@@ -41,7 +42,10 @@ namespace SubTerra.App.Integration
 
         private const string DarknessOverlayName = "DepthDarknessOverlay";
         private const float LegendLeft = 10f;
+        private const float LegendIconSize = 14f;
         private const float HintPadding = 10f;
+        /// <summary>범례의 긴급 탈출 포탈 아이콘이 한 바퀴 도는 시간(초). 지도 속 포탈과 같은 속도다.</summary>
+        private const float LegendSpinSeconds = MinimapFacilityGraphic.PortalSpinSeconds;
         private static readonly Vector2 FallbackPlayerCells = new(0.7f, 1.6f);
 
         private readonly HashSet<Vector3Int> minedCells = new();
@@ -51,12 +55,10 @@ namespace SubTerra.App.Integration
         private readonly Dictionary<string, BuildingInstance> facilityInstances = new();
         private readonly Dictionary<string, PowerNode> facilityPower = new();
         private readonly List<string> scratchIds = new();
-        private readonly MinimapGlyphGraphic[] legendIcons = new MinimapGlyphGraphic[4];
-        private readonly TMP_Text[] legendTexts = new TMP_Text[4];
-        private readonly float[] legendWidthsLarge = new float[4];
-        private readonly float[] legendWidthsSmall = new float[4];
-        private readonly float[] legendWidthsScaled = new float[4];
-        private readonly float[] legendX = new float[4];
+        private readonly MinimapOpacity opacity = new();
+        private readonly MinimapGlyphGraphic[] legendIcons = new MinimapGlyphGraphic[LegendKinds.Length];
+        private readonly float[] legendWidths = new float[LegendKinds.Length];
+        private readonly float[] legendX = new float[LegendKinds.Length];
 
         private Tilemap terrain;
         private Transform player;
@@ -88,7 +90,8 @@ namespace SubTerra.App.Integration
         private MinimapFrameGraphic frameGraphic;
         private MinimapTerrainGraphic terrainGraphic;
         private MinimapFacilityGraphic facilityGraphic;
-        private MinimapGlyphGraphic silhouette;
+        private MinimapGlyphGraphic beacon;
+        private RectTransform beaconRect;
         private MinimapGlyphGraphic ring;
         private Image scanImage;
         private Image beamTopImage;
@@ -117,6 +120,11 @@ namespace SubTerra.App.Integration
         public bool IsTransitioning => timeline.IsTransitioning;
         public int MinedCellCount => minedCells.Count;
         public MinimapFacilityRegistry Facilities => facilities;
+        /// <summary>true면 불투명(Ctrl+M), false면 기본 반투명(50%).</summary>
+        public bool IsOpaque => opacity.IsOpaque;
+        public float CurrentAlpha => rootGroup != null ? rootGroup.alpha : opacity.Alpha;
+        public RectTransform BeaconRect => beaconRect;
+        public int LegendIconCount => legendIcons.Length;
         public MinimapWindow Window => window;
         public float CurrentFrameWidth => MinimapBoardLayout.FrameWidth(timeline.Pose.Width);
         public string HintText => hint != null ? hint.text : string.Empty;
@@ -197,6 +205,13 @@ namespace SubTerra.App.Integration
             return mode;
         }
 
+        /// <summary>Ctrl+M 한 번 = 반투명 ↔ 불투명 전환(0.3초). 입력 경로는 Update 한 곳뿐이며 테스트도 이 진입점을 쓴다.</summary>
+        public bool PressOpacityKey()
+        {
+            EnsureHierarchy();
+            return opacity.Toggle();
+        }
+
         /// <summary>우하단 고정·화면 맞춤 배율·암전 오버레이 위 정렬을 적용한다.</summary>
         public void ApplyHudLayout()
         {
@@ -219,6 +234,9 @@ namespace SubTerra.App.Integration
         {
             EnsureHierarchy();
             timeline.Advance(unscaledDeltaTime);
+            opacity.Advance(unscaledDeltaTime);
+            float alpha = opacity.Alpha;
+            if (!Mathf.Approximately(rootGroup.alpha, alpha)) rootGroup.alpha = alpha;
             ApplyHudLayout();
             bool shown = timeline.IsVisible;
             SetBoardRendered(shown);
@@ -277,9 +295,14 @@ namespace SubTerra.App.Integration
         {
             var keyboard = Keyboard.current;
             bool mapKeyDown = keyboard != null && keyboard.mKey.isPressed;
-            // 누르고 있는 동안은 첫 프레임에만 한 단계 전환한다.
-            if (mapKeyDown && !wasMapKeyDown && CanCycleFromKeyboard(keyboard))
-                PressMapKey();
+            // 누르고 있는 동안은 첫 프레임에만 한 번 처리한다. Ctrl+M은 투명도, M만은 단계 전환.
+            if (mapKeyDown && !wasMapKeyDown && IsInputAvailable(keyboard))
+            {
+                bool ctrl = keyboard.leftCtrlKey.isPressed || keyboard.rightCtrlKey.isPressed;
+                if (ctrl) PressOpacityKey();
+                else PressMapKey();
+            }
+
             wasMapKeyDown = mapKeyDown;
         }
 
@@ -288,11 +311,9 @@ namespace SubTerra.App.Integration
             Advance(Time.unscaledDeltaTime);
         }
 
-        private static bool CanCycleFromKeyboard(Keyboard keyboard)
+        private static bool IsInputAvailable(Keyboard keyboard)
         {
             if (SubTerra.App.UI.UiPauseGate.IsHeld) return false;
-            // Ctrl 조합은 다른 단축키와 겹치지 않게 무시한다.
-            if (keyboard.leftCtrlKey.isPressed || keyboard.rightCtrlKey.isPressed) return false;
             var selected = EventSystem.current != null ? EventSystem.current.currentSelectedGameObject : null;
             return selected == null || (selected.GetComponentInParent<TMP_InputField>() == null
                 && selected.GetComponentInParent<InputField>() == null);
@@ -376,7 +397,9 @@ namespace SubTerra.App.Integration
             terrainFlashing = flashing;
             PollFacilityStates();
             bool facilityFlash = facilities.AnyFlashActive(now);
-            if (geometryChanged || facilities.Version != drawnFacilityVersion || facilityFlash || facilityFlashing)
+            // 포탈 내부 소용돌이는 천천히 계속 돌기 때문에 보이는 동안 다시 그린다.
+            bool facilityAnimated = facilities.AnyAnimatedVisible(window);
+            if (geometryChanged || facilities.Version != drawnFacilityVersion || facilityFlash || facilityFlashing || facilityAnimated)
             {
                 facilityGraphic.Configure(facilities, window, now);
                 drawnFacilityVersion = facilities.Version;
@@ -397,10 +420,16 @@ namespace SubTerra.App.Integration
             var size = new Vector2(Mathf.Max(6f, bodyCells.x * px), Mathf.Max(10f, bodyCells.y * px));
             playerMarker.anchoredPosition = window.CellToViewport(feet);
             if (playerMarker.sizeDelta != size) playerMarker.sizeDelta = size;
-            float ringSize = Mathf.Max(size.x, size.y) * 1.2f;
+            // 깜빡이는 붉은 표시등은 몸 중앙에 고정 크기로 둔다. 사람 모양은 쓰지 않는다.
+            float lightSize = Mathf.Clamp(px * 1.5f, 12f, 22f);
+            var lightDelta = new Vector2(lightSize, lightSize);
+            if (beaconRect.sizeDelta != lightDelta) beaconRect.sizeDelta = lightDelta;
+            var center = new Vector2(0f, size.y * 0.5f);
+            beaconRect.anchoredPosition = center;
+            float ringSize = lightSize * 1.9f;
             var ringDelta = new Vector2(ringSize, ringSize);
             if (ringRect.sizeDelta != ringDelta) ringRect.sizeDelta = ringDelta;
-            ringRect.anchoredPosition = new Vector2(0f, size.y * 0.5f);
+            ringRect.anchoredPosition = center;
         }
 
         private void UpdateDecor(MinimapBoardPose pose)
@@ -414,11 +443,16 @@ namespace SubTerra.App.Integration
                 scanImage.canvasRenderer.SetAlpha(pose.Terrain);
             }
 
-            // 위치 링만 느리고 약하게 맥동한다. 실루엣은 고정.
-            float pulse = timeline.RingPulse;
-            float scale = 1f + 0.08f * pulse;
+            // 붉은 표시등이 깜빡이고, 바깥 링은 꺼질 때 살짝 퍼지며 사라진다.
+            float blink = timeline.BeaconBlink;
+            beacon.canvasRenderer.SetAlpha(blink);
+            float scale = 1f + 0.3f * (1f - blink);
             ringRect.localScale = new Vector3(scale, scale, 1f);
-            ring.canvasRenderer.SetAlpha(0.45f + 0.3f * pulse);
+            ring.canvasRenderer.SetAlpha(0.7f * blink);
+            // 범례의 포탈 아이콘도 지도 속 포탈처럼 천천히 돈다.
+            int portal = Array.IndexOf(LegendKinds, MinimapFacilityKind.Portal);
+            if (portal >= 0 && legendIcons[portal] != null)
+                legendIcons[portal].rectTransform.localRotation = Quaternion.Euler(0f, 0f, timeline.DisplayClock * 360f / LegendSpinSeconds);
         }
 
         private void ApplyFrameWidth(float frameWidth)
@@ -437,36 +471,26 @@ namespace SubTerra.App.Integration
             frameGraphic.SetDivider(divider);
             hintRect.sizeDelta = new Vector2(hintBlockWidth, MinimapBoardLayout.FooterHeight);
             float available = frameWidth - divider - LegendLeft - 8f;
-            float font = 13f;
-            float icon = 13f;
-            float iconGap = 5f;
-            float[] widths = legendWidthsLarge;
-            if (!MinimapBoardLayout.LayoutLegend(available, widths, icon, iconGap, 8f, 28f, legendX))
+            // 이름 없이 아이콘만: 정사각형에서 넘치면 아이콘을 같은 비율로 줄인다.
+            float icon = LegendIconSize;
+            if (!MinimapBoardLayout.LayoutLegend(available, legendWidths, icon, 0f, 6f, 22f, legendX))
             {
-                // 정사각형: 작은 글자로, 그래도 넘치면 범례 전체를 같은 비율로 줄인다.
-                float scale = MinimapBoardLayout.LegendScale(available, legendWidthsSmall, 11f, 3f, 5f);
-                font = 11f * scale;
-                icon = 11f * scale;
-                iconGap = 3f * scale;
-                for (int i = 0; i < legendWidthsScaled.Length; i++) legendWidthsScaled[i] = legendWidthsSmall[i] * scale;
-                widths = legendWidthsScaled;
-                MinimapBoardLayout.LayoutLegend(available, widths, icon, iconGap, 5f * scale, 8f, legendX);
+                float scale = MinimapBoardLayout.LegendScale(available, legendWidths, LegendIconSize, 0f, 4f);
+                icon = LegendIconSize * scale;
+                MinimapBoardLayout.LayoutLegend(available, legendWidths, icon, 0f, 4f * scale, 22f, legendX);
             }
 
             float y = MinimapBoardLayout.FooterHeight * 0.5f;
             for (int i = 0; i < legendIcons.Length; i++)
             {
                 var iconRect = legendIcons[i].rectTransform;
-                iconRect.anchoredPosition = new Vector2(LegendLeft + legendX[i], y);
+                // 중심 피벗: 포탈 아이콘이 제자리에서 돌도록 한다.
+                iconRect.anchoredPosition = new Vector2(LegendLeft + legendX[i] + icon * 0.5f, y);
                 iconRect.sizeDelta = new Vector2(icon, icon);
-                var label = legendTexts[i];
-                if (!Mathf.Approximately(label.fontSize, font)) label.fontSize = font;
-                label.rectTransform.anchoredPosition = new Vector2(LegendLeft + legendX[i] + icon + iconGap, y);
-                label.rectTransform.sizeDelta = new Vector2(widths[i] + 2f, MinimapBoardLayout.FooterHeight);
             }
 
             int last = legendIcons.Length - 1;
-            LegendRightEdge = LegendLeft + legendX[last] + icon + iconGap + widths[last];
+            LegendRightEdge = LegendLeft + legendX[last] + icon;
             HintLeftEdge = frameWidth - divider;
         }
 
@@ -735,7 +759,7 @@ namespace SubTerra.App.Integration
             root = (RectTransform)transform;
             rootGroup = GetComponent<CanvasGroup>();
             if (rootGroup == null) rootGroup = gameObject.AddComponent<CanvasGroup>();
-            rootGroup.alpha = 1f;
+            rootGroup.alpha = opacity.Alpha;
             rootGroup.blocksRaycasts = false;
             rootGroup.interactable = false;
             rootGroup.ignoreParentGroups = false;
@@ -775,15 +799,9 @@ namespace SubTerra.App.Integration
             {
                 var icon = Graphic<MinimapGlyphGraphic>(footer, "LegendIcon" + i);
                 icon.rectTransform.anchorMin = icon.rectTransform.anchorMax = Vector2.zero;
-                icon.rectTransform.pivot = new Vector2(0f, 0.5f);
+                icon.rectTransform.pivot = new Vector2(0.5f, 0.5f);
                 icon.Set(MinimapPalette.GlyphForKind(LegendKinds[i]), MinimapPalette.ForKind(LegendKinds[i]));
                 legendIcons[i] = icon;
-                var label = Text(footer, "LegendLabel" + i, LegendLabels[i], 13f, MinimapPalette.Label, TextAlignmentOptions.MidlineLeft, font);
-                label.rectTransform.anchorMin = label.rectTransform.anchorMax = Vector2.zero;
-                label.rectTransform.pivot = new Vector2(0f, 0.5f);
-                legendTexts[i] = label;
-                legendWidthsLarge[i] = Measure(label, 13f);
-                legendWidthsSmall[i] = Measure(label, 11f);
             }
 
             hint = Text(footer, "Hint", ShrinkHintLabel, 13f, MinimapPalette.Title, TextAlignmentOptions.Center, font);
@@ -820,10 +838,12 @@ namespace SubTerra.App.Integration
             ringRect = ring.rectTransform;
             ringRect.anchorMin = ringRect.anchorMax = new Vector2(0.5f, 0f);
             ringRect.pivot = new Vector2(0.5f, 0.5f);
-            ring.Set(MinimapGlyph.Ring, MinimapPalette.PlayerRing);
-            silhouette = Graphic<MinimapGlyphGraphic>(playerMarker, "Silhouette");
-            Stretch(silhouette.rectTransform);
-            silhouette.Set(MinimapGlyph.Person, MinimapPalette.PlayerBody, MinimapPalette.PlayerGlow);
+            ring.Set(MinimapGlyph.Ring, MinimapPalette.Beacon);
+            beacon = Graphic<MinimapGlyphGraphic>(playerMarker, "Beacon");
+            beaconRect = beacon.rectTransform;
+            beaconRect.anchorMin = beaconRect.anchorMax = new Vector2(0.5f, 0f);
+            beaconRect.pivot = new Vector2(0.5f, 0.5f);
+            beacon.Set(MinimapGlyph.Beacon, MinimapPalette.Beacon);
 
             scanLine = Child(viewport, ScanLineName, typeof(CanvasRenderer), typeof(Image));
             scanLine.anchorMin = new Vector2(0f, 1f);
