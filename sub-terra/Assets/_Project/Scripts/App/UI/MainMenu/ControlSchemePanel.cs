@@ -1,3 +1,6 @@
+using SubTerra.App.UI.ControlTerminal;
+using SubTerra.App.UI.Guide;
+using SubTerra.App.UI.Sell;
 using SubTerra.Shared;
 using TMPro;
 using UnityEngine;
@@ -5,16 +8,26 @@ using UnityEngine.UI;
 
 namespace SubTerra.App.UI.MainMenu
 {
-    /// <summary>기존 설정 패널 안에 생성되는 공통 키보드 조작 안내/선택 창.</summary>
+    /// <summary>
+    /// 기존 설정 패널 안에 생성되는 조작 방식 선택 창('조작 단말').
+    /// 선택·이전/다음 순환·즉시 저장·돌아가기 계약은 여기서 그대로 지키고, 표시 연출은 ControlTerminalView가 맡는다.
+    /// </summary>
     public sealed class ControlSchemePanel : MonoBehaviour
     {
+        private static readonly Color ButtonFill = new Color(0.04f, 0.12f, 0.17f, 1f);
+        private static readonly Color ButtonHover = new Color(0.12f, 0.36f, 0.42f, 1f);
+        private static readonly Color ButtonPressed = new Color(0.03f, 0.2f, 0.26f, 1f);
+        private static readonly Color ButtonText = new Color(0.86f, 1f, 0.99f, 1f);
+
         private GameObject overlay;
+        private RectTransform overlayRect;
+        private RectTransform cardRect;
         private TMP_FontAsset font;
-        private TMP_Text title;
-        private TMP_Text description;
-        private readonly System.Collections.Generic.List<TMP_Text> keyLabels = new();
+        private ControlTerminalView terminal;
+        private bool isOpen;
         public ControlScheme Selected { get; private set; }
-        public bool IsOpen => overlay != null && overlay.activeSelf;
+        public bool IsOpen => isOpen && overlay != null && overlay.activeSelf;
+        public ControlTerminalView Terminal => terminal;
 
         public static ControlSchemePanel Attach(GameObject settingsRoot)
         {
@@ -38,6 +51,15 @@ namespace SubTerra.App.UI.MainMenu
         {
             ControlPreferences.IsSettingsOpen = false;
             Close();
+            // 비활성화되면 연출을 기다리지 않고 즉시 정리한다.
+            HideNow();
+        }
+
+        private void Update()
+        {
+            if (terminal == null || overlay == null || !overlay.activeSelf) return;
+            terminal.Tick(Time.unscaledDeltaTime);
+            if (!isOpen && terminal.IsHidden) overlay.SetActive(false);
         }
 
         public void SetDraft(ControlScheme scheme)
@@ -50,24 +72,33 @@ namespace SubTerra.App.UI.MainMenu
         {
             Selected = ControlPreferences.Cycle(Selected, delta);
             Refresh();
+            // 설정 창의 적용을 기다리지 않고 즉시 저장한다.
             SettingsRuntimeApplier.SaveControlScheme(Selected);
         }
 
         public void Open()
         {
             if (overlay == null) return;
-            Refresh();
+            isOpen = true;
+            terminal.ResetImmediate();
             overlay.SetActive(true);
             overlay.transform.SetAsLastSibling();
+            FitCard();
+            Refresh(false);
+            if (Application.isPlaying && isActiveAndEnabled) terminal.PlayIntro();
+            else terminal.ShowSettled();
             UiKeyboardSubmitGuard.ClearSelection();
         }
 
         public bool Close()
         {
             if (!IsOpen) return false;
-            overlay.SetActive(false);
+            isOpen = false;
+            // 저장은 퇴장 연출과 무관하게 즉시 한다.
             SettingsRuntimeApplier.SaveControlScheme(Selected);
             UiKeyboardSubmitGuard.ClearSelection();
+            if (Application.isPlaying && isActiveAndEnabled && terminal != null) terminal.PlayOutro();
+            else HideNow();
             return true;
         }
 
@@ -79,6 +110,18 @@ namespace SubTerra.App.UI.MainMenu
             return panel != null ? panel.Selected : fallback;
         }
 
+        private void HideNow()
+        {
+            if (terminal != null) terminal.ResetImmediate();
+            if (overlay != null) overlay.SetActive(false);
+        }
+
+        private void FitCard()
+        {
+            if (terminal == null || overlayRect == null) return;
+            terminal.FitTo(overlayRect.rect.size);
+        }
+
         private void Build()
         {
             var sample = GetComponentInChildren<TMP_Text>(true);
@@ -87,82 +130,39 @@ namespace SubTerra.App.UI.MainMenu
             if (authoredButton != null)
                 authoredButton.GetComponent<Button>().onClick.AddListener(Open);
             else
-                Button(transform, "ChangeControls", "키 조작 변경", 0, -366, 280, 40, Open);
+                SimpleButton(transform, "ChangeControls", "키 조작 변경", 0, -366, 280, 40, Open);
             var backdrop = Rect(transform, "ControlSchemeOverlay", 0, 0, 0, 0);
             backdrop.anchorMin = Vector2.zero;
             backdrop.anchorMax = Vector2.one;
             backdrop.offsetMin = backdrop.offsetMax = Vector2.zero;
             backdrop.gameObject.AddComponent<Image>().color = new Color(0.005f, 0.012f, 0.02f, 0.96f);
             overlay = backdrop.gameObject;
+            overlayRect = backdrop;
             Selected = ControlPreferences.FromIndex((int)ControlPreferences.Scheme);
-            var card = Rect(backdrop, "KeyboardCard", 0, 0, 960, 650);
-            card.gameObject.AddComponent<Image>().color = new Color(0.035f, 0.07f, 0.105f);
-            title = Label(card, "SchemeTitle", "", 0, 272, 700, 45, 30);
-            Button(card, "PreviousScheme", "<", -420, 0, 64, 80, () => Cycle(-1));
-            Button(card, "NextScheme", ">", 420, 0, 64, 80, () => Cycle(1));
-            Label(card, "KeyboardCaption", "키보드 · 이동 / 채굴", 0, 217, 650, 32, 22);
 
-            // 모든 방식에서 같은 키 배열을 유지하고 역할·색상·설명만 갱신한다.
-            Row(card, new[] { "Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P" }, -328, 146);
-            Row(card, new[] { "A", "S", "D", "F", "G", "H", "J", "K", "L" }, -310, 80);
-            Row(card, new[] { "Z", "X", "C", "V", "B", "N", "M" }, -280, 14);
-            Key(card, "↑", 250, 14);
-            Key(card, "←", 184, -52);
-            Key(card, "↓", 250, -52);
-            Key(card, "→", 316, -52);
-            Key(card, "Space", -175, -65, 220);
-            Key(card, "Enter", 15, -65, 130);
-            Key(card, "마우스 클릭", -80, -136, 250);
-            description = Label(card, "SchemeDescription", "", 0, -217, 760, 100, 22);
-            Button(card, "CloseControls", "선택 후 돌아가기", 0, -291, 300, 42, () => Close());
+            cardRect = Rect(backdrop, "KeyboardCard", 0, 0, ControlTerminalLayout.CardWidth, ControlTerminalLayout.CardHeight);
+            var cardImage = cardRect.gameObject.AddComponent<Image>();
+            cardImage.sprite = ResourceSellArt.ChamferFill();
+            cardImage.type = Image.Type.Sliced;
+            terminal = new ControlTerminalView(cardRect, cardImage, font, GuideSprites.Load(null));
+
+            var chrome = terminal.Chrome;
+            var arrowNormal = ControlTerminalArt.ArrowNormal();
+            var arrowHover = ControlTerminalArt.ArrowHover();
+            Button(chrome, "PreviousScheme", null, ControlTerminalLayout.PrevButtonX, ControlTerminalLayout.PlateCenter.y, 56, 88, () => Cycle(-1), 30f, arrowNormal, arrowHover, ControlTerminalArt.Chevron(false));
+            Button(chrome, "NextScheme", null, ControlTerminalLayout.NextButtonX, ControlTerminalLayout.PlateCenter.y, 56, 88, () => Cycle(1), 30f, arrowNormal, arrowHover, ControlTerminalArt.Chevron(true));
+            Button(chrome, "CloseControls", "선택 후 돌아가기", 0, -296, 330, 64, () => Close(), 22f,
+                ControlTerminalArt.ButtonNormal(), ControlTerminalArt.ButtonHover());
+            Button(chrome, "CloseControlsX", null, ControlTerminalLayout.CardWidth * 0.5f - 64f, ControlTerminalLayout.CardHeight * 0.5f - 64f, 56, 56, () => Close(), 20f,
+                ControlTerminalArt.ButtonNormal(), ControlTerminalArt.ButtonHover(), ControlTerminalArt.CloseIcon());
             overlay.SetActive(false);
-            Refresh();
+            Refresh(false);
         }
 
-        private void Row(Transform parent, string[] keys, float x, float y)
+        private void Refresh(bool animate = true)
         {
-            for (int i = 0; i < keys.Length; i++) Key(parent, keys[i], x + i * 66, y);
-        }
-
-        private void Key(Transform parent, string key, float x, float y, float width = 60)
-        {
-            var rect = Rect(parent, key, x, y, width, 58);
-            rect.gameObject.AddComponent<Image>();
-            var label = Label(rect, "Role", key, 0, 0, width - 4, 54, 16);
-            keyLabels.Add(label);
-        }
-
-        private void Refresh()
-        {
-            if (title == null) return;
-            title.text = "키 조작 방식 " + ((int)Selected + 1) + " / 3";
-            foreach (var label in keyLabels)
-            {
-                var key = label.transform.parent.name;
-                bool wasd = key == "W" || key == "A" || key == "S" || key == "D";
-                bool arrows = key == "↑" || key == "←" || key == "↓" || key == "→";
-                bool move = wasd && Selected != ControlScheme.ArrowsMove
-                    || arrows && Selected != ControlScheme.WasdMove;
-                bool mine = wasd && Selected == ControlScheme.ArrowsMove
-                    || arrows && Selected == ControlScheme.WasdMove || key == "Enter" || key == "마우스 클릭";
-                string role = move ? "이동" : mine ? "채굴" : key == "Space" ? "점프" : "";
-                if (wasd || arrows)
-                {
-                    string direction = key == "W" || key == "↑" ? "↑" : key == "S" || key == "↓" ? "↓"
-                        : key == "A" || key == "←" ? "←" : "→";
-                    role = direction + " " + role;
-                }
-                label.text = key + (role.Length > 0 ? "\n" + role : "");
-                label.fontSize = wasd || arrows ? 13 : 16;
-                label.transform.parent.GetComponent<Image>().color = move ? new Color(0.08f, 0.38f, 0.48f)
-                    : mine ? new Color(0.55f, 0.31f, 0.10f) : new Color(0.12f, 0.17f, 0.22f);
-            }
-            description.text = Selected == ControlScheme.Classic
-                ? "WASD / 방향키: 이동 (위·아래는 사다리)\n마우스 클릭: 선택 블록 채굴 · Enter: 바라보는 방향 채굴"
-                : (Selected == ControlScheme.WasdMove ? "WASD: 이동 · 방향키: 상하좌우 채굴"
-                    : "방향키: 이동 · WASD: 상하좌우 채굴")
-                    + "\n캐릭터 위치 기준 인접 블록 채굴 · 마우스 / Enter도 사용 가능";
-            description.text += "\n< >로 바꾸면 바로 저장됩니다. 돌아가기 후에도 유지됩니다.";
+            if (terminal == null) return;
+            terminal.SetScheme(Selected, animate && IsOpen && !terminal.IsHidden);
         }
 
         private static RectTransform Rect(Transform parent, string name, float x, float y, float width, float height)
@@ -175,19 +175,8 @@ namespace SubTerra.App.UI.MainMenu
             return rect;
         }
 
-        private TMP_Text Label(Transform parent, string name, string text, float x, float y, float width, float height, float size)
-        {
-            var label = Rect(parent, name, x, y, width, height).gameObject.AddComponent<TextMeshProUGUI>();
-            label.font = font;
-            label.text = text;
-            label.fontSize = size;
-            label.alignment = TextAlignmentOptions.Center;
-            label.color = Color.white;
-            label.raycastTarget = false;
-            return label;
-        }
-
-        private void Button(Transform parent, string name, string text, float x, float y, float width, float height,
+        /// <summary>설정 창 안의 기존 단순 버튼(키 조작 변경 진입).</summary>
+        private void SimpleButton(Transform parent, string name, string text, float x, float y, float width, float height,
             UnityEngine.Events.UnityAction action)
         {
             var rect = Rect(parent, name, x, y, width, height);
@@ -197,7 +186,83 @@ namespace SubTerra.App.UI.MainMenu
             button.targetGraphic = background;
             button.onClick.AddListener(action);
             UiKeyboardSubmitGuard.ConfigurePointerPreferredButton(button);
-            Label(rect, "Label", text, 0, 0, width - 8, height - 4, 22);
+            var label = Rect(rect, "Label", 0, 0, width - 8, height - 4).gameObject.AddComponent<TextMeshProUGUI>();
+            label.font = font;
+            label.text = text;
+            label.fontSize = 22;
+            label.alignment = TextAlignmentOptions.Center;
+            label.color = Color.white;
+            label.raycastTarget = false;
+        }
+
+        /// <summary>조작 단말과 같은 프레임 언어(각진 면·청록 테두리)의 버튼. 클릭 영역과 탐색 정책은 기존과 같다.</summary>
+        private void Button(Transform parent, string name, string text, float x, float y, float width, float height,
+            UnityEngine.Events.UnityAction action, float fontSize, Sprite normalArt = null, Sprite hoverArt = null, Sprite icon = null)
+        {
+            var rect = Rect(parent, name, x, y, width, height);
+            var background = rect.gameObject.AddComponent<Image>();
+            var button = rect.gameObject.AddComponent<ControlTerminalButton>();
+            button.targetGraphic = background;
+            button.onClick.AddListener(action);
+            UiKeyboardSubmitGuard.ConfigurePointerPreferredButton(button);
+
+            if (normalArt != null)
+            {
+                background.sprite = normalArt;
+                background.type = Image.Type.Sliced;
+                background.pixelsPerUnitMultiplier = ControlTerminalArt.SliceMultiplier(normalArt, ControlTerminalArt.ButtonCornerPixels);
+                var hoverRect = Rect(rect, "Hover", 0, 0, width, height);
+                var hover = hoverRect.gameObject.AddComponent<UnityEngine.UI.Image>();
+                hover.sprite = hoverArt != null ? hoverArt : normalArt;
+                hover.type = UnityEngine.UI.Image.Type.Sliced;
+                hover.pixelsPerUnitMultiplier = background.pixelsPerUnitMultiplier;
+                hover.raycastTarget = false;
+                button.BindHover(hover);
+            }
+            else
+            {
+                background.sprite = ResourceSellArt.ChamferFill();
+                background.type = Image.Type.Sliced;
+                var colors = button.colors;
+                colors.normalColor = ButtonFill;
+                colors.highlightedColor = ButtonHover;
+                colors.selectedColor = ButtonHover;
+                colors.pressedColor = ButtonPressed;
+                colors.colorMultiplier = 1f;
+                colors.fadeDuration = ControlTerminalButton.HoverSeconds;
+                button.colors = colors;
+
+                var line = Rect(rect, "Outline", 0, 0, 0, 0);
+                line.anchorMin = Vector2.zero;
+                line.anchorMax = Vector2.one;
+                line.offsetMin = line.offsetMax = Vector2.zero;
+                var outline = line.gameObject.AddComponent<Image>();
+                outline.sprite = ResourceSellArt.ChamferOutline();
+                outline.type = Image.Type.Sliced;
+                outline.color = new Color(0.25f, 0.95f, 0.92f, 0.7f);
+                outline.raycastTarget = false;
+            }
+
+            if (icon != null)
+            {
+                var closeIcon = name == "CloseControlsX";
+                var image = Rect(rect, closeIcon ? "CloseIcon" : "ArrowIcon", 0, 0, closeIcon ? 28 : 24, closeIcon ? 28 : 36).gameObject.AddComponent<UnityEngine.UI.Image>();
+                image.sprite = icon;
+                image.preserveAspect = true;
+                image.raycastTarget = false;
+            }
+            else
+            {
+                var label = Rect(rect, "Label", 0, 0, width - 8, height - 4).gameObject.AddComponent<TextMeshProUGUI>();
+                label.font = font;
+                label.text = text;
+                label.fontSize = fontSize;
+                label.alignment = TextAlignmentOptions.Center;
+                label.color = ButtonText;
+                label.raycastTarget = false;
+            }
+            var relay = rect.gameObject.AddComponent<ControlTerminalFocusRelay>();
+            relay.Bind(terminal);
         }
     }
 }

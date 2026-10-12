@@ -109,6 +109,8 @@ MonoBehaviour:
     sprite: {fileID: 21300000, guid: 0d077ad1b89f0f64b870e9ae79697b9f, type: 3}
   - key: fac.support
     sprite: {fileID: 21300000, guid: 0f69f3d75d45e3240995a176aac8d034, type: 3}
+  - key: fac.portal
+    sprite: {fileID: 21300000, guid: 8703b75e6b43ee240a3a98be1973d0b4, type: 3}
   - key: drone.idle
     sprite: {fileID: 21300000, guid: e2c96caaa6b742c88c0cab01e9ef6fe0, type: 3}
   - key: fx.coin
