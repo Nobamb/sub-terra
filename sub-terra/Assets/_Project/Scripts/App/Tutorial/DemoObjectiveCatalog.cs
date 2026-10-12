@@ -38,7 +38,7 @@ namespace SubTerra.App.Tutorial
                     IntroductionGuidanceBody),
                 Define(DemoObjectiveIds.MineCopper, "구리 채취", "구리 블록을 직접 채굴해 구리를 획득하세요.", "구리 블록을 찾아 채굴", DemoProgressSignal.CopperMined, DemoObjectiveIds.UpgradeDrillSpeed, R(copper: 3, gold: 50)),
                 Define(DemoObjectiveIds.UpgradeDrillSpeed, "드릴 속도 업그레이드", "업그레이드 창을 열고 드릴 속도를 1회 높이세요.", "업그레이드 창에서 드릴 속도 구매", DemoProgressSignal.DrillSpeedUpgraded, DemoObjectiveIds.TravelToSurface, R(copper: 5, iron: 1, gold: 40)),
-                Define(DemoObjectiveIds.TravelToSurface, "지상으로 이동", "엘리베이터를 이용해 지상 기지로 이동하세요.", "엘리베이터에서 지상 기지 선택", DemoProgressSignal.SurfaceReachedByElevator, DemoObjectiveIds.ReturnToMine, R(gold: 100)),
+                Define(DemoObjectiveIds.TravelToSurface, "지상으로 이동", "엘리베이터에 탑승한 뒤 상호작용 키(E)를 눌러 지상 기지로 귀환하세요.", "엘리베이터 안에서 상호작용 키(E)를 눌러 귀환", DemoProgressSignal.SurfaceReachedByElevator, DemoObjectiveIds.ReturnToMine, R(gold: 100)),
                 Define(DemoObjectiveIds.ReturnToMine, "광산 탐사 재개", "다시 광산으로 돌아온 뒤, 엘리베이터에서 벗어나 채굴을 이어가주세요.", "광산 도착 후 엘리베이터 아래 검은색 블록 3칸에서 벗어나기", DemoProgressSignal.MineReachedByElevator, DemoObjectiveIds.MineIron, R(copper: 2)),
                 Define(DemoObjectiveIds.MineIron, "철 채취", "철 블록을 직접 채굴해 철을 획득하세요.", "철 블록을 찾아 채굴", DemoProgressSignal.IronMined, DemoObjectiveIds.PlaceSupportInDanger, R(iron: 2)),
                 Define(DemoObjectiveIds.PlaceSupportInDanger, "위험 지대 보강", "구조 위험 경고가 활성화된 지대에 버팀목을 설치하세요.", "위험 경고가 표시된 곳에 버팀목 배치", DemoProgressSignal.SupportPlacedInDanger, DemoObjectiveIds.PlaceLadder, R(copper: 3, iron: 1)),
