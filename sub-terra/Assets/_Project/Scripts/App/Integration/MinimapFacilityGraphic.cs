@@ -11,6 +11,9 @@ namespace SubTerra.App.Integration
     public sealed class MinimapFacilityGraphic : MaskableGraphic
     {
         public const float InactiveAlpha = 0.4f;
+        public const float InactiveShade = 0.6f;
+        /// <summary>이름표가 없을 때의 연한 표식 투명도. 지금까지 전력 없는 시설이 보이던 수준(0.4 × 0.6)이다.</summary>
+        public const float RestAlpha = InactiveAlpha * 0.6f;
         /// <summary>긴급 탈출 포탈 내부 아이콘이 한 바퀴 도는 시간(초).</summary>
         public const float PortalSpinSeconds = 8f;
 
@@ -70,12 +73,32 @@ namespace SubTerra.App.Integration
         /// <summary>포탈 내부 소용돌이의 현재 회전각(라디안). unscaled 시간 기준으로 천천히 한 방향으로 돈다.</summary>
         public static float PortalSpin(float time) => Mathf.Repeat(time / PortalSpinSeconds, 1f) * Mathf.PI * 2f;
 
+        /// <summary>
+        /// 표식 색. 이름표 연동 시설(Presence ≥ 0)은 연한 기본(전력 부족 표식과 같은 수준)과 진한 표식(전력 정상 코어 수준) 사이를 오간다.
+        /// 연동하지 않는 시설은 전력 상태로만 정한다.
+        /// </summary>
+        public static Color TintFor(MinimapFacilityRecord record)
+        {
+            Color tint = MinimapPalette.ForKind(record.Kind);
+            float alpha;
+            float shade;
+            if (record.Presence >= 0f)
+            {
+                alpha = Mathf.Lerp(RestAlpha, 1f, record.Presence);
+                shade = Mathf.Lerp(InactiveShade, 1f, record.Presence);
+            }
+            else
+            {
+                alpha = record.Active ? 1f : InactiveAlpha;
+                shade = record.Active ? 1f : InactiveShade;
+            }
+
+            return new Color(tint.r * shade, tint.g * shade, tint.b * shade, tint.a * alpha);
+        }
+
         private static void Draw(VertexHelper mesh, MinimapFacilityRecord record, Rect footprint, float px, float flash, float time)
         {
-            float alpha = record.Active ? 1f : InactiveAlpha;
-            Color tint = MinimapPalette.ForKind(record.Kind);
-            if (!record.Active) tint = new Color(tint.r * 0.6f, tint.g * 0.6f, tint.b * 0.6f, tint.a);
-            tint.a *= alpha;
+            Color tint = TintFor(record);
             MinimapGlyph glyph = MinimapPalette.GlyphForKind(record.Kind);
 
             if (record.Kind == MinimapFacilityKind.Ladder || record.Kind == MinimapFacilityKind.Support)
@@ -122,22 +145,11 @@ namespace SubTerra.App.Integration
                 MinimapMeshKit.Quad(mesh, Rect.MinMaxRect(body.xMax - tab * 2f, body.yMax, body.xMax - tab, body.yMax + tabHeight), tint);
             }
 
-            Rect glyphRect;
-            if (record.Kind == MinimapFacilityKind.Settlement)
-            {
-                // 1x2 계산기: 세로로 긴 영역을 그대로 쓴다.
-                float gw = body.width * 0.72f;
-                float gh = body.height * 0.76f;
-                glyphRect = new Rect(body.center.x - gw * 0.5f, body.center.y - gh * 0.5f, gw, gh);
-            }
-            else
-            {
-                float ratio = record.Kind == MinimapFacilityKind.Storage ? 0.74f
-                    : record.Kind == MinimapFacilityKind.Portal ? 0.72f
-                    : 0.62f;
-                float size = Mathf.Min(body.width, body.height) * ratio;
-                glyphRect = new Rect(body.center.x - size * 0.5f, body.center.y - size * 0.5f, size, size);
-            }
+            float ratio = record.Kind == MinimapFacilityKind.Storage || record.Kind == MinimapFacilityKind.Settlement ? 0.74f
+                : record.Kind == MinimapFacilityKind.Portal ? 0.72f
+                : 0.62f;
+            float size = Mathf.Min(body.width, body.height) * ratio;
+            var glyphRect = new Rect(body.center.x - size * 0.5f, body.center.y - size * 0.5f, size, size);
 
             float spin = record.Kind == MinimapFacilityKind.Portal ? PortalSpin(time) : 0f;
             MinimapMeshKit.Glyph(mesh, glyph, glyphRect, tint, spin);

@@ -13,7 +13,7 @@ namespace SubTerra.App.Integration
     /// 플레이어가 시설에 가까워지면 시설명 홀로그램 이름표를 띄운다.
     /// 버팀목·사다리는 제외한다. 이름표는 시설마다 하나만 만들어 재사용하고, 등장·퇴장 연출은 상태가 바뀔 때만 진행한다.
     /// </summary>
-    public sealed class FacilityProximityLabelController : MonoBehaviour
+    public sealed class FacilityProximityLabelController : MonoBehaviour, IFacilityLabelSource
     {
         public const float DefaultRange = 2f;
 
@@ -32,6 +32,7 @@ namespace SubTerra.App.Integration
         private readonly HashSet<EntityId> seen = new HashSet<EntityId>();
         private readonly HashSet<EntityId> wantedIds = new HashSet<EntityId>();
         private readonly List<EntityId> stale = new List<EntityId>();
+        private readonly HashSet<string> shownInstanceIds = new HashSet<string>();
         private Transform bubbleRoot;
 
         public int VisibleBubbleCount { get; private set; }
@@ -81,6 +82,7 @@ namespace SubTerra.App.Integration
             EnsureKoreanFont();
             EnsureBubbleRoot();
             VisibleBubbleCount = 0;
+            shownInstanceIds.Clear();
 
             if (player == null)
             {
@@ -137,6 +139,7 @@ namespace SubTerra.App.Integration
 
                     accepted.Add(rect);
                     wantedIds.Add(candidate.Id);
+                    shownInstanceIds.Add(candidate.Instance.InstanceId);
                     bubble.Follow(anchor);
                     VisibleBubbleCount++;
                 }
@@ -152,6 +155,12 @@ namespace SubTerra.App.Integration
 
             RemoveStale(seen);
             TickBubbles();
+        }
+
+        /// <summary>이 시설의 이름표 팝업이 지금 떠 있으면 true. 미니맵 표식 강조가 읽는다.</summary>
+        public bool IsLabelShown(string instanceId)
+        {
+            return !string.IsNullOrEmpty(instanceId) && shownInstanceIds.Contains(instanceId);
         }
 
         public bool TryGetVisibleLabel(string buildingId, out string label)
@@ -196,6 +205,7 @@ namespace SubTerra.App.Integration
             seen.Clear();
             wantedIds.Clear();
             stale.Clear();
+            shownInstanceIds.Clear();
             VisibleBubbleCount = 0;
         }
 

@@ -18,7 +18,7 @@ namespace SubTerra.App.Integration
         Beacon = 10,
         Lamp = 11,
         Cube = 12,
-        Calculator = 13,
+        Coin = 13,
         Wormhole = 14
     }
 
@@ -255,8 +255,8 @@ namespace SubTerra.App.Integration
                 case MinimapGlyph.Cube:
                     Cube(mesh, c, h * 0.95f, tint);
                     break;
-                case MinimapGlyph.Calculator:
-                    Calculator(mesh, rect, tint);
+                case MinimapGlyph.Coin:
+                    Coin(mesh, c, h * 0.95f, tint);
                     break;
                 case MinimapGlyph.Wormhole:
                     Wormhole(mesh, c, h * 0.95f, tint, spin);
@@ -310,30 +310,13 @@ namespace SubTerra.App.Integration
             Quad(mesh, center, upperRight, lowerRight, bottom, Shade(tint, 0.74f));
         }
 
-        /// <summary>계산기: 외곽 + 화면 + 3x3 버튼. 가로보다 세로가 긴 비율로 rect 안에 맞춘다.</summary>
-        public static void Calculator(VertexHelper mesh, Rect rect, Color tint)
+        /// <summary>코인: 바깥 테두리 + 옅은 면 + 가운데 도드라진 원.</summary>
+        public static void Coin(VertexHelper mesh, Vector2 center, float radius, Color tint)
         {
-            float height = rect.height;
-            float width = Mathf.Min(rect.width, height * 0.78f);
-            if (width <= 0f || height <= 0f) return;
-            var body = new Rect(rect.center.x - width * 0.5f, rect.yMin, width, height);
-            float line = Mathf.Max(1f, width * 0.1f);
-            Outline(mesh, body, line, tint);
-            float pad = line * 1.3f;
-            float screenTop = body.yMax - pad;
-            float screenBottom = screenTop - height * 0.24f;
-            Quad(mesh, Rect.MinMaxRect(body.xMin + pad, screenBottom, body.xMax - pad, screenTop), WithAlphaScale(tint, 0.85f));
-            var keys = Rect.MinMaxRect(body.xMin + pad, body.yMin + pad, body.xMax - pad, screenBottom - pad);
-            if (keys.width <= 0f || keys.height <= 0f) return;
-            float pitchX = keys.width / 3f;
-            float pitchY = keys.height / 3f;
-            float dot = Mathf.Max(1f, Mathf.Min(pitchX, pitchY) * 0.6f);
-            for (int row = 0; row < 3; row++)
-            for (int col = 0; col < 3; col++)
-            {
-                var key = new Vector2(keys.xMin + (col + 0.5f) * pitchX, keys.yMin + (row + 0.5f) * pitchY);
-                Quad(mesh, Rect.MinMaxRect(key.x - dot * 0.5f, key.y - dot * 0.5f, key.x + dot * 0.5f, key.y + dot * 0.5f), tint);
-            }
+            if (radius <= 0f) return;
+            Circle(mesh, center, radius, WithAlphaScale(tint, 0.3f), 24);
+            Ring(mesh, center, radius, Mathf.Max(1f, radius * 0.18f), tint, 28);
+            Circle(mesh, center, radius * 0.42f, tint, 16);
         }
 
         /// <summary>웜홀: 고정 바깥 고리 + 회전하는 나선 팔 3개. spin만 바뀌며 바깥 고리는 움직이지 않는다.</summary>

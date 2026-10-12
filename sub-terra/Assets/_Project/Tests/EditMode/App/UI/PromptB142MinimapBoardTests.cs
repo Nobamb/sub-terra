@@ -300,7 +300,7 @@ namespace SubTerra.App.Tests.UI
         {
             Assert.That(MinimapPalette.GlyphForKind(MinimapFacilityKind.Light), Is.EqualTo(MinimapGlyph.Lamp));
             Assert.That(MinimapPalette.GlyphForKind(MinimapFacilityKind.Storage), Is.EqualTo(MinimapGlyph.Cube));
-            Assert.That(MinimapPalette.GlyphForKind(MinimapFacilityKind.Settlement), Is.EqualTo(MinimapGlyph.Calculator));
+            Assert.That(MinimapPalette.GlyphForKind(MinimapFacilityKind.Settlement), Is.EqualTo(MinimapGlyph.Coin));
             Assert.That(MinimapPalette.GlyphForKind(MinimapFacilityKind.Portal), Is.EqualTo(MinimapGlyph.Wormhole));
             Assert.That(MinimapPalette.GlyphForKind(MinimapFacilityKind.Elevator), Is.EqualTo(MinimapGlyph.Arrows));
         }
@@ -309,7 +309,7 @@ namespace SubTerra.App.Tests.UI
         public void EveryGlyph_DrawsInsideItsRect_AndPortalSpinMovesOnlyTheInside()
         {
             var rect = new Rect(0f, 0f, 20f, 40f);
-            foreach (var glyph in new[] { MinimapGlyph.Lamp, MinimapGlyph.Cube, MinimapGlyph.Calculator, MinimapGlyph.Wormhole, MinimapGlyph.Beacon })
+            foreach (var glyph in new[] { MinimapGlyph.Lamp, MinimapGlyph.Cube, MinimapGlyph.Coin, MinimapGlyph.Wormhole, MinimapGlyph.Beacon })
             {
                 using var mesh = new UnityEngine.UI.VertexHelper();
                 MinimapMeshKit.Glyph(mesh, glyph, rect, Color.white);
@@ -431,6 +431,64 @@ namespace SubTerra.App.Tests.UI
             Assert.That(MinimapTerrainClassifier.Classify(true, true), Is.EqualTo(MinimapCellKind.Block));
             Assert.That(MinimapTerrainClassifier.Classify(true, false), Is.EqualTo(MinimapCellKind.Empty));
             Assert.That(MinimapTerrainClassifier.Classify(false, false), Is.EqualTo(MinimapCellKind.Void));
+        }
+
+        // ── 이름표 연동 표식 농도 ──
+
+        [Test]
+        public void FacilityPresence_FirstStep_SnapsToTarget_WithoutFade()
+        {
+            var shown = new MinimapFacilityRecord();
+            Assert.That(shown.Presence, Is.LessThan(0f), "연동 전에는 전력 상태로만 그린다");
+            Assert.That(MinimapFacilityPresence.Step(shown, true, 0f), Is.True);
+            Assert.That(shown.Presence, Is.EqualTo(1f));
+
+            var hidden = new MinimapFacilityRecord();
+            Assert.That(MinimapFacilityPresence.Step(hidden, false, 0f), Is.True);
+            Assert.That(hidden.Presence, Is.EqualTo(0f));
+        }
+
+        [Test]
+        public void FacilityPresence_LabelShown_BecomesStrong_LabelGone_BecomesPale()
+        {
+            var record = new MinimapFacilityRecord();
+            MinimapFacilityPresence.Step(record, false, 0f);
+
+            MinimapFacilityPresence.Step(record, true, MinimapFacilityPresence.FadeSeconds * 0.5f);
+            Assert.That(record.Presence, Is.GreaterThan(0f).And.LessThan(1f), "도중 값에서 이어진다");
+            Assert.That(MinimapFacilityPresence.Step(record, true, MinimapFacilityPresence.FadeSeconds), Is.True);
+            Assert.That(record.Presence, Is.EqualTo(1f));
+            Assert.That(MinimapFacilityPresence.Step(record, true, 1f), Is.False, "도달 후에는 다시 그리지 않는다");
+
+            MinimapFacilityPresence.Step(record, false, MinimapFacilityPresence.FadeSeconds * 2f);
+            Assert.That(record.Presence, Is.EqualTo(0f));
+        }
+
+        [Test]
+        public void FacilityTint_LinkedFacility_StrongMatchesPoweredCore_PaleMatchesUnpoweredLook_RegardlessOfPower()
+        {
+            var core = new MinimapFacilityRecord { Kind = MinimapFacilityKind.Core, Active = true };
+            Color poweredCore = MinimapFacilityGraphic.TintFor(core);
+            Assert.That(poweredCore.a, Is.EqualTo(1f), "전력 정상 코어 = 가장 진한 표식");
+
+            foreach (bool powered in new[] { true, false })
+            {
+                var charger = new MinimapFacilityRecord { Kind = MinimapFacilityKind.Charger, Active = powered, Presence = 1f };
+                Color strong = MinimapFacilityGraphic.TintFor(charger);
+                Color source = MinimapPalette.Charger;
+                Assert.That(strong.a, Is.EqualTo(1f), "이름표가 뜨면 전력과 관계없이 코어 수준");
+                Assert.That(strong.r, Is.EqualTo(source.r).Within(1e-4f));
+                Assert.That(strong.g, Is.EqualTo(source.g).Within(1e-4f));
+
+                charger.Presence = 0f;
+                Color pale = MinimapFacilityGraphic.TintFor(charger);
+                Assert.That(pale.a, Is.EqualTo(MinimapFacilityGraphic.RestAlpha).Within(1e-4f));
+                Assert.That(pale.a, Is.LessThan(strong.a));
+                Assert.That(pale.g, Is.EqualTo(source.g * MinimapFacilityGraphic.InactiveShade).Within(1e-4f), "색감도 연하게");
+            }
+
+            var unlinked = new MinimapFacilityRecord { Kind = MinimapFacilityKind.Ladder, Active = false };
+            Assert.That(MinimapFacilityGraphic.TintFor(unlinked).a, Is.EqualTo(MinimapFacilityGraphic.InactiveAlpha).Within(1e-4f), "연동 없는 시설은 기존 그대로");
         }
 
         private static void AssertPose(MinimapBoardPose pose, float open, float width, float alpha, float line)
