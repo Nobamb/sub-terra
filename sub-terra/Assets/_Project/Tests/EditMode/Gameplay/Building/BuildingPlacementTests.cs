@@ -209,13 +209,13 @@ namespace SubTerra.Gameplay.Building.Tests
             finally { setup.Dispose(); }
         }
 
-        [TestCase("building.light.basic", 0, 0, 1)]
-        [TestCase("building.light.basic", 1, 1, 1)]
+        [TestCase("building.light.basic", 0, 0, 2)]
+        [TestCase("building.light.basic", 1, 1, 2)]
         [TestCase("building.light.basic", 1, 2, 2)]
-        [TestCase("building.settlement.basic", 0, 0, 1)]
-        [TestCase("building.settlement.basic", 1, 1, 1)]
+        [TestCase("building.settlement.basic", 0, 0, 2)]
+        [TestCase("building.settlement.basic", 1, 1, 2)]
         [TestCase("building.settlement.basic", 1, 2, 2)]
-        public void TallUtility_RestorePreservesLegacyAndRecordedArea(string id, int width, int height, int rows)
+        public void TallUtility_RestoreUpgradesLegacyAreaWithoutSpending(string id, int width, int height, int rows)
         {
             var setup = CreateSetup(10f, new Vector2(20f, 20f), buildingId: id);
             try
@@ -223,13 +223,45 @@ namespace SubTerra.Gameplay.Building.Tests
                 Assert.That(setup.Placement.TryRestoreBuilding(new BuildingSnapshotDto
                 {
                     instanceId = "utility-saved", buildingTypeId = id,
-                    footprintWidth = width, footprintHeight = height
-                }), Is.True);
+                    footprintWidth = width, footprintHeight = height, rotation = 1, level = 3, health = 0.7f
+                }, out var restored), Is.True);
+                Assert.That(restored.footprintHeight, Is.EqualTo(2));
+                Assert.That(restored.level, Is.EqualTo(3));
+                Assert.That(restored.rotation, Is.EqualTo(1));
+                Assert.That(restored.health, Is.EqualTo(0.7f));
                 Assert.That(setup.Wallet.SpendCount, Is.Zero);
                 Assert.That(setup.BuildingRoot.GetChild(0).position, Is.EqualTo(new Vector3(0.5f, rows * 0.5f, 0f)));
                 // 두 칸 위에서 검사해야 구형의 빈 상단과 신형의 점유 상단을 구분할 수 있다.
                 Assert.That(setup.Placement.CanPlaceAt(new Vector3Int(0, 2, 0), out var failure), Is.False);
                 Assert.That(failure, Is.EqualTo(rows == 2 ? BuildingPlacementFailure.Occupied : BuildingPlacementFailure.MissingGround));
+            }
+            finally { setup.Dispose(); }
+        }
+
+        [TestCase("building.light.basic", false)]
+        [TestCase("building.settlement.basic", false)]
+        [TestCase("building.light.basic", true)]
+        [TestCase("building.settlement.basic", true)]
+        public void TallUtility_RestoreDoesNotOverwriteTerrainOrLaterSavedFacility(string id, bool savedNeighbour)
+        {
+            var setup = CreateSetup(10f, new Vector2(20f, 20f), buildingId: id);
+            try
+            {
+                var original = new BuildingSnapshotDto { instanceId = "old", buildingTypeId = id,
+                    footprintWidth = 1, footprintHeight = 1 };
+                if (savedNeighbour)
+                    setup.Placement.ReserveSavedBuildingAreas(new[] { original,
+                        new BuildingSnapshotDto { instanceId = "later", buildingTypeId = id, y = 1,
+                            footprintWidth = 1, footprintHeight = 1 } });
+                else
+                    setup.Terrain.SetTile(Vector3Int.up, setup.Tile);
+                UnityEngine.TestTools.LogAssert.Expect(LogType.Warning,
+                    "[SubTerra] Saved facility old could not expand because its new area is blocked; its original position and size were preserved.");
+                Assert.That(setup.Placement.TryRestoreBuilding(original, out var restored), Is.True);
+                Assert.That(restored.footprintHeight, Is.EqualTo(1));
+                Assert.That(setup.Wallet.SpendCount, Is.Zero);
+                if (!savedNeighbour) Assert.That(setup.Terrain.GetTile(Vector3Int.up), Is.SameAs(setup.Tile));
+                Assert.That(original.footprintHeight, Is.EqualTo(1));
             }
             finally { setup.Dispose(); }
         }

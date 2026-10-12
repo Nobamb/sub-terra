@@ -423,10 +423,12 @@ namespace SubTerra.Gameplay.Snapshot
         {
             if (buildingPlacementSystem == null || snapshots == null) return;
             buildings.Clear();
-            foreach (BuildingSnapshotDto building in snapshots)
+            var savedBuildings = new List<BuildingSnapshotDto>(snapshots);
+            buildingPlacementSystem.ReserveSavedBuildingAreas(savedBuildings);
+            foreach (BuildingSnapshotDto building in savedBuildings)
             {
-                if (!buildingPlacementSystem.TryRestoreBuilding(building)) continue;
-                buildings[building.instanceId] = building;
+                if (!buildingPlacementSystem.TryRestoreBuilding(building, out var restored)) continue;
+                buildings[restored.instanceId] = restored;
             }
         }
 

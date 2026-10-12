@@ -14,6 +14,68 @@ namespace SubTerra.App.Tests.Tutorial
 {
     public sealed class PromptB107QuestUiTests
     {
+        [TestCase(DemoObjectiveIds.PlaceSupportInDanger, "Support")]
+        [TestCase(DemoObjectiveIds.PlaceLadder, "Ladder")]
+        [TestCase(DemoObjectiveIds.PlaceLightAtDepth, "Light")]
+        [TestCase(DemoObjectiveIds.StoreMineral, "Storage")]
+        [TestCase(DemoObjectiveIds.InstallOutpostCore, "OutpostCore")]
+        [TestCase(DemoObjectiveIds.ChargeNearOutpost, "Charger")]
+        [TestCase(DemoObjectiveIds.HealNearOutpost, "Clinic")]
+        [TestCase(DemoObjectiveIds.PurifyGasWithOutpost, "OutpostCore")]
+        [TestCase(DemoObjectiveIds.SellAtSettlement, "Settlement")]
+        [TestCase(DemoObjectiveIds.EmergencyEscapeReturn, "EmergencyEscapePortal")]
+        public void FacilityQuestImages_UseBuildingMenuArtwork(string id, string building)
+        {
+            var root = new GameObject("FacilityQuestThumbnail", typeof(RectTransform));
+            try
+            {
+                var image = ChildImage(root.transform, "Primary");
+                var view = root.AddComponent<QuestThumbnailView>();
+                var serialized = new SerializedObject(view);
+                serialized.FindProperty("primaryImage").objectReferenceValue = image;
+                serialized.ApplyModifiedPropertiesWithoutUndo();
+                PromptB1072QuestThumbnailBuilder.Configure(view);
+                view.Show(id, true);
+                var data = AssetDatabase.LoadAssetAtPath<SubTerra.App.Core.Data.BuildingData>(
+                    "Assets/_Project/Data/Buildings/Building_" + building + (building == "EmergencyEscapePortal" ? ".asset" : "_Basic.asset"));
+                Assert.That(data, Is.Not.Null);
+                Assert.That(image.sprite, Is.SameAs(data.Icon));
+                Assert.That(image.preserveAspect, Is.True);
+                Assert.That(image.raycastTarget, Is.False);
+            }
+            finally { Object.DestroyImmediate(root); }
+        }
+
+        [Test]
+        public void SavedScene_FacilityQuestEntriesMatchBuildingMenuArtwork()
+        {
+            var scene = SceneManager.GetSceneByPath(PromptB107QuestUiBuilder.IntegrationScenePath);
+            bool closeAfter = !scene.IsValid() || !scene.isLoaded;
+            if (closeAfter) scene = EditorSceneManager.OpenScene(PromptB107QuestUiBuilder.IntegrationScenePath, OpenSceneMode.Additive);
+            try
+            {
+                QuestThumbnailView view = null;
+                foreach (var root in scene.GetRootGameObjects())
+                {
+                    var candidate = root.GetComponentInChildren<QuestThumbnailView>(true);
+                    if (candidate != null) view = candidate;
+                }
+                Assert.That(view, Is.Not.Null);
+                var entries = new SerializedObject(view).FindProperty("entries");
+                int checkedFacilities = 0;
+                for (int i = 0; i < entries.arraySize; i++)
+                {
+                    var entry = entries.GetArrayElementAtIndex(i);
+                    var data = PromptB1072QuestThumbnailBuilder.FacilityFor(entry.FindPropertyRelative("objectiveId").stringValue);
+                    if (data == null) continue;
+                    Assert.That(entry.FindPropertyRelative("primary").objectReferenceValue, Is.SameAs(data.Icon));
+                    checkedFacilities++;
+                }
+                Assert.That(checkedFacilities, Is.EqualTo(10));
+            }
+            finally { if (closeAfter) EditorSceneManager.CloseScene(scene, true); }
+        }
+
         [Test]
         public void Crossfade_FadesAcrossPointThreeSecondsAndBack()
         {
@@ -218,8 +280,14 @@ namespace SubTerra.App.Tests.Tutorial
                     foreach (var id in DemoObjectiveIds.Ordered)
                     {
                         thumbnailView.Show(id, true);
-                        Assert.That(AssetDatabase.GetAssetPath(image.sprite), Is.EqualTo(PromptB1072QuestThumbnailBuilder.PathFor(id)));
-                        Assert.That(image.sprite.rect.width / image.sprite.rect.height, Is.GreaterThan(2.5f));
+                        var questFacility = PromptB1072QuestThumbnailBuilder.FacilityFor(id);
+                        if (questFacility != null)
+                            Assert.That(image.sprite, Is.SameAs(questFacility.Icon));
+                        else
+                        {
+                            Assert.That(AssetDatabase.GetAssetPath(image.sprite), Is.EqualTo(PromptB1072QuestThumbnailBuilder.PathFor(id)));
+                            Assert.That(image.sprite.rect.width / image.sprite.rect.height, Is.GreaterThan(2.5f));
+                        }
                         Assert.That(image.rectTransform.anchorMin, Is.EqualTo(Vector2.zero));
                         Assert.That(image.rectTransform.anchorMax, Is.EqualTo(Vector2.one));
                         Assert.That(image.preserveAspect, Is.True);
