@@ -50,6 +50,7 @@ namespace SubTerra.Gameplay.Snapshot
             if (miningSystem != null) miningSystem.TileMined += OnTileMined;
             if (structuralSystem != null) structuralSystem.CollapseTriggered += OnStructuralCollapse;
             if (buildingPlacementSystem != null) buildingPlacementSystem.BuildingPlaced += OnBuildingPlaced;
+            if (buildingPlacementSystem != null) buildingPlacementSystem.BuildingMoved += OnBuildingMoved;
         }
 
         private void OnDisable()
@@ -57,6 +58,7 @@ namespace SubTerra.Gameplay.Snapshot
             if (miningSystem != null) miningSystem.TileMined -= OnTileMined;
             if (structuralSystem != null) structuralSystem.CollapseTriggered -= OnStructuralCollapse;
             if (buildingPlacementSystem != null) buildingPlacementSystem.BuildingPlaced -= OnBuildingPlaced;
+            if (buildingPlacementSystem != null) buildingPlacementSystem.BuildingMoved -= OnBuildingMoved;
         }
 
         public WorldSnapshotDto CaptureSnapshot()
@@ -309,6 +311,16 @@ namespace SubTerra.Gameplay.Snapshot
                 footprintWidth = result.Footprint.x,
                 footprintHeight = result.Footprint.y
             };
+        }
+
+        private void OnBuildingMoved(BuildingPlacementResult result)
+        {
+            if (!result.IsSuccess || !buildings.TryGetValue(result.InstanceId, out var saved)) return;
+            saved.x = result.Cell.x;
+            saved.y = result.Cell.y;
+            saved.footprintWidth = result.Footprint.x;
+            saved.footprintHeight = result.Footprint.y;
+            buildings[result.InstanceId] = saved;
         }
 
         private List<GasSnapshotDto> CaptureGasZones()

@@ -39,6 +39,41 @@ namespace SubTerra.App.UI.Building
 
         private string selectedBuildingId = string.Empty;
         private IReadOnlyList<BuildingCostReadModel> selectedCosts;
+        private Button moveButton;
+        public event System.Action MoveRequested;
+
+        public void EnableFacilityMoving(bool enabled)
+        {
+            if (moveButton == null && enabled && panelRoot != null && detailNameText != null)
+            {
+                var root = new GameObject("MoveFacilityButton", typeof(RectTransform),
+                    typeof(UnityEngine.UI.Image), typeof(UnityEngine.UI.Button));
+                root.transform.SetParent(panelRoot.transform, false);
+                var rect = (RectTransform)root.transform;
+                rect.anchorMin = rect.anchorMax = new Vector2(1f, 1f);
+                rect.pivot = new Vector2(1f, 1f);
+                rect.anchoredPosition = new Vector2(-16f, -60f);
+                rect.sizeDelta = new Vector2(112f, 22f);
+                var image = root.GetComponent<UnityEngine.UI.Image>();
+                image.color = new Color(0.04f, 0.24f, 0.28f, 1f);
+                moveButton = root.GetComponent<UnityEngine.UI.Button>();
+                moveButton.targetGraphic = image;
+                moveButton.onClick.AddListener(() => MoveRequested?.Invoke());
+                var labelRoot = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
+                labelRoot.transform.SetParent(root.transform, false);
+                var label = labelRoot.GetComponent<TextMeshProUGUI>();
+                label.font = detailNameText.font;
+                label.fontSize = 13f;
+                label.color = new Color(0.5f, 1f, 1f, 1f);
+                label.alignment = TextAlignmentOptions.Center;
+                label.text = "시설 이동";
+                label.raycastTarget = false;
+                label.rectTransform.anchorMin = Vector2.zero;
+                label.rectTransform.anchorMax = Vector2.one;
+                label.rectTransform.offsetMin = label.rectTransform.offsetMax = Vector2.zero;
+            }
+            if (moveButton != null) moveButton.gameObject.SetActive(enabled);
+        }
 
         public Button CloseButton => closeButton;
         public bool UsesStructuredLayout => entries != null && entries.Length > 0 && detailNameText != null;
