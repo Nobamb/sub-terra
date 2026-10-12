@@ -82,7 +82,6 @@ namespace SubTerra.App.Tests.UI
             Assert.That(ControlTerminalBindings.Description(ControlScheme.WasdMove), Does.StartWith("WASD: 이동 · 방향키: 상하좌우 채굴"));
             Assert.That(ControlTerminalBindings.Description(ControlScheme.ArrowsMove), Does.StartWith("방향키: 이동 · WASD: 상하좌우 채굴"));
             Assert.That(ControlTerminalBindings.Description(ControlScheme.WasdMove), Does.Contain("마우스 / Enter도 사용 가능"));
-            Assert.That(ControlTerminalBindings.SaveNotice, Does.Contain("바로 저장"));
             Assert.That(ControlTerminalBindings.Caption, Is.EqualTo("키보드 · 이동 / 채굴"));
         }
 
@@ -810,8 +809,9 @@ namespace SubTerra.App.Tests.UI
             Assert.That(panel.Terminal.GetCap("←").Function, Is.EqualTo(ControlKeyFunction.MoveLeft));
         }
 
-        [Test]
-        public void Panel_CloseSavesAtOnceAndReopenStartsClean()
+        [TestCase("CloseControls")]
+        [TestCase("CloseControlsX")]
+        public void Panel_CloseSavesAtOnceAndReopenStartsClean(string buttonName)
         {
             var panel = CreatePanel(out var root);
             panel.SetDraft(ControlScheme.ArrowsMove);
@@ -819,7 +819,7 @@ namespace SubTerra.App.Tests.UI
             var terminal = panel.Terminal;
             terminal.GetCap("←").OnPointerEnter(null);
             Run(terminal, 0.5f);
-            Assert.That(panel.Close(), Is.True);
+            root.transform.Find("ControlSchemeOverlay/KeyboardCard/Chrome/" + buttonName).GetComponent<UnityEngine.UI.Button>().onClick.Invoke();
             Assert.That(panel.IsOpen, Is.False);
             Assert.That(panel.Close(), Is.False);
             Assert.That(SettingsRuntimeApplier.LoadControlScheme(), Is.EqualTo(ControlScheme.ArrowsMove));
@@ -860,7 +860,7 @@ namespace SubTerra.App.Tests.UI
             var panel = CreatePanel(out var root);
             panel.Open();
             var card = root.transform.Find("ControlSchemeOverlay/KeyboardCard");
-            var allowed = new HashSet<string> { "KeyboardCard", "PreviousScheme", "NextScheme", "CloseControls" };
+            var allowed = new HashSet<string> { "KeyboardCard", "PreviousScheme", "NextScheme", "CloseControls", "CloseControlsX" };
             foreach (var graphic in card.GetComponentsInChildren<Graphic>(true))
             {
                 if (!graphic.raycastTarget) continue;

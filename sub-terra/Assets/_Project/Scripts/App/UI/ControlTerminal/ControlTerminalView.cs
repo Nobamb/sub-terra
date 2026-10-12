@@ -410,8 +410,6 @@ namespace SubTerra.App.UI.ControlTerminal
             caption = Label("KeyboardCaption", 0f, 262f, 700f, 30f, 20f, FontStyles.Normal, ResourceSellUi.TextMuted);
             caption.text = ControlTerminalBindings.Caption;
             description = Label("SchemeDescription", 0f, -205f, 1000f, 84f, 21f, FontStyles.Normal, ResourceSellUi.TextMain);
-            var notice = Label("SaveNotice", 0f, -250f, 1000f, 26f, 17f, FontStyles.Normal, ResourceSellUi.TextMuted);
-            notice.text = ControlTerminalBindings.SaveNotice;
             hint = Label("HoverHint", ControlTerminalLayout.ScreenCenter.x, -62f, 420f, 24f, 16f, FontStyles.Normal, ResourceSellUi.TextDim);
             hint.text = ControlTerminalBindings.HoverHint;
         }

@@ -31,8 +31,8 @@ namespace SubTerra.App.UI.ControlTerminal
     /// </summary>
     public static class ControlTerminalLayout
     {
-        public const float CardWidth = 1280f;
-        public const float CardHeight = 700f;
+        public const float CardWidth = 1408f;
+        public const float CardHeight = 770f;
         public const float KeyWidth = 50f;
         public const float KeyHeight = 50f;
         public const float StepX = 56f;
@@ -51,8 +51,8 @@ namespace SubTerra.App.UI.ControlTerminal
         public static readonly Vector2 ScreenSize = new Vector2(320f, 180f);
         /// <summary>연결선이 키보드 오른쪽 가장자리를 벗어나 세로로 오르내리는 x.</summary>
         public const float ConnectorExitX = 205f;
-        public const float PrevButtonX = -578f;
-        public const float NextButtonX = 578f;
+        public const float PrevButtonX = -610f;
+        public const float NextButtonX = 610f;
 
         private static List<ControlKeyDef> keys;
 

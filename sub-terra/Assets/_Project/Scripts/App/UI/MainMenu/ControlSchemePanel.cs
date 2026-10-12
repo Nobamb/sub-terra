@@ -149,10 +149,12 @@ namespace SubTerra.App.UI.MainMenu
             var chrome = terminal.Chrome;
             var arrowNormal = ControlTerminalArt.ArrowNormal();
             var arrowHover = ControlTerminalArt.ArrowHover();
-            Button(chrome, "PreviousScheme", "<", ControlTerminalLayout.PrevButtonX, 0, 56, 88, () => Cycle(-1), 30f, arrowNormal, arrowHover);
-            Button(chrome, "NextScheme", ">", ControlTerminalLayout.NextButtonX, 0, 56, 88, () => Cycle(1), 30f, arrowNormal, arrowHover);
+            Button(chrome, "PreviousScheme", null, ControlTerminalLayout.PrevButtonX, ControlTerminalLayout.PlateCenter.y, 56, 88, () => Cycle(-1), 30f, arrowNormal, arrowHover, ControlTerminalArt.Chevron(false));
+            Button(chrome, "NextScheme", null, ControlTerminalLayout.NextButtonX, ControlTerminalLayout.PlateCenter.y, 56, 88, () => Cycle(1), 30f, arrowNormal, arrowHover, ControlTerminalArt.Chevron(true));
             Button(chrome, "CloseControls", "선택 후 돌아가기", 0, -296, 330, 64, () => Close(), 22f,
                 ControlTerminalArt.ButtonNormal(), ControlTerminalArt.ButtonHover());
+            Button(chrome, "CloseControlsX", null, ControlTerminalLayout.CardWidth * 0.5f - 64f, ControlTerminalLayout.CardHeight * 0.5f - 64f, 56, 56, () => Close(), 20f,
+                ControlTerminalArt.ButtonNormal(), ControlTerminalArt.ButtonHover(), ControlTerminalArt.CloseIcon());
             overlay.SetActive(false);
             Refresh(false);
         }
@@ -195,30 +197,27 @@ namespace SubTerra.App.UI.MainMenu
 
         /// <summary>조작 단말과 같은 프레임 언어(각진 면·청록 테두리)의 버튼. 클릭 영역과 탐색 정책은 기존과 같다.</summary>
         private void Button(Transform parent, string name, string text, float x, float y, float width, float height,
-            UnityEngine.Events.UnityAction action, float fontSize, Sprite normalArt = null, Sprite hoverArt = null)
+            UnityEngine.Events.UnityAction action, float fontSize, Sprite normalArt = null, Sprite hoverArt = null, Sprite icon = null)
         {
             var rect = Rect(parent, name, x, y, width, height);
             var background = rect.gameObject.AddComponent<Image>();
-            var button = rect.gameObject.AddComponent<Button>();
+            var button = rect.gameObject.AddComponent<ControlTerminalButton>();
             button.targetGraphic = background;
             button.onClick.AddListener(action);
             UiKeyboardSubmitGuard.ConfigurePointerPreferredButton(button);
 
             if (normalArt != null)
             {
-                // 생성 이미지 버튼: 호버·선택·눌림은 밝은 그림으로 바꿔 보인다.
                 background.sprite = normalArt;
                 background.type = Image.Type.Sliced;
                 background.pixelsPerUnitMultiplier = ControlTerminalArt.SliceMultiplier(normalArt, ControlTerminalArt.ButtonCornerPixels);
-                button.transition = Selectable.Transition.SpriteSwap;
-                var hover = hoverArt != null ? hoverArt : normalArt;
-                button.spriteState = new SpriteState
-                {
-                    highlightedSprite = hover,
-                    selectedSprite = hover,
-                    pressedSprite = hover,
-                    disabledSprite = normalArt
-                };
+                var hoverRect = Rect(rect, "Hover", 0, 0, width, height);
+                var hover = hoverRect.gameObject.AddComponent<UnityEngine.UI.Image>();
+                hover.sprite = hoverArt != null ? hoverArt : normalArt;
+                hover.type = UnityEngine.UI.Image.Type.Sliced;
+                hover.pixelsPerUnitMultiplier = background.pixelsPerUnitMultiplier;
+                hover.raycastTarget = false;
+                button.BindHover(hover);
             }
             else
             {
@@ -230,6 +229,7 @@ namespace SubTerra.App.UI.MainMenu
                 colors.selectedColor = ButtonHover;
                 colors.pressedColor = ButtonPressed;
                 colors.colorMultiplier = 1f;
+                colors.fadeDuration = ControlTerminalButton.HoverSeconds;
                 button.colors = colors;
 
                 var line = Rect(rect, "Outline", 0, 0, 0, 0);
@@ -243,13 +243,24 @@ namespace SubTerra.App.UI.MainMenu
                 outline.raycastTarget = false;
             }
 
-            var label = Rect(rect, "Label", 0, 0, width - 8, height - 4).gameObject.AddComponent<TextMeshProUGUI>();
-            label.font = font;
-            label.text = text;
-            label.fontSize = fontSize;
-            label.alignment = TextAlignmentOptions.Center;
-            label.color = ButtonText;
-            label.raycastTarget = false;
+            if (icon != null)
+            {
+                var closeIcon = name == "CloseControlsX";
+                var image = Rect(rect, closeIcon ? "CloseIcon" : "ArrowIcon", 0, 0, closeIcon ? 28 : 24, closeIcon ? 28 : 36).gameObject.AddComponent<UnityEngine.UI.Image>();
+                image.sprite = icon;
+                image.preserveAspect = true;
+                image.raycastTarget = false;
+            }
+            else
+            {
+                var label = Rect(rect, "Label", 0, 0, width - 8, height - 4).gameObject.AddComponent<TextMeshProUGUI>();
+                label.font = font;
+                label.text = text;
+                label.fontSize = fontSize;
+                label.alignment = TextAlignmentOptions.Center;
+                label.color = ButtonText;
+                label.raycastTarget = false;
+            }
             var relay = rect.gameObject.AddComponent<ControlTerminalFocusRelay>();
             relay.Bind(terminal);
         }

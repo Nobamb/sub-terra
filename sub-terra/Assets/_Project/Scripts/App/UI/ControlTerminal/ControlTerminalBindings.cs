@@ -42,7 +42,6 @@ namespace SubTerra.App.UI.ControlTerminal
         public static string Title(ControlScheme scheme) => "키 조작 방식 " + ((int)scheme + 1) + " / " + SchemeCount;
 
         public const string Caption = "키보드 · 이동 / 채굴";
-        public const string SaveNotice = "< >로 바꾸면 바로 저장됩니다. 돌아가기 후에도 유지됩니다.";
         public const string HoverHint = "키에 마우스를 올리면 동작을 미리 볼 수 있습니다.";
 
         public static string Description(ControlScheme scheme)
