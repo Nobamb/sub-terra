@@ -59,7 +59,7 @@ namespace SubTerra.App.Integration
             CancelPreview();
             pickingMoveTarget = true;
             BuildingPlacementActivity.Begin();
-            MoveStatusChanged?.Invoke("옮길 조명·정산 콘솔·충전기·보관함을 클릭하세요. 우클릭 또는 시설 이동 버튼으로 취소합니다.");
+            MoveStatusChanged?.Invoke("옮길 조명·정산 콘솔·충전기·보관함·보건소를 클릭하세요. 우클릭 취소");
         }
 
         public event Action<BuildingPlacementResultDto> PlacementChanged;
@@ -115,7 +115,7 @@ namespace SubTerra.App.Integration
                         var size = placementSystem.Selection.Footprint;
                         MoveStatusChanged?.Invoke($"{size.x}×{size.y} 영역을 확보한 위치에 클릭하세요. 무료 이동 · 우클릭 취소");
                     }
-                    else MoveStatusChanged?.Invoke("직접 설치하거나 저장에서 복원한 조명·정산 콘솔·충전기·보관함만 옮길 수 있습니다.");
+                    else MoveStatusChanged?.Invoke("설치·복원한 조명·정산 콘솔·충전기·보관함·보건소만 옮길 수 있습니다.");
                 }
                 return;
             }

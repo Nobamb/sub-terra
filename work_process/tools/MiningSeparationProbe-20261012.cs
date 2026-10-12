@@ -71,7 +71,7 @@ namespace SubTerra.App.Integration
                 if (!moved) { stack.Pop(); continue; }
                 if (current is IEnumerator nested) stack.Push(nested); else yield return current;
             }
-            File.WriteAllLines(Path.GetFullPath("../work_process/mining-separation-measured-20261012.txt"), report);
+            File.WriteAllLines(Path.GetFullPath(Path.Combine(Application.dataPath, "../../work_process/mining-separation-measured-20261012.txt")), report);
             MiningSeparationEntry.Finish(ok);
         }
         static void Require(bool condition, string message)
@@ -137,14 +137,23 @@ namespace SubTerra.App.Integration
                 field.SetValue(mine, wrapped);
             }
             var names = markerNames.ToArray();
+            const int maximumFrameSamples = 32768;
+            var sampleFrames = new int[maximumFrameSamples];
+            var sampleIntervals = new double[maximumFrameSamples];
+            var sampleMined = new int[maximumFrameSamples];
+            var sampleCosts = new long[maximumFrameSamples * names.Length];
+            int recordedFrames = 0, droppedFrames = 0;
             var recorders = new ProfilerRecorder[names.Length];
             var sum = new double[names.Length]; var maximum = new long[names.Length]; var count = new int[names.Length];
             for (int i = 0; i < names.Length; i++) recorders[i] = ProfilerRecorder.StartNew(ProfilerCategory.Scripts, names[i], 1);
+            var frameWatch = System.Diagnostics.Stopwatch.StartNew();
+            double previousMs = frameWatch.Elapsed.TotalMilliseconds;
             try
             {
                 float end = Time.realtimeSinceStartup + 30;
                 while (Time.realtimeSinceStartup < end)
                 {
+                    int sampledFrame = Time.frameCount;
                     if (!mine.IsMining)
                     {
                         using (Preparation.Auto())
@@ -166,13 +175,48 @@ namespace SubTerra.App.Integration
                     }
                     if (mine.IsMining) mine.TickMining(Time.deltaTime, player.transform.position, 1.35f);
                     yield return null;
+                    double nowMs = frameWatch.Elapsed.TotalMilliseconds;
+                    bool storeFrame = recordedFrames < maximumFrameSamples;
+                    if (storeFrame)
+                    {
+                        sampleFrames[recordedFrames] = sampledFrame;
+                        sampleIntervals[recordedFrames] = nowMs - previousMs;
+                        sampleMined[recordedFrames] = mined;
+                    }
+                    else droppedFrames++;
+                    previousMs = nowMs;
                     for (int i = 0; i < names.Length; i++)
                     {
-                        if (!recorders[i].Valid || recorders[i].Count == 0 || recorders[i].LastValue == 0) continue;
-                        long value = recorders[i].LastValue; sum[i] += value; count[i]++; maximum[i] = Math.Max(maximum[i], value);
+                        if (!recorders[i].Valid)
+                        {
+                            if (storeFrame) sampleCosts[recordedFrames * names.Length + i] = long.MinValue;
+                            continue;
+                        }
+                        long value = recorders[i].Count == 0 ? 0 : recorders[i].LastValue;
+                        if (storeFrame) sampleCosts[recordedFrames * names.Length + i] = value;
+                        if (value > 0) { sum[i] += value; count[i]++; maximum[i] = Math.Max(maximum[i], value); }
+                        // Clear old samples so an inactive marker cannot reuse a previous frame's cost.
+                        recorders[i].Reset();
                     }
+                    if (storeFrame) recordedFrames++;
                 }
+                // Format strings and write files only after the measured interval.
+                var frameRows = new List<string>(recordedFrames + 1) { "sampled_frame,interval_ms,total_mined," + string.Join(",", names) };
+                for (int frame = 0; frame < recordedFrames; frame++)
+                {
+                    var row = new List<string> { sampleFrames[frame].ToString(CultureInfo.InvariantCulture),
+                        sampleIntervals[frame].ToString("F4", CultureInfo.InvariantCulture), sampleMined[frame].ToString(CultureInfo.InvariantCulture) };
+                    for (int i = 0; i < names.Length; i++)
+                    {
+                        long value = sampleCosts[frame * names.Length + i];
+                        row.Add(value == long.MinValue ? "NA" : value.ToString(CultureInfo.InvariantCulture));
+                    }
+                    frameRows.Add(string.Join(",", row));
+                }
+                File.WriteAllLines(Path.GetFullPath(Path.Combine(Application.dataPath,
+                    "../../work_process/mining-separation-frames-20261012.csv")), frameRows);
                 report.Add("Editor Play CPU marker separation, 30 seconds; chargers=" + installed + "; mined=" + mined + "; not Windows/GPU FPS");
+                report.Add("Per-frame marker values are nanoseconds; rows=" + recordedFrames + "; dropped rows=" + droppedFrames + "; formatting excluded from measured interval.");
                 for (int i = 0; i < names.Length; i++) report.Add(names[i] + "; valid=" + recorders[i].Valid
                     + "; unit=" + recorders[i].UnitType + "; active frame samples=" + count[i]
                     + "; mean_ms=" + (count[i] == 0 ? 0 : sum[i] / count[i] / 1000000).ToString("F4", CultureInfo.InvariantCulture)

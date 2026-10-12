@@ -9,14 +9,23 @@ namespace SubTerra.Gameplay.Building.Tests
 {
     public sealed class BuildingPlacementTests
     {
+        [TestCase(0, 0)]
+        [TestCase(1, 0)]
+        [TestCase(0, 1)]
+        [TestCase(1, 1)]
+        public void ClinicMovement_BlockedFootprintKeepsOriginal(int x, int y)
+        {
+            MoveChargerOrStorage_BlockedCellAndCancelPreserveOriginal("building.clinic.basic", x, y, new Vector2Int(2, 2));
+        }
+
         [TestCase("building.charger.basic", 0, 0)]
         [TestCase("building.charger.basic", 1, 0)]
         [TestCase("building.charger.basic", 0, 1)]
         [TestCase("building.charger.basic", 1, 1)]
         [TestCase("building.storage.basic", 0, 0)]
-        public void MoveChargerOrStorage_BlockedCellAndCancelPreserveOriginal(string buildingId, int dx, int dy)
+        public void MoveChargerOrStorage_BlockedCellAndCancelPreserveOriginal(string buildingId, int dx, int dy, Vector2Int? footprint = null)
         {
-            var setup = CreateSetup(10f, new Vector2(20f, 20f), buildingId: buildingId);
+            var setup = CreateSetup(10f, new Vector2(20f, 20f), footprint: footprint, buildingId: buildingId);
             try
             {
                 SetField(setup.Placement, "restoreDefinitions", new[] { setup.Definition });

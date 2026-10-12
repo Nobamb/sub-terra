@@ -12,6 +12,12 @@ namespace SubTerra.Gameplay.Snapshot.Tests
 {
     public sealed class WorldSnapshotSystemTests
     {
+        [Test]
+        public void ClinicMovement_PreservesIdentityAndSaveFootprint()
+        {
+            PlacedFacility_JsonRoundTripPreservesIdentityFootprintAndOccupancy("clinic_basic", 2, 2, true);
+        }
+
         [TestCase("charger_basic", 2, 2)]
         [TestCase("storage_basic", 1, 1)]
         public void MovedChargerAndStorage_PreserveIdentityAndSaveFootprint(string assetName, int width, int height)
