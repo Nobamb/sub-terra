@@ -22,3 +22,12 @@
 - B 메뉴·시설 퀘스트 10개는 저장된 참조 비교로 확인했다. 실제 화면의 새 디자인을 시각 검수했다고 주장하지 않는다.
 - Test Runner Editor 종료 후 자동 설정 변경을 실행 전 기준으로 복원했다. Scene/Prefab을 새로 재생성하거나 저장하지 않았다.
 - 시설 이동 구현과 main 동기화 결과는 PR #168에 갱신한다. 현재 첫 번째 프로젝트는 `codex/facility-move-runtime-followup` 브랜치이며 최신 병합 main을 포함한다.
+
+## 메모리 압박과 캐시 정리
+
+- 사용자가 렉을 보고했을 때 디스크 여유 10.9GB, 사용 가능한 RAM 약 0.36GB/전체 7.4GB였다. Unity와 에셋 가져오기 작업자 2개가 실행 중이었다. 디스크 여유만으로 정상 실행 성능을 보장하지 않는다.
+- 사용자가 필요한 작업을 저장하고 Unity를 닫았다고 확인한 뒤, 실행 중인 Unity가 없는 것을 확인했다.
+- 첫 번째 프로젝트의 Library/Bee(493.1MB), Library/PlayerDataCache(467.3MB), Library/BuildPlayerData(3.2MB), 비어 있는 BuildInstructions/TempArtifacts만 정리했다. 합계 약 0.94GB, 정리 후 디스크 여유 11.64GB였다.
+- 소스·Assets·사용자 저장·Git·폰트 stash·에셋 가져오기 캐시 Artifacts·PackageCache·ShaderCache·ScriptAssemblies는 보존했다. 삭제한 빌드 캐시는 이후 필요할 때 다시 생성된다.
+- Unity 종료 후 RAM 여유는 약 1.38GB였으며 다른 앱 사용에 따라 변한다. 캐시 정리가 모든 렉의 원인을 해결했다고 주장하지 않는다.
+- 이후 작업에서 전체 씬 자동 측정/Windows 빌드는 기본으로 실행하지 않는다. 필요한 좁은 검사와 컴파일만 진행하고, 작업용 Editor는 검사 후 종료한다. 디스크·RAM 여유가 부족하면 무거운 검증을 시작하지 않는다.
