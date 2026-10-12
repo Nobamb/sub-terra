@@ -9,6 +9,40 @@ namespace SubTerra.Gameplay.Building.Tests
 {
     public sealed class BuildingPlacementTests
     {
+        [TestCase("building.charger.basic", 0, 0)]
+        [TestCase("building.charger.basic", 1, 0)]
+        [TestCase("building.charger.basic", 0, 1)]
+        [TestCase("building.charger.basic", 1, 1)]
+        [TestCase("building.storage.basic", 0, 0)]
+        public void MoveChargerOrStorage_BlockedCellAndCancelPreserveOriginal(string buildingId, int dx, int dy)
+        {
+            var setup = CreateSetup(10f, new Vector2(20f, 20f), buildingId: buildingId);
+            try
+            {
+                SetField(setup.Placement, "restoreDefinitions", new[] { setup.Definition });
+                for (int x = 0; x < setup.Definition.Footprint.x; x++)
+                {
+                    setup.Terrain.SetTile(new Vector3Int(x, -1, 0), setup.Tile);
+                    setup.Terrain.SetTile(new Vector3Int(3 + x, -1, 0), setup.Tile);
+                }
+                var placed = setup.Placement.TryPlaceAt(Vector3Int.zero);
+                Assert.That(placed.IsSuccess, Is.True);
+                var instance = setup.BuildingRoot.GetChild(0).GetComponent<BuildingInstance>();
+                Vector3 originalPosition = instance.transform.position;
+                setup.Terrain.SetTile(new Vector3Int(3 + dx, dy, 0), setup.Tile);
+                Assert.That(setup.Placement.TryBeginMove(instance), Is.True);
+                Assert.That(setup.Placement.TryMoveAt(new Vector3Int(3, 0, 0)).Failure,
+                    Is.EqualTo(BuildingPlacementFailure.Occupied));
+                setup.Placement.ClearSelection();
+                Assert.That(instance.transform.position, Is.EqualTo(originalPosition));
+                Assert.That(instance.InstanceId, Is.EqualTo(placed.InstanceId));
+                Assert.That(setup.BuildingRoot.childCount, Is.EqualTo(1));
+                Assert.That(setup.Wallet.SpendCount, Is.EqualTo(1));
+                Assert.That(setup.Placement.IsGroundSupportingBuilding(new Vector3Int(0, -1, 0)), Is.True);
+            }
+            finally { setup.Dispose(); }
+        }
+
         [TestCase("building.light.basic")]
         [TestCase("building.settlement.basic")]
         public void MoveLegacyFacility_ExpandsWithoutSpendingOrConstructionEvent(string buildingId)

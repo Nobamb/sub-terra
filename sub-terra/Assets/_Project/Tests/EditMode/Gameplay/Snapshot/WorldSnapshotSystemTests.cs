@@ -12,6 +12,13 @@ namespace SubTerra.Gameplay.Snapshot.Tests
 {
     public sealed class WorldSnapshotSystemTests
     {
+        [TestCase("charger_basic", 2, 2)]
+        [TestCase("storage_basic", 1, 1)]
+        public void MovedChargerAndStorage_PreserveIdentityAndSaveFootprint(string assetName, int width, int height)
+        {
+            PlacedFacility_JsonRoundTripPreservesIdentityFootprintAndOccupancy(assetName, width, height, true);
+        }
+
         [TestCase("light_basic")]
         [TestCase("settlement_basic")]
         public void LegacyUtility_RestoreAndRecaptureSaveCanonicalSizeAndKeepIdentity(string assetName)
@@ -350,10 +357,21 @@ namespace SubTerra.Gameplay.Snapshot.Tests
                     priorBuilding.rotation = 2;
                     prior.buildings[0] = priorBuilding;
                     Assert.That(snapshots.RestoreSnapshot(prior), Is.True);
-                    terrain.SetTile(new Vector3Int(3, -1, 0), ground);
-                    Assert.That(placement.TryBeginMove(buildingRoot.GetChild(0).GetComponent<BuildingInstance>()), Is.True);
+                    for (int x = 0; x < width; x++)
+                        terrain.SetTile(new Vector3Int(3 + x, -1, 0), ground);
+                    var movingInstance = buildingRoot.GetChild(0).GetComponent<BuildingInstance>();
+                    var powerBefore = movingInstance.GetComponent<PowerNode>();
+                    int demandBefore = powerBefore != null ? powerBefore.Demand : 0;
+                    Assert.That(placement.TryBeginMove(movingInstance), Is.True);
                     expectedOrigin = new Vector3Int(3, 0, 0);
                     Assert.That(placement.TryMoveAt(expectedOrigin).IsSuccess, Is.True);
+                    Assert.That(buildingRoot.GetChild(0).GetComponent<BuildingInstance>(), Is.SameAs(movingInstance));
+                    Assert.That(movingInstance.GetComponent<PowerNode>(), Is.SameAs(powerBefore));
+                    if (powerBefore != null)
+                    {
+                        Assert.That(powerBefore.EntityId, Is.EqualTo(movingInstance.InstanceId));
+                        Assert.That(powerBefore.Demand, Is.EqualTo(demandBefore));
+                    }
                 }
                 var original = buildingRoot.GetComponentInChildren<BuildingInstance>();
                 Assert.That(original, Is.Not.Null);

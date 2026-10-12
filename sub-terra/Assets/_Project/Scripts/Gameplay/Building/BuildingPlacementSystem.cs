@@ -335,7 +335,9 @@ namespace SubTerra.Gameplay.Building
         {
             if (instance == null || !runtimeBuildings.ContainsKey(instance)
                 || (instance.BuildingId != "building.light.basic"
-                    && instance.BuildingId != "building.settlement.basic")) return false;
+                    && instance.BuildingId != "building.settlement.basic"
+                    && instance.BuildingId != "building.charger.basic"
+                    && instance.BuildingId != "building.storage.basic")) return false;
             BuildingPlacementDefinition definition = FindDefinition(instance.BuildingId);
             if (definition == null || definition.RuntimePrefab == null) return false;
             Select(definition);
