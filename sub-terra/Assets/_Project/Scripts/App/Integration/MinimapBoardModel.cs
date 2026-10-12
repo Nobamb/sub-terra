@@ -48,6 +48,41 @@ namespace SubTerra.App.Integration
         public bool Active = true;
         /// <summary>최초 건설 연출 시작 시각(unscaled). 없으면 음수.</summary>
         public float BuiltAt = -1f;
+        /// <summary>이름표 연동 강조 정도. 0 = 연한 기본 표식, 1 = 진한 표식. 음수면 연동하지 않는 시설(전력 상태로만 그린다).</summary>
+        public float Presence = -1f;
+    }
+
+    /// <summary>시설 이름표(근접 팝업)가 지금 떠 있는 시설인지 알려 주는 쪽. 미니맵 표식 강조에만 쓴다.</summary>
+    public interface IFacilityLabelSource
+    {
+        bool IsLabelShown(string instanceId);
+    }
+
+    /// <summary>
+    /// 이름표가 떠 있으면 표식을 진하게(0→1), 사라지면 연하게(1→0) 만드는 순수 계산.
+    /// 상태는 시설 기록에 두고 시간(unscaled)만 받아 EditMode에서 검증한다.
+    /// </summary>
+    public static class MinimapFacilityPresence
+    {
+        public const float FadeSeconds = 0.25f;
+
+        public static float Target(bool labelShown) => labelShown ? 1f : 0f;
+
+        /// <summary>목표를 향해 한 걸음 이동한다. 처음(미설정)이면 목표로 바로 맞춰 열 때마다 번지지 않게 한다. 값이 바뀌면 true.</summary>
+        public static bool Step(MinimapFacilityRecord record, bool labelShown, float unscaledDelta)
+        {
+            float target = Target(labelShown);
+            float before = record.Presence;
+            if (before < 0f)
+            {
+                record.Presence = target;
+                return true;
+            }
+
+            float step = Mathf.Max(0f, unscaledDelta) / FadeSeconds;
+            record.Presence = Mathf.MoveTowards(before, target, step);
+            return !Mathf.Approximately(record.Presence, before);
+        }
     }
 
     /// <summary>

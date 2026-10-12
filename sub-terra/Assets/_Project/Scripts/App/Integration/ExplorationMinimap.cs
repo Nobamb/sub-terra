@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using SubTerra.App.Core.Data;
 using SubTerra.Gameplay.Building;
 using SubTerra.Gameplay.Player;
 using SubTerra.Gameplay.Power;
@@ -70,6 +71,7 @@ namespace SubTerra.App.Integration
         private ElevatorController[] elevators = Array.Empty<ElevatorController>();
         private bool placementSubscribed;
         private bool tilemapSubscribed;
+        private IFacilityLabelSource labelSource;
 
         private RectTransform root;
         private RectTransform aperture;
@@ -165,6 +167,22 @@ namespace SubTerra.App.Integration
             elevators = shafts ?? Array.Empty<ElevatorController>();
             if (isActiveAndEnabled) SubscribePlacement();
             RefreshElevators();
+        }
+
+        /// <summary>
+        /// 시설 이름표가 떠 있는 시설의 표식은 불투명하게, 이름표가 사라지면 살짝 투명하게 그린다.
+        /// 연결하지 않으면(null) 모든 표식이 기존처럼 완전 불투명이다.
+        /// </summary>
+        public void SetLabelSource(IFacilityLabelSource source)
+        {
+            labelSource = source;
+            if (source == null)
+            {
+                var records = facilities.Records;
+                for (int i = 0; i < records.Count; i++) records[i].Presence = -1f;
+            }
+
+            drawnFacilityVersion = -1;
         }
 
         /// <summary>세이브 복원·월드 재생성 뒤 채굴 기록과 시설 목록을 실제 스냅샷으로 다시 맞춘다.</summary>
@@ -396,10 +414,11 @@ namespace SubTerra.App.Integration
 
             terrainFlashing = flashing;
             PollFacilityStates();
+            bool presenceChanged = UpdateFacilityPresence(delta);
             bool facilityFlash = facilities.AnyFlashActive(now);
             // 포탈 내부 소용돌이는 천천히 계속 돌기 때문에 보이는 동안 다시 그린다.
             bool facilityAnimated = facilities.AnyAnimatedVisible(window);
-            if (geometryChanged || facilities.Version != drawnFacilityVersion || facilityFlash || facilityFlashing || facilityAnimated)
+            if (geometryChanged || facilities.Version != drawnFacilityVersion || facilityFlash || facilityFlashing || facilityAnimated || presenceChanged)
             {
                 facilityGraphic.Configure(facilities, window, now);
                 drawnFacilityVersion = facilities.Version;
@@ -627,6 +646,22 @@ namespace SubTerra.App.Integration
             {
                 if (pair.Value != null) facilities.SetActive(pair.Key, IsNodeActive(pair.Value));
             }
+        }
+
+        /// <summary>이름표를 쓰는 시설만 표식 불투명도를 목표(이름표 표시 중 1, 아니면 살짝 투명)로 옮긴다. 바뀐 게 있으면 true.</summary>
+        private bool UpdateFacilityPresence(float delta)
+        {
+            if (labelSource == null) return false;
+            bool changed = false;
+            var records = facilities.Records;
+            for (int i = 0; i < records.Count; i++)
+            {
+                var record = records[i];
+                if (!ItemDisplayNames.ShowsProximityName(record.BuildingId)) continue;
+                if (MinimapFacilityPresence.Step(record, labelSource.IsLabelShown(record.Id), delta)) changed = true;
+            }
+
+            return changed;
         }
 
         private void RefreshElevators()

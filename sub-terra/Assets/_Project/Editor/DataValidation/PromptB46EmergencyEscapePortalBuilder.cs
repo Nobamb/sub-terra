@@ -30,6 +30,8 @@ namespace SubTerra.App.Editor.DataValidation
             "Assets/_Project/Prefabs/Gameplay/Buildings/EmergencyEscapePortal.prefab";
         public const string PortalDataPath =
             "Assets/_Project/Data/Buildings/Building_EmergencyEscapePortal.asset";
+        public const string PortalArtworkPath =
+            "Assets/_Project/Art/Facilities/MVP/emergency_escape_portal_v1.png";
         public const string PortalPlacementPath =
             "Assets/_Project/Data/Buildings/Placement/escape_portal_emergencyPlacement.asset";
 
@@ -59,6 +61,77 @@ namespace SubTerra.App.Editor.DataValidation
             return "Prompt-B 46 portal data, BuildingMenu, and Integration Scene wired.";
         }
 
+        [MenuItem("SubTerra/Facilities/Refresh Emergency Escape Portal Artwork")]
+        public static void RefreshPortalArtwork()
+        {
+            if (EditorApplication.isPlayingOrWillChangePlaymode)
+                throw new InvalidOperationException("Stop Play Mode before refreshing portal artwork.");
+            var root = PrefabUtility.LoadPrefabContents(PortalPrefabPath);
+            try
+            {
+                ApplyPortalArtwork(root);
+                PrefabUtility.SaveAsPrefabAsset(root, PortalPrefabPath);
+            }
+            finally { PrefabUtility.UnloadPrefabContents(root); }
+            var data = AssetDatabase.LoadAssetAtPath<BuildingData>(PortalDataPath);
+            if (data == null) throw new InvalidOperationException("Portal building data missing.");
+            var serialized = new SerializedObject(data);
+            serialized.FindProperty("icon").objectReferenceValue = LoadPortalArtwork();
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            AssetDatabase.SaveAssetIfDirty(data);
+            PromptB1072QuestThumbnailBuilder.Apply();
+            Debug.Log("[SubTerra] Emergency portal artwork, construction icon and quest image synchronized.");
+        }
+
+        public static void ApplyPortalArtwork(GameObject root)
+        {
+            var sprite = LoadPortalArtwork();
+            foreach (var oldName in new[] { "OuterFrame", "PortalField" })
+            {
+                var old = root.transform.Find(oldName);
+                if (old != null) UnityEngine.Object.DestroyImmediate(old.gameObject);
+            }
+            var visual = root.transform.Find("VisualRoot");
+            if (visual == null)
+            {
+                visual = new GameObject("VisualRoot").transform;
+                visual.SetParent(root.transform, false);
+            }
+            var artwork = visual.Find("Artwork");
+            if (artwork == null)
+            {
+                artwork = new GameObject("Artwork", typeof(SpriteRenderer)).transform;
+                artwork.SetParent(visual, false);
+            }
+            var renderer = artwork.GetComponent<SpriteRenderer>();
+            renderer.sprite = sprite;
+            renderer.color = Color.white;
+            renderer.sortingOrder = 3; // 플레이어(order 5)가 포탈 안에서도 보이도록 뒤에 둔다.
+            FacilityGroundedVisual.Apply(root.transform, DataIds.Buildings.EmergencyEscapePortal, new Vector2Int(2, 2));
+        }
+
+        private static Sprite LoadPortalArtwork()
+        {
+            AssetDatabase.ImportAsset(PortalArtworkPath);
+            var importer = AssetImporter.GetAtPath(PortalArtworkPath) as TextureImporter;
+            if (importer == null) throw new InvalidOperationException("Portal artwork missing.");
+            importer.textureType = TextureImporterType.Sprite;
+            importer.spriteImportMode = SpriteImportMode.Single;
+            importer.spritePixelsPerUnit = 100f;
+            importer.spritePivot = new Vector2(0.5f, 0.5f);
+            importer.alphaIsTransparency = true;
+            importer.mipmapEnabled = false;
+            importer.filterMode = FilterMode.Bilinear;
+            importer.wrapMode = TextureWrapMode.Clamp;
+            importer.maxTextureSize = 2048;
+            importer.npotScale = TextureImporterNPOTScale.None;
+            importer.textureCompression = TextureImporterCompression.Uncompressed;
+            importer.SaveAndReimport();
+            var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(PortalArtworkPath);
+            if (sprite == null) throw new InvalidOperationException("Portal sprite import failed.");
+            return sprite;
+        }
+
         private static GameObject BuildPortalPrefab()
         {
             var root = new GameObject(
@@ -78,13 +151,7 @@ namespace SubTerra.App.Editor.DataValidation
                 var power = root.GetComponent<PowerNode>();
                 power.Configure(null, false, 0, 30, PowerPriority.Critical);
 
-                var sprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UISprite.psd");
-                CreateVisual(root.transform, "OuterFrame", sprite,
-                    Vector3.zero, new Vector2(2f, 2f),
-                    new Color(0.1f, 0.8f, 0.95f, 0.92f), 5);
-                CreateVisual(root.transform, "PortalField", sprite,
-                    new Vector3(0f, 0f, -0.01f), new Vector2(1.6f, 1.6f),
-                    new Color(0.08f, 0.16f, 0.35f, 0.78f), 6);
+                ApplyPortalArtwork(root);
 
                 var portalSo = new SerializedObject(root.GetComponent<EmergencyEscapePortal>());
                 portalSo.FindProperty("inputActions").objectReferenceValue =
@@ -147,7 +214,7 @@ namespace SubTerra.App.Editor.DataValidation
                 AssetDatabase.CreateAsset(data, PortalDataPath);
             }
 
-            var icon = LoadFirstSprite(IconPath);
+            var icon = LoadPortalArtwork();
             data.EditorSet(
                 DataIds.Buildings.EmergencyEscapePortal,
                 "긴급 탈출 포탈",

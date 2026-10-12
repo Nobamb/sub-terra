@@ -212,7 +212,7 @@ namespace SubTerra.App.Tests.UI
             foreach (var id in new[] { "fac.core", "fac.charger", "fac.clinic", "fac.elevator", "fac.light", "fac.storage", "fac.settlement", "fac.portal" })
                 Assert.That(Plain(id), Does.Contain("미니맵 아이콘"), id);
             Assert.That(Plain("fac.storage"), Does.Contain("정육면체"));
-            Assert.That(Plain("fac.settlement"), Does.Contain("계산기"));
+            Assert.That(Plain("fac.settlement"), Does.Contain("코인"));
             Assert.That(Plain("fac.light"), Does.Contain("전구"));
             Assert.That(Plain("fac.portal"), Does.Contain("웜홀"));
             Assert.That(Plain("fac.elevator"), Does.Contain("화살표"));

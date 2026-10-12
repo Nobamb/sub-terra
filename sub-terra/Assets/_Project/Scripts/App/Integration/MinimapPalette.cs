@@ -65,7 +65,7 @@ namespace SubTerra.App.Integration
             MinimapFacilityKind.Support => MinimapGlyph.Support,
             MinimapFacilityKind.Light => MinimapGlyph.Lamp,
             MinimapFacilityKind.Storage => MinimapGlyph.Cube,
-            MinimapFacilityKind.Settlement => MinimapGlyph.Calculator,
+            MinimapFacilityKind.Settlement => MinimapGlyph.Coin,
             MinimapFacilityKind.Portal => MinimapGlyph.Wormhole,
             _ => MinimapGlyph.Generic
         };

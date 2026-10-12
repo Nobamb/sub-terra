@@ -377,7 +377,7 @@ namespace SubTerra.App.UI.Guide
                 .Data("효과", "가진 광물을 골드로 정산합니다. 정산할 자원을 고르는 판매 창이 열립니다.")
                 .Data("연결 조건", "엘리베이터나 " + core + "의 전력 공급 범위 안에서만 쓸 수 있습니다.")
                 .Data("제외", ItemDisplayNames.Mineral(DataIds.RareItems.EngineFuel) + " 같은 희귀 품목은 정산할 수 없고 지상 기지에서 판매합니다.")
-                .Data("미니맵 아이콘", "보라색 계산기 모양으로, 가로 1칸 × 세로 2칸 크기로 표시됩니다. 전력을 받지 못하면 흐리게 표시됩니다.")
+                .Data("미니맵 아이콘", "보라색 코인 모양으로, 가로 1칸 × 세로 2칸 크기로 표시됩니다. 전력을 받지 못하면 흐리게 표시됩니다.")
                 .Link("ctrl.interact", "res.fuel", "mech.grid");
 
             Facility("fac.core", core, "기지 핵심 시설", "E", DataIds.Buildings.OutpostCoreBasic)

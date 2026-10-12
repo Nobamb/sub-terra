@@ -663,6 +663,10 @@ namespace SubTerra.App.Integration
             minimap.Bind(FindForegroundTilemap(), playerMovement.transform, snapshot);
             // 시설은 건설/복원 이벤트와 엘리베이터 승강로 범위로만 관측한다.
             minimap.BindFacilities(buildingPlacementSystem, Resolve<ElevatorController>(null));
+            // 이름표 팝업이 뜬 시설의 표식만 불투명하게 강조한다.
+            var labelController = GetComponent<FacilityProximityLabelController>();
+            if (labelController == null) labelController = Resolve<FacilityProximityLabelController>(null);
+            minimap.SetLabelSource(labelController);
             minimap.ApplyHudLayout();
         }
 
