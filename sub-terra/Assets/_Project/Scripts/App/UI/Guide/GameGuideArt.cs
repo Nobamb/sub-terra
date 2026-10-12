@@ -104,25 +104,6 @@ namespace SubTerra.App.UI.Guide
             });
         }
 
-        /// <summary>
-        /// 긴급 탈출 포탈. 게임에는 전용 아이콘이 없고 월드 프리팹이 청록 외곽 사각형(OuterFrame)과 남색 포털 면(PortalField)으로만
-        /// 그려지므로 같은 구성·색을 절차로 옮긴다. 색 포함 64x64.
-        /// </summary>
-        public static Sprite Portal()
-        {
-            return Colored("portal", 64, 64, (x, y) =>
-            {
-                var outer = RoundedBox(x - 32f, y - 32f, 30f, 30f, 5f);
-                if (!outer)
-                {
-                    return Color.clear;
-                }
-
-                var inner = RoundedBox(x - 32f, y - 32f, 24f, 24f, 3f);
-                return inner ? new Color(0.08f, 0.16f, 0.35f, 0.95f) : new Color(0.10f, 0.80f, 0.95f, 0.95f);
-            });
-        }
-
         /// <summary>가는 원 윤곽(전력 공급 범위 표시). 128x128.</summary>
         public static Sprite Ring()
         {
@@ -197,38 +178,6 @@ namespace SubTerra.App.UI.Guide
             }
 
             return dx * dx + dy * dy <= radius * radius;
-        }
-
-        private static Sprite Colored(string key, int width, int height, Func<float, float, Color> color)
-        {
-            if (Cache.TryGetValue(key, out var cached) && cached != null)
-            {
-                return cached;
-            }
-
-            var texture = new Texture2D(width, height, TextureFormat.RGBA32, false)
-            {
-                wrapMode = TextureWrapMode.Clamp,
-                filterMode = FilterMode.Bilinear,
-                hideFlags = HideFlags.HideAndDontSave
-            };
-            var pixels = new Color32[width * height];
-            for (var y = 0; y < height; y++)
-            {
-                for (var x = 0; x < width; x++)
-                {
-                    pixels[y * width + x] = color(x + 0.5f, y + 0.5f);
-                }
-            }
-
-            texture.SetPixels32(pixels);
-            texture.Apply(false, true);
-            var sprite = Sprite.Create(texture, new Rect(0f, 0f, width, height), new Vector2(0.5f, 0.5f), 100f, 0,
-                SpriteMeshType.FullRect);
-            sprite.name = "GameGuideArt-" + key;
-            sprite.hideFlags = HideFlags.HideAndDontSave;
-            Cache[key] = sprite;
-            return sprite;
         }
 
         private static Sprite Shape(string key, int width, int height, Func<float, float, bool> inside)

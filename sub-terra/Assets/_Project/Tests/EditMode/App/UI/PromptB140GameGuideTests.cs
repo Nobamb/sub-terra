@@ -785,15 +785,20 @@ namespace SubTerra.App.Tests.UI
         }
 
         [Test]
-        public void Sprites_PortalHasNoGameIconSoItFallsBackToTheDrawnPortal()
+        public void Sprites_PortalUsesTheGameArtworkForItsIconAndDemo()
         {
             var sprites = new GuideSprites(null, null);
-            Assert.That(sprites.Get("bld:" + DataIds.Buildings.EmergencyEscapePortal), Is.Not.Null, "그린 포탈은 스킨 없이도 나온다");
+            Assert.That(sprites.Get("bld:" + DataIds.Buildings.EmergencyEscapePortal), Is.Null, "스킨이 없으면 월드 스프라이트도 없다");
             Assert.That(sprites.Get("bld:" + DataIds.Buildings.ChargerBasic), Is.Null, "스킨이 없으면 월드 스프라이트도 없다");
             var skin = AssetDatabase.LoadAssetAtPath<GameGuideSkin>(PromptB140GameGuideSkinBuilder.SkinAssetPath);
             var withSkin = new GuideSprites(skin, null);
             var portal = withSkin.Get("bld:" + DataIds.Buildings.EmergencyEscapePortal);
-            Assert.That(portal, Is.Not.Null, "카탈로그의 2x2 자리표시 아이콘 대신 월드 프리팹 구성으로 그린 포탈");
+            var artwork = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/_Project/Art/Facilities/MVP/emergency_escape_portal_v1.png");
+            Assert.That(artwork, Is.Not.Null);
+            Assert.That(portal, Is.SameAs(artwork));
+            Assert.That(GuideSprites.SceneKeyFor(DataIds.Buildings.EmergencyEscapePortal), Is.EqualTo("fac.portal"));
+            Assert.That(GuideDemoLibrary.TryGet("fac.portal", out var clip), Is.True);
+            Assert.That(clip.UsedSpriteKeys(), Does.Contain("fac.portal"));
             Assert.That(GuideSprites.SceneKeyFor(DataIds.Buildings.ChargerBasic), Is.EqualTo("fac.charger"));
         }
 

@@ -55,6 +55,7 @@ namespace SubTerra.App.Editor.DataValidation
             Add("fac.settlement", "Facilities/MVP/settlement_console_cartoon_v3.png");
             Add("fac.storage", "Facilities/MVP/storage_basic_cartoon_v2.png");
             Add("fac.support", "Facilities/MVP/support_pillar_mine.png");
+            Add("fac.portal", "Facilities/MVP/emergency_escape_portal_v1.png");
 
             Add("drone.idle", "Characters/Drone/digger_bot_idle.png");
             Add("fx.coin", "FX/gold_coin_01.png");

@@ -141,7 +141,7 @@ namespace SubTerra.App.UI.Guide
                 case Core.Data.DataIds.Buildings.LadderBasic: return "fac.ladder";
                 case Core.Data.DataIds.Buildings.SupportBasic: return "fac.support";
                 case Core.Data.DataIds.Buildings.LightBasic: return "fac.light";
-                case Core.Data.DataIds.Buildings.EmergencyEscapePortal: return "art.portal";
+                case Core.Data.DataIds.Buildings.EmergencyEscapePortal: return "fac.portal";
                 default: return "icon.facility";
             }
         }
@@ -155,7 +155,6 @@ namespace SubTerra.App.UI.Guide
                 case "art.info": return GameGuideArt.Info();
                 case "art.warning": return GameGuideArt.Warning();
                 case "art.diamond": return GameGuideArt.Diamond();
-                case "art.portal": return GameGuideArt.Portal();
                 case "art.ring": return GameGuideArt.Ring();
                 case "art.book": return GameGuideArt.BookGlyph();
                 case "art.mouse": return GameGuideArt.Mouse();

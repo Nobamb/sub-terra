@@ -68,7 +68,7 @@ namespace SubTerra.App.UI.Guide
             Register(FacilityScene("fac.settlement", "fac.settlement", 62f, true, Amber));
             Register(FacilityScene("fac.core", "fac.core", 72f, true, Teal));
             Register(FacilityScene("fac.light", "fac.light", 68f, false, Amber));
-            Register(FacilityScene("fac.portal", "art.portal", 54f, true, Teal));
+            Register(FacilityScene("fac.portal", "fac.portal", 54f, true, Teal));
             Register(FacilityScene("fac.elevator", "fac.elevator", 88f, true, Teal));
             Register(LadderFacility());
             Register(SupportFacility());
