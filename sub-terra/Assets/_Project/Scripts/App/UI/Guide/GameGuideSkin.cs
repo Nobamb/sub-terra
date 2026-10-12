@@ -158,6 +158,7 @@ namespace SubTerra.App.UI.Guide
                 case "art.portal": return GameGuideArt.Portal();
                 case "art.ring": return GameGuideArt.Ring();
                 case "art.book": return GameGuideArt.BookGlyph();
+                case "art.mouse": return GameGuideArt.Mouse();
                 case "art.soft": return Sell.ResourceSellArt.Soft();
                 case "art.softrect": return Sell.ResourceSellArt.SoftRect();
                 case "art.fill": return Sell.ResourceSellArt.ChamferFill();
