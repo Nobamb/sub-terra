@@ -33,6 +33,27 @@ namespace SubTerra.App.Integration
         {
             EnsureRuntimeBindings();
             panelBinder?.BindTo(this);
+            ApplyWormholeGlyph();
+        }
+
+        // 웜홀 기호는 미니맵 범례와 같은 그림을 쓴다. Integration 어셈블리에만 있어 여기서 모양을 지정한다.
+        private void ApplyWormholeGlyph()
+        {
+            if (panelBinder == null)
+            {
+                return;
+            }
+
+            var glyphs = panelBinder.GetComponentsInChildren<MinimapGlyphGraphic>(true);
+            for (var i = 0; i < glyphs.Length; i++)
+            {
+                if (glyphs[i].GetComponent<CanvasRenderer>() == null)
+                {
+                    glyphs[i].gameObject.AddComponent<CanvasRenderer>();
+                }
+
+                glyphs[i].Set(MinimapGlyph.Wormhole, MinimapPalette.Portal);
+            }
         }
 
         public void Bind(GameState state, Transform player, Transform elevator)
@@ -55,6 +76,7 @@ namespace SubTerra.App.Integration
         {
             panelBinder = binder;
             panelBinder?.BindTo(this);
+            ApplyWormholeGlyph();
         }
 
         public void BindCameraFollow(PlayerCameraFollow follow)
@@ -90,6 +112,22 @@ namespace SubTerra.App.Integration
             }
 
             follow.PreviewWorldPosition(previewPosition, snapImmediately: true);
+            return true;
+        }
+
+        public bool TryGetDestinationPosition(
+            EmergencyEscapeDestination kind,
+            string outpostInstanceId,
+            out Vector2 position)
+        {
+            EnsureRuntimeBindings();
+            if (!TryResolveDestination(kind, outpostInstanceId, forArrival: false, out var world, out _))
+            {
+                position = default;
+                return false;
+            }
+
+            position = world;
             return true;
         }
 
@@ -131,7 +169,8 @@ namespace SubTerra.App.Integration
                 return false;
             }
 
-            panelBinder.Open(options, service.CurrentCost);
+            // 창을 열 때마다 현재 목적지 목록과 이동 가능 여부를 새로 받아 그린다.
+            panelBinder.Open(options, service.CurrentCost, service.PeekFailure());
             return true;
         }
 

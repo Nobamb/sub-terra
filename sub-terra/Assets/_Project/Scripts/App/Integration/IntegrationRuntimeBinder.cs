@@ -725,7 +725,8 @@ namespace SubTerra.App.Integration
             if (outpostPanelBinder != null)
             {
                 outpostPanelBinder.SetPrimaryInteractionClaim(
-                    () => elevator != null && elevator.TryClaimInteractionPriority());
+                    () => (elevator != null && elevator.TryClaimInteractionPriority())
+                        || EmergencyEscapePortal.AnyClaimsInteractionPriority());
                 outpostPanelBinder.BindTo(outpostService);
                 var catalog = bootstrap != null ? bootstrap.AssignedCatalog as GameDataCatalog : null;
                 outpostPanelBinder.SetFacilityPresentation(
