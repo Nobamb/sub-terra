@@ -14,10 +14,10 @@ namespace SubTerra.App.UI.HUD
         [SerializeField] private RectTransform openRoot;
         [SerializeField] private RectTransform closedRoot;
         [SerializeField] private CanvasGroup inputGroup;
-        public bool IsOpen { get; private set; } = true;
+        public bool IsOpen { get; private set; }
         public bool IsTransitioning { get; private set; }
 
-        private void OnEnable() => ResetOpen();
+        private void OnEnable() => ResetClosed();
 
         private void Update()
         {
@@ -53,22 +53,22 @@ namespace SubTerra.App.UI.HUD
         private void OnDisable()
         {
             StopAllCoroutines();
-            ResetOpen();
+            ResetClosed();
         }
 
-        private void ResetOpen()
+        private void ResetClosed()
         {
-            IsOpen = true;
+            IsOpen = false;
             IsTransitioning = false;
             if (openRoot != null)
             {
                 SetX(openRoot, 0f);
-                openRoot.gameObject.SetActive(true);
+                openRoot.gameObject.SetActive(false);
             }
             if (closedRoot != null)
             {
                 SetX(closedRoot, 0f);
-                closedRoot.gameObject.SetActive(false);
+                closedRoot.gameObject.SetActive(true);
             }
             if (inputGroup != null) inputGroup.interactable = true;
         }

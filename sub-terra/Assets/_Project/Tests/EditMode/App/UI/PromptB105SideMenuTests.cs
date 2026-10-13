@@ -20,8 +20,8 @@ namespace SubTerra.App.Tests.UI
                 var menu = scene.GetRootGameObjects().SelectMany(r => r.GetComponentsInChildren<GameplaySideMenuController>(true)).Single();
                 var open = menu.transform.Find("OpenMenuRoot");
                 var closed = menu.transform.Find("ClosedMenuRoot");
-                Assert.That(open.gameObject.activeSelf, Is.True);
-                Assert.That(closed.gameObject.activeSelf, Is.False);
+                Assert.That(open.gameObject.activeSelf, Is.False);
+                Assert.That(closed.gameObject.activeSelf, Is.True);
                 Assert.That(open.GetComponentsInChildren<UnityEngine.UI.Button>(true).Length, Is.EqualTo(7));
                 Assert.That(closed.GetComponentsInChildren<UnityEngine.UI.Button>(true).Length, Is.EqualTo(1));
                 var names = new[] { "Open0", "Open1", "Open2", "Open3", "SettingsShortcut", "QuitShortcut" };
