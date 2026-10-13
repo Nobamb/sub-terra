@@ -3524,3 +3524,99 @@ EditMode: 블록/빈 공간 구분·채굴/초기화 반영·월드→셀→UI �
 143-1. 지금 키 조작 방식 팝업창에서 연출 방식을 좀 수정해줘 일단 홀로그램 프레임 창에서 일부 부분들이 하나씩 네모난 일부의 조각처럼 나타나다가 원래 모양대로 돌아오는 느낌을 빠르게 구현해서 홀로그램 프레임 창을 표시한 뒤에 바로 키보드에 있던 키캡들은 원래는 없던 상태에서 프레임 창이 다 나타나면 키캡이 바운스되면서 돌출되면서 나타나는거야 없던 곳에서 한번 크게 튀어나오다가 다시 원래 위치로 되돌아오는 식으로 그리고 프레임이나 버튼 ui도 너무 약한데 codex의 이미지 생성 기능 활용해서 지금 게임 분위기 맞도록 분위기있는 에셋들을 만들도록 해
 
 144. 게임 가이드 내에 있는 단순하게 표현되던 긴급 탈출 포탈이 포함된 이미지는 새로 이미지 에셋 수정한 긴급탈출포탈 이미지로 변경해줘
+
+145. 캐릭터 머리 위 상태 문구를 시설 이름표와 같은 연출로 통일해줘. 채굴 %·채굴 결과는 청록 정보 스타일, 막힘 문구는 노란 경고 스타일(왼쪽 세모 느낌표 + 등장 시 2~3회 깜박임)로 바꾸고, 골드 팝업과 함께 먼저 뜬 것이 아래에 오도록 쌓아줘.
+
+필수 읽기 / 우선 확인 파일
+
+- CLAUDE.md, init/rule.md
+- sub-terra/Assets/\_Project/Scripts/App/Integration/MiningProgressHud.cs (statusRoot/statusText/progressFill, FailureMessage 7종, "채굴 N%", SetPendingYieldFeedback, failureDisplayDuration=10f, yieldDisplayDuration=2f)
+- sub-terra/Assets/\_Project/Scripts/App/Inventory/MiningYieldCommit.cs (FormatHudFeedback)
+- sub-terra/Assets/\_Project/Scripts/App/Integration/IntegrationRuntimeBinder.cs (MiningProgressHud·GoldPickupVfx 바인딩 지점)
+- sub-terra/Assets/\_Project/Scripts/App/UI/FacilityNameTag/FacilityNameTagVisual.cs, FacilityNameTagTimeline.cs, FacilityNameTagLayers.cs
+- sub-terra/Assets/\_Project/Scripts/App/Integration/FacilityProximityLabelController.cs, FacilityNameTagAnchor.cs
+- sub-terra/Assets/\_Project/Scripts/App/Integration/GoldPickupVfx.cs, GoldPickupPresentation.cs, GoldPickupPopupState.cs, GoldPickupPopupTimeline.cs, GoldPickupPopupVisual.cs
+- sub-terra/Assets/\_Project/Scripts/App/UI/Outpost/OutpostPanelPresenter.cs (ToggleInteractionPanel의 ShowTemporaryMessage(message, 3f) 두 곳), OutpostPanelView.cs, IOutpostPanelView.cs
+- sub-terra/Assets/\_Project/Scripts/App/Outpost/OutpostService.cs (TryGetPowerDisconnectedInteractionMessage, TryGetFacilityCooldownMessage)
+- sub-terra/Assets/\_Project/Scripts/App/UI/Sell/ResourceSellTimeline.cs (순수 계산 타임라인 패턴 참고)
+- 관련 테스트: Tests/EditMode/App/UI/FacilityNameTagTests.cs, Tests/EditMode/App/Integration/GoldPickupPopup*Tests.cs, PromptB1001GoldPickup*Tests, Tests/EditMode/App/Outpost/OutpostPanelPresenterTests.cs, PromptB99FacilityCooldownTests.cs, PromptB86ClinicTests.cs, PlayMode PromptB51FacilityPowerPopupPlayModeTests.cs, FacilityCooldownPopupPlayModeTests.cs
+
+### 1. 조사 범위
+
+먼저 git status로 기존 변경을 확인해줘. 위 파일만 우선 읽고, 존재하지 않는 경로나 API를 가정하지 마. 실제 코드가 이 프롬프트 설명과 다르면 실제 코드를 우선하고 완료 보고에 차이를 적어줘.
+특히 다음을 확인하고 짧게 정리한 뒤 구현해줘.
+
+- 시설 이름표의 월드 캔버스 구성, MainScreen 레이어 처리(CCTV 카메라에서 숨김), 펼침 등장·스캔 리빌·글로우·모서리 브래킷 8개를 그리는 방식과 재사용 가능한 단위
+- GoldPickupVfx 팝업이 머리 위치(head + Vector3.up \* GoldPickupPresentation.PopupBaseLift)를 계산하는 방식, 병합(OnMerged) 흐름, 종료 시점
+- MiningProgressHud가 Failed/Mining/Completed 단계를 처리하는 순서와 pendingYieldText 처리
+- ShowTemporaryMessage를 쓰는 다른 호출처가 있는지(있으면 이번 범위인지 판단해 보고)
+
+### 2. 공용 머리 위 문구 시스템
+
+- 플레이어 머리 위를 따라다니는 공용 스택 서비스(예: PlayerHeadMessageStack)와 문구 1개 단위(예: PlayerStatusMessage)를 새로 만들어줘. 이름은 프로젝트 규칙에 맞게 정해도 돼.
+- 외형은 시설 근접 이름표(B-134)와 같은 언어: 어두운 반투명 배경, 얇은 테두리, 모서리 브래킷 8개, 글로우, 가로로 펼쳐지며 등장, 스캔 리빌. 가능한 한 FacilityNameTag 쪽 코드를 재사용하고 복붙 복제는 피해줘. 이름표 자체의 동작·외형은 바꾸지 마.
+- 월드 캔버스 + MainScreen 레이어로 그려서 CCTV 화면에는 보이지 않게 해줘.
+- 시간 계산은 ResourceSellTimeline처럼 순수 계산 클래스(Advance(dt) → 상태/이벤트)로, MonoBehaviour 뷰는 얇게. 일시정지 중 잔류하지 않도록 unscaled 시간을 기존처럼 써줘.
+- 외부 API는 종류만 넘기면 되게: 예) ShowInfo(key, text), ShowWarning(key, text), SetProgress(key, text, progress). 나중에 건설 실패 문구도 ShowWarning 한 줄로 연결할 수 있어야 해.
+
+### 3. 두 가지 스타일
+
+- 정보(청록, 시설 이름표와 동일 팔레트): "채굴 N%" 진행 문구(게이지 포함)와 채굴 결과 문구(MiningYieldCommit.FormatHudFeedback 결과). 이름표처럼 보이게.
+- 경고(노랑): 노란 계열 배경 틴트·테두리·글로우, 텍스트 왼쪽에 노란 세모 느낌표 아이콘. 등장 시 태그 전체가 알파로 2~3회 깜박인 뒤 불투명하게 고정. 계속 깜박이지 않게.
+- 세모 느낌표 아이콘은 기존 스프라이트가 있으면 재사용하고, 없으면 코드나 간단한 스프라이트로 만들어줘(새 패키지 금지). 폰트에 없는 글리프가 있으면 확인해서 보완해줘.
+
+### 4. 경고 문구 연결
+
+- 채굴 실패 7종(MiningProgressHud.FailureMessage)을 경고 스타일로 머리 위에 표시. 기존 문구 텍스트는 유지.
+- 시설 사용불가 임시 문구: OutpostPanelPresenter.ToggleInteractionPanel에서 view.ShowTemporaryMessage(message, 3f)로 화면 중앙에 띄우던 전력망 미연결 문구와 쿨다운 폴백 문구를 머리 위 경고로 옮겨줘. 중앙 박스에는 더 이상 띄우지 마(쿨다운 팝업 TryShowFacilityCooldown 경로는 유지).
+- OutpostService의 "{시설명} 사용불가, 전력망 미연결\n 엘레베이터 또는 전진기지 코어 근처에서 전력망 연결이 가능합니다." 에서 오타 "엘레베이터" → "엘리베이터". 두 줄 문구가 태그 폭에서 자연스럽게 보이도록 줄바꿈/앞 공백 정리(관련 테스트 기대값도 같이 수정).
+- 표시 시간은 약 2.5초(기존 실패 10초, 시설 문구 3초 대체). 같은 키·같은 텍스트가 표시 중 다시 오면 새 태그를 만들지 말고 타이머만 연장해줘(깜박임 재시작 없음 또는 1회만 — 선택 후 보고).
+
+### 5. 골드 팝업과의 쌓임
+
+- 머리 위 요소(골드 팝업 + 정보/경고 문구)는 도착 순서대로 쌓아줘: 먼저 뜬 것이 가장 아래, 나중 것이 위.
+- 아래 요소가 사라지면 위 요소들이 부드럽게 내려오게(슬라이드 시간은 순수 계산으로).
+- 최대 개수(3~4) 상한, 넘치면 가장 오래된 것부터 퇴장.
+- "채굴 N%"는 같은 키로 갱신만 하고 매 프레임 새 항목을 만들지 마. 채굴 완료 시 진행 항목이 결과 문구로 자연스럽게 바뀌거나 교체되게.
+- 골드: 현재 GoldPickupVfx는 이미 단일 팝업 + 병합 구조(GoldPickupPopupState/Timeline/Visual)야. 이 팝업이 스택에 슬롯을 등록하고 스택이 준 높이 오프셋으로 SetPose 하게 연결해줘. 골드 보상 계산·HUD 파티클·병합 규칙·팝업 연출 자체는 바꾸지 마. 골드 팝업 크기가 문구 태그와 다르면 실제 높이로 슬롯을 잡아줘.
+
+### 6. 범위 밖(명시)
+
+- 엘리베이터 막힘 문구: 막힘 자체를 별도로 제거할 예정이라 손대지 마.
+- 시설 설치 실패 문구: 지금 건설 중에 채굴 실패 문구가 먼저 뜨는 문제는 사용자가 따로 고칠 예정. 이번엔 깨뜨리지만 말고, 나중에 ShowWarning으로 쉽게 연결되게만.
+- 판매·보관함·업그레이드·탈출·메인 메뉴 등 창 안의 상태 줄은 그대로.
+- 화면 구석의 가스 경고·구조 위험 HUD는 그대로.
+- 채굴 판정, 전력, 쿨다운, 골드 지급, 저장 로직 변경 금지. DOTween·새 패키지·포스트프로세싱 금지.
+
+### 7. 테스트
+
+EditMode:
+
+- 경고 타임라인: 깜박임 횟수(2~3회)와 이후 알파 고정, 총 표시 시간 ~2.5초 후 종료
+- 스택: 도착 순서 = 아래→위 순서, 아래 항목 제거 시 위 항목 목표 오프셋이 내려가고 슬라이드가 보간됨
+- 중복: 같은 키·텍스트 재요청 시 항목 수 불변 + 종료 시각 연장
+- 상한: 최대 개수 초과 시 가장 오래된 항목 퇴장
+- 스타일 선택: 채굴 진행/결과 → 정보, 실패 7종·시설 사용불가 → 경고
+- 오타 수정된 문구 기대값, 프레젠터가 ShowTemporaryMessage 대신 경고 경로를 호출하는지
+- 기존 FacilityNameTag·GoldPickup·Outpost 테스트 모두 통과
+  PlayMode: 이번에 새로 만들거나 수정한 PlayMode 테스트만 실행해서 통과를 확인해줘(전체 PlayMode 실행은 필요 없음). 대상: 머리 위 스택 생성·채굴 실패 시 경고 태그 표시·골드 팝업과 동시 표시 시 순서, MainScreen 레이어 확인.
+  EditMode는 전체를 실행해줘.
+
+### 8. 수동 확인 체크리스트 (Bootstrap → 새 게임 → 탐사, Mine_Demo_Integration 직접 실행 금지)
+
+- [ ] 블록을 캐는 동안 머리 위 청록 이름표 스타일 "채굴 N%"가 보이고 캐릭터를 따라다님
+- [ ] 채굴 완료 시 결과 문구가 청록 태그로 뜸, 골드 팝업과 겹치지 않고 먼저 뜬 게 아래
+- [ ] 화물 가득/드릴 레벨 부족 등에서 노란 경고 태그 + 왼쪽 세모 느낌표, 2~3회 깜박인 뒤 고정, 약 2.5초 후 사라짐
+- [ ] 같은 실패를 연타해도 태그가 늘지 않고 시간만 연장
+- [ ] 전력망 밖 시설에서 E → 화면 중앙 박스 대신 머리 위 경고, "엘리베이터" 표기
+- [ ] 아래 태그가 사라질 때 위 태그가 부드럽게 내려옴, 최대 개수 초과 시 오래된 것 퇴장
+- [ ] 전진기지 코어 CCTV 화면에 머리 위 태그가 보이지 않음
+- [ ] 시설 이름표·건설·엘리베이터·창 안 상태 줄 동작이 이전과 동일
+
+### 9. 완료 보고
+
+- 변경/추가 파일 목록과 각 역할, 재사용한 이름표 구성 요소
+- 프롬프트와 실제 코드가 달랐던 점, 선택한 수치(깜박임 횟수, 표시 시간, 상한, 슬라이드 시간)
+- 테스트 결과(EditMode 전체, 실행한 PlayMode 테스트 목록과 통과 여부)
+- git status로 의도하지 않은 변경(씬·프리팹·메타 등)이 없는지 확인 결과
+- 커밋은 사용자가 확인한 뒤에만 진행해줘.
