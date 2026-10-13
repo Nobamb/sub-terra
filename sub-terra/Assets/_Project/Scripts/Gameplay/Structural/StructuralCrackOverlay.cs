@@ -581,11 +581,10 @@ namespace SubTerra.Gameplay.Structural
                 }
                 if (t < 1f) continue;
 
-                // 충돌 뒤에는 낮고 흐린 비충돌 잔해로 남겨 낙하 결과 위치를 보여 준다.
-                visual.Renderer.color = new Color(0.48f, 0.42f, 0.36f, 0.5f);
-                visual.Root.transform.localScale = new Vector3(1f, 0.22f, 1f);
+                // 착지는 짧은 먼지로만 표시한다. 빈 공간에 고정 잔해를 남기지 않는다.
                 if (!AccessibilityPreferences.ReduceMotion)
                     CreateImpactDust(visual.End);
+                DestroyRuntimeObject(visual.Root);
                 fallingVisuals.RemoveAt(i);
             }
         }
