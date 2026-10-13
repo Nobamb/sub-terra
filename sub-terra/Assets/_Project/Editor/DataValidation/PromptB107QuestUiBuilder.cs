@@ -22,14 +22,13 @@ namespace SubTerra.App.Editor.DataValidation
         public const string IntegrationScenePath =
             "Assets/_Project/Scenes/App/Mine_Demo_Integration.unity";
 
-        // 가로는 기존 460의 25%. 세로는 HUD 프레임 하단(-264)과 시설 창 상단(-426) 사이만 쓸 수 있어
-        // 170(25%)이면 시설 창을 덮으므로, 그 틈에 들어가는 154로 둔다.
+        // Compact summary; the complete description stays in the existing details panel.
         public const float SummaryCardX = 16f;
-        public const float SummaryCardY = -268f;
-        public const float SummaryCardWidth = 575f;
-        public const float SummaryCardHeight = 154f;
-        public const float SummaryHeaderInset = 56f;
-        public const float SummaryHeaderY = -19f;
+        public const float SummaryCardY = -220f;
+        public const float SummaryCardWidth = 430f;
+        public const float SummaryCardHeight = 96f;
+        public const float SummaryHeaderInset = 28f;
+        public const float SummaryHeaderY = -10f;
         public const float ThumbnailHeight = 236f;
         private const float DetailsW = 880f;
         private const float DetailsH = 718f;
@@ -164,6 +163,7 @@ namespace SubTerra.App.Editor.DataValidation
             Assign(view, "basicStatusIcon", icon);
             Assign(view, "basicStatusClearSprite", QuestSprite("quest-status-check"));
             Assign(view, "basicStatusRingSprite", QuestSprite("quest-status-ring"));
+            view.ApplyCompactSummary();
             EditorUtility.SetDirty(hit);
             EditorUtility.SetDirty(fade);
         }

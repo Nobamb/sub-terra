@@ -47,6 +47,9 @@ namespace SubTerra.App.Tests.PlayMode
             var chrome = menu.GetComponentInParent<HudPanelChromeController>();
             var panels = menu.GetComponentInParent<PanelToggleController>();
             var underground = menu.GetComponentInParent<UndergroundMenuController>();
+            Assert.That(menu.IsOpen, Is.False);
+            menu.OpenIfClosed();
+            yield return UiTestWait.Until(() => !menu.IsTransitioning, "open initially collapsed menu", stage: "animation");
             Assert.That(menu.IsOpen, Is.True);
 
             chrome.CloseBuildingMenu();
@@ -161,6 +164,9 @@ namespace SubTerra.App.Tests.PlayMode
             var open = (RectTransform)menu.transform.Find("OpenMenuRoot");
             var closed = (RectTransform)menu.transform.Find("ClosedMenuRoot");
             var evidence = Path.GetFullPath("Temp/visual/prompt-b105-2");
+            Assert.That(menu.IsOpen, Is.False);
+            menu.OpenIfClosed();
+            yield return UiTestWait.Until(() => !menu.IsTransitioning, "open initially collapsed menu", stage: "animation");
             yield return UiTestWait.Capture(Path.Combine(evidence, "menu-open.png"));
             yield return UiTestWait.Press(keyboard, Key.Slash);
             yield return UiTestWait.Until(() => !menu.IsTransitioning, "side menu slash close", stage: "animation");

@@ -32,6 +32,26 @@ namespace SubTerra.App.UI.HUD
         {
             AlignHealthRow();
             HideBuildingSelection();
+            ApplyCompactLayout();
+        }
+
+        public void ApplyCompactLayout()
+        {
+            var root = transform as RectTransform;
+            var frame = transform.Find("HudFrame") as RectTransform;
+            if (root == null || frame == null) return;
+            root.localScale = new Vector3(0.88f, 0.88f, 1f);
+            var status = transform.Find("StructuralStatusRow") as RectTransform;
+            if (status != null) status.anchoredPosition = new Vector2(status.anchoredPosition.x, -179.1f);
+            if (root.sizeDelta.y <= 226f) return;
+            foreach (Transform child in transform)
+            {
+                if (!(child is RectTransform rect) || rect == frame || rect == status) continue;
+                rect.anchoredPosition = new Vector2(rect.anchoredPosition.x, rect.anchoredPosition.y * 0.9f);
+                if (rect.name == "ColumnSeparator") rect.sizeDelta = new Vector2(rect.sizeDelta.x, rect.sizeDelta.y * 0.9f);
+            }
+            root.sizeDelta = new Vector2(root.sizeDelta.x, 226f);
+            frame.sizeDelta = new Vector2(frame.sizeDelta.x, 226f);
         }
 
         public void AlignHealthRow()

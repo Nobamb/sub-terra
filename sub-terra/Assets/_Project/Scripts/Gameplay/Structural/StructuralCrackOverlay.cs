@@ -66,6 +66,7 @@ namespace SubTerra.Gameplay.Structural
             public float Elapsed;
             public float Duration;
             public bool ContactConsumed;
+            public bool Landed;
         }
 
         private sealed class DustVisual
@@ -564,6 +565,18 @@ namespace SubTerra.Gameplay.Structural
                 }
 
                 visual.Elapsed += deltaTime;
+                if (visual.Landed)
+                {
+                    // Keep a brief landing cue, then reclaim it even above an empty shaft.
+                    float fade = Mathf.Clamp01((visual.Elapsed - 0.15f) / 0.35f);
+                    visual.Renderer.color = new Color(0.48f, 0.42f, 0.36f, 0.5f * (1f - fade));
+                    if (visual.Elapsed >= 0.5f)
+                    {
+                        DestroyRuntimeObject(visual.Root);
+                        fallingVisuals.RemoveAt(i);
+                    }
+                    continue;
+                }
                 float t = Mathf.Clamp01(visual.Elapsed / visual.Duration);
                 Vector3 previousPosition = visual.Root.transform.position;
                 Vector3 nextPosition = Vector3.Lerp(visual.Start, visual.End, t * t);
@@ -581,12 +594,13 @@ namespace SubTerra.Gameplay.Structural
                 }
                 if (t < 1f) continue;
 
-                // 충돌 뒤에는 낮고 흐린 비충돌 잔해로 남겨 낙하 결과 위치를 보여 준다.
+                // Landing debris is visual only; it must not remain after its short fade.
                 visual.Renderer.color = new Color(0.48f, 0.42f, 0.36f, 0.5f);
                 visual.Root.transform.localScale = new Vector3(1f, 0.22f, 1f);
                 if (!AccessibilityPreferences.ReduceMotion)
                     CreateImpactDust(visual.End);
-                fallingVisuals.RemoveAt(i);
+                visual.Landed = true;
+                visual.Elapsed = 0f;
             }
         }
 

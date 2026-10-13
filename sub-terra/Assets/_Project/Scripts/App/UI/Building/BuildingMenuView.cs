@@ -80,7 +80,27 @@ namespace SubTerra.App.UI.Building
 
         private void Awake()
         {
+            ApplyCompactPanelLayout();
             HideLegacyChrome();
+        }
+
+        public void ApplyCompactPanelLayout()
+        {
+            var root = transform as RectTransform;
+            var panel = panelRoot != null ? panelRoot.transform as RectTransform : null;
+            if (root == null || panel == null || !UsesStructuredLayout || root.sizeDelta.x <= 540f) return;
+            root.sizeDelta = new Vector2(540f, root.sizeDelta.y);
+            if (panel.anchorMin.x == panel.anchorMax.x)
+                panel.sizeDelta = new Vector2(540f, panel.sizeDelta.y);
+            foreach (Transform child in panel)
+            {
+                if (!(child is RectTransform rect) || rect.anchorMin.x != 0f || rect.anchorMax.x != 0f) continue;
+                if (rect.anchoredPosition.x >= 240f)
+                    rect.anchoredPosition = new Vector2(rect.anchoredPosition.x - 16f, rect.anchoredPosition.y);
+                float available = 540f - rect.anchoredPosition.x - 16f;
+                if (rect.sizeDelta.x > available && available > 0f)
+                    rect.sizeDelta = new Vector2(available, rect.sizeDelta.y);
+            }
         }
 
         private void OnEnable()

@@ -154,8 +154,8 @@ namespace SubTerra.App.Tests.Tutorial
                 var progress = summary.transform.Find("ProgressCount").GetComponent<RectTransform>();
                 var missionText = mission.GetComponent<TMP_Text>();
                 var progressText = progress.GetComponent<TMP_Text>();
-                Assert.That(mission.anchoredPosition.x, Is.GreaterThanOrEqualTo(48f));
-                Assert.That(progress.anchoredPosition.x, Is.LessThanOrEqualTo(-48f));
+                Assert.That(mission.anchoredPosition.x, Is.GreaterThanOrEqualTo(28f));
+                Assert.That(progress.anchoredPosition.x, Is.LessThanOrEqualTo(-28f));
                 Assert.That(mission.anchoredPosition.y, Is.EqualTo(PromptB107QuestUiBuilder.SummaryHeaderY).Within(0.5f));
                 Assert.That(progress.anchoredPosition.y, Is.EqualTo(PromptB107QuestUiBuilder.SummaryHeaderY).Within(0.5f));
                 Assert.That(missionText.fontSize, Is.EqualTo(21f).Within(0.1f));
@@ -165,11 +165,10 @@ namespace SubTerra.App.Tests.Tutorial
                 var titleRect = summary.transform.Find("ObjectiveTitle").GetComponent<RectTransform>();
                 var bodyText = summary.transform.Find("ObjectiveBody").GetComponent<TMP_Text>();
                 var titleCenter = titleRect.anchoredPosition.y - titleRect.sizeDelta.y * 0.5f;
-                var bodyCenter = bodyText.rectTransform.anchoredPosition.y - bodyText.fontSize * 0.55f;
                 var iconCenter = statusIcon.anchoredPosition.y - statusIcon.sizeDelta.y * 0.5f;
-                Assert.That(titleRect.anchoredPosition.y, Is.LessThan(-64f));
-                Assert.That(bodyText.rectTransform.anchoredPosition.y, Is.LessThan(-100f));
-                Assert.That(iconCenter, Is.EqualTo((titleCenter + bodyCenter) * 0.5f).Within(1f));
+                Assert.That(bodyText.gameObject.activeSelf, Is.False);
+                Assert.That(iconCenter, Is.EqualTo(titleCenter).Within(1f));
+                Assert.That(-titleRect.anchoredPosition.y + titleRect.rect.height, Is.LessThan(summaryRect.rect.height));
                 Assert.That(summary.GetComponent<Button>().onClick.GetPersistentMethodName(0),
                     Is.EqualTo(nameof(DemoObjectiveView.OnObjectiveDetailsClicked)));
 

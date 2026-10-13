@@ -72,7 +72,7 @@ namespace SubTerra.Gameplay.Player.Tests
         }
 
         [UnityTest]
-        public IEnumerator LadderTop_StopsUpwardMovementButAllowsDescentAndJump()
+        public IEnumerator LadderTop_ClearsHeadPastEndButAllowsDescentAndJump()
         {
             var collider = playerObject.AddComponent<BoxCollider2D>();
             collider.size = new Vector2(0.6f, 0.7f);
@@ -84,8 +84,9 @@ namespace SubTerra.Gameplay.Player.Tests
             movement.EnterLadder(ladder);
             movement.SetVerticalMoveInput(1f);
             for (var i = 0; i < 8; i++) yield return new WaitForFixedUpdate();
-            Assert.LessOrEqual(collider.bounds.max.y, 2.501f, "Character must not climb above the ladder end.");
-            Assert.That(body.linearVelocityY, Is.EqualTo(0f).Within(0.001f));
+            Assert.Greater(collider.bounds.max.y, 2.5f, "The head must clear the edge while climbing from below.");
+            Assert.LessOrEqual(collider.bounds.min.y, 2.541f);
+            Assert.Greater(body.linearVelocityY, 0f);
             Assert.IsTrue(movement.IsClimbing);
             movement.SetVerticalMoveInput(-1f);
             yield return new WaitForFixedUpdate();
@@ -127,6 +128,30 @@ namespace SubTerra.Gameplay.Player.Tests
             movement.SetVerticalMoveInput(-1f);
             yield return new WaitForFixedUpdate();
             Assert.Less(body.linearVelocityY, 0f, "Manual descent must resume once supported.");
+        }
+
+        [UnityTest]
+        public IEnumerator LadderTop_FeetClearEdgeAndResumeHorizontalMovement()
+        {
+            var collider = playerObject.AddComponent<BoxCollider2D>();
+            collider.size = new Vector2(0.6f, 0.7f);
+            SetPrivateField(movement, "bodyCollider", collider);
+            var ladder = CreateLadderZone("WalkOffLadder", out firstLadderObject);
+            firstLadderObject.GetComponent<BoxCollider2D>().size = new Vector2(0.7f, 5f);
+            body.position = new Vector2(0f, 2.1f);
+            Physics2D.SyncTransforms();
+            movement.EnterLadder(ladder);
+            movement.SetVerticalMoveInput(1f);
+            for (var i = 0; i < 16; i++) yield return new WaitForFixedUpdate();
+            Assert.Greater(collider.bounds.min.y, 2.5f);
+            Assert.LessOrEqual(collider.bounds.min.y, 2.55f, "Exiting must not launch the player upward.");
+            Assert.IsFalse(movement.IsClimbing);
+            Assert.That(body.gravityScale, Is.EqualTo(0f), "Original gravity must be restored.");
+            movement.SetVerticalMoveInput(1f);
+            movement.SetMoveInput(1f);
+            yield return new WaitForFixedUpdate();
+            Assert.IsFalse(movement.IsClimbing, "Holding up must not reattach at the exit.");
+            Assert.Greater(body.linearVelocityX, 0f);
         }
 
         [UnityTest]

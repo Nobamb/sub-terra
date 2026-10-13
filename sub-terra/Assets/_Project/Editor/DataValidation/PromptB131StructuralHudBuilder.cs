@@ -28,7 +28,7 @@ namespace SubTerra.App.Editor.DataValidation
         public const string GlowFile = "structural-glow";
 
         // 행 배치(HUD 좌상단 기준 px). 하단 구분선(y=196)과 프레임 하단 테두리 사이에 둔다.
-        public const float RowX = 18f, RowY = 199f, RowWidth = 394f, RowHeight = 32f;
+        public const float RowX = 18f, RowY = 179.1f, RowWidth = 394f, RowHeight = 32f;
         public const float IconX = 4f, IconY = 2f, IconSize = 28f;
         public const float LabelX = 42f, LabelWidth = 340f;
 

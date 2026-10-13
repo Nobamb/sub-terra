@@ -77,6 +77,7 @@ namespace SubTerra.App.UI.Tutorial
 
         private void Awake()
         {
+            ApplyCompactSummary();
             if (tutorialCanvas != null)
             {
                 defaultTutorialSort = tutorialCanvas.sortingOrder;
@@ -117,6 +118,30 @@ namespace SubTerra.App.UI.Tutorial
             {
                 basicStatusIcon.sprite = cleared ? basicStatusClearSprite : basicStatusRingSprite;
             }
+        }
+
+        public void ApplyCompactSummary()
+        {
+            if (objectiveTitleText == null) return;
+            var card = objectiveTitleText.transform.parent as RectTransform;
+            if (card == null || card.name != "QuestSummaryButton") return;
+            card.sizeDelta = new Vector2(430f, 96f);
+            card.localScale = new Vector3(0.88f, 0.88f, 1f);
+            card.anchoredPosition = new Vector2(16f, -220f);
+            PlaceSummaryChild(card, "QuestMissionLabel", new Vector2(28f, -10f), new Vector2(140f, 30f));
+            PlaceSummaryChild(card, "ProgressCount", new Vector2(-28f, -10f), new Vector2(165f, 30f));
+            PlaceSummaryChild(card, "QuestStatusIcon", new Vector2(28f, -49f), new Vector2(32f, 32f));
+            PlaceSummaryChild(card, "ObjectiveTitle", new Vector2(74f, -48f), new Vector2(328f, 32f));
+            // The full description remains available through the existing details button.
+            if (objectiveBodyText != null && objectiveBodyText.transform.parent == card)
+                objectiveBodyText.gameObject.SetActive(false);
+        }
+
+        private static void PlaceSummaryChild(RectTransform card, string name, Vector2 position, Vector2 size)
+        {
+            if (!(card.Find(name) is RectTransform child)) return;
+            child.anchoredPosition = position;
+            child.sizeDelta = size;
         }
 
         public void SetGuidanceVisible(bool visible)
