@@ -45,6 +45,16 @@ namespace SubTerra.App.Tests.UI
                 }), Is.True);
                 var instance = host.GetComponentInChildren<SubTerra.Gameplay.Building.BuildingInstance>();
                 var original = instance.transform.position;
+                Assert.That(system.TryGetMovableAt(Vector3.zero, out var hoverTarget, out var ground), Is.True);
+                Assert.That(hoverTarget, Is.SameAs(instance));
+                Assert.That(ground.x, Is.EqualTo(original.x).Within(0.001f));
+                Assert.That(ground.y, Is.EqualTo(0f).Within(0.001f));
+                Assert.That(system.Selection, Is.Null, "호버 조회는 이동 선택을 시작하지 않는다.");
+                Assert.That(system.IsMoving, Is.False);
+                Assert.That(instance.transform.position, Is.EqualTo(original));
+                instance.gameObject.SetActive(false);
+                Assert.That(system.TryGetMovableAt(Vector3.zero, out _, out _), Is.False);
+                instance.gameObject.SetActive(true);
                 Assert.That(bridge.HandleWorldRightClick(new Vector3(20f, 20f, 0f)), Is.False);
                 Assert.That(bridge.HandleWorldRightClick(Vector3.zero), Is.True);
                 Assert.That(system.IsMoving, Is.True);

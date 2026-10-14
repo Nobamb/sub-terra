@@ -319,29 +319,47 @@ namespace SubTerra.Gameplay.Building
         }
 
         public bool TryBeginMoveAt(Vector3 worldPosition)
+            => TryGetMovableAt(worldPosition, out var instance, out _) && TryBeginMove(instance);
+
+        /// <summary>선택/점유를 변경하지 않고 실제 이동 가능한 대상과 바닥 중앙을 조회한다.</summary>
+        public bool TryGetMovableAt(Vector3 worldPosition, out BuildingInstance instance, out Vector3 groundAnchor)
         {
+            instance = null;
+            groundAnchor = default;
             Vector3Int cell = WorldToCell(worldPosition);
+            if (!occupiedBuildings.ContainsKey(cell)) return false;
             foreach (var entry in runtimeBuildings)
             {
-                if (entry.Key == null || !entry.Key.gameObject.activeInHierarchy) continue;
                 var placement = entry.Value;
-                if (ContainsCell(placement.Cell, placement.Footprint, cell))
-                    return TryBeginMove(entry.Key);
+                if (ContainsCell(placement.Cell, placement.Footprint, cell) && CanMoveInstance(entry.Key))
+                {
+                    instance = entry.Key;
+                    groundAnchor = FootprintWorldCenter(placement.Cell, placement.Footprint);
+                    var bottom = CellToWorld(placement.Cell);
+                    var above = CellToWorld(placement.Cell + Vector3Int.up);
+                    groundAnchor.y = bottom.y - (above.y - bottom.y) * 0.5f;
+                    return true;
+                }
             }
             return false;
         }
 
-        public bool TryBeginMove(BuildingInstance instance)
+        private bool CanMoveInstance(BuildingInstance instance)
         {
-            if (instance == null || !runtimeBuildings.ContainsKey(instance)
+            if (instance == null || !instance.gameObject.activeInHierarchy || !runtimeBuildings.ContainsKey(instance)
                 || (instance.BuildingId != "building.light.basic"
                     && instance.BuildingId != "building.settlement.basic"
                     && instance.BuildingId != "building.charger.basic"
                     && instance.BuildingId != "building.clinic.basic"
                     && instance.BuildingId != "building.storage.basic")) return false;
             BuildingPlacementDefinition definition = FindDefinition(instance.BuildingId);
-            if (definition == null || definition.RuntimePrefab == null) return false;
-            Select(definition);
+            return definition != null && definition.RuntimePrefab != null;
+        }
+
+        public bool TryBeginMove(BuildingInstance instance)
+        {
+            if (!CanMoveInstance(instance)) return false;
+            Select(FindDefinition(instance.BuildingId));
             movingBuilding = instance;
             return true;
         }
