@@ -27,10 +27,10 @@ namespace SubTerra.App.Editor.DataValidation
         };
         public const string GlowFile = "structural-glow";
 
-        // 행 배치(HUD 좌상단 기준 px). 하단 구분선(y=196)과 프레임 하단 테두리 사이에 둔다.
-        public const float RowX = 18f, RowY = 179.1f, RowWidth = 394f, RowHeight = 32f;
-        public const float IconX = 4f, IconY = 2f, IconSize = 28f;
-        public const float LabelX = 42f, LabelWidth = 340f;
+        // #180의 380×208 HUD 하단 행과 같은 절대 배치를 사용한다.
+        public const float RowX = 16f, RowY = 164f, RowWidth = 348f, RowHeight = 28f;
+        public const float IconX = 4f, IconY = 2f, IconSize = 24f;
+        public const float LabelX = 36f, LabelWidth = 306f;
 
         private static readonly Vector2[] Rock =
         {
@@ -99,7 +99,7 @@ namespace SubTerra.App.Editor.DataValidation
                 var text = label.gameObject.AddComponent<TextMeshProUGUI>();
                 text.font = basic.DepthText.font;
                 text.fontSharedMaterial = basic.DepthText.fontSharedMaterial;
-                text.fontSize = 21;
+                text.fontSize = 20;
                 text.enableAutoSizing = false;
                 text.alignment = TextAlignmentOptions.MidlineLeft;
                 text.textWrappingMode = TextWrappingModes.NoWrap;
