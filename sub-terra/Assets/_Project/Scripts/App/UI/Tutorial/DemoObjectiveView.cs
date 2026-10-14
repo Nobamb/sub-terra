@@ -589,6 +589,19 @@ namespace SubTerra.App.UI.Tutorial
 
         public void SetClaimText(string title, string questTitle, string rewardText, string hint)
         {
+            // 기존 씬에도 적용되도록 보상 행과 안내를 프레임 안쪽에 배치한다.
+            if (claimRewardRow != null)
+                claimRewardRow.anchoredPosition = new Vector2(0f, -388f);
+            if (claimHintText != null)
+            {
+                var rect = claimHintText.rectTransform;
+                rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 1f);
+                rect.pivot = new Vector2(0.5f, 0.5f);
+                rect.anchoredPosition = new Vector2(0f, -428f);
+                rect.sizeDelta = new Vector2(840f, 28f);
+                claimHintText.fontSize = 16f;
+                claimHintText.color = new Color(0.83f, 0.94f, 0.96f, 1f);
+            }
             if (claimTitleText != null)
             {
                 claimTitleText.text = title ?? string.Empty;
