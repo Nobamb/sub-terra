@@ -46,7 +46,8 @@ namespace SubTerra.App.UI.EmergencyEscape
         [SerializeField] private TMP_Text cctvStatusText;
         [SerializeField] private RawImage video;
         [SerializeField] private Button confirmButton;
-        [SerializeField] private Button closeButton;
+        [Tooltip("이동 버튼 안쪽 호버 그림. 이동할 수 없을 때는 꺼서 호버해도 밝아지지 않게 한다.")]
+        [SerializeField] private GameObject confirmHoverOverlay;
         [Header("전진기지 코어 팝업과 같은 질감")]
         [SerializeField] private RawImage hexPattern;
         [SerializeField] private RawImage scanlines;
@@ -55,6 +56,23 @@ namespace SubTerra.App.UI.EmergencyEscape
         [SerializeField] private Image wormholeGlow;
         [SerializeField] private CanvasGroup recGroup;
         [SerializeField] private Image recDot;
+        [Header("블랙홀 웜홀: 소용돌이 레이어·사건의 지평선·솟아오르는 입자")]
+        [SerializeField] private SwirlLayer[] swirlLayers;
+        [SerializeField] private Image wormholeCore;
+        [SerializeField] private EscapeWormholeParticleGraphic wormholeParticles;
+
+        /// <summary>같은 소용돌이라도 안쪽 레이어가 더 빨리 돌아 선풍기처럼 한 덩어리로 돌지 않게 한다.</summary>
+        [Serializable]
+        public sealed class SwirlLayer
+        {
+            public RectTransform rect;
+            public Image image;
+            [Tooltip("EscapeWormholeArt.Swirl 레이어 번호")] public int art;
+            [Tooltip("기준 회전 속도 대비 배율")] public float speed = 1f;
+        }
+
+        /// <summary>창이 열린 직후부터 입자가 이미 피어오르도록 미리 돌려 두는 시간(초).</summary>
+        private const float ParticlePrimeSeconds = 1f;
 
         private readonly List<EmergencyEscapeDestinationRowView> rows = new List<EmergencyEscapeDestinationRowView>();
         private EscapeDestinationListModel model = new EscapeDestinationListModel();
@@ -113,6 +131,18 @@ namespace SubTerra.App.UI.EmergencyEscape
             SetSprite(vignette, CoreCctvArt.Vignette());
             SetSprite(recDot, CoreCctvArt.Dot());
             SetSprite(wormholeGlow, CoreCctvArt.Soft());
+            SetSprite(wormholeCore, EscapeWormholeArt.Core());
+            if (swirlLayers != null)
+            {
+                for (var i = 0; i < swirlLayers.Length; i++)
+                {
+                    if (swirlLayers[i] != null)
+                    {
+                        SetSprite(swirlLayers[i].image, EscapeWormholeArt.Swirl(swirlLayers[i].art));
+                    }
+                }
+            }
+
             if (borderPanels != null)
             {
                 for (var i = 0; i < borderPanels.Length; i++)
@@ -263,9 +293,16 @@ namespace SubTerra.App.UI.EmergencyEscape
                     if (clock >= EscapePortalOpenTimeline.CloseDuration)
                     {
                         CompleteClose();
+                        return;
                     }
 
                     break;
+            }
+
+            // 닫히는 동안에는 새 입자를 만들지 않아 남은 입자만 흩어진다.
+            if (wormholeParticles != null)
+            {
+                wormholeParticles.Tick(delta, state == PlayState.Opening || state == PlayState.Open);
             }
         }
 
@@ -291,6 +328,11 @@ namespace SubTerra.App.UI.EmergencyEscape
                 // 새 화면이 잡히기 전에는 이전 목적지의 마지막 프레임이 비치지 않게 검게 둔다.
                 video.texture = null;
                 video.color = Color.black;
+            }
+
+            if (wormholeParticles != null)
+            {
+                wormholeParticles.Prime(ParticlePrimeSeconds);
             }
 
             if (Application.isPlaying)
@@ -476,7 +518,6 @@ namespace SubTerra.App.UI.EmergencyEscape
                 && rowTemplate.HasRequiredReferences()
                 && costText != null
                 && confirmButton != null
-                && closeButton != null
                 && video != null;
         }
 
@@ -533,9 +574,24 @@ namespace SubTerra.App.UI.EmergencyEscape
 
         private void ApplyWormholeSpin(float t)
         {
-            if (wormholeRect != null)
+            ApplySwirl(EscapePortalOpenTimeline.SpinAngle(t));
+        }
+
+        // 웜홀 루트는 돌리지 않는다. 입자가 항상 화면 위쪽으로 솟도록 소용돌이 레이어만 각자 속도로 돌린다.
+        private void ApplySwirl(float angle)
+        {
+            if (swirlLayers == null)
             {
-                wormholeRect.localRotation = Quaternion.Euler(0f, 0f, EscapePortalOpenTimeline.SpinAngle(t));
+                return;
+            }
+
+            for (var i = 0; i < swirlLayers.Length; i++)
+            {
+                var layer = swirlLayers[i];
+                if (layer != null && layer.rect != null)
+                {
+                    layer.rect.localRotation = Quaternion.Euler(0f, 0f, angle * layer.speed);
+                }
             }
         }
 
@@ -544,8 +600,9 @@ namespace SubTerra.App.UI.EmergencyEscape
             if (wormholeRect != null)
             {
                 wormholeRect.localScale = new Vector3(pose.WormholeScale, pose.WormholeScale, 1f);
-                wormholeRect.localRotation = Quaternion.Euler(0f, 0f, pose.WormholeAngle);
             }
+
+            ApplySwirl(pose.WormholeAngle);
 
             if (wormholeGroup != null)
             {
@@ -619,6 +676,10 @@ namespace SubTerra.App.UI.EmergencyEscape
             {
                 // 이동할 수 없는 항목이거나 처리 중이면 이동 버튼을 막는다.
                 confirmButton.interactable = !busy && model.CanTravel;
+                if (confirmHoverOverlay != null)
+                {
+                    confirmHoverOverlay.SetActive(confirmButton.interactable);
+                }
             }
         }
 

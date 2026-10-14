@@ -160,10 +160,286 @@ namespace SubTerra.App.Tests.UI
             Assert.That(root.sortingOrder, Is.LessThan(PopupWindowSorting.SettingsSortOrder), "설정 창만 더 위.");
             Assert.That(root.GetComponent<UnityEngine.UI.GraphicRaycaster>(), Is.Not.Null);
 
-            var glyph = prefab.GetComponentInChildren<MinimapGlyphGraphic>(true);
-            Assert.That(glyph, Is.Not.Null);
-            Assert.That(glyph.GetComponent<CanvasRenderer>(), Is.Not.Null,
+            Assert.That(prefab.GetComponentInChildren<MinimapGlyphGraphic>(true), Is.Null,
+                "미니맵 범례의 분홍 3갈래 기호(선풍기 느낌)는 더 이상 웜홀에 쓰지 않는다.");
+            var particles = prefab.GetComponentInChildren<EscapeWormholeParticleGraphic>(true);
+            Assert.That(particles, Is.Not.Null, "청록 입자가 솟아오르는 그래픽이 있다.");
+            Assert.That(particles.GetComponent<CanvasRenderer>(), Is.Not.Null,
                 "CanvasRenderer가 없으면 웜홀이 그려지지 않는다.");
+        }
+
+        // ---------------------------------------------------------------- 블랙홀 웜홀
+
+        [Test]
+        public void WormholeSpin_IsSlowEnoughNotToLookLikeAFan()
+        {
+            Assert.That(EscapePortalOpenTimeline.SpinSpeedMax, Is.LessThanOrEqualTo(300f),
+                "초당 3.5바퀴를 넘으면 선풍기처럼 보인다.");
+        }
+
+        [Test]
+        public void WormholeArt_IsCyanBlackHole_EmptyCenterAndNoPink()
+        {
+            for (var layer = 0; layer < EscapeWormholeArt.LayerCount; layer++)
+            {
+                Assert.That(EscapeWormholeArt.SwirlPixel(layer, 0f, 0f).a, Is.EqualTo(0f).Within(0.01f),
+                    "소용돌이 한가운데는 비어 있고 그 자리를 검은 지평선이 채운다.");
+                Assert.That(EscapeWormholeArt.SwirlPixel(layer, 1.1f, 0f).a, Is.EqualTo(0f));
+
+                var strongest = 0f;
+                for (var step = 0; step < 360; step += 3)
+                {
+                    for (var r = 0.45f; r < 0.98f; r += 0.05f)
+                    {
+                        var angle = step * Mathf.Deg2Rad;
+                        var pixel = EscapeWormholeArt.SwirlPixel(layer, Mathf.Cos(angle) * r, Mathf.Sin(angle) * r);
+                        strongest = Mathf.Max(strongest, pixel.a);
+                        if (pixel.a > 0.05f)
+                        {
+                            Assert.That(pixel.r, Is.LessThan(pixel.b), "분홍(붉은 기운)이 아닌 청록 계열이다.");
+                            Assert.That(pixel.g, Is.GreaterThanOrEqualTo(pixel.r));
+                        }
+                    }
+                }
+
+                Assert.That(strongest, Is.GreaterThan(0.3f), "소용돌이가 실제로 보인다.");
+            }
+        }
+
+        [Test]
+        public void WormholeArt_SwirlIsSmoothGasNotSeparateBlades()
+        {
+            // 같은 반지름의 한 바퀴에서 투명도가 완전히 0으로 끊기는 빈틈(날개 사이 공백)이 없어야 한다.
+            for (var layer = 0; layer < EscapeWormholeArt.LayerCount; layer++)
+            {
+                var r = layer == 0 ? 0.6f : 0.75f;
+                for (var step = 0; step < 360; step += 2)
+                {
+                    var angle = step * Mathf.Deg2Rad;
+                    var pixel = EscapeWormholeArt.SwirlPixel(layer, Mathf.Cos(angle) * r, Mathf.Sin(angle) * r);
+                    Assert.That(pixel.a, Is.GreaterThan(0.08f), "layer " + layer + " 각도 " + step);
+                }
+            }
+        }
+
+        [Test]
+        public void WormholeCore_IsBlackDiscWithBrightCyanRing()
+        {
+            Assert.That(EscapeWormholeArt.Core(), Is.Not.Null);
+            var center = EscapeWormholeArt.CorePixel(0f, 0f);
+            Assert.That(center.a, Is.GreaterThan(0.95f));
+            Assert.That(center.r + center.g + center.b, Is.LessThan(0.1f), "중심은 검다.");
+
+            var ring = EscapeWormholeArt.CorePixel(EscapeWormholeArt.CoreRingRadius, 0f);
+            Assert.That(ring.g, Is.GreaterThan(0.6f), "광자 고리는 밝은 청록이다.");
+            Assert.That(ring.r, Is.LessThan(ring.g));
+            Assert.That(EscapeWormholeArt.CorePixel(1.05f, 0f).a, Is.EqualTo(0f), "바깥은 투명하다.");
+        }
+
+        [Test]
+        public void ParticleField_SpawnsAroundHoleAndRisesUpwardAndSpreads()
+        {
+            var field = new EscapeWormholeParticleField { RingRadius = 76f };
+            field.Prime(1f);
+            Assert.That(field.Count, Is.GreaterThan(20), "열리는 순간 이미 입자가 피어오른다.");
+            Assert.That(field.Count, Is.LessThanOrEqualTo(EscapeWormholeParticleField.Capacity));
+
+            // 새로 태어난 입자를 따로 추적한다.
+            var single = new EscapeWormholeParticleField { RingRadius = 76f };
+            single.Tick(0.05f, true);
+            Assert.That(single.Count, Is.GreaterThan(0));
+            var born = single[0];
+            var startRadius = born.Position.magnitude;
+            Assert.That(startRadius, Is.InRange(76f * 0.9f, 76f * 1.3f), "구멍 가장자리 고리에서 태어난다.");
+            Assert.That(born.Velocity.y, Is.GreaterThan(100f), "위로 솟는다.");
+
+            var startY = born.Position.y;
+            single.Tick(0.5f, false);
+            Assert.That(single.Count, Is.GreaterThan(0));
+            Assert.That(single[0].Position.y, Is.GreaterThan(startY + 40f), "시간이 지나면 위로 올라간다.");
+        }
+
+        [Test]
+        public void ParticleField_FadesOutAndDisappears_WhenNotEmitting()
+        {
+            var field = new EscapeWormholeParticleField();
+            field.Prime(1f);
+            for (var i = 0; i < 120 && field.Count > 0; i++)
+            {
+                field.Tick(1f / 30f, false);
+            }
+
+            Assert.That(field.Count, Is.EqualTo(0), "방출을 멈추면 남은 입자가 모두 사라진다.");
+            Assert.That(EscapeWormholeParticleField.AlphaAt(0f), Is.EqualTo(0f).Within(0.0001f));
+            Assert.That(EscapeWormholeParticleField.AlphaAt(0.3f), Is.GreaterThan(0.9f));
+            Assert.That(EscapeWormholeParticleField.AlphaAt(1f), Is.EqualTo(0f).Within(0.0001f));
+        }
+
+        [Test]
+        public void ParticleField_IsDeterministicForTheSameInput()
+        {
+            var a = new EscapeWormholeParticleField();
+            var b = new EscapeWormholeParticleField();
+            a.Prime(1.2f);
+            b.Prime(1.2f);
+            Assert.That(a.Count, Is.EqualTo(b.Count));
+            for (var i = 0; i < a.Count; i++)
+            {
+                Assert.That(a[i].Position, Is.EqualTo(b[i].Position));
+            }
+        }
+
+        [Test]
+        public void PanelPrefab_WormholeLayers_AreWiredAndSwirlLayersTurnAtDifferentSpeeds()
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PanelPrefabPath);
+            var instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
+            spawned.Add(instance);
+            var view = instance.GetComponent<EmergencyEscapePanelView>();
+            view.SetVisible(true);
+
+            var outer = instance.transform.Find("PanelRoot/Wormhole/SwirlOuter");
+            var inner = instance.transform.Find("PanelRoot/Wormhole/SwirlInner");
+            var core = instance.transform.Find("PanelRoot/Wormhole/Core");
+            var particles = instance.transform.Find("PanelRoot/Wormhole/Particles");
+            Assert.That(outer, Is.Not.Null);
+            Assert.That(inner, Is.Not.Null);
+            Assert.That(core, Is.Not.Null);
+            Assert.That(particles, Is.Not.Null);
+            Assert.That(particles.GetSiblingIndex(), Is.LessThan(core.GetSiblingIndex()),
+                "아래쪽에서 올라오는 입자는 검은 지평선 뒤를 지난다.");
+            Assert.That(outer.GetComponent<UnityEngine.UI.Image>().sprite, Is.Not.Null, "소용돌이 그림이 입혀진다.");
+            Assert.That(core.GetComponent<UnityEngine.UI.Image>().sprite, Is.Not.Null);
+
+            view.ApplyOpenPreview(0.4f);
+            var outerAngle = Mathf.DeltaAngle(0f, outer.localEulerAngles.z);
+            var innerAngle = Mathf.DeltaAngle(0f, inner.localEulerAngles.z);
+            Assert.That(Mathf.Abs(innerAngle), Is.GreaterThan(Mathf.Abs(outerAngle)), "안쪽 원반이 더 빨리 돈다.");
+            Assert.That(instance.transform.Find("PanelRoot/Wormhole").localEulerAngles.z, Is.EqualTo(0f).Within(0.01f),
+                "웜홀 루트는 돌지 않아 입자가 항상 화면 위로 솟는다.");
+        }
+
+        // ---------------------------------------------------------------- 버튼 높이·호버
+
+        [Test]
+        public void PanelPrefab_HasOnlyTallConfirmButton_CloseIsCornerXOnly()
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PanelPrefabPath);
+            var window = prefab.transform.Find("PanelRoot/Window");
+            var confirm = (RectTransform)window.Find("ConfirmButton");
+            var result = (RectTransform)window.Find("ResultText");
+            var list = (RectTransform)window.Find("ListPanel");
+            Assert.That(window.Find("CloseButton"), Is.Null, "닫기는 우상단 ×가 맡아 닫기 버튼은 없다.");
+            Assert.That(window.Find("CornerCloseButton"), Is.Not.Null);
+            Assert.That(confirm.rect.height, Is.GreaterThanOrEqualTo(56f), "이동 버튼 세로가 넉넉하다.");
+
+            var resultBottom = result.anchoredPosition.y - result.rect.height;
+            var buttonTop = confirm.anchoredPosition.y;
+            Assert.That(buttonTop, Is.LessThanOrEqualTo(resultBottom + 0.5f), "결과 줄과 버튼이 겹치지 않는다.");
+            var buttonBottom = confirm.anchoredPosition.y - confirm.rect.height;
+            var listBottom = list.anchoredPosition.y - list.rect.height;
+            Assert.That(buttonBottom, Is.GreaterThanOrEqualTo(listBottom - 0.5f), "버튼이 목록 아래로 삐져나오지 않는다.");
+        }
+
+        [Test]
+        public void ConfirmButton_HoverLightStaysInsideTheButton_AndNoButtonHasOuterGlow()
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PanelPrefabPath);
+            var window = prefab.transform.Find("PanelRoot/Window");
+            var confirm = (RectTransform)window.Find("ConfirmButton");
+            var skin = confirm.GetComponent<SubTerra.App.UI.MainMenu.MenuSpriteButtonSkin>();
+            Assert.That(skin, Is.Not.Null, "이동 버튼은 호버 오버레이 페이드를 쓴다.");
+
+            var overlay = (RectTransform)confirm.Find("HoverOverlay");
+            Assert.That(overlay, Is.Not.Null);
+            var image = overlay.GetComponent<UnityEngine.UI.Image>();
+            Assert.That(image.sprite, Is.Not.Null, "호버 그림이 연결되어 있다.");
+            Assert.That(image.raycastTarget, Is.False);
+            Assert.That(image.color.a, Is.EqualTo(0f), "평소에는 보이지 않는다.");
+            Assert.That(overlay.anchorMin, Is.EqualTo(Vector2.zero));
+            Assert.That(overlay.anchorMax, Is.EqualTo(Vector2.one));
+            Assert.That(overlay.offsetMin, Is.EqualTo(Vector2.zero), "빛은 버튼 영역 안에만 있다.");
+            Assert.That(overlay.offsetMax, Is.EqualTo(Vector2.zero));
+            Assert.That(overlay.GetSiblingIndex(), Is.LessThan(confirm.Find("Label").GetSiblingIndex()), "글자는 빛 위에 그려진다.");
+
+            // 버튼 바깥으로 번지는 형제 발광 오브젝트는 어디에도 없다.
+            for (var i = 0; i < window.childCount; i++)
+            {
+                Assert.That(window.GetChild(i).name, Does.Not.EndWith("Glow"), window.GetChild(i).name);
+            }
+
+            foreach (var name in new[] { "ConfirmButton", "CornerCloseButton" })
+            {
+                foreach (var graphic in window.Find(name).GetComponentsInChildren<UnityEngine.UI.Graphic>(true))
+                {
+                    var rect = graphic.rectTransform;
+                    var button = (RectTransform)window.Find(name);
+                    Assert.That(rect.rect.width, Is.LessThanOrEqualTo(button.rect.width + 0.01f), name + "/" + graphic.name);
+                    Assert.That(rect.rect.height, Is.LessThanOrEqualTo(button.rect.height + 0.01f), name + "/" + graphic.name);
+                }
+            }
+        }
+
+        [Test]
+        public void CornerCloseButton_UsesSameHoverAsCoreCctvPopup()
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PanelPrefabPath);
+            var x = prefab.transform.Find("PanelRoot/Window/CornerCloseButton").GetComponent<UnityEngine.UI.Button>();
+            var overlay = x.transform.Find("HoverOverlay");
+            Assert.That(overlay, Is.Not.Null, "코어 팝업 × 버튼과 같은 청록 오버레이가 있다.");
+            Assert.That(x.targetGraphic.gameObject, Is.SameAs(overlay.gameObject));
+            Assert.That(x.transition, Is.EqualTo(UnityEngine.UI.Selectable.Transition.ColorTint));
+            Assert.That(x.colors.normalColor.a, Is.EqualTo(0f));
+            Assert.That(x.colors.highlightedColor.a, Is.EqualTo(0.18f).Within(0.001f), "코어 팝업과 같은 호버 세기.");
+            Assert.That(x.colors.fadeDuration, Is.EqualTo(0.15f).Within(0.001f));
+            Assert.That(overlay.GetSiblingIndex(), Is.EqualTo(0), "글자 뒤에 깔린다.");
+        }
+
+        [Test]
+        public void ConfirmHoverOverlay_IsHiddenWhenTravelIsNotPossible()
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PanelPrefabPath);
+            var instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
+            spawned.Add(instance);
+            var view = instance.GetComponent<EmergencyEscapePanelView>();
+            var options = new List<EmergencyEscapeDestinationOption>
+            {
+                new EmergencyEscapeDestinationOption(EmergencyEscapeDestination.Elevator, string.Empty, "엘리베이터")
+            };
+            var overlay = instance.transform.Find("PanelRoot/Window/ConfirmButton/HoverOverlay").gameObject;
+
+            view.SetDestinations(EscapeDestinationListModel.Build(options, EmergencyEscapePaymentFailure.None));
+            Assert.That(overlay.activeSelf, Is.True);
+            view.SetDestinations(EscapeDestinationListModel.Build(options, EmergencyEscapePaymentFailure.InsufficientGold));
+            Assert.That(view.ConfirmInteractable, Is.False);
+            Assert.That(overlay.activeSelf, Is.False, "이동할 수 없으면 호버해도 밝아지지 않는다.");
+        }
+
+        [Test]
+        public void DestinationRow_ShowsHoverTint_ButSelectedRowStaysBrighter()
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PanelPrefabPath);
+            var instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
+            spawned.Add(instance);
+            var view = instance.GetComponent<EmergencyEscapePanelView>();
+            var options = new List<EmergencyEscapeDestinationOption>
+            {
+                new EmergencyEscapeDestinationOption(EmergencyEscapeDestination.Elevator, string.Empty, "엘리베이터"),
+                new EmergencyEscapeDestinationOption(EmergencyEscapeDestination.OutpostCore, "c1", "코어 1")
+            };
+            var model = EscapeDestinationListModel.Build(options, EmergencyEscapePaymentFailure.None);
+            model.Select(0);
+            view.SetDestinations(model);
+
+            var idle = view.RowAt(1);
+            var background = idle.transform.GetComponent<UnityEngine.UI.Image>();
+            var idleColor = background.color;
+            idle.OnPointerEnter(null);
+            Assert.That(background.color.g, Is.GreaterThan(idleColor.g), "호버하면 청록빛이 도는 밝은 면이 된다.");
+            var selectedColor = view.RowAt(0).transform.GetComponent<UnityEngine.UI.Image>().color;
+            Assert.That(selectedColor.g, Is.GreaterThan(background.color.g), "선택된 줄이 호버 줄보다 밝다.");
+            idle.OnPointerExit(null);
+            Assert.That(background.color, Is.EqualTo(idleColor));
         }
 
         [Test]

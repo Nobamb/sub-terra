@@ -20,9 +20,12 @@ namespace SubTerra.App.UI.EmergencyEscape
         public const float OpenDuration = ConnectEnd;
         public const float CloseDuration = 0.2f;
 
-        /// <summary>회전 속도(도/초). 처음엔 느리게 시작해 SpinUpEnd에서 최대에 도달한다.</summary>
-        public const float SpinSpeedStart = 120f;
-        public const float SpinSpeedMax = 1260f;
+        /// <summary>
+        /// 소용돌이 기준 회전 속도(도/초). 처음엔 느리게 시작해 SpinUpEnd에서 최대에 도달한다.
+        /// 선풍기처럼 보이지 않게 느리고 묵직하며, 레이어마다 배율을 달리해 안쪽이 더 빨리 돈다.
+        /// </summary>
+        public const float SpinSpeedStart = 50f;
+        public const float SpinSpeedMax = 210f;
         public const float PopStartScale = 0.15f;
         /// <summary>창이 처음에 뒤로 눕는 각도(도). 정면에 가까워지며 0이 된다.</summary>
         public const float PopStartTilt = 55f;
@@ -32,7 +35,7 @@ namespace SubTerra.App.UI.EmergencyEscape
         {
             public float WormholeAlpha;
             public float WormholeScale;
-            /// <summary>웜홀 z 회전(도). 시간이 갈수록 빨라지는 누적 각도.</summary>
+            /// <summary>웜홀 소용돌이 기준 z 회전(도). 시간이 갈수록 빨라지는 누적 각도.</summary>
             public float WormholeAngle;
             public float WindowScale;
             /// <summary>창의 x축 기울기(도). 0이면 정면.</summary>

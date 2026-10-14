@@ -2,6 +2,7 @@
 using System;
 using SubTerra.App.Integration;
 using SubTerra.App.UI.EmergencyEscape;
+using SubTerra.App.UI.MainMenu;
 using TMPro;
 using UnityEditor;
 using UnityEngine;
@@ -22,13 +23,22 @@ namespace SubTerra.App.Editor.DataValidation
         private const string FramePath = MineResetArt + "mine-reset-frame.png";
         private const string PanelPath = MineResetArt + "mine-reset-panel.png";
         private const string ConfirmButtonPath = MineResetArt + "mine-reset-button-confirm.png";
-        private const string CancelButtonPath = MineResetArt + "mine-reset-button-cancel.png";
+        // Codex 이미지 생성으로 만든 이동 버튼 호버 그림. 버튼 안쪽만 밝아지고 바깥에는 빛이 없다.
+        public const string ConfirmHoverPath = "Assets/_Project/Art/UI/EmergencyEscape/escape-portal-button-hover.png";
         private const string FontPath = "Assets/_Project/Fonts/NotoSansKR-Regular_SDF.asset";
 
         public static readonly Vector2 WindowSize = new Vector2(1000f, 600f);
         public const float SideMargin = 56f;
         public const float RowHeight = 44f;
         public const float RowSpacing = 4f;
+        /// <summary>이동·닫기 버튼 높이. 이전 44는 낮아 답답해 넉넉하게 키웠다.</summary>
+        public const float ButtonHeight = 60f;
+        /// <summary>닫기 버튼을 없애고 이동 버튼 하나만 둔다. 가로는 원본 그림 비율이 크게 늘어지지 않는 폭.</summary>
+        public const float ConfirmButtonWidth = 340f;
+        public const float HoleSize = 520f;
+        public const float HoleCoreSize = 168f;
+        /// <summary>EscapeWormholeArt.CoreRingRadius와 같은 값(밝은 고리가 코어 반지름에서 차지하는 비율).</summary>
+        private const float CoreRingRatio = 0.88f;
 
         private static readonly Color TitleColor = new Color(0.84f, 0.98f, 1f, 1f);
         private static readonly Color Cyan = new Color(0.42f, 0.94f, 1f, 1f);
@@ -86,18 +96,28 @@ namespace SubTerra.App.Editor.DataValidation
             rootCanvas.sortingOrder = EmergencyEscapePanelView.SortingOrder;
             panelRoot.gameObject.AddComponent<GraphicRaycaster>();
 
-            // 웜홀: 창 뒤에서 도는 기호. 모양은 런타임에 브리지가 MinimapGlyphGraphic으로 지정한다.
-            var wormhole = NewRect("Wormhole", panelRoot, Vector2.zero, new Vector2(520f, 520f));
+            // 웜홀: 창 뒤의 청록색 블랙홀. 아래 순서대로 그려진다(뒤 → 앞).
+            // 빛 번짐 → 바깥 가스 소용돌이 → 안쪽 밝은 원반 → 솟아오르는 입자 → 검은 사건의 지평선.
+            // 그림은 런타임에 View.ApplyArt가 절차 생성해 입힌다. 루트는 돌리지 않고 소용돌이 레이어만 각자 속도로 돈다.
+            var wormhole = NewRect("Wormhole", panelRoot, Vector2.zero, new Vector2(HoleSize, HoleSize));
             var wormholeGroup = wormhole.gameObject.AddComponent<CanvasGroup>();
             wormholeGroup.interactable = false;
             wormholeGroup.blocksRaycasts = false;
-            var glow = NewRect("Glow", wormhole, Vector2.zero, new Vector2(840f, 840f));
-            var glowImage = AddImage(glow, null, new Color(1f, 0.42f, 0.86f, 0.4f), false);
-            var glyphRect = NewRect("Glyph", wormhole, Vector2.zero, new Vector2(520f, 520f));
-            // MinimapGlyphGraphic은 CanvasRenderer를 자동으로 붙이지 않는다. 없으면 웜홀이 아예 그려지지 않는다.
-            glyphRect.gameObject.AddComponent<CanvasRenderer>();
-            var glyph = glyphRect.gameObject.AddComponent<MinimapGlyphGraphic>();
-            glyph.Set(MinimapGlyph.Wormhole, MinimapPalette.Portal);
+            var glow = NewRect("Glow", wormhole, Vector2.zero, new Vector2(860f, 860f));
+            var glowImage = AddImage(glow, null, new Color(0.08f, 0.82f, 0.9f, 0.32f), false);
+            var outerSwirl = NewRect("SwirlOuter", wormhole, Vector2.zero, new Vector2(HoleSize + 40f, HoleSize + 40f));
+            var outerSwirlImage = AddImage(outerSwirl, null, new Color(1f, 1f, 1f, 0.9f), false);
+            var innerSwirl = NewRect("SwirlInner", wormhole, Vector2.zero, new Vector2(HoleSize * 0.7f, HoleSize * 0.7f));
+            var innerSwirlImage = AddImage(innerSwirl, null, Color.white, false);
+            var particles = NewRect("Particles", wormhole, Vector2.zero, new Vector2(HoleSize, HoleSize));
+            // 그래픽 컴포넌트는 CanvasRenderer를 스스로 붙이지 않는 경우가 있어 먼저 붙인다. 없으면 입자가 그려지지 않는다.
+            particles.gameObject.AddComponent<CanvasRenderer>();
+            var particleGraphic = particles.gameObject.AddComponent<EscapeWormholeParticleGraphic>();
+            var particleObject = new SerializedObject(particleGraphic);
+            particleObject.FindProperty("ringRadius").floatValue = HoleCoreSize * 0.5f * CoreRingRatio;
+            particleObject.ApplyModifiedPropertiesWithoutUndo();
+            var core = NewRect("Core", wormhole, Vector2.zero, new Vector2(HoleCoreSize, HoleCoreSize));
+            var coreImage = AddImage(core, null, Color.white, false);
 
             var window = NewRect("Window", panelRoot, Vector2.zero, WindowSize);
             var windowGroup = window.gameObject.AddComponent<CanvasGroup>();
@@ -171,7 +191,8 @@ namespace SubTerra.App.Editor.DataValidation
             // ---- 오른쪽: CCTV ----
             var cctvLeft = SideMargin + listWidth + 16f;
             var cctvWidth = WindowSize.x - SideMargin - cctvLeft;
-            const float cctvHeight = 330f;
+            // 버튼 높이를 늘린 만큼 CCTV를 조금 줄여 비용·결과 줄과 버튼이 겹치지 않게 한다.
+            const float cctvHeight = 318f;
             var cctv = NewTop("CctvArea", window, cctvLeft, bodyTop, cctvWidth, cctvHeight);
             AddImage(cctv, null, new Color(0.01f, 0.025f, 0.04f, 1f), false);
             var videoRect = Stretch("Video", cctv);
@@ -214,13 +235,12 @@ namespace SubTerra.App.Editor.DataValidation
             recLabel.text = "REC";
 
             // ---- 비용·결과·버튼 ----
-            var cost = AddText(window, "CostText", font, TopLeft(cctvLeft, bodyTop + cctvHeight + 10f, cctvWidth, 30f), 22f, TitleColor, TextAlignmentOptions.MidlineLeft);
+            var cost = AddText(window, "CostText", font, TopLeft(cctvLeft, bodyTop + cctvHeight + 8f, cctvWidth, 28f), 22f, TitleColor, TextAlignmentOptions.MidlineLeft);
             cost.text = "비용: 100G + 전력 10";
-            var result = AddText(window, "ResultText", font, TopLeft(cctvLeft, bodyTop + cctvHeight + 42f, cctvWidth, 28f), 20f, TerminalColor, TextAlignmentOptions.MidlineLeft);
-            var buttonY = bodyTop + bodyHeight - 44f;
-            var buttonWidth = (cctvWidth - 36f) * 0.5f;
-            var confirm = BuildButton(window, "ConfirmButton", font, ConfirmButtonPath, "이동", cctvLeft, buttonY, buttonWidth);
-            var close = BuildButton(window, "CloseButton", font, CancelButtonPath, "닫기", cctvLeft + buttonWidth + 36f, buttonY, buttonWidth);
+            var result = AddText(window, "ResultText", font, TopLeft(cctvLeft, bodyTop + cctvHeight + 36f, cctvWidth, 26f), 20f, TerminalColor, TextAlignmentOptions.MidlineLeft);
+            var buttonY = bodyTop + bodyHeight - ButtonHeight;
+            // 닫기는 우상단 ×와 Esc가 맡는다. 이동 버튼만 오른쪽 칸 가운데에 둔다.
+            var confirm = BuildConfirmButton(window, font, cctvLeft + (cctvWidth - ConfirmButtonWidth) * 0.5f, buttonY, ConfirmButtonWidth, out var confirmHover);
 
             // 웜홀은 창 뒤에 깔린다.
             wormhole.SetAsFirstSibling();
@@ -244,12 +264,19 @@ namespace SubTerra.App.Editor.DataValidation
             Set(viewObject, "cctvStatusText", cctvStatus);
             Set(viewObject, "video", video);
             Set(viewObject, "confirmButton", confirm);
-            Set(viewObject, "closeButton", close);
+            Set(viewObject, "confirmHoverOverlay", confirmHover.gameObject);
             Set(viewObject, "hexPattern", hexImage);
             Set(viewObject, "scanlines", scan);
             Set(viewObject, "vignette", vignetteImage);
             Set(viewObject, "recGroup", recGroup);
             Set(viewObject, "recDot", recDot);
+            Set(viewObject, "wormholeCore", coreImage);
+            Set(viewObject, "wormholeParticles", particleGraphic);
+            // 바깥 가스는 느리게, 안쪽 원반은 빠르게 돌려 한 덩어리로 도는 선풍기 느낌을 없앤다.
+            var swirls = viewObject.FindProperty("swirlLayers");
+            swirls.arraySize = 2;
+            SetSwirlLayer(swirls.GetArrayElementAtIndex(0), outerSwirl, outerSwirlImage, 0, 0.45f);
+            SetSwirlLayer(swirls.GetArrayElementAtIndex(1), innerSwirl, innerSwirlImage, 1, 1f);
             var borders = viewObject.FindProperty("borderPanels");
             borders.arraySize = 2;
             borders.GetArrayElementAtIndex(0).objectReferenceValue = listBorderImage;
@@ -259,7 +286,6 @@ namespace SubTerra.App.Editor.DataValidation
             var binderObject = new SerializedObject(binder);
             Set(binderObject, "view", view);
             Set(binderObject, "confirmButton", confirm);
-            Set(binderObject, "closeButton", close);
             Set(binderObject, "closeCornerButton", cornerClose);
             binderObject.ApplyModifiedPropertiesWithoutUndo();
         }
@@ -274,16 +300,14 @@ namespace SubTerra.App.Editor.DataValidation
             var button = rect.gameObject.AddComponent<Button>();
             button.targetGraphic = image;
             button.navigation = new Navigation { mode = Navigation.Mode.None };
-            var colors = button.colors;
-            colors.highlightedColor = new Color(0.6f, 1.2f, 1.3f, 1f);
-            colors.pressedColor = new Color(0.5f, 0.8f, 0.9f, 1f);
-            button.colors = colors;
             var label = AddText(rect, "Label", font, Vector2.zero, Vector2.zero, 24f, Cyan, TextAlignmentOptions.Center);
             label.rectTransform.anchorMin = Vector2.zero;
             label.rectTransform.anchorMax = Vector2.one;
             label.rectTransform.offsetMin = Vector2.zero;
             label.rectTransform.offsetMax = Vector2.zero;
             label.text = "×";
+            // 전진기지 코어 팝업의 × 버튼과 같은 호버: 안쪽 청록 오버레이가 페이드 인한다(바깥 빛 없음).
+            CoreCctvPopupBuilder.ApplyCloseButtonHover(button);
             return button;
         }
 
@@ -344,29 +368,53 @@ namespace SubTerra.App.Editor.DataValidation
             return rowView;
         }
 
-        private static Button BuildButton(
-            RectTransform parent, string name, TMP_FontAsset font, string spritePath, string text, float x, float y, float width)
+        // 이동 버튼: 호버하면 Codex가 만든 호버 그림이 버튼 영역 안에서만 페이드 인한다(바깥 번짐 없음).
+        private static Button BuildConfirmButton(
+            RectTransform parent, TMP_FontAsset font, float x, float y, float width, out RectTransform hoverOverlay)
         {
-            var rect = NewTop(name, parent, x, y, width, 44f);
-            var image = AddImage(rect, LoadSprite(spritePath), Color.white, true);
+            var rect = NewTop("ConfirmButton", parent, x, y, width, ButtonHeight);
+            var image = AddImage(rect, LoadSprite(ConfirmButtonPath), Color.white, true);
             image.preserveAspect = false;
             var button = rect.gameObject.AddComponent<Button>();
             button.targetGraphic = image;
             var colors = button.colors;
-            colors.highlightedColor = new Color(1.15f, 1.15f, 1.15f, 1f);
+            colors.highlightedColor = Color.white;
             colors.pressedColor = new Color(0.8f, 0.8f, 0.8f, 1f);
             colors.disabledColor = new Color(0.5f, 0.5f, 0.5f, 0.6f);
             button.colors = colors;
             button.navigation = new Navigation { mode = Navigation.Mode.None };
-            var label = AddText(rect, "Label", font, Vector2.zero, Vector2.zero, 22f, TitleColor, TextAlignmentOptions.Center);
+
+            hoverOverlay = Stretch("HoverOverlay", rect);
+            var overlayImage = AddImage(hoverOverlay, LoadHoverSprite(), new Color(1f, 1f, 1f, 0f), false);
+            overlayImage.preserveAspect = false;
+            var skin = rect.gameObject.AddComponent<MenuSpriteButtonSkin>();
+            skin.SetOverlay(overlayImage);
+
+            var label = AddText(rect, "Label", font, Vector2.zero, Vector2.zero, 24f, TitleColor, TextAlignmentOptions.Center);
             var labelRect = label.rectTransform;
             labelRect.anchorMin = Vector2.zero;
             labelRect.anchorMax = Vector2.one;
             labelRect.offsetMin = Vector2.zero;
             labelRect.offsetMax = Vector2.zero;
             label.fontStyle = FontStyles.Bold;
-            label.text = text;
+            label.text = "이동";
             return button;
+        }
+
+        private static Sprite LoadHoverSprite()
+        {
+            var importer = AssetImporter.GetAtPath(ConfirmHoverPath) as TextureImporter;
+            if (importer != null && (importer.textureType != TextureImporterType.Sprite || importer.mipmapEnabled
+                || !importer.alphaIsTransparency))
+            {
+                importer.textureType = TextureImporterType.Sprite;
+                importer.spriteImportMode = SpriteImportMode.Single;
+                importer.alphaIsTransparency = true;
+                importer.mipmapEnabled = false;
+                importer.SaveAndReimport();
+            }
+
+            return LoadSprite(ConfirmHoverPath);
         }
 
         private static void AddOutline(RectTransform parent, Color color)
@@ -482,6 +530,14 @@ namespace SubTerra.App.Editor.DataValidation
             }
 
             return sprite;
+        }
+
+        private static void SetSwirlLayer(SerializedProperty layer, RectTransform rect, Image image, int art, float speed)
+        {
+            layer.FindPropertyRelative("rect").objectReferenceValue = rect;
+            layer.FindPropertyRelative("image").objectReferenceValue = image;
+            layer.FindPropertyRelative("art").intValue = art;
+            layer.FindPropertyRelative("speed").floatValue = speed;
         }
 
         private static void Set(SerializedObject target, string field, UnityEngine.Object value)

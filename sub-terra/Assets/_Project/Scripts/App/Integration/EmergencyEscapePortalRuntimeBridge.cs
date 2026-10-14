@@ -33,27 +33,6 @@ namespace SubTerra.App.Integration
         {
             EnsureRuntimeBindings();
             panelBinder?.BindTo(this);
-            ApplyWormholeGlyph();
-        }
-
-        // 웜홀 기호는 미니맵 범례와 같은 그림을 쓴다. Integration 어셈블리에만 있어 여기서 모양을 지정한다.
-        private void ApplyWormholeGlyph()
-        {
-            if (panelBinder == null)
-            {
-                return;
-            }
-
-            var glyphs = panelBinder.GetComponentsInChildren<MinimapGlyphGraphic>(true);
-            for (var i = 0; i < glyphs.Length; i++)
-            {
-                if (glyphs[i].GetComponent<CanvasRenderer>() == null)
-                {
-                    glyphs[i].gameObject.AddComponent<CanvasRenderer>();
-                }
-
-                glyphs[i].Set(MinimapGlyph.Wormhole, MinimapPalette.Portal);
-            }
         }
 
         public void Bind(GameState state, Transform player, Transform elevator)
@@ -76,7 +55,6 @@ namespace SubTerra.App.Integration
         {
             panelBinder = binder;
             panelBinder?.BindTo(this);
-            ApplyWormholeGlyph();
         }
 
         public void BindCameraFollow(PlayerCameraFollow follow)
