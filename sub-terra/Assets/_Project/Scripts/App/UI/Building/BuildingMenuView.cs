@@ -66,7 +66,7 @@ namespace SubTerra.App.UI.Building
                 label.fontSize = 13f;
                 label.color = new Color(0.5f, 1f, 1f, 1f);
                 label.alignment = TextAlignmentOptions.Center;
-                label.text = "시설 이동";
+                label.text = "이동 (우클릭)";
                 label.raycastTarget = false;
                 label.rectTransform.anchorMin = Vector2.zero;
                 label.rectTransform.anchorMax = Vector2.one;

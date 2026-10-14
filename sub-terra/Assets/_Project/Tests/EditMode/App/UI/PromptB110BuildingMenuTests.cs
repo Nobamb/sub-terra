@@ -18,6 +18,55 @@ namespace SubTerra.App.Tests.UI
         private const string CatalogPath = "Assets/_Project/Data/Catalog/GameDataCatalog.asset";
 
         [Test]
+        public void WorldRightClick_StartsAndCancelsMoveWithoutOpeningBuildingMenu()
+        {
+            var host = new GameObject("RightClickMove");
+            host.SetActive(false);
+            var prefab = new GameObject("StorageTemplate");
+            var definition = ScriptableObject.CreateInstance<SubTerra.Gameplay.Building.BuildingPlacementDefinition>();
+            try
+            {
+                definition.EditorSet(DataIds.Buildings.StorageBasic, prefab, Vector2Int.one, false);
+                var system = host.AddComponent<SubTerra.Gameplay.Building.BuildingPlacementSystem>();
+                var systemSettings = new SerializedObject(system);
+                var definitions = systemSettings.FindProperty("restoreDefinitions");
+                definitions.arraySize = 1;
+                definitions.GetArrayElementAtIndex(0).objectReferenceValue = definition;
+                systemSettings.ApplyModifiedPropertiesWithoutUndo();
+                var bridge = host.AddComponent<SubTerra.App.Integration.GameplayBuildingPlacementBridge>();
+                var bridgeSettings = new SerializedObject(bridge);
+                bridgeSettings.FindProperty("placementSystem").objectReferenceValue = system;
+                bridgeSettings.ApplyModifiedPropertiesWithoutUndo();
+                host.SetActive(true);
+                Assert.That(system.TryRestoreBuilding(new BuildingSnapshotDto
+                {
+                    instanceId = "storage.right-click", buildingTypeId = DataIds.Buildings.StorageBasic,
+                    footprintWidth = 1, footprintHeight = 1, level = 2, health = 0.75f
+                }), Is.True);
+                var instance = host.GetComponentInChildren<SubTerra.Gameplay.Building.BuildingInstance>();
+                var original = instance.transform.position;
+                Assert.That(bridge.HandleWorldRightClick(new Vector3(20f, 20f, 0f)), Is.False);
+                Assert.That(bridge.HandleWorldRightClick(Vector3.zero), Is.True);
+                Assert.That(system.IsMoving, Is.True);
+                Assert.That(bridge.HandleWorldRightClick(Vector3.zero), Is.True);
+                Assert.That(system.IsMoving, Is.False);
+                Assert.That(system.Selection, Is.Null);
+                Assert.That(instance.transform.position, Is.EqualTo(original));
+                Assert.That(instance.InstanceId, Is.EqualTo("storage.right-click"));
+                Assert.That(bridge.HandleWorldRightClick(Vector3.zero), Is.True);
+                Assert.That(system.TryMoveAt(new Vector3Int(2, 0, 0)).IsSuccess, Is.True);
+                Assert.That(bridge.IsMoveMode, Is.False);
+                Assert.That(instance.InstanceId, Is.EqualTo("storage.right-click"));
+            }
+            finally
+            {
+                Object.DestroyImmediate(host);
+                Object.DestroyImmediate(prefab);
+                Object.DestroyImmediate(definition);
+            }
+        }
+
+        [Test]
         public void FacilityMoveButton_IsBoundOnceAndFitsInsidePanel()
         {
             var host = new GameObject("MoveMenu", typeof(RectTransform));
