@@ -7,8 +7,6 @@ namespace SubTerra.App.UI.Tutorial
 {
     public sealed class QuestClearPopupMotion : MonoBehaviour
     {
-        public const float ClaimHintY = -420f;
-        public const float ClaimRewardY = -380f;
         [SerializeField] private RectTransform checkSign;
         [SerializeField] private RectTransform borderGlint;
         [SerializeField] private Image borderGlintImage;
@@ -22,7 +20,6 @@ namespace SubTerra.App.UI.Tutorial
         private void Awake()
         {
             panel = (RectTransform)transform;
-            ApplyContentInsets(panel);
             transition = gameObject.AddComponent<StartBriefingPopupMotion>();
             transition.enabled = false;
             transition.ConfigureQuestClear(borderGlint);
@@ -31,20 +28,6 @@ namespace SubTerra.App.UI.Tutorial
         private void OnEnable()
         {
             Open();
-        }
-
-        public static void ApplyContentInsets(RectTransform root)
-        {
-            if (root == null) return;
-            if (root.Find("ClaimRewardRow") is RectTransform row)
-                row.anchoredPosition = new Vector2(row.anchoredPosition.x, ClaimRewardY);
-            if (!(root.Find("ClaimHint") is RectTransform hint)) return;
-            hint.anchoredPosition = new Vector2(hint.anchoredPosition.x, ClaimHintY);
-            var text = hint.GetComponent<TMPro.TMP_Text>();
-            if (text == null) return;
-            text.fontSize = 14f;
-            text.color = new Color(0.75f, 0.9f, 0.93f, 1f);
-            text.raycastTarget = false;
         }
 
         public void Open()

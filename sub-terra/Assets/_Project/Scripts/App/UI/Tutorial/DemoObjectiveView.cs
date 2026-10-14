@@ -98,7 +98,7 @@ namespace SubTerra.App.UI.Tutorial
 
             if (objectiveBodyText != null)
             {
-                objectiveBodyText.text = model.Description ?? string.Empty;
+                objectiveBodyText.text = model.IsDemoComplete ? model.Description ?? string.Empty : model.NextActionHint ?? string.Empty;
             }
 
             if (nextActionText != null)
@@ -125,16 +125,29 @@ namespace SubTerra.App.UI.Tutorial
             if (objectiveTitleText == null) return;
             var card = objectiveTitleText.transform.parent as RectTransform;
             if (card == null || card.name != "QuestSummaryButton") return;
-            card.sizeDelta = new Vector2(430f, 96f);
-            card.localScale = new Vector3(0.88f, 0.88f, 1f);
-            card.anchoredPosition = new Vector2(16f, -220f);
-            PlaceSummaryChild(card, "QuestMissionLabel", new Vector2(28f, -10f), new Vector2(140f, 30f));
-            PlaceSummaryChild(card, "ProgressCount", new Vector2(-28f, -10f), new Vector2(165f, 30f));
-            PlaceSummaryChild(card, "QuestStatusIcon", new Vector2(28f, -49f), new Vector2(32f, 32f));
-            PlaceSummaryChild(card, "ObjectiveTitle", new Vector2(74f, -48f), new Vector2(328f, 32f));
-            // The full description remains available through the existing details button.
+            card.sizeDelta = new Vector2(460f, 116f);
+            card.localScale = Vector3.one;
+            card.anchoredPosition = new Vector2(16f, -232f);
+            PlaceSummaryChild(card, "QuestMissionLabel", new Vector2(36f, -10f), new Vector2(170f, 32f));
+            var mission = card.Find("QuestMissionLabel");
+            if (mission != null && mission.TryGetComponent<TMP_Text>(out var missionText))
+            {
+                missionText.text = "MISSION · 방법 보기";
+                missionText.fontSize = 18f;
+            }
+            PlaceSummaryChild(card, "ProgressCount", new Vector2(-36f, -10f), new Vector2(170f, 32f));
+            PlaceSummaryChild(card, "QuestStatusIcon", new Vector2(32f, -60.9f), new Vector2(32f, 32f));
+            PlaceSummaryChild(card, "ObjectiveTitle", new Vector2(78f, -46f), new Vector2(346f, 34f));
+            PlaceSummaryChild(card, "ObjectiveBody", new Vector2(78f, -82f), new Vector2(346f, 26f));
             if (objectiveBodyText != null && objectiveBodyText.transform.parent == card)
-                objectiveBodyText.gameObject.SetActive(false);
+            {
+                objectiveBodyText.gameObject.SetActive(true);
+                objectiveBodyText.fontSize = 16f;
+                objectiveBodyText.enableAutoSizing = true;
+                objectiveBodyText.fontSizeMin = 12f;
+                objectiveBodyText.fontSizeMax = 16f;
+                objectiveBodyText.overflowMode = TextOverflowModes.Ellipsis;
+            }
         }
 
         private static void PlaceSummaryChild(RectTransform card, string name, Vector2 position, Vector2 size)
@@ -614,6 +627,19 @@ namespace SubTerra.App.UI.Tutorial
 
         public void SetClaimText(string title, string questTitle, string rewardText, string hint)
         {
+            // 기존 씬에도 적용되도록 보상 행과 안내를 프레임 안쪽에 배치한다.
+            if (claimRewardRow != null)
+                claimRewardRow.anchoredPosition = new Vector2(0f, -388f);
+            if (claimHintText != null)
+            {
+                var rect = claimHintText.rectTransform;
+                rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 1f);
+                rect.pivot = new Vector2(0.5f, 0.5f);
+                rect.anchoredPosition = new Vector2(0f, -428f);
+                rect.sizeDelta = new Vector2(840f, 28f);
+                claimHintText.fontSize = 16f;
+                claimHintText.color = new Color(0.83f, 0.94f, 0.96f, 1f);
+            }
             if (claimTitleText != null)
             {
                 claimTitleText.text = title ?? string.Empty;

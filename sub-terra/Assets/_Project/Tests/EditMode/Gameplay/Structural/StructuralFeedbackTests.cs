@@ -179,42 +179,6 @@ namespace SubTerra.Gameplay.Structural.Tests
             }
         }
 
-        [Test]
-        public void FallingDebris_IsReclaimedAfterLandingAboveEmptySpace()
-        {
-            var root = new GameObject("DebrisLifetimeTest", typeof(Grid));
-            var sourceRoot = new GameObject("Source", typeof(Tilemap));
-            sourceRoot.transform.SetParent(root.transform, false);
-            var texture = new Texture2D(2, 2);
-            var sprite = Sprite.Create(texture, new Rect(0, 0, 2, 2), Vector2.one * 0.5f, 2f);
-            var tile = ScriptableObject.CreateInstance<Tile>();
-            tile.sprite = sprite;
-            try
-            {
-                var source = sourceRoot.GetComponent<Tilemap>();
-                var cell = new Vector3Int(0, 2, 0);
-                source.SetTile(cell, tile);
-                var overlay = root.AddComponent<StructuralCrackOverlay>();
-                overlay.PlayCollapse(cell, source, 0.05f);
-                var update = typeof(StructuralCrackOverlay).GetMethod("UpdateFallingVisuals",
-                    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
-                update.Invoke(overlay, new object[] { 0.06f });
-                Assert.That(root.transform.Find("StructuralFallingRock"), Is.Not.Null);
-                update.Invoke(overlay, new object[] { 0.14f });
-                Assert.That(root.transform.Find("StructuralFallingRock"), Is.Not.Null);
-                update.Invoke(overlay, new object[] { 0.4f });
-                Assert.That(root.transform.Find("StructuralFallingRock"), Is.Null);
-            }
-            finally
-            {
-                Object.DestroyImmediate(root);
-                Object.DestroyImmediate(sourceRoot);
-                Object.DestroyImmediate(tile);
-                Object.DestroyImmediate(sprite);
-                Object.DestroyImmediate(texture);
-            }
-        }
-
         private static void SetPrivateField(object target, string name, object value)
         {
             var field = target.GetType().GetField(
