@@ -393,29 +393,13 @@ namespace SubTerra.Gameplay.Player
                     rail.localPosition = position;
                     Vector3 scale = rail.localScale;
                     scale.y = (top - bottom) / spriteHeight;
-                    float width = part == "Channel" ? 0.16f : part == "Face" ? 0.085f
-                        : part == "Highlight" ? 0.012f : 0.025f;
+                    float width = part == "Channel" ? 0.16f : part == "Face" ? 0.09f : part == "Highlight" ? 0.012f : 0.025f;
                     scale.x = width / renderer.sprite.bounds.size.x;
+                    renderer.color = part == "Highlight" ? new Color(0.38f, 0.42f, 0.44f)
+                        : part == "Face" ? new Color(0.25f, 0.28f, 0.31f)
+                        : part == "Channel" ? new Color(0.1f, 0.12f, 0.14f)
+                        : new Color(0.06f, 0.08f, 0.1f);
                     rail.localScale = scale;
-                    renderer.color = part == "Channel" ? new Color(0.14f, 0.16f, 0.19f)
-                        : part == "Face" ? new Color(0.32f, 0.35f, 0.39f)
-                        : part == "Highlight" ? new Color(0.43f, 0.47f, 0.49f)
-                        : new Color(0.06f, 0.08f, 0.10f);
-                }
-                float x = side == "Left" ? -0.67f : 0.67f;
-                // Short sockets overlap the cabin guide instead of ending in a plain line.
-                FixedShaftPart(rails, template, side + "GuideSocket", new Vector2(x, 0.83f),
-                    new Vector2(0.24f, 0.34f), new Color(0.20f, 0.23f, 0.26f), 2);
-                FixedShaftPart(rails, template, side + "GuideSocketFace", new Vector2(x, 0.83f),
-                    new Vector2(0.10f, 0.26f), new Color(0.43f, 0.47f, 0.49f), 3);
-                for (int index = 0; index < 8; index++)
-                {
-                    FixedShaftPart(rails, template, side + "Clamp" + index,
-                        new Vector2(x, 1.45f + index * 1.45f), new Vector2(0.22f, 0.06f),
-                        new Color(0.36f, 0.39f, 0.42f), 2);
-                    FixedShaftPart(rails, template, side + "ClampBolt" + index,
-                        new Vector2(x + Mathf.Sign(x) * 0.085f, 1.45f + index * 1.45f),
-                        new Vector2(0.035f, 0.035f), new Color(0.82f, 0.49f, 0.12f), 3);
                 }
             }
 
@@ -426,6 +410,13 @@ namespace SubTerra.Gameplay.Player
             for (int side = -1; side <= 1; side += 2)
             {
                 string name = side < 0 ? "Left" : "Right";
+                for (int index = 0; index < 8; index++)
+                    FixedShaftPart(rails, template, name + "Clamp" + index,
+                        new Vector2(side * 0.67f, 1.45f + index * 1.45f),
+                        new Vector2(0.2f, 0.06f), new Color(0.5f, 0.37f, 0.16f), 2);
+                // 기존 가이드 중심에 맞춘 짧은 금속 슬리브로 객실과 레일의 접점을 연결한다.
+                FixedShaftPart(rails, template, name + "GuideSleeve", new Vector2(side * 0.67f, 0.8f),
+                    new Vector2(0.24f, 0.18f), new Color(0.25f, 0.28f, 0.31f), 2);
                 FixedShaftPart(rails, template, name + "Foot", new Vector2(side * 0.67f, -0.90f),
                     new Vector2(0.30f, 0.16f), new Color(0.32f, 0.35f, 0.39f), 2);
                 FixedShaftPart(rails, template, name + "FootBolt", new Vector2(side * 0.67f, -0.88f),

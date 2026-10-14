@@ -19,7 +19,7 @@ namespace SubTerra.App.Editor.DataValidation
     {
         public const string BuildingMenuPrefabPath = "Assets/_Project/Prefabs/UI/BuildingMenu.prefab";
 
-        public const float PanelWidth = 540f;
+        public const float PanelWidth = 500f;
         public const float PanelHeight = 560f;
         public const float HeaderHeight = 54f;
         public const float LeftColumnX = 16f;
@@ -27,7 +27,7 @@ namespace SubTerra.App.Editor.DataValidation
         public const float EntryHeight = 46f;
         public const float EntrySpacing = 4f;
         public const float FirstEntryY = -88f;
-        public const float RightColumnX = 224f;
+        public const float RightColumnX = 240f;
         public const float RightColumnWidth = PanelWidth - RightColumnX - 16f;
         public const float LeftRightGap = RightColumnX - (LeftColumnX + EntryWidth);
         public const int CostRowCount = 3;
@@ -138,7 +138,6 @@ namespace SubTerra.App.Editor.DataValidation
             so.FindProperty("availabilityBadge").objectReferenceValue = banner.Badge;
             so.FindProperty("availabilityGlyph").objectReferenceValue = banner.Glyph;
             so.ApplyModifiedPropertiesWithoutUndo();
-            view.ApplyCompactPanelLayout();
             EditorUtility.SetDirty(view);
 
             return "Prompt-B 110 BuildingMenu rebuilt: entries=" + entries.Count + " costRows=" + costs.Rows.Count;

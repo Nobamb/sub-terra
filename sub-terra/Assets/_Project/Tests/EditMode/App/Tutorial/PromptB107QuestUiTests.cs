@@ -1,4 +1,5 @@
 using System.IO;
+using System.Linq;
 using NUnit.Framework;
 using SubTerra.App.Editor.DataValidation;
 using SubTerra.App.Tutorial;
@@ -14,6 +15,41 @@ namespace SubTerra.App.Tests.Tutorial
 {
     public sealed class PromptB107QuestUiTests
     {
+        [Test]
+        public void CompactSummary_ShowsActionWhileDetailsKeepFullDescription()
+        {
+            var host = new GameObject("SummaryContent", typeof(RectTransform));
+            try
+            {
+                var card = new GameObject("QuestSummaryButton", typeof(RectTransform));
+                card.transform.SetParent(host.transform, false);
+                var titleRoot = new GameObject("ObjectiveTitle", typeof(RectTransform), typeof(TextMeshProUGUI));
+                titleRoot.transform.SetParent(card.transform, false);
+                var bodyRoot = new GameObject("ObjectiveBody", typeof(RectTransform), typeof(TextMeshProUGUI));
+                bodyRoot.transform.SetParent(card.transform, false);
+                var detailsRoot = new GameObject("DetailsBody", typeof(RectTransform), typeof(TextMeshProUGUI));
+                detailsRoot.transform.SetParent(host.transform, false);
+                var view = host.AddComponent<DemoObjectiveView>();
+                var serialized = new SerializedObject(view);
+                serialized.FindProperty("objectiveTitleText").objectReferenceValue = titleRoot.GetComponent<TMP_Text>();
+                serialized.FindProperty("objectiveBodyText").objectReferenceValue = bodyRoot.GetComponent<TMP_Text>();
+                serialized.FindProperty("detailsBodyText").objectReferenceValue = detailsRoot.GetComponent<TMP_Text>();
+                serialized.ApplyModifiedPropertiesWithoutUndo();
+                view.ApplyCompactSummary();
+                view.ApplyCompactSummary();
+                var definition = DemoObjectiveCatalog.GetRequired(DemoObjectiveIds.PurifyGasWithOutpost);
+                view.SetObjective(new DemoObjectiveReadModel(definition.Id, definition.Title, definition.Description,
+                    definition.NextActionHint, 15, 18, false, false, false, "", ""));
+                view.SetDetailsText(definition.Title, definition.Description, definition.NextActionHint);
+                Assert.That(bodyRoot.activeSelf, Is.True);
+                Assert.That(bodyRoot.GetComponent<TMP_Text>().text, Is.EqualTo(definition.NextActionHint));
+                Assert.That(detailsRoot.GetComponent<TMP_Text>().text, Is.EqualTo(definition.Description));
+                Assert.That(((RectTransform)card.transform).sizeDelta, Is.EqualTo(new Vector2(460f, 116f)));
+                Assert.That(card.transform.localScale, Is.EqualTo(Vector3.one));
+            }
+            finally { Object.DestroyImmediate(host); }
+        }
+
         [TestCase(DemoObjectiveIds.PlaceSupportInDanger, "Support")]
         [TestCase(DemoObjectiveIds.PlaceLadder, "Ladder")]
         [TestCase(DemoObjectiveIds.PlaceLightAtDepth, "Light")]
@@ -126,6 +162,8 @@ namespace SubTerra.App.Tests.Tutorial
             try
             {
                 var root = Find(scene, "DemoObjectiveRoot");
+                Assert.That(scene.GetRootGameObjects().Any(r => r.name == "DroneScanPulseVisuals"), Is.False,
+                    "실행 중 생성한 스캔 루트를 씬에 저장하면 안 된다.");
                 var summary = Find(scene, "QuestSummaryButton");
                 var details = Find(scene, "QuestDetailsPanel");
                 var view = root.GetComponent<DemoObjectiveView>();
@@ -135,11 +173,14 @@ namespace SubTerra.App.Tests.Tutorial
                 Assert.That(view.HasDetailsReferences(), Is.True);
                 Assert.That(view.HasRewardLogReferences(), Is.True);
                 Assert.That(details.activeSelf, Is.False);
-                Assert.That(summaryRect.anchoredPosition.y, Is.LessThan(-264f));
-                Assert.That(bottom, Is.GreaterThan(-426f));
+                var hud = scene.GetRootGameObjects().SelectMany(r => r.GetComponentsInChildren<SubTerra.App.UI.HUD.BasicHudView>(true)).Single();
+                var building = scene.GetRootGameObjects().SelectMany(r => r.GetComponentsInChildren<SubTerra.App.UI.Building.BuildingMenuView>(true)).Single();
+                var hudRect = (RectTransform)hud.transform;
+                Assert.That(summaryRect.anchoredPosition.y, Is.LessThan(hudRect.anchoredPosition.y - hudRect.sizeDelta.y));
+                Assert.That(bottom, Is.GreaterThan(((RectTransform)building.transform).anchoredPosition.y));
                 Assert.That(summaryRect.sizeDelta.x, Is.EqualTo(PromptB107QuestUiBuilder.SummaryCardWidth));
                 Assert.That(summaryRect.sizeDelta.y, Is.EqualTo(PromptB107QuestUiBuilder.SummaryCardHeight));
-                Assert.That(summaryRect.sizeDelta.x, Is.EqualTo(460f * 1.25f).Within(0.1f));
+                Assert.That(summaryRect.sizeDelta.x, Is.LessThanOrEqualTo(500f));
 
                 var summaryFade = summary.GetComponent<QuestSpriteCrossfade>();
                 Assert.That(summaryFade, Is.Not.Null);
@@ -154,21 +195,22 @@ namespace SubTerra.App.Tests.Tutorial
                 var progress = summary.transform.Find("ProgressCount").GetComponent<RectTransform>();
                 var missionText = mission.GetComponent<TMP_Text>();
                 var progressText = progress.GetComponent<TMP_Text>();
-                Assert.That(mission.anchoredPosition.x, Is.GreaterThanOrEqualTo(28f));
-                Assert.That(progress.anchoredPosition.x, Is.LessThanOrEqualTo(-28f));
+                Assert.That(mission.anchoredPosition.x, Is.GreaterThanOrEqualTo(32f));
+                Assert.That(progress.anchoredPosition.x, Is.LessThanOrEqualTo(-32f));
                 Assert.That(mission.anchoredPosition.y, Is.EqualTo(PromptB107QuestUiBuilder.SummaryHeaderY).Within(0.5f));
                 Assert.That(progress.anchoredPosition.y, Is.EqualTo(PromptB107QuestUiBuilder.SummaryHeaderY).Within(0.5f));
-                Assert.That(missionText.fontSize, Is.EqualTo(21f).Within(0.1f));
-                Assert.That(progressText.fontSize, Is.EqualTo(21f).Within(0.1f));
+                Assert.That(missionText.fontSize, Is.EqualTo(18f).Within(0.1f));
+                Assert.That(progressText.fontSize, Is.EqualTo(18f).Within(0.1f));
                 Assert.That(summary.transform.Find("QuestMissionMarks").gameObject.activeSelf, Is.False);
                 var statusIcon = summary.transform.Find("QuestStatusIcon").GetComponent<RectTransform>();
                 var titleRect = summary.transform.Find("ObjectiveTitle").GetComponent<RectTransform>();
                 var bodyText = summary.transform.Find("ObjectiveBody").GetComponent<TMP_Text>();
                 var titleCenter = titleRect.anchoredPosition.y - titleRect.sizeDelta.y * 0.5f;
+                var bodyCenter = bodyText.rectTransform.anchoredPosition.y - bodyText.fontSize * 0.55f;
                 var iconCenter = statusIcon.anchoredPosition.y - statusIcon.sizeDelta.y * 0.5f;
-                Assert.That(bodyText.gameObject.activeSelf, Is.False);
-                Assert.That(iconCenter, Is.EqualTo(titleCenter).Within(1f));
-                Assert.That(-titleRect.anchoredPosition.y + titleRect.rect.height, Is.LessThan(summaryRect.rect.height));
+                Assert.That(titleRect.anchoredPosition.y, Is.LessThan(-44f));
+                Assert.That(bodyText.rectTransform.anchoredPosition.y, Is.LessThan(-74f));
+                Assert.That(iconCenter, Is.EqualTo((titleCenter + bodyCenter) * 0.5f).Within(1f));
                 Assert.That(summary.GetComponent<Button>().onClick.GetPersistentMethodName(0),
                     Is.EqualTo(nameof(DemoObjectiveView.OnObjectiveDetailsClicked)));
 
@@ -213,7 +255,7 @@ namespace SubTerra.App.Tests.Tutorial
                 Assert.That(Find(scene, "QuestThumbnailDots"), Is.Not.Null);
                 Assert.That(Find(scene, "QuestBrandText"), Is.Not.Null);
                 var facility = Find(scene, "BuildingPanel").GetComponent<RectTransform>();
-                Assert.That(facility.anchoredPosition.y, Is.EqualTo(-426f));
+                Assert.That(facility.anchoredPosition.y, Is.LessThanOrEqualTo(bottom - 12f));
 
                 var clone = Object.Instantiate(root);
                 try
