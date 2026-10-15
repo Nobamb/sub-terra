@@ -121,8 +121,10 @@ namespace SubTerra.Gameplay.Tests.Drone
             Assert.That(world.Sensor.LastPulseTargets.Single(t => t.Cell == ordinaryOre).Kind, Is.EqualTo(DroneScanTargetKind.Mineral));
             var view = world.Sensor.GetComponent<DroneScanPulseView>();
             var visual = typeof(DroneScanPulseView).GetField("visualRoot", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(view) as GameObject;
-            var lights = visual.GetComponentsInChildren<UnityEngine.Rendering.Universal.Light2D>();
-            Assert.That(lights.Count(l => l.color == new Color(1f, 0.82f, 0.18f, 1f)), Is.EqualTo(2));
+            Assert.That(visual.GetComponentsInChildren<UnityEngine.Rendering.Universal.Light2D>(), Is.Empty);
+            var markers = visual.GetComponentsInChildren<SpriteRenderer>();
+            Assert.That(markers.Count(m => m.name.StartsWith("DroneScanMarker_")
+                && m.color == new Color(1f, 0.82f, 0.18f, 0.8f)), Is.EqualTo(2));
         }
 
         [TestCase(3f)]

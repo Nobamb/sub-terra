@@ -137,6 +137,7 @@ namespace SubTerra.Gameplay.Structural.Tests
             var overlay = overlayObject.AddComponent<Tilemap>();
             overlayObject.AddComponent<TilemapRenderer>();
             var tile = ScriptableObject.CreateInstance<Tile>();
+            var replacement = ScriptableObject.CreateInstance<Tile>();
             var texture = new Texture2D(1, 1);
             texture.SetPixel(0, 0, Color.white);
             texture.Apply();
@@ -146,6 +147,10 @@ namespace SubTerra.Gameplay.Structural.Tests
                 new Vector2(0.5f, 0.5f),
                 1f);
             tile.sprite = sprite;
+            var replacementSprite = Sprite.Create(texture, new Rect(0, 0, 1, 1),
+                new Vector2(0.5f, 0.5f), 1f);
+            replacement.sprite = replacementSprite;
+            replacement.color = Color.green;
             var cell = new Vector3Int(0, 2, 0);
             source.SetTile(cell, tile);
 
@@ -165,15 +170,51 @@ namespace SubTerra.Gameplay.Structural.Tests
                 Assert.That(root.transform.Find("StructuralShake_0_2"), Is.Not.Null);
                 Assert.That(source.GetColor(cell).a, Is.Zero);
 
+                source.SetTile(cell, replacement);
+                crackOverlay.SetCell(cell, StructuralRiskLevel.Caution, 0.2f, StructuralRiskCause.Unsupported);
+                var renderer = root.transform.Find("StructuralShake_0_2").GetComponent<SpriteRenderer>();
+                Assert.That(renderer.sprite, Is.SameAs(replacementSprite));
+                Assert.That(renderer.color, Is.EqualTo(Color.green));
+                Assert.That(source.GetTile(cell), Is.SameAs(replacement));
+
                 crackOverlay.ClearCell(cell);
 
                 Assert.That(crackOverlay.HasShakeVisual(cell), Is.False);
                 Assert.That(source.GetColor(cell).a, Is.EqualTo(1f).Within(0.0001f));
+                Assert.That(source.GetColor(cell), Is.EqualTo(Color.green));
+
+                // 위험 이벤트가 다시 오지 않아도 광석→일반 암석 교체를 다음 표시 갱신에서 따라간다.
+                source.SetTile(cell, tile);
+                crackOverlay.SetCell(cell, StructuralRiskLevel.Caution, 0.2f, StructuralRiskCause.Unsupported);
+                source.SetTile(cell, replacement);
+                typeof(StructuralCrackOverlay).GetMethod("UpdateCrackAnimation",
+                    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
+                    .Invoke(crackOverlay, new object[] { 0.02f });
+                source.SetTile(cell, tile);
+                typeof(StructuralCrackOverlay).GetMethod("UpdateCrackAnimation",
+                    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
+                    .Invoke(crackOverlay, new object[] { 0.02f });
+                renderer = root.transform.Find("StructuralShake_0_2").GetComponent<SpriteRenderer>();
+                Assert.That(source.GetTile(cell), Is.SameAs(tile));
+                Assert.That(renderer.sprite, Is.SameAs(sprite), "일반 타일에 이전 광석 Sprite가 남으면 안 된다.");
+                Assert.That(renderer.color, Is.EqualTo(Color.white));
+                crackOverlay.ClearCell(cell);
+                Assert.That(source.GetColor(cell), Is.EqualTo(Color.white));
+
+                crackOverlay.SetCell(cell, StructuralRiskLevel.Caution, 0.2f, StructuralRiskCause.Unsupported);
+                source.SetTile(cell, null);
+                typeof(StructuralCrackOverlay).GetMethod("UpdateCrackAnimation",
+                    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
+                    .Invoke(crackOverlay, new object[] { 0.02f });
+                Assert.That(crackOverlay.HasShakeVisual(cell), Is.False);
+                Assert.That(overlay.HasTile(cell), Is.False);
             }
             finally
             {
                 Object.DestroyImmediate(root);
                 Object.DestroyImmediate(tile);
+                Object.DestroyImmediate(replacement);
+                Object.DestroyImmediate(replacementSprite);
                 Object.DestroyImmediate(sprite);
                 Object.DestroyImmediate(texture);
             }
