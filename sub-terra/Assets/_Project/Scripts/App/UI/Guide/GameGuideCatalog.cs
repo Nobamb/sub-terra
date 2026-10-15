@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using SubTerra.App.Core.Data;
 using SubTerra.App.Outpost;
+using SubTerra.App.Progression;
 using SubTerra.App.Run;
 using SubTerra.App.Save;
 using SubTerra.Shared.Localization;
@@ -340,7 +341,7 @@ namespace SubTerra.App.UI.Guide
             Resource("res.iron", ItemDisplayNames.Mineral(DataIds.Minerals.Iron), "채굴 · 보관 · 판매", DataIds.Minerals.Iron)
                 .Link("mech.cargo", "fac.storage");
             Resource("res.lithium", ItemDisplayNames.Mineral(DataIds.Minerals.Lithium), "채굴 · 보관 · 판매", DataIds.Minerals.Lithium)
-                .Data("심층 해금", "목표 13개 완료와 드릴 속도 2레벨이 필요합니다. 드론 스캔과 가스 저항 레벨은 필수 조건이 아닙니다.")
+                .Data("심층 해금", DeepZoneUnlockRule.Mvp.DescribeUpgradeRequirements() + " 조건을 모두 갖추면 해금됩니다.")
                 .Link("mech.cargo", "fac.storage");
             Resource("res.fuel", ItemDisplayNames.Mineral(DataIds.RareItems.EngineFuel), "희귀 · 지상에서 판매", DataIds.RareItems.EngineFuel)
                 .Link("fac.storage", "fac.settlement");
