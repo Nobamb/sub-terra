@@ -34,6 +34,7 @@ namespace SubTerra.App.Integration
         private readonly List<EntityId> stale = new List<EntityId>();
         private readonly HashSet<string> shownInstanceIds = new HashSet<string>();
         private Transform bubbleRoot;
+        private SubTerra.Gameplay.Player.PlayerMovement playerMovement;
 
         public int VisibleBubbleCount { get; private set; }
         public TMP_FontAsset ActiveFont => koreanFont;
@@ -91,6 +92,11 @@ namespace SubTerra.App.Integration
                 return;
             }
 
+            if (playerMovement == null || playerMovement.transform != player)
+            {
+                playerMovement = player.GetComponent<SubTerra.Gameplay.Player.PlayerMovement>();
+            }
+
             BuildingInstance[] instances;
             using (DiscoveryMarker.Auto())
             {
@@ -112,6 +118,13 @@ namespace SubTerra.App.Integration
 
                 var id = instance.GetEntityId();
                 seen.Add(id);
+                // 포탈은 캐릭터가 영역 안에 완전히 들어갔을 때만 안내한다. 걸치면 다른 시설이 우선한다.
+                if (instance.BuildingId == DataIds.Buildings.EmergencyEscapePortal
+                    && !EmergencyEscapePortal.IsPortalTarget(instance, playerMovement))
+                {
+                    continue;
+                }
+
                 var delta = (Vector2)(instance.transform.position - player.position);
                 if (delta.sqrMagnitude <= squaredRange)
                 {

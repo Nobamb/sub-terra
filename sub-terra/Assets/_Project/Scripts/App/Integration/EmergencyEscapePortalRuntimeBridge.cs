@@ -93,6 +93,22 @@ namespace SubTerra.App.Integration
             return true;
         }
 
+        public bool TryGetDestinationPosition(
+            EmergencyEscapeDestination kind,
+            string outpostInstanceId,
+            out Vector2 position)
+        {
+            EnsureRuntimeBindings();
+            if (!TryResolveDestination(kind, outpostInstanceId, forArrival: false, out var world, out _))
+            {
+                position = default;
+                return false;
+            }
+
+            position = world;
+            return true;
+        }
+
         public void ClearDestinationPreview()
         {
             var follow = ResolveCameraFollow();
@@ -131,7 +147,8 @@ namespace SubTerra.App.Integration
                 return false;
             }
 
-            panelBinder.Open(options, service.CurrentCost);
+            // 창을 열 때마다 현재 목적지 목록과 이동 가능 여부를 새로 받아 그린다.
+            panelBinder.Open(options, service.CurrentCost, service.PeekFailure());
             return true;
         }
 

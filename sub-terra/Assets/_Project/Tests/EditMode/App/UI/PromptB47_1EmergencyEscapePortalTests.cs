@@ -154,7 +154,9 @@ namespace SubTerra.App.Tests.UI
             var networkObject = new GameObject("PromptB47_2_Network");
             var network = networkObject.AddComponent<PowerNetworkSystem>();
             var portalObject = new GameObject("PromptB47_2_Portal");
-            portalObject.AddComponent<BoxCollider2D>().isTrigger = true;
+            var zone = portalObject.AddComponent<BoxCollider2D>();
+            zone.isTrigger = true;
+            zone.size = new Vector2(2f, 2f);
             var portalPower = portalObject.AddComponent<PowerNode>();
             portalPower.Configure(network, false, 0, 30, PowerPriority.Critical);
             var portal = portalObject.AddComponent<EmergencyEscapePortal>();
@@ -165,7 +167,11 @@ namespace SubTerra.App.Tests.UI
 
             var player = new GameObject("PromptB47_2_Rider");
             player.AddComponent<Rigidbody2D>().gravityScale = 0f;
+            // prompt-B 147: 캐릭터 판정 영역이 포탈 영역 안에 완전히 들어가야 포탈이 열린다.
+            var body = player.AddComponent<BoxCollider2D>();
+            body.size = new Vector2(0.6f, 1f);
             var movement = player.AddComponent<PlayerMovement>();
+            Physics2D.SyncTransforms();
             var portObject = new GameObject("PromptB47_2_Port");
             var fakePort = portObject.AddComponent<FakeEscapePort>();
             SetField(portal, "rider", movement);
@@ -262,7 +268,7 @@ namespace SubTerra.App.Tests.UI
         }
 
         [Test]
-        public void PromptB47_1_PanelPrefab_HasDropdownAndActions()
+        public void PromptB47_1_PanelPrefab_HasDestinationListAndActions()
         {
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PanelPrefabPath);
             Assert.That(prefab, Is.Not.Null);

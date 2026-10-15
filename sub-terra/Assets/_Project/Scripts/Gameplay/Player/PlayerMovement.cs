@@ -62,6 +62,24 @@ namespace SubTerra.Gameplay.Player
         public float CurrentJumpMultiplier => cargoJumpMultiplier;
         private float PlayerTop => bodyCollider != null ? bodyCollider.bounds.max.y : body.position.y;
 
+        /// <summary>캐릭터 판정 영역의 월드 Bounds. 콜라이더가 없으면 false.</summary>
+        public bool TryGetBodyBounds(out Bounds bounds)
+        {
+            if (bodyCollider == null)
+            {
+                bodyCollider = GetComponent<Collider2D>();
+            }
+
+            if (bodyCollider == null)
+            {
+                bounds = default;
+                return false;
+            }
+
+            bounds = bodyCollider.bounds;
+            return true;
+        }
+
         private void Awake()
         {
             body = GetComponent<Rigidbody2D>();

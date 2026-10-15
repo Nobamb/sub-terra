@@ -51,14 +51,15 @@ namespace SubTerra.App.Tests.Integration
         public void E_S05_ProgressHud_FollowsPlayerAndUsesMiningProgressAsFill()
         {
             var source = Read("Scripts", "App", "Integration", "MiningProgressHud.cs");
+            var stack = Read("Scripts", "App", "UI", "PlayerStatus", "PlayerHeadMessageStack.cs");
             var binder = Read("Scripts", "App", "Integration", "IntegrationRuntimeBinder.cs");
 
-            Assert.That(source, Does.Contain("float progress = Mathf.Clamp01(state.Progress)"));
-            Assert.That(source, Does.Contain("progressFillRect.localScale"));
-            Assert.That(source, Does.Contain("state.Phase == MiningPhase.Mining"));
-            Assert.That(source, Does.Contain("playerCollider.bounds.max.y"));
-            Assert.That(source, Does.Contain("screenOffset = new(0f, 20f)"));
+            Assert.That(source, Does.Contain("Mathf.Clamp01(state.Progress)"));
+            Assert.That(source, Does.Contain("messages.SetProgress("));
+            Assert.That(source, Does.Contain("case MiningPhase.Mining:"));
+            Assert.That(stack, Does.Contain("playerCollider.bounds.max.y"));
             Assert.That(binder, Does.Contain("playerMovement.transform"));
+            Assert.That(binder, Does.Contain("miningProgressHud.SetMessageStack(playerHeadMessages)"));
         }
 
         [Test]

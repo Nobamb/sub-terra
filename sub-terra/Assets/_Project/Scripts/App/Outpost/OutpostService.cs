@@ -151,7 +151,7 @@ namespace SubTerra.App.Outpost
 
                 message = facilityName
                     + " 사용불가, 전력망 미연결\n"
-                    + " 엘레베이터 또는 전진기지 코어 근처에서 전력망 연결이 가능합니다.";
+                    + "엘리베이터 또는 전진기지 코어 근처에서 전력망 연결이 가능합니다.";
                 return true;
             }
 

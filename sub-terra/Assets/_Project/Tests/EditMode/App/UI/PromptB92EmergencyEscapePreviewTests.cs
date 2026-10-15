@@ -96,14 +96,30 @@ namespace SubTerra.App.Tests.UI
         }
 
         [Test]
-        public void OpenPanel_PreviewsDefaultElevator_AndSelectionChangeMovesToOutpostCore()
+        public void OpenPanel_ShowsDestinationsInCctv_WithoutMovingMainCamera()
         {
+            // prompt-B 147: 터미널 창은 CCTV로 목적지를 비추므로 메인 카메라는 움직이지 않는다.
             var fixture = CreateFixture();
             var playerStart = fixture.Player.transform.position;
+            var cameraStart = fixture.Camera.transform.position;
 
             Assert.That(fixture.Bridge.TryOpenEscapePanel(out _), Is.True);
             Assert.That(fixture.Binder.IsOpen, Is.True);
-            AssertCameraCenteredOn(fixture.Camera.transform, fixture.Elevator.transform.position);
+            AssertNear(fixture.Camera.transform.position, cameraStart);
+            Assert.That(fixture.Follow.IsPreviewActive, Is.False);
+
+            Assert.That(
+                fixture.Bridge.TryGetDestinationPosition(
+                    EmergencyEscapeDestination.Elevator, string.Empty, out var elevatorPosition),
+                Is.True);
+            Assert.That(elevatorPosition, Is.EqualTo((Vector2)fixture.Elevator.transform.position));
+            Assert.That(
+                fixture.Bridge.TryGetDestinationPosition(
+                    EmergencyEscapeDestination.OutpostCore,
+                    "building.outpost_core.basic-prompt-b92",
+                    out var outpostPosition),
+                Is.True);
+            Assert.That(outpostPosition, Is.EqualTo((Vector2)fixture.Outpost.transform.position));
 
             var options = fixture.Bridge.GetDestinationOptions();
             var outpostIndex = -1;
@@ -118,14 +134,13 @@ namespace SubTerra.App.Tests.UI
 
             Assert.That(outpostIndex, Is.GreaterThan(0));
             fixture.Binder.PreviewDestinationAt(outpostIndex);
-            AssertCameraCenteredOn(fixture.Camera.transform, fixture.Outpost.transform.position);
+            AssertNear(fixture.Camera.transform.position, cameraStart);
             Assert.That(fixture.Player.transform.position, Is.EqualTo(playerStart));
             Assert.That(fixture.State.Player.Gold, Is.EqualTo(300));
 
             fixture.Binder.Close();
             Assert.That(fixture.Binder.IsOpen, Is.False);
-            Assert.That(fixture.Follow.IsPreviewActive, Is.False);
-            AssertNear(fixture.Camera.transform.position, playerStart + fixture.Follow.FollowOffset);
+            AssertNear(fixture.Camera.transform.position, cameraStart);
         }
 
         [Test]
