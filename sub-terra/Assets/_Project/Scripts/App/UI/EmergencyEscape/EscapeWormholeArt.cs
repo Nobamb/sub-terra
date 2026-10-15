@@ -122,6 +122,45 @@ namespace SubTerra.App.UI.EmergencyEscape
             return color;
         }
 
+        /// <summary>
+        /// 이동 버튼 호버용 안쪽 빛. 가운데가 가장 밝고 가장자리는 완전히 투명해, 버튼 그림 위에 얹어도
+        /// 테두리와 크기는 그대로이고 안쪽만 청록빛이 돈다.
+        /// </summary>
+        public static Sprite ButtonInnerGlow()
+        {
+            return GetSprite("button-inner-glow", BuildButtonInnerGlow);
+        }
+
+        /// <summary>안쪽 빛 한 픽셀의 색(정규화 좌표 -1~1). 가장자리 알파가 0인지 테스트에서 검사한다.</summary>
+        public static Color ButtonInnerGlowPixel(float nx, float ny)
+        {
+            // 네 모서리가 둥근 사각형 거리: 긴 버튼에서도 가운데 띠가 은은하게 퍼진다.
+            var ax = Mathf.Abs(nx);
+            var ay = Mathf.Abs(ny);
+            var d = Mathf.Pow(ax * ax * ax * ax + ay * ay * ay * ay, 0.25f);
+            var alpha = 1f - Smooth(0.15f, 1f, d);
+            return new Color(RingCyan.r * 0.55f, RingCyan.g, RingCyan.b, alpha * alpha);
+        }
+
+        private static Sprite BuildButtonInnerGlow()
+        {
+            const int width = 128;
+            const int height = 32;
+            var texture = NewTexture(width, height);
+            var pixels = new Color32[width * height];
+            var halfX = (width - 1) * 0.5f;
+            var halfY = (height - 1) * 0.5f;
+            for (var y = 0; y < height; y++)
+            {
+                for (var x = 0; x < width; x++)
+                {
+                    pixels[y * width + x] = ButtonInnerGlowPixel((x - halfX) / halfX, (y - halfY) / halfY);
+                }
+            }
+
+            return Finish(texture, pixels);
+        }
+
         private static Sprite BuildCore()
         {
             var size = CoreSize;

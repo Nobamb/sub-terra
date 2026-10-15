@@ -48,6 +48,8 @@ namespace SubTerra.App.UI.EmergencyEscape
         [SerializeField] private Button confirmButton;
         [Tooltip("이동 버튼 안쪽 호버 그림. 이동할 수 없을 때는 꺼서 호버해도 밝아지지 않게 한다.")]
         [SerializeField] private GameObject confirmHoverOverlay;
+        [Tooltip("우상단 × 버튼의 호버 오버레이. 코어 팝업처럼 부드러운 그림을 입혀 가운데만 빛나게 한다.")]
+        [SerializeField] private Image closeHoverGlow;
         [Header("전진기지 코어 팝업과 같은 질감")]
         [SerializeField] private RawImage hexPattern;
         [SerializeField] private RawImage scanlines;
@@ -132,6 +134,14 @@ namespace SubTerra.App.UI.EmergencyEscape
             SetSprite(recDot, CoreCctvArt.Dot());
             SetSprite(wormholeGlow, CoreCctvArt.Soft());
             SetSprite(wormholeCore, EscapeWormholeArt.Core());
+            // 코어 팝업 × 버튼과 같은 부드러운 원형 그림: 평평한 사각형이 아니라 가운데만 빛난다.
+            SetSprite(closeHoverGlow, CoreCctvArt.Soft());
+            if (confirmHoverOverlay != null)
+            {
+                // 이동 버튼은 테두리를 건드리지 않고 안쪽만 은은하게 밝아진다.
+                SetSprite(confirmHoverOverlay.GetComponent<Image>(), EscapeWormholeArt.ButtonInnerGlow());
+            }
+
             if (swirlLayers != null)
             {
                 for (var i = 0; i < swirlLayers.Length; i++)
@@ -299,10 +309,12 @@ namespace SubTerra.App.UI.EmergencyEscape
                     break;
             }
 
-            // 닫히는 동안에는 새 입자를 만들지 않아 남은 입자만 흩어진다.
+            // 열린 뒤에는 블랙홀이 사라지므로 새 입자를 만들지 않고 남은 입자만 흩어진다. 닫을 때는 블랙홀이 보이는 동안만 만든다.
             if (wormholeParticles != null)
             {
-                wormholeParticles.Tick(delta, state == PlayState.Opening || state == PlayState.Open);
+                var emit = (state == PlayState.Opening && EscapePortalOpenTimeline.OpenEmitsParticles(clock))
+                    || (state == PlayState.Closing && EscapePortalOpenTimeline.CloseEmitsParticles(clock));
+                wormholeParticles.Tick(delta, emit);
             }
         }
 
@@ -387,6 +399,12 @@ namespace SubTerra.App.UI.EmergencyEscape
             clock = 0f;
             StopCctv();
             SetWindowInteractable(false);
+            if (wormholeParticles != null)
+            {
+                // 블랙홀이 나타나는 순간부터 입자가 이미 피어오르도록 미리 돌려 둔다.
+                wormholeParticles.Prime(ParticlePrimeSeconds * 0.6f);
+            }
+
             ApplyClose(0f);
         }
 
