@@ -117,10 +117,11 @@ namespace SubTerra.App.Integration
             var origin = ResolveDirectionalOrigin(cursorCell, world.x);
             var locationValid = placementSystem.CanPlaceLocationAt(origin, out var failure);
             var canAfford = CanAfford(selectedBuildingId);
+            if (locationValid && !canAfford) failure = BuildingPlacementFailure.CannotAfford;
             var state = locationValid
                 ? BuildingPlacementState.Valid
                 : BuildingPlacementState.Invalid;
-            var reason = ToReasonId(locationValid && !canAfford ? BuildingPlacementFailure.CannotAfford : failure);
+            var reason = ToReasonId(failure);
             PublishIfChanged(state, reason, origin);
 
             if (preview != null)
