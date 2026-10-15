@@ -84,7 +84,7 @@ namespace SubTerra.App.Editor.DataValidation
             };
             var names = new[]
             {
-                "버팀목", "조명", "충전기", "보관함", "정산 콘솔", "전진기지 코어", "긴급 탈출 포탈"
+                "버팀목", "조명", "충전기", "보관함", (ItemDisplayNames.SettlementName), (ItemDisplayNames.OutpostName), "긴급 탈출 포탈"
             };
 
             for (var i = 0; i < ids.Length; i++)

@@ -482,7 +482,7 @@ namespace SubTerra.App.Drone
             if (gasWarning)
             {
                 guidance = "가스 위험 " + Format(context.gasRisk)
-                    + ". 가스 구역에서 이탈하거나 전진기지 코어를 설치해 안전지대를 확보하세요.";
+                    + (". 가스 구역에서 이탈하거나 " + ItemDisplayNames.OutpostName + "를 설치해 안전지대를 확보하세요.");
             }
 
             if (structuralWarning)

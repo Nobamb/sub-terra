@@ -287,17 +287,25 @@ namespace SubTerra.App.Tests.Progression
                 state.TryRestore(
                     new[]
                     {
-                        new UpgradeLevelState(DataIds.Upgrades.DrillSpeed, 2)
+                        new UpgradeLevelState(DataIds.Upgrades.DrillSpeed, 2),
+                        new UpgradeLevelState(DataIds.Upgrades.DroneScan, 1),
+                        new UpgradeLevelState(DataIds.Upgrades.GasResistance, 1)
                     }),
                 Is.True);
             var service = new ProgressionService(state, new Catalog(), new Wallet());
 
-            var before = service.GetDeepZoneAccess(12);
-            var boundary = service.GetDeepZoneAccess(13);
-            var unlocked = service.TryUnlockDeepZone(13);
+            var before = service.GetDeepZoneAccess(18);
+            state.TryRestore(new[]
+            {
+                new UpgradeLevelState(DataIds.Upgrades.DrillSpeed, 2),
+                new UpgradeLevelState(DataIds.Upgrades.DroneScan, 2),
+                new UpgradeLevelState(DataIds.Upgrades.GasResistance, 1)
+            });
+            var boundary = service.GetDeepZoneAccess(0);
+            var unlocked = service.TryUnlockDeepZone(0);
 
             Assert.That(before.IsUnlocked, Is.False);
-            Assert.That(before.Reason, Does.Contain("목표"));
+            Assert.That(before.Reason, Does.Contain("드론 스캔"));
             Assert.That(boundary.IsUnlocked, Is.True);
             Assert.That(unlocked.DidUnlockNow, Is.True);
             Assert.That(state.IsZoneUnlocked(DataIds.Zones.Deep), Is.True);
@@ -305,6 +313,67 @@ namespace SubTerra.App.Tests.Progression
             var json = JsonUtility.ToJson(state);
             Assert.That(json, Does.Contain(DataIds.Upgrades.DrillSpeed));
             Assert.That(json, Does.Contain(DataIds.Zones.Deep));
+        }
+
+        [TestCase(1, 2, 1, "드릴 속도")]
+        [TestCase(2, 1, 1, "드론 스캔 범위")]
+        [TestCase(2, 2, 0, "가스 저항")]
+        public void DeepZone_MissingAnyRequiredUpgrade_RemainsLocked(int drill, int scan, int gas, string reason)
+        {
+            var state = new UpgradeState();
+            state.TryRestore(new[]
+            {
+                new UpgradeLevelState(DataIds.Upgrades.DrillSpeed, drill),
+                new UpgradeLevelState(DataIds.Upgrades.DroneScan, scan),
+                new UpgradeLevelState(DataIds.Upgrades.GasResistance, gas)
+            });
+            var service = new ProgressionService(state, null, null);
+            var events = 0;
+            service.DeepZoneAccessChanged += _ => events++;
+            var result = service.TryUnlockDeepZone(18);
+            Assert.That(result.IsUnlocked, Is.False);
+            Assert.That(result.Reason, Does.Contain(reason));
+            Assert.That(state.IsZoneUnlocked(DataIds.Zones.Deep), Is.False);
+            Assert.That(events, Is.Zero);
+        }
+
+        [Test]
+        public void DeepZone_AllRequiredUpgrades_UnlocksOnceWithoutObjectiveGate()
+        {
+            var state = new UpgradeState();
+            state.TryRestore(new[]
+            {
+                new UpgradeLevelState(DataIds.Upgrades.DrillSpeed, 2),
+                new UpgradeLevelState(DataIds.Upgrades.DroneScan, 2),
+                new UpgradeLevelState(DataIds.Upgrades.GasResistance, 1)
+            });
+            var service = new ProgressionService(state, null, null);
+            var events = 0;
+            service.DeepZoneAccessChanged += _ => events++;
+            Assert.That(service.TryUnlockDeepZone(0).DidUnlockNow, Is.True);
+            Assert.That(service.TryUnlockDeepZone(0).DidUnlockNow, Is.False);
+            Assert.That(events, Is.EqualTo(1));
+
+            var loaded = new UpgradeState();
+            loaded.TryRestoreUnlockedZones(state.UnlockedZoneIds);
+            Assert.That(new ProgressionService(loaded, null, null).GetDeepZoneAccess(0).IsUnlocked, Is.True,
+                "기존에 해금한 저장은 새 장비 조건으로 다시 잠그지 않는다.");
+        }
+
+        [Test]
+        public void FacilityDisplayNames_OldCatalogNamesUseCurrentNamesWithoutChangingIds()
+        {
+            Assert.That(ItemDisplayNames.PreferDisplay(DataIds.Buildings.SettlementBasic, "정산 콘솔"), Is.EqualTo("자원 정산기"));
+            Assert.That(ItemDisplayNames.PreferDisplay(DataIds.Buildings.OutpostCoreBasic, "전진기지 코어"), Is.EqualTo("전진기지"));
+            Assert.That(ItemDisplayNames.NormalizeFacilityText("전진기지 코어 근처의 정산 콘솔"), Is.EqualTo("전진기지 근처의 자원 정산기"));
+            Assert.That(DataIds.Buildings.SettlementBasic, Is.EqualTo("building.settlement.basic"));
+            Assert.That(DataIds.Buildings.OutpostCoreBasic, Is.EqualTo("building.outpost_core.basic"));
+            var item = new SubTerra.App.UI.Building.BuildingMenuItemReadModel(
+                DataIds.Buildings.SettlementBasic, "정산 콘솔", "전진기지 코어 영역", null, 0, null);
+            Assert.That(item.DisplayName, Is.EqualTo("자원 정산기"));
+            Assert.That(item.Description, Is.EqualTo("전진기지 영역"));
+            Assert.That(SubTerra.App.UI.Guide.GameGuideCatalog.Get("fac.settlement").Title, Is.EqualTo("자원 정산기"));
+            Assert.That(SubTerra.App.UI.Guide.GameGuideCatalog.Get("fac.core").Title, Is.EqualTo("전진기지"));
         }
 
         [Test]

@@ -16,6 +16,39 @@ namespace SubTerra.App.Tests.Save
 {
     public sealed class SaveRuntimeWiringTests
     {
+        [Test]
+        public void PendingMineRestore_SaveUsesCachedSeedAndRepeatedEntryKeepsGuard()
+        {
+            var root = new GameObject("PendingMineRestore");
+            root.SetActive(false); // Awake의 실제 사용자 저장 서비스 초기화 방지
+            var providerRoot = new GameObject("UnrestoredMineProvider");
+            try
+            {
+                var runtime = root.AddComponent<SaveRuntimeController>();
+                var provider = providerRoot.AddComponent<SubTerra.Gameplay.Snapshot.WorldSnapshotSystem>();
+                provider.ConfigureBaseWorldIdentity(20260731, 1);
+                const System.Reflection.BindingFlags flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+                var cache = (MineWorldCache)typeof(SaveRuntimeController).GetField("mineWorldCache", flags).GetValue(runtime);
+                cache.ReplaceFromProvider(new SubTerra.Shared.WorldSnapshotDto { worldSeed = 777 });
+                var pending = typeof(SaveRuntimeController).GetField("pendingMineWorldRestore", flags);
+                pending.SetValue(runtime, true);
+                var capture = typeof(SaveRuntimeController).GetMethod("CaptureContext", flags);
+                var context = (SaveCaptureContext)capture.Invoke(runtime, null);
+                Assert.That(context.WorldProvider, Is.Null);
+                Assert.That(context.MineWorldFallback.worldSeed, Is.EqualTo(777));
+                Assert.That(cache.Peek().worldSeed, Is.EqualTo(777));
+                Assert.That(runtime.TryStartExploration(out _), Is.False);
+                Assert.That((bool)pending.GetValue(runtime), Is.True);
+                pending.SetValue(runtime, false);
+                Assert.That(((SaveCaptureContext)capture.Invoke(runtime, null)).WorldProvider, Is.Not.Null);
+            }
+            finally
+            {
+                Object.DestroyImmediate(providerRoot);
+                Object.DestroyImmediate(root);
+            }
+        }
+
         private const string BootstrapPath =
             "Assets/_Project/Scenes/Bootstrap/Bootstrap.unity";
         private const string MainMenuPath =
