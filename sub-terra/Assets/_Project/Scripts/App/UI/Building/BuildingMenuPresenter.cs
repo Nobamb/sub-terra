@@ -131,7 +131,7 @@ namespace SubTerra.App.UI.Building
                 return false;
             }
 
-            gameState?.SetBuildingSelection(data.Id, data.DisplayName);
+            gameState?.SetBuildingSelection(data.Id, ItemDisplayNames.PreferDisplay(data.Id, data.DisplayName));
             view?.SetSelection(CreateItem(data));
             view?.SetStatusMessage(string.Empty);
             RefreshAvailability();

@@ -6,6 +6,21 @@ namespace SubTerra.App.Core.Data
     /// </summary>
     public static class ItemDisplayNames
     {
+        public const string SettlementName = "자원 정산기";
+        public const string OutpostName = "전진기지";
+
+        /// <summary>구형 카탈로그의 설명 문구도 현재 표시 명칭에 맞춘다. 영구 ID는 변경하지 않는다.</summary>
+        public static string NormalizeFacilityText(string text)
+        {
+            return (text ?? string.Empty)
+                .Replace("정산 콘솔을", SettlementName + "를")
+                .Replace("정산 콘솔은", SettlementName + "는")
+                .Replace("정산 콘솔과", SettlementName + "와")
+                .Replace("정산 콘솔이", SettlementName + "가")
+                .Replace("정산 콘솔", SettlementName)
+                .Replace("전진기지 코어", OutpostName);
+        }
+
         public static string Cost(string itemId, int quantity)
         {
             return itemId == DataIds.Currency.Gold ? quantity + "G" : Mineral(itemId) + " x" + quantity;
@@ -62,9 +77,9 @@ namespace SubTerra.App.Core.Data
                 case DataIds.Buildings.StorageBasic:
                     return "보관함";
                 case DataIds.Buildings.SettlementBasic:
-                    return "정산 콘솔";
+                    return SettlementName;
                 case DataIds.Buildings.OutpostCoreBasic:
-                    return "전진기지 코어";
+                    return OutpostName;
                 case DataIds.Buildings.EmergencyEscapePortal:
                     return "긴급 탈출 포탈";
                 default:
@@ -178,6 +193,11 @@ namespace SubTerra.App.Core.Data
         /// <summary>표시용 이름. 카탈로그 이름이 비어 있거나 ID와 같으면 한국어 폴백.</summary>
         public static string PreferDisplay(string permanentId, string catalogDisplayName)
         {
+            if (permanentId == DataIds.Buildings.SettlementBasic || permanentId == DataIds.Buildings.OutpostCoreBasic)
+            {
+                return Building(permanentId);
+            }
+
             if (!string.IsNullOrEmpty(catalogDisplayName)
                 && catalogDisplayName != permanentId
                 && catalogDisplayName.IndexOf('.') < 0)

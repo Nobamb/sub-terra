@@ -187,7 +187,7 @@ namespace SubTerra.App.UI.Guide
                 costs.Add(new GuideCost(ItemDisplayNames.Mineral(data.BuildCosts[i].ItemId), data.BuildCosts[i].Quantity));
             }
 
-            return new GuideBuildingInfo(data.Id, name, data.Icon, data.Description, data.PowerDraw, costs);
+            return new GuideBuildingInfo(data.Id, name, data.Icon, ItemDisplayNames.NormalizeFacilityText(data.Description), data.PowerDraw, costs);
         }
     }
 }

@@ -248,26 +248,26 @@ namespace SubTerra.App.Tests.PlayerStatus
 
             Assert.That(source, Does.Contain("messages.SetProgress("));
             Assert.That(source, Does.Contain("messages.ShowInfo(ProgressKey, pendingYieldText)"));
-            Assert.That(source, Does.Contain("messages.ShowWarning(FailureKey, FailureMessage(state.FailureReason))"));
+            Assert.That(source, Does.Contain("messages.ShowWarning(FailureKey, failureMessage)"));
             Assert.That(source, Does.Not.Contain("ShowTemporaryMessage"));
         }
 
         [Test]
-        public void MiningHud_NotMineableWhilePlacing_ShowsPlacementMessage()
+        public void MiningHud_NonMiningTargetsWhilePlacing_DoNotClaimPlacementIsInvalid()
         {
             var notMineable = SubTerra.Gameplay.Mining.MiningFailureReason.NotMineable;
 
             Assert.That(
                 SubTerra.App.Integration.MiningProgressHud.FailureMessage(notMineable, true),
-                Is.EqualTo("설치할 수 없는 지형입니다."));
+                Is.Empty);
             Assert.That(
                 SubTerra.App.Integration.MiningProgressHud.FailureMessage(notMineable, false),
                 Is.EqualTo("채굴할 수 없는 지형입니다."));
-            // 타일이 없는 빈 칸(시설이 겹친 자리 등)을 눌러도 같은 설치 문구.
+            // 빈 칸의 채굴 실패도 설치 불가의 근거가 되지 않는다.
             Assert.That(
                 SubTerra.App.Integration.MiningProgressHud.FailureMessage(
                     SubTerra.Gameplay.Mining.MiningFailureReason.InvalidTarget, true),
-                Is.EqualTo("설치할 수 없는 지형입니다."));
+                Is.Empty);
             // 다른 채굴 실패는 설치 준비 중에도 기존 문구 그대로.
             Assert.That(
                 SubTerra.App.Integration.MiningProgressHud.FailureMessage(

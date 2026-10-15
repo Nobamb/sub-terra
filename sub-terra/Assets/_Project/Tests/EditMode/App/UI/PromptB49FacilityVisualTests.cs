@@ -203,8 +203,8 @@ namespace SubTerra.App.Tests.UI
             Assert.That(controls, Does.Contain("가까이"));
             Assert.That(controls, Does.Contain("충전기"));
             Assert.That(controls, Does.Contain("보관함"));
-            Assert.That(controls, Does.Contain("정산 콘솔"));
-            Assert.That(controls, Does.Contain("전진기지 코어"));
+            Assert.That(controls, Does.Contain("자원 정산기"));
+            Assert.That(controls, Does.Contain("전진기지"));
             Assert.That(controls, Does.Contain("긴급 탈출 포탈"));
             Assert.That(controls, Does.Contain("말풍선"));
             Assert.That(controls, Does.Contain("버팀목·사다리 제외"));
@@ -225,8 +225,8 @@ namespace SubTerra.App.Tests.UI
             Assert.That(ItemDisplayNames.Building(DataIds.Buildings.LightBasic), Is.EqualTo("조명"));
             Assert.That(ItemDisplayNames.Building(DataIds.Buildings.ChargerBasic), Is.EqualTo("충전기"));
             Assert.That(ItemDisplayNames.Building(DataIds.Buildings.StorageBasic), Is.EqualTo("보관함"));
-            Assert.That(ItemDisplayNames.Building(DataIds.Buildings.SettlementBasic), Is.EqualTo("정산 콘솔"));
-            Assert.That(ItemDisplayNames.Building(DataIds.Buildings.OutpostCoreBasic), Is.EqualTo("전진기지 코어"));
+            Assert.That(ItemDisplayNames.Building(DataIds.Buildings.SettlementBasic), Is.EqualTo("자원 정산기"));
+            Assert.That(ItemDisplayNames.Building(DataIds.Buildings.OutpostCoreBasic), Is.EqualTo("전진기지"));
         }
 
         [Test]

@@ -98,7 +98,9 @@ namespace SubTerra.App.Integration
                 case MiningPhase.Failed:
                     pendingYieldText = null;
                     messages.Dismiss(ProgressKey);
-                    messages.ShowWarning(FailureKey, FailureMessage(state.FailureReason));
+                    var failureMessage = FailureMessage(state.FailureReason);
+                    if (string.IsNullOrEmpty(failureMessage)) messages.Dismiss(FailureKey);
+                    else messages.ShowWarning(FailureKey, failureMessage);
                     break;
                 case MiningPhase.Completed when !string.IsNullOrEmpty(pendingYieldText):
                     messages.ShowInfo(ProgressKey, pendingYieldText);
@@ -110,24 +112,21 @@ namespace SubTerra.App.Integration
             }
         }
 
-        /// <summary>설치 준비 중 시설과 겹친 칸을 눌렀을 때 채굴 문구 대신 쓰는 안내.</summary>
-        public const string PlacementBlockedMessage = "설치할 수 없는 지형입니다.";
-
         private string FailureMessage(MiningFailureReason reason)
         {
             return FailureMessage(reason, isPlacementActive != null && isPlacementActive());
         }
 
         /// <summary>
-        /// 설치 준비 상태에서 누른 칸이 채굴 대상이 아니면(시설 등 보호 칸, 타일 없는 빈 칸, 캘 수 없는 지형)
-        /// 채굴이 아니라 설치 시도이므로 설치 문구를 쓴다. 드릴·전력·화물 같은 채굴 조건 안내는 그대로 둔다.
+        /// 빈 칸·보호 칸의 채굴 실패는 설치 가능 여부를 뜻하지 않는다.
+        /// 설치 중에는 이 실패를 숨기고 배치 시스템이 판정한 설치 결과만 안내한다.
         /// </summary>
         public static string FailureMessage(MiningFailureReason reason, bool placementActive)
         {
             if (placementActive
                 && (reason == MiningFailureReason.NotMineable || reason == MiningFailureReason.InvalidTarget))
             {
-                return PlacementBlockedMessage;
+                return string.Empty;
             }
 
             return reason switch

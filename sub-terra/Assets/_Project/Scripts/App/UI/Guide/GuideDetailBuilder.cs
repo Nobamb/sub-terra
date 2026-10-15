@@ -107,14 +107,14 @@ namespace SubTerra.App.UI.Guide
                 uses.Add("판매");
                 lines.Add(new GuideLine(GuideLineKind.Data, "용도", string.Join(" · ", uses)));
                 lines.Add(new GuideLine(GuideLineKind.Data, "보관·판매",
-                    "보관함에서 보관하고 꺼낼 수 있습니다. 정산 콘솔과 지상 기지 판매 창에서 판매합니다."));
+                    ("보관함에서 보관하고 꺼낼 수 있습니다. " + ItemDisplayNames.SettlementName + "와 지상 기지 판매 창에서 판매합니다.")));
             }
             else
             {
                 lines.Add(new GuideLine(GuideLineKind.Data, "얻는 방법",
                     "광산의 희귀 신호 칸을 채굴하면 얻습니다. Digger-Bot이 '희귀 신호'로 알려 줍니다."));
                 lines.Add(new GuideLine(GuideLineKind.Data, "보관·판매",
-                    "보관함에 보관할 수 있습니다. 정산 콘솔에서는 정산할 수 없고, 지상 기지 판매 창에서 수량을 직접 정해 판매합니다."));
+                    ("보관함에 보관할 수 있습니다. " + ItemDisplayNames.SettlementName + "에서는 정산할 수 없고, 지상 기지 판매 창에서 수량을 직접 정해 판매합니다.")));
                 lines.Add(new GuideLine(GuideLineKind.Tip, string.Empty,
                     "판매 창의 '최대 선택'에서는 제외되므로 필요한 수량을 직접 지정하세요."));
             }

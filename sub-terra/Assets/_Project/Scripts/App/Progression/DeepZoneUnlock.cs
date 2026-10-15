@@ -29,13 +29,26 @@ namespace SubTerra.App.Progression
             UpgradeRequirements = upgradeRequirements ?? System.Array.Empty<UpgradeLevelRequirement>();
         }
 
-        /// <summary>앞선 목표 완료 + 필수 진행인 드릴 2레벨. 선택 성능 업그레이드는 강제하지 않는다.</summary>
+        /// <summary>심층 탐사에 필요한 채굴·탐지·가스 대응 장비 조건.</summary>
         public static DeepZoneUnlockRule Mvp { get; } = new DeepZoneUnlockRule(
-            13,
+            0,
             new[]
             {
-                new UpgradeLevelRequirement(DataIds.Upgrades.DrillSpeed, 2)
+                new UpgradeLevelRequirement(DataIds.Upgrades.DrillSpeed, 2),
+                new UpgradeLevelRequirement(DataIds.Upgrades.DroneScan, 2),
+                new UpgradeLevelRequirement(DataIds.Upgrades.GasResistance, 1)
             });
+
+        public string DescribeUpgradeRequirements()
+        {
+            var parts = new List<string>();
+            foreach (var requirement in UpgradeRequirements)
+            {
+                parts.Add(ItemDisplayNames.Upgrade(requirement.UpgradeId) + " Lv." + requirement.RequiredLevel);
+            }
+
+            return string.Join(" · ", parts);
+        }
     }
 
     public readonly struct ZoneAccessResult

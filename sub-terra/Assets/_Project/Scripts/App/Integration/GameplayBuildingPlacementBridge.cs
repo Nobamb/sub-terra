@@ -51,7 +51,11 @@ namespace SubTerra.App.Integration
         private int lastY = int.MinValue;
         private readonly List<Vector3Int> footprintPreviewCells = new();
         private bool pickingMoveTarget;
+        private int lastPointerPlacementFrame = -1;
         public bool IsMoveMode => pickingMoveTarget || (placementSystem != null && placementSystem.IsMoving);
+        public bool OwnsPointerInput => IsMoveMode
+            || (placementSystem != null && placementSystem.Selection != null)
+            || lastPointerPlacementFrame == Time.frameCount;
         public event Action<string> MoveStatusChanged;
 
         public void BeginMoveSelection()
@@ -59,7 +63,7 @@ namespace SubTerra.App.Integration
             CancelPreview();
             pickingMoveTarget = true;
             BuildingPlacementActivity.Begin();
-            MoveStatusChanged?.Invoke("옮길 조명·정산 콘솔·충전기·보관함·보건소를 클릭하세요. 우클릭 취소");
+            MoveStatusChanged?.Invoke($"옮길 조명·{ItemDisplayNames.SettlementName}·충전기·보관함·보건소를 클릭하세요. 우클릭 취소");
         }
 
         public event Action<BuildingPlacementResultDto> PlacementChanged;
@@ -105,6 +109,7 @@ namespace SubTerra.App.Integration
                     && Mouse.current.leftButton.wasPressedThisFrame
                     && (EventSystem.current == null || !EventSystem.current.IsPointerOverGameObject()))
                 {
+                    lastPointerPlacementFrame = Time.frameCount;
                     var cursor = Mouse.current.position.ReadValue();
                     var point = camera.ScreenToWorldPoint(new Vector3(cursor.x, cursor.y, -camera.transform.position.z));
                     if (placementSystem.TryBeginMoveAt(point))
@@ -115,7 +120,7 @@ namespace SubTerra.App.Integration
                         var size = placementSystem.Selection.Footprint;
                         MoveStatusChanged?.Invoke($"{size.x}×{size.y} 영역을 확보한 위치에 클릭하세요. 무료 이동 · 우클릭 취소");
                     }
-                    else MoveStatusChanged?.Invoke("설치·복원한 조명·정산 콘솔·충전기·보관함·보건소만 옮길 수 있습니다.");
+                    else MoveStatusChanged?.Invoke($"설치·복원한 조명·{ItemDisplayNames.SettlementName}·충전기·보관함·보건소만 옮길 수 있습니다.");
                 }
                 return;
             }
@@ -198,6 +203,7 @@ namespace SubTerra.App.Integration
             if (Mouse.current.leftButton.wasPressedThisFrame
                 && (EventSystem.current == null || !EventSystem.current.IsPointerOverGameObject()))
             {
+                lastPointerPlacementFrame = Time.frameCount;
                 placementSystem.TryPlaceAt(origin);
             }
         }
