@@ -31,7 +31,7 @@ namespace SubTerra.App.Tests.UI
                 Assert.That(trail.transform.GetSiblingIndex(), Is.LessThan(fill.transform.GetSiblingIndex()));
                 Assert.That(gauge.Find("Frame").GetSiblingIndex(), Is.GreaterThan(fill.transform.GetSiblingIndex()));
                 hud.SetHealthLevel(80, 100);
-                Assert.That(trail.fillAmount, Is.EqualTo(0.8f));
+                Assert.That(trail.fillAmount, Is.EqualTo(1f), "잔상보다 낮은 회복은 피격 잔상을 지우지 않는다.");
                 hud.SetHealthLevel(80, 200);
                 Assert.That(trail.fillAmount, Is.EqualTo(0.4f));
                 hud.SetHealthLevel(40, 200);
@@ -72,18 +72,53 @@ namespace SubTerra.App.Tests.UI
         }
 
         [Test]
-        public void DamageTrail_HealingAndResetDoNotLeaveDamageSegment()
+        public void DamageTrail_HealingCatchUpAndResetDoNotLeaveDamageSegment()
         {
             var trail = new HealthDamageTrail();
             trail.Reset(1f);
             trail.Set(0.4f);
             trail.Advance(0.2f);
-            trail.Set(0.7f);
-            Assert.That(trail.Fraction, Is.EqualTo(0.7f));
+            trail.Set(1f);
+            Assert.That(trail.Fraction, Is.EqualTo(1f));
             trail.Advance(0.1f);
-            Assert.That(trail.Fraction, Is.EqualTo(0.7f));
+            Assert.That(trail.Fraction, Is.EqualTo(1f));
             trail.Reset(0.5f);
             Assert.That(trail.Fraction, Is.EqualTo(0.5f));
+        }
+
+        [Test]
+        public void DamageTrail_RegenerationDuringHoldDoesNotEraseOrRestartTrail()
+        {
+            var trail = new HealthDamageTrail();
+            trail.Reset(1f);
+            trail.Set(0.6f);
+            for (var i = 1; i <= 3; i++)
+            {
+                trail.Set(0.6f + i * 0.001f);
+                trail.Advance(0.1f);
+                Assert.That(trail.Fraction, Is.EqualTo(1f));
+            }
+            trail.Advance(0.25f);
+            Assert.That(trail.Fraction, Is.EqualTo(0.8015f).Within(0.001f), "대기 시간은 최초 피격 기준이다.");
+        }
+
+        [Test]
+        public void DamageTrail_ContinuousRegenerationFinishesOnTimeWithoutGrowing()
+        {
+            var trail = new HealthDamageTrail();
+            trail.Reset(1f);
+            trail.Set(0.6f);
+            var previous = 1f;
+            for (var i = 1; i <= 15; i++)
+            {
+                var health = 0.6f + i * 0.001f;
+                trail.Set(health);
+                trail.Advance(0.05f);
+                Assert.That(trail.Fraction, Is.LessThanOrEqualTo(previous + 0.0001f));
+                Assert.That(trail.Fraction, Is.GreaterThanOrEqualTo(health));
+                previous = trail.Fraction;
+            }
+            Assert.That(trail.Fraction, Is.EqualTo(0.615f).Within(0.001f));
         }
 
         [Test]
