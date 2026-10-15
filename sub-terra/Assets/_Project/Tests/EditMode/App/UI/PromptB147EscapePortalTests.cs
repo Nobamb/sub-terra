@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using NUnit.Framework;
 using SubTerra.App.Core.Data;
+using SubTerra.App.Editor.DataValidation;
 using SubTerra.App.Integration;
 using SubTerra.App.Run;
 using SubTerra.App.State;
@@ -75,7 +76,8 @@ namespace SubTerra.App.Tests.UI
                 EscapePortalOpenTimeline.ConnectEnd - EscapePortalOpenTimeline.ConnectStart,
                 Is.LessThanOrEqualTo(0.3f + 0.0001f));
             Assert.That(EscapePortalOpenTimeline.ConnectLineCount, Is.InRange(1, 2));
-            Assert.That(EscapePortalOpenTimeline.CloseDuration, Is.EqualTo(0.2f).Within(0.0001f));
+            Assert.That(EscapePortalOpenTimeline.CloseDuration, Is.LessThanOrEqualTo(0.6f));
+            Assert.That(EscapePortalOpenTimeline.WormholeGoneAt, Is.LessThanOrEqualTo(EscapePortalOpenTimeline.OpenDuration));
             Assert.That(EscapePortalOpenTimeline.EvaluateOpen(EscapePortalOpenTimeline.OpenDuration).Finished, Is.True);
             Assert.That(EscapePortalOpenTimeline.EvaluateOpen(EscapePortalOpenTimeline.OpenDuration - 0.01f).Finished, Is.False);
         }
@@ -109,11 +111,44 @@ namespace SubTerra.App.Tests.UI
         }
 
         [Test]
-        public void CloseTimeline_PullsWindowIntoWormholeWithinShortTime()
+        public void OpenTimeline_WormholeVanishesAfterWindowHasPoppedOut()
+        {
+            var during = EscapePortalOpenTimeline.EvaluateOpen(EscapePortalOpenTimeline.PopStart);
+            Assert.That(during.WormholeAlpha, Is.EqualTo(1f).Within(0.001f), "창이 나오는 순간까지 블랙홀이 보인다.");
+
+            var popped = EscapePortalOpenTimeline.EvaluateOpen(EscapePortalOpenTimeline.PopEnd);
+            Assert.That(popped.WormholeAlpha, Is.EqualTo(1f).Within(0.001f));
+
+            var gone = EscapePortalOpenTimeline.EvaluateOpen(EscapePortalOpenTimeline.WormholeGoneAt);
+            Assert.That(gone.WormholeAlpha, Is.EqualTo(0f).Within(0.001f), "창이 나온 뒤에는 블랙홀이 사라진다.");
+            Assert.That(EscapePortalOpenTimeline.OpenEndPose.WormholeAlpha, Is.EqualTo(0f).Within(0.001f));
+
+            Assert.That(EscapePortalOpenTimeline.OpenEmitsParticles(0.3f), Is.True);
+            Assert.That(EscapePortalOpenTimeline.OpenEmitsParticles(EscapePortalOpenTimeline.PopEnd), Is.False,
+                "블랙홀이 사라지기 시작하면 새 입자를 만들지 않는다.");
+        }
+
+        [Test]
+        public void CloseTimeline_WormholeAppearsFirst_ThenWindowIsPulledIn_ThenBothVanish()
         {
             var begin = EscapePortalOpenTimeline.EvaluateClose(0f, 100f);
             Assert.That(begin.WindowScale, Is.EqualTo(1f).Within(0.001f));
+            Assert.That(begin.WindowAlpha, Is.EqualTo(1f).Within(0.001f));
+            Assert.That(begin.WormholeAlpha, Is.EqualTo(0f).Within(0.001f), "닫기 시작 때는 블랙홀이 아직 없다.");
             Assert.That(begin.Finished, Is.False);
+
+            var appeared = EscapePortalOpenTimeline.EvaluateClose(EscapePortalOpenTimeline.CloseWormholeInEnd, 100f);
+            Assert.That(appeared.WormholeAlpha, Is.EqualTo(1f).Within(0.001f), "블랙홀이 먼저 또렷하게 나타난다.");
+            Assert.That(appeared.WindowAlpha, Is.GreaterThan(0.5f), "창은 아직 사라지지 않았다.");
+
+            var pulling = EscapePortalOpenTimeline.EvaluateClose(
+                (EscapePortalOpenTimeline.ClosePullStart + EscapePortalOpenTimeline.ClosePullEnd) * 0.5f, 100f);
+            Assert.That(pulling.WindowScale, Is.LessThan(1f));
+            Assert.That(pulling.WormholeAlpha, Is.EqualTo(1f).Within(0.001f));
+
+            var windowGone = EscapePortalOpenTimeline.EvaluateClose(EscapePortalOpenTimeline.ClosePullEnd, 100f);
+            Assert.That(windowGone.WindowAlpha, Is.EqualTo(0f).Within(0.001f), "창이 사라진 뒤에 블랙홀도 사라진다.");
+            Assert.That(windowGone.WormholeAlpha, Is.GreaterThan(0f));
 
             var end = EscapePortalOpenTimeline.EvaluateClose(EscapePortalOpenTimeline.CloseDuration, 100f);
             Assert.That(end.Finished, Is.True);
@@ -353,13 +388,30 @@ namespace SubTerra.App.Tests.UI
             var overlay = (RectTransform)confirm.Find("HoverOverlay");
             Assert.That(overlay, Is.Not.Null);
             var image = overlay.GetComponent<UnityEngine.UI.Image>();
-            Assert.That(image.sprite, Is.Not.Null, "호버 그림이 연결되어 있다.");
             Assert.That(image.raycastTarget, Is.False);
             Assert.That(image.color.a, Is.EqualTo(0f), "평소에는 보이지 않는다.");
             Assert.That(overlay.anchorMin, Is.EqualTo(Vector2.zero));
             Assert.That(overlay.anchorMax, Is.EqualTo(Vector2.one));
-            Assert.That(overlay.offsetMin, Is.EqualTo(Vector2.zero), "빛은 버튼 영역 안에만 있다.");
-            Assert.That(overlay.offsetMax, Is.EqualTo(Vector2.zero));
+            Assert.That(overlay.offsetMin, Is.EqualTo(PromptB147EscapePortalTerminalBuilder.HoverInset),
+                "빛은 버튼 테두리 안쪽에만 있다.");
+            Assert.That(overlay.offsetMax, Is.EqualTo(-PromptB147EscapePortalTerminalBuilder.HoverInset));
+            Assert.That(overlay.rect.width, Is.LessThan(confirm.rect.width), "버튼 그림보다 작게 안쪽에만 얹는다.");
+            Assert.That(overlay.rect.height, Is.LessThan(confirm.rect.height));
+            Assert.That(confirm.GetComponent<UnityEngine.UI.Image>().sprite.name, Does.Contain("confirm"),
+                "버튼 그림은 기존 그대로라 크기·테두리가 달라 보이지 않는다.");
+
+            // 런타임에 그림이 입혀지고, 호버 알파는 은은한 상한을 넘지 않는다.
+            var instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
+            spawned.Add(instance);
+            var view = instance.GetComponent<EmergencyEscapePanelView>();
+            view.ApplyArt();
+            var runtimeOverlay = instance.transform.Find("PanelRoot/Window/ConfirmButton/HoverOverlay")
+                .GetComponent<UnityEngine.UI.Image>();
+            Assert.That(runtimeOverlay.sprite, Is.Not.Null, "안쪽 빛 그림이 입혀진다.");
+            var runtimeSkin = runtimeOverlay.GetComponentInParent<SubTerra.App.UI.MainMenu.MenuSpriteButtonSkin>(true);
+            runtimeSkin.OnPointerEnter(null);
+            Assert.That(runtimeSkin.OverlayAlpha, Is.EqualTo(PromptB147EscapePortalTerminalBuilder.HoverMaxAlpha).Within(0.001f),
+                "호버해도 안쪽 빛은 은은한 상한까지만 밝아진다.");
             Assert.That(overlay.GetSiblingIndex(), Is.LessThan(confirm.Find("Label").GetSiblingIndex()), "글자는 빛 위에 그려진다.");
 
             // 버튼 바깥으로 번지는 형제 발광 오브젝트는 어디에도 없다.
@@ -393,6 +445,36 @@ namespace SubTerra.App.Tests.UI
             Assert.That(x.colors.highlightedColor.a, Is.EqualTo(0.18f).Within(0.001f), "코어 팝업과 같은 호버 세기.");
             Assert.That(x.colors.fadeDuration, Is.EqualTo(0.15f).Within(0.001f));
             Assert.That(overlay.GetSiblingIndex(), Is.EqualTo(0), "글자 뒤에 깔린다.");
+        }
+
+        [Test]
+        public void CornerCloseButton_HoverGetsSoftCenterGlowSpriteLikeCoreCctvPopup()
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PanelPrefabPath);
+            var instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
+            spawned.Add(instance);
+            var view = instance.GetComponent<EmergencyEscapePanelView>();
+            var x = instance.transform.Find("PanelRoot/Window/CornerCloseButton").GetComponent<UnityEngine.UI.Button>();
+            var glow = (UnityEngine.UI.Image)x.targetGraphic;
+            Assert.That(glow.sprite, Is.Null, "그림은 런타임에 입혀진다(코어 팝업과 같은 방식).");
+
+            view.ApplyArt();
+            Assert.That(glow.sprite, Is.Not.Null, "평평한 사각형이 아니라 부드러운 그림이 입혀져야 가운데만 빛난다.");
+            Assert.That(glow.sprite.name, Does.EndWith("core-cctv-soft"), "코어 팝업 × 버튼과 같은 그림.");
+        }
+
+        [Test]
+        public void ConfirmInnerGlow_IsBrightInTheCenter_AndFullyTransparentAtTheEdges()
+        {
+            Assert.That(EscapeWormholeArt.ButtonInnerGlow(), Is.Not.Null);
+            var center = EscapeWormholeArt.ButtonInnerGlowPixel(0f, 0f);
+            Assert.That(center.a, Is.GreaterThan(0.9f));
+            Assert.That(center.b, Is.GreaterThan(center.r), "청록 계열이다.");
+            foreach (var edge in new[] { new Vector2(1f, 0f), new Vector2(-1f, 0f), new Vector2(0f, 1f), new Vector2(0f, -1f), new Vector2(1f, 1f) })
+            {
+                Assert.That(EscapeWormholeArt.ButtonInnerGlowPixel(edge.x, edge.y).a, Is.EqualTo(0f).Within(0.001f),
+                    "가장자리에는 빛이 없어 버튼이 커 보이지 않는다.");
+            }
         }
 
         [Test]
