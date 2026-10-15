@@ -49,6 +49,10 @@ namespace SubTerra.App.Integration
         private int lastX = int.MinValue;
         private int lastY = int.MinValue;
         private readonly List<Vector3Int> footprintPreviewCells = new();
+        private int lastPointerPlacementFrame = -1;
+
+        public bool OwnsPointerInput => (placementSystem != null && placementSystem.Selection != null)
+            || lastPointerPlacementFrame == Time.frameCount;
 
         public event Action<BuildingPlacementResultDto> PlacementChanged;
 
@@ -149,6 +153,7 @@ namespace SubTerra.App.Integration
             if (Mouse.current.leftButton.wasPressedThisFrame
                 && (EventSystem.current == null || !EventSystem.current.IsPointerOverGameObject()))
             {
+                lastPointerPlacementFrame = Time.frameCount;
                 placementSystem.TryPlaceAt(origin);
             }
         }
