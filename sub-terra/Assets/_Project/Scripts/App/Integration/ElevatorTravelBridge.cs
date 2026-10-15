@@ -92,11 +92,10 @@ namespace SubTerra.App.Integration
             var succeeded = destination == ElevatorDestination.Mine
                 ? runtime.TryStartExploration(out reason)
                 : runtime.TryReturnToSurface(out reason);
-            if (succeeded && destination == ElevatorDestination.SurfaceBase)
+            if (succeeded && destination == ElevatorDestination.SurfaceBase
+                && runtime.ElevatorState == ElevatorTravelState.Arrived)
             {
-                DemoObjectiveDirector.AdvancePersistedState(
-                    state,
-                    DemoProgressSignal.SurfaceReachedByElevator);
+                DemoObjectiveDirector.AdvancePersistedState(state, DemoProgressSignal.SurfaceReachedByElevator);
             }
 
             return succeeded;

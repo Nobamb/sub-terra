@@ -125,7 +125,7 @@ namespace SubTerra.App.Tests.UI
             Assert.That(presenter.SelectedBuildingId, Is.Empty);
             Assert.That(state.GetBuildingSelection().HasSelection, Is.False);
             Assert.That(wallet.TrySpendCount, Is.Zero);
-            Assert.That(view.StatusMessage, Does.Contain("차지한 위치"));
+            Assert.That(view.StatusMessage, Does.Contain("빈 공간을 선택하세요"));
         }
 
         [TestCase("out_of_range", "너무 먼")]
