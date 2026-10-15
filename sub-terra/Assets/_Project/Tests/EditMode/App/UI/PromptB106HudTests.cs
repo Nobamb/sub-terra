@@ -9,6 +9,50 @@ namespace SubTerra.App.Tests.UI
     public sealed class PromptB106HudTests
     {
         [Test]
+        public void DamageTrail_HoldsThenFallsToCurrentHealth()
+        {
+            var trail = new HealthDamageTrail();
+            trail.Reset(1f);
+            trail.Set(0.6f);
+            trail.Advance(0.3f);
+            Assert.That(trail.Fraction, Is.EqualTo(1f));
+            trail.Advance(0.25f);
+            Assert.That(trail.Fraction, Is.EqualTo(0.8f).Within(0.001f));
+            trail.Advance(0.3f);
+            Assert.That(trail.Fraction, Is.EqualTo(0.6f).Within(0.001f));
+        }
+
+        [Test]
+        public void DamageTrail_ConsecutiveDamageContinuesFromVisibleAmount()
+        {
+            var trail = new HealthDamageTrail();
+            trail.Reset(1f);
+            trail.Set(0.6f);
+            trail.Advance(0.55f);
+            float visible = trail.Fraction;
+            trail.Set(0.4f);
+            Assert.That(trail.Fraction, Is.EqualTo(visible));
+            trail.Set(0.4f);
+            trail.Advance(0.75f);
+            Assert.That(trail.Fraction, Is.EqualTo(0.4f).Within(0.001f));
+        }
+
+        [Test]
+        public void DamageTrail_HealingAndResetDoNotLeaveDamageSegment()
+        {
+            var trail = new HealthDamageTrail();
+            trail.Reset(1f);
+            trail.Set(0.4f);
+            trail.Advance(0.2f);
+            trail.Set(0.7f);
+            Assert.That(trail.Fraction, Is.EqualTo(0.7f));
+            trail.Advance(0.1f);
+            Assert.That(trail.Fraction, Is.EqualTo(0.7f));
+            trail.Reset(0.5f);
+            Assert.That(trail.Fraction, Is.EqualTo(0.5f));
+        }
+
+        [Test]
         public void Prefab_HasLayeredGaugesAndRequiredReferences()
         {
             var root = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/Prefabs/UI/BasicHUD.prefab");

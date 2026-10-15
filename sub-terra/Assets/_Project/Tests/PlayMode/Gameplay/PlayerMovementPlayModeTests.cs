@@ -10,6 +10,45 @@ namespace SubTerra.Gameplay.Player.Tests
 {
     public sealed class PlayerMovementPlayModeTests
     {
+        [Test]
+        public void JumpGrace_LeavingGroundAllowsOneLateJumpOnly()
+        {
+            var window = new JumpGraceWindow();
+            window.ObserveGround(0f, 0.1f);
+            window.Request(0.08f, 0.1f);
+            Assert.That(window.TryConsume(0.09f, false, false, false, false), Is.True);
+            window.Request(0.095f, 0.1f);
+            Assert.That(window.TryConsume(0.095f, false, false, true, false), Is.False);
+            window.Clear();
+            window.ObserveGround(0f, 0.1f);
+            window.Request(0.11f, 0.1f);
+            Assert.That(window.TryConsume(0.11f, false, false, false, false), Is.False);
+        }
+
+        [Test]
+        public void JumpGrace_BufferWaitsForLandingAndExpires()
+        {
+            var window = new JumpGraceWindow();
+            window.Request(1f, 0.1f);
+            Assert.That(window.TryConsume(1.02f, false, false, false, false), Is.False);
+            Assert.That(window.TryConsume(1.08f, true, false, false, false), Is.True);
+            Assert.That(window.TryConsume(1.08f, true, false, false, false), Is.False);
+            window.Request(2f, 0.1f);
+            Assert.That(window.TryConsume(2.11f, true, false, false, false), Is.False);
+        }
+
+        [Test]
+        public void JumpGrace_ClearAndAirLockPreventDeferredEscapeJump()
+        {
+            var window = new JumpGraceWindow();
+            window.Request(0f, 0.1f);
+            Assert.That(window.TryConsume(0.02f, false, true, false, true), Is.False);
+            window.Clear();
+            Assert.That(window.TryConsume(0.03f, true, false, false, false), Is.False);
+            window.Request(0.04f, 0.1f);
+            Assert.That(window.TryConsume(0.05f, false, true, false, false), Is.True);
+        }
+
         private GameObject playerObject;
         private PlayerMovement movement;
         private Rigidbody2D body;

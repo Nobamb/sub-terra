@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using SubTerra.App.UI.PlayerStatus;
 using SubTerra.App.Core.Data;
 using SubTerra.App.Economy;
 using SubTerra.App.Inventory;
@@ -230,8 +231,12 @@ namespace SubTerra.App.UI.Building
             }
             else if (result.state == BuildingPlacementState.Failed)
             {
-                view?.SetStatusMessage(FormatPlacementReason(result.reasonId, true));
-                ClearSelectionState();
+                var message = wallet != null && selected != null
+                    && !wallet.CanAfford(ItemCostMapping.ToDtoList(selected.BuildCosts))
+                    ? "자원이 부족합니다."
+                    : FormatPlacementReason(result.reasonId, true);
+                view?.SetStatusMessage(message);
+                PlayerStatusWarnings.Current?.ShowWarning("building.placement-failed", message);
             }
             else if (result.state == BuildingPlacementState.Cancelled)
             {
