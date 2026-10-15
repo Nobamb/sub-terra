@@ -1,31 +1,26 @@
+using SubTerra.App.UI.PlayerStatus;
 using SubTerra.Gameplay.Mining;
-using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace SubTerra.App.Integration
 {
-    /// <summary>채굴이 진행되는 동안 플레이어 머리 위에 진행 게이지를 표시한다.</summary>
+    /// <summary>
+    /// 채굴 상태를 플레이어 머리 위 문구 스택으로 보낸다.
+    /// 진행("채굴 N%")과 결과는 청록 정보 문구, 실패는 노란 경고 문구로 뜬다.
+    /// 진행 항목은 같은 키로 갱신만 하고, 완료 시 같은 자리에서 결과 문구로 바뀐다.
+    /// </summary>
     public sealed class MiningProgressHud : MonoBehaviour
     {
+        private const string ProgressKey = "mining.progress";
+        private const string FailureKey = "mining.failure";
+
+        // 예전 화면 공간 게이지 루트. 씬 호환을 위해 남겨 두고, 항상 꺼 둔다.
         [SerializeField] private GameObject statusRoot;
-        [SerializeField] private TMP_Text statusText;
-        [SerializeField] private Image progressFill;
-        [SerializeField] private Vector2 screenOffset = new(0f, 20f);
-        [SerializeField, Min(0f)] private float failureDisplayDuration = 10f;
-        [SerializeField, Min(0f)] private float yieldDisplayDuration = 2f;
 
         private MiningSystem boundSystem;
         private Transform playerTarget;
-        private Collider2D playerCollider;
-        private RectTransform statusRect;
-        private Vector2 normalStatusSize;
-        private RectTransform progressFillRect;
-        private Canvas parentCanvas;
-        private bool isFailureVisible;
-        private float failureHideAt;
-        private bool isYieldVisible;
-        private float yieldHideAt;
+        private PlayerHeadMessageStack messages;
+        private System.Func<bool> isPlacementActive;
         private string pendingYieldText;
 
         public void BindTo(MiningSystem system, Transform player)
@@ -42,23 +37,34 @@ namespace SubTerra.App.Integration
 
             boundSystem = system;
             playerTarget = player;
-            playerCollider = playerTarget != null
-                ? playerTarget.GetComponent<Collider2D>()
-                : null;
-            CacheUiReferences();
+            if (statusRoot != null)
+            {
+                statusRoot.SetActive(false);
+            }
+
             if (boundSystem != null)
             {
                 boundSystem.ProgressChanged += OnProgressChanged;
             }
-
-            SetVisible(false);
         }
 
         public void BindTo(MiningSystem system) => BindTo(system, playerTarget);
 
+        /// <summary>문구를 그릴 머리 위 스택을 넘긴다. 없으면 아무 문구도 띄우지 않는다.</summary>
+        public void SetMessageStack(PlayerHeadMessageStack stack)
+        {
+            messages = stack;
+        }
+
+        /// <summary>지금 시설 설치 준비(선택) 상태인지 알려 주는 조회. 없으면 항상 채굴 문구를 쓴다.</summary>
+        public void SetPlacementProbe(System.Func<bool> probe)
+        {
+            isPlacementActive = probe;
+        }
+
         /// <summary>
         /// 채굴 커밋이 Completed 이벤트를 보내기 전에 수확 문구를 맡겨 둔다.
-        /// Completed에서 게이지를 끄고 이 문구를 잠시 보여 준다.
+        /// Completed에서 진행 문구를 이 결과 문구로 바꾼다.
         /// </summary>
         public void SetPendingYieldFeedback(string text)
         {
@@ -74,152 +80,55 @@ namespace SubTerra.App.Integration
             }
         }
 
-        private void LateUpdate()
-        {
-            if (isFailureVisible && Time.unscaledTime >= failureHideAt)
-            {
-                isFailureVisible = false;
-                SetVisible(false);
-            }
-
-            if (isYieldVisible && Time.unscaledTime >= yieldHideAt)
-            {
-                isYieldVisible = false;
-                SetVisible(false);
-            }
-
-            if (statusRoot != null && statusRoot.activeSelf)
-            {
-                UpdatePosition();
-            }
-        }
-
         private void OnProgressChanged(MiningProgressState state)
         {
-            bool isMining = state.Phase == MiningPhase.Mining;
-            isFailureVisible = state.Phase == MiningPhase.Failed;
-            if (isFailureVisible)
-            {
-                // 게임이 일시 정지되어도 안내가 화면에 영구 잔류하지 않도록 실시간을 사용한다.
-                failureHideAt = Time.unscaledTime + failureDisplayDuration;
-                isYieldVisible = false;
-                pendingYieldText = null;
-            }
-
-            if (state.Phase == MiningPhase.Completed && !string.IsNullOrEmpty(pendingYieldText))
-            {
-                isYieldVisible = true;
-                yieldHideAt = Time.unscaledTime + yieldDisplayDuration;
-                if (progressFill != null)
-                {
-                    progressFill.gameObject.SetActive(false);
-                }
-
-                if (statusText != null)
-                {
-                    statusText.text = pendingYieldText;
-                }
-
-                pendingYieldText = null;
-                SetVisible(true);
-                UpdatePosition();
-                return;
-            }
-
-            if (state.Phase != MiningPhase.Completed)
-            {
-                isYieldVisible = false;
-            }
-
-            if (progressFill != null)
-            {
-                float progress = Mathf.Clamp01(state.Progress);
-                progressFillRect.localScale = new Vector3(progress, 1f, 1f);
-                progressFill.gameObject.SetActive(isMining);
-            }
-
-            if (statusText != null)
-            {
-                statusText.text = state.Phase switch
-                {
-                    MiningPhase.Mining => $"채굴 {Mathf.RoundToInt(state.Progress * 100f)}%",
-                    MiningPhase.Failed => FailureMessage(state.FailureReason),
-                    _ => string.Empty
-                };
-            }
-
-            bool isVisible = isMining || state.Phase == MiningPhase.Failed;
-            SetVisible(isVisible);
-            if (isVisible)
-            {
-                UpdatePosition();
-            }
-        }
-
-        private void SetVisible(bool visible)
-        {
-            if (statusRect != null)
-            {
-                statusRect.sizeDelta = visible && isFailureVisible
-                    ? new Vector2(Mathf.Max(normalStatusSize.x, 360f), Mathf.Max(normalStatusSize.y, 44f))
-                    : normalStatusSize;
-            }
-            if (statusRoot != null)
-            {
-                statusRoot.SetActive(visible);
-            }
-        }
-
-        private void CacheUiReferences()
-        {
-            var nextStatusRect = statusRoot != null
-                ? statusRoot.GetComponent<RectTransform>()
-                : null;
-            if (nextStatusRect != statusRect && nextStatusRect != null)
-            {
-                normalStatusSize = nextStatusRect.sizeDelta;
-            }
-            statusRect = nextStatusRect;
-            parentCanvas = GetComponentInParent<Canvas>();
-            if (progressFill != null)
-            {
-                progressFillRect = progressFill.rectTransform;
-                progressFill.type = Image.Type.Simple;
-            }
-        }
-
-        private void UpdatePosition()
-        {
-            Camera worldCamera = Camera.main;
-            if (playerTarget == null || statusRect == null || worldCamera == null)
+            if (messages == null)
             {
                 return;
             }
 
-            float top = playerCollider != null
-                ? playerCollider.bounds.max.y
-                : playerTarget.position.y;
-            Vector3 screenPoint = worldCamera.WorldToScreenPoint(
-                new Vector3(playerTarget.position.x, top, playerTarget.position.z));
-            screenPoint += (Vector3)screenOffset;
-
-            Camera uiCamera = parentCanvas != null
-                && parentCanvas.renderMode != RenderMode.ScreenSpaceOverlay
-                    ? parentCanvas.worldCamera
-                    : null;
-            if (statusRect.parent is RectTransform parentRect
-                && RectTransformUtility.ScreenPointToWorldPointInRectangle(
-                    parentRect,
-                    screenPoint,
-                    uiCamera,
-                    out Vector3 worldPoint))
+            switch (state.Phase)
             {
-                statusRect.position = worldPoint;
+                case MiningPhase.Mining:
+                    messages.SetProgress(
+                        ProgressKey,
+                        $"채굴 {Mathf.RoundToInt(state.Progress * 100f)}%",
+                        Mathf.Clamp01(state.Progress));
+                    break;
+                case MiningPhase.Failed:
+                    pendingYieldText = null;
+                    messages.Dismiss(ProgressKey);
+                    var failureMessage = FailureMessage(state.FailureReason);
+                    if (string.IsNullOrEmpty(failureMessage)) messages.Dismiss(FailureKey);
+                    else messages.ShowWarning(FailureKey, failureMessage);
+                    break;
+                case MiningPhase.Completed when !string.IsNullOrEmpty(pendingYieldText):
+                    messages.ShowInfo(ProgressKey, pendingYieldText);
+                    pendingYieldText = null;
+                    break;
+                default:
+                    messages.Dismiss(ProgressKey);
+                    break;
             }
         }
 
-        private static string FailureMessage(MiningFailureReason reason)
+        private string FailureMessage(MiningFailureReason reason)
         {
+            return FailureMessage(reason, isPlacementActive != null && isPlacementActive());
+        }
+
+        /// <summary>
+        /// 빈 칸·보호 칸의 채굴 실패는 설치 가능 여부를 뜻하지 않는다.
+        /// 설치 중에는 이 실패를 숨기고 배치 시스템이 판정한 설치 결과만 안내한다.
+        /// </summary>
+        public static string FailureMessage(MiningFailureReason reason, bool placementActive)
+        {
+            if (placementActive
+                && (reason == MiningFailureReason.NotMineable || reason == MiningFailureReason.InvalidTarget))
+            {
+                return string.Empty;
+            }
+
             return reason switch
             {
                 MiningFailureReason.DrillLevelTooLow => "드릴 레벨이 부족합니다. 지상에서 업그레이드하세요.",

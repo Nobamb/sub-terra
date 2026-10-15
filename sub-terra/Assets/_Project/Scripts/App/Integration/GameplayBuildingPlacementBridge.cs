@@ -56,7 +56,11 @@ namespace SubTerra.App.Integration
         private FacilityNameTagVisual moveHoverHint;
         private BuildingInstance hoveredMoveTarget;
         private float moveHoverStarted;
+        private int lastPointerPlacementFrame = -1;
         public bool IsMoveMode => pickingMoveTarget || (placementSystem != null && placementSystem.IsMoving);
+        public bool OwnsPointerInput => IsMoveMode
+            || (placementSystem != null && placementSystem.Selection != null)
+            || lastPointerPlacementFrame == Time.frameCount;
         public event Action<string> MoveStatusChanged;
 
         public void BeginMoveSelection()
@@ -64,7 +68,7 @@ namespace SubTerra.App.Integration
             CancelPreview();
             pickingMoveTarget = true;
             BuildingPlacementActivity.Begin();
-            MoveStatusChanged?.Invoke("옮길 조명·정산 콘솔·충전기·보관함·보건소를 클릭하세요. 우클릭 취소");
+            MoveStatusChanged?.Invoke($"옮길 조명·{ItemDisplayNames.SettlementName}·충전기·보관함·보건소를 클릭하세요. 우클릭 취소");
         }
 
         public event Action<BuildingPlacementResultDto> PlacementChanged;
@@ -201,10 +205,11 @@ namespace SubTerra.App.Integration
                     && Mouse.current.leftButton.wasPressedThisFrame
                     && (EventSystem.current == null || !EventSystem.current.IsPointerOverGameObject()))
                 {
+                    lastPointerPlacementFrame = Time.frameCount;
                     var cursor = Mouse.current.position.ReadValue();
                     var point = camera.ScreenToWorldPoint(new Vector3(cursor.x, cursor.y, -camera.transform.position.z));
                     if (!TryBeginMoveFromWorld(point))
-                        MoveStatusChanged?.Invoke("설치·복원한 조명·정산 콘솔·충전기·보관함·보건소만 옮길 수 있습니다.");
+                        MoveStatusChanged?.Invoke($"설치·복원한 조명·{ItemDisplayNames.SettlementName}·충전기·보관함·보건소만 옮길 수 있습니다.");
                 }
                 return;
             }
@@ -285,10 +290,9 @@ namespace SubTerra.App.Integration
             UpdateSupportRange(origin);
 
             if (Mouse.current.leftButton.wasPressedThisFrame
-                && locationValid
-                && CanAfford(selectedBuildingId)
                 && (EventSystem.current == null || !EventSystem.current.IsPointerOverGameObject()))
             {
+                lastPointerPlacementFrame = Time.frameCount;
                 placementSystem.TryPlaceAt(origin);
             }
         }
@@ -328,7 +332,7 @@ namespace SubTerra.App.Integration
 
         /// <summary>
         /// C 설치: 6칸 이내·CanPlaceAt 통과·최근접(동률 시 발밑→전방→아래/옆).
-        /// 후보 없음 → 설치 없이 사유만 Invalid로 알림(선택 유지).
+        /// 후보 없음 → 설치 없이 실패 사유를 알림(선택 유지).
         /// 성공 → TryPlaceAt과 동일하게 비용 1회·선택 해제.
         /// </summary>
         private void TryPlaceNearestByShortcut()
@@ -339,10 +343,14 @@ namespace SubTerra.App.Integration
                     out var cell,
                     out var failure))
             {
-                PublishIfChanged(
-                    BuildingPlacementState.Invalid,
-                    ToReasonId(failure),
-                    cell);
+                Publish(new BuildingPlacementResultDto
+                {
+                    state = BuildingPlacementState.Failed,
+                    buildingId = selectedBuildingId,
+                    reasonId = ToReasonId(failure),
+                    x = cell.x,
+                    y = cell.y
+                });
                 return;
             }
 
@@ -470,7 +478,6 @@ namespace SubTerra.App.Integration
                 x = result.Cell.x,
                 y = result.Cell.y
             });
-            ClearRuntimeSelection();
         }
 
         private void PublishIfChanged(

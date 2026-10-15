@@ -271,7 +271,7 @@ namespace SubTerra.App.Tests.UI
                 var panel = menu.transform.Find("PanelRoot");
                 var item = new BuildingMenuItemReadModel(
                     DataIds.Buildings.OutpostCoreBasic,
-                    "전진기지 코어",
+                    "전진기지",
                     "설명",
                     null,
                     5,
@@ -288,7 +288,7 @@ namespace SubTerra.App.Tests.UI
                     .GetComponent<BuildingMenuEntryVisual>();
                 Assert.That(entry.IsSelected, Is.True);
                 Assert.That(entry.transform.Find("EntryState").GetComponent<TMP_Text>().text, Is.EqualTo("부족"));
-                Assert.That(panel.Find("DetailName").GetComponent<TMP_Text>().text, Is.EqualTo("전진기지 코어"));
+                Assert.That(panel.Find("DetailName").GetComponent<TMP_Text>().text, Is.EqualTo("전진기지"));
                 Assert.That(panel.Find("DetailPowerChip"), Is.Null);
                 Assert.That(panel.Find("DetailOperatingCondition").gameObject.activeSelf, Is.False);
                 Assert.That(panel.Find("CostSection").gameObject.activeSelf, Is.True);
@@ -335,7 +335,7 @@ namespace SubTerra.App.Tests.UI
                         data.Id, data.DisplayName, data.Description, data.Icon, data.PowerDraw, null));
                     Assert.That(condition.gameObject.activeSelf, Is.EqualTo(restricted), data.Id);
                     Assert.That(condition.text, Is.EqualTo(restricted
-                        ? "전진기지 코어 영역 내에서만 작동합니다."
+                        ? "전진기지 영역 내에서만 작동합니다."
                         : string.Empty), data.Id);
                 }
 
@@ -367,11 +367,11 @@ namespace SubTerra.App.Tests.UI
                 view.SetSelection(new BuildingMenuItemReadModel(
                     DataIds.Buildings.ChargerBasic, "충전기", "설명", null, 3, null));
                 Assert.That(text.text.Replace("\r\n", "\n"), Does.StartWith(
-                    "충전기\n전진기지 코어 영역 내에서만 작동합니다.\n설명"));
+                    "충전기\n전진기지 영역 내에서만 작동합니다.\n설명"));
                 Assert.That(text.text, Does.Not.Contain("전력 소비"));
 
                 view.SetSelection(new BuildingMenuItemReadModel(
-                    DataIds.Buildings.OutpostCoreBasic, "전진기지 코어", "설명", null, 5, null));
+                    DataIds.Buildings.OutpostCoreBasic, "전진기지", "설명", null, 5, null));
                 Assert.That(text.text, Does.Not.Contain("영역 내에서만"));
                 Assert.That(text.text, Does.Not.Contain("전력 소비"));
             }

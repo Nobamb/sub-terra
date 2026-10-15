@@ -42,6 +42,8 @@ namespace SubTerra.App.Tests.PlayMode.Traversal
 
             var player = new GameObject("PromptB47_2_Rider");
             player.AddComponent<Rigidbody2D>().gravityScale = 0f;
+            // prompt-B 147: 캐릭터 판정 영역이 포탈 영역 안에 완전히 들어가야 포탈이 열린다.
+            player.AddComponent<BoxCollider2D>().size = new Vector2(0.6f, 0.9f);
             var movement = player.AddComponent<PlayerMovement>();
             var portObject = new GameObject("PromptB47_2_FakePort");
             var fakePort = portObject.AddComponent<FakeEscapePort>();
@@ -89,6 +91,8 @@ namespace SubTerra.App.Tests.PlayMode.Traversal
 
             var player = new GameObject("PromptB47_Rider");
             player.AddComponent<Rigidbody2D>().gravityScale = 0f;
+            // prompt-B 147: 캐릭터 판정 영역이 포탈 영역 안에 완전히 들어가야 포탈이 열린다.
+            player.AddComponent<BoxCollider2D>().size = new Vector2(0.6f, 0.9f);
             var movement = player.AddComponent<PlayerMovement>();
             var portObject = new GameObject("PromptB47_FakePort");
             var fakePort = portObject.AddComponent<FakeEscapePort>();
@@ -255,6 +259,115 @@ namespace SubTerra.App.Tests.PlayMode.Traversal
             var field = target.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.That(field, Is.Not.Null, "Missing field: " + name);
             field.SetValue(target, value);
+        }
+
+        [UnityTest]
+        public IEnumerator PromptB147_PanelView_OpensThroughIntro_SkipsAndClosesEvenWhenTimeIsPaused()
+        {
+            var canvasObject = new GameObject("PromptB147_Canvas", typeof(Canvas));
+            var root = new GameObject("PromptB147_Panel", typeof(RectTransform));
+            root.transform.SetParent(canvasObject.transform, false);
+            var panelRoot = new GameObject("PanelRoot", typeof(RectTransform));
+            panelRoot.transform.SetParent(root.transform, false);
+            var window = new GameObject("Window", typeof(RectTransform), typeof(CanvasGroup));
+            window.transform.SetParent(panelRoot.transform, false);
+            var wormhole = new GameObject("Wormhole", typeof(RectTransform), typeof(CanvasGroup));
+            wormhole.transform.SetParent(panelRoot.transform, false);
+            var view = root.AddComponent<EmergencyEscapePanelView>();
+            SetField(view, "panelRoot", panelRoot);
+            SetField(view, "windowRect", window.GetComponent<RectTransform>());
+            SetField(view, "windowGroup", window.GetComponent<CanvasGroup>());
+            SetField(view, "wormholeRect", wormhole.GetComponent<RectTransform>());
+            SetField(view, "wormholeGroup", wormhole.GetComponent<CanvasGroup>());
+
+            // 게임 시간이 멈춰도(창이 열려 있는 동안 timeScale 0) 연출은 unscaled 시간으로 끝까지 재생된다.
+            var previousScale = Time.timeScale;
+            Time.timeScale = 0f;
+            try
+            {
+                view.SetVisible(true);
+                Assert.That(view.State, Is.EqualTo(EmergencyEscapePanelView.PlayState.Opening));
+                Assert.That(window.GetComponent<CanvasGroup>().blocksRaycasts, Is.False, "연출 중에는 클릭을 막는다.");
+
+                var waited = 0f;
+                while (view.State == EmergencyEscapePanelView.PlayState.Opening && waited < 3f)
+                {
+                    waited += Time.unscaledDeltaTime;
+                    yield return null;
+                }
+
+                Assert.That(view.State, Is.EqualTo(EmergencyEscapePanelView.PlayState.Open));
+                Assert.That(waited, Is.LessThan(1.2f + 0.3f), "열기 연출은 1.2초 안에 끝난다(프레임 여유 포함).");
+                Assert.That(window.GetComponent<CanvasGroup>().blocksRaycasts, Is.True);
+                Assert.That(window.transform.localScale.x, Is.EqualTo(1f).Within(0.001f));
+
+                // 건너뛰기: 열기 도중 SkipOpen을 부르면 즉시 끝 상태다.
+                view.HideImmediate();
+                view.SetVisible(true);
+                yield return null;
+                view.SkipOpen();
+                Assert.That(view.State, Is.EqualTo(EmergencyEscapePanelView.PlayState.Open));
+                Assert.That(window.transform.localScale.x, Is.EqualTo(1f).Within(0.001f));
+
+                // 닫기: 0.2초 연출 뒤 숨는다.
+                var closed = false;
+                view.BeginClose(() => closed = true);
+                Assert.That(view.State, Is.EqualTo(EmergencyEscapePanelView.PlayState.Closing));
+                Assert.That(view.IsOpen, Is.False);
+                waited = 0f;
+                while (!closed && waited < 2f)
+                {
+                    waited += Time.unscaledDeltaTime;
+                    yield return null;
+                }
+
+                Assert.That(closed, Is.True);
+                Assert.That(view.State, Is.EqualTo(EmergencyEscapePanelView.PlayState.Hidden));
+                Assert.That(panelRoot.activeSelf, Is.False);
+            }
+            finally
+            {
+                Time.timeScale = previousScale;
+                Object.Destroy(canvasObject);
+            }
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator PromptB147_Prewarm_BuildsCctvOnce_ThenLeavesPanelHiddenAndRenderOff()
+        {
+            var canvasObject = new GameObject("PromptB147_PrewarmCanvas", typeof(Canvas));
+            var root = new GameObject("PromptB147_PrewarmPanel", typeof(RectTransform));
+            root.transform.SetParent(canvasObject.transform, false);
+            var panelRoot = new GameObject("PanelRoot", typeof(RectTransform));
+            panelRoot.transform.SetParent(root.transform, false);
+            var videoObject = new GameObject("Video", typeof(RectTransform), typeof(RawImage));
+            videoObject.transform.SetParent(panelRoot.transform, false);
+            ((RectTransform)videoObject.transform).sizeDelta = new Vector2(320f, 180f);
+            var view = root.AddComponent<EmergencyEscapePanelView>();
+            SetField(view, "panelRoot", panelRoot);
+            SetField(view, "video", videoObject.GetComponent<RawImage>());
+            panelRoot.SetActive(false);
+
+            yield return view.Prewarm();
+
+            Assert.That(view.State, Is.EqualTo(EmergencyEscapePanelView.PlayState.Hidden));
+            Assert.That(panelRoot.activeSelf, Is.False, "프리워밍이 끝나면 창은 숨겨진다.");
+            Assert.That(view.Rig, Is.Not.Null);
+            Assert.That(view.Rig.IsCreated, Is.True, "카메라와 렌더 텍스처를 미리 만들어 둔다.");
+            Assert.That(view.Rig.IsRendering, Is.False, "미리 그린 뒤에는 렌더링을 끈다.");
+
+            // 이후 열면 같은 카메라를 재사용한다.
+            var camera = view.Rig.Camera;
+            view.SetVisible(true);
+            view.ShowDestination(new Vector2(3f, 4f), "엘리베이터");
+            Assert.That(view.Rig.Camera, Is.SameAs(camera));
+            Assert.That(view.Rig.Position, Is.EqualTo(new Vector2(3f, 4f)), "열 때마다 이전 위치에서 쓸려 가지 않고 바로 비춘다.");
+
+            view.HideImmediate();
+            Object.Destroy(canvasObject);
+            yield return null;
         }
 
         private sealed class FakeEscapePort : MonoBehaviour, IEmergencyEscapePortalPort

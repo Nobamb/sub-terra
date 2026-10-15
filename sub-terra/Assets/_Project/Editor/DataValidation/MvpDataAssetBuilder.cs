@@ -308,10 +308,10 @@ namespace SubTerra.App.Editor.DataValidation
                 EnsureBuilding("Building_Storage_Basic.asset", DataIds.Buildings.StorageBasic, "기본 보관함",
                     "탐사 중 수집한 광물을 임시 보관합니다.", prefab, 0,
                     storageIcon, new List<ItemCostEntry> { new ItemCostEntry(DataIds.Minerals.Iron, 2) }),
-                EnsureBuilding("Building_Settlement_Basic.asset", DataIds.Buildings.SettlementBasic, "정산 콘솔",
+                EnsureBuilding("Building_Settlement_Basic.asset", DataIds.Buildings.SettlementBasic, (ItemDisplayNames.SettlementName),
                     "보관한 광물을 정산해 골드로 전환합니다.", prefab, 1,
                     settlementIcon, new List<ItemCostEntry> { new ItemCostEntry(DataIds.Minerals.Lithium, 1) }),
-                EnsureBuilding("Building_OutpostCore_Basic.asset", DataIds.Buildings.OutpostCoreBasic, "전진기지 코어",
+                EnsureBuilding("Building_OutpostCore_Basic.asset", DataIds.Buildings.OutpostCoreBasic, (ItemDisplayNames.OutpostName),
                     "연결된 시설에 전력을 공급하고 유독 가스 정화 안전지대를 형성하며 탐사 체크포인트 역할을 합니다.", prefab, 5,
                     outpostIcon, new List<ItemCostEntry>
                     {
@@ -320,7 +320,7 @@ namespace SubTerra.App.Editor.DataValidation
                     }),
                 EnsureBuilding("Building_EmergencyEscapePortal.asset", DataIds.Buildings.EmergencyEscapePortal,
                     "긴급 탈출 포탈",
-                    "E키로 사용합니다. 100G와 최대 전력의 10%를 소모해 최근 전진기지 코어 또는 엘리베이터로 이동합니다.",
+                    ("E키로 사용합니다. 100G와 최대 전력의 10%를 소모해 최근 " + ItemDisplayNames.OutpostName + " 또는 엘리베이터로 이동합니다."),
                     emergencyEscapePortalPrefab, 30,
                     icon, new List<ItemCostEntry>
                     {

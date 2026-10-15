@@ -186,26 +186,43 @@ namespace SubTerra.App.UI.MainMenu
             }
 
             float startY = card.anchoredPosition.y;
-            float endY = 850f;
+            float startX = card.anchoredPosition.x;
+            float endY = ResolveCloseEndY();
             float duration = 0.38f;
             float elapsed = 0f;
-            float dip = 8f * currentScale;
 
             while (elapsed < duration)
             {
                 elapsed += Time.unscaledDeltaTime;
                 float t = Mathf.Clamp01(elapsed / duration);
-                // 초속 0이 되는 t^3 대신 ease-out으로 바로 상승하고, 약한 바운스는 같은 곡선에 섞는다.
-                float ease = 1f - (1f - t) * (1f - t);
-                float bounce = dip * t * (1f - t) * (1f - t);
-                float y = Mathf.Lerp(startY, endY, ease) - bounce;
-                card.anchoredPosition = new Vector2(0, y);
+                // 화면을 벗어나기 전에 감속해 멈추지 않도록 끝까지 상승 속도를 유지한다.
+                float y = Mathf.Lerp(startY, endY, CloseProgress(t));
+                card.anchoredPosition = new Vector2(startX, y);
                 yield return null;
             }
 
-            card.anchoredPosition = new Vector2(0, endY);
+            card.anchoredPosition = new Vector2(startX, endY);
             closeRoutine = null;
             FinishClose();
+        }
+
+        public static float CloseProgress(float normalizedTime)
+        {
+            float t = Mathf.Clamp01(normalizedTime);
+            return 0.65f * t + 0.35f * t * t;
+        }
+
+        private float ResolveCloseEndY()
+        {
+            var parent = card.parent as RectTransform;
+            if (parent == null) return card.anchoredPosition.y + 850f;
+            var corners = new Vector3[4];
+            card.GetWorldCorners(corners);
+            float bottom = float.PositiveInfinity;
+            for (int i = 0; i < corners.Length; i++)
+                bottom = Mathf.Min(bottom, parent.InverseTransformPoint(corners[i]).y);
+            return card.anchoredPosition.y + Mathf.Max(0f, parent.rect.yMax - bottom)
+                + 8f * currentScale;
         }
 
         private void FinishClose()

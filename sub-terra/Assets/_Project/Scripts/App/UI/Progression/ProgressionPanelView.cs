@@ -989,7 +989,10 @@ namespace SubTerra.App.UI.Progression
             builder.AppendLine();
             builder.AppendLine("해금 조건");
             var rule = DeepZoneUnlockRule.Mvp;
-            builder.Append("· 완료 목표 ").Append(rule.RequiredCompletedObjectives).AppendLine("개 이상");
+            if (rule.RequiredCompletedObjectives > 0)
+            {
+                builder.Append("· 완료 목표 ").Append(rule.RequiredCompletedObjectives).AppendLine("개 이상");
+            }
             if (rule.UpgradeRequirements != null)
             {
                 for (var i = 0; i < rule.UpgradeRequirements.Count; i++)

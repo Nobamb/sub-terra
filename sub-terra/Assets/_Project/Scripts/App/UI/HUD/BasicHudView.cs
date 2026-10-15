@@ -65,7 +65,11 @@ namespace SubTerra.App.UI.HUD
 
         public void SetHealthLevel(float current, int maximum)
         {
-            if (healthGauge != null) healthGauge.SetValue(current, maximum);
+            if (healthGauge != null)
+            {
+                healthGauge.EnableDamageTrail();
+                healthGauge.SetValue(current, maximum);
+            }
         }
 
         public void SetHealth(string text)

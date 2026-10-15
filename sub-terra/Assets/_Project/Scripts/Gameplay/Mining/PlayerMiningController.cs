@@ -27,6 +27,13 @@ namespace SubTerra.Gameplay.Mining
         private MiningDebrisVisual debrisVisual;
         private MiningSystem debrisMiningSystem;
         private static readonly List<RaycastResult> PointerHits = new(8);
+        private System.Func<bool> pointerMiningBlocker;
+        private bool pointerClaimedByPlacement;
+
+        public void SetPointerMiningBlocker(System.Func<bool> blocker)
+        {
+            pointerMiningBlocker = blocker;
+        }
 
         public bool IsMining => miningSystem != null && miningSystem.IsMining;
 
@@ -51,6 +58,11 @@ namespace SubTerra.Gameplay.Mining
 
         private void Update()
         {
+            if (Mouse.current == null || !Mouse.current.leftButton.isPressed)
+                pointerClaimedByPlacement = false;
+            else if (pointerMiningBlocker != null && pointerMiningBlocker())
+                pointerClaimedByPlacement = true;
+
             EnsureDebrisVisual();
             if (miningSystem == null)
             {
@@ -66,6 +78,15 @@ namespace SubTerra.Gameplay.Mining
                 lastMiningDirection = Vector2.zero;
                 if (animationController != null) animationController.SetMining(false);
                 return;
+            }
+
+            // 설치가 성공해 선택이 풀려도 같은 누르기 동작은 채굴로 재사용하지 않는다.
+            if (pointerClaimedByPlacement && pendingPointerTarget)
+            {
+                miningSystem.CancelMining();
+                startPending = false;
+                pendingPointerTarget = false;
+                miningInputPressedLastFrame = false;
             }
 
             Vector2 direction = PlayerKeyboardControls.ReadMiningDirection(ControlPreferences.Scheme);
@@ -139,7 +160,7 @@ namespace SubTerra.Gameplay.Mining
             }
 
             // 머리 위 구출 칩·팝업 등 UI 클릭이 채굴로 통과하지 않게 한다.
-            if (mousePressed && IsPointerOverUi())
+            if (mousePressed && (pointerClaimedByPlacement || IsPointerOverUi()))
             {
                 return false;
             }
@@ -178,7 +199,7 @@ namespace SubTerra.Gameplay.Mining
         {
             pendingDirection = PlayerKeyboardControls.ReadMiningDirection(ControlPreferences.Scheme);
             pendingPointerTarget = Mouse.current != null
-                && Mouse.current.leftButton.isPressed && pendingDirection == Vector2.zero;
+                && Mouse.current.leftButton.isPressed && !pointerClaimedByPlacement && pendingDirection == Vector2.zero;
             if (pendingPointerTarget && Camera.main != null)
             {
                 Vector3 world = Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());

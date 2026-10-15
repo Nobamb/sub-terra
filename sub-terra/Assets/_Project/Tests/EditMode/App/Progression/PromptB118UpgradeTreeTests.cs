@@ -15,6 +15,74 @@ namespace SubTerra.App.Tests.Progression
     /// <summary>prompt-B 118: 업그레이드 트리 해금 규칙, 구매 검증, 표시 수치 검증.</summary>
     public sealed class PromptB118UpgradeTreeTests
     {
+        [Test]
+        public void UnlockedIcon_IsVisibleWhileUnlockFeedbackIsPending()
+        {
+            var node = CreateVisibilityNode(out var icon, out var blind);
+            try
+            {
+                node.Apply(VisibilitySnapshot(false));
+                Assert.That(icon.enabled, Is.False);
+                Assert.That(blind.alpha, Is.EqualTo(1f));
+                typeof(UpgradeTreeNodeView).GetField("revealPending",
+                    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
+                    .SetValue(node, true);
+                node.Apply(VisibilitySnapshot(true));
+                Assert.That(node.IsRevealPending, Is.True);
+                Assert.That(icon.enabled, Is.True);
+                Assert.That(blind.alpha, Is.Zero, "해금 확정 정보는 순차 연출을 기다리지 않음");
+                node.Apply(VisibilitySnapshot(true));
+                Assert.That(blind.alpha, Is.Zero, "목록을 다시 그려도 재가림 없음");
+            }
+            finally { Object.DestroyImmediate(node.gameObject); }
+        }
+
+        [Test]
+        public void UnlockFeedback_FinalTweenNeverRehidesUnlockedIcon()
+        {
+            var node = CreateVisibilityNode(out var icon, out var blind);
+            try
+            {
+                node.Apply(VisibilitySnapshot(true));
+                var sequence = (System.Collections.IEnumerator)typeof(UpgradeTreeNodeView)
+                    .GetMethod("UnlockRoutine", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
+                    .Invoke(node, new object[] { 0f });
+                Assert.That(sequence.MoveNext(), Is.True); // 자물쇠 구간
+                Assert.That(sequence.MoveNext(), Is.True); // 파편 구간
+                Assert.That(sequence.MoveNext(), Is.True); // 마지막 점등 구간
+                var finalTween = (System.Collections.IEnumerator)sequence.Current;
+                Assert.That(finalTween.MoveNext(), Is.True); // t=0에서 다시 불투명해지던 프레임
+                Assert.That(icon.enabled, Is.True);
+                Assert.That(blind.alpha, Is.Zero);
+                ((System.IDisposable)sequence).Dispose();
+            }
+            finally { Object.DestroyImmediate(node.gameObject); }
+        }
+
+        private static UpgradeSnapshot VisibilitySnapshot(bool unlocked) => new UpgradeSnapshot(
+            DataIds.Upgrades.DroneScan, "드론 스캔 범위", 0, 2, 0f, 3f,
+            System.Array.Empty<ItemCostDto>(), false, null, null, unlocked);
+
+        private static UpgradeTreeNodeView CreateVisibilityNode(
+            out UnityEngine.UI.Image icon, out CanvasGroup blind)
+        {
+            var root = new GameObject("UpgradeVisibility", typeof(RectTransform));
+            var body = new GameObject("Body", typeof(RectTransform)).GetComponent<RectTransform>();
+            body.SetParent(root.transform, false);
+            icon = new GameObject("Icon", typeof(RectTransform), typeof(UnityEngine.UI.Image))
+                .GetComponent<UnityEngine.UI.Image>();
+            icon.transform.SetParent(body, false);
+            blind = new GameObject("Blind", typeof(RectTransform), typeof(CanvasGroup)).GetComponent<CanvasGroup>();
+            blind.transform.SetParent(body, false);
+            var node = root.AddComponent<UpgradeTreeNodeView>();
+            var serialized = new SerializedObject(node);
+            serialized.FindProperty("body").objectReferenceValue = body;
+            serialized.FindProperty("icon").objectReferenceValue = icon;
+            serialized.FindProperty("blind").objectReferenceValue = blind;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            return node;
+        }
+
         private const string CatalogPath = "Assets/_Project/Data/Catalog/GameDataCatalog.asset";
         private const string SurfacePrefabPath = "Assets/_Project/Prefabs/UI/SurfaceBasePanel.prefab";
 
