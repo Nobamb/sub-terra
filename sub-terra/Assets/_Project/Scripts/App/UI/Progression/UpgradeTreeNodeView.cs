@@ -119,15 +119,6 @@ namespace SubTerra.App.UI.Progression
             }
         }
 
-        /// <summary>신규 해금 연출이 끝날 때까지 블라인드를 유지하도록 표시한다.</summary>
-        public void HoldBlindForReveal()
-        {
-            if (isActiveAndEnabled)
-            {
-                revealPending = true;
-            }
-        }
-
         public void Apply(UpgradeSnapshot value)
         {
             snapshot = value;
@@ -149,7 +140,7 @@ namespace SubTerra.App.UI.Progression
                     : UpgradeNodeVisualState.Insufficient;
             }
 
-            // 미해금 노드는 이름·아이콘·레벨을 비워 숨긴다. 연출 대기 중인 노드는 블라인드가 가린다.
+            // 정보 공개는 확정된 상태만 따른다. 해금 연출 대기 때문에 다시 가리지 않는다.
             var showContent = unlocked;
             if (icon != null)
             {
@@ -173,10 +164,7 @@ namespace SubTerra.App.UI.Progression
             }
 
             ApplyStateColors();
-            if (!IsRunning(unlockRoutine))
-            {
-                SetBlindVisible(!unlocked || revealPending);
-            }
+            SetBlindVisible(!unlocked);
         }
 
         private void ApplyStateColors()
@@ -314,11 +302,6 @@ namespace SubTerra.App.UI.Progression
             StopAllCoroutines();
         }
 
-        private static bool IsRunning(Coroutine routine)
-        {
-            return routine != null;
-        }
-
         // ---- 자금 부족: 좌우 흔들림 + 경고색 ----
         public void PlayShake()
         {
@@ -430,7 +413,7 @@ namespace SubTerra.App.UI.Progression
             levelUpRoutine = null;
         }
 
-        // ---- 신규 해금: 자물쇠 진동 → 파손 → 블라인드 제거 → 청록 점등 ----
+        // ---- 신규 해금: 정보 공개와 별개로 파손·청록 점등 피드백만 재생 ----
         public void PlayUnlock(float delay)
         {
             if (!isActiveAndEnabled || body == null)
@@ -450,7 +433,6 @@ namespace SubTerra.App.UI.Progression
             }
 
             revealPending = true;
-            SetBlindVisible(true);
             unlockRoutine = StartCoroutine(UnlockRoutine(delay));
         }
 
@@ -522,7 +504,7 @@ namespace SubTerra.App.UI.Progression
                 }
             }
 
-            // 3) 블라인드 걷힘 (0.15s) + 4) 청록 점등 (0.3s)
+            // 확정된 정보를 유지한 채 청록 점등만 재생한다.
             revealPending = false;
             if (hasSnapshot)
             {
@@ -536,15 +518,10 @@ namespace SubTerra.App.UI.Progression
 
             yield return UpgradeTreeTween.Run(UnlockNodeDuration - 0.4f, t =>
             {
-                if (blind != null)
-                {
-                    blind.alpha = 1f - UpgradeTreeTween.EaseOut(Mathf.Clamp01(t / 0.5f));
-                }
-
                 UpgradeTreeTween.SetColor(glow, UpgradeTreeTween.Cyan, 0.9f * UpgradeTreeTween.Pulse(Mathf.Clamp01((t - 0.2f) / 0.8f)));
             });
 
-            SetBlindVisible(false);
+            SetBlindVisible(!hasSnapshot || !snapshot.IsUnlocked);
             UpgradeTreeTween.SetAlpha(glow, 0f);
             for (var i = 0; i < lockParts.Length; i++)
             {

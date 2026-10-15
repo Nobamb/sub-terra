@@ -2,13 +2,17 @@ using System.Text;
 using SubTerra.App.Core.Data;
 using SubTerra.App.Inventory;
 using SubTerra.App.Outpost;
+using SubTerra.App.UI.PlayerStatus;
 
 namespace SubTerra.App.UI.Outpost
 {
     /// <summary>시설별 전진기지 View와 Service를 연결한다. UI에서 State를 직접 변경하지 않는다.</summary>
     public sealed class OutpostPanelPresenter
     {
+        private const string FacilityWarningKey = "outpost.facility";
+
         private readonly IOutpostPanelView view;
+        private IPlayerStatusWarningSink warningSink;
         private OutpostService service;
         private OutpostSnapshot latestSnapshot;
         private bool busy;
@@ -69,7 +73,7 @@ namespace SubTerra.App.UI.Outpost
                 && service.TryGetPowerDisconnectedInteractionMessage(out var message))
             {
                 CloseInteractionPanel();
-                view?.ShowTemporaryMessage(message, 3f);
+                ShowFacilityWarning(message);
                 return;
             }
 
@@ -79,7 +83,7 @@ namespace SubTerra.App.UI.Outpost
                 CloseServicePanel();
                 if (!TryShowFacilityCooldown())
                 {
-                    view?.ShowTemporaryMessage(cooldownMessage, 3f);
+                    ShowFacilityWarning(cooldownMessage);
                 }
 
                 return;
@@ -381,6 +385,23 @@ namespace SubTerra.App.UI.Outpost
         private void OnTutorialRequested()
         {
             view?.SetTutorialVisible(true);
+        }
+
+        /// <summary>미지정이면 현재 활성화된 머리 위 스택(PlayerStatusWarnings.Current)을 쓴다.</summary>
+        public IPlayerStatusWarningSink WarningSink
+        {
+            get => warningSink ?? PlayerStatusWarnings.Current;
+            set => warningSink = value;
+        }
+
+        /// <summary>시설 사용불가 안내는 중앙 박스가 아니라 플레이어 머리 위 경고로 보낸다.</summary>
+        private void ShowFacilityWarning(string message)
+        {
+            var sink = WarningSink;
+            if (sink != null)
+            {
+                sink.ShowWarning(FacilityWarningKey, message);
+            }
         }
 
         private void CloseInteractionPanel()

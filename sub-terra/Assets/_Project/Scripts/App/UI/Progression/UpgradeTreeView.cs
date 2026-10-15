@@ -605,8 +605,6 @@ namespace SubTerra.App.UI.Progression
                         continue;
                     }
 
-                    // Refresh가 노드를 갱신하기 전에 블라인드 유지를 먼저 걸어 둔다.
-                    target.HoldBlindForReveal();
                     var connector = FindConnectorToChild(unlocked[i]);
                     if (connector != null)
                     {

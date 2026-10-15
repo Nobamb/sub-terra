@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using SubTerra.App.UI.HUD;
+using SubTerra.App.UI.PlayerStatus;
 using SubTerra.Gameplay.Mining;
 using SubTerra.Shared;
 using TMPro;
@@ -51,6 +52,16 @@ namespace SubTerra.App.Integration
         public bool IsPulsing => pulseElapsed >= 0f;
         public GoldPickupPopupState PopupState => popupState;
         public GoldPickupPopupVisual PopupVisual => popupVisual;
+
+        // 머리 위 문구 스택에서 골드 팝업이 차지하는 자리 키. 먼저 뜬 항목이 아래에 쌓인다.
+        private const string PopupSlotKey = "gold.popup";
+        private PlayerHeadMessageStack messageStack;
+
+        /// <summary>머리 위 문구 스택을 연결한다. 없으면 골드 팝업은 기존처럼 머리 위에 단독으로 뜬다.</summary>
+        public void SetMessageStack(PlayerHeadMessageStack stack)
+        {
+            messageStack = stack;
+        }
 
         public void BindTo(MiningSystem system, Transform player, Tilemap tilemap = null)
         {
@@ -192,6 +203,11 @@ namespace SubTerra.App.Integration
                 popupState = new GoldPickupPopupState(baseGold, bonusGold);
                 popupVisual = GoldPickupPopupVisual.Create(worldRoot, pickupFont, coinSprite, coinScaleMultiplier);
                 popupVisual.Apply(popupState);
+                if (messageStack != null)
+                {
+                    messageStack.RegisterSlot(PopupSlotKey, popupVisual.CurrentHeight);
+                }
+
                 UpdatePopupPose();
                 return;
             }
@@ -246,6 +262,14 @@ namespace SubTerra.App.Integration
                 return;
             }
 
+            if (messageStack != null)
+            {
+                // 높이는 실제 팝업 높이를 쓰고, 위치는 스택이 준 자리(아래부터 쌓인 오프셋)를 따른다.
+                messageStack.RegisterSlot(PopupSlotKey, popupVisual.CurrentHeight);
+                popupVisual.SetPose(messageStack.WorldPositionOf(messageStack.OffsetOf(PopupSlotKey)));
+                return;
+            }
+
             Vector3 head = playerTarget != null ? HeadPosition() : popupAnchor;
             popupVisual.SetPose(head + Vector3.up * GoldPickupPresentation.PopupBaseLift);
         }
@@ -255,6 +279,11 @@ namespace SubTerra.App.Integration
             if (popupVisual != null)
             {
                 popupVisual.Destroy();
+            }
+
+            if (messageStack != null)
+            {
+                messageStack.UnregisterSlot(PopupSlotKey);
             }
 
             popupVisual = null;

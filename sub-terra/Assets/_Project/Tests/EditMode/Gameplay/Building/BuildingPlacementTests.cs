@@ -69,7 +69,16 @@ namespace SubTerra.Gameplay.Building.Tests
                 setup.Placement.BuildingPlaced += _ => built++;
                 setup.Placement.BuildingMoved += _ => moved++;
                 Assert.That(setup.Placement.TryBeginMove(instance), Is.True);
+                setup.Wallet.CanAffordValue = false;
+                Assert.That(setup.Placement.CanPlaceAt(new Vector3Int(3, 0, 0), out var moveFailure), Is.True);
+                Assert.That(setup.Placement.TryFindBestPlacementCell(1f, out _, out moveFailure), Is.True);
                 setup.Placement.SetResourceWallet(null);
+                Assert.That(setup.Placement.CanPlaceAt(new Vector3Int(3, 0, 0), out moveFailure), Is.True);
+                Assert.That(setup.Placement.TryFindBestPlacementCell(1f, out _, out moveFailure), Is.True);
+                setup.Terrain.SetTile(new Vector3Int(3, 1, 0), setup.Tile);
+                Assert.That(setup.Placement.CanPlaceAt(new Vector3Int(3, 0, 0), out moveFailure), Is.False);
+                Assert.That(moveFailure, Is.EqualTo(BuildingPlacementFailure.Occupied));
+                setup.Terrain.SetTile(new Vector3Int(3, 1, 0), null);
                 Assert.That(setup.Placement.TryPlaceAt(new Vector3Int(3, 0, 0)).IsSuccess, Is.True);
                 Assert.That(setup.BuildingRoot.childCount, Is.EqualTo(1));
                 Assert.That(setup.BuildingRoot.GetChild(0).GetComponent<BuildingInstance>(), Is.SameAs(instance));
@@ -80,6 +89,7 @@ namespace SubTerra.Gameplay.Building.Tests
                 Assert.That(moved, Is.EqualTo(1));
                 Assert.That(setup.Placement.IsGroundSupportingBuilding(new Vector3Int(0, -1, 0)), Is.False);
                 Assert.That(setup.Placement.IsGroundSupportingBuilding(new Vector3Int(3, -1, 0)), Is.True);
+                setup.Wallet.CanAffordValue = true;
                 setup.Placement.Select(setup.Definition);
                 setup.Placement.SetResourceWallet(setup.Wallet);
                 Assert.That(setup.Placement.CanPlaceAt(Vector3Int.zero, out _), Is.True);
@@ -134,6 +144,29 @@ namespace SubTerra.Gameplay.Building.Tests
                 Assert.That(setup.Wallet.SpendCount, Is.EqualTo(1));
                 instance.Initialize(instance.InstanceId, "building.ladder.basic");
                 Assert.That(setup.Placement.TryBeginMove(instance), Is.False);
+            }
+            finally { setup.Dispose(); }
+        }
+
+        [Test]
+        public void InsufficientResources_TakePriorityAndRepeatedAttemptsDoNotSpend()
+        {
+            var setup = CreateSetup(6f, new Vector2(20f, 20f));
+            try
+            {
+                setup.Wallet.CanAffordValue = false;
+                setup.Terrain.SetTile(Vector3Int.zero, setup.Tile);
+                int rejected = 0;
+                setup.Placement.PlacementRejected += _ => rejected++;
+                Assert.That(setup.Placement.TryPlaceAt(Vector3Int.zero).Failure, Is.EqualTo(BuildingPlacementFailure.CannotAfford));
+                Assert.That(setup.Placement.TryPlaceAt(Vector3Int.zero).Failure, Is.EqualTo(BuildingPlacementFailure.CannotAfford));
+                Assert.That(setup.Placement.TryFindBestPlacementCell(1f, out _, out var failure), Is.False);
+                Assert.That(failure, Is.EqualTo(BuildingPlacementFailure.CannotAfford));
+                Assert.That(rejected, Is.EqualTo(2));
+                Assert.That(setup.Wallet.SpendCount, Is.Zero);
+                Assert.That(setup.BuildingRoot.childCount, Is.Zero);
+                setup.Wallet.CanAffordValue = true;
+                Assert.That(setup.Placement.TryPlaceAt(Vector3Int.zero).Failure, Is.EqualTo(BuildingPlacementFailure.Occupied));
             }
             finally { setup.Dispose(); }
         }
@@ -1075,9 +1108,10 @@ namespace SubTerra.Gameplay.Building.Tests
 
         private sealed class RecordingWallet : IResourceWallet
         {
+            public bool CanAffordValue { get; set; } = true;
             public int SpendCount { get; private set; }
             public bool CanAfford(System.Collections.Generic.IReadOnlyList<ItemCostDto> costs)
-                => true;
+                => CanAffordValue;
 
             public bool TrySpend(System.Collections.Generic.IReadOnlyList<ItemCostDto> costs)
             {

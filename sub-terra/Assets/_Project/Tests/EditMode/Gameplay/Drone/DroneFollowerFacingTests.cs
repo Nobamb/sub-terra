@@ -8,6 +8,38 @@ namespace SubTerra.Gameplay.Tests.Drone
 {
     public sealed class DroneFollowerFacingTests
     {
+        [Test]
+        public void ClosePlayerAndLeftJump_DoNotSnapDroneAcrossPlayer()
+        {
+            var drone = new GameObject("NearDrone");
+            var target = new GameObject("JumpingPlayer");
+            try
+            {
+                drone.AddComponent<SpriteRenderer>();
+                var follower = drone.AddComponent<DroneFollower>();
+                follower.SetTarget(target.transform);
+                drone.transform.position = new Vector3(0.1f, 0f, -2f);
+                follower.Tick(1f / 60f);
+                Assert.That(drone.transform.position.x, Is.GreaterThan(0f), "접근 시 반대편 고정 오프셋으로 순간 이동하지 않음");
+                for (int i = 0; i < 30; i++)
+                {
+                    target.transform.position += new Vector3(-0.03f, 0.02f, 0f);
+                    Vector3 before = drone.transform.position;
+                    follower.Tick(1f / 60f);
+                    Assert.That(Vector3.Distance(before, drone.transform.position), Is.LessThan(0.2f));
+                    Assert.That(drone.transform.position.z, Is.EqualTo(-2f));
+                }
+                Vector3 paused = drone.transform.position;
+                follower.Tick(0f);
+                Assert.That(drone.transform.position, Is.EqualTo(paused));
+            }
+            finally
+            {
+                Object.DestroyImmediate(drone);
+                Object.DestroyImmediate(target);
+            }
+        }
+
         private const string DronePrefabPath = "Assets/_Project/Prefabs/Gameplay/Drone/DiggerBot_Runtime.prefab";
         private const string RightFacingSpritePath = "Assets/_Project/Art/Characters/Drone/digger_bot_side_right.png";
 
