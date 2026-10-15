@@ -361,6 +361,22 @@ namespace SubTerra.App.Tests.Progression
         }
 
         [Test]
+        public void FacilityDisplayNames_OldCatalogNamesUseCurrentNamesWithoutChangingIds()
+        {
+            Assert.That(ItemDisplayNames.PreferDisplay(DataIds.Buildings.SettlementBasic, "정산 콘솔"), Is.EqualTo("자원 정산기"));
+            Assert.That(ItemDisplayNames.PreferDisplay(DataIds.Buildings.OutpostCoreBasic, "전진기지 코어"), Is.EqualTo("전진기지"));
+            Assert.That(ItemDisplayNames.NormalizeFacilityText("전진기지 코어 근처의 정산 콘솔"), Is.EqualTo("전진기지 근처의 자원 정산기"));
+            Assert.That(DataIds.Buildings.SettlementBasic, Is.EqualTo("building.settlement.basic"));
+            Assert.That(DataIds.Buildings.OutpostCoreBasic, Is.EqualTo("building.outpost_core.basic"));
+            var item = new SubTerra.App.UI.Building.BuildingMenuItemReadModel(
+                DataIds.Buildings.SettlementBasic, "정산 콘솔", "전진기지 코어 영역", null, 0, null);
+            Assert.That(item.DisplayName, Is.EqualTo("자원 정산기"));
+            Assert.That(item.Description, Is.EqualTo("전진기지 영역"));
+            Assert.That(SubTerra.App.UI.Guide.GameGuideCatalog.Get("fac.settlement").Title, Is.EqualTo("자원 정산기"));
+            Assert.That(SubTerra.App.UI.Guide.GameGuideCatalog.Get("fac.core").Title, Is.EqualTo("전진기지"));
+        }
+
+        [Test]
         public void MaximumEnergyAndCargoPurchase_RefreshExistingStateEventsImmediately()
         {
             var energy = CreateUpgrade(DataIds.Upgrades.MaximumEnergy, 1, 20f);

@@ -171,6 +171,8 @@ namespace SubTerra.App.Tests
             system.State.SetEnergy(10, 100);
             var view = new RecordingView();
             var presenter = new OutpostPanelPresenter(view);
+            var warnings = new RecordingPlayerStatusWarningSink();
+            presenter.WarningSink = warnings;
             presenter.Bind(system.Service);
             system.Service.ApplyRuntimeStatus(ChargerStatus("charger.a"));
 
@@ -182,11 +184,11 @@ namespace SubTerra.App.Tests
             presenter.ToggleInteractionPanel();
 
             Assert.That(view.Visible, Is.False);
-            Assert.That(view.TemporaryMessage, Is.EqualTo(
+            Assert.That(view.TemporaryMessage, Is.Null);
+            Assert.That(warnings.Text, Is.EqualTo(
                 OutpostService.FormatFacilityCooldownMessage(
                     DataIds.Buildings.ChargerBasic,
                     OutpostService.FacilityUseCooldownSeconds)));
-            Assert.That(view.TemporaryMessageDuration, Is.EqualTo(3f));
             presenter.Unbind();
         }
 

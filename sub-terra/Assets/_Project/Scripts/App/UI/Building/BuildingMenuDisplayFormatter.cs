@@ -106,7 +106,7 @@ namespace SubTerra.App.UI.Building
             return buildingId == DataIds.Buildings.ChargerBasic
                 || buildingId == DataIds.Buildings.ClinicBasic
                 || buildingId == DataIds.Buildings.SettlementBasic
-                    ? "전진기지 코어 영역 내에서만 작동합니다."
+                    ? (ItemDisplayNames.OutpostName + " 영역 내에서만 작동합니다.")
                     : string.Empty;
         }
 

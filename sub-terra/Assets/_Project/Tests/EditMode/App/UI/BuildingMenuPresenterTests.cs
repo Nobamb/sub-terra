@@ -111,21 +111,35 @@ namespace SubTerra.App.Tests.UI
         }
 
         [Test]
-        public void G_F03_PlacementFailure_ClearsSelectionWithoutSpending()
+        public void G_F03_PlacementFailure_KeepsSelectionAndRepeatsWarningWithoutSpending()
         {
             Assert.That(presenter.SelectBuilding(DataIds.Buildings.SupportBasic), Is.True);
-
-            placement.Emit(new BuildingPlacementResultDto
+            var warning = new SubTerra.App.Tests.RecordingPlayerStatusWarningSink();
+            var previous = SubTerra.App.UI.PlayerStatus.PlayerStatusWarnings.Current;
+            SubTerra.App.UI.PlayerStatus.PlayerStatusWarnings.Current = warning;
+            try
             {
-                state = BuildingPlacementState.Failed,
-                buildingId = DataIds.Buildings.SupportBasic,
-                reasonId = "occupied"
-            });
-
-            Assert.That(presenter.SelectedBuildingId, Is.Empty);
-            Assert.That(state.GetBuildingSelection().HasSelection, Is.False);
-            Assert.That(wallet.TrySpendCount, Is.Zero);
-            Assert.That(view.StatusMessage, Does.Contain("빈 공간을 선택하세요"));
+                wallet.CanAffordValue = false;
+                var failed = new BuildingPlacementResultDto
+                {
+                    state = BuildingPlacementState.Failed,
+                    buildingId = DataIds.Buildings.SupportBasic,
+                    reasonId = "occupied"
+                };
+                placement.Emit(failed);
+                placement.Emit(failed);
+                Assert.That(presenter.SelectedBuildingId, Is.EqualTo(DataIds.Buildings.SupportBasic));
+                Assert.That(state.GetBuildingSelection().HasSelection, Is.True);
+                Assert.That(wallet.TrySpendCount, Is.Zero);
+                Assert.That(view.StatusMessage, Does.Contain("자원이 부족"));
+                Assert.That(warning.Count, Is.EqualTo(2));
+                Assert.That(warning.Text, Does.Contain("자원이 부족"));
+                wallet.CanAffordValue = true;
+                placement.Emit(failed);
+                Assert.That(warning.Text, Does.Contain("겹쳐"));
+                Assert.That(view.StatusMessage, Does.Contain("빈 공간을 선택하세요"));
+            }
+            finally { SubTerra.App.UI.PlayerStatus.PlayerStatusWarnings.Current = previous; }
         }
 
         [TestCase("out_of_range", "너무 먼")]

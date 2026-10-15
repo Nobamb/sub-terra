@@ -133,7 +133,7 @@ namespace SubTerra.App.Tests.UI
         {
             Open(MinimapBoardMode.Wide);
             Assert.That(map.LegendIconCount, Is.EqualTo(ExplorationMinimap.LegendKinds.Length));
-            foreach (var name in new[] { "코어", "충전기", "보건소", "엘리베이터", "조명", "보관함", "정산 콘솔", "긴급 탈출 포탈" })
+            foreach (var name in new[] { "코어", "충전기", "보건소", "엘리베이터", "조명", "보관함", "자원 정산기", "긴급 탈출 포탈" })
             {
                 foreach (var text in map.GetComponentsInChildren<TMPro.TMP_Text>(true))
                     Assert.That(text.text, Does.Not.Contain(name), "하단에 시설 이름을 쓰지 않는다");

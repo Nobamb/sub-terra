@@ -10,6 +10,7 @@ using SubTerra.App.State;
 using SubTerra.App.UI.HUD;
 using SubTerra.App.UI.Inventory;
 using SubTerra.App.UI.Outpost;
+using SubTerra.App.UI.PlayerStatus;
 using SubTerra.App.UI.Progression;
 using SubTerra.App.UI.Tutorial;
 using SubTerra.Gameplay.Building;
@@ -60,6 +61,7 @@ namespace SubTerra.App.Integration
         [SerializeField] private PlayerMovement playerMovement;
         [SerializeField] private MiningProgressHud miningProgressHud;
         [SerializeField] private GoldPickupVfx goldPickupVfx;
+        private PlayerHeadMessageStack playerHeadMessages;
         [SerializeField] private RunFailureRuntimeController runFailureController;
         private EmergencyRescueRuntimeController emergencyRescueController;
         private ExplorationMinimap minimap;
@@ -610,6 +612,8 @@ namespace SubTerra.App.Integration
                 Debug.LogWarning("[SubTerra] BindInventoryPanelUi failed: " + ex.Message);
             }
 
+            playerHeadMessages = EnsurePlayerHeadMessageStack(playerMovement != null ? playerMovement.transform : null);
+
             if (miningProgressHud != null)
             {
                 try
@@ -617,6 +621,9 @@ namespace SubTerra.App.Integration
                     miningProgressHud.BindTo(
                         miningSystem,
                         playerMovement != null ? playerMovement.transform : null);
+                    miningProgressHud.SetMessageStack(playerHeadMessages);
+                    miningProgressHud.SetPlacementProbe(
+                        () => buildingPlacementSystem != null && buildingPlacementSystem.Selection != null);
                 }
                 catch (Exception ex)
                 {
@@ -631,6 +638,7 @@ namespace SubTerra.App.Integration
                     goldPickupVfx.BindTo(
                         miningSystem,
                         playerMovement != null ? playerMovement.transform : null);
+                    goldPickupVfx.SetMessageStack(playerHeadMessages);
                 }
                 catch (Exception ex)
                 {
@@ -717,7 +725,8 @@ namespace SubTerra.App.Integration
             if (outpostPanelBinder != null)
             {
                 outpostPanelBinder.SetPrimaryInteractionClaim(
-                    () => elevator != null && elevator.TryClaimInteractionPriority());
+                    () => (elevator != null && elevator.TryClaimInteractionPriority())
+                        || EmergencyEscapePortal.AnyClaimsInteractionPriority());
                 outpostPanelBinder.BindTo(outpostService);
                 var catalog = bootstrap != null ? bootstrap.AssignedCatalog as GameDataCatalog : null;
                 outpostPanelBinder.SetFacilityPresentation(
@@ -908,6 +917,20 @@ namespace SubTerra.App.Integration
             {
                 emergencyRescueController.Unbind();
             }
+        }
+
+        /// <summary>플레이어 머리 위 문구 스택을 한 번만 만든다. 런타임에 만들어 씬 YAML을 건드리지 않는다.</summary>
+        private PlayerHeadMessageStack EnsurePlayerHeadMessageStack(Transform player)
+        {
+            if (playerHeadMessages == null)
+            {
+                var go = new GameObject("PlayerHeadMessageStack");
+                playerHeadMessages = go.AddComponent<PlayerHeadMessageStack>();
+                playerHeadMessages.SetFont(FacilityProximityLabelController.ResolveKoreanFont());
+            }
+
+            playerHeadMessages.SetPlayer(player);
+            return playerHeadMessages;
         }
 
         /// <summary>
@@ -1236,6 +1259,15 @@ namespace SubTerra.App.Integration
 
         private void ResolveDeferredInputBehaviours()
         {
+            var miningController = FindAnyObjectByType<PlayerMiningController>(
+                FindObjectsInactive.Exclude);
+            if (miningController != null)
+            {
+                miningController.SetPointerMiningBlocker(() => placementBridge != null
+                    ? placementBridge.OwnsPointerInput
+                    : buildingPlacementSystem != null && buildingPlacementSystem.Selection != null);
+            }
+
             if (HasAnyValidDeferredInput())
             {
                 return;
@@ -1252,8 +1284,6 @@ namespace SubTerra.App.Integration
                 resolved.Add(playerMovement);
             }
 
-            var miningController = FindAnyObjectByType<PlayerMiningController>(
-                FindObjectsInactive.Exclude);
             if (miningController != null)
             {
                 resolved.Add(miningController);

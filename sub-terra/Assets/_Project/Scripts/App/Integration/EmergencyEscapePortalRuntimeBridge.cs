@@ -93,6 +93,22 @@ namespace SubTerra.App.Integration
             return true;
         }
 
+        public bool TryGetDestinationPosition(
+            EmergencyEscapeDestination kind,
+            string outpostInstanceId,
+            out Vector2 position)
+        {
+            EnsureRuntimeBindings();
+            if (!TryResolveDestination(kind, outpostInstanceId, forArrival: false, out var world, out _))
+            {
+                position = default;
+                return false;
+            }
+
+            position = world;
+            return true;
+        }
+
         public void ClearDestinationPreview()
         {
             var follow = ResolveCameraFollow();
@@ -131,7 +147,8 @@ namespace SubTerra.App.Integration
                 return false;
             }
 
-            panelBinder.Open(options, service.CurrentCost);
+            // 창을 열 때마다 현재 목적지 목록과 이동 가능 여부를 새로 받아 그린다.
+            panelBinder.Open(options, service.CurrentCost, service.PeekFailure());
             return true;
         }
 
@@ -167,7 +184,7 @@ namespace SubTerra.App.Integration
                 options.Add(new EmergencyEscapeDestinationOption(
                     EmergencyEscapeDestination.OutpostCore,
                     outpost.InstanceId,
-                    "전진기지 코어 " + (i + 1)));
+                    (ItemDisplayNames.OutpostName + " ") + (i + 1)));
             }
 
             return options;
@@ -210,7 +227,7 @@ namespace SubTerra.App.Integration
             panelBinder?.Close();
             SaveRuntimeController.Instance?.SaveCurrent(AutoSaveReason.Manual);
             reason = kind == EmergencyEscapeDestination.OutpostCore
-                ? "전진기지 코어로 긴급 이동했습니다."
+                ? (ItemDisplayNames.OutpostName + "로 긴급 이동했습니다.")
                 : "엘리베이터로 긴급 이동했습니다.";
             return true;
         }
@@ -354,7 +371,7 @@ namespace SubTerra.App.Integration
 
             if (string.IsNullOrWhiteSpace(outpostInstanceId))
             {
-                reason = "전진기지 코어를 선택해 주세요.";
+                reason = (ItemDisplayNames.OutpostName + "를 선택해 주세요.");
                 return false;
             }
 
@@ -376,7 +393,7 @@ namespace SubTerra.App.Integration
                 return true;
             }
 
-            reason = "선택한 전진기지 코어를 찾을 수 없습니다.";
+            reason = ("선택한 " + ItemDisplayNames.OutpostName + "를 찾을 수 없습니다.");
             return false;
         }
 

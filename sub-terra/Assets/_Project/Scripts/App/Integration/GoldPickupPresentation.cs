@@ -15,7 +15,7 @@ namespace SubTerra.App.Integration
         public const float DustCleanupSeconds = 0.8f;
 
         // 머리와 팝업 아래쪽 사이 여백.
-        public const float PopupBaseLift = 0.12f;
+        public const float PopupBaseLift = SubTerra.App.UI.PlayerStatus.PlayerHeadMessageStack.BaseLift;
 
         public const int HudParticleCount = 3;
         public const float HudFlightSeconds = 0.42f;

@@ -259,6 +259,7 @@ namespace SubTerra.App.UI.Guide
             // ---------------------------------------------------------------- 핵심 메커니즘
             Mechanic("mech.base", "지상 기지의 역할", "탐사를 준비하고 정산하는 안전 구역", "base")
                 .Data("할 수 있는 일", "지하 탐사 시작 · 자원 판매 · 업그레이드 · 새 광산 초기화")
+                .Data("심층 구역 해금", DeepZoneUnlockRule.Mvp.DescribeUpgradeRequirements() + "을 모두 갖추면 자동 해금됩니다. 업그레이드 창에서 조건을 확인하세요.")
                 .Data("도착하면", "전력이 가득 충전됩니다.")
                 .Text("판매해서 얻은 골드는 새 광산 초기화와 긴급 구출 같은 비용에, 광물은 업그레이드와 시설 건설에 쓰입니다.")
                 .Tip("지상 기지에서는 광산 초기화 타이머가 멈춥니다.")
@@ -299,12 +300,12 @@ namespace SubTerra.App.UI.Guide
                 .Tip("어떤 시설이 연결돼 있는지는 " + core + "의 CCTV 목록에서 확인할 수 있습니다.")
                 .Link("mech.core", "fac.light");
 
-            Mechanic("mech.core", "전진기지 코어", "연결 시설 확인 · 가스 정화 · 체크포인트", "core")
+            Mechanic("mech.core", (ItemDisplayNames.OutpostName), "연결 시설 확인 · 가스 정화 · 체크포인트", "core")
                 .Step("CCTV 열기", core + " 가까이에서 E 키를 누르면 CCTV 창이 열립니다.")
-                .Step("목록 확인", "전력이 연결된 " + charger + "·" + clinic + "·" + settlement + "이 목록에 표시됩니다.")
+                .Step("목록 확인", "전력이 연결된 " + charger + "·" + clinic + "·" + settlement + "가 목록에 표시됩니다.")
                 .Step("시설 선택", "목록을 클릭하거나 ↑·↓ 키로 고르면 CCTV 화면이 그 시설로 이동합니다.")
-                .Data("코어의 역할", "주변 시설에 전력을 공급하고, 유독 가스 정화 안전지대를 만들며, 탐사 체크포인트가 됩니다.")
-                .Tip("CCTV 창은 코어에서 멀어지면 닫히고, E 키로 다시 열 수 있습니다.")
+                .Data(core + "의 역할", "주변 시설에 전력을 공급하고, 유독 가스 정화 안전지대를 만들며, 탐사 체크포인트가 됩니다.")
+                .Tip("CCTV 창은 " + core + "에서 멀어지면 닫히고, E 키로 다시 열 수 있습니다.")
                 .Link("fac.core", "mech.grid", "mech.gas");
 
             Mechanic("mech.structure", "구조 위험", "버팀목과 귀환 경로 확보", "structure")
@@ -412,7 +413,7 @@ namespace SubTerra.App.UI.Guide
 
             Add(new GuideCardDef("fac.elevator", GuideTabKind.Resources, GuideCardKind.Facility, "엘리베이터", "지상 기지로 귀환", "E", "fac.elevator"))
                 .Data("사용", "광산의 엘리베이터 안에서 E 키를 누르면 지상 기지로 귀환합니다. " + elevatorEnergyText)
-                .Data("전력 공급", "엘리베이터 주변에는 전력이 공급됩니다. " + charger + "·" + clinic + "·" + settlement + "을 가까이 두면 쓸 수 있습니다.")
+                .Data("전력 공급", "엘리베이터 주변에는 전력이 공급됩니다. " + charger + "·" + clinic + "·" + settlement + "를 가까이 두면 쓸 수 있습니다.")
                 .Data("미니맵 아이콘", "하늘색 위·아래 화살표 모양입니다. 승강로를 따라 화살표가 세로로 늘어서 표시됩니다.")
                 .Link("ctrl.elevator", "mech.grid");
 

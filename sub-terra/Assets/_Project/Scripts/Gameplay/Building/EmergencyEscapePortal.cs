@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using SubTerra.Gameplay.Player;
 using SubTerra.Gameplay.Power;
 using SubTerra.Shared;
@@ -16,7 +17,8 @@ namespace SubTerra.Gameplay.Building
         [SerializeField] private InputActionAsset inputActions;
         [SerializeField] private string interactActionPath = "Player/Interact";
         [SerializeField] private PowerNode powerNode;
-        [SerializeField, Min(0.5f)] private float interactionRadius = 2.5f;
+
+        private static readonly List<EmergencyEscapePortal> ActivePortals = new List<EmergencyEscapePortal>();
 
         private InputAction interactAction;
         private PlayerMovement rider;
@@ -40,6 +42,58 @@ namespace SubTerra.Gameplay.Building
         }
 
         public string LastReason { get; private set; } = string.Empty;
+
+        /// <summary>
+        /// 캐릭터 판정 영역이 포탈 영역 안에 완전히 들어가 있는지. 걸치면 false라 다른 시설이 우선한다.
+        /// </summary>
+        public bool IsPlayerFullyInside(PlayerMovement player)
+        {
+            var zone = GetComponent<Collider2D>();
+            if (zone == null || player == null || !player.TryGetBodyBounds(out var body))
+            {
+                return false;
+            }
+
+            return EscapePortalContainment.IsFullyInside(body, zone.bounds);
+        }
+
+        /// <summary>공용 Interact 입력에서 다른 시설보다 포탈이 먼저 처리되어야 하는지(완전 포함일 때만 true).</summary>
+        public bool TryClaimInteractionPriority()
+        {
+            if (rider == null)
+            {
+                TryAcquireRiderFromOverlap();
+            }
+
+            return IsPlayerFullyInside(rider);
+        }
+
+        /// <summary>활성 포탈 중 하나라도 플레이어를 완전히 품고 있으면 true.</summary>
+        public static bool AnyClaimsInteractionPriority()
+        {
+            for (var i = 0; i < ActivePortals.Count; i++)
+            {
+                var portal = ActivePortals[i];
+                if (portal != null && portal.TryClaimInteractionPriority())
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>이 시설이 포탈이면 플레이어가 완전히 들어가 있을 때만 대상으로 본다. 포탈이 아니면 false.</summary>
+        public static bool IsPortalTarget(BuildingInstance instance, PlayerMovement player)
+        {
+            if (instance == null)
+            {
+                return false;
+            }
+
+            var portal = instance.GetComponent<EmergencyEscapePortal>();
+            return portal != null && portal.IsPlayerFullyInside(player);
+        }
 
         private bool HasPowerService =>
             powerNode != null && powerNode.Network != null;
@@ -67,6 +121,11 @@ namespace SubTerra.Gameplay.Building
 
         private void OnEnable()
         {
+            if (!ActivePortals.Contains(this))
+            {
+                ActivePortals.Add(this);
+            }
+
             ResolveInput();
             if (interactAction != null)
             {
@@ -81,6 +140,7 @@ namespace SubTerra.Gameplay.Building
 
         private void OnDisable()
         {
+            ActivePortals.Remove(this);
             if (interactAction != null)
             {
                 interactAction.started -= OnInteractStarted;
@@ -132,9 +192,10 @@ namespace SubTerra.Gameplay.Building
                 TryAcquireRiderFromOverlap();
             }
 
-            if (rider == null)
+            // 캐릭터가 포탈 영역 안에 완전히 들어가야만 포탈이 대상이 된다. 걸치면 다른 시설이 우선한다.
+            if (rider == null || !IsPlayerFullyInside(rider))
             {
-                LastReason = "포탈 근처에서만 사용할 수 있습니다.";
+                LastReason = "포탈 안으로 완전히 들어가야 사용할 수 있습니다.";
                 return false;
             }
 
@@ -178,43 +239,30 @@ namespace SubTerra.Gameplay.Building
             }
         }
 
-        /// <summary>
-        /// Trigger Enter를 놓친 경우·콜라이더 가장자리 근처에서도
-        /// 포탈 반경 안의 플레이어를 탑승자로 인식한다.
-        /// </summary>
+        /// <summary>Trigger Enter를 놓친 경우에도 포탈 영역과 겹친 플레이어를 탑승자로 인식한다.</summary>
         private void TryAcquireRiderFromOverlap()
         {
             var zone = GetComponent<Collider2D>();
-            if (zone != null)
+            if (zone == null)
             {
-                var filter = new ContactFilter2D
-                {
-                    useTriggers = true,
-                    useLayerMask = false
-                };
-                var hits = new Collider2D[12];
-                var count = zone.Overlap(filter, hits);
-                for (var i = 0; i < count; i++)
-                {
-                    if (hits[i] == null)
-                    {
-                        continue;
-                    }
-
-                    TryAcquireRider(hits[i]);
-                    if (rider != null)
-                    {
-                        return;
-                    }
-                }
+                return;
             }
 
-            // 트리거 바깥이지만 "근처"에 있는 플레이어도 허용한다.
-            var radius = Mathf.Max(0.5f, interactionRadius);
-            var nearby = Physics2D.OverlapCircleAll(transform.position, radius);
-            for (var i = 0; i < nearby.Length; i++)
+            var filter = new ContactFilter2D
             {
-                TryAcquireRider(nearby[i]);
+                useTriggers = true,
+                useLayerMask = false
+            };
+            var hits = new Collider2D[12];
+            var count = zone.Overlap(filter, hits);
+            for (var i = 0; i < count; i++)
+            {
+                if (hits[i] == null)
+                {
+                    continue;
+                }
+
+                TryAcquireRider(hits[i]);
                 if (rider != null)
                 {
                     return;

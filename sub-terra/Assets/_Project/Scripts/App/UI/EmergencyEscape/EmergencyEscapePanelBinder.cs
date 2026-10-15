@@ -2,22 +2,27 @@ using System.Collections.Generic;
 using SubTerra.App.Run;
 using SubTerra.Shared;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 namespace SubTerra.App.UI.EmergencyEscape
 {
-    /// <summary>긴급 탈출 선택 창 입력과 Runtime Bridge를 연결한다.</summary>
+    /// <summary>긴급 탈출 터미널 창 입력과 Runtime Bridge를 연결한다.</summary>
     public sealed class EmergencyEscapePanelBinder : MonoBehaviour
     {
+        public const string PauseOwner = "emergency-escape-panel";
+
         [SerializeField] private EmergencyEscapePanelView view;
         [SerializeField] private Button confirmButton;
         [SerializeField] private Button closeButton;
+        [SerializeField] private Button closeCornerButton;
 
         private IEmergencyEscapePortalPort port;
         private IEmergencyEscapeDestinationPreview preview;
         private IReadOnlyList<EmergencyEscapeDestinationOption> options =
             System.Array.Empty<EmergencyEscapeDestinationOption>();
         private bool busy;
+        private int openFrame = -1;
 
         public bool IsOpen
         {
@@ -42,7 +47,16 @@ namespace SubTerra.App.UI.EmergencyEscape
             }
 
             WireButtons();
-            view?.SetVisible(false);
+            view?.HideImmediate();
+        }
+
+        private void Start()
+        {
+            // 첫 열기에서 끊기지 않도록 CCTV·글자·레이아웃 준비를 미리 해 둔다.
+            if (view != null && Application.isPlaying)
+            {
+                StartCoroutine(view.Prewarm());
+            }
         }
 
         private void OnEnable()
@@ -55,6 +69,66 @@ namespace SubTerra.App.UI.EmergencyEscape
         {
             UnwireButtons();
             UnwireDestinationEvents();
+            ReleasePause();
+        }
+
+        private void Update()
+        {
+            if (view == null || !view.IsOpen)
+            {
+                return;
+            }
+
+            // 창을 연 E 입력과 같은 프레임의 키는 건너뛰기로 읽지 않는다.
+            if (Time.frameCount <= openFrame)
+            {
+                return;
+            }
+
+            if (view.IsOpening)
+            {
+                if (AnyKeyOrClickPressed())
+                {
+                    view.SkipOpen();
+                }
+
+                return;
+            }
+
+            var keyboard = Keyboard.current;
+            if (keyboard == null)
+            {
+                return;
+            }
+
+            if (keyboard.upArrowKey.wasPressedThisFrame)
+            {
+                StepSelection(-1);
+            }
+            else if (keyboard.downArrowKey.wasPressedThisFrame)
+            {
+                StepSelection(1);
+            }
+            else if (keyboard.enterKey.wasPressedThisFrame || keyboard.numpadEnterKey.wasPressedThisFrame)
+            {
+                ConfirmSelectedDestination();
+            }
+        }
+
+        // 게임 시간이 멈춘 동안 UndergroundMenuController가 Esc를 막으므로 창이 직접 받는다.
+        // 같은 프레임에 설정 창이 함께 열리지 않도록 모든 Update가 끝난 LateUpdate에서 닫는다.
+        private void LateUpdate()
+        {
+            if (view == null || !view.IsOpen)
+            {
+                return;
+            }
+
+            var keyboard = Keyboard.current;
+            if (keyboard != null && keyboard.escapeKey.wasPressedThisFrame && Time.frameCount > openFrame)
+            {
+                Close();
+            }
         }
 
         public void BindTo(IEmergencyEscapePortalPort escapePort)
@@ -63,10 +137,14 @@ namespace SubTerra.App.UI.EmergencyEscape
             preview = escapePort as IEmergencyEscapeDestinationPreview;
         }
 
-        /// <summary>목적지 목록과 비용을 채운 뒤 패널을 연다. 엘리베이터를 기본 선택한다.</summary>
+        /// <summary>
+        /// 현재 목적지 목록과 비용을 새로 채운 뒤 창을 연다. 엘리베이터를 기본 선택한다.
+        /// failure가 None이 아니면 모든 항목을 흐리게 하고 이유를 보여 준다.
+        /// </summary>
         public void Open(
             IReadOnlyList<EmergencyEscapeDestinationOption> destinationOptions,
-            EmergencyEscapeCost cost)
+            EmergencyEscapeCost cost,
+            EmergencyEscapePaymentFailure failure = EmergencyEscapePaymentFailure.None)
         {
             options = destinationOptions
                 ?? System.Array.Empty<EmergencyEscapeDestinationOption>();
@@ -75,28 +153,37 @@ namespace SubTerra.App.UI.EmergencyEscape
                 return;
             }
 
-            view.SetDestinations(options, 0);
+            var model = EscapeDestinationListModel.Build(options, failure);
+            model.Select(0);
+            view.SetDestinations(model);
             view.SetCost(cost.Gold, cost.Energy);
             view.SetResult(string.Empty, false);
             view.SetBusy(false);
             busy = false;
+            openFrame = Time.frameCount;
+            UiKeyboardSubmitGuard.ClearSelection();
+            AcquirePause();
             view.SetVisible(true);
-            // 기본 선택(엘리베이터)부터 위치를 보여 준다.
+            // 기본 선택(엘리베이터)부터 CCTV로 보여 준다.
             PreviewDestinationAt(view.SelectedDestinationIndex);
         }
 
         public void Close()
         {
             busy = false;
-            preview?.ClearDestinationPreview();
             view?.SetBusy(false);
-            view?.SetVisible(false);
+            ReleasePause();
+            if (view != null)
+            {
+                // 에디트 모드에서는 즉시, 플레이 중에는 창이 웜홀로 빨려 들어가는 연출 뒤에 숨는다.
+                view.BeginClose(null);
+            }
         }
 
-        /// <summary>드롭다운 선택 변경 시 해당 목적지로 시점을 옮긴다.</summary>
+        /// <summary>목적지 선택이 바뀔 때 해당 목적지를 CCTV로 비춘다.</summary>
         public void PreviewDestinationAt(int index)
         {
-            if (preview == null || options == null || options.Count == 0)
+            if (view == null || options == null || options.Count == 0)
             {
                 return;
             }
@@ -107,7 +194,29 @@ namespace SubTerra.App.UI.EmergencyEscape
             }
 
             var selected = options[index];
-            preview.TryPreviewDestination(selected.Kind, selected.InstanceId, out _);
+            view.SetSelectedDestinationIndex(index);
+            if (preview == null)
+            {
+                return;
+            }
+
+            if (preview.TryGetDestinationPosition(selected.Kind, selected.InstanceId, out var position))
+            {
+                view.ShowDestination(position, selected.DisplayName);
+            }
+        }
+
+        public void StepSelection(int delta)
+        {
+            if (view == null)
+            {
+                return;
+            }
+
+            if (view.Model.Step(delta))
+            {
+                PreviewDestinationAt(view.Model.SelectedIndex);
+            }
         }
 
         public void ConfirmSelectedDestination()
@@ -135,6 +244,13 @@ namespace SubTerra.App.UI.EmergencyEscape
                 index = 0;
             }
 
+            // 이동할 수 없는 항목(골드·전력 부족)은 이유만 보여 주고 비용 처리 경로를 타지 않는다.
+            if (view != null && view.Model.TryGetSelected(out var row) && !row.Enabled)
+            {
+                view.SetResult(row.Reason, true);
+                return;
+            }
+
             var selected = options[index];
             busy = true;
             view?.SetBusy(true);
@@ -157,6 +273,32 @@ namespace SubTerra.App.UI.EmergencyEscape
             }
         }
 
+        private static bool AnyKeyOrClickPressed()
+        {
+            var keyboard = Keyboard.current;
+            if (keyboard != null && keyboard.anyKey.wasPressedThisFrame)
+            {
+                return true;
+            }
+
+            var mouse = Mouse.current;
+            return mouse != null && mouse.leftButton.wasPressedThisFrame;
+        }
+
+        // 선택하는 동안 방향키가 캐릭터를 움직이지 않도록 게임 진행을 잠시 멈춘다(연출은 unscaled 시간).
+        private static void AcquirePause()
+        {
+            if (Application.isPlaying)
+            {
+                UiPauseGate.Acquire(PauseOwner);
+            }
+        }
+
+        private static void ReleasePause()
+        {
+            UiPauseGate.Release(PauseOwner);
+        }
+
         private void WireButtons()
         {
             if (confirmButton != null)
@@ -170,6 +312,12 @@ namespace SubTerra.App.UI.EmergencyEscape
                 closeButton.onClick.RemoveListener(Close);
                 closeButton.onClick.AddListener(Close);
             }
+
+            if (closeCornerButton != null)
+            {
+                closeCornerButton.onClick.RemoveListener(Close);
+                closeCornerButton.onClick.AddListener(Close);
+            }
         }
 
         private void UnwireButtons()
@@ -182,6 +330,11 @@ namespace SubTerra.App.UI.EmergencyEscape
             if (closeButton != null)
             {
                 closeButton.onClick.RemoveListener(Close);
+            }
+
+            if (closeCornerButton != null)
+            {
+                closeCornerButton.onClick.RemoveListener(Close);
             }
         }
 

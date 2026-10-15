@@ -40,6 +40,25 @@ namespace SubTerra.App.Run
             GoldCost,
             CalculateEnergyCost(gameState?.Player?.MaxEnergy ?? 0));
 
+        /// <summary>비용을 쓰지 않고 지금 이동할 수 있는지만 확인한다. 이동 가능하면 None.</summary>
+        public EmergencyEscapePaymentFailure PeekFailure()
+        {
+            if (!GameState.IsComplete(gameState))
+            {
+                return EmergencyEscapePaymentFailure.InvalidState;
+            }
+
+            var cost = CurrentCost;
+            if (gameState.Player.Gold < cost.Gold)
+            {
+                return EmergencyEscapePaymentFailure.InsufficientGold;
+            }
+
+            return gameState.Player.Energy < cost.Energy
+                ? EmergencyEscapePaymentFailure.InsufficientEnergy
+                : EmergencyEscapePaymentFailure.None;
+        }
+
         public bool TrySpend(
             out EmergencyEscapeCost cost,
             out EmergencyEscapePaymentFailure failure)

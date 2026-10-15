@@ -582,11 +582,13 @@ namespace SubTerra.App.Tests.Outpost
         }
 
         [Test]
-        public void Presenter_WithoutCooldownInterface_FallsBackToThreeSecondMessage()
+        public void Presenter_WithoutCooldownInterface_FallsBackToHeadWarning()
         {
             var system = CreateChargeSystem();
             var view = new PlainRecordingView();
             var presenter = new OutpostPanelPresenter(view);
+            var warnings = new SubTerra.App.Tests.RecordingPlayerStatusWarningSink();
+            presenter.WarningSink = warnings;
             system.State.SetEnergy(10, 100);
             system.Service.ApplyRuntimeStatus(ChargerStatus("charger.a"));
             presenter.Bind(system.Service);
@@ -595,11 +597,12 @@ namespace SubTerra.App.Tests.Outpost
 
             presenter.ToggleInteractionPanel();
 
-            Assert.That(view.TemporaryMessage, Is.EqualTo(
+            Assert.That(view.TemporaryMessage, Is.Null, "중앙 박스 대신 머리 위 경고로 보낸다");
+            Assert.That(warnings.Key, Is.EqualTo("outpost.facility"));
+            Assert.That(warnings.Text, Is.EqualTo(
                 OutpostService.FormatFacilityCooldownMessage(
                     DataIds.Buildings.ChargerBasic,
                     OutpostService.FacilityUseCooldownSeconds)));
-            Assert.That(view.TemporaryMessageDuration, Is.EqualTo(3f));
         }
 
         [Test]

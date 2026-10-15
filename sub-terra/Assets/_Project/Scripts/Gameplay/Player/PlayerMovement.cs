@@ -3,6 +3,24 @@ using UnityEngine;
 
 namespace SubTerra.Gameplay.Player
 {
+    /// <summary>짧은 입력 예약과 발판 이탈 유예. Unity 시간/물리와 분리해 경계 조건을 검사한다.</summary>
+    public sealed class JumpGraceWindow
+    {
+        private float requestUntil = float.NegativeInfinity;
+        private float groundUntil = float.NegativeInfinity;
+        public void Request(float now, float duration) => requestUntil = now + System.Math.Max(0f, duration);
+        public void ObserveGround(float now, float duration) => groundUntil = now + System.Math.Max(0f, duration);
+        public void Clear() { requestUntil = groundUntil = float.NegativeInfinity; }
+        public void ClearGround() => groundUntil = float.NegativeInfinity;
+        public bool TryConsume(float now, bool grounded, bool climbing, bool used, bool airLocked)
+        {
+            if (now > requestUntil || airLocked || (used && !climbing)
+                || (!grounded && !climbing && now > groundUntil)) return false;
+            Clear();
+            return true;
+        }
+    }
+
     [RequireComponent(typeof(Rigidbody2D))]
     public sealed class PlayerMovement : MonoBehaviour
     {
@@ -12,6 +30,8 @@ namespace SubTerra.Gameplay.Player
         [SerializeField, Min(0f)] private float deceleration = 55f;
         [SerializeField, Min(0f)] private float jumpImpulse = 11f;
         [SerializeField, Min(0f)] private float ladderSpeed = 4f;
+        [SerializeField, Range(0f, 0.2f)] private float coyoteTimeSeconds = 0.1f;
+        [SerializeField, Range(0f, 0.2f)] private float jumpBufferSeconds = 0.1f;
 
         [Header("Ground Check")]
         [SerializeField] private Transform groundCheck;
@@ -32,7 +52,7 @@ namespace SubTerra.Gameplay.Player
         private readonly RaycastHit2D[] probeHits = new RaycastHit2D[8];
         private float moveInput;
         private float verticalMoveInput;
-        private bool jumpRequested;
+        private readonly JumpGraceWindow jumpWindow = new JumpGraceWindow();
         private float jumpAirLockRemaining;
         /// <summary>
         /// true면 이번 공중 구간에서 이미 점프를 썼다.
@@ -65,6 +85,24 @@ namespace SubTerra.Gameplay.Player
         private float PlayerTop => bodyCollider != null ? bodyCollider.bounds.max.y : body.position.y;
         private float PlayerBottom => bodyCollider != null ? bodyCollider.bounds.min.y : body.position.y;
 
+        /// <summary>캐릭터 판정 영역의 월드 Bounds. 콜라이더가 없으면 false.</summary>
+        public bool TryGetBodyBounds(out Bounds bounds)
+        {
+            if (bodyCollider == null)
+            {
+                bodyCollider = GetComponent<Collider2D>();
+            }
+
+            if (bodyCollider == null)
+            {
+                bounds = default;
+                return false;
+            }
+
+            bounds = bodyCollider.bounds;
+            return true;
+        }
+
         private void Awake()
         {
             body = GetComponent<Rigidbody2D>();
@@ -80,6 +118,8 @@ namespace SubTerra.Gameplay.Player
 
             // 점프 판정과 같은 물리 틱에서 착지를 갱신한다.
             UpdateGroundedState();
+            if (CanMove && IsGrounded && !jumpUsedUntilLand)
+                jumpWindow.ObserveGround(Time.time, coyoteTimeSeconds);
             ApplyHorizontalMovement();
 
             var jumped = TryApplyJump();
@@ -95,6 +135,7 @@ namespace SubTerra.Gameplay.Player
 
         private void OnDisable()
         {
+            jumpWindow.Clear();
             ExitLadder();
         }
 
@@ -110,7 +151,7 @@ namespace SubTerra.Gameplay.Player
 
         public void RequestJump()
         {
-            jumpRequested = true;
+            if (CanMove) jumpWindow.Request(Time.time, jumpBufferSeconds);
         }
 
         public void SetVerticalMoveInput(float vertical)
@@ -145,6 +186,7 @@ namespace SubTerra.Gameplay.Player
             body.gravityScale = 0f;
             body.linearVelocity = new Vector2(body.linearVelocityX, 0f);
             IsClimbing = true;
+            jumpWindow.ClearGround();
             // 사다리 탑승 시 탈출 점프 1회 허용.
             jumpAirLockRemaining = 0f;
             jumpUsedUntilLand = false;
@@ -186,6 +228,7 @@ namespace SubTerra.Gameplay.Player
             CanMove = canMove;
             if (!canMove)
             {
+                jumpWindow.Clear();
                 moveInput = 0f;
             }
         }
@@ -221,29 +264,15 @@ namespace SubTerra.Gameplay.Player
         /// </summary>
         private bool TryApplyJump()
         {
-            if (!jumpRequested)
-            {
-                return false;
-            }
-
-            // 입력을 소모한다. 실패해도 버퍼를 붙잡지 않아 공중 연타가 쌓이지 않는다.
-            jumpRequested = false;
-
             if (!CanMove || body == null)
             {
+                jumpWindow.Clear();
                 return false;
             }
 
-            if (jumpAirLockRemaining > 0f)
-            {
+            if (!jumpWindow.TryConsume(Time.time, IsGrounded, IsClimbing,
+                    jumpUsedUntilLand, jumpAirLockRemaining > 0f))
                 return false;
-            }
-
-            // 핵심: 점프 후 착지 확정 전까지는 IsGrounded 와 무관하게 차단.
-            if (jumpUsedUntilLand && !IsClimbing)
-            {
-                return false;
-            }
 
             if (IsClimbing)
             {
@@ -252,13 +281,6 @@ namespace SubTerra.Gameplay.Player
                 body.linearVelocity = new Vector2(body.linearVelocityX, 0f);
                 ApplyJumpImpulse();
                 return true;
-            }
-
-            // 같은 물리 틱에서 갱신한 접점/발밑 보조 판정을 사용한다.
-            // 공중 재점프는 jumpUsedUntilLand가 별도로 차단한다.
-            if (!IsGrounded)
-            {
-                return false;
             }
 
             ApplyJumpImpulse();

@@ -5,6 +5,7 @@ using SubTerra.App.Inventory;
 using SubTerra.App.Outpost;
 using SubTerra.App.State;
 using SubTerra.App.UI.Outpost;
+using SubTerra.App.UI.PlayerStatus;
 using SubTerra.Shared;
 
 namespace SubTerra.App.Tests.Outpost
@@ -190,13 +191,17 @@ namespace SubTerra.App.Tests.Outpost
                 }
             });
 
+            var warnings = new RecordingPlayerStatusWarningSink();
+            presenter.WarningSink = warnings;
+
             presenter.ToggleInteractionPanel();
 
             Assert.That(view.Visible, Is.False);
-            Assert.That(view.TemporaryMessage, Is.EqualTo(
+            Assert.That(view.TemporaryMessage, Is.Null, "중앙 박스 대신 머리 위 경고로 보낸다");
+            Assert.That(warnings.Key, Is.EqualTo("outpost.facility"));
+            Assert.That(warnings.Text, Is.EqualTo(
                 "충전기 사용불가, 전력망 미연결\n"
-                + " 엘레베이터 또는 전진기지 코어 근처에서 전력망 연결이 가능합니다."));
-            Assert.That(view.TemporaryMessageDuration, Is.EqualTo(3f));
+                + "엘리베이터 또는 전진기지 근처에서 전력망 연결이 가능합니다."));
             presenter.Unbind();
         }
 
@@ -225,9 +230,13 @@ namespace SubTerra.App.Tests.Outpost
                 }
             });
 
+            var warnings = new RecordingPlayerStatusWarningSink();
+            presenter.WarningSink = warnings;
+
             presenter.ToggleInteractionPanel();
 
-            Assert.That(view.TemporaryMessage, Does.StartWith("정산 콘솔 사용불가"));
+            Assert.That(view.TemporaryMessage, Is.Null);
+            Assert.That(warnings.Text, Does.StartWith("자원 정산기 사용불가"));
             presenter.Unbind();
         }
 
