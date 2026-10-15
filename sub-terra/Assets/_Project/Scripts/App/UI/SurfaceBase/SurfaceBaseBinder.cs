@@ -31,12 +31,14 @@ namespace SubTerra.App.UI.SurfaceBase
         private InventoryService boundInventory;
         private GameState boundCycleState;
         private bool mineResetBusy;
+        private SurfaceBaseQuestPanel questPanel;
 
         public SurfaceBasePresenter Presenter => presenter;
         public bool IsBound => presenter != null;
 
         private void OnEnable()
         {
+            questPanel = GetComponent<SurfaceBaseQuestPanel>();
             if (view == null)
             {
                 view = GetComponent<SurfaceBaseView>();
@@ -190,6 +192,7 @@ namespace SubTerra.App.UI.SurfaceBase
             if (keyboard.escapeKey.wasPressedThisFrame)
             {
                 if (settings.IsOpen) OnSettingsCancel();
+                else if (questPanel != null && questPanel.TryCloseTopWindow(PopupWindowSorting.Top)) { }
                 else if (view.IsUpgradeVisible) OnUpgradeCloseClicked();
                 else if (CanOpenSettingsFromEscape()) OnSettingsClicked();
             }
@@ -205,6 +208,7 @@ namespace SubTerra.App.UI.SurfaceBase
             var topWindow = PopupWindowSorting.Top;
             if (topWindow != null)
             {
+                if (questPanel != null && questPanel.TryCloseTopWindow(topWindow)) return;
                 var deepZone = topWindow.GetComponent<DeepZoneUnlockPopupEscClose>();
                 if (deepZone != null) { deepZone.Close(); return; }
                 var clock = topWindow.GetComponentInParent<MineResetClockOverlay>();
