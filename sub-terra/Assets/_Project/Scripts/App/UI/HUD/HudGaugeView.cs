@@ -60,9 +60,21 @@ namespace SubTerra.App.UI.HUD
             trailFill = Instantiate(fill, fill.transform.parent);
             trailFill.name = "DamageTrail";
             trailFill.transform.SetSiblingIndex(fill.transform.GetSiblingIndex());
-            trailFill.color = new Color(1f, 0.65f, 0.1f, 0.9f);
+            // 빨간 원본에 주황 tint를 곱하면 빨간색으로 남는다. 원본은 윤곽 마스크로만 쓴다.
+            trailFill.color = Color.white;
             trailFill.raycastTarget = false;
             trailFill.fillAmount = fill.fillAmount;
+            var mask = trailFill.gameObject.AddComponent<UnityEngine.UI.Mask>();
+            mask.showMaskGraphic = false;
+            var colorObject = new GameObject("TrailColor", typeof(RectTransform), typeof(UnityEngine.UI.Image));
+            colorObject.transform.SetParent(trailFill.transform, false);
+            var rect = (RectTransform)colorObject.transform;
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.offsetMin = rect.offsetMax = Vector2.zero;
+            var colorFill = colorObject.GetComponent<UnityEngine.UI.Image>();
+            colorFill.color = new Color(1f, 0.65f, 0.1f, 1f);
+            colorFill.raycastTarget = false;
         }
 
         public void SetValue(float current, float maximum)

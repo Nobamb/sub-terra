@@ -9,6 +9,40 @@ namespace SubTerra.App.Tests.UI
     public sealed class PromptB106HudTests
     {
         [Test]
+        public void DamageTrail_UsesIndependentOrangeInsideOriginalShapeAndResets()
+        {
+            var instance = Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/Prefabs/UI/BasicHUD.prefab"));
+            try
+            {
+                var hud = instance.GetComponent<BasicHudView>();
+                hud.SetHealthLevel(100, 100);
+                hud.SetHealthLevel(60, 100);
+                var gauge = instance.transform.Find("HealthGauge");
+                var fill = gauge.Find("Fill").GetComponent<UnityEngine.UI.Image>();
+                var trail = gauge.Find("DamageTrail").GetComponent<UnityEngine.UI.Image>();
+                var color = trail.transform.Find("TrailColor").GetComponent<UnityEngine.UI.Image>();
+                Assert.That(fill.fillAmount, Is.EqualTo(0.6f));
+                Assert.That(trail.fillAmount, Is.EqualTo(1f));
+                Assert.That(trail.sprite, Is.EqualTo(fill.sprite), "모양은 원본 마스크를 유지한다.");
+                Assert.That(trail.GetComponent<UnityEngine.UI.Mask>().showMaskGraphic, Is.False);
+                Assert.That(color.sprite, Is.Null, "빨간 원본을 곱하지 않고 주황 단색을 표시한다.");
+                Assert.That(color.color, Is.EqualTo(new Color(1f, 0.65f, 0.1f, 1f)));
+                Assert.That(color.raycastTarget, Is.False);
+                Assert.That(trail.transform.GetSiblingIndex(), Is.LessThan(fill.transform.GetSiblingIndex()));
+                Assert.That(gauge.Find("Frame").GetSiblingIndex(), Is.GreaterThan(fill.transform.GetSiblingIndex()));
+                hud.SetHealthLevel(80, 100);
+                Assert.That(trail.fillAmount, Is.EqualTo(0.8f));
+                hud.SetHealthLevel(80, 200);
+                Assert.That(trail.fillAmount, Is.EqualTo(0.4f));
+                hud.SetHealthLevel(40, 200);
+                gauge.GetComponent<HudGaugeView>().enabled = false;
+                Assert.That(trail.fillAmount, Is.EqualTo(0.2f));
+                Assert.That(instance.transform.Find("EnergyGauge/DamageTrail"), Is.Null);
+            }
+            finally { Object.DestroyImmediate(instance); }
+        }
+
+        [Test]
         public void DamageTrail_HoldsThenFallsToCurrentHealth()
         {
             var trail = new HealthDamageTrail();

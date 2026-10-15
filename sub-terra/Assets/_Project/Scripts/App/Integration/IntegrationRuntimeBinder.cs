@@ -1259,6 +1259,15 @@ namespace SubTerra.App.Integration
 
         private void ResolveDeferredInputBehaviours()
         {
+            var miningController = FindAnyObjectByType<PlayerMiningController>(
+                FindObjectsInactive.Exclude);
+            if (miningController != null)
+            {
+                miningController.SetPointerMiningBlocker(() => placementBridge != null
+                    ? placementBridge.OwnsPointerInput
+                    : buildingPlacementSystem != null && buildingPlacementSystem.Selection != null);
+            }
+
             if (HasAnyValidDeferredInput())
             {
                 return;
@@ -1275,8 +1284,6 @@ namespace SubTerra.App.Integration
                 resolved.Add(playerMovement);
             }
 
-            var miningController = FindAnyObjectByType<PlayerMiningController>(
-                FindObjectsInactive.Exclude);
             if (miningController != null)
             {
                 resolved.Add(miningController);

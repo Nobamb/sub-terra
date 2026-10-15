@@ -44,7 +44,7 @@ namespace SubTerra.App.Tests.PlayMode.MineDemo
         }
 
         [UnityTest]
-        public IEnumerator NotMineableWhilePlacing_ShowsPlacementMessage_InIntegrationScene()
+        public IEnumerator NonMiningTargetWhilePlacing_DoesNotCreateFalsePlacementWarning()
         {
             using (var env = new UiTestEnvironment())
             {
@@ -66,21 +66,21 @@ namespace SubTerra.App.Tests.PlayMode.MineDemo
                 yield return null;
 
                 var entry = stack.Model.Find("mining.failure");
-                Assert.That(entry, Is.Not.Null);
-                Assert.That(entry.Text, Is.EqualTo(MiningProgressHud.PlacementBlockedMessage));
+                Assert.That(entry == null || !entry.Wanted, Is.True);
 
-                // 타일이 없는 빈 칸(시설이 겹친 자리)을 눌러도 채굴 문구가 아니라 설치 문구여야 한다.
+                // 타일이 없는 빈 칸의 채굴 실패로 설치 경고를 만들지 않는다.
                 mining.SetCellProtectionPredicate(null);
                 Assert.That(mining.TryStartMining(new Vector3Int(9999, 9999, 0)), Is.False);
                 yield return null;
                 Assert.That(mining.LastFailure, Is.EqualTo(MiningFailureReason.InvalidTarget));
-                Assert.That(stack.Model.Find("mining.failure").Text, Is.EqualTo(MiningProgressHud.PlacementBlockedMessage));
+                entry = stack.Model.Find("mining.failure");
+                Assert.That(entry == null || !entry.Wanted, Is.True);
 
                 // 설치 준비를 끝내면 같은 실패가 다시 채굴 문구로 돌아온다.
                 bridge.CancelPreview();
                 Assert.That(mining.TryStartMining(new Vector3Int(9999, 9999, 0)), Is.False);
                 yield return null;
-                Assert.That(stack.Model.Find("mining.failure").Text, Is.Not.EqualTo(MiningProgressHud.PlacementBlockedMessage));
+                Assert.That(stack.Model.Find("mining.failure").Text, Is.EqualTo("채굴할 수 없습니다."));
             }
         }
 
@@ -109,6 +109,9 @@ namespace SubTerra.App.Tests.PlayMode.MineDemo
                 Assert.That(bridge.BeginPreview(SubTerra.App.Core.Data.DataIds.Buildings.ChargerBasic), Is.True);
                 yield return null;
 
+                var miningFailures = 0;
+                mining.ProgressChanged += progress => { if (progress.Phase == MiningPhase.Failed) miningFailures++; };
+
                 var screen = (Vector2)Camera.main.WorldToScreenPoint(target);
                 env.Mouse.MakeCurrent();
                 UnityEngine.InputSystem.InputSystem.QueueStateEvent(env.Mouse, new UnityEngine.InputSystem.LowLevel.MouseState { position = screen });
@@ -129,7 +132,8 @@ namespace SubTerra.App.Tests.PlayMode.MineDemo
                 var drawn = string.Join("|", stack.GetComponentsInChildren<TMPro.TMP_Text>(true).Select(t => t.text));
                 Assert.That(texts, Does.Not.Contain("채굴할 수 없는 지형입니다."), log.ToString());
                 Assert.That(drawn, Does.Not.Contain("채굴할 수 없는 지형입니다."), "화면에 그려진 글자: " + drawn);
-                Assert.That(drawn, Does.Contain(MiningProgressHud.PlacementBlockedMessage), "화면에 그려진 글자: " + drawn);
+                Assert.That(drawn, Does.Not.Contain("설치할 수 없는 지형입니다."), "화면에 그려진 글자: " + drawn);
+                Assert.That(miningFailures, Is.Zero, "설치 클릭이 채굴 실패까지 발생시키면 안 된다.");
             }
         }
 
