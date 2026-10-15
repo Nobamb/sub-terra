@@ -86,7 +86,7 @@ namespace SubTerra.App.Tests.UI
             var resources = GameGuideCatalog.ForTab(GuideTabKind.Resources);
             Assert.That(resources.Count(c => c.Kind == GuideCardKind.Resource), Is.EqualTo(5), "구리·철·리튬·엔진 연료·골드");
             Assert.That(resources.Count(c => c.Kind == GuideCardKind.Facility), Is.EqualTo(10),
-                "보관함·충전기·보건소·정산 콘솔·코어·사다리·버팀목·조명·긴급 탈출 포탈·엘리베이터");
+                "보관함·충전기·보건소·자원 정산기·코어·사다리·버팀목·조명·긴급 탈출 포탈·엘리베이터");
         }
 
         [Test]
@@ -146,8 +146,8 @@ namespace SubTerra.App.Tests.UI
             }
 
             Assert.That(GameGuideCatalog.Get("fac.clinic").Title, Is.EqualTo("보건소"));
-            Assert.That(GameGuideCatalog.Get("fac.settlement").Title, Is.EqualTo("정산 콘솔"));
-            Assert.That(GameGuideCatalog.Get("fac.core").Title, Is.EqualTo("전진기지 코어"));
+            Assert.That(GameGuideCatalog.Get("fac.settlement").Title, Is.EqualTo("자원 정산기"));
+            Assert.That(GameGuideCatalog.Get("fac.core").Title, Is.EqualTo("전진기지"));
             Assert.That(GameGuideCatalog.Get("fac.support").Title, Is.EqualTo("버팀목"));
             Assert.That(GameGuideCatalog.Get("fac.portal").Title, Is.EqualTo(ItemDisplayNames.Building(DataIds.Buildings.EmergencyEscapePortal)));
             Assert.That(GameGuideCatalog.Get("res.fuel").Title, Is.EqualTo("엔진 연료"));
@@ -225,7 +225,7 @@ namespace SubTerra.App.Tests.UI
             Assert.That(text, Does.Contain("가까워지면 시설 이름이 말풍선으로 표시됩니다(버팀목·사다리 제외)"));
             Assert.That(ItemDisplayNames.ShowsProximityName(DataIds.Buildings.SupportBasic), Is.False);
             Assert.That(ItemDisplayNames.ShowsProximityName(DataIds.Buildings.LadderBasic), Is.False);
-            foreach (var name in new[] { "충전기", "보관함", "정산 콘솔", "전진기지 코어", "긴급 탈출 포탈" })
+            foreach (var name in new[] { "충전기", "보관함", "자원 정산기", "전진기지", "긴급 탈출 포탈" })
             {
                 Assert.That(text, Does.Contain(name));
             }
@@ -287,7 +287,7 @@ namespace SubTerra.App.Tests.UI
 
             var fuel = GuideDetailBuilder.Build(GameGuideCatalog.Get("res.fuel"), data);
             var fuelText = GuideDetailBuilder.ToPlainText(fuel);
-            Assert.That(fuelText, Does.Contain("정산 콘솔에서는 정산할 수 없고"));
+            Assert.That(fuelText, Does.Contain("자원 정산기에서는 정산할 수 없고"));
             Assert.That(fuelText, Does.Contain("최대 선택"));
             Assert.That(text, Does.Not.Contain("정산할 수 없고"), "일반 광물은 콘솔에서 판매할 수 있다");
         }

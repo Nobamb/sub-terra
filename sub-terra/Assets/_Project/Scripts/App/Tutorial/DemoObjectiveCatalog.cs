@@ -1,3 +1,4 @@
+using SubTerra.App.Core.Data;
 using System.Collections.Generic;
 
 namespace SubTerra.App.Tutorial
@@ -45,17 +46,17 @@ namespace SubTerra.App.Tutorial
                 Define(DemoObjectiveIds.PlaceLadder, "사다리 설치", "건설 메뉴에서 사다리를 선택해 설치하세요.", "이동할 수직 통로에 사다리 배치", DemoProgressSignal.LadderPlaced, DemoObjectiveIds.PlaceLightAtDepth, R(iron: 3)),
                 Define(DemoObjectiveIds.PlaceLightAtDepth, "심부 조명 설치", "지하 10m 이상 내려간 뒤 조명을 설치하세요.", "깊이 표시가 10m 이상일 때 조명 배치", DemoProgressSignal.LightPlacedAtDepth, DemoObjectiveIds.StoreMineral, R(iron: 3)),
                 Define(DemoObjectiveIds.StoreMineral, "광물 보관", "보관함을 설치한 뒤 아무 광물이나 1개 이상 보관하세요.", "보관함 배치 후 보관함에서 광물 맡기기", DemoProgressSignal.MineralStored, DemoObjectiveIds.InstallOutpostCore, R(copper: 3, iron: 2)),
-                Define(DemoObjectiveIds.InstallOutpostCore, "전진기지 코어 설치", "전진기지 코어를 설치해 체크포인트를 활성화하세요.", "건설 메뉴에서 전진기지 코어 배치", DemoProgressSignal.OutpostCoreInstalled, DemoObjectiveIds.ChargeNearOutpost, R(copper: 3, iron: 3, gold: 200)),
-                Define(DemoObjectiveIds.ChargeNearOutpost, "전진기지에서 충전", "방금 설치한 전진기지 코어 근처에 충전기를 설치한 뒤 전력을 충전하세요.", "코어 10칸 안에 충전기 배치 후 충전", DemoProgressSignal.ChargedNearOutpost, DemoObjectiveIds.HealNearOutpost, R(copper: 3, iron: 2)),
-                Define(DemoObjectiveIds.HealNearOutpost, "전진기지에서 회복", "전진기지 코어 근처에 보건소를 설치한 뒤 체력을 회복하세요.", "코어 10칸 안에 보건소 배치 후 회복", DemoProgressSignal.HealedNearOutpost, DemoObjectiveIds.UnlockDeepZone, R(copper: 3, iron: 2)),
+                Define(DemoObjectiveIds.InstallOutpostCore, (ItemDisplayNames.OutpostName + " 설치"), (ItemDisplayNames.OutpostName + "를 설치해 체크포인트를 활성화하세요."), ("건설 메뉴에서 " + ItemDisplayNames.OutpostName + " 배치"), DemoProgressSignal.OutpostCoreInstalled, DemoObjectiveIds.ChargeNearOutpost, R(copper: 3, iron: 3, gold: 200)),
+                Define(DemoObjectiveIds.ChargeNearOutpost, "전진기지에서 충전", ("방금 설치한 " + ItemDisplayNames.OutpostName + " 근처에 충전기를 설치한 뒤 전력을 충전하세요."), ItemDisplayNames.OutpostName + " 10칸 안에 충전기 배치 후 충전", DemoProgressSignal.ChargedNearOutpost, DemoObjectiveIds.HealNearOutpost, R(copper: 3, iron: 2)),
+                Define(DemoObjectiveIds.HealNearOutpost, "전진기지에서 회복", (ItemDisplayNames.OutpostName + " 근처에 보건소를 설치한 뒤 체력을 회복하세요."), ItemDisplayNames.OutpostName + " 10칸 안에 보건소 배치 후 회복", DemoProgressSignal.HealedNearOutpost, DemoObjectiveIds.UnlockDeepZone, R(copper: 3, iron: 2)),
                 Define(DemoObjectiveIds.UnlockDeepZone, "심층 구역 해금", "드릴 속도 2레벨, 드론 스캔 2레벨, 가스 저항 1레벨을 갖춰 심층 구역을 해금하세요.", "필요 업그레이드를 구매해 심층 잠금 해제", DemoProgressSignal.DeepZoneUnlocked, DemoObjectiveIds.MineLithium, R(iron: 2, lithium: 1, gold: 80)),
                 Define(DemoObjectiveIds.MineLithium, "리튬 채취", "심층 구역에서 리튬 블록을 직접 채굴하세요.", "심층 리튬 광맥 채굴", DemoProgressSignal.LithiumMined, DemoObjectiveIds.PurifyGasWithOutpost, R(lithium: 2)),
-                Define(DemoObjectiveIds.PurifyGasWithOutpost, "가스 정화", "리튬 또는 가스 블록 5칸 안에 전진기지 코어를 먼저 설치하고, 그 블록을 채굴한 뒤 나온 가스에 접근해 코어의 정화 효과를 받으세요.", "코어 설치 → 근처 리튬/가스 블록 채굴 → 정화 범위에서 가스 접근", DemoProgressSignal.GasPurifiedByOutpost, DemoObjectiveIds.SellAtSettlement, R(lithium: 3)),
-                Define(DemoObjectiveIds.SellAtSettlement, "전진기지 자원 판매", "전진기지 코어 10칸 안에 정산 콘솔을 설치한 뒤 광물을 판매하세요.", "정산 콘솔 배치 후 광물 판매", DemoProgressSignal.MineralSoldAtSettlement, DemoObjectiveIds.EmergencyEscapeReturn, R(iron: 2, lithium: 2, gold: 100)),
+                Define(DemoObjectiveIds.PurifyGasWithOutpost, "가스 정화", ("리튬 또는 가스 블록 5칸 안에 " + ItemDisplayNames.OutpostName + "를 먼저 설치하고, 그 블록을 채굴한 뒤 나온 가스에 접근해 정화 효과를 받으세요."), ItemDisplayNames.OutpostName + " 설치 → 근처 리튬/가스 블록 채굴 → 정화 범위에서 가스 접근", DemoProgressSignal.GasPurifiedByOutpost, DemoObjectiveIds.SellAtSettlement, R(lithium: 3)),
+                Define(DemoObjectiveIds.SellAtSettlement, "전진기지 자원 판매", (ItemDisplayNames.OutpostName + " 10칸 안에 " + ItemDisplayNames.SettlementName + "를 설치한 뒤 광물을 판매하세요."), (ItemDisplayNames.SettlementName + " 배치 후 광물 판매"), DemoProgressSignal.MineralSoldAtSettlement, DemoObjectiveIds.EmergencyEscapeReturn, R(iron: 2, lithium: 2, gold: 100)),
                 new DemoObjectiveDefinition(
                     DemoObjectiveIds.EmergencyEscapeReturn,
                     "긴급 탈출 귀환",
-                    "긴급 탈출 포탈을 사용해 전진기지 코어 또는 엘리베이터로 귀환하세요.",
+                    ("긴급 탈출 포탈을 사용해 " + ItemDisplayNames.OutpostName + " 또는 엘리베이터로 귀환하세요."),
                     "포탈 탑승 후 목적지를 선택해 긴급 이동",
                     DemoProgressSignal.EmergencyEscapeSucceeded,
                     string.Empty,

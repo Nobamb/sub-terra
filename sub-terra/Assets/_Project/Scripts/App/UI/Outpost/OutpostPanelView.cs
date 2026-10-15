@@ -1,3 +1,4 @@
+using SubTerra.App.Core.Data;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
@@ -343,7 +344,7 @@ namespace SubTerra.App.UI.Outpost
             switch (mode)
             {
                 case OutpostPanelMode.Core:
-                    titleText.text = "전진기지 코어";
+                    titleText.text = (ItemDisplayNames.OutpostName);
                     break;
                 case OutpostPanelMode.Charger:
                     titleText.text = "충전기";
@@ -352,7 +353,7 @@ namespace SubTerra.App.UI.Outpost
                     titleText.text = "보건소";
                     break;
                 case OutpostPanelMode.Settlement:
-                    titleText.text = "정산 콘솔";
+                    titleText.text = (ItemDisplayNames.SettlementName);
                     break;
                 case OutpostPanelMode.Storage:
                     titleText.text = "보관함";
@@ -678,7 +679,7 @@ namespace SubTerra.App.UI.Outpost
                 case "out_of_range":
                     return "상호작용 거리 밖";
                 case "core_inactive":
-                    return "전진기지 코어 비활성";
+                    return (ItemDisplayNames.OutpostName + " 비활성");
                 default:
                     return string.IsNullOrEmpty(reasonId) ? "원인 정보 없음" : reasonId;
             }
@@ -695,7 +696,7 @@ namespace SubTerra.App.UI.Outpost
                 case "building.storage.basic":
                     return "보관함";
                 case "building.settlement.basic":
-                    return "정산 콘솔";
+                    return (ItemDisplayNames.SettlementName);
                 case "building.light.basic":
                     return "조명";
                 case "building.support.basic":

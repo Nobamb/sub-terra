@@ -201,7 +201,7 @@ namespace SubTerra.App.Tests.Outpost
             Assert.That(warnings.Key, Is.EqualTo("outpost.facility"));
             Assert.That(warnings.Text, Is.EqualTo(
                 "충전기 사용불가, 전력망 미연결\n"
-                + "엘리베이터 또는 전진기지 코어 근처에서 전력망 연결이 가능합니다."));
+                + "엘리베이터 또는 전진기지 근처에서 전력망 연결이 가능합니다."));
             presenter.Unbind();
         }
 
@@ -236,7 +236,7 @@ namespace SubTerra.App.Tests.Outpost
             presenter.ToggleInteractionPanel();
 
             Assert.That(view.TemporaryMessage, Is.Null);
-            Assert.That(warnings.Text, Does.StartWith("정산 콘솔 사용불가"));
+            Assert.That(warnings.Text, Does.StartWith("자원 정산기 사용불가"));
             presenter.Unbind();
         }
 

@@ -143,12 +143,34 @@ namespace SubTerra.App.Tests.Progression
         }
 
         [Test]
-        public void SurfaceWindow_HasNoDeepZoneStatusLine()
+        public void SurfaceWindow_DeepZoneConditionsReserveSpaceAndDoNotDuplicateOnRefresh()
         {
-            var panel = SurfacePanel();
-            Assert.That(panel.GetComponentsInChildren<Transform>(true).Any(t => t.name == "DeepZoneText"), Is.False);
-            var texts = panel.Find(PromptB118UpgradeTreeBuilder.TreeRootName).GetComponentsInChildren<TMP_Text>(true);
-            Assert.That(texts.Any(t => t.text != null && t.text.Contains("심층 구역")), Is.False);
+            var instance = Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(SurfacePrefabPath));
+            try
+            {
+                var tree = instance.GetComponentInChildren<UpgradeTreeView>(true);
+                var initialBottom = tree.Viewport.offsetMin.y;
+                tree.SetDeepZoneStatus(new ZoneAccessResult(false, false, "드론 스캔 범위 2레벨 필요"));
+                var labels = instance.GetComponentsInChildren<TMP_Text>(true)
+                    .Where(t => t.text != null && t.text.Contains("구역 해금 · 심층 구역")).ToArray();
+                Assert.That(labels.Length, Is.EqualTo(1));
+                Assert.That(labels[0].text, Does.Contain("드릴 속도 Lv.2"));
+                Assert.That(labels[0].text, Does.Contain("드론 스캔 범위 Lv.2"));
+                Assert.That(labels[0].text, Does.Contain("가스 저항 Lv.1"));
+                Assert.That(labels[0].raycastTarget, Is.False);
+                var labelPanel = (RectTransform)labels[0].transform.parent;
+                Assert.That(tree.Viewport.offsetMin.y, Is.GreaterThan(initialBottom));
+                Assert.That(labelPanel.offsetMax.y, Is.LessThan(tree.Viewport.offsetMin.y));
+                var reservedBottom = tree.Viewport.offsetMin.y;
+                tree.SetDeepZoneStatus(new ZoneAccessResult(true, true, string.Empty));
+                Assert.That(tree.Viewport.offsetMin.y, Is.EqualTo(reservedBottom));
+                Assert.That(labels[0].text, Does.Contain("해금됨"));
+                Assert.That(instance.GetComponentsInChildren<Transform>(true).Count(t => t.name == "DeepZoneStatus"), Is.EqualTo(1));
+            }
+            finally
+            {
+                Object.DestroyImmediate(instance);
+            }
         }
 
         [Test]

@@ -44,18 +44,20 @@ namespace SubTerra.App.Tests.Tutorial
             };
 
             Assert.That(DemoObjectiveIds.Ordered, Is.EqualTo(expected));
-            Assert.That(DeepZoneUnlockRule.Mvp.RequiredCompletedObjectives, Is.EqualTo(13));
+            Assert.That(DeepZoneUnlockRule.Mvp.RequiredCompletedObjectives, Is.Zero);
 
             var requirements = DeepZoneUnlockRule.Mvp.UpgradeRequirements;
-            Assert.That(requirements.Count, Is.EqualTo(1));
+            Assert.That(requirements.Count, Is.EqualTo(3));
             Assert.That(
                 requirements.Any(r => r.UpgradeId == DataIds.Upgrades.DrillSpeed
                     && r.RequiredLevel == 2),
                 Is.True);
             Assert.That(
-                requirements.Any(r => r.UpgradeId == DataIds.Upgrades.DroneScan
-                    || r.UpgradeId == DataIds.Upgrades.GasResistance),
-                Is.False);
+                requirements.Any(r => r.UpgradeId == DataIds.Upgrades.DroneScan && r.RequiredLevel == 2),
+                Is.True);
+            Assert.That(
+                requirements.Any(r => r.UpgradeId == DataIds.Upgrades.GasResistance && r.RequiredLevel == 1),
+                Is.True);
         }
 
         [Test]

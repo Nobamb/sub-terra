@@ -43,7 +43,7 @@ namespace SubTerra.App.Tests.Outpost
 
             Assert.That(list.Count, Is.EqualTo(2));
             Assert.That(list.Items[0].DisplayName, Is.EqualTo("충전기"));
-            Assert.That(list.Items[1].DisplayName, Is.EqualTo("정산 콘솔"));
+            Assert.That(list.Items[1].DisplayName, Is.EqualTo("자원 정산기"));
         }
 
         [Test]

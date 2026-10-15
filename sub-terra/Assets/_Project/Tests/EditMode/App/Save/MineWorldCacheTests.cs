@@ -49,6 +49,27 @@ namespace SubTerra.App.Tests.Save
         }
 
         [Test]
+        public void NewGameSeed_SurfaceSaveThenContinue_PreservesUnexploredWorld()
+        {
+            Assert.That(MineResetService.TryCreateNewGameWorld(new UtcMineResetSeedSource(), out var world), Is.True);
+            var cache = new MineWorldCache();
+            cache.ReplaceFromProvider(CreateMinedSnapshot(seed: 42, x: 3, y: 7));
+            cache.Clear();
+            cache.ReplaceFromProvider(world);
+            var save = new SaveService(physical, paths, mapper, json);
+            Assert.That(save.Save(1, CreateCaptureContext(null, cache.Peek())).IsSuccess, Is.True);
+            var loaded = new LoadService(physical, paths, mapper, json).Load(1);
+            Assert.That(loaded.IsSuccess, Is.True);
+            var continuedCache = new MineWorldCache();
+            continuedCache.SeedFromSave(loaded.State.World);
+            Assert.That(continuedCache.HasSnapshot, Is.True);
+            Assert.That(continuedCache.Peek().worldSeed, Is.EqualTo(world.worldSeed));
+            Assert.That(continuedCache.Peek().generatorVersion, Is.EqualTo(world.generatorVersion));
+            Assert.That(continuedCache.Peek().miningChanges, Is.Empty);
+            Assert.That(continuedCache.Peek().buildings, Is.Empty);
+        }
+
+        [Test]
         public void T1_NullProvider_WithCache_PreservesMiningChangesInSave()
         {
             var cache = new MineWorldCache();
