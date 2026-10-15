@@ -367,9 +367,10 @@ namespace SubTerra.App.Integration
             switch (failure)
             {
                 case BuildingPlacementFailure.Occupied: return $"지형 또는 다른 시설과 겹쳐 이동할 수 없습니다. {size.x}×{size.y} 빈 공간이 필요합니다.";
-                case BuildingPlacementFailure.ElevatorSpace: return "엘리베이터 이동 공간에는 시설을 옮길 수 없습니다.";
-                case BuildingPlacementFailure.MissingGround: return "시설 아래에 지면이 필요합니다.";
+                case BuildingPlacementFailure.ElevatorSpace: return "엘리베이터 이동 공간입니다. 승강로 밖으로 옮기세요.";
+                case BuildingPlacementFailure.MissingGround: return "시설 아래에 지면이 필요합니다. 바닥 위를 선택하세요.";
                 case BuildingPlacementFailure.OutOfRange: return "너무 멉니다. 가까이 이동한 뒤 배치하세요.";
+                case BuildingPlacementFailure.OutsideAllowedArea: return "이동이 허용되지 않은 구역입니다. 구역 안을 선택하세요.";
                 default: return "이 위치에는 시설을 옮길 수 없습니다.";
             }
         }

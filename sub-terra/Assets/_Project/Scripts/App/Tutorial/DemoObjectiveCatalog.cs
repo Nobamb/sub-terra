@@ -42,7 +42,7 @@ namespace SubTerra.App.Tutorial
                 Define(DemoObjectiveIds.TravelToSurface, "지상으로 이동", "엘리베이터에 탑승한 뒤 상호작용 키(E)를 눌러 지상 기지로 귀환하세요.", "엘리베이터 안에서 상호작용 키(E)를 눌러 귀환", DemoProgressSignal.SurfaceReachedByElevator, DemoObjectiveIds.ReturnToMine, R(gold: 100)),
                 Define(DemoObjectiveIds.ReturnToMine, "광산 탐사 재개", "다시 광산으로 돌아온 뒤, 엘리베이터에서 벗어나 채굴을 이어가주세요.", "광산 도착 후 엘리베이터 아래 검은색 블록 3칸에서 벗어나기", DemoProgressSignal.MineReachedByElevator, DemoObjectiveIds.MineIron, R(copper: 2)),
                 Define(DemoObjectiveIds.MineIron, "철 채취", "철 블록을 직접 채굴해 철을 획득하세요.", "철 블록을 찾아 채굴", DemoProgressSignal.IronMined, DemoObjectiveIds.PlaceSupportInDanger, R(iron: 2)),
-                Define(DemoObjectiveIds.PlaceSupportInDanger, "위험 지대 보강", "구조 위험 경고가 활성화된 지대에 버팀목을 설치하세요.", "위험 경고가 표시된 곳에 버팀목 배치", DemoProgressSignal.SupportPlacedInDanger, DemoObjectiveIds.PlaceLadder, R(copper: 3, iron: 1)),
+                Define(DemoObjectiveIds.PlaceSupportInDanger, "위험 지대 보강", "구조 위험이 있는 지대에 버팀목을 설치해 위험도를 낮추세요.", "위험 지대에 버팀목을 배치해 위험도 낮추기", DemoProgressSignal.SupportPlacedInDanger, DemoObjectiveIds.PlaceLadder, R(copper: 3, iron: 1)),
                 Define(DemoObjectiveIds.PlaceLadder, "사다리 설치", "건설 메뉴에서 사다리를 선택해 설치하세요.", "이동할 수직 통로에 사다리 배치", DemoProgressSignal.LadderPlaced, DemoObjectiveIds.PlaceLightAtDepth, R(iron: 3)),
                 Define(DemoObjectiveIds.PlaceLightAtDepth, "심부 조명 설치", "지하 10m 이상 내려간 뒤 조명을 설치하세요.", "깊이 표시가 10m 이상일 때 조명 배치", DemoProgressSignal.LightPlacedAtDepth, DemoObjectiveIds.StoreMineral, R(iron: 3)),
                 Define(DemoObjectiveIds.StoreMineral, "광물 보관", "보관함을 설치한 뒤 아무 광물이나 1개 이상 보관하세요.", "보관함 배치 후 보관함에서 광물 맡기기", DemoProgressSignal.MineralStored, DemoObjectiveIds.InstallOutpostCore, R(copper: 3, iron: 2)),

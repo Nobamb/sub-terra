@@ -77,6 +77,7 @@ namespace SubTerra.App.UI.Tutorial
 
         private void Awake()
         {
+            ApplyCompactSummary();
             if (tutorialCanvas != null)
             {
                 defaultTutorialSort = tutorialCanvas.sortingOrder;
@@ -97,7 +98,7 @@ namespace SubTerra.App.UI.Tutorial
 
             if (objectiveBodyText != null)
             {
-                objectiveBodyText.text = model.Description ?? string.Empty;
+                objectiveBodyText.text = model.IsDemoComplete ? model.Description ?? string.Empty : model.NextActionHint ?? string.Empty;
             }
 
             if (nextActionText != null)
@@ -117,6 +118,43 @@ namespace SubTerra.App.UI.Tutorial
             {
                 basicStatusIcon.sprite = cleared ? basicStatusClearSprite : basicStatusRingSprite;
             }
+        }
+
+        public void ApplyCompactSummary()
+        {
+            if (objectiveTitleText == null) return;
+            var card = objectiveTitleText.transform.parent as RectTransform;
+            if (card == null || card.name != "QuestSummaryButton") return;
+            card.sizeDelta = new Vector2(460f, 116f);
+            card.localScale = Vector3.one;
+            card.anchoredPosition = new Vector2(16f, -232f);
+            PlaceSummaryChild(card, "QuestMissionLabel", new Vector2(36f, -10f), new Vector2(170f, 32f));
+            var mission = card.Find("QuestMissionLabel");
+            if (mission != null && mission.TryGetComponent<TMP_Text>(out var missionText))
+            {
+                missionText.text = "MISSION · 방법 보기";
+                missionText.fontSize = 18f;
+            }
+            PlaceSummaryChild(card, "ProgressCount", new Vector2(-36f, -10f), new Vector2(170f, 32f));
+            PlaceSummaryChild(card, "QuestStatusIcon", new Vector2(32f, -60.9f), new Vector2(32f, 32f));
+            PlaceSummaryChild(card, "ObjectiveTitle", new Vector2(78f, -46f), new Vector2(346f, 34f));
+            PlaceSummaryChild(card, "ObjectiveBody", new Vector2(78f, -82f), new Vector2(346f, 26f));
+            if (objectiveBodyText != null && objectiveBodyText.transform.parent == card)
+            {
+                objectiveBodyText.gameObject.SetActive(true);
+                objectiveBodyText.fontSize = 16f;
+                objectiveBodyText.enableAutoSizing = true;
+                objectiveBodyText.fontSizeMin = 12f;
+                objectiveBodyText.fontSizeMax = 16f;
+                objectiveBodyText.overflowMode = TextOverflowModes.Ellipsis;
+            }
+        }
+
+        private static void PlaceSummaryChild(RectTransform card, string name, Vector2 position, Vector2 size)
+        {
+            if (!(card.Find(name) is RectTransform child)) return;
+            child.anchoredPosition = position;
+            child.sizeDelta = size;
         }
 
         public void SetGuidanceVisible(bool visible)

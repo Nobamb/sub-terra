@@ -342,6 +342,7 @@ namespace SubTerra.App.UI.Guide
             Resource("res.iron", ItemDisplayNames.Mineral(DataIds.Minerals.Iron), "채굴 · 보관 · 판매", DataIds.Minerals.Iron)
                 .Link("mech.cargo", "fac.storage");
             Resource("res.lithium", ItemDisplayNames.Mineral(DataIds.Minerals.Lithium), "채굴 · 보관 · 판매", DataIds.Minerals.Lithium)
+                .Data("심층 해금", DeepZoneUnlockRule.Mvp.DescribeUpgradeRequirements() + " 조건을 모두 갖추면 해금됩니다.")
                 .Link("mech.cargo", "fac.storage");
             Resource("res.fuel", ItemDisplayNames.Mineral(DataIds.RareItems.EngineFuel), "희귀 · 지상에서 판매", DataIds.RareItems.EngineFuel)
                 .Link("fac.storage", "fac.settlement");
@@ -423,7 +424,7 @@ namespace SubTerra.App.UI.Guide
                 new GuideFirstStep("02", "자원 채굴", "인접한 광물을 채굴", "first.mine", "icon.copper", "ctrl.mine"),
                 new GuideFirstStep("03", "상태 확인", "체력·전력·화물을 확인", "first.status", "icon.cargo", "mech.health"),
                 new GuideFirstStep("04", "지상으로 귀환", "위험해지기 전에 돌아오기", "first.return", "icon.elevator", "ctrl.elevator"),
-                new GuideFirstStep("05", "판매·업그레이드", "자원을 팔고 다음 탐사 준비", "first.sell", "icon.sell", "fac.settlement")
+                new GuideFirstStep("05", "판매·업그레이드", "지상 기지에서 자원을 팔고 다음 탐사 준비", "first.sell", "icon.sell", "mech.base")
             };
         }
     }
