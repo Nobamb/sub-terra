@@ -18,6 +18,99 @@ namespace SubTerra.App.Tests.UI
         private const string CatalogPath = "Assets/_Project/Data/Catalog/GameDataCatalog.asset";
 
         [Test]
+        public void WorldRightClick_StartsAndCancelsMoveWithoutOpeningBuildingMenu()
+        {
+            var host = new GameObject("RightClickMove");
+            host.SetActive(false);
+            var prefab = new GameObject("StorageTemplate");
+            var definition = ScriptableObject.CreateInstance<SubTerra.Gameplay.Building.BuildingPlacementDefinition>();
+            try
+            {
+                definition.EditorSet(DataIds.Buildings.StorageBasic, prefab, Vector2Int.one, false);
+                var system = host.AddComponent<SubTerra.Gameplay.Building.BuildingPlacementSystem>();
+                var systemSettings = new SerializedObject(system);
+                var definitions = systemSettings.FindProperty("restoreDefinitions");
+                definitions.arraySize = 1;
+                definitions.GetArrayElementAtIndex(0).objectReferenceValue = definition;
+                systemSettings.ApplyModifiedPropertiesWithoutUndo();
+                var bridge = host.AddComponent<SubTerra.App.Integration.GameplayBuildingPlacementBridge>();
+                var bridgeSettings = new SerializedObject(bridge);
+                bridgeSettings.FindProperty("placementSystem").objectReferenceValue = system;
+                bridgeSettings.ApplyModifiedPropertiesWithoutUndo();
+                host.SetActive(true);
+                Assert.That(system.TryRestoreBuilding(new BuildingSnapshotDto
+                {
+                    instanceId = "storage.right-click", buildingTypeId = DataIds.Buildings.StorageBasic,
+                    footprintWidth = 1, footprintHeight = 1, level = 2, health = 0.75f
+                }), Is.True);
+                var instance = host.GetComponentInChildren<SubTerra.Gameplay.Building.BuildingInstance>();
+                var original = instance.transform.position;
+                Assert.That(system.TryGetMovableAt(Vector3.zero, out var hoverTarget, out var ground), Is.True);
+                Assert.That(hoverTarget, Is.SameAs(instance));
+                Assert.That(ground.x, Is.EqualTo(original.x).Within(0.001f));
+                Assert.That(ground.y, Is.EqualTo(0f).Within(0.001f));
+                Assert.That(system.Selection, Is.Null, "호버 조회는 이동 선택을 시작하지 않는다.");
+                Assert.That(system.IsMoving, Is.False);
+                Assert.That(instance.transform.position, Is.EqualTo(original));
+                instance.gameObject.SetActive(false);
+                Assert.That(system.TryGetMovableAt(Vector3.zero, out _, out _), Is.False);
+                instance.gameObject.SetActive(true);
+                Assert.That(bridge.HandleWorldRightClick(new Vector3(20f, 20f, 0f)), Is.False);
+                Assert.That(bridge.HandleWorldRightClick(Vector3.zero), Is.True);
+                Assert.That(system.IsMoving, Is.True);
+                Assert.That(bridge.HandleWorldRightClick(Vector3.zero), Is.True);
+                Assert.That(system.IsMoving, Is.False);
+                Assert.That(system.Selection, Is.Null);
+                Assert.That(instance.transform.position, Is.EqualTo(original));
+                Assert.That(instance.InstanceId, Is.EqualTo("storage.right-click"));
+                Assert.That(bridge.HandleWorldRightClick(Vector3.zero), Is.True);
+                Assert.That(system.TryMoveAt(new Vector3Int(2, 0, 0)).IsSuccess, Is.True);
+                Assert.That(bridge.IsMoveMode, Is.False);
+                Assert.That(instance.InstanceId, Is.EqualTo("storage.right-click"));
+            }
+            finally
+            {
+                Object.DestroyImmediate(host);
+                Object.DestroyImmediate(prefab);
+                Object.DestroyImmediate(definition);
+            }
+        }
+
+        [Test]
+        public void FacilityMoveButton_IsBoundOnceAndFitsInsidePanel()
+        {
+            var host = new GameObject("MoveMenu", typeof(RectTransform));
+            try
+            {
+                var panel = new GameObject("PanelRoot", typeof(RectTransform));
+                panel.transform.SetParent(host.transform, false);
+                ((RectTransform)panel.transform).sizeDelta = new Vector2(580.8f, 560f);
+                var nameObject = new GameObject("Name", typeof(RectTransform), typeof(TextMeshProUGUI));
+                nameObject.transform.SetParent(panel.transform, false);
+                var view = host.AddComponent<BuildingMenuView>();
+                var so = new SerializedObject(view);
+                so.FindProperty("panelRoot").objectReferenceValue = panel;
+                so.FindProperty("detailNameText").objectReferenceValue = nameObject.GetComponent<TMP_Text>();
+                so.ApplyModifiedPropertiesWithoutUndo();
+                int requested = 0;
+                view.MoveRequested += () => requested++;
+                view.EnableFacilityMoving(true);
+                view.EnableFacilityMoving(true);
+                var button = panel.transform.Find("MoveFacilityButton").GetComponent<UnityEngine.UI.Button>();
+                button.onClick.Invoke();
+                Assert.That(requested, Is.EqualTo(1));
+                Assert.That(panel.transform.Cast<Transform>().Count(t => t.name == "MoveFacilityButton"), Is.EqualTo(1));
+                var rect = (RectTransform)button.transform;
+                Assert.That(rect.anchoredPosition, Is.EqualTo(new Vector2(-16f, -60f)));
+                Assert.That(rect.sizeDelta, Is.EqualTo(new Vector2(112f, 22f)));
+                Assert.That(button.GetComponentInChildren<TMP_Text>().text, Is.EqualTo("시설 이동"));
+                view.EnableFacilityMoving(false);
+                Assert.That(button.gameObject.activeSelf, Is.False);
+            }
+            finally { Object.DestroyImmediate(host); }
+        }
+
+        [Test]
         public void Prefab_HasStructuredReferencesAndKeepsLegacyFields()
         {
             var menu = AssetDatabase.LoadAssetAtPath<GameObject>(MenuPath);

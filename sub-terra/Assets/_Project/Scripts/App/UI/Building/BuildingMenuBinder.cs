@@ -17,6 +17,8 @@ namespace SubTerra.App.UI.Building
         [SerializeField] private MonoBehaviour placementPortBehaviour;
 
         private BuildingMenuPresenter presenter;
+        private IBuildingFacilityMovePort movePort;
+        private IBuildingPlacementPort activePort;
 
         public BuildingMenuPresenter Presenter => presenter;
         public bool IsBound => presenter != null && presenter.IsBound;
@@ -28,11 +30,13 @@ namespace SubTerra.App.UI.Building
                 view = GetComponent<BuildingMenuView>();
             }
 
-            presenter = new BuildingMenuPresenter(view);
+            // Integration may bind an inactive menu before its first Awake.
+            presenter ??= new BuildingMenuPresenter(view);
         }
 
         private void OnDestroy()
         {
+            UnbindMoving();
             presenter?.Unbind();
             presenter = null;
         }
@@ -49,7 +53,36 @@ namespace SubTerra.App.UI.Building
             }
 
             var port = placementPort ?? placementPortBehaviour as IBuildingPlacementPort;
+            UnbindMoving();
+            activePort = port;
+            movePort = port as IBuildingFacilityMovePort;
+            if (movePort != null && view != null)
+            {
+                movePort.MoveStatusChanged += view.SetStatusMessage;
+                view.MoveRequested += BeginMoving;
+            }
+            if (view != null) view.EnableFacilityMoving(movePort != null);
             presenter.Bind(catalog, wallet, inventory, port, gameState);
+        }
+
+        private void OnDisable()
+        {
+            if (movePort != null && movePort.IsMoveMode) activePort?.CancelPreview();
+        }
+
+        private void BeginMoving()
+        {
+            bool cancel = movePort != null && movePort.IsMoveMode;
+            presenter?.CancelSelection();
+            if (!cancel) movePort?.BeginMoveSelection();
+        }
+
+        private void UnbindMoving()
+        {
+            if (movePort != null && view != null) movePort.MoveStatusChanged -= view.SetStatusMessage;
+            if (view != null) view.MoveRequested -= BeginMoving;
+            movePort = null;
+            activePort = null;
         }
 
         public bool SelectBuilding(string buildingId)

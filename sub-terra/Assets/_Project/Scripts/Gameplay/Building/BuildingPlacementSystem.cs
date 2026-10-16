@@ -34,8 +34,12 @@ namespace SubTerra.Gameplay.Building
         private readonly Dictionary<Vector3Int, string> savedBuildingCells = new();
         private SubTerra.Gameplay.Player.ElevatorController[] placementElevators;
         private readonly Dictionary<BuildingInstance, SpriteRenderer[]> authoredBuildingRenderers = new();
+        private readonly Dictionary<BuildingInstance, BuildingPlacementResult> runtimeBuildings = new();
+        private BuildingInstance movingBuilding;
 
         public BuildingPlacementDefinition Selection => selection;
+        public bool IsMoving => movingBuilding != null;
+        public event Action<BuildingPlacementResult> BuildingMoved;
         public StructuralIntegritySystem StructuralSystem => structuralIntegritySystem;
         public event Action<BuildingPlacementResult> BuildingPlaced;
         /// <summary>저장 데이터로 복원된 시설의 시각 후처리 전용 알림이다. 게임 이벤트·비용 처리에는 사용하지 않는다.</summary>
@@ -61,6 +65,7 @@ namespace SubTerra.Gameplay.Building
 
         private void OnDisable()
         {
+            movingBuilding = null;
             // 비활성 시 잔여 Preview 활성 상태를 정리한다.
             if (selection != null)
             {
@@ -71,6 +76,7 @@ namespace SubTerra.Gameplay.Building
 
         public void Select(BuildingPlacementDefinition definition)
         {
+            movingBuilding = null;
             if (selection != null)
             {
                 BuildingPlacementActivity.End();
@@ -85,6 +91,7 @@ namespace SubTerra.Gameplay.Building
 
         public void ClearSelection()
         {
+            movingBuilding = null;
             if (selection != null)
             {
                 BuildingPlacementActivity.End();
@@ -197,7 +204,8 @@ namespace SubTerra.Gameplay.Building
                         }
                     }
                 }
-                if (occupiedBuildings.ContainsKey(cell) || (terrainTilemap != null && terrainTilemap.HasTile(cell)))
+                if ((occupiedBuildings.ContainsKey(cell) && !IsMovingBuildingCell(cell))
+                    || (terrainTilemap != null && terrainTilemap.HasTile(cell)))
                 {
                     failure = BuildingPlacementFailure.Occupied;
                     return false;
@@ -209,7 +217,7 @@ namespace SubTerra.Gameplay.Building
                 Vector3Int groundCell = cell + Vector3Int.down;
                 TileBase groundTile = terrainTilemap != null ? terrainTilemap.GetTile(groundCell) : null;
                 if (isBottomRow
-                    && ((occupiedBuildings.ContainsKey(groundCell)
+                    && ((occupiedBuildings.ContainsKey(groundCell) && !IsMovingBuildingCell(groundCell)
                          && !CanStackOnBuilding(selection.BuildingId, groundCell))
                         || (groundTile != null
                             && string.Equals(
@@ -236,6 +244,13 @@ namespace SubTerra.Gameplay.Building
 
         private bool CanAffordSelection(out BuildingPlacementFailure failure)
         {
+            // 시설 이동은 무료다. 지갑이 없거나 자원이 부족해도 위치 검사는 계속한다.
+            if (IsMoving)
+            {
+                failure = BuildingPlacementFailure.None;
+                return true;
+            }
+
             if (sharedResourceWallet != null)
             {
                 if (!sharedResourceWallet.CanAfford(selection.Costs))
@@ -261,6 +276,7 @@ namespace SubTerra.Gameplay.Building
 
         public BuildingPlacementResult TryPlaceAt(Vector3Int origin)
         {
+            if (IsMoving) return TryMoveAt(origin);
             if (!CanPlaceAt(origin, out BuildingPlacementFailure failure)) return Reject(failure, origin);
             BuildingPlacementDefinition definition = selection;
             Vector2Int footprint = definition.Footprint;
@@ -306,7 +322,90 @@ namespace SubTerra.Gameplay.Building
                 origin,
                 reducedStructuralRisk,
                 footprint);
+            runtimeBuildings[instance] = result;
             BuildingPlaced?.Invoke(result);
+            return result;
+        }
+
+        public bool TryBeginMoveAt(Vector3 worldPosition)
+            => TryGetMovableAt(worldPosition, out var instance, out _) && TryBeginMove(instance);
+
+        /// <summary>선택/점유를 변경하지 않고 실제 이동 가능한 대상과 바닥 중앙을 조회한다.</summary>
+        public bool TryGetMovableAt(Vector3 worldPosition, out BuildingInstance instance, out Vector3 groundAnchor)
+        {
+            instance = null;
+            groundAnchor = default;
+            Vector3Int cell = WorldToCell(worldPosition);
+            if (!occupiedBuildings.ContainsKey(cell)) return false;
+            foreach (var entry in runtimeBuildings)
+            {
+                var placement = entry.Value;
+                if (ContainsCell(placement.Cell, placement.Footprint, cell) && CanMoveInstance(entry.Key))
+                {
+                    instance = entry.Key;
+                    groundAnchor = FootprintWorldCenter(placement.Cell, placement.Footprint);
+                    var bottom = CellToWorld(placement.Cell);
+                    var above = CellToWorld(placement.Cell + Vector3Int.up);
+                    groundAnchor.y = bottom.y - (above.y - bottom.y) * 0.5f;
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private bool CanMoveInstance(BuildingInstance instance)
+        {
+            if (instance == null || !instance.gameObject.activeInHierarchy || !runtimeBuildings.ContainsKey(instance)
+                || (instance.BuildingId != "building.light.basic"
+                    && instance.BuildingId != "building.settlement.basic"
+                    && instance.BuildingId != "building.charger.basic"
+                    && instance.BuildingId != "building.clinic.basic"
+                    && instance.BuildingId != "building.storage.basic")) return false;
+            BuildingPlacementDefinition definition = FindDefinition(instance.BuildingId);
+            return definition != null && definition.RuntimePrefab != null;
+        }
+
+        public bool TryBeginMove(BuildingInstance instance)
+        {
+            if (!CanMoveInstance(instance)) return false;
+            Select(FindDefinition(instance.BuildingId));
+            movingBuilding = instance;
+            return true;
+        }
+
+        private bool IsMovingBuildingCell(Vector3Int cell)
+        {
+            return movingBuilding != null && runtimeBuildings.TryGetValue(movingBuilding, out var placement)
+                && ContainsCell(placement.Cell, placement.Footprint, cell);
+        }
+
+        private static bool ContainsCell(Vector3Int origin, Vector2Int size, Vector3Int cell)
+            => cell.z == origin.z && cell.x >= origin.x && cell.y >= origin.y
+                && cell.x < origin.x + Mathf.Max(1, size.x)
+                && cell.y < origin.y + Mathf.Max(1, size.y);
+
+        public BuildingPlacementResult TryMoveAt(Vector3Int origin)
+        {
+            if (!IsMoving || !runtimeBuildings.TryGetValue(movingBuilding, out var old))
+                return Reject(BuildingPlacementFailure.NoSelection, origin);
+            if (!CanPlaceAt(origin, out var failure)) return Reject(failure, origin);
+            BuildingInstance instance = movingBuilding;
+            Vector2Int footprint = selection.Footprint;
+            // Validation precedes every mutation; the original object and facility state survive.
+            foreach (var cell in EnumerateFootprint(old.Cell, old.Footprint)) occupiedBuildings.Remove(cell);
+            instance.transform.position = FootprintWorldCenter(origin, footprint);
+            instance.Initialize(instance.InstanceId, instance.BuildingId, footprint);
+            foreach (var cell in EnumerateFootprint(origin, footprint)) occupiedBuildings[cell] = instance.BuildingId;
+            var result = new BuildingPlacementResult(true, BuildingPlacementFailure.None,
+                instance.InstanceId, instance.BuildingId, origin, footprint: footprint);
+            runtimeBuildings[instance] = result;
+            supportingGroundCells.Clear();
+            foreach (var entry in runtimeBuildings)
+                if (entry.Key != null) RegisterSupportingGround(entry.Value.Cell, entry.Value.Footprint);
+            powerNetworkSystem?.RequestRebuild();
+            ClearSelection();
+            // Moving is not construction: no wallet call and no BuildingPlaced quest/reward event.
+            BuildingMoved?.Invoke(result);
             return result;
         }
 
@@ -509,6 +608,8 @@ namespace SubTerra.Gameplay.Building
         /// </summary>
         public void PrepareForWorldRestore()
         {
+            ClearSelection();
+            runtimeBuildings.Clear();
             WorldRestorePreparing?.Invoke();
             Transform root = buildingRoot != null ? buildingRoot : transform;
             for (int index = root.childCount - 1; index >= 0; index--)
@@ -577,6 +678,8 @@ namespace SubTerra.Gameplay.Building
                 buildingRoot != null ? buildingRoot : transform);
             BuildingInstance instance = instanceObject.GetComponent<BuildingInstance>() ?? instanceObject.AddComponent<BuildingInstance>();
             instance.Initialize(snapshot.instanceId, snapshot.buildingTypeId, footprint);
+            runtimeBuildings[instance] = new BuildingPlacementResult(true, BuildingPlacementFailure.None,
+                snapshot.instanceId, snapshot.buildingTypeId, cell, footprint: footprint);
             BindPowerNode(instanceObject, snapshot.instanceId);
             foreach (Vector3Int occupied in EnumerateFootprint(cell, footprint))
             {

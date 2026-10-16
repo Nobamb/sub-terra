@@ -60,6 +60,7 @@ namespace SubTerra.Gameplay.Player
         /// </summary>
         private bool jumpUsedUntilLand;
         private float gravityBeforeClimbing;
+        private bool ascendingTowardsLadderExit;
         private readonly HashSet<LadderZone> activeLadders = new HashSet<LadderZone>();
         private float cargoSpeedMultiplier = 1f;
         private float cargoJumpMultiplier = 1f;
@@ -72,6 +73,7 @@ namespace SubTerra.Gameplay.Player
         public bool IsClimbing { get; private set; }
         public bool IsTouchingLadder => activeLadders.Count > 0;
         public bool IsApproachingLadderFromAbove => IsClimbing && body != null
+            && !ascendingTowardsLadderExit
             && TryGetLadderTop(out var top) && PlayerTop > top + 0.001f;
         public bool IsJumpInProgress => jumpUsedUntilLand && !IsGrounded;
         public bool IsDescendingLadder => IsClimbing && verticalMoveInput < -0.01f;
@@ -81,6 +83,7 @@ namespace SubTerra.Gameplay.Player
         public float CurrentSpeedMultiplier => cargoSpeedMultiplier * hazardSpeedMultiplier;
         public float CurrentJumpMultiplier => cargoJumpMultiplier;
         private float PlayerTop => bodyCollider != null ? bodyCollider.bounds.max.y : body.position.y;
+        private float PlayerBottom => bodyCollider != null ? bodyCollider.bounds.min.y : body.position.y;
 
         /// <summary>캐릭터 판정 영역의 월드 Bounds. 콜라이더가 없으면 false.</summary>
         public bool TryGetBodyBounds(out Bounds bounds)
@@ -179,6 +182,7 @@ namespace SubTerra.Gameplay.Player
             }
 
             gravityBeforeClimbing = body.gravityScale;
+            ascendingTowardsLadderExit = false;
             body.gravityScale = 0f;
             body.linearVelocity = new Vector2(body.linearVelocityX, 0f);
             IsClimbing = true;
@@ -212,8 +216,11 @@ namespace SubTerra.Gameplay.Player
             }
 
             body.gravityScale = gravityBeforeClimbing;
+            if (ascendingTowardsLadderExit && body.linearVelocityY > 0f)
+                body.linearVelocity = new Vector2(body.linearVelocityX, 0f);
             verticalMoveInput = 0f;
             IsClimbing = false;
+            ascendingTowardsLadderExit = false;
         }
 
         public void SetCanMove(bool canMove)
@@ -304,7 +311,22 @@ namespace SubTerra.Gameplay.Player
             if (TryGetLadderTop(out var top))
             {
                 var playerTop = PlayerTop;
-                if (playerTop > top + 0.001f)
+                if (verticalMoveInput < -0.01f) ascendingTowardsLadderExit = false;
+                if (verticalVelocity > 0f && playerTop <= top + 0.001f)
+                    ascendingTowardsLadderExit = true;
+                if (ascendingTowardsLadderExit && verticalVelocity > 0f)
+                {
+                    // Clear the ledge with the feet; stopping the head at the top traps the body below it.
+                    float remaining = Mathf.Max(0f, top + 0.04f - PlayerBottom);
+                    if (remaining <= 0.001f)
+                    {
+                        body.linearVelocity = new Vector2(body.linearVelocityX, 0f);
+                        ExitLadderMode();
+                        return;
+                    }
+                    verticalVelocity = Mathf.Min(verticalVelocity, remaining / Time.fixedDeltaTime);
+                }
+                else if (!ascendingTowardsLadderExit && playerTop > top + 0.001f)
                 {
                     // 위에서 걸친 경우 손을 댈 수 있는 높이까지 입력과 무관하게 내려온다.
                     // 마지막 틱의 이동만 제한해 순간 위치 보정이나 아래쪽 초과 이동을 피한다.
@@ -312,12 +334,6 @@ namespace SubTerra.Gameplay.Player
                         ? -Mathf.Min(ladderSpeed * CurrentSpeedMultiplier,
                             (playerTop - top) / Time.fixedDeltaTime)
                         : 0f;
-                }
-                else if (verticalVelocity > 0f)
-                {
-                    // 여러 사다리에 접촉 중이면 가장 높은 끝을 사용해 연결 구간은 통과한다.
-                    var remaining = Mathf.Max(0f, top - playerTop);
-                    verticalVelocity = Mathf.Min(verticalVelocity, remaining / Time.fixedDeltaTime);
                 }
             }
             body.linearVelocity = new Vector2(body.linearVelocityX, verticalVelocity);
@@ -349,6 +365,8 @@ namespace SubTerra.Gameplay.Player
                 return;
             }
 
+            if (verticalMoveInput > 0f && TryGetLadderTop(out var top) && PlayerBottom >= top - 0.001f)
+                return;
             EnterLadderMode();
         }
 

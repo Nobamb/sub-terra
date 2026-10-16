@@ -9,6 +9,145 @@ namespace SubTerra.Gameplay.Building.Tests
 {
     public sealed class BuildingPlacementTests
     {
+        [TestCase(0, 0)]
+        [TestCase(1, 0)]
+        [TestCase(0, 1)]
+        [TestCase(1, 1)]
+        public void ClinicMovement_BlockedFootprintKeepsOriginal(int x, int y)
+        {
+            MoveChargerOrStorage_BlockedCellAndCancelPreserveOriginal("building.clinic.basic", x, y, new Vector2Int(2, 2));
+        }
+
+        [TestCase("building.charger.basic", 0, 0)]
+        [TestCase("building.charger.basic", 1, 0)]
+        [TestCase("building.charger.basic", 0, 1)]
+        [TestCase("building.charger.basic", 1, 1)]
+        [TestCase("building.storage.basic", 0, 0)]
+        public void MoveChargerOrStorage_BlockedCellAndCancelPreserveOriginal(string buildingId, int dx, int dy, Vector2Int? footprint = null)
+        {
+            var setup = CreateSetup(10f, new Vector2(20f, 20f), footprint: footprint, buildingId: buildingId);
+            try
+            {
+                SetField(setup.Placement, "restoreDefinitions", new[] { setup.Definition });
+                for (int x = 0; x < setup.Definition.Footprint.x; x++)
+                {
+                    setup.Terrain.SetTile(new Vector3Int(x, -1, 0), setup.Tile);
+                    setup.Terrain.SetTile(new Vector3Int(3 + x, -1, 0), setup.Tile);
+                }
+                var placed = setup.Placement.TryPlaceAt(Vector3Int.zero);
+                Assert.That(placed.IsSuccess, Is.True);
+                var instance = setup.BuildingRoot.GetChild(0).GetComponent<BuildingInstance>();
+                Vector3 originalPosition = instance.transform.position;
+                setup.Terrain.SetTile(new Vector3Int(3 + dx, dy, 0), setup.Tile);
+                Assert.That(setup.Placement.TryBeginMove(instance), Is.True);
+                Assert.That(setup.Placement.TryMoveAt(new Vector3Int(3, 0, 0)).Failure,
+                    Is.EqualTo(BuildingPlacementFailure.Occupied));
+                setup.Placement.ClearSelection();
+                Assert.That(instance.transform.position, Is.EqualTo(originalPosition));
+                Assert.That(instance.InstanceId, Is.EqualTo(placed.InstanceId));
+                Assert.That(setup.BuildingRoot.childCount, Is.EqualTo(1));
+                Assert.That(setup.Wallet.SpendCount, Is.EqualTo(1));
+                Assert.That(setup.Placement.IsGroundSupportingBuilding(new Vector3Int(0, -1, 0)), Is.True);
+            }
+            finally { setup.Dispose(); }
+        }
+
+        [TestCase("building.light.basic")]
+        [TestCase("building.settlement.basic")]
+        public void MoveLegacyFacility_ExpandsWithoutSpendingOrConstructionEvent(string buildingId)
+        {
+            var setup = CreateSetup(10f, new Vector2(20f, 20f), buildingId: buildingId);
+            try
+            {
+                SetField(setup.Placement, "restoreDefinitions", new[] { setup.Definition });
+                setup.Terrain.SetTile(new Vector3Int(0, -1, 0), setup.Tile);
+                setup.Terrain.SetTile(new Vector3Int(3, -1, 0), setup.Tile);
+                Assert.That(setup.Placement.TryRestoreBuilding(new BuildingSnapshotDto
+                    { instanceId = "legacy-7", buildingTypeId = buildingId }), Is.True);
+                var instance = setup.BuildingRoot.GetChild(0).GetComponent<BuildingInstance>();
+                int built = 0, moved = 0;
+                setup.Placement.BuildingPlaced += _ => built++;
+                setup.Placement.BuildingMoved += _ => moved++;
+                Assert.That(setup.Placement.TryBeginMove(instance), Is.True);
+                setup.Wallet.CanAffordValue = false;
+                Assert.That(setup.Placement.CanPlaceAt(new Vector3Int(3, 0, 0), out var moveFailure), Is.True);
+                Assert.That(setup.Placement.TryFindBestPlacementCell(1f, out _, out moveFailure), Is.True);
+                setup.Placement.SetResourceWallet(null);
+                Assert.That(setup.Placement.CanPlaceAt(new Vector3Int(3, 0, 0), out moveFailure), Is.True);
+                Assert.That(setup.Placement.TryFindBestPlacementCell(1f, out _, out moveFailure), Is.True);
+                setup.Terrain.SetTile(new Vector3Int(3, 1, 0), setup.Tile);
+                Assert.That(setup.Placement.CanPlaceAt(new Vector3Int(3, 0, 0), out moveFailure), Is.False);
+                Assert.That(moveFailure, Is.EqualTo(BuildingPlacementFailure.Occupied));
+                setup.Terrain.SetTile(new Vector3Int(3, 1, 0), null);
+                Assert.That(setup.Placement.TryPlaceAt(new Vector3Int(3, 0, 0)).IsSuccess, Is.True);
+                Assert.That(setup.BuildingRoot.childCount, Is.EqualTo(1));
+                Assert.That(setup.BuildingRoot.GetChild(0).GetComponent<BuildingInstance>(), Is.SameAs(instance));
+                Assert.That(instance.InstanceId, Is.EqualTo("legacy-7"));
+                Assert.That(instance.transform.position, Is.EqualTo(new Vector3(3.5f, 1f, 0f)));
+                Assert.That(setup.Wallet.SpendCount, Is.Zero);
+                Assert.That(built, Is.Zero);
+                Assert.That(moved, Is.EqualTo(1));
+                Assert.That(setup.Placement.IsGroundSupportingBuilding(new Vector3Int(0, -1, 0)), Is.False);
+                Assert.That(setup.Placement.IsGroundSupportingBuilding(new Vector3Int(3, -1, 0)), Is.True);
+                setup.Wallet.CanAffordValue = true;
+                setup.Placement.Select(setup.Definition);
+                setup.Placement.SetResourceWallet(setup.Wallet);
+                Assert.That(setup.Placement.CanPlaceAt(Vector3Int.zero, out _), Is.True);
+                Assert.That(setup.Placement.CanPlaceAt(new Vector3Int(3, 1, 0), out var failure), Is.False);
+                Assert.That(failure, Is.EqualTo(BuildingPlacementFailure.Occupied));
+            }
+            finally { setup.Dispose(); }
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void MoveFacility_RejectOrCancelLeavesOriginalUntouched(bool blockedByOtherFacility)
+        {
+            var setup = CreateSetup(10f, new Vector2(20f, 20f), buildingId: "building.light.basic");
+            try
+            {
+                SetField(setup.Placement, "restoreDefinitions", new[] { setup.Definition });
+                setup.Terrain.SetTile(new Vector3Int(0, -1, 0), setup.Tile);
+                setup.Terrain.SetTile(new Vector3Int(3, -1, 0), setup.Tile);
+                Assert.That(setup.Placement.TryPlaceAt(Vector3Int.zero).IsSuccess, Is.True);
+                var instance = setup.BuildingRoot.GetChild(0).GetComponent<BuildingInstance>();
+                var original = instance.transform.position;
+                if (blockedByOtherFacility)
+                    setup.Placement.TryRestoreBuilding(new BuildingSnapshotDto
+                        { instanceId = "other-8", buildingTypeId = setup.Definition.BuildingId, x = 3 });
+                else setup.Terrain.SetTile(new Vector3Int(3, 1, 0), setup.Tile);
+                Assert.That(setup.Placement.TryBeginMove(instance), Is.True);
+                Assert.That(setup.Placement.TryMoveAt(new Vector3Int(3, 0, 0)).Failure,
+                    Is.EqualTo(BuildingPlacementFailure.Occupied));
+                Assert.That(instance.transform.position, Is.EqualTo(original));
+                Assert.That(setup.Placement.IsMoving, Is.True);
+                setup.Placement.ClearSelection();
+                Assert.That(instance.transform.position, Is.EqualTo(original));
+                Assert.That(setup.Wallet.SpendCount, Is.EqualTo(1));
+                Assert.That(setup.Placement.IsGroundSupportingBuilding(new Vector3Int(0, -1, 0)), Is.True);
+            }
+            finally { setup.Dispose(); }
+        }
+
+        [Test]
+        public void MoveFacility_AllowsItsOwnCellsButRejectsUnsupportedKinds()
+        {
+            var setup = CreateSetup(10f, new Vector2(20f, 20f), buildingId: "building.settlement.basic");
+            try
+            {
+                SetField(setup.Placement, "restoreDefinitions", new[] { setup.Definition });
+                setup.Terrain.SetTile(new Vector3Int(0, -1, 0), setup.Tile);
+                setup.Placement.TryPlaceAt(Vector3Int.zero);
+                var instance = setup.BuildingRoot.GetChild(0).GetComponent<BuildingInstance>();
+                Assert.That(setup.Placement.TryBeginMoveAt(instance.transform.position), Is.True);
+                Assert.That(setup.Placement.TryMoveAt(Vector3Int.zero).IsSuccess, Is.True);
+                Assert.That(setup.Wallet.SpendCount, Is.EqualTo(1));
+                instance.Initialize(instance.InstanceId, "building.ladder.basic");
+                Assert.That(setup.Placement.TryBeginMove(instance), Is.False);
+            }
+            finally { setup.Dispose(); }
+        }
+
         [Test]
         public void InsufficientResources_TakePriorityAndRepeatedAttemptsDoNotSpend()
         {
