@@ -6,6 +6,7 @@ using SubTerra.App.Integration;
 using SubTerra.App.Inventory;
 using SubTerra.App.Save;
 using SubTerra.App.State;
+using SubTerra.App.UI.RunFailure;
 using SubTerra.Gameplay.Player;
 using SubTerra.Shared;
 using UnityEngine;
@@ -44,12 +45,23 @@ namespace SubTerra.App.Tests.PlayMode.RunFailure
             SetField(runtime, "inventory", inventoryState);
             SetField(runtime, "inventoryService", inventory);
 
+            var startPos = new Vector3(8f, -20f, 0f);
             var player = new GameObject("PromptB46_Player");
-            player.transform.position = new Vector3(8f, -20f, 0f);
+            player.transform.position = startPos;
             player.AddComponent<Rigidbody2D>().gravityScale = 0f;
             var movement = player.AddComponent<PlayerMovement>();
             var fallback = new GameObject("PromptB46_ElevatorCenter");
             fallback.transform.position = new Vector3(-6.5f, -0.65f, 0f);
+
+            var canvasObject = new GameObject("PromptB46_Canvas", typeof(RectTransform), typeof(Canvas));
+            var panelObject = new GameObject("RunFailurePanel", typeof(RectTransform));
+            panelObject.transform.SetParent(canvasObject.transform, false);
+            var view = panelObject.AddComponent<RunFailurePanelView>();
+            view.BuildOrUpdateHierarchy();
+            view.VisualSettings.darkenDuration = 0.08f;
+            view.VisualSettings.heavyGlitchDuration = 0.50f;
+            view.VisualSettings.tvTurnOnDuration = 0.08f;
+
             var settings = ScriptableObject.CreateInstance<PlayerSurvivalSettings>();
             var host = new GameObject("PromptB46_RunFailure");
             var survival = host.AddComponent<PlayerSurvivalController>();
@@ -59,21 +71,40 @@ namespace SubTerra.App.Tests.PlayMode.RunFailure
             SetField(controller, "playerMovement", movement);
             SetField(controller, "playerTransform", player.transform);
             SetField(controller, "localSurfaceFallback", fallback.transform);
-            SetField(controller, "failureDisplaySeconds", 0f);
+            SetField(controller, "failureView", view);
             controller.Bind(runtime, state);
 
             state.SetCurrentEnergy(0);
             Assert.That(survival.ApplyFall(100f), Is.True);
             yield return null;
 
+            // 확인 전에는 진행하지 않으며 순간이동도 일어나지 않는다.
+            Assert.That(controller.IsHandling, Is.True);
+            Assert.That(controller.IsWaitingForConfirmation, Is.True);
+            Assert.That(player.transform.position, Is.EqualTo(startPos));
+            Assert.That(movement.CanMove, Is.False);
+
+            // 1차 입력: 연출 스킵
+            Assert.That(controller.ConfirmOrSkip(), Is.False);
+            Assert.That(controller.IsWaitingForConfirmation, Is.True);
+
+            // 2차 입력: 확인 확정 후 암전 → 강한 글리치(이동 1회) → TV 켜짐 전환
+            Assert.That(controller.ConfirmOrSkip(), Is.True);
+            var elapsed = 0f;
+            while (controller.IsHandling && elapsed < 2.5f)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                yield return null;
+            }
+
             Assert.That(controller.IsHandling, Is.False);
+            Assert.That(controller.PlayerMoveExecutionCount, Is.EqualTo(1));
             Assert.That(player.transform.position, Is.EqualTo(fallback.transform.position));
             Assert.That(state.Run.LifecyclePhase, Is.EqualTo(RunLifecyclePhase.Active));
-            Assert.That(state.Player.Energy,
-                Is.EqualTo(SaveRuntimeController.MineElevatorEnergyCost));
             Assert.That(movement.CanMove, Is.True);
 
             controller.Unbind();
+            Object.Destroy(canvasObject);
             Object.Destroy(host);
             Object.Destroy(settings);
             Object.Destroy(fallback);
@@ -123,6 +154,16 @@ namespace SubTerra.App.Tests.PlayMode.RunFailure
             var host = new GameObject("L_Runtime_Orchestrator");
             var elevatorFallback = new GameObject("L_Runtime_ElevatorFallback");
             elevatorFallback.transform.position = new Vector3(-6.5f, -0.65f, 0f);
+
+            var canvasObject = new GameObject("L_Runtime_Canvas", typeof(RectTransform), typeof(Canvas));
+            var panelObject = new GameObject("RunFailurePanel", typeof(RectTransform));
+            panelObject.transform.SetParent(canvasObject.transform, false);
+            var view = panelObject.AddComponent<RunFailurePanelView>();
+            view.BuildOrUpdateHierarchy();
+            view.VisualSettings.darkenDuration = 0.08f;
+            view.VisualSettings.heavyGlitchDuration = 0.50f;
+            view.VisualSettings.tvTurnOnDuration = 0.08f;
+
             var survival = host.AddComponent<PlayerSurvivalController>();
             survival.Configure(settings, player.transform);
             var controller = host.AddComponent<RunFailureRuntimeController>();
@@ -130,8 +171,8 @@ namespace SubTerra.App.Tests.PlayMode.RunFailure
             SetField(controller, "playerMovement", movement);
             SetField(controller, "playerTransform", player.transform);
             SetField(controller, "localSurfaceFallback", elevatorFallback.transform);
+            SetField(controller, "failureView", view);
             SetField(controller, "gameplayInputBehaviours", new Behaviour[] { playerInput });
-            SetField(controller, "failureDisplaySeconds", 0.05f);
             controller.Bind(runtime, state);
 
             var rescueCount = 0;
@@ -168,7 +209,18 @@ namespace SubTerra.App.Tests.PlayMode.RunFailure
             Assert.That(controller.IsHandling, Is.True);
             Assert.That(playerInput.enabled, Is.False);
             Assert.That(movement.CanMove, Is.False);
-            yield return new WaitForSecondsRealtime(0.1f);
+            Assert.That(view.DisplayedCauseTitle, Is.EqualTo("가스 중독"));
+
+            // 스킵 후 확인 확정
+            Assert.That(controller.ConfirmOrSkip(), Is.False);
+            Assert.That(controller.ConfirmOrSkip(), Is.True);
+
+            var elapsed = 0f;
+            while (controller.IsHandling && elapsed < 2.5f)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                yield return null;
+            }
 
             Assert.That(controller.IsHandling, Is.False);
             Assert.That(rescueCount, Is.EqualTo(1));
@@ -192,6 +244,7 @@ namespace SubTerra.App.Tests.PlayMode.RunFailure
             Assert.That(survival.State.CanAct, Is.True);
 
             controller.Unbind();
+            Object.Destroy(canvasObject);
             Object.Destroy(host);
             Object.Destroy(elevatorFallback);
             Object.Destroy(player);
