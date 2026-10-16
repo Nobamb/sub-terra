@@ -133,6 +133,9 @@ namespace SubTerra.App.UI.RunFailure
         public const string EmptyCargoMessage = "잃은 자원 없음";
         public const float StepSeconds = 1f / 30f;
 
+        private const float IdleSlotSeconds = 0.4f;
+        private const float IdleBurstChance = 0.34f;
+
         private readonly RunFailureCause cause;
         private readonly List<CargoLossEntryDto> lostItems;
         private readonly float preservationRatio;
@@ -298,13 +301,14 @@ namespace SubTerra.App.UI.RunFailure
 
                 // 30fps 계단식 스타카토 플리커
                 var flickerRoll = Hash01(glitchSeed, 43);
+                // 창 전체가 사라졌다 켜지는 느낌이 아니라 밝기가 살짝 흔들리는 정도로 제한한다.
                 if (normalized < 0.15f)
                 {
-                    windowFlickerAlpha = flickerRoll > 0.45f ? 0.88f : 0.28f;
+                    windowFlickerAlpha = flickerRoll > 0.45f ? 0.92f : 0.62f;
                 }
                 else if (flickerRoll > 0.64f)
                 {
-                    windowFlickerAlpha = Mathf.Lerp(0.45f, 0.92f, normalized);
+                    windowFlickerAlpha = Mathf.Lerp(0.74f, 0.96f, normalized);
                 }
                 else
                 {
@@ -403,18 +407,24 @@ namespace SubTerra.App.UI.RunFailure
         {
             var t = Mathf.Max(0f, timeSeconds);
             seed = Mathf.FloorToInt(t / StepSeconds) + 911;
-            var cycle = Mathf.Repeat(t, 2.25f);
-            if (cycle < 0.08f)
+
+            // 0.4초 칸마다 확률로 짧게 한 번, 창 가장자리 조각에만 쓰이는 간헐 글리치 (전력 고갈 팝업과 같은 방식)
+            var slot = Mathf.FloorToInt(t / IdleSlotSeconds);
+            var local = t - (slot * IdleSlotSeconds);
+            if (Hash01(slot, 7) > IdleBurstChance)
             {
-                return 0.68f;
+                return 0f;
             }
 
-            if (cycle > 1.18f && cycle < 1.24f)
+            var start = Hash01(slot, 3) * 0.18f;
+            var length = 0.08f + (Hash01(slot, 5) * 0.08f);
+            if (local < start || local > start + length)
             {
-                return 0.46f;
+                return 0f;
             }
 
-            return 0f;
+            seed = (slot * 7) + Mathf.FloorToInt(local / StepSeconds) + 911;
+            return 0.40f + (Hash01(slot, 11) * 0.45f);
         }
 
         public static float Hash01(int seed, int salt)

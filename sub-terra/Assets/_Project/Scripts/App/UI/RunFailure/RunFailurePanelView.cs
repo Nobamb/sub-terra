@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using SubTerra.App.Core;
 using SubTerra.App.Core.Data;
+using SubTerra.App.Tutorial;
 using SubTerra.App.UI.HUD;
 using SubTerra.App.UI.MainMenu;
 using SubTerra.Shared;
@@ -20,13 +21,30 @@ namespace SubTerra.App.UI.RunFailure
     /// </summary>
     public sealed class RunFailurePanelView : MonoBehaviour
     {
-        public static readonly Vector2 CardSize = new Vector2(880f, 675f);
+        // 전용 패널 이미지(1432x1098)와 같은 비율을 유지해야 프레임이 늘어나지 않는다.
+        public static readonly Vector2 CardSize = new Vector2(1100f, 843f);
 
         private const int WindowBarCount = 12;
         private const int CardBandCount = 4;
         private const int ScreenBarCount = 14;
-        private const float EdgeSpill = 34f;
+        private const float EdgeSpill = 64f;
         private const float BackdropAlpha = 0.78f;
+        private const float TextJitterScale = 0.15f;
+        private const float DecorJitterScale = 1.4f;
+
+        // 카드 중심 기준 세로 배치(위 +). 패널 이미지 안쪽 여백(약 y +326 ~ -308) 안에서 요소 사이를 18px 이상 띄운다.
+        private const float TitleCenterY = 284f;
+        private const float DividerCenterY = 244f;
+        private const float SubtitleCenterY = 212f;
+        private const float CargoCenterY = 12f;
+        private const float CargoHeaderHeight = 44f;
+        private const float CargoRowHeight = 50f;
+        private const float CargoRowSpacing = 8f;
+        private const float BadgeCenterY = -194f;
+        private const float ButtonCenterY = -265f;
+        private static readonly Vector2 CargoBoxSize = new Vector2(880f, 328f);
+        private static readonly Vector2 BadgeSize = new Vector2(740f, 48f);
+        private static readonly Vector2 ConfirmButtonSize = new Vector2(320f, 58f);
 
         private static readonly Color BackdropBaseColor = new Color(0.01f, 0.015f, 0.028f, BackdropAlpha);
 
@@ -70,8 +88,11 @@ namespace SubTerra.App.UI.RunFailure
 
         private MineResetTimedPopupSkin popupSkin;
         private Image backdropImage;
+        private Canvas panelCanvas;
+        private GraphicRaycaster panelRaycaster;
         private Image backdropVignetteImage;
         private Image cardFlashImage;
+        private Image cardScanlineImage;
         private RectTransform contentRoot;
         private CanvasGroup contentCanvasGroup;
         private Image warnLeftImage;
@@ -89,6 +110,8 @@ namespace SubTerra.App.UI.RunFailure
         private Image preservationDiamondRight;
         private Image confirmButtonOutlineImage;
         private SliceBandWidgets[] glitchBands;
+        private JitterBlock[] jitterBlocks;
+        private bool jitterBlocksOffset;
         private Image screenVignetteImage;
         private Image screenCenterFlashImage;
         private Image tvTopSeamGlowImage;
@@ -120,6 +143,13 @@ namespace SubTerra.App.UI.RunFailure
         public string DisplayedCauseTitle => titleText != null ? titleText.text : string.Empty;
         public string DisplayedPreservationText => preservationText != null ? preservationText.text : string.Empty;
         public string DisplayedEmptyCargoText => emptyCargoText != null ? emptyCargoText.text : string.Empty;
+
+        private sealed class JitterBlock
+        {
+            public RectTransform[] Rects;
+            public Vector2[] BasePositions;
+            public float Scale;
+        }
 
         private sealed class SliceBandWidgets
         {
@@ -234,6 +264,21 @@ namespace SubTerra.App.UI.RunFailure
             backdropImage.color = BackdropBaseColor;
             backdropImage.raycastTarget = true;
 
+            // 드론 말풍선(30_000)보다 앞에 보이도록 독립 정렬 캔버스를 쓴다.
+            panelCanvas = GetComponent<Canvas>();
+            if (panelCanvas == null)
+            {
+                panelCanvas = gameObject.AddComponent<Canvas>();
+            }
+
+            panelCanvas.overrideSorting = true;
+            panelCanvas.sortingOrder = UiLayerPriority.RunFailureModal;
+            panelRaycaster = GetComponent<GraphicRaycaster>();
+            if (panelRaycaster == null)
+            {
+                panelRaycaster = gameObject.AddComponent<GraphicRaycaster>();
+            }
+
             for (var i = transform.childCount - 1; i >= 0; i--)
             {
                 var child = transform.GetChild(i);
@@ -320,18 +365,28 @@ namespace SubTerra.App.UI.RunFailure
                 glitchBands[i] = CreateSliceBand(bandRootRect, i);
             }
 
-            // 순간 섬광 레이어
-            var flashSprite = RunFailureGlitchArt.GetHaloSprite();
+            // 순간 섬광 레이어: 패널 이미지 자체를 원인색으로 덧입혀 프레임 모양 그대로 번쩍인다(사각 윤곽선 아님).
             cardFlashImage = CreateCenteredImage(
                 visualRoot,
                 "CardFlash",
-                flashSprite,
+                activePanelSprite,
                 Vector2.zero,
-                CardSize + new Vector2(18f, 18f),
+                CardSize,
                 new Color(1f, 0.28f, 0.24f, 0f));
+            cardFlashImage.type = Image.Type.Simple;
+
+            // 글리치 중에만 은은하게 깔리는 주사선 질감
+            var scanlineLayerObj = CreateUiObject("CardScanlines", visualRoot);
+            SetCenteredRect(scanlineLayerObj.GetComponent<RectTransform>(), Vector2.zero, CardSize - new Vector2(150f, 160f));
+            cardScanlineImage = scanlineLayerObj.AddComponent<Image>();
+            cardScanlineImage.sprite = RunFailureGlitchArt.GetScanlineSprite();
+            cardScanlineImage.type = Image.Type.Tiled;
+            cardScanlineImage.color = new Color(1f, 1f, 1f, 0f);
+            cardScanlineImage.raycastTarget = false;
 
             // 4. 본문 컨텐츠 영역 (제목, 원인 설명, 유실 자원 테이블, 보존율 배지, 확인 버튼)
             BuildCardContent(visualRoot, activeFont);
+            BuildJitterBlocks();
 
             // 5. 카드 가장자리 스필 글리치 바 12개
             var barContainerObj = CreateUiObject("WindowGlitchBars", visualRoot);
@@ -395,6 +450,101 @@ namespace SubTerra.App.UI.RunFailure
 
             rgbSplitLeftImage.sprite = sprite;
             rgbSplitRightImage.sprite = sprite;
+            if (cardFlashImage != null)
+            {
+                cardFlashImage.sprite = sprite;
+            }
+        }
+
+        /// <summary>글리치 때 본문이 블록 단위로 가로로 어긋나도록 이동 대상과 기준 위치를 모아 둔다.</summary>
+        private void BuildJitterBlocks()
+        {
+            var blocks = new List<JitterBlock>();
+            // 글자가 들어 있는 블록은 거의 고정(배율 낮음), 장식만 크게 어긋나 글자는 읽히고 바깥만 일그러져 보이게 한다.
+            AddJitterBlock(blocks, TextJitterScale, titleText != null ? titleText.rectTransform : null);
+            AddJitterBlock(blocks, DecorJitterScale, warnLeftImage != null ? warnLeftImage.rectTransform : null);
+            AddJitterBlock(blocks, DecorJitterScale, warnRightImage != null ? warnRightImage.rectTransform : null);
+            AddJitterBlock(blocks, DecorJitterScale, titleDividerImage != null ? titleDividerImage.rectTransform : null, titleDividerCoreImage != null ? titleDividerCoreImage.rectTransform : null);
+            AddJitterBlock(blocks, TextJitterScale, subtitleText != null ? subtitleText.rectTransform : null);
+            AddJitterBlock(blocks, TextJitterScale, cargoScrollRect != null ? cargoScrollRect.transform.parent as RectTransform : null);
+            AddJitterBlock(blocks, TextJitterScale, preservationPlateImage != null ? preservationPlateImage.rectTransform : null);
+            AddJitterBlock(blocks, TextJitterScale, confirmButton != null ? confirmButton.transform as RectTransform : null);
+            jitterBlocks = blocks.ToArray();
+            jitterBlocksOffset = false;
+        }
+
+        private static void AddJitterBlock(List<JitterBlock> blocks, float scale, params RectTransform[] rects)
+        {
+            var valid = new List<RectTransform>();
+            for (var i = 0; i < rects.Length; i++)
+            {
+                if (rects[i] != null)
+                {
+                    valid.Add(rects[i]);
+                }
+            }
+
+            if (valid.Count == 0)
+            {
+                return;
+            }
+
+            var basePositions = new Vector2[valid.Count];
+            for (var i = 0; i < valid.Count; i++)
+            {
+                basePositions[i] = valid[i].anchoredPosition;
+            }
+
+            blocks.Add(new JitterBlock { Rects = valid.ToArray(), BasePositions = basePositions, Scale = scale });
+        }
+
+        private void ApplyJitterBlocks(int seed, float amplitude)
+        {
+            if (jitterBlocks == null)
+            {
+                return;
+            }
+
+            for (var i = 0; i < jitterBlocks.Length; i++)
+            {
+                var block = jitterBlocks[i];
+                // 일부 블록만 어긋나야 화면이 찢어진 느낌이 난다.
+                var moves = RunFailureRevealTimeline.Hash01(seed, 91 + i) > 0.42f;
+                var shiftX = moves
+                    ? (RunFailureRevealTimeline.Hash01(seed, 101 + i) - 0.5f) * 2f * amplitude * block.Scale
+                    : 0f;
+                for (var j = 0; j < block.Rects.Length; j++)
+                {
+                    if (block.Rects[j] != null)
+                    {
+                        block.Rects[j].anchoredPosition = block.BasePositions[j] + new Vector2(shiftX, 0f);
+                    }
+                }
+            }
+
+            jitterBlocksOffset = true;
+        }
+
+        private void ResetJitterBlocks()
+        {
+            if (!jitterBlocksOffset || jitterBlocks == null)
+            {
+                return;
+            }
+
+            for (var i = 0; i < jitterBlocks.Length; i++)
+            {
+                var block = jitterBlocks[i];
+                for (var j = 0; j < block.Rects.Length; j++)
+                {
+                    if (block.Rects[j] != null)
+                    {
+                        block.Rects[j].anchoredPosition = block.BasePositions[j];
+                    }
+                }
+            }
+
+            jitterBlocksOffset = false;
         }
 
         private SliceBandWidgets CreateSliceBand(RectTransform parent, int index)
@@ -438,34 +588,34 @@ namespace SubTerra.App.UI.RunFailure
             titleText.fontStyle = FontStyles.Bold;
             titleText.characterSpacing = 3f;
             titleText.enableAutoSizing = true;
-            titleText.fontSizeMin = 26f;
-            titleText.fontSizeMax = 38f;
-            SetCenteredRect(titleText.rectTransform, new Vector2(0f, 240f), new Vector2(560f, 54f));
+            titleText.fontSizeMin = 28f;
+            titleText.fontSizeMax = 42f;
+            SetCenteredRect(titleText.rectTransform, new Vector2(0f, TitleCenterY), new Vector2(640f, 60f));
 
             var diamondSprite = RunFailureGlitchArt.GetDiamondSprite();
             warnLeftImage = CreateCenteredImage(
                 contentRoot,
                 "WarnL",
                 diamondSprite,
-                new Vector2(-175f, 240f),
-                new Vector2(20f, 20f),
+                new Vector2(-225f, TitleCenterY),
+                new Vector2(22f, 22f),
                 new Color(1f, 0.28f, 0.24f, 0.95f));
             warnRightImage = CreateCenteredImage(
                 contentRoot,
                 "WarnR",
                 diamondSprite,
-                new Vector2(175f, 240f),
-                new Vector2(20f, 20f),
+                new Vector2(225f, TitleCenterY),
+                new Vector2(22f, 22f),
                 new Color(1f, 0.28f, 0.24f, 0.95f));
 
             // 2. 원인별 색상을 적용하는 타이틀 디바이더
             var dividerSprite = RunFailureGlitchArt.GetCrtBeamSprite();
-            var dividerSize = new Vector2(600f, 4f);
+            var dividerSize = new Vector2(700f, 4f);
             titleDividerImage = CreateCenteredImage(
                 contentRoot,
                 "TitleDivider",
                 dividerSprite,
-                new Vector2(0f, 210f),
+                new Vector2(0f, DividerCenterY),
                 dividerSize,
                 new Color(1f, 0.50f, 0.45f, 0.92f));
 
@@ -473,22 +623,22 @@ namespace SubTerra.App.UI.RunFailure
                 contentRoot,
                 "TitleDividerCore",
                 RunFailureGlitchArt.GetCrtBeamSprite(),
-                new Vector2(0f, 210f),
-                new Vector2(520f, 4f),
+                new Vector2(0f, DividerCenterY),
+                new Vector2(600f, 4f),
                 new Color(1f, 0.35f, 0.30f, 0.85f));
 
             // 3. 부제 (원인별 상태 메시지)
-            subtitleText = CreateTextElement(contentRoot, "FailureSubtitle", font, 19f, TextAlignmentOptions.Center);
+            subtitleText = CreateTextElement(contentRoot, "FailureSubtitle", font, 21f, TextAlignmentOptions.Center);
             subtitleText.color = new Color(0.86f, 0.92f, 0.98f, 0.94f);
             subtitleText.enableAutoSizing = true;
-            subtitleText.fontSizeMin = 14f;
-            subtitleText.fontSizeMax = 19f;
-            SetCenteredRect(subtitleText.rectTransform, new Vector2(0f, 174f), new Vector2(720f, 34f));
+            subtitleText.fontSizeMin = 15f;
+            subtitleText.fontSizeMax = 21f;
+            SetCenteredRect(subtitleText.rectTransform, new Vector2(0f, SubtitleCenterY), new Vector2(880f, 36f));
 
             // 4. 유실 자원 목록 홀로그램 테이블 (팝업 내부 중앙 영역)
             var cargoBoxObj = CreateUiObject("LostCargoSection", contentRoot);
             var cargoBoxRect = cargoBoxObj.GetComponent<RectTransform>();
-            SetCenteredRect(cargoBoxRect, new Vector2(0f, 4f), new Vector2(736f, 304f));
+            SetCenteredRect(cargoBoxRect, new Vector2(0f, CargoCenterY), CargoBoxSize);
             var cargoBoxImg = cargoBoxObj.AddComponent<Image>();
             cargoBoxImg.sprite = RunFailureGlitchArt.GetChamferFillSprite();
             cargoBoxImg.type = Image.Type.Sliced;
@@ -500,7 +650,7 @@ namespace SubTerra.App.UI.RunFailure
                 "CargoTableOutline",
                 RunFailureGlitchArt.GetChamferOutlineSprite(),
                 Vector2.zero,
-                new Vector2(736f, 304f),
+                CargoBoxSize,
                 new Color(1f, 0.28f, 0.24f, 0.48f));
 
             // 테이블 상단 헤더 바
@@ -509,8 +659,8 @@ namespace SubTerra.App.UI.RunFailure
             headerRect.anchorMin = new Vector2(0f, 1f);
             headerRect.anchorMax = new Vector2(1f, 1f);
             headerRect.pivot = new Vector2(0.5f, 1f);
-            headerRect.offsetMin = new Vector2(6f, -40f);
-            headerRect.offsetMax = new Vector2(-6f, -4f);
+            headerRect.offsetMin = new Vector2(8f, -(CargoHeaderHeight + 6f));
+            headerRect.offsetMax = new Vector2(-8f, -6f);
             cargoHeaderBarImage = headerObj.AddComponent<Image>();
             cargoHeaderBarImage.sprite = RunFailureGlitchArt.GetChamferFillSprite();
             cargoHeaderBarImage.type = Image.Type.Sliced;
@@ -521,26 +671,26 @@ namespace SubTerra.App.UI.RunFailure
                 headerRect,
                 "HeaderLeft",
                 font,
-                16f,
+                18f,
                 TextAlignmentOptions.MidlineLeft);
             cargoHeaderLeftText.fontStyle = FontStyles.Bold;
             cargoHeaderLeftText.text = "유실 자원 목록";
-            SetStretch(cargoHeaderLeftText.rectTransform, new Vector2(18f, 0f), new Vector2(-220f, 0f));
+            SetStretch(cargoHeaderLeftText.rectTransform, new Vector2(24f, 0f), new Vector2(-240f, 0f));
 
             cargoHeaderRightText = CreateTextElement(
                 headerRect,
                 "HeaderRight",
                 font,
-                16f,
+                18f,
                 TextAlignmentOptions.MidlineRight);
             cargoHeaderRightText.fontStyle = FontStyles.Bold;
             cargoHeaderRightText.text = "유실 수량";
-            SetStretch(cargoHeaderRightText.rectTransform, new Vector2(220f, 0f), new Vector2(-18f, 0f));
+            SetStretch(cargoHeaderRightText.rectTransform, new Vector2(240f, 0f), new Vector2(-24f, 0f));
 
             // 스크롤 뷰포트
             var scrollObj = CreateUiObject("CargoScrollView", cargoBoxRect);
             var scrollRectTransform = scrollObj.GetComponent<RectTransform>();
-            SetStretch(scrollRectTransform, new Vector2(10f, 10f), new Vector2(-10f, -44f));
+            SetStretch(scrollRectTransform, new Vector2(12f, 12f), new Vector2(-12f, -(CargoHeaderHeight + 14f)));
             cargoScrollRect = scrollObj.AddComponent<ScrollRect>();
             cargoScrollRect.horizontal = false;
             cargoScrollRect.vertical = true;
@@ -564,7 +714,7 @@ namespace SubTerra.App.UI.RunFailure
             cargoContentRoot.sizeDelta = Vector2.zero;
             var vlg = scrollContentObj.AddComponent<VerticalLayoutGroup>();
             vlg.padding = new RectOffset(6, 6, 6, 6);
-            vlg.spacing = 7f;
+            vlg.spacing = CargoRowSpacing;
             vlg.childAlignment = TextAnchor.UpperLeft;
             vlg.childControlWidth = true;
             vlg.childControlHeight = true;
@@ -586,12 +736,12 @@ namespace SubTerra.App.UI.RunFailure
                 TextAlignmentOptions.Center);
             emptyCargoText.color = new Color(0.75f, 0.82f, 0.90f, 0.92f);
             emptyCargoText.text = RunFailureRevealTimeline.EmptyCargoMessage;
-            SetStretch(emptyCargoText.rectTransform, new Vector2(20f, 16f), new Vector2(-20f, -44f));
+            SetStretch(emptyCargoText.rectTransform, new Vector2(24f, 20f), new Vector2(-24f, -(CargoHeaderHeight + 14f)));
 
             // 5. 드론 구조 보존율 하단 배지
             var presPlateObj = CreateUiObject("PreservationBadge", contentRoot);
             var presPlateRect = presPlateObj.GetComponent<RectTransform>();
-            SetCenteredRect(presPlateRect, new Vector2(0f, -170f), new Vector2(640f, 42f));
+            SetCenteredRect(presPlateRect, new Vector2(0f, BadgeCenterY), BadgeSize);
             preservationPlateImage = presPlateObj.AddComponent<Image>();
             preservationPlateImage.sprite = RunFailureGlitchArt.GetChamferFillSprite();
             preservationPlateImage.type = Image.Type.Sliced;
@@ -603,33 +753,33 @@ namespace SubTerra.App.UI.RunFailure
                 "PreservationOutline",
                 RunFailureGlitchArt.GetChamferOutlineSprite(),
                 Vector2.zero,
-                new Vector2(640f, 42f),
+                BadgeSize,
                 new Color(1f, 0.28f, 0.24f, 0.42f));
 
             preservationDiamondLeft = CreateCenteredImage(
                 presPlateRect,
                 "PresDiamondL",
                 diamondSprite,
-                new Vector2(-288f, 0f),
-                new Vector2(12f, 12f),
+                new Vector2((-BadgeSize.x * 0.5f) + 28f, 0f),
+                new Vector2(13f, 13f),
                 new Color(1f, 0.28f, 0.24f, 0.85f));
             preservationDiamondRight = CreateCenteredImage(
                 presPlateRect,
                 "PresDiamondR",
                 diamondSprite,
-                new Vector2(288f, 0f),
-                new Vector2(12f, 12f),
+                new Vector2((BadgeSize.x * 0.5f) - 28f, 0f),
+                new Vector2(13f, 13f),
                 new Color(1f, 0.28f, 0.24f, 0.85f));
 
             preservationText = CreateTextElement(
                 presPlateRect,
                 "PreservationText",
                 font,
-                20f,
+                22f,
                 TextAlignmentOptions.Center);
             preservationText.fontStyle = FontStyles.Bold;
             preservationText.color = new Color(0.92f, 0.96f, 1f, 0.98f);
-            SetStretch(preservationText.rectTransform, new Vector2(36f, 2f), new Vector2(-36f, -2f));
+            SetStretch(preservationText.rectTransform, new Vector2(48f, 2f), new Vector2(-48f, -2f));
 
             // 호환용 숨김 detailText (기존 직렬화/정적 테스트 호환성 유지)
             detailText = CreateTextElement(
@@ -639,13 +789,13 @@ namespace SubTerra.App.UI.RunFailure
                 16f,
                 TextAlignmentOptions.Center);
             detailText.color = new Color(1f, 1f, 1f, 0f);
-            SetCenteredRect(detailText.rectTransform, new Vector2(0f, -182f), new Vector2(640f, 40f));
+            SetCenteredRect(detailText.rectTransform, new Vector2(0f, BadgeCenterY), new Vector2(640f, 40f));
 
             // 6. 전용 패널에 맞춘 확인 버튼
-            var buttonSize = new Vector2(288f, 54f);
+            var buttonSize = ConfirmButtonSize;
             var buttonObj = CreateUiObject("ConfirmButton", contentRoot);
             var buttonRect = buttonObj.GetComponent<RectTransform>();
-            SetCenteredRect(buttonRect, new Vector2(0f, -230f), buttonSize);
+            SetCenteredRect(buttonRect, new Vector2(0f, ButtonCenterY), buttonSize);
 
             confirmButtonOutlineImage = CreateCenteredImage(
                 buttonRect,
@@ -683,7 +833,7 @@ namespace SubTerra.App.UI.RunFailure
                 buttonRect,
                 "ConfirmLabel",
                 font,
-                25f,
+                27f,
                 TextAlignmentOptions.Center);
             confirmButtonText.fontStyle = FontStyles.Bold;
             confirmButtonText.text = "확인";
@@ -1379,6 +1529,13 @@ namespace SubTerra.App.UI.RunFailure
                     cardFlashImage.color = WithAlpha(primaryColor, 0f);
                 }
 
+                if (cardScanlineImage != null)
+                {
+                    cardScanlineImage.color = WithAlpha(Color.white, 0f);
+                }
+
+                ResetJitterBlocks();
+
                 if (windowGlitchBars != null)
                 {
                     for (var i = 0; i < windowGlitchBars.Length; i++)
@@ -1407,10 +1564,11 @@ namespace SubTerra.App.UI.RunFailure
             }
 
             // 1. 좌/우 고스트 프레임 분리
+            // 고스트·밴드·섬광은 본문 뒤에 깔리므로 세게 줘도 글자는 그대로 읽힌다.
             var ghostShift = rgbSplitOffset.sqrMagnitude > 0.01f
-                ? rgbSplitOffset
-                : new Vector2((mode == 0 ? 4f : 9f) * clampedIntensity, 0f);
-            var ghostAlphaScale = mode == 0 ? 0.34f : 0.64f;
+                ? rgbSplitOffset * 2.4f
+                : new Vector2((mode == 0 ? 9f : 20f) * clampedIntensity, 0f);
+            var ghostAlphaScale = mode == 0 ? 0.38f : 0.82f;
 
             if (rgbSplitLeftRect != null && rgbSplitLeftImage != null)
             {
@@ -1426,10 +1584,17 @@ namespace SubTerra.App.UI.RunFailure
                 rgbSplitRightImage.color = WithAlpha(secondaryColor, (ghostAlphaScale * 0.9f) * clampedIntensity);
             }
 
+            // 패널 이미지에 원인색을 곱해 덧입히므로 프레임·장식 모양대로 번쩍이고 면이 균일한 단색으로 칠해지지 않는다.
             if (cardFlashImage != null)
             {
-                var flashScale = mode == 0 ? 0.22f : 0.72f;
+                var flashScale = mode == 0 ? 0.0f : 0.70f;
                 cardFlashImage.color = WithAlpha(flashTint, flashScale * clampedIntensity);
+            }
+
+            if (cardScanlineImage != null)
+            {
+                var scanScale = mode == 0 ? 0.05f : 0.12f;
+                cardScanlineImage.color = WithAlpha(Color.Lerp(primaryColor, Color.white, 0.5f), scanScale * clampedIntensity);
             }
 
             // 30fps 스텝이 동일하면 바/밴드 지오메트리 재계산 생략
@@ -1441,11 +1606,21 @@ namespace SubTerra.App.UI.RunFailure
 
             lastCardGlitchKey = key;
 
+            // 본문 블록이 가로로 어긋나는 왜곡(대기 중 가장자리 글리치에서는 흔들지 않는다)
+            if (mode == 0)
+            {
+                ResetJitterBlocks();
+            }
+            else
+            {
+                ApplyJitterBlocks(seed, (mode == 2 ? 34f : 22f) * clampedIntensity);
+            }
+
             // 2. 카드 가장자리 스필 및 내부 글리치 바 (EmergencyRescuePopupView 방식)
             if (windowGlitchBars != null && windowGlitchBarImages != null)
             {
                 var totalBars = Mathf.Min(windowGlitchBars.Length, windowGlitchBarImages.Length);
-                var maxActiveBars = mode == 2 ? totalBars : (mode == 1 ? Mathf.Min(9, totalBars) : Mathf.Min(4, totalBars));
+                var maxActiveBars = mode == 0 ? Mathf.Min(6, totalBars) : totalBars;
                 var activeBarCount = Mathf.Clamp(Mathf.CeilToInt(clampedIntensity * maxActiveBars), 1, maxActiveBars);
 
                 for (var i = 0; i < totalBars; i++)
@@ -1475,20 +1650,28 @@ namespace SubTerra.App.UI.RunFailure
                     var h6 = RunFailureRevealTimeline.Hash01(seed, (i * 5) + 16);
                     var h7 = RunFailureRevealTimeline.Hash01(seed, (i * 5) + 17);
 
-                    var width = mode == 0 ? 18f + (h1 * 64f) : 54f + (h1 * 260f);
-                    var height = 2.5f + (h2 * 5.5f);
+                    // 바는 본문 위에 그려지므로 글자를 가리지 않게 프레임 둘레(좌우 가장자리·위아래 테두리)에만 둔다.
+                    // 바깥 끝은 EdgeSpill까지 번지고, 안쪽 끝은 본문 영역(x≈±450) 밖에 머물도록 길이를 제한한다.
+                    var width = mode == 0 ? 40f + (h1 * 80f) : 70f + (h1 * 70f);
+                    var height = 6f + (h2 * 10f);
                     var side = h3 < 0.5f ? -1f : 1f;
-                    var yRange = (CardSize.y * 0.5f) - 36f;
-                    var y = (h4 - 0.5f) * 2f * yRange;
+                    var halfW = CardSize.x * 0.5f;
+                    var halfH = CardSize.y * 0.5f;
                     float x;
-                    if (mode == 0)
+                    float y;
+                    if (mode == 0 || h5 < 0.6f)
                     {
-                        x = side * ((CardSize.x * 0.5f) + (EdgeSpill * 0.8f) - (width * 0.5f));
+                        // 좌우 가장자리: 바깥으로 번지며 프레임 두께 안쪽까지만 들어온다.
+                        x = side * (halfW + (EdgeSpill * 0.8f) - (width * 0.5f));
+                        y = (h4 - 0.5f) * 2f * (halfH - 40f);
                     }
                     else
                     {
-                        var xRange = (CardSize.x * 0.5f) - (width * 0.5f) + EdgeSpill;
-                        x = (h5 - 0.5f) * 2f * xRange;
+                        // 위아래 테두리: 제목·버튼 영역 밖(프레임 두께 구간)에만 놓는다.
+                        width = 130f + (h1 * 300f);
+                        var yEdge = halfH - 36f + (EdgeSpill * 0.3f) - (h4 * 64f);
+                        y = (h3 < 0.5f ? -1f : 1f) * yEdge;
+                        x = (h6 - 0.5f) * 2f * (halfW - (width * 0.5f));
                     }
 
                     barRect.anchorMin = new Vector2(0.5f, 0.5f);
@@ -1503,7 +1686,7 @@ namespace SubTerra.App.UI.RunFailure
                         barColor = Color.Lerp(primaryColor, Color.white, 0.55f);
                     }
 
-                    var alpha = (0.42f + (0.52f * h7)) * Mathf.Min(1f, clampedIntensity * 1.3f);
+                    var alpha = (0.40f + (0.50f * h7)) * Mathf.Min(1f, clampedIntensity * 1.3f);
                     barImage.color = WithAlpha(barColor, alpha);
                     if (!barRect.gameObject.activeSelf)
                     {
@@ -1518,8 +1701,8 @@ namespace SubTerra.App.UI.RunFailure
                 var activeBandCount = mode == 0 || clampedIntensity < 0.14f
                     ? 0
                     : Mathf.Clamp(
-                        Mathf.RoundToInt(clampedIntensity * (mode == 2 ? CardBandCount : 3)),
-                        1,
+                        Mathf.RoundToInt(clampedIntensity * CardBandCount),
+                        mode == 2 ? 2 : 1,
                         CardBandCount);
 
                 for (var i = 0; i < glitchBands.Length; i++)
@@ -1545,10 +1728,10 @@ namespace SubTerra.App.UI.RunFailure
                     var b3 = RunFailureRevealTimeline.Hash01(seed, (i * 7) + 33);
                     var b4 = RunFailureRevealTimeline.Hash01(seed, (i * 7) + 34);
 
-                    var bandHeight = 18f + (b1 * (mode == 2 ? 62f : 38f));
+                    var bandHeight = 30f + (b1 * (mode == 2 ? 110f : 80f));
                     var bandY = (b2 - 0.5f) * 2f * ((CardSize.y * 0.5f) - 64f);
                     var shiftSign = b3 < 0.5f ? -1f : 1f;
-                    var shiftX = shiftSign * (10f + (b4 * (mode == 2 ? 38f : 24f))) * clampedIntensity;
+                    var shiftX = shiftSign * (28f + (b4 * (mode == 2 ? 80f : 56f))) * clampedIntensity;
 
                     band.MaskRect.anchoredPosition = new Vector2(0f, bandY);
                     band.MaskRect.sizeDelta = new Vector2(CardSize.x + (EdgeSpill * 2f), bandHeight);
@@ -1557,7 +1740,7 @@ namespace SubTerra.App.UI.RunFailure
                     if (band.TintOverlay != null)
                     {
                         var bandColor = (i % 2 == 0) ? primaryColor : secondaryColor;
-                        band.TintOverlay.color = WithAlpha(bandColor, 0.22f * clampedIntensity);
+                        band.TintOverlay.color = WithAlpha(bandColor, 0.20f * clampedIntensity);
                     }
 
                     if (!band.MaskRect.gameObject.activeSelf)
@@ -1878,8 +2061,8 @@ namespace SubTerra.App.UI.RunFailure
                 rowBackground.raycastTarget = false;
 
                 var layout = rowObject.GetComponent<HorizontalLayoutGroup>();
-                layout.padding = new RectOffset(16, 16, 6, 6);
-                layout.spacing = 12f;
+                layout.padding = new RectOffset(20, 20, 6, 6);
+                layout.spacing = 14f;
                 layout.childAlignment = TextAnchor.MiddleLeft;
                 layout.childControlWidth = true;
                 layout.childControlHeight = true;
@@ -1887,8 +2070,8 @@ namespace SubTerra.App.UI.RunFailure
                 layout.childForceExpandHeight = false;
 
                 var rowElement = rowObject.GetComponent<LayoutElement>();
-                rowElement.preferredHeight = 46f;
-                rowElement.minHeight = 46f;
+                rowElement.preferredHeight = CargoRowHeight;
+                rowElement.minHeight = CargoRowHeight;
 
                 // 장식 오버레이 (Layout Ignored): 테두리, 좌측 네온 바, 카운트업 펄스 광원
                 var outlineObj = CreateUiObject("RowOutline", rowObject.transform);
@@ -1931,10 +2114,10 @@ namespace SubTerra.App.UI.RunFailure
                     typeof(LayoutElement));
                 iconPlateObj.transform.SetParent(rowObject.transform, false);
                 var iconPlateElement = iconPlateObj.GetComponent<LayoutElement>();
-                iconPlateElement.preferredWidth = 34f;
-                iconPlateElement.preferredHeight = 34f;
-                iconPlateElement.minWidth = 34f;
-                iconPlateElement.minHeight = 34f;
+                iconPlateElement.preferredWidth = 38f;
+                iconPlateElement.preferredHeight = 38f;
+                iconPlateElement.minWidth = 38f;
+                iconPlateElement.minHeight = 38f;
                 var iconPlateImage = iconPlateObj.GetComponent<Image>();
                 iconPlateImage.sprite = RunFailureGlitchArt.GetChamferFillSprite();
                 iconPlateImage.type = Image.Type.Sliced;
@@ -1963,7 +2146,7 @@ namespace SubTerra.App.UI.RunFailure
                     nameText.font = font;
                 }
 
-                nameText.fontSize = 20f;
+                nameText.fontSize = 22f;
                 nameText.fontStyle = FontStyles.Bold;
                 nameText.alignment = TextAlignmentOptions.MidlineLeft;
                 nameText.color = new Color(0.93f, 0.96f, 1f, 1f);
@@ -1979,15 +2162,15 @@ namespace SubTerra.App.UI.RunFailure
                     typeof(LayoutElement));
                 minusObj.transform.SetParent(rowObject.transform, false);
                 var minusElement = minusObj.GetComponent<LayoutElement>();
-                minusElement.preferredWidth = 18f;
-                minusElement.minWidth = 18f;
+                minusElement.preferredWidth = 20f;
+                minusElement.minWidth = 20f;
                 var minusText = minusObj.GetComponent<TextMeshProUGUI>();
                 if (font != null)
                 {
                     minusText.font = font;
                 }
 
-                minusText.fontSize = 20f;
+                minusText.fontSize = 22f;
                 minusText.fontStyle = FontStyles.Bold;
                 minusText.alignment = TextAlignmentOptions.MidlineRight;
                 minusText.text = "-";
@@ -2002,15 +2185,15 @@ namespace SubTerra.App.UI.RunFailure
                     typeof(LayoutElement));
                 quantityObject.transform.SetParent(rowObject.transform, false);
                 var quantityElement = quantityObject.GetComponent<LayoutElement>();
-                quantityElement.preferredWidth = 86f;
-                quantityElement.minWidth = 68f;
+                quantityElement.preferredWidth = 100f;
+                quantityElement.minWidth = 76f;
                 var quantityText = quantityObject.GetComponent<TextMeshProUGUI>();
                 if (font != null)
                 {
                     quantityText.font = font;
                 }
 
-                quantityText.fontSize = 22f;
+                quantityText.fontSize = 24f;
                 quantityText.fontStyle = FontStyles.Bold;
                 quantityText.alignment = TextAlignmentOptions.MidlineRight;
                 quantityText.color = Color.white;
@@ -2194,6 +2377,17 @@ namespace SubTerra.App.UI.RunFailure
             canvasGroup.alpha = visible ? 1f : 0f;
             canvasGroup.interactable = visible;
             canvasGroup.blocksRaycasts = visible;
+
+            // 독립 캔버스는 숨긴 동안에도 전체 화면 배경이 클릭을 가로채지 않도록 직접 끈다.
+            if (panelRaycaster != null)
+            {
+                panelRaycaster.enabled = visible;
+            }
+
+            if (backdropImage != null)
+            {
+                backdropImage.raycastTarget = visible;
+            }
         }
     }
 }
