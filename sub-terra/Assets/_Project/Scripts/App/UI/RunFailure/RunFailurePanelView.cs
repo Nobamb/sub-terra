@@ -15,9 +15,8 @@ namespace SubTerra.App.UI.RunFailure
 {
     /// <summary>
     /// B-148: 탐사 실패(체력 소진 / 가스 중독) 팝업 연출.
-    /// 전력 고갈 구출 팝업(EmergencyRescuePopupView)과 동일한 Sci-Fi 홀로그램 프레임 에셋(MineResetTimedPopupSkin) 및
-    /// 30fps 계단식 밴드 슬라이스·고스트 분리·바 스필 글리치 연출을 사용하며,
-    /// 원인에 따라 가스 중독은 초록색 계열, 구조 붕괴/추락 등은 빨간색 계열 테마로 표시한다.
+    /// 가스 중독은 초록색, 구조 붕괴/추락 등은 빨간색 전용 팝업 이미지를 사용한다.
+    /// 30fps 계단식 밴드 슬라이스·고스트 분리·바 스필 글리치 연출을 유지한다.
     /// </summary>
     public sealed class RunFailurePanelView : MonoBehaviour
     {
@@ -29,15 +28,12 @@ namespace SubTerra.App.UI.RunFailure
         private const float EdgeSpill = 34f;
         private const float BackdropAlpha = 0.78f;
 
-        private static readonly Color CardColor = new Color(0.02f, 0.035f, 0.055f, 0.98f);
         private static readonly Color BackdropBaseColor = new Color(0.01f, 0.015f, 0.028f, BackdropAlpha);
 
         [SerializeField] private CanvasGroup canvasGroup;
         [SerializeField] private RectTransform visualRoot;
         [SerializeField] private CanvasGroup windowCanvasGroup;
         [SerializeField] private Image windowBackgroundImage;
-        [SerializeField] private Image windowBorderImage;
-        [SerializeField] private Image headerAccentImage;
         [SerializeField] private RectTransform rgbSplitLeftRect;
         [SerializeField] private Image rgbSplitLeftImage;
         [SerializeField] private RectTransform rgbSplitRightRect;
@@ -67,18 +63,14 @@ namespace SubTerra.App.UI.RunFailure
         [SerializeField] private RunFailureVisualSettings visualSettings = new RunFailureVisualSettings();
 
         private readonly List<CargoRowWidgets> cargoRows = new List<CargoRowWidgets>();
+        private readonly List<Image> panelSurfaces = new List<Image>();
+        private Sprite gasPanelSprite;
+        private Sprite impactPanelSprite;
+        private Sprite activePanelSprite;
 
         private MineResetTimedPopupSkin popupSkin;
         private Image backdropImage;
         private Image backdropVignetteImage;
-        private Image backdropScanlineImage;
-        private Image outerHaloImage;
-        private Image hexOverlayImage;
-        private Image panelScanlineImage;
-        private Image bottomWashImage;
-        private Image frameTopTintImage;
-        private Image frameBottomTintImage;
-        private Image frameGlowImage;
         private Image cardFlashImage;
         private RectTransform contentRoot;
         private CanvasGroup contentCanvasGroup;
@@ -95,7 +87,7 @@ namespace SubTerra.App.UI.RunFailure
         private Image preservationOutlineImage;
         private Image preservationDiamondLeft;
         private Image preservationDiamondRight;
-        private Image confirmButtonGlowImage;
+        private Image confirmButtonOutlineImage;
         private SliceBandWidgets[] glitchBands;
         private Image screenVignetteImage;
         private Image screenCenterFlashImage;
@@ -259,23 +251,19 @@ namespace SubTerra.App.UI.RunFailure
             }
 
             cargoRows.Clear();
+            panelSurfaces.Clear();
+            gasPanelSprite = Resources.Load<Sprite>("UI/RunFailure/gas-death-popup");
+            impactPanelSprite = Resources.Load<Sprite>("UI/RunFailure/impact-death-popup");
+            activePanelSprite = impactPanelSprite;
             lastCardGlitchKey = int.MinValue;
 
-            // 1. 배경 비네팅 및 스캔라인 분위기 레이어
+            // 1. 배경 비네팅
             var vignetteObj = CreateUiObject("BackdropVignette", transform);
             SetStretch(vignetteObj.GetComponent<RectTransform>(), Vector2.zero, Vector2.zero);
             backdropVignetteImage = vignetteObj.AddComponent<Image>();
             backdropVignetteImage.sprite = RunFailureGlitchArt.GetVignetteSprite();
             backdropVignetteImage.color = new Color(0.02f, 0.01f, 0.02f, 0.72f);
             backdropVignetteImage.raycastTarget = false;
-
-            var bgScanObj = CreateUiObject("BackdropScanlines", transform);
-            SetStretch(bgScanObj.GetComponent<RectTransform>(), Vector2.zero, Vector2.zero);
-            backdropScanlineImage = bgScanObj.AddComponent<Image>();
-            backdropScanlineImage.sprite = RunFailureGlitchArt.GetScanlineSprite();
-            backdropScanlineImage.type = Image.Type.Tiled;
-            backdropScanlineImage.color = new Color(1f, 0.28f, 0.24f, 0.05f);
-            backdropScanlineImage.raycastTarget = false;
 
             // 2. 암전 오버레이
             var blackoutObj = CreateUiObject("BlackoutOverlay", transform);
@@ -285,7 +273,7 @@ namespace SubTerra.App.UI.RunFailure
             blackoutOverlayImage.raycastTarget = false;
             blackoutObj.SetActive(false);
 
-            // 3. 메인 팝업 카드 (EmergencyRescuePopupView와 동일한 880x675 규격 및 에셋 구성)
+            // 3. 원인별 전용 이미지로 구성한 메인 팝업 카드
             var visualObj = CreateUiObject("VisualRoot", transform);
             visualRoot = visualObj.GetComponent<RectTransform>();
             visualRoot.anchorMin = new Vector2(0.5f, 0.5f);
@@ -298,19 +286,8 @@ namespace SubTerra.App.UI.RunFailure
 
             windowCanvasGroup = visualObj.AddComponent<CanvasGroup>();
 
-            // 카드 외곽 후광
-            outerHaloImage = CreateCenteredImage(
-                visualRoot,
-                "OuterHalo",
-                RunFailureGlitchArt.GetHaloSprite(),
-                Vector2.zero,
-                new Vector2(CardSize.x + 190f, CardSize.y + 160f),
-                new Color(1f, 0.28f, 0.24f, 0.42f));
-
             // 고스트 프레임 (좌/우 RGB 채널 분리)
-            var frameSprite = popupSkin != null && popupSkin.frame != null
-                ? popupSkin.frame
-                : RunFailureGlitchArt.GetFrameNeonBorderSprite();
+            var frameSprite = activePanelSprite;
 
             var splitLeftObj = CreateUiObject("RgbSplitLeft", visualRoot);
             rgbSplitLeftRect = splitLeftObj.GetComponent<RectTransform>();
@@ -331,7 +308,7 @@ namespace SubTerra.App.UI.RunFailure
             splitRightObj.SetActive(false);
 
             // 본체 패널·프레임 레이어
-            BuildCardSurfaceLayers(visualRoot, popupSkin, true);
+            BuildCardSurfaceLayers(visualRoot, true);
 
             // 가로 슬라이스 밴드 4개 (EmergencyRescuePopupView Band와 동일하게 패널·프레임 일부를 잘라 가로로 어긋나게 함)
             var bandRootObj = CreateUiObject("GlitchBands", visualRoot);
@@ -340,13 +317,11 @@ namespace SubTerra.App.UI.RunFailure
             glitchBands = new SliceBandWidgets[CardBandCount];
             for (var i = 0; i < CardBandCount; i++)
             {
-                glitchBands[i] = CreateSliceBand(bandRootRect, popupSkin, i);
+                glitchBands[i] = CreateSliceBand(bandRootRect, i);
             }
 
             // 순간 섬광 레이어
-            var flashSprite = popupSkin != null && popupSkin.frameGlow != null
-                ? popupSkin.frameGlow
-                : RunFailureGlitchArt.GetHaloSprite();
+            var flashSprite = RunFailureGlitchArt.GetHaloSprite();
             cardFlashImage = CreateCenteredImage(
                 visualRoot,
                 "CardFlash",
@@ -356,7 +331,7 @@ namespace SubTerra.App.UI.RunFailure
                 new Color(1f, 0.28f, 0.24f, 0f));
 
             // 4. 본문 컨텐츠 영역 (제목, 원인 설명, 유실 자원 테이블, 보존율 배지, 확인 버튼)
-            BuildCardContent(visualRoot, popupSkin, activeFont);
+            BuildCardContent(visualRoot, activeFont);
 
             // 5. 카드 가장자리 스필 글리치 바 12개
             var barContainerObj = CreateUiObject("WindowGlitchBars", visualRoot);
@@ -386,145 +361,43 @@ namespace SubTerra.App.UI.RunFailure
             BindConfirmButton();
         }
 
-        private void BuildCardSurfaceLayers(RectTransform parent, MineResetTimedPopupSkin skin, bool isMainCard)
+        private void BuildCardSurfaceLayers(RectTransform parent, bool isMainCard)
         {
-            var basePlate = CreateCenteredImage(
+            var panel = CreateCenteredImage(
                 parent,
-                "PanelBase",
-                RunFailureGlitchArt.GetChamferFillSprite(),
+                isMainCard ? "Panel" : "BandPanel",
+                activePanelSprite,
                 Vector2.zero,
-                CardSize - new Vector2(28f, 26f),
-                CardColor);
-            basePlate.raycastTarget = isMainCard;
-
-            if (isMainCard)
-            {
-                var panelObj = CreateUiObject("Panel", parent);
-                SetCenteredRect(panelObj.GetComponent<RectTransform>(), Vector2.zero, CardSize);
-                windowBackgroundImage = panelObj.AddComponent<Image>();
-                if (skin != null && skin.panel != null)
-                {
-                    windowBackgroundImage.sprite = skin.panel;
-                    windowBackgroundImage.color = new Color(0.92f, 0.96f, 1f, 0.98f);
-                }
-                else
-                {
-                    windowBackgroundImage.sprite = RunFailureGlitchArt.GetChamferFillSprite();
-                    windowBackgroundImage.color = CardColor;
-                }
-
-                windowBackgroundImage.raycastTarget = true;
-
-                // 육각 홀로그램 그리드 오버레이
-                var hexObj = CreateUiObject("HexOverlay", parent);
-                SetCenteredRect(hexObj.GetComponent<RectTransform>(), Vector2.zero, CardSize - new Vector2(64f, 60f));
-                hexOverlayImage = hexObj.AddComponent<Image>();
-                hexOverlayImage.sprite = RunFailureGlitchArt.GetHexTileSprite();
-                hexOverlayImage.type = Image.Type.Tiled;
-                hexOverlayImage.color = new Color(1f, 0.28f, 0.24f, 0.065f);
-                hexOverlayImage.raycastTarget = false;
-
-                // 패널 스캔라인
-                var scanObj = CreateUiObject("PanelScanlines", parent);
-                SetCenteredRect(scanObj.GetComponent<RectTransform>(), Vector2.zero, CardSize - new Vector2(56f, 52f));
-                panelScanlineImage = scanObj.AddComponent<Image>();
-                panelScanlineImage.sprite = RunFailureGlitchArt.GetScanlineSprite();
-                panelScanlineImage.type = Image.Type.Tiled;
-                panelScanlineImage.color = new Color(1f, 0.28f, 0.24f, 0.055f);
-                panelScanlineImage.raycastTarget = false;
-
-                // 상단 및 하단 경고 분위기 번짐 (Wash)
-                headerAccentImage = CreateCenteredImage(
-                    parent,
-                    "HeaderAccentWash",
-                    RunFailureGlitchArt.GetSoftGlowSprite(),
-                    new Vector2(0f, (CardSize.y * 0.5f) - 108f),
-                    new Vector2(CardSize.x * 0.86f, 210f),
-                    new Color(1f, 0.28f, 0.24f, 0.24f));
-
-                bottomWashImage = CreateCenteredImage(
-                    parent,
-                    "BottomAccentWash",
-                    RunFailureGlitchArt.GetSoftGlowSprite(),
-                    new Vector2(0f, -(CardSize.y * 0.5f) + 96f),
-                    new Vector2(CardSize.x * 0.82f, 170f),
-                    new Color(1f, 0.28f, 0.24f, 0.15f));
-            }
-            else if (skin != null && skin.panel != null)
-            {
-                CreateCenteredImage(parent, "BandPanel", skin.panel, Vector2.zero, CardSize, CardColor);
-            }
-
-            if (skin != null && skin.frame != null)
-            {
-                CreateCenteredImage(parent, "Frame", skin.frame, Vector2.zero, CardSize, Color.white);
-            }
-
-            if (isMainCard)
-            {
-                // 상/하단 금속 코너에 원인 색상 틴트 입히기
-                if (skin != null && skin.frame != null)
-                {
-                    frameTopTintImage = CreateCornerTintMask(parent, "FrameTintTop", skin.frame, true, 128f);
-                    frameBottomTintImage = CreateCornerTintMask(parent, "FrameTintBottom", skin.frame, false, 98f);
-                }
-
-                // 프레임 네온 테두리 (가스 중독 = 초록색, 구조 충돌/추락 = 빨간색으로 선명히 발광)
-                windowBorderImage = CreateCenteredImage(
-                    parent,
-                    "WindowBorder",
-                    RunFailureGlitchArt.GetFrameNeonBorderSprite(),
-                    Vector2.zero,
-                    CardSize,
-                    new Color(1f, 0.28f, 0.24f, 0.92f));
-
-                var glowSprite = skin != null && skin.frameGlow != null
-                    ? skin.frameGlow
-                    : RunFailureGlitchArt.GetHaloSprite();
-                frameGlowImage = CreateCenteredImage(
-                    parent,
-                    "FrameGlow",
-                    glowSprite,
-                    Vector2.zero,
-                    CardSize + new Vector2(12f, 12f),
-                    new Color(1f, 0.28f, 0.24f, 0.52f));
-            }
-            else
-            {
-                CreateCenteredImage(
-                    parent,
-                    "BandNeonBorder",
-                    RunFailureGlitchArt.GetFrameNeonBorderSprite(),
-                    Vector2.zero,
-                    CardSize,
-                    new Color(1f, 1f, 1f, 0.85f));
-            }
-        }
-
-        private static Image CreateCornerTintMask(
-            RectTransform parent,
-            string name,
-            Sprite frameSprite,
-            bool isTop,
-            float maskHeight)
-        {
-            var maskY = (isTop ? 1f : -1f) * ((CardSize.y * 0.5f) - (maskHeight * 0.5f));
-            var maskObj = CreateUiObject(name, parent);
-            var maskRect = maskObj.GetComponent<RectTransform>();
-            SetCenteredRect(maskRect, new Vector2(0f, maskY), new Vector2(CardSize.x, maskHeight));
-            maskObj.AddComponent<RectMask2D>();
-
-            var innerImg = CreateCenteredImage(
-                maskRect,
-                "TintFrame",
-                frameSprite,
-                new Vector2(0f, -maskY),
                 CardSize,
-                new Color(1f, 0.45f, 0.42f, 0.72f));
-            return innerImg;
+                Color.white);
+            panel.type = Image.Type.Simple;
+            panel.raycastTarget = isMainCard;
+            panelSurfaces.Add(panel);
+            if (isMainCard)
+            {
+                windowBackgroundImage = panel;
+            }
         }
 
-        private SliceBandWidgets CreateSliceBand(RectTransform parent, MineResetTimedPopupSkin skin, int index)
+        private void ApplyPanelArt(RunFailureCause cause)
+        {
+            var sprite = cause == RunFailureCause.GasExposure ? gasPanelSprite : impactPanelSprite;
+            if (activePanelSprite == sprite)
+            {
+                return;
+            }
+
+            activePanelSprite = sprite;
+            foreach (var panel in panelSurfaces)
+            {
+                panel.sprite = sprite;
+            }
+
+            rgbSplitLeftImage.sprite = sprite;
+            rgbSplitRightImage.sprite = sprite;
+        }
+
+        private SliceBandWidgets CreateSliceBand(RectTransform parent, int index)
         {
             var maskObj = CreateUiObject("Band_" + index, parent);
             var maskRect = maskObj.GetComponent<RectTransform>();
@@ -534,7 +407,7 @@ namespace SubTerra.App.UI.RunFailure
             var innerObj = CreateUiObject("BandInner", maskRect);
             var innerRect = innerObj.GetComponent<RectTransform>();
             SetCenteredRect(innerRect, Vector2.zero, CardSize);
-            BuildCardSurfaceLayers(innerRect, skin, false);
+            BuildCardSurfaceLayers(innerRect, false);
 
             var tintOverlay = CreateCenteredImage(
                 innerRect,
@@ -553,7 +426,7 @@ namespace SubTerra.App.UI.RunFailure
             };
         }
 
-        private void BuildCardContent(RectTransform parent, MineResetTimedPopupSkin skin, TMP_FontAsset font)
+        private void BuildCardContent(RectTransform parent, TMP_FontAsset font)
         {
             var contentObj = CreateUiObject("Content", parent);
             contentRoot = contentObj.GetComponent<RectTransform>();
@@ -567,36 +440,32 @@ namespace SubTerra.App.UI.RunFailure
             titleText.enableAutoSizing = true;
             titleText.fontSizeMin = 26f;
             titleText.fontSizeMax = 38f;
-            SetCenteredRect(titleText.rectTransform, new Vector2(0f, 260f), new Vector2(560f, 54f));
+            SetCenteredRect(titleText.rectTransform, new Vector2(0f, 240f), new Vector2(560f, 54f));
 
             var diamondSprite = RunFailureGlitchArt.GetDiamondSprite();
             warnLeftImage = CreateCenteredImage(
                 contentRoot,
                 "WarnL",
                 diamondSprite,
-                new Vector2(-175f, 260f),
+                new Vector2(-175f, 240f),
                 new Vector2(20f, 20f),
                 new Color(1f, 0.28f, 0.24f, 0.95f));
             warnRightImage = CreateCenteredImage(
                 contentRoot,
                 "WarnR",
                 diamondSprite,
-                new Vector2(175f, 260f),
+                new Vector2(175f, 240f),
                 new Vector2(20f, 20f),
                 new Color(1f, 0.28f, 0.24f, 0.95f));
 
-            // 2. 타이틀 디바이더 (MineResetTimedPopupSkin.titleDivider + 코어 네온 빔)
-            var dividerSprite = skin != null && skin.titleDivider != null
-                ? skin.titleDivider
-                : RunFailureGlitchArt.GetCrtBeamSprite();
-            var dividerSize = skin != null && skin.titleDivider != null
-                ? new Vector2(640f, 18f)
-                : new Vector2(600f, 4f);
+            // 2. 원인별 색상을 적용하는 타이틀 디바이더
+            var dividerSprite = RunFailureGlitchArt.GetCrtBeamSprite();
+            var dividerSize = new Vector2(600f, 4f);
             titleDividerImage = CreateCenteredImage(
                 contentRoot,
                 "TitleDivider",
                 dividerSprite,
-                new Vector2(0f, 224f),
+                new Vector2(0f, 210f),
                 dividerSize,
                 new Color(1f, 0.50f, 0.45f, 0.92f));
 
@@ -604,7 +473,7 @@ namespace SubTerra.App.UI.RunFailure
                 contentRoot,
                 "TitleDividerCore",
                 RunFailureGlitchArt.GetCrtBeamSprite(),
-                new Vector2(0f, 224f),
+                new Vector2(0f, 210f),
                 new Vector2(520f, 4f),
                 new Color(1f, 0.35f, 0.30f, 0.85f));
 
@@ -614,7 +483,7 @@ namespace SubTerra.App.UI.RunFailure
             subtitleText.enableAutoSizing = true;
             subtitleText.fontSizeMin = 14f;
             subtitleText.fontSizeMax = 19f;
-            SetCenteredRect(subtitleText.rectTransform, new Vector2(0f, 190f), new Vector2(720f, 34f));
+            SetCenteredRect(subtitleText.rectTransform, new Vector2(0f, 174f), new Vector2(720f, 34f));
 
             // 4. 유실 자원 목록 홀로그램 테이블 (팝업 내부 중앙 영역)
             var cargoBoxObj = CreateUiObject("LostCargoSection", contentRoot);
@@ -622,6 +491,7 @@ namespace SubTerra.App.UI.RunFailure
             SetCenteredRect(cargoBoxRect, new Vector2(0f, 4f), new Vector2(736f, 304f));
             var cargoBoxImg = cargoBoxObj.AddComponent<Image>();
             cargoBoxImg.sprite = RunFailureGlitchArt.GetChamferFillSprite();
+            cargoBoxImg.type = Image.Type.Sliced;
             cargoBoxImg.color = new Color(0.016f, 0.026f, 0.044f, 0.90f);
             cargoBoxImg.raycastTarget = true;
 
@@ -643,6 +513,7 @@ namespace SubTerra.App.UI.RunFailure
             headerRect.offsetMax = new Vector2(-6f, -4f);
             cargoHeaderBarImage = headerObj.AddComponent<Image>();
             cargoHeaderBarImage.sprite = RunFailureGlitchArt.GetChamferFillSprite();
+            cargoHeaderBarImage.type = Image.Type.Sliced;
             cargoHeaderBarImage.color = new Color(1f, 0.28f, 0.24f, 0.14f);
             cargoHeaderBarImage.raycastTarget = false;
 
@@ -720,9 +591,10 @@ namespace SubTerra.App.UI.RunFailure
             // 5. 드론 구조 보존율 하단 배지
             var presPlateObj = CreateUiObject("PreservationBadge", contentRoot);
             var presPlateRect = presPlateObj.GetComponent<RectTransform>();
-            SetCenteredRect(presPlateRect, new Vector2(0f, -182f), new Vector2(640f, 42f));
+            SetCenteredRect(presPlateRect, new Vector2(0f, -170f), new Vector2(640f, 42f));
             preservationPlateImage = presPlateObj.AddComponent<Image>();
             preservationPlateImage.sprite = RunFailureGlitchArt.GetChamferFillSprite();
+            preservationPlateImage.type = Image.Type.Sliced;
             preservationPlateImage.color = new Color(0.03f, 0.05f, 0.08f, 0.90f);
             preservationPlateImage.raycastTarget = false;
 
@@ -769,31 +641,24 @@ namespace SubTerra.App.UI.RunFailure
             detailText.color = new Color(1f, 1f, 1f, 0f);
             SetCenteredRect(detailText.rectTransform, new Vector2(0f, -182f), new Vector2(640f, 40f));
 
-            // 6. 확인 버튼 (MineResetTimedPopupSkin.buttonConfirm + HoverOverlay + MenuSpriteButtonSkin)
-            var buttonSize = new Vector2(288f, 66f);
+            // 6. 전용 패널에 맞춘 확인 버튼
+            var buttonSize = new Vector2(288f, 54f);
             var buttonObj = CreateUiObject("ConfirmButton", contentRoot);
             var buttonRect = buttonObj.GetComponent<RectTransform>();
-            SetCenteredRect(buttonRect, new Vector2(0f, -252f), buttonSize);
+            SetCenteredRect(buttonRect, new Vector2(0f, -230f), buttonSize);
 
-            confirmButtonGlowImage = CreateCenteredImage(
+            confirmButtonOutlineImage = CreateCenteredImage(
                 buttonRect,
-                "ButtonGlow",
-                RunFailureGlitchArt.GetHaloSprite(),
+                "ButtonOutline",
+                RunFailureGlitchArt.GetChamferOutlineSprite(),
                 Vector2.zero,
-                buttonSize + new Vector2(46f, 26f),
-                new Color(1f, 0.28f, 0.24f, 0.32f));
+                buttonSize + new Vector2(4f, 4f),
+                new Color(1f, 0.28f, 0.24f, 0.65f));
 
             confirmButtonImage = buttonObj.AddComponent<Image>();
-            if (skin != null && skin.buttonConfirm != null)
-            {
-                confirmButtonImage.sprite = skin.buttonConfirm;
-                confirmButtonImage.color = Color.white;
-            }
-            else
-            {
-                confirmButtonImage.sprite = RunFailureGlitchArt.GetChamferFillSprite();
-                confirmButtonImage.color = new Color(0.16f, 0.36f, 0.38f, 0.96f);
-            }
+            confirmButtonImage.sprite = RunFailureGlitchArt.GetChamferFillSprite();
+            confirmButtonImage.type = Image.Type.Sliced;
+            confirmButtonImage.color = new Color(0.36f, 0.10f, 0.09f, 1f);
 
             confirmButtonImage.raycastTarget = true;
             confirmButton = buttonObj.AddComponent<Button>();
@@ -803,9 +668,7 @@ namespace SubTerra.App.UI.RunFailure
             nav.mode = Navigation.Mode.None;
             confirmButton.navigation = nav;
 
-            var hoverSprite = skin != null && skin.buttonConfirmHover != null
-                ? skin.buttonConfirmHover
-                : RunFailureGlitchArt.GetChamferOutlineSprite();
+            var hoverSprite = RunFailureGlitchArt.GetChamferOutlineSprite();
             var hoverOverlay = CreateCenteredImage(
                 buttonRect,
                 "HoverOverlay",
@@ -958,6 +821,10 @@ namespace SubTerra.App.UI.RunFailure
             SetCenteredRect(obj.GetComponent<RectTransform>(), anchoredPosition, sizeDelta);
             var img = obj.AddComponent<Image>();
             img.sprite = sprite;
+            if (sprite != null && sprite.border.sqrMagnitude > 0f)
+            {
+                img.type = Image.Type.Sliced;
+            }
             img.color = color;
             img.raycastTarget = false;
             return img;
@@ -1214,6 +1081,7 @@ namespace SubTerra.App.UI.RunFailure
 
         public void ApplyRevealFrame(RunFailureRevealFrame frame)
         {
+            ApplyPanelArt(frame.Cause);
             ApplyStaticTheme(frame.GlitchColor, frame.SecondarySplitColor);
 
             if (titleText != null)
@@ -1408,56 +1276,6 @@ namespace SubTerra.App.UI.RunFailure
                     0.78f);
             }
 
-            if (backdropScanlineImage != null)
-            {
-                backdropScanlineImage.color = WithAlpha(accentColor, 0.055f);
-            }
-
-            if (outerHaloImage != null)
-            {
-                outerHaloImage.color = WithAlpha(accentColor, 0.44f);
-            }
-
-            if (hexOverlayImage != null)
-            {
-                hexOverlayImage.color = WithAlpha(accentColor, 0.075f);
-            }
-
-            if (panelScanlineImage != null)
-            {
-                panelScanlineImage.color = WithAlpha(accentColor, 0.06f);
-            }
-
-            if (headerAccentImage != null)
-            {
-                headerAccentImage.color = WithAlpha(accentColor, 0.26f);
-            }
-
-            if (bottomWashImage != null)
-            {
-                bottomWashImage.color = WithAlpha(accentColor, 0.16f);
-            }
-
-            if (frameTopTintImage != null)
-            {
-                frameTopTintImage.color = WithAlpha(softAccent, 0.78f);
-            }
-
-            if (frameBottomTintImage != null)
-            {
-                frameBottomTintImage.color = WithAlpha(softAccent, 0.72f);
-            }
-
-            if (windowBorderImage != null)
-            {
-                windowBorderImage.color = WithAlpha(brightAccent, 0.94f);
-            }
-
-            if (frameGlowImage != null)
-            {
-                frameGlowImage.color = WithAlpha(accentColor, 0.58f);
-            }
-
             if (warnLeftImage != null)
             {
                 warnLeftImage.color = brightAccent;
@@ -1513,25 +1331,18 @@ namespace SubTerra.App.UI.RunFailure
                 preservationDiamondRight.color = brightAccent;
             }
 
-            if (confirmButtonGlowImage != null)
+            if (confirmButtonOutlineImage != null)
             {
-                confirmButtonGlowImage.color = WithAlpha(accentColor, 0.36f);
+                confirmButtonOutlineImage.color = WithAlpha(accentColor, 0.65f);
             }
 
             if (confirmButtonImage != null)
             {
-                if (popupSkin != null && popupSkin.buttonConfirm != null)
-                {
-                    confirmButtonImage.color = Color.Lerp(Color.white, softAccent, 0.28f);
-                }
-                else
-                {
-                    confirmButtonImage.color = new Color(
-                        Mathf.Lerp(0.14f, accentColor.r, 0.42f),
-                        Mathf.Lerp(0.16f, accentColor.g, 0.42f),
-                        Mathf.Lerp(0.22f, accentColor.b, 0.42f),
-                        0.96f);
-                }
+                confirmButtonImage.color = new Color(
+                    Mathf.Lerp(0.06f, accentColor.r, 0.28f),
+                    Mathf.Lerp(0.06f, accentColor.g, 0.28f),
+                    Mathf.Lerp(0.06f, accentColor.b, 0.28f),
+                    1f);
             }
         }
 
@@ -2062,6 +1873,7 @@ namespace SubTerra.App.UI.RunFailure
 
                 var rowBackground = rowObject.GetComponent<Image>();
                 rowBackground.sprite = RunFailureGlitchArt.GetChamferFillSprite();
+                rowBackground.type = Image.Type.Sliced;
                 rowBackground.color = new Color(0.042f, 0.062f, 0.102f, 0.84f);
                 rowBackground.raycastTarget = false;
 
@@ -2085,6 +1897,7 @@ namespace SubTerra.App.UI.RunFailure
                 outlineLayout.ignoreLayout = true;
                 var rowOutline = outlineObj.AddComponent<Image>();
                 rowOutline.sprite = RunFailureGlitchArt.GetChamferOutlineSprite();
+                rowOutline.type = Image.Type.Sliced;
                 rowOutline.color = new Color(1f, 0.28f, 0.24f, 0.26f);
                 rowOutline.raycastTarget = false;
 
@@ -2124,6 +1937,7 @@ namespace SubTerra.App.UI.RunFailure
                 iconPlateElement.minHeight = 34f;
                 var iconPlateImage = iconPlateObj.GetComponent<Image>();
                 iconPlateImage.sprite = RunFailureGlitchArt.GetChamferFillSprite();
+                iconPlateImage.type = Image.Type.Sliced;
                 iconPlateImage.color = new Color(0.08f, 0.12f, 0.18f, 0.92f);
                 iconPlateImage.raycastTarget = false;
 

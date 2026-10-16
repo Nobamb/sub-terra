@@ -434,6 +434,51 @@ namespace SubTerra.App.Tests.Run
             }
         }
 
+        [TestCase(RunFailureCause.GasExposure, "gas-death-popup")]
+        [TestCase(RunFailureCause.StructuralCollapse, "impact-death-popup")]
+        [TestCase(RunFailureCause.Fall, "impact-death-popup")]
+        [TestCase(RunFailureCause.Unknown, "impact-death-popup")]
+        [TestCase(RunFailureCause.PowerDepleted, "impact-death-popup")]
+        public void PanelView_UsesDedicatedCauseArtForPanelAndGlitchCopies(
+            RunFailureCause cause, string spriteName)
+        {
+            var panel = new GameObject("RunFailurePanel", typeof(RectTransform));
+            try
+            {
+                var expected = Resources.Load<Sprite>("UI/RunFailure/" + spriteName);
+                Assert.That(expected, Is.Not.Null);
+                var view = panel.AddComponent<RunFailurePanelView>();
+                view.Show(new PlayerRescueResultDto { cause = cause });
+                var root = panel.transform.Find("VisualRoot");
+                var surface = root.Find("Panel").GetComponent<UnityEngine.UI.Image>();
+                Assert.That(surface.sprite, Is.SameAs(expected));
+                Assert.That(surface.color, Is.EqualTo(Color.white));
+                Assert.That(root.Find("RgbSplitLeft").GetComponent<UnityEngine.UI.Image>().sprite,
+                    Is.SameAs(expected));
+                Assert.That(root.Find("RgbSplitRight").GetComponent<UnityEngine.UI.Image>().sprite,
+                    Is.SameAs(expected));
+                for (var i = 0; i < 4; i++)
+                {
+                    Assert.That(root.Find("GlitchBands/Band_" + i + "/BandInner/BandPanel")
+                        .GetComponent<UnityEngine.UI.Image>().sprite, Is.SameAs(expected));
+                }
+
+                Assert.That(root.Find("Frame"), Is.Null);
+                Assert.That(root.Find("OuterHalo"), Is.Null);
+                Assert.That(root.Find("FrameGlow"), Is.Null);
+
+                // 같은 View를 다시 열 때에도 직전 원인의 이미지가 남지 않는다.
+                var nextCause = cause == RunFailureCause.GasExposure
+                    ? RunFailureCause.Fall : RunFailureCause.GasExposure;
+                view.Show(new PlayerRescueResultDto { cause = nextCause });
+                Assert.That(surface.sprite, Is.Not.SameAs(expected));
+            }
+            finally
+            {
+                Object.DestroyImmediate(panel);
+            }
+        }
+
         private static Fixture CreateFixture(IUpgradeEffectProvider effects = null)
         {
             var catalog = new InMemoryMineralCatalog();
