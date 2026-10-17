@@ -48,7 +48,7 @@ namespace SubTerra.App.Tests.UI
                 Assert.That(system.TryGetMovableAt(Vector3.zero, out var hoverTarget, out var ground), Is.True);
                 Assert.That(hoverTarget, Is.SameAs(instance));
                 Assert.That(ground.x, Is.EqualTo(original.x).Within(0.001f));
-                Assert.That(ground.y, Is.EqualTo(0f).Within(0.001f));
+                Assert.That(ground.y, Is.EqualTo(-0.5f).Within(0.001f), "단위 셀의 바닥은 중심보다 반 칸 아래다.");
                 Assert.That(system.Selection, Is.Null, "호버 조회는 이동 선택을 시작하지 않는다.");
                 Assert.That(system.IsMoving, Is.False);
                 Assert.That(instance.transform.position, Is.EqualTo(original));
@@ -103,7 +103,7 @@ namespace SubTerra.App.Tests.UI
                 var rect = (RectTransform)button.transform;
                 Assert.That(rect.anchoredPosition, Is.EqualTo(new Vector2(-16f, -60f)));
                 Assert.That(rect.sizeDelta, Is.EqualTo(new Vector2(112f, 22f)));
-                Assert.That(button.GetComponentInChildren<TMP_Text>().text, Is.EqualTo("시설 이동"));
+                Assert.That(button.GetComponentInChildren<TMP_Text>().text, Is.EqualTo("이동 (우클릭)"));
                 view.EnableFacilityMoving(false);
                 Assert.That(button.gameObject.activeSelf, Is.False);
             }

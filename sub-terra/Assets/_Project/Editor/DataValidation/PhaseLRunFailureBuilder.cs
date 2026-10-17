@@ -57,7 +57,8 @@ namespace SubTerra.App.Editor.DataValidation
                     + " movement=" + (movement != null);
             }
 
-            var host = FindTransform(roots, "RunFailureOrchestrator")?.gameObject;
+            var hostTransform = FindTransform(roots, "RunFailureOrchestrator");
+            var host = hostTransform != null ? hostTransform.gameObject : null;
             if (host == null)
             {
                 host = new GameObject("RunFailureOrchestrator");
@@ -128,80 +129,19 @@ namespace SubTerra.App.Editor.DataValidation
                     typeof(CanvasGroup),
                     typeof(Image));
             panel.transform.SetParent(parent, false);
-            var rect = panel.GetComponent<RectTransform>();
-            rect.anchorMin = Vector2.zero;
-            rect.anchorMax = Vector2.one;
-            rect.offsetMin = Vector2.zero;
-            rect.offsetMax = Vector2.zero;
-            var blocker = panel.GetComponent<Image>();
-            blocker.color = new Color(0f, 0f, 0f, 0.42f);
-            blocker.raycastTarget = true;
 
-            var visual = panel.transform.Find("VisualRoot");
-            if (visual == null)
+            var view = existing != null ? existing : panel.AddComponent<RunFailurePanelView>();
+            var font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(
+                "Assets/_Project/Fonts/NotoSansKR-Regular_SDF.asset");
+            if (font == null)
             {
-                var visualObject = new GameObject("VisualRoot", typeof(RectTransform), typeof(Image));
-                visualObject.transform.SetParent(panel.transform, false);
-                visual = visualObject.transform;
+                font = KoreanFontAssetUtility.GetOrCreateKoreanFontAsset();
             }
 
-            var visualRect = visual.GetComponent<RectTransform>();
-            visualRect.anchorMin = new Vector2(0.5f, 0.5f);
-            visualRect.anchorMax = new Vector2(0.5f, 0.5f);
-            visualRect.pivot = new Vector2(0.5f, 0.5f);
-            visualRect.sizeDelta = new Vector2(680f, 260f);
-            visualRect.anchoredPosition = Vector2.zero;
-            visual.GetComponent<Image>().color = new Color(0.06f, 0.02f, 0.025f, 0.96f);
-
-            var title = panel.GetComponentsInChildren<TextMeshProUGUI>(true)
-                .FirstOrDefault(item => item.name == "FailureTitle")
-                ?? CreateText(visual, "FailureTitle", 32f, TextAlignmentOptions.Center);
-            title.transform.SetParent(visual, false);
-            SetRect(title.rectTransform, new Vector2(28f, 154f), new Vector2(-28f, -24f));
-            var detail = panel.GetComponentsInChildren<TextMeshProUGUI>(true)
-                .FirstOrDefault(item => item.name == "FailureDetail")
-                ?? CreateText(visual, "FailureDetail", 23f, TextAlignmentOptions.Center);
-            detail.transform.SetParent(visual, false);
-            SetRect(detail.rectTransform, new Vector2(32f, 24f), new Vector2(-32f, -108f));
-
-            var view = existing ?? panel.AddComponent<RunFailurePanelView>();
-            var serialized = new SerializedObject(view);
-            serialized.FindProperty("canvasGroup").objectReferenceValue = panel.GetComponent<CanvasGroup>();
-            serialized.FindProperty("titleText").objectReferenceValue = title;
-            serialized.FindProperty("detailText").objectReferenceValue = detail;
-            serialized.ApplyModifiedPropertiesWithoutUndo();
+            view.BuildOrUpdateHierarchy(font);
+            view.Hide();
+            EditorUtility.SetDirty(view);
             return view;
-        }
-
-        private static TextMeshProUGUI CreateText(
-            Transform parent,
-            string name,
-            float size,
-            TextAlignmentOptions alignment)
-        {
-            var target = new GameObject(name, typeof(RectTransform));
-            target.transform.SetParent(parent, false);
-            var text = target.AddComponent<TextMeshProUGUI>();
-            var font = KoreanFontAssetUtility.GetOrCreateKoreanFontAsset();
-            if (font != null)
-            {
-                text.font = font;
-            }
-
-            text.fontSize = size;
-            text.alignment = alignment;
-            text.color = Color.white;
-            text.textWrappingMode = TextWrappingModes.Normal;
-            text.raycastTarget = false;
-            return text;
-        }
-
-        private static void SetRect(RectTransform rect, Vector2 offsetMin, Vector2 offsetMax)
-        {
-            rect.anchorMin = Vector2.zero;
-            rect.anchorMax = Vector2.one;
-            rect.offsetMin = offsetMin;
-            rect.offsetMax = offsetMax;
         }
 
         private static void WireSurvival(

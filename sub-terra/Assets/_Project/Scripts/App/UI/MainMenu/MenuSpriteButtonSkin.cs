@@ -13,6 +13,8 @@ namespace SubTerra.App.UI.MainMenu
         public const float HighlightDurationSeconds = 0.2f;
 
         [SerializeField] private Image overlay;
+        [Tooltip("호버 때 오버레이가 도달하는 최대 알파. 은은한 빛만 필요한 버튼에서 낮춘다.")]
+        [SerializeField, Range(0f, 1f)] private float maxAlpha = 1f;
         private bool hovered;
         private bool keyboardActive;
         private float currentAlpha;
@@ -24,6 +26,11 @@ namespace SubTerra.App.UI.MainMenu
         public void SetOverlay(Image target)
         {
             overlay = target;
+        }
+
+        public void SetMaxAlpha(float value)
+        {
+            maxAlpha = Mathf.Clamp01(value);
         }
 
         public void SetKeyboardActive(bool active)
@@ -83,7 +90,7 @@ namespace SubTerra.App.UI.MainMenu
         {
             if (overlay == null) return;
             var color = overlay.color;
-            color.a = alpha;
+            color.a = alpha * maxAlpha;
             overlay.color = color;
         }
     }

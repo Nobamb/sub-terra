@@ -279,7 +279,7 @@ namespace SubTerra.App.Tests.Tutorial
                     Assert.That(FindChild(clone.transform, "ObjectiveTitle").GetComponent<TMP_Text>().text,
                         Is.EqualTo(current.Title));
                     Assert.That(FindChild(clone.transform, "ObjectiveBody").GetComponent<TMP_Text>().text,
-                        Is.EqualTo(current.Description));
+                        Is.EqualTo(current.NextActionHint));
                     Assert.That(FindChild(clone.transform, "QuestStatusIcon").GetComponent<Image>().sprite.name,
                         Is.EqualTo("quest-status-ring"));
 

@@ -459,6 +459,8 @@ namespace SubTerra.Gameplay.Player.Tests
         {
             body.gravityScale = 3f;
             LadderZone ladder = CreateLadderZone("RegrabbableLadder", out firstLadderObject);
+            // 점프 후에도 사다리 범위 안에 남아 있어야 재탑승을 검사할 수 있다.
+            firstLadderObject.GetComponent<BoxCollider2D>().size = new Vector2(0.7f, 5f);
             movement.EnterLadder(ladder);
 
             movement.RequestJump();
@@ -468,6 +470,8 @@ namespace SubTerra.Gameplay.Player.Tests
             Assert.Greater(body.linearVelocityY, 0f);
 
             yield return new WaitForSeconds(0.2f);
+            Assert.That(ladder.TryGetTop(out var top), Is.True);
+            Assert.That(body.position.y, Is.LessThan(top));
             movement.SetVerticalMoveInput(1f);
             yield return new WaitForFixedUpdate();
 
