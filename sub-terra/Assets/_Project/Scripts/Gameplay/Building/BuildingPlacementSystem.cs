@@ -139,14 +139,16 @@ namespace SubTerra.Gameplay.Building
 
         public bool CanPlaceAt(Vector3Int origin, out BuildingPlacementFailure failure)
         {
-            if (selection == null) { failure = BuildingPlacementFailure.NoSelection; return false; }
-            if (string.IsNullOrWhiteSpace(selection.BuildingId) || selection.RuntimePrefab == null)
-            {
-                failure = BuildingPlacementFailure.InvalidDefinition;
-                return false;
-            }
-
+            if (!HasValidSelection(out failure)) return false;
+            // 실제 설치·C키 실패 사유는 기존처럼 자원 부족을 우선한다.
             if (!CanAffordSelection(out failure)) return false;
+            return CanPlaceLocationAt(origin, out failure);
+        }
+
+        /// <summary>비용과 별개로 위치만 판정한다. 미리보기가 자원 부족을 위치 정상으로 오인하지 않게 한다.</summary>
+        public bool CanPlaceLocationAt(Vector3Int origin, out BuildingPlacementFailure failure)
+        {
+            if (!HasValidSelection(out failure)) return false;
             Vector2Int footprint = selection.Footprint;
             // 거리·허용 구역은 footprint 중심 기준으로 검사해 2x2 좌하단 origin 편향을 줄인다.
             Vector3 worldPosition = FootprintWorldCenter(origin, footprint);
@@ -228,6 +230,19 @@ namespace SubTerra.Gameplay.Building
                     failure = BuildingPlacementFailure.MissingGround;
                     return false;
                 }
+            }
+
+            failure = BuildingPlacementFailure.None;
+            return true;
+        }
+
+        private bool HasValidSelection(out BuildingPlacementFailure failure)
+        {
+            if (selection == null) { failure = BuildingPlacementFailure.NoSelection; return false; }
+            if (string.IsNullOrWhiteSpace(selection.BuildingId) || selection.RuntimePrefab == null)
+            {
+                failure = BuildingPlacementFailure.InvalidDefinition;
+                return false;
             }
 
             failure = BuildingPlacementFailure.None;

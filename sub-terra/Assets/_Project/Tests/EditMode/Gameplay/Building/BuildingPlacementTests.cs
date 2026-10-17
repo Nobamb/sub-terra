@@ -10,6 +10,38 @@ namespace SubTerra.Gameplay.Building.Tests
     public sealed class BuildingPlacementTests
     {
         [Test]
+        public void LocationPreviewChecksFootprintGroundAndDistanceEvenWithoutResources()
+        {
+            var setup = CreateSetup(3f, new Vector2(20f, 20f), buildingId: "building.charger.basic");
+            try
+            {
+                setup.Wallet.CanAffordValue = false;
+                setup.Terrain.SetTile(new Vector3Int(0, -1, 0), setup.Tile);
+                setup.Terrain.SetTile(new Vector3Int(1, -1, 0), setup.Tile);
+                Assert.That(setup.Placement.CanPlaceLocationAt(Vector3Int.zero, out var failure), Is.True);
+                Assert.That(failure, Is.EqualTo(BuildingPlacementFailure.None));
+                Assert.That(setup.Placement.CanPlaceAt(Vector3Int.zero, out failure), Is.False);
+                Assert.That(failure, Is.EqualTo(BuildingPlacementFailure.CannotAfford));
+
+                setup.Terrain.SetTile(new Vector3Int(1, 1, 0), setup.Tile);
+                Assert.That(setup.Placement.CanPlaceLocationAt(Vector3Int.zero, out failure), Is.False);
+                Assert.That(failure, Is.EqualTo(BuildingPlacementFailure.Occupied));
+                Assert.That(setup.Placement.TryPlaceAt(Vector3Int.zero).Failure, Is.EqualTo(BuildingPlacementFailure.CannotAfford));
+
+                setup.Terrain.SetTile(new Vector3Int(1, 1, 0), null);
+                setup.Terrain.SetTile(new Vector3Int(1, -1, 0), null);
+                Assert.That(setup.Placement.CanPlaceLocationAt(Vector3Int.zero, out failure), Is.False);
+                Assert.That(failure, Is.EqualTo(BuildingPlacementFailure.MissingGround));
+                Assert.That(setup.Placement.CanPlaceLocationAt(new Vector3Int(5, 0, 0), out failure), Is.False);
+                Assert.That(failure, Is.EqualTo(BuildingPlacementFailure.OutOfRange));
+                Assert.That(setup.Wallet.SpendCount, Is.Zero);
+                Assert.That(setup.BuildingRoot.childCount, Is.Zero);
+                Assert.That(setup.Placement.Selection, Is.SameAs(setup.Definition));
+            }
+            finally { setup.Dispose(); }
+        }
+
+        [Test]
         public void InsufficientResources_TakePriorityAndRepeatedAttemptsDoNotSpend()
         {
             var setup = CreateSetup(6f, new Vector2(20f, 20f));

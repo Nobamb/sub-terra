@@ -137,6 +137,7 @@ namespace SubTerra.Gameplay.Structural.Tests
             var overlay = overlayObject.AddComponent<Tilemap>();
             overlayObject.AddComponent<TilemapRenderer>();
             var tile = ScriptableObject.CreateInstance<Tile>();
+            var replacement = ScriptableObject.CreateInstance<Tile>();
             var texture = new Texture2D(1, 1);
             texture.SetPixel(0, 0, Color.white);
             texture.Apply();
@@ -146,6 +147,10 @@ namespace SubTerra.Gameplay.Structural.Tests
                 new Vector2(0.5f, 0.5f),
                 1f);
             tile.sprite = sprite;
+            var replacementSprite = Sprite.Create(texture, new Rect(0, 0, 1, 1),
+                new Vector2(0.5f, 0.5f), 1f);
+            replacement.sprite = replacementSprite;
+            replacement.color = Color.green;
             var cell = new Vector3Int(0, 2, 0);
             source.SetTile(cell, tile);
 
@@ -165,17 +170,116 @@ namespace SubTerra.Gameplay.Structural.Tests
                 Assert.That(root.transform.Find("StructuralShake_0_2"), Is.Not.Null);
                 Assert.That(source.GetColor(cell).a, Is.Zero);
 
+                source.SetTile(cell, replacement);
+                crackOverlay.SetCell(cell, StructuralRiskLevel.Caution, 0.2f, StructuralRiskCause.Unsupported);
+                var renderer = root.transform.Find("StructuralShake_0_2").GetComponent<SpriteRenderer>();
+                Assert.That(renderer.sprite, Is.SameAs(replacementSprite));
+                Assert.That(renderer.color, Is.EqualTo(Color.green));
+                Assert.That(source.GetTile(cell), Is.SameAs(replacement));
+
                 crackOverlay.ClearCell(cell);
 
                 Assert.That(crackOverlay.HasShakeVisual(cell), Is.False);
                 Assert.That(source.GetColor(cell).a, Is.EqualTo(1f).Within(0.0001f));
+                Assert.That(source.GetColor(cell), Is.EqualTo(Color.green));
+
+                // 위험 이벤트가 다시 오지 않아도 광석→일반 암석 교체를 다음 표시 갱신에서 따라간다.
+                source.SetTile(cell, tile);
+                crackOverlay.SetCell(cell, StructuralRiskLevel.Caution, 0.2f, StructuralRiskCause.Unsupported);
+                source.SetTile(cell, replacement);
+                typeof(StructuralCrackOverlay).GetMethod("UpdateCrackAnimation",
+                    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
+                    .Invoke(crackOverlay, new object[] { 0.02f });
+                source.SetTile(cell, tile);
+                typeof(StructuralCrackOverlay).GetMethod("UpdateCrackAnimation",
+                    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
+                    .Invoke(crackOverlay, new object[] { 0.02f });
+                renderer = root.transform.Find("StructuralShake_0_2").GetComponent<SpriteRenderer>();
+                Assert.That(source.GetTile(cell), Is.SameAs(tile));
+                Assert.That(renderer.sprite, Is.SameAs(sprite), "일반 타일에 이전 광석 Sprite가 남으면 안 된다.");
+                Assert.That(renderer.color, Is.EqualTo(Color.white));
+                crackOverlay.ClearCell(cell);
+                Assert.That(source.GetColor(cell), Is.EqualTo(Color.white));
+
+                crackOverlay.SetCell(cell, StructuralRiskLevel.Caution, 0.2f, StructuralRiskCause.Unsupported);
+                source.SetTile(cell, null);
+                typeof(StructuralCrackOverlay).GetMethod("UpdateCrackAnimation",
+                    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
+                    .Invoke(crackOverlay, new object[] { 0.02f });
+                Assert.That(crackOverlay.HasShakeVisual(cell), Is.False);
+                Assert.That(overlay.HasTile(cell), Is.False);
             }
             finally
             {
                 Object.DestroyImmediate(root);
                 Object.DestroyImmediate(tile);
+                Object.DestroyImmediate(replacement);
+                Object.DestroyImmediate(replacementSprite);
                 Object.DestroyImmediate(sprite);
                 Object.DestroyImmediate(texture);
+            }
+        }
+
+        [Test]
+        public void ShakeVisual_IsBehindNeighboringForegroundTiles()
+        {
+            using var fixture = new ShakeFixture();
+            var visual = fixture.Root.transform.Find("StructuralShake_0_0").GetComponent<SpriteRenderer>();
+            Assert.That(visual.sortingLayerID, Is.EqualTo(fixture.SourceRenderer.sortingLayerID));
+            Assert.That(visual.sortingOrder, Is.LessThan(fixture.SourceRenderer.sortingOrder),
+                "움직인 복제본은 인접한 실제 광석 타일을 덮으면 안 된다.");
+            Assert.That(fixture.Source.GetTile(Vector3Int.zero), Is.SameAs(fixture.Tile));
+        }
+
+        [Test]
+        public void MissingCrackTile_ReleasesShakeAndRestoresSourceWithoutNewRiskEvent()
+        {
+            using var fixture = new ShakeFixture();
+            fixture.Overlay.SetTile(Vector3Int.zero, null);
+            typeof(StructuralCrackOverlay).GetMethod("UpdateCrackAnimation",
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
+                .Invoke(fixture.Feedback, new object[] { 0.02f });
+            Assert.That(fixture.Feedback.HasShakeVisual(Vector3Int.zero), Is.False);
+            Assert.That(fixture.Source.GetColor(Vector3Int.zero), Is.EqualTo(Color.white));
+            Assert.That(fixture.Source.GetTile(Vector3Int.zero), Is.SameAs(fixture.Tile));
+        }
+
+        private sealed class ShakeFixture : System.IDisposable
+        {
+            public readonly GameObject Root = new GameObject("ShakeOwnershipFixture");
+            public readonly Tilemap Source;
+            public readonly Tilemap Overlay;
+            public readonly TilemapRenderer SourceRenderer;
+            public readonly StructuralCrackOverlay Feedback;
+            public readonly Tile Tile = ScriptableObject.CreateInstance<Tile>();
+            private readonly Sprite sprite;
+
+            public ShakeFixture()
+            {
+                var grid = new GameObject("Grid", typeof(Grid));
+                grid.transform.SetParent(Root.transform);
+                var sourceObject = new GameObject("Foreground", typeof(Tilemap), typeof(TilemapRenderer));
+                sourceObject.transform.SetParent(grid.transform);
+                Source = sourceObject.GetComponent<Tilemap>();
+                SourceRenderer = sourceObject.GetComponent<TilemapRenderer>();
+                SourceRenderer.sortingOrder = 14;
+                var overlayObject = new GameObject("Cracks", typeof(Tilemap), typeof(TilemapRenderer));
+                overlayObject.transform.SetParent(grid.transform);
+                Overlay = overlayObject.GetComponent<Tilemap>();
+                sprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 1, 1), Vector2.one * 0.5f, 1f);
+                Tile.sprite = sprite;
+                Source.SetTile(Vector3Int.zero, Tile);
+                Feedback = Root.AddComponent<StructuralCrackOverlay>();
+                SetPrivateField(Feedback, "overlayTilemap", Overlay);
+                Feedback.BindSourceTilemap(Source);
+                Feedback.SetCell(Vector3Int.zero, StructuralRiskLevel.Caution, 0.2f, StructuralRiskCause.Unsupported);
+            }
+
+            public void Dispose()
+            {
+                Object.DestroyImmediate(Root);
+                Object.DestroyImmediate(Tile);
+                Object.DestroyImmediate(sprite);
             }
         }
 

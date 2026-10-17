@@ -26,7 +26,7 @@ namespace SubTerra.App.Integration
 
     /// <summary>
     /// B의 메뉴/지갑과 A의 배치 시스템을 연결한다.
-    /// A의 CanPlaceAt·TryPlaceAt만 호출하며 지형·구조 계산을 복제하지 않는다.
+    /// A의 위치 조회·설치 API를 호출하며 지형·구조 계산을 복제하지 않는다.
     /// </summary>
     public sealed class GameplayBuildingPlacementBridge :
         MonoBehaviour,
@@ -115,11 +115,9 @@ namespace SubTerra.App.Integration
             var cursorCell = placementSystem.WorldToCell(world);
             // 2x2 긴급 탈출 포탈 등: 플레이어 좌/우에 따라 footprint를 펼친 좌하단 origin을 사용한다.
             var origin = ResolveDirectionalOrigin(cursorCell, world.x);
-            var canPlace = placementSystem.CanPlaceAt(origin, out var failure);
-
-            // A는 위치 검사를 먼저 하고 마지막에 비용을 확인한다.
-            // CannotAfford는 위치 자체는 유효하므로 B 비용 실패와 분리해 표시한다.
-            var locationValid = canPlace || failure == BuildingPlacementFailure.CannotAfford;
+            var locationValid = placementSystem.CanPlaceLocationAt(origin, out var failure);
+            var canAfford = CanAfford(selectedBuildingId);
+            if (locationValid && !canAfford) failure = BuildingPlacementFailure.CannotAfford;
             var state = locationValid
                 ? BuildingPlacementState.Valid
                 : BuildingPlacementState.Invalid;
@@ -132,7 +130,7 @@ namespace SubTerra.App.Integration
                     placementSystem.Selection.BuildingId, placementSystem.Selection.Footprint);
             }
             placementSystem.GetFootprintCells(origin, footprintPreviewCells);
-            var previewValid = locationValid && CanAfford(selectedBuildingId);
+            var previewValid = locationValid && canAfford;
             if (footprintPreviewCells.Count > 1)
             {
                 // 다중 칸: 칸마다 점 4개(2x2) 등 표시.

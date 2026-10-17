@@ -1,10 +1,9 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Rendering.Universal;
 
 namespace SubTerra.Gameplay.Drone
 {
-    /// <summary>스캔 대상만 재사용 Light2D로 표시하고 수명이 끝나면 모두 회수한다.</summary>
+    /// <summary>스캔 대상 칸만 재사용 표식으로 강조한다. 주변 일반 지형을 조명하지 않는다.</summary>
     public sealed class DroneScanPulseView : MonoBehaviour
     {
         [SerializeField] private Color mineralColor = new(0.92f, 0.97f, 1f, 1f);
@@ -13,12 +12,12 @@ namespace SubTerra.Gameplay.Drone
         [SerializeField] private Color sealedGlyphColor = new(0.18f, 0.92f, 0.88f, 1f);
         [SerializeField, Min(0f)] private float lightIntensity = 1.8f;
         [SerializeField, Min(0.1f)] private float lightRadius = 1.05f;
-        [SerializeField, Min(0.1f)] private float ringDuration = 1.5f;
+        [SerializeField, Min(0.1f)] private float ringDuration = 0.9f;
 
         private sealed class PooledMarker
         {
             public GameObject Root;
-            public Light2D Light;
+            public SpriteRenderer Renderer;
         }
 
         private readonly List<PooledMarker> pool = new();
@@ -27,11 +26,15 @@ namespace SubTerra.Gameplay.Drone
         private SpriteRenderer rangeRing;
         private Texture2D ringTexture;
         private Sprite ringSprite;
+        private Texture2D markerTexture;
+        private Sprite markerSprite;
         private float expiresAt;
         private float ringExpiresAt;
         private int activeCount;
 
+        /// <summary>기존 호출부 호환용 이름. 실제 Light2D 수가 아니라 활성 대상 표식 수다.</summary>
         public int ActiveLightCount => activeCount;
+        public int ActiveMarkerCount => activeCount;
         public bool IsRingVisible => rangeRing != null && rangeRing.gameObject.activeSelf;
 
         public void Show(
@@ -103,19 +106,17 @@ namespace SubTerra.Gameplay.Drone
         {
             if (index < pool.Count) return pool[index];
 
-            var root = new GameObject("DroneScanLight_" + pool.Count);
+            var root = new GameObject("DroneScanMarker_" + pool.Count);
             root.layer = gameObject.layer;
             root.transform.SetParent(visualRoot.transform, true);
-            Light2D light = root.AddComponent<Light2D>();
-            light.lightType = Light2D.LightType.Point;
-            light.intensity = lightIntensity;
-            light.pointLightInnerRadius = lightRadius * 0.3f;
-            light.pointLightOuterRadius = lightRadius;
+            var renderer = root.AddComponent<SpriteRenderer>();
+            renderer.sprite = ResolveMarkerSprite();
+            renderer.sortingOrder = 95;
 
             var marker = new PooledMarker
             {
                 Root = root,
-                Light = light
+                Renderer = renderer
             };
             pool.Add(marker);
             return marker;
@@ -130,8 +131,28 @@ namespace SubTerra.Gameplay.Drone
                 DroneScanTargetKind.SealedGlyph => sealedGlyphColor,
                 _ => mineralColor
             };
-            marker.Light.color = color;
-            marker.Light.intensity = lightIntensity;
+            marker.Renderer.color = new Color(color.r, color.g, color.b, 0.8f);
+        }
+
+        private Sprite ResolveMarkerSprite()
+        {
+            if (markerSprite != null) return markerSprite;
+            const int size = 32;
+            markerTexture = new Texture2D(size, size, TextureFormat.RGBA32, false)
+            {
+                name = "RuntimeDroneTargetMarker", filterMode = FilterMode.Point
+            };
+            for (int y = 0; y < size; y++)
+            for (int x = 0; x < size; x++)
+            {
+                bool border = (x == 2 || x == size - 3) && y >= 2 && y <= size - 3
+                    || (y == 2 || y == size - 3) && x >= 2 && x <= size - 3;
+                markerTexture.SetPixel(x, y, border ? Color.white : Color.clear);
+            }
+            markerTexture.Apply();
+            markerSprite = Sprite.Create(markerTexture, new Rect(0, 0, size, size),
+                new Vector2(0.5f, 0.5f), size);
+            return markerSprite;
         }
 
         private void ShowRangeRing(Vector3 center, int radius)
@@ -195,6 +216,8 @@ namespace SubTerra.Gameplay.Drone
             if (visualRoot != null) DestroyRuntimeObject(visualRoot);
             DestroyRuntimeObject(ringSprite);
             DestroyRuntimeObject(ringTexture);
+            DestroyRuntimeObject(markerSprite);
+            DestroyRuntimeObject(markerTexture);
         }
 
         private static void DestroyRuntimeObject(Object value)
