@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using SubTerra.App.UI.PlayerStatus;
 using SubTerra.App.Core.Data;
 using SubTerra.App.Economy;
 using SubTerra.App.Inventory;
@@ -130,7 +131,7 @@ namespace SubTerra.App.UI.Building
                 return false;
             }
 
-            gameState?.SetBuildingSelection(data.Id, data.DisplayName);
+            gameState?.SetBuildingSelection(data.Id, ItemDisplayNames.PreferDisplay(data.Id, data.DisplayName));
             view?.SetSelection(CreateItem(data));
             view?.SetStatusMessage(string.Empty);
             RefreshAvailability();
@@ -230,8 +231,12 @@ namespace SubTerra.App.UI.Building
             }
             else if (result.state == BuildingPlacementState.Failed)
             {
-                view?.SetStatusMessage(FormatPlacementReason(result.reasonId, true));
-                ClearSelectionState();
+                var message = wallet != null && selected != null
+                    && !wallet.CanAfford(ItemCostMapping.ToDtoList(selected.BuildCosts))
+                    ? "자원이 부족합니다."
+                    : FormatPlacementReason(result.reasonId, true);
+                view?.SetStatusMessage(message);
+                PlayerStatusWarnings.Current?.ShowWarning("building.placement-failed", message);
             }
             else if (result.state == BuildingPlacementState.Cancelled)
             {
@@ -275,11 +280,11 @@ namespace SubTerra.App.UI.Building
             switch (reasonId)
             {
                 case "occupied":
-                    return "다른 시설이나 지형과 겹쳐 설치할 수 없습니다.";
+                    return "다른 시설이나 지형과 겹칩니다. 빈 공간을 선택하세요.";
                 case "elevator_space":
-                    return "엘리베이터 이동 공간에는 설치할 수 없습니다.";
+                    return "엘리베이터 이동 공간입니다. 승강로 밖을 선택하세요.";
                 case "missing_ground":
-                    return "시설을 지지할 지면이 없습니다.";
+                    return "시설을 지지할 지면이 없습니다. 바닥 위를 선택하세요.";
                 case "invalid_definition":
                     return "시설 데이터가 올바르지 않습니다.";
                 case "instantiate_failed":
@@ -293,9 +298,9 @@ namespace SubTerra.App.UI.Building
                 case "no_selection":
                     return "선택된 시설이 없습니다.";
                 case "out_of_range":
-                    return "플레이어에게서 너무 먼 위치입니다.";
+                    return "플레이어에게서 너무 먼 위치입니다. 가까이 이동하세요.";
                 case "outside_allowed_area":
-                    return "건설이 허용되지 않은 구역입니다.";
+                    return "건설이 허용되지 않은 구역입니다. 구역 안을 선택하세요.";
                 default:
                     return failed ? "시설 설치에 실패했습니다." : string.Empty;
             }

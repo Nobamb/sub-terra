@@ -117,7 +117,7 @@ namespace SubTerra.App.Editor.DataValidation
             Style(mission, headerFont, Cyan, TextAlignmentOptions.MidlineLeft, false);
             mission.fontStyle = FontStyles.Bold;
             mission.characterSpacing = 4f;
-            mission.text = "MISSION";
+            mission.text = "MISSION · 방법 보기";
             Place(mission.rectTransform, SummaryHeaderInset, SummaryHeaderY, 170f, 32f, new Vector2(0f, 1f), new Vector2(0f, 1f));
 
             var marks = EnsureLabel(button.transform, "QuestMissionMarks", font);

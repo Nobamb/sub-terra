@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using SubTerra.App.Core.Data;
 using SubTerra.Shared;
 using UnityEngine;
 
@@ -42,8 +43,8 @@ namespace SubTerra.App.UI.Building
             IReadOnlyList<BuildingCostReadModel> costs)
         {
             BuildingId = buildingId ?? string.Empty;
-            DisplayName = displayName ?? string.Empty;
-            Description = description ?? string.Empty;
+            DisplayName = ItemDisplayNames.PreferDisplay(buildingId, displayName);
+            Description = ItemDisplayNames.NormalizeFacilityText(description);
             Icon = icon;
             PowerDraw = powerDraw < 0 ? 0 : powerDraw;
             Costs = costs ?? Array.Empty<BuildingCostReadModel>();

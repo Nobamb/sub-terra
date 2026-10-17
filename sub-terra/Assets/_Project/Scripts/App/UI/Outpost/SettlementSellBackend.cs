@@ -14,8 +14,8 @@ namespace SubTerra.App.UI.Outpost
     /// </summary>
     public sealed class SettlementSellBackend : IResourceSellBackend
     {
-        public const string HintText = "정산 콘솔 · 화물의 자원을 선택하고 수량을 정해 골드로 판매하세요.";
-        public const string BulkNotice = "희귀 품목은 정산 콘솔에서 판매할 수 없습니다 · 지상 판매창 이용";
+        public const string HintText = (ItemDisplayNames.SettlementName + " · 화물의 자원을 선택하고 수량을 정해 골드로 판매하세요.");
+        public const string BulkNotice = ("희귀 품목은 " + ItemDisplayNames.SettlementName + "에서 판매할 수 없습니다 · 지상 판매창 이용");
         public const string RareNote = "정산 불가 · 지상에서 판매";
 
         private OutpostPanelPresenter presenter;

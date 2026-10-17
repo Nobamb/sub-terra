@@ -253,7 +253,13 @@ namespace SubTerra.Gameplay.Player
             }
 
             travelCommitted = true;
-            if (!travelPort.TryTravel(destination, out var reason))
+            var accepted = travelPort.TryTravel(destination, out var reason);
+            // 지연 Scene 로드의 접수와 실제 도착을 구분한다. 실패하면 동일한 하강·조작 복구를 탄다.
+            while (accepted && travelPort.State == ElevatorTravelState.Moving)
+            {
+                yield return null;
+            }
+            if (!accepted || travelPort.State == ElevatorTravelState.Blocked)
             {
                 travelCommitted = false;
                 if (animateCabin)

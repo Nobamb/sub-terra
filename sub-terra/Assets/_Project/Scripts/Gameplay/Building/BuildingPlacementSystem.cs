@@ -153,6 +153,7 @@ namespace SubTerra.Gameplay.Building
                 return false;
             }
 
+            if (!CanAffordSelection(out failure)) return false;
             Vector2Int footprint = selection.Footprint;
             // 거리·허용 구역은 footprint 중심 기준으로 검사해 2x2 좌하단 origin 편향을 줄인다.
             Vector3 worldPosition = FootprintWorldCenter(origin, footprint);
@@ -237,11 +238,19 @@ namespace SubTerra.Gameplay.Building
                 }
             }
 
+            failure = BuildingPlacementFailure.None;
+            return true;
+        }
+
+        private bool CanAffordSelection(out BuildingPlacementFailure failure)
+        {
+            // 시설 이동은 무료다. 지갑이 없거나 자원이 부족해도 위치 검사는 계속한다.
             if (IsMoving)
             {
                 failure = BuildingPlacementFailure.None;
                 return true;
             }
+
             if (sharedResourceWallet != null)
             {
                 if (!sharedResourceWallet.CanAfford(selection.Costs))
@@ -319,29 +328,47 @@ namespace SubTerra.Gameplay.Building
         }
 
         public bool TryBeginMoveAt(Vector3 worldPosition)
+            => TryGetMovableAt(worldPosition, out var instance, out _) && TryBeginMove(instance);
+
+        /// <summary>선택/점유를 변경하지 않고 실제 이동 가능한 대상과 바닥 중앙을 조회한다.</summary>
+        public bool TryGetMovableAt(Vector3 worldPosition, out BuildingInstance instance, out Vector3 groundAnchor)
         {
+            instance = null;
+            groundAnchor = default;
             Vector3Int cell = WorldToCell(worldPosition);
+            if (!occupiedBuildings.ContainsKey(cell)) return false;
             foreach (var entry in runtimeBuildings)
             {
-                if (entry.Key == null || !entry.Key.gameObject.activeInHierarchy) continue;
                 var placement = entry.Value;
-                if (ContainsCell(placement.Cell, placement.Footprint, cell))
-                    return TryBeginMove(entry.Key);
+                if (ContainsCell(placement.Cell, placement.Footprint, cell) && CanMoveInstance(entry.Key))
+                {
+                    instance = entry.Key;
+                    groundAnchor = FootprintWorldCenter(placement.Cell, placement.Footprint);
+                    var bottom = CellToWorld(placement.Cell);
+                    var above = CellToWorld(placement.Cell + Vector3Int.up);
+                    groundAnchor.y = bottom.y - (above.y - bottom.y) * 0.5f;
+                    return true;
+                }
             }
             return false;
         }
 
-        public bool TryBeginMove(BuildingInstance instance)
+        private bool CanMoveInstance(BuildingInstance instance)
         {
-            if (instance == null || !runtimeBuildings.ContainsKey(instance)
+            if (instance == null || !instance.gameObject.activeInHierarchy || !runtimeBuildings.ContainsKey(instance)
                 || (instance.BuildingId != "building.light.basic"
                     && instance.BuildingId != "building.settlement.basic"
                     && instance.BuildingId != "building.charger.basic"
                     && instance.BuildingId != "building.clinic.basic"
                     && instance.BuildingId != "building.storage.basic")) return false;
             BuildingPlacementDefinition definition = FindDefinition(instance.BuildingId);
-            if (definition == null || definition.RuntimePrefab == null) return false;
-            Select(definition);
+            return definition != null && definition.RuntimePrefab != null;
+        }
+
+        public bool TryBeginMove(BuildingInstance instance)
+        {
+            if (!CanMoveInstance(instance)) return false;
+            Select(FindDefinition(instance.BuildingId));
             movingBuilding = instance;
             return true;
         }
@@ -399,6 +426,8 @@ namespace SubTerra.Gameplay.Building
                 failure = BuildingPlacementFailure.NoSelection;
                 return false;
             }
+
+            if (!CanAffordSelection(out failure)) return false;
 
             Vector3 originWorld = placementOrigin != null
                 ? placementOrigin.position

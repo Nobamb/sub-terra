@@ -15,6 +15,46 @@ namespace SubTerra.App.Tests.Save
     public sealed class MineResetServiceTests
     {
         [Test]
+        public void NewGameWorld_EachCreationUsesFreshSeedAndNoChanges()
+        {
+            var source = new FixedSeedSource(101, 202);
+            Assert.That(MineResetService.TryCreateNewGameWorld(source, out var first), Is.True);
+            Assert.That(MineResetService.TryCreateNewGameWorld(source, out var second), Is.True);
+            Assert.That(first.worldSeed, Is.EqualTo(101));
+            Assert.That(second.worldSeed, Is.EqualTo(202));
+            Assert.That(first.generatorVersion, Is.EqualTo(new WorldSnapshotDto().generatorVersion));
+            Assert.That(first.miningChanges, Is.Empty);
+            Assert.That(first.buildings, Is.Empty);
+            Assert.That(first.changedTiles, Is.Empty);
+            Assert.That(first.gasChanges, Is.Empty);
+            Assert.That(first.collapseChanges, Is.Empty);
+            Assert.That(first.powerState.cableConnections, Is.Empty);
+            second.miningChanges.Add(new MiningSnapshotDto());
+            Assert.That(first.miningChanges, Is.Empty, "새 월드 사이에 변경점 목록을 공유하지 않음");
+        }
+
+        [Test]
+        public void NewGameWorld_RetriesZeroSeedAndFailsWithoutUsableSource()
+        {
+            Assert.That(MineResetService.TryCreateNewGameWorld(new FixedSeedSource(0, 303), out var world), Is.True);
+            Assert.That(world.worldSeed, Is.EqualTo(303));
+            Assert.That(MineResetService.TryCreateNewGameWorld(new FixedSeedSource(0), out world), Is.False);
+            Assert.That(world, Is.Null);
+            Assert.That(MineResetService.TryCreateNewGameWorld(null, out world), Is.False);
+            Assert.That(world, Is.Null);
+        }
+
+        [Test]
+        public void NewGameWorld_RuntimeSourceProducesDifferentConsecutiveSeeds()
+        {
+            var source = new UtcMineResetSeedSource();
+            Assert.That(MineResetService.TryCreateNewGameWorld(source, out var first), Is.True);
+            Assert.That(MineResetService.TryCreateNewGameWorld(source, out var second), Is.True);
+            Assert.That(first.worldSeed, Is.GreaterThan(0));
+            Assert.That(second.worldSeed, Is.GreaterThan(first.worldSeed));
+        }
+
+        [Test]
         public void Gold800_Reset_SpendsFeeAndReplacesWorldWithEmptyNewSeed()
         {
             var state = GameState.CreateNew();

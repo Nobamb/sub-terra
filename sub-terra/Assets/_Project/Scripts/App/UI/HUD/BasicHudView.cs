@@ -32,6 +32,68 @@ namespace SubTerra.App.UI.HUD
         {
             AlignHealthRow();
             HideBuildingSelection();
+            ApplyCompactLayout();
+        }
+
+        public void ApplyCompactLayout()
+        {
+            var root = transform as RectTransform;
+            var frame = transform.Find("HudFrame") as RectTransform;
+            if (root == null || frame == null) return;
+            root.localScale = Vector3.one;
+            PlaceCompact(root, 12f, 12f, 380f, 208f);
+            PlaceCompact(frame, 0f, 0f, 380f, 208f);
+            foreach (var gaugeName in new[] { "HealthGauge", "EnergyGauge" })
+            {
+                var gauge = transform.Find(gaugeName) as RectTransform;
+                if (gauge == null) continue;
+                PlaceCompact(gauge, 106f, gaugeName == "HealthGauge" ? 16f : 52f, 258f, 32f);
+                foreach (var child in new[] { "Empty", "Fill", "Frame" })
+                    PlaceCompact(gauge.Find(child) as RectTransform, 0f, 0f, 258f, 32f);
+            }
+            TextCompact(healthText, 110f, 16f, 246f, 30f, 22f);
+            TextCompact(energyText, 110f, 52f, 246f, 30f, 22f);
+            LabelCompact("HealthLabel", 52f, 17f, 50f, 28f, 20f);
+            LabelCompact("EnergyLabel", 52f, 53f, 50f, 28f, 20f);
+            TextCompact(depthText, 52f, 96f, 132f, 26f, 19f);
+            TextCompact(goldText, 52f, 126f, 132f, 26f, 19f);
+            TextCompact(cargoText, 232f, 96f, 134f, 26f, 19f);
+            TextCompact(unsettledValueText, 232f, 126f, 134f, 26f, 18f);
+            float[] xs = { 20f, 20f, 20f, 20f, 202f, 202f };
+            float[] ys = { 18f, 54f, 97f, 127f, 97f, 127f };
+            for (int i = 0; i < 6; i++) PlaceCompact(transform.Find("HudIcon" + i) as RectTransform, xs[i], ys[i], 24f, 24f);
+            PlaceCompact(transform.Find("TopSeparator") as RectTransform, 16f, 89f, 348f, 1f);
+            PlaceCompact(transform.Find("BottomSeparator") as RectTransform, 16f, 158f, 348f, 1f);
+            PlaceCompact(transform.Find("ColumnSeparator") as RectTransform, 190f, 96f, 1f, 56f);
+            var status = transform.Find("StructuralStatusRow") as RectTransform;
+            if (status != null)
+            {
+                PlaceCompact(status, 16f, 164f, 348f, 28f);
+                PlaceCompact(status.Find("Icon") as RectTransform, 4f, 2f, 24f, 24f);
+                var label = status.Find("Label");
+                if (label != null) TextCompact(label.GetComponent<TMP_Text>(), 36f, 0f, 306f, 28f, 20f);
+            }
+        }
+
+        private void LabelCompact(string name, float x, float y, float w, float h, float size)
+        {
+            var label = transform.Find(name);
+            if (label != null) TextCompact(label.GetComponent<TMP_Text>(), x, y, w, h, size);
+        }
+
+        private static void TextCompact(TMP_Text text, float x, float y, float w, float h, float size)
+        {
+            if (text == null) return;
+            PlaceCompact(text.rectTransform, x, y, w, h);
+            text.fontSize = size;
+        }
+
+        private static void PlaceCompact(RectTransform rect, float x, float y, float w, float h)
+        {
+            if (rect == null) return;
+            rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(0f, 1f);
+            rect.anchoredPosition = new Vector2(x, -y);
+            rect.sizeDelta = new Vector2(w, h);
         }
 
         public void AlignHealthRow()
@@ -65,7 +127,11 @@ namespace SubTerra.App.UI.HUD
 
         public void SetHealthLevel(float current, int maximum)
         {
-            if (healthGauge != null) healthGauge.SetValue(current, maximum);
+            if (healthGauge != null)
+            {
+                healthGauge.EnableDamageTrail();
+                healthGauge.SetValue(current, maximum);
+            }
         }
 
         public void SetHealth(string text)

@@ -93,6 +93,7 @@ namespace SubTerra.App.Editor.DataValidation
             Line(root, "TopSeparator", 18, 108, 394, 1);
             Line(root, "BottomSeparator", 18, 196, 394, 1);
             Line(root, "ColumnSeparator", 208, 117, 1, 70);
+            view.ApplyCompactLayout();
             EditorUtility.SetDirty(view);
             PrefabUtility.RecordPrefabInstancePropertyModifications(view);
             PrefabUtility.RecordPrefabInstancePropertyModifications(root);

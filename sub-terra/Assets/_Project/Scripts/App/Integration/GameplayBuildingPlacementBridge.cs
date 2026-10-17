@@ -4,6 +4,8 @@ using SubTerra.App.Core.Data;
 using SubTerra.App.Economy;
 using SubTerra.App.UI;
 using SubTerra.App.UI.Building;
+using SubTerra.App.UI.FacilityNameTag;
+using SubTerra.App.UI.HUD;
 using SubTerra.Gameplay.Building;
 using SubTerra.Gameplay.Player;
 using SubTerra.Shared;
@@ -51,7 +53,14 @@ namespace SubTerra.App.Integration
         private int lastY = int.MinValue;
         private readonly List<Vector3Int> footprintPreviewCells = new();
         private bool pickingMoveTarget;
+        private FacilityNameTagVisual moveHoverHint;
+        private BuildingInstance hoveredMoveTarget;
+        private float moveHoverStarted;
+        private int lastPointerPlacementFrame = -1;
         public bool IsMoveMode => pickingMoveTarget || (placementSystem != null && placementSystem.IsMoving);
+        public bool OwnsPointerInput => IsMoveMode
+            || (placementSystem != null && placementSystem.Selection != null)
+            || lastPointerPlacementFrame == Time.frameCount;
         public event Action<string> MoveStatusChanged;
 
         public void BeginMoveSelection()
@@ -59,10 +68,39 @@ namespace SubTerra.App.Integration
             CancelPreview();
             pickingMoveTarget = true;
             BuildingPlacementActivity.Begin();
-            MoveStatusChanged?.Invoke("옮길 조명·정산 콘솔·충전기·보관함·보건소를 클릭하세요. 우클릭 취소");
+            MoveStatusChanged?.Invoke($"옮길 조명·{ItemDisplayNames.SettlementName}·충전기·보관함·보건소를 클릭하세요. 우클릭 취소");
         }
 
         public event Action<BuildingPlacementResultDto> PlacementChanged;
+
+        /// <summary>월드 우클릭: 시설 이동 시작, 이동 중이면 원래 위치를 보존하고 취소.</summary>
+        public bool HandleWorldRightClick(Vector3 worldPosition)
+        {
+            if (UiPauseGate.IsHeld) return false;
+            if (IsMoveMode)
+            {
+                CancelPreview();
+                return true;
+            }
+            return TryBeginMoveFromWorld(worldPosition);
+        }
+
+        public bool TryBeginMoveFromWorld(Vector3 worldPosition)
+        {
+            if (UiPauseGate.IsHeld || placementSystem == null || placementSystem.IsMoving) return false;
+            var previousId = selectedBuildingId;
+            if (!placementSystem.TryBeginMoveAt(worldPosition)) return false;
+            if (pickingMoveTarget) BuildingPlacementActivity.End();
+            pickingMoveTarget = false;
+            if (!string.IsNullOrEmpty(previousId))
+                Publish(new BuildingPlacementResultDto { state = BuildingPlacementState.Cancelled, buildingId = previousId });
+            selectedBuildingId = placementSystem.Selection.BuildingId;
+            HideMoveHoverHint();
+            ResetPublishedState();
+            var size = placementSystem.Selection.Footprint;
+            MoveStatusChanged?.Invoke($"{size.x}×{size.y} 빈 공간에 좌클릭해 배치하세요. 무료 이동 · 우클릭 취소");
+            return true;
+        }
 
         private void OnEnable()
         {
@@ -84,18 +122,80 @@ namespace SubTerra.App.Integration
             }
 
             ClearRuntimeSelection();
+            HideMoveHoverHint();
+        }
+
+        private void OnDestroy()
+        {
+            if (moveHoverHint != null) moveHoverHint.Destroy();
+        }
+
+        private void HideMoveHoverHint()
+        {
+            hoveredMoveTarget = null;
+            if (moveHoverHint != null) moveHoverHint.ResetImmediate();
+        }
+
+        private void UpdateMoveHoverHint()
+        {
+            if (UiPauseGate.IsHeld || IsMoveMode || placementSystem == null
+                || placementSystem.Selection != null || Mouse.current == null
+                || (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject()))
+            {
+                HideMoveHoverHint();
+                return;
+            }
+            var camera = targetCamera != null ? targetCamera : Camera.main;
+            if (camera == null) { HideMoveHoverHint(); return; }
+            var cursor = Mouse.current.position.ReadValue();
+            var point = camera.ScreenToWorldPoint(new Vector3(cursor.x, cursor.y, -camera.transform.position.z));
+            if (!placementSystem.TryGetMovableAt(point, out var instance, out var anchor))
+            {
+                HideMoveHoverHint();
+                return;
+            }
+            if (hoveredMoveTarget != instance)
+            {
+                HideMoveHoverHint();
+                hoveredMoveTarget = instance;
+                moveHoverStarted = Time.realtimeSinceStartup;
+            }
+            if (Time.realtimeSinceStartup - moveHoverStarted < 0.15f) return;
+            if (moveHoverHint == null)
+            {
+                var hud = FindAnyObjectByType<BasicHudView>(FindObjectsInactive.Include);
+                if (hud == null || hud.HealthText == null || hud.HealthText.font == null) return;
+                moveHoverHint = FacilityNameTagVisual.CreateWorld(transform, hud.HealthText.font,
+                    FacilityNameTagLayers.MainScreen, "FacilityMoveHoverHint");
+                moveHoverHint.Rect.localScale = Vector3.one * 0.008f;
+                moveHoverHint.SetLabel("우클릭 · 이동");
+            }
+            anchor.y -= 0.08f + FacilityNameTagVisual.Height * 0.008f;
+            anchor.z = 0f;
+            moveHoverHint.Rect.position = anchor;
+            moveHoverHint.SetWanted(true);
+            moveHoverHint.Tick(Time.unscaledDeltaTime);
         }
 
         private void Update()
         {
-            if (IsMoveMode && Mouse.current != null && Mouse.current.rightButton.wasPressedThisFrame)
-            {
-                CancelPreview();
-                return;
-            }
+            UpdateMoveHoverHint();
             if (UiPauseGate.IsHeld)
             {
                 return;
+            }
+
+            if (Mouse.current != null && Mouse.current.rightButton.wasPressedThisFrame
+                && (EventSystem.current == null || !EventSystem.current.IsPointerOverGameObject()))
+            {
+                var camera = targetCamera != null ? targetCamera : Camera.main;
+                if (camera != null)
+                {
+                    var cursor = Mouse.current.position.ReadValue();
+                    var point = camera.ScreenToWorldPoint(new Vector3(cursor.x, cursor.y, -camera.transform.position.z));
+                    if (HandleWorldRightClick(point)) return;
+                }
+                else if (IsMoveMode) { CancelPreview(); return; }
             }
 
             if (pickingMoveTarget)
@@ -105,17 +205,11 @@ namespace SubTerra.App.Integration
                     && Mouse.current.leftButton.wasPressedThisFrame
                     && (EventSystem.current == null || !EventSystem.current.IsPointerOverGameObject()))
                 {
+                    lastPointerPlacementFrame = Time.frameCount;
                     var cursor = Mouse.current.position.ReadValue();
                     var point = camera.ScreenToWorldPoint(new Vector3(cursor.x, cursor.y, -camera.transform.position.z));
-                    if (placementSystem.TryBeginMoveAt(point))
-                    {
-                        pickingMoveTarget = false;
-                        BuildingPlacementActivity.End();
-                        selectedBuildingId = placementSystem.Selection.BuildingId;
-                        var size = placementSystem.Selection.Footprint;
-                        MoveStatusChanged?.Invoke($"{size.x}×{size.y} 영역을 확보한 위치에 클릭하세요. 무료 이동 · 우클릭 취소");
-                    }
-                    else MoveStatusChanged?.Invoke("설치·복원한 조명·정산 콘솔·충전기·보관함·보건소만 옮길 수 있습니다.");
+                    if (!TryBeginMoveFromWorld(point))
+                        MoveStatusChanged?.Invoke($"설치·복원한 조명·{ItemDisplayNames.SettlementName}·충전기·보관함·보건소만 옮길 수 있습니다.");
                 }
                 return;
             }
@@ -196,10 +290,9 @@ namespace SubTerra.App.Integration
             UpdateSupportRange(origin);
 
             if (Mouse.current.leftButton.wasPressedThisFrame
-                && locationValid
-                && CanAfford(selectedBuildingId)
                 && (EventSystem.current == null || !EventSystem.current.IsPointerOverGameObject()))
             {
+                lastPointerPlacementFrame = Time.frameCount;
                 placementSystem.TryPlaceAt(origin);
             }
         }
@@ -239,7 +332,7 @@ namespace SubTerra.App.Integration
 
         /// <summary>
         /// C 설치: 6칸 이내·CanPlaceAt 통과·최근접(동률 시 발밑→전방→아래/옆).
-        /// 후보 없음 → 설치 없이 사유만 Invalid로 알림(선택 유지).
+        /// 후보 없음 → 설치 없이 실패 사유를 알림(선택 유지).
         /// 성공 → TryPlaceAt과 동일하게 비용 1회·선택 해제.
         /// </summary>
         private void TryPlaceNearestByShortcut()
@@ -250,10 +343,14 @@ namespace SubTerra.App.Integration
                     out var cell,
                     out var failure))
             {
-                PublishIfChanged(
-                    BuildingPlacementState.Invalid,
-                    ToReasonId(failure),
-                    cell);
+                Publish(new BuildingPlacementResultDto
+                {
+                    state = BuildingPlacementState.Failed,
+                    buildingId = selectedBuildingId,
+                    reasonId = ToReasonId(failure),
+                    x = cell.x,
+                    y = cell.y
+                });
                 return;
             }
 
@@ -359,9 +456,10 @@ namespace SubTerra.App.Integration
             switch (failure)
             {
                 case BuildingPlacementFailure.Occupied: return $"지형 또는 다른 시설과 겹쳐 이동할 수 없습니다. {size.x}×{size.y} 빈 공간이 필요합니다.";
-                case BuildingPlacementFailure.ElevatorSpace: return "엘리베이터 이동 공간에는 시설을 옮길 수 없습니다.";
-                case BuildingPlacementFailure.MissingGround: return "시설 아래에 지면이 필요합니다.";
+                case BuildingPlacementFailure.ElevatorSpace: return "엘리베이터 이동 공간입니다. 승강로 밖으로 옮기세요.";
+                case BuildingPlacementFailure.MissingGround: return "시설 아래에 지면이 필요합니다. 바닥 위를 선택하세요.";
                 case BuildingPlacementFailure.OutOfRange: return "너무 멉니다. 가까이 이동한 뒤 배치하세요.";
+                case BuildingPlacementFailure.OutsideAllowedArea: return "이동이 허용되지 않은 구역입니다. 구역 안을 선택하세요.";
                 default: return "이 위치에는 시설을 옮길 수 없습니다.";
             }
         }
@@ -381,7 +479,6 @@ namespace SubTerra.App.Integration
                 x = result.Cell.x,
                 y = result.Cell.y
             });
-            ClearRuntimeSelection();
         }
 
         private void PublishIfChanged(

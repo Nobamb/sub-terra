@@ -18,6 +18,65 @@ namespace SubTerra.App.Tests.UI
         private const string CatalogPath = "Assets/_Project/Data/Catalog/GameDataCatalog.asset";
 
         [Test]
+        public void WorldRightClick_StartsAndCancelsMoveWithoutOpeningBuildingMenu()
+        {
+            var host = new GameObject("RightClickMove");
+            host.SetActive(false);
+            var prefab = new GameObject("StorageTemplate");
+            var definition = ScriptableObject.CreateInstance<SubTerra.Gameplay.Building.BuildingPlacementDefinition>();
+            try
+            {
+                definition.EditorSet(DataIds.Buildings.StorageBasic, prefab, Vector2Int.one, false);
+                var system = host.AddComponent<SubTerra.Gameplay.Building.BuildingPlacementSystem>();
+                var systemSettings = new SerializedObject(system);
+                var definitions = systemSettings.FindProperty("restoreDefinitions");
+                definitions.arraySize = 1;
+                definitions.GetArrayElementAtIndex(0).objectReferenceValue = definition;
+                systemSettings.ApplyModifiedPropertiesWithoutUndo();
+                var bridge = host.AddComponent<SubTerra.App.Integration.GameplayBuildingPlacementBridge>();
+                var bridgeSettings = new SerializedObject(bridge);
+                bridgeSettings.FindProperty("placementSystem").objectReferenceValue = system;
+                bridgeSettings.ApplyModifiedPropertiesWithoutUndo();
+                host.SetActive(true);
+                Assert.That(system.TryRestoreBuilding(new BuildingSnapshotDto
+                {
+                    instanceId = "storage.right-click", buildingTypeId = DataIds.Buildings.StorageBasic,
+                    footprintWidth = 1, footprintHeight = 1, level = 2, health = 0.75f
+                }), Is.True);
+                var instance = host.GetComponentInChildren<SubTerra.Gameplay.Building.BuildingInstance>();
+                var original = instance.transform.position;
+                Assert.That(system.TryGetMovableAt(Vector3.zero, out var hoverTarget, out var ground), Is.True);
+                Assert.That(hoverTarget, Is.SameAs(instance));
+                Assert.That(ground.x, Is.EqualTo(original.x).Within(0.001f));
+                Assert.That(ground.y, Is.EqualTo(0f).Within(0.001f));
+                Assert.That(system.Selection, Is.Null, "호버 조회는 이동 선택을 시작하지 않는다.");
+                Assert.That(system.IsMoving, Is.False);
+                Assert.That(instance.transform.position, Is.EqualTo(original));
+                instance.gameObject.SetActive(false);
+                Assert.That(system.TryGetMovableAt(Vector3.zero, out _, out _), Is.False);
+                instance.gameObject.SetActive(true);
+                Assert.That(bridge.HandleWorldRightClick(new Vector3(20f, 20f, 0f)), Is.False);
+                Assert.That(bridge.HandleWorldRightClick(Vector3.zero), Is.True);
+                Assert.That(system.IsMoving, Is.True);
+                Assert.That(bridge.HandleWorldRightClick(Vector3.zero), Is.True);
+                Assert.That(system.IsMoving, Is.False);
+                Assert.That(system.Selection, Is.Null);
+                Assert.That(instance.transform.position, Is.EqualTo(original));
+                Assert.That(instance.InstanceId, Is.EqualTo("storage.right-click"));
+                Assert.That(bridge.HandleWorldRightClick(Vector3.zero), Is.True);
+                Assert.That(system.TryMoveAt(new Vector3Int(2, 0, 0)).IsSuccess, Is.True);
+                Assert.That(bridge.IsMoveMode, Is.False);
+                Assert.That(instance.InstanceId, Is.EqualTo("storage.right-click"));
+            }
+            finally
+            {
+                Object.DestroyImmediate(host);
+                Object.DestroyImmediate(prefab);
+                Object.DestroyImmediate(definition);
+            }
+        }
+
+        [Test]
         public void FacilityMoveButton_IsBoundOnceAndFitsInsidePanel()
         {
             var host = new GameObject("MoveMenu", typeof(RectTransform));
@@ -212,7 +271,7 @@ namespace SubTerra.App.Tests.UI
                 var panel = menu.transform.Find("PanelRoot");
                 var item = new BuildingMenuItemReadModel(
                     DataIds.Buildings.OutpostCoreBasic,
-                    "전진기지 코어",
+                    "전진기지",
                     "설명",
                     null,
                     5,
@@ -229,7 +288,7 @@ namespace SubTerra.App.Tests.UI
                     .GetComponent<BuildingMenuEntryVisual>();
                 Assert.That(entry.IsSelected, Is.True);
                 Assert.That(entry.transform.Find("EntryState").GetComponent<TMP_Text>().text, Is.EqualTo("부족"));
-                Assert.That(panel.Find("DetailName").GetComponent<TMP_Text>().text, Is.EqualTo("전진기지 코어"));
+                Assert.That(panel.Find("DetailName").GetComponent<TMP_Text>().text, Is.EqualTo("전진기지"));
                 Assert.That(panel.Find("DetailPowerChip"), Is.Null);
                 Assert.That(panel.Find("DetailOperatingCondition").gameObject.activeSelf, Is.False);
                 Assert.That(panel.Find("CostSection").gameObject.activeSelf, Is.True);
@@ -276,7 +335,7 @@ namespace SubTerra.App.Tests.UI
                         data.Id, data.DisplayName, data.Description, data.Icon, data.PowerDraw, null));
                     Assert.That(condition.gameObject.activeSelf, Is.EqualTo(restricted), data.Id);
                     Assert.That(condition.text, Is.EqualTo(restricted
-                        ? "전진기지 코어 영역 내에서만 작동합니다."
+                        ? "전진기지 영역 내에서만 작동합니다."
                         : string.Empty), data.Id);
                 }
 
@@ -308,11 +367,11 @@ namespace SubTerra.App.Tests.UI
                 view.SetSelection(new BuildingMenuItemReadModel(
                     DataIds.Buildings.ChargerBasic, "충전기", "설명", null, 3, null));
                 Assert.That(text.text.Replace("\r\n", "\n"), Does.StartWith(
-                    "충전기\n전진기지 코어 영역 내에서만 작동합니다.\n설명"));
+                    "충전기\n전진기지 영역 내에서만 작동합니다.\n설명"));
                 Assert.That(text.text, Does.Not.Contain("전력 소비"));
 
                 view.SetSelection(new BuildingMenuItemReadModel(
-                    DataIds.Buildings.OutpostCoreBasic, "전진기지 코어", "설명", null, 5, null));
+                    DataIds.Buildings.OutpostCoreBasic, "전진기지", "설명", null, 5, null));
                 Assert.That(text.text, Does.Not.Contain("영역 내에서만"));
                 Assert.That(text.text, Does.Not.Contain("전력 소비"));
             }

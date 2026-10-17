@@ -78,6 +78,17 @@ namespace SubTerra.App.Save
         private const int MaximumSeedAttempts = 8;
         private const int MaximumPaidDoubling = 22;
 
+        /// <summary>첫 저장 전 새 광산의 정체성을 만든다. 유료/시간 초기화 효과는 발생시키지 않는다.</summary>
+        public static bool TryCreateNewGameWorld(IMineResetSeedSource seeds, out WorldSnapshotDto world)
+        {
+            world = null;
+            if (seeds == null) return false;
+            long seed = TryCreateDifferentSeed(seeds, 0);
+            if (seed == 0) return false;
+            world = new WorldSnapshotDto { worldSeed = seed };
+            return true;
+        }
+
         public static int GetFeeGold(int paidResetCount)
         {
             var count = paidResetCount < 0 ? 0 : paidResetCount;

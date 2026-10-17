@@ -127,11 +127,13 @@ namespace SubTerra.App.Tests.Tutorial
             var wallet = new TestWallet();
             wallet.Set(DataIds.Minerals.Copper, 50);
             var upgradeState = new UpgradeState();
-            // 필수 진행인 드릴만 1레벨로 준비한다. 스캔·가스는 선택 계열이다.
+            // 마지막 드릴 구매로 세 장비 조건이 모두 충족되는 경계.
             Assert.That(
                 upgradeState.TryRestore(new[]
                 {
-                    new UpgradeLevelState(DataIds.Upgrades.DrillSpeed, 1)
+                    new UpgradeLevelState(DataIds.Upgrades.DrillSpeed, 1),
+                    new UpgradeLevelState(DataIds.Upgrades.DroneScan, 2),
+                    new UpgradeLevelState(DataIds.Upgrades.GasResistance, 1)
                 }),
                 Is.True);
 

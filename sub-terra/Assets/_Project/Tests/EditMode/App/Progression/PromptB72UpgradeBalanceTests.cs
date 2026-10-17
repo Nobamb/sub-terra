@@ -48,13 +48,17 @@ namespace SubTerra.App.Tests.Progression
         }
 
         [Test]
-        public void DeepZone_RequiresOnlyProgressAndDrillLevelTwo()
+        public void DeepZone_RequiresDrillDroneAndGasResistance()
         {
             var requirements = DeepZoneUnlockRule.Mvp.UpgradeRequirements;
 
-            Assert.That(requirements.Count, Is.EqualTo(1));
+            Assert.That(requirements.Count, Is.EqualTo(3));
             Assert.That(requirements[0].UpgradeId, Is.EqualTo(DataIds.Upgrades.DrillSpeed));
             Assert.That(requirements[0].RequiredLevel, Is.EqualTo(2));
+            Assert.That(requirements[1].UpgradeId, Is.EqualTo(DataIds.Upgrades.DroneScan));
+            Assert.That(requirements[1].RequiredLevel, Is.EqualTo(2));
+            Assert.That(requirements[2].UpgradeId, Is.EqualTo(DataIds.Upgrades.GasResistance));
+            Assert.That(requirements[2].RequiredLevel, Is.EqualTo(1));
         }
 
         [TestCase(1.25f, 16)]

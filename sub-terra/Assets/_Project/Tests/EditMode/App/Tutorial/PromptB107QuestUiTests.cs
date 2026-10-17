@@ -15,6 +15,41 @@ namespace SubTerra.App.Tests.Tutorial
 {
     public sealed class PromptB107QuestUiTests
     {
+        [Test]
+        public void CompactSummary_ShowsActionWhileDetailsKeepFullDescription()
+        {
+            var host = new GameObject("SummaryContent", typeof(RectTransform));
+            try
+            {
+                var card = new GameObject("QuestSummaryButton", typeof(RectTransform));
+                card.transform.SetParent(host.transform, false);
+                var titleRoot = new GameObject("ObjectiveTitle", typeof(RectTransform), typeof(TextMeshProUGUI));
+                titleRoot.transform.SetParent(card.transform, false);
+                var bodyRoot = new GameObject("ObjectiveBody", typeof(RectTransform), typeof(TextMeshProUGUI));
+                bodyRoot.transform.SetParent(card.transform, false);
+                var detailsRoot = new GameObject("DetailsBody", typeof(RectTransform), typeof(TextMeshProUGUI));
+                detailsRoot.transform.SetParent(host.transform, false);
+                var view = host.AddComponent<DemoObjectiveView>();
+                var serialized = new SerializedObject(view);
+                serialized.FindProperty("objectiveTitleText").objectReferenceValue = titleRoot.GetComponent<TMP_Text>();
+                serialized.FindProperty("objectiveBodyText").objectReferenceValue = bodyRoot.GetComponent<TMP_Text>();
+                serialized.FindProperty("detailsBodyText").objectReferenceValue = detailsRoot.GetComponent<TMP_Text>();
+                serialized.ApplyModifiedPropertiesWithoutUndo();
+                view.ApplyCompactSummary();
+                view.ApplyCompactSummary();
+                var definition = DemoObjectiveCatalog.GetRequired(DemoObjectiveIds.PurifyGasWithOutpost);
+                view.SetObjective(new DemoObjectiveReadModel(definition.Id, definition.Title, definition.Description,
+                    definition.NextActionHint, 15, 18, false, false, false, "", ""));
+                view.SetDetailsText(definition.Title, definition.Description, definition.NextActionHint);
+                Assert.That(bodyRoot.activeSelf, Is.True);
+                Assert.That(bodyRoot.GetComponent<TMP_Text>().text, Is.EqualTo(definition.NextActionHint));
+                Assert.That(detailsRoot.GetComponent<TMP_Text>().text, Is.EqualTo(definition.Description));
+                Assert.That(((RectTransform)card.transform).sizeDelta, Is.EqualTo(new Vector2(460f, 116f)));
+                Assert.That(card.transform.localScale, Is.EqualTo(Vector3.one));
+            }
+            finally { Object.DestroyImmediate(host); }
+        }
+
         [TestCase(DemoObjectiveIds.PlaceSupportInDanger, "Support")]
         [TestCase(DemoObjectiveIds.PlaceLadder, "Ladder")]
         [TestCase(DemoObjectiveIds.PlaceLightAtDepth, "Light")]
