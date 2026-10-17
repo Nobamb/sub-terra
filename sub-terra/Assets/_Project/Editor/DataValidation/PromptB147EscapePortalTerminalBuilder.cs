@@ -23,8 +23,10 @@ namespace SubTerra.App.Editor.DataValidation
         private const string FramePath = MineResetArt + "mine-reset-frame.png";
         private const string PanelPath = MineResetArt + "mine-reset-panel.png";
         private const string ConfirmButtonPath = MineResetArt + "mine-reset-button-confirm.png";
-        // Codex 이미지 생성으로 만든 이동 버튼 호버 그림. 버튼 안쪽만 밝아지고 바깥에는 빛이 없다.
-        public const string ConfirmHoverPath = "Assets/_Project/Art/UI/EmergencyEscape/escape-portal-button-hover.png";
+        /// <summary>이동 버튼 호버 빛이 버튼 테두리 안쪽에 머물도록 가장자리에서 띄우는 간격(가로, 세로).</summary>
+        public static readonly Vector2 HoverInset = new Vector2(12f, 7f);
+        /// <summary>이동 버튼 호버 빛의 최대 알파. 은은하게만 비친다.</summary>
+        public const float HoverMaxAlpha = 0.6f;
         private const string FontPath = "Assets/_Project/Fonts/NotoSansKR-Regular_SDF.asset";
 
         public static readonly Vector2 WindowSize = new Vector2(1000f, 600f);
@@ -265,6 +267,7 @@ namespace SubTerra.App.Editor.DataValidation
             Set(viewObject, "video", video);
             Set(viewObject, "confirmButton", confirm);
             Set(viewObject, "confirmHoverOverlay", confirmHover.gameObject);
+            Set(viewObject, "closeHoverGlow", cornerClose.targetGraphic);
             Set(viewObject, "hexPattern", hexImage);
             Set(viewObject, "scanlines", scan);
             Set(viewObject, "vignette", vignetteImage);
@@ -384,11 +387,15 @@ namespace SubTerra.App.Editor.DataValidation
             button.colors = colors;
             button.navigation = new Navigation { mode = Navigation.Mode.None };
 
+            // 호버 빛은 버튼 그림을 바꾸지 않고 안쪽(테두리 안)에만 얹는다. 그림은 런타임에 View.ApplyArt가 입힌다.
             hoverOverlay = Stretch("HoverOverlay", rect);
-            var overlayImage = AddImage(hoverOverlay, LoadHoverSprite(), new Color(1f, 1f, 1f, 0f), false);
+            hoverOverlay.offsetMin = new Vector2(HoverInset.x, HoverInset.y);
+            hoverOverlay.offsetMax = new Vector2(-HoverInset.x, -HoverInset.y);
+            var overlayImage = AddImage(hoverOverlay, null, new Color(1f, 1f, 1f, 0f), false);
             overlayImage.preserveAspect = false;
             var skin = rect.gameObject.AddComponent<MenuSpriteButtonSkin>();
             skin.SetOverlay(overlayImage);
+            skin.SetMaxAlpha(HoverMaxAlpha);
 
             var label = AddText(rect, "Label", font, Vector2.zero, Vector2.zero, 24f, TitleColor, TextAlignmentOptions.Center);
             var labelRect = label.rectTransform;
@@ -399,22 +406,6 @@ namespace SubTerra.App.Editor.DataValidation
             label.fontStyle = FontStyles.Bold;
             label.text = "이동";
             return button;
-        }
-
-        private static Sprite LoadHoverSprite()
-        {
-            var importer = AssetImporter.GetAtPath(ConfirmHoverPath) as TextureImporter;
-            if (importer != null && (importer.textureType != TextureImporterType.Sprite || importer.mipmapEnabled
-                || !importer.alphaIsTransparency))
-            {
-                importer.textureType = TextureImporterType.Sprite;
-                importer.spriteImportMode = SpriteImportMode.Single;
-                importer.alphaIsTransparency = true;
-                importer.mipmapEnabled = false;
-                importer.SaveAndReimport();
-            }
-
-            return LoadSprite(ConfirmHoverPath);
         }
 
         private static void AddOutline(RectTransform parent, Color color)

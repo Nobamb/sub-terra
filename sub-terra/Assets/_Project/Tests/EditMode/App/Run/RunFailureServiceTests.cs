@@ -1,10 +1,13 @@
+using System.Collections.Generic;
 using NUnit.Framework;
 using SubTerra.App.Inventory;
 using SubTerra.App.Run;
 using SubTerra.App.Save;
 using SubTerra.App.State;
+using SubTerra.App.UI.RunFailure;
 using SubTerra.Gameplay.Player;
 using SubTerra.Shared;
+using UnityEngine;
 
 namespace SubTerra.App.Tests.Run
 {
@@ -190,6 +193,290 @@ namespace SubTerra.App.Tests.Run
                 out var fallback);
             Assert.That(fallback.ReturnTarget.Kind, Is.EqualTo(RunReturnTargetKind.SurfaceFallback));
             Assert.That(fallback.Rescue.usedCheckpoint, Is.False);
+        }
+
+        [Test]
+        public void PromptB148_RevealTimeline_SequentialStartAndEaseOutCountUp()
+        {
+            var lost = new List<CargoLossEntryDto>
+            {
+                new CargoLossEntryDto { mineralId = "mineral.copper", quantity = 10 },
+                new CargoLossEntryDto { mineralId = "mineral.iron", quantity = 24 },
+                new CargoLossEntryDto { mineralId = "mineral.gold_ore", quantity = 8 }
+            };
+            var timeline = new RunFailureRevealTimeline(
+                RunFailureCause.StructuralCollapse,
+                lost,
+                0.6f);
+
+            var initial = timeline.Evaluate(0f);
+            Assert.That(initial.IsWindowGlitching, Is.True);
+            Assert.That(initial.Items.Count, Is.EqualTo(3));
+            Assert.That(initial.Items[0].StartTime, Is.LessThan(initial.Items[1].StartTime));
+            Assert.That(initial.Items[1].StartTime, Is.LessThan(initial.Items[2].StartTime));
+
+            // 각 항목의 수량 카운트업은 0에서 시작해 0.3~0.5초 안에 목표 수량에 도달한다.
+            for (var i = 0; i < initial.Items.Count; i++)
+            {
+                var item = initial.Items[i];
+                Assert.That(item.CountUpDuration, Is.InRange(0.30f, 0.50f));
+
+                var atStart = timeline.Evaluate(item.StartTime);
+                Assert.That(atStart.Items[i].DisplayQuantity, Is.EqualTo(0));
+                Assert.That(atStart.Items[i].IsVisible, Is.True);
+
+                var mid = timeline.Evaluate(item.StartTime + (item.CountUpDuration * 0.5f));
+                Assert.That(mid.Items[i].DisplayQuantity, Is.GreaterThan(0));
+                Assert.That(mid.Items[i].DisplayQuantity, Is.LessThanOrEqualTo(item.TargetQuantity));
+
+                var atEnd = timeline.Evaluate(item.StartTime + item.CountUpDuration);
+                Assert.That(atEnd.Items[i].DisplayQuantity, Is.EqualTo(item.TargetQuantity));
+                Assert.That(atEnd.Items[i].IsCompleted, Is.True);
+            }
+        }
+
+        [Test]
+        public void PromptB148_RevealTimeline_SkipReachesFinalStateAndSecondConfirmAdvances()
+        {
+            var lost = new List<CargoLossEntryDto>
+            {
+                new CargoLossEntryDto { mineralId = "mineral.copper", quantity = 12 },
+                new CargoLossEntryDto { mineralId = "mineral.iron", quantity = 7 }
+            };
+            var timeline = new RunFailureRevealTimeline(
+                RunFailureCause.Fall,
+                lost,
+                0.6f);
+
+            timeline.Advance(0.10f);
+            Assert.That(timeline.IsComplete, Is.False);
+
+            // 첫 확인/스킵 입력은 연출만 즉시 최종 상태로 건너뛰고 다음 단계로 넘어가지 않는다.
+            Assert.That(timeline.TryConfirmOrSkip(), Is.False);
+            Assert.That(timeline.IsSkipped, Is.True);
+            Assert.That(timeline.IsComplete, Is.True);
+            Assert.That(timeline.IsConfirmed, Is.False);
+
+            var skippedFrame = timeline.Evaluate(0.10f);
+            Assert.That(skippedFrame.IsWindowGlitching, Is.False);
+            Assert.That(skippedFrame.Items[0].DisplayQuantity, Is.EqualTo(12));
+            Assert.That(skippedFrame.Items[1].DisplayQuantity, Is.EqualTo(7));
+            Assert.That(skippedFrame.Items[0].IsCompleted, Is.True);
+            Assert.That(skippedFrame.Items[1].IsCompleted, Is.True);
+
+            // 최종 상태에서 한 번 더 확인을 눌렀을 때만 다음 전환으로 넘어간다.
+            Assert.That(timeline.TryConfirmOrSkip(), Is.True);
+            Assert.That(timeline.IsConfirmed, Is.True);
+        }
+
+        [Test]
+        public void PromptB148_RevealTimeline_EmptyLostCargo_ReturnsEmptyMessage()
+        {
+            var timeline = new RunFailureRevealTimeline(
+                RunFailureCause.StructuralCollapse,
+                new List<CargoLossEntryDto>(),
+                0.75f);
+
+            var frame = timeline.Evaluate(0f);
+            Assert.That(frame.HasLostCargo, Is.False);
+            Assert.That(frame.Items.Count, Is.Zero);
+            Assert.That(frame.EmptyCargoText, Is.EqualTo("잃은 자원 없음"));
+            Assert.That(frame.PreservationText, Is.EqualTo("드론 구조: 화물 75% 보존"));
+        }
+
+        [Test]
+        public void PromptB148_RevealTimeline_SelectsGreenForGasAndRedForOthers()
+        {
+            var gasTimeline = new RunFailureRevealTimeline(
+                RunFailureCause.GasExposure,
+                null,
+                0.6f);
+            var collapseTimeline = new RunFailureRevealTimeline(
+                RunFailureCause.StructuralCollapse,
+                null,
+                0.6f);
+            var fallTimeline = new RunFailureRevealTimeline(
+                RunFailureCause.Fall,
+                null,
+                0.6f);
+
+            Assert.That(gasTimeline.GlitchColor.g, Is.GreaterThan(gasTimeline.GlitchColor.r));
+            Assert.That(gasTimeline.GlitchColor.g, Is.GreaterThan(gasTimeline.GlitchColor.b));
+            Assert.That(gasTimeline.CauseTitle, Is.EqualTo("가스 중독"));
+
+            Assert.That(collapseTimeline.GlitchColor.r, Is.GreaterThan(collapseTimeline.GlitchColor.g));
+            Assert.That(collapseTimeline.GlitchColor.r, Is.GreaterThan(collapseTimeline.GlitchColor.b));
+            Assert.That(collapseTimeline.CauseTitle, Is.EqualTo("체력 소진"));
+            Assert.That(fallTimeline.GlitchColor, Is.EqualTo(collapseTimeline.GlitchColor));
+        }
+
+        [Test]
+        public void PromptB148_TransitionTimeline_WaitsForConfirmAndRunsDarkenGlitchTvUnderTwoSeconds()
+        {
+            var timeline = new RunFailureTransitionTimeline(
+                RunFailureCause.GasExposure,
+                null,
+                false);
+
+            Assert.That(timeline.TotalDuration, Is.LessThanOrEqualTo(2.0f));
+            Assert.That(timeline.HeavyGlitchDuration, Is.InRange(0.50f, 0.70f));
+
+            // 확인 전에는 다음 단계로 진행하지 않는다.
+            var beforeConfirm = timeline.Advance(0.50f);
+            Assert.That(beforeConfirm.Phase, Is.EqualTo(RunFailureTransitionPhase.NotStarted));
+            Assert.That(timeline.ElapsedSeconds, Is.Zero);
+            Assert.That(timeline.PlayerMoveCount, Is.Zero);
+
+            timeline.BeginConfirm();
+            var visitedPhases = new List<RunFailureTransitionPhase>();
+            var moveTriggers = 0;
+
+            while (!timeline.IsComplete)
+            {
+                var frame = timeline.Advance(0.05f);
+                if (visitedPhases.Count == 0 || visitedPhases[visitedPhases.Count - 1] != frame.Phase)
+                {
+                    visitedPhases.Add(frame.Phase);
+                }
+
+                if (frame.ShouldMovePlayer)
+                {
+                    moveTriggers++;
+                    Assert.That(frame.Phase, Is.EqualTo(RunFailureTransitionPhase.HeavyGlitch));
+                    Assert.That(frame.BlackoutAlpha, Is.EqualTo(1f).Within(0.0001f));
+                }
+            }
+
+            Assert.That(moveTriggers, Is.EqualTo(1));
+            Assert.That(timeline.PlayerMoveCount, Is.EqualTo(1));
+            Assert.That(
+                visitedPhases,
+                Is.EqualTo(new[]
+                {
+                    RunFailureTransitionPhase.Darken,
+                    RunFailureTransitionPhase.HeavyGlitch,
+                    RunFailureTransitionPhase.TvTurnOn,
+                    RunFailureTransitionPhase.Completed
+                }));
+        }
+
+        [Test]
+        public void PromptB148_PanelView_RendersEmptyOrScrollableCargoAndHandlesSkipThenConfirm()
+        {
+            var canvasObj = new GameObject("TestCanvas", typeof(RectTransform), typeof(Canvas));
+            var panelObj = new GameObject("RunFailurePanel", typeof(RectTransform));
+            panelObj.transform.SetParent(canvasObj.transform, false);
+            var view = panelObj.AddComponent<RunFailurePanelView>();
+            view.BuildOrUpdateHierarchy();
+
+            try
+            {
+                Assert.That(view.HasRequiredReferences(), Is.True);
+                var visualRoot = panelObj.transform.Find("VisualRoot") as RectTransform;
+                Assert.That(visualRoot, Is.Not.Null);
+                Assert.That(visualRoot.sizeDelta, Is.EqualTo(RunFailurePanelView.CardSize));
+                Assert.That(visualRoot.Find("GlitchBands/Band_0"), Is.Not.Null);
+                Assert.That(visualRoot.Find("WindowGlitchBars/WindowGlitchBar_0"), Is.Not.Null);
+                Assert.That(visualRoot.Find("Content/TitleDivider"), Is.Not.Null);
+                Assert.That(visualRoot.Find("Content/LostCargoSection"), Is.Not.Null);
+                Assert.That(visualRoot.Find("Content/PreservationBadge"), Is.Not.Null);
+
+                var emptyRescue = new PlayerRescueResultDto
+                {
+                    failureToken = "empty",
+                    cause = RunFailureCause.GasExposure,
+                    preservationRatio = 0.6f,
+                    lostCargo = new List<CargoLossEntryDto>()
+                };
+                view.Show(emptyRescue);
+                Assert.That(view.DisplayedCauseTitle, Is.EqualTo("가스 중독"));
+                Assert.That(view.DisplayedEmptyCargoText, Is.EqualTo("잃은 자원 없음"));
+                Assert.That(view.DisplayedPreservationText, Is.EqualTo("드론 구조: 화물 60% 보존"));
+                Assert.That(view.ActiveCargoRowCount, Is.Zero);
+
+                var multiRescue = new PlayerRescueResultDto
+                {
+                    failureToken = "multi",
+                    cause = RunFailureCause.StructuralCollapse,
+                    preservationRatio = 0.7f,
+                    lostCargo = new List<CargoLossEntryDto>
+                    {
+                        new CargoLossEntryDto { mineralId = "mineral.copper", quantity = 10 },
+                        new CargoLossEntryDto { mineralId = "mineral.iron", quantity = 15 },
+                        new CargoLossEntryDto { mineralId = "mineral.silver", quantity = 6 },
+                        new CargoLossEntryDto { mineralId = "mineral.gold_ore", quantity = 4 },
+                        new CargoLossEntryDto { mineralId = "mineral.titanium", quantity = 3 },
+                        new CargoLossEntryDto { mineralId = "mineral.cobalt", quantity = 5 }
+                    }
+                };
+                view.Show(multiRescue);
+                Assert.That(view.DisplayedCauseTitle, Is.EqualTo("체력 소진"));
+                Assert.That(view.ActiveCargoRowCount, Is.EqualTo(6));
+                Assert.That(view.IsRevealComplete, Is.False);
+                Assert.That(view.IsConfirmed, Is.False);
+
+                // 1차 입력: 스킵만 수행
+                Assert.That(view.ConfirmOrSkip(), Is.False);
+                Assert.That(view.IsRevealComplete, Is.True);
+                Assert.That(view.IsConfirmed, Is.False);
+
+                // 2차 입력: 확인 확정
+                Assert.That(view.ConfirmOrSkip(), Is.True);
+                Assert.That(view.IsConfirmed, Is.True);
+                Assert.That(view.ActiveTransitionTimeline, Is.Not.Null);
+                var darkenFrame = view.ActiveTransitionTimeline.Evaluate(0.05f);
+                Assert.That(darkenFrame.Phase, Is.EqualTo(RunFailureTransitionPhase.Darken));
+                Assert.That(darkenFrame.WindowGlitchIntensity, Is.GreaterThan(0f));
+            }
+            finally
+            {
+                Object.DestroyImmediate(canvasObj);
+            }
+        }
+
+        [TestCase(RunFailureCause.GasExposure, "gas-death-popup")]
+        [TestCase(RunFailureCause.StructuralCollapse, "impact-death-popup")]
+        [TestCase(RunFailureCause.Fall, "impact-death-popup")]
+        [TestCase(RunFailureCause.Unknown, "impact-death-popup")]
+        [TestCase(RunFailureCause.PowerDepleted, "impact-death-popup")]
+        public void PanelView_UsesDedicatedCauseArtForPanelAndGlitchCopies(
+            RunFailureCause cause, string spriteName)
+        {
+            var panel = new GameObject("RunFailurePanel", typeof(RectTransform));
+            try
+            {
+                var expected = Resources.Load<Sprite>("UI/RunFailure/" + spriteName);
+                Assert.That(expected, Is.Not.Null);
+                var view = panel.AddComponent<RunFailurePanelView>();
+                view.Show(new PlayerRescueResultDto { cause = cause });
+                var root = panel.transform.Find("VisualRoot");
+                var surface = root.Find("Panel").GetComponent<UnityEngine.UI.Image>();
+                Assert.That(surface.sprite, Is.SameAs(expected));
+                Assert.That(surface.color, Is.EqualTo(Color.white));
+                Assert.That(root.Find("RgbSplitLeft").GetComponent<UnityEngine.UI.Image>().sprite,
+                    Is.SameAs(expected));
+                Assert.That(root.Find("RgbSplitRight").GetComponent<UnityEngine.UI.Image>().sprite,
+                    Is.SameAs(expected));
+                for (var i = 0; i < 4; i++)
+                {
+                    Assert.That(root.Find("GlitchBands/Band_" + i + "/BandInner/BandPanel")
+                        .GetComponent<UnityEngine.UI.Image>().sprite, Is.SameAs(expected));
+                }
+
+                Assert.That(root.Find("Frame"), Is.Null);
+                Assert.That(root.Find("OuterHalo"), Is.Null);
+                Assert.That(root.Find("FrameGlow"), Is.Null);
+
+                // 같은 View를 다시 열 때에도 직전 원인의 이미지가 남지 않는다.
+                var nextCause = cause == RunFailureCause.GasExposure
+                    ? RunFailureCause.Fall : RunFailureCause.GasExposure;
+                view.Show(new PlayerRescueResultDto { cause = nextCause });
+                Assert.That(surface.sprite, Is.Not.SameAs(expected));
+            }
+            finally
+            {
+                Object.DestroyImmediate(panel);
+            }
         }
 
         private static Fixture CreateFixture(IUpgradeEffectProvider effects = null)

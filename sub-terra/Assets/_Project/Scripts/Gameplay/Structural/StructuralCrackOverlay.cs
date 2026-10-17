@@ -37,6 +37,7 @@ namespace SubTerra.Gameplay.Structural
         private readonly List<FallingVisual> fallingVisuals = new();
         private readonly List<DustVisual> dustVisuals = new();
         private readonly HashSet<Vector3Int> visibleCells = new();
+        private readonly List<Vector3Int> staleShakeCells = new();
         private ICollapseDamageReceiver collapseDamageReceiver;
         private Tilemap sourceTilemap;
 
@@ -189,10 +190,10 @@ namespace SubTerra.Gameplay.Structural
         /// <summary>지정 셀의 균열만 제거한다. 다른 구역에는 영향 없다.</summary>
         public void ClearCell(Vector3Int cell)
         {
-            if (overlayTilemap == null) return;
-            if (!visibleCells.Remove(cell) && !cellRisks.ContainsKey(cell)) return;
+            if (!visibleCells.Remove(cell) && !cellRisks.ContainsKey(cell)
+                && !shakeVisuals.ContainsKey(cell)) return;
 
-            overlayTilemap.SetTile(cell, null);
+            if (overlayTilemap != null) overlayTilemap.SetTile(cell, null);
             cellRisks.Remove(cell);
             cellIntensities.Remove(cell);
             cellCauses.Remove(cell);
@@ -221,6 +222,7 @@ namespace SubTerra.Gameplay.Structural
 
             if (visibleCells.Count == 0 && cellRisks.Count == 0)
             {
+                ClearShakeVisuals();
                 return;
             }
 
@@ -240,6 +242,7 @@ namespace SubTerra.Gameplay.Structural
 
             visibleCells.Clear();
             cellRisks.Clear();
+            ClearShakeVisuals();
         }
 
         /// <summary>
@@ -329,6 +332,13 @@ namespace SubTerra.Gameplay.Structural
 
         private void UpdateCrackAnimation(float deltaTime)
         {
+            // 외부 타일 삭제/재계산으로 균열 소유권이 사라진 경우에도 복제본과 숨김 색을 회수한다.
+            staleShakeCells.Clear();
+            foreach (var entry in shakeVisuals)
+                if (overlayTilemap == null || !visibleCells.Contains(entry.Key)
+                    || !cellRisks.ContainsKey(entry.Key) || !overlayTilemap.HasTile(entry.Key))
+                    staleShakeCells.Add(entry.Key);
+            foreach (var cell in staleShakeCells) ClearCell(cell);
             if (overlayTilemap == null || visibleCells.Count == 0) return;
             bool reduceMotion = AccessibilityPreferences.ReduceMotion;
             var cells = new List<Vector3Int>(visibleCells);
@@ -425,7 +435,8 @@ namespace SubTerra.Gameplay.Structural
             if (sourceRenderer != null)
             {
                 renderer.sortingLayerID = sourceRenderer.sortingLayerID;
-                renderer.sortingOrder = sourceRenderer.sortingOrder;
+                // 실제 인접 타일이 흔들림 복제본보다 앞에 그려져 광물 그림을 덮지 않게 한다.
+                renderer.sortingOrder = Mathf.Max(short.MinValue, sourceRenderer.sortingOrder - 1);
                 renderer.sharedMaterial = sourceRenderer.sharedMaterial;
             }
 
