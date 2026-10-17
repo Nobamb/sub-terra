@@ -36,7 +36,7 @@ namespace SubTerra.App.Tests.UI
                 Assert.That(trail.fillAmount, Is.EqualTo(0.4f));
                 hud.SetHealthLevel(40, 200);
                 gauge.GetComponent<HudGaugeView>().enabled = false;
-                // 일반 MonoBehaviour의 비활성 콜백은 EditMode에서 자동 실행되지 않는다.
+                // 일반 MonoBehaviour의 비활성 콜백은 EditMode에서 자동 호출되지 않는다.
                 typeof(HudGaugeView).GetMethod("OnDisable",
                     System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
                     .Invoke(gauge.GetComponent<HudGaugeView>(), null);

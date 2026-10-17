@@ -10,7 +10,10 @@ namespace SubTerra.Gameplay.Drone
         [SerializeField] private Color hazardColor = new(1f, 0.12f, 0.08f, 1f);
         [SerializeField] private Color goldColor = new(1f, 0.82f, 0.18f, 1f);
         [SerializeField] private Color sealedGlyphColor = new(0.18f, 0.92f, 0.88f, 1f);
-        [SerializeField, Min(0.1f)] private float ringDuration = 1.5f;
+        [SerializeField, Min(0f)] private float lightIntensity = 1.8f;
+        [SerializeField, Min(0.1f)] private float lightRadius = 1.05f;
+        [SerializeField, Min(0.1f)] private float ringDuration = 0.9f;
+        // 기존 씬의 직렬화 필드는 유지하지만 감지 표식은 점광원을 생성하지 않는다.
 
         private sealed class PooledMarker
         {
