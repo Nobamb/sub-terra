@@ -332,6 +332,43 @@ namespace SubTerra.App.UI.HUD
             }
         }
 
+        private bool clearanceSent;
+        private bool clearanceOnScreen;
+
+        private void LateUpdate()
+        {
+            PublishClockClearance();
+        }
+
+        private void OnDestroy()
+        {
+            if (clearanceSent && clearanceOnScreen)
+            {
+                clearanceSent = false;
+                clearanceOnScreen = false;
+                GasWarningClockClearance.Add(-1);
+            }
+        }
+
+        private void PublishClockClearance()
+        {
+            var onScreen = IsClockOnScreen;
+            if (clearanceSent && onScreen == clearanceOnScreen)
+            {
+                return;
+            }
+
+            var wasOnScreen = clearanceSent && clearanceOnScreen;
+            clearanceSent = true;
+            clearanceOnScreen = onScreen;
+            if (wasOnScreen == onScreen)
+            {
+                return;
+            }
+
+            GasWarningClockClearance.Add(onScreen ? 1 : -1);
+        }
+
         private void Update()
         {
             if (!sessionVisible || UiPauseGate.IsHeld)

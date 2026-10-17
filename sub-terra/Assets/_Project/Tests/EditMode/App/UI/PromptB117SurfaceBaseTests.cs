@@ -1,8 +1,10 @@
 using System.Reflection;
 using NUnit.Framework;
 using SubTerra.App.State;
+using SubTerra.App.Tutorial;
 using SubTerra.App.UI;
 using SubTerra.App.UI.SurfaceBase;
+using SubTerra.App.UI.Tutorial;
 using TMPro;
 using UnityEditor;
 using UnityEngine;
@@ -13,6 +15,75 @@ namespace SubTerra.App.Tests.UI
     public sealed class PromptB117SurfaceBaseTests
     {
         private const string PrefabPath = "Assets/_Project/Prefabs/UI/SurfaceBasePanel.prefab";
+
+        [Test]
+        public void QuestActions_UseEqualSizeAndSpacing()
+        {
+            var content = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath).transform.Find("SurfaceBaseContent");
+            var quest = (RectTransform)content.Find("QuestButton");
+            var sell = (RectTransform)content.Find("OpenSellButton");
+            var upgrade = (RectTransform)content.Find("UpgradeButton");
+            Assert.That(quest.sizeDelta, Is.EqualTo(sell.sizeDelta));
+            Assert.That(upgrade.sizeDelta, Is.EqualTo(sell.sizeDelta));
+            Assert.That(quest.anchoredPosition.y, Is.EqualTo(sell.anchoredPosition.y));
+            Assert.That(upgrade.anchoredPosition.y, Is.EqualTo(sell.anchoredPosition.y));
+            Assert.That(quest.anchoredPosition.x, Is.LessThan(sell.anchoredPosition.x));
+            Assert.That(upgrade.anchoredPosition.x - sell.anchoredPosition.x,
+                Is.EqualTo(sell.anchoredPosition.x - quest.anchoredPosition.x));
+            Assert.That(sell.anchoredPosition.x - quest.anchoredPosition.x, Is.GreaterThan(quest.sizeDelta.x));
+            Assert.That(quest.GetComponentInChildren<TMP_Text>(true).text, Is.EqualTo("퀘스트"));
+            Assert.That(quest.GetComponent<SurfaceBaseButtonFeedback>(), Is.Not.Null);
+            Assert.That(quest.GetComponent<Button>().targetGraphic.raycastTarget, Is.True);
+        }
+
+        [Test]
+        public void SurfaceQuest_ReusesDetailsWithoutChangingProgressOrRewards()
+        {
+            var instance = Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath));
+            try
+            {
+                var panel = instance.GetComponent<SurfaceBaseQuestPanel>();
+                // EditMode에서는 일반 MonoBehaviour의 활성화 콜백을 실행하지 않으므로 명시한다.
+                var lifecycle = BindingFlags.Instance | BindingFlags.NonPublic;
+                typeof(SurfaceBaseQuestPanel).GetMethod("OnDisable", lifecycle).Invoke(panel, null);
+                typeof(SurfaceBaseQuestPanel).GetMethod("OnEnable", lifecycle).Invoke(panel, null);
+                var questRoot = instance.transform.Find("SurfaceQuestRoot");
+                var details = questRoot.Find("QuestDetailsPanel").gameObject;
+                var view = questRoot.GetComponent<DemoObjectiveView>();
+                var state = GameState.CreateNew();
+                state.SetGold(321);
+                state.SetDemoProgress(DemoObjectiveIds.PlaceLadder, 7, false);
+                state.SetQuestRewardSettlement(DemoObjectiveIds.PlaceSupportInDanger, 6);
+                Assert.That(panel.Open(state), Is.True);
+                Assert.That(panel.IsOpen, Is.True);
+                Assert.That(details.activeInHierarchy, Is.True);
+                var title = (TMP_Text)new SerializedObject(view).FindProperty("detailsTitleText").objectReferenceValue;
+                Assert.That(title.text, Is.EqualTo(DemoObjectiveCatalog.All[7].Title));
+                view.OnDetailsNextClicked();
+                Assert.That(title.text, Is.EqualTo(DemoObjectiveCatalog.All[8].Title));
+                view.OnDetailsPrevClicked();
+                Assert.That(title.text, Is.EqualTo(DemoObjectiveCatalog.All[7].Title));
+                view.OnDetailsDismissClicked();
+                Assert.That(panel.IsOpen, Is.False);
+                Assert.That(details.activeInHierarchy, Is.False);
+                Assert.That(panel.Open(state), Is.True);
+                Assert.That(panel.TryCloseTopWindow(PopupWindowSorting.Top), Is.True);
+                Assert.That(panel.IsOpen, Is.False);
+                Assert.That(state.Progress.CurrentObjectiveId, Is.EqualTo(DemoObjectiveIds.PlaceLadder));
+                Assert.That(state.Progress.CompletedObjectives, Is.EqualTo(7));
+                Assert.That(state.Progress.PendingQuestRewardId, Is.EqualTo(DemoObjectiveIds.PlaceSupportInDanger));
+                Assert.That(state.Progress.QuestRewardSettledCount, Is.EqualTo(6));
+                Assert.That(state.Player.Gold, Is.EqualTo(321));
+                Assert.That(instance.activeSelf, Is.True);
+            }
+            finally
+            {
+                var panel = instance.GetComponent<SurfaceBaseQuestPanel>();
+                if (panel != null)
+                    typeof(SurfaceBaseQuestPanel).GetMethod("OnDisable", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(panel, null);
+                Object.DestroyImmediate(instance);
+            }
+        }
 
         [Test]
         public void Header_ConsumesCurrentStateWithoutChangingIt()

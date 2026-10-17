@@ -21,6 +21,8 @@ namespace SubTerra.App.Tutorial
         public const int QuestPopup = 30_500;
         /// <summary>드론 말풍선을 포함한 모든 게임 HUD보다 앞에 표시하는 긴급 구출 모달.</summary>
         public const int EmergencyRescueModal = 31_000;
+        /// <summary>탐사 실패(체력 소진/가스 중독) 창. 드론 말풍선(30_000)과 긴급 구출 모달 위, 팝업 창(32_100~) 아래.</summary>
+        public const int RunFailureModal = 31_500;
 
         /// <summary>긴급 경고가 일반 튜토리얼 안내보다 위에 와야 하는지.</summary>
         public static bool HazardBeatsTutorial(int hazardSortOrder, int tutorialSortOrder)
