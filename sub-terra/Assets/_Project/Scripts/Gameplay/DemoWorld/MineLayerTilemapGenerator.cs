@@ -88,8 +88,6 @@ namespace SubTerra.Gameplay.DemoWorld
             }
 
             MineLayerLayout layout = new MineLayerGenerator().Generate(seed, distribution);
-            // 이전 시드의 흔들림 복제본·숨김 색을 지운 뒤 새 타일을 배치한다.
-            if (structuralSystem != null) structuralSystem.ClearRuntimeRiskState();
             RegisterGoldTiles();
             foregroundTilemap.ClearAllTiles();
             foreach (MineLayerCell cell in layout.EnumerateCells())

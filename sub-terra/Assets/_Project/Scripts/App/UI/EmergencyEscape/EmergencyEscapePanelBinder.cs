@@ -172,12 +172,15 @@ namespace SubTerra.App.UI.EmergencyEscape
         {
             busy = false;
             view?.SetBusy(false);
-            ReleasePause();
-            if (view != null)
+            if (view == null)
             {
-                // 에디트 모드에서는 즉시, 플레이 중에는 창이 웜홀로 빨려 들어가는 연출 뒤에 숨는다.
-                view.BeginClose(null);
+                ReleasePause();
+                return;
             }
+
+            // 닫기 연출이 끝날 때까지 게임 진행을 멈춘 채로 둔다. 먼저 풀면 연출 중 플레이어·카메라가 움직인다.
+            // 에디트 모드에서는 즉시, 플레이 중에는 블랙홀이 창을 빨아들이는 연출 뒤에 풀린다.
+            view.BeginClose(ReleasePause);
         }
 
         /// <summary>목적지 선택이 바뀔 때 해당 목적지를 CCTV로 비춘다.</summary>

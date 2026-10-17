@@ -146,6 +146,7 @@ namespace SubTerra.Gameplay.Building
                 return false;
             }
 
+            if (!CanAffordSelection(out failure)) return false;
             Vector2Int footprint = selection.Footprint;
             // 거리·허용 구역은 footprint 중심 기준으로 검사해 2x2 좌하단 origin 편향을 줄인다.
             Vector3 worldPosition = FootprintWorldCenter(origin, footprint);
@@ -229,6 +230,12 @@ namespace SubTerra.Gameplay.Building
                 }
             }
 
+            failure = BuildingPlacementFailure.None;
+            return true;
+        }
+
+        private bool CanAffordSelection(out BuildingPlacementFailure failure)
+        {
             if (sharedResourceWallet != null)
             {
                 if (!sharedResourceWallet.CanAfford(selection.Costs))
@@ -320,6 +327,8 @@ namespace SubTerra.Gameplay.Building
                 failure = BuildingPlacementFailure.NoSelection;
                 return false;
             }
+
+            if (!CanAffordSelection(out failure)) return false;
 
             Vector3 originWorld = placementOrigin != null
                 ? placementOrigin.position

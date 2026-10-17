@@ -49,6 +49,10 @@ namespace SubTerra.App.Integration
         private int lastX = int.MinValue;
         private int lastY = int.MinValue;
         private readonly List<Vector3Int> footprintPreviewCells = new();
+        private int lastPointerPlacementFrame = -1;
+
+        public bool OwnsPointerInput => (placementSystem != null && placementSystem.Selection != null)
+            || lastPointerPlacementFrame == Time.frameCount;
 
         public event Action<BuildingPlacementResultDto> PlacementChanged;
 
@@ -147,10 +151,9 @@ namespace SubTerra.App.Integration
             UpdateSupportRange(origin);
 
             if (Mouse.current.leftButton.wasPressedThisFrame
-                && locationValid
-                && CanAfford(selectedBuildingId)
                 && (EventSystem.current == null || !EventSystem.current.IsPointerOverGameObject()))
             {
+                lastPointerPlacementFrame = Time.frameCount;
                 placementSystem.TryPlaceAt(origin);
             }
         }
@@ -190,7 +193,7 @@ namespace SubTerra.App.Integration
 
         /// <summary>
         /// C 설치: 6칸 이내·CanPlaceAt 통과·최근접(동률 시 발밑→전방→아래/옆).
-        /// 후보 없음 → 설치 없이 사유만 Invalid로 알림(선택 유지).
+        /// 후보 없음 → 설치 없이 실패 사유를 알림(선택 유지).
         /// 성공 → TryPlaceAt과 동일하게 비용 1회·선택 해제.
         /// </summary>
         private void TryPlaceNearestByShortcut()
@@ -201,10 +204,14 @@ namespace SubTerra.App.Integration
                     out var cell,
                     out var failure))
             {
-                PublishIfChanged(
-                    BuildingPlacementState.Invalid,
-                    ToReasonId(failure),
-                    cell);
+                Publish(new BuildingPlacementResultDto
+                {
+                    state = BuildingPlacementState.Failed,
+                    buildingId = selectedBuildingId,
+                    reasonId = ToReasonId(failure),
+                    x = cell.x,
+                    y = cell.y
+                });
                 return;
             }
 
@@ -303,7 +310,6 @@ namespace SubTerra.App.Integration
                 x = result.Cell.x,
                 y = result.Cell.y
             });
-            ClearRuntimeSelection();
         }
 
         private void PublishIfChanged(

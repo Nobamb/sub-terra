@@ -1,3 +1,4 @@
+using SubTerra.App.Core.Data;
 using System;
 using System.Collections.Generic;
 using SubTerra.App.Outpost;
@@ -40,7 +41,7 @@ namespace SubTerra.App.UI.Outpost
             public Sprite sprite;
         }
 
-        public const string TitleLabel = "전진기지 코어";
+        public const string TitleLabel = (ItemDisplayNames.OutpostName);
         public const string EmptyListLabel = "연결된 시설 없음";
         public const string ConnectedLabel = "연결되었습니다";
 

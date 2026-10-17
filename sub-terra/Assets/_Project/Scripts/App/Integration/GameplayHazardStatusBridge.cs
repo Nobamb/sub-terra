@@ -263,7 +263,7 @@ namespace SubTerra.App.Integration
             var connected = snapshot.ActiveFacilityCount > 0 || snapshot.Supply > 0;
             var reason = connected
                 ? string.Empty
-                : "전진기지 코어 또는 케이블 연결을 확인하세요.";
+                : (ItemDisplayNames.OutpostName + " 또는 케이블 연결을 확인하세요.");
             PowerStatus = new PowerStatusReadModel(
                 connected,
                 snapshot.Supply,
@@ -383,7 +383,7 @@ namespace SubTerra.App.Integration
                 case "out_of_range":
                     return "상호작용 거리 밖";
                 case "core_inactive":
-                    return "전진기지 코어 비활성";
+                    return (ItemDisplayNames.OutpostName + " 비활성");
                 default:
                     return string.IsNullOrEmpty(reasonId) ? "원인 정보 없음" : reasonId;
             }

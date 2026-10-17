@@ -10,6 +10,29 @@ namespace SubTerra.Gameplay.Building.Tests
     public sealed class BuildingPlacementTests
     {
         [Test]
+        public void InsufficientResources_TakePriorityAndRepeatedAttemptsDoNotSpend()
+        {
+            var setup = CreateSetup(6f, new Vector2(20f, 20f));
+            try
+            {
+                setup.Wallet.CanAffordValue = false;
+                setup.Terrain.SetTile(Vector3Int.zero, setup.Tile);
+                int rejected = 0;
+                setup.Placement.PlacementRejected += _ => rejected++;
+                Assert.That(setup.Placement.TryPlaceAt(Vector3Int.zero).Failure, Is.EqualTo(BuildingPlacementFailure.CannotAfford));
+                Assert.That(setup.Placement.TryPlaceAt(Vector3Int.zero).Failure, Is.EqualTo(BuildingPlacementFailure.CannotAfford));
+                Assert.That(setup.Placement.TryFindBestPlacementCell(1f, out _, out var failure), Is.False);
+                Assert.That(failure, Is.EqualTo(BuildingPlacementFailure.CannotAfford));
+                Assert.That(rejected, Is.EqualTo(2));
+                Assert.That(setup.Wallet.SpendCount, Is.Zero);
+                Assert.That(setup.BuildingRoot.childCount, Is.Zero);
+                setup.Wallet.CanAffordValue = true;
+                Assert.That(setup.Placement.TryPlaceAt(Vector3Int.zero).Failure, Is.EqualTo(BuildingPlacementFailure.Occupied));
+            }
+            finally { setup.Dispose(); }
+        }
+
+        [Test]
         public void Charger_SuccessRecordsFourCellsAndSpendsOnce()
         {
             var setup = CreateSetup(10f, new Vector2(20f, 20f), buildingId: "building.charger.basic");
@@ -946,9 +969,10 @@ namespace SubTerra.Gameplay.Building.Tests
 
         private sealed class RecordingWallet : IResourceWallet
         {
+            public bool CanAffordValue { get; set; } = true;
             public int SpendCount { get; private set; }
             public bool CanAfford(System.Collections.Generic.IReadOnlyList<ItemCostDto> costs)
-                => true;
+                => CanAffordValue;
 
             public bool TrySpend(System.Collections.Generic.IReadOnlyList<ItemCostDto> costs)
             {

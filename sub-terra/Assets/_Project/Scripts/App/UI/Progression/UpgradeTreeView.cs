@@ -298,14 +298,54 @@ namespace SubTerra.App.UI.Progression
 
         public void SetDeepZoneStatus(ZoneAccessResult access)
         {
+            EnsureDeepZoneText();
             if (deepZoneText == null)
             {
                 return;
             }
 
-            deepZoneText.text = access.IsUnlocked
-                ? "심층 구역 · 해금됨"
-                : "심층 구역 · 잠금" + (string.IsNullOrEmpty(access.Reason) ? string.Empty : " — " + access.Reason);
+            deepZoneText.gameObject.SetActive(true);
+            deepZoneText.text = "구역 해금 · 심층 구역\n" + DeepZoneUnlockRule.Mvp.DescribeUpgradeRequirements()
+                + "\n" + (access.IsUnlocked ? "해금됨" : "잠금 — " + access.Reason);
+        }
+
+        private void EnsureDeepZoneText()
+        {
+            if (deepZoneText != null || viewport == null || viewport.parent == null || detailName == null)
+            {
+                return;
+            }
+
+            // 기존 프리팹도 빌더 재실행 없이 같은 안내를 갖도록 하며 트리와 공간을 나눈다.
+            const float height = 84f;
+            var panel = new GameObject("DeepZoneStatus", typeof(RectTransform), typeof(Image));
+            panel.transform.SetParent(viewport.parent, false);
+            var rect = (RectTransform)panel.transform;
+            rect.anchorMin = new Vector2(0f, 0f);
+            rect.anchorMax = new Vector2(1f, 0f);
+            rect.pivot = new Vector2(0.5f, 0f);
+            rect.offsetMin = viewport.offsetMin;
+            rect.offsetMax = new Vector2(viewport.offsetMax.x, viewport.offsetMin.y + height);
+            var background = panel.GetComponent<Image>();
+            background.color = new Color(0.015f, 0.04f, 0.055f, 0.9f);
+            background.raycastTarget = false;
+            viewport.offsetMin += new Vector2(0f, height + 8f);
+
+            var label = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
+            label.transform.SetParent(rect, false);
+            deepZoneText = label.GetComponent<TextMeshProUGUI>();
+            deepZoneText.font = detailName.font;
+            deepZoneText.fontSize = 18f;
+            deepZoneText.enableAutoSizing = true;
+            deepZoneText.fontSizeMin = 13f;
+            deepZoneText.fontSizeMax = 18f;
+            deepZoneText.color = detailName.color;
+            deepZoneText.alignment = TextAlignmentOptions.MidlineLeft;
+            deepZoneText.raycastTarget = false;
+            deepZoneText.rectTransform.anchorMin = Vector2.zero;
+            deepZoneText.rectTransform.anchorMax = Vector2.one;
+            deepZoneText.rectTransform.offsetMin = new Vector2(12f, 4f);
+            deepZoneText.rectTransform.offsetMax = new Vector2(-12f, -4f);
         }
 
         // ---------- 상세 패널 ----------
@@ -605,8 +645,6 @@ namespace SubTerra.App.UI.Progression
                         continue;
                     }
 
-                    // Refresh가 노드를 갱신하기 전에 블라인드 유지를 먼저 걸어 둔다.
-                    target.HoldBlindForReveal();
                     var connector = FindConnectorToChild(unlocked[i]);
                     if (connector != null)
                     {

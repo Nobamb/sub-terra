@@ -221,6 +221,12 @@ namespace SubTerra.App.Save
                 return false;
             }
 
+            // 실패 시 기존 슬롯/런타임을 건드리지 않도록 시드를 먼저 준비한다.
+            if (!MineResetService.TryCreateNewGameWorld(mineResetSeeds, out var initialWorld))
+            {
+                Debug.LogWarning("[SubTerra] New game world seed creation failed.");
+                return false;
+            }
             var state = GameState.CreateNew();
             if (!ApplyRuntimeState(
                     state,
@@ -233,6 +239,7 @@ namespace SubTerra.App.Save
 
             // 새 게임은 이전 슬롯 Mine 캐시를 물려받지 않는다.
             mineWorldCache.Clear();
+            mineWorldCache.ReplaceFromProvider(initialWorld);
             pendingMineWorldRestore = false;
 
             ActivateSlot(slotId);
@@ -257,28 +264,37 @@ namespace SubTerra.App.Save
         /// </summary>
         public bool TryStartExploration(out string reason)
         {
+            if (pendingMineWorldRestore)
+            {
+                reason = "광산을 복원 중입니다. 잠시 후 다시 시도하세요.";
+                return false;
+            }
+            // 씬 로드/탐사 시작 이벤트의 자동 저장이 복원 전 기본 맵으로 캐시를 덮지 않게 한다.
+            pendingMineWorldRestore = true;
             if (!TryElevatorTravel(
                 SceneNames.Integration,
                 MineElevatorEnergyCost,
                 AutoSaveReason.Manual,
                 out reason))
             {
+                pendingMineWorldRestore = false;
                 return false;
             }
 
             if (runLifecycle == null)
             {
+                pendingMineWorldRestore = false;
                 reason = "Run 수명주기 서비스가 준비되지 않았습니다.";
                 return false;
             }
 
             if (!runLifecycle.TryBeginExploration(out reason))
             {
+                pendingMineWorldRestore = false;
                 return false;
             }
 
             // Scene Load 직후 한 프레임 뒤 Restore (Awake 지층 생성 이후 변경점 적용).
-            pendingMineWorldRestore = true;
             StartCoroutine(RestoreMineWorldAfterExplorationEntry());
             return true;
         }
@@ -666,7 +682,8 @@ namespace SubTerra.App.Save
         private SaveCaptureContext CaptureContext()
         {
             var provider = Resolve();
-            if (provider != null && !suppressMineWorldCapture)
+            bool canCaptureProvider = !suppressMineWorldCapture && !pendingMineWorldRestore;
+            if (provider != null && canCaptureProvider)
             {
                 // Provider가 살아있는 동안 캡처해 캐시를 최신으로 유지한다.
                 // Surface 저장 시 Provider null이면 이 캐시가 폴백으로 쓰인다.
@@ -678,7 +695,7 @@ namespace SubTerra.App.Save
                 inventory,
                 upgrades,
                 dialogueGenerator,
-                suppressMineWorldCapture ? null : provider,
+                canCaptureProvider ? provider : null,
                 SceneManager.GetActiveScene().name,
                 Application.version,
                 mineWorldCache.Peek());
@@ -975,9 +992,10 @@ namespace SubTerra.App.Save
                 yield break;
             }
 
-            pendingMineWorldRestore = false;
             var snapshot = mineWorldCache.Peek();
-            if (!TryRestoreMineWorld(snapshot, out var restoreReason)
+            bool restored = TryRestoreMineWorld(snapshot, out var restoreReason);
+            pendingMineWorldRestore = false;
+            if (!restored
                 && !string.IsNullOrEmpty(restoreReason))
             {
                 Debug.LogWarning(

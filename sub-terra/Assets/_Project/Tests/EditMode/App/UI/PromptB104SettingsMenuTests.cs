@@ -13,6 +13,48 @@ namespace SubTerra.App.Tests.UI
 {
     public sealed class PromptB104SettingsMenuTests
     {
+        [TestCase(1920f, 1080f, 1f)]
+        [TestCase(1280f, 720f, 0.72f)]
+        [TestCase(2560f, 1440f, 1f)]
+        public void CloseEnd_MovesWholeCardAboveViewport(float width, float height, float scale)
+        {
+            var root = new GameObject("CloseGeometry", typeof(RectTransform));
+            try
+            {
+                var viewport = root.GetComponent<RectTransform>();
+                viewport.sizeDelta = new Vector2(width, height);
+                var card = new GameObject("Card", typeof(RectTransform)).GetComponent<RectTransform>();
+                card.SetParent(viewport, false);
+                card.sizeDelta = new Vector2(1120f, 1000f);
+                card.localScale = Vector3.one * scale;
+                card.anchoredPosition = new Vector2(120f, -50f);
+                var skin = root.AddComponent<SettingsMenuSkin>();
+                typeof(SettingsMenuSkin).GetField("card", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(skin, card);
+                float endY = (float)typeof(SettingsMenuSkin).GetMethod("ResolveCloseEndY",
+                    BindingFlags.Instance | BindingFlags.NonPublic).Invoke(skin, null);
+                card.anchoredPosition = new Vector2(card.anchoredPosition.x, endY);
+                var corners = new Vector3[4];
+                card.GetWorldCorners(corners);
+                Assert.That(corners.Min(c => viewport.InverseTransformPoint(c).y), Is.GreaterThan(viewport.rect.yMax));
+                Assert.That(card.anchoredPosition.x, Is.EqualTo(120f));
+            }
+            finally { Object.DestroyImmediate(root); }
+        }
+
+        [Test]
+        public void CloseProgress_ContinuesRisingThroughLastFrame()
+        {
+            Assert.That(SettingsMenuSkin.CloseProgress(0f), Is.Zero);
+            Assert.That(SettingsMenuSkin.CloseProgress(1f), Is.EqualTo(1f));
+            float previous = 0f;
+            for (int i = 1; i <= 20; i++)
+            {
+                float next = SettingsMenuSkin.CloseProgress(i / 20f);
+                Assert.That(next - previous, Is.GreaterThan(0.03f));
+                previous = next;
+            }
+        }
+
         [TestCase(PromptB104SettingsMenuBuilder.MainPrefab)]
         [TestCase(PromptB104SettingsMenuBuilder.SurfacePrefab)]
         public void Skin_PreservesExistingDraftControlsAndCancelEvents(string path)

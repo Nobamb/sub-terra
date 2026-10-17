@@ -48,7 +48,6 @@ namespace SubTerra.Gameplay.Structural
 
         private sealed class ShakeVisual
         {
-            public TileBase SourceTile;
             public GameObject Root;
             public SpriteRenderer Renderer;
             public Color OriginalCellColor;
@@ -335,13 +334,6 @@ namespace SubTerra.Gameplay.Structural
             for (int i = 0; i < cells.Count; i++)
             {
                 Vector3Int cell = cells[i];
-                if (sourceTilemap != null && !sourceTilemap.HasTile(cell))
-                {
-                    ClearCell(cell);
-                    continue;
-                }
-                if (cellCauses.TryGetValue(cell, out StructuralRiskCause cause))
-                    UpdateShakeVisual(cell, cause);
                 if (pulseRemaining.TryGetValue(cell, out float remaining))
                 {
                     remaining -= deltaTime;
@@ -399,15 +391,10 @@ namespace SubTerra.Gameplay.Structural
             if (shakeVisuals.TryGetValue(cell, out ShakeVisual existing)
                 && existing.Root != null)
             {
-                if (existing.SourceTile == sourceTilemap.GetTile(cell))
-                {
-                    if (existing.Cause != cause) existing.Elapsed = 0f;
-                    existing.Cause = cause;
-                    existing.Renderer.sprite = sourceTilemap.GetSprite(cell);
-                    return;
-                }
-                // 같은 셀이 새 광석으로 바뀌면 이전 복제본과 색 복원을 재사용하지 않는다.
-                RemoveShakeVisual(cell);
+                if (existing.Cause != cause)
+                    existing.Elapsed = 0f;
+                existing.Cause = cause;
+                return;
             }
 
             Sprite sprite = sourceTilemap.GetSprite(cell);
@@ -440,7 +427,6 @@ namespace SubTerra.Gameplay.Structural
 
             shakeVisuals[cell] = new ShakeVisual
             {
-                SourceTile = sourceTilemap.GetTile(cell),
                 Root = root,
                 Renderer = renderer,
                 OriginalCellColor = originalColor,
@@ -542,7 +528,7 @@ namespace SubTerra.Gameplay.Structural
             if (!shakeVisuals.TryGetValue(cell, out ShakeVisual visual)) return;
             shakeVisuals.Remove(cell);
 
-            if (sourceTilemap != null && sourceTilemap.GetTile(cell) == visual.SourceTile)
+            if (sourceTilemap != null)
             {
                 sourceTilemap.SetTileFlags(
                     cell,
@@ -555,10 +541,7 @@ namespace SubTerra.Gameplay.Structural
                 overlayTilemap.SetTransformMatrix(cell, visual.OriginalOverlayTransform);
 
             if (visual.Root != null)
-            {
-                visual.Root.SetActive(false);
                 DestroyRuntimeObject(visual.Root);
-            }
         }
 
         private void ClearShakeVisuals()

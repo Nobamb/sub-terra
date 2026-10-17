@@ -111,7 +111,7 @@ namespace SubTerra.App.Tests.Drone
                 Is.EqualTo(DataIds.Dialogue.DroneStructuralWarning));
             Assert.That(result.Dialogue.IsUrgent, Is.True);
             Assert.That(result.Dialogue.Tokens["safetyGuidance"], Does.Contain("가스 구역에서 이탈"));
-            Assert.That(result.Dialogue.Tokens["safetyGuidance"], Does.Contain("전진기지 코어"));
+            Assert.That(result.Dialogue.Tokens["safetyGuidance"], Does.Contain("전진기지"));
             Assert.That(result.Dialogue.Tokens["safetyGuidance"], Does.Contain("버팀목 설치"));
         }
 
@@ -124,7 +124,7 @@ namespace SubTerra.App.Tests.Drone
             var result = service.Analyze(context);
 
             Assert.That(result.Dialogue.Tokens["safetyGuidance"], Does.Contain("가스 구역에서 이탈"));
-            Assert.That(result.Dialogue.Tokens["safetyGuidance"], Does.Contain("전진기지 코어"));
+            Assert.That(result.Dialogue.Tokens["safetyGuidance"], Does.Contain("전진기지"));
             Assert.That(result.Dialogue.Tokens["safetyGuidance"], Does.Not.Contain("버팀목"));
         }
 
@@ -138,7 +138,7 @@ namespace SubTerra.App.Tests.Drone
 
             Assert.That(result.Dialogue.Tokens["safetyGuidance"], Does.Contain("버팀목 설치"));
             Assert.That(result.Dialogue.Tokens["safetyGuidance"], Does.Not.Contain("가스 구역"));
-            Assert.That(result.Dialogue.Tokens["safetyGuidance"], Does.Not.Contain("전진기지 코어"));
+            Assert.That(result.Dialogue.Tokens["safetyGuidance"], Does.Not.Contain("전진기지"));
         }
 
         [Test]

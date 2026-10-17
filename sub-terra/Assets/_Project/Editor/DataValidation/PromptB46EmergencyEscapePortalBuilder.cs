@@ -218,7 +218,7 @@ namespace SubTerra.App.Editor.DataValidation
             data.EditorSet(
                 DataIds.Buildings.EmergencyEscapePortal,
                 "긴급 탈출 포탈",
-                "E키로 목적지 선택 창을 엽니다. 100G와 최대 전력의 10%를 소모해 엘리베이터 또는 설치한 전진기지 코어로 이동합니다.",
+                ("E키로 목적지 선택 창을 엽니다. 100G와 최대 전력의 10%를 소모해 엘리베이터 또는 설치한 " + ItemDisplayNames.OutpostName + "로 이동합니다."),
                 prefab,
                 icon,
                 30,

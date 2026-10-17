@@ -309,7 +309,7 @@ namespace SubTerra.App.Tests.PlayMode.Traversal
                 Assert.That(view.State, Is.EqualTo(EmergencyEscapePanelView.PlayState.Open));
                 Assert.That(window.transform.localScale.x, Is.EqualTo(1f).Within(0.001f));
 
-                // 닫기: 0.2초 연출 뒤 숨는다.
+                // 닫기: 블랙홀이 나타나고 창이 빨려 들어가는 연출 뒤 숨는다.
                 var closed = false;
                 view.BeginClose(() => closed = true);
                 Assert.That(view.State, Is.EqualTo(EmergencyEscapePanelView.PlayState.Closing));
@@ -324,6 +324,67 @@ namespace SubTerra.App.Tests.PlayMode.Traversal
                 Assert.That(closed, Is.True);
                 Assert.That(view.State, Is.EqualTo(EmergencyEscapePanelView.PlayState.Hidden));
                 Assert.That(panelRoot.activeSelf, Is.False);
+            }
+            finally
+            {
+                Time.timeScale = previousScale;
+                Object.Destroy(canvasObject);
+            }
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator PromptB147_2_Close_KeepsGameTimePausedUntilTheCloseAnimationEnds()
+        {
+            var canvasObject = new GameObject("PromptB147_2_Canvas", typeof(Canvas));
+            var root = new GameObject("PromptB147_2_Panel", typeof(RectTransform));
+            root.transform.SetParent(canvasObject.transform, false);
+            var panelRoot = new GameObject("PanelRoot", typeof(RectTransform));
+            panelRoot.transform.SetParent(root.transform, false);
+            var window = new GameObject("Window", typeof(RectTransform), typeof(CanvasGroup));
+            window.transform.SetParent(panelRoot.transform, false);
+            var wormhole = new GameObject("Wormhole", typeof(RectTransform), typeof(CanvasGroup));
+            wormhole.transform.SetParent(panelRoot.transform, false);
+            var view = root.AddComponent<EmergencyEscapePanelView>();
+            SetField(view, "panelRoot", panelRoot);
+            SetField(view, "windowRect", window.GetComponent<RectTransform>());
+            SetField(view, "windowGroup", window.GetComponent<CanvasGroup>());
+            SetField(view, "wormholeRect", wormhole.GetComponent<RectTransform>());
+            SetField(view, "wormholeGroup", wormhole.GetComponent<CanvasGroup>());
+            var binder = root.AddComponent<EmergencyEscapePanelBinder>();
+            SetField(binder, "view", view);
+            yield return null;
+            yield return null;
+            yield return null;
+
+            var previousScale = Time.timeScale;
+            Time.timeScale = 1f;
+            try
+            {
+                var options = new List<EmergencyEscapeDestinationOption>
+                {
+                    new EmergencyEscapeDestinationOption(EmergencyEscapeDestination.Elevator, string.Empty, "엘리베이터")
+                };
+                binder.Open(options, new SubTerra.App.Run.EmergencyEscapeCost(100, 10));
+                Assert.That(Time.timeScale, Is.EqualTo(0f), "창이 열려 있는 동안 게임이 멈춘다.");
+                view.SkipOpen();
+
+                binder.Close();
+                Assert.That(view.State, Is.EqualTo(EmergencyEscapePanelView.PlayState.Closing));
+                Assert.That(Time.timeScale, Is.EqualTo(0f),
+                    "닫는 연출 중에도 월드(플레이어·카메라)는 움직이지 않는다.");
+
+                var waited = 0f;
+                while (view.State != EmergencyEscapePanelView.PlayState.Hidden && waited < 3f)
+                {
+                    Assert.That(Time.timeScale, Is.EqualTo(0f), "연출이 끝나기 전에는 풀리지 않는다.");
+                    waited += Time.unscaledDeltaTime;
+                    yield return null;
+                }
+
+                Assert.That(view.State, Is.EqualTo(EmergencyEscapePanelView.PlayState.Hidden));
+                Assert.That(Time.timeScale, Is.EqualTo(1f), "창이 완전히 사라진 뒤에 게임이 다시 흐른다.");
             }
             finally
             {
