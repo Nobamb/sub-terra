@@ -13,7 +13,6 @@ namespace SubTerra.Gameplay.Drone
         [SerializeField, Min(0f)] private float lightIntensity = 1.8f;
         [SerializeField, Min(0.1f)] private float lightRadius = 1.05f;
         [SerializeField, Min(0.1f)] private float ringDuration = 0.9f;
-        // 기존 씬의 직렬화 필드는 유지하지만 감지 표식은 점광원을 생성하지 않는다.
 
         private sealed class PooledMarker
         {
