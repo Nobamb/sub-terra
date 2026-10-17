@@ -192,11 +192,13 @@ namespace SubTerra.App.Progression
                 nextLevel.EffectValue,
                 newlyUnlocked);
             LastPurchaseResult = result;
-            PurchaseCompleted?.Invoke(result);
+            // 성공 피드백이 이전 UI·파생 능력치를 읽지 않도록 상태 변경을 먼저 전파한다.
             if (TryGetSnapshot(upgradeId, out var snapshot))
             {
                 UpgradeChanged?.Invoke(snapshot);
             }
+
+            PurchaseCompleted?.Invoke(result);
 
             // Phase K는 이 훅에서 업그레이드 레벨 커밋이 끝난 상태를 저장한다.
             AutoSaveRequested?.Invoke(new ProgressionAutoSaveRequest(upgradeId, nextLevelNumber));
