@@ -18,16 +18,17 @@ namespace SubTerra.App.UI.HUD
         public void Set(float next)
         {
             next = System.Math.Max(0f, System.Math.Min(1f, next));
-            if (!initialized || next > current)
+            if (!initialized || next >= Fraction)
             {
-                Fraction = next;
-                elapsed = 1f;
+                Reset(next);
+                return;
             }
             else if (next < current)
             {
                 start = Fraction;
                 elapsed = 0f;
             }
+            // 재생으로 조금 회복되어도 잔상을 지우거나 대기 시간을 다시 시작하지 않는다.
             current = next;
             initialized = true;
         }
@@ -35,7 +36,8 @@ namespace SubTerra.App.UI.HUD
         {
             elapsed += System.Math.Max(0f, seconds);
             float progress = System.Math.Max(0f, System.Math.Min(1f, (elapsed - 0.35f) / 0.4f));
-            Fraction = System.Math.Max(current, start + (current - start) * progress);
+            Fraction = System.Math.Max(current,
+                System.Math.Min(Fraction, start + (current - start) * progress));
         }
     }
 

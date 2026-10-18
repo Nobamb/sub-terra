@@ -4,16 +4,16 @@
 
 ## 세부 규칙 라우팅
 
-| 작업 상황 | 추가로 읽을 파일 |
-| --- | --- |
-| 요구사항, MVP 범위, 담당자 역할, 병렬·순차 작업 계획 | [`rules/project-scope.md`](rules/project-scope.md) |
-| Git, 브랜치, PR, 변경 파일 범위, 커밋·병합 | [`rules/git-commit.md`](rules/git-commit.md) |
-| Unity Scene·Prefab·공용 설정·직렬화·시각 에셋 | [`rules/unity-project.md`](rules/unity-project.md) |
-| UI, uGUI/TMP, Layout Builder, UI Prefab·Scene 변경 또는 복구 | [`rules/ui-ugui.md`](rules/ui-ugui.md)와 [`rules/unity-project.md`](rules/unity-project.md); Builder 코드도 바꾸면 [`rules/code.md`](rules/code.md) |
-| C# 코드·Shared 계약·구조·로그 | [`rules/code.md`](rules/code.md) |
-| GameDataCatalog, ID, DTO, 세이브, 외부 AI·전송, 결정론적 게임플레이·Digger-Bot | [`rules/data-save-gameplay.md`](rules/data-save-gameplay.md); 코드 수정도 있으면 [`rules/code.md`](rules/code.md) |
-| Build Profile, 자동 저장, 배포 결과물, 기능·Play/Edit Mode·Windows 빌드 검증 | [`rules/testing-qa.md`](rules/testing-qa.md) |
-| 작업 결과 제출 또는 Agent 작업 요청 작성 | [`rules/reporting.md`](rules/reporting.md) |
+| 작업 상황                                                                      | 추가로 읽을 파일                                                                                                                                    |
+| ------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 요구사항, MVP 범위, 담당자 역할, 병렬·순차 작업 계획                           | [`rules/project-scope.md`](rules/project-scope.md)                                                                                                  |
+| Git, 브랜치, PR, 변경 파일 범위, 커밋·병합                                     | [`rules/git-commit.md`](rules/git-commit.md)                                                                                                        |
+| Unity Scene·Prefab·공용 설정·직렬화·시각 에셋                                  | [`rules/unity-project.md`](rules/unity-project.md)                                                                                                  |
+| UI, uGUI/TMP, Layout Builder, UI Prefab·Scene 변경 또는 복구                   | [`rules/ui-ugui.md`](rules/ui-ugui.md)와 [`rules/unity-project.md`](rules/unity-project.md); Builder 코드도 바꾸면 [`rules/code.md`](rules/code.md) |
+| C# 코드·Shared 계약·구조·로그                                                  | [`rules/code.md`](rules/code.md)                                                                                                                    |
+| GameDataCatalog, ID, DTO, 세이브, 외부 AI·전송, 결정론적 게임플레이·Digger-Bot | [`rules/data-save-gameplay.md`](rules/data-save-gameplay.md); 코드 수정도 있으면 [`rules/code.md`](rules/code.md)                                   |
+| Build Profile, 자동 저장, 배포 결과물, 기능·Play/Edit Mode·Windows 빌드 검증   | [`rules/testing-qa.md`](rules/testing-qa.md)                                                                                                        |
+| 작업 결과 제출 또는 Agent 작업 요청 작성                                       | [`rules/reporting.md`](rules/reporting.md)                                                                                                          |
 
 저장소 파일을 변경하는 작업은 `rules/git-commit.md`를, 작업 결과를 제출할 때는 `rules/reporting.md`를 추가로 읽는다. UI 변경에는 `rules/ui-ugui.md`의 커밋 범위 검증 및 회귀 복구 규칙도 적용한다. 작업의 규칙 간 충돌이 보이면 임의로 완화하지 말고 보고한다.
 
@@ -33,12 +33,13 @@
 3. 공통 개발 규칙
 
 3-1. 기존 프로젝트 구조와 소유권을 우선한다.
-   - 프로젝트 전용 파일은 `Assets/_Project/` 아래에 둔다.
-   - 담당자 A의 월드·게임플레이 코드는 `Scripts/Gameplay/` 아래에 둔다.
-   - 담당자 B의 상태·UI·저장·통합 코드는 `Scripts/App/` 아래에 둔다.
-   - 두 영역이 공유하는 인터페이스, 이벤트와 DTO는 `Scripts/Shared/`에서 관리한다.
-   - 최종 통합 Scene은 담당자 B만 수정하고, 담당자 A는 독립 Test Scene과 Runtime Prefab에서 작업한다.
-   - 외부 패키지는 `Plugins/` 또는 `ThirdParty/`로 프로젝트 코드와 분리한다.
+
+- 프로젝트 전용 파일은 `Assets/_Project/` 아래에 둔다.
+- 담당자 A의 월드·게임플레이 코드는 `Scripts/Gameplay/` 아래에 둔다.
+- 담당자 B의 상태·UI·저장·통합 코드는 `Scripts/App/` 아래에 둔다.
+- 두 영역이 공유하는 인터페이스, 이벤트와 DTO는 `Scripts/Shared/`에서 관리한다.
+- 최종 통합 Scene은 담당자 B만 수정하고, 담당자 A는 독립 Test Scene과 Runtime Prefab에서 작업한다.
+- 외부 패키지는 `Plugins/` 또는 `ThirdParty/`로 프로젝트 코드와 분리한다.
 
 9. 작업 금지 범위
    Agent는 아래 작업을 수행하면 안 된다.
@@ -94,3 +95,34 @@
 
     10-3. 사용자 확인
     실제 Git 히스토리를 변경하거나 외부 배포·업로드를 수행하기 전에는 사용자 확인을 받는다.
+
+16. 작업 태도 규칙
+
+16-1. 정보 없이 코딩 금지
+
+- 관련 코드, Scene/Prefab 구조, 기획 문서, 이슈를 먼저 읽고 시작한다.
+- 확인 못 한 부분은 추측으로 채우지 않는다. "미확인"이라고 적고 질문하거나 직접 확인한다.
+
+16-2. 무조건 동의 금지
+
+- 요청이 기획, 기존 규칙, 다른 PR과 충돌하면 구현 전에 먼저 말한다.
+- 더 단순하거나 안전한 방법이 있으면 이유와 함께 제안한다.
+- 사용자 의견이 틀렸다고 판단되면 근거를 들어 말한다. 최종 결정은 사용자가 한다.
+
+16-3. 테스트만으로 완료 금지
+
+- 자동 테스트 통과는 완료 조건의 일부일 뿐이다.
+- 실제 플레이 흐름(Bootstrap → 새 게임 → 탐사)이나 해당 화면에서 확인한 뒤에만 "완료"라고 쓴다.
+- 직접 확인하지 못한 항목은 "미검증"으로 보고하고 수동 체크리스트를 남긴다.
+
+16-4. 같은 실수 반복 금지
+
+- 작업 전 `init/rules/lessons.md`를 읽는다.
+- 실수나 회귀를 고치면 원인과 재발 방지법을 한 줄로 추가한다.
+- 형식: `날짜 | 실수 | 원인 | 다음부터 할 일`
+
+17. 화면 확인 효율
+
+- 스크린샷 비교는 기본적으로 절반 해상도로 한다. 세부 확인이 필요할 때만 원본을 쓴다.
+- 애니메이션이나 연출 확인은 프레임을 한 장씩 보내지 말고 여러 장을 묶어서 한 번에 본다.
+- 단순 반복 확인(문구 존재, 위치, 색 체크 등)은 가벼운 모델이나 하위 에이전트에 맡긴다. 판단이 필요한 리뷰만 상위 모델이 한다.

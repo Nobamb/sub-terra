@@ -137,6 +137,7 @@ namespace SubTerra.App.Tests.UI
                 wallet.CanAffordValue = true;
                 placement.Emit(failed);
                 Assert.That(warning.Text, Does.Contain("겹쳐"));
+                Assert.That(view.StatusMessage, Does.Contain("빈 공간을 선택하세요"));
             }
             finally { SubTerra.App.UI.PlayerStatus.PlayerStatusWarnings.Current = previous; }
         }
