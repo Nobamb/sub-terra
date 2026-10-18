@@ -350,6 +350,8 @@ namespace SubTerra.App.UI.MainMenu
         private void UpdateFrames()
         {
             var timeline = FrameTimeline;
+            // 설정·확인 창이 열리거나 전환 연출이 시작되면 호버 프레임은 떼어 낸다.
+            if (timeline.Hover >= 0 && (IsAnyModalOpen || (intro != null && intro.BlocksInput))) timeline.SetHover(-1);
             // 부팅 중에는 선택 카드가 보일 때까지 프레임을 붙이지 않는다.
             if (intro == null || intro.IsCardShown(timeline.Holder < 0 ? 0 : timeline.Holder))
             {
@@ -397,9 +399,11 @@ namespace SubTerra.App.UI.MainMenu
                 var card = GetCard(i);
                 if (card == null) continue;
                 card.Hovered -= OnCardHovered;
+                card.Unhovered -= OnCardUnhovered;
                 card.DeleteClicked -= OnCardDeleteClicked;
                 if (!wire) continue;
                 card.Hovered += OnCardHovered;
+                card.Unhovered += OnCardUnhovered;
                 card.DeleteClicked += OnCardDeleteClicked;
             }
         }
@@ -411,12 +415,18 @@ namespace SubTerra.App.UI.MainMenu
             return -1;
         }
 
-        // 마우스 호버로도 슬롯을 고른다(위/아래 키와 같은 프레임 이동).
+        // 호버는 철제 프레임만 붙인다. 슬롯 선택(내부 빛, 이어하기 상태)은 클릭이나 위/아래 키로만 바뀐다.
         private void OnCardHovered(SaveSlotCardView card)
         {
             if ((intro != null && intro.BlocksInput) || IsAnyModalOpen) return;
-            var slot = IndexOf(card) + 1;
-            if (slot > 0 && slot != currentSelectedSlotId) SlotSelected?.Invoke(slot);
+            var index = IndexOf(card);
+            if (index >= 0) FrameTimeline.SetHover(index);
+        }
+
+        private void OnCardUnhovered(SaveSlotCardView card)
+        {
+            var index = IndexOf(card);
+            if (index >= 0 && FrameTimeline.Hover == index) FrameTimeline.SetHover(-1);
         }
 
         private void OnCardDeleteClicked(SaveSlotCardView card)
@@ -883,6 +893,10 @@ namespace SubTerra.App.UI.MainMenu
                 colors.normalColor = i == selectedSlotId - 1
                     ? colors.pressedColor
                     : slotDefaultColors[i];
+                // 호버는 프레임만 붙이므로 판 색은 호버로 밝아지지 않는다.
+                // 클릭 뒤 EventSystem 선택 상태에서도 판 색이 달라지지 않게 같은 색으로 맞춘다.
+                colors.highlightedColor = colors.normalColor;
+                colors.selectedColor = colors.normalColor;
                 button.colors = colors;
             }
         }

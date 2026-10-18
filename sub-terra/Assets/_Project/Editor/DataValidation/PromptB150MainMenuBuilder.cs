@@ -24,6 +24,9 @@ namespace SubTerra.App.Editor.DataValidation
         public const string SignalIconPath = ArtPath + "icon-signal.png";
         public const string NewRecordIconPath = ArtPath + "icon-new-record.png";
         public const string TrashIconPath = ArtPath + "icon-trash.png";
+        public const string TrashWhiteIconPath = ArtPath + "icon-trash-white.png";
+        public const string DeleteOffPath = ArtPath + "delete-button-off.png";
+        public const string DeleteOnPath = ArtPath + "delete-button-on.png";
         public const string QuitDangerIconPath = ArtPath + "icon-quit-danger.png";
         public const string ExplorationButtonPath = PromptB117SurfaceBaseBuilder.ArtPath + "Exploration-button.png";
         public const string SettingsIconPath = PromptB117SurfaceBaseBuilder.ArtPath + "Icons/icon-settings.png";
@@ -31,7 +34,7 @@ namespace SubTerra.App.Editor.DataValidation
         public const string ButtonOnPath = "Assets/_Project/Art/UI/MainMenu/Settings/button-active-on.png";
 
         public const string Subtitle = "봉인 너머에서 신호가 온다.";
-        public static readonly float[] SlotY = { 170f, 52f, -66f };
+        public static readonly float[] SlotY = { 186f, 62f, -62f };
         public static readonly Vector2 SlotSize = new Vector2(800f, 112f);
         public static readonly Vector2 ContinueSize = new Vector2(560f, 116f);
         public static readonly Vector2 SecondarySize = new Vector2(252f, 70f);
@@ -40,7 +43,21 @@ namespace SubTerra.App.Editor.DataValidation
         public const float SecondaryX = 272f;
         public static readonly string[] FramePieceNames = { "CornerTL", "CornerTR", "CornerBL", "CornerBR", "BarTop", "BarBottom" };
 
-        private static readonly Vector4 BarBorder = new Vector4(32f, 0f, 32f, 0f);
+        // 철제 프레임은 카드 바깥에 안쪽 모서리가 카드 가장자리와 딱 맞게 붙는다. 아트 1유닛 = 2px.
+        public const float CornerThickness = 9f;
+        public static readonly Vector2 CornerSize = new Vector2(88f, 50f);
+        public const float BarThickness = 8f;
+        public const float BarHeight = 14f;
+        public const float BarWidth = 540f;
+        public const float FrameOverlap = 0.5f;
+        public static readonly Vector2 DeleteSize = new Vector2(44f, 44f);
+        public const float DeleteInsetX = 36f;
+        public const float DeleteInsetY = 34f;
+        public const float DeleteIdleAlpha = 0.72f;
+        public const float ContinueIconSize = 70f;
+        public const float ContinueIconGap = 20f;
+
+        private static readonly Vector4 BarBorder = new Vector4(22f, 0f, 22f, 0f);
 
         [MenuItem("SubTerra/UI/Build Prompt-B 150 Main Menu")]
         public static void Build()
@@ -62,7 +79,7 @@ namespace SubTerra.App.Editor.DataValidation
         public static void SetupTextureImporters()
         {
             foreach (var path in new[] { CornerPath, CornerGlowPath, DangerOffPath, DangerOnPath,
-                         SignalIconPath, NewRecordIconPath, TrashIconPath, QuitDangerIconPath })
+                         SignalIconPath, NewRecordIconPath, TrashIconPath, TrashWhiteIconPath, QuitDangerIconPath, DeleteOffPath, DeleteOnPath })
                 ImportSprite(path, Vector4.zero);
             ImportSprite(BarPath, BarBorder);
             ImportSprite(BarGlowPath, BarBorder);
@@ -94,8 +111,8 @@ namespace SubTerra.App.Editor.DataValidation
             PromptB117SurfaceBaseBuilder.StyleButton(cont, ExplorationButtonPath, ExplorationButtonPath,
                 new Vector2(ContinueSize.x, ContinueSize.x * 728f / 2159f), contIcon, bright: true,
                 glowColor: new Color(0.45f, 0.9f, 1f));
-            Place(contIcon.rectTransform, -196f, 0f, 74f, 74f);
-            ButtonLabel(cont, "이어하기", 40f, 40f, -4f, 330f, Hex("E6FBFF"), bold: true);
+            ButtonLabel(cont, "이어하기", 40f, 0f, -4f, 330f, Hex("E6FBFF"), bold: true);
+            PlaceContinueContent(cont, contIcon);
 
             var labels = new[] { "새 게임", "설정(esc)", "종료" };
             var names = new[] { "NewGameButton", "SettingsButton", "QuitButton" };
@@ -187,6 +204,16 @@ namespace SubTerra.App.Editor.DataValidation
             // 선택 표시는 철제 프레임 하나로 한다. 화살표·코너 브래킷·선택 테두리는 제거.
             foreach (var name in new[] { "TriangleSelector", "CornerBrackets", "Edge0", "Edge1", "Edge2", "Edge3" })
                 DestroyChild(selection, name);
+            // 호버는 프레임만 붙이므로 판 색도 호버로 밝아지지 않게 한다(선택 색은 런타임이 맞춘다).
+            var slotButton = slot.GetComponent<UnityEngine.UI.Button>();
+            if (slotButton != null)
+            {
+                var slotColors = slotButton.colors;
+                slotColors.highlightedColor = slotColors.normalColor;
+                slotColors.selectedColor = slotColors.normalColor;
+                slotButton.colors = slotColors;
+            }
+
             var innerGlow = (RectTransform)selection.Find("InnerGlow");
             Place(innerGlow, 0f, 0f, SlotSize.x, SlotSize.y);
             Place((RectTransform)selection, 0f, 0f, SlotSize.x, SlotSize.y);
@@ -214,15 +241,34 @@ namespace SubTerra.App.Editor.DataValidation
             flashImage.color = Hex("BFF8FF", 0f);
             flashImage.raycastTarget = false;
 
-            // 휴지통: 오른쪽 위. 평소 흐리게, 선택 카드에서만 또렷하게.
-            var deleteRect = Rect(slot, "DeleteButton", SlotSize.x * 0.5f - 30f, SlotSize.y * 0.5f - 24f, 40f, 40f);
-            var hit = Get<Image>(deleteRect);
-            hit.sprite = null;
-            hit.color = Color.clear;
-            hit.raycastTarget = true;
+            // 휴지통: 설정창 X버튼과 같은 판 에셋에서 X 글자만 뺀 기본/호버(내부 발광) 이미지 위에 쓰레기통 아이콘.
+            var deleteRect = Rect(slot, "DeleteButton", SlotSize.x * 0.5f - DeleteInsetX, SlotSize.y * 0.5f - DeleteInsetY,
+                DeleteSize.x, DeleteSize.y);
+            var plate = Get<Image>(deleteRect);
+            plate.sprite = Sprite(DeleteOffPath);
+            plate.type = Image.Type.Simple;
+            plate.preserveAspect = true;
+            plate.color = Color.white;
+            plate.raycastTarget = true;
+            var hoverRect = Rect(deleteRect, "HoverOverlay", 0f, 0f, DeleteSize.x, DeleteSize.y);
+            var hoverImage = Get<Image>(hoverRect);
+            hoverImage.sprite = Sprite(DeleteOnPath);
+            hoverImage.type = Image.Type.Simple;
+            hoverImage.preserveAspect = true;
+            hoverImage.raycastTarget = false;
+            // 색 전환(ColorTint)은 이 색에 곱해지므로 알파 1로 둬야 호버 때 켜진다. 평소 꺼짐은 Button normalColor 알파 0이 맡는다.
+            hoverImage.color = Color.white;
             var deleteButton = Get<UnityEngine.UI.Button>(deleteRect);
-            deleteButton.targetGraphic = hit;
-            deleteButton.transition = Selectable.Transition.None;
+            deleteButton.targetGraphic = hoverImage;
+            deleteButton.transition = Selectable.Transition.ColorTint;
+            var deleteColors = deleteButton.colors;
+            deleteColors.normalColor = new Color(1f, 1f, 1f, 0f);
+            deleteColors.highlightedColor = Color.white;
+            deleteColors.selectedColor = Color.white;
+            deleteColors.pressedColor = new Color(0.85f, 0.95f, 1f, 1f);
+            deleteColors.disabledColor = new Color(1f, 1f, 1f, 0f);
+            deleteColors.fadeDuration = 0.15f;
+            deleteButton.colors = deleteColors;
             var nav = deleteButton.navigation;
             nav.mode = Navigation.Mode.None;
             deleteButton.navigation = nav;
@@ -232,22 +278,38 @@ namespace SubTerra.App.Editor.DataValidation
             trashImage.sprite = Sprite(TrashIconPath);
             trashImage.preserveAspect = true;
             trashImage.raycastTarget = false;
+            // 호버 때 판 발광과 같은 청록이라 아이콘이 묻히므로, 흰색 아이콘을 위에 겹쳐 두고 호버에서 켠다.
+            var white = Rect(deleteRect, "IconWhite", 0f, 0f, 26f, 26f);
+            var whiteImage = Get<Image>(white);
+            whiteImage.sprite = Sprite(TrashWhiteIconPath);
+            whiteImage.preserveAspect = true;
+            whiteImage.raycastTarget = false;
+            whiteImage.color = new Color(1f, 1f, 1f, 0f);
+            trash.SetAsLastSibling();
+            white.SetAsLastSibling();
+            var hoverFx = Get<SlotDeleteButtonHover>(deleteRect);
+            var hoverSo = new SerializedObject(hoverFx);
+            Ref(hoverSo, "whiteIcon", whiteImage);
+            hoverSo.ApplyModifiedPropertiesWithoutUndo();
 
             var frame = Stretch(slot, "MagnetFrame");
             var pieces = new RectTransform[6];
             var glows = new Image[6];
             var halfW = SlotSize.x * 0.5f;
             var halfH = SlotSize.y * 0.5f;
+            var cornerX = halfW + CornerThickness - CornerSize.x * 0.5f - FrameOverlap;
+            var cornerY = halfH + CornerThickness - CornerSize.y * 0.5f - FrameOverlap;
             for (var p = 0; p < 4; p++)
             {
                 var sx = p % 2 == 0 ? -1f : 1f;
                 var sy = p < 2 ? 1f : -1f;
                 pieces[p] = Piece(frame, FramePieceNames[p], CornerPath, CornerGlowPath,
-                    sx * (halfW - 15.4f), sy * (halfH - 15.4f), 46f, 46f, new Vector3(-sx, sy, 1f), false, out glows[p]);
+                    sx * cornerX, sy * cornerY, CornerSize.x, CornerSize.y, new Vector3(-sx, sy, 1f), false, out glows[p]);
             }
 
-            pieces[4] = Piece(frame, "BarTop", BarPath, BarGlowPath, 0f, halfH - 0.5f, 260f, 15.4f, Vector3.one, true, out glows[4]);
-            pieces[5] = Piece(frame, "BarBottom", BarPath, BarGlowPath, 0f, -halfH + 0.5f, 260f, 15.4f, new Vector3(1f, -1f, 1f), true, out glows[5]);
+            var barY = halfH + BarThickness - BarHeight * 0.5f - FrameOverlap;
+            pieces[4] = Piece(frame, "BarTop", BarPath, BarGlowPath, 0f, barY, BarWidth, BarHeight, Vector3.one, true, out glows[4]);
+            pieces[5] = Piece(frame, "BarBottom", BarPath, BarGlowPath, 0f, -barY, BarWidth, BarHeight, new Vector3(1f, -1f, 1f), true, out glows[5]);
 
             // 계층 순서: 판 → 텍스트/썸네일 → 선택 글로우 → 번쩍임 → 휴지통 → 철제 프레임
             selection.SetAsLastSibling();
@@ -263,6 +325,7 @@ namespace SubTerra.App.Editor.DataValidation
             Ref(so, "deleteButton", deleteButton);
             Ref(so, "deleteGroup", deleteGroup);
             Ref(so, "exitFlash", flashImage);
+            so.FindProperty("deleteIdleAlpha").floatValue = DeleteIdleAlpha;
             SetArray(so, "framePieces", pieces);
             SetArray(so, "frameGlows", glows);
             so.ApplyModifiedPropertiesWithoutUndo();
@@ -277,7 +340,7 @@ namespace SubTerra.App.Editor.DataValidation
             var image = Get<Image>(rect);
             image.sprite = Sprite(sprite);
             image.type = sliced ? Image.Type.Sliced : Image.Type.Simple;
-            image.pixelsPerUnitMultiplier = sliced ? 3.1f : 1f;
+            image.pixelsPerUnitMultiplier = sliced ? 2f : 1f;
             image.color = Color.white;
             image.raycastTarget = false;
             var glowRect = Stretch(rect, "SeamGlow");
@@ -306,16 +369,17 @@ namespace SubTerra.App.Editor.DataValidation
             var scan = Get<RawImage>(Stretch(atmosphere, "Scanlines"));
             scan.raycastTarget = false;
             scan.color = Color.clear;
-            var burst = Get<RawImage>(Stretch(atmosphere, "StaticBurst"));
-            burst.raycastTarget = false;
-            burst.color = new Color(1f, 1f, 1f, 0f);
+            // TV 신호 노이즈 대신 가장자리 글리치. 막대는 MainMenuAtmosphere가 런타임에 만든다.
+            DestroyChild(atmosphere, "StaticBurst");
+            var glitch = Stretch(atmosphere, "EdgeGlitch");
+            glitch.gameObject.SetActive(false);
             var dust = Stretch(atmosphere, "Dust");
             var component = Get<MainMenuAtmosphere>(atmosphere);
             var so = new SerializedObject(component);
             Ref(so, "backdrop", backdropImage);
             Ref(so, "vignette", vignette);
             Ref(so, "scanlines", scan);
-            Ref(so, "staticBurst", burst);
+            Ref(so, "glitchRoot", glitch);
             Ref(so, "dustRoot", dust);
             so.ApplyModifiedPropertiesWithoutUndo();
             return atmosphere;
@@ -395,6 +459,19 @@ namespace SubTerra.App.Editor.DataValidation
             label.raycastTarget = false;
             Place(label.rectTransform, x, y, width, ((RectTransform)button.transform).sizeDelta.y - 8f);
             label.transform.SetAsLastSibling();
+        }
+
+        /// <summary>이어하기 아이콘과 글자를 한 묶음으로 보고 버튼 가운데에 놓는다. 아이콘과 글자 사이는 일정한 간격만 둔다.</summary>
+        private static void PlaceContinueContent(UnityEngine.UI.Button button, Image icon)
+        {
+            var label = button.transform.Find("Label").GetComponent<TMP_Text>();
+            var textWidth = Mathf.Min(label.GetPreferredValues(label.text).x, 320f);
+            var total = ContinueIconSize + ContinueIconGap + textWidth;
+            var left = -total * 0.5f;
+            // 아이콘 그림이 칸 안에서 약간 위로 그려져 있어 2px 내린다.
+            Place(icon.rectTransform, left + ContinueIconSize * 0.5f, -2f, ContinueIconSize, ContinueIconSize);
+            Place(label.rectTransform, left + ContinueIconSize + ContinueIconGap + textWidth * 0.5f, -4f,
+                textWidth + 16f, ((RectTransform)button.transform).sizeDelta.y - 8f);
         }
 
         private static TMP_Text Text(Transform parent, string name, TMP_FontAsset font, string value,

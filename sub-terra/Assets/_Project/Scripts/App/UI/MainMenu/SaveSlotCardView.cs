@@ -7,7 +7,7 @@ using UnityEngine.EventSystems;
 
 namespace SubTerra.App.UI.MainMenu
 {
-    public sealed class SaveSlotCardView : MonoBehaviour, IPointerEnterHandler
+    public sealed class SaveSlotCardView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
         private const float NoiseFrameSeconds = 1f / 24f;
 
@@ -26,7 +26,7 @@ namespace SubTerra.App.UI.MainMenu
         [SerializeField] private RectTransform[] framePieces = new RectTransform[0];
         [SerializeField] private UnityEngine.UI.Image[] frameGlows = new UnityEngine.UI.Image[0];
         [SerializeField] private Color seamFlashColor = new Color(0.45f, 0.95f, 1f, 1f);
-        [SerializeField, Range(0f, 1f)] private float deleteIdleAlpha = 0.28f;
+        [SerializeField, Range(0f, 1f)] private float deleteIdleAlpha = 0.72f;
         [SerializeField, Range(0f, 1f)] private float emptyNoiseAlpha = 0.55f;
         [SerializeField] private float thumbnailRevealSeconds = 0.22f;
 
@@ -45,6 +45,7 @@ namespace SubTerra.App.UI.MainMenu
         private bool hasIntroHome;
 
         public event Action<SaveSlotCardView> Hovered;
+        public event Action<SaveSlotCardView> Unhovered;
         public event Action<SaveSlotCardView> DeleteClicked;
 
         public SaveSlotCardKind Kind => kind;
@@ -72,6 +73,7 @@ namespace SubTerra.App.UI.MainMenu
         }
 
         public void OnPointerEnter(PointerEventData eventData) => Hovered?.Invoke(this);
+        public void OnPointerExit(PointerEventData eventData) => Unhovered?.Invoke(this);
 
         public void ShowThumbnail(int slotId, bool canContinue)
         {

@@ -47,7 +47,8 @@ namespace SubTerra.App.UI.MainMenu
     }
 
     /// <summary>
-    /// B-150 자석 철제 프레임. 선택된 카드 하나에만 프레임이 붙는다.
+    /// B-150 자석 철제 프레임. 선택(클릭·위/아래 키)된 카드와 마우스가 올라간 카드에 프레임이 붙는다.
+    /// 선택 카드는 항상 하나, 호버 카드도 하나이므로 프레임은 최대 두 카드에만 있다.
     /// 다른 슬롯을 고르면 이전 카드는 떨어지고 새 카드에 붙으며, 연타 시 진행 중 연출을 끊고 넘어간다.
     /// </summary>
     public sealed class SlotFrameMagnetTimeline
@@ -56,6 +57,7 @@ namespace SubTerra.App.UI.MainMenu
         private readonly SlotFramePhase[] phases;
         private readonly float[] elapsed;
         private int holder = -1;
+        private int hover = -1;
 
         public SlotFrameMagnetTimeline(int slotCount = 3, SlotFrameMagnetSettings settings = null)
         {
@@ -66,11 +68,13 @@ namespace SubTerra.App.UI.MainMenu
 
         public SlotFrameMagnetSettings Settings => settings;
         public int SlotCount => phases.Length;
-        /// <summary>프레임이 붙어 있거나 붙는 중인 카드. 없으면 -1.</summary>
+        /// <summary>선택되어 프레임이 붙어 있거나 붙는 중인 카드. 없으면 -1.</summary>
         public int Holder => holder;
+        /// <summary>마우스가 올라가 있어 프레임이 붙는 카드. 없으면 -1.</summary>
+        public int Hover => hover;
         public SlotFramePhase PhaseOf(int index) => Valid(index) ? phases[index] : SlotFramePhase.Off;
 
-        /// <summary>붙어 있거나 붙는 중인 카드 수. 항상 0 또는 1이다.</summary>
+        /// <summary>붙어 있거나 붙는 중인 카드 수. 선택 1 + 호버 1이라 최대 2다.</summary>
         public int HolderCount
         {
             get
@@ -85,21 +89,49 @@ namespace SubTerra.App.UI.MainMenu
         public void Select(int index)
         {
             if (!Valid(index) || index == holder) return;
-            Release();
             holder = index;
-            phases[index] = SlotFramePhase.Attaching;
-            elapsed[index] = 0f;
+            Refresh();
         }
 
-        /// <summary>현재 카드의 프레임을 떼어 낸다.</summary>
+        /// <summary>선택 카드의 프레임을 떼어 낸다. 마우스가 그 카드 위에 있으면 호버 프레임으로 남는다.</summary>
         public void Release()
         {
-            if (!Valid(holder)) return;
-            var visible = Sample(holder).Alpha;
-            phases[holder] = SlotFramePhase.Detaching;
-            // 붙던 도중이면 지금 보이는 만큼에서 이어서 사라진다.
-            elapsed[holder] = (1f - visible) * settings.detachDuration;
+            if (holder < 0) return;
             holder = -1;
+            Refresh();
+        }
+
+        /// <summary>마우스가 올라간 카드. 호버는 프레임만 붙이고 선택은 바꾸지 않는다. -1이면 호버 해제.</summary>
+        public void SetHover(int index)
+        {
+            var next = Valid(index) ? index : -1;
+            if (next == hover) return;
+            hover = next;
+            Refresh();
+        }
+
+        // 선택·호버 카드는 붙이고, 나머지는 떼어 낸다. 진행 중인 연출은 현재 상태에서 이어 간다.
+        private void Refresh()
+        {
+            for (var i = 0; i < phases.Length; i++)
+            {
+                var wanted = i == holder || i == hover;
+                var attached = phases[i] == SlotFramePhase.Attaching || phases[i] == SlotFramePhase.Attached;
+                if (wanted && !attached)
+                {
+                    var visible = phases[i] == SlotFramePhase.Detaching ? Sample(i).Alpha : 0f;
+                    phases[i] = SlotFramePhase.Attaching;
+                    // 떨어지던 도중이면 지금 보이는 만큼에서 다시 붙는다.
+                    elapsed[i] = visible * settings.attachDuration * 0.45f;
+                }
+                else if (!wanted && attached)
+                {
+                    var visible = Sample(i).Alpha;
+                    phases[i] = SlotFramePhase.Detaching;
+                    // 붙던 도중이면 지금 보이는 만큼에서 이어서 사라진다.
+                    elapsed[i] = (1f - visible) * settings.detachDuration;
+                }
+            }
         }
 
         /// <summary>건너뛰기·초기 표시용. 선택 카드는 즉시 붙은 상태, 나머지는 꺼진 상태.</summary>
@@ -112,6 +144,7 @@ namespace SubTerra.App.UI.MainMenu
             }
 
             holder = -1;
+            hover = -1;
             if (!Valid(index)) return;
             holder = index;
             phases[index] = SlotFramePhase.Attached;

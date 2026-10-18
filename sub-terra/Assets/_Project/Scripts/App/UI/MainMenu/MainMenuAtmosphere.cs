@@ -4,11 +4,19 @@ using UnityEngine;
 namespace SubTerra.App.UI.MainMenu
 {
     /// <summary>
-    /// B-150 배경 분위기: 떠다니는 먼지, 옅은 스캔라인, 몇 초에 한 번 짧은 지지직, 메뉴 뒤 어둠(비네트).
+    /// B-150 배경 분위기: 떠다니는 먼지, 옅은 스캔라인, 몇 초에 한 번 화면 가장자리에만 나타나는 짧은 글리치, 메뉴 뒤 어둠(비네트).
     /// 메뉴 글자보다 뒤에 그려지고 입력을 받지 않는다. 텍스처는 CCTV 팝업과 같은 절차 생성 그림을 쓴다.
     /// </summary>
     public sealed class MainMenuAtmosphere : MonoBehaviour
     {
+        private struct GlitchBar
+        {
+            public RectTransform Rect;
+            public UnityEngine.UI.Image Image;
+            public float Side;
+            public bool Cyan;
+        }
+
         private struct Mote
         {
             public RectTransform Rect;
@@ -22,7 +30,8 @@ namespace SubTerra.App.UI.MainMenu
         [SerializeField] private UnityEngine.UI.Image backdrop;
         [SerializeField] private UnityEngine.UI.Image vignette;
         [SerializeField] private UnityEngine.UI.RawImage scanlines;
-        [SerializeField] private UnityEngine.UI.RawImage staticBurst;
+        [Tooltip("화면 가장자리 글리치 막대가 생기는 영역. 화면 전체를 덮는 Stretch 여야 한다.")]
+        [SerializeField] private RectTransform glitchRoot;
         [SerializeField] private RectTransform dustRoot;
 
         [Header("Tuning")]
@@ -33,8 +42,17 @@ namespace SubTerra.App.UI.MainMenu
         [SerializeField] private float scanlineSpacing = 4f;
         [SerializeField] private float scanlineScrollSpeed = 0.25f;
         [SerializeField] private Vector2 burstInterval = new Vector2(3.5f, 7f);
-        [SerializeField] private float burstDuration = 0.12f;
-        [SerializeField, Range(0f, 0.3f)] private float burstAlpha = 0.07f;
+        [SerializeField] private float burstDuration = 0.14f;
+        [Tooltip("글리치 막대 알파. 이전 지지직 노이즈 수준으로 아주 약하게 둔다.")]
+        [SerializeField, Range(0f, 0.4f)] private float burstAlpha = 0.14f;
+        [Tooltip("좌우 가장자리에서 안쪽으로 글리치가 퍼지는 폭(화면 너비 비율)")]
+        [SerializeField, Range(0.02f, 0.2f)] private float glitchEdgeWidth = 0.07f;
+        [SerializeField] private int glitchBarsPerSide = 4;
+        [SerializeField] private Vector2 glitchBarHeight = new Vector2(2f, 12f);
+        [Tooltip("색 번짐(RGB 분리) 간격(px)")]
+        [SerializeField] private float glitchSplit = 4f;
+        [SerializeField] private Color glitchColorA = new Color(0.35f, 0.95f, 1f, 1f);
+        [SerializeField] private Color glitchColorB = new Color(1f, 0.3f, 0.55f, 1f);
         [SerializeField] private int dustCount = 28;
         [SerializeField, Range(0f, 1f)] private float dustAlpha = 0.28f;
         [SerializeField] private Vector2 dustSize = new Vector2(2f, 4.5f);
@@ -45,6 +63,7 @@ namespace SubTerra.App.UI.MainMenu
         private float burstClock;
         private float nextBurst;
         private float noiseStep;
+        private GlitchBar[] glitchBars;
 
         private void Awake()
         {
@@ -64,12 +83,6 @@ namespace SubTerra.App.UI.MainMenu
             {
                 scanlines.texture = CoreCctvArt.Scanline();
                 scanlines.color = new Color(0.55f, 0.9f, 1f, scanlineAlpha);
-            }
-
-            if (staticBurst != null)
-            {
-                staticBurst.texture = CoreCctvArt.Noise();
-                staticBurst.color = new Color(1f, 1f, 1f, 0f);
             }
 
             nextBurst = Random.Range(burstInterval.x, burstInterval.y);
@@ -93,16 +106,11 @@ namespace SubTerra.App.UI.MainMenu
 
         private void UpdateBurst(float dt)
         {
-            if (staticBurst == null) return;
+            if (glitchRoot == null || glitchBarsPerSide <= 0) return;
             burstClock += dt;
-            var color = staticBurst.color;
             if (burstClock < nextBurst)
             {
-                if (color.a != 0f)
-                {
-                    color.a = 0f;
-                    staticBurst.color = color;
-                }
+                if (glitchBars != null && glitchRoot.gameObject.activeSelf) HideGlitch();
                 return;
             }
 
@@ -111,21 +119,82 @@ namespace SubTerra.App.UI.MainMenu
             {
                 burstClock = 0f;
                 nextBurst = Random.Range(burstInterval.x, burstInterval.y);
-                color.a = 0f;
-                staticBurst.color = color;
+                HideGlitch();
                 return;
             }
 
-            // 지지직: 짧게 두 번 끊어지는 노이즈.
+            // 글리치: 짧게 두 번 끊어지며, 매 프레임 가장자리 막대 위치가 바뀐다.
             var u = local / burstDuration;
-            color.a = burstAlpha * (u < 0.4f || u > 0.6f ? 1f : 0.25f);
-            staticBurst.color = color;
+            var strength = u < 0.4f || u > 0.6f ? 1f : 0.25f;
             noiseStep += dt;
-            if (noiseStep >= 1f / 30f)
+            if (noiseStep >= 1f / 30f || glitchBars == null)
             {
                 noiseStep = 0f;
-                staticBurst.uvRect = new Rect(Random.value, Random.value, 3f, 1.6f);
+                ScatterGlitch(strength);
             }
+        }
+
+        private void ScatterGlitch(float strength)
+        {
+            EnsureGlitch();
+            var size = glitchRoot.rect.size;
+            var edge = Mathf.Max(8f, size.x * glitchEdgeWidth);
+            for (var i = 0; i < glitchBars.Length; i++)
+            {
+                var bar = glitchBars[i];
+                // 두 색 막대가 한 쌍으로 같은 높이에 어긋나 겹쳐 RGB 분리처럼 보인다.
+                if (!bar.Cyan) continue;
+                var y = Random.Range(-size.y * 0.5f, size.y * 0.5f);
+                var height = Random.Range(glitchBarHeight.x, glitchBarHeight.y);
+                var length = Random.Range(edge * 0.25f, edge);
+                var x = bar.Side * (size.x * 0.5f - length * 0.5f);
+                var split = Random.Range(0.5f, 1f) * glitchSplit;
+                Place(bar, x - bar.Side * split * 0.5f, y, length, height, strength);
+                Place(glitchBars[i + 1], x + bar.Side * split * 0.5f, y, length, height, strength);
+            }
+
+            glitchRoot.gameObject.SetActive(true);
+        }
+
+        private void Place(GlitchBar bar, float x, float y, float width, float height, float strength)
+        {
+            bar.Rect.anchoredPosition = new Vector2(x, y);
+            bar.Rect.sizeDelta = new Vector2(width, height);
+            var c = bar.Cyan ? glitchColorA : glitchColorB;
+            c.a = burstAlpha * strength * Random.Range(0.6f, 1f);
+            bar.Image.color = c;
+        }
+
+        private void HideGlitch()
+        {
+            if (glitchRoot != null) glitchRoot.gameObject.SetActive(false);
+        }
+
+        private void EnsureGlitch()
+        {
+            if (glitchBars != null) return;
+            glitchBars = new GlitchBar[glitchBarsPerSide * 4];
+            var index = 0;
+            for (var side = -1; side <= 1; side += 2)
+            {
+                for (var n = 0; n < glitchBarsPerSide; n++)
+                {
+                    glitchBars[index++] = CreateGlitchBar(side, true);
+                    glitchBars[index++] = CreateGlitchBar(side, false);
+                }
+            }
+        }
+
+        private GlitchBar CreateGlitchBar(int side, bool cyan)
+        {
+            var go = new GameObject("Glitch_" + (side < 0 ? "L" : "R") + (cyan ? "A" : "B"),
+                typeof(RectTransform), typeof(UnityEngine.UI.Image));
+            go.transform.SetParent(glitchRoot, false);
+            var rect = (RectTransform)go.transform;
+            rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(0.5f, 0.5f);
+            var image = go.GetComponent<UnityEngine.UI.Image>();
+            image.raycastTarget = false;
+            return new GlitchBar { Rect = rect, Image = image, Side = side, Cyan = cyan };
         }
 
         private void UpdateDust(float dt)

@@ -174,6 +174,141 @@ namespace SubTerra.App.Tests.UI.MainMenu
         }
 
         [Test]
+        public void Frame_Hover_AttachesWithoutChangingSelection()
+        {
+            var frame = new SlotFrameMagnetTimeline();
+            frame.Select(0);
+            frame.Tick(1f);
+
+            frame.SetHover(2);
+            Assert.That(frame.Holder, Is.EqualTo(0), "호버는 선택을 바꾸지 않는다");
+            Assert.That(frame.Hover, Is.EqualTo(2));
+            Assert.That(frame.PhaseOf(2), Is.EqualTo(SlotFramePhase.Attaching), "호버 카드에도 프레임이 붙는다");
+            Assert.That(frame.PhaseOf(0), Is.EqualTo(SlotFramePhase.Attached), "선택 카드 프레임은 유지");
+            Assert.That(frame.HolderCount, Is.EqualTo(2));
+
+            frame.Tick(1f);
+            frame.SetHover(1);
+            Assert.That(frame.PhaseOf(2), Is.EqualTo(SlotFramePhase.Detaching), "호버가 옮겨가면 이전 카드는 떨어진다");
+            Assert.That(frame.PhaseOf(1), Is.EqualTo(SlotFramePhase.Attaching));
+            Assert.That(frame.PhaseOf(0), Is.EqualTo(SlotFramePhase.Attached));
+
+            frame.SetHover(-1);
+            frame.Tick(1f);
+            Assert.That(frame.Sample(1).Alpha, Is.Zero, "마우스가 벗어나면 프레임이 떨어진다");
+            Assert.That(frame.Sample(0).Alpha, Is.EqualTo(1f), "선택 카드는 그대로");
+        }
+
+        [Test]
+        public void Frame_HoverOnSelectedCard_KeepsItAttached()
+        {
+            var frame = new SlotFrameMagnetTimeline();
+            frame.Select(1);
+            frame.Tick(1f);
+            frame.SetHover(1);
+            Assert.That(frame.PhaseOf(1), Is.EqualTo(SlotFramePhase.Attached), "이미 붙은 카드에 호버해도 다시 붙지 않는다");
+            frame.SetHover(-1);
+            Assert.That(frame.PhaseOf(1), Is.EqualTo(SlotFramePhase.Attached), "선택된 카드는 호버가 풀려도 유지");
+
+            // 호버 중인 카드를 클릭해 선택해도 프레임이 다시 붙지 않는다.
+            frame.SetHover(2);
+            frame.Tick(1f);
+            frame.Select(2);
+            Assert.That(frame.PhaseOf(2), Is.EqualTo(SlotFramePhase.Attached));
+            Assert.That(frame.PhaseOf(1), Is.EqualTo(SlotFramePhase.Detaching));
+            frame.SetHover(-1);
+            Assert.That(frame.PhaseOf(2), Is.EqualTo(SlotFramePhase.Attached), "선택 카드 프레임 유지");
+        }
+
+        [Test]
+        public void Frame_RapidHoverAndSelect_NeverExceedsTwoCards()
+        {
+            var frame = new SlotFrameMagnetTimeline();
+            var random = new System.Random(151);
+            for (var i = 0; i < 400; i++)
+            {
+                var roll = random.Next(4);
+                if (roll == 0) frame.Select(random.Next(3));
+                else if (roll == 1) frame.SetHover(random.Next(-1, 3));
+                frame.Tick((float)random.NextDouble() * 0.03f);
+                Assert.That(frame.HolderCount, Is.LessThanOrEqualTo(2), "step " + i);
+            }
+        }
+
+        [Test]
+        public void View_HoverShowsFrameOnly_ClickSelects()
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PromptB150MainMenuBuilder.PrefabPath);
+            var instance = UnityEngine.Object.Instantiate(prefab);
+            var view = instance.GetComponent<MainMenuView>();
+            var onEnable = typeof(MainMenuView).GetMethod("OnEnable", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            var onDisable = typeof(MainMenuView).GetMethod("OnDisable", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            try
+            {
+                var selected = new System.Collections.Generic.List<int>();
+                view.SlotSelected += selected.Add;
+                onEnable.Invoke(view, null);
+                view.SetSelectedSlot(1, true, "msg");
+
+                var cards = instance.GetComponentsInChildren<SaveSlotCardView>(true);
+                cards[2].OnPointerEnter(null);
+                Assert.That(selected, Is.Empty, "호버만으로는 슬롯이 선택되지 않는다");
+                Assert.That(view.CurrentSelectedSlotId, Is.EqualTo(1));
+                Assert.That(view.FrameTimeline.Hover, Is.EqualTo(2), "호버 카드에 프레임");
+                Assert.That(view.FrameTimeline.Holder, Is.EqualTo(0));
+
+                cards[2].OnPointerExit(null);
+                Assert.That(view.FrameTimeline.Hover, Is.EqualTo(-1));
+
+                cards[2].GetComponent<UnityEngine.UI.Button>().onClick.Invoke();
+                Assert.That(selected, Is.EqualTo(new[] { 3 }), "클릭하면 슬롯이 선택된다");
+            }
+            finally
+            {
+                onDisable.Invoke(view, null);
+                UnityEngine.Object.DestroyImmediate(instance);
+            }
+        }
+
+        [Test]
+        public void DeleteButton_Hover_FadesInWhiteTrashIcon()
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PromptB150MainMenuBuilder.PrefabPath);
+            var instance = UnityEngine.Object.Instantiate(prefab);
+            try
+            {
+                var card = instance.GetComponentsInChildren<SaveSlotCardView>(true)[0];
+                var fx = card.transform.Find("DeleteButton").GetComponent<SlotDeleteButtonHover>();
+                var white = card.transform.Find("DeleteButton/IconWhite").GetComponent<UnityEngine.UI.Image>();
+                var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+                typeof(SlotDeleteButtonHover).GetMethod("OnEnable", flags).Invoke(fx, null);
+                Assert.That(white.color.a, Is.Zero, "평소엔 흰색 아이콘이 숨겨져 있다");
+
+                fx.OnPointerEnter(null);
+                var update = typeof(SlotDeleteButtonHover).GetMethod("Update", flags);
+                for (var i = 0; i < 200 && fx.WhiteAmount < 1f; i++)
+                {
+                    System.Threading.Thread.Sleep(5);
+                    update.Invoke(fx, null);
+                }
+                Assert.That(fx.WhiteAmount, Is.EqualTo(1f), "호버하면 흰색 아이콘이 완전히 켜진다");
+                Assert.That(white.color.a, Is.EqualTo(1f));
+
+                fx.OnPointerExit(null);
+                for (var i = 0; i < 200 && fx.WhiteAmount > 0f; i++)
+                {
+                    System.Threading.Thread.Sleep(5);
+                    update.Invoke(fx, null);
+                }
+                Assert.That(white.color.a, Is.Zero, "벗어나면 다시 숨겨진다");
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(instance);
+            }
+        }
+
+        [Test]
         public void Metadata_ReadsMaximumDepthAndObjectives()
         {
             Assert.That(save.Save(1, Context(maxDepth: 30, depth: 12, objectives: 5)).IsSuccess, Is.True);
@@ -352,7 +487,51 @@ namespace SubTerra.App.Tests.UI.MainMenu
                 Assert.That(slot.Find("Selection/TriangleSelector"), Is.Null, "화살표와 프레임을 함께 쓰지 않는다");
                 Assert.That(slot.Find("DeleteButton"), Is.Not.Null);
                 Assert.That(slot.Find("Thumbnail/SignalNoise"), Is.Not.Null);
+
+                // 휴지통은 설정창 X버튼 판에서 X만 뺀 기본/호버 발광 이미지 + 쓰레기통 아이콘.
+                var plate = slot.Find("DeleteButton").GetComponent<UnityEngine.UI.Image>();
+                Assert.That(AssetDatabase.GetAssetPath(plate.sprite), Is.EqualTo(PromptB150MainMenuBuilder.DeleteOffPath));
+                var hover = slot.Find("DeleteButton/HoverOverlay").GetComponent<UnityEngine.UI.Image>();
+                Assert.That(AssetDatabase.GetAssetPath(hover.sprite), Is.EqualTo(PromptB150MainMenuBuilder.DeleteOnPath));
+                Assert.That(slot.Find("DeleteButton").GetComponent<UnityEngine.UI.Button>().targetGraphic, Is.EqualTo(hover));
+                Assert.That(hover.color.a, Is.EqualTo(1f), "ColorTint는 이미지 색에 곱해지므로 알파 1이어야 호버 때 켜진다");
+                Assert.That(slot.Find("DeleteButton").GetComponent<UnityEngine.UI.Button>().colors.normalColor.a, Is.Zero, "평소엔 꺼짐");
+                Assert.That(slot.Find("DeleteButton").GetComponent<UnityEngine.UI.Button>().colors.highlightedColor.a, Is.EqualTo(1f));
+                var icon = slot.Find("DeleteButton/Icon");
+                Assert.That(AssetDatabase.GetAssetPath(icon.GetComponent<UnityEngine.UI.Image>().sprite),
+                    Is.EqualTo(PromptB150MainMenuBuilder.TrashIconPath));
+                Assert.That(icon.GetSiblingIndex(), Is.GreaterThan(hover.transform.GetSiblingIndex()), "아이콘이 발광 위");
+                var whiteIcon = slot.Find("DeleteButton/IconWhite");
+                Assert.That(AssetDatabase.GetAssetPath(whiteIcon.GetComponent<UnityEngine.UI.Image>().sprite),
+                    Is.EqualTo(PromptB150MainMenuBuilder.TrashWhiteIconPath), "호버용 흰색 쓰레기통");
+                Assert.That(whiteIcon.GetSiblingIndex(), Is.GreaterThan(icon.GetSiblingIndex()), "흰색 아이콘이 기본 아이콘 위");
+                Assert.That(whiteIcon.GetComponent<UnityEngine.UI.Image>().color.a, Is.Zero, "평소엔 숨김");
+                Assert.That(slot.Find("DeleteButton").GetComponent<SlotDeleteButtonHover>(), Is.Not.Null);
+
+                // 프레임은 카드 바깥에 안쪽 모서리가 카드 가장자리에 붙는다.
+                var rect = (RectTransform)slot;
+                var halfW = rect.sizeDelta.x * 0.5f;
+                var halfH = rect.sizeDelta.y * 0.5f;
+                var tl = (RectTransform)slot.Find("MagnetFrame/CornerTL");
+                var tlInnerX = tl.anchoredPosition.x - tl.sizeDelta.x * 0.5f + PromptB150MainMenuBuilder.CornerThickness;
+                Assert.That(tlInnerX, Is.EqualTo(-halfW + PromptB150MainMenuBuilder.FrameOverlap).Within(0.01f),
+                    "모서리 조각 세로 팔의 안쪽 면이 카드 왼쪽 가장자리에 붙는다");
+                var top = (RectTransform)slot.Find("MagnetFrame/BarTop");
+                var topInner = top.anchoredPosition.y + top.sizeDelta.y * 0.5f - PromptB150MainMenuBuilder.BarThickness;
+                Assert.That(topInner, Is.EqualTo(halfH - PromptB150MainMenuBuilder.FrameOverlap).Within(0.01f),
+                    "위쪽 바의 안쪽 면이 카드 위 가장자리에 붙는다");
             }
+
+            var atmosphere = prefab.transform.Find("Atmosphere");
+            Assert.That(atmosphere.Find("StaticBurst"), Is.Null, "TV 신호 노이즈는 글리치로 대체");
+            Assert.That(atmosphere.Find("EdgeGlitch"), Is.Not.Null);
+            Assert.That(content.Find("ContinueButton/Icon"), Is.Not.Null);
+            var continueIcon = (RectTransform)content.Find("ContinueButton/Icon");
+            var continueLabel = (RectTransform)content.Find("ContinueButton/Label");
+            var gap = (continueLabel.anchoredPosition.x - continueLabel.sizeDelta.x * 0.5f + 8f)
+                - (continueIcon.anchoredPosition.x + continueIcon.sizeDelta.x * 0.5f);
+            Assert.That(gap, Is.EqualTo(PromptB150MainMenuBuilder.ContinueIconGap).Within(0.5f), "이어하기 아이콘과 글자 사이 간격");
+            Assert.That(continueIcon.anchoredPosition.x, Is.GreaterThan(-196f), "아이콘이 글자 쪽으로 붙는다");
         }
 
         private static SaveCaptureContext Context(int maxDepth, int depth, int objectives)
