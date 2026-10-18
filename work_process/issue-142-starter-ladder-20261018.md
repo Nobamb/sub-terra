@@ -17,3 +17,9 @@ Unity6000.5.4f1.
 
 ## 남은 검수
 Windows 새 게임의 실제 화면, 사다리 직접 건설/오르내리기, 기존 실제 슬롯의 복사본 검증은 미실행이다. 사용자의 Windows 일괄 검증 보류를 유지한다. 추가 Inspector 배선 없음. 최종 검수·병합은 팀원 영역이며 같은 PR에서 후속 기록을 이어간다.
+
+## #143과 조합 검사
+- #142 5dc324cb + #143 1fe93abe를 commit 없는 임시 merge로 조합했다. 충돌 없음. 트리 ce5989d3a56b3a853e29fcaa6a1c06bc9d837089.
+- PlayerResumePositionTests + SaveContinuePlayModeTests + StarterLadderPlayModeTests PlayMode12/12 PASS(exit0).
+- 실제 Bootstrap 새 게임과 이어하기에서 기본 사다리0개, 저장된 설치 사다리1개 및 종료 좌표 복원을 함께 확인했다. 조합은 검사 후 merge --abort로 해제했으며 팀원의 최종 병합은 하지 않았다.
+- 증거 combined-playmode.xml/log, combined-tree.txt는 Builds/Issue142-20261018/에 보존.
