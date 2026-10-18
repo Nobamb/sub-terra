@@ -37,3 +37,10 @@
 - 현재 Windows가 게임 창으로 포커스를 넘기는 요청을 거부하여 입력을 중단했다. 사용자가 QA 창을 앞으로 가져오면 저장된13/18부터 재개한다. 다른 창에는 키/클릭을 보내지 않았다.
 - 후속 순서: 심층 해금(드릴속도2/드론스캔2/가스저항1)→리튬→전진기지 가스 정화→현장 정산→긴급 탈출, 완주 후 정상 종료/이어하기/종료 경고 확인. Demo18/18은 아직 미완료다.
 - 실기 캡처: fixed-continue, depth16-restored, light-success, store-one, core-adjusted, charger-interact, healed-outpost, clinic-chamber(체력소진), recovery-after-collapse. 각 PNG와 -half.png는 로컬 Builds/WindowsValidation-20261018/에 보존했다.
+## 정상 종료 후 경고 분리 확인
+- 수정 QA PID9992에 Windows 정상 창 닫기 요청(CloseMainWindow)을 보냈고 true/프로세스 종료 true를 확인했다. 종료 직후 QA 저장은13/18·보상정산13·시설10·채굴77·골드460으로 유지됐다. 강제 종료는 하지 않았다.
+- Player-2-fixed.log에 ComputeBuffer 미해제 경고1건이 남는다. 따라서 수정 빌드 종료 경고 검사는 FAIL이다. 최종 Demo 완주 후 종료 검증과는 구분한다.
+- 같은 실행 파일을 -native-leak-detection EnabledWithStackTrace로 재실행(PID10092), 이어하기를 선택하지 않고 메인 메뉴에서 정상 창 닫기 요청 후 종료했다. Player-3-leaktrace.log에서도 동일 경고1건이 발생했다. 이 옵션만으로 할당 스택은 추가 출력되지 않았다.
+- 최소 범위: 광산 플레이/붕괴/전진기지 팝업에 진입하지 않아도 발생하므로 그 경로만의 문제로 단정할 수 없다. 프로젝트 자체 생성 코드는 검색되지 않았고 엔진/렌더러 소유 여부는 미확정이다. 경고를 억제하거나 무관한 패키지/설정을 바꾸지 않았다.
+- 메인 메뉴 실행에서 RenderTexture.active에 설정된 RenderTexture 해제 경고도 별도로 기록됐다. ComputeBuffer와 같은 원인이라는 증거는 없다.
+- Unity 검사/빌드가 자동으로 만든 define 순서 변화는 로컬 증거 패치로 남긴 뒤 작업 전 상태로 복원했다. 나머지 자동 갱신 파일은 내용 차이 없음 확인 후 인덱스 상태만 갱신했다. 추적 파일의 잔여 diff 없음.
