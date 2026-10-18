@@ -13,6 +13,28 @@ namespace SubTerra.Gameplay.Tests.Drone
     public sealed class DroneSensorUpgradeTests
     {
         [Test]
+        public void ScanRing_FadesAndExpiresWithoutChangingRadius()
+        {
+            var host = new GameObject("ScanRingLifetime");
+            try
+            {
+                var view = host.AddComponent<DroneScanPulseView>();
+                view.Show(new DroneScanTarget[0], Vector3.zero, 7, 10f, 0f);
+                var root = (GameObject)typeof(DroneScanPulseView)
+                    .GetField("visualRoot", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(view);
+                var ring = root.transform.Find("DroneScanRangeRing").GetComponent<SpriteRenderer>();
+                float initialAlpha = ring.color.a;
+                Assert.That(initialAlpha, Is.InRange(0.1f, 0.25f));
+                view.Tick(0.45f);
+                Assert.That(ring.color.a, Is.LessThan(initialAlpha));
+                Assert.That(ring.transform.localScale.x, Is.EqualTo(7f));
+                view.Tick(1f);
+                Assert.That(view.IsRingVisible, Is.False);
+            }
+            finally { Object.DestroyImmediate(host); }
+        }
+
+        [Test]
         public void DroneScanUpgrade_ChangesActualSensorRadius()
         {
             var host = new GameObject("DroneSensorUpgradeTests");

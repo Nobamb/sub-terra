@@ -11,8 +11,72 @@ namespace SubTerra.App.UI.HUD
         [SerializeField] private TextMeshProUGUI gasRiskText;
         [SerializeField] private GameObject warningRoot;
 
+        private RectTransform panelRect;
+        private Vector2 restingAnchoredPosition;
+        private bool restingCaptured;
+
         public TextMeshProUGUI GasRiskText => gasRiskText;
         public GameObject WarningRoot => warningRoot;
+        public Vector2 RestingAnchoredPosition => restingAnchoredPosition;
+
+        private bool clearanceSent;
+        private bool clearanceOnScreen;
+
+        private void LateUpdate()
+        {
+            SyncClockClearance();
+        }
+
+        /// <summary>시계 표시 상태가 바뀌었으면 경고 위치를 맞춘다.</summary>
+        public void SyncClockClearance()
+        {
+            var onScreen = GasWarningClockClearance.ClockOnScreen;
+            if (clearanceSent && restingCaptured && onScreen == clearanceOnScreen)
+            {
+                return;
+            }
+
+            clearanceSent = true;
+            clearanceOnScreen = onScreen;
+            ApplyClockClearance(onScreen);
+        }
+
+        /// <summary>
+        /// 시계가 화면에 있으면 경고를 시계 아래에 두고, 없으면 잡았던 원래 위치로 되돌린다.
+        /// </summary>
+        public void ApplyClockClearance(bool clockOnScreen)
+        {
+            CaptureRestingPosition();
+            if (panelRect == null)
+            {
+                return;
+            }
+
+            var next = GasWarningClockLayout.Position(clockOnScreen, restingAnchoredPosition);
+            if (panelRect.anchoredPosition == next)
+            {
+                return;
+            }
+
+            panelRect.anchoredPosition = next;
+        }
+
+        private void CaptureRestingPosition()
+        {
+            if (restingCaptured)
+            {
+                return;
+            }
+
+            panelRect = transform as RectTransform;
+            if (panelRect == null)
+            {
+                return;
+            }
+
+            restingAnchoredPosition = panelRect.anchoredPosition;
+            restingCaptured = true;
+        }
 
         public void SetGasRisk(string text)
         {
