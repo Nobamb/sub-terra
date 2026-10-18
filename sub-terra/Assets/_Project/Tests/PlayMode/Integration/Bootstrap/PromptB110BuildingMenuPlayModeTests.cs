@@ -148,7 +148,7 @@ namespace SubTerra.App.Tests.PlayMode
                 Entry(panel, id).GetComponent<Button>().onClick.Invoke();
                 yield return null;
                 Assert.That(condition.gameObject.activeSelf, Is.True, id);
-                Assert.That(condition.text, Is.EqualTo("전진기지 코어 영역 내에서만 작동합니다."), id);
+                Assert.That(condition.text, Is.EqualTo(ItemDisplayNames.OutpostName + " 영역 내에서만 작동합니다."), id);
                 AssertNotTruncated(panel);
             }
 

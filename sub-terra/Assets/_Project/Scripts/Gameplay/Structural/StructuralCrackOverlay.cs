@@ -17,16 +17,16 @@ namespace SubTerra.Gameplay.Structural
         [SerializeField] private TileBase cautionCrackTile;
         [SerializeField] private TileBase dangerCrackTile;
         [SerializeField] private TileBase imminentCrackTile;
-        [SerializeField] private Color cautionColor = new(1f, 0.82f, 0.2f, 0.55f);
-        [SerializeField] private Color dangerColor = new(1f, 0.38f, 0.08f, 0.72f);
-        [SerializeField] private Color imminentColor = new(0.95f, 0.08f, 0.06f, 0.9f);
+        [SerializeField] private Color cautionColor = new(0.8f, 0.72f, 0.38f, 0.3f);
+        [SerializeField] private Color dangerColor = new(0.85f, 0.48f, 0.22f, 0.48f);
+        [SerializeField] private Color imminentColor = new(0.9f, 0.24f, 0.14f, 0.66f);
         [SerializeField, Min(0.05f)] private float pulseSeconds = 0.28f;
-        [SerializeField, Min(0.05f)] private float telegraphFlashSeconds = 0.12f;
+        [SerializeField, Min(0.05f)] private float telegraphFlashSeconds = 0.6f;
         // 기존 노란 마름모/붉은 직사각형 원인 표식을 같은 조건의 흔들림으로 치환한다.
-        [SerializeField, Min(0f)] private float unsupportedShakeDistance = 0.1f;
-        [SerializeField, Min(0.005f)] private float unsupportedShakeInterval = 0.02f;
-        [SerializeField, Min(0f)] private float impactShakeDistance = 0.3f;
-        [SerializeField, Min(0.005f)] private float impactShakeInterval = 0.01f;
+        [SerializeField, Min(0f)] private float unsupportedShakeDistance = 0.025f;
+        [SerializeField, Min(0.005f)] private float unsupportedShakeInterval = 0.12f;
+        [SerializeField, Min(0f)] private float impactShakeDistance = 0.06f;
+        [SerializeField, Min(0.005f)] private float impactShakeInterval = 0.08f;
 
         private readonly Dictionary<Vector3Int, StructuralRiskLevel> cellRisks = new();
         private readonly Dictionary<Vector3Int, float> cellIntensities = new();
@@ -37,6 +37,7 @@ namespace SubTerra.Gameplay.Structural
         private readonly List<FallingVisual> fallingVisuals = new();
         private readonly List<DustVisual> dustVisuals = new();
         private readonly HashSet<Vector3Int> visibleCells = new();
+        private readonly List<Vector3Int> staleShakeCells = new();
         private ICollapseDamageReceiver collapseDamageReceiver;
         private Tilemap sourceTilemap;
 
@@ -48,6 +49,7 @@ namespace SubTerra.Gameplay.Structural
 
         private sealed class ShakeVisual
         {
+            public TileBase SourceTile;
             public GameObject Root;
             public SpriteRenderer Renderer;
             public Color OriginalCellColor;
@@ -188,10 +190,10 @@ namespace SubTerra.Gameplay.Structural
         /// <summary>지정 셀의 균열만 제거한다. 다른 구역에는 영향 없다.</summary>
         public void ClearCell(Vector3Int cell)
         {
-            if (overlayTilemap == null) return;
-            if (!visibleCells.Remove(cell) && !cellRisks.ContainsKey(cell)) return;
+            if (!visibleCells.Remove(cell) && !cellRisks.ContainsKey(cell)
+                && !shakeVisuals.ContainsKey(cell)) return;
 
-            overlayTilemap.SetTile(cell, null);
+            if (overlayTilemap != null) overlayTilemap.SetTile(cell, null);
             cellRisks.Remove(cell);
             cellIntensities.Remove(cell);
             cellCauses.Remove(cell);
@@ -220,6 +222,7 @@ namespace SubTerra.Gameplay.Structural
 
             if (visibleCells.Count == 0 && cellRisks.Count == 0)
             {
+                ClearShakeVisuals();
                 return;
             }
 
@@ -239,6 +242,7 @@ namespace SubTerra.Gameplay.Structural
 
             visibleCells.Clear();
             cellRisks.Clear();
+            ClearShakeVisuals();
         }
 
         /// <summary>
@@ -328,12 +332,26 @@ namespace SubTerra.Gameplay.Structural
 
         private void UpdateCrackAnimation(float deltaTime)
         {
+            // 외부 타일 삭제/재계산으로 균열 소유권이 사라진 경우에도 복제본과 숨김 색을 회수한다.
+            staleShakeCells.Clear();
+            foreach (var entry in shakeVisuals)
+                if (overlayTilemap == null || !visibleCells.Contains(entry.Key)
+                    || !cellRisks.ContainsKey(entry.Key) || !overlayTilemap.HasTile(entry.Key))
+                    staleShakeCells.Add(entry.Key);
+            foreach (var cell in staleShakeCells) ClearCell(cell);
             if (overlayTilemap == null || visibleCells.Count == 0) return;
             bool reduceMotion = AccessibilityPreferences.ReduceMotion;
             var cells = new List<Vector3Int>(visibleCells);
             for (int i = 0; i < cells.Count; i++)
             {
                 Vector3Int cell = cells[i];
+                if (sourceTilemap != null && !sourceTilemap.HasTile(cell))
+                {
+                    ClearCell(cell);
+                    continue;
+                }
+                if (cellCauses.TryGetValue(cell, out StructuralRiskCause cause))
+                    UpdateShakeVisual(cell, cause);
                 if (pulseRemaining.TryGetValue(cell, out float remaining))
                 {
                     remaining -= deltaTime;
@@ -356,18 +374,18 @@ namespace SubTerra.Gameplay.Structural
             if (!cellRisks.TryGetValue(cell, out StructuralRiskLevel risk))
                 return Color.clear;
 
-            Color color = HasAuthoredCrackTile(risk) ? Color.white : GetColor(risk);
+            Color color = HasAuthoredCrackTile(risk) ? new Color(0.82f, 0.79f, 0.73f) : GetColor(risk);
             float intensity = cellIntensities.TryGetValue(cell, out float value) ? value : 0f;
             color.a = GetColor(risk).a * Mathf.Lerp(0.58f, 1f, intensity);
 
             if (!AccessibilityPreferences.ReduceMotion)
             {
                 if (pulseRemaining.TryGetValue(cell, out float remaining) && pulseSeconds > 0f)
-                    color.a = Mathf.Lerp(color.a, 1f, Mathf.Clamp01(remaining / pulseSeconds));
+                    color.a = Mathf.Lerp(color.a, 0.7f, Mathf.Clamp01(remaining / pulseSeconds));
                 if (telegraphingCells.Contains(cell) && telegraphFlashSeconds > 0f)
                 {
                     float phase = Mathf.PingPong(Time.unscaledTime / telegraphFlashSeconds, 1f);
-                    color.a = Mathf.Lerp(0.35f, 1f, phase);
+                    color.a = Mathf.Lerp(0.45f, 0.75f, phase);
                 }
             }
 
@@ -391,10 +409,15 @@ namespace SubTerra.Gameplay.Structural
             if (shakeVisuals.TryGetValue(cell, out ShakeVisual existing)
                 && existing.Root != null)
             {
-                if (existing.Cause != cause)
-                    existing.Elapsed = 0f;
-                existing.Cause = cause;
-                return;
+                if (existing.SourceTile == sourceTilemap.GetTile(cell))
+                {
+                    if (existing.Cause != cause) existing.Elapsed = 0f;
+                    existing.Cause = cause;
+                    existing.Renderer.sprite = sourceTilemap.GetSprite(cell);
+                    return;
+                }
+                // 같은 셀이 새 광석으로 바뀌면 이전 복제본과 색 복원을 재사용하지 않는다.
+                RemoveShakeVisual(cell);
             }
 
             Sprite sprite = sourceTilemap.GetSprite(cell);
@@ -412,7 +435,8 @@ namespace SubTerra.Gameplay.Structural
             if (sourceRenderer != null)
             {
                 renderer.sortingLayerID = sourceRenderer.sortingLayerID;
-                renderer.sortingOrder = sourceRenderer.sortingOrder;
+                // 실제 인접 타일이 흔들림 복제본보다 앞에 그려져 광물 그림을 덮지 않게 한다.
+                renderer.sortingOrder = Mathf.Max(short.MinValue, sourceRenderer.sortingOrder - 1);
                 renderer.sharedMaterial = sourceRenderer.sharedMaterial;
             }
 
@@ -427,6 +451,7 @@ namespace SubTerra.Gameplay.Structural
 
             shakeVisuals[cell] = new ShakeVisual
             {
+                SourceTile = sourceTilemap.GetTile(cell),
                 Root = root,
                 Renderer = renderer,
                 OriginalCellColor = originalColor,
@@ -451,9 +476,13 @@ namespace SubTerra.Gameplay.Structural
             float interval = visual.Cause == StructuralRiskCause.Unsupported
                 ? unsupportedShakeInterval
                 : impactShakeInterval;
+            // 작은 떨림 사이에 정지 구간을 두어 여러 타일의 지속적인 진동을 줄인다.
+            float burstPhase = Mathf.Repeat(visual.Elapsed, 1.4f);
+            distance *= burstPhase < 0.4f ? Mathf.Sin(Mathf.PI * burstPhase / 0.4f) : 0f;
             Vector2 offset = reduceMotion
                 ? Vector2.zero
                 : CalculateShakeOffset(visual.Elapsed, distance, interval, cell);
+            offset = KeepShakeOutsideOccupiedCells(cell, offset);
             Vector3 center = sourceTilemap != null
                 ? sourceTilemap.GetCellCenterWorld(cell)
                 : overlayTilemap.GetCellCenterWorld(cell);
@@ -467,6 +496,24 @@ namespace SubTerra.Gameplay.Structural
                     ? visual.OriginalOverlayTransform
                     : Matrix4x4.Translate(worldOffset)
                         * visual.OriginalOverlayTransform);
+        }
+
+        private Vector2 KeepShakeOutsideOccupiedCells(Vector3Int cell, Vector2 offset)
+        {
+            if (sourceTilemap == null) return offset;
+            // 두 원본이 모두 숨겨지면 복제본끼리는 Foreground 정렬로 보호되지 않는다.
+            // 실제 이웃 셀을 침범하지 않고, 노출된 빈 공간 쪽의 흔들림만 유지한다.
+            var horizontal = offset.x > 0f ? Vector3Int.right : Vector3Int.left;
+            var vertical = offset.y > 0f ? Vector3Int.up : Vector3Int.down;
+            if (offset.x != 0f && sourceTilemap.HasTile(cell + horizontal)) offset.x = 0f;
+            if (offset.y != 0f && sourceTilemap.HasTile(cell + vertical)) offset.y = 0f;
+            // 방향 전환의 보간 구간에는 대각선 셀 모서리도 침범할 수 있다.
+            if (offset.x != 0f && offset.y != 0f && sourceTilemap.HasTile(cell + horizontal + vertical))
+            {
+                if (Mathf.Abs(offset.x) <= Mathf.Abs(offset.y)) offset.x = 0f;
+                else offset.y = 0f;
+            }
+            return offset;
         }
 
         public static Vector2 CalculateShakeOffset(
@@ -528,7 +575,7 @@ namespace SubTerra.Gameplay.Structural
             if (!shakeVisuals.TryGetValue(cell, out ShakeVisual visual)) return;
             shakeVisuals.Remove(cell);
 
-            if (sourceTilemap != null)
+            if (sourceTilemap != null && sourceTilemap.GetTile(cell) == visual.SourceTile)
             {
                 sourceTilemap.SetTileFlags(
                     cell,
@@ -541,7 +588,10 @@ namespace SubTerra.Gameplay.Structural
                 overlayTilemap.SetTransformMatrix(cell, visual.OriginalOverlayTransform);
 
             if (visual.Root != null)
+            {
+                visual.Root.SetActive(false);
                 DestroyRuntimeObject(visual.Root);
+            }
         }
 
         private void ClearShakeVisuals()
@@ -581,11 +631,10 @@ namespace SubTerra.Gameplay.Structural
                 }
                 if (t < 1f) continue;
 
-                // 충돌 뒤에는 낮고 흐린 비충돌 잔해로 남겨 낙하 결과 위치를 보여 준다.
-                visual.Renderer.color = new Color(0.48f, 0.42f, 0.36f, 0.5f);
-                visual.Root.transform.localScale = new Vector3(1f, 0.22f, 1f);
+                // 착지는 짧은 먼지로만 표시한다. 빈 공간에 고정 잔해를 남기지 않는다.
                 if (!AccessibilityPreferences.ReduceMotion)
                     CreateImpactDust(visual.End);
+                DestroyRuntimeObject(visual.Root);
                 fallingVisuals.RemoveAt(i);
             }
         }

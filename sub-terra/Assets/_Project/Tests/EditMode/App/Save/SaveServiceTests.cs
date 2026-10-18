@@ -370,6 +370,84 @@ namespace SubTerra.App.Tests.Save
             Assert.That(await coordinator.FlushAsync(TimeSpan.FromMilliseconds(10)), Is.True);
         }
 
+        [Test]
+        public void MovedFacilities_MapperPreservesStorageAndCooldownIdentity()
+        {
+            var context = CreateMovedFacilityContext(SceneNames.Integration);
+            var stateMapper = new SaveDataMapper(new FixedSaveClock());
+            var captured = stateMapper.Capture(context);
+            Assert.That(stateMapper.TryRestore(captured, out var restored), Is.True);
+            AssertMovedFacilityState(restored);
+            Assert.That(restored.GameState.Outpost, Is.Not.SameAs(context.GameState.Outpost));
+            restored.GameState.AddMineResetElapsed(5d);
+            Assert.That(restored.GameState.Outpost.TryGetFacilityCooldownRemaining("charger.moved", out var remaining), Is.True);
+            Assert.That(remaining, Is.EqualTo(115d));
+            Assert.That(context.GameState.Outpost.TryGetFacilityCooldownRemaining("charger.moved", out var original), Is.True);
+            Assert.That(original, Is.EqualTo(120d));
+        }
+
+        [TestCase(SceneNames.Integration)]
+        [TestCase(SceneNames.SurfaceBase)]
+        public void MovedFacilities_FileSaveAndFreshLoadPreserveState(string sceneName)
+        {
+            var context = CreateMovedFacilityContext(sceneName);
+            Assert.That(CreateSaveService(physical).Save(2, context).IsSuccess, Is.True);
+            Assert.That(paths.TryGetPaths(2, out var slotPaths), Is.True);
+            Assert.That(File.Exists(slotPaths.Normal), Is.True);
+            Assert.That(File.Exists(slotPaths.Temporary), Is.False);
+            // Read the actual file through fresh services, not the original in-memory state.
+            var freshLoad = new LoadService(new PhysicalSaveFileSystem(), paths,
+                new SaveDataMapper(new FixedSaveClock()), new SaveJsonCodec(new SaveMigrationService()));
+            var loaded = freshLoad.Load(2);
+            Assert.That(loaded.IsSuccess, Is.True);
+            Assert.That(loaded.State.TargetSceneName, Is.EqualTo(sceneName));
+            AssertMovedFacilityState(loaded.State);
+        }
+
+        private static SaveCaptureContext CreateMovedFacilityContext(string sceneName)
+        {
+            var game = GameState.CreateNew();
+            game.SetGold(350);
+            Assert.That(game.Outpost.TryRestore(
+                new[] { new OutpostStorageEntryState("mineral.copper", 7), new OutpostStorageEntryState("mineral.iron", 4) },
+                new[] { "outpost.1" }, "checkpoint.1", 12, -4,
+                new[] { new FacilityCooldownState("charger.moved", 120d), new FacilityCooldownState("clinic.moved", 240d) }), Is.True);
+            var world = new FixedWorldProvider().CaptureSnapshot();
+            world.buildings = new List<BuildingSnapshotDto>
+            {
+                new BuildingSnapshotDto { instanceId = "storage.moved", buildingTypeId = "building.storage.basic", x = 3, y = -5, footprintWidth = 1, footprintHeight = 1, level = 2, health = 0.75f },
+                new BuildingSnapshotDto { instanceId = "charger.moved", buildingTypeId = "building.charger.basic", x = 7, y = -5, footprintWidth = 2, footprintHeight = 2, level = 3, health = 0.8f },
+                new BuildingSnapshotDto { instanceId = "clinic.moved", buildingTypeId = "building.clinic.basic", x = 11, y = -5, footprintWidth = 2, footprintHeight = 2, level = 4, health = 0.9f }
+            };
+            return new SaveCaptureContext(game, new InventoryState(100f), new UpgradeState(), null,
+                sceneName == SceneNames.Integration ? new FixedWorldProvider { SnapshotOverride = world } : null,
+                sceneName, "0.1-move-save-test", world);
+        }
+
+        private static void AssertMovedFacilityState(RestoredSaveState restored)
+        {
+            Assert.That(restored.GameState.Player.Gold, Is.EqualTo(350));
+            Assert.That(restored.GameState.Outpost.GetStorageQuantity("mineral.copper"), Is.EqualTo(7));
+            Assert.That(restored.GameState.Outpost.GetStorageQuantity("mineral.iron"), Is.EqualTo(4));
+            Assert.That(restored.GameState.Outpost.TryGetFacilityCooldownRemaining("charger.moved", out var charge), Is.True);
+            Assert.That(restored.GameState.Outpost.TryGetFacilityCooldownRemaining("clinic.moved", out var heal), Is.True);
+            Assert.That(charge, Is.EqualTo(120d));
+            Assert.That(heal, Is.EqualTo(240d));
+            Assert.That(restored.World.buildings, Has.Count.EqualTo(3));
+            var expected = CreateMovedFacilityContext(SceneNames.Integration).WorldProvider.CaptureSnapshot().buildings;
+            foreach (var before in expected)
+            {
+                var after = restored.World.buildings.Single(entry => entry.instanceId == before.instanceId);
+                Assert.That(after.buildingTypeId, Is.EqualTo(before.buildingTypeId));
+                Assert.That(after.x, Is.EqualTo(before.x));
+                Assert.That(after.y, Is.EqualTo(before.y));
+                Assert.That(after.footprintWidth, Is.EqualTo(before.footprintWidth));
+                Assert.That(after.footprintHeight, Is.EqualTo(before.footprintHeight));
+                Assert.That(after.level, Is.EqualTo(before.level));
+                Assert.That(after.health, Is.EqualTo(before.health));
+            }
+        }
+
         private SaveService CreateSaveService(ISaveFileSystem fileSystem)
         {
             return new SaveService(fileSystem, paths, mapper, json);
@@ -495,8 +573,10 @@ namespace SubTerra.App.Tests.Save
 
         private sealed class FixedWorldProvider : IWorldSnapshotProvider
         {
+            public WorldSnapshotDto SnapshotOverride { get; set; }
             public WorldSnapshotDto CaptureSnapshot()
             {
+                if (SnapshotOverride != null) return SnapshotOverride;
                 return new WorldSnapshotDto
                 {
                     timestamp = 123,

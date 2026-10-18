@@ -393,6 +393,12 @@ namespace SubTerra.Gameplay.Player
                     rail.localPosition = position;
                     Vector3 scale = rail.localScale;
                     scale.y = (top - bottom) / spriteHeight;
+                    float width = part == "Channel" ? 0.16f : part == "Face" ? 0.09f : part == "Highlight" ? 0.012f : 0.025f;
+                    scale.x = width / renderer.sprite.bounds.size.x;
+                    renderer.color = part == "Highlight" ? new Color(0.38f, 0.42f, 0.44f)
+                        : part == "Face" ? new Color(0.25f, 0.28f, 0.31f)
+                        : part == "Channel" ? new Color(0.1f, 0.12f, 0.14f)
+                        : new Color(0.06f, 0.08f, 0.1f);
                     rail.localScale = scale;
                 }
             }
@@ -404,6 +410,13 @@ namespace SubTerra.Gameplay.Player
             for (int side = -1; side <= 1; side += 2)
             {
                 string name = side < 0 ? "Left" : "Right";
+                for (int index = 0; index < 8; index++)
+                    FixedShaftPart(rails, template, name + "Clamp" + index,
+                        new Vector2(side * 0.67f, 1.45f + index * 1.45f),
+                        new Vector2(0.2f, 0.06f), new Color(0.5f, 0.37f, 0.16f), 2);
+                // 기존 가이드 중심에 맞춘 짧은 금속 슬리브로 객실과 레일의 접점을 연결한다.
+                FixedShaftPart(rails, template, name + "GuideSleeve", new Vector2(side * 0.67f, 0.8f),
+                    new Vector2(0.24f, 0.18f), new Color(0.25f, 0.28f, 0.31f), 2);
                 FixedShaftPart(rails, template, name + "Foot", new Vector2(side * 0.67f, -0.90f),
                     new Vector2(0.30f, 0.16f), new Color(0.32f, 0.35f, 0.39f), 2);
                 FixedShaftPart(rails, template, name + "FootBolt", new Vector2(side * 0.67f, -0.88f),

@@ -35,35 +35,33 @@ namespace SubTerra.App.Editor.DataValidation
             public readonly string IconKey;
             public readonly Vector2 Position;
             public readonly string ParentId;
-            public readonly int DrillLevelRequired;
 
-            public NodeDef(string id, string iconKey, float x, float y, string parentId, int drillLevelRequired)
+            public NodeDef(string id, string iconKey, float x, float y, string parentId)
             {
                 Id = id;
                 IconKey = iconKey;
                 Position = new Vector2(x, y);
                 ParentId = parentId;
-                DrillLevelRequired = drillLevelRequired;
             }
         }
 
         /// <summary>
-        /// 최종 해금 조건표(항목 / 해금 조건 / 연결 대상). 부모의 해금 단계는 항상 자식보다 같거나 빠르다.
+        /// 연결된 부모를 Lv.1 이상 구매하면 해금한다. 위치와 연결선은 기존 배치를 유지한다.
         /// 드릴 속도는 중심 노드로 처음부터 공개된다.
         /// </summary>
         public static readonly NodeDef[] Nodes =
         {
-            new NodeDef(DataIds.Upgrades.DrillSpeed, "arrow", 0f, 0f, "", 0),
-            new NodeDef(DataIds.Upgrades.DrillEfficiency, "plug", 0f, 205f, DataIds.Upgrades.DrillSpeed, 1),
-            new NodeDef(DataIds.Upgrades.MaximumEnergy, "bolt", -225f, 0f, DataIds.Upgrades.DrillSpeed, 1),
-            new NodeDef(DataIds.Upgrades.MaximumCargo, "box", 225f, 0f, DataIds.Upgrades.DrillSpeed, 1),
-            new NodeDef(DataIds.Upgrades.MaximumHealth, "heart", -225f, 205f, DataIds.Upgrades.MaximumEnergy, 2),
-            new NodeDef(DataIds.Upgrades.GasResistance, "gas", -225f, -205f, DataIds.Upgrades.MaximumEnergy, 2),
-            new NodeDef(DataIds.Upgrades.CargoYield, "copper", 225f, 205f, DataIds.Upgrades.MaximumCargo, 2),
-            new NodeDef(DataIds.Upgrades.DroneScan, "drone", 0f, -205f, DataIds.Upgrades.DrillSpeed, 2),
-            new NodeDef(DataIds.Upgrades.HealthRegeneration, "reset", -450f, 205f, DataIds.Upgrades.MaximumHealth, 3),
-            new NodeDef(DataIds.Upgrades.CargoGold, "coins", 450f, 0f, DataIds.Upgrades.MaximumCargo, 3),
-            new NodeDef(DataIds.Upgrades.DroneRescue, "rescue", 225f, -205f, DataIds.Upgrades.DroneScan, 3)
+            new NodeDef(DataIds.Upgrades.DrillSpeed, "arrow", 0f, 0f, ""),
+            new NodeDef(DataIds.Upgrades.DrillEfficiency, "plug", 0f, 205f, DataIds.Upgrades.DrillSpeed),
+            new NodeDef(DataIds.Upgrades.MaximumEnergy, "bolt", -225f, 0f, DataIds.Upgrades.DrillSpeed),
+            new NodeDef(DataIds.Upgrades.MaximumCargo, "box", 225f, 0f, DataIds.Upgrades.DrillSpeed),
+            new NodeDef(DataIds.Upgrades.MaximumHealth, "heart", -225f, 205f, DataIds.Upgrades.MaximumEnergy),
+            new NodeDef(DataIds.Upgrades.GasResistance, "gas", -225f, -205f, DataIds.Upgrades.MaximumEnergy),
+            new NodeDef(DataIds.Upgrades.CargoYield, "copper", 225f, 205f, DataIds.Upgrades.MaximumCargo),
+            new NodeDef(DataIds.Upgrades.DroneScan, "drone", 0f, -205f, DataIds.Upgrades.DrillSpeed),
+            new NodeDef(DataIds.Upgrades.HealthRegeneration, "reset", -450f, 205f, DataIds.Upgrades.MaximumHealth),
+            new NodeDef(DataIds.Upgrades.CargoGold, "coins", 450f, 0f, DataIds.Upgrades.MaximumCargo),
+            new NodeDef(DataIds.Upgrades.DroneRescue, "rescue", 225f, -205f, DataIds.Upgrades.DroneScan)
         };
 
         private static readonly Vector2 NodeSize = new Vector2(128f, 136f);
@@ -109,8 +107,7 @@ namespace SubTerra.App.Editor.DataValidation
                     return "FAIL: missing upgrade asset " + def.Id;
                 }
 
-                var requirement = def.DrillLevelRequired > 0 ? DataIds.Upgrades.DrillSpeed : string.Empty;
-                asset.EditorSetUnlock(requirement, def.DrillLevelRequired, def.ParentId);
+                asset.EditorSetUnlock(def.ParentId, string.IsNullOrEmpty(def.ParentId) ? 0 : 1, def.ParentId);
                 EditorUtility.SetDirty(asset);
                 applied++;
             }

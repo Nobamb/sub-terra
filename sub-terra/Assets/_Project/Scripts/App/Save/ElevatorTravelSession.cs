@@ -78,12 +78,18 @@ namespace SubTerra.App.Save
             return true;
         }
 
-        public bool TryDepart(ISceneLoader sceneLoader, out ElevatorTravelFailure failure)
+        public bool TryDepart(ISceneLoader sceneLoader, out ElevatorTravelFailure failure, bool deferArrival = false)
         {
-            if (State != ElevatorTravelState.Calling || sceneLoader == null)
+            if (State != ElevatorTravelState.Calling)
             {
                 failure = ElevatorTravelFailure.Busy;
                 return false;
+            }
+
+            if (sceneLoader == null)
+            {
+                RefundEnergy();
+                return Block(ElevatorTravelFailure.SceneLoadFailed, out failure);
             }
 
             SetState(ElevatorTravelState.Moving);
@@ -93,16 +99,29 @@ namespace SubTerra.App.Save
                 return Block(ElevatorTravelFailure.SceneLoadFailed, out failure);
             }
 
-            chargedEnergy = 0;
-            destinationScene = string.Empty;
-            SetState(ElevatorTravelState.Arrived);
+            if (!deferArrival) CompleteArrival(true);
             failure = ElevatorTravelFailure.None;
             return true;
         }
 
+        public void CompleteArrival(bool succeeded)
+        {
+            if (State != ElevatorTravelState.Moving) return;
+            if (!succeeded)
+            {
+                RefundEnergy();
+                Block(ElevatorTravelFailure.SceneLoadFailed, out _);
+                return;
+            }
+
+            chargedEnergy = 0;
+            destinationScene = string.Empty;
+            SetState(ElevatorTravelState.Arrived);
+        }
+
         public void Reset()
         {
-            if (State == ElevatorTravelState.Calling)
+            if (State == ElevatorTravelState.Calling || State == ElevatorTravelState.Moving)
             {
                 RefundEnergy();
             }

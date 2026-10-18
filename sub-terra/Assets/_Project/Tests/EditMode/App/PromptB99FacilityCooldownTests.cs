@@ -131,6 +131,24 @@ namespace SubTerra.App.Tests
         }
 
         [Test]
+        public void ClinicMovement_ReturnToRangeDoesNotResetHealingCooldown()
+        {
+            var health = new FakeHealthCommand(true);
+            var system = CreateChargeSystem(health);
+            system.Service.ApplyRuntimeStatus(ClinicStatus("clinic.moved"));
+            Assert.That(system.Service.TryHeal().IsSuccess, Is.True);
+            var outOfRange = ClinicStatus("clinic.moved");
+            outOfRange.isInInteractionRange = false;
+            system.Service.ApplyRuntimeStatus(outOfRange);
+            system.State.AddMineResetElapsed(60d);
+            system.Service.ApplyRuntimeStatus(ClinicStatus("clinic.moved"));
+            Assert.That(system.Service.TryHeal().IsSuccess, Is.False);
+            Assert.That(health.CallCount, Is.EqualTo(1));
+            Assert.That(system.Service.State.TryGetFacilityCooldownRemaining("clinic.moved", out var remaining), Is.True);
+            Assert.That(remaining, Is.EqualTo(OutpostService.FacilityUseCooldownSeconds - 60d).Within(0.0001d));
+        }
+
+        [Test]
         public void PromptB99_DisconnectedCharger_DoesNotStartCooldown()
         {
             var system = CreateChargeSystem();
