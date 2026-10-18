@@ -68,6 +68,24 @@ namespace SubTerra.Gameplay.Player.Tests
             Assert.AreEqual(0f, body.gravityScale);
         }
 
+        [UnityTest]
+        public IEnumerator DeferredTravelFailure_RestoresRiderControlAndPhysics()
+        {
+            port.State = ElevatorTravelState.Moving;
+            SetField(elevator, "callDelaySeconds", 0.02f);
+            Assert.That(elevator.RequestTravel(), Is.True);
+            yield return new WaitForSecondsRealtime(0.06f);
+            Assert.That(movement.CanMove, Is.False);
+            Assert.That(elevator.State, Is.EqualTo(ElevatorTravelState.Moving));
+            port.State = ElevatorTravelState.Blocked;
+            yield return null;
+            yield return null;
+            Assert.That(movement.CanMove, Is.True);
+            Assert.That(body.bodyType, Is.EqualTo(RigidbodyType2D.Dynamic));
+            Assert.That(body.gravityScale, Is.EqualTo(3f));
+            Assert.That(elevator.State, Is.EqualTo(ElevatorTravelState.Blocked));
+        }
+
         [Test]
         public void DisablingDuringCall_RestoresRiderControlAndPhysics()
         {
@@ -331,7 +349,7 @@ namespace SubTerra.Gameplay.Player.Tests
         {
             public int CallCount { get; private set; }
             public bool ShouldSucceed { get; set; } = true;
-            public ElevatorTravelState State => ElevatorTravelState.Idle;
+            public ElevatorTravelState State { get; set; } = ElevatorTravelState.Idle;
 
             public bool TryTravel(ElevatorDestination destination, out string reason)
             {

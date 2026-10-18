@@ -2,6 +2,7 @@ using System;
 using SubTerra.Shared;
 using UnityEngine;
 using UnityEngine.Tilemaps;
+using Unity.Profiling;
 
 namespace SubTerra.Gameplay.Mining
 {
@@ -82,6 +83,11 @@ namespace SubTerra.Gameplay.Mining
     public sealed class MiningSystem : MonoBehaviour
     {
         private const string LockedSignalTileId = "tile.locked.signal";
+        private static readonly ProfilerMarker TickMarker = new("SubTerra.Mining.Tick");
+        private static readonly ProfilerMarker CompleteMarker = new("SubTerra.Mining.Complete");
+        private static readonly ProfilerMarker TransactionMarker = new("SubTerra.Mining.Transaction");
+        private static readonly ProfilerMarker RemoveTileMarker = new("SubTerra.Mining.RemoveTile");
+        private static readonly ProfilerMarker SubscribersMarker = new("SubTerra.Mining.Subscribers");
 
         [SerializeField] private Tilemap foregroundTilemap;
         [SerializeField] private MiningTileResolver tileResolver;
@@ -308,6 +314,7 @@ namespace SubTerra.Gameplay.Mining
 
         public void TickMining(float deltaTime)
         {
+            using var tickSample = TickMarker.Auto();
             if (!ValidateActiveMining())
             {
                 return;
@@ -428,6 +435,7 @@ namespace SubTerra.Gameplay.Mining
 
         private bool CompleteMining()
         {
+            using var completeSample = CompleteMarker.Auto();
             if (!ValidateActiveMining())
             {
                 return false;
@@ -435,6 +443,7 @@ namespace SubTerra.Gameplay.Mining
 
             if (miningTransaction != null)
             {
+                using var transactionSample = TransactionMarker.Auto();
                 var commit = miningTransaction.TryCommitMining(
                     activeTile.mineralId,
                     activeTile.quantity,
@@ -462,7 +471,7 @@ namespace SubTerra.Gameplay.Mining
 
             Sprite minedSprite = foregroundTilemap.GetSprite(activeCell);
             Color minedColor = tile is Tile coloredTile ? coloredTile.color : Color.white;
-            foregroundTilemap.SetTile(activeCell, null);
+            using (RemoveTileMarker.Auto()) foregroundTilemap.SetTile(activeCell, null);
 
             if (miningTransaction == null
                 && rewardReceiver != null
@@ -487,7 +496,7 @@ namespace SubTerra.Gameplay.Mining
                 DeepZoneSignalAccessed?.Invoke(activeCell);
             }
 
-            TileMined?.Invoke(activeCell, activeTile);
+            using (SubscribersMarker.Auto()) TileMined?.Invoke(activeCell, activeTile);
             Publish(MiningPhase.Completed);
             return true;
         }
