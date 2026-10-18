@@ -57,6 +57,50 @@ namespace SubTerra.App.Tests.Save
         }
 
         [Test]
+        public void ResumePosition_RoundTripsJsonAndMapper_WithoutSharingMutableData()
+        {
+            var original = CreateContext(350);
+            var position = new PlayerPositionSaveData { hasPosition = true, x = 12.25f, y = -37.6f };
+            var context = new SaveCaptureContext(original.GameState, original.Inventory, original.Upgrades,
+                original.DialogueGenerator, original.WorldProvider, original.TargetSceneName,
+                original.GameVersion, resumePosition: position);
+            var save = CreateSaveService(physical);
+            Assert.That(save.Save(1, context).IsSuccess, Is.True);
+            position.x = 99f;
+
+            var loaded = CreateLoadService(physical).Load(1);
+
+            Assert.That(loaded.IsSuccess, Is.True);
+            Assert.That(loaded.State.ResumePosition.IsValid, Is.True);
+            Assert.That(loaded.State.ResumePosition.x, Is.EqualTo(12.25f));
+            Assert.That(loaded.State.ResumePosition.y, Is.EqualTo(-37.6f));
+            Assert.That(loaded.State.GameState.Player.Gold, Is.EqualTo(350));
+        }
+
+        [TestCase(1)]
+        [TestCase(5)]
+        [TestCase(SaveVersions.Current)]
+        public void SaveWithoutPosition_KeepsLegacySpawnAfterJsonRoundTrip(int version)
+        {
+            var data = mapper.Capture(CreateContext(90));
+            data.saveVersion = version;
+            Assert.That(json.TryDeserialize(json.Serialize(data), out var decoded),
+                Is.EqualTo(SaveMigrationStatus.Current).Or.EqualTo(SaveMigrationStatus.Migrated));
+            Assert.That(mapper.TryRestore(decoded, out var restored), Is.True);
+            Assert.That(restored.ResumePosition, Is.Null);
+        }
+
+        [Test]
+        public void NonFiniteResumePosition_DoesNotDiscardOtherwiseValidSave()
+        {
+            var data = mapper.Capture(CreateContext(91));
+            data.resumePosition = new PlayerPositionSaveData { hasPosition = true, x = float.NaN, y = -10f };
+            Assert.That(mapper.TryRestore(data, out var restored), Is.True);
+            Assert.That(restored.ResumePosition, Is.Null);
+            Assert.That(restored.GameState.Player.Gold, Is.EqualTo(91));
+        }
+
+        [Test]
         public void K_F01_AllBStateAndWorldSnapshot_RoundTrip()
         {
             var context = CreateContext(350);

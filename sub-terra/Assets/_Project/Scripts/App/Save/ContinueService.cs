@@ -44,7 +44,8 @@ namespace SubTerra.App.Save
         SceneLoadFailed = 3,
         WorldProviderMissing = 4,
         WorldRestoreFailed = 5,
-        RecalculationFailed = 6
+        RecalculationFailed = 6,
+        PlayerPositionRestoreFailed = 7
     }
 
     public sealed class ContinueResult
@@ -69,6 +70,7 @@ namespace SubTerra.App.Save
         private readonly IWorldSnapshotResolver worldResolver;
         private readonly IDerivedStateRecalculator recalculator;
         private readonly ILoadedUiGate uiGate;
+        private readonly IPlayerPositionPersistence playerPosition;
 
         public ContinueService(
             LoadService loader,
@@ -76,7 +78,8 @@ namespace SubTerra.App.Save
             ISceneLoader sceneLoader,
             IWorldSnapshotResolver snapshotResolver,
             IDerivedStateRecalculator derivedStateRecalculator,
-            ILoadedUiGate loadedUiGate)
+            ILoadedUiGate loadedUiGate,
+            IPlayerPositionPersistence positionPersistence = null)
         {
             loadService = loader ?? throw new ArgumentNullException(nameof(loader));
             stateReceiver = restoredStateReceiver
@@ -87,6 +90,7 @@ namespace SubTerra.App.Save
             recalculator = derivedStateRecalculator
                 ?? throw new ArgumentNullException(nameof(derivedStateRecalculator));
             uiGate = loadedUiGate ?? throw new ArgumentNullException(nameof(loadedUiGate));
+            playerPosition = positionPersistence;
         }
 
         public ContinueResult Continue(int slotId)
@@ -133,6 +137,13 @@ namespace SubTerra.App.Save
                 {
                     return new ContinueResult(ContinueStatus.RecalculationFailed, load);
                 }
+            }
+
+            if (RequiresWorldRestore(load.State.TargetSceneName)
+                && load.State.ResumePosition != null
+                && (playerPosition == null || !playerPosition.TryRestorePlayerPosition(load.State.ResumePosition)))
+            {
+                return new ContinueResult(ContinueStatus.PlayerPositionRestoreFailed, load);
             }
 
             uiGate.SetReady(true);

@@ -5,11 +5,13 @@ using System.IO;
 using NUnit.Framework;
 using SubTerra.App.Core;
 using SubTerra.App.Inventory;
+using SubTerra.App.Integration;
 using SubTerra.App.Progression;
 using SubTerra.App.Save;
 using SubTerra.App.State;
 using SubTerra.App.UI.Save;
 using SubTerra.Shared;
+using SubTerra.Gameplay.Player;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
@@ -74,6 +76,58 @@ namespace SubTerra.App.Tests.PlayMode.Save
         }
 
         [UnityTest]
+        public IEnumerator RuntimeMineContinue_RestoresLastPosition_InIsolatedSlot()
+        {
+            var args = Environment.GetCommandLineArgs();
+            var rootArgument = Array.IndexOf(args, "-subterra-save-root");
+            Assert.That(rootArgument, Is.GreaterThanOrEqualTo(0), "An isolated QA save root is required.");
+            var root = Path.GetFullPath(args[rootArgument + 1]);
+            var projectTemp = Path.GetFullPath(Path.Combine(Application.dataPath, "../Temp"));
+            Assert.That(root.StartsWith(projectTemp + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase), Is.True);
+            GameBootstrapper.ResetInstanceForTests();
+            yield return SceneManager.LoadSceneAsync("Assets/_Project/Scenes/Bootstrap/Bootstrap.unity");
+            yield return WaitForRuntimeCondition(() => SceneManager.GetActiveScene().name == "MainMenu");
+            var runtime = SaveRuntimeController.Instance;
+            try
+            {
+                Assert.That(runtime.StartNewGame(2, true), Is.True);
+                yield return WaitForRuntimeCondition(() => SceneManager.GetActiveScene().name == "SurfaceBase" && runtime.IsUiReady);
+                Assert.That(runtime.TryStartExploration(out var reason), Is.True, reason);
+                yield return WaitForRuntimeCondition(() => SceneManager.GetActiveScene().name == SceneNames.Integration && runtime.IsUiReady);
+                yield return new WaitForSeconds(0.25f);
+                var player = UnityEngine.Object.FindAnyObjectByType<PlayerMovement>();
+                Assert.That(player, Is.Not.Null);
+                var saved = player.Position + new Vector2(0.15f, 0f);
+                player.GetComponent<Rigidbody2D>().position = saved;
+                player.transform.position = new Vector3(saved.x, saved.y, player.transform.position.z);
+                Physics2D.SyncTransforms();
+                Assert.That(runtime.SaveCurrent().IsSuccess, Is.True);
+                var loaded = new LoadService(new PhysicalSaveFileSystem(), new SavePathPolicy(root),
+                    new SaveDataMapper(new FixedClock()), new SaveJsonCodec(new SaveMigrationService())).Load(2);
+                Assert.That(loaded.State.ResumePosition, Is.Not.Null);
+                Assert.That(loaded.State.ResumePosition.x, Is.EqualTo(saved.x));
+                Assert.That(loaded.State.ResumePosition.y, Is.EqualTo(saved.y));
+                player.GetComponent<Rigidbody2D>().position = saved + Vector2.right;
+                bool completed = false;
+                bool succeeded = false;
+                runtime.BeginContinue(2, result => { completed = true; succeeded = result.IsSuccess; });
+                Assert.That(runtime.SaveCurrent().Status, Is.EqualTo(SaveStatus.CaptureFailed));
+                yield return WaitForRuntimeCondition(() => completed);
+                Assert.That(succeeded, Is.True);
+                player = UnityEngine.Object.FindAnyObjectByType<PlayerMovement>();
+                Assert.That(Vector2.Distance(player.Position, saved), Is.LessThan(0.1f),
+                    "Saved " + saved + "; restored " + player.Position);
+                Assert.That(runtime.IsUiReady, Is.True);
+            }
+            finally
+            {
+                if (runtime != null) UnityEngine.Object.Destroy(runtime.gameObject);
+                GameBootstrapper.ResetInstanceForTests();
+            }
+            yield return null;
+        }
+
+        [UnityTest]
         public IEnumerator K_F07_NewSession_RestoresStateSceneWorldDerivedAndUiInOrder()
         {
             var root = Path.Combine(
@@ -104,7 +158,8 @@ namespace SubTerra.App.Tests.PlayMode.Save
                     null,
                     captureWorld,
                     SceneNames.Integration,
-                    "play-test");
+                    "play-test",
+                    resumePosition: new PlayerPositionSaveData { hasPosition = true, x = 2.25f, y = -20.6f });
                 Assert.That(save.Save(1, context).IsSuccess, Is.True);
 
                 var receiver = new RecordingStateReceiver(order);
@@ -115,7 +170,8 @@ namespace SubTerra.App.Tests.PlayMode.Save
                     new RecordingSceneLoader(order),
                     new RecordingWorldResolver(order, restoreWorld),
                     new RecordingRecalculator(order),
-                    new RecordingUiGate(order));
+                    new RecordingUiGate(order),
+                    new RecordingPlayerPosition(order));
 
                 var result = continueService.Continue(1);
                 yield return null;
@@ -135,6 +191,7 @@ namespace SubTerra.App.Tests.PlayMode.Save
                         "resolve-world",
                         "world",
                         "derived",
+                        "position",
                         "ui:true"
                     }));
             }
@@ -223,6 +280,20 @@ namespace SubTerra.App.Tests.PlayMode.Save
         private sealed class FixedClock : ISaveClock
         {
             public long UtcNowSeconds => 1000;
+        }
+
+        private sealed class RecordingPlayerPosition : IPlayerPositionPersistence
+        {
+            private readonly List<string> order;
+            public RecordingPlayerPosition(List<string> order) { this.order = order; }
+            public PlayerPositionSaveData CapturePlayerPosition() => null;
+            public bool TryRestorePlayerPosition(PlayerPositionSaveData position)
+            {
+                Assert.That(position.x, Is.EqualTo(2.25f));
+                Assert.That(position.y, Is.EqualTo(-20.6f));
+                order.Add("position");
+                return true;
+            }
         }
 
         private sealed class CaptureWorldProvider : IWorldSnapshotProvider
