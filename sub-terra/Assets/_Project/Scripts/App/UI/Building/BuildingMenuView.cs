@@ -39,13 +39,66 @@ namespace SubTerra.App.UI.Building
 
         private string selectedBuildingId = string.Empty;
         private IReadOnlyList<BuildingCostReadModel> selectedCosts;
+        private Button moveButton;
+        public event System.Action MoveRequested;
+
+        public void EnableFacilityMoving(bool enabled)
+        {
+            if (moveButton == null && enabled && panelRoot != null && detailNameText != null)
+            {
+                var root = new GameObject("MoveFacilityButton", typeof(RectTransform),
+                    typeof(UnityEngine.UI.Image), typeof(UnityEngine.UI.Button));
+                root.transform.SetParent(panelRoot.transform, false);
+                var rect = (RectTransform)root.transform;
+                rect.anchorMin = rect.anchorMax = new Vector2(1f, 1f);
+                rect.pivot = new Vector2(1f, 1f);
+                rect.anchoredPosition = new Vector2(-16f, -60f);
+                rect.sizeDelta = new Vector2(112f, 22f);
+                var image = root.GetComponent<UnityEngine.UI.Image>();
+                image.color = new Color(0.04f, 0.24f, 0.28f, 1f);
+                moveButton = root.GetComponent<UnityEngine.UI.Button>();
+                moveButton.targetGraphic = image;
+                moveButton.onClick.AddListener(() => MoveRequested?.Invoke());
+                var labelRoot = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
+                labelRoot.transform.SetParent(root.transform, false);
+                var label = labelRoot.GetComponent<TextMeshProUGUI>();
+                label.font = detailNameText.font;
+                label.fontSize = 13f;
+                label.color = new Color(0.5f, 1f, 1f, 1f);
+                label.alignment = TextAlignmentOptions.Center;
+                label.text = "이동 (우클릭)";
+                label.raycastTarget = false;
+                label.rectTransform.anchorMin = Vector2.zero;
+                label.rectTransform.anchorMax = Vector2.one;
+                label.rectTransform.offsetMin = label.rectTransform.offsetMax = Vector2.zero;
+            }
+            if (moveButton != null) moveButton.gameObject.SetActive(enabled);
+        }
 
         public Button CloseButton => closeButton;
         public bool UsesStructuredLayout => entries != null && entries.Length > 0 && detailNameText != null;
 
         private void Awake()
         {
+            ApplyCompactPanelLayout();
             HideLegacyChrome();
+        }
+
+        public void ApplyCompactPanelLayout()
+        {
+            var root = transform as RectTransform;
+            var panel = panelRoot != null ? panelRoot.transform as RectTransform : null;
+            if (root == null || panel == null || !UsesStructuredLayout || root.sizeDelta.x <= 500f) return;
+            root.sizeDelta = new Vector2(500f, root.sizeDelta.y);
+            if (panel.anchorMin.x == panel.anchorMax.x)
+                panel.sizeDelta = new Vector2(500f, panel.sizeDelta.y);
+            foreach (Transform child in panel)
+            {
+                if (!(child is RectTransform rect) || rect.anchorMin.x != 0f || rect.anchorMax.x != 0f) continue;
+                float available = 500f - rect.anchoredPosition.x - 16f;
+                if (rect.sizeDelta.x > available && available > 0f)
+                    rect.sizeDelta = new Vector2(available, rect.sizeDelta.y);
+            }
         }
 
         private void OnEnable()

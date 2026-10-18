@@ -17,16 +17,16 @@ namespace SubTerra.Gameplay.Structural
         [SerializeField] private TileBase cautionCrackTile;
         [SerializeField] private TileBase dangerCrackTile;
         [SerializeField] private TileBase imminentCrackTile;
-        [SerializeField] private Color cautionColor = new(1f, 0.82f, 0.2f, 0.55f);
-        [SerializeField] private Color dangerColor = new(1f, 0.38f, 0.08f, 0.72f);
-        [SerializeField] private Color imminentColor = new(0.95f, 0.08f, 0.06f, 0.9f);
+        [SerializeField] private Color cautionColor = new(0.8f, 0.72f, 0.38f, 0.3f);
+        [SerializeField] private Color dangerColor = new(0.85f, 0.48f, 0.22f, 0.48f);
+        [SerializeField] private Color imminentColor = new(0.9f, 0.24f, 0.14f, 0.66f);
         [SerializeField, Min(0.05f)] private float pulseSeconds = 0.28f;
-        [SerializeField, Min(0.05f)] private float telegraphFlashSeconds = 0.12f;
+        [SerializeField, Min(0.05f)] private float telegraphFlashSeconds = 0.6f;
         // 기존 노란 마름모/붉은 직사각형 원인 표식을 같은 조건의 흔들림으로 치환한다.
-        [SerializeField, Min(0f)] private float unsupportedShakeDistance = 0.1f;
-        [SerializeField, Min(0.005f)] private float unsupportedShakeInterval = 0.02f;
-        [SerializeField, Min(0f)] private float impactShakeDistance = 0.3f;
-        [SerializeField, Min(0.005f)] private float impactShakeInterval = 0.01f;
+        [SerializeField, Min(0f)] private float unsupportedShakeDistance = 0.025f;
+        [SerializeField, Min(0.005f)] private float unsupportedShakeInterval = 0.12f;
+        [SerializeField, Min(0f)] private float impactShakeDistance = 0.06f;
+        [SerializeField, Min(0.005f)] private float impactShakeInterval = 0.08f;
 
         private readonly Dictionary<Vector3Int, StructuralRiskLevel> cellRisks = new();
         private readonly Dictionary<Vector3Int, float> cellIntensities = new();
@@ -356,18 +356,18 @@ namespace SubTerra.Gameplay.Structural
             if (!cellRisks.TryGetValue(cell, out StructuralRiskLevel risk))
                 return Color.clear;
 
-            Color color = HasAuthoredCrackTile(risk) ? Color.white : GetColor(risk);
+            Color color = HasAuthoredCrackTile(risk) ? new Color(0.82f, 0.79f, 0.73f) : GetColor(risk);
             float intensity = cellIntensities.TryGetValue(cell, out float value) ? value : 0f;
             color.a = GetColor(risk).a * Mathf.Lerp(0.58f, 1f, intensity);
 
             if (!AccessibilityPreferences.ReduceMotion)
             {
                 if (pulseRemaining.TryGetValue(cell, out float remaining) && pulseSeconds > 0f)
-                    color.a = Mathf.Lerp(color.a, 1f, Mathf.Clamp01(remaining / pulseSeconds));
+                    color.a = Mathf.Lerp(color.a, 0.7f, Mathf.Clamp01(remaining / pulseSeconds));
                 if (telegraphingCells.Contains(cell) && telegraphFlashSeconds > 0f)
                 {
                     float phase = Mathf.PingPong(Time.unscaledTime / telegraphFlashSeconds, 1f);
-                    color.a = Mathf.Lerp(0.35f, 1f, phase);
+                    color.a = Mathf.Lerp(0.45f, 0.75f, phase);
                 }
             }
 
@@ -451,6 +451,9 @@ namespace SubTerra.Gameplay.Structural
             float interval = visual.Cause == StructuralRiskCause.Unsupported
                 ? unsupportedShakeInterval
                 : impactShakeInterval;
+            // 작은 떨림 사이에 정지 구간을 두어 여러 타일의 지속적인 진동을 줄인다.
+            float burstPhase = Mathf.Repeat(visual.Elapsed, 1.4f);
+            distance *= burstPhase < 0.4f ? Mathf.Sin(Mathf.PI * burstPhase / 0.4f) : 0f;
             Vector2 offset = reduceMotion
                 ? Vector2.zero
                 : CalculateShakeOffset(visual.Elapsed, distance, interval, cell);
@@ -581,11 +584,10 @@ namespace SubTerra.Gameplay.Structural
                 }
                 if (t < 1f) continue;
 
-                // 충돌 뒤에는 낮고 흐린 비충돌 잔해로 남겨 낙하 결과 위치를 보여 준다.
-                visual.Renderer.color = new Color(0.48f, 0.42f, 0.36f, 0.5f);
-                visual.Root.transform.localScale = new Vector3(1f, 0.22f, 1f);
+                // 착지는 짧은 먼지로만 표시한다. 빈 공간에 고정 잔해를 남기지 않는다.
                 if (!AccessibilityPreferences.ReduceMotion)
                     CreateImpactDust(visual.End);
+                DestroyRuntimeObject(visual.Root);
                 fallingVisuals.RemoveAt(i);
             }
         }

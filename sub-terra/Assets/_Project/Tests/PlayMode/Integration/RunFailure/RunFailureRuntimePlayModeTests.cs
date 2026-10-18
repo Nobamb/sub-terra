@@ -255,6 +255,37 @@ namespace SubTerra.App.Tests.PlayMode.RunFailure
             GameBootstrapper.ResetInstanceForTests();
         }
 
+        [Test]
+        public void DeferredSurfaceLoadFailure_RestoresActiveRunAndMovement()
+        {
+            var host = new GameObject("DeferredFailureRecovery");
+            var player = new GameObject("DeferredFailurePlayer");
+            try
+            {
+                player.AddComponent<Rigidbody2D>().gravityScale = 0f;
+                var movement = player.AddComponent<PlayerMovement>();
+                movement.SetCanMove(false);
+                var state = GameState.CreateNew();
+                state.BeginRun();
+                state.SetRunLifecyclePhase(RunLifecyclePhase.Returning);
+                var controller = host.AddComponent<RunFailureRuntimeController>();
+                SetField(controller, "gameState", state);
+                SetField(controller, "playerMovement", movement);
+                var callback = typeof(RunFailureRuntimeController).GetMethod(
+                    "OnSurfaceLoadCompleted", BindingFlags.Instance | BindingFlags.NonPublic);
+                Assert.That(callback, Is.Not.Null);
+                callback.Invoke(controller, new object[] { false });
+                Assert.That(state.Run.LifecyclePhase, Is.EqualTo(RunLifecyclePhase.Active));
+                Assert.That(movement.CanMove, Is.True);
+                Assert.That(controller.IsHandling, Is.False);
+            }
+            finally
+            {
+                Object.DestroyImmediate(host);
+                Object.DestroyImmediate(player);
+            }
+        }
+
         private static void SetField(object target, string name, object value)
         {
             var field = target.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic);

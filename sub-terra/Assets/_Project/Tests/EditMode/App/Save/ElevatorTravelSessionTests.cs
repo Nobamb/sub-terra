@@ -92,6 +92,53 @@ namespace SubTerra.App.Tests.Save
             Assert.AreEqual(20, state.Player.Energy);
         }
 
+        [Test]
+        public void DeferredDepart_FailureRefundsOnceAndAllowsRetry()
+        {
+            var state = GameState.CreateNew();
+            state.SetCurrentEnergy(20);
+            var session = new ElevatorTravelSession(state);
+            Assert.That(session.TryCall(SceneNames.SurfaceBase, 5, true, out _), Is.True);
+            Assert.That(session.TryDepart(new RecordingSceneLoader(), out _, deferArrival: true), Is.True);
+            Assert.That(session.State, Is.EqualTo(ElevatorTravelState.Moving));
+            Assert.That(state.Player.Energy, Is.EqualTo(15));
+            Assert.That(session.TryCall(SceneNames.SurfaceBase, 5, true, out _), Is.False);
+            session.CompleteArrival(false);
+            session.CompleteArrival(false);
+            Assert.That(session.State, Is.EqualTo(ElevatorTravelState.Blocked));
+            Assert.That(state.Player.Energy, Is.EqualTo(20));
+            Assert.That(session.TryCall(SceneNames.SurfaceBase, 0, true, out _), Is.True);
+            Assert.That(session.TryDepart(new RecordingSceneLoader(), out _), Is.True);
+            Assert.That(session.State, Is.EqualTo(ElevatorTravelState.Arrived));
+        }
+
+        [Test]
+        public void DeferredDepart_SuccessCommitsOnlyOnCompletion()
+        {
+            var state = GameState.CreateNew();
+            state.SetCurrentEnergy(20);
+            var session = new ElevatorTravelSession(state);
+            session.TryCall(SceneNames.SurfaceBase, 5, true, out _);
+            session.TryDepart(new RecordingSceneLoader(), out _, deferArrival: true);
+            session.CompleteArrival(true);
+            session.CompleteArrival(false);
+            Assert.That(session.State, Is.EqualTo(ElevatorTravelState.Arrived));
+            Assert.That(state.Player.Energy, Is.EqualTo(15));
+        }
+
+        [Test]
+        public void Depart_MissingLoaderRefundsAndAllowsRetry()
+        {
+            var state = GameState.CreateNew();
+            state.SetCurrentEnergy(20);
+            var session = new ElevatorTravelSession(state);
+            session.TryCall(SceneNames.SurfaceBase, 5, true, out _);
+            Assert.That(session.TryDepart(null, out var failure), Is.False);
+            Assert.That(failure, Is.EqualTo(ElevatorTravelFailure.SceneLoadFailed));
+            Assert.That(state.Player.Energy, Is.EqualTo(20));
+            Assert.That(session.TryCall(SceneNames.SurfaceBase, 0, true, out _), Is.True);
+        }
+
         private sealed class RecordingSceneLoader : ISceneLoader
         {
             public bool Result { get; set; } = true;

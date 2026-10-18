@@ -327,22 +327,20 @@ namespace SubTerra.App.Integration
             }
 
             // 광산 시계는 지상 Scene 로드 전에 먼저 꺼진다.
-            var surfaceLoader = runtime != null ? runtime.CreateSurfaceSceneLoader() : new UnitySceneLoader();
+            var surfaceLoader = runtime != null ? runtime.CreateSurfaceSceneLoader(OnSurfaceLoadCompleted) : new UnitySceneLoader();
             if (!surfaceLoader.Load(SceneNames.SurfaceBase))
             {
-                // Build 설정 이상에도 플레이어가 영구 행동불능이 되지 않도록 Mine 안전 지점으로 폴백한다.
-                if (gameState != null)
-                {
-                    gameState.SetRunLifecyclePhase(RunLifecyclePhase.Active);
-                }
-
-                if (runtime != null)
-                {
-                    runtime.SaveCurrent(AutoSaveReason.RunFailure);
-                }
-
-                RecoverLocally();
+                OnSurfaceLoadCompleted(false);
             }
+        }
+
+        private void OnSurfaceLoadCompleted(bool succeeded)
+        {
+            if (succeeded || this == null) return;
+            // 즉시 실패와 시계 OFF 후의 지연 실패가 같은 조작 복구 경로를 사용한다.
+            gameState?.SetRunLifecyclePhase(RunLifecyclePhase.Active);
+            runtime?.SaveCurrent(AutoSaveReason.RunFailure);
+            RecoverLocally();
         }
 
         private bool IsConfirmationReady()

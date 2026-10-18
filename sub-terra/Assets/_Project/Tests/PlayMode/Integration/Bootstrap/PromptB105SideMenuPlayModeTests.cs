@@ -47,8 +47,10 @@ namespace SubTerra.App.Tests.PlayMode
             var chrome = menu.GetComponentInParent<HudPanelChromeController>();
             var panels = menu.GetComponentInParent<PanelToggleController>();
             var underground = menu.GetComponentInParent<UndergroundMenuController>();
-            Assert.That(menu.IsOpen, Is.True);
-
+            Assert.That(menu.IsOpen, Is.False);
+            Assert.That(closed.gameObject.activeSelf, Is.True);
+            menu.OpenIfClosed();
+            yield return UiTestWait.Until(() => !menu.IsTransitioning, "initial compact menu open", stage: "animation");
             chrome.CloseBuildingMenu();
             yield return Click(bar, "Open0"); Assert.That(chrome.IsBuildingMenuOpen, Is.True);
             yield return Click(bar, "Open0"); Assert.That(chrome.IsBuildingMenuOpen, Is.False);
@@ -143,10 +145,12 @@ namespace SubTerra.App.Tests.PlayMode
             yield return null;
             menu.gameObject.SetActive(false);
             menu.gameObject.SetActive(true);
-            Assert.That(menu.IsOpen, Is.True);
+            Assert.That(menu.IsOpen, Is.False);
             Assert.That(menu.IsTransitioning, Is.False);
             Assert.That(open.anchoredPosition.x, Is.Zero);
             Assert.That(save.ActiveSlot, Is.Zero);
+            menu.OpenIfClosed();
+            yield return UiTestWait.Until(() => !menu.IsTransitioning, "menu reopen after enable", stage: "animation");
             AssertSideInsideScreen(menu, open);
             UiTestWait.AssertClickTarget(bar.Find("Open0").GetComponent<UnityEngine.UI.Button>());
         }
@@ -161,6 +165,10 @@ namespace SubTerra.App.Tests.PlayMode
             var open = (RectTransform)menu.transform.Find("OpenMenuRoot");
             var closed = (RectTransform)menu.transform.Find("ClosedMenuRoot");
             var evidence = Path.GetFullPath("Temp/visual/prompt-b105-2");
+            Assert.That(menu.IsOpen, Is.False);
+            yield return UiTestWait.Capture(Path.Combine(evidence, "menu-initial-closed.png"));
+            menu.OpenIfClosed();
+            yield return UiTestWait.Until(() => !menu.IsTransitioning, "initial visual menu open", stage: "animation");
             yield return UiTestWait.Capture(Path.Combine(evidence, "menu-open.png"));
             yield return UiTestWait.Press(keyboard, Key.Slash);
             yield return UiTestWait.Until(() => !menu.IsTransitioning, "side menu slash close", stage: "animation");
