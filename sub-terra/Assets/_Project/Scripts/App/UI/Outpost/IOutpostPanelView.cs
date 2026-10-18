@@ -19,17 +19,11 @@ namespace SubTerra.App.UI.Outpost
     {
         void SetVisible(bool visible);
         void SetMode(OutpostPanelMode mode);
-        void SetPower(float supply, float consumption, bool active, string inactiveReasonId);
         void SetFacilities(IReadOnlyList<OutpostFacilityReadModel> facilities);
-        void SetCargo(string playerCargo, string storageCargo);
-        void SetSettlementCargo(string cargo);
-        void SetCheckpoint(string checkpoint);
-        void SetSelectedMineral(string summary);
         void SetMineralOptions(IReadOnlyList<OutpostMineralOption> options, string selectedMineralId);
         void ClearMineralSearch();
         void SetResult(string message, bool isError);
         void ShowTemporaryMessage(string message, float durationSeconds);
-        void SetTutorialVisible(bool visible);
         void SetBusy(bool busy);
 
         /// <summary>

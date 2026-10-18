@@ -38,10 +38,6 @@ namespace SubTerra.App.Tests.Outpost
             });
 
             Assert.That(view.Visible, Is.False);
-            Assert.That(view.Active, Is.False);
-            Assert.That(view.Reason, Is.EqualTo("power_disconnected"));
-            Assert.That(view.Supply, Is.EqualTo(4f));
-            Assert.That(view.Consumption, Is.EqualTo(7f));
 
             presenter.ToggleInteractionPanel();
             Assert.That(view.Visible, Is.True);
@@ -432,10 +428,6 @@ namespace SubTerra.App.Tests.Outpost
             }
 
             public bool Visible;
-            public bool Active;
-            public string Reason;
-            public float Supply;
-            public float Consumption;
             public string TemporaryMessage;
             public float TemporaryMessageDuration;
             public OutpostPanelMode Mode;
@@ -443,22 +435,10 @@ namespace SubTerra.App.Tests.Outpost
             public void SetVisible(bool visible) => Visible = visible;
             public void SetMode(OutpostPanelMode mode) => Mode = mode;
 
-            public void SetPower(float supply, float consumption, bool active, string inactiveReasonId)
-            {
-                Supply = supply;
-                Consumption = consumption;
-                Active = active;
-                Reason = inactiveReasonId;
-            }
-
             public void SetFacilities(IReadOnlyList<OutpostFacilityReadModel> facilities) { }
-            public void SetCargo(string playerCargo, string storageCargo) { }
-            public void SetSettlementCargo(string cargo) { }
-            public void SetCheckpoint(string checkpoint) { }
             public IReadOnlyList<OutpostMineralOption> MineralOptions;
             public string PickerSelectedMineralId;
 
-            public void SetSelectedMineral(string summary) { }
             public void SetMineralOptions(
                 IReadOnlyList<OutpostMineralOption> options,
                 string selectedMineralId)
@@ -474,7 +454,6 @@ namespace SubTerra.App.Tests.Outpost
                 TemporaryMessage = message;
                 TemporaryMessageDuration = durationSeconds;
             }
-            public void SetTutorialVisible(bool visible) { }
             public void SetBusy(bool busy) { }
         }
     }

@@ -373,7 +373,7 @@ namespace SubTerra.App.Tests.Outpost
         // ---- 프리팹 ----
 
         [Test]
-        public void Prefab_HasCorePopupWired_AndKeepsExistingPanelAndServicePopup()
+        public void Prefab_HasCorePopupWired_AndKeepsServicePopupWithoutLegacyPanel()
         {
             var view = Spawn();
             var popup = view.CorePopup;
@@ -384,8 +384,7 @@ namespace SubTerra.App.Tests.Outpost
             Assert.That(popup.transform.parent, Is.EqualTo(view.transform));
             Assert.That(view.CoreCloseButton, Is.Not.Null);
             Assert.That(view.ServicePopup, Is.Not.Null, "충전기·보건소 팝업은 그대로여야 한다.");
-            Assert.That(view.PanelRoot.transform.Find("CoreRoot"), Is.Not.Null, "기존 패널 계층은 건드리지 않는다.");
-            Assert.That(view.PanelRoot.transform.Find("CloseButton"), Is.Not.Null);
+            Assert.That(view.transform.Find("PanelRoot"), Is.Null);
         }
 
         [Test]
@@ -451,9 +450,8 @@ namespace SubTerra.App.Tests.Outpost
             view.SetVisible(true);
 
             Assert.That(view.CorePopup.IsShown, Is.True);
-            Assert.That(view.PanelRoot.activeSelf, Is.False);
+            Assert.That(view.transform.Find("PanelRoot"), Is.Null);
             Assert.That(view.ActiveWindowRoot, Is.EqualTo(view.CorePopup.gameObject));
-            Assert.That(view.transform.Find("PanelRoot/CoreRoot").gameObject.activeSelf, Is.False);
             Assert.That(view.ServicePopup.State, Is.EqualTo(FacilityServicePopupView.PlayState.Hidden));
         }
 
@@ -791,10 +789,13 @@ namespace SubTerra.App.Tests.Outpost
         public void Popup_FacilityIcons_UseExistingBuildingIcons()
         {
             var view = Spawn();
-            var popup = OpenWith(view, Facilities(1));
-            popup.Tick(3f);
             var charger = AssetDatabase.LoadAssetAtPath<BuildingData>(
                 "Assets/_Project/Data/Buildings/Building_Charger_Basic.asset");
+            // IntegrationRuntimeBinder가 실제로 주입하는 카탈로그 경로를 검사한다.
+            // 직렬화된 구 fallback 그림은 현재 카탈로그 아이콘과 다를 수 있다.
+            view.SetFacilityIconResolver(id => id == DataIds.Buildings.ChargerBasic ? charger.Icon : null);
+            var popup = OpenWith(view, Facilities(1));
+            popup.Tick(3f);
 
             Assert.That(popup.ItemAt(0).Icon.sprite, Is.Not.Null);
             Assert.That(popup.ItemAt(0).Icon.sprite, Is.EqualTo(charger.Icon));
@@ -966,18 +967,11 @@ namespace SubTerra.App.Tests.Outpost
 
             public void SetVisible(bool visible) => view.SetVisible(visible);
             public void SetMode(OutpostPanelMode mode) => view.SetMode(mode);
-            public void SetPower(float supply, float consumption, bool active, string inactiveReasonId) =>
-                view.SetPower(supply, consumption, active, inactiveReasonId);
             public void SetFacilities(IReadOnlyList<OutpostFacilityReadModel> facilities) => view.SetFacilities(facilities);
-            public void SetCargo(string playerCargo, string storageCargo) => view.SetCargo(playerCargo, storageCargo);
-            public void SetSettlementCargo(string cargo) => view.SetSettlementCargo(cargo);
-            public void SetCheckpoint(string checkpoint) => view.SetCheckpoint(checkpoint);
-            public void SetSelectedMineral(string summary) => view.SetSelectedMineral(summary);
             public void SetMineralOptions(IReadOnlyList<OutpostMineralOption> options, string selectedMineralId) { }
             public void ClearMineralSearch() { }
             public void SetResult(string message, bool isError) => view.SetResult(message, isError);
             public void ShowTemporaryMessage(string message, float durationSeconds) { }
-            public void SetTutorialVisible(bool visible) => view.SetTutorialVisible(visible);
             public void SetBusy(bool busy) => view.SetBusy(busy);
         }
 

@@ -324,7 +324,7 @@ namespace SubTerra.App.Tests.Outpost
         // ---- 프리팹과 View ----
 
         [Test]
-        public void Prefab_HasServicePopupWired_AndKeepsExistingPanel()
+        public void Prefab_HasServicePopupWired_WithoutLegacyPanel()
         {
             var view = Spawn();
             var popup = view.ServicePopup;
@@ -334,7 +334,7 @@ namespace SubTerra.App.Tests.Outpost
             Assert.That(view.ServiceCloseButton, Is.Not.Null);
             Assert.That(popup.gameObject.activeSelf, Is.False);
             Assert.That(popup.transform.parent, Is.EqualTo(view.transform));
-            Assert.That(view.PanelRoot.transform.Find("CloseButton"), Is.Not.Null, "기존 패널의 닫기 버튼은 그대로여야 한다.");
+            Assert.That(view.transform.Find("PanelRoot"), Is.Null);
         }
 
         [TestCase(OutpostPanelMode.Clinic)]
@@ -348,23 +348,23 @@ namespace SubTerra.App.Tests.Outpost
 
             Assert.That(view.ServicePopup.IsShown, Is.True);
             Assert.That(view.ServicePopup.Mode, Is.EqualTo(mode));
-            Assert.That(view.PanelRoot.activeSelf, Is.False);
+            Assert.That(view.transform.Find("PanelRoot"), Is.Null);
             Assert.That(view.ActiveWindowRoot, Is.EqualTo(view.ServicePopup.gameObject));
-            Assert.That(view.transform.Find("PanelRoot/ChargerRoot").gameObject.activeSelf, Is.False);
         }
 
         [Test]
-        public void SettlementMode_UsesLegacyPanel_AndPopupsStayHidden()
+        public void SettlementMode_WithoutRuntimePopup_DoesNotRestoreLegacyPanel()
         {
             var view = Spawn();
 
             view.SetMode(OutpostPanelMode.Settlement);
             view.SetVisible(true);
 
-            Assert.That(view.PanelRoot.activeSelf, Is.True);
+            Assert.That(view.transform.Find("PanelRoot"), Is.Null);
             Assert.That(view.ServicePopup.State, Is.EqualTo(FacilityServicePopupView.PlayState.Hidden));
             Assert.That(view.CorePopup.State, Is.EqualTo(CoreCctvPopupView.PlayState.Hidden));
-            Assert.That(view.ActiveWindowRoot, Is.EqualTo(view.PanelRoot));
+            Assert.That(view.ActiveWindowRoot, Is.Null, "런타임 판매 팝업이 없을 때 옛 화면으로 돌아가지 않는다.");
+            Assert.That(view.gameObject.activeSelf, Is.True, "팝업 호스트와 입력 Binder는 활성 상태를 유지한다.");
         }
 
         [Test]
@@ -375,7 +375,7 @@ namespace SubTerra.App.Tests.Outpost
             view.SetMode(OutpostPanelMode.Core);
             view.SetVisible(true);
 
-            Assert.That(view.PanelRoot.activeSelf, Is.False);
+            Assert.That(view.transform.Find("PanelRoot"), Is.Null);
             Assert.That(view.ServicePopup.State, Is.EqualTo(FacilityServicePopupView.PlayState.Hidden));
             Assert.That(view.CorePopup.IsShown, Is.True);
             Assert.That(view.ActiveWindowRoot, Is.EqualTo(view.CorePopup.gameObject));
@@ -481,7 +481,7 @@ namespace SubTerra.App.Tests.Outpost
 
             Assert.That(popup.gameObject.activeSelf, Is.False);
             Assert.That(popup.State, Is.EqualTo(FacilityServicePopupView.PlayState.Hidden));
-            Assert.That(view.PanelRoot.activeSelf, Is.False, "닫는 중 예전 큰 패널이 켜지면 안 된다.");
+            Assert.That(view.transform.Find("PanelRoot"), Is.Null);
         }
 
         [Test]
@@ -601,12 +601,7 @@ namespace SubTerra.App.Tests.Outpost
 
             public void SetVisible(bool visible) { }
             public void SetMode(OutpostPanelMode mode) { }
-            public void SetPower(float supply, float consumption, bool active, string inactiveReasonId) { }
             public void SetFacilities(IReadOnlyList<OutpostFacilityReadModel> facilities) { }
-            public void SetCargo(string playerCargo, string storageCargo) { }
-            public void SetSettlementCargo(string cargo) { }
-            public void SetCheckpoint(string checkpoint) { }
-            public void SetSelectedMineral(string summary) { }
             public void SetMineralOptions(IReadOnlyList<OutpostMineralOption> options, string selectedMineralId) { }
             public void ClearMineralSearch() { }
 
@@ -617,7 +612,6 @@ namespace SubTerra.App.Tests.Outpost
             }
 
             public void ShowTemporaryMessage(string message, float durationSeconds) { }
-            public void SetTutorialVisible(bool visible) { }
             public void SetBusy(bool busy) { }
 
             public void SetServiceVital(OutpostOperationKind kind, float before, float after, float maximum)

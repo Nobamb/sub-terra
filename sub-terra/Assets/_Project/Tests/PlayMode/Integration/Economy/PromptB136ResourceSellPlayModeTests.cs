@@ -64,6 +64,34 @@ namespace SubTerra.App.Tests.PlayMode
             env = null;
         }
 
+        [UnityTest]
+        public IEnumerator LegacyCleanup_ConsoleSellsAndClosesWithoutLegacyControls()
+        {
+            var scene = default(ConsoleScene);
+            yield return LoadConsole(s => scene = s);
+            GameBootstrapper.Instance.State.SetGold(500);
+            Add(Copper, 6);
+            Add(Iron, 4);
+            Add(Fuel, 1);
+            scene.Binder.Presenter.ToggleInteractionPanel();
+            var popup = scene.View.SellPopup;
+            yield return UiTestWait.Until(() => popup.State == ResourceSellPopupView.PopupState.Open, "console open");
+            Assert.That(scene.View.transform.Find("PanelRoot"), Is.Null);
+            Assert.That(scene.Binder.isActiveAndEnabled, Is.True);
+            Assert.That(scene.View.ActiveWindowRoot, Is.EqualTo(popup.gameObject));
+            yield return ClickCenter(popup.SelectAllButton.Button);
+            yield return ClickCenter(popup.SellButton.Button);
+            Assert.That(GameBootstrapper.Instance.State.Player.Gold, Is.EqualTo(620));
+            Assert.That(env.Save.InventoryService.State.GetQuantity(Copper), Is.Zero);
+            Assert.That(env.Save.InventoryService.State.GetQuantity(Iron), Is.Zero);
+            Assert.That(env.Save.InventoryService.State.GetQuantity(Fuel), Is.EqualTo(1));
+            yield return UiTestWait.Until(() => !popup.IsSaleEffectActive, "sale effect done");
+            yield return ClickCenter(popup.CloseButton.Button);
+            yield return UiTestWait.Until(() => !popup.IsVisible, "console close");
+            Assert.That(scene.Binder.Presenter.IsInteractionPanelOpen, Is.False);
+            Assert.That(scene.Binder.isActiveAndEnabled, Is.True);
+        }
+
         // ================= 지상 판매창 =================
 
         [UnityTest]
@@ -353,7 +381,7 @@ namespace SubTerra.App.Tests.PlayMode
             scene.Binder.Presenter.ToggleInteractionPanel();
             var popup = scene.View.SellPopup;
             Assert.That(popup, Is.Not.Null, "정산 콘솔도 공통 판매 팝업을 쓴다");
-            Assert.That(scene.View.PanelRoot.activeSelf, Is.False, "예전 큰 정산 패널은 뜨지 않는다");
+            Assert.That(scene.View.transform.Find("PanelRoot"), Is.Null, "옛 패널은 프리팹에서 제거한다.");
             yield return UiTestWait.Until(() => popup.State == ResourceSellPopupView.PopupState.Open, "console popup open");
             Assert.That(popup.CardRect.sizeDelta, Is.EqualTo(ResourceSellPopupView.CardSize), "지상과 같은 레이아웃");
             Assert.That(popup.HintString, Does.Contain("정산 콘솔"));

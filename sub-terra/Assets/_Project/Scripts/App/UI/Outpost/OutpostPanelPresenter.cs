@@ -1,4 +1,3 @@
-using System.Text;
 using SubTerra.App.Core.Data;
 using SubTerra.App.Inventory;
 using SubTerra.App.Outpost;
@@ -43,7 +42,6 @@ namespace SubTerra.App.UI.Outpost
             {
                 service.SnapshotChanged += Render;
                 service.OperationCompleted += OnOperationCompleted;
-                service.TutorialRequested += OnTutorialRequested;
             }
 
             view?.SetBusy(false);
@@ -57,7 +55,6 @@ namespace SubTerra.App.UI.Outpost
             {
                 service.SnapshotChanged -= Render;
                 service.OperationCompleted -= OnOperationCompleted;
-                service.TutorialRequested -= OnTutorialRequested;
                 service = null;
             }
 
@@ -241,11 +238,6 @@ namespace SubTerra.App.UI.Outpost
             return Execute(() => service.TrySettle(source), kind);
         }
 
-        public void DismissTutorial()
-        {
-            view?.SetTutorialVisible(false);
-        }
-
         private OutpostOperationResult Execute(
             System.Func<OutpostOperationResult> operation,
             OutpostOperationKind kind)
@@ -310,20 +302,8 @@ namespace SubTerra.App.UI.Outpost
 
             view?.SetVisible(interactionPanelRequested);
             view?.SetMode(interactionPanelRequested ? activeMode : OutpostPanelMode.None);
-            view?.SetPower(
-                snapshot.PowerSupply,
-                snapshot.PowerConsumption,
-                snapshot.IsActive,
-                snapshot.InactiveReasonId);
             view?.SetFacilities(snapshot.Facilities);
-            view?.SetCargo(
-                FormatInventory(snapshot.PlayerCargo),
-                FormatInventory(snapshot.Storage));
             view?.SetStorageCargo(snapshot.PlayerCargo, snapshot.Storage);
-            view?.SetSettlementCargo(FormatSettlementInventory(snapshot.PlayerCargo));
-            view?.SetCheckpoint(string.IsNullOrEmpty(snapshot.CheckpointId)
-                ? "체크포인트 없음"
-                : snapshot.CheckpointId + " (" + snapshot.CheckpointX + ", " + snapshot.CheckpointY + ")");
             RenderSelection();
             RenderMineralOptions();
         }
@@ -342,7 +322,6 @@ namespace SubTerra.App.UI.Outpost
         {
             if (string.IsNullOrEmpty(selectedMineralId) || latestSnapshot == null)
             {
-                view?.SetSelectedMineral("자원을 선택하세요.");
                 view?.SetStorageSelection(string.Empty, string.Empty, 0, 0, selectedQuantity);
                 return;
             }
@@ -360,31 +339,11 @@ namespace SubTerra.App.UI.Outpost
             var owned = playerStack?.Quantity ?? 0;
             var stored = storageStack?.Quantity ?? 0;
             view?.SetStorageSelection(selectedMineralId, displayName, owned, stored, selectedQuantity);
-            if (activeMode == OutpostPanelMode.Settlement)
-            {
-                var unitPrice = playerStack?.UnitPrice ?? 0;
-                var preview = selectedQuantity > 0 && unitPrice <= int.MaxValue / selectedQuantity
-                    ? unitPrice * selectedQuantity
-                    : 0;
-                view?.SetSelectedMineral(
-                    displayName + " | 보유 " + owned + " | 수량 " + selectedQuantity
-                    + " | 예상 +" + preview + "G");
-                return;
-            }
-
-            view?.SetSelectedMineral(
-                displayName + " | 보유 " + owned + " | 보관 " + stored
-                + " | 수량 " + selectedQuantity);
         }
 
         private void OnOperationCompleted(OutpostOperationResult result)
         {
             view?.SetResult(result.Message, !result.IsSuccess);
-        }
-
-        private void OnTutorialRequested()
-        {
-            view?.SetTutorialVisible(true);
         }
 
         /// <summary>미지정이면 현재 활성화된 머리 위 스택(PlayerStatusWarnings.Current)을 쓴다.</summary>
@@ -528,69 +487,6 @@ namespace SubTerra.App.UI.Outpost
             }
 
             return null;
-        }
-
-        private static string FormatInventory(InventorySnapshot snapshot)
-        {
-            if (snapshot?.Stacks == null || snapshot.Stacks.Count == 0)
-            {
-                return "비어 있음";
-            }
-
-            var builder = new StringBuilder();
-            for (var i = 0; i < snapshot.Stacks.Count; i++)
-            {
-                if (i > 0)
-                {
-                    builder.Append("  ·  ");
-                }
-
-                var stack = snapshot.Stacks[i];
-                builder.Append(string.IsNullOrEmpty(stack.DisplayName)
-                        ? stack.MineralId
-                        : stack.DisplayName)
-                    .Append(" x")
-                    .Append(stack.Quantity);
-            }
-
-            builder.Append("  /  ")
-                .Append(snapshot.CurrentWeight.ToString("0.##"))
-                .Append("kg");
-            return builder.ToString();
-        }
-
-        private static string FormatSettlementInventory(InventorySnapshot snapshot)
-        {
-            if (snapshot?.Stacks == null || snapshot.Stacks.Count == 0)
-            {
-                return "판매할 자원이 없습니다.";
-            }
-
-            var builder = new StringBuilder();
-            for (var i = 0; i < snapshot.Stacks.Count; i++)
-            {
-                if (i > 0)
-                {
-                    builder.AppendLine();
-                }
-
-                var stack = snapshot.Stacks[i];
-                var total = stack.UnitPrice > 0 && stack.Quantity <= int.MaxValue / stack.UnitPrice
-                    ? stack.UnitPrice * stack.Quantity
-                    : 0;
-                builder.Append(string.IsNullOrEmpty(stack.DisplayName)
-                        ? stack.MineralId
-                        : stack.DisplayName)
-                    .Append("    보유 ")
-                    .Append(stack.Quantity)
-                    .Append("    개당 ")
-                    .Append(stack.UnitPrice)
-                    .Append("G    전량 ")
-                    .Append(total)
-                    .Append('G');
-            }
-
-            return builder.ToString();
         }
     }
 }

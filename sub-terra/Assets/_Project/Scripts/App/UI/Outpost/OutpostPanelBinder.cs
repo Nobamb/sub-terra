@@ -13,8 +13,6 @@ namespace SubTerra.App.UI.Outpost
     public sealed class OutpostPanelBinder : MonoBehaviour
     {
         [SerializeField] private OutpostPanelView view;
-        [SerializeField] private TMP_InputField quantityInput;
-        [SerializeField] private OutpostMineralPickerView mineralPicker;
         [SerializeField] private InputActionAsset inputActions;
         [SerializeField] private string interactActionPath = "Player/Interact";
 
@@ -42,16 +40,6 @@ namespace SubTerra.App.UI.Outpost
             }
 
             presenter = new OutpostPanelPresenter(view);
-            if (quantityInput != null)
-            {
-                quantityInput.onValueChanged.AddListener(OnQuantityChanged);
-            }
-
-            if (mineralPicker != null)
-            {
-                mineralPicker.SearchChanged += OnMineralSearchChanged;
-                mineralPicker.MineralSelected += SelectMineral;
-            }
         }
 
         private void OnEnable()
@@ -86,17 +74,6 @@ namespace SubTerra.App.UI.Outpost
 
         private void OnDestroy()
         {
-            if (quantityInput != null)
-            {
-                quantityInput.onValueChanged.RemoveListener(OnQuantityChanged);
-            }
-
-            if (mineralPicker != null)
-            {
-                mineralPicker.SearchChanged -= OnMineralSearchChanged;
-                mineralPicker.MineralSelected -= SelectMineral;
-            }
-
             ReleaseSellSession();
             UnwireStoragePopup();
             presenter?.Unbind();
@@ -238,51 +215,8 @@ namespace SubTerra.App.UI.Outpost
         public void SelectMineral(string mineralId)
         {
             selectedMineralId = mineralId ?? string.Empty;
-            if (quantityInput != null)
-            {
-                quantityInput.text = "1";
-            }
 
             presenter?.SelectMineral(selectedMineralId);
-        }
-
-        public void SetQuantityOne() => SetQuantity(1);
-        public void SetQuantityFive() => SetQuantity(5);
-        public void SetQuantityTen() => SetQuantity(10);
-
-        public void Charge()
-        {
-            presenter?.RequestCharge();
-        }
-
-        public void Deposit()
-        {
-            presenter?.RequestDeposit(selectedMineralId, ReadQuantity());
-        }
-
-        public void Withdraw()
-        {
-            presenter?.RequestWithdraw(selectedMineralId, ReadQuantity());
-        }
-
-        public void SellSelected()
-        {
-            presenter?.RequestSellSelected(selectedMineralId, ReadQuantity());
-        }
-
-        public void SettlePlayerCargo()
-        {
-            presenter?.RequestSettlement(OutpostSettlementSource.PlayerCargo);
-        }
-
-        public void SettleStorage()
-        {
-            presenter?.RequestSettlement(OutpostSettlementSource.Storage);
-        }
-
-        public void DismissTutorial()
-        {
-            presenter?.DismissTutorial();
         }
 
         /// <summary>우측 상단 X와 ESC가 공유하는 닫기 경로. 시설에서 떨어지지 않아도 창만 숨긴다.</summary>
@@ -310,29 +244,6 @@ namespace SubTerra.App.UI.Outpost
             return input != null && input.isFocused && storagePopup != null && input.transform.IsChildOf(storagePopup.transform);
         }
 
-        private int ReadQuantity()
-        {
-            return quantityInput != null
-                && int.TryParse(quantityInput.text, out var quantity)
-                    ? quantity
-                    : 0;
-        }
-
-        private void SetQuantity(int quantity)
-        {
-            if (quantityInput != null)
-            {
-                quantityInput.text = quantity.ToString();
-            }
-
-            presenter?.SetQuantity(quantity);
-        }
-
-        private void OnQuantityChanged(string _)
-        {
-            presenter?.SetQuantity(ReadQuantity());
-        }
-
         private void OnMineralSearchChanged(string query)
         {
             presenter?.SetMineralSearch(query);
@@ -340,7 +251,6 @@ namespace SubTerra.App.UI.Outpost
 
         private void WireCloseButton()
         {
-            WireCloseButton(view != null ? view.CloseButton : null);
             WireCloseButton(view != null ? view.ServiceCloseButton : null);
             WireCloseButton(view != null ? view.CoreCloseButton : null);
         }
@@ -359,7 +269,6 @@ namespace SubTerra.App.UI.Outpost
 
         private void UnwireCloseButton()
         {
-            UnwireCloseButton(view != null ? view.CloseButton : null);
             UnwireCloseButton(view != null ? view.ServiceCloseButton : null);
             UnwireCloseButton(view != null ? view.CoreCloseButton : null);
         }

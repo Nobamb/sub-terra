@@ -1293,10 +1293,18 @@ namespace SubTerra.App.Tests.PlayMode
 
         private static int CountCctvCameras()
         {
+            // 긴급 탈출 팝업도 같은 CameraRig를 미리 만든다. 다른 소유자의 정상 카메라는 제외하되
+            // 전진기지에서 유실·중복 생성된 카메라는 계속 검출한다.
+            var otherOwners = new HashSet<Camera>();
+            foreach (var escape in Object.FindObjectsByType<SubTerra.App.UI.EmergencyEscape.EmergencyEscapePanelView>(FindObjectsInactive.Include))
+            {
+                if (escape.Rig?.Camera != null)
+                    otherOwners.Add(escape.Rig.Camera);
+            }
             var count = 0;
             foreach (var camera in Object.FindObjectsByType<Camera>(FindObjectsInactive.Include))
             {
-                if (camera.name == CoreCctvCameraRig.CameraName)
+                if (camera.name == CoreCctvCameraRig.CameraName && !otherOwners.Contains(camera))
                 {
                     count++;
                 }
