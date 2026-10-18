@@ -1,6 +1,7 @@
 using System;
 using SubTerra.App.Tutorial;
 using SubTerra.App.RuntimeInfo;
+using SubTerra.App.UI.SurfaceBase;
 using SubTerra.Shared.Localization;
 using TMPro;
 using UnityEngine;
@@ -30,6 +31,18 @@ namespace SubTerra.App.UI.MainMenu
         [SerializeField] private Button overwriteCancelButton;
         [SerializeField] private Button overwriteCloseButton;
 
+        [Header("Delete Confirm (B-150)")]
+        [SerializeField] private GameObject deleteConfirmRoot;
+        [SerializeField] private TMP_Text deleteMessageText;
+        [SerializeField] private Button deleteConfirmButton;
+        [SerializeField] private Button deleteCancelButton;
+        [SerializeField] private Button deleteCloseButton;
+
+        [Header("Boot / Frame (B-150)")]
+        [SerializeField] private MainMenuIntroDirector intro;
+        [SerializeField] private SlotFrameMagnetSettings frameSettings = new SlotFrameMagnetSettings();
+        private SlotFrameMagnetTimeline frameTimeline;
+
         [Header("Settings")]
         [SerializeField] private GameObject settingsRoot;
         private ControlSchemePanel controlSchemePanel;
@@ -38,6 +51,12 @@ namespace SubTerra.App.UI.MainMenu
         public bool IsOverwriteConfirmVisible => overwriteConfirmRoot != null && overwriteConfirmRoot.activeSelf;
         public bool IsTopOverwriteWindow(Canvas canvas) =>
             IsOverwriteConfirmVisible && PopupWindowSorting.Contains(canvas, overwriteConfirmRoot);
+        public bool IsDeleteConfirmVisible => deleteConfirmRoot != null && deleteConfirmRoot.activeSelf;
+        public bool IsTopDeleteWindow(Canvas canvas) =>
+            IsDeleteConfirmVisible && PopupWindowSorting.Contains(canvas, deleteConfirmRoot);
+        public MainMenuIntroDirector Intro => intro;
+        public SlotFrameMagnetTimeline FrameTimeline =>
+            frameTimeline ?? (frameTimeline = new SlotFrameMagnetTimeline(3, frameSettings));
         [SerializeField] private Slider masterVolumeSlider;
         [SerializeField] private TMP_Text masterVolumeLabel;
         [SerializeField] private Toggle reduceMotionToggle;
@@ -74,6 +93,9 @@ namespace SubTerra.App.UI.MainMenu
         public event Action QuitClicked;
         public event Action OverwriteConfirmClicked;
         public event Action OverwriteCancelClicked;
+        public event Action<int> DeleteSlotClicked;
+        public event Action DeleteConfirmClicked;
+        public event Action DeleteCancelClicked;
         public event Action SettingsApplyClicked;
         public event Action SettingsCancelClicked;
         public event Action SettingsDefaultsClicked;
@@ -95,6 +117,11 @@ namespace SubTerra.App.UI.MainMenu
             overwriteConfirmButton?.onClick.AddListener(OnOverwriteConfirm);
             overwriteCancelButton?.onClick.AddListener(OnOverwriteCancel);
             if (overwriteCloseButton != null) overwriteCloseButton.onClick.AddListener(OnOverwriteCancel);
+            if (deleteConfirmButton != null) deleteConfirmButton.onClick.AddListener(OnDeleteConfirm);
+            if (deleteCancelButton != null) deleteCancelButton.onClick.AddListener(OnDeleteCancel);
+            if (deleteCloseButton != null) deleteCloseButton.onClick.AddListener(OnDeleteCancel);
+            WireCards(true);
+            if (intro != null) intro.BootSkipped += OnBootSkipped;
             settingsApplyButton?.onClick.AddListener(OnSettingsApply);
             settingsCancelButton?.onClick.RemoveListener(OnSettingsCancel);
             settingsCancelButton?.onClick.AddListener(OnSettingsCancel);
@@ -154,6 +181,11 @@ namespace SubTerra.App.UI.MainMenu
             overwriteConfirmButton?.onClick.RemoveListener(OnOverwriteConfirm);
             overwriteCancelButton?.onClick.RemoveListener(OnOverwriteCancel);
             if (overwriteCloseButton != null) overwriteCloseButton.onClick.RemoveListener(OnOverwriteCancel);
+            if (deleteConfirmButton != null) deleteConfirmButton.onClick.RemoveListener(OnDeleteConfirm);
+            if (deleteCancelButton != null) deleteCancelButton.onClick.RemoveListener(OnDeleteCancel);
+            if (deleteCloseButton != null) deleteCloseButton.onClick.RemoveListener(OnDeleteCancel);
+            WireCards(false);
+            if (intro != null) intro.BootSkipped -= OnBootSkipped;
             settingsApplyButton?.onClick.RemoveListener(OnSettingsApply);
             settingsCancelButton?.onClick.RemoveListener(OnSettingsCancel);
             settingsDefaultsButton?.onClick.RemoveListener(OnSettingsDefaults);
@@ -200,6 +232,43 @@ namespace SubTerra.App.UI.MainMenu
             }
         }
 
+        public void SetSlotKind(int slotId, SaveSlotCardKind kind)
+        {
+            var card = GetCard(slotId - 1);
+            if (card != null) card.SetKind(kind);
+        }
+
+        public void SetDeleteConfirmVisible(bool visible, int slotId)
+        {
+            if (deleteConfirmRoot != null)
+            {
+                deleteConfirmRoot.SetActive(visible);
+            }
+
+            if (visible && deleteMessageText != null)
+            {
+                deleteMessageText.text = SaveSlotCardFormatter.Title(slotId)
+                    + "을 삭제할까요?\n<size=85%><color=#E6A23C>되돌릴 수 없습니다.</color></size>";
+            }
+        }
+
+        /// <summary>B-150: 선택 카드가 번쩍인 뒤 TV 꺼지듯 접히고 onClosed를 호출한다. 연출이 없으면 바로 호출.</summary>
+        public void PlayExitTransition(Action onClosed)
+        {
+            if (intro == null)
+            {
+                onClosed?.Invoke();
+                return;
+            }
+
+            intro.PlayExit(currentSelectedSlotId - 1, onClosed);
+        }
+
+        public void CancelExitTransition()
+        {
+            if (intro != null) intro.CancelExit();
+        }
+
         private int currentSelectedSlotId = 1;
         public int CurrentSelectedSlotId => currentSelectedSlotId;
 
@@ -210,9 +279,16 @@ namespace SubTerra.App.UI.MainMenu
         public void SetSelectedSlot(int slotId, bool canContinue, string message)
         {
             currentSelectedSlotId = slotId;
+            // 철제 프레임은 선택 카드 하나에만 붙는다. 에디터(테스트)에서는 바로 끝 상태.
+            if (Application.isPlaying) FrameTimeline.Select(slotId - 1);
+            else FrameTimeline.Snap(slotId - 1);
+            ApplyFrames();
             if (continueButton != null)
             {
                 continueButton.interactable = canContinue;
+                // 기록이 없거나 손상된 슬롯이면 이어하기 글자도 흐리게 둔다.
+                var continueLabel = continueButton.GetComponentInChildren<TMP_Text>(true);
+                if (continueLabel != null) continueLabel.alpha = canContinue ? 1f : 0.4f;
             }
 
             if (messageText != null && !string.IsNullOrEmpty(message))
@@ -267,14 +343,93 @@ namespace SubTerra.App.UI.MainMenu
 
         private void Update()
         {
+            UpdateFrames();
             HandleKeyboardNavigation();
+        }
+
+        private void UpdateFrames()
+        {
+            var timeline = FrameTimeline;
+            // 부팅 중에는 선택 카드가 보일 때까지 프레임을 붙이지 않는다.
+            if (intro == null || intro.IsCardShown(timeline.Holder < 0 ? 0 : timeline.Holder))
+            {
+                timeline.Tick(Time.unscaledDeltaTime);
+            }
+
+            ApplyFrames();
+        }
+
+        private void ApplyFrames()
+        {
+            var timeline = FrameTimeline;
+            for (var i = 0; i < 3; i++)
+            {
+                var card = GetCard(i);
+                if (card != null) card.ApplyFrame(timeline.Sample(i));
+            }
+        }
+
+        private void OnBootSkipped()
+        {
+            FrameTimeline.Snap(currentSelectedSlotId - 1);
+            ApplyFrames();
+        }
+
+        private bool IsAnyModalOpen =>
+            (settingsRoot != null && settingsRoot.activeSelf)
+            || IsOverwriteConfirmVisible
+            || IsDeleteConfirmVisible;
+
+        private SaveSlotCardView GetCard(int index)
+        {
+            if (slotButtons == null || index < 0 || index >= slotButtons.Length || slotButtons[index] == null)
+            {
+                return null;
+            }
+
+            return slotButtons[index].GetComponent<SaveSlotCardView>();
+        }
+
+        private void WireCards(bool wire)
+        {
+            for (var i = 0; i < 3; i++)
+            {
+                var card = GetCard(i);
+                if (card == null) continue;
+                card.Hovered -= OnCardHovered;
+                card.DeleteClicked -= OnCardDeleteClicked;
+                if (!wire) continue;
+                card.Hovered += OnCardHovered;
+                card.DeleteClicked += OnCardDeleteClicked;
+            }
+        }
+
+        private int IndexOf(SaveSlotCardView card)
+        {
+            for (var i = 0; i < 3; i++)
+                if (GetCard(i) == card) return i;
+            return -1;
+        }
+
+        // 마우스 호버로도 슬롯을 고른다(위/아래 키와 같은 프레임 이동).
+        private void OnCardHovered(SaveSlotCardView card)
+        {
+            if ((intro != null && intro.BlocksInput) || IsAnyModalOpen) return;
+            var slot = IndexOf(card) + 1;
+            if (slot > 0 && slot != currentSelectedSlotId) SlotSelected?.Invoke(slot);
+        }
+
+        private void OnCardDeleteClicked(SaveSlotCardView card)
+        {
+            if ((intro != null && intro.BlocksInput) || IsAnyModalOpen) return;
+            var slot = IndexOf(card) + 1;
+            if (slot > 0) DeleteSlotClicked?.Invoke(slot);
         }
 
         private void HandleKeyboardNavigation()
         {
-            // 설정 창이나 덮어쓰기 확인창이 열려 있으면 슬롯/액션 키보드 탐색을 차단한다.
-            if ((settingsRoot != null && settingsRoot.activeSelf) ||
-                (overwriteConfirmRoot != null && overwriteConfirmRoot.activeSelf))
+            // 설정 창·덮어쓰기/삭제 확인창이 열려 있거나 부팅·전환 연출 중이면 슬롯/액션 키보드 탐색을 차단한다.
+            if (IsAnyModalOpen || (intro != null && intro.BlocksInput))
             {
                 return;
             }
@@ -329,6 +484,8 @@ namespace SubTerra.App.UI.MainMenu
                 if (button == null) continue;
                 var skin = button.GetComponent<MenuSpriteButtonSkin>();
                 if (skin != null) skin.SetKeyboardActive(i == actionButtonIndex);
+                var feedback = button.GetComponent<SurfaceBaseButtonFeedback>();
+                if (feedback != null) feedback.SetKeyboardActive(i == actionButtonIndex);
             }
         }
 
@@ -795,6 +952,8 @@ namespace SubTerra.App.UI.MainMenu
         private void OnQuit() => QuitClicked?.Invoke();
         private void OnOverwriteConfirm() => OverwriteConfirmClicked?.Invoke();
         private void OnOverwriteCancel() => OverwriteCancelClicked?.Invoke();
+        private void OnDeleteConfirm() => DeleteConfirmClicked?.Invoke();
+        private void OnDeleteCancel() => DeleteCancelClicked?.Invoke();
         private void OnSettingsApply() => SettingsApplyClicked?.Invoke();
         private void OnSettingsCancel() => SettingsCancelClicked?.Invoke();
         private void OnSettingsDefaults() => SettingsDefaultsClicked?.Invoke();

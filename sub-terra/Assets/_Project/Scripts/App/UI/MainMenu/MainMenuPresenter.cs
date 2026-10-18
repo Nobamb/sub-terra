@@ -13,6 +13,9 @@ namespace SubTerra.App.UI.MainMenu
         void SetVersionLabel(string version);
         void SetMessage(string message);
         void SetQuitBlockedMessage(string message);
+        /// <summary>B-150: 빈/정상/손상 카드 표시(노이즈 썸네일, 삭제 버튼 노출).</summary>
+        void SetSlotKind(int slotId, SaveSlotCardKind kind);
+        void SetDeleteConfirmVisible(bool visible, int slotId);
     }
 
     /// <summary>
@@ -25,6 +28,7 @@ namespace SubTerra.App.UI.MainMenu
         private readonly IMainMenuView view;
         private readonly LoadService loader;
         private readonly NewGameOverwriteGate overwriteGate = new NewGameOverwriteGate();
+        private readonly SlotDeleteGate deleteGate = new SlotDeleteGate();
         private readonly SettingsSession settings;
         private readonly string gameVersion;
         private int selectedSlot = SavePathPolicy.MinimumSlot;
@@ -33,11 +37,14 @@ namespace SubTerra.App.UI.MainMenu
         public event Action<int> StartNewGameConfirmed;
         public event Action QuitConfirmed;
         public event Action<SettingsValues> SettingsApplied;
+        /// <summary>삭제 확인을 통과한 슬롯. 실제 파일 삭제는 바인더가 런타임에 위임한다.</summary>
+        public event Action<int> DeleteSlotConfirmed;
 
         public int SelectedSlot => selectedSlot;
         public NewGameOverwriteGate OverwriteGate => overwriteGate;
         public SettingsSession Settings => settings;
         public bool IsOverwriteConfirmOpen => overwriteGate.IsAwaitingConfirm;
+        public bool IsDeleteConfirmOpen => deleteGate.IsAwaitingConfirm;
 
         public MainMenuPresenter(
             IMainMenuView menuView,
@@ -61,12 +68,13 @@ namespace SubTerra.App.UI.MainMenu
                 var metadata = loader.GetSlotMetadata(slot);
                 var eligibility = SlotContinuePolicy.FromMetadata(metadata);
                 var canContinue = SlotContinuePolicy.CanContinue(eligibility);
-                var label = BuildSlotLabel(metadata, eligibility);
+                var label = SaveSlotCardFormatter.BuildLabel(metadata, eligibility);
                 view.SetSlotDisplay(
                     slot,
                     label,
                     canContinue,
                     SlotContinuePolicy.Describe(eligibility));
+                view.SetSlotKind(slot, SaveSlotCardFormatter.KindOf(eligibility));
             }
 
             SelectSlot(selectedSlot);
@@ -109,6 +117,11 @@ namespace SubTerra.App.UI.MainMenu
 
         public NewGameRequestStatus RequestNewGame()
         {
+            if (deleteGate.IsAwaitingConfirm)
+            {
+                return NewGameRequestStatus.Cancelled;
+            }
+
             var metadata = loader.GetSlotMetadata(selectedSlot);
             var eligibility = SlotContinuePolicy.FromMetadata(metadata);
             var status = overwriteGate.Request(selectedSlot, eligibility);
@@ -155,6 +168,60 @@ namespace SubTerra.App.UI.MainMenu
             view.SetOverwriteConfirmVisible(false, selectedSlot);
             view.SetMessage("새 게임이 취소되었습니다.");
             return status;
+        }
+
+        /// <summary>B-150: 휴지통 버튼. 기록이 있는 슬롯만 확인 창을 연다(확인 전 삭제 없음).</summary>
+        public bool RequestDeleteSlot(int slotId)
+        {
+            if (overwriteGate.IsAwaitingConfirm
+                || slotId < SavePathPolicy.MinimumSlot
+                || slotId > SavePathPolicy.MaximumSlot)
+            {
+                return false;
+            }
+
+            var eligibility = SlotContinuePolicy.FromMetadata(loader.GetSlotMetadata(slotId));
+            if (!deleteGate.Request(slotId, eligibility))
+            {
+                return false;
+            }
+
+            if (selectedSlot != slotId)
+            {
+                SelectSlot(slotId);
+            }
+
+            view.SetDeleteConfirmVisible(true, slotId);
+            return true;
+        }
+
+        public int ConfirmDeleteSlot()
+        {
+            var slot = deleteGate.Confirm();
+            view.SetDeleteConfirmVisible(false, slot);
+            if (slot > 0)
+            {
+                DeleteSlotConfirmed?.Invoke(slot);
+            }
+
+            return slot;
+        }
+
+        public void CancelDeleteSlot()
+        {
+            // 취소: 파일 불변. 게이트만 닫는다.
+            var slot = deleteGate.PendingSlotId;
+            deleteGate.Cancel();
+            view.SetDeleteConfirmVisible(false, slot);
+        }
+
+        /// <summary>바인더가 삭제를 마친 뒤 호출한다. 카드·이어하기 상태를 다시 읽는다.</summary>
+        public void CompleteDeleteSlot(int slotId, bool deleted)
+        {
+            Refresh();
+            view.SetMessage(deleted
+                ? SaveSlotCardFormatter.Title(slotId) + "을 삭제했습니다."
+                : SaveSlotCardFormatter.Title(slotId) + "을 삭제하지 못했습니다.");
         }
 
         public void OpenSettings()
@@ -207,37 +274,7 @@ namespace SubTerra.App.UI.MainMenu
             StartNewGameConfirmed = null;
             QuitConfirmed = null;
             SettingsApplied = null;
-        }
-
-        private static string BuildSlotLabel(
-            SaveSlotMetadata metadata,
-            SlotContinueEligibility eligibility)
-        {
-            if (metadata == null)
-            {
-                return "Slot ?";
-            }
-
-            if (eligibility == SlotContinueEligibility.Empty)
-            {
-                return "탐사 기록 " + metadata.SlotId.ToString("00")
-                    + "\n<size=75%><color=#91A7AE>— 기록 없음 —  새 탐사를 시작할 수 있습니다.</color></size>";
-            }
-
-            if (eligibility == SlotContinueEligibility.Unrecoverable)
-            {
-                return "탐사 기록 " + metadata.SlotId.ToString("00")
-                    + "\n<size=75%><color=#E6A23C>기록 손상 · 이어하기 불가</color></size>";
-            }
-
-            var savedAt = metadata.SavedAtUtc > 0
-                ? DateTimeOffset.FromUnixTimeSeconds(metadata.SavedAtUtc).ToLocalTime().ToString("yyyy.MM.dd  HH:mm")
-                : "—";
-            return "탐사 기록 " + metadata.SlotId.ToString("00")
-                + "   Gold " + metadata.Gold + "   Depth " + metadata.Depth + "m"
-                + "\n<size=70%><color=#91A7AE>마지막 저장  " + savedAt
-                + (metadata.IsRecoverableFromBackup ? "  [Backup]" : string.Empty)
-                + "</color></size>";
+            DeleteSlotConfirmed = null;
         }
     }
 }
