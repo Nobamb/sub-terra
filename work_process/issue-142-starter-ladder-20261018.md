@@ -23,3 +23,10 @@ Windows 새 게임의 실제 화면, 사다리 직접 건설/오르내리기, �
 - PlayerResumePositionTests + SaveContinuePlayModeTests + StarterLadderPlayModeTests PlayMode12/12 PASS(exit0).
 - 실제 Bootstrap 새 게임과 이어하기에서 기본 사다리0개, 저장된 설치 사다리1개 및 종료 좌표 복원을 함께 확인했다. 조합은 검사 후 merge --abort로 해제했으며 팀원의 최종 병합은 하지 않았다.
 - 증거 combined-playmode.xml/log, combined-tree.txt는 Builds/Issue142-20261018/에 보존.
+
+
+## 2026-10-18 최신 main 충돌 해소 및 검토 준비
+- 최신 main a3266026의 Integration 씬을 기준으로 전용 Editor 제거 메서드를 실행했다. 잘못 지정한 메서드 namespace의 첫 실행은 종료1로 보존했고 정확한 SubTerra.App.Editor 경로 재실행은 종료0/사다리1개 제거다.
+- Editor 자동 직렬화 부수 변경은 제외하고 main 대비 초기 사다리 제거79줄만 보존했다. HUD/레일/현재 씬 연결은 최신 main을 유지한다.
+- 새 EditMode8/8, PlayMode1/1 PASS. 실제 Bootstrap 새 게임에서 초기 LadderZone0, 별도 QA 저장의 플레이어 설치 사다리 ID/좌표 복원 확인. 증거: Builds/PRReady-20261018/pr199-*.
+- Windows 실제 화면 검증은 사용자 요청으로 완료 기준에서 제외한 미실행 후속 항목이다. 구현·관련 자동 검사 완료로 팀원 검수용 Ready로 전환한다.
