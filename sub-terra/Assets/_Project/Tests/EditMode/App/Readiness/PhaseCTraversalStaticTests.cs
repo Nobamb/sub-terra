@@ -163,9 +163,11 @@ namespace SubTerra.App.Tests.Readiness
 
             Assert.NotNull(Find<ElevatorController>(scene));
             Assert.NotNull(Find<ElevatorTravelBridge>(scene));
-            Assert.NotNull(scene.GetRootGameObjects()
+            Assert.IsNull(scene.GetRootGameObjects()
                 .SelectMany(root => root.GetComponentsInChildren<Transform>(true))
                 .FirstOrDefault(item => item.name == "LadderTrainingShaft_6m"));
+            Assert.That(scene.GetRootGameObjects()
+                .SelectMany(root => root.GetComponentsInChildren<LadderZone>(true)), Is.Empty);
 
             var placement = Find<BuildingPlacementSystem>(scene);
             var serialized = new SerializedObject(placement);
