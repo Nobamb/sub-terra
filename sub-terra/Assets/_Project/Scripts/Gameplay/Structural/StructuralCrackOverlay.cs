@@ -479,6 +479,7 @@ namespace SubTerra.Gameplay.Structural
             Vector2 offset = reduceMotion
                 ? Vector2.zero
                 : CalculateShakeOffset(visual.Elapsed, distance, interval, cell);
+            offset = KeepShakeOutsideOccupiedCells(cell, offset);
             Vector3 center = sourceTilemap != null
                 ? sourceTilemap.GetCellCenterWorld(cell)
                 : overlayTilemap.GetCellCenterWorld(cell);
@@ -492,6 +493,24 @@ namespace SubTerra.Gameplay.Structural
                     ? visual.OriginalOverlayTransform
                     : Matrix4x4.Translate(worldOffset)
                         * visual.OriginalOverlayTransform);
+        }
+
+        private Vector2 KeepShakeOutsideOccupiedCells(Vector3Int cell, Vector2 offset)
+        {
+            if (sourceTilemap == null) return offset;
+            // 두 원본이 모두 숨겨지면 복제본끼리는 Foreground 정렬로 보호되지 않는다.
+            // 실제 이웃 셀을 침범하지 않고, 노출된 빈 공간 쪽의 흔들림만 유지한다.
+            var horizontal = offset.x > 0f ? Vector3Int.right : Vector3Int.left;
+            var vertical = offset.y > 0f ? Vector3Int.up : Vector3Int.down;
+            if (offset.x != 0f && sourceTilemap.HasTile(cell + horizontal)) offset.x = 0f;
+            if (offset.y != 0f && sourceTilemap.HasTile(cell + vertical)) offset.y = 0f;
+            // 방향 전환의 보간 구간에는 대각선 셀 모서리도 침범할 수 있다.
+            if (offset.x != 0f && offset.y != 0f && sourceTilemap.HasTile(cell + horizontal + vertical))
+            {
+                if (Mathf.Abs(offset.x) <= Mathf.Abs(offset.y)) offset.x = 0f;
+                else offset.y = 0f;
+            }
+            return offset;
         }
 
         public static Vector2 CalculateShakeOffset(

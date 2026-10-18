@@ -244,6 +244,86 @@ namespace SubTerra.Gameplay.Structural.Tests
             Assert.That(fixture.Source.GetTile(Vector3Int.zero), Is.SameAs(fixture.Tile));
         }
 
+        [TestCase(1, 0)]
+        [TestCase(1, 1)]
+        public void AdjacentShakingTiles_DoNotDrawInsideEachOthersLogicalCells(int x, int y)
+        {
+            using var fixture = new ShakeFixture();
+            var neighborCell = new Vector3Int(x, y, 0);
+            var neighbor = ScriptableObject.CreateInstance<Tile>();
+            neighbor.sprite = fixture.Tile.sprite;
+            neighbor.color = Color.green;
+            try
+            {
+                fixture.Source.SetTile(neighborCell, neighbor);
+                fixture.Feedback.SetCell(neighborCell, StructuralRiskLevel.Danger, 0.6f, StructuralRiskCause.Unsupported);
+                var visual = fixture.Root.transform.Find("StructuralShake_0_0").GetComponent<SpriteRenderer>();
+                var other = fixture.Root.transform.Find($"StructuralShake_{x}_{y}").GetComponent<SpriteRenderer>();
+                var update = typeof(StructuralCrackOverlay).GetMethod("UpdateCrackAnimation",
+                    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+                var moved = false;
+                for (var frame = 0; frame < 96; frame++)
+                {
+                    update.Invoke(fixture.Feedback, new object[] { 0.006f });
+                    moved |= Vector3.Distance(visual.transform.position, fixture.Source.GetCellCenterWorld(Vector3Int.zero)) > 0.001f;
+                    var overlaps = DrawsInsideCell(visual, fixture.Source.GetCellCenterWorld(neighborCell))
+                        || DrawsInsideCell(other, fixture.Source.GetCellCenterWorld(Vector3Int.zero));
+                    if (overlaps) CapturePair(fixture.Root, $"adjacent-before-{x}-{y}.png");
+                    Assert.That(overlaps, Is.False, $"frame {frame}: 숨겨진 이웃 원본 대신 다른 블록의 복제본이 그려진다.");
+                }
+                Assert.That(moved, Is.True, "빈 공간 방향의 흔들림은 유지한다.");
+                Assert.That(fixture.Source.GetTile(Vector3Int.zero), Is.SameAs(fixture.Tile));
+                Assert.That(fixture.Source.GetTile(neighborCell), Is.SameAs(neighbor));
+                CapturePair(fixture.Root, $"adjacent-after-{x}-{y}.png");
+            }
+            finally
+            {
+                Object.DestroyImmediate(neighbor);
+            }
+        }
+
+        private static bool DrawsInsideCell(SpriteRenderer visual, Vector3 center)
+        {
+            var bounds = visual.bounds;
+            return Mathf.Min(bounds.max.x, center.x + 0.5f) - Mathf.Max(bounds.min.x, center.x - 0.5f) > 0.001f
+                && Mathf.Min(bounds.max.y, center.y + 0.5f) - Mathf.Max(bounds.min.y, center.y - 0.5f) > 0.001f;
+        }
+
+        private static void CapturePair(GameObject root, string name)
+        {
+            var directory = System.Environment.GetEnvironmentVariable("SUBTERRA_QA_ARTIFACT_ROOT");
+            if (string.IsNullOrEmpty(directory)) return;
+            System.IO.Directory.CreateDirectory(directory);
+            var cameraObject = new GameObject("AdjacentShakeEvidence", typeof(Camera));
+            cameraObject.transform.SetParent(root.transform);
+            var camera = cameraObject.GetComponent<Camera>();
+            camera.orthographic = true;
+            camera.orthographicSize = 1.5f;
+            camera.transform.position = new Vector3(1f, 0.75f, -10f);
+            camera.clearFlags = CameraClearFlags.SolidColor;
+            camera.backgroundColor = Color.black;
+            var target = RenderTexture.GetTemporary(768, 384, 24);
+            var previous = RenderTexture.active;
+            var image = new Texture2D(768, 384, TextureFormat.RGB24, false);
+            try
+            {
+                camera.targetTexture = target;
+                camera.Render();
+                RenderTexture.active = target;
+                image.ReadPixels(new Rect(0, 0, 768, 384), 0, 0);
+                image.Apply();
+                System.IO.File.WriteAllBytes(System.IO.Path.Combine(directory, name), image.EncodeToPNG());
+            }
+            finally
+            {
+                camera.targetTexture = null;
+                RenderTexture.active = previous;
+                RenderTexture.ReleaseTemporary(target);
+                Object.DestroyImmediate(image);
+                Object.DestroyImmediate(cameraObject);
+            }
+        }
+
         private sealed class ShakeFixture : System.IDisposable
         {
             public readonly GameObject Root = new GameObject("ShakeOwnershipFixture");
