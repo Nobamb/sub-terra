@@ -99,10 +99,12 @@ namespace SubTerra.App.Core.Data
         public string DisplayName => displayName;
         public int MaxLevel => maxLevel;
         public IReadOnlyList<UpgradeLevelDefinition> Levels => levels;
-        /// <summary>해금에 필요한 업그레이드 ID. 비어 있으면 조건 없음.</summary>
-        public string UnlockRequirementUpgradeId => unlockRequirementUpgradeId ?? string.Empty;
+        /// <summary>연결된 부모 Lv.1로 해금한다. 부모 없는 기존 정의만 별도 조건을 사용한다.</summary>
+        public string UnlockRequirementUpgradeId => !string.IsNullOrEmpty(treeParentId)
+            ? treeParentId : unlockRequirementUpgradeId ?? string.Empty;
         /// <summary>해금에 필요한 위 업그레이드의 최소 레벨.</summary>
-        public int UnlockRequiredLevel => unlockRequiredLevel < 0 ? 0 : unlockRequiredLevel;
+        public int UnlockRequiredLevel => !string.IsNullOrEmpty(treeParentId)
+            ? 1 : unlockRequiredLevel < 0 ? 0 : unlockRequiredLevel;
         /// <summary>트리 UI에서 연결선이 이어지는 상위 노드 ID. 비어 있으면 루트.</summary>
         public string TreeParentId => treeParentId ?? string.Empty;
 

@@ -72,6 +72,20 @@ namespace SubTerra.Gameplay.Structural.Tests
             Assert.That(receiver.ImpactCount, Is.EqualTo(2));
         }
 
+        [UnityTest]
+        public IEnumerator FallingRockAndImpactDust_AreRemovedAfterLanding()
+        {
+            using var fixture = new RuntimeFixture(1, true, false);
+            fixture.CrackOverlay.PlayCollapse(
+                new Vector3Int(0, 2, 0), fixture.Foreground, 0.1f);
+            Assert.That(fixture.CrackOverlay.transform.Find("StructuralFallingRock"), Is.Not.Null);
+            yield return new WaitForSecondsRealtime(0.65f);
+            Assert.That(fixture.CrackOverlay.transform.Find("StructuralFallingRock"), Is.Null,
+                "낙하가 끝난 바위가 비어 있는 셀에 남으면 안 된다.");
+            Assert.That(fixture.CrackOverlay.transform.Find("StructuralImpactDust"), Is.Null,
+                "착지 먼지도 수명이 끝나면 회수되어야 한다.");
+        }
+
         private sealed class CountingCollapseReceiver : ICollapseDamageReceiver
         {
             public int ImpactCount { get; private set; }

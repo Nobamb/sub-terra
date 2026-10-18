@@ -126,7 +126,8 @@ namespace SubTerra.App.UI.HUD
             EnsureDiggerHostActive();
             WireButtons();
             ConfigurePointerPreferredChromeButtons();
-            ApplyBuildingMenuVisible(buildingMenuOpen, cancelSelection: false);
+            buildingMenuOpen = false;
+            ApplyBuildingMenuVisible(false, cancelSelection: false);
             ApplyDiggerBotVisible(diggerBotOpen);
             ApplyGameGuideVisible(gameGuideOpen);
             // prompt-B 36-1: 시작 시 인벤토리는 항상 닫힌 상태.
@@ -145,6 +146,8 @@ namespace SubTerra.App.UI.HUD
 
         private void Start()
         {
+            if (!buildingMenuOpen)
+                ApplyBuildingMenuVisible(false, cancelSelection: false);
             // 다른 UI 초기화가 PanelRoot를 다시 켠 경우 한 번 더 닫아 둔다.
             ResolveInventoryPanelIfNeeded();
             if (!inventoryPanelOpen)

@@ -127,13 +127,16 @@ namespace SubTerra.App.Editor.DataValidation
             var hint = EnsureText(
                 panel.transform,
                 "ClaimHint",
-                new Vector2(142.5f, -446f),
-                new Vector2(840f, 24f),
-                12f,
+                new Vector2(142.5f, -428f),
+                new Vector2(840f, 28f),
+                16f,
                 TextAlignmentOptions.Midline,
                 font);
             hint.text = "닫으면 보상이 지급됩니다.";
-            hint.color = new Color(0.62f, 0.78f, 0.82f, 1f);
+            hint.rectTransform.anchorMin = hint.rectTransform.anchorMax = new Vector2(0.5f, 1f);
+            hint.rectTransform.pivot = new Vector2(0.5f, 0.5f);
+            hint.rectTransform.anchoredPosition = new Vector2(0f, -428f);
+            hint.color = new Color(0.83f, 0.94f, 0.96f, 1f);
             var progress = EnsureText(panel.transform, "ClaimProgress", new Vector2(725f, -127f),
                 new Vector2(180f, 48f), 18f, TextAlignmentOptions.MidlineRight, font);
             progress.color = new Color(0.45f, 1f, 1f, 1f);
@@ -144,7 +147,7 @@ namespace SubTerra.App.Editor.DataValidation
             description.text = "퀘스트 목표를 달성했습니다.";
             description.color = new Color(0.83f, 0.94f, 0.96f, 1f);
             var rewardRow = EnsureRect(panel.transform, "ClaimRewardRow",
-                new Vector2(0.5f, 1f), new Vector2(0f, -420f), new Vector2(870f, 44f));
+                new Vector2(0.5f, 1f), new Vector2(0f, -388f), new Vector2(870f, 44f));
             rewardRow.pivot = new Vector2(0.5f, 0.5f);
             var existingRewardLabel = panel.transform.Find("ClaimRewardLabel");
             if (existingRewardLabel != null) existingRewardLabel.SetParent(rewardRow, false);

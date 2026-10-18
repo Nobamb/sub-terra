@@ -124,8 +124,8 @@ namespace SubTerra.App.Editor.DataValidation
                 Toggle(open, host, new Vector2(0, 0), 52, "menu-collapse-off.png", "menu-collapse-on.png");
                 Toggle(closed, host, ClosedTogglePosition, 54, "menu-close-off.png", "menu-close-on.png");
                 Set(host, "openRoot", open); Set(host, "closedRoot", closed); Set(host, "inputGroup", group);
-                open.gameObject.SetActive(true);
-                closed.gameObject.SetActive(false);
+                open.gameObject.SetActive(false);
+                closed.gameObject.SetActive(true);
                 EditorSceneManager.MarkSceneDirty(scene);
                 EditorSceneManager.SaveScene(scene);
             }

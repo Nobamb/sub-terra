@@ -734,6 +734,7 @@ namespace SubTerra.App.Integration
             if (placementSubscribed || placement == null) return;
             placement.BuildingPlaced += OnBuildingPlaced;
             placement.BuildingRestored += OnBuildingRestored;
+            placement.BuildingMoved += OnBuildingRestored;
             placement.WorldRestorePreparing += OnWorldRestorePreparing;
             placementSubscribed = true;
         }
@@ -745,6 +746,7 @@ namespace SubTerra.App.Integration
             {
                 placement.BuildingPlaced -= OnBuildingPlaced;
                 placement.BuildingRestored -= OnBuildingRestored;
+                placement.BuildingMoved -= OnBuildingRestored;
                 placement.WorldRestorePreparing -= OnWorldRestorePreparing;
             }
 
