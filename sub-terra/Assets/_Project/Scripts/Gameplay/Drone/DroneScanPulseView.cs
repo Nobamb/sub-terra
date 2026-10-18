@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -18,6 +19,7 @@ namespace SubTerra.Gameplay.Drone
         {
             public GameObject Root;
             public SpriteRenderer Renderer;
+            public DroneScanTarget Target;
         }
 
         private readonly List<PooledMarker> pool = new();
@@ -31,6 +33,7 @@ namespace SubTerra.Gameplay.Drone
         private float expiresAt;
         private float ringExpiresAt;
         private int activeCount;
+        private Func<DroneScanTarget, bool> targetIsValid;
 
         /// <summary>기존 호출부 호환용 이름. 실제 Light2D 수가 아니라 활성 대상 표식 수다.</summary>
         public int ActiveLightCount => activeCount;
@@ -42,15 +45,19 @@ namespace SubTerra.Gameplay.Drone
             Vector3 center,
             int radius,
             float nextExpiresAt,
-            float currentTime)
+            float currentTime,
+            Func<DroneScanTarget, bool> isTargetValid = null)
         {
             EnsureVisualRoot();
-            activeCount = targets?.Count ?? 0;
+            activeCount = 0;
+            targetIsValid = isTargetValid;
             activeTargets.Clear();
-            for (int index = 0; index < activeCount; index++)
+            for (int index = 0; index < (targets?.Count ?? 0); index++)
             {
-                PooledMarker marker = GetOrCreate(index);
                 DroneScanTarget target = targets[index];
+                if (targetIsValid != null && !targetIsValid(target)) continue;
+                PooledMarker marker = GetOrCreate(activeCount++);
+                marker.Target = target;
                 marker.Root.transform.position = target.WorldPosition + Vector3.back * 0.1f;
                 marker.Root.SetActive(true);
                 ApplyKind(marker, target.Kind);
@@ -74,6 +81,7 @@ namespace SubTerra.Gameplay.Drone
 
         public void Tick(float currentTime)
         {
+            PruneInvalidTargets();
             if (activeCount > 0 && currentTime >= expiresAt)
             {
                 DeactivateMarkers();
@@ -87,6 +95,22 @@ namespace SubTerra.Gameplay.Drone
             {
                 float remaining = Mathf.Clamp01((ringExpiresAt - currentTime) / Mathf.Max(0.1f, ringDuration));
                 rangeRing.color = new Color(0.35f, 0.72f, 0.8f, 0.22f * remaining);
+            }
+        }
+
+        private void PruneInvalidTargets()
+        {
+            if (targetIsValid == null) return;
+            for (int index = activeCount - 1; index >= 0; index--)
+            {
+                var marker = pool[index];
+                if (targetIsValid(marker.Target)) continue;
+                marker.Root.SetActive(false);
+                activeTargets.Remove(marker.Target.Cell);
+                activeCount--;
+                // 활성 표식을 앞쪽에 유지해 다음 스캔에서도 같은 풀을 재사용한다.
+                pool[index] = pool[activeCount];
+                pool[activeCount] = marker;
             }
         }
 
@@ -211,6 +235,7 @@ namespace SubTerra.Gameplay.Drone
             }
             activeCount = 0;
             activeTargets.Clear();
+            targetIsValid = null;
         }
 
         private void OnDisable()
@@ -227,7 +252,7 @@ namespace SubTerra.Gameplay.Drone
             DestroyRuntimeObject(markerTexture);
         }
 
-        private static void DestroyRuntimeObject(Object value)
+        private static void DestroyRuntimeObject(UnityEngine.Object value)
         {
             if (value == null) return;
             if (Application.isPlaying) Destroy(value);

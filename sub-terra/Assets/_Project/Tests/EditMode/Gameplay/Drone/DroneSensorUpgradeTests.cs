@@ -13,6 +13,73 @@ namespace SubTerra.Gameplay.Tests.Drone
     public sealed class DroneSensorUpgradeTests
     {
         [Test]
+        public void FirstPulse_WaitsForRestoredWorld_AndDisablingClearsExistingMarkers()
+        {
+            using var world = new SensorWorld(3f);
+            var cell = new Vector3Int(1, 0, 0);
+            world.PlaceMineral(cell, "mineral.copper");
+            world.Sensor.SetScanWorldReady(false);
+            world.Sensor.TickScanPulse(0f);
+            Assert.That(world.Sensor.ScanPulseView, Is.Null);
+
+            world.RemoveTile(cell); // 월드 복원이 저장된 채굴 흔적을 적용한 상황.
+            world.Sensor.SetScanWorldReady(true);
+            world.Sensor.TickScanPulse(1f);
+            Assert.That(world.Sensor.LastPulseTargets, Is.Empty);
+            Assert.That(world.Sensor.ScanPulseView.ActiveMarkerCount, Is.Zero);
+
+            world.PlaceMineral(cell, "mineral.iron");
+            world.Sensor.TickScanPulse(31f);
+            Assert.That(world.Sensor.ScanPulseView.ActiveMarkerCount, Is.EqualTo(1));
+            world.Sensor.SetScanWorldReady(false);
+            Assert.That(world.Sensor.ScanPulseView.ActiveMarkerCount, Is.Zero);
+            Assert.That(world.Sensor.ScanPulseView.IsRingVisible, Is.False);
+        }
+
+        [Test]
+        public void RemovedMineral_ClearsMarkerBeforePulseExpires()
+        {
+            using var world = new SensorWorld(3f);
+            var cell = new Vector3Int(1, 0, 0);
+            world.PlaceMineral(cell, "mineral.copper");
+            world.Sensor.TickScanPulse(0f);
+            var view = world.Sensor.ScanPulseView;
+            Assert.That(view.TryGetActiveTarget(cell, out _), Is.True);
+
+            world.RemoveTile(cell);
+            world.Sensor.TickScanPulse(0.2f);
+
+            Assert.That(view.TryGetActiveTarget(cell, out _), Is.False,
+                "Mining, collapse and world restore must not leave an ore marker on an empty cell.");
+            Assert.That(view.ActiveMarkerCount, Is.Zero);
+        }
+
+        [Test]
+        public void MineralReplacedByRock_ClearsOldMarker()
+        {
+            using var world = new SensorWorld(3f);
+            var cell = new Vector3Int(1, 0, 0);
+            world.PlaceMineral(cell, "mineral.copper");
+            world.Sensor.TickScanPulse(0f);
+            world.PlaceRock(cell);
+            world.Sensor.TickScanPulse(0.2f);
+            Assert.That(world.Sensor.ScanPulseView.TryGetActiveTarget(cell, out _), Is.False);
+        }
+
+        [Test]
+        public void ActiveGas_RemainsMarkedAfterSourceTileIsRemoved()
+        {
+            using var world = new SensorWorld(7f);
+            var cell = new Vector3Int(1, 0, 0);
+            world.PlaceGas(cell);
+            world.Sensor.TickScanPulse(0f);
+            world.RemoveTile(cell);
+            world.Sensor.TickScanPulse(0.2f);
+            Assert.That(world.Sensor.ScanPulseView.TryGetActiveTarget(cell, out var kind), Is.True);
+            Assert.That(kind, Is.EqualTo(DroneScanTargetKind.GasHazard));
+        }
+
+        [Test]
         public void ScanRing_FadesAndExpiresWithoutChangingRadius()
         {
             var host = new GameObject("ScanRingLifetime");
@@ -205,6 +272,15 @@ namespace SubTerra.Gameplay.Tests.Drone
             }
 
             public DroneSensor Sensor { get; }
+
+            public void RemoveTile(Vector3Int cell) => tilemap.SetTile(cell, null);
+
+            public void PlaceRock(Vector3Int cell)
+            {
+                resolver.RegisterRuntime(rock,
+                    new MiningTileDto("tile.rock", string.Empty, 0, true, 1f, 0f, 0f, false));
+                tilemap.SetTile(cell, rock);
+            }
 
             public void PlaceMineral(Vector3Int cell, string mineralId, int gold = 0)
             {

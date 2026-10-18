@@ -40,6 +40,7 @@ namespace SubTerra.Gameplay.Drone
         private GasRiskLevel? appliedGasRisk;
         private IUpgradeEffectProvider upgradeEffects;
         private DroneScanPulseView pulseView;
+        private bool scanWorldReady = true;
         private readonly List<DroneScanTarget> lastPulseTargets = new();
 
         public DroneContextDto CurrentContext { get; private set; }
@@ -49,6 +50,7 @@ namespace SubTerra.Gameplay.Drone
         public float PulseDuration => pulseDuration;
         public IReadOnlyList<DroneScanTarget> LastPulseTargets => lastPulseTargets;
         public DroneScanPulseView ScanPulseView => pulseView;
+        public bool IsScanWorldReady => scanWorldReady;
         public bool IsScanPulseActive => pulseView != null && pulseView.IsRingVisible;
         /// <summary>지표면 기준 Y. HUD 깊이 브리지와 동일 값을 공유할 때 사용한다.</summary>
         public float SurfaceY
@@ -72,6 +74,15 @@ namespace SubTerra.Gameplay.Drone
         }
 
         public void SetPlayerTransform(Transform target) => playerTransform = target;
+
+        /// <summary>통합 씬은 월드 복원과 UI/입력 게이트가 끝난 뒤 첫 펄스를 허용한다.</summary>
+        public void SetScanWorldReady(bool ready)
+        {
+            if (scanWorldReady == ready) return;
+            scanWorldReady = ready;
+            nextPulseTime = 0f;
+            if (!ready) ClearScanPulse();
+        }
 
         public void SetUpgradeEffects(IUpgradeEffectProvider effects)
         {
@@ -200,6 +211,7 @@ namespace SubTerra.Gameplay.Drone
         /// <summary>Context 갱신과 독립된 30초 월드 스캔 펄스를 진행한다.</summary>
         public void TickScanPulse(float currentTime)
         {
+            if (!scanWorldReady) return;
             if (pulseView != null)
             {
                 pulseView.Tick(currentTime);
@@ -228,7 +240,25 @@ namespace SubTerra.Gameplay.Drone
                 center,
                 radius,
                 currentTime + Mathf.Max(0.1f, pulseDuration),
-                currentTime);
+                currentTime,
+                IsPulseTargetValid);
+        }
+
+        private bool IsPulseTargetValid(DroneScanTarget target)
+        {
+            if (foregroundTilemap == null) return false;
+            // 빈 칸의 실제 가스 구역 표식은 의도된 동작이다.
+            if (target.Kind == DroneScanTargetKind.GasHazard)
+                return ResolveMineralScanRadius() >= 7 && IsActiveGasCell(target.Cell);
+            var tile = foregroundTilemap.GetTile(target.Cell);
+            if (tile == null || tileResolver == null
+                || !tileResolver.TryResolve(tile, out MiningTileDto definition)) return false;
+            if (target.Kind == DroneScanTargetKind.SealedGlyph)
+                return definition.tileId == "tile.locked.signal";
+            if (definition.tileId == "tile.locked.signal") return false;
+            return target.Kind == DroneScanTargetKind.GoldDrop
+                ? definition.goldDrop > 0
+                : definition.goldDrop <= 0 && !string.IsNullOrWhiteSpace(definition.mineralId);
         }
 
         private void CollectPulseTargets(int radius, List<DroneScanTarget> results)
