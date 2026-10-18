@@ -133,6 +133,35 @@ namespace SubTerra.App.Tests.Progression
             return new GameDataUpgradeCatalog(catalog);
         }
 
+        private sealed class PurchaseView : IProgressionPanelView
+        {
+            public UpgradeSnapshot Selected;
+            public IReadOnlyList<UpgradeSnapshot> Items;
+            public void SetUpgradeList(IReadOnlyList<UpgradeSnapshot> values) => Items = values;
+            public void SetSelectedUpgrade(UpgradeSnapshot value) => Selected = value;
+            public void SetPurchaseResult(string message, string detail) { }
+            public void SetDeepZoneAccess(ZoneAccessResult access) { }
+            public void SetBusy(bool busy) { }
+            public void SetVisible(bool visible) { }
+        }
+
+        [Test]
+        public void Purchase_UpdatesSelectedLevelAndEffectsWithoutReopeningPanel()
+        {
+            var wallet = new Wallet();
+            wallet.Amounts[DataIds.Minerals.Copper] = 100;
+            var service = new ProgressionService(new UpgradeState(), LoadCatalog(), wallet);
+            var view = new PurchaseView();
+            var presenter = new ProgressionPanelPresenter(view);
+            presenter.Bind(service);
+            Assert.That(presenter.SelectUpgrade(DataIds.Upgrades.DrillSpeed), Is.True);
+            Assert.That(presenter.RequestPurchase().IsSuccess, Is.True);
+            Assert.That(view.Selected.CurrentLevel, Is.EqualTo(1));
+            Assert.That(service.Effects.GetDrillLevel(), Is.EqualTo(1));
+            Assert.That(view.Items.Single(u => u.UpgradeId == DataIds.Upgrades.DroneScan).IsUnlocked, Is.True);
+            presenter.Unbind();
+        }
+
         private static UpgradeState StateWithDrill(int level)
         {
             var state = new UpgradeState();
@@ -164,10 +193,10 @@ namespace SubTerra.App.Tests.Progression
         }
 
         [TestCase(0, 1)]
-        [TestCase(1, 4)]
-        [TestCase(2, 8)]
-        [TestCase(3, 11)]
-        public void DrillSpeedLevel_UnlocksNeighborsInStages(int drillLevel, int expectedUnlockedCount)
+        [TestCase(1, 5)]
+        [TestCase(2, 5)]
+        [TestCase(3, 5)]
+        public void DrillSpeedLevel_OnlyUnlocksDirectNeighbors(int drillLevel, int expectedUnlockedCount)
         {
             var catalog = LoadCatalog();
 
@@ -177,17 +206,16 @@ namespace SubTerra.App.Tests.Progression
         }
 
         [Test]
-        public void EveryExistingUpgrade_IsReachableThroughDrillSpeedOnly()
+        public void EveryExistingUpgrade_IsReachableThroughPurchasedParents()
         {
             var catalog = LoadCatalog();
-            var maxDrill = 0;
-            Assert.That(catalog.TryGetUpgrade(DataIds.Upgrades.DrillSpeed, out var drill), Is.True);
-            maxDrill = drill.MaxLevel;
-
-            var unlocked = UnlockedIds(catalog, StateWithDrill(maxDrill));
+            var state = new UpgradeState();
+            Assert.That(state.TryRestore(catalog.Upgrades.Select(u => new UpgradeLevelState(u.Id, 1)).ToList()), Is.True);
+            var unlocked = UnlockedIds(catalog, state);
 
             Assert.That(unlocked.Count, Is.EqualTo(catalog.Upgrades.Count));
             // 드릴 속도 자체는 조건이 없고, 비용에도 다른 업그레이드/골드가 들어가지 않는다.
+            Assert.That(catalog.TryGetUpgrade(DataIds.Upgrades.DrillSpeed, out var drill), Is.True);
             Assert.That(UpgradeUnlockRules.HasRequirement(drill), Is.False);
             for (var i = 0; i < drill.Levels.Count; i++)
             {
@@ -211,10 +239,8 @@ namespace SubTerra.App.Tests.Progression
                 }
 
                 Assert.That(byId.ContainsKey(data.TreeParentId), Is.True, data.Id);
-                Assert.That(
-                    byId[data.TreeParentId].UnlockRequiredLevel,
-                    Is.LessThanOrEqualTo(data.UnlockRequiredLevel),
-                    data.Id);
+                Assert.That(data.UnlockRequirementUpgradeId, Is.EqualTo(data.TreeParentId), data.Id);
+                Assert.That(data.UnlockRequiredLevel, Is.EqualTo(1), data.Id);
             }
         }
 
@@ -233,11 +259,29 @@ namespace SubTerra.App.Tests.Progression
             foreach (var def in PromptB118UpgradeTreeBuilder.Nodes)
             {
                 Assert.That(catalog.TryGetUpgrade(def.Id, out var data), Is.True, def.Id);
-                Assert.That(data.UnlockRequiredLevel, Is.EqualTo(def.DrillLevelRequired), def.Id);
+                Assert.That(data.UnlockRequiredLevel, Is.EqualTo(string.IsNullOrEmpty(def.ParentId) ? 0 : 1), def.Id);
                 Assert.That(data.TreeParentId, Is.EqualTo(def.ParentId), def.Id);
             }
 
             Assert.That(PromptB118UpgradeTreeBuilder.Nodes.Length, Is.EqualTo(catalog.Upgrades.Count));
+        }
+
+        [Test]
+        public void CargoChildren_RequireCargoLevelOne_NotHigherDrillLevel()
+        {
+            var catalog = LoadCatalog();
+            Assert.That(catalog.TryGetUpgrade(DataIds.Upgrades.CargoYield, out var yield), Is.True);
+            Assert.That(catalog.TryGetUpgrade(DataIds.Upgrades.CargoGold, out var gold), Is.True);
+            Assert.That(UpgradeUnlockRules.IsUnlocked(yield, StateWithDrill(3)), Is.False);
+            Assert.That(UpgradeUnlockRules.IsUnlocked(gold, StateWithDrill(3)), Is.False);
+            var state = StateWithDrill(1);
+            Assert.That(state.TryRestore(new[]
+            {
+                new UpgradeLevelState(DataIds.Upgrades.DrillSpeed, 1),
+                new UpgradeLevelState(DataIds.Upgrades.MaximumCargo, 1)
+            }), Is.True);
+            Assert.That(UpgradeUnlockRules.IsUnlocked(yield, state), Is.True);
+            Assert.That(UpgradeUnlockRules.IsUnlocked(gold, state), Is.True);
         }
 
         [Test]
@@ -291,7 +335,8 @@ namespace SubTerra.App.Tests.Progression
                 {
                     DataIds.Upgrades.DrillEfficiency,
                     DataIds.Upgrades.MaximumEnergy,
-                    DataIds.Upgrades.MaximumCargo
+                    DataIds.Upgrades.MaximumCargo,
+                    DataIds.Upgrades.DroneScan
                 }));
             Assert.That(wallet.GetOwnedQuantity(DataIds.Minerals.Copper), Is.Zero);
         }
@@ -324,9 +369,9 @@ namespace SubTerra.App.Tests.Progression
 
             Assert.That(snapshot.IsUnlocked, Is.False);
             Assert.That(snapshot.CanAffordNextLevel, Is.False);
-            Assert.That(snapshot.LockedReason, Is.EqualTo("드릴 속도 Lv.2 필요"));
+            Assert.That(snapshot.LockedReason, Is.EqualTo("드릴 속도 Lv.1 필요"));
             Assert.That(snapshot.UnlockRequirementUpgradeId, Is.EqualTo(DataIds.Upgrades.DrillSpeed));
-            Assert.That(snapshot.UnlockRequiredLevel, Is.EqualTo(2));
+            Assert.That(snapshot.UnlockRequiredLevel, Is.EqualTo(1));
         }
 
         [Test]

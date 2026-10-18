@@ -22,14 +22,13 @@ namespace SubTerra.App.Editor.DataValidation
         public const string IntegrationScenePath =
             "Assets/_Project/Scenes/App/Mine_Demo_Integration.unity";
 
-        // 가로는 기존 460의 25%. 세로는 HUD 프레임 하단(-264)과 시설 창 상단(-426) 사이만 쓸 수 있어
-        // 170(25%)이면 시설 창을 덮으므로, 그 틈에 들어가는 154로 둔다.
+        // 압축한 HUD 아래에 배치한다. 긴 설명은 클릭해서 여는 기존 상세창에서 확인한다.
         public const float SummaryCardX = 16f;
-        public const float SummaryCardY = -268f;
-        public const float SummaryCardWidth = 575f;
-        public const float SummaryCardHeight = 154f;
-        public const float SummaryHeaderInset = 56f;
-        public const float SummaryHeaderY = -19f;
+        public const float SummaryCardY = -232f;
+        public const float SummaryCardWidth = 460f;
+        public const float SummaryCardHeight = 116f;
+        public const float SummaryHeaderInset = 36f;
+        public const float SummaryHeaderY = -10f;
         public const float ThumbnailHeight = 236f;
         private const float DetailsW = 880f;
         private const float DetailsH = 718f;
@@ -113,12 +112,12 @@ namespace SubTerra.App.Editor.DataValidation
             Adopt(button.transform, root, "ObjectiveTitle");
             Adopt(button.transform, root, "ObjectiveBody");
 
-            const float headerFont = 21f;
+            const float headerFont = 18f;
             var mission = EnsureLabel(button.transform, "QuestMissionLabel", font);
             Style(mission, headerFont, Cyan, TextAlignmentOptions.MidlineLeft, false);
             mission.fontStyle = FontStyles.Bold;
             mission.characterSpacing = 4f;
-            mission.text = "MISSION";
+            mission.text = "MISSION · 방법 보기";
             Place(mission.rectTransform, SummaryHeaderInset, SummaryHeaderY, 170f, 32f, new Vector2(0f, 1f), new Vector2(0f, 1f));
 
             var marks = EnsureLabel(button.transform, "QuestMissionMarks", font);
@@ -127,25 +126,25 @@ namespace SubTerra.App.Editor.DataValidation
 
             var progress = button.transform.Find("ProgressCount").GetComponent<TMP_Text>();
             Style(progress, headerFont, Color.white, TextAlignmentOptions.MidlineRight, false);
-            Place(progress.rectTransform, -SummaryHeaderInset, SummaryHeaderY, 240f, 32f, new Vector2(1f, 1f), new Vector2(1f, 1f));
+            Place(progress.rectTransform, -SummaryHeaderInset, SummaryHeaderY, 170f, 32f, new Vector2(1f, 1f), new Vector2(1f, 1f));
 
-            const float iconSize = 44f;
+            const float iconSize = 32f;
             var icon = EnsureImage(button.transform, "QuestStatusIcon", QuestSprite("quest-status-ring"));
             icon.preserveAspect = true;
-            Place(icon.rectTransform, SummaryHeaderInset - 4f, -74f, iconSize, iconSize, new Vector2(0f, 1f), new Vector2(0f, 1f));
+            Place(icon.rectTransform, SummaryHeaderInset - 4f, -57f, iconSize, iconSize, new Vector2(0f, 1f), new Vector2(0f, 1f));
 
             var titleX = SummaryHeaderInset - 4f + iconSize + 14f;
             var titleWidth = SummaryCardWidth - titleX - SummaryHeaderInset;
             var title = button.transform.Find("ObjectiveTitle").GetComponent<TMP_Text>();
-            Style(title, 22f, Color.white, TextAlignmentOptions.MidlineLeft, false);
+            Style(title, 20f, Color.white, TextAlignmentOptions.MidlineLeft, false);
             title.fontStyle = FontStyles.Bold;
             title.overflowMode = TextOverflowModes.Ellipsis;
-            Place(title.rectTransform, titleX, -66f, titleWidth, 32f, new Vector2(0f, 1f), new Vector2(0f, 1f));
+            Place(title.rectTransform, titleX, -46f, titleWidth, 34f, new Vector2(0f, 1f), new Vector2(0f, 1f));
 
             var body = button.transform.Find("ObjectiveBody").GetComponent<TMP_Text>();
             Style(body, 16f, new Color(0.85f, 0.93f, 0.96f), TextAlignmentOptions.TopLeft, true);
             body.overflowMode = TextOverflowModes.Ellipsis;
-            Place(body.rectTransform, titleX, -102f, titleWidth, 44f, new Vector2(0f, 1f), new Vector2(0f, 1f));
+            Place(body.rectTransform, titleX, -82f, titleWidth, 26f, new Vector2(0f, 1f), new Vector2(0f, 1f));
             CenterOnFirstLines(icon.rectTransform, title.rectTransform, body);
 
             var nextAction = root.Find("NextAction");

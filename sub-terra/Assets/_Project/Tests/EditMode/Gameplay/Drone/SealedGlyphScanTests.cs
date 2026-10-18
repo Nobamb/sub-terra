@@ -65,8 +65,9 @@ namespace SubTerra.Gameplay.Tests.Drone
                 var visualRoot = typeof(DroneScanPulseView)
                     .GetField("visualRoot", BindingFlags.Instance | BindingFlags.NonPublic)
                     .GetValue(view) as GameObject;
-                var lights = visualRoot.GetComponentsInChildren<UnityEngine.Rendering.Universal.Light2D>();
-                Assert.That(lights.Any(light => ColorsMatch(light.color, new Color(0.18f, 0.92f, 0.88f, 1f))), Is.True);
+                Assert.That(visualRoot.GetComponentsInChildren<UnityEngine.Rendering.Universal.Light2D>(), Is.Empty);
+                var markers = visualRoot.GetComponentsInChildren<SpriteRenderer>();
+                Assert.That(markers.Any(marker => ColorsMatch(marker.color, new Color(0.18f, 0.92f, 0.88f, 0.8f))), Is.True);
                 var glyph = AssetDatabase.LoadAssetAtPath<Sprite>(
                     "Assets/_Project/Art/Tiles/SealedGlyph/sealed_glyph_awakened_01.png");
                 Assert.That(glyph, Is.Not.Null);

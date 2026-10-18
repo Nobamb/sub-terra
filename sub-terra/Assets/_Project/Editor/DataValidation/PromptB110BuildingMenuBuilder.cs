@@ -19,7 +19,7 @@ namespace SubTerra.App.Editor.DataValidation
     {
         public const string BuildingMenuPrefabPath = "Assets/_Project/Prefabs/UI/BuildingMenu.prefab";
 
-        public const float PanelWidth = 528f * 1.1f;
+        public const float PanelWidth = 500f;
         public const float PanelHeight = 560f;
         public const float HeaderHeight = 54f;
         public const float LeftColumnX = 16f;

@@ -8,7 +8,7 @@ namespace SubTerra.Gameplay.Power
         public const float DefaultRadius = 10f;
 
         private const int CircleSegments = 96;
-        private static readonly Color RangeColor = new(0.1f, 0.55f, 1f, 0.78f);
+        private static readonly Color RangeColor = new(0.12f, 0.48f, 0.68f, 0.25f);
 
         [SerializeField, Min(0.1f)] private float radius = DefaultRadius;
         [SerializeField] private LineRenderer rangeLine;
@@ -74,8 +74,8 @@ namespace SubTerra.Gameplay.Power
             rangeLine.useWorldSpace = false;
             rangeLine.loop = true;
             rangeLine.positionCount = CircleSegments;
-            rangeLine.startWidth = 0.08f;
-            rangeLine.endWidth = 0.08f;
+            rangeLine.startWidth = 0.035f;
+            rangeLine.endWidth = 0.035f;
             rangeLine.startColor = RangeColor;
             rangeLine.endColor = RangeColor;
             rangeLine.numCornerVertices = 2;

@@ -7,6 +7,8 @@
     "SubTerra.Gameplay.Building",
     "SubTerra.Gameplay.Snapshot",
     "SubTerra.Gameplay.Mining",
+    "SubTerra.Gameplay.DemoWorld",
+    "SubTerra.Gameplay.Structural",
     "SubTerra.Gameplay.Player",
     "SubTerra.Gameplay.Power",
     "SubTerra.Gameplay.Hazards",

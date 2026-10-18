@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="1" result="Passed" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-10-12 06:33:47Z" end-time="2026-10-12 06:33:50Z" duration="3.0575874">
+  <test-suite type="TestSuite" id="1000" name="sub-terra" fullname="sub-terra" runstate="Runnable" testcasecount="1586" result="Passed" start-time="2026-10-12 06:33:47Z" end-time="2026-10-12 06:33:50Z" duration="3.057587" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="2654" name="SubTerra.App.Tests.EditMode.dll" fullname="C:/Users/jeone/sub-terra/sub-terra/Library/ScriptAssemblies/SubTerra.App.Tests.EditMode.dll" runstate="Runnable" testcasecount="1430" result="Passed" start-time="2026-10-12 06:33:47Z" end-time="2026-10-12 06:33:50Z" duration="3.010975" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="20272" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="2655" name="SubTerra" fullname="SubTerra" runstate="Runnable" testcasecount="1430" result="Passed" start-time="2026-10-12 06:33:47Z" end-time="2026-10-12 06:33:50Z" duration="2.983297" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="2661" name="App" fullname="SubTerra.App" runstate="Runnable" testcasecount="1420" result="Passed" start-time="2026-10-12 06:33:48Z" end-time="2026-10-12 06:33:50Z" duration="2.949865" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="2662" name="Tests" fullname="SubTerra.App.Tests" runstate="Runnable" testcasecount="1420" result="Passed" start-time="2026-10-12 06:33:48Z" end-time="2026-10-12 06:33:50Z" duration="2.916461" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestSuite" id="2663" name="UI" fullname="SubTerra.App.Tests.UI" runstate="Runnable" testcasecount="590" result="Passed" start-time="2026-10-12 06:33:48Z" end-time="2026-10-12 06:33:50Z" duration="2.843464" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-suite type="TestFixture" id="1321" name="PromptB110BuildingMenuTests" fullname="SubTerra.App.Tests.UI.PromptB110BuildingMenuTests" classname="SubTerra.App.Tests.UI.PromptB110BuildingMenuTests" runstate="Runnable" testcasecount="11" result="Passed" start-time="2026-10-12 06:33:49Z" end-time="2026-10-12 06:33:50Z" duration="1.227045" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1322" name="FacilityMoveButton_IsBoundOnceAndFitsInsidePanel" fullname="SubTerra.App.Tests.UI.PromptB110BuildingMenuTests.FacilityMoveButton_IsBoundOnceAndFitsInsidePanel" methodname="FacilityMoveButton_IsBoundOnceAndFitsInsidePanel" classname="SubTerra.App.Tests.UI.PromptB110BuildingMenuTests" runstate="Runnable" seed="1697441375" result="Passed" start-time="2026-10-12 06:33:50Z" end-time="2026-10-12 06:33:50Z" duration="0.281859" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                  <output><![CDATA[Saving results to: C:/Users/jeone/AppData/LocalLow/DefaultCompany/sub-terra\TestResults.xml
+]]></output>
+                </test-case>
+              </test-suite>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

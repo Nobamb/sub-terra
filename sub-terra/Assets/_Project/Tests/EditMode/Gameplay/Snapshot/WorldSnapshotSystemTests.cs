@@ -12,6 +12,19 @@ namespace SubTerra.Gameplay.Snapshot.Tests
 {
     public sealed class WorldSnapshotSystemTests
     {
+        [Test]
+        public void ClinicMovement_PreservesIdentityAndSaveFootprint()
+        {
+            PlacedFacility_JsonRoundTripPreservesIdentityFootprintAndOccupancy("clinic_basic", 2, 2, true);
+        }
+
+        [TestCase("charger_basic", 2, 2)]
+        [TestCase("storage_basic", 1, 1)]
+        public void MovedChargerAndStorage_PreserveIdentityAndSaveFootprint(string assetName, int width, int height)
+        {
+            PlacedFacility_JsonRoundTripPreservesIdentityFootprintAndOccupancy(assetName, width, height, true);
+        }
+
         [TestCase("light_basic")]
         [TestCase("settlement_basic")]
         public void LegacyUtility_RestoreAndRecaptureSaveCanonicalSizeAndKeepIdentity(string assetName)
@@ -291,8 +304,10 @@ namespace SubTerra.Gameplay.Snapshot.Tests
         [TestCase("charger_basic", 2, 2)]
         [TestCase("storage_basic", 1, 1)]
         [TestCase("outpost_core_basic", 2, 2)]
+        [TestCase("light_basic", 1, 2, true)]
+        [TestCase("settlement_basic", 1, 2, true)]
         public void PlacedFacility_JsonRoundTripPreservesIdentityFootprintAndOccupancy(
-            string assetName, int width, int height)
+            string assetName, int width, int height, bool relocate = false)
         {
             var definition = AssetDatabase.LoadAssetAtPath<BuildingPlacementDefinition>(
                 "Assets/_Project/Data/Buildings/Placement/" + assetName + "Placement.asset");
@@ -338,6 +353,32 @@ namespace SubTerra.Gameplay.Snapshot.Tests
                 var result = placement.TryPlaceAt(Vector3Int.zero);
                 Assert.That(result.IsSuccess, Is.True, result.Failure.ToString());
                 Assert.That(wallet.SpendCount, Is.EqualTo(1));
+                var expectedOrigin = Vector3Int.zero;
+                if (relocate)
+                {
+                    var prior = snapshots.CaptureSnapshot();
+                    var priorBuilding = prior.buildings[0];
+                    priorBuilding.level = 7;
+                    priorBuilding.health = 0.55f;
+                    priorBuilding.rotation = 2;
+                    prior.buildings[0] = priorBuilding;
+                    Assert.That(snapshots.RestoreSnapshot(prior), Is.True);
+                    for (int x = 0; x < width; x++)
+                        terrain.SetTile(new Vector3Int(3 + x, -1, 0), ground);
+                    var movingInstance = buildingRoot.GetChild(0).GetComponent<BuildingInstance>();
+                    var powerBefore = movingInstance.GetComponent<PowerNode>();
+                    int demandBefore = powerBefore != null ? powerBefore.Demand : 0;
+                    Assert.That(placement.TryBeginMove(movingInstance), Is.True);
+                    expectedOrigin = new Vector3Int(3, 0, 0);
+                    Assert.That(placement.TryMoveAt(expectedOrigin).IsSuccess, Is.True);
+                    Assert.That(buildingRoot.GetChild(0).GetComponent<BuildingInstance>(), Is.SameAs(movingInstance));
+                    Assert.That(movingInstance.GetComponent<PowerNode>(), Is.SameAs(powerBefore));
+                    if (powerBefore != null)
+                    {
+                        Assert.That(powerBefore.EntityId, Is.EqualTo(movingInstance.InstanceId));
+                        Assert.That(powerBefore.Demand, Is.EqualTo(demandBefore));
+                    }
+                }
                 var original = buildingRoot.GetComponentInChildren<BuildingInstance>();
                 Assert.That(original, Is.Not.Null);
                 Vector3 position = original.transform.position;
@@ -350,8 +391,14 @@ namespace SubTerra.Gameplay.Snapshot.Tests
                 Assert.That(record.buildingTypeId, Is.EqualTo(definition.BuildingId));
                 Assert.That(record.footprintWidth, Is.EqualTo(width));
                 Assert.That(record.footprintHeight, Is.EqualTo(height));
-                Assert.That(record.x, Is.EqualTo(0));
-                Assert.That(record.y, Is.EqualTo(0));
+                Assert.That(record.x, Is.EqualTo(expectedOrigin.x));
+                Assert.That(record.y, Is.EqualTo(expectedOrigin.y));
+                if (relocate)
+                {
+                    Assert.That(record.level, Is.EqualTo(7));
+                    Assert.That(record.health, Is.EqualTo(0.55f));
+                    Assert.That(record.rotation, Is.EqualTo(2));
+                }
 
                 // Includes clearing the original instance; restoration must never spend again.
                 Assert.That(snapshots.RestoreSnapshot(saved), Is.True);
@@ -365,7 +412,7 @@ namespace SubTerra.Gameplay.Snapshot.Tests
                 for (int x = 0; x < width; x++)
                 for (int y = 0; y < height; y++)
                 {
-                    Assert.That(placement.CanPlaceAt(new Vector3Int(x, y, 0), out var failure), Is.False);
+                    Assert.That(placement.CanPlaceAt(expectedOrigin + new Vector3Int(x, y, 0), out var failure), Is.False);
                     Assert.That(failure, Is.EqualTo(BuildingPlacementFailure.Occupied));
                 }
                 var recaptured = snapshots.CaptureSnapshot().buildings;

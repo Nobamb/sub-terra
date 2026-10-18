@@ -10,6 +10,7 @@ using SubTerra.App.Inventory;
 using SubTerra.App.Outpost;
 using SubTerra.App.Progression;
 using SubTerra.App.State;
+using SubTerra.App.Tutorial;
 using SubTerra.App.UI.HUD;
 using SubTerra.App.UI.MainMenu;
 using SubTerra.Shared;
@@ -381,7 +382,8 @@ namespace SubTerra.App.Save
                 return false;
             }
 
-            if (!runLifecycle.CompleteNormalReturn(out reason))
+            if (elevatorTravel.State != ElevatorTravelState.Moving
+                && !runLifecycle.CompleteNormalReturn(out reason))
             {
                 runLifecycle.AbortPendingReturn();
                 return false;
@@ -1043,8 +1045,8 @@ namespace SubTerra.App.Save
             }
 
             var toSurface = destinationScene == SceneNames.SurfaceBase;
-            var sceneLoader = toSurface ? CreateSurfaceSceneLoader() : new UnitySceneLoader();
-            if (!elevatorTravel.TryDepart(sceneLoader, out var departFailure))
+            var sceneLoader = toSurface ? CreateSurfaceSceneLoader(CompleteDeferredElevatorArrival) : new UnitySceneLoader();
+            if (!elevatorTravel.TryDepart(sceneLoader, out var departFailure, sceneLoader is ClockOffSceneLoader))
             {
                 reason = DescribeElevatorFailure(departFailure);
                 return false;
@@ -1061,14 +1063,30 @@ namespace SubTerra.App.Save
         /// 지상으로 가는 Scene 로더. 광산 시계가 켜져 있으면 전원 OFF 연출이 끝난 뒤에 Scene을 로드해
         /// 시계가 지상 도착 이전에 꺼지게 한다. 시계가 없으면 즉시 로드한다.
         /// </summary>
-        public ISceneLoader CreateSurfaceSceneLoader()
+        private void CompleteDeferredElevatorArrival(bool succeeded)
+        {
+            elevatorTravel.CompleteArrival(succeeded);
+            if (!succeeded)
+            {
+                runLifecycle.AbortPendingReturn();
+                LastReturnTarget = default;
+            }
+            else if (runLifecycle.Phase == RunLifecyclePhase.Returning)
+            {
+                runLifecycle.CompleteNormalReturn(out _);
+                // 기존 광산의 Bridge는 씬 전환 때 사라지므로 지연 도착 신호는 영속 런타임에서 보낸다.
+                DemoObjectiveDirector.AdvancePersistedState(boundState, DemoProgressSignal.SurfaceReachedByElevator);
+            }
+        }
+
+        public ISceneLoader CreateSurfaceSceneLoader(Action<bool> completed = null)
         {
             if (Application.isPlaying
                 && mineResetClockOverlay != null
                 && mineResetClockOverlay.IsClockOnScreen
                 && IsMineResetSessionScene(SceneManager.GetActiveScene().name))
             {
-                return new ClockOffSceneLoader(this);
+                return new ClockOffSceneLoader(this, completed);
             }
 
             return new UnitySceneLoader();
@@ -1077,10 +1095,12 @@ namespace SubTerra.App.Save
         private sealed class ClockOffSceneLoader : ISceneLoader
         {
             private readonly SaveRuntimeController owner;
+            private readonly Action<bool> completed;
 
-            public ClockOffSceneLoader(SaveRuntimeController owner)
+            public ClockOffSceneLoader(SaveRuntimeController owner, Action<bool> completed)
             {
                 this.owner = owner;
+                this.completed = completed;
             }
 
             public bool Load(string sceneName)
@@ -1091,18 +1111,22 @@ namespace SubTerra.App.Save
                     return new UnitySceneLoader().Load(sceneName);
                 }
 
-                owner.StartCoroutine(owner.LoadAfterClockOff(sceneName));
+                owner.StartCoroutine(owner.LoadAfterClockOff(sceneName, completed));
                 return true;
             }
         }
 
-        private IEnumerator LoadAfterClockOff(string sceneName)
+        private IEnumerator LoadAfterClockOff(string sceneName, Action<bool> completed)
         {
+            // Load는 접수만 반환한다. 시계가 즉시 꺼져도 호출자의 예약 처리가 끝난 뒤 완료한다.
+            yield return null;
             yield return WaitForClockPowerOff();
-            if (!new UnitySceneLoader().Load(sceneName) && mineResetClockOverlay != null)
+            var succeeded = new UnitySceneLoader().Load(sceneName);
+            if (!succeeded && mineResetClockOverlay != null)
             {
                 mineResetClockOverlay.EndDeparture();
             }
+            completed?.Invoke(succeeded);
         }
 
         // 시계 전원 OFF 연출을 시작하고 끝날 때까지 기다린다. 연출이 멈춰도 이동이 막히지 않게 상한을 둔다.
@@ -1133,6 +1157,8 @@ namespace SubTerra.App.Save
                 {
                     yield return null;
                 }
+
+                if (SceneManager.GetActiveScene().name != waitForScene) yield break;
 
                 yield return null;
             }
