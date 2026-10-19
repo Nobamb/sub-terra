@@ -195,7 +195,7 @@ namespace SubTerra.App.Editor.DataValidation
 
             var quest = Button(content, "QuestButton");
             Place((RectTransform)quest.transform, new Vector2(0.5f, 0.5f), new Vector2(-426f, -145f), new Vector2(386f, 98f));
-            var questIcon = Image(quest.transform, "Icon", Sprite("Assets/_Project/Art/UI/Gameplay/Quest/quest-icon-mission.png"));
+            var questIcon = Image(quest.transform, "Icon", Sprite(ArtPath + "Icons/icon-quest.png"));
             StyleButton(quest, SettingsArt + "button-active-off.png", SettingsArt + "button-active-on.png", new Vector2(386f, 98f), questIcon);
             Label(quest, "퀘스트", 30f, font);
             ButtonIcon(quest, questIcon);

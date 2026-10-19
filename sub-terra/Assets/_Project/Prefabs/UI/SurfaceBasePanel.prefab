@@ -3095,6 +3095,7 @@ MonoBehaviour:
   particleRoot: {fileID: 4176723165971919441}
   particleSprite: {fileID: 21300000, guid: 0525205a8f7ad3349a0c00d1914af559, type: 3}
   spinIconOnHover: 0
+  particleColor: {r: 0.29, g: 0.88, b: 0.95, a: 1}
 --- !u!114 &9149828782998308283
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4244,6 +4245,7 @@ MonoBehaviour:
   particleRoot: {fileID: 5357223590310339356}
   particleSprite: {fileID: 21300000, guid: 0525205a8f7ad3349a0c00d1914af559, type: 3}
   spinIconOnHover: 0
+  particleColor: {r: 0.29, g: 0.88, b: 0.95, a: 1}
 --- !u!114 &4736964668749869188
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8410,6 +8412,7 @@ MonoBehaviour:
   particleRoot: {fileID: 6899370794665482581}
   particleSprite: {fileID: 21300000, guid: 0525205a8f7ad3349a0c00d1914af559, type: 3}
   spinIconOnHover: 0
+  particleColor: {r: 0.29, g: 0.88, b: 0.95, a: 1}
 --- !u!1 &1160678224293259422
 GameObject:
   m_ObjectHideFlags: 0
@@ -9849,6 +9852,7 @@ MonoBehaviour:
   particleRoot: {fileID: 0}
   particleSprite: {fileID: 0}
   spinIconOnHover: 0
+  particleColor: {r: 0.29, g: 0.88, b: 0.95, a: 1}
 --- !u!225 &315876625589713312
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -15191,6 +15195,7 @@ MonoBehaviour:
   particleRoot: {fileID: 5677339460421790101}
   particleSprite: {fileID: 21300000, guid: 0525205a8f7ad3349a0c00d1914af559, type: 3}
   spinIconOnHover: 0
+  particleColor: {r: 0.29, g: 0.88, b: 0.95, a: 1}
 --- !u!1 &2048935907561174418
 GameObject:
   m_ObjectHideFlags: 0
@@ -19012,6 +19017,7 @@ MonoBehaviour:
   particleRoot: {fileID: 8491276132091883145}
   particleSprite: {fileID: 21300000, guid: 0525205a8f7ad3349a0c00d1914af559, type: 3}
   spinIconOnHover: 0
+  particleColor: {r: 0.29, g: 0.88, b: 0.95, a: 1}
 --- !u!1 &2487099891320283156
 GameObject:
   m_ObjectHideFlags: 0
@@ -27515,6 +27521,7 @@ MonoBehaviour:
   particleRoot: {fileID: 1212561849302556366}
   particleSprite: {fileID: 21300000, guid: 0525205a8f7ad3349a0c00d1914af559, type: 3}
   spinIconOnHover: 1
+  particleColor: {r: 0.29, g: 0.88, b: 0.95, a: 1}
 --- !u!114 &5309264947009592514
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -37423,7 +37430,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: c0d0bf78a42f0824391efebc4a0cf9af, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 52ece9f476f6816478d487d47c3531f3, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -39827,6 +39834,7 @@ MonoBehaviour:
   particleRoot: {fileID: 8693186781853118085}
   particleSprite: {fileID: 21300000, guid: 0525205a8f7ad3349a0c00d1914af559, type: 3}
   spinIconOnHover: 0
+  particleColor: {r: 0.29, g: 0.88, b: 0.95, a: 1}
 --- !u!114 &4230281187323941688
 MonoBehaviour:
   m_ObjectHideFlags: 0
