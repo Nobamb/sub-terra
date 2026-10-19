@@ -321,7 +321,7 @@ namespace SubTerra.App.Tests.Tutorial
         }
 
         [Test]
-        public void ClaimLayout_KeepsRewardsAboveFooterAndSurvivesRuntimeRefresh()
+        public void ClaimLayout_KeepsRewardsInFooterAndHintAfterDescription()
         {
             var scene = SceneManager.GetSceneByPath(PromptB951QuestClearRewardUiBuilder.IntegrationScenePath);
             var closeAfter = !scene.IsValid() || !scene.isLoaded;
@@ -337,22 +337,25 @@ namespace SubTerra.App.Tests.Tutorial
                 var hint = (RectTransform)panel.Find("ClaimHint");
                 Assert.That(quest.anchoredPosition.y, Is.EqualTo(-214f));
                 Assert.That(description.anchoredPosition.y, Is.EqualTo(-266f));
-                Assert.That(row.anchoredPosition.y, Is.EqualTo(-340f));
-                Assert.That(fallback.anchoredPosition.y, Is.EqualTo(-318f));
-                Assert.That(hint.anchoredPosition.y, Is.EqualTo(-418f));
+                Assert.That(row.anchoredPosition.y, Is.EqualTo(-420f));
+                Assert.That(fallback.anchoredPosition.y, Is.EqualTo(-398f));
+                Assert.That(hint.anchoredPosition, Is.EqualTo(new Vector2(330f, -302f)));
                 Assert.That(row.sizeDelta, Is.EqualTo(new Vector2(870f, 44f)));
                 Assert.That(hint.GetComponent<TMP_Text>().fontSize, Is.EqualTo(16f));
-                // 프레임 하단 구분선(y=-371) 위에 보상을 두고 안내와 충분히 띄운다.
-                Assert.That(row.anchoredPosition.y - row.sizeDelta.y / 2f, Is.GreaterThan(-371f));
-                Assert.That(row.anchoredPosition.y - row.sizeDelta.y / 2f
-                    - (hint.anchoredPosition.y + hint.sizeDelta.y / 2f), Is.GreaterThanOrEqualTo(40f));
+                Assert.That(hint.GetComponent<TMP_Text>().alignment, Is.EqualTo(TextAlignmentOptions.MidlineLeft));
+                Assert.That(hint.anchorMin, Is.EqualTo(description.anchorMin));
+                Assert.That(hint.pivot, Is.EqualTo(description.pivot));
+                Assert.That(hint.anchoredPosition.y, Is.EqualTo(description.anchoredPosition.y - description.sizeDelta.y));
+                // 보상은 프레임 하단 구분선(y=-371) 아래의 기존 구획 안에 둔다.
+                Assert.That(row.anchoredPosition.y + row.sizeDelta.y / 2f, Is.LessThan(-371f));
+                Assert.That(row.anchoredPosition.y - row.sizeDelta.y / 2f, Is.GreaterThan(-460f));
 
                 row.anchoredPosition = new Vector2(0f, -388f);
                 hint.anchoredPosition = new Vector2(0f, -428f);
                 var view = Find(scene, "DemoObjectiveRoot").GetComponent<DemoObjectiveView>();
                 view.SetClaimText("퀘스트 클리어", "목표", "보상 없음", "닫으면 보상이 지급됩니다.");
-                Assert.That(row.anchoredPosition.y, Is.EqualTo(-340f));
-                Assert.That(hint.anchoredPosition.y, Is.EqualTo(-418f));
+                Assert.That(row.anchoredPosition.y, Is.EqualTo(-420f));
+                Assert.That(hint.anchoredPosition, Is.EqualTo(new Vector2(330f, -302f)));
                 Assert.That(panel.gameObject.activeSelf, Is.False);
                 Assert.That(panel.Find("ClaimCloseButton").GetComponent<Button>().onClick.GetPersistentMethodName(0),
                     Is.EqualTo(nameof(DemoObjectiveView.OnClaimConfirmClicked)));

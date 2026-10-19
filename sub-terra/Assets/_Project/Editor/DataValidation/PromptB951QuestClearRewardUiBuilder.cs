@@ -124,7 +124,7 @@ namespace SubTerra.App.Editor.DataValidation
                 if (type != null) break;
             }
             if (type == null) throw new System.InvalidOperationException("보상 검사 어셈블리가 없습니다.");
-            foreach (var name in new[] { "ClaimLayout_KeepsRewardsAboveFooterAndSurvivesRuntimeRefresh", "Presenter_ShowsClaimPopupOnClear_AndGrantsWhenClosed" })
+            foreach (var name in new[] { "ClaimLayout_KeepsRewardsInFooterAndHintAfterDescription", "Presenter_ShowsClaimPopupOnClear_AndGrantsWhenClosed" })
             {
                 type.GetMethod(name).Invoke(System.Activator.CreateInstance(type), null);
                 Debug.Log("[SubTerra] PASS: " + name);
@@ -169,15 +169,12 @@ namespace SubTerra.App.Editor.DataValidation
             var hint = EnsureText(
                 panel.transform,
                 "ClaimHint",
-                new Vector2(142.5f, DemoObjectiveView.ClaimHintY),
-                new Vector2(840f, 28f),
+                new Vector2(330f, DemoObjectiveView.ClaimHintY),
+                new Vector2(620f, 28f),
                 16f,
-                TextAlignmentOptions.Midline,
+                TextAlignmentOptions.MidlineLeft,
                 font);
             hint.text = "닫으면 보상이 지급됩니다.";
-            hint.rectTransform.anchorMin = hint.rectTransform.anchorMax = new Vector2(0.5f, 1f);
-            hint.rectTransform.pivot = new Vector2(0.5f, 0.5f);
-            hint.rectTransform.anchoredPosition = new Vector2(0f, DemoObjectiveView.ClaimHintY);
             hint.color = new Color(0.83f, 0.94f, 0.96f, 1f);
             var progress = EnsureText(panel.transform, "ClaimProgress", new Vector2(725f, -127f),
                 new Vector2(180f, 48f), 18f, TextAlignmentOptions.MidlineRight, font);

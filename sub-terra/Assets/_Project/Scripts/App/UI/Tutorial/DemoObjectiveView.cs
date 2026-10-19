@@ -653,10 +653,10 @@ namespace SubTerra.App.UI.Tutorial
             }
         }
 
-        public const float ClaimRewardRowY = -340f;
-        public const float ClaimHintY = -418f;
+        public const float ClaimRewardRowY = -420f;
+        public const float ClaimHintY = -302f;
 
-        // 빌더와 실행 중 팝업이 같은 간격을 사용한다. 보상은 본문, 안내는 하단 구획에 둔다.
+        // 빌더와 실행 중 팝업이 같은 간격을 사용한다. 안내는 설명 바로 아래, 보상은 하단 구획에 둔다.
         public static void ApplyClaimLayout(Transform panel)
         {
             if (panel == null) return;
@@ -672,10 +672,11 @@ namespace SubTerra.App.UI.Tutorial
         {
             if (hint == null) return;
             var rect = hint.rectTransform;
-            rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 1f);
-            rect.pivot = new Vector2(0.5f, 0.5f);
-            rect.anchoredPosition = new Vector2(0f, ClaimHintY);
-            rect.sizeDelta = new Vector2(840f, 28f);
+            rect.anchorMin = rect.anchorMax = new Vector2(0f, 1f);
+            rect.pivot = new Vector2(0f, 1f);
+            rect.anchoredPosition = new Vector2(330f, ClaimHintY);
+            rect.sizeDelta = new Vector2(620f, 28f);
+            hint.alignment = TextAlignmentOptions.MidlineLeft;
             hint.fontSize = 16f;
             hint.color = new Color(0.83f, 0.94f, 0.96f, 1f);
         }
