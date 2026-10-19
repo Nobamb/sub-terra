@@ -119,7 +119,8 @@ namespace SubTerra.App.Save
             var source = result.UsedBackup ? slotPaths.Backup : slotPaths.Normal;
             try
             {
-                var status = json.TryDeserialize(fileSystem.ReadAllText(source), out var data);
+                var raw = fileSystem.ReadAllText(source);
+                var status = json.TryDeserialize(raw, out var data);
                 if (status == SaveMigrationStatus.FutureVersion
                     || status == SaveMigrationStatus.InvalidData
                     || data == null)
@@ -143,7 +144,9 @@ namespace SubTerra.App.Save
                     data.savedAtUtc,
                     data.player.gold,
                     data.run.depth,
-                    result.Status);
+                    result.Status,
+                    HasJsonKey(raw, "maximumDepth") ? data.run.maximumDepth : -1,
+                    HasJsonKey(raw, "completedObjectives") ? data.progress.completedObjectives : -1);
             }
             catch
             {
@@ -157,6 +160,13 @@ namespace SubTerra.App.Save
                     0,
                     LoadStatus.IoFailure);
             }
+        }
+
+        // B-150: 파일에 실제로 기록된 값만 메타에 싣는다. 키가 없는 옛 세이브는 -1("-")로 둔다.
+        private static bool HasJsonKey(string raw, string key)
+        {
+            return !string.IsNullOrEmpty(raw)
+                && raw.IndexOf("\"" + key + "\"", StringComparison.Ordinal) >= 0;
         }
 
         private FileLoadStatus TryLoadFile(string path, out RestoredSaveState state)

@@ -421,24 +421,7 @@ namespace SubTerra.App.Editor.DataValidation
             titles.arraySize = headings.Length;
             for (int i = 0; i < headings.Length; i++) titles.GetArrayElementAtIndex(i).objectReferenceValue = headings[i];
             skinData.ApplyModifiedPropertiesWithoutUndo();
-
-            if (view is MainMenuView)
-                SkinMainMenuActionButtons(view.transform);
-        }
-
-        private static void SkinMainMenuActionButtons(Transform root)
-        {
-            var content = root.Find("MenuContent");
-            if (content == null) return;
-            var names = new[] { "ContinueButton", "NewGameButton", "SettingsButton", "QuitButton" };
-            foreach (var name in names)
-            {
-                var buttonTransform = content.Find(name);
-                if (buttonTransform == null) continue;
-                var button = Get<Button>(buttonTransform.gameObject);
-                var rect = (RectTransform)buttonTransform;
-                SkinSpriteButton(button, ButtonOffPath, ButtonOnPath, rect.sizeDelta.x, rect.sizeDelta.y);
-            }
+            // B-150부터 메인 메뉴 이어하기/새 게임/설정/종료 버튼은 PromptB150MainMenuBuilder가 지상 기지 스타일로 만든다.
         }
 
         private static void Label(SerializedObject view, string field, RectTransform card, float x, float y)

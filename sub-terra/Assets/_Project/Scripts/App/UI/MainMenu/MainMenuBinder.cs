@@ -15,6 +15,7 @@ namespace SubTerra.App.UI.MainMenu
 
         private MainMenuPresenter presenter;
         private bool startingNewGame;
+        private bool continuing;
 
         public MainMenuPresenter Presenter => presenter;
         public bool IsBound => presenter != null;
@@ -44,14 +45,18 @@ namespace SubTerra.App.UI.MainMenu
             presenter.StartNewGameConfirmed += OnStartNewGame;
             presenter.QuitConfirmed += OnQuit;
             presenter.SettingsApplied += OnSettingsApplied;
+            presenter.DeleteSlotConfirmed += OnDeleteSlotConfirmed;
 
             view.SlotSelected += presenter.SelectSlot;
-            view.ContinueClicked += presenter.RequestContinue;
+            view.ContinueClicked += OnContinueClicked;
             view.NewGameClicked += OnNewGameClicked;
             view.SettingsClicked += OnSettingsClicked;
             view.QuitClicked += OnQuitClicked;
             view.OverwriteConfirmClicked += OnOverwriteConfirm;
             view.OverwriteCancelClicked += OnOverwriteCancel;
+            view.DeleteSlotClicked += OnDeleteSlotClicked;
+            view.DeleteConfirmClicked += OnDeleteConfirm;
+            view.DeleteCancelClicked += OnDeleteCancel;
             view.SettingsApplyClicked += OnSettingsApply;
             view.SettingsCancelClicked += OnSettingsCancel;
             view.SettingsDefaultsClicked += presenter.ResetSettingsDefaults;
@@ -65,12 +70,15 @@ namespace SubTerra.App.UI.MainMenu
             if (view != null && presenter != null)
             {
                 view.SlotSelected -= presenter.SelectSlot;
-                view.ContinueClicked -= presenter.RequestContinue;
+                view.ContinueClicked -= OnContinueClicked;
                 view.NewGameClicked -= OnNewGameClicked;
                 view.SettingsClicked -= OnSettingsClicked;
                 view.QuitClicked -= OnQuitClicked;
                 view.OverwriteConfirmClicked -= OnOverwriteConfirm;
                 view.OverwriteCancelClicked -= OnOverwriteCancel;
+                view.DeleteSlotClicked -= OnDeleteSlotClicked;
+                view.DeleteConfirmClicked -= OnDeleteConfirm;
+                view.DeleteCancelClicked -= OnDeleteCancel;
                 view.SettingsApplyClicked -= OnSettingsApply;
                 view.SettingsCancelClicked -= OnSettingsCancel;
                 view.SettingsDefaultsClicked -= presenter.ResetSettingsDefaults;
@@ -83,6 +91,7 @@ namespace SubTerra.App.UI.MainMenu
                 presenter.StartNewGameConfirmed -= OnStartNewGame;
                 presenter.QuitConfirmed -= OnQuit;
                 presenter.SettingsApplied -= OnSettingsApplied;
+                presenter.DeleteSlotConfirmed -= OnDeleteSlotConfirmed;
                 presenter.Dispose();
                 presenter = null;
             }
@@ -111,8 +120,10 @@ namespace SubTerra.App.UI.MainMenu
                     var clock = topWindow.GetComponentInParent<MineResetClockOverlay>();
                     if (clock != null && clock.TryClosePopup(topWindow)) return;
                     if (view.IsTopOverwriteWindow(topWindow)) OnOverwriteCancel();
+                    else if (view.IsTopDeleteWindow(topWindow)) OnDeleteCancel();
                 }
                 else if (view.IsOverwriteConfirmVisible) OnOverwriteCancel();
+                else if (view.IsDeleteConfirmVisible) OnDeleteCancel();
             }
         }
 
@@ -123,8 +134,38 @@ namespace SubTerra.App.UI.MainMenu
 
         private void OnNewGameClicked()
         {
-            if (startingNewGame) return;
+            if (startingNewGame || continuing) return;
             presenter?.RequestNewGame();
+        }
+
+        private void OnContinueClicked()
+        {
+            if (startingNewGame || continuing) return;
+            presenter?.RequestContinue();
+        }
+
+        private void OnDeleteSlotClicked(int slotId)
+        {
+            if (startingNewGame || continuing) return;
+            presenter?.RequestDeleteSlot(slotId);
+        }
+
+        private void OnDeleteConfirm()
+        {
+            presenter?.ConfirmDeleteSlot();
+        }
+
+        private void OnDeleteCancel()
+        {
+            presenter?.CancelDeleteSlot();
+        }
+
+        private void OnDeleteSlotConfirmed(int slotId)
+        {
+            // 확인 창을 통과한 경로만 여기에 온다. 실제 삭제는 런타임 세이브 서비스가 한다.
+            var runtime = SaveRuntimeController.Instance;
+            var deleted = runtime != null && runtime.DeleteSlot(slotId);
+            presenter?.CompleteDeleteSlot(slotId, deleted);
         }
 
         private static bool CanOpenSettingsFromEscape()
@@ -195,7 +236,21 @@ namespace SubTerra.App.UI.MainMenu
 
         private void OnContinue(int slotId)
         {
-            SaveRuntimeController.Instance?.BeginContinue(slotId, OnContinueCompleted);
+            if (continuing || startingNewGame) return;
+            continuing = true;
+            // B-150: 카드 번쩍 → TV 꺼짐 연출 뒤 기존 이어하기 흐름을 그대로 탄다.
+            view.PlayExitTransition(() =>
+            {
+                var runtime = SaveRuntimeController.Instance;
+                if (runtime == null)
+                {
+                    continuing = false;
+                    if (view != null) view.CancelExitTransition();
+                    return;
+                }
+
+                runtime.BeginContinue(slotId, OnContinueCompleted);
+            });
         }
 
         private void OnContinueCompleted(ContinueResult result)
@@ -208,6 +263,12 @@ namespace SubTerra.App.UI.MainMenu
             if (result == null || result.IsSuccess)
             {
                 return;
+            }
+
+            continuing = false;
+            if (view != null)
+            {
+                view.CancelExitTransition();
             }
 
             // 로드 실패 후 탐사/지상 Scene에 들어가지 않는다. 오류만 표시.
@@ -225,7 +286,14 @@ namespace SubTerra.App.UI.MainMenu
             var runtime = SaveRuntimeController.Instance;
             if (runtime == null) return;
             startingNewGame = true;
-            if (!runtime.StartNewGame(slotId, confirmOverwrite: true)) startingNewGame = false;
+            view.PlayExitTransition(() =>
+            {
+                if (runtime == null || !runtime.StartNewGame(slotId, confirmOverwrite: true))
+                {
+                    startingNewGame = false;
+                    if (view != null) view.CancelExitTransition();
+                }
+            });
         }
 
         private void OnQuit()
