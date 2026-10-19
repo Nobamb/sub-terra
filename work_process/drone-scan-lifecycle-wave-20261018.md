@@ -17,3 +17,9 @@
 - EditMode DroneSensorUpgradeTests + SealedGlyphScanTests 15/15 PASS (wave-final.xml). 대상 소멸/교체 회수, 빈칸 활성 가스 유지, 근거리 우선 노출, 페이드, 드론 중심, 대각선 도달, 기존 봉인 문양 표시를 검증했다.
 - PlayMode 준비 게이트/선택 UI 바인더 누락/채굴 보상 통합 검사 3/3 PASS (wave-play.xml). 저장은 프로젝트 Temp/DroneScan-20261018에서 격리했다.
 - Windows 실제 화면/취향 검수는 미실행이며 이번 완료 기준에서 제외한다. Unity 자동 변경 설정은 복원했다.
+
+## 최신 main 최종 통합
+- 2026-10-19 main fa2a9db4 통합 후 EditMode15/15, PlayMode3/3 재통과 (wave-main-edit.xml, wave-main-play.xml). 새 드론 터미널/메인 메뉴 연출과 기존 게임플레이 스캔 변경을 함께 컴파일·검증했다.
+- 검토 대상 #196/#198/#199/#200/#204/#205의 모든 15개 PR 쌍을 git merge-tree로 검사해 충돌0. 이는 Git 충돌 검사이며 Windows 실화면 통합 검증을 의미하지 않는다.
+- #198/#200 공통 교훈 기록 충돌도 양쪽 보존으로 정리했다. #198의 v6 저장과 최신 메뉴 검사(v5 고정 조건) 통합은 해당 PR에서 보완해 저장/메뉴64개, 이어하기11개 통과했다.
+- 설정 자동 변경은 복원했다. Windows 실제 화면 검증은 미실행이며 사용자 요청으로 완료 기준에서 제외한다. 모든 PR의 최종 병합은 팀원 검수 후 진행한다.
