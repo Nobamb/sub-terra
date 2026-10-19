@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bb18f72a9f06cfe4fbac63863776fb09, type: 3}
+  m_Name: GameplayCursorSkin
+  m_EditorClassIdentifier: SubTerra.App::SubTerra.App.UI.GameplayCursor.GameplayCursorSkin
+  drillFrames:
+  - {fileID: -1346799105, guid: 628374a6aa4eeab469d32eb0b76165b5, type: 3}
+  - {fileID: -257848135, guid: 628374a6aa4eeab469d32eb0b76165b5, type: 3}
+  - {fileID: -818163485, guid: 628374a6aa4eeab469d32eb0b76165b5, type: 3}
+  - {fileID: 1655832402, guid: 628374a6aa4eeab469d32eb0b76165b5, type: 3}
+  - {fileID: 1722569602, guid: 628374a6aa4eeab469d32eb0b76165b5, type: 3}
+  - {fileID: 207673284, guid: 628374a6aa4eeab469d32eb0b76165b5, type: 3}
+  - {fileID: 74650938, guid: 628374a6aa4eeab469d32eb0b76165b5, type: 3}
+  - {fileID: -2007469949, guid: 628374a6aa4eeab469d32eb0b76165b5, type: 3}
+  clawFrames:
+  - {fileID: 1193242584, guid: b40f70e96a5b80047998cb03570cbbad, type: 3}
+  - {fileID: 1171923192, guid: b40f70e96a5b80047998cb03570cbbad, type: 3}
+  - {fileID: 344774283, guid: b40f70e96a5b80047998cb03570cbbad, type: 3}
+  - {fileID: 375636934, guid: b40f70e96a5b80047998cb03570cbbad, type: 3}
+  drillCellSize: 48
+  clawCellSize: 55
+  tuning:
+    startSpeed: 0.3
+    spinUpPerSecond: 0.45
+    spinDownPerSecond: 0.6
+    minFlickerFps: 9
+    maxFlickerFps: 30
+    jitterPixels: 1.2
+    jitterFrequency: 38
+    swapPulseSeconds: 0.12
+    swapPulseScale: 1.14
+    glowFadePerSecond: 8
+    glowColor: {r: 0.247, g: 0.878, b: 0.816, a: 1}
+    glowAlpha: 0.85
+    glowSize: 22
+    particlesPerSecond: 9
+    particleSize: {x: 2.5, y: 4.5}

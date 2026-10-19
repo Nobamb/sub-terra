@@ -14,7 +14,8 @@
     "SubTerra.Gameplay.Hazards",
     "Unity.InputSystem",
     "Unity.TextMeshPro",
-    "UnityEngine.UI"
+    "UnityEngine.UI",
+    "Unity.2D.Sprite.Editor"
   ],
   "includePlatforms": ["Editor"],
   "excludePlatforms": [],

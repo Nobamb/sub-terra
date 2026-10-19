@@ -5,6 +5,7 @@ using SubTerra.App.Economy;
 using SubTerra.App.UI;
 using SubTerra.App.UI.Building;
 using SubTerra.App.UI.FacilityNameTag;
+using SubTerra.App.UI.GameplayCursor;
 using SubTerra.App.UI.HUD;
 using SubTerra.Gameplay.Building;
 using SubTerra.Gameplay.Player;
@@ -34,7 +35,8 @@ namespace SubTerra.App.Integration
         MonoBehaviour,
         IBuildingPlacementPort,
         IBuildingFacilityMovePort,
-        IBuildingResourceWallet
+        IBuildingResourceWallet,
+        IGameplayCursorStateSource
     {
         [SerializeField] private BuildingPlacementSystem placementSystem;
         [SerializeField] private BuildingPlacementPreview preview;
@@ -57,11 +59,17 @@ namespace SubTerra.App.Integration
         private BuildingInstance hoveredMoveTarget;
         private float moveHoverStarted;
         private int lastPointerPlacementFrame = -1;
+        private bool cursorPickHover;
         public bool IsMoveMode => pickingMoveTarget || (placementSystem != null && placementSystem.IsMoving);
         public bool OwnsPointerInput => IsMoveMode
             || (placementSystem != null && placementSystem.Selection != null)
             || lastPointerPlacementFrame == Time.frameCount;
         public event Action<string> MoveStatusChanged;
+
+        // B-151 커서 연출용 읽기 전용 상태. 이동 안내(우클릭 · 이동)가 뜨는 조건과 같은 시설 호버를 쓴다.
+        public bool CursorMoveMode => IsMoveMode;
+        public bool CursorCarrying => placementSystem != null && placementSystem.IsMoving;
+        public bool CursorHoverGrabbable => pickingMoveTarget ? cursorPickHover : hoveredMoveTarget != null;
 
         public void BeginMoveSelection()
         {
@@ -104,6 +112,7 @@ namespace SubTerra.App.Integration
 
         private void OnEnable()
         {
+            GameplayCursorState.Register(this);
             if (placementSystem != null)
             {
                 placementSystem.BuildingPlaced += OnBuildingPlaced;
@@ -123,6 +132,8 @@ namespace SubTerra.App.Integration
 
             ClearRuntimeSelection();
             HideMoveHoverHint();
+            cursorPickHover = false;
+            GameplayCursorState.Unregister(this);
         }
 
         private void OnDestroy()
@@ -177,9 +188,24 @@ namespace SubTerra.App.Integration
             moveHoverHint.Tick(Time.unscaledDeltaTime);
         }
 
+        /// <summary>메뉴로 옮길 시설을 고르는 중에도 커서 집게가 잡을 수 있는 시설 위에서 열리게 한다.</summary>
+        private void UpdateCursorPickHover()
+        {
+            cursorPickHover = false;
+            if (!pickingMoveTarget || UiPauseGate.IsHeld || placementSystem == null || Mouse.current == null
+                || (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject()))
+                return;
+            var camera = targetCamera != null ? targetCamera : Camera.main;
+            if (camera == null) return;
+            var cursor = Mouse.current.position.ReadValue();
+            var point = camera.ScreenToWorldPoint(new Vector3(cursor.x, cursor.y, -camera.transform.position.z));
+            cursorPickHover = placementSystem.TryGetMovableAt(point, out _, out _);
+        }
+
         private void Update()
         {
             UpdateMoveHoverHint();
+            UpdateCursorPickHover();
             if (UiPauseGate.IsHeld)
             {
                 return;
