@@ -252,8 +252,10 @@ namespace SubTerra.Gameplay.Drone
             if (tile == null || tileResolver == null
                 || !tileResolver.TryResolve(tile, out MiningTileDto definition)) return false;
             if (target.Kind == DroneScanTargetKind.SealedGlyph)
-                return definition.tileId == "tile.locked.signal";
+                return definition.tileId == "tile.locked.signal" && (definition.mineralId ?? string.Empty) == target.MineralId;
             if (definition.tileId == "tile.locked.signal") return false;
+            if ((definition.mineralId ?? string.Empty) != target.MineralId || (definition.goldDrop > 0) != target.HasGold)
+                return false;
             return target.Kind == DroneScanTargetKind.GoldDrop
                 ? definition.goldDrop > 0
                 : definition.goldDrop <= 0 && !string.IsNullOrWhiteSpace(definition.mineralId);
@@ -303,10 +305,18 @@ namespace SubTerra.Gameplay.Drone
                 var cell = new Vector3Int(x, y, center.z);
                 if (kinds.TryGetValue(cell, out DroneScanTargetKind kind))
                 {
+                    var mineralId = string.Empty;
+                    var hasGold = false;
+                    var tile = foregroundTilemap.GetTile(cell);
+                    if (tile != null && tileResolver != null && tileResolver.TryResolve(tile, out var definition))
+                    {
+                        mineralId = definition.mineralId;
+                        hasGold = definition.goldDrop > 0;
+                    }
                     results.Add(new DroneScanTarget(
                         cell,
                         foregroundTilemap.GetCellCenterWorld(cell),
-                        kind));
+                        kind, mineralId, hasGold));
                 }
             }
         }

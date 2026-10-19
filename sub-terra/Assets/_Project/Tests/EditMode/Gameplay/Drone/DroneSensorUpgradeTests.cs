@@ -129,7 +129,7 @@ namespace SubTerra.Gameplay.Tests.Drone
                 var root = (GameObject)typeof(DroneScanPulseView).GetField("visualRoot",
                     BindingFlags.Instance | BindingFlags.NonPublic).GetValue(view);
                 var marker = root.GetComponentsInChildren<SpriteRenderer>()
-                    .Single(renderer => renderer.transform.position.x == 3f);
+                    .Single(renderer => renderer.name.StartsWith("DroneScanMarker_") && renderer.transform.position.x == 3f);
                 float alpha = marker.color.a;
                 view.Tick(9f);
                 Assert.That(marker.color.a, Is.LessThan(alpha));
@@ -252,15 +252,16 @@ namespace SubTerra.Gameplay.Tests.Drone
             Assert.That(view.ActiveLightCount, Is.EqualTo(initialLightCount));
         }
 
-        [Test]
-        public void PromptB100_GoldRockAndOreUseYellowAndOverrideGas()
+        [TestCase("")]
+        [TestCase(null)]
+        public void GoldRockUsesYellow_AndGoldOreKeepsResourceColorWithYellowAccent(string emptyMineralId)
         {
             using var world = new SensorWorld(7f);
             var goldRock = new Vector3Int(1, 0, 0);
             var goldOre = new Vector3Int(2, 0, 0);
             var ordinaryOre = new Vector3Int(-7, -7, 0);
             world.PlaceGas(goldRock);
-            world.PlaceMineral(goldRock, "", 20);
+            world.PlaceMineral(goldRock, emptyMineralId, 20);
             world.PlaceMineral(goldOre, "mineral.copper", 50);
             world.PlaceMineral(ordinaryOre, "mineral.copper");
             world.Sensor.TickScanPulse(0);
@@ -274,8 +275,95 @@ namespace SubTerra.Gameplay.Tests.Drone
             var markers = visual.GetComponentsInChildren<SpriteRenderer>();
             Assert.That(markers.Count(m => m.name.StartsWith("DroneScanMarker_")
                 && m.color.r == 1f && m.color.g == 0.82f && m.color.b == 0.18f
-                && m.color.a > 0f && m.color.a <= 0.8f), Is.EqualTo(2));
+                && m.color.a > 0f && m.color.a <= 0.8f), Is.EqualTo(1));
+            Assert.That(markers.Any(m => m.name == "GoldAccent" && m.color.a > 0f
+                && m.color.r == 1f && m.color.g == 0.82f), Is.True);
+            Assert.That(world.Sensor.LastPulseTargets.Single(t => t.Cell == goldOre).MineralId,
+                Is.EqualTo("mineral.copper"));
         }
+
+        [Test]
+        public void Reticle_FocusesFlashesAndExpandsOnExit_WithHollowCornersAndCross()
+        {
+            var host = new GameObject("ReticleFocus");
+            try
+            {
+                var view = host.AddComponent<DroneScanPulseView>();
+                view.Show(new[] { new DroneScanTarget(Vector3Int.zero, Vector3.zero,
+                    DroneScanTargetKind.Mineral, "mineral.copper") }, Vector3.zero, 3, 10f, 0f);
+                var marker = ScanVisual(view).GetComponentsInChildren<SpriteRenderer>()
+                    .Single(renderer => renderer.name.StartsWith("DroneScanMarker_"));
+                var texture = marker.sprite.texture;
+                Assert.That(texture.GetPixel(32, 32).a, Is.Zero, "Center stays hollow.");
+                Assert.That(texture.GetPixel(3, 3).a, Is.EqualTo(1f));
+                Assert.That(texture.GetPixel(20, 20).a, Is.EqualTo(1f));
+                Assert.That(texture.GetPixel(3, 30).a, Is.Zero, "Corners do not become a solid box.");
+                view.Tick(0.04f);
+                Assert.That(marker.transform.localScale.x, Is.GreaterThan(1f));
+                view.Tick(0.16f);
+                Assert.That(marker.transform.localScale.x, Is.EqualTo(1f).Within(0.001f));
+                Assert.That(marker.color.g, Is.GreaterThan(0.9f), "Focus produces a brief white flash.");
+                view.Tick(0.4f);
+                Assert.That(marker.color.g, Is.EqualTo(0.45f).Within(0.001f));
+                view.Tick(9.95f);
+                Assert.That(marker.transform.localScale.x, Is.GreaterThan(1.1f));
+                Assert.That(marker.color.a, Is.LessThan(0.2f));
+                view.Tick(10f);
+                Assert.That(view.ActiveMarkerCount, Is.Zero);
+            }
+            finally { Object.DestroyImmediate(host); }
+        }
+
+        [Test]
+        public void ResourceColorsAndFuelSparks_ResetWhenMarkerPoolIsReused()
+        {
+            var host = new GameObject("ReticleColors");
+            try
+            {
+                var view = host.AddComponent<DroneScanPulseView>();
+                var ids = new[] { "mineral.copper", "mineral.iron", "mineral.lithium", "item.rare.engine_fuel" };
+                var colors = new Color[ids.Length];
+                for (int index = 0; index < ids.Length; index++)
+                {
+                    view.Show(new[] { new DroneScanTarget(Vector3Int.zero, Vector3.zero,
+                        DroneScanTargetKind.Mineral, ids[index], true) }, Vector3.zero, 3, 10f, 0f);
+                    view.Tick(0.4f);
+                    colors[index] = ScanVisual(view).GetComponentsInChildren<SpriteRenderer>()
+                        .Single(renderer => renderer.name.StartsWith("DroneScanMarker_")).color;
+                }
+                Assert.That(colors[0].r, Is.GreaterThan(colors[0].g));
+                Assert.That(Mathf.Abs(colors[1].r - colors[1].b), Is.LessThan(0.15f));
+                Assert.That(colors[2].b, Is.GreaterThan(colors[2].r));
+                Assert.That(colors[3].g, Is.GreaterThan(colors[3].b));
+                Assert.That(ScanVisual(view).GetComponentsInChildren<SpriteRenderer>()
+                    .Count(renderer => renderer.name.StartsWith("FuelSpark_")), Is.EqualTo(3));
+                view.Show(new[] { new DroneScanTarget(Vector3Int.zero, Vector3.zero,
+                    DroneScanTargetKind.Mineral, "mineral.iron") }, Vector3.zero, 3, 10f, 0f);
+                view.Tick(0.4f);
+                Assert.That(ScanVisual(view).GetComponentsInChildren<SpriteRenderer>()
+                    .Any(renderer => renderer.name == "GoldAccent" || renderer.name.StartsWith("FuelSpark_")), Is.False);
+                view.Clear();
+                Assert.That(ScanVisual(view).GetComponentsInChildren<SpriteRenderer>()
+                    .Any(renderer => renderer.enabled), Is.False);
+            }
+            finally { Object.DestroyImmediate(host); }
+        }
+
+        [Test]
+        public void ResourceReplacement_ClearsPreviousReticleEvenWhenBothTilesAreMinerals()
+        {
+            using var world = new SensorWorld(3f);
+            var cell = Vector3Int.right;
+            world.PlaceMineral(cell, "mineral.copper");
+            world.Sensor.TickScanPulse(0f);
+            world.Sensor.TickScanPulse(0.8f);
+            world.PlaceMineral(cell, "mineral.iron");
+            world.Sensor.TickScanPulse(0.9f);
+            Assert.That(world.Sensor.ScanPulseView.ActiveMarkerCount, Is.Zero);
+        }
+
+        private static GameObject ScanVisual(DroneScanPulseView view) =>
+            (GameObject)typeof(DroneScanPulseView).GetField("visualRoot", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(view);
 
         [TestCase(3f)]
         [TestCase(7f)]

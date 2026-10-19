@@ -13,7 +13,7 @@ namespace SubTerra.Gameplay.Tests.Drone
     public sealed class SealedGlyphScanTests
     {
         [Test]
-        public void LockedSignal_UsesCyanScanKind_NotMineralWhite()
+        public void LockedSignal_UsesFuelReticleAndPreservesSealedGlyphKind()
         {
             var root = new GameObject("SealedGlyphScanTests");
             try
@@ -68,7 +68,8 @@ namespace SubTerra.Gameplay.Tests.Drone
                     .GetValue(view) as GameObject;
                 Assert.That(visualRoot.GetComponentsInChildren<UnityEngine.Rendering.Universal.Light2D>(), Is.Empty);
                 var markers = visualRoot.GetComponentsInChildren<SpriteRenderer>();
-                Assert.That(markers.Any(marker => ColorsMatch(marker.color, new Color(0.18f, 0.92f, 0.88f, 0.8f))), Is.True);
+                Assert.That(markers.Any(marker => marker.name.StartsWith("DroneScanMarker_")
+                    && ColorsMatch(marker.color, new Color(0.45f, 1f, 0.65f, 0.8f))), Is.True);
                 var glyph = AssetDatabase.LoadAssetAtPath<Sprite>(
                     "Assets/_Project/Art/Tiles/SealedGlyph/sealed_glyph_awakened_01.png");
                 Assert.That(glyph, Is.Not.Null);
