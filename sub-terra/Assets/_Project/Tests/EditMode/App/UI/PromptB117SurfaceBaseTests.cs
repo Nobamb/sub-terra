@@ -17,6 +17,21 @@ namespace SubTerra.App.Tests.UI
         private const string PrefabPath = "Assets/_Project/Prefabs/UI/SurfaceBasePanel.prefab";
 
         [Test]
+        public void QuestIcon_UsesSurfaceSetAssetWithoutChangingLayout()
+        {
+            var root = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath);
+            var quest = (RectTransform)root.transform.Find("SurfaceBaseContent/QuestButton");
+            var icon = quest.Find("Icon").GetComponent<Image>();
+            Assert.That(AssetDatabase.GetAssetPath(icon.sprite),
+                Is.EqualTo("Assets/_Project/Art/UI/SurfaceBase/Icons/icon-quest.png"));
+            Assert.That(icon.preserveAspect, Is.True);
+            Assert.That(icon.GetComponent<LayoutElement>().preferredWidth, Is.EqualTo(50f));
+            Assert.That(icon.rectTransform.sizeDelta.y, Is.EqualTo(50f));
+            Assert.That(quest.sizeDelta, Is.EqualTo(new Vector2(386f, 98f)));
+            Assert.That(quest.anchoredPosition, Is.EqualTo(new Vector2(-426f, -145f)));
+        }
+
+        [Test]
         public void QuestActions_UseEqualSizeAndSpacing()
         {
             var content = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath).transform.Find("SurfaceBaseContent");
