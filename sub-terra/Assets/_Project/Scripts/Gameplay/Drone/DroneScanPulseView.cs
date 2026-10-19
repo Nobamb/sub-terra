@@ -20,10 +20,12 @@ namespace SubTerra.Gameplay.Drone
             public GameObject Root;
             public SpriteRenderer Renderer;
             public DroneScanTarget Target;
+            public Color Color;
+            public float RevealAt;
         }
 
         private readonly List<PooledMarker> pool = new();
-        private readonly Dictionary<Vector3Int, DroneScanTargetKind> activeTargets = new();
+        private readonly Dictionary<Vector3Int, PooledMarker> activeTargets = new();
         private GameObject visualRoot;
         private SpriteRenderer rangeRing;
         private Texture2D ringTexture;
@@ -32,6 +34,9 @@ namespace SubTerra.Gameplay.Drone
         private Sprite markerSprite;
         private float expiresAt;
         private float ringExpiresAt;
+        private float pulseStartedAt;
+        private float growthEndsAt;
+        private float ringEndRadius;
         private int activeCount;
         private Func<DroneScanTarget, bool> targetIsValid;
 
@@ -61,7 +66,7 @@ namespace SubTerra.Gameplay.Drone
                 marker.Root.transform.position = target.WorldPosition + Vector3.back * 0.1f;
                 marker.Root.SetActive(true);
                 ApplyKind(marker, target.Kind);
-                activeTargets[target.Cell] = target.Kind;
+                activeTargets[target.Cell] = marker;
             }
 
             for (int index = activeCount; index < pool.Count; index++)
@@ -70,13 +75,33 @@ namespace SubTerra.Gameplay.Drone
             }
 
             expiresAt = nextExpiresAt;
-            ShowRangeRing(center, radius);
+            pulseStartedAt = currentTime;
+            growthEndsAt = currentTime + Mathf.Max(0.1f, ringDuration) * 0.65f;
+            ringEndRadius = Mathf.Max(0.15f, radius);
+            // 논리 스캔은 기존 격자 반경을 유지한다. 드론에서 가장 먼 감지 칸도 파동이 지난다.
+            for (int index = 0; index < activeCount; index++)
+                ringEndRadius = Mathf.Max(ringEndRadius, Vector2.Distance(center, pool[index].Target.WorldPosition));
+            for (int index = 0; index < activeCount; index++)
+            {
+                var marker = pool[index];
+                float distance = Vector2.Distance(center, marker.Target.WorldPosition);
+                marker.RevealAt = currentTime + (growthEndsAt - currentTime)
+                    * Mathf.InverseLerp(0.15f, ringEndRadius, distance);
+            }
+            ShowRangeRing(center, radius > 0 ? 0.15f : 0f);
             ringExpiresAt = currentTime + Mathf.Max(0.1f, ringDuration);
+            UpdateMarkerVisuals(currentTime);
         }
 
         public bool TryGetActiveTarget(Vector3Int cell, out DroneScanTargetKind kind)
         {
-            return activeTargets.TryGetValue(cell, out kind);
+            if (activeTargets.TryGetValue(cell, out var marker) && marker.Renderer.color.a > 0f)
+            {
+                kind = marker.Target.Kind;
+                return true;
+            }
+            kind = default;
+            return false;
         }
 
         public void Tick(float currentTime)
@@ -93,8 +118,23 @@ namespace SubTerra.Gameplay.Drone
             }
             else if (rangeRing != null && rangeRing.gameObject.activeSelf)
             {
-                float remaining = Mathf.Clamp01((ringExpiresAt - currentTime) / Mathf.Max(0.1f, ringDuration));
-                rangeRing.color = new Color(0.35f, 0.72f, 0.8f, 0.22f * remaining);
+                float expansion = Mathf.InverseLerp(pulseStartedAt, growthEndsAt, currentTime);
+                rangeRing.transform.localScale = Vector3.one * Mathf.Lerp(0.15f, ringEndRadius, expansion);
+                float remaining = 1f - Mathf.InverseLerp(growthEndsAt, ringExpiresAt, currentTime);
+                rangeRing.color = new Color(0.35f, 0.72f, 0.8f, 0.45f * remaining);
+            }
+            UpdateMarkerVisuals(currentTime);
+        }
+
+        private void UpdateMarkerVisuals(float currentTime)
+        {
+            float fade = Mathf.Clamp01((expiresAt - currentTime) / Mathf.Max(0.001f, expiresAt - growthEndsAt));
+            for (int index = 0; index < activeCount; index++)
+            {
+                var marker = pool[index];
+                float reveal = Mathf.Clamp01((currentTime - marker.RevealAt) / 0.1f);
+                var color = marker.Color;
+                marker.Renderer.color = new Color(color.r, color.g, color.b, 0.8f * reveal * fade);
             }
         }
 
@@ -161,7 +201,8 @@ namespace SubTerra.Gameplay.Drone
                 DroneScanTargetKind.SealedGlyph => sealedGlyphColor,
                 _ => mineralColor
             };
-            marker.Renderer.color = new Color(color.r, color.g, color.b, 0.8f);
+            marker.Color = color;
+            marker.Renderer.color = new Color(color.r, color.g, color.b, 0f);
         }
 
         private Sprite ResolveMarkerSprite()
@@ -185,12 +226,13 @@ namespace SubTerra.Gameplay.Drone
             return markerSprite;
         }
 
-        private void ShowRangeRing(Vector3 center, int radius)
+        private void ShowRangeRing(Vector3 center, float radius)
         {
-            if (rangeRing == null || radius <= 0) return;
+            if (rangeRing == null) return;
+            if (radius <= 0) { rangeRing.gameObject.SetActive(false); return; }
             rangeRing.transform.position = center + Vector3.back * 0.05f;
             rangeRing.transform.localScale = Vector3.one * radius;
-            rangeRing.color = new Color(0.35f, 0.72f, 0.8f, 0.22f);
+            rangeRing.color = new Color(0.35f, 0.72f, 0.8f, 0.45f);
             rangeRing.gameObject.SetActive(true);
         }
 
@@ -223,7 +265,7 @@ namespace SubTerra.Gameplay.Drone
             ringObject.transform.SetParent(visualRoot.transform, true);
             rangeRing = ringObject.AddComponent<SpriteRenderer>();
             rangeRing.sprite = ringSprite;
-            rangeRing.sortingOrder = 8;
+            rangeRing.sortingOrder = 94;
             ringObject.SetActive(false);
         }
 

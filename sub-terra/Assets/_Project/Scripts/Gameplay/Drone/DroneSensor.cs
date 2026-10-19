@@ -232,9 +232,7 @@ namespace SubTerra.Gameplay.Drone
 
             CollectPulseTargets(radius, lastPulseTargets);
             EnsurePulseView();
-            Vector3 center = foregroundTilemap != null
-                ? foregroundTilemap.GetCellCenterWorld(foregroundTilemap.WorldToCell(GetPlayerPosition()))
-                : GetPlayerPosition();
+            Vector3 center = transform.position;
             pulseView.Show(
                 lastPulseTargets,
                 center,

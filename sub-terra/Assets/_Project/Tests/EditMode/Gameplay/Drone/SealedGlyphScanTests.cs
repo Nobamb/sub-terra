@@ -53,6 +53,7 @@ namespace SubTerra.Gameplay.Tests.Drone
                 tilemap.SetTile(new Vector3Int(1, 0, 0), tile);
 
                 sensor.TickScanPulse(0f);
+                sensor.TickScanPulse(0.7f);
                 Assert.That(sensor.LastPulseTargets.Count, Is.EqualTo(1));
                 Assert.That(sensor.LastPulseTargets[0].Kind, Is.EqualTo(DroneScanTargetKind.SealedGlyph));
                 Assert.That(sensor.CaptureContext().NearbyMineralIds, Does.Contain("item.rare.engine_fuel"));
@@ -83,6 +84,7 @@ namespace SubTerra.Gameplay.Tests.Drone
                 TickVisual(presentation);
                 Assert.That(overlay.enabled, Is.False);
                 sensor.TickScanPulse(sensor.PulseInterval);
+                sensor.TickScanPulse(sensor.PulseInterval + 0.7f);
                 TickVisual(presentation);
                 Assert.That(overlay.enabled, Is.True);
                 tilemap.SetTile(new Vector3Int(1, 0, 0), null);
