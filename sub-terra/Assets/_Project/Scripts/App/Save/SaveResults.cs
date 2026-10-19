@@ -78,6 +78,10 @@ namespace SubTerra.App.Save
         public long SavedAtUtc { get; }
         public int Gold { get; }
         public int Depth { get; }
+        /// <summary>B-150: 세이브 파일에 기록된 최대 깊이. 옛 세이브에 값이 없으면 -1.</summary>
+        public int MaximumDepth { get; }
+        /// <summary>B-150: 완료한 데모 목표 수. 옛 세이브에 값이 없으면 -1.</summary>
+        public int CompletedObjectives { get; }
         /// <summary>Phase K Load 결과. 빈/정상/백업/손상 구분을 Main Menu가 그대로 쓴다.</summary>
         public LoadStatus LoadStatus { get; }
 
@@ -94,7 +98,9 @@ namespace SubTerra.App.Save
             long savedAtUtc,
             int gold,
             int depth,
-            LoadStatus loadStatus = LoadStatus.NotFound)
+            LoadStatus loadStatus = LoadStatus.NotFound,
+            int maximumDepth = -1,
+            int completedObjectives = -1)
         {
             SlotId = slotId;
             HasSave = hasSave;
@@ -104,6 +110,8 @@ namespace SubTerra.App.Save
             Gold = gold;
             Depth = depth;
             LoadStatus = loadStatus;
+            MaximumDepth = maximumDepth;
+            CompletedObjectives = completedObjectives;
         }
     }
 }
