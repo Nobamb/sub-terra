@@ -514,6 +514,8 @@ namespace SubTerra.App.Tests.UI.MainMenu
             public void SetVersionLabel(string version) { }
             public void SetMessage(string message) => Message = message;
             public void SetQuitBlockedMessage(string message) => Message = message;
+            public void SetSlotKind(int slotId, SaveSlotCardKind kind) { }
+            public void SetDeleteConfirmVisible(bool visible, int slotId) { }
         }
 
         private sealed class RecordingSurfaceView : ISurfaceBaseView

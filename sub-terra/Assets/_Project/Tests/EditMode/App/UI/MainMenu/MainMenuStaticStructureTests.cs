@@ -104,8 +104,10 @@ namespace SubTerra.App.Tests.UI.MainMenu
                 var selection = slot.Find("Selection");
                 Assert.That(selection, Is.Not.Null);
                 Assert.That(selection.Find("InnerGlow"), Is.Not.Null);
-                Assert.That(selection.Find("CornerBrackets"), Is.Not.Null);
-                Assert.That(selection.Find("TriangleSelector"), Is.Not.Null);
+                // B-150: 선택 표시는 자석 철제 프레임 하나로 통일(화살표·코너 브래킷 제거).
+                Assert.That(selection.Find("CornerBrackets"), Is.Null);
+                Assert.That(selection.Find("TriangleSelector"), Is.Null);
+                Assert.That(slot.Find("MagnetFrame"), Is.Not.Null);
             }
 
             // Visual Snapshot Capture for verification
@@ -160,7 +162,7 @@ namespace SubTerra.App.Tests.UI.MainMenu
             var content = prefab.transform.Find("MenuContent");
             Assert.That(content, Is.Not.Null);
 
-            // 1. 슬롯 코너 브라켓 두께 3px 및 Navigation.Mode.None 검증
+            // 1. Navigation.Mode.None 검증. B-150부터 코너 브래킷 대신 자석 철제 프레임 6조각을 쓴다.
             for (var i = 1; i <= 3; i++)
             {
                 var slot = content.Find("Slot" + i);
@@ -170,26 +172,9 @@ namespace SubTerra.App.Tests.UI.MainMenu
 
                 var selection = slot.Find("Selection");
                 Assert.That(selection, Is.Not.Null);
-                var brackets = selection.Find("CornerBrackets");
-                Assert.That(brackets, Is.Not.Null);
-
-                var tlH = brackets.Find("TL_H") as RectTransform;
-                var tlV = brackets.Find("TL_V") as RectTransform;
-                var trH = brackets.Find("TR_H") as RectTransform;
-                var trV = brackets.Find("TR_V") as RectTransform;
-                var blH = brackets.Find("BL_H") as RectTransform;
-                var blV = brackets.Find("BL_V") as RectTransform;
-                var brH = brackets.Find("BR_H") as RectTransform;
-                var brV = brackets.Find("BR_V") as RectTransform;
-
-                Assert.That(tlH.sizeDelta.y, Is.EqualTo(3f));
-                Assert.That(tlV.sizeDelta.x, Is.EqualTo(3f));
-                Assert.That(trH.sizeDelta.y, Is.EqualTo(3f));
-                Assert.That(trV.sizeDelta.x, Is.EqualTo(3f));
-                Assert.That(blH.sizeDelta.y, Is.EqualTo(3f));
-                Assert.That(blV.sizeDelta.x, Is.EqualTo(3f));
-                Assert.That(brH.sizeDelta.y, Is.EqualTo(3f));
-                Assert.That(brV.sizeDelta.x, Is.EqualTo(3f));
+                Assert.That(selection.Find("CornerBrackets"), Is.Null);
+                foreach (var piece in PromptB150MainMenuBuilder.FramePieceNames)
+                    Assert.That(slot.Find("MagnetFrame/" + piece), Is.Not.Null, piece);
             }
 
             // 2. Sub-Terra 타이틀: 중앙 청록색 그림자 레이어 & TitleGlow Shadow 컴포넌트 검증
