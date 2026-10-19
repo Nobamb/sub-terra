@@ -13,7 +13,77 @@ namespace SubTerra.Gameplay.Tests.Drone
     public sealed class DroneSensorUpgradeTests
     {
         [Test]
-        public void ScanRing_FadesAndExpiresWithoutChangingRadius()
+        public void FirstPulse_WaitsForRestoredWorld_AndDisablingClearsExistingMarkers()
+        {
+            using var world = new SensorWorld(3f);
+            var cell = new Vector3Int(1, 0, 0);
+            world.PlaceMineral(cell, "mineral.copper");
+            world.Sensor.SetScanWorldReady(false);
+            world.Sensor.TickScanPulse(0f);
+            Assert.That(world.Sensor.ScanPulseView, Is.Null);
+
+            world.RemoveTile(cell); // 월드 복원이 저장된 채굴 흔적을 적용한 상황.
+            world.Sensor.SetScanWorldReady(true);
+            world.Sensor.TickScanPulse(1f);
+            Assert.That(world.Sensor.LastPulseTargets, Is.Empty);
+            Assert.That(world.Sensor.ScanPulseView.ActiveMarkerCount, Is.Zero);
+
+            world.PlaceMineral(cell, "mineral.iron");
+            world.Sensor.TickScanPulse(31f);
+            Assert.That(world.Sensor.ScanPulseView.ActiveMarkerCount, Is.EqualTo(1));
+            world.Sensor.SetScanWorldReady(false);
+            Assert.That(world.Sensor.ScanPulseView.ActiveMarkerCount, Is.Zero);
+            Assert.That(world.Sensor.ScanPulseView.IsRingVisible, Is.False);
+        }
+
+        [Test]
+        public void RemovedMineral_ClearsMarkerBeforePulseExpires()
+        {
+            using var world = new SensorWorld(3f);
+            var cell = new Vector3Int(1, 0, 0);
+            world.PlaceMineral(cell, "mineral.copper");
+            world.Sensor.TickScanPulse(0f);
+            world.Sensor.TickScanPulse(0.7f);
+            var view = world.Sensor.ScanPulseView;
+            Assert.That(view.TryGetActiveTarget(cell, out _), Is.True);
+
+            world.RemoveTile(cell);
+            world.Sensor.TickScanPulse(0.8f);
+
+            Assert.That(view.TryGetActiveTarget(cell, out _), Is.False,
+                "Mining, collapse and world restore must not leave an ore marker on an empty cell.");
+            Assert.That(view.ActiveMarkerCount, Is.Zero);
+        }
+
+        [Test]
+        public void MineralReplacedByRock_ClearsOldMarker()
+        {
+            using var world = new SensorWorld(3f);
+            var cell = new Vector3Int(1, 0, 0);
+            world.PlaceMineral(cell, "mineral.copper");
+            world.Sensor.TickScanPulse(0f);
+            world.Sensor.TickScanPulse(0.7f);
+            world.PlaceRock(cell);
+            world.Sensor.TickScanPulse(0.8f);
+            Assert.That(world.Sensor.ScanPulseView.TryGetActiveTarget(cell, out _), Is.False);
+        }
+
+        [Test]
+        public void ActiveGas_RemainsMarkedAfterSourceTileIsRemoved()
+        {
+            using var world = new SensorWorld(7f);
+            var cell = new Vector3Int(1, 0, 0);
+            world.PlaceGas(cell);
+            world.Sensor.TickScanPulse(0f);
+            world.Sensor.TickScanPulse(0.7f);
+            world.RemoveTile(cell);
+            world.Sensor.TickScanPulse(0.8f);
+            Assert.That(world.Sensor.ScanPulseView.TryGetActiveTarget(cell, out var kind), Is.True);
+            Assert.That(kind, Is.EqualTo(DroneScanTargetKind.GasHazard));
+        }
+
+        [Test]
+        public void ScanRing_ExpandsThenFadesAndExpires()
         {
             var host = new GameObject("ScanRingLifetime");
             try
@@ -24,14 +94,69 @@ namespace SubTerra.Gameplay.Tests.Drone
                     .GetField("visualRoot", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(view);
                 var ring = root.transform.Find("DroneScanRangeRing").GetComponent<SpriteRenderer>();
                 float initialAlpha = ring.color.a;
-                Assert.That(initialAlpha, Is.InRange(0.1f, 0.25f));
-                view.Tick(0.45f);
+                Assert.That(initialAlpha, Is.InRange(0.3f, 0.5f));
+                Assert.That(ring.transform.localScale.x, Is.EqualTo(0.15f));
+                view.Tick(0.25f);
+                Assert.That(ring.transform.localScale.x, Is.InRange(0.16f, 6.99f));
+                view.Tick(0.75f);
                 Assert.That(ring.color.a, Is.LessThan(initialAlpha));
                 Assert.That(ring.transform.localScale.x, Is.EqualTo(7f));
+                Assert.That(ring.sortingOrder, Is.GreaterThan(10), "Ring must draw over the terrain.");
                 view.Tick(1f);
                 Assert.That(view.IsRingVisible, Is.False);
             }
             finally { Object.DestroyImmediate(host); }
+        }
+
+        [Test]
+        public void Wave_RevealsNearbyTargetsBeforeDistantOnes_ThenFades()
+        {
+            var host = new GameObject("ScanWaveReveal");
+            try
+            {
+                var view = host.AddComponent<DroneScanPulseView>();
+                var near = new DroneScanTarget(Vector3Int.right, Vector3.right, DroneScanTargetKind.Mineral);
+                var far = new DroneScanTarget(Vector3Int.right * 3, Vector3.right * 3, DroneScanTargetKind.GoldDrop);
+                view.Show(new[] { near, far }, Vector3.zero, 3, 10f, 0f);
+                Assert.That(view.TryGetActiveTarget(near.Cell, out _), Is.False);
+                Assert.That(view.TryGetActiveTarget(far.Cell, out _), Is.False);
+                view.Tick(0.3f);
+                Assert.That(view.TryGetActiveTarget(near.Cell, out _), Is.True);
+                Assert.That(view.TryGetActiveTarget(far.Cell, out _), Is.False);
+                view.Tick(0.7f);
+                Assert.That(view.TryGetActiveTarget(far.Cell, out var kind), Is.True);
+                Assert.That(kind, Is.EqualTo(DroneScanTargetKind.GoldDrop));
+                var root = (GameObject)typeof(DroneScanPulseView).GetField("visualRoot",
+                    BindingFlags.Instance | BindingFlags.NonPublic).GetValue(view);
+                var marker = root.GetComponentsInChildren<SpriteRenderer>()
+                    .Single(renderer => renderer.transform.position.x == 3f);
+                float alpha = marker.color.a;
+                view.Tick(9f);
+                Assert.That(marker.color.a, Is.LessThan(alpha));
+                view.Tick(10f);
+                Assert.That(view.ActiveMarkerCount, Is.Zero);
+            }
+            finally { Object.DestroyImmediate(host); }
+        }
+
+        [Test]
+        public void Pulse_UsesDroneOrigin_AndWaveReachesDiagonalTargets()
+        {
+            using var world = new SensorWorld(3f);
+            world.Sensor.transform.position = new Vector3(-1f, 1f, 0f);
+            var cell = new Vector3Int(3, 3, 0);
+            world.PlaceMineral(cell, "mineral.iron");
+            world.Sensor.TickScanPulse(0f);
+            var view = world.Sensor.ScanPulseView;
+            var root = (GameObject)typeof(DroneScanPulseView).GetField("visualRoot",
+                BindingFlags.Instance | BindingFlags.NonPublic).GetValue(view);
+            var ring = root.transform.Find("DroneScanRangeRing");
+            Assert.That((Vector2)ring.position, Is.EqualTo((Vector2)world.Sensor.transform.position));
+            world.Sensor.TickScanPulse(0.7f);
+            Assert.That(view.TryGetActiveTarget(cell, out _), Is.True);
+            Assert.That(ring.localScale.x, Is.GreaterThanOrEqualTo(
+                Vector2.Distance(world.Sensor.transform.position, world.Sensor.LastPulseTargets.Single().WorldPosition)));
+            Assert.That(world.Sensor.EffectiveMineralScanRadius, Is.EqualTo(3));
         }
 
         [Test]
@@ -101,6 +226,7 @@ namespace SubTerra.Gameplay.Tests.Drone
                 target => target.Cell == new Vector3Int(8, 0, 0)));
 
             DroneScanPulseView view = world.Sensor.GetComponent<DroneScanPulseView>();
+            world.Sensor.TickScanPulse(0.7f);
             int initialLightCount = view.ActiveLightCount;
             Assert.That(initialLightCount, Is.GreaterThan(0));
             Assert.That(view.IsRingVisible, Is.True);
@@ -138,6 +264,7 @@ namespace SubTerra.Gameplay.Tests.Drone
             world.PlaceMineral(goldOre, "mineral.copper", 50);
             world.PlaceMineral(ordinaryOre, "mineral.copper");
             world.Sensor.TickScanPulse(0);
+            world.Sensor.TickScanPulse(0.7f);
             Assert.That(world.Sensor.LastPulseTargets.Single(t => t.Cell == goldRock).Kind, Is.EqualTo(DroneScanTargetKind.GoldDrop));
             Assert.That(world.Sensor.LastPulseTargets.Single(t => t.Cell == goldOre).Kind, Is.EqualTo(DroneScanTargetKind.GoldDrop));
             Assert.That(world.Sensor.LastPulseTargets.Single(t => t.Cell == ordinaryOre).Kind, Is.EqualTo(DroneScanTargetKind.Mineral));
@@ -146,7 +273,8 @@ namespace SubTerra.Gameplay.Tests.Drone
             Assert.That(visual.GetComponentsInChildren<UnityEngine.Rendering.Universal.Light2D>(), Is.Empty);
             var markers = visual.GetComponentsInChildren<SpriteRenderer>();
             Assert.That(markers.Count(m => m.name.StartsWith("DroneScanMarker_")
-                && m.color == new Color(1f, 0.82f, 0.18f, 0.8f)), Is.EqualTo(2));
+                && m.color.r == 1f && m.color.g == 0.82f && m.color.b == 0.18f
+                && m.color.a > 0f && m.color.a <= 0.8f), Is.EqualTo(2));
         }
 
         [TestCase(3f)]
@@ -205,6 +333,15 @@ namespace SubTerra.Gameplay.Tests.Drone
             }
 
             public DroneSensor Sensor { get; }
+
+            public void RemoveTile(Vector3Int cell) => tilemap.SetTile(cell, null);
+
+            public void PlaceRock(Vector3Int cell)
+            {
+                resolver.RegisterRuntime(rock,
+                    new MiningTileDto("tile.rock", string.Empty, 0, true, 1f, 0f, 0f, false));
+                tilemap.SetTile(cell, rock);
+            }
 
             public void PlaceMineral(Vector3Int cell, string mineralId, int gold = 0)
             {

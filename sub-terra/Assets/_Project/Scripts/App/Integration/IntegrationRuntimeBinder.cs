@@ -1246,6 +1246,7 @@ namespace SubTerra.App.Integration
 
         private void SetDeferredInputEnabled(bool enabled)
         {
+            if (droneSensor != null) droneSensor.SetScanWorldReady(enabled);
             ResolveDeferredInputBehaviours();
             if (deferredInputBehaviours == null)
             {

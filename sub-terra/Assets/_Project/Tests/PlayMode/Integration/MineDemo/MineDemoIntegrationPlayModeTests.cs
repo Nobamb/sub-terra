@@ -9,6 +9,7 @@ using SubTerra.App.Inventory;
 using SubTerra.App.Save;
 using SubTerra.App.State;
 using SubTerra.Gameplay.Building;
+using SubTerra.Gameplay.Drone;
 using SubTerra.Gameplay.Snapshot;
 using SubTerra.Shared;
 using UnityEngine;
@@ -247,7 +248,14 @@ namespace SubTerra.App.Tests.PlayMode.MineDemo
                 new System.Text.RegularExpressions.Regex("Integration scene opened without the Bootstrap runtime"));
 
             var host = new GameObject("M_Gate_BinderHost");
+            host.SetActive(false);
+            var sensorObject = new GameObject("M_Gate_DroneSensor");
+            sensorObject.transform.SetParent(host.transform);
+            var sensor = sensorObject.AddComponent<DroneSensor>();
             var binder = host.AddComponent<IntegrationRuntimeBinder>();
+            typeof(IntegrationRuntimeBinder).GetField("droneSensor",
+                BindingFlags.Instance | BindingFlags.NonPublic).SetValue(binder, sensor);
+            host.SetActive(true);
             // Awake + Start 한 프레임
             yield return null;
             yield return null;
@@ -259,6 +267,7 @@ namespace SubTerra.App.Tests.PlayMode.MineDemo
             // 순서 미완료 시 ActivateUi 거부
             Assert.That(binder.ActivateUi(), Is.False);
             Assert.That(binder.IsUiActivated, Is.False);
+            Assert.That(sensor.IsScanWorldReady, Is.False, "First scan waits with the world/UI gate.");
 
             listener.NotifyWorldRestored();
             Assert.That(binder.ActivationGate.IsWorldRestored, Is.False, "state 없이 world 무시");
@@ -273,6 +282,7 @@ namespace SubTerra.App.Tests.PlayMode.MineDemo
             // 게이트가 채워지면 ActivateUi 허용 (강제 MarkReady 우회가 아님)
             Assert.That(binder.ActivateUi(), Is.True);
             Assert.That(binder.IsUiActivated, Is.True);
+            Assert.That(sensor.IsScanWorldReady, Is.True);
 
             Object.Destroy(host);
             GameBootstrapper.ResetInstanceForTests();
