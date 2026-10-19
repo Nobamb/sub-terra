@@ -208,20 +208,19 @@ namespace SubTerra.App.Tests.UI
                 {
                     var button = content.Find(names[i]);
                     Assert.That(button, Is.Not.Null, names[i]);
-                    // 메인 메뉴 버튼 판은 컷코너 플레이트다. on 스프라이트는 HoverOverlay가 담당한다.
-                    var plate = button.GetComponent<UnityEngine.UI.Image>().sprite;
-                    Assert.That(plate, Is.Not.Null, names[i] + " plate");
-                    Assert.That(plate.name, Does.StartWith("UI_CutCorner_Plate"), names[i] + " plate");
-                    var overlay = button.Find("HoverOverlay");
-                    Assert.That(overlay, Is.Not.Null, names[i] + " overlay");
-                    Assert.That(overlay.GetComponent<UnityEngine.UI.Image>().sprite.name.StartsWith("button-active-on"),
-                        Is.True, names[i] + " on");
-                    Assert.That(overlay.GetComponent<UnityEngine.UI.Image>().raycastTarget, Is.False);
-                    var label = button.GetComponentInChildren<TMP_Text>(true);
+                    // B-150: 지상 기지 버튼 스타일. Frame(off)·HoverFrame(on) 스프라이트를 SurfaceBaseButtonFeedback이 전환한다.
+                    var frame = button.Find("Frame");
+                    var hover = button.Find("HoverFrame");
+                    Assert.That(frame, Is.Not.Null, names[i] + " frame");
+                    Assert.That(hover, Is.Not.Null, names[i] + " hover");
+                    Assert.That(hover.GetComponent<UnityEngine.UI.Image>().raycastTarget, Is.False);
+                    if (i == 1 || i == 2)
+                        Assert.That(hover.GetComponent<UnityEngine.UI.Image>().sprite.name, Does.StartWith("button-active-on"), names[i] + " on");
+                    var label = button.Find("Label").GetComponent<TMP_Text>();
                     Assert.That(label, Is.Not.Null, names[i] + " text");
                     Assert.That(label.text, Does.Contain(labels[i]).IgnoreCase, names[i] + " label");
-                    Assert.That(button.GetComponent<MenuSpriteButtonSkin>(), Is.Not.Null, names[i] + " skin");
-                    Assert.That(MenuSpriteButtonSkin.HighlightDurationSeconds, Is.EqualTo(0.2f),
+                    Assert.That(button.GetComponent<SurfaceBaseButtonFeedback>(), Is.Not.Null, names[i] + " skin");
+                    Assert.That(SurfaceBaseButtonFeedback.BlendSeconds, Is.EqualTo(0.2f),
                         "세이브 슬롯 선택과 같은 페이드 시간");
                     Assert.That(button.GetComponent<UnityEngine.UI.Button>().navigation.mode,
                         Is.EqualTo(UnityEngine.UI.Navigation.Mode.None));
@@ -240,8 +239,8 @@ namespace SubTerra.App.Tests.UI
                 Assert.That(view.CurrentActionButtonIndex, Is.EqualTo(-1));
                 view.NavigateActionButton(1);
                 Assert.That(view.CurrentActionButtonIndex, Is.EqualTo(0));
-                Assert.That(content.Find("ContinueButton").GetComponent<MenuSpriteButtonSkin>().IsHighlighted, Is.True);
-                Assert.That(content.Find("NewGameButton").GetComponent<MenuSpriteButtonSkin>().IsHighlighted, Is.False);
+                Assert.That(content.Find("ContinueButton").GetComponent<SurfaceBaseButtonFeedback>().IsHighlighted, Is.True);
+                Assert.That(content.Find("NewGameButton").GetComponent<SurfaceBaseButtonFeedback>().IsHighlighted, Is.False);
 
                 view.NavigateActionButton(1);
                 Assert.That(view.CurrentActionButtonIndex, Is.EqualTo(1));

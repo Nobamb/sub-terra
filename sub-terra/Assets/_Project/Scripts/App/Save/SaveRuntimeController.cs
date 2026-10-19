@@ -205,6 +205,22 @@ namespace SubTerra.App.Save
         }
 
         /// <summary>
+        /// B-150: 메인 메뉴 삭제 확인 뒤에만 호출한다. 본 파일·백업·임시 파일과 썸네일을 함께 지운다.
+        /// 저장 중이거나 현재 플레이 중인 슬롯은 지우지 않는다.
+        /// </summary>
+        public bool DeleteSlot(int slotId)
+        {
+            if (!IsAllowedSlot(slotId) || saveInProgress || (activeSlot > 0 && activeSlot == slotId))
+            {
+                return false;
+            }
+
+            var deleted = saveService.DeleteSlot(slotId);
+            if (deleted) Thumbnails.Delete(slotId);
+            return deleted;
+        }
+
+        /// <summary>
         /// 새 게임 시작. confirmOverwrite가 false이고 슬롯에 세이브가 있으면 거부한다.
         /// 기본 첫 Scene은 Surface Base이며, 탐사는 TryStartExploration으로만 진입한다.
         /// </summary>

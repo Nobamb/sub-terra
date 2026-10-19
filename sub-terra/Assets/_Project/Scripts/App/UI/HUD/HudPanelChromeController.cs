@@ -548,8 +548,13 @@ namespace SubTerra.App.UI.HUD
             // 분석/말풍선용 호스트는 절대 끄지 않는다.
             EnsureDiggerHostActive();
 
+            // prompt-B 149: 닫을 때는 접힘 연출이 끝난 뒤 창 본체를 끈다(X·Tab·드론 클릭 공통).
+            var animatedClose = !visible
+                && diggerBotView != null
+                && diggerBotView.TryBeginAnimatedClose(CompleteDiggerBotClose);
+
             // digger-bot 창 본체만 토글한다.
-            if (diggerBotRoot != null)
+            if (diggerBotRoot != null && !animatedClose)
             {
                 diggerBotRoot.SetActive(visible);
                 if (visible)
@@ -563,7 +568,7 @@ namespace SubTerra.App.UI.HUD
                 }
             }
 
-            if (diggerBotView != null)
+            if (diggerBotView != null && !animatedClose)
             {
                 diggerBotView.SetVisible(visible);
             }
@@ -572,6 +577,15 @@ namespace SubTerra.App.UI.HUD
             if (diggerOpenButton != null)
             {
                 diggerOpenButton.gameObject.SetActive(false);
+            }
+        }
+
+        private void CompleteDiggerBotClose()
+        {
+            // 접힘 도중 다시 열렸으면 끄지 않는다.
+            if (!diggerBotOpen && diggerBotRoot != null)
+            {
+                diggerBotRoot.SetActive(false);
             }
         }
 
