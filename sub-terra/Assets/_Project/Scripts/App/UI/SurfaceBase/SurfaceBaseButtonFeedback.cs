@@ -35,12 +35,15 @@ namespace SubTerra.App.UI.SurfaceBase
         [SerializeField] private RectTransform particleRoot;
         [SerializeField] private Sprite particleSprite;
         [SerializeField] private bool spinIconOnHover;
+        // B-150: 메인 메뉴 종료 버튼처럼 다른 색의 호버 입자가 필요할 때 바꾼다.
+        [SerializeField] private Color particleColor = new Color(0.29f, 0.88f, 0.95f);
 
         private static Sprite softGlowSprite;
         private UnityEngine.UI.Button button;
         private Particle[] particles;
         private bool hovered;
         private bool selected;
+        private bool keyboardActive;
         private bool wasActive;
         private float blend;
         private float sweepTime;
@@ -49,6 +52,10 @@ namespace SubTerra.App.UI.SurfaceBase
 
         public float HighlightAmount => blend;
         public float IconBrightness => icon != null ? icon.color.r : 1f;
+        public bool IsHighlighted => hovered || selected || keyboardActive;
+
+        /// <summary>메인 메뉴 좌우 키 포커스. 호버와 같은 밝기 전환을 쓴다.</summary>
+        public void SetKeyboardActive(bool active) => keyboardActive = active;
 
         private void Awake() => button = GetComponent<UnityEngine.UI.Button>();
         public void OnPointerEnter(PointerEventData eventData) => hovered = true;
@@ -63,7 +70,7 @@ namespace SubTerra.App.UI.SurfaceBase
             if (button == null) button = GetComponent<UnityEngine.UI.Button>();
             float dt = Time.unscaledDeltaTime;
             bool enabled = button.IsInteractable();
-            bool active = enabled && (hovered || selected);
+            bool active = enabled && IsHighlighted;
             float target = active ? 1f : 0f;
             blend = Mathf.MoveTowards(blend, target, dt / BlendSeconds);
             if (active && !wasActive) OnActivated();
@@ -78,7 +85,7 @@ namespace SubTerra.App.UI.SurfaceBase
 
         private void OnDisable()
         {
-            hovered = selected = wasActive = false;
+            hovered = selected = wasActive = keyboardActive = false;
             blend = sweepTime = emitCarry = 0f;
             spinTime = -1f;
             if (icon != null) icon.rectTransform.localRotation = Quaternion.identity;
@@ -205,7 +212,7 @@ namespace SubTerra.App.UI.SurfaceBase
                 particles[i].BaseAlpha = Random.Range(0.25f, 1f);
                 particles[i].Rect.sizeDelta = new Vector2(size, size);
                 particles[i].Rect.anchoredPosition = particles[i].Pos;
-                var c = Color.Lerp(new Color(0.29f, 0.88f, 0.95f), Color.white, Random.value * 0.35f);
+                var c = Color.Lerp(particleColor, Color.white, Random.value * 0.35f);
                 particles[i].Image.color = new Color(c.r, c.g, c.b, particles[i].BaseAlpha);
                 particles[i].Image.gameObject.SetActive(true);
                 return;

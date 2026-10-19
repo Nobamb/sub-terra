@@ -215,6 +215,10 @@ namespace SubTerra.App.Editor.DataValidation
                     Get<MenuSignalPulse>(background);
                 }
 
+                // B-150: 메인화면 개편 레이어를 이어서 적용한다(103 재실행 시에도 150 결과 유지).
+                PromptB150MainMenuBuilder.SetupTextureImporters();
+                PromptB150MainMenuBuilder.Apply(root);
+
                 PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
                 Debug.Log("[PromptB103MainMenuBuilder] Build Completed Successfully!");
             }
