@@ -4,10 +4,8 @@ using NUnit.Framework;
 using SubTerra.App.Editor.DataValidation;
 using SubTerra.App.Outpost;
 using SubTerra.App.UI.Outpost;
-using TMPro;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace SubTerra.App.Tests.Outpost
 {
@@ -58,86 +56,36 @@ namespace SubTerra.App.Tests.Outpost
         }
 
         [Test]
-        public void PromptB52_OutpostPanel_HasSeparateFacilityModesAndScrollableLists()
+        public void OutpostPrefab_ContainsOnlyModernPopups_AndNoMissingScripts()
         {
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
                 "Assets/_Project/Prefabs/UI/OutpostPanel.prefab");
-
             Assert.That(prefab, Is.Not.Null);
-            var panelRoot = prefab.transform.Find("PanelRoot");
-            Assert.That(panelRoot, Is.Not.Null);
-            Assert.That(panelRoot.Find("CoreRoot"), Is.Not.Null);
-            Assert.That(panelRoot.Find("ChargerRoot"), Is.Not.Null);
-            Assert.That(panelRoot.Find("SettlementRoot"), Is.Not.Null);
-            Assert.That(panelRoot.Find("StorageRoot"), Is.Not.Null);
-            Assert.That(panelRoot.Find("TransactionRoot"), Is.Not.Null);
-
-            var scrollRects = prefab.GetComponentsInChildren<ScrollRect>(true);
-            Assert.That(scrollRects.Any(scroll => scroll.name == "FacilitiesScroll"), Is.True);
-            Assert.That(scrollRects.Any(scroll => scroll.name == "SettlementCargoScroll"), Is.True);
-            Assert.That(scrollRects.All(scroll => !scroll.horizontal && scroll.vertical), Is.True);
-        }
-
-        [Test]
-        public void PromptB69_OutpostPanel_HasSearchableMineralDropdown()
-        {
-            PromptB69StoragePickerBuilder.Build();
-            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
-                "Assets/_Project/Prefabs/UI/OutpostPanel.prefab");
-
-            Assert.That(prefab, Is.Not.Null);
-            var transaction = prefab.transform.Find("PanelRoot/TransactionRoot");
-            Assert.That(transaction, Is.Not.Null);
-            Assert.That(transaction.Find("Select_mineral.copper"), Is.Null);
-            Assert.That(transaction.Find("Select_mineral.iron"), Is.Null);
-            Assert.That(transaction.Find("Select_mineral.lithium"), Is.Null);
-
-            var picker = transaction.Find("MineralPicker");
-            Assert.That(picker, Is.Not.Null);
-            Assert.That(picker.Find("SearchInput"), Is.Not.Null);
-            Assert.That(picker.Find("CaptionButton"), Is.Not.Null);
-            Assert.That(picker.Find("OptionsPanel"), Is.Not.Null);
-            Assert.That(picker.GetComponent<OutpostMineralPickerView>(), Is.Not.Null);
-            Assert.That(picker.GetComponent<OutpostMineralPickerView>().HasRequiredReferences(), Is.True);
-            Assert.That(prefab.GetComponent<OutpostPanelView>().HasRequiredReferences(), Is.True);
-        }
-
-        [Test]
-        public void PromptB70_OutpostPanel_HasTopRightCloseButton()
-        {
-            PromptB70FacilityPanelCloseBuilder.Build();
-            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
-                "Assets/_Project/Prefabs/UI/OutpostPanel.prefab");
-
-            Assert.That(prefab, Is.Not.Null);
-            var panelRoot = prefab.transform.Find("PanelRoot") as RectTransform;
-            var close = panelRoot != null
-                ? panelRoot.Find("CloseButton") as RectTransform
-                : null;
-            Assert.That(panelRoot, Is.Not.Null);
-            Assert.That(close, Is.Not.Null);
-            Assert.That(close.GetComponent<Button>(), Is.Not.Null);
-
-            var label = close.GetComponentInChildren<TMP_Text>(true);
-            Assert.That(label, Is.Not.Null);
-            Assert.That(label.text, Is.EqualTo("×"));
-            Assert.That(close.anchorMin, Is.EqualTo(new Vector2(1f, 1f)));
-            Assert.That(close.anchorMax, Is.EqualTo(new Vector2(1f, 1f)));
-            Assert.That(close.pivot, Is.EqualTo(new Vector2(1f, 1f)));
-            Assert.That(close.anchoredPosition.x, Is.LessThan(0f));
-            Assert.That(close.anchoredPosition.y, Is.LessThanOrEqualTo(0f));
-
-            var title = panelRoot.Find("Title") as RectTransform;
-            Assert.That(title, Is.Not.Null);
-            var panelWidth = ((RectTransform)prefab.transform).sizeDelta.x;
-            var titleRight = title.anchoredPosition.x + title.sizeDelta.x;
-            var closeLeft = panelWidth + close.anchoredPosition.x - close.sizeDelta.x;
-            Assert.That(titleRight, Is.LessThan(closeLeft), "제목과 X 버튼이 겹치면 안 된다.");
-
+            Assert.That(prefab.transform.Find("PanelRoot"), Is.Null);
             var view = prefab.GetComponent<OutpostPanelView>();
-            Assert.That(view, Is.Not.Null);
-            Assert.That(view.CloseButton, Is.EqualTo(close.GetComponent<Button>()));
-            Assert.That(view.HasRequiredReferences(), Is.True);
+            Assert.That(view.CorePopup, Is.Not.Null);
+            Assert.That(view.CoreCloseButton, Is.Not.Null);
+            Assert.That(view.ServicePopup, Is.Not.Null);
+            Assert.That(view.ServiceCloseButton, Is.Not.Null);
+            Assert.That(view.HasRequiredReferences(), Is.True, "경고 폰트와 실제 팝업 연결을 보존한다.");
+            foreach (var node in prefab.GetComponentsInChildren<Transform>(true))
+                Assert.That(GameObjectUtility.GetMonoBehavioursWithMissingScriptCount(node.gameObject), Is.Zero, node.name);
+        }
+
+        [Test]
+        public void RetiredBuilder_DoesNotRecreateLegacyPanelOrReplaceModernPopups()
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                "Assets/_Project/Prefabs/UI/OutpostPanel.prefab");
+            var view = prefab.GetComponent<OutpostPanelView>();
+            var core = view.CorePopup;
+            var service = view.ServicePopup;
+            var before = System.IO.File.ReadAllBytes(AssetDatabase.GetAssetPath(prefab));
+            PhaseHOutpostUiPrefabBuilder.BuildPrefab();
+            Assert.That(System.IO.File.ReadAllBytes(AssetDatabase.GetAssetPath(prefab)), Is.EqualTo(before));
+            Assert.That(view.CorePopup, Is.SameAs(core));
+            Assert.That(view.ServicePopup, Is.SameAs(service));
+            Assert.That(prefab.transform.Find("PanelRoot"), Is.Null);
         }
     }
 }

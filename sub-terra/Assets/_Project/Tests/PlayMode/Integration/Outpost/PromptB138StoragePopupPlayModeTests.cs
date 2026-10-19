@@ -61,6 +61,31 @@ namespace SubTerra.App.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator LegacyCleanup_StorageTransfersAndClosesWithoutLegacyControls()
+        {
+            var scene = default(StorageScene);
+            yield return Load(s => scene = s);
+            Add(Copper, 8);
+            scene.Binder.Presenter.ToggleInteractionPanel();
+            var popup = scene.View.StoragePopup;
+            yield return UiTestWait.Until(() => popup.State == StoragePopupView.PopupState.Open, "storage open");
+            Assert.That(scene.View.transform.Find("PanelRoot"), Is.Null);
+            Assert.That(scene.Binder.isActiveAndEnabled, Is.True);
+            Assert.That(scene.View.ActiveWindowRoot, Is.EqualTo(popup.gameObject));
+            scene.Binder.SelectMineral(Copper);
+            scene.Binder.DepositQuantity(3);
+            Assert.That(env.Save.InventoryService.State.GetQuantity(Copper), Is.EqualTo(5));
+            Assert.That(scene.Service.State.GetStorageQuantity(Copper), Is.EqualTo(3));
+            scene.Binder.WithdrawQuantity(2);
+            Assert.That(env.Save.InventoryService.State.GetQuantity(Copper), Is.EqualTo(7));
+            Assert.That(scene.Service.State.GetStorageQuantity(Copper), Is.EqualTo(1));
+            yield return ClickCenter(popup.CloseButton.Button);
+            yield return UiTestWait.Until(() => !popup.IsVisible, "storage close");
+            Assert.That(scene.Binder.Presenter.IsInteractionPanelOpen, Is.False);
+            Assert.That(scene.Binder.isActiveAndEnabled, Is.True);
+        }
+
+        [UnityTest]
         public IEnumerator Storage_ShowboxLocksInput_ThenRealClicksDepositWithdrawThroughService()
         {
             var scene = default(StorageScene);
@@ -74,7 +99,7 @@ namespace SubTerra.App.Tests.PlayMode
             scene.Binder.Presenter.ToggleInteractionPanel();
             var popup = scene.View.StoragePopup;
             Assert.That(popup, Is.Not.Null, "보관함은 전용 팝업을 쓴다");
-            Assert.That(scene.View.PanelRoot.activeSelf, Is.False, "예전 큰 보관함 패널은 뜨지 않는다");
+            Assert.That(scene.View.transform.Find("PanelRoot"), Is.Null, "옛 패널은 프리팹에서 제거한다.");
             Assert.That(popup.State, Is.EqualTo(StoragePopupView.PopupState.Opening));
             Assert.That(popup.PopCount, Is.EqualTo(2), "보유 자원 종류만큼 광물이 튀어나온다");
 

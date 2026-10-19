@@ -943,12 +943,7 @@ namespace SubTerra.App.Tests.Outpost
 
             public void SetVisible(bool visible) => Visible = visible;
             public void SetMode(OutpostPanelMode mode) { }
-            public void SetPower(float supply, float consumption, bool active, string inactiveReasonId) { }
             public void SetFacilities(IReadOnlyList<OutpostFacilityReadModel> facilities) { }
-            public void SetCargo(string playerCargo, string storageCargo) { }
-            public void SetSettlementCargo(string cargo) { }
-            public void SetCheckpoint(string checkpoint) { }
-            public void SetSelectedMineral(string summary) { }
             public void SetMineralOptions(IReadOnlyList<OutpostMineralOption> options, string selectedMineralId) { }
             public void ClearMineralSearch() { }
             public void SetResult(string message, bool isError) { }
@@ -959,7 +954,6 @@ namespace SubTerra.App.Tests.Outpost
                 TemporaryMessageDuration = durationSeconds;
             }
 
-            public void SetTutorialVisible(bool visible) { }
             public void SetBusy(bool busy) { }
         }
 
