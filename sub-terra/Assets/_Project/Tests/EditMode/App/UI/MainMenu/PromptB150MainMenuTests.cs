@@ -325,12 +325,14 @@ namespace SubTerra.App.Tests.UI.MainMenu
             Assert.That(label, Does.Contain("마지막 저장"));
         }
 
-        [Test]
-        public void Metadata_OldSaveWithoutValues_ShowsDash()
+        [TestCase(5)]
+        [TestCase(SaveVersions.Current)]
+        public void Metadata_OldSaveWithoutValues_ShowsDash(int version)
         {
             Assert.That(save.Save(2, Context(maxDepth: 0, depth: 0, objectives: 0)).IsSuccess, Is.True);
             paths.TryGetPaths(2, out var slot);
             var text = File.ReadAllText(slot.Normal);
+            text = Regex.Replace(text, "\"saveVersion\"\\s*:\\s*\\d+", "\"saveVersion\":" + version);
             text = Regex.Replace(text, "\"maximumDepth\"\\s*:\\s*-?\\d+\\s*,\\s*", string.Empty);
             text = Regex.Replace(text, "\"completedObjectives\"\\s*:\\s*-?\\d+\\s*,\\s*", string.Empty);
             Assert.That(text, Does.Not.Contain("maximumDepth"));
@@ -342,7 +344,8 @@ namespace SubTerra.App.Tests.UI.MainMenu
             Assert.That(meta.CompletedObjectives, Is.EqualTo(-1));
             Assert.That(SaveSlotCardFormatter.MaximumDepth(meta), Is.EqualTo("-"));
             Assert.That(SaveSlotCardFormatter.Objectives(meta), Is.EqualTo("-"));
-            Assert.That(SaveVersions.Current, Is.EqualTo(5), "B-150은 SaveVersion을 올리지 않는다");
+            Assert.That(File.ReadAllText(slot.Normal), Is.EqualTo(text),
+                "메타 조회는 v5/현재 버전 파일의 형식을 다시 쓰지 않는다");
         }
 
         [Test]

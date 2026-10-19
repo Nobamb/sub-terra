@@ -26,3 +26,9 @@ Unity6000.5.4f1, 자동검사. 원래 사용자 저장은 사용하지 않음.
 - 최신 main a3266026 통합. lessons.md 양쪽 기록을 보존해 충돌을 해소했고 저장 코드는 자동 병합됐다.
 - 새 EditMode48/48, 최종 PlayMode11/11 PASS. 최초 PlayMode9/11은 실행 인자의 저장 루트를 Builds로 정해 검사 자체의 Temp 경로 안전 조건2개에 걸렸다. 프로젝트 Temp/PRReady198-20261018로 고쳐 전체11개 재통과했다. 제품 코드나 검사를 우회하지 않았다.
 - 사용자 요청으로 Windows 실제 화면 검증은 완료 기준에서 제외하고 미실행 후속 항목으로 유지한다. Save v6의 이전 빌드 비호환 안내는 유지하며 코드 검수용 Ready로 전환한다. 새 증거: Builds/PRReady-20261018/pr198-*.
+
+## 2026-10-19 최신 main 재통합
+- main fa2a9db4의 메인 메뉴·드론 터미널 변경을 보존했다. #200과 공통 교훈 문서를 동일하게 맞춰 순차 병합 충돌을 방지했다.
+- 저장/메뉴 EditMode 초기 62/63: 새 메뉴 검사에서 CurrentVersion=5를 고정해 #143의 v6과 충돌했다. v5/현재 버전 메타 읽기와 원본 파일 보존을 모두 확인하도록 보완한 뒤 64/64 PASS.
+- 최신 main에서 PlayerResumePositionTests/SaveContinuePlayModeTests 11/11 PASS. 프로젝트 Temp/PRReady198-20261019 격리 저장. Windows 실제 화면 미실행.
+- 증거: Builds/PRReady-20261018/pr198-latest-main-edit*, pr198-latest-main-play.*.
