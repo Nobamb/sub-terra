@@ -44,6 +44,31 @@ namespace SubTerra.App.Editor.DataValidation
             Debug.Log("[SubTerra] " + Build());
         }
 
+        [MenuItem("SubTerra/UI/Apply Mission Summary Text Spacing")]
+        public static void ApplySummaryTextSpacing()
+        {
+            if (EditorApplication.isPlaying) throw new InvalidOperationException("Stop Play Mode first.");
+            var scene = SceneManager.GetSceneByPath(IntegrationScenePath);
+            if (scene.IsValid() && scene.isLoaded && scene.isDirty)
+                throw new InvalidOperationException("Mine_Demo_Integration에 저장되지 않은 변경이 있습니다.");
+            bool closeAfter = !scene.IsValid() || !scene.isLoaded;
+            if (closeAfter) scene = EditorSceneManager.OpenScene(IntegrationScenePath, OpenSceneMode.Additive);
+            try
+            {
+                var root = Find(scene, "DemoObjectiveRoot");
+                var card = root != null ? root.transform.Find("QuestSummaryButton") as RectTransform : null;
+                if (card == null || card.Find("ObjectiveTitle") == null || card.Find("ObjectiveBody") == null)
+                    throw new InvalidOperationException("Mission summary text is missing.");
+                DemoObjectiveView.ApplySummaryTextSpacing(card);
+                EditorSceneManager.MarkSceneDirty(scene);
+                if (!EditorSceneManager.SaveScene(scene)) throw new InvalidOperationException("Scene save failed.");
+            }
+            finally
+            {
+                if (closeAfter && scene.IsValid() && scene.isLoaded) EditorSceneManager.CloseScene(scene, true);
+            }
+        }
+
         public static string Build()
         {
             if (EditorApplication.isPlaying)
@@ -139,12 +164,12 @@ namespace SubTerra.App.Editor.DataValidation
             Style(title, 20f, Color.white, TextAlignmentOptions.MidlineLeft, false);
             title.fontStyle = FontStyles.Bold;
             title.overflowMode = TextOverflowModes.Ellipsis;
-            Place(title.rectTransform, titleX, -46f, titleWidth, 34f, new Vector2(0f, 1f), new Vector2(0f, 1f));
+            Place(title.rectTransform, titleX, -44f, titleWidth, 30f, new Vector2(0f, 1f), new Vector2(0f, 1f));
 
             var body = button.transform.Find("ObjectiveBody").GetComponent<TMP_Text>();
             Style(body, 16f, new Color(0.85f, 0.93f, 0.96f), TextAlignmentOptions.TopLeft, true);
             body.overflowMode = TextOverflowModes.Ellipsis;
-            Place(body.rectTransform, titleX, -82f, titleWidth, 26f, new Vector2(0f, 1f), new Vector2(0f, 1f));
+            Place(body.rectTransform, titleX, -76f, titleWidth, 26f, new Vector2(0f, 1f), new Vector2(0f, 1f));
             CenterOnFirstLines(icon.rectTransform, title.rectTransform, body);
 
             var nextAction = root.Find("NextAction");
