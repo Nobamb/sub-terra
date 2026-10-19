@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using SubTerra.App.State;
+using SubTerra.App.UI.GameplayCursor;
 
 namespace SubTerra.App.Core
 {
@@ -246,6 +247,20 @@ namespace SubTerra.App.Core
             if (Application.isPlaying)
             {
                 DontDestroyOnLoad(gameObject);
+                AttachGameplayCursor();
+            }
+        }
+
+        // 인게임 드릴/집게 커서(B-151). 실패해도 OS 커서로 진행한다.
+        private void AttachGameplayCursor()
+        {
+            try
+            {
+                GameplayCursorController.AttachTo(transform);
+            }
+            catch (Exception e)
+            {
+                Debug.LogError("[SubTerra] Gameplay cursor attach failed: " + e.Message);
             }
         }
 
