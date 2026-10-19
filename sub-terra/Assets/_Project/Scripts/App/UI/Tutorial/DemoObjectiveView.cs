@@ -136,9 +136,7 @@ namespace SubTerra.App.UI.Tutorial
                 missionText.fontSize = 18f;
             }
             PlaceSummaryChild(card, "ProgressCount", new Vector2(-36f, -10f), new Vector2(170f, 32f));
-            PlaceSummaryChild(card, "QuestStatusIcon", new Vector2(32f, -60.9f), new Vector2(32f, 32f));
-            PlaceSummaryChild(card, "ObjectiveTitle", new Vector2(78f, -46f), new Vector2(346f, 34f));
-            PlaceSummaryChild(card, "ObjectiveBody", new Vector2(78f, -82f), new Vector2(346f, 26f));
+            ApplySummaryTextSpacing(card);
             if (objectiveBodyText != null && objectiveBodyText.transform.parent == card)
             {
                 objectiveBodyText.gameObject.SetActive(true);
@@ -148,6 +146,14 @@ namespace SubTerra.App.UI.Tutorial
                 objectiveBodyText.fontSizeMax = 16f;
                 objectiveBodyText.overflowMode = TextOverflowModes.Ellipsis;
             }
+        }
+
+        public static void ApplySummaryTextSpacing(RectTransform card)
+        {
+            // 헤더 아래 2px, 제목/설명 사이 2px, 카드 아래 14px 여백을 남긴다.
+            PlaceSummaryChild(card, "ObjectiveTitle", new Vector2(78f, -44f), new Vector2(346f, 30f));
+            PlaceSummaryChild(card, "ObjectiveBody", new Vector2(78f, -76f), new Vector2(346f, 26f));
+            PlaceSummaryChild(card, "QuestStatusIcon", new Vector2(32f, -55.9f), new Vector2(32f, 32f));
         }
 
         private static void PlaceSummaryChild(RectTransform card, string name, Vector2 position, Vector2 size)

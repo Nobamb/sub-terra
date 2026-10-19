@@ -46,6 +46,14 @@ namespace SubTerra.App.Tests.Tutorial
                 Assert.That(detailsRoot.GetComponent<TMP_Text>().text, Is.EqualTo(definition.Description));
                 Assert.That(((RectTransform)card.transform).sizeDelta, Is.EqualTo(new Vector2(460f, 116f)));
                 Assert.That(card.transform.localScale, Is.EqualTo(Vector3.one));
+                var titleRect = (RectTransform)titleRoot.transform;
+                var bodyRect = (RectTransform)bodyRoot.transform;
+                Assert.That(titleRect.anchoredPosition.y, Is.EqualTo(-44f));
+                Assert.That(116f + bodyRect.anchoredPosition.y - bodyRect.sizeDelta.y, Is.EqualTo(14f));
+                Assert.That(-bodyRect.anchoredPosition.y, Is.GreaterThanOrEqualTo(
+                    -titleRect.anchoredPosition.y + titleRect.sizeDelta.y + 2f));
+                Assert.That(bodyRoot.GetComponent<TMP_Text>().fontSizeMax, Is.EqualTo(16f));
+                Assert.That(bodyRoot.GetComponent<TMP_Text>().overflowMode, Is.EqualTo(TextOverflowModes.Ellipsis));
             }
             finally { Object.DestroyImmediate(host); }
         }
@@ -208,7 +216,7 @@ namespace SubTerra.App.Tests.Tutorial
                 var titleCenter = titleRect.anchoredPosition.y - titleRect.sizeDelta.y * 0.5f;
                 var bodyCenter = bodyText.rectTransform.anchoredPosition.y - bodyText.fontSize * 0.55f;
                 var iconCenter = statusIcon.anchoredPosition.y - statusIcon.sizeDelta.y * 0.5f;
-                Assert.That(titleRect.anchoredPosition.y, Is.LessThan(-44f));
+                Assert.That(titleRect.anchoredPosition.y, Is.EqualTo(-44f));
                 Assert.That(bodyText.rectTransform.anchoredPosition.y, Is.LessThan(-74f));
                 Assert.That(iconCenter, Is.EqualTo((titleCenter + bodyCenter) * 0.5f).Within(1f));
                 Assert.That(summary.GetComponent<Button>().onClick.GetPersistentMethodName(0),
