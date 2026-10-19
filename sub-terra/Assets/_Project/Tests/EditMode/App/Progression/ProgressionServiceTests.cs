@@ -408,6 +408,44 @@ namespace SubTerra.App.Tests.Progression
             synchronizer.Dispose();
         }
 
+        [TestCase(DataIds.Upgrades.MaximumEnergy)]
+        [TestCase(DataIds.Upgrades.MaximumCargo)]
+        public void PurchaseCompleted_ObservesUpdatedDerivedState_BeforeAutoSave(string upgradeId)
+        {
+            var data = CreateUpgrade(upgradeId, 1, 20f);
+            var wallet = new Wallet();
+            wallet.Set(DataIds.Minerals.Copper, 10);
+            var service = new ProgressionService(new UpgradeState(), new Catalog(data), wallet);
+            var gameState = GameState.CreateNew();
+            var inventory = new InventoryService(new InMemoryMineralCatalog(), 50f, gameState);
+            var events = new List<string>();
+            var maximumAtCompletion = 0f;
+
+            // 성공 알림 구독 순서와 관계없이 파생 상태가 먼저 확정되어야 한다.
+            service.PurchaseCompleted += result =>
+            {
+                Assert.That(result.IsSuccess, Is.True);
+                maximumAtCompletion = upgradeId == DataIds.Upgrades.MaximumEnergy
+                    ? gameState.Player.MaxEnergy
+                    : inventory.MaxCapacity;
+                events.Add("completed");
+            };
+            using (var synchronizer = new ProgressionDerivedStateSynchronizer(gameState, inventory))
+            {
+                synchronizer.Bind(service);
+                service.UpgradeChanged += _ => events.Add("changed");
+                service.AutoSaveRequested += _ => events.Add("save");
+
+                var result = service.TryPurchase(upgradeId);
+
+                Assert.That(result.IsSuccess, Is.True);
+                Assert.That(maximumAtCompletion, Is.EqualTo(
+                    upgradeId == DataIds.Upgrades.MaximumEnergy ? 120f : 70f));
+                Assert.That(events, Is.EqualTo(new[] { "changed", "completed", "save" }));
+                Assert.That(wallet.SpendCalls, Is.EqualTo(1));
+            }
+        }
+
         [Test]
         public void Restore_InvalidEntries_IsAtomic()
         {
