@@ -75,6 +75,8 @@ namespace SubTerra.App.Save
                 outpost = CaptureOutpost(game.Outpost),
                 drone = CaptureDrone(context.DialogueGenerator),
                 world = world,
+                resumePosition = context.ResumePosition != null && context.ResumePosition.IsValid
+                    ? context.ResumePosition.Copy() : null,
                 mineResetElapsedSeconds = game.MineResetCycle.ElapsedSeconds,
                 mineResetPaidCount = game.MineResetCycle.PaidResetCount,
                 mineResetClockVisible = game.MineResetCycle.ClockVisible
@@ -131,7 +133,9 @@ namespace SubTerra.App.Save
                 upgrades,
                 data.drone,
                 data.world,
-                data.targetSceneName);
+                data.targetSceneName,
+                data.resumePosition != null && data.resumePosition.IsValid
+                    ? data.resumePosition.Copy() : null);
             return true;
         }
 

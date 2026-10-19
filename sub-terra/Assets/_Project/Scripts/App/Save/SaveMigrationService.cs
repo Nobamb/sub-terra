@@ -47,6 +47,12 @@ namespace SubTerra.App.Save
                         MigrateVersion4To5(data);
                         migrated = true;
                         break;
+                    case 5:
+                        // 구세이브에는 종료 좌표가 없다. 원래 Scene 시작점을 유지한다.
+                        data.resumePosition = null;
+                        data.saveVersion = 6;
+                        migrated = true;
+                        break;
                     default:
                         return SaveMigrationStatus.InvalidOldVersion;
                 }

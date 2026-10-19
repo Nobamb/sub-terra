@@ -55,6 +55,7 @@ namespace SubTerra.App.Save
         private bool pendingInitialSave;
         private bool uiReady;
         private bool saveInProgress;
+        private bool suppressContinueCapture;
         private float nextPeriodicSaveAt;
         private SaveResult lastSaveResult;
         private ContinueResult lastContinueResult;
@@ -259,6 +260,7 @@ namespace SubTerra.App.Save
             mineWorldCache.ReplaceFromProvider(initialWorld);
             pendingMineWorldRestore = false;
 
+            suppressContinueCapture = false;
             ActivateSlot(slotId);
             pendingInitialSave = true;
             pendingInitialScene = SceneNames.SurfaceBase;
@@ -502,10 +504,13 @@ namespace SubTerra.App.Save
                 new UnitySceneLoader(),
                 this,
                 this,
-                this);
+                this,
+                new ScenePlayerPositionPersistence());
+            suppressContinueCapture = true;
             lastContinueResult = service.Continue(slotId);
             if (lastContinueResult.IsSuccess)
             {
+                suppressContinueCapture = false;
                 // 동기 Continue도 Mine 캐시를 시드해 Surface 저장·재진입에 사용한다.
                 mineWorldCache.Clear();
                 mineWorldCache.SeedFromSave(lastContinueResult.Load?.State?.World);
@@ -699,6 +704,8 @@ namespace SubTerra.App.Save
 
         private SaveCaptureContext CaptureContext()
         {
+            // 복원 중 또는 복원 실패 후의 기본 맵/시작 좌표로 정상 슬롯을 덮지 않는다.
+            if (suppressContinueCapture) return null;
             var provider = Resolve();
             bool canCaptureProvider = !suppressMineWorldCapture && !pendingMineWorldRestore;
             if (provider != null && canCaptureProvider)
@@ -716,7 +723,8 @@ namespace SubTerra.App.Save
                 canCaptureProvider ? provider : null,
                 SceneManager.GetActiveScene().name,
                 Application.version,
-                mineWorldCache.Peek());
+                mineWorldCache.Peek(),
+                uiReady && canCaptureProvider ? ResolvePlayerPosition()?.CapturePlayerPosition() : null);
         }
 
         /// <summary>
@@ -1246,6 +1254,7 @@ namespace SubTerra.App.Save
             int slotId,
             Action<ContinueResult> completed)
         {
+            suppressContinueCapture = true;
             uiReady = false;
             if (!IsAllowedSlot(slotId))
             {
@@ -1330,8 +1339,20 @@ namespace SubTerra.App.Save
                 NotifyIntegrationDerivedRecalculated();
             }
 
+            if (ContinueService.RequiresWorldRestore(load.State.TargetSceneName)
+                && load.State.ResumePosition != null)
+            {
+                var position = ResolvePlayerPosition();
+                if (position == null || !position.TryRestorePlayerPosition(load.State.ResumePosition))
+                {
+                    CompleteContinue(new ContinueResult(ContinueStatus.PlayerPositionRestoreFailed, load), completed);
+                    yield break;
+                }
+            }
+
             ActivateSlot(slotId);
             dirty = false;
+            suppressContinueCapture = false;
             uiReady = true;
             CompleteContinue(
                 new ContinueResult(ContinueStatus.Success, load),
@@ -1352,6 +1373,24 @@ namespace SubTerra.App.Save
                     listener.NotifyWorldRestored();
                 }
             }
+        }
+
+        private static IPlayerPositionPersistence ResolvePlayerPosition()
+        {
+            var scene = SceneManager.GetActiveScene();
+            foreach (var behaviour in FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Exclude))
+            {
+                if (behaviour.gameObject.scene == scene && behaviour is IPlayerPositionPersistence position)
+                    return position;
+            }
+            return null;
+        }
+
+        private sealed class ScenePlayerPositionPersistence : IPlayerPositionPersistence
+        {
+            public PlayerPositionSaveData CapturePlayerPosition() => ResolvePlayerPosition()?.CapturePlayerPosition();
+            public bool TryRestorePlayerPosition(PlayerPositionSaveData position)
+                => ResolvePlayerPosition()?.TryRestorePlayerPosition(position) == true;
         }
 
         private static void NotifyIntegrationDerivedRecalculated()
