@@ -6,3 +6,4 @@
 - PromptB107QuestUiTests 14/14 PASS. 반복 적용, 카드 크기, 여백, 겹침 방지, Ellipsis, 기존 상세창/시설창/상태 아이콘 배치를 검사했다.
 - 자동 Camera.Render 캡처 quest-basic/quest-hover는 Builds/MissionSpacing-20261019에 보존해 확인. 기존 추적 증거 이미지는 복원.
 - Windows 실제 게임 화면 검증은 사용자 요청으로 제외하며 미실행. 팀원 검수 후 병합.
+- 최신 main fa2a9db4 통합 후 동일 EditMode 14/14 재통과 (edit-main.xml). main의 메인 메뉴/드론 터미널 변경을 보존했다.
