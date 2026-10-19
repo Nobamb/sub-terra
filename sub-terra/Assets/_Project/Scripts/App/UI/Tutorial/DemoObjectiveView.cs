@@ -627,19 +627,11 @@ namespace SubTerra.App.UI.Tutorial
 
         public void SetClaimText(string title, string questTitle, string rewardText, string hint)
         {
-            // 기존 씬에도 적용되도록 보상 행과 안내를 프레임 안쪽에 배치한다.
+            ApplyClaimLayout(claimRoot != null ? claimRoot.transform : null);
             if (claimRewardRow != null)
-                claimRewardRow.anchoredPosition = new Vector2(0f, -388f);
+                claimRewardRow.anchoredPosition = new Vector2(0f, ClaimRewardRowY);
             if (claimHintText != null)
-            {
-                var rect = claimHintText.rectTransform;
-                rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 1f);
-                rect.pivot = new Vector2(0.5f, 0.5f);
-                rect.anchoredPosition = new Vector2(0f, -428f);
-                rect.sizeDelta = new Vector2(840f, 28f);
-                claimHintText.fontSize = 16f;
-                claimHintText.color = new Color(0.83f, 0.94f, 0.96f, 1f);
-            }
+                ApplyClaimHint(claimHintText);
             if (claimTitleText != null)
             {
                 claimTitleText.text = title ?? string.Empty;
@@ -659,6 +651,40 @@ namespace SubTerra.App.UI.Tutorial
             {
                 claimHintText.text = hint ?? string.Empty;
             }
+        }
+
+        public const float ClaimRewardRowY = -340f;
+        public const float ClaimHintY = -418f;
+
+        // 빌더와 실행 중 팝업이 같은 간격을 사용한다. 보상은 본문, 안내는 하단 구획에 둔다.
+        public static void ApplyClaimLayout(Transform panel)
+        {
+            if (panel == null) return;
+            SetClaimY(panel, "ClaimQuestTitle", -214f);
+            SetClaimY(panel, "ClaimDescription", -266f);
+            SetClaimY(panel, "ClaimReward", ClaimRewardRowY + 22f);
+            SetClaimY(panel, "ClaimRewardRow", ClaimRewardRowY);
+            var hint = panel.Find("ClaimHint");
+            if (hint != null) ApplyClaimHint(hint.GetComponent<TMP_Text>());
+        }
+
+        private static void ApplyClaimHint(TMP_Text hint)
+        {
+            if (hint == null) return;
+            var rect = hint.rectTransform;
+            rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 1f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = new Vector2(0f, ClaimHintY);
+            rect.sizeDelta = new Vector2(840f, 28f);
+            hint.fontSize = 16f;
+            hint.color = new Color(0.83f, 0.94f, 0.96f, 1f);
+        }
+
+        private static void SetClaimY(Transform panel, string name, float y)
+        {
+            var rect = panel.Find(name) as RectTransform;
+            if (rect != null)
+                rect.anchoredPosition = new Vector2(rect.anchoredPosition.x, y);
         }
 
         private static void SetDumpMineral(

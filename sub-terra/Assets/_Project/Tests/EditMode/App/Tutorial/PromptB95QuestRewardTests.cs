@@ -321,6 +321,50 @@ namespace SubTerra.App.Tests.Tutorial
         }
 
         [Test]
+        public void ClaimLayout_KeepsRewardsAboveFooterAndSurvivesRuntimeRefresh()
+        {
+            var scene = SceneManager.GetSceneByPath(PromptB951QuestClearRewardUiBuilder.IntegrationScenePath);
+            var closeAfter = !scene.IsValid() || !scene.isLoaded;
+            if (closeAfter)
+                scene = EditorSceneManager.OpenScene(PromptB951QuestClearRewardUiBuilder.IntegrationScenePath, OpenSceneMode.Additive);
+            try
+            {
+                var panel = Find(scene, "QuestClearRewardPanel").transform;
+                var quest = (RectTransform)panel.Find("ClaimQuestTitle");
+                var description = (RectTransform)panel.Find("ClaimDescription");
+                var row = (RectTransform)panel.Find("ClaimRewardRow");
+                var fallback = (RectTransform)panel.Find("ClaimReward");
+                var hint = (RectTransform)panel.Find("ClaimHint");
+                Assert.That(quest.anchoredPosition.y, Is.EqualTo(-214f));
+                Assert.That(description.anchoredPosition.y, Is.EqualTo(-266f));
+                Assert.That(row.anchoredPosition.y, Is.EqualTo(-340f));
+                Assert.That(fallback.anchoredPosition.y, Is.EqualTo(-318f));
+                Assert.That(hint.anchoredPosition.y, Is.EqualTo(-418f));
+                Assert.That(row.sizeDelta, Is.EqualTo(new Vector2(870f, 44f)));
+                Assert.That(hint.GetComponent<TMP_Text>().fontSize, Is.EqualTo(16f));
+                // 프레임 하단 구분선(y=-371) 위에 보상을 두고 안내와 충분히 띄운다.
+                Assert.That(row.anchoredPosition.y - row.sizeDelta.y / 2f, Is.GreaterThan(-371f));
+                Assert.That(row.anchoredPosition.y - row.sizeDelta.y / 2f
+                    - (hint.anchoredPosition.y + hint.sizeDelta.y / 2f), Is.GreaterThanOrEqualTo(40f));
+
+                row.anchoredPosition = new Vector2(0f, -388f);
+                hint.anchoredPosition = new Vector2(0f, -428f);
+                var view = Find(scene, "DemoObjectiveRoot").GetComponent<DemoObjectiveView>();
+                view.SetClaimText("퀘스트 클리어", "목표", "보상 없음", "닫으면 보상이 지급됩니다.");
+                Assert.That(row.anchoredPosition.y, Is.EqualTo(-340f));
+                Assert.That(hint.anchoredPosition.y, Is.EqualTo(-418f));
+                Assert.That(panel.gameObject.activeSelf, Is.False);
+                Assert.That(panel.Find("ClaimCloseButton").GetComponent<Button>().onClick.GetPersistentMethodName(0),
+                    Is.EqualTo(nameof(DemoObjectiveView.OnClaimConfirmClicked)));
+            }
+            finally
+            {
+                if (closeAfter && scene.IsValid() && scene.isLoaded)
+                    EditorSceneManager.CloseScene(scene, true);
+            }
+        }
+
+        [Test]
         public void IntegrationScene_HasQuestLogAndOverflowPanels()
         {
             var scene = SceneManager.GetSceneByPath(PromptB95QuestRewardUiBuilder.IntegrationScenePath);

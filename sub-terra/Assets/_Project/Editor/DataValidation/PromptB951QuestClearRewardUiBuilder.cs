@@ -89,6 +89,48 @@ namespace SubTerra.App.Editor.DataValidation
             }
         }
 
+        [MenuItem("SubTerra/UI/Apply Quest Clear Reward Spacing")]
+        public static void ApplySpacing()
+        {
+            var scene = SceneManager.GetSceneByPath(IntegrationScenePath);
+            var closeAfter = !scene.IsValid() || !scene.isLoaded;
+            if (closeAfter)
+                scene = EditorSceneManager.OpenScene(IntegrationScenePath, OpenSceneMode.Additive);
+            try
+            {
+                var root = FindInScene(scene, "DemoObjectiveRoot");
+                var panel = root != null ? root.transform.Find("QuestClearRewardPanel") : null;
+                if (panel == null)
+                    throw new System.InvalidOperationException("QuestClearRewardPanel이 없습니다.");
+                DemoObjectiveView.ApplyClaimLayout(panel);
+                EditorSceneManager.MarkSceneDirty(scene);
+                if (!EditorSceneManager.SaveScene(scene))
+                    throw new System.InvalidOperationException("보상 팝업 배치를 저장하지 못했습니다.");
+            }
+            finally
+            {
+                if (closeAfter && scene.IsValid() && scene.isLoaded)
+                    EditorSceneManager.CloseScene(scene, true);
+            }
+        }
+
+        public static void ApplySpacingAndVerify()
+        {
+            ApplySpacing();
+            System.Type type = null;
+            foreach (var assembly in System.AppDomain.CurrentDomain.GetAssemblies())
+            {
+                type = assembly.GetType("SubTerra.App.Tests.Tutorial.PromptB95QuestRewardTests");
+                if (type != null) break;
+            }
+            if (type == null) throw new System.InvalidOperationException("보상 검사 어셈블리가 없습니다.");
+            foreach (var name in new[] { "ClaimLayout_KeepsRewardsAboveFooterAndSurvivesRuntimeRefresh", "Presenter_ShowsClaimPopupOnClear_AndGrantsWhenClosed" })
+            {
+                type.GetMethod(name).Invoke(System.Activator.CreateInstance(type), null);
+                Debug.Log("[SubTerra] PASS: " + name);
+            }
+        }
+
         private static ClaimRefs EnsureClaimPanel(Transform root, TMP_FontAsset font)
         {
             var panel = EnsurePanel(root, "QuestClearRewardPanel", new Vector2(1125f, 562.5f));
@@ -111,7 +153,7 @@ namespace SubTerra.App.Editor.DataValidation
             var quest = EnsureText(
                 panel.transform,
                 "ClaimQuestTitle",
-                new Vector2(330f, -226f),
+                new Vector2(330f, -214f),
                 new Vector2(620f, 48f),
                 29f,
                 TextAlignmentOptions.MidlineLeft,
@@ -119,7 +161,7 @@ namespace SubTerra.App.Editor.DataValidation
             var reward = EnsureText(
                 panel.transform,
                 "ClaimReward",
-                new Vector2(440f, -398f),
+                new Vector2(440f, DemoObjectiveView.ClaimRewardRowY + 22f),
                 new Vector2(360f, 44f),
                 19f,
                 TextAlignmentOptions.MidlineLeft,
@@ -127,7 +169,7 @@ namespace SubTerra.App.Editor.DataValidation
             var hint = EnsureText(
                 panel.transform,
                 "ClaimHint",
-                new Vector2(142.5f, -428f),
+                new Vector2(142.5f, DemoObjectiveView.ClaimHintY),
                 new Vector2(840f, 28f),
                 16f,
                 TextAlignmentOptions.Midline,
@@ -135,19 +177,19 @@ namespace SubTerra.App.Editor.DataValidation
             hint.text = "닫으면 보상이 지급됩니다.";
             hint.rectTransform.anchorMin = hint.rectTransform.anchorMax = new Vector2(0.5f, 1f);
             hint.rectTransform.pivot = new Vector2(0.5f, 0.5f);
-            hint.rectTransform.anchoredPosition = new Vector2(0f, -428f);
+            hint.rectTransform.anchoredPosition = new Vector2(0f, DemoObjectiveView.ClaimHintY);
             hint.color = new Color(0.83f, 0.94f, 0.96f, 1f);
             var progress = EnsureText(panel.transform, "ClaimProgress", new Vector2(725f, -127f),
                 new Vector2(180f, 48f), 18f, TextAlignmentOptions.MidlineRight, font);
             progress.color = new Color(0.45f, 1f, 1f, 1f);
             var oldMission = panel.transform.Find("ClaimMission");
             if (oldMission != null) Object.DestroyImmediate(oldMission.gameObject);
-            var description = EnsureText(panel.transform, "ClaimDescription", new Vector2(330f, -278f),
+            var description = EnsureText(panel.transform, "ClaimDescription", new Vector2(330f, -266f),
                 new Vector2(620f, 36f), 18f, TextAlignmentOptions.MidlineLeft, font);
             description.text = "퀘스트 목표를 달성했습니다.";
             description.color = new Color(0.83f, 0.94f, 0.96f, 1f);
             var rewardRow = EnsureRect(panel.transform, "ClaimRewardRow",
-                new Vector2(0.5f, 1f), new Vector2(0f, -388f), new Vector2(870f, 44f));
+                new Vector2(0.5f, 1f), new Vector2(0f, DemoObjectiveView.ClaimRewardRowY), new Vector2(870f, 44f));
             rewardRow.pivot = new Vector2(0.5f, 0.5f);
             var existingRewardLabel = panel.transform.Find("ClaimRewardLabel");
             if (existingRewardLabel != null) existingRewardLabel.SetParent(rewardRow, false);
@@ -199,6 +241,7 @@ namespace SubTerra.App.Editor.DataValidation
             Assign(motionSerialized, "borderGlintImage", glint);
             motionSerialized.ApplyModifiedPropertiesWithoutUndo();
             panel.transform.SetAsLastSibling();
+            DemoObjectiveView.ApplyClaimLayout(panel.transform);
             return new ClaimRefs(panel, title, quest, reward, hint, progress, rewardRow, closeButton);
         }
 
