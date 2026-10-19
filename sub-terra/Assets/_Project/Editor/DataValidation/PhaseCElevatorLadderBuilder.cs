@@ -45,14 +45,14 @@ namespace SubTerra.App.Editor
         public static string BuildAll()
         {
             EnsureFolder("Assets/_Project/Prefabs/Gameplay/Traversal");
-            // 씬 기본 사다리는 세로 1유닛, 설치용은 세로 5칸으로 분리한다.
-            var ladderPrefab = BuildLadderPrefab(LadderPrefabPath, "Ladder", height: 1f);
+            // 기존 단위 프리팹은 호환용으로 유지한다. 새 탐사에는 기본 사다리를 배치하지 않는다.
+            BuildLadderPrefab(LadderPrefabPath, "Ladder", height: 1f);
             var buildablePrefab = BuildLadderPrefab(
                 LadderBuildablePrefabPath, "Ladder_Buildable", height: 5f);
             var elevatorPrefab = BuildElevatorPrefab();
             var placement = BuildLadderDefinitions(buildablePrefab);
             AddLadderToCatalog();
-            WireIntegrationScene(ladderPrefab, elevatorPrefab, placement);
+            WireIntegrationScene(elevatorPrefab, placement);
             PhaseLMenuSceneBuilder.BuildSurfaceBasePrefab();
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
@@ -189,8 +189,30 @@ namespace SubTerra.App.Editor
             EditorUtility.SetDirty(catalog);
         }
 
+        [MenuItem("SubTerra/MVP2/Remove Authored Starter Ladder")]
+        public static void RemoveStarterLadderFromIntegrationScene()
+        {
+            var scene = EditorSceneManager.OpenScene(IntegrationScenePath, OpenSceneMode.Single);
+            var candidates = scene.GetRootGameObjects()
+                .SelectMany(root => root.GetComponentsInChildren<Transform>(true))
+                .Where(item => item.name == "LadderTrainingShaft_6m"
+                    && item.parent != null && item.parent.name == "PhaseCTraversal"
+                    && item.GetComponent<BuildingInstance>() == null).ToArray();
+            foreach (var target in candidates)
+            {
+                if (PrefabUtility.GetPrefabAssetPathOfNearestInstanceRoot(target.gameObject) != LadderPrefabPath)
+                    throw new InvalidOperationException("Unexpected starter ladder prefab; leaving Scene unchanged.");
+            }
+            foreach (var target in candidates) UnityEngine.Object.DestroyImmediate(target.gameObject);
+            if (candidates.Length > 0)
+            {
+                EditorSceneManager.MarkSceneDirty(scene);
+                EditorSceneManager.SaveScene(scene);
+            }
+            Debug.Log("[SubTerra] Authored starter ladders removed: " + candidates.Length);
+        }
+
         private static void WireIntegrationScene(
-            GameObject ladderPrefab,
             GameObject elevatorPrefab,
             BuildingPlacementDefinition placement)
         {
@@ -204,16 +226,6 @@ namespace SubTerra.App.Editor
             elevator.name = "StartElevatorStation";
             elevator.transform.SetParent(traversal.transform, false);
             elevator.transform.position = new Vector3(-6.5f, 0f, 0f);
-
-            // 시작 세로 통로를 채굴하면 즉시 6칸 이상 사다리를 검증할 수 있는 데모 구간.
-            // Transform을 늘리면 가로대 2개가 7배 벌어진다. 렌더러만 반복하고 등반 영역을 맞춘다.
-            var demoLadder = (GameObject)PrefabUtility.InstantiatePrefab(ladderPrefab, scene);
-            demoLadder.name = "LadderTrainingShaft_6m";
-            demoLadder.transform.SetParent(traversal.transform, false);
-            demoLadder.transform.position = new Vector3(-9.5f, -5f, 0f);
-            demoLadder.transform.localScale = Vector3.one;
-            demoLadder.GetComponent<SpriteRenderer>().size = new Vector2(1f, 7f);
-            demoLadder.GetComponent<BoxCollider2D>().size = new Vector2(0.7f, 7f);
 
             var bridgeHost = new GameObject("ElevatorTravelBridge");
             bridgeHost.transform.SetParent(traversal.transform, false);
