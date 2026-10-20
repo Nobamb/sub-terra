@@ -333,7 +333,7 @@ namespace SubTerra.App.Editor.DataValidation
             var one = EnsureButton(
                 row.transform,
                 "DumpOne",
-                "1개 버리기",
+                CargoDiscardText.ButtonLabel(CargoDiscardKind.One),
                 new Vector2(1f, 0.5f),
                 new Vector2(-170f, 0f),
                 new Vector2(150f, 44f),
@@ -342,7 +342,7 @@ namespace SubTerra.App.Editor.DataValidation
             var all = EnsureButton(
                 row.transform,
                 "DumpAll",
-                "전부 버리기",
+                CargoDiscardText.ButtonLabel(CargoDiscardKind.All),
                 new Vector2(1f, 0.5f),
                 new Vector2(-8f, 0f),
                 new Vector2(150f, 44f),

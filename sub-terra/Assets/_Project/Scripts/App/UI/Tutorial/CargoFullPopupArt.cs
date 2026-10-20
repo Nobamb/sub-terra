@@ -86,6 +86,21 @@ namespace SubTerra.App.UI.Tutorial
             });
         }
 
+        /// <summary>도트 되돌아가기 아이콘(16x16): 왼쪽을 향한 화살촉 + 위로 꺾인 꼬리.</summary>
+        public static Sprite BackIcon()
+        {
+            return Create("back", 16, 16, Vector4.zero, TextureWrapMode.Clamp, (x, y) =>
+            {
+                // 화살촉: (2,7) 꼭짓점에서 오른쪽으로 벌어지는 2px 두께 선.
+                var dx = x - 2;
+                var arrow = dx >= 0 && dx <= 5 && (y == 7 - dx || y == 8 - dx || y == 7 + dx || y == 8 + dx);
+                // 몸통: 가로 막대 후 오른쪽에서 위로 꺾임.
+                var shaft = (y == 7 || y == 8) && x >= 3 && x <= 12;
+                var tail = (x == 12 || x == 13) && y >= 7 && y <= 13;
+                return arrow || shaft || tail ? new Color32(255, 255, 255, 255) : new Color32(255, 255, 255, 0);
+            });
+        }
+
         /// <summary>9-slice 경계가 없는 기존 그림을 같은 텍스처의 9-slice 스프라이트로 감싼다(그림 파일은 그대로).</summary>
         public static Sprite Sliced(Sprite source, float borderX, float borderY)
         {

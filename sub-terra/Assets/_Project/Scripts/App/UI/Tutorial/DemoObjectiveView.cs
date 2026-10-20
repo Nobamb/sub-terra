@@ -50,6 +50,7 @@ namespace SubTerra.App.UI.Tutorial
         [SerializeField] private Button dumpIronAllButton;
         [SerializeField] private Button dumpLithiumOneButton;
         [SerializeField] private Button dumpLithiumAllButton;
+        [SerializeField] private CargoDiscardPopupView dumpPopup;
         [SerializeField] private GameObject claimRoot;
         [SerializeField] private TMP_Text claimTitleText;
         [SerializeField] private TMP_Text claimQuestTitleText;
@@ -79,6 +80,16 @@ namespace SubTerra.App.UI.Tutorial
         // 화물 부족 창이 접히는 0.2초 동안 다음 창을 미뤄 두 창이 겹쳐 보이지 않게 한다.
         private bool dumpAfterCapacityClose;
         private bool claimAfterCapacityClose;
+        // 화물 버리기 창(B-153)이 닫히는 동안(페이지 넘김·완료 표시·접기) 다음 창을 미룬다.
+        private bool dumpPopupHooked;
+        private bool capacityAfterDumpClose;
+        private bool claimAfterDumpClose;
+        // 두 창 사이 이동은 같은 단말의 페이지 넘김이다. 클릭 처리 중에만 켠다.
+        private bool pageToDump;
+        private bool pageToCapacity;
+        private bool dumpRequestInFlight;
+        private CargoShortfallModel dumpShortfall;
+        private QuestReward dumpReward;
 
         private void Awake()
         {
@@ -501,17 +512,23 @@ namespace SubTerra.App.UI.Tutorial
 
         public void SetCapacityChoiceVisible(bool visible)
         {
+            capacityAfterDumpClose = visible && IsDumpClosing();
+            if (capacityAfterDumpClose)
+            {
+                return;
+            }
+
             var popup = ResolveCapacityPopup();
             if (popup != null)
             {
                 if (visible)
                 {
-                    popup.Show();
+                    popup.Show(false);
                     capacityRoot.transform.SetAsLastSibling();
                 }
                 else
                 {
-                    popup.Close();
+                    popup.Close(pageToDump);
                 }
 
                 return;
@@ -581,7 +598,7 @@ namespace SubTerra.App.UI.Tutorial
             if (dumpAfterCapacityClose)
             {
                 dumpAfterCapacityClose = false;
-                SetDumpPanelVisible(true);
+                ShowDumpPanel(capacityPopup != null && capacityPopup.LastCloseWasPage);
             }
 
             if (claimAfterCapacityClose)
@@ -597,6 +614,11 @@ namespace SubTerra.App.UI.Tutorial
             {
                 capacityPopup.Closed -= OnCapacityPopupClosed;
             }
+
+            if (dumpPopup != null && dumpPopupHooked)
+            {
+                dumpPopup.Closed -= OnDumpPopupClosed;
+            }
         }
 
         public void SetDumpPanelVisible(bool visible)
@@ -607,13 +629,121 @@ namespace SubTerra.App.UI.Tutorial
                 return;
             }
 
+            if (visible)
+            {
+                ShowDumpPanel(false);
+                return;
+            }
+
+            var popup = ResolveDumpPopup();
+            if (popup != null)
+            {
+                // 버리기 처리 중에 닫히면 부족이 0이 되어 지급된 것이다. 완료 표시를 잠깐 보여 준 뒤 접는다.
+                popup.Close(dumpRequestInFlight
+                    ? CargoDiscardPopupView.CloseMode.Complete
+                    : pageToCapacity ? CargoDiscardPopupView.CloseMode.Page : CargoDiscardPopupView.CloseMode.Fold);
+                return;
+            }
+
             if (dumpRoot != null)
             {
-                dumpRoot.SetActive(visible);
-                if (visible)
+                dumpRoot.SetActive(false);
+            }
+        }
+
+        private void ShowDumpPanel(bool page)
+        {
+            var popup = ResolveDumpPopup();
+            if (popup != null)
+            {
+                popup.Show(page);
+                dumpRoot.transform.SetAsLastSibling();
+                return;
+            }
+
+            if (dumpRoot != null)
+            {
+                dumpRoot.SetActive(true);
+                dumpRoot.transform.SetAsLastSibling();
+            }
+        }
+
+        private CargoDiscardPopupView ResolveDumpPopup()
+        {
+            if (dumpPopup == null && dumpRoot != null)
+            {
+                dumpPopup = dumpRoot.GetComponent<CargoDiscardPopupView>();
+                if (dumpPopup == null && Application.isPlaying)
                 {
-                    dumpRoot.transform.SetAsLastSibling();
+                    // 빌더를 다시 돌리지 않은 씬에서도 새 화물 버리기 창을 쓴다.
+                    dumpPopup = dumpRoot.AddComponent<CargoDiscardPopupView>();
                 }
+            }
+
+            if (dumpPopup != null && !dumpPopupHooked)
+            {
+                dumpPopupHooked = true;
+                dumpPopup.Closed += OnDumpPopupClosed;
+                dumpPopup.EnsureReady();
+                HookMissingDumpListeners(dumpPopup);
+            }
+
+            return dumpPopup;
+        }
+
+        // 빌더가 영구 연결한 버튼은 그대로 두고, 실행 중에 새로 생긴 버튼만 코드로 잇는다.
+        private void HookMissingDumpListeners(CargoDiscardPopupView popup)
+        {
+            var minerals = new[] { DataIds.Minerals.Copper, DataIds.Minerals.Iron, DataIds.Minerals.Lithium };
+            for (var m = 0; m < minerals.Length; m++)
+            {
+                for (var k = 0; k < CargoDiscardText.Kinds.Length; k++)
+                {
+                    var button = popup.GetButton(minerals[m], CargoDiscardText.Kinds[k]);
+                    if (button == null || button.onClick.GetPersistentEventCount() > 0)
+                    {
+                        continue;
+                    }
+
+                    var mineralId = minerals[m];
+                    var kind = CargoDiscardText.Kinds[k];
+                    button.onClick.AddListener(() => RequestDump(mineralId, kind));
+                }
+            }
+
+            var back = popup.BackButton;
+            if (back != null && back.onClick.GetPersistentEventCount() == 0)
+            {
+                back.onClick.AddListener(OnDumpClosedClicked);
+            }
+        }
+
+        private bool IsDumpClosing()
+        {
+            return dumpPopup != null && dumpPopup.IsClosing;
+        }
+
+        private void OnDumpPopupClosed()
+        {
+            if (capacityAfterDumpClose)
+            {
+                capacityAfterDumpClose = false;
+                var popup = ResolveCapacityPopup();
+                if (popup != null)
+                {
+                    popup.Show(dumpPopup.LastCloseWasPage);
+                    capacityRoot.transform.SetAsLastSibling();
+                }
+                else
+                {
+                    SetCapacityChoiceVisible(true);
+                }
+            }
+
+            if (claimAfterDumpClose)
+            {
+                claimAfterDumpClose = false;
+                SetClaimVisible(true);
             }
         }
 
@@ -625,8 +755,22 @@ namespace SubTerra.App.UI.Tutorial
             }
         }
 
+        /// <summary>화물 버리기 창(B-153) 게이지·헤더 보상 값. 다음 SetDumpRows에서 함께 그린다.</summary>
+        public void SetDumpChoice(CargoShortfallModel shortfall, QuestReward reward)
+        {
+            dumpShortfall = shortfall;
+            dumpReward = reward;
+        }
+
         public void SetDumpRows(IReadOnlyList<QuestDumpRow> rows)
         {
+            var popup = ResolveDumpPopup();
+            if (popup != null)
+            {
+                popup.Render(dumpShortfall, dumpReward, rows);
+                return;
+            }
+
             SetDumpMineral(DataIds.Minerals.Copper, dumpCopperText, dumpCopperOneButton, dumpCopperAllButton, rows);
             SetDumpMineral(DataIds.Minerals.Iron, dumpIronText, dumpIronOneButton, dumpIronAllButton, rows);
             SetDumpMineral(DataIds.Minerals.Lithium, dumpLithiumText, dumpLithiumOneButton, dumpLithiumAllButton, rows);
@@ -635,7 +779,8 @@ namespace SubTerra.App.UI.Tutorial
         public void SetClaimVisible(bool visible)
         {
             claimAfterCapacityClose = visible && IsCapacityClosing();
-            if (claimAfterCapacityClose)
+            claimAfterDumpClose = visible && !claimAfterCapacityClose && IsDumpClosing();
+            if (claimAfterCapacityClose || claimAfterDumpClose)
             {
                 return;
             }
@@ -913,7 +1058,21 @@ namespace SubTerra.App.UI.Tutorial
                 return;
             }
 
-            CapacityDumpRequested?.Invoke();
+            // 화물 부족 → 화물 버리기는 같은 단말의 페이지 넘김이다. 접지 않고 내용만 바꾼다.
+            pageToDump = true;
+            try
+            {
+                CapacityDumpRequested?.Invoke();
+            }
+            finally
+            {
+                pageToDump = false;
+            }
+
+            if (!dumpAfterCapacityClose && capacityPopup != null)
+            {
+                capacityPopup.FoldInsteadOfPage();
+            }
         }
 
         public void OnCapacityForfeitClicked()
@@ -933,39 +1092,70 @@ namespace SubTerra.App.UI.Tutorial
             return popup == null || popup.TryAcceptChoice();
         }
 
+        /// <summary>돌아가기·X 키. 화물 부족 창으로 페이지를 넘기고, 이미 닫히는 중이면 무시한다.</summary>
         public void OnDumpClosedClicked()
         {
-            DumpClosedRequested?.Invoke();
+            var popup = ResolveDumpPopup();
+            if (popup != null && !popup.TryAcceptBack())
+            {
+                return;
+            }
+
+            pageToCapacity = true;
+            try
+            {
+                DumpClosedRequested?.Invoke();
+            }
+            finally
+            {
+                pageToCapacity = false;
+            }
+
+            if (popup != null && !capacityAfterDumpClose)
+            {
+                popup.FoldInsteadOfPage();
+            }
         }
 
-        public void OnDumpCopperOneClicked()
-        {
-            DumpRequested?.Invoke(DataIds.Minerals.Copper, 1);
-        }
+        public void OnDumpCopperOneClicked() => RequestDump(DataIds.Minerals.Copper, CargoDiscardKind.One);
+        public void OnDumpCopperFiveClicked() => RequestDump(DataIds.Minerals.Copper, CargoDiscardKind.Five);
+        public void OnDumpCopperTenClicked() => RequestDump(DataIds.Minerals.Copper, CargoDiscardKind.Ten);
+        public void OnDumpCopperNeededClicked() => RequestDump(DataIds.Minerals.Copper, CargoDiscardKind.Needed);
+        public void OnDumpCopperAllClicked() => RequestDump(DataIds.Minerals.Copper, CargoDiscardKind.All);
+        public void OnDumpIronOneClicked() => RequestDump(DataIds.Minerals.Iron, CargoDiscardKind.One);
+        public void OnDumpIronFiveClicked() => RequestDump(DataIds.Minerals.Iron, CargoDiscardKind.Five);
+        public void OnDumpIronTenClicked() => RequestDump(DataIds.Minerals.Iron, CargoDiscardKind.Ten);
+        public void OnDumpIronNeededClicked() => RequestDump(DataIds.Minerals.Iron, CargoDiscardKind.Needed);
+        public void OnDumpIronAllClicked() => RequestDump(DataIds.Minerals.Iron, CargoDiscardKind.All);
+        public void OnDumpLithiumOneClicked() => RequestDump(DataIds.Minerals.Lithium, CargoDiscardKind.One);
+        public void OnDumpLithiumFiveClicked() => RequestDump(DataIds.Minerals.Lithium, CargoDiscardKind.Five);
+        public void OnDumpLithiumTenClicked() => RequestDump(DataIds.Minerals.Lithium, CargoDiscardKind.Ten);
+        public void OnDumpLithiumNeededClicked() => RequestDump(DataIds.Minerals.Lithium, CargoDiscardKind.Needed);
+        public void OnDumpLithiumAllClicked() => RequestDump(DataIds.Minerals.Lithium, CargoDiscardKind.All);
 
-        public void OnDumpCopperAllClicked()
+        // 모든 수량 버튼이 같은 DumpRequested(id, 수량) 경로를 쓴다. 연출·처리 중 클릭은 문(gate)에서 버린다.
+        private void RequestDump(string mineralId, CargoDiscardKind kind)
         {
-            DumpRequested?.Invoke(DataIds.Minerals.Copper, int.MaxValue);
-        }
+            var popup = ResolveDumpPopup();
+            var quantity = popup != null ? popup.RequestCount(mineralId, kind) : CargoDiscardText.FixedCount(kind);
+            if (quantity <= 0 || (popup != null && !popup.TryAcceptDump()))
+            {
+                return;
+            }
 
-        public void OnDumpIronOneClicked()
-        {
-            DumpRequested?.Invoke(DataIds.Minerals.Iron, 1);
-        }
-
-        public void OnDumpIronAllClicked()
-        {
-            DumpRequested?.Invoke(DataIds.Minerals.Iron, int.MaxValue);
-        }
-
-        public void OnDumpLithiumOneClicked()
-        {
-            DumpRequested?.Invoke(DataIds.Minerals.Lithium, 1);
-        }
-
-        public void OnDumpLithiumAllClicked()
-        {
-            DumpRequested?.Invoke(DataIds.Minerals.Lithium, int.MaxValue);
+            dumpRequestInFlight = true;
+            try
+            {
+                DumpRequested?.Invoke(mineralId, quantity);
+            }
+            finally
+            {
+                dumpRequestInFlight = false;
+                if (popup != null)
+                {
+                    popup.ReleaseDump();
+                }
+            }
         }
 
         /// <summary>클리어 보상 팝업 닫기/확인. 닫는 시점에 보상을 지급한다.</summary>

@@ -255,6 +255,55 @@ namespace SubTerra.App.Editor.DataValidation
             EditorUtility.SetDirty(fontAsset);
         }
 
+        /// <summary>
+        /// 주어진 글자를 폰트 에셋 글자 표·아틀라스에 넣고 저장한다. 이미 저장된 글자는 건드리지 않는다.
+        /// 동적 추가는 메모리 조회표에만 남을 수 있고, 에셋이 디스크 값으로 되돌아가면(예: git restore)
+        /// 조회표는 빈 아틀라스 칸을 가리켜 글자가 빈칸으로 그려진다. 그래서 먼저 저장된 표로 조회표를 다시 만든다.
+        /// </summary>
+        public static string EnsureCharactersSaved(TMP_FontAsset fontAsset, string characters)
+        {
+            if (fontAsset == null || string.IsNullOrEmpty(characters))
+            {
+                return "font-missing";
+            }
+
+            fontAsset.ReadFontAssetDefinition();
+            var stored = new HashSet<uint>();
+            if (fontAsset.characterTable != null)
+            {
+                for (var i = 0; i < fontAsset.characterTable.Count; i++)
+                {
+                    stored.Add(fontAsset.characterTable[i].unicode);
+                }
+            }
+
+            var missing = new System.Text.StringBuilder();
+            var seen = new HashSet<char>();
+            for (var i = 0; i < characters.Length; i++)
+            {
+                var c = characters[i];
+                if (char.IsControl(c) || !seen.Add(c) || stored.Contains(c))
+                {
+                    continue;
+                }
+
+                missing.Append(c);
+            }
+
+            if (missing.Length == 0)
+            {
+                return "ok";
+            }
+
+            fontAsset.atlasPopulationMode = AtlasPopulationMode.Dynamic;
+            SetClearDynamicDataOnBuild(fontAsset, false);
+            fontAsset.TryAddCharacters(missing.ToString(), out var notAdded);
+            AddRenderingResources(fontAsset);
+            EditorUtility.SetDirty(fontAsset);
+            AssetDatabase.SaveAssetIfDirty(fontAsset);
+            return "added " + missing + (string.IsNullOrEmpty(notAdded) ? string.Empty : " / failed " + notAdded);
+        }
+
         private static void StripStaleAtlasTextures(TMP_FontAsset fontAsset)
         {
             if (fontAsset == null)

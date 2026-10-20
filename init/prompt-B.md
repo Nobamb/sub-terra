@@ -3739,3 +3739,5 @@ EditMode:
 151. cursor-fix/B-151-mouse-cursor-drill.md 의 내용을 참고해서 기존 게임 내에 있던 마우스 커서를 수정해줘
 
 152. in-game/select-throw-items 폴더에 있는 concept-image.png, B-152-cargo-full-popup.md를 참고해서 화물 공간 부족 관련 팝업창 연출 및 UI 수정해줘
+
+153. in-game/B-153-cargo-discard-popup.md의 내용 참고해서 버릴 자원 선택 버튼을 클릭해서 나타나는 화물 버리기 팝업에 대한 ui 수정해줘

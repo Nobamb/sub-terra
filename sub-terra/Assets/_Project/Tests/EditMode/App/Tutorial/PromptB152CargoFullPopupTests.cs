@@ -494,6 +494,7 @@ namespace SubTerra.App.Tests.Tutorial
             }
 
             public void SetDumpSummary(string summary) { }
+            public void SetDumpChoice(CargoShortfallModel shortfall, QuestReward reward) { }
             public void SetDumpRows(IReadOnlyList<QuestDumpRow> rows) { }
             public void SetClaimVisible(bool visible) => ClaimVisible = visible;
             public void SetClaimText(string title, string questTitle, string rewardText, string hint) { }

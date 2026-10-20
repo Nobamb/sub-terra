@@ -166,6 +166,40 @@ namespace SubTerra.App.Tutorial
             return rows;
         }
 
+        /// <summary>
+        /// 화물 버리기 창 표시용 읽기 전용 목록. 구리·철·리튬 세 줄을 순서대로 늘 돌려주고,
+        /// 0개 줄에도 카탈로그 개당 무게를 담는다. 버리기 판정에는 쓰지 않는다.
+        /// </summary>
+        public IReadOnlyList<QuestDumpRow> GetDumpRowsForDisplay()
+        {
+            var owned = GetDumpRows();
+            var ids = new[] { DataIds.Minerals.Copper, DataIds.Minerals.Iron, DataIds.Minerals.Lithium };
+            var rows = new List<QuestDumpRow>(ids.Length);
+            for (var i = 0; i < ids.Length; i++)
+            {
+                var row = new QuestDumpRow(ids[i], DisplayNameOf(ids[i]), 0, 0f);
+                for (var j = 0; j < owned.Count; j++)
+                {
+                    if (owned[j].MineralId == ids[i])
+                    {
+                        row = owned[j];
+                        break;
+                    }
+                }
+
+                if (row.UnitWeight <= 0f
+                    && inventory?.CatalogLookup != null
+                    && inventory.CatalogLookup.TryGetMineral(ids[i], out var info))
+                {
+                    row = new QuestDumpRow(row.MineralId, row.DisplayName, row.Quantity, info.UnitWeight);
+                }
+
+                rows.Add(row);
+            }
+
+            return rows;
+        }
+
         public string FormatDumpSummary()
         {
             if (inventory == null)
