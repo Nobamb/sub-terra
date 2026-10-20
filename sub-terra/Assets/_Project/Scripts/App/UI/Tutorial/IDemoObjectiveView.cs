@@ -19,6 +19,8 @@ namespace SubTerra.App.UI.Tutorial
         void SetDetailsNavInteractable(bool previousEnabled, bool nextEnabled);
         void SetCapacityChoiceVisible(bool visible);
         void SetCapacityChoiceText(string title, string body);
+        /// <summary>화물 부족 팝업(B-152) 표시값: 받을 보상, 현재/최대 적재량, 부족한 공간.</summary>
+        void SetCapacityChoice(CargoShortfallModel shortfall, QuestReward reward);
         void SetDumpPanelVisible(bool visible);
         void SetDumpSummary(string summary);
         void SetDumpRows(System.Collections.Generic.IReadOnlyList<SubTerra.App.Tutorial.QuestDumpRow> rows);

@@ -155,7 +155,8 @@ namespace SubTerra.App.UI.Tutorial
 
         public void ChooseDumpInventory()
         {
-            if (rewards == null || !rewards.HasPending)
+            // 화물 부족 창이 닫힌 뒤 늦게 들어온 클릭은 버린다(연타 중복 방지).
+            if (!capacityOpen || rewards == null || !rewards.HasPending)
             {
                 return;
             }
@@ -169,6 +170,12 @@ namespace SubTerra.App.UI.Tutorial
 
         public void ChooseForfeitReward()
         {
+            // 한 번 포기한 뒤 같은 연타가 다음 보상까지 포기하지 않게 한다.
+            if (!capacityOpen)
+            {
+                return;
+            }
+
             if (rewards == null || !rewards.HasPending)
             {
                 CloseOverflow();
@@ -379,12 +386,11 @@ namespace SubTerra.App.UI.Tutorial
             capacityOpen = true;
             view?.SetDumpPanelVisible(false);
             view?.SetClaimVisible(false);
-            view?.SetCapacityChoiceText(
-                "화물 공간이 부족합니다",
-                "기존 자원을 버리고 퀘스트 보상("
-                + result.Reward.FormatKorean()
-                + ")을 받을지, 퀘스트 보상을 버릴지 선택하세요.\n"
-                + "판매가 아니라 버리는 것만 가능합니다.");
+            view?.SetCapacityChoiceText(CargoFullPopupText.Title, CargoFullPopupText.Guide);
+            var shortfall = rewards != null
+                ? rewards.DescribeCargoShortfall()
+                : CargoShortfallModel.From(0f, 0f, 0f);
+            view?.SetCapacityChoice(shortfall, result.Reward);
             view?.SetCapacityChoiceVisible(true);
         }
 

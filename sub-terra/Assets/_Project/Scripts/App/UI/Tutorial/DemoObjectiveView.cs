@@ -38,6 +38,7 @@ namespace SubTerra.App.UI.Tutorial
         [SerializeField] private GameObject capacityRoot;
         [SerializeField] private TMP_Text capacityTitleText;
         [SerializeField] private TMP_Text capacityBodyText;
+        [SerializeField] private CargoFullPopupView capacityPopup;
         [SerializeField] private GameObject dumpRoot;
         [SerializeField] private TMP_Text dumpSummaryText;
         [SerializeField] private TMP_Text dumpCopperText;
@@ -74,6 +75,10 @@ namespace SubTerra.App.UI.Tutorial
         private Canvas guidanceCanvas;
         private Canvas detailsCanvas;
         private Canvas claimCanvas;
+        private bool capacityPopupHooked;
+        // 화물 부족 창이 접히는 0.2초 동안 다음 창을 미뤄 두 창이 겹쳐 보이지 않게 한다.
+        private bool dumpAfterCapacityClose;
+        private bool claimAfterCapacityClose;
 
         private void Awake()
         {
@@ -496,6 +501,22 @@ namespace SubTerra.App.UI.Tutorial
 
         public void SetCapacityChoiceVisible(bool visible)
         {
+            var popup = ResolveCapacityPopup();
+            if (popup != null)
+            {
+                if (visible)
+                {
+                    popup.Show();
+                    capacityRoot.transform.SetAsLastSibling();
+                }
+                else
+                {
+                    popup.Close();
+                }
+
+                return;
+            }
+
             if (capacityRoot != null)
             {
                 capacityRoot.SetActive(visible);
@@ -519,8 +540,73 @@ namespace SubTerra.App.UI.Tutorial
             }
         }
 
+        /// <summary>화물 부족 팝업(B-152) 보상 카드·게이지·포기 문구를 갱신한다.</summary>
+        public void SetCapacityChoice(CargoShortfallModel shortfall, QuestReward reward)
+        {
+            var popup = ResolveCapacityPopup();
+            if (popup != null)
+            {
+                popup.Render(shortfall, reward);
+            }
+        }
+
+        private CargoFullPopupView ResolveCapacityPopup()
+        {
+            if (capacityPopup == null && capacityRoot != null)
+            {
+                capacityPopup = capacityRoot.GetComponent<CargoFullPopupView>();
+                if (capacityPopup == null && Application.isPlaying)
+                {
+                    // 빌더를 다시 돌리지 않은 씬에서도 새 화물 부족 창을 쓴다.
+                    capacityPopup = capacityRoot.AddComponent<CargoFullPopupView>();
+                }
+            }
+
+            if (capacityPopup != null && !capacityPopupHooked)
+            {
+                capacityPopupHooked = true;
+                capacityPopup.Closed += OnCapacityPopupClosed;
+            }
+
+            return capacityPopup;
+        }
+
+        private bool IsCapacityClosing()
+        {
+            return capacityPopup != null && capacityPopup.IsClosing;
+        }
+
+        private void OnCapacityPopupClosed()
+        {
+            if (dumpAfterCapacityClose)
+            {
+                dumpAfterCapacityClose = false;
+                SetDumpPanelVisible(true);
+            }
+
+            if (claimAfterCapacityClose)
+            {
+                claimAfterCapacityClose = false;
+                SetClaimVisible(true);
+            }
+        }
+
+        private void OnDestroy()
+        {
+            if (capacityPopup != null && capacityPopupHooked)
+            {
+                capacityPopup.Closed -= OnCapacityPopupClosed;
+            }
+        }
+
         public void SetDumpPanelVisible(bool visible)
         {
+            dumpAfterCapacityClose = visible && IsCapacityClosing();
+            if (dumpAfterCapacityClose)
+            {
+                return;
+            }
+
             if (dumpRoot != null)
             {
                 dumpRoot.SetActive(visible);
@@ -548,6 +634,12 @@ namespace SubTerra.App.UI.Tutorial
 
         public void SetClaimVisible(bool visible)
         {
+            claimAfterCapacityClose = visible && IsCapacityClosing();
+            if (claimAfterCapacityClose)
+            {
+                return;
+            }
+
             if (claimRoot != null)
             {
                 if (visible)
@@ -816,12 +908,29 @@ namespace SubTerra.App.UI.Tutorial
 
         public void OnCapacityDumpClicked()
         {
+            if (!AcceptCapacityChoice())
+            {
+                return;
+            }
+
             CapacityDumpRequested?.Invoke();
         }
 
         public void OnCapacityForfeitClicked()
         {
+            if (!AcceptCapacityChoice())
+            {
+                return;
+            }
+
             CapacityForfeitRequested?.Invoke();
+        }
+
+        // 열기 연출 중·이미 고른 뒤의 클릭은 막는다. 두 버튼 중 하나만 한 번 통과한다.
+        private bool AcceptCapacityChoice()
+        {
+            var popup = ResolveCapacityPopup();
+            return popup == null || popup.TryAcceptChoice();
         }
 
         public void OnDumpClosedClicked()

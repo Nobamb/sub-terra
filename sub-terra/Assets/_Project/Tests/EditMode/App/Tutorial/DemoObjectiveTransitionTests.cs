@@ -451,6 +451,7 @@ namespace SubTerra.App.Tests.Tutorial
             public void SetDetailsNavInteractable(bool previousEnabled, bool nextEnabled) { }
             public void SetCapacityChoiceVisible(bool visible) { }
             public void SetCapacityChoiceText(string title, string body) { }
+            public void SetCapacityChoice(CargoShortfallModel shortfall, QuestReward reward) { }
             public void SetDumpPanelVisible(bool visible) { }
             public void SetDumpSummary(string summary) { }
             public void SetDumpRows(IReadOnlyList<QuestDumpRow> rows) { }

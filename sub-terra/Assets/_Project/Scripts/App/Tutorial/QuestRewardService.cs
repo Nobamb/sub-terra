@@ -182,6 +182,20 @@ namespace SubTerra.App.Tutorial
                 + needed.ToString("0.#");
         }
 
+        /// <summary>화물 부족 팝업 표시용 읽기 전용 값. 지급·포기 판정에는 쓰지 않는다.</summary>
+        public CargoShortfallModel DescribeCargoShortfall()
+        {
+            if (inventory == null)
+            {
+                return CargoShortfallModel.From(0f, 0f, 0f);
+            }
+
+            return CargoShortfallModel.From(
+                inventory.CurrentWeight,
+                inventory.MaxCapacity,
+                PendingReward.ComputeMineralWeight(inventory.CatalogLookup));
+        }
+
         public static string DisplayNameOf(string mineralId)
         {
             if (mineralId == DataIds.Minerals.Copper)
