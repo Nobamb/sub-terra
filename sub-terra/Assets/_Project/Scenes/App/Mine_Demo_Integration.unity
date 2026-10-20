@@ -2889,8 +2889,46 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: SubTerra.App::SubTerra.App.UI.RunFailure.RunFailurePanelView
   canvasGroup: {fileID: 87188310}
+  visualRoot: {fileID: 0}
+  windowCanvasGroup: {fileID: 0}
+  windowBackgroundImage: {fileID: 0}
+  rgbSplitLeftRect: {fileID: 0}
+  rgbSplitLeftImage: {fileID: 0}
+  rgbSplitRightRect: {fileID: 0}
+  rgbSplitRightImage: {fileID: 0}
+  windowGlitchBars: []
+  windowGlitchBarImages: []
   titleText: {fileID: 1324436064}
   detailText: {fileID: 2146193369}
+  cargoScrollRect: {fileID: 0}
+  cargoContentRoot: {fileID: 0}
+  emptyCargoText: {fileID: 0}
+  preservationText: {fileID: 0}
+  confirmButton: {fileID: 0}
+  confirmButtonText: {fileID: 0}
+  confirmButtonImage: {fileID: 0}
+  blackoutOverlayImage: {fileID: 0}
+  screenGlitchRoot: {fileID: 0}
+  screenScanlineImage: {fileID: 0}
+  screenGlitchBars: []
+  screenGlitchBarImages: []
+  tvTopShutterRect: {fileID: 0}
+  tvTopShutterImage: {fileID: 0}
+  tvBottomShutterRect: {fileID: 0}
+  tvBottomShutterImage: {fileID: 0}
+  tvCenterBeamRect: {fileID: 0}
+  tvCenterBeamImage: {fileID: 0}
+  visualSettings:
+    windowGlitchDuration: 0.3
+    itemStaggerSeconds: 0.12
+    itemCountUpDuration: 0.4
+    darkenDuration: 0.4
+    heavyGlitchDuration: 0.6
+    tvTurnOnDuration: 0.4
+    gasGlitchColor: {r: 0.22, g: 0.92, b: 0.38, a: 1}
+    gasSecondaryColor: {r: 0.1, g: 0.55, b: 0.18, a: 1}
+    defaultGlitchColor: {r: 1, g: 0.28, b: 0.24, a: 1}
+    defaultSecondaryColor: {r: 0.24, g: 0.86, b: 1, a: 1}
 --- !u!114 &87188308
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7806,6 +7844,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: SubTerra.App::SubTerra.App.UI.MainMenu.MenuSpriteButtonSkin
   overlay: {fileID: 1771215554}
+  maxAlpha: 1
 --- !u!1 &230664901
 GameObject:
   m_ObjectHideFlags: 0
@@ -16963,6 +17002,7 @@ GameObject:
   - component: {fileID: 525600376}
   - component: {fileID: 525600378}
   - component: {fileID: 525600377}
+  - component: {fileID: 525600379}
   m_Layer: 0
   m_Name: QuestRewardCapacityPanel
   m_TagString: Untagged
@@ -16991,7 +17031,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 720, y: 360}
+  m_SizeDelta: {x: 1000, y: 660}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &525600377
 MonoBehaviour:
@@ -17031,6 +17071,38 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 525600375}
   m_CullTransparentMesh: 1
+--- !u!114 &525600379
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 525600375}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b8113568cb1dae747898820acfc498fa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SubTerra.App::SubTerra.App.UI.Tutorial.CargoFullPopupView
+  titleText: {fileID: 611826770}
+  guideText: {fileID: 1864678429}
+  dumpButton: {fileID: 1591694100}
+  forfeitButton: {fileID: 1656042918}
+  panelSize: {x: 1000, y: 660}
+  gaugeCells: 12
+  maxOverflowCells: 4
+  timing:
+    scanEnd: 0.1
+    revealStart: 0.08
+    revealEnd: 0.26
+    frameFlashPeak: 0.27
+    frameFlashEnd: 0.4
+    contentStart: 0.22
+    contentEnd: 0.34
+    gaugeStart: 0.3
+    gaugeDuration: 0.24
+    overflowFlashRise: 0.02
+    overflowFlashFall: 0.03
+    closeDuration: 0.2
 --- !u!1 &526350774
 GameObject:
   m_ObjectHideFlags: 0
@@ -20827,7 +20899,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 
+  m_text: "\uD654\uBB3C \uACF5\uAC04 \uBD80\uC871"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 48b6c44ff06b5b84d81cbfcf3342d6f0, type: 2}
   m_sharedMaterial: {fileID: 1283237503404649690, guid: 48b6c44ff06b5b84d81cbfcf3342d6f0, type: 2}
@@ -25846,7 +25918,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\uAE30\uC874 \uC790\uC6D0 \uBC84\uB9AC\uAE30"
+  m_text: "\uBC84\uB9B4 \uC790\uC6D0 \uC120\uD0DD"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 48b6c44ff06b5b84d81cbfcf3342d6f0, type: 2}
   m_sharedMaterial: {fileID: 1283237503404649690, guid: 48b6c44ff06b5b84d81cbfcf3342d6f0, type: 2}
@@ -31419,6 +31491,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: SubTerra.App::SubTerra.App.UI.MainMenu.MenuSpriteButtonSkin
   overlay: {fileID: 1362531155}
+  maxAlpha: 1
 --- !u!1 &865521394
 GameObject:
   m_ObjectHideFlags: 0
@@ -36622,6 +36695,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: SubTerra.App::SubTerra.App.UI.MainMenu.MenuSpriteButtonSkin
   overlay: {fileID: 1556634258}
+  maxAlpha: 1
 --- !u!1 &1003671234
 GameObject:
   m_ObjectHideFlags: 0
@@ -87342,6 +87416,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: SubTerra.App::SubTerra.App.UI.MainMenu.MenuSpriteButtonSkin
   overlay: {fileID: 246315533}
+  maxAlpha: 1
 --- !u!1 &1535776246
 GameObject:
   m_ObjectHideFlags: 0
@@ -88662,7 +88737,6 @@ MonoBehaviour:
   - {fileID: 976616838}
   - {fileID: 985740727}
   baseCargoLossRatio: 0.4
-  failureDisplaySeconds: 1.25
 --- !u!114 &1557797926
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -90316,7 +90390,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\uD018\uC2A4\uD2B8 \uBCF4\uC0C1 \uBC84\uB9AC\uAE30"
+  m_text: "\uBCF4\uC0C1 \uBC84\uB9AC\uAE30"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 48b6c44ff06b5b84d81cbfcf3342d6f0, type: 2}
   m_sharedMaterial: {fileID: 1283237503404649690, guid: 48b6c44ff06b5b84d81cbfcf3342d6f0, type: 2}
@@ -96041,6 +96115,7 @@ MonoBehaviour:
   capacityRoot: {fileID: 525600375}
   capacityTitleText: {fileID: 611826770}
   capacityBodyText: {fileID: 1864678429}
+  capacityPopup: {fileID: 525600379}
   dumpRoot: {fileID: 241569154}
   dumpSummaryText: {fileID: 600620763}
   dumpCopperText: {fileID: 461424153}
@@ -100247,6 +100322,7 @@ MonoBehaviour:
   particleRoot: {fileID: 129505266}
   particleSprite: {fileID: 21300000, guid: 0525205a8f7ad3349a0c00d1914af559, type: 3}
   spinIconOnHover: 0
+  particleColor: {r: 0.29, g: 0.88, b: 0.95, a: 1}
 --- !u!114 &1859708752
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -100481,7 +100557,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 
+  m_text: "\uBCF4\uC0C1\uC744 \uBC1B\uC73C\uB824\uBA74 \uD654\uBB3C \uACF5\uAC04\uC744
+    \uD655\uBCF4\uD558\uC138\uC694."
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 48b6c44ff06b5b84d81cbfcf3342d6f0, type: 2}
   m_sharedMaterial: {fileID: 1283237503404649690, guid: 48b6c44ff06b5b84d81cbfcf3342d6f0, type: 2}
@@ -101904,6 +101981,7 @@ MonoBehaviour:
   particleRoot: {fileID: 391306252}
   particleSprite: {fileID: 21300000, guid: 0525205a8f7ad3349a0c00d1914af559, type: 3}
   spinIconOnHover: 0
+  particleColor: {r: 0.29, g: 0.88, b: 0.95, a: 1}
 --- !u!1 &1916281206
 GameObject:
   m_ObjectHideFlags: 0
