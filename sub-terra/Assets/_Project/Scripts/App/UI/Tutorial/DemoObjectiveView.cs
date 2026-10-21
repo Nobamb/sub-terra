@@ -579,6 +579,16 @@ namespace SubTerra.App.UI.Tutorial
             }
         }
 
+        public bool TryCloseClaimPopup(Canvas topWindow)
+        {
+            if (claimRoot == null || !claimRoot.activeInHierarchy
+                || !PopupWindowSorting.Contains(topWindow, claimRoot)) return false;
+            var motion = claimRoot.GetComponent<QuestClearPopupMotion>();
+            // 닫히는 동안의 연타는 소비하되 지급 요청은 다시 보내지 않는다.
+            if (motion == null || !motion.IsClosing) OnClaimConfirmClicked();
+            return true;
+        }
+
         public bool TryCloseTopPopup()
         {
             if (TryCloseGuidance())

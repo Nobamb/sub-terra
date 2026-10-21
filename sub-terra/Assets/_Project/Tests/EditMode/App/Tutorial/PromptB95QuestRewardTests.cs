@@ -216,6 +216,7 @@ namespace SubTerra.App.Tests.Tutorial
             Assert.That(env.Inventory.State.GetQuantity(DataIds.Minerals.Copper), Is.Zero);
 
             presenter.ConfirmClaim();
+            presenter.ConfirmClaim(); // 연타해도 정산한 보상을 다시 지급하지 않는다.
 
             Assert.That(view.ClaimVisible, Is.False);
             Assert.That(env.Inventory.State.GetQuantity(DataIds.Minerals.Copper), Is.EqualTo(3));
