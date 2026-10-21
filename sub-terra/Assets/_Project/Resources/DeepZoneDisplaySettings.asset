@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 739bb7234a59e0d48b26b6f942d1aaff, type: 3}
+  m_Name: DeepZoneDisplaySettings
+  m_EditorClassIdentifier: SubTerra.App::SubTerra.App.Progression.DeepZoneDisplaySettings
+  levels:
+  - minimumDepth: 36
+    maximumDepth: 40
+    availableInDemo: 1
+    plannedRequirement:
+  - minimumDepth: 41
+    maximumDepth: 75
+    availableInDemo: 0
+    plannedRequirement: "Lv.1 \uD574\uAE08 \xB7 Demo \uBAA9\uD45C 13\uAC1C \uC644\uB8CC"
+  - minimumDepth: 76
+    maximumDepth: 100
+    availableInDemo: 0
+    plannedRequirement: "Lv.2 \uD574\uAE08 \xB7 \uACE8\uB4DC/\uD76C\uADC0 \uC790\uC6D0
+      \uC870\uAC74 \uC900\uBE44 \uC911"

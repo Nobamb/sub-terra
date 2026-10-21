@@ -74,6 +74,7 @@ namespace SubTerra.App.UI.Progression
 
         private void OnEnable()
         {
+            ApplyWindowTitle();
             // 트리 모드는 탭·목록을 쓰지 않는다(기존 오브젝트는 비활성으로 남는다).
             if (treeView != null)
             {
@@ -92,6 +93,13 @@ namespace SubTerra.App.UI.Progression
         private void OnDisable()
         {
             UnwireCategoryTabsRuntime();
+        }
+
+        public void ApplyWindowTitle()
+        {
+            var root = panelRoot != null ? panelRoot.transform : transform;
+            foreach (var label in root.GetComponentsInChildren<TMP_Text>(true))
+                if (label.name == "UpgradeTitle" || label.name == "UpgradeTreeTitle") label.text = "업그레이드";
         }
 
         public void BindPresenter(ProgressionPanelPresenter target)
@@ -972,44 +980,7 @@ namespace SubTerra.App.UI.Progression
 
         private static string BuildDeepZoneDetail(ZoneAccessResult access)
         {
-            var builder = new StringBuilder();
-            if (access.IsUnlocked)
-            {
-                builder.AppendLine("심층 구역: 최대 레벨")
-                    .Append("더 이상 업그레이드할 수 없습니다.");
-                return builder.ToString();
-            }
-
-            builder.AppendLine("심층 구역: 잠금");
-            if (!string.IsNullOrEmpty(access.Reason))
-            {
-                builder.AppendLine(access.Reason);
-            }
-
-            builder.AppendLine();
-            builder.AppendLine("해금 조건");
-            var rule = DeepZoneUnlockRule.Mvp;
-            if (rule.RequiredCompletedObjectives > 0)
-            {
-                builder.Append("· 완료 목표 ").Append(rule.RequiredCompletedObjectives).AppendLine("개 이상");
-            }
-            if (rule.UpgradeRequirements != null)
-            {
-                for (var i = 0; i < rule.UpgradeRequirements.Count; i++)
-                {
-                    var req = rule.UpgradeRequirements[i];
-                    var display = ItemDisplayNames.PreferDisplay(req.UpgradeId, req.UpgradeId);
-                    builder.Append("· ")
-                        .Append(display)
-                        .Append(" Lv.")
-                        .Append(req.RequiredLevel)
-                        .AppendLine(" 이상");
-                }
-            }
-
-            builder.AppendLine();
-            builder.Append("조건 충족 시 자동으로 잠금이 해제됩니다.");
-            return builder.ToString();
+            return DeepZoneDisplaySettings.Describe(access, compact: false);
         }
 
         private void RefreshPurchaseButton()
