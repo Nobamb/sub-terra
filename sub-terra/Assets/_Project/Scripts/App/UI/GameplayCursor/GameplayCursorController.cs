@@ -9,7 +9,7 @@ namespace SubTerra.App.UI.GameplayCursor
 {
     /// <summary>
     /// 인게임(지상 기지·탐사) 커서(B-151). OS 커서를 숨기고 최상위 오버레이에 드릴/집게 스프라이트를 마우스 위치에 그린다.
-    /// Bootstrap 루트 아래에 붙어 씬 전환에도 유지되며, 메인 메뉴 등 다른 씬에서는 OS 커서로 돌려 놓는다.
+    /// Bootstrap 루트 아래에 붙어 씬 전환에도 유지되며, 메인 메뉴·지상·탐사 화면에서 사용한다.
     /// 클릭은 가로채지 않는다(GraphicRaycaster 없음, raycastTarget=false).
     /// </summary>
     public sealed class GameplayCursorController : MonoBehaviour
@@ -80,10 +80,11 @@ namespace SubTerra.App.UI.GameplayCursor
             return go.AddComponent<GameplayCursorController>();
         }
 
-        /// <summary>커스텀 커서를 켜는 씬: Bootstrap 이후 게임 화면(지상 기지·탐사). 메인 메뉴는 OS 커서.</summary>
+        /// <summary>커스텀 커서를 켜는 씬: Bootstrap 이후 메인 메뉴·지상 기지·탐사.</summary>
         public static bool IsGameplayScene(string sceneName)
         {
-            return string.Equals(sceneName, SceneNames.SurfaceBase, StringComparison.Ordinal)
+            return string.Equals(sceneName, SceneNames.MainMenu, StringComparison.Ordinal)
+                || string.Equals(sceneName, SceneNames.SurfaceBase, StringComparison.Ordinal)
                 || string.Equals(sceneName, SceneNames.Integration, StringComparison.Ordinal);
         }
 
