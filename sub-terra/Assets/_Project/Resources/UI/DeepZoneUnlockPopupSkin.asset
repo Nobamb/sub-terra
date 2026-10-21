@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 46f162b6634dea14fa6fd0ce686c0f1a, type: 3}
+  m_Name: DeepZoneUnlockPopupSkin
+  m_EditorClassIdentifier: SubTerra.App::SubTerra.App.UI.Progression.DeepZoneUnlockPopupSkin
+  frame: {fileID: 21300000, guid: eb2af98be19f47f4ca2b7ffe317a549d, type: 3}
+  buttonOff: {fileID: 21300000, guid: 8da8434e663ae644692170d9067a2945, type: 3}
+  buttonOn: {fileID: 21300000, guid: ee78099fa9f7f1f45987a38495a608e6, type: 3}
+  buttonSweep: {fileID: 21300000, guid: 53c8d236d6593a640a256c88da4034b0, type: 3}
+  buttonParticle: {fileID: 21300000, guid: 0525205a8f7ad3349a0c00d1914af559, type: 3}
+  font: {fileID: 11400000, guid: 4e47050591bde29468964b019e0f4a3c, type: 2}
+  minDepth: 36
+  maxDepth: 40
+  windowSize: {x: 560, y: 310}
+  titleY: 80
+  titleSize: {x: 440, y: 44}
+  titleFontSize: 30
+  bodyY: 4
+  bodySize: {x: 460, y: 44}
+  bodyFontSize: 22
+  buttonY: -77
+  buttonSize: {x: 184, y: 44}
+  buttonFontSize: 22
+  introSpeed: 1.6

@@ -54,6 +54,22 @@ namespace SubTerra.App.UI.SurfaceBase
         public float IconBrightness => icon != null ? icon.color.r : 1f;
         public bool IsHighlighted => hovered || selected || keyboardActive;
 
+        /// <summary>런타임에 만든 버튼(B-154 심층 해금 창)에 빌더의 StyleButton과 같은 레이어를 연결한다.</summary>
+        internal void Configure(
+            UnityEngine.UI.Image plateImage,
+            UnityEngine.UI.Image highlightImage,
+            UnityEngine.UI.Image sweepImage,
+            RectTransform particles,
+            Sprite particle)
+        {
+            plate = plateImage;
+            highlight = highlightImage;
+            sweep = sweepImage;
+            particleRoot = particles;
+            particleSprite = particle;
+            Apply(true);
+        }
+
         /// <summary>메인 메뉴 좌우 키 포커스. 호버와 같은 밝기 전환을 쓴다.</summary>
         public void SetKeyboardActive(bool active) => keyboardActive = active;
 
