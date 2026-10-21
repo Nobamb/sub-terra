@@ -107,6 +107,9 @@ namespace SubTerra.App.UI.Outpost
         private TMP_Text previewText;
         private ResourceSellButton depositButton;
         private ResourceSellButton withdrawButton;
+        private ResourceSellButton allQuantityButton;
+        private ResourceSellButton depositAllButton;
+        private ResourceSellButton withdrawAllButton;
 
         private RectTransform boxRoot;
         private StorageBoxGraphic box;
@@ -193,6 +196,8 @@ namespace SubTerra.App.UI.Outpost
         public event Action<int> QuantityChanged;
         public event Action<int> DepositRequested;
         public event Action<int> WithdrawRequested;
+        public event Action DepositAllRequested;
+        public event Action WithdrawAllRequested;
 
         /// <summary>확인용: true면 Update가 시간을 진행하지 않고 테스트가 Tick으로 직접 진행한다.</summary>
         public bool ManualTick { get; set; }
@@ -375,6 +380,7 @@ namespace SubTerra.App.UI.Outpost
             storage = storageSnapshot;
             RenderLists();
             RenderCargoGauge();
+            RenderSelection();
             // 상자가 열리기 전이면 튀어나올 광물도 최신 화물 기준으로 맞춘다.
             if (state == PopupState.Hidden || state == PopupState.Opening && clock < StorageBoxTimeline.PopStart)
             {
@@ -581,6 +587,9 @@ namespace SubTerra.App.UI.Outpost
 
             depositButton.Button.interactable = !busy && deposit > 0;
             withdrawButton.Button.interactable = !busy && withdraw > 0;
+            allQuantityButton.Button.interactable = !busy && HasSelection && (owned > 0 || stored > 0);
+            depositAllButton.Button.interactable = !busy && StorageTransferPreview.Totals(playerCargo).Kinds > 0;
+            withdrawAllButton.Button.interactable = !busy && StorageTransferPreview.Totals(storage).Kinds > 0;
             for (var i = 0; i < quickButtons.Length; i++)
             {
                 quickButtons[i].Button.interactable = !busy && HasSelection && (owned > 0 || stored > 0);
@@ -620,7 +629,14 @@ namespace SubTerra.App.UI.Outpost
                 return;
             }
 
-            ApplyQuantity(StorageTransferPreview.ClampInput(quantity + value, owned, stored), true);
+            var next = quantity > int.MaxValue - value ? int.MaxValue : quantity + value;
+            ApplyQuantity(StorageTransferPreview.ClampInput(next, owned, stored), true);
+        }
+
+        public void SelectAllQuantity()
+        {
+            if (CanAcceptInput() && HasSelection && !busy)
+                ApplyQuantity(Mathf.Max(owned, stored), true);
         }
 
         private void OnMinusQuantity()
@@ -679,6 +695,18 @@ namespace SubTerra.App.UI.Outpost
             {
                 WithdrawRequested?.Invoke(quantity);
             }
+        }
+
+        public void RequestDepositAll()
+        {
+            if (CanAcceptInput() && !busy && depositAllButton.Button.interactable)
+                DepositAllRequested?.Invoke();
+        }
+
+        public void RequestWithdrawAll()
+        {
+            if (CanAcceptInput() && !busy && withdrawAllButton.Button.interactable)
+                WithdrawAllRequested?.Invoke();
         }
 
         // ---------------- 연출 ----------------
@@ -1114,7 +1142,13 @@ namespace SubTerra.App.UI.Outpost
             selectionCounts = ResourceSellUi.Label(selection, "Counts", ColumnW - 300f, 0f, 282f, ControlH, font, 19f,
                 FontStyles.Normal, ResourceSellUi.TextMain, TextAlignmentOptions.Right);
 
-            statusText = ResourceSellUi.Label(controls, "Status", Pad, StatusY, CardSize.x - Pad * 2f, 28f, font, 18f,
+            depositAllButton = ResourceSellButton.Create(controls, "DepositAllButton", Pad, StatusY, 180f, 32f, font,
+                "전체 보관", 19f, ResourceSellButton.Variant.Normal);
+            withdrawAllButton = ResourceSellButton.Create(controls, "WithdrawAllButton", Pad + 196f, StatusY, 180f, 32f, font,
+                "전체 꺼내기", 19f, ResourceSellButton.Variant.Normal);
+            depositAllButton.Button.onClick.AddListener(RequestDepositAll);
+            withdrawAllButton.Button.onClick.AddListener(RequestWithdrawAll);
+            statusText = ResourceSellUi.Label(controls, "Status", Pad + 392f, StatusY, CardSize.x - Pad * 2f - 392f, 32f, font, 18f,
                 FontStyles.Normal, ResourceSellUi.Ok, TextAlignmentOptions.Right);
 
             BuildFooter(controls);
@@ -1133,25 +1167,33 @@ namespace SubTerra.App.UI.Outpost
             Caption(controls, "QuantityCaption", "수량", x, FooterY + 16f);
             const float inputY = FooterY + 52f;
             const float inputH = 56f;
-            const float minusW = 52f;
+            const float minusW = 44f;
             minusButton = ResourceSellButton.Create(controls, "QuantityMinusButton", x, inputY, minusW, inputH, font, "-", 28f,
                 ResourceSellButton.Variant.Normal);
             minusButton.Button.onClick.AddListener(OnMinusQuantity);
             var inputX = x + minusW + 8f;
-            quantityInput = BuildInput(controls, "QuantityInput", inputX, inputY, 120f, inputH, "0", 28f, TextAlignmentOptions.Center, true);
+            quantityInput = BuildInput(controls, "QuantityInput", inputX, inputY, 100f, inputH, "0", 24f, TextAlignmentOptions.Center, true);
+            quantityInput.textComponent.enableAutoSizing = true;
+            quantityInput.textComponent.fontSizeMin = 10f;
+            quantityInput.textComponent.fontSizeMax = 24f;
             quantityInput.onValueChanged.AddListener(OnQuantityTyped);
 
             quickButtons = new ResourceSellButton[QuickQuantities.Length];
-            var qx = inputX + 120f + 10f;
+            var qx = inputX + 100f + 10f;
             for (var i = 0; i < QuickQuantities.Length; i++)
             {
                 var value = QuickQuantities[i];
                 // 1개짜리는 "+" 한 글자, 나머지는 "+5"처럼 더하는 양을 보여준다.
-                quickButtons[i] = ResourceSellButton.Create(controls, "Quantity" + value + "Button", qx, inputY, 76f, inputH, font,
+                quickButtons[i] = ResourceSellButton.Create(controls, "Quantity" + value + "Button", qx, inputY, 60f, inputH, font,
                     value == 1 ? "+" : "+" + value, value == 1 ? 28f : 21f, ResourceSellButton.Variant.Normal);
                 quickButtons[i].Button.onClick.AddListener(() => OnQuickQuantity(value));
-                qx += 76f + 8f;
+                qx += 60f + 8f;
             }
+
+            allQuantityButton = ResourceSellButton.Create(controls, "QuantityAllButton", qx, inputY, 76f, inputH, font,
+                "모두", 21f, ResourceSellButton.Variant.Normal);
+            allQuantityButton.Button.onClick.AddListener(SelectAllQuantity);
+            qx += 84f;
 
             var withdrawX = Pad + barWidth - 28f - ActionW;
             var depositX = withdrawX - 16f - ActionW;
@@ -1300,7 +1342,7 @@ namespace SubTerra.App.UI.Outpost
             input.pointSize = size;
             input.lineType = TMP_InputField.LineType.SingleLine;
             input.contentType = numeric ? TMP_InputField.ContentType.IntegerNumber : TMP_InputField.ContentType.Standard;
-            input.characterLimit = numeric ? 4 : 24;
+            input.characterLimit = numeric ? 10 : 24;
             input.caretColor = ResourceSellUi.Teal;
             input.customCaretColor = true;
             input.selectionColor = ResourceSellUi.WithAlpha(ResourceSellUi.Teal, 0.35f);
