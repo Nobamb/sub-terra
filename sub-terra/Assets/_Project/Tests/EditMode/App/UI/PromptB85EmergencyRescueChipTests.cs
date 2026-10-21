@@ -50,7 +50,7 @@ namespace SubTerra.App.Tests.UI
 
             Assert.That(view, Does.Contain("EmergencyRescueChipFollow"));
             Assert.That(view, Does.Contain("overrideSorting = true"));
-            Assert.That(view, Does.Contain("UiLayerPriority.CriticalHazard"));
+            Assert.That(view, Does.Contain("UiLayerPriority.EmergencyRescueIndicator"));
             Assert.That(view, Does.Not.Contain("energyAnchor"));
             Assert.That(follow, Does.Contain("WorldToScreenPoint"));
             Assert.That(follow, Does.Contain("playerCollider.bounds.max.y"));
@@ -102,7 +102,7 @@ namespace SubTerra.App.Tests.UI
                 Assert.That(button, Is.Not.Null);
                 Assert.That(nestedCanvas, Is.Not.Null);
                 Assert.That(nestedCanvas.overrideSorting, Is.True);
-                Assert.That(nestedCanvas.sortingOrder, Is.EqualTo(UiLayerPriority.CriticalHazard));
+                Assert.That(nestedCanvas.sortingOrder, Is.EqualTo(UiLayerPriority.EmergencyRescueIndicator));
                 Assert.That(raycaster, Is.Not.Null);
                 Assert.That(follow, Is.Not.Null);
                 Assert.That(label, Is.Not.Null);

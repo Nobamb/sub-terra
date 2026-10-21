@@ -43,7 +43,6 @@ namespace SubTerra.App.UI.EmergencyRescue
         private Image glow;
         private Image[] brackets;
         private Image[] edges;
-        private Image[] redTicks;
         private Image pictoGlow;
         private Image[] rails;
         private Image platform;
@@ -97,7 +96,7 @@ namespace SubTerra.App.UI.EmergencyRescue
 
             var canvas = rect.gameObject.AddComponent<Canvas>();
             canvas.overrideSorting = true;
-            canvas.sortingOrder = UiLayerPriority.CriticalHazard;
+            canvas.sortingOrder = UiLayerPriority.EmergencyRescueIndicator;
             rect.gameObject.AddComponent<GraphicRaycaster>();
             rect.gameObject.AddComponent<EmergencyRescueChipFollow>();
             var group = rect.gameObject.AddComponent<CanvasGroup>();
@@ -360,10 +359,6 @@ namespace SubTerra.App.UI.EmergencyRescue
             keycapGlow.color = EmergencyRescueUi.WithAlpha(
                 EmergencyRescueUi.Teal, Mathf.Max(0.85f * idleDepth, pressDepth));
 
-            for (var i = 0; i < redTicks.Length; i++)
-            {
-                redTicks[i].color = EmergencyRescueUi.WithAlpha(EmergencyRescueUi.Red, 0.75f * show.FrameAlpha);
-            }
         }
 
         private void Build(TMP_FontAsset font)
@@ -402,13 +397,6 @@ namespace SubTerra.App.UI.EmergencyRescue
                 brackets[c * 2 + 1] = EmergencyRescueUi.Image(
                     holo, "BracketV" + c, null, new Vector2(vx, vy), new Vector2(thick, length), Accent);
             }
-
-            // 붉은 경고색은 윗모서리 안쪽의 작은 눈금 둘뿐이다.
-            redTicks = new Image[2];
-            redTicks[0] = EmergencyRescueUi.Image(
-                holo, "RedTickL", null, new Vector2(-w * 0.5f + 30f, h * 0.5f - 8f), new Vector2(12f, 3f), EmergencyRescueUi.Red);
-            redTicks[1] = EmergencyRescueUi.Image(
-                holo, "RedTickR", null, new Vector2(w * 0.5f - 30f, h * 0.5f - 8f), new Vector2(12f, 3f), EmergencyRescueUi.Red);
 
             RectTransform content = EmergencyRescueUi.Rect(transform, "Content", Vector2.zero, Size);
             contentGroup = content.gameObject.AddComponent<CanvasGroup>();

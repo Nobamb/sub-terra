@@ -44,6 +44,20 @@ namespace SubTerra.App.Tests.UI
         // ---------- 시간표 ----------
 
         [Test]
+        public void Issue218_ChipIsAboveDroneDialogueAndHasNoRedTicks()
+        {
+            var chip = view.Chip;
+            var canvas = chip.GetComponent<Canvas>();
+            Assert.That(canvas.overrideSorting, Is.True);
+            Assert.That(canvas.sortingOrder, Is.GreaterThan(SubTerra.App.UI.Drone.DroneDialogueSocket.OverlaySortingOrder));
+            Assert.That(canvas.sortingOrder, Is.LessThan(SubTerra.App.Tutorial.UiLayerPriority.EmergencyRescueModal));
+            Assert.That(chip.transform.Find("Holo/RedTickL"), Is.Null);
+            Assert.That(chip.transform.Find("Holo/RedTickR"), Is.Null);
+            Assert.That(chip.TitleLabel.text, Is.EqualTo(EmergencyRescueChipView.TitleText));
+            Assert.That(chip.GetComponent<EmergencyRescueChipFollow>(), Is.Not.Null);
+        }
+
+        [Test]
         public void Intro_BurstsTwoOrThreeTimes_ThenSettlesClean()
         {
             var bursts = 0;
