@@ -435,8 +435,9 @@ namespace SubTerra.Gameplay.Structural
             if (sourceRenderer != null)
             {
                 renderer.sortingLayerID = sourceRenderer.sortingLayerID;
-                // 실제 인접 타일이 흔들림 복제본보다 앞에 그려져 광물 그림을 덮지 않게 한다.
-                renderer.sortingOrder = Mathf.Max(short.MinValue, sourceRenderer.sortingOrder - 1);
+                // Foreground와 Background가 같은 순서인 씬에서도 숨긴 원본 대신 복제본이 보이게 한다.
+                // 이웃 칸 침범은 KeepShakeOutsideOccupiedCells에서 별도로 막는다.
+                renderer.sortingOrder = Mathf.Min(short.MaxValue, sourceRenderer.sortingOrder + 1);
                 renderer.sharedMaterial = sourceRenderer.sharedMaterial;
             }
 

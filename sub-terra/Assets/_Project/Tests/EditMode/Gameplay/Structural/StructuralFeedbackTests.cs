@@ -221,13 +221,20 @@ namespace SubTerra.Gameplay.Structural.Tests
         }
 
         [Test]
-        public void ShakeVisual_IsBehindNeighboringForegroundTiles()
+        public void Issue215_ShakeVisualStaysAboveBackgroundWithSceneSortingOrders()
         {
             using var fixture = new ShakeFixture();
+            fixture.Feedback.ClearAll();
+            fixture.SourceRenderer.sortingOrder = 0; // 통합 씬의 Foreground와 Background는 모두 0이다.
+            var background = new GameObject("Background", typeof(SpriteRenderer));
+            background.transform.SetParent(fixture.Root.transform);
+            background.GetComponent<SpriteRenderer>().sortingOrder = 0;
+            fixture.Feedback.SetCell(Vector3Int.zero, StructuralRiskLevel.Caution, 0.2f, StructuralRiskCause.Unsupported);
             var visual = fixture.Root.transform.Find("StructuralShake_0_0").GetComponent<SpriteRenderer>();
             Assert.That(visual.sortingLayerID, Is.EqualTo(fixture.SourceRenderer.sortingLayerID));
-            Assert.That(visual.sortingOrder, Is.LessThan(fixture.SourceRenderer.sortingOrder),
-                "움직인 복제본은 인접한 실제 광석 타일을 덮으면 안 된다.");
+            Assert.That(visual.sortingOrder, Is.GreaterThan(background.GetComponent<SpriteRenderer>().sortingOrder),
+                "원본 지형이 숨겨져도 흔들림 복제본이 배경 뒤로 가려지면 안 된다.");
+            Assert.That(visual.sprite, Is.SameAs(fixture.Source.GetSprite(Vector3Int.zero)));
             Assert.That(fixture.Source.GetTile(Vector3Int.zero), Is.SameAs(fixture.Tile));
         }
 
