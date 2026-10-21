@@ -299,6 +299,18 @@ namespace SubTerra.App.UI.MainMenu
             RefreshSlotSelection(slotId);
         }
 
+        public void SetPrimaryAction(string label, bool enabled)
+        {
+            if (continueButton == null) return;
+            continueButton.interactable = enabled;
+            var text = continueButton.GetComponentInChildren<TMP_Text>(true);
+            if (text != null)
+            {
+                text.text = label;
+                text.alpha = enabled ? 1f : 0.4f;
+            }
+        }
+
         /// <summary>
         /// 메인 메뉴에서 위/아래 방향키 조작을 통해 세이브 슬롯을 선택한다.
         /// direction &lt; 0: 위 방향키 (상단 슬롯 방향으로 이동, 최소 1)
