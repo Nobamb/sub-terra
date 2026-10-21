@@ -305,8 +305,7 @@ namespace SubTerra.App.UI.Progression
             }
 
             deepZoneText.gameObject.SetActive(true);
-            deepZoneText.text = "구역 해금 · 심층 구역\n" + DeepZoneUnlockRule.Mvp.DescribeUpgradeRequirements()
-                + "\n" + (access.IsUnlocked ? "해금됨" : "잠금 — " + access.Reason);
+            deepZoneText.text = DeepZoneDisplaySettings.Describe(access, compact: true);
         }
 
         private void EnsureDeepZoneText()

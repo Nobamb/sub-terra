@@ -329,6 +329,58 @@ namespace SubTerra.App.Tests.UI
             }
         }
 
+        [TestCase(PromptB104SettingsMenuBuilder.MainPrefab)]
+        [TestCase(PromptB104SettingsMenuBuilder.SurfacePrefab)]
+        public void Issue222_MutePreservesVolumeAndSliderChangesUnmute(string path)
+        {
+            const string volumeKey = "subterra.settings.masterVolume";
+            var hadVolume = PlayerPrefs.HasKey(volumeKey);
+            var oldVolume = PlayerPrefs.GetFloat(volumeKey);
+            var hadMuted = PlayerPrefs.HasKey(SettingsRuntimeApplier.PrefMasterMuted);
+            var oldMuted = PlayerPrefs.GetInt(SettingsRuntimeApplier.PrefMasterMuted);
+            var oldAudio = AudioListener.volume;
+            var instance = Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(path));
+            try
+            {
+                PlayerPrefs.SetFloat(volumeKey, 0.37f);
+                SettingsRuntimeApplier.SetMasterMuted(false, 0.37f);
+                var skin = instance.transform.Find("SettingsPanel").GetComponent<SettingsMenuSkin>();
+                Invoke(skin, "OnEnable");
+                var slider = (UnityEngine.UI.Slider)new SerializedObject(skin).FindProperty("volumeSlider").objectReferenceValue;
+                slider.SetValueWithoutNotify(0.37f);
+                var icon = SettingsMuteButton.Ensure(slider);
+                Assert.That(SettingsMuteButton.Ensure(slider), Is.SameAs(icon));
+                icon.Button.onClick.Invoke();
+                Assert.That(icon.ShowsMuted, Is.True);
+                Assert.That(slider.value, Is.EqualTo(0.37f));
+                Assert.That(AudioListener.volume, Is.Zero);
+                var reloaded = SettingsRuntimeApplier.LoadOrDefaults();
+                SettingsRuntimeApplier.RestoreAppliedVolume(reloaded);
+                Assert.That(reloaded.MasterVolume, Is.EqualTo(0.37f));
+                Assert.That(AudioListener.volume, Is.Zero);
+                icon.Button.onClick.Invoke();
+                Assert.That(AudioListener.volume, Is.EqualTo(0.37f));
+                icon.Button.onClick.Invoke();
+                slider.value = 0.62f;
+                Assert.That(SettingsRuntimeApplier.IsMasterMuted, Is.False);
+                Assert.That(icon.ShowsMuted, Is.False);
+                Assert.That(AudioListener.volume, Is.EqualTo(0.62f));
+                slider.value = 0f;
+                Assert.That(icon.ShowsMuted, Is.True);
+                Assert.That(AudioListener.volume, Is.Zero);
+                Assert.That(icon.rectTransform.anchoredPosition.x + icon.rectTransform.rect.xMax, Is.LessThan(0f));
+            }
+            finally
+            {
+                Object.DestroyImmediate(instance);
+                if (hadVolume) PlayerPrefs.SetFloat(volumeKey, oldVolume); else PlayerPrefs.DeleteKey(volumeKey);
+                if (hadMuted) PlayerPrefs.SetInt(SettingsRuntimeApplier.PrefMasterMuted, oldMuted);
+                else PlayerPrefs.DeleteKey(SettingsRuntimeApplier.PrefMasterMuted);
+                AudioListener.volume = oldAudio;
+                PlayerPrefs.Save();
+            }
+        }
+
         private static void Invoke(Component component, string method) => component.GetType()
             .GetMethod(method, BindingFlags.Instance | BindingFlags.NonPublic).Invoke(component, null);
     }

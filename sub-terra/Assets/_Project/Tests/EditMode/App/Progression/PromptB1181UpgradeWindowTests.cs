@@ -143,7 +143,7 @@ namespace SubTerra.App.Tests.Progression
         }
 
         [Test]
-        public void SurfaceWindow_DeepZoneConditionsReserveSpaceAndDoNotDuplicateOnRefresh()
+        public void Issue223_SurfaceWindowDeepZoneConditionsReserveSpaceAndDoNotDuplicateOnRefresh()
         {
             var instance = Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(SurfacePrefabPath));
             try
@@ -152,7 +152,7 @@ namespace SubTerra.App.Tests.Progression
                 var initialBottom = tree.Viewport.offsetMin.y;
                 tree.SetDeepZoneStatus(new ZoneAccessResult(false, false, "드론 스캔 범위 2레벨 필요"));
                 var labels = instance.GetComponentsInChildren<TMP_Text>(true)
-                    .Where(t => t.text != null && t.text.Contains("구역 해금 · 심층 구역")).ToArray();
+                    .Where(t => t.text != null && t.text.Contains("심층 구역 Lv.0/3")).ToArray();
                 Assert.That(labels.Length, Is.EqualTo(1));
                 Assert.That(labels[0].text, Does.Contain("드릴 속도 Lv.2"));
                 Assert.That(labels[0].text, Does.Contain("드론 스캔 범위 Lv.2"));
