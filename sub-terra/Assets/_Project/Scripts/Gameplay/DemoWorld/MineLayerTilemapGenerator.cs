@@ -87,6 +87,7 @@ namespace SubTerra.Gameplay.DemoWorld
                 return false;
             }
 
+            EnsureBackgroundRenderOrder();
             MineLayerLayout layout = new MineLayerGenerator().Generate(seed, distribution);
             // 이전 시드의 흔들림 복제본·숨김 색을 지운 뒤 새 타일을 배치한다.
             if (structuralSystem != null) structuralSystem.ClearRuntimeRiskState();
@@ -145,6 +146,23 @@ namespace SubTerra.Gameplay.DemoWorld
             snapshotSystem?.ConfigureBaseWorldIdentity(seed, generatorVersion);
             structuralSystem?.ConfigureWorldSeed(seed);
             return true;
+        }
+
+        private void EnsureBackgroundRenderOrder()
+        {
+            // 구형 씬은 전경과 배경이 모두 0이다. 흔들림 복제본만 앞으로 옮기면
+            // 일반 광석은 계속 배경과 정렬이 경합하므로 생성/복원 때 배경을 뒤로 고정한다.
+            Transform grid = foregroundTilemap.transform.parent;
+            Transform background = grid != null ? grid.Find("BackgroundTilemap") : null;
+            if (background == null) return;
+            var foregroundRenderer = foregroundTilemap.GetComponent<TilemapRenderer>();
+            var backgroundRenderer = background.GetComponent<TilemapRenderer>();
+            if (foregroundRenderer == null || backgroundRenderer == null) return;
+            if (backgroundRenderer.sortingLayerID == foregroundRenderer.sortingLayerID
+                && backgroundRenderer.sortingOrder >= foregroundRenderer.sortingOrder)
+            {
+                backgroundRenderer.sortingOrder = foregroundRenderer.sortingOrder - 1;
+            }
         }
 
         private void ConfigureDeepZoneMiningBoundary()

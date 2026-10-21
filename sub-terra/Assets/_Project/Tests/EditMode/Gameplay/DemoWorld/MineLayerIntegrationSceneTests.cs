@@ -15,6 +15,47 @@ namespace SubTerra.Gameplay.DemoWorld.Tests
             "Assets/_Project/Scenes/App/Mine_Demo_Integration.unity";
 
         [Test]
+        public void Issue215_RegenerationKeepsOreAndGasInFrontOfBackground()
+        {
+            // 사용자 씬과 저장 슬롯을 건드리지 않고 실제 통합 씬 설정을 검사한다.
+            Scene scene = EditorSceneManager.OpenPreviewScene(ScenePath);
+            try
+            {
+                var generator = FindInScene<MineLayerTilemapGenerator>(scene);
+                Assert.That(generator, Is.Not.Null);
+                var data = new SerializedObject(generator);
+                var foreground = (Tilemap)data.FindProperty("foregroundTilemap").objectReferenceValue;
+                var background = foreground.transform.parent.Find("BackgroundTilemap").GetComponent<Tilemap>();
+                var frontRenderer = foreground.GetComponent<TilemapRenderer>();
+                var backRenderer = background.GetComponent<TilemapRenderer>();
+                // 구형 씬/저장 복원에서도 동일한 표시 순서로 시작해야 한다.
+                backRenderer.sortingOrder = frontRenderer.sortingOrder;
+                Assert.That(generator.Regenerate(generator.WorldSeed, generator.GeneratorVersion), Is.True);
+                Assert.That(backRenderer.sortingLayerID, Is.EqualTo(frontRenderer.sortingLayerID));
+                Assert.That(backRenderer.sortingOrder, Is.LessThan(frontRenderer.sortingOrder),
+                    "배경과 전경의 순서가 같으면 카메라 이동/청크 정렬에 따라 일반 암석이 광석을 덮을 수 있다.");
+
+                foreach (string property in new[] { "copperTile", "ironTile", "gasPocketTile" })
+                {
+                    var tile = (TileBase)data.FindProperty(property).objectReferenceValue;
+                    var cell = new Vector3Int(0, -25, 0);
+                    foreground.SetTile(cell, tile);
+                    Assert.That(foreground.GetSprite(cell), Is.Not.Null, property);
+                    Assert.That(foreground.GetTile(cell), Is.SameAs(tile), property);
+                    Assert.That(foreground.GetColor(cell).a, Is.GreaterThan(0f), property);
+                }
+                // 이어하기와 광산 재생성에서 순서가 반복해서 낮아지지 않는다.
+                int backgroundOrder = backRenderer.sortingOrder;
+                Assert.That(generator.Regenerate(generator.WorldSeed, generator.GeneratorVersion), Is.True);
+                Assert.That(backRenderer.sortingOrder, Is.EqualTo(backgroundOrder));
+            }
+            finally
+            {
+                EditorSceneManager.ClosePreviewScene(scene);
+            }
+        }
+
+        [Test]
         public void IntegrationScene_HasGeneratedFortyMeterLayerAndRestoreWiring()
         {
             Scene scene = SceneManager.GetSceneByPath(ScenePath);
