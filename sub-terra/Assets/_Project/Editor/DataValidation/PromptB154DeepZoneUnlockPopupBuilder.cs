@@ -1,4 +1,5 @@
 using System;
+using SubTerra.App.UI.HUD;
 using SubTerra.App.UI.Progression;
 using TMPro;
 using UnityEditor;
@@ -16,6 +17,19 @@ namespace SubTerra.App.Editor.DataValidation
         public const string SkinAssetPath = "Assets/_Project/Resources/UI/DeepZoneUnlockPopupSkin.asset";
         public const string DistributionPath = "Assets/_Project/Data/World/MineLayerDistribution.asset";
         private const string SettingsArt = "Assets/_Project/Art/UI/MainMenu/Settings/";
+        public const string MineResetSkinPath = "Assets/_Project/Resources/UI/MineResetTimedPopupSkin.asset";
+        // B-154-1 심층 발견 그림: Codex 생성 원본을 work_process/.../deep-zone-popup/tools/build_deep_zone_art.py로 레이어화했다.
+        public const string ArtPath = "Assets/_Project/Art/UI/Gameplay/DeepZone/Unlock/";
+        private static readonly string[] ArtFiles =
+        {
+            "deep-zone-emblem.png",
+            "deep-zone-border.png",
+            "deep-zone-border-glow.png",
+            "deep-zone-glow-crystals-left.png",
+            "deep-zone-glow-crystals-right.png",
+            "deep-zone-glow-core.png",
+            "deep-zone-ring.png"
+        };
 
         [MenuItem("SubTerra/UI/Build Prompt-B 154 Deep Zone Unlock Popup")]
         public static void BuildFromMenu()
@@ -67,7 +81,32 @@ namespace SubTerra.App.Editor.DataValidation
                 AssetDatabase.CreateAsset(skin, SkinAssetPath);
             }
 
-            skin.frame = Load(PromptB120StartBriefingBuilder.FramePath);
+            // B-154-1: 카드 프레임·바탕·구분선·스캔 빛·입자는 광산 초기화 알림 스킨이 가리키는 그림을 그대로 쓴다.
+            var mineReset = AssetDatabase.LoadAssetAtPath<MineResetTimedPopupSkin>(MineResetSkinPath);
+            if (mineReset == null)
+            {
+                throw new InvalidOperationException("광산 초기화 스킨이 없습니다: " + MineResetSkinPath);
+            }
+
+            skin.frame = mineReset.frame;
+            skin.frameGlow = mineReset.frameGlow;
+            skin.panel = mineReset.panel;
+            skin.titleDivider = mineReset.titleDivider;
+            skin.scanLine = mineReset.scanLine;
+            skin.mote = mineReset.mote;
+
+            ConfigureArtImport();
+            skin.emblem = Load(ArtPath + "deep-zone-emblem.png");
+            skin.emblemBorder = Load(ArtPath + "deep-zone-border.png");
+            skin.emblemBorderGlow = Load(ArtPath + "deep-zone-border-glow.png");
+            skin.emblemCrystalGlows = new[]
+            {
+                Load(ArtPath + "deep-zone-glow-crystals-left.png"),
+                Load(ArtPath + "deep-zone-glow-crystals-right.png")
+            };
+            skin.emblemCoreGlow = Load(ArtPath + "deep-zone-glow-core.png");
+            skin.emblemRing = Load(ArtPath + "deep-zone-ring.png");
+
             skin.buttonOff = Load(SettingsArt + "button-active-off.png");
             skin.buttonOn = Load(SettingsArt + "button-active-on.png");
             skin.buttonSweep = Load(SettingsArt + "slider-glow.png");
@@ -115,6 +154,44 @@ namespace SubTerra.App.Editor.DataValidation
             }
 
             return false;
+        }
+
+        // 광산 초기화 그림(MineResetSurfaceBaseLayoutBuilder)과 같은 가져오기 설정.
+        private static void ConfigureArtImport()
+        {
+            foreach (var name in ArtFiles)
+            {
+                var path = ArtPath + name;
+                AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);
+                var importer = AssetImporter.GetAtPath(path) as TextureImporter;
+                if (importer == null)
+                {
+                    Debug.LogWarning("[SubTerra] Deep zone unlock art missing: " + path);
+                    continue;
+                }
+
+                var changed = importer.textureType != TextureImporterType.Sprite
+                    || importer.spriteImportMode != SpriteImportMode.Single
+                    || importer.mipmapEnabled
+                    || !importer.alphaIsTransparency
+                    || importer.maxTextureSize != 2048
+                    || importer.textureCompression != TextureImporterCompression.CompressedHQ
+                    || importer.wrapMode != TextureWrapMode.Clamp;
+                if (!changed)
+                {
+                    continue;
+                }
+
+                importer.textureType = TextureImporterType.Sprite;
+                importer.spriteImportMode = SpriteImportMode.Single;
+                importer.mipmapEnabled = false;
+                importer.alphaIsTransparency = true;
+                importer.maxTextureSize = 2048;
+                importer.textureCompression = TextureImporterCompression.CompressedHQ;
+                importer.wrapMode = TextureWrapMode.Clamp;
+                importer.filterMode = FilterMode.Bilinear;
+                importer.SaveAndReimport();
+            }
         }
 
         private static Sprite Load(string path)

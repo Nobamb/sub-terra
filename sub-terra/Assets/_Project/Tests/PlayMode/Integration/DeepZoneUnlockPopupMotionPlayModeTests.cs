@@ -117,6 +117,56 @@ namespace SubTerra.App.Tests.PlayMode
             Assert.That(view.IsDeepZoneUnlockPopupOpen, Is.True);
         }
 
+        [UnityTest]
+        public IEnumerator HeroArtScansDownCountsDepthThenPulsesBlueWhilePaused()
+        {
+            var skin = DeepZoneUnlockPopupSkin.Load();
+            view.ShowDeepZoneUnlockPopup();
+            var root = canvas.transform.Find(DeepZoneUnlockPopupMotion.RootName).gameObject;
+            var hero = root.transform.Find("UnlockContent/" + DeepZoneUnlockPopupMotion.HeroName);
+            var emblem = hero.Find("Emblem").GetComponent<Image>();
+            var scan = hero.Find("ScanClip/ScanLine").GetComponent<Image>();
+            var counter = root.transform.Find("UnlockContent/Message").GetComponent<TMP_Text>();
+            var crystal = hero.Find("CrystalGlow0").GetComponent<Image>();
+            var ring = hero.Find("PingRing0").GetComponent<Image>();
+            var art = root.GetComponent<DeepZoneUnlockArtMotion>();
+
+            // 창이 열리기 전에는 그림이 드러나지 않는다.
+            Assert.That(emblem.fillAmount, Is.Zero);
+            yield return WaitFor(() => emblem.fillAmount > 0.2f && emblem.fillAmount < 0.8f);
+            Assert.That(scan.enabled, Is.True);
+            Assert.That(counter.text, Is.Not.EqualTo(DeepZoneUnlockPopupText.Range(skin.minDepth, skin.maxDepth)));
+
+            yield return WaitFor(() => emblem.fillAmount >= 1f);
+            yield return WaitFor(() => art.Time > DeepZoneUnlockArtTimeline.ScanFadeEnd + 0.05f);
+            Assert.That(counter.text, Is.EqualTo(DeepZoneUnlockPopupText.Range(skin.minDepth, skin.maxDepth)));
+            Assert.That(scan.enabled, Is.False);
+            yield return WaitFor(() => ring.enabled);
+
+            // 유지 중 푸른 발광이 일정 주기로 밝아졌다 어두워진다.
+            yield return WaitFor(() => art.Time > DeepZoneUnlockArtTimeline.IdleRampEnd);
+            var low = 1f;
+            var high = 0f;
+            var until = Time.realtimeSinceStartup + 3.4f;
+            while (Time.realtimeSinceStartup < until)
+            {
+                low = Mathf.Min(low, crystal.color.a);
+                high = Mathf.Max(high, crystal.color.a);
+                yield return null;
+            }
+
+            Assert.That(high - low, Is.GreaterThan(0.15f));
+            Assert.That(Time.timeScale, Is.Zero);
+
+            // 다시 열면 그림은 처음부터 다시 드러난다.
+            view.TryHideDeepZoneUnlockPopup();
+            yield return WaitFor(() => !root.activeSelf);
+            view.ShowDeepZoneUnlockPopup();
+            Assert.That(art.IsStarted, Is.False);
+            yield return null;
+            Assert.That(emblem.fillAmount, Is.LessThan(0.2f));
+        }
+
         private static void AssertNoLeftoverEffects(GameObject root)
         {
             Assert.That(root.transform.Find("UnlockGlitch").gameObject.activeSelf, Is.False);

@@ -30,6 +30,7 @@ namespace SubTerra.App.UI.Tutorial
         [SerializeField] private Image frameGlow;
         [SerializeField] private Image[] ghostFrames;
         [SerializeField] private Image[] edgeBars;
+        [SerializeField] private Image[] frameBackings;
 
         [Header("Signal")]
         [SerializeField] private Image signalLine;
@@ -90,16 +91,20 @@ namespace SubTerra.App.UI.Tutorial
         {
             var panel = (RectTransform)transform;
             var source = GetComponent<UnityEngine.UI.Image>();
-            ConfigureCompact(panel.sizeDelta, source.sprite, source.raycastTarget, "Claim", glint, 1f);
+            var size = panel.sizeDelta;
+            // 퀘스트 클리어 프레임 그림의 보이는 외곽선(900x450 기준 395x155).
+            var extent = new Vector2(395f * size.x / 900f, 155f * size.y / 450f);
+            ConfigureCompact(size, extent, source.sprite, source.raycastTarget, "Claim", glint, 1f);
             source.enabled = false;
         }
 
         /// <summary>
         /// 시작 브리핑 연출을 작은 창에 런타임으로 붙인다. 기존 자식(glint 제외)은 본문 레이어로 옮긴다.
-        /// 프레임 외곽 비율은 퀘스트 클리어 창(900x450 기준 395x155)과 같다. 화면 찢기·화면 복사는 쓰지 않는다.
+        /// frameExtent는 프레임 그림에서 보이는 외곽선의 반폭·반높이다. 화면 찢기·화면 복사는 쓰지 않는다.
         /// </summary>
         internal void ConfigureCompact(
             Vector2 size,
+            Vector2 frameExtent,
             Sprite frameSprite,
             bool frameRaycast,
             string prefix,
@@ -109,7 +114,7 @@ namespace SubTerra.App.UI.Tutorial
             pauseOnOpen = false;
             var panel = (RectTransform)transform;
             windowSize = size;
-            frameHalfExtent = new Vector2(395f * windowSize.x / 900f, 155f * windowSize.y / 450f);
+            frameHalfExtent = frameExtent;
             this.effectScale = Mathf.Max(0.1f, effectScale);
 
             var children = new Transform[panel.childCount];
@@ -161,6 +166,29 @@ namespace SubTerra.App.UI.Tutorial
                 screenBars[i] = CreateQuestImage(screenGlitchRoot, "NoiseBar" + i, null);
             rootGroup = GetComponent<CanvasGroup>();
             if (rootGroup == null) rootGroup = gameObject.AddComponent<CanvasGroup>();
+        }
+
+        /// <summary>
+        /// 프레임 그림 안쪽이 비어 있을 때 프레임과 함께 열리고 닫히는 바탕을 프레임 아래에 깐다.
+        /// 프레임과 같은 세로 배율·표시 여부를 따르고, 글리치(흔들림·잔상)는 적용하지 않는다.
+        /// </summary>
+        internal Image AddFrameBacking(string name, Sprite sprite, Color color, Vector2 size)
+        {
+            if (window == null)
+            {
+                return null;
+            }
+
+            var backing = CreateQuestImage(window, name, sprite);
+            backing.color = color;
+            backing.rectTransform.sizeDelta = size;
+            backing.transform.SetAsFirstSibling();
+            var list = new Image[(frameBackings != null ? frameBackings.Length : 0) + 1];
+            if (frameBackings != null) frameBackings.CopyTo(list, 0);
+            list[list.Length - 1] = backing;
+            frameBackings = list;
+            SetEnabled(backing, false);
+            return backing;
         }
 
         private static Image CreateQuestImage(RectTransform parent, string name, Sprite sprite)
@@ -664,6 +692,17 @@ namespace SubTerra.App.UI.Tutorial
                 frameImage.color = Color.Lerp(DimFrame, Color.white, light);
             }
 
+            if (frameBackings != null)
+            {
+                for (var i = 0; i < frameBackings.Length; i++)
+                {
+                    var backing = frameBackings[i];
+                    if (backing == null) continue;
+                    backing.enabled = open > 0.001f;
+                    backing.rectTransform.localScale = new Vector3(1f, Mathf.Max(0.01f, open), 1f);
+                }
+            }
+
             if (intensity > 0.001f)
             {
                 glitchTimer -= dt;
@@ -913,6 +952,7 @@ namespace SubTerra.App.UI.Tutorial
             }
 
             SetEnabled(frameGlow, false);
+            SetEnabled(frameBackings, false);
             SetEnabled(ghostFrames, false);
             SetEnabled(edgeBars, false);
             SetEnabled(signalLine, false);

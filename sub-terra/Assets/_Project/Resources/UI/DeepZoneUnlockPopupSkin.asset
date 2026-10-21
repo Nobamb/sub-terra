@@ -12,22 +12,44 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 46f162b6634dea14fa6fd0ce686c0f1a, type: 3}
   m_Name: DeepZoneUnlockPopupSkin
   m_EditorClassIdentifier: SubTerra.App::SubTerra.App.UI.Progression.DeepZoneUnlockPopupSkin
-  frame: {fileID: 21300000, guid: eb2af98be19f47f4ca2b7ffe317a549d, type: 3}
+  frame: {fileID: 21300000, guid: d14fe587f737c0948a9b2076ce62342b, type: 3}
+  frameGlow: {fileID: 21300000, guid: cbf50dff9edc4ef419ac351047f592b0, type: 3}
+  panel: {fileID: 21300000, guid: 31ee6135abac0d646b92b08056055f46, type: 3}
+  titleDivider: {fileID: 21300000, guid: 0af3ccf69c0327b4eb77f166676c5e3f, type: 3}
+  panelColor: {r: 0.02, g: 0.035, b: 0.05, a: 0.98}
   buttonOff: {fileID: 21300000, guid: 8da8434e663ae644692170d9067a2945, type: 3}
   buttonOn: {fileID: 21300000, guid: ee78099fa9f7f1f45987a38495a608e6, type: 3}
   buttonSweep: {fileID: 21300000, guid: 53c8d236d6593a640a256c88da4034b0, type: 3}
   buttonParticle: {fileID: 21300000, guid: 0525205a8f7ad3349a0c00d1914af559, type: 3}
   font: {fileID: 11400000, guid: 4e47050591bde29468964b019e0f4a3c, type: 2}
+  emblem: {fileID: 21300000, guid: 0071f7a0c098e944f91903e92ff75180, type: 3}
+  emblemBorder: {fileID: 21300000, guid: 1f119cc37e701544b836b19f49737121, type: 3}
+  emblemBorderGlow: {fileID: 21300000, guid: e9e9d8a05e4485f4f841fc4384755448, type: 3}
+  emblemCrystalGlows:
+  - {fileID: 21300000, guid: b613185d4893b464d82014a32c36a197, type: 3}
+  - {fileID: 21300000, guid: 9943721a7b698bd4d94800d05b41e1de, type: 3}
+  emblemCoreGlow: {fileID: 21300000, guid: c58e64da764697146aa4121b0cf299fa, type: 3}
+  emblemRing: {fileID: 21300000, guid: d98788ae6e2809644bd1845e12c4e523, type: 3}
+  scanLine: {fileID: 21300000, guid: 44cbd65de9d740243a6aec7477b357a9, type: 3}
+  mote: {fileID: 21300000, guid: 0525205a8f7ad3349a0c00d1914af559, type: 3}
   minDepth: 36
   maxDepth: 40
-  windowSize: {x: 560, y: 310}
-  titleY: 80
-  titleSize: {x: 440, y: 44}
-  titleFontSize: 30
-  bodyY: 4
-  bodySize: {x: 460, y: 44}
-  bodyFontSize: 22
-  buttonY: -77
-  buttonSize: {x: 184, y: 44}
-  buttonFontSize: 22
-  introSpeed: 1.6
+  windowSize: {x: 900, y: 690}
+  frameExtentRatio: {x: 0.481, y: 0.474}
+  titleY: 290
+  titleSize: {x: 600, y: 56}
+  titleFontSize: 40
+  dividerY: 256
+  dividerSize: {x: 560, y: 15.3}
+  emblemY: 50
+  emblemSize: {x: 672, y: 418}
+  bodyY: -172
+  bodySize: {x: 700, y: 46}
+  bodyFontSize: 32
+  detailY: -211
+  detailSize: {x: 720, y: 32}
+  detailFontSize: 20
+  buttonY: -274
+  buttonSize: {x: 260, y: 56}
+  buttonFontSize: 24
+  introSpeed: 1.25

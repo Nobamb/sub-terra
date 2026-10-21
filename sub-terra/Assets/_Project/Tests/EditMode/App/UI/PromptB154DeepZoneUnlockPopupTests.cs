@@ -65,11 +65,27 @@ namespace SubTerra.App.Tests.UI
         }
 
         [Test]
-        public void Skin_ReusesStartBriefingArtAndFont()
+        public void Skin_ReusesBriefingFontButtonsAndMineResetCard()
         {
             var skin = LoadSkin();
             Assert.That(skin.IsComplete, Is.True);
-            Assert.That(AssetDatabase.GetAssetPath(skin.frame), Is.EqualTo(PromptB120StartBriefingBuilder.FramePath));
+            Assert.That(skin.HasArt, Is.True);
+            var mineReset = AssetDatabase.LoadAssetAtPath<SubTerra.App.UI.HUD.MineResetTimedPopupSkin>(
+                PromptB154DeepZoneUnlockPopupBuilder.MineResetSkinPath);
+            Assert.That(skin.frame, Is.EqualTo(mineReset.frame));
+            Assert.That(skin.frameGlow, Is.EqualTo(mineReset.frameGlow));
+            Assert.That(skin.panel, Is.EqualTo(mineReset.panel));
+            Assert.That(AssetDatabase.GetAssetPath(skin.emblem), Does.StartWith(PromptB154DeepZoneUnlockPopupBuilder.ArtPath));
+            Assert.That(skin.emblemCrystalGlows.Length, Is.EqualTo(2));
+            foreach (var glow in skin.emblemCrystalGlows)
+            {
+                Assert.That(glow, Is.Not.Null);
+                // 발광 마스크는 엠블럼과 같은 캔버스라 겹쳐 놓기만 하면 위치가 맞는다.
+                Assert.That(glow.rect.size, Is.EqualTo(skin.emblem.rect.size));
+            }
+
+            Assert.That(skin.emblemCoreGlow.rect.size, Is.EqualTo(skin.emblem.rect.size));
+            Assert.That(skin.emblemBorder.rect.size, Is.EqualTo(skin.emblem.rect.size));
             Assert.That(AssetDatabase.GetAssetPath(skin.font), Is.EqualTo(PromptB120StartBriefingBuilder.BriefingFontPath));
             Assert.That(AssetDatabase.GetAssetPath(skin.buttonOff), Does.EndWith("button-active-off.png"));
             Assert.That(AssetDatabase.GetAssetPath(skin.buttonOn), Does.EndWith("button-active-on.png"));
@@ -115,13 +131,68 @@ namespace SubTerra.App.Tests.UI
             Assert.That(GetField(transition, "pauseOnOpen"), Is.False);
             Assert.That(GetField(transition, "tearSlices"), Is.Null);
             Assert.That((Vector2)GetField(transition, "windowSize"), Is.EqualTo(skin.windowSize));
-            // 시작 브리핑 1700x950보다 훨씬 작은 창.
-            Assert.That(skin.windowSize.x, Is.LessThanOrEqualTo(600f));
-            Assert.That(skin.windowSize.y, Is.LessThanOrEqualTo(320f));
+            // B-154-1: B-154(560x310)보다 크게 키운 그림 카드.
+            Assert.That(skin.windowSize.x, Is.GreaterThan(800f));
+            Assert.That(skin.windowSize.y, Is.GreaterThan(600f));
+            Assert.That((Vector2)GetField(transition, "frameHalfExtent"),
+                Is.EqualTo(Vector2.Scale(skin.windowSize, skin.frameExtentRatio)));
             Assert.That(root.transform.Find("UnlockTransition/Frame"), Is.Not.Null);
+            // 프레임 안쪽 바탕은 프레임과 함께 열린다(맨 아래 두 겹).
+            Assert.That(root.transform.Find("UnlockTransition").GetChild(0).name, Is.EqualTo("PanelBase"));
+            Assert.That(root.transform.Find("UnlockTransition").GetChild(1).name, Is.EqualTo("Panel"));
             Assert.That(root.transform.Find("UnlockContent/CloseButton"), Is.Not.Null);
+            Assert.That(root.transform.Find("UnlockContent/Detail").GetComponent<TMP_Text>().text,
+                Is.EqualTo(DeepZoneUnlockPopupText.Detail));
             Assert.That(root.transform.Find("UnlockGlitch"), Is.Not.Null);
             Assert.That(Find(DeepZoneUnlockPopupMotion.CloseButtonName).GetComponent<Button>(), Is.Not.Null);
+
+            var hero = root.transform.Find("UnlockContent/" + DeepZoneUnlockPopupMotion.HeroName);
+            Assert.That(hero, Is.Not.Null);
+            var emblem = hero.Find("Emblem").GetComponent<Image>();
+            Assert.That(emblem.sprite, Is.EqualTo(skin.emblem));
+            Assert.That(emblem.type, Is.EqualTo(Image.Type.Filled));
+            Assert.That(emblem.fillOrigin, Is.EqualTo((int)Image.OriginVertical.Top));
+            Assert.That(hero.Find("CrystalGlow0"), Is.Not.Null);
+            Assert.That(hero.Find("CrystalGlow1"), Is.Not.Null);
+            Assert.That(hero.Find("CoreGlow"), Is.Not.Null);
+            Assert.That(hero.Find("ScanClip/ScanLine"), Is.Not.Null);
+            foreach (var graphic in hero.GetComponentsInChildren<Graphic>(true))
+            {
+                Assert.That(graphic.raycastTarget, Is.False, graphic.name + " must not block clicks");
+            }
+
+            Assert.That(root.GetComponent<DeepZoneUnlockArtMotion>(), Is.Not.Null);
+        }
+
+        [Test]
+        public void ArtTimeline_RevealsTopDownThenFlashesAndBreathesBlueAtIntervals()
+        {
+            Assert.That(DeepZoneUnlockArtTimeline.Reveal(0f), Is.Zero);
+            Assert.That(DeepZoneUnlockArtTimeline.Reveal(DeepZoneUnlockArtTimeline.RevealEnd), Is.EqualTo(1f));
+            Assert.That(DeepZoneUnlockArtTimeline.Counter(0.5f), Is.EqualTo(DeepZoneUnlockArtTimeline.Reveal(0.5f)));
+
+            // 발견 섬광은 다 드러나는 순간 최고이고 유지 발광으로 가라앉는다.
+            Assert.That(DeepZoneUnlockArtTimeline.Flash(0.1f), Is.Zero);
+            Assert.That(DeepZoneUnlockArtTimeline.Flash(DeepZoneUnlockArtTimeline.RevealEnd), Is.EqualTo(1f));
+            Assert.That(DeepZoneUnlockArtTimeline.Flash(DeepZoneUnlockArtTimeline.RevealEnd + 2f), Is.Zero);
+            Assert.That(DeepZoneUnlockArtTimeline.Idle(DeepZoneUnlockArtTimeline.IdleRampEnd), Is.EqualTo(1f));
+            var settled = DeepZoneUnlockArtTimeline.Level(0.3f, 1f, 0f, 1f);
+            Assert.That(settled, Is.EqualTo(0.3f).Within(1e-5f));
+            Assert.That(DeepZoneUnlockArtTimeline.Level(0.3f, 1f, 1f, 1f), Is.EqualTo(1f));
+
+            // 탐지 파동은 같은 간격으로 반복되고, 파동 사이에는 쉬는 구간이 있다.
+            var first = DeepZoneUnlockArtTimeline.RevealEnd + 0.3f;
+            Assert.That(DeepZoneUnlockArtTimeline.Ping(first), Is.GreaterThan(0f));
+            Assert.That(DeepZoneUnlockArtTimeline.Ping(first + DeepZoneUnlockArtTimeline.PingPeriod),
+                Is.EqualTo(DeepZoneUnlockArtTimeline.Ping(first)).Within(1e-4f));
+            Assert.That(DeepZoneUnlockArtTimeline.Ping(DeepZoneUnlockArtTimeline.RevealEnd
+                + DeepZoneUnlockArtTimeline.PingDuration + 0.2f), Is.EqualTo(-1f));
+            Assert.That(DeepZoneUnlockArtTimeline.PingScale(0.9f), Is.GreaterThan(1f));
+            Assert.That(DeepZoneUnlockArtTimeline.Ping(0.2f), Is.EqualTo(-1f));
+
+            // 호흡은 0~1 사이에서 주기적으로 반복된다.
+            Assert.That(DeepZoneUnlockArtTimeline.Breath(0f, 3f, 0f), Is.Zero.Within(1e-5f));
+            Assert.That(DeepZoneUnlockArtTimeline.Breath(1.5f, 3f, 0f), Is.EqualTo(1f).Within(1e-5f));
         }
 
         [Test]
