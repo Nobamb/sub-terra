@@ -196,10 +196,11 @@ namespace SubTerra.App.UI.SurfaceBase
                 else if (view.IsUpgradeVisible) OnUpgradeCloseClicked();
                 else if (CanOpenSettingsFromEscape()) OnSettingsClicked();
             }
-            if (!keyboard.xKey.wasPressedThisFrame) return;
             var selected = UnityEngine.EventSystems.EventSystem.current;
             if (selected != null && selected.currentSelectedGameObject != null
                 && selected.currentSelectedGameObject.GetComponent<TMPro.TMP_InputField>() != null) return;
+            if (!UiPauseGate.IsHeld && keyboard.oKey.wasPressedThisFrame) OnQuitClicked();
+            if (!keyboard.xKey.wasPressedThisFrame) return;
             if (settings.IsOpen)
             {
                 if (!view.TryCloseControlSchemePanel()) OnSettingsCancel();

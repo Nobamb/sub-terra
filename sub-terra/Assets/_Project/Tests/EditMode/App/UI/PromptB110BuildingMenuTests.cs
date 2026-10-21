@@ -77,35 +77,16 @@ namespace SubTerra.App.Tests.UI
         }
 
         [Test]
-        public void FacilityMoveButton_IsBoundOnceAndFitsInsidePanel()
+        public void Issue216_BuildingMenuDoesNotAddMoveButtonOrReserveLayoutSpace()
         {
-            var host = new GameObject("MoveMenu", typeof(RectTransform));
+            var host = Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(MenuPath));
             try
             {
-                var panel = new GameObject("PanelRoot", typeof(RectTransform));
-                panel.transform.SetParent(host.transform, false);
-                ((RectTransform)panel.transform).sizeDelta = new Vector2(580.8f, 560f);
-                var nameObject = new GameObject("Name", typeof(RectTransform), typeof(TextMeshProUGUI));
-                nameObject.transform.SetParent(panel.transform, false);
-                var view = host.AddComponent<BuildingMenuView>();
-                var so = new SerializedObject(view);
-                so.FindProperty("panelRoot").objectReferenceValue = panel;
-                so.FindProperty("detailNameText").objectReferenceValue = nameObject.GetComponent<TMP_Text>();
-                so.ApplyModifiedPropertiesWithoutUndo();
-                int requested = 0;
-                view.MoveRequested += () => requested++;
-                view.EnableFacilityMoving(true);
-                view.EnableFacilityMoving(true);
-                var button = panel.transform.Find("MoveFacilityButton").GetComponent<UnityEngine.UI.Button>();
-                button.onClick.Invoke();
-                Assert.That(requested, Is.EqualTo(1));
-                Assert.That(panel.transform.Cast<Transform>().Count(t => t.name == "MoveFacilityButton"), Is.EqualTo(1));
-                var rect = (RectTransform)button.transform;
-                Assert.That(rect.anchoredPosition, Is.EqualTo(new Vector2(-16f, -60f)));
-                Assert.That(rect.sizeDelta, Is.EqualTo(new Vector2(112f, 22f)));
-                Assert.That(button.GetComponentInChildren<TMP_Text>().text, Is.EqualTo("이동 (우클릭)"));
-                view.EnableFacilityMoving(false);
-                Assert.That(button.gameObject.activeSelf, Is.False);
+                var view = host.GetComponent<BuildingMenuView>();
+                host.SetActive(true);
+                Assert.That(host.GetComponentsInChildren<Transform>(true).Any(t => t.name == "MoveFacilityButton"), Is.False);
+                Assert.That(host.GetComponentsInChildren<TMP_Text>(true).Any(t => t.text == "이동 (우클릭)"), Is.False);
+                Assert.That(view.HasStructuredReferences(), Is.True);
             }
             finally { Object.DestroyImmediate(host); }
         }

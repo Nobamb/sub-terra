@@ -19,6 +19,8 @@ namespace SubTerra.App.Tutorial
         public const int CriticalHazard = 600;
         /// <summary>드론 말풍선(30_000)보다 앞, 긴급 구출보다 뒤에 두는 퀘스트 목록/클리어 팝업.</summary>
         public const int QuestPopup = 30_500;
+        /// <summary>말풍선보다 앞, 구조 실행 모달보다 뒤에 표시하는 머리 위 구조요청 안내.</summary>
+        public const int EmergencyRescueIndicator = 30_900;
         /// <summary>드론 말풍선을 포함한 모든 게임 HUD보다 앞에 표시하는 긴급 구출 모달.</summary>
         public const int EmergencyRescueModal = 31_000;
         /// <summary>탐사 실패(체력 소진/가스 중독) 창. 드론 말풍선(30_000)과 긴급 구출 모달 위, 팝업 창(32_100~) 아래.</summary>

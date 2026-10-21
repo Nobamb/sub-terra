@@ -7,6 +7,9 @@ using SubTerra.App.Core;
 using SubTerra.App.Core.Data;
 using SubTerra.App.Integration;
 using SubTerra.App.Outpost;
+using SubTerra.App.Inventory;
+using SubTerra.App.State;
+using SubTerra.Shared;
 using SubTerra.App.UI;
 using SubTerra.App.UI.Outpost;
 using SubTerra.App.UI.Sell;
@@ -58,6 +61,73 @@ namespace SubTerra.App.Tests.PlayMode
             spawned.Clear();
             env?.Dispose();
             env = null;
+        }
+
+        [UnityTest]
+        public IEnumerator Issue212_ButtonsUseBoundServiceAndRespectBusyAndClosing()
+        {
+            var root = new GameObject("Canvas", typeof(RectTransform), typeof(Canvas));
+            var view = root.AddComponent<OutpostPanelView>();
+            var binder = root.AddComponent<OutpostPanelBinder>();
+            try
+            {
+                var catalog = new InMemoryMineralCatalog();
+                catalog.Register(DataIds.Minerals.Copper, 1f, 10, "구리");
+                var state = GameState.CreateNew();
+                var inventory = new InventoryService(catalog, 100f, state);
+                inventory.TryAddMineral(DataIds.Minerals.Copper, 3);
+                state.Outpost.TryRestore(new[] { new OutpostStorageEntryState(DataIds.Minerals.Copper, 20) },
+                    new string[0], string.Empty, 0, 0);
+                var service = new OutpostService(inventory, catalog, state);
+                service.ApplyRuntimeStatus(new OutpostStatusDto
+                {
+                    isInInteractionRange = true,
+                    interactionFacilityInstanceId = "storage.1",
+                    interactionFacilityBuildingId = DataIds.Buildings.StorageBasic,
+                    connectedFacilities = new List<ConnectedFacilityStatusDto>()
+                });
+                binder.BindTo(service);
+                var popup = view.StoragePopup;
+                popup.ManualTick = true;
+                binder.Presenter.ToggleInteractionPanel();
+                for (var i = 0; i < 24; i++) popup.Tick(0.05f);
+                Assert.That(popup.IsInteractive, Is.True);
+                binder.SelectMineral(DataIds.Minerals.Copper);
+
+                var controls = popup.transform.Find("Card/Content/Controls");
+                var all = controls.Find("QuantityAllButton").GetComponent<UnityEngine.UI.Button>();
+                all.onClick.Invoke();
+                Assert.That(popup.Quantity, Is.EqualTo(20));
+                controls.Find("DepositButton").GetComponent<UnityEngine.UI.Button>().onClick.Invoke();
+                Assert.That(inventory.State.GetQuantity(DataIds.Minerals.Copper), Is.Zero);
+                Assert.That(state.Outpost.GetStorageQuantity(DataIds.Minerals.Copper), Is.EqualTo(23));
+                var withdraw = controls.Find("WithdrawAllButton").GetComponent<UnityEngine.UI.Button>();
+                withdraw.onClick.Invoke();
+                Assert.That(inventory.State.GetQuantity(DataIds.Minerals.Copper), Is.EqualTo(23));
+                var deposit = controls.Find("DepositAllButton").GetComponent<UnityEngine.UI.Button>();
+                popup.SetBusy(true);
+                deposit.onClick.Invoke();
+                Assert.That(inventory.State.GetQuantity(DataIds.Minerals.Copper), Is.EqualTo(23));
+                popup.SetBusy(false);
+                deposit.onClick.Invoke();
+                Assert.That(state.Outpost.GetStorageQuantity(DataIds.Minerals.Copper), Is.EqualTo(23));
+                popup.BeginClose();
+                withdraw.onClick.Invoke();
+                Assert.That(inventory.State.GetQuantity(DataIds.Minerals.Copper), Is.Zero);
+
+                var allRect = (RectTransform)all.transform;
+                var preview = (RectTransform)controls.Find("Preview");
+                Assert.That(allRect.anchoredPosition.x + allRect.rect.xMax,
+                    Is.LessThan(preview.anchoredPosition.x + preview.rect.xMin));
+                Assert.That(preview.sizeDelta.x, Is.GreaterThan(160f));
+                var depositRect = (RectTransform)deposit.transform;
+                Assert.That(depositRect.anchoredPosition.y + depositRect.rect.yMin, Is.GreaterThanOrEqualTo(-620f));
+            }
+            finally
+            {
+                UnityEngine.Object.Destroy(root);
+            }
+            yield return null;
         }
 
         [UnityTest]

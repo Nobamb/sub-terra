@@ -63,6 +63,10 @@ namespace SubTerra.App.UI.Progression
         private ProgressionPanelPresenter presenter;
         private ZoneAccessResult lastDeepZoneAccess;
         private UnityAction[] categoryTabRuntimeActions;
+        private TMP_Text deepZoneUnlockPopupTitle;
+        private DeepZoneUnlockPopupMotion deepZoneUnlockPopupMotion;
+        private DeepZoneUnlockPopupSkin deepZoneUnlockPopupSkin;
+        private bool deepZoneUnlockPopupClosing;
 
         public UpgradeCategory ActiveCategory => activeCategory;
         public bool LevelsOnlySummary => levelsOnlySummary;
@@ -70,7 +74,7 @@ namespace SubTerra.App.UI.Progression
         public bool IsTreeMode => treeView != null;
         public UpgradeTreeView TreeView => treeView;
         public bool IsDeepZoneUnlockPopupOpen =>
-            deepZoneUnlockPopupRoot != null && deepZoneUnlockPopupRoot.activeSelf;
+            deepZoneUnlockPopupRoot != null && deepZoneUnlockPopupRoot.activeSelf && !deepZoneUnlockPopupClosing;
 
         private void OnEnable()
         {
@@ -564,39 +568,73 @@ namespace SubTerra.App.UI.Progression
 
         public void ShowDeepZoneUnlockPopup()
         {
-            const string message = "심층 구역 잠금이 해제되었습니다";
+            const string fallbackMessage = "심층 구역 잠금이 해제되었습니다";
             CreateDeepZoneUnlockPopupIfNeeded();
             EnsureDeepZoneUnlockCloseButton();
+            var skinned = deepZoneUnlockPopupMotion != null && deepZoneUnlockPopupSkin != null;
+            if (deepZoneUnlockPopupTitle != null)
+            {
+                deepZoneUnlockPopupTitle.text = DeepZoneUnlockPopupText.Header();
+            }
+
             if (deepZoneUnlockPopupText != null)
             {
-                deepZoneUnlockPopupText.text = message;
+                deepZoneUnlockPopupText.text = skinned
+                    ? DeepZoneUnlockPopupText.Range(deepZoneUnlockPopupSkin.minDepth, deepZoneUnlockPopupSkin.maxDepth)
+                    : fallbackMessage;
             }
 
             if (deepZoneUnlockPopupRoot != null)
             {
-                deepZoneUnlockPopupRoot.SetActive(true);
+                deepZoneUnlockPopupClosing = false;
+                if (deepZoneUnlockPopupMotion != null)
+                {
+                    deepZoneUnlockPopupMotion.Open();
+                }
+                else
+                {
+                    deepZoneUnlockPopupRoot.SetActive(true);
+                }
+
                 deepZoneUnlockPopupRoot.transform.SetAsLastSibling();
                 PopupWindowSorting.BringToFront(deepZoneUnlockPopupRoot.GetComponent<Canvas>());
                 return;
             }
 
-            SetPurchaseResult(message, string.Empty);
+            SetPurchaseResult(fallbackMessage, string.Empty);
         }
 
+        /// <summary>
+        /// 닫기 버튼·X·ESC·지상 기지가 모두 타는 닫기 경로. 요청 순간부터 닫힌 상태로 보고,
+        /// 글리치 닫기 연출이 끝나면 창을 끄고 정렬 목록에서 뺀다.
+        /// </summary>
         public void HideDeepZoneUnlockPopup()
         {
-            if (deepZoneUnlockPopupRoot != null)
+            if (deepZoneUnlockPopupRoot == null || !deepZoneUnlockPopupRoot.activeSelf)
             {
-                PopupWindowSorting.Remove(deepZoneUnlockPopupRoot.GetComponent<Canvas>());
-                deepZoneUnlockPopupRoot.SetActive(false);
+                UiKeyboardSubmitGuard.ClearSelection();
+                return;
             }
 
+            if (deepZoneUnlockPopupClosing)
+            {
+                return;
+            }
+
+            deepZoneUnlockPopupClosing = true;
             UiKeyboardSubmitGuard.ClearSelection();
+            if (deepZoneUnlockPopupMotion != null
+                && deepZoneUnlockPopupMotion.RequestClose(CompleteDeepZoneUnlockPopupHide))
+            {
+                return;
+            }
+
+            CompleteDeepZoneUnlockPopupHide();
         }
 
         /// <summary>
         /// 팝업이 열려 있으면 닫기 버튼과 같은 경로로 숨기고 true를 반환한다.
-        /// 이미 닫혀 있으면 아무 것도 하지 않고 false.
+        /// 이미 닫혀 있거나 닫는 중이면 아무 것도 하지 않고 false.
         /// </summary>
         public bool TryHideDeepZoneUnlockPopup()
         {
@@ -607,6 +645,18 @@ namespace SubTerra.App.UI.Progression
 
             HideDeepZoneUnlockPopup();
             return true;
+        }
+
+        private void CompleteDeepZoneUnlockPopupHide()
+        {
+            deepZoneUnlockPopupClosing = false;
+            if (deepZoneUnlockPopupRoot != null)
+            {
+                PopupWindowSorting.Remove(deepZoneUnlockPopupRoot.GetComponent<Canvas>());
+                deepZoneUnlockPopupRoot.SetActive(false);
+            }
+
+            UiKeyboardSubmitGuard.ClearSelection();
         }
 
         private void CreateDeepZoneUnlockPopupIfNeeded()
@@ -622,8 +672,25 @@ namespace SubTerra.App.UI.Progression
                 return;
             }
 
+            var skin = DeepZoneUnlockPopupSkin.Load();
+            if (skin != null && skin.IsComplete)
+            {
+                var parts = DeepZoneUnlockPopupMotion.Create(
+                    canvases[canvases.Length - 1].transform,
+                    skin,
+                    UiLayerPriority.ModalPanel + 10);
+                deepZoneUnlockPopupRoot = parts.Root;
+                deepZoneUnlockPopupTitle = parts.Title;
+                deepZoneUnlockPopupText = parts.Body;
+                deepZoneUnlockPopupCloseButton = parts.CloseButton;
+                deepZoneUnlockPopupMotion = parts.Root.GetComponent<DeepZoneUnlockPopupMotion>();
+                deepZoneUnlockPopupSkin = skin;
+                return;
+            }
+
+            Debug.LogWarning("[SubTerra] DeepZoneUnlockPopupSkin missing or incomplete; using the plain popup.");
             var root = new GameObject(
-                "DeepZoneUnlockPopup_Runtime",
+                DeepZoneUnlockPopupMotion.RootName,
                 typeof(RectTransform),
                 typeof(Image),
                 typeof(Canvas),
