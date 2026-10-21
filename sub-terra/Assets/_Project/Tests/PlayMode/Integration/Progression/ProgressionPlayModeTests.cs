@@ -196,6 +196,59 @@ namespace SubTerra.App.Tests.PlayMode.Integration.Progression
         }
 
         [UnityTest]
+        public IEnumerator Issue211_SurfaceScenePurchaseUpdatesLevelsAndEffectsWithoutLeaving()
+        {
+            using var env = new UiTestEnvironment();
+            yield return env.LoadSurfaceBase(() =>
+            {
+                var surface = Object.FindAnyObjectByType<SubTerra.App.UI.SurfaceBase.SurfaceBaseBinder>();
+                return surface != null && surface.IsBound;
+            }, sceneLoadTimeout: 90f, configureResolution: false);
+            var surfaceView = Object.FindAnyObjectByType<SubTerra.App.UI.SurfaceBase.SurfaceBaseView>();
+            var binder = surfaceView.GetComponentInChildren<ProgressionPanelBinder>(true);
+            var panel = binder.GetComponent<ProgressionPanelView>();
+            Assert.That(binder.IsBound, Is.True);
+            env.Save.InventoryService.SetMaximumCapacity(10000f);
+            env.Save.InventoryService.TryAddMineral(DataIds.Minerals.Copper, 200);
+            env.Save.InventoryService.TryAddMineral(DataIds.Minerals.Iron, 100);
+            surfaceView.SetUpgradeVisible(true);
+            var purchase = (UnityEngine.UI.Button)typeof(ProgressionPanelView)
+                .GetField("purchaseButton", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(panel);
+            var ids = new[] { DataIds.Upgrades.DrillSpeed, DataIds.Upgrades.DrillSpeed,
+                DataIds.Upgrades.MaximumEnergy, DataIds.Upgrades.MaximumHealth,
+                DataIds.Upgrades.MaximumCargo, DataIds.Upgrades.CargoYield };
+            foreach (var id in ids)
+            {
+                Assert.That(binder.SelectUpgrade(id), Is.True);
+                Assert.That(env.Save.Progression.TryGetSnapshot(id, out var before), Is.True);
+                Assert.That(before.IsUnlocked, Is.True, before.LockedReason);
+                Assert.That(purchase.interactable, Is.True, id);
+                purchase.onClick.Invoke();
+                Assert.That(env.Save.Progression.LastPurchaseResult.IsSuccess, Is.True, id);
+                Assert.That(env.Save.Progression.TryGetSnapshot(id, out var after), Is.True);
+                Assert.That(after.CurrentLevel, Is.EqualTo(before.CurrentLevel + 1), id);
+                var node = panel.TreeView.FindNode(id);
+                var label = (TMPro.TMP_Text)typeof(UpgradeTreeNodeView)
+                    .GetField("levelLabel", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(node);
+                Assert.That(label.text, Is.EqualTo(after.IsMaximumLevel ? "MAX" : "Lv." + after.CurrentLevel + "/" + after.MaximumLevel), id);
+                if (id == DataIds.Upgrades.MaximumEnergy)
+                    Assert.That(GameBootstrapper.Instance.State.Player.MaxEnergy, Is.EqualTo(100 + (int)after.CurrentEffectValue));
+                if (id == DataIds.Upgrades.MaximumHealth)
+                    Assert.That(((IPlayerHealthUpgradeProvider)env.Save.Progression.Effects).GetMaximumHealth(100),
+                        Is.EqualTo(100 + (int)after.CurrentEffectValue));
+                if (id == DataIds.Upgrades.CargoYield)
+                    Assert.That(env.Save.Progression.Effects.GetMiningYieldBonus(DataIds.Minerals.Copper), Is.EqualTo(1));
+                if (id == DataIds.Upgrades.MaximumCargo)
+                    Assert.That(env.Save.InventoryService.MaxCapacity, Is.EqualTo(50f + after.CurrentEffectValue));
+                yield return null;
+            }
+            surfaceView.SetUpgradeVisible(false);
+            surfaceView.SetUpgradeVisible(true);
+            Assert.That(binder.IsBound, Is.True);
+            Assert.That(env.Save.ActiveSlot, Is.Zero);
+        }
+
+        [UnityTest]
         public IEnumerator Purchase_UpdatesUiAndProviderInSameFrame()
         {
             var data = ScriptableObject.CreateInstance<UpgradeData>();
