@@ -120,6 +120,8 @@ namespace SubTerra.App.UI.Outpost
             storagePopup.QuantityChanged += OnStorageQuantityChanged;
             storagePopup.DepositRequested += DepositQuantity;
             storagePopup.WithdrawRequested += WithdrawQuantity;
+            storagePopup.DepositAllRequested += DepositAll;
+            storagePopup.WithdrawAllRequested += WithdrawAll;
             if (storagePopup.Picker != null)
             {
                 storagePopup.Picker.SearchChanged += OnMineralSearchChanged;
@@ -139,6 +141,8 @@ namespace SubTerra.App.UI.Outpost
             storagePopup.QuantityChanged -= OnStorageQuantityChanged;
             storagePopup.DepositRequested -= DepositQuantity;
             storagePopup.WithdrawRequested -= WithdrawQuantity;
+            storagePopup.DepositAllRequested -= DepositAll;
+            storagePopup.WithdrawAllRequested -= WithdrawAll;
             if (storagePopup.Picker != null)
             {
                 storagePopup.Picker.SearchChanged -= OnMineralSearchChanged;
@@ -163,6 +167,10 @@ namespace SubTerra.App.UI.Outpost
         {
             presenter?.RequestWithdraw(selectedMineralId, quantity);
         }
+
+        public void DepositAll() => presenter?.RequestDepositAll();
+
+        public void WithdrawAll() => presenter?.RequestWithdrawAll();
 
         /// <summary>판매 창 자원 아이콘 조회(카탈로그의 기존 아이콘). 표시 전용.</summary>
         public void SetItemIconResolver(Func<string, Sprite> resolver)

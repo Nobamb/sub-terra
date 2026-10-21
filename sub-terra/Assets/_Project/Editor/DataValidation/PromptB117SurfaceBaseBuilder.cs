@@ -273,7 +273,7 @@ namespace SubTerra.App.Editor.DataValidation
             plate.color = new Color(0.06f, 0.16f, 0.19f, 1f);
             plate.raycastTarget = true;
             Ensure<PopupWindowDrag>(card.gameObject);
-            var title = Text(card, "UpgradeTitle", font, "장비 업그레이드", 32f);
+            var title = Text(card, "UpgradeTitle", font, "업그레이드", 32f);
             Place(title.rectTransform, new Vector2(0.5f, 1f), new Vector2(-250f, -48f), new Vector2(460f, 64f));
             close = Button(card, "CloseUpgradeButton");
             Place((RectTransform)close.transform, new Vector2(1f, 1f), new Vector2(-62f, -48f), new Vector2(72f, 58f));

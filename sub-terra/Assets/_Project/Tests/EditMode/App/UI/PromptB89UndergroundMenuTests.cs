@@ -4,6 +4,7 @@ using NUnit.Framework;
 using SubTerra.App.Editor.DataValidation;
 using SubTerra.App.Integration;
 using SubTerra.App.UI.HUD;
+using SubTerra.App.UI;
 using SubTerra.App.UI.SurfaceBase;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -81,6 +82,30 @@ namespace SubTerra.App.Tests.UI
             menu.HandleCloseTopPopup();
             Assert.That(chrome.IsBuildingMenuOpen || chrome.IsInventoryPanelOpen, Is.False);
             Assert.That(menu.IsSettingsOpen, Is.False);
+        }
+
+        [Test]
+        public void Issue217_XClosesTopQuestRewardThroughExistingConfirmAction()
+        {
+            var view = scene.GetRootGameObjects().SelectMany(root =>
+                root.GetComponentsInChildren<SubTerra.App.UI.Tutorial.DemoObjectiveView>(true)).Single();
+            var motion = view.GetComponentInChildren<SubTerra.App.UI.Tutorial.QuestClearPopupMotion>(true);
+            // EditMode는 Unity의 Awake/OnEnable을 실행하지 않으므로 기존 닫기 연출을 초기화한다.
+            Invoke(motion, "Awake");
+            Invoke(motion.GetComponent<SubTerra.App.UI.Tutorial.StartBriefingPopupMotion>(), "OnEnable");
+            view.SetClaimVisible(true);
+            var confirms = 0;
+            System.Action close = () => { confirms++; view.SetClaimVisible(false); };
+            view.ClaimConfirmRequested += close;
+            try
+            {
+                Assert.That(PopupWindowSorting.Top, Is.Not.Null);
+                menu.HandleCloseTopPopup();
+                menu.HandleCloseTopPopup();
+                Assert.That(confirms, Is.EqualTo(1));
+                Assert.That(menu.IsSettingsOpen, Is.False);
+            }
+            finally { view.ClaimConfirmRequested -= close; }
         }
 
         [Test]

@@ -17,6 +17,60 @@ namespace SubTerra.App.Tests.UI
         private const string PrefabPath = "Assets/_Project/Prefabs/UI/SurfaceBasePanel.prefab";
 
         [Test]
+        public void Issue209_SurfaceOKeyUsesQuitPolicyAndDefersWhileSaving()
+        {
+            const string editModeInput = "RUN_PLAYER_UPDATES_IN_EDIT_MODE";
+            var inputSettings = UnityEngine.InputSystem.InputSystem.settings;
+            var hadEditModeInput = (bool)inputSettings.GetType()
+                .GetMethod("IsFeatureEnabled", BindingFlags.Instance | BindingFlags.NonPublic)
+                .Invoke(inputSettings, new object[] { editModeInput });
+            inputSettings.SetInternalFeatureFlag(editModeInput, true);
+            var previousKeyboard = UnityEngine.InputSystem.Keyboard.current;
+            var keyboard = UnityEngine.InputSystem.InputSystem.AddDevice<UnityEngine.InputSystem.Keyboard>();
+            var runtimeRoot = new GameObject("QuitShortcutRuntime");
+            var host = new GameObject("SurfaceQuitShortcut");
+            var runtime = runtimeRoot.AddComponent<SubTerra.App.Save.SaveRuntimeController>();
+            var instanceProperty = typeof(SubTerra.App.Save.SaveRuntimeController).GetProperty("Instance");
+            var previousRuntime = instanceProperty.GetValue(null);
+            var view = host.AddComponent<SurfaceBaseView>();
+            var binder = host.AddComponent<SurfaceBaseBinder>();
+            var textRoot = new GameObject("Message", typeof(RectTransform));
+            textRoot.transform.SetParent(host.transform);
+            var message = textRoot.AddComponent<TextMeshProUGUI>();
+            try
+            {
+                instanceProperty.SetValue(null, runtime);
+                typeof(SubTerra.App.Save.SaveRuntimeController).GetField("saveInProgress", BindingFlags.Instance | BindingFlags.NonPublic)
+                    .SetValue(runtime, true); // 실제 종료·저장 없이 기존 종료 정책까지 입력이 도달하는지 확인한다.
+                typeof(SurfaceBaseView).GetField("messageText", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(view, message);
+                typeof(SurfaceBaseBinder).GetField("view", BindingFlags.Instance | BindingFlags.NonPublic).SetValue(binder, view);
+                typeof(SurfaceBaseBinder).GetField("settings", BindingFlags.Instance | BindingFlags.NonPublic)
+                    .SetValue(binder, new SubTerra.App.UI.MainMenu.SettingsSession());
+                // Input System은 첫 조회부터 프레임별 누름 상태를 추적하므로 입력 전에 초기화한다.
+                _ = keyboard.oKey.wasPressedThisFrame;
+                UnityEngine.InputSystem.InputSystem.QueueStateEvent(keyboard, new UnityEngine.InputSystem.LowLevel.KeyboardState());
+                UnityEngine.InputSystem.InputSystem.Update();
+                UnityEngine.InputSystem.InputSystem.QueueStateEvent(keyboard,
+                    new UnityEngine.InputSystem.LowLevel.KeyboardState(UnityEngine.InputSystem.Key.O));
+                UnityEngine.InputSystem.InputSystem.Update();
+                keyboard.MakeCurrent();
+                Assert.That(keyboard.oKey.wasPressedThisFrame, Is.True, "검사용 키보드에서 O 눌림이 전달되어야 한다.");
+                Assert.That(UiPauseGate.IsHeld, Is.False, "검사 시작 시 UI 일시정지가 없어야 한다.");
+                typeof(SurfaceBaseBinder).GetMethod("Update", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(binder, null);
+                Assert.That(message.text, Is.EqualTo("저장 중입니다. 잠시 후 다시 시도하세요."));
+            }
+            finally
+            {
+                Object.DestroyImmediate(host);
+                Object.DestroyImmediate(runtimeRoot);
+                instanceProperty.SetValue(null, previousRuntime);
+                UnityEngine.InputSystem.InputSystem.RemoveDevice(keyboard);
+                if (previousKeyboard != null) previousKeyboard.MakeCurrent();
+                inputSettings.SetInternalFeatureFlag(editModeInput, hadEditModeInput);
+            }
+        }
+
+        [Test]
         public void QuestIcon_UsesSurfaceSetAssetWithoutChangingLayout()
         {
             var root = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath);

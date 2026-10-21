@@ -143,6 +143,36 @@ namespace SubTerra.App.Tests.UI.MainMenu
         }
 
         [Test]
+        public void Issue219_PrimaryActionStartsOnlySelectedEmptySlotAndPreservesSavedSlot()
+        {
+            var save = CreateSave();
+            Assert.That(save.Save(1, CreateContext(777)).IsSuccess, Is.True);
+            paths.TryGetPaths(1, out var saved);
+            var before = File.ReadAllBytes(saved.Normal);
+            var view = new RecordingMenuView();
+            using var presenter = new MainMenuPresenter(view, CreateLoad(), "test");
+            var starts = new List<int>();
+            var continues = new List<int>();
+            presenter.StartNewGameConfirmed += starts.Add;
+            presenter.ContinueRequested += continues.Add;
+            presenter.SelectSlot(2);
+            Assert.That(view.PrimaryEnabled, Is.True);
+            Assert.That(view.PrimaryLabel, Is.EqualTo("새 탐사 시작"));
+            presenter.RequestContinue();
+            Assert.That(starts, Is.EqualTo(new[] { 2 }));
+            Assert.That(continues, Is.Empty);
+            Assert.That(File.ReadAllBytes(saved.Normal), Is.EqualTo(before));
+            presenter.SelectSlot(1);
+            Assert.That(view.PrimaryLabel, Is.EqualTo("이어하기"));
+            presenter.RequestContinue();
+            Assert.That(continues, Is.EqualTo(new[] { 1 }));
+            Assert.That(presenter.RequestNewGame(), Is.EqualTo(NewGameRequestStatus.AwaitingOverwriteConfirm));
+            presenter.RequestContinue();
+            Assert.That(starts, Is.EqualTo(new[] { 2 }), "덮어쓰기 확인 없이 큰 버튼이 새 게임을 시작하면 안 된다.");
+            Assert.That(continues, Is.EqualTo(new[] { 1 }));
+        }
+
+        [Test]
         public void L_F01_EmptySlotNewGame_ReadyWithoutConfirm()
         {
             var load = CreateLoad();
@@ -505,6 +535,11 @@ namespace SubTerra.App.Tests.UI.MainMenu
         {
             public bool OverwriteVisible;
             public string Message;
+            public string PrimaryLabel;
+            public bool PrimaryEnabled;
+
+            public void SetPrimaryAction(string label, bool enabled)
+            { PrimaryLabel = label; PrimaryEnabled = enabled; }
 
             public void SetSlotDisplay(int slotId, string label, bool canContinue, string statusText) { }
             public void SetSelectedSlot(int slotId, bool canContinue, string message) => Message = message;

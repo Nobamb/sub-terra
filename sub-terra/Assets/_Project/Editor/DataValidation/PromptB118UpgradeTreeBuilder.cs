@@ -307,7 +307,7 @@ namespace SubTerra.App.Editor.DataValidation
             if (addTitle && panel.Find("UpgradeTreeTitle") == null)
             {
                 var title = NewText("UpgradeTreeTitle", panel, font, 32f, UpgradeTreeTween.TextMain, TextAlignmentOptions.MidlineLeft);
-                title.text = "장비 업그레이드";
+                title.text = "업그레이드";
                 SetRect(title.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f),
                     new Vector2(40f, -22f), new Vector2(520f, 64f));
             }

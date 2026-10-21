@@ -216,6 +216,7 @@ namespace SubTerra.App.Tests.Tutorial
             Assert.That(env.Inventory.State.GetQuantity(DataIds.Minerals.Copper), Is.Zero);
 
             presenter.ConfirmClaim();
+            presenter.ConfirmClaim(); // 연타해도 정산한 보상을 다시 지급하지 않는다.
 
             Assert.That(view.ClaimVisible, Is.False);
             Assert.That(env.Inventory.State.GetQuantity(DataIds.Minerals.Copper), Is.EqualTo(3));
@@ -444,10 +445,10 @@ namespace SubTerra.App.Tests.Tutorial
                     Is.EqualTo(UiLayerPriority.QuestPopup));
                 Assert.That(
                     dumpExisting.GetComponentInChildren<TMP_Text>(true).text,
-                    Is.EqualTo("기존 자원 버리기"));
+                    Is.EqualTo("버릴 자원 선택"));
                 Assert.That(
                     forfeitReward.GetComponentInChildren<TMP_Text>(true).text,
-                    Is.EqualTo("퀘스트 보상 버리기"));
+                    Is.EqualTo("보상 버리기"));
                 Assert.That(
                     claimClose.GetComponent<Button>().onClick.GetPersistentMethodName(0),
                     Is.EqualTo(nameof(DemoObjectiveView.OnClaimConfirmClicked)));
@@ -565,8 +566,10 @@ namespace SubTerra.App.Tests.Tutorial
             public void SetDetailsNavInteractable(bool previousEnabled, bool nextEnabled) { }
             public void SetCapacityChoiceVisible(bool visible) => CapacityVisible = visible;
             public void SetCapacityChoiceText(string title, string body) { }
+            public void SetCapacityChoice(CargoShortfallModel shortfall, QuestReward reward) { }
             public void SetDumpPanelVisible(bool visible) => DumpVisible = visible;
             public void SetDumpSummary(string summary) { }
+            public void SetDumpChoice(CargoShortfallModel shortfall, QuestReward reward) { }
             public void SetDumpRows(IReadOnlyList<QuestDumpRow> rows) { }
             public void SetClaimVisible(bool visible) => ClaimVisible = visible;
             public void SetClaimText(string title, string questTitle, string rewardText, string hint)

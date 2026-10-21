@@ -30,6 +30,7 @@ namespace SubTerra.App.UI.Tutorial
         [SerializeField] private Image frameGlow;
         [SerializeField] private Image[] ghostFrames;
         [SerializeField] private Image[] edgeBars;
+        [SerializeField] private Image[] frameBackings;
 
         [Header("Signal")]
         [SerializeField] private Image signalLine;
@@ -66,6 +67,8 @@ namespace SubTerra.App.UI.Tutorial
         private bool openGlitchDone;
         private bool holdsPause;
         private bool pauseOnOpen = true;
+        private float introSpeed = 1f;
+        private float effectScale = 1f;
         private int activeBurst = -1;
         private float phaseTime;
         private float clock;
@@ -86,15 +89,37 @@ namespace SubTerra.App.UI.Tutorial
 
         internal void ConfigureQuestClear(RectTransform glint)
         {
-            pauseOnOpen = false;
             var panel = (RectTransform)transform;
             var source = GetComponent<UnityEngine.UI.Image>();
-            windowSize = panel.sizeDelta;
-            frameHalfExtent = new Vector2(395f * windowSize.x / 900f, 155f * windowSize.y / 450f);
+            var size = panel.sizeDelta;
+            // 퀘스트 클리어 프레임 그림의 보이는 외곽선(900x450 기준 395x155).
+            var extent = new Vector2(395f * size.x / 900f, 155f * size.y / 450f);
+            ConfigureCompact(size, extent, source.sprite, source.raycastTarget, "Claim", glint, 1f);
+            source.enabled = false;
+        }
+
+        /// <summary>
+        /// 시작 브리핑 연출을 작은 창에 런타임으로 붙인다. 기존 자식(glint 제외)은 본문 레이어로 옮긴다.
+        /// frameExtent는 프레임 그림에서 보이는 외곽선의 반폭·반높이다. 화면 찢기·화면 복사는 쓰지 않는다.
+        /// </summary>
+        internal void ConfigureCompact(
+            Vector2 size,
+            Vector2 frameExtent,
+            Sprite frameSprite,
+            bool frameRaycast,
+            string prefix,
+            RectTransform glint,
+            float effectScale)
+        {
+            pauseOnOpen = false;
+            var panel = (RectTransform)transform;
+            windowSize = size;
+            frameHalfExtent = frameExtent;
+            this.effectScale = Mathf.Max(0.1f, effectScale);
 
             var children = new Transform[panel.childCount];
             for (var i = 0; i < children.Length; i++) children[i] = panel.GetChild(i);
-            var contentRect = new GameObject("ClaimContent", typeof(RectTransform), typeof(CanvasGroup))
+            var contentRect = new GameObject(prefix + "Content", typeof(RectTransform), typeof(CanvasGroup))
                 .GetComponent<RectTransform>();
             contentRect.SetParent(panel, false);
             contentRect.sizeDelta = windowSize;
@@ -104,23 +129,22 @@ namespace SubTerra.App.UI.Tutorial
                 if (child != glint) child.SetParent(contentRect, false);
             }
 
-            window = new GameObject("ClaimTransition", typeof(RectTransform)).GetComponent<RectTransform>();
+            window = new GameObject(prefix + "Transition", typeof(RectTransform)).GetComponent<RectTransform>();
             window.SetParent(panel, false);
             window.sizeDelta = windowSize;
             window.SetAsFirstSibling();
-            frameGlow = CreateQuestImage(window, "FrameGlow", source.sprite);
+            frameGlow = CreateQuestImage(window, "FrameGlow", frameSprite);
             ghostFrames = new[]
             {
-                CreateQuestImage(window, "FrameGhostA", source.sprite),
-                CreateQuestImage(window, "FrameGhostB", source.sprite)
+                CreateQuestImage(window, "FrameGhostA", frameSprite),
+                CreateQuestImage(window, "FrameGhostB", frameSprite)
             };
-            frameImage = CreateQuestImage(window, "Frame", source.sprite);
-            frameImage.raycastTarget = source.raycastTarget;
+            frameImage = CreateQuestImage(window, "Frame", frameSprite);
+            frameImage.raycastTarget = frameRaycast;
             frame = frameImage.rectTransform;
             frameGlow.rectTransform.sizeDelta = windowSize;
             frame.sizeDelta = windowSize;
             foreach (var ghost in ghostFrames) ghost.rectTransform.sizeDelta = windowSize;
-            source.enabled = false;
 
             edgeBars = new Image[10];
             for (var i = 0; i < edgeBars.Length; i++)
@@ -134,7 +158,7 @@ namespace SubTerra.App.UI.Tutorial
             }
 
             if (glint != null) glint.SetParent(window, false);
-            screenGlitchRoot = new GameObject("ClaimGlitch", typeof(RectTransform)).GetComponent<RectTransform>();
+            screenGlitchRoot = new GameObject(prefix + "Glitch", typeof(RectTransform)).GetComponent<RectTransform>();
             screenGlitchRoot.SetParent(panel, false);
             screenGlitchRoot.sizeDelta = windowSize;
             screenBars = new Image[8];
@@ -142,6 +166,29 @@ namespace SubTerra.App.UI.Tutorial
                 screenBars[i] = CreateQuestImage(screenGlitchRoot, "NoiseBar" + i, null);
             rootGroup = GetComponent<CanvasGroup>();
             if (rootGroup == null) rootGroup = gameObject.AddComponent<CanvasGroup>();
+        }
+
+        /// <summary>
+        /// 프레임 그림 안쪽이 비어 있을 때 프레임과 함께 열리고 닫히는 바탕을 프레임 아래에 깐다.
+        /// 프레임과 같은 세로 배율·표시 여부를 따르고, 글리치(흔들림·잔상)는 적용하지 않는다.
+        /// </summary>
+        internal Image AddFrameBacking(string name, Sprite sprite, Color color, Vector2 size)
+        {
+            if (window == null)
+            {
+                return null;
+            }
+
+            var backing = CreateQuestImage(window, name, sprite);
+            backing.color = color;
+            backing.rectTransform.sizeDelta = size;
+            backing.transform.SetAsFirstSibling();
+            var list = new Image[(frameBackings != null ? frameBackings.Length : 0) + 1];
+            if (frameBackings != null) frameBackings.CopyTo(list, 0);
+            list[list.Length - 1] = backing;
+            frameBackings = list;
+            SetEnabled(backing, false);
+            return backing;
         }
 
         private static Image CreateQuestImage(RectTransform parent, string name, Sprite sprite)
@@ -154,11 +201,21 @@ namespace SubTerra.App.UI.Tutorial
             return image;
         }
 
-        internal void RequestQuestClose()
+        internal void RequestQuestClose() => RequestCompactClose(null);
+
+        /// <summary>작은 창 닫기: 등장 중이어도 바로 닫기 연출로 넘어간다. 시작하지 못하면(비활성 등) false.</summary>
+        internal bool RequestCompactClose(Action closed)
         {
             if (lifecycle.Phase == BriefingPhase.Waiting) lifecycle.TryStartIntro();
             if (lifecycle.Phase == BriefingPhase.Intro) lifecycle.TryFinishIntro();
-            RequestClose(null);
+            return RequestClose(closed);
+        }
+
+        /// <summary>등장 시간표 재생 배속. 1이면 시작 브리핑과 같은 1.28초다.</summary>
+        internal float IntroSpeed
+        {
+            get => introSpeed;
+            set => introSpeed = Mathf.Max(0.1f, value);
         }
 
         private void Awake()
@@ -238,7 +295,7 @@ namespace SubTerra.App.UI.Tutorial
 
                     break;
                 case BriefingPhase.Intro:
-                    phaseTime += dt;
+                    phaseTime += dt * introSpeed;
                     UpdateIntro(phaseTime, dt);
                     if (phaseTime >= StartBriefingTimeline.IntroDuration)
                     {
@@ -635,6 +692,17 @@ namespace SubTerra.App.UI.Tutorial
                 frameImage.color = Color.Lerp(DimFrame, Color.white, light);
             }
 
+            if (frameBackings != null)
+            {
+                for (var i = 0; i < frameBackings.Length; i++)
+                {
+                    var backing = frameBackings[i];
+                    if (backing == null) continue;
+                    backing.enabled = open > 0.001f;
+                    backing.rectTransform.localScale = new Vector3(1f, Mathf.Max(0.01f, open), 1f);
+                }
+            }
+
             if (intensity > 0.001f)
             {
                 glitchTimer -= dt;
@@ -767,7 +835,7 @@ namespace SubTerra.App.UI.Tutorial
                     Edge = i % 4,
                     Position = planner.Range(0f, 1f),
                     Speed = planner.Range(0.05f, 0.18f) * (planner.Range(0f, 1f) < 0.5f ? -1f : 1f),
-                    Length = planner.Range(60f, 220f),
+                    Length = planner.Range(60f, 220f) * effectScale,
                     Lateral = planner.Range(-5f, 7f),
                     Seed = planner.Range(0f, 100f)
                 };
@@ -778,7 +846,7 @@ namespace SubTerra.App.UI.Tutorial
             for (var i = 0; i < motes; i++)
             {
                 var angle = planner.Range(0f, Mathf.PI * 2f);
-                var radius = planner.Range(380f, 760f);
+                var radius = planner.Range(380f, 760f) * effectScale;
                 moteStart[i] = new Vector2(Mathf.Cos(angle) * radius * 1.4f, Mathf.Sin(angle) * radius * 0.6f);
             }
         }
@@ -884,6 +952,7 @@ namespace SubTerra.App.UI.Tutorial
             }
 
             SetEnabled(frameGlow, false);
+            SetEnabled(frameBackings, false);
             SetEnabled(ghostFrames, false);
             SetEnabled(edgeBars, false);
             SetEnabled(signalLine, false);
