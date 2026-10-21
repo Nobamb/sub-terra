@@ -16,13 +16,38 @@ MonoBehaviour:
   - minimumDepth: 36
     maximumDepth: 40
     availableInDemo: 1
-    plannedRequirement:
+    plannedRequirement: 
+    thumbnail: {fileID: 21300000, guid: fd193327201434f46844b377aa21a79f, type: 3}
+    mineralMask: {fileID: 21300000, guid: 797f1220b153595428f6ff3e198acb04, type: 3}
   - minimumDepth: 41
     maximumDepth: 75
     availableInDemo: 0
     plannedRequirement: "Lv.1 \uD574\uAE08 \xB7 Demo \uBAA9\uD45C 13\uAC1C \uC644\uB8CC"
+    thumbnail: {fileID: 21300000, guid: a630b9690dcca7c4389ee9949c5a74f5, type: 3}
+    mineralMask: {fileID: 21300000, guid: 3d483dd36561ec349b5b823e04acb8b0, type: 3}
   - minimumDepth: 76
     maximumDepth: 100
     availableInDemo: 0
     plannedRequirement: "Lv.2 \uD574\uAE08 \xB7 \uACE8\uB4DC/\uD76C\uADC0 \uC790\uC6D0
       \uC870\uAC74 \uC900\uBE44 \uC911"
+    thumbnail: {fileID: 21300000, guid: 947e4212100406748bc96fc92cadec07, type: 3}
+    mineralMask: {fileID: 21300000, guid: 89eda66f59503354ca68da1c99074dc8, type: 3}
+  thumbnailStyle:
+    glintPeriod: 2.6
+    glintPeriodSpread: 0.07
+    lockedGlintColor: {r: 0.8, g: 0.85, b: 0.88, a: 1}
+    unlockedGlintColor: {r: 1, g: 1, b: 1, a: 1}
+    lockedGlintAlpha: {x: 0.15, y: 0.45}
+    unlockedGlintAlpha: {x: 0.6, y: 0.9}
+    lockedGrayBrightness: 0.6
+    glintGrayBrightness: 1.1
+    fallbackLockedTint: {r: 0.45, g: 0.45, b: 0.45, a: 1}
+    unlockDuration: 1
+    lockCenter: {x: 0.5, y: 0.66}
+    revealRadius: 1.2
+    revealFeather: 0.18
+    shackleKick: 6
+    lockDrop: 40
+    lockDropAngle: 25
+    fallbackColor: {r: 0.09, g: 0.14, b: 0.24, a: 1}
+    fallbackDarkenPerLevel: 0.22

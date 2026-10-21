@@ -63,6 +63,8 @@ namespace SubTerra.App.UI.Progression
         private float zoomTarget = 1f;
         private Vector2 pan;
         private Vector2 panTarget;
+        private DeepZoneThumbnailStrip deepZoneStrip;
+        private Func<bool> deepZoneRevealBlocked;
 
         private const float ZoomSharpness = 14f;
 
@@ -298,15 +300,64 @@ namespace SubTerra.App.UI.Progression
 
         public void SetDeepZoneStatus(ZoneAccessResult access)
         {
-            EnsureDeepZoneText();
-            if (deepZoneText == null)
-            {
-                return;
-            }
-
-            deepZoneText.gameObject.SetActive(true);
-            deepZoneText.text = DeepZoneDisplaySettings.Describe(access, compact: true);
+            SetDeepZoneStatus(access, Resources.Load<DeepZoneDisplaySettings>(DeepZoneDisplaySettings.ResourcePath));
         }
+
+        /// <summary>
+        /// B-155: 심층 구역 칸을 레벨별 썸네일로 그린다. 설정이 없으면 기존 글자 안내로 대체한다.
+        /// 해금 연출은 해금 창이 닫힌 뒤 한 번만 재생된다(DeepZoneRevealBlocked).
+        /// </summary>
+        public void SetDeepZoneStatus(ZoneAccessResult access, DeepZoneDisplaySettings settings)
+        {
+            try
+            {
+                EnsureDeepZoneText();
+                if (deepZoneText == null)
+                {
+                    return;
+                }
+
+                deepZoneText.gameObject.SetActive(true);
+                var useThumbnails = settings != null && settings.Levels.Count > 0 && deepZoneStrip != null;
+                LayoutDeepZoneLabel(useThumbnails);
+                if (!useThumbnails)
+                {
+                    if (deepZoneStrip != null)
+                    {
+                        deepZoneStrip.gameObject.SetActive(false);
+                    }
+
+                    deepZoneText.text = DeepZoneDisplaySettings.Describe(access, compact: true);
+                    return;
+                }
+
+                deepZoneStrip.gameObject.SetActive(true);
+                deepZoneStrip.RevealBlocked = deepZoneRevealBlocked;
+                deepZoneText.text = settings.BuildSummary(access);
+                deepZoneStrip.Apply(settings, access);
+            }
+            catch (Exception exception)
+            {
+                Debug.LogError("[SubTerra] 심층 구역 썸네일 표시 실패: " + exception);
+            }
+        }
+
+        /// <summary>해금 창이 보이는 동안 true를 돌려주는 조회. ProgressionPanelView가 넘긴다.</summary>
+        public Func<bool> DeepZoneRevealBlocked
+        {
+            get => deepZoneRevealBlocked;
+            set
+            {
+                deepZoneRevealBlocked = value;
+                if (deepZoneStrip != null)
+                {
+                    deepZoneStrip.RevealBlocked = value;
+                }
+            }
+        }
+
+        public DeepZoneThumbnailStrip DeepZoneThumbnails => deepZoneStrip;
+        public TMP_Text DeepZoneSummary => deepZoneText;
 
         private void EnsureDeepZoneText()
         {
@@ -316,7 +367,8 @@ namespace SubTerra.App.UI.Progression
             }
 
             // 기존 프리팹도 빌더 재실행 없이 같은 안내를 갖도록 하며 트리와 공간을 나눈다.
-            const float height = 84f;
+            // 윗줄 요약 약 22 + 썸네일 약 110.
+            const float height = 140f;
             var panel = new GameObject("DeepZoneStatus", typeof(RectTransform), typeof(Image));
             panel.transform.SetParent(viewport.parent, false);
             var rect = (RectTransform)panel.transform;
@@ -329,6 +381,7 @@ namespace SubTerra.App.UI.Progression
             background.color = new Color(0.015f, 0.04f, 0.055f, 0.9f);
             background.raycastTarget = false;
             viewport.offsetMin += new Vector2(0f, height + 8f);
+            lastViewportSize = Vector2.zero;
 
             var label = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
             label.transform.SetParent(rect, false);
@@ -336,15 +389,38 @@ namespace SubTerra.App.UI.Progression
             deepZoneText.font = detailName.font;
             deepZoneText.fontSize = 18f;
             deepZoneText.enableAutoSizing = true;
-            deepZoneText.fontSizeMin = 13f;
+            deepZoneText.fontSizeMin = 11f;
             deepZoneText.fontSizeMax = 18f;
             deepZoneText.color = detailName.color;
             deepZoneText.alignment = TextAlignmentOptions.MidlineLeft;
             deepZoneText.raycastTarget = false;
-            deepZoneText.rectTransform.anchorMin = Vector2.zero;
-            deepZoneText.rectTransform.anchorMax = Vector2.one;
-            deepZoneText.rectTransform.offsetMin = new Vector2(12f, 4f);
-            deepZoneText.rectTransform.offsetMax = new Vector2(-12f, -4f);
+
+            deepZoneStrip = DeepZoneThumbnailStrip.Create(rect, detailName.font);
+            var stripRect = (RectTransform)deepZoneStrip.transform;
+            stripRect.anchorMin = Vector2.zero;
+            stripRect.anchorMax = Vector2.one;
+            stripRect.offsetMin = new Vector2(8f, 6f);
+            stripRect.offsetMax = new Vector2(-8f, -28f);
+            deepZoneStrip.RevealBlocked = deepZoneRevealBlocked;
+        }
+
+        // 썸네일이 있으면 윗줄 한 줄 요약, 없으면 칸 전체에 기존 글자 안내.
+        private void LayoutDeepZoneLabel(bool summaryOnly)
+        {
+            var labelRect = deepZoneText.rectTransform;
+            if (summaryOnly)
+            {
+                labelRect.anchorMin = new Vector2(0f, 1f);
+                labelRect.anchorMax = Vector2.one;
+                labelRect.offsetMin = new Vector2(12f, -26f);
+                labelRect.offsetMax = new Vector2(-12f, -4f);
+                return;
+            }
+
+            labelRect.anchorMin = Vector2.zero;
+            labelRect.anchorMax = Vector2.one;
+            labelRect.offsetMin = new Vector2(12f, 4f);
+            labelRect.offsetMax = new Vector2(-12f, -4f);
         }
 
         // ---------- 상세 패널 ----------

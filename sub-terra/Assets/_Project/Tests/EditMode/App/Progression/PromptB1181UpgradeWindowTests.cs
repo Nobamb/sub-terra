@@ -154,9 +154,11 @@ namespace SubTerra.App.Tests.Progression
                 var labels = instance.GetComponentsInChildren<TMP_Text>(true)
                     .Where(t => t.text != null && t.text.Contains("심층 구역 Lv.0/3")).ToArray();
                 Assert.That(labels.Length, Is.EqualTo(1));
-                Assert.That(labels[0].text, Does.Contain("드릴 속도 Lv.2"));
-                Assert.That(labels[0].text, Does.Contain("드론 스캔 범위 Lv.2"));
-                Assert.That(labels[0].text, Does.Contain("가스 저항 Lv.1"));
+                // B-155: 조건 문구는 Lv.1 썸네일 아래 띠로 옮겼다.
+                var lv1Condition = tree.DeepZoneThumbnails.GetCellState(0).Condition;
+                Assert.That(lv1Condition, Does.Contain("드릴 속도 Lv.2"));
+                Assert.That(lv1Condition, Does.Contain("드론 스캔 범위 Lv.2"));
+                Assert.That(lv1Condition, Does.Contain("가스 저항 Lv.1"));
                 Assert.That(labels[0].raycastTarget, Is.False);
                 var labelPanel = (RectTransform)labels[0].transform.parent;
                 Assert.That(tree.Viewport.offsetMin.y, Is.GreaterThan(initialBottom));
@@ -164,8 +166,9 @@ namespace SubTerra.App.Tests.Progression
                 var reservedBottom = tree.Viewport.offsetMin.y;
                 tree.SetDeepZoneStatus(new ZoneAccessResult(true, true, string.Empty));
                 Assert.That(tree.Viewport.offsetMin.y, Is.EqualTo(reservedBottom));
-                Assert.That(labels[0].text, Does.Contain("해금됨"));
+                Assert.That(labels[0].text, Does.Contain("심층 구역 Lv.1/3"));
                 Assert.That(instance.GetComponentsInChildren<Transform>(true).Count(t => t.name == "DeepZoneStatus"), Is.EqualTo(1));
+                Assert.That(tree.DeepZoneThumbnails.CellCount, Is.EqualTo(3));
             }
             finally
             {

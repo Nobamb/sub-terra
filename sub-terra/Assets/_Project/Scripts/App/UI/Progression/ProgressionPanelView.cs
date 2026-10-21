@@ -76,6 +76,11 @@ namespace SubTerra.App.UI.Progression
         public bool IsDeepZoneUnlockPopupOpen =>
             deepZoneUnlockPopupRoot != null && deepZoneUnlockPopupRoot.activeSelf && !deepZoneUnlockPopupClosing;
 
+        private bool IsDeepZoneUnlockPopupVisible()
+        {
+            return deepZoneUnlockPopupRoot != null && deepZoneUnlockPopupRoot.activeInHierarchy;
+        }
+
         private void OnEnable()
         {
             ApplyWindowTitle();
@@ -559,6 +564,12 @@ namespace SubTerra.App.UI.Progression
             lastDeepZoneAccess = access;
             if (treeView != null)
             {
+                // B-155: 썸네일 해금 연출이 해금 창에 가리지 않도록 창이 보이는 동안(닫는 연출 포함) 미룬다.
+                if (treeView.DeepZoneRevealBlocked == null)
+                {
+                    treeView.DeepZoneRevealBlocked = IsDeepZoneUnlockPopupVisible;
+                }
+
                 treeView.SetDeepZoneStatus(access);
                 return;
             }
