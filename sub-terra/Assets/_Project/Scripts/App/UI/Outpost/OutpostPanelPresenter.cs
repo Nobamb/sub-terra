@@ -214,6 +214,16 @@ namespace SubTerra.App.UI.Outpost
                 OutpostOperationKind.Withdraw);
         }
 
+        public OutpostOperationResult RequestDepositAll()
+        {
+            return Execute(() => service.TryDepositAll(), OutpostOperationKind.Deposit);
+        }
+
+        public OutpostOperationResult RequestWithdrawAll()
+        {
+            return Execute(() => service.TryWithdrawAll(), OutpostOperationKind.Withdraw);
+        }
+
         public OutpostOperationResult RequestSellSelected(string mineralId, int quantity)
         {
             return Execute(

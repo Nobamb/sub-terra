@@ -4,6 +4,8 @@ using SubTerra.App.Core.Data;
 using SubTerra.App.Inventory;
 using SubTerra.App.Outpost;
 using SubTerra.App.State;
+using SubTerra.App.Progression;
+using SubTerra.App.Save;
 using SubTerra.Shared;
 
 namespace SubTerra.App.Tests.Outpost
@@ -414,6 +416,98 @@ namespace SubTerra.App.Tests.Outpost
             Assert.That(result.Message, Does.Contain("지상 기지"));
             Assert.That(system.State.Player.Gold, Is.Zero);
             Assert.That(system.Inventory.State.GetQuantity(fuel), Is.EqualTo(1));
+        }
+
+        [Test]
+        public void Issue212_BulkTransferPreservesAllKindsAndSaveRoundTrip()
+        {
+            var system = CreateSystem();
+            system.Inventory.TryAddMineral(Copper, 3);
+            system.Inventory.TryAddMineral(Iron, 4);
+            system.Inventory.TryAddMineral(DataIds.RareItems.EngineFuel, 1);
+            RestoreStorage(system, 20);
+            system.Service.ApplyRuntimeStatus(CreateStorageStatus());
+            var changes = 0;
+            var inventoryChanges = 0;
+            system.Service.SnapshotChanged += _ => changes++;
+            system.Inventory.InventoryChanged += _ => inventoryChanges++;
+            Assert.That(system.Service.TryDepositAll().IsSuccess, Is.True);
+            Assert.That(system.Inventory.GetSnapshot().Stacks, Is.Empty);
+            Assert.That(system.Service.State.GetStorageQuantity(Copper), Is.EqualTo(23));
+            Assert.That(system.Service.State.GetStorageQuantity(Iron), Is.EqualTo(4));
+            Assert.That(system.Service.State.GetStorageQuantity(DataIds.RareItems.EngineFuel), Is.EqualTo(1));
+            Assert.That(changes, Is.EqualTo(1));
+            Assert.That(inventoryChanges, Is.EqualTo(1));
+
+            var mapper = new SaveDataMapper(new SystemSaveClock());
+            var codec = new SaveJsonCodec(new SaveMigrationService());
+            var captured = mapper.Capture(new SaveCaptureContext(system.State, system.Inventory.State,
+                new UpgradeState(), null, null, "Mine_Demo_Integration", "issue212"));
+            codec.TryDeserialize(codec.Serialize(captured), out var data);
+            Assert.That(mapper.TryRestore(data, out var restored), Is.True);
+            Assert.That(restored.GameState.Outpost.GetStorageQuantity(Copper), Is.EqualTo(23));
+            Assert.That(restored.GameState.Outpost.GetStorageQuantity(Iron), Is.EqualTo(4));
+            Assert.That(restored.GameState.Outpost.GetStorageQuantity(DataIds.RareItems.EngineFuel), Is.EqualTo(1));
+            Assert.That(restored.Inventory.GetQuantity(Copper), Is.Zero);
+
+            Assert.That(system.Service.TryWithdrawAll().IsSuccess, Is.True);
+            Assert.That(system.Inventory.State.GetQuantity(Copper), Is.EqualTo(23));
+            Assert.That(system.Inventory.State.GetQuantity(Iron), Is.EqualTo(4));
+            Assert.That(system.Inventory.State.GetQuantity(DataIds.RareItems.EngineFuel), Is.EqualTo(1));
+            Assert.That(system.Service.State.GetStorageQuantity(Copper), Is.Zero);
+            Assert.That(changes, Is.EqualTo(2));
+            Assert.That(inventoryChanges, Is.EqualTo(2));
+            Assert.That(system.Service.TryWithdrawAll().IsSuccess, Is.False);
+            Assert.That(system.Inventory.State.GetQuantity(Copper), Is.EqualTo(23));
+        }
+
+        [TestCase(3, 20)]
+        [TestCase(20, 3)]
+        [TestCase(0, 20)]
+        [TestCase(20, 0)]
+        public void Issue212_AllQuantityMovesOnlySourceStock(int owned, int stored)
+        {
+            var system = CreateSystem();
+            if (owned > 0) system.Inventory.TryAddMineral(Copper, owned);
+            RestoreStorage(system, stored);
+            system.Service.ApplyRuntimeStatus(CreateStorageStatus());
+            var quantity = System.Math.Max(owned, stored);
+            Assert.That(system.Service.TryDeposit(Copper, quantity).IsSuccess, Is.EqualTo(owned > 0));
+            Assert.That(system.Inventory.State.GetQuantity(Copper), Is.Zero);
+            Assert.That(system.Service.State.GetStorageQuantity(Copper), Is.EqualTo(owned + stored));
+            Assert.That(system.Service.TryWithdraw(Copper, owned + stored).IsSuccess, Is.True);
+            Assert.That(system.Service.State.GetStorageQuantity(Copper), Is.Zero);
+            Assert.That(system.Inventory.State.GetQuantity(Copper), Is.EqualTo(owned + stored));
+        }
+
+        [Test]
+        public void Issue212_BulkFailureLeavesEveryResourceUnchanged()
+        {
+            var system = CreateSystem(maxCapacity: 8f);
+            system.Inventory.TryAddMineral(Copper, 1);
+            RestoreStorage(system, 1, 4);
+            system.Service.ApplyRuntimeStatus(CreateStorageStatus());
+            Assert.That(system.Service.TryWithdrawAll().Status, Is.EqualTo(OutpostOperationStatus.CapacityExceeded));
+            Assert.That(system.Inventory.State.GetQuantity(Copper), Is.EqualTo(1));
+            Assert.That(system.Inventory.State.GetQuantity(Iron), Is.Zero);
+            Assert.That(system.Service.State.GetStorageQuantity(Copper), Is.EqualTo(1));
+            Assert.That(system.Service.State.GetStorageQuantity(Iron), Is.EqualTo(4));
+
+            RestoreStorage(system, int.MaxValue, 4);
+            Assert.That(system.Service.TryDepositAll().Status, Is.EqualTo(OutpostOperationStatus.OverflowRisk));
+            Assert.That(system.Inventory.State.GetQuantity(Copper), Is.EqualTo(1));
+            Assert.That(system.Service.State.GetStorageQuantity(Copper), Is.EqualTo(int.MaxValue));
+            system.Service.ClearRuntimeStatus();
+            Assert.That(system.Service.TryDepositAll().IsSuccess, Is.False);
+            Assert.That(system.Inventory.State.GetQuantity(Copper), Is.EqualTo(1));
+        }
+
+        private static void RestoreStorage(TestSystem system, int copper, int iron = 0)
+        {
+            var entries = new List<OutpostStorageEntryState>();
+            if (copper > 0) entries.Add(new OutpostStorageEntryState(Copper, copper));
+            if (iron > 0) entries.Add(new OutpostStorageEntryState(Iron, iron));
+            Assert.That(system.Service.State.TryRestore(entries, new string[0], string.Empty, 0, 0), Is.True);
         }
 
         private static TestSystem CreateSystem(float maxCapacity = 100f)

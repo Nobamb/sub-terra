@@ -425,6 +425,60 @@ namespace SubTerra.App.Outpost
             return Complete(result);
         }
 
+        public OutpostOperationResult TryDepositAll() => TryTransferAll(true);
+
+        public OutpostOperationResult TryWithdrawAll() => TryTransferAll(false);
+
+        private OutpostOperationResult TryTransferAll(bool deposit)
+        {
+            var kind = deposit ? OutpostOperationKind.Deposit : OutpostOperationKind.Withdraw;
+            if (!TryValidateFacility(DataIds.Buildings.StorageBasic, kind, out var failure))
+                return Complete(failure);
+
+            var items = new List<KeyValuePair<string, int>>();
+            if (deposit)
+            {
+                foreach (var stack in inventory.GetSnapshot().Stacks)
+                    if (stack.Quantity > 0) items.Add(new KeyValuePair<string, int>(stack.MineralId, stack.Quantity));
+            }
+            else
+            {
+                foreach (var stack in state.Storage)
+                    if (stack.Quantity > 0) items.Add(new KeyValuePair<string, int>(stack.MineralId, stack.Quantity));
+            }
+
+            if (items.Count == 0)
+                return Complete(Fail(OutpostOperationStatus.InsufficientQuantity, kind,
+                    deposit ? "보관할 화물이 없습니다." : "꺼낼 자원이 없습니다."));
+
+            var total = 0;
+            foreach (var item in items)
+            {
+                if (!TryValidateMineralRequest(item.Key, item.Value, kind, out _, out failure))
+                    return Complete(failure);
+                var destination = deposit ? state.GetStorageQuantity(item.Key) : inventory.State.GetQuantity(item.Key);
+                if (destination > int.MaxValue - item.Value || total > int.MaxValue - item.Value)
+                    return Complete(Fail(OutpostOperationStatus.OverflowRisk, kind, "이동 수량 한도를 초과합니다."));
+                total += item.Value;
+            }
+
+            // 전체 꺼내기도 기존 단일 꺼내기처럼 전량을 수용할 수 있을 때만 처리한다.
+            if (!deposit && !inventory.CanFitExact(items))
+                return Complete(Fail(OutpostOperationStatus.CapacityExceeded, kind,
+                    "전체 자원을 꺼낼 화물 공간이 부족합니다. 수량을 줄여 꺼내세요."));
+
+            var mutation = deposit ? inventory.TryReduceMany(items) : inventory.TryAddManyExact(items);
+            if (mutation.Status != InventoryMutationStatus.Success)
+                return Complete(Fail(deposit ? OutpostOperationStatus.InsufficientQuantity : OutpostOperationStatus.CapacityExceeded,
+                    kind, "전체 자원 이동에 실패했습니다."));
+
+            foreach (var item in items)
+                state.SetStorageQuantity(item.Key, state.GetStorageQuantity(item.Key) + (deposit ? item.Value : -item.Value));
+            RaiseSnapshotChanged();
+            return Complete(Success(kind, string.Empty, total, 0,
+                deposit ? "모든 화물을 보관했습니다." : "보관된 모든 자원을 꺼냈습니다."));
+        }
+
         public OutpostOperationResult TrySettle(OutpostSettlementSource source)
         {
             settlementSequence++;

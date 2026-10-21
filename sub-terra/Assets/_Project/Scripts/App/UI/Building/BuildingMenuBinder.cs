@@ -59,9 +59,7 @@ namespace SubTerra.App.UI.Building
             if (movePort != null && view != null)
             {
                 movePort.MoveStatusChanged += view.SetStatusMessage;
-                view.MoveRequested += BeginMoving;
             }
-            if (view != null) view.EnableFacilityMoving(movePort != null);
             presenter.Bind(catalog, wallet, inventory, port, gameState);
         }
 
@@ -70,17 +68,9 @@ namespace SubTerra.App.UI.Building
             if (movePort != null && movePort.IsMoveMode) activePort?.CancelPreview();
         }
 
-        private void BeginMoving()
-        {
-            bool cancel = movePort != null && movePort.IsMoveMode;
-            presenter?.CancelSelection();
-            if (!cancel) movePort?.BeginMoveSelection();
-        }
-
         private void UnbindMoving()
         {
             if (movePort != null && view != null) movePort.MoveStatusChanged -= view.SetStatusMessage;
-            if (view != null) view.MoveRequested -= BeginMoving;
             movePort = null;
             activePort = null;
         }
