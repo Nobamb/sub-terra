@@ -386,7 +386,8 @@ namespace SubTerra.App.Tests.UI.MainMenu
                 Assert.That(File.Exists(slot.Normal), Is.False);
                 Assert.That(File.Exists(slot.Backup), Is.False, "백업 파일도 함께 지운다");
                 Assert.That(view.Kinds[1], Is.EqualTo(SaveSlotCardKind.Empty), "삭제 뒤 카드가 빈 슬롯으로 갱신");
-                Assert.That(view.Continue, Is.False);
+                Assert.That(view.Continue, Is.True);
+                Assert.That(view.PrimaryLabel, Is.EqualTo("새 탐사 시작"));
             }
         }
 
@@ -427,7 +428,7 @@ namespace SubTerra.App.Tests.UI.MainMenu
         }
 
         [Test]
-        public void Continue_DisabledForEmptyAndCorruptedSlots()
+        public void Issue219_PrimaryActionStartsEmptySlotsButDisablesCorruptedSlots()
         {
             Assert.That(save.Save(1, Context(10, 3, 1)).IsSuccess, Is.True);
             paths.TryGetPaths(3, out var broken);
@@ -441,14 +442,41 @@ namespace SubTerra.App.Tests.UI.MainMenu
                 presenter.SelectSlot(1);
                 Assert.That(view.Continue, Is.True);
                 presenter.SelectSlot(2);
-                Assert.That(view.Continue, Is.False, "빈 슬롯");
+                Assert.That(view.Continue, Is.True, "빈 슬롯은 새 탐사를 시작할 수 있다.");
+                Assert.That(view.PrimaryLabel, Is.EqualTo("새 탐사 시작"));
                 presenter.SelectSlot(3);
                 Assert.That(view.Continue, Is.False, "손상 슬롯");
+                Assert.That(view.PrimaryLabel, Is.EqualTo("이어하기"));
                 Assert.That(view.Kinds[3], Is.EqualTo(SaveSlotCardKind.Corrupted));
             }
 
             Assert.That(SaveSlotCardFormatter.BuildLabel(load.GetSlotMetadata(3), SlotContinueEligibility.Unrecoverable),
                 Does.Contain("이어하기 불가"));
+        }
+
+        [Test]
+        public void Issue219_PrimaryButtonLabelChangesWithoutResizing()
+        {
+            var prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(
+                "Assets/_Project/Prefabs/UI/MainMenuPanel.prefab");
+            var instance = UnityEngine.Object.Instantiate(prefab);
+            try
+            {
+                var view = instance.GetComponent<MainMenuView>();
+                var button = (UnityEngine.UI.Button)typeof(MainMenuView).GetField("continueButton",
+                    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).GetValue(view);
+                var rect = (RectTransform)button.transform;
+                var size = rect.sizeDelta;
+                var position = rect.anchoredPosition;
+                view.SetPrimaryAction("새 탐사 시작", true);
+                Assert.That(button.interactable, Is.True);
+                Assert.That(button.GetComponentInChildren<TMPro.TMP_Text>(true).text, Is.EqualTo("새 탐사 시작"));
+                view.SetPrimaryAction("이어하기", true);
+                Assert.That(button.GetComponentInChildren<TMPro.TMP_Text>(true).text, Is.EqualTo("이어하기"));
+                Assert.That(rect.sizeDelta, Is.EqualTo(size));
+                Assert.That(rect.anchoredPosition, Is.EqualTo(position));
+            }
+            finally { UnityEngine.Object.DestroyImmediate(instance); }
         }
 
         [Test]
@@ -552,10 +580,12 @@ namespace SubTerra.App.Tests.UI.MainMenu
         {
             public bool DeleteVisible;
             public bool Continue;
+            public string PrimaryLabel;
             public readonly SaveSlotCardKind[] Kinds = new SaveSlotCardKind[4];
 
             public void SetSlotDisplay(int slotId, string label, bool canContinue, string statusText) { }
             public void SetSelectedSlot(int slotId, bool canContinue, string message) => Continue = canContinue;
+            public void SetPrimaryAction(string label, bool enabled) { PrimaryLabel = label; Continue = enabled; }
             public void SetOverwriteConfirmVisible(bool visible, int slotId) { }
             public void SetSettingsVisible(bool visible) { }
             public void SetSettingsDraft(SettingsValues values) { }
