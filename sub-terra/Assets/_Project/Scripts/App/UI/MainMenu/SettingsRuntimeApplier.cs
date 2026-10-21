@@ -11,6 +11,9 @@ namespace SubTerra.App.UI.MainMenu
     public static class SettingsRuntimeApplier
     {
         private const string PrefMasterVolume = "subterra.settings.masterVolume";
+        public const string PrefMasterMuted = "subterra.settings.masterMuted";
+        public static bool IsMasterMuted => PlayerPrefs.GetInt(PrefMasterMuted, 0) != 0;
+        public static event System.Action MasterMuteChanged;
         private const string PrefReduceMotion = "subterra.settings.reduceMotion";
         private const string PrefResAuto = "subterra.settings.resAuto";
         private const string PrefResWidth = "subterra.settings.resWidth";
@@ -23,6 +26,7 @@ namespace SubTerra.App.UI.MainMenu
         private static void ApplyPersistedControlsOnLoad()
         {
             ApplyPersistedControlScheme();
+            RestoreAppliedVolume(LoadOrDefaults());
         }
 
         /// <summary>저장된 조작 방식을 Gameplay가 읽기 전에 복원한다.</summary>
@@ -106,7 +110,18 @@ namespace SubTerra.App.UI.MainMenu
         /// <summary>슬라이더 드래그 중 즉시 음량만 미리듣기.</summary>
         public static void PreviewMasterVolume(float volume01)
         {
+            // 슬라이더 조작은 음소거를 해제한다. 저장 음량 자체는 기존 적용/취소 정책을 따른다.
+            if (IsMasterMuted) SetMasterMuted(false, volume01);
             AudioListener.volume = Mathf.Clamp01(volume01);
+        }
+
+        /// <summary>음소거는 조작 방식처럼 즉시 저장하며 원래 음량과 분리한다.</summary>
+        public static void SetMasterMuted(bool muted, float volume01)
+        {
+            PlayerPrefs.SetInt(PrefMasterMuted, muted ? 1 : 0);
+            PlayerPrefs.Save();
+            AudioListener.volume = muted ? 0f : Mathf.Clamp01(volume01);
+            MasterMuteChanged?.Invoke();
         }
 
         /// <summary>적용 확정. 음량·접근성·언어·해상도·프레임을 반영한다.</summary>
@@ -117,7 +132,7 @@ namespace SubTerra.App.UI.MainMenu
                 return;
             }
 
-            AudioListener.volume = Mathf.Clamp01(values.MasterVolume);
+            AudioListener.volume = IsMasterMuted ? 0f : Mathf.Clamp01(values.MasterVolume);
             AccessibilityPreferences.ReduceMotion = values.ReduceMotion;
             SaveControlScheme(values.Controls);
             LocalizationService.SetLanguageCode(
@@ -218,7 +233,7 @@ namespace SubTerra.App.UI.MainMenu
                 return;
             }
 
-            AudioListener.volume = Mathf.Clamp01(applied.MasterVolume);
+            AudioListener.volume = IsMasterMuted ? 0f : Mathf.Clamp01(applied.MasterVolume);
         }
     }
 }

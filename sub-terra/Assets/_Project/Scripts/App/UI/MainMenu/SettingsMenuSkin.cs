@@ -33,6 +33,7 @@ namespace SubTerra.App.UI.MainMenu
         [SerializeField] private float switchOffX = -16f;
 
         private int footerIndex = -1;
+        private SettingsMuteButton muteButton;
         public int CurrentFooterButtonIndex => footerIndex;
 
         private bool lastSwitchState;
@@ -80,6 +81,7 @@ namespace SubTerra.App.UI.MainMenu
             }
 
             RefreshScale();
+            if (volumeSlider != null) muteButton = SettingsMuteButton.Ensure(volumeSlider);
             RefreshSwitch(instant: true);
             RefreshVolumeGlow();
             RefreshFooterHighlight();
@@ -708,6 +710,7 @@ namespace SubTerra.App.UI.MainMenu
         {
             var skin = root != null ? root.GetComponent<SettingsMenuSkin>() : null;
             if (skin == null) return LocalizationService.FormatMasterVolume(volume);
+            if (skin.muteButton != null) skin.muteButton.SetVerticesDirty();
             if (skin.volumeCaption != null)
                 skin.volumeCaption.text = LocalizationService.Get("settings.master_volume", "마스터 음량");
             bool english = LocalizationService.Current == GameLanguage.English;
