@@ -8,9 +8,11 @@
 | #221 퀘스트 상세 썸네일 | 새 PR #237, codex/issue-221-quest-thumbnail-scenes. 코드 fa48a419, 최종 인계 기록 4c31d66a | 대상 10개와 지상·지하 각 18개 연결 검사 총 12건 통과 |
 | #223 심층 썸네일·잠금/연출 | 기존 #235는 이미 병합됨. 최신 main 1b18513a의 팀원 구현을 유지. 중복 PR 없음 | 이번 로컬 정적 시안은 별도 보관하고 현재 통합본에 적용하지 않음 |
 | #211 지상 업그레이드 | 기존 조사 초안 #233. 추가 구현 없음 | 특정 슬롯·구매 항목·진입 경로 확보 후 조사 재개 |
+| #236 보관함 배치·균등 꺼내기 | PR #238, codex/issue-236-storage-balanced-withdraw. 구현 f1e5c806 | 최종 고유 EditMode 10건 + PlayMode 1건 통과 |
 
 - #225: https://github.com/Nobamb/sub-terra/pull/225
 - #237: https://github.com/Nobamb/sub-terra/pull/237
+- #238: https://github.com/Nobamb/sub-terra/pull/238
 - #225·#237은 main 1b18513a 기준 충돌 없이 통합했다. 통합 후 동일 Unity 검사는 반복하지 않았다. 실제 게임 화면/Windows 빌드 검증 완료를 의미하지 않는다.
 - main과 PR의 실제 병합은 팀원이 진행한다.
 
@@ -18,7 +20,7 @@
 
 - 저장소: C:/Users/jeone/sub-terra
 - Unity 프로젝트: C:/Users/jeone/sub-terra/sub-terra (Hub 첫 번째 항목), Unity 6000.5.4f1.
-- 함께 확인할 브랜치: **codex/nonvisual-review-20261021-latest**. 최신 main + #225 + #237을 합친 검토용이며, 이 브랜치로 별도 PR을 만들지 않는다.
+- 함께 확인할 브랜치: **codex/nonvisual-review-20261021-latest**. 최신 main 1b18513a + #225 + #237 + #238을 합친 검토용이며, 이 브랜치로 별도 PR을 만들지 않는다.
 - 과거 codex/nonvisual-review-20261021은 이전 작업·로컬 시안 기록용이다. 최신 화면 확인에는 -latest 브랜치를 사용한다.
 - 시작 씬은 Bootstrap. exe는 빌드 당시 코드이므로 브랜치만 변경해도 기존 exe는 바뀌지 않는다.
 - #223 관련 실행 코드·설정·이미지는 최신 main의 팀원 버전 그대로다. 제 정적 시안 커밋 0e3c3fa5는 로컬 codex/archive-static-deepzone-20261021에 보관했다. 이 보관 브랜치를 작업 브랜치나 PR로 사용하지 않는다.
@@ -34,4 +36,13 @@
 
 - #225: work_process/issue-215-result-20261021.md. 게임플레이 코드·회귀 검사·기록만 포함.
 - #237: work_process/issue-221-quest-thumbnail-result-20261021.md. 이미지 1장, 썸네일 빌더, 지상 프리팹/지하 씬의 참조 각 10개, 관련 검사·기록만 포함.
+- #238: work_process/issue-236-storage-balanced-withdraw-20261022.md. 서비스·UI 코드 각 1개, 관련 검사 2개, 기록. 공간 부족 시 균등 부분 꺼내기와 하단 버튼 두 줄 배치. 실제 화면·완전 종료 후 이어하기는 별도 확인.
 - ProjectSettings·패키지·폰트·실제 저장 슬롯 변경 없음. 무거운 새 측정·전체 Demo·Windows 빌드 검사는 추가 실행하지 않았다.
+
+## 다음 이슈 선정 — 2026-10-22
+
+- #127 다국어: 작성자 Nobamb의 진행 중 댓글이 있어 중복 구현 보류. 현재 설정 적용과 LocalizationService 연결은 존재하며 전체 번역 완료로 판정하지 않는다.
+- #211: 새로운 슬롯·구매 항목·오류 정보 없이 동일 검사를 반복하지 않는다. 조사 초안 #233 유지.
+- #215·#221·#236: 각각 #225·#237·#238에 게시했으므로 새 구현 반복 금지. #223은 main의 팀원 구현 유지.
+- #158 효과음은 이슈의 단계 순서대로 0+A부터 별도 범위로 진행할 수 있으나, 전체를 한 번에 구현하지 않는다. 연출 제외 우선순위를 변경할지는 사용자 선택 대기.
+- #135 황금 지형은 GoldDropSettings·GoldDropTileSetup 및 탐지 경로가 이미 존재한다. 열린 이슈만 보고 새로 추가하지 않는다.
