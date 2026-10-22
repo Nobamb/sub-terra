@@ -1,7 +1,9 @@
+using SubTerra.App.Audio;
 using SubTerra.App.Core.Data;
 using SubTerra.App.Inventory;
 using SubTerra.App.Outpost;
 using SubTerra.App.UI.PlayerStatus;
+using SubTerra.Shared.Audio;
 
 namespace SubTerra.App.UI.Outpost
 {
@@ -70,6 +72,7 @@ namespace SubTerra.App.UI.Outpost
                 && service.TryGetPowerDisconnectedInteractionMessage(out var message))
             {
                 CloseInteractionPanel();
+                SfxPlayer.Play(SfxId.UiCancelFail);
                 ShowFacilityWarning(message);
                 return;
             }
@@ -78,6 +81,8 @@ namespace SubTerra.App.UI.Outpost
                 && service.TryGetFacilityCooldownMessage(out var cooldownMessage))
             {
                 CloseServicePanel();
+                // 쿨타임 팝업이 뜨든 문구로 대신하든 실패음은 한 번이다.
+                SfxPlayer.Play(SfxId.UiCancelFail);
                 if (!TryShowFacilityCooldown())
                 {
                     ShowFacilityWarning(cooldownMessage);

@@ -159,6 +159,10 @@ namespace SubTerra.App.UI.SurfaceBase
             resetMineConfirmYesButton?.onClick.AddListener(OnResetMineConfirm);
             resetMineConfirmNoButton?.onClick.RemoveListener(OnResetMineCancel);
             resetMineConfirmNoButton?.onClick.AddListener(OnResetMineCancel);
+            // 클릭 소리는 창 열림·바인더 결과음이 맡아 호버만 붙인다. 골드 부족으로 꺼진 실행 버튼은 지금처럼 무음.
+            UiSfx.Attach(resetMineButton, SfxId.None, hover: true);
+            UiSfx.Attach(resetMineConfirmYesButton, SfxId.None, hover: true, failWhenDisabled: false);
+            UiSfx.Attach(resetMineConfirmNoButton, SfxId.None, hover: true);
             resolutionPrevButton?.onClick.AddListener(OnResolutionPrev);
             resolutionNextButton?.onClick.AddListener(OnResolutionNext);
             languageCycleButton?.onClick.AddListener(OnLanguageCycle);

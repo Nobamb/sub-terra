@@ -90,6 +90,8 @@ namespace SubTerra.App.UI.EmergencyRescue
             {
                 ReplaceListener(popup.RescueButton, rescue);
                 ReplaceListener(popup.CloseButton, close);
+                // RemoveAllListeners가 효과음 리스너까지 지우므로 다시 붙인다.
+                popup.AttachButtonSfx();
             }
 
             if (chip != null)

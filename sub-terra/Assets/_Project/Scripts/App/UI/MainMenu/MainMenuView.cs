@@ -1,7 +1,9 @@
 using System;
+using SubTerra.App.Audio;
 using SubTerra.App.Tutorial;
 using SubTerra.App.RuntimeInfo;
 using SubTerra.App.UI.SurfaceBase;
+using SubTerra.Shared.Audio;
 using SubTerra.Shared.Localization;
 using TMPro;
 using UnityEngine;
@@ -120,6 +122,7 @@ namespace SubTerra.App.UI.MainMenu
             if (deleteConfirmButton != null) deleteConfirmButton.onClick.AddListener(OnDeleteConfirm);
             if (deleteCancelButton != null) deleteCancelButton.onClick.AddListener(OnDeleteCancel);
             if (deleteCloseButton != null) deleteCloseButton.onClick.AddListener(OnDeleteCancel);
+            AttachButtonSfx();
             WireCards(true);
             if (intro != null) intro.BootSkipped += OnBootSkipped;
             settingsApplyButton?.onClick.AddListener(OnSettingsApply);
@@ -157,6 +160,18 @@ namespace SubTerra.App.UI.MainMenu
             {
                 masterVolumeSlider.onValueChanged.AddListener(OnMasterVolumeChanged);
             }
+        }
+
+        // 바인더가 클릭 소리를 내는 버튼은 호버만 붙인다. 슬롯 카드는 선택 소리(UiSlotSelect)만 낸다.
+        private void AttachButtonSfx()
+        {
+            UiSfx.Attach(settingsButton, SfxId.UiClick, hover: true);
+            UiSfx.Attach(quitButton, SfxId.UiClick, hover: true);
+            UiSfx.Attach(continueButton, SfxId.None, hover: true);
+            UiSfx.Attach(newGameButton, SfxId.None, hover: true);
+            UiSfx.Attach(overwriteConfirmButton, SfxId.None, hover: true);
+            UiSfx.Attach(overwriteCancelButton, SfxId.None, hover: true);
+            UiSfx.Attach(overwriteCloseButton, SfxId.None, hover: true);
         }
 
         private void OnRectTransformDimensionsChange() => RefreshLayout();

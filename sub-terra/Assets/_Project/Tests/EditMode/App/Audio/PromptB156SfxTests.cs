@@ -126,12 +126,13 @@ namespace SubTerra.App.Tests.Audio
         [Test]
         public void EmptyClipSlot_IsSilentWithoutException()
         {
-            AddEntry(SfxId.UiBack, SfxBus.UI, 0f);
+            // 대신 낼 칸이 없는 빈 칸은 무음이고 경고는 한 번뿐이다.
+            AddEntry(SfxId.UiScanTick, SfxBus.UI, 0f);
             NewPlayer();
-            LogAssert.Expect(LogType.Warning, new System.Text.RegularExpressions.Regex("UiBack"));
-            Assert.DoesNotThrow(() => player.PlayNow(SfxId.UiBack));
+            LogAssert.Expect(LogType.Warning, new System.Text.RegularExpressions.Regex("UiScanTick"));
+            Assert.DoesNotThrow(() => player.PlayNow(SfxId.UiScanTick));
             now += 1f;
-            Assert.DoesNotThrow(() => player.PlayNow(SfxId.UiBack));
+            Assert.DoesNotThrow(() => player.PlayNow(SfxId.UiScanTick));
             Assert.DoesNotThrow(() => player.PlayNow(SfxId.UiHover));
             Assert.That(player.StartedCount, Is.Zero);
         }
@@ -155,7 +156,7 @@ namespace SubTerra.App.Tests.Audio
         {
             var ids = new[]
             {
-                SfxId.UiClick, SfxId.UiHover, SfxId.UiBack, SfxId.UiConfirm, SfxId.UiCancelFail,
+                SfxId.UiClick, SfxId.UiHover, SfxId.UiSlotSelect, SfxId.UiConfirm, SfxId.UiCancelFail,
                 SfxId.UiPopupOpen, SfxId.UiPopupClose, SfxId.UiScanTick, SfxId.UiCctvOn, SfxId.UiMineResetWhoosh
             };
             foreach (var id in ids) AddEntry(id, SfxBus.UI, 3f);
@@ -284,6 +285,10 @@ namespace SubTerra.App.Tests.Audio
             Assert.That(defaults.Count, Is.EqualTo(15));
             var ids = new System.Collections.Generic.HashSet<SfxId>();
             foreach (var pair in defaults) Assert.That(ids.Add(pair.Entry.Id), Is.True);
+            // 3번(구 UiBack)은 비워 둔다. 이름으로 쓰면 Obsolete 경고가 나므로 번호로 확인한다.
+            Assert.That(ids.Contains((SfxId)3), Is.False);
+            Assert.That(ids.Contains(SfxId.UiSlotSelect), Is.True);
+            Assert.That((int)SfxId.UiSlotSelect, Is.EqualTo(16));
         }
 
         [TestCase("Assets/_Project/Audio/SFX/UI/ui_mine_reset_whoosh.mp3", SfxId.UiMineResetWhoosh)]
@@ -327,6 +332,9 @@ namespace SubTerra.App.Tests.Audio
             {
                 Assert.That(text, Does.Contain("| " + pair.FileName + " |"), pair.FileName);
             }
+
+            Assert.That(text, Does.Not.Contain("| ui_back |"));
+            Assert.That(text, Does.Contain("| ui_slot_select |"));
         }
     }
 }

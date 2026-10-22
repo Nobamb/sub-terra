@@ -447,7 +447,7 @@ namespace SubTerra.App.UI.SurfaceBase
                 return;
             }
 
-            SfxPlayer.Play(SfxId.UiBack);
+            SfxPlayer.Play(SfxId.UiClick);
             view.SetMineResetConfirmVisible(false);
         }
 

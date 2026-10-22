@@ -22,7 +22,13 @@ namespace SubTerra.App.Audio
             }
         }
 
-        /// <summary>SfxId 순서대로 15칸(None 제외). 파일 이름은 확장자 제외.</summary>
+        /// <summary>칸이 비어 있을 때 경고 없이 대신 낼 칸. 표에 없는 빈 칸은 무음이다.</summary>
+        public static readonly IReadOnlyDictionary<SfxId, SfxId> Fallbacks = new Dictionary<SfxId, SfxId>
+        {
+            { SfxId.UiSlotSelect, SfxId.UiClick },
+        };
+
+        /// <summary>SfxId 순서대로 15칸(None·비워 둔 3번 제외). 파일 이름은 확장자 제외.</summary>
         public static IReadOnlyList<(SfxEntry Entry, string FileName)> Create()
         {
             return new List<(SfxEntry, string)>
@@ -31,8 +37,6 @@ namespace SubTerra.App.Audio
                 (new SfxEntry(SfxId.UiClick, SfxBus.UI, volume: 1f), "ui_click"),
                 // 원본 0.12초.
                 (new SfxEntry(SfxId.UiHover, SfxBus.UI, volume: 0.7f), "ui_hover"),
-                // 파일이 아직 없는 칸(무음). 파일이 들어오면 같은 이름으로 채워진다.
-                (new SfxEntry(SfxId.UiBack, SfxBus.UI, volume: 0.8f), "ui_back"),
                 (new SfxEntry(SfxId.UiConfirm, SfxBus.UI, volume: 0.55f), "ui_confirm"),
                 (new SfxEntry(SfxId.UiCancelFail, SfxBus.UI, volume: 0.6f), "ui_cancel_fail"),
                 (new SfxEntry(SfxId.UiPopupOpen, SfxBus.UI, volume: 0.5f), "ui_popup_open"),
@@ -55,6 +59,8 @@ namespace SubTerra.App.Audio
                 // 원본 1.70초 중 소리는 0.5초까지.
                 (new SfxEntry(SfxId.AlertRiskTick, SfxBus.Alert, volume: 0.9f,
                     maxDuration: 0.6f, fadeOut: 0.1f), "alert_risk_tick"),
+                // 파일이 아직 없는 칸. 비어 있는 동안 UiClick으로 대신 나고, 파일이 들어오면 같은 이름으로 채워진다.
+                (new SfxEntry(SfxId.UiSlotSelect, SfxBus.UI, volume: 0.8f), "ui_slot_select"),
             };
         }
     }

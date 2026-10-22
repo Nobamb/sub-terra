@@ -41,7 +41,8 @@ namespace SubTerra.App.Audio
         private bool libraryWarned;
         private bool madeDontDestroy;
         private bool attachedToBootstrap;
-        private Func<float> clock = () => Time.unscaledTime;
+        // 불러오기처럼 긴 프레임 중에 시작한 소리가 다음 프레임에 바로 끊기지 않도록 프레임 시작 시각이 아닌 실제 시각을 쓴다.
+        private Func<float> clock = () => Time.realtimeSinceStartup;
         private Func<bool> isMuted = () => SettingsRuntimeApplier.IsMasterMuted
             || SettingsRuntimeApplier.IsMuted(AudioChannel.Sfx);
 
@@ -371,6 +372,16 @@ namespace SubTerra.App.Audio
 
             if (!lib.TryGetEntry(id, out entry) || entry.Clip == null)
             {
+                // 대신 낼 칸이 있으면 경고 없이 그 칸을 재생한다.
+                if (SfxLibraryDefaults.Fallbacks.TryGetValue(id, out var fallbackId)
+                    && lib.TryGetEntry(fallbackId, out var fallback)
+                    && fallback.Clip != null)
+                {
+                    entry = fallback;
+                    busVolume = lib.GetBusVolume(entry.Bus);
+                    return true;
+                }
+
                 // 비어 있는 칸은 무음. 경고는 칸마다 한 번만 남긴다.
                 if (warned.Add(id))
                 {

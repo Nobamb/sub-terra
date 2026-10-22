@@ -119,6 +119,8 @@ namespace SubTerra.App.UI.Outpost
 
         private void OnEnable()
         {
+            // 닫힘 소리는 Hide가 내므로 닫기 버튼에는 호버만 붙인다.
+            UiSfx.Attach(closeButton, SfxId.None, hover: true);
             // Show를 거치지 않은 활성화(부모 패널이 꺼졌다 켜진 경우)에는 멈춘 화면이 남지 않도록 다시 숨긴다.
             if (!showRequested)
             {

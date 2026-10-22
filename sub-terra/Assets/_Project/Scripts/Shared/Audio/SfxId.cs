@@ -8,6 +8,7 @@ namespace SubTerra.Shared.Audio
         None = 0,
         UiClick = 1,
         UiHover = 2,
+        [System.Obsolete("B-158에서 제거. 번호 3은 비워 둔다")]
         UiBack = 3,
         UiConfirm = 4,
         UiCancelFail = 5,
@@ -20,6 +21,7 @@ namespace SubTerra.Shared.Audio
         WorldHoloClose = 12,
         WorldFacilityTagBeep = 13,
         AlarmMineWail = 14,
-        AlertRiskTick = 15
+        AlertRiskTick = 15,
+        UiSlotSelect = 16
     }
 }

@@ -138,7 +138,7 @@ namespace SubTerra.App.UI.MainMenu
 
         private void OnSlotSelectedSfx(int slotId)
         {
-            SfxPlayer.Play(SfxId.UiClick);
+            SfxPlayer.Play(SfxId.UiSlotSelect);
         }
 
         private void OnNewGameClicked()
@@ -207,7 +207,7 @@ namespace SubTerra.App.UI.MainMenu
         private void OnOverwriteCancel()
         {
             // 취소 경로: 파일·State 보존. Presenter 게이트만 닫힌다.
-            SfxPlayer.Play(SfxId.UiBack);
+            SfxPlayer.Play(SfxId.UiClick);
             presenter?.CancelOverwriteNewGame();
         }
 

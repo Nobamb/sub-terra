@@ -8,7 +8,6 @@
 |---|---|---|---|---|
 | ui_click | 공통 버튼 클릭 | https://pixabay.com/sound-effects/film-special-effects-ui-click-retro-514601/ | | UI Click Retro (SoundShelfStudio) |
 | ui_hover | 버튼 호버 (선택, 기본 끔) | https://pixabay.com/sound-effects/film-special-effects-soft-ui-hover-tick-608625/ | | Soft UI Hover Tick |
-| ui_back | 뒤로가기·X·ESC 닫기 | | | 파일 없음(무음). 넣을 때 주소를 적는다 |
 | ui_confirm | 확인·성공 | https://pixabay.com/sound-effects/film-special-effects-confirm-tap-394001/ | | Confirm Tap (ExistentialTaco) |
 | ui_cancel_fail | 취소·불가·실패 | https://pixabay.com/sound-effects/film-special-effects-ui-error-pop-515668/ | | UI Error Pop |
 | ui_popup_open | 팝업 열림 | https://pixabay.com/sound-effects/film-special-effects-new-notification-010-352755/ | | New Notification 010 (2순위 ...new-notification-08-352461/) |
@@ -21,3 +20,4 @@
 | world_facility_tag_beep | 시설 근접 라벨 등장 | https://pixabay.com/sound-effects/film-special-effects-short-beep-tone-47916/ | | Short Beep Tone |
 | alarm_mine_wail | 위험도 상승 경보 | https://pixabay.com/sound-effects/film-special-effects-factory-alarm-95712/ | | Factory Alarm. 웽 한 번(약 0.4~0.6초). 단계별 반복·높이는 코드가 조절 |
 | alert_risk_tick | 위험도 하강 틱 | https://pixabay.com/sound-effects/film-special-effects-ui-ai-system-notification-537631/ | | UI AI System Notification |
+| ui_slot_select | 세이브 슬롯 선택 | | | 선정 전. 비어 있으면 ui_click으로 대신 난다 |
