@@ -1,5 +1,7 @@
 # 걷기 양발 교대 보완 — 2026-10-22
 
+> 아래는 최초 4자세 구현의 기록이다. 사용자 피드백 후 기존 PR #242에서 16장/16fps로 다시 수정했으며, 현재 결과는 [걷기 후속 기록](player-walk-smooth-followup-20261022.md)을 따른다.
+
 ## 요청·분석
 
 - 걷기 중 한 다리만 움직여 보인다는 피드백에 따라 실제 Player.prefab 바인딩, PlayerAnimationController.Play/ResolveFrames, Walk PNG 10장을 비교했다.

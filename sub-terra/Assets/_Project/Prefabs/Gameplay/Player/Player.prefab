@@ -120,6 +120,8 @@ MonoBehaviour:
   deceleration: 55
   jumpImpulse: 11
   ladderSpeed: 4
+  coyoteTimeSeconds: 0.1
+  jumpBufferSeconds: 0.1
   groundCheck: {fileID: 5911924000846914324}
   groundCheckRadius: 0.08
   groundLayers:
@@ -362,6 +364,12 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 60a10697e5f89d44da1f992fde8ce673, type: 3}
   - {fileID: 21300000, guid: 2de78f070f6f1de4587f76fa5fe9b028, type: 3}
   - {fileID: 21300000, guid: 4346acbe586013d4faa86e7741c5d46e, type: 3}
+  - {fileID: 21300000, guid: c69f23b3e166445449aaa00b0232971d, type: 3}
+  - {fileID: 21300000, guid: ee1f6a1d4b5071347be57c90fec7d7da, type: 3}
+  - {fileID: 21300000, guid: a5192f19a8b37dc43919385f1867919c, type: 3}
+  - {fileID: 21300000, guid: 53d11e25e524b5740a5643a13f07c268, type: 3}
+  - {fileID: 21300000, guid: ec3b8f7bd61032d4e9f802e6e0b64a06, type: 3}
+  - {fileID: 21300000, guid: a8a172bbcf7bde44c928a2c7e7a0de34, type: 3}
   jumpFrames:
   - {fileID: 21300000, guid: 842fedbd906e72449b98a207ad4a15d0, type: 3}
   - {fileID: 21300000, guid: 95405d56138461d43a48687df6cdd42c, type: 3}
