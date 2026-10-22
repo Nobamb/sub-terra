@@ -7,6 +7,7 @@ namespace SubTerra.App.UI.MainMenu
     {
         void SetSlotDisplay(int slotId, string label, bool canContinue, string statusText);
         void SetSelectedSlot(int slotId, bool canContinue, string message);
+        void SetPrimaryAction(string label, bool enabled);
         void SetOverwriteConfirmVisible(bool visible, int slotId);
         void SetSettingsVisible(bool visible);
         void SetSettingsDraft(SettingsValues values);
@@ -99,12 +100,20 @@ namespace SubTerra.App.UI.MainMenu
             }
 
             view.SetSelectedSlot(slotId, canContinue, message);
+            var empty = eligibility == SlotContinueEligibility.Empty;
+            view.SetPrimaryAction(empty ? "새 탐사 시작" : "이어하기", empty || canContinue);
         }
 
         public void RequestContinue()
         {
+            if (deleteGate.IsAwaitingConfirm || overwriteGate.IsAwaitingConfirm) return;
             var metadata = loader.GetSlotMetadata(selectedSlot);
             var eligibility = SlotContinuePolicy.FromMetadata(metadata);
+            if (eligibility == SlotContinueEligibility.Empty)
+            {
+                RequestNewGame();
+                return;
+            }
             if (!SlotContinuePolicy.CanContinue(eligibility))
             {
                 view.SetMessage(SlotContinuePolicy.Describe(eligibility));

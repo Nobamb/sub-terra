@@ -210,11 +210,11 @@ namespace SubTerra.App.Tests.UI
         }
 
         [Test]
-        public void CustomCursor_OnlyInGameplayScenes()
+        public void Issue210_CustomCursorIncludesMainMenuButNotBootstrap()
         {
             Assert.That(GameplayCursorController.IsGameplayScene("SurfaceBase"), Is.True);
             Assert.That(GameplayCursorController.IsGameplayScene("Mine_Demo_Integration"), Is.True);
-            Assert.That(GameplayCursorController.IsGameplayScene("MainMenu"), Is.False);
+            Assert.That(GameplayCursorController.IsGameplayScene("MainMenu"), Is.True);
             Assert.That(GameplayCursorController.IsGameplayScene("Bootstrap"), Is.False);
         }
 
