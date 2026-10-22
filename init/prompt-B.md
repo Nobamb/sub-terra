@@ -3748,3 +3748,6 @@ EditMode:
 
 
 155. B-155-deep-zone-thumbnail.md 내용 참고해서 업그레이드 창에 있는 심층 구역 관련 영역 썸네일 지정해줘 이미지 생성은 codex를 통해서 생성하도록 하고 연출 부분은 니가 신경써서 작업해주면 돼
+
+
+156. sound/B-156-sfx-foundation-a.md의 내용 참고해서 Audio/SFX 내에 있는 폴더에 있는 효과음들을 게임 내에 적절하게 넣어줘
