@@ -9,10 +9,12 @@
 | #223 심층 썸네일·잠금/연출 | 기존 #235는 이미 병합됨. 최신 main 1b18513a의 팀원 구현을 유지. 중복 PR 없음 | 이번 로컬 정적 시안은 별도 보관하고 현재 통합본에 적용하지 않음 |
 | #211 지상 업그레이드 | 기존 조사 초안 #233에 f4f4acb8 추가. 런타임 수정 없음 | 메모리 저장·실제 BeginContinue 후 구매 즉시 반영 1건 통과. 광산 복귀는 headless 그래픽 종료로 미검증 |
 | #236 보관함 배치·균등 꺼내기 | PR #238, codex/issue-236-storage-balanced-withdraw. 구현 f1e5c806 | 최종 고유 EditMode 10건 + PlayMode 1건 통과 |
+| #213 창 열림 연출 | PR #239, codex/issue-213-window-open-motion. 구현 6562e51c | 실제 메뉴 프리팹 등 PlayMode 3건 통과. 실제 화면 별도 |
 
 - #225: https://github.com/Nobamb/sub-terra/pull/225
 - #237: https://github.com/Nobamb/sub-terra/pull/237
 - #238: https://github.com/Nobamb/sub-terra/pull/238
+- #239: https://github.com/Nobamb/sub-terra/pull/239
 - #225·#237은 main 1b18513a 기준 충돌 없이 통합했다. 통합 후 동일 Unity 검사는 반복하지 않았다. 실제 게임 화면/Windows 빌드 검증 완료를 의미하지 않는다.
 - main과 PR의 실제 병합은 팀원이 진행한다.
 
@@ -20,7 +22,7 @@
 
 - 저장소: C:/Users/jeone/sub-terra
 - Unity 프로젝트: C:/Users/jeone/sub-terra/sub-terra (Hub 첫 번째 항목), Unity 6000.5.4f1.
-- 함께 확인할 브랜치: **codex/nonvisual-review-20261021-latest**. 최신 main 1b18513a + #225 + #237 + #238을 합친 검토용이며, 이 브랜치로 별도 PR을 만들지 않는다.
+- 함께 확인할 브랜치: **codex/nonvisual-review-20261021-latest**. 최신 main 1b18513a + #225 + #237 + #238 + #239 및 #233 조사 검사를 합친 검토용이며, 이 브랜치로 별도 PR을 만들지 않는다.
 - 과거 codex/nonvisual-review-20261021은 이전 작업·로컬 시안 기록용이다. 최신 화면 확인에는 -latest 브랜치를 사용한다.
 - 시작 씬은 Bootstrap. exe는 빌드 당시 코드이므로 브랜치만 변경해도 기존 exe는 바뀌지 않는다.
 - #223 관련 실행 코드·설정·이미지는 최신 main의 팀원 버전 그대로다. 제 정적 시안 커밋 0e3c3fa5는 로컬 codex/archive-static-deepzone-20261021에 보관했다. 이 보관 브랜치를 작업 브랜치나 PR로 사용하지 않는다.
@@ -46,3 +48,6 @@
 - #215·#221·#236: 각각 #225·#237·#238에 게시했으므로 새 구현 반복 금지. #223은 main의 팀원 구현 유지.
 - #158 효과음은 이슈의 단계 순서대로 0+A부터 별도 범위로 진행할 수 있으나, 전체를 한 번에 구현하지 않는다. 연출 제외 우선순위를 변경할지는 사용자 선택 대기.
 - #135 황금 지형은 GoldDropSettings·GoldDropTileSetup 및 탐지 경로가 이미 존재한다. 열린 이슈만 보고 새로 추가하지 않는다.
+- #213은 #239에 게시했고 확인용 브랜치에 통합했다. 상세: work_process/issue-213-window-open-motion-20261022.md. 후속은 같은 PR에서 진행한다.
+- #211 미커밋 진단은 stash 3f9fc5357d498ff469365f4f09d5ee08aa1ac338 (`issue211-purchase-trace-pending-20261022`)에 보관했다. 사용자가 실제 재현을 보류했으므로 복구/게시하지 않았다. 이어서 할 때 이 변경부터 복구하며 중복 구현하지 않는다.
+- #158 효과음은 팀원 담당으로 남긴다. 다음 후보 #220은 지하 배경 한 장의 정적 샘플부터 깊이/좌우 이동을 연결하는 범위로 제안했으며 아직 구현하지 않았다.
