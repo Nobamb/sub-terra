@@ -1,4 +1,6 @@
+using SubTerra.App.Audio;
 using SubTerra.App.UI.Outpost;
+using SubTerra.Shared.Audio;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -60,6 +62,7 @@ namespace SubTerra.App.UI.FacilityNameTag
         public const float IconSpace = 30f;
 
         private const float FontSize = 22f;
+        private const float BeepCooldown = 1.5f;
         private const float EdgeThickness = 1.5f;
         private const float BracketLength = 10f;
         private const float BracketThickness = 2.5f;
@@ -98,12 +101,16 @@ namespace SubTerra.App.UI.FacilityNameTag
         private float clock;
         private bool wanted;
         private bool settled;
+        private float lastBeepAt = float.NegativeInfinity;
         private bool built;
 
         public RectTransform Rect => rect;
         public GameObject Root => root;
         public string LabelText => label;
         public bool Wanted => wanted;
+
+        /// <summary>true면 라벨이 나타날 때 비프, 스캔선이 지나갈 때 틱을 낸다. 근접 시설 라벨만 켠다.</summary>
+        public bool PlaySfx { get; set; }
         public float Level => level;
         public float Width => width;
         public float CurrentHeight => height;
@@ -367,6 +374,13 @@ namespace SubTerra.App.UI.FacilityNameTag
             {
                 root.SetActive(true);
             }
+
+            // 시설 근처를 오가며 켜졌다 꺼져도 비프가 따라 울리지 않게 라벨마다 간격을 둔다.
+            if (value && PlaySfx && Time.unscaledTime - lastBeepAt >= BeepCooldown)
+            {
+                lastBeepAt = Time.unscaledTime;
+                SfxPlayer.Play(SfxId.WorldFacilityTagBeep);
+            }
         }
 
         /// <summary>unscaled 시간 기준으로 연출을 진행한다. 완전히 사라지면 오브젝트를 끈다.</summary>
@@ -391,6 +405,12 @@ namespace SubTerra.App.UI.FacilityNameTag
             clock += deltaSeconds;
             var before = level;
             level = FacilityNameTagTimeline.Advance(level, wanted, deltaSeconds);
+            if (PlaySfx && wanted && before < FacilityNameTagTimeline.ScanStart
+                && level >= FacilityNameTagTimeline.ScanStart)
+            {
+                SfxPlayer.Play(SfxId.UiScanTick);
+            }
+
             if (wanted && level >= 1f)
             {
                 // 표시 중에는 레이아웃을 건드리지 않고 테두리 발광만 천천히 숨 쉰다.

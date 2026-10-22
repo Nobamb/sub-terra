@@ -1,9 +1,11 @@
 using System;
 using System.Globalization;
+using SubTerra.App.Audio;
 using SubTerra.App.Core;
 using SubTerra.App.Save;
 using SubTerra.App.Tutorial;
 using SubTerra.App.UI.MainMenu;
+using SubTerra.Shared.Audio;
 using SubTerra.Shared.Localization;
 using TMPro;
 using UnityEngine;
@@ -368,6 +370,7 @@ namespace SubTerra.App.UI.SurfaceBase
             {
                 if (Application.isPlaying && resetMineConfirmMotion.isActiveAndEnabled)
                 {
+                    SfxPlayer.Play(SfxId.UiPopupOpen);
                     resetMineConfirmMotion.PlayOpen();
                 }
                 else
@@ -384,6 +387,11 @@ namespace SubTerra.App.UI.SurfaceBase
                 && resetMineConfirmMotion.isActiveAndEnabled)
             {
                 var root = resetMineConfirmRoot;
+                if (!resetMineConfirmMotion.IsClosing)
+                {
+                    SfxPlayer.Play(SfxId.UiPopupClose);
+                }
+
                 resetMineConfirmMotion.PlayClose(() =>
                 {
                     if (root != null) root.SetActive(false);

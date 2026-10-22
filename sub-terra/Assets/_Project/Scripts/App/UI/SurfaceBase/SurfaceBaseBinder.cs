@@ -1,3 +1,4 @@
+using SubTerra.App.Audio;
 using SubTerra.App.Core;
 using SubTerra.App.Inventory;
 using SubTerra.App.Save;
@@ -7,6 +8,7 @@ using SubTerra.App.UI.MainMenu;
 using SubTerra.App.UI.HUD;
 using SubTerra.App.UI.Progression;
 using SubTerra.Shared;
+using SubTerra.Shared.Audio;
 using SubTerra.Shared.Localization;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -365,6 +367,7 @@ namespace SubTerra.App.UI.SurfaceBase
                 || view.IsUpgradeVisible
                 || (economyBinder != null && economyBinder.IsModalVisible))
             {
+                SfxPlayer.Play(SfxId.UiCancelFail);
                 view.SetMessage(LocalizationService.Get("mine_reset.fail.busy"));
                 return;
             }
@@ -385,6 +388,7 @@ namespace SubTerra.App.UI.SurfaceBase
             if ((settings != null && settings.IsOpen) || view.IsUpgradeVisible
                 || (economyBinder != null && economyBinder.IsModalVisible))
             {
+                SfxPlayer.Play(SfxId.UiCancelFail);
                 view.SetMessage(LocalizationService.Get("mine_reset.fail.busy"));
                 return;
             }
@@ -392,6 +396,7 @@ namespace SubTerra.App.UI.SurfaceBase
             // 골드 부족 상태에서는 버튼이 꺼져 있지만, 다른 입력 경로로도 차감 시도가 가지 않게 한 번 더 막는다.
             if (presenter != null && !presenter.TryGetMineResetQuote(out _, out _, out _))
             {
+                SfxPlayer.Play(SfxId.UiCancelFail);
                 return;
             }
 
@@ -416,10 +421,12 @@ namespace SubTerra.App.UI.SurfaceBase
                         message = string.Format(message, feeGold, gold);
                     }
 
+                    SfxPlayer.Play(SfxId.UiCancelFail);
                     view.SetMessage(message);
                     return;
                 }
 
+                SfxPlayer.Play(SfxId.UiConfirm);
                 view.SetMessage(string.Format(
                     LocalizationService.Get("mine_reset.success"),
                     feeGold));
@@ -440,6 +447,7 @@ namespace SubTerra.App.UI.SurfaceBase
                 return;
             }
 
+            SfxPlayer.Play(SfxId.UiBack);
             view.SetMineResetConfirmVisible(false);
         }
 
