@@ -321,11 +321,13 @@ namespace SubTerra.App.UI.Tutorial
                 return;
             }
 
+            var wasVisible = detailsRoot.activeSelf;
             detailsRoot.SetActive(true);
             detailsRoot.transform.SetAsLastSibling();
             EnsurePopupCanvas(detailsRoot, ref detailsCanvas);
             // 인벤토리·시설처럼 방금 연 창이 이미 떠 있는 팝업보다 앞에 온다.
             PopupWindowSorting.BringToFront(detailsCanvas);
+            if (!wasVisible) TerminalWindowOpenMotion.Open(detailsRoot);
         }
 
         public void SetDetailsText(string title, string body, string nextAction)

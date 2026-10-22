@@ -180,6 +180,7 @@ namespace SubTerra.App.UI.Inventory
 
         public void SetVisible(bool visible)
         {
+            var wasVisible = gameObject.activeSelf && (panelRoot == null || panelRoot.activeSelf);
             // prompt-B 33-1: 루트 전체를 끄면 Binder 구독이 끊기고 닫기 버튼 상태가 꼬일 수 있다.
             // 루트는 유지한 채 PanelRoot·닫기 버튼만 토글한다.
             if (!gameObject.activeSelf)
@@ -202,6 +203,8 @@ namespace SubTerra.App.UI.Inventory
             {
                 gameObject.SetActive(visible);
             }
+            if (visible && !wasVisible) TerminalWindowOpenMotion.Open(gameObject);
+            if (!visible) TerminalWindowOpenMotion.Stop(gameObject);
         }
 
         public bool HasRequiredReferences()
