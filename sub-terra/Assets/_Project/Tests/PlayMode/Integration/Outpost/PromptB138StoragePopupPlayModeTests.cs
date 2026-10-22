@@ -64,7 +64,7 @@ namespace SubTerra.App.Tests.PlayMode
         }
 
         [UnityTest]
-        public IEnumerator Issue212_ButtonsUseBoundServiceAndRespectBusyAndClosing()
+        public IEnumerator Issue236_ButtonsUseBoundServiceAndRespectBusyAndClosing()
         {
             var root = new GameObject("Canvas", typeof(RectTransform), typeof(Canvas));
             var view = root.AddComponent<OutpostPanelView>();
@@ -101,13 +101,15 @@ namespace SubTerra.App.Tests.PlayMode
                 controls.Find("DepositButton").GetComponent<UnityEngine.UI.Button>().onClick.Invoke();
                 Assert.That(inventory.State.GetQuantity(DataIds.Minerals.Copper), Is.Zero);
                 Assert.That(state.Outpost.GetStorageQuantity(DataIds.Minerals.Copper), Is.EqualTo(23));
+                inventory.SetMaximumCapacity(10f);
                 var withdraw = controls.Find("WithdrawAllButton").GetComponent<UnityEngine.UI.Button>();
                 withdraw.onClick.Invoke();
-                Assert.That(inventory.State.GetQuantity(DataIds.Minerals.Copper), Is.EqualTo(23));
+                Assert.That(inventory.State.GetQuantity(DataIds.Minerals.Copper), Is.EqualTo(10));
+                Assert.That(controls.Find("Status").GetComponent<TMP_Text>().text, Does.Contain("일부만"));
                 var deposit = controls.Find("DepositAllButton").GetComponent<UnityEngine.UI.Button>();
                 popup.SetBusy(true);
                 deposit.onClick.Invoke();
-                Assert.That(inventory.State.GetQuantity(DataIds.Minerals.Copper), Is.EqualTo(23));
+                Assert.That(inventory.State.GetQuantity(DataIds.Minerals.Copper), Is.EqualTo(10));
                 popup.SetBusy(false);
                 deposit.onClick.Invoke();
                 Assert.That(state.Outpost.GetStorageQuantity(DataIds.Minerals.Copper), Is.EqualTo(23));
@@ -121,7 +123,19 @@ namespace SubTerra.App.Tests.PlayMode
                     Is.LessThan(preview.anchoredPosition.x + preview.rect.xMin));
                 Assert.That(preview.sizeDelta.x, Is.GreaterThan(160f));
                 var depositRect = (RectTransform)deposit.transform;
-                Assert.That(depositRect.anchoredPosition.y + depositRect.rect.yMin, Is.GreaterThanOrEqualTo(-620f));
+                var selectedDeposit = (RectTransform)controls.Find("DepositButton");
+                var selectedWithdraw = (RectTransform)controls.Find("WithdrawButton");
+                var withdrawRect = (RectTransform)withdraw.transform;
+                var footer = (RectTransform)controls.Find("Footer");
+                Assert.That(footer.sizeDelta.y, Is.EqualTo(164f));
+                Assert.That(selectedDeposit.sizeDelta.y, Is.EqualTo(52f));
+                Assert.That(depositRect.anchoredPosition.x, Is.EqualTo(selectedDeposit.anchoredPosition.x));
+                Assert.That(withdrawRect.anchoredPosition.x, Is.EqualTo(selectedWithdraw.anchoredPosition.x));
+                Assert.That(depositRect.sizeDelta, Is.EqualTo(selectedDeposit.sizeDelta));
+                Assert.That(withdrawRect.sizeDelta, Is.EqualTo(selectedWithdraw.sizeDelta));
+                Assert.That(depositRect.anchoredPosition.y, Is.LessThan(selectedDeposit.anchoredPosition.y - selectedDeposit.rect.height));
+                Assert.That(depositRect.anchoredPosition.y - depositRect.rect.height,
+                    Is.GreaterThanOrEqualTo(footer.anchoredPosition.y - footer.rect.height));
             }
             finally
             {
