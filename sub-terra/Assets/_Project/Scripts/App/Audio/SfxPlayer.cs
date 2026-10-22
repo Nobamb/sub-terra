@@ -10,7 +10,7 @@ namespace SubTerra.App.Audio
     /// <summary>
     /// 효과음 재생기. SfxRequests를 구독하고, AudioSource 풀로 소리를 낸다.
     /// 시간은 비스케일이라 UiPauseGate로 게임이 멈춰도 UI 소리와 경보 반복이 이어진다.
-    /// 음량 조절은 AudioListener.volume이 맡으므로 여기서 따로 곱하지 않는다.
+    /// 마스터 음량은 AudioListener.volume이 맡고, 효과음 채널 음량(설정창 효과음 슬라이더)은 여기서 곱한다.
     /// </summary>
     public sealed class SfxPlayer : MonoBehaviour
     {
@@ -42,7 +42,8 @@ namespace SubTerra.App.Audio
         private bool madeDontDestroy;
         private bool attachedToBootstrap;
         private Func<float> clock = () => Time.unscaledTime;
-        private Func<bool> isMuted = () => SettingsRuntimeApplier.IsMasterMuted;
+        private Func<bool> isMuted = () => SettingsRuntimeApplier.IsMasterMuted
+            || SettingsRuntimeApplier.IsMuted(AudioChannel.Sfx);
 
         private SfxId alarmId;
         private int alarmRemaining;
@@ -162,6 +163,7 @@ namespace SubTerra.App.Audio
             SfxRequests.PlayRequested += HandlePlay;
             SfxRequests.AlarmRequested += HandleAlarm;
             SettingsRuntimeApplier.MasterMuteChanged += HandleMuteChanged;
+            SettingsRuntimeApplier.ChannelChanged += HandleChannelChanged;
         }
 
         private void Unsubscribe()
@@ -169,6 +171,7 @@ namespace SubTerra.App.Audio
             SfxRequests.PlayRequested -= HandlePlay;
             SfxRequests.AlarmRequested -= HandleAlarm;
             SettingsRuntimeApplier.MasterMuteChanged -= HandleMuteChanged;
+            SettingsRuntimeApplier.ChannelChanged -= HandleChannelChanged;
         }
 
         /// <summary>테스트용. EditMode에서는 OnDisable/OnDestroy가 불리지 않아 구독과 인스턴스를 직접 정리한다.</summary>
@@ -233,7 +236,9 @@ namespace SubTerra.App.Audio
                 return;
             }
 
-            voice.Source.volume = voice.Volume * SfxPlayback.FadeGain(elapsed, voice.Duration, voice.FadeOut);
+            // 매 프레임 다시 곱하므로 재생 중에 효과음 슬라이더를 움직여도 따라간다.
+            voice.Source.volume = voice.Volume * SettingsRuntimeApplier.EffectiveVolume(AudioChannel.Sfx)
+                * SfxPlayback.FadeGain(elapsed, voice.Duration, voice.FadeOut);
         }
 
         private void HandlePlay(SfxId id, float pitch)
@@ -263,6 +268,15 @@ namespace SubTerra.App.Audio
         private void HandleMuteChanged()
         {
             if (isMuted())
+            {
+                StopAll();
+            }
+        }
+
+        private void HandleChannelChanged(AudioChannel channel)
+        {
+            // 마스터는 MasterMuteChanged가 따로 처리한다. 효과음만 끄면 재생 중인 소리를 바로 멈춘다.
+            if (channel == AudioChannel.Sfx && isMuted())
             {
                 StopAll();
             }
@@ -398,7 +412,7 @@ namespace SubTerra.App.Audio
             source.Stop();
             source.clip = clip;
             source.pitch = pitch;
-            source.volume = entry.Volume * busVolume;
+            source.volume = entry.Volume * busVolume * SettingsRuntimeApplier.EffectiveVolume(AudioChannel.Sfx);
             source.time = plan.StartTime;
             source.Play();
 

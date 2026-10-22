@@ -576,6 +576,12 @@ namespace SubTerra.App.UI.MainMenu
                 masterVolumeSlider.SetValueWithoutNotify(values.MasterVolume);
             }
 
+            var audioRows = AudioRows();
+            if (audioRows != null)
+            {
+                audioRows.SetValues(values.BgmVolume, values.SfxVolume);
+            }
+
             if (reduceMotionToggle != null)
             {
                 reduceMotionToggle.SetIsOnWithoutNotify(values.ReduceMotion);
@@ -614,6 +620,13 @@ namespace SubTerra.App.UI.MainMenu
             if (masterVolumeSlider != null)
             {
                 result.MasterVolume = masterVolumeSlider.value;
+            }
+
+            var audioRows = AudioRows();
+            if (audioRows != null)
+            {
+                result.BgmVolume = audioRows.Bgm.Slider.value;
+                result.SfxVolume = audioRows.Sfx.Slider.value;
             }
 
             if (reduceMotionToggle != null)
@@ -670,6 +683,13 @@ namespace SubTerra.App.UI.MainMenu
                 && settingsDefaultsButton != null;
         }
 
+        // 배경음·효과음 줄은 설정창 스킨이 런타임에 만든다. 아직 열린 적이 없어도 여기서 만들어 받는다.
+        private SettingsAudioRows AudioRows()
+        {
+            var skin = settingsRoot != null ? settingsRoot.GetComponent<SettingsMenuSkin>() : null;
+            return skin != null ? skin.EnsureAudioRows() : null;
+        }
+
         private void RefreshSettingsLabels(float volume)
         {
             if (masterVolumeLabel != null)
@@ -723,7 +743,7 @@ namespace SubTerra.App.UI.MainMenu
             {
                 bgmHintLabel.text = LocalizationService.Get(
                     "settings.bgm_hint",
-                    "BGM 4종(타이틀/기지/탐사/위험)은 마스터 음량으로 조절됩니다.");
+                    "배경음은 배경음 슬라이더로 조절됩니다.");
             }
         }
 

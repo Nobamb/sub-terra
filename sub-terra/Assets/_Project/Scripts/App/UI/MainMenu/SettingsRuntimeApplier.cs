@@ -4,6 +4,13 @@ using UnityEngine;
 
 namespace SubTerra.App.UI.MainMenu
 {
+    public enum AudioChannel
+    {
+        Master = 0,
+        Bgm = 1,
+        Sfx = 2
+    }
+
     /// <summary>
     /// 설정 값을 AudioListener / 접근성 / 해상도 / 언어에 적용하고 PlayerPrefs에 저장한다.
     /// Main Menu·Surface Base가 동일 경로를 쓰도록 한곳에 모은다.
@@ -12,8 +19,18 @@ namespace SubTerra.App.UI.MainMenu
     {
         private const string PrefMasterVolume = "subterra.settings.masterVolume";
         public const string PrefMasterMuted = "subterra.settings.masterMuted";
+        public const string PrefBgmVolume = "subterra.settings.bgmVolume";
+        public const string PrefSfxVolume = "subterra.settings.sfxVolume";
+        public const string PrefBgmMuted = "subterra.settings.bgmMuted";
+        public const string PrefSfxMuted = "subterra.settings.sfxMuted";
         public static bool IsMasterMuted => PlayerPrefs.GetInt(PrefMasterMuted, 0) != 0;
         public static event System.Action MasterMuteChanged;
+        /// <summary>채널 음량·음소거가 바뀔 때마다 알린다. 마스터는 AudioListener가 곱하므로 실제 소리 반영은 Bgm·Sfx만 따라간다.</summary>
+        public static event System.Action<AudioChannel> ChannelChanged;
+
+        // 미리듣기를 포함한 현재 채널 음량. 저장값은 적용 때만 갱신한다.
+        private static float bgmVolume = 1f;
+        private static float sfxVolume = 1f;
         private const string PrefReduceMotion = "subterra.settings.reduceMotion";
         private const string PrefResAuto = "subterra.settings.resAuto";
         private const string PrefResWidth = "subterra.settings.resWidth";
@@ -58,6 +75,17 @@ namespace SubTerra.App.UI.MainMenu
                 values.MasterVolume = Mathf.Clamp01(PlayerPrefs.GetFloat(PrefMasterVolume, 0.5f));
             }
 
+            // 새 채널 키가 없으면 100%라 업데이트 직후 소리 크기가 그대로다.
+            if (PlayerPrefs.HasKey(PrefBgmVolume))
+            {
+                values.BgmVolume = Mathf.Clamp01(PlayerPrefs.GetFloat(PrefBgmVolume, 1f));
+            }
+
+            if (PlayerPrefs.HasKey(PrefSfxVolume))
+            {
+                values.SfxVolume = Mathf.Clamp01(PlayerPrefs.GetFloat(PrefSfxVolume, 1f));
+            }
+
             if (PlayerPrefs.HasKey(PrefReduceMotion))
             {
                 values.ReduceMotion = PlayerPrefs.GetInt(PrefReduceMotion, 0) != 0;
@@ -94,6 +122,8 @@ namespace SubTerra.App.UI.MainMenu
             }
 
             PlayerPrefs.SetFloat(PrefMasterVolume, Mathf.Clamp01(values.MasterVolume));
+            PlayerPrefs.SetFloat(PrefBgmVolume, Mathf.Clamp01(values.BgmVolume));
+            PlayerPrefs.SetFloat(PrefSfxVolume, Mathf.Clamp01(values.SfxVolume));
             PlayerPrefs.SetInt(PrefReduceMotion, values.ReduceMotion ? 1 : 0);
             PlayerPrefs.SetInt(PrefResAuto, values.ResolutionAutomatic ? 1 : 0);
             PlayerPrefs.SetInt(PrefResWidth, values.ResolutionWidth);
@@ -122,6 +152,83 @@ namespace SubTerra.App.UI.MainMenu
             PlayerPrefs.Save();
             AudioListener.volume = muted ? 0f : Mathf.Clamp01(volume01);
             MasterMuteChanged?.Invoke();
+            ChannelChanged?.Invoke(AudioChannel.Master);
+        }
+
+        public static bool IsMuted(AudioChannel channel)
+        {
+            switch (channel)
+            {
+                case AudioChannel.Bgm:
+                    return PlayerPrefs.GetInt(PrefBgmMuted, 0) != 0;
+                case AudioChannel.Sfx:
+                    return PlayerPrefs.GetInt(PrefSfxMuted, 0) != 0;
+                default:
+                    return IsMasterMuted;
+            }
+        }
+
+        /// <summary>채널을 즉시 저장하며 켜고 끈다. volume01은 슬라이더 값이라 음소거 중에도 그대로 남는다.</summary>
+        public static void SetMuted(AudioChannel channel, bool muted, float volume01)
+        {
+            if (channel == AudioChannel.Master)
+            {
+                SetMasterMuted(muted, volume01);
+                return;
+            }
+
+            PlayerPrefs.SetInt(channel == AudioChannel.Bgm ? PrefBgmMuted : PrefSfxMuted, muted ? 1 : 0);
+            PlayerPrefs.Save();
+            SetLiveVolume(channel, volume01);
+            ChannelChanged?.Invoke(channel);
+        }
+
+        /// <summary>슬라이더 드래그 중 미리듣기. 음소거 중이면 해제한다.</summary>
+        public static void PreviewVolume(AudioChannel channel, float volume01)
+        {
+            if (channel == AudioChannel.Master)
+            {
+                PreviewMasterVolume(volume01);
+                return;
+            }
+
+            if (IsMuted(channel))
+            {
+                SetMuted(channel, false, volume01);
+                return;
+            }
+
+            SetLiveVolume(channel, volume01);
+            ChannelChanged?.Invoke(channel);
+        }
+
+        /// <summary>Bgm·Sfx는 음소거면 0, 아니면 현재 값. 마스터는 AudioListener가 이미 곱하므로 여기서 곱하지 않는다.</summary>
+        public static float EffectiveVolume(AudioChannel channel)
+        {
+            switch (channel)
+            {
+                case AudioChannel.Bgm:
+                    return IsMuted(channel) ? 0f : bgmVolume;
+                case AudioChannel.Sfx:
+                    return IsMuted(channel) ? 0f : sfxVolume;
+                default:
+                    return IsMasterMuted ? 0f : AudioListener.volume;
+            }
+        }
+
+        private static void SetLiveVolume(AudioChannel channel, float volume01)
+        {
+            volume01 = Mathf.Clamp01(volume01);
+            if (channel == AudioChannel.Bgm) bgmVolume = volume01;
+            else if (channel == AudioChannel.Sfx) sfxVolume = volume01;
+        }
+
+        private static void ApplyChannelVolumes(SettingsValues values)
+        {
+            SetLiveVolume(AudioChannel.Bgm, values.BgmVolume);
+            SetLiveVolume(AudioChannel.Sfx, values.SfxVolume);
+            ChannelChanged?.Invoke(AudioChannel.Bgm);
+            ChannelChanged?.Invoke(AudioChannel.Sfx);
         }
 
         /// <summary>적용 확정. 음량·접근성·언어·해상도·프레임을 반영한다.</summary>
@@ -133,6 +240,7 @@ namespace SubTerra.App.UI.MainMenu
             }
 
             AudioListener.volume = IsMasterMuted ? 0f : Mathf.Clamp01(values.MasterVolume);
+            ApplyChannelVolumes(values);
             AccessibilityPreferences.ReduceMotion = values.ReduceMotion;
             SaveControlScheme(values.Controls);
             LocalizationService.SetLanguageCode(
@@ -234,6 +342,7 @@ namespace SubTerra.App.UI.MainMenu
             }
 
             AudioListener.volume = IsMasterMuted ? 0f : Mathf.Clamp01(applied.MasterVolume);
+            ApplyChannelVolumes(applied);
         }
     }
 }

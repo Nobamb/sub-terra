@@ -3751,3 +3751,6 @@ EditMode:
 
 
 156. sound/B-156-sfx-foundation-a.md의 내용 참고해서 Audio/SFX 내에 있는 폴더에 있는 효과음들을 게임 내에 적절하게 넣어줘
+
+
+157. B-157-settings-bgm-sfx-volume.md의 내용 참고해서 설정창 크기 수정 및 배경음, 효과음 관련 오디오 슬라이더를 설정창 내의 오디오 영역에 각각 추가해줘

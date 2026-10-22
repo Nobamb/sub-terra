@@ -118,7 +118,9 @@ namespace SubTerra.Shared.Localization
             Add("settings.apply", "적용", "Apply");
             Add("settings.cancel", "취소", "Cancel");
             Add("settings.defaults", "기본값", "Defaults");
-            Add("settings.bgm_hint", "BGM 4종(타이틀/기지/탐사/위험)은 마스터 음량으로 조절됩니다.", "Four BGMs (title/base/mine/danger) follow master volume.");
+            Add("settings.bgm_volume", "배경음", "Music");
+            Add("settings.sfx_volume", "효과음", "Sound Effects");
+            Add("settings.bgm_hint", "배경음은 배경음 슬라이더로 조절됩니다.", "Music is adjusted with the Music slider.");
             Add("economy.sell.title", "광물 판매", "Sell Minerals");
             Add("economy.sell.owned", "보유 {0}", "Owned {0}");
             Add("economy.sell.unit_price", "단가 {0}G", "Unit {0}G");
