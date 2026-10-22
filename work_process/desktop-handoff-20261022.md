@@ -5,6 +5,7 @@
 - 저장소: Nobamb/sub-terra. 노트북 Git 루트는 `C:/Users/jeone/sub-terra`, Unity 루트는 그 아래 `sub-terra/`다. 데스크탑에서는 해당 PC의 실제 경로를 먼저 확인한다.
 - Unity 6000.5.4f1, 시작 씬 Bootstrap. Hub의 주 작업 프로젝트를 사용한다. 과거 worktree 프로젝트나 Mine_Demo_Integration 단독 재생과 혼동하지 않는다.
 - 걷기 브랜치: `codex/player-walk-two-leg-cycle`, 기존 PR #242. 마지막 16장 미리보기를 사용자가 확인하고 같은 PR 갱신을 승인했다.
+- 걷기 후속 구현 커밋 `dfe8e0a6`을 푸시했고 기존 #242의 제목·본문·미리보기를 갱신했다. GitHub가 갱신 직후 일시적으로 병합 불가를 표시했으나, main `4fcbc406`과의 실제 병합 계산은 충돌 없이 성공했고 재조회에서도 #242 mergeable=true를 확인했다.
 - Unity를 닫고 로컬 변경을 확인한 뒤 fetch/pull한다. 변경이 있으면 덮어쓰지 않는다. `git reset --hard`, stash pop 일괄 실행, 캐시 전체 삭제는 하지 않는다.
 - #242의 원래 분기 기준은 main `78e0ece8`이다. 마감 직전 원격 main은 `4fcbc406`로 확인했다. 이번 게시에서 최신 main을 합치지는 않는다. #225 등 최신 main 변경까지 함께 볼 때는 그 시점의 main을 별도로 통합하고 충돌을 검토한다. main에 걷기 후속이 이미 병합됐으면 main에서 작업을 이어간다.
 - Git 브랜치 전환은 기존 exe를 갱신하지 않는다. Editor에서 확인하거나 해당 커밋으로 새로 빌드한 exe와 Data 폴더를 함께 사용한다.
@@ -28,7 +29,7 @@
 
 - 이 수정은 다시 원인 조사부터 시작할 필요가 없다. 재현 조건: 광산 업그레이드 창을 한 번도 열지 않음 → 지상 귀환 → 최대 체력 구매. 레벨 커밋 후 파괴된 View의 갱신에서 MissingReferenceException이 발생했다.
 - 수정: ProgressionPanelBinder.Unbind 명시화, IntegrationRuntimeBinder가 비활성 창 구독 해제 콜백을 보관해 씬 종료 시 해제, SurfaceBaseBinder.OnDisable도 전체 해제. 기본 꺼짐의 `-trace-upgrades` 선택형 진단 포함. 예외 무시나 매 프레임 강제 갱신 방식이 아니다.
-- 기존 PR #233: 브랜치 `codex/issue-211-surface-upgrade-investigation`, 마감 확인 head `f4f4acb8`, 초안이며 GitHub상 충돌이 있다. 최신 main 통합과 충돌 정리 후 아래 패치를 검토·적용한다. 새 #211 PR을 만들지 않는다.
+- 기존 PR #233: 브랜치 `codex/issue-211-surface-upgrade-investigation`, 마감 확인 head `f4f4acb8`, 초안이다. GitHub 조회에 병합 불가가 표시됐지만 main `4fcbc406`과의 실제 병합 계산은 충돌 없이 성공했다. 재개 시 최신 상태를 확인하고 main 통합 후 아래 패치를 검토·적용한다. 새 #211 PR을 만들지 않는다.
 - 복원 패치: `handoff-20261022/issue211-lifecycle-fix.pending.patch` (이 문서 기준 상대 경로). 원본 stash `d3c8688e3d481e6ce2250cc8f46be7201090b00f`, 패치 기준 커밋 `491b5d89d736e558161a74e8b901335d7ce10791`.
 - 패치는 런타임 3파일 + ProgressionPlayModeTests + #211 결과 기록, 총 5파일이다. 원본 stash의 예전 통합 인계 문서 변경 1개는 제외하고 여기에 요약했다. 이 복원 패치만으로 필요한 수정 코드와 검사 코드는 모두 전달된다.
 - 기존 최종 결과: EditMode 1건, PlayMode 2건(실제 씬 탐사·귀환/메모리 저장·이어하기 경로 포함) 통과. 이후 지상 해제 호출의 최종 EditMode 1건 재확인. 고유 검사는 총 3건이며 단순 합산해 4건이라고 보고하지 않는다. 요약 파일은 handoff 폴더에 복사했다.
