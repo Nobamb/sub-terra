@@ -40,6 +40,9 @@ namespace SubTerra.Gameplay.Structural
         private readonly List<Vector3Int> staleShakeCells = new();
         private ICollapseDamageReceiver collapseDamageReceiver;
         private Tilemap sourceTilemap;
+        private TilemapRenderer sourceTilemapRenderer;
+        private MaterialPropertyBlock shakeProperties;
+        private static readonly int MainTexture = Shader.PropertyToID("_MainTex");
 
         private Tile runtimeCrackTile;
         private Sprite runtimeCrackSprite;
@@ -86,6 +89,7 @@ namespace SubTerra.Gameplay.Structural
 
             ClearShakeVisuals();
             sourceTilemap = source;
+            sourceTilemapRenderer = source != null ? source.GetComponent<TilemapRenderer>() : null;
             if (sourceTilemap == null) return;
 
             var cells = new List<Vector3Int>(visibleCells);
@@ -413,7 +417,7 @@ namespace SubTerra.Gameplay.Structural
                 {
                     if (existing.Cause != cause) existing.Elapsed = 0f;
                     existing.Cause = cause;
-                    existing.Renderer.sprite = sourceTilemap.GetSprite(cell);
+                    RefreshShakeSprite(existing.Renderer, sourceTilemap.GetSprite(cell));
                     return;
                 }
                 // 같은 셀이 새 광석으로 바뀌면 이전 복제본과 색 복원을 재사용하지 않는다.
@@ -440,6 +444,7 @@ namespace SubTerra.Gameplay.Structural
                 renderer.sortingOrder = Mathf.Min(short.MaxValue, sourceRenderer.sortingOrder + 1);
                 renderer.sharedMaterial = sourceRenderer.sharedMaterial;
             }
+            RefreshShakeSprite(renderer, sprite, true);
 
             Color originalColor = sourceTilemap.GetColor(cell);
             renderer.color = originalColor * sourceTilemap.color;
@@ -460,6 +465,19 @@ namespace SubTerra.Gameplay.Structural
                 OriginalOverlayTransform = overlayTilemap.GetTransformMatrix(cell),
                 Cause = cause
             };
+        }
+
+        private void RefreshShakeSprite(SpriteRenderer renderer, Sprite sprite, bool force = false)
+        {
+            Material currentMaterial = sourceTilemapRenderer != null ? sourceTilemapRenderer.sharedMaterial : renderer.sharedMaterial;
+            if (!force && renderer.sprite == sprite && renderer.sharedMaterial == currentMaterial) return;
+            renderer.sprite = sprite;
+            renderer.sharedMaterial = currentMaterial;
+            // Tilemap 재질의 마지막 텍스처가 모든 복제본에 재사용되지 않도록 셀별로 지정한다.
+            if (shakeProperties == null) shakeProperties = new MaterialPropertyBlock();
+            renderer.GetPropertyBlock(shakeProperties);
+            shakeProperties.SetTexture(MainTexture, sprite != null ? sprite.texture : null);
+            renderer.SetPropertyBlock(shakeProperties);
         }
 
         private void UpdateShakeAnimation(Vector3Int cell, float deltaTime, bool reduceMotion)
