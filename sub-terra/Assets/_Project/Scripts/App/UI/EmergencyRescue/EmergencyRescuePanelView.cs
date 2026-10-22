@@ -1,6 +1,8 @@
 using System;
+using SubTerra.App.Audio;
 using SubTerra.App.Run;
 using SubTerra.App.Tutorial;
+using SubTerra.Shared.Audio;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -92,7 +94,11 @@ namespace SubTerra.App.UI.EmergencyRescue
 
             if (chip != null)
             {
-                ReplaceListener(chip.Button, reopen);
+                ReplaceListener(chip.Button, reopen == null ? null : (Action)(() =>
+                {
+                    SfxPlayer.Play(SfxId.UiClick);
+                    reopen();
+                }));
             }
         }
 

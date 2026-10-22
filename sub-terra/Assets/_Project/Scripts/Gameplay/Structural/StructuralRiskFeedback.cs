@@ -1,6 +1,7 @@
 using System;
 using SubTerra.Gameplay.Player;
 using SubTerra.Shared;
+using SubTerra.Shared.Audio;
 using UnityEngine;
 
 namespace SubTerra.Gameplay.Structural
@@ -9,14 +10,14 @@ namespace SubTerra.Gameplay.Structural
     public sealed class StructuralRiskFeedback : MonoBehaviour
     {
         [SerializeField] private StructuralIntegritySystem structuralSystem;
+        // 경고음은 SfxRequests로 옮겼다. PhaseG 셋업이 연결하는 필드라 남겨 둔다.
         [SerializeField] private AudioSource audioSource;
         [SerializeField] private AudioSource explorationBgmSource;
         [SerializeField] private AudioSource dangerBgmSource;
-        [SerializeField] private AudioClip warningTone;
         [SerializeField] private bool reduceMotion;
         [SerializeField] private PlayerCameraFollow cameraFollow;
 
-        private AudioClip runtimeWarningTone;
+        private StructuralRiskLevel lastRisk = StructuralRiskLevel.Stable;
 
         public event Action<StructuralRiskLevel> CameraShakeRequested;
 
@@ -42,15 +43,13 @@ namespace SubTerra.Gameplay.Structural
         {
             UpdateDangerBgm(risk);
 
+            var previous = lastRisk;
+            lastRisk = risk;
+            PlayRiskSfx(previous, risk);
+
             if (risk == StructuralRiskLevel.Stable)
             {
                 return;
-            }
-
-            if (audioSource != null)
-            {
-                audioSource.pitch = GetPitch(risk);
-                audioSource.PlayOneShot(ResolveWarningTone());
             }
 
             if (ShouldRequestCameraShake(risk, reduceMotion || AccessibilityPreferences.ReduceMotion))
@@ -80,6 +79,51 @@ namespace SubTerra.Gameplay.Structural
             // 실제 붕괴는 위험 단계 상승보다 강한 흔들림을 준다.
             CameraShakeRequested?.Invoke(StructuralRiskLevel.CollapseImminent);
             ApplyCameraShake(0.38f, 0.4f);
+        }
+
+        /// <summary>오를 때만 경보, 내릴 때는 틱 한 번, 같은 단계면 무음.</summary>
+        private static void PlayRiskSfx(StructuralRiskLevel previous, StructuralRiskLevel risk)
+        {
+            switch (ResolveRiskSound(previous, risk))
+            {
+                case RiskSound.Alarm:
+                    SfxRequests.PlayAlarm(
+                        SfxId.AlarmMineWail,
+                        ResolveAlarmRepeat(risk),
+                        ResolveAlarmInterval(risk),
+                        GetPitch(risk));
+                    break;
+                case RiskSound.Tick:
+                    SfxRequests.Play(SfxId.AlertRiskTick);
+                    break;
+            }
+        }
+
+        public enum RiskSound
+        {
+            None = 0,
+            Alarm = 1,
+            Tick = 2
+        }
+
+        public static RiskSound ResolveRiskSound(StructuralRiskLevel previous, StructuralRiskLevel risk)
+        {
+            if (risk > previous) return RiskSound.Alarm;
+            return risk < previous ? RiskSound.Tick : RiskSound.None;
+        }
+
+        public static int ResolveAlarmRepeat(StructuralRiskLevel risk)
+        {
+            return risk == StructuralRiskLevel.CollapseImminent ? 3
+                : risk == StructuralRiskLevel.Danger ? 2
+                : 1;
+        }
+
+        public static float ResolveAlarmInterval(StructuralRiskLevel risk)
+        {
+            return risk == StructuralRiskLevel.CollapseImminent ? 0.24f
+                : risk == StructuralRiskLevel.Danger ? 0.34f
+                : 0f;
         }
 
         public static float GetPitch(StructuralRiskLevel risk)
@@ -151,38 +195,6 @@ namespace SubTerra.Gameplay.Structural
                     explorationBgmSource.UnPause();
                 }
             }
-        }
-
-        private AudioClip ResolveWarningTone()
-        {
-            if (warningTone != null) return warningTone;
-            if (runtimeWarningTone != null) return runtimeWarningTone;
-
-            const int sampleRate = 22050;
-            const int sampleCount = 2205;
-            var samples = new float[sampleCount];
-            for (int index = 0; index < sampleCount; index++)
-            {
-                float envelope = 1f - index / (float)sampleCount;
-                samples[index] = Mathf.Sin(2f * Mathf.PI * 440f * index / sampleRate)
-                    * envelope * 0.18f;
-            }
-
-            runtimeWarningTone = AudioClip.Create(
-                "StructuralWarningTone",
-                sampleCount,
-                1,
-                sampleRate,
-                false);
-            runtimeWarningTone.SetData(samples, 0);
-            return runtimeWarningTone;
-        }
-
-        private void OnDestroy()
-        {
-            if (runtimeWarningTone == null) return;
-            if (Application.isPlaying) Destroy(runtimeWarningTone);
-            else DestroyImmediate(runtimeWarningTone);
         }
     }
 }

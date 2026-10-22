@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.IO;
+using SubTerra.App.Audio;
 using SubTerra.App.Core;
 using SubTerra.App.Core.Data;
 using SubTerra.App.Drone;
@@ -14,6 +15,7 @@ using SubTerra.App.Tutorial;
 using SubTerra.App.UI.HUD;
 using SubTerra.App.UI.MainMenu;
 using SubTerra.Shared;
+using SubTerra.Shared.Audio;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -353,6 +355,7 @@ namespace SubTerra.App.Save
                 return false;
             }
 
+            SfxPlayer.Play(SfxId.UiMineResetWhoosh);
             SaveCurrent(AutoSaveReason.MineReset);
             EnsureMineResetClockOverlay();
             mineResetClockOverlay?.RefreshFromState();

@@ -1,10 +1,12 @@
 using System.Globalization;
+using SubTerra.App.Audio;
 using SubTerra.App.Core;
 using SubTerra.App.Save;
 using SubTerra.App.Tutorial;
 using SubTerra.App.UI.MainMenu;
 using SubTerra.App.UI.SurfaceBase;
 using SubTerra.App.UI.Tutorial;
+using SubTerra.Shared.Audio;
 using SubTerra.Shared.Localization;
 using TMPro;
 using UnityEngine;
@@ -249,6 +251,7 @@ namespace SubTerra.App.UI.HUD
             if (popupMotion != null)
             {
                 popupMotion.SetBackdropFloor(backdropFloor);
+                SfxPlayer.Play(SfxId.UiPopupOpen);
                 popupMotion.PlayOpen();
             }
         }
@@ -578,7 +581,7 @@ namespace SubTerra.App.UI.HUD
             popupFooter.fontSizeMax = 19f;
 
             popupOkButton = CreateOkButton(contentRect, skin, font);
-            popupOkButton.onClick.AddListener(HidePopup);
+            popupOkButton.onClick.AddListener(OnPopupOkClicked);
 
             popupMotion = popupRoot.AddComponent<MineResetPopupMotion>();
             popupMotion.Bind(new MineResetPopupMotion.Layers
@@ -692,6 +695,12 @@ namespace SubTerra.App.UI.HUD
             return image;
         }
 
+        private void OnPopupOkClicked()
+        {
+            SfxPlayer.Play(SfxId.UiConfirm);
+            HidePopup();
+        }
+
         // 확인·Esc가 이 경로로 들어온다. 창만 닫고 월드·골드·시드·요금·씬은 건드리지 않는다.
         private void HidePopup()
         {
@@ -709,6 +718,11 @@ namespace SubTerra.App.UI.HUD
             if (popupMotion != null && Application.isPlaying && popupMotion.isActiveAndEnabled)
             {
                 // 이미 닫는 중이면 PlayClose가 무시한다.
+                if (!popupMotion.IsClosing)
+                {
+                    SfxPlayer.Play(SfxId.UiPopupClose);
+                }
+
                 popupMotion.PlayClose(CloseImmediately);
                 return;
             }

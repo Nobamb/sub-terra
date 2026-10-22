@@ -440,8 +440,10 @@ namespace SubTerra.App.Integration
 
             public static NameBubble Create(Transform parent, TMP_FontAsset font)
             {
-                return new NameBubble(FacilityNameTagVisual.CreateWorld(
-                    parent, font, FacilityNameTagLayers.MainScreen, "FacilityNameTag"));
+                var visual = FacilityNameTagVisual.CreateWorld(
+                    parent, font, FacilityNameTagLayers.MainScreen, "FacilityNameTag");
+                visual.PlaySfx = true;
+                return new NameBubble(visual);
             }
 
             public void SetFont(TMP_FontAsset font)

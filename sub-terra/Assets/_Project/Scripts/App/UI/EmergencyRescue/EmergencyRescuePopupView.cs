@@ -1,7 +1,9 @@
 using System;
+using SubTerra.App.Audio;
 using SubTerra.App.Run;
 using SubTerra.App.UI.HUD;
 using SubTerra.App.UI.MainMenu;
+using SubTerra.Shared.Audio;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -254,6 +256,7 @@ namespace SubTerra.App.UI.EmergencyRescue
                 return true;
             }
 
+            SfxPlayer.Play(SfxId.UiPopupClose);
             ApplyGlitch(EmergencyRescueTimeline.Outro(0f), 2);
             return true;
         }
@@ -355,6 +358,7 @@ namespace SubTerra.App.UI.EmergencyRescue
         private void StartOpening()
         {
             state = PopupState.Opening;
+            SfxPlayer.Play(SfxId.UiPopupOpen);
             clock = 0f;
             idleClock = 0f;
             lastGeometryKey = int.MinValue;
