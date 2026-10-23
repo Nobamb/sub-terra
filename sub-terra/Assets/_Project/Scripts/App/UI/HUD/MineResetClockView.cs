@@ -8,6 +8,7 @@ namespace SubTerra.App.UI.HUD
     public sealed class MineResetClockView : MonoBehaviour
     {
         private readonly MineResetClockStyle style = new MineResetClockStyle();
+        private readonly MineResetClockTickGate tickGate = new MineResetClockTickGate();
         private readonly UnityEngine.UI.Image[] segments = new UnityEngine.UI.Image[42];
         private readonly UnityEngine.UI.Image[] dots = new UnityEngine.UI.Image[4];
         private readonly UnityEngine.UI.Image[] accents = new UnityEngine.UI.Image[2];
@@ -27,6 +28,7 @@ namespace SubTerra.App.UI.HUD
         public bool IsPoweredOn => poweredOn;
         public bool IsPowerAnimating => poweredOn ? powerProgress < 1f : powerProgress > 0f;
         public int DisplaySeconds => displaySeconds;
+        public MineResetClockTickGate TickGate => tickGate;
         public MineResetClockBand Band => style.Band;
         public bool IsTransitioning => style.IsTransitioning;
         public float PulseFactor => style.PulseFactor;
@@ -115,17 +117,10 @@ namespace SubTerra.App.UI.HUD
             if (!style.Observe(total)) return;
             var previous = displaySeconds;
             displaySeconds = total;
-            if (poweredOn && IsFinalTick(previous, total)) SfxPlayer.Play(SfxId.TimerTickSingle);
+            if (tickGate.TryTick(previous, total, poweredOn)) SfxPlayer.Play(SfxId.TimerTickSingle);
             for (var i = 0; i < 6; i++)
                 masks[i] = SevenSegmentGlyph.GetMask(clock[i + i / 2] - '0');
             Apply();
-        }
-
-        /// <summary>막판(1~60초) 째깍. 표시 초가 정확히 1 줄었을 때만이며 첫 관측(-1)·시간 점프·0초는 무음.</summary>
-        public static bool IsFinalTick(int previous, int next)
-        {
-            return previous >= 0 && previous - next == 1 && next >= 1
-                && MineResetClockStyle.GetBand(next) == MineResetClockBand.Final;
         }
 
         public void SetPowered(bool on, bool immediate = false)
@@ -188,6 +183,7 @@ namespace SubTerra.App.UI.HUD
         public void ResetObservation()
         {
             style.Reset();
+            tickGate.Reset();
             displaySeconds = -1;
             if (built) Apply();
         }

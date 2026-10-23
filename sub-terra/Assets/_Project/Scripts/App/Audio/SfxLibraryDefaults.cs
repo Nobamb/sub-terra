@@ -71,15 +71,15 @@ namespace SubTerra.App.Audio
                 (new SfxEntry(SfxId.StorageLidOpen, SfxBus.World, volume: 0.7f), "storage_lid_open"),
                 // 1.34초.
                 (new SfxEntry(SfxId.StorageTakeAll, SfxBus.World, volume: 0.6f), "storage_take_all"),
-                // 1.70초. 앞 0.6초 SF 소리 뒤 세 장 넘김.
-                (new SfxEntry(SfxId.GuidePageFlipX3, SfxBus.UI, volume: 0.5f), "guide_page_flip_x3"),
+                // 1.40초. 앞 0.6초 SF 소리 뒤 세 장 넘김. B-161: SF가 넘김에 묻혀 음량을 올렸다.
+                (new SfxEntry(SfxId.GuidePageFlipX3, SfxBus.UI, volume: 0.8f), "guide_page_flip_x3"),
                 // 0.28초.
                 (new SfxEntry(SfxId.GuidePageFlip, SfxBus.UI, volume: 0.5f), "guide_page_flip_loop"),
-                // 0.98초, 째깍 4번 → 0.6초만.
-                (new SfxEntry(SfxId.TimerTick, SfxBus.UI, volume: 0.45f,
+                // 0.98초, 째깍 4번 → 0.6초만. B-161: 짧은 째깍이 벨·BGM에 묻혀 음량을 올렸다.
+                (new SfxEntry(SfxId.TimerTick, SfxBus.UI, volume: 0.9f,
                     maxDuration: 0.6f, fadeOut: 0.1f), "timer_tick"),
-                // 0.23초.
-                (new SfxEntry(SfxId.TimerTickSingle, SfxBus.UI, volume: 0.4f), "timer_tick_single"),
+                // 0.40초.
+                (new SfxEntry(SfxId.TimerTickSingle, SfxBus.UI, volume: 0.9f), "timer_tick_single"),
                 // 1.43초.
                 (new SfxEntry(SfxId.TimerEnd, SfxBus.UI, volume: 0.6f), "timer_end"),
                 // 1.72초(삑 0.12초 + 무음) → 목소리를 오래 잡지 않게 0.3초만.

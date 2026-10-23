@@ -199,7 +199,10 @@ namespace SubTerra.App.UI.Guide
             return true;
         }
 
-        /// <summary>닫는 연출을 시작한다. 등장 도중에도 받아들이며 연출이 끝나면 루트가 꺼져 입력 차단이 남지 않는다.</summary>
+        /// <summary>
+        /// 닫는 연출을 시작한다. 등장 도중에도 받아들이며 연출이 끝나면 루트가 꺼져 입력 차단이 남지 않는다.
+        /// X·G·ESC 모두 이 경로라 닫힘 소리는 실제로 닫기 시작할 때 한 번만 난다.
+        /// </summary>
         public bool BeginClose()
         {
             if (state == PopupState.Hidden || state == PopupState.Closing)
@@ -222,6 +225,7 @@ namespace SubTerra.App.UI.Guide
                 return true;
             }
 
+            SfxPlayer.Play(SfxId.UiPopupClose);
             ApplyFrame(GameGuideTimeline.Close(0f, closeFrom));
             return true;
         }

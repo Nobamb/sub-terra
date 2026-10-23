@@ -3760,3 +3760,5 @@ EditMode:
 159. B-159-agent-rules-entry-cleanup.md의 내용 참고해서 지금 문서 내용들 수정해줘
 
 160. work_process/MVP2/sound 폴더에 있는 sfx-B 폴더, B-160-sfx-b-stage.md의 내용 참고해서 효과음 적용해줘
+
+161. work_process/MVP2/sound 폴더에서 B-161-sfx-b-stage-fix.md랑 sfx-B-fix폴더 내용 참고해서 기존 효과음 관련 수정 진행해줘

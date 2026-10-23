@@ -168,7 +168,7 @@ MonoBehaviour:
   - id: 21
     clip: {fileID: 8300000, guid: 4277b38b10963cf4688e37799a41b87a, type: 3}
     bus: 0
-    volume: 0.5
+    volume: 0.8
     pitch: 1
     startTime: 0
     maxDuration: 0
@@ -184,7 +184,7 @@ MonoBehaviour:
   - id: 23
     clip: {fileID: 8300000, guid: 5a25e494db9c0ac43a4d69cfced6bde6, type: 3}
     bus: 0
-    volume: 0.45
+    volume: 0.9
     pitch: 1
     startTime: 0
     maxDuration: 0.6
@@ -192,7 +192,7 @@ MonoBehaviour:
   - id: 24
     clip: {fileID: 8300000, guid: bce6e0164cce91d4390622cd84379a65, type: 3}
     bus: 0
-    volume: 0.4
+    volume: 0.9
     pitch: 1
     startTime: 0
     maxDuration: 0

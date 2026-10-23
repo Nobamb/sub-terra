@@ -295,20 +295,25 @@ namespace SubTerra.App.Tests.Audio
         {
             var view = NewClockView();
             view.SetFormattedClock("00:01:01");
+            now += 1f;
             view.SetFormattedClock("00:01:00");
+            now += 1f;
             view.SetFormattedClock("00:00:59");
             Assert.That(Count(SfxId.TimerTickSingle), Is.EqualTo(2), "61→60→59");
 
+            // B-161: 2~3초 감소(프레임 튐)는 째깍이 나므로 4초 이상 건너뛰기만 확인한다.
             played.Clear();
+            now += 1f;
             view.SetFormattedClock("00:00:10");
-            view.SetFormattedClock("00:00:07");
+            now += 1f;
             view.SetFormattedClock("00:00:01");
+            now += 1f;
             view.SetFormattedClock("00:00:00");
             Assert.That(Count(SfxId.TimerTickSingle), Is.Zero, "점프·0초 무음");
 
-            Assert.That(MineResetClockView.IsFinalTick(-1, 59), Is.False, "첫 관측");
-            Assert.That(MineResetClockView.IsFinalTick(62, 61), Is.False, "60초 위");
-            Assert.That(MineResetClockView.IsFinalTick(2, 1), Is.True);
+            Assert.That(MineResetClockTickGate.IsFinalDecrement(-1, 59), Is.False, "첫 관측");
+            Assert.That(MineResetClockTickGate.IsFinalDecrement(62, 61), Is.False, "60초 위");
+            Assert.That(MineResetClockTickGate.IsFinalDecrement(2, 1), Is.True);
         }
 
         [Test]
@@ -330,6 +335,7 @@ namespace SubTerra.App.Tests.Audio
             var clock = overlay.transform.Find("ClockRoot");
             clock.gameObject.SetActive(true);
             var view = clock.GetComponent<MineResetClockView>();
+            view.TickGate.Clock = () => now;
             view.SetPowered(true, true);
             played.Clear();
             return view;
