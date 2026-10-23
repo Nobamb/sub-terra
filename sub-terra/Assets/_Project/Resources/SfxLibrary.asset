@@ -328,7 +328,7 @@ MonoBehaviour:
   - id: 41
     clip: {fileID: 8300000, guid: 61b9ad3f78e51294fbc634515bd279ef, type: 3}
     bus: 0
-    volume: 0.5
+    volume: 1.0
     pitch: 1
     startTime: 0
     maxDuration: 1

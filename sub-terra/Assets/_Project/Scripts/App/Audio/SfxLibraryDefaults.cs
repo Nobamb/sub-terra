@@ -125,7 +125,7 @@ namespace SubTerra.App.Audio
                 // 0.42초(위 소리의 가장 큰 부분).
                 (new SfxEntry(SfxId.BriefingGlitchShort, SfxBus.UI, volume: 0.45f), "briefing_glitch_tick_short"),
                 // 1.93 → 1.82초 → 1.0초만.
-                (new SfxEntry(SfxId.BriefingClose, SfxBus.UI, volume: 0.5f,
+                (new SfxEntry(SfxId.BriefingClose, SfxBus.UI, volume: 1.0f,
                     maxDuration: 1.0f, fadeOut: 0.3f), "briefing_close"),
                 // 1.10 → 0.30초. 4번 겹쳐 나므로 음량을 낮게 잡았다.
                 (new SfxEntry(SfxId.SellCoinStack, SfxBus.UI, volume: 0.5f), "sell_open_coin_stack"),
