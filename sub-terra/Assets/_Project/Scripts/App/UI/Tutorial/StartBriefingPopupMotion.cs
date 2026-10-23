@@ -1,5 +1,7 @@
 using System;
 using System.Collections;
+using SubTerra.App.Audio;
+using SubTerra.Shared.Audio;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -14,6 +16,7 @@ namespace SubTerra.App.UI.Tutorial
     public sealed class StartBriefingPopupMotion : MonoBehaviour
     {
         public const string PauseOwner = "start-briefing";
+        public const float ShortGlitchSfxInterval = 0.15f;
 
         private static readonly Color Cyan = new Color(0.20f, 1f, 0.96f, 1f);
         private static readonly Color DimFrame = new Color(0.22f, 0.32f, 0.36f, 1f);
@@ -82,6 +85,9 @@ namespace SubTerra.App.UI.Tutorial
         private float flickerLevel = 1f;
         private float burstUntil;
         private Vector2 lastRootSize;
+        // B-162: 시작 브리핑만 소리를 낸다. 같은 연출을 빌려 쓰는 작은 창(심층 해금·퀘스트 클리어)은 끈다.
+        private bool playsBriefingSfx = true;
+        private readonly SfxThrottle shortGlitchSfx = new SfxThrottle(ShortGlitchSfxInterval);
 
         public BriefingPhase Phase => lifecycle.Phase;
         public bool IsClosing => lifecycle.Phase == BriefingPhase.Closing;
@@ -112,6 +118,7 @@ namespace SubTerra.App.UI.Tutorial
             float effectScale)
         {
             pauseOnOpen = false;
+            playsBriefingSfx = false;
             var panel = (RectTransform)transform;
             windowSize = size;
             frameHalfExtent = frameExtent;
@@ -264,6 +271,8 @@ namespace SubTerra.App.UI.Tutorial
             onClosed = closed;
             phaseTime = 0f;
             glitchTimer = 0f;
+            // 닫기 버튼·X·ESC 모두 이 경로라 한 번만 난다.
+            PlaySfx(SfxId.BriefingClose);
             TriggerGlitch(BriefingGlitchKind.FrameShift, 1f);
             TriggerGlitch(BriefingGlitchKind.EdgeBurst, 1f);
             // 선택이 남은 버튼에 Enter/Submit이 다시 들어가 중복 종료되지 않게 한다.
@@ -280,7 +289,11 @@ namespace SubTerra.App.UI.Tutorial
         private void Update()
         {
             // 화면 복사·씬 로드 직후의 긴 프레임에 연출이 건너뛰어지지 않도록 한 프레임 진행량을 제한한다.
-            var dt = Mathf.Min(Time.unscaledDeltaTime, 0.05f);
+            Tick(Mathf.Min(Time.unscaledDeltaTime, 0.05f));
+        }
+
+        private void Tick(float dt)
+        {
             clock += dt;
             FitWindow(false);
 
@@ -359,14 +372,41 @@ namespace SubTerra.App.UI.Tutorial
                 ReleaseSnapshot();
             }
 
+            BeginIntro();
+        }
+
+        private void BeginIntro()
+        {
             if (lifecycle.TryStartIntro())
             {
                 phaseTime = 0f;
+                shortGlitchSfx.Reset();
+                // 첫 화면 글리치(0초 버스트)와 같이 난다.
+                PlaySfx(SfxId.BriefingGlitch);
                 if (pauseOnOpen)
                 {
                     UiPauseGate.Acquire(PauseOwner);
                     holdsPause = true;
                 }
+            }
+        }
+
+        private void PlaySfx(SfxId id)
+        {
+            if (playsBriefingSfx)
+            {
+                SfxPlayer.Play(id);
+            }
+        }
+
+        // 등장·표시 중 불규칙 글리치마다 짧은 지직. 닫는 중에는 닫힘 소리가 이어지므로 내지 않는다.
+        private void PlayShortGlitchSfx()
+        {
+            var phase = lifecycle.Phase;
+            if ((phase == BriefingPhase.Intro || phase == BriefingPhase.Shown) && playsBriefingSfx
+                && shortGlitchSfx.TryPass(clock))
+            {
+                SfxPlayer.Play(SfxId.BriefingGlitchShort);
             }
         }
 
@@ -481,6 +521,12 @@ namespace SubTerra.App.UI.Tutorial
             {
                 HideScreenGlitch();
                 return;
+            }
+
+            // 0번 버스트는 등장 소리(BriefingGlitch)가 맡는다.
+            if (burst > 0)
+            {
+                PlayShortGlitchSfx();
             }
 
             RerollScreenBurst();
@@ -741,6 +787,7 @@ namespace SubTerra.App.UI.Tutorial
                         planner.Range(-3f, 3f));
                     break;
                 case BriefingGlitchKind.EdgeBurst:
+                    PlayShortGlitchSfx();
                     burstUntil = clock + planner.Range(0.06f, 0.16f);
                     if (burstAlpha != null)
                     {

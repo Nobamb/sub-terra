@@ -28,7 +28,15 @@ namespace SubTerra.App.Audio
             { SfxId.UiSlotSelect, SfxId.UiClick },
         };
 
-        /// <summary>SfxId 순서대로 33칸(None·비워 둔 3번 제외). 파일 이름은 확장자 제외.</summary>
+        /// <summary>길게 반복 재생하는 파일. 통째로 풀어 두지 않고 압축된 채 메모리에 둔다.</summary>
+        private static readonly HashSet<string> LoopFileNames = new HashSet<string>
+        {
+            "portal_idle_loop",
+        };
+
+        public static bool IsLoopFile(string fileName) => fileName != null && LoopFileNames.Contains(fileName);
+
+        /// <summary>SfxId 순서대로 43칸(None·비워 둔 3번 제외). 파일 이름은 확장자 제외.</summary>
         public static IReadOnlyList<(SfxEntry Entry, string FileName)> Create()
         {
             return new List<(SfxEntry, string)>
@@ -102,6 +110,29 @@ namespace SubTerra.App.Audio
                 (new SfxEntry(SfxId.GoldCoinPop, SfxBus.World, volume: 0.45f), "gold_coin_pop"),
                 // 0.70초.
                 (new SfxEntry(SfxId.StorageOrePop, SfxBus.World, volume: 0.5f), "storage_ore_pop"),
+
+                // B-162. Alert 버스는 쓰지 않는다. 길이는 다듬은 파일 기준(원본 → 새 길이).
+                // 1.23 → 1.17초.
+                (new SfxEntry(SfxId.RunFailGlitch, SfxBus.UI, volume: 0.6f), "run_fail_collapse_glitch"),
+                // 1.28 → 0.83초.
+                (new SfxEntry(SfxId.RunFailBlackout, SfxBus.UI, volume: 0.6f), "run_fail_blackout"),
+                // 0.19초.
+                (new SfxEntry(SfxId.RunFailRowTick, SfxBus.UI, volume: 0.5f), "run_fail_row_tick"),
+                // 0.43 → 0.46초.
+                (new SfxEntry(SfxId.EscapeArrive, SfxBus.World, volume: 0.6f), "escape_arrive"),
+                // 1.57 → 1.02초.
+                (new SfxEntry(SfxId.BriefingGlitch, SfxBus.UI, volume: 0.5f), "briefing_glitch_tick"),
+                // 0.42초(위 소리의 가장 큰 부분).
+                (new SfxEntry(SfxId.BriefingGlitchShort, SfxBus.UI, volume: 0.45f), "briefing_glitch_tick_short"),
+                // 1.93 → 1.82초 → 1.0초만.
+                (new SfxEntry(SfxId.BriefingClose, SfxBus.UI, volume: 0.5f,
+                    maxDuration: 1.0f, fadeOut: 0.3f), "briefing_close"),
+                // 1.10 → 0.30초. 4번 겹쳐 나므로 음량을 낮게 잡았다.
+                (new SfxEntry(SfxId.SellCoinStack, SfxBus.UI, volume: 0.5f), "sell_open_coin_stack"),
+                // 2.09 → 1.42초. 끝까지 재생.
+                (new SfxEntry(SfxId.SellCoinBurst, SfxBus.UI, volume: 0.55f), "sell_open_coin_burst"),
+                // 82 → 20.01초 반복용. 원샷 풀이 아니라 PortalIdleLoopAudio가 따로 튼다.
+                (new SfxEntry(SfxId.PortalIdleLoop, SfxBus.World, volume: 0.35f), "portal_idle_loop"),
             };
         }
     }

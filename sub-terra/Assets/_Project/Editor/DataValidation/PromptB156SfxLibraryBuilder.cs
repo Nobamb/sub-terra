@@ -113,7 +113,7 @@ namespace SubTerra.App.Editor.DataValidation
         }
     }
 
-    /// <summary>Audio/SFX 아래 파일의 import 설정(모노, 로드 시 압축 해제, Vorbis 70%)을 맞추고, 새 파일이 들어오면 라이브러리를 다시 채운다.</summary>
+    /// <summary>Audio/SFX 아래 파일의 import 설정(모노, 로드 시 압축 해제(반복음은 압축 유지), Vorbis 70%)을 맞추고, 새 파일이 들어오면 라이브러리를 다시 채운다.</summary>
     public sealed class PromptB156SfxPostprocessor : AssetPostprocessor
     {
         private static bool refreshQueued;
@@ -128,7 +128,9 @@ namespace SubTerra.App.Editor.DataValidation
             var importer = (AudioImporter)assetImporter;
             importer.forceToMono = true;
             var settings = importer.defaultSampleSettings;
-            settings.loadType = AudioClipLoadType.DecompressOnLoad;
+            // B-162: 20초 반복음은 풀어 두면 메모리를 크게 차지하므로 압축된 채 둔다.
+            var isLoop = SfxLibraryDefaults.IsLoopFile(Path.GetFileNameWithoutExtension(assetPath));
+            settings.loadType = isLoop ? AudioClipLoadType.CompressedInMemory : AudioClipLoadType.DecompressOnLoad;
             settings.compressionFormat = AudioCompressionFormat.Vorbis;
             settings.quality = 0.7f;
             settings.preloadAudioData = true;

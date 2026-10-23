@@ -33,6 +33,11 @@ namespace SubTerra.App.Integration
         {
             EnsureRuntimeBindings();
             panelBinder?.BindTo(this);
+            // B-162: 포탈 대기음. 씬에 미리 붙여 두면 그 설정을 쓴다.
+            if (GetComponent<PortalIdleLoopAudio>() == null)
+            {
+                gameObject.AddComponent<PortalIdleLoopAudio>();
+            }
         }
 
         public void Bind(GameState state, Transform player, Transform elevator)

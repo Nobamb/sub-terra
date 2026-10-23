@@ -356,6 +356,7 @@ namespace SubTerra.App.UI.Sell
                 return true;
             }
 
+            SfxPlayer.Play(SfxId.UiPopupClose);
             ApplyClose(0f);
             return true;
         }
@@ -386,7 +387,9 @@ namespace SubTerra.App.UI.Sell
             switch (state)
             {
                 case PopupState.Opening:
+                    var previous = clock;
                     clock += dt;
+                    PlayOpeningSfx(previous, clock);
                     if (clock >= ResourceSellTimeline.OpenDuration)
                     {
                         state = PopupState.Open;
@@ -429,6 +432,23 @@ namespace SubTerra.App.UI.Sell
             {
                 saleClock += dt;
                 ApplySale(saleClock);
+            }
+        }
+
+        // 금화가 하나씩 쌓일 때마다(피치를 올리며 앞 소리 위에 겹쳐) 한 번, 창과 부딪힐 때 한 번.
+        private static void PlayOpeningSfx(float previous, float now)
+        {
+            for (var coin = 0; coin < ResourceSellTimeline.CoinCount; coin++)
+            {
+                if (SfxPlayback.Crossed(previous, now, ResourceSellTimeline.CoinLandTime(coin)))
+                {
+                    SfxPlayer.Play(SfxId.SellCoinStack, ResourceSellTimeline.CoinStackPitch(coin));
+                }
+            }
+
+            if (SfxPlayback.Crossed(previous, now, ResourceSellTimeline.ImpactTime))
+            {
+                SfxPlayer.Play(SfxId.SellCoinBurst);
             }
         }
 

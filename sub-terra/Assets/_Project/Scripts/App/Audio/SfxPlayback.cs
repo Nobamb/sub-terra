@@ -125,4 +125,44 @@ namespace SubTerra.App.Audio
             passed = false;
         }
     }
+
+    /// <summary>
+    /// 정해 둔 시각에 한 번 내는 소리. 앞 소리와 겹치지 않게 뒤로 미룰 때 쓴다.
+    /// 시계는 주입할 수 있고, 기본은 비스케일 실제 시각이다.
+    /// </summary>
+    public sealed class SfxDelayedCue
+    {
+        private float dueAt;
+
+        public SfxDelayedCue(Func<float> clock = null)
+        {
+            Clock = clock ?? (() => Time.realtimeSinceStartup);
+        }
+
+        public Func<float> Clock { get; set; }
+        public bool IsPending { get; private set; }
+
+        public void Schedule(float delay)
+        {
+            dueAt = Clock() + Mathf.Max(0f, delay);
+            IsPending = true;
+        }
+
+        /// <summary>시각이 지났으면 true를 한 번만 돌려준다.</summary>
+        public bool TryFire()
+        {
+            if (!IsPending || Clock() < dueAt)
+            {
+                return false;
+            }
+
+            IsPending = false;
+            return true;
+        }
+
+        public void Cancel()
+        {
+            IsPending = false;
+        }
+    }
 }

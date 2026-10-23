@@ -39,3 +39,13 @@
 | gold_lever | 골드 팝업 레버 | https://pixabay.com/sound-effects/film-special-effects-clank1-91862/ | 2026-10-23 | 꼬리 정리(0.71→0.62초) |
 | gold_reel_stop | 골드 팝업 숫자 착지 | https://pixabay.com/sound-effects/film-special-effects-money-counting-machine-sfx-406495/ | 2026-10-23 | 원본 0.84~1.92초만(2.23→1.09초). 앞 0.6초만 재생 |
 | gold_coin_pop | 골드 팝업 금화 분출 | https://pixabay.com/sound-effects/film-special-effects-coins-drop-1-404409/ | 2026-10-23 | 앞 무음 제거, 쏟아지는 부분만(2.22→0.89초) |
+| run_fail_collapse_glitch | 탐사 실패 창 등장 글리치 | https://pixabay.com/sound-effects/film-special-effects-digital-glitch-sfx-438248/ | 2026-10-23 | 앞 무음 정리, 리미터 약 +3dB(1.23→1.17초) |
+| run_fail_blackout | 탐사 실패 후 화면 암전 | https://pixabay.com/sound-effects/film-special-effects-power-off-386180/ | 2026-10-23 | 앞 무음 정리, 끝 잡음 꼬리 자르고 페이드(1.28→0.83초) |
+| run_fail_row_tick | 탐사 실패 창 잃은 자원 줄 등장 | https://pixabay.com/sound-effects/film-special-effects-beep-313342/ | 2026-10-23 | 원본이 작아 약 +6~8dB(0.19초) |
+| escape_arrive | 긴급 탈출 도착(워프 0.35초 뒤) | https://pixabay.com/sound-effects/technology-sci-fi-power-down-blip-608638/ | 2026-10-23 | 앞 무음 정리, +2dB(0.43→0.46초) |
+| briefing_glitch_tick | 시작 브리핑 창 등장 글리치 | https://pixabay.com/sound-effects/film-special-effects-glitch-sound-2-589408/ | 2026-10-23 | 앞뒤 무음 정리(1.57→1.02초) |
+| briefing_glitch_tick_short | 시작 브리핑 표시 중 짧은 글리치 | https://pixabay.com/sound-effects/film-special-effects-glitch-sound-2-589408/ | 2026-10-23 | 위 원본 0.28~0.70초만(0.42초) |
+| briefing_close | 시작 브리핑 창 닫힘 | https://pixabay.com/sound-effects/film-special-effects-glitch-and-distortion-sound-effects-547046/ | 2026-10-23 | 앞 무음 정리(1.93→1.82초). 앞 1.0초만 재생, 끝 0.3초 페이드 |
+| sell_open_coin_stack | 판매 창 열림 금화 쌓임(4번) | https://pixabay.com/sound-effects/film-special-effects-drop-coin-384921/ | 2026-10-23 | 울림 0.3초까지, 리미터 약 +3dB(1.10→0.30초). 피치 1.00→1.12 |
+| sell_open_coin_burst | 판매 창 열림 금화 터짐 | https://pixabay.com/sound-effects/film-special-effects-spinning-coin-on-table-352448/ | 2026-10-23 | 원본 0.185~1.61초, 리미터 약 +5dB(2.09→1.42초). 끝까지 재생 |
+| portal_idle_loop | 긴급 탈출 포탈 근처 대기음(반복) | https://pixabay.com/sound-effects/film-special-effects-black-hole-55468/ | 2026-10-23 | 원본 0.74~10.74초 정방향+역방향 이음(82→20.01초, 모노). 압축된 채 메모리 |

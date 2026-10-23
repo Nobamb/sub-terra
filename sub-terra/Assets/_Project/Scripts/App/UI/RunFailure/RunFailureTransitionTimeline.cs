@@ -1,3 +1,4 @@
+using SubTerra.App.Audio;
 using SubTerra.App.UI.Sell;
 using SubTerra.Shared;
 using UnityEngine;
@@ -127,6 +128,12 @@ namespace SubTerra.App.UI.RunFailure
             {
                 BeginConfirm();
             }
+        }
+
+        /// <summary>B-162: 이번 진행(previous → now)에서 TV 켜짐 단계가 시작됐는가. 큰 dt로 건너뛰어도 한 번만 참이다.</summary>
+        public bool CrossedTvTurnOn(float previous, float now)
+        {
+            return SfxPlayback.Crossed(previous, now, PreSurfaceLoadDuration);
         }
 
         public void BeginConfirm()

@@ -40,6 +40,16 @@ namespace SubTerra.Shared.Audio
         GoldLever = 31,
         GoldReelStop = 32,
         GoldCoinPop = 33,
-        StorageOrePop = 34
+        StorageOrePop = 34,
+        RunFailGlitch = 35,
+        RunFailBlackout = 36,
+        RunFailRowTick = 37,
+        EscapeArrive = 38,
+        BriefingGlitch = 39,
+        BriefingGlitchShort = 40,
+        BriefingClose = 41,
+        SellCoinStack = 42,
+        SellCoinBurst = 43,
+        PortalIdleLoop = 44
     }
 }
