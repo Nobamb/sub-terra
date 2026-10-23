@@ -1,0 +1,97 @@
+diff --git a/sub-terra/Assets/_Project/Scripts/App/Outpost/OutpostService.cs b/sub-terra/Assets/_Project/Scripts/App/Outpost/OutpostService.cs
+index d5d2f23e..1e883718 100644
+--- a/sub-terra/Assets/_Project/Scripts/App/Outpost/OutpostService.cs
++++ b/sub-terra/Assets/_Project/Scripts/App/Outpost/OutpostService.cs
+@@ -393,34 +393,27 @@ namespace SubTerra.App.Outpost
+                     "플레이어 화물 수량 한도를 초과합니다."));
+             }
+ 
+-            var addedWeight = info.UnitWeight * transferQuantity;
+-            if (addedWeight < 0f
+-                || inventory.CurrentWeight + addedWeight > inventory.MaxCapacity + 0.0001f)
+-            {
+-                return Complete(Fail(
+-                    OutpostOperationStatus.CapacityExceeded,
+-                    OutpostOperationKind.Withdraw,
+-                    "플레이어 화물 한도를 초과합니다."));
+-            }
+-
+-            // 정확히 전량을 수용할 수 있음을 확인한 뒤 이동한다.
++            // 화물의 기존 부분 수용 규칙을 사용하고 실제로 받은 양만 보관함에서 차감한다.
+             var addition = inventory.TryAddMineral(mineralId, transferQuantity);
+-            if (addition.Status != InventoryMutationStatus.Success
+-                || addition.AcceptedQuantity != transferQuantity)
++            if ((addition.Status != InventoryMutationStatus.Success && addition.Status != InventoryMutationStatus.PartialAccept)
++                || addition.AcceptedQuantity <= 0)
+             {
+                 return Complete(Fail(
+                     OutpostOperationStatus.CapacityExceeded,
+                     OutpostOperationKind.Withdraw,
+-                    "플레이어 화물 이동에 실패했습니다."));
++                    "자원을 꺼낼 화물 공간이 부족합니다."));
+             }
+ 
+-            state.SetStorageQuantity(mineralId, storageQuantity - transferQuantity);
++            int accepted = addition.AcceptedQuantity;
++            state.SetStorageQuantity(mineralId, storageQuantity - accepted);
+             var result = Success(
+                 OutpostOperationKind.Withdraw,
+                 mineralId,
+-                transferQuantity,
++                accepted,
+                 0,
+-                "화물로 " + transferQuantity + "개를 옮겼습니다.");
++                accepted < transferQuantity
++                    ? "화물 공간이 부족해 " + accepted + "개만 꺼냈습니다."
++                    : "화물로 " + accepted + "개를 옮겼습니다.");
+             RaiseSnapshotChanged();
+             return Complete(result);
+         }
+diff --git a/sub-terra/Assets/_Project/Scripts/App/UI/Outpost/StoragePopupView.cs b/sub-terra/Assets/_Project/Scripts/App/UI/Outpost/StoragePopupView.cs
+index c045b6b7..c3f7e69b 100644
+--- a/sub-terra/Assets/_Project/Scripts/App/UI/Outpost/StoragePopupView.cs
++++ b/sub-terra/Assets/_Project/Scripts/App/UI/Outpost/StoragePopupView.cs
+@@ -574,7 +574,8 @@ namespace SubTerra.App.UI.Outpost
+             }
+ 
+             var deposit = HasSelection ? StorageTransferPreview.DepositAmount(quantity, owned) : 0;
+-            var withdraw = HasSelection ? StorageTransferPreview.WithdrawAmount(quantity, stored) : 0;
++            var requestedWithdraw = HasSelection ? StorageTransferPreview.WithdrawAmount(quantity, stored) : 0;
++            var withdraw = HasSelection ? StorageTransferPreview.WithdrawAmount(quantity, selectedId, storage, playerCargo) : 0;
+             if (!HasSelection)
+             {
+                 previewText.text = "<color=#9EC2D1>" + PreviewPrompt + "</color>";
+@@ -582,7 +583,8 @@ namespace SubTerra.App.UI.Outpost
+             else
+             {
+                 previewText.text = "보관  <b>" + deposit + "개</b>" + AllNote(quantity, owned)
+-                    + "\n꺼내기  <b>" + withdraw + "개</b>" + AllNote(quantity, stored);
++                    + "\n꺼내기  <b>" + withdraw + "개</b>"
++                    + (withdraw < requestedWithdraw ? " (화물 공간 한도)" : AllNote(quantity, stored));
+             }
+ 
+             depositButton.Button.interactable = !busy && deposit > 0;
+diff --git a/sub-terra/Assets/_Project/Scripts/App/UI/Outpost/StorageTransferPreview.cs b/sub-terra/Assets/_Project/Scripts/App/UI/Outpost/StorageTransferPreview.cs
+index 9143bbca..11243879 100644
+--- a/sub-terra/Assets/_Project/Scripts/App/UI/Outpost/StorageTransferPreview.cs
++++ b/sub-terra/Assets/_Project/Scripts/App/UI/Outpost/StorageTransferPreview.cs
+@@ -107,6 +107,19 @@ namespace SubTerra.App.UI.Outpost
+             return OutpostTransferQuantity.ClampToAvailable(quantity, stored);
+         }
+ 
++        public static int WithdrawAmount(int quantity, string mineralId, InventorySnapshot storage, InventorySnapshot cargo)
++        {
++            if (storage == null || cargo == null || string.IsNullOrEmpty(mineralId)) return 0;
++            foreach (var stack in storage.Stacks)
++            {
++                if (stack.MineralId != mineralId) continue;
++                int requested = WithdrawAmount(quantity, stack.Quantity);
++                int fitting = InventoryCalculator.MaxFittingUnits(cargo.MaxCapacity - cargo.CurrentWeight, stack.UnitWeight);
++                return System.Math.Min(requested, fitting);
++            }
++            return 0;
++        }
++
+         /// <summary>등장 연출에 튀어나올 광물 ID(화물 → 보관 순, 중복 없이 최대 max개).</summary>
+         public static List<string> PopIds(InventorySnapshot playerCargo, InventorySnapshot storage, int max)
+         {
