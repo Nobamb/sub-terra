@@ -28,7 +28,7 @@ namespace SubTerra.App.Audio
             { SfxId.UiSlotSelect, SfxId.UiClick },
         };
 
-        /// <summary>SfxId 순서대로 15칸(None·비워 둔 3번 제외). 파일 이름은 확장자 제외.</summary>
+        /// <summary>SfxId 순서대로 33칸(None·비워 둔 3번 제외). 파일 이름은 확장자 제외.</summary>
         public static IReadOnlyList<(SfxEntry Entry, string FileName)> Create()
         {
             return new List<(SfxEntry, string)>
@@ -61,6 +61,47 @@ namespace SubTerra.App.Audio
                     maxDuration: 0.6f, fadeOut: 0.1f), "alert_risk_tick"),
                 // 파일이 아직 없는 칸. 비어 있는 동안 UiClick으로 대신 나고, 파일이 들어오면 같은 이름으로 채워진다.
                 (new SfxEntry(SfxId.UiSlotSelect, SfxBus.UI, volume: 0.8f), "ui_slot_select"),
+
+                // B-160. 경보 반복을 끊지 않도록 Alert 버스는 쓰지 않는다. 길이는 다듬은 파일 기준.
+                // 0.99초.
+                (new SfxEntry(SfxId.SellConfirm, SfxBus.UI, volume: 0.6f), "sell_confirm"),
+                // 1.80초.
+                (new SfxEntry(SfxId.StorageBoxRise, SfxBus.World, volume: 0.5f), "storage_box_rise"),
+                // 0.31초.
+                (new SfxEntry(SfxId.StorageLidOpen, SfxBus.World, volume: 0.7f), "storage_lid_open"),
+                // 1.34초.
+                (new SfxEntry(SfxId.StorageTakeAll, SfxBus.World, volume: 0.6f), "storage_take_all"),
+                // 1.70초. 앞 0.6초 SF 소리 뒤 세 장 넘김.
+                (new SfxEntry(SfxId.GuidePageFlipX3, SfxBus.UI, volume: 0.5f), "guide_page_flip_x3"),
+                // 0.28초.
+                (new SfxEntry(SfxId.GuidePageFlip, SfxBus.UI, volume: 0.5f), "guide_page_flip_loop"),
+                // 0.98초, 째깍 4번 → 0.6초만.
+                (new SfxEntry(SfxId.TimerTick, SfxBus.UI, volume: 0.45f,
+                    maxDuration: 0.6f, fadeOut: 0.1f), "timer_tick"),
+                // 0.23초.
+                (new SfxEntry(SfxId.TimerTickSingle, SfxBus.UI, volume: 0.4f), "timer_tick_single"),
+                // 1.43초.
+                (new SfxEntry(SfxId.TimerEnd, SfxBus.UI, volume: 0.6f), "timer_end"),
+                // 1.72초(삑 0.12초 + 무음) → 목소리를 오래 잡지 않게 0.3초만.
+                (new SfxEntry(SfxId.MinimapBeep, SfxBus.UI, volume: 0.4f, maxDuration: 0.3f), "minimap_beep"),
+                // 0.43초.
+                (new SfxEntry(SfxId.KeycapPop, SfxBus.UI, volume: 0.45f), "keycap_pop"),
+                // 2.42초 → 1.3초만.
+                (new SfxEntry(SfxId.PortalActivate, SfxBus.World, volume: 0.5f,
+                    maxDuration: 1.3f, fadeOut: 0.3f), "portal_activate"),
+                // 0.37초.
+                (new SfxEntry(SfxId.PortalSwitch, SfxBus.UI, volume: 0.5f), "portal_switch"),
+                // 1.93초.
+                (new SfxEntry(SfxId.PortalWarp, SfxBus.World, volume: 0.6f), "portal_warp"),
+                // 0.62초.
+                (new SfxEntry(SfxId.GoldLever, SfxBus.World, volume: 0.6f), "gold_lever"),
+                // 1.09초 → 0.6초만.
+                (new SfxEntry(SfxId.GoldReelStop, SfxBus.World, volume: 0.5f,
+                    maxDuration: 0.6f, fadeOut: 0.2f), "gold_reel_stop"),
+                // 0.89초.
+                (new SfxEntry(SfxId.GoldCoinPop, SfxBus.World, volume: 0.45f), "gold_coin_pop"),
+                // 0.70초.
+                (new SfxEntry(SfxId.StorageOrePop, SfxBus.World, volume: 0.5f), "storage_ore_pop"),
             };
         }
     }

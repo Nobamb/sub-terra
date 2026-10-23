@@ -1,6 +1,8 @@
 using System.Collections.Generic;
+using SubTerra.App.Audio;
 using SubTerra.App.Run;
 using SubTerra.Shared;
+using SubTerra.Shared.Audio;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
@@ -23,6 +25,13 @@ namespace SubTerra.App.UI.EmergencyEscape
             System.Array.Empty<EmergencyEscapeDestinationOption>();
         private bool busy;
         private int openFrame = -1;
+        private int previewedIndex = -1;
+        private readonly SfxThrottle switchSfx = new SfxThrottle(SwitchSfxInterval);
+
+        public const float SwitchSfxInterval = 0.08f;
+
+        /// <summary>목적지 변경음 간격 제한. 테스트는 Clock을 바꿔 시간을 주입한다.</summary>
+        public SfxThrottle SwitchSfx => switchSfx;
 
         public bool IsOpen
         {
@@ -164,6 +173,8 @@ namespace SubTerra.App.UI.EmergencyEscape
             UiKeyboardSubmitGuard.ClearSelection();
             AcquirePause();
             view.SetVisible(true);
+            // 웜홀 회전·창 튀어나옴과 같이 간다. 기본 선택 미리보기는 무음.
+            SfxPlayer.Play(SfxId.PortalActivate);
             // 기본 선택(엘리베이터)부터 CCTV로 보여 준다.
             PreviewDestinationAt(view.SelectedDestinationIndex);
         }
@@ -197,6 +208,7 @@ namespace SubTerra.App.UI.EmergencyEscape
             }
 
             var selected = options[index];
+            previewedIndex = index;
             view.SetSelectedDestinationIndex(index);
             if (preview == null)
             {
@@ -218,7 +230,16 @@ namespace SubTerra.App.UI.EmergencyEscape
 
             if (view.Model.Step(delta))
             {
+                PlaySwitchSfx();
                 PreviewDestinationAt(view.Model.SelectedIndex);
+            }
+        }
+
+        private void PlaySwitchSfx()
+        {
+            if (switchSfx.TryPass())
+            {
+                SfxPlayer.Play(SfxId.PortalSwitch);
             }
         }
 
@@ -266,6 +287,7 @@ namespace SubTerra.App.UI.EmergencyEscape
                 view?.SetResult(reason, !success);
                 if (success)
                 {
+                    SfxPlayer.Play(SfxId.PortalWarp);
                     Close();
                 }
             }
@@ -362,8 +384,14 @@ namespace SubTerra.App.UI.EmergencyEscape
             view.DestinationSelected -= HandleDestinationSelected;
         }
 
+        // 행 클릭은 이벤트 전에 선택을 바꾸므로 마지막으로 비춘 목적지와 비교한다.
         private void HandleDestinationSelected(int index)
         {
+            if (index != previewedIndex)
+            {
+                PlaySwitchSfx();
+            }
+
             PreviewDestinationAt(index);
         }
     }

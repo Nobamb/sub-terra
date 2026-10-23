@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using SubTerra.App.Audio;
 using SubTerra.App.UI.HUD;
+using SubTerra.Shared.Audio;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -531,6 +533,7 @@ namespace SubTerra.App.UI.Sell
             {
                 case ResourceSellConfirmStatus.Sold:
                     SetStatus(outcome.Message, ResourceSellUi.Ok);
+                    SfxPlayer.Play(SfxId.SellConfirm);
                     StartSaleEffect(outcome);
                     break;
                 case ResourceSellConfirmStatus.Adjusted:

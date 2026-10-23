@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace SubTerra.App.Audio
@@ -74,6 +75,54 @@ namespace SubTerra.App.Audio
         public static bool IsThrottled(float now, float lastPlayedAt, float minInterval)
         {
             return now - lastPlayedAt < minInterval;
+        }
+
+        /// <summary>연출 시간표의 시점 at을 이번 진행(previous → now)에서 넘었는가. 프레임이 튀어도 한 번만 참이다.</summary>
+        public static bool Crossed(float previous, float now, float at)
+        {
+            return previous < at && at <= now;
+        }
+    }
+
+    /// <summary>
+    /// 콜 사이트별 칸 최소 간격. SfxPlayer 공통 제한(0.05초)보다 긴 간격이 필요한 소리에 쓴다.
+    /// 시계는 주입할 수 있고, 기본은 비스케일 실제 시각이다.
+    /// </summary>
+    public sealed class SfxThrottle
+    {
+        private readonly float minInterval;
+        private float lastAt;
+        private bool passed;
+
+        public SfxThrottle(float minInterval, Func<float> clock = null)
+        {
+            this.minInterval = minInterval;
+            Clock = clock ?? (() => Time.realtimeSinceStartup);
+        }
+
+        public Func<float> Clock { get; set; }
+
+        public bool TryPass()
+        {
+            return TryPass(Clock());
+        }
+
+        /// <summary>간격 안이면 false. 통과하면 이 시각을 기록한다.</summary>
+        public bool TryPass(float now)
+        {
+            if (passed && SfxPlayback.IsThrottled(now, lastAt, minInterval))
+            {
+                return false;
+            }
+
+            passed = true;
+            lastAt = now;
+            return true;
+        }
+
+        public void Reset()
+        {
+            passed = false;
         }
     }
 }

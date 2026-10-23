@@ -21,3 +21,21 @@
 | alarm_mine_wail | 위험도 상승 경보 | https://pixabay.com/sound-effects/film-special-effects-factory-alarm-95712/ | | Factory Alarm. 웽 한 번(약 0.4~0.6초). 단계별 반복·높이는 코드가 조절 |
 | alert_risk_tick | 위험도 하강 틱 | https://pixabay.com/sound-effects/film-special-effects-ui-ai-system-notification-537631/ | | UI AI System Notification |
 | ui_slot_select | 세이브 슬롯 선택 | | | 선정 전. 비어 있으면 ui_click으로 대신 난다 |
+| sell_confirm | 판매 확정 | https://pixabay.com/sound-effects/film-special-effects-cash-register-kaching-376867/ | 2026-10-23 | 앞뒤 무음 정리(1.10→0.99초) |
+| storage_box_rise | 보관함 상자 올라옴 | https://pixabay.com/sound-effects/film-special-effects-sci-fi-door-unlock-and-hydraulic-open-2-546619/ | 2026-10-23 | 원본 0.80~2.60초만 남김(5.11→1.80초), 페이드 인·아웃 |
+| storage_lid_open | 보관함 뚜껑 열림 | https://pixabay.com/sound-effects/film-special-effects-box-open-90674/ | 2026-10-23 | 앞 무음 정리(0.48→0.31초), 끝 짧은 페이드 |
+| storage_ore_pop | 보관함 광물 튀어나옴 | https://pixabay.com/sound-effects/film-special-effects-gem-release-384932/ | 2026-10-23 | 꼬리 무음 정리(1.02→0.70초) |
+| storage_take_all | 전체 보관·꺼내기 | https://pixabay.com/sound-effects/film-special-effects-heavy-rock-rolling-515254/ | 2026-10-23 | 굴러가는 꼬리 자르고 페이드(2.11→1.34초) |
+| guide_page_flip_x3 | 게임 가이드 첫 등장(세 장 넘김) | https://pixabay.com/sound-effects/film-special-effects-flipping-book-page-499646/ | 2026-10-23 | 넘김 시작 SF 부분 + 넘김 1번을 0.4초 간격 3번 합침(1.70초) |
+| guide_page_flip_loop | 게임 가이드 다시 열기(한 장 넘김) | https://pixabay.com/sound-effects/film-special-effects-flipping-book-page-499646/ | 2026-10-23 | 원본 0.64~0.92초 넘김 1번(0.28초) |
+| timer_tick | 3시간 만료 시계 연출 시침 회전 | https://pixabay.com/sound-effects/film-special-effects-tick-tock-94356/ | 2026-10-23 | 앞뒤 정리(1.04→0.98초). 앞 0.6초만 재생 |
+| timer_tick_single | 광산 초기화 시계 막판 1초 째깍 | https://pixabay.com/sound-effects/film-special-effects-tick-tock-94356/ | 2026-10-23 | 첫 째깍 1번만(0.23초) |
+| timer_end | 3시간 만료 시계 흔들림 벨 | https://pixabay.com/sound-effects/film-special-effects-generic-alarm-clock-86759/ | 2026-10-23 | 벨 3번까지만, 끝 페이드(4.56→1.43초) |
+| minimap_beep | 미니맵 M 단계 전환 | https://pixabay.com/sound-effects/film-special-effects-digital-beep-151921/ | 2026-10-23 | 다듬지 않은 원본 mp3(1.72초). 앞 0.3초만 재생 |
+| keycap_pop | 키 조작 창 키캡 튀어나옴 | https://pixabay.com/sound-effects/film-special-effects-keyboard-click-327728/ | 2026-10-23 | 잔향 꼬리 정리(1.03→0.43초) |
+| portal_activate | 긴급 탈출 포탈 창 열림 | https://pixabay.com/sound-effects/technology-energy-charge-1-482503/ | 2026-10-23 | 고조 뒤 감쇠 페이드(3.02→2.42초). 앞 1.3초만 재생 |
+| portal_switch | 긴급 탈출 목적지 변경 | https://pixabay.com/sound-effects/film-special-effects-tuning-in-blip-201632/ | 2026-10-23 | 앞 무음 정리, 음량 키움(0.41→0.37초) |
+| portal_warp | 긴급 탈출 이동 | https://pixabay.com/sound-effects/film-special-effects-sci-fi-portal-jump-05-416165/ | 2026-10-23 | 잔향 꼬리 페이드(3.50→1.93초) |
+| gold_lever | 골드 팝업 레버 | https://pixabay.com/sound-effects/film-special-effects-clank1-91862/ | 2026-10-23 | 꼬리 정리(0.71→0.62초) |
+| gold_reel_stop | 골드 팝업 숫자 착지 | https://pixabay.com/sound-effects/film-special-effects-money-counting-machine-sfx-406495/ | 2026-10-23 | 원본 0.84~1.92초만(2.23→1.09초). 앞 0.6초만 재생 |
+| gold_coin_pop | 골드 팝업 금화 분출 | https://pixabay.com/sound-effects/film-special-effects-coins-drop-1-404409/ | 2026-10-23 | 앞 무음 제거, 쏟아지는 부분만(2.22→0.89초) |

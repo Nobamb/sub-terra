@@ -22,6 +22,24 @@ namespace SubTerra.Shared.Audio
         WorldFacilityTagBeep = 13,
         AlarmMineWail = 14,
         AlertRiskTick = 15,
-        UiSlotSelect = 16
+        UiSlotSelect = 16,
+        SellConfirm = 17,
+        StorageBoxRise = 18,
+        StorageLidOpen = 19,
+        StorageTakeAll = 20,
+        GuidePageFlipX3 = 21,
+        GuidePageFlip = 22,
+        TimerTick = 23,
+        TimerTickSingle = 24,
+        TimerEnd = 25,
+        MinimapBeep = 26,
+        KeycapPop = 27,
+        PortalActivate = 28,
+        PortalSwitch = 29,
+        PortalWarp = 30,
+        GoldLever = 31,
+        GoldReelStop = 32,
+        GoldCoinPop = 33,
+        StorageOrePop = 34
     }
 }

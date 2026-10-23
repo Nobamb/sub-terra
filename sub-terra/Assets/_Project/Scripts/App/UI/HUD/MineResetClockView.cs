@@ -1,4 +1,6 @@
 using System;
+using SubTerra.App.Audio;
+using SubTerra.Shared.Audio;
 using UnityEngine;
 
 namespace SubTerra.App.UI.HUD
@@ -111,10 +113,19 @@ namespace SubTerra.App.UI.HUD
             if (minutes >= 60 || seconds >= 60) return;
             var total = hours * 3600 + minutes * 60 + seconds;
             if (!style.Observe(total)) return;
+            var previous = displaySeconds;
             displaySeconds = total;
+            if (poweredOn && IsFinalTick(previous, total)) SfxPlayer.Play(SfxId.TimerTickSingle);
             for (var i = 0; i < 6; i++)
                 masks[i] = SevenSegmentGlyph.GetMask(clock[i + i / 2] - '0');
             Apply();
+        }
+
+        /// <summary>막판(1~60초) 째깍. 표시 초가 정확히 1 줄었을 때만이며 첫 관측(-1)·시간 점프·0초는 무음.</summary>
+        public static bool IsFinalTick(int previous, int next)
+        {
+            return previous >= 0 && previous - next == 1 && next >= 1
+                && MineResetClockStyle.GetBand(next) == MineResetClockBand.Final;
         }
 
         public void SetPowered(bool on, bool immediate = false)

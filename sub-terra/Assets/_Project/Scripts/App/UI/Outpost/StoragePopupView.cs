@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
+using SubTerra.App.Audio;
 using SubTerra.App.Inventory;
 using SubTerra.App.UI.HUD;
 using SubTerra.App.UI.Sell;
+using SubTerra.Shared.Audio;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -259,6 +261,7 @@ namespace SubTerra.App.UI.Outpost
             transform.SetAsLastSibling();
             PopupWindowSorting.BringToFront(canvas);
             ApplyOpen(0f);
+            SfxPlayer.Play(SfxId.StorageBoxRise);
             return true;
         }
 
@@ -315,7 +318,9 @@ namespace SubTerra.App.UI.Outpost
             switch (state)
             {
                 case PopupState.Opening:
+                    var previous = clock;
                     clock += dt;
+                    PlayOpeningSfx(previous, clock);
                     if (clock >= StorageBoxTimeline.OpenDuration)
                     {
                         state = PopupState.Open;
@@ -338,6 +343,20 @@ namespace SubTerra.App.UI.Outpost
 
                     ApplyClose(clock);
                     break;
+            }
+        }
+
+        // 광물 사이 간격(0.04초)은 연타 제한보다 짧아 첫 광물에서 한 번만 낸다.
+        private void PlayOpeningSfx(float previous, float now)
+        {
+            if (SfxPlayback.Crossed(previous, now, StorageBoxTimeline.LidOpenStart))
+            {
+                SfxPlayer.Play(SfxId.StorageLidOpen);
+            }
+
+            if (popCount > 0 && SfxPlayback.Crossed(previous, now, StorageBoxTimeline.PopStart))
+            {
+                SfxPlayer.Play(SfxId.StorageOrePop);
             }
         }
 

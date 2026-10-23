@@ -1,6 +1,8 @@
 using System;
+using SubTerra.App.Audio;
 using SubTerra.App.Outpost;
 using SubTerra.App.UI.Sell;
+using SubTerra.Shared.Audio;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -168,9 +170,18 @@ namespace SubTerra.App.UI.Outpost
             presenter?.RequestWithdraw(selectedMineralId, quantity);
         }
 
-        public void DepositAll() => presenter?.RequestDepositAll();
+        public void DepositAll() => PlayTakeAllSfx(presenter?.RequestDepositAll());
 
-        public void WithdrawAll() => presenter?.RequestWithdrawAll();
+        public void WithdrawAll() => PlayTakeAllSfx(presenter?.RequestWithdrawAll());
+
+        /// <summary>전체 보관·꺼내기가 실제로 옮겼을 때만 소리를 낸다. 한 개씩 옮기기는 무음.</summary>
+        public static void PlayTakeAllSfx(OutpostOperationResult? result)
+        {
+            if (result.HasValue && result.Value.IsSuccess)
+            {
+                SfxPlayer.Play(SfxId.StorageTakeAll);
+            }
+        }
 
         /// <summary>판매 창 자원 아이콘 조회(카탈로그의 기존 아이콘). 표시 전용.</summary>
         public void SetItemIconResolver(Func<string, Sprite> resolver)

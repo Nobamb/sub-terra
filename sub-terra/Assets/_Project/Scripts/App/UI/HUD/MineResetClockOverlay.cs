@@ -232,6 +232,8 @@ namespace SubTerra.App.UI.HUD
                 return;
             }
 
+            // 시계 연출 없이 카드만 뜨는 경로는 벨만 한 번 낸다.
+            SfxPlayer.Play(SfxId.TimerEnd);
             OpenPopupCard(0f);
         }
 

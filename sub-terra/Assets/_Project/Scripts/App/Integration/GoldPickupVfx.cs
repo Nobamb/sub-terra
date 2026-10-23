@@ -41,6 +41,7 @@ namespace SubTerra.App.Integration
         private readonly List<DustAnim> dusts = new List<DustAnim>(2);
         private readonly List<HudParticle> hudParticles = new List<HudParticle>(MaxHudParticles);
         private readonly List<PulseTarget> pulseTargets = new List<PulseTarget>(2);
+        private readonly GoldPickupSfx sfx = new GoldPickupSfx();
         private float pulseElapsed = -1f;
 
         public int PendingGold => pendingGold;
@@ -217,6 +218,7 @@ namespace SubTerra.App.Integration
             if (result.Changed)
             {
                 popupVisual.OnMerged(result);
+                sfx.OnMerged(result);
                 popupVisual.Apply(popupState);
             }
 
@@ -240,6 +242,7 @@ namespace SubTerra.App.Integration
             // 이미 있는 금화를 먼저 진행해야 이번 착지로 새로 나온 금화가 나이 0에서 시작한다.
             popupVisual.Tick(dt);
             popupVisual.Handle(events, popupState);
+            sfx.Handle(events);
             popupVisual.Apply(popupState);
             UpdatePopupPose();
 

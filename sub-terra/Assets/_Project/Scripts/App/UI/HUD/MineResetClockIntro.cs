@@ -1,4 +1,6 @@
 using System;
+using SubTerra.App.Audio;
+using SubTerra.Shared.Audio;
 using UnityEngine;
 
 namespace SubTerra.App.UI.HUD
@@ -59,7 +61,30 @@ namespace SubTerra.App.UI.HUD
             }
 
             // 씬 로딩 직후 큰 프레임 간격으로 연출을 건너뛰지 않게 한 프레임 진행량을 제한한다.
-            time += Mathf.Min(Time.unscaledDeltaTime, 1f / 20f);
+            Tick(Mathf.Min(Time.unscaledDeltaTime, 1f / 20f));
+        }
+
+        /// <summary>테스트와 Update가 같은 경로로 시간을 진행한다.</summary>
+        public void Tick(float dt)
+        {
+            if (!playing)
+            {
+                return;
+            }
+
+            var previous = time;
+            time += dt;
+            // 시침이 돌기 시작할 때 째깍, 흔들림이 시작할 때 벨.
+            if (SfxPlayback.Crossed(previous, time, MineResetClockIntroTimeline.HandStart))
+            {
+                SfxPlayer.Play(SfxId.TimerTick);
+            }
+
+            if (SfxPlayback.Crossed(previous, time, MineResetClockIntroTimeline.HandEnd))
+            {
+                SfxPlayer.Play(SfxId.TimerEnd);
+            }
+
             if (time >= MineResetClockIntroTimeline.Duration)
             {
                 Apply(MineResetClockIntroTimeline.Duration);
