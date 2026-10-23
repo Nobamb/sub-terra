@@ -408,6 +408,39 @@ namespace SubTerra.App.Tests.Progression
             synchronizer.Dispose();
         }
 
+        [Test]
+        public void Issue211_SurfacePrefabPurchaseUpdatesVisibleLevelAndEnergyWithoutSceneChange()
+        {
+            var data = CreateUpgrade(DataIds.Upgrades.MaximumEnergy, 2, 20f);
+            var wallet = new Wallet();
+            wallet.Set(DataIds.Minerals.Copper, 10);
+            var service = new ProgressionService(new UpgradeState(), new Catalog(data), wallet);
+            var gameState = GameState.CreateNew();
+            var inventory = new InventoryService(new InMemoryMineralCatalog(), 50f, gameState);
+            using var synchronizer = new ProgressionDerivedStateSynchronizer(gameState, inventory);
+            synchronizer.Bind(service);
+            var prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(
+                "Assets/_Project/Prefabs/UI/SurfaceBasePanel.prefab");
+            var instance = Object.Instantiate(prefab);
+            try
+            {
+                var binder = instance.GetComponentInChildren<SubTerra.App.UI.Progression.ProgressionPanelBinder>(true);
+                binder.BindTo(service);
+                instance.GetComponent<SubTerra.App.UI.SurfaceBase.SurfaceBaseView>().SetUpgradeVisible(true);
+                Assert.That(binder.SelectUpgrade(data.Id), Is.True);
+                var node = binder.GetComponent<SubTerra.App.UI.Progression.ProgressionPanelView>().TreeView.FindNode(data.Id);
+                var label = (TMPro.TMP_Text)typeof(SubTerra.App.UI.Progression.UpgradeTreeNodeView)
+                    .GetField("levelLabel", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).GetValue(node);
+                Assert.That(label.text, Is.EqualTo("Lv.0/2"));
+                binder.PurchaseSelected();
+                Assert.That(service.LastPurchaseResult.IsSuccess, Is.True);
+                Assert.That(label.text, Is.EqualTo("Lv.1/2"));
+                Assert.That(gameState.Player.MaxEnergy, Is.EqualTo(120));
+                Assert.That(wallet.Get(DataIds.Minerals.Copper), Is.EqualTo(9));
+            }
+            finally { Object.DestroyImmediate(instance); }
+        }
+
         [TestCase(DataIds.Upgrades.MaximumEnergy)]
         [TestCase(DataIds.Upgrades.MaximumCargo)]
         public void PurchaseCompleted_ObservesUpdatedDerivedState_BeforeAutoSave(string upgradeId)
