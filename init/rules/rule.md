@@ -1,21 +1,22 @@
 # Project Sub-Terra Agent 작업 규칙
 
-이 문서는 모든 Agent가 작업 전 읽는 진입점이다. 아래 공통 규칙은 작업 분야에 관계없이 적용한다. 관련 세부 문서를 작업 전에 읽고, 한 작업이 여러 분야에 걸치면 해당 파일을 모두 읽는다. 원래 조항 번호는 이동 추적을 위해 유지했다. 이동 내역은 저장소 루트의 `RULE_MIGRATION.md`에 기록되어 있다.
+이 문서는 모든 Agent가 작업 전 읽는 진입점이다. 아래 공통 규칙은 작업 분야에 관계없이 적용한다. 관련 세부 문서를 작업 전에 읽고, 한 작업이 여러 분야에 걸치면 해당 파일을 모두 읽는다. 원래 조항 번호는 이동 추적을 위해 유지했다. 이동 내역은 같은 폴더의 [`RULE_MIGRATION.md`](RULE_MIGRATION.md)에 기록되어 있다.
 
 ## 세부 규칙 라우팅
 
 | 작업 상황                                                                      | 추가로 읽을 파일                                                                                                                                    |
 | ------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 요구사항, MVP 범위, 담당자 역할, 병렬·순차 작업 계획                           | [`rules/project-scope.md`](rules/project-scope.md)                                                                                                  |
-| Git, 브랜치, PR, 변경 파일 범위, 커밋·병합                                     | [`rules/git-commit.md`](rules/git-commit.md)                                                                                                        |
-| Unity Scene·Prefab·공용 설정·직렬화·시각 에셋                                  | [`rules/unity-project.md`](rules/unity-project.md)                                                                                                  |
-| UI, uGUI/TMP, Layout Builder, UI Prefab·Scene 변경 또는 복구                   | [`rules/ui-ugui.md`](rules/ui-ugui.md)와 [`rules/unity-project.md`](rules/unity-project.md); Builder 코드도 바꾸면 [`rules/code.md`](rules/code.md) |
-| C# 코드·Shared 계약·구조·로그                                                  | [`rules/code.md`](rules/code.md)                                                                                                                    |
-| GameDataCatalog, ID, DTO, 세이브, 외부 AI·전송, 결정론적 게임플레이·Digger-Bot | [`rules/data-save-gameplay.md`](rules/data-save-gameplay.md); 코드 수정도 있으면 [`rules/code.md`](rules/code.md)                                   |
-| Build Profile, 자동 저장, 배포 결과물, 기능·Play/Edit Mode·Windows 빌드 검증   | [`rules/testing-qa.md`](rules/testing-qa.md)                                                                                                        |
-| 작업 결과 제출 또는 Agent 작업 요청 작성                                       | [`rules/reporting.md`](rules/reporting.md)                                                                                                          |
+| 요구사항, MVP 범위, 담당자 역할, 병렬·순차 작업 계획                           | [`project-scope.md`](project-scope.md)                                                                                                  |
+| Git, 브랜치, PR, 변경 파일 범위, 커밋·병합                                     | [`git-commit.md`](git-commit.md)                                                                                                        |
+| Unity Scene·Prefab·공용 설정·직렬화·시각 에셋                                  | [`unity-project.md`](unity-project.md)                                                                                                  |
+| UI, uGUI/TMP, Layout Builder, UI Prefab·Scene 변경 또는 복구                   | [`ui-ugui.md`](ui-ugui.md)와 [`unity-project.md`](unity-project.md); Builder 코드도 바꾸면 [`code.md`](code.md) |
+| C# 코드·Shared 계약·구조·로그                                                  | [`code.md`](code.md)                                                                                                                    |
+| GameDataCatalog, ID, DTO, 세이브, 외부 AI·전송, 결정론적 게임플레이·Digger-Bot | [`data-save-gameplay.md`](data-save-gameplay.md); 코드 수정도 있으면 [`code.md`](code.md)                                   |
+| Build Profile, 자동 저장, 배포 결과물, 기능·Play/Edit Mode·Windows 빌드 검증   | [`testing-qa.md`](testing-qa.md)                                                                                                        |
+| 작업 결과 제출 또는 Agent 작업 요청 작성                                       | [`reporting.md`](reporting.md)                                                                                                          |
+| 모든 작업 시작 전 (실수 기록 확인) | [`lessons.md`](lessons.md) |
 
-저장소 파일을 변경하는 작업은 `rules/git-commit.md`를, 작업 결과를 제출할 때는 `rules/reporting.md`를 추가로 읽는다. UI 변경에는 `rules/ui-ugui.md`의 커밋 범위 검증 및 회귀 복구 규칙도 적용한다. 작업의 규칙 간 충돌이 보이면 임의로 완화하지 말고 보고한다.
+저장소 파일을 변경하는 작업은 `git-commit.md`를, 작업 결과를 제출할 때는 `reporting.md`를 추가로 읽는다. UI 변경에는 `ui-ugui.md`의 커밋 범위 검증 및 회귀 복구 규칙도 적용한다. 작업의 규칙 간 충돌이 보이면 임의로 완화하지 말고 보고한다. 모든 작업은 16번 작업 태도 규칙을 따르고, 시작 전에 `lessons.md`를 읽는다.
 
 1. 규칙 우선순위
    Agent는 작업 중 판단이 필요한 상황에서 아래 우선순위를 따른다.

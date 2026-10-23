@@ -217,7 +217,7 @@ sub-terra/
 | ------------------------- | ---------------------------------------------------------- |
 | 시스템·MVP 범위 전체      | [`init/PRD.md`](init/PRD.md)                               |
 | 폴더와 씬 구조            | [`init/structure.md`](init/structure.md)                   |
-| 작업 규칙과 세이브 안정성 | [`init/rule.md`](init/rule.md)                             |
+| 작업 규칙과 세이브 안정성 | [`init/rules/rule.md`](init/rules/rule.md)                      |
 | 역할 분담                 | [`init/process.md`](init/process.md)                       |
 | 통합 방법                 | [`docs/INTEGRATION_GUIDE.md`](docs/INTEGRATION_GUIDE.md)   |
 | 데모 월드 좌표            | [`docs/A_DEMO_WORLD_GUIDE.md`](docs/A_DEMO_WORLD_GUIDE.md) |
