@@ -1,7 +1,10 @@
 # Sub-Terra SFX 선택 (B-156)
+
+> B-156 때 고른 기록. 지금 게임에 들어간 소리와 최신 출처는 `init/sound-effect-address.md`를 기준으로 본다.
+
 | 파일 이름 | 쓰는 곳 | 주소 | 받은 날짜 | 비고 |
 |---|---|---|---|---|
-| ui_click | 공통 버튼 클릭 | https://pixabay.com/sound-effects/film-special-effects-ui-click-retro-514601/ | | UI Click Retro (SoundShelfStudio) |
+| ui_click | 공통 버튼 클릭 | https://pixabay.com/sound-effects/technology-sci-fi-ui-click-sound-596258/ | 2026-10-25 | Sci-Fi UI Click Sound (SoundShelfStudio). 2026-10-25 교체, 이전 원본 [ui-click-retro-514601](https://pixabay.com/sound-effects/film-special-effects-ui-click-retro-514601/) (UI Click Retro) |
 | ui_confirm | 확인·성공 | https://pixabay.com/sound-effects/film-special-effects-confirm-tap-394001/ | | Confirm Tap (ExistentialTaco) |
 | ui_cancel_fail | 취소·불가·실패 | https://pixabay.com/sound-effects/film-special-effects-ui-error-pop-515668/ | | UI Error Pop |
 | ui_hover | 호버 | https://pixabay.com/sound-effects/film-special-effects-soft-ui-hover-tick-608625/ | | Soft UI Hover Tick |

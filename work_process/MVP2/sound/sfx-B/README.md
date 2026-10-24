@@ -10,8 +10,8 @@
 | storage_lid_open.wav | 보관함 뚜껑 열림 | 0.48s → 0.31s | 앞 무음 정리(삐걱 + 탁 남김). 원본이 탁 소리 직후 바로 끊겨 있어 끝에 짧은 페이드만 넣음 |
 | storage_ore_pop.wav | 광물 튀어나옴 | 1.02s → 0.70s | 꼬리 무음 정리 |
 | storage_take_all.wav | 전체 보관·꺼내기 | 2.11s → 1.34s | 작게 남은 굴러가는 꼬리 자르고 0.15s 페이드아웃 |
-| guide_page_flip.wav | 가이드 페이지 넘김(전체) | 1.22s → 1.10s | 앞뒤 정리 |
-| guide_page_flip_intro.wav | 넘김 시작 SF 느낌 부분 | → 0.60s | 원본 0.02~0.62s(넘기기 직전까지) |
+| guide_page_flip.wav | 가이드 페이지 넘김(전체) | 1.22s → 1.10s | 앞뒤 정리. **게임 미사용**(중간 파일) |
+| guide_page_flip_intro.wav | 넘김 시작 SF 느낌 부분 | → 0.60s | 원본 0.02~0.62s(넘기기 직전까지). **게임 미사용**(x3를 만들 때 쓴 중간 파일) |
 | guide_page_flip_loop.wav | 넘김 1번(반복 재생용) | → 0.28s | 원본 0.64~0.92s, 조용한 지점에서 자르고 짧은 페이드 |
 | guide_page_flip_x3.wav | 시작 + 3번 넘김 미리 합친 것 | → 1.70s | intro 뒤에 loop를 0.4s 간격으로 3번(2·3번째는 조금 작게) |
 | timer_tick.wav | 타이머 째깍(째깍-딱 2회) | 1.04s → 0.98s | 앞뒤 정리 |
@@ -26,6 +26,8 @@
 | gold_reel_stop.wav | 골드 숫자 떨어짐 | 2.23s → 1.09s | 소리가 가장 큰 두 번째 구간(원본 0.84~1.92s)만, 끝 0.3s 페이드 |
 | gold_coin_pop.wav | 골드 코인 튀어나옴 | 2.22s → 0.89s | 앞 무음 0.25s 제거, 동전 쏟아지는 부분만 남기고 0.25s 페이드 |
 
+- guide_page_flip_x3, timer_tick, timer_tick_single은 B-161에서 더 크게 만든 버전으로 바뀜(`sfx-B-fix/README.md`). 출처는 같음.
+
 ## 출처
 | 슬롯 | Pixabay | 원본 파일명 |
 |---|---|---|
@@ -34,8 +36,8 @@
 | storage_lid_open | https://pixabay.com/sound-effects/film-special-effects-box-open-90674/ | freesound_community-box-open-90674.mp3 |
 | storage_ore_pop | https://pixabay.com/sound-effects/film-special-effects-gem-release-384932/ | freesound_gamestudio-gem-release-384932.mp3 |
 | storage_take_all | https://pixabay.com/sound-effects/film-special-effects-heavy-rock-rolling-515254/ | dragon-studio-heavy-rock-rolling-515254.mp3 |
-| guide_page_flip | https://pixabay.com/sound-effects/film-special-effects-flipping-book-page-499646/ | dragon-studio-flipping-book-page-499646.mp3 |
-| timer_tick | https://pixabay.com/sound-effects/film-special-effects-tick-tock-94356/ | freesound_community-tick-tock-94356.mp3 |
+| guide_page_flip_x3, guide_page_flip_loop | https://pixabay.com/sound-effects/film-special-effects-flipping-book-page-499646/ | dragon-studio-flipping-book-page-499646.mp3 |
+| timer_tick, timer_tick_single | https://pixabay.com/sound-effects/film-special-effects-tick-tock-94356/ | freesound_community-tick-tock-94356.mp3 |
 | timer_end | https://pixabay.com/sound-effects/film-special-effects-generic-alarm-clock-86759/ | freesound_community-generic-alarm-clock-86759.mp3 |
 | minimap_beep | https://pixabay.com/sound-effects/film-special-effects-digital-beep-151921/ | universfield-digital-beep-151921.mp3 |
 | keycap_pop | https://pixabay.com/sound-effects/film-special-effects-keyboard-click-327728/ | creatorshome-keyboard-click-327728.mp3 |

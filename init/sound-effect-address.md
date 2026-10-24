@@ -6,7 +6,7 @@
 
 | 파일 이름 | 게임 안에서 쓰는 곳 | 받은 페이지 주소 | 받은 날짜 | 비고 |
 |---|---|---|---|---|
-| ui_click | 공통 버튼 클릭 | https://pixabay.com/sound-effects/film-special-effects-ui-click-retro-514601/ | | UI Click Retro (SoundShelfStudio) |
+| ui_click | 공통 버튼 클릭 | https://pixabay.com/sound-effects/technology-sci-fi-ui-click-sound-596258/ | 2026-10-25 | Sci-Fi UI Click Sound (SoundShelfStudio). 앞 무음 정리, "딸깍" 본체 0.2초만, 모노로 합침, 리미터 약 +6dB(1.39→0.20초). 파일 형식은 기존과 같은 mp3. 이전 원본 ui-click-retro-514601에서 교체 |
 | ui_hover | 버튼 호버 (선택, 기본 끔) | https://pixabay.com/sound-effects/film-special-effects-soft-ui-hover-tick-608625/ | | Soft UI Hover Tick |
 | ui_confirm | 확인·성공 | https://pixabay.com/sound-effects/film-special-effects-confirm-tap-394001/ | | Confirm Tap (ExistentialTaco) |
 | ui_cancel_fail | 취소·불가·실패 | https://pixabay.com/sound-effects/film-special-effects-ui-error-pop-515668/ | | UI Error Pop |
@@ -26,10 +26,10 @@
 | storage_lid_open | 보관함 뚜껑 열림 | https://pixabay.com/sound-effects/film-special-effects-box-open-90674/ | 2026-10-23 | 앞 무음 정리(0.48→0.31초), 끝 짧은 페이드 |
 | storage_ore_pop | 보관함 광물 튀어나옴 | https://pixabay.com/sound-effects/film-special-effects-gem-release-384932/ | 2026-10-23 | 꼬리 무음 정리(1.02→0.70초) |
 | storage_take_all | 전체 보관·꺼내기 | https://pixabay.com/sound-effects/film-special-effects-heavy-rock-rolling-515254/ | 2026-10-23 | 굴러가는 꼬리 자르고 페이드(2.11→1.34초) |
-| guide_page_flip_x3 | 게임 가이드 첫 등장(세 장 넘김) | https://pixabay.com/sound-effects/film-special-effects-flipping-book-page-499646/ | 2026-10-23 | 넘김 시작 SF 부분 + 넘김 1번을 0.4초 간격 3번 합침(1.70초) |
+| guide_page_flip_x3 | 게임 가이드 첫 등장(세 장 넘김) | https://pixabay.com/sound-effects/film-special-effects-flipping-book-page-499646/ | 2026-10-23 | 넘김 시작 SF 부분 + 넘김 1번을 0.4초 간격 3번 합침(1.70초). B-161에서 앞 SF 부분 약 +9.5dB |
 | guide_page_flip_loop | 게임 가이드 다시 열기(한 장 넘김) | https://pixabay.com/sound-effects/film-special-effects-flipping-book-page-499646/ | 2026-10-23 | 원본 0.64~0.92초 넘김 1번(0.28초) |
-| timer_tick | 3시간 만료 시계 연출 시침 회전 | https://pixabay.com/sound-effects/film-special-effects-tick-tock-94356/ | 2026-10-23 | 앞뒤 정리(1.04→0.98초). 앞 0.6초만 재생 |
-| timer_tick_single | 광산 초기화 시계 막판 1초 째깍 | https://pixabay.com/sound-effects/film-special-effects-tick-tock-94356/ | 2026-10-23 | 첫 째깍 1번만(0.23초) |
+| timer_tick | 3시간 만료 시계 연출 시침 회전 | https://pixabay.com/sound-effects/film-special-effects-tick-tock-94356/ | 2026-10-23 | 앞뒤 정리(1.04→0.98초). 앞 0.6초만 재생. B-161에서 +10dB 후 리미터 |
+| timer_tick_single | 광산 초기화 시계 막판 1초 째깍 | https://pixabay.com/sound-effects/film-special-effects-tick-tock-94356/ | 2026-10-23 | 첫 째깍 1번만(0.23초). B-161에서 +10dB 후 리미터 |
 | timer_end | 3시간 만료 시계 흔들림 벨 | https://pixabay.com/sound-effects/film-special-effects-generic-alarm-clock-86759/ | 2026-10-23 | 벨 3번까지만, 끝 페이드(4.56→1.43초) |
 | minimap_beep | 미니맵 M 단계 전환 | https://pixabay.com/sound-effects/film-special-effects-digital-beep-151921/ | 2026-10-23 | 다듬지 않은 원본 mp3(1.72초). 앞 0.3초만 재생 |
 | keycap_pop | 키 조작 창 키캡 튀어나옴 | https://pixabay.com/sound-effects/film-special-effects-keyboard-click-327728/ | 2026-10-23 | 잔향 꼬리 정리(1.03→0.43초) |
@@ -43,13 +43,13 @@
 | run_fail_blackout | 탐사 실패 후 화면 암전 | https://pixabay.com/sound-effects/film-special-effects-power-off-386180/ | 2026-10-23 | 앞 무음 정리, 끝 잡음 꼬리 자르고 페이드(1.28→0.83초) |
 | run_fail_row_tick | 탐사 실패 창 잃은 자원 줄 등장 | https://pixabay.com/sound-effects/film-special-effects-beep-313342/ | 2026-10-23 | 원본이 작아 약 +6~8dB(0.19초) |
 | escape_arrive | 긴급 탈출 도착(워프 0.35초 뒤) | https://pixabay.com/sound-effects/technology-sci-fi-power-down-blip-608638/ | 2026-10-23 | 앞 무음 정리, +2dB(0.43→0.46초) |
-| briefing_glitch_tick | 시작 브리핑 창 등장 글리치 | https://pixabay.com/sound-effects/film-special-effects-glitch-sound-2-589408/ | 2026-10-23 | 앞뒤 무음 정리(1.57→1.02초) |
-| briefing_glitch_tick_short | 시작 브리핑 표시 중 짧은 글리치 | https://pixabay.com/sound-effects/film-special-effects-glitch-sound-2-589408/ | 2026-10-23 | 위 원본 0.28~0.70초만(0.42초) |
-| briefing_close | 시작 브리핑 창 닫힘 | https://pixabay.com/sound-effects/film-special-effects-glitch-and-distortion-sound-effects-547046/ | 2026-10-23 | 앞 무음 정리(1.93→1.82초). 앞 1.0초만 재생, 끝 0.3초 페이드 |
+| briefing_glitch_tick | 시작 브리핑 창 등장 글리치 | https://pixabay.com/sound-effects/film-special-effects-glitch-sound-effect-hd-379466/ | 2026-10-24 | 원본 안 두 번째 지직(1.63~2.11초)만, +8dB 후 리미터(3.10→0.47초). 이전 원본 glitch-sound-2-589408에서 교체 |
+| briefing_glitch_tick_short | 시작 브리핑 표시 중 짧은 글리치 | https://pixabay.com/sound-effects/film-special-effects-glitch-sound-effect-hd-379466/ | 2026-10-24 | briefing_glitch_tick과 같은 파일(같은 바이트, 0.47초). 이전 원본 glitch-sound-2-589408에서 교체 |
+| briefing_close | 시작 브리핑 창 닫힘 | https://pixabay.com/sound-effects/film-special-effects-digital-glitch-sfx-438248/ | 2026-10-24 | 받은 mp3를 다듬지 않고 진짜 PCM wav로 바꿈(2026-10-25, 1.23초, 소리·길이·음량 그대로). run_fail_collapse_glitch와 같은 원본. 칸 값: 앞 1.0초만 재생, 끝 0.3초 페이드. 이전 원본 glitch-and-distortion-sound-effects-547046에서 교체 |
 | sell_open_coin_stack | 판매 창 열림 금화 쌓임(4번) | https://pixabay.com/sound-effects/film-special-effects-drop-coin-384921/ | 2026-10-23 | 울림 0.3초까지, 리미터 약 +3dB(1.10→0.30초). 피치 1.00→1.12 |
 | sell_open_coin_burst | 판매 창 열림 금화 터짐 | https://pixabay.com/sound-effects/film-special-effects-spinning-coin-on-table-352448/ | 2026-10-23 | 원본 0.185~1.61초, 리미터 약 +5dB(2.09→1.42초). 끝까지 재생 |
 | portal_idle_loop | 긴급 탈출 포탈 근처 대기음(반복) | https://pixabay.com/sound-effects/film-special-effects-black-hole-55468/ | 2026-10-23 | 원본 0.74~10.74초 정방향+역방향 이음(82→20.01초, 모노). 압축된 채 메모리 |
-| storage_close | 보관함 닫힘(뚜껑 닫힘·상자 내려감) | https://pixabay.com/sound-effects/film-special-effects-close-big-military-case-47806/ | 2026-10-24 | 앞 무음 정리, "탁"+"딸깍"까지 남기고 페이드, 약 +4dB(1.49→1.00초) |
+| storage_close | 보관함 닫힘(뚜껑 닫힘·상자 내려감) | https://pixabay.com/sound-effects/film-special-effects-futuristic-hydraulic-sci-fi-door-opening-1-614165/ | 2026-10-25 | 수압 문 열림 소리 앞 0.9초를 거꾸로 뒤집음("쉬이익" 후 "척" 잠김), 앞 0.12초 페이드인(2.18→0.90초). 상자 올라옴(546619)과 같은 제작자. 칸 값 음량 0.35. 이전 원본 close-big-military-case-47806에서 교체 |
 | storage_partial_notice | 보관함 전체 꺼내기가 일부만 꺼내졌을 때 | https://pixabay.com/sound-effects/film-special-effects-soft-ui-warning-alert-1-614153/ | 2026-10-24 | 앞 무음 정리, 끝 페이드(0.94→0.80초) |
 | timer_5min_alert | 광산 남은 시간 5분 알림 | https://pixabay.com/sound-effects/film-special-effects-digital-alarm-clock-151927/ | 2026-10-24 | 반복 알람 중 첫 "삐삐삐삐" 묶음만, 직류 성분 제거(7.60→0.80초) |
 | keys_holo_open | 키 조작 창 열림(홀로그램 펼침) | https://pixabay.com/sound-effects/technology-futuristic-holographic-interface-menu-opening-566063/ | 2026-10-24 | 앞 0.9초만, 끝 0.3초 페이드(2.04→0.90초) |
