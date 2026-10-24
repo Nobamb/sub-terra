@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using SubTerra.App.Audio;
 using SubTerra.App.Core.Data;
+using SubTerra.Shared.Audio;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -237,6 +239,7 @@ namespace SubTerra.App.UI.Outpost
 
                 var mineralId = option.MineralId;
                 instance.onClick.AddListener(() => NotifySelected(mineralId));
+                UiSfx.Attach(instance, SfxId.UiClick, failWhenDisabled: false);
                 spawnedOptions.Add(instance.gameObject);
             }
         }

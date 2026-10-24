@@ -48,6 +48,8 @@ namespace SubTerra.App.Outpost
         public int Quantity { get; }
         public int GoldDelta { get; }
         public string Message { get; }
+        /// <summary>전체 꺼내기에서 화물 공간이 모자라 요청보다 적게 옮겼을 때만 true.</summary>
+        public bool IsPartial { get; }
 
         public bool IsSuccess => Status == OutpostOperationStatus.Success;
 
@@ -57,7 +59,8 @@ namespace SubTerra.App.Outpost
             string mineralId,
             int quantity,
             int goldDelta,
-            string message)
+            string message,
+            bool isPartial = false)
         {
             Status = status;
             Kind = kind;
@@ -65,6 +68,7 @@ namespace SubTerra.App.Outpost
             Quantity = quantity;
             GoldDelta = goldDelta;
             Message = message ?? string.Empty;
+            IsPartial = isPartial;
         }
     }
 

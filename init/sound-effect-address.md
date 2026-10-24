@@ -49,3 +49,9 @@
 | sell_open_coin_stack | 판매 창 열림 금화 쌓임(4번) | https://pixabay.com/sound-effects/film-special-effects-drop-coin-384921/ | 2026-10-23 | 울림 0.3초까지, 리미터 약 +3dB(1.10→0.30초). 피치 1.00→1.12 |
 | sell_open_coin_burst | 판매 창 열림 금화 터짐 | https://pixabay.com/sound-effects/film-special-effects-spinning-coin-on-table-352448/ | 2026-10-23 | 원본 0.185~1.61초, 리미터 약 +5dB(2.09→1.42초). 끝까지 재생 |
 | portal_idle_loop | 긴급 탈출 포탈 근처 대기음(반복) | https://pixabay.com/sound-effects/film-special-effects-black-hole-55468/ | 2026-10-23 | 원본 0.74~10.74초 정방향+역방향 이음(82→20.01초, 모노). 압축된 채 메모리 |
+| storage_close | 보관함 닫힘(뚜껑 닫힘·상자 내려감) | https://pixabay.com/sound-effects/film-special-effects-close-big-military-case-47806/ | 2026-10-24 | 앞 무음 정리, "탁"+"딸깍"까지 남기고 페이드, 약 +4dB(1.49→1.00초) |
+| storage_partial_notice | 보관함 전체 꺼내기가 일부만 꺼내졌을 때 | https://pixabay.com/sound-effects/film-special-effects-soft-ui-warning-alert-1-614153/ | 2026-10-24 | 앞 무음 정리, 끝 페이드(0.94→0.80초) |
+| timer_5min_alert | 광산 남은 시간 5분 알림 | https://pixabay.com/sound-effects/film-special-effects-digital-alarm-clock-151927/ | 2026-10-24 | 반복 알람 중 첫 "삐삐삐삐" 묶음만, 직류 성분 제거(7.60→0.80초) |
+| keys_holo_open | 키 조작 창 열림(홀로그램 펼침) | https://pixabay.com/sound-effects/technology-futuristic-holographic-interface-menu-opening-566063/ | 2026-10-24 | 앞 0.9초만, 끝 0.3초 페이드(2.04→0.90초) |
+| keys_page_turn | 키 조작 창 이전/다음 넘김 | https://pixabay.com/sound-effects/film-special-effects-ui-swipe-navigation-soft-523625/ | 2026-10-24 | 앞뒤 무음 정리, 끝 페이드(1.38→0.62초) |
+| portal_close | 긴급 탈출 포탈 창을 이동 없이 닫음 | https://pixabay.com/sound-effects/technology-futuristic-hologram-menu-close-ui-614155/ | 2026-10-24 | 앞뒤 무음 정리, 끝 페이드(0.89→0.71초) |

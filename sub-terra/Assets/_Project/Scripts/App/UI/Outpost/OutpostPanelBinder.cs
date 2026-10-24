@@ -162,24 +162,70 @@ namespace SubTerra.App.UI.Outpost
         /// <summary>보관함 팝업의 보관 버튼. 실제 이동량(보유보다 많으면 전부)은 Service가 판정한다.</summary>
         public void DepositQuantity(int quantity)
         {
-            presenter?.RequestDeposit(selectedMineralId, quantity);
+            if (presenter == null)
+            {
+                return;
+            }
+
+            var wasBusy = presenter.IsBusy;
+            PlayQuantitySfx(presenter.RequestDeposit(selectedMineralId, quantity), wasBusy);
         }
 
         public void WithdrawQuantity(int quantity)
         {
-            presenter?.RequestWithdraw(selectedMineralId, quantity);
+            if (presenter == null)
+            {
+                return;
+            }
+
+            var wasBusy = presenter.IsBusy;
+            PlayQuantitySfx(presenter.RequestWithdraw(selectedMineralId, quantity), wasBusy);
         }
 
-        public void DepositAll() => PlayTakeAllSfx(presenter?.RequestDepositAll());
+        public void DepositAll() => RequestTakeAll(true);
 
-        public void WithdrawAll() => PlayTakeAllSfx(presenter?.RequestWithdrawAll());
+        public void WithdrawAll() => RequestTakeAll(false);
 
-        /// <summary>전체 보관·꺼내기가 실제로 옮겼을 때만 소리를 낸다. 한 개씩 옮기기는 무음.</summary>
-        public static void PlayTakeAllSfx(OutpostOperationResult? result)
+        private void RequestTakeAll(bool deposit)
         {
-            if (result.HasValue && result.Value.IsSuccess)
+            if (presenter == null)
             {
-                SfxPlayer.Play(SfxId.StorageTakeAll);
+                return;
+            }
+
+            var wasBusy = presenter.IsBusy;
+            PlayTakeAllSfx(deposit ? presenter.RequestDepositAll() : presenter.RequestWithdrawAll(), wasBusy);
+        }
+
+        /// <summary>선택 수량 보관·꺼내기 결과음. 처리 중이라 막힌 요청은 무음.</summary>
+        public static void PlayQuantitySfx(OutpostOperationResult? result, bool blockedByBusy = false)
+        {
+            if (!result.HasValue || blockedByBusy)
+            {
+                return;
+            }
+
+            SfxPlayer.Play(result.Value.IsSuccess ? SfxId.UiConfirm : SfxId.UiCancelFail);
+        }
+
+        /// <summary>
+        /// 전체 보관·꺼내기 결과음. 일부만 꺼내졌으면 묵직한 소리 대신 안내음만, 실패면 실패음.
+        /// 처리 중이라 막힌 요청은 무음.
+        /// </summary>
+        public static void PlayTakeAllSfx(OutpostOperationResult? result, bool blockedByBusy = false)
+        {
+            if (!result.HasValue || blockedByBusy)
+            {
+                return;
+            }
+
+            if (!result.Value.IsSuccess)
+            {
+                SfxPlayer.Play(SfxId.UiCancelFail);
+            }
+            else
+            {
+                SfxPlayer.Play(result.Value.IsPartial ? SfxId.StoragePartialNotice : SfxId.StorageTakeAll);
             }
         }
 

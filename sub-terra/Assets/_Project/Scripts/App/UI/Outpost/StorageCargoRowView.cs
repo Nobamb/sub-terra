@@ -1,5 +1,7 @@
 using System;
+using SubTerra.App.Audio;
 using SubTerra.App.UI.Sell;
+using SubTerra.Shared.Audio;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -85,6 +87,7 @@ namespace SubTerra.App.UI.Outpost
             navigation.mode = Navigation.Mode.None;
             view.button.navigation = navigation;
             view.button.onClick.AddListener(() => view.Clicked?.Invoke(view.MineralId));
+            UiSfx.Attach(view.button, SfxId.UiClick, failWhenDisabled: false);
             view.Apply(true);
             return view;
         }

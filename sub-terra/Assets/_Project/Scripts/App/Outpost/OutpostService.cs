@@ -480,9 +480,11 @@ namespace SubTerra.App.Outpost
             foreach (var item in items)
                 state.SetStorageQuantity(item.Key, state.GetStorageQuantity(item.Key) + (deposit ? item.Value : -item.Value));
             RaiseSnapshotChanged();
-            return Complete(Success(kind, string.Empty, total, 0,
+            var partial = !deposit && total < requestedTotal;
+            return Complete(new OutpostOperationResult(OutpostOperationStatus.Success, kind, string.Empty, total, 0,
                 deposit ? "모든 화물을 보관했습니다."
-                    : total < requestedTotal ? "화물 공간이 부족해 일부만 꺼냈습니다." : "보관된 모든 자원을 꺼냈습니다."));
+                    : partial ? "화물 공간이 부족해 일부만 꺼냈습니다." : "보관된 모든 자원을 꺼냈습니다.",
+                partial));
         }
 
         private List<KeyValuePair<string, int>> PlanBalancedWithdrawal(List<KeyValuePair<string, int>> source, out int total)

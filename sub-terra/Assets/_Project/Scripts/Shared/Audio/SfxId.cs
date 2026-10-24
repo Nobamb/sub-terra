@@ -50,6 +50,12 @@ namespace SubTerra.Shared.Audio
         BriefingClose = 41,
         SellCoinStack = 42,
         SellCoinBurst = 43,
-        PortalIdleLoop = 44
+        PortalIdleLoop = 44,
+        StorageClose = 45,
+        StoragePartialNotice = 46,
+        Timer5MinAlert = 47,
+        KeysHoloOpen = 48,
+        KeysPageTurn = 49,
+        PortalClose = 50
     }
 }

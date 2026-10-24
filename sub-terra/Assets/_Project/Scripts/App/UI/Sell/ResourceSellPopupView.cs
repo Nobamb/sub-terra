@@ -558,12 +558,15 @@ namespace SubTerra.App.UI.Sell
                     break;
                 case ResourceSellConfirmStatus.Adjusted:
                     SetStatus(outcome.Message, ResourceSellUi.Gold);
+                    SfxPlayer.Play(SfxId.UiCancelFail);
                     break;
                 case ResourceSellConfirmStatus.Failed:
                     SetStatus(outcome.Message, ResourceSellUi.Error);
+                    SfxPlayer.Play(SfxId.UiCancelFail);
                     break;
                 case ResourceSellConfirmStatus.Empty:
                     SetStatus(outcome.Message, ResourceSellUi.TextMuted);
+                    SfxPlayer.Play(SfxId.UiCancelFail);
                     break;
             }
 
@@ -1306,6 +1309,8 @@ namespace SubTerra.App.UI.Sell
                 ResetLabel, 20f, ResourceSellButton.Variant.Normal, ResourceSellArt.ResetArc(), 20f);
             selectAllButton.Button.onClick.AddListener(OnSelectAll);
             resetButton.Button.onClick.AddListener(OnReset);
+            UiSfx.Attach(selectAllButton.Button, SfxId.UiClick, failWhenDisabled: false);
+            UiSfx.Attach(resetButton.Button, SfxId.UiClick, failWhenDisabled: false);
             noticeText = ResourceSellUi.Label(footer, "BulkNotice", 560f, ToolsY - 2f, CardSize.x - Pad - 560f, 26f, font, 16f,
                 FontStyles.Normal, ResourceSellUi.TextMuted, TextAlignmentOptions.Right);
             statusText = ResourceSellUi.Label(footer, "Status", 560f, ToolsY + 24f, CardSize.x - Pad - 560f, 28f, font, 18f,
@@ -1473,6 +1478,8 @@ namespace SubTerra.App.UI.Sell
             }
 
             sellButton.Button.onClick.AddListener(() => RequestSell());
+            // 결과음은 RequestSell이 낸다. 고른 게 없어 막힌 버튼만 실패음.
+            UiSfx.Attach(sellButton.Button, SfxId.None);
         }
 
         private void Caption(Transform parent, string name, string text, float x, float y)

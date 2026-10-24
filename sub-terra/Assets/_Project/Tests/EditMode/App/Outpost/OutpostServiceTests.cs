@@ -450,7 +450,9 @@ namespace SubTerra.App.Tests.Outpost
             Assert.That(restored.GameState.Outpost.GetStorageQuantity(DataIds.RareItems.EngineFuel), Is.EqualTo(1));
             Assert.That(restored.Inventory.GetQuantity(Copper), Is.Zero);
 
-            Assert.That(system.Service.TryWithdrawAll().IsSuccess, Is.True);
+            var withdrawn = system.Service.TryWithdrawAll();
+            Assert.That(withdrawn.IsSuccess, Is.True);
+            Assert.That(withdrawn.IsPartial, Is.False);
             Assert.That(system.Inventory.State.GetQuantity(Copper), Is.EqualTo(23));
             Assert.That(system.Inventory.State.GetQuantity(Iron), Is.EqualTo(4));
             Assert.That(system.Inventory.State.GetQuantity(DataIds.RareItems.EngineFuel), Is.EqualTo(1));
@@ -523,6 +525,7 @@ namespace SubTerra.App.Tests.Outpost
             var result = system.Service.TryWithdrawAll();
             Assert.That(result.IsSuccess, Is.True);
             Assert.That(result.Message, Does.Contain("일부만"));
+            Assert.That(result.IsPartial, Is.True, "B-163: 일부 꺼냄 안내음 판정");
             Assert.That(system.Inventory.State.GetQuantity(Iron), Is.EqualTo(expectedIron));
             Assert.That(system.Inventory.State.GetQuantity(Copper), Is.EqualTo(carriedCopper + expectedCopper));
             Assert.That(system.Inventory.State.GetQuantity(DataIds.Minerals.Lithium), Is.EqualTo(expectedLithium));

@@ -86,6 +86,8 @@ namespace SubTerra.App.UI.HUD
         private Image popupBlocker;
         private bool sessionVisible;
         private bool departing;
+        private readonly MineResetFiveMinuteGate fiveMinuteGate = new MineResetFiveMinuteGate();
+        private object observedAlertState;
 
         /// <summary>시계가 켜져 있거나 꺼지는 연출 중이면 true. 지상 이동 전에 꺼질 때까지 기다릴지 판단한다.</summary>
         public bool IsClockOnScreen => clockRoot != null && clockRoot.activeSelf;
@@ -128,6 +130,7 @@ namespace SubTerra.App.UI.HUD
             sessionVisible = visible;
             // 세션이 끝나면 이동 예약은 의미가 없다.
             if (!visible) departing = false;
+            if (!visible) fiveMinuteGate.Reset();
             if (!visible && popupRoot != null)
             {
                 CloseImmediately();
@@ -393,6 +396,32 @@ namespace SubTerra.App.UI.HUD
             if (clockRoot != null && clockRoot.activeSelf)
             {
                 RefreshFromState();
+            }
+
+            ObserveFiveMinuteAlert();
+        }
+
+        // 5분 알림은 놓치면 안 되는 안내라 T 시계를 꺼 두어도 따로 판정한다.
+        private void ObserveFiveMinuteAlert()
+        {
+            var runtime = SaveRuntimeController.Instance;
+            if (departing || runtime == null || runtime.ActiveSlot <= 0)
+            {
+                fiveMinuteGate.Reset();
+                return;
+            }
+
+            var bootstrap = GameBootstrapper.Instance;
+            var state = bootstrap != null ? bootstrap.State : null;
+            if (!ReferenceEquals(observedAlertState, state))
+            {
+                observedAlertState = state;
+                fiveMinuteGate.Reset();
+            }
+
+            if (fiveMinuteGate.Observe(MineResetFiveMinuteGate.ToSeconds(runtime.MineResetRemainingSeconds)))
+            {
+                SfxPlayer.Play(SfxId.Timer5MinAlert);
             }
         }
 

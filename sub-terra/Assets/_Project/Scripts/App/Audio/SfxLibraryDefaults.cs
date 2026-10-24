@@ -36,7 +36,7 @@ namespace SubTerra.App.Audio
 
         public static bool IsLoopFile(string fileName) => fileName != null && LoopFileNames.Contains(fileName);
 
-        /// <summary>SfxId 순서대로 43칸(None·비워 둔 3번 제외). 파일 이름은 확장자 제외.</summary>
+        /// <summary>SfxId 순서대로 49칸(None·비워 둔 3번 제외). 파일 이름은 확장자 제외.</summary>
         public static IReadOnlyList<(SfxEntry Entry, string FileName)> Create()
         {
             return new List<(SfxEntry, string)>
@@ -133,6 +133,20 @@ namespace SubTerra.App.Audio
                 (new SfxEntry(SfxId.SellCoinBurst, SfxBus.UI, volume: 0.55f), "sell_open_coin_burst"),
                 // 82 → 20.01초 반복용. 원샷 풀이 아니라 PortalIdleLoopAudio가 따로 튼다.
                 (new SfxEntry(SfxId.PortalIdleLoop, SfxBus.World, volume: 0.35f), "portal_idle_loop"),
+
+                // B-163. 모두 UI 버스(Alert는 경보 반복을 끊는다). 길이는 다듬은 파일 기준.
+                // 1.00초. 순간 소리라 평균이 작다.
+                (new SfxEntry(SfxId.StorageClose, SfxBus.UI, volume: 0.7f), "storage_close"),
+                // 0.80초.
+                (new SfxEntry(SfxId.StoragePartialNotice, SfxBus.UI, volume: 0.65f), "storage_partial_notice"),
+                // 0.80초("삐삐삐삐" 한 묶음).
+                (new SfxEntry(SfxId.Timer5MinAlert, SfxBus.UI, volume: 0.6f), "timer_5min_alert"),
+                // 0.90초. 키캡 소리를 덮지 않게 작게.
+                (new SfxEntry(SfxId.KeysHoloOpen, SfxBus.UI, volume: 0.45f), "keys_holo_open"),
+                // 0.62초.
+                (new SfxEntry(SfxId.KeysPageTurn, SfxBus.UI, volume: 0.65f), "keys_page_turn"),
+                // 0.71초.
+                (new SfxEntry(SfxId.PortalClose, SfxBus.UI, volume: 0.55f), "portal_close"),
             };
         }
     }

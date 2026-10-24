@@ -289,6 +289,7 @@ namespace SubTerra.App.UI.Outpost
             }
 
             ApplyClose(clock);
+            SfxPlayer.Play(SfxId.StorageClose);
             return true;
         }
 
@@ -1184,6 +1185,7 @@ namespace SubTerra.App.UI.Outpost
             minusButton = ResourceSellButton.Create(controls, "QuantityMinusButton", x, inputY, minusW, inputH, font, "-", 28f,
                 ResourceSellButton.Variant.Normal);
             minusButton.Button.onClick.AddListener(OnMinusQuantity);
+            UiSfx.Attach(minusButton.Button, SfxId.UiClick, failWhenDisabled: false);
             var inputX = x + minusW + 8f;
             quantityInput = BuildInput(controls, "QuantityInput", inputX, inputY, 100f, inputH, "0", 24f, TextAlignmentOptions.Center, true);
             quantityInput.textComponent.enableAutoSizing = true;
@@ -1200,12 +1202,14 @@ namespace SubTerra.App.UI.Outpost
                 quickButtons[i] = ResourceSellButton.Create(controls, "Quantity" + value + "Button", qx, inputY, 60f, inputH, font,
                     value == 1 ? "+" : "+" + value, value == 1 ? 28f : 21f, ResourceSellButton.Variant.Normal);
                 quickButtons[i].Button.onClick.AddListener(() => OnQuickQuantity(value));
+                UiSfx.Attach(quickButtons[i].Button, SfxId.UiClick, failWhenDisabled: false);
                 qx += 60f + 8f;
             }
 
             allQuantityButton = ResourceSellButton.Create(controls, "QuantityAllButton", qx, inputY, 76f, inputH, font,
                 "모두", 21f, ResourceSellButton.Variant.Normal);
             allQuantityButton.Button.onClick.AddListener(SelectAllQuantity);
+            UiSfx.Attach(allQuantityButton.Button, SfxId.UiClick, failWhenDisabled: false);
             qx += 84f;
 
             var withdrawX = Pad + barWidth - 28f - ActionW;
@@ -1236,6 +1240,11 @@ namespace SubTerra.App.UI.Outpost
             FitLabel(withdrawAllButton);
             depositAllButton.Button.onClick.AddListener(RequestDepositAll);
             withdrawAllButton.Button.onClick.AddListener(RequestWithdrawAll);
+            // 결과음은 OutpostPanelBinder가 낸다. 옮길 게 없어 막힌 버튼만 실패음.
+            UiSfx.Attach(depositButton.Button, SfxId.None);
+            UiSfx.Attach(withdrawButton.Button, SfxId.None);
+            UiSfx.Attach(depositAllButton.Button, SfxId.None);
+            UiSfx.Attach(withdrawAllButton.Button, SfxId.None);
         }
 
         private static void FitLabel(ResourceSellButton button)

@@ -28,6 +28,7 @@ namespace SubTerra.App.UI.Outpost
         private OutpostPanelMode activeMode;
 
         public bool IsBound => service != null;
+        public bool IsBusy => busy;
         public OutpostPanelMode ActiveMode => activeMode;
         public bool IsInteractionPanelOpen => interactionPanelRequested;
 

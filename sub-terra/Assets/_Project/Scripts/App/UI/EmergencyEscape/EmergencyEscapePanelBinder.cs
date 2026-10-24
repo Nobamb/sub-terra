@@ -191,6 +191,12 @@ namespace SubTerra.App.UI.EmergencyEscape
 
         public void Close()
         {
+            // 이동 성공으로 닫힐 때(처리 중)는 워프음만 낸다.
+            if (!busy && view != null && view.IsOpen)
+            {
+                SfxPlayer.Play(SfxId.PortalClose);
+            }
+
             busy = false;
             view?.SetBusy(false);
             if (view == null)
@@ -272,12 +278,14 @@ namespace SubTerra.App.UI.EmergencyEscape
             if (port == null)
             {
                 view?.SetResult("긴급 탈출 경로가 준비되지 않았습니다.", true);
+                SfxPlayer.Play(SfxId.UiCancelFail);
                 return;
             }
 
             if (options == null || options.Count == 0)
             {
                 view?.SetResult("이동할 목적지가 없습니다.", true);
+                SfxPlayer.Play(SfxId.UiCancelFail);
                 return;
             }
 
@@ -291,6 +299,7 @@ namespace SubTerra.App.UI.EmergencyEscape
             if (view != null && view.Model.TryGetSelected(out var row) && !row.Enabled)
             {
                 view.SetResult(row.Reason, true);
+                SfxPlayer.Play(SfxId.UiCancelFail);
                 return;
             }
 
@@ -309,6 +318,10 @@ namespace SubTerra.App.UI.EmergencyEscape
                     SfxPlayer.Play(SfxId.PortalWarp);
                     arriveSfx.Schedule(ArriveSfxDelay);
                     Close();
+                }
+                else
+                {
+                    SfxPlayer.Play(SfxId.UiCancelFail);
                 }
             }
             finally
@@ -350,6 +363,8 @@ namespace SubTerra.App.UI.EmergencyEscape
             {
                 confirmButton.onClick.RemoveListener(ConfirmSelectedDestination);
                 confirmButton.onClick.AddListener(ConfirmSelectedDestination);
+                // 흐린 목적지라 막힌 이동 버튼을 눌러도 Enter와 같은 실패음이 난다.
+                UiSfx.Attach(confirmButton, SfxId.None);
             }
 
             if (closeButton != null)
