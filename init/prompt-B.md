@@ -3765,3 +3765,6 @@ EditMode:
 
 
 162. work_process/MVP2/sound 폴더에서 B-162-sfx-c-stage.md, sfx-C 폴더 참고해서 효과음 추가해줘
+
+
+163.  work_process/MVP2/sound 폴더에서 sfx-B-rest 폴더, prompt-B-163.md 참고해서 효과음 추가해줘
