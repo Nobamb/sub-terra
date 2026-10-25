@@ -56,9 +56,9 @@
 | keys_page_turn | 키 조작 창 이전/다음 넘김 | https://pixabay.com/sound-effects/film-special-effects-ui-swipe-navigation-soft-523625/ | 2026-10-24 | 앞뒤 무음 정리, 끝 페이드(1.38→0.62초) |
 | portal_close | 긴급 탈출 포탈 창을 이동 없이 닫음 | https://pixabay.com/sound-effects/technology-futuristic-hologram-menu-close-ui-614155/ | 2026-10-24 | 앞뒤 무음 정리, 끝 페이드(0.89→0.71초) |
 | footstep | 걷기 한 걸음 | https://pixabay.com/sound-effects/film-special-effects-st1-footstep-sfx-323053/ | 2026-10-25 | 한 걸음, 약 +5dB 리미터(0.42→0.39초). World 폴더 |
-| jump | 점프 도약 | https://pixabay.com/sound-effects/film-special-effects-jump-615208/ | 2026-10-25 | 앞 0.6초만, 끝 페이드(1.75→0.58초). World 폴더 |
+| jump | 점프 도약 | https://pixabay.com/sound-effects/film-special-effects-whoosh-end-384629/ | 2026-10-25 | Whoosh End (SoundReality). 본체 앞 0.5초만, 끝 페이드(8.04→0.50초). 이전 원본 jump-615208에서 교체(마리오 느낌). World 폴더 |
 | land | 보통 착지 | https://pixabay.com/sound-effects/film-special-effects-character-fall-impact-250069/ | 2026-10-25 | 앞 0.6초만, 끝 페이드(1.27→0.55초). World 폴더 |
-| land_heavy | 세게 떨어짐(다침) | https://pixabay.com/sound-effects/film-special-effects-heavy-body-fall-352446/ | 2026-10-25 | 앞 무음 정리, 본체 약 1초 + 꼬리 페이드(2.40→1.01초). World 폴더 |
+| land_heavy | 세게 떨어짐(다침) | https://pixabay.com/sound-effects/film-special-effects-heavy-body-fall-352446/ | 2026-10-25 | 앞 무음 정리, 본체 약 1초 + 꼬리 페이드(2.40→1.01초). World 폴더. 2026-10-25 저음 줄이고 중음 +4dB, 약 +5dB 리미터 |
 | ladder_grab | 사다리 잡기·놓기 | https://pixabay.com/sound-effects/film-special-effects-metal-clang-sound-81634/ | 2026-10-25 | "챙"만, 약 +5dB 리미터(1.44→0.20초). World 폴더 |
 | ladder_climb | 사다리 한 칸 오르기/내리기 | https://pixabay.com/sound-effects/film-special-effects-footsteps-on-wood-397989/ | 2026-10-25 | 나무 발걸음 중 첫 걸음만(4.34→0.50초). 변형 ladder_climb_b는 두 번째 걸음. World 폴더 |
 | ladder_climb_b | 사다리 한 칸 오르기/내리기(ladder_climb과 번갈아) | https://pixabay.com/sound-effects/film-special-effects-footsteps-on-wood-397989/ | 2026-10-25 | 같은 원본의 두 번째 걸음만(4.34→0.50초). World 폴더 |
@@ -67,6 +67,6 @@
 | elevator_arrive_ding | 엘리베이터 도착 | https://pixabay.com/sound-effects/film-special-effects-lift-bell-107838/ | 2026-10-25 | 울림 1.35초까지, 끝 페이드(3.67→1.35초). World 폴더 |
 | drill_loop | 채굴 드릴(반복) | https://pixabay.com/sound-effects/city-jack-hammer-breaking-up-concrete-short-burst-103896/ | 2026-10-25 | 원본 2~4초를 0.15초 겹쳐 이음, 한 바퀴 1.85초. 비교용 정방향+역방향 2.0초 버전 있음. World 폴더 |
 | block_break | 블록 부서짐 | https://pixabay.com/sound-effects/film-special-effects-rock-destroy-6409/ | 2026-10-25 | 부스러기까지, 끝 페이드(2.98→1.06초). World 폴더 |
-| pickup_common | 구리·철·리튬 획득 | https://pixabay.com/sound-effects/film-special-effects-item-pickup-3-540193/ | 2026-10-25 | 앞 0.7초만, 끝 페이드(1.54→0.68초). World 폴더 |
+| pickup_common | 구리·철·리튬 획득 | https://pixabay.com/sound-effects/film-special-effects-item-pickup-3-540193/ | 2026-10-25 | 앞 0.7초만, 끝 페이드(1.54→0.68초). World 폴더. 2026-10-25 180Hz 아래 저음 제거, 약 +5dB 리미터 |
 | pickup_rare | 엔진 연료(희귀) 획득 | https://pixabay.com/sound-effects/film-special-effects-diamond-found-190255/ | 2026-10-25 | 첫 반짝임만, 자연 페이드(5.72→0.81초). World 폴더 |
 | cargo_heavy_warning | 화물 80% 넘음 경고 | https://pixabay.com/sound-effects/film-special-effects-warning-sound-6686/ | 2026-10-25 | 2번 반복 중 첫 번째만(1.03→0.35초). World 폴더 |

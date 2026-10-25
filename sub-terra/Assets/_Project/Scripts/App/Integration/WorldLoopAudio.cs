@@ -2,6 +2,7 @@ using System;
 using SubTerra.App.Audio;
 using SubTerra.App.UI;
 using SubTerra.App.UI.MainMenu;
+using SubTerra.Shared;
 using SubTerra.Shared.Audio;
 using UnityEngine;
 
@@ -77,7 +78,8 @@ namespace SubTerra.App.Integration
         private Func<bool> isWanted = () => false;
         private Func<bool> isFailureHandling = () => false;
         private Func<bool> canAct = () => true;
-        private Func<bool> isPaused = () => UiPauseGate.IsHeld;
+        // B-165: 광산 ESC 설정창은 UiPauseGate를 잡지 않으므로 설정창 열림도 정지로 본다.
+        private Func<bool> isPaused = () => UiPauseGate.IsHeld || ControlPreferences.IsSettingsOpen;
         private Func<bool> isMuted = () => SettingsRuntimeApplier.IsMasterMuted
             || SettingsRuntimeApplier.IsMuted(AudioChannel.Sfx);
         private SfxLibrary library;

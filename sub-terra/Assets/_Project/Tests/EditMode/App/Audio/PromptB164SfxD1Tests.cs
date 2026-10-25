@@ -20,9 +20,9 @@ namespace SubTerra.App.Tests.Audio
         private static readonly (SfxId Id, int Number, string File, float Volume)[] Table =
         {
             (SfxId.Footstep, 51, "footstep", 0.65f),
-            (SfxId.Jump, 52, "jump", 0.25f),
+            (SfxId.Jump, 52, "jump", 0.4f),
             (SfxId.Land, 53, "land", 0.45f),
-            (SfxId.LandHeavy, 54, "land_heavy", 0.35f),
+            (SfxId.LandHeavy, 54, "land_heavy", 0.7f),
             (SfxId.LadderGrab, 55, "ladder_grab", 0.9f),
             (SfxId.LadderClimb, 56, "ladder_climb", 0.35f),
             (SfxId.LadderClimbB, 57, "ladder_climb_b", 0.35f),
@@ -31,7 +31,7 @@ namespace SubTerra.App.Tests.Audio
             (SfxId.ElevatorArriveDing, 60, "elevator_arrive_ding", 0.45f),
             (SfxId.DrillLoop, 61, "drill_loop", 0.35f),
             (SfxId.BlockBreak, 62, "block_break", 0.3f),
-            (SfxId.PickupCommon, 63, "pickup_common", 0.35f),
+            (SfxId.PickupCommon, 63, "pickup_common", 0.65f),
             (SfxId.PickupRare, 64, "pickup_rare", 0.5f),
             (SfxId.CargoHeavyWarning, 65, "cargo_heavy_warning", 0.2f),
         };

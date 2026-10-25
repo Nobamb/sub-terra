@@ -41,12 +41,10 @@ namespace SubTerra.App.Tests.Audio
 
         private readonly List<Object> created = new List<Object>();
         private readonly List<(SfxId Id, float Pitch)> played = new List<(SfxId, float)>();
-        private float now;
 
         [SetUp]
         public void SetUp()
         {
-            now = 10f;
             played.Clear();
             SfxRequests.PlayRequested += Record;
         }
@@ -417,26 +415,25 @@ namespace SubTerra.App.Tests.Audio
             SetField(view, "panelRoot", host);
             SetField(binder, "view", view);
             binder.BindTo(port);
-            binder.ArriveSfx.Clock = () => now;
             binder.Open(port.GetDestinationOptions(), new EmergencyEscapeCost(0, 0));
             return binder;
         }
 
-        [Test]
-        public void Escape_ArriveOnce035SecondsAfterWarp()
+        private static void TickFrames(EmergencyEscapePanelBinder binder, int frames)
         {
+            var update = typeof(EmergencyEscapePanelBinder).GetMethod("Update", BindingFlags.Instance | BindingFlags.NonPublic);
+            for (var i = 0; i < frames; i++) update.Invoke(binder, null);
+        }
+
+        [Test]
+        public void Escape_WarpOnly_NoArriveAfterSuccess()
+        {
+            // B-165: 도착음은 실패처럼 들려 성공 뒤에도 내지 않는다.
             var binder = NewEscape(new FakePort());
             binder.ConfirmSelectedDestination();
             Assert.That(Count(SfxId.PortalWarp), Is.EqualTo(1));
-            Assert.That(Count(SfxId.EscapeArrive), Is.Zero, "워프와 같은 프레임에는 내지 않는다");
-
-            now += 0.3f;
-            binder.TickArriveSfx();
+            TickFrames(binder, 60);
             Assert.That(Count(SfxId.EscapeArrive), Is.Zero);
-            now += EmergencyEscapePanelBinder.ArriveSfxDelay;
-            binder.TickArriveSfx();
-            binder.TickArriveSfx();
-            Assert.That(Count(SfxId.EscapeArrive), Is.EqualTo(1));
         }
 
         [Test]
@@ -444,8 +441,7 @@ namespace SubTerra.App.Tests.Audio
         {
             var binder = NewEscape(new FakePort { Succeed = false });
             binder.ConfirmSelectedDestination();
-            now += 1f;
-            binder.TickArriveSfx();
+            TickFrames(binder, 60);
             Assert.That(Count(SfxId.EscapeArrive), Is.Zero);
         }
 

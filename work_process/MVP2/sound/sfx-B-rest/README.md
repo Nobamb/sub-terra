@@ -27,7 +27,7 @@ mp3는 들어보기용(192kbps). 게임에는 wav를 넣음.
 - 파일은 모두 피크 -1dBFS로 맞췄음. 실제 크기는 게임 볼륨 값으로 조절.
 - keys_holo_open은 키캡 소리를 가리지 않게 0.4~0.5 정도에서 시작 추천.
 - storage_partial_notice, keys_page_turn은 0.1초 최대가 커서(-7~-8) 0.6~0.7 정도에서 시작 추천.
-- **storage_close는 SfxLibrary에서 음량 0.35로** (2026-10-25 새 소리는 소리가 꽉 차 있어서 이전 값 0.7이면 약 5dB 크게 들림). `Resources/SfxLibrary.asset`과 `SfxLibraryDefaults.cs`의 StorageClose 칸을 0.7 → 0.35로 바꾸기.
+- storage_close 음량은 들어 보고 **0.7 그대로 두기로 함**(2026-10-25 사용자 결정). 0.35로 낮추지 않는다.
 - timer_5min_alert는 경보(Alert) 채널 말고 일반 효과음 채널로 (경보 채널은 한 번에 1개라 끝 벨과 부딪힐 수 있음).
 
 ## 출처

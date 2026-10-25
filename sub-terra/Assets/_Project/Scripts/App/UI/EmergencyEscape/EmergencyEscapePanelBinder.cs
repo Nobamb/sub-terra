@@ -27,19 +27,11 @@ namespace SubTerra.App.UI.EmergencyEscape
         private int openFrame = -1;
         private int previewedIndex = -1;
         private readonly SfxThrottle switchSfx = new SfxThrottle(SwitchSfxInterval);
-        private readonly SfxDelayedCue arriveSfx = new SfxDelayedCue();
 
         public const float SwitchSfxInterval = 0.08f;
-        /// <summary>
-        /// 텔레포트 직후 같은 프레임 LateUpdate에서 카메라가 도착 지점으로 붙으므로 워프음과 겹치지 않게 미룬다(비스케일).
-        /// </summary>
-        public const float ArriveSfxDelay = 0.35f;
 
         /// <summary>목적지 변경음 간격 제한. 테스트는 Clock을 바꿔 시간을 주입한다.</summary>
         public SfxThrottle SwitchSfx => switchSfx;
-
-        /// <summary>도착음 예약. 테스트는 Clock을 바꿔 시간을 주입한다.</summary>
-        public SfxDelayedCue ArriveSfx => arriveSfx;
 
         public bool IsOpen
         {
@@ -87,12 +79,10 @@ namespace SubTerra.App.UI.EmergencyEscape
             UnwireButtons();
             UnwireDestinationEvents();
             ReleasePause();
-            arriveSfx.Cancel();
         }
 
         private void Update()
         {
-            TickArriveSfx();
             if (view == null || !view.IsOpen)
             {
                 return;
@@ -251,15 +241,6 @@ namespace SubTerra.App.UI.EmergencyEscape
             }
         }
 
-        /// <summary>예약한 도착음이 때가 되면 한 번 낸다. 창이 닫힌 뒤에도 Update가 부른다.</summary>
-        public void TickArriveSfx()
-        {
-            if (arriveSfx.TryFire())
-            {
-                SfxPlayer.Play(SfxId.EscapeArrive);
-            }
-        }
-
         private void PlaySwitchSfx()
         {
             if (switchSfx.TryPass())
@@ -315,8 +296,8 @@ namespace SubTerra.App.UI.EmergencyEscape
                 view?.SetResult(reason, !success);
                 if (success)
                 {
+                    // B-165: 도착음(EscapeArrive)은 전원이 꺼지는 소리라 실패처럼 들려 내지 않는다. 칸·파일은 남긴다.
                     SfxPlayer.Play(SfxId.PortalWarp);
-                    arriveSfx.Schedule(ArriveSfxDelay);
                     Close();
                 }
                 else

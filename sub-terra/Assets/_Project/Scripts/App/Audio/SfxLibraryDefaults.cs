@@ -153,12 +153,12 @@ namespace SubTerra.App.Audio
                 // B-164(D-1). 모두 World 버스(Alert는 경보 반복을 끊는다). 길이는 다듬은 파일 기준.
                 // 0.39초.
                 (new SfxEntry(SfxId.Footstep, SfxBus.World, volume: 0.65f), "footstep"),
-                // 0.58초.
-                (new SfxEntry(SfxId.Jump, SfxBus.World, volume: 0.25f), "jump"),
+                // 0.50초. B-165: 가벼운 "휙" 바람 소리로 교체.
+                (new SfxEntry(SfxId.Jump, SfxBus.World, volume: 0.4f), "jump"),
                 // 0.55초.
                 (new SfxEntry(SfxId.Land, SfxBus.World, volume: 0.45f), "land"),
                 // 1.01초.
-                (new SfxEntry(SfxId.LandHeavy, SfxBus.World, volume: 0.35f), "land_heavy"),
+                (new SfxEntry(SfxId.LandHeavy, SfxBus.World, volume: 0.7f), "land_heavy"),
                 // 0.20초.
                 (new SfxEntry(SfxId.LadderGrab, SfxBus.World, volume: 0.9f), "ladder_grab"),
                 // 0.50초.
@@ -176,7 +176,7 @@ namespace SubTerra.App.Audio
                 // 1.06초.
                 (new SfxEntry(SfxId.BlockBreak, SfxBus.World, volume: 0.3f), "block_break"),
                 // 0.68초.
-                (new SfxEntry(SfxId.PickupCommon, SfxBus.World, volume: 0.35f), "pickup_common"),
+                (new SfxEntry(SfxId.PickupCommon, SfxBus.World, volume: 0.65f), "pickup_common"),
                 // 0.81초.
                 (new SfxEntry(SfxId.PickupRare, SfxBus.World, volume: 0.5f), "pickup_rare"),
                 // 0.35초.

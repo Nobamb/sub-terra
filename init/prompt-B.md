@@ -3771,3 +3771,6 @@ EditMode:
 
 
 164. work_process/MVP2/sound 폴더에서 prompt-B-164.md 내용 참고해서 SFX/World 폴더에 추가한 효과음들 토대로 게임에 적용시켜줘
+
+
+165. work_process/MVP2/sound 폴더에서 prompt-B-165.md 내용 참고해서 효과음 교체 및 효과음 관련 수정 작업 진행해줘 Audio/SFX/World에 있던 기존 효과음은 내가 교체해놓아서 교체 작업은 안해도 돼
