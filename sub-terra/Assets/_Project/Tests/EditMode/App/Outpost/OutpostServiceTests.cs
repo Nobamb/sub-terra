@@ -15,6 +15,80 @@ namespace SubTerra.App.Tests.Outpost
         private const string Copper = DataIds.Minerals.Copper;
         private const string Iron = DataIds.Minerals.Iron;
 
+        [TestCase(0, 85)]
+        [TestCase(20, 70)]
+        public void Issue240_PartialIronWithdraw_PreservesTotalsEventsAndSave(int carriedCopper, int expectedIron)
+        {
+            var system = CreateSystem(170f);
+            if (carriedCopper > 0) system.Inventory.TryAddMineral(Copper, carriedCopper);
+            Assert.That(system.Service.State.TryRestore(new[] { new OutpostStorageEntryState(Iron, 130) },
+                new string[0], string.Empty, 0, 0), Is.True);
+            system.Service.ApplyRuntimeStatus(CreateStorageStatus());
+            int inventoryEvents = 0, storageEvents = 0, completions = 0;
+            system.Inventory.InventoryChanged += _ => inventoryEvents++;
+            system.Service.SnapshotChanged += _ => storageEvents++;
+            system.Service.OperationCompleted += _ => completions++;
+
+            var result = system.Service.TryWithdraw(Iron, 130);
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(result.Quantity, Is.EqualTo(expectedIron));
+            Assert.That(result.Message, Does.Contain(expectedIron + "개만"));
+            Assert.That(system.Inventory.State.GetQuantity(Iron), Is.EqualTo(expectedIron));
+            Assert.That(system.Service.State.GetStorageQuantity(Iron), Is.EqualTo(130 - expectedIron));
+            Assert.That(system.Inventory.CurrentWeight, Is.EqualTo(170f).Within(0.0001f));
+            Assert.That(inventoryEvents, Is.EqualTo(1));
+            Assert.That(storageEvents, Is.EqualTo(1));
+            Assert.That(completions, Is.EqualTo(1));
+            Assert.That(system.Service.TryWithdraw(Iron, 130).IsSuccess, Is.False);
+            Assert.That(system.Inventory.State.GetQuantity(Iron), Is.EqualTo(expectedIron));
+            Assert.That(system.Service.State.GetStorageQuantity(Iron), Is.EqualTo(130 - expectedIron));
+            Assert.That(inventoryEvents, Is.EqualTo(1));
+            Assert.That(storageEvents, Is.EqualTo(1));
+
+            var mapper = new SaveDataMapper(new SystemSaveClock());
+            var codec = new SaveJsonCodec(new SaveMigrationService());
+            var capture = mapper.Capture(new SaveCaptureContext(system.State, system.Inventory.State,
+                new UpgradeState(), null, null, "Mine_Demo_Integration", "issue240"));
+            Assert.That(codec.TryDeserialize(codec.Serialize(capture), out var data), Is.EqualTo(SaveMigrationStatus.Current));
+            Assert.That(mapper.TryRestore(data, out var restored), Is.True);
+            Assert.That(restored.Inventory.GetQuantity(Iron), Is.EqualTo(expectedIron));
+            Assert.That(restored.GameState.Outpost.GetStorageQuantity(Iron), Is.EqualTo(130 - expectedIron));
+        }
+
+        [TestCase(Copper, 1.5f)]
+        [TestCase(Iron, 2f)]
+        [TestCase(DataIds.Minerals.Lithium, 0.8f)]
+        [TestCase(DataIds.RareItems.EngineFuel, 1f)]
+        public void Issue240_PartialWithdraw_UsesEachMineralWeight(string id, float unitWeight)
+        {
+            var system = CreateSystem(unitWeight * 2.5f);
+            Assert.That(system.Service.State.TryRestore(new[] { new OutpostStorageEntryState(id, 10) },
+                new string[0], string.Empty, 0, 0), Is.True);
+            system.Service.ApplyRuntimeStatus(CreateStorageStatus());
+            var result = system.Service.TryWithdraw(id, 10);
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(result.Quantity, Is.EqualTo(2));
+            Assert.That(system.Inventory.State.GetQuantity(id), Is.EqualTo(2));
+            Assert.That(system.Service.State.GetStorageQuantity(id), Is.EqualTo(8));
+            Assert.That(system.Inventory.CurrentWeight, Is.LessThanOrEqualTo(system.Inventory.MaxCapacity));
+        }
+
+        [TestCase(1, 1)]
+        [TestCase(5, 2)]
+        [TestCase(10, 2)]
+        [TestCase(130, 2)]
+        public void Issue240_SelectedQuantity_IsLimitedByStorageAndCapacity(int quantity, int expected)
+        {
+            var system = CreateSystem(5f);
+            Assert.That(system.Service.State.TryRestore(new[] { new OutpostStorageEntryState(Iron, 10) },
+                new string[0], string.Empty, 0, 0), Is.True);
+            system.Service.ApplyRuntimeStatus(CreateStorageStatus());
+            var result = system.Service.TryWithdraw(Iron, quantity);
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(result.Quantity, Is.EqualTo(expected));
+            Assert.That(system.Service.State.GetStorageQuantity(Iron), Is.EqualTo(10 - expected));
+        }
+
         [Test]
         public void H_F01_ActiveCharger_ChargesToMaximum_AndRaisesEnergyImmediately()
         {
