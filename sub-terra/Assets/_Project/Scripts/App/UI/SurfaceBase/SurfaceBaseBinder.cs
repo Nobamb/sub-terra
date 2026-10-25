@@ -184,7 +184,7 @@ namespace SubTerra.App.UI.SurfaceBase
             }
 
             economyBinder?.Unbind();
-            progressionBinder?.Presenter?.Unbind();
+            if (progressionBinder != null) progressionBinder.Unbind();
         }
 
         private void Update()

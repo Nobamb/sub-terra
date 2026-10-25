@@ -1,5 +1,6 @@
 using System;
 using SubTerra.App.Progression;
+using SubTerra.App.Save;
 using UnityEngine;
 
 namespace SubTerra.App.UI.Progression
@@ -12,6 +13,7 @@ namespace SubTerra.App.UI.Progression
     public sealed class ProgressionPanelBinder : MonoBehaviour
     {
         [SerializeField] private ProgressionPanelView view;
+        [SerializeField] private bool tracePurchases;
 
         private ProgressionPanelPresenter presenter;
         private ProgressionService service;
@@ -49,6 +51,12 @@ namespace SubTerra.App.UI.Progression
         }
 
         private void OnDestroy()
+        {
+            Unbind();
+        }
+
+        /// <summary>한 번도 활성화되지 않은 창도 씬 소유자가 명시적으로 구독을 해제한다.</summary>
+        public void Unbind()
         {
             if (service != null)
             {
@@ -113,7 +121,43 @@ namespace SubTerra.App.UI.Progression
 
         public void PurchaseSelected()
         {
-            presenter?.RequestPurchase();
+            var upgradeId = presenter?.SelectedUpgradeId ?? string.Empty;
+            TracePurchase("before", upgradeId, string.Empty);
+            try
+            {
+                if (presenter == null)
+                {
+                    TracePurchase("after", upgradeId, "PresenterMissing");
+                    return;
+                }
+
+                var result = presenter.RequestPurchase();
+                TracePurchase("after", upgradeId, result.Status.ToString());
+            }
+            catch (Exception exception)
+            {
+                // 예외를 숨기지 않고 원래 스택을 유지한다. 진단은 발생 단계를 덧붙인다.
+                TracePurchase("exception", upgradeId, exception.GetType().Name);
+                throw;
+            }
+        }
+
+        private void TracePurchase(string phase, string upgradeId, string outcome)
+        {
+            // 일반 플레이에서는 기록하지 않는다. exe도 -trace-upgrades로 같은 진단을 켤 수 있다.
+            if (!tracePurchases && Array.IndexOf(Environment.GetCommandLineArgs(), "-trace-upgrades") < 0)
+                return;
+
+            var runtime = SaveRuntimeController.Instance;
+            var current = runtime != null ? runtime.Progression : null;
+            var boundLevel = service != null && service.TryGetSnapshot(upgradeId, out var bound)
+                ? bound.CurrentLevel : -1;
+            var currentLevel = current != null && current.TryGetSnapshot(upgradeId, out var live)
+                ? live.CurrentLevel : -1;
+            Debug.Log($"[UpgradePurchaseTrace] phase={phase} frame={Time.frameCount} "
+                + $"scene={gameObject.scene.name} binder={GetEntityId()} upgrade={upgradeId} "
+                + $"bound={IsBound} currentService={current != null && ReferenceEquals(service, current)} "
+                + $"boundLevel={boundLevel} currentLevel={currentLevel} outcome={outcome}", this);
         }
 
         private void EnsureView()

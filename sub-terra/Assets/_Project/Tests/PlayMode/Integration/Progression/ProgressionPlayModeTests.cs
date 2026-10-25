@@ -243,6 +243,56 @@ namespace SubTerra.App.Tests.PlayMode.Integration.Progression
             PurchaseAndCheck(DataIds.Upgrades.MaximumEnergy);
             Assert.That(runtime.SaveCurrent().IsSuccess, Is.True);
 
+            // 그래픽 없는 검사에서는 URP/CCTV 렌더만 제외한다. 씬·서비스·구매 경로는 유지한다.
+            var disabledForHeadless = new List<Behaviour>();
+            SceneManager.sceneLoaded += PrepareHeadlessScene;
+            try
+            {
+                var serviceBeforeTravel = runtime.Progression;
+                Object.FindAnyObjectByType<SubTerra.App.UI.SurfaceBase.SurfaceBaseView>().SetUpgradeVisible(false);
+                Assert.That(runtime.TryStartExploration(out var enterReason), Is.True, enterReason);
+                yield return UiTestWait.Until(() => SceneManager.GetActiveScene().name == SceneNames.Integration
+                    && Object.FindAnyObjectByType<IntegrationRuntimeBinder>()?.IsUiActivated == true,
+                    "광산 UI 연결", 90f);
+                yield return UiTestEnvironment.DismissBriefing();
+                Assert.That(runtime.Progression, Is.SameAs(serviceBeforeTravel));
+                var mineOwner = Object.FindAnyObjectByType<IntegrationRuntimeBinder>();
+                var minePanel = (ProgressionPanelBinder)typeof(IntegrationRuntimeBinder)
+                    .GetField("progressionPanelBinder", flags).GetValue(mineOwner);
+                Assert.That(minePanel.gameObject.activeInHierarchy, Is.False, "광산 업그레이드 창을 열지 않은 경로를 확인한다.");
+                var minePresenter = minePanel.Presenter;
+                Assert.That(minePresenter.IsBound, Is.True);
+                Assert.That(runtime.TryReturnToSurface(out var returnReason), Is.True, returnReason);
+                yield return UiTestWait.Until(SurfaceReady, "실제 귀환 후 지상 연결", 90f);
+                Assert.That(minePresenter.IsBound, Is.False, "파괴된 비활성 창의 구독이 남으면 다음 구매 갱신을 중단시킨다.");
+                Assert.That(runtime.Progression, Is.SameAs(serviceBeforeTravel));
+                PurchaseAndCheck(DataIds.Upgrades.MaximumHealth);
+            }
+            finally
+            {
+                SceneManager.sceneLoaded -= PrepareHeadlessScene;
+                foreach (var behaviour in disabledForHeadless)
+                    if (behaviour != null) behaviour.enabled = true;
+            }
+
+            void PrepareHeadlessScene(Scene scene, LoadSceneMode mode)
+            {
+                if (SystemInfo.graphicsDeviceType != UnityEngine.Rendering.GraphicsDeviceType.Null
+                    || scene.name != SceneNames.Integration) return;
+                foreach (var camera in Object.FindObjectsByType<Camera>(FindObjectsSortMode.None))
+                    if (camera.enabled)
+                    {
+                        disabledForHeadless.Add(camera);
+                        camera.enabled = false;
+                    }
+                foreach (var binder in Object.FindObjectsByType<SubTerra.App.UI.EmergencyEscape.EmergencyEscapePanelBinder>(FindObjectsSortMode.None))
+                    if (binder.enabled)
+                    {
+                        disabledForHeadless.Add(binder);
+                        binder.enabled = false;
+                    }
+            }
+
             bool SurfaceReady() => SceneManager.GetActiveScene().name == SceneNames.SurfaceBase
                 && Object.FindAnyObjectByType<SubTerra.App.UI.SurfaceBase.SurfaceBaseBinder>()?.IsBound == true
                 && runtime.IsUiReady;
@@ -257,6 +307,9 @@ namespace SubTerra.App.Tests.PlayMode.Integration.Progression
                 Assert.That(runtime.Progression.TryGetSnapshot(id, out var before), Is.True);
                 var purchase = (UnityEngine.UI.Button)typeof(ProgressionPanelView).GetField("purchaseButton", flags).GetValue(panel);
                 Assert.That(purchase.interactable, Is.True, id);
+                typeof(ProgressionPanelBinder).GetField("tracePurchases", flags).SetValue(binder, true);
+                LogAssert.Expect(LogType.Log, new System.Text.RegularExpressions.Regex(
+                    @"\[UpgradePurchaseTrace\] phase=before .*currentService=True .*boundLevel=" + before.CurrentLevel));
                 purchase.onClick.Invoke();
                 Assert.That(runtime.Progression.LastPurchaseResult.IsSuccess, Is.True, id);
                 Assert.That(runtime.Progression.TryGetSnapshot(id, out var after), Is.True);
@@ -266,6 +319,9 @@ namespace SubTerra.App.Tests.PlayMode.Integration.Progression
                 Assert.That(label.text, Is.EqualTo(after.IsMaximumLevel ? "MAX" : "Lv." + after.CurrentLevel + "/" + after.MaximumLevel));
                 if (id == DataIds.Upgrades.MaximumEnergy)
                     Assert.That(GameBootstrapper.Instance.State.Player.MaxEnergy, Is.EqualTo(100 + (int)after.CurrentEffectValue));
+                if (id == DataIds.Upgrades.MaximumHealth)
+                    Assert.That(((IPlayerHealthUpgradeProvider)runtime.Progression.Effects).GetMaximumHealth(100),
+                        Is.EqualTo(100 + (int)after.CurrentEffectValue));
             }
         }
 
@@ -335,6 +391,37 @@ namespace SubTerra.App.Tests.PlayMode.Integration.Progression
             surfaceView.SetUpgradeVisible(true);
             Assert.That(binder.IsBound, Is.True);
             Assert.That(env.Save.ActiveSlot, Is.Zero);
+        }
+
+        [Test]
+        public void Issue211_PurchaseTracePreservesSubscriberExceptionAndCommittedLevel()
+        {
+            var host = new GameObject("Issue211_DiagnosticBinder");
+            var data = CreateUpgrade(DataIds.Upgrades.DrillSpeed, 0.25f);
+            try
+            {
+                var binder = host.AddComponent<ProgressionPanelBinder>();
+                var service = new ProgressionService(new UpgradeState(), new Catalog(data), new Wallet());
+                binder.BindTo(service);
+                Assert.That(binder.SelectUpgrade(data.Id), Is.True);
+                typeof(ProgressionPanelBinder).GetField("tracePurchases", BindingFlags.Instance | BindingFlags.NonPublic)
+                    .SetValue(binder, true);
+                var failure = new System.InvalidOperationException("검사용 구독자 예외");
+                service.UpgradeChanged += _ => throw failure;
+                LogAssert.Expect(LogType.Log, new System.Text.RegularExpressions.Regex(
+                    @"\[UpgradePurchaseTrace\] phase=before .*boundLevel=0"));
+                LogAssert.Expect(LogType.Log, new System.Text.RegularExpressions.Regex(
+                    @"\[UpgradePurchaseTrace\] phase=exception .*boundLevel=1 .*outcome=InvalidOperationException"));
+                Assert.That(Assert.Throws<System.InvalidOperationException>(() => binder.PurchaseSelected()), Is.SameAs(failure));
+                Assert.That(service.TryGetSnapshot(data.Id, out var snapshot), Is.True);
+                Assert.That(snapshot.CurrentLevel, Is.EqualTo(1));
+                Assert.That(binder.Presenter.IsBusy, Is.False);
+            }
+            finally
+            {
+                Object.DestroyImmediate(host);
+                Object.DestroyImmediate(data);
+            }
         }
 
         [UnityTest]
