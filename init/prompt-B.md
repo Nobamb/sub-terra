@@ -3774,3 +3774,5 @@ EditMode:
 
 
 165. work_process/MVP2/sound 폴더에서 prompt-B-165.md 내용 참고해서 효과음 교체 및 효과음 관련 수정 작업 진행해줘 Audio/SFX/World에 있던 기존 효과음은 내가 교체해놓아서 교체 작업은 안해도 돼
+
+166. work_process/MVP2/sound 폴더에서 prompt-B-166.md 의 내용을 참고해서 효과음 관련 버그 수정 및 엘레베이터 타는 동안에는 설정창 나오지 않도록 설정해줘

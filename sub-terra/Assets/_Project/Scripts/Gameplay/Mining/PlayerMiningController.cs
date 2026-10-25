@@ -29,6 +29,13 @@ namespace SubTerra.Gameplay.Mining
         private static readonly List<RaycastResult> PointerHits = new(8);
         private System.Func<bool> pointerMiningBlocker;
         private bool pointerClaimedByPlacement;
+        private bool enterMiningSuppressed;
+
+        /// <summary>B-166: 창을 Enter로 확인한 뒤 그 누르기가 채굴로 이어지지 않게, Enter를 한 번 뗄 때까지 채굴 키로 보지 않는다.</summary>
+        public void SuppressEnterUntilReleased()
+        {
+            enterMiningSuppressed = true;
+        }
 
         public void SetPointerMiningBlocker(System.Func<bool> blocker)
         {
@@ -154,8 +161,14 @@ namespace SubTerra.Gameplay.Mining
         {
             if (PlayerKeyboardControls.ReadMiningDirection(ControlPreferences.Scheme) != Vector2.zero)
                 return true;
-            bool enterMining = Keyboard.current != null
+            bool enterHeld = Keyboard.current != null
                 && Keyboard.current.enterKey.isPressed;
+            if (!enterHeld)
+            {
+                enterMiningSuppressed = false;
+            }
+
+            bool enterMining = enterHeld && !enterMiningSuppressed;
             if (enterMining)
             {
                 return true;

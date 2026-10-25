@@ -8,6 +8,7 @@ using SubTerra.App.UI.Outpost;
 using SubTerra.App.UI.Progression;
 using SubTerra.App.UI.SurfaceBase;
 using SubTerra.App.UI.Tutorial;
+using SubTerra.Gameplay.Player;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -146,6 +147,8 @@ namespace SubTerra.App.Integration
         public void OpenSettings()
         {
             if (settings == null || settingsView == null || IsSettingsOpen) return;
+            // B-166: ESC와 설정 버튼이 모두 이 경로를 지난다. 엘리베이터 탑승 중에는 소리 없이 무시한다.
+            if (IsElevatorRiding()) return;
             settings.Open();
             settingsView.SetSettingsDraft(settings.Draft);
             settingsView.SetSettingsVisible(true);
@@ -162,6 +165,18 @@ namespace SubTerra.App.Integration
             settingsView.SetSettingsVisible(false);
             SettingsRuntimeApplier.RestoreAppliedVolume(settings.Applied);
             UiKeyboardSubmitGuard.ClearSelection();
+        }
+
+        /// <summary>B-166: 탑승 중이면 설정창을 열지 않는다. 판정은 ElevatorController.IsRiding 한 곳에서 한다.</summary>
+        public static bool IsElevatorRiding()
+        {
+            var elevators = FindObjectsByType<ElevatorController>(FindObjectsInactive.Exclude);
+            for (var i = 0; i < elevators.Length; i++)
+            {
+                if (elevators[i] != null && elevators[i].IsRiding) return true;
+            }
+
+            return false;
         }
 
         private static bool TryHideOpenDeepZoneUnlockPopup()

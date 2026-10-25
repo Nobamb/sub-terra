@@ -18,6 +18,7 @@ namespace SubTerra.App.Audio
         [SerializeField] private bool failWhenDisabled = true;
 
         private bool listening;
+        private int clickedFrame = -1;
 
         public SfxId ClickSfx => clickSfx;
         public bool Hover => hover;
@@ -84,6 +85,7 @@ namespace SubTerra.App.Audio
 
         private void OnClicked()
         {
+            clickedFrame = Time.frameCount;
             if (clickSfx != SfxId.None)
             {
                 SfxPlayer.Play(clickSfx);
@@ -92,6 +94,13 @@ namespace SubTerra.App.Audio
 
         public void OnPointerClick(PointerEventData eventData)
         {
+            // B-166: 같은 클릭으로 onClick이 이미 불렸다면(그 처리로 창이 닫혀 버튼이 막혔어도) 실패음을 내지 않는다.
+            if (clickedFrame == Time.frameCount)
+            {
+                clickedFrame = -1;
+                return;
+            }
+
             // 활성 버튼은 onClick이 소리를 내므로, 눌렸는데 반응하지 않는 버튼만 여기서 처리한다.
             if (failWhenDisabled && button != null && !button.IsInteractable())
             {

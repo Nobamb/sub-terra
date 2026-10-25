@@ -67,6 +67,10 @@ namespace SubTerra.Gameplay.Player
         /// <summary>상태·탑승자 변화로 홀로그램 안내 종류가 바뀔 수 있을 때 발생한다.</summary>
         public event Action PromptChanged;
         public bool HasRider => riderMovement != null;
+        /// <summary>B-166: 탑승이 확정된(Calling) 뒤 씬이 바뀔 때까지 true. 이동이 거절·취소되면 false로 돌아온다.</summary>
+        public bool IsRiding => State == ElevatorTravelState.Calling
+            || State == ElevatorTravelState.Moving
+            || travelCommitted;
         public ElevatorPromptKind PromptKind => ElevatorPromptResolver.Resolve(
             State, HasRider, riderLocked || travelCommitted, destination);
 

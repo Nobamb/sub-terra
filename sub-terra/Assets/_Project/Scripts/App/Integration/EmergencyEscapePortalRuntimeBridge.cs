@@ -8,6 +8,7 @@ using SubTerra.App.State;
 using SubTerra.App.Tutorial;
 using SubTerra.App.UI.EmergencyEscape;
 using SubTerra.Gameplay.Building;
+using SubTerra.Gameplay.Mining;
 using SubTerra.Gameplay.Player;
 using SubTerra.Shared;
 using UnityEngine;
@@ -230,6 +231,12 @@ namespace SubTerra.App.Integration
                 gameState,
                 DemoProgressSignal.EmergencyEscapeSucceeded);
             panelBinder?.Close();
+            // B-166: Enter로 확인했으면 닫기 연출 뒤 아직 눌린 Enter가 도착 자리 옆 칸 채굴(실패음)로 이어지지 않게 한다.
+            var mining = playerTransform.GetComponent<PlayerMiningController>();
+            if (mining != null)
+            {
+                mining.SuppressEnterUntilReleased();
+            }
             SaveRuntimeController.Instance?.SaveCurrent(AutoSaveReason.Manual);
             reason = kind == EmergencyEscapeDestination.OutpostCore
                 ? (ItemDisplayNames.OutpostName + "로 긴급 이동했습니다.")
