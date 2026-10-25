@@ -56,6 +56,21 @@ namespace SubTerra.Shared.Audio
         Timer5MinAlert = 47,
         KeysHoloOpen = 48,
         KeysPageTurn = 49,
-        PortalClose = 50
+        PortalClose = 50,
+        Footstep = 51,
+        Jump = 52,
+        Land = 53,
+        LandHeavy = 54,
+        LadderGrab = 55,
+        LadderClimb = 56,
+        LadderClimbB = 57,
+        ElevatorDoor = 58,
+        ElevatorMoveLoop = 59,
+        ElevatorArriveDing = 60,
+        DrillLoop = 61,
+        BlockBreak = 62,
+        PickupCommon = 63,
+        PickupRare = 64,
+        CargoHeavyWarning = 65
     }
 }

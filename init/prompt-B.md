@@ -3768,3 +3768,6 @@ EditMode:
 
 
 163.  work_process/MVP2/sound 폴더에서 sfx-B-rest 폴더, prompt-B-163.md 참고해서 효과음 추가해줘
+
+
+164. work_process/MVP2/sound 폴더에서 prompt-B-164.md 내용 참고해서 SFX/World 폴더에 추가한 효과음들 토대로 게임에 적용시켜줘

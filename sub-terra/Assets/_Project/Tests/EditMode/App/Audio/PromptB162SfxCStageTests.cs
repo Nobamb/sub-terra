@@ -521,7 +521,7 @@ namespace SubTerra.App.Tests.Audio
         }
 
         [Test]
-        public void Loop_SuppressedOrMutedStops_PauseDucks()
+        public void Loop_SuppressedPausedOrMutedStops()
         {
             var muted = false;
             var paused = false;
@@ -531,10 +531,15 @@ namespace SubTerra.App.Tests.Audio
             loop.Tick(Vector2.zero, portals, true);
             Assert.That(loop.IsActive, Is.False, "탐사 실패 처리 중에는 정지");
 
+            // B-164: UI 정지 중에는 작게 이어지지 않고 멈춘다. 풀리면 다시 난다.
             paused = true;
             loop.Tick(Vector2.zero, portals, false);
-            Assert.That(loop.IsActive, Is.True);
-            Assert.That(loop.Gain, Is.EqualTo(0.35f).Within(0.0001f), "UI 정지 중에는 작게");
+            Assert.That(loop.IsActive, Is.False, "UI 정지 중에는 정지");
+
+            paused = false;
+            loop.Tick(Vector2.zero, portals, false);
+            Assert.That(loop.IsActive, Is.True, "정지가 풀리면 다시");
+            Assert.That(loop.Gain, Is.EqualTo(1f).Within(0.0001f));
 
             muted = true;
             loop.Tick(Vector2.zero, portals, false);

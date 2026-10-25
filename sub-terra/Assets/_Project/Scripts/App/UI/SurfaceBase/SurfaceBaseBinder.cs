@@ -502,6 +502,9 @@ namespace SubTerra.App.UI.SurfaceBase
                 return (false, reason);
             }
 
+            // B-164: 탐사 시작 버튼에는 확인음이 붙어 있지 않다. 지상에는 승강 칸이 없어 승강 루프는 없다.
+            SfxPlayer.Play(SfxId.UiConfirm);
+            SfxPlayer.Play(SfxId.ElevatorDoor);
             return (true, string.Empty);
         }
     }

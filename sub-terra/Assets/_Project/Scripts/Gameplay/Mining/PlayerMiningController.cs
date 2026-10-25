@@ -37,6 +37,9 @@ namespace SubTerra.Gameplay.Mining
 
         public bool IsMining => miningSystem != null && miningSystem.IsMining;
 
+        /// <summary>B-164: 채굴 키를 새로 누른 순간(누르기 시작·방향 바꿈). 실패음 반복 판정을 풀 때 쓴다.</summary>
+        public event System.Action MiningPressed;
+
         private void Awake()
         {
             movement = GetComponent<PlayerMovement>();
@@ -91,7 +94,13 @@ namespace SubTerra.Gameplay.Mining
 
             Vector2 direction = PlayerKeyboardControls.ReadMiningDirection(ControlPreferences.Scheme);
             bool miningInputPressed = IsMiningInputPressed();
-            if (direction != Vector2.zero && direction != lastMiningDirection)
+            bool directionChanged = direction != Vector2.zero && direction != lastMiningDirection;
+            if (miningInputPressed && (!miningInputPressedLastFrame || directionChanged))
+            {
+                MiningPressed?.Invoke();
+            }
+
+            if (directionChanged)
             {
                 miningSystem.CancelMining();
                 CaptureCurrentTarget();

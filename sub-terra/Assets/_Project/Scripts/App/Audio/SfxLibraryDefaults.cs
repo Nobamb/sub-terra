@@ -32,11 +32,13 @@ namespace SubTerra.App.Audio
         private static readonly HashSet<string> LoopFileNames = new HashSet<string>
         {
             "portal_idle_loop",
+            "elevator_move_loop",
+            "drill_loop",
         };
 
         public static bool IsLoopFile(string fileName) => fileName != null && LoopFileNames.Contains(fileName);
 
-        /// <summary>SfxId 순서대로 49칸(None·비워 둔 3번 제외). 파일 이름은 확장자 제외.</summary>
+        /// <summary>SfxId 순서대로 64칸(None·비워 둔 3번 제외). 파일 이름은 확장자 제외.</summary>
         public static IReadOnlyList<(SfxEntry Entry, string FileName)> Create()
         {
             return new List<(SfxEntry, string)>
@@ -147,6 +149,38 @@ namespace SubTerra.App.Audio
                 (new SfxEntry(SfxId.KeysPageTurn, SfxBus.UI, volume: 0.65f), "keys_page_turn"),
                 // 0.71초.
                 (new SfxEntry(SfxId.PortalClose, SfxBus.UI, volume: 0.55f), "portal_close"),
+
+                // B-164(D-1). 모두 World 버스(Alert는 경보 반복을 끊는다). 길이는 다듬은 파일 기준.
+                // 0.39초.
+                (new SfxEntry(SfxId.Footstep, SfxBus.World, volume: 0.65f), "footstep"),
+                // 0.58초.
+                (new SfxEntry(SfxId.Jump, SfxBus.World, volume: 0.25f), "jump"),
+                // 0.55초.
+                (new SfxEntry(SfxId.Land, SfxBus.World, volume: 0.45f), "land"),
+                // 1.01초.
+                (new SfxEntry(SfxId.LandHeavy, SfxBus.World, volume: 0.35f), "land_heavy"),
+                // 0.20초.
+                (new SfxEntry(SfxId.LadderGrab, SfxBus.World, volume: 0.9f), "ladder_grab"),
+                // 0.50초.
+                (new SfxEntry(SfxId.LadderClimb, SfxBus.World, volume: 0.35f), "ladder_climb"),
+                // 0.50초.
+                (new SfxEntry(SfxId.LadderClimbB, SfxBus.World, volume: 0.35f), "ladder_climb_b"),
+                // 1.58초. 열림·닫힘 공용.
+                (new SfxEntry(SfxId.ElevatorDoor, SfxBus.World, volume: 0.45f), "elevator_door"),
+                // 5.5초 반복용. 원샷 풀이 아니라 WorldLoopAudio가 따로 튼다.
+                (new SfxEntry(SfxId.ElevatorMoveLoop, SfxBus.World, volume: 0.15f), "elevator_move_loop"),
+                // 1.35초.
+                (new SfxEntry(SfxId.ElevatorArriveDing, SfxBus.World, volume: 0.45f), "elevator_arrive_ding"),
+                // 1.85초 반복용. WorldLoopAudio가 따로 튼다.
+                (new SfxEntry(SfxId.DrillLoop, SfxBus.World, volume: 0.35f), "drill_loop"),
+                // 1.06초.
+                (new SfxEntry(SfxId.BlockBreak, SfxBus.World, volume: 0.3f), "block_break"),
+                // 0.68초.
+                (new SfxEntry(SfxId.PickupCommon, SfxBus.World, volume: 0.35f), "pickup_common"),
+                // 0.81초.
+                (new SfxEntry(SfxId.PickupRare, SfxBus.World, volume: 0.5f), "pickup_rare"),
+                // 0.35초.
+                (new SfxEntry(SfxId.CargoHeavyWarning, SfxBus.World, volume: 0.2f), "cargo_heavy_warning"),
             };
         }
     }
