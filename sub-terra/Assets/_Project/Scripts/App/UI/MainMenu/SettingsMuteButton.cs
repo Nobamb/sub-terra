@@ -6,16 +6,22 @@ namespace SubTerra.App.UI.MainMenu
     public sealed class SettingsMuteButton : UnityEngine.UI.MaskableGraphic
     {
         private UnityEngine.UI.Slider slider;
+        private AudioChannel channel;
         public UnityEngine.UI.Button Button => GetComponent<UnityEngine.UI.Button>();
-        public bool ShowsMuted => SettingsRuntimeApplier.IsMasterMuted || slider != null && slider.value <= 0f;
+        public AudioChannel Channel => channel;
+        public bool ShowsMuted => SettingsRuntimeApplier.IsMuted(channel) || slider != null && slider.value <= 0f;
 
-        public static SettingsMuteButton Ensure(UnityEngine.UI.Slider slider)
+        /// <summary>마스터는 기존 "MasterMuteButton" 이름을 그대로 쓰고, 나머지는 "BgmMuteButton"·"SfxMuteButton"이다.</summary>
+        public static string ObjectNameFor(AudioChannel channel) => channel + "MuteButton";
+
+        public static SettingsMuteButton Ensure(UnityEngine.UI.Slider slider, AudioChannel channel = AudioChannel.Master)
         {
-            var existing = slider.transform.Find("MasterMuteButton");
+            var objectName = ObjectNameFor(channel);
+            var existing = slider.transform.Find(objectName);
             var icon = existing != null ? existing.GetComponent<SettingsMuteButton>() : null;
             if (icon == null)
             {
-                var root = new GameObject("MasterMuteButton", typeof(RectTransform), typeof(CanvasRenderer),
+                var root = new GameObject(objectName, typeof(RectTransform), typeof(CanvasRenderer),
                     typeof(SettingsMuteButton), typeof(UnityEngine.UI.Button));
                 root.layer = slider.gameObject.layer;
                 root.transform.SetParent(slider.transform, false);
@@ -32,6 +38,8 @@ namespace SubTerra.App.UI.MainMenu
             }
             if (icon.slider != null) icon.slider.onValueChanged.RemoveListener(icon.OnSliderChanged);
             icon.slider = slider;
+            icon.channel = channel;
+            if (icon.isActiveAndEnabled) icon.Subscribe();
             slider.onValueChanged.AddListener(icon.OnSliderChanged);
             icon.SetVerticesDirty();
             return icon;
@@ -40,8 +48,7 @@ namespace SubTerra.App.UI.MainMenu
         protected override void OnEnable()
         {
             base.OnEnable();
-            SettingsRuntimeApplier.MasterMuteChanged -= RefreshIcon;
-            SettingsRuntimeApplier.MasterMuteChanged += RefreshIcon;
+            Subscribe();
             if (slider != null)
             {
                 slider.onValueChanged.RemoveListener(OnSliderChanged);
@@ -51,26 +58,45 @@ namespace SubTerra.App.UI.MainMenu
 
         protected override void OnDisable()
         {
-            SettingsRuntimeApplier.MasterMuteChanged -= RefreshIcon;
+            Unsubscribe();
             if (slider != null) slider.onValueChanged.RemoveListener(OnSliderChanged);
             base.OnDisable();
         }
 
         protected override void OnDestroy()
         {
+            Unsubscribe();
             if (slider != null) slider.onValueChanged.RemoveListener(OnSliderChanged);
             base.OnDestroy();
+        }
+
+        private void Subscribe()
+        {
+            Unsubscribe();
+            SettingsRuntimeApplier.ChannelChanged += OnChannelChanged;
+            if (channel == AudioChannel.Master) SettingsRuntimeApplier.MasterMuteChanged += RefreshIcon;
+        }
+
+        private void Unsubscribe()
+        {
+            SettingsRuntimeApplier.ChannelChanged -= OnChannelChanged;
+            SettingsRuntimeApplier.MasterMuteChanged -= RefreshIcon;
+        }
+
+        private void OnChannelChanged(AudioChannel changed)
+        {
+            if (changed == channel) RefreshIcon();
         }
 
         private void ToggleMute()
         {
             if (slider != null)
-                SettingsRuntimeApplier.SetMasterMuted(!SettingsRuntimeApplier.IsMasterMuted, slider.value);
+                SettingsRuntimeApplier.SetMuted(channel, !SettingsRuntimeApplier.IsMuted(channel), slider.value);
         }
 
         private void OnSliderChanged(float value)
         {
-            SettingsRuntimeApplier.PreviewMasterVolume(value);
+            SettingsRuntimeApplier.PreviewVolume(channel, value);
             RefreshIcon();
         }
 

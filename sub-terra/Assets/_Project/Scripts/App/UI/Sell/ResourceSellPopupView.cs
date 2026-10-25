@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using SubTerra.App.Audio;
 using SubTerra.App.UI.HUD;
+using SubTerra.Shared.Audio;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -354,6 +356,7 @@ namespace SubTerra.App.UI.Sell
                 return true;
             }
 
+            SfxPlayer.Play(SfxId.UiPopupClose);
             ApplyClose(0f);
             return true;
         }
@@ -384,7 +387,9 @@ namespace SubTerra.App.UI.Sell
             switch (state)
             {
                 case PopupState.Opening:
+                    var previous = clock;
                     clock += dt;
+                    PlayOpeningSfx(previous, clock);
                     if (clock >= ResourceSellTimeline.OpenDuration)
                     {
                         state = PopupState.Open;
@@ -427,6 +432,23 @@ namespace SubTerra.App.UI.Sell
             {
                 saleClock += dt;
                 ApplySale(saleClock);
+            }
+        }
+
+        // 금화가 하나씩 쌓일 때마다(피치를 올리며 앞 소리 위에 겹쳐) 한 번, 창과 부딪힐 때 한 번.
+        private static void PlayOpeningSfx(float previous, float now)
+        {
+            for (var coin = 0; coin < ResourceSellTimeline.CoinCount; coin++)
+            {
+                if (SfxPlayback.Crossed(previous, now, ResourceSellTimeline.CoinLandTime(coin)))
+                {
+                    SfxPlayer.Play(SfxId.SellCoinStack, ResourceSellTimeline.CoinStackPitch(coin));
+                }
+            }
+
+            if (SfxPlayback.Crossed(previous, now, ResourceSellTimeline.ImpactTime))
+            {
+                SfxPlayer.Play(SfxId.SellCoinBurst);
             }
         }
 
@@ -531,16 +553,20 @@ namespace SubTerra.App.UI.Sell
             {
                 case ResourceSellConfirmStatus.Sold:
                     SetStatus(outcome.Message, ResourceSellUi.Ok);
+                    SfxPlayer.Play(SfxId.SellConfirm);
                     StartSaleEffect(outcome);
                     break;
                 case ResourceSellConfirmStatus.Adjusted:
                     SetStatus(outcome.Message, ResourceSellUi.Gold);
+                    SfxPlayer.Play(SfxId.UiCancelFail);
                     break;
                 case ResourceSellConfirmStatus.Failed:
                     SetStatus(outcome.Message, ResourceSellUi.Error);
+                    SfxPlayer.Play(SfxId.UiCancelFail);
                     break;
                 case ResourceSellConfirmStatus.Empty:
                     SetStatus(outcome.Message, ResourceSellUi.TextMuted);
+                    SfxPlayer.Play(SfxId.UiCancelFail);
                     break;
             }
 
@@ -1283,6 +1309,8 @@ namespace SubTerra.App.UI.Sell
                 ResetLabel, 20f, ResourceSellButton.Variant.Normal, ResourceSellArt.ResetArc(), 20f);
             selectAllButton.Button.onClick.AddListener(OnSelectAll);
             resetButton.Button.onClick.AddListener(OnReset);
+            UiSfx.Attach(selectAllButton.Button, SfxId.UiClick, failWhenDisabled: false);
+            UiSfx.Attach(resetButton.Button, SfxId.UiClick, failWhenDisabled: false);
             noticeText = ResourceSellUi.Label(footer, "BulkNotice", 560f, ToolsY - 2f, CardSize.x - Pad - 560f, 26f, font, 16f,
                 FontStyles.Normal, ResourceSellUi.TextMuted, TextAlignmentOptions.Right);
             statusText = ResourceSellUi.Label(footer, "Status", 560f, ToolsY + 24f, CardSize.x - Pad - 560f, 28f, font, 18f,
@@ -1450,6 +1478,8 @@ namespace SubTerra.App.UI.Sell
             }
 
             sellButton.Button.onClick.AddListener(() => RequestSell());
+            // 결과음은 RequestSell이 낸다. 고른 게 없어 막힌 버튼만 실패음.
+            UiSfx.Attach(sellButton.Button, SfxId.None);
         }
 
         private void Caption(Transform parent, string name, string text, float x, float y)

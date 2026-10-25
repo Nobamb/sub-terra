@@ -1,7 +1,9 @@
 using System.Collections.Generic;
+using SubTerra.App.Audio;
 using SubTerra.App.UI.Guide;
 using SubTerra.App.UI.Sell;
 using SubTerra.Shared;
+using SubTerra.Shared.Audio;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -32,6 +34,9 @@ namespace SubTerra.App.UI.ControlTerminal
         private const float GlowStripThickness = 54f;
         private const float FlareLength = 150f;
         private const float FitMargin = 48f;
+        // 키캡 톡 소리는 0.08초 간격 제한이라 다섯 줄 중 실제로는 2~3번 나고, 줄마다 조금씩 높아진다.
+        public const float KeycapSfxInterval = 0.08f;
+        public const float KeycapPitchStep = 0.03f;
 
         private static readonly Color CardFill = new Color(0.02f, 0.06f, 0.10f, 0.94f);
         private static readonly Color Accent = new Color(0.55f, 1f, 0.97f, 1f);
@@ -45,6 +50,7 @@ namespace SubTerra.App.UI.ControlTerminal
         private readonly IGuideSprites sprites;
         private readonly ControlTerminalHoverState hover = new ControlTerminalHoverState();
         private readonly ControlTerminalAutoDemo autoDemo = new ControlTerminalAutoDemo();
+        private readonly SfxThrottle keycapSfx = new SfxThrottle(KeycapSfxInterval);
         private readonly List<ControlTerminalKeyCap> caps = new List<ControlTerminalKeyCap>();
         private readonly RectTransform[] ghostRects = new RectTransform[ControlTerminalTimeline.GhostCount];
         private readonly Image[] ghostImages = new Image[ControlTerminalTimeline.GhostCount];
@@ -472,6 +478,7 @@ namespace SubTerra.App.UI.ControlTerminal
             phase = Phase.Intro;
             introTime = 0f;
             outroTime = 0f;
+            keycapSfx.Reset();
             swapTime = ControlTerminalTimeline.PageSwapDuration;
             ApplySwap();
             autoDemo.Restart();
@@ -538,7 +545,9 @@ namespace SubTerra.App.UI.ControlTerminal
 
             if (phase == Phase.Intro)
             {
+                var previous = introTime;
                 introTime += dt;
+                PlayKeycapSfx(previous, introTime);
                 ApplyIntro(introTime);
                 ApplyIntroKeys(introTime);
                 if (introTime >= ControlTerminalTimeline.IntroDuration)
@@ -724,6 +733,16 @@ namespace SubTerra.App.UI.ControlTerminal
             if (!frame.HoloActive) cardFill.color = FrameColor;
             keyboardGroup.alpha = frame.KeyboardAlpha;
             chromeGroup.alpha = frame.TextAlpha;
+        }
+
+        // 연출 시계(introTime)로 간격을 재므로 PlayIntro마다 처음부터 다시 잰다.
+        private void PlayKeycapSfx(float previous, float now)
+        {
+            int row = ControlTerminalTimeline.CrossedKeyRow(previous, now);
+            if (row >= 0 && keycapSfx.TryPass(now))
+            {
+                SfxPlayer.Play(SfxId.KeycapPop, 1f + row * KeycapPitchStep);
+            }
         }
 
         private void ApplyIntroKeys(float time)

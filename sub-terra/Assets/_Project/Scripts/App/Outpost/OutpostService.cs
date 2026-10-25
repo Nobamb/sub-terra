@@ -451,21 +451,26 @@ namespace SubTerra.App.Outpost
                 return Complete(Fail(OutpostOperationStatus.InsufficientQuantity, kind,
                     deposit ? "보관할 화물이 없습니다." : "꺼낼 자원이 없습니다."));
 
-            var total = 0;
+            long requestedTotal = 0;
             foreach (var item in items)
             {
                 if (!TryValidateMineralRequest(item.Key, item.Value, kind, out _, out failure))
                     return Complete(failure);
                 var destination = deposit ? state.GetStorageQuantity(item.Key) : inventory.State.GetQuantity(item.Key);
-                if (destination > int.MaxValue - item.Value || total > int.MaxValue - item.Value)
+                if (deposit && (destination > int.MaxValue - item.Value || requestedTotal > int.MaxValue - item.Value))
                     return Complete(Fail(OutpostOperationStatus.OverflowRisk, kind, "이동 수량 한도를 초과합니다."));
-                total += item.Value;
+                requestedTotal += item.Value;
             }
 
-            // 전체 꺼내기도 기존 단일 꺼내기처럼 전량을 수용할 수 있을 때만 처리한다.
-            if (!deposit && !inventory.CanFitExact(items))
-                return Complete(Fail(OutpostOperationStatus.CapacityExceeded, kind,
-                    "전체 자원을 꺼낼 화물 공간이 부족합니다. 수량을 줄여 꺼내세요."));
+            int total;
+            if (deposit) total = (int)requestedTotal;
+            else
+            {
+                items = PlanBalancedWithdrawal(items, out total);
+                if (total == 0)
+                    return Complete(Fail(OutpostOperationStatus.CapacityExceeded, kind,
+                        "자원을 꺼낼 화물 공간이 부족합니다."));
+            }
 
             var mutation = deposit ? inventory.TryReduceMany(items) : inventory.TryAddManyExact(items);
             if (mutation.Status != InventoryMutationStatus.Success)
@@ -475,8 +480,87 @@ namespace SubTerra.App.Outpost
             foreach (var item in items)
                 state.SetStorageQuantity(item.Key, state.GetStorageQuantity(item.Key) + (deposit ? item.Value : -item.Value));
             RaiseSnapshotChanged();
-            return Complete(Success(kind, string.Empty, total, 0,
-                deposit ? "모든 화물을 보관했습니다." : "보관된 모든 자원을 꺼냈습니다."));
+            var partial = !deposit && total < requestedTotal;
+            return Complete(new OutpostOperationResult(OutpostOperationStatus.Success, kind, string.Empty, total, 0,
+                deposit ? "모든 화물을 보관했습니다."
+                    : partial ? "화물 공간이 부족해 일부만 꺼냈습니다." : "보관된 모든 자원을 꺼냈습니다.",
+                partial));
+        }
+
+        private List<KeyValuePair<string, int>> PlanBalancedWithdrawal(List<KeyValuePair<string, int>> source, out int total)
+        {
+            source.Sort((a, b) =>
+            {
+                int quantity = b.Value.CompareTo(a.Value);
+                if (quantity != 0) return quantity;
+                catalog.TryGetMineral(a.Key, out var aInfo);
+                catalog.TryGetMineral(b.Key, out var bInfo);
+                int value = bInfo.UnitPrice.CompareTo(aInfo.UnitPrice);
+                return value != 0 ? value : StringComparer.Ordinal.Compare(a.Key, b.Key);
+            });
+            var counts = new int[source.Count];
+            var limits = new int[source.Count];
+            var weights = new float[source.Count];
+            for (int i = 0; i < source.Count; i++)
+            {
+                catalog.TryGetMineral(source[i].Key, out var info);
+                weights[i] = info.UnitWeight;
+                limits[i] = Math.Min(source[i].Value, int.MaxValue - inventory.State.GetQuantity(source[i].Key));
+            }
+
+            double remaining = Math.Max(0f, inventory.MaxCapacity - inventory.CurrentWeight);
+            int plannedTotal = 0;
+            var active = new List<int>(source.Count);
+            while (plannedTotal < int.MaxValue)
+            {
+                active.Clear();
+                double roundWeight = 0;
+                int rounds = int.MaxValue;
+                for (int i = 0; i < source.Count; i++)
+                {
+                    if (counts[i] >= limits[i] || weights[i] > remaining + 0.0001) continue;
+                    active.Add(i);
+                    roundWeight += weights[i];
+                    rounds = Math.Min(rounds, limits[i] - counts[i]);
+                }
+                if (active.Count == 0) break;
+                // 한 바퀴에 각 자원을 한 개씩 꺼내는 것과 같은 결과를 완전한 바퀴 단위로 계산한다.
+                rounds = (int)Math.Min(rounds, Math.Floor((remaining + 0.0001) / roundWeight));
+                rounds = Math.Min(rounds, (int.MaxValue - plannedTotal) / active.Count);
+                if (rounds > 0)
+                {
+                    foreach (int i in active) counts[i] += rounds;
+                    plannedTotal += rounds * active.Count;
+                    remaining -= roundWeight * rounds;
+                }
+                else
+                {
+                    bool moved = false;
+                    foreach (int i in active)
+                    {
+                        if (plannedTotal == int.MaxValue || weights[i] > remaining + 0.0001) continue;
+                        counts[i]++;
+                        plannedTotal++;
+                        remaining -= weights[i];
+                        moved = true;
+                    }
+                    if (!moved) break;
+                }
+            }
+
+            // 최종 수용량은 기존 인벤토리와 같은 계산/순서로 검증한다. 상태 변경은 이후 한 번만 한다.
+            var result = new List<KeyValuePair<string, int>>(source.Count);
+            float capacity = Math.Max(0f, inventory.MaxCapacity - inventory.CurrentWeight);
+            total = 0;
+            for (int i = 0; i < source.Count; i++)
+            {
+                int quantity = Math.Min(counts[i], InventoryCalculator.MaxFittingUnits(capacity, weights[i]));
+                if (quantity <= 0) continue;
+                result.Add(new KeyValuePair<string, int>(source[i].Key, quantity));
+                capacity -= quantity * weights[i];
+                total += quantity;
+            }
+            return result;
         }
 
         public OutpostOperationResult TrySettle(OutpostSettlementSource source)

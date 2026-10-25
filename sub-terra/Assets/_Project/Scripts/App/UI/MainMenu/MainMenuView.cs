@@ -1,7 +1,9 @@
 using System;
+using SubTerra.App.Audio;
 using SubTerra.App.Tutorial;
 using SubTerra.App.RuntimeInfo;
 using SubTerra.App.UI.SurfaceBase;
+using SubTerra.Shared.Audio;
 using SubTerra.Shared.Localization;
 using TMPro;
 using UnityEngine;
@@ -120,6 +122,7 @@ namespace SubTerra.App.UI.MainMenu
             if (deleteConfirmButton != null) deleteConfirmButton.onClick.AddListener(OnDeleteConfirm);
             if (deleteCancelButton != null) deleteCancelButton.onClick.AddListener(OnDeleteCancel);
             if (deleteCloseButton != null) deleteCloseButton.onClick.AddListener(OnDeleteCancel);
+            AttachButtonSfx();
             WireCards(true);
             if (intro != null) intro.BootSkipped += OnBootSkipped;
             settingsApplyButton?.onClick.AddListener(OnSettingsApply);
@@ -157,6 +160,18 @@ namespace SubTerra.App.UI.MainMenu
             {
                 masterVolumeSlider.onValueChanged.AddListener(OnMasterVolumeChanged);
             }
+        }
+
+        // 바인더가 클릭 소리를 내는 버튼은 호버만 붙인다. 슬롯 카드는 선택 소리(UiSlotSelect)만 낸다.
+        private void AttachButtonSfx()
+        {
+            UiSfx.Attach(settingsButton, SfxId.UiClick, hover: true);
+            UiSfx.Attach(quitButton, SfxId.UiClick, hover: true);
+            UiSfx.Attach(continueButton, SfxId.None, hover: true);
+            UiSfx.Attach(newGameButton, SfxId.None, hover: true);
+            UiSfx.Attach(overwriteConfirmButton, SfxId.None, hover: true);
+            UiSfx.Attach(overwriteCancelButton, SfxId.None, hover: true);
+            UiSfx.Attach(overwriteCloseButton, SfxId.None, hover: true);
         }
 
         private void OnRectTransformDimensionsChange() => RefreshLayout();
@@ -576,6 +591,12 @@ namespace SubTerra.App.UI.MainMenu
                 masterVolumeSlider.SetValueWithoutNotify(values.MasterVolume);
             }
 
+            var audioRows = AudioRows();
+            if (audioRows != null)
+            {
+                audioRows.SetValues(values.BgmVolume, values.SfxVolume);
+            }
+
             if (reduceMotionToggle != null)
             {
                 reduceMotionToggle.SetIsOnWithoutNotify(values.ReduceMotion);
@@ -614,6 +635,13 @@ namespace SubTerra.App.UI.MainMenu
             if (masterVolumeSlider != null)
             {
                 result.MasterVolume = masterVolumeSlider.value;
+            }
+
+            var audioRows = AudioRows();
+            if (audioRows != null)
+            {
+                result.BgmVolume = audioRows.Bgm.Slider.value;
+                result.SfxVolume = audioRows.Sfx.Slider.value;
             }
 
             if (reduceMotionToggle != null)
@@ -670,6 +698,13 @@ namespace SubTerra.App.UI.MainMenu
                 && settingsDefaultsButton != null;
         }
 
+        // 배경음·효과음 줄은 설정창 스킨이 런타임에 만든다. 아직 열린 적이 없어도 여기서 만들어 받는다.
+        private SettingsAudioRows AudioRows()
+        {
+            var skin = settingsRoot != null ? settingsRoot.GetComponent<SettingsMenuSkin>() : null;
+            return skin != null ? skin.EnsureAudioRows() : null;
+        }
+
         private void RefreshSettingsLabels(float volume)
         {
             if (masterVolumeLabel != null)
@@ -723,7 +758,7 @@ namespace SubTerra.App.UI.MainMenu
             {
                 bgmHintLabel.text = LocalizationService.Get(
                     "settings.bgm_hint",
-                    "BGM 4종(타이틀/기지/탐사/위험)은 마스터 음량으로 조절됩니다.");
+                    "배경음은 배경음 슬라이더로 조절됩니다.");
             }
         }
 

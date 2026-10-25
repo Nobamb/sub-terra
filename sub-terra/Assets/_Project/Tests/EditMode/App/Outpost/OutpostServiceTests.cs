@@ -450,7 +450,9 @@ namespace SubTerra.App.Tests.Outpost
             Assert.That(restored.GameState.Outpost.GetStorageQuantity(DataIds.RareItems.EngineFuel), Is.EqualTo(1));
             Assert.That(restored.Inventory.GetQuantity(Copper), Is.Zero);
 
-            Assert.That(system.Service.TryWithdrawAll().IsSuccess, Is.True);
+            var withdrawn = system.Service.TryWithdrawAll();
+            Assert.That(withdrawn.IsSuccess, Is.True);
+            Assert.That(withdrawn.IsPartial, Is.False);
             Assert.That(system.Inventory.State.GetQuantity(Copper), Is.EqualTo(23));
             Assert.That(system.Inventory.State.GetQuantity(Iron), Is.EqualTo(4));
             Assert.That(system.Inventory.State.GetQuantity(DataIds.RareItems.EngineFuel), Is.EqualTo(1));
@@ -481,9 +483,9 @@ namespace SubTerra.App.Tests.Outpost
         }
 
         [Test]
-        public void Issue212_BulkFailureLeavesEveryResourceUnchanged()
+        public void Issue236_BulkFailureLeavesEveryResourceUnchanged()
         {
-            var system = CreateSystem(maxCapacity: 8f);
+            var system = CreateSystem(maxCapacity: 1.5f);
             system.Inventory.TryAddMineral(Copper, 1);
             RestoreStorage(system, 1, 4);
             system.Service.ApplyRuntimeStatus(CreateStorageStatus());
@@ -502,6 +504,97 @@ namespace SubTerra.App.Tests.Outpost
             Assert.That(system.Inventory.State.GetQuantity(Copper), Is.EqualTo(1));
         }
 
+        [TestCase(170f, 6, 0, 47, 47, 6)]
+        [TestCase(100f, 10, 0, 26, 26, 10)]
+        [TestCase(170f, 6, 20, 39, 38, 6)]
+        public void Issue236_PartialWithdrawBalancesNewItemsAndPreservesSave(
+            float capacity, int lithium, int carriedCopper, int expectedIron, int expectedCopper, int expectedLithium)
+        {
+            var system = CreateSystem(capacity);
+            if (carriedCopper > 0) system.Inventory.TryAddMineral(Copper, carriedCopper);
+            Assert.That(system.Service.State.TryRestore(new[]
+            {
+                new OutpostStorageEntryState(Copper, capacity == 100f ? 100 : 74),
+                new OutpostStorageEntryState(Iron, 125),
+                new OutpostStorageEntryState(DataIds.Minerals.Lithium, lithium)
+            }, new string[0], string.Empty, 0, 0), Is.True);
+            system.Service.ApplyRuntimeStatus(CreateStorageStatus());
+            int inventoryEvents = 0, storageEvents = 0;
+            system.Inventory.InventoryChanged += _ => inventoryEvents++;
+            system.Service.SnapshotChanged += _ => storageEvents++;
+            var result = system.Service.TryWithdrawAll();
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(result.Message, Does.Contain("일부만"));
+            Assert.That(result.IsPartial, Is.True, "B-163: 일부 꺼냄 안내음 판정");
+            Assert.That(system.Inventory.State.GetQuantity(Iron), Is.EqualTo(expectedIron));
+            Assert.That(system.Inventory.State.GetQuantity(Copper), Is.EqualTo(carriedCopper + expectedCopper));
+            Assert.That(system.Inventory.State.GetQuantity(DataIds.Minerals.Lithium), Is.EqualTo(expectedLithium));
+            Assert.That(system.Inventory.CurrentWeight, Is.LessThanOrEqualTo(capacity + 0.0001f));
+            Assert.That(inventoryEvents, Is.EqualTo(1));
+            Assert.That(storageEvents, Is.EqualTo(1));
+            Assert.That(system.Service.TryWithdrawAll().IsSuccess, Is.False, "남은 무게에 한 개도 안 들어갈 때 재클릭해도 수량 불변");
+            Assert.That(inventoryEvents, Is.EqualTo(1));
+            var mapper = new SaveDataMapper(new SystemSaveClock());
+            var codec = new SaveJsonCodec(new SaveMigrationService());
+            var capture = mapper.Capture(new SaveCaptureContext(system.State, system.Inventory.State,
+                new UpgradeState(), null, null, "Mine_Demo_Integration", "issue236"));
+            Assert.That(codec.TryDeserialize(codec.Serialize(capture), out var data), Is.EqualTo(SaveMigrationStatus.Current));
+            Assert.That(mapper.TryRestore(data, out var restored), Is.True);
+            Assert.That(restored.Inventory.GetQuantity(Copper), Is.EqualTo(carriedCopper + expectedCopper));
+            Assert.That(restored.GameState.Outpost.GetStorageQuantity(Iron), Is.EqualTo(125 - expectedIron));
+            Assert.That(restored.GameState.Outpost.GetStorageQuantity(Copper), Is.EqualTo((capacity == 100f ? 100 : 74) - expectedCopper));
+            Assert.That(restored.GameState.Outpost.GetStorageQuantity(DataIds.Minerals.Lithium), Is.EqualTo(lithium - expectedLithium));
+        }
+
+        [TestCase(1f, 0, 0, 0, 1)]
+        [TestCase(1.8f, 0, 0, 1, 1)]
+        [TestCase(3.8f, 0, 1, 1, 1)]
+        public void Issue236_TiedStockUsesCatalogValueOrder(float capacity, int copper, int iron, int lithium, int fuel)
+        {
+            var system = CreateSystem(capacity);
+            Assert.That(system.Service.State.TryRestore(new[]
+            {
+                new OutpostStorageEntryState(Copper, 2), new OutpostStorageEntryState(Iron, 2),
+                new OutpostStorageEntryState(DataIds.Minerals.Lithium, 2),
+                new OutpostStorageEntryState(DataIds.RareItems.EngineFuel, 2)
+            }, new string[0], string.Empty, 0, 0), Is.True);
+            system.Service.ApplyRuntimeStatus(CreateStorageStatus());
+            Assert.That(system.Service.TryWithdrawAll().IsSuccess, Is.True);
+            Assert.That(system.Inventory.State.GetQuantity(Copper), Is.EqualTo(copper));
+            Assert.That(system.Inventory.State.GetQuantity(Iron), Is.EqualTo(iron));
+            Assert.That(system.Inventory.State.GetQuantity(DataIds.Minerals.Lithium), Is.EqualTo(lithium));
+            Assert.That(system.Inventory.State.GetQuantity(DataIds.RareItems.EngineFuel), Is.EqualTo(fuel));
+        }
+
+        [Test]
+        public void Issue236_SkipsHeavyItemAndPrioritizesLargerStock()
+        {
+            var system = CreateSystem(1.5f);
+            RestoreStorage(system, 1, 100);
+            system.Service.ApplyRuntimeStatus(CreateStorageStatus());
+            Assert.That(system.Service.TryWithdrawAll().IsSuccess, Is.True);
+            Assert.That(system.Inventory.State.GetQuantity(Copper), Is.EqualTo(1));
+            Assert.That(system.Inventory.State.GetQuantity(Iron), Is.Zero);
+            system = CreateSystem(2f);
+            RestoreStorage(system, 100, 1);
+            system.Service.ApplyRuntimeStatus(CreateStorageStatus());
+            Assert.That(system.Service.TryWithdrawAll().IsSuccess, Is.True);
+            Assert.That(system.Inventory.State.GetQuantity(Copper), Is.EqualTo(1));
+            Assert.That(system.Inventory.State.GetQuantity(Iron), Is.Zero, "가치보다 보관량 우선");
+        }
+
+        [Test, Timeout(1000)]
+        public void Issue236_HugeStockDoesNotLoopPerUnitOrOverflow()
+        {
+            var system = CreateSystem(170f);
+            RestoreStorage(system, int.MaxValue, int.MaxValue);
+            system.Service.ApplyRuntimeStatus(CreateStorageStatus());
+            Assert.That(system.Service.TryWithdrawAll().IsSuccess, Is.True);
+            Assert.That(system.Inventory.State.GetQuantity(Iron), Is.EqualTo(49));
+            Assert.That(system.Inventory.State.GetQuantity(Copper), Is.EqualTo(48));
+            Assert.That(system.Inventory.CurrentWeight, Is.EqualTo(170f));
+        }
+
         private static void RestoreStorage(TestSystem system, int copper, int iron = 0)
         {
             var entries = new List<OutpostStorageEntryState>();
@@ -515,6 +608,7 @@ namespace SubTerra.App.Tests.Outpost
             var catalog = new InMemoryMineralCatalog();
             catalog.Register(Copper, 1.5f, 10, "구리");
             catalog.Register(Iron, 2f, 15, "철");
+            catalog.Register(DataIds.Minerals.Lithium, 0.8f, 25, "리튬");
             catalog.Register(DataIds.RareItems.EngineFuel, 1f, 100, "엔진 연료");
             var state = GameState.CreateNew();
             var inventory = new InventoryService(catalog, maxCapacity, state);

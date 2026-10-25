@@ -69,6 +69,7 @@ namespace SubTerra.App.UI.Building
         private void OnEnable()
         {
             HideLegacyChrome();
+            TerminalWindowOpenMotion.Open(gameObject);
         }
 
         public void SetBuildingList(IReadOnlyList<BuildingMenuItemReadModel> items)
@@ -226,6 +227,7 @@ namespace SubTerra.App.UI.Building
 
         public void SetVisible(bool visible)
         {
+            var wasVisible = gameObject.activeSelf && (panelRoot == null || panelRoot.activeSelf);
             // panelRoot와 루트 GO를 함께 맞춰 X 버튼만 남거나 내용만 사라지는 상태를 막는다.
             if (panelRoot != null)
             {
@@ -236,6 +238,11 @@ namespace SubTerra.App.UI.Building
             {
                 gameObject.SetActive(visible);
             }
+            else if (visible && !wasVisible)
+            {
+                TerminalWindowOpenMotion.Open(gameObject);
+            }
+            if (!visible) TerminalWindowOpenMotion.Stop(gameObject);
         }
 
         public bool HasRequiredReferences()

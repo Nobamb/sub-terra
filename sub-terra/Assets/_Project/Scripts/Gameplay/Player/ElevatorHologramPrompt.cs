@@ -1,4 +1,5 @@
 using System;
+using SubTerra.Shared.Audio;
 using TMPro;
 using UnityEngine;
 
@@ -175,6 +176,7 @@ namespace SubTerra.Gameplay.Player
         private void BeginShow()
         {
             shown = true;
+            SfxRequests.Play(SfxId.WorldHoloOpen);
             if (panel != null)
             {
                 panel.gameObject.SetActive(true);
@@ -191,6 +193,7 @@ namespace SubTerra.Gameplay.Player
         private void BeginHide()
         {
             shown = false;
+            SfxRequests.Play(SfxId.WorldHoloClose);
             // 창이 사라질 때 남은 사각 파티클도 짧게 정리한다.
             for (int i = 0; i < age.Length; i++)
             {

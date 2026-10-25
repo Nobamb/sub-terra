@@ -1,5 +1,7 @@
+using SubTerra.App.Audio;
 using SubTerra.App.Save;
 using SubTerra.App.UI.HUD;
+using SubTerra.Shared.Audio;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -48,6 +50,7 @@ namespace SubTerra.App.UI.MainMenu
             presenter.DeleteSlotConfirmed += OnDeleteSlotConfirmed;
 
             view.SlotSelected += presenter.SelectSlot;
+            view.SlotSelected += OnSlotSelectedSfx;
             view.ContinueClicked += OnContinueClicked;
             view.NewGameClicked += OnNewGameClicked;
             view.SettingsClicked += OnSettingsClicked;
@@ -70,6 +73,7 @@ namespace SubTerra.App.UI.MainMenu
             if (view != null && presenter != null)
             {
                 view.SlotSelected -= presenter.SelectSlot;
+                view.SlotSelected -= OnSlotSelectedSfx;
                 view.ContinueClicked -= OnContinueClicked;
                 view.NewGameClicked -= OnNewGameClicked;
                 view.SettingsClicked -= OnSettingsClicked;
@@ -132,15 +136,22 @@ namespace SubTerra.App.UI.MainMenu
             return view != null && view.HasRequiredReferences();
         }
 
+        private void OnSlotSelectedSfx(int slotId)
+        {
+            SfxPlayer.Play(SfxId.UiSlotSelect);
+        }
+
         private void OnNewGameClicked()
         {
             if (startingNewGame || continuing) return;
+            SfxPlayer.Play(SfxId.UiConfirm);
             presenter?.RequestNewGame();
         }
 
         private void OnContinueClicked()
         {
             if (startingNewGame || continuing) return;
+            SfxPlayer.Play(SfxId.UiConfirm);
             presenter?.RequestContinue();
         }
 
@@ -189,12 +200,14 @@ namespace SubTerra.App.UI.MainMenu
 
         private void OnOverwriteConfirm()
         {
+            SfxPlayer.Play(SfxId.UiConfirm);
             presenter?.ConfirmOverwriteNewGame();
         }
 
         private void OnOverwriteCancel()
         {
             // 취소 경로: 파일·State 보존. Presenter 게이트만 닫힌다.
+            SfxPlayer.Play(SfxId.UiClick);
             presenter?.CancelOverwriteNewGame();
         }
 
@@ -285,6 +298,8 @@ namespace SubTerra.App.UI.MainMenu
             if (startingNewGame) return;
             var runtime = SaveRuntimeController.Instance;
             if (runtime == null) return;
+            // 같은 클릭에서 이미 확인음이 났으면 연타 제한이 한 번으로 줄인다.
+            SfxPlayer.Play(SfxId.UiConfirm);
             startingNewGame = true;
             view.PlayExitTransition(() =>
             {

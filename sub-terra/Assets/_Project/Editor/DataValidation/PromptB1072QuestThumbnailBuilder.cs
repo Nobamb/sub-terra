@@ -20,11 +20,38 @@ namespace SubTerra.App.Editor.DataValidation
         [MenuItem("SubTerra/UI/Apply Prompt-B 107-2 Quest Thumbnails")]
         public static void Apply()
         {
+            ApplyToScene(true);
+            ApplySurfaceReferences();
+        }
+
+        [MenuItem("SubTerra/UI/Refresh Quest Thumbnail References Only")]
+        public static void ApplyReferences()
+        {
+            ApplyToScene(false);
+            ApplySurfaceReferences();
+        }
+
+        public static void ApplySurfaceReferences()
+        {
+            if (EditorApplication.isPlaying) throw new InvalidOperationException("Stop Play Mode first.");
+            var panel = PrefabUtility.LoadPrefabContents(PromptB117SurfaceBaseBuilder.PrefabPath);
+            try
+            {
+                var view = panel.GetComponentInChildren<QuestThumbnailView>(true);
+                if (view == null) throw new InvalidOperationException("Surface QuestThumbnailView missing.");
+                Configure(view);
+                PrefabUtility.SaveAsPrefabAsset(panel, PromptB117SurfaceBaseBuilder.PrefabPath);
+            }
+            finally { PrefabUtility.UnloadPrefabContents(panel); }
+        }
+
+        private static void ApplyToScene(bool importTextures)
+        {
             if (EditorApplication.isPlaying) throw new InvalidOperationException("Stop Play Mode first.");
             var scene = SceneManager.GetSceneByPath(PromptB107QuestUiBuilder.IntegrationScenePath);
             if (scene.IsValid() && scene.isLoaded && scene.isDirty)
                 throw new InvalidOperationException("Integration 씬에 저장되지 않은 변경이 있습니다.");
-            Import();
+            if (importTextures) Import();
             bool closeAfter = !scene.IsValid() || !scene.isLoaded;
             if (closeAfter)
                 scene = EditorSceneManager.OpenScene(PromptB107QuestUiBuilder.IntegrationScenePath, OpenSceneMode.Additive);
@@ -55,8 +82,8 @@ namespace SubTerra.App.Editor.DataValidation
             for (int i = 0; i < DemoObjectiveIds.Ordered.Length; i++)
             {
                 var id = DemoObjectiveIds.Ordered[i];
-                var facility = FacilityFor(id);
-                var sprite = facility != null ? facility.Icon : AssetDatabase.LoadAssetAtPath<Sprite>(PathFor(id));
+                // 건설 메뉴 아이콘은 투명 배경의 시설 그림이다. 상세창은 배경이 있는 전용 장면을 쓴다.
+                var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(PathFor(id));
                 if (sprite == null) throw new InvalidOperationException("Thumbnail missing: " + id);
                 var entry = entries.GetArrayElementAtIndex(i);
                 entry.FindPropertyRelative("objectiveId").stringValue = id;

@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using SubTerra.Shared.Localization;
 using TMPro;
 using UnityEngine;
@@ -60,8 +61,10 @@ namespace SubTerra.App.UI.MainMenu
         private RectTransform particleRoot;
         private Sprite fallbackParticleSprite;
         private float particleCooldown;
-        private bool particleTriggersWired;
         private bool dropdownTriggersWired;
+        private SettingsAudioRows audioRows;
+        private readonly List<KeyValuePair<Slider, UnityEngine.Events.UnityAction<float>>> volumeHooks =
+            new List<KeyValuePair<Slider, UnityEngine.Events.UnityAction<float>>>();
         private TMP_Dropdown[] dropdowns;
 
         private void OnEnable()
@@ -74,14 +77,13 @@ namespace SubTerra.App.UI.MainMenu
                 closeButton.onClick.RemoveListener(Cancel);
                 closeButton.onClick.AddListener(Cancel);
             }
-            if (volumeSlider != null)
-            {
-                volumeSlider.onValueChanged.RemoveListener(OnVolumeChanged);
-                volumeSlider.onValueChanged.AddListener(OnVolumeChanged);
-            }
+            // 배경음·효과음 줄은 복제본이라 다른 연결보다 먼저 만든다.
+            EnsureAudioRows();
+            HookVolumeSliders();
 
             RefreshScale();
             if (volumeSlider != null) muteButton = SettingsMuteButton.Ensure(volumeSlider);
+            EnsureRowMuteButtons();
             RefreshSwitch(instant: true);
             RefreshVolumeGlow();
             RefreshFooterHighlight();
@@ -103,7 +105,7 @@ namespace SubTerra.App.UI.MainMenu
         {
             HideDropdowns();
             if (closeButton != null) closeButton.onClick.RemoveListener(Cancel);
-            if (volumeSlider != null) volumeSlider.onValueChanged.RemoveListener(OnVolumeChanged);
+            UnhookVolumeSliders();
             if (openRoutine != null) { StopCoroutine(openRoutine); openRoutine = null; }
             if (closeRoutine != null) { StopCoroutine(closeRoutine); closeRoutine = null; }
             if (toggleRoutine != null) { StopCoroutine(toggleRoutine); toggleRoutine = null; }
@@ -257,7 +259,8 @@ namespace SubTerra.App.UI.MainMenu
         {
             if (card == null) return;
             var bounds = ((RectTransform)transform).rect;
-            currentScale = Mathf.Min(1f, bounds.width / 1120f, bounds.height / 1000f);
+            currentScale = Mathf.Min(1f, bounds.width / 1120f,
+                bounds.height / (1000f + SettingsAudioRows.CardHeightGrowth));
             currentScale = Mathf.Max(0.01f, currentScale);
             card.localScale = Vector3.one * currentScale;
 
@@ -346,19 +349,86 @@ namespace SubTerra.App.UI.MainMenu
                 handleImage.color = Color.white;
         }
 
-        private void OnVolumeChanged(float val)
+        /// <summary>배경음·효과음 줄을 한 번만 만든다. 이미 있으면 그대로 돌려준다.</summary>
+        public SettingsAudioRows EnsureAudioRows()
         {
+            if (audioRows != null && audioRows.IsAlive) return audioRows;
+            audioRows = null;
+            try
+            {
+                audioRows = SettingsAudioRows.Ensure(card, volumeSlider, volumeCaption);
+            }
+            catch (Exception exception)
+            {
+                Debug.LogWarning("[SettingsMenuSkin] 오디오 줄 생성 실패: " + exception.Message);
+            }
+
+            return audioRows;
+        }
+
+        private void EnsureRowMuteButtons()
+        {
+            if (audioRows == null) return;
+            foreach (var row in audioRows.Rows)
+                if (row != null && row.Slider != null) SettingsMuteButton.Ensure(row.Slider, row.Channel);
+        }
+
+        private IEnumerable<Slider> VolumeSliders()
+        {
+            if (volumeSlider != null) yield return volumeSlider;
+            if (audioRows == null) yield break;
+            foreach (var row in audioRows.Rows)
+                if (row != null && row.Slider != null) yield return row.Slider;
+        }
+
+        private void HookVolumeSliders()
+        {
+            UnhookVolumeSliders();
+            foreach (var slider in VolumeSliders())
+            {
+                var target = slider;
+                UnityEngine.Events.UnityAction<float> action = _ => OnVolumeChanged(target);
+                target.onValueChanged.AddListener(action);
+                volumeHooks.Add(new KeyValuePair<Slider, UnityEngine.Events.UnityAction<float>>(target, action));
+            }
+        }
+
+        private void UnhookVolumeSliders()
+        {
+            for (int i = 0; i < volumeHooks.Count; i++)
+            {
+                var hook = volumeHooks[i];
+                if (hook.Key != null) hook.Key.onValueChanged.RemoveListener(hook.Value);
+            }
+            volumeHooks.Clear();
+        }
+
+        private void OnVolumeChanged(Slider slider)
+        {
+            if (audioRows != null) audioRows.RefreshLabels();
             RefreshVolumeGlow();
-            EmitSliderParticles(4, respectCooldown: true);
+            EmitSliderParticles(slider, 4, respectCooldown: true);
         }
 
         private void RefreshVolumeGlow()
         {
-            if (volumeFillGlow == null) return;
-            volumeFillGlow.color = Color.white;
-            volumeFillGlow.raycastTarget = false;
-            volumeFillGlow.transform.SetAsLastSibling();
-            volumeFillGlow.enabled = volumeSlider == null || volumeSlider.normalizedValue > 0.001f;
+            RefreshGlow(volumeSlider, volumeFillGlow);
+            if (audioRows == null) return;
+            foreach (var row in audioRows.Rows)
+            {
+                if (row == null || row.Slider == null) continue;
+                var glow = row.Slider.fillRect != null ? row.Slider.fillRect.Find("FillGlow") : null;
+                RefreshGlow(row.Slider, glow != null ? glow.GetComponent<Image>() : null);
+            }
+        }
+
+        private static void RefreshGlow(Slider slider, Image glow)
+        {
+            if (glow == null) return;
+            glow.color = Color.white;
+            glow.raycastTarget = false;
+            glow.transform.SetAsLastSibling();
+            glow.enabled = slider == null || slider.normalizedValue > 0.001f;
         }
 
         /// <summary>
@@ -533,9 +603,12 @@ namespace SubTerra.App.UI.MainMenu
 
         private void WireParticleTriggers()
         {
-            if (particleTriggersWired) return;
-            particleTriggersWired = true;
-            WireBurst(volumeSlider != null ? volumeSlider.gameObject : null, OnSliderParticleEvent);
+            // AddTrigger가 같은 종류를 중복으로 달지 않으므로 다시 열어도 안전하다.
+            foreach (var slider in VolumeSliders())
+            {
+                var target = slider;
+                WireBurst(target.gameObject, data => OnSliderParticleEvent(data, target));
+            }
             WireBurst(reduceMotion != null ? reduceMotion.gameObject : null, OnToggleParticleEvent);
         }
 
@@ -562,11 +635,11 @@ namespace SubTerra.App.UI.MainMenu
             trigger.triggers.Add(entry);
         }
 
-        private void OnSliderParticleEvent(BaseEventData data)
+        private void OnSliderParticleEvent(BaseEventData data, Slider slider)
         {
             var pointer = data as PointerEventData;
             bool down = pointer != null && !pointer.dragging;
-            EmitSliderParticles(down ? 12 : 5, respectCooldown: !down);
+            EmitSliderParticles(slider, down ? 12 : 5, respectCooldown: !down);
         }
 
         private void OnToggleParticleEvent(BaseEventData _)
@@ -579,12 +652,12 @@ namespace SubTerra.App.UI.MainMenu
             particleCooldown = 0.04f;
         }
 
-        private void EmitSliderParticles(int count, bool respectCooldown)
+        private void EmitSliderParticles(Slider slider, int count, bool respectCooldown)
         {
             if (!Application.isPlaying) return;
             if (respectCooldown && particleCooldown > 0f) return;
             particleCooldown = 0.04f;
-            BurstAt(volumeSlider != null ? volumeSlider.handleRect : null, count);
+            BurstAt(slider != null ? slider.handleRect : null, count);
         }
 
         private void BurstAt(RectTransform origin, int count)
@@ -713,6 +786,7 @@ namespace SubTerra.App.UI.MainMenu
             if (skin.muteButton != null) skin.muteButton.SetVerticesDirty();
             if (skin.volumeCaption != null)
                 skin.volumeCaption.text = LocalizationService.Get("settings.master_volume", "마스터 음량");
+            if (skin.audioRows != null) skin.audioRows.RefreshCaptions();
             bool english = LocalizationService.Current == GameLanguage.English;
             string[] titles = english
                 ? new[] { "Audio", "Display", "System", "Controls" }

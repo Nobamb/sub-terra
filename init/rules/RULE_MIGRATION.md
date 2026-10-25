@@ -6,10 +6,10 @@
 
 | 기존 조항 | 주요 내용 | 새 위치 |
 | --- | --- | --- |
-| 1, 1-1 ~ 1-8 | 보호·안정성·소유권·게임 규칙 등 우선순위 | `init/rule.md` |
+| 1, 1-1 ~ 1-8 | 보호·안정성·소유권·게임 규칙 등 우선순위 | `init/rules/rule.md` |
 | 2 서두, 2-1 ~ 2-4 | 게임 정의, 목표, MVP 포함·제외 범위, 권장 기술 스택 | `init/rules/project-scope.md` |
 | 2-5, 2-5-1 ~ 2-5-6 | UI 변경 범위, Builder, Editor 부작용, 커밋 전 범위 검증, 복구, 예외 | `init/rules/ui-ugui.md` |
-| 3 서두, 3-1 | 프로젝트 폴더 구조와 A/B/Shared 소유권 | `init/rule.md` |
+| 3 서두, 3-1 | 프로젝트 폴더 구조와 A/B/Shared 소유권 | `init/rules/rule.md` |
 | 3-2 ~ 3-6 | C# 직렬화·구조·의존성·주석·로그 | `init/rules/code.md` |
 | 4, 4-1 ~ 4-5 | ScriptableObject, 영구 ID, 런타임 상태, DTO, 데이터 변경 | `init/rules/data-save-gameplay.md` |
 | 5, 5-1 ~ 5-5 | Scene·Prefab 소유권, YAML·.meta, 공용 설정, Integration 바인딩 | `init/rules/unity-project.md` |
@@ -17,13 +17,20 @@
 | 7 서두, 7-1 ~ 7-2 | 결정론적 플레이와 Digger-Bot 분석 | `init/rules/data-save-gameplay.md` |
 | 7-3 | 시각 요소·그레이박스·정식 에셋 교체 | `init/rules/unity-project.md` |
 | 8, 8-1 ~ 8-3 | Build Profile, 자동 저장, 배포 결과물 | `init/rules/testing-qa.md` |
-| 9, 9-1 ~ 9-12 | 공통 금지 범위와 보안 경계 | `init/rule.md` |
-| 10, 10-1 ~ 10-3 | 민감정보 탐지, Diff 제외, 사용자 확인 | `init/rule.md` |
+| 9, 9-1 ~ 9-12 | 공통 금지 범위와 보안 경계 | `init/rules/rule.md` |
+| 10, 10-1 ~ 10-3 | 민감정보 탐지, Diff 제외, 사용자 확인 | `init/rules/rule.md` |
 | 11, 11-1 ~ 11-8 | 브랜치, PR, 병합·보고 | `init/rules/git-commit.md` |
 | 12, 12-1 ~ 12-3 | 기본·기능·빌드 검증 | `init/rules/testing-qa.md` |
 | 13, 13-1 ~ 13-2 | 병렬 작업과 순차 의존성 | `init/rules/project-scope.md` |
 | 14, 14-1 ~ 14-7 및 예시 | 결과물 제출 형식 | `init/rules/reporting.md` |
 | 15 및 템플릿 | Agent 작업 요청 형식 | `init/rules/reporting.md` |
+
+분리 이후 추가된 조항:
+
+| 조항 | 주요 내용 | 위치 |
+| --- | --- | --- |
+| 16, 16-1 ~ 16-4 | 작업 태도: 정보 없이 코딩 금지, 무조건 동의 금지, 테스트만으로 완료 금지, 같은 실수 반복 금지 | `init/rules/rule.md` |
+| 17 | 화면 확인 효율 | `init/rules/rule.md` |
 
 ## 중복과 적용 범위
 

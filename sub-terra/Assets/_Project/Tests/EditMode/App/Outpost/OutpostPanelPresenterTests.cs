@@ -202,6 +202,48 @@ namespace SubTerra.App.Tests.Outpost
         }
 
         [Test]
+        public void ToggleInteractionPanel_DisconnectedCharger_PlaysCancelFailOnce()
+        {
+            var catalog = new InMemoryMineralCatalog();
+            var state = GameState.CreateNew();
+            var service = new OutpostService(new InventoryService(catalog, 100f, state), catalog, state);
+            var presenter = new OutpostPanelPresenter(new RecordingView());
+            presenter.WarningSink = new RecordingPlayerStatusWarningSink();
+            presenter.Bind(service);
+            service.ApplyRuntimeStatus(new OutpostStatusDto
+            {
+                isInInteractionRange = true,
+                interactionFacilityInstanceId = "charger.1",
+                interactionFacilityBuildingId = DataIds.Buildings.ChargerBasic,
+                connectedFacilities = new List<ConnectedFacilityStatusDto>
+                {
+                    new ConnectedFacilityStatusDto
+                    {
+                        instanceId = "charger.1",
+                        buildingId = DataIds.Buildings.ChargerBasic,
+                        isActive = false,
+                        inactiveReasonId = "power_disconnected"
+                    }
+                }
+            });
+
+            var played = new List<SubTerra.Shared.Audio.SfxId>();
+            System.Action<SubTerra.Shared.Audio.SfxId, float> record = (id, pitch) => played.Add(id);
+            SubTerra.Shared.Audio.SfxRequests.PlayRequested += record;
+            try
+            {
+                presenter.ToggleInteractionPanel();
+            }
+            finally
+            {
+                SubTerra.Shared.Audio.SfxRequests.PlayRequested -= record;
+                presenter.Unbind();
+            }
+
+            Assert.That(played, Is.EqualTo(new[] { SubTerra.Shared.Audio.SfxId.UiCancelFail }));
+        }
+
+        [Test]
         public void ToggleInteractionPanel_DisconnectedSettlement_UsesSettlementName()
         {
             var catalog = new InMemoryMineralCatalog();

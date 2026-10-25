@@ -29,7 +29,7 @@ namespace SubTerra.App.Tests.Integration
         public void Advance_RaisesEachLandingOnceAtItsTime()
         {
             var state = new GoldPickupPopupState(120, 30);
-            Assert.That(state.Advance(0.69f), Is.EqualTo(GoldPickupPopupEvents.None));
+            Assert.That(state.Advance(0.69f), Is.EqualTo(GoldPickupPopupEvents.LeverPulled), "0.36초 레버(B-160)");
             Assert.That(state.Advance(0.02f), Is.EqualTo(GoldPickupPopupEvents.BaseLanded), "0.70초 기본 착지");
             Assert.That(state.Advance(0.10f), Is.EqualTo(GoldPickupPopupEvents.None));
             Assert.That(state.Advance(0.10f), Is.EqualTo(GoldPickupPopupEvents.BonusLanded), "0.86초 추가 착지(기본 뒤)");
@@ -37,7 +37,8 @@ namespace SubTerra.App.Tests.Integration
 
             var baseOnly = new GoldPickupPopupState(120, 0);
             GoldPickupPopupEvents all = baseOnly.Advance(1.0f);
-            Assert.That(all, Is.EqualTo(GoldPickupPopupEvents.BaseLanded), "추가가 없으면 추가 착지·두 번째 분출 없음");
+            Assert.That(all, Is.EqualTo(GoldPickupPopupEvents.LeverPulled | GoldPickupPopupEvents.BaseLanded),
+                "추가가 없으면 추가 착지·두 번째 분출 없음");
         }
 
         [Test]
@@ -70,7 +71,8 @@ namespace SubTerra.App.Tests.Integration
             var state = new GoldPickupPopupState(100, 20);
             GoldPickupPopupEvents events = state.Advance(10f);
             Assert.That(events, Is.EqualTo(
-                GoldPickupPopupEvents.BaseLanded
+                GoldPickupPopupEvents.LeverPulled
+                | GoldPickupPopupEvents.BaseLanded
                 | GoldPickupPopupEvents.BonusLanded
                 | GoldPickupPopupEvents.ExitStarted
                 | GoldPickupPopupEvents.Finished));

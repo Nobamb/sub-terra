@@ -1,6 +1,8 @@
 using System;
+using SubTerra.App.Audio;
 using SubTerra.App.Outpost;
 using SubTerra.App.UI.Sell;
+using SubTerra.Shared.Audio;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -160,17 +162,72 @@ namespace SubTerra.App.UI.Outpost
         /// <summary>보관함 팝업의 보관 버튼. 실제 이동량(보유보다 많으면 전부)은 Service가 판정한다.</summary>
         public void DepositQuantity(int quantity)
         {
-            presenter?.RequestDeposit(selectedMineralId, quantity);
+            if (presenter == null)
+            {
+                return;
+            }
+
+            var wasBusy = presenter.IsBusy;
+            PlayQuantitySfx(presenter.RequestDeposit(selectedMineralId, quantity), wasBusy);
         }
 
         public void WithdrawQuantity(int quantity)
         {
-            presenter?.RequestWithdraw(selectedMineralId, quantity);
+            if (presenter == null)
+            {
+                return;
+            }
+
+            var wasBusy = presenter.IsBusy;
+            PlayQuantitySfx(presenter.RequestWithdraw(selectedMineralId, quantity), wasBusy);
         }
 
-        public void DepositAll() => presenter?.RequestDepositAll();
+        public void DepositAll() => RequestTakeAll(true);
 
-        public void WithdrawAll() => presenter?.RequestWithdrawAll();
+        public void WithdrawAll() => RequestTakeAll(false);
+
+        private void RequestTakeAll(bool deposit)
+        {
+            if (presenter == null)
+            {
+                return;
+            }
+
+            var wasBusy = presenter.IsBusy;
+            PlayTakeAllSfx(deposit ? presenter.RequestDepositAll() : presenter.RequestWithdrawAll(), wasBusy);
+        }
+
+        /// <summary>선택 수량 보관·꺼내기 결과음. 처리 중이라 막힌 요청은 무음.</summary>
+        public static void PlayQuantitySfx(OutpostOperationResult? result, bool blockedByBusy = false)
+        {
+            if (!result.HasValue || blockedByBusy)
+            {
+                return;
+            }
+
+            SfxPlayer.Play(result.Value.IsSuccess ? SfxId.UiConfirm : SfxId.UiCancelFail);
+        }
+
+        /// <summary>
+        /// 전체 보관·꺼내기 결과음. 일부만 꺼내졌으면 묵직한 소리 대신 안내음만, 실패면 실패음.
+        /// 처리 중이라 막힌 요청은 무음.
+        /// </summary>
+        public static void PlayTakeAllSfx(OutpostOperationResult? result, bool blockedByBusy = false)
+        {
+            if (!result.HasValue || blockedByBusy)
+            {
+                return;
+            }
+
+            if (!result.Value.IsSuccess)
+            {
+                SfxPlayer.Play(SfxId.UiCancelFail);
+            }
+            else
+            {
+                SfxPlayer.Play(result.Value.IsPartial ? SfxId.StoragePartialNotice : SfxId.StorageTakeAll);
+            }
+        }
 
         /// <summary>판매 창 자원 아이콘 조회(카탈로그의 기존 아이콘). 표시 전용.</summary>
         public void SetItemIconResolver(Func<string, Sprite> resolver)

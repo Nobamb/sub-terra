@@ -1,7 +1,9 @@
 using System;
+using SubTerra.App.Audio;
 using SubTerra.App.Run;
 using SubTerra.App.UI.HUD;
 using SubTerra.App.UI.MainMenu;
+using SubTerra.Shared.Audio;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -254,6 +256,7 @@ namespace SubTerra.App.UI.EmergencyRescue
                 return true;
             }
 
+            SfxPlayer.Play(SfxId.UiPopupClose);
             ApplyGlitch(EmergencyRescueTimeline.Outro(0f), 2);
             return true;
         }
@@ -355,6 +358,7 @@ namespace SubTerra.App.UI.EmergencyRescue
         private void StartOpening()
         {
             state = PopupState.Opening;
+            SfxPlayer.Play(SfxId.UiPopupOpen);
             clock = 0f;
             idleClock = 0f;
             lastGeometryKey = int.MinValue;
@@ -662,6 +666,14 @@ namespace SubTerra.App.UI.EmergencyRescue
             closeButton = CreateButton(
                 skin, "CloseButton", CloseLabel, new Vector2(180f, -250f), new Vector2(190f, 58f), 24f,
                 SecondaryTint, out closeImage, out closeLabel);
+            AttachButtonSfx();
+        }
+
+        /// <summary>구출은 확인음, 닫기는 BeginClose가 닫힘 소리를 내므로 호버만. 리스너를 갈아 끼운 뒤 다시 불러도 한 번만 난다.</summary>
+        internal void AttachButtonSfx()
+        {
+            UiSfx.Attach(rescueButton, SfxId.UiConfirm, hover: true);
+            UiSfx.Attach(closeButton, SfxId.None, hover: true);
         }
 
         private Button CreateButton(

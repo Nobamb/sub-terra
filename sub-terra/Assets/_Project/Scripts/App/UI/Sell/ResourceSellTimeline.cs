@@ -105,6 +105,20 @@ namespace SubTerra.App.UI.Sell
             return EaseOutCubic((t - coin * CoinStagger) / CoinDrop);
         }
 
+        /// <summary>금화 i가 쌓인 자리에 닿는 시각(0.15 / 0.23 / 0.31 / 0.39초).</summary>
+        public static float CoinLandTime(int coin)
+        {
+            return coin * CoinStagger + CoinDrop;
+        }
+
+        /// <summary>금화가 쌓일수록 소리를 조금씩 올린다(1.00 → 1.12).</summary>
+        public static float CoinStackPitch(int coin)
+        {
+            return 1f + CoinStackPitchStep * coin;
+        }
+
+        public const float CoinStackPitchStep = 0.04f;
+
         /// <summary>금화 i가 도는 각도(라디안). 떨어지는 동안과 쌓인 뒤에도 계속 돈다.</summary>
         public static float CoinSpinAngle(float t, int coin)
         {

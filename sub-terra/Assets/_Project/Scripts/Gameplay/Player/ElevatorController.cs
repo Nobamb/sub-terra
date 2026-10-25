@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using SubTerra.Shared;
+using SubTerra.Shared.Audio;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -26,6 +27,9 @@ namespace SubTerra.Gameplay.Player
         [SerializeField, Min(0f)] private float callDelaySeconds = 0.35f;
         [SerializeField, Min(0f)] private float travelDelaySeconds = 0.22f;
 
+        // B-164: 출구 막힘 실패음 연타 간격(초).
+        private const float TravelFailSfxInterval = 0.3f;
+
         private InputAction interactAction;
         private ElevatorDoorVisual doorVisual;
         private PlayerMovement riderMovement;
@@ -38,6 +42,8 @@ namespace SubTerra.Gameplay.Player
         private IElevatorTravelPort travelPort;
         private Coroutine travelRoutine;
         private Bounds? placementExclusionBounds;
+        private float lastTravelFailSfxAt = float.NegativeInfinity;
+        private bool arrivalCuePending;
 
         /// <summary>Fixed shaft envelope; remains reserved even after the cabin departs.</summary>
         public Bounds GetPlacementExclusionBounds()
@@ -61,6 +67,10 @@ namespace SubTerra.Gameplay.Player
         /// <summary>상태·탑승자 변화로 홀로그램 안내 종류가 바뀔 수 있을 때 발생한다.</summary>
         public event Action PromptChanged;
         public bool HasRider => riderMovement != null;
+        /// <summary>B-166: 탑승이 확정된(Calling) 뒤 씬이 바뀔 때까지 true. 이동이 거절·취소되면 false로 돌아온다.</summary>
+        public bool IsRiding => State == ElevatorTravelState.Calling
+            || State == ElevatorTravelState.Moving
+            || travelCommitted;
         public ElevatorPromptKind PromptKind => ElevatorPromptResolver.Resolve(
             State, HasRider, riderLocked || travelCommitted, destination);
 
@@ -88,6 +98,9 @@ namespace SubTerra.Gameplay.Player
             ResolvePort();
             doorVisual = GetComponent<ElevatorDoorVisual>();
             SetState(ElevatorTravelState.Idle);
+            // 엘리베이터·탐사 시작으로 들어왔을 때(런타임 Arrived)만 문이 처음 열리며 도착음을 낸다.
+            // 이어하기·불러오기·포탈 도착은 런타임이 Idle이라 무음이다.
+            arrivalCuePending = travelPort != null && travelPort.State == ElevatorTravelState.Arrived;
         }
 
         private void OnEnable()
@@ -208,6 +221,7 @@ namespace SubTerra.Gameplay.Player
             if (!IsExitClear())
             {
                 SetState(ElevatorTravelState.Blocked);
+                PlayTravelFailSfx();
                 return false;
             }
 
@@ -215,11 +229,15 @@ namespace SubTerra.Gameplay.Player
             if (travelPort == null)
             {
                 SetState(ElevatorTravelState.Blocked);
+                PlayTravelFailSfx();
                 return false;
             }
 
             LockRider();
             SetState(ElevatorTravelState.Calling);
+            // 같은 상태면 StateChanged가 오지 않으므로 이벤트가 아니라 이 자리에서 낸다. 문은 Calling에서 닫히기 시작한다.
+            SfxRequests.Play(SfxId.UiConfirm);
+            SfxRequests.Play(SfxId.ElevatorDoor);
             travelRoutine = StartCoroutine(TravelRoutine());
             return true;
         }
@@ -272,6 +290,9 @@ namespace SubTerra.Gameplay.Player
                 }
 
                 SetState(ElevatorTravelState.Blocked);
+                // 칸이 내려와 문이 다시 열린다. 승강 루프는 Blocked에서 멈춘다.
+                SfxRequests.Play(SfxId.ElevatorDoor);
+                SfxRequests.Play(SfxId.UiCancelFail);
                 if (showDebugStatus && statusText != null && !string.IsNullOrWhiteSpace(reason))
                 {
                     statusText.text = "Blocked · " + reason;
@@ -284,6 +305,31 @@ namespace SubTerra.Gameplay.Player
             SetState(ElevatorTravelState.Arrived);
             // 성공 시 기존 씬의 엘리베이터와 탑승자는 언로드까지 상단에서 유지한다.
             travelRoutine = null;
+        }
+
+        private void PlayTravelFailSfx()
+        {
+            // started 콜백과 Update가 같은 프레임에 모두 부를 수 있고, 연타도 0.3초 간격으로 거른다.
+            var now = Time.unscaledTime;
+            if (now - lastTravelFailSfxAt < TravelFailSfxInterval)
+            {
+                return;
+            }
+
+            lastTravelFailSfxAt = now;
+            SfxRequests.Play(SfxId.UiCancelFail);
+        }
+
+        /// <summary>B-164: 엘리베이터로 광산에 도착한 뒤 문이 처음 열릴 때 한 번만 true.</summary>
+        internal bool ConsumeArrivalCue()
+        {
+            if (!arrivalCuePending)
+            {
+                return false;
+            }
+
+            arrivalCuePending = false;
+            return true;
         }
 
         private void LockRider()

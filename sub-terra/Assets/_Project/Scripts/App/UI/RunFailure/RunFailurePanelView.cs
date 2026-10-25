@@ -1,12 +1,14 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using SubTerra.App.Audio;
 using SubTerra.App.Core;
 using SubTerra.App.Core.Data;
 using SubTerra.App.Tutorial;
 using SubTerra.App.UI.HUD;
 using SubTerra.App.UI.MainMenu;
 using SubTerra.Shared;
+using SubTerra.Shared.Audio;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -1043,6 +1045,8 @@ namespace SubTerra.App.UI.RunFailure
 
             var initialFrame = revealTimeline.Evaluate(0f);
             ApplyRevealFrame(initialFrame);
+            // 창 글리치는 0초에 시작한다.
+            SfxPlayer.Play(SfxId.RunFailGlitch);
         }
 
         public void ShowSurfaceFallback()
@@ -1108,8 +1112,7 @@ namespace SubTerra.App.UI.RunFailure
             var dt = Mathf.Min(Time.unscaledDeltaTime, 0.05f);
             if (!revealTimeline.IsComplete && dt > 0f)
             {
-                var frame = revealTimeline.Advance(dt);
-                ApplyRevealFrame(frame);
+                AdvanceReveal(dt);
             }
             else if (revealTimeline.IsComplete && !revealTimeline.IsConfirmed && dt > 0f)
             {
@@ -1149,6 +1152,32 @@ namespace SubTerra.App.UI.RunFailure
             }
         }
 
+        /// <summary>테스트와 Update가 같은 경로로 실패 창 등장 연출을 진행한다.</summary>
+        public void AdvanceReveal(float dt)
+        {
+            if (revealTimeline == null || revealTimeline.IsComplete || dt <= 0f)
+            {
+                return;
+            }
+
+            var previous = revealTimeline.ElapsedSeconds;
+            var frame = revealTimeline.Advance(dt);
+            PlayRowTicks(previous, revealTimeline.ElapsedSeconds);
+            ApplyRevealFrame(frame);
+        }
+
+        // 잃은 자원 줄이 보이기 시작할 때마다 한 번. 스킵은 Advance를 거치지 않아 남은 줄은 무음이다.
+        private void PlayRowTicks(float previous, float now)
+        {
+            for (var i = 0; i < revealTimeline.ItemCount; i++)
+            {
+                if (SfxPlayback.Crossed(previous, now, revealTimeline.GetItemStartTime(i)))
+                {
+                    SfxPlayer.Play(SfxId.RunFailRowTick);
+                }
+            }
+        }
+
         /// <summary>
         /// 연출 진행 중이면 즉시 최종 상태로 스킵하고 false를 반환한다.
         /// 이미 최종 상태라면 확인을 확정하고 true를 반환한다.
@@ -1182,6 +1211,12 @@ namespace SubTerra.App.UI.RunFailure
 
         public IEnumerator PlayTransitionRoutine(bool includeTvTurnOn, Action onMovePlayer)
         {
+            return PlayTransitionRoutine(includeTvTurnOn, onMovePlayer, null);
+        }
+
+        /// <param name="stepProvider">한 프레임 진행량. null이면 비스케일 dt. 테스트가 큰 dt를 넣을 때 쓴다.</param>
+        public IEnumerator PlayTransitionRoutine(bool includeTvTurnOn, Action onMovePlayer, Func<float> stepProvider)
+        {
             isInTransition = true;
             if (transitionTimeline == null)
             {
@@ -1198,11 +1233,19 @@ namespace SubTerra.App.UI.RunFailure
                 : transitionTimeline.PreSurfaceLoadDuration;
 
             ApplyTransitionFrame(transitionTimeline.Evaluate(0f));
+            // 암전(Darken) 단계는 0초에 시작한다. 강한 글리치 단계는 암전 소리 꼬리가 이어져 무음이다.
+            SfxPlayer.Play(SfxId.RunFailBlackout);
 
             while (transitionTimeline.ElapsedSeconds < targetDuration - 0.0001f)
             {
-                var step = Mathf.Max(0.001f, Time.unscaledDeltaTime);
+                var step = Mathf.Max(0.001f, stepProvider != null ? stepProvider() : Time.unscaledDeltaTime);
+                var previous = transitionTimeline.ElapsedSeconds;
                 var frame = transitionTimeline.Advance(step);
+                if (includeTvTurnOn && transitionTimeline.CrossedTvTurnOn(previous, transitionTimeline.ElapsedSeconds))
+                {
+                    SfxPlayer.Play(SfxId.UiPopupOpen);
+                }
+
                 if (frame.ShouldMovePlayer && onMovePlayer != null)
                 {
                     onMovePlayer.Invoke();

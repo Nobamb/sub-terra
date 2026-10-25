@@ -3748,3 +3748,31 @@ EditMode:
 
 
 155. B-155-deep-zone-thumbnail.md 내용 참고해서 업그레이드 창에 있는 심층 구역 관련 영역 썸네일 지정해줘 이미지 생성은 codex를 통해서 생성하도록 하고 연출 부분은 니가 신경써서 작업해주면 돼
+
+
+156. sound/B-156-sfx-foundation-a.md의 내용 참고해서 Audio/SFX 내에 있는 폴더에 있는 효과음들을 게임 내에 적절하게 넣어줘
+
+
+157. B-157-settings-bgm-sfx-volume.md의 내용 참고해서 설정창 크기 수정 및 배경음, 효과음 관련 오디오 슬라이더를 설정창 내의 오디오 영역에 각각 추가해줘
+
+158. B-158-sfx-foundation-a-fix.md의 내용 참고해서 기존에 설정한 효과음 관련 부분 수정 작업 진행해줘
+
+159. B-159-agent-rules-entry-cleanup.md의 내용 참고해서 지금 문서 내용들 수정해줘
+
+160. work_process/MVP2/sound 폴더에 있는 sfx-B 폴더, B-160-sfx-b-stage.md의 내용 참고해서 효과음 적용해줘
+
+161. work_process/MVP2/sound 폴더에서 B-161-sfx-b-stage-fix.md랑 sfx-B-fix폴더 내용 참고해서 기존 효과음 관련 수정 진행해줘
+
+
+162. work_process/MVP2/sound 폴더에서 B-162-sfx-c-stage.md, sfx-C 폴더 참고해서 효과음 추가해줘
+
+
+163.  work_process/MVP2/sound 폴더에서 sfx-B-rest 폴더, prompt-B-163.md 참고해서 효과음 추가해줘
+
+
+164. work_process/MVP2/sound 폴더에서 prompt-B-164.md 내용 참고해서 SFX/World 폴더에 추가한 효과음들 토대로 게임에 적용시켜줘
+
+
+165. work_process/MVP2/sound 폴더에서 prompt-B-165.md 내용 참고해서 효과음 교체 및 효과음 관련 수정 작업 진행해줘 Audio/SFX/World에 있던 기존 효과음은 내가 교체해놓아서 교체 작업은 안해도 돼
+
+166. work_process/MVP2/sound 폴더에서 prompt-B-166.md 의 내용을 참고해서 효과음 관련 버그 수정 및 엘레베이터 타는 동안에는 설정창 나오지 않도록 설정해줘

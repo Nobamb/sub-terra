@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.IO;
+using SubTerra.App.Audio;
 using SubTerra.App.Core;
 using SubTerra.App.Core.Data;
 using SubTerra.App.Drone;
@@ -14,6 +15,7 @@ using SubTerra.App.Tutorial;
 using SubTerra.App.UI.HUD;
 using SubTerra.App.UI.MainMenu;
 using SubTerra.Shared;
+using SubTerra.Shared.Audio;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -353,6 +355,7 @@ namespace SubTerra.App.Save
                 return false;
             }
 
+            SfxPlayer.Play(SfxId.UiMineResetWhoosh);
             SaveCurrent(AutoSaveReason.MineReset);
             EnsureMineResetClockOverlay();
             mineResetClockOverlay?.RefreshFromState();
@@ -1072,7 +1075,32 @@ namespace SubTerra.App.Save
             StartCoroutine(SaveAfterElevatorArrival(
                 arrivalSaveReason,
                 sceneLoader is ClockOffSceneLoader ? destinationScene : null));
+            if (toSurface)
+            {
+                StartCoroutine(PlayArrivalDingWhenSurfaceOpens());
+            }
+
             return true;
+        }
+
+        /// <summary>
+        /// B-164: 지상 도착음. 지상에는 문 그림이 없어 문 소리 없이 "딩"만 낸다.
+        /// Surface 씬이 열리고 엘리베이터가 Arrived일 때 한 번. 지연 로드가 실패하면 Blocked라 무음이다.
+        /// </summary>
+        private IEnumerator PlayArrivalDingWhenSurfaceOpens()
+        {
+            yield return null;
+            var deadline = Time.unscaledTime + ClockPowerOffMaxWaitSeconds + 3f;
+            while (SceneManager.GetActiveScene().name != SceneNames.SurfaceBase && Time.unscaledTime < deadline)
+            {
+                yield return null;
+            }
+
+            if (SceneManager.GetActiveScene().name == SceneNames.SurfaceBase
+                && ElevatorState == ElevatorTravelState.Arrived)
+            {
+                SfxPlayer.Play(SfxId.ElevatorArriveDing);
+            }
         }
 
         /// <summary>

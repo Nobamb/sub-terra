@@ -68,7 +68,7 @@ namespace SubTerra.App.Tests.Tutorial
         [TestCase(DemoObjectiveIds.PurifyGasWithOutpost, "OutpostCore")]
         [TestCase(DemoObjectiveIds.SellAtSettlement, "Settlement")]
         [TestCase(DemoObjectiveIds.EmergencyEscapeReturn, "EmergencyEscapePortal")]
-        public void FacilityQuestImages_UseBuildingMenuArtwork(string id, string building)
+        public void Issue221_FacilityQuestImagesUseConceptScenes(string id, string building)
         {
             var root = new GameObject("FacilityQuestThumbnail", typeof(RectTransform));
             try
@@ -83,7 +83,9 @@ namespace SubTerra.App.Tests.Tutorial
                 var data = AssetDatabase.LoadAssetAtPath<SubTerra.App.Core.Data.BuildingData>(
                     "Assets/_Project/Data/Buildings/Building_" + building + (building == "EmergencyEscapePortal" ? ".asset" : "_Basic.asset"));
                 Assert.That(data, Is.Not.Null);
-                Assert.That(image.sprite, Is.SameAs(data.Icon));
+                Assert.That(AssetDatabase.GetAssetPath(image.sprite), Is.EqualTo(PromptB1072QuestThumbnailBuilder.PathFor(id)));
+                Assert.That(image.sprite, Is.Not.SameAs(data.Icon), "상세창에 건설 메뉴의 단독 시설 아이콘을 표시하면 안 된다.");
+                Assert.That(image.sprite.rect.width / image.sprite.rect.height, Is.EqualTo(3f).Within(0.01f));
                 Assert.That(image.preserveAspect, Is.True);
                 Assert.That(image.raycastTarget, Is.False);
             }
@@ -91,7 +93,25 @@ namespace SubTerra.App.Tests.Tutorial
         }
 
         [Test]
-        public void SavedScene_FacilityQuestEntriesMatchBuildingMenuArtwork()
+        public void Issue221_SurfaceQuestEntriesUseConceptScenes()
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PromptB117SurfaceBaseBuilder.PrefabPath);
+            Assert.That(prefab, Is.Not.Null);
+            var view = prefab.GetComponentInChildren<QuestThumbnailView>(true);
+            Assert.That(view, Is.Not.Null);
+            var entries = new SerializedObject(view).FindProperty("entries");
+            Assert.That(entries.arraySize, Is.EqualTo(18));
+            for (int i = 0; i < entries.arraySize; i++)
+            {
+                var entry = entries.GetArrayElementAtIndex(i);
+                var id = entry.FindPropertyRelative("objectiveId").stringValue;
+                Assert.That(AssetDatabase.GetAssetPath(entry.FindPropertyRelative("primary").objectReferenceValue),
+                    Is.EqualTo(PromptB1072QuestThumbnailBuilder.PathFor(id)), id);
+            }
+        }
+
+        [Test]
+        public void Issue221_SavedSceneQuestEntriesUseConceptScenes()
         {
             var scene = SceneManager.GetSceneByPath(PromptB107QuestUiBuilder.IntegrationScenePath);
             bool closeAfter = !scene.IsValid() || !scene.isLoaded;
@@ -110,12 +130,13 @@ namespace SubTerra.App.Tests.Tutorial
                 for (int i = 0; i < entries.arraySize; i++)
                 {
                     var entry = entries.GetArrayElementAtIndex(i);
-                    var data = PromptB1072QuestThumbnailBuilder.FacilityFor(entry.FindPropertyRelative("objectiveId").stringValue);
-                    if (data == null) continue;
-                    Assert.That(entry.FindPropertyRelative("primary").objectReferenceValue, Is.SameAs(data.Icon));
+                    var id = entry.FindPropertyRelative("objectiveId").stringValue;
+                    var sprite = entry.FindPropertyRelative("primary").objectReferenceValue as Sprite;
+                    Assert.That(sprite, Is.Not.Null, id);
+                    Assert.That(AssetDatabase.GetAssetPath(sprite), Is.EqualTo(PromptB1072QuestThumbnailBuilder.PathFor(id)), id);
                     checkedFacilities++;
                 }
-                Assert.That(checkedFacilities, Is.EqualTo(10));
+                Assert.That(checkedFacilities, Is.EqualTo(18));
             }
             finally { if (closeAfter) EditorSceneManager.CloseScene(scene, true); }
         }
@@ -329,14 +350,8 @@ namespace SubTerra.App.Tests.Tutorial
                     foreach (var id in DemoObjectiveIds.Ordered)
                     {
                         thumbnailView.Show(id, true);
-                        var questFacility = PromptB1072QuestThumbnailBuilder.FacilityFor(id);
-                        if (questFacility != null)
-                            Assert.That(image.sprite, Is.SameAs(questFacility.Icon));
-                        else
-                        {
-                            Assert.That(AssetDatabase.GetAssetPath(image.sprite), Is.EqualTo(PromptB1072QuestThumbnailBuilder.PathFor(id)));
-                            Assert.That(image.sprite.rect.width / image.sprite.rect.height, Is.GreaterThan(2.5f));
-                        }
+                        Assert.That(AssetDatabase.GetAssetPath(image.sprite), Is.EqualTo(PromptB1072QuestThumbnailBuilder.PathFor(id)));
+                        Assert.That(image.sprite.rect.width / image.sprite.rect.height, Is.GreaterThan(2.5f));
                         Assert.That(image.rectTransform.anchorMin, Is.EqualTo(Vector2.zero));
                         Assert.That(image.rectTransform.anchorMax, Is.EqualTo(Vector2.one));
                         Assert.That(image.preserveAspect, Is.True);

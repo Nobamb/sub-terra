@@ -1,4 +1,6 @@
 using System;
+using SubTerra.App.Audio;
+using SubTerra.Shared.Audio;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -165,6 +167,12 @@ namespace SubTerra.App.UI.Sell
                     MaxRequested?.Invoke(ItemId);
                 }
             });
+            // 0개·최대일 때 막힌 버튼은 무음.
+            UiSfx.Attach(minus.Button, SfxId.UiClick, failWhenDisabled: false);
+            UiSfx.Attach(plus.Button, SfxId.UiClick, failWhenDisabled: false);
+            UiSfx.Attach(plusFive.Button, SfxId.UiClick, failWhenDisabled: false);
+            UiSfx.Attach(plusTen.Button, SfxId.UiClick, failWhenDisabled: false);
+            UiSfx.Attach(max.Button, SfxId.UiClick, failWhenDisabled: false);
         }
 
         /// <summary>행 값과 버튼 활성(0이면 −, 최대면 +·+5·+10·최대 비활성)을 갱신한다.</summary>

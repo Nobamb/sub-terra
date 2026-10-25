@@ -1,4 +1,5 @@
 using SubTerra.Shared;
+using SubTerra.Shared.Audio;
 using UnityEngine;
 
 namespace SubTerra.Gameplay.Player
@@ -272,6 +273,13 @@ namespace SubTerra.Gameplay.Player
             {
                 SnapTo(targetFraction);
                 return;
+            }
+
+            if (targetFraction < closedFraction && elevator != null && elevator.ConsumeArrivalCue())
+            {
+                // B-164: 엘리베이터로 광산에 도착해 문이 열리기 시작하는 순간.
+                SfxRequests.Play(SfxId.ElevatorArriveDing);
+                SfxRequests.Play(SfxId.ElevatorDoor);
             }
 
             transitionStartFraction = closedFraction;

@@ -1,3 +1,4 @@
+using SubTerra.Shared.Audio;
 using UnityEngine;
 
 namespace SubTerra.Gameplay.Player
@@ -11,6 +12,11 @@ namespace SubTerra.Gameplay.Player
         private const float LadderVisualGraceDuration = 0.1f;
         // 중립 → 오른쪽 중간/상승/중간 → 중립 → 왼쪽 중간/상승/중간.
         private static readonly int[] FiveFrameLadderSequence = { 0, 1, 2, 1, 0, 3, 4, 3 };
+        // B-164: 등반 순서에서 자세가 꼭대기에 닿는 인덱스(5프레임: 2·6, 3프레임: 1·3).
+        private const int FiveFrameLadderTopA = 2;
+        private const int FiveFrameLadderTopB = 6;
+        private const float FootstepMinHorizontalSpeed = 0.1f;
+        private const float FootstepAlternatePitch = 0.96f;
 
         [SerializeField] private SpriteRenderer spriteRenderer;
         [SerializeField] private Animator animator;
@@ -23,6 +29,8 @@ namespace SubTerra.Gameplay.Player
         [SerializeField] private Sprite[] knockoutFrames;
         [SerializeField, Min(0.01f)] private float ladderDistancePerFrame = 0.5f;
         [SerializeField, Min(0f)] private float ladderSettleDelay = 0.08f;
+        [Tooltip("B-164: 걷기 그림에서 발이 닿는 프레임. 이 프레임으로 넘어갈 때 발소리를 낸다.")]
+        [SerializeField] private int[] footstepFrames = { 2, 7 };
 
         [SerializeField] private PlayerMovement movement;
         private bool isMining;
@@ -38,6 +46,8 @@ namespace SubTerra.Gameplay.Player
         private float ladderStillTime;
         private bool ladderPositionCaptured;
         private float ladderVisualGraceUntil;
+        private int lastWalkFrame = -1;
+        private bool footstepAlternate;
 
         private void Awake()
         {
@@ -241,6 +251,34 @@ namespace SubTerra.Gameplay.Player
             {
                 spriteRenderer.sprite = frames[frameIndex];
             }
+
+            if (stateName == "Walk")
+            {
+                TryPlayFootstep(frameIndex);
+            }
+        }
+
+        private void TryPlayFootstep(int frameIndex)
+        {
+            if (frameIndex == lastWalkFrame)
+            {
+                return;
+            }
+
+            lastWalkFrame = frameIndex;
+            if (footstepFrames == null
+                || System.Array.IndexOf(footstepFrames, frameIndex) < 0
+                || !movement.IsGrounded
+                || movement.IsClimbing
+                || movement.HorizontalSpeed <= FootstepMinHorizontalSpeed
+                || Time.timeScale <= 0f)
+            {
+                return;
+            }
+
+            // 같은 소리가 기계적으로 들리지 않게 피치를 번갈아 쓴다. 시설 바닥도 같은 소리다.
+            SfxRequests.Play(SfxId.Footstep, footstepAlternate ? FootstepAlternatePitch : 1f);
+            footstepAlternate = !footstepAlternate;
         }
 
         private (Sprite[] Frames, float FrameRate, bool Loop) ResolveFrames(string stateName)
@@ -311,6 +349,10 @@ namespace SubTerra.Gameplay.Player
                 ladderSequenceIndex = ((ladderSequenceIndex % sequenceLength) + sequenceLength)
                     % sequenceLength;
                 ladderTravelDistance -= direction * steps * distancePerFrame;
+                if (IsLadderTopIndex(ladderSequenceIndex, ladderFrames.Length >= 5))
+                {
+                    SfxRequests.Play(movement.LadderSfx.OnClimbStep());
+                }
             }
 
             if (ladderFrames.Length >= 5)
@@ -325,6 +367,13 @@ namespace SubTerra.Gameplay.Player
                 3 => 2,
                 _ => 0
             };
+        }
+
+        private static bool IsLadderTopIndex(int sequenceIndex, bool fiveFrames)
+        {
+            return fiveFrames
+                ? sequenceIndex == FiveFrameLadderTopA || sequenceIndex == FiveFrameLadderTopB
+                : sequenceIndex == 1 || sequenceIndex == 3;
         }
 
         private void SetLadderFrame(int frameIndex)
@@ -381,6 +430,7 @@ namespace SubTerra.Gameplay.Player
 
             currentState = stateName;
             stateStartedAt = Time.unscaledTime;
+            lastWalkFrame = -1;
         }
 
         private static bool IsLadderState(string stateName)

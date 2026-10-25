@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
+using SubTerra.App.Audio;
 using SubTerra.App.Inventory;
 using SubTerra.App.UI.HUD;
 using SubTerra.App.UI.Sell;
+using SubTerra.Shared.Audio;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -52,9 +54,9 @@ namespace SubTerra.App.UI.Outpost
         private const float ControlH = 52f;
         private const float StatusY = 582f;
         private const float FooterY = 620f;
-        private const float FooterH = 136f;
+        private const float FooterH = 164f;
         private const float ActionW = 250f;
-        private const float ActionH = 88f;
+        private const float ActionH = 52f;
         private const float OptionsH = 220f;
         private const float BoxSize = 170f;
         // 튀어나온 광물의 최대 크기는 상자(뚜껑을 연 모습 포함)의 30%.
@@ -259,6 +261,7 @@ namespace SubTerra.App.UI.Outpost
             transform.SetAsLastSibling();
             PopupWindowSorting.BringToFront(canvas);
             ApplyOpen(0f);
+            SfxPlayer.Play(SfxId.StorageBoxRise);
             return true;
         }
 
@@ -286,6 +289,7 @@ namespace SubTerra.App.UI.Outpost
             }
 
             ApplyClose(clock);
+            SfxPlayer.Play(SfxId.StorageClose);
             return true;
         }
 
@@ -315,7 +319,9 @@ namespace SubTerra.App.UI.Outpost
             switch (state)
             {
                 case PopupState.Opening:
+                    var previous = clock;
                     clock += dt;
+                    PlayOpeningSfx(previous, clock);
                     if (clock >= StorageBoxTimeline.OpenDuration)
                     {
                         state = PopupState.Open;
@@ -338,6 +344,20 @@ namespace SubTerra.App.UI.Outpost
 
                     ApplyClose(clock);
                     break;
+            }
+        }
+
+        // 광물 사이 간격(0.04초)은 연타 제한보다 짧아 첫 광물에서 한 번만 낸다.
+        private void PlayOpeningSfx(float previous, float now)
+        {
+            if (SfxPlayback.Crossed(previous, now, StorageBoxTimeline.LidOpenStart))
+            {
+                SfxPlayer.Play(SfxId.StorageLidOpen);
+            }
+
+            if (popCount > 0 && SfxPlayback.Crossed(previous, now, StorageBoxTimeline.PopStart))
+            {
+                SfxPlayer.Play(SfxId.StorageOrePop);
             }
         }
 
@@ -1142,13 +1162,7 @@ namespace SubTerra.App.UI.Outpost
             selectionCounts = ResourceSellUi.Label(selection, "Counts", ColumnW - 300f, 0f, 282f, ControlH, font, 19f,
                 FontStyles.Normal, ResourceSellUi.TextMain, TextAlignmentOptions.Right);
 
-            depositAllButton = ResourceSellButton.Create(controls, "DepositAllButton", Pad, StatusY, 180f, 32f, font,
-                "전체 보관", 19f, ResourceSellButton.Variant.Normal);
-            withdrawAllButton = ResourceSellButton.Create(controls, "WithdrawAllButton", Pad + 196f, StatusY, 180f, 32f, font,
-                "전체 꺼내기", 19f, ResourceSellButton.Variant.Normal);
-            depositAllButton.Button.onClick.AddListener(RequestDepositAll);
-            withdrawAllButton.Button.onClick.AddListener(RequestWithdrawAll);
-            statusText = ResourceSellUi.Label(controls, "Status", Pad + 392f, StatusY, CardSize.x - Pad * 2f - 392f, 32f, font, 18f,
+            statusText = ResourceSellUi.Label(controls, "Status", Pad, StatusY, CardSize.x - Pad * 2f, 32f, font, 18f,
                 FontStyles.Normal, ResourceSellUi.Ok, TextAlignmentOptions.Right);
 
             BuildFooter(controls);
@@ -1171,6 +1185,7 @@ namespace SubTerra.App.UI.Outpost
             minusButton = ResourceSellButton.Create(controls, "QuantityMinusButton", x, inputY, minusW, inputH, font, "-", 28f,
                 ResourceSellButton.Variant.Normal);
             minusButton.Button.onClick.AddListener(OnMinusQuantity);
+            UiSfx.Attach(minusButton.Button, SfxId.UiClick, failWhenDisabled: false);
             var inputX = x + minusW + 8f;
             quantityInput = BuildInput(controls, "QuantityInput", inputX, inputY, 100f, inputH, "0", 24f, TextAlignmentOptions.Center, true);
             quantityInput.textComponent.enableAutoSizing = true;
@@ -1187,12 +1202,14 @@ namespace SubTerra.App.UI.Outpost
                 quickButtons[i] = ResourceSellButton.Create(controls, "Quantity" + value + "Button", qx, inputY, 60f, inputH, font,
                     value == 1 ? "+" : "+" + value, value == 1 ? 28f : 21f, ResourceSellButton.Variant.Normal);
                 quickButtons[i].Button.onClick.AddListener(() => OnQuickQuantity(value));
+                UiSfx.Attach(quickButtons[i].Button, SfxId.UiClick, failWhenDisabled: false);
                 qx += 60f + 8f;
             }
 
             allQuantityButton = ResourceSellButton.Create(controls, "QuantityAllButton", qx, inputY, 76f, inputH, font,
                 "모두", 21f, ResourceSellButton.Variant.Normal);
             allQuantityButton.Button.onClick.AddListener(SelectAllQuantity);
+            UiSfx.Attach(allQuantityButton.Button, SfxId.UiClick, failWhenDisabled: false);
             qx += 84f;
 
             var withdrawX = Pad + barWidth - 28f - ActionW;
@@ -1205,7 +1222,7 @@ namespace SubTerra.App.UI.Outpost
             previewText.lineSpacing = 6f;
             previewText.textWrappingMode = TextWrappingModes.Normal;
 
-            var actionY = FooterY + (FooterH - ActionH) * 0.5f;
+            var actionY = FooterY + 20f;
             depositButton = ResourceSellButton.Create(controls, "DepositButton", depositX, actionY, ActionW, ActionH, font,
                 DepositLabel, 23f, ResourceSellButton.Variant.Primary, ResourceSellArt.FillDown(), 26f);
             withdrawButton = ResourceSellButton.Create(controls, "WithdrawButton", withdrawX, actionY, ActionW, ActionH, font,
@@ -1214,6 +1231,20 @@ namespace SubTerra.App.UI.Outpost
             FitLabel(withdrawButton);
             depositButton.Button.onClick.AddListener(RequestDeposit);
             withdrawButton.Button.onClick.AddListener(RequestWithdraw);
+            var bulkY = actionY + ActionH + 12f;
+            depositAllButton = ResourceSellButton.Create(controls, "DepositAllButton", depositX, bulkY, ActionW, ActionH, font,
+                "전체 보관", 23f, ResourceSellButton.Variant.Normal);
+            withdrawAllButton = ResourceSellButton.Create(controls, "WithdrawAllButton", withdrawX, bulkY, ActionW, ActionH, font,
+                "전체 꺼내기", 23f, ResourceSellButton.Variant.Normal);
+            FitLabel(depositAllButton);
+            FitLabel(withdrawAllButton);
+            depositAllButton.Button.onClick.AddListener(RequestDepositAll);
+            withdrawAllButton.Button.onClick.AddListener(RequestWithdrawAll);
+            // 결과음은 OutpostPanelBinder가 낸다. 옮길 게 없어 막힌 버튼만 실패음.
+            UiSfx.Attach(depositButton.Button, SfxId.None);
+            UiSfx.Attach(withdrawButton.Button, SfxId.None);
+            UiSfx.Attach(depositAllButton.Button, SfxId.None);
+            UiSfx.Attach(withdrawAllButton.Button, SfxId.None);
         }
 
         private static void FitLabel(ResourceSellButton button)

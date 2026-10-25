@@ -193,6 +193,35 @@ namespace SubTerra.App.Tests
         }
 
         [Test]
+        public void PromptB158_CooldownToggle_PlaysCancelFailOnce()
+        {
+            var system = CreateChargeSystem();
+            system.State.SetEnergy(10, 100);
+            var view = new RecordingView();
+            var presenter = new OutpostPanelPresenter(view);
+            presenter.WarningSink = new RecordingPlayerStatusWarningSink();
+            presenter.Bind(system.Service);
+            system.Service.ApplyRuntimeStatus(ChargerStatus("charger.a"));
+            presenter.ToggleInteractionPanel();
+            presenter.DismissInteractionPanel();
+
+            var played = new List<SubTerra.Shared.Audio.SfxId>();
+            System.Action<SubTerra.Shared.Audio.SfxId, float> record = (id, pitch) => played.Add(id);
+            SubTerra.Shared.Audio.SfxRequests.PlayRequested += record;
+            try
+            {
+                presenter.ToggleInteractionPanel();
+            }
+            finally
+            {
+                SubTerra.Shared.Audio.SfxRequests.PlayRequested -= record;
+                presenter.Unbind();
+            }
+
+            Assert.That(played, Is.EqualTo(new[] { SubTerra.Shared.Audio.SfxId.UiCancelFail }));
+        }
+
+        [Test]
         public void PromptB99_SaveRestore_KeepsPerInstanceRemaining()
         {
             var system = CreateChargeSystem();

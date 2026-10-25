@@ -1,8 +1,10 @@
+using SubTerra.App.Audio;
 using SubTerra.App.Core.Data;
 using System;
 using System.Collections.Generic;
 using SubTerra.App.Outpost;
 using SubTerra.App.UI.FacilityNameTag;
+using SubTerra.Shared.Audio;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -130,6 +132,7 @@ namespace SubTerra.App.UI.Outpost
         private bool showRequested;
         private bool revealStarted;
         private bool decided;
+        private bool cctvOnPlayed;
         private bool connectedPhase;
         private bool terminalLatched;
         private int activeItemCount;
@@ -210,6 +213,8 @@ namespace SubTerra.App.UI.Outpost
 
         private void OnEnable()
         {
+            // 닫힘 소리는 Hide가 내므로 닫기 버튼에는 호버만 붙인다.
+            UiSfx.Attach(closeButton, SfxId.None, hover: true);
             // Show를 거치지 않은 활성화(부모 패널이 꺼졌다 켜진 경우)에는 멈춘 화면이 남지 않도록 다시 숨긴다.
             if (!showRequested)
             {
@@ -287,6 +292,11 @@ namespace SubTerra.App.UI.Outpost
 
             state = PlayState.Exiting;
             exitClock = 0f;
+            if (isActiveAndEnabled)
+            {
+                SfxPlayer.Play(SfxId.UiPopupClose);
+            }
+
             exitStartOpen = lastOpen;
             exitStartLine = lastLine;
             exitStartBody = lastBody;
@@ -459,10 +469,18 @@ namespace SubTerra.App.UI.Outpost
             ApplyWindow(CoreCctvTimeline.Window(clock));
             ApplyTerminal(clock);
 
+            // 가로선이 다 그려지는 순간 화면이 켜진다. Show 한 번에 한 번만 낸다.
+            if (!cctvOnPlayed && clock >= CoreCctvTimeline.LineEnd)
+            {
+                cctvOnPlayed = true;
+                SfxPlayer.Play(SfxId.UiCctvOn);
+            }
+
             if (!decided && clock >= CoreCctvTimeline.DecideTime)
             {
                 decided = true;
                 connectedPhase = list.Count > 0;
+                SfxPlayer.Play(connectedPhase ? SfxId.UiConfirm : SfxId.UiCancelFail);
             }
 
             if (decided && !revealStarted && clock >= CoreCctvTimeline.RevealStart(connectedPhase))
@@ -1453,6 +1471,7 @@ namespace SubTerra.App.UI.Outpost
             introEndTime = 0f;
             revealStarted = false;
             decided = false;
+            cctvOnPlayed = false;
             connectedPhase = false;
             terminalLatched = false;
             cameraTargetId = string.Empty;

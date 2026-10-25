@@ -11,7 +11,8 @@ namespace SubTerra.App.Integration
         BaseLanded = 1,
         BonusLanded = 2,
         ExitStarted = 4,
-        Finished = 8
+        Finished = 8,
+        LeverPulled = 16
     }
 
     /// <summary>합치기 한 번의 결과. 합계 포화로 실제로 늘지 않은 값은 0으로 돌아온다.</summary>
@@ -43,6 +44,7 @@ namespace SubTerra.App.Integration
         private float baseRollStart;
         private int bonusFrom;
         private float bonusRollStart;
+        private bool leverFired;
         private bool baseLandFired;
         private bool bonusLandFired;
         private bool exiting;
@@ -227,6 +229,13 @@ namespace SubTerra.App.Integration
             DisplayBonus = GoldPickupPopupTimeline.RollValue(bonusFrom, TotalBonus, Elapsed - bonusRollStart);
 
             var events = GoldPickupPopupEvents.None;
+            // 레버는 팝업 하나에 한 번. 합치기로 다시 당기지 않는다.
+            if (!leverFired && Elapsed >= GoldPickupPopupTimeline.LeverDownStart)
+            {
+                leverFired = true;
+                events |= GoldPickupPopupEvents.LeverPulled;
+            }
+
             if (!baseLandFired && Elapsed >= GoldPickupPopupTimeline.LandTime(BaseFallStart))
             {
                 baseLandFired = true;

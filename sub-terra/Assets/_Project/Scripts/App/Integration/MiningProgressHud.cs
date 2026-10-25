@@ -1,5 +1,7 @@
+using SubTerra.App.Audio;
 using SubTerra.App.UI.PlayerStatus;
 using SubTerra.Gameplay.Mining;
+using SubTerra.Shared.Audio;
 using UnityEngine;
 
 namespace SubTerra.App.Integration
@@ -22,6 +24,8 @@ namespace SubTerra.App.Integration
         private PlayerHeadMessageStack messages;
         private System.Func<bool> isPlacementActive;
         private string pendingYieldText;
+        private PlayerMiningController boundInput;
+        private readonly MiningFailSfxGate failSfx = new MiningFailSfxGate();
 
         public void BindTo(MiningSystem system, Transform player)
         {
@@ -37,6 +41,7 @@ namespace SubTerra.App.Integration
 
             boundSystem = system;
             playerTarget = player;
+            BindInput(player != null ? player.GetComponent<PlayerMiningController>() : null);
             if (statusRoot != null)
             {
                 statusRoot.SetActive(false);
@@ -78,10 +83,38 @@ namespace SubTerra.App.Integration
                 boundSystem.ProgressChanged -= OnProgressChanged;
                 boundSystem = null;
             }
+
+            BindInput(null);
+        }
+
+        private void BindInput(PlayerMiningController input)
+        {
+            if (boundInput == input)
+            {
+                return;
+            }
+
+            if (boundInput != null)
+            {
+                boundInput.MiningPressed -= failSfx.OnMiningPressed;
+            }
+
+            boundInput = input;
+            if (boundInput != null)
+            {
+                boundInput.MiningPressed += failSfx.OnMiningPressed;
+            }
         }
 
         private void OnProgressChanged(MiningProgressState state)
         {
+            // B-164: 문구를 숨기는 실패(설치 중 빈 칸·보호 칸)는 무음. 문구 스택이 없어도 소리는 낸다.
+            var hidden = state.Phase == MiningPhase.Failed && string.IsNullOrEmpty(FailureMessage(state.FailureReason));
+            if (failSfx.OnProgress(state.Phase, state.FailureReason, hidden))
+            {
+                SfxPlayer.Play(SfxId.UiCancelFail);
+            }
+
             if (messages == null)
             {
                 return;

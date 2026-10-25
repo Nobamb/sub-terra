@@ -1,10 +1,12 @@
 using System.Globalization;
+using SubTerra.App.Audio;
 using SubTerra.App.Core;
 using SubTerra.App.Save;
 using SubTerra.App.Tutorial;
 using SubTerra.App.UI.MainMenu;
 using SubTerra.App.UI.SurfaceBase;
 using SubTerra.App.UI.Tutorial;
+using SubTerra.Shared.Audio;
 using SubTerra.Shared.Localization;
 using TMPro;
 using UnityEngine;
@@ -84,6 +86,8 @@ namespace SubTerra.App.UI.HUD
         private Image popupBlocker;
         private bool sessionVisible;
         private bool departing;
+        private readonly MineResetFiveMinuteGate fiveMinuteGate = new MineResetFiveMinuteGate();
+        private object observedAlertState;
 
         /// <summary>시계가 켜져 있거나 꺼지는 연출 중이면 true. 지상 이동 전에 꺼질 때까지 기다릴지 판단한다.</summary>
         public bool IsClockOnScreen => clockRoot != null && clockRoot.activeSelf;
@@ -126,6 +130,7 @@ namespace SubTerra.App.UI.HUD
             sessionVisible = visible;
             // 세션이 끝나면 이동 예약은 의미가 없다.
             if (!visible) departing = false;
+            if (!visible) fiveMinuteGate.Reset();
             if (!visible && popupRoot != null)
             {
                 CloseImmediately();
@@ -230,6 +235,8 @@ namespace SubTerra.App.UI.HUD
                 return;
             }
 
+            // 시계 연출 없이 카드만 뜨는 경로는 벨만 한 번 낸다.
+            SfxPlayer.Play(SfxId.TimerEnd);
             OpenPopupCard(0f);
         }
 
@@ -249,6 +256,7 @@ namespace SubTerra.App.UI.HUD
             if (popupMotion != null)
             {
                 popupMotion.SetBackdropFloor(backdropFloor);
+                SfxPlayer.Play(SfxId.UiPopupOpen);
                 popupMotion.PlayOpen();
             }
         }
@@ -388,6 +396,32 @@ namespace SubTerra.App.UI.HUD
             if (clockRoot != null && clockRoot.activeSelf)
             {
                 RefreshFromState();
+            }
+
+            ObserveFiveMinuteAlert();
+        }
+
+        // 5분 알림은 놓치면 안 되는 안내라 T 시계를 꺼 두어도 따로 판정한다.
+        private void ObserveFiveMinuteAlert()
+        {
+            var runtime = SaveRuntimeController.Instance;
+            if (departing || runtime == null || runtime.ActiveSlot <= 0)
+            {
+                fiveMinuteGate.Reset();
+                return;
+            }
+
+            var bootstrap = GameBootstrapper.Instance;
+            var state = bootstrap != null ? bootstrap.State : null;
+            if (!ReferenceEquals(observedAlertState, state))
+            {
+                observedAlertState = state;
+                fiveMinuteGate.Reset();
+            }
+
+            if (fiveMinuteGate.Observe(MineResetFiveMinuteGate.ToSeconds(runtime.MineResetRemainingSeconds)))
+            {
+                SfxPlayer.Play(SfxId.Timer5MinAlert);
             }
         }
 
@@ -578,7 +612,7 @@ namespace SubTerra.App.UI.HUD
             popupFooter.fontSizeMax = 19f;
 
             popupOkButton = CreateOkButton(contentRect, skin, font);
-            popupOkButton.onClick.AddListener(HidePopup);
+            popupOkButton.onClick.AddListener(OnPopupOkClicked);
 
             popupMotion = popupRoot.AddComponent<MineResetPopupMotion>();
             popupMotion.Bind(new MineResetPopupMotion.Layers
@@ -692,6 +726,12 @@ namespace SubTerra.App.UI.HUD
             return image;
         }
 
+        private void OnPopupOkClicked()
+        {
+            SfxPlayer.Play(SfxId.UiConfirm);
+            HidePopup();
+        }
+
         // 확인·Esc가 이 경로로 들어온다. 창만 닫고 월드·골드·시드·요금·씬은 건드리지 않는다.
         private void HidePopup()
         {
@@ -709,6 +749,11 @@ namespace SubTerra.App.UI.HUD
             if (popupMotion != null && Application.isPlaying && popupMotion.isActiveAndEnabled)
             {
                 // 이미 닫는 중이면 PlayClose가 무시한다.
+                if (!popupMotion.IsClosing)
+                {
+                    SfxPlayer.Play(SfxId.UiPopupClose);
+                }
+
                 popupMotion.PlayClose(CloseImmediately);
                 return;
             }
