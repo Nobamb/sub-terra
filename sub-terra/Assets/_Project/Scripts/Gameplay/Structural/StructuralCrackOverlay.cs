@@ -83,6 +83,11 @@ namespace SubTerra.Gameplay.Structural
 
         public Tilemap OverlayTilemap => overlayTilemap;
 
+        private void Awake()
+        {
+            ClearAll();
+        }
+
         public void BindSourceTilemap(Tilemap source)
         {
             if (sourceTilemap == source) return;
@@ -159,7 +164,7 @@ namespace SubTerra.Gameplay.Structural
             if (sprite == null) sprite = ResolveCrackTile(StructuralRiskLevel.CollapseImminent) is Tile tile ? tile.sprite : null;
             if (sprite == null) return;
 
-            var root = new GameObject("StructuralFallingRock");
+            var root = new GameObject("StructuralFallingRock") { hideFlags = HideFlags.DontSave };
             root.transform.SetParent(transform, true);
             Vector3 start = source.GetCellCenterWorld(cell);
             root.transform.position = start;
@@ -212,41 +217,33 @@ namespace SubTerra.Gameplay.Structural
         /// </summary>
         public void ClearAll()
         {
-            if (overlayTilemap == null)
-            {
-                visibleCells.Clear();
-                cellRisks.Clear();
-                cellIntensities.Clear();
-                cellCauses.Clear();
-                pulseRemaining.Clear();
-                telegraphingCells.Clear();
-                ClearShakeVisuals();
-                return;
-            }
-
-            if (visibleCells.Count == 0 && cellRisks.Count == 0)
-            {
-                ClearShakeVisuals();
-                return;
-            }
-
-            var cells = new List<Vector3Int>(visibleCells);
-            foreach (Vector3Int cell in cellRisks.Keys)
-            {
-                if (!visibleCells.Contains(cell))
-                {
-                    cells.Add(cell);
-                }
-            }
-
-            for (int i = 0; i < cells.Count; i++)
-            {
-                ClearCell(cells[i]);
-            }
-
+            RemoveUntrackedRuntimeVisuals();
+            ClearShakeVisuals();
+            if (overlayTilemap != null) overlayTilemap.ClearAllTiles();
             visibleCells.Clear();
             cellRisks.Clear();
-            ClearShakeVisuals();
+            cellIntensities.Clear();
+            cellCauses.Clear();
+            pulseRemaining.Clear();
+            telegraphingCells.Clear();
+        }
+
+        private void RemoveUntrackedRuntimeVisuals()
+        {
+            // 이전 씬에 저장된 잔재는 런타임 목록에 없다. 이 컴포넌트의 직속 시각 자식만 정리한다.
+            var tracked = new HashSet<GameObject>();
+            foreach (var visual in shakeVisuals.Values) tracked.Add(visual.Root);
+            foreach (var visual in fallingVisuals) tracked.Add(visual.Root);
+            foreach (var visual in dustVisuals) tracked.Add(visual.Root);
+            for (int i = transform.childCount - 1; i >= 0; i--)
+            {
+                var child = transform.GetChild(i).gameObject;
+                bool runtimeName = child.name.StartsWith("StructuralShake_", System.StringComparison.Ordinal)
+                    || child.name == "StructuralFallingRock" || child.name == "StructuralImpactDust";
+                if (!runtimeName || tracked.Contains(child) || child.GetComponent<SpriteRenderer>() == null) continue;
+                child.SetActive(false);
+                DestroyRuntimeObject(child);
+            }
         }
 
         /// <summary>
@@ -427,7 +424,7 @@ namespace SubTerra.Gameplay.Structural
             Sprite sprite = sourceTilemap.GetSprite(cell);
             if (sprite == null) return;
 
-            var root = new GameObject("StructuralShake_" + cell.x + "_" + cell.y);
+            var root = new GameObject("StructuralShake_" + cell.x + "_" + cell.y) { hideFlags = HideFlags.DontSave };
             root.layer = sourceTilemap.gameObject.layer;
             root.transform.SetParent(transform, true);
             root.transform.position = sourceTilemap.GetCellCenterWorld(cell);
@@ -660,7 +657,7 @@ namespace SubTerra.Gameplay.Structural
 
         private void CreateImpactDust(Vector3 position)
         {
-            var root = new GameObject("StructuralImpactDust");
+            var root = new GameObject("StructuralImpactDust") { hideFlags = HideFlags.DontSave };
             root.transform.SetParent(transform, true);
             root.transform.position = position;
             var renderer = root.AddComponent<SpriteRenderer>();

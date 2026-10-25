@@ -12,6 +12,40 @@ namespace SubTerra.Gameplay.Structural.Tests
     public sealed class StructuralCollapsePlayModeTests
     {
         [UnityTest]
+        public IEnumerator Issue245_Awake_ClearsUntrackedSavedVisualsAndCracks()
+        {
+            var host = new GameObject("SavedResidueHost");
+            host.SetActive(false);
+            var grid = new GameObject("Grid", typeof(Grid));
+            grid.transform.SetParent(host.transform);
+            var mapObject = new GameObject("Cracks", typeof(Tilemap));
+            mapObject.transform.SetParent(grid.transform);
+            var tilemap = mapObject.GetComponent<Tilemap>();
+            var tile = ScriptableObject.CreateInstance<Tile>();
+            tilemap.SetTile(new Vector3Int(-13, -39), tile);
+            var ghost = new GameObject("StructuralShake_-13_-39", typeof(SpriteRenderer));
+            ghost.transform.SetParent(host.transform);
+            var other = new GameObject("OtherVisual", typeof(SpriteRenderer));
+            other.transform.SetParent(host.transform);
+            var overlay = host.AddComponent<StructuralCrackOverlay>();
+            SetField(overlay, "overlayTilemap", tilemap);
+            try
+            {
+                host.SetActive(true);
+                yield return null;
+                Assert.That(ghost == null, Is.True);
+                Assert.That(tilemap.GetUsedTilesCount(), Is.Zero);
+                Assert.That(other != null, Is.True);
+            }
+            finally
+            {
+                Object.Destroy(host);
+                Object.Destroy(tile);
+            }
+            yield return null;
+        }
+
+        [UnityTest]
         public IEnumerator WarningOverlay_AppearsOnSeparateNonCollidingTilemap()
         {
             using var fixture = new RuntimeFixture(1, true, false);
