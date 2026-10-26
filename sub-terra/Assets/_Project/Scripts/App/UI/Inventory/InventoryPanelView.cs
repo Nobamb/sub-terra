@@ -40,7 +40,7 @@ namespace SubTerra.App.UI.Inventory
         {
             // prompt-B 36-1: 시작 시 인벤토리 창은 닫힌 상태.
             // HudPanelChromeController가 I 키/버튼으로 토글한다.
-            SetVisible(false);
+            HideImmediately();
         }
 
         public void SetCargoSummary(string cargoText)
@@ -180,7 +180,13 @@ namespace SubTerra.App.UI.Inventory
 
         public void SetVisible(bool visible)
         {
-            var wasVisible = gameObject.activeSelf && (panelRoot == null || panelRoot.activeSelf);
+            if (!visible)
+            {
+                TerminalWindowOpenMotion.Close(gameObject, HideImmediately);
+                return;
+            }
+            var wasVisible = gameObject.activeSelf && (panelRoot == null || panelRoot.activeSelf)
+                && !TerminalWindowOpenMotion.IsClosingWindow(gameObject);
             // prompt-B 33-1: 루트 전체를 끄면 Binder 구독이 끊기고 닫기 버튼 상태가 꼬일 수 있다.
             // 루트는 유지한 채 PanelRoot·닫기 버튼만 토글한다.
             if (!gameObject.activeSelf)
@@ -204,7 +210,13 @@ namespace SubTerra.App.UI.Inventory
                 gameObject.SetActive(visible);
             }
             if (visible && !wasVisible) TerminalWindowOpenMotion.Open(gameObject);
-            if (!visible) TerminalWindowOpenMotion.Stop(gameObject);
+        }
+
+        private void HideImmediately()
+        {
+            if (panelRoot != null) panelRoot.SetActive(false);
+            if (closeButton != null) closeButton.gameObject.SetActive(false);
+            if (panelRoot == null && closeButton == null) gameObject.SetActive(false);
         }
 
         public bool HasRequiredReferences()

@@ -143,6 +143,7 @@ namespace SubTerra.App.Tests.PlayMode
             // I로 닫고, 닫힌 동안 자원이 줄어도 다시 열면 최신 값을 보여야 한다.
             yield return PressI();
             Assert.That(chrome.IsInventoryPanelOpen, Is.False);
+            yield return new WaitForSecondsRealtime(SubTerra.App.UI.TerminalWindowOpenMotion.CloseDuration + .03f);
             Assert.That(view.PanelRoot.activeSelf, Is.False);
             Assert.That(inventory.TryReduceMineral(DataIds.Minerals.Iron, 2).DidChange, Is.True);
             yield return null;

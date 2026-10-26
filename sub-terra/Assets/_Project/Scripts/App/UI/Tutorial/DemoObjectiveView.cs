@@ -312,22 +312,23 @@ namespace SubTerra.App.UI.Tutorial
 
             if (!visible)
             {
-                if (detailsCanvas != null)
-                {
-                    PopupWindowSorting.Remove(detailsCanvas);
-                }
-
-                detailsRoot.SetActive(false);
+                TerminalWindowOpenMotion.Close(detailsRoot, HideDetailsImmediately);
                 return;
             }
 
-            var wasVisible = detailsRoot.activeSelf;
+            var wasVisible = detailsRoot.activeSelf && !TerminalWindowOpenMotion.IsClosingWindow(detailsRoot);
             detailsRoot.SetActive(true);
             detailsRoot.transform.SetAsLastSibling();
             EnsurePopupCanvas(detailsRoot, ref detailsCanvas);
             // 인벤토리·시설처럼 방금 연 창이 이미 떠 있는 팝업보다 앞에 온다.
             PopupWindowSorting.BringToFront(detailsCanvas);
             if (!wasVisible) TerminalWindowOpenMotion.Open(detailsRoot);
+        }
+
+        private void HideDetailsImmediately()
+        {
+            if (detailsCanvas != null) PopupWindowSorting.Remove(detailsCanvas);
+            if (detailsRoot != null) detailsRoot.SetActive(false);
         }
 
         public void SetDetailsText(string title, string body, string nextAction)

@@ -463,15 +463,16 @@ namespace SubTerra.App.UI.HUD
                 buildingMenuBinder.CancelSelection();
             }
 
-            // 패널 전체(루트)를 토글한다. PanelRoot만 끄면 X 버튼이 루트에 남아 상태가 꼬인다.
-            if (buildingMenuRoot != null)
-            {
-                buildingMenuRoot.SetActive(visible);
-            }
-
+            // 닫힘 연출이 끝날 때 View가 루트를 끈다. 먼저 끄면 역순 연출이 중단된다.
             if (buildingMenuView != null)
             {
+                if (visible && buildingMenuRoot != null && !buildingMenuRoot.activeSelf)
+                    buildingMenuRoot.SetActive(true);
                 buildingMenuView.SetVisible(visible);
+            }
+            else if (buildingMenuRoot != null)
+            {
+                buildingMenuRoot.SetActive(visible);
             }
 
             // prompt-B 32: 우측 중앙 재열기 버튼은 항상 숨긴다.
