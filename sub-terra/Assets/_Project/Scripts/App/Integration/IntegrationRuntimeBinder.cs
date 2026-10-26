@@ -217,6 +217,7 @@ namespace SubTerra.App.Integration
             ResolveSceneReferences();
 
             TryStep("EnsureGameplayServices", () => runtime.EnsureGameplayServices());
+            TryStep("MineBackdrop", EnsureMineBackdrop);
             TryStep(
                 "BindGameState",
                 () =>
@@ -945,6 +946,14 @@ namespace SubTerra.App.Integration
             }
 
             progressionPanelBinder.Presenter.Refresh();
+        }
+
+        private void EnsureMineBackdrop()
+        {
+            if (playerMovement == null) return;
+            var terrain = FindForegroundTilemap();
+            MineBackdropController.AttachTo(transform, Camera.main, playerMovement.transform,
+                terrain != null ? terrain.GetComponent<TilemapRenderer>() : null);
         }
 
         private void OnDestroy()
