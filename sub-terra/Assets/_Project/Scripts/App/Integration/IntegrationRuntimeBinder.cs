@@ -81,6 +81,7 @@ namespace SubTerra.App.Integration
         private bool tileMinedSfxBound;
         private readonly CargoHeavySfxGate cargoHeavySfx = new CargoHeavySfxGate();
         private bool droneReadingsBound;
+        private Action unbindProgressionPanel;
 
         public IntegrationContractRegistry Contracts => contracts;
         public IntegrationActivationGate ActivationGate => activationGate;
@@ -425,6 +426,9 @@ namespace SubTerra.App.Integration
                         return;
                     }
 
+                    // 비활성 창은 Unity OnDestroy가 호출되지 않을 수 있다.
+                    // 파괴 순서와 무관하게 CLR 참조로 구독 해제 경로를 보관한다.
+                    unbindProgressionPanel = progressionPanelBinder.Unbind;
                     progressionPanelBinder.BindTo(
                         runtime.Progression,
                         () => bootstrap != null
@@ -949,6 +953,8 @@ namespace SubTerra.App.Integration
 
         private void OnDestroy()
         {
+            unbindProgressionPanel?.Invoke();
+            unbindProgressionPanel = null;
             if (inventorySpeedBound && runtime != null && runtime.InventoryService != null)
             {
                 runtime.InventoryService.InventoryChanged -= OnInventoryChangedForMovement;

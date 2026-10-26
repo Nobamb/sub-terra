@@ -198,7 +198,7 @@ namespace SubTerra.App.Tests.PlayMode
         }
 
         /// <summary>LoadIntegration과 같은 격리 런타임(슬롯 0, 플레이어 세이브 미사용)으로 지상 기지 Scene을 연다.</summary>
-        public IEnumerator LoadSurfaceBase(Func<bool> ready)
+        public IEnumerator LoadSurfaceBase(Func<bool> ready, float sceneLoadTimeout = 10f, bool configureResolution = true)
         {
             var timer = Stopwatch.StartNew();
             GameBootstrapper.ResetInstanceForTests();
@@ -220,9 +220,9 @@ namespace SubTerra.App.Tests.PlayMode
             Assert.That(Save.ActiveSlot, Is.Zero, "Tests must not use player saves");
             Save.SetReady(true);
             var load = SceneManager.LoadSceneAsync(SceneNames.SurfaceBase);
-            yield return UiTestWait.Until(() => load.isDone, "SurfaceBase scene load", stage: "scene");
+            yield return UiTestWait.Until(() => load.isDone, "SurfaceBase scene load", timeout: sceneLoadTimeout, stage: "scene");
             yield return UiTestWait.Until(ready, "SurfaceBase panels bound");
-            yield return Resolution.Set(1920, 1080);
+            if (configureResolution) yield return Resolution.Set(1920, 1080);
             BindInput();
             UiTestWait.Record("setup-total", "isolated SurfaceBase runtime", timer.Elapsed.TotalSeconds);
         }
