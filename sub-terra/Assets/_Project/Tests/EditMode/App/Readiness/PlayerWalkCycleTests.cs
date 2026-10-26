@@ -11,6 +11,32 @@ namespace SubTerra.App.Tests.EditMode.Readiness
     public sealed class PlayerWalkCycleTests
     {
         [Test]
+        public void WalkBake_KneesKeepTheirWidthAndHipSeamStaysAttached()
+        {
+            System.Type baker = null;
+            foreach (var assembly in System.AppDomain.CurrentDomain.GetAssemblies())
+                if ((baker = assembly.GetType("SubTerra.Editor.SmoothWalkCycleBaker")) != null) break;
+            Assert.That(baker, Is.Not.Null);
+            var poseType = baker.GetNestedType("LegPose", BindingFlags.NonPublic);
+            var deform = poseType.GetMethod("Deform");
+            foreach (var near in new[] { true, false })
+            for (int i = 0; i < 16; i++)
+            {
+                float phase = i / 16f;
+                float bob = 1.5f - 3.5f * Mathf.Cos(phase * 4 * Mathf.PI);
+                var pose = System.Activator.CreateInstance(poseType, new object[] { near, phase, bob });
+                var knee = new Vector2(near ? 119 : 150, 61);
+                var left = (Vector2)deform.Invoke(pose, new object[] { knee - Vector2.right * 5f });
+                var right = (Vector2)deform.Invoke(pose, new object[] { knee + Vector2.right * 5f });
+                Assert.That(Vector2.Distance(left, right), Is.GreaterThan(9.5f),
+                    $"무릎 접합부가 눌리면 안 된다: near={near}, frame={i + 1}");
+                var hem = new Vector2(near ? 119 : 144, 87);
+                Assert.That(Vector2.Distance((Vector2)deform.Invoke(pose, new object[] { hem }),
+                    hem + Vector2.up * bob), Is.LessThan(.001f));
+            }
+        }
+
+        [Test]
         public void WalkCycle_UsesAllSixteenDistinctFramesAndLoopsAtOneSecond()
         {
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/Prefabs/Gameplay/Player/Player.prefab");

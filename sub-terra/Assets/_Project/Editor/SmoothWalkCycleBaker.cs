@@ -53,9 +53,11 @@ namespace SubTerra.Editor
                 regions.Clear();
                 triangles.Clear();
                 // 각 다리의 메시를 분리해, 서로 교차할 때 사잇면이 길게 늘어나지 않게 한다.
-                AddRegion(2, new[]{137,168,156,172,165,185,166,194,164,206,159,215,168,220,174,228,173,242,131,242,131,229,138,221,137,214,137,202,132,190,131,184});
-                AddRegion(1, new[]{110,168,134,172,137,182,136,193,132,207,128,217,124,219,133,229,134,242,80,242,80,228,89,220,95,215,95,205,101,191,101,181});
-                AddRegion(0, new[]{0,0,256,0,256,169,174,169,174,180,159,180,147,183,128,183,111,179,108,177,94,182,76,178,70,169,0,169});
+                AddRegion(2, new[]{138,168,159,168,156,172,165,185,166,194,164,206,159,215,168,220,174,228,173,242,131,242,131,229,138,221,137,214,137,202,132,190,131,184});
+                AddRegion(1, new[]{110,168,138,168,137,182,136,193,132,207,128,217,124,219,133,229,134,242,80,242,80,228,89,220,95,215,95,205,101,191,101,181});
+                // 고정 바지 밑단이 움직이는 허벅지를 가로로 자르지 않게 접합선(170)까지만 덮는다.
+                // 양손 영역은 기존 윤곽을 유지하고, 접합선 아래 바지는 각 다리 메시가 담당한다.
+                AddRegion(0, new[]{0,0,256,0,256,169,174,169,174,180,159,180,159,170,110,170,110,177,94,182,76,178,70,169,0,169});
                 positions = new Vector3[pixels.Count];
                 var uv = new Vector2[pixels.Count];
                 for (int i = 0; i < pixels.Count; i++) uv[i] = new Vector2(pixels[i].x / 256, 1 - pixels[i].y / 256);
@@ -141,9 +143,11 @@ namespace SubTerra.Editor
         {
             private readonly Vector2 originalHip, originalKnee, originalAnkle, hip, knee, ankle;
             private readonly float thighRotation, shinRotation, bootRotation, thighScale, shinScale;
+            private readonly float bodyBob;
 
             public LegPose(bool near, float phase, float bob)
             {
+                bodyBob = bob;
                 originalHip = near ? new Vector2(119, 82) : new Vector2(144, 82);
                 originalKnee = near ? new Vector2(119, 61) : new Vector2(150, 61);
                 originalAnkle = near ? new Vector2(108, 36) : new Vector2(150, 36);
@@ -169,12 +173,27 @@ namespace SubTerra.Editor
             public Vector2 Deform(Vector2 p)
             {
                 float down = 256 - p.y;
-                Vector2 thigh = hip + Rotate((p - originalHip) * thighScale, thighRotation);
-                Vector2 shin = knee + Rotate((p - originalKnee) * shinScale, shinRotation);
-                Vector2 boot = ankle + Rotate(p - originalAnkle, bootRotation);
-                return Vector2.Lerp(Vector2.Lerp(thigh, shin, Mathf.SmoothStep(0, 1, Mathf.InverseLerp(186, 204, down))),
-                    boot, Mathf.SmoothStep(0, 1, Mathf.InverseLerp(211, 225, down)));
+                Vector2 deformed;
+                if (down <= 204)
+                {
+                    float bend = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(186, 204, down));
+                    // 회전된 위치의 평균은 무릎 폭을 줄인다. 공통 관절을 중심으로 각도를 보간한다.
+                    float angle = BlendAngle(thighRotation, shinRotation, bend);
+                    deformed = knee + Rotate(p - originalKnee, angle) * Mathf.Lerp(thighScale, shinScale, bend);
+                }
+                else
+                {
+                    float bend = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(211, 225, down));
+                    float angle = BlendAngle(shinRotation, bootRotation, bend);
+                    deformed = ankle + Rotate(p - originalAnkle, angle) * Mathf.Lerp(shinScale, 1f, bend);
+                }
+                // 바지 윗단은 몸통과 같은 위치를 유지하고, 허벅지 안쪽에서 다리 변형으로 이어 준다.
+                float attachment = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(170, 184, down));
+                return Vector2.Lerp(p + Vector2.up * bodyBob, deformed, attachment);
             }
+
+            private static float BlendAngle(float from, float to, float weight) =>
+                Mathf.LerpAngle(from * Mathf.Rad2Deg, to * Mathf.Rad2Deg, weight) * Mathf.Deg2Rad;
         }
         private static void Pose(float phase)
         {
