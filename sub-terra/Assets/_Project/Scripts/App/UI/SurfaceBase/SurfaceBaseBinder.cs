@@ -260,13 +260,15 @@ namespace SubTerra.App.UI.SurfaceBase
             if (view == null || progressionBinder == null || settings == null
                 || settings.IsOpen || view.IsMineResetConfirmVisible
                 || (economyBinder != null && economyBinder.IsModalVisible)) return;
-            view.SetUpgradeVisible(true);
+            // B-167: 업그레이드 버튼(과 이후 U키 #249)은 이 함수 하나로 연다. 연출은 열기 요청에서만 시작한다.
+            view.RequestUpgradeOpen();
             if (progressionBinder.Presenter != null) progressionBinder.Presenter.Refresh();
         }
 
+        // ESC·X키·창 X 버튼이 함께 쓰는 닫기 경로.
         private void OnUpgradeCloseClicked()
         {
-            if (view != null) view.SetUpgradeVisible(false);
+            if (view != null) view.RequestUpgradeClose();
         }
 
         private void OnExploreClicked()
