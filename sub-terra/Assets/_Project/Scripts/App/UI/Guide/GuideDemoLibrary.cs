@@ -13,8 +13,8 @@ namespace SubTerra.App.UI.Guide
     {
         public const float StageWidth = 320f;
         public const float StageHeight = 120f;
-        public const int PlayerWalkFrameCount = 16;
-        public const float PlayerWalkFrameRate = 16f;
+        public const int PlayerWalkFrameCount = 47;
+        public const float PlayerWalkFrameRate = 10f;
 
         private const float Unit = 34f;
         private const float GroundTop = -26f;

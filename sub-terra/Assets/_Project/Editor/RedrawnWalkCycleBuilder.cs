@@ -7,11 +7,11 @@ using UnityEngine;
 
 namespace SubTerra.Editor
 {
-    // 새로 그린 전신 16장만 등록한다. 이전 2x2 원화나 신체 부위 변형은 사용하지 않는다.
+    // 팀원이 제공한 GIF의 전신 프레임을 등록한다. 신체 부위 변형은 하지 않는다.
     public static class RedrawnWalkCycleBuilder
     {
         private const string Art = "Assets/_Project/Art/Characters/Player/";
-        private const string Approved = "../work_process/images/player-walk-whole-redraw-20261027/approved-one-second";
+        private const string Approved = "../work_process/images/teammate-walk-gif-20261027/runtime-frames";
 
         [MenuItem("SubTerra/Build Redrawn Walk Cycle")]
         public static void Build() => Run(false, false);

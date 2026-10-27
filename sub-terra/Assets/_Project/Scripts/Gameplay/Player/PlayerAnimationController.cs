@@ -6,8 +6,8 @@ namespace SubTerra.Gameplay.Player
     // 런타임 표시가 Animator 평가 순서에 의존하지 않도록 한다.
     public sealed class PlayerAnimationController : MonoBehaviour
     {
-        public const int WalkFrameCount = 16;
-        public const float WalkFrameRate = 16f;
+        public const int WalkFrameCount = 47;
+        public const float WalkFrameRate = 10f;
         private const float DamageDuration = 0.35f;
         private const float LadderMovementEpsilon = 0.0001f;
         private const float LadderVisualGraceDuration = 0.1f;

@@ -12,23 +12,23 @@ namespace SubTerra.App.Tests.EditMode.Readiness
     public sealed class PlayerWalkCycleTests
     {
         [Test]
-        public void GuideWalk_UsesTheSameSixteenDrawings()
+        public void GuideWalk_UsesTheSameTeammateGifFrames()
         {
             var skin = AssetDatabase.LoadAssetAtPath<GameGuideSkin>("Assets/_Project/Resources/UI/GameGuideSkin.asset");
             Assert.That(skin, Is.Not.Null);
             Assert.That(GuideDemoLibrary.PlayerWalkFrameCount, Is.EqualTo(PlayerAnimationController.WalkFrameCount));
             Assert.That(GuideDemoLibrary.PlayerWalkFrameRate, Is.EqualTo(PlayerAnimationController.WalkFrameRate));
-            for (int i = 1; i <= 16; i++)
+            for (int i = 1; i <= 47; i++)
                 Assert.That(skin.Get("player.walk." + i), Is.EqualTo(AssetDatabase.LoadAssetAtPath<Sprite>(
                     $"Assets/_Project/Art/Characters/Player/Frames/Walk/walk_{i:D2}.png")));
-            Assert.That(skin.Get("player.walk.17"), Is.Null);
+            Assert.That(skin.Get("player.walk.48"), Is.Null);
             foreach (var clip in GuideDemoLibrary.All)
             foreach (var key in clip.UsedSpriteKeys())
                 if (key.StartsWith("player.walk.")) Assert.That(skin.Get(key), Is.Not.Null, key);
         }
 
         [Test]
-        public void WalkCycle_UsesSixteenDistinctDrawingsAndLoopsInOneSecond()
+        public void WalkCycle_PreservesTeammateGifFramesAndTiming()
         {
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/Prefabs/Gameplay/Player/Player.prefab");
             var visual = Object.Instantiate(prefab.transform.Find("VisualRoot").gameObject);
@@ -38,19 +38,19 @@ namespace SubTerra.App.Tests.EditMode.Readiness
                 var renderer = visual.GetComponent<SpriteRenderer>();
                 var fields = new SerializedObject(controller);
                 var frames = fields.FindProperty("walkFrames");
-                Assert.That(frames.arraySize, Is.EqualTo(16));
-                Assert.That(PlayerAnimationController.WalkFrameRate, Is.EqualTo(16f));
+                Assert.That(frames.arraySize, Is.EqualTo(47));
+                Assert.That(PlayerAnimationController.WalkFrameRate, Is.EqualTo(10f));
                 var hashes = new HashSet<string>();
                 var play = typeof(PlayerAnimationController).GetMethod("Play", BindingFlags.Instance | BindingFlags.NonPublic);
                 var start = typeof(PlayerAnimationController).GetField("stateStartedAt", BindingFlags.Instance | BindingFlags.NonPublic);
                 play.Invoke(controller, new object[] { "Walk" });
-                for (int i = 0; i < 16; i++)
+                for (int i = 0; i < 47; i++)
                 {
                     var sprite = (Sprite)frames.GetArrayElementAtIndex(i).objectReferenceValue;
                     Assert.That(sprite, Is.Not.Null);
                     string path = AssetDatabase.GetAssetPath(sprite);
                     CollectionAssert.AreEqual(File.ReadAllBytes(
-                        $"../work_process/images/player-walk-whole-redraw-20261027/approved-one-second/walk-{i + 1:D2}.png"),
+                        $"../work_process/images/teammate-walk-gif-20261027/runtime-frames/walk-{i + 1:D2}.png"),
                         File.ReadAllBytes(path), "채택된 전신 원화와 런타임 일치 " + (i + 1));
                     using (var sha = System.Security.Cryptography.SHA256.Create())
                         hashes.Add(System.Convert.ToBase64String(sha.ComputeHash(File.ReadAllBytes(path))));
@@ -58,9 +58,9 @@ namespace SubTerra.App.Tests.EditMode.Readiness
                     play.Invoke(controller, new object[] { "Walk" });
                     Assert.That(renderer.sprite, Is.EqualTo(sprite), "frame " + (i + 1));
                 }
-                Assert.That(hashes.Count, Is.EqualTo(16), "새로 그린 열여섯 자세를 모두 사용한다.");
-                float duration = 16f / PlayerAnimationController.WalkFrameRate;
-                Assert.That(duration, Is.EqualTo(1f));
+                Assert.That(hashes.Count, Is.EqualTo(47), "원본 GIF의 프레임을 모두 사용한다.");
+                float duration = 47f / PlayerAnimationController.WalkFrameRate;
+                Assert.That(duration, Is.EqualTo(4.7f).Within(.001f));
                 start.SetValue(controller, Time.unscaledTime - duration - .001f);
                 play.Invoke(controller, new object[] { "Walk" });
                 Assert.That(renderer.sprite, Is.EqualTo(frames.GetArrayElementAtIndex(0).objectReferenceValue));
@@ -76,7 +76,7 @@ namespace SubTerra.App.Tests.EditMode.Readiness
         [Test]
         public void WalkDrawings_KeepGroundLineAndCharacterHeight()
         {
-            for (int i = 1; i <= 16; i++)
+            for (int i = 1; i <= 47; i++)
             {
                 var texture = new Texture2D(2, 2);
                 try
