@@ -184,21 +184,21 @@ namespace SubTerra.App.Audio
 
                 // B-168(D-2) 위험·생존. World 버스(Alert는 경보 반복을 끊는다). 길이는 다듬은 파일 기준.
                 // 1.23초. 반복하지 않고 GasPulseAudio가 맥박마다 한 번씩 처음부터 튼다.
-                (new SfxEntry(SfxId.GasPulseLoop, SfxBus.World, volume: 0.45f), "gas_pulse_loop"),
+                (new SfxEntry(SfxId.GasPulseLoop, SfxBus.World, volume: 0.38f), "gas_pulse_loop"),
                 // 0.68초. Big Hit + Metal Crack 합침.
                 (new SfxEntry(SfxId.PlayerHurt, SfxBus.World, volume: 0.6f), "player_hurt"),
                 // 0.97초. Warning Alarm Loop #1의 2주기. 반복 재생하지 않는다.
                 (new SfxEntry(SfxId.LowHealthWarning, SfxBus.World, volume: 0.5f), "low_health_warning"),
                 // 1.40초. Boulder Impact 앞부분.
                 (new SfxEntry(SfxId.CeilingCollapse, SfxBus.World, volume: 0.7f), "ceiling_collapse"),
-                // 1.63초. Glitch Sound 4.
-                (new SfxEntry(SfxId.RescueHoloOpen, SfxBus.World, volume: 0.5f), "rescue_holo_open"),
+                // 1.63초. Glitch Sound 4. 앞 0.12초를 건너뛴다.
+                (new SfxEntry(SfxId.RescueHoloOpen, SfxBus.World, volume: 0.7f, startTime: 0.12f), "rescue_holo_open"),
 
                 // B-168(D-2) 시설 설치·업그레이드.
                 // 0.30초. 사다리·버팀목·조명.
-                (new SfxEntry(SfxId.BuildPlaceSmall, SfxBus.World, volume: 0.65f), "build_place_small"),
+                (new SfxEntry(SfxId.BuildPlaceSmall, SfxBus.World, volume: 0.9f), "build_place_small"),
                 // 1.37초. 그 밖 큰 시설.
-                (new SfxEntry(SfxId.BuildPlaceHeavy, SfxBus.World, volume: 0.6f), "build_place_heavy"),
+                (new SfxEntry(SfxId.BuildPlaceHeavy, SfxBus.World, volume: 1.0f), "build_place_heavy"),
                 // 0.64초. 자원 부족 "띵-딩".
                 (new SfxEntry(SfxId.BuildFailResource, SfxBus.UI, volume: 0.5f), "build_fail_resource"),
                 // 0.42초. 놓을 수 없는 자리 "부-".

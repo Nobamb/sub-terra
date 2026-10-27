@@ -22,13 +22,13 @@ namespace SubTerra.App.Tests.Audio
     {
         private static readonly (SfxId Id, int Number, string File, SfxBus Bus, float Volume)[] Table =
         {
-            (SfxId.GasPulseLoop, 66, "gas_pulse_loop", SfxBus.World, 0.45f),
+            (SfxId.GasPulseLoop, 66, "gas_pulse_loop", SfxBus.World, 0.38f),
             (SfxId.PlayerHurt, 67, "player_hurt", SfxBus.World, 0.6f),
             (SfxId.LowHealthWarning, 68, "low_health_warning", SfxBus.World, 0.5f),
             (SfxId.CeilingCollapse, 69, "ceiling_collapse", SfxBus.World, 0.7f),
-            (SfxId.RescueHoloOpen, 70, "rescue_holo_open", SfxBus.World, 0.5f),
-            (SfxId.BuildPlaceSmall, 71, "build_place_small", SfxBus.World, 0.65f),
-            (SfxId.BuildPlaceHeavy, 72, "build_place_heavy", SfxBus.World, 0.6f),
+            (SfxId.RescueHoloOpen, 70, "rescue_holo_open", SfxBus.World, 0.7f),
+            (SfxId.BuildPlaceSmall, 71, "build_place_small", SfxBus.World, 0.9f),
+            (SfxId.BuildPlaceHeavy, 72, "build_place_heavy", SfxBus.World, 1.0f),
             (SfxId.BuildFailResource, 73, "build_fail_resource", SfxBus.UI, 0.5f),
             (SfxId.BuildFailBlocked, 74, "build_fail_blocked", SfxBus.UI, 0.55f),
             (SfxId.UpgradeLevelUp, 75, "upgrade_levelup", SfxBus.UI, 0.55f),
@@ -104,6 +104,7 @@ namespace SubTerra.App.Tests.Audio
                 Assert.That(asset.Clip.name, Is.EqualTo(row.File), row.Id.ToString());
                 Assert.That(asset.Bus, Is.EqualTo(row.Bus), row.Id.ToString());
                 Assert.That(asset.Volume, Is.EqualTo(actual.Entry.Volume).Within(0.0001f), row.Id.ToString());
+                Assert.That(asset.StartTime, Is.EqualTo(actual.Entry.StartTime).Within(0.0001f), row.Id.ToString());
                 Assert.That(asset.MaxDuration, Is.EqualTo(actual.Entry.MaxDuration).Within(0.0001f), row.Id.ToString());
                 Assert.That(asset.FadeOut, Is.EqualTo(actual.Entry.FadeOut).Within(0.0001f), row.Id.ToString());
 

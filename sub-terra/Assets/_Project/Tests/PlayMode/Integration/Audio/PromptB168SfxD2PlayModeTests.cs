@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using NUnit.Framework;
+using SubTerra.App.Audio;
 using SubTerra.App.Core;
 using SubTerra.App.Core.Data;
 using SubTerra.App.Integration;
@@ -12,7 +13,9 @@ using SubTerra.App.Tests.PlayMode;
 using SubTerra.App.Tutorial;
 using SubTerra.App.UI;
 using SubTerra.App.UI.Building;
+using SubTerra.App.UI.EmergencyRescue;
 using SubTerra.App.UI.HUD;
+using SubTerra.App.UI.MainMenu;
 using SubTerra.App.UI.PlayerStatus;
 using SubTerra.App.UI.SurfaceBase;
 using SubTerra.Gameplay.Building;
@@ -42,12 +45,14 @@ namespace SubTerra.App.Tests.PlayMode.Audio
 
         private UiTestEnvironment environment;
         private readonly List<(SfxId Id, float At)> requested = new List<(SfxId, float)>();
+        private readonly List<AudioSource> rescueSources = new List<AudioSource>();
 
         [UnityTearDown]
         public IEnumerator TearDown()
         {
             SfxRequests.PlayRequested -= OnRequested;
             requested.Clear();
+            rescueSources.Clear();
             ControlPreferences.IsSettingsOpen = false;
             if (environment != null) environment.Dispose();
             environment = null;
@@ -185,6 +190,62 @@ namespace SubTerra.App.Tests.PlayMode.Audio
             Assert.That(Count(SfxId.CeilingCollapse), Is.EqualTo(1));
         }
 
+        [UnityTest]
+        public IEnumerator RescueHologram_CloseStartsVoiceOnce_ChipClickDoesNotReplay()
+        {
+            yield return BootToMineWithMemorySlot();
+            var state = GameBootstrapper.Instance.State;
+            var controller = Object.FindAnyObjectByType<EmergencyRescueRuntimeController>();
+            var view = Object.FindAnyObjectByType<EmergencyRescuePanelView>(FindObjectsInactive.Include);
+            Assert.That(controller, Is.Not.Null);
+            Assert.That(view, Is.Not.Null);
+            Assert.That(SfxPlayer.Instance, Is.Not.Null);
+
+            state.SetCurrentEnergy(0);
+            yield return UiTestWait.Until(() => view.IsStable, "rescue popup stable");
+            yield return UiTestWait.Capture("Temp/b168-1-evidence/popup.png");
+            StartRecording("rescue close button");
+            var started = SfxPlayer.Instance.StartedCount;
+            yield return UiTestWait.Click(environment.Mouse, view.Popup.CloseButton);
+            yield return UiTestWait.Until(() => view.IsChipVisible && !view.IsPopupVisible, "rescue chip after close");
+            AssertRescueVoiceStarted();
+            Assert.That(SfxPlayer.Instance.StartedCount, Is.GreaterThan(started));
+            Assert.That(Count(SfxId.UiPopupClose), Is.EqualTo(1));
+            yield return new WaitForSecondsRealtime(EmergencyRescueTimeline.ChipShowDuration);
+            yield return UiTestWait.Capture("Temp/b168-1-evidence/chip.png");
+
+            StartRecording("rescue chip click");
+            yield return UiTestWait.Click(environment.Mouse, view.Chip.Button);
+            yield return UiTestWait.Until(() => view.IsStable, "rescue reopened by chip");
+            Assert.That(Count(SfxId.RescueHoloOpen), Is.Zero);
+            Assert.That(Count(SfxId.UiClick), Is.EqualTo(1));
+            Assert.That(Count(SfxId.UiPopupOpen), Is.EqualTo(1));
+
+            // 회복하면 기존의 최초 팝업 표시 상태도 초기화된다.
+            state.SetCurrentEnergy(state.Player.MaxEnergy);
+            state.SetCurrentEnergy(0);
+            yield return UiTestWait.Until(() => view.IsStable, "second depletion popup stable");
+            StartRecording("rescue second depletion close button");
+            yield return UiTestWait.Click(environment.Mouse, view.Popup.CloseButton);
+            yield return UiTestWait.Until(() => view.IsChipVisible && !view.IsPopupVisible, "second depletion chip");
+            AssertRescueVoiceStarted();
+
+            // 같은 고갈 중 팝업 없는 분기: 안내를 숨긴 뒤 전력 모델 갱신 이벤트를 보낸다.
+            yield return new WaitForSecondsRealtime(1.8f);
+            view.SetChipVisible(false);
+            StartRecording("rescue without popup, depleted energy model update");
+            state.SetEnergy(0, state.Player.MaxEnergy + 1);
+            Assert.That(view.IsPopupVisible, Is.False);
+            Assert.That(view.IsChipVisible, Is.True);
+            AssertRescueVoiceStarted();
+        }
+
+        private void AssertRescueVoiceStarted()
+        {
+            Assert.That(Count(SfxId.RescueHoloOpen), Is.EqualTo(1), "펼침 요청 한 번");
+            Assert.That(rescueSources.Count, Is.EqualTo(1), "실제 AudioSource 재생 한 번");
+        }
+
         private static PlayerStatusEntry Find(PlayerHeadMessageStack stack, string key)
         {
             var entries = stack.Model.Entries;
@@ -204,6 +265,8 @@ namespace SubTerra.App.Tests.PlayMode.Audio
             yield return UiTestWait.Until(() => SaveRuntimeController.Instance != null
                 && SaveRuntimeController.Instance.InventoryService != null
                 && SceneManager.GetActiveScene().name == SceneNames.MainMenu, "Bootstrap runtime and MainMenu", 20f);
+            // 연속 검사는 앞 Bootstrap을 파괴하지만 AfterSceneLoad 초기화는 Play 진입 때 한 번만 돈다.
+            if (SfxPlayer.Instance == null) new GameObject("B168SfxPlayer").AddComponent<SfxPlayer>();
             var runtime = SaveRuntimeController.Instance;
             var fs = new MemoryFileSystem();
             var paths = new SavePathPolicy(Path.Combine(Path.GetTempPath(), "subterra-b168-memory"));
@@ -254,6 +317,7 @@ namespace SubTerra.App.Tests.PlayMode.Audio
         private void StartRecording(string label)
         {
             requested.Clear();
+            rescueSources.Clear();
             SfxRequests.PlayRequested -= OnRequested;
             SfxRequests.PlayRequested += OnRequested;
             Log("---- " + label + " frame=" + Time.frameCount + " t=" + Time.unscaledTime.ToString("F3"));
@@ -263,6 +327,21 @@ namespace SubTerra.App.Tests.PlayMode.Audio
         {
             requested.Add((id, Time.realtimeSinceStartup));
             Log("request frame=" + Time.frameCount + " t=" + Time.unscaledTime.ToString("F3") + " id=" + id);
+            if (id != SfxId.RescueHoloOpen) return;
+            var player = SfxPlayer.Instance;
+            Assert.That(player, Is.Not.Null);
+            Assert.That(player.Library.TryGetEntry(id, out var entry), Is.True);
+            foreach (var source in player.GetComponents<AudioSource>())
+            {
+                if (source.clip != entry.Clip || !source.isPlaying) continue;
+                rescueSources.Add(source);
+                var expected = entry.Volume * player.Library.GetBusVolume(entry.Bus)
+                    * SettingsRuntimeApplier.EffectiveVolume(AudioChannel.Sfx);
+                Assert.That(source.volume, Is.EqualTo(expected).Within(0.0001f));
+                Assert.That(source.volume * AudioListener.volume, Is.GreaterThan(0f));
+                Log("rescue started=" + player.StartedCount + " sourceVolume=" + source.volume
+                    + " listener=" + AudioListener.volume + " startTime=" + entry.StartTime + " sourceTime=" + source.time);
+            }
         }
 
         private int Count(SfxId id)
