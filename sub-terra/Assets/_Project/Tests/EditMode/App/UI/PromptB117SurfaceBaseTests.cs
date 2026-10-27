@@ -132,8 +132,13 @@ namespace SubTerra.App.Tests.UI
                 Assert.That(title.text, Is.EqualTo(DemoObjectiveCatalog.All[8].Title));
                 view.OnDetailsPrevClicked();
                 Assert.That(title.text, Is.EqualTo(DemoObjectiveCatalog.All[7].Title));
+                var detailsMotion = details.GetComponent<TerminalWindowOpenMotion>();
+                detailsMotion.Advance(1f);
                 view.OnDetailsDismissClicked();
                 Assert.That(panel.IsOpen, Is.False);
+                Assert.That(details.activeInHierarchy, Is.True, "The parent must survive the closing animation.");
+                Assert.That(detailsMotion.IsClosing, Is.True);
+                detailsMotion.Advance(1f);
                 Assert.That(details.activeInHierarchy, Is.False);
                 Assert.That(panel.Open(state), Is.True);
                 Assert.That(panel.TryCloseTopWindow(PopupWindowSorting.Top), Is.True);
