@@ -26,7 +26,7 @@ namespace SubTerra.App.Tests.Audio
             (SfxId.PlayerHurt, 67, "player_hurt", SfxBus.World, 0.6f),
             (SfxId.LowHealthWarning, 68, "low_health_warning", SfxBus.World, 0.5f),
             (SfxId.CeilingCollapse, 69, "ceiling_collapse", SfxBus.World, 0.7f),
-            (SfxId.RescueHoloOpen, 70, "rescue_holo_open", SfxBus.World, 0.7f),
+            (SfxId.RescueHoloOpen, 70, "rescue_holo_open", SfxBus.World, 0.8f),
             (SfxId.BuildPlaceSmall, 71, "build_place_small", SfxBus.World, 0.9f),
             (SfxId.BuildPlaceHeavy, 72, "build_place_heavy", SfxBus.World, 1.0f),
             (SfxId.BuildFailResource, 73, "build_fail_resource", SfxBus.UI, 0.5f),

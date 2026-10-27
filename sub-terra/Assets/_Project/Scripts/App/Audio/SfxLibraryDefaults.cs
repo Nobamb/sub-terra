@@ -192,7 +192,7 @@ namespace SubTerra.App.Audio
                 // 1.40초. Boulder Impact 앞부분.
                 (new SfxEntry(SfxId.CeilingCollapse, SfxBus.World, volume: 0.7f), "ceiling_collapse"),
                 // 1.63초. Glitch Sound 4. 앞 0.12초를 건너뛴다.
-                (new SfxEntry(SfxId.RescueHoloOpen, SfxBus.World, volume: 0.7f, startTime: 0.12f), "rescue_holo_open"),
+                (new SfxEntry(SfxId.RescueHoloOpen, SfxBus.World, volume: 0.8f, startTime: 0.12f), "rescue_holo_open"),
 
                 // B-168(D-2) 시설 설치·업그레이드.
                 // 0.30초. 사다리·버팀목·조명.

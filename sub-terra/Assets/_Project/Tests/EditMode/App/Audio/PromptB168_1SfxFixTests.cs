@@ -11,7 +11,7 @@ namespace SubTerra.App.Tests.Audio
     public sealed class PromptB168_1SfxFixTests
     {
         [TestCase(SfxId.GasPulseLoop, 0.38f, 0f)]
-        [TestCase(SfxId.RescueHoloOpen, 0.7f, 0.12f)]
+        [TestCase(SfxId.RescueHoloOpen, 0.8f, 0.12f)]
         [TestCase(SfxId.BuildPlaceSmall, 0.9f, 0f)]
         [TestCase(SfxId.BuildPlaceHeavy, 1.0f, 0f)]
         public void FixedSlot_DefaultsAndResourcesAssetMatch(SfxId id, float volume, float startTime)
