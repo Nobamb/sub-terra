@@ -130,6 +130,9 @@ namespace SubTerra.App.UI
                 motion = panelRoot.AddComponent<UpgradeWindowMotion>();
             }
 
+            // B-169: 지상 기지와 같은 자물쇠 소리. 이미 붙어 있으면 다시 구독하지 않는다.
+            UpgradeWindowMotionSfx.Attach(motion);
+
             var canvas = panelRoot.GetComponent<Canvas>();
             if (!visible)
             {

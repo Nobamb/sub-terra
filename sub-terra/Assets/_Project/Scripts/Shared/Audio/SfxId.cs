@@ -86,6 +86,10 @@ namespace SubTerra.Shared.Audio
         UnlockClick = 77,
         UnlockGlow = 78,
         WindowTvOpen = 79,
-        WindowTvClose = 80
+        WindowTvClose = 80,
+        UpgradeLockCrack = 81,
+        UpgradeLockShatter = 82,
+        UpgradeWindowSuckIn = 83,
+        UpgradeLockRegather = 84
     }
 }

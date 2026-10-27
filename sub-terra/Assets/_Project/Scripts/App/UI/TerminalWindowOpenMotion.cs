@@ -1,12 +1,19 @@
 using System;
+using SubTerra.App.Audio;
 using SubTerra.App.UI.Outpost;
 using SubTerra.App.UI.RunFailure;
 using SubTerra.Shared;
+using SubTerra.Shared.Audio;
 using UnityEngine;
 
 namespace SubTerra.App.UI
 {
-    /// <summary>중앙 빛점·가로선·세로 펼침을 역순으로도 재생하는 공통 창 연출.</summary>
+    /// <summary>
+    /// 중앙 빛점·가로선·세로 펼침을 역순으로도 재생하는 공통 창 연출.
+    /// B-169: 열기 시작(점이 보이는 프레임)에 WindowTvOpen, 닫기 시작에 WindowTvClose를 여기 한 곳에서 낸다.
+    /// 보이는 창을 열 때·닫을 때만 내므로 이미 열린 창을 다시 열거나(내용 갱신) 숨은 창을 다시 닫아도 무음이다.
+    /// 쓰는 창: 인벤토리·건설창·퀘스트 상세창.
+    /// </summary>
     [DisallowMultipleComponent]
     public sealed class TerminalWindowOpenMotion : MonoBehaviour
     {
@@ -23,9 +30,12 @@ namespace SubTerra.App.UI
         private float originalAlpha, progress;
         private bool originalInteractable;
         private Action closeCompleted;
+        // B-169: 소리 기준의 '보이는 창' 상태. 열기 소리를 낸 뒤 true, 닫기 시작·비활성화에서 false.
+        private bool shown;
 
         public bool IsPlaying { get; private set; }
         public bool IsClosing { get; private set; }
+        public bool IsShown => shown;
 
         public static bool IsClosingWindow(GameObject root)
         {
@@ -47,7 +57,13 @@ namespace SubTerra.App.UI
             var motion = root != null ? root.GetComponent<TerminalWindowOpenMotion>() : null;
             if (motion == null || !motion.enabled || !root.activeInHierarchy || AccessibilityPreferences.ReduceMotion)
             {
-                if (motion != null) motion.Restore();
+                if (motion != null)
+                {
+                    // 모션 감소여도 보이던 창을 닫으면 꺼짐 소리는 낸다.
+                    if (root.activeInHierarchy) motion.PlayCloseSound();
+                    motion.shown = false;
+                    motion.Restore();
+                }
                 completed?.Invoke();
                 return;
             }
@@ -79,11 +95,16 @@ namespace SubTerra.App.UI
                 IsClosing = false;
                 closeCompleted = null;
                 group.interactable = originalInteractable;
+                // 닫던 창을 다시 열면 꺼짐 소리를 끊고 켜짐을 처음부터 낸다.
+                PlayOpenSound();
             }
             else
             {
                 CaptureWindow();
-                if (AccessibilityPreferences.ReduceMotion || !gameObject.activeInHierarchy) return;
+                if (!gameObject.activeInHierarchy) return;
+                // 모션 감소여도 소리는 낸다.
+                PlayOpenSound();
+                if (AccessibilityPreferences.ReduceMotion) return;
                 progress = 0f;
                 EnsureEffects();
                 IsPlaying = true;
@@ -91,9 +112,24 @@ namespace SubTerra.App.UI
             ApplyFrame();
         }
 
+        private void PlayOpenSound()
+        {
+            if (shown) return;
+            shown = true;
+            WindowTvSfx.Play(SfxId.WindowTvOpen);
+        }
+
+        private void PlayCloseSound()
+        {
+            if (!shown) return;
+            shown = false;
+            WindowTvSfx.Play(SfxId.WindowTvClose);
+        }
+
         private void PlayClose(Action completed)
         {
             if (IsClosing) return;
+            PlayCloseSound();
             if (!IsPlaying)
             {
                 CaptureWindow();
@@ -202,6 +238,8 @@ namespace SubTerra.App.UI
 
         private void OnDisable()
         {
+            // 부모가 꺼지거나 씬을 떠나 숨으면 무음으로 정리한다.
+            shown = false;
             if (IsClosing) FinishClose();
             else Restore();
         }

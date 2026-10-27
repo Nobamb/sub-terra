@@ -67,6 +67,7 @@ namespace SubTerra.App.UI.SurfaceBase
         private float closeOpenClock;
         private bool rewinding;
         private Action closeFinished;
+        private bool reducedMotionTransition;
 
         /// <summary>이번 플레이 세션에서 전체(처음) 열기 연출을 이미 보여 줬는지. 게임 가이드와 같은 규칙이다.</summary>
         public static bool IntroPlayed
@@ -98,6 +99,12 @@ namespace SubTerra.App.UI.SurfaceBase
         public event Action OpenCompleted;
         public event Action CloseCompleted;
 
+        /// <summary>
+        /// B-169: 모션 감소로 BeginOpen·BeginClose가 연출 없이 바로 끝날 때만 OpenCompleted·CloseCompleted를 부르는 동안 true.
+        /// CompleteImmediately(설정 창 강제 숨김·Bind·씬 이동)와 연출 끝에서는 false라 소리를 구분할 수 있다.
+        /// </summary>
+        public bool IsReducedMotionTransition => reducedMotionTransition;
+
         /// <summary>확인용: true면 Update가 시간을 진행하지 않고 테스트가 Tick으로 직접 진행한다.</summary>
         public bool ManualTick { get; set; }
 
@@ -118,6 +125,13 @@ namespace SubTerra.App.UI.SurfaceBase
         {
             var motion = t != null ? t.GetComponentInParent<UpgradeWindowMotion>(true) : null;
             return motion != null && motion.IsOpening;
+        }
+
+        /// <summary>B-169: t가 속한 업그레이드 창이 열리거나 닫히는 중인지(노드 해금 연출은 다 열린 뒤 시작한다).</summary>
+        public static bool IsTransitioningFor(Transform t)
+        {
+            var motion = t != null ? t.GetComponentInParent<UpgradeWindowMotion>(true) : null;
+            return motion != null && (motion.IsOpening || motion.IsClosing);
         }
 
         /// <summary>
@@ -141,7 +155,16 @@ namespace SubTerra.App.UI.SurfaceBase
             if (card == null || AccessibilityPreferences.ReduceMotion || !IsLive())
             {
                 state = MotionState.Opening;
-                Settle(true);
+                reducedMotionTransition = card != null && AccessibilityPreferences.ReduceMotion && IsLive();
+                try
+                {
+                    Settle(true);
+                }
+                finally
+                {
+                    reducedMotionTransition = false;
+                }
+
                 return;
             }
 
@@ -205,7 +228,16 @@ namespace SubTerra.App.UI.SurfaceBase
             state = MotionState.Closing;
             if (card == null || AccessibilityPreferences.ReduceMotion || !IsLive())
             {
-                FinishClose();
+                reducedMotionTransition = card != null && AccessibilityPreferences.ReduceMotion && IsLive();
+                try
+                {
+                    FinishClose();
+                }
+                finally
+                {
+                    reducedMotionTransition = false;
+                }
+
                 return true;
             }
 

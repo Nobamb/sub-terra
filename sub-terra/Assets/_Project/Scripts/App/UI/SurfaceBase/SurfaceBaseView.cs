@@ -91,6 +91,8 @@ namespace SubTerra.App.UI.SurfaceBase
             if (upgradeMotion != null || upgradeRoot == null) return upgradeMotion;
             upgradeMotion = upgradeRoot.GetComponent<UpgradeWindowMotion>();
             if (upgradeMotion == null) upgradeMotion = upgradeRoot.AddComponent<UpgradeWindowMotion>();
+            // B-169: 자물쇠 연출 훅에 소리를 한 번만 붙인다(광산 PanelToggleController와 같은 연결).
+            UpgradeWindowMotionSfx.Attach(upgradeMotion);
             return upgradeMotion;
         }
 

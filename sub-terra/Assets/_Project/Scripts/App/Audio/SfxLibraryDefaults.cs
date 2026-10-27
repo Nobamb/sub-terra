@@ -38,7 +38,7 @@ namespace SubTerra.App.Audio
 
         public static bool IsLoopFile(string fileName) => fileName != null && LoopFileNames.Contains(fileName);
 
-        /// <summary>SfxId 순서대로 79칸(None·비워 둔 3번 제외). 파일 이름은 확장자 제외.</summary>
+        /// <summary>SfxId 순서대로 83칸(None·비워 둔 3번 제외). 파일 이름은 확장자 제외.</summary>
         public static IReadOnlyList<(SfxEntry Entry, string FileName)> Create()
         {
             return new List<(SfxEntry, string)>
@@ -218,6 +218,16 @@ namespace SubTerra.App.Audio
                 (new SfxEntry(SfxId.WindowTvOpen, SfxBus.UI, volume: 0.4f), "window_tv_open"),
                 // 0.56초. 평균 음량이 커서 작게 시작.
                 (new SfxEntry(SfxId.WindowTvClose, SfxBus.UI, volume: 0.5f), "window_tv_close"),
+
+                // B-169 업그레이드 창 자물쇠(#252). 길이는 파일 그대로 자르지 않는다.
+                // 0.60초. 처음 열기의 금 가는 소리. 딸깍 밑에 작게 깐다.
+                (new SfxEntry(SfxId.UpgradeLockCrack, SfxBus.UI, volume: 0.25f), "upgrade_lock_crack"),
+                // 0.78초. 부서짐.
+                (new SfxEntry(SfxId.UpgradeLockShatter, SfxBus.UI, volume: 0.55f), "upgrade_lock_shatter"),
+                // 0.38초. 닫을 때 빨려 들어감(끝으로 갈수록 커짐).
+                (new SfxEntry(SfxId.UpgradeWindowSuckIn, SfxBus.UI, volume: 0.35f), "upgrade_window_suck_in"),
+                // 0.25초. 조각 모임(끝에 "착").
+                (new SfxEntry(SfxId.UpgradeLockRegather, SfxBus.UI, volume: 0.5f), "upgrade_lock_regather"),
             };
         }
     }

@@ -5,6 +5,7 @@ using System.Text;
 using SubTerra.App.Audio;
 using SubTerra.App.Core.Data;
 using SubTerra.App.Progression;
+using SubTerra.App.UI.SurfaceBase;
 using SubTerra.Shared;
 using SubTerra.Shared.Audio;
 using TMPro;
@@ -22,7 +23,8 @@ namespace SubTerra.App.UI.Progression
     public sealed class UpgradeTreeView : MonoBehaviour
     {
         private const float UnlockFlowDuration = 0.22f;
-        private const float UnlockStagger = 0.08f;
+        // B-169: 여러 노드가 한꺼번에 풀리면 이 간격으로 이어서 연다.
+        public const float UnlockStagger = 0.12f;
         private const float ShortageFlashDuration = 0.35f;
 
         [SerializeField] private RectTransform viewport;
@@ -68,6 +70,18 @@ namespace SubTerra.App.UI.Progression
         private DeepZoneThumbnailStrip deepZoneStrip;
         private Func<bool> deepZoneRevealBlocked;
 
+        private struct ScheduledUnlock
+        {
+            public string UpgradeId;
+            public float StartAt;
+            public bool Audible;
+        }
+
+        private readonly UpgradeUnlockRevealTracker unlockTracker = new UpgradeUnlockRevealTracker();
+        private readonly List<ScheduledUnlock> unlockSchedule = new List<ScheduledUnlock>();
+        private readonly List<string> pendingBuffer = new List<string>();
+        private readonly SfxRepeatGate unlockCueGate = new SfxRepeatGate(UnlockRevealTimeline.SameCueSeconds);
+
         private const float ZoomSharpness = 14f;
 
         public string SelectedId => selectedId;
@@ -78,6 +92,11 @@ namespace SubTerra.App.UI.Progression
         public IReadOnlyList<UpgradeTreeNodeView> Nodes => nodes;
         public IReadOnlyList<UpgradeTreeConnector> Connectors => connectors;
         public bool PurchaseButtonVisible => purchaseButton != null && purchaseButton.gameObject.activeSelf;
+        public UpgradeUnlockRevealTracker UnlockTracker => unlockTracker;
+        public int ScheduledUnlockCount => unlockSchedule.Count;
+
+        /// <summary>확인용: true면 LateUpdate가 해금 순서를 진행하지 않고 테스트가 TickUnlockReveal로 직접 진행한다.</summary>
+        public bool ManualTick { get; set; }
 
         private void OnEnable()
         {
@@ -110,10 +129,25 @@ namespace SubTerra.App.UI.Progression
             }
 
             StopFlash();
+            // 아직 시작 안 한 해금은 대기로 남겨 다음에 열 때 재생한다.
+            unlockSchedule.Clear();
         }
 
         private void LateUpdate()
         {
+            if (!ManualTick)
+            {
+                try
+                {
+                    TickUnlockReveal(Time.unscaledTime);
+                }
+                catch (Exception exception)
+                {
+                    unlockSchedule.Clear();
+                    Debug.LogException(exception);
+                }
+            }
+
             FitContent();
             if (!Mathf.Approximately(zoom, zoomTarget) || pan != panTarget)
             {
@@ -252,6 +286,8 @@ namespace SubTerra.App.UI.Progression
                 {
                     if (snapshots[s].UpgradeId == node.UpgradeId)
                     {
+                        // B-169: 그린 뒤 잠김 → 풀림이 된 노드는 해금 연출까지 블라인드·자물쇠를 유지한다.
+                        node.SetRevealPending(unlockTracker.Observe(node.UpgradeId, snapshots[s].IsUnlocked));
                         node.Apply(snapshots[s]);
                         found = true;
                         break;
@@ -715,24 +751,8 @@ namespace SubTerra.App.UI.Progression
                     node.PlayLevelUp();
                 }
 
-                var unlocked = result.NewlyUnlockedUpgradeIds;
-                for (var i = 0; i < unlocked.Count; i++)
-                {
-                    var target = FindNode(unlocked[i]);
-                    if (target == null)
-                    {
-                        continue;
-                    }
-
-                    var connector = FindConnectorToChild(unlocked[i]);
-                    if (connector != null)
-                    {
-                        connector.PlayFlow(UnlockFlowDuration);
-                    }
-
-                    target.PlayUnlock(UnlockFlowDuration + UnlockStagger * i);
-                }
-
+                // 새로 풀린 노드는 Render가 해금 대기로 잡아 두고 TickUnlockReveal이 이어서 재생한다.
+                // 두 번 재생하지 않도록 여기서는 부르지 않는다.
                 return;
             }
 
@@ -755,6 +775,105 @@ namespace SubTerra.App.UI.Progression
         }
 
         public const string UpgradePurchaseFailureKey = "upgrade.purchase";
+
+        // ---------- B-169 노드 해금 순서 ----------
+
+        /// <summary>창이 보이고 업그레이드 창 열기·닫기 연출 중이 아닐 때만 해금 연출을 시작한다.</summary>
+        public bool CanStartUnlockReveal => isActiveAndEnabled && !UpgradeWindowMotion.IsTransitioningFor(transform);
+
+        /// <summary>
+        /// 해금 대기 노드를 커넥터 흐름 뒤 0.12초 간격으로 이어서 연다. 소리는 처음 3개 노드만, 같은 소리는 0.1초 안에 한 번.
+        /// 창이 닫히거나 열기·닫기 연출이 시작되면 아직 시작 안 한 노드는 대기로 남는다.
+        /// </summary>
+        public void TickUnlockReveal(float now)
+        {
+            if (!CanStartUnlockReveal)
+            {
+                unlockSchedule.Clear();
+                return;
+            }
+
+            if (unlockSchedule.Count == 0)
+            {
+                if (!unlockTracker.HasPending)
+                {
+                    return;
+                }
+
+                ScheduleUnlocks(now);
+            }
+
+            for (var i = 0; i < unlockSchedule.Count; i++)
+            {
+                var entry = unlockSchedule[i];
+                if (now < entry.StartAt)
+                {
+                    continue;
+                }
+
+                unlockSchedule.RemoveAt(i);
+                i--;
+                unlockTracker.MarkStarted(entry.UpgradeId);
+                var node = FindNode(entry.UpgradeId);
+                if (node != null)
+                {
+                    node.BeginUnlock(entry.Audible ? CueSink(entry.StartAt) : null);
+                }
+            }
+        }
+
+        private void ScheduleUnlocks(float now)
+        {
+            pendingBuffer.Clear();
+            pendingBuffer.AddRange(unlockTracker.Pending);
+            var order = 0;
+            for (var i = 0; i < pendingBuffer.Count; i++)
+            {
+                var id = pendingBuffer[i];
+                var node = FindNode(id);
+                if (node == null || !node.isActiveAndEnabled)
+                {
+                    // 그릴 노드가 없으면 대기를 지운다.
+                    unlockTracker.MarkStarted(id);
+                    continue;
+                }
+
+                var connector = FindConnectorToChild(id);
+                if (connector != null)
+                {
+                    connector.PlayFlow(UnlockFlowDuration);
+                }
+
+                unlockSchedule.Add(new ScheduledUnlock
+                {
+                    UpgradeId = id,
+                    StartAt = now + UnlockFlowDuration + UnlockStagger * order,
+                    Audible = order < UnlockRevealTimeline.MaxAudibleNodes
+                });
+                order++;
+            }
+        }
+
+        // 같은 소리 0.1초 제한은 프레임 시각이 아니라 예정된 시간표 시각으로 판정한다.
+        // 프레임 경계 때문에 0.12초 간격 노드가 0.1초 안으로 붙어 소리가 빠지지 않게 한다.
+        private Action<SfxId> CueSink(float startAt)
+        {
+            return id => unlockCueGate.TryPlay(id, startAt + UnlockRevealTimeline.CueTime(id) * UpgradeTreeNodeView.UnlockDuration);
+        }
+
+        /// <summary>불러오기·다시 묶은 직후. 다음 그리기를 첫 그리기로 보고 연출 없이 그린다.</summary>
+        public void ResetUnlockReveal()
+        {
+            unlockTracker.Reset();
+            unlockSchedule.Clear();
+            for (var i = 0; i < nodes.Length; i++)
+            {
+                if (nodes[i] != null)
+                {
+                    nodes[i].SetRevealPending(false);
+                }
+            }
+        }
 
         public static SfxId ResolvePurchaseFailureSfx(ProgressionPurchaseStatus status)
         {

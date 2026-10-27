@@ -82,7 +82,7 @@ namespace SubTerra.App.Tests.Audio
                 defaults.Add(pair.Entry.Id, (pair.Entry, pair.FileName));
             }
 
-            Assert.That(defaults.Count, Is.EqualTo(79));
+            Assert.That(defaults.Count, Is.EqualTo(83));
             Assert.That(defaults.ContainsKey((SfxId)3), Is.False, "3번은 비워 둔다");
             Assert.That((int)SfxId.CargoHeavyWarning, Is.EqualTo(65));
 
@@ -118,11 +118,14 @@ namespace SubTerra.App.Tests.Audio
             Assert.That(defaults[SfxId.UnlockRattle].Entry.FadeOut, Is.EqualTo(0.1f));
             Assert.That(SfxLibraryDefaults.IsLoopFile("gas_pulse_loop"), Is.False, "반복 파일이 아니다");
 
+            // 잠금 연출 소리는 B-169에서 81~84번 칸으로만 들어온다.
             foreach (var pair in SfxLibraryDefaults.Create())
             {
                 var file = pair.FileName;
-                Assert.That(file.StartsWith("upgrade_lock"), Is.False, "잠금 연출은 B-169");
-                Assert.That(file, Is.Not.EqualTo("upgrade_window_suck_in"), "잠금 연출은 B-169");
+                if (file.StartsWith("upgrade_lock") || file == "upgrade_window_suck_in")
+                {
+                    Assert.That((int)pair.Entry.Id, Is.InRange(81, 84), file);
+                }
             }
         }
 
