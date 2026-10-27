@@ -5,6 +5,7 @@ using SubTerra.App.Core;
 using SubTerra.App.Save;
 using SubTerra.App.Tutorial;
 using SubTerra.App.UI.MainMenu;
+using SubTerra.App.UI.Inventory;
 using SubTerra.Shared.Audio;
 using SubTerra.Shared.Localization;
 using TMPro;
@@ -32,12 +33,26 @@ namespace SubTerra.App.UI.SurfaceBase
         [SerializeField] private Button upgradeButton;
         [SerializeField] private Button upgradeCloseButton;
         [SerializeField] private GameObject upgradeRoot;
+        [SerializeField] private RectTransform upgradeCard;
+        [SerializeField] private Button inventoryButton;
+        [SerializeField] private GameObject inventoryRoot;
+        [SerializeField] private InventoryPanelView inventoryPanel;
+        private bool upgradeVisible;
+        private bool inventoryVisible;
 
-        public bool IsUpgradeVisible => upgradeRoot != null && upgradeRoot.activeSelf;
+        public bool IsUpgradeVisible => upgradeVisible && upgradeRoot != null && upgradeRoot.activeSelf;
+        public bool IsInventoryVisible => inventoryVisible && inventoryRoot != null && inventoryRoot.activeSelf;
+        public bool IsSecondaryClosing => (upgradeRoot != null && upgradeRoot.activeSelf && !upgradeVisible)
+            || (inventoryRoot != null && inventoryRoot.activeSelf && !inventoryVisible);
+        public InventoryPanelView InventoryPanel => inventoryPanel;
+        public bool ContainsInventoryWindow(Canvas canvas) => inventoryRoot != null && PopupWindowSorting.Contains(canvas, inventoryRoot);
+        public bool ContainsUpgradeWindow(Canvas canvas) => upgradeRoot != null && PopupWindowSorting.Contains(canvas, upgradeRoot);
         public bool IsTopUpgradeWindow(Canvas canvas) =>
             IsUpgradeVisible && PopupWindowSorting.Contains(canvas, upgradeRoot);
         public event Action UpgradeClicked;
         public event Action UpgradeCloseClicked;
+        public event Action InventoryClicked;
+        public event Action InventoryCloseClicked;
 
         public void SetResources(float cargo, int gold)
         {
@@ -48,11 +63,17 @@ namespace SubTerra.App.UI.SurfaceBase
         public void SetUpgradeVisible(bool visible)
         {
             if (upgradeRoot == null) return;
+            if (upgradeCard == null)
+            {
+                var drag = upgradeRoot.GetComponentInChildren<PopupWindowDrag>(true);
+                upgradeCard = drag != null ? (RectTransform)drag.transform : (RectTransform)upgradeRoot.transform;
+            }
+            bool wasVisible = IsUpgradeVisible;
+            upgradeVisible = visible;
             var dimmer = upgradeRoot.GetComponent<Canvas>();
             if (!visible)
             {
-                PopupWindowSorting.Remove(dimmer);
-                upgradeRoot.SetActive(false);
+                TerminalWindowOpenMotion.Close(upgradeCard.gameObject, HideUpgradeImmediately);
                 return;
             }
 
@@ -70,6 +91,41 @@ namespace SubTerra.App.UI.SurfaceBase
             {
                 PopupWindowSorting.BringToFront(dimmer);
             }
+            if (!wasVisible) TerminalWindowOpenMotion.Open(upgradeCard.gameObject);
+        }
+
+        private void HideUpgradeImmediately()
+        {
+            if (upgradeRoot == null) return;
+            PopupWindowSorting.Remove(upgradeRoot.GetComponent<Canvas>());
+            if (upgradeCard != null) PopupWindowSorting.Remove(upgradeCard.GetComponent<Canvas>());
+            upgradeRoot.SetActive(false);
+        }
+
+        public void SetInventoryVisible(bool visible)
+        {
+            if (inventoryRoot == null || inventoryPanel == null) return;
+            bool wasVisible = IsInventoryVisible;
+            inventoryVisible = visible;
+            if (!visible)
+            {
+                TerminalWindowOpenMotion.Close(inventoryPanel.gameObject, HideInventoryImmediately);
+                return;
+            }
+            inventoryRoot.SetActive(true);
+            inventoryRoot.transform.SetAsLastSibling();
+            inventoryPanel.SetVisible(true);
+            PopupWindowSorting.BringToFront(inventoryRoot.GetComponent<Canvas>());
+            PopupWindowSorting.BringToFront(inventoryPanel.GetComponent<Canvas>());
+            if (!wasVisible) TerminalWindowOpenMotion.Open(inventoryPanel.gameObject);
+        }
+
+        private void HideInventoryImmediately()
+        {
+            if (inventoryRoot == null) return;
+            PopupWindowSorting.Remove(inventoryRoot.GetComponent<Canvas>());
+            if (inventoryPanel != null) PopupWindowSorting.Remove(inventoryPanel.GetComponent<Canvas>());
+            inventoryRoot.SetActive(false);
         }
 
         [Header("Mine reset")]
@@ -147,6 +203,9 @@ namespace SubTerra.App.UI.SurfaceBase
             SetButtonLabel(settingsButton, "설정(esc)");
             if (upgradeButton != null) upgradeButton.onClick.AddListener(OnUpgrade);
             if (upgradeCloseButton != null) upgradeCloseButton.onClick.AddListener(OnUpgradeClose);
+            if (inventoryButton != null) inventoryButton.onClick.AddListener(OnInventory);
+            if (inventoryPanel != null && inventoryPanel.CloseButton != null)
+                inventoryPanel.CloseButton.onClick.AddListener(OnInventoryClose);
             exploreButton?.onClick.AddListener(OnExplore);
             settingsButton?.onClick.AddListener(OnSettings);
             quitButton?.onClick.AddListener(OnQuit);
@@ -207,6 +266,9 @@ namespace SubTerra.App.UI.SurfaceBase
         {
             if (upgradeButton != null) upgradeButton.onClick.RemoveListener(OnUpgrade);
             if (upgradeCloseButton != null) upgradeCloseButton.onClick.RemoveListener(OnUpgradeClose);
+            if (inventoryButton != null) inventoryButton.onClick.RemoveListener(OnInventory);
+            if (inventoryPanel != null && inventoryPanel.CloseButton != null)
+                inventoryPanel.CloseButton.onClick.RemoveListener(OnInventoryClose);
             exploreButton?.onClick.RemoveListener(OnExplore);
             settingsButton?.onClick.RemoveListener(OnSettings);
             quitButton?.onClick.RemoveListener(OnQuit);
@@ -934,6 +996,8 @@ namespace SubTerra.App.UI.SurfaceBase
         private void OnExplore() => ExploreClicked?.Invoke();
         private void OnUpgrade() => UpgradeClicked?.Invoke();
         private void OnUpgradeClose() => UpgradeCloseClicked?.Invoke();
+        private void OnInventory() => InventoryClicked?.Invoke();
+        private void OnInventoryClose() => InventoryCloseClicked?.Invoke();
         private void OnSettings() => SettingsClicked?.Invoke();
         private void OnQuit() => QuitClicked?.Invoke();
         private void OnSettingsApply() => SettingsApplyClicked?.Invoke();
