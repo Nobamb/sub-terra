@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using SubTerra.App.Audio;
 using SubTerra.App.Core.Data;
 using SubTerra.App.Economy;
 using SubTerra.App.UI;
@@ -7,9 +8,11 @@ using SubTerra.App.UI.Building;
 using SubTerra.App.UI.FacilityNameTag;
 using SubTerra.App.UI.GameplayCursor;
 using SubTerra.App.UI.HUD;
+using SubTerra.App.UI.PlayerStatus;
 using SubTerra.Gameplay.Building;
 using SubTerra.Gameplay.Player;
 using SubTerra.Shared;
+using SubTerra.Shared.Audio;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
@@ -456,6 +459,8 @@ namespace SubTerra.App.Integration
 
         private void OnBuildingPlaced(BuildingPlacementResult result)
         {
+            // B-168: 작은 시설은 "철컥", 큰 시설은 "쿵-철컹".
+            SfxPlayer.Play(BuildingPlacementSfx.ResolvePlaced(result.BuildingId));
             Publish(new BuildingPlacementResultDto
             {
                 state = BuildingPlacementState.Placed,
@@ -469,6 +474,8 @@ namespace SubTerra.App.Integration
 
         private void OnBuildingMoved(BuildingPlacementResult result)
         {
+            // B-168: 옮겨 놓아도 설치와 같은 규칙으로 낸다.
+            SfxPlayer.Play(BuildingPlacementSfx.ResolvePlaced(result.BuildingId));
             ClearRuntimeSelection();
             MoveStatusChanged?.Invoke("시설을 옮겼습니다. 위치와 설치 영역이 다음 저장에 반영됩니다.");
         }
@@ -492,7 +499,16 @@ namespace SubTerra.App.Integration
         {
             if (placementSystem != null && placementSystem.IsMoving)
             {
-                MoveStatusChanged?.Invoke(MoveFailureMessage(result.Failure));
+                var moveMessage = MoveFailureMessage(result.Failure);
+                MoveStatusChanged?.Invoke(moveMessage);
+                // B-168: 클릭으로 확정하려다 실패한 경우만 경고와 "부-". 마우스를 올려 둘 때의 문구는 무음이다.
+                var warnings = PlayerStatusWarnings.Current;
+                if (warnings != null)
+                {
+                    warnings.ShowWarning("building.move-failed", moveMessage);
+                }
+
+                FailureFeedback.Play(SfxId.BuildFailBlocked, BuildingPlacementSfx.MoveFailureKey);
                 return;
             }
             Publish(new BuildingPlacementResultDto

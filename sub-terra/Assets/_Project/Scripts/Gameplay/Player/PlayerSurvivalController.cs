@@ -260,7 +260,14 @@ namespace SubTerra.Gameplay.Player
                 return false;
             }
 
-            StartDamageFeedback(healthBeforeDamage - State.Health);
+            var appliedDamage = healthBeforeDamage - State.Health;
+            StartDamageFeedback(appliedDamage);
+            var hurtSfx = ResolveHurtSfx(cause, appliedDamage, becameIncapacitated);
+            if (hurtSfx != SfxId.None)
+            {
+                SfxRequests.Play(hurtSfx);
+            }
+
             PublishStateChanged();
             if (becameIncapacitated)
             {
@@ -276,6 +283,22 @@ namespace SubTerra.Gameplay.Player
             }
 
             return true;
+        }
+
+        /// <summary>
+        /// B-168: 무너진 돌·가스의 실제 피해만 피격음. 낙하는 착지 LandHeavy가 맡고,
+        /// 체력이 0이 되는 마지막 한 방과 전력 고갈은 실패 창 소리에 양보해 무음이다.
+        /// </summary>
+        public static SfxId ResolveHurtSfx(RunFailureCause cause, float appliedDamage, bool becameIncapacitated)
+        {
+            if (appliedDamage <= 0f || becameIncapacitated)
+            {
+                return SfxId.None;
+            }
+
+            return cause == RunFailureCause.StructuralCollapse || cause == RunFailureCause.GasExposure
+                ? SfxId.PlayerHurt
+                : SfxId.None;
         }
 
         public static float ResolveDamageShakeAmplitude(float damage, int maximumHealth)

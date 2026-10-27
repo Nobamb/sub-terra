@@ -1,4 +1,6 @@
+using SubTerra.App.Audio;
 using SubTerra.App.Tutorial;
+using SubTerra.Shared.Audio;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -135,6 +137,8 @@ namespace SubTerra.App.UI.EmergencyRescue
 
             ResetState();
             shown = true;
+            // B-168: 이미 보이는 중이면 위에서 돌아가므로 펼쳐질 때 한 번만 난다.
+            SfxPlayer.Play(SfxId.RescueHoloOpen);
             if (!gameObject.activeSelf)
             {
                 gameObject.SetActive(true);

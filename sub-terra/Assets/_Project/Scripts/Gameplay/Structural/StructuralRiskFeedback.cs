@@ -1,6 +1,7 @@
 using System;
 using SubTerra.Gameplay.Player;
 using SubTerra.Shared;
+using SubTerra.Shared.Audio;
 using UnityEngine;
 
 namespace SubTerra.Gameplay.Structural
@@ -57,6 +58,12 @@ namespace SubTerra.Gameplay.Structural
 
         private void OnCollapseTriggered(StructuralCollapseEventDto collapse)
         {
+            // B-168: 돌이 바닥에 닿는 순간(CollapseFallSeconds 뒤) 이벤트당 한 번. 위험 경보와 별개다.
+            if (ShouldPlayCollapseSfx(collapse))
+            {
+                SfxRequests.Play(SfxId.CeilingCollapse);
+            }
+
             if (explorationBgmSource != null && explorationBgmSource.isPlaying)
             {
                 explorationBgmSource.Pause();
@@ -75,6 +82,11 @@ namespace SubTerra.Gameplay.Structural
             // 실제 붕괴는 위험 단계 상승보다 강한 흔들림을 준다.
             CameraShakeRequested?.Invoke(StructuralRiskLevel.CollapseImminent);
             ApplyCameraShake(0.38f, 0.4f);
+        }
+
+        public static bool ShouldPlayCollapseSfx(StructuralCollapseEventDto collapse)
+        {
+            return collapse != null && collapse.cells != null && collapse.cells.Count > 0;
         }
 
         public enum RiskSound

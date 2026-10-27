@@ -2,9 +2,11 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
+using SubTerra.App.Audio;
 using SubTerra.App.Core.Data;
 using SubTerra.App.Progression;
 using SubTerra.Shared;
+using SubTerra.Shared.Audio;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -706,6 +708,8 @@ namespace SubTerra.App.UI.Progression
             var node = FindNode(result.UpgradeId);
             if (result.IsSuccess)
             {
+                // B-168: 레벨업 한 번. 새로 풀린 노드 소리는 B-169.
+                SfxPlayer.Play(SfxId.UpgradeLevelUp);
                 if (node != null)
                 {
                     node.PlayLevelUp();
@@ -740,10 +744,28 @@ namespace SubTerra.App.UI.Progression
                     node.PlayShake();
                 }
 
+                // B-168: 노드 흔들림과 같은 프레임. 자원 부족은 시설 설치와 같은 "띵-딩", 잠김은 "부-".
+                FailureFeedback.Play(ResolvePurchaseFailureSfx(result.Status), UpgradePurchaseFailureKey);
+
                 if (result.Status == ProgressionPurchaseStatus.InsufficientResources)
                 {
                     FlashShortage();
                 }
+            }
+        }
+
+        public const string UpgradePurchaseFailureKey = "upgrade.purchase";
+
+        public static SfxId ResolvePurchaseFailureSfx(ProgressionPurchaseStatus status)
+        {
+            switch (status)
+            {
+                case ProgressionPurchaseStatus.InsufficientResources:
+                    return SfxId.BuildFailResource;
+                case ProgressionPurchaseStatus.Locked:
+                    return SfxId.BuildFailBlocked;
+                default:
+                    return SfxId.None;
             }
         }
 

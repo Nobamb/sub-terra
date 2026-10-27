@@ -525,6 +525,126 @@ MonoBehaviour:
     startTime: 0
     maxDuration: 0
     fadeOut: 0
+  - id: 66
+    clip: {fileID: 8300000, guid: 76c51543941a36043a6f8d4b501c1748, type: 3}
+    bus: 1
+    volume: 0.45
+    pitch: 1
+    startTime: 0
+    maxDuration: 0
+    fadeOut: 0
+  - id: 67
+    clip: {fileID: 8300000, guid: e8c7c0ff383410b4bb6dec207050528c, type: 3}
+    bus: 1
+    volume: 0.6
+    pitch: 1
+    startTime: 0
+    maxDuration: 0
+    fadeOut: 0
+  - id: 68
+    clip: {fileID: 8300000, guid: 69eb1c2b5a37692438dea6a21185431f, type: 3}
+    bus: 1
+    volume: 0.5
+    pitch: 1
+    startTime: 0
+    maxDuration: 0
+    fadeOut: 0
+  - id: 69
+    clip: {fileID: 8300000, guid: 42c2b4d484c6c2e4ca97ec3fd9add4c7, type: 3}
+    bus: 1
+    volume: 0.7
+    pitch: 1
+    startTime: 0
+    maxDuration: 0
+    fadeOut: 0
+  - id: 70
+    clip: {fileID: 8300000, guid: 634e400a3e8ff674cbc2e88e9e7f456c, type: 3}
+    bus: 1
+    volume: 0.5
+    pitch: 1
+    startTime: 0
+    maxDuration: 0
+    fadeOut: 0
+  - id: 71
+    clip: {fileID: 8300000, guid: 12129e73bd999604b9905558af0b8718, type: 3}
+    bus: 1
+    volume: 0.65
+    pitch: 1
+    startTime: 0
+    maxDuration: 0
+    fadeOut: 0
+  - id: 72
+    clip: {fileID: 8300000, guid: 31581cccfb88a074f84d985c96aa3b2b, type: 3}
+    bus: 1
+    volume: 0.6
+    pitch: 1
+    startTime: 0
+    maxDuration: 0
+    fadeOut: 0
+  - id: 73
+    clip: {fileID: 8300000, guid: 10436c69517ea484cb5250c2695a2398, type: 3}
+    bus: 0
+    volume: 0.5
+    pitch: 1
+    startTime: 0
+    maxDuration: 0
+    fadeOut: 0
+  - id: 74
+    clip: {fileID: 8300000, guid: 9a563f80b928f62489973ae85b2e250f, type: 3}
+    bus: 0
+    volume: 0.55
+    pitch: 1
+    startTime: 0
+    maxDuration: 0
+    fadeOut: 0
+  - id: 75
+    clip: {fileID: 8300000, guid: 1f1956e4dcf30b540aec4451e4380dfd, type: 3}
+    bus: 0
+    volume: 0.55
+    pitch: 1
+    startTime: 0
+    maxDuration: 0
+    fadeOut: 0
+  - id: 76
+    clip: {fileID: 8300000, guid: 320e6edde907de0409ee137ee6b89ec8, type: 3}
+    bus: 0
+    volume: 0.5
+    pitch: 1
+    startTime: 0
+    maxDuration: 0.3
+    fadeOut: 0.1
+  - id: 77
+    clip: {fileID: 8300000, guid: a3a97fc07f3f2b34790d1405cb114322, type: 3}
+    bus: 0
+    volume: 0.7
+    pitch: 1
+    startTime: 0
+    maxDuration: 0
+    fadeOut: 0
+  - id: 78
+    clip: {fileID: 8300000, guid: 857d44cb82947e3468ec19a71e229634, type: 3}
+    bus: 0
+    volume: 0.45
+    pitch: 1
+    startTime: 0
+    maxDuration: 0
+    fadeOut: 0
+  - id: 79
+    clip: {fileID: 8300000, guid: cf2a1f7d82180574a8573a9574c88b25, type: 3}
+    bus: 0
+    volume: 0.4
+    pitch: 1
+    startTime: 0
+    maxDuration: 0
+    fadeOut: 0
+  - id: 80
+    clip: {fileID: 8300000, guid: 46e020819123d684ab7536e41837cecf, type: 3}
+    bus: 0
+    volume: 0.5
+    pitch: 1
+    startTime: 0
+    maxDuration: 0
+    fadeOut: 0
   uiBusVolume: 1
   worldBusVolume: 1
   alertBusVolume: 1

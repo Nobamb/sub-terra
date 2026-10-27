@@ -855,7 +855,7 @@ namespace SubTerra.App.Integration
         }
 
         /// <summary>
-        /// B-164: 드릴·엘리베이터 승강 반복 소리와 블록 파괴·자원 획득음을 연결한다.
+        /// B-164: 드릴·엘리베이터 승강 반복 소리와 블록 파괴·자원 획득음을 연결한다. B-168: 가스 맥박·체력 경고.
         /// 반복 소리는 씬 오브젝트(플레이어·엘리베이터)에 붙여 씬과 함께 사라진다.
         /// </summary>
         private void BindWorldSfx()
@@ -889,6 +889,23 @@ namespace SubTerra.App.Integration
                     () => elevator != null && elevator.State == ElevatorTravelState.Moving,
                     failureHandling,
                     playerCanAct);
+            }
+
+            // B-168: 가스 맥박은 초록 비네팅 위상을 따라가고, 엘리베이터 탑승 중에는 멈춘다.
+            GasPulseAudio.Attach(
+                Resolve<GasPoisonOverlayView>(null, FindObjectsInactive.Include),
+                failureHandling,
+                playerCanAct,
+                () => elevator != null && elevator.IsRiding);
+
+            var survivalController = runFailureController != null ? runFailureController.SurvivalController : null;
+            if (survivalController != null)
+            {
+                // B-168: 체력 30% 경고. 기다리는 동안 실패 처리·행동불능이 되면 취소한다.
+                LowHealthWarningAudio.Attach(
+                    survivalController.gameObject,
+                    survivalController,
+                    () => failureHandling() || !playerCanAct());
             }
 
             if (mining != null && !tileMinedSfxBound)

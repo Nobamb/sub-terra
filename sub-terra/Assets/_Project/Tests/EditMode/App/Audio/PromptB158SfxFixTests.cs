@@ -345,7 +345,9 @@ namespace SubTerra.App.Tests.Audio
             var path = Path.Combine(Application.dataPath, "_Project/Scripts/Gameplay/Structural/StructuralRiskFeedback.cs");
             var source = File.ReadAllText(path);
             Assert.That(source, Does.Not.Contain("SfxRequests.PlayAlarm"));
-            Assert.That(source, Does.Not.Contain("SfxRequests.Play("));
+            // B-168: 천장 붕괴음만 여기서 낸다. 위험 경보는 계속 GameplayHazardStatusBridge 몫이다.
+            Assert.That(source.Replace("SfxRequests.Play(SfxId.CeilingCollapse)", string.Empty),
+                Does.Not.Contain("SfxRequests.Play("));
         }
     }
 }
