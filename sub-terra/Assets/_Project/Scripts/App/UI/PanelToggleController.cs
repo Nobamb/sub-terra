@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using SubTerra.App.UI.Building;
 using SubTerra.App.UI.Progression;
+using SubTerra.App.UI.SurfaceBase;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -46,7 +47,7 @@ namespace SubTerra.App.UI
                 }
 
                 panelRoots.Add(panel.PanelId, panel.PanelRoot);
-                SetVisible(panel.PanelId, panel.VisibleOnStart);
+                SetVisible(panel.PanelId, panel.VisibleOnStart, false);
             }
         }
 
@@ -89,6 +90,11 @@ namespace SubTerra.App.UI
 
         public void SetVisible(RuntimePanelId panelId, bool visible)
         {
+            SetVisible(panelId, visible, true);
+        }
+
+        private void SetVisible(RuntimePanelId panelId, bool visible, bool animate)
+        {
             if (!panelRoots.TryGetValue(panelId, out var panelRoot) || panelRoot == null)
             {
                 return;
@@ -100,18 +106,64 @@ namespace SubTerra.App.UI
             }
 
             state.SetVisible(panelId, visible);
-            panelRoot.SetActive(visible);
-
-            // 업그레이드 창은 열릴 때 맨 앞 + 높은 sortingOrder로 올려 다른 HUD에 묻히지 않게 한다.
-            if (visible && panelId == RuntimePanelId.Upgrade)
+            if (panelId == RuntimePanelId.Upgrade)
             {
-                panelRoot.transform.SetAsLastSibling();
-                var progressionView = panelRoot.GetComponent<ProgressionPanelView>()
-                    ?? panelRoot.GetComponentInChildren<ProgressionPanelView>(true);
-                progressionView?.BringToFront();
+                SetUpgradeVisible(panelRoot, visible, animate);
+            }
+            else
+            {
+                panelRoot.SetActive(visible);
             }
 
             VisibilityChanged?.Invoke(panelId, visible);
+        }
+
+        /// <summary>
+        /// B-167: 지상 기지와 같은 자물쇠 연출로 열고 닫는다. 닫기 요청 즉시 IsVisible은 false가 되고,
+        /// 창 루트는 닫기 연출이 끝난 뒤 꺼진다. 닫는 중 다시 열면 지금 모양에서 이어서 연다.
+        /// </summary>
+        private static void SetUpgradeVisible(GameObject panelRoot, bool visible, bool animate)
+        {
+            var motion = panelRoot.GetComponent<UpgradeWindowMotion>();
+            if (motion == null)
+            {
+                motion = panelRoot.AddComponent<UpgradeWindowMotion>();
+            }
+
+            var canvas = panelRoot.GetComponent<Canvas>();
+            if (!visible)
+            {
+                if (!animate || !panelRoot.activeSelf)
+                {
+                    motion.CompleteImmediately(false);
+                    panelRoot.SetActive(false);
+                    return;
+                }
+
+                // 닫는 중인 창이 X키의 '맨 위 창'으로 잡혀 다음 창 닫기를 막지 않게 정렬 목록에서 먼저 뺀다(그리는 순서는 유지).
+                PopupWindowSorting.Remove(canvas);
+                motion.BeginClose(() =>
+                {
+                    if (panelRoot != null) panelRoot.SetActive(false);
+                });
+                return;
+            }
+
+            panelRoot.SetActive(true);
+            // 업그레이드 창은 열릴 때 맨 앞 + 높은 sortingOrder로 올려 다른 HUD에 묻히지 않게 한다.
+            panelRoot.transform.SetAsLastSibling();
+            var progressionView = panelRoot.GetComponent<ProgressionPanelView>();
+            if (progressionView == null) progressionView = panelRoot.GetComponentInChildren<ProgressionPanelView>(true);
+            if (progressionView != null) progressionView.BringToFront();
+            PopupWindowSorting.BringToFront(canvas);
+            if (animate)
+            {
+                motion.BeginOpen();
+            }
+            else
+            {
+                motion.CompleteImmediately(true);
+            }
         }
 
         public void ToggleBuilding() => Toggle(RuntimePanelId.Building);

@@ -37,12 +37,15 @@ namespace SubTerra.App.UI.SurfaceBase
         [SerializeField] private Button inventoryButton;
         [SerializeField] private GameObject inventoryRoot;
         [SerializeField] private InventoryPanelView inventoryPanel;
-        private bool upgradeVisible;
         private bool inventoryVisible;
 
-        public bool IsUpgradeVisible => upgradeVisible && upgradeRoot != null && upgradeRoot.activeSelf;
+        private UpgradeWindowMotion upgradeMotion;
+
+        // 닫힘 요청과 루트 비활성화 사이에도 다른 창이 겹쳐 열리지 않도록 구분한다.
+        public bool IsUpgradeVisible => upgradeRoot != null && upgradeRoot.activeSelf
+            && (upgradeMotion == null || !upgradeMotion.IsClosing);
         public bool IsInventoryVisible => inventoryVisible && inventoryRoot != null && inventoryRoot.activeSelf;
-        public bool IsSecondaryClosing => (upgradeRoot != null && upgradeRoot.activeSelf && !upgradeVisible)
+        public bool IsSecondaryClosing => (upgradeMotion != null && upgradeMotion.IsClosing)
             || (inventoryRoot != null && inventoryRoot.activeSelf && !inventoryVisible);
         public InventoryPanelView InventoryPanel => inventoryPanel;
         public bool ContainsInventoryWindow(Canvas canvas) => inventoryRoot != null && PopupWindowSorting.Contains(canvas, inventoryRoot);
@@ -54,29 +57,69 @@ namespace SubTerra.App.UI.SurfaceBase
         public event Action InventoryClicked;
         public event Action InventoryCloseClicked;
 
+        /// <summary>B-167 열기·닫기 연출. upgradeRoot가 없으면 null.</summary>
+        public UpgradeWindowMotion UpgradeMotion => EnsureUpgradeMotion();
+
         public void SetResources(float cargo, int gold)
         {
             if (cargoText != null) cargoText.text = "화물 " + cargo.ToString("0.##");
             if (goldText != null) goldText.text = "골드 <color=#FFE66B>" + gold + "G</color>";
         }
 
+        /// <summary>업그레이드 버튼·ESC·X키·창 X 버튼이 함께 쓰는 열기 경로. 자물쇠가 부서지며 창이 펼쳐진다.</summary>
+        public void RequestUpgradeOpen()
+        {
+            var motion = EnsureUpgradeMotion();
+            if (motion == null) return;
+            if (motion.IsOpening || motion.IsSettled) return;
+            ShowUpgradeRoot();
+            motion.BeginOpen();
+        }
+
+        /// <summary>함께 쓰는 닫기 경로. 루트 비활성화는 닫기 연출이 끝난 뒤.</summary>
+        public void RequestUpgradeClose()
+        {
+            var motion = EnsureUpgradeMotion();
+            if (motion == null || !IsUpgradeVisible) return;
+            motion.BeginClose(HideUpgradeRoot);
+        }
+
+        /// <summary>연출 없이 즉시 켜고 끈다(설정 창 강제 숨김·Bind·OnDisable·기존 검사). 진행 중 연출은 끝 상태로 정리한다.</summary>
         public void SetUpgradeVisible(bool visible)
         {
             if (upgradeRoot == null) return;
-            if (upgradeCard == null)
-            {
-                var drag = upgradeRoot.GetComponentInChildren<PopupWindowDrag>(true);
-                upgradeCard = drag != null ? (RectTransform)drag.transform : (RectTransform)upgradeRoot.transform;
-            }
-            bool wasVisible = IsUpgradeVisible;
-            upgradeVisible = visible;
-            var dimmer = upgradeRoot.GetComponent<Canvas>();
+            var motion = EnsureUpgradeMotion();
             if (!visible)
             {
-                TerminalWindowOpenMotion.Close(upgradeCard.gameObject, HideUpgradeImmediately);
+                if (motion != null) motion.CompleteImmediately(false);
+                HideUpgradeRoot();
                 return;
             }
 
+            ShowUpgradeRoot();
+            if (motion != null) motion.CompleteImmediately(true);
+        }
+
+        private UpgradeWindowMotion EnsureUpgradeMotion()
+        {
+            if (upgradeMotion != null || upgradeRoot == null) return upgradeMotion;
+            upgradeMotion = upgradeRoot.GetComponent<UpgradeWindowMotion>();
+            if (upgradeMotion == null) upgradeMotion = upgradeRoot.AddComponent<UpgradeWindowMotion>();
+            return upgradeMotion;
+        }
+
+        private void HideUpgradeRoot()
+        {
+            if (upgradeRoot == null) return;
+            PopupWindowSorting.Remove(upgradeRoot.GetComponent<Canvas>());
+            if (upgradeCard != null) PopupWindowSorting.Remove(upgradeCard.GetComponent<Canvas>());
+            upgradeRoot.SetActive(false);
+        }
+
+        private void ShowUpgradeRoot()
+        {
+            if (upgradeRoot == null) return;
+            var dimmer = upgradeRoot.GetComponent<Canvas>();
             upgradeRoot.SetActive(true);
             upgradeRoot.transform.SetAsLastSibling();
             // 딤 이미지가 카드 캔버스보다 앞에 있으면 반투명 검은 막이 업그레이드 클릭을 전부 삼킨다.
@@ -91,15 +134,6 @@ namespace SubTerra.App.UI.SurfaceBase
             {
                 PopupWindowSorting.BringToFront(dimmer);
             }
-            if (!wasVisible) TerminalWindowOpenMotion.Open(upgradeCard.gameObject);
-        }
-
-        private void HideUpgradeImmediately()
-        {
-            if (upgradeRoot == null) return;
-            PopupWindowSorting.Remove(upgradeRoot.GetComponent<Canvas>());
-            if (upgradeCard != null) PopupWindowSorting.Remove(upgradeCard.GetComponent<Canvas>());
-            upgradeRoot.SetActive(false);
         }
 
         public void SetInventoryVisible(bool visible)

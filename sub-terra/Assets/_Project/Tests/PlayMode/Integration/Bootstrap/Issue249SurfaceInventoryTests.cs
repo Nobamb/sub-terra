@@ -70,6 +70,7 @@ namespace SubTerra.App.Tests.PlayMode
 
         private IEnumerator Create()
         {
+            UpgradeWindowMotion.ResetSessionForTests();
             environment = new UiTestEnvironment();
             yield return environment.LoadSurfaceBase(() =>
             {
@@ -96,6 +97,14 @@ namespace SubTerra.App.Tests.PlayMode
             yield return null;
             InputSystem.QueueStateEvent(keyboard, new KeyboardState());
             yield return null;
+        }
+
+        private static IEnumerator WaitForUpgrade(UpgradeWindowMotion motion, bool open)
+        {
+            var deadline = Time.realtimeSinceStartup + 8f;
+            while ((open ? !motion.IsSettled : motion.IsClosing) && Time.realtimeSinceStartup < deadline)
+                yield return null;
+            Assert.That(open ? motion.IsSettled : !motion.IsClosing, Is.True, "Upgrade motion timed out.");
         }
 
         [UnityTearDown]
@@ -134,12 +143,31 @@ namespace SubTerra.App.Tests.PlayMode
             Assert.That(view.InventoryPanel.gameObject.activeInHierarchy, Is.False);
             yield return Press(Key.U);
             Assert.That(view.IsUpgradeVisible, Is.True);
-            yield return new WaitForSecondsRealtime(.25f);
+            var motion = view.UpgradeMotion;
+            Assert.That(motion.IsOpening, Is.True, "U must start the existing lock animation.");
+            Assert.That(motion.IsFullOpen, Is.True);
+            yield return WaitForUpgrade(motion, true);
             yield return Capture("surface-upgrade");
             yield return Press(Key.Escape);
             Assert.That(view.IsUpgradeVisible, Is.False);
             Assert.That(settings.IsOpen, Is.False, "ESC 한 번으로 설정창까지 열면 안 된다.");
-            yield return new WaitForSecondsRealtime(.25f);
+            Assert.That(motion.IsClosing, Is.True);
+            Assert.That(view.IsSecondaryClosing, Is.True);
+            binder.ToggleInventory();
+            Assert.That(view.IsInventoryVisible, Is.False, "Closing upgrade still blocks another window.");
+            binder.ToggleUpgrade();
+            Assert.That(motion.IsOpening, Is.True, "U route can reopen during closing.");
+            yield return WaitForUpgrade(motion, true);
+            yield return Press(Key.X);
+            Assert.That(motion.IsClosing, Is.True);
+            yield return WaitForUpgrade(motion, false);
+            root.transform.Find("SurfaceBaseContent/UpgradeButton").GetComponent<UnityEngine.UI.Button>().onClick.Invoke();
+            Assert.That(motion.IsOpening, Is.True, "Button uses the same motion as U.");
+            Assert.That(motion.IsFullOpen, Is.False, "A later open uses the short version.");
+            yield return WaitForUpgrade(motion, true);
+            yield return Press(Key.U);
+            Assert.That(motion.IsClosing, Is.True);
+            yield return WaitForUpgrade(motion, false);
             settings.Open();
             yield return Press(Key.I);
             Assert.That(view.IsInventoryVisible, Is.False);
