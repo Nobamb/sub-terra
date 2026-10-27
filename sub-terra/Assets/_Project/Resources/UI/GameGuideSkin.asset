@@ -35,6 +35,18 @@ MonoBehaviour:
     sprite: {fileID: 21300000, guid: 2de78f070f6f1de4587f76fa5fe9b028, type: 3}
   - key: player.walk.10
     sprite: {fileID: 21300000, guid: 4346acbe586013d4faa86e7741c5d46e, type: 3}
+  - key: player.walk.11
+    sprite: {fileID: 21300000, guid: c69f23b3e166445449aaa00b0232971d, type: 3}
+  - key: player.walk.12
+    sprite: {fileID: 21300000, guid: ee1f6a1d4b5071347be57c90fec7d7da, type: 3}
+  - key: player.walk.13
+    sprite: {fileID: 21300000, guid: a5192f19a8b37dc43919385f1867919c, type: 3}
+  - key: player.walk.14
+    sprite: {fileID: 21300000, guid: 53d11e25e524b5740a5643a13f07c268, type: 3}
+  - key: player.walk.15
+    sprite: {fileID: 21300000, guid: ec3b8f7bd61032d4e9f802e6e0b64a06, type: 3}
+  - key: player.walk.16
+    sprite: {fileID: 21300000, guid: a8a172bbcf7bde44c928a2c7e7a0de34, type: 3}
   - key: player.mine.1
     sprite: {fileID: 21300000, guid: 41d68100d8c057649a878d33abc361d6, type: 3}
   - key: player.mine.2

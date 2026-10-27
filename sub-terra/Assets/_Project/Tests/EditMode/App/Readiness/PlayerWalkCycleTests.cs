@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using NUnit.Framework;
+using SubTerra.App.UI.Guide;
 using SubTerra.Gameplay.Player;
 using UnityEditor;
 using UnityEngine;
@@ -11,33 +12,23 @@ namespace SubTerra.App.Tests.EditMode.Readiness
     public sealed class PlayerWalkCycleTests
     {
         [Test]
-        public void WalkBake_KneesKeepTheirWidthAndHipSeamStaysAttached()
+        public void GuideWalk_UsesTheSameSixteenDrawings()
         {
-            System.Type baker = null;
-            foreach (var assembly in System.AppDomain.CurrentDomain.GetAssemblies())
-                if ((baker = assembly.GetType("SubTerra.Editor.SmoothWalkCycleBaker")) != null) break;
-            Assert.That(baker, Is.Not.Null);
-            var poseType = baker.GetNestedType("LegPose", BindingFlags.NonPublic);
-            var deform = poseType.GetMethod("Deform");
-            foreach (var near in new[] { true, false })
-            for (int i = 0; i < 16; i++)
-            {
-                float phase = i / 16f;
-                float bob = 1.5f - 3.5f * Mathf.Cos(phase * 4 * Mathf.PI);
-                var pose = System.Activator.CreateInstance(poseType, new object[] { near, phase, bob });
-                var knee = new Vector2(near ? 119 : 150, 61);
-                var left = (Vector2)deform.Invoke(pose, new object[] { knee - Vector2.right * 5f });
-                var right = (Vector2)deform.Invoke(pose, new object[] { knee + Vector2.right * 5f });
-                Assert.That(Vector2.Distance(left, right), Is.GreaterThan(9.5f),
-                    $"무릎 접합부가 눌리면 안 된다: near={near}, frame={i + 1}");
-                var hem = new Vector2(near ? 119 : 144, 87);
-                Assert.That(Vector2.Distance((Vector2)deform.Invoke(pose, new object[] { hem }),
-                    hem + Vector2.up * bob), Is.LessThan(.001f));
-            }
+            var skin = AssetDatabase.LoadAssetAtPath<GameGuideSkin>("Assets/_Project/Resources/UI/GameGuideSkin.asset");
+            Assert.That(skin, Is.Not.Null);
+            Assert.That(GuideDemoLibrary.PlayerWalkFrameCount, Is.EqualTo(PlayerAnimationController.WalkFrameCount));
+            Assert.That(GuideDemoLibrary.PlayerWalkFrameRate, Is.EqualTo(PlayerAnimationController.WalkFrameRate));
+            for (int i = 1; i <= 16; i++)
+                Assert.That(skin.Get("player.walk." + i), Is.EqualTo(AssetDatabase.LoadAssetAtPath<Sprite>(
+                    $"Assets/_Project/Art/Characters/Player/Frames/Walk/walk_{i:D2}.png")));
+            Assert.That(skin.Get("player.walk.17"), Is.Null);
+            foreach (var clip in GuideDemoLibrary.All)
+            foreach (var key in clip.UsedSpriteKeys())
+                if (key.StartsWith("player.walk.")) Assert.That(skin.Get(key), Is.Not.Null, key);
         }
 
         [Test]
-        public void WalkCycle_UsesAllSixteenDistinctFramesAndLoopsAtOneSecond()
+        public void WalkCycle_UsesSixteenDistinctDrawingsAndLoopsInOneSecond()
         {
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/Prefabs/Gameplay/Player/Player.prefab");
             var visual = Object.Instantiate(prefab.transform.Find("VisualRoot").gameObject);
@@ -48,6 +39,7 @@ namespace SubTerra.App.Tests.EditMode.Readiness
                 var fields = new SerializedObject(controller);
                 var frames = fields.FindProperty("walkFrames");
                 Assert.That(frames.arraySize, Is.EqualTo(16));
+                Assert.That(PlayerAnimationController.WalkFrameRate, Is.EqualTo(16f));
                 var hashes = new HashSet<string>();
                 var play = typeof(PlayerAnimationController).GetMethod("Play", BindingFlags.Instance | BindingFlags.NonPublic);
                 var start = typeof(PlayerAnimationController).GetField("stateStartedAt", BindingFlags.Instance | BindingFlags.NonPublic);
@@ -57,21 +49,57 @@ namespace SubTerra.App.Tests.EditMode.Readiness
                     var sprite = (Sprite)frames.GetArrayElementAtIndex(i).objectReferenceValue;
                     Assert.That(sprite, Is.Not.Null);
                     string path = AssetDatabase.GetAssetPath(sprite);
+                    CollectionAssert.AreEqual(File.ReadAllBytes(
+                        $"../work_process/images/player-walk-whole-redraw-20261027/approved-one-second/walk-{i + 1:D2}.png"),
+                        File.ReadAllBytes(path), "채택된 전신 원화와 런타임 일치 " + (i + 1));
                     using (var sha = System.Security.Cryptography.SHA256.Create())
                         hashes.Add(System.Convert.ToBase64String(sha.ComputeHash(File.ReadAllBytes(path))));
-                    start.SetValue(controller, Time.unscaledTime - (i / 16f + .001f));
+                    start.SetValue(controller, Time.unscaledTime - (i / PlayerAnimationController.WalkFrameRate + .001f));
                     play.Invoke(controller, new object[] { "Walk" });
                     Assert.That(renderer.sprite, Is.EqualTo(sprite), "frame " + (i + 1));
                 }
-                Assert.That(hashes.Count, Is.EqualTo(16), "중복 그림을 오래 유지하는 구성을 다시 넣지 않는다.");
-                start.SetValue(controller, Time.unscaledTime - 1.001f);
+                Assert.That(hashes.Count, Is.EqualTo(16), "새로 그린 열여섯 자세를 모두 사용한다.");
+                float duration = 16f / PlayerAnimationController.WalkFrameRate;
+                Assert.That(duration, Is.EqualTo(1f));
+                start.SetValue(controller, Time.unscaledTime - duration - .001f);
                 play.Invoke(controller, new object[] { "Walk" });
                 Assert.That(renderer.sprite, Is.EqualTo(frames.GetArrayElementAtIndex(0).objectReferenceValue));
                 var clip = AssetDatabase.LoadAssetAtPath<AnimationClip>("Assets/_Project/Art/Characters/Player/Animations/PlayerWalk.anim");
-                Assert.That(clip.frameRate, Is.EqualTo(16));
-                Assert.That(AnimationUtility.GetAnimationClipSettings(clip).stopTime, Is.EqualTo(1).Within(.001f));
+                Assert.That(clip.frameRate, Is.EqualTo(PlayerAnimationController.WalkFrameRate));
+                Assert.That(AnimationUtility.GetAnimationClipSettings(clip).stopTime, Is.EqualTo(duration).Within(.001f));
+                play.Invoke(controller, new object[] { "Idle" });
+                Assert.That(renderer.sprite, Is.EqualTo(fields.FindProperty("idleFrames").GetArrayElementAtIndex(0).objectReferenceValue));
             }
             finally { Object.DestroyImmediate(visual); }
+        }
+
+        [Test]
+        public void WalkDrawings_KeepGroundLineAndCharacterHeight()
+        {
+            for (int i = 1; i <= 16; i++)
+            {
+                var texture = new Texture2D(2, 2);
+                try
+                {
+                    texture.LoadImage(File.ReadAllBytes($"Assets/_Project/Art/Characters/Player/Frames/Walk/walk_{i:D2}.png"));
+                    Assert.That(texture.width, Is.EqualTo(256));
+                    Assert.That(texture.height, Is.EqualTo(256));
+                    Color32[] pixels = texture.GetPixels32();
+                    int bottom = 256, top = -1, left = 256, right = -1;
+                    for (int y = 0; y < 256; y++)
+                    for (int x = 0; x < 256; x++)
+                    {
+                        if (pixels[y * 256 + x].a < 32) continue;
+                        bottom = Mathf.Min(bottom, y); top = Mathf.Max(top, y);
+                        left = Mathf.Min(left, x); right = Mathf.Max(right, x);
+                    }
+                    Assert.That(bottom, Is.InRange(14, 18), "발 기준점 " + i);
+                    Assert.That(top - bottom + 1, Is.InRange(218, 236), "캐릭터 높이 " + i);
+                    Assert.That(left, Is.GreaterThan(4), "왼쪽 잘림 " + i);
+                    Assert.That(right, Is.LessThan(251), "오른쪽 잘림 " + i);
+                }
+                finally { Object.DestroyImmediate(texture); }
+            }
         }
     }
 }
