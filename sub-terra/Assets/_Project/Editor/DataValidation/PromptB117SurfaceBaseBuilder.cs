@@ -181,27 +181,34 @@ namespace SubTerra.App.Editor.DataValidation
             exploreIcon.preserveAspect = true;
 
             var sell = content.Find("OpenSellButton").GetComponent<UnityEngine.UI.Button>();
-            Place((RectTransform)sell.transform, new Vector2(0.5f, 0.5f), new Vector2(0f, -145f), new Vector2(386f, 98f));
+            Place((RectTransform)sell.transform, new Vector2(0.5f, 0.5f), new Vector2(-213f, -275f), new Vector2(386f, 98f));
             var sellIcon = Image(sell.transform, "Icon", Sprite(ArtPath + "Icons/icon-sell.png"));
             StyleButton(sell, SettingsArt + "button-active-off.png", SettingsArt + "button-active-on.png", new Vector2(386f, 98f), sellIcon);
             Label(sell, "자원 판매", 30f);
             ButtonIcon(sell, sellIcon);
             var upgrade = Button(content, "UpgradeButton");
-            Place((RectTransform)upgrade.transform, new Vector2(0.5f, 0.5f), new Vector2(426f, -145f), new Vector2(386f, 98f));
+            Place((RectTransform)upgrade.transform, new Vector2(0.5f, 0.5f), new Vector2(213f, -145f), new Vector2(386f, 98f));
             var upgradeIcon = Image(upgrade.transform, "Icon", Sprite(ArtPath + "Icons/icon-upgrade.png"));
             StyleButton(upgrade, SettingsArt + "button-active-off.png", SettingsArt + "button-active-on.png", new Vector2(386f, 98f), upgradeIcon);
             Label(upgrade, "업그레이드", 30f, font);
             ButtonIcon(upgrade, upgradeIcon);
 
             var quest = Button(content, "QuestButton");
-            Place((RectTransform)quest.transform, new Vector2(0.5f, 0.5f), new Vector2(-426f, -145f), new Vector2(386f, 98f));
+            Place((RectTransform)quest.transform, new Vector2(0.5f, 0.5f), new Vector2(-213f, -145f), new Vector2(386f, 98f));
             var questIcon = Image(quest.transform, "Icon", Sprite(ArtPath + "Icons/icon-quest.png"));
             StyleButton(quest, SettingsArt + "button-active-off.png", SettingsArt + "button-active-on.png", new Vector2(386f, 98f), questIcon);
             Label(quest, "퀘스트", 30f, font);
             ButtonIcon(quest, questIcon);
 
+            var inventory = Button(content, "InventoryButton");
+            Place((RectTransform)inventory.transform, new Vector2(0.5f, 0.5f), new Vector2(213f, -275f), new Vector2(386f, 98f));
+            var inventoryIcon = Image(inventory.transform, "Icon", Sprite(ArtPath + "Icons/icon-cargo.png"));
+            StyleButton(inventory, SettingsArt + "button-active-off.png", SettingsArt + "button-active-on.png", new Vector2(386f, 98f), inventoryIcon);
+            Label(inventory, "인벤토리", 30f, font);
+            ButtonIcon(inventory, inventoryIcon);
+
             var reset = content.Find("ResetMineButton").GetComponent<UnityEngine.UI.Button>();
-            Place((RectTransform)reset.transform, new Vector2(0.5f, 0.5f), new Vector2(0f, -282f), new Vector2(530f, 112f));
+            Place((RectTransform)reset.transform, new Vector2(0.5f, 0.5f), new Vector2(0f, -415f), new Vector2(530f, 112f));
             var resetIcon = Image(reset.transform, "Icon", Sprite(ArtPath + "Icons/icon-reset.png"));
             StyleButton(reset, ArtPath + "mine-init-button.png", ArtPath + "mine-init-button.png", new Vector2(530f, 177f),
                 resetIcon, bright: true, glowColor: new Color(0.5f, 1f, 0.6f), spin: true);
