@@ -3791,3 +3791,6 @@ EditMode:
 
 
 170. sfx-B170 폴더 내에서 prompt-B-170.md 내용 참고해서 시작 인트로, 종료 아웃트로 연출 제대로 추가 및 종료 전 종료창 팝업 연출 추가해줘 이미지 생성은 codex의 이미지 생성기능을 같이 활용해주고 단순 반복작업은 haiku 5.5나 codex 6 luna같은 하위 에이전트에게 구체적으로 어떻게 시켜야될지 정리해서 맡기도록 해
+
+
+171. work_process/MVP2/prompt-B-171.md 내용 참고해서 기존 걷기모션 수정 진행해줘 work_process/images/player-walk-40f-20261028 폴더에 1~40.png로 교체할 이미지 모두 있어
