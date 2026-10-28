@@ -37,7 +37,7 @@ namespace SubTerra.App.UI.Progression
         private const float UnlockShackleKick = 6f;
         private const float UnlockDrop = 40f / ThumbnailLockScale;
         private const float UnlockDrift = DeepZoneThumbnailStrip.LockDrift / ThumbnailLockScale;
-        private const float UnlockDropAngle = 25f;
+        private const float UnlockDropAngle = 270f;
 
         [SerializeField] private string upgradeId;
         [SerializeField] private Button button;
@@ -74,6 +74,8 @@ namespace SubTerra.App.UI.Progression
         private Vector2 lockBase;
         private Vector2 shackleTopBase;
         private Vector2 shackleRightBase;
+        private RectTransform iconRevealRoot;
+        private Image iconRevealLight;
 
         public string UpgradeId => upgradeId;
         public Sprite IconSprite => icon != null ? icon.sprite : null;
@@ -308,6 +310,7 @@ namespace SubTerra.App.UI.Progression
             }
 
             UpgradeTreeTween.SetAlpha(glow, 0f);
+            HideIconReveal();
             for (var i = 0; i < edgeBars.Length; i++)
             {
                 UpgradeTreeTween.SetAlpha(edgeBars[i], 0f);
@@ -545,6 +548,12 @@ namespace SubTerra.App.UI.Progression
             unlockU = u;
 
             var pose = UnlockRevealTimeline.SampleLock(u, UnlockShackleKick, UnlockDrop, UnlockDropAngle, UnlockDrift);
+            if (u >= UnlockRevealTimeline.ShakeEnd && u < UnlockRevealTimeline.ClickEnd)
+            {
+                var kick = Mathf.InverseLerp(UnlockRevealTimeline.ShakeEnd, UnlockRevealTimeline.ClickEnd, u);
+                pose = new UnlockLockPose(pose.Offset, pose.Angle, pose.Scale,
+                    pose.ShackleLift + UnlockShackleKick * 0.2f * Mathf.Sin(kick * Mathf.PI), pose.Alpha, pose.Visible);
+            }
             if (lockRoot != null)
             {
                 if (pose.Visible)
@@ -571,6 +580,7 @@ namespace SubTerra.App.UI.Progression
             }
 
             UpgradeTreeTween.SetColor(glow, UpgradeTreeTween.Cyan, reveal > 0f ? 0.9f * UpgradeTreeTween.Pulse(reveal) : 0f);
+            ApplyIconReveal(reveal);
 
             for (var i = 0; i < cueBuffer.Count; i++)
             {
@@ -589,6 +599,7 @@ namespace SubTerra.App.UI.Progression
             unlockCue = null;
             revealPending = false;
             UpgradeTreeTween.SetAlpha(glow, 0f);
+            HideIconReveal();
             if (lockBaseCaptured)
             {
                 ApplyLockPose(new UnlockLockPose(Vector2.zero, 0f, 1f, 0f, 1f, true));
@@ -598,6 +609,50 @@ namespace SubTerra.App.UI.Progression
             {
                 Apply(snapshot);
             }
+        }
+
+        private void ApplyIconReveal(float progress)
+        {
+            if (progress <= 0f || progress >= 1f || icon == null)
+            {
+                HideIconReveal();
+                return;
+            }
+
+            if (iconRevealRoot == null)
+            {
+                // 아이콘 원본 알파로 자른 빛을 중심에서 키운다. 아이콘 자체의 색/활성 상태는 건드리지 않는다.
+                var root = new GameObject("UnlockIconReveal", typeof(RectTransform), typeof(Image), typeof(Mask));
+                iconRevealRoot = (RectTransform)root.transform;
+                iconRevealRoot.SetParent(icon.transform, false);
+                iconRevealRoot.anchorMin = Vector2.zero;
+                iconRevealRoot.anchorMax = Vector2.one;
+                iconRevealRoot.offsetMin = iconRevealRoot.offsetMax = Vector2.zero;
+                var stencil = root.GetComponent<Image>();
+                stencil.sprite = icon.sprite;
+                stencil.preserveAspect = icon.preserveAspect;
+                stencil.raycastTarget = false;
+                root.GetComponent<Mask>().showMaskGraphic = false;
+                var light = new GameObject("Light", typeof(RectTransform), typeof(Image));
+                light.transform.SetParent(root.transform, false);
+                iconRevealLight = light.GetComponent<Image>();
+                iconRevealLight.sprite = SubTerra.App.UI.Outpost.CoreCctvArt.Soft();
+                iconRevealLight.raycastTarget = false;
+                iconRevealLight.rectTransform.anchorMin = iconRevealLight.rectTransform.anchorMax = Vector2.one * 0.5f;
+                iconRevealLight.rectTransform.anchoredPosition = Vector2.zero;
+            }
+
+            iconRevealRoot.gameObject.SetActive(true);
+            iconRevealRoot.GetComponent<Image>().sprite = icon.sprite;
+            iconRevealLight.rectTransform.sizeDelta = icon.rectTransform.rect.size
+                * Mathf.Lerp(0.15f, 2.3f, UpgradeTreeTween.EaseOut(progress));
+            UpgradeTreeTween.SetColor(iconRevealLight, Color.Lerp(UpgradeTreeTween.Cyan, Color.white, 0.35f),
+                0.9f * UpgradeTreeTween.Pulse(progress));
+        }
+
+        private void HideIconReveal()
+        {
+            if (iconRevealRoot != null) iconRevealRoot.gameObject.SetActive(false);
         }
 
         private void Raise(SfxId id)

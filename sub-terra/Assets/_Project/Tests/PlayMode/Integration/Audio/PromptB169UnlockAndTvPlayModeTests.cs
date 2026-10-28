@@ -27,7 +27,7 @@ namespace SubTerra.App.Tests.PlayMode.Audio
     /// </summary>
     public sealed class PromptB169UnlockAndTvPlayModeTests
     {
-        private const string EvidenceDirectory = "Temp/b169-unlock-evidence";
+        private const string EvidenceDirectory = "../work_process/images/b169-unlock-evidence";
         private const BindingFlags Private = BindingFlags.Instance | BindingFlags.NonPublic;
 
         private static readonly SfxId[] LockSounds =
@@ -166,6 +166,19 @@ namespace SubTerra.App.Tests.PlayMode.Audio
             yield return WaitSeconds(0.6f);
             Assert.That(LockOnly(), Is.EqualTo(new[] { SfxId.UnlockClick, SfxId.UpgradeLockShatter }), "다시 열기는 딸깍 → 쨍그랑만");
             foreach (var node in nodes) Assert.That(node.IsUnlockPlaying, Is.False, "다시 열면 해금 연출 없음");
+
+            // 캡처 비용으로 중간 자세를 건너뛰지 않도록 시각 비교만 같은 노드에서 수동 진행한다.
+            var preview = nodes[0];
+            preview.ManualTick = true;
+            preview.SetRevealPending(true);
+            preview.BeginUnlock(null);
+            var previewSteps = new[] { 0.275f, 0.245f, 0.2f, 0.28f };
+            for (var i = 0; i < previewSteps.Length; i++)
+            {
+                preview.StepUnlock(previewSteps[i]);
+                yield return Capture("issue188-stage-" + i);
+            }
+            preview.ManualTick = false;
         }
 
         [UnityTest]
