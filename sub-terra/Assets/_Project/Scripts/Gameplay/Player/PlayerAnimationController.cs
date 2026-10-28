@@ -10,6 +10,7 @@ namespace SubTerra.Gameplay.Player
         public const int WalkFrameCount = SubTerra.Shared.PlayerWalkCycle.FrameCount;
         public const float WalkFrameRate = SubTerra.Shared.PlayerWalkCycle.FrameRate;
         private const float DamageDuration = 0.35f;
+        private const float WalkGroundVisualGraceDuration = 0.06f;
         private const float LadderMovementEpsilon = 0.0001f;
         private const float LadderVisualGraceDuration = 0.1f;
         // 중립 → 오른쪽 중간/상승/중간 → 중립 → 왼쪽 중간/상승/중간.
@@ -41,6 +42,7 @@ namespace SubTerra.Gameplay.Player
         private float damageUntil;
         private string currentState;
         private float stateStartedAt;
+        private float lastGroundedAt = float.NegativeInfinity;
         private bool survivalEventsBound;
         private float ladderTravelDistance;
         private int ladderSequenceIndex;
@@ -101,6 +103,11 @@ namespace SubTerra.Gameplay.Player
             if (spriteRenderer == null || movement == null)
             {
                 return;
+            }
+
+            if (movement.IsGrounded)
+            {
+                lastGroundedAt = Time.unscaledTime;
             }
 
             var stateName = ResolveStateName();
@@ -186,6 +193,15 @@ namespace SubTerra.Gameplay.Player
 
             if (!movement.IsGrounded)
             {
+                // 타일 경계의 한 틱 접지 누락이 걷기 순서를 처음부터 재시작하지 않게 한다.
+                if (currentState == "Walk"
+                    && movement.IsMovementRequested
+                    && !movement.IsJumpInProgress
+                    && Time.unscaledTime - lastGroundedAt <= WalkGroundVisualGraceDuration)
+                {
+                    return "Walk";
+                }
+
                 return "Jump";
             }
 

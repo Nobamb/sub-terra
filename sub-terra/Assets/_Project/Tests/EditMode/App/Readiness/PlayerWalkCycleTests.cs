@@ -127,6 +127,65 @@ namespace SubTerra.App.Tests.EditMode.Readiness
 
         [TestCase(1f)]
         [TestCase(-1f)]
+        public void WalkCycle_BriefGroundContactLossKeepsPhase_RealJumpAndFallStillSwitch(float direction)
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/Prefabs/Gameplay/Player/Player.prefab");
+            var player = Object.Instantiate(prefab);
+            try
+            {
+                const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
+                var movement = player.GetComponent<PlayerMovement>();
+                var controller = player.GetComponentInChildren<PlayerAnimationController>();
+                var renderer = controller.GetComponent<SpriteRenderer>();
+                typeof(PlayerMovement).GetMethod("Awake", flags).Invoke(movement, null);
+                typeof(PlayerAnimationController).GetMethod("Awake", flags).Invoke(controller, null);
+                var grounded = typeof(PlayerMovement).GetField("<IsGrounded>k__BackingField", flags);
+                var lateUpdate = typeof(PlayerAnimationController).GetMethod("LateUpdate", flags);
+                var start = typeof(PlayerAnimationController).GetField("stateStartedAt", flags);
+                var frames = new SerializedObject(controller);
+                movement.SetMoveInput(direction);
+                grounded.SetValue(movement, true);
+                lateUpdate.Invoke(controller, null);
+                start.SetValue(controller, Time.unscaledTime - .326f);
+                lateUpdate.Invoke(controller, null);
+                var phase = start.GetValue(controller);
+                var walkSprite = renderer.sprite;
+
+                // 실제 광산의 타일 경계에서 한 물리 틱 동안 접지가 빠지는 상황.
+                grounded.SetValue(movement, false);
+                lateUpdate.Invoke(controller, null);
+                Assert.That(renderer.sprite, Is.EqualTo(walkSprite), "짧은 접지 누락에 Jump 첫 그림이 끼어들지 않는다");
+                Assert.That(start.GetValue(controller), Is.EqualTo(phase), "걷기 타이머를 다시 시작하지 않는다");
+                grounded.SetValue(movement, true);
+                lateUpdate.Invoke(controller, null);
+                Assert.That(start.GetValue(controller), Is.EqualTo(phase));
+
+                grounded.SetValue(movement, false);
+                typeof(PlayerAnimationController).GetField("lastGroundedAt", flags)
+                    .SetValue(controller, Time.unscaledTime - .1f);
+                lateUpdate.Invoke(controller, null);
+                Assert.That(renderer.sprite, Is.EqualTo(frames.FindProperty("jumpFrames").GetArrayElementAtIndex(0).objectReferenceValue),
+                    "발판에서 실제로 떨어지면 Jump로 전환한다");
+
+                grounded.SetValue(movement, true);
+                lateUpdate.Invoke(controller, null);
+                grounded.SetValue(movement, false);
+                typeof(PlayerMovement).GetField("jumpUsedUntilLand", flags).SetValue(movement, true);
+                lateUpdate.Invoke(controller, null);
+                Assert.That(renderer.sprite, Is.EqualTo(frames.FindProperty("jumpFrames").GetArrayElementAtIndex(0).objectReferenceValue),
+                    "점프 입력으로 뜨면 유예 없이 바로 전환한다");
+
+                grounded.SetValue(movement, true);
+                lateUpdate.Invoke(controller, null);
+                movement.SetMoveInput(0f);
+                lateUpdate.Invoke(controller, null);
+                Assert.That(renderer.sprite, Is.EqualTo(frames.FindProperty("idleFrames").GetArrayElementAtIndex(0).objectReferenceValue));
+            }
+            finally { Object.DestroyImmediate(player); }
+        }
+
+        [TestCase(1f)]
+        [TestCase(-1f)]
         public void WalkFootsteps_PlayTwicePerCycleAtTheSameContactFrames(float direction)
         {
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/Prefabs/Gameplay/Player/Player.prefab");
