@@ -71,6 +71,25 @@ namespace SubTerra.Shared.Audio
         BlockBreak = 62,
         PickupCommon = 63,
         PickupRare = 64,
-        CargoHeavyWarning = 65
+        CargoHeavyWarning = 65,
+        GasPulseLoop = 66,
+        PlayerHurt = 67,
+        LowHealthWarning = 68,
+        CeilingCollapse = 69,
+        RescueHoloOpen = 70,
+        BuildPlaceSmall = 71,
+        BuildPlaceHeavy = 72,
+        BuildFailResource = 73,
+        BuildFailBlocked = 74,
+        UpgradeLevelUp = 75,
+        UnlockRattle = 76,
+        UnlockClick = 77,
+        UnlockGlow = 78,
+        WindowTvOpen = 79,
+        WindowTvClose = 80,
+        UpgradeLockCrack = 81,
+        UpgradeLockShatter = 82,
+        UpgradeWindowSuckIn = 83,
+        UpgradeLockRegather = 84
     }
 }

@@ -1,23 +1,47 @@
-using SubTerra.App.UI.Drone;
+using System;
+using SubTerra.App.Audio;
+using SubTerra.App.UI.Outpost;
 using SubTerra.App.UI.RunFailure;
 using SubTerra.Shared;
+using SubTerra.Shared.Audio;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace SubTerra.App.UI
 {
-    /// <summary>드론 터미널의 가로선·세로 펼침을 재사용하는 짧은 창 열기 연출.</summary>
+    /// <summary>
+    /// 중앙 빛점·가로선·세로 펼침을 역순으로도 재생하는 공통 창 연출.
+    /// B-169: 열기 시작(점이 보이는 프레임)에 WindowTvOpen, 닫기 시작에 WindowTvClose를 여기 한 곳에서 낸다.
+    /// 보이는 창을 열 때·닫을 때만 내므로 이미 열린 창을 다시 열거나(내용 갱신) 숨은 창을 다시 닫아도 무음이다.
+    /// 쓰는 창: 인벤토리·건설창·퀘스트 상세창.
+    /// </summary>
     [DisallowMultipleComponent]
     public sealed class TerminalWindowOpenMotion : MonoBehaviour
     {
         public const float Duration = 0.18f;
-        private readonly DroneTerminalFxSettings settings = new DroneTerminalFxSettings { openDuration = Duration };
+        public const float CloseDuration = 0.16f;
+        private static readonly Color LightColor = new Color(0.5f, 0.98f, 1f, 1f);
         private RectTransform window;
-        private Image line;
+        private RectTransform effects;
+        private UnityEngine.UI.Image line, point, glow;
+        private Canvas effectCanvas, windowCanvas;
+        private CanvasGroup group;
         private Vector3 originalScale;
         private Vector2 centerOffset;
-        private float elapsed;
+        private float originalAlpha, progress;
+        private bool originalInteractable;
+        private Action closeCompleted;
+        // B-169: 소리 기준의 '보이는 창' 상태. 열기 소리를 낸 뒤 true, 닫기 시작·비활성화에서 false.
+        private bool shown;
+
         public bool IsPlaying { get; private set; }
+        public bool IsClosing { get; private set; }
+        public bool IsShown => shown;
+
+        public static bool IsClosingWindow(GameObject root)
+        {
+            var motion = root != null ? root.GetComponent<TerminalWindowOpenMotion>() : null;
+            return motion != null && motion.IsClosing;
+        }
 
         public static void Open(GameObject root)
         {
@@ -25,24 +49,100 @@ namespace SubTerra.App.UI
             var motion = root.GetComponent<TerminalWindowOpenMotion>();
             if (motion == null) motion = root.AddComponent<TerminalWindowOpenMotion>();
             motion.enabled = true;
-            motion.Play();
+            motion.PlayOpen();
+        }
+
+        public static void Close(GameObject root, Action completed)
+        {
+            var motion = root != null ? root.GetComponent<TerminalWindowOpenMotion>() : null;
+            if (motion == null || !motion.enabled || !root.activeInHierarchy || AccessibilityPreferences.ReduceMotion)
+            {
+                if (motion != null)
+                {
+                    // 모션 감소여도 보이던 창을 닫으면 꺼짐 소리는 낸다.
+                    if (root.activeInHierarchy) motion.PlayCloseSound();
+                    motion.shown = false;
+                    motion.Restore();
+                }
+                completed?.Invoke();
+                return;
+            }
+            motion.PlayClose(completed);
         }
 
         public static void Stop(GameObject root)
         {
-            if (root != null) root.GetComponent<TerminalWindowOpenMotion>()?.Restore();
+            var motion = root != null ? root.GetComponent<TerminalWindowOpenMotion>() : null;
+            if (motion != null) motion.Restore();
         }
 
-        private void Play()
+        private void CaptureWindow()
         {
-            if (IsPlaying) Restore();
             window = (RectTransform)transform;
             originalScale = window.localScale;
-            elapsed = 0f;
-            if (AccessibilityPreferences.ReduceMotion || !gameObject.activeInHierarchy) return;
-            EnsureLine();
-            IsPlaying = true;
+            group = GetComponent<CanvasGroup>();
+            if (group == null) group = gameObject.AddComponent<CanvasGroup>();
+            originalAlpha = group.alpha;
+            originalInteractable = group.interactable;
+            windowCanvas = GetComponentInParent<Canvas>();
+        }
+
+        private void PlayOpen()
+        {
+            if (IsPlaying)
+            {
+                if (!IsClosing) return;
+                IsClosing = false;
+                closeCompleted = null;
+                group.interactable = originalInteractable;
+                // 닫던 창을 다시 열면 꺼짐 소리를 끊고 켜짐을 처음부터 낸다.
+                PlayOpenSound();
+            }
+            else
+            {
+                CaptureWindow();
+                if (!gameObject.activeInHierarchy) return;
+                // 모션 감소여도 소리는 낸다.
+                PlayOpenSound();
+                if (AccessibilityPreferences.ReduceMotion) return;
+                progress = 0f;
+                EnsureEffects();
+                IsPlaying = true;
+            }
             ApplyFrame();
+        }
+
+        private void PlayOpenSound()
+        {
+            if (shown) return;
+            shown = true;
+            WindowTvSfx.Play(SfxId.WindowTvOpen);
+        }
+
+        private void PlayCloseSound()
+        {
+            if (!shown) return;
+            shown = false;
+            WindowTvSfx.Play(SfxId.WindowTvClose);
+        }
+
+        private void PlayClose(Action completed)
+        {
+            if (IsClosing) return;
+            PlayCloseSound();
+            if (!IsPlaying)
+            {
+                CaptureWindow();
+                EnsureEffects();
+                progress = 1f;
+                IsPlaying = true;
+            }
+            IsClosing = true;
+            closeCompleted = completed;
+            // 배경으로 클릭이 빠지지 않도록 raycast는 유지하고 창 내부 조작만 막는다.
+            group.interactable = false;
+            if (progress <= 0f) FinishClose();
+            else ApplyFrame();
         }
 
         private void Update() => Advance(Time.unscaledDeltaTime);
@@ -50,48 +150,104 @@ namespace SubTerra.App.UI
         public void Advance(float deltaTime)
         {
             if (!IsPlaying) return;
-            elapsed += Mathf.Max(0f, deltaTime);
-            if (elapsed >= Duration || AccessibilityPreferences.ReduceMotion)
+            if (AccessibilityPreferences.ReduceMotion)
             {
-                Restore();
+                if (IsClosing) FinishClose();
+                else Restore();
                 return;
             }
-            ApplyFrame();
+            progress = Mathf.Clamp01(progress + Mathf.Max(0f, deltaTime) * (IsClosing ? -1f / CloseDuration : 1f / Duration));
+            if (IsClosing && progress <= 0f) FinishClose();
+            else if (!IsClosing && progress >= 1f) Restore();
+            else ApplyFrame();
         }
+
+        private static float Smooth(float value, float from, float to)
+            => Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(from, to, value));
 
         private void ApplyFrame()
         {
-            var frame = DroneTerminalTimeline.Open(elapsed, settings);
-            var height = Mathf.Max(0.003f, frame.Open);
-            // 좌상단 피벗인 건설창도 중앙 가로선을 기준으로 위아래로 펼친다.
-            // 드래그 등 외부 위치 변경은 유지하고 연출이 더한 보정값만 회수한다.
+            float height = Mathf.Max(0.003f, Smooth(progress, 0.42f, 1f));
             window.anchoredPosition -= centerOffset;
             centerOffset = new Vector2(0f, (0.5f - window.pivot.y) * window.rect.height * originalScale.y * (1f - height));
             window.anchoredPosition += centerOffset;
             window.localScale = new Vector3(originalScale.x, originalScale.y * height, originalScale.z);
-            line.gameObject.SetActive(true);
-            line.rectTransform.sizeDelta = new Vector2(window.rect.width * frame.LineWidth, 2.5f);
-            // 본문이 접혀 있어도 가로선의 두께는 일정하게 유지한다.
-            line.rectTransform.localScale = new Vector3(1f, 1f / height, 1f);
-            var color = settings.lineColor;
-            color.a *= frame.LineAlpha;
-            line.color = color;
+            group.alpha = originalAlpha * Smooth(progress, 0.42f, 0.75f);
+
+            // 본문과 형제로 두어 본문의 축소·페이드에도 점과 선의 크기·밝기를 유지한다.
+            effects.gameObject.SetActive(true);
+            effects.SetSiblingIndex(window.GetSiblingIndex() + 1);
+            effects.position = window.TransformPoint(window.rect.center);
+            effects.localScale = originalScale;
+            if (effectCanvas != null && windowCanvas != null)
+            {
+                effectCanvas.sortingLayerID = windowCanvas.sortingLayerID;
+                effectCanvas.sortingOrder = windowCanvas.sortingOrder;
+            }
+            float dotAlpha = Smooth(progress, 0f, 0.06f) * (1f - Smooth(progress, 0.22f, 0.45f));
+            point.rectTransform.sizeDelta = Vector2.one * Mathf.Lerp(8f, 15f, Smooth(progress, 0f, 0.22f));
+            glow.rectTransform.sizeDelta = Vector2.one * Mathf.Lerp(28f, 58f, Smooth(progress, 0f, 0.22f));
+            SetLight(point, dotAlpha);
+            SetLight(glow, dotAlpha * 0.45f);
+            line.rectTransform.sizeDelta = new Vector2(window.rect.width * Smooth(progress, 0.16f, 0.42f), 2.5f);
+            SetLight(line, Smooth(progress, 0.12f, 0.3f) * (1f - Smooth(progress, 0.7f, 1f)));
         }
 
-        private void EnsureLine()
+        private void SetLight(UnityEngine.UI.Image graphic, float alpha)
         {
-            if (line != null) return;
-            var beam = new GameObject("WindowOpenLine", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(LayoutElement));
-            beam.transform.SetParent(transform, false);
-            beam.GetComponent<LayoutElement>().ignoreLayout = true;
-            line = beam.GetComponent<Image>();
-            line.sprite = RunFailureGlitchArt.GetCrtBeamSprite();
-            line.raycastTarget = false;
-            line.rectTransform.anchorMin = line.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
-            line.rectTransform.pivot = new Vector2(0.5f, 0.5f);
+            var color = LightColor;
+            color.a = alpha * originalAlpha;
+            graphic.color = color;
         }
 
-        private void OnDisable() => Restore();
+        private void EnsureEffects()
+        {
+            if (effects != null) return;
+            var root = new GameObject("WindowMotionFx", typeof(RectTransform), typeof(UnityEngine.UI.LayoutElement));
+            effects = (RectTransform)root.transform;
+            effects.SetParent(transform.parent, false);
+            root.GetComponent<UnityEngine.UI.LayoutElement>().ignoreLayout = true;
+            if (windowCanvas != null)
+            {
+                effectCanvas = root.AddComponent<Canvas>();
+                effectCanvas.overrideSorting = true;
+            }
+            glow = CreateLight("WindowOpenGlow", CoreCctvArt.Soft());
+            line = CreateLight("WindowOpenLine", RunFailureGlitchArt.GetCrtBeamSprite());
+            point = CreateLight("WindowOpenPoint", CoreCctvArt.Dot());
+        }
+
+        private UnityEngine.UI.Image CreateLight(string name, Sprite sprite)
+        {
+            var obj = new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(UnityEngine.UI.Image));
+            obj.transform.SetParent(effects, false);
+            var graphic = obj.GetComponent<UnityEngine.UI.Image>();
+            graphic.sprite = sprite;
+            graphic.raycastTarget = false;
+            graphic.rectTransform.anchorMin = graphic.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
+            graphic.rectTransform.pivot = new Vector2(0.5f, 0.5f);
+            return graphic;
+        }
+
+        private void FinishClose()
+        {
+            var completed = closeCompleted;
+            Restore();
+            completed?.Invoke();
+        }
+
+        private void OnDisable()
+        {
+            // 부모가 꺼지거나 씬을 떠나 숨으면 무음으로 정리한다.
+            shown = false;
+            if (IsClosing) FinishClose();
+            else Restore();
+        }
+
+        private void OnDestroy()
+        {
+            if (effects != null) Destroy(effects.gameObject);
+        }
 
         private void Restore()
         {
@@ -99,10 +255,17 @@ namespace SubTerra.App.UI
             {
                 window.localScale = originalScale;
                 window.anchoredPosition -= centerOffset;
+                if (group != null)
+                {
+                    group.alpha = originalAlpha;
+                    group.interactable = originalInteractable;
+                }
             }
             centerOffset = Vector2.zero;
             IsPlaying = false;
-            if (line != null) line.gameObject.SetActive(false);
+            IsClosing = false;
+            closeCompleted = null;
+            if (effects != null) effects.gameObject.SetActive(false);
         }
     }
 }

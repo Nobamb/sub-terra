@@ -594,7 +594,8 @@ namespace SubTerra.App.UI.Outpost
             }
 
             var deposit = HasSelection ? StorageTransferPreview.DepositAmount(quantity, owned) : 0;
-            var withdraw = HasSelection ? StorageTransferPreview.WithdrawAmount(quantity, stored) : 0;
+            var requestedWithdraw = HasSelection ? StorageTransferPreview.WithdrawAmount(quantity, stored) : 0;
+            var withdraw = HasSelection ? StorageTransferPreview.WithdrawAmount(quantity, selectedId, storage, playerCargo) : 0;
             if (!HasSelection)
             {
                 previewText.text = "<color=#9EC2D1>" + PreviewPrompt + "</color>";
@@ -602,7 +603,8 @@ namespace SubTerra.App.UI.Outpost
             else
             {
                 previewText.text = "보관  <b>" + deposit + "개</b>" + AllNote(quantity, owned)
-                    + "\n꺼내기  <b>" + withdraw + "개</b>" + AllNote(quantity, stored);
+                    + "\n꺼내기  <b>" + withdraw + "개</b>"
+                    + (withdraw < requestedWithdraw ? " (화물 공간 한도)" : AllNote(quantity, stored));
             }
 
             depositButton.Button.interactable = !busy && deposit > 0;

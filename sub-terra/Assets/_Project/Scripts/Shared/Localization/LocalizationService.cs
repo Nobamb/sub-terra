@@ -100,7 +100,7 @@ namespace SubTerra.Shared.Localization
             Add("settings.title", "설정", "Settings");
             Add("settings.master_volume", "마스터 음량", "Master Volume");
             Add("settings.resolution", "해상도", "Resolution");
-            Add("settings.reduce_motion", "화면 진동 억제", "Suppress Screen Shake");
+            Add("settings.reduce_animation_effects", "애니메이션 연출 감소", "Reduce Animation Effects");
             Add("settings.language", "언어", "Language");
             Add("settings.language.ko", "한국어", "Korean");
             Add("settings.language.en", "English", "English");

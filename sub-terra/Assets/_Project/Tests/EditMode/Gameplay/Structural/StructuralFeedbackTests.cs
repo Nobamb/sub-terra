@@ -8,6 +8,67 @@ namespace SubTerra.Gameplay.Structural.Tests
     public sealed class StructuralFeedbackTests
     {
         [Test]
+        public void Issue245_ClearAll_RemovesUntrackedResidueWithoutDeletingSourceOrOtherObjects()
+        {
+            using var fixture = new ShakeFixture();
+            var orphan = new GameObject("StructuralShake_-13_-39", typeof(SpriteRenderer));
+            orphan.transform.SetParent(fixture.Root.transform);
+            var falling = new GameObject("StructuralFallingRock", typeof(SpriteRenderer));
+            falling.transform.SetParent(fixture.Root.transform);
+            var dust = new GameObject("StructuralImpactDust", typeof(SpriteRenderer));
+            dust.transform.SetParent(fixture.Root.transform);
+            var unrelated = new GameObject("OtherVisual", typeof(SpriteRenderer));
+            unrelated.transform.SetParent(fixture.Root.transform);
+            fixture.Overlay.SetTile(new Vector3Int(-13, -39), fixture.Tile);
+            fixture.Feedback.ClearAll();
+            Assert.That(orphan == null && falling == null && dust == null, Is.True,
+                "목록에 없는 직렬화 잔재도 자기 소유 범위에서 제거해야 한다.");
+            Assert.That(fixture.Overlay.GetUsedTilesCount(), Is.Zero);
+            Assert.That(unrelated != null, Is.True);
+            Assert.That(fixture.Source.GetTile(Vector3Int.zero), Is.SameAs(fixture.Tile));
+            Assert.That(fixture.Source.GetColor(Vector3Int.zero).a, Is.EqualTo(1f));
+        }
+
+        [Test]
+        public void Issue245_RuntimeVisuals_AreExcludedFromSceneSaving()
+        {
+            using var fixture = new ShakeFixture();
+            fixture.Feedback.PlayCollapse(Vector3Int.zero, fixture.Source, 0.1f);
+            typeof(StructuralCrackOverlay).GetMethod("CreateImpactDust",
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
+                .Invoke(fixture.Feedback, new object[] { Vector3.zero });
+            foreach (Transform child in fixture.Root.transform)
+            {
+                if (child.GetComponent<SpriteRenderer>() == null) continue;
+                Assert.That(child.gameObject.hideFlags & HideFlags.DontSave, Is.EqualTo(HideFlags.DontSave), child.name);
+            }
+        }
+
+        [Test]
+        public void Issue245_SavedIntegrationScene_HasNoRuntimeStructuralResidue()
+        {
+            const string path = "Assets/_Project/Scenes/App/Mine_Demo_Integration.unity";
+            var scene = UnityEngine.SceneManagement.SceneManager.GetSceneByPath(path);
+            bool closeAfter = !scene.IsValid() || !scene.isLoaded;
+            if (closeAfter) scene = UnityEditor.SceneManagement.EditorSceneManager.OpenScene(
+                path, UnityEditor.SceneManagement.OpenSceneMode.Additive);
+            try
+            {
+                foreach (var root in scene.GetRootGameObjects())
+                {
+                    foreach (var child in root.GetComponentsInChildren<Transform>(true))
+                    {
+                        Assert.That(child.name.StartsWith("StructuralShake_", System.StringComparison.Ordinal)
+                            || child.name == "StructuralFallingRock" || child.name == "StructuralImpactDust", Is.False, child.name);
+                    }
+                    foreach (var overlay in root.GetComponentsInChildren<StructuralCrackOverlay>(true))
+                        Assert.That(overlay.OverlayTilemap.GetUsedTilesCount(), Is.Zero);
+                }
+            }
+            finally { if (closeAfter) UnityEditor.SceneManagement.EditorSceneManager.CloseScene(scene, true); }
+        }
+
+        [Test]
         public void CrackDensity_IncreasesAcrossWarningLevels()
         {
             int caution = StructuralCrackOverlay.GetVisibleCount(9, StructuralRiskLevel.Caution);

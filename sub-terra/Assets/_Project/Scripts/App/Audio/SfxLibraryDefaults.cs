@@ -38,7 +38,7 @@ namespace SubTerra.App.Audio
 
         public static bool IsLoopFile(string fileName) => fileName != null && LoopFileNames.Contains(fileName);
 
-        /// <summary>SfxId 순서대로 64칸(None·비워 둔 3번 제외). 파일 이름은 확장자 제외.</summary>
+        /// <summary>SfxId 순서대로 83칸(None·비워 둔 3번 제외). 파일 이름은 확장자 제외.</summary>
         public static IReadOnlyList<(SfxEntry Entry, string FileName)> Create()
         {
             return new List<(SfxEntry, string)>
@@ -181,6 +181,53 @@ namespace SubTerra.App.Audio
                 (new SfxEntry(SfxId.PickupRare, SfxBus.World, volume: 0.5f), "pickup_rare"),
                 // 0.35초.
                 (new SfxEntry(SfxId.CargoHeavyWarning, SfxBus.World, volume: 0.2f), "cargo_heavy_warning"),
+
+                // B-168(D-2) 위험·생존. World 버스(Alert는 경보 반복을 끊는다). 길이는 다듬은 파일 기준.
+                // 1.23초. 반복하지 않고 GasPulseAudio가 맥박마다 한 번씩 처음부터 튼다.
+                (new SfxEntry(SfxId.GasPulseLoop, SfxBus.World, volume: 0.38f), "gas_pulse_loop"),
+                // 0.68초. Big Hit + Metal Crack 합침.
+                (new SfxEntry(SfxId.PlayerHurt, SfxBus.World, volume: 0.6f), "player_hurt"),
+                // 0.97초. Warning Alarm Loop #1의 2주기. 반복 재생하지 않는다.
+                (new SfxEntry(SfxId.LowHealthWarning, SfxBus.World, volume: 0.5f), "low_health_warning"),
+                // 1.40초. Boulder Impact 앞부분.
+                (new SfxEntry(SfxId.CeilingCollapse, SfxBus.World, volume: 0.7f), "ceiling_collapse"),
+                // 1.63초. Glitch Sound 4. 앞 0.12초를 건너뛴다.
+                (new SfxEntry(SfxId.RescueHoloOpen, SfxBus.World, volume: 0.8f, startTime: 0.12f), "rescue_holo_open"),
+
+                // B-168(D-2) 시설 설치·업그레이드.
+                // 0.30초. 사다리·버팀목·조명.
+                (new SfxEntry(SfxId.BuildPlaceSmall, SfxBus.World, volume: 0.9f), "build_place_small"),
+                // 1.37초. 그 밖 큰 시설.
+                (new SfxEntry(SfxId.BuildPlaceHeavy, SfxBus.World, volume: 1.0f), "build_place_heavy"),
+                // 0.64초. 자원 부족 "띵-딩".
+                (new SfxEntry(SfxId.BuildFailResource, SfxBus.UI, volume: 0.5f), "build_fail_resource"),
+                // 0.42초. 놓을 수 없는 자리 "부-".
+                (new SfxEntry(SfxId.BuildFailBlocked, SfxBus.UI, volume: 0.55f), "build_fail_blocked"),
+                // 0.56초. Digital Success Chime 앞부분.
+                (new SfxEntry(SfxId.UpgradeLevelUp, SfxBus.UI, volume: 0.55f), "upgrade_levelup"),
+
+                // B-168은 칸만 만든다. 연결은 B-169.
+                // 0.67초. 흔들림(0.2초) 뒤 딸깍과 겹치지 않게 0.3초에서 끊는다.
+                (new SfxEntry(SfxId.UnlockRattle, SfxBus.UI, volume: 0.5f,
+                    maxDuration: 0.3f, fadeOut: 0.1f), "unlock_rattle"),
+                // 0.44초.
+                (new SfxEntry(SfxId.UnlockClick, SfxBus.UI, volume: 0.7f), "unlock_click"),
+                // 1.00초.
+                (new SfxEntry(SfxId.UnlockGlow, SfxBus.UI, volume: 0.45f), "unlock_glow"),
+                // 0.73초.
+                (new SfxEntry(SfxId.WindowTvOpen, SfxBus.UI, volume: 0.4f), "window_tv_open"),
+                // 0.56초. 평균 음량이 커서 작게 시작.
+                (new SfxEntry(SfxId.WindowTvClose, SfxBus.UI, volume: 0.5f), "window_tv_close"),
+
+                // B-169 업그레이드 창 자물쇠(#252). 길이는 파일 그대로 자르지 않는다.
+                // 0.60초. 처음 열기의 금 가는 소리. 딸깍 밑에 작게 깐다.
+                (new SfxEntry(SfxId.UpgradeLockCrack, SfxBus.UI, volume: 0.25f), "upgrade_lock_crack"),
+                // 0.78초. 부서짐.
+                (new SfxEntry(SfxId.UpgradeLockShatter, SfxBus.UI, volume: 0.55f), "upgrade_lock_shatter"),
+                // 0.38초. 닫을 때 빨려 들어감(끝으로 갈수록 커짐).
+                (new SfxEntry(SfxId.UpgradeWindowSuckIn, SfxBus.UI, volume: 0.35f), "upgrade_window_suck_in"),
+                // 0.25초. 조각 모임(끝에 "착").
+                (new SfxEntry(SfxId.UpgradeLockRegather, SfxBus.UI, volume: 0.5f), "upgrade_lock_regather"),
             };
         }
     }

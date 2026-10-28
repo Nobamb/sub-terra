@@ -120,6 +120,23 @@ namespace SubTerra.App.UI.HUD
 
         public GasRiskLevel Target => target;
 
+        /// <summary>B-168: 지금 가중치가 더 큰 단계(둘 다 0이면 Safe). 읽기 전용이며 값 계산에는 쓰지 않는다.</summary>
+        public GasRiskLevel DominantLevel
+        {
+            get
+            {
+                if (cautionWeight <= 0f && criticalWeight <= 0f)
+                {
+                    return GasRiskLevel.Safe;
+                }
+
+                return criticalWeight >= cautionWeight ? GasRiskLevel.Hazard : GasRiskLevel.Elevated;
+            }
+        }
+
+        /// <summary>B-168: 우세 단계의 맥박 위상(0~1). 0.5에서 비네팅이 가장 밝다.</summary>
+        public float DominantPhase => DominantLevel == GasRiskLevel.Hazard ? criticalPhase : cautionPhase;
+
         /// <summary>목표 단계를 바꾼다. 진입·단계 변경·이탈에 맞춰 보간 속도를 고른다.</summary>
         public void SetLevel(GasRiskLevel level)
         {

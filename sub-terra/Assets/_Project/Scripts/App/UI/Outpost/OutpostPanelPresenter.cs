@@ -67,13 +67,15 @@ namespace SubTerra.App.UI.Outpost
             view?.SetBusy(false);
         }
 
+        public const string OutpostFacilityFailureKey = "outpost.facility";
+
         public void ToggleInteractionPanel()
         {
             if (service != null
                 && service.TryGetPowerDisconnectedInteractionMessage(out var message))
             {
                 CloseInteractionPanel();
-                SfxPlayer.Play(SfxId.UiCancelFail);
+                FailureFeedback.Play(SfxId.UiCancelFail, OutpostFacilityFailureKey);
                 ShowFacilityWarning(message);
                 return;
             }
@@ -83,7 +85,7 @@ namespace SubTerra.App.UI.Outpost
             {
                 CloseServicePanel();
                 // 쿨타임 팝업이 뜨든 문구로 대신하든 실패음은 한 번이다.
-                SfxPlayer.Play(SfxId.UiCancelFail);
+                FailureFeedback.Play(SfxId.UiCancelFail, OutpostFacilityFailureKey);
                 if (!TryShowFacilityCooldown())
                 {
                     ShowFacilityWarning(cooldownMessage);

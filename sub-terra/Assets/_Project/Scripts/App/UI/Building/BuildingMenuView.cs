@@ -227,7 +227,13 @@ namespace SubTerra.App.UI.Building
 
         public void SetVisible(bool visible)
         {
-            var wasVisible = gameObject.activeSelf && (panelRoot == null || panelRoot.activeSelf);
+            if (!visible)
+            {
+                TerminalWindowOpenMotion.Close(gameObject, HideImmediately);
+                return;
+            }
+            var wasVisible = gameObject.activeSelf && (panelRoot == null || panelRoot.activeSelf)
+                && !TerminalWindowOpenMotion.IsClosingWindow(gameObject);
             // panelRoot와 루트 GO를 함께 맞춰 X 버튼만 남거나 내용만 사라지는 상태를 막는다.
             if (panelRoot != null)
             {
@@ -242,7 +248,12 @@ namespace SubTerra.App.UI.Building
             {
                 TerminalWindowOpenMotion.Open(gameObject);
             }
-            if (!visible) TerminalWindowOpenMotion.Stop(gameObject);
+        }
+
+        private void HideImmediately()
+        {
+            if (panelRoot != null) panelRoot.SetActive(false);
+            gameObject.SetActive(false);
         }
 
         public bool HasRequiredReferences()

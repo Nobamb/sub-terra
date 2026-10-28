@@ -33,11 +33,18 @@ namespace SubTerra.App.UI.SurfaceBase
         [SerializeField] private Button upgradeCloseButton;
         [SerializeField] private GameObject upgradeRoot;
 
-        public bool IsUpgradeVisible => upgradeRoot != null && upgradeRoot.activeSelf;
+        private UpgradeWindowMotion upgradeMotion;
+
+        // 닫는 연출 중에는 이미 닫힌 것으로 본다(광산 초기화 확인창과 같은 규칙).
+        public bool IsUpgradeVisible => upgradeRoot != null && upgradeRoot.activeSelf
+            && (upgradeMotion == null || !upgradeMotion.IsClosing);
         public bool IsTopUpgradeWindow(Canvas canvas) =>
             IsUpgradeVisible && PopupWindowSorting.Contains(canvas, upgradeRoot);
         public event Action UpgradeClicked;
         public event Action UpgradeCloseClicked;
+
+        /// <summary>B-167 열기·닫기 연출. upgradeRoot가 없으면 null.</summary>
+        public UpgradeWindowMotion UpgradeMotion => EnsureUpgradeMotion();
 
         public void SetResources(float cargo, int gold)
         {
@@ -45,17 +52,61 @@ namespace SubTerra.App.UI.SurfaceBase
             if (goldText != null) goldText.text = "골드 <color=#FFE66B>" + gold + "G</color>";
         }
 
+        /// <summary>업그레이드 버튼·ESC·X키·창 X 버튼이 함께 쓰는 열기 경로. 자물쇠가 부서지며 창이 펼쳐진다.</summary>
+        public void RequestUpgradeOpen()
+        {
+            var motion = EnsureUpgradeMotion();
+            if (motion == null) return;
+            if (motion.IsOpening || motion.IsSettled) return;
+            ShowUpgradeRoot();
+            motion.BeginOpen();
+        }
+
+        /// <summary>함께 쓰는 닫기 경로. 루트 비활성화는 닫기 연출이 끝난 뒤.</summary>
+        public void RequestUpgradeClose()
+        {
+            var motion = EnsureUpgradeMotion();
+            if (motion == null || !IsUpgradeVisible) return;
+            motion.BeginClose(HideUpgradeRoot);
+        }
+
+        /// <summary>연출 없이 즉시 켜고 끈다(설정 창 강제 숨김·Bind·OnDisable·기존 검사). 진행 중 연출은 끝 상태로 정리한다.</summary>
         public void SetUpgradeVisible(bool visible)
         {
             if (upgradeRoot == null) return;
-            var dimmer = upgradeRoot.GetComponent<Canvas>();
+            var motion = EnsureUpgradeMotion();
             if (!visible)
             {
-                PopupWindowSorting.Remove(dimmer);
-                upgradeRoot.SetActive(false);
+                if (motion != null) motion.CompleteImmediately(false);
+                HideUpgradeRoot();
                 return;
             }
 
+            ShowUpgradeRoot();
+            if (motion != null) motion.CompleteImmediately(true);
+        }
+
+        private UpgradeWindowMotion EnsureUpgradeMotion()
+        {
+            if (upgradeMotion != null || upgradeRoot == null) return upgradeMotion;
+            upgradeMotion = upgradeRoot.GetComponent<UpgradeWindowMotion>();
+            if (upgradeMotion == null) upgradeMotion = upgradeRoot.AddComponent<UpgradeWindowMotion>();
+            // B-169: 자물쇠 연출 훅에 소리를 한 번만 붙인다(광산 PanelToggleController와 같은 연결).
+            UpgradeWindowMotionSfx.Attach(upgradeMotion);
+            return upgradeMotion;
+        }
+
+        private void HideUpgradeRoot()
+        {
+            if (upgradeRoot == null) return;
+            PopupWindowSorting.Remove(upgradeRoot.GetComponent<Canvas>());
+            upgradeRoot.SetActive(false);
+        }
+
+        private void ShowUpgradeRoot()
+        {
+            if (upgradeRoot == null) return;
+            var dimmer = upgradeRoot.GetComponent<Canvas>();
             upgradeRoot.SetActive(true);
             upgradeRoot.transform.SetAsLastSibling();
             // 딤 이미지가 카드 캔버스보다 앞에 있으면 반투명 검은 막이 업그레이드 클릭을 전부 삼킨다.
@@ -722,8 +773,8 @@ namespace SubTerra.App.UI.SurfaceBase
             if (reduceMotionLabel != null)
             {
                 reduceMotionLabel.text = LocalizationService.Get(
-                    "settings.reduce_motion",
-                    "화면 진동 억제");
+                    "settings.reduce_animation_effects",
+                    "애니메이션 연출 감소");
             }
 
             if (languageLabel != null)

@@ -107,6 +107,19 @@ namespace SubTerra.App.UI.Outpost
             return OutpostTransferQuantity.ClampToAvailable(quantity, stored);
         }
 
+        public static int WithdrawAmount(int quantity, string mineralId, InventorySnapshot storage, InventorySnapshot cargo)
+        {
+            if (storage == null || cargo == null || string.IsNullOrEmpty(mineralId)) return 0;
+            foreach (var stack in storage.Stacks)
+            {
+                if (stack.MineralId != mineralId) continue;
+                int requested = WithdrawAmount(quantity, stack.Quantity);
+                int fitting = InventoryCalculator.MaxFittingUnits(cargo.MaxCapacity - cargo.CurrentWeight, stack.UnitWeight);
+                return System.Math.Min(requested, fitting);
+            }
+            return 0;
+        }
+
         /// <summary>등장 연출에 튀어나올 광물 ID(화물 → 보관 순, 중복 없이 최대 max개).</summary>
         public static List<string> PopIds(InventorySnapshot playerCargo, InventorySnapshot storage, int max)
         {

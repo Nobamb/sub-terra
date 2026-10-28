@@ -81,6 +81,12 @@ namespace SubTerra.App.UI.Progression
             return deepZoneUnlockPopupRoot != null && deepZoneUnlockPopupRoot.activeInHierarchy;
         }
 
+        // B-167: 업그레이드 창이 자물쇠를 부수며 열리는 동안에도 썸네일 해금 연출을 미룬다.
+        private bool IsDeepZoneRevealBlocked()
+        {
+            return IsDeepZoneUnlockPopupVisible() || SubTerra.App.UI.SurfaceBase.UpgradeWindowMotion.IsOpeningFor(transform);
+        }
+
         private void OnEnable()
         {
             ApplyWindowTitle();
@@ -564,10 +570,10 @@ namespace SubTerra.App.UI.Progression
             lastDeepZoneAccess = access;
             if (treeView != null)
             {
-                // B-155: 썸네일 해금 연출이 해금 창에 가리지 않도록 창이 보이는 동안(닫는 연출 포함) 미룬다.
+                // B-155: 썸네일 해금 연출이 해금 창에 가리지 않도록 창이 보이는 동안(닫는 연출 포함), B-167 업그레이드 창이 열리는 동안 미룬다.
                 if (treeView.DeepZoneRevealBlocked == null)
                 {
-                    treeView.DeepZoneRevealBlocked = IsDeepZoneUnlockPopupVisible;
+                    treeView.DeepZoneRevealBlocked = IsDeepZoneRevealBlocked;
                 }
 
                 treeView.SetDeepZoneStatus(access);

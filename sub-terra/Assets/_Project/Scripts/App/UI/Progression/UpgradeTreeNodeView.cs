@@ -1,7 +1,10 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
+using SubTerra.App.Audio;
 using SubTerra.App.Core.Data;
 using SubTerra.App.Progression;
+using SubTerra.Shared.Audio;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -27,7 +30,14 @@ namespace SubTerra.App.UI.Progression
         private const float ShakeDuration = 0.3f;
         private const float ShakeAmplitude = 9f;
         private const float LevelUpDuration = 0.65f;
-        private const float UnlockNodeDuration = 0.7f;
+
+        // B-169: 심층 썸네일 해금과 같은 1초 시간표. 노드 자물쇠는 썸네일 것의 1/1.3 크기라 떨어지는 거리만 비율로 줄인다.
+        public const float UnlockDuration = 1f;
+        private const float ThumbnailLockScale = 1.3f;
+        private const float UnlockShackleKick = 6f;
+        private const float UnlockDrop = 40f / ThumbnailLockScale;
+        private const float UnlockDrift = DeepZoneThumbnailStrip.LockDrift / ThumbnailLockScale;
+        private const float UnlockDropAngle = 25f;
 
         [SerializeField] private string upgradeId;
         [SerializeField] private Button button;
@@ -50,18 +60,33 @@ namespace SubTerra.App.UI.Progression
         private UpgradeSnapshot snapshot;
         private bool hasSnapshot;
         private bool selected;
+        // B-169: 해금 연출을 기다리는 동안 풀린 정보 위에 블라인드·자물쇠를 그대로 둔다. 창이 꺼져도 유지한다.
         private bool revealPending;
         private UpgradeNodeVisualState visualState = UpgradeNodeVisualState.Locked;
         private Coroutine shakeRoutine;
         private Coroutine levelUpRoutine;
-        private Coroutine unlockRoutine;
+        private bool unlockPlaying;
+        private float unlockElapsed;
+        private float unlockU;
+        private Action<SfxId> unlockCue;
+        private readonly List<SfxId> cueBuffer = new List<SfxId>();
+        private bool lockBaseCaptured;
+        private Vector2 lockBase;
+        private Vector2 shackleTopBase;
+        private Vector2 shackleRightBase;
 
         public string UpgradeId => upgradeId;
         public Sprite IconSprite => icon != null ? icon.sprite : null;
         public UpgradeNodeVisualState VisualState => visualState;
         public bool IsRevealPending => revealPending;
         public bool IsBlindVisible => blind != null && blind.alpha > 0.01f;
-        public bool IsAnimating => shakeRoutine != null || levelUpRoutine != null || unlockRoutine != null;
+        public float BlindAlpha => blind != null ? blind.alpha : 0f;
+        public bool IsLockVisible => lockRoot != null && lockRoot.gameObject.activeSelf;
+        public bool IsUnlockPlaying => unlockPlaying;
+        public bool IsAnimating => shakeRoutine != null || levelUpRoutine != null || unlockPlaying;
+
+        /// <summary>확인용: true면 Update가 해금 연출을 진행하지 않고 테스트가 StepUnlock으로 직접 진행한다.</summary>
+        public bool ManualTick { get; set; }
 
         public event Action<string> Clicked;
 
@@ -85,7 +110,6 @@ namespace SubTerra.App.UI.Progression
         {
             StopRoutines();
             ResetVisuals();
-            revealPending = false;
             if (hasSnapshot)
             {
                 Apply(snapshot);
@@ -95,9 +119,17 @@ namespace SubTerra.App.UI.Progression
         private void OnDisable()
         {
             // 연출 도중 닫아도 확정된 구매 결과는 State에 있으므로 시각 상태만 정리한다.
+            // 해금 연출 중이었으면 끝 상태(풀림)로, 아직 시작 안 한 대기는 다음에 열 때 재생한다.
             StopRoutines();
             ResetVisuals();
-            revealPending = false;
+        }
+
+        private void Update()
+        {
+            if (unlockPlaying && !ManualTick)
+            {
+                StepUnlock(Time.unscaledDeltaTime);
+            }
         }
 
         public void OnPointerClick(PointerEventData eventData)
@@ -140,7 +172,7 @@ namespace SubTerra.App.UI.Progression
                     : UpgradeNodeVisualState.Insufficient;
             }
 
-            // 정보 공개는 확정된 상태만 따른다. 해금 연출 대기 때문에 다시 가리지 않는다.
+            // 정보는 확정된 상태대로 채운다. B-169: 해금 연출 대기 중에는 그 위를 블라인드·자물쇠로 가린 채 둔다.
             var showContent = unlocked;
             if (icon != null)
             {
@@ -163,9 +195,34 @@ namespace SubTerra.App.UI.Progression
                         : "Lv." + value.CurrentLevel + "/" + value.MaximumLevel;
             }
 
+            if (unlockPlaying)
+            {
+                // 연출 중 다시 그려도 지금 장면을 유지한다(블라인드·자물쇠는 StepUnlock이 그린다).
+                return;
+            }
+
             ApplyStateColors();
-            SetBlindVisible(!unlocked);
+            SetBlindVisible(!unlocked || revealPending);
         }
+
+        /// <summary>B-169: UpgradeTreeView가 해금 대기 여부를 알려 준다. 대기면 풀린 뒤에도 잠긴 모습으로 둔다.</summary>
+        public void SetRevealPending(bool pending)
+        {
+            if (revealPending == pending || unlockPlaying)
+            {
+                return;
+            }
+
+            revealPending = pending;
+            if (hasSnapshot)
+            {
+                ApplyStateColors();
+                SetBlindVisible(!snapshot.IsUnlocked || revealPending);
+            }
+        }
+
+        // 대기 중에는 테두리·준비 표시도 잠김 색으로 둬 풀린 상태가 미리 드러나지 않게 한다.
+        private UpgradeNodeVisualState DisplayState => revealPending ? UpgradeNodeVisualState.Locked : visualState;
 
         private void ApplyStateColors()
         {
@@ -173,7 +230,8 @@ namespace SubTerra.App.UI.Progression
             var outlineAlpha = 0.9f;
             var levelColor = UpgradeTreeTween.TextDim;
             var iconAlpha = 1f;
-            switch (visualState)
+            var shown = DisplayState;
+            switch (shown)
             {
                 case UpgradeNodeVisualState.Ready:
                     outlineColor = UpgradeTreeTween.Cyan;
@@ -209,7 +267,7 @@ namespace SubTerra.App.UI.Progression
 
             if (readyMark != null)
             {
-                readyMark.enabled = visualState == UpgradeNodeVisualState.Ready;
+                readyMark.enabled = shown == UpgradeNodeVisualState.Ready;
             }
 
             if (selection != null)
@@ -257,8 +315,15 @@ namespace SubTerra.App.UI.Progression
 
             if (lockRoot != null)
             {
-                lockRoot.localRotation = Quaternion.identity;
-                lockRoot.anchoredPosition = new Vector2(0f, lockRoot.anchoredPosition.y);
+                if (lockBaseCaptured)
+                {
+                    ApplyLockPose(new UnlockLockPose(Vector2.zero, 0f, 1f, 0f, 1f, true));
+                }
+                else
+                {
+                    lockRoot.localRotation = Quaternion.identity;
+                    lockRoot.anchoredPosition = new Vector2(0f, lockRoot.anchoredPosition.y);
+                }
             }
 
             for (var i = 0; i < lockParts.Length; i++)
@@ -290,7 +355,7 @@ namespace SubTerra.App.UI.Progression
             if (hasSnapshot)
             {
                 ApplyStateColors();
-                SetBlindVisible(!snapshot.IsUnlocked);
+                SetBlindVisible(!snapshot.IsUnlocked || revealPending);
             }
         }
 
@@ -298,7 +363,14 @@ namespace SubTerra.App.UI.Progression
         {
             shakeRoutine = null;
             levelUpRoutine = null;
-            unlockRoutine = null;
+            if (unlockPlaying)
+            {
+                // 시작한 해금 연출은 끝 상태(풀림)로 맞춘다.
+                unlockPlaying = false;
+                revealPending = false;
+                unlockCue = null;
+            }
+
             StopAllCoroutines();
         }
 
@@ -413,8 +485,13 @@ namespace SubTerra.App.UI.Progression
             levelUpRoutine = null;
         }
 
-        // ---- 신규 해금: 정보 공개와 별개로 파손·청록 점등 피드백만 재생 ----
-        public void PlayUnlock(float delay)
+        // ---- B-169 신규 해금: 흔들림 → 딸깍 → 떨어지며 기울어 사라짐 → 블라인드가 걷히며 청록 발광 ----
+
+        /// <summary>
+        /// 해금 연출을 처음부터 시작한다. cue가 있으면 0/0.2/0.65 시점을 넘는 프레임에 소리를 넘긴다(없으면 연출만).
+        /// 창이 꺼져 있으면 끝 상태(풀림)로 바로 맞춘다.
+        /// </summary>
+        public void BeginUnlock(Action<SfxId> cue)
         {
             if (!isActiveAndEnabled || body == null)
             {
@@ -427,74 +504,15 @@ namespace SubTerra.App.UI.Progression
                 return;
             }
 
-            if (unlockRoutine != null)
-            {
-                StopCoroutine(unlockRoutine);
-            }
-
-            revealPending = true;
-            unlockRoutine = StartCoroutine(UnlockRoutine(delay));
-        }
-
-        private IEnumerator UnlockRoutine(float delay)
-        {
-            if (delay > 0f)
-            {
-                yield return UpgradeTreeTween.WaitUnscaled(delay);
-            }
-
-            // 1) 자물쇠 진동 (0.2s)
-            yield return UpgradeTreeTween.Run(0.2f, t =>
-            {
-                if (lockRoot != null)
-                {
-                    lockRoot.localRotation = Quaternion.Euler(
-                        0f,
-                        0f,
-                        Mathf.Sin(t * Mathf.PI * 8f) * 12f * (0.5f + t * 0.5f));
-                }
-            });
-
-            // 2) 파손: 자물쇠 숨기고 파편 소수를 흩뿌린다 (0.2s)
+            CaptureLockBase();
+            unlockPlaying = true;
+            unlockElapsed = 0f;
+            unlockU = UnlockRevealTimeline.BeforeStart;
+            unlockCue = cue;
             if (lockRoot != null)
             {
-                lockRoot.localRotation = Quaternion.identity;
+                lockRoot.gameObject.SetActive(true);
             }
-
-            for (var i = 0; i < lockParts.Length; i++)
-            {
-                if (lockParts[i] != null)
-                {
-                    lockParts[i].enabled = false;
-                }
-            }
-
-            var origin = lockRoot != null ? lockRoot.anchoredPosition : Vector2.zero;
-            for (var i = 0; i < fragments.Length; i++)
-            {
-                if (fragments[i] != null)
-                {
-                    fragments[i].gameObject.SetActive(true);
-                    UpgradeTreeTween.SetAlpha(fragments[i], 1f);
-                    fragments[i].rectTransform.anchoredPosition = origin;
-                }
-            }
-
-            yield return UpgradeTreeTween.Run(0.2f, t =>
-            {
-                for (var i = 0; i < fragments.Length; i++)
-                {
-                    if (fragments[i] == null)
-                    {
-                        continue;
-                    }
-
-                    var angle = (30f + 360f / Mathf.Max(1, fragments.Length) * i) * Mathf.Deg2Rad;
-                    var direction = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle) - 0.35f * t);
-                    fragments[i].rectTransform.anchoredPosition = origin + direction * (46f * UpgradeTreeTween.EaseOut(t));
-                    UpgradeTreeTween.SetAlpha(fragments[i], 1f - t);
-                }
-            });
 
             for (var i = 0; i < fragments.Length; i++)
             {
@@ -504,34 +522,155 @@ namespace SubTerra.App.UI.Progression
                 }
             }
 
-            // 확정된 정보를 유지한 채 청록 점등만 재생한다.
+            SampleUnlock(0f);
+        }
+
+        /// <summary>해금 연출을 dt만큼 진행한다. Update와 테스트가 같은 경로를 쓴다.</summary>
+        public void StepUnlock(float deltaTime)
+        {
+            if (!unlockPlaying)
+            {
+                return;
+            }
+
+            unlockElapsed += Mathf.Max(0f, deltaTime);
+            SampleUnlock(Mathf.Clamp01(unlockElapsed / UnlockDuration));
+        }
+
+        private void SampleUnlock(float u)
+        {
+            cueBuffer.Clear();
+            UnlockRevealTimeline.CollectCues(unlockU, u, cueBuffer);
+            var crossedGlow = SfxPlayback.Crossed(unlockU, u, UnlockRevealTimeline.GlowAt);
+            unlockU = u;
+
+            var pose = UnlockRevealTimeline.SampleLock(u, UnlockShackleKick, UnlockDrop, UnlockDropAngle, UnlockDrift);
+            if (lockRoot != null)
+            {
+                if (pose.Visible)
+                {
+                    ApplyLockPose(pose);
+                }
+
+                lockRoot.gameObject.SetActive(pose.Visible);
+            }
+
+            if (crossedGlow)
+            {
+                // 자물쇠가 사라지는 순간부터 풀린 색으로 그린다.
+                revealPending = false;
+                ApplyStateColors();
+            }
+
+            var reveal = u < UnlockRevealTimeline.FallEnd
+                ? 0f
+                : (u - UnlockRevealTimeline.FallEnd) / (1f - UnlockRevealTimeline.FallEnd);
+            if (blind != null)
+            {
+                blind.alpha = 1f - UpgradeTreeTween.EaseOut(reveal);
+            }
+
+            UpgradeTreeTween.SetColor(glow, UpgradeTreeTween.Cyan, reveal > 0f ? 0.9f * UpgradeTreeTween.Pulse(reveal) : 0f);
+
+            for (var i = 0; i < cueBuffer.Count; i++)
+            {
+                Raise(cueBuffer[i]);
+            }
+
+            if (u >= 1f)
+            {
+                FinishUnlock();
+            }
+        }
+
+        private void FinishUnlock()
+        {
+            unlockPlaying = false;
+            unlockCue = null;
             revealPending = false;
+            UpgradeTreeTween.SetAlpha(glow, 0f);
+            if (lockBaseCaptured)
+            {
+                ApplyLockPose(new UnlockLockPose(Vector2.zero, 0f, 1f, 0f, 1f, true));
+            }
+
             if (hasSnapshot)
             {
                 Apply(snapshot);
             }
+        }
 
-            if (lockRoot != null)
+        private void Raise(SfxId id)
+        {
+            if (unlockCue == null)
             {
-                lockRoot.gameObject.SetActive(false);
+                return;
             }
 
-            yield return UpgradeTreeTween.Run(UnlockNodeDuration - 0.4f, t =>
+            try
             {
-                UpgradeTreeTween.SetColor(glow, UpgradeTreeTween.Cyan, 0.9f * UpgradeTreeTween.Pulse(Mathf.Clamp01((t - 0.2f) / 0.8f)));
-            });
+                unlockCue(id);
+            }
+            catch (Exception exception)
+            {
+                Debug.LogException(exception);
+            }
+        }
 
-            SetBlindVisible(!hasSnapshot || !snapshot.IsUnlocked);
-            UpgradeTreeTween.SetAlpha(glow, 0f);
+        private void CaptureLockBase()
+        {
+            if (lockBaseCaptured || lockRoot == null)
+            {
+                return;
+            }
+
+            lockBase = new Vector2(0f, lockRoot.anchoredPosition.y);
+            var top = FindLockPart("ShackleTop");
+            var right = FindLockPart("ShackleRight");
+            shackleTopBase = top != null ? top.rectTransform.anchoredPosition : Vector2.zero;
+            shackleRightBase = right != null ? right.rectTransform.anchoredPosition : Vector2.zero;
+            lockBaseCaptured = true;
+        }
+
+        private void ApplyLockPose(UnlockLockPose pose)
+        {
+            if (lockRoot == null)
+            {
+                return;
+            }
+
+            lockRoot.anchoredPosition = lockBase + pose.Offset;
+            lockRoot.localRotation = Quaternion.Euler(0f, 0f, pose.Angle);
+            lockRoot.localScale = new Vector3(pose.Scale, pose.Scale, 1f);
+            var top = FindLockPart("ShackleTop");
+            if (top != null)
+            {
+                top.rectTransform.anchoredPosition = shackleTopBase + new Vector2(0f, pose.ShackleLift);
+            }
+
+            var right = FindLockPart("ShackleRight");
+            if (right != null)
+            {
+                right.rectTransform.anchoredPosition = shackleRightBase + new Vector2(0f, pose.ShackleLift);
+            }
+
             for (var i = 0; i < lockParts.Length; i++)
             {
-                if (lockParts[i] != null)
+                UpgradeTreeTween.SetAlpha(lockParts[i], pose.Alpha);
+            }
+        }
+
+        private Image FindLockPart(string partName)
+        {
+            for (var i = 0; i < lockParts.Length; i++)
+            {
+                if (lockParts[i] != null && lockParts[i].name == partName)
                 {
-                    lockParts[i].enabled = true;
+                    return lockParts[i];
                 }
             }
 
-            unlockRoutine = null;
+            return null;
         }
     }
 }
