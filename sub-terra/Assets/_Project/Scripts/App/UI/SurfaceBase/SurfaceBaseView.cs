@@ -625,7 +625,6 @@ namespace SubTerra.App.UI.SurfaceBase
             }
 
             if (visible && controlSchemePanel == null) controlSchemePanel = ControlSchemePanel.Attach(settingsRoot);
-            if (visible) SetUpgradeVisible(false);
             if (!visible)
             {
                 var skin = settingsRoot.GetComponent<SubTerra.App.UI.MainMenu.SettingsMenuSkin>();
