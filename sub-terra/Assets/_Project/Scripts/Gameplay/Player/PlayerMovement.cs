@@ -274,7 +274,24 @@ namespace SubTerra.Gameplay.Player
                 body.linearVelocityX,
                 targetVelocity,
                 rate * Time.fixedDeltaTime);
+            // 공중에서 벽/발판 옆면을 계속 밀면 마찰과 모서리 반력이 낙하를 받친다.
+            // 바닥으로 인정되지 않는 접점에는 밀어 넣지 않고, 반대 방향 이탈은 허용한다.
+            if (!IsGrounded && !IsClimbing && IsPushingIntoSide(nextVelocityX))
+                nextVelocityX = 0f;
             body.linearVelocity = new Vector2(nextVelocityX, body.linearVelocityY);
+        }
+
+        private bool IsPushingIntoSide(float velocityX)
+        {
+            int count = body.GetContacts(contactBuffer);
+            for (int i = 0; i < count; i++)
+            {
+                var contact = contactBuffer[i];
+                if (contact.normal.y < minGroundNormalY && contact.normal.x * velocityX < -0.001f)
+                    return true;
+            }
+
+            return false;
         }
 
         /// <summary>

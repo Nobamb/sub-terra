@@ -819,6 +819,14 @@ namespace SubTerra.App.UI.Tutorial
             }
         }
 
+        public bool TryCloseDetailsPopup(Canvas topWindow)
+        {
+            if (detailsRoot == null || !detailsRoot.activeInHierarchy
+                || !PopupWindowSorting.Contains(topWindow, detailsRoot)) return false;
+            if (!TerminalWindowOpenMotion.IsClosingWindow(detailsRoot)) OnDetailsDismissClicked();
+            return true;
+        }
+
         public bool TryCloseClaimPopup(Canvas topWindow)
         {
             if (claimRoot == null || !claimRoot.activeInHierarchy

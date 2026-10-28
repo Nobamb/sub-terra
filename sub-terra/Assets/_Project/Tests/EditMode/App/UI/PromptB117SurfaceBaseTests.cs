@@ -17,6 +17,28 @@ namespace SubTerra.App.Tests.UI
         private const string PrefabPath = "Assets/_Project/Prefabs/UI/SurfaceBasePanel.prefab";
 
         [Test]
+        public void Issue249_InventoryReusesMinePrefabAndKeepsResetInsideScreen()
+        {
+            var root = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath);
+            var content = root.transform.Find("SurfaceBaseContent");
+            var modal = content.Find("InventoryModal");
+            var inventory = modal.GetComponentInChildren<SubTerra.App.UI.Inventory.InventoryPanelView>(true);
+            Assert.That(modal.gameObject.activeSelf, Is.False);
+            Assert.That(PrefabUtility.GetPrefabAssetPathOfNearestInstanceRoot(inventory.gameObject),
+                Is.EqualTo("Assets/_Project/Prefabs/UI/InventoryPanel.prefab"));
+            Assert.That(((RectTransform)inventory.transform).anchoredPosition, Is.EqualTo(Vector2.zero));
+            var view = new SerializedObject(root.GetComponent<SurfaceBaseView>());
+            Assert.That(view.FindProperty("inventoryPanel").objectReferenceValue, Is.EqualTo(inventory));
+            Assert.That(view.FindProperty("inventoryButton").objectReferenceValue,
+                Is.EqualTo(content.Find("InventoryButton").GetComponent<Button>()));
+            var binder = new SerializedObject(root.GetComponent<SurfaceBaseBinder>());
+            Assert.That(binder.FindProperty("inventoryBinder").objectReferenceValue,
+                Is.EqualTo(inventory.GetComponent<SubTerra.App.UI.Inventory.InventoryPanelBinder>()));
+            var reset = (RectTransform)content.Find("ResetMineButton");
+            Assert.That(reset.anchoredPosition.y - 177f / 2f, Is.GreaterThan(-540f));
+        }
+
+        [Test]
         public void Issue209_SurfaceOKeyUsesQuitPolicyAndDefersWhileSaving()
         {
             const string editModeInput = "RUN_PLAYER_UPDATES_IN_EDIT_MODE";
@@ -82,7 +104,7 @@ namespace SubTerra.App.Tests.UI
             Assert.That(icon.GetComponent<LayoutElement>().preferredWidth, Is.EqualTo(50f));
             Assert.That(icon.rectTransform.sizeDelta.y, Is.EqualTo(50f));
             Assert.That(quest.sizeDelta, Is.EqualTo(new Vector2(386f, 98f)));
-            Assert.That(quest.anchoredPosition, Is.EqualTo(new Vector2(-426f, -145f)));
+            Assert.That(quest.anchoredPosition, Is.EqualTo(new Vector2(-213f, -145f)));
         }
 
         [Test]
@@ -92,14 +114,16 @@ namespace SubTerra.App.Tests.UI
             var quest = (RectTransform)content.Find("QuestButton");
             var sell = (RectTransform)content.Find("OpenSellButton");
             var upgrade = (RectTransform)content.Find("UpgradeButton");
+            var inventory = (RectTransform)content.Find("InventoryButton");
             Assert.That(quest.sizeDelta, Is.EqualTo(sell.sizeDelta));
             Assert.That(upgrade.sizeDelta, Is.EqualTo(sell.sizeDelta));
-            Assert.That(quest.anchoredPosition.y, Is.EqualTo(sell.anchoredPosition.y));
-            Assert.That(upgrade.anchoredPosition.y, Is.EqualTo(sell.anchoredPosition.y));
-            Assert.That(quest.anchoredPosition.x, Is.LessThan(sell.anchoredPosition.x));
-            Assert.That(upgrade.anchoredPosition.x - sell.anchoredPosition.x,
-                Is.EqualTo(sell.anchoredPosition.x - quest.anchoredPosition.x));
-            Assert.That(sell.anchoredPosition.x - quest.anchoredPosition.x, Is.GreaterThan(quest.sizeDelta.x));
+            Assert.That(inventory.sizeDelta, Is.EqualTo(sell.sizeDelta));
+            Assert.That(quest.anchoredPosition.y, Is.EqualTo(upgrade.anchoredPosition.y));
+            Assert.That(sell.anchoredPosition.y, Is.EqualTo(inventory.anchoredPosition.y));
+            Assert.That(quest.anchoredPosition.x, Is.EqualTo(sell.anchoredPosition.x));
+            Assert.That(upgrade.anchoredPosition.x, Is.EqualTo(inventory.anchoredPosition.x));
+            Assert.That(upgrade.anchoredPosition.x - quest.anchoredPosition.x, Is.GreaterThan(quest.sizeDelta.x));
+            Assert.That(quest.anchoredPosition.y - sell.anchoredPosition.y, Is.GreaterThan(quest.sizeDelta.y));
             Assert.That(quest.GetComponentInChildren<TMP_Text>(true).text, Is.EqualTo("퀘스트"));
             Assert.That(quest.GetComponent<SurfaceBaseButtonFeedback>(), Is.Not.Null);
             Assert.That(quest.GetComponent<Button>().targetGraphic.raycastTarget, Is.True);
@@ -132,8 +156,13 @@ namespace SubTerra.App.Tests.UI
                 Assert.That(title.text, Is.EqualTo(DemoObjectiveCatalog.All[8].Title));
                 view.OnDetailsPrevClicked();
                 Assert.That(title.text, Is.EqualTo(DemoObjectiveCatalog.All[7].Title));
+                var detailsMotion = details.GetComponent<TerminalWindowOpenMotion>();
+                detailsMotion.Advance(1f);
                 view.OnDetailsDismissClicked();
                 Assert.That(panel.IsOpen, Is.False);
+                Assert.That(details.activeInHierarchy, Is.True, "The parent must survive the closing animation.");
+                Assert.That(detailsMotion.IsClosing, Is.True);
+                detailsMotion.Advance(1f);
                 Assert.That(details.activeInHierarchy, Is.False);
                 Assert.That(panel.Open(state), Is.True);
                 Assert.That(panel.TryCloseTopWindow(PopupWindowSorting.Top), Is.True);

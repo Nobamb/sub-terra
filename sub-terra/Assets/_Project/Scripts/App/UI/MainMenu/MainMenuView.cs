@@ -729,8 +729,8 @@ namespace SubTerra.App.UI.MainMenu
             if (reduceMotionLabel != null)
             {
                 reduceMotionLabel.text = LocalizationService.Get(
-                    "settings.reduce_motion",
-                    "화면 진동 억제");
+                    "settings.reduce_animation_effects",
+                    "애니메이션 연출 감소");
             }
 
             if (languageLabel != null)

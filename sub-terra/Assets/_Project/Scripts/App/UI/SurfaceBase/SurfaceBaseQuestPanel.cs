@@ -75,7 +75,7 @@ namespace SubTerra.App.UI.SurfaceBase
             presenter?.Dispose();
             presenter = null;
             director = null;
-            if (questView != null) questView.gameObject.SetActive(false);
+            // 상세창이 역순 닫힘을 마칠 때까지 상위 Canvas를 유지한다.
         }
 
         private void RefreshProgress() => director?.RestoreFromProgress(boundState?.Progress);
