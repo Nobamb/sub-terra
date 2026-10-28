@@ -4,7 +4,8 @@
 
 - 저장소 `C:/Users/jeone/sub-terra`, Unity Hub 첫 프로젝트 `C:/Users/jeone/sub-terra/sub-terra`, Unity 6000.5.4f1.
 - 기존 PR #250 / `codex/issue-220-mine-parallax-background`에서 수정. 신규 배경 PR은 만들지 않는다.
-- `origin/main` `adc834e0`를 충돌 없이 로컬 통합했다. 이 기록 작성 시 병합 커밋 및 배경 후속 게시 전이다.
+- `origin/main` `adc834e0` 통합 후, #255·#256이 병합된 최신 main `8e1f5f92`도 충돌 없이 통합했다.
+- 게시: 배경 구현 `9708e281`, main 동기화 `b3975fb3` / `373f5306`. 기존 PR #250에 푸시하고 설명과 비교 이미지를 갱신했다. 새 PR이나 main 직접 병합은 하지 않았다.
 - 리뷰: https://github.com/Nobamb/sub-terra/pull/250#issuecomment-6410110641
 - 직전 자원 획득 연출은 별도 커밋 `cfaa8536`, PR #259로 게시했다. 이 배경 브랜치에 미병합 #259를 섞지 않는다.
 
