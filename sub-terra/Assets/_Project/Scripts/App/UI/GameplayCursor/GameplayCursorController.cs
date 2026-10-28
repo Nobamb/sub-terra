@@ -31,6 +31,7 @@ namespace SubTerra.App.UI.GameplayCursor
 
         private static Sprite glowSprite;
         private static Sprite ringSprite;
+        private static Sprite drillChargeSprite;
 
         [SerializeField] private GameplayCursorSkin skin;
 
@@ -41,6 +42,8 @@ namespace SubTerra.App.UI.GameplayCursor
         private Image visual;
         private Image glow;
         private Image ring;
+        private Image drillCharge;
+        private Mask drillMask;
         private RectTransform particleRoot;
         private Particle[] particles;
         private float emitCarry;
@@ -56,6 +59,7 @@ namespace SubTerra.App.UI.GameplayCursor
         public Image Visual => visual;
         public Image Glow => glow;
         public Image Ring => ring;
+        public Image DrillCharge => drillCharge;
         public Canvas Canvas => canvasRoot != null ? canvasRoot.GetComponent<Canvas>() : null;
         public int ActiveParticleCount
         {
@@ -182,6 +186,16 @@ namespace SubTerra.App.UI.GameplayCursor
             visual = NewImage("Visual", hotspot, skin.drillFrames[0], Color.white);
             visual.preserveAspect = true;
             visualRect = visual.rectTransform;
+            // 원본 알파로 잘라 원뿔 밖에 색이 새지 않게 한다. 입력은 받지 않는다.
+            drillMask = visual.gameObject.AddComponent<Mask>();
+            drillMask.showMaskGraphic = true;
+            drillMask.enabled = false;
+            drillCharge = NewImage("DrillCharge", visualRect, DrillChargeSprite(), tuning.glowColor);
+            var chargeRect = drillCharge.rectTransform;
+            chargeRect.anchorMin = Vector2.zero;
+            chargeRect.anchorMax = Vector2.one;
+            chargeRect.offsetMin = chargeRect.offsetMax = Vector2.zero;
+            drillCharge.enabled = false;
             particleRoot = NewRect("TipParticles", hotspot);
             particleRoot.sizeDelta = Vector2.zero;
             // 빛은 그림 위 끝에 겹쳐야 하므로 드릴 뒤가 아닌 앞에 둔다.
@@ -222,6 +236,11 @@ namespace SubTerra.App.UI.GameplayCursor
                     (Mathf.PerlinNoise(jitterTime * frequency, 0.31f) - 0.5f) * 2f * amplitude,
                     (Mathf.PerlinNoise(0.73f, jitterTime * frequency) - 0.5f) * 2f * amplitude);
             visualRect.localScale = Vector3.one * model.PulseScale;
+
+            var charged = !claw && model.DrillCharge > 0.001f;
+            drillMask.enabled = charged;
+            drillCharge.enabled = charged;
+            if (charged) drillCharge.color = WithAlpha(skin.tuning.glowColor, model.DrillCharge * 0.5f);
 
             var tuning = skin.tuning;
             ring.enabled = model.RingAlpha > 0.001f;
@@ -365,6 +384,36 @@ namespace SubTerra.App.UI.GameplayCursor
             if (glowSprite != null) return glowSprite;
             glowSprite = ProceduralSprite(32, d => { var a = Mathf.Clamp01(1f - d); return a * a; });
             return glowSprite;
+        }
+
+        private static Sprite DrillChargeSprite()
+        {
+            if (drillChargeSprite != null) return drillChargeSprite;
+            const int n = 128;
+            var tex = new Texture2D(n, n, TextureFormat.RGBA32, false)
+            {
+                wrapMode = TextureWrapMode.Clamp,
+                hideFlags = HideFlags.HideAndDontSave
+            };
+            // B-151의 443px 칸: 왼쪽 위 (55,60)이 끝. 원뿔을 따라 넓어지되 몸통 전에서 끝낸다.
+            var tip = new Vector2(55f, 383f);
+            var axis = new Vector2(1f, -1f).normalized;
+            for (var y = 0; y < n; y++)
+                for (var x = 0; x < n; x++)
+                {
+                    var delta = new Vector2((x + 0.5f) * 443f / n, (y + 0.5f) * 443f / n) - tip;
+                    var along = Vector2.Dot(delta, axis);
+                    var across = Mathf.Abs(Vector2.Dot(delta, new Vector2(-axis.y, axis.x)));
+                    var width = Mathf.Max(0f, along) * 0.39f;
+                    var edge = Mathf.Clamp01((width - across) / 5f);
+                    var end = 1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(190f, 228f, along));
+                    var alpha = along >= 0f && along < 228f ? edge * end : 0f;
+                    tex.SetPixel(x, y, new Color(1f, 1f, 1f, alpha));
+                }
+            tex.Apply();
+            drillChargeSprite = Sprite.Create(tex, new Rect(0f, 0f, n, n), Vector2.one * 0.5f, 100f);
+            drillChargeSprite.hideFlags = HideFlags.HideAndDontSave;
+            return drillChargeSprite;
         }
 
         private static Sprite RingSprite()

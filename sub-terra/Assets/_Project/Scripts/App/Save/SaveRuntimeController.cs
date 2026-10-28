@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.IO;
+using SubTerra.App.Audio;
 using SubTerra.App.Core;
 using SubTerra.App.Core.Data;
 using SubTerra.App.Drone;
@@ -14,6 +15,7 @@ using SubTerra.App.Tutorial;
 using SubTerra.App.UI.HUD;
 using SubTerra.App.UI.MainMenu;
 using SubTerra.Shared;
+using SubTerra.Shared.Audio;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -353,6 +355,7 @@ namespace SubTerra.App.Save
                 return false;
             }
 
+            SfxPlayer.Play(SfxId.UiMineResetWhoosh);
             SaveCurrent(AutoSaveReason.MineReset);
             EnsureMineResetClockOverlay();
             mineResetClockOverlay?.RefreshFromState();
@@ -437,11 +440,27 @@ namespace SubTerra.App.Save
                 return;
             }
 
+            SaveBeforeQuit();
+            ShutdownApplication();
+        }
+
+        /// <summary>B-170: 종료 연출 전에 먼저 저장한다. 조건은 RequestQuit과 같다.</summary>
+        public void SaveBeforeQuit()
+        {
+            if (saveInProgress)
+            {
+                return;
+            }
+
             if (dirty && activeSlot > 0)
             {
                 SaveCurrent(AutoSaveReason.QuitRequested);
             }
+        }
 
+        /// <summary>B-170: 종료 연출이 끝난 뒤 실제로 끈다(에디터는 재생 멈춤, 빌드는 Application.Quit).</summary>
+        public void ShutdownApplication()
+        {
             // Editor Play Mode: Application.Quit만으로는 재생이 멈추지 않는다.
             // App 어셈블리는 UnityEditor를 참조하지 않으므로 리플렉션으로 isPlaying을 끈다.
             // Player 빌드: Application.Quit 경로.
@@ -1072,7 +1091,32 @@ namespace SubTerra.App.Save
             StartCoroutine(SaveAfterElevatorArrival(
                 arrivalSaveReason,
                 sceneLoader is ClockOffSceneLoader ? destinationScene : null));
+            if (toSurface)
+            {
+                StartCoroutine(PlayArrivalDingWhenSurfaceOpens());
+            }
+
             return true;
+        }
+
+        /// <summary>
+        /// B-164: 지상 도착음. 지상에는 문 그림이 없어 문 소리 없이 "딩"만 낸다.
+        /// Surface 씬이 열리고 엘리베이터가 Arrived일 때 한 번. 지연 로드가 실패하면 Blocked라 무음이다.
+        /// </summary>
+        private IEnumerator PlayArrivalDingWhenSurfaceOpens()
+        {
+            yield return null;
+            var deadline = Time.unscaledTime + ClockPowerOffMaxWaitSeconds + 3f;
+            while (SceneManager.GetActiveScene().name != SceneNames.SurfaceBase && Time.unscaledTime < deadline)
+            {
+                yield return null;
+            }
+
+            if (SceneManager.GetActiveScene().name == SceneNames.SurfaceBase
+                && ElevatorState == ElevatorTravelState.Arrived)
+            {
+                SfxPlayer.Play(SfxId.ElevatorArriveDing);
+            }
         }
 
         /// <summary>

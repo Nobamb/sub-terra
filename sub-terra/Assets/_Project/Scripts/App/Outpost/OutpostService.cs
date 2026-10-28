@@ -393,34 +393,27 @@ namespace SubTerra.App.Outpost
                     "플레이어 화물 수량 한도를 초과합니다."));
             }
 
-            var addedWeight = info.UnitWeight * transferQuantity;
-            if (addedWeight < 0f
-                || inventory.CurrentWeight + addedWeight > inventory.MaxCapacity + 0.0001f)
-            {
-                return Complete(Fail(
-                    OutpostOperationStatus.CapacityExceeded,
-                    OutpostOperationKind.Withdraw,
-                    "플레이어 화물 한도를 초과합니다."));
-            }
-
-            // 정확히 전량을 수용할 수 있음을 확인한 뒤 이동한다.
+            // 화물의 기존 부분 수용 규칙을 사용하고 실제로 받은 양만 보관함에서 차감한다.
             var addition = inventory.TryAddMineral(mineralId, transferQuantity);
-            if (addition.Status != InventoryMutationStatus.Success
-                || addition.AcceptedQuantity != transferQuantity)
+            if ((addition.Status != InventoryMutationStatus.Success && addition.Status != InventoryMutationStatus.PartialAccept)
+                || addition.AcceptedQuantity <= 0)
             {
                 return Complete(Fail(
                     OutpostOperationStatus.CapacityExceeded,
                     OutpostOperationKind.Withdraw,
-                    "플레이어 화물 이동에 실패했습니다."));
+                    "자원을 꺼낼 화물 공간이 부족합니다."));
             }
 
-            state.SetStorageQuantity(mineralId, storageQuantity - transferQuantity);
+            int accepted = addition.AcceptedQuantity;
+            state.SetStorageQuantity(mineralId, storageQuantity - accepted);
             var result = Success(
                 OutpostOperationKind.Withdraw,
                 mineralId,
-                transferQuantity,
+                accepted,
                 0,
-                "화물로 " + transferQuantity + "개를 옮겼습니다.");
+                accepted < transferQuantity
+                    ? "화물 공간이 부족해 " + accepted + "개만 꺼냈습니다."
+                    : "화물로 " + accepted + "개를 옮겼습니다.");
             RaiseSnapshotChanged();
             return Complete(result);
         }
@@ -480,9 +473,11 @@ namespace SubTerra.App.Outpost
             foreach (var item in items)
                 state.SetStorageQuantity(item.Key, state.GetStorageQuantity(item.Key) + (deposit ? item.Value : -item.Value));
             RaiseSnapshotChanged();
-            return Complete(Success(kind, string.Empty, total, 0,
+            var partial = !deposit && total < requestedTotal;
+            return Complete(new OutpostOperationResult(OutpostOperationStatus.Success, kind, string.Empty, total, 0,
                 deposit ? "모든 화물을 보관했습니다."
-                    : total < requestedTotal ? "화물 공간이 부족해 일부만 꺼냈습니다." : "보관된 모든 자원을 꺼냈습니다."));
+                    : partial ? "화물 공간이 부족해 일부만 꺼냈습니다." : "보관된 모든 자원을 꺼냈습니다.",
+                partial));
         }
 
         private List<KeyValuePair<string, int>> PlanBalancedWithdrawal(List<KeyValuePair<string, int>> source, out int total)

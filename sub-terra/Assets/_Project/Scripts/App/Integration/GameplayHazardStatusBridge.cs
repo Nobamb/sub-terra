@@ -7,6 +7,7 @@ using SubTerra.Gameplay.Power;
 using SubTerra.Gameplay.Player;
 using SubTerra.Gameplay.Structural;
 using SubTerra.Shared;
+using SubTerra.Shared.Audio;
 using UnityEngine;
 using AppGasRiskLevel = SubTerra.App.State.GasRiskLevel;
 using AppStructuralRiskLevel = SubTerra.App.State.StructuralRiskLevel;
@@ -34,6 +35,9 @@ namespace SubTerra.App.Integration
         private Vector3Int lastStructuralCell;
         private bool hasStructuralCell;
         private bool hasStructuralStatus;
+        // 경보 기준 단계. 씬에 새로 들어온 첫 상태도 Stable에서 바뀐 것으로 보고, OnEnable에서 되돌리지 않는다.
+        private GameplayStructuralRiskLevel alarmLevel = GameplayStructuralRiskLevel.Stable;
+        private readonly StructuralAlarmGate alarmGate = new StructuralAlarmGate();
 
         public HazardStatusReadModel StructuralStatus { get; private set; } =
             new(HazardSeverity.Safe, "안전", string.Empty);
@@ -155,12 +159,14 @@ namespace SubTerra.App.Integration
             if (playerTarget == null)
             {
                 if (!force) return;
+                // 전체 위험도로 대신한 상태는 HUD에만 쓰고 경보는 내지 않는다.
                 ApplyStructuralStatus(new StructuralRiskStatus(
                     Vector3Int.zero,
                     0f,
                     structuralSystem.CurrentRisk,
                     StructuralRiskCause.None,
-                    structuralSystem.CurrentRisk == GameplayStructuralRiskLevel.CollapseImminent));
+                    structuralSystem.CurrentRisk == GameplayStructuralRiskLevel.CollapseImminent),
+                    false);
                 return;
             }
 
@@ -168,7 +174,32 @@ namespace SubTerra.App.Integration
             if (!force && hasStructuralCell && cell == lastStructuralCell) return;
             lastStructuralCell = cell;
             hasStructuralCell = true;
-            ApplyStructuralStatus(structuralSystem.EvaluateStatusAt(cell));
+            ApplyStructuralStatus(structuralSystem.EvaluateStatusAt(cell), true);
+        }
+
+        /// <summary>단계가 바뀔 때만 소리를 낸다. 원인 문구만 바뀌면 무음.</summary>
+        private void PlayAlarmOnLevelChange(GameplayStructuralRiskLevel risk)
+        {
+            if (risk == alarmLevel)
+            {
+                return;
+            }
+
+            var previous = alarmLevel;
+            alarmLevel = risk;
+            switch (alarmGate.Evaluate(previous, risk))
+            {
+                case StructuralRiskFeedback.RiskSound.Alarm:
+                    SfxRequests.PlayAlarm(
+                        SfxId.AlarmMineWail,
+                        StructuralRiskFeedback.ResolveAlarmRepeat(risk),
+                        StructuralRiskFeedback.ResolveAlarmInterval(risk),
+                        StructuralRiskFeedback.GetPitch(risk));
+                    break;
+                case StructuralRiskFeedback.RiskSound.Tick:
+                    SfxRequests.Play(SfxId.AlertRiskTick);
+                    break;
+            }
         }
 
         private void ResolvePlayerTarget()
@@ -178,9 +209,14 @@ namespace SubTerra.App.Integration
             if (movement != null) playerTarget = movement.transform;
         }
 
-        private void ApplyStructuralStatus(StructuralRiskStatus status)
+        private void ApplyStructuralStatus(StructuralRiskStatus status, bool playerBased)
         {
             GameplayStructuralRiskLevel risk = status.Level;
+            if (playerBased)
+            {
+                PlayAlarmOnLevelChange(risk);
+            }
+
             var severity = risk == GameplayStructuralRiskLevel.CollapseImminent
                 ? HazardSeverity.Imminent
                 : risk == GameplayStructuralRiskLevel.Danger

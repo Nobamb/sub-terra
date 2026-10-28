@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using SubTerra.App.Audio;
 using SubTerra.App.Core;
 using SubTerra.App.Core.Data;
 using SubTerra.App.Inventory;
@@ -19,6 +20,7 @@ using SubTerra.Gameplay.Integration;
 using SubTerra.Gameplay.Mining;
 using SubTerra.Gameplay.Player;
 using SubTerra.Shared;
+using SubTerra.Shared.Audio;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 using UnityEngine.UI;
@@ -76,7 +78,10 @@ namespace SubTerra.App.Integration
         private bool contractsWired;
         private bool uiActivated;
         private bool inventorySpeedBound;
+        private bool tileMinedSfxBound;
+        private readonly CargoHeavySfxGate cargoHeavySfx = new CargoHeavySfxGate();
         private bool droneReadingsBound;
+        private Action unbindProgressionPanel;
 
         public IntegrationContractRegistry Contracts => contracts;
         public IntegrationActivationGate ActivationGate => activationGate;
@@ -363,6 +368,8 @@ namespace SubTerra.App.Integration
                         hudBinder);
                 });
 
+            TryStep("WorldSfx", BindWorldSfx);
+
             var dataCatalog = bootstrap.AssignedCatalog as GameDataCatalog;
             TryStep(
                 "PlacementBridge",
@@ -419,6 +426,9 @@ namespace SubTerra.App.Integration
                         return;
                     }
 
+                    // 비활성 창은 Unity OnDestroy가 호출되지 않을 수 있다.
+                    // 파괴 순서와 무관하게 CLR 참조로 구독 해제 경로를 보관한다.
+                    unbindProgressionPanel = progressionPanelBinder.Unbind;
                     progressionPanelBinder.BindTo(
                         runtime.Progression,
                         () => bootstrap != null
@@ -844,6 +854,74 @@ namespace SubTerra.App.Integration
             ApplyCargoSpeed(runtime.InventoryService.GetSnapshot());
         }
 
+        /// <summary>
+        /// B-164: 드릴·엘리베이터 승강 반복 소리와 블록 파괴·자원 획득음을 연결한다. B-168: 가스 맥박·체력 경고.
+        /// 반복 소리는 씬 오브젝트(플레이어·엘리베이터)에 붙여 씬과 함께 사라진다.
+        /// </summary>
+        private void BindWorldSfx()
+        {
+            Func<bool> failureHandling = () => runFailureController != null && runFailureController.IsHandling;
+            Func<bool> playerCanAct = () =>
+            {
+                var survival = runFailureController != null ? runFailureController.SurvivalController : null;
+                return survival == null || survival.State == null || survival.State.CanAct;
+            };
+
+            var movement = playerMovement;
+            var mining = miningSystem;
+            if (movement != null && mining != null)
+            {
+                // 엘리베이터에 탑승해 잠긴 동안(CanMove 꺼짐)은 드릴 소리를 내지 않는다.
+                WorldLoopAudio.Attach(
+                    movement.gameObject,
+                    SfxId.DrillLoop,
+                    () => mining != null && mining.IsMining && movement != null && movement.CanMove,
+                    failureHandling,
+                    playerCanAct);
+            }
+
+            var elevator = Resolve<ElevatorController>(null);
+            if (elevator != null)
+            {
+                WorldLoopAudio.Attach(
+                    elevator.gameObject,
+                    SfxId.ElevatorMoveLoop,
+                    () => elevator != null && elevator.State == ElevatorTravelState.Moving,
+                    failureHandling,
+                    playerCanAct);
+            }
+
+            // B-168: 가스 맥박은 초록 비네팅 위상을 따라가고, 엘리베이터 탑승 중에는 멈춘다.
+            GasPulseAudio.Attach(
+                Resolve<GasPoisonOverlayView>(null, FindObjectsInactive.Include),
+                failureHandling,
+                playerCanAct,
+                () => elevator != null && elevator.IsRiding);
+
+            var survivalController = runFailureController != null ? runFailureController.SurvivalController : null;
+            if (survivalController != null)
+            {
+                // B-168: 체력 30% 경고. 기다리는 동안 실패 처리·행동불능이 되면 취소한다.
+                LowHealthWarningAudio.Attach(
+                    survivalController.gameObject,
+                    survivalController,
+                    () => failureHandling() || !playerCanAct());
+            }
+
+            if (mining != null && !tileMinedSfxBound)
+            {
+                mining.TileMined += OnTileMinedForSfx;
+                tileMinedSfxBound = true;
+            }
+        }
+
+        private static void OnTileMinedForSfx(Vector3Int _, MiningTileDto tile)
+        {
+            // 드릴 루프는 같은 프레임 LateUpdate에서 IsMining이 꺼져 줄어들며 끝난다.
+            SfxPlayer.Play(SfxId.BlockBreak);
+            SfxPlayer.Play(MiningPickupSfx.Resolve(tile.mineralId, tile.quantity, tile.goldDrop));
+        }
+
         private void OnInventoryChangedForMovement(InventorySnapshot snapshot)
         {
             ApplyCargoSpeed(snapshot);
@@ -862,6 +940,11 @@ namespace SubTerra.App.Integration
                 CargoLoadEffectPolicy.EvaluateJumpMultiplier(
                     snapshot.CurrentWeight,
                     snapshot.MaxCapacity));
+            if (cargoHeavySfx.Observe(
+                    CargoLoadEffectPolicy.EvaluateLoadRatio(snapshot.CurrentWeight, snapshot.MaxCapacity)))
+            {
+                SfxPlayer.Play(SfxId.CargoHeavyWarning);
+            }
 
             var survival = runFailureController != null
                 ? runFailureController.SurvivalController
@@ -887,6 +970,8 @@ namespace SubTerra.App.Integration
 
         private void OnDestroy()
         {
+            unbindProgressionPanel?.Invoke();
+            unbindProgressionPanel = null;
             if (inventorySpeedBound && runtime != null && runtime.InventoryService != null)
             {
                 runtime.InventoryService.InventoryChanged -= OnInventoryChangedForMovement;
@@ -898,6 +983,12 @@ namespace SubTerra.App.Integration
             }
 
             inventorySpeedBound = false;
+            if (tileMinedSfxBound && miningSystem != null)
+            {
+                miningSystem.TileMined -= OnTileMinedForSfx;
+            }
+
+            tileMinedSfxBound = false;
             if (droneReadingsBound && bootstrap != null && bootstrap.State != null)
             {
                 bootstrap.State.EnergyChanged -= OnEnergyChangedForDrone;

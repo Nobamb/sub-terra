@@ -171,6 +171,22 @@ namespace SubTerra.App.UI.ControlTerminal
             return x < 0f ? 0f : x > 1f ? 1f : x;
         }
 
+        /// <summary>키캡 줄(0~3)·마우스(4)가 튀어나오기 시작하는 시각.</summary>
+        public static float KeyRowStart(int row) => KeyPopStart + row * KeyStagger;
+
+        /// <summary>이번 진행(previous → now)에서 시작 시각을 넘은 줄 중 가장 늦은 줄. 없으면 -1.</summary>
+        public static int CrossedKeyRow(float previous, float now)
+        {
+            int row = -1;
+            for (int i = 0; i < RowCount; i++)
+            {
+                var start = KeyRowStart(i);
+                if (previous < start && start <= now) row = i;
+            }
+
+            return row;
+        }
+
         public static float Smooth(float x) => x * x * (3f - 2f * x);
         public static float EaseOut(float x) => 1f - (1f - x) * (1f - x) * (1f - x);
 

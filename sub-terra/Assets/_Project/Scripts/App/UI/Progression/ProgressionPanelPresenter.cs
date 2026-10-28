@@ -53,6 +53,11 @@ namespace SubTerra.App.UI.Progression
             {
                 panelView.BindPresenter(this);
                 panelView.SetActiveCategory(activeCategory);
+                // B-169: 불러오기·다시 묶은 직후 첫 그리기는 해금 연출 없이 그대로 그린다.
+                if (panelView.TreeView != null)
+                {
+                    panelView.TreeView.ResetUnlockReveal();
+                }
             }
 
             view?.SetBusy(false);

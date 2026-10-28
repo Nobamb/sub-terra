@@ -64,6 +64,61 @@ namespace SubTerra.App.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator Issue240_SelectedWithdraw_UsesPreviewedAmountAndRejectsBusyOrClosingClicks()
+        {
+            var root = new GameObject("Canvas", typeof(RectTransform), typeof(Canvas));
+            var view = root.AddComponent<OutpostPanelView>();
+            var binder = root.AddComponent<OutpostPanelBinder>();
+            try
+            {
+                var catalog = new InMemoryMineralCatalog();
+                catalog.Register(Iron, 2f, 15, "철");
+                var state = GameState.CreateNew();
+                var inventory = new InventoryService(catalog, 170f, state);
+                Assert.That(state.Outpost.TryRestore(new[] { new OutpostStorageEntryState(Iron, 130) },
+                    new string[0], string.Empty, 0, 0), Is.True);
+                var service = new OutpostService(inventory, catalog, state);
+                service.ApplyRuntimeStatus(new OutpostStatusDto
+                {
+                    isInInteractionRange = true,
+                    interactionFacilityInstanceId = "storage.1",
+                    interactionFacilityBuildingId = DataIds.Buildings.StorageBasic,
+                    connectedFacilities = new List<ConnectedFacilityStatusDto>()
+                });
+                binder.BindTo(service);
+                var popup = view.StoragePopup;
+                popup.ManualTick = true;
+                binder.Presenter.ToggleInteractionPanel();
+                for (int i = 0; i < 24; i++) popup.Tick(0.05f);
+                Assert.That(popup.IsInteractive, Is.True);
+                binder.SelectMineral(Iron);
+                popup.transform.Find("Card/Content/Controls/QuantityAllButton")
+                    .GetComponent<UnityEngine.UI.Button>().onClick.Invoke();
+                Assert.That(popup.Quantity, Is.EqualTo(130));
+                Assert.That(popup.PreviewString, Does.Contain("85개"));
+                Assert.That(popup.PreviewString, Does.Contain("화물 공간 한도"));
+                int completed = 0;
+                service.OperationCompleted += _ => completed++;
+                popup.SetBusy(true);
+                popup.WithdrawButton.Button.onClick.Invoke();
+                Assert.That(completed, Is.Zero);
+                popup.SetBusy(false);
+                popup.WithdrawButton.Button.onClick.Invoke();
+                Assert.That(completed, Is.EqualTo(1));
+                Assert.That(inventory.State.GetQuantity(Iron), Is.EqualTo(85));
+                Assert.That(state.Outpost.GetStorageQuantity(Iron), Is.EqualTo(45));
+                Assert.That(popup.transform.Find("Card/Content/Controls/Status").GetComponent<TMP_Text>().text,
+                    Does.Contain("85개만"));
+                Assert.That(popup.WithdrawButton.Button.interactable, Is.False);
+                Assert.That(popup.BeginClose(), Is.True);
+                popup.WithdrawButton.Button.onClick.Invoke();
+                Assert.That(completed, Is.EqualTo(1));
+            }
+            finally { Object.Destroy(root); }
+            yield return null;
+        }
+
+        [UnityTest]
         public IEnumerator Issue236_ButtonsUseBoundServiceAndRespectBusyAndClosing()
         {
             var root = new GameObject("Canvas", typeof(RectTransform), typeof(Canvas));

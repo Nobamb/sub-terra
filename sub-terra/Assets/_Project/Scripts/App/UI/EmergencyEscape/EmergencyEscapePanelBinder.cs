@@ -1,6 +1,8 @@
 using System.Collections.Generic;
+using SubTerra.App.Audio;
 using SubTerra.App.Run;
 using SubTerra.Shared;
+using SubTerra.Shared.Audio;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
@@ -23,6 +25,13 @@ namespace SubTerra.App.UI.EmergencyEscape
             System.Array.Empty<EmergencyEscapeDestinationOption>();
         private bool busy;
         private int openFrame = -1;
+        private int previewedIndex = -1;
+        private readonly SfxThrottle switchSfx = new SfxThrottle(SwitchSfxInterval);
+
+        public const float SwitchSfxInterval = 0.08f;
+
+        /// <summary>목적지 변경음 간격 제한. 테스트는 Clock을 바꿔 시간을 주입한다.</summary>
+        public SfxThrottle SwitchSfx => switchSfx;
 
         public bool IsOpen
         {
@@ -125,7 +134,8 @@ namespace SubTerra.App.UI.EmergencyEscape
             }
 
             var keyboard = Keyboard.current;
-            if (keyboard != null && keyboard.escapeKey.wasPressedThisFrame && Time.frameCount > openFrame)
+            if (keyboard != null && keyboard.escapeKey.wasPressedThisFrame && Time.frameCount > openFrame
+                && !QuitConfirm.QuitConfirmFlow.IsBlockingInput)
             {
                 Close();
             }
@@ -164,12 +174,20 @@ namespace SubTerra.App.UI.EmergencyEscape
             UiKeyboardSubmitGuard.ClearSelection();
             AcquirePause();
             view.SetVisible(true);
+            // 웜홀 회전·창 튀어나옴과 같이 간다. 기본 선택 미리보기는 무음.
+            SfxPlayer.Play(SfxId.PortalActivate);
             // 기본 선택(엘리베이터)부터 CCTV로 보여 준다.
             PreviewDestinationAt(view.SelectedDestinationIndex);
         }
 
         public void Close()
         {
+            // 이동 성공으로 닫힐 때(처리 중)는 워프음만 낸다.
+            if (!busy && view != null && view.IsOpen)
+            {
+                SfxPlayer.Play(SfxId.PortalClose);
+            }
+
             busy = false;
             view?.SetBusy(false);
             if (view == null)
@@ -197,6 +215,7 @@ namespace SubTerra.App.UI.EmergencyEscape
             }
 
             var selected = options[index];
+            previewedIndex = index;
             view.SetSelectedDestinationIndex(index);
             if (preview == null)
             {
@@ -218,7 +237,16 @@ namespace SubTerra.App.UI.EmergencyEscape
 
             if (view.Model.Step(delta))
             {
+                PlaySwitchSfx();
                 PreviewDestinationAt(view.Model.SelectedIndex);
+            }
+        }
+
+        private void PlaySwitchSfx()
+        {
+            if (switchSfx.TryPass())
+            {
+                SfxPlayer.Play(SfxId.PortalSwitch);
             }
         }
 
@@ -232,12 +260,14 @@ namespace SubTerra.App.UI.EmergencyEscape
             if (port == null)
             {
                 view?.SetResult("긴급 탈출 경로가 준비되지 않았습니다.", true);
+                SfxPlayer.Play(SfxId.UiCancelFail);
                 return;
             }
 
             if (options == null || options.Count == 0)
             {
                 view?.SetResult("이동할 목적지가 없습니다.", true);
+                SfxPlayer.Play(SfxId.UiCancelFail);
                 return;
             }
 
@@ -251,6 +281,7 @@ namespace SubTerra.App.UI.EmergencyEscape
             if (view != null && view.Model.TryGetSelected(out var row) && !row.Enabled)
             {
                 view.SetResult(row.Reason, true);
+                SfxPlayer.Play(SfxId.UiCancelFail);
                 return;
             }
 
@@ -266,7 +297,13 @@ namespace SubTerra.App.UI.EmergencyEscape
                 view?.SetResult(reason, !success);
                 if (success)
                 {
+                    // B-165: 도착음(EscapeArrive)은 전원이 꺼지는 소리라 실패처럼 들려 내지 않는다. 칸·파일은 남긴다.
+                    SfxPlayer.Play(SfxId.PortalWarp);
                     Close();
+                }
+                else
+                {
+                    SfxPlayer.Play(SfxId.UiCancelFail);
                 }
             }
             finally
@@ -308,6 +345,8 @@ namespace SubTerra.App.UI.EmergencyEscape
             {
                 confirmButton.onClick.RemoveListener(ConfirmSelectedDestination);
                 confirmButton.onClick.AddListener(ConfirmSelectedDestination);
+                // 흐린 목적지라 막힌 이동 버튼을 눌러도 Enter와 같은 실패음이 난다.
+                UiSfx.Attach(confirmButton, SfxId.None);
             }
 
             if (closeButton != null)
@@ -362,8 +401,14 @@ namespace SubTerra.App.UI.EmergencyEscape
             view.DestinationSelected -= HandleDestinationSelected;
         }
 
+        // 행 클릭은 이벤트 전에 선택을 바꾸므로 마지막으로 비춘 목적지와 비교한다.
         private void HandleDestinationSelected(int index)
         {
+            if (index != previewedIndex)
+            {
+                PlaySwitchSfx();
+            }
+
             PreviewDestinationAt(index);
         }
     }

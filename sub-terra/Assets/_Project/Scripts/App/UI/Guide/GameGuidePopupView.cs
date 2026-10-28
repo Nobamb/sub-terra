@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using SubTerra.App.Audio;
 using SubTerra.App.UI.HUD;
 using SubTerra.App.UI.Sell;
+using SubTerra.Shared.Audio;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -77,6 +79,7 @@ namespace SubTerra.App.UI.Guide
         private GuideFrame frame;
         private GuideFrame closeFrom;
         private bool settled;
+        private bool flipSfxPending;
 
         private float firstT = 1f;
         private float firstTarget = 1f;
@@ -185,10 +188,21 @@ namespace SubTerra.App.UI.Guide
             lastCanvasSize = Vector2.zero;
             FitToCanvas();
             ApplyFrame(GameGuideTimeline.Open(clock, fullIntro));
+
+            // 첫 등장 소리는 앞 0.6초 SF 소리가 끝날 때 첫 장이 넘어가도록 바로 낸다. 닫던 중 다시 열면 무음.
+            flipSfxPending = !resume && !fullIntro;
+            if (!resume && fullIntro)
+            {
+                SfxPlayer.Play(SfxId.GuidePageFlipX3);
+            }
+
             return true;
         }
 
-        /// <summary>닫는 연출을 시작한다. 등장 도중에도 받아들이며 연출이 끝나면 루트가 꺼져 입력 차단이 남지 않는다.</summary>
+        /// <summary>
+        /// 닫는 연출을 시작한다. 등장 도중에도 받아들이며 연출이 끝나면 루트가 꺼져 입력 차단이 남지 않는다.
+        /// X·G·ESC 모두 이 경로라 닫힘 소리는 실제로 닫기 시작할 때 한 번만 난다.
+        /// </summary>
         public bool BeginClose()
         {
             if (state == PopupState.Hidden || state == PopupState.Closing)
@@ -199,6 +213,7 @@ namespace SubTerra.App.UI.Guide
             StopDemo();
             closeFrom = frame;
             closeClock = 0f;
+            flipSfxPending = false;
             state = PopupState.Closing;
             tabsGroup.interactable = false;
             listGroup.interactable = false;
@@ -210,6 +225,7 @@ namespace SubTerra.App.UI.Guide
                 return true;
             }
 
+            SfxPlayer.Play(SfxId.UiPopupClose);
             ApplyFrame(GameGuideTimeline.Close(0f, closeFrom));
             return true;
         }
@@ -241,7 +257,14 @@ namespace SubTerra.App.UI.Guide
             switch (state)
             {
                 case PopupState.Opening:
+                    var previous = clock;
                     clock += dt;
+                    if (flipSfxPending && SfxPlayback.Crossed(previous, clock, GameGuideTimeline.FlipStartTime(false)))
+                    {
+                        flipSfxPending = false;
+                        SfxPlayer.Play(SfxId.GuidePageFlip);
+                    }
+
                     var total = GameGuideTimeline.OpenDuration(fullIntro);
                     if (clock >= total)
                     {

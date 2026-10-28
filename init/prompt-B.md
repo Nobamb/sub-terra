@@ -3748,3 +3748,46 @@ EditMode:
 
 
 155. B-155-deep-zone-thumbnail.md 내용 참고해서 업그레이드 창에 있는 심층 구역 관련 영역 썸네일 지정해줘 이미지 생성은 codex를 통해서 생성하도록 하고 연출 부분은 니가 신경써서 작업해주면 돼
+
+
+156. sound/B-156-sfx-foundation-a.md의 내용 참고해서 Audio/SFX 내에 있는 폴더에 있는 효과음들을 게임 내에 적절하게 넣어줘
+
+
+157. B-157-settings-bgm-sfx-volume.md의 내용 참고해서 설정창 크기 수정 및 배경음, 효과음 관련 오디오 슬라이더를 설정창 내의 오디오 영역에 각각 추가해줘
+
+158. B-158-sfx-foundation-a-fix.md의 내용 참고해서 기존에 설정한 효과음 관련 부분 수정 작업 진행해줘
+
+159. B-159-agent-rules-entry-cleanup.md의 내용 참고해서 지금 문서 내용들 수정해줘
+
+160. work_process/MVP2/sound 폴더에 있는 sfx-B 폴더, B-160-sfx-b-stage.md의 내용 참고해서 효과음 적용해줘
+
+161. work_process/MVP2/sound 폴더에서 B-161-sfx-b-stage-fix.md랑 sfx-B-fix폴더 내용 참고해서 기존 효과음 관련 수정 진행해줘
+
+
+162. work_process/MVP2/sound 폴더에서 B-162-sfx-c-stage.md, sfx-C 폴더 참고해서 효과음 추가해줘
+
+
+163.  work_process/MVP2/sound 폴더에서 sfx-B-rest 폴더, prompt-B-163.md 참고해서 효과음 추가해줘
+
+
+164. work_process/MVP2/sound 폴더에서 prompt-B-164.md 내용 참고해서 SFX/World 폴더에 추가한 효과음들 토대로 게임에 적용시켜줘
+
+
+165. work_process/MVP2/sound 폴더에서 prompt-B-165.md 내용 참고해서 효과음 교체 및 효과음 관련 수정 작업 진행해줘 Audio/SFX/World에 있던 기존 효과음은 내가 교체해놓아서 교체 작업은 안해도 돼
+
+166. work_process/MVP2/sound 폴더에서 prompt-B-166.md 의 내용을 참고해서 효과음 관련 버그 수정 및 엘레베이터 타는 동안에는 설정창 나오지 않도록 설정해줘
+
+167. prompt-B-167.md 내용 참고해서 기존에 없던 업그레이드 등장 연출 추가해줘 이미지 생성이 필요하다면 codex를 통해 만들어도 되고 단순 반복작업은 5.5 haiku나 codex 6 luna같은 하위 에이전트에게 맡기도록 해
+
+
+168. prompt-B-168.md 내용 참고해서 효과음 추가 작업 진행해줘 단순 반복작업은 5.5 haiku나 codex 6 luna같은 하위 에이전트에게 구체적으로 어떻게 시켜야될지 정리해서 맡기도록 해
+
+
+168-1. prompt-B-168-1.md 확인해서 prompt-B.md 168번에서 작업한 효과음 관련 수정 작업 진행해 단순 반복작업은 codex 6 luna같은 하위 에이전트에게 구체적으로 어떻게 시켜야될지 정리해서 맡기도록 해
+
+168-2. prompt-B-168-2.md 내용 참고해서 기존에 작은 소리로 들리던 에너지 부족시 머리 위에 나타나는 홀로그램 연출 효과음 크기가 더 잘들릴 수 있도록 수정작업해줘 단순 반복작업은 codex 6 luna같은 하위 에이전트에게 구체적으로 어떻게 시켜야될지 정리해서 맡기도록 해
+
+169. prompt-B-169.md 내용 참고해서 효과음 추가 작업 진행해줘 단순 반복작업은 haiku 5.5나 codex 6 luna같은 하위 에이전트에게 구체적으로 어떻게 시켜야될지 정리해서 맡기도록 해
+
+
+170. sfx-B170 폴더 내에서 prompt-B-170.md 내용 참고해서 시작 인트로, 종료 아웃트로 연출 제대로 추가 및 종료 전 종료창 팝업 연출 추가해줘 이미지 생성은 codex의 이미지 생성기능을 같이 활용해주고 단순 반복작업은 haiku 5.5나 codex 6 luna같은 하위 에이전트에게 구체적으로 어떻게 시켜야될지 정리해서 맡기도록 해

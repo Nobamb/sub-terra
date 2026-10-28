@@ -29,6 +29,13 @@ namespace SubTerra.Gameplay.Mining
         private static readonly List<RaycastResult> PointerHits = new(8);
         private System.Func<bool> pointerMiningBlocker;
         private bool pointerClaimedByPlacement;
+        private bool enterMiningSuppressed;
+
+        /// <summary>B-166: 창을 Enter로 확인한 뒤 그 누르기가 채굴로 이어지지 않게, Enter를 한 번 뗄 때까지 채굴 키로 보지 않는다.</summary>
+        public void SuppressEnterUntilReleased()
+        {
+            enterMiningSuppressed = true;
+        }
 
         public void SetPointerMiningBlocker(System.Func<bool> blocker)
         {
@@ -36,6 +43,9 @@ namespace SubTerra.Gameplay.Mining
         }
 
         public bool IsMining => miningSystem != null && miningSystem.IsMining;
+
+        /// <summary>B-164: 채굴 키를 새로 누른 순간(누르기 시작·방향 바꿈). 실패음 반복 판정을 풀 때 쓴다.</summary>
+        public event System.Action MiningPressed;
 
         private void Awake()
         {
@@ -91,7 +101,13 @@ namespace SubTerra.Gameplay.Mining
 
             Vector2 direction = PlayerKeyboardControls.ReadMiningDirection(ControlPreferences.Scheme);
             bool miningInputPressed = IsMiningInputPressed();
-            if (direction != Vector2.zero && direction != lastMiningDirection)
+            bool directionChanged = direction != Vector2.zero && direction != lastMiningDirection;
+            if (miningInputPressed && (!miningInputPressedLastFrame || directionChanged))
+            {
+                MiningPressed?.Invoke();
+            }
+
+            if (directionChanged)
             {
                 miningSystem.CancelMining();
                 CaptureCurrentTarget();
@@ -145,8 +161,14 @@ namespace SubTerra.Gameplay.Mining
         {
             if (PlayerKeyboardControls.ReadMiningDirection(ControlPreferences.Scheme) != Vector2.zero)
                 return true;
-            bool enterMining = Keyboard.current != null
+            bool enterHeld = Keyboard.current != null
                 && Keyboard.current.enterKey.isPressed;
+            if (!enterHeld)
+            {
+                enterMiningSuppressed = false;
+            }
+
+            bool enterMining = enterHeld && !enterMiningSuppressed;
             if (enterMining)
             {
                 return true;

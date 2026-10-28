@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
+using SubTerra.App.Audio;
 using SubTerra.App.UI.PlayerStatus;
 using SubTerra.App.Core.Data;
 using SubTerra.App.Economy;
 using SubTerra.App.Inventory;
 using SubTerra.App.State;
 using SubTerra.Shared;
+using SubTerra.Shared.Audio;
 
 namespace SubTerra.App.UI.Building
 {
@@ -231,12 +233,17 @@ namespace SubTerra.App.UI.Building
             }
             else if (result.state == BuildingPlacementState.Failed)
             {
-                var message = wallet != null && selected != null
-                    && !wallet.CanAfford(ItemCostMapping.ToDtoList(selected.BuildCosts))
+                var resourceShort = wallet != null && selected != null
+                    && !wallet.CanAfford(ItemCostMapping.ToDtoList(selected.BuildCosts));
+                var message = resourceShort
                     ? "자원이 부족합니다."
                     : FormatPlacementReason(result.reasonId, true);
                 view?.SetStatusMessage(message);
                 PlayerStatusWarnings.Current?.ShowWarning("building.placement-failed", message);
+                // B-168: 마우스 클릭·C 단축키 실패가 모두 여기로 온다. 다시 시도할 때마다 난다.
+                FailureFeedback.Play(
+                    BuildingPlacementSfx.ResolveFailure(resourceShort, result.reasonId),
+                    BuildingPlacementSfx.PlaceFailureKey);
             }
             else if (result.state == BuildingPlacementState.Cancelled)
             {

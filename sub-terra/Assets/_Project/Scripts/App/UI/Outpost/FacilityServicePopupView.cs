@@ -1,5 +1,7 @@
 using System.Collections.Generic;
+using SubTerra.App.Audio;
 using SubTerra.App.UI.HUD;
+using SubTerra.Shared.Audio;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -117,6 +119,8 @@ namespace SubTerra.App.UI.Outpost
 
         private void OnEnable()
         {
+            // 닫힘 소리는 Hide가 내므로 닫기 버튼에는 호버만 붙인다.
+            UiSfx.Attach(closeButton, SfxId.None, hover: true);
             // Show를 거치지 않은 활성화(부모 패널이 꺼졌다 켜진 경우)에는 멈춘 화면이 남지 않도록 다시 숨긴다.
             if (!showRequested)
             {
@@ -174,6 +178,7 @@ namespace SubTerra.App.UI.Outpost
                 gameObject.SetActive(true);
             }
 
+            SfxPlayer.Play(SfxId.UiPopupOpen);
             BeginPlay();
         }
 
@@ -187,6 +192,11 @@ namespace SubTerra.App.UI.Outpost
 
             state = PlayState.Exiting;
             exitClock = 0f;
+            if (isActiveAndEnabled)
+            {
+                SfxPlayer.Play(SfxId.UiPopupClose);
+            }
+
             ZeroEffects();
             if (windowGroup != null)
             {
@@ -219,6 +229,11 @@ namespace SubTerra.App.UI.Outpost
 
             resultText.text = message ?? string.Empty;
             resultText.color = isError ? ErrorColor : OkColor;
+            // 빈 문자열은 결과를 지우는 호출이라 소리를 내지 않는다.
+            if (!string.IsNullOrEmpty(message))
+            {
+                SfxPlayer.Play(isError ? SfxId.UiCancelFail : SfxId.UiConfirm);
+            }
         }
 
         /// <summary>실제 회복·충전 전후 값. 게이지는 펼침이 끝나는 시점부터 이전→이후로 보간한다.</summary>

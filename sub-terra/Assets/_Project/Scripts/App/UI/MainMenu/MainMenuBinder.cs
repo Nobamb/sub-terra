@@ -1,5 +1,8 @@
+using SubTerra.App.Audio;
 using SubTerra.App.Save;
 using SubTerra.App.UI.HUD;
+using SubTerra.App.UI.QuitConfirm;
+using SubTerra.Shared.Audio;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -48,6 +51,7 @@ namespace SubTerra.App.UI.MainMenu
             presenter.DeleteSlotConfirmed += OnDeleteSlotConfirmed;
 
             view.SlotSelected += presenter.SelectSlot;
+            view.SlotSelected += OnSlotSelectedSfx;
             view.ContinueClicked += OnContinueClicked;
             view.NewGameClicked += OnNewGameClicked;
             view.SettingsClicked += OnSettingsClicked;
@@ -70,6 +74,7 @@ namespace SubTerra.App.UI.MainMenu
             if (view != null && presenter != null)
             {
                 view.SlotSelected -= presenter.SelectSlot;
+                view.SlotSelected -= OnSlotSelectedSfx;
                 view.ContinueClicked -= OnContinueClicked;
                 view.NewGameClicked -= OnNewGameClicked;
                 view.SettingsClicked -= OnSettingsClicked;
@@ -100,6 +105,8 @@ namespace SubTerra.App.UI.MainMenu
         private void Update()
         {
             if (presenter == null || view == null || Keyboard.current == null) return;
+            // B-170: 종료 확인 창이 ESC·X를 먼저 받는다.
+            if (QuitConfirmFlow.IsBlockingInput) return;
             if (Keyboard.current.escapeKey.wasPressedThisFrame)
             {
                 if (presenter.Settings.IsOpen) OnSettingsCancel();
@@ -132,15 +139,22 @@ namespace SubTerra.App.UI.MainMenu
             return view != null && view.HasRequiredReferences();
         }
 
+        private void OnSlotSelectedSfx(int slotId)
+        {
+            SfxPlayer.Play(SfxId.UiSlotSelect);
+        }
+
         private void OnNewGameClicked()
         {
             if (startingNewGame || continuing) return;
+            SfxPlayer.Play(SfxId.UiConfirm);
             presenter?.RequestNewGame();
         }
 
         private void OnContinueClicked()
         {
             if (startingNewGame || continuing) return;
+            SfxPlayer.Play(SfxId.UiConfirm);
             presenter?.RequestContinue();
         }
 
@@ -189,12 +203,14 @@ namespace SubTerra.App.UI.MainMenu
 
         private void OnOverwriteConfirm()
         {
+            SfxPlayer.Play(SfxId.UiConfirm);
             presenter?.ConfirmOverwriteNewGame();
         }
 
         private void OnOverwriteCancel()
         {
             // 취소 경로: 파일·State 보존. Presenter 게이트만 닫힌다.
+            SfxPlayer.Play(SfxId.UiClick);
             presenter?.CancelOverwriteNewGame();
         }
 
@@ -285,6 +301,8 @@ namespace SubTerra.App.UI.MainMenu
             if (startingNewGame) return;
             var runtime = SaveRuntimeController.Instance;
             if (runtime == null) return;
+            // 같은 클릭에서 이미 확인음이 났으면 연타 제한이 한 번으로 줄인다.
+            SfxPlayer.Play(SfxId.UiConfirm);
             startingNewGame = true;
             view.PlayExitTransition(() =>
             {
@@ -298,7 +316,9 @@ namespace SubTerra.App.UI.MainMenu
 
         private void OnQuit()
         {
-            SaveRuntimeController.Instance?.RequestQuit();
+            // B-170: 바로 끄지 않고 종료 확인 창을 띄운다. 저장 중 판단은 presenter가 먼저 했다.
+            var intro = view != null ? view.Intro : null;
+            QuitConfirmFlow.Request(false, intro, presenter != null && presenter.Settings.IsOpen);
         }
 
         private void OnSettingsApplied(SettingsValues values)

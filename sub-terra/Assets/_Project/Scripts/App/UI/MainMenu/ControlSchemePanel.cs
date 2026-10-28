@@ -1,7 +1,9 @@
+using SubTerra.App.Audio;
 using SubTerra.App.UI.ControlTerminal;
 using SubTerra.App.UI.Guide;
 using SubTerra.App.UI.Sell;
 using SubTerra.Shared;
+using SubTerra.Shared.Audio;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -28,6 +30,9 @@ namespace SubTerra.App.UI.MainMenu
         public ControlScheme Selected { get; private set; }
         public bool IsOpen => isOpen && overlay != null && overlay.activeSelf;
         public ControlTerminalView Terminal => terminal;
+        /// <summary>확인용: true면 에디터 모드에서도 플레이 중처럼 등장·퇴장 연출 경로를 탄다.</summary>
+        public bool ForceMotionForTests { get; set; }
+        private bool CanPlayMotion => (Application.isPlaying || ForceMotionForTests) && isActiveAndEnabled;
 
         public static ControlSchemePanel Attach(GameObject settingsRoot)
         {
@@ -70,8 +75,10 @@ namespace SubTerra.App.UI.MainMenu
 
         public void Cycle(int delta)
         {
+            var previous = Selected;
             Selected = ControlPreferences.Cycle(Selected, delta);
             Refresh();
+            if (IsOpen && Selected != previous) SfxPlayer.Play(SfxId.KeysPageTurn);
             // 설정 창의 적용을 기다리지 않고 즉시 저장한다.
             SettingsRuntimeApplier.SaveControlScheme(Selected);
         }
@@ -85,7 +92,12 @@ namespace SubTerra.App.UI.MainMenu
             overlay.transform.SetAsLastSibling();
             FitCard();
             Refresh(false);
-            if (Application.isPlaying && isActiveAndEnabled) terminal.PlayIntro();
+            if (CanPlayMotion)
+            {
+                // 홀로그램 펼침이 t=0 프레임 조립과 함께 나서 키캡 소리(0.42초~)보다 먼저 난다.
+                SfxPlayer.Play(SfxId.KeysHoloOpen);
+                terminal.PlayIntro();
+            }
             else terminal.ShowSettled();
             UiKeyboardSubmitGuard.ClearSelection();
         }
@@ -97,7 +109,11 @@ namespace SubTerra.App.UI.MainMenu
             // 저장은 퇴장 연출과 무관하게 즉시 한다.
             SettingsRuntimeApplier.SaveControlScheme(Selected);
             UiKeyboardSubmitGuard.ClearSelection();
-            if (Application.isPlaying && isActiveAndEnabled && terminal != null) terminal.PlayOutro();
+            if (CanPlayMotion && terminal != null)
+            {
+                SfxPlayer.Play(SfxId.UiPopupClose);
+                terminal.PlayOutro();
+            }
             else HideNow();
             return true;
         }

@@ -1,6 +1,8 @@
 using System;
+using SubTerra.App.Audio;
 using SubTerra.App.Run;
 using SubTerra.App.Tutorial;
+using SubTerra.Shared.Audio;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -88,11 +90,17 @@ namespace SubTerra.App.UI.EmergencyRescue
             {
                 ReplaceListener(popup.RescueButton, rescue);
                 ReplaceListener(popup.CloseButton, close);
+                // RemoveAllListeners가 효과음 리스너까지 지우므로 다시 붙인다.
+                popup.AttachButtonSfx();
             }
 
             if (chip != null)
             {
-                ReplaceListener(chip.Button, reopen);
+                ReplaceListener(chip.Button, reopen == null ? null : (Action)(() =>
+                {
+                    SfxPlayer.Play(SfxId.UiClick);
+                    reopen();
+                }));
             }
         }
 

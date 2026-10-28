@@ -27,6 +27,10 @@ namespace SubTerra.App.UI.MainMenu
     public sealed class SettingsValues
     {
         public float MasterVolume { get; set; }
+        /// <summary>배경음(BGM_ 소스) 채널 음량. 실제 크기는 마스터 × 채널이다.</summary>
+        public float BgmVolume { get; set; }
+        /// <summary>효과음 채널 음량. UI·월드·경고를 나누지 않는 슬라이더 하나다.</summary>
+        public float SfxVolume { get; set; }
         public bool ReduceMotion { get; set; }
         public int ResolutionWidth { get; set; }
         public int ResolutionHeight { get; set; }
@@ -43,6 +47,8 @@ namespace SubTerra.App.UI.MainMenu
             return new SettingsValues
             {
                 MasterVolume = 0.5f,
+                BgmVolume = 1f,
+                SfxVolume = 1f,
                 ReduceMotion = false,
                 ResolutionWidth = 1920,
                 ResolutionHeight = 1080,
@@ -58,6 +64,8 @@ namespace SubTerra.App.UI.MainMenu
             return new SettingsValues
             {
                 MasterVolume = MasterVolume,
+                BgmVolume = BgmVolume,
+                SfxVolume = SfxVolume,
                 ReduceMotion = ReduceMotion,
                 ResolutionWidth = ResolutionWidth,
                 ResolutionHeight = ResolutionHeight,
@@ -76,6 +84,8 @@ namespace SubTerra.App.UI.MainMenu
             }
 
             MasterVolume = other.MasterVolume;
+            BgmVolume = other.BgmVolume;
+            SfxVolume = other.SfxVolume;
             ReduceMotion = other.ReduceMotion;
             ResolutionWidth = other.ResolutionWidth;
             ResolutionHeight = other.ResolutionHeight;

@@ -16,45 +16,50 @@ namespace SubTerra.App.Tests.Progression
     public sealed class PromptB118UpgradeTreeTests
     {
         [Test]
-        public void UnlockedIcon_IsVisibleWhileUnlockFeedbackIsPending()
+        public void UnlockedIcon_IsFilledButCoveredWhileUnlockRevealIsPending()
         {
+            // B-169: 해금 정보는 바로 채우되, 연출 전까지 블라인드가 그 위를 가린다(자물쇠가 보이도록).
             var node = CreateVisibilityNode(out var icon, out var blind);
             try
             {
                 node.Apply(VisibilitySnapshot(false));
                 Assert.That(icon.enabled, Is.False);
                 Assert.That(blind.alpha, Is.EqualTo(1f));
-                typeof(UpgradeTreeNodeView).GetField("revealPending",
-                    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
-                    .SetValue(node, true);
+                node.SetRevealPending(true);
                 node.Apply(VisibilitySnapshot(true));
                 Assert.That(node.IsRevealPending, Is.True);
                 Assert.That(icon.enabled, Is.True);
-                Assert.That(blind.alpha, Is.Zero, "해금 확정 정보는 순차 연출을 기다리지 않음");
+                Assert.That(blind.alpha, Is.EqualTo(1f), "해금 연출 전에는 블라인드를 걷지 않음");
                 node.Apply(VisibilitySnapshot(true));
-                Assert.That(blind.alpha, Is.Zero, "목록을 다시 그려도 재가림 없음");
+                Assert.That(blind.alpha, Is.EqualTo(1f), "목록을 다시 그려도 대기 중이면 가린 채");
+                node.SetRevealPending(false);
+                Assert.That(blind.alpha, Is.Zero, "대기가 아니면 바로 풀린 모습");
             }
             finally { Object.DestroyImmediate(node.gameObject); }
         }
 
         [Test]
-        public void UnlockFeedback_FinalTweenNeverRehidesUnlockedIcon()
+        public void UnlockFeedback_FinalFramesNeverRehideUnlockedIcon()
         {
             var node = CreateVisibilityNode(out var icon, out var blind);
             try
             {
+                node.ManualTick = true;
+                node.Apply(VisibilitySnapshot(false));
+                node.SetRevealPending(true);
                 node.Apply(VisibilitySnapshot(true));
-                var sequence = (System.Collections.IEnumerator)typeof(UpgradeTreeNodeView)
-                    .GetMethod("UnlockRoutine", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
-                    .Invoke(node, new object[] { 0f });
-                Assert.That(sequence.MoveNext(), Is.True); // 자물쇠 구간
-                Assert.That(sequence.MoveNext(), Is.True); // 파편 구간
-                Assert.That(sequence.MoveNext(), Is.True); // 마지막 점등 구간
-                var finalTween = (System.Collections.IEnumerator)sequence.Current;
-                Assert.That(finalTween.MoveNext(), Is.True); // t=0에서 다시 불투명해지던 프레임
-                Assert.That(icon.enabled, Is.True);
+                node.BeginUnlock(null);
+                var previous = blind.alpha;
+                for (var i = 0; i < 70; i++)
+                {
+                    node.StepUnlock(1f / 60f);
+                    Assert.That(icon.enabled, Is.True);
+                    Assert.That(blind.alpha, Is.LessThanOrEqualTo(previous + 0.0001f), "블라인드는 걷히기만 한다");
+                    previous = blind.alpha;
+                }
+
+                Assert.That(node.IsUnlockPlaying, Is.False);
                 Assert.That(blind.alpha, Is.Zero);
-                ((System.IDisposable)sequence).Dispose();
             }
             finally { Object.DestroyImmediate(node.gameObject); }
         }

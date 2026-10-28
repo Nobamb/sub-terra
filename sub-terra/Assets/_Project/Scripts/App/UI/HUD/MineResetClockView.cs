@@ -1,4 +1,6 @@
 using System;
+using SubTerra.App.Audio;
+using SubTerra.Shared.Audio;
 using UnityEngine;
 
 namespace SubTerra.App.UI.HUD
@@ -6,6 +8,7 @@ namespace SubTerra.App.UI.HUD
     public sealed class MineResetClockView : MonoBehaviour
     {
         private readonly MineResetClockStyle style = new MineResetClockStyle();
+        private readonly MineResetClockTickGate tickGate = new MineResetClockTickGate();
         private readonly UnityEngine.UI.Image[] segments = new UnityEngine.UI.Image[42];
         private readonly UnityEngine.UI.Image[] dots = new UnityEngine.UI.Image[4];
         private readonly UnityEngine.UI.Image[] accents = new UnityEngine.UI.Image[2];
@@ -25,6 +28,7 @@ namespace SubTerra.App.UI.HUD
         public bool IsPoweredOn => poweredOn;
         public bool IsPowerAnimating => poweredOn ? powerProgress < 1f : powerProgress > 0f;
         public int DisplaySeconds => displaySeconds;
+        public MineResetClockTickGate TickGate => tickGate;
         public MineResetClockBand Band => style.Band;
         public bool IsTransitioning => style.IsTransitioning;
         public float PulseFactor => style.PulseFactor;
@@ -111,7 +115,9 @@ namespace SubTerra.App.UI.HUD
             if (minutes >= 60 || seconds >= 60) return;
             var total = hours * 3600 + minutes * 60 + seconds;
             if (!style.Observe(total)) return;
+            var previous = displaySeconds;
             displaySeconds = total;
+            if (tickGate.TryTick(previous, total, poweredOn)) SfxPlayer.Play(SfxId.TimerTickSingle);
             for (var i = 0; i < 6; i++)
                 masks[i] = SevenSegmentGlyph.GetMask(clock[i + i / 2] - '0');
             Apply();
@@ -177,6 +183,7 @@ namespace SubTerra.App.UI.HUD
         public void ResetObservation()
         {
             style.Reset();
+            tickGate.Reset();
             displaySeconds = -1;
             if (built) Apply();
         }

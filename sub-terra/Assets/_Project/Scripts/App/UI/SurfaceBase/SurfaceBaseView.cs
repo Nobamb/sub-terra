@@ -1,9 +1,12 @@
 using System;
 using System.Globalization;
+using SubTerra.App.Audio;
 using SubTerra.App.Core;
 using SubTerra.App.Save;
 using SubTerra.App.Tutorial;
 using SubTerra.App.UI.MainMenu;
+using SubTerra.App.UI.Inventory;
+using SubTerra.Shared.Audio;
 using SubTerra.Shared.Localization;
 using TMPro;
 using UnityEngine;
@@ -30,12 +33,32 @@ namespace SubTerra.App.UI.SurfaceBase
         [SerializeField] private Button upgradeButton;
         [SerializeField] private Button upgradeCloseButton;
         [SerializeField] private GameObject upgradeRoot;
+        [SerializeField] private RectTransform upgradeCard;
+        [SerializeField] private Button inventoryButton;
+        [SerializeField] private GameObject inventoryRoot;
+        [SerializeField] private InventoryPanelView inventoryPanel;
+        private bool inventoryVisible;
 
-        public bool IsUpgradeVisible => upgradeRoot != null && upgradeRoot.activeSelf;
+        private UpgradeWindowMotion upgradeMotion;
+
+        // 닫힘 요청과 루트 비활성화 사이에도 다른 창이 겹쳐 열리지 않도록 구분한다.
+        public bool IsUpgradeVisible => upgradeRoot != null && upgradeRoot.activeSelf
+            && (upgradeMotion == null || !upgradeMotion.IsClosing);
+        public bool IsInventoryVisible => inventoryVisible && inventoryRoot != null && inventoryRoot.activeSelf;
+        public bool IsSecondaryClosing => (upgradeMotion != null && upgradeMotion.IsClosing)
+            || (inventoryRoot != null && inventoryRoot.activeSelf && !inventoryVisible);
+        public InventoryPanelView InventoryPanel => inventoryPanel;
+        public bool ContainsInventoryWindow(Canvas canvas) => inventoryRoot != null && PopupWindowSorting.Contains(canvas, inventoryRoot);
+        public bool ContainsUpgradeWindow(Canvas canvas) => upgradeRoot != null && PopupWindowSorting.Contains(canvas, upgradeRoot);
         public bool IsTopUpgradeWindow(Canvas canvas) =>
             IsUpgradeVisible && PopupWindowSorting.Contains(canvas, upgradeRoot);
         public event Action UpgradeClicked;
         public event Action UpgradeCloseClicked;
+        public event Action InventoryClicked;
+        public event Action InventoryCloseClicked;
+
+        /// <summary>B-167 열기·닫기 연출. upgradeRoot가 없으면 null.</summary>
+        public UpgradeWindowMotion UpgradeMotion => EnsureUpgradeMotion();
 
         public void SetResources(float cargo, int gold)
         {
@@ -43,17 +66,62 @@ namespace SubTerra.App.UI.SurfaceBase
             if (goldText != null) goldText.text = "골드 <color=#FFE66B>" + gold + "G</color>";
         }
 
+        /// <summary>업그레이드 버튼·ESC·X키·창 X 버튼이 함께 쓰는 열기 경로. 자물쇠가 부서지며 창이 펼쳐진다.</summary>
+        public void RequestUpgradeOpen()
+        {
+            var motion = EnsureUpgradeMotion();
+            if (motion == null) return;
+            if (motion.IsOpening || motion.IsSettled) return;
+            ShowUpgradeRoot();
+            motion.BeginOpen();
+        }
+
+        /// <summary>함께 쓰는 닫기 경로. 루트 비활성화는 닫기 연출이 끝난 뒤.</summary>
+        public void RequestUpgradeClose()
+        {
+            var motion = EnsureUpgradeMotion();
+            if (motion == null || !IsUpgradeVisible) return;
+            motion.BeginClose(HideUpgradeRoot);
+        }
+
+        /// <summary>연출 없이 즉시 켜고 끈다(설정 창 강제 숨김·Bind·OnDisable·기존 검사). 진행 중 연출은 끝 상태로 정리한다.</summary>
         public void SetUpgradeVisible(bool visible)
         {
             if (upgradeRoot == null) return;
-            var dimmer = upgradeRoot.GetComponent<Canvas>();
+            var motion = EnsureUpgradeMotion();
             if (!visible)
             {
-                PopupWindowSorting.Remove(dimmer);
-                upgradeRoot.SetActive(false);
+                if (motion != null) motion.CompleteImmediately(false);
+                HideUpgradeRoot();
                 return;
             }
 
+            ShowUpgradeRoot();
+            if (motion != null) motion.CompleteImmediately(true);
+        }
+
+        private UpgradeWindowMotion EnsureUpgradeMotion()
+        {
+            if (upgradeMotion != null || upgradeRoot == null) return upgradeMotion;
+            upgradeMotion = upgradeRoot.GetComponent<UpgradeWindowMotion>();
+            if (upgradeMotion == null) upgradeMotion = upgradeRoot.AddComponent<UpgradeWindowMotion>();
+            // B-169: 자물쇠 연출 훅에 소리를 한 번만 붙인다(광산 PanelToggleController와 같은 연결).
+            UpgradeWindowMotionSfx.Attach(upgradeMotion);
+            return upgradeMotion;
+        }
+
+        private void HideUpgradeRoot()
+        {
+            if (upgradeRoot == null) return;
+            PopupWindowSorting.Remove(upgradeRoot.GetComponent<Canvas>());
+            if (upgradeCard != null) PopupWindowSorting.Remove(upgradeCard.GetComponent<Canvas>());
+            upgradeRoot.SetActive(false);
+        }
+
+        private void ShowUpgradeRoot()
+        {
+            if (upgradeRoot == null) return;
+            var dimmer = upgradeRoot.GetComponent<Canvas>();
             upgradeRoot.SetActive(true);
             upgradeRoot.transform.SetAsLastSibling();
             // 딤 이미지가 카드 캔버스보다 앞에 있으면 반투명 검은 막이 업그레이드 클릭을 전부 삼킨다.
@@ -68,6 +136,32 @@ namespace SubTerra.App.UI.SurfaceBase
             {
                 PopupWindowSorting.BringToFront(dimmer);
             }
+        }
+
+        public void SetInventoryVisible(bool visible)
+        {
+            if (inventoryRoot == null || inventoryPanel == null) return;
+            bool wasVisible = IsInventoryVisible;
+            inventoryVisible = visible;
+            if (!visible)
+            {
+                TerminalWindowOpenMotion.Close(inventoryPanel.gameObject, HideInventoryImmediately);
+                return;
+            }
+            inventoryRoot.SetActive(true);
+            inventoryRoot.transform.SetAsLastSibling();
+            inventoryPanel.SetVisible(true);
+            PopupWindowSorting.BringToFront(inventoryRoot.GetComponent<Canvas>());
+            PopupWindowSorting.BringToFront(inventoryPanel.GetComponent<Canvas>());
+            if (!wasVisible) TerminalWindowOpenMotion.Open(inventoryPanel.gameObject);
+        }
+
+        private void HideInventoryImmediately()
+        {
+            if (inventoryRoot == null) return;
+            PopupWindowSorting.Remove(inventoryRoot.GetComponent<Canvas>());
+            if (inventoryPanel != null) PopupWindowSorting.Remove(inventoryPanel.GetComponent<Canvas>());
+            inventoryRoot.SetActive(false);
         }
 
         [Header("Mine reset")]
@@ -145,6 +239,9 @@ namespace SubTerra.App.UI.SurfaceBase
             SetButtonLabel(settingsButton, "설정(esc)");
             if (upgradeButton != null) upgradeButton.onClick.AddListener(OnUpgrade);
             if (upgradeCloseButton != null) upgradeCloseButton.onClick.AddListener(OnUpgradeClose);
+            if (inventoryButton != null) inventoryButton.onClick.AddListener(OnInventory);
+            if (inventoryPanel != null && inventoryPanel.CloseButton != null)
+                inventoryPanel.CloseButton.onClick.AddListener(OnInventoryClose);
             exploreButton?.onClick.AddListener(OnExplore);
             settingsButton?.onClick.AddListener(OnSettings);
             quitButton?.onClick.AddListener(OnQuit);
@@ -157,6 +254,12 @@ namespace SubTerra.App.UI.SurfaceBase
             resetMineConfirmYesButton?.onClick.AddListener(OnResetMineConfirm);
             resetMineConfirmNoButton?.onClick.RemoveListener(OnResetMineCancel);
             resetMineConfirmNoButton?.onClick.AddListener(OnResetMineCancel);
+            // 클릭 소리는 창 열림·바인더 결과음이 맡아 호버만 붙인다. 골드 부족으로 꺼진 실행 버튼은 지금처럼 무음.
+            UiSfx.Attach(resetMineButton, SfxId.None, hover: true);
+            UiSfx.Attach(resetMineConfirmYesButton, SfxId.None, hover: true, failWhenDisabled: false);
+            UiSfx.Attach(resetMineConfirmNoButton, SfxId.None, hover: true);
+            // B-170: 종료 확인 창 등장음이 클릭음을 대신한다.
+            UiSfx.Attach(quitButton, SfxId.None, hover: true);
             resolutionPrevButton?.onClick.AddListener(OnResolutionPrev);
             resolutionNextButton?.onClick.AddListener(OnResolutionNext);
             languageCycleButton?.onClick.AddListener(OnLanguageCycle);
@@ -201,6 +304,9 @@ namespace SubTerra.App.UI.SurfaceBase
         {
             if (upgradeButton != null) upgradeButton.onClick.RemoveListener(OnUpgrade);
             if (upgradeCloseButton != null) upgradeCloseButton.onClick.RemoveListener(OnUpgradeClose);
+            if (inventoryButton != null) inventoryButton.onClick.RemoveListener(OnInventory);
+            if (inventoryPanel != null && inventoryPanel.CloseButton != null)
+                inventoryPanel.CloseButton.onClick.RemoveListener(OnInventoryClose);
             exploreButton?.onClick.RemoveListener(OnExplore);
             settingsButton?.onClick.RemoveListener(OnSettings);
             quitButton?.onClick.RemoveListener(OnQuit);
@@ -368,6 +474,7 @@ namespace SubTerra.App.UI.SurfaceBase
             {
                 if (Application.isPlaying && resetMineConfirmMotion.isActiveAndEnabled)
                 {
+                    SfxPlayer.Play(SfxId.UiPopupOpen);
                     resetMineConfirmMotion.PlayOpen();
                 }
                 else
@@ -384,6 +491,11 @@ namespace SubTerra.App.UI.SurfaceBase
                 && resetMineConfirmMotion.isActiveAndEnabled)
             {
                 var root = resetMineConfirmRoot;
+                if (!resetMineConfirmMotion.IsClosing)
+                {
+                    SfxPlayer.Play(SfxId.UiPopupClose);
+                }
+
                 resetMineConfirmMotion.PlayClose(() =>
                 {
                     if (root != null) root.SetActive(false);
@@ -513,7 +625,6 @@ namespace SubTerra.App.UI.SurfaceBase
             }
 
             if (visible && controlSchemePanel == null) controlSchemePanel = ControlSchemePanel.Attach(settingsRoot);
-            if (visible) SetUpgradeVisible(false);
             if (!visible)
             {
                 var skin = settingsRoot.GetComponent<SubTerra.App.UI.MainMenu.SettingsMenuSkin>();
@@ -587,6 +698,12 @@ namespace SubTerra.App.UI.SurfaceBase
                 masterVolumeSlider.SetValueWithoutNotify(values.MasterVolume);
             }
 
+            var audioRows = AudioRows();
+            if (audioRows != null)
+            {
+                audioRows.SetValues(values.BgmVolume, values.SfxVolume);
+            }
+
             if (reduceMotionToggle != null)
             {
                 reduceMotionToggle.SetIsOnWithoutNotify(values.ReduceMotion);
@@ -604,6 +721,13 @@ namespace SubTerra.App.UI.SurfaceBase
             if (masterVolumeSlider != null)
             {
                 result.MasterVolume = masterVolumeSlider.value;
+            }
+
+            var audioRows = AudioRows();
+            if (audioRows != null)
+            {
+                result.BgmVolume = audioRows.Bgm.Slider.value;
+                result.SfxVolume = audioRows.Sfx.Slider.value;
             }
 
             if (reduceMotionToggle != null)
@@ -666,6 +790,13 @@ namespace SubTerra.App.UI.SurfaceBase
             }
         }
 
+        // 배경음·효과음 줄은 설정창 스킨이 런타임에 만든다. 아직 열린 적이 없어도 여기서 만들어 받는다.
+        private SettingsAudioRows AudioRows()
+        {
+            var skin = settingsRoot != null ? settingsRoot.GetComponent<SettingsMenuSkin>() : null;
+            return skin != null ? skin.EnsureAudioRows() : null;
+        }
+
         private void RefreshSettingsLabels(float volume)
         {
             if (masterVolumeLabel != null)
@@ -690,8 +821,8 @@ namespace SubTerra.App.UI.SurfaceBase
             if (reduceMotionLabel != null)
             {
                 reduceMotionLabel.text = LocalizationService.Get(
-                    "settings.reduce_motion",
-                    "화면 진동 억제");
+                    "settings.reduce_animation_effects",
+                    "애니메이션 연출 감소");
             }
 
             if (languageLabel != null)
@@ -718,7 +849,7 @@ namespace SubTerra.App.UI.SurfaceBase
             {
                 bgmHintLabel.text = LocalizationService.Get(
                     "settings.bgm_hint",
-                    "BGM 4종(타이틀/기지/탐사/위험)은 마스터 음량으로 조절됩니다.");
+                    "배경음은 배경음 슬라이더로 조절됩니다.");
             }
         }
 
@@ -902,6 +1033,8 @@ namespace SubTerra.App.UI.SurfaceBase
         private void OnExplore() => ExploreClicked?.Invoke();
         private void OnUpgrade() => UpgradeClicked?.Invoke();
         private void OnUpgradeClose() => UpgradeCloseClicked?.Invoke();
+        private void OnInventory() => InventoryClicked?.Invoke();
+        private void OnInventoryClose() => InventoryCloseClicked?.Invoke();
         private void OnSettings() => SettingsClicked?.Invoke();
         private void OnQuit() => QuitClicked?.Invoke();
         private void OnSettingsApply() => SettingsApplyClicked?.Invoke();

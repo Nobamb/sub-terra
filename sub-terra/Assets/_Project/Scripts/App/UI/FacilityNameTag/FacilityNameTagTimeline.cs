@@ -46,7 +46,8 @@ namespace SubTerra.App.UI.FacilityNameTag
         private const float CornerEnd = 0.22f;
         private const float SpreadStart = 0.18f;
         private const float SpreadEnd = 0.62f;
-        private const float ScanStart = 0.55f;
+        /// <summary>스캔선과 글자 드러남이 시작되는 level. 스캔 소리가 이 시점에 난다.</summary>
+        public const float ScanStart = 0.55f;
 
         /// <summary>wanted 방향으로 level을 dt만큼 진행한다.</summary>
         public static float Advance(float level, bool wanted, float deltaSeconds)

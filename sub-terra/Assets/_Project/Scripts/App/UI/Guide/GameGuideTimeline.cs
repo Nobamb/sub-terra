@@ -90,6 +90,9 @@ namespace SubTerra.App.UI.Guide
 
         public static float OpenDuration(bool full) => full ? FullOpenDuration : QuickOpenDuration;
 
+        /// <summary>첫 페이지가 넘어가기 시작하는 시각.</summary>
+        public static float FlipStartTime(bool full) => full ? Full.FlipStart : Quick.FlipStart;
+
         public static GuideFrame Open(float t, bool full)
         {
             var p = full ? Full : Quick;

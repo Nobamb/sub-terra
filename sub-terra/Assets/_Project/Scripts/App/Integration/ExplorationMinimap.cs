@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
+using SubTerra.App.Audio;
 using SubTerra.App.Core.Data;
 using SubTerra.Gameplay.Building;
 using SubTerra.Gameplay.Player;
 using SubTerra.Gameplay.Power;
 using SubTerra.Shared;
+using SubTerra.Shared.Audio;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -211,6 +213,7 @@ namespace SubTerra.App.Integration
         {
             EnsureHierarchy();
             MinimapBoardMode mode = timeline.Press();
+            SfxPlayer.Play(SfxId.MinimapBeep, BeepPitch(mode));
             UpdateHint();
             if (mode != MinimapBoardMode.Closed)
             {
@@ -221,6 +224,17 @@ namespace SubTerra.App.Integration
             }
 
             return mode;
+        }
+
+        /// <summary>단계마다 다른 높이의 삑: 가로형 1.0, 정사각형 1.15, 닫힘 0.85.</summary>
+        public static float BeepPitch(MinimapBoardMode mode)
+        {
+            switch (mode)
+            {
+                case MinimapBoardMode.Square: return 1.15f;
+                case MinimapBoardMode.Closed: return 0.85f;
+                default: return 1f;
+            }
         }
 
         /// <summary>Ctrl+M 한 번 = 반투명 ↔ 불투명 전환(0.3초). 입력 경로는 Update 한 곳뿐이며 테스트도 이 진입점을 쓴다.</summary>

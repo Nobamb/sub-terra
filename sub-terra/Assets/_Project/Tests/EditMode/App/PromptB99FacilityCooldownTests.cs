@@ -193,6 +193,37 @@ namespace SubTerra.App.Tests
         }
 
         [Test]
+        public void PromptB158_CooldownToggle_PlaysCancelFailOnce()
+        {
+            var system = CreateChargeSystem();
+            system.State.SetEnergy(10, 100);
+            var view = new RecordingView();
+            var presenter = new OutpostPanelPresenter(view);
+            presenter.WarningSink = new RecordingPlayerStatusWarningSink();
+            presenter.Bind(system.Service);
+            system.Service.ApplyRuntimeStatus(ChargerStatus("charger.a"));
+            presenter.ToggleInteractionPanel();
+            presenter.DismissInteractionPanel();
+
+            // B-168: 실패음은 FailureFeedback을 거친다. 같은 프레임에 도는 앞 검사의 기록을 비운다.
+            SubTerra.App.Audio.FailureFeedback.ResetForTests(null, null);
+            var played = new List<SubTerra.Shared.Audio.SfxId>();
+            System.Action<SubTerra.Shared.Audio.SfxId, float> record = (id, pitch) => played.Add(id);
+            SubTerra.Shared.Audio.SfxRequests.PlayRequested += record;
+            try
+            {
+                presenter.ToggleInteractionPanel();
+            }
+            finally
+            {
+                SubTerra.Shared.Audio.SfxRequests.PlayRequested -= record;
+                presenter.Unbind();
+            }
+
+            Assert.That(played, Is.EqualTo(new[] { SubTerra.Shared.Audio.SfxId.UiCancelFail }));
+        }
+
+        [Test]
         public void PromptB99_SaveRestore_KeepsPerInstanceRemaining()
         {
             var system = CreateChargeSystem();

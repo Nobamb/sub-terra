@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using SubTerra.Shared.Audio;
 using UnityEngine;
 
 namespace SubTerra.Gameplay.Player
@@ -65,6 +66,8 @@ namespace SubTerra.Gameplay.Player
         private float cargoSpeedMultiplier = 1f;
         private float cargoJumpMultiplier = 1f;
         private float hazardSpeedMultiplier = 1f;
+        private readonly PlayerMoveSfxGate moveSfx = new PlayerMoveSfxGate();
+        private readonly LadderSfxGate ladderSfx = new LadderSfxGate();
 
         public Vector2 Position => body != null ? body.position : (Vector2)transform.position;
         public float FacingDirection { get; private set; } = 1f;
@@ -82,6 +85,12 @@ namespace SubTerra.Gameplay.Player
             || Mathf.Abs(verticalMoveInput) > 0.01f;
         public float CurrentSpeedMultiplier => cargoSpeedMultiplier * hazardSpeedMultiplier;
         public float CurrentJumpMultiplier => cargoJumpMultiplier;
+        /// <summary>실제 가로 속도 크기. 벽을 밀고 있으면 0에 가깝다.</summary>
+        public float HorizontalSpeed => body != null ? Mathf.Abs(body.linearVelocityX) : 0f;
+        /// <summary>B-164: 점프·착지 소리 판정. 착지는 PlayerSurvivalController가 같은 판정기로 낸다.</summary>
+        public PlayerMoveSfxGate MoveSfx => moveSfx;
+        /// <summary>B-164: 사다리 잡기·놓기·걸음 소리 판정.</summary>
+        public LadderSfxGate LadderSfx => ladderSfx;
         private float PlayerTop => bodyCollider != null ? bodyCollider.bounds.max.y : body.position.y;
         private float PlayerBottom => bodyCollider != null ? bodyCollider.bounds.min.y : body.position.y;
 
@@ -125,6 +134,11 @@ namespace SubTerra.Gameplay.Player
             var jumped = TryApplyJump();
             if (IsClimbing && !jumped)
             {
+                if (CanMove && IsMovingOnLadder)
+                {
+                    SfxRequests.Play(ladderSfx.OnVerticalMove());
+                }
+
                 ApplyVerticalMovement();
             }
             else if (!jumped)
@@ -190,12 +204,14 @@ namespace SubTerra.Gameplay.Player
             // 사다리 탑승 시 탈출 점프 1회 허용.
             jumpAirLockRemaining = 0f;
             jumpUsedUntilLand = false;
+            SfxRequests.Play(ladderSfx.OnEnter(IsGrounded));
         }
 
+        /// <summary>위치 복원·OnDisable처럼 강제로 내리는 경로라 놓음 소리를 내지 않는다.</summary>
         public void ExitLadder()
         {
             activeLadders.Clear();
-            ExitLadderMode();
+            ExitLadderMode(silent: true);
         }
 
         public void ExitLadder(LadderZone ladder)
@@ -208,12 +224,14 @@ namespace SubTerra.Gameplay.Player
             ExitLadderMode();
         }
 
-        private void ExitLadderMode()
+        private void ExitLadderMode(bool silent = false)
         {
             if (!IsClimbing || body == null)
             {
                 return;
             }
+
+            SfxRequests.Play(ladderSfx.OnExit(silent));
 
             body.gravityScale = gravityBeforeClimbing;
             if (ascendingTowardsLadderExit && body.linearVelocityY > 0f)
@@ -256,7 +274,24 @@ namespace SubTerra.Gameplay.Player
                 body.linearVelocityX,
                 targetVelocity,
                 rate * Time.fixedDeltaTime);
+            // 공중에서 벽/발판 옆면을 계속 밀면 마찰과 모서리 반력이 낙하를 받친다.
+            // 바닥으로 인정되지 않는 접점에는 밀어 넣지 않고, 반대 방향 이탈은 허용한다.
+            if (!IsGrounded && !IsClimbing && IsPushingIntoSide(nextVelocityX))
+                nextVelocityX = 0f;
             body.linearVelocity = new Vector2(nextVelocityX, body.linearVelocityY);
+        }
+
+        private bool IsPushingIntoSide(float velocityX)
+        {
+            int count = body.GetContacts(contactBuffer);
+            for (int i = 0; i < count; i++)
+            {
+                var contact = contactBuffer[i];
+                if (contact.normal.y < minGroundNormalY && contact.normal.x * velocityX < -0.001f)
+                    return true;
+            }
+
+            return false;
         }
 
         /// <summary>
@@ -301,6 +336,8 @@ namespace SubTerra.Gameplay.Player
             jumpAirLockRemaining = jumpAirLockDuration;
             jumpUsedUntilLand = true;
             IsGrounded = false;
+            // 땅·코요테·입력 버퍼·사다리 점프가 모두 이곳을 지나므로 한 번만 난다.
+            SfxRequests.Play(moveSfx.ResolveJump());
         }
 
         private void ApplyVerticalMovement()

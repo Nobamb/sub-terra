@@ -1,7 +1,8 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
+using SubTerra.App.Audio;
 using SubTerra.App.Progression;
+using SubTerra.Shared.Audio;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -38,19 +39,35 @@ namespace SubTerra.App.UI.Progression
         // 자물쇠 4조각은 업그레이드 노드 LockPart(PromptB118UpgradeTreeBuilder)의 1.3배.
         private const float LockScale = 1.3f;
         private const float BandHeight = 44f;
+        // 떨어지며 옆으로 밀리는 거리(px).
+        public const float LockDrift = 4f;
 
         private readonly List<Cell> cells = new List<Cell>();
         private readonly DeepZoneRevealTracker tracker = new DeepZoneRevealTracker();
         private DeepZoneThumbnailStyle style = new DeepZoneThumbnailStyle();
         private TMP_FontAsset font;
         private Func<bool> revealBlocked;
-        private Coroutine revealRoutine;
+        private readonly List<SfxId> cueBuffer = new List<SfxId>();
+        private readonly SfxRepeatGate cueGate = new SfxRepeatGate(UnlockRevealTimeline.SameCueSeconds);
+        private bool revealing;
+        private float revealElapsed;
+        private float revealU;
         private int revealFrom;
         private int revealTo;
 
         public int CellCount => cells.Count;
         public bool HasPendingReveal => tracker.HasPending;
-        public bool IsRevealing => revealRoutine != null;
+        public bool IsRevealing => revealing;
+
+        /// <summary>확인용: true면 Update가 연출을 진행하지 않고 테스트가 TickReveal로 직접 진행한다.</summary>
+        public bool ManualTick { get; set; }
+
+        /// <summary>테스트용 소리 시계(같은 소리 0.1초 제한).</summary>
+        public Func<float> CueClock
+        {
+            get => cueGate.Clock;
+            set => cueGate.Clock = value ?? (() => Time.realtimeSinceStartup);
+        }
         public bool HasShader => ResolveShader() != null;
 
         /// <summary>해금 창(B-154)이 보이는 동안 true. 그동안 연출을 미룬다.</summary>
@@ -132,14 +149,18 @@ namespace SubTerra.App.UI.Progression
 
             revealFrom = from;
             revealTo = Mathf.Min(to, cells.Count);
-            if (!Application.isPlaying)
+            if (!Application.isPlaying && !ManualTick)
             {
-                // 에디트 모드에는 코루틴 루프가 없으므로 끝 상태로 바로 맞춘다.
+                // 에디트 모드에는 Update 루프가 없으므로 끝 상태로 바로 맞춘다(무음).
                 FinishReveal();
                 return true;
             }
 
-            revealRoutine = StartCoroutine(RevealRoutine());
+            // B-169: 한 번에 여러 칸이 풀려도 소리는 이 연출 한 세트만 낸다.
+            revealing = true;
+            revealElapsed = 0f;
+            revealU = UnlockRevealTimeline.BeforeStart;
+            StepReveal(0f);
             return true;
         }
 
@@ -158,6 +179,12 @@ namespace SubTerra.App.UI.Progression
 
         private void Update()
         {
+            // 시작한 프레임에 한 번 더 진행하지 않도록 진행을 먼저 한다.
+            if (revealing && !ManualTick)
+            {
+                TickReveal(Time.unscaledDeltaTime);
+            }
+
             if (tracker.HasPending && !IsRevealing)
             {
                 TryPlayPending();
@@ -173,9 +200,8 @@ namespace SubTerra.App.UI.Progression
         private void OnDisable()
         {
             // 연출 도중 창이 꺼지면 바로 끝 상태로 맞춘다. 아직 시작 안 한 대기는 다음에 열 때 재생한다.
-            if (revealRoutine != null)
+            if (revealing)
             {
-                StopCoroutine(revealRoutine);
                 FinishReveal();
             }
         }
@@ -191,22 +217,43 @@ namespace SubTerra.App.UI.Progression
             cells.Clear();
         }
 
-        private IEnumerator RevealRoutine()
+        /// <summary>진행 중인 해금 연출을 dt만큼 진행한다. Update와 테스트가 같은 경로를 쓴다.</summary>
+        public void TickReveal(float deltaTime)
         {
-            yield return UpgradeTreeTween.Run(style.unlockDuration, u =>
+            if (!revealing)
             {
-                for (var i = revealFrom; i < revealTo; i++)
-                {
-                    SampleReveal(cells[i], u);
-                }
-            });
-            revealRoutine = null;
-            FinishReveal();
+                return;
+            }
+
+            revealElapsed += Mathf.Max(0f, deltaTime);
+            var duration = Mathf.Max(0.0001f, style.unlockDuration);
+            StepReveal(Mathf.Clamp01(revealElapsed / duration));
+        }
+
+        private void StepReveal(float u)
+        {
+            cueBuffer.Clear();
+            UnlockRevealTimeline.CollectCues(revealU, u, cueBuffer);
+            revealU = u;
+            for (var i = revealFrom; i < revealTo; i++)
+            {
+                SampleReveal(cells[i], u);
+            }
+
+            for (var i = 0; i < cueBuffer.Count; i++)
+            {
+                cueGate.TryPlay(cueBuffer[i]);
+            }
+
+            if (u >= 1f)
+            {
+                FinishReveal();
+            }
         }
 
         private void FinishReveal()
         {
-            revealRoutine = null;
+            revealing = false;
             for (var i = revealFrom; i < revealTo && i < cells.Count; i++)
             {
                 DrawUnlocked(cells[i]);
@@ -264,30 +311,14 @@ namespace SubTerra.App.UI.Progression
             }
 
             var s = style;
-            if (u < 0.2f)
+            // B-169: 자물쇠 자세는 업그레이드 노드와 같은 공용 시간표를 쓴다.
+            var pose = UnlockRevealTimeline.SampleLock(u, s.shackleKick, s.lockDrop, s.lockDropAngle, LockDrift);
+            if (pose.Visible)
             {
-                var p = u / 0.2f;
-                SetLockPose(cell, Vector2.zero, Mathf.Sin(p * Mathf.PI * 8f) * 12f * (0.5f + p * 0.5f), 1f, 0f, 1f);
-            }
-            else if (u < 0.3f)
-            {
-                var p = (u - 0.2f) / 0.1f;
-                SetLockPose(cell, Vector2.zero, 0f, 1f + 0.1f * UpgradeTreeTween.Pulse(p), s.shackleKick * UpgradeTreeTween.EaseOut(p), 1f);
-            }
-            else if (u < 0.65f)
-            {
-                var p = (u - 0.3f) / 0.35f;
-                var fall = p * p;
-                SetLockPose(
-                    cell,
-                    new Vector2(4f * fall, -s.lockDrop * fall),
-                    -s.lockDropAngle * fall,
-                    1f,
-                    s.shackleKick,
-                    1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.35f, 1f, p)));
+                SetLockPose(cell, pose.Offset, pose.Angle, pose.Scale, pose.ShackleLift, pose.Alpha);
             }
 
-            cell.LockRoot.gameObject.SetActive(u < 0.65f);
+            cell.LockRoot.gameObject.SetActive(pose.Visible);
 
             var spread = u < 0.3f ? 0f : UpgradeTreeTween.EaseOut((u - 0.3f) / 0.7f);
             var rim = spread > 0f ? 1f - spread * spread : 0f;
