@@ -19,7 +19,7 @@ Before making changes, use these documents as authoritative:
 
 - `init/rules` — binding agent/work rules
 - `init/rules/rule.md` — entry point; §16 work attitude and §17 screen-check rules apply to every task
-- `init/rules/lessons.md` — mistake log; read before every task, append one line after fixing a mistake
+- `init/rules/lessons/` — mistake records; before each task, list filenames and read the relevant files selected by topic or tags; add each new lesson as a separate file
 - `init/PRD.md` — game design and gameplay values
 - `docs/INTEGRATION_GUIDE.md` — runtime integration architecture
 - relevant files under `work_process/` — feature-specific requirements
@@ -62,6 +62,6 @@ After making changes:
 2. Check the relevant diff.
 3. Run the narrowest relevant tests.
 4. Report changed files, verification performed, and unresolved issues. Mark anything not verified in actual play or on screen as "미검증" with a manual checklist.
-5. If you fixed a mistake or regression, add one line to `init/rules/lessons.md`.
+5. If you fixed a mistake or regression, add a separate dated topic file under `init/rules/lessons/` following the format in `init/rules/rule.md` §16-4. Do not append to a shared table or index.
 
 Do not make unrelated cleanup changes.
