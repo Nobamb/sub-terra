@@ -12,7 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25243424c16763b4dbc6cb614437214c, type: 3}
   m_Name: MineBackdropSettings
   m_EditorClassIdentifier: SubTerra.App::SubTerra.App.UI.MineBackdropSettings
-  image: {fileID: 2800000, guid: ba3f4b06b0c745440a125135cd65ab9b, type: 3}
+  image: {fileID: 2800000, guid: 6641cf04b3f7fef48943fb917640c273, type: 3}
+  ironImage: {fileID: 2800000, guid: 57fe4041ce724bf478c61f7561ffcc7e, type: 3}
+  lithiumImage: {fileID: 2800000, guid: c50315cb0444f1e468cd05b2cc8a0f70, type: 3}
+  ironDepth: 16
+  lithiumDepth: 36
+  mineralSurfaceY: -1
+  depthBlendDistance: 2
+  themeSmoothingSeconds: 0.8
   tint: {r: 0.65, g: 0.7, b: 0.75, a: 1}
   horizontalTravelWorld: 160
   depthTravelWorld: 160

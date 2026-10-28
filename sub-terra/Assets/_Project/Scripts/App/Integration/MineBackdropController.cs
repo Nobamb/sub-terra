@@ -10,6 +10,11 @@ namespace SubTerra.App.Integration
     {
         private static readonly int UvRectId = Shader.PropertyToID("_UvRect");
         private static readonly int TintId = Shader.PropertyToID("_Tint");
+        private static readonly int LayerWeightsId = Shader.PropertyToID("_LayerWeights");
+        private static readonly int LithiumGlowId = Shader.PropertyToID("_LithiumGlow");
+        public System.Func<float> FocusCellYProvider { private get; set; }
+        public Vector3 CurrentLayerWeights { get; private set; }
+        private float glowClock;
         private MineBackdropSettings settings;
         private Camera targetCamera;
         private Transform focus;
@@ -65,6 +70,8 @@ namespace SubTerra.App.Integration
                 gameObject.layer = foreground.gameObject.layer;
             }
             material.mainTexture = settings.image;
+            material.SetTexture("_IronTex", settings.ironImage != null ? settings.ironImage : settings.image);
+            material.SetTexture("_LithiumTex", settings.lithiumImage != null ? settings.lithiumImage : settings.image);
             material.SetColor(TintId, settings.tint);
             Refresh(0f);
         }
@@ -74,6 +81,14 @@ namespace SubTerra.App.Integration
         public void Refresh(float deltaTime)
         {
             if (settings == null || targetCamera == null || focus == null || meshRenderer == null) return;
+            float depth = Mathf.Max(0f, settings.mineralSurfaceY - (FocusCellYProvider != null ? FocusCellYProvider() : focus.position.y));
+            var weights = settings.LayerWeights(depth);
+            float themeBlend = AccessibilityPreferences.ReduceMotion || settings.themeSmoothingSeconds <= 0f
+                ? 1f : 1f - Mathf.Exp(-Mathf.Max(0f, deltaTime) / settings.themeSmoothingSeconds);
+            CurrentLayerWeights = centered ? Vector3.Lerp(CurrentLayerWeights, weights, themeBlend) : weights;
+            material.SetVector(LayerWeightsId, CurrentLayerWeights);
+            glowClock += Mathf.Max(0f, deltaTime);
+            material.SetFloat(LithiumGlowId, AccessibilityPreferences.ReduceMotion ? .08f : .08f + .025f * Mathf.Sin(glowClock * .7f));
             var desired = settings.Viewport(AccessibilityPreferences.ReduceMotion ? settings.surfaceOrigin : (Vector2)focus.position, targetCamera.aspect);
             float blend = AccessibilityPreferences.ReduceMotion || settings.smoothingSeconds <= 0f
                 ? 1f : 1f - Mathf.Exp(-Mathf.Max(0f, deltaTime) / settings.smoothingSeconds);

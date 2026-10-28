@@ -41,6 +41,25 @@ namespace SubTerra.App.Tests.EditMode.UI
         }
 
         [Test]
+        public void Layers_FollowMineralDepthsBlendContinuouslyAndFallbackWithoutTextures()
+        {
+            Assert.That(settings.LayerWeights(100), Is.EqualTo(Vector3.right));
+            settings.ironImage = image;
+            settings.lithiumImage = image;
+            Assert.That(settings.LayerWeights(15), Is.EqualTo(Vector3.right));
+            Assert.That(settings.LayerWeights(25), Is.EqualTo(Vector3.up));
+            Assert.That(settings.LayerWeights(40), Is.EqualTo(Vector3.forward));
+            Assert.That(settings.LayerWeights(17).x, Is.EqualTo(.5f).Within(.001f));
+            Assert.That(settings.LayerWeights(37).z, Is.EqualTo(.5f).Within(.001f));
+            for (float depth = 0; depth < 80; depth += .25f)
+            {
+                var weights = settings.LayerWeights(depth);
+                Assert.That(weights.x + weights.y + weights.z, Is.EqualTo(1f).Within(.0001f));
+                Assert.That(Vector3.Distance(weights, settings.LayerWeights(depth + .001f)), Is.LessThan(.01f));
+            }
+        }
+
+        [Test]
         public void Viewport_DepthAndSidesMoveGraduallyAndReserveFutureMapSpace()
         {
             var top = settings.Viewport(Vector2.zero, 16f / 9f);

@@ -36,6 +36,7 @@ namespace SubTerra.App.Tests.PlayMode
                 camera.transform.position = new Vector3(25, -35, -10);
                 var destination = config.Viewport(target.transform.position, camera.aspect);
                 backdrop.Refresh(.016f);
+                Assert.That(backdrop.CurrentLayerWeights.z, Is.GreaterThan(0f).And.LessThan(1f));
                 Assert.That(backdrop.CurrentViewport.center.y, Is.LessThan(start.center.y));
                 Assert.That(backdrop.CurrentViewport.center.y, Is.GreaterThan(destination.center.y));
                 var renderer = backdrop.GetComponent<MeshRenderer>();
@@ -54,9 +55,17 @@ namespace SubTerra.App.Tests.PlayMode
                 Assert.That(renderer.enabled, Is.True);
                 AccessibilityPreferences.ReduceMotion = true;
                 backdrop.Refresh(.016f);
+                Assert.That(backdrop.CurrentLayerWeights.z, Is.EqualTo(1f));
                 var fixedViewport = config.Viewport(config.surfaceOrigin, camera.aspect);
                 Assert.That(backdrop.CurrentViewport.x, Is.EqualTo(fixedViewport.x).Within(.00001f));
                 Assert.That(backdrop.CurrentViewport.y, Is.EqualTo(fixedViewport.y).Within(.00001f));
+                foreach (float depth in new[] { 5f, 17f, 25f, 37f, 40f })
+                {
+                    backdrop.FocusCellYProvider = () => config.mineralSurfaceY - depth;
+                    backdrop.Refresh(0f);
+                    Assert.That(backdrop.CurrentLayerWeights, Is.EqualTo(config.LayerWeights(depth)));
+                    Capture(camera, depth);
+                }
             }
             finally
             {
@@ -65,6 +74,34 @@ namespace SubTerra.App.Tests.PlayMode
                 Object.DestroyImmediate(target);
                 Object.DestroyImmediate(config);
                 AccessibilityPreferences.ReduceMotion = originalReduceMotion;
+            }
+        }
+
+        private static void Capture(Camera camera, float depth)
+        {
+            const int width = 480, height = 240;
+            var target = RenderTexture.GetTemporary(width, height, 24);
+            var previous = RenderTexture.active;
+            var image = new Texture2D(width, height, TextureFormat.RGB24, false);
+            try
+            {
+                camera.targetTexture = target;
+                UnityEngine.Rendering.RenderPipeline.SubmitRenderRequest(camera,
+                    new UnityEngine.Rendering.RenderPipeline.StandardRequest { destination = target });
+                RenderTexture.active = target;
+                image.ReadPixels(new Rect(0, 0, width, height), 0, 0);
+                image.Apply();
+                var directory = System.IO.Path.GetFullPath(System.IO.Path.Combine(Application.dataPath,
+                    "../../work_process/images/mine-depth-backdrop"));
+                System.IO.Directory.CreateDirectory(directory);
+                System.IO.File.WriteAllBytes(System.IO.Path.Combine(directory, "depth-" + depth + ".png"), image.EncodeToPNG());
+            }
+            finally
+            {
+                camera.targetTexture = null;
+                RenderTexture.active = previous;
+                RenderTexture.ReleaseTemporary(target);
+                Object.DestroyImmediate(image);
             }
         }
     }

@@ -973,8 +973,11 @@ namespace SubTerra.App.Integration
         {
             if (playerMovement == null) return;
             var terrain = FindForegroundTilemap();
-            MineBackdropController.AttachTo(transform, Camera.main, playerMovement.transform,
+            var backdrop = MineBackdropController.AttachTo(transform, Camera.main, playerMovement.transform,
                 terrain != null ? terrain.GetComponent<TilemapRenderer>() : null);
+            if (backdrop != null && terrain != null)
+                backdrop.FocusCellYProvider = () => terrain != null && playerMovement != null
+                    ? terrain.WorldToCell(playerMovement.transform.position).y : 0f;
         }
 
         private void OnDestroy()
