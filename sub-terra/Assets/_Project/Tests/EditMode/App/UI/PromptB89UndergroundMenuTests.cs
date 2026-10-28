@@ -85,6 +85,32 @@ namespace SubTerra.App.Tests.UI
         }
 
         [Test]
+        public void Issue253_XClosesQuestDetailsAndConsumesRepeatedClose()
+        {
+            var view = scene.GetRootGameObjects().SelectMany(root =>
+                root.GetComponentsInChildren<SubTerra.App.UI.Tutorial.DemoObjectiveView>(true)).Single();
+            view.SetDetailsVisible(true);
+            var top = PopupWindowSorting.Top;
+            Assert.That(top, Is.Not.Null);
+            var motion = top.GetComponent<TerminalWindowOpenMotion>();
+            Assert.That(motion, Is.Not.Null);
+            motion.Advance(1f);
+            var dismisses = 0;
+            System.Action close = () => { dismisses++; view.SetDetailsVisible(false); };
+            view.DetailsDismissRequested += close;
+            try
+            {
+                menu.HandleCloseTopPopup();
+                menu.HandleCloseTopPopup();
+                Assert.That(dismisses, Is.EqualTo(1));
+                Assert.That(motion.IsClosing, Is.True);
+                motion.Advance(1f);
+                Assert.That(top.gameObject.activeSelf, Is.False);
+            }
+            finally { view.DetailsDismissRequested -= close; }
+        }
+
+        [Test]
         public void Issue217_XClosesTopQuestRewardThroughExistingConfirmAction()
         {
             var view = scene.GetRootGameObjects().SelectMany(root =>

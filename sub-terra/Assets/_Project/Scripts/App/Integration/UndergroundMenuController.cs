@@ -102,6 +102,7 @@ namespace SubTerra.App.Integration
             if (topWindow != null)
             {
                 if (briefing != null && briefing.TryCloseClaimPopup(topWindow)) return;
+                if (briefing != null && briefing.TryCloseDetailsPopup(topWindow)) return;
                 var deepZone = topWindow.GetComponent<DeepZoneUnlockPopupEscClose>();
                 if (deepZone != null) { deepZone.Close(); return; }
                 var rescueView = topWindow.GetComponent<EmergencyRescuePanelView>();
