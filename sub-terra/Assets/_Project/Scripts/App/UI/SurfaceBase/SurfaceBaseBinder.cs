@@ -8,6 +8,7 @@ using SubTerra.App.UI.MainMenu;
 using SubTerra.App.UI.HUD;
 using SubTerra.App.UI.Progression;
 using SubTerra.App.UI.Inventory;
+using SubTerra.App.UI.QuitConfirm;
 using SubTerra.Shared;
 using SubTerra.Shared.Audio;
 using SubTerra.Shared.Localization;
@@ -201,6 +202,8 @@ namespace SubTerra.App.UI.SurfaceBase
         {
             var keyboard = Keyboard.current;
             if (settings == null || view == null || keyboard == null) return;
+            // B-170: 종료 확인 창이 ESC·X를 먼저 받고, 떠 있는 동안 다른 단축키를 막는다.
+            if (QuitConfirmFlow.IsBlockingInput) return;
             if (keyboard.escapeKey.wasPressedThisFrame)
             {
                 if (settings.IsOpen) OnSettingsCancel();
@@ -539,14 +542,12 @@ namespace SubTerra.App.UI.SurfaceBase
                 return;
             }
 
-            var decision = QuitPolicy.Decide(runtime.IsDirty, runtime.IsSaveInProgress);
-            if (decision == QuitDecision.DeferWhileSaving)
+            // B-170: 바로 끄지 않고 종료 확인 창을 띄운다. 설정 창이 열려 있으면 무시한다.
+            var result = QuitConfirmFlow.Request(true, null, settings != null && settings.IsOpen);
+            if (result == QuitRequestResult.DeferredWhileSaving)
             {
                 view?.SetMessage("저장 중입니다. 잠시 후 다시 시도하세요.");
-                return;
             }
-
-            runtime.RequestQuit();
         }
 
         /// <summary>

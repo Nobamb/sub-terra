@@ -677,6 +677,22 @@ MonoBehaviour:
     startTime: 0
     maxDuration: 0
     fadeOut: 0
+  - id: 85
+    clip: {fileID: 8300000, guid: e3891968bf084a1c821678a91fa9c7e0, type: 3}
+    bus: 0
+    volume: 0.45
+    pitch: 1
+    startTime: 0
+    maxDuration: 0
+    fadeOut: 0
+  - id: 86
+    clip: {fileID: 8300000, guid: 03996bbebd084837bafaea3ee8ecb1db, type: 3}
+    bus: 0
+    volume: 0.5
+    pitch: 1
+    startTime: 0
+    maxDuration: 0
+    fadeOut: 0
   uiBusVolume: 1
   worldBusVolume: 1
   alertBusVolume: 1

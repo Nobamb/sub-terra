@@ -1,3 +1,4 @@
+using SubTerra.App.Audio;
 using SubTerra.App.Save;
 using SubTerra.App.UI;
 using SubTerra.App.UI.HUD;
@@ -6,9 +7,11 @@ using SubTerra.App.UI.EmergencyRescue;
 using SubTerra.App.UI.MainMenu;
 using SubTerra.App.UI.Outpost;
 using SubTerra.App.UI.Progression;
+using SubTerra.App.UI.QuitConfirm;
 using SubTerra.App.UI.SurfaceBase;
 using SubTerra.App.UI.Tutorial;
 using SubTerra.Gameplay.Player;
+using SubTerra.Shared.Audio;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -38,6 +41,11 @@ namespace SubTerra.App.Integration
                 if (label != null) label.text = "설정(esc)";
                 break;
             }
+            for (var i = 0; i < shortcuts.Length; i++)
+            {
+                // B-170: 종료 확인 창 등장음이 클릭음을 대신한다.
+                if (shortcuts[i].name == "QuitShortcut") UiSfx.Attach(shortcuts[i], SfxId.None, hover: true);
+            }
             if (settingsView == null) return;
             var initial = SettingsRuntimeApplier.LoadOrDefaults();
             SettingsRuntimeApplier.ApplyPersistedControlScheme();
@@ -64,6 +72,8 @@ namespace SubTerra.App.Integration
         {
             var keyboard = Keyboard.current;
             if (keyboard == null) return;
+            // B-170: 종료 확인 창이 ESC·X를 먼저 받고(-400), 떠 있는 동안 다른 단축키를 막는다.
+            if (QuitConfirmFlow.IsBlockingInput) return;
             // 시작 브리핑처럼 진행을 멈춘 동안에는 설정·종료 단축키를 막고 X(닫기)만 허용한다.
             var paused = UiPauseGate.IsHeld;
             if (!paused && keyboard.escapeKey.wasPressedThisFrame) HandleEscape();
@@ -213,13 +223,19 @@ namespace SubTerra.App.Integration
 
         private void PreviewVolume(float volume) => SettingsRuntimeApplier.PreviewMasterVolume(volume);
 
+        /// <summary>메뉴 "게임 종료(O)" 버튼과 O키. B-170: 바로 끄지 않고 종료 확인 창을 띄운다.</summary>
         public void RequestQuit()
         {
-            var runtime = SaveRuntimeController.Instance;
-            if (runtime == null) return;
-            if (QuitPolicy.Decide(runtime.IsDirty, runtime.IsSaveInProgress) == QuitDecision.DeferWhileSaving)
-                return;
-            runtime.RequestQuit();
+            if (SaveRuntimeController.Instance == null) return;
+            // 설정 창이 열려 있으면 무시. 탑승 중·일시정지 중 판단은 QuitConfirmFlow가 한다.
+            QuitConfirmFlow.Request(true, null, IsSettingsOpen);
+        }
+
+        // B-170: App은 Gameplay를 모르므로 엘리베이터 탑승 판정을 여기서 등록한다(지상·광산 모두).
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterAssembliesLoaded)]
+        private static void RegisterQuitRideCheck()
+        {
+            QuitConfirmFlow.RideCheck = IsElevatorRiding;
         }
     }
 }

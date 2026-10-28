@@ -1,4 +1,8 @@
 using System;
+using SubTerra.App.Audio;
+using SubTerra.App.UI.QuitConfirm;
+using SubTerra.Shared;
+using SubTerra.Shared.Audio;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -9,7 +13,7 @@ namespace SubTerra.App.UI.MainMenu
     /// B-150 메인화면 켜짐/꺼짐 연출 적용기. 시간 계산은 MainMenuBootTimeline·MainMenuExitTimeline이 하고
     /// 여기서는 셔터·문구·카드·버튼에 값만 적용한다. 연출 중에는 메뉴 입력을 막는다.
     /// </summary>
-    public sealed class MainMenuIntroDirector : MonoBehaviour
+    public sealed class MainMenuIntroDirector : MonoBehaviour, IQuitOutroView
     {
         [SerializeField] private MainMenuBootSettings bootSettings = new MainMenuBootSettings();
         [SerializeField] private MainMenuExitSettings exitSettings = new MainMenuExitSettings();
@@ -45,11 +49,15 @@ namespace SubTerra.App.UI.MainMenu
         private bool hasLogoHome;
         private float glitchStep;
         private readonly bool[] revealStarted = new bool[3];
+        private readonly MainMenuTypeTickGate typeTicks = new MainMenuTypeTickGate();
+        private bool quitting;
+        private bool quitReduced;
 
         public bool IsBooting => booting;
         public bool IsExiting => exiting;
         /// <summary>건너뛰기 입력이 같은 프레임에 메뉴 버튼까지 누르지 않도록 다음 프레임까지 막는다.</summary>
-        public bool BlocksInput => booting || exiting || Time.frameCount <= inputResumeFrame;
+        public bool BlocksInput => booting || exiting || quitting || Time.frameCount <= inputResumeFrame;
+        public bool IsQuitting => quitting;
         public MainMenuBootTimeline Boot => boot ?? (boot = new MainMenuBootTimeline(bootSettings));
         public event Action BootSkipped;
 
@@ -77,16 +85,30 @@ namespace SubTerra.App.UI.MainMenu
         {
             booting = false;
             exiting = false;
+            quitting = false;
             exitClosed = null;
         }
 
         public void StartBoot()
         {
             Boot.Restart();
+            typeTicks.Reset();
             exiting = false;
+            quitting = false;
             booting = true;
             for (var i = 0; i < revealStarted.Length; i++) revealStarted[i] = false;
             SetMenuInput(false);
+            if (AccessibilityPreferences.ReduceMotion)
+            {
+                // B-170: 애니메이션 연출 감소면 바로 끝 화면 + 켜짐 소리만(틱 없음).
+                Boot.Skip();
+                FinishCardReveals();
+                ApplyBoot();
+                FinishBoot();
+                MainMenuBootSfx.Play();
+                return;
+            }
+
             ApplyBoot();
         }
 
@@ -95,11 +117,41 @@ namespace SubTerra.App.UI.MainMenu
         {
             if (!booting) return;
             Boot.Skip();
-            for (var i = 0; i < cards.Length; i++)
-                if (cards[i] != null) cards[i].FinishThumbnailReveal();
+            FinishCardReveals();
             ApplyBoot();
             FinishBoot();
+            MainMenuBootSfx.FadeOut();
             BootSkipped?.Invoke();
+        }
+
+        private void FinishCardReveals()
+        {
+            for (var i = 0; i < cards.Length; i++)
+                if (cards[i] != null) cards[i].FinishThumbnailReveal();
+        }
+
+        public float QuitOutroDuration => QuitOutroTimeline.MenuDuration(Boot);
+
+        /// <summary>B-170 종료 연출 시작: 메뉴 입력을 막고 부팅 시간표를 거꾸로 재생할 준비를 한다.</summary>
+        public void BeginQuitOutro(bool reducedMotion)
+        {
+            if (booting) SkipBoot();
+            exiting = false;
+            exitClosed = null;
+            quitting = true;
+            quitReduced = reducedMotion;
+            for (var i = 0; i < revealStarted.Length; i++) revealStarted[i] = true;
+            SetMenuInput(false);
+            if (reducedMotion) SetShutters(0f, 0f, 0f);
+            else ApplyQuitOutro(0f);
+        }
+
+        /// <summary>progress 0 = 끝 화면, 1 = 가로선까지 사라진 검은 화면.</summary>
+        public void ApplyQuitOutro(float progress)
+        {
+            if (!quitting || quitReduced) return;
+            Boot.SetElapsed(QuitOutroTimeline.BootTimeAt(Boot.TotalDuration, progress));
+            ApplyBoot();
         }
 
         /// <summary>선택 카드가 번쩍인 뒤 화면이 가로선으로 접히고, 다 접히면 onClosed를 한 번 호출한다.</summary>
@@ -149,8 +201,10 @@ namespace SubTerra.App.UI.MainMenu
                     return;
                 }
 
-                Boot.Advance(dt);
+                // B-170: 첫 화면이 그려진 다음 프레임부터 시계를 돌린다(로딩 dt 버림, 1/30초 상한).
+                if (Boot.Tick(dt)) MainMenuBootSfx.Play();
                 ApplyBoot();
+                PlayTypeTick();
                 if (Boot.IsComplete) FinishBoot();
             }
             else if (exiting)
@@ -181,6 +235,14 @@ namespace SubTerra.App.UI.MainMenu
             if (keyboard != null && keyboard.anyKey.wasPressedThisFrame) return true;
             var mouse = Mouse.current;
             return mouse != null && (mouse.leftButton.wasPressedThisFrame || mouse.rightButton.wasPressedThisFrame);
+        }
+
+        private void PlayTypeTick()
+        {
+            if (!Boot.ClockStarted || Boot.IsComplete) return;
+            var subtitleLength = subtitleText != null && subtitleText.text != null ? subtitleText.text.Length : 0;
+            var typed = Boot.TypedCharacters(headerConnecting != null ? headerConnecting.Length : 0, subtitleLength);
+            if (typeTicks.Step(typed, Boot.Elapsed)) SfxPlayer.Play(SfxId.MainMenuTypeTick);
         }
 
         private void FinishBoot()
