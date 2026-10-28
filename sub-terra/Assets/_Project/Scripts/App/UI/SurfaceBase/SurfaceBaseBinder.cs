@@ -204,8 +204,7 @@ namespace SubTerra.App.UI.SurfaceBase
             if (keyboard.escapeKey.wasPressedThisFrame)
             {
                 if (settings.IsOpen) OnSettingsCancel();
-                else if (!TryCloseSurfaceWindow() && TopSurfaceWindow() == null
-                    && !view.IsSecondaryClosing && CanOpenSettingsFromEscape()) OnSettingsClicked();
+                else if (CanOpenSettingsFromEscape()) OnSettingsClicked();
                 return;
             }
             var selected = UnityEngine.EventSystems.EventSystem.current;
@@ -382,7 +381,6 @@ namespace SubTerra.App.UI.SurfaceBase
             settings.Apply();
             SettingsRuntimeApplier.Apply(settings.Applied, applyResolution: true);
             view.SetSettingsVisible(false);
-            view.SetMineResetConfirmVisible(false);
         }
 
         private void OnSettingsCancel()
