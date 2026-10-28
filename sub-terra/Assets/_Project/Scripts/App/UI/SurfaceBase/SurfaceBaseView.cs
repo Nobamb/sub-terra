@@ -258,6 +258,8 @@ namespace SubTerra.App.UI.SurfaceBase
             UiSfx.Attach(resetMineButton, SfxId.None, hover: true);
             UiSfx.Attach(resetMineConfirmYesButton, SfxId.None, hover: true, failWhenDisabled: false);
             UiSfx.Attach(resetMineConfirmNoButton, SfxId.None, hover: true);
+            // B-170: 종료 확인 창 등장음이 클릭음을 대신한다.
+            UiSfx.Attach(quitButton, SfxId.None, hover: true);
             resolutionPrevButton?.onClick.AddListener(OnResolutionPrev);
             resolutionNextButton?.onClick.AddListener(OnResolutionNext);
             languageCycleButton?.onClick.AddListener(OnLanguageCycle);
@@ -623,7 +625,6 @@ namespace SubTerra.App.UI.SurfaceBase
             }
 
             if (visible && controlSchemePanel == null) controlSchemePanel = ControlSchemePanel.Attach(settingsRoot);
-            if (visible) SetUpgradeVisible(false);
             if (!visible)
             {
                 var skin = settingsRoot.GetComponent<SubTerra.App.UI.MainMenu.SettingsMenuSkin>();

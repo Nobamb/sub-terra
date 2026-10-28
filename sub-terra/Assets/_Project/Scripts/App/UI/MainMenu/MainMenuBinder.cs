@@ -1,6 +1,7 @@
 using SubTerra.App.Audio;
 using SubTerra.App.Save;
 using SubTerra.App.UI.HUD;
+using SubTerra.App.UI.QuitConfirm;
 using SubTerra.Shared.Audio;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -104,6 +105,8 @@ namespace SubTerra.App.UI.MainMenu
         private void Update()
         {
             if (presenter == null || view == null || Keyboard.current == null) return;
+            // B-170: 종료 확인 창이 ESC·X를 먼저 받는다.
+            if (QuitConfirmFlow.IsBlockingInput) return;
             if (Keyboard.current.escapeKey.wasPressedThisFrame)
             {
                 if (presenter.Settings.IsOpen) OnSettingsCancel();
@@ -313,7 +316,9 @@ namespace SubTerra.App.UI.MainMenu
 
         private void OnQuit()
         {
-            SaveRuntimeController.Instance?.RequestQuit();
+            // B-170: 바로 끄지 않고 종료 확인 창을 띄운다. 저장 중 판단은 presenter가 먼저 했다.
+            var intro = view != null ? view.Intro : null;
+            QuitConfirmFlow.Request(false, intro, presenter != null && presenter.Settings.IsOpen);
         }
 
         private void OnSettingsApplied(SettingsValues values)

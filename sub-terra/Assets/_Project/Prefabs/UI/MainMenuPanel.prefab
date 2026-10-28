@@ -2998,23 +2998,23 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: SubTerra.App::SubTerra.App.UI.MainMenu.MainMenuIntroDirector
   bootSettings:
-    lineDuration: 0.08
-    openDuration: 0.22
-    headerStart: 0.16
-    headerTyping: 0.24
-    headerConnectedAt: 0.46
-    logoStart: 0.3
-    logoGlitch: 0.18
-    subtitleStart: 0.44
-    subtitleTyping: 0.2
-    cardStart: 0.54
-    cardStagger: 0.08
-    cardFade: 0.18
+    lineDuration: 0.16
+    openDuration: 0.44
+    headerStart: 0.32
+    headerTyping: 0.48
+    headerConnectedAt: 0.92
+    logoStart: 0.6
+    logoGlitch: 0.36
+    subtitleStart: 0.88
+    subtitleTyping: 0.4
+    cardStart: 1.08
+    cardStagger: 0.16
+    cardFade: 0.36
     cardRise: 22
-    continueStart: 0.72
-    buttonFade: 0.12
-    secondaryStart: 0.8
-    secondaryStagger: 0.03
+    continueStart: 1.44
+    buttonFade: 0.24
+    secondaryStart: 1.6
+    secondaryStagger: 0.06
   exitSettings:
     flashDuration: 0.1
     foldDuration: 0.22

@@ -202,7 +202,8 @@ namespace SubTerra.App.Tests.Audio
             InvokeOnEnable(view);
 
             AssertSfx(ButtonField(view, "settingsButton"), SfxId.UiClick, true, true, "settings");
-            AssertSfx(ButtonField(view, "quitButton"), SfxId.UiClick, true, true, "quit");
+            // B-170: 종료 확인 창 등장음이 클릭음을 대신한다.
+            AssertSfx(ButtonField(view, "quitButton"), SfxId.None, true, true, "quit");
             AssertSfx(ButtonField(view, "continueButton"), SfxId.None, true, true, "continue");
             AssertSfx(ButtonField(view, "newGameButton"), SfxId.None, true, true, "newGame");
             AssertSfx(ButtonField(view, "overwriteConfirmButton"), SfxId.None, true, true, "overwriteConfirm");

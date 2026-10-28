@@ -90,6 +90,8 @@ namespace SubTerra.Shared.Audio
         UpgradeLockCrack = 81,
         UpgradeLockShatter = 82,
         UpgradeWindowSuckIn = 83,
-        UpgradeLockRegather = 84
+        UpgradeLockRegather = 84,
+        MainMenuBoot = 85,
+        MainMenuTypeTick = 86
     }
 }

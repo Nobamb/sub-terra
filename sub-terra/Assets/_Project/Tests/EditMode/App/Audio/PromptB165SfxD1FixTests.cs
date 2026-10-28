@@ -88,7 +88,7 @@ namespace SubTerra.App.Tests.Audio
                 Assert.That(asset.Volume, Is.EqualTo(row.Volume).Within(0.0001f), row.Id.ToString());
             }
 
-            Assert.That(defaults.Count, Is.EqualTo(83), "칸 수는 그대로(B-169에서 83칸)");
+            Assert.That(defaults.Count, Is.EqualTo(85), "칸 수는 그대로(B-170에서 85칸)");
         }
 
         // ---- ESC 설정창 ----

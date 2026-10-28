@@ -283,7 +283,7 @@ namespace SubTerra.App.Tests.Audio
         {
             var defaults = SfxLibraryDefaults.Create();
             // B-156 15칸 + B-160 18칸(광물 튀어나옴 포함) + B-162 10칸 + B-163 6칸 + B-164 15칸 + B-168 15칸 + B-169 4칸.
-            Assert.That(defaults.Count, Is.EqualTo(83));
+            Assert.That(defaults.Count, Is.EqualTo(85));
             var ids = new System.Collections.Generic.HashSet<SfxId>();
             foreach (var pair in defaults) Assert.That(ids.Add(pair.Entry.Id), Is.True);
             // 3번(구 UiBack)은 비워 둔다. 이름으로 쓰면 Obsolete 경고가 나므로 번호로 확인한다.

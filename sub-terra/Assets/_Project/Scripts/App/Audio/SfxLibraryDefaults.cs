@@ -228,6 +228,11 @@ namespace SubTerra.App.Audio
                 (new SfxEntry(SfxId.UpgradeWindowSuckIn, SfxBus.UI, volume: 0.35f), "upgrade_window_suck_in"),
                 // 0.25초. 조각 모임(끝에 "착").
                 (new SfxEntry(SfxId.UpgradeLockRegather, SfxBus.UI, volume: 0.5f), "upgrade_lock_regather"),
+                // B-170 메인 화면 부팅. 길이는 파일 그대로.
+                // 2.3초. 켜짐 + 끝에 작게 TV 지직. 건너뛰면 코드가 0.15초에 줄여 멈춘다.
+                (new SfxEntry(SfxId.MainMenuBoot, SfxBus.UI, volume: 0.45f), "main_menu_boot"),
+                // 0.13초. 부팅 문구 타이핑 틱(0.06초 간격 제한은 코드에서).
+                (new SfxEntry(SfxId.MainMenuTypeTick, SfxBus.UI, volume: 0.5f), "main_menu_type_tick"),
             };
         }
     }

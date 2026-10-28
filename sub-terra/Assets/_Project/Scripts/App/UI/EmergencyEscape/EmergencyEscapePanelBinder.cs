@@ -134,7 +134,8 @@ namespace SubTerra.App.UI.EmergencyEscape
             }
 
             var keyboard = Keyboard.current;
-            if (keyboard != null && keyboard.escapeKey.wasPressedThisFrame && Time.frameCount > openFrame)
+            if (keyboard != null && keyboard.escapeKey.wasPressedThisFrame && Time.frameCount > openFrame
+                && !QuitConfirm.QuitConfirmFlow.IsBlockingInput)
             {
                 Close();
             }

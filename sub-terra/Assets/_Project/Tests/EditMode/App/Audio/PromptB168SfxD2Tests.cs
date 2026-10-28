@@ -82,7 +82,7 @@ namespace SubTerra.App.Tests.Audio
                 defaults.Add(pair.Entry.Id, (pair.Entry, pair.FileName));
             }
 
-            Assert.That(defaults.Count, Is.EqualTo(83));
+            Assert.That(defaults.Count, Is.EqualTo(85));
             Assert.That(defaults.ContainsKey((SfxId)3), Is.False, "3번은 비워 둔다");
             Assert.That((int)SfxId.CargoHeavyWarning, Is.EqualTo(65));
 

@@ -3,32 +3,32 @@ using UnityEngine;
 
 namespace SubTerra.App.UI.MainMenu
 {
-    /// <summary>B-150 부팅 연출 시간 값. 인스펙터에서 조정하며 합계는 1초 안쪽으로 묶는다.</summary>
+    /// <summary>B-150 부팅 연출 시간 값. 인스펙터에서 조정하며 합계는 2초 안쪽으로 묶는다(B-170에서 약 2배).</summary>
     [Serializable]
     public sealed class MainMenuBootSettings
     {
         [Tooltip("가로선이 번쩍 그어지는 시간")]
-        public float lineDuration = 0.08f;
+        public float lineDuration = 0.16f;
         [Tooltip("가로선이 위아래로 펼쳐지는 시간")]
-        public float openDuration = 0.22f;
-        public float headerStart = 0.16f;
-        public float headerTyping = 0.24f;
+        public float openDuration = 0.44f;
+        public float headerStart = 0.32f;
+        public float headerTyping = 0.48f;
         [Tooltip("'신호 연결됨'으로 바뀌는 시점")]
-        public float headerConnectedAt = 0.46f;
-        public float logoStart = 0.30f;
-        public float logoGlitch = 0.18f;
-        public float subtitleStart = 0.44f;
-        public float subtitleTyping = 0.20f;
-        public float cardStart = 0.54f;
+        public float headerConnectedAt = 0.92f;
+        public float logoStart = 0.60f;
+        public float logoGlitch = 0.36f;
+        public float subtitleStart = 0.88f;
+        public float subtitleTyping = 0.40f;
+        public float cardStart = 1.08f;
         [Tooltip("슬롯 카드 사이 등장 간격")]
-        public float cardStagger = 0.08f;
-        public float cardFade = 0.18f;
+        public float cardStagger = 0.16f;
+        public float cardFade = 0.36f;
         [Tooltip("카드가 아래에서 올라오는 거리(px)")]
         public float cardRise = 22f;
-        public float continueStart = 0.72f;
-        public float buttonFade = 0.12f;
-        public float secondaryStart = 0.80f;
-        public float secondaryStagger = 0.03f;
+        public float continueStart = 1.44f;
+        public float buttonFade = 0.24f;
+        public float secondaryStart = 1.60f;
+        public float secondaryStagger = 0.06f;
     }
 
     /// <summary>부팅 연출 한 시점의 값. View는 이 값만 적용한다.</summary>
@@ -65,13 +65,19 @@ namespace SubTerra.App.UI.MainMenu
     /// </summary>
     public sealed class MainMenuBootTimeline
     {
-        public const float MaxDuration = 1.0f;
+        public const float MaxDuration = 2.0f;
         public const int CardCount = 3;
         public const int SecondaryButtonCount = 3;
+        /// <summary>B-170: 시작 프레임과 그다음 프레임의 dt는 씬 로딩 시간이라 버린다.</summary>
+        public const int DiscardedFrames = 2;
+        /// <summary>한 프레임에 더하는 최대 시간. 렉이 걸리면 연출이 그만큼 느려진다.</summary>
+        public const float MaxStep = 1f / 30f;
 
         private readonly MainMenuBootSettings settings;
         private float elapsed;
         private bool skipped;
+        private int discarded;
+        private bool clockStarted;
 
         public MainMenuBootTimeline(MainMenuBootSettings settings = null)
         {
@@ -108,6 +114,28 @@ namespace SubTerra.App.UI.MainMenu
             }
         }
 
+        /// <summary>시계가 실제로 움직이기 시작했는지(처음 두 프레임 뒤).</summary>
+        public bool ClockStarted => clockStarted;
+
+        /// <summary>
+        /// 프레임마다 부른다. 처음 DiscardedFrames 프레임의 dt는 버리고, 그 뒤는 MaxStep으로 잘라 더한다.
+        /// 시계가 처음 움직인 프레임에만 true(켜짐 소리 시점).
+        /// </summary>
+        public bool Tick(float rawDeltaSeconds)
+        {
+            if (IsComplete) return false;
+            if (discarded < DiscardedFrames)
+            {
+                discarded++;
+                return false;
+            }
+
+            Advance(Mathf.Min(rawDeltaSeconds, MaxStep));
+            if (clockStarted || elapsed <= 0f) return false;
+            clockStarted = true;
+            return true;
+        }
+
         public void Skip()
         {
             skipped = true;
@@ -118,6 +146,27 @@ namespace SubTerra.App.UI.MainMenu
         {
             skipped = false;
             elapsed = 0f;
+            discarded = 0;
+            clockStarted = false;
+        }
+
+        /// <summary>B-170 종료 연출: 시간표를 임의 시점으로 옮겨 거꾸로 샘플한다.</summary>
+        public void SetElapsed(float seconds)
+        {
+            skipped = false;
+            elapsed = Mathf.Clamp(seconds, 0f, TotalDuration);
+        }
+
+        /// <summary>가로선 → 위아래 펼침까지(화면 부분)의 길이.</summary>
+        public float ScreenDuration => settings.lineDuration + settings.openDuration;
+
+        /// <summary>부팅 문구·부제에서 지금까지 타이핑된 글자 수(신호 연결됨 교체는 세지 않는다).</summary>
+        public int TypedCharacters(int headerLength, int subtitleLength)
+        {
+            if (IsComplete) return headerLength + subtitleLength;
+            var frame = Sample();
+            return Mathf.CeilToInt(headerLength * frame.HeaderTyping)
+                + Mathf.CeilToInt(subtitleLength * frame.SubtitleTyping);
         }
 
         private float Clock => IsComplete ? float.MaxValue : elapsed;
@@ -161,5 +210,47 @@ namespace SubTerra.App.UI.MainMenu
 
         public static float Smooth(float x) => x * x * (3f - 2f * x);
         public static float EaseOut(float x) => 1f - (1f - x) * (1f - x);
+    }
+
+    /// <summary>B-170 타이핑 틱: 보이는 글자 수가 늘어난 프레임에, 예정 시각 기준 0.06초에 한 번만.</summary>
+    public sealed class MainMenuTypeTickGate
+    {
+        public const float MinInterval = 0.06f;
+
+        private int lastCount;
+        private float lastAt = float.NegativeInfinity;
+
+        public void Reset()
+        {
+            lastCount = 0;
+            lastAt = float.NegativeInfinity;
+        }
+
+        public bool Step(int typedCharacters, float time)
+        {
+            var grew = typedCharacters > lastCount;
+            if (typedCharacters > lastCount) lastCount = typedCharacters;
+            if (!grew || time - lastAt < MinInterval - 0.0001f) return false;
+            lastAt = time;
+            return true;
+        }
+    }
+
+    /// <summary>
+    /// B-170 종료 연출: 부팅 시간표를 거꾸로 샘플한다(t = 전체 × (1 − 진행)).
+    /// 메인 화면은 전체를 2.5배로, 지상·광산 덮개는 화면 부분(펼침 → 가로선)만 쓴다.
+    /// </summary>
+    public static class QuitOutroTimeline
+    {
+        public const float MenuSpeed = 2.5f;
+        public const float MenuMaxDuration = 0.8f;
+        public const float OverlayDuration = 0.45f;
+        /// <summary>애니메이션 연출 감소: 바로 검게 한 뒤 이 시간에 종료.</summary>
+        public const float ReducedMotionDelay = 0.35f;
+
+        public static float MenuDuration(MainMenuBootTimeline boot) =>
+            Mathf.Min(boot.TotalDuration / MenuSpeed, MenuMaxDuration);
+
+        public static float BootTimeAt(float total, float progress) => total * (1f - Mathf.Clamp01(progress));
     }
 }

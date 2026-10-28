@@ -166,7 +166,8 @@ namespace SubTerra.App.UI.MainMenu
         private void AttachButtonSfx()
         {
             UiSfx.Attach(settingsButton, SfxId.UiClick, hover: true);
-            UiSfx.Attach(quitButton, SfxId.UiClick, hover: true);
+            // B-170: 종료 확인 창 등장음이 클릭음을 대신한다.
+            UiSfx.Attach(quitButton, SfxId.None, hover: true);
             UiSfx.Attach(continueButton, SfxId.None, hover: true);
             UiSfx.Attach(newGameButton, SfxId.None, hover: true);
             UiSfx.Attach(overwriteConfirmButton, SfxId.None, hover: true);
