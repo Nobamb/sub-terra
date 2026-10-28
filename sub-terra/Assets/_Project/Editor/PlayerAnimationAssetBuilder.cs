@@ -106,6 +106,10 @@ namespace SubTerra.Editor
                 var array = serialized.FindProperty("walkFrames");
                 array.arraySize = frames.Length;
                 for (int i = 0; i < frames.Length; i++) array.GetArrayElementAtIndex(i).objectReferenceValue = frames[i];
+                var footsteps = serialized.FindProperty("footstepFrames");
+                footsteps.arraySize = 2;
+                footsteps.GetArrayElementAtIndex(0).intValue = 1;
+                footsteps.GetArrayElementAtIndex(1).intValue = 21;
                 serialized.ApplyModifiedPropertiesWithoutUndo();
                 PrefabUtility.SaveAsPrefabAsset(root, PlayerPrefabPath);
             }

@@ -7,8 +7,8 @@ namespace SubTerra.Gameplay.Player
     // 런타임 표시가 Animator 평가 순서에 의존하지 않도록 한다.
     public sealed class PlayerAnimationController : MonoBehaviour
     {
-        public const int WalkFrameCount = 47;
-        public const float WalkFrameRate = 10f;
+        public const int WalkFrameCount = SubTerra.Shared.PlayerWalkCycle.FrameCount;
+        public const float WalkFrameRate = SubTerra.Shared.PlayerWalkCycle.FrameRate;
         private const float DamageDuration = 0.35f;
         private const float LadderMovementEpsilon = 0.0001f;
         private const float LadderVisualGraceDuration = 0.1f;
@@ -32,7 +32,7 @@ namespace SubTerra.Gameplay.Player
         [SerializeField, Min(0.01f)] private float ladderDistancePerFrame = 0.5f;
         [SerializeField, Min(0f)] private float ladderSettleDelay = 0.08f;
         [Tooltip("B-164: 걷기 그림에서 발이 닿는 프레임. 이 프레임으로 넘어갈 때 발소리를 낸다.")]
-        [SerializeField] private int[] footstepFrames = { 2, 7 };
+        [SerializeField] private int[] footstepFrames = { 1, 21 };
 
         [SerializeField] private PlayerMovement movement;
         private bool isMining;

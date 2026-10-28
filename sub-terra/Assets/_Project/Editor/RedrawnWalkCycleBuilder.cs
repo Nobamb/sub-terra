@@ -7,11 +7,11 @@ using UnityEngine;
 
 namespace SubTerra.Editor
 {
-    // 팀원이 제공한 GIF의 전신 프레임을 등록한다. 신체 부위 변형은 하지 않는다.
+    // 사용자가 제공한 전신 프레임을 등록한다. 신체 부위 변형은 하지 않는다.
     public static class RedrawnWalkCycleBuilder
     {
         private const string Art = "Assets/_Project/Art/Characters/Player/";
-        private const string Approved = "../work_process/images/teammate-walk-gif-20261027/runtime-frames";
+        private const string Approved = "../work_process/images/player-walk-40f-20261028/runtime-frames";
 
         [MenuItem("SubTerra/Build Redrawn Walk Cycle")]
         public static void Build() => Run(false, false);
@@ -46,6 +46,8 @@ namespace SubTerra.Editor
                     AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
                     PlayerAnimationAssetBuilder.ApplySmoothWalkCycle();
                     UpdateGuideSprites();
+                    for (int i = 41; i <= 47; i++)
+                        AssetDatabase.DeleteAsset(Art + "Frames/Walk/walk_" + i.ToString("D2") + ".png");
                     PlayerAnimationAssetBuilder.ValidateRuntimeTransition();
                 }
                 Debug.Log("Redrawn walk cycle: " + drawings.Length + " whole drawings, "

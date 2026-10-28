@@ -95,20 +95,6 @@ MonoBehaviour:
     sprite: {fileID: 21300000, guid: 609de1801422c394e9fbd69afff3895e, type: 3}
   - key: player.walk.40
     sprite: {fileID: 21300000, guid: f2997de3445d2b54d92e40bafaff1e5f, type: 3}
-  - key: player.walk.41
-    sprite: {fileID: 21300000, guid: 253201454d620084fa80d0d8d86a110b, type: 3}
-  - key: player.walk.42
-    sprite: {fileID: 21300000, guid: cf4ce0486a378884382811a2fbf0b91a, type: 3}
-  - key: player.walk.43
-    sprite: {fileID: 21300000, guid: f70fb8a17d2048241a37a3887d21214a, type: 3}
-  - key: player.walk.44
-    sprite: {fileID: 21300000, guid: 1e7cf65f43c3eea47b078c23660d08c8, type: 3}
-  - key: player.walk.45
-    sprite: {fileID: 21300000, guid: 12f16410c4acb0445bbadd5e003f3e35, type: 3}
-  - key: player.walk.46
-    sprite: {fileID: 21300000, guid: da7d57f69bb9e7e4ebd7c3422a051f3f, type: 3}
-  - key: player.walk.47
-    sprite: {fileID: 21300000, guid: 0b50b68aaf384964485b73a6fb0e2b70, type: 3}
   - key: player.mine.1
     sprite: {fileID: 21300000, guid: 41d68100d8c057649a878d33abc361d6, type: 3}
   - key: player.mine.2
