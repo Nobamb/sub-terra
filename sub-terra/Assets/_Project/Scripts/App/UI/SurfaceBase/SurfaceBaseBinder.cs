@@ -7,6 +7,7 @@ using SubTerra.App.UI.Economy;
 using SubTerra.App.UI.MainMenu;
 using SubTerra.App.UI.HUD;
 using SubTerra.App.UI.Progression;
+using SubTerra.App.UI.Inventory;
 using SubTerra.Shared;
 using SubTerra.Shared.Audio;
 using SubTerra.Shared.Localization;
@@ -27,6 +28,7 @@ namespace SubTerra.App.UI.SurfaceBase
         [SerializeField] private SurfaceBaseView view;
         [SerializeField] private EconomyPanelBinder economyBinder;
         [SerializeField] private ProgressionPanelBinder progressionBinder;
+        [SerializeField] private InventoryPanelBinder inventoryBinder;
 
         private SurfaceBasePresenter presenter;
         private SettingsSession settings;
@@ -88,6 +90,7 @@ namespace SubTerra.App.UI.SurfaceBase
 
             // 채굴·판매 후 보유량이 바뀌면 업그레이드 구매 가능 여부를 즉시 갱신한다.
             boundInventory = runtime.InventoryService;
+            if (inventoryBinder != null) inventoryBinder.BindTo(boundInventory);
             if (boundInventory != null)
             {
                 boundInventory.InventoryChanged += OnInventoryChangedForProgression;
@@ -114,11 +117,14 @@ namespace SubTerra.App.UI.SurfaceBase
             view.SetMineResetConfirmVisible(false);
             view.SetMineResetBusy(false);
             view.SetUpgradeVisible(false);
+            view.SetInventoryVisible(false);
             RefreshMineResetFeeLabel();
 
             view.ExploreClicked += OnExploreClicked;
             view.UpgradeClicked += OnUpgradeClicked;
             view.UpgradeCloseClicked += OnUpgradeCloseClicked;
+            view.InventoryClicked += OnInventoryClicked;
+            view.InventoryCloseClicked += OnInventoryCloseClicked;
             view.SettingsClicked += OnSettingsClicked;
             view.QuitClicked += OnQuitClicked;
             view.SettingsApplyClicked += OnSettingsApply;
@@ -139,7 +145,10 @@ namespace SubTerra.App.UI.SurfaceBase
                 view.ExploreClicked -= OnExploreClicked;
                 view.UpgradeClicked -= OnUpgradeClicked;
                 view.UpgradeCloseClicked -= OnUpgradeCloseClicked;
+                view.InventoryClicked -= OnInventoryClicked;
+                view.InventoryCloseClicked -= OnInventoryCloseClicked;
                 view.SetUpgradeVisible(false);
+                view.SetInventoryVisible(false);
                 view.SettingsClicked -= OnSettingsClicked;
                 view.QuitClicked -= OnQuitClicked;
                 view.SettingsApplyClicked -= OnSettingsApply;
@@ -169,6 +178,7 @@ namespace SubTerra.App.UI.SurfaceBase
             }
 
             settings = null;
+            if (inventoryBinder != null) inventoryBinder.BindTo(null);
             mineResetBusy = false;
             if (boundInventory != null)
             {
@@ -194,13 +204,15 @@ namespace SubTerra.App.UI.SurfaceBase
             if (keyboard.escapeKey.wasPressedThisFrame)
             {
                 if (settings.IsOpen) OnSettingsCancel();
-                else if (questPanel != null && questPanel.TryCloseTopWindow(PopupWindowSorting.Top)) { }
-                else if (view.IsUpgradeVisible) OnUpgradeCloseClicked();
-                else if (CanOpenSettingsFromEscape()) OnSettingsClicked();
+                else if (!TryCloseSurfaceWindow() && TopSurfaceWindow() == null
+                    && !view.IsSecondaryClosing && CanOpenSettingsFromEscape()) OnSettingsClicked();
+                return;
             }
             var selected = UnityEngine.EventSystems.EventSystem.current;
             if (selected != null && selected.currentSelectedGameObject != null
-                && selected.currentSelectedGameObject.GetComponent<TMPro.TMP_InputField>() != null) return;
+                && selected.currentSelectedGameObject.GetComponentInParent<TMPro.TMP_InputField>() != null) return;
+            if (keyboard.iKey.wasPressedThisFrame) { ToggleInventory(); return; }
+            if (keyboard.uKey.wasPressedThisFrame) { ToggleUpgrade(); return; }
             if (!UiPauseGate.IsHeld && keyboard.oKey.wasPressedThisFrame) OnQuitClicked();
             if (!keyboard.xKey.wasPressedThisFrame) return;
             if (settings.IsOpen)
@@ -208,30 +220,53 @@ namespace SubTerra.App.UI.SurfaceBase
                 if (!view.TryCloseControlSchemePanel()) OnSettingsCancel();
                 return;
             }
-            var topWindow = PopupWindowSorting.Top;
+            TryCloseSurfaceWindow();
+        }
+
+        private bool TryCloseSurfaceWindow()
+        {
+            var topWindow = TopSurfaceWindow();
             if (topWindow != null)
             {
-                if (questPanel != null && questPanel.TryCloseTopWindow(topWindow)) return;
+                if (questPanel != null && questPanel.TryCloseTopWindow(topWindow)) return true;
                 var deepZone = topWindow.GetComponent<DeepZoneUnlockPopupEscClose>();
-                if (deepZone != null) { deepZone.Close(); return; }
+                if (deepZone != null) { deepZone.Close(); return true; }
                 var clock = topWindow.GetComponentInParent<MineResetClockOverlay>();
-                if (clock != null && clock.TryClosePopup(topWindow)) return;
+                if (clock != null && clock.TryClosePopup(topWindow)) return true;
                 if (view.IsTopMineResetConfirmWindow(topWindow)
                     || (view.IsMineResetConfirmVisible && !view.IsUpgradeVisible
                         && !(economyBinder != null && economyBinder.IsModalVisible)))
-                { OnResetMineCancelled(); return; }
+                { OnResetMineCancelled(); return true; }
+                if (view.IsInventoryVisible && view.ContainsInventoryWindow(topWindow))
+                { OnInventoryCloseClicked(); return true; }
                 if (view.IsTopUpgradeWindow(topWindow))
-                { OnUpgradeCloseClicked(); return; }
+                { OnUpgradeCloseClicked(); return true; }
                 if (economyBinder != null && economyBinder.IsTopWindow(topWindow))
-                { economyBinder.CloseModal(); return; }
-                return;
+                { economyBinder.CloseModal(); return true; }
+                return false;
             }
             var progressionView = progressionBinder != null
                 ? progressionBinder.GetComponentInChildren<ProgressionPanelView>(true) : null;
-            if (progressionView != null && progressionView.TryHideDeepZoneUnlockPopup()) return;
-            if (view.IsMineResetConfirmVisible) { OnResetMineCancelled(); return; }
-            if (view.IsUpgradeVisible) { OnUpgradeCloseClicked(); return; }
-            if (economyBinder != null && economyBinder.IsModalVisible) economyBinder.CloseModal();
+            if (progressionView != null && progressionView.TryHideDeepZoneUnlockPopup()) return true;
+            if (view.IsMineResetConfirmVisible) { OnResetMineCancelled(); return true; }
+            if (view.IsInventoryVisible) { OnInventoryCloseClicked(); return true; }
+            if (view.IsUpgradeVisible) { OnUpgradeCloseClicked(); return true; }
+            if (economyBinder != null && economyBinder.IsModalVisible) { economyBinder.CloseModal(); return true; }
+            return false;
+        }
+
+        private static Canvas TopSurfaceWindow()
+        {
+            var top = PopupWindowSorting.Top;
+            while (top != null)
+            {
+                // 이전 판매 카드처럼 활성 오브젝트를 투명하게 숨기는 창은 모달이 아니다.
+                var group = top.GetComponentInParent<CanvasGroup>();
+                if (group == null || group.alpha > 0f || group.blocksRaycasts) return top;
+                PopupWindowSorting.Remove(top);
+                top = PopupWindowSorting.Top;
+            }
+            return null;
         }
 
         private void OnInventoryChangedForProgression(InventorySnapshot _)
@@ -257,9 +292,8 @@ namespace SubTerra.App.UI.SurfaceBase
 
         private void OnUpgradeClicked()
         {
-            if (view == null || progressionBinder == null || settings == null
-                || settings.IsOpen || view.IsMineResetConfirmVisible
-                || (economyBinder != null && economyBinder.IsModalVisible)) return;
+            if (view == null || progressionBinder == null || !CanOpenSecondaryWindow()
+                || view.IsInventoryVisible || view.IsSecondaryClosing && !view.ContainsUpgradeWindow(TopSurfaceWindow())) return;
             // B-167: 업그레이드 버튼(과 이후 U키 #249)은 이 함수 하나로 연다. 연출은 열기 요청에서만 시작한다.
             view.RequestUpgradeOpen();
             if (progressionBinder.Presenter != null) progressionBinder.Presenter.Refresh();
@@ -270,6 +304,34 @@ namespace SubTerra.App.UI.SurfaceBase
         {
             if (view != null) view.RequestUpgradeClose();
         }
+
+        private bool CanOpenSecondaryWindow()
+        {
+            if (settings == null || settings.IsOpen || view == null || mineResetBusy || view.IsMineResetConfirmVisible
+                || (questPanel != null && questPanel.IsOpen)
+                || (economyBinder != null && economyBinder.IsModalVisible)) return false;
+            var top = TopSurfaceWindow();
+            return top == null || view.ContainsInventoryWindow(top) || view.ContainsUpgradeWindow(top);
+        }
+
+        public void ToggleUpgrade()
+        {
+            if (view == null) return;
+            if (view.IsUpgradeVisible) OnUpgradeCloseClicked();
+            else OnUpgradeClicked();
+        }
+
+        public void ToggleInventory()
+        {
+            if (view == null || inventoryBinder == null) return;
+            if (view.IsInventoryVisible) { OnInventoryCloseClicked(); return; }
+            if (!CanOpenSecondaryWindow() || view.IsUpgradeVisible
+                || view.IsSecondaryClosing && !view.ContainsInventoryWindow(TopSurfaceWindow())) return;
+            view.SetInventoryVisible(true);
+        }
+
+        private void OnInventoryClicked() => ToggleInventory();
+        private void OnInventoryCloseClicked() { if (view != null) view.SetInventoryVisible(false); }
 
         private void OnExploreClicked()
         {

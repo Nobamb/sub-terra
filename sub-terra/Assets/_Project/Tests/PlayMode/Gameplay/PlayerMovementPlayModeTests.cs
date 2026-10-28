@@ -99,6 +99,52 @@ namespace SubTerra.Gameplay.Player.Tests
         }
 
         [UnityTest]
+        public IEnumerator AirborneSideContact_FallsWhileHoldingTowardsPlatform()
+        {
+            return AssertFallsAtSide(1f, true);
+        }
+
+        [UnityTest]
+        public IEnumerator AirborneSideContact_FallsAtOppositePlatformEdge()
+        {
+            return AssertFallsAtSide(-1f, true);
+        }
+
+        [UnityTest]
+        public IEnumerator AirborneSideContact_FallsWhileHoldingTowardsSolidWall()
+        {
+            return AssertFallsAtSide(1f, false);
+        }
+
+        private IEnumerator AssertFallsAtSide(float direction, bool oneWay)
+        {
+            var capsule = playerObject.AddComponent<CapsuleCollider2D>();
+            capsule.size = new Vector2(0.6f, 0.7f);
+            SetPrivateField(movement, "bodyCollider", capsule);
+            body.gravityScale = 3f;
+            body.constraints = RigidbodyConstraints2D.FreezeRotation;
+            wallObject = new GameObject("SupportCap");
+            var cap = wallObject.AddComponent<BoxCollider2D>();
+            cap.size = new Vector2(1f, 0.4f);
+            cap.offset = new Vector2(0f, 1.1f);
+            cap.usedByEffector = oneWay;
+            var effector = wallObject.AddComponent<PlatformEffector2D>();
+            effector.useOneWay = true;
+            effector.useSideFriction = false;
+            effector.useSideBounce = false;
+            effector.surfaceArc = 180f;
+            effector.enabled = oneWay;
+            body.position = new Vector2(-0.78f * direction, 1.42f);
+            movement.SetMoveInput(direction);
+            Physics2D.SyncTransforms();
+
+            for (var i = 0; i < 40; i++) yield return new WaitForFixedUpdate();
+
+            Assert.Less(body.position.y, 0.8f, "Holding towards the cap must not support the airborne player.");
+            Assert.IsFalse(movement.IsGrounded);
+        }
+
+        [UnityTest]
         public IEnumerator MoveInputAcceleratesPlayerToTheRight()
         {
             movement.SetMoveInput(1f);
