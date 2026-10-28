@@ -13,6 +13,8 @@ namespace SubTerra.App.UI.Guide
     {
         public const float StageWidth = 320f;
         public const float StageHeight = 120f;
+        public const int PlayerWalkFrameCount = SubTerra.Shared.PlayerWalkCycle.FrameCount;
+        public const float PlayerWalkFrameRate = SubTerra.Shared.PlayerWalkCycle.FrameRate;
 
         private const float Unit = 34f;
         private const float GroundTop = -26f;
@@ -154,7 +156,7 @@ namespace SubTerra.App.UI.Guide
 
         private static DemoLayer Walker(DemoClip c, DemoTrack x, DemoTrack active)
         {
-            return Spr(c, "player.idle", PlayerHeight, 0f, PlayerY).PosX(x).Animate("player.walk", 10, 14f, "player.idle", active);
+            return Spr(c, "player.idle", PlayerHeight, 0f, PlayerY).PosX(x).Animate("player.walk", GuideDemoLibrary.PlayerWalkFrameCount, GuideDemoLibrary.PlayerWalkFrameRate, "player.idle", active);
         }
 
         private static DemoKeyCap Key(DemoClip c, string label, float x, float y, DemoTrack press)
@@ -240,7 +242,7 @@ namespace SubTerra.App.UI.Guide
             var rise = S(0f, 0f, 1.95f, 0f, 3.2f, 74f, 4f, 74f);
             var vanish = S(0f, 0f, 0.2f, 1f, 2.6f, 1f, 3.3f, 0f, 4f, 0f);
             Spr(c, "fac.elevator", 88f, 24f, GroundTop + 40f).Fade(vanish).PosY(S(0f, GroundTop + 40f, 1.95f, GroundTop + 40f, 3.2f, GroundTop + 114f, 4f, GroundTop + 114f));
-            Spr(c, "player.idle", PlayerHeight, 0f, PlayerY).Animate("player.walk", 10, 14f, "player.idle", H(0f, 1f, 1.2f, 0f))
+            Spr(c, "player.idle", PlayerHeight, 0f, PlayerY).Animate("player.walk", GuideDemoLibrary.PlayerWalkFrameCount, GuideDemoLibrary.PlayerWalkFrameRate, "player.idle", H(0f, 1f, 1.2f, 0f))
                 .PosX(S(0f, -120f, 1.2f, 24f, 4f, 24f))
                 .PosY(S(0f, PlayerY, 1.95f, PlayerY, 3.2f, PlayerY + 74f, 4f, PlayerY + 74f)).Fade(vanish);
             Box(c, 96f, 16f, 24f, 56f, new Color(0.1f, 0.35f, 0.4f, 0.55f)).Fade(S(0f, 0f, 1.1f, 0f, 1.4f, 1f, 1.9f, 1f, 2.1f, 0f));
