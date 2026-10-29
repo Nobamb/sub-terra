@@ -28,9 +28,11 @@ namespace SubTerra.Gameplay.Player
         [SerializeField] private Sprite[] jumpFrames;
         [SerializeField] private Sprite[] ladderFrames;
         [SerializeField] private Sprite[] miningFrames;
+        [SerializeField] private Sprite[] ladderMiningFrames;
         [SerializeField] private Sprite[] damageFrames;
         [SerializeField] private Sprite[] knockoutFrames;
         [SerializeField] private PlayerMiningAnimationSettings miningAnimation = new();
+        [SerializeField] private PlayerLadderMiningAnimationSettings ladderMiningAnimation = new();
         [SerializeField, Min(0.01f)] private float knockoutFps = 24f;
         [SerializeField, Min(0.01f)] private float knockoutBreathingFps = 12f;
         [SerializeField, Min(0.01f)] private float ladderDistancePerFrame = 0.5f;
@@ -41,6 +43,8 @@ namespace SubTerra.Gameplay.Player
         [SerializeField] private PlayerMovement movement;
         private bool isMining;
         private PlayerMiningAnimationSequence miningSequence;
+        private PlayerLadderMiningAnimationSequence ladderMiningSequence;
+        private bool miningOnLadder;
         private SubTerra.Shared.RunFailureCause knockoutCause;
         private bool wasIncapacitated;
         private PlayerSurvivalController survival;
@@ -60,8 +64,16 @@ namespace SubTerra.Gameplay.Player
         private bool footstepAlternate;
 
         public bool IsShowingLadderVisual => IsLadderState(currentState);
+        public bool IsShowingLadderMiningVisual => currentState == "LadderMining";
+        public int LadderMiningDirection => LadderMiningSequence.Direction;
+        public bool CanMineOnLadder => movement != null && !movement.IsJumpInProgress
+            && !movement.IsApproachingLadderFromAbove
+            && (movement.IsClimbing || (movement.IsTouchingLadder
+                && (IsShowingLadderVisual || IsShowingLadderMiningVisual || miningOnLadder)));
         private PlayerMiningAnimationSequence MiningSequence =>
             miningSequence ??= new PlayerMiningAnimationSequence(miningAnimation);
+        private PlayerLadderMiningAnimationSequence LadderMiningSequence =>
+            ladderMiningSequence ??= new PlayerLadderMiningAnimationSequence(ladderMiningAnimation);
 
         private void OnValidate()
         {
@@ -99,6 +111,8 @@ namespace SubTerra.Gameplay.Player
             UnsubscribeSurvivalEvents();
             ResetLadderPlayback();
             MiningSequence.Reset();
+            LadderMiningSequence.Reset();
+            miningOnLadder = false;
             isMining = false;
             knockoutCause = SubTerra.Shared.RunFailureCause.Unknown;
             wasIncapacitated = false;
@@ -135,6 +149,7 @@ namespace SubTerra.Gameplay.Player
                 if (!wasIncapacitated && knockoutCause == SubTerra.Shared.RunFailureCause.Unknown)
                     knockoutCause = survival.State.LastDamageCause;
                 MiningSequence.Reset();
+                LadderMiningSequence.Reset();
                 isMining = false;
             }
             else if (wasIncapacitated)
@@ -142,24 +157,36 @@ namespace SubTerra.Gameplay.Player
                 knockoutCause = SubTerra.Shared.RunFailureCause.Unknown;
                 damageUntil = 0f;
                 MiningSequence.Reset();
+                LadderMiningSequence.Reset();
                 isMining = false;
                 SetCurrentState("Idle");
             }
             wasIncapacitated = incapacitated;
 
-            if (!incapacitated && (movement.IsMovementRequested || movement.IsJumpInProgress))
+            if (!incapacitated && (movement.IsMovementRequested || movement.IsJumpInProgress
+                || (LadderMiningSequence.IsActive && !CanMineOnLadder)))
             {
                 MiningSequence.Interrupt();
+                LadderMiningSequence.Interrupt();
                 isMining = false;
             }
             if (Time.unscaledTime >= damageUntil)
             {
                 if (currentState == "Damage")
                 {
-                    if (isMining) MiningSequence.ResumeAfterDamage();
-                    else MiningSequence.Reset();
+                    if (isMining)
+                    {
+                        if (miningOnLadder) LadderMiningSequence.ResumeAfterDamage();
+                        else MiningSequence.ResumeAfterDamage();
+                    }
+                    else
+                    {
+                        MiningSequence.Reset();
+                        LadderMiningSequence.Reset();
+                    }
                 }
                 MiningSequence.Tick(Time.unscaledDeltaTime);
+                LadderMiningSequence.Tick(Time.unscaledDeltaTime);
             }
 
             var stateName = ResolveStateName();
@@ -207,13 +234,36 @@ namespace SubTerra.Gameplay.Player
         {
             if (value == isMining) return;
             isMining = value;
-            if (value) MiningSequence.Start();
+            if (value)
+            {
+                miningOnLadder = false;
+                LadderMiningSequence.Reset();
+                MiningSequence.Start();
+            }
+            else if (miningOnLadder) LadderMiningSequence.Stop();
             else MiningSequence.Stop();
+        }
+
+        public void SetLadderMining(int direction)
+        {
+            if (isMining && miningOnLadder) return;
+            isMining = true;
+            miningOnLadder = true;
+            MiningSequence.Reset();
+            LadderMiningSequence.Start(direction);
+        }
+
+        public void InterruptMining()
+        {
+            isMining = false;
+            MiningSequence.Interrupt();
+            LadderMiningSequence.Interrupt();
         }
 
         public void NotifyMiningCompleted()
         {
-            MiningSequence.Complete();
+            if (miningOnLadder) LadderMiningSequence.Complete();
+            else MiningSequence.Complete();
             // 다음 블록의 SetMining(true)는 마무리 중에도 새 시작으로 구분한다.
             isMining = false;
         }
@@ -228,6 +278,11 @@ namespace SubTerra.Gameplay.Player
             if (Time.unscaledTime < damageUntil)
             {
                 return "Damage";
+            }
+
+            if (LadderMiningSequence.IsActive)
+            {
+                return "LadderMining";
             }
 
             if (MiningSequence.IsActive)
@@ -288,6 +343,7 @@ namespace SubTerra.Gameplay.Player
                 : survival != null && survival.State != null
                     ? survival.State.LastDamageCause : SubTerra.Shared.RunFailureCause.Unknown;
             MiningSequence.Reset();
+            LadderMiningSequence.Reset();
             isMining = false;
             SetCurrentState("Knockout");
             stateStartedAt = Time.unscaledTime;
@@ -337,6 +393,8 @@ namespace SubTerra.Gameplay.Player
 
             if (stateName == "Mining")
                 frameIndex = Mathf.Min(MiningSequence.FrameIndex, frames.Length - 1);
+            else if (stateName == "LadderMining")
+                frameIndex = Mathf.Min(LadderMiningSequence.FrameIndex, frames.Length - 1);
             else if (stateName == "Knockout" && frames.Length >= 48
                 && elapsed >= 48f / Mathf.Max(0.01f, knockoutFps)
                 && knockoutCause == SubTerra.Shared.RunFailureCause.GasExposure)
@@ -384,6 +442,7 @@ namespace SubTerra.Gameplay.Player
                 "Walk" => (walkFrames, WalkFrameRate, true),
                 "Jump" => (jumpFrames, 12f, false),
                 "Mining" => (miningFrames, miningAnimation.workFps, false),
+                "LadderMining" => (ladderMiningFrames, ladderMiningAnimation.workFps, false),
                 "Damage" => (damageFrames, 10f, false),
                 "Knockout" => (knockoutFrames, knockoutFps, false),
                 _ => (idleFrames, 4f, true)
@@ -500,6 +559,7 @@ namespace SubTerra.Gameplay.Player
             }
 
             return nextStateName != "Mining"
+                && nextStateName != "LadderMining"
                 && nextStateName != "Damage"
                 && nextStateName != "Knockout";
         }

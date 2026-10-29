@@ -436,6 +436,31 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 12d51f9706116fc488bf720a4a96bf67, type: 3}
   - {fileID: 21300000, guid: afd47df545772e44b834fdb84a8735d7, type: 3}
   - {fileID: 21300000, guid: a4df1a9a38d181345b1f0b38673694f8, type: 3}
+  ladderMiningFrames:
+  - {fileID: 21300000, guid: 574893f752b1cfb4a8b9182f7c4b082e, type: 3}
+  - {fileID: 21300000, guid: ca6d3d5d3020bb848982c76b677cb8f5, type: 3}
+  - {fileID: 21300000, guid: 58bb50b67ba85ab44941308b4286780b, type: 3}
+  - {fileID: 21300000, guid: 54dae20d56302bc4ca4a98c315eec5a7, type: 3}
+  - {fileID: 21300000, guid: afdb4fde457ced643b1c43e2af0e7264, type: 3}
+  - {fileID: 21300000, guid: 40bb955cb0378294d8a24c26d1ab5f1f, type: 3}
+  - {fileID: 21300000, guid: 736a87115e076624e89b92064b42271e, type: 3}
+  - {fileID: 21300000, guid: 8693bb34bd6eeae4d83b8ac9a0d2f4b1, type: 3}
+  - {fileID: 21300000, guid: 503ad0fcafb6f3b46bef93fd7ebf537f, type: 3}
+  - {fileID: 21300000, guid: 78368fef8ae89ce44b7937ac58ca4ae7, type: 3}
+  - {fileID: 21300000, guid: de2619a02fd552848864a1fba216499f, type: 3}
+  - {fileID: 21300000, guid: 3abc96dd91c10f64a94d3c30e179d0f9, type: 3}
+  - {fileID: 21300000, guid: 0f31e64c363bf634d89a6e6ed50dafa2, type: 3}
+  - {fileID: 21300000, guid: 423f011abb0834743b625d1e8e2b768f, type: 3}
+  - {fileID: 21300000, guid: e698cdbc422448946b4072820166bc1f, type: 3}
+  - {fileID: 21300000, guid: 6d621384d4e654a448839b146068bc93, type: 3}
+  - {fileID: 21300000, guid: 15f3c8ded99d99b4e90ca4d1f4eadf2d, type: 3}
+  - {fileID: 21300000, guid: 80bffc9de5cdd544bba6e00778a0c331, type: 3}
+  - {fileID: 21300000, guid: 27ffad8bd09c33c498eab2c7f697b97c, type: 3}
+  - {fileID: 21300000, guid: 7ead6ec7ea3583c428a2b2bb6f9b579d, type: 3}
+  - {fileID: 21300000, guid: d133bd972cfa1d34a9f2d185b42fc1c9, type: 3}
+  - {fileID: 21300000, guid: 58c5b6052912ee749a0c336bbe2f1ef9, type: 3}
+  - {fileID: 21300000, guid: a9508ba1efacbf846ae90f969e1e84ff, type: 3}
+  - {fileID: 21300000, guid: cd6fc10fa5c1862468e903e5a7287309, type: 3}
   damageFrames:
   - {fileID: 21300000, guid: 63c487259e5d9ee48a01f2a58768e44f, type: 3}
   - {fileID: 21300000, guid: 1c0dbdafb70f95240816921f05b5c58a, type: 3}
@@ -495,6 +520,17 @@ MonoBehaviour:
     workFps: 12
     returnFps: 30
     miningReturnFrame: 5
+    finishFps: 60
+    cancelMaxSeconds: 0.3
+    restartGraceSeconds: 0.15
+  ladderMiningAnimation:
+    startLastFrame: 12
+    workFirstFrame: 13
+    workLastFrame: 16
+    finishFirstFrame: 17
+    finishLastFrame: 24
+    startFps: 24
+    workFps: 12
     finishFps: 60
     cancelMaxSeconds: 0.3
     restartGraceSeconds: 0.15

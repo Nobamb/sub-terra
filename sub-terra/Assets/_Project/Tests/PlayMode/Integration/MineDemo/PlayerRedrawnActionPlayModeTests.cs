@@ -59,6 +59,172 @@ namespace SubTerra.App.Tests.PlayMode.MineDemo
         }
 
         [UnityTest]
+        public IEnumerator Bootstrap_LadderMiningDirectionsReleaseCompletionAndCancellation()
+        {
+            environment = new UiTestEnvironment();
+            GameBootstrapper.ResetInstanceForTests();
+            yield return SceneManager.LoadSceneAsync(SceneNames.Bootstrap);
+            yield return UiTestWait.Until(() => SaveRuntimeController.Instance != null
+                && SaveRuntimeController.Instance.InventoryService != null
+                && SceneManager.GetActiveScene().name == SceneNames.MainMenu, "B174 Bootstrap", 20f);
+            var runtime = SaveRuntimeController.Instance;
+            var fs = new MemoryFileSystem();
+            var paths = new SavePathPolicy(Path.GetFullPath("Temp/b174-memory"));
+            var mapper = new SaveDataMapper(new SystemSaveClock());
+            var json = new SaveJsonCodec(new SaveMigrationService());
+            Set(runtime, "saveService", new SaveService(fs, paths, mapper, json));
+            Set(runtime, "loadService", new LoadService(fs, paths, mapper, json));
+            Assert.That(runtime.StartNewGame(1), Is.True);
+            yield return UiTestWait.Until(() => SceneManager.GetActiveScene().name == SceneNames.SurfaceBase
+                && runtime.IsUiReady, "B174 new game", 20f);
+            GameBootstrapper.Instance.State.SetDemoProgress(DemoObjectiveIds.MineCopper, 1, false);
+            GameBootstrapper.Instance.State.SetQuestRewardSettlement(string.Empty, 1);
+            Assert.That(runtime.TryStartExploration(out var reason), Is.True, reason);
+            yield return UiTestWait.Until(() => SceneManager.GetActiveScene().name == SceneNames.Integration
+                && runtime.IsUiReady, "B174 exploration", 20f);
+            yield return environment.Resolution.Set(960, 540);
+            environment.BindInput();
+            yield return UiTestEnvironment.DismissBriefing();
+            yield return UiTestWait.FocusGameView();
+
+            var movement = Object.FindAnyObjectByType<PlayerMovement>();
+            var animation = movement.GetComponentInChildren<PlayerAnimationController>();
+            var renderer = animation.GetComponent<SpriteRenderer>();
+            var controller = movement.GetComponent<PlayerMiningController>();
+            var mining = (MiningSystem)Get(controller, "miningSystem");
+            var map = mining.ForegroundTilemap;
+            var resolver = (MiningTileResolver)Get(mining, "tileResolver");
+            var input = movement.GetComponent<PlayerController>();
+            input.enabled = false;
+            var body = movement.GetComponent<Rigidbody2D>();
+            body.simulated = false;
+            movement.enabled = false;
+            movement.SetMoveInput(0f);
+            movement.SetVerticalMoveInput(0f);
+            var playerCell = map.WorldToCell(movement.Position) + new Vector3Int(5, -6, 0);
+            var origin = map.GetCellCenterWorld(playerCell);
+            Sprite rockSprite = null;
+            foreach (var cell in map.cellBounds.allPositionsWithin)
+                if (map.GetSprite(cell) != null) { rockSprite = map.GetSprite(cell); break; }
+            var tile = ScriptableObject.CreateInstance<UnityEngine.Tilemaps.Tile>();
+            tile.sprite = rockSprite;
+            resolver.RegisterRuntime(tile, new MiningTileDto("tile.b174.visual", "", 0, true, 1f, 2f, 0f, false));
+            for (int x = -2; x <= 2; x++)
+            for (int y = -2; y <= 2; y++) map.SetTile(playerCell + new Vector3Int(x, y, 0), null);
+            body.position = origin;
+            movement.transform.position = origin;
+            Set(movement, "<IsGrounded>k__BackingField", false);
+            var ladderPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/Prefabs/Gameplay/Traversal/Ladder.prefab");
+            LadderZone ladder = null;
+            for (int i = -1; i <= 1; i++)
+            {
+                var segment = Object.Instantiate(ladderPrefab, origin + Vector3.up * i, Quaternion.identity);
+                if (i == 0) ladder = segment.GetComponent<LadderZone>();
+            }
+            movement.EnterLadder(ladder);
+            var camera = Camera.main;
+            var follow = camera.GetComponent<PlayerCameraFollow>();
+            if (follow != null) follow.enabled = false;
+            camera.orthographicSize = 2.3f;
+            camera.transform.position = new Vector3(origin.x, origin.y + .1f, -10f);
+            yield return null;
+            yield return null;
+            Assert.That(animation.IsShowingLadderVisual, Is.True);
+            yield return UiTestWait.Capture("Temp/b174-play-evidence/ladder-idle.png");
+            var fields = new SerializedObject(animation);
+            var frames = fields.FindProperty("ladderMiningFrames");
+            Assert.That(frames.arraySize, Is.EqualTo(24));
+            int initialFrame = Time.frameCount;
+            foreach (int side in new[] { 1, -1 })
+            {
+                map.SetTile(playerCell + new Vector3Int(side, 0, 0), tile);
+                movement.SetMoveInput(-side);
+                movement.SetMoveInput(0f);
+                Set(controller, "pendingDirection", new Vector2(side, 0));
+                Set(controller, "pendingPointerTarget", false);
+                Invoke(controller, "TryStartPendingTarget");
+                Assert.That(mining.IsMining, Is.True);
+                var sequence = (PlayerLadderMiningAnimationSequence)Get(animation, "ladderMiningSequence");
+                Assert.That(sequence.FrameIndex, Is.Zero);
+                yield return null;
+                yield return null;
+                Assert.That(Mathf.Sign(renderer.transform.localScale.x), Is.EqualTo(side), "ActiveCell로 방향 결정");
+                yield return UiTestWait.Capture("Temp/b174-play-evidence/" + side + "-start.png");
+                yield return UiTestWait.Until(() => sequence.FrameIndex >= 12 && sequence.FrameIndex <= 15,
+                    "B174 work loop", 3f);
+                Assert.That(mining.IsMining, Is.True, "버튼을 누르지 않아도 계속 채굴");
+                var seen = new HashSet<int>();
+                float deadline = Time.realtimeSinceStartup + .6f;
+                while (Time.realtimeSinceStartup < deadline)
+                {
+                    seen.Add(sequence.FrameIndex);
+                    yield return null;
+                }
+                CollectionAssert.AreEquivalent(new[] { 12, 13, 14, 15 }, seen);
+                yield return UiTestWait.Capture("Temp/b174-play-evidence/" + side + "-work.png");
+                int completionFrame = -1;
+                Action<MiningProgressState> observe = progress =>
+                {
+                    if (progress.Phase == MiningPhase.Completed) completionFrame = sequence.FrameIndex;
+                };
+                mining.ProgressChanged += observe;
+                mining.TickMining(10f);
+                mining.ProgressChanged -= observe;
+                Assert.That(completionFrame, Is.EqualTo(16), "완료 이벤트 안에서 즉시 17번");
+                yield return UiTestWait.Capture("Temp/b174-play-evidence/" + side + "-finish.png");
+                yield return UiTestWait.Until(() => animation.IsShowingLadderVisual, "B174 ladder return", 2f);
+                Assert.That(renderer.transform.localScale.x, Is.GreaterThan(0f));
+            }
+            Assert.That(Time.frameCount - initialFrame, Is.GreaterThan(20), "실제 프레임 진행");
+            foreach (var direction in new[] { Vector2.up, Vector2.down })
+            {
+                Set(controller, "pendingDirection", direction);
+                Invoke(controller, "TryStartPendingTarget");
+                Assert.That(mining.IsMining, Is.False);
+            }
+            foreach (var action in new[] { "up", "down", "exit", "jump", "settings" })
+            {
+                movement.EnterLadder(ladder);
+                map.SetTile(playerCell + Vector3Int.right, tile);
+                Set(controller, "pendingDirection", Vector2.right);
+                Invoke(controller, "TryStartPendingTarget");
+                yield return null;
+                if (action == "up") movement.SetVerticalMoveInput(1f);
+                else if (action == "down") movement.SetVerticalMoveInput(-1f);
+                else if (action == "exit") movement.ExitLadder();
+                else if (action == "jump") Set(movement, "jumpUsedUntilLand", true);
+                else ControlPreferences.IsSettingsOpen = true;
+                yield return null;
+                yield return null;
+                Assert.That(mining.IsMining, Is.False, action);
+                var sequence = (PlayerLadderMiningAnimationSequence)Get(animation, "ladderMiningSequence");
+                Assert.That(sequence.IsActive, Is.EqualTo(action == "settings"), action);
+                movement.SetVerticalMoveInput(0f);
+                Set(movement, "jumpUsedUntilLand", false);
+                ControlPreferences.IsSettingsOpen = false;
+                yield return new WaitForSecondsRealtime(.35f);
+            }
+            movement.EnterLadder(ladder);
+            map.SetTile(playerCell + Vector3Int.right, tile);
+            Set(controller, "pendingDirection", Vector2.right);
+            Invoke(controller, "TryStartPendingTarget");
+            var survival = movement.GetComponent<PlayerSurvivalController>();
+            if (survival == null) survival = Object.FindAnyObjectByType<PlayerSurvivalController>();
+            animation.BindSurvival(survival);
+            Assert.That(survival.ApplyGasFailure(new GasExposureFailureInputDto
+            {
+                gasZoneId = "b174-animation-check", severity = GasExposureFailureSeverity.RescueRequired
+            }), Is.True);
+            yield return null;
+            Assert.That(Get(animation, "currentState"), Is.EqualTo("Knockout"));
+            Object.Destroy(tile);
+        }
+
+        private static object Get(object target, string name) => target.GetType().GetField(name, Private).GetValue(target);
+        private static void Set(object target, string name, object value) => target.GetType().GetField(name, Private).SetValue(target, value);
+        private static void Invoke(object target, string name) => target.GetType().GetMethod(name, Private).Invoke(target, null);
+
+        [UnityTest]
         public IEnumerator Bootstrap_MiningCompletionGasBreathingRescueAndLadderFacing()
         {
             environment = new UiTestEnvironment();
