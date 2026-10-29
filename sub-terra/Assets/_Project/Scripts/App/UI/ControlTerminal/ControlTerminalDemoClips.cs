@@ -123,7 +123,7 @@ namespace SubTerra.App.UI.ControlTerminal
             var x = S(0f, -70f * dir, 1.5f, 70f * dir, duration, 70f * dir);
             var fade = LoopFade(duration, 0.15f, 1.7f);
             Spr(clip, "player.idle", PlayerHeight, 0f, PlayerY).PosX(x).Sx(K(dir)).Fade(fade)
-                .Animate("player.walk", 10, 14f, "player.idle", H(0f, 1f, 1.5f, 0f));
+                .Animate("player.walk", GuideDemoLibrary.PlayerWalkFrameCount, GuideDemoLibrary.PlayerWalkFrameRate, "player.idle", H(0f, 1f, 1.5f, 0f));
             Arrow(clip, "art.arrow", 0f, 28f, Teal, dir < 0 ? 180f : 0f, fade).PosX(x);
             return clip;
         }

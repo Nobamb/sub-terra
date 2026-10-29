@@ -44,7 +44,7 @@ namespace SubTerra.Editor
         private static readonly AnimationDefinition[] Definitions =
         {
             new("Idle", "Idle", "player_idle", 1, 4f, true),
-            new("Walk", "Walk", "walk", 10, 10f, true),
+            new("Walk", "Walk", "walk", PlayerAnimationController.WalkFrameCount, PlayerAnimationController.WalkFrameRate, true),
             new("Jump", "Jump", "jump", 10, 12f, false),
             new("Mining", "Mining", "mining", 8, 10f, true),
             new("Damage", "Damage", "damage", 4, 10f, false),
@@ -69,6 +69,57 @@ namespace SubTerra.Editor
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
             Debug.Log("Player animation assets were built successfully.");
+        }
+
+        [MenuItem("SubTerra/Apply Smooth Walk Cycle")]
+        public static void ApplySmoothWalkCycle()
+        {
+            for (int i = 1; i <= PlayerAnimationController.WalkFrameCount; i++)
+            {
+                string path = FramesRoot + "/Walk/walk_" + i.ToString("D2") + ".png";
+                AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);
+                var importer = AssetImporter.GetAtPath(path) as TextureImporter;
+                if (importer == null) throw new FileNotFoundException("Walk texture missing.", path);
+                importer.textureType = TextureImporterType.Sprite;
+                importer.spriteImportMode = SpriteImportMode.Single;
+                importer.spritePixelsPerUnit = 256f;
+                var settings = new TextureImporterSettings();
+                importer.ReadTextureSettings(settings);
+                settings.spriteAlignment = (int)SpriteAlignment.Center;
+                settings.spritePivot = new Vector2(.5f, .5f);
+                settings.spriteMeshType = SpriteMeshType.FullRect;
+                importer.SetTextureSettings(settings);
+                importer.mipmapEnabled = false;
+                importer.alphaIsTransparency = true;
+                importer.wrapMode = TextureWrapMode.Clamp;
+                importer.filterMode = FilterMode.Bilinear;
+                importer.textureCompression = TextureImporterCompression.Uncompressed;
+                importer.SaveAndReimport();
+            }
+
+            var root = PrefabUtility.LoadPrefabContents(PlayerPrefabPath);
+            try
+            {
+                var animation = root.transform.Find("VisualRoot").GetComponent<PlayerAnimationController>();
+                var serialized = new SerializedObject(animation);
+                var frames = LoadFrames("Walk");
+                var array = serialized.FindProperty("walkFrames");
+                array.arraySize = frames.Length;
+                for (int i = 0; i < frames.Length; i++) array.GetArrayElementAtIndex(i).objectReferenceValue = frames[i];
+                var footsteps = serialized.FindProperty("footstepFrames");
+                footsteps.arraySize = 2;
+                footsteps.GetArrayElementAtIndex(0).intValue = 1;
+                footsteps.GetArrayElementAtIndex(1).intValue = 21;
+                serialized.ApplyModifiedPropertiesWithoutUndo();
+                PrefabUtility.SaveAsPrefabAsset(root, PlayerPrefabPath);
+            }
+            finally { PrefabUtility.UnloadPrefabContents(root); }
+            var clip = CreateOrUpdateClip(Definitions[1]);
+            var clipSettings = AnimationUtility.GetAnimationClipSettings(clip);
+            clipSettings.stopTime = (float)PlayerAnimationController.WalkFrameCount / PlayerAnimationController.WalkFrameRate;
+            AnimationUtility.SetAnimationClipSettings(clip, clipSettings);
+            AssetDatabase.SaveAssets();
+            Debug.Log("Smooth walk cycle applied to Player prefab and walk preview clip.");
         }
 
         [MenuItem("SubTerra/Apply Approved Ladder Five Frames")]

@@ -1,0 +1,12 @@
+Mode: EditMode
+Scope: quick
+Selected: 1
+Executed: 1
+Pass: 1
+Fail: 0
+Skip: 0
+Inconclusive: 0
+DurationSec: 1.701021
+Missing:
+Unexpected:
+ExitCode: 0

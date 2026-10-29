@@ -145,6 +145,41 @@ namespace SubTerra.Gameplay.Player.Tests
         }
 
         [UnityTest]
+        public IEnumerator WalkAnimation_OneTickGroundGapKeepsWalk_RequestedJumpSwitchesImmediately()
+        {
+            SetupGroundedPlayerWithContacts();
+            animationVisualObject = new GameObject("WalkGapVisual");
+            animationVisualObject.transform.SetParent(playerObject.transform, false);
+            var renderer = animationVisualObject.AddComponent<SpriteRenderer>();
+            var animation = animationVisualObject.AddComponent<PlayerAnimationController>();
+            otherAnimationFrames = new[] { CreateTestSprite(), CreateTestSprite(), CreateTestSprite() };
+            animation.ConfigureFrames(renderer, movement, new[] { otherAnimationFrames[0] },
+                new[] { otherAnimationFrames[1] }, new[] { otherAnimationFrames[2] }, null, null, null, null);
+            for (int i = 0; i < 3; i++) yield return new WaitForFixedUpdate();
+            movement.SetMoveInput(1f);
+            yield return null;
+            Assert.That(renderer.sprite, Is.SameAs(otherAnimationFrames[1]));
+
+            var ground = groundObject.GetComponent<Collider2D>();
+            ground.enabled = false;
+            yield return new WaitForFixedUpdate();
+            yield return null;
+            Assert.That(movement.IsGrounded, Is.False, "실제 물리 접점과 발밑 보조 판정을 한 틱 제거한다");
+            Assert.That(renderer.sprite, Is.SameAs(otherAnimationFrames[1]), "접지가 잠깐 빠져도 Walk를 유지한다");
+            ground.enabled = true;
+            for (int i = 0; i < 2; i++) yield return new WaitForFixedUpdate();
+            yield return null;
+            Assert.That(movement.IsGrounded, Is.True);
+            Assert.That(renderer.sprite, Is.SameAs(otherAnimationFrames[1]));
+
+            movement.RequestJump();
+            yield return new WaitForFixedUpdate();
+            yield return null;
+            Assert.That(movement.IsJumpInProgress, Is.True);
+            Assert.That(renderer.sprite, Is.SameAs(otherAnimationFrames[2]), "입력으로 점프하면 즉시 Jump로 바뀐다");
+        }
+
+        [UnityTest]
         public IEnumerator MoveInputAcceleratesPlayerToTheRight()
         {
             movement.SetMoveInput(1f);

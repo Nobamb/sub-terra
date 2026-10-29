@@ -7,7 +7,10 @@ namespace SubTerra.Gameplay.Player
     // 런타임 표시가 Animator 평가 순서에 의존하지 않도록 한다.
     public sealed class PlayerAnimationController : MonoBehaviour
     {
+        public const int WalkFrameCount = SubTerra.Shared.PlayerWalkCycle.FrameCount;
+        public const float WalkFrameRate = SubTerra.Shared.PlayerWalkCycle.FrameRate;
         private const float DamageDuration = 0.35f;
+        private const float WalkGroundVisualGraceDuration = 0.06f;
         private const float LadderMovementEpsilon = 0.0001f;
         private const float LadderVisualGraceDuration = 0.1f;
         // 중립 → 오른쪽 중간/상승/중간 → 중립 → 왼쪽 중간/상승/중간.
@@ -30,7 +33,7 @@ namespace SubTerra.Gameplay.Player
         [SerializeField, Min(0.01f)] private float ladderDistancePerFrame = 0.5f;
         [SerializeField, Min(0f)] private float ladderSettleDelay = 0.08f;
         [Tooltip("B-164: 걷기 그림에서 발이 닿는 프레임. 이 프레임으로 넘어갈 때 발소리를 낸다.")]
-        [SerializeField] private int[] footstepFrames = { 2, 7 };
+        [SerializeField] private int[] footstepFrames = { 1, 21 };
 
         [SerializeField] private PlayerMovement movement;
         private bool isMining;
@@ -39,6 +42,7 @@ namespace SubTerra.Gameplay.Player
         private float damageUntil;
         private string currentState;
         private float stateStartedAt;
+        private float lastGroundedAt = float.NegativeInfinity;
         private bool survivalEventsBound;
         private float ladderTravelDistance;
         private int ladderSequenceIndex;
@@ -99,6 +103,11 @@ namespace SubTerra.Gameplay.Player
             if (spriteRenderer == null || movement == null)
             {
                 return;
+            }
+
+            if (movement.IsGrounded)
+            {
+                lastGroundedAt = Time.unscaledTime;
             }
 
             var stateName = ResolveStateName();
@@ -184,6 +193,15 @@ namespace SubTerra.Gameplay.Player
 
             if (!movement.IsGrounded)
             {
+                // 타일 경계의 한 틱 접지 누락이 걷기 순서를 처음부터 재시작하지 않게 한다.
+                if (currentState == "Walk"
+                    && movement.IsMovementRequested
+                    && !movement.IsJumpInProgress
+                    && Time.unscaledTime - lastGroundedAt <= WalkGroundVisualGraceDuration)
+                {
+                    return "Walk";
+                }
+
                 return "Jump";
             }
 
@@ -285,7 +303,7 @@ namespace SubTerra.Gameplay.Player
         {
             return stateName switch
             {
-                "Walk" => (walkFrames, 10f, true),
+                "Walk" => (walkFrames, WalkFrameRate, true),
                 "Jump" => (jumpFrames, 12f, false),
                 "Mining" => (miningFrames, 10f, true),
                 "Damage" => (damageFrames, 10f, false),

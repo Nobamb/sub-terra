@@ -1,0 +1,870 @@
+{
+  "frame_count": 47,
+  "fps": 10,
+  "period_seconds": 4.7,
+  "source_size": [
+    512,
+    539
+  ],
+  "method": "exterior-connected near-black matte removed; source dark ink retained within 2px of body; enclosed dark details retained",
+  "source_rgb_preserved": true,
+  "durations_preserved": true,
+  "decoded_transparent_gif_frames": 47,
+  "unity_applied": true,
+  "frames": [
+    {
+      "frame": 1,
+      "duration_ms": 100,
+      "native_bbox": [
+        77,
+        20,
+        404,
+        523
+      ],
+      "rgb_unchanged": true,
+      "non_background_color_pixels_retained": true,
+      "uniform_scale": 0.4396887159533074,
+      "translation": [
+        21,
+        10
+      ],
+      "runtime_sha256": "acc3bb71255cf29b4db6a37905510fcd3642fd524db9accecf109d2e25b9b65b"
+    },
+    {
+      "frame": 2,
+      "duration_ms": 100,
+      "native_bbox": [
+        91,
+        14,
+        408,
+        525
+      ],
+      "rgb_unchanged": true,
+      "non_background_color_pixels_retained": true,
+      "uniform_scale": 0.4396887159533074,
+      "translation": [
+        20,
+        9
+      ],
+      "runtime_sha256": "1e1609ceb46ea3d010e4f6160ddb70ec520ca84ca8156132f7dfa127cb61c34a"
+    },
+    {
+      "frame": 3,
+      "duration_ms": 100,
+      "native_bbox": [
+        94,
+        5,
+        409,
+        524
+      ],
+      "rgb_unchanged": true,
+      "non_background_color_pixels_retained": true,
+      "uniform_scale": 0.4396887159533074,
+      "translation": [
+        19,
+        10
+      ],
+      "runtime_sha256": "fe1f1a8bb1827e34be99d7092e312ebd2351af1f4899630b1c693394e03a28ba"
+    },
+    {
+      "frame": 4,
+      "duration_ms": 100,
+      "native_bbox": [
+        93,
+        0,
+        408,
+        524
+      ],
+      "rgb_unchanged": true,
+      "non_background_color_pixels_retained": true,
+      "uniform_scale": 0.4396887159533074,
+      "translation": [
+        20,
+        10
+      ],
+      "runtime_sha256": "a419c31482adfbd25930a8aaba53aab0ffc8a505b08e282e6ca09695b81b66d4"
+    },
+    {
+      "frame": 5,
+      "duration_ms": 100,
+      "native_bbox": [
+        92,
+        3,
+        404,
+        523
+      ],
+      "rgb_unchanged": true,
+      "non_background_color_pixels_retained": true,
+      "uniform_scale": 0.4396887159533074,
+      "translation": [
+        21,
+        10
+      ],
+      "runtime_sha256": "4a738dff1acdb1c0c52718962fcbcbb0e3f565d558cc8e51913f2ae9e3c0bd01"
+    },
+    {
+      "frame": 6,
+      "duration_ms": 100,
+      "native_bbox": [
+        93,
+        9,
+        429,
+        525
+      ],
+      "rgb_unchanged": true,
+      "non_background_color_pixels_retained": true,
+      "uniform_scale": 0.4396887159533074,
+      "translation": [
+        22,
+        9
+      ],
+      "runtime_sha256": "2e70d9d1d383a13e965ca92707ab06a22b0c619ecd596e03b68c64dc15f804d5"
+    },
+    {
+      "frame": 7,
+      "duration_ms": 100,
+      "native_bbox": [
+        78,
+        19,
+        412,
+        522
+      ],
+      "rgb_unchanged": true,
+      "non_background_color_pixels_retained": true,
+      "uniform_scale": 0.4396887159533074,
+      "translation": [
+        20,
+        10
+      ],
+      "runtime_sha256": "2a8a2f8e08627e817ccfe3cdf0c4e495e035bfef439ed85c5672db9f7986babe"
+    },
+    {
+      "frame": 8,
+      "duration_ms": 100,
+      "native_bbox": [
+        94,
+        16,
+        410,
+        521
+      ],
+      "rgb_unchanged": true,
+      "non_background_color_pixels_retained": true,
+      "uniform_scale": 0.4396887159533074,
+      "translation": [
+        18,
+        11
+      ],
+      "runtime_sha256": "32bd39b5c59c012081d65277b92fad84a8fd0fc4e18e1d4b3fe1856a25e50f47"
+    },
+    {
+      "frame": 9,
+      "duration_ms": 100,
+      "native_bbox": [
+        97,
+        4,
+        412,
+        520
+      ],
+      "rgb_unchanged": true,
+      "non_background_color_pixels_retained": true,
+      "uniform_scale": 0.4396887159533074,
+      "translation": [
+        18,
+        11
+      ],
+      "runtime_sha256": "e43daf42042798fbc75840c8274b950bac58eb57db4a5e0a37295d95a53eeb27"
+    },
+    {
+      "frame": 10,
+      "duration_ms": 100,
+      "native_bbox": [
+        95,
+        0,
+        409,
+        521
+      ],
+      "rgb_unchanged": true,
+      "non_background_color_pixels_retained": true,
+      "uniform_scale": 0.4396887159533074,
+      "translation": [
+        19,
+        11
+      ],
+      "runtime_sha256": "c2a574b1ceb229dd8ec03ffa0d066ff5e25793954b8108d1dd7ac74119ad4826"
+    },
+    {
+      "frame": 11,
+      "duration_ms": 100,
+      "native_bbox": [
+        92,
+        2,
+        405,
+        518
+      ],
+      "rgb_unchanged": true,
+      "non_background_color_pixels_retained": true,
+      "uniform_scale": 0.4396887159533074,
+      "translation": [
+        21,
+        12
+      ],
+      "runtime_sha256": "9da5e0f75a072e9738c9d7c7471c766cd1736211bb2df6195c591293cbfe3bcc"
+    },
+    {
+      "frame": 12,
+      "duration_ms": 100,
+      "native_bbox": [
+        92,
+        9,
+        418,
+        519
+      ],
+      "rgb_unchanged": true,
+      "non_background_color_pixels_retained": true,
+      "uniform_scale": 0.4396887159533074,
+      "translation": [
+        22,
+        12
+      ],
+      "runtime_sha256": "c8e530f10eadbd7853a30d5d4440c41994247bbd83a96c1f612e3bbb529cf716"
+    },
+    {
+      "frame": 13,
+      "duration_ms": 100,
+      "native_bbox": [
+        91,
+        17,
+        414,
+        522
+      ],
+      "rgb_unchanged": true,
+      "non_background_color_pixels_retained": true,
+      "uniform_scale": 0.4396887159533074,
+      "translation": [
+        22,
+        10
+      ],
+      "runtime_sha256": "418977072f1534cdb8676cf8ba713e715384b747cada47f71264a931fd7f6280"
+    },
+    {
+      "frame": 14,
+      "duration_ms": 100,
+      "native_bbox": [
+        80,
+        18,
+        404,
+        526
+      ],
+      "rgb_unchanged": true,
+      "non_background_color_pixels_retained": true,
+      "uniform_scale": 0.4396887159533074,
+      "translation": [
+        21,
+        9
+      ],
+      "runtime_sha256": "bd2d0b06663400e74d2fcb22b7866f0d72174fbc13e745b363133196c82e3d6b"
+    },
+    {
+      "frame": 15,
+      "duration_ms": 100,
+      "native_bbox": [
+        94,
+        11,
+        409,
+        525
+      ],
+      "rgb_unchanged": true,
+      "non_background_color_pixels_retained": true,
+      "uniform_scale": 0.4396887159533074,
+      "translation": [
+        20,
+        9
+      ],
+      "runtime_sha256": "325921b02a53162bd3ac27ffed8e7b8bf9f3d881394b307fadd28df7ea84d171"
+    },
+    {
+      "frame": 16,
+      "duration_ms": 100,
+      "native_bbox": [
+        93,
+        3,
+        409,
+        523
+      ],
+      "rgb_unchanged": true,
+      "non_background_color_pixels_retained": true,
+      "uniform_scale": 0.4396887159533074,
+      "translation": [
+        19,
+        10
+      ],
+      "runtime_sha256": "2ef6aabee68a4b759e595e5bc21c8a61402ed999f636c85cf9fb42ba0f70d7b3"
+    },
+    {
+      "frame": 17,
+      "duration_ms": 100,
+      "native_bbox": [
+        92,
+        0,
+        406,
+        526
+      ],
+      "rgb_unchanged": true,
+      "non_background_color_pixels_retained": true,
+      "uniform_scale": 0.4396887159533074,
+      "translation": [
+        21,
+        9
+      ],
+      "runtime_sha256": "c70e9872a36b217c659bd4545055e15c073d664bfab99c257f64d7023f83d34b"
+    },
+    {
+      "frame": 18,
+      "duration_ms": 100,
+      "native_bbox": [
+        92,
+        4,
+        403,
+        523
+      ],
+      "rgb_unchanged": true,
+      "non_background_color_pixels_retained": true,
+      "uniform_scale": 0.4396887159533074,
+      "translation": [
+        22,
+        10
+      ],
+      "runtime_sha256": "a0bf1ff5dcad38767c7e32e20fb7ad04bd4262baa2b92e6a4dd23c5cc5ec56d6"
+    },
+    {
+      "frame": 19,
+      "duration_ms": 100,
+      "native_bbox": [
+        93,
+        15,
+        427,
+        523
+      ],
+      "rgb_unchanged": true,
+      "non_background_color_pixels_retained": true,
+      "uniform_scale": 0.4396887159533074,
+      "translation": [
+        21,
+        10
+      ],
+      "runtime_sha256": "c61bc24fdc57c290369dd5f50ebe3ec308dba54346dbe77a845b7d5c40c51a0e"
+    },
+    {
+      "frame": 20,
+      "duration_ms": 100,
+      "native_bbox": [
+        71,
+        18,
+        414,
+        526
+      ],
+      "rgb_unchanged": true,
+      "non_background_color_pixels_retained": true,
+      "uniform_scale": 0.4396887159533074,
+      "translation": [
+        19,
+        9
+      ],
+      "runtime_sha256": "22faa8d3b79069d59d957d24cd251bdb52894dab1dc075b3b7e17b650700ee64"
+    },
+    {
+      "frame": 21,
+      "duration_ms": 100,
+      "native_bbox": [
+        92,
+        12,
+        417,
+        525
+      ],
+      "rgb_unchanged": true,
+      "non_background_color_pixels_retained": true,
+      "uniform_scale": 0.4396887159533074,
+      "translation": [
+        18,
+        9
+      ],
+      "runtime_sha256": "4000e09d9276763d348319fa9ddb825228fad492563193332b0a998ffbac9f0d"
+    },
+    {
+      "frame": 22,
+      "duration_ms": 100,
+      "native_bbox": [
+        97,
+        3,
+        417,
+        524
+      ],
+      "rgb_unchanged": true,
+      "non_background_color_pixels_retained": true,
+      "uniform_scale": 0.4396887159533074,
+      "translation": [
+        19,
+        10
+      ],
+      "runtime_sha256": "c03d1766fc2836e090abac8aeede79f3edb020a197b3dce66da2e0a0a42448ed"
+    },
+    {
+      "frame": 23,
+      "duration_ms": 100,
+      "native_bbox": [
+        94,
+        0,
+        407,
+        518
+      ],
+      "rgb_unchanged": true,
+      "non_background_color_pixels_retained": true,
+      "uniform_scale": 0.4396887159533074,
+      "translation": [
+        19,
+        12
+      ],
+      "runtime_sha256": "c37cbbcc9eeef8f2a874746ef2a5896db4d829af97b9e5bc6167431a0360a3b0"
+    },
+    {
+      "frame": 24,
+      "duration_ms": 100,
+      "native_bbox": [
+        92,
+        6,
+        411,
+        519
+      ],
+      "rgb_unchanged": true,
+      "non_background_color_pixels_retained": true,
+      "uniform_scale": 0.4396887159533074,
+      "translation": [
+        22,
+        12
+      ],
+      "runtime_sha256": "2e85f861adf3c451c1eab35578151062062e371f24e436b9f6e2896ab86dbd0a"
+    },
+    {
+      "frame": 25,
+      "duration_ms": 100,
+      "native_bbox": [
+        91,
+        16,
+        408,
+        525
+      ],
+      "rgb_unchanged": true,
+      "non_background_color_pixels_retained": true,
+      "uniform_scale": 0.4396887159533074,
+      "translation": [
+        22,
+        9
+      ],
+      "runtime_sha256": "d4d180796e612168fd18d50717e4c5a51944bca94472dd8b231b7670eaca3fab"
+    },
+    {
+      "frame": 26,
+      "duration_ms": 100,
+      "native_bbox": [
+        92,
+        16,
+        407,
+        527
+      ],
+      "rgb_unchanged": true,
+      "non_background_color_pixels_retained": true,
+      "uniform_scale": 0.4396887159533074,
+      "translation": [
+        20,
+        8
+      ],
+      "runtime_sha256": "c9b8863c39548eff49dcdfef17af164373c60d59329880917b26d50224fba384"
+    },
+    {
+      "frame": 27,
+      "duration_ms": 100,
+      "native_bbox": [
+        92,
+        5,
+        409,
+        524
+      ],
+      "rgb_unchanged": true,
+      "non_background_color_pixels_retained": true,
+      "uniform_scale": 0.4396887159533074,
+      "translation": [
+        19,
+        10
+      ],
+      "runtime_sha256": "bb85ccc38feae8779401ffda32b86beae00ac09642e3195aa7bb80d8217a02bf"
+    },
+    {
+      "frame": 28,
+      "duration_ms": 100,
+      "native_bbox": [
+        92,
+        0,
+        408,
+        523
+      ],
+      "rgb_unchanged": true,
+      "non_background_color_pixels_retained": true,
+      "uniform_scale": 0.4396887159533074,
+      "translation": [
+        20,
+        10
+      ],
+      "runtime_sha256": "9165f326b1cc03a743ece29fbf0fc8ebdb625ead5d3a6483709f9e24c36e408e"
+    },
+    {
+      "frame": 29,
+      "duration_ms": 100,
+      "native_bbox": [
+        91,
+        5,
+        417,
+        523
+      ],
+      "rgb_unchanged": true,
+      "non_background_color_pixels_retained": true,
+      "uniform_scale": 0.4396887159533074,
+      "translation": [
+        22,
+        10
+      ],
+      "runtime_sha256": "2a9cbad87e310013e54079242f7bda24527f739adfc95f4548d44892f919c81c"
+    },
+    {
+      "frame": 30,
+      "duration_ms": 100,
+      "native_bbox": [
+        90,
+        13,
+        424,
+        522
+      ],
+      "rgb_unchanged": true,
+      "non_background_color_pixels_retained": true,
+      "uniform_scale": 0.4396887159533074,
+      "translation": [
+        22,
+        10
+      ],
+      "runtime_sha256": "fa60173f3e58a8203f6f56b489e17c6b5b7a23c0b118441872589d44472e641a"
+    },
+    {
+      "frame": 31,
+      "duration_ms": 100,
+      "native_bbox": [
+        73,
+        17,
+        406,
+        522
+      ],
+      "rgb_unchanged": true,
+      "non_background_color_pixels_retained": true,
+      "uniform_scale": 0.4396887159533074,
+      "translation": [
+        20,
+        10
+      ],
+      "runtime_sha256": "6ed4a554604eff3d03b30988097d8a94296191da5694205f2ea1c565e3241016"
+    },
+    {
+      "frame": 32,
+      "duration_ms": 100,
+      "native_bbox": [
+        97,
+        9,
+        416,
+        521
+      ],
+      "rgb_unchanged": true,
+      "non_background_color_pixels_retained": true,
+      "uniform_scale": 0.4396887159533074,
+      "translation": [
+        19,
+        11
+      ],
+      "runtime_sha256": "2de450c6fb0bffa8aa114007e224336cb49f97e6bbe972eb270ae275173ff075"
+    },
+    {
+      "frame": 33,
+      "duration_ms": 100,
+      "native_bbox": [
+        95,
+        0,
+        416,
+        520
+      ],
+      "rgb_unchanged": true,
+      "non_background_color_pixels_retained": true,
+      "uniform_scale": 0.4396887159533074,
+      "translation": [
+        19,
+        11
+      ],
+      "runtime_sha256": "f2f1f916145d61f494580ad37f765e22968c650378bb05d6e57b08330d66f0c4"
+    },
+    {
+      "frame": 34,
+      "duration_ms": 100,
+      "native_bbox": [
+        94,
+        3,
+        405,
+        520
+      ],
+      "rgb_unchanged": true,
+      "non_background_color_pixels_retained": true,
+      "uniform_scale": 0.4396887159533074,
+      "translation": [
+        21,
+        11
+      ],
+      "runtime_sha256": "30ca97fc20db908644858d7d8dc678d0e0aa340ea320c9c8ff1512f5a31b50cb"
+    },
+    {
+      "frame": 35,
+      "duration_ms": 100,
+      "native_bbox": [
+        91,
+        12,
+        421,
+        525
+      ],
+      "rgb_unchanged": true,
+      "non_background_color_pixels_retained": true,
+      "uniform_scale": 0.4396887159533074,
+      "translation": [
+        20,
+        9
+      ],
+      "runtime_sha256": "4dac8cc02c505a85ba67f9aab9b5a8b0cf860f7f6328716a08256e007916c96a"
+    },
+    {
+      "frame": 36,
+      "duration_ms": 100,
+      "native_bbox": [
+        80,
+        18,
+        417,
+        525
+      ],
+      "rgb_unchanged": true,
+      "non_background_color_pixels_retained": true,
+      "uniform_scale": 0.4396887159533074,
+      "translation": [
+        19,
+        9
+      ],
+      "runtime_sha256": "470aca5b901aca5ec2bbf6022ce7e2d7f430c98864b331769cff1ebd173e58a0"
+    },
+    {
+      "frame": 37,
+      "duration_ms": 100,
+      "native_bbox": [
+        94,
+        11,
+        418,
+        525
+      ],
+      "rgb_unchanged": true,
+      "non_background_color_pixels_retained": true,
+      "uniform_scale": 0.4396887159533074,
+      "translation": [
+        18,
+        9
+      ],
+      "runtime_sha256": "dc04a1052f7832087f2a4227f05a3048bf298d302c618dce07f42b43db4b9be4"
+    },
+    {
+      "frame": 38,
+      "duration_ms": 100,
+      "native_bbox": [
+        93,
+        5,
+        410,
+        522
+      ],
+      "rgb_unchanged": true,
+      "non_background_color_pixels_retained": true,
+      "uniform_scale": 0.4396887159533074,
+      "translation": [
+        20,
+        10
+      ],
+      "runtime_sha256": "dab7e6cfe815e3b2425f3b082c77a168f3e58384e73936fdd5895f7cfee4f0e4"
+    },
+    {
+      "frame": 39,
+      "duration_ms": 100,
+      "native_bbox": [
+        92,
+        4,
+        407,
+        522
+      ],
+      "rgb_unchanged": true,
+      "non_background_color_pixels_retained": true,
+      "uniform_scale": 0.4396887159533074,
+      "translation": [
+        20,
+        10
+      ],
+      "runtime_sha256": "0d5d4fab7d7a9eace6f29f5fa880fe31f2df7a4edbeefe61d8b128d67897aa53"
+    },
+    {
+      "frame": 40,
+      "duration_ms": 100,
+      "native_bbox": [
+        88,
+        9,
+        418,
+        522
+      ],
+      "rgb_unchanged": true,
+      "non_background_color_pixels_retained": true,
+      "uniform_scale": 0.4396887159533074,
+      "translation": [
+        21,
+        10
+      ],
+      "runtime_sha256": "03108a8fdf88d2d64e9dab6f92e4e9830d61251370c1cf2eca3a06838510a455"
+    },
+    {
+      "frame": 41,
+      "duration_ms": 100,
+      "native_bbox": [
+        91,
+        20,
+        414,
+        522
+      ],
+      "rgb_unchanged": true,
+      "non_background_color_pixels_retained": true,
+      "uniform_scale": 0.4396887159533074,
+      "translation": [
+        22,
+        10
+      ],
+      "runtime_sha256": "558b01f284e21c1cda9c1332b79bbd49525103f725629bd0bef9ca16d5a79ff0"
+    },
+    {
+      "frame": 42,
+      "duration_ms": 100,
+      "native_bbox": [
+        84,
+        20,
+        405,
+        528
+      ],
+      "rgb_unchanged": true,
+      "non_background_color_pixels_retained": true,
+      "uniform_scale": 0.4396887159533074,
+      "translation": [
+        21,
+        8
+      ],
+      "runtime_sha256": "72814eedbc966b7525e2e35fb1c86f5c88af123f0c82a91c0828fdce797e2744"
+    },
+    {
+      "frame": 43,
+      "duration_ms": 100,
+      "native_bbox": [
+        87,
+        9,
+        414,
+        527
+      ],
+      "rgb_unchanged": true,
+      "non_background_color_pixels_retained": true,
+      "uniform_scale": 0.4396887159533074,
+      "translation": [
+        19,
+        8
+      ],
+      "runtime_sha256": "19d801b76d68c2d71d8ab9e795dc48a27094ef9d383affe04edeff0acde08c96"
+    },
+    {
+      "frame": 44,
+      "duration_ms": 100,
+      "native_bbox": [
+        94,
+        3,
+        407,
+        524
+      ],
+      "rgb_unchanged": true,
+      "non_background_color_pixels_retained": true,
+      "uniform_scale": 0.4396887159533074,
+      "translation": [
+        20,
+        10
+      ],
+      "runtime_sha256": "fa1d2ffe24155539f8a24dd8dae67b410bbcc95b04a1955aa8011fb19c80da49"
+    },
+    {
+      "frame": 45,
+      "duration_ms": 100,
+      "native_bbox": [
+        90,
+        0,
+        412,
+        528
+      ],
+      "rgb_unchanged": true,
+      "non_background_color_pixels_retained": true,
+      "uniform_scale": 0.4396887159533074,
+      "translation": [
+        22,
+        8
+      ],
+      "runtime_sha256": "a828ecd490bb700939e9b74d03673c1b6657fe513b51b47899ad04de954c893a"
+    },
+    {
+      "frame": 46,
+      "duration_ms": 100,
+      "native_bbox": [
+        92,
+        7,
+        418,
+        527
+      ],
+      "rgb_unchanged": true,
+      "non_background_color_pixels_retained": true,
+      "uniform_scale": 0.4396887159533074,
+      "translation": [
+        22,
+        8
+      ],
+      "runtime_sha256": "857fc3f89a6a372002a15d0e2f5d16143f0f6e37a7f2964c9be17bd284e358fb"
+    },
+    {
+      "frame": 47,
+      "duration_ms": 100,
+      "native_bbox": [
+        83,
+        17,
+        426,
+        527
+      ],
+      "rgb_unchanged": true,
+      "non_background_color_pixels_retained": true,
+      "uniform_scale": 0.4396887159533074,
+      "translation": [
+        21,
+        8
+      ],
+      "runtime_sha256": "82ea85c1c1883862062035b4b89a0b19ed54eadbfba67d10c63b66e6e652ab2b"
+    }
+  ],
+  "unity_editmode": {
+    "selected": 3,
+    "passed": 3,
+    "failed": 0,
+    "exit_code": 0
+  },
+  "decoded_alpha_matches_native_pngs": true,
+  "max_decoded_gif_palette_mae": 2.6824327534276513
+}

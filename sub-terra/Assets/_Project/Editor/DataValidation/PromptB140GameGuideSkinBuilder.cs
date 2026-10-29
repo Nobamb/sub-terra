@@ -26,7 +26,7 @@ namespace SubTerra.App.Editor.DataValidation
             void Add(string key, string path) => map.Add(new KeyValuePair<string, string>(key, Art + path));
 
             Add("player.idle", "Characters/Player/Frames/Idle/player_idle_01.png");
-            for (var i = 1; i <= 10; i++) Add("player.walk." + i, "Characters/Player/Frames/Walk/walk_" + i.ToString("00") + ".png");
+            for (var i = 1; i <= GuideDemoLibrary.PlayerWalkFrameCount; i++) Add("player.walk." + i, "Characters/Player/Frames/Walk/walk_" + i.ToString("00") + ".png");
             for (var i = 1; i <= 8; i++) Add("player.mine." + i, "Characters/Player/Frames/Mining/mining_" + i.ToString("00") + ".png");
             for (var i = 1; i <= 5; i++) Add("player.ladder." + i, "Characters/Player/Frames/LadderBack/ladder_back_" + i.ToString("00") + ".png");
             Add("player.jump.4", "Characters/Player/Frames/Jump/jump_04.png");
