@@ -25,7 +25,11 @@ namespace SubTerra.Gameplay.Player
         [SerializeField] private Animator animator;
         [SerializeField] private Sprite[] idleFrames;
         [SerializeField] private Sprite[] walkFrames;
+        [Tooltip("B-175 이전 점프 10장. 새 단계 그림 3묶음이 없을 때만 쓴다.")]
         [SerializeField] private Sprite[] jumpFrames;
+        [SerializeField] private Sprite[] jumpReadyFrames;
+        [SerializeField] private Sprite[] jumpRiseFrames;
+        [SerializeField] private Sprite[] jumpFallFrames;
         [SerializeField] private Sprite[] ladderFrames;
         [SerializeField] private Sprite[] miningFrames;
         [SerializeField] private Sprite[] ladderMiningFrames;
@@ -33,6 +37,7 @@ namespace SubTerra.Gameplay.Player
         [SerializeField] private Sprite[] knockoutFrames;
         [SerializeField] private PlayerMiningAnimationSettings miningAnimation = new();
         [SerializeField] private PlayerLadderMiningAnimationSettings ladderMiningAnimation = new();
+        [SerializeField] private PlayerJumpAnimationSettings jumpAnimation = new();
         [SerializeField, Min(0.01f)] private float knockoutFps = 24f;
         [SerializeField, Min(0.01f)] private float knockoutBreathingFps = 12f;
         [SerializeField, Min(0.01f)] private float ladderDistancePerFrame = 0.5f;
@@ -62,8 +67,14 @@ namespace SubTerra.Gameplay.Player
         private float ladderVisualGraceUntil;
         private int lastWalkFrame = -1;
         private bool footstepAlternate;
+        private PlayerJumpAnimationSequence jumpSequence;
+        private int observedJumpCount;
+        private bool jumpBobApplied;
+        private float jumpBobBaseY;
 
         public bool IsShowingLadderVisual => IsLadderState(currentState);
+        /// <summary>B-175: 점프 그림 단계. #265 연출은 PhaseChanged를 구독한다.</summary>
+        public PlayerJumpAnimationSequence JumpAnimation => JumpSequence;
         public bool IsShowingLadderMiningVisual => currentState == "LadderMining";
         public int LadderMiningDirection => LadderMiningSequence.Direction;
         public bool CanMineOnLadder => movement != null && !movement.IsJumpInProgress
@@ -74,6 +85,10 @@ namespace SubTerra.Gameplay.Player
             miningSequence ??= new PlayerMiningAnimationSequence(miningAnimation);
         private PlayerLadderMiningAnimationSequence LadderMiningSequence =>
             ladderMiningSequence ??= new PlayerLadderMiningAnimationSequence(ladderMiningAnimation);
+        private PlayerJumpAnimationSequence JumpSequence =>
+            jumpSequence ??= new PlayerJumpAnimationSequence(jumpAnimation);
+        private bool HasJumpPhaseFrames => HasFrames(jumpReadyFrames) && HasFrames(jumpRiseFrames)
+            && HasFrames(jumpFallFrames);
 
         private void OnValidate()
         {
@@ -104,6 +119,10 @@ namespace SubTerra.Gameplay.Player
             }
 
             SubscribeSurvivalEvents();
+            if (movement != null)
+            {
+                observedJumpCount = movement.JumpCount;
+            }
         }
 
         private void OnDisable()
@@ -112,6 +131,8 @@ namespace SubTerra.Gameplay.Player
             ResetLadderPlayback();
             MiningSequence.Reset();
             LadderMiningSequence.Reset();
+            JumpSequence.Reset();
+            ApplyJumpBob(0f);
             miningOnLadder = false;
             isMining = false;
             knockoutCause = SubTerra.Shared.RunFailureCause.Unknown;
@@ -189,7 +210,14 @@ namespace SubTerra.Gameplay.Player
                 LadderMiningSequence.Tick(Time.unscaledDeltaTime);
             }
 
+            UpdateJumpSequence(incapacitated);
             var stateName = ResolveStateName();
+            if (stateName == "Mining" || stateName == "LadderMining")
+            {
+                JumpSequence.Reset();
+            }
+
+            ApplyJumpBob(stateName == "Jump" && HasJumpPhaseFrames ? JumpSequence.BobOffsetPixels() : 0f);
             if (IsLadderState(stateName))
             {
                 ladderVisualGraceUntil = Time.unscaledTime + LadderVisualGraceDuration;
@@ -292,7 +320,7 @@ namespace SubTerra.Gameplay.Player
 
             if (movement.IsApproachingLadderFromAbove)
             {
-                return "Jump";
+                return "LadderDrop";
             }
 
             // Trigger 접촉이 아직 남아 있는 동안에는 물리 상태 전환 한 틱 때문에
@@ -310,20 +338,102 @@ namespace SubTerra.Gameplay.Player
 
             if (!movement.IsGrounded)
             {
-                // 타일 경계의 한 틱 접지 누락이 걷기 순서를 처음부터 재시작하지 않게 한다.
-                if (currentState == "Walk"
-                    && movement.IsMovementRequested
-                    && !movement.IsJumpInProgress
-                    && Time.unscaledTime - lastGroundedAt <= WalkGroundVisualGraceDuration)
-                {
-                    return "Walk";
-                }
+                return IsWalkGroundGrace() ? "Walk" : "Jump";
+            }
 
+            // 착지 그림(ready 8→1)은 이동 입력이 없을 때만 이어 간다.
+            if (HasJumpPhaseFrames && JumpSequence.Phase == PlayerJumpPhase.Land
+                && !movement.IsMovementRequested)
+            {
                 return "Jump";
             }
 
             return movement.IsMovementRequested ? "Walk" : "Idle";
         }
+
+        // 타일 경계의 한 틱 접지 누락이 걷기 순서를 처음부터 재시작하지 않게 한다.
+        private bool IsWalkGroundGrace()
+        {
+            return currentState == "Walk"
+                && movement.IsMovementRequested
+                && !movement.IsJumpInProgress
+                && Time.unscaledTime - lastGroundedAt <= WalkGroundVisualGraceDuration;
+        }
+
+        private void UpdateJumpSequence(bool incapacitated)
+        {
+            // 착지 틱에 버퍼 점프가 바로 실행되면 공중 상태가 끊기지 않으므로 실행 횟수로 본다.
+            bool started = movement.JumpCount != observedJumpCount;
+            observedJumpCount = movement.JumpCount;
+
+            bool onLadder = movement.IsClimbing || (movement.IsTouchingLadder && !movement.IsJumpInProgress);
+            if (incapacitated || onLadder)
+            {
+                JumpSequence.Reset();
+                return;
+            }
+
+            if (started)
+            {
+                JumpSequence.StartJump(movement.LastJumpLaunchSpeed);
+            }
+
+            bool airborne = !movement.IsGrounded && !IsWalkGroundGrace();
+            JumpSequence.Tick(started ? 0f : Time.unscaledDeltaTime, airborne,
+                movement.VerticalSpeed, movement.IsMovementRequested);
+        }
+
+        private void PlayJumpPhase()
+        {
+            var frames = JumpSequence.Clip switch
+            {
+                PlayerJumpClip.Ready => jumpReadyFrames,
+                PlayerJumpClip.Rise => jumpRiseFrames,
+                _ => jumpFallFrames
+            };
+            var frame = frames[Mathf.Clamp(JumpSequence.FrameIndex, 0, frames.Length - 1)];
+            if (frame != null)
+            {
+                spriteRenderer.sprite = frame;
+            }
+        }
+
+        // 사다리 위에서 내려오기 직전 표시는 낙하 반복 그림을 시간으로 돌린다.
+        private void PlayLadderDrop()
+        {
+            int first = Mathf.Clamp(jumpAnimation.fallLoopFirstFrame, 1, jumpFallFrames.Length) - 1;
+            int last = Mathf.Clamp(jumpAnimation.fallLoopLastFrame, first + 1, jumpFallFrames.Length) - 1;
+            var elapsed = Mathf.Max(0f, Time.unscaledTime - stateStartedAt);
+            int step = Mathf.FloorToInt(elapsed * Mathf.Max(0.01f, jumpAnimation.fallLoopFps)) % (last - first + 1);
+            var frame = jumpFallFrames[first + step];
+            if (frame != null)
+            {
+                spriteRenderer.sprite = frame;
+            }
+        }
+
+        // 설정에서 켠 경우에만 fall 1~15 그림 안의 출렁임을 반대로 옮긴다. 기본은 끔.
+        private void ApplyJumpBob(float pixels)
+        {
+            if (spriteRenderer == null || (!jumpBobApplied && pixels == 0f))
+            {
+                return;
+            }
+
+            var visual = spriteRenderer.transform;
+            if (!jumpBobApplied)
+            {
+                jumpBobBaseY = visual.localPosition.y;
+            }
+
+            var pixelsPerUnit = spriteRenderer.sprite != null ? spriteRenderer.sprite.pixelsPerUnit : 256f;
+            var position = visual.localPosition;
+            position.y = jumpBobBaseY - pixels / pixelsPerUnit * Mathf.Abs(visual.localScale.y);
+            visual.localPosition = position;
+            jumpBobApplied = pixels != 0f;
+        }
+
+        private static bool HasFrames(Sprite[] frames) => frames != null && frames.Length > 0;
 
         private void HandleHealthChanged(SubTerra.Shared.PlayerHealthReadModel health)
         {
@@ -378,6 +488,17 @@ namespace SubTerra.Gameplay.Player
         private void Play(string stateName)
         {
             SetCurrentState(stateName);
+            if (HasJumpPhaseFrames && stateName == "Jump")
+            {
+                PlayJumpPhase();
+                return;
+            }
+
+            if (HasJumpPhaseFrames && stateName == "LadderDrop")
+            {
+                PlayLadderDrop();
+                return;
+            }
 
             var (frames, frameRate, loop) = ResolveFrames(stateName);
             if (frames == null || frames.Length == 0)
@@ -440,7 +561,7 @@ namespace SubTerra.Gameplay.Player
             return stateName switch
             {
                 "Walk" => (walkFrames, WalkFrameRate, true),
-                "Jump" => (jumpFrames, 12f, false),
+                "Jump" or "LadderDrop" => (jumpFrames, 12f, false),
                 "Mining" => (miningFrames, miningAnimation.workFps, false),
                 "LadderMining" => (ladderMiningFrames, ladderMiningAnimation.workFps, false),
                 "Damage" => (damageFrames, 10f, false),

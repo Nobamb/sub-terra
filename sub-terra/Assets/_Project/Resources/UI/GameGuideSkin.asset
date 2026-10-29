@@ -154,7 +154,7 @@ MonoBehaviour:
   - key: player.ladder.5
     sprite: {fileID: 21300000, guid: 5912301cac5a9a04c851fc6aa6800fdd, type: 3}
   - key: player.jump.4
-    sprite: {fileID: 21300000, guid: bfb9c9b4b6c3df747841882eede38b6c, type: 3}
+    sprite: {fileID: 21300000, guid: 2bcf2e62099519840b9da799f4bdb00b, type: 3}
   - key: player.damage.1
     sprite: {fileID: 21300000, guid: 63c487259e5d9ee48a01f2a58768e44f, type: 3}
   - key: player.knockout.1

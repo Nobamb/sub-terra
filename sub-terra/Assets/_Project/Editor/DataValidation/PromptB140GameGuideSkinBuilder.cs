@@ -30,7 +30,8 @@ namespace SubTerra.App.Editor.DataValidation
             for (var i = 1; i <= 24; i++) Add("player.mine." + i, "Characters/Player/Frames/Mining/mining_" + i.ToString("00") + ".png");
             Add("player.ladder.1", "Characters/Player/Frames/LadderBack/ladder_back_neutral_v2.png");
             for (var i = 2; i <= 5; i++) Add("player.ladder." + i, "Characters/Player/Frames/LadderBack/ladder_back_style_" + i.ToString("00") + ".png");
-            Add("player.jump.4", "Characters/Player/Frames/Jump/jump_04.png");
+            // B-175: 다리를 접고 오르는 새 상승 그림.
+            Add("player.jump.4", "Characters/Player/Frames/JumpRise/jump_rise_12.png");
             Add("player.damage.1", "Characters/Player/Frames/Damage/damage_01.png");
             Add("player.knockout.1", "Characters/Player/Frames/Knockout/knockout_48.png");
 

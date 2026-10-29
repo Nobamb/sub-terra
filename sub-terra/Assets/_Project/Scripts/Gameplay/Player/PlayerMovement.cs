@@ -87,6 +87,12 @@ namespace SubTerra.Gameplay.Player
         public float CurrentJumpMultiplier => cargoJumpMultiplier;
         /// <summary>실제 가로 속도 크기. 벽을 밀고 있으면 0에 가깝다.</summary>
         public float HorizontalSpeed => body != null ? Mathf.Abs(body.linearVelocityX) : 0f;
+        /// <summary>실제 세로 속도(위 +).</summary>
+        public float VerticalSpeed => body != null ? body.linearVelocityY : 0f;
+        /// <summary>B-175: 점프가 실행될 때마다 1 증가. 착지 순간 재점프도 구분한다.</summary>
+        public int JumpCount { get; private set; }
+        /// <summary>B-175: 마지막 점프의 시작 위 속도(화물 배율 반영).</summary>
+        public float LastJumpLaunchSpeed { get; private set; }
         /// <summary>B-164: 점프·착지 소리 판정. 착지는 PlayerSurvivalController가 같은 판정기로 낸다.</summary>
         public PlayerMoveSfxGate MoveSfx => moveSfx;
         /// <summary>B-164: 사다리 잡기·놓기·걸음 소리 판정.</summary>
@@ -330,6 +336,10 @@ namespace SubTerra.Gameplay.Player
                 body.linearVelocity = new Vector2(body.linearVelocityX, 0f);
             }
 
+            // B-175: 그림 단계 계산용 기록. 물리 값은 바꾸지 않는다.
+            LastJumpLaunchSpeed = body.linearVelocityY
+                + jumpImpulse * cargoJumpMultiplier / Mathf.Max(0.0001f, body.mass);
+            JumpCount++;
             body.AddForce(
                 Vector2.up * jumpImpulse * cargoJumpMultiplier,
                 ForceMode2D.Impulse);
