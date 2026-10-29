@@ -27,11 +27,12 @@ namespace SubTerra.App.Editor.DataValidation
 
             Add("player.idle", "Characters/Player/Frames/Idle/player_idle_01.png");
             for (var i = 1; i <= GuideDemoLibrary.PlayerWalkFrameCount; i++) Add("player.walk." + i, "Characters/Player/Frames/Walk/walk_" + i.ToString("00") + ".png");
-            for (var i = 1; i <= 8; i++) Add("player.mine." + i, "Characters/Player/Frames/Mining/mining_" + i.ToString("00") + ".png");
-            for (var i = 1; i <= 5; i++) Add("player.ladder." + i, "Characters/Player/Frames/LadderBack/ladder_back_" + i.ToString("00") + ".png");
+            for (var i = 1; i <= 24; i++) Add("player.mine." + i, "Characters/Player/Frames/Mining/mining_" + i.ToString("00") + ".png");
+            Add("player.ladder.1", "Characters/Player/Frames/LadderBack/ladder_back_neutral_v2.png");
+            for (var i = 2; i <= 5; i++) Add("player.ladder." + i, "Characters/Player/Frames/LadderBack/ladder_back_style_" + i.ToString("00") + ".png");
             Add("player.jump.4", "Characters/Player/Frames/Jump/jump_04.png");
             Add("player.damage.1", "Characters/Player/Frames/Damage/damage_01.png");
-            Add("player.knockout.1", "Characters/Player/Frames/Knockout/knockout_01.png");
+            Add("player.knockout.1", "Characters/Player/Frames/Knockout/knockout_48.png");
 
             Add("tile.ground", "Tiles/Ground/ground_normal_01.png");
             Add("tile.ground.2", "Tiles/Ground/ground_normal_02.png");

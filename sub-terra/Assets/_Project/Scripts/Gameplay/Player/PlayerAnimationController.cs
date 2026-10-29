@@ -30,6 +30,9 @@ namespace SubTerra.Gameplay.Player
         [SerializeField] private Sprite[] miningFrames;
         [SerializeField] private Sprite[] damageFrames;
         [SerializeField] private Sprite[] knockoutFrames;
+        [SerializeField] private PlayerMiningAnimationSettings miningAnimation = new();
+        [SerializeField, Min(0.01f)] private float knockoutFps = 24f;
+        [SerializeField, Min(0.01f)] private float knockoutBreathingFps = 12f;
         [SerializeField, Min(0.01f)] private float ladderDistancePerFrame = 0.5f;
         [SerializeField, Min(0f)] private float ladderSettleDelay = 0.08f;
         [Tooltip("B-164: 걷기 그림에서 발이 닿는 프레임. 이 프레임으로 넘어갈 때 발소리를 낸다.")]
@@ -37,6 +40,9 @@ namespace SubTerra.Gameplay.Player
 
         [SerializeField] private PlayerMovement movement;
         private bool isMining;
+        private PlayerMiningAnimationSequence miningSequence;
+        private SubTerra.Shared.RunFailureCause knockoutCause;
+        private bool wasIncapacitated;
         private PlayerSurvivalController survival;
         private float previousHealth;
         private float damageUntil;
@@ -52,6 +58,15 @@ namespace SubTerra.Gameplay.Player
         private float ladderVisualGraceUntil;
         private int lastWalkFrame = -1;
         private bool footstepAlternate;
+
+        public bool IsShowingLadderVisual => IsLadderState(currentState);
+        private PlayerMiningAnimationSequence MiningSequence =>
+            miningSequence ??= new PlayerMiningAnimationSequence(miningAnimation);
+
+        private void OnValidate()
+        {
+            miningAnimation.miningReturnFrame = Mathf.Clamp(miningAnimation.miningReturnFrame, 5, 12);
+        }
 
         private void Awake()
         {
@@ -83,6 +98,10 @@ namespace SubTerra.Gameplay.Player
         {
             UnsubscribeSurvivalEvents();
             ResetLadderPlayback();
+            MiningSequence.Reset();
+            isMining = false;
+            knockoutCause = SubTerra.Shared.RunFailureCause.Unknown;
+            wasIncapacitated = false;
         }
 
         public void BindSurvival(PlayerSurvivalController survivalController)
@@ -108,6 +127,39 @@ namespace SubTerra.Gameplay.Player
             if (movement.IsGrounded)
             {
                 lastGroundedAt = Time.unscaledTime;
+            }
+
+            bool incapacitated = survival != null && survival.State != null && !survival.State.CanAct;
+            if (incapacitated)
+            {
+                if (!wasIncapacitated && knockoutCause == SubTerra.Shared.RunFailureCause.Unknown)
+                    knockoutCause = survival.State.LastDamageCause;
+                MiningSequence.Reset();
+                isMining = false;
+            }
+            else if (wasIncapacitated)
+            {
+                knockoutCause = SubTerra.Shared.RunFailureCause.Unknown;
+                damageUntil = 0f;
+                MiningSequence.Reset();
+                isMining = false;
+                SetCurrentState("Idle");
+            }
+            wasIncapacitated = incapacitated;
+
+            if (!incapacitated && (movement.IsMovementRequested || movement.IsJumpInProgress))
+            {
+                MiningSequence.Interrupt();
+                isMining = false;
+            }
+            if (Time.unscaledTime >= damageUntil)
+            {
+                if (currentState == "Damage")
+                {
+                    if (isMining) MiningSequence.ResumeAfterDamage();
+                    else MiningSequence.Reset();
+                }
+                MiningSequence.Tick(Time.unscaledDeltaTime);
             }
 
             var stateName = ResolveStateName();
@@ -153,7 +205,17 @@ namespace SubTerra.Gameplay.Player
 
         public void SetMining(bool value)
         {
+            if (value == isMining) return;
             isMining = value;
+            if (value) MiningSequence.Start();
+            else MiningSequence.Stop();
+        }
+
+        public void NotifyMiningCompleted()
+        {
+            MiningSequence.Complete();
+            // 다음 블록의 SetMining(true)는 마무리 중에도 새 시작으로 구분한다.
+            isMining = false;
         }
 
         private string ResolveStateName()
@@ -168,7 +230,7 @@ namespace SubTerra.Gameplay.Player
                 return "Damage";
             }
 
-            if (isMining)
+            if (MiningSequence.IsActive)
             {
                 return "Mining";
             }
@@ -218,9 +280,17 @@ namespace SubTerra.Gameplay.Player
             previousHealth = health.Current;
         }
 
-        private void HandleFailureRequested(SubTerra.Shared.RunFailureInputDto _)
+        private void HandleFailureRequested(SubTerra.Shared.RunFailureInputDto dto)
         {
             damageUntil = 0f;
+            knockoutCause = dto != null && dto.cause != SubTerra.Shared.RunFailureCause.Unknown
+                ? dto.cause
+                : survival != null && survival.State != null
+                    ? survival.State.LastDamageCause : SubTerra.Shared.RunFailureCause.Unknown;
+            MiningSequence.Reset();
+            isMining = false;
+            SetCurrentState("Knockout");
+            stateStartedAt = Time.unscaledTime;
             Play("Knockout");
         }
 
@@ -265,6 +335,14 @@ namespace SubTerra.Gameplay.Player
                 ? frameIndex % frames.Length
                 : Mathf.Min(frameIndex, frames.Length - 1);
 
+            if (stateName == "Mining")
+                frameIndex = Mathf.Min(MiningSequence.FrameIndex, frames.Length - 1);
+            else if (stateName == "Knockout" && frames.Length >= 48
+                && elapsed >= 48f / Mathf.Max(0.01f, knockoutFps)
+                && knockoutCause == SubTerra.Shared.RunFailureCause.GasExposure)
+                frameIndex = 36 + Mathf.FloorToInt((elapsed - 48f / Mathf.Max(0.01f, knockoutFps))
+                    * knockoutBreathingFps) % 12;
+
             if (frames[frameIndex] != null)
             {
                 spriteRenderer.sprite = frames[frameIndex];
@@ -305,9 +383,9 @@ namespace SubTerra.Gameplay.Player
             {
                 "Walk" => (walkFrames, WalkFrameRate, true),
                 "Jump" => (jumpFrames, 12f, false),
-                "Mining" => (miningFrames, 10f, true),
+                "Mining" => (miningFrames, miningAnimation.workFps, false),
                 "Damage" => (damageFrames, 10f, false),
-                "Knockout" => (knockoutFrames, 8f, false),
+                "Knockout" => (knockoutFrames, knockoutFps, false),
                 _ => (idleFrames, 4f, true)
             };
         }

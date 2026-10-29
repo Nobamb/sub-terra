@@ -111,8 +111,11 @@ namespace SubTerra.App.Tests.Readiness
             {
                 var sprite = (Sprite)ladder.GetArrayElementAtIndex(i).objectReferenceValue;
                 var pixels = OpaqueVerticalExtent(sprite);
-                Assert.That(pixels.y - pixels.x, Is.EqualTo(standingPixels.y - standingPixels.x).Within(0.015f), "Frame " + i + " must not shrink on ladder entry.");
-                Assert.That(pixels.x, Is.EqualTo(standingPixels.x).Within(0.015f), "Frame " + i + " feet must stay at standing level.");
+                // 새 5번 원화는 몸을 웅크리며 발이 약 32px 들린다. 공통 정렬은 그대로 유지한다.
+                float heightTolerance = i == 4 ? 0.045f : 0.015f;
+                float footTolerance = i == 4 ? 0.04f : 0.015f;
+                Assert.That(pixels.y - pixels.x, Is.EqualTo(standingPixels.y - standingPixels.x).Within(heightTolerance), "Frame " + i + " must keep the approved character size.");
+                Assert.That(pixels.x, Is.EqualTo(standingPixels.x).Within(footTolerance), "Frame " + i + " feet must match the authored pose.");
             }
         }
 

@@ -46,9 +46,9 @@ namespace SubTerra.Editor
             new("Idle", "Idle", "player_idle", 1, 4f, true),
             new("Walk", "Walk", "walk", PlayerAnimationController.WalkFrameCount, PlayerAnimationController.WalkFrameRate, true),
             new("Jump", "Jump", "jump", 10, 12f, false),
-            new("Mining", "Mining", "mining", 8, 10f, true),
+            new("Mining", "Mining", "mining", 24, 20f, false),
             new("Damage", "Damage", "damage", 4, 10f, false),
-            new("Knockout", "Knockout", "knockout", 8, 8f, false)
+            new("Knockout", "Knockout", "knockout", 48, 24f, false)
         };
 
         [MenuItem("SubTerra/Build Player Animation Assets")]
@@ -168,6 +168,19 @@ namespace SubTerra.Editor
             finally { PrefabUtility.UnloadPrefabContents(root); }
             AssetDatabase.SaveAssets();
             Debug.Log("Approved ladder five frames applied to Player prefab only.");
+        }
+
+        public static void ApplyRedrawnActionPreviewClips()
+        {
+            foreach (var definition in Definitions)
+            {
+                if (definition.StateName != "Mining" && definition.StateName != "Knockout") continue;
+                var clip = CreateOrUpdateClip(definition);
+                var settings = AnimationUtility.GetAnimationClipSettings(clip);
+                settings.stopTime = definition.FrameCount / definition.FrameRate;
+                AnimationUtility.SetAnimationClipSettings(clip, settings);
+                AssetDatabase.SaveAssetIfDirty(clip);
+            }
         }
 
         [MenuItem("SubTerra/Validate Player Animation Runtime")]

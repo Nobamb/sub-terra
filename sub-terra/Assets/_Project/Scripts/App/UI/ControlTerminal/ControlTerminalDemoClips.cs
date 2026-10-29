@@ -146,9 +146,10 @@ namespace SubTerra.App.UI.ControlTerminal
             var from = up ? low : high;
             var to = up ? high : low;
             var fade = LoopFade(duration, 0.15f, 1.75f);
-            Spr(clip, "player.ladder.1", PlayerHeight, 56f, from).Fade(fade)
-                .Animate("player.ladder", 5, 8f, "player.ladder.1", H(0f, 0f, 0.2f, 1f, 1.5f, 0f))
+            var ladder = Spr(clip, "player.ladder.1", PlayerHeight, 56f, from).Fade(fade)
+                .Animate("player.ladder", 8, 8f, "player.ladder.1", H(0f, 0f, 0.2f, 1f, 1.5f, 0f))
                 .PosY(S(0f, from, 0.2f, from, 1.5f, to, duration, to));
+            ladder.FrameKeys = new[] { "player.ladder.1", "player.ladder.2", "player.ladder.3", "player.ladder.2", "player.ladder.1", "player.ladder.4", "player.ladder.5", "player.ladder.4" };
             Arrow(clip, "art.arrowup", 92f, 24f, Teal, up ? 0f : 180f, fade);
             return clip;
         }
@@ -208,12 +209,15 @@ namespace SubTerra.App.UI.ControlTerminal
             }
 
             var mineStart = highlight ? 0.7f : 0.35f;
-            var mineEnd = 1.95f;
+            var miningFrameOffset = Mathf.FloorToInt(mineStart * 12f);
+            var mineEnd = (miningFrameOffset + 13) / 12f;
+            var animationEnd = (miningFrameOffset + 24) / 12f;
             var gone = S(0f, 1f, mineEnd - 0.3f, 1f, mineEnd, 0f, duration - 0.35f, 0f, duration - 0.15f, 1f, duration, 1f);
             Tile(clip, "tile.ore.copper", blockX, blockY).Fade(gone)
                 .Scale(S(0f, 1f, mineEnd - 0.3f, 1f, mineEnd, 0.2f, duration - 0.35f, 0.2f, duration - 0.15f, 1f, duration, 1f));
-            Spr(clip, "player.idle", PlayerHeight, playerX, PlayerY).Sx(K(dx < 0 ? -1f : 1f))
-                .Animate("player.mine", 8, 11f, "player.idle", H(0f, 0f, mineStart, 1f, mineEnd, 0f));
+            var mining = Spr(clip, "player.idle", PlayerHeight, playerX, PlayerY).Sx(K(dx < 0 ? -1f : 1f))
+                .Animate("player.mine", 24, 12f, "player.idle", H(0f, 0f, mineStart, 1f, animationEnd, 0f));
+            for (var i = 0; i < 24; i++) mining.FrameKeys[(i + miningFrameOffset) % 24] = "player.mine." + (i + 1);
 
             // 채굴 대상 블록을 금빛 테두리로 먼저 강조한 뒤 채굴한다.
             var outline = Spr(clip, "art.line", 0f, blockX, blockY).Color_(Amber);

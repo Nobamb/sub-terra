@@ -26,6 +26,7 @@ namespace SubTerra.Gameplay.Mining
         private PlayerAnimationController animationController;
         private MiningDebrisVisual debrisVisual;
         private MiningSystem debrisMiningSystem;
+        private MiningSystem animationMiningSystem;
         private static readonly List<RaycastResult> PointerHits = new(8);
         private System.Func<bool> pointerMiningBlocker;
         private bool pointerClaimedByPlacement;
@@ -55,12 +56,20 @@ namespace SubTerra.Gameplay.Mining
             EnsureDebrisVisual();
         }
 
-        private void OnEnable() => mineAction?.Enable();
+        private void OnEnable()
+        {
+            mineAction?.Enable();
+            BindAnimationEvents();
+        }
 
         private void OnDisable()
         {
             mineAction?.Disable();
             miningSystem?.CancelMining();
+            if (animationMiningSystem != null)
+                animationMiningSystem.ProgressChanged -= HandleAnimationProgress;
+            animationMiningSystem = null;
+            if (animationController != null) animationController.SetMining(false);
             startPending = false;
             miningInputPressedLastFrame = false;
             lastMiningDirection = Vector2.zero;
@@ -74,6 +83,7 @@ namespace SubTerra.Gameplay.Mining
                 pointerClaimedByPlacement = true;
 
             EnsureDebrisVisual();
+            BindAnimationEvents();
             if (miningSystem == null)
             {
                 animationController?.SetMining(false);
@@ -155,6 +165,23 @@ namespace SubTerra.Gameplay.Mining
             if (debrisVisual == null) debrisVisual = gameObject.AddComponent<MiningDebrisVisual>();
             debrisVisual.Configure(miningSystem, transform);
             debrisMiningSystem = miningSystem;
+        }
+
+        private void BindAnimationEvents()
+        {
+            if (animationMiningSystem == miningSystem) return;
+            if (animationMiningSystem != null)
+                animationMiningSystem.ProgressChanged -= HandleAnimationProgress;
+            animationMiningSystem = miningSystem;
+            if (animationMiningSystem != null)
+                animationMiningSystem.ProgressChanged += HandleAnimationProgress;
+        }
+
+        private void HandleAnimationProgress(MiningProgressState progress)
+        {
+            if (animationController == null) return;
+            if (progress.Phase == MiningPhase.Completed) animationController.NotifyMiningCompleted();
+            else if (progress.Phase == MiningPhase.Cancelled) animationController.SetMining(false);
         }
 
         private bool IsMiningInputPressed()

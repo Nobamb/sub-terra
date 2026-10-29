@@ -222,9 +222,10 @@ namespace SubTerra.App.UI.Guide
             }
 
             Tile(c, "tile.ground", 90f, -43f);
-            Spr(c, "player.ladder.1", PlayerHeight, 56f, 0f)
-                .Animate("player.ladder", 5, 8f, "player.ladder.1", H(0f, 0f, 0.25f, 1f, 1.55f, 0f, 1.85f, 1f, 3.15f, 0f))
+            var ladder = Spr(c, "player.ladder.1", PlayerHeight, 56f, 0f)
+                .Animate("player.ladder", 8, 8f, "player.ladder.1", H(0f, 0f, 0.25f, 1f, 1.55f, 0f, 1.85f, 1f, 3.15f, 0f))
                 .PosY(S(0f, -8f, 0.25f, -8f, 1.55f, 34f, 1.85f, 34f, 3.15f, -8f, 3.6f, -8f));
+            ladder.FrameKeys = new[] { "player.ladder.1", "player.ladder.2", "player.ladder.3", "player.ladder.2", "player.ladder.1", "player.ladder.4", "player.ladder.5", "player.ladder.4" };
             Spr(c, "art.arrowup", 16f, 84f, 14f).Color_(Teal)
                 .Fade(S(0f, 0f, 0.3f, 1f, 1.45f, 1f, 1.55f, 0f, 3.6f, 0f));
             Spr(c, "art.arrowup", 16f, 84f, 14f).Color_(Teal).Rot(K(180f))
@@ -278,23 +279,24 @@ namespace SubTerra.App.UI.Guide
             Tile(c, "tile.ground", 24f, GroundTop + Unit * 1.5f);
             Tile(c, "tile.ground", 56f, GroundTop + Unit * 1.5f);
             Tile(c, "tile.ore.copper", 24f, GroundTop + Unit * 0.5f)
-                .Scale(S(0f, 1f, 1.75f, 1f, 2.05f, 0f, 3.3f, 0f))
-                .Fade(H(0f, 1f, 2.05f, 0f));
-            Spr(c, "player.idle", PlayerHeight, -10f, PlayerY).Animate("player.mine", 8, 11f, "player.idle", H(0f, 0f, 0.3f, 1f, 2.0f, 0f));
+                .Scale(S(0f, 1f, 1.08f, 1f, 1.333f, 0f, 3.3f, 0f))
+                .Fade(H(0f, 1f, 1.333f, 0f));
+            var mining = Spr(c, "player.idle", PlayerHeight, -10f, PlayerY).Animate("player.mine", 24, 12f, "player.idle", H(0f, 0f, 0.3f, 1f, 2.25f, 0f));
+            for (var i = 0; i < 24; i++) mining.FrameKeys[(i + 3) % 24] = "player.mine." + (i + 1);
             for (var i = 0; i < 5; i++)
             {
                 var dx = -16f + i * 12f;
                 var dy = 18f + (i % 2) * 14f;
                 Box(c, 5f, 5f, 24f, -9f, new Color(0.78f, 0.42f, 0.2f, 1f))
-                    .PosX(S(0f, 24f, 1.9f, 24f, 2.5f, 24f + dx))
-                    .PosY(S(0f, -9f, 1.9f, -9f, 2.2f, -9f + dy, 2.6f, -30f))
-                    .Fade(S(0f, 0f, 1.85f, 0f, 1.95f, 1f, 2.5f, 0f));
+                    .PosX(S(0f, 24f, 1.333f, 24f, 1.933f, 24f + dx))
+                    .PosY(S(0f, -9f, 1.333f, -9f, 1.633f, -9f + dy, 2.033f, -30f))
+                    .Fade(S(0f, 0f, 1.233f, 0f, 1.333f, 1f, 1.933f, 0f));
             }
 
             Spr(c, "icon.cargo", 24f, 128f, 40f).Fade(S(0f, 0.25f, 3.3f, 0.25f));
             Spr(c, "item:" + DataIds.Minerals.Copper, 18f, 24f, -9f)
-                .PosX(S(0f, 24f, 2.0f, 24f, 2.8f, 126f)).PosY(S(0f, -9f, 2.0f, -9f, 2.4f, 18f, 2.8f, 38f))
-                .Fade(S(0f, 0f, 1.95f, 0f, 2.05f, 1f, 2.7f, 1f, 2.85f, 0f));
+                .PosX(S(0f, 24f, 1.333f, 24f, 2.133f, 126f)).PosY(S(0f, -9f, 1.333f, -9f, 1.733f, 18f, 2.133f, 38f))
+                .Fade(S(0f, 0f, 1.283f, 0f, 1.383f, 1f, 2.033f, 1f, 2.183f, 0f));
             MouseKey(c, -135f, 42f, DemoTrack.Pulse(0.3f, 1.15f));
             Key(c, "Enter", -96f, 42f, DemoTrack.Pulse(1.2f, 2.0f));
             return c;

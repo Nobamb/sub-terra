@@ -3794,3 +3794,6 @@ EditMode:
 
 
 171. work_process/MVP2/prompt-B-171.md 내용 참고해서 기존 걷기모션 수정 진행해줘 work_process/images/player-walk-40f-20261028 폴더에 1~40.png로 교체할 이미지 모두 있어
+
+
+172. prompt-B-172.md 내용 참고해서 기존에 있던 쓰러지는 모션과 땅 파는 모션, 사다리 움직이는 모션 수정해줘 단순 반복 작업은 6 luna 모델에게 맡기도록 하고
