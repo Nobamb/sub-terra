@@ -281,8 +281,7 @@ namespace SubTerra.App.UI.Guide
             Tile(c, "tile.ore.copper", 24f, GroundTop + Unit * 0.5f)
                 .Scale(S(0f, 1f, 1.08f, 1f, 1.333f, 0f, 3.3f, 0f))
                 .Fade(H(0f, 1f, 1.333f, 0f));
-            var mining = Spr(c, "player.idle", PlayerHeight, -10f, PlayerY).Animate("player.mine", 24, 12f, "player.idle", H(0f, 0f, 0.3f, 1f, 2.25f, 0f));
-            for (var i = 0; i < 24; i++) mining.FrameKeys[(i + 3) % 24] = "player.mine." + (i + 1);
+            Spr(c, "player.idle", PlayerHeight, -10f, PlayerY).AnimateMining(0.3f, 1.333f);
             for (var i = 0; i < 5; i++)
             {
                 var dx = -16f + i * 12f;

@@ -16,8 +16,7 @@ namespace SubTerra.App.Tests.EditMode.Readiness
             Assert.That(settings.workFps, Is.EqualTo(12f));
             Assert.That(settings.returnFps, Is.EqualTo(30f));
             Assert.That(settings.miningReturnFrame, Is.EqualTo(5));
-            Assert.That(settings.completedHoldSeconds, Is.EqualTo(0.12f));
-            Assert.That(settings.finishFps, Is.EqualTo(20f));
+            Assert.That(settings.finishFps, Is.EqualTo(60f));
             Assert.That(settings.cancelMaxSeconds, Is.EqualTo(0.3f));
             Assert.That(settings.restartGraceSeconds, Is.EqualTo(0.15f));
         }
@@ -58,21 +57,19 @@ namespace SubTerra.App.Tests.EditMode.Readiness
         }
 
         [Test]
-        public void Complete_FromStartOrReturn_ContinuesForwardAndFinishesAtFrameTwentyFour()
+        public void Complete_FromStartWorkOrReturn_StartsFinishImmediately()
         {
             var fromStart = NewSequence();
             fromStart.Start();
             TickUntilFrame(fromStart, 2);
             fromStart.Complete();
-            TickUntilFrame(fromStart, 13);
             AssertCompletedFinish(fromStart);
 
             var fromWork = NewSequence();
             fromWork.Start();
             TickUntilFrame(fromWork, 8);
             fromWork.Complete();
-            TickUntilFrame(fromWork, 13);
-            Assert.That(fromWork.FrameIndex, Is.EqualTo(13), "completion from work reaches frame 14");
+            AssertCompletedFinish(fromWork);
 
             var fromReturn = NewSequence();
             fromReturn.Start();
@@ -80,8 +77,21 @@ namespace SubTerra.App.Tests.EditMode.Readiness
             TickUntilFrame(fromReturn, 11);
             TickUntilFrame(fromReturn, 10);
             fromReturn.Complete();
-            TickUntilFrame(fromReturn, 13);
-            Assert.That(fromReturn.FrameIndex, Is.EqualTo(13), "frame 14 begins the completion hold");
+            AssertCompletedFinish(fromReturn);
+        }
+
+        [Test]
+        public void Complete_FromIdleOrCancel_StartsFinishImmediately()
+        {
+            var sequence = NewSequence();
+            sequence.Complete();
+            AssertCompletedFinish(sequence);
+
+            sequence.Start();
+            TickUntilFrame(sequence, 8);
+            sequence.Stop();
+            sequence.Complete();
+            AssertCompletedFinish(sequence);
         }
 
         [Test]
@@ -119,8 +129,6 @@ namespace SubTerra.App.Tests.EditMode.Readiness
             Assert.That(sequence.FrameIndex, Is.EqualTo(0));
 
             sequence.Complete();
-            TickUntilFrame(sequence, 13);
-            sequence.Tick(0.122f);
             Assert.That(sequence.FrameIndex, Is.EqualTo(14));
             sequence.Start();
             Assert.That(sequence.IsActive, Is.True);
@@ -185,15 +193,12 @@ namespace SubTerra.App.Tests.EditMode.Readiness
         {
             sequence.Stop();
             Assert.That(sequence.IsActive, Is.True, "Stop is ignored after completion");
-            sequence.Tick(0.117f);
-            sequence.Stop();
-            Assert.That(sequence.FrameIndex, Is.EqualTo(13), "frame 14 remains during its hold");
-            sequence.Tick(0.004f);
-            Assert.That(sequence.FrameIndex, Is.EqualTo(14), "frame 15 follows the hold");
+            Assert.That(sequence.FrameIndex, Is.EqualTo(14), "completion immediately starts lifting at frame 15");
 
-            for (var frame = 15; frame <= 23; frame++) TickUntilFrame(sequence, frame);
+            sequence.Tick(9f / 60f);
+            Assert.That(sequence.FrameIndex, Is.EqualTo(23), "finish reaches frame 24 at 60 fps");
             Assert.That(sequence.IsActive, Is.True);
-            sequence.Tick(0.051f);
+            sequence.Tick(1f / 60f);
             Assert.That(sequence.IsActive, Is.False);
             Assert.That(sequence.FrameIndex, Is.EqualTo(23));
         }

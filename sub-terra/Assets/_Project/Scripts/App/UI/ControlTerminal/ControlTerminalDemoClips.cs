@@ -211,13 +211,11 @@ namespace SubTerra.App.UI.ControlTerminal
             var mineStart = highlight ? 0.7f : 0.35f;
             var miningFrameOffset = Mathf.FloorToInt(mineStart * 12f);
             var mineEnd = (miningFrameOffset + 13) / 12f;
-            var animationEnd = (miningFrameOffset + 24) / 12f;
             var gone = S(0f, 1f, mineEnd - 0.3f, 1f, mineEnd, 0f, duration - 0.35f, 0f, duration - 0.15f, 1f, duration, 1f);
             Tile(clip, "tile.ore.copper", blockX, blockY).Fade(gone)
                 .Scale(S(0f, 1f, mineEnd - 0.3f, 1f, mineEnd, 0.2f, duration - 0.35f, 0.2f, duration - 0.15f, 1f, duration, 1f));
-            var mining = Spr(clip, "player.idle", PlayerHeight, playerX, PlayerY).Sx(K(dx < 0 ? -1f : 1f))
-                .Animate("player.mine", 24, 12f, "player.idle", H(0f, 0f, mineStart, 1f, animationEnd, 0f));
-            for (var i = 0; i < 24; i++) mining.FrameKeys[(i + miningFrameOffset) % 24] = "player.mine." + (i + 1);
+            Spr(clip, "player.idle", PlayerHeight, playerX, PlayerY).Sx(K(dx < 0 ? -1f : 1f))
+                .AnimateMining(mineStart, mineEnd);
 
             // 채굴 대상 블록을 금빛 테두리로 먼저 강조한 뒤 채굴한다.
             var outline = Spr(clip, "art.line", 0f, blockX, blockY).Color_(Amber);

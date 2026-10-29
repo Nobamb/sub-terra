@@ -9,8 +9,7 @@ namespace SubTerra.Gameplay.Player
         public float workFps = 12f;
         public float returnFps = 30f;
         public int miningReturnFrame = 5;
-        public float completedHoldSeconds = 0.12f;
-        public float finishFps = 20f;
+        public float finishFps = 60f;
         public float cancelMaxSeconds = 0.3f;
         public float restartGraceSeconds = 0.15f;
     }
@@ -18,7 +17,7 @@ namespace SubTerra.Gameplay.Player
     // 그림 번호만 계산한다. 채굴 판정·시간·소리는 이 순서에 의존하지 않는다.
     public sealed class PlayerMiningAnimationSequence
     {
-        private enum Phase { Idle, Start, Work, Return, Completed, Finish, Cancel }
+        private enum Phase { Idle, Start, Work, Return, Finish, Cancel }
         private readonly PlayerMiningAnimationSettings settings;
         private Phase phase;
         private float elapsed;
@@ -49,9 +48,9 @@ namespace SubTerra.Gameplay.Player
         {
             if (!IsActive) Start();
             completed = true;
-            // 역재생·시작 구간에서 깨져도 현재 그림부터 13까지 정재생한다.
-            if (phase == Phase.Start || phase == Phase.Return || phase == Phase.Cancel)
-                phase = Phase.Work;
+            // 블록이 깨지는 즉시 남은 채굴 그림과 완료 대기 없이 드릴을 들어 올린다.
+            FrameIndex = 14;
+            phase = Phase.Finish;
             elapsed = 0f;
         }
 
@@ -104,9 +103,8 @@ namespace SubTerra.Gameplay.Player
         private float FrameSeconds()
         {
             if (phase == Phase.Cancel) return cancelFrameSeconds;
-            if (phase == Phase.Completed) return Positive(settings.completedHoldSeconds);
             if (phase == Phase.Finish) return 1f / Positive(settings.finishFps);
-            if (completed || phase == Phase.Return) return 1f / Positive(settings.returnFps);
+            if (phase == Phase.Return) return 1f / Positive(settings.returnFps);
             return 1f / Positive(phase == Phase.Start ? settings.startFps : settings.workFps);
         }
 
@@ -119,11 +117,6 @@ namespace SubTerra.Gameplay.Player
                     break;
                 case Phase.Work:
                     if (FrameIndex < 12) FrameIndex++;
-                    else if (completed)
-                    {
-                        FrameIndex = 13;
-                        phase = Phase.Completed;
-                    }
                     else
                     {
                         FrameIndex = 11;
@@ -138,10 +131,6 @@ namespace SubTerra.Gameplay.Player
                         FrameIndex++;
                         phase = Phase.Work;
                     }
-                    break;
-                case Phase.Completed:
-                    FrameIndex = 14;
-                    phase = Phase.Finish;
                     break;
                 case Phase.Finish:
                     if (FrameIndex < 23) FrameIndex++;

@@ -495,8 +495,7 @@ MonoBehaviour:
     workFps: 12
     returnFps: 30
     miningReturnFrame: 5
-    completedHoldSeconds: 0.12
-    finishFps: 20
+    finishFps: 60
     cancelMaxSeconds: 0.3
     restartGraceSeconds: 0.15
   knockoutFps: 24

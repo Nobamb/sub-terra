@@ -125,13 +125,21 @@ namespace SubTerra.App.Tests.PlayMode.MineDemo
                 break;
             }
             Assert.That(started, Is.True, "실제 광산에서 채굴 가능한 블록");
+            int completionFrame = -1;
+            Action<MiningProgressState> observeCompletion = progress =>
+            {
+                if (progress.Phase == MiningPhase.Completed)
+                    completionFrame = ((PlayerMiningAnimationSequence)typeof(PlayerAnimationController)
+                        .GetField("miningSequence", Private).GetValue(animation)).FrameIndex;
+            };
+            mining.ProgressChanged += observeCompletion;
             var seen = new HashSet<Sprite>();
             var captured = new HashSet<int>();
             float deadline = Time.realtimeSinceStartup + mining.EffectiveDuration + 2f;
             while (Time.realtimeSinceStartup < deadline)
             {
                 seen.Add(renderer.sprite);
-                foreach (int index in new[] { 0, 6, 13, 23 })
+                foreach (int index in new[] { 0, 6, 16, 23 })
                     if (!captured.Contains(index) && renderer.sprite == fields.FindProperty("miningFrames")
                         .GetArrayElementAtIndex(index).objectReferenceValue)
                     {
@@ -140,9 +148,9 @@ namespace SubTerra.App.Tests.PlayMode.MineDemo
                     }
                 yield return null;
             }
+            mining.ProgressChanged -= observeCompletion;
             Assert.That(mining.IsMining, Is.False);
-            Assert.That(seen.Contains((Sprite)fields.FindProperty("miningFrames").GetArrayElementAtIndex(13).objectReferenceValue), Is.True,
-                "실제 완료 이벤트 이후 14번 완료 자세");
+            Assert.That(completionFrame, Is.EqualTo(14), "실제 파괴 이벤트 안에서 대기 없이 드릴 회수 시작");
             Assert.That(seen.Contains((Sprite)fields.FindProperty("miningFrames").GetArrayElementAtIndex(23).objectReferenceValue), Is.True,
                 "SetMining(false) 이후에도 24번까지 마무리");
             yield return UiTestWait.Capture(Evidence + "mine-finished.png");
