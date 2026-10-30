@@ -9,7 +9,8 @@ namespace SubTerra.Gameplay.Player
     {
         public const int WalkFrameCount = SubTerra.Shared.PlayerWalkCycle.FrameCount;
         public const float WalkFrameRate = SubTerra.Shared.PlayerWalkCycle.FrameRate;
-        private const float DamageDuration = 0.35f;
+        // B-176: 다침 8장 × 20fps. 마지막 4-idle 장까지 보이게 한다.
+        private const float DamageDuration = 0.4f;
         private const float WalkGroundVisualGraceDuration = 0.06f;
         private const float LadderMovementEpsilon = 0.0001f;
         private const float LadderVisualGraceDuration = 0.1f;
@@ -38,6 +39,7 @@ namespace SubTerra.Gameplay.Player
         [SerializeField] private PlayerMiningAnimationSettings miningAnimation = new();
         [SerializeField] private PlayerLadderMiningAnimationSettings ladderMiningAnimation = new();
         [SerializeField] private PlayerJumpAnimationSettings jumpAnimation = new();
+        [SerializeField, Min(0.01f)] private float damageFps = 20f;
         [SerializeField, Min(0.01f)] private float knockoutFps = 24f;
         [SerializeField, Min(0.01f)] private float knockoutBreathingFps = 12f;
         [SerializeField, Min(0.01f)] private float ladderDistancePerFrame = 0.5f;
@@ -55,6 +57,7 @@ namespace SubTerra.Gameplay.Player
         private PlayerSurvivalController survival;
         private float previousHealth;
         private float damageUntil;
+        private int ladderDamageDirection = 1;
         private string currentState;
         private float stateStartedAt;
         private float lastGroundedAt = float.NegativeInfinity;
@@ -77,6 +80,9 @@ namespace SubTerra.Gameplay.Player
         public PlayerJumpAnimationSequence JumpAnimation => JumpSequence;
         public bool IsShowingLadderMiningVisual => currentState == "LadderMining";
         public int LadderMiningDirection => LadderMiningSequence.Direction;
+        /// <summary>B-176: 사다리를 잡은 채 다치는 중. 이동 방향 대신 LadderDamageDirection으로 고정한다.</summary>
+        public bool IsShowingLadderDamageVisual => currentState == "Damage" && IsHoldingLadder;
+        public int LadderDamageDirection => ladderDamageDirection;
         public bool CanMineOnLadder => movement != null && !movement.IsJumpInProgress
             && !movement.IsApproachingLadderFromAbove
             && (movement.IsClimbing || (movement.IsTouchingLadder
@@ -87,6 +93,8 @@ namespace SubTerra.Gameplay.Player
             ladderMiningSequence ??= new PlayerLadderMiningAnimationSequence(ladderMiningAnimation);
         private PlayerJumpAnimationSequence JumpSequence =>
             jumpSequence ??= new PlayerJumpAnimationSequence(jumpAnimation);
+        private bool IsHoldingLadder => movement != null
+            && (movement.IsClimbing || (movement.IsTouchingLadder && !movement.IsJumpInProgress));
         private bool HasJumpPhaseFrames => HasFrames(jumpReadyFrames) && HasFrames(jumpRiseFrames)
             && HasFrames(jumpFallFrames);
 
@@ -325,8 +333,7 @@ namespace SubTerra.Gameplay.Player
 
             // Trigger 접촉이 아직 남아 있는 동안에는 물리 상태 전환 한 틱 때문에
             // 일반 Walk/Jump 프레임이 사다리 표시를 덮어쓰지 않게 한다.
-            if (movement.IsClimbing
-                || (movement.IsTouchingLadder && !movement.IsJumpInProgress))
+            if (IsHoldingLadder)
             {
                 if (!movement.IsMovingOnLadder)
                 {
@@ -366,8 +373,7 @@ namespace SubTerra.Gameplay.Player
             bool started = movement.JumpCount != observedJumpCount;
             observedJumpCount = movement.JumpCount;
 
-            bool onLadder = movement.IsClimbing || (movement.IsTouchingLadder && !movement.IsJumpInProgress);
-            if (incapacitated || onLadder)
+            if (incapacitated || IsHoldingLadder)
             {
                 JumpSequence.Reset();
                 return;
@@ -440,6 +446,8 @@ namespace SubTerra.Gameplay.Player
             if (health.Current < previousHealth)
             {
                 damageUntil = Time.unscaledTime + DamageDuration;
+                // 사다리 채굴 중 맞으면 그 방향, 아니면 사다리 그림처럼 오른쪽을 본다.
+                ladderDamageDirection = LadderMiningSequence.IsActive ? LadderMiningSequence.Direction : 1;
             }
 
             previousHealth = health.Current;
@@ -564,7 +572,7 @@ namespace SubTerra.Gameplay.Player
                 "Jump" or "LadderDrop" => (jumpFrames, 12f, false),
                 "Mining" => (miningFrames, miningAnimation.workFps, false),
                 "LadderMining" => (ladderMiningFrames, ladderMiningAnimation.workFps, false),
-                "Damage" => (damageFrames, 10f, false),
+                "Damage" => (damageFrames, damageFps, false),
                 "Knockout" => (knockoutFrames, knockoutFps, false),
                 _ => (idleFrames, 4f, true)
             };

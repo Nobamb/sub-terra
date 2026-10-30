@@ -512,9 +512,13 @@ MonoBehaviour:
   - {fileID: 21300000, guid: cd6fc10fa5c1862468e903e5a7287309, type: 3}
   damageFrames:
   - {fileID: 21300000, guid: 63c487259e5d9ee48a01f2a58768e44f, type: 3}
+  - {fileID: 21300000, guid: 6bf4702113d83474cafd4511356a92df, type: 3}
   - {fileID: 21300000, guid: 1c0dbdafb70f95240816921f05b5c58a, type: 3}
+  - {fileID: 21300000, guid: a72c26a1e59557d47853da184342ed15, type: 3}
   - {fileID: 21300000, guid: 1c9becf97ca21134f8836c1ed99e889a, type: 3}
+  - {fileID: 21300000, guid: 0b702c1ee770d6047bb771b2a38b9bd6, type: 3}
   - {fileID: 21300000, guid: d865b2e9d5d7e2d49aca39aca0256df7, type: 3}
+  - {fileID: 21300000, guid: c56e3d104ca5c054b812b5fd6a4a87f2, type: 3}
   knockoutFrames:
   - {fileID: 21300000, guid: 4264a6d6b577572489d8cfdb3ae4c42a, type: 3}
   - {fileID: 21300000, guid: 70ce84c857897cb49b4bfb6ce377fa50, type: 3}
@@ -611,6 +615,7 @@ MonoBehaviour:
     - 8
     - -1
     - -8
+  damageFps: 20
   knockoutFps: 24
   knockoutBreathingFps: 12
   ladderDistancePerFrame: 0.25

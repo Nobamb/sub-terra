@@ -20,6 +20,12 @@ namespace SubTerra.Editor
         private const string LadderFramePrefix = "ladder_back";
         private const int LadderFrameCount = 5;
         private const int PlayerSortingOrder = 5;
+        // B-176: 기존 4장 사이에 사이 동작 4장을 넣은 재생 순서.
+        public static readonly string[] DamageFrameNames =
+        {
+            "damage_01", "damage_1_2", "damage_02", "damage_2_3",
+            "damage_03", "damage_3_4", "damage_04", "damage_4_idle"
+        };
 
         private readonly struct AnimationDefinition
         {
@@ -47,7 +53,7 @@ namespace SubTerra.Editor
             new("Walk", "Walk", "walk", PlayerAnimationController.WalkFrameCount, PlayerAnimationController.WalkFrameRate, true),
             new("Jump", "Jump", "jump", 10, 12f, false),
             new("Mining", "Mining", "mining", 24, 20f, false),
-            new("Damage", "Damage", "damage", 4, 10f, false),
+            new("Damage", "Damage", "damage", 8, 20f, false),
             new("Knockout", "Knockout", "knockout", 48, 24f, false)
         };
 
@@ -237,6 +243,27 @@ namespace SubTerra.Editor
             }
         }
 
+        public static void ApplyDamagePreviewClip()
+        {
+            foreach (var definition in Definitions)
+            {
+                if (definition.StateName != "Damage") continue;
+                var clip = CreateOrUpdateClip(definition);
+                var settings = AnimationUtility.GetAnimationClipSettings(clip);
+                settings.stopTime = definition.FrameCount / definition.FrameRate;
+                AnimationUtility.SetAnimationClipSettings(clip, settings);
+                AssetDatabase.SaveAssetIfDirty(clip);
+            }
+        }
+
+        private static string FramePath(AnimationDefinition definition, int index)
+        {
+            var name = definition.StateName == "Damage"
+                ? DamageFrameNames[index]
+                : definition.Prefix + "_" + (index + 1).ToString("D2");
+            return FramesRoot + "/" + definition.Folder + "/" + name + ".png";
+        }
+
         private static void ConfigureFrameImports()
         {
             foreach (var guid in AssetDatabase.FindAssets("t:Texture2D", new[] { FramesRoot }))
@@ -285,7 +312,7 @@ namespace SubTerra.Editor
             var keyframes = new ObjectReferenceKeyframe[definition.FrameCount];
             for (var index = 0; index < definition.FrameCount; index++)
             {
-                var spritePath = FramesRoot + "/" + definition.Folder + "/" + definition.Prefix + "_" + (index + 1).ToString("D2") + ".png";
+                var spritePath = FramePath(definition, index);
                 var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(spritePath);
                 if (sprite == null)
                 {
@@ -407,8 +434,7 @@ namespace SubTerra.Editor
                 var frames = new Sprite[definition.FrameCount];
                 for (var index = 0; index < definition.FrameCount; index++)
                 {
-                    var spritePath = FramesRoot + "/" + definition.Folder + "/"
-                        + definition.Prefix + "_" + (index + 1).ToString("D2") + ".png";
+                    var spritePath = FramePath(definition, index);
                     frames[index] = AssetDatabase.LoadAssetAtPath<Sprite>(spritePath);
                     if (frames[index] == null)
                     {
