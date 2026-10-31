@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using SubTerra.App.Audio;
+using SubTerra.Shared.Audio;
 using SubTerra.App.Core.Data;
 using SubTerra.App.Progression;
 using TMPro;
@@ -17,6 +19,7 @@ namespace SubTerra.App.UI.Progression
     [RequireComponent(typeof(Image))]
     public sealed class ProgressionUpgradeEntryButton : MonoBehaviour, IPointerClickHandler
     {
+        private const SfxId SelectionSfx = SfxId.UiClick;
         private static readonly Color NormalColor = new Color(0.14f, 0.28f, 0.34f, 1f);
         private static readonly Color SelectedColor = new Color(0.28f, 0.52f, 0.42f, 1f);
 
@@ -169,6 +172,7 @@ namespace SubTerra.App.UI.Progression
 
             if (button != null)
             {
+                UiSfx.Attach(button, SelectionSfx, failWhenDisabled: false);
                 button.interactable = true;
                 button.enabled = true;
                 button.onClick.RemoveListener(OnButtonClicked);

@@ -256,6 +256,10 @@ namespace SubTerra.App.UI.SurfaceBase
             resetMineConfirmNoButton?.onClick.AddListener(OnResetMineCancel);
             // 클릭 소리는 창 열림·바인더 결과음이 맡아 호버만 붙인다. 골드 부족으로 꺼진 실행 버튼은 지금처럼 무음.
             UiSfx.Attach(resetMineButton, SfxId.None, hover: true);
+            UiSfx.Attach(upgradeButton, SfxId.None, hover: true);
+            UiSfx.Attach(settingsButton, SfxId.None, hover: true);
+            UiSfx.Attach(inventoryButton, SfxId.None, hover: true);
+            UiSfx.Attach(exploreButton, SfxId.None, hover: true);
             UiSfx.Attach(resetMineConfirmYesButton, SfxId.None, hover: true, failWhenDisabled: false);
             UiSfx.Attach(resetMineConfirmNoButton, SfxId.None, hover: true);
             // B-170: 종료 확인 창 등장음이 클릭음을 대신한다.
@@ -617,6 +621,12 @@ namespace SubTerra.App.UI.SurfaceBase
             ApplyMineResetConfirmInteractable();
         }
 
+        public void PlaySettingsApplySound()
+        {
+            var skin = settingsRoot != null ? settingsRoot.GetComponent<SettingsMenuSkin>() : null;
+            if (skin != null) skin.PlayApplySound();
+        }
+
         public void SetSettingsVisible(bool visible)
         {
             if (settingsRoot == null)
@@ -703,6 +713,8 @@ namespace SubTerra.App.UI.SurfaceBase
             {
                 audioRows.SetValues(values.BgmVolume, values.SfxVolume);
             }
+            var skin = settingsRoot != null ? settingsRoot.GetComponent<SettingsMenuSkin>() : null;
+            if (skin != null) skin.RefreshVolumeSoundSteps();
 
             if (reduceMotionToggle != null)
             {

@@ -1,3 +1,5 @@
+using SubTerra.App.Audio;
+using SubTerra.Shared.Audio;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -34,6 +36,7 @@ namespace SubTerra.App.UI.Building
             UiKeyboardSubmitGuard.ConfigurePointerPreferredButton(button);
             button.onClick.RemoveListener(Select);
             button.onClick.AddListener(Select);
+            UiSfx.Attach(button, SfxId.UiClick);
         }
 
         private void OnDisable()

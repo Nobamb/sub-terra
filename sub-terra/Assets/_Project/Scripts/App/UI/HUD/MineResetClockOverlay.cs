@@ -377,6 +377,24 @@ namespace SubTerra.App.UI.HUD
             GasWarningClockClearance.Add(onScreen ? 1 : -1);
         }
 
+        private const SfxId PowerOnSfx = SfxId.UiCctvOn;
+        private const SfxId PowerOffSfx = SfxId.WindowTvClose;
+
+        private void ToggleClockFromInput()
+        {
+            var runtime = SaveRuntimeController.Instance;
+            if (runtime == null) return;
+            var wasPowered = clockRoot != null && clockRoot.activeSelf
+                && clockView != null && clockView.IsPoweredOn;
+            runtime.ToggleMineResetClock();
+            RefreshFromState();
+            var powered = clockRoot != null && clockRoot.activeSelf
+                && clockView != null && clockView.IsPoweredOn;
+            if (Application.isPlaying && sessionVisible && !departing && runtime.ActiveSlot > 0
+                && wasPowered != powered)
+                SfxPlayer.Play(powered ? PowerOnSfx : PowerOffSfx);
+        }
+
         private void Update()
         {
             if (!sessionVisible || UiPauseGate.IsHeld)
@@ -389,8 +407,7 @@ namespace SubTerra.App.UI.HUD
                 && keyboard.tKey.wasPressedThisFrame
                 && !IsTypingInInputField())
             {
-                var runtime = SaveRuntimeController.Instance;
-                if (runtime != null) runtime.ToggleMineResetClock();
+                ToggleClockFromInput();
             }
 
             if (clockRoot != null && clockRoot.activeSelf)

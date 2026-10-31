@@ -222,6 +222,7 @@ namespace SubTerra.App.UI.MainMenu
             }
 
             var draft = view.ReadSettingsDraft(presenter.Settings.Draft);
+            view.PlaySettingsApplySound();
             presenter.ApplySettings(draft);
         }
 
@@ -262,6 +263,7 @@ namespace SubTerra.App.UI.MainMenu
                 {
                     continuing = false;
                     if (view != null) view.CancelExitTransition();
+                    SfxPlayer.Play(SfxId.UiCancelFail);
                     return;
                 }
 
@@ -292,6 +294,7 @@ namespace SubTerra.App.UI.MainMenu
             if (view != null)
             {
                 view.SetMessage("이어하기 실패: " + result.Status);
+                SfxPlayer.Play(SfxId.UiCancelFail);
             }
         }
 
@@ -300,7 +303,11 @@ namespace SubTerra.App.UI.MainMenu
             // 덮어쓰기 확인을 통과한 경로만 여기에 온다.
             if (startingNewGame) return;
             var runtime = SaveRuntimeController.Instance;
-            if (runtime == null) return;
+            if (runtime == null)
+            {
+                SfxPlayer.Play(SfxId.UiCancelFail);
+                return;
+            }
             // 같은 클릭에서 이미 확인음이 났으면 연타 제한이 한 번으로 줄인다.
             SfxPlayer.Play(SfxId.UiConfirm);
             startingNewGame = true;
@@ -310,6 +317,7 @@ namespace SubTerra.App.UI.MainMenu
                 {
                     startingNewGame = false;
                     if (view != null) view.CancelExitTransition();
+                    SfxPlayer.Play(SfxId.UiCancelFail);
                 }
             });
         }

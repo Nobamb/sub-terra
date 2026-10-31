@@ -1,3 +1,5 @@
+using SubTerra.App.Audio;
+using SubTerra.Shared.Audio;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -36,6 +38,8 @@ namespace SubTerra.App.UI.HUD
 
         private void OnEnable()
         {
+            if (button == null) button = GetComponent<Button>();
+            UiSfx.Attach(button, SfxId.None, hover: true);
             if (Application.isPlaying) EnsurePool();
         }
 

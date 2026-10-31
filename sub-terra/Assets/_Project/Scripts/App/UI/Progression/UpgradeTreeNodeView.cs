@@ -27,6 +27,7 @@ namespace SubTerra.App.UI.Progression
     /// </summary>
     public sealed class UpgradeTreeNodeView : MonoBehaviour, IPointerClickHandler
     {
+        private const SfxId SelectionSfx = SfxId.UiClick;
         private const float ShakeDuration = 0.3f;
         private const float ShakeAmplitude = 9f;
         private const float LevelUpDuration = 0.65f;
@@ -108,6 +109,8 @@ namespace SubTerra.App.UI.Progression
 
         private void OnEnable()
         {
+            if (button == null) button = GetComponent<Button>();
+            UiSfx.Attach(button, SelectionSfx, failWhenDisabled: false);
             StopRoutines();
             ResetVisuals();
             if (hasSnapshot)

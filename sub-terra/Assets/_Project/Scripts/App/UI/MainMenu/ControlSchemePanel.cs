@@ -144,7 +144,10 @@ namespace SubTerra.App.UI.MainMenu
             font = sample != null ? sample.font : TMP_Settings.defaultFontAsset;
             var authoredButton = transform.Find("SettingsCard/ChangeControls");
             if (authoredButton != null)
+            {
                 authoredButton.GetComponent<Button>().onClick.AddListener(Open);
+                UiSfx.Attach(authoredButton.GetComponent<Button>(), SfxId.None, hover: true);
+            }
             else
                 SimpleButton(transform, "ChangeControls", "키 조작 변경", 0, -366, 280, 40, Open);
             var backdrop = Rect(transform, "ControlSchemeOverlay", 0, 0, 0, 0);
@@ -201,6 +204,7 @@ namespace SubTerra.App.UI.MainMenu
             var button = rect.gameObject.AddComponent<Button>();
             button.targetGraphic = background;
             button.onClick.AddListener(action);
+            UiSfx.Attach(button, SfxId.None, hover: true);
             UiKeyboardSubmitGuard.ConfigurePointerPreferredButton(button);
             var label = Rect(rect, "Label", 0, 0, width - 8, height - 4).gameObject.AddComponent<TextMeshProUGUI>();
             label.font = font;

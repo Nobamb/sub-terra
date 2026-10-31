@@ -1,4 +1,6 @@
 using SubTerra.App.Core;
+using SubTerra.App.Audio;
+using SubTerra.Shared.Audio;
 using SubTerra.App.State;
 using SubTerra.App.Tutorial;
 using SubTerra.App.UI.Tutorial;
@@ -9,6 +11,7 @@ namespace SubTerra.App.UI.SurfaceBase
     /// <summary>기존 퀘스트 상세창을 지상에서 읽기 전용으로 연다. 진행·보상 처리는 연결하지 않는다.</summary>
     public sealed class SurfaceBaseQuestPanel : MonoBehaviour
     {
+        private const SfxId QuestClickSfx = SfxId.UiClick;
         [SerializeField] private UnityEngine.UI.Button questButton;
         [SerializeField] private DemoObjectiveView questView;
         private DemoObjectiveDirector director;
@@ -19,6 +22,7 @@ namespace SubTerra.App.UI.SurfaceBase
 
         private void OnEnable()
         {
+            UiSfx.Attach(questButton, QuestClickSfx, hover: true);
             questButton?.onClick.AddListener(OnQuestClicked);
             if (questView == null) return;
             questView.DetailsDismissRequested += Close;

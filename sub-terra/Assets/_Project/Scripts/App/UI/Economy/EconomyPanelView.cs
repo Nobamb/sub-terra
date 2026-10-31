@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using SubTerra.App.Audio;
+using SubTerra.Shared.Audio;
 using SubTerra.App.UI.Sell;
 using TMPro;
 using UnityEngine;
@@ -327,6 +329,7 @@ namespace SubTerra.App.UI.Economy
 
         private void WireButtons(bool add)
         {
+            if (add) UiSfx.Attach(openSellButton, SfxId.None, hover: true);
             Wire(openSellButton, OnOpenSell, add);
             Wire(closeSellButton, OnCloseSell, add);
             Wire(qtyMinusButton, OnQtyMinus, add);

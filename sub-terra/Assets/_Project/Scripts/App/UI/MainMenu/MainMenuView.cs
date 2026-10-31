@@ -165,7 +165,7 @@ namespace SubTerra.App.UI.MainMenu
         // 바인더가 클릭 소리를 내는 버튼은 호버만 붙인다. 슬롯 카드는 선택 소리(UiSlotSelect)만 낸다.
         private void AttachButtonSfx()
         {
-            UiSfx.Attach(settingsButton, SfxId.UiClick, hover: true);
+            UiSfx.Attach(settingsButton, SfxId.None, hover: true);
             // B-170: 종료 확인 창 등장음이 클릭음을 대신한다.
             UiSfx.Attach(quitButton, SfxId.None, hover: true);
             UiSfx.Attach(continueButton, SfxId.None, hover: true);
@@ -541,6 +541,12 @@ namespace SubTerra.App.UI.MainMenu
             }
         }
 
+        public void PlaySettingsApplySound()
+        {
+            var skin = settingsRoot != null ? settingsRoot.GetComponent<SettingsMenuSkin>() : null;
+            if (skin != null) skin.PlayApplySound();
+        }
+
         public void SetSettingsVisible(bool visible)
         {
             if (settingsRoot != null)
@@ -597,6 +603,8 @@ namespace SubTerra.App.UI.MainMenu
             {
                 audioRows.SetValues(values.BgmVolume, values.SfxVolume);
             }
+            var skin = settingsRoot != null ? settingsRoot.GetComponent<SettingsMenuSkin>() : null;
+            if (skin != null) skin.RefreshVolumeSoundSteps();
 
             if (reduceMotionToggle != null)
             {

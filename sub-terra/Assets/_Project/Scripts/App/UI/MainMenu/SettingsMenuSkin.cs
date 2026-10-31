@@ -1,6 +1,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using SubTerra.App.Audio;
+using SubTerra.Shared.Audio;
 using SubTerra.Shared.Localization;
 using TMPro;
 using UnityEngine;
@@ -16,6 +18,10 @@ namespace SubTerra.App.UI.MainMenu
     /// </summary>
     public sealed class SettingsMenuSkin : MonoBehaviour
     {
+        private const SfxId VolumeTickSfx = SfxId.UiScanTick;
+        private readonly SfxThrottle volumeTickThrottle = new SfxThrottle(0.07f);
+        private readonly Dictionary<Slider, int> volumeSteps = new Dictionary<Slider, int>();
+        private bool suppressNextCloseSound;
         [SerializeField] private RectTransform card;
         [SerializeField] private Button closeButton;
         [SerializeField] private Button cancelButton;
@@ -69,6 +75,8 @@ namespace SubTerra.App.UI.MainMenu
 
         private void OnEnable()
         {
+            suppressNextCloseSound = false;
+            volumeTickThrottle.Reset();
             isClosing = false;
             closeComplete = null;
             footerIndex = -1;
@@ -89,10 +97,20 @@ namespace SubTerra.App.UI.MainMenu
             RefreshFooterHighlight();
             WireParticleTriggers();
             WireDropdownTriggers();
+            if (reduceMotion != null)
+            {
+                reduceMotion.onValueChanged.RemoveListener(OnReduceMotionChanged);
+                reduceMotion.onValueChanged.AddListener(OnReduceMotionChanged);
+            }
+            UiSfx.Attach(closeButton, SfxId.None, hover: true);
+            UiSfx.Attach(cancelButton, SfxId.None, hover: true);
+            if (footerButtons != null && footerButtons.Length > 0)
+                UiSfx.Attach(footerButtons[0], SfxId.UiClick, hover: true);
 
             if (Application.isPlaying)
             {
                 if (openRoutine != null) StopCoroutine(openRoutine);
+                SfxPlayer.Play(SfxId.UiPopupOpen);
                 openRoutine = StartCoroutine(AnimateOpen());
             }
             else if (card != null)
@@ -103,6 +121,8 @@ namespace SubTerra.App.UI.MainMenu
 
         private void OnDisable()
         {
+            suppressNextCloseSound = false;
+            if (reduceMotion != null) reduceMotion.onValueChanged.RemoveListener(OnReduceMotionChanged);
             HideDropdowns();
             if (closeButton != null) closeButton.onClick.RemoveListener(Cancel);
             UnhookVolumeSliders();
@@ -151,10 +171,24 @@ namespace SubTerra.App.UI.MainMenu
             }
 
             isClosing = true;
+            if (!suppressNextCloseSound) SfxPlayer.Play(SfxId.UiPopupClose);
+            suppressNextCloseSound = false;
             closeComplete = onComplete;
             if (openRoutine != null) { StopCoroutine(openRoutine); openRoutine = null; }
             if (closeRoutine != null) StopCoroutine(closeRoutine);
             closeRoutine = StartCoroutine(AnimateClose());
+        }
+
+        public void PlayApplySound()
+        {
+            if (!Application.isPlaying || !isActiveAndEnabled || isClosing) return;
+            suppressNextCloseSound = true;
+            SfxPlayer.Play(SfxId.UiConfirm);
+        }
+
+        private void OnReduceMotionChanged(bool value)
+        {
+            if (Application.isPlaying) SfxPlayer.Play(SfxId.UiClick);
         }
 
         private IEnumerator AnimateOpen()
@@ -387,6 +421,7 @@ namespace SubTerra.App.UI.MainMenu
             foreach (var slider in VolumeSliders())
             {
                 var target = slider;
+                volumeSteps[target] = Mathf.FloorToInt(target.normalizedValue * 20f);
                 UnityEngine.Events.UnityAction<float> action = _ => OnVolumeChanged(target);
                 target.onValueChanged.AddListener(action);
                 volumeHooks.Add(new KeyValuePair<Slider, UnityEngine.Events.UnityAction<float>>(target, action));
@@ -401,13 +436,25 @@ namespace SubTerra.App.UI.MainMenu
                 if (hook.Key != null) hook.Key.onValueChanged.RemoveListener(hook.Value);
             }
             volumeHooks.Clear();
+            volumeSteps.Clear();
         }
 
         private void OnVolumeChanged(Slider slider)
         {
+            var step = Mathf.FloorToInt(slider.normalizedValue * 20f);
+            var changed = volumeSteps.TryGetValue(slider, out var previous) && previous != step;
+            volumeSteps[slider] = step;
+            if (Application.isPlaying && changed && volumeTickThrottle.TryPass())
+                SfxPlayer.Play(VolumeTickSfx, Mathf.Lerp(0.9f, 1.1f, slider.normalizedValue));
             if (audioRows != null) audioRows.RefreshLabels();
             RefreshVolumeGlow();
             EmitSliderParticles(slider, 4, respectCooldown: true);
+        }
+
+        public void RefreshVolumeSoundSteps()
+        {
+            foreach (var slider in VolumeSliders())
+                volumeSteps[slider] = Mathf.FloorToInt(slider.normalizedValue * 20f);
         }
 
         private void RefreshVolumeGlow()
@@ -500,8 +547,19 @@ namespace SubTerra.App.UI.MainMenu
                 if (trigger == null) trigger = dropdown.gameObject.AddComponent<EventTrigger>();
                 var entry = new EventTrigger.Entry { eventID = EventTriggerType.PointerDown };
                 var selected = dropdown;
-                entry.callback.AddListener(_ => HideDropdownsExcept(selected));
+                entry.callback.AddListener(data =>
+                {
+                    var pointer = data as PointerEventData;
+                    if (Application.isPlaying && selected.IsInteractable() && !selected.IsExpanded
+                        && pointer != null && pointer.button == PointerEventData.InputButton.Left)
+                        SfxPlayer.Play(SfxId.UiClick);
+                    HideDropdownsExcept(selected);
+                });
                 trigger.triggers.Add(entry);
+                dropdown.onValueChanged.AddListener(_ =>
+                {
+                    if (Application.isPlaying) SfxPlayer.Play(SfxId.UiClick);
+                });
             }
         }
 

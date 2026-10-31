@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using SubTerra.App.Audio;
+using SubTerra.Shared.Audio;
 using SubTerra.App.Core.Data;
 using SubTerra.App.Tutorial;
 using SubTerra.App.UI;
@@ -141,6 +143,7 @@ namespace SubTerra.App.UI.Tutorial
             if (objectiveTitleText == null) return;
             var card = objectiveTitleText.transform.parent as RectTransform;
             if (card == null || card.name != "QuestSummaryButton") return;
+            UiSfx.Attach(card.GetComponent<Button>(), SfxId.None, hover: true);
             card.sizeDelta = new Vector2(460f, 116f);
             card.localScale = Vector3.one;
             card.anchoredPosition = new Vector2(16f, -232f);
