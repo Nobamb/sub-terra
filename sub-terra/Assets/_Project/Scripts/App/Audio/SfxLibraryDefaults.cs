@@ -233,6 +233,15 @@ namespace SubTerra.App.Audio
                 (new SfxEntry(SfxId.MainMenuBoot, SfxBus.UI, volume: 0.45f), "main_menu_boot"),
                 // 0.13초. 부팅 문구 타이핑 틱(0.06초 간격 제한은 코드에서).
                 (new SfxEntry(SfxId.MainMenuTypeTick, SfxBus.UI, volume: 0.5f), "main_menu_type_tick"),
+                // B-178 퀘스트 보상·작은 글리치 창·드론 스캔. 길이는 다듬은 파일 그대로.
+                // 1.10초. 보상이 실제로 들어올 때 한 번 "띠-링".
+                (new SfxEntry(SfxId.QuestReward, SfxBus.UI, volume: 0.5f), "quest_reward"),
+                // 0.90초. 퀘스트 클리어·심층 해금 창 열림(150Hz 아래를 깎은 가벼운 버전).
+                (new SfxEntry(SfxId.GlitchPopupOpen, SfxBus.UI, volume: 0.6f), "glitch_popup_open"),
+                // 0.70초. 같은 두 창 닫힘(열림 원본을 거꾸로).
+                (new SfxEntry(SfxId.GlitchPopupClose, SfxBus.UI, volume: 0.6f), "glitch_popup_close"),
+                // 0.90초. 30초 스캔 링 시작 "핑". 자주 나므로 작게.
+                (new SfxEntry(SfxId.DroneScanPing, SfxBus.World, volume: 0.3f), "drone_scan_ping"),
             };
         }
     }

@@ -92,6 +92,11 @@ namespace SubTerra.Shared.Audio
         UpgradeWindowSuckIn = 83,
         UpgradeLockRegather = 84,
         MainMenuBoot = 85,
-        MainMenuTypeTick = 86
+        MainMenuTypeTick = 86,
+        // B-178 퀘스트 보상·작은 글리치 창·드론 스캔.
+        QuestReward = 87,
+        GlitchPopupOpen = 88,
+        GlitchPopupClose = 89,
+        DroneScanPing = 90
     }
 }

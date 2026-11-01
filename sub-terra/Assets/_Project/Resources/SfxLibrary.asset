@@ -693,6 +693,38 @@ MonoBehaviour:
     startTime: 0
     maxDuration: 0
     fadeOut: 0
+  - id: 87
+    clip: {fileID: 8300000, guid: a166d79044cf74444ac1b1de1485377a, type: 3}
+    bus: 0
+    volume: 0.5
+    pitch: 1
+    startTime: 0
+    maxDuration: 0
+    fadeOut: 0
+  - id: 88
+    clip: {fileID: 8300000, guid: bdee280d556a6ac48bf9ebbf1a7ce860, type: 3}
+    bus: 0
+    volume: 0.6
+    pitch: 1
+    startTime: 0
+    maxDuration: 0
+    fadeOut: 0
+  - id: 89
+    clip: {fileID: 8300000, guid: 121387f6fa65c3641884ef98460b7f66, type: 3}
+    bus: 0
+    volume: 0.6
+    pitch: 1
+    startTime: 0
+    maxDuration: 0
+    fadeOut: 0
+  - id: 90
+    clip: {fileID: 8300000, guid: 888db262f3f1f874c83db7ff82d9abf9, type: 3}
+    bus: 1
+    volume: 0.3
+    pitch: 1
+    startTime: 0
+    maxDuration: 0
+    fadeOut: 0
   uiBusVolume: 1
   worldBusVolume: 1
   alertBusVolume: 1

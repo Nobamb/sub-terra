@@ -1,5 +1,7 @@
 using System;
+using SubTerra.App.Audio;
 using SubTerra.App.Tutorial;
+using SubTerra.Shared.Audio;
 
 namespace SubTerra.App.UI.Tutorial
 {
@@ -334,6 +336,12 @@ namespace SubTerra.App.UI.Tutorial
                 return;
             }
 
+            // B-178: 보상이 실제로 들어온 순간(Settle) 한 번. 화물 부족·포기·빈 보상은 무음.
+            if (ShouldPlayRewardSfx(result))
+            {
+                SfxPlayer.Play(SfxId.QuestReward);
+            }
+
             if (!rewards.HasPending)
             {
                 CloseOverflow();
@@ -344,6 +352,12 @@ namespace SubTerra.App.UI.Tutorial
             {
                 RenderDetails();
             }
+        }
+
+        /// <summary>B-178: 보상 지급음을 낼 결과인지. ConfirmClaim 반환값이 아니라 GrantResolved 결과로 판단한다.</summary>
+        public static bool ShouldPlayRewardSfx(QuestRewardGrantResult result)
+        {
+            return result.Status == QuestRewardGrantStatus.Granted && !result.Reward.IsEmpty;
         }
 
         private void ShowClaim(QuestRewardGrantResult result)

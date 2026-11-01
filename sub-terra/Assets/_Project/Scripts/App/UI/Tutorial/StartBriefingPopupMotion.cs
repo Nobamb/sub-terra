@@ -17,6 +17,11 @@ namespace SubTerra.App.UI.Tutorial
     {
         public const string PauseOwner = "start-briefing";
         public const float ShortGlitchSfxInterval = 0.15f;
+        // B-178: 작은 창(ConfigureCompact)의 열림·닫힘 소리. 브리핑 소리 대신 낸다.
+        public const SfxId CompactOpenSfx = SfxId.GlitchPopupOpen;
+        public const SfxId CompactCloseSfx = SfxId.GlitchPopupClose;
+        // 닫히던 창을 바로 다시 열 때(연달아 퀘스트 클리어) 닫힘·보상과 뭉개지지 않게 열림음을 늦춘다(비스케일).
+        public const float ReopenOpenSfxDelay = 0.35f;
 
         private static readonly Color Cyan = new Color(0.20f, 1f, 0.96f, 1f);
         private static readonly Color DimFrame = new Color(0.22f, 0.32f, 0.36f, 1f);
@@ -85,9 +90,16 @@ namespace SubTerra.App.UI.Tutorial
         private float flickerLevel = 1f;
         private float burstUntil;
         private Vector2 lastRootSize;
-        // B-162: 시작 브리핑만 소리를 낸다. 같은 연출을 빌려 쓰는 작은 창(심층 해금·퀘스트 클리어)은 끈다.
+        // B-162: 시작 브리핑만 브리핑 소리를 낸다. 같은 연출을 빌려 쓰는 작은 창(심층 해금·퀘스트 클리어)은
+        // 브리핑 소리 대신 B-178 열림·닫힘 소리만 낸다(표시 중 짧은 지직은 무음).
         private bool playsBriefingSfx = true;
+        private bool playsCompactSfx;
+        private float nextOpenSfxDelay;
+        private float pendingOpenSfxAt = -1f;
         private readonly SfxThrottle shortGlitchSfx = new SfxThrottle(ShortGlitchSfxInterval);
+
+        /// <summary>EditMode 검사에서만 켠다. 에디트 모드에서는 작은 창 소리를 내지 않는다.</summary>
+        internal static bool CompactSfxInEditModeForTests;
 
         public BriefingPhase Phase => lifecycle.Phase;
         public bool IsClosing => lifecycle.Phase == BriefingPhase.Closing;
@@ -119,6 +131,7 @@ namespace SubTerra.App.UI.Tutorial
         {
             pauseOnOpen = false;
             playsBriefingSfx = false;
+            playsCompactSfx = true;
             var panel = (RectTransform)transform;
             windowSize = size;
             frameHalfExtent = frameExtent;
@@ -254,6 +267,9 @@ namespace SubTerra.App.UI.Tutorial
             // 화면 전환·비활성화 시 연출과 정지 소유권을 모두 정리한다. 종료 콜백은 부르지 않는다.
             lifecycle.Reset();
             onClosed = null;
+            // 늦춘 열림음이 남아 있으면 버린다(꺼진 창은 소리를 내지 않는다).
+            pendingOpenSfxAt = -1f;
+            nextOpenSfxDelay = 0f;
             StopAllCoroutines();
             ReleaseSnapshot();
             ReleasePause();
@@ -273,6 +289,8 @@ namespace SubTerra.App.UI.Tutorial
             glitchTimer = 0f;
             // 닫기 버튼·X·ESC 모두 이 경로라 한 번만 난다.
             PlaySfx(SfxId.BriefingClose);
+            pendingOpenSfxAt = -1f;
+            PlayCompactSfx(CompactCloseSfx);
             TriggerGlitch(BriefingGlitchKind.FrameShift, 1f);
             TriggerGlitch(BriefingGlitchKind.EdgeBurst, 1f);
             // 선택이 남은 버튼에 Enter/Submit이 다시 들어가 중복 종료되지 않게 한다.
@@ -296,6 +314,7 @@ namespace SubTerra.App.UI.Tutorial
         {
             clock += dt;
             FitWindow(false);
+            TickPendingOpenSfx();
 
             switch (lifecycle.Phase)
             {
@@ -383,6 +402,7 @@ namespace SubTerra.App.UI.Tutorial
                 shortGlitchSfx.Reset();
                 // 첫 화면 글리치(0초 버스트)와 같이 난다.
                 PlaySfx(SfxId.BriefingGlitch);
+                BeginCompactOpenSfx();
                 if (pauseOnOpen)
                 {
                     UiPauseGate.Acquire(PauseOwner);
@@ -394,6 +414,50 @@ namespace SubTerra.App.UI.Tutorial
         private void PlaySfx(SfxId id)
         {
             if (playsBriefingSfx)
+            {
+                SfxPlayer.Play(id);
+            }
+        }
+
+        /// <summary>다음 등장 한 번만 열림음을 delay초 늦춘다. 창을 켠(enabled) 뒤에 부른다.</summary>
+        internal void DelayNextOpenSfx(float delay)
+        {
+            nextOpenSfxDelay = Mathf.Max(0f, delay);
+        }
+
+        private void BeginCompactOpenSfx()
+        {
+            var delay = nextOpenSfxDelay;
+            nextOpenSfxDelay = 0f;
+            pendingOpenSfxAt = -1f;
+            if (delay > 0f)
+            {
+                pendingOpenSfxAt = clock + delay;
+                return;
+            }
+
+            PlayCompactSfx(CompactOpenSfx);
+        }
+
+        // 기다리는 동안 닫히면(RequestClose) 취소되고, 꺼지면(OnDisable) 버려진다.
+        private void TickPendingOpenSfx()
+        {
+            if (pendingOpenSfxAt < 0f || clock < pendingOpenSfxAt)
+            {
+                return;
+            }
+
+            pendingOpenSfxAt = -1f;
+            var phase = lifecycle.Phase;
+            if (phase == BriefingPhase.Intro || phase == BriefingPhase.Shown)
+            {
+                PlayCompactSfx(CompactOpenSfx);
+            }
+        }
+
+        private void PlayCompactSfx(SfxId id)
+        {
+            if (playsCompactSfx && (Application.isPlaying || CompactSfxInEditModeForTests))
             {
                 SfxPlayer.Play(id);
             }

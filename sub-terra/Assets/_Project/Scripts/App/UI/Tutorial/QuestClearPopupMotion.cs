@@ -38,12 +38,15 @@ namespace SubTerra.App.UI.Tutorial
             }
 
             if (motion != null) StopCoroutine(motion);
+            // B-178: 닫히던 창을 다시 열면(연달아 퀘스트 클리어) 닫힘음·보상음과 같은 프레임이라 열림음을 늦춘다.
+            var reopening = closing;
             closing = false;
             panel.anchoredPosition = Vector2.zero;
             if (checkSign != null) checkSign.localScale = Vector3.zero;
             if (borderGlint != null) borderGlint.gameObject.SetActive(false);
             transition.enabled = false;
             transition.enabled = true;
+            if (reopening) transition.DelayNextOpenSfx(StartBriefingPopupMotion.ReopenOpenSfxDelay);
             motion = StartCoroutine(Enter());
         }
 
