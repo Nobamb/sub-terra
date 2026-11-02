@@ -33,7 +33,8 @@ namespace SubTerra.App.Tests.Audio
             (SfxId.EscapeArrive, 38, "escape_arrive", SfxBus.World, 0.6f),
             (SfxId.BriefingGlitch, 39, "briefing_glitch_tick", SfxBus.UI, 0.5f),
             (SfxId.BriefingGlitchShort, 40, "briefing_glitch_tick_short", SfxBus.UI, 0.45f),
-            (SfxId.BriefingClose, 41, "briefing_close", SfxBus.UI, 0.5f),
+            // B-180: 6c94d07a에서 짧은 클립으로 바꾸며 기본값·에셋을 1.0으로 올린 값을 따른다.
+            (SfxId.BriefingClose, 41, "briefing_close", SfxBus.UI, 1.0f),
             (SfxId.SellCoinStack, 42, "sell_open_coin_stack", SfxBus.UI, 0.5f),
             (SfxId.SellCoinBurst, 43, "sell_open_coin_burst", SfxBus.UI, 0.55f),
             (SfxId.PortalIdleLoop, 44, "portal_idle_loop", SfxBus.World, 0.35f),

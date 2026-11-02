@@ -1,0 +1,4 @@
+Started 2026-10-29T10:10:00.4164647+09:00
+PASS: SubTerra.App.Tests.PlayMode.MineDemo.PlayerRedrawnActionPlayModeTests.Bootstrap_MiningCompletionGasBreathingRescueAndLadderFacing (9.8s)
+Result: Passed
+Pass: 1 Fail: 0

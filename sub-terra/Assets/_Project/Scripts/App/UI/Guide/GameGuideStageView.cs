@@ -317,7 +317,9 @@ namespace SubTerra.App.UI.Guide
                     Sprite next;
                     if (active)
                     {
-                        var index = Mathf.FloorToInt(time * def.Fps) % layer.Frames.Length;
+                        var index = def.FrameIndex != null
+                            ? Mathf.FloorToInt(def.FrameIndex.Eval(time))
+                            : Mathf.FloorToInt(time * def.Fps) % layer.Frames.Length;
                         next = layer.Frames[index];
                     }
                     else

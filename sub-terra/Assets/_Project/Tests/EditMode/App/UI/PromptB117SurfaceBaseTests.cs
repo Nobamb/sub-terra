@@ -344,10 +344,10 @@ namespace SubTerra.App.Tests.UI
                 Assert.That(view.IsUpgradeVisible, Is.False);
                 view.SetUpgradeVisible(true);
                 view.SetSettingsVisible(true);
-                Assert.That(view.IsUpgradeVisible, Is.False);
+                Assert.That(view.IsUpgradeVisible, Is.True, "설정창 뒤 업그레이드 창은 유지한다.");
                 Assert.That(instance.transform.Find("SettingsPanel").gameObject.activeSelf, Is.True);
                 view.SetSettingsVisible(false);
-                Assert.That(view.IsUpgradeVisible, Is.False);
+                Assert.That(view.IsUpgradeVisible, Is.True);
             }
             finally { Object.DestroyImmediate(instance); }
         }

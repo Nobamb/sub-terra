@@ -145,6 +145,104 @@ namespace SubTerra.Gameplay.Player.Tests
         }
 
         [UnityTest]
+        public IEnumerator WalkAnimation_OneTickGroundGapKeepsWalk_RequestedJumpSwitchesImmediately()
+        {
+            SetupGroundedPlayerWithContacts();
+            animationVisualObject = new GameObject("WalkGapVisual");
+            animationVisualObject.transform.SetParent(playerObject.transform, false);
+            var renderer = animationVisualObject.AddComponent<SpriteRenderer>();
+            var animation = animationVisualObject.AddComponent<PlayerAnimationController>();
+            otherAnimationFrames = new[] { CreateTestSprite(), CreateTestSprite(), CreateTestSprite() };
+            animation.ConfigureFrames(renderer, movement, new[] { otherAnimationFrames[0] },
+                new[] { otherAnimationFrames[1] }, new[] { otherAnimationFrames[2] }, null, null, null, null);
+            for (int i = 0; i < 3; i++) yield return new WaitForFixedUpdate();
+            movement.SetMoveInput(1f);
+            yield return null;
+            Assert.That(renderer.sprite, Is.SameAs(otherAnimationFrames[1]));
+
+            var ground = groundObject.GetComponent<Collider2D>();
+            ground.enabled = false;
+            yield return new WaitForFixedUpdate();
+            yield return null;
+            Assert.That(movement.IsGrounded, Is.False, "실제 물리 접점과 발밑 보조 판정을 한 틱 제거한다");
+            Assert.That(renderer.sprite, Is.SameAs(otherAnimationFrames[1]), "접지가 잠깐 빠져도 Walk를 유지한다");
+            ground.enabled = true;
+            for (int i = 0; i < 2; i++) yield return new WaitForFixedUpdate();
+            yield return null;
+            Assert.That(movement.IsGrounded, Is.True);
+            Assert.That(renderer.sprite, Is.SameAs(otherAnimationFrames[1]));
+
+            movement.RequestJump();
+            yield return new WaitForFixedUpdate();
+            yield return null;
+            Assert.That(movement.IsJumpInProgress, Is.True);
+            Assert.That(renderer.sprite, Is.SameAs(otherAnimationFrames[2]), "입력으로 점프하면 즉시 Jump로 바뀐다");
+        }
+
+        [UnityTest]
+        public IEnumerator PromptB175_RealJump_PlaysTakeOffRiseApexFallThenLanding()
+        {
+            SetupGroundedPlayerWithContacts(airLockDuration: 0.05f);
+            animationVisualObject = new GameObject("JumpPhaseVisual");
+            animationVisualObject.transform.SetParent(playerObject.transform, false);
+            var renderer = animationVisualObject.AddComponent<SpriteRenderer>();
+            var animation = animationVisualObject.AddComponent<PlayerAnimationController>();
+            var idle = CreateTestSprite();
+            animation.ConfigureFrames(renderer, movement, new[] { idle }, new[] { CreateTestSprite() },
+                new[] { CreateTestSprite() }, null, null, null, null);
+            var ready = new Sprite[8];
+            var rise = new Sprite[24];
+            var fall = new Sprite[24];
+            for (int i = 0; i < 24; i++)
+            {
+                if (i < 8) ready[i] = CreateTestSprite();
+                rise[i] = CreateTestSprite();
+                fall[i] = CreateTestSprite();
+            }
+            SetPrivateField(animation, "jumpReadyFrames", ready);
+            SetPrivateField(animation, "jumpRiseFrames", rise);
+            SetPrivateField(animation, "jumpFallFrames", fall);
+            // 생성 직후 첫 틱은 접점이 없어 짧은 착지 그림이 나올 수 있으므로 대기 그림까지 기다린다.
+            for (float waited = 0f; waited < 1f && renderer.sprite != idle; waited += Time.deltaTime)
+                yield return null;
+            Assert.That(renderer.sprite, Is.SameAs(idle), "점프 전 대기");
+
+            movement.RequestJump();
+            yield return new WaitForFixedUpdate();
+            Assert.That(movement.LastJumpLaunchSpeed, Is.EqualTo(body.linearVelocityY).Within(0.5f),
+                "그림 진행도 기준 속도는 실제 시작 속도와 같다");
+            yield return null;
+            Assert.That(renderer.sprite, Is.SameAs(rise[0]), "키를 누르면 준비 동작 없이 바로 도약 1");
+
+            int lastRise = 0;
+            bool sawApex = false;
+            bool sawLanding = false;
+            for (float waited = 0f; waited < 4f && renderer.sprite != idle; waited += Time.deltaTime)
+            {
+                int riseIndex = System.Array.IndexOf(rise, renderer.sprite);
+                if (riseIndex >= 0)
+                {
+                    Assert.That(sawApex, Is.False, "정점 이후 상승 그림으로 되돌아가지 않는다");
+                    Assert.That(riseIndex, Is.GreaterThanOrEqualTo(lastRise), "상승 그림은 되돌아가지 않는다");
+                    lastRise = riseIndex;
+                }
+                if (renderer.sprite == fall[0])
+                {
+                    sawApex = true;
+                    Assert.That(lastRise, Is.EqualTo(23), "정점 전에 상승 24에 닿는다");
+                }
+                if (renderer.sprite == ready[7])
+                {
+                    sawLanding = true;
+                    Assert.That(movement.IsGrounded, Is.True);
+                }
+                yield return null;
+            }
+            Assert.That(sawApex && sawLanding, Is.True, "fall 1과 착지 ready 8을 거친다");
+            Assert.That(renderer.sprite, Is.SameAs(idle), "착지 그림 뒤 대기로 돌아온다");
+        }
+
+        [UnityTest]
         public IEnumerator MoveInputAcceleratesPlayerToTheRight()
         {
             movement.SetMoveInput(1f);

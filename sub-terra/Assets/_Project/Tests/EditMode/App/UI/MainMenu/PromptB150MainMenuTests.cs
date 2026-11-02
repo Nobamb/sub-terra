@@ -46,7 +46,7 @@ namespace SubTerra.App.Tests.UI.MainMenu
         }
 
         [Test]
-        public void Boot_RunsInOrder_WithinOneSecond()
+        public void Boot_RunsInOrder_WithinTwoSeconds()
         {
             var timeline = new MainMenuBootTimeline();
             Assert.That(timeline.TotalDuration, Is.LessThanOrEqualTo(MainMenuBootTimeline.MaxDuration));
@@ -80,8 +80,8 @@ namespace SubTerra.App.Tests.UI.MainMenu
             Assert.That(headerAt, Is.LessThan(logoAt), "부팅 문구 → 로고");
             Assert.That(logoAt, Is.LessThan(subtitleAt), "로고 → 부제");
             Assert.That(subtitleAt, Is.LessThan(cardAt[0]), "부제 → 카드");
-            Assert.That(cardAt[1] - cardAt[0], Is.EqualTo(0.08f).Within(0.011f), "카드 0.08초 간격");
-            Assert.That(cardAt[2] - cardAt[1], Is.EqualTo(0.08f).Within(0.011f));
+            Assert.That(cardAt[1] - cardAt[0], Is.EqualTo(0.16f).Within(0.011f), "카드 0.16초 간격(B-170)");
+            Assert.That(cardAt[2] - cardAt[1], Is.EqualTo(0.16f).Within(0.011f));
             Assert.That(cardAt[0], Is.LessThan(continueAt), "카드 → 이어하기");
             Assert.That(continueAt, Is.LessThan(secondaryAt[0]), "이어하기 → 새 게임·설정·종료");
             Assert.That(secondaryAt[0], Is.LessThan(secondaryAt[2]));

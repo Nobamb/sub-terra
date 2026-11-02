@@ -14,9 +14,9 @@
 | GameDataCatalog, ID, DTO, 세이브, 외부 AI·전송, 결정론적 게임플레이·Digger-Bot | [`data-save-gameplay.md`](data-save-gameplay.md); 코드 수정도 있으면 [`code.md`](code.md)                                   |
 | Build Profile, 자동 저장, 배포 결과물, 기능·Play/Edit Mode·Windows 빌드 검증   | [`testing-qa.md`](testing-qa.md)                                                                                                        |
 | 작업 결과 제출 또는 Agent 작업 요청 작성                                       | [`reporting.md`](reporting.md)                                                                                                          |
-| 모든 작업 시작 전 (실수 기록 확인) | [`lessons.md`](lessons.md) |
+| 모든 작업 시작 전 (실수 기록 확인) | [`lessons/`](lessons/) 폴더의 관련 파일 (옛 표 `lessons.md`는 읽기만) |
 
-저장소 파일을 변경하는 작업은 `git-commit.md`를, 작업 결과를 제출할 때는 `reporting.md`를 추가로 읽는다. UI 변경에는 `ui-ugui.md`의 커밋 범위 검증 및 회귀 복구 규칙도 적용한다. 작업의 규칙 간 충돌이 보이면 임의로 완화하지 말고 보고한다. 모든 작업은 16번 작업 태도 규칙을 따르고, 시작 전에 `lessons.md`를 읽는다.
+저장소 파일을 변경하는 작업은 `git-commit.md`를, 작업 결과를 제출할 때는 `reporting.md`를 추가로 읽는다. UI 변경에는 `ui-ugui.md`의 커밋 범위 검증 및 회귀 복구 규칙도 적용한다. 작업의 규칙 간 충돌이 보이면 임의로 완화하지 말고 보고한다. 모든 작업은 16번 작업 태도 규칙을 따르고, 시작 전에 `lessons/` 폴더에서 관련 교훈을 읽는다.
 
 1. 규칙 우선순위
    Agent는 작업 중 판단이 필요한 상황에서 아래 우선순위를 따른다.
@@ -118,9 +118,11 @@
 
 16-4. 같은 실수 반복 금지
 
-- 작업 전 `init/rules/lessons.md`를 읽는다.
-- 실수나 회귀를 고치면 원인과 재발 방지법을 한 줄로 추가한다.
-- 형식: `날짜 | 실수 | 원인 | 다음부터 할 일`
+- 작업 전 `init/rules/lessons/` 폴더의 파일 이름·태그를 보고 이번 작업과 관련된 교훈을 읽는다. 옛 표 `lessons.md`도 읽기만 한다.
+- 실수나 회귀를 고치면 교훈 하나당 새 파일 하나를 만든다. `lessons.md`나 다른 교훈 파일에 줄을 추가하지 않는다.
+- 파일 이름: `YYYY-MM-DD-주제.md`. 이슈·PR이 있으면 `YYYY-MM-DD-issueNNN-주제.md` / `YYYY-MM-DD-prNNN-주제.md`. 주제는 영문 소문자와 `-`만.
+- 내용: `# 제목` 다음 줄에 `- 날짜:`, `- 태그:`, `- 실수:`, `- 원인:`, `- 다음부터 할 일:`, `- 관련:`. 보통 10줄 안팎, 200줄 이내.
+- 공용 목차 파일은 만들지 않는다(충돌 원인).
 
 17. 화면 확인 효율
 

@@ -73,9 +73,11 @@ namespace SubTerra.App.Tests.PlayMode.MineDemo
                 capture.enabled = false;
                 var output = Path.GetFullPath("../work_process/images/resource-pickup-vfx");
                 Directory.CreateDirectory(output);
+                float elapsed = 0f;
                 foreach (var age in new[] { 0.12f, 0.12f, 0.24f })
                 {
                     vfx.Tick(age);
+                    elapsed += age;
                     var target = RenderTexture.GetTemporary(320, 200, 24);
                     var previous = RenderTexture.active;
                     var image = new Texture2D(320, 200, TextureFormat.RGB24, false);
@@ -87,7 +89,8 @@ namespace SubTerra.App.Tests.PlayMode.MineDemo
                         RenderTexture.active = target;
                         image.ReadPixels(new Rect(0, 0, 320, 200), 0, 0);
                         image.Apply();
-                        File.WriteAllBytes(Path.Combine(output, "remaining-" + vfx.ActiveCount + ".png"), image.EncodeToPNG());
+                        File.WriteAllBytes(Path.Combine(output, "at-" + Mathf.RoundToInt(elapsed * 1000f).ToString("D3")
+                            + "-remaining-" + vfx.ActiveCount + ".png"), image.EncodeToPNG());
                     }
                     finally
                     {

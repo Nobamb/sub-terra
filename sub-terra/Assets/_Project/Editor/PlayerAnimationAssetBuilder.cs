@@ -20,6 +20,12 @@ namespace SubTerra.Editor
         private const string LadderFramePrefix = "ladder_back";
         private const int LadderFrameCount = 5;
         private const int PlayerSortingOrder = 5;
+        // B-176: 기존 4장 사이에 사이 동작 4장을 넣은 재생 순서.
+        public static readonly string[] DamageFrameNames =
+        {
+            "damage_01", "damage_1_2", "damage_02", "damage_2_3",
+            "damage_03", "damage_3_4", "damage_04", "damage_4_idle"
+        };
 
         private readonly struct AnimationDefinition
         {
@@ -44,11 +50,11 @@ namespace SubTerra.Editor
         private static readonly AnimationDefinition[] Definitions =
         {
             new("Idle", "Idle", "player_idle", 1, 4f, true),
-            new("Walk", "Walk", "walk", 10, 10f, true),
+            new("Walk", "Walk", "walk", PlayerAnimationController.WalkFrameCount, PlayerAnimationController.WalkFrameRate, true),
             new("Jump", "Jump", "jump", 10, 12f, false),
-            new("Mining", "Mining", "mining", 8, 10f, true),
-            new("Damage", "Damage", "damage", 4, 10f, false),
-            new("Knockout", "Knockout", "knockout", 8, 8f, false)
+            new("Mining", "Mining", "mining", 24, 20f, false),
+            new("Damage", "Damage", "damage", 8, 20f, false),
+            new("Knockout", "Knockout", "knockout", 48, 24f, false)
         };
 
         [MenuItem("SubTerra/Build Player Animation Assets")]
@@ -69,6 +75,57 @@ namespace SubTerra.Editor
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
             Debug.Log("Player animation assets were built successfully.");
+        }
+
+        [MenuItem("SubTerra/Apply Smooth Walk Cycle")]
+        public static void ApplySmoothWalkCycle()
+        {
+            for (int i = 1; i <= PlayerAnimationController.WalkFrameCount; i++)
+            {
+                string path = FramesRoot + "/Walk/walk_" + i.ToString("D2") + ".png";
+                AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);
+                var importer = AssetImporter.GetAtPath(path) as TextureImporter;
+                if (importer == null) throw new FileNotFoundException("Walk texture missing.", path);
+                importer.textureType = TextureImporterType.Sprite;
+                importer.spriteImportMode = SpriteImportMode.Single;
+                importer.spritePixelsPerUnit = 256f;
+                var settings = new TextureImporterSettings();
+                importer.ReadTextureSettings(settings);
+                settings.spriteAlignment = (int)SpriteAlignment.Center;
+                settings.spritePivot = new Vector2(.5f, .5f);
+                settings.spriteMeshType = SpriteMeshType.FullRect;
+                importer.SetTextureSettings(settings);
+                importer.mipmapEnabled = false;
+                importer.alphaIsTransparency = true;
+                importer.wrapMode = TextureWrapMode.Clamp;
+                importer.filterMode = FilterMode.Bilinear;
+                importer.textureCompression = TextureImporterCompression.Uncompressed;
+                importer.SaveAndReimport();
+            }
+
+            var root = PrefabUtility.LoadPrefabContents(PlayerPrefabPath);
+            try
+            {
+                var animation = root.transform.Find("VisualRoot").GetComponent<PlayerAnimationController>();
+                var serialized = new SerializedObject(animation);
+                var frames = LoadFrames("Walk");
+                var array = serialized.FindProperty("walkFrames");
+                array.arraySize = frames.Length;
+                for (int i = 0; i < frames.Length; i++) array.GetArrayElementAtIndex(i).objectReferenceValue = frames[i];
+                var footsteps = serialized.FindProperty("footstepFrames");
+                footsteps.arraySize = 2;
+                footsteps.GetArrayElementAtIndex(0).intValue = 1;
+                footsteps.GetArrayElementAtIndex(1).intValue = 21;
+                serialized.ApplyModifiedPropertiesWithoutUndo();
+                PrefabUtility.SaveAsPrefabAsset(root, PlayerPrefabPath);
+            }
+            finally { PrefabUtility.UnloadPrefabContents(root); }
+            var clip = CreateOrUpdateClip(Definitions[1]);
+            var clipSettings = AnimationUtility.GetAnimationClipSettings(clip);
+            clipSettings.stopTime = (float)PlayerAnimationController.WalkFrameCount / PlayerAnimationController.WalkFrameRate;
+            AnimationUtility.SetAnimationClipSettings(clip, clipSettings);
+            AssetDatabase.SaveAssets();
+            Debug.Log("Smooth walk cycle applied to Player prefab and walk preview clip.");
         }
 
         [MenuItem("SubTerra/Apply Approved Ladder Five Frames")]
@@ -117,6 +174,19 @@ namespace SubTerra.Editor
             finally { PrefabUtility.UnloadPrefabContents(root); }
             AssetDatabase.SaveAssets();
             Debug.Log("Approved ladder five frames applied to Player prefab only.");
+        }
+
+        public static void ApplyRedrawnActionPreviewClips()
+        {
+            foreach (var definition in Definitions)
+            {
+                if (definition.StateName != "Mining" && definition.StateName != "Knockout") continue;
+                var clip = CreateOrUpdateClip(definition);
+                var settings = AnimationUtility.GetAnimationClipSettings(clip);
+                settings.stopTime = definition.FrameCount / definition.FrameRate;
+                AnimationUtility.SetAnimationClipSettings(clip, settings);
+                AssetDatabase.SaveAssetIfDirty(clip);
+            }
         }
 
         [MenuItem("SubTerra/Validate Player Animation Runtime")]
@@ -173,6 +243,27 @@ namespace SubTerra.Editor
             }
         }
 
+        public static void ApplyDamagePreviewClip()
+        {
+            foreach (var definition in Definitions)
+            {
+                if (definition.StateName != "Damage") continue;
+                var clip = CreateOrUpdateClip(definition);
+                var settings = AnimationUtility.GetAnimationClipSettings(clip);
+                settings.stopTime = definition.FrameCount / definition.FrameRate;
+                AnimationUtility.SetAnimationClipSettings(clip, settings);
+                AssetDatabase.SaveAssetIfDirty(clip);
+            }
+        }
+
+        private static string FramePath(AnimationDefinition definition, int index)
+        {
+            var name = definition.StateName == "Damage"
+                ? DamageFrameNames[index]
+                : definition.Prefix + "_" + (index + 1).ToString("D2");
+            return FramesRoot + "/" + definition.Folder + "/" + name + ".png";
+        }
+
         private static void ConfigureFrameImports()
         {
             foreach (var guid in AssetDatabase.FindAssets("t:Texture2D", new[] { FramesRoot }))
@@ -221,7 +312,7 @@ namespace SubTerra.Editor
             var keyframes = new ObjectReferenceKeyframe[definition.FrameCount];
             for (var index = 0; index < definition.FrameCount; index++)
             {
-                var spritePath = FramesRoot + "/" + definition.Folder + "/" + definition.Prefix + "_" + (index + 1).ToString("D2") + ".png";
+                var spritePath = FramePath(definition, index);
                 var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(spritePath);
                 if (sprite == null)
                 {
@@ -343,8 +434,7 @@ namespace SubTerra.Editor
                 var frames = new Sprite[definition.FrameCount];
                 for (var index = 0; index < definition.FrameCount; index++)
                 {
-                    var spritePath = FramesRoot + "/" + definition.Folder + "/"
-                        + definition.Prefix + "_" + (index + 1).ToString("D2") + ".png";
+                    var spritePath = FramePath(definition, index);
                     frames[index] = AssetDatabase.LoadAssetAtPath<Sprite>(spritePath);
                     if (frames[index] == null)
                     {

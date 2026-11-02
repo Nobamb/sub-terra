@@ -32,10 +32,10 @@ namespace SubTerra.App.Tests.PlayMode
                 + $"top={(top != null ? top.name + "/" + top.transform.parent?.name : "none")}";
         }
 
-        private IEnumerator Capture(string name)
+        private IEnumerator Capture(string name, string folder = "issue249")
         {
             if (SystemInfo.graphicsDeviceType == UnityEngine.Rendering.GraphicsDeviceType.Null) yield break;
-            var directory = System.IO.Path.GetFullPath("../work_process/images/issue249");
+            var directory = System.IO.Path.GetFullPath("../work_process/images/" + folder);
             System.IO.Directory.CreateDirectory(directory);
             yield return null;
             var target = RenderTexture.GetTemporary(960, 540, 24);
@@ -68,7 +68,7 @@ namespace SubTerra.App.Tests.PlayMode
             }
         }
 
-        private IEnumerator Create()
+        private IEnumerator Create(float sceneLoadTimeout = 10f)
         {
             UpgradeWindowMotion.ResetSessionForTests();
             environment = new UiTestEnvironment();
@@ -76,7 +76,7 @@ namespace SubTerra.App.Tests.PlayMode
             {
                 binder = Object.FindAnyObjectByType<SurfaceBaseBinder>();
                 return binder != null && binder.IsBound;
-            });
+            }, sceneLoadTimeout: sceneLoadTimeout);
             view = binder.GetComponent<SurfaceBaseView>();
             root = view.gameObject;
             settings = (SettingsSession)typeof(SurfaceBaseBinder)
@@ -148,9 +148,9 @@ namespace SubTerra.App.Tests.PlayMode
             Assert.That(motion.IsFullOpen, Is.True);
             yield return WaitForUpgrade(motion, true);
             yield return Capture("surface-upgrade");
-            yield return Press(Key.Escape);
+            yield return Press(Key.X);
             Assert.That(view.IsUpgradeVisible, Is.False);
-            Assert.That(settings.IsOpen, Is.False, "ESC 한 번으로 설정창까지 열면 안 된다.");
+            Assert.That(settings.IsOpen, Is.False, "X는 현재 창만 닫는다.");
             Assert.That(motion.IsClosing, Is.True);
             Assert.That(view.IsSecondaryClosing, Is.True);
             binder.ToggleInventory();
@@ -171,6 +171,59 @@ namespace SubTerra.App.Tests.PlayMode
             settings.Open();
             yield return Press(Key.I);
             Assert.That(view.IsInventoryVisible, Is.False);
+        }
+
+        [UnityTest]
+        public IEnumerator Issue260_EscapeTogglesSettingsAndPreservesUnderlyingWindows()
+        {
+            yield return Create(30f);
+            var quests = binder.GetComponent<SurfaceBaseQuestPanel>();
+            Assert.That(quests.Open(SubTerra.App.Core.GameBootstrapper.Instance.State), Is.True);
+            yield return new WaitForSecondsRealtime(.4f);
+            yield return Press(Key.Escape);
+            Assert.That(settings.IsOpen, Is.True);
+            Assert.That(quests.IsOpen, Is.True);
+            var settingsCanvas = root.transform.Find("SettingsPanel").GetComponent<Canvas>();
+            Assert.That(settingsCanvas.sortingOrder, Is.GreaterThan(SubTerra.App.UI.PopupWindowSorting.Top.sortingOrder));
+            yield return new WaitForSecondsRealtime(.5f);
+            yield return Capture("quest-settings", "issue260");
+            yield return Press(Key.Escape);
+            Assert.That(settings.IsOpen, Is.False);
+            Assert.That(quests.IsOpen, Is.True);
+            yield return new WaitForSecondsRealtime(.5f);
+            yield return Press(Key.X);
+            Assert.That(quests.IsOpen, Is.False);
+            yield return new WaitForSecondsRealtime(.5f);
+
+            binder.ToggleUpgrade();
+            yield return WaitForUpgrade(view.UpgradeMotion, true);
+            yield return Press(Key.Escape);
+            Assert.That(settings.IsOpen, Is.True);
+            Assert.That(view.IsUpgradeVisible, Is.True);
+            Assert.That(view.UpgradeMotion.IsClosing, Is.False);
+            yield return new WaitForSecondsRealtime(.5f);
+            yield return Capture("upgrade-settings", "issue260");
+            yield return Press(Key.X);
+            Assert.That(settings.IsOpen, Is.False);
+            Assert.That(view.IsUpgradeVisible, Is.True);
+            yield return new WaitForSecondsRealtime(.5f);
+            yield return Press(Key.X);
+            yield return WaitForUpgrade(view.UpgradeMotion, false);
+
+            binder.ToggleInventory();
+            yield return new WaitForSecondsRealtime(.3f);
+            yield return Press(Key.Escape);
+            Assert.That(settings.IsOpen, Is.True);
+            Assert.That(view.IsInventoryVisible, Is.True);
+            yield return Press(Key.Escape);
+            Assert.That(settings.IsOpen, Is.False);
+            Assert.That(view.IsInventoryVisible, Is.True);
+            yield return new WaitForSecondsRealtime(.5f);
+            yield return Press(Key.X);
+            Assert.That(view.IsInventoryVisible, Is.False);
+            yield return new WaitForSecondsRealtime(.3f);
+            yield return Press(Key.Escape);
+            Assert.That(settings.IsOpen, Is.True, "창이 없어도 ESC는 설정창을 연다.");
         }
 
         [UnityTest]

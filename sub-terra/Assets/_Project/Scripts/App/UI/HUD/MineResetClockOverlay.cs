@@ -140,10 +140,14 @@ namespace SubTerra.App.UI.HUD
         }
 
         /// <summary>지상으로 떠나기 직전에 호출한다. 씬이 바뀌기 전에 전원 OFF 연출을 시작한다.</summary>
-        public void BeginDeparture()
+        public void BeginDeparture(bool playSound = true)
         {
+            if (departing) return;
+            var wasPowered = IsClockOnScreen && clockView != null && clockView.IsPoweredOn;
             departing = true;
             RefreshFromState();
+            if (Application.isPlaying && playSound && wasPowered && !clockView.IsPoweredOn)
+                SfxPlayer.Play(PowerOffSfx);
         }
 
         /// <summary>이동이 취소·실패했을 때 호출한다. 광산 안이면 시계가 다시 켜진다.</summary>
@@ -377,6 +381,24 @@ namespace SubTerra.App.UI.HUD
             GasWarningClockClearance.Add(onScreen ? 1 : -1);
         }
 
+        private const SfxId PowerOnSfx = SfxId.UiCctvOn;
+        private const SfxId PowerOffSfx = SfxId.WindowTvClose;
+
+        private void ToggleClockFromInput()
+        {
+            var runtime = SaveRuntimeController.Instance;
+            if (runtime == null) return;
+            var wasPowered = clockRoot != null && clockRoot.activeSelf
+                && clockView != null && clockView.IsPoweredOn;
+            runtime.ToggleMineResetClock();
+            RefreshFromState();
+            var powered = clockRoot != null && clockRoot.activeSelf
+                && clockView != null && clockView.IsPoweredOn;
+            if (Application.isPlaying && sessionVisible && !departing && runtime.ActiveSlot > 0
+                && wasPowered != powered)
+                SfxPlayer.Play(powered ? PowerOnSfx : PowerOffSfx);
+        }
+
         private void Update()
         {
             if (!sessionVisible || UiPauseGate.IsHeld)
@@ -389,8 +411,7 @@ namespace SubTerra.App.UI.HUD
                 && keyboard.tKey.wasPressedThisFrame
                 && !IsTypingInInputField())
             {
-                var runtime = SaveRuntimeController.Instance;
-                if (runtime != null) runtime.ToggleMineResetClock();
+                ToggleClockFromInput();
             }
 
             if (clockRoot != null && clockRoot.activeSelf)

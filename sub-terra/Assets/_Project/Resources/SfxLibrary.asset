@@ -677,6 +677,94 @@ MonoBehaviour:
     startTime: 0
     maxDuration: 0
     fadeOut: 0
+  - id: 85
+    clip: {fileID: 8300000, guid: e3891968bf084a1c821678a91fa9c7e0, type: 3}
+    bus: 0
+    volume: 0.45
+    pitch: 1
+    startTime: 0
+    maxDuration: 0
+    fadeOut: 0
+  - id: 86
+    clip: {fileID: 8300000, guid: 03996bbebd084837bafaea3ee8ecb1db, type: 3}
+    bus: 0
+    volume: 0.5
+    pitch: 1
+    startTime: 0
+    maxDuration: 0
+    fadeOut: 0
+  - id: 87
+    clip: {fileID: 8300000, guid: a166d79044cf74444ac1b1de1485377a, type: 3}
+    bus: 0
+    volume: 0.5
+    pitch: 1
+    startTime: 0
+    maxDuration: 0
+    fadeOut: 0
+  - id: 88
+    clip: {fileID: 8300000, guid: bdee280d556a6ac48bf9ebbf1a7ce860, type: 3}
+    bus: 0
+    volume: 0.6
+    pitch: 1
+    startTime: 0
+    maxDuration: 0
+    fadeOut: 0
+  - id: 89
+    clip: {fileID: 8300000, guid: 121387f6fa65c3641884ef98460b7f66, type: 3}
+    bus: 0
+    volume: 0.6
+    pitch: 1
+    startTime: 0
+    maxDuration: 0
+    fadeOut: 0
+  - id: 90
+    clip: {fileID: 8300000, guid: 888db262f3f1f874c83db7ff82d9abf9, type: 3}
+    bus: 1
+    volume: 0.3
+    pitch: 1
+    startTime: 0
+    maxDuration: 0
+    fadeOut: 0
+  - id: 91
+    clip: {fileID: 8300000, guid: c6b69dc8467af8041915a702bfa0bac4, type: 3}
+    bus: 0
+    volume: 0.55
+    pitch: 1
+    startTime: 0
+    maxDuration: 0
+    fadeOut: 0
+  - id: 92
+    clip: {fileID: 8300000, guid: 431c5e841c96f6e4eb1ca5daf49609b1, type: 3}
+    bus: 0
+    volume: 0.55
+    pitch: 1
+    startTime: 0
+    maxDuration: 0
+    fadeOut: 0
+  - id: 93
+    clip: {fileID: 8300000, guid: 937b568db41e7394c8b7d25ee7f0a2c9, type: 3}
+    bus: 0
+    volume: 0.55
+    pitch: 1
+    startTime: 0
+    maxDuration: 0
+    fadeOut: 0
+  - id: 94
+    clip: {fileID: 8300000, guid: afe7821acd14cbf4a9adc910312b0352, type: 3}
+    bus: 0
+    volume: 0.55
+    pitch: 1
+    startTime: 0
+    maxDuration: 0
+    fadeOut: 0
+  - id: 95
+    clip: {fileID: 8300000, guid: 320e6edde907de0409ee137ee6b89ec8, type: 3}
+    bus: 0
+    volume: 0.5
+    pitch: 1
+    startTime: 0.15
+    maxDuration: 0
+    fadeOut: 0.05
   uiBusVolume: 1
   worldBusVolume: 1
   alertBusVolume: 1

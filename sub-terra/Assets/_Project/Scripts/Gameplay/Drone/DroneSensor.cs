@@ -41,6 +41,8 @@ namespace SubTerra.Gameplay.Drone
         private IUpgradeEffectProvider upgradeEffects;
         private DroneScanPulseView pulseView;
         private bool scanWorldReady = true;
+        // 다음 펄스가 월드 준비·업그레이드 적용 뒤 바로 오는 즉시 스캔인지(B-178 소리 생략 판단용).
+        private bool pulseTimerReset = true;
         private readonly List<DroneScanTarget> lastPulseTargets = new();
 
         public DroneContextDto CurrentContext { get; private set; }
@@ -60,6 +62,12 @@ namespace SubTerra.Gameplay.Drone
         }
 
         public event Action<DroneContextDto> ContextUpdated;
+
+        /// <summary>
+        /// 스캔 링이 퍼지기 시작한 프레임에 한 번. 인자는 월드 준비·업그레이드 적용 직후의 즉시 스캔인지 여부다.
+        /// 소리를 낼지는 듣는 쪽(App)이 정한다.
+        /// </summary>
+        public event Action<bool> ScanPulseStarted;
 
         private void Update()
         {
@@ -81,6 +89,7 @@ namespace SubTerra.Gameplay.Drone
             if (scanWorldReady == ready) return;
             scanWorldReady = ready;
             nextPulseTime = 0f;
+            pulseTimerReset = true;
             if (!ready) ClearScanPulse();
         }
 
@@ -88,6 +97,7 @@ namespace SubTerra.Gameplay.Drone
         {
             upgradeEffects = effects;
             nextPulseTime = 0f;
+            pulseTimerReset = true;
             if (ResolveMineralScanRadius() <= 0)
             {
                 ClearScanPulse();
@@ -240,6 +250,17 @@ namespace SubTerra.Gameplay.Drone
                 currentTime + Mathf.Max(0.1f, pulseDuration),
                 currentTime,
                 IsPulseTargetValid);
+
+            var immediate = pulseTimerReset;
+            pulseTimerReset = false;
+            try
+            {
+                ScanPulseStarted?.Invoke(immediate);
+            }
+            catch (Exception exception)
+            {
+                Debug.LogWarning("[DroneSensor] ScanPulseStarted 처리 실패: " + exception.Message);
+            }
         }
 
         private bool IsPulseTargetValid(DroneScanTarget target)

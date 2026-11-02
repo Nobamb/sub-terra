@@ -228,6 +228,32 @@ namespace SubTerra.App.Audio
                 (new SfxEntry(SfxId.UpgradeWindowSuckIn, SfxBus.UI, volume: 0.35f), "upgrade_window_suck_in"),
                 // 0.25초. 조각 모임(끝에 "착").
                 (new SfxEntry(SfxId.UpgradeLockRegather, SfxBus.UI, volume: 0.5f), "upgrade_lock_regather"),
+                // B-170 메인 화면 부팅. 길이는 파일 그대로.
+                // 2.3초. 켜짐 + 끝에 작게 TV 지직. 건너뛰면 코드가 0.15초에 줄여 멈춘다.
+                (new SfxEntry(SfxId.MainMenuBoot, SfxBus.UI, volume: 0.45f), "main_menu_boot"),
+                // 0.13초. 부팅 문구 타이핑 틱(0.06초 간격 제한은 코드에서).
+                (new SfxEntry(SfxId.MainMenuTypeTick, SfxBus.UI, volume: 0.5f), "main_menu_type_tick"),
+                // B-178 퀘스트 보상·작은 글리치 창·드론 스캔. 길이는 다듬은 파일 그대로.
+                // 1.10초. 보상이 실제로 들어올 때 한 번 "띠-링".
+                (new SfxEntry(SfxId.QuestReward, SfxBus.UI, volume: 0.5f), "quest_reward"),
+                // 0.90초. 퀘스트 클리어·심층 해금 창 열림(150Hz 아래를 깎은 가벼운 버전).
+                (new SfxEntry(SfxId.GlitchPopupOpen, SfxBus.UI, volume: 0.6f), "glitch_popup_open"),
+                // 0.70초. 같은 두 창 닫힘(열림 원본을 거꾸로).
+                (new SfxEntry(SfxId.GlitchPopupClose, SfxBus.UI, volume: 0.6f), "glitch_popup_close"),
+                // 0.90초. 30초 스캔 링 시작 "핑". 자주 나므로 작게.
+                (new SfxEntry(SfxId.DroneScanPing, SfxBus.World, volume: 0.3f), "drone_scan_ping"),
+                // B-179-1: 0.698초. 방향키·스크롤의 한 번 변화, 피치는 1 고정.
+                (new SfxEntry(SfxId.SettingsSliderDrag, SfxBus.UI, volume: 0.55f), "settings_slider_drag"),
+                // 0.544초. SliderDragLoopAudio가 앞·반복·끝을 샘플 경계로 연결한다.
+                (new SfxEntry(SfxId.SettingsSliderDragHead, SfxBus.UI, volume: 0.55f), "settings_slider_drag_head"),
+                // 0.1696초(7481샘플). 짧은 PCM 반복이므로 LoopFileNames에 넣지 않는다.
+                (new SfxEntry(SfxId.SettingsSliderDragLoop, SfxBus.UI, volume: 0.55f), "settings_slider_drag_loop"),
+                // 0.164초. 손을 놓으면 다음 반복 끝에 붙인다.
+                (new SfxEntry(SfxId.SettingsSliderDragTail, SfxBus.UI, volume: 0.55f), "settings_slider_drag_tail"),
+                // B-180-1: 76번과 같은 0.67초 파일. 앞 0.15초의 작게 차오르는 부분(단독으로는 바람 소리처럼 들림)은 건너뛰고
+                // 0.25~0.6초의 쇠 덜그럭까지 끝까지 낸다. 0.52초.
+                (new SfxEntry(SfxId.LockedNodeRattle, SfxBus.UI, volume: 0.5f, startTime: 0.15f, fadeOut: 0.05f),
+                    "unlock_rattle"),
             };
         }
     }
