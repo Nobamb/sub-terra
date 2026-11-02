@@ -1,0 +1,157 @@
+[
+  {
+    "pose": 1,
+    "source": "work_process\\images\\issue266\\female-original-outfit-ladder-v1-review\\pose-01.png",
+    "sourceSha256": "45560F075FC3ECD73D891690CFB5DD32DA130D199DCCFA040DBDAFAD8B81011D",
+    "scale": 2.0871459694989105,
+    "dx": 71.01416122004366,
+    "dy": 64.6013071895425,
+    "width": 1254,
+    "height": 1254,
+    "bounds": {
+      "Location": {
+        "IsEmpty": false,
+        "X": 364,
+        "Y": 146
+      },
+      "Size": {
+        "IsEmpty": false,
+        "Width": 537,
+        "Height": 959
+      },
+      "X": 364,
+      "Y": 146,
+      "Width": 537,
+      "Height": 959,
+      "Left": 364,
+      "Top": 146,
+      "Right": 901,
+      "Bottom": 1105,
+      "IsEmpty": false
+    }
+  },
+  {
+    "pose": 2,
+    "source": "work_process\\images\\issue266\\female-original-outfit-ladder-v1-review\\pose-02.png",
+    "sourceSha256": "6695F7793C7BCAEA3ED6523A4764D0E8F3A7F034B3E84376416ECFD59A2DB217",
+    "scale": 2.0871459694989105,
+    "dx": 71.01416122004366,
+    "dy": 64.6013071895425,
+    "width": 1254,
+    "height": 1254,
+    "bounds": {
+      "Location": {
+        "IsEmpty": false,
+        "X": 340,
+        "Y": 145
+      },
+      "Size": {
+        "IsEmpty": false,
+        "Width": 586,
+        "Height": 962
+      },
+      "X": 340,
+      "Y": 145,
+      "Width": 586,
+      "Height": 962,
+      "Left": 340,
+      "Top": 145,
+      "Right": 926,
+      "Bottom": 1107,
+      "IsEmpty": false
+    }
+  },
+  {
+    "pose": 3,
+    "source": "work_process\\images\\issue266\\female-original-outfit-ladder-v1-review\\pose-03.png",
+    "sourceSha256": "03C8071E32E938C3E0A9061171FD0E9CE2E035AC98A09F94E602496A5632A2AE",
+    "scale": 2.0871459694989105,
+    "dx": 71.01416122004366,
+    "dy": 64.6013071895425,
+    "width": 1254,
+    "height": 1254,
+    "bounds": {
+      "Location": {
+        "IsEmpty": false,
+        "X": 353,
+        "Y": 140
+      },
+      "Size": {
+        "IsEmpty": false,
+        "Width": 568,
+        "Height": 967
+      },
+      "X": 353,
+      "Y": 140,
+      "Width": 568,
+      "Height": 967,
+      "Left": 353,
+      "Top": 140,
+      "Right": 921,
+      "Bottom": 1107,
+      "IsEmpty": false
+    }
+  },
+  {
+    "pose": 4,
+    "source": "work_process\\images\\issue266\\female-original-outfit-ladder-v1-review\\pose-04.png",
+    "sourceSha256": "D6B46986404BA16B33B650E80D777AF27A9443DE0BB0D9CFA82252D92113BF9E",
+    "scale": 2.0871459694989105,
+    "dx": 71.01416122004366,
+    "dy": 64.6013071895425,
+    "width": 1254,
+    "height": 1254,
+    "bounds": {
+      "Location": {
+        "IsEmpty": false,
+        "X": 353,
+        "Y": 133
+      },
+      "Size": {
+        "IsEmpty": false,
+        "Width": 546,
+        "Height": 961
+      },
+      "X": 353,
+      "Y": 133,
+      "Width": 546,
+      "Height": 961,
+      "Left": 353,
+      "Top": 133,
+      "Right": 899,
+      "Bottom": 1094,
+      "IsEmpty": false
+    }
+  },
+  {
+    "pose": 5,
+    "source": "work_process\\images\\issue266\\female-original-outfit-ladder-v1-review\\pose-05.png",
+    "sourceSha256": "7955B896AF74594A1FBCEDE0E195E9983E55A9C49FD712CF11EBDCA799C02DA4",
+    "scale": 2.0871459694989105,
+    "dx": 71.01416122004366,
+    "dy": 64.6013071895425,
+    "width": 1254,
+    "height": 1254,
+    "bounds": {
+      "Location": {
+        "IsEmpty": false,
+        "X": 359,
+        "Y": 131
+      },
+      "Size": {
+        "IsEmpty": false,
+        "Width": 511,
+        "Height": 962
+      },
+      "X": 359,
+      "Y": 131,
+      "Width": 511,
+      "Height": 962,
+      "Left": 359,
+      "Top": 131,
+      "Right": 870,
+      "Bottom": 1093,
+      "IsEmpty": false
+    }
+  }
+]
