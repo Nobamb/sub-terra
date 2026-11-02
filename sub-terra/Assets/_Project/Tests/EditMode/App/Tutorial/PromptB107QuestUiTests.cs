@@ -16,6 +16,37 @@ namespace SubTerra.App.Tests.Tutorial
     public sealed class PromptB107QuestUiTests
     {
         [Test]
+        public void Issue267_SavedSurfaceAndMineCloseButtonsShareContentInsets()
+        {
+            var surface = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/Prefabs/UI/SurfaceBasePanel.prefab");
+            Check(surface.transform.Find("SurfaceQuestRoot/QuestDetailsPanel/QuestDetailsCloseButton"));
+            var scene = EditorSceneManager.OpenScene(PromptB107QuestUiBuilder.IntegrationScenePath, OpenSceneMode.Additive);
+            try { Check(Find(scene, "QuestDetailsCloseButton").transform); }
+            finally { EditorSceneManager.CloseScene(scene, true); }
+
+            void Check(Transform target)
+            {
+                var rect = (RectTransform)target;
+                Assert.That(rect.anchoredPosition, Is.EqualTo(new Vector2(-112f, -94f)));
+                Assert.That(rect.sizeDelta, Is.EqualTo(new Vector2(68f, 68f)));
+                Assert.That(rect.anchorMin, Is.EqualTo(Vector2.one));
+                Assert.That(rect.anchorMax, Is.EqualTo(Vector2.one));
+                Assert.That(target.GetComponent<Button>().onClick.GetPersistentMethodName(0),
+                    Is.EqualTo(nameof(DemoObjectiveView.OnDetailsDismissClicked)));
+                foreach (string name in new[] { "NormalImage", "HoverImage" })
+                {
+                    var image = (RectTransform)target.Find(name);
+                    Assert.That(image.anchorMin, Is.EqualTo(Vector2.zero));
+                    Assert.That(image.anchorMax, Is.EqualTo(Vector2.one));
+                    Assert.That(image.offsetMin, Is.EqualTo(Vector2.zero));
+                    Assert.That(image.offsetMax, Is.EqualTo(Vector2.zero));
+                }
+                PromptB107QuestUiBuilder.ApplyDetailsCloseLayout(rect);
+                Assert.That(rect.anchoredPosition, Is.EqualTo(new Vector2(-112f, -94f)));
+            }
+        }
+
+        [Test]
         public void CompactSummary_ShowsActionWhileDetailsKeepFullDescription()
         {
             var host = new GameObject("SummaryContent", typeof(RectTransform));
