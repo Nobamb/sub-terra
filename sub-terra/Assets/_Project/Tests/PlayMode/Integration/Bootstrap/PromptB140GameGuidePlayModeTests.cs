@@ -76,6 +76,50 @@ namespace SubTerra.App.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator GuideAndControlTerminal_MiningCompletionFrames()
+        {
+            yield return Load(1280, 720);
+            var chrome = Chrome();
+            chrome.OpenGameGuide();
+            var popup = Popup();
+            yield return WaitOpen(popup);
+            popup.GuideState.SelectCard("ctrl.mine");
+            yield return UiTestWait.Until(() => popup.DetailStage.Clip != null && popup.DetailStage.Clip.Id == "mine",
+                "mining guide demo", 2f);
+            yield return new WaitForSecondsRealtime(0.25f);
+            popup.DetailStage.Stop();
+            foreach (var offset in new[] { -0.01f, 0f, 0.15f, 0.17f })
+            {
+                popup.DetailStage.Show(1.333f + offset);
+                yield return UiTestWait.Capture("Temp/guide-mining-evidence/guide-" + (offset + 0.01f).ToString("F2") + ".png");
+            }
+            chrome.CloseGameGuide();
+            yield return WaitHidden(popup);
+
+            var canvas = new GameObject("MiningControlsPreview", typeof(RectTransform), typeof(Canvas));
+            canvas.GetComponent<Canvas>().renderMode = RenderMode.ScreenSpaceOverlay;
+            var panel = SubTerra.App.UI.MainMenu.ControlSchemePanel.Attach(canvas);
+            try
+            {
+                panel.Open();
+                yield return UiTestWait.Until(() => panel.Terminal.CurrentPhase == SubTerra.App.UI.ControlTerminal.ControlTerminalView.Phase.Idle,
+                    "control terminal open", 3f);
+                var cap = panel.Terminal.GetCap("Enter");
+                ExecuteEvents.Execute(cap.gameObject, new PointerEventData(EventSystem.current), ExecuteEvents.pointerEnterHandler);
+                yield return UiTestWait.Until(() => panel.Terminal.ScreenVisible && panel.Terminal.Stage.Clip != null,
+                    "mining controls demo", 2f);
+                yield return new WaitForSecondsRealtime(0.5f);
+                panel.Terminal.Stage.Stop();
+                foreach (var offset in new[] { -0.01f, 0f, 0.15f, 0.17f })
+                {
+                    panel.Terminal.Stage.Show(17f / 12f + offset);
+                    yield return UiTestWait.Capture("Temp/guide-mining-evidence/controls-" + (offset + 0.01f).ToString("F2") + ".png");
+                }
+            }
+            finally { Object.Destroy(canvas); }
+        }
+
+        [UnityTest]
         public IEnumerator Guide_OpensAndClosesThroughExistingPaths()
         {
             yield return Load();

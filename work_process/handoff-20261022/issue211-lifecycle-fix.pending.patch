@@ -1,0 +1,290 @@
+diff --git a/sub-terra/Assets/_Project/Scripts/App/Integration/IntegrationRuntimeBinder.cs b/sub-terra/Assets/_Project/Scripts/App/Integration/IntegrationRuntimeBinder.cs
+index 4a3ea8e5..72be5fc0 100644
+--- a/sub-terra/Assets/_Project/Scripts/App/Integration/IntegrationRuntimeBinder.cs
++++ b/sub-terra/Assets/_Project/Scripts/App/Integration/IntegrationRuntimeBinder.cs
+@@ -77,6 +77,7 @@ namespace SubTerra.App.Integration
+         private bool uiActivated;
+         private bool inventorySpeedBound;
+         private bool droneReadingsBound;
++        private Action unbindProgressionPanel;
+ 
+         public IntegrationContractRegistry Contracts => contracts;
+         public IntegrationActivationGate ActivationGate => activationGate;
+@@ -419,6 +420,9 @@ namespace SubTerra.App.Integration
+                         return;
+                     }
+ 
++                    // 비활성 창은 Unity OnDestroy가 호출되지 않을 수 있다.
++                    // 파괴 순서와 무관하게 CLR 참조로 구독 해제 경로를 보관한다.
++                    unbindProgressionPanel = progressionPanelBinder.Unbind;
+                     progressionPanelBinder.BindTo(
+                         runtime.Progression,
+                         () => bootstrap != null
+@@ -887,6 +891,8 @@ namespace SubTerra.App.Integration
+ 
+         private void OnDestroy()
+         {
++            unbindProgressionPanel?.Invoke();
++            unbindProgressionPanel = null;
+             if (inventorySpeedBound && runtime != null && runtime.InventoryService != null)
+             {
+                 runtime.InventoryService.InventoryChanged -= OnInventoryChangedForMovement;
+diff --git a/sub-terra/Assets/_Project/Scripts/App/UI/Progression/ProgressionPanelBinder.cs b/sub-terra/Assets/_Project/Scripts/App/UI/Progression/ProgressionPanelBinder.cs
+index 4c19516f..e97ffc14 100644
+--- a/sub-terra/Assets/_Project/Scripts/App/UI/Progression/ProgressionPanelBinder.cs
++++ b/sub-terra/Assets/_Project/Scripts/App/UI/Progression/ProgressionPanelBinder.cs
+@@ -1,5 +1,6 @@
+ using System;
+ using SubTerra.App.Progression;
++using SubTerra.App.Save;
+ using UnityEngine;
+ 
+ namespace SubTerra.App.UI.Progression
+@@ -12,6 +13,7 @@ namespace SubTerra.App.UI.Progression
+     public sealed class ProgressionPanelBinder : MonoBehaviour
+     {
+         [SerializeField] private ProgressionPanelView view;
++        [SerializeField] private bool tracePurchases;
+ 
+         private ProgressionPanelPresenter presenter;
+         private ProgressionService service;
+@@ -49,6 +51,12 @@ namespace SubTerra.App.UI.Progression
+         }
+ 
+         private void OnDestroy()
++        {
++            Unbind();
++        }
++
++        /// <summary>한 번도 활성화되지 않은 창도 씬 소유자가 명시적으로 구독을 해제한다.</summary>
++        public void Unbind()
+         {
+             if (service != null)
+             {
+@@ -113,7 +121,43 @@ namespace SubTerra.App.UI.Progression
+ 
+         public void PurchaseSelected()
+         {
+-            presenter?.RequestPurchase();
++            var upgradeId = presenter?.SelectedUpgradeId ?? string.Empty;
++            TracePurchase("before", upgradeId, string.Empty);
++            try
++            {
++                if (presenter == null)
++                {
++                    TracePurchase("after", upgradeId, "PresenterMissing");
++                    return;
++                }
++
++                var result = presenter.RequestPurchase();
++                TracePurchase("after", upgradeId, result.Status.ToString());
++            }
++            catch (Exception exception)
++            {
++                // 예외를 숨기지 않고 원래 스택을 유지한다. 진단은 발생 단계를 덧붙인다.
++                TracePurchase("exception", upgradeId, exception.GetType().Name);
++                throw;
++            }
++        }
++
++        private void TracePurchase(string phase, string upgradeId, string outcome)
++        {
++            // 일반 플레이에서는 기록하지 않는다. exe도 -trace-upgrades로 같은 진단을 켤 수 있다.
++            if (!tracePurchases && Array.IndexOf(Environment.GetCommandLineArgs(), "-trace-upgrades") < 0)
++                return;
++
++            var runtime = SaveRuntimeController.Instance;
++            var current = runtime != null ? runtime.Progression : null;
++            var boundLevel = service != null && service.TryGetSnapshot(upgradeId, out var bound)
++                ? bound.CurrentLevel : -1;
++            var currentLevel = current != null && current.TryGetSnapshot(upgradeId, out var live)
++                ? live.CurrentLevel : -1;
++            Debug.Log($"[UpgradePurchaseTrace] phase={phase} frame={Time.frameCount} "
++                + $"scene={gameObject.scene.name} binder={GetEntityId()} upgrade={upgradeId} "
++                + $"bound={IsBound} currentService={current != null && ReferenceEquals(service, current)} "
++                + $"boundLevel={boundLevel} currentLevel={currentLevel} outcome={outcome}", this);
+         }
+ 
+         private void EnsureView()
+diff --git a/sub-terra/Assets/_Project/Scripts/App/UI/SurfaceBase/SurfaceBaseBinder.cs b/sub-terra/Assets/_Project/Scripts/App/UI/SurfaceBase/SurfaceBaseBinder.cs
+index ae04d29a..cc92947b 100644
+--- a/sub-terra/Assets/_Project/Scripts/App/UI/SurfaceBase/SurfaceBaseBinder.cs
++++ b/sub-terra/Assets/_Project/Scripts/App/UI/SurfaceBase/SurfaceBaseBinder.cs
+@@ -182,7 +182,7 @@ namespace SubTerra.App.UI.SurfaceBase
+             }
+ 
+             economyBinder?.Unbind();
+-            progressionBinder?.Presenter?.Unbind();
++            if (progressionBinder != null) progressionBinder.Unbind();
+         }
+ 
+         private void Update()
+diff --git a/sub-terra/Assets/_Project/Tests/PlayMode/Integration/Progression/ProgressionPlayModeTests.cs b/sub-terra/Assets/_Project/Tests/PlayMode/Integration/Progression/ProgressionPlayModeTests.cs
+index 3463bb79..18b44d0c 100644
+--- a/sub-terra/Assets/_Project/Tests/PlayMode/Integration/Progression/ProgressionPlayModeTests.cs
++++ b/sub-terra/Assets/_Project/Tests/PlayMode/Integration/Progression/ProgressionPlayModeTests.cs
+@@ -243,6 +243,56 @@ namespace SubTerra.App.Tests.PlayMode.Integration.Progression
+             PurchaseAndCheck(DataIds.Upgrades.MaximumEnergy);
+             Assert.That(runtime.SaveCurrent().IsSuccess, Is.True);
+ 
++            // 그래픽 없는 검사에서는 URP/CCTV 렌더만 제외한다. 씬·서비스·구매 경로는 유지한다.
++            var disabledForHeadless = new List<Behaviour>();
++            SceneManager.sceneLoaded += PrepareHeadlessScene;
++            try
++            {
++                var serviceBeforeTravel = runtime.Progression;
++                Object.FindAnyObjectByType<SubTerra.App.UI.SurfaceBase.SurfaceBaseView>().SetUpgradeVisible(false);
++                Assert.That(runtime.TryStartExploration(out var enterReason), Is.True, enterReason);
++                yield return UiTestWait.Until(() => SceneManager.GetActiveScene().name == SceneNames.Integration
++                    && Object.FindAnyObjectByType<IntegrationRuntimeBinder>()?.IsUiActivated == true,
++                    "광산 UI 연결", 90f);
++                yield return UiTestEnvironment.DismissBriefing();
++                Assert.That(runtime.Progression, Is.SameAs(serviceBeforeTravel));
++                var mineOwner = Object.FindAnyObjectByType<IntegrationRuntimeBinder>();
++                var minePanel = (ProgressionPanelBinder)typeof(IntegrationRuntimeBinder)
++                    .GetField("progressionPanelBinder", flags).GetValue(mineOwner);
++                Assert.That(minePanel.gameObject.activeInHierarchy, Is.False, "광산 업그레이드 창을 열지 않은 경로를 확인한다.");
++                var minePresenter = minePanel.Presenter;
++                Assert.That(minePresenter.IsBound, Is.True);
++                Assert.That(runtime.TryReturnToSurface(out var returnReason), Is.True, returnReason);
++                yield return UiTestWait.Until(SurfaceReady, "실제 귀환 후 지상 연결", 90f);
++                Assert.That(minePresenter.IsBound, Is.False, "파괴된 비활성 창의 구독이 남으면 다음 구매 갱신을 중단시킨다.");
++                Assert.That(runtime.Progression, Is.SameAs(serviceBeforeTravel));
++                PurchaseAndCheck(DataIds.Upgrades.MaximumHealth);
++            }
++            finally
++            {
++                SceneManager.sceneLoaded -= PrepareHeadlessScene;
++                foreach (var behaviour in disabledForHeadless)
++                    if (behaviour != null) behaviour.enabled = true;
++            }
++
++            void PrepareHeadlessScene(Scene scene, LoadSceneMode mode)
++            {
++                if (SystemInfo.graphicsDeviceType != UnityEngine.Rendering.GraphicsDeviceType.Null
++                    || scene.name != SceneNames.Integration) return;
++                foreach (var camera in Object.FindObjectsByType<Camera>(FindObjectsSortMode.None))
++                    if (camera.enabled)
++                    {
++                        disabledForHeadless.Add(camera);
++                        camera.enabled = false;
++                    }
++                foreach (var binder in Object.FindObjectsByType<SubTerra.App.UI.EmergencyEscape.EmergencyEscapePanelBinder>(FindObjectsSortMode.None))
++                    if (binder.enabled)
++                    {
++                        disabledForHeadless.Add(binder);
++                        binder.enabled = false;
++                    }
++            }
++
+             bool SurfaceReady() => SceneManager.GetActiveScene().name == SceneNames.SurfaceBase
+                 && Object.FindAnyObjectByType<SubTerra.App.UI.SurfaceBase.SurfaceBaseBinder>()?.IsBound == true
+                 && runtime.IsUiReady;
+@@ -257,6 +307,9 @@ namespace SubTerra.App.Tests.PlayMode.Integration.Progression
+                 Assert.That(runtime.Progression.TryGetSnapshot(id, out var before), Is.True);
+                 var purchase = (UnityEngine.UI.Button)typeof(ProgressionPanelView).GetField("purchaseButton", flags).GetValue(panel);
+                 Assert.That(purchase.interactable, Is.True, id);
++                typeof(ProgressionPanelBinder).GetField("tracePurchases", flags).SetValue(binder, true);
++                LogAssert.Expect(LogType.Log, new System.Text.RegularExpressions.Regex(
++                    @"\[UpgradePurchaseTrace\] phase=before .*currentService=True .*boundLevel=" + before.CurrentLevel));
+                 purchase.onClick.Invoke();
+                 Assert.That(runtime.Progression.LastPurchaseResult.IsSuccess, Is.True, id);
+                 Assert.That(runtime.Progression.TryGetSnapshot(id, out var after), Is.True);
+@@ -266,6 +319,9 @@ namespace SubTerra.App.Tests.PlayMode.Integration.Progression
+                 Assert.That(label.text, Is.EqualTo(after.IsMaximumLevel ? "MAX" : "Lv." + after.CurrentLevel + "/" + after.MaximumLevel));
+                 if (id == DataIds.Upgrades.MaximumEnergy)
+                     Assert.That(GameBootstrapper.Instance.State.Player.MaxEnergy, Is.EqualTo(100 + (int)after.CurrentEffectValue));
++                if (id == DataIds.Upgrades.MaximumHealth)
++                    Assert.That(((IPlayerHealthUpgradeProvider)runtime.Progression.Effects).GetMaximumHealth(100),
++                        Is.EqualTo(100 + (int)after.CurrentEffectValue));
+             }
+         }
+ 
+@@ -337,6 +393,37 @@ namespace SubTerra.App.Tests.PlayMode.Integration.Progression
+             Assert.That(env.Save.ActiveSlot, Is.Zero);
+         }
+ 
++        [Test]
++        public void Issue211_PurchaseTracePreservesSubscriberExceptionAndCommittedLevel()
++        {
++            var host = new GameObject("Issue211_DiagnosticBinder");
++            var data = CreateUpgrade(DataIds.Upgrades.DrillSpeed, 0.25f);
++            try
++            {
++                var binder = host.AddComponent<ProgressionPanelBinder>();
++                var service = new ProgressionService(new UpgradeState(), new Catalog(data), new Wallet());
++                binder.BindTo(service);
++                Assert.That(binder.SelectUpgrade(data.Id), Is.True);
++                typeof(ProgressionPanelBinder).GetField("tracePurchases", BindingFlags.Instance | BindingFlags.NonPublic)
++                    .SetValue(binder, true);
++                var failure = new System.InvalidOperationException("검사용 구독자 예외");
++                service.UpgradeChanged += _ => throw failure;
++                LogAssert.Expect(LogType.Log, new System.Text.RegularExpressions.Regex(
++                    @"\[UpgradePurchaseTrace\] phase=before .*boundLevel=0"));
++                LogAssert.Expect(LogType.Log, new System.Text.RegularExpressions.Regex(
++                    @"\[UpgradePurchaseTrace\] phase=exception .*boundLevel=1 .*outcome=InvalidOperationException"));
++                Assert.That(Assert.Throws<System.InvalidOperationException>(() => binder.PurchaseSelected()), Is.SameAs(failure));
++                Assert.That(service.TryGetSnapshot(data.Id, out var snapshot), Is.True);
++                Assert.That(snapshot.CurrentLevel, Is.EqualTo(1));
++                Assert.That(binder.Presenter.IsBusy, Is.False);
++            }
++            finally
++            {
++                Object.DestroyImmediate(host);
++                Object.DestroyImmediate(data);
++            }
++        }
++
+         [UnityTest]
+         public IEnumerator Purchase_UpdatesUiAndProviderInSameFrame()
+         {
+diff --git a/work_process/issue-211-result-20261021.md b/work_process/issue-211-result-20261021.md
+index 57956b93..33607679 100644
+--- a/work_process/issue-211-result-20261021.md
++++ b/work_process/issue-211-result-20261021.md
+@@ -1,6 +1,13 @@
+ # #211 지상 업그레이드 재현 조사 — 2026-10-21
+ 
+-## 결론
++## 최신 결론 — 2026-10-22
++
++- 광산에서 업그레이드 창을 한 번도 열지 않고 지상으로 돌아온 뒤 최대 체력을 구매하는 경로에서 문제를 재현했다. 레벨은 커밋되지만 파괴된 광산 ProgressionPanelView에 갱신 이벤트가 전달되어 MissingReferenceException이 발생했다. 현재 지상 창의 갱신·완료·자동 저장 이벤트까지 진행되지 않을 수 있다.
++- 비활성 상태로 연결된 창은 Unity OnDestroy가 호출되지 않을 수 있는데, IntegrationRuntimeBinder에 해당 구독을 해제하는 코드가 없었다. 씬 소유자가 명시적으로 해제하도록 수정했다. 현재 서비스와 연결이 다르다는 가설은 이 경로에서 반증됐다.
++- 수정 후 실제 메모리 저장·BeginContinue·탐사·귀환·재구매 검사 통과. 광산의 열지 않은 Presenter가 귀환 시 unbound 상태임을 확인했고, 최대 체력 구매 후 서비스 레벨·실제 트리 라벨·체력 효과 제공값이 즉시 갱신됐다. 실제 화면·Windows exe·사용자 재현 슬롯까지 검증한 결과는 아니다.
++- 아래 초기 미재현 기록은 당시 검사 범위의 결과로 보존한다. 이번 변경은 기존 초안 PR #233 브랜치에 있으며 아직 커밋·푸시하지 않았다. 게시 시 같은 PR의 제목·본문을 실제 수정 내용으로 갱신한다.
++
++## 초기 조사 결론
+ 
+ - 실제 SurfaceBase 씬·카탈로그·구매 버튼 경로에서도 제보 증상은 미재현이다. 해결 완료로 처리하거나 이슈를 닫지 않는다.
+ - 드릴 2회 → 최대 전력 → 최대 체력 → 최대 화물 → 채굴 수확량 순서로 구매했다. 기존 트리의 선행 해금을 지켰다.
+@@ -35,3 +42,30 @@
+ - 첫 확장 검사는 광산 진입 후 headless URP 렌더 텍스처 생성 실패·Editor 네이티브 종료로 완료되지 않았다. 업그레이드 실패로 분류하지 않으며 같은 광산 검사를 반복하지 않았다. 다음 시도는 검사 시작 전에 썸네일 격리를 보완하려고 중단했고, 최종 검사는 지상 이어하기만 실행했다. 원시 로그: work_process/tools/issue211-continue-return-20261022.log.
+ - 초기 확장 검사에서 저장 JSON은 메모리로 격리했으나 썸네일 서비스 경로는 격리되지 않았다. 새 게임의 슬롯 1 썸네일 삭제 호출이 사용자 경로를 향할 수 있었으며, 기존 썸네일 존재 여부와 실제 삭제 여부는 확인할 수 없다. 사용자 JSON을 읽거나 덮어쓰지는 않았다. 최종 검사에서는 썸네일 서비스도 임시 경로로 교체했다. 썸네일 누락 시 다음 실제 저장에서 다시 생성할 수 있다.
+ - 결론: 새 게임과 지상 저장·이어하기에서는 미재현. 광산 복귀 후 구매와 앱 완전 종료 후 이어하기·실제 렌더 화면은 미검증이다. 이벤트 예외 격리 같은 추측성 런타임 수정을 하지 않는다. 재현 슬롯·구매 항목·오류 로그 확보가 다음 단계다.
++
++## 다음 재현을 위한 선택형 구매 진단 — 2026-10-22
++
++- 현재 PC의 Player.log/Player-prev.log는 2026-09-22 기록이며 #211을 설명하는 구매 스택을 찾지 못했다. 2026-10-22 이슈 댓글도 비어 있다. 과거 채굴 오류나 Unity 연결/라이선스 오류를 구매 지연 원인으로 간주하지 않는다.
++- ProgressionPanelBinder에 선택형 진단을 추가했다. 기본은 꺼짐. 실행 인자 `-trace-upgrades` 또는 Play 중 해당 바인더의 `Trace Purchases` 체크로 켠다. 프리팹·씬 변경 불필요.
++- 구매당 `[UpgradePurchaseTrace]` 두 줄: before와 after 또는 exception. 프레임·씬·바인더 ID·구매 ID·현재 서비스 연결 일치 여부·연결된 서비스/현재 서비스 레벨·결과/예외 종류를 기록한다. 개인 경로·세이브 내용·자원 목록을 추가로 기록하지 않는다. 매 프레임 출력하지 않는다.
++- 예외는 잡아서 무시하지 않고 원래 예외와 스택으로 다시 던진다. 구매 비용·판정·레벨·저장 순서는 변경하지 않는다. 실제 예외 원인이나 실제 #211 해결을 의미하지 않는다.
++- 검증: PlayMode 2건 통과, 실패/건너뜀 0, 14.65초. 이어하기 후 실제 구매·레벨/최대 전력 갱신과 before/after 로그, 예외 원본 전파·커밋된 레벨·busy 해제를 확인했다. 처음에는 Unity 6.5에서 금지된 GetInstanceID 호출로 컴파일이 중단되어 GetEntityId로 수정한 뒤 두 건만 재실행했다. 최종 컴파일 오류 없음. 결과: work_process/tools/issue211-purchase-trace-20261022-final/.
++- 진단만 추가했던 시점에는 미재현 초안으로 유지했다. 아래 후속 조사에서 원인이 재현됐으므로, 다음 게시 시 기존 #233의 제목·본문을 수정 내용에 맞게 갱신한다. 새 PR은 만들지 않는다.
++
++## 원인 재현과 수정 — 2026-10-22 후속
++
++- 실패 증거: work_process/tools/issue211-mine-return-stack-20261022/PlayMode-results.xml. 최대 체력 구매 중 ProgressionService.TryPurchase → ProgressionPanelPresenter.OnUpgradeChanged → ProgressionPanelView.SetUpgradeList → ApplyCategoryFilterToButtons에서 파괴된 View의 transform 접근으로 MissingReferenceException 발생. 첫 실패 실행은 기대한 after 로그가 없다는 검사 오류로 스택이 가려져, 그 기대식만 제거한 뒤 동일 예외를 재확인했다. 결과를 성공으로 처리하거나 예외를 무시하지 않았다.
++- 변경: ProgressionPanelBinder.Unbind를 공개하고 OnDestroy도 이를 사용한다. IntegrationRuntimeBinder는 비활성 창을 연결할 때 구독 해제 delegate를 보관하고 자신의 OnDestroy에서 호출한다. Unity 객체 파괴 순서 때문에 컴포넌트가 이미 destroyed-null이 되어도 관리 객체의 구독 해제 코드를 호출할 수 있다. SurfaceBaseBinder.OnDisable도 Presenter만 해제하던 호출을 Binder 전체 해제로 바꿔 심층 구독까지 해제한다.
++- 선택형 진단은 복구한 기존 변경을 유지한다. 기본 꺼짐이며 예외를 원래대로 전파한다. 임의의 이벤트 예외 격리나 매 프레임 강제 갱신은 추가하지 않는다.
++- 실제 왕복 검사: 메모리 슬롯 새 게임·드릴 구매·저장·BeginContinue·드릴/최대 전력 구매 → 실제 TryStartExploration·Integration UI 활성화 → 열지 않은 업그레이드 창의 bound 상태 확인 → 실제 TryReturnToSurface → 해당 Presenter의 unbound 상태 → 최대 체력 구매의 레벨/라벨/효과 확인.
++- headless 검사에서만 sceneLoaded 시 활성 카메라와 EmergencyEscapePanelBinder를 비활성화해 URP 렌더와 CCTV 사전 준비를 제외했다. 게임의 씬 로더·상태·서비스·월드·구매 규칙은 우회하지 않는다. 카메라 관련 화면 상호작용을 검증한 것은 아니며 검사 종료 시 살아있는 Behaviour는 복구한다.
++- 수정 후 결과: work_process/tools/issue211-inactive-panel-fix-20261022/. EditMode 1건 통과, PlayMode 2건 통과(왕복 포함 29.37초). 이후 지상 해제 호출 한 줄의 최종 컴파일/지상 구매 검사 1건을 work_process/tools/issue211-surface-cleanup-final-20261022/에서 확인해 통과했다(1.46초). 고유 검사 총 3건 통과이며 광산 왕복 전체는 반복하지 않았다.
++- 새 씬·프리팹·패키지·ProjectSettings 변경 없음. 저장 JSON·썸네일 경로 모두 격리한 상태로 실행했다. #211 제보 전체의 모든 조건이 해결됐다고 단정하지 않으며, 재현한 수명주기 오류의 수정이다.
++
++### 팀원 PC에서 한 번 수집하는 방법
++
++1. 이 진단 코드가 포함된 새 실행 파일을 사용한다. 이전 exe는 Git 브랜치만 변경해도 바뀌지 않는다.
++2. 실행 파일의 바로가기 대상 끝에 공백 후 `-trace-upgrades`를 붙인다. 또는 터미널에서 `./SubTerra.exe -trace-upgrades`로 실행한다(파일 이름은 실제 배포명 사용).
++3. 문제가 발생했던 진입 경로(새 게임 / 이어하기 / 광산 복귀)와 구매 항목을 적고 한 번만 구매한다. 창을 닫았다 다시 열었을 때의 레벨도 적는다. 구매를 반복해 비용을 쓰지 않는다.
++4. Player.log에서 `[UpgradePurchaseTrace]` 줄과 그 사이/직후의 예외 스택만 전달한다. 세이브 파일 전체는 전달하지 않는다. Unity에서 확인했다면 Console에서 같은 접두어로 찾는다.
++5. `currentService=False` 또는 boundLevel/currentLevel 차이는 서비스 연결 가설의 단서다. `exception`에서 레벨만 오른 경우는 커밋 후 이벤트 중단 가설의 단서다. after=Success와 두 레벨이 모두 올랐는데 화면만 그대로면 View/연출 경로를 조사한다. 어느 경우도 로그 한 줄만으로 최종 원인을 단정하지 않는다.

@@ -1,3 +1,5 @@
+using SubTerra.App.Audio;
+using SubTerra.Shared.Audio;
 using SubTerra.App.UI.Building;
 using SubTerra.App.UI.Drone;
 using SubTerra.App.UI.Inventory;
@@ -341,6 +343,7 @@ namespace SubTerra.App.UI.HUD
             {
                 gameGuideOpenButton.onClick.RemoveListener(ToggleGameGuide);
                 gameGuideOpenButton.onClick.AddListener(ToggleGameGuide);
+                UiSfx.Attach(gameGuideOpenButton, SfxId.None, hover: true);
             }
 
             if (inventoryCloseButton != null)

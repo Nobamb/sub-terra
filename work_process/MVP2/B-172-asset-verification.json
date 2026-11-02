@@ -1,0 +1,1539 @@
+{
+  "generated_utc": "2026-10-29T01:12:31Z",
+  "working_tree_watch_unchanged_during_check": true,
+  "guid_preservation": {
+    "expected_count": 21,
+    "matched_count": 21,
+    "all_match": true,
+    "frames": [
+      {
+        "path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_01.png.meta",
+        "head_guid": "41d68100d8c057649a878d33abc361d6",
+        "working_guid": "41d68100d8c057649a878d33abc361d6",
+        "match": true
+      },
+      {
+        "path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_02.png.meta",
+        "head_guid": "e69f5b9a559592e4cbe0dcd0fe950b11",
+        "working_guid": "e69f5b9a559592e4cbe0dcd0fe950b11",
+        "match": true
+      },
+      {
+        "path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_03.png.meta",
+        "head_guid": "c5246c41f76ed87488c6149e0448e219",
+        "working_guid": "c5246c41f76ed87488c6149e0448e219",
+        "match": true
+      },
+      {
+        "path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_04.png.meta",
+        "head_guid": "05fec1abc994d06408bcce073dabdf9e",
+        "working_guid": "05fec1abc994d06408bcce073dabdf9e",
+        "match": true
+      },
+      {
+        "path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_05.png.meta",
+        "head_guid": "86b033cff81760948886d6fc02240ced",
+        "working_guid": "86b033cff81760948886d6fc02240ced",
+        "match": true
+      },
+      {
+        "path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_06.png.meta",
+        "head_guid": "8636abf880aeb28498bf573604aaab7f",
+        "working_guid": "8636abf880aeb28498bf573604aaab7f",
+        "match": true
+      },
+      {
+        "path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_07.png.meta",
+        "head_guid": "22228916432d41e45abdb75332cb8227",
+        "working_guid": "22228916432d41e45abdb75332cb8227",
+        "match": true
+      },
+      {
+        "path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_08.png.meta",
+        "head_guid": "b46497afc4d19e74885cf9a0e56e3379",
+        "working_guid": "b46497afc4d19e74885cf9a0e56e3379",
+        "match": true
+      },
+      {
+        "path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_01.png.meta",
+        "head_guid": "4264a6d6b577572489d8cfdb3ae4c42a",
+        "working_guid": "4264a6d6b577572489d8cfdb3ae4c42a",
+        "match": true
+      },
+      {
+        "path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_02.png.meta",
+        "head_guid": "70ce84c857897cb49b4bfb6ce377fa50",
+        "working_guid": "70ce84c857897cb49b4bfb6ce377fa50",
+        "match": true
+      },
+      {
+        "path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_03.png.meta",
+        "head_guid": "262f615e67fe84d42b186e2f395f6995",
+        "working_guid": "262f615e67fe84d42b186e2f395f6995",
+        "match": true
+      },
+      {
+        "path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_04.png.meta",
+        "head_guid": "473d4cb99655afc49af8b522a1880819",
+        "working_guid": "473d4cb99655afc49af8b522a1880819",
+        "match": true
+      },
+      {
+        "path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_05.png.meta",
+        "head_guid": "81847fb71dfce25408f862d6764bd252",
+        "working_guid": "81847fb71dfce25408f862d6764bd252",
+        "match": true
+      },
+      {
+        "path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_06.png.meta",
+        "head_guid": "c9c69db55a0a1a64ca0e5c8dca94dd60",
+        "working_guid": "c9c69db55a0a1a64ca0e5c8dca94dd60",
+        "match": true
+      },
+      {
+        "path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_07.png.meta",
+        "head_guid": "bce68305ec2a97845908bd04f20f22a2",
+        "working_guid": "bce68305ec2a97845908bd04f20f22a2",
+        "match": true
+      },
+      {
+        "path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_08.png.meta",
+        "head_guid": "8929d86159727894ca38875d1efd626e",
+        "working_guid": "8929d86159727894ca38875d1efd626e",
+        "match": true
+      },
+      {
+        "path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/LadderBack/ladder_back_neutral_v2.png.meta",
+        "head_guid": "86bb9ae731578a74fa39b2464a75ed46",
+        "working_guid": "86bb9ae731578a74fa39b2464a75ed46",
+        "match": true
+      },
+      {
+        "path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/LadderBack/ladder_back_style_02.png.meta",
+        "head_guid": "fa4f29abc4a63ff4bada3dd0a9cb5237",
+        "working_guid": "fa4f29abc4a63ff4bada3dd0a9cb5237",
+        "match": true
+      },
+      {
+        "path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/LadderBack/ladder_back_style_03.png.meta",
+        "head_guid": "c70489b371526cb428e8a81d61071184",
+        "working_guid": "c70489b371526cb428e8a81d61071184",
+        "match": true
+      },
+      {
+        "path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/LadderBack/ladder_back_style_04.png.meta",
+        "head_guid": "b9dcfaa001a35f046b0b76c28df0c63d",
+        "working_guid": "b9dcfaa001a35f046b0b76c28df0c63d",
+        "match": true
+      },
+      {
+        "path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/LadderBack/ladder_back_style_05.png.meta",
+        "head_guid": "5912301cac5a9a04c851fc6aa6800fdd",
+        "working_guid": "5912301cac5a9a04c851fc6aa6800fdd",
+        "match": true
+      }
+    ]
+  },
+  "runtime_frame_comparison": {
+    "expected_count": 77,
+    "byte_equal_count": 77,
+    "all_byte_equal": true,
+    "groups": [
+      {
+        "folder": "player-mining-24f-20261029",
+        "expected_count": 24,
+        "runtime_count": 24,
+        "frames": [
+          {
+            "runtime_path": "work_process/images/player-mining-24f-20261029/runtime-frames/mining-01.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_01.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "fc1663b1da8a2933f2c4dbe52356b2d38e224ff80f7e94e39e934539378d5f7c",
+            "unity_sha256": "fc1663b1da8a2933f2c4dbe52356b2d38e224ff80f7e94e39e934539378d5f7c",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-mining-24f-20261029/runtime-frames/mining-02.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_02.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "8d6316e1ac7251fb67061fbb1f42064976ccf06d27a2cb76adc7df018782fcac",
+            "unity_sha256": "8d6316e1ac7251fb67061fbb1f42064976ccf06d27a2cb76adc7df018782fcac",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-mining-24f-20261029/runtime-frames/mining-03.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_03.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "8e301769d8946b56e088eb64529f42cbbd609f00bf4b50afb9a8d5d8012c7255",
+            "unity_sha256": "8e301769d8946b56e088eb64529f42cbbd609f00bf4b50afb9a8d5d8012c7255",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-mining-24f-20261029/runtime-frames/mining-04.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_04.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "78c0e796709186ea220fc3c8b5d9b1f06909d02e4c8420cad534268de26f7928",
+            "unity_sha256": "78c0e796709186ea220fc3c8b5d9b1f06909d02e4c8420cad534268de26f7928",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-mining-24f-20261029/runtime-frames/mining-05.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_05.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "64180e9a60b93bee81165aa78baf1b2a972b7ab27f34847b27c8ea9e30926280",
+            "unity_sha256": "64180e9a60b93bee81165aa78baf1b2a972b7ab27f34847b27c8ea9e30926280",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-mining-24f-20261029/runtime-frames/mining-06.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_06.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "913477d3e62dda1908e7682b975c411978b6092eecb01ec055ffac4df289543e",
+            "unity_sha256": "913477d3e62dda1908e7682b975c411978b6092eecb01ec055ffac4df289543e",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-mining-24f-20261029/runtime-frames/mining-07.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_07.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "e36e81ef5eee5a4740d782dc39f396d491e68b99567afdc8e6c9df0958a635da",
+            "unity_sha256": "e36e81ef5eee5a4740d782dc39f396d491e68b99567afdc8e6c9df0958a635da",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-mining-24f-20261029/runtime-frames/mining-08.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_08.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "451682c86282820a590262206a98c30a9360d7cb9933823e376432c50ef9d01f",
+            "unity_sha256": "451682c86282820a590262206a98c30a9360d7cb9933823e376432c50ef9d01f",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-mining-24f-20261029/runtime-frames/mining-09.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_09.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "9e9e85e5e73d371ea1ee74e84a0fd935604d8046ec054501fb79f48596d95d73",
+            "unity_sha256": "9e9e85e5e73d371ea1ee74e84a0fd935604d8046ec054501fb79f48596d95d73",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-mining-24f-20261029/runtime-frames/mining-10.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_10.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "ad7cbe27fe0260b0cc2ef637f6ce9bbfae0d7f3ff8c3522916575ccf7d53bda6",
+            "unity_sha256": "ad7cbe27fe0260b0cc2ef637f6ce9bbfae0d7f3ff8c3522916575ccf7d53bda6",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-mining-24f-20261029/runtime-frames/mining-11.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_11.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "286b5c2cfb732cbfa34422b5f8d252624696f07de0c428bbbdfa49325f429a11",
+            "unity_sha256": "286b5c2cfb732cbfa34422b5f8d252624696f07de0c428bbbdfa49325f429a11",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-mining-24f-20261029/runtime-frames/mining-12.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_12.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "3fed378977fbbc9d17451cfdc05bd6e39c092f4e1d620142a024443911d01f46",
+            "unity_sha256": "3fed378977fbbc9d17451cfdc05bd6e39c092f4e1d620142a024443911d01f46",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-mining-24f-20261029/runtime-frames/mining-13.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_13.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "797f001dd01ac810ef092fc1ad72e5b3891df5f3a8d37d1221b36caf9859a01f",
+            "unity_sha256": "797f001dd01ac810ef092fc1ad72e5b3891df5f3a8d37d1221b36caf9859a01f",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-mining-24f-20261029/runtime-frames/mining-14.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_14.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "02fb23b9699b616235242aafc912a14fb4069795fdfa9d82685ed5e1cd22f356",
+            "unity_sha256": "02fb23b9699b616235242aafc912a14fb4069795fdfa9d82685ed5e1cd22f356",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-mining-24f-20261029/runtime-frames/mining-15.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_15.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "e22644794da27f3260479301ab8c470ed7b254c9468f741bc30d73e8cf1cb0a2",
+            "unity_sha256": "e22644794da27f3260479301ab8c470ed7b254c9468f741bc30d73e8cf1cb0a2",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-mining-24f-20261029/runtime-frames/mining-16.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_16.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "b174ab7f806c70b86578e6e3f79052cd47b55ee330ad2d89c03d74f8bf9b5ed8",
+            "unity_sha256": "b174ab7f806c70b86578e6e3f79052cd47b55ee330ad2d89c03d74f8bf9b5ed8",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-mining-24f-20261029/runtime-frames/mining-17.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_17.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "04760b25cd5f8fe6dfc22b826cb83b274816f828d5ff1ca746653a2025eab087",
+            "unity_sha256": "04760b25cd5f8fe6dfc22b826cb83b274816f828d5ff1ca746653a2025eab087",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-mining-24f-20261029/runtime-frames/mining-18.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_18.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "014f976ff2f8025b1575c210f9ba82f7ab3b7bd24aee139ae56db524a696a997",
+            "unity_sha256": "014f976ff2f8025b1575c210f9ba82f7ab3b7bd24aee139ae56db524a696a997",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-mining-24f-20261029/runtime-frames/mining-19.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_19.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "321c1fae8fa12b7306e0782756db308987b9faf7212fd5c05e79a79a8fd54c36",
+            "unity_sha256": "321c1fae8fa12b7306e0782756db308987b9faf7212fd5c05e79a79a8fd54c36",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-mining-24f-20261029/runtime-frames/mining-20.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_20.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "ed2edacf915bb3f6088adc7f36d74afc1ed890558eeb972b01076e499d4f326d",
+            "unity_sha256": "ed2edacf915bb3f6088adc7f36d74afc1ed890558eeb972b01076e499d4f326d",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-mining-24f-20261029/runtime-frames/mining-21.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_21.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "398296119a79f48a241b1ed9b9e2a08db1e5c714f0276e4e146d2e71f8289190",
+            "unity_sha256": "398296119a79f48a241b1ed9b9e2a08db1e5c714f0276e4e146d2e71f8289190",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-mining-24f-20261029/runtime-frames/mining-22.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_22.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "e6b034894c8a35afe71df20952fbfb0b436b123836fb0e82cd7f49fbd05d2437",
+            "unity_sha256": "e6b034894c8a35afe71df20952fbfb0b436b123836fb0e82cd7f49fbd05d2437",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-mining-24f-20261029/runtime-frames/mining-23.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_23.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "6b120c23941e1815e94012bc2ee22719b80d785ea95405a16d6076458223f859",
+            "unity_sha256": "6b120c23941e1815e94012bc2ee22719b80d785ea95405a16d6076458223f859",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-mining-24f-20261029/runtime-frames/mining-24.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_24.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "d492c62031395f383b0b601a734eafb1e0547e660c1920e27f22608ef8024828",
+            "unity_sha256": "d492c62031395f383b0b601a734eafb1e0547e660c1920e27f22608ef8024828",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          }
+        ],
+        "byte_equal_count": 24,
+        "transparent_2px_count": 24
+      },
+      {
+        "folder": "player-knockout-48f-20261029",
+        "expected_count": 48,
+        "runtime_count": 48,
+        "frames": [
+          {
+            "runtime_path": "work_process/images/player-knockout-48f-20261029/runtime-frames/knockout-01.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_01.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "10864b58db8da594b3876f3aa4e0cee0c93005f886b42fa2b8d1c6415ac0c710",
+            "unity_sha256": "10864b58db8da594b3876f3aa4e0cee0c93005f886b42fa2b8d1c6415ac0c710",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-knockout-48f-20261029/runtime-frames/knockout-02.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_02.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "8df44a009a67338dedbf4b9eaba46f7713a7884e18408e074c8c6d6af0202d72",
+            "unity_sha256": "8df44a009a67338dedbf4b9eaba46f7713a7884e18408e074c8c6d6af0202d72",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-knockout-48f-20261029/runtime-frames/knockout-03.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_03.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "7a9e0af6106c8f438673d9ea73773753e0fc3274b29f3fbb9b25ad6102376355",
+            "unity_sha256": "7a9e0af6106c8f438673d9ea73773753e0fc3274b29f3fbb9b25ad6102376355",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-knockout-48f-20261029/runtime-frames/knockout-04.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_04.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "990c4d47cf3bfe1edc0abb0e9de55c5915fe5c2f0e9351dcabee8efe8a0d3330",
+            "unity_sha256": "990c4d47cf3bfe1edc0abb0e9de55c5915fe5c2f0e9351dcabee8efe8a0d3330",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-knockout-48f-20261029/runtime-frames/knockout-05.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_05.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "c5f8886c6bf0dc461b509adad9ba2396ed37fd99f02fca427035b95dd1b8d49a",
+            "unity_sha256": "c5f8886c6bf0dc461b509adad9ba2396ed37fd99f02fca427035b95dd1b8d49a",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-knockout-48f-20261029/runtime-frames/knockout-06.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_06.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "456872ba12e41685f2b4ad68bbc7d77e18e80d8236a77b9b1b724bd2a55ca1d7",
+            "unity_sha256": "456872ba12e41685f2b4ad68bbc7d77e18e80d8236a77b9b1b724bd2a55ca1d7",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-knockout-48f-20261029/runtime-frames/knockout-07.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_07.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "7f1f1ae1beadf57d74fc5c38a2774817dfee7113d7a402561765b3c7031e3416",
+            "unity_sha256": "7f1f1ae1beadf57d74fc5c38a2774817dfee7113d7a402561765b3c7031e3416",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-knockout-48f-20261029/runtime-frames/knockout-08.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_08.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "9e10d6efcc2d1b47e0214f4c55507c63b0ca9082edee63486f8d4055192c0a9a",
+            "unity_sha256": "9e10d6efcc2d1b47e0214f4c55507c63b0ca9082edee63486f8d4055192c0a9a",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-knockout-48f-20261029/runtime-frames/knockout-09.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_09.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "539ec8de3829e5532fa1b306993164836a4d5d8f79fdc10e50e59700118c8dbf",
+            "unity_sha256": "539ec8de3829e5532fa1b306993164836a4d5d8f79fdc10e50e59700118c8dbf",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-knockout-48f-20261029/runtime-frames/knockout-10.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_10.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "5c195dbc8b8dccb689386a959d379647f3ca0d5476ac445e336b61d78b860b63",
+            "unity_sha256": "5c195dbc8b8dccb689386a959d379647f3ca0d5476ac445e336b61d78b860b63",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-knockout-48f-20261029/runtime-frames/knockout-11.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_11.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "1e9e42519c233f8d01eff7362ae6c46680e5443a292d1bdd731e5613e5a02f29",
+            "unity_sha256": "1e9e42519c233f8d01eff7362ae6c46680e5443a292d1bdd731e5613e5a02f29",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-knockout-48f-20261029/runtime-frames/knockout-12.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_12.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "af4dcddc415c945cc90fddeadfced14bc47cb16787a3abd715c19bf1e52a8ccc",
+            "unity_sha256": "af4dcddc415c945cc90fddeadfced14bc47cb16787a3abd715c19bf1e52a8ccc",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-knockout-48f-20261029/runtime-frames/knockout-13.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_13.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "648649778dc6e58652574f3712855d5527c1b0a575707ab058784584c41532db",
+            "unity_sha256": "648649778dc6e58652574f3712855d5527c1b0a575707ab058784584c41532db",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-knockout-48f-20261029/runtime-frames/knockout-14.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_14.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "6614e3ca8a47f7548d9ea17c2b89055ad9415efad83aa5254b8c978de39e3413",
+            "unity_sha256": "6614e3ca8a47f7548d9ea17c2b89055ad9415efad83aa5254b8c978de39e3413",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-knockout-48f-20261029/runtime-frames/knockout-15.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_15.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "f467e39a6965ec23c3cec00b015df4805d954eb843ece40650fc1af65c330c71",
+            "unity_sha256": "f467e39a6965ec23c3cec00b015df4805d954eb843ece40650fc1af65c330c71",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-knockout-48f-20261029/runtime-frames/knockout-16.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_16.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "8619421525eb9070318f22f220af5f96ffcdbc415743f1fd475f7df02d1de666",
+            "unity_sha256": "8619421525eb9070318f22f220af5f96ffcdbc415743f1fd475f7df02d1de666",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-knockout-48f-20261029/runtime-frames/knockout-17.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_17.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "0e9aba9ab8685dfa360c86b3da51f369aef149ba63cb548f68afdbb54eac62ec",
+            "unity_sha256": "0e9aba9ab8685dfa360c86b3da51f369aef149ba63cb548f68afdbb54eac62ec",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-knockout-48f-20261029/runtime-frames/knockout-18.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_18.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "edad445628bb0a5f8ce0afe1d3b9d27a909341c4c0fa1a08d47027b999950201",
+            "unity_sha256": "edad445628bb0a5f8ce0afe1d3b9d27a909341c4c0fa1a08d47027b999950201",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-knockout-48f-20261029/runtime-frames/knockout-19.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_19.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "48299a999491a7c6bf63ef476ba0cb8ddfa3adbb486be056ef2738091690faa7",
+            "unity_sha256": "48299a999491a7c6bf63ef476ba0cb8ddfa3adbb486be056ef2738091690faa7",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-knockout-48f-20261029/runtime-frames/knockout-20.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_20.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "a0c8d7f068827767b711f6b6f0d40584eb7ab4e333337e84fd429040c1232178",
+            "unity_sha256": "a0c8d7f068827767b711f6b6f0d40584eb7ab4e333337e84fd429040c1232178",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-knockout-48f-20261029/runtime-frames/knockout-21.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_21.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "d127410303303dd4e0a5cc40d2ca81dafc150640570be1d57651088e1b3defc0",
+            "unity_sha256": "d127410303303dd4e0a5cc40d2ca81dafc150640570be1d57651088e1b3defc0",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-knockout-48f-20261029/runtime-frames/knockout-22.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_22.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "38d2eabc951da9b02d33efc2ef84fb9478ead9682420f6bf56d59307cc213c96",
+            "unity_sha256": "38d2eabc951da9b02d33efc2ef84fb9478ead9682420f6bf56d59307cc213c96",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-knockout-48f-20261029/runtime-frames/knockout-23.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_23.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "b78511b93c19e6b35c674f38bf5bb904abd092082ce49cc485dda25da6f1db53",
+            "unity_sha256": "b78511b93c19e6b35c674f38bf5bb904abd092082ce49cc485dda25da6f1db53",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-knockout-48f-20261029/runtime-frames/knockout-24.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_24.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "b9f45bc98e48a42c5b7828db2688614448ef181f4eb07d5f43b3b42168ac7529",
+            "unity_sha256": "b9f45bc98e48a42c5b7828db2688614448ef181f4eb07d5f43b3b42168ac7529",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-knockout-48f-20261029/runtime-frames/knockout-25.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_25.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "ff6486193f312b022f34c9dd13d33015567f098bfffa7cadd07265822c23ceeb",
+            "unity_sha256": "ff6486193f312b022f34c9dd13d33015567f098bfffa7cadd07265822c23ceeb",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-knockout-48f-20261029/runtime-frames/knockout-26.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_26.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "fcd442a7ac9a25d46ea5da73c958e2c31c896803c94ce522fbf0259f0b4d0131",
+            "unity_sha256": "fcd442a7ac9a25d46ea5da73c958e2c31c896803c94ce522fbf0259f0b4d0131",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-knockout-48f-20261029/runtime-frames/knockout-27.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_27.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "d0f63519d4c1a356d313b94a8318e5531dd007e89eeaddea96bf858c2eb7cbed",
+            "unity_sha256": "d0f63519d4c1a356d313b94a8318e5531dd007e89eeaddea96bf858c2eb7cbed",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-knockout-48f-20261029/runtime-frames/knockout-28.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_28.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "d0cc0bdaf8500d5e507d37e0163bec0ef22a7783258e4cfac6db9de9bdb1094d",
+            "unity_sha256": "d0cc0bdaf8500d5e507d37e0163bec0ef22a7783258e4cfac6db9de9bdb1094d",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-knockout-48f-20261029/runtime-frames/knockout-29.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_29.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "fa88e1fca47fa45205b71588363bdfe85a64af521045a74a646f8f8be2c678c4",
+            "unity_sha256": "fa88e1fca47fa45205b71588363bdfe85a64af521045a74a646f8f8be2c678c4",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-knockout-48f-20261029/runtime-frames/knockout-30.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_30.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "e8450629b8022d62c551380eb391d62706354ee29ee4cb8557c5469387273e35",
+            "unity_sha256": "e8450629b8022d62c551380eb391d62706354ee29ee4cb8557c5469387273e35",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-knockout-48f-20261029/runtime-frames/knockout-31.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_31.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "80e813b56a0320771991cd7e69626717ce17cd5740d055f98582ccca6d809233",
+            "unity_sha256": "80e813b56a0320771991cd7e69626717ce17cd5740d055f98582ccca6d809233",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-knockout-48f-20261029/runtime-frames/knockout-32.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_32.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "2ebe54c06b55d35622ecc634bc234bbd55722f56dd89189d9a685f39ae590f80",
+            "unity_sha256": "2ebe54c06b55d35622ecc634bc234bbd55722f56dd89189d9a685f39ae590f80",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-knockout-48f-20261029/runtime-frames/knockout-33.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_33.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "f9257124b0338bcad0f04ecdcd64d50c73783dcbca3282b18b4496d5c9b136de",
+            "unity_sha256": "f9257124b0338bcad0f04ecdcd64d50c73783dcbca3282b18b4496d5c9b136de",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-knockout-48f-20261029/runtime-frames/knockout-34.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_34.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "43ecd05fd41faf2fc65f4b7a7605fcbf58aac1708837487b8454ec7c2365fc59",
+            "unity_sha256": "43ecd05fd41faf2fc65f4b7a7605fcbf58aac1708837487b8454ec7c2365fc59",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-knockout-48f-20261029/runtime-frames/knockout-35.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_35.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "8d426c48438e757da6b32c280ab805ebd9ae14d16547b2c54dbe5c1eeb79d69b",
+            "unity_sha256": "8d426c48438e757da6b32c280ab805ebd9ae14d16547b2c54dbe5c1eeb79d69b",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-knockout-48f-20261029/runtime-frames/knockout-36.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_36.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "d6d17a7fc298bf9e6c2bd210d1f66b0e91742c98e6ec90e0b339ba875b7bb30e",
+            "unity_sha256": "d6d17a7fc298bf9e6c2bd210d1f66b0e91742c98e6ec90e0b339ba875b7bb30e",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-knockout-48f-20261029/runtime-frames/knockout-37.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_37.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "11bbd4a8ac8cf3b81b40033869302e7a67cda1aa518dd487b9458f6aa738eea4",
+            "unity_sha256": "11bbd4a8ac8cf3b81b40033869302e7a67cda1aa518dd487b9458f6aa738eea4",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-knockout-48f-20261029/runtime-frames/knockout-38.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_38.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "ff9af8efc19ce4a9b4182d0db17a5aa1d9024ae5baabdebec280cd0ded5efba6",
+            "unity_sha256": "ff9af8efc19ce4a9b4182d0db17a5aa1d9024ae5baabdebec280cd0ded5efba6",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-knockout-48f-20261029/runtime-frames/knockout-39.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_39.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "3f4cf83140973544bf6d8eee9bb805650c2f55d5a87d9d5e3269a5e3f969d742",
+            "unity_sha256": "3f4cf83140973544bf6d8eee9bb805650c2f55d5a87d9d5e3269a5e3f969d742",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-knockout-48f-20261029/runtime-frames/knockout-40.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_40.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "5804bc909a8bd62da0e13bdf2f605d228fa4ed0dbdcfe3ceaadafc6d92b562c4",
+            "unity_sha256": "5804bc909a8bd62da0e13bdf2f605d228fa4ed0dbdcfe3ceaadafc6d92b562c4",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-knockout-48f-20261029/runtime-frames/knockout-41.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_41.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "f038a67fae09b9c170075615ef29ec1fea3f2294ff7deddad3a3ba86d8ea614b",
+            "unity_sha256": "f038a67fae09b9c170075615ef29ec1fea3f2294ff7deddad3a3ba86d8ea614b",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-knockout-48f-20261029/runtime-frames/knockout-42.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_42.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "b8219aedc2c205250ec3f44a78111d96be0ebbe06bf4908a7978e6b2348239d5",
+            "unity_sha256": "b8219aedc2c205250ec3f44a78111d96be0ebbe06bf4908a7978e6b2348239d5",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-knockout-48f-20261029/runtime-frames/knockout-43.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_43.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "c3145ee34eb0d7406a89918f81f757b4833544b9cc7b330a14d1dfedc6b4501f",
+            "unity_sha256": "c3145ee34eb0d7406a89918f81f757b4833544b9cc7b330a14d1dfedc6b4501f",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-knockout-48f-20261029/runtime-frames/knockout-44.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_44.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "36ba4a19470da51b764be279762bc72d34c2081236369d576b00619735fe62b1",
+            "unity_sha256": "36ba4a19470da51b764be279762bc72d34c2081236369d576b00619735fe62b1",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-knockout-48f-20261029/runtime-frames/knockout-45.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_45.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "8dc928f5085e61ba4047b5fe211e7f4542baaa09c1e551f1027f579bef84dadd",
+            "unity_sha256": "8dc928f5085e61ba4047b5fe211e7f4542baaa09c1e551f1027f579bef84dadd",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-knockout-48f-20261029/runtime-frames/knockout-46.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_46.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "73e1d19ea29c8396a73a64cee0afa9bf490d23f10658af2c9e9743e5d41d6a29",
+            "unity_sha256": "73e1d19ea29c8396a73a64cee0afa9bf490d23f10658af2c9e9743e5d41d6a29",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-knockout-48f-20261029/runtime-frames/knockout-47.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_47.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "4c31283fd241a6d247ac905df343ad4be4beecf391927b4e201e4eacedde1d09",
+            "unity_sha256": "4c31283fd241a6d247ac905df343ad4be4beecf391927b4e201e4eacedde1d09",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-knockout-48f-20261029/runtime-frames/knockout-48.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_48.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "a1b9997e265e20eba60ebd28ebe44c0d040a543d0559445e49d306270a3a3c85",
+            "unity_sha256": "a1b9997e265e20eba60ebd28ebe44c0d040a543d0559445e49d306270a3a3c85",
+            "size": [
+              256,
+              256
+            ],
+            "transparent_2px_margin": true
+          }
+        ],
+        "byte_equal_count": 48,
+        "transparent_2px_count": 48
+      },
+      {
+        "folder": "player-ladder-5f-20261029",
+        "expected_count": 5,
+        "runtime_count": 5,
+        "frames": [
+          {
+            "runtime_path": "work_process/images/player-ladder-5f-20261029/runtime-frames/ladder-01.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/LadderBack/ladder_back_neutral_v2.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "8e0b941408141f98166cb9631829969155f7d6c40e81a3dde32acef28144ec6c",
+            "unity_sha256": "8e0b941408141f98166cb9631829969155f7d6c40e81a3dde32acef28144ec6c",
+            "size": [
+              1254,
+              1254
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-ladder-5f-20261029/runtime-frames/ladder-02.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/LadderBack/ladder_back_style_02.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "dc17a145b5b3c0a0fcf3dd6cbff223fe046d36a581f9e708fcf19bc5c934aa67",
+            "unity_sha256": "dc17a145b5b3c0a0fcf3dd6cbff223fe046d36a581f9e708fcf19bc5c934aa67",
+            "size": [
+              1254,
+              1254
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-ladder-5f-20261029/runtime-frames/ladder-03.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/LadderBack/ladder_back_style_03.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "6ca2fb14279b1a65a21c0099887591f1b9dffbfa829a776d0a82b2e4091b1960",
+            "unity_sha256": "6ca2fb14279b1a65a21c0099887591f1b9dffbfa829a776d0a82b2e4091b1960",
+            "size": [
+              1254,
+              1254
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-ladder-5f-20261029/runtime-frames/ladder-04.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/LadderBack/ladder_back_style_04.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "84c2599ba2c2661d9aa8a7915506ae1c09837a416c9a389e5509b031040fb27b",
+            "unity_sha256": "84c2599ba2c2661d9aa8a7915506ae1c09837a416c9a389e5509b031040fb27b",
+            "size": [
+              1254,
+              1254
+            ],
+            "transparent_2px_margin": true
+          },
+          {
+            "runtime_path": "work_process/images/player-ladder-5f-20261029/runtime-frames/ladder-05.png",
+            "unity_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/LadderBack/ladder_back_style_05.png",
+            "exists": true,
+            "byte_equal": true,
+            "runtime_sha256": "e3e385848489d216c02e86ab589136a8807921a34704ee9718df1a8ed2c4ced0",
+            "unity_sha256": "e3e385848489d216c02e86ab589136a8807921a34704ee9718df1a8ed2c4ced0",
+            "size": [
+              1254,
+              1254
+            ],
+            "transparent_2px_margin": true
+          }
+        ],
+        "byte_equal_count": 5,
+        "transparent_2px_count": 5
+      }
+    ]
+  },
+  "transparent_margin": {
+    "expected_count": 77,
+    "passed_count": 77,
+    "all_pass": true
+  },
+  "player_prefab_frame_mapping": {
+    "miningFrames": {
+      "count": 24,
+      "expected_count": 24,
+      "resolved_paths": [
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_01.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_02.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_03.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_04.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_05.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_06.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_07.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_08.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_09.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_10.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_11.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_12.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_13.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_14.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_15.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_16.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_17.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_18.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_19.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_20.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_21.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_22.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_23.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_24.png"
+      ],
+      "expected_paths": [
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_01.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_02.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_03.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_04.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_05.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_06.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_07.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_08.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_09.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_10.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_11.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_12.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_13.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_14.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_15.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_16.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_17.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_18.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_19.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_20.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_21.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_22.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_23.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_24.png"
+      ],
+      "matches_expected_order": true
+    },
+    "knockoutFrames": {
+      "count": 48,
+      "expected_count": 48,
+      "resolved_paths": [
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_01.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_02.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_03.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_04.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_05.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_06.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_07.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_08.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_09.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_10.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_11.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_12.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_13.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_14.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_15.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_16.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_17.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_18.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_19.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_20.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_21.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_22.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_23.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_24.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_25.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_26.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_27.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_28.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_29.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_30.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_31.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_32.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_33.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_34.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_35.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_36.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_37.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_38.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_39.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_40.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_41.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_42.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_43.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_44.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_45.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_46.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_47.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_48.png"
+      ],
+      "expected_paths": [
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_01.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_02.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_03.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_04.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_05.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_06.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_07.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_08.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_09.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_10.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_11.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_12.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_13.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_14.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_15.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_16.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_17.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_18.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_19.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_20.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_21.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_22.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_23.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_24.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_25.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_26.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_27.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_28.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_29.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_30.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_31.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_32.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_33.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_34.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_35.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_36.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_37.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_38.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_39.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_40.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_41.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_42.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_43.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_44.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_45.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_46.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_47.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_48.png"
+      ],
+      "matches_expected_order": true
+    },
+    "ladderFrames": {
+      "count": 5,
+      "expected_count": 5,
+      "resolved_paths": [
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/LadderBack/ladder_back_neutral_v2.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/LadderBack/ladder_back_style_02.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/LadderBack/ladder_back_style_03.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/LadderBack/ladder_back_style_04.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/LadderBack/ladder_back_style_05.png"
+      ],
+      "expected_paths": [
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/LadderBack/ladder_back_neutral_v2.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/LadderBack/ladder_back_style_02.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/LadderBack/ladder_back_style_03.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/LadderBack/ladder_back_style_04.png",
+        "sub-terra/Assets/_Project/Art/Characters/Player/Frames/LadderBack/ladder_back_style_05.png"
+      ],
+      "matches_expected_order": true
+    }
+  },
+  "guide_skin_mapping": {
+    "expected_count": 30,
+    "matched_count": 30,
+    "all_match": true,
+    "entries": {
+      "player.mine.1": {
+        "actual_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_01.png",
+        "expected_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_01.png",
+        "matches": true
+      },
+      "player.mine.2": {
+        "actual_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_02.png",
+        "expected_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_02.png",
+        "matches": true
+      },
+      "player.mine.3": {
+        "actual_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_03.png",
+        "expected_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_03.png",
+        "matches": true
+      },
+      "player.mine.4": {
+        "actual_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_04.png",
+        "expected_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_04.png",
+        "matches": true
+      },
+      "player.mine.5": {
+        "actual_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_05.png",
+        "expected_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_05.png",
+        "matches": true
+      },
+      "player.mine.6": {
+        "actual_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_06.png",
+        "expected_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_06.png",
+        "matches": true
+      },
+      "player.mine.7": {
+        "actual_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_07.png",
+        "expected_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_07.png",
+        "matches": true
+      },
+      "player.mine.8": {
+        "actual_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_08.png",
+        "expected_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_08.png",
+        "matches": true
+      },
+      "player.mine.9": {
+        "actual_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_09.png",
+        "expected_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_09.png",
+        "matches": true
+      },
+      "player.mine.10": {
+        "actual_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_10.png",
+        "expected_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_10.png",
+        "matches": true
+      },
+      "player.mine.11": {
+        "actual_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_11.png",
+        "expected_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_11.png",
+        "matches": true
+      },
+      "player.mine.12": {
+        "actual_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_12.png",
+        "expected_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_12.png",
+        "matches": true
+      },
+      "player.mine.13": {
+        "actual_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_13.png",
+        "expected_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_13.png",
+        "matches": true
+      },
+      "player.mine.14": {
+        "actual_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_14.png",
+        "expected_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_14.png",
+        "matches": true
+      },
+      "player.mine.15": {
+        "actual_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_15.png",
+        "expected_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_15.png",
+        "matches": true
+      },
+      "player.mine.16": {
+        "actual_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_16.png",
+        "expected_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_16.png",
+        "matches": true
+      },
+      "player.mine.17": {
+        "actual_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_17.png",
+        "expected_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_17.png",
+        "matches": true
+      },
+      "player.mine.18": {
+        "actual_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_18.png",
+        "expected_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_18.png",
+        "matches": true
+      },
+      "player.mine.19": {
+        "actual_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_19.png",
+        "expected_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_19.png",
+        "matches": true
+      },
+      "player.mine.20": {
+        "actual_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_20.png",
+        "expected_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_20.png",
+        "matches": true
+      },
+      "player.mine.21": {
+        "actual_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_21.png",
+        "expected_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_21.png",
+        "matches": true
+      },
+      "player.mine.22": {
+        "actual_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_22.png",
+        "expected_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_22.png",
+        "matches": true
+      },
+      "player.mine.23": {
+        "actual_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_23.png",
+        "expected_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_23.png",
+        "matches": true
+      },
+      "player.mine.24": {
+        "actual_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_24.png",
+        "expected_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_24.png",
+        "matches": true
+      },
+      "player.ladder.1": {
+        "actual_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/LadderBack/ladder_back_neutral_v2.png",
+        "expected_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/LadderBack/ladder_back_neutral_v2.png",
+        "matches": true
+      },
+      "player.ladder.2": {
+        "actual_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/LadderBack/ladder_back_style_02.png",
+        "expected_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/LadderBack/ladder_back_style_02.png",
+        "matches": true
+      },
+      "player.ladder.3": {
+        "actual_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/LadderBack/ladder_back_style_03.png",
+        "expected_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/LadderBack/ladder_back_style_03.png",
+        "matches": true
+      },
+      "player.ladder.4": {
+        "actual_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/LadderBack/ladder_back_style_04.png",
+        "expected_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/LadderBack/ladder_back_style_04.png",
+        "matches": true
+      },
+      "player.ladder.5": {
+        "actual_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/LadderBack/ladder_back_style_05.png",
+        "expected_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/LadderBack/ladder_back_style_05.png",
+        "matches": true
+      },
+      "player.knockout.1": {
+        "actual_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_48.png",
+        "expected_path": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Knockout/knockout_48.png",
+        "matches": true
+      }
+    }
+  },
+  "temporary_b172_files": {
+    "scanned_roots": [
+      "work_process/images/",
+      "sub-terra/Assets/"
+    ],
+    "count": 0,
+    "paths": [],
+    "none_found": true
+  },
+  "excluded_scope_diff": {
+    "checked": [
+      "sub-terra/ProjectSettings/",
+      "sub-terra/Packages/",
+      "Frames/Walk/",
+      "Frames/Idle/",
+      "Frames/Jump/",
+      "Frames/Damage/"
+    ],
+    "changed_paths": [],
+    "working_tree_status_paths": [],
+    "none_changed": true
+  }
+}

@@ -1,0 +1,12 @@
+Mode: PlayMode
+Scope: quick
+Selected: 2
+Executed: 2
+Pass: 2
+Fail: 0
+Skip: 0
+Inconclusive: 0
+DurationSec: 29.365961
+Missing:
+Unexpected:
+ExitCode: 0

@@ -40,6 +40,7 @@ namespace SubTerra.App.UI.GameplayCursor
         public int DrillFrameIndex { get; private set; }
         public int ClawFrameIndex { get; private set; }
         public float GlowLevel { get; private set; }
+        public float DrillCharge { get; private set; }
         public bool ParticlesActive { get; private set; }
         public float PulseScale { get; private set; } = 1f;
         public float RingAlpha { get; private set; }
@@ -62,6 +63,9 @@ namespace SubTerra.App.UI.GameplayCursor
 
             UpdateDrillFrame(dt);
             UpdateSheet(input.MoveMode, dt);
+            // 시작 속도로 뛰는 회전과 달리 빛은 0부터 차오르고 감속을 따라 사라진다.
+            DrillCharge = input.MoveMode ? 0f : Mathf.MoveTowards(DrillCharge, LeftHeld ? Speed : 0f,
+                (LeftHeld ? tuning.spinUpPerSecond : tuning.spinDownPerSecond) * dt);
             ClawFrameIndex = !input.MoveMode ? 0 : input.Carrying ? 3 : input.HoverGrabbable ? 2 : 1;
 
             var glowTarget = input.HoverGrabbable && !input.Carrying ? 1f : 0f;

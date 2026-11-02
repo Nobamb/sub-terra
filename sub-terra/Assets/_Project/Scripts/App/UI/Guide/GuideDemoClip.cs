@@ -140,6 +140,7 @@ namespace SubTerra.App.UI.Guide
         public float Fps = 10f;
         public string IdleKey = string.Empty;
         public DemoTrack FrameActive;
+        public DemoTrack FrameIndex;
 
         public DemoLayer PosX(DemoTrack track) { X = track; return this; }
         public DemoLayer PosY(DemoTrack track) { Y = track; return this; }
@@ -165,6 +166,26 @@ namespace SubTerra.App.UI.Guide
             Fps = fps;
             IdleKey = idleKey;
             FrameActive = active;
+            return this;
+        }
+
+        public DemoLayer AnimateMining(float start, float completedAt)
+        {
+            Animate("player.mine", 24, 12f, "player.idle",
+                DemoTrack.Hold(0f, 0f, start, 1f, completedAt + 10f / 60f, 0f));
+            var frames = new List<float>();
+            for (var i = 0; i < 13 && start + i / 12f < completedAt; i++)
+            {
+                frames.Add(start + i / 12f);
+                frames.Add(i);
+            }
+            // 블록이 사라지는 순간 회수를 시작하고 실제 캐릭터처럼 60fps로 마친다.
+            for (var i = 0; i < 10; i++)
+            {
+                frames.Add(completedAt + i / 60f);
+                frames.Add(14 + i);
+            }
+            FrameIndex = DemoTrack.Hold(frames.ToArray());
             return this;
         }
     }

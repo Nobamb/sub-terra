@@ -1,7 +1,9 @@
 using System.Collections.Generic;
+using SubTerra.App.Audio;
 using SubTerra.App.Core.Data;
 using SubTerra.App.UI.HUD;
 using SubTerra.App.UI.Sell;
+using SubTerra.Shared.Audio;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -30,6 +32,19 @@ namespace SubTerra.App.UI.Guide
         }
 
         private readonly TabList[] lists = new TabList[3];
+
+        /// <summary>B-180 ★: 가이드 탭·필터·접기·카드·관련 링크를 누를 때 소리(PM이 번호만 바꿔 끼운다).</summary>
+        public const SfxId GuideClickSfx = SfxId.UiClick;
+
+        /// <summary>B-180: 카드 선택(OnCardClicked)과 같은 조건. 열림·닫힘 연출 중 호버음은 무음(클릭은 그때 버튼이 막혀 있다).</summary>
+        public bool CanPlayButtonSfx =>
+            state == PopupState.Open || (state == PopupState.Opening && detailGroup != null && detailGroup.interactable);
+
+        private void AttachGuideSfx(Button target, bool click)
+        {
+            UiSfx.Attach(target, click ? GuideClickSfx : SfxId.None, hover: true, failWhenDisabled: false,
+                hoverGate: () => CanPlayButtonSfx);
+        }
         private readonly GameGuideButton[] tabButtons = new GameGuideButton[3];
         private readonly GameGuideButton[] filterButtons = new GameGuideButton[3];
         private readonly List<GameGuideCardView> stepTiles = new List<GameGuideCardView>();
@@ -129,6 +144,8 @@ namespace SubTerra.App.UI.Guide
             closeButton = GameGuideButton.Create(tabsRect, "CloseButton", CardSize.x - Pad - 52f, 54f, 52f, 52f, font, string.Empty,
                 20f, GameGuideButton.Kind.Close, ResourceSellArt.Cross(), 26f);
             closeButton.Button.onClick.AddListener(RequestClose);
+            // 닫힘음은 BeginClose가 낸다.
+            AttachGuideSfx(closeButton.Button, false);
         }
 
         private void BuildTabs()
@@ -141,6 +158,7 @@ namespace SubTerra.App.UI.Guide
                 var button = GameGuideButton.Create(tabsRect, "Tab_" + i, Pad + i * (tabWidth + gap), TabY, tabWidth, TabHeight,
                     font, GameGuideCatalog.TabTitle((GuideTabKind)i), 24f, GameGuideButton.Kind.Tab);
                 button.Button.onClick.AddListener(() => guideState.SelectTab((GuideTabKind)index));
+                AttachGuideSfx(button.Button, true);
                 tabButtons[i] = button;
             }
         }
@@ -173,6 +191,7 @@ namespace SubTerra.App.UI.Guide
                 var x = 14f + i * (GameGuideCardView.StepWidth + tileGap);
                 var tile = GameGuideCardView.CreateStepTile(expanded, steps[i], x, 54f, font, sprites);
                 tile.Clicked += OnCardClicked;
+                AttachGuideSfx(tile.Button, true);
                 stepTiles.Add(tile);
                 if (i < steps.Count - 1)
                 {
@@ -211,6 +230,7 @@ namespace SubTerra.App.UI.Guide
                     GameGuideButton.Kind.Normal, StepIcon(step.IconKey), 24f);
                 var targetId = step.TargetCardId;
                 mini.Button.onClick.AddListener(() => OnCardClicked(targetId));
+                AttachGuideSfx(mini.Button, true);
                 miniItems.Add(mini);
                 if (i < steps.Count - 1)
                 {
@@ -224,6 +244,7 @@ namespace SubTerra.App.UI.Guide
             firstToggle = GameGuideButton.Create(firstRoot, "ToggleButton", BodyWidth - 120f, 20f, 106f, 36f, font, "접기", 17f,
                 GameGuideButton.Kind.Normal);
             firstToggle.Button.onClick.AddListener(() => guideState.ToggleFirstExplore());
+            AttachGuideSfx(firstToggle.Button, true);
             firstToggleLabel = firstToggle.GetComponentInChildren<TMP_Text>(true);
             firstToggleLabel.rectTransform.anchoredPosition = new Vector2(12f, 0f);
             var chevronRect = ResourceSellUi.Centered(firstToggle.transform, "Chevron", new Vector2(-34f, 0f), new Vector2(18f, 18f));
@@ -276,6 +297,7 @@ namespace SubTerra.App.UI.Guide
                 var chip = GameGuideButton.Create(list.FilterRow, "Filter_" + i, i * 102f, 4f, 94f, 40f, font, names[i], 19f,
                     GameGuideButton.Kind.Chip);
                 chip.Button.onClick.AddListener(() => guideState.SetFilter((GuideFilter)index));
+                AttachGuideSfx(chip.Button, true);
                 filterButtons[i] = chip;
             }
         }
@@ -309,6 +331,7 @@ namespace SubTerra.App.UI.Guide
             {
                 var view = GameGuideCardView.Create(list.Scroll.Content, defs[i], layout, 0f, 0f, font, sprites);
                 view.Clicked += OnCardClicked;
+                AttachGuideSfx(view.Button, true);
                 list.Cards.Add(view);
             }
 

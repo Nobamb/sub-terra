@@ -27,6 +27,13 @@ namespace SubTerra.App.UI.Progression
     /// </summary>
     public sealed class UpgradeTreeNodeView : MonoBehaviour, IPointerClickHandler
     {
+        private const SfxId SelectionSfx = SfxId.UiClick;
+        // B-180-1: 잠긴 노드를 누르면 선택 클릭음 대신 자물쇠만 흔들며 쇠 소리를 낸다.
+        // 76번(UnlockRattle)은 0.3초에서 끊겨 차오르는 바람 소리만 들리므로 덜그럭까지 내는 95번을 쓴다. 흔들림은 덜그럭이 끝나는 0.45초까지.
+        public const SfxId LockedClickSfx = SfxId.LockedNodeRattle;
+        public const float LockRattleDuration = 0.45f;
+        private const float LockRattleAngle = 12f;
+        private const float LockRattleTurns = 4f;
         private const float ShakeDuration = 0.3f;
         private const float ShakeAmplitude = 9f;
         private const float LevelUpDuration = 0.65f;
@@ -70,6 +77,8 @@ namespace SubTerra.App.UI.Progression
         private float unlockU;
         private Action<SfxId> unlockCue;
         private readonly List<SfxId> cueBuffer = new List<SfxId>();
+        private bool lockRattlePlaying;
+        private float lockRattleElapsed;
         private bool lockBaseCaptured;
         private Vector2 lockBase;
         private Vector2 shackleTopBase;
@@ -85,7 +94,14 @@ namespace SubTerra.App.UI.Progression
         public float BlindAlpha => blind != null ? blind.alpha : 0f;
         public bool IsLockVisible => lockRoot != null && lockRoot.gameObject.activeSelf;
         public bool IsUnlockPlaying => unlockPlaying;
-        public bool IsAnimating => shakeRoutine != null || levelUpRoutine != null || unlockPlaying;
+        public bool IsAnimating => shakeRoutine != null || levelUpRoutine != null || unlockPlaying || lockRattlePlaying;
+        public bool IsLockRattlePlaying => lockRattlePlaying;
+
+        /// <summary>B-180-1: 화면에 잠긴 모습으로 보이고 해금 연출 중이 아닌 노드.</summary>
+        public bool IsShownLocked => hasSnapshot && !snapshot.IsUnlocked && !unlockPlaying;
+
+        /// <summary>B-180: 업그레이드 창 열림·닫힘 연출 중이 아니면 true.</summary>
+        public bool CanPlayButtonSfx() => !SubTerra.App.UI.SurfaceBase.UpgradeWindowMotion.IsTransitioningFor(transform);
 
         /// <summary>확인용: true면 Update가 해금 연출을 진행하지 않고 테스트가 StepUnlock으로 직접 진행한다.</summary>
         public bool ManualTick { get; set; }
@@ -110,6 +126,9 @@ namespace SubTerra.App.UI.Progression
 
         private void OnEnable()
         {
+            if (button == null) button = GetComponent<Button>();
+            // B-180: 호버음 추가. 창이 자물쇠를 부수며 열리거나 빨려 들어가며 닫히는 동안 호버음은 무음, 클릭은 그대로.
+            AttachButtonSfx();
             StopRoutines();
             ResetVisuals();
             if (hasSnapshot)
@@ -132,6 +151,11 @@ namespace SubTerra.App.UI.Progression
             {
                 StepUnlock(Time.unscaledDeltaTime);
             }
+
+            if (lockRattlePlaying && !ManualTick)
+            {
+                StepLockRattle(Time.unscaledDeltaTime);
+            }
         }
 
         public void OnPointerClick(PointerEventData eventData)
@@ -141,7 +165,89 @@ namespace SubTerra.App.UI.Progression
                 return;
             }
 
+            TryPlayLockRattle();
             Clicked?.Invoke(upgradeId);
+        }
+
+        // B-180-1: 잠긴 노드는 버튼 클릭음을 끄고 OnPointerClick에서 쇠 소리를 낸다. 해금되면 다시 UiClick.
+        private void AttachButtonSfx()
+        {
+            if (button == null)
+            {
+                return;
+            }
+
+            var click = IsShownLocked ? SfxId.None : SelectionSfx;
+            var current = button.GetComponent<UiSfxButton>();
+            if (current != null && current.ClickSfx == click && current.HasHoverGate)
+            {
+                return;
+            }
+
+            UiSfx.Attach(button, click, hover: true, failWhenDisabled: false, hoverGate: CanPlayButtonSfx);
+        }
+
+        /// <summary>
+        /// B-180-1: 잠긴 노드를 누르면 자물쇠만 짧게 흔들고 쇠 소리를 한 번 낸다. 잠금·해금 조건 안내는 그대로다.
+        /// 창 열림·닫힘·해금 연출 중이거나 이미 흔들리는 중이면 무시한다(연타로 쌓이지 않음).
+        /// </summary>
+        public bool TryPlayLockRattle()
+        {
+            if (!isActiveAndEnabled || !IsShownLocked || lockRattlePlaying || !CanPlayButtonSfx())
+            {
+                return false;
+            }
+
+            SfxPlayer.Play(LockedClickSfx);
+            if (lockRoot == null || !lockRoot.gameObject.activeInHierarchy)
+            {
+                return true;
+            }
+
+            CaptureLockBase();
+            lockRattlePlaying = true;
+            lockRattleElapsed = 0f;
+            SampleLockRattle(0f);
+            return true;
+        }
+
+        /// <summary>자물쇠 흔들림을 dt만큼 진행한다. Update와 테스트가 같은 경로를 쓴다.</summary>
+        public void StepLockRattle(float deltaTime)
+        {
+            if (!lockRattlePlaying)
+            {
+                return;
+            }
+
+            lockRattleElapsed += Mathf.Max(0f, deltaTime);
+            SampleLockRattle(Mathf.Clamp01(lockRattleElapsed / LockRattleDuration));
+        }
+
+        private void SampleLockRattle(float u)
+        {
+            if (u >= 1f)
+            {
+                StopLockRattle();
+                return;
+            }
+
+            var angle = Mathf.Sin(u * Mathf.PI * 2f * LockRattleTurns) * LockRattleAngle * (1f - u);
+            ApplyLockPose(new UnlockLockPose(Vector2.zero, angle, 1f, 0f, 1f, true));
+        }
+
+        private void StopLockRattle()
+        {
+            if (!lockRattlePlaying)
+            {
+                return;
+            }
+
+            lockRattlePlaying = false;
+            lockRattleElapsed = 0f;
+            if (lockBaseCaptured)
+            {
+                ApplyLockPose(new UnlockLockPose(Vector2.zero, 0f, 1f, 0f, 1f, true));
+            }
         }
 
         public void SetSelected(bool value)
@@ -159,6 +265,12 @@ namespace SubTerra.App.UI.Progression
             hasSnapshot = true;
 
             var unlocked = value.IsUnlocked;
+            if (unlocked)
+            {
+                StopLockRattle();
+            }
+
+            AttachButtonSfx();
             if (!unlocked)
             {
                 visualState = UpgradeNodeVisualState.Locked;
@@ -366,6 +478,9 @@ namespace SubTerra.App.UI.Progression
         {
             shakeRoutine = null;
             levelUpRoutine = null;
+            // 창이 꺼지면 흔들림을 끝낸다. 자물쇠 자세는 이어지는 ResetVisuals가 되돌린다.
+            lockRattlePlaying = false;
+            lockRattleElapsed = 0f;
             if (unlockPlaying)
             {
                 // 시작한 해금 연출은 끝 상태(풀림)로 맞춘다.
@@ -508,6 +623,7 @@ namespace SubTerra.App.UI.Progression
             }
 
             CaptureLockBase();
+            StopLockRattle();
             unlockPlaying = true;
             unlockElapsed = 0f;
             unlockU = UnlockRevealTimeline.BeforeStart;

@@ -1,5 +1,7 @@
 using System;
+using SubTerra.App.Audio;
 using SubTerra.App.Tutorial;
+using SubTerra.Shared.Audio;
 
 namespace SubTerra.App.UI.Tutorial
 {
@@ -131,6 +133,9 @@ namespace SubTerra.App.UI.Tutorial
             view?.SetDetailsVisible(false);
         }
 
+        /// <summary>B-180 ★: 퀘스트 상세창 이전/다음으로 실제로 넘어갔을 때 소리.</summary>
+        public const SfxId QuestPageTurnSfx = SfxId.KeysPageTurn;
+
         public void ShowPreviousQuest()
         {
             if (!detailsOpen || viewedIndex <= 0)
@@ -140,6 +145,7 @@ namespace SubTerra.App.UI.Tutorial
 
             viewedIndex--;
             RenderDetails();
+            SfxPlayer.Play(QuestPageTurnSfx);
         }
 
         public void ShowNextQuest()
@@ -151,6 +157,7 @@ namespace SubTerra.App.UI.Tutorial
 
             viewedIndex++;
             RenderDetails();
+            SfxPlayer.Play(QuestPageTurnSfx);
         }
 
         public void ChooseDumpInventory()
@@ -334,6 +341,8 @@ namespace SubTerra.App.UI.Tutorial
                 return;
             }
 
+            // B-180-1: 완료음(QuestReward)은 지급 시점이 아니라 완료 창의 체크가 나타날 때 QuestClearPopupMotion이 낸다.
+            // 지급 규칙과 시점은 그대로이고 여기서는 소리를 내지 않는다.
             if (!rewards.HasPending)
             {
                 CloseOverflow();

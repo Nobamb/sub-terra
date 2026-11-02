@@ -29,6 +29,7 @@ namespace SubTerra.App.UI.MainMenu
         private bool isOpen;
         public ControlScheme Selected { get; private set; }
         public bool IsOpen => isOpen && overlay != null && overlay.activeSelf;
+        public bool IsClosing => overlay != null && overlay.activeSelf && terminal != null && terminal.IsOutroPlaying;
         public ControlTerminalView Terminal => terminal;
         /// <summary>확인용: true면 에디터 모드에서도 플레이 중처럼 등장·퇴장 연출 경로를 탄다.</summary>
         public bool ForceMotionForTests { get; set; }
@@ -102,7 +103,7 @@ namespace SubTerra.App.UI.MainMenu
             UiKeyboardSubmitGuard.ClearSelection();
         }
 
-        public bool Close()
+        public bool Close(bool playSound = true)
         {
             if (!IsOpen) return false;
             isOpen = false;
@@ -111,7 +112,7 @@ namespace SubTerra.App.UI.MainMenu
             UiKeyboardSubmitGuard.ClearSelection();
             if (CanPlayMotion && terminal != null)
             {
-                SfxPlayer.Play(SfxId.UiPopupClose);
+                if (playSound) SfxPlayer.Play(SfxId.UiPopupClose);
                 terminal.PlayOutro();
             }
             else HideNow();
@@ -144,7 +145,10 @@ namespace SubTerra.App.UI.MainMenu
             font = sample != null ? sample.font : TMP_Settings.defaultFontAsset;
             var authoredButton = transform.Find("SettingsCard/ChangeControls");
             if (authoredButton != null)
+            {
                 authoredButton.GetComponent<Button>().onClick.AddListener(Open);
+                UiSfx.Attach(authoredButton.GetComponent<Button>(), SfxId.None, hover: true);
+            }
             else
                 SimpleButton(transform, "ChangeControls", "키 조작 변경", 0, -366, 280, 40, Open);
             var backdrop = Rect(transform, "ControlSchemeOverlay", 0, 0, 0, 0);
@@ -201,6 +205,7 @@ namespace SubTerra.App.UI.MainMenu
             var button = rect.gameObject.AddComponent<Button>();
             button.targetGraphic = background;
             button.onClick.AddListener(action);
+            UiSfx.Attach(button, SfxId.None, hover: true);
             UiKeyboardSubmitGuard.ConfigurePointerPreferredButton(button);
             var label = Rect(rect, "Label", 0, 0, width - 8, height - 4).gameObject.AddComponent<TextMeshProUGUI>();
             label.font = font;
@@ -220,6 +225,7 @@ namespace SubTerra.App.UI.MainMenu
             var button = rect.gameObject.AddComponent<ControlTerminalButton>();
             button.targetGraphic = background;
             button.onClick.AddListener(action);
+            UiSfx.Attach(button, SfxId.None, hover: true);
             UiKeyboardSubmitGuard.ConfigurePointerPreferredButton(button);
 
             if (normalArt != null)

@@ -1,4 +1,6 @@
 using System.Collections;
+using SubTerra.App.Audio;
+using SubTerra.Shared.Audio;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -11,6 +13,8 @@ namespace SubTerra.App.UI.HUD
     {
         public const float ExitSeconds = 0.5f;
         public const float EnterSeconds = 0.3f;
+        private const SfxId ExpandSfx = SfxId.UiPopupOpen;
+        private const SfxId CollapseSfx = SfxId.UiPopupClose;
         [SerializeField] private RectTransform openRoot;
         [SerializeField] private RectTransform closedRoot;
         [SerializeField] private CanvasGroup inputGroup;
@@ -82,6 +86,7 @@ namespace SubTerra.App.UI.HUD
         private IEnumerator Transition()
         {
             IsTransitioning = true;
+            if (Application.isPlaying) SfxPlayer.Play(IsOpen ? CollapseSfx : ExpandSfx);
             inputGroup.interactable = false;
             var outgoing = IsOpen ? openRoot : closedRoot;
             var incoming = IsOpen ? closedRoot : openRoot;

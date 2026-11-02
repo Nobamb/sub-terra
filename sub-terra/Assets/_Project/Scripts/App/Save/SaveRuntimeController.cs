@@ -440,11 +440,27 @@ namespace SubTerra.App.Save
                 return;
             }
 
+            SaveBeforeQuit();
+            ShutdownApplication();
+        }
+
+        /// <summary>B-170: 종료 연출 전에 먼저 저장한다. 조건은 RequestQuit과 같다.</summary>
+        public void SaveBeforeQuit()
+        {
+            if (saveInProgress)
+            {
+                return;
+            }
+
             if (dirty && activeSlot > 0)
             {
                 SaveCurrent(AutoSaveReason.QuitRequested);
             }
+        }
 
+        /// <summary>B-170: 종료 연출이 끝난 뒤 실제로 끈다(에디터는 재생 멈춤, 빌드는 Application.Quit).</summary>
+        public void ShutdownApplication()
+        {
             // Editor Play Mode: Application.Quit만으로는 재생이 멈추지 않는다.
             // App 어셈블리는 UnityEditor를 참조하지 않으므로 리플렉션으로 isPlaying을 끈다.
             // Player 빌드: Application.Quit 경로.
@@ -800,7 +816,8 @@ namespace SubTerra.App.Save
             if (mineResetClockOverlay != null
                 && IsMineResetSessionScene(SceneManager.GetActiveScene().name))
             {
-                mineResetClockOverlay.BeginDeparture();
+                // 만료 벨·초기화 알림 연출에는 출발 꺼짐음을 겹치지 않는다.
+                mineResetClockOverlay.BeginDeparture(playSound: false);
             }
 
             const int maximumWaitFrames = 600;
