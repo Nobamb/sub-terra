@@ -3817,3 +3817,6 @@ EditMode:
 
 
 179. prompt-B-179.md 참고해서 sub-terra-sfx-B179 폴더에 있는 효과음들 참고해서 게임에 효과음들을 배치해줘
+
+
+179-1. prompt-B-179-1.md 참고해서 기존 prompt-B.md의 179번에서 했던 내용들을 좀 수정해줘
