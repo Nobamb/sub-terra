@@ -224,6 +224,7 @@ namespace SubTerra.App.UI.MainMenu
             var button = rect.gameObject.AddComponent<ControlTerminalButton>();
             button.targetGraphic = background;
             button.onClick.AddListener(action);
+            UiSfx.Attach(button, SfxId.None, hover: true);
             UiKeyboardSubmitGuard.ConfigurePointerPreferredButton(button);
 
             if (normalArt != null)

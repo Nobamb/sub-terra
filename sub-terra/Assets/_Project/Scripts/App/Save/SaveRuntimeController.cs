@@ -816,7 +816,8 @@ namespace SubTerra.App.Save
             if (mineResetClockOverlay != null
                 && IsMineResetSessionScene(SceneManager.GetActiveScene().name))
             {
-                mineResetClockOverlay.BeginDeparture();
+                // 만료 벨·초기화 알림 연출에는 출발 꺼짐음을 겹치지 않는다.
+                mineResetClockOverlay.BeginDeparture(playSound: false);
             }
 
             const int maximumWaitFrames = 600;

@@ -242,6 +242,8 @@ namespace SubTerra.App.Audio
                 (new SfxEntry(SfxId.GlitchPopupClose, SfxBus.UI, volume: 0.6f), "glitch_popup_close"),
                 // 0.90초. 30초 스캔 링 시작 "핑". 자주 나므로 작게.
                 (new SfxEntry(SfxId.DroneScanPing, SfxBus.World, volume: 0.3f), "drone_scan_ping"),
+                // B-179: 0.88초. 한 번 잡아 끄는 동안 한 번만 재생, 피치는 1 고정.
+                (new SfxEntry(SfxId.SettingsSliderDrag, SfxBus.UI, volume: 0.13f), "settings_slider_drag"),
             };
         }
     }

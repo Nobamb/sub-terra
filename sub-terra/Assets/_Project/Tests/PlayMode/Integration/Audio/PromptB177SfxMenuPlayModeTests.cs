@@ -59,18 +59,20 @@ namespace SubTerra.App.Tests.PlayMode.Audio
 
                 events.Clear(); pitchValues.Clear();
                 var now = 100f;
-                Get<SfxThrottle>(skin, "volumeTickThrottle").Clock = () => now;
+                Get<SfxThrottle>(skin, "volumeKeyThrottle").Clock = () => now;
                 slider.value = 1f;
                 slider.value = 0.5f;
-                Assert.That(events, Is.EqualTo(new[] { SfxId.UiScanTick }), "한 프레임 이동·0.07초 제한");
-                Assert.That(pitchValues[0], Is.EqualTo(1.1f).Within(1e-5));
-                now += 0.08f;
+                Call(skin, "LateUpdate");
+                Assert.That(events, Is.EqualTo(new[] { SfxId.SettingsSliderDrag }), "B-179: 비포인터 변경 0.88초 제한");
+                Assert.That(pitchValues[0], Is.EqualTo(1f));
+                now += 0.89f;
                 events.Clear();
                 slider.value = 0.51f;
                 Assert.That(events, Is.Empty, "5% 칸 내부");
                 slider.value = 0.56f;
-                Assert.That(events, Is.EqualTo(new[] { SfxId.UiScanTick }));
-                Assert.That(pitchValues[pitchValues.Count - 1], Is.InRange(0.9f, 1.1f));
+                Call(skin, "LateUpdate");
+                Assert.That(events, Is.EqualTo(new[] { SfxId.SettingsSliderDrag }));
+                Assert.That(pitchValues[pitchValues.Count - 1], Is.EqualTo(1f));
                 events.Clear();
                 slider.SetValueWithoutNotify(0.9f);
                 dropdown.SetValueWithoutNotify(1);
@@ -112,7 +114,7 @@ namespace SubTerra.App.Tests.PlayMode.Audio
         }
 
         [UnityTest]
-        public IEnumerator Runtime_SideMenuAndClock_OnlyInputChangesMakeSound()
+        public IEnumerator Runtime_SideMenuAndClock_InputAndVisibleDepartureMakeSound()
         {
             var events = new List<SfxId>();
             Action<SfxId, float> record = (id, pitch) => events.Add(id);
@@ -156,7 +158,7 @@ namespace SubTerra.App.Tests.PlayMode.Audio
                 events.Clear();
                 overlay.BeginDeparture();
                 Call(overlay, "ToggleClockFromInput");
-                Assert.That(events, Is.Empty, "출발은 무음");
+                Assert.That(events, Is.EqualTo(new[] { SfxId.WindowTvClose }), "B-179: 켜진 시계의 출발 꺼짐음만 한 번");
                 overlay.EndDeparture();
                 Set(runtime, "activeSlot", 0);
                 overlay.RefreshFromState();

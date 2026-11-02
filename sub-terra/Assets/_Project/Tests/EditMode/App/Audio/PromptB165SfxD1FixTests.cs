@@ -88,7 +88,7 @@ namespace SubTerra.App.Tests.Audio
                 Assert.That(asset.Volume, Is.EqualTo(row.Volume).Within(0.0001f), row.Id.ToString());
             }
 
-            Assert.That(defaults.Count, Is.EqualTo(89), "칸 수는 그대로(B-178에서 89칸)");
+            Assert.That(defaults.Count, Is.EqualTo(90), "B-179 슬라이더 드래그 1칸 추가");
         }
 
         // ---- ESC 설정창 ----

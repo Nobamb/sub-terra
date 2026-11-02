@@ -97,6 +97,7 @@ namespace SubTerra.Shared.Audio
         QuestReward = 87,
         GlitchPopupOpen = 88,
         GlitchPopupClose = 89,
-        DroneScanPing = 90
+        DroneScanPing = 90,
+        SettingsSliderDrag = 91
     }
 }

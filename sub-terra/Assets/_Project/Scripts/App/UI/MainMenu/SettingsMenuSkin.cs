@@ -18,9 +18,18 @@ namespace SubTerra.App.UI.MainMenu
     /// </summary>
     public sealed class SettingsMenuSkin : MonoBehaviour
     {
-        private const SfxId VolumeTickSfx = SfxId.UiScanTick;
-        private readonly SfxThrottle volumeTickThrottle = new SfxThrottle(0.07f);
+        private const SfxId VolumeDragSfx = SfxId.SettingsSliderDrag;
+        private const float VolumeKeySfxGap = 0.88f;
+        private readonly SfxThrottle volumeKeyThrottle = new SfxThrottle(VolumeKeySfxGap);
         private readonly Dictionary<Slider, int> volumeSteps = new Dictionary<Slider, int>();
+        private readonly Dictionary<Slider, VolumeDragState> volumeDrags = new Dictionary<Slider, VolumeDragState>();
+
+        private sealed class VolumeDragState
+        {
+            public bool Dragging;
+            public bool Played;
+            public bool Pending;
+        }
         private bool suppressNextCloseSound;
         [SerializeField] private RectTransform card;
         [SerializeField] private Button closeButton;
@@ -76,7 +85,7 @@ namespace SubTerra.App.UI.MainMenu
         private void OnEnable()
         {
             suppressNextCloseSound = false;
-            volumeTickThrottle.Reset();
+            volumeKeyThrottle.Reset();
             isClosing = false;
             closeComplete = null;
             footerIndex = -1;
@@ -276,6 +285,15 @@ namespace SubTerra.App.UI.MainMenu
 
         private void LateUpdate()
         {
+            foreach (var pair in volumeDrags)
+            {
+                if (pair.Key == null || !pair.Key.isActiveAndEnabled)
+                {
+                    pair.Value.Dragging = pair.Value.Played = pair.Value.Pending = false;
+                    continue;
+                }
+                FlushVolumeSound(pair.Value);
+            }
             RaiseDropdownLists();
             FitDropdownTemplates();
             if (particleCooldown > 0f)
@@ -422,6 +440,7 @@ namespace SubTerra.App.UI.MainMenu
             {
                 var target = slider;
                 volumeSteps[target] = Mathf.FloorToInt(target.normalizedValue * 20f);
+                volumeDrags[target] = new VolumeDragState();
                 UnityEngine.Events.UnityAction<float> action = _ => OnVolumeChanged(target);
                 target.onValueChanged.AddListener(action);
                 volumeHooks.Add(new KeyValuePair<Slider, UnityEngine.Events.UnityAction<float>>(target, action));
@@ -437,6 +456,7 @@ namespace SubTerra.App.UI.MainMenu
             }
             volumeHooks.Clear();
             volumeSteps.Clear();
+            volumeDrags.Clear();
         }
 
         private void OnVolumeChanged(Slider slider)
@@ -444,8 +464,14 @@ namespace SubTerra.App.UI.MainMenu
             var step = Mathf.FloorToInt(slider.normalizedValue * 20f);
             var changed = volumeSteps.TryGetValue(slider, out var previous) && previous != step;
             volumeSteps[slider] = step;
-            if (Application.isPlaying && changed && volumeTickThrottle.TryPass())
-                SfxPlayer.Play(VolumeTickSfx, Mathf.Lerp(0.9f, 1.1f, slider.normalizedValue));
+            if (Application.isPlaying && changed && slider.isActiveAndEnabled
+                && volumeDrags.TryGetValue(slider, out var drag))
+            {
+                drag.Pending = true;
+                if (drag.Dragging) FlushVolumeSound(drag);
+                // 트랙 클릭은 Slider.OnPointerDown이 EventTrigger보다 먼저 값을 바꾼다.
+                // 아직 누름을 받지 못했으면 PointerDown 또는 LateUpdate에서 재생한다.
+            }
             if (audioRows != null) audioRows.RefreshLabels();
             RefreshVolumeGlow();
             EmitSliderParticles(slider, 4, respectCooldown: true);
@@ -454,7 +480,40 @@ namespace SubTerra.App.UI.MainMenu
         public void RefreshVolumeSoundSteps()
         {
             foreach (var slider in VolumeSliders())
+            {
                 volumeSteps[slider] = Mathf.FloorToInt(slider.normalizedValue * 20f);
+                if (volumeDrags.TryGetValue(slider, out var drag)) drag.Pending = false;
+            }
+        }
+
+        private void BeginVolumeDrag(Slider slider, BaseEventData data)
+        {
+            if (data is not PointerEventData pointer || pointer.button != PointerEventData.InputButton.Left
+                || !slider.IsActive() || !slider.IsInteractable()
+                || !volumeDrags.TryGetValue(slider, out var drag)) return;
+            drag.Dragging = true;
+            drag.Played = false;
+            FlushVolumeSound(drag);
+        }
+
+        private void EndVolumeDrag(Slider slider)
+        {
+            if (!volumeDrags.TryGetValue(slider, out var drag)) return;
+            FlushVolumeSound(drag);
+            drag.Dragging = false;
+        }
+
+        private void FlushVolumeSound(VolumeDragState drag)
+        {
+            if (!drag.Pending) return;
+            drag.Pending = false;
+            if (drag.Dragging)
+            {
+                if (drag.Played) return;
+                drag.Played = true;
+                volumeKeyThrottle.Reset();
+            }
+            if (volumeKeyThrottle.TryPass()) SfxPlayer.Play(VolumeDragSfx, 1f);
         }
 
         private void RefreshVolumeGlow()
@@ -665,7 +724,16 @@ namespace SubTerra.App.UI.MainMenu
             foreach (var slider in VolumeSliders())
             {
                 var target = slider;
-                WireBurst(target.gameObject, data => OnSliderParticleEvent(data, target));
+                var trigger = target.GetComponent<EventTrigger>();
+                if (trigger == null) trigger = target.gameObject.AddComponent<EventTrigger>();
+                AddTrigger(trigger, EventTriggerType.PointerDown, data =>
+                {
+                    BeginVolumeDrag(target, data);
+                    OnSliderParticleEvent(data, target);
+                });
+                AddTrigger(trigger, EventTriggerType.Drag, data => OnSliderParticleEvent(data, target));
+                AddTrigger(trigger, EventTriggerType.PointerUp, _ => EndVolumeDrag(target));
+                AddTrigger(trigger, EventTriggerType.EndDrag, _ => EndVolumeDrag(target));
             }
             WireBurst(reduceMotion != null ? reduceMotion.gameObject : null, OnToggleParticleEvent);
         }
