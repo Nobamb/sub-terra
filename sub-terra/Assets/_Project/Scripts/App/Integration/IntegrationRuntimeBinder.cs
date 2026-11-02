@@ -79,6 +79,7 @@ namespace SubTerra.App.Integration
         private bool uiActivated;
         private bool inventorySpeedBound;
         private bool tileMinedSfxBound;
+        private DroneScanPingSfx droneScanPing;
         private readonly CargoHeavySfxGate cargoHeavySfx = new CargoHeavySfxGate();
         private bool droneReadingsBound;
         private Action unbindProgressionPanel;
@@ -914,6 +915,20 @@ namespace SubTerra.App.Integration
                 mining.TileMined += OnTileMinedForSfx;
                 tileMinedSfxBound = true;
             }
+
+            // B-178: 스캔 링 "핑". 설정창(일시정지 아님)·UiPauseGate 중에는 그 회차만 생략한다.
+            if (droneSensor != null)
+            {
+                UndergroundMenuController menu = null;
+                droneScanPing?.Dispose();
+                droneScanPing = new DroneScanPingSfx(() =>
+                {
+                    // 30초에 한 번만 부르므로 없을 때만 다시 찾는다.
+                    menu = Resolve(menu, FindObjectsInactive.Include);
+                    return menu != null && menu.IsSettingsOpen;
+                });
+                droneScanPing.Bind(droneSensor);
+            }
         }
 
         private static void OnTileMinedForSfx(Vector3Int _, MiningTileDto tile)
@@ -1001,6 +1016,8 @@ namespace SubTerra.App.Integration
             }
 
             tileMinedSfxBound = false;
+            droneScanPing?.Dispose();
+            droneScanPing = null;
             if (droneReadingsBound && bootstrap != null && bootstrap.State != null)
             {
                 bootstrap.State.EnergyChanged -= OnEnergyChangedForDrone;

@@ -1173,6 +1173,7 @@ namespace SubTerra.App.UI.Progression
                 UnityAction action = () => SelectCategoryTab(index);
                 categoryTabRuntimeActions[i] = action;
                 button.onClick.AddListener(action);
+                SubTerra.App.Audio.UiSfx.Attach(button, SubTerra.Shared.Audio.SfxId.UiClick);
             }
         }
 

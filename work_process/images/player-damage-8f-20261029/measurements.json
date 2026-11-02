@@ -1,0 +1,241 @@
+{
+  "canvas": [
+    256,
+    256
+  ],
+  "ppu": 256,
+  "pivot": [
+    0.5,
+    0.5
+  ],
+  "target_foot_y": 242,
+  "alignment": "alpha<8 cleared, premultiplied LANCZOS, alpha-weighted body centroid -> 128 + shift, foot row -> y242",
+  "game_frames": [
+    {
+      "bounds": [
+        63,
+        15,
+        193,
+        243
+      ],
+      "height": 228,
+      "foot_y": 242,
+      "centroid_x": 126.93,
+      "edge_clearance": {
+        "left": 63,
+        "top": 15,
+        "right": 63,
+        "bottom": 13
+      },
+      "alpha_1_to_7_pixels": 101,
+      "name": "damage_01"
+    },
+    {
+      "bounds": [
+        51,
+        23,
+        204,
+        243
+      ],
+      "height": 220,
+      "foot_y": 242,
+      "centroid_x": 117.97,
+      "edge_clearance": {
+        "left": 51,
+        "top": 23,
+        "right": 52,
+        "bottom": 13
+      },
+      "alpha_1_to_7_pixels": 114,
+      "name": "damage_02"
+    },
+    {
+      "bounds": [
+        47,
+        37,
+        210,
+        243
+      ],
+      "height": 206,
+      "foot_y": 242,
+      "centroid_x": 119.26,
+      "edge_clearance": {
+        "left": 47,
+        "top": 37,
+        "right": 46,
+        "bottom": 13
+      },
+      "alpha_1_to_7_pixels": 130,
+      "name": "damage_03"
+    },
+    {
+      "bounds": [
+        62,
+        24,
+        194,
+        243
+      ],
+      "height": 219,
+      "foot_y": 242,
+      "centroid_x": 128.41,
+      "edge_clearance": {
+        "left": 62,
+        "top": 24,
+        "right": 62,
+        "bottom": 13
+      },
+      "alpha_1_to_7_pixels": 98,
+      "name": "damage_04"
+    }
+  ],
+  "order": [
+    "01",
+    "1-2",
+    "02",
+    "2-3",
+    "03",
+    "3-4",
+    "04",
+    "4-idle"
+  ],
+  "silhouette_difference_steps": {
+    "01->1-2": 0.446,
+    "1-2->02": 0.144,
+    "02->2-3": 0.23,
+    "2-3->03": 0.14,
+    "03->3-4": 0.229,
+    "3-4->04": 0.613,
+    "04->4-idle": 0.17,
+    "4-idle->idle": 0.213
+  },
+  "frames": [
+    {
+      "source": "damage-1-2-center.png",
+      "output": "damage-1-2.png",
+      "scale": 0.209,
+      "resized_size": 262,
+      "shift_x": -8,
+      "translation": [
+        -18,
+        2
+      ],
+      "bounds": [
+        55,
+        23,
+        198,
+        243
+      ],
+      "height": 220,
+      "foot_y": 242,
+      "centroid_x": 120.4,
+      "edge_clearance": {
+        "left": 55,
+        "top": 23,
+        "right": 58,
+        "bottom": 13
+      },
+      "alpha_1_to_7_pixels": 0,
+      "sha256": "dbe5f413525ac74e5ee2c1a82255b70e833d7b4164ad3d68ab510649afa4afc7",
+      "iou_prev": 0.642,
+      "iou_next": 0.869,
+      "silhouette_difference_prev": 0.446,
+      "silhouette_difference_next": 0.144
+    },
+    {
+      "source": "damage-2-3-center.png",
+      "output": "damage-2-3.png",
+      "scale": 0.211,
+      "resized_size": 265,
+      "shift_x": -9,
+      "translation": [
+        -15,
+        5
+      ],
+      "bounds": [
+        47,
+        34,
+        212,
+        243
+      ],
+      "height": 209,
+      "foot_y": 242,
+      "centroid_x": 119.3,
+      "edge_clearance": {
+        "left": 47,
+        "top": 34,
+        "right": 44,
+        "bottom": 13
+      },
+      "alpha_1_to_7_pixels": 0,
+      "sha256": "505ccf8badc9d8b56757cdcccf517aac9d04c94a2fee0ef047827650422197b0",
+      "iou_prev": 0.793,
+      "iou_next": 0.875,
+      "silhouette_difference_prev": 0.23,
+      "silhouette_difference_next": 0.14
+    },
+    {
+      "source": "damage-3-4-center.png",
+      "output": "damage-3-4.png",
+      "scale": 0.213,
+      "resized_size": 267,
+      "shift_x": -7,
+      "translation": [
+        -11,
+        4
+      ],
+      "bounds": [
+        51,
+        32,
+        212,
+        243
+      ],
+      "height": 211,
+      "foot_y": 242,
+      "centroid_x": 121.21,
+      "edge_clearance": {
+        "left": 51,
+        "top": 32,
+        "right": 44,
+        "bottom": 13
+      },
+      "alpha_1_to_7_pixels": 0,
+      "sha256": "fafdf335999ac51c4f519bd452236c09f13ac886b6231e9a1e13a5d7ca32f721",
+      "iou_prev": 0.795,
+      "iou_next": 0.555,
+      "silhouette_difference_prev": 0.229,
+      "silhouette_difference_next": 0.613
+    },
+    {
+      "source": "damage-4-idle.png",
+      "output": "damage-4-idle.png",
+      "scale": 0.229,
+      "resized_size": 287,
+      "shift_x": 0,
+      "translation": [
+        -18,
+        -10
+      ],
+      "bounds": [
+        56,
+        22,
+        206,
+        243
+      ],
+      "height": 221,
+      "foot_y": 242,
+      "centroid_x": 128.34,
+      "edge_clearance": {
+        "left": 56,
+        "top": 22,
+        "right": 50,
+        "bottom": 13
+      },
+      "alpha_1_to_7_pixels": 0,
+      "sha256": "fe2c492bf33791a5461dd5a0bef911edef48cd5cbfde404d3ea9cc83923bbe36",
+      "iou_prev": 0.85,
+      "iou_next": 0.804,
+      "silhouette_difference_prev": 0.17,
+      "silhouette_difference_next": 0.213
+    }
+  ]
+}

@@ -36,3 +36,11 @@
 - [ ] Windows exe에서 밝기·전환 체감 및 GPU 비용. 성능 개선을 주장하지 않는다.
 
 팀원은 기존 PR #250의 후속 변경에서 위 항목을 확인한다. 단독 배경 카메라 캡처만으로 전체 Demo 실제 플레이 검증 완료라고 보고하지 않는다.
+
+## 2026-11-03 최신 main 통합 검토
+- origin/main d2f54697을 기존 PR #250 브랜치에 통합. 충돌은 동결된 lessons.md만 최신 main으로 해결했다.
+- 최신 잠금 클릭/퀘스트 효과음 등 팀원 변경 보존. 기존 개별 교훈 파일 1개는 #263과 동일 내용으로 이관했다.
+- EditMode MineBackdropViewportTests 5/5, PlayMode Issue220MineBackdropTests 2/2 통과. 추가한 실제 Bootstrap 검사도 별도 재실행 1/1 통과.
+- 별도 Temp/PR250-20261103 저장 경로에서 새 게임 → 지상 → 탐사 → 저장 → 이어하기 후 배경 하나/지형 뒤 정렬/얕은 층 가중치를 확인했다. 검사 초기 브리핑은 배치 실행의 WaitForEndOfFrame 제약을 피해 기존 진행 중 퀘스트 상태로 준비했다. 최초 브리핑 자체 검증은 아니다.
+- 실제 광산 카메라 960×540 렌더 bootstrap-integration.png에서 구리 배경과 전경 분리를 확인했다. HUD를 합성하지 않은 카메라 렌더이며 전체 화면 QA 완료 근거로 사용하지 않는다.
+- 결과: sub-terra/Builds/PR250-20261103/{edit.xml,play-verified.xml,render.xml}. Windows·전체 Demo·깊은 층 실제 왕복·소리 청취는 미검증. 기존 수동 체크리스트 중 깊은 층/Windows 항목 유지.

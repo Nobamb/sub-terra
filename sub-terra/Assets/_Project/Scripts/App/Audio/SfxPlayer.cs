@@ -75,6 +75,14 @@ namespace SubTerra.App.Audio
         /// <summary>요청이 실제 재생까지 간 횟수(연타 제한·무음에 걸린 요청은 세지 않는다).</summary>
         public int StartedCount { get; private set; }
 
+        /// <summary>B-178: 그 칸이 마지막으로 재생을 시작한 뒤 지난 초(읽기 전용). 한 번도 안 났으면 양의 무한대.</summary>
+        public float SecondsSinceLastPlayed(SfxId id)
+        {
+            return lastPlayedAt.TryGetValue(id, out var last)
+                ? Mathf.Max(0f, clock() - last)
+                : float.PositiveInfinity;
+        }
+
         public SfxLibrary Library => ResolveLibrary();
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]

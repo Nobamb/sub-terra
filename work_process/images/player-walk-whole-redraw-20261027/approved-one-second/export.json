@@ -1,0 +1,295 @@
+{
+  "frame_count": 16,
+  "frame_rate": 16,
+  "period_seconds": 1,
+  "shared_uniform_scale": 0.7533333333333333,
+  "no_body_part_warp_or_compositing": true,
+  "normal_gif": {
+    "decoded_frames": 16,
+    "total_ms": 1000,
+    "max_palette_error": 2.318389892578125
+  },
+  "slow_gif": {
+    "decoded_frames": 16,
+    "total_ms": 2000,
+    "max_palette_error": 2.318389892578125
+  },
+  "frames": [
+    {
+      "frame": 1,
+      "source_crop": [
+        97,
+        11,
+        300,
+        316
+      ],
+      "uniform_scale": 0.7533333333333333,
+      "translation": [
+        39,
+        0
+      ],
+      "height": 227,
+      "unity_ground_y": 16,
+      "sha256": "c4318eae673566dda71ff011ab8b558fb00d23ec1e18276f3efce70149015268"
+    },
+    {
+      "frame": 2,
+      "source_crop": [
+        404,
+        12,
+        593,
+        316
+      ],
+      "uniform_scale": 0.7533333333333333,
+      "translation": [
+        48,
+        0
+      ],
+      "height": 227,
+      "unity_ground_y": 16,
+      "sha256": "4810c29ef7dd580d2fe645929642ec6df0d1c6427f7245a9dfa3791d92eceb65"
+    },
+    {
+      "frame": 3,
+      "source_crop": [
+        687,
+        12,
+        882,
+        318
+      ],
+      "uniform_scale": 0.7533333333333333,
+      "translation": [
+        45,
+        -1
+      ],
+      "height": 228,
+      "unity_ground_y": 16,
+      "sha256": "846e32e946827862dea1528503c3ae81f32d67689699c585f7e0b6dd95547a0b"
+    },
+    {
+      "frame": 4,
+      "source_crop": [
+        978,
+        12,
+        1168,
+        316
+      ],
+      "uniform_scale": 0.7533333333333333,
+      "translation": [
+        48,
+        0
+      ],
+      "height": 226,
+      "unity_ground_y": 17,
+      "sha256": "722e36ec8e14e8c9bc452038eb5af0d570fb2fade99e89d0523cfea384e7fee6"
+    },
+    {
+      "frame": 5,
+      "source_crop": [
+        111,
+        320,
+        296,
+        628
+      ],
+      "uniform_scale": 0.7533333333333333,
+      "translation": [
+        53,
+        -3
+      ],
+      "height": 230,
+      "unity_ground_y": 16,
+      "sha256": "5852a1987221d561a9abb58acb21a1d33f4d177e3e73f53d5441c25f8a73d80c"
+    },
+    {
+      "frame": 6,
+      "source_crop": [
+        407,
+        321,
+        592,
+        630
+      ],
+      "uniform_scale": 0.7533333333333333,
+      "translation": [
+        53,
+        -3
+      ],
+      "height": 230,
+      "unity_ground_y": 15,
+      "sha256": "6ce174133f7e1c3050cf30464dacc9e60e394034eab025473bcf8a5c2d1592e1"
+    },
+    {
+      "frame": 7,
+      "source_crop": [
+        691,
+        321,
+        882,
+        629
+      ],
+      "uniform_scale": 0.7533333333333333,
+      "translation": [
+        48,
+        -3
+      ],
+      "height": 229,
+      "unity_ground_y": 16,
+      "sha256": "9320bd33f25646d4e572d042f54c86f5957603eb53677519e0c23ad9f049f05e"
+    },
+    {
+      "frame": 8,
+      "source_crop": [
+        983,
+        322,
+        1183,
+        629
+      ],
+      "uniform_scale": 0.7533333333333333,
+      "translation": [
+        46,
+        -2
+      ],
+      "height": 229,
+      "unity_ground_y": 16,
+      "sha256": "d3ce977a730042eccdca6185c13e5a9645371e59abb3122a09a7fcae4bf98c4f"
+    },
+    {
+      "frame": 9,
+      "source_crop": [
+        92,
+        633,
+        292,
+        934
+      ],
+      "uniform_scale": 0.7533333333333333,
+      "translation": [
+        41,
+        3
+      ],
+      "height": 224,
+      "unity_ground_y": 15,
+      "sha256": "05fdbd2e3df834edf98acb14f2400891c9f2d875c10a0d05a8f7f5c88e0ef028"
+    },
+    {
+      "frame": 10,
+      "source_crop": [
+        396,
+        633,
+        587,
+        934
+      ],
+      "uniform_scale": 0.7533333333333333,
+      "translation": [
+        51,
+        3
+      ],
+      "height": 224,
+      "unity_ground_y": 15,
+      "sha256": "e52af397fbc7d0a65b4d4915dc88051ab72f9100a2d7606cebb6edf92319651c"
+    },
+    {
+      "frame": 11,
+      "source_crop": [
+        686,
+        633,
+        878,
+        934
+      ],
+      "uniform_scale": 0.7533333333333333,
+      "translation": [
+        47,
+        3
+      ],
+      "height": 223,
+      "unity_ground_y": 16,
+      "sha256": "5c15636499b766cfe9e7b16665881c4dcf5e71ed82819bb89891e25bbabac4c1"
+    },
+    {
+      "frame": 12,
+      "source_crop": [
+        978,
+        634,
+        1182,
+        936
+      ],
+      "uniform_scale": 0.7533333333333333,
+      "translation": [
+        51,
+        2
+      ],
+      "height": 226,
+      "unity_ground_y": 15,
+      "sha256": "3696f2896e24c7a47d35d0bc74a6943a00809d52e28d71fec5d850b64b3e6c7d"
+    },
+    {
+      "frame": 13,
+      "source_crop": [
+        104,
+        941,
+        293,
+        1245
+      ],
+      "uniform_scale": 0.7533333333333333,
+      "translation": [
+        50,
+        0
+      ],
+      "height": 227,
+      "unity_ground_y": 16,
+      "sha256": "fcf17bb54261c74c8bc70b87d8df319271fa24bc4af5fdb4bc5077c13d4df3ae"
+    },
+    {
+      "frame": 14,
+      "source_crop": [
+        410,
+        941,
+        595,
+        1245
+      ],
+      "uniform_scale": 0.7533333333333333,
+      "translation": [
+        53,
+        0
+      ],
+      "height": 226,
+      "unity_ground_y": 16,
+      "sha256": "337ee086154297a87793926f6ae1d12712791264835f774a67eb6f52816b764d"
+    },
+    {
+      "frame": 15,
+      "source_crop": [
+        691,
+        941,
+        882,
+        1245
+      ],
+      "uniform_scale": 0.7533333333333333,
+      "translation": [
+        48,
+        0
+      ],
+      "height": 227,
+      "unity_ground_y": 16,
+      "sha256": "e91805113d217bcd4bb1afdbcc04d76bf72de87cfd9a7f0354e2cf0a99152ab2"
+    },
+    {
+      "frame": 16,
+      "source_crop": [
+        976,
+        941,
+        1174,
+        1247
+      ],
+      "uniform_scale": 0.7533333333333333,
+      "translation": [
+        49,
+        -1
+      ],
+      "height": 228,
+      "unity_ground_y": 16,
+      "sha256": "653c11caa8e6ed480f26220a16f78f8f6010a13f8506a27300aae9bdb780c233"
+    }
+  ],
+  "art_limitations": [
+    "Some foot spacing, arm timing and torso-angle variation remain."
+  ],
+  "unity_validation": "separate Unity test report; not inferred from export"
+}

@@ -632,6 +632,35 @@ namespace SubTerra.App.Tests.UI
 
         // ---------------------------------------------------------------- 패널 배선
 
+        [TestCase(ControlKeyFunction.None, 1.333f)]
+        [TestCase(ControlKeyFunction.MineLeft, 17f / 12f)]
+        [TestCase(ControlKeyFunction.MineRight, 17f / 12f)]
+        [TestCase(ControlKeyFunction.MineUp, 17f / 12f)]
+        [TestCase(ControlKeyFunction.MineDown, 17f / 12f)]
+        [TestCase(ControlKeyFunction.MineFacing, 17f / 12f)]
+        [TestCase(ControlKeyFunction.MineMouse, 21f / 12f)]
+        public void DemoMining_LiftsImmediatelyWhenBlockDisappears_AndFinishesAtSixtyFps(ControlKeyFunction function, float completedAt)
+        {
+            DemoClip clip;
+            if (function == ControlKeyFunction.None)
+                Assert.That(GuideDemoLibrary.TryGet("mine", out clip), Is.True);
+            else clip = ControlTerminalDemoClips.Get(function);
+            var stage = CreatePanel(out _).Terminal.Stage;
+            stage.Bind(clip, false);
+            var mining = clip.Layers.Find(layer => layer.FrameKeys != null && layer.IdleKey == "player.idle");
+            var image = stage.transform.Find("World/L" + clip.Layers.IndexOf(mining) + "_player.idle").GetComponent<Image>();
+            var skin = Resources.Load<GameGuideSkin>(GameGuideSkin.ResourcePath);
+            var block = clip.Layers.Find(layer => layer.SpriteKey == "tile.ore.copper");
+
+            stage.Show(completedAt);
+            Assert.That(block.Alpha.Eval(completedAt), Is.Zero);
+            Assert.That(image.sprite, Is.EqualTo(skin.Get("player.mine.15")), "파괴 즉시 회수 시작");
+            stage.Show(completedAt + 9f / 60f + 0.0001f);
+            Assert.That(image.sprite, Is.EqualTo(skin.Get("player.mine.24")), "회수 10프레임은 60fps");
+            stage.Show(completedAt + 10f / 60f + 0.0001f);
+            Assert.That(image.sprite, Is.EqualTo(skin.Get("player.idle")), "회수 뒤 즉시 대기 자세");
+        }
+
         private ControlSchemePanel CreatePanel(out GameObject root)
         {
             root = new GameObject("Settings", typeof(RectTransform), typeof(Canvas));

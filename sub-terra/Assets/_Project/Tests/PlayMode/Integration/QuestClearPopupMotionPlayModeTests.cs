@@ -3,6 +3,7 @@ using System.Collections;
 using System.Reflection;
 using NUnit.Framework;
 using SubTerra.App.UI.Tutorial;
+using SubTerra.Shared.Audio;
 using UnityEngine;
 using UnityEngine.TestTools;
 
@@ -105,6 +106,88 @@ namespace SubTerra.App.Tests.PlayMode
             Assert.That(check.localScale, Is.EqualTo(Vector3.zero));
             yield return WaitFor(() => transition.IsShown);
             Assert.That(Time.timeScale, Is.Zero);
+        }
+
+        // B-180-1: 완료음은 체크 아이콘이 커지기 시작할 때 한 번, 닫을 때는 브리핑 종료음만.
+        [UnityTest]
+        public IEnumerator CompletionSfxPlaysWhenCheckAppears_CloseUsesBriefingCloseOnly()
+        {
+            var played = new System.Collections.Generic.List<SfxId>();
+            Action<SfxId, float> record = (id, pitch) => played.Add(id);
+            SfxRequests.PlayRequested += record;
+            try
+            {
+                popup.SetActive(true);
+                var transition = popup.GetComponent<StartBriefingPopupMotion>();
+                yield return WaitFor(() => transition.Phase == BriefingPhase.Intro);
+                Assert.That(Count(played, SfxId.QuestReward), Is.Zero, "창이 막 열릴 때는 완료음 없음");
+
+                yield return WaitFor(() => check.localScale.x > 0f);
+                Assert.That(Count(played, SfxId.QuestReward), Is.EqualTo(1), "체크가 나타나기 시작할 때 한 번");
+                Assert.That(check.localScale.x, Is.LessThan(0.6f), "체크 등장 시작 무렵");
+                Assert.That(motion.CheckSfxPlayed, Is.True);
+
+                yield return new WaitForSecondsRealtime(0.5f);
+                Assert.That(Count(played, SfxId.QuestReward), Is.EqualTo(1), "표시 중 반복 없음");
+
+                played.Clear();
+                motion.Close();
+                motion.Close();
+                yield return WaitFor(() => !popup.activeSelf);
+                Assert.That(Count(played, SfxId.BriefingClose), Is.EqualTo(1), "닫힘은 브리핑 종료음 한 번");
+                Assert.That(Count(played, SfxId.GlitchPopupClose), Is.Zero);
+                Assert.That(Count(played, SfxId.QuestReward), Is.Zero, "닫을 때 완료음 없음");
+
+                // 다음 완료 표시에서도 같은 순서로 다시 한 번.
+                played.Clear();
+                popup.SetActive(true);
+                yield return WaitFor(() => check.localScale.x > 0f);
+                Assert.That(Count(played, SfxId.QuestReward), Is.EqualTo(1));
+            }
+            finally
+            {
+                SfxRequests.PlayRequested -= record;
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator CloseBeforeCheckAppears_NoLateCompletionSfx()
+        {
+            var played = new System.Collections.Generic.List<SfxId>();
+            Action<SfxId, float> record = (id, pitch) => played.Add(id);
+            SfxRequests.PlayRequested += record;
+            try
+            {
+                popup.SetActive(true);
+                yield return null;
+                motion.Close();
+                yield return WaitFor(() => !popup.activeSelf);
+                yield return new WaitForSecondsRealtime(0.3f);
+                Assert.That(Count(played, SfxId.QuestReward), Is.Zero, "체크가 나오기 전에 닫으면 완료음 없음");
+                Assert.That(motion.CheckSfxPlayed, Is.False);
+
+                // 닫는 중 다시 열기: 새 표시에서 체크가 나올 때 한 번만.
+                played.Clear();
+                popup.SetActive(true);
+                yield return null;
+                motion.Close();
+                yield return new WaitForSecondsRealtime(0.05f);
+                motion.Open();
+                yield return WaitFor(() => check.localScale.x > 0f);
+                yield return new WaitForSecondsRealtime(0.4f);
+                Assert.That(Count(played, SfxId.QuestReward), Is.EqualTo(1));
+            }
+            finally
+            {
+                SfxRequests.PlayRequested -= record;
+            }
+        }
+
+        private static int Count(System.Collections.Generic.List<SfxId> played, SfxId id)
+        {
+            var count = 0;
+            foreach (var value in played) if (value == id) count++;
+            return count;
         }
 
         private static IEnumerator WaitFor(Func<bool> condition)

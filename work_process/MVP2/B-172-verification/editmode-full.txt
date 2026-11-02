@@ -1,0 +1,175 @@
+SubTerra EditMode Test Run
+Started: 2026-10-29T10:06:42.1180488+09:00
+RunStarted: sub-terra
+FAIL: SubTerra.App.Tests.Audio.PromptB162SfxCStageTests.Defaults_CSlotsMatchTable_NumberedFrom35_NoAlertBus
+    BriefingClose
+  Expected: 0.5f
+  But was:  1.0f
+
+  at SubTerra.App.Tests.Audio.PromptB162SfxCStageTests.Defaults_CSlotsMatchTable_NumberedFrom35_NoAlertBus () [0x00204] in C:\Users\USER\Desktop\develop\develop-list\sub-terra\sub-terra\Assets\_Project\Tests\EditMode\App\Audio\PromptB162SfxCStageTests.cs:120
+
+FAIL: SubTerra.App.Tests.Integration.IntegrationWiringTests.M_F02_BuildingPlacementSystem_WithSetResourceWallet_FailNoSpend_SuccessOnce
+  System.NullReferenceException : Object reference not set to an instance of an object
+    at SubTerra.Gameplay.Building.BuildingPlacementSystem.CanPlaceLocationAt (UnityEngine.Vector3Int origin, SubTerra.Gameplay.Building.BuildingPlacementFailure& failure) [0x000c8] in C:\Users\USER\Desktop\develop\develop-list\sub-terra\sub-terra\Assets\_Project\Scripts\Gameplay\Building\BuildingPlacementSystem.cs:179 
+  at SubTerra.Gameplay.Building.BuildingPlacementSystem.CanPlaceAt (UnityEngine.Vector3Int origin, SubTerra.Gameplay.Building.BuildingPlacementFailure& failure) [0x00016] in C:\Users\USER\Desktop\develop\develop-list\sub-terra\sub-terra\Assets\_Project\Scripts\Gameplay\Building\BuildingPlacementSystem.cs:152 
+  at SubTerra.Gameplay.Building.BuildingPlacementSystem.TryPlaceAt (UnityEngine.Vector3Int origin) [0x00010] in C:\Users\USER\Desktop\develop\develop-list\sub-terra\sub-terra\Assets\_Project\Scripts\Gameplay\Building\BuildingPlacementSystem.cs:295 
+  at SubTerra.App.Tests.Integration.IntegrationWiringTests.M_F02_BuildingPlacementSystem_WithSetResourceWallet_FailNoSpend_SuccessOnce () [0x001dd] in C:\Users\USER\Desktop\develop\develop-list\sub-terra\sub-terra\Assets\_Project\Tests\EditMode\App\Integration\IntegrationWiringTests.cs:461 
+  at (wrapper managed-to-native) System.Reflection.RuntimeMethodInfo.InternalInvoke(System.Reflection.RuntimeMethodInfo,object,object[],System.Exception&)
+  at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x0006a] in <816f70bc2a9c4332b0bd119906a8d40e>:0 
+FAIL: SubTerra.App.Tests.Integration.IntegrationWiringTests.M_F04_WorldSnapshotSystem_CaptureRestore_UsesRestoreDefinitions_NoDoubleBuilding
+  System.NullReferenceException : Object reference not set to an instance of an object
+    at SubTerra.Gameplay.Building.BuildingPlacementSystem.CanPlaceLocationAt (UnityEngine.Vector3Int origin, SubTerra.Gameplay.Building.BuildingPlacementFailure& failure) [0x000c8] in C:\Users\USER\Desktop\develop\develop-list\sub-terra\sub-terra\Assets\_Project\Scripts\Gameplay\Building\BuildingPlacementSystem.cs:179 
+  at SubTerra.Gameplay.Building.BuildingPlacementSystem.CanPlaceAt (UnityEngine.Vector3Int origin, SubTerra.Gameplay.Building.BuildingPlacementFailure& failure) [0x00016] in C:\Users\USER\Desktop\develop\develop-list\sub-terra\sub-terra\Assets\_Project\Scripts\Gameplay\Building\BuildingPlacementSystem.cs:152 
+  at SubTerra.Gameplay.Building.BuildingPlacementSystem.TryPlaceAt (UnityEngine.Vector3Int origin) [0x00010] in C:\Users\USER\Desktop\develop\develop-list\sub-terra\sub-terra\Assets\_Project\Scripts\Gameplay\Building\BuildingPlacementSystem.cs:295 
+  at SubTerra.App.Tests.Integration.IntegrationWiringTests.M_F04_WorldSnapshotSystem_CaptureRestore_UsesRestoreDefinitions_NoDoubleBuilding () [0x001ee] in C:\Users\USER\Desktop\develop\develop-list\sub-terra\sub-terra\Assets\_Project\Tests\EditMode\App\Integration\IntegrationWiringTests.cs:520 
+  at (wrapper managed-to-native) System.Reflection.RuntimeMethodInfo.InternalInvoke(System.Reflection.RuntimeMethodInfo,object,object[],System.Exception&)
+  at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x0006a] in <816f70bc2a9c4332b0bd119906a8d40e>:0 
+FAIL: SubTerra.App.Tests.Integration.IntegrationWiringTests.PlayableMineScene_HasRequestedCharacterTerrainAndMiningLayout
+    Missing terrain at (-13, -40).
+  Expected: True
+  But was:  False
+
+  at SubTerra.App.Tests.Integration.IntegrationWiringTests.PlayableMineScene_HasRequestedCharacterTerrainAndMiningLayout () [0x0004b] in C:\Users\USER\Desktop\develop\develop-list\sub-terra\sub-terra\Assets\_Project\Tests\EditMode\App\Integration\IntegrationWiringTests.cs:78
+
+FAIL: SubTerra.App.Tests.Integration.PhaseFSupportStaticTests.F_S04_BuildingSnapshot_ContainsOnlyIdentityCoordinatesAndState
+    Expected: equivalent to < "instanceId", "buildingTypeId", "x", "y", "rotation", "level", "health" >
+  But was:  < "instanceId", "buildingTypeId", "x", "y", "rotation", "level", "health", "footprintWidth", "footprintHeight" >
+
+  at SubTerra.App.Tests.Integration.PhaseFSupportStaticTests.F_S04_BuildingSnapshot_ContainsOnlyIdentityCoordinatesAndState () [0x00010] in C:\Users\USER\Desktop\develop\develop-list\sub-terra\sub-terra\Assets\_Project\Tests\EditMode\App\Integration\PhaseFSupportStaticTests.cs:116
+
+FAIL: SubTerra.App.Tests.Progression.PromptB101GoldGainTests.PurchasesAllLevelsAndJsonRestoresEffectWithoutNewSaveFields
+    Expected: True
+  But was:  False
+
+  at SubTerra.App.Tests.Progression.PromptB101GoldGainTests.PurchasesAllLevelsAndJsonRestoresEffectWithoutNewSaveFields () [0x0008b] in C:\Users\USER\Desktop\develop\develop-list\sub-terra\sub-terra\Assets\_Project\Tests\EditMode\App\Progression\PromptB101GoldGainTests.cs:92
+
+FAIL: SubTerra.App.Tests.Tutorial.PromptB107QuestUiTests.Scene_UsesQuestFramesWithoutCoveringTheFacilityPanel
+  System.InvalidOperationException : Mine_Demo_Integration에 저장되지 않은 변경이 있습니다.
+    at SubTerra.App.Editor.DataValidation.PromptB107QuestUiBuilder.Build () [0x00101] in C:\Users\USER\Desktop\develop\develop-list\sub-terra\sub-terra\Assets\_Project\Editor\DataValidation\PromptB107QuestUiBuilder.cs:120 
+  at SubTerra.App.Tests.Tutorial.PromptB107QuestUiTests.Scene_UsesQuestFramesWithoutCoveringTheFacilityPanel () [0x00000] in C:\Users\USER\Desktop\develop\develop-list\sub-terra\sub-terra\Assets\_Project\Tests\EditMode\App\Tutorial\PromptB107QuestUiTests.cs:181 
+  at (wrapper managed-to-native) System.Reflection.RuntimeMethodInfo.InternalInvoke(System.Reflection.RuntimeMethodInfo,object,object[],System.Exception&)
+  at System.Reflection.RuntimeMethodInfo.Invoke (System.Object obj, System.Reflection.BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) [0x0006a] in <816f70bc2a9c4332b0bd119906a8d40e>:0 
+FAIL: SubTerra.App.Tests.UI.BuildingMenuPresenterTests.G_F03_PlacementFailure_KeepsSelectionAndRepeatsWarningWithoutSpending
+    Expected: String containing "겹쳐"
+  But was:  "다른 시설이나 지형과 겹칩니다. 빈 공간을 선택하세요."
+
+  at SubTerra.App.Tests.UI.BuildingMenuPresenterTests.G_F03_PlacementFailure_KeepsSelectionAndRepeatsWarningWithoutSpending () [0x0011c] in C:\Users\USER\Desktop\develop\develop-list\sub-terra\sub-terra\Assets\_Project\Tests\EditMode\App\UI\BuildingMenuPresenterTests.cs:139
+
+FAIL: SubTerra.App.Tests.UI.HudStaticStructureTests.PromptB106_HealthAndEnergyRowsMatchGaugeAlignmentAndSpacing
+    Expected: 45.0f +/- 0.00100000005f
+  But was:  36.0f
+
+  at SubTerra.App.Tests.UI.HudStaticStructureTests.PromptB106_HealthAndEnergyRowsMatchGaugeAlignmentAndSpacing () [0x000bb] in C:\Users\USER\Desktop\develop\develop-list\sub-terra\sub-terra\Assets\_Project\Tests\EditMode\App\UI\HudStaticStructureTests.cs:167
+
+FAIL: SubTerra.App.Tests.UI.MainMenu.PromptB150MainMenuTests.DeleteButton_Hover_FadesInWhiteTrashIcon
+    호버하면 흰색 아이콘이 완전히 켜진다
+  Expected: 1.0f
+  But was:  0.543064654f
+
+  at SubTerra.App.Tests.UI.MainMenu.PromptB150MainMenuTests.DeleteButton_Hover_FadesInWhiteTrashIcon () [0x000d2] in C:\Users\USER\Desktop\develop\develop-list\sub-terra\sub-terra\Assets\_Project\Tests\EditMode\App\UI\MainMenu\PromptB150MainMenuTests.cs:294
+
+FAIL: SubTerra.App.Tests.UI.MineResetSurfaceBaseTests.SurfaceBasePrefab_HasResetButtonAndInactiveLayeredPopup
+    Expected: -282.0f +/- 0.5f
+  But was:  -415.0f
+
+  at SubTerra.App.Tests.UI.MineResetSurfaceBaseTests.SurfaceBasePrefab_HasResetButtonAndInactiveLayeredPopup () [0x00089] in C:\Users\USER\Desktop\develop\develop-list\sub-terra\sub-terra\Assets\_Project\Tests\EditMode\App\UI\MineResetSurfaceBaseTests.cs:34
+
+FAIL: SubTerra.App.Tests.UI.PromptB138StoragePopupTests.Open_Pops_GrowToPeak_ThenFlyToListIconShrinking
+    안착 뒤 목록 아이콘이 이어받는다
+  Expected: 0
+  But was:  9.53674316E-07f
+
+  at SubTerra.App.Tests.UI.PromptB138StoragePopupTests.Open_Pops_GrowToPeak_ThenFlyToListIconShrinking () [0x00128] in C:\Users\USER\Desktop\develop\develop-list\sub-terra\sub-terra\Assets\_Project\Tests\EditMode\App\UI\PromptB138StoragePopupTests.cs:112
+
+FAIL: SubTerra.App.Tests.UI.PromptB167UpgradeWindowMotionTests.SurfaceBinder_ButtonEscXKeyAndCloseButtonUseSameRequests
+    Escape 키는 닫기 연출 경로를 탄다.
+  Expected: True
+  But was:  False
+
+  at SubTerra.App.Tests.UI.PromptB167UpgradeWindowMotionTests+<>c__DisplayClass23_0.<SurfaceBinder_ButtonEscXKeyAndCloseButtonUseSameRequests>b__0 (UnityEngine.InputSystem.Keyboard keyboard) [0x00076] in C:\Users\USER\Desktop\develop\develop-list\sub-terra\sub-terra\Assets\_Project\Tests\EditMode\App\UI\PromptB167UpgradeWindowMotionTests.cs:466
+at SubTerra.App.Tests.UI.PromptB167UpgradeWindowMotionTests.WithKeyboard (System.Action`1[T] body) [0x0004b] in C:\Users\USER\Desktop\develop\develop-list\sub-terra\sub-terra\Assets\_Project\Tests\EditMode\App\UI\PromptB167UpgradeWindowMotionTests.cs:648
+at SubTerra.App.Tests.UI.PromptB167UpgradeWindowMotionTests.SurfaceBinder_ButtonEscXKeyAndCloseButtonUseSameRequests () [0x001ad] in C:\Users\USER\Desktop\develop\develop-list\sub-terra\sub-terra\Assets\_Project\Tests\EditMode\App\UI\PromptB167UpgradeWindowMotionTests.cs:457
+
+FAIL: SubTerra.App.Tests.UI.PromptB167UpgradeWindowMotionTests.SurfaceView_RequestCloseKeepsRootUntilMotionEnds
+    설정 창은 닫는 중인 업그레이드 창도 바로 정리한다.
+  Expected: False
+  But was:  True
+
+  at SubTerra.App.Tests.UI.PromptB167UpgradeWindowMotionTests.SurfaceView_RequestCloseKeepsRootUntilMotionEnds () [0x00102] in C:\Users\USER\Desktop\develop\develop-list\sub-terra\sub-terra\Assets\_Project\Tests\EditMode\App\UI\PromptB167UpgradeWindowMotionTests.cs:392
+
+FAIL: SubTerra.App.Tests.UI.PromptB32PanelLayoutTests.BuildingPanel_HasOnlyXClose_AndIncreasedSize
+    Expected: 580.799988f +/- 0.5f
+  But was:  500.0f
+
+  at SubTerra.App.Tests.UI.PromptB32PanelLayoutTests.BuildingPanel_HasOnlyXClose_AndIncreasedSize () [0x00036] in C:\Users\USER\Desktop\develop\develop-list\sub-terra\sub-terra\Assets\_Project\Tests\EditMode\App\UI\PromptB32PanelLayoutTests.cs:54
+
+FAIL: SubTerra.App.Tests.UI.PromptB35PanelLayoutTests.BuildingMenuPrefab_MatchesPanelWidth
+    Expected: 580.799988f +/- 0.5f
+  But was:  500.0f
+
+  at SubTerra.App.Tests.UI.PromptB35PanelLayoutTests.BuildingMenuPrefab_MatchesPanelWidth () [0x0002f] in C:\Users\USER\Desktop\develop\develop-list\sub-terra\sub-terra\Assets\_Project\Tests\EditMode\App\UI\PromptB35PanelLayoutTests.cs:81
+
+FAIL: SubTerra.App.Tests.UI.PromptB35PanelLayoutTests.BuildingPanel_WidthIncreasedByTenPercent
+    Expected: 580.799988f +/- 0.5f
+  But was:  500.0f
+
+  at SubTerra.App.Tests.UI.PromptB35PanelLayoutTests.BuildingPanel_WidthIncreasedByTenPercent () [0x00045] in C:\Users\USER\Desktop\develop\develop-list\sub-terra\sub-terra\Assets\_Project\Tests\EditMode\App\UI\PromptB35PanelLayoutTests.cs:34
+
+FAIL: SubTerra.App.Tests.UI.PromptB42UiLayerTests.SurfaceBaseSettings_ClosesUpgradeModalBeforeOpening
+    Expected: False
+  But was:  True
+
+  at SubTerra.App.Tests.UI.PromptB42UiLayerTests.SurfaceBaseSettings_ClosesUpgradeModalBeforeOpening () [0x0007c] in C:\Users\USER\Desktop\develop\develop-list\sub-terra\sub-terra\Assets\_Project\Tests\EditMode\App\UI\PromptB42UiLayerTests.cs:216
+
+FAIL: SubTerra.App.Tests.UI.PromptB85EmergencyRescueChipTests.PromptB85_ChipFollowTick_PlacesChipAbovePlayerHead
+    Expected: 2202.0f +/- 2.0f
+  But was:  1842.0f
+
+  at SubTerra.App.Tests.UI.PromptB85EmergencyRescueChipTests.PromptB85_ChipFollowTick_PlacesChipAbovePlayerHead () [0x0017e] in C:\Users\USER\Desktop\develop\develop-list\sub-terra\sub-terra\Assets\_Project\Tests\EditMode\App\UI\PromptB85EmergencyRescueChipTests.cs:165
+
+FAIL: SubTerra.App.Tests.UI.PromptB89UndergroundMenuTests.X_ClosesOnePanelAtATimeWithoutOpeningSettings
+    Expected: False
+  But was:  True
+
+  at SubTerra.App.Tests.UI.PromptB89UndergroundMenuTests.X_ClosesOnePanelAtATimeWithoutOpeningSettings () [0x00023] in C:\Users\USER\Desktop\develop\develop-list\sub-terra\sub-terra\Assets\_Project\Tests\EditMode\App\UI\PromptB89UndergroundMenuTests.cs:80
+
+FAIL: SubTerra.App.Tests.UI.PromptBSellPanelLayoutTests.SurfaceBasePrefab_PreservesSellModalWithPrompt117Actions
+    Expected: greater than or equal to 6.0f
+  But was:  -118.0f
+
+  at SubTerra.App.Tests.UI.PromptBSellPanelLayoutTests.AssertBelowWithGap (UnityEngine.RectTransform upper, UnityEngine.RectTransform lower, System.Single minimumGap) [0x0005b] in C:\Users\USER\Desktop\develop\develop-list\sub-terra\sub-terra\Assets\_Project\Tests\EditMode\App\UI\PromptBSellPanelLayoutTests.cs:185
+at SubTerra.App.Tests.UI.PromptBSellPanelLayoutTests.SurfaceBasePrefab_PreservesSellModalWithPrompt117Actions () [0x001b5] in C:\Users\USER\Desktop\develop\develop-list\sub-terra\sub-terra\Assets\_Project\Tests\EditMode\App\UI\PromptBSellPanelLayoutTests.cs:51
+
+FAIL: SubTerra.App.Tests.UI.StructuralStatusHudTests.BasicHud_LegacyPowerIconRemoved_AndRowSitsInsideFrameBelowSeparator
+    HUD 크기는 그대로
+  Expected: (430.00, 248.00)
+  But was:  (380.00, 208.00)
+
+  at SubTerra.App.Tests.UI.StructuralStatusHudTests.BasicHud_LegacyPowerIconRemoved_AndRowSitsInsideFrameBelowSeparator () [0x00022] in C:\Users\USER\Desktop\develop\develop-list\sub-terra\sub-terra\Assets\_Project\Tests\EditMode\App\UI\StructuralStatusHudTests.cs:147
+
+FAIL: SubTerra.App.Tests.UI.StructuralStatusHudTests.StructuralRow_LongestLabel_FitsWithoutClipping
+    구조 안전
+  Expected: less than or equal to 28.0f
+  But was:  28.9699993f
+
+  at SubTerra.App.Tests.UI.StructuralStatusHudTests.StructuralRow_LongestLabel_FitsWithoutClipping () [0x00069] in C:\Users\USER\Desktop\develop\develop-list\sub-terra\sub-terra\Assets\_Project\Tests\EditMode\App\UI\StructuralStatusHudTests.cs:223
+
+FAIL: SubTerra.Gameplay.Building.Tests.FacilityTilemapVisualTests.FacilityPlacementAndRestore_LeavesCaveBlackAndOriginalTerrainUnchanged("building.charger.basic")
+    Expected: True
+  But was:  False
+
+  at SubTerra.Gameplay.Building.Tests.FacilityTilemapVisualTests.FacilityPlacementAndRestore_LeavesCaveBlackAndOriginalTerrainUnchanged (System.String buildingId) [0x0019b] in C:\Users\USER\Desktop\develop\develop-list\sub-terra\sub-terra\Assets\_Project\Tests\EditMode\Gameplay\Building\FacilityTilemapVisualTests.cs:58
+
+FAIL: SubTerra.Gameplay.Structural.Tests.StructuralFeedbackTests.Issue245_SavedIntegrationScene_HasNoRuntimeStructuralResidue
+    StructuralShake_-13_-39
+  Expected: False
+  But was:  True
+
+  at SubTerra.Gameplay.Structural.Tests.StructuralFeedbackTests.Issue245_SavedIntegrationScene_HasNoRuntimeStructuralResidue () [0x0005c] in C:\Users\USER\Desktop\develop\develop-list\sub-terra\sub-terra\Assets\_Project\Tests\EditMode\Gameplay\Structural\StructuralFeedbackTests.cs:61
+
+RunFinished
+Result: Failed
+Pass: 2169 Fail: 25 Skip: 0
+DurationSec: 64.6432476
+Message: One or more child tests had errors
+StackTrace: 

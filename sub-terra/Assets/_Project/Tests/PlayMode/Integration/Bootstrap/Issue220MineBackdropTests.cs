@@ -1,13 +1,111 @@
+using System;
+using System.Collections;
+using System.IO;
 using NUnit.Framework;
+using SubTerra.App.Core;
 using SubTerra.App.Integration;
+using SubTerra.App.Save;
+using SubTerra.App.Tutorial;
 using SubTerra.App.UI;
 using SubTerra.Shared;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.TestTools;
+using Object = UnityEngine.Object;
 
 namespace SubTerra.App.Tests.PlayMode
 {
     public sealed class Issue220MineBackdropTests
     {
+        private UiTestEnvironment runtimeEnvironment;
+
+        [UnityTearDown]
+        public IEnumerator CleanupRuntime()
+        {
+            if (runtimeEnvironment == null) yield break;
+            runtimeEnvironment.Dispose();
+            runtimeEnvironment = null;
+            var empty = SceneManager.CreateScene("BackdropCleanup");
+            SceneManager.SetActiveScene(empty);
+            for (int i = SceneManager.sceneCount - 1; i >= 0; i--)
+                if (SceneManager.GetSceneAt(i) != empty)
+                    yield return SceneManager.UnloadSceneAsync(SceneManager.GetSceneAt(i));
+        }
+
+        [UnityTest]
+        public IEnumerator BootstrapExplorationAndContinue_KeepOneBackdropBehindTerrain()
+        {
+            var args = Environment.GetCommandLineArgs();
+            int at = Array.IndexOf(args, "-subterra-save-root");
+            Assert.That(at, Is.GreaterThanOrEqualTo(0), "Isolated QA save root required.");
+            string qa = Path.GetFullPath(args[at + 1]);
+            string temp = Path.GetFullPath(Path.Combine(Application.dataPath, "../Temp")) + Path.DirectorySeparatorChar;
+            Assert.That(qa.StartsWith(temp, StringComparison.OrdinalIgnoreCase), Is.True);
+            runtimeEnvironment = new UiTestEnvironment();
+            GameBootstrapper.ResetInstanceForTests();
+            yield return SceneManager.LoadSceneAsync("Assets/_Project/Scenes/Bootstrap/Bootstrap.unity");
+            yield return UiTestWait.Until(() => SceneManager.GetActiveScene().name == "MainMenu", "main menu", 60f);
+            var runtime = SaveRuntimeController.Instance;
+            Assert.That(runtime.StartNewGame(2, true), Is.True);
+            yield return UiTestWait.Until(() => SceneManager.GetActiveScene().name == "SurfaceBase" && runtime.IsUiReady,
+                "surface ready", 60f);
+            // Initial briefing captures WaitForEndOfFrame, which batchmode does not dispatch.
+            // Keep this backdrop test on the existing in-progress quest path.
+            GameBootstrapper.Instance.State.SetDemoProgress(DemoObjectiveIds.MineCopper, 1, false);
+            GameBootstrapper.Instance.State.SetQuestRewardSettlement(string.Empty, 1);
+            Assert.That(runtime.TryStartExploration(out var reason), Is.True, reason);
+            yield return UiTestWait.Until(() => SceneManager.GetActiveScene().name == SceneNames.Integration && runtime.IsUiReady,
+                "mine ready", 60f);
+            yield return UiTestEnvironment.DismissBriefing();
+            yield return runtimeEnvironment.Resolution.Set(1920, 1080);
+            AssertBackdrop();
+            yield return null;
+            var camera = Camera.main;
+            var target = RenderTexture.GetTemporary(960, 540, 24);
+            var previous = RenderTexture.active;
+            var image = new Texture2D(960, 540, TextureFormat.RGB24, false);
+            try
+            {
+                camera.targetTexture = target;
+                UnityEngine.Rendering.RenderPipeline.SubmitRenderRequest(camera,
+                    new UnityEngine.Rendering.RenderPipeline.StandardRequest { destination = target });
+                RenderTexture.active = target;
+                image.ReadPixels(new Rect(0, 0, 960, 540), 0, 0);
+                image.Apply();
+                string directory = Path.GetFullPath("../work_process/images/mine-depth-backdrop");
+                Directory.CreateDirectory(directory);
+                File.WriteAllBytes(Path.Combine(directory, "bootstrap-integration.png"), image.EncodeToPNG());
+            }
+            finally
+            {
+                camera.targetTexture = null;
+                RenderTexture.active = previous;
+                RenderTexture.ReleaseTemporary(target);
+                Object.Destroy(image);
+            }
+            Assert.That(runtime.SaveCurrent().IsSuccess, Is.True);
+            ContinueResult continued = null;
+            runtime.BeginContinue(2, result => continued = result);
+            yield return UiTestWait.Until(() => continued != null, "continue complete", 60f);
+            Assert.That(continued.IsSuccess, Is.True, continued.Status.ToString());
+            yield return UiTestWait.Until(() => runtime.IsUiReady, "continued mine ready", 60f);
+            AssertBackdrop();
+        }
+
+        private static void AssertBackdrop()
+        {
+            // DontSave runtime renderers are intentionally omitted by Object.FindObjectsByType.
+            var binder = Object.FindAnyObjectByType<IntegrationRuntimeBinder>();
+            Assert.That(binder, Is.Not.Null);
+            var backdrops = binder.GetComponentsInChildren<MineBackdropController>(true);
+            Assert.That(backdrops.Length, Is.EqualTo(1));
+            var background = backdrops[0].GetComponent<MeshRenderer>();
+            var mining = Object.FindAnyObjectByType<SubTerra.Gameplay.Mining.MiningSystem>();
+            Assert.That(background.enabled, Is.True);
+            Assert.That(background.sortingOrder, Is.LessThan(mining.ForegroundTilemap.GetComponent<UnityEngine.Tilemaps.TilemapRenderer>().sortingOrder));
+            Assert.That(backdrops[0].CurrentLayerWeights.x, Is.GreaterThan(0.99f));
+        }
+
         [Test]
         public void Backdrop_CoversCameraSmoothsTeleportAndReusesOwnedRenderer()
         {

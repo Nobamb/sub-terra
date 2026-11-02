@@ -26,10 +26,13 @@ namespace SubTerra.Gameplay.Mining
         private PlayerAnimationController animationController;
         private MiningDebrisVisual debrisVisual;
         private MiningSystem debrisMiningSystem;
+        private MiningSystem animationMiningSystem;
         private static readonly List<RaycastResult> PointerHits = new(8);
         private System.Func<bool> pointerMiningBlocker;
         private bool pointerClaimedByPlacement;
         private bool enterMiningSuppressed;
+        private bool activeMiningOnLadder;
+        private bool hasMiningAnimationContext;
 
         /// <summary>B-166: 창을 Enter로 확인한 뒤 그 누르기가 채굴로 이어지지 않게, Enter를 한 번 뗄 때까지 채굴 키로 보지 않는다.</summary>
         public void SuppressEnterUntilReleased()
@@ -55,15 +58,24 @@ namespace SubTerra.Gameplay.Mining
             EnsureDebrisVisual();
         }
 
-        private void OnEnable() => mineAction?.Enable();
+        private void OnEnable()
+        {
+            mineAction?.Enable();
+            BindAnimationEvents();
+        }
 
         private void OnDisable()
         {
             mineAction?.Disable();
             miningSystem?.CancelMining();
+            if (animationMiningSystem != null)
+                animationMiningSystem.ProgressChanged -= HandleAnimationProgress;
+            animationMiningSystem = null;
+            if (animationController != null) animationController.SetMining(false);
             startPending = false;
             miningInputPressedLastFrame = false;
             lastMiningDirection = Vector2.zero;
+            hasMiningAnimationContext = false;
         }
 
         private void Update()
@@ -74,9 +86,23 @@ namespace SubTerra.Gameplay.Mining
                 pointerClaimedByPlacement = true;
 
             EnsureDebrisVisual();
+            BindAnimationEvents();
             if (miningSystem == null)
             {
                 animationController?.SetMining(false);
+                return;
+            }
+
+            // 사다리/바닥 전환과 등반·점프는 역재생 없이 즉시 끊는다.
+            bool onLadder = animationController != null && animationController.CanMineOnLadder;
+            if (hasMiningAnimationContext && miningSystem.IsMining
+                && ((activeMiningOnLadder != onLadder)
+                    || (activeMiningOnLadder && (movement.IsMovementRequested || movement.IsJumpInProgress))))
+            {
+                miningSystem.CancelMining();
+                if (animationController != null) animationController.InterruptMining();
+                startPending = false;
+                hasMiningAnimationContext = false;
                 return;
             }
 
@@ -143,7 +169,7 @@ namespace SubTerra.Gameplay.Mining
                 return;
             }
 
-            animationController?.SetMining(true);
+            ShowMiningAnimation();
             miningSystem.TickMining(Time.deltaTime, movement.Position, reach);
         }
 
@@ -155,6 +181,41 @@ namespace SubTerra.Gameplay.Mining
             if (debrisVisual == null) debrisVisual = gameObject.AddComponent<MiningDebrisVisual>();
             debrisVisual.Configure(miningSystem, transform);
             debrisMiningSystem = miningSystem;
+        }
+
+        private void BindAnimationEvents()
+        {
+            if (animationMiningSystem == miningSystem) return;
+            if (animationMiningSystem != null)
+                animationMiningSystem.ProgressChanged -= HandleAnimationProgress;
+            animationMiningSystem = miningSystem;
+            if (animationMiningSystem != null)
+                animationMiningSystem.ProgressChanged += HandleAnimationProgress;
+        }
+
+        private void HandleAnimationProgress(MiningProgressState progress)
+        {
+            if (animationController == null) return;
+            if (progress.Phase == MiningPhase.Mining) ShowMiningAnimation();
+            else if (progress.Phase == MiningPhase.Completed) animationController.NotifyMiningCompleted();
+            else if (progress.Phase == MiningPhase.Cancelled) animationController.SetMining(false);
+            if (progress.Phase != MiningPhase.Mining) hasMiningAnimationContext = false;
+        }
+
+        private void ShowMiningAnimation()
+        {
+            if (animationController == null) return;
+            if (!hasMiningAnimationContext)
+            {
+                activeMiningOnLadder = animationController.CanMineOnLadder;
+                hasMiningAnimationContext = true;
+            }
+            if (activeMiningOnLadder && miningSystem.ForegroundTilemap != null)
+            {
+                var playerCell = miningSystem.ForegroundTilemap.WorldToCell(movement.Position);
+                animationController.SetLadderMining(miningSystem.ActiveCell.x - playerCell.x);
+            }
+            else animationController.SetMining(true);
         }
 
         private bool IsMiningInputPressed()
@@ -237,6 +298,25 @@ namespace SubTerra.Gameplay.Mining
 
         private void TryStartPendingTarget()
         {
+            if (animationController != null && animationController.CanMineOnLadder)
+            {
+                if (miningSystem.ForegroundTilemap == null || pendingDirection.y != 0f) return;
+                if (pendingPointerTarget)
+                {
+                    var map = miningSystem.ForegroundTilemap;
+                    var playerCell = map.WorldToCell(movement.Position);
+                    var targetCell = map.WorldToCell(pendingWorldPoint);
+                    if (targetCell.y != playerCell.y || targetCell.x == playerCell.x) return;
+                }
+                else
+                {
+                    // Enter의 위·아래 대체 목표 탐색도 사다리에서는 사용하지 않는다.
+                    var direction = pendingDirection != Vector2.zero ? pendingDirection
+                        : new Vector2(movement.FacingDirection, 0f);
+                    miningSystem.TryStartMiningInDirection(movement.Position, direction, reach);
+                    return;
+                }
+            }
             if (pendingDirection != Vector2.zero)
             {
                 miningSystem.TryStartMiningInDirection(movement.Position, pendingDirection, reach);

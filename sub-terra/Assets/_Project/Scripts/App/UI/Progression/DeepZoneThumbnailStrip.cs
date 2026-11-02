@@ -527,9 +527,7 @@ namespace SubTerra.App.UI.Progression
             rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(0.5f, 0.5f);
             rect.anchoredPosition = position * LockScale;
             rect.sizeDelta = size * LockScale;
-            var shadow = image.gameObject.AddComponent<Shadow>();
-            shadow.effectColor = new Color(0f, 0f, 0f, 0.65f);
-            shadow.effectDistance = new Vector2(1.5f, -1.5f);
+            // B-180-1: 조각마다 붙던 Shadow가 고리 윗부분에서 외곽선처럼 보여 빼고 단색만 그린다.
             return image;
         }
 

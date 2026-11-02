@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using SubTerra.App.Audio;
+using SubTerra.Shared.Audio;
 using SubTerra.App.Core.Data;
 using SubTerra.App.Tutorial;
 using SubTerra.App.UI;
@@ -94,6 +96,9 @@ namespace SubTerra.App.UI.Tutorial
         private void Awake()
         {
             ApplyCompactSummary();
+            // B-180: 이전/다음은 넘김 소리를 Presenter가 내므로 버튼은 호버만.
+            UiSfx.Attach(detailsPrevButton, SfxId.None, hover: true, failWhenDisabled: false);
+            UiSfx.Attach(detailsNextButton, SfxId.None, hover: true, failWhenDisabled: false);
             if (tutorialCanvas != null)
             {
                 defaultTutorialSort = tutorialCanvas.sortingOrder;
@@ -141,6 +146,7 @@ namespace SubTerra.App.UI.Tutorial
             if (objectiveTitleText == null) return;
             var card = objectiveTitleText.transform.parent as RectTransform;
             if (card == null || card.name != "QuestSummaryButton") return;
+            UiSfx.Attach(card.GetComponent<Button>(), SfxId.None, hover: true);
             card.sizeDelta = new Vector2(460f, 116f);
             card.localScale = Vector3.one;
             card.anchoredPosition = new Vector2(16f, -232f);

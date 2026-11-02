@@ -47,6 +47,43 @@ namespace SubTerra.App.Tests.UI
         }
 
         [Test]
+        public void Issue126_DrillChargeBuildsGraduallyAndFadesWithRotation()
+        {
+            var model = NewModel();
+            var held = new GameplayCursorInput { LeftHeld = true };
+            model.Tick(Step, held);
+            Assert.That(model.DrillCharge, Is.GreaterThan(0f).And.LessThan(0.02f));
+            var briefCharge = model.DrillCharge;
+            model.Tick(Step, default);
+            Assert.That(model.DrillCharge, Is.LessThan(briefCharge), "A short release must not keep charging.");
+            Run(model, 3f, held);
+            Assert.That(model.DrillCharge, Is.EqualTo(1f).Within(0.001f));
+            Run(model, 0.5f, default);
+            Assert.That(model.DrillCharge, Is.GreaterThan(0f).And.LessThan(1f));
+            Run(model, 3f, default);
+            Assert.That(model.DrillCharge, Is.Zero);
+        }
+
+        [Test]
+        public void Issue126_ChargeFollowsDrillArtAndNeverLightsClaw()
+        {
+            var controller = NewController();
+            var point = new Vector2(200f, 200f);
+            controller.Apply(new GameplayCursorInput { LeftHeld = true }, Step, point);
+            Assert.That(controller.DrillCharge.enabled, Is.True);
+            Assert.That(controller.DrillCharge.transform.parent, Is.EqualTo(controller.Visual.transform));
+            Assert.That(controller.Visual.GetComponent<Mask>().enabled, Is.True);
+            Assert.That(controller.DrillCharge.raycastTarget, Is.False);
+            Assert.That(controller.Hotspot.position.x, Is.EqualTo(point.x));
+            var texture = controller.DrillCharge.sprite.texture;
+            Assert.That(texture.GetPixel(45, 81).a, Is.GreaterThan(0f), "Cone interior must glow.");
+            Assert.That(texture.GetPixel(100, 20).a, Is.Zero, "Motor body must remain unlit.");
+            controller.Apply(new GameplayCursorInput { MoveMode = true, LeftHeld = true }, Step, point);
+            Assert.That(controller.DrillCharge.enabled, Is.False);
+            Assert.That(controller.Visual.GetComponent<Mask>().enabled, Is.False);
+        }
+
+        [Test]
         public void Sheets_SliceIntoEightAndFour_WithTipPivotAtUpperLeft()
         {
             var skin = LoadSkin();
