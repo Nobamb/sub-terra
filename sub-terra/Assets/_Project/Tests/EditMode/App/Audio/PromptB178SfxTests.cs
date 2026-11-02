@@ -91,7 +91,7 @@ namespace SubTerra.App.Tests.Audio
                 defaults.Add(pair.Entry.Id, (pair.Entry, pair.FileName));
             }
 
-            Assert.That(defaults.Count, Is.EqualTo(93), "B-170 85칸 + B-178 4칸 + B-179 1칸 + B-179-1 3칸");
+            Assert.That(defaults.Count, Is.EqualTo(94), "B-170 85칸 + B-178 4칸 + B-179 1칸 + B-179-1 3칸 + B-180-1 1칸");
             Assert.That((int)SfxId.MainMenuTypeTick, Is.EqualTo(86), "기존 번호는 그대로");
 
             var library = AssetDatabase.LoadAssetAtPath<SfxLibrary>(PromptB156SfxLibraryBuilder.AssetPath);
@@ -335,14 +335,18 @@ namespace SubTerra.App.Tests.Audio
             return (inventory, rewards, presenter);
         }
 
+        // B-180-1: 완료음은 완료 창의 체크가 나타날 때(QuestClearPopupMotion) 나므로 지급 경로는 무음이다.
+        // 지급 횟수·시점은 그대로인지 함께 본다. 체크 시점 소리는 QuestClearPopupMotionPlayModeTests가 확인한다.
         [Test]
-        public void Reward_GrantedOnce()
+        public void Reward_GrantedOnce_GrantPathSilent()
         {
             var env = ClaimFirstReward(20f);
             Assert.That(env.Rewards.HasPending, Is.False);
-            Assert.That(Count(SfxId.QuestReward), Is.EqualTo(1));
+            Assert.That(env.Inventory.State.GetQuantity(Copper), Is.EqualTo(3));
+            Assert.That(Count(SfxId.QuestReward), Is.Zero);
             env.Presenter.ConfirmClaim();
-            Assert.That(Count(SfxId.QuestReward), Is.EqualTo(1), "다시 눌러도 한 번");
+            Assert.That(env.Inventory.State.GetQuantity(Copper), Is.EqualTo(3), "다시 눌러도 한 번만 지급");
+            Assert.That(Count(SfxId.QuestReward), Is.Zero);
         }
 
         [Test]
@@ -357,7 +361,7 @@ namespace SubTerra.App.Tests.Audio
         }
 
         [Test]
-        public void Reward_AfterDumpRetry_GrantedOnce()
+        public void Reward_AfterDumpRetry_GrantedOnce_GrantPathSilent()
         {
             // 8/8(철 4) + 구리 3(4.5) → 철 3개를 버리면 RetryPending으로 들어온다.
             var env = ClaimFirstReward(8f, (Iron, 4));
@@ -368,27 +372,7 @@ namespace SubTerra.App.Tests.Audio
 
             Assert.That(env.Rewards.HasPending, Is.False);
             Assert.That(env.Inventory.State.GetQuantity(Copper), Is.EqualTo(3));
-            Assert.That(Count(SfxId.QuestReward), Is.EqualTo(1));
-        }
-
-        [Test]
-        public void Reward_RuleIgnoresEmptyAndNonGranted()
-        {
-            var reward = new QuestReward(1, 0, 0, 0);
-            Assert.That(DemoObjectivePresenter.ShouldPlayRewardSfx(
-                new QuestRewardGrantResult(QuestRewardGrantStatus.Granted, "q", reward, "granted")), Is.True);
-            Assert.That(DemoObjectivePresenter.ShouldPlayRewardSfx(
-                new QuestRewardGrantResult(QuestRewardGrantStatus.Granted, "q", QuestReward.None, "empty-reward")), Is.False);
-            foreach (var status in new[]
-                     {
-                         QuestRewardGrantStatus.NeedsCapacity, QuestRewardGrantStatus.Forfeited,
-                         QuestRewardGrantStatus.AlreadySettled, QuestRewardGrantStatus.NothingPending,
-                         QuestRewardGrantStatus.AwaitingClaim
-                     })
-            {
-                Assert.That(DemoObjectivePresenter.ShouldPlayRewardSfx(
-                    new QuestRewardGrantResult(status, "q", reward, "x")), Is.False, status.ToString());
-            }
+            Assert.That(Count(SfxId.QuestReward), Is.Zero, "B-180-1: 늦게 지급돼도 완료음을 다시 내지 않는다");
         }
 
         // ---- C. 드론 스캔 ----

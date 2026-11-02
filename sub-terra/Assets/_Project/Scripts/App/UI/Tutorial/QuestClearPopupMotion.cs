@@ -22,6 +22,13 @@ namespace SubTerra.App.UI.Tutorial
         /// <summary>B-180: 프리팹 빌더(B-95-1)가 만든 닫기 버튼 이름.</summary>
         public const string CloseButtonName = "ClaimCloseButton";
 
+        // B-180-1: 완료음은 체크 아이콘이 커지기 시작할 때, 닫을 때는 시작 브리핑 종료와 같은 글리치음.
+        public const SfxId CheckAppearSfx = SfxId.QuestReward;
+        public const SfxId CloseSfx = SfxId.BriefingClose;
+
+        /// <summary>이번 열기에서 완료음을 냈는지(확인용). 다시 열면 지운다.</summary>
+        public bool CheckSfxPlayed { get; private set; }
+
         /// <summary>B-180: 등장 연출이 끝나 표시 중이고 닫는 중이 아닐 때만 닫기 호버음을 낸다.</summary>
         public bool CanPlayCloseHover => !closing && transition != null && transition.IsShown;
 
@@ -31,6 +38,7 @@ namespace SubTerra.App.UI.Tutorial
             transition = gameObject.AddComponent<StartBriefingPopupMotion>();
             transition.enabled = false;
             transition.ConfigureQuestClear(borderGlint);
+            transition.SetCompactCloseSfx(CloseSfx);
             AttachCloseHoverSfx();
         }
 
@@ -73,6 +81,7 @@ namespace SubTerra.App.UI.Tutorial
             // B-178: 닫히던 창을 다시 열면(연달아 퀘스트 클리어) 닫힘음·보상음과 같은 프레임이라 열림음을 늦춘다.
             var reopening = closing;
             closing = false;
+            CheckSfxPlayed = false;
             panel.anchoredPosition = Vector2.zero;
             if (checkSign != null) checkSign.localScale = Vector3.zero;
             if (borderGlint != null) borderGlint.gameObject.SetActive(false);
@@ -104,6 +113,7 @@ namespace SubTerra.App.UI.Tutorial
         private IEnumerator Enter()
         {
             while (!transition.IsShown) yield return null;
+            PlayCheckSfx();
             if (checkSign != null)
             {
                 yield return ScaleCheck(0f, 1.1f, 0.2f);
@@ -125,6 +135,18 @@ namespace SubTerra.App.UI.Tutorial
             }
 
             motion = null;
+        }
+
+        // 등장 코루틴이 체크를 키우기 직전에 한 번. 닫는 중이거나 꺼졌으면(코루틴이 멈춰 여기 오지 않음) 무음.
+        private void PlayCheckSfx()
+        {
+            if (closing || CheckSfxPlayed)
+            {
+                return;
+            }
+
+            CheckSfxPlayed = true;
+            SfxPlayer.Play(CheckAppearSfx);
         }
 
         private IEnumerator ScaleCheck(float from, float to, float duration)

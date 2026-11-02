@@ -341,12 +341,8 @@ namespace SubTerra.App.UI.Tutorial
                 return;
             }
 
-            // B-178: 보상이 실제로 들어온 순간(Settle) 한 번. 화물 부족·포기·빈 보상은 무음.
-            if (ShouldPlayRewardSfx(result))
-            {
-                SfxPlayer.Play(SfxId.QuestReward);
-            }
-
+            // B-180-1: 완료음(QuestReward)은 지급 시점이 아니라 완료 창의 체크가 나타날 때 QuestClearPopupMotion이 낸다.
+            // 지급 규칙과 시점은 그대로이고 여기서는 소리를 내지 않는다.
             if (!rewards.HasPending)
             {
                 CloseOverflow();
@@ -357,12 +353,6 @@ namespace SubTerra.App.UI.Tutorial
             {
                 RenderDetails();
             }
-        }
-
-        /// <summary>B-178: 보상 지급음을 낼 결과인지. ConfirmClaim 반환값이 아니라 GrantResolved 결과로 판단한다.</summary>
-        public static bool ShouldPlayRewardSfx(QuestRewardGrantResult result)
-        {
-            return result.Status == QuestRewardGrantStatus.Granted && !result.Reward.IsEmpty;
         }
 
         private void ShowClaim(QuestRewardGrantResult result)

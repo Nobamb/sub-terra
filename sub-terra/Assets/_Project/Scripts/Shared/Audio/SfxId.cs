@@ -101,6 +101,8 @@ namespace SubTerra.Shared.Audio
         SettingsSliderDrag = 91,
         SettingsSliderDragHead = 92,
         SettingsSliderDragLoop = 93,
-        SettingsSliderDragTail = 94
+        SettingsSliderDragTail = 94,
+        // B-180-1: 잠긴 업그레이드 클릭. unlock_rattle을 자르지 않고 덜그럭 부분까지 낸다(76번은 창·해금 연출용으로 0.3초에서 끊는다).
+        LockedNodeRattle = 95
     }
 }

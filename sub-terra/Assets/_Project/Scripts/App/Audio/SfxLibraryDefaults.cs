@@ -250,6 +250,10 @@ namespace SubTerra.App.Audio
                 (new SfxEntry(SfxId.SettingsSliderDragLoop, SfxBus.UI, volume: 0.55f), "settings_slider_drag_loop"),
                 // 0.164초. 손을 놓으면 다음 반복 끝에 붙인다.
                 (new SfxEntry(SfxId.SettingsSliderDragTail, SfxBus.UI, volume: 0.55f), "settings_slider_drag_tail"),
+                // B-180-1: 76번과 같은 0.67초 파일. 앞 0.15초의 작게 차오르는 부분(단독으로는 바람 소리처럼 들림)은 건너뛰고
+                // 0.25~0.6초의 쇠 덜그럭까지 끝까지 낸다. 0.52초.
+                (new SfxEntry(SfxId.LockedNodeRattle, SfxBus.UI, volume: 0.5f, startTime: 0.15f, fadeOut: 0.05f),
+                    "unlock_rattle"),
             };
         }
     }

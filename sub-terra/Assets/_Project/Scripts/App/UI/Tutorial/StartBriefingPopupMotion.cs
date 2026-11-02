@@ -94,6 +94,8 @@ namespace SubTerra.App.UI.Tutorial
         // 브리핑 소리 대신 B-178 열림·닫힘 소리만 낸다(표시 중 짧은 지직은 무음).
         private bool playsBriefingSfx = true;
         private bool playsCompactSfx;
+        // B-180-1: 작은 창 닫힘음. 기본은 공용 CompactCloseSfx, 퀘스트 클리어 창만 브리핑 종료음으로 바꾼다.
+        private SfxId compactCloseSfx = CompactCloseSfx;
         private float nextOpenSfxDelay;
         private float pendingOpenSfxAt = -1f;
         private readonly SfxThrottle shortGlitchSfx = new SfxThrottle(ShortGlitchSfxInterval);
@@ -104,6 +106,9 @@ namespace SubTerra.App.UI.Tutorial
         public BriefingPhase Phase => lifecycle.Phase;
         public bool IsClosing => lifecycle.Phase == BriefingPhase.Closing;
         public bool IsShown => lifecycle.Phase == BriefingPhase.Shown;
+
+        /// <summary>B-180-1: 이 작은 창의 닫힘음만 바꾼다(다른 작은 창·시작 브리핑은 그대로).</summary>
+        internal void SetCompactCloseSfx(SfxId id) => compactCloseSfx = id;
 
         internal void ConfigureQuestClear(RectTransform glint)
         {
@@ -290,7 +295,7 @@ namespace SubTerra.App.UI.Tutorial
             // 닫기 버튼·X·ESC 모두 이 경로라 한 번만 난다.
             PlaySfx(SfxId.BriefingClose);
             pendingOpenSfxAt = -1f;
-            PlayCompactSfx(CompactCloseSfx);
+            PlayCompactSfx(compactCloseSfx);
             TriggerGlitch(BriefingGlitchKind.FrameShift, 1f);
             TriggerGlitch(BriefingGlitchKind.EdgeBurst, 1f);
             // 선택이 남은 버튼에 Enter/Submit이 다시 들어가 중복 종료되지 않게 한다.
