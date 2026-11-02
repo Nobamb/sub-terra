@@ -92,6 +92,17 @@ namespace SubTerra.Shared.Audio
         UpgradeWindowSuckIn = 83,
         UpgradeLockRegather = 84,
         MainMenuBoot = 85,
-        MainMenuTypeTick = 86
+        MainMenuTypeTick = 86,
+        // B-178 퀘스트 보상·작은 글리치 창·드론 스캔.
+        QuestReward = 87,
+        GlitchPopupOpen = 88,
+        GlitchPopupClose = 89,
+        DroneScanPing = 90,
+        SettingsSliderDrag = 91,
+        SettingsSliderDragHead = 92,
+        SettingsSliderDragLoop = 93,
+        SettingsSliderDragTail = 94,
+        // B-180-1: 잠긴 업그레이드 클릭. unlock_rattle을 자르지 않고 덜그럭 부분까지 낸다(76번은 창·해금 연출용으로 0.3초에서 끊는다).
+        LockedNodeRattle = 95
     }
 }

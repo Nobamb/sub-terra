@@ -1,0 +1,1543 @@
+{
+  "scale": 0.267,
+  "actual_scale": 0.26666666666666666,
+  "resized_size": 256,
+  "translation": [
+    1,
+    1
+  ],
+  "canvas": [
+    256,
+    256
+  ],
+  "ppu": 256,
+  "pivot": [
+    0.5,
+    0.5
+  ],
+  "alignment": "ready 1 foot row -> y241, alpha-weighted body centroid -> idle centroid; one translation for all 56 frames",
+  "idle": {
+    "bounds": [
+      64,
+      16,
+      191,
+      242
+    ],
+    "height": 226,
+    "foot_y": 241,
+    "centroid_x": 125.55,
+    "helmet_bounds": [
+      88,
+      17,
+      165,
+      66
+    ],
+    "helmet_width": 77
+  },
+  "ready_1": {
+    "bounds": [
+      66,
+      18,
+      191,
+      242
+    ],
+    "height": 224,
+    "foot_y": 241,
+    "centroid_x": 125.77,
+    "helmet_bounds": [
+      89,
+      20,
+      166,
+      67
+    ],
+    "helmet_width": 77,
+    "silhouette_difference_vs_idle": 0.0458
+  },
+  "range": {
+    "top_min": 12,
+    "bottom_max": 251,
+    "left_min": 45,
+    "right_max": 222
+  },
+  "fall_bob_offsets_px": [
+    0,
+    19,
+    32,
+    38,
+    39,
+    40,
+    39,
+    37,
+    34,
+    30,
+    24,
+    17,
+    8,
+    -1,
+    -8
+  ],
+  "frames": {
+    "ready": [
+      {
+        "frame": 1,
+        "source_bounds": [
+          241,
+          63,
+          714,
+          905
+        ],
+        "output_bounds": [
+          66,
+          18,
+          191,
+          242
+        ],
+        "output_height": 224,
+        "foot_y": 241,
+        "center_x": 128.5,
+        "centroid_x": 125.77,
+        "edge_clearance": {
+          "left": 66,
+          "top": 18,
+          "right": 65,
+          "bottom": 14
+        },
+        "sha256": "1c5216d092a4b617184e05f942fb66aee242d6a9903c8cca0b49617ac1595379"
+      },
+      {
+        "frame": 2,
+        "source_bounds": [
+          241,
+          70,
+          723,
+          905
+        ],
+        "output_bounds": [
+          65,
+          20,
+          194,
+          243
+        ],
+        "output_height": 223,
+        "foot_y": 242,
+        "center_x": 129.5,
+        "centroid_x": 126.21,
+        "edge_clearance": {
+          "left": 65,
+          "top": 20,
+          "right": 62,
+          "bottom": 13
+        },
+        "sha256": "c3504967cd93e93718b89a68fc4131f5fc26484ed157e59bc00a29b2632c5228"
+      },
+      {
+        "frame": 3,
+        "source_bounds": [
+          238,
+          79,
+          738,
+          905
+        ],
+        "output_bounds": [
+          64,
+          22,
+          197,
+          242
+        ],
+        "output_height": 220,
+        "foot_y": 241,
+        "center_x": 130.5,
+        "centroid_x": 127.37,
+        "edge_clearance": {
+          "left": 64,
+          "top": 22,
+          "right": 59,
+          "bottom": 14
+        },
+        "sha256": "6fa057e4de63b47d3ae91d2502bd1845db67dac31d87a22f856f8bbe76f71495"
+      },
+      {
+        "frame": 4,
+        "source_bounds": [
+          227,
+          98,
+          759,
+          902
+        ],
+        "output_bounds": [
+          62,
+          27,
+          203,
+          241
+        ],
+        "output_height": 214,
+        "foot_y": 240,
+        "center_x": 132.5,
+        "centroid_x": 129.1,
+        "edge_clearance": {
+          "left": 62,
+          "top": 27,
+          "right": 53,
+          "bottom": 15
+        },
+        "sha256": "80bb2a788c212651b62947fa07f8ca558976866310d2a7e9129947bb21f51201"
+      },
+      {
+        "frame": 5,
+        "source_bounds": [
+          225,
+          129,
+          777,
+          898
+        ],
+        "output_bounds": [
+          61,
+          35,
+          208,
+          241
+        ],
+        "output_height": 206,
+        "foot_y": 240,
+        "center_x": 134.5,
+        "centroid_x": 130.74,
+        "edge_clearance": {
+          "left": 61,
+          "top": 35,
+          "right": 48,
+          "bottom": 15
+        },
+        "sha256": "d561e5040f9a31a73b7cf88bb711c34a83058b79bffc590a2b6e07751a798b8f"
+      },
+      {
+        "frame": 6,
+        "source_bounds": [
+          227,
+          158,
+          788,
+          893
+        ],
+        "output_bounds": [
+          62,
+          43,
+          211,
+          239
+        ],
+        "output_height": 196,
+        "foot_y": 238,
+        "center_x": 136.5,
+        "centroid_x": 132.09,
+        "edge_clearance": {
+          "left": 62,
+          "top": 43,
+          "right": 45,
+          "bottom": 17
+        },
+        "sha256": "f2e4b1377e18fdbdce780ac35ae5ad33df1cecb09b2f1f477d1620054bcbc9df"
+      },
+      {
+        "frame": 7,
+        "source_bounds": [
+          229,
+          176,
+          793,
+          890
+        ],
+        "output_bounds": [
+          62,
+          48,
+          212,
+          239
+        ],
+        "output_height": 191,
+        "foot_y": 238,
+        "center_x": 137.0,
+        "centroid_x": 133.06,
+        "edge_clearance": {
+          "left": 62,
+          "top": 48,
+          "right": 44,
+          "bottom": 17
+        },
+        "sha256": "c1c312a419533e2d828c4545f82a1bded54f5d23602082865aa01365ec9cbc93"
+      },
+      {
+        "frame": 8,
+        "source_bounds": [
+          229,
+          189,
+          795,
+          892
+        ],
+        "output_bounds": [
+          62,
+          51,
+          213,
+          239
+        ],
+        "output_height": 188,
+        "foot_y": 238,
+        "center_x": 137.5,
+        "centroid_x": 133.77,
+        "edge_clearance": {
+          "left": 62,
+          "top": 51,
+          "right": 43,
+          "bottom": 17
+        },
+        "sha256": "3953191795175873d9ea278b2cfff555d269a2808380717310edb91e68cb7220"
+      }
+    ],
+    "processing": [
+      {
+        "frame": 1,
+        "source_bounds": [
+          217,
+          200,
+          797,
+          899
+        ],
+        "output_bounds": [
+          59,
+          54,
+          213,
+          241
+        ],
+        "output_height": 187,
+        "foot_y": 240,
+        "center_x": 136.0,
+        "centroid_x": 137.22,
+        "edge_clearance": {
+          "left": 59,
+          "top": 54,
+          "right": 43,
+          "bottom": 15
+        },
+        "sha256": "cf164a42d06253b0ebe57f984e35bc33289a973a90658238009b93d9e82ab852"
+      },
+      {
+        "frame": 2,
+        "source_bounds": [
+          249,
+          158,
+          784,
+          900
+        ],
+        "output_bounds": [
+          68,
+          43,
+          210,
+          241
+        ],
+        "output_height": 198,
+        "foot_y": 240,
+        "center_x": 139.0,
+        "centroid_x": 136.47,
+        "edge_clearance": {
+          "left": 68,
+          "top": 43,
+          "right": 46,
+          "bottom": 15
+        },
+        "sha256": "e56d38cd6ef793da01c77c941c8994c6aa1896419eb06841a81227d7448c5dd6"
+      },
+      {
+        "frame": 3,
+        "source_bounds": [
+          259,
+          92,
+          782,
+          901
+        ],
+        "output_bounds": [
+          70,
+          26,
+          210,
+          241
+        ],
+        "output_height": 215,
+        "foot_y": 240,
+        "center_x": 140.0,
+        "centroid_x": 134.06,
+        "edge_clearance": {
+          "left": 70,
+          "top": 26,
+          "right": 46,
+          "bottom": 15
+        },
+        "sha256": "ff8c29fb47a5e931634017aea13355b08847be3df4f4f1720812135e4942d68a"
+      },
+      {
+        "frame": 4,
+        "source_bounds": [
+          258,
+          60,
+          778,
+          900
+        ],
+        "output_bounds": [
+          70,
+          17,
+          208,
+          241
+        ],
+        "output_height": 224,
+        "foot_y": 240,
+        "center_x": 139.0,
+        "centroid_x": 132.03,
+        "edge_clearance": {
+          "left": 70,
+          "top": 17,
+          "right": 48,
+          "bottom": 15
+        },
+        "sha256": "1490da1414841498602bc8a285582112a00db4b6fb04dc95524b3962daa4b940"
+      },
+      {
+        "frame": 5,
+        "source_bounds": [
+          249,
+          56,
+          760,
+          902
+        ],
+        "output_bounds": [
+          68,
+          16,
+          203,
+          242
+        ],
+        "output_height": 226,
+        "foot_y": 241,
+        "center_x": 135.5,
+        "centroid_x": 130.3,
+        "edge_clearance": {
+          "left": 68,
+          "top": 16,
+          "right": 53,
+          "bottom": 14
+        },
+        "sha256": "e003b90080632c19ebc7daa91ad8e2ee95a52ffb7b30f7c7b0b8d4500da9b9be"
+      },
+      {
+        "frame": 6,
+        "source_bounds": [
+          247,
+          71,
+          758,
+          906
+        ],
+        "output_bounds": [
+          67,
+          20,
+          203,
+          243
+        ],
+        "output_height": 223,
+        "foot_y": 242,
+        "center_x": 135.0,
+        "centroid_x": 129.55,
+        "edge_clearance": {
+          "left": 67,
+          "top": 20,
+          "right": 53,
+          "bottom": 13
+        },
+        "sha256": "8cb643de9ad30c79e0406a0946bade444ef396e113179b2fa3308fe3297e0f28"
+      },
+      {
+        "frame": 7,
+        "source_bounds": [
+          239,
+          91,
+          764,
+          912
+        ],
+        "output_bounds": [
+          65,
+          26,
+          204,
+          244
+        ],
+        "output_height": 218,
+        "foot_y": 243,
+        "center_x": 134.5,
+        "centroid_x": 129.28,
+        "edge_clearance": {
+          "left": 65,
+          "top": 26,
+          "right": 52,
+          "bottom": 12
+        },
+        "sha256": "a229b4ddfadda33f23194ae277118f019bcae82702d3ec3583c256c6902d4cd0"
+      },
+      {
+        "frame": 8,
+        "source_bounds": [
+          234,
+          103,
+          765,
+          914
+        ],
+        "output_bounds": [
+          63,
+          29,
+          205,
+          245
+        ],
+        "output_height": 216,
+        "foot_y": 244,
+        "center_x": 134.0,
+        "centroid_x": 129.54,
+        "edge_clearance": {
+          "left": 63,
+          "top": 29,
+          "right": 51,
+          "bottom": 11
+        },
+        "sha256": "f5fe8415339fb8c8ce9e5f67c8819d15bf5fdac9da72ecb7e61dabae0e34e565"
+      },
+      {
+        "frame": 9,
+        "source_bounds": [
+          226,
+          113,
+          766,
+          914
+        ],
+        "output_bounds": [
+          61,
+          31,
+          205,
+          245
+        ],
+        "output_height": 214,
+        "foot_y": 244,
+        "center_x": 133.0,
+        "centroid_x": 130.39,
+        "edge_clearance": {
+          "left": 61,
+          "top": 31,
+          "right": 51,
+          "bottom": 11
+        },
+        "sha256": "0b91babe68293e33f673d1d5ccee3e2d149e3610f1c23be23441f93ff5b27faa"
+      },
+      {
+        "frame": 10,
+        "source_bounds": [
+          213,
+          118,
+          770,
+          911
+        ],
+        "output_bounds": [
+          58,
+          33,
+          206,
+          244
+        ],
+        "output_height": 211,
+        "foot_y": 243,
+        "center_x": 132.0,
+        "centroid_x": 131.52,
+        "edge_clearance": {
+          "left": 58,
+          "top": 33,
+          "right": 50,
+          "bottom": 12
+        },
+        "sha256": "8ba6a40ec7104569ac44ec39f058de42cac82bcf423f922ba6334bd40a182220"
+      },
+      {
+        "frame": 11,
+        "source_bounds": [
+          200,
+          124,
+          776,
+          908
+        ],
+        "output_bounds": [
+          55,
+          34,
+          208,
+          243
+        ],
+        "output_height": 209,
+        "foot_y": 242,
+        "center_x": 131.5,
+        "centroid_x": 132.63,
+        "edge_clearance": {
+          "left": 55,
+          "top": 34,
+          "right": 48,
+          "bottom": 13
+        },
+        "sha256": "6634e9a685f8fd5abe953aabba582117860effc8d1f8ed6c6180b5de77449489"
+      },
+      {
+        "frame": 12,
+        "source_bounds": [
+          193,
+          127,
+          779,
+          905
+        ],
+        "output_bounds": [
+          53,
+          35,
+          208,
+          242
+        ],
+        "output_height": 207,
+        "foot_y": 241,
+        "center_x": 130.5,
+        "centroid_x": 133.26,
+        "edge_clearance": {
+          "left": 53,
+          "top": 35,
+          "right": 48,
+          "bottom": 14
+        },
+        "sha256": "f5e8837c8d857bd0797b2ff0461609a452e69fde37240e40863de13c60eaf1d3"
+      },
+      {
+        "frame": 13,
+        "source_bounds": [
+          184,
+          128,
+          780,
+          899
+        ],
+        "output_bounds": [
+          51,
+          35,
+          209,
+          240
+        ],
+        "output_height": 205,
+        "foot_y": 239,
+        "center_x": 130.0,
+        "centroid_x": 133.72,
+        "edge_clearance": {
+          "left": 51,
+          "top": 35,
+          "right": 47,
+          "bottom": 16
+        },
+        "sha256": "13a4d442033bcc44387257de72c1463559357ea47b899fad0f4262db93812d72"
+      },
+      {
+        "frame": 14,
+        "source_bounds": [
+          178,
+          129,
+          781,
+          893
+        ],
+        "output_bounds": [
+          49,
+          36,
+          209,
+          239
+        ],
+        "output_height": 203,
+        "foot_y": 238,
+        "center_x": 129.0,
+        "centroid_x": 134.04,
+        "edge_clearance": {
+          "left": 49,
+          "top": 36,
+          "right": 47,
+          "bottom": 17
+        },
+        "sha256": "8d5ff307a2e3a8f42477e78bf45eb383cfd52b95b6a252b5bf179a5539db2417"
+      },
+      {
+        "frame": 15,
+        "source_bounds": [
+          171,
+          130,
+          782,
+          884
+        ],
+        "output_bounds": [
+          47,
+          36,
+          209,
+          237
+        ],
+        "output_height": 201,
+        "foot_y": 236,
+        "center_x": 128.0,
+        "centroid_x": 134.32,
+        "edge_clearance": {
+          "left": 47,
+          "top": 36,
+          "right": 47,
+          "bottom": 19
+        },
+        "sha256": "b49ff1e5bf76c8af674ae920f6e3f3b43ab1608025991d4894cfd2c2dc216fb0"
+      },
+      {
+        "frame": 16,
+        "source_bounds": [
+          166,
+          128,
+          783,
+          876
+        ],
+        "output_bounds": [
+          46,
+          35,
+          210,
+          234
+        ],
+        "output_height": 199,
+        "foot_y": 233,
+        "center_x": 128.0,
+        "centroid_x": 134.56,
+        "edge_clearance": {
+          "left": 46,
+          "top": 35,
+          "right": 46,
+          "bottom": 22
+        },
+        "sha256": "5a8254b426e0ea0f335e77cfde5e187fce3515045473b355528e2184e7654f96"
+      },
+      {
+        "frame": 17,
+        "source_bounds": [
+          164,
+          127,
+          785,
+          866
+        ],
+        "output_bounds": [
+          45,
+          35,
+          210,
+          232
+        ],
+        "output_height": 197,
+        "foot_y": 231,
+        "center_x": 127.5,
+        "centroid_x": 134.84,
+        "edge_clearance": {
+          "left": 45,
+          "top": 35,
+          "right": 46,
+          "bottom": 24
+        },
+        "sha256": "74e2cd1e32e00d9f5f2cff20be53dc05ad4bf45dc6a0b92156ddbeaf9f42bc79"
+      },
+      {
+        "frame": 18,
+        "source_bounds": [
+          163,
+          124,
+          787,
+          858
+        ],
+        "output_bounds": [
+          45,
+          34,
+          211,
+          230
+        ],
+        "output_height": 196,
+        "foot_y": 229,
+        "center_x": 128.0,
+        "centroid_x": 135.11,
+        "edge_clearance": {
+          "left": 45,
+          "top": 34,
+          "right": 45,
+          "bottom": 26
+        },
+        "sha256": "e0362395c3779110231d3333d3fd3acdce83db62434fcaf66d1f23da3c75b13b"
+      },
+      {
+        "frame": 19,
+        "source_bounds": [
+          164,
+          121,
+          789,
+          852
+        ],
+        "output_bounds": [
+          45,
+          33,
+          211,
+          228
+        ],
+        "output_height": 195,
+        "foot_y": 227,
+        "center_x": 128.0,
+        "centroid_x": 135.5,
+        "edge_clearance": {
+          "left": 45,
+          "top": 33,
+          "right": 45,
+          "bottom": 28
+        },
+        "sha256": "a7b01f7cab6ded859166577a9781165f845d026838d1d3edc0377090e725c5de"
+      },
+      {
+        "frame": 20,
+        "source_bounds": [
+          166,
+          120,
+          792,
+          853
+        ],
+        "output_bounds": [
+          45,
+          33,
+          212,
+          228
+        ],
+        "output_height": 195,
+        "foot_y": 227,
+        "center_x": 128.5,
+        "centroid_x": 136.05,
+        "edge_clearance": {
+          "left": 45,
+          "top": 33,
+          "right": 44,
+          "bottom": 28
+        },
+        "sha256": "6c9a322bb5a3608cd43469e50f449fff76241346269de3e5ef6c5a426601cfda"
+      },
+      {
+        "frame": 21,
+        "source_bounds": [
+          168,
+          120,
+          796,
+          859
+        ],
+        "output_bounds": [
+          46,
+          33,
+          213,
+          230
+        ],
+        "output_height": 197,
+        "foot_y": 229,
+        "center_x": 129.5,
+        "centroid_x": 137.01,
+        "edge_clearance": {
+          "left": 46,
+          "top": 33,
+          "right": 43,
+          "bottom": 26
+        },
+        "sha256": "33dd6bff89405881160bb47d99ce09d529942269fbe527e712c1813cc93dd91f"
+      },
+      {
+        "frame": 22,
+        "source_bounds": [
+          174,
+          123,
+          800,
+          870
+        ],
+        "output_bounds": [
+          48,
+          34,
+          214,
+          233
+        ],
+        "output_height": 199,
+        "foot_y": 232,
+        "center_x": 131.0,
+        "centroid_x": 138.15,
+        "edge_clearance": {
+          "left": 48,
+          "top": 34,
+          "right": 42,
+          "bottom": 23
+        },
+        "sha256": "33993eb80b6016cdfb6d17fc92d787c74717a15a9b9ee2caf7857fa61a374fcd"
+      },
+      {
+        "frame": 23,
+        "source_bounds": [
+          184,
+          130,
+          809,
+          884
+        ],
+        "output_bounds": [
+          50,
+          36,
+          216,
+          236
+        ],
+        "output_height": 200,
+        "foot_y": 235,
+        "center_x": 133.0,
+        "centroid_x": 139.91,
+        "edge_clearance": {
+          "left": 50,
+          "top": 36,
+          "right": 40,
+          "bottom": 20
+        },
+        "sha256": "342bc37c8c04fecf68728e17a18ad3a0d7f8f6488b9c6ba66dab52a550c0a695"
+      },
+      {
+        "frame": 24,
+        "source_bounds": [
+          201,
+          138,
+          818,
+          895
+        ],
+        "output_bounds": [
+          55,
+          38,
+          219,
+          239
+        ],
+        "output_height": 201,
+        "foot_y": 238,
+        "center_x": 137.0,
+        "centroid_x": 141.67,
+        "edge_clearance": {
+          "left": 55,
+          "top": 38,
+          "right": 37,
+          "bottom": 17
+        },
+        "sha256": "7f93df995fe572bfda610713f3cc947b4887be9495f5932124fc6ebf31a32610"
+      }
+    ],
+    "fall": [
+      {
+        "frame": 1,
+        "source_bounds": [
+          230,
+          154,
+          830,
+          907
+        ],
+        "output_bounds": [
+          63,
+          42,
+          222,
+          243
+        ],
+        "output_height": 201,
+        "foot_y": 242,
+        "center_x": 142.5,
+        "centroid_x": 144.08,
+        "edge_clearance": {
+          "left": 63,
+          "top": 42,
+          "right": 34,
+          "bottom": 13
+        },
+        "sha256": "6b646db4c52729ef58c4bf31b5835491da25b83ce0c9b2a847bfb582b8da0697"
+      },
+      {
+        "frame": 2,
+        "source_bounds": [
+          217,
+          104,
+          825,
+          838
+        ],
+        "output_bounds": [
+          59,
+          29,
+          220,
+          224
+        ],
+        "output_height": 195,
+        "foot_y": 223,
+        "center_x": 139.5,
+        "centroid_x": 143.14,
+        "edge_clearance": {
+          "left": 59,
+          "top": 29,
+          "right": 36,
+          "bottom": 32
+        },
+        "sha256": "90c9b3471db029b5d98c3c834930420348b0c1262d630c229baa16b48e90de19"
+      },
+      {
+        "frame": 3,
+        "source_bounds": [
+          209,
+          64,
+          821,
+          787
+        ],
+        "output_bounds": [
+          57,
+          18,
+          220,
+          211
+        ],
+        "output_height": 193,
+        "foot_y": 210,
+        "center_x": 138.5,
+        "centroid_x": 142.69,
+        "edge_clearance": {
+          "left": 57,
+          "top": 18,
+          "right": 36,
+          "bottom": 45
+        },
+        "sha256": "8eab159e0232a217368d1a29e2fd66c501c79bf49e144fdf077bda037ca65c3b"
+      },
+      {
+        "frame": 4,
+        "source_bounds": [
+          207,
+          43,
+          819,
+          766
+        ],
+        "output_bounds": [
+          57,
+          13,
+          219,
+          205
+        ],
+        "output_height": 192,
+        "foot_y": 204,
+        "center_x": 138.0,
+        "centroid_x": 142.33,
+        "edge_clearance": {
+          "left": 57,
+          "top": 13,
+          "right": 37,
+          "bottom": 51
+        },
+        "sha256": "0db56b656f6b316b5b6fbe80359c1e7812596b26984e4722ea01b022f2285292"
+      },
+      {
+        "frame": 5,
+        "source_bounds": [
+          208,
+          40,
+          817,
+          761
+        ],
+        "output_bounds": [
+          57,
+          12,
+          218,
+          204
+        ],
+        "output_height": 192,
+        "foot_y": 203,
+        "center_x": 137.5,
+        "centroid_x": 142.09,
+        "edge_clearance": {
+          "left": 57,
+          "top": 12,
+          "right": 38,
+          "bottom": 52
+        },
+        "sha256": "25edcd2de7c0b60929446b27ff458664667ea409f8b4ed196851d1221cdfbb9d"
+      },
+      {
+        "frame": 6,
+        "source_bounds": [
+          209,
+          42,
+          814,
+          760
+        ],
+        "output_bounds": [
+          57,
+          12,
+          218,
+          203
+        ],
+        "output_height": 191,
+        "foot_y": 202,
+        "center_x": 137.5,
+        "centroid_x": 141.93,
+        "edge_clearance": {
+          "left": 57,
+          "top": 12,
+          "right": 38,
+          "bottom": 53
+        },
+        "sha256": "706245039b616decc3b87ae1b69340f3d30c1bba5d87bf69aadf1fde773a5f11"
+      },
+      {
+        "frame": 7,
+        "source_bounds": [
+          211,
+          49,
+          812,
+          762
+        ],
+        "output_bounds": [
+          58,
+          14,
+          217,
+          204
+        ],
+        "output_height": 190,
+        "foot_y": 203,
+        "center_x": 137.5,
+        "centroid_x": 141.76,
+        "edge_clearance": {
+          "left": 58,
+          "top": 14,
+          "right": 39,
+          "bottom": 52
+        },
+        "sha256": "37f8e0bb4c4f0125258fb449ab643d6282e10f6c6eba14b041a833bc8afa7094"
+      },
+      {
+        "frame": 8,
+        "source_bounds": [
+          213,
+          60,
+          810,
+          769
+        ],
+        "output_bounds": [
+          58,
+          17,
+          216,
+          206
+        ],
+        "output_height": 189,
+        "foot_y": 205,
+        "center_x": 137.0,
+        "centroid_x": 141.57,
+        "edge_clearance": {
+          "left": 58,
+          "top": 17,
+          "right": 40,
+          "bottom": 50
+        },
+        "sha256": "1816dc7b3da2bc3d00bd1483ae8de34e789a5876f7065142daa259248354341d"
+      },
+      {
+        "frame": 9,
+        "source_bounds": [
+          215,
+          76,
+          808,
+          780
+        ],
+        "output_bounds": [
+          59,
+          21,
+          216,
+          209
+        ],
+        "output_height": 188,
+        "foot_y": 208,
+        "center_x": 137.5,
+        "centroid_x": 141.36,
+        "edge_clearance": {
+          "left": 59,
+          "top": 21,
+          "right": 40,
+          "bottom": 47
+        },
+        "sha256": "ce73713a1f057ed3604206e2fa59c57b08fd25f4d8658debc3205b4d2ab17ad9"
+      },
+      {
+        "frame": 10,
+        "source_bounds": [
+          217,
+          97,
+          806,
+          796
+        ],
+        "output_bounds": [
+          59,
+          27,
+          216,
+          213
+        ],
+        "output_height": 186,
+        "foot_y": 212,
+        "center_x": 137.5,
+        "centroid_x": 141.11,
+        "edge_clearance": {
+          "left": 59,
+          "top": 27,
+          "right": 40,
+          "bottom": 43
+        },
+        "sha256": "20ed0ded3287608b1ab01cb085afee480d72312eedb9b662fce80120562d8bfd"
+      },
+      {
+        "frame": 11,
+        "source_bounds": [
+          220,
+          122,
+          804,
+          818
+        ],
+        "output_bounds": [
+          60,
+          34,
+          215,
+          219
+        ],
+        "output_height": 185,
+        "foot_y": 218,
+        "center_x": 137.5,
+        "centroid_x": 140.72,
+        "edge_clearance": {
+          "left": 60,
+          "top": 34,
+          "right": 41,
+          "bottom": 37
+        },
+        "sha256": "1687076fd2a7e1bf091ae4b4b81238e0994f9681447a5320c47e7bcbefe8f174"
+      },
+      {
+        "frame": 12,
+        "source_bounds": [
+          223,
+          151,
+          801,
+          846
+        ],
+        "output_bounds": [
+          61,
+          42,
+          215,
+          226
+        ],
+        "output_height": 184,
+        "foot_y": 225,
+        "center_x": 138.0,
+        "centroid_x": 140.17,
+        "edge_clearance": {
+          "left": 61,
+          "top": 42,
+          "right": 41,
+          "bottom": 30
+        },
+        "sha256": "1971da38aa6aacd8d0f3b6169876d6e8c22c02805237e4bd75523cddf12597af"
+      },
+      {
+        "frame": 13,
+        "source_bounds": [
+          228,
+          184,
+          800,
+          879
+        ],
+        "output_bounds": [
+          62,
+          50,
+          214,
+          235
+        ],
+        "output_height": 185,
+        "foot_y": 234,
+        "center_x": 138.0,
+        "centroid_x": 139.5,
+        "edge_clearance": {
+          "left": 62,
+          "top": 50,
+          "right": 42,
+          "bottom": 21
+        },
+        "sha256": "078a4fff6c5c074180069ae5597724a4b77657e6fd514d8e473f65a05dbd78fe"
+      },
+      {
+        "frame": 14,
+        "source_bounds": [
+          239,
+          213,
+          798,
+          911
+        ],
+        "output_bounds": [
+          65,
+          58,
+          213,
+          244
+        ],
+        "output_height": 186,
+        "foot_y": 243,
+        "center_x": 139.0,
+        "centroid_x": 138.64,
+        "edge_clearance": {
+          "left": 65,
+          "top": 58,
+          "right": 43,
+          "bottom": 12
+        },
+        "sha256": "53f234941990a75c6b0e94f4a26b2966625849b68e8e903bcea05b657394ecab"
+      },
+      {
+        "frame": 15,
+        "source_bounds": [
+          256,
+          234,
+          796,
+          939
+        ],
+        "output_bounds": [
+          70,
+          64,
+          213,
+          251
+        ],
+        "output_height": 187,
+        "foot_y": 250,
+        "center_x": 141.5,
+        "centroid_x": 137.61,
+        "edge_clearance": {
+          "left": 70,
+          "top": 64,
+          "right": 43,
+          "bottom": 5
+        },
+        "sha256": "a085ffb310b7fd6fee72f352174965b55c50b25e63e776f196f0407d4c37f33d"
+      },
+      {
+        "frame": 16,
+        "source_bounds": [
+          254,
+          237,
+          795,
+          925
+        ],
+        "output_bounds": [
+          69,
+          64,
+          213,
+          248
+        ],
+        "output_height": 184,
+        "foot_y": 247,
+        "center_x": 141.0,
+        "centroid_x": 137.27,
+        "edge_clearance": {
+          "left": 69,
+          "top": 64,
+          "right": 43,
+          "bottom": 8
+        },
+        "sha256": "818474fb86090ed9c250382f5909d71af15f9b6a56e75a717ddc52aa85b7a126"
+      },
+      {
+        "frame": 17,
+        "source_bounds": [
+          234,
+          225,
+          796,
+          907
+        ],
+        "output_bounds": [
+          64,
+          61,
+          213,
+          243
+        ],
+        "output_height": 182,
+        "foot_y": 242,
+        "center_x": 138.5,
+        "centroid_x": 136.92,
+        "edge_clearance": {
+          "left": 64,
+          "top": 61,
+          "right": 43,
+          "bottom": 13
+        },
+        "sha256": "ba37f2d21064d18c483020364ca3919a2c87ca52a52b5b53b33cd9846a2ad44d"
+      },
+      {
+        "frame": 18,
+        "source_bounds": [
+          227,
+          213,
+          798,
+          898
+        ],
+        "output_bounds": [
+          62,
+          58,
+          214,
+          241
+        ],
+        "output_height": 183,
+        "foot_y": 240,
+        "center_x": 138.0,
+        "centroid_x": 136.98,
+        "edge_clearance": {
+          "left": 62,
+          "top": 58,
+          "right": 42,
+          "bottom": 15
+        },
+        "sha256": "119597864d6517d474853d6868a656eac280e616af2367458ef4708616722a42"
+      },
+      {
+        "frame": 19,
+        "source_bounds": [
+          221,
+          206,
+          799,
+          899
+        ],
+        "output_bounds": [
+          60,
+          56,
+          214,
+          241
+        ],
+        "output_height": 185,
+        "foot_y": 240,
+        "center_x": 137.0,
+        "centroid_x": 137.06,
+        "edge_clearance": {
+          "left": 60,
+          "top": 56,
+          "right": 42,
+          "bottom": 15
+        },
+        "sha256": "66c95014231295d0f45379efd3960f5226d6381272ce3a8bd8a226164425460b"
+      },
+      {
+        "frame": 20,
+        "source_bounds": [
+          220,
+          202,
+          800,
+          899
+        ],
+        "output_bounds": [
+          60,
+          55,
+          214,
+          241
+        ],
+        "output_height": 186,
+        "foot_y": 240,
+        "center_x": 137.0,
+        "centroid_x": 137.13,
+        "edge_clearance": {
+          "left": 60,
+          "top": 55,
+          "right": 42,
+          "bottom": 15
+        },
+        "sha256": "56e5316fdaa4e20a2776b167616c6984fc4416e6d475d5b55006a69f2d2bc847"
+      },
+      {
+        "frame": 21,
+        "source_bounds": [
+          218,
+          200,
+          800,
+          899
+        ],
+        "output_bounds": [
+          59,
+          54,
+          214,
+          241
+        ],
+        "output_height": 187,
+        "foot_y": 240,
+        "center_x": 136.5,
+        "centroid_x": 137.18,
+        "edge_clearance": {
+          "left": 59,
+          "top": 54,
+          "right": 42,
+          "bottom": 15
+        },
+        "sha256": "7b77a70db8f833eccd7790484f0ee576a43292a91dc6ca184aad351fce8b276a"
+      },
+      {
+        "frame": 22,
+        "source_bounds": [
+          218,
+          199,
+          799,
+          899
+        ],
+        "output_bounds": [
+          59,
+          54,
+          214,
+          241
+        ],
+        "output_height": 187,
+        "foot_y": 240,
+        "center_x": 136.5,
+        "centroid_x": 137.21,
+        "edge_clearance": {
+          "left": 59,
+          "top": 54,
+          "right": 42,
+          "bottom": 15
+        },
+        "sha256": "7ebf6abe59754218f79543c3ab5dc3a64371f9de15b4e1778600ad2299d5c00d"
+      },
+      {
+        "frame": 23,
+        "source_bounds": [
+          217,
+          199,
+          799,
+          899
+        ],
+        "output_bounds": [
+          59,
+          54,
+          214,
+          241
+        ],
+        "output_height": 187,
+        "foot_y": 240,
+        "center_x": 136.5,
+        "centroid_x": 137.21,
+        "edge_clearance": {
+          "left": 59,
+          "top": 54,
+          "right": 42,
+          "bottom": 15
+        },
+        "sha256": "59bc9b5cabd1be281d4c8095eb8d6152f9d2cdfd2ca90966b610c28b3de2b9e0"
+      },
+      {
+        "frame": 24,
+        "source_bounds": [
+          217,
+          199,
+          798,
+          901
+        ],
+        "output_bounds": [
+          59,
+          54,
+          213,
+          241
+        ],
+        "output_height": 187,
+        "foot_y": 240,
+        "center_x": 136.0,
+        "centroid_x": 137.23,
+        "edge_clearance": {
+          "left": 59,
+          "top": 54,
+          "right": 43,
+          "bottom": 15
+        },
+        "sha256": "57a92c788232950becba4720b9f85ab87347e6462ae08b4d81fe13a744429009"
+      }
+    ]
+  }
+}

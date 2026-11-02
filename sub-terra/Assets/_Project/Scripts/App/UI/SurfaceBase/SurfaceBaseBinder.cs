@@ -380,6 +380,7 @@ namespace SubTerra.App.UI.SurfaceBase
             }
 
             var draft = view.ReadSettingsDraft(settings.Draft);
+            view.PlaySettingsApplySound();
             settings.Draft.CopyFrom(draft);
             settings.Apply();
             SettingsRuntimeApplier.Apply(settings.Applied, applyResolution: true);

@@ -1,7 +1,9 @@
 using System;
+using SubTerra.App.Audio;
 using SubTerra.App.UI.HUD;
 using SubTerra.App.UI.SurfaceBase;
 using SubTerra.App.UI.Tutorial;
+using SubTerra.Shared.Audio;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -36,6 +38,9 @@ namespace SubTerra.App.UI.Progression
         public StartBriefingPopupMotion Transition => transition;
         public DeepZoneUnlockArtMotion Art => art;
         public bool IsClosing => transition != null && transition.IsClosing;
+
+        /// <summary>B-180: 등장 연출이 끝나 표시 중일 때만 닫기 호버음을 낸다(닫는 중·등장 중 무음).</summary>
+        public bool CanPlayCloseHover => transition != null && transition.IsShown;
 
         public sealed class Parts
         {
@@ -129,6 +134,9 @@ namespace SubTerra.App.UI.Progression
             art = gameObject.AddComponent<DeepZoneUnlockArtMotion>();
             art.SetDepth(skin.minDepth, skin.maxDepth);
             art.Bind(layers);
+
+            // B-180: 닫힘음은 B-178 작은 창 경로가 내므로 클릭은 무음, 호버만 붙인다.
+            UiSfx.Attach(parts.CloseButton, SfxId.None, hover: true, failWhenDisabled: false, hoverGate: () => CanPlayCloseHover);
         }
 
         /// <summary>처음부터 연다. 닫는 중이면 닫기를 끊고 연출을 다시 시작한다.</summary>

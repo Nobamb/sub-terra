@@ -37,6 +37,7 @@ namespace SubTerra.App.Integration
             for (var i = 0; i < shortcuts.Length; i++)
             {
                 if (shortcuts[i].name != "SettingsShortcut") continue;
+                UiSfx.Attach(shortcuts[i], SfxId.None, hover: true);
                 var label = shortcuts[i].GetComponentInChildren<TMPro.TMP_Text>(true);
                 if (label != null) label.text = "설정(esc)";
                 break;
@@ -209,6 +210,7 @@ namespace SubTerra.App.Integration
         {
             if (!IsSettingsOpen || settingsView == null) return;
             settings.Draft.CopyFrom(settingsView.ReadSettingsDraft(settings.Draft));
+            settingsView.PlaySettingsApplySound();
             settings.Apply();
             SettingsRuntimeApplier.Apply(settings.Applied, applyResolution: true);
             settingsView.SetSettingsVisible(false);

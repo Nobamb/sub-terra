@@ -1,3 +1,4 @@
+using System;
 using SubTerra.Shared.Audio;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -19,19 +20,42 @@ namespace SubTerra.App.Audio
 
         private bool listening;
         private int clickedFrame = -1;
+        // B-180: 창 열림·닫힘 연출 중처럼 호버음을 막아야 할 때 false를 돌려준다. null이면 항상 허용.
+        private Func<bool> hoverGate;
 
         public SfxId ClickSfx => clickSfx;
         public bool Hover => hover;
         public bool FailWhenDisabled => failWhenDisabled;
+        public bool HasHoverGate => hoverGate != null;
 
-        public void Configure(Button target, SfxId click, bool playHover, bool failOnDisabledClick = true)
+        public void Configure(Button target, SfxId click, bool playHover, bool failOnDisabledClick = true,
+            Func<bool> hoverCondition = null)
         {
             Unlisten();
             button = target;
             clickSfx = click;
             hover = playHover;
             failWhenDisabled = failOnDisabledClick;
+            hoverGate = hoverCondition;
             Listen();
+        }
+
+        private bool HoverAllowed()
+        {
+            if (hoverGate == null)
+            {
+                return true;
+            }
+
+            try
+            {
+                return hoverGate();
+            }
+            catch (Exception exception)
+            {
+                Debug.LogWarning("[UiSfxButton] 호버음 조건 확인 실패: " + exception.Message);
+                return false;
+            }
         }
 
         private void Awake()
@@ -110,7 +134,7 @@ namespace SubTerra.App.Audio
 
         public void OnPointerEnter(PointerEventData eventData)
         {
-            if (hover && button != null && button.IsInteractable())
+            if (hover && button != null && button.IsInteractable() && HoverAllowed())
             {
                 SfxPlayer.Play(SfxId.UiHover);
             }
@@ -120,8 +144,9 @@ namespace SubTerra.App.Audio
     public static class UiSfx
     {
         /// <summary>같은 버튼에 여러 번 불러도 소리가 한 번만 나도록 기존 컴포넌트를 재사용한다.</summary>
+        /// <remarks>hoverGate가 false를 돌려주는 동안에는 호버음만 막는다(B-180). 클릭음은 지금처럼 버튼 onClick을 따른다.</remarks>
         public static UiSfxButton Attach(Button button, SfxId click = SfxId.UiClick, bool hover = false,
-            bool failWhenDisabled = true)
+            bool failWhenDisabled = true, Func<bool> hoverGate = null)
         {
             if (button == null)
             {
@@ -134,7 +159,7 @@ namespace SubTerra.App.Audio
                 component = button.gameObject.AddComponent<UiSfxButton>();
             }
 
-            component.Configure(button, click, hover, failWhenDisabled);
+            component.Configure(button, click, hover, failWhenDisabled, hoverGate);
             return component;
         }
     }

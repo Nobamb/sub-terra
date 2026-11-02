@@ -164,19 +164,27 @@ namespace SubTerra.App.Tests.EditMode.Readiness
                 typeof(PlayerAnimationController).GetField("lastGroundedAt", flags)
                     .SetValue(controller, Time.unscaledTime - .1f);
                 lateUpdate.Invoke(controller, null);
-                Assert.That(renderer.sprite, Is.EqualTo(frames.FindProperty("jumpFrames").GetArrayElementAtIndex(0).objectReferenceValue),
-                    "발판에서 실제로 떨어지면 Jump로 전환한다");
+                Assert.That(renderer.sprite, Is.EqualTo(frames.FindProperty("jumpFallFrames").GetArrayElementAtIndex(0).objectReferenceValue),
+                    "발판에서 실제로 떨어지면 fall 1부터 전환한다");
 
                 grounded.SetValue(movement, true);
                 lateUpdate.Invoke(controller, null);
                 grounded.SetValue(movement, false);
                 typeof(PlayerMovement).GetField("jumpUsedUntilLand", flags).SetValue(movement, true);
+                typeof(PlayerMovement).GetField("<JumpCount>k__BackingField", flags).SetValue(movement, 1);
                 lateUpdate.Invoke(controller, null);
-                Assert.That(renderer.sprite, Is.EqualTo(frames.FindProperty("jumpFrames").GetArrayElementAtIndex(0).objectReferenceValue),
-                    "점프 입력으로 뜨면 유예 없이 바로 전환한다");
+                Assert.That(renderer.sprite, Is.EqualTo(frames.FindProperty("jumpRiseFrames").GetArrayElementAtIndex(0).objectReferenceValue),
+                    "점프 입력으로 뜨면 유예 없이 바로 도약 1로 전환한다");
 
                 grounded.SetValue(movement, true);
+                movement.SetMoveInput(0f);
                 lateUpdate.Invoke(controller, null);
+                Assert.That(renderer.sprite, Is.EqualTo(frames.FindProperty("jumpReadyFrames").GetArrayElementAtIndex(7).objectReferenceValue),
+                    "이동 입력 없이 착지하면 ready 8부터 착지 그림");
+                movement.SetMoveInput(direction);
+                lateUpdate.Invoke(controller, null);
+                Assert.That(typeof(PlayerAnimationController).GetField("currentState", flags).GetValue(controller), Is.EqualTo("Walk"),
+                    "착지 중 좌우 입력이면 바로 걷기");
                 movement.SetMoveInput(0f);
                 lateUpdate.Invoke(controller, null);
                 Assert.That(renderer.sprite, Is.EqualTo(frames.FindProperty("idleFrames").GetArrayElementAtIndex(0).objectReferenceValue));

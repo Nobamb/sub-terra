@@ -127,11 +127,21 @@ namespace SubTerra.App.Editor.DataValidation
 
             var importer = (AudioImporter)assetImporter;
             importer.forceToMono = true;
+            var fileName = Path.GetFileNameWithoutExtension(assetPath);
+            var sliderSegment = fileName == "settings_slider_drag_head"
+                || fileName == "settings_slider_drag_loop" || fileName == "settings_slider_drag_tail";
+            // 조각별 정규화·압축 여백은 앞/반복/끝의 이음새를 바꾼다.
+            if (sliderSegment)
+            {
+                var serialized = new SerializedObject(importer);
+                serialized.FindProperty("m_Normalize").boolValue = false;
+                serialized.ApplyModifiedPropertiesWithoutUndo();
+            }
             var settings = importer.defaultSampleSettings;
             // B-162: 20초 반복음은 풀어 두면 메모리를 크게 차지하므로 압축된 채 둔다.
-            var isLoop = SfxLibraryDefaults.IsLoopFile(Path.GetFileNameWithoutExtension(assetPath));
+            var isLoop = SfxLibraryDefaults.IsLoopFile(fileName);
             settings.loadType = isLoop ? AudioClipLoadType.CompressedInMemory : AudioClipLoadType.DecompressOnLoad;
-            settings.compressionFormat = AudioCompressionFormat.Vorbis;
+            settings.compressionFormat = sliderSegment ? AudioCompressionFormat.PCM : AudioCompressionFormat.Vorbis;
             settings.quality = 0.7f;
             settings.preloadAudioData = true;
             importer.defaultSampleSettings = settings;

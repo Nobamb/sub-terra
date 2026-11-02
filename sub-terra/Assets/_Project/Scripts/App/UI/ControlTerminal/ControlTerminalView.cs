@@ -37,6 +37,9 @@ namespace SubTerra.App.UI.ControlTerminal
         // 키캡 톡 소리는 0.08초 간격 제한이라 다섯 줄 중 실제로는 2~3번 나고, 줄마다 조금씩 높아진다.
         public const float KeycapSfxInterval = 0.08f;
         public const float KeycapPitchStep = 0.03f;
+        private const SfxId KeyHoverSfx = SfxId.KeycapPop;
+        private const SfxId MouseHoverSfx = SfxId.UiClick;
+        private const float KeyHoverGap = 0.06f;
 
         private static readonly Color CardFill = new Color(0.02f, 0.06f, 0.10f, 0.94f);
         private static readonly Color Accent = new Color(0.55f, 1f, 0.97f, 1f);
@@ -51,6 +54,7 @@ namespace SubTerra.App.UI.ControlTerminal
         private readonly ControlTerminalHoverState hover = new ControlTerminalHoverState();
         private readonly ControlTerminalAutoDemo autoDemo = new ControlTerminalAutoDemo();
         private readonly SfxThrottle keycapSfx = new SfxThrottle(KeycapSfxInterval);
+        private readonly SfxThrottle keyHoverSfx = new SfxThrottle(KeyHoverGap);
         private readonly List<ControlTerminalKeyCap> caps = new List<ControlTerminalKeyCap>();
         private readonly RectTransform[] ghostRects = new RectTransform[ControlTerminalTimeline.GhostCount];
         private readonly Image[] ghostImages = new Image[ControlTerminalTimeline.GhostCount];
@@ -513,6 +517,7 @@ namespace SubTerra.App.UI.ControlTerminal
         /// <summary>닫힘·disable·재열기 전에 호버·선·영상·눌림을 모두 즉시 정리한다.</summary>
         public void ResetImmediate()
         {
+            keyHoverSfx.Reset();
             ClearHover();
             for (int i = 0; i < caps.Count; i++) caps[i].ResetImmediate();
             autoDemo.Restart();
@@ -585,6 +590,9 @@ namespace SubTerra.App.UI.ControlTerminal
         private void OnKeyEntered(ControlTerminalKeyCap cap)
         {
             if (phase == Phase.Hidden || phase == Phase.Outro) return;
+            if (phase == Phase.Idle && cap.IsFunctionKey && keyHoverSfx.TryPass())
+                SfxPlayer.Play(cap.Def.IsMouse ? MouseHoverSfx : KeyHoverSfx,
+                    cap.Def.IsMouse ? 1f : 1f + Mathf.Max(0, cap.Def.Row) * KeycapPitchStep);
             hover.Enter(cap.Id);
             autoDemo.SetBlocked(true);
         }

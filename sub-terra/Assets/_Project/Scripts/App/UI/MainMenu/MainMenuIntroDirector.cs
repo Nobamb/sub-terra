@@ -18,6 +18,9 @@ namespace SubTerra.App.UI.MainMenu
         [SerializeField] private MainMenuBootSettings bootSettings = new MainMenuBootSettings();
         [SerializeField] private MainMenuExitSettings exitSettings = new MainMenuExitSettings();
 
+        /// <summary>B-180 ★: 이어하기·새 게임 뒤 화면이 접히기 시작할 때 소리.</summary>
+        public const SfxId ExitFoldSfx = SfxId.WindowTvClose;
+
         [Header("Screen")]
         [SerializeField] private GameObject overlayRoot;
         [SerializeField] private RectTransform topShutter;
@@ -209,22 +212,34 @@ namespace SubTerra.App.UI.MainMenu
             }
             else if (exiting)
             {
-                exit.Advance(dt);
-                ApplyExit();
-                if (exit.IsComplete)
+                TickExit(dt);
+            }
+        }
+
+        private void TickExit(float dt)
+        {
+            var before = exit.Elapsed;
+            exit.Advance(dt);
+            // B-180: 접힘 시작 시점을 이번 프레임에 넘었을 때 한 번. CancelExit 뒤에는 Tick이 멈춰 무음.
+            if (SfxPlayback.Crossed(before, exit.Elapsed, exit.FoldStart))
+            {
+                SfxPlayer.Play(ExitFoldSfx);
+            }
+
+            ApplyExit();
+            if (exit.IsComplete)
+            {
+                exiting = false;
+                var closed = exitClosed;
+                exitClosed = null;
+                try
                 {
-                    exiting = false;
-                    var closed = exitClosed;
-                    exitClosed = null;
-                    try
-                    {
-                        closed?.Invoke();
-                    }
-                    catch (Exception ex)
-                    {
-                        Debug.LogError("[MainMenuIntroDirector] Exit callback failed: " + ex);
-                        CancelExit();
-                    }
+                    closed?.Invoke();
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogError("[MainMenuIntroDirector] Exit callback failed: " + ex);
+                    CancelExit();
                 }
             }
         }

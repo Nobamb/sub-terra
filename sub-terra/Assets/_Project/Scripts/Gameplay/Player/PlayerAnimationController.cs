@@ -9,7 +9,8 @@ namespace SubTerra.Gameplay.Player
     {
         public const int WalkFrameCount = SubTerra.Shared.PlayerWalkCycle.FrameCount;
         public const float WalkFrameRate = SubTerra.Shared.PlayerWalkCycle.FrameRate;
-        private const float DamageDuration = 0.35f;
+        // B-176: 다침 8장 × 20fps. 마지막 4-idle 장까지 보이게 한다.
+        private const float DamageDuration = 0.4f;
         private const float WalkGroundVisualGraceDuration = 0.06f;
         private const float LadderMovementEpsilon = 0.0001f;
         private const float LadderVisualGraceDuration = 0.1f;
@@ -25,11 +26,22 @@ namespace SubTerra.Gameplay.Player
         [SerializeField] private Animator animator;
         [SerializeField] private Sprite[] idleFrames;
         [SerializeField] private Sprite[] walkFrames;
+        [Tooltip("B-175 이전 점프 10장. 새 단계 그림 3묶음이 없을 때만 쓴다.")]
         [SerializeField] private Sprite[] jumpFrames;
+        [SerializeField] private Sprite[] jumpReadyFrames;
+        [SerializeField] private Sprite[] jumpRiseFrames;
+        [SerializeField] private Sprite[] jumpFallFrames;
         [SerializeField] private Sprite[] ladderFrames;
         [SerializeField] private Sprite[] miningFrames;
+        [SerializeField] private Sprite[] ladderMiningFrames;
         [SerializeField] private Sprite[] damageFrames;
         [SerializeField] private Sprite[] knockoutFrames;
+        [SerializeField] private PlayerMiningAnimationSettings miningAnimation = new();
+        [SerializeField] private PlayerLadderMiningAnimationSettings ladderMiningAnimation = new();
+        [SerializeField] private PlayerJumpAnimationSettings jumpAnimation = new();
+        [SerializeField, Min(0.01f)] private float damageFps = 20f;
+        [SerializeField, Min(0.01f)] private float knockoutFps = 24f;
+        [SerializeField, Min(0.01f)] private float knockoutBreathingFps = 12f;
         [SerializeField, Min(0.01f)] private float ladderDistancePerFrame = 0.5f;
         [SerializeField, Min(0f)] private float ladderSettleDelay = 0.08f;
         [Tooltip("B-164: 걷기 그림에서 발이 닿는 프레임. 이 프레임으로 넘어갈 때 발소리를 낸다.")]
@@ -37,9 +49,15 @@ namespace SubTerra.Gameplay.Player
 
         [SerializeField] private PlayerMovement movement;
         private bool isMining;
+        private PlayerMiningAnimationSequence miningSequence;
+        private PlayerLadderMiningAnimationSequence ladderMiningSequence;
+        private bool miningOnLadder;
+        private SubTerra.Shared.RunFailureCause knockoutCause;
+        private bool wasIncapacitated;
         private PlayerSurvivalController survival;
         private float previousHealth;
         private float damageUntil;
+        private int ladderDamageDirection = 1;
         private string currentState;
         private float stateStartedAt;
         private float lastGroundedAt = float.NegativeInfinity;
@@ -52,6 +70,38 @@ namespace SubTerra.Gameplay.Player
         private float ladderVisualGraceUntil;
         private int lastWalkFrame = -1;
         private bool footstepAlternate;
+        private PlayerJumpAnimationSequence jumpSequence;
+        private int observedJumpCount;
+        private bool jumpBobApplied;
+        private float jumpBobBaseY;
+
+        public bool IsShowingLadderVisual => IsLadderState(currentState);
+        /// <summary>B-175: 점프 그림 단계. #265 연출은 PhaseChanged를 구독한다.</summary>
+        public PlayerJumpAnimationSequence JumpAnimation => JumpSequence;
+        public bool IsShowingLadderMiningVisual => currentState == "LadderMining";
+        public int LadderMiningDirection => LadderMiningSequence.Direction;
+        /// <summary>B-176: 사다리를 잡은 채 다치는 중. 이동 방향 대신 LadderDamageDirection으로 고정한다.</summary>
+        public bool IsShowingLadderDamageVisual => currentState == "Damage" && IsHoldingLadder;
+        public int LadderDamageDirection => ladderDamageDirection;
+        public bool CanMineOnLadder => movement != null && !movement.IsJumpInProgress
+            && !movement.IsApproachingLadderFromAbove
+            && (movement.IsClimbing || (movement.IsTouchingLadder
+                && (IsShowingLadderVisual || IsShowingLadderMiningVisual || miningOnLadder)));
+        private PlayerMiningAnimationSequence MiningSequence =>
+            miningSequence ??= new PlayerMiningAnimationSequence(miningAnimation);
+        private PlayerLadderMiningAnimationSequence LadderMiningSequence =>
+            ladderMiningSequence ??= new PlayerLadderMiningAnimationSequence(ladderMiningAnimation);
+        private PlayerJumpAnimationSequence JumpSequence =>
+            jumpSequence ??= new PlayerJumpAnimationSequence(jumpAnimation);
+        private bool IsHoldingLadder => movement != null
+            && (movement.IsClimbing || (movement.IsTouchingLadder && !movement.IsJumpInProgress));
+        private bool HasJumpPhaseFrames => HasFrames(jumpReadyFrames) && HasFrames(jumpRiseFrames)
+            && HasFrames(jumpFallFrames);
+
+        private void OnValidate()
+        {
+            miningAnimation.miningReturnFrame = Mathf.Clamp(miningAnimation.miningReturnFrame, 5, 12);
+        }
 
         private void Awake()
         {
@@ -77,12 +127,24 @@ namespace SubTerra.Gameplay.Player
             }
 
             SubscribeSurvivalEvents();
+            if (movement != null)
+            {
+                observedJumpCount = movement.JumpCount;
+            }
         }
 
         private void OnDisable()
         {
             UnsubscribeSurvivalEvents();
             ResetLadderPlayback();
+            MiningSequence.Reset();
+            LadderMiningSequence.Reset();
+            JumpSequence.Reset();
+            ApplyJumpBob(0f);
+            miningOnLadder = false;
+            isMining = false;
+            knockoutCause = SubTerra.Shared.RunFailureCause.Unknown;
+            wasIncapacitated = false;
         }
 
         public void BindSurvival(PlayerSurvivalController survivalController)
@@ -110,7 +172,60 @@ namespace SubTerra.Gameplay.Player
                 lastGroundedAt = Time.unscaledTime;
             }
 
+            bool incapacitated = survival != null && survival.State != null && !survival.State.CanAct;
+            if (incapacitated)
+            {
+                if (!wasIncapacitated && knockoutCause == SubTerra.Shared.RunFailureCause.Unknown)
+                    knockoutCause = survival.State.LastDamageCause;
+                MiningSequence.Reset();
+                LadderMiningSequence.Reset();
+                isMining = false;
+            }
+            else if (wasIncapacitated)
+            {
+                knockoutCause = SubTerra.Shared.RunFailureCause.Unknown;
+                damageUntil = 0f;
+                MiningSequence.Reset();
+                LadderMiningSequence.Reset();
+                isMining = false;
+                SetCurrentState("Idle");
+            }
+            wasIncapacitated = incapacitated;
+
+            if (!incapacitated && (movement.IsMovementRequested || movement.IsJumpInProgress
+                || (LadderMiningSequence.IsActive && !CanMineOnLadder)))
+            {
+                MiningSequence.Interrupt();
+                LadderMiningSequence.Interrupt();
+                isMining = false;
+            }
+            if (Time.unscaledTime >= damageUntil)
+            {
+                if (currentState == "Damage")
+                {
+                    if (isMining)
+                    {
+                        if (miningOnLadder) LadderMiningSequence.ResumeAfterDamage();
+                        else MiningSequence.ResumeAfterDamage();
+                    }
+                    else
+                    {
+                        MiningSequence.Reset();
+                        LadderMiningSequence.Reset();
+                    }
+                }
+                MiningSequence.Tick(Time.unscaledDeltaTime);
+                LadderMiningSequence.Tick(Time.unscaledDeltaTime);
+            }
+
+            UpdateJumpSequence(incapacitated);
             var stateName = ResolveStateName();
+            if (stateName == "Mining" || stateName == "LadderMining")
+            {
+                JumpSequence.Reset();
+            }
+
+            ApplyJumpBob(stateName == "Jump" && HasJumpPhaseFrames ? JumpSequence.BobOffsetPixels() : 0f);
             if (IsLadderState(stateName))
             {
                 ladderVisualGraceUntil = Time.unscaledTime + LadderVisualGraceDuration;
@@ -153,7 +268,40 @@ namespace SubTerra.Gameplay.Player
 
         public void SetMining(bool value)
         {
+            if (value == isMining) return;
             isMining = value;
+            if (value)
+            {
+                miningOnLadder = false;
+                LadderMiningSequence.Reset();
+                MiningSequence.Start();
+            }
+            else if (miningOnLadder) LadderMiningSequence.Stop();
+            else MiningSequence.Stop();
+        }
+
+        public void SetLadderMining(int direction)
+        {
+            if (isMining && miningOnLadder) return;
+            isMining = true;
+            miningOnLadder = true;
+            MiningSequence.Reset();
+            LadderMiningSequence.Start(direction);
+        }
+
+        public void InterruptMining()
+        {
+            isMining = false;
+            MiningSequence.Interrupt();
+            LadderMiningSequence.Interrupt();
+        }
+
+        public void NotifyMiningCompleted()
+        {
+            if (miningOnLadder) LadderMiningSequence.Complete();
+            else MiningSequence.Complete();
+            // 다음 블록의 SetMining(true)는 마무리 중에도 새 시작으로 구분한다.
+            isMining = false;
         }
 
         private string ResolveStateName()
@@ -168,20 +316,24 @@ namespace SubTerra.Gameplay.Player
                 return "Damage";
             }
 
-            if (isMining)
+            if (LadderMiningSequence.IsActive)
+            {
+                return "LadderMining";
+            }
+
+            if (MiningSequence.IsActive)
             {
                 return "Mining";
             }
 
             if (movement.IsApproachingLadderFromAbove)
             {
-                return "Jump";
+                return "LadderDrop";
             }
 
             // Trigger 접촉이 아직 남아 있는 동안에는 물리 상태 전환 한 틱 때문에
             // 일반 Walk/Jump 프레임이 사다리 표시를 덮어쓰지 않게 한다.
-            if (movement.IsClimbing
-                || (movement.IsTouchingLadder && !movement.IsJumpInProgress))
+            if (IsHoldingLadder)
             {
                 if (!movement.IsMovingOnLadder)
                 {
@@ -193,34 +345,126 @@ namespace SubTerra.Gameplay.Player
 
             if (!movement.IsGrounded)
             {
-                // 타일 경계의 한 틱 접지 누락이 걷기 순서를 처음부터 재시작하지 않게 한다.
-                if (currentState == "Walk"
-                    && movement.IsMovementRequested
-                    && !movement.IsJumpInProgress
-                    && Time.unscaledTime - lastGroundedAt <= WalkGroundVisualGraceDuration)
-                {
-                    return "Walk";
-                }
+                return IsWalkGroundGrace() ? "Walk" : "Jump";
+            }
 
+            // 착지 그림(ready 8→1)은 이동 입력이 없을 때만 이어 간다.
+            if (HasJumpPhaseFrames && JumpSequence.Phase == PlayerJumpPhase.Land
+                && !movement.IsMovementRequested)
+            {
                 return "Jump";
             }
 
             return movement.IsMovementRequested ? "Walk" : "Idle";
         }
 
+        // 타일 경계의 한 틱 접지 누락이 걷기 순서를 처음부터 재시작하지 않게 한다.
+        private bool IsWalkGroundGrace()
+        {
+            return currentState == "Walk"
+                && movement.IsMovementRequested
+                && !movement.IsJumpInProgress
+                && Time.unscaledTime - lastGroundedAt <= WalkGroundVisualGraceDuration;
+        }
+
+        private void UpdateJumpSequence(bool incapacitated)
+        {
+            // 착지 틱에 버퍼 점프가 바로 실행되면 공중 상태가 끊기지 않으므로 실행 횟수로 본다.
+            bool started = movement.JumpCount != observedJumpCount;
+            observedJumpCount = movement.JumpCount;
+
+            if (incapacitated || IsHoldingLadder)
+            {
+                JumpSequence.Reset();
+                return;
+            }
+
+            if (started)
+            {
+                JumpSequence.StartJump(movement.LastJumpLaunchSpeed);
+            }
+
+            bool airborne = !movement.IsGrounded && !IsWalkGroundGrace();
+            JumpSequence.Tick(started ? 0f : Time.unscaledDeltaTime, airborne,
+                movement.VerticalSpeed, movement.IsMovementRequested);
+        }
+
+        private void PlayJumpPhase()
+        {
+            var frames = JumpSequence.Clip switch
+            {
+                PlayerJumpClip.Ready => jumpReadyFrames,
+                PlayerJumpClip.Rise => jumpRiseFrames,
+                _ => jumpFallFrames
+            };
+            var frame = frames[Mathf.Clamp(JumpSequence.FrameIndex, 0, frames.Length - 1)];
+            if (frame != null)
+            {
+                spriteRenderer.sprite = frame;
+            }
+        }
+
+        // 사다리 위에서 내려오기 직전 표시는 낙하 반복 그림을 시간으로 돌린다.
+        private void PlayLadderDrop()
+        {
+            int first = Mathf.Clamp(jumpAnimation.fallLoopFirstFrame, 1, jumpFallFrames.Length) - 1;
+            int last = Mathf.Clamp(jumpAnimation.fallLoopLastFrame, first + 1, jumpFallFrames.Length) - 1;
+            var elapsed = Mathf.Max(0f, Time.unscaledTime - stateStartedAt);
+            int step = Mathf.FloorToInt(elapsed * Mathf.Max(0.01f, jumpAnimation.fallLoopFps)) % (last - first + 1);
+            var frame = jumpFallFrames[first + step];
+            if (frame != null)
+            {
+                spriteRenderer.sprite = frame;
+            }
+        }
+
+        // 설정에서 켠 경우에만 fall 1~15 그림 안의 출렁임을 반대로 옮긴다. 기본은 끔.
+        private void ApplyJumpBob(float pixels)
+        {
+            if (spriteRenderer == null || (!jumpBobApplied && pixels == 0f))
+            {
+                return;
+            }
+
+            var visual = spriteRenderer.transform;
+            if (!jumpBobApplied)
+            {
+                jumpBobBaseY = visual.localPosition.y;
+            }
+
+            var pixelsPerUnit = spriteRenderer.sprite != null ? spriteRenderer.sprite.pixelsPerUnit : 256f;
+            var position = visual.localPosition;
+            position.y = jumpBobBaseY - pixels / pixelsPerUnit * Mathf.Abs(visual.localScale.y);
+            visual.localPosition = position;
+            jumpBobApplied = pixels != 0f;
+        }
+
+        private static bool HasFrames(Sprite[] frames) => frames != null && frames.Length > 0;
+
         private void HandleHealthChanged(SubTerra.Shared.PlayerHealthReadModel health)
         {
             if (health.Current < previousHealth)
             {
                 damageUntil = Time.unscaledTime + DamageDuration;
+                // 사다리 채굴 중 맞으면 그 방향, 아니면 사다리 그림처럼 오른쪽을 본다.
+                ladderDamageDirection = LadderMiningSequence.IsActive ? LadderMiningSequence.Direction : 1;
             }
 
             previousHealth = health.Current;
         }
 
-        private void HandleFailureRequested(SubTerra.Shared.RunFailureInputDto _)
+        private void HandleFailureRequested(SubTerra.Shared.RunFailureInputDto dto)
         {
             damageUntil = 0f;
+            knockoutCause = dto != null && dto.cause != SubTerra.Shared.RunFailureCause.Unknown
+                ? dto.cause
+                : survival != null && survival.State != null
+                    ? survival.State.LastDamageCause : SubTerra.Shared.RunFailureCause.Unknown;
+            MiningSequence.Reset();
+            LadderMiningSequence.Reset();
+            isMining = false;
+            SetCurrentState("Knockout");
+            stateStartedAt = Time.unscaledTime;
             Play("Knockout");
         }
 
@@ -252,6 +496,17 @@ namespace SubTerra.Gameplay.Player
         private void Play(string stateName)
         {
             SetCurrentState(stateName);
+            if (HasJumpPhaseFrames && stateName == "Jump")
+            {
+                PlayJumpPhase();
+                return;
+            }
+
+            if (HasJumpPhaseFrames && stateName == "LadderDrop")
+            {
+                PlayLadderDrop();
+                return;
+            }
 
             var (frames, frameRate, loop) = ResolveFrames(stateName);
             if (frames == null || frames.Length == 0)
@@ -264,6 +519,16 @@ namespace SubTerra.Gameplay.Player
             frameIndex = loop
                 ? frameIndex % frames.Length
                 : Mathf.Min(frameIndex, frames.Length - 1);
+
+            if (stateName == "Mining")
+                frameIndex = Mathf.Min(MiningSequence.FrameIndex, frames.Length - 1);
+            else if (stateName == "LadderMining")
+                frameIndex = Mathf.Min(LadderMiningSequence.FrameIndex, frames.Length - 1);
+            else if (stateName == "Knockout" && frames.Length >= 48
+                && elapsed >= 48f / Mathf.Max(0.01f, knockoutFps)
+                && knockoutCause == SubTerra.Shared.RunFailureCause.GasExposure)
+                frameIndex = 36 + Mathf.FloorToInt((elapsed - 48f / Mathf.Max(0.01f, knockoutFps))
+                    * knockoutBreathingFps) % 12;
 
             if (frames[frameIndex] != null)
             {
@@ -304,10 +569,11 @@ namespace SubTerra.Gameplay.Player
             return stateName switch
             {
                 "Walk" => (walkFrames, WalkFrameRate, true),
-                "Jump" => (jumpFrames, 12f, false),
-                "Mining" => (miningFrames, 10f, true),
-                "Damage" => (damageFrames, 10f, false),
-                "Knockout" => (knockoutFrames, 8f, false),
+                "Jump" or "LadderDrop" => (jumpFrames, 12f, false),
+                "Mining" => (miningFrames, miningAnimation.workFps, false),
+                "LadderMining" => (ladderMiningFrames, ladderMiningAnimation.workFps, false),
+                "Damage" => (damageFrames, damageFps, false),
+                "Knockout" => (knockoutFrames, knockoutFps, false),
                 _ => (idleFrames, 4f, true)
             };
         }
@@ -422,6 +688,7 @@ namespace SubTerra.Gameplay.Player
             }
 
             return nextStateName != "Mining"
+                && nextStateName != "LadderMining"
                 && nextStateName != "Damage"
                 && nextStateName != "Knockout";
         }

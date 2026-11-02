@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using SubTerra.Gameplay.Drone;
@@ -34,6 +35,25 @@ namespace SubTerra.Gameplay.Tests.Drone
             world.Sensor.SetScanWorldReady(false);
             Assert.That(world.Sensor.ScanPulseView.ActiveMarkerCount, Is.Zero);
             Assert.That(world.Sensor.ScanPulseView.IsRingVisible, Is.False);
+        }
+
+        [Test]
+        public void B178_ScanPulseStarted_MarksImmediatePulseAfterReset()
+        {
+            using var world = new SensorWorld(3f);
+            var pulses = new List<bool>();
+            world.Sensor.ScanPulseStarted += pulses.Add;
+
+            world.Sensor.TickScanPulse(0f);
+            world.Sensor.TickScanPulse(10f);
+            world.Sensor.TickScanPulse(30f);
+            Assert.That(pulses, Is.EqualTo(new[] { true, false }), "업그레이드 적용 직후 즉시 스캔 → 30초 뒤 정상 회차");
+
+            world.Sensor.SetScanWorldReady(false);
+            world.Sensor.SetScanWorldReady(true);
+            world.Sensor.TickScanPulse(31f);
+            world.Sensor.TickScanPulse(61f);
+            Assert.That(pulses, Is.EqualTo(new[] { true, false, true, false }), "월드 준비 직후 즉시 스캔");
         }
 
         [Test]

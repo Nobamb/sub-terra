@@ -45,6 +45,8 @@ namespace SubTerra.App.UI.MainMenu
         }
 
         public float TotalDuration => settings.flashDuration + settings.foldDuration + settings.lineCollapseDuration;
+        /// <summary>화면이 접히기 시작하는 시각(카드 번쩍임 절반).</summary>
+        public float FoldStart => settings.flashDuration * 0.5f;
         public float Elapsed => elapsed;
         public bool IsComplete => elapsed >= TotalDuration;
 
@@ -58,7 +60,7 @@ namespace SubTerra.App.UI.MainMenu
         public MainMenuExitFrame Sample()
         {
             var t = elapsed;
-            var foldStart = settings.flashDuration * 0.5f;
+            var foldStart = FoldStart;
             var foldEnd = foldStart + settings.foldDuration;
             var flash = 1f - MainMenuBootTimeline.Range(t, 0f, settings.flashDuration);
             var fold = MainMenuBootTimeline.Range(t, foldStart, foldEnd);

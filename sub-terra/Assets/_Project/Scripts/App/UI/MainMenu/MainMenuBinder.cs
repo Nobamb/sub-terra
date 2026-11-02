@@ -16,6 +16,12 @@ namespace SubTerra.App.UI.MainMenu
     {
         [SerializeField] private MainMenuView view;
 
+        // B-180 ★: 슬롯 삭제 소리. PM이 번호만 바꿔 끼운다.
+        public const SfxId DeleteTrashSfx = SfxId.UiClick;
+        public const SfxId DeleteConfirmOpenSfx = SfxId.UiPopupOpen;
+        public const SfxId DeleteConfirmSfx = SfxId.RunFailBlackout;
+        public const SfxId DeleteCancelSfx = SfxId.UiPopupClose;
+
         private MainMenuPresenter presenter;
         private bool startingNewGame;
         private bool continuing;
@@ -161,17 +167,33 @@ namespace SubTerra.App.UI.MainMenu
         private void OnDeleteSlotClicked(int slotId)
         {
             if (startingNewGame || continuing) return;
-            presenter?.RequestDeleteSlot(slotId);
+            if (presenter == null) return;
+            SfxPlayer.Play(DeleteTrashSfx);
+            if (presenter.RequestDeleteSlot(slotId))
+            {
+                SfxPlayer.Play(DeleteConfirmOpenSfx);
+            }
         }
 
         private void OnDeleteConfirm()
         {
-            presenter?.ConfirmDeleteSlot();
+            if (presenter == null) return;
+            if (presenter.ConfirmDeleteSlot() > 0)
+            {
+                SfxPlayer.Play(DeleteConfirmSfx);
+            }
         }
 
         private void OnDeleteCancel()
         {
-            presenter?.CancelDeleteSlot();
+            if (presenter == null) return;
+            // 확인 창이 떠 있었을 때만 닫힘음(취소·X 버튼·X 키 공통).
+            var wasOpen = presenter.IsDeleteConfirmOpen;
+            presenter.CancelDeleteSlot();
+            if (wasOpen)
+            {
+                SfxPlayer.Play(DeleteCancelSfx);
+            }
         }
 
         private void OnDeleteSlotConfirmed(int slotId)
@@ -222,6 +244,7 @@ namespace SubTerra.App.UI.MainMenu
             }
 
             var draft = view.ReadSettingsDraft(presenter.Settings.Draft);
+            view.PlaySettingsApplySound();
             presenter.ApplySettings(draft);
         }
 
@@ -262,6 +285,7 @@ namespace SubTerra.App.UI.MainMenu
                 {
                     continuing = false;
                     if (view != null) view.CancelExitTransition();
+                    SfxPlayer.Play(SfxId.UiCancelFail);
                     return;
                 }
 
@@ -292,6 +316,7 @@ namespace SubTerra.App.UI.MainMenu
             if (view != null)
             {
                 view.SetMessage("이어하기 실패: " + result.Status);
+                SfxPlayer.Play(SfxId.UiCancelFail);
             }
         }
 
@@ -300,7 +325,11 @@ namespace SubTerra.App.UI.MainMenu
             // 덮어쓰기 확인을 통과한 경로만 여기에 온다.
             if (startingNewGame) return;
             var runtime = SaveRuntimeController.Instance;
-            if (runtime == null) return;
+            if (runtime == null)
+            {
+                SfxPlayer.Play(SfxId.UiCancelFail);
+                return;
+            }
             // 같은 클릭에서 이미 확인음이 났으면 연타 제한이 한 번으로 줄인다.
             SfxPlayer.Play(SfxId.UiConfirm);
             startingNewGame = true;
@@ -310,6 +339,7 @@ namespace SubTerra.App.UI.MainMenu
                 {
                     startingNewGame = false;
                     if (view != null) view.CancelExitTransition();
+                    SfxPlayer.Play(SfxId.UiCancelFail);
                 }
             });
         }
