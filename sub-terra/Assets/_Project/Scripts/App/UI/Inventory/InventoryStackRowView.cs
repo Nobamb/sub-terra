@@ -37,6 +37,8 @@ namespace SubTerra.App.UI.Inventory
 
             if (nameText != null)
             {
+                // TMP maxVisibleLines is runtime state, not a serialized prefab property.
+                if (unitWeightText != null) nameText.maxVisibleLines = 2;
                 nameText.text = string.IsNullOrEmpty(stack.DisplayName)
                     ? stack.MineralId
                     : stack.DisplayName;

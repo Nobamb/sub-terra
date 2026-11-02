@@ -25,6 +25,7 @@ namespace SubTerra.App.UI.Inventory
         [SerializeField] private Image cargoFillImage;
         [SerializeField] private TMP_Text unsettledAmountText;
         [SerializeField] private TMP_Text ownedKindsText;
+        [SerializeField] private TMP_Text emptyHintText;
         [SerializeField] private Color cargoNormalColor = new Color(0.45f, 0.95f, 1f, 1f);
         [SerializeField] private Color cargoNearFullColor = new Color(1f, 0.72f, 0.2f, 1f);
         [SerializeField] private Color cargoFullColor = new Color(1f, 0.45f, 0.4f, 1f);
@@ -130,24 +131,17 @@ namespace SubTerra.App.UI.Inventory
                 }
             }
 
+            for (var i = 0; i < stackRows.Length; i++)
+            {
+                if (stackRows[i] == null) continue;
+                total++;
+                if (stacks != null && HasQuantity(stacks, stackRows[i].MineralId)) owned++;
+            }
             if (ownedKindsText != null)
             {
-                for (var i = 0; i < stackRows.Length; i++)
-                {
-                    if (stackRows[i] == null)
-                    {
-                        continue;
-                    }
-
-                    total++;
-                    if (stacks != null && HasQuantity(stacks, stackRows[i].MineralId))
-                    {
-                        owned++;
-                    }
-                }
-
                 ownedKindsText.text = InventoryPanelDisplayFormatter.OwnedKinds(owned, total);
             }
+            if (emptyHintText != null) emptyHintText.gameObject.SetActive(owned == 0);
         }
 
         private static bool HasQuantity(IReadOnlyList<InventoryStackReadModel> stacks, string mineralId)

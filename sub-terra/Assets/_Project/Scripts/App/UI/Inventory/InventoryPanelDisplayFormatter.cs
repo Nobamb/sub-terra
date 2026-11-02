@@ -63,9 +63,9 @@ namespace SubTerra.App.UI.Inventory
             switch (level)
             {
                 case InventoryCargoLevel.Full:
-                    return "가득 참";
+                    return "적재량 가득 참";
                 case InventoryCargoLevel.NearFull:
-                    return "거의 가득";
+                    return "적재 한계 임박";
                 case InventoryCargoLevel.Normal:
                     return "적재 여유";
                 default:
@@ -79,11 +79,11 @@ namespace SubTerra.App.UI.Inventory
             var label = LevelLabel(level);
             if (level == InventoryCargoLevel.Full)
             {
-                return label + "  ·  더 이상 채굴할 수 없습니다";
+                return label;
             }
 
             var remaining = max > current ? max - current : 0f;
-            return label + "  ·  남은 용량 " + HudFormatter.FormatCargoAmount(remaining);
+            return label + "  ·  남은 적재량 " + HudFormatter.FormatCargoAmount(remaining);
         }
 
         public static string UnsettledAmount(float value)

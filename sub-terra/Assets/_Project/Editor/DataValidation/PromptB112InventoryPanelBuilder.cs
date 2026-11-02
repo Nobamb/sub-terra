@@ -32,9 +32,9 @@ namespace SubTerra.App.Editor.DataValidation
         public const float CardGap = 10f;
         public const float ValueCardWidth = ContentWidth - CargoCardWidth - CardGap;
         public const float ListLabelTop = -194f;
-        public const float ListTop = -224f;
-        public const float ListHeight = 250f;
-        public const float RowHeight = 58f;
+        public const float ListTop = -242f;
+        public const float ListHeight = 232f;
+        public const float RowHeight = 88f;
         public const float RowSpacing = 6f;
         public const float FooterTop = -486f;
 
@@ -126,6 +126,7 @@ namespace SubTerra.App.Editor.DataValidation
             so.FindProperty("cargoFillImage").objectReferenceValue = gauge.Fill;
             so.FindProperty("unsettledAmountText").objectReferenceValue = value;
             so.FindProperty("ownedKindsText").objectReferenceValue = ownedKinds;
+            so.FindProperty("emptyHintText").objectReferenceValue = panel.Find("EmptyHint").GetComponent<TMP_Text>();
             so.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(view);
 
@@ -192,9 +193,9 @@ namespace SubTerra.App.Editor.DataValidation
             var inner = CargoCardWidth - 28f;
 
             var label = EnsureText(card.transform, "CargoLabel", font);
-            Style(label, 12.5f, Cyan, TextAlignmentOptions.MidlineLeft, FontStyles.Bold);
-            label.characterSpacing = 3f;
-            label.text = "CARGO LOAD <color=#6B8C99>· 적재량</color>";
+            Style(label, 16f, Cyan, TextAlignmentOptions.MidlineLeft, FontStyles.Bold);
+            label.characterSpacing = 0f;
+            label.text = "적재량";
             PlaceTopLeft(label.rectTransform, 14f, -10f, 240f, 18f);
 
             var amount = EnsureText(card.transform, "CargoAmountText", font);
@@ -249,15 +250,15 @@ namespace SubTerra.App.Editor.DataValidation
             accent.rectTransform.sizeDelta = new Vector2(3f, 0f);
 
             var label = EnsureText(card.transform, "ValueLabel", font);
-            Style(label, 12.5f, Cyan, TextAlignmentOptions.MidlineLeft, FontStyles.Bold);
-            label.characterSpacing = 3f;
-            label.text = "UNSETTLED";
+            Style(label, 16f, Cyan, TextAlignmentOptions.MidlineLeft, FontStyles.Bold);
+            label.characterSpacing = 0f;
+            label.text = "미정산 가치";
             PlaceTopLeft(label.rectTransform, 14f, -10f, inner, 18f);
 
             var caption = EnsureText(card.transform, "ValueCaption", font);
-            Style(caption, 13f, SubText, TextAlignmentOptions.MidlineLeft, FontStyles.Normal);
-            caption.text = "미정산 가치";
-            PlaceTopLeft(caption.rectTransform, 14f, -28f, inner, 20f);
+            Style(caption, 12f, SubText, TextAlignmentOptions.MidlineLeft, FontStyles.Normal);
+            caption.text = "정산 시 받을 금액";
+            PlaceTopLeft(caption.rectTransform, 14f, -88f, inner, 18f);
 
             var amount = EnsureText(card.transform, "UnsettledAmountText", font);
             Style(amount, 30f, Gold, TextAlignmentOptions.MidlineLeft, FontStyles.Bold);
@@ -265,16 +266,16 @@ namespace SubTerra.App.Editor.DataValidation
             amount.fontSizeMin = 18f;
             amount.fontSizeMax = 30f;
             amount.text = InventoryPanelDisplayFormatter.UnsettledAmount(0f);
-            PlaceTopLeft(amount.rectTransform, 14f, -56f, inner, 42f);
+            PlaceTopLeft(amount.rectTransform, 14f, -34f, inner, 44f);
             return amount;
         }
 
         private static TMP_Text BuildListHeader(Transform panel, TMP_FontAsset font)
         {
             var label = EnsureText(panel, "ListSectionLabel", font);
-            Style(label, 12.5f, Cyan, TextAlignmentOptions.MidlineLeft, FontStyles.Bold);
-            label.characterSpacing = 3f;
-            label.text = "RESOURCES <color=#6B8C99>· 보유 자원</color>";
+            Style(label, 16f, Cyan, TextAlignmentOptions.MidlineLeft, FontStyles.Bold);
+            label.characterSpacing = 0f;
+            label.text = "보유 자원";
             PlaceTopLeft(label.rectTransform, Margin, ListLabelTop, 300f, 18f);
 
             var owned = EnsureText(panel, "OwnedKindsText", font);
@@ -284,6 +285,10 @@ namespace SubTerra.App.Editor.DataValidation
 
             var divider = EnsureImage(panel, "ListDivider", CyanLine);
             PlaceTopLeft(divider.rectTransform, Margin, ListLabelTop - 22f, ContentWidth, 1.5f);
+            var empty = EnsureText(panel, "EmptyHint", font);
+            Style(empty, 13f, SubText, TextAlignmentOptions.MidlineLeft, FontStyles.Normal);
+            empty.text = "보유 중인 자원이 없습니다";
+            PlaceTopLeft(empty.rectTransform, Margin, -220f, ContentWidth, 18f);
             return owned;
         }
 
@@ -400,21 +405,21 @@ namespace SubTerra.App.Editor.DataValidation
             accent.enabled = false;
 
             var frame = EnsureImage(go.transform, "IconFrame", new Color(0.02f, 0.05f, 0.07f, 1f));
-            PlaceTopLeft(frame.rectTransform, 12f, -7f, 44f, 44f);
+            PlaceTopLeft(frame.rectTransform, 12f, -22f, 44f, 44f);
             EnsureOutline(frame.gameObject, new Color(0.3f, 0.85f, 1f, 0.35f), 1f);
 
             var icon = go.transform.Find("Icon").GetComponent<Image>();
             icon.preserveAspect = true;
             icon.raycastTarget = false;
-            PlaceTopLeft(icon.rectTransform, 16f, -11f, 36f, 36f);
+            PlaceTopLeft(icon.rectTransform, 14f, -24f, 40f, 40f);
 
             var name = go.transform.Find("Name").GetComponent<TMP_Text>();
             name.font = font;
             Style(name, 18f, Color.white, TextAlignmentOptions.MidlineLeft, FontStyles.Bold);
-            name.enableAutoSizing = true;
-            name.fontSizeMin = 14f;
-            name.fontSizeMax = 18f;
-            PlaceTopLeft(name.rectTransform, 68f, -6f, 280f, 26f);
+            name.enableAutoSizing = false;
+            name.textWrappingMode = TextWrappingModes.Normal;
+            name.maxVisibleLines = 2;
+            PlaceTopLeft(name.rectTransform, 68f, -12f, 332f, 44f);
 
             var weight = EnsureText(go.transform, "UnitWeight", font);
             Style(weight, 13f, SubText, TextAlignmentOptions.MidlineLeft, FontStyles.Normal);
@@ -422,18 +427,21 @@ namespace SubTerra.App.Editor.DataValidation
             weight.text = weights.TryGetValue(row.MineralId, out unitWeight)
                 ? InventoryPanelDisplayFormatter.UnitWeight(unitWeight)
                 : string.Empty;
-            PlaceTopLeft(weight.rectTransform, 68f, -32f, 280f, 20f);
+            PlaceTopLeft(weight.rectTransform, 68f, -58f, 332f, 18f);
 
             var quantity = go.transform.Find("Quantity").GetComponent<TMP_Text>();
             quantity.font = font;
             Style(quantity, 24f, Color.white, TextAlignmentOptions.MidlineRight, FontStyles.Normal);
             quantity.text = InventoryPanelDisplayFormatter.Quantity(0);
-            PlaceTopRight(quantity.rectTransform, -16f, -4f, 150f, 30f);
+            quantity.enableAutoSizing = true;
+            quantity.fontSizeMin = 16f;
+            quantity.fontSizeMax = 24f;
+            PlaceTopRight(quantity.rectTransform, -12f, -12f, 104f, 32f);
 
             var state = EnsureText(go.transform, "State", font);
             Style(state, 12.5f, SubText, TextAlignmentOptions.MidlineRight, FontStyles.Normal);
             state.text = InventoryPanelDisplayFormatter.QuantityState(0);
-            PlaceTopRight(state.rectTransform, -16f, -34f, 150f, 18f);
+            PlaceTopRight(state.rectTransform, -12f, -58f, 104f, 18f);
 
             // 배경 → 강조 막대 → 아이콘 틀 → 아이콘 → 글자 순으로 그린다.
             accent.transform.SetSiblingIndex(0);
@@ -485,8 +493,8 @@ namespace SubTerra.App.Editor.DataValidation
 
             var hint = EnsureText(panel, "ControlsHint", font);
             Style(hint, 14f, SubText, TextAlignmentOptions.MidlineLeft, FontStyles.Normal);
-            hint.text = "<color=#73F0FF>I</color> 닫기   <color=#FFB833>?</color> 위에 마우스를 올리면 화물 무게 안내";
-            PlaceTopLeft(hint.rectTransform, Margin, FooterTop - 8f, ContentWidth, 24f);
+            hint.text = "<color=#73F0FF>I</color> 닫기 · 휠로 자원 목록 이동";
+            PlaceTopLeft(hint.rectTransform, Margin, FooterTop - 8f, ContentWidth - 40f, 24f);
         }
 
         private static void StyleWeightHelp(Transform panel, TMP_FontAsset font)
@@ -498,8 +506,8 @@ namespace SubTerra.App.Editor.DataValidation
                 return;
             }
 
-            // 적재량 카드 우측 상단에 붙여 무게 도움말임을 드러낸다.
-            PlaceTopLeft((RectTransform)icon, Margin + CargoCardWidth - 14f - 24f, CardTop - 7f, 24f, 24f);
+            // 고정 Footer의 도움말을 가리켜도 카드·목록 숫자를 덮지 않는다.
+            PlaceTopLeft((RectTransform)icon, PanelWidth - Margin - 24f, FooterTop - 8f, 24f, 24f);
             var image = icon.GetComponent<Image>();
             image.color = Amber;
             image.raycastTarget = true;
@@ -513,7 +521,7 @@ namespace SubTerra.App.Editor.DataValidation
             var label = icon.Find("Label").GetComponent<TMP_Text>();
             label.fontSize = 17f;
 
-            PlaceTopLeft((RectTransform)tooltip, Margin, CardTop - 36f, 420f, 150f);
+            PlaceTopLeft((RectTransform)tooltip, Margin, -PanelHeight - 8f, ContentWidth, 130f);
             var tipImage = tooltip.GetComponent<Image>();
             tipImage.color = new Color(0.03f, 0.055f, 0.08f, 0.98f);
             tipImage.raycastTarget = false;
