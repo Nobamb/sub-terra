@@ -37,7 +37,7 @@ namespace SubTerra.App.UI.ControlTerminal
         // 키캡 톡 소리는 0.08초 간격 제한이라 다섯 줄 중 실제로는 2~3번 나고, 줄마다 조금씩 높아진다.
         public const float KeycapSfxInterval = 0.08f;
         public const float KeycapPitchStep = 0.03f;
-        private const SfxId KeyHoverSfx = SfxId.UiHover;
+        private const SfxId KeyHoverSfx = SfxId.KeycapPop;
         private const SfxId MouseHoverSfx = SfxId.UiClick;
         private const float KeyHoverGap = 0.06f;
 
@@ -591,7 +591,8 @@ namespace SubTerra.App.UI.ControlTerminal
         {
             if (phase == Phase.Hidden || phase == Phase.Outro) return;
             if (phase == Phase.Idle && cap.IsFunctionKey && keyHoverSfx.TryPass())
-                SfxPlayer.Play(cap.Def.IsMouse ? MouseHoverSfx : KeyHoverSfx);
+                SfxPlayer.Play(cap.Def.IsMouse ? MouseHoverSfx : KeyHoverSfx,
+                    cap.Def.IsMouse ? 1f : 1f + Mathf.Max(0, cap.Def.Row) * KeycapPitchStep);
             hover.Enter(cap.Id);
             autoDemo.SetBlocked(true);
         }

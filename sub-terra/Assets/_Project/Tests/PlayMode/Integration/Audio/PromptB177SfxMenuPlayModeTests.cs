@@ -63,9 +63,9 @@ namespace SubTerra.App.Tests.PlayMode.Audio
                 slider.value = 1f;
                 slider.value = 0.5f;
                 Call(skin, "LateUpdate");
-                Assert.That(events, Is.EqualTo(new[] { SfxId.SettingsSliderDrag }), "B-179: 비포인터 변경 0.88초 제한");
+                Assert.That(events, Is.EqualTo(new[] { SfxId.SettingsSliderDrag }), "B-179-1: 비포인터 변경 0.70초 제한");
                 Assert.That(pitchValues[0], Is.EqualTo(1f));
-                now += 0.89f;
+                now += 0.71f;
                 events.Clear();
                 slider.value = 0.51f;
                 Assert.That(events, Is.Empty, "5% 칸 내부");

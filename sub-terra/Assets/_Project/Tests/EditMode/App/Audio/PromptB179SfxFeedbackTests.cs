@@ -49,17 +49,17 @@ namespace SubTerra.App.Tests.Audio
             var row = defaults.First(pair => pair.Entry.Id == SfxId.SettingsSliderDrag);
             Assert.That(row.FileName, Is.EqualTo("settings_slider_drag"));
             Assert.That(row.Entry.Bus, Is.EqualTo(SfxBus.UI));
-            Assert.That(row.Entry.Volume, Is.EqualTo(0.13f));
+            Assert.That(row.Entry.Volume, Is.EqualTo(0.55f));
             var library = Resources.Load<SfxLibrary>(SfxLibrary.ResourcePath);
             Assert.That(library.TryGetEntry(SfxId.SettingsSliderDrag, out var entry), Is.True);
             Assert.That(entry.Bus, Is.EqualTo(SfxBus.UI));
-            Assert.That(entry.Volume, Is.EqualTo(0.13f));
+            Assert.That(entry.Volume, Is.EqualTo(0.55f));
             Assert.That(entry.Pitch, Is.EqualTo(1f));
             Assert.That(entry.MaxDuration, Is.Zero);
             Assert.That(entry.FadeOut, Is.Zero);
             var path = "Assets/_Project/Audio/SFX/UI/settings_slider_drag.wav";
             Assert.That(AssetDatabase.GetAssetPath(entry.Clip), Is.EqualTo(path));
-            Assert.That(entry.Clip.length, Is.EqualTo(0.88f).Within(0.03f));
+            Assert.That(entry.Clip.length, Is.EqualTo(0.698f).Within(0.01f));
             var importer = (AudioImporter)AssetImporter.GetAtPath(path);
             Assert.That(importer.forceToMono, Is.True);
             Assert.That(importer.defaultSampleSettings.loadType, Is.EqualTo(AudioClipLoadType.DecompressOnLoad));
@@ -110,7 +110,7 @@ namespace SubTerra.App.Tests.Audio
             var key = terminal.GetCap("W");
             key.OnPointerEnter(null);
             terminal.GetCap("A").OnPointerEnter(null);
-            Assert.That(played, Is.EqualTo(new[] { SfxId.UiHover }), "0.06초 안 두 키");
+            Assert.That(played, Is.EqualTo(new[] { SfxId.KeycapPop }), "0.06초 안 두 키");
             played.Clear();
             now += 0.07f;
             terminal.GetCap(ControlTerminalBindings.MouseKey).OnPointerEnter(null);
@@ -123,7 +123,7 @@ namespace SubTerra.App.Tests.Audio
             key.OnPointerExit(null);
             now += 0.07f;
             key.OnPointerEnter(null);
-            Assert.That(played, Is.EqualTo(new[] { SfxId.UiHover }));
+            Assert.That(played, Is.EqualTo(new[] { SfxId.KeycapPop }));
         }
 
         [Test]
@@ -149,7 +149,7 @@ namespace SubTerra.App.Tests.Audio
             terminal.SetScheme(ControlScheme.WasdMove, false);
             terminal.ShowSettled();
             terminal.GetCap("←").OnPointerEnter(null);
-            Assert.That(played, Is.EqualTo(new[] { SfxId.UiHover }));
+            Assert.That(played, Is.EqualTo(new[] { SfxId.KeycapPop }));
         }
 
         [Test]

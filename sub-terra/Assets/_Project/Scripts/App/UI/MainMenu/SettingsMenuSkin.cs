@@ -19,7 +19,9 @@ namespace SubTerra.App.UI.MainMenu
     public sealed class SettingsMenuSkin : MonoBehaviour
     {
         private const SfxId VolumeDragSfx = SfxId.SettingsSliderDrag;
-        private const float VolumeKeySfxGap = 0.88f;
+        private const float VolumeKeySfxGap = 0.70f;
+        private SliderDragLoopAudio volumeLoop;
+        private Slider soundingSlider;
         private readonly SfxThrottle volumeKeyThrottle = new SfxThrottle(VolumeKeySfxGap);
         private readonly Dictionary<Slider, int> volumeSteps = new Dictionary<Slider, int>();
         private readonly Dictionary<Slider, VolumeDragState> volumeDrags = new Dictionary<Slider, VolumeDragState>();
@@ -84,6 +86,8 @@ namespace SubTerra.App.UI.MainMenu
 
         private void OnEnable()
         {
+            volumeLoop = GetComponent<SliderDragLoopAudio>();
+            if (volumeLoop == null && Application.isPlaying) volumeLoop = gameObject.AddComponent<SliderDragLoopAudio>();
             suppressNextCloseSound = false;
             volumeKeyThrottle.Reset();
             isClosing = false;
@@ -130,6 +134,7 @@ namespace SubTerra.App.UI.MainMenu
 
         private void OnDisable()
         {
+            CancelVolumeSound();
             suppressNextCloseSound = false;
             if (reduceMotion != null) reduceMotion.onValueChanged.RemoveListener(OnReduceMotionChanged);
             HideDropdowns();
@@ -180,6 +185,9 @@ namespace SubTerra.App.UI.MainMenu
             }
 
             isClosing = true;
+            CancelVolumeSound();
+            var controls = GetComponent<ControlSchemePanel>();
+            if (controls != null) controls.Close(playSound: false);
             if (!suppressNextCloseSound) SfxPlayer.Play(SfxId.UiPopupClose);
             suppressNextCloseSound = false;
             closeComplete = onComplete;
@@ -228,6 +236,7 @@ namespace SubTerra.App.UI.MainMenu
         {
             if (card == null)
             {
+                while (ControlPanelIsClosing()) yield return null;
                 FinishClose();
                 yield break;
             }
@@ -249,6 +258,8 @@ namespace SubTerra.App.UI.MainMenu
             }
 
             card.anchoredPosition = new Vector2(startX, endY);
+            // 단말 Tick은 긴 프레임을 제한하므로 0.36초 퇴장이 실제로 끝났는지 기다린다.
+            while (ControlPanelIsClosing()) yield return null;
             closeRoutine = null;
             FinishClose();
         }
@@ -257,6 +268,12 @@ namespace SubTerra.App.UI.MainMenu
         {
             float t = Mathf.Clamp01(normalizedTime);
             return 0.65f * t + 0.35f * t * t;
+        }
+
+        private bool ControlPanelIsClosing()
+        {
+            var controls = GetComponent<ControlSchemePanel>();
+            return controls != null && controls.IsClosing;
         }
 
         private float ResolveCloseEndY()
@@ -285,6 +302,8 @@ namespace SubTerra.App.UI.MainMenu
 
         private void LateUpdate()
         {
+            if (volumeLoop != null && (!volumeLoop.CanPlay || isClosing
+                || (volumeLoop.IsPlaying && (soundingSlider == null || !soundingSlider.isActiveAndEnabled)))) CancelVolumeSound();
             foreach (var pair in volumeDrags)
             {
                 if (pair.Key == null || !pair.Key.isActiveAndEnabled)
@@ -292,7 +311,7 @@ namespace SubTerra.App.UI.MainMenu
                     pair.Value.Dragging = pair.Value.Played = pair.Value.Pending = false;
                     continue;
                 }
-                FlushVolumeSound(pair.Value);
+                FlushVolumeSound(pair.Key, pair.Value);
             }
             RaiseDropdownLists();
             FitDropdownTemplates();
@@ -468,7 +487,7 @@ namespace SubTerra.App.UI.MainMenu
                 && volumeDrags.TryGetValue(slider, out var drag))
             {
                 drag.Pending = true;
-                if (drag.Dragging) FlushVolumeSound(drag);
+                if (drag.Dragging) FlushVolumeSound(slider, drag);
                 // 트랙 클릭은 Slider.OnPointerDown이 EventTrigger보다 먼저 값을 바꾼다.
                 // 아직 누름을 받지 못했으면 PointerDown 또는 LateUpdate에서 재생한다.
             }
@@ -493,28 +512,44 @@ namespace SubTerra.App.UI.MainMenu
                 || !volumeDrags.TryGetValue(slider, out var drag)) return;
             drag.Dragging = true;
             drag.Played = false;
-            FlushVolumeSound(drag);
+            FlushVolumeSound(slider, drag);
         }
 
         private void EndVolumeDrag(Slider slider)
         {
             if (!volumeDrags.TryGetValue(slider, out var drag)) return;
-            FlushVolumeSound(drag);
+            if (!drag.Dragging) return;
+            FlushVolumeSound(slider, drag);
             drag.Dragging = false;
+            if (soundingSlider == slider && volumeLoop != null) volumeLoop.Release();
         }
 
-        private void FlushVolumeSound(VolumeDragState drag)
+        private void FlushVolumeSound(Slider slider, VolumeDragState drag)
         {
             if (!drag.Pending) return;
             drag.Pending = false;
+            if (isClosing || (volumeLoop != null && !volumeLoop.CanPlay)) return;
             if (drag.Dragging)
             {
                 if (drag.Played) return;
                 drag.Played = true;
                 volumeKeyThrottle.Reset();
+                soundingSlider = slider;
+                if (volumeLoop != null) volumeLoop.Begin();
+                return;
             }
             if (volumeKeyThrottle.TryPass()) SfxPlayer.Play(VolumeDragSfx, 1f);
         }
+
+        private void CancelVolumeSound()
+        {
+            if (volumeLoop != null) volumeLoop.Cancel();
+            soundingSlider = null;
+            foreach (var drag in volumeDrags.Values) drag.Dragging = drag.Played = drag.Pending = false;
+        }
+
+        private void OnApplicationFocus(bool focused) { if (!focused) CancelVolumeSound(); }
+        private void OnApplicationPause(bool paused) { if (paused) CancelVolumeSound(); }
 
         private void RefreshVolumeGlow()
         {

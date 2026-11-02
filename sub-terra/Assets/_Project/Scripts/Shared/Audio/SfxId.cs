@@ -98,6 +98,9 @@ namespace SubTerra.Shared.Audio
         GlitchPopupOpen = 88,
         GlitchPopupClose = 89,
         DroneScanPing = 90,
-        SettingsSliderDrag = 91
+        SettingsSliderDrag = 91,
+        SettingsSliderDragHead = 92,
+        SettingsSliderDragLoop = 93,
+        SettingsSliderDragTail = 94
     }
 }

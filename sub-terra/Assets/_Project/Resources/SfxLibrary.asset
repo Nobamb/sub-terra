@@ -728,7 +728,31 @@ MonoBehaviour:
   - id: 91
     clip: {fileID: 8300000, guid: c6b69dc8467af8041915a702bfa0bac4, type: 3}
     bus: 0
-    volume: 0.13
+    volume: 0.55
+    pitch: 1
+    startTime: 0
+    maxDuration: 0
+    fadeOut: 0
+  - id: 92
+    clip: {fileID: 8300000, guid: 431c5e841c96f6e4eb1ca5daf49609b1, type: 3}
+    bus: 0
+    volume: 0.55
+    pitch: 1
+    startTime: 0
+    maxDuration: 0
+    fadeOut: 0
+  - id: 93
+    clip: {fileID: 8300000, guid: 937b568db41e7394c8b7d25ee7f0a2c9, type: 3}
+    bus: 0
+    volume: 0.55
+    pitch: 1
+    startTime: 0
+    maxDuration: 0
+    fadeOut: 0
+  - id: 94
+    clip: {fileID: 8300000, guid: afe7821acd14cbf4a9adc910312b0352, type: 3}
+    bus: 0
+    volume: 0.55
     pitch: 1
     startTime: 0
     maxDuration: 0

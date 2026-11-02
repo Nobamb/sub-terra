@@ -75,6 +75,8 @@ namespace SubTerra.App.Tests.PlayMode.Audio
             skin = root.AddComponent<SettingsMenuSkin>();
             Set(skin, "volumeSlider", slider);
             root.SetActive(true);
+            skin.GetComponent<SliderDragLoopAudio>().ConfigureForTests(
+                Resources.Load<SfxLibrary>(SfxLibrary.ResourcePath), () => false, () => false);
             Get<SfxThrottle>(skin, "volumeKeyThrottle").Clock = () => now;
             played.Clear(); pitches.Clear();
         }
@@ -93,24 +95,29 @@ namespace SubTerra.App.Tests.PlayMode.Audio
         }
 
         [UnityTest]
-        public IEnumerator Slider_HeldOverOneSecond_PlaysOnce_AndNextDragPlaysAgain()
+        public IEnumerator Slider_HeldOverOneSecond_KeepsOneHead_AndNextDragStartsAgain()
         {
             MakeSlider();
             Pointer(EventTriggerType.PointerDown);
             slider.value = 1f;
             slider.value = 0f;
             slider.value = 0.5f;
+            var loop = skin.GetComponent<SliderDragLoopAudio>();
+            var firstLoopStart = Get<double>(loop, "loopStart");
             yield return new WaitForSecondsRealtime(1.05f);
             now += 1.1f;
             slider.value = 1f;
             slider.value = 0f;
-            Assert.That(played, Is.EqualTo(new[] { SfxId.SettingsSliderDrag }));
-            Assert.That(pitches, Is.EqualTo(new[] { 1f }));
+            Assert.That(played, Is.Empty, "드래그는 원샷 풀 대신 전용 AudioSource를 쓴다");
+            Assert.That(loop.IsHeld, Is.True);
+            Assert.That(Get<double>(loop, "loopStart"), Is.EqualTo(firstLoopStart));
             Pointer(EventTriggerType.PointerUp);
             Pointer(EventTriggerType.EndDrag);
             Pointer(EventTriggerType.PointerDown);
             slider.value = 1f;
-            Assert.That(played, Is.EqualTo(new[] { SfxId.SettingsSliderDrag, SfxId.SettingsSliderDrag }));
+            yield return new WaitForSecondsRealtime(0.05f);
+            Assert.That(loop.IsHeld, Is.True);
+            Assert.That(Get<double>(loop, "loopStart"), Is.GreaterThan(firstLoopStart));
         }
 
         [UnityTest]
@@ -125,10 +132,13 @@ namespace SubTerra.App.Tests.PlayMode.Audio
             };
             ExecuteEvents.Execute(slider.gameObject, data, ExecuteEvents.pointerDownHandler);
             Assert.That(slider.value, Is.GreaterThan(0.5f));
-            Assert.That(played, Is.EqualTo(new[] { SfxId.SettingsSliderDrag }));
+            Assert.That(played, Is.Empty);
+            var loop = skin.GetComponent<SliderDragLoopAudio>();
+            Assert.That(loop.IsHeld, Is.True);
+            var firstLoopStart = Get<double>(loop, "loopStart");
             now += 2f;
             slider.value = 0f;
-            Assert.That(played.Count, Is.EqualTo(1), "트랙 클릭 뒤 계속 끌어도 한 번");
+            Assert.That(Get<double>(loop, "loopStart"), Is.EqualTo(firstLoopStart), "트랙 클릭 뒤 계속 끌어도 앞은 한 번");
             yield return null;
         }
 
@@ -141,7 +151,7 @@ namespace SubTerra.App.Tests.PlayMode.Audio
             Assert.That(played, Is.Empty);
             slider.value = 0.5f;
             Call(skin, "LateUpdate");
-            now += 0.87f;
+            now += 0.69f;
             slider.value = 0.6f;
             Call(skin, "LateUpdate");
             Assert.That(played.Count, Is.EqualTo(1));
@@ -163,7 +173,8 @@ namespace SubTerra.App.Tests.PlayMode.Audio
             played.Clear();
             Pointer(EventTriggerType.PointerDown);
             slider.value = 0.5f;
-            Assert.That(played, Is.EqualTo(new[] { SfxId.SettingsSliderDrag }), "슬라이더 비활성 뒤 새 드래그");
+            Assert.That(played, Is.Empty);
+            Assert.That(skin.GetComponent<SliderDragLoopAudio>().IsHeld, Is.True, "슬라이더 비활성 뒤 새 드래그");
             skin.gameObject.SetActive(false);
             skin.gameObject.SetActive(true);
             played.Clear();
@@ -171,7 +182,8 @@ namespace SubTerra.App.Tests.PlayMode.Audio
             Assert.That(played, Is.Empty, "재열기만 하면 무음");
             Pointer(EventTriggerType.PointerDown);
             slider.value = 1f;
-            Assert.That(played, Is.EqualTo(new[] { SfxId.SettingsSliderDrag }), "PointerUp 놓친 뒤 재열기");
+            Assert.That(played, Is.Empty);
+            Assert.That(skin.GetComponent<SliderDragLoopAudio>().IsHeld, Is.True, "PointerUp 놓친 뒤 재열기");
             Assert.That(slider.GetComponent<EventTrigger>().triggers.FindAll(
                 entry => entry.eventID == EventTriggerType.PointerDown).Count, Is.EqualTo(1));
         }
