@@ -86,6 +86,9 @@ namespace SubTerra.App.UI.Progression
         public bool IsUnlockPlaying => unlockPlaying;
         public bool IsAnimating => shakeRoutine != null || levelUpRoutine != null || unlockPlaying;
 
+        /// <summary>B-180: 업그레이드 창 열림·닫힘 연출 중이 아니면 true.</summary>
+        public bool CanPlayButtonSfx() => !SubTerra.App.UI.SurfaceBase.UpgradeWindowMotion.IsTransitioningFor(transform);
+
         /// <summary>확인용: true면 Update가 해금 연출을 진행하지 않고 테스트가 StepUnlock으로 직접 진행한다.</summary>
         public bool ManualTick { get; set; }
 
@@ -110,7 +113,8 @@ namespace SubTerra.App.UI.Progression
         private void OnEnable()
         {
             if (button == null) button = GetComponent<Button>();
-            UiSfx.Attach(button, SelectionSfx, failWhenDisabled: false);
+            // B-180: 호버음 추가. 창이 자물쇠를 부수며 열리거나 빨려 들어가며 닫히는 동안 호버음은 무음, 클릭은 그대로.
+            UiSfx.Attach(button, SelectionSfx, hover: true, failWhenDisabled: false, hoverGate: CanPlayButtonSfx);
             StopRoutines();
             ResetVisuals();
             if (hasSnapshot)

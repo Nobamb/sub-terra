@@ -173,6 +173,10 @@ namespace SubTerra.App.UI.MainMenu
             UiSfx.Attach(overwriteConfirmButton, SfxId.None, hover: true);
             UiSfx.Attach(overwriteCancelButton, SfxId.None, hover: true);
             UiSfx.Attach(overwriteCloseButton, SfxId.None, hover: true);
+            // B-180: 삭제 확인 창의 소리는 MainMenuBinder가 결과에 따라 낸다.
+            UiSfx.Attach(deleteConfirmButton, SfxId.None, hover: true);
+            UiSfx.Attach(deleteCancelButton, SfxId.None, hover: true);
+            UiSfx.Attach(deleteCloseButton, SfxId.None, hover: true);
         }
 
         private void OnRectTransformDimensionsChange() => RefreshLayout();

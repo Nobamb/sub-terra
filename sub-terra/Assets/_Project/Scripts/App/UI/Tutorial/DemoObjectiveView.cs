@@ -96,6 +96,9 @@ namespace SubTerra.App.UI.Tutorial
         private void Awake()
         {
             ApplyCompactSummary();
+            // B-180: 이전/다음은 넘김 소리를 Presenter가 내므로 버튼은 호버만.
+            UiSfx.Attach(detailsPrevButton, SfxId.None, hover: true, failWhenDisabled: false);
+            UiSfx.Attach(detailsNextButton, SfxId.None, hover: true, failWhenDisabled: false);
             if (tutorialCanvas != null)
             {
                 defaultTutorialSort = tutorialCanvas.sortingOrder;

@@ -1,5 +1,7 @@
 using System.Collections;
+using SubTerra.App.Audio;
 using SubTerra.App.UI;
+using SubTerra.Shared.Audio;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -17,12 +19,42 @@ namespace SubTerra.App.UI.Tutorial
         private bool closing;
         public bool IsClosing => closing;
 
+        /// <summary>B-180: 프리팹 빌더(B-95-1)가 만든 닫기 버튼 이름.</summary>
+        public const string CloseButtonName = "ClaimCloseButton";
+
+        /// <summary>B-180: 등장 연출이 끝나 표시 중이고 닫는 중이 아닐 때만 닫기 호버음을 낸다.</summary>
+        public bool CanPlayCloseHover => !closing && transition != null && transition.IsShown;
+
         private void Awake()
         {
             panel = (RectTransform)transform;
             transition = gameObject.AddComponent<StartBriefingPopupMotion>();
             transition.enabled = false;
             transition.ConfigureQuestClear(borderGlint);
+            AttachCloseHoverSfx();
+        }
+
+        // B-180: 닫힘음·보상음은 B-178 경로가 내므로 클릭은 무음, 호버만 붙인다.
+        // ConfigureQuestClear가 본문을 ClaimContent 아래로 옮기므로 하위 전체에서 이름으로 찾는다.
+        private void AttachCloseHoverSfx()
+        {
+            Button button = null;
+            foreach (var candidate in GetComponentsInChildren<Button>(true))
+            {
+                if (candidate.name == CloseButtonName)
+                {
+                    button = candidate;
+                    break;
+                }
+            }
+
+            if (button == null)
+            {
+                Debug.LogWarning("[QuestClearPopupMotion] 닫기 버튼을 찾지 못해 호버음을 붙이지 않았습니다.");
+                return;
+            }
+
+            UiSfx.Attach(button, SfxId.None, hover: true, failWhenDisabled: false, hoverGate: () => CanPlayCloseHover);
         }
 
         private void OnEnable()

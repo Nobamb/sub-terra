@@ -133,6 +133,9 @@ namespace SubTerra.App.UI.Tutorial
             view?.SetDetailsVisible(false);
         }
 
+        /// <summary>B-180 ★: 퀘스트 상세창 이전/다음으로 실제로 넘어갔을 때 소리.</summary>
+        public const SfxId QuestPageTurnSfx = SfxId.KeysPageTurn;
+
         public void ShowPreviousQuest()
         {
             if (!detailsOpen || viewedIndex <= 0)
@@ -142,6 +145,7 @@ namespace SubTerra.App.UI.Tutorial
 
             viewedIndex--;
             RenderDetails();
+            SfxPlayer.Play(QuestPageTurnSfx);
         }
 
         public void ShowNextQuest()
@@ -153,6 +157,7 @@ namespace SubTerra.App.UI.Tutorial
 
             viewedIndex++;
             RenderDetails();
+            SfxPlayer.Play(QuestPageTurnSfx);
         }
 
         public void ChooseDumpInventory()

@@ -401,6 +401,7 @@ namespace SubTerra.App.UI.Guide
                     18f, GameGuideButton.Kind.Normal, GameGuideArt.BookGlyph(), 22f);
                 var targetId = target.Id;
                 button.Button.onClick.AddListener(() => OnCardClicked(targetId));
+                AttachGuideSfx(button.Button, true);
                 x += buttonWidth + 10f;
             }
 

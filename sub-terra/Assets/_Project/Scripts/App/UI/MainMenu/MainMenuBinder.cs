@@ -16,6 +16,12 @@ namespace SubTerra.App.UI.MainMenu
     {
         [SerializeField] private MainMenuView view;
 
+        // B-180 ★: 슬롯 삭제 소리. PM이 번호만 바꿔 끼운다.
+        public const SfxId DeleteTrashSfx = SfxId.UiClick;
+        public const SfxId DeleteConfirmOpenSfx = SfxId.UiPopupOpen;
+        public const SfxId DeleteConfirmSfx = SfxId.RunFailBlackout;
+        public const SfxId DeleteCancelSfx = SfxId.UiPopupClose;
+
         private MainMenuPresenter presenter;
         private bool startingNewGame;
         private bool continuing;
@@ -161,17 +167,33 @@ namespace SubTerra.App.UI.MainMenu
         private void OnDeleteSlotClicked(int slotId)
         {
             if (startingNewGame || continuing) return;
-            presenter?.RequestDeleteSlot(slotId);
+            if (presenter == null) return;
+            SfxPlayer.Play(DeleteTrashSfx);
+            if (presenter.RequestDeleteSlot(slotId))
+            {
+                SfxPlayer.Play(DeleteConfirmOpenSfx);
+            }
         }
 
         private void OnDeleteConfirm()
         {
-            presenter?.ConfirmDeleteSlot();
+            if (presenter == null) return;
+            if (presenter.ConfirmDeleteSlot() > 0)
+            {
+                SfxPlayer.Play(DeleteConfirmSfx);
+            }
         }
 
         private void OnDeleteCancel()
         {
-            presenter?.CancelDeleteSlot();
+            if (presenter == null) return;
+            // 확인 창이 떠 있었을 때만 닫힘음(취소·X 버튼·X 키 공통).
+            var wasOpen = presenter.IsDeleteConfirmOpen;
+            presenter.CancelDeleteSlot();
+            if (wasOpen)
+            {
+                SfxPlayer.Play(DeleteCancelSfx);
+            }
         }
 
         private void OnDeleteSlotConfirmed(int slotId)

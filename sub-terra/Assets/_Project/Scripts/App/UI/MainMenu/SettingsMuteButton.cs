@@ -1,3 +1,5 @@
+using SubTerra.App.Audio;
+using SubTerra.Shared.Audio;
 using UnityEngine;
 
 namespace SubTerra.App.UI.MainMenu
@@ -5,6 +7,9 @@ namespace SubTerra.App.UI.MainMenu
     /// <summary>기존 슬라이더 왼쪽의 도트 확성기. 별도 이미지나 폰트 글리프를 요구하지 않는다.</summary>
     public sealed class SettingsMuteButton : UnityEngine.UI.MaskableGraphic
     {
+        /// <summary>B-180 ★: 음소거를 풀었을 때 바로 내는 소리(음소거를 켤 때는 무음).</summary>
+        public const SfxId UnmuteClickSfx = SfxId.UiClick;
+
         private UnityEngine.UI.Slider slider;
         private AudioChannel channel;
         public UnityEngine.UI.Button Button => GetComponent<UnityEngine.UI.Button>();
@@ -90,8 +95,11 @@ namespace SubTerra.App.UI.MainMenu
 
         private void ToggleMute()
         {
-            if (slider != null)
-                SettingsRuntimeApplier.SetMuted(channel, !SettingsRuntimeApplier.IsMuted(channel), slider.value);
+            if (slider == null) return;
+            var unmuting = SettingsRuntimeApplier.IsMuted(channel);
+            SettingsRuntimeApplier.SetMuted(channel, !unmuting, slider.value);
+            // B-180: 음소거를 먼저 푼 뒤에 재생해야 SfxPlayer의 음소거 확인에 먹히지 않는다.
+            if (unmuting) SfxPlayer.Play(UnmuteClickSfx);
         }
 
         private void OnSliderChanged(float value)

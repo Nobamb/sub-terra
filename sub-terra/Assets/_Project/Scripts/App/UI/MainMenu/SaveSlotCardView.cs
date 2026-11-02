@@ -1,6 +1,8 @@
 ﻿using System;
+using SubTerra.App.Audio;
 using SubTerra.App.Save;
 using SubTerra.App.UI.Outpost;
+using SubTerra.Shared.Audio;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -60,6 +62,8 @@ namespace SubTerra.App.UI.MainMenu
             CacheIntroHome();
             if (signalNoise != null) signalNoise.texture = CoreCctvArt.Noise();
             ApplyFrame(new SlotFrameSample(SlotFramePhase.Off, 0f, 0f, 0f));
+            // B-180: 휴지통 클릭음·확인 창 열림음은 MainMenuBinder가 내므로 호버만.
+            UiSfx.Attach(deleteButton, SfxId.None, hover: true, failWhenDisabled: false);
         }
 
         private void OnEnable()

@@ -593,6 +593,12 @@ namespace SubTerra.App.UI.Outpost
             RetargetCamera(videoState == VideoState.PoweringOn || videoState == VideoState.On);
         }
 
+        /// <summary>B-180 ★: 시설 목록 한 줄을 누를 때 소리.</summary>
+        public const SfxId CctvItemClickSfx = SfxId.UiClick;
+
+        /// <summary>B-180: SelectFacility가 받아들이는 동안만 목록 클릭·호버 소리를 낸다.</summary>
+        public bool CanPlayItemSfx => state != PlayState.Hidden && state != PlayState.Exiting && revealStarted;
+
         private void OnItemClicked(string instanceId)
         {
             SelectFacility(instanceId);
@@ -679,6 +685,8 @@ namespace SubTerra.App.UI.Outpost
                 item.gameObject.SetActive(true);
                 item.SetArt(CoreCctvArt.Border(), CoreCctvArt.Glow());
                 item.Clicked += OnItemClicked;
+                // 항목은 재사용되므로 만들 때 한 번만 붙인다(다시 붙여도 기존 컴포넌트를 쓴다).
+                UiSfx.Attach(item.Button, CctvItemClickSfx, hover: true, failWhenDisabled: false, hoverGate: () => CanPlayItemSfx);
                 items.Add(item);
             }
 
