@@ -136,7 +136,7 @@ namespace SubTerra.App.Tests.UI
                 Assert.That(warning.Text, Does.Contain("자원이 부족"));
                 wallet.CanAffordValue = true;
                 placement.Emit(failed);
-                Assert.That(warning.Text, Does.Contain("겹쳐"));
+                Assert.That(warning.Text, Does.Contain("다른 시설이나 지형과 겹칩니다."));
                 Assert.That(view.StatusMessage, Does.Contain("빈 공간을 선택하세요"));
             }
             finally { SubTerra.App.UI.PlayerStatus.PlayerStatusWarnings.Current = previous; }

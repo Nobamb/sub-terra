@@ -32,6 +32,7 @@ namespace SubTerra.App.UI.Building
         [SerializeField] private Image availabilityAccent;
         [SerializeField] private Image availabilityBadge;
         [SerializeField] private TMP_Text availabilityGlyph;
+        [SerializeField] private ScrollRect detailScroll;
         [SerializeField] private Color idleColor = new Color(0.45f, 0.62f, 0.7f, 1f);
         [SerializeField] private Color readyColor = new Color(0.3f, 0.92f, 0.62f, 1f);
         [SerializeField] private Color warningColor = new Color(1f, 0.76f, 0.28f, 1f);
@@ -39,6 +40,7 @@ namespace SubTerra.App.UI.Building
 
         private string selectedBuildingId = string.Empty;
         private IReadOnlyList<BuildingCostReadModel> selectedCosts;
+        private string detailLayoutBuildingId;
 
         public Button CloseButton => closeButton;
         public bool UsesStructuredLayout => entries != null && entries.Length > 0 && detailNameText != null;
@@ -138,7 +140,7 @@ namespace SubTerra.App.UI.Building
             if (selectionText != null)
             {
                 selectionText.text = UsesStructuredLayout
-                    ? "왼쪽 목록에서 설치할 시설을 선택하세요.\n용도, 필요 자원과 설치 조건이 여기에 표시됩니다."
+                    ? detailScroll != null ? string.Empty : "왼쪽 목록에서 설치할 시설을 선택하세요.\n용도, 필요 자원과 설치 조건이 여기에 표시됩니다."
                     : "시설을 선택하세요.";
             }
 
@@ -166,6 +168,7 @@ namespace SubTerra.App.UI.Building
             }
             SetActive(costSection, false);
             HideCostRows(0);
+            LayoutDetailBody();
         }
 
         private void HideLegacyChrome()
@@ -386,6 +389,40 @@ namespace SubTerra.App.UI.Building
             }
 
             HideCostRows(count);
+            LayoutDetailBody();
+        }
+
+        private void LayoutDetailBody()
+        {
+            if (detailScroll == null || detailScroll.content == null || selectionText == null) return;
+            float width = detailScroll.viewport.rect.width;
+            if (width <= 0f) width = 244f;
+            float y = 0f;
+            Place(selectionText.rectTransform, Mathf.Max(32f,
+                selectionText.GetPreferredValues(selectionText.text, width, float.PositiveInfinity).y));
+            if (detailOperatingConditionText != null && detailOperatingConditionText.gameObject.activeSelf)
+                Place(detailOperatingConditionText.rectTransform, Mathf.Max(24f,
+                    detailOperatingConditionText.GetPreferredValues(detailOperatingConditionText.text, width, float.PositiveInfinity).y));
+            if (costSection != null && costSection.activeSelf)
+                Place((RectTransform)costSection.transform, 30f + Mathf.Min(selectedCosts?.Count ?? 0, costRows.Length) * 40f);
+            float height = Mathf.Max(detailScroll.viewport.rect.height, y);
+            detailScroll.content.GetComponent<LayoutElement>().preferredHeight = height;
+            detailScroll.content.sizeDelta = new Vector2(0f, height);
+            if (detailLayoutBuildingId != selectedBuildingId)
+            {
+                detailScroll.StopMovement();
+                detailScroll.verticalNormalizedPosition = 1f;
+                detailLayoutBuildingId = selectedBuildingId;
+            }
+
+            void Place(RectTransform rect, float height)
+            {
+                rect.anchorMin = rect.anchorMax = new Vector2(0f, 1f);
+                rect.pivot = new Vector2(0f, 1f);
+                rect.anchoredPosition = new Vector2(0f, -y);
+                rect.sizeDelta = new Vector2(width, height);
+                y += height + 12f;
+            }
         }
 
         private void HideCostRows(int fromIndex)
@@ -409,7 +446,8 @@ namespace SubTerra.App.UI.Building
             var kind = BuildingMenuDisplayFormatter.Classify(availability);
             var color = ColorFor(kind);
             var message = availability.Message;
-            if (kind == BuildingAvailabilityDisplayKind.NeedResources)
+            if (kind == BuildingAvailabilityDisplayKind.NeedResources
+                && (string.IsNullOrEmpty(message) || message == "자원이 부족합니다."))
             {
                 // 무엇이 얼마나 부족한지 읽기 모델 수량으로 구체화한다. 없으면 Presenter 사유를 그대로 쓴다.
                 var shortage = BuildingMenuDisplayFormatter.ShortageDetail(selectedCosts);

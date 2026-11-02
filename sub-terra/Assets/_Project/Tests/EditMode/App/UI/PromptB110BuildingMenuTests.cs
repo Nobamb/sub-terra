@@ -18,6 +18,43 @@ namespace SubTerra.App.Tests.UI
         private const string CatalogPath = "Assets/_Project/Data/Catalog/GameDataCatalog.asset";
 
         [Test]
+        public void Issue269_LongDescriptionGrowsBeforeCostsAndPreservesSpecificFailure()
+        {
+            var menu = Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(MenuPath));
+            try
+            {
+                var view = menu.GetComponent<BuildingMenuView>();
+                var costs = new[] { new BuildingCostReadModel(DataIds.Minerals.Iron, 5, 3),
+                    new BuildingCostReadModel(DataIds.Minerals.Copper, 4, 10), new BuildingCostReadModel(DataIds.Minerals.Lithium, 3, 1) };
+                view.SetSelection(new BuildingMenuItemReadModel("qa.long", "긴 시설명", new string('가', 300), null, 0, costs));
+                var scroll = menu.transform.Find("PanelRoot/DetailScroll").GetComponent<ScrollRect>();
+                LayoutRebuilder.ForceRebuildLayoutImmediate(scroll.content);
+                Assert.That(scroll.content.rect.height, Is.GreaterThan(scroll.viewport.rect.height));
+                var body = (RectTransform)scroll.content.Find("SelectionText");
+                var cost = (RectTransform)scroll.content.Find("CostSection");
+                Assert.That(-cost.anchoredPosition.y, Is.GreaterThanOrEqualTo(body.sizeDelta.y + 12f));
+                view.SetAvailability(new BuildingAvailabilityReadModel(BuildingPlacementState.Invalid, false, "시설을 지지할 지면이 없습니다."));
+                Assert.That(menu.transform.Find("PanelRoot/AvailabilityText").GetComponent<TMP_Text>().text, Does.Contain("지면이 없습니다"));
+                view.ClearSelection();
+                Assert.That(scroll.content.Find("CostSection").gameObject.activeSelf, Is.False);
+            }
+            finally { Object.DestroyImmediate(menu); }
+        }
+
+        [Test]
+        public void Issue269_BuilderIsRepeatableWithoutDuplicatingEntriesOrDetailChildren()
+        {
+            PromptB110BuildingMenuBuilder.Build();
+            PromptB110BuildingMenuBuilder.Build();
+            var menu = AssetDatabase.LoadAssetAtPath<GameObject>(MenuPath);
+            Assert.That(menu.GetComponentsInChildren<ScrollRect>(true).Length, Is.EqualTo(2));
+            Assert.That(menu.GetComponentsInChildren<Transform>(true).Count(t => t.name == "SelectionText"), Is.EqualTo(1));
+            Assert.That(menu.GetComponentsInChildren<Transform>(true).Count(t => t.name == "DetailOperatingCondition"), Is.EqualTo(1));
+            Assert.That(menu.GetComponentsInChildren<BuildingMenuEntryButton>(true).Length, Is.EqualTo(9));
+            Assert.That(menu.GetComponent<BuildingMenuView>().HasStructuredReferences(), Is.True);
+        }
+
+        [Test]
         public void WorldRightClick_StartsAndCancelsMoveWithoutOpeningBuildingMenu()
         {
             var host = new GameObject("RightClickMove");
@@ -131,20 +168,21 @@ namespace SubTerra.App.Tests.UI
                 .OrderByDescending(r => r.anchoredPosition.y)
                 .ToList();
 
-            Assert.That(rects[0].anchoredPosition.y, Is.EqualTo(PromptB110BuildingMenuBuilder.FirstEntryY).Within(0.1f));
+            var scroll = menu.transform.Find("PanelRoot/FacilityScroll").GetComponent<ScrollRect>();
+            var layout = scroll.content.GetComponent<VerticalLayoutGroup>();
+            Assert.That(layout.spacing, Is.GreaterThanOrEqualTo(4f));
+            Assert.That(layout.childControlHeight, Is.False);
+            Assert.That(layout.childForceExpandHeight, Is.False);
+            Assert.That(scroll.content.GetComponent<ContentSizeFitter>().verticalFit,
+                Is.EqualTo(ContentSizeFitter.FitMode.PreferredSize));
             for (var i = 0; i < rects.Count; i++)
             {
-                Assert.That(rects[i].anchoredPosition.x, Is.EqualTo(PromptB110BuildingMenuBuilder.LeftColumnX).Within(0.1f));
+                Assert.That(rects[i].parent, Is.SameAs(scroll.content));
                 Assert.That(rects[i].sizeDelta.y, Is.EqualTo(PromptB110BuildingMenuBuilder.EntryHeight).Within(0.1f));
-                if (i > 0)
-                {
-                    var previousBottom = rects[i - 1].anchoredPosition.y - rects[i - 1].sizeDelta.y;
-                    Assert.That(rects[i].anchoredPosition.y, Is.LessThanOrEqualTo(previousBottom), rects[i].name);
-                }
             }
 
-            var last = rects[rects.Count - 1];
-            Assert.That(-last.anchoredPosition.y + last.sizeDelta.y,
+            Assert.That(scroll.viewport.GetComponent<RectMask2D>(), Is.Not.Null);
+            Assert.That(-((RectTransform)scroll.transform).anchoredPosition.y + scroll.viewport.rect.height,
                 Is.LessThanOrEqualTo(PromptB110BuildingMenuBuilder.PanelHeight - 16f));
         }
 
@@ -155,7 +193,7 @@ namespace SubTerra.App.Tests.UI
             var panel = menu.transform.Find("PanelRoot");
             var names = new[]
             {
-                "DetailIconFrame", "DetailName", "DetailOperatingCondition", "SelectionText", "CostSection",
+                "DetailIconFrame", "DetailName", "DetailScroll",
                 "AvailabilityBanner", "AvailabilityText", "StatusText", "ControlsHint"
             };
             var listRight = PromptB110BuildingMenuBuilder.LeftColumnX + PromptB110BuildingMenuBuilder.EntryWidth;
@@ -167,7 +205,7 @@ namespace SubTerra.App.Tests.UI
                 Assert.That(rect.anchoredPosition.x + rect.sizeDelta.x,
                     Is.LessThanOrEqualTo(PromptB110BuildingMenuBuilder.PanelWidth - 8f + 0.5f), name);
                 Assert.That(-rect.anchoredPosition.y + rect.sizeDelta.y,
-                    Is.LessThanOrEqualTo(PromptB110BuildingMenuBuilder.PanelHeight), name);
+                    Is.LessThanOrEqualTo(PromptB110BuildingMenuBuilder.PanelHeight - 16f), name);
             }
 
             // 설치 상태 문구는 배너 안에 놓인다.
@@ -186,7 +224,7 @@ namespace SubTerra.App.Tests.UI
             {
                 var isButton = graphic.GetComponent<Button>() != null;
                 var isPanel = graphic.name == "PanelRoot";
-                if (!isButton && !isPanel)
+                if (!isButton && !isPanel && graphic.name != "Viewport")
                 {
                     Assert.That(graphic.raycastTarget, Is.False, graphic.name);
                 }
@@ -265,16 +303,16 @@ namespace SubTerra.App.Tests.UI
                 view.SetBuildingList(new[] { item });
                 view.SetSelection(item);
 
-                var entry = panel.Find("Select_" + DataIds.Buildings.OutpostCoreBasic)
+                var entry = panel.Find("FacilityScroll/Viewport/Content/Select_" + DataIds.Buildings.OutpostCoreBasic)
                     .GetComponent<BuildingMenuEntryVisual>();
                 Assert.That(entry.IsSelected, Is.True);
                 Assert.That(entry.transform.Find("EntryState").GetComponent<TMP_Text>().text, Is.EqualTo("부족"));
                 Assert.That(panel.Find("DetailName").GetComponent<TMP_Text>().text, Is.EqualTo("전진기지"));
                 Assert.That(panel.Find("DetailPowerChip"), Is.Null);
-                Assert.That(panel.Find("DetailOperatingCondition").gameObject.activeSelf, Is.False);
-                Assert.That(panel.Find("CostSection").gameObject.activeSelf, Is.True);
-                Assert.That(panel.Find("CostSection/CostRow_1").gameObject.activeSelf, Is.True);
-                Assert.That(panel.Find("CostSection/CostRow_2").gameObject.activeSelf, Is.False);
+                Assert.That(panel.Find("DetailScroll/Viewport/Content/DetailOperatingCondition").gameObject.activeSelf, Is.False);
+                Assert.That(panel.Find("DetailScroll/Viewport/Content/CostSection").gameObject.activeSelf, Is.True);
+                Assert.That(panel.Find("DetailScroll/Viewport/Content/CostSection/CostRow_1").gameObject.activeSelf, Is.True);
+                Assert.That(panel.Find("DetailScroll/Viewport/Content/CostSection/CostRow_2").gameObject.activeSelf, Is.False);
 
                 view.SetAvailability(new BuildingAvailabilityReadModel(BuildingPlacementState.Previewing, false, "자원이 부족합니다."));
                 var availabilityText = panel.Find("AvailabilityText").GetComponent<TMP_Text>().text;
@@ -283,8 +321,8 @@ namespace SubTerra.App.Tests.UI
 
                 view.ClearSelection();
                 Assert.That(entry.IsSelected, Is.False);
-                Assert.That(panel.Find("CostSection").gameObject.activeSelf, Is.False);
-                Assert.That(panel.Find("DetailOperatingCondition").gameObject.activeSelf, Is.False);
+                Assert.That(panel.Find("DetailScroll/Viewport/Content/CostSection").gameObject.activeSelf, Is.False);
+                Assert.That(panel.Find("DetailScroll/Viewport/Content/DetailOperatingCondition").gameObject.activeSelf, Is.False);
             }
             finally
             {
@@ -300,10 +338,11 @@ namespace SubTerra.App.Tests.UI
             {
                 var view = menu.GetComponent<BuildingMenuView>();
                 var panel = menu.transform.Find("PanelRoot");
-                var condition = panel.Find("DetailOperatingCondition").GetComponent<TMP_Text>();
+                var condition = panel.Find("DetailScroll/Viewport/Content/DetailOperatingCondition").GetComponent<TMP_Text>();
                 var name = panel.Find("DetailName").GetComponent<TMP_Text>();
-                Assert.That(condition.rectTransform.anchoredPosition.y,
-                    Is.LessThanOrEqualTo(name.rectTransform.anchoredPosition.y - name.rectTransform.sizeDelta.y));
+                var top = new Vector3[4]; var bottom = new Vector3[4];
+                condition.rectTransform.GetWorldCorners(top); name.rectTransform.GetWorldCorners(bottom);
+                Assert.That(top[2].y, Is.LessThanOrEqualTo(bottom[0].y));
                 Assert.That(condition.raycastTarget, Is.False);
 
                 var catalog = AssetDatabase.LoadAssetAtPath<GameDataCatalog>(CatalogPath);
@@ -323,7 +362,7 @@ namespace SubTerra.App.Tests.UI
                 view.ClearSelection();
                 Assert.That(condition.gameObject.activeSelf, Is.False);
                 Assert.That(condition.text, Is.Empty);
-                Assert.That(panel.Find("SelectionText").GetComponent<TMP_Text>().text, Does.Not.Contain("전력"));
+                Assert.That(panel.Find("DetailScroll/Viewport/Content/SelectionText").GetComponent<TMP_Text>().text, Does.Not.Contain("전력"));
             }
             finally
             {
@@ -338,7 +377,7 @@ namespace SubTerra.App.Tests.UI
             try
             {
                 var view = host.AddComponent<BuildingMenuView>();
-                var textObject = new GameObject("SelectionText", typeof(RectTransform), typeof(TextMeshProUGUI));
+                var textObject = new GameObject("DetailScroll/Viewport/Content/SelectionText", typeof(RectTransform), typeof(TextMeshProUGUI));
                 textObject.transform.SetParent(host.transform, false);
                 var text = textObject.GetComponent<TMP_Text>();
                 var so = new SerializedObject(view);

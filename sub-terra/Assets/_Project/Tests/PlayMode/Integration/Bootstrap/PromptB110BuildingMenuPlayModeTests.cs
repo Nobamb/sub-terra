@@ -66,7 +66,7 @@ namespace SubTerra.App.Tests.PlayMode
             Assert.That(result.IsSuccess, Is.True, result.Failure.ToString());
             Assert.That(state.Player.Energy, Is.EqualTo(energyBefore), "건설 자체는 플레이어 전력을 차감하지 않는다.");
             Assert.That(inventory.State.GetQuantity(DataIds.Minerals.Copper), Is.EqualTo(copperBefore - copperCost));
-            Assert.That(view.transform.Find("PanelRoot/DetailOperatingCondition").gameObject.activeSelf, Is.False);
+            Assert.That(view.transform.Find("PanelRoot/DetailScroll/Viewport/Content/DetailOperatingCondition").gameObject.activeSelf, Is.False);
             Assert.That(environment.Save.ActiveSlot, Is.Zero);
         }
 
@@ -86,11 +86,13 @@ namespace SubTerra.App.Tests.PlayMode
             Assert.That(view, Is.Not.Null);
             Assert.That(binder.IsBound, Is.True);
             Assert.That(view.HasStructuredReferences(), Is.True);
+            yield return UiTestWait.Until(() => !view.GetComponent<SubTerra.App.UI.TerminalWindowOpenMotion>().IsPlaying,
+                "building menu open animation");
 
             var panel = view.transform.Find("PanelRoot");
             var detailName = panel.Find("DetailName").GetComponent<TMP_Text>();
             var availability = panel.Find("AvailabilityText").GetComponent<TMP_Text>();
-            var costSection = panel.Find("CostSection").gameObject;
+            var costSection = panel.Find("DetailScroll/Viewport/Content/CostSection").gameObject;
             Assert.That(detailName.text, Is.EqualTo("시설 미선택"));
             Assert.That(costSection.activeSelf, Is.False);
 
@@ -118,7 +120,7 @@ namespace SubTerra.App.Tests.PlayMode
             var added = save.InventoryService.TryAddMineralExact(DataIds.Minerals.Copper, 6);
             Assert.That(added.DidChange, Is.True, "copper add");
             yield return null;
-            var row0 = panel.Find("CostSection/CostRow_0/State").GetComponent<TMP_Text>();
+            var row0 = panel.Find("DetailScroll/Viewport/Content/CostSection/CostRow_0/State").GetComponent<TMP_Text>();
             Assert.That(row0.text, Does.Contain("충분"));
             Assert.That(support.Find("EntryState").GetComponent<TMP_Text>().text,
                 Is.EqualTo(BuildingMenuDisplayFormatter.ReadyGlyph));
@@ -130,15 +132,15 @@ namespace SubTerra.App.Tests.PlayMode
             core.GetComponent<Button>().onClick.Invoke();
             yield return null;
             AssertOnlySelected(panel, DataIds.Buildings.OutpostCoreBasic);
-            Assert.That(panel.Find("CostSection/CostRow_0").gameObject.activeSelf, Is.True);
-            Assert.That(panel.Find("CostSection/CostRow_1").gameObject.activeSelf, Is.True);
-            Assert.That(panel.Find("CostSection/CostRow_2").gameObject.activeSelf, Is.False);
-            Assert.That(panel.Find("CostSection/CostRow_1/State").GetComponent<TMP_Text>().text, Does.Contain("부족"));
+            Assert.That(panel.Find("DetailScroll/Viewport/Content/CostSection/CostRow_0").gameObject.activeSelf, Is.True);
+            Assert.That(panel.Find("DetailScroll/Viewport/Content/CostSection/CostRow_1").gameObject.activeSelf, Is.True);
+            Assert.That(panel.Find("DetailScroll/Viewport/Content/CostSection/CostRow_2").gameObject.activeSelf, Is.False);
+            Assert.That(panel.Find("DetailScroll/Viewport/Content/CostSection/CostRow_1/State").GetComponent<TMP_Text>().text, Does.Contain("부족"));
             Assert.That(availability.text, Does.Contain("자원 부족"));
             AssertNotTruncated(panel);
             if (visual) yield return UiTestWait.Capture(Path.Combine(evidence, "building-partial-1920x1080.png"));
 
-            var condition = panel.Find("DetailOperatingCondition").GetComponent<TMP_Text>();
+            var condition = panel.Find("DetailScroll/Viewport/Content/DetailOperatingCondition").GetComponent<TMP_Text>();
             Assert.That(panel.Find("DetailPowerChip"), Is.Null);
             foreach (var id in new[]
             {
@@ -187,7 +189,7 @@ namespace SubTerra.App.Tests.PlayMode
 
         private static Transform Entry(Transform panel, string buildingId)
         {
-            var entry = panel.Find("Select_" + buildingId);
+            var entry = panel.Find("FacilityScroll/Viewport/Content/Select_" + buildingId);
             Assert.That(entry, Is.Not.Null, buildingId);
             return entry;
         }

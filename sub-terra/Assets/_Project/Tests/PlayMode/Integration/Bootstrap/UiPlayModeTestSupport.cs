@@ -73,7 +73,7 @@ namespace SubTerra.App.Tests.PlayMode
         {
             Canvas.ForceUpdateCanvases();
             Assert.That(button.IsInteractable(), Is.True, button.name + " is not interactable");
-            var pointer = new PointerEventData(EventSystem.current) { position = button.transform.position };
+            var pointer = new PointerEventData(EventSystem.current) { position = ButtonScreenCenter(button) };
             var hits = new List<RaycastResult>();
             EventSystem.current.RaycastAll(pointer, hits);
             Assert.That(hits, Is.Not.Empty, button.name + " has no raycast hit");
@@ -86,7 +86,7 @@ namespace SubTerra.App.Tests.PlayMode
             if (!mouse.enabled) InputSystem.EnableDevice(mouse);
             AssertClickTarget(button);
             mouse.MakeCurrent();
-            var position = (Vector2)button.transform.position;
+            var position = ButtonScreenCenter(button);
             InputSystem.QueueStateEvent(mouse, new MouseState { position = position });
             yield return null;
             InputSystem.QueueStateEvent(mouse, new MouseState { position = position, buttons = 1 });
@@ -97,6 +97,14 @@ namespace SubTerra.App.Tests.PlayMode
             yield return Until(() => !mouse.leftButton.isPressed, "mouse up " + button.name, 2f, "input");
             yield return null;
             yield return null;
+        }
+
+        private static Vector2 ButtonScreenCenter(Button button)
+        {
+            var rect = (RectTransform)button.transform;
+            var canvas = button.GetComponentInParent<Canvas>().rootCanvas;
+            return RectTransformUtility.WorldToScreenPoint(canvas.renderMode == RenderMode.ScreenSpaceOverlay
+                ? null : canvas.worldCamera, rect.TransformPoint(rect.rect.center));
         }
 
         public static IEnumerator FocusGameView()

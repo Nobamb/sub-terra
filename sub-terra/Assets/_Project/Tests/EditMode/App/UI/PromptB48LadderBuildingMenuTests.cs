@@ -31,8 +31,6 @@ namespace SubTerra.App.Tests.UI
             "Assets/_Project/Scenes/App/Mine_Demo_Integration.unity";
 
         // prompt-B 110: 목록이 헤더 바로 아래에서 시작하는 행 구조로 바뀌었다.
-        private static readonly float FirstButtonY = PromptB110BuildingMenuBuilder.EntryY(0);
-        private static readonly float LastButtonY = PromptB110BuildingMenuBuilder.EntryY(8);
         private const float PanelHeight = 560f;
 
         [Test]
@@ -92,15 +90,15 @@ namespace SubTerra.App.Tests.UI
             var ladderRect = ladder.GetComponent<RectTransform>();
             var escapeRect = escape.GetComponent<RectTransform>();
 
-            Assert.That(supportRect.anchoredPosition.y, Is.EqualTo(FirstButtonY).Within(0.1f));
-            Assert.That(escapeRect.anchoredPosition.y, Is.EqualTo(LastButtonY).Within(0.1f));
-            // 사다리는 버팀목 바로 아래(y가 더 음수).
-            Assert.That(ladderRect.anchoredPosition.y, Is.LessThan(supportRect.anchoredPosition.y));
-            Assert.That(ladderRect.anchoredPosition.y, Is.GreaterThan(escapeRect.anchoredPosition.y));
+            // ScrollRect의 LayoutGroup이 런타임 좌표를 관리한다. 저장 좌표 대신 순서를 확인한다.
+            Assert.That(ladderRect.GetSiblingIndex(), Is.EqualTo(supportRect.GetSiblingIndex() + 1));
+            Assert.That(escapeRect.GetSiblingIndex(), Is.GreaterThan(ladderRect.GetSiblingIndex()));
 
-            // 마지막 버튼 하단이 패널 높이 안에 있어야 한다.
-            var lastBottom = Mathf.Abs(escapeRect.anchoredPosition.y) + escapeRect.sizeDelta.y;
-            Assert.That(lastBottom, Is.LessThanOrEqualTo(PanelHeight));
+            // 마지막 버튼은 목록 스크롤 끝에서 접근할 수 있어야 한다.
+            var scroll = menu.transform.Find("PanelRoot/FacilityScroll").GetComponent<UnityEngine.UI.ScrollRect>();
+            Assert.That(escapeRect.parent, Is.SameAs(scroll.content));
+            Assert.That(scroll.content.GetComponent<UnityEngine.UI.VerticalLayoutGroup>(), Is.Not.Null);
+            Assert.That(scroll.viewport.rect.height, Is.LessThan(PanelHeight));
 
             var matches = 0;
             var entries = menu.GetComponentsInChildren<BuildingMenuEntryButton>(true);

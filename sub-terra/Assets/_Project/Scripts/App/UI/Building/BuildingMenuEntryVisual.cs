@@ -55,6 +55,7 @@ namespace SubTerra.App.UI.Building
 
             if (nameText != null)
             {
+                nameText.maxVisibleLines = 2;
                 nameText.text = ItemDisplayNames.Building(item.BuildingId);
             }
 

@@ -86,7 +86,7 @@ namespace SubTerra.App.UI.Building
             switch (kind)
             {
                 case BuildingAvailabilityDisplayKind.Ready:
-                    return "좌클릭으로 설치하거나 C로 가까운 위치에 설치하세요.";
+                    return "좌클릭 설치 · C 근접 설치";
                 case BuildingAvailabilityDisplayKind.NeedResources:
                     return "자원이 부족합니다.";
                 case BuildingAvailabilityDisplayKind.CheckPlacement:
@@ -196,9 +196,7 @@ namespace SubTerra.App.UI.Building
 
         public static string CostAmount(BuildingCostReadModel cost)
         {
-            var color = cost.IsEnough ? EnoughColorHex : MissingColorHex;
-            return "<size=85%>보유</size> <color=" + color + "><b>" + cost.Owned + "</b></color>"
-                + " <size=85%>/ 필요</size> <b>" + cost.Required + "</b>";
+            return "<b>" + cost.Owned + "</b> / <b>" + cost.Required + "</b>";
         }
 
         public static string CostState(BuildingCostReadModel cost)
