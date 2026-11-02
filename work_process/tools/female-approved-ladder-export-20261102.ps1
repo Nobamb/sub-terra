@@ -1,4 +1,8 @@
-# Approved whole-body cels only. No rig parts or newly generated poses.
+param(
+ [string]$SourceDirectory='work_process/images/issue266/female-original-outfit-ladder-v1-review',
+ [string]$OutputDirectory='work_process/images/issue266/approved-ladder-whole-cels'
+)
+# Whole-body cel normalization only. No rig parts or body-part transforms.
 $ErrorActionPreference='Stop'
 Add-Type -AssemblyName System.Drawing
 Add-Type -ReferencedAssemblies System.Drawing.Common,System.Drawing.Primitives -TypeDefinition @'
@@ -14,8 +18,8 @@ public static class ApprovedLadderBounds {
  }
 }
 '@
-$source=Join-Path $PWD 'work_process/images/issue266/female-original-outfit-ladder-v1-review'
-$target=Join-Path $PWD 'work_process/images/issue266/approved-ladder-whole-cels'
+$source=Join-Path $PWD $SourceDirectory
+$target=Join-Path $PWD $OutputDirectory
 New-Item -ItemType Directory -Path $target -Force | Out-Null
 $female=[System.Drawing.Bitmap]::new((Join-Path $source 'pose-01.png'))
 $male=[System.Drawing.Bitmap]::new((Join-Path $PWD 'sub-terra/Assets/_Project/Art/Characters/Player/Frames/LadderBack/ladder_back_neutral_v2.png'))

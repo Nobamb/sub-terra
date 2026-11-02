@@ -1,0 +1,157 @@
+[
+  {
+    "pose": 1,
+    "source": "work_process\\images\\issue266\\female-ladder-skirt-v5-review\\pose-01.png",
+    "sourceSha256": "12C7F4B588553F6B93C256980317895A09ED2E10F8872A50F514A9C7B6B4B727",
+    "scale": 2.047008547008547,
+    "dx": 79.7841880341881,
+    "dy": 70.26068376068376,
+    "width": 1254,
+    "height": 1254,
+    "bounds": {
+      "Location": {
+        "IsEmpty": false,
+        "X": 362,
+        "Y": 146
+      },
+      "Size": {
+        "IsEmpty": false,
+        "Width": 541,
+        "Height": 957
+      },
+      "X": 362,
+      "Y": 146,
+      "Width": 541,
+      "Height": 957,
+      "Left": 362,
+      "Top": 146,
+      "Right": 903,
+      "Bottom": 1103,
+      "IsEmpty": false
+    }
+  },
+  {
+    "pose": 2,
+    "source": "work_process\\images\\issue266\\female-ladder-skirt-v5-review\\pose-02.png",
+    "sourceSha256": "14DB1226142AC055E4E4F9306A75F4BAF9350F17EBCA5193EFDB535138756520",
+    "scale": 2.047008547008547,
+    "dx": 79.7841880341881,
+    "dy": 70.26068376068376,
+    "width": 1254,
+    "height": 1254,
+    "bounds": {
+      "Location": {
+        "IsEmpty": false,
+        "X": 338,
+        "Y": 146
+      },
+      "Size": {
+        "IsEmpty": false,
+        "Width": 591,
+        "Height": 957
+      },
+      "X": 338,
+      "Y": 146,
+      "Width": 591,
+      "Height": 957,
+      "Left": 338,
+      "Top": 146,
+      "Right": 929,
+      "Bottom": 1103,
+      "IsEmpty": false
+    }
+  },
+  {
+    "pose": 3,
+    "source": "work_process\\images\\issue266\\female-ladder-skirt-v5-review\\pose-03.png",
+    "sourceSha256": "40FE3F3A95B41E549B3936DCB3D4458E847DA5DA60D91F9FA967B463C46EE3B6",
+    "scale": 2.047008547008547,
+    "dx": 79.7841880341881,
+    "dy": 70.26068376068376,
+    "width": 1254,
+    "height": 1254,
+    "bounds": {
+      "Location": {
+        "IsEmpty": false,
+        "X": 352,
+        "Y": 142
+      },
+      "Size": {
+        "IsEmpty": false,
+        "Width": 572,
+        "Height": 961
+      },
+      "X": 352,
+      "Y": 142,
+      "Width": 572,
+      "Height": 961,
+      "Left": 352,
+      "Top": 142,
+      "Right": 924,
+      "Bottom": 1103,
+      "IsEmpty": false
+    }
+  },
+  {
+    "pose": 4,
+    "source": "work_process\\images\\issue266\\female-ladder-skirt-v5-review\\pose-04.png",
+    "sourceSha256": "6DCEAF054C6A77692F681E573225E39E359FFDD80743C6245AB092B06003F58B",
+    "scale": 2.047008547008547,
+    "dx": 79.7841880341881,
+    "dy": 70.26068376068376,
+    "width": 1254,
+    "height": 1254,
+    "bounds": {
+      "Location": {
+        "IsEmpty": false,
+        "X": 344,
+        "Y": 136
+      },
+      "Size": {
+        "IsEmpty": false,
+        "Width": 563,
+        "Height": 954
+      },
+      "X": 344,
+      "Y": 136,
+      "Width": 563,
+      "Height": 954,
+      "Left": 344,
+      "Top": 136,
+      "Right": 907,
+      "Bottom": 1090,
+      "IsEmpty": false
+    }
+  },
+  {
+    "pose": 5,
+    "source": "work_process\\images\\issue266\\female-ladder-skirt-v5-review\\pose-05.png",
+    "sourceSha256": "AD16697546B80FA97D0DDB1880E21C949E0ACDE914FADB80DF28DE7FD034CA10",
+    "scale": 2.047008547008547,
+    "dx": 79.7841880341881,
+    "dy": 70.26068376068376,
+    "width": 1254,
+    "height": 1254,
+    "bounds": {
+      "Location": {
+        "IsEmpty": false,
+        "X": 352,
+        "Y": 126
+      },
+      "Size": {
+        "IsEmpty": false,
+        "Width": 526,
+        "Height": 964
+      },
+      "X": 352,
+      "Y": 126,
+      "Width": 526,
+      "Height": 964,
+      "Left": 352,
+      "Top": 126,
+      "Right": 878,
+      "Bottom": 1090,
+      "IsEmpty": false
+    }
+  }
+]
