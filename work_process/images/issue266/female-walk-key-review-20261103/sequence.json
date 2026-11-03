@@ -1,0 +1,19 @@
+{
+  "poses": [
+    "near-contact",
+    "far-pass",
+    "far-contact",
+    "near-pass"
+  ],
+  "runtimeApplied": false,
+  "previewCycleSeconds": 1.6,
+  "note": "Four key poses only; held poses are not smooth inbetween animation.",
+  "order": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "previewFps": 2.5,
+  "sourceCellPixels": 627
+}

@@ -11,19 +11,23 @@ public static class MiningWhiteMatte
     {
         using var src = new Bitmap(input);
         int w=src.Width,h=src.Height,n=w*h;
-        if(w!=1536||h!=1024) throw new Exception("Expected six 512-square cels");
+        int columns,cellSize;
+        if(w==1536&&h==1024){columns=3;cellSize=512;}
+        else if(w==h&&w%2==0){columns=2;cellSize=w/2;}
+        else throw new Exception("Expected 3x2 mining or 2x2 walk sheet");
+        int cellCount=columns*(h/cellSize);
         using var rgba = new Bitmap(w,h,PixelFormat.Format32bppArgb);
         using(var g=Graphics.FromImage(rgba)) g.DrawImageUnscaled(src,0,0);
         var rect=new Rectangle(0,0,w,h);
         var data=rgba.LockBits(rect,ImageLockMode.ReadOnly,PixelFormat.Format32bppArgb);
         var bytes=new byte[n*4]; Marshal.Copy(data.Scan0,bytes,0,bytes.Length);rgba.UnlockBits(data);
-        var remove=new bool[n]; var labels=new int[n]; var queue=new int[512*512];
+        var remove=new bool[n]; var labels=new int[n]; var queue=new int[cellSize*cellSize];
         var accepted=new HashSet<string>((holeIds??"").Split(','));
         var report=new System.Text.StringBuilder();
-        for(int cell=0;cell<6;cell++)
+        for(int cell=0;cell<cellCount;cell++)
         {
-            int ox=cell%3*512,oy=cell/3*512,id=0;
-            for(int y=oy;y<oy+512;y++) for(int x=ox;x<ox+512;x++)
+            int ox=cell%columns*cellSize,oy=cell/columns*cellSize,id=0;
+            for(int y=oy;y<oy+cellSize;y++) for(int x=ox;x<ox+cellSize;x++)
             {
                 int start=y*w+x;
                 if(labels[start]!=0||!White(bytes,start))continue;
@@ -33,11 +37,11 @@ public static class MiningWhiteMatte
                 {
                     int p=queue[first++],px=p%w,py=p/w;
                     minx=Math.Min(minx,px);maxx=Math.Max(maxx,px);miny=Math.Min(miny,py);maxy=Math.Max(maxy,py);
-                    border|=px==ox||px==ox+511||py==oy||py==oy+511;
+                    border|=px==ox||px==ox+cellSize-1||py==oy||py==oy+cellSize-1;
                     Add(px-1,py);Add(px+1,py);Add(px,py-1);Add(px,py+1);
                     void Add(int nx,int ny)
                     {
-                        if(nx<ox||nx>=ox+512||ny<oy||ny>=oy+512)return;
+                        if(nx<ox||nx>=ox+cellSize||ny<oy||ny>=oy+cellSize)return;
                         int q=ny*w+nx;if(labels[q]!=0||!White(bytes,q))return;
                         labels[q]=id;queue[last++]=q;
                     }
@@ -69,10 +73,10 @@ public static class MiningWhiteMatte
         }
         // Isolated leftovers are background; keep the one connected full-body cel per grid cell.
         Array.Clear(labels,0,labels.Length);int stray=0;
-        for(int cell=0;cell<6;cell++)
+        for(int cell=0;cell<cellCount;cell++)
         {
-            int ox=cell%3*512,oy=cell/3*512,id=0,best=0,bestSize=0;
-            for(int y=oy;y<oy+512;y++)for(int x=ox;x<ox+512;x++)
+            int ox=cell%columns*cellSize,oy=cell/columns*cellSize,id=0,best=0,bestSize=0;
+            for(int y=oy;y<oy+cellSize;y++)for(int x=ox;x<ox+cellSize;x++)
             {
                 int start=y*w+x;if(labels[start]!=0||bytes[start*4+3]==0)continue;
                 id++;int first=0,last=1;queue[0]=start;labels[start]=id;
@@ -81,7 +85,7 @@ public static class MiningWhiteMatte
                     int p=queue[first++],px=p%w,py=p/w;
                     for(int dy=-1;dy<=1;dy++)for(int dx=-1;dx<=1;dx++)
                     {
-                        int nx=px+dx,ny=py+dy;if(nx<ox||nx>=ox+512||ny<oy||ny>=oy+512)continue;
+                        int nx=px+dx,ny=py+dy;if(nx<ox||nx>=ox+cellSize||ny<oy||ny>=oy+cellSize)continue;
                         int q=ny*w+nx;if(labels[q]!=0||bytes[q*4+3]==0)continue;
                         labels[q]=id;queue[last++]=q;
                     }
@@ -89,7 +93,7 @@ public static class MiningWhiteMatte
                 if(last>bestSize){best=id;bestSize=last;}
             }
             if(bestSize<10000)throw new Exception("Foreground segmentation failed");
-            for(int y=oy;y<oy+512;y++)for(int x=ox;x<ox+512;x++)
+            for(int y=oy;y<oy+cellSize;y++)for(int x=ox;x<ox+cellSize;x++)
             {
                 int p=y*w+x;if(bytes[p*4+3]>0&&labels[p]!=best)
                 {bytes[p*4]=bytes[p*4+1]=bytes[p*4+2]=bytes[p*4+3]=0;stray++;}
@@ -105,12 +109,13 @@ public static class MiningWhiteMatte
     {
         using var src=new Bitmap(input);using var dst=new Bitmap(output);
         int changed=0,border=0,opaque=0,clear=0;
+        int cell=dst.Width==1536&&dst.Height==1024?512:dst.Width/2;
         for(int y=0;y<dst.Height;y++)for(int x=0;x<dst.Width;x++)
         {
             var c=dst.GetPixel(x,y);var s=src.GetPixel(x,y);
             if(c.A==255){opaque++;if(c.R!=s.R||c.G!=s.G||c.B!=s.B)changed++;}
             if(c.A==0)clear++;
-            if((x%512<4||x%512>507||y%512<4||y%512>507)&&c.A!=0)border++;
+            if((x%cell<4||x%cell>cell-5||y%cell<4||y%cell>cell-5)&&c.A!=0)border++;
         }
         if(changed!=0||border!=0)throw new Exception("Opaque RGB or cel margin regression");
         return $"opaqueRgbChanged={changed}; nonzeroMarginPixels={border}; opaquePixels={opaque}; transparentPixels={clear}";
