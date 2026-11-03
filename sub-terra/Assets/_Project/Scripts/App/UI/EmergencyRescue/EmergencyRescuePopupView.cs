@@ -358,10 +358,13 @@ namespace SubTerra.App.UI.EmergencyRescue
             AttachButtonSfx();
         }
 
-        /// <summary>구출은 확인음, 닫기는 BeginClose가 닫힘 소리를 내므로 호버만. 리스너를 갈아 끼운 뒤 다시 불러도 한 번만 난다.</summary>
+        /// <summary>
+        /// B-181: 구출은 결과음(워프·실패음)만 남기고 확인음을 뺀다. 닫기는 BeginClose가 닫힘 소리를 내므로 호버만.
+        /// 리스너를 갈아 끼운 뒤 다시 불러도 한 번만 난다.
+        /// </summary>
         internal void AttachButtonSfx()
         {
-            UiSfx.Attach(rescueButton, SfxId.UiConfirm, hover: true);
+            UiSfx.Attach(rescueButton, SfxId.None, hover: true);
             UiSfx.Attach(closeButton, SfxId.None, hover: true);
         }
 

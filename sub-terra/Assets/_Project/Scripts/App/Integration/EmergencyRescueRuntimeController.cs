@@ -1,3 +1,4 @@
+using SubTerra.App.Audio;
 using SubTerra.App.Core;
 using SubTerra.App.Core.Data;
 using SubTerra.App.Drone.Dialogue;
@@ -10,6 +11,7 @@ using SubTerra.App.UI.EmergencyRescue;
 using SubTerra.App.UI.HUD;
 using SubTerra.Gameplay.Building;
 using SubTerra.Gameplay.Player;
+using SubTerra.Shared.Audio;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -24,6 +26,14 @@ namespace SubTerra.App.Integration
         private const float DroneReminderDelaySeconds = 18f;
         private const string ReminderText = "구출이 필요하면 머리 위 버튼을 누르거나 R 키를 누르세요";
 
+        // B-181 ★ 구조 순간이동 소리. PM이 숫자만 바꿔 끼운다.
+        public const SfxId RescueWarpSfx = SfxId.PortalWarp;
+        public const SfxId RescueArriveSfx = SfxId.ElevatorArriveDing;
+        public const SfxId RescueFailSfx = SfxId.UiCancelFail;
+        /// <summary>워프 뒤 도착 "딩"까지의 실제 시간(초).</summary>
+        public const float RescueArriveDelay = 0.35f;
+        public const string RescueFailureKey = "emergency.rescue";
+
         private SaveRuntimeController runtime;
         private GameState gameState;
         private EmergencyRescueService service;
@@ -36,14 +46,18 @@ namespace SubTerra.App.Integration
         // 닫는 연출 도중 재열기 입력이 들어오면 닫기가 끝난 직후 같은 팝업을 다시 연다.
         private bool pendingReopen;
         private float closedAt = -1f;
+        // B-181: 워프 → 도착 "딩" 예약(실제 시간).
+        private readonly EmergencyRescueArrivalSfx arrivalSfx = new EmergencyRescueArrivalSfx(() => Time.realtimeSinceStartup);
 
         /// <summary>팝업이 화면에 있음(등장·열림·닫는 중). Esc 닫기 경로가 이 값을 본다.</summary>
         public bool IsPanelOpen => view != null && view.IsPopupVisible;
         public bool IsChipVisible => view != null && view.IsChipVisible;
         public bool IsRescueAvailable => service != null && service.IsAvailable && !rescueCompleted;
+        public bool IsArriveSfxPending => arrivalSfx.IsPending;
 
         private void Update()
         {
+            arrivalSfx.Tick(IsRunActiveForArrival());
             if (!IsRescueAvailable || UiPauseGate.IsHeld)
             {
                 return;
@@ -118,6 +132,8 @@ namespace SubTerra.App.Integration
                 view.Bind(null, null, null);
             }
 
+            // B-181: 씬 전환·재바인딩 중 기다리던 도착음은 버린다.
+            arrivalSfx.Cancel();
             runtime = null;
             gameState = null;
             service = null;
@@ -238,6 +254,7 @@ namespace SubTerra.App.Integration
             if (!HasElevatorDestination())
             {
                 view.SetMessage("엘리베이터 위치를 찾지 못했습니다. 잠시 후 다시 시도해 주세요.");
+                PlayRescueFailSfx();
                 return;
             }
 
@@ -246,6 +263,7 @@ namespace SubTerra.App.Integration
             if (!EmergencyRescueCostRows.AreSame(view.DisplayedCost, current))
             {
                 view.Show(current, "화물 상태가 변경되었습니다. 최신 비용을 다시 확인해 주세요.");
+                PlayRescueFailSfx();
                 return;
             }
 
@@ -258,14 +276,33 @@ namespace SubTerra.App.Integration
                     failure == EmergencyRescueFailure.InventoryChanged
                         ? "화물 상태가 변경되었습니다. 최신 비용을 다시 확인해 주세요."
                         : "현재는 긴급 구출을 요청할 수 없습니다.");
+                PlayRescueFailSfx();
                 return;
             }
 
+            // B-181: 구조 버튼 확인음 대신 워프 한 번, 실제 시간 RescueArriveDelay 뒤 도착 "딩" 한 번.
+            arrivalSfx.BeginWarp();
             MoveToResolvedElevator();
             rescueCompleted = true;
             pendingReopen = false;
             HideAll();
             runtime?.SaveCurrent(AutoSaveReason.Manual);
+        }
+
+        private static void PlayRescueFailSfx()
+        {
+            FailureFeedback.Play(RescueFailSfx, RescueFailureKey);
+        }
+
+        // 탐사 실패(진행 단계가 Active가 아님)·바인딩 해제면 기다리던 도착음을 버린다.
+        private bool IsRunActiveForArrival()
+        {
+            if (gameState == null)
+            {
+                return false;
+            }
+
+            return gameState.Run == null || gameState.Run.LifecyclePhase == RunLifecyclePhase.Active;
         }
 
         private bool HasElevatorDestination()

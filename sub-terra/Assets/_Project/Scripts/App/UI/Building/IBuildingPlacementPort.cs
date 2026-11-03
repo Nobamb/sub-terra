@@ -8,6 +8,9 @@ namespace SubTerra.App.UI.Building
         event Action<string> MoveStatusChanged;
         bool IsMoveMode { get; }
         void BeginMoveSelection();
+
+        /// <summary>B-181: 이동을 취소한다. playSfx가 true이고 시설을 들고 있었을 때만 취소음을 낸다.</summary>
+        void CancelMove(bool playSfx);
     }
 
     /// <summary>
