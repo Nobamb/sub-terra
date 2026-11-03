@@ -136,9 +136,7 @@ namespace SubTerra.App.Tests.Audio
             Assert.That(FacilityCooldownPopupView.CooldownOpenDelay, Is.EqualTo(0f));
 
             Assert.That((int)EmergencyRescueRuntimeController.RescueWarpSfx, Is.EqualTo(30));
-            Assert.That((int)EmergencyRescueRuntimeController.RescueArriveSfx, Is.EqualTo(60));
             Assert.That((int)EmergencyRescueRuntimeController.RescueFailSfx, Is.EqualTo(5));
-            Assert.That(EmergencyRescueRuntimeController.RescueArriveDelay, Is.EqualTo(0.35f));
 
             Assert.That((int)GameplayBuildingPlacementBridge.MovePickupSfx, Is.EqualTo(11));
             Assert.That((int)GameplayBuildingPlacementBridge.MoveCancelSfx, Is.EqualTo(12));
@@ -346,64 +344,23 @@ namespace SubTerra.App.Tests.Audio
         // ---- B. 구조 순간이동 ----
 
         [Test]
-        public void RescueArrival_WarpOnce_ThenDingAfterDelayOnce()
-        {
-            var sfx = new EmergencyRescueArrivalSfx(() => now);
-            var start = now;
-
-            sfx.BeginWarp();
-            Assert.That(Count(SfxId.PortalWarp), Is.EqualTo(1));
-            Assert.That(Count(SfxId.ElevatorArriveDing), Is.Zero);
-
-            now = start + 0.30f;
-            Assert.That(sfx.Tick(true), Is.False);
-            Assert.That(Count(SfxId.ElevatorArriveDing), Is.Zero, "0.30초에는 아직");
-
-            now = start + 0.40f;
-            Assert.That(sfx.Tick(true), Is.True);
-            Assert.That(Count(SfxId.ElevatorArriveDing), Is.EqualTo(1), "0.40초에 딩 한 번");
-
-            now = start + 2f;
-            sfx.Tick(true);
-            Assert.That(Count(SfxId.ElevatorArriveDing), Is.EqualTo(1));
-            Assert.That(Count(SfxId.EscapeArrive), Is.Zero, "B-165에서 뺀 도착음은 쓰지 않는다");
-        }
-
-        [Test]
-        public void RescueArrival_CancelOrRunEnded_DropsDing()
-        {
-            var sfx = new EmergencyRescueArrivalSfx(() => now);
-            var start = now;
-            sfx.BeginWarp();
-            sfx.Cancel();
-            now = start + 1f;
-            sfx.Tick(true);
-            Assert.That(Count(SfxId.ElevatorArriveDing), Is.Zero, "Unbind로 버림");
-
-            sfx.BeginWarp();
-            now += 0.1f;
-            sfx.Tick(false);
-            now += 1f;
-            sfx.Tick(true);
-            Assert.That(Count(SfxId.ElevatorArriveDing), Is.Zero, "탐사 실패로 버림");
-            Assert.That(sfx.IsPending, Is.False);
-        }
-
-        [Test]
-        public void RescueController_WiresWarpBeforeMove_FailSoundOnEachFailure_CancelOnUnbind()
+        public void RescueController_WarpOnceBeforeMove_NoArrivalDing_FailSoundOnEachFailure()
         {
             var source = ReadScript("App", "Integration", "EmergencyRescueRuntimeController.cs");
             var tryRescue = source.Substring(source.IndexOf("private void TryRescue()", StringComparison.Ordinal));
             tryRescue = tryRescue.Substring(0, tryRescue.IndexOf("private static void PlayRescueFailSfx", StringComparison.Ordinal));
 
-            Assert.That(tryRescue.IndexOf("arrivalSfx.BeginWarp();", StringComparison.Ordinal),
+            const string warp = "SfxPlayer.Play(RescueWarpSfx);";
+            Assert.That(CountOf(tryRescue, warp), Is.EqualTo(1), "성공 시 워프 한 번");
+            Assert.That(tryRescue.IndexOf(warp, StringComparison.Ordinal),
                 Is.LessThan(tryRescue.IndexOf("MoveToResolvedElevator();", StringComparison.Ordinal)));
+            Assert.That(CountOf(source, "SfxPlayer.Play("), Is.EqualTo(1), "워프 외 추가 재생(지연 도착음 등) 없음");
+            Assert.That(source, Does.Not.Contain("ElevatorArriveDing"), "엘리베이터를 탄 것이 아니므로 구조 도착 딩 없음");
+            Assert.That(source, Does.Not.Contain("RescueArrive"));
+            Assert.That(File.Exists(Path.Combine(Application.dataPath, "_Project", "Scripts", "App", "Integration", "EmergencyRescueArrivalSfx.cs")),
+                Is.False, "지연 도착음 클래스는 제거");
             Assert.That(CountOf(tryRescue, "PlayRescueFailSfx();"), Is.EqualTo(3), "엘리베이터 못 찾음·비용 바뀜·결제 실패");
             Assert.That(source, Does.Contain("FailureFeedback.Play(RescueFailSfx, RescueFailureKey)"));
-
-            var unbind = source.Substring(source.IndexOf("public void Unbind()", StringComparison.Ordinal));
-            unbind = unbind.Substring(0, unbind.IndexOf("private void OnDestroy()", StringComparison.Ordinal));
-            Assert.That(unbind, Does.Contain("arrivalSfx.Cancel();"));
 
             var reset = source.Substring(source.IndexOf("private void ResetEpisode()", StringComparison.Ordinal));
             reset = reset.Substring(0, reset.IndexOf("private static Sprite ResolveIcon", StringComparison.Ordinal));

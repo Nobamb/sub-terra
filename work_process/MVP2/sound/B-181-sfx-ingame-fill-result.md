@@ -31,11 +31,9 @@
 - 실패음(UiCancelFail)과 켜짐음은 같은 프레임에 겹친다. 기본값은 늦추지 않음(0)이다.
 
 ## B. 구조 순간이동
-- 성공: `EmergencyRescueRuntimeController.TryRescue` ~284에서 `service.TryRescue` 성공 뒤, `MoveToResolvedElevator` 직전에 `arrivalSfx.BeginWarp()`를 부른다 → `RescueWarpSfx = PortalWarp(30)` 한 번.
-- 도착: 실제 시간 `RescueArriveDelay = 0.35`초 뒤 `RescueArriveSfx = ElevatorArriveDing(60)` 한 번. 예약과 판정은 새 일반 C# 클래스 `App/Integration/EmergencyRescueArrivalSfx.cs`가 맡고, 컨트롤러 `Update` ~60에서 `Tick`한다(구조 뒤 `IsRescueAvailable`이 false가 되어도 이 줄은 먼저 돈다).
-  - 기다리는 동안 `Unbind`(씬 전환·`OnDestroy`) ~136에서 `Cancel`, 탐사 실패(진행 단계가 Active가 아님)·gameState 없음이면 버린다.
-  - `ResetEpisode`(전력 회복)는 도착음을 버리지 않는다. 구조 직후 전력이 차도 "딩"은 난다.
-  - `EscapeArrive`(38)는 쓰지 않는다.
+- 성공: `EmergencyRescueRuntimeController.TryRescue`에서 `service.TryRescue` 성공 뒤, `MoveToResolvedElevator` 직전에 `SfxPlayer.Play(RescueWarpSfx)` → `PortalWarp(30)` 한 번.
+- 도착음 없음(PR #283 피드백 반영): 처음에는 0.35초 뒤 `ElevatorArriveDing(60)`을 냈지만, `portal_warp.wav`는 0~0.3초가 작게 차오르는 구간(RMS 0.02~0.05)이고 소리의 중심은 0.35~0.9초(RMS 약 0.25)여서 "딩"이 워프를 덮었다. 엘리베이터를 탄 것도 아니므로 구조 도착 "딩"과 `EmergencyRescueArrivalSfx.cs`를 지웠다.
+  - 엘리베이터 문·지상 도착의 기존 "딩"은 그대로다. `EscapeArrive`(38)도 쓰지 않는다.
 - 구조 버튼: `EmergencyRescuePopupView.AttachButtonSfx` ~362를 `UiSfx.Attach(rescueButton, SfxId.None, hover: true)`로 바꿨다. 결과음만 남는다.
 - 실패음을 넣은 경로(`RescueFailSfx = UiCancelFail(5)`, `FailureFeedback` 키 `emergency.rescue`, 0.3초 묶음):
   1. 엘리베이터 못 찾음 ~257
@@ -83,14 +81,13 @@
   - 실패음과 대기 창 켜짐음이 겹칠 때 뭉개지는지(`CooldownOpenDelay`)
   - 0.6배 크기
   - 말풍선 비프 피치 1.35가 이름표 비프와 구분되는지
-- 구조 성공 전체 흐름(결제 → 워프 → 딩)은 EditMode에서 예약 클래스와 소스 연결로만 확인했다. 실제 씬 흐름은 미검증이다.
-- 드론 스캔 핑이 도착 "딩" 0.6초 안에서 빠지는지는 코드로만 확인했다.
+- 구조 성공 뒤 워프 소리는 사용자가 실제 게임에서 들리는 것을 확인했다. 구조 직후 엘리베이터 홀로그램 켜짐음(`WorldHoloOpen`, 0~0.4초가 큼)이 워프 앞부분(0~0.3초 거의 무음)과 겹쳐 한 소리처럼 들릴 수 있다.
 
 ## 사용자 테스트 가이드
 1. 전진기지 충전기를 쓰고 바로 다시 E를 누른다 → 실패음과 함께 대기 창이 작은 TV 켜짐 소리로 뜬다.
 2. 창 앞에서 대기 시간이 끝날 때까지 기다린다 → 완료 빛과 함께 "반짝" 소리, 이어서 작은 꺼짐 소리가 난다.
 3. 대기 창이 떠 있을 때 멀리 걸어간다 → 작은 꺼짐 소리가 한 번 난다. 보건소도 1~3번이 같다.
-4. 광산에서 전력이 0이 되어 구조 창이 뜨면 구조 버튼에 마우스를 올린다 → 호버음. 누르면 확인음 없이 워프 소리가 나고 엘리베이터 앞으로 옮겨진 뒤 "딩" 한 번.
+4. 광산에서 전력이 0이 되어 구조 창이 뜨면 구조 버튼에 마우스를 올린다 → 호버음. 누르면 확인음 없이 워프 소리 한 번이 나고 엘리베이터 앞으로 옮겨진다(도착 "딩" 없음).
 5. 화물이 바뀌어 비용이 달라지는 등 구조가 안 되면 실패음이 난다(만들기 어려우면 건너뛰어도 됨).
 6. 설치한 시설을 우클릭으로 집는다 → 작은 홀로그램 열림 소리.
 7. 들고 있는 채로 우클릭하거나 건설창을 닫아 취소한다 → 작은 닫힘 소리. 다른 자리에 놓으면 예전처럼 설치음, 못 놓는 자리면 실패음.
@@ -104,6 +101,6 @@
 | 항목 | 상태 | 비고 |
 |---|---|---|
 | 재사용 대기 창 켜짐·꺼짐·완료 | 구현 | 79/80 0.6배, 78 |
-| 구조 순간이동 (D-2 위험·생존) | 구현 | 30 → 0.35초 → 60, 실패 5, 구조 버튼 확인음 제거 |
+| 구조 순간이동 (D-2 위험·생존) | 구현 | 30 한 번(도착 딩 없음), 실패 5, 구조 버튼 확인음 제거 |
 | 시설 이동 집기·취소 | 구현 | 11/12 0.6배, 들고 있을 때만 취소음 |
 | 드론 말풍선 | 구현 | 13 피치 1.35, 급한 대사 = 같은 비프(B-183에서 교체) |

@@ -27,11 +27,9 @@ namespace SubTerra.App.Integration
         private const string ReminderText = "구출이 필요하면 머리 위 버튼을 누르거나 R 키를 누르세요";
 
         // B-181 ★ 구조 순간이동 소리. PM이 숫자만 바꿔 끼운다.
+        // 엘리베이터를 탄 것이 아니므로 구조 도착 "딩"은 넣지 않는다(PR #283 피드백).
         public const SfxId RescueWarpSfx = SfxId.PortalWarp;
-        public const SfxId RescueArriveSfx = SfxId.ElevatorArriveDing;
         public const SfxId RescueFailSfx = SfxId.UiCancelFail;
-        /// <summary>워프 뒤 도착 "딩"까지의 실제 시간(초).</summary>
-        public const float RescueArriveDelay = 0.35f;
         public const string RescueFailureKey = "emergency.rescue";
 
         private SaveRuntimeController runtime;
@@ -46,18 +44,14 @@ namespace SubTerra.App.Integration
         // 닫는 연출 도중 재열기 입력이 들어오면 닫기가 끝난 직후 같은 팝업을 다시 연다.
         private bool pendingReopen;
         private float closedAt = -1f;
-        // B-181: 워프 → 도착 "딩" 예약(실제 시간).
-        private readonly EmergencyRescueArrivalSfx arrivalSfx = new EmergencyRescueArrivalSfx(() => Time.realtimeSinceStartup);
 
         /// <summary>팝업이 화면에 있음(등장·열림·닫는 중). Esc 닫기 경로가 이 값을 본다.</summary>
         public bool IsPanelOpen => view != null && view.IsPopupVisible;
         public bool IsChipVisible => view != null && view.IsChipVisible;
         public bool IsRescueAvailable => service != null && service.IsAvailable && !rescueCompleted;
-        public bool IsArriveSfxPending => arrivalSfx.IsPending;
 
         private void Update()
         {
-            arrivalSfx.Tick(IsRunActiveForArrival());
             if (!IsRescueAvailable || UiPauseGate.IsHeld)
             {
                 return;
@@ -132,8 +126,6 @@ namespace SubTerra.App.Integration
                 view.Bind(null, null, null);
             }
 
-            // B-181: 씬 전환·재바인딩 중 기다리던 도착음은 버린다.
-            arrivalSfx.Cancel();
             runtime = null;
             gameState = null;
             service = null;
@@ -280,8 +272,8 @@ namespace SubTerra.App.Integration
                 return;
             }
 
-            // B-181: 구조 버튼 확인음 대신 워프 한 번, 실제 시간 RescueArriveDelay 뒤 도착 "딩" 한 번.
-            arrivalSfx.BeginWarp();
+            // B-181: 구조 버튼 확인음 대신 이동 전에 워프 한 번만 낸다.
+            SfxPlayer.Play(RescueWarpSfx);
             MoveToResolvedElevator();
             rescueCompleted = true;
             pendingReopen = false;
@@ -292,17 +284,6 @@ namespace SubTerra.App.Integration
         private static void PlayRescueFailSfx()
         {
             FailureFeedback.Play(RescueFailSfx, RescueFailureKey);
-        }
-
-        // 탐사 실패(진행 단계가 Active가 아님)·바인딩 해제면 기다리던 도착음을 버린다.
-        private bool IsRunActiveForArrival()
-        {
-            if (gameState == null)
-            {
-                return false;
-            }
-
-            return gameState.Run == null || gameState.Run.LifecyclePhase == RunLifecyclePhase.Active;
         }
 
         private bool HasElevatorDestination()
