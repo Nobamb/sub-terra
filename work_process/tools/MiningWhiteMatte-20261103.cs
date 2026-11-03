@@ -117,7 +117,7 @@ public static class MiningWhiteMatte
             if(c.A==0)clear++;
             if((x%cell<4||x%cell>cell-5||y%cell<4||y%cell>cell-5)&&c.A!=0)border++;
         }
-        if(changed!=0||border!=0)throw new Exception("Opaque RGB or cel margin regression");
+        if(changed!=0||border!=0)throw new Exception($"Opaque RGB or cel margin regression: changed={changed}, margin={border}");
         return $"opaqueRgbChanged={changed}; nonzeroMarginPixels={border}; opaquePixels={opaque}; transparentPixels={clear}";
     }
 }

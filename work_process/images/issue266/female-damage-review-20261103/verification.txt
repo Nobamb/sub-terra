@@ -1,0 +1,1 @@
+opaqueRgbChanged=0; nonzeroMarginPixels=0; opaquePixels=399667; transparentPixels=1949322
