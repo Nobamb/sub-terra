@@ -1,8 +1,10 @@
 using System;
+using SubTerra.App.Audio;
 using SubTerra.App.Core.Data;
 using SubTerra.App.Outpost;
 using SubTerra.App.UI.HUD;
 using SubTerra.App.UI.Sell;
+using SubTerra.Shared.Audio;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -14,10 +16,18 @@ namespace SubTerra.App.UI.Outpost
     /// 상태는 TV 진행값(progress) 하나와 목표 on/off로 표현하며 코루틴·콜백을 쓰지 않는다.
     /// 입력은 받지 않는다(모든 Graphic raycastTarget 해제, Stage CanvasGroup blocksRaycasts 해제).
     /// </summary>
-    public sealed class FacilityCooldownPopupView : MonoBehaviour, IFacilityCooldownPopupView
+    public sealed class FacilityCooldownPopupView : MonoBehaviour, IFacilityCooldownPopupView, IFacilityCooldownQuietHide
     {
         /// <summary>HUD 위, 모달 팝업(EmergencyRescue 31,000) 아래.</summary>
         public const int SortingOrder = 30_600;
+
+        // B-181 ★ 소리 id·음량 배율·간격. PM이 숫자만 바꿔 끼운다.
+        public const SfxId CooldownOpenSfx = SfxId.WindowTvOpen;
+        public const SfxId CooldownCloseSfx = SfxId.WindowTvClose;
+        public const SfxId CooldownDoneSfx = SfxId.UnlockGlow;
+        public const float CooldownTvVolume = 0.6f;
+        /// <summary>같은 프레임의 실패음과 뭉개지면 켜짐음을 이만큼(실제 초) 늦춘다. 0이면 바로.</summary>
+        public const float CooldownOpenDelay = 0f;
 
         private const float WindowWidth = 400f;
         private const float WindowHeight = 210f;
@@ -108,6 +118,9 @@ namespace SubTerra.App.UI.Outpost
         private float completeT = -1f;
         private bool flashHeld;
         private float elapsed;
+        // B-181: 켜짐음을 낸 창만 꺼질 때 꺼짐음을 한 번 낸다. 늦춘 켜짐음은 elapsed 기준 시각에 낸다.
+        private bool closeSfxArmed;
+        private float pendingOpenSfxAt = -1f;
 
         public bool IsOpen => targetOn;
         public bool IsCompleting => completeT >= 0f;
@@ -177,6 +190,8 @@ namespace SubTerra.App.UI.Outpost
                 return false;
             }
 
+            // B-181: 꺼져 있었거나(꺼지는 중 포함) 다른 대상으로 바뀔 때만 새로 켜는 것으로 본다.
+            var turningOn = !targetOn || !sameTarget;
             if (!gameObject.activeSelf)
             {
                 gameObject.SetActive(true);
@@ -209,10 +224,26 @@ namespace SubTerra.App.UI.Outpost
             edgeSize = FacilityCooldownPopupTimeline.InnerEdgeSize01(remaining);
             SetCountdown(remaining);
             ApplyPose();
+            if (turningOn)
+            {
+                RequestOpenSfx();
+            }
+
             return true;
         }
 
         public void HideFacilityCooldown()
+        {
+            Hide(true);
+        }
+
+        /// <summary>B-181: 바인딩 해제·씬 전환처럼 조용히 치우는 경로. 연출은 같고 꺼짐음만 없다.</summary>
+        public void HideFacilityCooldownQuietly()
+        {
+            Hide(false);
+        }
+
+        private void Hide(bool playSfx)
         {
             if (!built || !targetOn)
             {
@@ -224,6 +255,36 @@ namespace SubTerra.App.UI.Outpost
             flashHeld = false;
             hasObserved = false;
             gatherTarget = 0f;
+            OnTurningOff(playSfx);
+        }
+
+        private void RequestOpenSfx()
+        {
+            closeSfxArmed = true;
+            if (CooldownOpenDelay > 0f)
+            {
+                pendingOpenSfxAt = elapsed + CooldownOpenDelay;
+                return;
+            }
+
+            pendingOpenSfxAt = -1f;
+            WindowTvSfx.Play(CooldownOpenSfx, CooldownTvVolume);
+        }
+
+        /// <summary>targetOn이 true→false로 바뀐 순간. 켜짐음을 낸 창이면 꺼짐음을 한 번만 낸다.</summary>
+        private void OnTurningOff(bool playSfx)
+        {
+            pendingOpenSfxAt = -1f;
+            if (!closeSfxArmed)
+            {
+                return;
+            }
+
+            closeSfxArmed = false;
+            if (playSfx)
+            {
+                WindowTvSfx.Play(CooldownCloseSfx, CooldownTvVolume);
+            }
         }
 
         /// <summary>테스트와 Update가 같이 쓰는 진행 경로. dt는 실제 시간(unscaled) 기준.</summary>
@@ -236,6 +297,12 @@ namespace SubTerra.App.UI.Outpost
 
             dt = Mathf.Max(0f, dt);
             elapsed += dt;
+            if (pendingOpenSfxAt >= 0f && targetOn && elapsed >= pendingOpenSfxAt)
+            {
+                pendingOpenSfxAt = -1f;
+                WindowTvSfx.Play(CooldownOpenSfx, CooldownTvVolume);
+            }
+
             if (targetOn && completeT < 0f)
             {
                 Observe();
@@ -251,6 +318,7 @@ namespace SubTerra.App.UI.Outpost
                     flashHeld = true;
                     targetOn = false;
                     gatherTarget = 0f;
+                    OnTurningOff(true);
                 }
             }
 
@@ -316,11 +384,13 @@ namespace SubTerra.App.UI.Outpost
                 completeT = 0f;
                 gatherTarget = 1f;
                 SetDisplaySeconds(0);
+                SfxPlayer.Play(CooldownDoneSfx);
             }
             else
             {
                 targetOn = false;
                 gatherTarget = 0f;
+                OnTurningOff(true);
             }
 
             hasObserved = false;
@@ -762,6 +832,9 @@ namespace SubTerra.App.UI.Outpost
         {
             progress = 0f;
             targetOn = false;
+            // B-181: 조용히 치우는 경로는 꺼짐음·늦춘 켜짐음을 남기지 않는다.
+            closeSfxArmed = false;
+            pendingOpenSfxAt = -1f;
             completeT = -1f;
             flashHeld = false;
             gather = 0f;

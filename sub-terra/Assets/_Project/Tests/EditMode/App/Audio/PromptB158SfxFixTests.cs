@@ -246,7 +246,8 @@ namespace SubTerra.App.Tests.Audio
         }
 
         [Test]
-        public void EmergencyRescue_RescueConfirmsAndCloseHoversOnly_SurvivesBind()
+        // B-181: 구출 버튼 확인음을 빼고 결과음(워프·실패음)만 남겨, 구출·닫기 둘 다 호버만 남는다.
+        public void EmergencyRescue_RescueAndCloseHoverOnly_SurvivesBind()
         {
             var canvas = new GameObject("B158Canvas", typeof(RectTransform), typeof(Canvas));
             created.Add(canvas);
@@ -255,14 +256,14 @@ namespace SubTerra.App.Tests.Audio
             var closed = 0;
             view.Bind(() => rescued++, () => closed++, null);
 
-            AssertSfx(view.Popup.RescueButton, SfxId.UiConfirm, true, true, "rescue");
+            AssertSfx(view.Popup.RescueButton, SfxId.None, true, true, "rescue");
             AssertSfx(view.Popup.CloseButton, SfxId.None, true, true, "close");
 
             view.Popup.RescueButton.onClick.Invoke();
             view.Popup.CloseButton.onClick.Invoke();
             Assert.That(rescued, Is.EqualTo(1));
             Assert.That(closed, Is.EqualTo(1));
-            Assert.That(played, Is.EqualTo(new[] { SfxId.UiConfirm }));
+            Assert.That(played, Is.Empty);
         }
 
         // ---- CCTV 닫힘 ----

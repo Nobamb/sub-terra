@@ -153,7 +153,8 @@ namespace SubTerra.App.Integration
                 return;
             }
             var placement = FindFirstObjectByType<GameplayBuildingPlacementBridge>();
-            if (placement != null) placement.CancelPreview();
+            // B-181: ESC 취소도 플레이어 입력이라 들고 있던 시설이면 취소음을 낸다.
+            if (placement != null) placement.CancelPreview(true);
         }
 
         public void OpenSettings()
