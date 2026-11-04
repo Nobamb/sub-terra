@@ -1,0 +1,85 @@
+{
+  "frames": [
+    {
+      "source": "female-mining-inbetween-review-20261103/key-01.png",
+      "sheetScale": 0.9168443496801706,
+      "cell": 0,
+      "name": "key-01",
+      "sha256": "7A03D5B4F4B28ED2066D4DE3CDC8E5CFCF72355B0DEE060B752529DCB4987C0A"
+    },
+    {
+      "source": "female-mining-inbetween-review-20261103/middle-01.png",
+      "sheetScale": 0.9247311827956989,
+      "cell": 1,
+      "name": "middle-01",
+      "sha256": "EBD5536A82843CBC673CA7F23DA56B1CF6186492D6AB8825EBD72064100BBB4E"
+    },
+    {
+      "source": "female-mining-inbetween-review-20261103/key-02.png",
+      "sheetScale": 0.9492273730684326,
+      "cell": 2,
+      "name": "key-02",
+      "sha256": "437FFA099DD56B8C32EA500914A38C5E017CB140165F1337B58534F7B4DB6B02"
+    },
+    {
+      "source": "female-mining-inbetween-review-20261103/middle-02.png",
+      "sheetScale": 0.9706546275395034,
+      "cell": 3,
+      "name": "middle-02",
+      "sha256": "B94604F21CBA72CD34A401D8C0E8B3800EB96158F5A7768429897F0EA544FA36"
+    },
+    {
+      "source": "female-mining-inbetween-review-20261103/key-03.png",
+      "sheetScale": 0.9662921348314607,
+      "cell": 4,
+      "name": "key-03",
+      "sha256": "1DDF7683F3FD6C79A96A0E8F8E7BCD8AFC7ABF0E99E4B443821F10DE30655C03"
+    },
+    {
+      "source": "female-mining-inbetween-review-20261103/key-04.png",
+      "sheetScale": 0.9662921348314607,
+      "cell": 5,
+      "name": "key-04",
+      "sha256": "B3ADE2F882A80A2FCCD26DB2522D3AB419538D955F525C7F88FA529A01298D84"
+    },
+    {
+      "source": "female-mining-inbetween-review-20261103/middle-04.png",
+      "sheetScale": 0.9662921348314607,
+      "cell": 6,
+      "name": "middle-04",
+      "sha256": "090AB04FAE483B315488A55B0E74AA07A19E836D12ACBB7FA21D04E0820D148A"
+    },
+    {
+      "source": "female-mining-inbetween-review-20261103/middle-05.png",
+      "sheetScale": 0.9409190371991247,
+      "cell": 7,
+      "name": "middle-05",
+      "sha256": "E9C1E1F8B59B14680217D27CB8D75D059CD0EED194C771DAE68901FB1C3EA153"
+    },
+    {
+      "source": "female-mining-inbetween-review-20261103/key-05.png",
+      "sheetScale": 0.9327548806941431,
+      "cell": 8,
+      "name": "key-05",
+      "sha256": "8FA75F3EC4CE4771B500121B2345E95D1B9FA7ACD295BF2BAD501C654C4A7652"
+    },
+    {
+      "source": "female-mining-inbetween-review-20261103/middle-06.png",
+      "sheetScale": 0.9429824561403509,
+      "cell": 9,
+      "name": "middle-06",
+      "sha256": "F596DFA4FF6698327C59F5A801AFD0B1A1A6D0B1DBD3078586DA0E49A1702530"
+    },
+    {
+      "source": "female-mining-inbetween-review-20261103/key-06.png",
+      "sheetScale": 0.9129511677282378,
+      "cell": 10,
+      "name": "key-06",
+      "sha256": "E0CE18448850B995B65B69BAC63DC006B83DEA3AE87D8B3DCEB6689F9E024AAD"
+    }
+  ],
+  "rows": 4,
+  "columns": 3,
+  "runtimeApplied": false,
+  "motion": "mining"
+}
