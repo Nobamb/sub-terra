@@ -6,15 +6,29 @@ using System.Runtime.InteropServices;
 // Background-only connected-component cleanup. No limb manipulation.
 public static class LandingRecoveryReview
 {
+    public static double FootSpanCenter(string source)
+    {
+        using var im=new Bitmap(source);int bottom=-1,left=im.Width,right=-1;
+        for(int y=im.Height-1;y>=0&&bottom<0;y--)
+            for(int x=0;x<im.Width;x++)if(im.GetPixel(x,y).A>=180){bottom=y;break;}
+        for(int y=Math.Max(0,bottom-15);y<=bottom;y++)
+            for(int x=0;x<im.Width;x++)if(im.GetPixel(x,y).A>=180){left=Math.Min(left,x);right=Math.Max(right,x);}
+        if(right<left)throw new Exception("No foot diagnostic span");
+        return (left+right+1)/2.0;
+    }
+    public static string CleanCel(string source, string output) => Extract(source, output, -1);
     public static string Extract(string source,string output,int column)
     {
         using var sheet=new Bitmap(source);
-        if(sheet.Width!=sheet.Height*2)throw new Exception("Expected two square cells");
+        if(column < 0 ? sheet.Width!=sheet.Height : sheet.Width!=sheet.Height*2)
+            throw new Exception("Expected square cel or two square cells");
         int s=sheet.Height,n=s*s;
-        using var cel=sheet.Clone(new Rectangle(column*s,0,s,s),PixelFormat.Format32bppArgb);
+        using var cel=sheet.Clone(new Rectangle(Math.Max(0,column)*s,0,s,s),PixelFormat.Format32bppArgb);
         var rect=new Rectangle(0,0,s,s);
         var data=cel.LockBits(rect,ImageLockMode.ReadOnly,PixelFormat.Format32bppArgb);
         var b=new byte[n*4];Marshal.Copy(data.Scan0,b,0,b.Length);cel.UnlockBits(data);
+        int negligible=0;
+        if(column<0)for(int p=0;p<n;p++)if(b[p*4+3]==1){Array.Clear(b,p*4,4);negligible++;}
         var labels=new int[n];var queue=new int[n];int id=0,best=0,bestSize=0;
         for(int start=0;start<n;start++)
         {
@@ -42,6 +56,6 @@ public static class LandingRecoveryReview
         if(margin>0)throw new Exception("Figure reaches cell edge");
         data=cel.LockBits(rect,ImageLockMode.WriteOnly,PixelFormat.Format32bppArgb);
         Marshal.Copy(b,0,data.Scan0,b.Length);cel.UnlockBits(data);cel.Save(output,ImageFormat.Png);
-        return $"column={column}; isolatedAlphaPixelsRemoved={removed}; foregroundRgbChanged=0; nonzeroMarginPixels={margin}";
+        return $"column={column}; isolatedAlphaPixelsRemoved={removed}; negligibleAlphaOneRemoved={negligible}; foregroundRgbChanged=0; nonzeroMarginPixels={margin}";
     }
 }
