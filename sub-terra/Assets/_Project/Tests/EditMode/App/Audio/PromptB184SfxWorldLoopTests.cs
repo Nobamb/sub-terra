@@ -61,8 +61,8 @@ namespace SubTerra.App.Tests.Audio
                 .Invoke(target, null);
         }
 
-        [TestCase(SfxId.ScanMarkClick, 99, "scan_mark_click", 0.4f, 0.1f)]
-        [TestCase(SfxId.GasFlowLoop, 100, "gas_flow_loop", 0.45f, 4f)]
+        [TestCase(SfxId.ScanMarkClick, 99, "scan_mark_click", 1.0f, 0.1f)]
+        [TestCase(SfxId.GasFlowLoop, 100, "gas_flow_loop", 0.8f, 4f)]
         [TestCase(SfxId.UnstableBlockShakeLoop, 101, "unstable_block_shake_loop", 0.5f, 1.5f)]
         public void Slots_AssetAndDefaultsMatch(SfxId id, int number, string file, float volume, float seconds)
         {

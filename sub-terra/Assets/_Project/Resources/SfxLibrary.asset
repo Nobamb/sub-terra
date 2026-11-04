@@ -800,7 +800,7 @@ MonoBehaviour:
   - id: 99
     clip: {fileID: 8300000, guid: a9bc040b00dc9ed439efc5ded5762f5e, type: 3}
     bus: 1
-    volume: 0.4
+    volume: 1.0
     pitch: 1
     startTime: 0
     maxDuration: 0
@@ -808,7 +808,7 @@ MonoBehaviour:
   - id: 100
     clip: {fileID: 8300000, guid: 8e8aaaa63b96c5446bc23d6e8a9c565b, type: 3}
     bus: 1
-    volume: 0.45
+    volume: 0.8
     pitch: 1
     startTime: 0
     maxDuration: 0
