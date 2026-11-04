@@ -19,8 +19,10 @@ namespace SubTerra.App.UI.Drone
 
         // B-181 ★ 말풍선 비프. PM이 숫자만 바꿔 끼운다.
         public const SfxId DroneBubbleSfx = SfxId.WorldFacilityTagBeep;
-        /// <summary>급한 대사(PRIORITY)도 지금은 같은 비프. B-183에서 새 음원으로 바꾼다.</summary>
-        public const SfxId DroneUrgentBubbleSfx = SfxId.WorldFacilityTagBeep;
+        public const SfxId DroneUrgentBubbleSfx = SfxId.DroneBubbleUrgent;
+        public const SfxId DroneSeriousUrgentBubbleSfx = SfxId.DroneBubbleUrgentSerious;
+        public const float DroneUrgentBubblePitch = 1f;
+        public const float DronePriorityBubbleGap = 0.3f;
         /// <summary>시설 이름표 비프보다 높게.</summary>
         public const float DroneBubblePitch = 1.35f;
         /// <summary>드론 스캔 핑이 이 시간(실제 초) 안에 났으면 이번 비프는 뺀다.</summary>
@@ -125,7 +127,7 @@ namespace SubTerra.App.UI.Drone
 
             ApplyTerminalTheme();
             ApplyTerminalState(operationalState);
-            TryPlayBubbleSfx(dialogue.IsUrgent, sameText, wasBoundVisible);
+            TryPlayBubbleSfx(dialogue, sameText, wasBoundVisible);
             SetCanvasVisible(true);
             RefreshPosition();
         }
@@ -185,7 +187,7 @@ namespace SubTerra.App.UI.Drone
         }
 
         /// <returns>비프를 냈으면 true. 생략한 회차는 늦춰 내지 않는다.</returns>
-        private bool TryPlayBubbleSfx(bool urgent, bool sameText, bool wasBoundVisible)
+        private bool TryPlayBubbleSfx(DroneDialogueResult dialogue, bool sameText, bool wasBoundVisible)
         {
             var first = firstDialoguePending;
             firstDialoguePending = false;
@@ -205,6 +207,9 @@ namespace SubTerra.App.UI.Drone
                 return false;
             }
 
+            if (dialogue.IsUrgent && secondsSinceSfx(SfxId.DronePriorityAlert) < DronePriorityBubbleGap)
+                return false;
+
             if (hasBeeped && now - lastBeepAt < DroneBubbleMinGap)
             {
                 return false;
@@ -212,7 +217,9 @@ namespace SubTerra.App.UI.Drone
 
             hasBeeped = true;
             lastBeepAt = now;
-            SfxPlayer.Play(urgent ? DroneUrgentBubbleSfx : DroneBubbleSfx, DroneBubblePitch);
+            var id = !dialogue.IsUrgent ? DroneBubbleSfx
+                : DroneUrgentBubbleRule.IsSerious(dialogue) ? DroneSeriousUrgentBubbleSfx : DroneUrgentBubbleSfx;
+            SfxPlayer.Play(id, dialogue.IsUrgent ? DroneUrgentBubblePitch : DroneBubblePitch);
             return true;
         }
 

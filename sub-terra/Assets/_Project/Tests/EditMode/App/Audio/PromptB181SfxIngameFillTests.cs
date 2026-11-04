@@ -143,7 +143,7 @@ namespace SubTerra.App.Tests.Audio
             Assert.That(GameplayBuildingPlacementBridge.MoveHoloVolume, Is.EqualTo(0.6f));
 
             Assert.That((int)DroneDialogueSocket.DroneBubbleSfx, Is.EqualTo(13));
-            Assert.That(DroneDialogueSocket.DroneUrgentBubbleSfx, Is.EqualTo(DroneDialogueSocket.DroneBubbleSfx), "급한 대사 = 같은 비프(B-183에서 교체)");
+            Assert.That(DroneDialogueSocket.DroneUrgentBubbleSfx, Is.EqualTo(SfxId.DroneBubbleUrgent), "B-183: 급한 대사 전용 음원");
             Assert.That(DroneDialogueSocket.DroneBubblePitch, Is.EqualTo(1.35f));
             Assert.That(DroneDialogueSocket.DroneBubblePingGap, Is.EqualTo(0.3f));
             Assert.That(DroneDialogueSocket.DroneBubbleMinGap, Is.EqualTo(1.5f));
@@ -664,13 +664,13 @@ namespace SubTerra.App.Tests.Audio
         }
 
         [Test]
-        public void Bubble_UrgentLinePlaysSameBeepOnce()
+        public void Bubble_UrgentLinePlaysDedicatedBeepOnce()
         {
             var clock = new BubbleClock { Now = 10f };
             var socket = BoundSocket(clock);
             socket.SetDialogue(Line("urgent", true));
-            Assert.That(Count(SfxId.WorldFacilityTagBeep), Is.EqualTo(1));
-            Assert.That(Last(SfxId.WorldFacilityTagBeep).Pitch, Is.EqualTo(1.35f).Within(0.0001f));
+            Assert.That(Count(SfxId.DroneBubbleUrgent), Is.EqualTo(1));
+            Assert.That(Last(SfxId.DroneBubbleUrgent).Pitch, Is.EqualTo(1f).Within(0.0001f));
         }
 
         [Test]

@@ -69,8 +69,8 @@ namespace SubTerra.App.Audio
                 // 원본 1.70초 중 소리는 0.5초까지.
                 (new SfxEntry(SfxId.AlertRiskTick, SfxBus.Alert, volume: 0.9f,
                     maxDuration: 0.6f, fadeOut: 0.1f), "alert_risk_tick"),
-                // 파일이 아직 없는 칸. 비어 있는 동안 UiClick으로 대신 나고, 파일이 들어오면 같은 이름으로 채워진다.
-                (new SfxEntry(SfxId.UiSlotSelect, SfxBus.UI, volume: 0.8f), "ui_slot_select"),
+                // B-183: 0.300초. 슬롯 쇠 프레임 딸깍.
+                (new SfxEntry(SfxId.UiSlotSelect, SfxBus.UI, volume: 0.65f), "ui_slot_select"),
 
                 // B-160. 경보 반복을 끊지 않도록 Alert 버스는 쓰지 않는다. 길이는 다듬은 파일 기준.
                 // 0.99초.
@@ -254,6 +254,14 @@ namespace SubTerra.App.Audio
                 // 0.25~0.6초의 쇠 덜그럭까지 끝까지 낸다. 0.52초.
                 (new SfxEntry(SfxId.LockedNodeRattle, SfxBus.UI, volume: 0.5f, startTime: 0.15f, fadeOut: 0.05f),
                     "unlock_rattle"),
+                // B-183: 2.000초 PCM 반복. 빈 슬롯을 고르거나 호버할 때만 별도 AudioSource로 재생.
+                (new SfxEntry(SfxId.EmptySlotNoiseLoop, SfxBus.UI, volume: 0.4f), "empty_slot_noise_loop"),
+                // 0.600초. 분석 창 PRIORITY 진입.
+                (new SfxEntry(SfxId.DronePriorityAlert, SfxBus.UI, volume: 0.5f), "drone_priority_alert"),
+                // 0.230초. 단순 급한 말.
+                (new SfxEntry(SfxId.DroneBubbleUrgent, SfxBus.World, volume: 0.6f), "drone_bubble_urgent"),
+                // 0.230초. 같은 박자에서 7반음 낮춘 심각한 말.
+                (new SfxEntry(SfxId.DroneBubbleUrgentSerious, SfxBus.World, volume: 0.6f), "drone_bubble_urgent_serious"),
             };
         }
     }

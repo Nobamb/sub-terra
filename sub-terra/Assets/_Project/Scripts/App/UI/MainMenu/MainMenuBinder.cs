@@ -21,6 +21,8 @@ namespace SubTerra.App.UI.MainMenu
         public const SfxId DeleteConfirmOpenSfx = SfxId.UiPopupOpen;
         public const SfxId DeleteConfirmSfx = SfxId.RunFailBlackout;
         public const SfxId DeleteCancelSfx = SfxId.UiPopupClose;
+        // B-183 ★ 슬롯 선택 연타 간격.
+        public const float SlotSelectMinGap = 0.12f;
 
         private MainMenuPresenter presenter;
         private bool startingNewGame;
@@ -147,6 +149,9 @@ namespace SubTerra.App.UI.MainMenu
 
         private void OnSlotSelectedSfx(int slotId)
         {
+            if (view != null) view.PlaySlotSelectedNoise(slotId);
+            var player = SfxPlayer.Instance;
+            if (player != null && player.SecondsSinceLastPlayed(SfxId.UiSlotSelect) < SlotSelectMinGap) return;
             SfxPlayer.Play(SfxId.UiSlotSelect);
         }
 
