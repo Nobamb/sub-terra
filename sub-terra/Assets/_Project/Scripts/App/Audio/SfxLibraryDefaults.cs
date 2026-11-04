@@ -262,6 +262,12 @@ namespace SubTerra.App.Audio
                 (new SfxEntry(SfxId.DroneBubbleUrgent, SfxBus.World, volume: 0.6f), "drone_bubble_urgent"),
                 // 0.230초. 같은 박자에서 7반음 낮춘 심각한 말.
                 (new SfxEntry(SfxId.DroneBubbleUrgentSerious, SfxBus.World, volume: 0.6f), "drone_bubble_urgent_serious"),
+                // B-184: 0.100초. 가까운 스캔 표시의 초점 번쩍임.
+                (new SfxEntry(SfxId.ScanMarkClick, SfxBus.World, volume: 0.4f), "scan_mark_click"),
+                // 4.000초 PCM 반복. 새로 분출한 가스만 별도 AudioSource로 재생.
+                (new SfxEntry(SfxId.GasFlowLoop, SfxBus.World, volume: 0.45f), "gas_flow_loop"),
+                // 1.500초 PCM 반복. 실제 흔들리는 블록 근처에서만 재생.
+                (new SfxEntry(SfxId.UnstableBlockShakeLoop, SfxBus.World, volume: 0.5f), "unstable_block_shake_loop"),
             };
         }
     }

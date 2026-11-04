@@ -1,0 +1,12 @@
+Mode: EditMode
+Scope: full
+Selected: 2432
+Executed: 2432
+Pass: 2402
+Fail: 30
+Skip: 0
+Inconclusive: 0
+DurationSec: 72.625543
+Missing:
+Unexpected:
+ExitCode: 1

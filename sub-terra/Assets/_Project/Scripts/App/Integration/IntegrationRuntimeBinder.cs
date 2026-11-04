@@ -17,8 +17,10 @@ using SubTerra.App.UI.Tutorial;
 using SubTerra.Gameplay.Building;
 using SubTerra.Gameplay.Drone;
 using SubTerra.Gameplay.Integration;
+using GasHazardSystem = SubTerra.Gameplay.Hazards.GasHazardSystem;
 using SubTerra.Gameplay.Mining;
 using SubTerra.Gameplay.Player;
+using StructuralCrackOverlay = SubTerra.Gameplay.Structural.StructuralCrackOverlay;
 using SubTerra.Shared;
 using SubTerra.Shared.Audio;
 using UnityEngine;
@@ -80,6 +82,7 @@ namespace SubTerra.App.Integration
         private bool inventorySpeedBound;
         private bool tileMinedSfxBound;
         private DroneScanPingSfx droneScanPing;
+        private DroneScanMarkSfx droneScanMark;
         private readonly CargoHeavySfxGate cargoHeavySfx = new CargoHeavySfxGate();
         private bool droneReadingsBound;
         private Action unbindProgressionPanel;
@@ -899,6 +902,16 @@ namespace SubTerra.App.Integration
                 playerCanAct,
                 () => elevator != null && elevator.IsRiding);
 
+            // B-184: 월드 복원 뒤 바인딩한다. 기존 가스는 수집하지 않아 이어하기는 무음이다.
+            var gasFlow = GetComponent<GasFlowLoopAudio>();
+            if (gasFlow == null) gasFlow = gameObject.AddComponent<GasFlowLoopAudio>();
+            gasFlow.Configure(Resolve<GasHazardSystem>(null), movement != null ? movement.transform : null,
+                failureHandling, playerCanAct, () => elevator != null && elevator.IsRiding);
+            var shakeLoop = GetComponent<UnstableShakeLoopAudio>();
+            if (shakeLoop == null) shakeLoop = gameObject.AddComponent<UnstableShakeLoopAudio>();
+            shakeLoop.Configure(Resolve<StructuralCrackOverlay>(null), movement != null ? movement.transform : null,
+                failureHandling, playerCanAct, () => elevator != null && elevator.IsRiding);
+
             var survivalController = runFailureController != null ? runFailureController.SurvivalController : null;
             if (survivalController != null)
             {
@@ -927,6 +940,13 @@ namespace SubTerra.App.Integration
                     return menu != null && menu.IsSettingsOpen;
                 });
                 droneScanPing.Bind(droneSensor);
+                droneScanMark?.Dispose();
+                droneScanMark = new DroneScanMarkSfx(() =>
+                {
+                    menu = Resolve(menu, FindObjectsInactive.Include);
+                    return menu != null && menu.IsSettingsOpen;
+                });
+                droneScanMark.Bind(droneSensor);
             }
         }
 
@@ -983,6 +1003,16 @@ namespace SubTerra.App.Integration
             progressionPanelBinder.Presenter.Refresh();
         }
 
+        private void OnEnable()
+        {
+            if (droneScanMark != null) droneScanMark.Bind(droneSensor);
+        }
+
+        private void OnDisable()
+        {
+            droneScanMark?.Unbind();
+        }
+
         private void OnDestroy()
         {
             unbindProgressionPanel?.Invoke();
@@ -1006,6 +1036,8 @@ namespace SubTerra.App.Integration
             tileMinedSfxBound = false;
             droneScanPing?.Dispose();
             droneScanPing = null;
+            droneScanMark?.Dispose();
+            droneScanMark = null;
             if (droneReadingsBound && bootstrap != null && bootstrap.State != null)
             {
                 bootstrap.State.EnergyChanged -= OnEnergyChangedForDrone;
