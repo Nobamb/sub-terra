@@ -16,6 +16,25 @@ namespace SubTerra.App.UI.Tutorial
     /// </summary>
     public sealed class DemoObjectiveView : MonoBehaviour, IDemoObjectiveView
     {
+        public const SfxId CargoPageSfx = SfxId.KeysPageTurn;
+        public const SfxId CargoForfeitSfx = SfxId.UiCancelFail;
+        public const SfxId DiscardTickSfx = SfxId.UiScanTick;
+        public const SfxId DiscardAllSfx = SfxId.StorageTakeAll;
+        public const SfxId DiscardBackSfx = SfxId.UiClick;
+        public const float DiscardTickGap = 0.08f;
+        public const bool SkipDiscardSfxOnComplete = true;
+        private readonly SfxThrottle discardSfxThrottle = new SfxThrottle(DiscardTickGap);
+        private bool cargoSfxQuiet;
+
+        // Bind/Unbind에서 복원·정리 중인 창과 예약된 소리를 함께 조용히 한다.
+        internal void SetCargoSfxQuiet(bool quiet)
+        {
+            cargoSfxQuiet = quiet;
+            if (capacityPopup != null) capacityPopup.SfxQuiet = quiet;
+            if (dumpPopup != null) dumpPopup.SfxQuiet = quiet;
+            if (quiet) discardSfxThrottle.Reset();
+        }
+
         [SerializeField] private TMP_Text objectiveTitleText;
         [SerializeField] private TMP_Text objectiveBodyText;
         [SerializeField] private TMP_Text nextActionText;
@@ -590,6 +609,7 @@ namespace SubTerra.App.UI.Tutorial
 
             if (capacityPopup != null && !capacityPopupHooked)
             {
+                capacityPopup.SfxQuiet = cargoSfxQuiet;
                 capacityPopupHooked = true;
                 capacityPopup.Closed += OnCapacityPopupClosed;
             }
@@ -691,6 +711,7 @@ namespace SubTerra.App.UI.Tutorial
 
             if (dumpPopup != null && !dumpPopupHooked)
             {
+                dumpPopup.SfxQuiet = cargoSfxQuiet;
                 dumpPopupHooked = true;
                 dumpPopup.Closed += OnDumpPopupClosed;
                 dumpPopup.EnsureReady();
@@ -1085,6 +1106,7 @@ namespace SubTerra.App.UI.Tutorial
                 return;
             }
 
+            if (CanPlayCapacitySfx()) SfxPlayer.Play(CargoPageSfx);
             // 화물 부족 → 화물 버리기는 같은 단말의 페이지 넘김이다. 접지 않고 내용만 바꾼다.
             pageToDump = true;
             try
@@ -1109,8 +1131,11 @@ namespace SubTerra.App.UI.Tutorial
                 return;
             }
 
+            if (CanPlayCapacitySfx()) SfxPlayer.Play(CargoForfeitSfx);
             CapacityForfeitRequested?.Invoke();
         }
+
+        private bool CanPlayCapacitySfx() => !cargoSfxQuiet && capacityPopup != null && capacityPopup.CanPlaySfx;
 
         // 열기 연출 중·이미 고른 뒤의 클릭은 막는다. 두 버튼 중 하나만 한 번 통과한다.
         private bool AcceptCapacityChoice()
@@ -1129,6 +1154,7 @@ namespace SubTerra.App.UI.Tutorial
             }
 
             pageToCapacity = true;
+            if (!cargoSfxQuiet && popup != null && popup.CanPlaySfx) SfxPlayer.Play(DiscardBackSfx);
             try
             {
                 DumpClosedRequested?.Invoke();
@@ -1171,9 +1197,18 @@ namespace SubTerra.App.UI.Tutorial
             }
 
             dumpRequestInFlight = true;
+            var previousWeight = popup != null ? popup.Model.CurrentWeight : 0f;
             try
             {
                 DumpRequested?.Invoke(mineralId, quantity);
+                var completed = popup != null && popup.IsClosing
+                    && popup.ActiveCloseMode == CargoDiscardPopupView.CloseMode.Complete;
+                if (!cargoSfxQuiet && popup != null && popup.CanPlaySfx
+                    && popup.Model.CurrentWeight < previousWeight
+                    && !(SkipDiscardSfxOnComplete && completed) && discardSfxThrottle.TryPass())
+                {
+                    SfxPlayer.Play(kind == CargoDiscardKind.All ? DiscardAllSfx : DiscardTickSfx);
+                }
             }
             finally
             {

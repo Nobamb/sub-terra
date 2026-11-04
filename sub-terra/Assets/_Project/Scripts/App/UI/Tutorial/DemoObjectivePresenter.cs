@@ -65,12 +65,20 @@ namespace SubTerra.App.UI.Tutorial
             inputLocked = false;
             viewedIndex = 0;
             view?.SetInputLocked(false);
-            Render(director?.ReadModel ?? default);
-            rewards?.SyncFromProgress();
+            try
+            {
+                Render(director?.ReadModel ?? default);
+                rewards?.SyncFromProgress();
+            }
+            finally
+            {
+                if (view is DemoObjectiveView questView) questView.SetCargoSfxQuiet(false);
+            }
         }
 
         public void Unbind()
         {
+            if (view is DemoObjectiveView questView) questView.SetCargoSfxQuiet(true);
             if (director != null)
             {
                 director.ProgressChanged -= OnProgressChanged;

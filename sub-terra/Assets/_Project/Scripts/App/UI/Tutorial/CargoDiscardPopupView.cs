@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using SubTerra.App.Audio;
+using SubTerra.Shared.Audio;
 using SubTerra.App.Core.Data;
 using SubTerra.App.Tutorial;
 using SubTerra.App.UI.HUD;
@@ -41,6 +43,23 @@ namespace SubTerra.App.UI.Tutorial
         public const string TitleName = "DumpTitle";
         public const string SummaryName = "DumpSummary";
         public const string BackName = "DumpCloseButton";
+
+        public const SfxId CargoCloseSfx = SfxId.WindowTvClose;
+        private bool sfxQuiet;
+        private bool closeSfxArmed;
+
+        public bool SfxQuiet
+        {
+            get => sfxQuiet;
+            set
+            {
+                sfxQuiet = value;
+                if (value) closeSfxArmed = false;
+            }
+        }
+
+        internal bool CanPlaySfx => !sfxQuiet && isActiveAndEnabled
+            && (CargoFullPopupView.SfxInEditModeForTests || (Application.isPlaying && !ManualTick));
 
         private const float Pad = CargoPopupChrome.Pad;
         private const float GaugeY = 116f;
@@ -261,6 +280,11 @@ namespace SubTerra.App.UI.Tutorial
             state = PopupState.Opening;
             paging = page;
             clock = 0f;
+            closeSfxArmed = CanPlaySfx;
+            if (!page && CanPlaySfx)
+            {
+                WindowTvSfx.Play(CargoFullPopupView.CargoOpenSfx, CargoFullPopupView.CargoTvVolume);
+            }
             if (!Application.isPlaying && !ManualTick)
             {
                 SettleOpen();
@@ -320,6 +344,7 @@ namespace SubTerra.App.UI.Tutorial
                 return;
             }
 
+            if (mode == CloseMode.Fold) PlayCloseSfx();
             ApplyClose(0f);
         }
 
@@ -334,6 +359,7 @@ namespace SubTerra.App.UI.Tutorial
             closeMode = CloseMode.Fold;
             paging = false;
             clock = Mathf.Min(clock, activeOpen.closeDuration * 0.4f);
+            PlayCloseSfx();
             ApplyClose(clock);
         }
 
@@ -426,6 +452,7 @@ namespace SubTerra.App.UI.Tutorial
                         // 완료 표시가 끝나면 B-152와 같이 접는다.
                         closeMode = CloseMode.Fold;
                         clock = 0f;
+                        PlayCloseSfx();
                     }
 
                     clock += dt;
@@ -559,6 +586,7 @@ namespace SubTerra.App.UI.Tutorial
 
         private void ResetToHidden()
         {
+            closeSfxArmed = false;
             state = PopupState.Hidden;
             closeMode = CloseMode.Fold;
             paging = false;
@@ -589,6 +617,16 @@ namespace SubTerra.App.UI.Tutorial
             }
 
             return openTiming.Sanitized();
+        }
+
+        private void PlayCloseSfx()
+        {
+            if (closeSfxArmed && CanPlaySfx)
+            {
+                WindowTvSfx.Play(CargoCloseSfx, CargoFullPopupView.CargoTvVolume);
+            }
+
+            closeSfxArmed = false;
         }
 
         private CargoDiscardTiming ResolveTiming()
@@ -897,6 +935,7 @@ namespace SubTerra.App.UI.Tutorial
             };
 
             backButton = EnsureButton(transform, BackName, CargoDiscardText.BackTitle);
+            UiSfx.Attach(backButton, SfxId.None, hover: true, failWhenDisabled: false, hoverGate: () => CanPlaySfx);
             var neutral = Color.Lerp(teal, CargoPopupChrome.TextMuted(skin), 0.45f);
             backFeedback = CargoPopupChrome.BuildChoice(backButton, content, (size.x - BackW) * 0.5f, BackY, BackW, BackH, neutral,
                 CargoFullPopupArt.BackIcon(), 28f, CargoDiscardText.BackTitle, CargoDiscardText.BackSubtitle, true, font, skin,
@@ -961,6 +1000,7 @@ namespace SubTerra.App.UI.Tutorial
                 var kind = CargoDiscardText.Kinds[k];
                 var label = CargoDiscardText.ButtonLabel(kind);
                 var button = EnsureButton(root, ButtonName(kind), label);
+                UiSfx.Attach(button, SfxId.None, hover: true, failWhenDisabled: false, hoverGate: () => CanPlaySfx);
                 var x = start + k * (ButtonW + ButtonGap);
                 CargoPopupChrome.SetRect((RectTransform)button.transform, x, 6f, ButtonW, ButtonH);
                 Color accent;

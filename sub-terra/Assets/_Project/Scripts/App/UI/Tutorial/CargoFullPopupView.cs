@@ -1,4 +1,6 @@
 using System;
+using SubTerra.App.Audio;
+using SubTerra.Shared.Audio;
 using SubTerra.App.Tutorial;
 using SubTerra.App.UI.HUD;
 using SubTerra.App.UI.Sell;
@@ -25,6 +27,26 @@ namespace SubTerra.App.UI.Tutorial
         }
 
         public static readonly Vector2 DefaultPanelSize = new Vector2(1000f, 660f);
+
+        public const SfxId CargoOpenSfx = SfxId.WindowTvOpen;
+        public const SfxId CargoOverflowSfx = SfxId.CargoHeavyWarning;
+        public const float CargoTvVolume = 0.6f;
+        internal static bool SfxInEditModeForTests;
+        private bool sfxQuiet;
+        private bool overflowSfxArmed;
+
+        public bool SfxQuiet
+        {
+            get => sfxQuiet;
+            set
+            {
+                sfxQuiet = value;
+                if (value) overflowSfxArmed = false;
+            }
+        }
+
+        internal bool CanPlaySfx => !sfxQuiet && isActiveAndEnabled
+            && (SfxInEditModeForTests || (Application.isPlaying && !ManualTick));
 
         private const float Pad = CargoPopupChrome.Pad;
         private const float GuideY = 120f;
@@ -195,6 +217,11 @@ namespace SubTerra.App.UI.Tutorial
             state = PopupState.Opening;
             paging = page;
             clock = 0f;
+            overflowSfxArmed = !page && CanPlaySfx;
+            if (overflowSfxArmed)
+            {
+                WindowTvSfx.Play(CargoOpenSfx, CargoTvVolume);
+            }
             if (!Application.isPlaying && !ManualTick)
             {
                 // 에디터 미리보기·씬 검사에서는 연출 없이 완성 상태로 둔다.
@@ -250,6 +277,10 @@ namespace SubTerra.App.UI.Tutorial
 
             paging = false;
             clock = Mathf.Min(clock, activeTiming.closeDuration * 0.4f);
+            if (CanPlaySfx)
+            {
+                WindowTvSfx.Play(CargoDiscardPopupView.CargoCloseSfx, CargoTvVolume);
+            }
             ApplyClose(clock);
         }
 
@@ -291,7 +322,13 @@ namespace SubTerra.App.UI.Tutorial
             switch (state)
             {
                 case PopupState.Opening:
+                    var previous = clock;
                     clock += dt;
+                    if (overflowSfxArmed && SfxPlayback.Crossed(previous, clock, activeTiming.GaugeEnd))
+                    {
+                        overflowSfxArmed = false;
+                        if (CanPlaySfx) SfxPlayer.Play(CargoOverflowSfx);
+                    }
                     if (clock >= OpenDuration)
                     {
                         SettleOpen();
@@ -323,6 +360,7 @@ namespace SubTerra.App.UI.Tutorial
 
         private void OnDisable()
         {
+            overflowSfxArmed = false;
             // 부모가 꺼져 연출이 끊겨도 다음 표시가 처음부터 시작되게 한다.
             if (state == PopupState.Hidden)
             {
@@ -353,6 +391,7 @@ namespace SubTerra.App.UI.Tutorial
 
         private void FinishClose()
         {
+            overflowSfxArmed = false;
             var notify = state != PopupState.Hidden;
             LastCloseWasPage = state == PopupState.Closing && paging;
             state = PopupState.Hidden;
@@ -589,6 +628,8 @@ namespace SubTerra.App.UI.Tutorial
                 ButtonH, CargoPopupChrome.Danger(skin), skin != null ? skin.trashIcon : null, 36f,
                 CargoFullPopupText.ForfeitTitle, string.Empty, false, font, skin, out forfeitSubtitle);
             footer = CargoPopupFooter.Build(content, FooterY, innerW, font, skin);
+            UiSfx.Attach(dumpButton, SfxId.None, hover: true, failWhenDisabled: false, hoverGate: () => CanPlaySfx);
+            UiSfx.Attach(forfeitButton, SfxId.None, hover: true, failWhenDisabled: false, hoverGate: () => CanPlaySfx);
         }
 
         private void BuildRewardCard()
