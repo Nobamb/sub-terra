@@ -3854,3 +3854,8 @@ Resources/UI/CargoFullPopupSkin.asset의 goldIcon: 화물 공간 부족 창, 버
 Scenes/App/Mine_Demo_Integration.unity의 퀘스트 클리어·퀘스트 보상 Icon
 Prefabs/UI/SurfaceBasePanel.prefab의 지상 퀘스트 창 골드 아이콘
 아이콘 모양이 바뀌면서 크기나 비율이 어색해지지 않는지도 함께 확인해 주세요.
+
+
+183. work_process\MVP2\sound\prompt-B-183.md 의 내용 참고해서 sfx-B183-184 폴더에 있는 효과음을 게임 내에 적용해줘
+
+184. work_process\MVP2\sound\prompt-B-184.md 의 내용 참고해서 sfx-B183-184 폴더에 있는 효과음을 게임 내에 적용해줘
