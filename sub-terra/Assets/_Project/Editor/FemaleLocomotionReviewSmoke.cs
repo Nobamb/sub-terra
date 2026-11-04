@@ -16,7 +16,7 @@ using Object = UnityEngine.Object;
 namespace SubTerra.Editor
 {
     // Bootstrap Play 안의 임시 평지에서 실제 Player prefab 이동/렌더를 확인한다.
-    // 새 게임/슬롯/세이브 API는 호출하지 않는다.
+    // 광산 검사는 전용 저장 루트가 지정된 경우에만 새 시험 슬롯을 사용한다.
     [InitializeOnLoad]
     public static class FemaleLocomotionReviewSmoke
     {
@@ -57,10 +57,12 @@ namespace SubTerra.Editor
         public static void Run() => Begin(false);
         public static void RunWithMine() => Begin(true);
         public static void RunMineOnly() => Begin(true, true);
+        public static void RunRhythmWithMine() => Begin(true, false, true);
 
-        private static void Begin(bool includeMine, bool onlyMine = false)
+        private static void Begin(bool includeMine, bool onlyMine = false, bool rhythmTrial = false)
         {
-            output = Path.GetFullPath(Path.Combine(Application.dataPath, "../../work_process/issue266-distance-ground-20261104" + (onlyMine ? "-mine-retry" : "")));
+            string folder = rhythmTrial ? "issue266-walk-rhythm-20261104" : "issue266-distance-ground-20261104" + (onlyMine ? "-mine-retry" : "");
+            output = Path.GetFullPath(Path.Combine(Application.dataPath, "../../work_process/" + folder));
             Directory.CreateDirectory(output);
             if (includeMine)
             {
@@ -74,6 +76,7 @@ namespace SubTerra.Editor
             SessionState.SetBool(Key, true);
             SessionState.SetBool(Key + ".mine", includeMine);
             SessionState.SetBool(Key + ".mineOnly", onlyMine);
+            SessionState.SetBool(Key + ".rhythm", rhythmTrial);
             ready = false; corrected = false; mineRequested = false; mineStage = 0;
             capture = 0; movieFrame = 0; lastMovieTime = -1;
             deadline = EditorApplication.timeSinceStartup + 90;
@@ -98,7 +101,7 @@ namespace SubTerra.Editor
                     if (SceneManager.GetActiveScene().name != SceneNames.MainMenu) return;
                     if (SessionState.GetBool(Key + ".mineOnly", false))
                     {
-                        Trace.Clear(); Trace.AppendLine("time,mode,playerX,speed,grounded,pose,soleX,soleY,groundY,offsetY,maleIdleFootY,travel,image");
+                        Trace.Clear(); Trace.AppendLine("time,mode,playerX,speed,grounded,pose,soleX,soleY,groundY,offsetY,maleIdleFootY,travel,trialSpeed,estimatedCycle,image");
                         renderTexture = new RenderTexture(640, 384, 24);
                         BeginMine(); return;
                     }
@@ -106,7 +109,8 @@ namespace SubTerra.Editor
                 }
                 float elapsed = Time.time - startTime;
                 float phaseTime = Time.time - phaseStartedAt;
-                string mode = corrected ? "distance-ground" : "time-original";
+                bool rhythmTrial = SessionState.GetBool(Key + ".rhythm", false);
+                string mode = rhythmTrial ? (corrected ? "rhythm-slow" : "distance-fast") : (corrected ? "distance-ground" : "time-original");
                 float input = phaseTime < 0.7f ? 0 : phaseTime < 2.2f ? 1 : phaseTime < 2.6f ? 0 : phaseTime < 4.1f ? -1 : 0;
                 movement.SetMoveInput(input);
                 renderer.flipX = input < 0 || (input == 0 && movement.FacingDirection < 0);
@@ -115,7 +119,7 @@ namespace SubTerra.Editor
                     string file = $"movie-{movieFrame++:D3}.png";
                     Capture(file);
                     var sole = review.ContactWorldPoint;
-                    Trace.AppendLine(FormattableString.Invariant($"{elapsed:F4},{mode},{movement.Position.x:F5},{movement.HorizontalSpeed:F5},{movement.IsGrounded},{review.ContactPose},{sole.x:F5},{sole.y:F5},{review.GroundY:F5},{review.GroundOffset:F5},{review.MaleReferenceFootY:F5},{review.TravelDistance:F5},{file}"));
+                    Trace.AppendLine(FormattableString.Invariant($"{elapsed:F4},{mode},{movement.Position.x:F5},{movement.HorizontalSpeed:F5},{movement.IsGrounded},{review.ContactPose},{sole.x:F5},{sole.y:F5},{review.GroundY:F5},{review.GroundOffset:F5},{review.MaleReferenceFootY:F5},{review.TravelDistance:F5},{review.TrialMoveSpeed:F5},{review.EstimatedCycleSeconds:F5},{file}"));
                     lastMovieTime = elapsed;
                 }
                 float[] moments = { 0.6f, 0.75f, 0.84f, 1.4f, 2.5f, 2.65f, 2.74f, 3.5f, 4.5f };
@@ -133,10 +137,15 @@ namespace SubTerra.Editor
                         body.position = new Vector2(1000, 1000); body.linearVelocity = Vector2.zero;
                         movement.SetMoveInput(0); renderer.flipX = false;
                         review.ConfigureReview(true, true);
+                        review.ConfigureRhythm(rhythmTrial);
                         return;
                     }
+                    float originalSpeed = review.OriginalMoveSpeed;
                     review.StopReview();
                     if (review.IsReviewActive) throw new Exception("Trial did not stop");
+                    var restoredMovement = new SerializedObject(movement);
+                    if (!Mathf.Approximately(restoredMovement.FindProperty("moveSpeed").floatValue, originalSpeed))
+                        throw new Exception("Original movement speed was not restored");
                     File.WriteAllText(Path.Combine(output, "movement-trace.csv"), Trace.ToString());
                     if (SessionState.GetBool(Key + ".mine", false)) { BeginMine(); return; }
                     Finish(true, "Before/after fixture movement and sprite/transform restoration passed. Mine scene was not requested.");
@@ -181,11 +190,13 @@ namespace SubTerra.Editor
             root.SetActive(true);
             review = ScriptableObject.CreateInstance<FemaleLocomotionReviewWindow>();
             review.StartReview(animation);
-            review.ConfigureReview(false, false);
+            bool rhythmTrial = SessionState.GetBool(Key + ".rhythm", false);
+            review.ConfigureReview(rhythmTrial, rhythmTrial);
+            review.ConfigureRhythm(false);
             Time.timeScale = 1;
             startTime = Time.time;
             phaseStartedAt = Time.time;
-            Trace.Clear(); Trace.AppendLine("time,mode,playerX,speed,grounded,pose,soleX,soleY,groundY,offsetY,maleIdleFootY,travel,image");
+            Trace.Clear(); Trace.AppendLine("time,mode,playerX,speed,grounded,pose,soleX,soleY,groundY,offsetY,maleIdleFootY,travel,trialSpeed,estimatedCycle,image");
         }
 
         private static void Capture(string file)
@@ -259,6 +270,7 @@ namespace SubTerra.Editor
                 renderer = animation.GetComponent<SpriteRenderer>();
                 review = ScriptableObject.CreateInstance<FemaleLocomotionReviewWindow>();
                 review.StartReview(animation); review.ConfigureReview(true, true);
+                review.ConfigureRhythm(SessionState.GetBool(Key + ".rhythm", false));
                 camera = Camera.main;
                 if (camera == null) throw new Exception("Mine camera missing");
                 startTime = Time.time; mineCaptureAt = 0; mineStage = 3; capture = 0;
@@ -274,7 +286,7 @@ namespace SubTerra.Editor
                 {
                     Capture(file);
                     var sole = review.ContactWorldPoint;
-                    Trace.AppendLine(FormattableString.Invariant($"{elapsed:F4},mine,{movement.Position.x:F5},{movement.HorizontalSpeed:F5},{movement.IsGrounded},{review.ContactPose},{sole.x:F5},{sole.y:F5},{review.GroundY:F5},{review.GroundOffset:F5},{review.MaleReferenceFootY:F5},{review.TravelDistance:F5},{file}"));
+                    Trace.AppendLine(FormattableString.Invariant($"{elapsed:F4},mine,{movement.Position.x:F5},{movement.HorizontalSpeed:F5},{movement.IsGrounded},{review.ContactPose},{sole.x:F5},{sole.y:F5},{review.GroundY:F5},{review.GroundOffset:F5},{review.MaleReferenceFootY:F5},{review.TravelDistance:F5},{review.TrialMoveSpeed:F5},{review.EstimatedCycleSeconds:F5},{file}"));
                 }
                 finally { camera.targetTexture = previousTarget; }
                 mineCaptureAt = EditorApplication.timeSinceStartup;
@@ -282,6 +294,11 @@ namespace SubTerra.Editor
             if (elapsed < 1.8f) return;
             movement.SetMoveInput(0);
             if (mineInput != null) mineInput.enabled = true;
+            float expectedSpeed = review.OriginalMoveSpeed;
+            review.StopReview();
+            var restoredProperties = new SerializedObject(movement);
+            if (!Mathf.Approximately(restoredProperties.FindProperty("moveSpeed").floatValue, expectedSpeed))
+                throw new Exception("Mine movement speed was not restored");
             Finish(true, "Before/after fixture and isolated Bootstrap -> SurfaceBase -> actual Mine Play completed. Sprite and VisualRoot restoration passed. This does not validate other female motions or input/UI walkthrough.");
         }
 

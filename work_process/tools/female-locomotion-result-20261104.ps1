@@ -2,8 +2,9 @@ param([string]$ReviewFolder='issue266-distance-ground-20261104')
 $ErrorActionPreference='Stop'
 $dir=(Resolve-Path (Join-Path $PSScriptRoot ('../'+$ReviewFolder))).Path
 $rows=@(Import-Csv (Join-Path $dir 'movement-trace.csv'))
+$modes=@($rows | Select-Object -ExpandProperty mode -Unique)
 $stats=@()
-foreach($mode in @('time-original','distance-ground','mine')) {
+foreach($mode in $modes) {
  $part=@($rows | Where-Object {$_.mode -eq $mode})
  $grounded=@($part | Where-Object {$_.grounded -eq 'True' -and $_.pose -ne '' -and $_.groundY -ne 'NaN'})
  $gaps=@($grounded | ForEach-Object {[Math]::Abs([double]$_.soleY-[double]$_.groundY)})
@@ -17,21 +18,24 @@ foreach($mode in @('time-original','distance-ground','mine')) {
    $drifts += [Math]::Abs([double]$b.soleX-[double]$a.soleX)
   }
  }
- $stats+=[pscustomobject]@{mode=$mode;samples=$part.Count;groundedSamples=$grounded.Count;maxGroundGap=($gaps | Measure-Object -Maximum).Maximum;maxMaleIdleReferenceGap=($maleGaps | Measure-Object -Maximum).Maximum;stationarySamples=$blocked.Count;stationaryMovingPoses=$badBlocked.Count;heldWalkPairs=$drifts.Count;maxHeldSoleDrift=($drifts | Measure-Object -Maximum).Maximum;maxSpeed=($part | Measure-Object speed -Maximum).Maximum}
+ $steady=@($part | Where-Object {$_.estimatedCycle -and $_.pose -like 'walk/*' -and [double]$_.speed -gt 0.2})
+ $stats+=[pscustomobject]@{mode=$mode;samples=$part.Count;groundedSamples=$grounded.Count;maxGroundGap=($gaps | Measure-Object -Maximum).Maximum;maxMaleIdleReferenceGap=($maleGaps | Measure-Object -Maximum).Maximum;stationarySamples=$blocked.Count;stationaryMovingPoses=$badBlocked.Count;heldWalkPairs=$drifts.Count;maxHeldSoleDrift=($drifts | Measure-Object -Maximum).Maximum;maxSpeed=($part | Measure-Object speed -Maximum).Maximum;minimumEstimatedCycle=($steady | Measure-Object estimatedCycle -Minimum).Minimum}
 }
 $stats | ConvertTo-Json -Depth 4 | Set-Content (Join-Path $dir 'comparison.json') -Encoding utf8
 Add-Type -AssemblyName System.Drawing
-foreach($mode in @('time-original','distance-ground')){
+foreach($mode in $modes){
  if(-not (Test-Path (Join-Path $dir ($mode+'-00.png')))){continue}
  $contact=[System.Drawing.Bitmap]::new(960,576);$g=[System.Drawing.Graphics]::FromImage($contact)
  for($i=0;$i -lt 9;$i++){
-  $im=[System.Drawing.Bitmap]::new((Join-Path $dir ('{0}-{1:D2}.png' -f $mode,$i)))
+  $path=Join-Path $dir ('{0}-{1:D2}.png' -f $mode,$i)
+  if(-not (Test-Path $path)){continue}
+  $im=[System.Drawing.Bitmap]::new($path)
   $g.DrawImage($im,($i%3)*320,[int][Math]::Floor($i/3)*192,320,192);$im.Dispose()
  }
  $g.Dispose();$contact.Save((Join-Path $dir ($mode+'-contact.png')));$contact.Dispose()
 }
 $ffmpeg=Join-Path $PSScriptRoot 'video-deps/imageio_ffmpeg/binaries/ffmpeg-win-x86_64-v7.1.exe'
-foreach($mode in @('time-original','distance-ground','mine')){
+foreach($mode in $modes){
  $part=@($rows | Where-Object {$_.mode -eq $mode -and $_.pose -ne ''})
  if($part.Count -eq 0){continue}
  $concat=@()

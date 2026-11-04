@@ -40,6 +40,10 @@ namespace SubTerra.Editor
         // Review annotation: ~260px near-foot travel per half cycle at 667.43 PPU.
         private float cycleDistanceLocal = 0.78f;
         private float entryDistanceLocal = 0.12f;
+        private bool slowTrialMovement;
+        private float rhythmCycleSeconds = 0.7f;
+        private float originalMoveSpeed = float.NaN;
+        private float appliedMoveSpeed = float.NaN;
         private float travelDistance;
         private float previousPlayerX;
         private bool previousFlip;
@@ -57,15 +61,32 @@ namespace SubTerra.Editor
         public float GroundY { get; private set; } = float.NaN;
         public float MaleReferenceFootY { get; private set; }
         public float TravelDistance => travelDistance;
+        public float OriginalMoveSpeed => originalMoveSpeed;
+        public float TrialMoveSpeed => float.IsNaN(appliedMoveSpeed) ? originalMoveSpeed : appliedMoveSpeed;
+        public float EstimatedCycleSeconds => target != null && horizontalSpeed > 0.02f
+            ? cycleDistanceLocal * Mathf.Abs(target.transform.lossyScale.x) / horizontalSpeed : 0;
+        public void ConfigureRhythm(bool slowMovement, float targetCycleSeconds = 0.7f)
+        {
+            slowTrialMovement = slowMovement;
+            rhythmCycleSeconds = Mathf.Clamp(targetCycleSeconds, 0.4f, 1.2f);
+            ApplyTrialSpeed();
+            sampledFrame = -1; lastWasWalk = false; travelDistance = 0;
+            if (movement != null) previousPlayerX = movement.Position.x;
+        }
         public void ConfigureReview(bool byDistance, bool groundAlignment)
         {
             distancePlayback = byDistance; alignGround = groundAlignment;
             sampledFrame = -1; lastWasWalk = false; travelDistance = 0;
             if (movement != null) previousPlayerX = movement.Position.x;
+            ApplyTrialSpeed();
         }
 
         [MenuItem("SubTerra/Review/Female Idle Walk (Play Only)")]
-        public static void Open() => GetWindow<FemaleLocomotionReviewWindow>("여자 걷기 시험");
+        public static void Open()
+        {
+            var window = GetWindow<FemaleLocomotionReviewWindow>("여자 걷기 시험");
+            if (!window.IsReviewActive) window.slowTrialMovement = true;
+        }
 
         private void OnEnable()
         {
@@ -99,6 +120,12 @@ namespace SubTerra.Editor
             EditorGUI.BeginChangeCheck();
             distancePlayback = EditorGUILayout.Toggle("이동 거리에 맞춰 재생", distancePlayback);
             alignGround = EditorGUILayout.Toggle("바닥 높이에 발 맞춤", alignGround);
+            slowTrialMovement = EditorGUILayout.Toggle("시험에서만 이동 속도 낮춤", slowTrialMovement);
+            if (slowTrialMovement)
+            {
+                rhythmCycleSeconds = EditorGUILayout.Slider("목표 걷기 주기(초)", rhythmCycleSeconds, 0.4f, 1.2f);
+                EditorGUILayout.HelpBox("보폭에 맞춰 Play 중인 플레이어의 이동 속도를 낮춥니다. 시험 종료 시 원래 속도로 복구합니다.", MessageType.Info);
+            }
             if (distancePlayback)
             {
                 cycleDistanceLocal = EditorGUILayout.Slider("한 주기 이동 거리(검토값)", cycleDistanceLocal, 0.3f, 2f);
@@ -109,7 +136,7 @@ namespace SubTerra.Editor
                 cycleSeconds = EditorGUILayout.Slider("걷기 한 주기(초)", cycleSeconds, 0.2f, 2f);
                 entrySeconds = EditorGUILayout.Slider("진입 시간(초)", entrySeconds, 0.04f, 0.4f);
             }
-            if (EditorGUI.EndChangeCheck()) { sampledFrame = -1; lastWasWalk = false; }
+            if (EditorGUI.EndChangeCheck()) { sampledFrame = -1; lastWasWalk = false; ApplyTrialSpeed(); }
             using (new EditorGUI.DisabledScope(!EditorApplication.isPlaying || IsReviewActive))
                 if (GUILayout.Button("대기·걷기 시험 켜기")) TryStart();
             using (new EditorGUI.DisabledScope(!IsReviewActive))
@@ -117,6 +144,8 @@ namespace SubTerra.Editor
             EditorGUILayout.LabelField("표시", shownPose);
             EditorGUILayout.LabelField("실제 가로 속도", horizontalSpeed.ToString("F2") + " unit/s");
             EditorGUILayout.LabelField("발 높이 보정", GroundOffset.ToString("F3") + " unit");
+            if (IsReviewActive && horizontalSpeed > 0.02f && distancePlayback)
+                EditorGUILayout.LabelField("현재 속도의 예상 주기", (cycleDistanceLocal * Mathf.Abs(target.transform.lossyScale.x) / horizontalSpeed).ToString("F2") + "초");
             EditorGUILayout.HelpBox(status, MessageType.None);
             EditorGUILayout.LabelField("확인: 출발/정지/좌우 전환, 발의 가로 이동과 지면 접점.", EditorStyles.wordWrappedLabel);
         }
@@ -149,6 +178,8 @@ namespace SubTerra.Editor
                 movement = controller.GetComponentInParent<PlayerMovement>();
                 if (movement == null) throw new InvalidOperationException("PlayerMovement 참조가 없습니다.");
                 bodyCollider = movement.GetComponent<Collider2D>();
+                var movementProperties = new SerializedObject(movement);
+                originalMoveSpeed = movementProperties.FindProperty("moveSpeed").floatValue;
                 foreach (var sprite in originalIdle) { maleIdleReference = sprite; break; }
                 var referenceTexture = new Texture2D(2, 2, TextureFormat.RGBA32, false);
                 try
@@ -168,6 +199,7 @@ namespace SubTerra.Editor
                 for (int i = 0; i < walk.Length; i++) walk[i] = LoadSprite(Path.Combine(aligned, "walk/" + WalkNames[i] + ".png"));
                 sampledFrame = -1; lastWasWalk = false;
                 previousPlayerX = movement.Position.x; previousFlip = target.flipX; travelDistance = 0;
+                ApplyTrialSpeed();
                 status = "Play 한정 시험 중. 프리팹·씬·세이브를 변경하지 않습니다. 단위 격자와 비교해 발 미끄러짐을 보세요.";
             }
             catch { StopReview(); throw; }
@@ -177,6 +209,31 @@ namespace SubTerra.Editor
         {
             for (int i = 0; i < property.arraySize; i++)
                 if (property.GetArrayElementAtIndex(i).objectReferenceValue is Sprite sprite) result.Add(sprite);
+        }
+
+        private void ApplyTrialSpeed()
+        {
+            if (movement == null || target == null || !EditorApplication.isPlaying || float.IsNaN(originalMoveSpeed)) return;
+            if (EditorUtility.IsPersistent(movement)) throw new InvalidOperationException("시험 속도는 Play 인스턴스에만 적용할 수 있습니다.");
+            var properties = new SerializedObject(movement);
+            var speed = properties.FindProperty("moveSpeed");
+            if (slowTrialMovement && distancePlayback)
+            {
+                float desired = cycleDistanceLocal * Mathf.Abs(target.transform.lossyScale.x) / rhythmCycleSeconds;
+                appliedMoveSpeed = Mathf.Min(originalMoveSpeed, Mathf.Max(0, desired));
+                speed.floatValue = appliedMoveSpeed;
+                properties.ApplyModifiedPropertiesWithoutUndo();
+            }
+            else if (!float.IsNaN(appliedMoveSpeed))
+            {
+                // 외부 시스템이 바꾼 값은 오래된 시험 값으로 덮어쓰지 않는다.
+                if (Mathf.Approximately(speed.floatValue, appliedMoveSpeed))
+                {
+                    speed.floatValue = originalMoveSpeed;
+                    properties.ApplyModifiedPropertiesWithoutUndo();
+                }
+                appliedMoveSpeed = float.NaN;
+            }
         }
 
         private Sprite LoadSprite(string path)
@@ -297,6 +354,14 @@ namespace SubTerra.Editor
         public void StopReview()
         {
             RestoreRender();
+            if (movement != null && !float.IsNaN(appliedMoveSpeed))
+            {
+                bool wantedSlowMovement = slowTrialMovement;
+                slowTrialMovement = false;
+                ApplyTrialSpeed();
+                slowTrialMovement = wantedSlowMovement;
+            }
+            originalMoveSpeed = float.NaN; appliedMoveSpeed = float.NaN;
             target = null; movement = null; bodyCollider = null;
             maleIdleReference = null; idle = null; entry = null; walk = null;
             originalIdle.Clear(); originalWalk.Clear();
