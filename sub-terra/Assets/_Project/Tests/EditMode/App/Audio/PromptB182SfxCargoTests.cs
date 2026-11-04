@@ -135,12 +135,15 @@ namespace SubTerra.App.Tests.Audio
         }
 
         [Test]
-        public void PageOpen_HideImmediate_DisableAndPreview_AreQuiet()
+        public void PageOpen_PlaysImmediatelyOnce_OverflowAndCleanupStayQuiet()
         {
             full.Show(true);
+            full.Show(true);
+            Assert.That(full.Clock, Is.Zero);
+            Assert.That(WindowTvSfx.StartedCount, Is.EqualTo(1));
             full.Tick(2f);
             full.HideImmediate();
-            Assert.That(WindowTvSfx.StartedCount, Is.Zero);
+            Assert.That(WindowTvSfx.StartedCount, Is.EqualTo(1));
             Assert.That(played, Is.Empty);
             full.Show(false);
             full.HideImmediate();
@@ -169,7 +172,7 @@ namespace SubTerra.App.Tests.Audio
         }
 
         [Test]
-        public void AcceptedPageAndBack_Once_NoTvOrOverflowOnReturn()
+        public void AcceptedPageAndBack_TvOnceAtEachDisplay_NoOverflowOnReturn()
         {
             full.Show(false);
             full.Tick(2f);
@@ -180,6 +183,8 @@ namespace SubTerra.App.Tests.Audio
             view.OnCapacityDumpClicked();
             Assert.That(played, Is.EqualTo(new[] { SfxId.KeysPageTurn }));
             full.Tick(1f);
+            Assert.That(dump.State, Is.EqualTo(CargoDiscardPopupView.PopupState.Opening));
+            Assert.That(WindowTvSfx.StartedCount, Is.EqualTo(2));
             dump.Tick(1f);
             var tvBefore = WindowTvSfx.StartedCount;
             view.DumpClosedRequested += () => { view.SetDumpPanelVisible(false); view.SetCapacityChoiceVisible(true); };
@@ -187,9 +192,11 @@ namespace SubTerra.App.Tests.Audio
             view.OnDumpClosedClicked();
             view.OnDumpClosedClicked();
             dump.Tick(1f);
+            Assert.That(full.Clock, Is.Zero);
+            Assert.That(WindowTvSfx.StartedCount, Is.EqualTo(tvBefore + 1));
             full.Tick(1f);
             Assert.That(played, Is.EqualTo(new[] { SfxId.UiClick }));
-            Assert.That(WindowTvSfx.StartedCount, Is.EqualTo(tvBefore));
+            Assert.That(WindowTvSfx.StartedCount, Is.EqualTo(tvBefore + 1));
         }
 
         [Test]
@@ -203,7 +210,7 @@ namespace SubTerra.App.Tests.Audio
             view.OnCapacityForfeitClicked();
             view.OnCapacityForfeitClicked();
             full.Tick(1f);
-            Assert.That(played, Is.EqualTo(new[] { SfxId.UiCancelFail }));
+            Assert.That(played, Is.EqualTo(new[] { SfxId.StorageTakeAll }));
             Assert.That(WindowTvSfx.StartedCount, Is.EqualTo(tvBefore));
         }
 

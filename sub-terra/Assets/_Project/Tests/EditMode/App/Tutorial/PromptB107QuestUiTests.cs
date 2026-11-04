@@ -111,6 +111,16 @@ namespace SubTerra.App.Tests.Tutorial
         }
 
         [Test]
+        public void SurfaceQuestGold_UsesSellCoin_WithinExistingSquare()
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PromptB117SurfaceBaseBuilder.PrefabPath);
+            var icon = FindChild(prefab.transform, "RewardSlotGold").Find("Icon").GetComponent<Image>();
+            Assert.That(AssetDatabase.GetAssetPath(icon.sprite), Is.EqualTo("Assets/_Project/Art/UI/SurfaceBase/Icons/icon-gold.png"));
+            Assert.That(icon.preserveAspect, Is.True);
+            Assert.That(icon.rectTransform.sizeDelta, Is.EqualTo(new Vector2(52f, 52f)));
+        }
+
+        [Test]
         public void Issue221_SavedSceneQuestEntriesUseConceptScenes()
         {
             var scene = SceneManager.GetSceneByPath(PromptB107QuestUiBuilder.IntegrationScenePath);

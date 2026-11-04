@@ -257,6 +257,12 @@ namespace SubTerra.App.UI.Tutorial
                 gameObject.SetActive(true);
             }
 
+            // 페이지 전환도 표시 시작에 한 번 낸다. 글자 배치·글리치 연출을 기다리지 않는다.
+            if (CanPlaySfx)
+            {
+                WindowTvSfx.Play(CargoFullPopupView.CargoOpenSfx, CargoFullPopupView.CargoTvVolume);
+            }
+
             transform.SetAsLastSibling();
             if (rendered)
             {
@@ -281,10 +287,6 @@ namespace SubTerra.App.UI.Tutorial
             paging = page;
             clock = 0f;
             closeSfxArmed = CanPlaySfx;
-            if (!page && CanPlaySfx)
-            {
-                WindowTvSfx.Play(CargoFullPopupView.CargoOpenSfx, CargoFullPopupView.CargoTvVolume);
-            }
             if (!Application.isPlaying && !ManualTick)
             {
                 SettleOpen();

@@ -3834,3 +3834,23 @@ EditMode:
 181. prompt-B-181.md 내용 참고해서 기존 효과음들을 재활용해서 지금 게임 내에서 효과음이 없는 부분들에 대해 효과음들을 적용해줘
 
 182. prompt-B-182.md 내용 참고해서 기존 효과음들을 재활용해서 지금 게임 내에서 효과음이 없는 부분들에 대해 효과음들을 적용해줘
+
+182-1. init\prompt-B.md 182번에서 좀 아쉬운데 이 부분에 대해 다음 내용 참고해서 수정해줘
+
+수정 요청 (직접 테스트 후)
+1. 작은 TV 켜짐음이 글리치 이후에 나서 어색함
+화물 공간 부족 창과 버릴 자원 선택 창을 열 때, 글리치 연출이 끝난 뒤에 TV 켜짐음(WindowTvOpen)이 들립니다.
+켜짐음은 글리치와 관계없이 팝업이 켜지자마자 한 번 나도록 바꿔 주세요.
+코드상으로는 CargoFullPopupView.cs:223, CargoDiscardPopupView.cs:286에서 지연 없이 재생하는 것처럼 보입니다. 실제 플레이에서는 글리치 뒤에 들리므로, 창이 열리는 경로에서 어느 시점에 호출되는지 확인이 필요합니다. 다른 창은 공용 TerminalWindowOpenMotion에서 열릴 때 바로 납니다.
+2. 보상 버리기 소리를 묵직한 보관함 소리로 변경
+지금은 화물 공간 부족 창에서 "보상 버리기"를 누르면 부정음(UiCancelFail, DemoObjectiveView.CargoForfeitSfx)이 납니다.
+버릴 자원 선택에서 "전부 버리기"를 눌렀을 때와 같은 **묵직한 보관함 소리(StorageTakeAll)**가 나도록 바꿔 주세요.
+예: CargoForfeitSfx = SfxId.StorageTakeAll로 바꾸거나, DemoObjectiveView.cs:1134에서 DiscardAllSfx를 재생합니다.
+3. 골드 아이콘을 골드바 → 금화로 변경
+퀘스트 클리어 창과 화물 공간 부족 창에서 골드가 금화가 아닌 골드바 아이콘(Art/UI/Gameplay/Quest/quest-icon-gold.png)으로 나옵니다.
+판매창에서 쓰는 기존 금화 아이콘(Art/UI/SurfaceBase/Icons/icon-gold.png)으로 맞춰 주세요.
+바꿀 곳:
+Resources/UI/CargoFullPopupSkin.asset의 goldIcon: 화물 공간 부족 창, 버릴 자원 선택 창
+Scenes/App/Mine_Demo_Integration.unity의 퀘스트 클리어·퀘스트 보상 Icon
+Prefabs/UI/SurfaceBasePanel.prefab의 지상 퀘스트 창 골드 아이콘
+아이콘 모양이 바뀌면서 크기나 비율이 어색해지지 않는지도 함께 확인해 주세요.

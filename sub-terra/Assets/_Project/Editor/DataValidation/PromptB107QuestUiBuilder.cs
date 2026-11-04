@@ -36,7 +36,7 @@ namespace SubTerra.App.Editor.DataValidation
         private const string IconCopper = "Assets/_Project/Art/Icons/icon_copper.png";
         private const string IconIron = "Assets/_Project/Art/Icons/icon_iron.png";
         private const string IconLithium = "Assets/_Project/Art/Icons/icon_lithium.png";
-        private const string IconGold = Art + "quest-icon-gold.png";
+        private const string IconGold = "Assets/_Project/Art/UI/SurfaceBase/Icons/icon-gold.png";
 
         [MenuItem("SubTerra/UI/Build Prompt-B 107 Quest Window")]
         public static void BuildFromMenu()

@@ -203,6 +203,12 @@ namespace SubTerra.App.UI.Tutorial
                 gameObject.SetActive(true);
             }
 
+            // 페이지 전환도 표시 시작에 한 번 낸다. 글자 배치·게이지 연출을 기다리지 않는다.
+            if (CanPlaySfx)
+            {
+                WindowTvSfx.Play(CargoOpenSfx, CargoTvVolume);
+            }
+
             transform.SetAsLastSibling();
             // 꺼진 상태에서 그린 글자 폭은 글리프가 아직 없어 0으로 나올 수 있다. 켜진 뒤 다시 잰다.
             if (rendered)
@@ -218,10 +224,6 @@ namespace SubTerra.App.UI.Tutorial
             paging = page;
             clock = 0f;
             overflowSfxArmed = !page && CanPlaySfx;
-            if (overflowSfxArmed)
-            {
-                WindowTvSfx.Play(CargoOpenSfx, CargoTvVolume);
-            }
             if (!Application.isPlaying && !ManualTick)
             {
                 // 에디터 미리보기·씬 검사에서는 연출 없이 완성 상태로 둔다.

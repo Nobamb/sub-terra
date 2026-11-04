@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 using NUnit.Framework;
 using SubTerra.App.Audio;
 using SubTerra.App.Tutorial;
@@ -93,7 +94,7 @@ namespace SubTerra.Integration.Tests.Audio
         }
 
         [UnityTest]
-        public IEnumerator RuntimeOpen_AutoUpdate_OverflowOnce_PageAndCleanupQuiet()
+        public IEnumerator RuntimeOpen_AutoUpdate_OverflowOnce_PageTvImmediate_CleanupQuiet()
         {
             full.Render(CargoShortfallModel.From(170f, 170f, 9.5f), new QuestReward(3, 3, 0, 200));
             full.Show(false);
@@ -106,11 +107,64 @@ namespace SubTerra.Integration.Tests.Audio
             yield return SaveScreen("cargo-full");
             full.HideImmediate();
             full.Show(true);
+            full.Show(true);
+            Assert.That(full.Clock, Is.Zero);
+            Assert.That(WindowTvSfx.StartedCount, Is.EqualTo(2));
             yield return new WaitUntil(() => full.State == CargoFullPopupView.PopupState.Open);
-            Assert.That(WindowTvSfx.StartedCount, Is.EqualTo(1));
+            Assert.That(WindowTvSfx.StartedCount, Is.EqualTo(2));
             Assert.That(played, Has.Count.EqualTo(1));
             full.HideImmediate();
+            Assert.That(WindowTvSfx.StartedCount, Is.EqualTo(2));
+        }
+
+        [UnityTest]
+        public IEnumerator RuntimeViewPagePath_StartsTvBeforeReveal_OncePerPopup()
+        {
+            var view = root.AddComponent<DemoObjectiveView>();
+            foreach (var field in new (string name, Object value)[]
+            {
+                ("capacityRoot", full.gameObject), ("capacityPopup", full),
+                ("dumpRoot", dump.gameObject), ("dumpPopup", dump)
+            })
+            {
+                typeof(DemoObjectiveView).GetField(field.name, BindingFlags.Instance | BindingFlags.NonPublic)
+                    .SetValue(view, field.value);
+            }
+            var shortfall = CargoShortfallModel.From(170f, 170f, 9.5f);
+            var reward = new QuestReward(3, 3, 0, 200);
+            view.SetCapacityChoice(shortfall, reward);
+            view.SetDumpChoice(shortfall, reward);
+            view.SetDumpRows(new[] { new QuestDumpRow("mineral.copper", "구리", 80, 1.5f) });
+            view.SetCapacityChoiceVisible(true);
+            Assert.That(full.Clock, Is.Zero);
             Assert.That(WindowTvSfx.StartedCount, Is.EqualTo(1));
+            yield return new WaitUntil(() => full.State == CargoFullPopupView.PopupState.Open);
+            view.CapacityDumpRequested += () =>
+            {
+                view.SetCapacityChoiceVisible(false);
+                view.SetDumpPanelVisible(true);
+            };
+            view.OnCapacityDumpClicked();
+            view.OnCapacityDumpClicked();
+            yield return new WaitUntil(() => dump.State == CargoDiscardPopupView.PopupState.Opening);
+            Assert.That(WindowTvSfx.StartedCount, Is.EqualTo(2));
+            Assert.That(WindowTvSfx.Source.isPlaying, Is.True);
+            Assert.That(dump.ContentAlpha, Is.LessThan(1f));
+            yield return new WaitUntil(() => dump.State == CargoDiscardPopupView.PopupState.Open);
+            Assert.That(WindowTvSfx.StartedCount, Is.EqualTo(2));
+            view.DumpClosedRequested += () =>
+            {
+                view.SetDumpPanelVisible(false);
+                view.SetCapacityChoiceVisible(true);
+            };
+            view.OnDumpClosedClicked();
+            view.OnDumpClosedClicked();
+            yield return new WaitUntil(() => full.State == CargoFullPopupView.PopupState.Opening);
+            Assert.That(WindowTvSfx.StartedCount, Is.EqualTo(3));
+            Assert.That(WindowTvSfx.Source.isPlaying, Is.True);
+            Assert.That(full.ContentAlpha, Is.LessThan(1f));
+            yield return new WaitUntil(() => full.State == CargoFullPopupView.PopupState.Open);
+            Assert.That(WindowTvSfx.StartedCount, Is.EqualTo(3));
         }
 
         [UnityTest]

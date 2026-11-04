@@ -338,6 +338,7 @@ namespace SubTerra.App.Tests.Tutorial
 
                 var skin = Resources.Load<CargoFullPopupSkin>(CargoFullPopupSkin.ResourcePath);
                 Assert.That(skin, Is.Not.Null);
+                Assert.That(AssetDatabase.GetAssetPath(skin.goldIcon), Is.EqualTo("Assets/_Project/Art/UI/SurfaceBase/Icons/icon-gold.png"));
                 Assert.That(AssetDatabase.GetAssetPath(skin.ironIcon), Is.EqualTo(PromptB152CargoFullPopupBuilder.IronIconPath));
                 Assert.That(AssetDatabase.GetAssetPath(skin.warningIcon), Is.EqualTo(PromptB152CargoFullPopupBuilder.WarningIconPath));
                 Assert.That(AssetDatabase.GetAssetPath(skin.trashIcon), Is.EqualTo(PromptB152CargoFullPopupBuilder.TrashIconPath));

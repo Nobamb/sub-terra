@@ -17,7 +17,7 @@ namespace SubTerra.App.UI.Tutorial
     public sealed class DemoObjectiveView : MonoBehaviour, IDemoObjectiveView
     {
         public const SfxId CargoPageSfx = SfxId.KeysPageTurn;
-        public const SfxId CargoForfeitSfx = SfxId.UiCancelFail;
+        public const SfxId CargoForfeitSfx = SfxId.StorageTakeAll;
         public const SfxId DiscardTickSfx = SfxId.UiScanTick;
         public const SfxId DiscardAllSfx = SfxId.StorageTakeAll;
         public const SfxId DiscardBackSfx = SfxId.UiClick;
