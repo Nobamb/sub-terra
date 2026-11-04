@@ -1,0 +1,4 @@
+Your project uses a scriptable render pipeline. You can use Camera.stereoTargetEye only with the built-in renderer.
+[B184 smoke] spawn=0.5082163; zoneActive=True; tracked=1; level=0; timeScale=1; pauseHeld=False; settingsOpen=False; masterMuted=False; sfxMuted=True; binderEnabled=True; loopEnabled=True; runPhase=Active; elevatorRiding=False; movementCanMove=True; testMuteBypass=True
+
+Saving results to: C:/Users/USER/AppData/LocalLow/DefaultCompany/sub-terra\TestResults.xml

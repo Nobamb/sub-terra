@@ -130,7 +130,8 @@ namespace SubTerra.App.Editor.DataValidation
             var fileName = Path.GetFileNameWithoutExtension(assetPath);
             var sliderSegment = fileName == "settings_slider_drag_head"
                 || fileName == "settings_slider_drag_loop" || fileName == "settings_slider_drag_tail";
-            var preserveSamples = sliderSegment || fileName == "empty_slot_noise_loop";
+            var preserveSamples = sliderSegment || fileName == "empty_slot_noise_loop"
+                || fileName == "gas_flow_loop" || fileName == "unstable_block_shake_loop";
             // 조각별 정규화·압축 여백은 앞/반복/끝의 이음새를 바꾼다.
             if (preserveSamples)
             {

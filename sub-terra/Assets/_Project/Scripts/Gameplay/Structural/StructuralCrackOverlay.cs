@@ -82,6 +82,27 @@ namespace SubTerra.Gameplay.Structural
         }
 
         public Tilemap OverlayTilemap => overlayTilemap;
+        public int ShakingCellCount => shakeVisuals.Count;
+        public event System.Action Cleared;
+
+        public bool TryGetNearestShakingCell(Vector3 world, out Vector3 cellCenter)
+        {
+            cellCenter = default;
+            if (sourceTilemap == null || !isActiveAndEnabled) return false;
+            float nearest = float.PositiveInfinity;
+            bool found = false;
+            foreach (var pair in shakeVisuals)
+            {
+                if (pair.Value.Root == null || !sourceTilemap.HasTile(pair.Key)) continue;
+                Vector3 center = sourceTilemap.GetCellCenterWorld(pair.Key);
+                float distance = (center - world).sqrMagnitude;
+                if (distance >= nearest) continue;
+                nearest = distance;
+                cellCenter = center;
+                found = true;
+            }
+            return found;
+        }
 
         private void Awake()
         {
@@ -217,6 +238,7 @@ namespace SubTerra.Gameplay.Structural
         /// </summary>
         public void ClearAll()
         {
+            Cleared?.Invoke();
             RemoveUntrackedRuntimeVisuals();
             ClearShakeVisuals();
             if (overlayTilemap != null) overlayTilemap.ClearAllTiles();

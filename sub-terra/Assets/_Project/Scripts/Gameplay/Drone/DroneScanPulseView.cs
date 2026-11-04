@@ -24,6 +24,8 @@ namespace SubTerra.Gameplay.Drone
             public DroneScanTarget Target;
             public Color Color;
             public float RevealAt;
+            public int Order;
+            public bool Focused;
         }
 
         private readonly List<PooledMarker> pool = new();
@@ -47,6 +49,7 @@ namespace SubTerra.Gameplay.Drone
         public int ActiveLightCount => activeCount;
         public int ActiveMarkerCount => activeCount;
         public bool IsRingVisible => rangeRing != null && rangeRing.gameObject.activeSelf;
+        public event Action<int, Vector3> MarkerFocused;
 
         public void Show(
             IReadOnlyList<DroneScanTarget> targets,
@@ -91,6 +94,8 @@ namespace SubTerra.Gameplay.Drone
             for (int index = 0; index < activeCount; index++)
             {
                 var marker = pool[index];
+                marker.Order = index;
+                marker.Focused = false;
                 float distance = Vector2.Distance(center, marker.Target.WorldPosition);
                 marker.RevealAt = Mathf.Max(previousReveal + 0.012f,
                     currentTime + (growthEndsAt - currentTime) * Mathf.InverseLerp(0.15f, ringEndRadius, distance));
@@ -141,6 +146,11 @@ namespace SubTerra.Gameplay.Drone
             {
                 var marker = pool[index];
                 float age = currentTime - marker.RevealAt;
+                if (!marker.Focused && age >= 0.16f)
+                {
+                    marker.Focused = true;
+                    MarkerFocused?.Invoke(marker.Order, marker.Target.WorldPosition);
+                }
                 float focus = Mathf.Clamp01(age / 0.16f);
                 float flash = Mathf.Clamp01(1f - Mathf.Abs(age - 0.16f) / 0.045f);
                 float exit = Mathf.Clamp01((currentTime - (expiresAt - 0.28f)) / 0.28f);

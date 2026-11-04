@@ -90,7 +90,7 @@ namespace SubTerra.App.Tests.Audio
             Assert.That(importer.defaultSampleSettings.compressionFormat, Is.EqualTo(AudioCompressionFormat.PCM));
             Assert.That(SfxLibraryDefaults.IsLoopFile("empty_slot_noise_loop"), Is.False);
             Assert.That((int)SfxId.LockedNodeRattle, Is.EqualTo(95));
-            foreach (var id in new[] { 99, 100, 101 }) Assert.That(Library.TryGetEntry((SfxId)id, out _), Is.False);
+            foreach (var id in new[] { 99, 100, 101 }) Assert.That(Library.TryGetEntry((SfxId)id, out _), Is.True, "B-184 예약 칸 적용");
         }
 
         [TestCase(0.05f, 1)]

@@ -108,6 +108,10 @@ namespace SubTerra.Shared.Audio
         EmptySlotNoiseLoop = 102,
         DronePriorityAlert = 103,
         DroneBubbleUrgent = 104,
-        DroneBubbleUrgentSerious = 105
+        DroneBubbleUrgentSerious = 105,
+        // B-184: 월드 스캔 표시·가스·흔들림.
+        ScanMarkClick = 99,
+        GasFlowLoop = 100,
+        UnstableBlockShakeLoop = 101
     }
 }

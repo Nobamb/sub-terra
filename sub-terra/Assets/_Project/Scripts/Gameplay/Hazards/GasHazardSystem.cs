@@ -24,6 +24,7 @@ namespace SubTerra.Gameplay.Hazards
         public event Action<GasExposureState> ExposureChanged;
         public event Action<GasZone> GasZoneActivated;
         public event Action<string> GasZoneDeactivated;
+        public event Action ZonesCleared;
 
         private void Update()
         {
@@ -79,6 +80,7 @@ namespace SubTerra.Gameplay.Hazards
         /// <summary>월드 스냅샷 복원 전 활성 가스 구역을 제거한다.</summary>
         public void ClearRestoredZones()
         {
+            ZonesCleared?.Invoke();
             for (int index = zones.Count - 1; index >= 0; index--)
             {
                 GasZone zone = zones[index];
