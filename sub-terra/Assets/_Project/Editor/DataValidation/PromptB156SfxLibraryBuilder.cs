@@ -130,8 +130,9 @@ namespace SubTerra.App.Editor.DataValidation
             var fileName = Path.GetFileNameWithoutExtension(assetPath);
             var sliderSegment = fileName == "settings_slider_drag_head"
                 || fileName == "settings_slider_drag_loop" || fileName == "settings_slider_drag_tail";
+            var preserveSamples = sliderSegment || fileName == "empty_slot_noise_loop";
             // 조각별 정규화·압축 여백은 앞/반복/끝의 이음새를 바꾼다.
-            if (sliderSegment)
+            if (preserveSamples)
             {
                 var serialized = new SerializedObject(importer);
                 serialized.FindProperty("m_Normalize").boolValue = false;
@@ -141,7 +142,7 @@ namespace SubTerra.App.Editor.DataValidation
             // B-162: 20초 반복음은 풀어 두면 메모리를 크게 차지하므로 압축된 채 둔다.
             var isLoop = SfxLibraryDefaults.IsLoopFile(fileName);
             settings.loadType = isLoop ? AudioClipLoadType.CompressedInMemory : AudioClipLoadType.DecompressOnLoad;
-            settings.compressionFormat = sliderSegment ? AudioCompressionFormat.PCM : AudioCompressionFormat.Vorbis;
+            settings.compressionFormat = preserveSamples ? AudioCompressionFormat.PCM : AudioCompressionFormat.Vorbis;
             settings.quality = 0.7f;
             settings.preloadAudioData = true;
             importer.defaultSampleSettings = settings;

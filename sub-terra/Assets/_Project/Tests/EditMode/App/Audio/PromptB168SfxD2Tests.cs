@@ -82,7 +82,7 @@ namespace SubTerra.App.Tests.Audio
                 defaults.Add(pair.Entry.Id, (pair.Entry, pair.FileName));
             }
 
-            Assert.That(defaults.Count, Is.EqualTo(94)); // B-179-1 슬라이더 3칸 + B-180-1 잠긴 노드 덜그럭 1칸.
+            Assert.That(defaults.Count, Is.EqualTo(98)); // B-179-1 슬라이더 3칸 + B-180-1 잠긴 노드 덜그럭 1칸.
             Assert.That(defaults.ContainsKey((SfxId)3), Is.False, "3번은 비워 둔다");
             Assert.That((int)SfxId.CargoHeavyWarning, Is.EqualTo(65));
 

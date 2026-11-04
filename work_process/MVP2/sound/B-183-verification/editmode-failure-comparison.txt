@@ -1,0 +1,5 @@
+
+InputObject                                                                                                   SideIndic
+                                                                                                              ator
+-----------                                                                                                   ---------
+FAIL: SubTerra.App.Tests.EditMode.Readiness.PlayerLadderMiningTests.Damage_ResumesThirteen_KnockoutInterrupts =>

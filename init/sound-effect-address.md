@@ -20,7 +20,7 @@
 | world_facility_tag_beep | 시설 근접 라벨 등장 | https://pixabay.com/sound-effects/film-special-effects-short-beep-tone-47916/ | | Short Beep Tone |
 | alarm_mine_wail | 위험도 상승 경보 | https://pixabay.com/sound-effects/film-special-effects-factory-alarm-95712/ | | Factory Alarm. 웽 한 번(약 0.4~0.6초). 단계별 반복·높이는 코드가 조절 |
 | alert_risk_tick | 위험도 하강 틱 | https://pixabay.com/sound-effects/film-special-effects-ui-ai-system-notification-537631/ | | UI AI System Notification |
-| ui_slot_select | 세이브 슬롯 선택 | | | 선정 전. 비어 있으면 ui_click으로 대신 난다 |
+| ui_slot_select | 메인 메뉴에서 세이브 슬롯을 고를 때 쇠 프레임 "딸깍" | https://pixabay.com/sound-effects/film-special-effects-steampunk-mechanical-gadget-188052/ | 2026-11-02 | Steampunk Mechanical Gadget (DavidDumaisAudio). 원본 0.020~0.320초, 끝 0.12초 페이드(1.27→0.30초, 모노, 최고점 -1dBFS). UI 폴더 |
 | sell_confirm | 판매 확정 | https://pixabay.com/sound-effects/film-special-effects-cash-register-kaching-376867/ | 2026-10-23 | 앞뒤 무음 정리(1.10→0.99초) |
 | storage_box_rise | 보관함 상자 올라옴 | https://pixabay.com/sound-effects/film-special-effects-sci-fi-door-unlock-and-hydraulic-open-2-546619/ | 2026-10-23 | 원본 0.80~2.60초만 남김(5.11→1.80초), 페이드 인·아웃 |
 | storage_lid_open | 보관함 뚜껑 열림 | https://pixabay.com/sound-effects/film-special-effects-box-open-90674/ | 2026-10-23 | 앞 무음 정리(0.48→0.31초), 끝 짧은 페이드 |
@@ -99,3 +99,7 @@
 | settings_slider_drag_head | 설정 음량 슬라이더를 잡고 끌기 시작할 때(시작 "탁"+첫 웅웅) | https://pixabay.com/sound-effects/film-special-effects-sci-fi-door-14782/ | 2026-11-02 | B-179 settings_slider_drag의 0~0.544초(떨림이 작은 곳의 0 교차점에서 자름, 0.544초, 모노, 최고점 -1dBFS). UI 폴더, Normalize 끔 |
 | settings_slider_drag_loop | 설정 음량 슬라이더를 잡고 있는 동안 반복 | https://pixabay.com/sound-effects/film-special-effects-sci-fi-door-14782/ | 2026-11-02 | B-179 settings_slider_drag의 0.544~0.714초 "웅" 한 번(0.1696초, 7481샘플). 앞 10ms에 끝 다음 10ms를 섞어 이음새 없이 반복. UI 폴더, Normalize 끔 |
 | settings_slider_drag_tail | 설정 음량 슬라이더에서 손을 뗄 때 끝 꼬리 | https://pixabay.com/sound-effects/film-special-effects-sci-fi-door-14782/ | 2026-11-02 | B-179 settings_slider_drag의 0.714초~끝(0.164초). 반복 조각 끝과 샘플이 그대로 이어짐. UI 폴더, Normalize 끔 |
+| empty_slot_noise_loop | 메인 메뉴 빈 슬롯을 고르거나 마우스를 올린 동안만 TV 지직 노이즈(반복) | https://pixabay.com/sound-effects/film-special-effects-tv-static-noise-152056/ | 2026-11-02 | TV Static Noise (Universfield). 원본 10.1초부터 2.0초, 0.25초 교차 페이드로 이음새 없는 반복(15.05→2.00초, 모노, RMS -24dBFS). UI 폴더, Normalize 끔 |
+| drone_priority_alert | Tab 드론 분석 창이 PRIORITY로 바뀌는 순간 경고음 한 번 | https://pixabay.com/sound-effects/film-special-effects-ui-warning-beep-515666/ | 2026-11-02 | UI Warning Beep (SoundShelfStudio). 원본 0~0.60초, 끝 0.08초 페이드(1.23→0.60초, 모노, 최고점 -1dBFS). UI 폴더 |
+| drone_bubble_urgent | 드론 머리 위 말풍선의 급한 말(단순 알림, 예: 전력 부족) "삐빅" | https://pixabay.com/sound-effects/musical-ui-double-digital-beep-491835/ | 2026-11-02 | UI - double digital beep (YUSUF_SFX). 원본 0.080~0.310초, 끝 0.02초 페이드(1.23→0.23초, 모노, 최고점 -1dBFS). World 폴더 |
+| drone_bubble_urgent_serious | 드론 머리 위 말풍선의 심각한 급한 말(비상·붕괴 위험·가스) 낮은 "삐빅" | https://pixabay.com/sound-effects/musical-ui-double-digital-beep-491835/ | 2026-11-02 | drone_bubble_urgent와 같은 원본·같은 자리. 두 음을 각각 7반음 낮춰 원래 박자에 다시 놓음(약 1975→1318Hz, 0.23초, 모노, 최고점 -1dBFS). World 폴더 |
