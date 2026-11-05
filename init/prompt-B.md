@@ -3859,3 +3859,26 @@ Prefabs/UI/SurfaceBasePanel.prefab의 지상 퀘스트 창 골드 아이콘
 183. work_process\MVP2\sound\prompt-B-183.md 의 내용 참고해서 sfx-B183-184 폴더에 있는 효과음을 게임 내에 적용해줘
 
 184. work_process\MVP2\sound\prompt-B-184.md 의 내용 참고해서 sfx-B183-184 폴더에 있는 효과음을 게임 내에 적용해줘
+
+
+185. work_process/MVP2/prompt-B-185.md 의 내용 참고해서 전력이 들어와야 사용 가능한 시설에 대해 연출 추가해줘
+
+
+185-1.  /unity:ui-ugui @init/prompt-B.md 의 185번 부분 제대로 해결이 안되었어 다음 내용
+  참고해서 수정해줘
+
+  테스트 결과: 실제 게임에서 전력 켜짐 연출이 안 나옵니다
+전진기지 코어 범위 안에 충전기를 설치했는데(코어 먼저 / 충전기 먼저 둘 다) 청록 정전기·빛 연출이 전혀 나오지 않습니다. 설치 순서와 상관없이 범위 안에서 꺼짐→켜짐이 되는 순간 연출이 나와야 합니다.
+
+원인 (코드 확인 결과)
+연출이 실제 게임에서 시설이 켜지는 방식과 다른 판정에 붙어 있습니다.
+
+지금 연출은 PowerFacility.cs에서 PowerNode.PowerStateChanged(케이블 연결 + 공급/수요 계산 기반 IsPowered)가 꺼짐→켜짐으로 바뀔 때만 시작됩니다.
+하지만 실제 게임에서 충전기·보건소·정산 콘솔이 켜졌는지는 GameplayEventBridge.cs의 범위 판정(IsWithinPowerSupplyRange, IsProximityPoweredFacility)으로 정합니다. 코어/엘리베이터 반경 안이면 켜진 것으로 봅니다.
+케이블 기반 PowerNode.IsPowered는 실제 플레이에서 거의 켜지지 않습니다. EmergencyEscapePortal.cs 주석에도 "전진기지 공급 5 < 수요 30이라 용량 기반 PowerNode.IsPowered만으로는 패널이 영구 차단된다"고 적혀 있습니다.
+그래서 PowerStateChanged가 오지 않고 → PlayPowerOnEffect()가 호출되지 않습니다. 보고서의 화면 확인은 미리보기 씬에서 연출을 직접 진행한 것이라 이 경로를 거치지 않았습니다.
+수정 요청
+연출 시작 조건을 실제 게임의 범위 판정과 같은 기준으로 바꿔 주세요. 시설이 범위 판정상 꺼짐→켜짐이 되는 순간(새로 설치해서 범위 안에 들어옴 / 코어를 나중에 설치해서 범위가 생김 / 케이블·CCTV 창 연결) 각 시설에서 PowerOnEffect.Play가 한 번 불리도록 해 주세요.
+기존 규칙은 그대로 유지: 이어하기·탐사 진입 복원 중에는 연출 없음, 켜짐→켜짐·켜짐→꺼짐은 연출 없음, 여러 개가 한 번에 켜지면 시설마다 연출 + BatchStarted는 한 번.
+실제 플레이 흐름으로 확인해 주세요(Bootstrap → 광산 → 코어 설치 → 범위 안에 충전기 설치, 그리고 반대 순서). 미리보기 씬에서 직접 Tick을 돌리는 테스트만으로는 이 문제를 못 잡습니다. 가능하면 "범위 안에 시설 설치 → 연출 시작"을 확인하는 PlayMode 테스트를 추가해 주세요.
+조명·보관함은 범위 판정 목록(IsProximityPoweredFacility)에 없으니, 이 두 시설은 어떤 조건에서 켜지는지 확인하고 같은 기준으로 맞춰 주세요.

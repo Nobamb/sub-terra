@@ -1,7 +1,7 @@
 {
   "name": "SubTerra.Gameplay.Power",
   "rootNamespace": "SubTerra.Gameplay.Power",
-  "references": [],
+  "references": ["SubTerra.Shared"],
   "includePlatforms": [],
   "excludePlatforms": [],
   "allowUnsafeCode": false,

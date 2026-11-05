@@ -43,6 +43,9 @@ namespace SubTerra.Gameplay.Snapshot
         /// <summary>마지막 복원 실패 사유(로그·테스트용). 세이브 원문/절대 경로는 넣지 않는다.</summary>
         public string LastRestoreFailureReason { get; private set; } = string.Empty;
 
+        /// <summary>RestoreSnapshot 실행 중 true. 이 동안 켜지는 시설은 연출 없이 조용히 켠다(B-185).</summary>
+        public bool IsRestoring { get; private set; }
+
         private void Awake() => ResolveBaseWorldGenerator();
 
         private void OnEnable()
@@ -86,6 +89,21 @@ namespace SubTerra.Gameplay.Snapshot
         }
 
         public bool RestoreSnapshot(WorldSnapshotDto snapshot)
+        {
+            IsRestoring = true;
+            PowerOnEffect.BeginSuppression();
+            try
+            {
+                return RestoreSnapshotCore(snapshot);
+            }
+            finally
+            {
+                PowerOnEffect.EndSuppression();
+                IsRestoring = false;
+            }
+        }
+
+        private bool RestoreSnapshotCore(WorldSnapshotDto snapshot)
         {
             LastRestoreSucceeded = false;
             LastRestoreFailureReason = string.Empty;
