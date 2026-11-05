@@ -3,7 +3,7 @@
 ## 상태 요약
 - 코드·등록·테스트 완료. Pixabay 자동 다운로드가 막혀 PM이 직접 받아 `power_on_static.wav`를 넣었다(Unity 길이 0.816초, 에셋 음량 0.8).
 - PM이 올린 음량 0.8에 맞춰 `SfxLibraryDefaults`도 0.8로 고침(프롬프트의 0.3~0.5 범위를 벗어남). 길이도 목표 0.6초보다 길다.
-- 파일 내용이 MP3인데 확장자만 .wav다. Unity는 정상 import한다.
+- 받은 파일이 MP3 데이터였으나 진짜 PCM wav(모노, 48kHz, 16bit)로 변환했다.
 - 직접 듣기는 PM 확인 필요(미검증).
 
 ## 기준
@@ -18,7 +18,7 @@
 | Scripts/App/Integration/PowerOnSfx.cs (신규) | `PowerOnEffect.BatchStarted`만 구독 |
 | Scripts/App/Integration/IntegrationRuntimeBinder.cs | `BindWorldSfx` 끝에서 생성·구독, `OnDestroy`에서 해제 |
 | Tests | 신규 `PromptB186PowerOnSfxTests`. 슬롯 개수를 하드코딩한 기존 테스트 6곳(101→102 등)을 한 칸 늘어난 값으로 수정 |
-| init/sound-effect-address.md, work_process/MVP2/sound/sfx-B186/README.md | 출처 줄(작성자 미확인 표시) |
+| init/sound-effect-address.md, work_process/MVP2/sound/sfx-B186/README.md | 출처 줄(작성자 blww) |
 
 ## ★ 상수 (PowerOnSfx.cs)
 `PowerOnMinGap 0.25f`, `PowerOnStaticCctvGap 0.15f`, `PowerOnStaticDuckedVolume 0.5f`. 음량 0.8f는 SfxLibraryDefaults.
@@ -26,7 +26,7 @@
 ## 음원 표
 | SfxId | 파일 | 길이 | 버스/음량 | 원본 구간 | Pixabay URL | 작성자 |
 |---|---|---|---|---|---|---|
-| 106 PowerOnStatic | power_on_static.wav | 0.816초 | World / 0.8 | 미확인(PM이 편집) | https://pixabay.com/sound-effects/film-special-effects-short-electric-zap-561890/ | **미확인**(PM이 직접 받음, 작성자 채울 것) |
+| 106 PowerOnStatic | power_on_static.wav | 0.816초 | World / 0.8 | 미확인(PM이 받은 그대로) | https://pixabay.com/sound-effects/film-special-effects-short-electric-zap-561890/ | blww |
 - 받은 방법: curl → Cloudflare 확인 화면 HTTP 403. 브라우저 필요.
 - `sound-effect-address.md`·`sfx-B186/README.md`의 출처와 같음. 작성자·자른 구간은 파일을 받을 때 두 곳에 채워야 한다(**완료 체크리스트의 출처 항목은 미완료**).
 
@@ -58,4 +58,4 @@
 12. Unity Console에 새 빨간 오류·노란 경고가 없는지 본다.
 
 ## 완료 체크리스트
-[x] push [ ] 커밋 해시(PR 본문 참고) [x] 컴파일 오류 없음 [x] EditMode 새 실패 없음(기준 비교는 미검증) [x] SfxId 106 추가·기존 값 그대로 [x] SfxLibraryDefaults·SfxLibrary.asset 등록 [x] `power_on_static.wav` 존재 [ ] address.md 작성자 [ ] README 작성자·구간 [x] main 직접 커밋 없음 [x] PR 안 만듦
+[x] push [ ] 커밋 해시(PR 본문 참고) [x] 컴파일 오류 없음 [x] EditMode 새 실패 없음(기준 비교는 미검증) [x] SfxId 106 추가·기존 값 그대로 [x] SfxLibraryDefaults·SfxLibrary.asset 등록 [x] `power_on_static.wav` 존재 [x] address.md 작성자 [x] README 작성자(구간은 받은 그대로라 미확인) [x] main 직접 커밋 없음 [x] PR 안 만듦
