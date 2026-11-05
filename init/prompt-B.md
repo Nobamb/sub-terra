@@ -3882,3 +3882,23 @@ Prefabs/UI/SurfaceBasePanel.prefab의 지상 퀘스트 창 골드 아이콘
 기존 규칙은 그대로 유지: 이어하기·탐사 진입 복원 중에는 연출 없음, 켜짐→켜짐·켜짐→꺼짐은 연출 없음, 여러 개가 한 번에 켜지면 시설마다 연출 + BatchStarted는 한 번.
 실제 플레이 흐름으로 확인해 주세요(Bootstrap → 광산 → 코어 설치 → 범위 안에 충전기 설치, 그리고 반대 순서). 미리보기 씬에서 직접 Tick을 돌리는 테스트만으로는 이 문제를 못 잡습니다. 가능하면 "범위 안에 시설 설치 → 연출 시작"을 확인하는 PlayMode 테스트를 추가해 주세요.
 조명·보관함은 범위 판정 목록(IsProximityPoweredFacility)에 없으니, 이 두 시설은 어떤 조건에서 켜지는지 확인하고 같은 기준으로 맞춰 주세요.
+
+
+185-2. 지금 전력망이 필요없는 조명, 보관함 같은 시설에서도 전진기지 근처에 설치하게 되면 전력 연결 연출이 동일하게 적용되던데 전진기지 없이도 동작이 가능한 시설에 대해서는 연출을 빼줬으면 해 아래 내용 참고해서 작업 진행해줘 
+
+조명·보관함 켜짐 연출 제거 요청
+실제 플레이로 확인해 보니 전진기지 범위와 상관없는 시설인 조명과 보관함에서도 켜짐 연출이 나와요. 두 시설은 전진기지 없이도 원래 쓸 수 있어요. 그런데 연출이 나오면 플레이어가 "이제 전원이 들어와서 쓸 수 있게 됐다"고 오해할 수 있으니, 이 두 시설에서는 연출을 빼 주세요.
+
+연출은 충전기·보건소·정산 콘솔처럼 범위에 따라 실제로 켜지고 꺼지는 시설에서만 나오게 해 주세요.
+
+고칠 곳
+sub-terra/Assets/_Project/Scripts/Gameplay/Integration/GameplayEventBridge.cs
+478~483줄 IsPowerOnEffectFacility: 481줄 building.light.basic, 482줄 building.storage.basic 조건을 지워서 IsProximityPoweredFacility(buildingId)만 남겨 주세요. 이 메서드 없이 IsProximityPoweredFacility를 바로 써도 괜찮아요.
+475~476줄 주석에서 조명·보관함 설명도 함께 정리해 주세요.
+sub-terra/Assets/_Project/Tests/EditMode/App/Integration/PromptB185RangePowerOnEffectTests.cs
+114줄 AllFiveFacilities_TurnOnTogether_EachPlays_BatchOnce: 122~123줄 LightBasic, StorageBasic을 빼고 세 시설 기준으로 바꿔 주세요. BatchStarted 기대값도 5에서 3으로 바꾸고, 테스트 이름도 맞춰 주세요.
+조명과 보관함을 범위 안에 설치하거나 코어를 나중에 설치해도 PowerOnEffectInstance가 없고 Started가 없는지 확인하는 테스트를 하나 추가해 주세요.
+work_process/MVP2/power/B-185-1-power-on-range-result.md: "조명·보관함은 언제 켜지나" 부분과 테스트 가이드 5번을 바뀐 동작에 맞게 고쳐 주세요.
+확인할 것
+코어 범위 안에 조명이나 보관함을 설치하거나 근처에 코어를 설치해도 연출이 없어야 해요.
+충전기·보건소·정산 콘솔은 지금처럼 두 가지 설치 순서 모두에서 연출이 나와야 해요.
