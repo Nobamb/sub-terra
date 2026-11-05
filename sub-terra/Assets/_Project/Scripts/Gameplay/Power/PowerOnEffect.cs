@@ -43,9 +43,9 @@ namespace SubTerra.Gameplay.Power
         private const float VisibleRendererAlpha = 0.1f;
         private const int SparkVariantCount = 3;
 
-        /// <summary>연출이 시작된 시설마다 한 번. isBatch는 같은 Rebuild에서 둘 이상 켜졌는지.</summary>
+        /// <summary>연출이 시작된 시설마다 한 번. isBatch는 같은 범위 판정에서 둘 이상 켜졌는지.</summary>
         public static event Action<PowerFacility, bool> Started;
-        /// <summary>한 Rebuild에서 연출이 하나 이상 시작되면 한 번만(켜진 개수, 시설 중심 평균).</summary>
+        /// <summary>한 번의 범위 판정(전력망 Rebuild)에서 연출이 하나 이상 시작되면 한 번만(켜진 개수, 시설 중심 평균).</summary>
         public static event Action<int, Vector3> BatchStarted;
 
         private static readonly List<PowerOnEffect> pendingStarts = new();
@@ -54,7 +54,6 @@ namespace SubTerra.Gameplay.Power
         private static Sprite[] sparkSprites;
 
         private PowerFacility owner;
-        private PowerNode ownerNode;
         private GameObject effectRoot;
         private SpriteRenderer glowRenderer;
         private readonly List<SpriteRenderer> sparkRenderers = new();
@@ -94,11 +93,7 @@ namespace SubTerra.Gameplay.Power
             BatchStarted = null;
         }
 
-        public void Bind(PowerFacility facility, PowerNode node)
-        {
-            owner = facility;
-            ownerNode = node;
-        }
+        public void Bind(PowerFacility facility) => owner = facility;
 
         /// <summary>연출을 처음부터 시작한다. 생략(모션 감소로 빛 없음)이면 false.</summary>
         public bool Play(IReadOnlyList<GameObject> poweredVisuals)
@@ -163,30 +158,24 @@ namespace SubTerra.Gameplay.Power
 
         private void LateUpdate()
         {
-            // NetworkRebuilt를 못 받은 경우의 안전망. 보통은 Rebuild 끝에서 이미 비어 있다.
+            // 판정 쪽이 FlushPendingStarts를 못 부른 경우의 안전망. 보통은 판정 끝에서 이미 비어 있다.
             if (pendingStarts.Count > 0) FlushPendingStarts();
         }
 
         private void OnDisable() => Stop();
 
-        private void OnDestroy()
-        {
-            pendingStarts.Remove(this);
-            if (ownerNode != null && ownerNode.Network != null) ownerNode.Network.NetworkRebuilt -= OnNetworkRebuilt;
-        }
+        private void OnDestroy() => pendingStarts.Remove(this);
 
         private void QueueStart()
         {
             if (!pendingStarts.Contains(this)) pendingStarts.Add(this);
-            PowerNetworkSystem network = ownerNode != null ? ownerNode.Network : null;
-            if (network == null) return;
-            network.NetworkRebuilt -= OnNetworkRebuilt;
-            network.NetworkRebuilt += OnNetworkRebuilt;
         }
 
-        private static void OnNetworkRebuilt(PowerNetworkSnapshot _) => FlushPendingStarts();
-
-        private static void FlushPendingStarts()
+        /// <summary>
+        /// B-185-1: 범위 판정 한 번이 끝나면 부른다. 그 사이 시작된 연출을 Started(시설마다)와
+        /// BatchStarted(한 번)로 알린다. 시작된 연출이 없으면 아무것도 하지 않는다.
+        /// </summary>
+        public static void FlushPendingStarts()
         {
             if (pendingStarts.Count == 0) return;
             PowerOnEffect[] batch = pendingStarts.ToArray();
@@ -316,7 +305,8 @@ namespace SubTerra.Gameplay.Power
             if (poweredVisuals == null || PoweredFadeIn <= 0f) return;
             foreach (GameObject visual in poweredVisuals)
             {
-                if (visual == null) continue;
+                // 켜짐 그림은 PowerNode 기준이라 꺼져 있을 수 있다. 보이는 것만 페이드한다.
+                if (visual == null || !visual.activeSelf) continue;
                 foreach (SpriteRenderer target in visual.GetComponentsInChildren<SpriteRenderer>(true))
                 {
                     if (target == null) continue;

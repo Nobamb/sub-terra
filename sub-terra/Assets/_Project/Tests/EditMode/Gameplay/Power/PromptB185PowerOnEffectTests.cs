@@ -43,13 +43,13 @@ namespace SubTerra.Gameplay.Power.Tests
         }
 
         [Test]
-        public void OffToOn_PlaysEffectAndRaisesStartedOnce()
+        public void RangeOffToOn_PlaysEffectAndRaisesStartedOnce()
         {
             var f = CreateWorld(1, 10);
-            Connect(f.core, f.facilities[0]);
 
             PowerFacility facility = f.facilities[0];
-            Assert.That(facility.IsInteractionAvailable, Is.True);
+            Assert.That(TurnOn(f.facilities[0]), Is.True);
+            Assert.That(facility.IsInSupplyRange, Is.True);
             Assert.That(facility.PowerOnEffectInstance, Is.Not.Null);
             Assert.That(facility.PowerOnEffectInstance.IsPlaying, Is.True);
             Assert.That(facility.PowerOnEffectInstance.EffectRoot.activeSelf, Is.True);
@@ -61,25 +61,52 @@ namespace SubTerra.Gameplay.Power.Tests
         }
 
         [Test]
-        public void OnToOn_AndOnToOff_RaiseNothing()
+        public void CablePowerAlone_DoesNotPlayEffect()
         {
+            // B-185-1: 실제 게임 켜짐은 범위 판정이다. 케이블 용량 기반 PowerNode 켜짐만으로는 연출 없음.
             var f = CreateWorld(1, 10);
             Connect(f.core, f.facilities[0]);
+            PowerOnEffect.FlushPendingStarts();
+
+            Assert.That(f.facilities[0].facility.IsInteractionAvailable, Is.True, "상호작용 판정은 그대로");
+            Assert.That(f.visuals[0].activeSelf, Is.True, "켜짐 그림은 그대로 PowerNode 기준");
+            Assert.That(f.facilities[0].facility.PowerOnEffectInstance, Is.Null);
+            Assert.That(started, Is.Empty);
+            Assert.That(batches, Is.Empty);
+        }
+
+        [Test]
+        public void RangeOnToOn_AndOnToOff_RaiseNothing()
+        {
+            var f = CreateWorld(1, 10);
+            TurnOn(f.facilities[0]);
             PowerOnEffect effect = f.facilities[0].facility.PowerOnEffectInstance;
             effect.Tick(PowerOnEffect.PowerOnDuration + 0.01f);
             started.Clear();
             batches.Clear();
 
-            f.network.Rebuild();
-            Assert.That(started, Is.Empty, "켜짐→켜짐은 연출 없음");
+            Assert.That(TurnOn(f.facilities[0]), Is.False, "켜짐→켜짐은 연출 없음");
+            Assert.That(started, Is.Empty);
             Assert.That(effect.IsPlaying, Is.False);
 
-            f.core.Configure(f.network, true, 0, 0, PowerPriority.Critical);
-            Assert.That(f.facilities[0].facility.IsInteractionAvailable, Is.False);
-            Assert.That(started, Is.Empty, "켜짐→꺼짐은 연출 없음");
+            Assert.That(SetRange(f.facilities[0], false), Is.False, "켜짐→꺼짐은 연출 없음");
+            Assert.That(f.facilities[0].facility.IsInSupplyRange, Is.False);
+            Assert.That(started, Is.Empty);
             Assert.That(batches, Is.Empty);
             Assert.That(effect.IsPlaying, Is.False);
-            Assert.That(f.visuals[0].activeSelf, Is.False);
+        }
+
+        [Test]
+        public void AllowEffectFalse_UpdatesStateQuietly()
+        {
+            var f = CreateWorld(1, 10);
+            Assert.That(f.facilities[0].facility.SetSupplyRangePowered(true, false), Is.False);
+            PowerOnEffect.FlushPendingStarts();
+
+            Assert.That(f.facilities[0].facility.IsInSupplyRange, Is.True);
+            Assert.That(f.facilities[0].facility.PowerOnEffectInstance, Is.Null);
+            Assert.That(started, Is.Empty);
+            Assert.That(TurnOn(f.facilities[0]), Is.False, "이미 켜진 것으로 기록되어 다음 판정도 조용함");
         }
 
         [Test]
@@ -91,6 +118,7 @@ namespace SubTerra.Gameplay.Power.Tests
 
             CallLifecycle(f.facilities[0].facility, "Awake");
             CallLifecycle(f.facilities[0].facility, "OnEnable");
+            PowerOnEffect.FlushPendingStarts();
 
             Assert.That(f.facilities[0].facility.IsInteractionAvailable, Is.True);
             Assert.That(f.visuals[0].activeSelf, Is.True, "첫 적용은 지금처럼 바로 켬");
@@ -100,7 +128,7 @@ namespace SubTerra.Gameplay.Power.Tests
         }
 
         [Test]
-        public void RestoreSnapshot_PowersOnQuietly()
+        public void RestoreSnapshot_RangeOnIsQuiet_AndStaysQuietAfterwards()
         {
             var f = CreateWorld(1, 10);
             f.core.SetEntityId("core-0001");
@@ -110,39 +138,50 @@ namespace SubTerra.Gameplay.Power.Tests
             var snapshots = f.root.AddComponent<WorldSnapshotSystem>();
             SetField(snapshots, "powerNetworkSystem", f.network);
             SetField(snapshots, "powerCablePrefab", prefabCable);
-
-            bool restored = snapshots.RestoreSnapshot(new WorldSnapshotDto
+            // GameplayEventBridge처럼 Rebuild마다 범위 판정을 넘긴다(여기서는 항상 범위 안).
+            Action<PowerNetworkSnapshot> judge = _ =>
             {
-                powerState = new PowerSnapshotDto
+                f.facilities[0].facility.SetSupplyRangePowered(true, true);
+                PowerOnEffect.FlushPendingStarts();
+            };
+            f.network.NetworkRebuilt += judge;
+            try
+            {
+                bool restored = snapshots.RestoreSnapshot(new WorldSnapshotDto
                 {
-                    cableConnections = new List<PowerConnectionSnapshotDto>
+                    powerState = new PowerSnapshotDto
                     {
-                        new() { nodeAInstanceId = "core-0001", nodeBInstanceId = "facility-0001" }
+                        cableConnections = new List<PowerConnectionSnapshotDto>
+                        {
+                            new() { nodeAInstanceId = "core-0001", nodeBInstanceId = "facility-0001" }
+                        }
                     }
-                }
-            });
+                });
 
-            Assert.That(restored, Is.True);
-            Assert.That(f.facilities[0].facility.IsInteractionAvailable, Is.True);
-            Assert.That(f.visuals[0].activeSelf, Is.True);
-            PowerOnEffect effect = f.facilities[0].facility.PowerOnEffectInstance;
-            Assert.That(effect == null || !effect.IsPlaying, Is.True, "불러오기는 연출 없음");
-            Assert.That(started, Is.Empty);
-            Assert.That(batches, Is.Empty);
-            Assert.That(snapshots.IsRestoring, Is.False);
-            Assert.That(PowerOnEffect.IsSuppressed, Is.False, "Restore가 끝나면 생략 구간도 끝난다");
+                Assert.That(restored, Is.True);
+                Assert.That(f.facilities[0].facility.IsInSupplyRange, Is.True);
+                PowerOnEffect effect = f.facilities[0].facility.PowerOnEffectInstance;
+                Assert.That(effect == null || !effect.IsPlaying, Is.True, "불러오기는 연출 없음");
+                Assert.That(started, Is.Empty);
+                Assert.That(batches, Is.Empty);
+                Assert.That(snapshots.IsRestoring, Is.False);
+                Assert.That(PowerOnEffect.IsSuppressed, Is.False, "Restore가 끝나면 생략 구간도 끝난다");
+
+                f.network.Rebuild();
+                Assert.That(started, Is.Empty, "복원 뒤 다음 Rebuild도 켜짐→켜짐이라 연출 없음");
+            }
+            finally
+            {
+                f.network.NetworkRebuilt -= judge;
+            }
         }
 
         [Test]
-        public void OneRebuildPoweringThree_PlaysThreeEffects_StartedThrice_BatchOnce()
+        public void OneJudgementPoweringThree_PlaysThreeEffects_StartedThrice_BatchOnce()
         {
             var f = CreateWorld(3, 0);
-            foreach (var facility in f.facilities) Connect(f.core, facility);
-            Assert.That(f.facilities.All(entry => !entry.facility.IsInteractionAvailable), Is.True);
-            started.Clear();
-            batches.Clear();
-
-            f.core.Configure(f.network, true, 10, 0, PowerPriority.Critical);
+            foreach (var facility in f.facilities) facility.facility.SetSupplyRangePowered(true, true);
+            PowerOnEffect.FlushPendingStarts();
 
             Assert.That(f.facilities.All(entry => entry.facility.PowerOnEffectInstance.IsPlaying), Is.True);
             Assert.That(started, Has.Count.EqualTo(3));
@@ -160,6 +199,7 @@ namespace SubTerra.Gameplay.Power.Tests
             AccessibilityPreferences.ReduceMotion = true;
             var f = CreateWorld(1, 10);
             Connect(f.core, f.facilities[0]);
+            TurnOn(f.facilities[0]);
             PowerOnEffect effect = f.facilities[0].facility.PowerOnEffectInstance;
 
             Assert.That(effect.IsPlaying, Is.True);
@@ -182,6 +222,7 @@ namespace SubTerra.Gameplay.Power.Tests
         {
             var f = CreateWorld(1, 10);
             Connect(f.core, f.facilities[0]);
+            TurnOn(f.facilities[0]);
             PowerOnEffect effect = f.facilities[0].facility.PowerOnEffectInstance;
             SpriteRenderer powered = f.visuals[0].GetComponent<SpriteRenderer>();
 
@@ -216,21 +257,38 @@ namespace SubTerra.Gameplay.Power.Tests
         }
 
         [Test]
-        public void PowerLostMidEffect_StopsImmediately_AndPoweredVisualOff()
+        public void HiddenPoweredVisual_IsNotFaded()
+        {
+            // 범위로만 켜지고 케이블 전력이 없으면 켜짐 그림은 꺼진 채이고 색도 건드리지 않는다.
+            var f = CreateWorld(1, 10);
+            SpriteRenderer powered = f.visuals[0].GetComponent<SpriteRenderer>();
+            TurnOn(f.facilities[0]);
+
+            Assert.That(f.facilities[0].facility.PowerOnEffectInstance.IsPlaying, Is.True);
+            Assert.That(f.visuals[0].activeSelf, Is.False);
+            Assert.That(powered.color.a, Is.EqualTo(1f));
+        }
+
+        [Test]
+        public void RangeLostMidEffect_StopsImmediately_AndRestoresPoweredAlpha()
         {
             var f = CreateWorld(1, 10);
             Connect(f.core, f.facilities[0]);
+            TurnOn(f.facilities[0]);
             PowerOnEffect effect = f.facilities[0].facility.PowerOnEffectInstance;
             SpriteRenderer powered = f.visuals[0].GetComponent<SpriteRenderer>();
             effect.Tick(0.1f);
             Assert.That(effect.IsPlaying, Is.True);
 
-            f.core.Configure(f.network, true, 0, 0, PowerPriority.Critical);
+            SetRange(f.facilities[0], false);
 
             Assert.That(effect.IsPlaying, Is.False);
             Assert.That(effect.EffectRoot.activeSelf, Is.False);
-            Assert.That(f.visuals[0].activeSelf, Is.False);
             Assert.That(powered.color.a, Is.EqualTo(1f), "페이드 중 꺼져도 원래 알파로 돌려 둔다");
+
+            // 케이블 전력이 끊기면 켜짐 그림·상호작용은 지금처럼 바로 꺼진다.
+            f.core.Configure(f.network, true, 0, 0, PowerPriority.Critical);
+            Assert.That(f.visuals[0].activeSelf, Is.False);
             Assert.That(f.facilities[0].facility.IsInteractionAvailable, Is.False);
         }
 
@@ -238,7 +296,7 @@ namespace SubTerra.Gameplay.Power.Tests
         public void EffectEndsAfterDuration_AndObjectIsReused()
         {
             var f = CreateWorld(1, 10);
-            PowerCable cable = Connect(f.core, f.facilities[0]);
+            TurnOn(f.facilities[0]);
             PowerOnEffect effect = f.facilities[0].facility.PowerOnEffectInstance;
             GameObject root = effect.EffectRoot;
 
@@ -246,8 +304,8 @@ namespace SubTerra.Gameplay.Power.Tests
             Assert.That(effect.IsPlaying, Is.False);
             Assert.That(root.activeSelf, Is.False);
 
-            f.network.UnregisterCable(cable);
-            f.network.RegisterCable(cable);
+            SetRange(f.facilities[0], false);
+            TurnOn(f.facilities[0]);
             Assert.That(effect.IsPlaying, Is.True);
             Assert.That(f.facilities[0].facility.PowerOnEffectInstance, Is.SameAs(effect));
             Assert.That(effect.EffectRoot, Is.SameAs(root), "시설당 오브젝트 하나를 재사용");
@@ -259,7 +317,7 @@ namespace SubTerra.Gameplay.Power.Tests
         public void EffectSortsJustInFrontOfFacility()
         {
             var f = CreateWorld(1, 10);
-            Connect(f.core, f.facilities[0]);
+            TurnOn(f.facilities[0]);
             PowerOnEffect effect = f.facilities[0].facility.PowerOnEffectInstance;
             int facilityMax = 6;
 
@@ -354,6 +412,16 @@ namespace SubTerra.Gameplay.Power.Tests
             batches.Clear();
             return world;
         }
+
+        /// <summary>GameplayEventBridge 한 번의 범위 판정과 같은 순서: 상태 전달 → 끝에서 Flush.</summary>
+        private static bool SetRange(FacilityEntry facility, bool inRange)
+        {
+            bool playing = facility.facility.SetSupplyRangePowered(inRange, true);
+            PowerOnEffect.FlushPendingStarts();
+            return playing;
+        }
+
+        private static bool TurnOn(FacilityEntry facility) => SetRange(facility, true);
 
         private PowerCable Connect(PowerNode core, FacilityEntry facility)
         {
