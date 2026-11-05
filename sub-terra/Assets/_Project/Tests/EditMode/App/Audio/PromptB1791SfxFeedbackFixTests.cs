@@ -94,10 +94,10 @@ namespace SubTerra.App.Tests.Audio
         {
             var defaults = SfxLibraryDefaults.Create();
             var library = Resources.Load<SfxLibrary>(SfxLibrary.ResourcePath);
-            Assert.That(defaults.Count(), Is.EqualTo(101));
-            Assert.That(defaults.Select(pair => pair.Entry.Id).Distinct().Count(), Is.EqualTo(101));
-            Assert.That(library.Entries.Count, Is.EqualTo(101));
-            Assert.That(library.Entries.Select(entry => entry.Id).Distinct().Count(), Is.EqualTo(101));
+            Assert.That(defaults.Count(), Is.EqualTo(102));
+            Assert.That(defaults.Select(pair => pair.Entry.Id).Distinct().Count(), Is.EqualTo(102));
+            Assert.That(library.Entries.Count, Is.EqualTo(102));
+            Assert.That(library.Entries.Select(entry => entry.Id).Distinct().Count(), Is.EqualTo(102));
             foreach (SfxBus bus in Enum.GetValues(typeof(SfxBus)))
                 Assert.That(library.GetBusVolume(bus), Is.EqualTo(1f), bus.ToString());
             foreach (var row in new[]
