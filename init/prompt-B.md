@@ -3905,3 +3905,7 @@ work_process/MVP2/power/B-185-1-power-on-range-result.md: "조명·보관함은 
 
 
 186. prompt-B-186.md 내용 참고해서 시설에 전력 연결 될 때 효과음 추가해줘
+
+
+187. prompt-B-187.md 내용 참고해서 배경 화면 수정해줘
+
