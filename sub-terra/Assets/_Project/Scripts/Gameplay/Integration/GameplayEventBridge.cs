@@ -346,7 +346,7 @@ namespace SubTerra.Gameplay.Integration
                     }
 
                     var instance = node.GetComponent<BuildingInstance>();
-                    if (instance == null || !IsPowerOnEffectFacility(instance.BuildingId))
+                    if (instance == null || !IsProximityPoweredFacility(instance.BuildingId))
                     {
                         continue;
                     }
@@ -464,22 +464,15 @@ namespace SubTerra.Gameplay.Integration
                 && instance.BuildingId == "building.outpost_core.basic";
         }
 
+        /// <summary>
+        /// 전진기지 범위가 켜짐 판정 그 자체인 시설. 켜짐 연출도 이 시설에만 나온다.
+        /// 조명(가스 시야)·보관함(근접 사용)은 범위와 무관하게 동작하므로 연출을 내지 않는다.
+        /// </summary>
         private static bool IsProximityPoweredFacility(string buildingId)
         {
             return buildingId == "building.charger.basic"
                 || buildingId == "building.clinic.basic"
                 || buildingId == "building.settlement.basic";
-        }
-
-        /// <summary>
-        /// 켜짐 연출 대상. 충전기·보건소·정산 콘솔은 범위가 켜짐 판정 그 자체이고,
-        /// 조명(가스 시야)·보관함(근접 사용)은 전력과 무관하게 동작하므로 연출만 같은 범위 기준을 쓴다.
-        /// </summary>
-        private static bool IsPowerOnEffectFacility(string buildingId)
-        {
-            return IsProximityPoweredFacility(buildingId)
-                || buildingId == "building.light.basic"
-                || buildingId == "building.storage.basic";
         }
 
         private void Publish(GameplayEventDto gameplayEvent) => eventSink?.Publish(gameplayEvent);

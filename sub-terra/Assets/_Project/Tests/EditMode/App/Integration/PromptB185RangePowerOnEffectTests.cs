@@ -111,16 +111,14 @@ namespace SubTerra.App.Tests.Integration
         }
 
         [Test]
-        public void AllFiveFacilities_TurnOnTogether_EachPlays_BatchOnce()
+        public void AllThreeFacilities_TurnOnTogether_EachPlays_BatchOnce()
         {
             EnableBridge();
             var ids = new[]
             {
                 DataIds.Buildings.ChargerBasic,
                 DataIds.Buildings.ClinicBasic,
-                DataIds.Buildings.SettlementBasic,
-                DataIds.Buildings.LightBasic,
-                DataIds.Buildings.StorageBasic
+                DataIds.Buildings.SettlementBasic
             };
             var facilities = ids.Select((id, i) => CreateFacility("f-" + i, id, new Vector3(i * 1.5f - 3f, 2f, 0f))).ToArray();
             Assert.That(started, Is.Empty);
@@ -130,7 +128,28 @@ namespace SubTerra.App.Tests.Integration
             Assert.That(facilities.All(facility => facility.PowerOnEffectInstance.IsPlaying), Is.True);
             Assert.That(started.Select(entry => entry.facility), Is.EquivalentTo(facilities));
             Assert.That(started.All(entry => entry.isBatch), Is.True);
-            Assert.That(batches, Is.EqualTo(new[] { 5 }), "여러 개가 한 번에 켜져도 BatchStarted는 한 번");
+            Assert.That(batches, Is.EqualTo(new[] { 3 }), "여러 개가 한 번에 켜져도 BatchStarted는 한 번");
+        }
+
+        [TestCase(DataIds.Buildings.LightBasic)]
+        [TestCase(DataIds.Buildings.StorageBasic)]
+        public void RangeIndependentFacility_NeverPlays_InEitherInstallOrder(string buildingId)
+        {
+            EnableBridge();
+
+            // 코어가 먼저: 범위 안에 설치해도 연출 없음
+            CreateCore("core-1", Vector3.zero);
+            var inRange = CreateFacility("f-in", buildingId, new Vector3(4f, 0f, 0f));
+
+            // 시설이 먼저: 범위 밖에 설치한 뒤 코어를 나중에 설치해도 연출 없음
+            var outOfRange = CreateFacility("f-out", buildingId, new Vector3(-30f, 0f, 0f));
+            CreateCore("core-2", new Vector3(-30f, 0f, 0f));
+            network.Rebuild();
+
+            Assert.That(inRange.PowerOnEffectInstance, Is.Null);
+            Assert.That(outOfRange.PowerOnEffectInstance, Is.Null);
+            Assert.That(started, Is.Empty);
+            Assert.That(batches, Is.Empty);
         }
 
         [Test]

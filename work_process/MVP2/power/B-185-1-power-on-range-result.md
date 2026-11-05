@@ -12,16 +12,17 @@
 ## 조명·보관함은 언제 켜지나
 - 조명: 가스 시야 구멍(`GasClearance`의 `GasVisionClearanceSource`)이 `PoweredVisualRoot` 밖에 있어 **전력과 무관하게 항상 동작**한다.
 - 보관함: `OutpostService.TryValidateFacility`가 상호작용 범위 안이면 전력 확인 없이 허용한다(**항상 사용 가능**).
-- 두 시설은 기능상 전력 조건이 없으므로 기능은 그대로 두고, **연출만 다른 시설과 같은 범위 기준**(코어·엘리베이터 반경 안으로 들어오는 순간)을 쓴다.
+- 두 시설은 전진기지 범위와 무관하게 원래 쓸 수 있으므로 **켜짐 연출을 내지 않는다.** 연출이 나오면 "이제 전원이 들어와 쓸 수 있다"로 오해할 수 있기 때문이다. 코어 범위 안에 설치하거나 코어를 나중에 설치해도 `PowerOnEffectInstance`·`Started`·`BatchStarted`가 없다. 기능은 그대로다.
+- 연출은 범위에 따라 실제로 켜지고 꺼지는 충전기·보건소·정산 콘솔에서만 나온다.
 
 ## 바꾼 파일
 | 파일 | 내용 |
 | --- | --- |
-| `Scripts/Gameplay/Integration/GameplayEventBridge.cs` | `RefreshFacilityPowerRange(bool allowEffect)` ~332: 전력망 노드 중 연출 대상 5종(`IsPowerOnEffectFacility` ~478: 충전기·보건소·정산 콘솔·조명·보관함)에 `IsWithinPowerSupplyRange` 결과를 넘기고, 끝에서 `PowerOnEffect.FlushPendingStarts()`. 호출: `OnPowerNetworkRebuilt` ~199(연출 허용), `OnEnable` ~55·`SetElevatorPowerOrigin` ~96(연출 없이 상태만) |
+| `Scripts/Gameplay/Integration/GameplayEventBridge.cs` | `RefreshFacilityPowerRange(bool allowEffect)` ~332: 전력망 노드 중 연출 대상 3종(`IsProximityPoweredFacility` ~467: 충전기·보건소·정산 콘솔. 조명·보관함은 제외)에 `IsWithinPowerSupplyRange` 결과를 넘기고, 끝에서 `PowerOnEffect.FlushPendingStarts()`. 호출: `OnPowerNetworkRebuilt` ~199(연출 허용), `OnEnable` ~55·`SetElevatorPowerOrigin` ~96(연출 없이 상태만) |
 | `Scripts/Gameplay/Power/PowerFacility.cs` | `IsInSupplyRange` ~23, `SetSupplyRangePowered(bool inRange, bool allowEffect)` ~48: 범위상 꺼짐→켜짐일 때만 `PowerOnEffect.Play`. 켜짐→꺼짐은 연출 즉시 정리. `PowerNode` 경로는 켜짐 그림·상호작용만 담당(연출 호출 제거) |
 | `Scripts/Gameplay/Power/PowerOnEffect.cs` | 전력망 `NetworkRebuilt` 구독 제거, `FlushPendingStarts()` ~178 공개(판정 한 번 = `BatchStarted` 한 번). `Bind(PowerFacility)`로 단순화. 켜짐 그림 페이드는 보이는(활성) 그림만 |
 | `Tests/EditMode/Gameplay/Power/PromptB185PowerOnEffectTests.cs` | 범위 기준으로 수정, 14개 |
-| `Tests/EditMode/App/Integration/PromptB185RangePowerOnEffectTests.cs` (새) | 실제 `GameplayEventBridge` 판정으로 10개 |
+| `Tests/EditMode/App/Integration/PromptB185RangePowerOnEffectTests.cs` (새) | 실제 `GameplayEventBridge` 판정으로 10개 + 조명·보관함 무연출 확인 2케이스(후속 수정에서 추가, 세 시설 일괄 켜짐 테스트는 `BatchStarted` 3) |
 | `Tests/PlayMode/Integration/Outpost/PromptB185PowerOnEffectPlayModeTests.cs` (새) | Bootstrap → 새 게임 → 광산 실제 흐름 1개 |
 | `init/rules/lessons/2026-11-05-issue292-effect-trigger-real-judgement.md` (새) | 교훈 |
 
@@ -67,7 +68,7 @@
 2. 코어 범위(파란 원) 안에 충전기를 설치하는 순간 충전기 주변에 청록 정전기가 몇 번 튀고 청록빛이 은은하게 퍼졌다 사라지는지 본다(1초 안).
 3. 반대 순서: 범위 밖에 충전기를 먼저 설치(연출 없음) → 그 근처에 코어를 설치하는 순간 충전기에서 연출이 나오는지 본다.
 4. 엘리베이터 근처(10칸 안)에 시설을 설치해도 연출이 나오는지 본다.
-5. 보건소·정산 콘솔·조명·보관함도 범위 안에 들어오는 순간 같은 연출이 나오는지 본다.
+5. 보건소·정산 콘솔도 범위 안에 들어오는 순간(코어 먼저/시설 먼저 두 순서 모두) 같은 연출이 나오는지 본다. 반대로 조명·보관함은 코어 범위 안에 설치하거나 근처에 코어를 나중에 설치해도 연출이 나오지 않아야 한다.
 6. 범위 밖 시설 여러 개를 두고 코어를 설치하면 시설마다 연출이 나오는지 본다.
 7. 범위 안 시설을 범위 밖으로 옮기면 연출이 없는지, 다시 범위 안으로 옮기면 연출이 나오는지 본다.
 8. 저장 후 이어하기·지상에서 다시 탐사 진입 시 이미 켜진 시설에 연출이 없는지 본다.
