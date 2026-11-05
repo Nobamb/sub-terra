@@ -13,7 +13,7 @@ namespace SubTerra.App.Tests.EditMode.UI
         public void SetUp()
         {
             settings = ScriptableObject.CreateInstance<MineBackdropSettings>();
-            image = new Texture2D(8, 12);
+            image = new Texture2D(16, 9); // B-187 가로형 그림 비율
             settings.image = image;
         }
 

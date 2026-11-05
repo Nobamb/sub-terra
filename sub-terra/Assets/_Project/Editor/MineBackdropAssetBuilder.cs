@@ -53,9 +53,25 @@ namespace SubTerra.Editor
                     if (kind == 4) config.lithiumDepth = band.FindPropertyRelative("minDepth").intValue;
                 }
             }
+            MigrateB187Defaults(config);
             EditorUtility.SetDirty(config);
             AssetDatabase.SaveAssetIfDirty(config);
             Debug.Log("Mine backdrop depth settings built.");
+        }
+
+        // 세로형 구 그림 기준 값일 때만 가로형(B-187) 기본값으로 올린다. PM이 직접 고친 값은 덮지 않는다.
+        private static void MigrateB187Defaults(MineBackdropSettings config)
+        {
+            var oldTint = new Color(.65f, .7f, .75f, 1f);
+            if (Mathf.Approximately(config.tint.r, oldTint.r) && Mathf.Approximately(config.tint.g, oldTint.g)
+                && Mathf.Approximately(config.tint.b, oldTint.b)) config.tint = MineBackdropSettings.DefaultTint;
+            if (Mathf.Approximately(config.visibleImageHeight, .22f) || Mathf.Approximately(config.visibleImageHeight, .5f)) config.visibleImageHeight = .65f;
+            if (Mathf.Approximately(config.depthTravelWorld, 160f) || Mathf.Approximately(config.depthTravelWorld, 80f)) config.depthTravelWorld = 60f;
+            if (Mathf.Approximately(config.horizontalTravelWorld, 160f)) config.horizontalTravelWorld = 80f;
+            // 첫 반짝임 기본값(0.08/0.30/0.25)일 때만 더 또렷한 값으로 올린다.
+            if (Mathf.Approximately(config.lithiumPulseBoost, .08f)) config.lithiumPulseBoost = .2f;
+            if (Mathf.Approximately(config.copperPulseStrength, .3f)) config.copperPulseStrength = .45f;
+            if (Mathf.Approximately(config.ironPulseStrength, .25f)) config.ironPulseStrength = .4f;
         }
 
         private static void ImportImage(string path)

@@ -12,9 +12,19 @@ namespace SubTerra.App.Integration
         private static readonly int TintId = Shader.PropertyToID("_Tint");
         private static readonly int LayerWeightsId = Shader.PropertyToID("_LayerWeights");
         private static readonly int LithiumGlowId = Shader.PropertyToID("_LithiumGlow");
+        private static readonly int LithiumPulseId = Shader.PropertyToID("_LithiumPulse");
+        private static readonly int CopperPulseId = Shader.PropertyToID("_CopperPulse");
+        private static readonly int IronPulseId = Shader.PropertyToID("_IronPulse");
+        private static readonly int PulseSeedId = Shader.PropertyToID("_PulseSeed");
+        private static readonly int GlowClockId = Shader.PropertyToID("_GlowClock");
+        private static readonly int LithiumShimmerId = Shader.PropertyToID("_LithiumShimmer");
+        private static readonly int CopperShimmerId = Shader.PropertyToID("_CopperShimmer");
+        private static readonly int IronShimmerId = Shader.PropertyToID("_IronShimmer");
         public System.Func<float> FocusCellYProvider { private get; set; }
         public Vector3 CurrentLayerWeights { get; private set; }
-        private float glowClock;
+        public float CurrentDepthBrightness { get; private set; } = 1f;
+        private readonly MineBackdropGlow glow = new MineBackdropGlow();
+        public float GlowClock => glow.Clock;
         private MineBackdropSettings settings;
         private Camera targetCamera;
         private Transform focus;
@@ -87,8 +97,21 @@ namespace SubTerra.App.Integration
                 ? 1f : 1f - Mathf.Exp(-Mathf.Max(0f, deltaTime) / settings.themeSmoothingSeconds);
             CurrentLayerWeights = centered ? Vector3.Lerp(CurrentLayerWeights, weights, themeBlend) : weights;
             material.SetVector(LayerWeightsId, CurrentLayerWeights);
-            glowClock += Mathf.Max(0f, deltaTime);
-            material.SetFloat(LithiumGlowId, AccessibilityPreferences.ReduceMotion ? .08f : .08f + .025f * Mathf.Sin(glowClock * .7f));
+            float targetBrightness = settings.DepthBrightness(depth);
+            CurrentDepthBrightness = centered ? Mathf.Lerp(CurrentDepthBrightness, targetBrightness, themeBlend) : targetBrightness;
+            var tint = settings.tint;
+            material.SetColor(TintId, new Color(tint.r * CurrentDepthBrightness, tint.g * CurrentDepthBrightness, tint.b * CurrentDepthBrightness, tint.a));
+            // 일시정지(timeScale 0)에서는 반짝 타이머도 멈춘다. 깊이 전환·시점 보간은 기존대로 unscaled.
+            glow.Advance(deltaTime, Time.timeScale, AccessibilityPreferences.ReduceMotion, settings);
+            material.SetFloat(LithiumGlowId, glow.LithiumBase(settings));
+            material.SetFloat(LithiumPulseId, glow.LithiumPulse(settings));
+            material.SetFloat(CopperPulseId, glow.CopperPulse(settings));
+            material.SetFloat(IronPulseId, glow.IronPulse(settings));
+            material.SetFloat(PulseSeedId, glow.Seed);
+            material.SetFloat(GlowClockId, glow.Clock);
+            material.SetFloat(LithiumShimmerId, glow.LithiumShimmer(settings));
+            material.SetFloat(CopperShimmerId, glow.CopperShimmer(settings));
+            material.SetFloat(IronShimmerId, glow.IronShimmer(settings));
             var desired = settings.Viewport(AccessibilityPreferences.ReduceMotion ? settings.surfaceOrigin : (Vector2)focus.position, targetCamera.aspect);
             float blend = AccessibilityPreferences.ReduceMotion || settings.smoothingSeconds <= 0f
                 ? 1f : 1f - Mathf.Exp(-Mathf.Max(0f, deltaTime) / settings.smoothingSeconds);

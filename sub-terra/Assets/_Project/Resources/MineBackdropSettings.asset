@@ -20,10 +20,25 @@ MonoBehaviour:
   mineralSurfaceY: -1
   depthBlendDistance: 2
   themeSmoothingSeconds: 0.8
-  tint: {r: 0.65, g: 0.7, b: 0.75, a: 1}
-  horizontalTravelWorld: 160
-  depthTravelWorld: 160
+  tint: {r: 0.92, g: 0.95, b: 1, a: 1}
+  horizontalTravelWorld: 80
+  depthTravelWorld: 60
+  depthDarkenStart: 2
+  depthDarkenFullDepth: 40
+  deepBrightness: 0.35
+  lithiumGlowBase: 0.08
+  lithiumPulseBoost: 0.2
+  copperPulseStrength: 0.45
+  ironPulseStrength: 0.4
+  lithiumShimmer: 0.35
+  copperShimmer: 0.18
+  ironShimmer: 0.18
+  pulseDurationMin: 0.35
+  pulseDurationMax: 0.6
+  pulseIntervalMin: 2.5
+  pulseIntervalMax: 5
+  reducedMotionLithiumGlow: 0.08
   surfaceOrigin: {x: 0, y: 0}
-  visibleImageHeight: 0.22
+  visibleImageHeight: 0.65
   edgePadding: 0.05
   smoothingSeconds: 0.25
