@@ -328,12 +328,13 @@ namespace SubTerra.Gameplay.Power.Tests
         }
 
         [Test]
+        // B-186에서 PowerOnStatic = 106 한 칸만 늘었다(기존 값은 그대로).
         public void SfxIdCountAndValues_AreUnchanged()
         {
             int[] values = Enum.GetValues(typeof(SfxId)).Cast<int>().ToArray();
-            Assert.That(values.Length, Is.EqualTo(103));
-            Assert.That(values.Sum(), Is.EqualTo(5274));
-            Assert.That(values.Max(), Is.EqualTo(105));
+            Assert.That(values.Length, Is.EqualTo(104));
+            Assert.That(values.Sum(), Is.EqualTo(5380));
+            Assert.That(values.Max(), Is.EqualTo(106));
         }
 
         private void OnStarted(PowerFacility facility, bool isBatch) => started.Add((facility, isBatch));

@@ -268,6 +268,8 @@ namespace SubTerra.App.Audio
                 (new SfxEntry(SfxId.GasFlowLoop, SfxBus.World, volume: 0.8f), "gas_flow_loop"),
                 // 1.500초 PCM 반복. 실제 흔들리는 블록 근처에서만 재생.
                 (new SfxEntry(SfxId.UnstableBlockShakeLoop, SfxBus.World, volume: 0.5f), "unstable_block_shake_loop"),
+                // B-186: 약 0.6초. 시설 전력 켜짐 연출의 정전기 순간. ★ 음량 0.8(PM이 에셋에서 올린 값)
+                (new SfxEntry(SfxId.PowerOnStatic, SfxBus.World, volume: 0.8f), "power_on_static"),
             };
         }
     }
