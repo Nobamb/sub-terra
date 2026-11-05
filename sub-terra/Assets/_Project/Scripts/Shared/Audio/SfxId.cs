@@ -112,8 +112,6 @@ namespace SubTerra.Shared.Audio
         // B-184: 월드 스캔 표시·가스·흔들림.
         ScanMarkClick = 99,
         GasFlowLoop = 100,
-        UnstableBlockShakeLoop = 101,
-        // B-186: 시설에 전력이 들어올 때 짧은 정전기 "지직".
-        PowerOnStatic = 106
+        UnstableBlockShakeLoop = 101
     }
 }
