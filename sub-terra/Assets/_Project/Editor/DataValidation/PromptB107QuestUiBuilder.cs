@@ -30,6 +30,37 @@ namespace SubTerra.App.Editor.DataValidation
         public const float SummaryHeaderInset = 36f;
         public const float SummaryHeaderY = -10f;
         public const float ThumbnailHeight = 236f;
+        public static void ApplyDetailsCloseLayout(RectTransform close)
+        {
+            Place(close, -112f, -94f, 68f, 68f, Vector2.one, new Vector2(.5f, .5f));
+        }
+
+        [MenuItem("SubTerra/UI/Align Quest Details Close Button Only")]
+        public static void AlignDetailsCloseButtons()
+        {
+            if (EditorApplication.isPlaying) throw new InvalidOperationException("Stop Play Mode first.");
+            var scene = SceneManager.GetSceneByPath(IntegrationScenePath);
+            if (scene.IsValid() && scene.isLoaded && scene.isDirty)
+                throw new InvalidOperationException("Mine_Demo_Integration has unsaved changes.");
+            bool closeAfter = !scene.IsValid() || !scene.isLoaded;
+            if (closeAfter) scene = EditorSceneManager.OpenScene(IntegrationScenePath, OpenSceneMode.Additive);
+            try
+            {
+                var root = Find(scene, "DemoObjectiveRoot");
+                ApplyDetailsCloseLayout((RectTransform)root.transform.Find("QuestDetailsPanel/QuestDetailsCloseButton"));
+                EditorSceneManager.MarkSceneDirty(scene);
+                if (!EditorSceneManager.SaveScene(scene)) throw new InvalidOperationException("Scene save failed.");
+            }
+            finally { if (closeAfter && scene.IsValid() && scene.isLoaded) EditorSceneManager.CloseScene(scene, true); }
+            const string surfacePrefab = "Assets/_Project/Prefabs/UI/SurfaceBasePanel.prefab";
+            var surface = PrefabUtility.LoadPrefabContents(surfacePrefab);
+            try
+            {
+                ApplyDetailsCloseLayout((RectTransform)surface.transform.Find("SurfaceQuestRoot/QuestDetailsPanel/QuestDetailsCloseButton"));
+                PrefabUtility.SaveAsPrefabAsset(surface, surfacePrefab);
+            }
+            finally { PrefabUtility.UnloadPrefabContents(surface); }
+        }
         private const float DetailsW = 880f;
         private const float DetailsH = 718f;
 
@@ -310,7 +341,7 @@ namespace SubTerra.App.Editor.DataValidation
             Place(brand.rectTransform, 550f, -654f, 252f, 20f, new Vector2(0f, 1f), new Vector2(0f, 1f));
 
             var close = EnsureButton(panel, "QuestDetailsCloseButton");
-            Place(close.GetComponent<RectTransform>(), -42f, -40f, 68f, 68f, new Vector2(1f, 1f), new Vector2(0.5f, 0.5f));
+            ApplyDetailsCloseLayout(close.GetComponent<RectTransform>());
             ClearHit(close);
             HideLabel(close.transform);
             EnsureFade(close, "quest-close-button-active-off", "quest-close-button-active-on");
