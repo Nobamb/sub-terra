@@ -984,17 +984,6 @@ namespace SubTerra.App.Integration
             progressionPanelBinder.Presenter.Refresh();
         }
 
-        private void EnsureMineBackdrop()
-        {
-            if (playerMovement == null) return;
-            var terrain = FindForegroundTilemap();
-            var backdrop = MineBackdropController.AttachTo(transform, Camera.main, playerMovement.transform,
-                terrain != null ? terrain.GetComponent<TilemapRenderer>() : null);
-            if (backdrop != null && terrain != null)
-                backdrop.FocusCellYProvider = () => terrain != null && playerMovement != null
-                    ? terrain.WorldToCell(playerMovement.transform.position).y : 0f;
-        }
-
         private void OnDestroy()
         {
             unbindProgressionPanel?.Invoke();
@@ -1131,6 +1120,17 @@ namespace SubTerra.App.Integration
             }
 
             depthBridge.BindGameState(bootstrap.State);
+        }
+
+        private void EnsureMineBackdrop()
+        {
+            if (playerMovement == null) return;
+            var terrain = FindForegroundTilemap();
+            var backdrop = MineBackdropController.AttachTo(transform, Camera.main, playerMovement.transform,
+                terrain != null ? terrain.GetComponent<TilemapRenderer>() : null);
+            if (backdrop != null && terrain != null)
+                backdrop.FocusCellYProvider = () => terrain != null && playerMovement != null
+                    ? terrain.WorldToCell(playerMovement.transform.position).y : 0f;
         }
 
         private void BindDepthDarkness()
