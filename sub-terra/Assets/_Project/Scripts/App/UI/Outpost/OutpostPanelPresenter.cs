@@ -63,7 +63,9 @@ namespace SubTerra.App.UI.Outpost
 
             latestSnapshot = null;
             busy = false;
-            CloseInteractionPanel();
+            // B-181: 바인딩 해제(씬 전환·불러오기)는 조용히 치운다.
+            CloseServicePanel();
+            HideFacilityCooldown(quiet: true);
             view?.SetBusy(false);
         }
 
@@ -432,10 +434,16 @@ namespace SubTerra.App.UI.Outpost
             return true;
         }
 
-        private void HideFacilityCooldown()
+        private void HideFacilityCooldown(bool quiet = false)
         {
             cooldownTargetInstanceId = string.Empty;
             cooldownTargetBuildingId = string.Empty;
+            if (quiet && view is IFacilityCooldownQuietHide quietView)
+            {
+                quietView.HideFacilityCooldownQuietly();
+                return;
+            }
+
             var cooldownView = view as IFacilityCooldownPopupView;
             if (cooldownView != null)
             {

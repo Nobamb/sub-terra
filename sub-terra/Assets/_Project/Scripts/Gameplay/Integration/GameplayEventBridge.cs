@@ -51,6 +51,8 @@ namespace SubTerra.Gameplay.Integration
                 buildingPlacementSystem.PlacementRejected += OnBuildingRejected;
             }
             if (powerNetworkSystem != null) powerNetworkSystem.NetworkRebuilt += OnPowerNetworkRebuilt;
+            // 꺼져 있던 동안(복원 등) 바뀐 범위 상태는 연출 없이 맞춰 둔다.
+            RefreshFacilityPowerRange(false);
         }
 
         private void OnDisable()
@@ -90,6 +92,8 @@ namespace SubTerra.Gameplay.Integration
         public void SetElevatorPowerOrigin(Transform origin)
         {
             elevatorPowerOrigin = origin;
+            // 엘리베이터 연결은 씬 배선 단계라 켜짐 연출 없이 상태만 맞춘다.
+            RefreshFacilityPowerRange(false);
             PublishOutpostStatusIfAvailable();
         }
 
@@ -192,6 +196,7 @@ namespace SubTerra.Gameplay.Integration
         private void OnPowerNetworkRebuilt(PowerNetworkSnapshot snapshot)
         {
             EnsureOutpostRangeIndicators();
+            RefreshFacilityPowerRange(true);
             latestPowerSnapshot = snapshot;
             hasPowerSnapshot = true;
             PublishOutpostStatusIfAvailable();
@@ -319,6 +324,54 @@ namespace SubTerra.Gameplay.Integration
             return statuses;
         }
 
+        /// <summary>
+        /// B-185-1: 켜짐 연출을 실제 게임 판정(BuildFacilityStatuses와 같은 공급 범위)에 맞춘다.
+        /// 설치·이동·코어 설치·엘리베이터 범위 모두 Rebuild를 거치므로 여기서 한 번에 판정한다.
+        /// 복원 중에는 PowerOnEffect.IsSuppressed라 상태만 맞추고, 판정 끝에 BatchStarted를 한 번 알린다.
+        /// </summary>
+        private void RefreshFacilityPowerRange(bool allowEffect)
+        {
+            if (powerNetworkSystem == null)
+            {
+                return;
+            }
+
+            try
+            {
+                foreach (PowerNode node in powerNetworkSystem.Nodes)
+                {
+                    if (node == null || node.IsPowerSource)
+                    {
+                        continue;
+                    }
+
+                    var instance = node.GetComponent<BuildingInstance>();
+                    if (instance == null || !IsProximityPoweredFacility(instance.BuildingId))
+                    {
+                        continue;
+                    }
+
+                    var facility = node.GetComponent<PowerFacility>();
+                    if (facility == null)
+                    {
+                        continue;
+                    }
+
+                    facility.SetSupplyRangePowered(
+                        IsWithinPowerSupplyRange(node.transform.position),
+                        allowEffect);
+                }
+            }
+            catch (Exception exception)
+            {
+                Debug.LogException(exception, this);
+            }
+            finally
+            {
+                PowerOnEffect.FlushPendingStarts();
+            }
+        }
+
         private bool IsWithinPowerSupplyRange(Vector3 facilityPosition)
         {
             var squaredRange = PowerSupplyRangeIndicator.DefaultRadius
@@ -411,6 +464,10 @@ namespace SubTerra.Gameplay.Integration
                 && instance.BuildingId == "building.outpost_core.basic";
         }
 
+        /// <summary>
+        /// 전진기지 범위가 켜짐 판정 그 자체인 시설. 켜짐 연출도 이 시설에만 나온다.
+        /// 조명(가스 시야)·보관함(근접 사용)은 범위와 무관하게 동작하므로 연출을 내지 않는다.
+        /// </summary>
         private static bool IsProximityPoweredFacility(string buildingId)
         {
             return buildingId == "building.charger.basic"

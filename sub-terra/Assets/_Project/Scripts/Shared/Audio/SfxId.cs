@@ -103,6 +103,17 @@ namespace SubTerra.Shared.Audio
         SettingsSliderDragLoop = 93,
         SettingsSliderDragTail = 94,
         // B-180-1: 잠긴 업그레이드 클릭. unlock_rattle을 자르지 않고 덜그럭 부분까지 낸다(76번은 창·해금 연출용으로 0.3초에서 끊는다).
-        LockedNodeRattle = 95
+        LockedNodeRattle = 95,
+        // B-183: 기존 95번과 B-184 예약 99~101을 보존한다.
+        EmptySlotNoiseLoop = 102,
+        DronePriorityAlert = 103,
+        DroneBubbleUrgent = 104,
+        DroneBubbleUrgentSerious = 105,
+        // B-184: 월드 스캔 표시·가스·흔들림.
+        ScanMarkClick = 99,
+        GasFlowLoop = 100,
+        UnstableBlockShakeLoop = 101,
+        // B-186: 시설에 전력이 들어올 때 짧은 정전기 "지직".
+        PowerOnStatic = 106
     }
 }

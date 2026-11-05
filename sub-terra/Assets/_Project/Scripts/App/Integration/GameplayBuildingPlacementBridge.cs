@@ -49,6 +49,11 @@ namespace SubTerra.App.Integration
         [SerializeField] private BuildingPlacementBinding[] bindings =
             Array.Empty<BuildingPlacementBinding>();
 
+        // B-181 ★ 시설 집기·이동 취소 소리. PM이 숫자만 바꿔 끼운다.
+        public const SfxId MovePickupSfx = SfxId.WorldHoloOpen;
+        public const SfxId MoveCancelSfx = SfxId.WorldHoloClose;
+        public const float MoveHoloVolume = 0.6f;
+
         private IResourceWallet wallet;
         private GameDataCatalog catalog;
         private string selectedBuildingId = string.Empty;
@@ -76,7 +81,7 @@ namespace SubTerra.App.Integration
 
         public void BeginMoveSelection()
         {
-            CancelPreview();
+            CancelPreview(false);
             pickingMoveTarget = true;
             BuildingPlacementActivity.Begin();
             MoveStatusChanged?.Invoke($"옮길 조명·{ItemDisplayNames.SettlementName}·충전기·보관함·보건소를 클릭하세요. 우클릭 취소");
@@ -90,7 +95,7 @@ namespace SubTerra.App.Integration
             if (UiPauseGate.IsHeld) return false;
             if (IsMoveMode)
             {
-                CancelPreview();
+                CancelPreview(true);
                 return true;
             }
             return TryBeginMoveFromWorld(worldPosition);
@@ -106,6 +111,8 @@ namespace SubTerra.App.Integration
             if (!string.IsNullOrEmpty(previousId))
                 Publish(new BuildingPlacementResultDto { state = BuildingPlacementState.Cancelled, buildingId = previousId });
             selectedBuildingId = placementSystem.Selection.BuildingId;
+            // B-181: 우클릭 집기와 "이동" 버튼 뒤 클릭 집기가 모두 이 한 곳을 지난다.
+            SfxPlayer.Play(MovePickupSfx, 1f, MoveHoloVolume);
             HideMoveHoverHint();
             ResetPublishedState();
             var size = placementSystem.Selection.Footprint;
@@ -224,7 +231,7 @@ namespace SubTerra.App.Integration
                     var point = camera.ScreenToWorldPoint(new Vector3(cursor.x, cursor.y, -camera.transform.position.z));
                     if (HandleWorldRightClick(point)) return;
                 }
-                else if (IsMoveMode) { CancelPreview(); return; }
+                else if (IsMoveMode) { CancelPreview(true); return; }
             }
 
             if (pickingMoveTarget)
@@ -424,8 +431,19 @@ namespace SubTerra.App.Integration
             return true;
         }
 
+        /// <summary>기존 계약 경로(바인딩 해제·선택 교체). 소리를 내지 않는다.</summary>
         public void CancelPreview()
         {
+            CancelPreview(false);
+        }
+
+        /// <summary>
+        /// B-181: playSfx가 true인 플레이어 입력 경로(우클릭·ESC·건설창 닫기)에서만,
+        /// 시설을 실제로 들고 있었을 때(IsMoving) 이동 취소음을 한 번 낸다. 대상 고르기 모드만 켜진 취소는 무음이다.
+        /// </summary>
+        public void CancelPreview(bool playSfx)
+        {
+            bool wasCarrying = placementSystem != null && placementSystem.IsMoving;
             bool hadMove = IsMoveMode;
             var cancelledId = selectedBuildingId;
             var hadSelection = !string.IsNullOrEmpty(cancelledId)
@@ -440,6 +458,15 @@ namespace SubTerra.App.Integration
                 });
             }
             if (hadMove) MoveStatusChanged?.Invoke("시설 이동을 취소했습니다. 원래 위치를 유지합니다.");
+            if (playSfx && wasCarrying)
+            {
+                SfxPlayer.Play(MoveCancelSfx, 1f, MoveHoloVolume);
+            }
+        }
+
+        public void CancelMove(bool playSfx)
+        {
+            CancelPreview(playSfx);
         }
 
         public bool CanAfford(string buildingId)

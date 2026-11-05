@@ -223,6 +223,42 @@ namespace SubTerra.App.Tests.UI
         }
 
         [Test]
+        public void Issue188_NodeKicksShackleSpinsAndSpreadsLightInsideIcon()
+        {
+            var node = OpenTreeNode();
+            node.ManualTick = true;
+            node.Apply(Snapshot(node.UpgradeId, false));
+            node.SetRevealPending(true);
+            node.Apply(Snapshot(node.UpgradeId, true));
+            var top = FindChild(node.transform, "ShackleTop");
+            var topBase = top.anchoredPosition.y;
+            var lockRect = FindChild(node.transform, "Lock");
+            node.BeginUnlock(null);
+            StepNode(node, 0.275f);
+            Assert.That(top.anchoredPosition.y, Is.GreaterThan(topBase + 6f), "Shackle overshoots before settling open.");
+            StepNode(node, 0.245f);
+            Assert.That(Mathf.Abs(Mathf.DeltaAngle(0f, lockRect.localEulerAngles.z)), Is.GreaterThan(75f));
+            StepNode(node, 0.2f);
+            var icon = FindChild(node.transform, "Icon");
+            var reveal = icon.Find("UnlockIconReveal");
+            Assert.That(reveal, Is.Not.Null);
+            Assert.That(reveal.gameObject.activeSelf, Is.True);
+            Assert.That(reveal.GetComponent<Mask>().showMaskGraphic, Is.False);
+            Assert.That(reveal.GetComponent<Image>().sprite, Is.SameAs(node.IconSprite));
+            var light = reveal.Find("Light").GetComponent<Image>();
+            var earlySize = light.rectTransform.sizeDelta.x;
+            StepNode(node, 0.1f);
+            Assert.That(light.rectTransform.sizeDelta.x, Is.GreaterThan(earlySize));
+            Assert.That(light.raycastTarget, Is.False);
+            Assert.That(light.color.a, Is.GreaterThan(0f));
+            node.Apply(Snapshot(node.UpgradeId, true));
+            Assert.That(reveal.gameObject.activeSelf, Is.True, "Refreshing content must not restart the reveal.");
+            StepNode(node, 0.3f);
+            Assert.That(reveal.gameObject.activeSelf, Is.False);
+            Assert.That(icon.GetComponent<Image>().enabled, Is.True);
+        }
+
+        [Test]
         public void Node_DisableMidRevealEndsUnlocked()
         {
             var node = OpenTreeNode();
@@ -231,11 +267,12 @@ namespace SubTerra.App.Tests.UI
             node.SetRevealPending(true);
             node.Apply(Snapshot(node.UpgradeId, true));
             node.BeginUnlock(null);
-            StepNode(node, 0.4f);
+            StepNode(node, 0.75f);
             typeof(UpgradeTreeNodeView).GetMethod("OnDisable", Private).Invoke(node, null);
             Assert.That(node.IsUnlockPlaying, Is.False);
             Assert.That(node.IsRevealPending, Is.False);
             Assert.That(node.BlindAlpha, Is.EqualTo(0f));
+            Assert.That(FindChild(node.transform, "UnlockIconReveal").gameObject.activeSelf, Is.False);
         }
 
         // ---------- A-3 소리 ----------

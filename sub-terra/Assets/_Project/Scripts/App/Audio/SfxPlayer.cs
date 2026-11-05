@@ -75,6 +75,9 @@ namespace SubTerra.App.Audio
         /// <summary>요청이 실제 재생까지 간 횟수(연타 제한·무음에 걸린 요청은 세지 않는다).</summary>
         public int StartedCount { get; private set; }
 
+        /// <summary>B-181: 마지막으로 재생을 시작한 요청의 음량 배율(검사용 읽기 전용).</summary>
+        public float LastVolumeScale { get; private set; } = 1f;
+
         /// <summary>B-178: 그 칸이 마지막으로 재생을 시작한 뒤 지난 초(읽기 전용). 한 번도 안 났으면 양의 무한대.</summary>
         public float SecondsSinceLastPlayed(SfxId id)
         {
@@ -113,6 +116,12 @@ namespace SubTerra.App.Audio
         public static void Play(SfxId id, float pitch = 1f)
         {
             SfxRequests.Play(id, pitch);
+        }
+
+        /// <summary>B-181: 칸 음량은 그대로 두고 이번 재생만 volumeScale(0~1로 자름)배로 낸다.</summary>
+        public static void Play(SfxId id, float pitch, float volumeScale)
+        {
+            SfxRequests.Play(id, pitch, volumeScale);
         }
 
         /// <summary>테스트용. 라이브러리·시계·음소거 판정을 주입한 플레이어를 만든다.</summary>
@@ -170,6 +179,7 @@ namespace SubTerra.App.Audio
         {
             Unsubscribe();
             SfxRequests.PlayRequested += HandlePlay;
+            SfxRequests.ScaledPlayRequested += HandleScaledPlay;
             SfxRequests.AlarmRequested += HandleAlarm;
             SettingsRuntimeApplier.MasterMuteChanged += HandleMuteChanged;
             SettingsRuntimeApplier.ChannelChanged += HandleChannelChanged;
@@ -178,6 +188,7 @@ namespace SubTerra.App.Audio
         private void Unsubscribe()
         {
             SfxRequests.PlayRequested -= HandlePlay;
+            SfxRequests.ScaledPlayRequested -= HandleScaledPlay;
             SfxRequests.AlarmRequested -= HandleAlarm;
             SettingsRuntimeApplier.MasterMuteChanged -= HandleMuteChanged;
             SettingsRuntimeApplier.ChannelChanged -= HandleChannelChanged;
@@ -262,6 +273,18 @@ namespace SubTerra.App.Audio
             }
         }
 
+        private void HandleScaledPlay(SfxId id, float pitch, float volumeScale)
+        {
+            try
+            {
+                PlayNow(id, pitch, volumeScale);
+            }
+            catch (Exception exception)
+            {
+                Debug.LogWarning("[SfxPlayer] 재생 실패 " + id + ": " + exception.Message);
+            }
+        }
+
         private void HandleAlarm(SfxId id, int repeat, float interval, float pitch)
         {
             try
@@ -305,6 +328,13 @@ namespace SubTerra.App.Audio
         /// <summary>요청을 바로 처리한다. 음소거·연타 제한·빈 칸 판정은 모두 여기서 거친다.</summary>
         public void PlayNow(SfxId id, float pitch = 1f)
         {
+            PlayNow(id, pitch, 1f);
+        }
+
+        /// <summary>B-181: volumeScale(0~1로 자름)을 최종 음량에 곱한다. 기존 호출은 1배다.</summary>
+        public void PlayNow(SfxId id, float pitch, float volumeScale)
+        {
+            volumeScale = SfxRequests.ClampVolumeScale(volumeScale);
             if (isMuted())
             {
                 return;
@@ -322,15 +352,16 @@ namespace SubTerra.App.Audio
             }
 
             lastPlayedAt[id] = now;
+            LastVolumeScale = volumeScale;
             if (entry.Bus == SfxBus.Alert)
             {
                 // 새 경보 계열 소리가 오면 진행 중인 반복은 끝낸다.
                 alarmRemaining = 0;
-                StartVoice(alertVoice, entry, busVolume, pitch, 0f, now);
+                StartVoice(alertVoice, entry, busVolume * volumeScale, pitch, 0f, now);
                 return;
             }
 
-            StartVoice(AcquirePoolVoice(), entry, busVolume, pitch, 0f, now);
+            StartVoice(AcquirePoolVoice(), entry, busVolume * volumeScale, pitch, 0f, now);
         }
 
         /// <summary>경보를 repeat번 반복한다. 진행 중인 반복은 끊고 새로 시작하며 루프는 쓰지 않는다.</summary>

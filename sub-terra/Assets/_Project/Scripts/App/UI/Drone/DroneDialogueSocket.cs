@@ -1,5 +1,9 @@
+using System;
+using SubTerra.App.Audio;
 using SubTerra.App.Drone;
 using SubTerra.App.Drone.Dialogue;
+using SubTerra.Shared;
+using SubTerra.Shared.Audio;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -12,6 +16,21 @@ namespace SubTerra.App.UI.Drone
         IDroneOperationalStateView
     {
         public const int OverlaySortingOrder = 30_000;
+
+        // B-181 ★ 말풍선 비프. PM이 숫자만 바꿔 끼운다.
+        public const SfxId DroneBubbleSfx = SfxId.WorldFacilityTagBeep;
+        public const SfxId DroneUrgentBubbleSfx = SfxId.DroneBubbleUrgent;
+        public const SfxId DroneSeriousUrgentBubbleSfx = SfxId.DroneBubbleUrgentSerious;
+        public const float DroneUrgentBubblePitch = 1f;
+        public const float DronePriorityBubbleGap = 0.3f;
+        /// <summary>시설 이름표 비프보다 높게.</summary>
+        public const float DroneBubblePitch = 1.35f;
+        /// <summary>드론 스캔 핑이 이 시간(실제 초) 안에 났으면 이번 비프는 뺀다.</summary>
+        public const float DroneBubblePingGap = 0.3f;
+        /// <summary>마지막 비프에서 이 시간(실제 초) 안이면 이번 비프는 뺀다.</summary>
+        public const float DroneBubbleMinGap = 1.5f;
+        /// <summary>씬 시작·바인딩(불러오기·이어하기) 직후 이 시간(실제 초) 동안은 비프를 내지 않는다.</summary>
+        public const float DroneBubbleStartupQuiet = 1.0f;
 
         [SerializeField] private Transform anchor;
         [SerializeField] private RectTransform visualRoot;
@@ -37,6 +56,15 @@ namespace SubTerra.App.UI.Drone
         private TextMeshProUGUI terminalStatus;
         private DroneOperationalState operationalState = DroneOperationalState.Idle;
 
+        // B-181: 비프 생략 판정. 첫 대사(초기화)는 무음, 이후는 간격·정지·핑 겹침을 본다.
+        private bool firstDialoguePending = true;
+        private bool hasBeeped;
+        private float lastBeepAt;
+        private float quietUntil = float.NegativeInfinity;
+        private Func<float> sfxClock = DefaultSfxClock;
+        private Func<SfxId, float> secondsSinceSfx = DefaultSecondsSinceSfx;
+        private Func<bool> isSfxPaused = DefaultSfxPaused;
+
         private static readonly Color TerminalBackground = new Color(0.012f, 0.035f, 0.055f, 0.975f);
         private static readonly Color TerminalHeader = new Color(0.018f, 0.12f, 0.16f, 0.99f);
         private static readonly Color AccentCyan = new Color(0.18f, 0.84f, 0.92f, 1f);
@@ -46,6 +74,7 @@ namespace SubTerra.App.UI.Drone
 
         private void Awake()
         {
+            BeginStartupQuiet();
             EnsureOverlayCanvas();
             ApplyNonBlockingPresentation();
             SetCanvasVisible(false);
@@ -77,7 +106,10 @@ namespace SubTerra.App.UI.Drone
                 return;
             }
 
-            dialogueText.text = "> " + dialogue.Text;
+            var nextText = "> " + dialogue.Text;
+            var sameText = IsShowing && hasDialogue && string.Equals(dialogueText.text, nextText, StringComparison.Ordinal);
+            var wasBoundVisible = boundVisible;
+            dialogueText.text = nextText;
             hasDialogue = true;
             // 바인딩 전이라도 대사가 오면 표시 가능하게 둔다(Bind SetVisible 레이스 방지).
             if (!boundVisible)
@@ -95,12 +127,19 @@ namespace SubTerra.App.UI.Drone
 
             ApplyTerminalTheme();
             ApplyTerminalState(operationalState);
+            TryPlayBubbleSfx(dialogue, sameText, wasBoundVisible);
             SetCanvasVisible(true);
             RefreshPosition();
         }
 
         public void SetVisible(bool visible)
         {
+            if (visible && !boundVisible)
+            {
+                // 바인딩(씬 시작·불러오기·이어하기) 직후 첫 대사와 잠깐의 시간은 초기화로 보고 무음.
+                BeginStartupQuiet();
+            }
+
             boundVisible = visible;
             SetCanvasVisible(visible && hasDialogue && Time.unscaledTime < visibleUntil);
         }
@@ -146,6 +185,67 @@ namespace SubTerra.App.UI.Drone
                 ApplyScreenScale(camera, desired);
             }
         }
+
+        /// <returns>비프를 냈으면 true. 생략한 회차는 늦춰 내지 않는다.</returns>
+        private bool TryPlayBubbleSfx(DroneDialogueResult dialogue, bool sameText, bool wasBoundVisible)
+        {
+            var first = firstDialoguePending;
+            firstDialoguePending = false;
+            if (first || sameText || !wasBoundVisible)
+            {
+                return false;
+            }
+
+            var now = sfxClock();
+            if (now < quietUntil || isSfxPaused())
+            {
+                return false;
+            }
+
+            if (secondsSinceSfx(SfxId.DroneScanPing) < DroneBubblePingGap)
+            {
+                return false;
+            }
+
+            if (dialogue.IsUrgent && secondsSinceSfx(SfxId.DronePriorityAlert) < DronePriorityBubbleGap)
+                return false;
+
+            if (hasBeeped && now - lastBeepAt < DroneBubbleMinGap)
+            {
+                return false;
+            }
+
+            hasBeeped = true;
+            lastBeepAt = now;
+            var id = !dialogue.IsUrgent ? DroneBubbleSfx
+                : DroneUrgentBubbleRule.IsSerious(dialogue) ? DroneSeriousUrgentBubbleSfx : DroneUrgentBubbleSfx;
+            SfxPlayer.Play(id, dialogue.IsUrgent ? DroneUrgentBubblePitch : DroneBubblePitch);
+            return true;
+        }
+
+        private void BeginStartupQuiet()
+        {
+            firstDialoguePending = true;
+            quietUntil = sfxClock() + DroneBubbleStartupQuiet;
+        }
+
+        /// <summary>테스트용. 시계·소리 경과·정지 판정을 주입한다. null이면 실제 값을 쓴다.</summary>
+        public void ConfigureSfxForTests(Func<float> clock, Func<SfxId, float> secondsSince, Func<bool> paused)
+        {
+            sfxClock = clock ?? DefaultSfxClock;
+            secondsSinceSfx = secondsSince ?? DefaultSecondsSinceSfx;
+            isSfxPaused = paused ?? DefaultSfxPaused;
+        }
+
+        private static float DefaultSfxClock() => Time.realtimeSinceStartup;
+
+        private static float DefaultSecondsSinceSfx(SfxId id)
+        {
+            var player = SfxPlayer.Instance;
+            return player != null ? player.SecondsSinceLastPlayed(id) : float.PositiveInfinity;
+        }
+
+        private static bool DefaultSfxPaused() => UiPauseGate.IsHeld || ControlPreferences.IsSettingsOpen;
 
         public bool HasRequiredReferences()
         {

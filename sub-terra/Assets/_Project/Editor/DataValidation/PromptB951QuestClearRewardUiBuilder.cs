@@ -261,7 +261,7 @@ namespace SubTerra.App.Editor.DataValidation
         {
             var item = EnsureRect(row, name, new Vector2(0f, 1f), Vector2.zero, new Vector2(165f, 44f));
             var iconPath = iconFile == "quest-icon-gold.png"
-                ? "Assets/_Project/Art/UI/Gameplay/Quest/" + iconFile
+                ? "Assets/_Project/Art/UI/SurfaceBase/Icons/icon-gold.png"
                 : Icons + iconFile;
             var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(iconPath);
             if (sprite == null) throw new System.InvalidOperationException("Missing reward icon: " + iconPath);

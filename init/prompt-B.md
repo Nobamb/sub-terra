@@ -3829,3 +3829,79 @@ EditMode:
 
 
 180-2. 지금 업그레이드에서 잠긴 업그레이드 클릭하면 바람소리가 나거든? 일단 잠긴 업그레이드를 클릭하면 unlock_rattle 효과음(기존 업그레이드 창을 열 때 자물쇠 흔들림 효과음)을 넣어주면 좋겠어 그리고 업그레이드 하단에 심층구역 자물쇠 아이콘도 있잖아 거기있는 자물쇠의 윗부분에 외곽선인가 그림자가 보여서 좋은 디자인이 아냐 그래서 거기에 외곽선 또는 그림자가 보이지 않게 해서 오로지 단색만 보여주도록 설정해줘
+
+
+181. prompt-B-181.md 내용 참고해서 기존 효과음들을 재활용해서 지금 게임 내에서 효과음이 없는 부분들에 대해 효과음들을 적용해줘
+
+182. prompt-B-182.md 내용 참고해서 기존 효과음들을 재활용해서 지금 게임 내에서 효과음이 없는 부분들에 대해 효과음들을 적용해줘
+
+182-1. init\prompt-B.md 182번에서 좀 아쉬운데 이 부분에 대해 다음 내용 참고해서 수정해줘
+
+수정 요청 (직접 테스트 후)
+1. 작은 TV 켜짐음이 글리치 이후에 나서 어색함
+화물 공간 부족 창과 버릴 자원 선택 창을 열 때, 글리치 연출이 끝난 뒤에 TV 켜짐음(WindowTvOpen)이 들립니다.
+켜짐음은 글리치와 관계없이 팝업이 켜지자마자 한 번 나도록 바꿔 주세요.
+코드상으로는 CargoFullPopupView.cs:223, CargoDiscardPopupView.cs:286에서 지연 없이 재생하는 것처럼 보입니다. 실제 플레이에서는 글리치 뒤에 들리므로, 창이 열리는 경로에서 어느 시점에 호출되는지 확인이 필요합니다. 다른 창은 공용 TerminalWindowOpenMotion에서 열릴 때 바로 납니다.
+2. 보상 버리기 소리를 묵직한 보관함 소리로 변경
+지금은 화물 공간 부족 창에서 "보상 버리기"를 누르면 부정음(UiCancelFail, DemoObjectiveView.CargoForfeitSfx)이 납니다.
+버릴 자원 선택에서 "전부 버리기"를 눌렀을 때와 같은 **묵직한 보관함 소리(StorageTakeAll)**가 나도록 바꿔 주세요.
+예: CargoForfeitSfx = SfxId.StorageTakeAll로 바꾸거나, DemoObjectiveView.cs:1134에서 DiscardAllSfx를 재생합니다.
+3. 골드 아이콘을 골드바 → 금화로 변경
+퀘스트 클리어 창과 화물 공간 부족 창에서 골드가 금화가 아닌 골드바 아이콘(Art/UI/Gameplay/Quest/quest-icon-gold.png)으로 나옵니다.
+판매창에서 쓰는 기존 금화 아이콘(Art/UI/SurfaceBase/Icons/icon-gold.png)으로 맞춰 주세요.
+바꿀 곳:
+Resources/UI/CargoFullPopupSkin.asset의 goldIcon: 화물 공간 부족 창, 버릴 자원 선택 창
+Scenes/App/Mine_Demo_Integration.unity의 퀘스트 클리어·퀘스트 보상 Icon
+Prefabs/UI/SurfaceBasePanel.prefab의 지상 퀘스트 창 골드 아이콘
+아이콘 모양이 바뀌면서 크기나 비율이 어색해지지 않는지도 함께 확인해 주세요.
+
+
+183. work_process\MVP2\sound\prompt-B-183.md 의 내용 참고해서 sfx-B183-184 폴더에 있는 효과음을 게임 내에 적용해줘
+
+184. work_process\MVP2\sound\prompt-B-184.md 의 내용 참고해서 sfx-B183-184 폴더에 있는 효과음을 게임 내에 적용해줘
+
+
+185. work_process/MVP2/prompt-B-185.md 의 내용 참고해서 전력이 들어와야 사용 가능한 시설에 대해 연출 추가해줘
+
+
+185-1.  /unity:ui-ugui @init/prompt-B.md 의 185번 부분 제대로 해결이 안되었어 다음 내용
+  참고해서 수정해줘
+
+  테스트 결과: 실제 게임에서 전력 켜짐 연출이 안 나옵니다
+전진기지 코어 범위 안에 충전기를 설치했는데(코어 먼저 / 충전기 먼저 둘 다) 청록 정전기·빛 연출이 전혀 나오지 않습니다. 설치 순서와 상관없이 범위 안에서 꺼짐→켜짐이 되는 순간 연출이 나와야 합니다.
+
+원인 (코드 확인 결과)
+연출이 실제 게임에서 시설이 켜지는 방식과 다른 판정에 붙어 있습니다.
+
+지금 연출은 PowerFacility.cs에서 PowerNode.PowerStateChanged(케이블 연결 + 공급/수요 계산 기반 IsPowered)가 꺼짐→켜짐으로 바뀔 때만 시작됩니다.
+하지만 실제 게임에서 충전기·보건소·정산 콘솔이 켜졌는지는 GameplayEventBridge.cs의 범위 판정(IsWithinPowerSupplyRange, IsProximityPoweredFacility)으로 정합니다. 코어/엘리베이터 반경 안이면 켜진 것으로 봅니다.
+케이블 기반 PowerNode.IsPowered는 실제 플레이에서 거의 켜지지 않습니다. EmergencyEscapePortal.cs 주석에도 "전진기지 공급 5 < 수요 30이라 용량 기반 PowerNode.IsPowered만으로는 패널이 영구 차단된다"고 적혀 있습니다.
+그래서 PowerStateChanged가 오지 않고 → PlayPowerOnEffect()가 호출되지 않습니다. 보고서의 화면 확인은 미리보기 씬에서 연출을 직접 진행한 것이라 이 경로를 거치지 않았습니다.
+수정 요청
+연출 시작 조건을 실제 게임의 범위 판정과 같은 기준으로 바꿔 주세요. 시설이 범위 판정상 꺼짐→켜짐이 되는 순간(새로 설치해서 범위 안에 들어옴 / 코어를 나중에 설치해서 범위가 생김 / 케이블·CCTV 창 연결) 각 시설에서 PowerOnEffect.Play가 한 번 불리도록 해 주세요.
+기존 규칙은 그대로 유지: 이어하기·탐사 진입 복원 중에는 연출 없음, 켜짐→켜짐·켜짐→꺼짐은 연출 없음, 여러 개가 한 번에 켜지면 시설마다 연출 + BatchStarted는 한 번.
+실제 플레이 흐름으로 확인해 주세요(Bootstrap → 광산 → 코어 설치 → 범위 안에 충전기 설치, 그리고 반대 순서). 미리보기 씬에서 직접 Tick을 돌리는 테스트만으로는 이 문제를 못 잡습니다. 가능하면 "범위 안에 시설 설치 → 연출 시작"을 확인하는 PlayMode 테스트를 추가해 주세요.
+조명·보관함은 범위 판정 목록(IsProximityPoweredFacility)에 없으니, 이 두 시설은 어떤 조건에서 켜지는지 확인하고 같은 기준으로 맞춰 주세요.
+
+
+185-2. 지금 전력망이 필요없는 조명, 보관함 같은 시설에서도 전진기지 근처에 설치하게 되면 전력 연결 연출이 동일하게 적용되던데 전진기지 없이도 동작이 가능한 시설에 대해서는 연출을 빼줬으면 해 아래 내용 참고해서 작업 진행해줘 
+
+조명·보관함 켜짐 연출 제거 요청
+실제 플레이로 확인해 보니 전진기지 범위와 상관없는 시설인 조명과 보관함에서도 켜짐 연출이 나와요. 두 시설은 전진기지 없이도 원래 쓸 수 있어요. 그런데 연출이 나오면 플레이어가 "이제 전원이 들어와서 쓸 수 있게 됐다"고 오해할 수 있으니, 이 두 시설에서는 연출을 빼 주세요.
+
+연출은 충전기·보건소·정산 콘솔처럼 범위에 따라 실제로 켜지고 꺼지는 시설에서만 나오게 해 주세요.
+
+고칠 곳
+sub-terra/Assets/_Project/Scripts/Gameplay/Integration/GameplayEventBridge.cs
+478~483줄 IsPowerOnEffectFacility: 481줄 building.light.basic, 482줄 building.storage.basic 조건을 지워서 IsProximityPoweredFacility(buildingId)만 남겨 주세요. 이 메서드 없이 IsProximityPoweredFacility를 바로 써도 괜찮아요.
+475~476줄 주석에서 조명·보관함 설명도 함께 정리해 주세요.
+sub-terra/Assets/_Project/Tests/EditMode/App/Integration/PromptB185RangePowerOnEffectTests.cs
+114줄 AllFiveFacilities_TurnOnTogether_EachPlays_BatchOnce: 122~123줄 LightBasic, StorageBasic을 빼고 세 시설 기준으로 바꿔 주세요. BatchStarted 기대값도 5에서 3으로 바꾸고, 테스트 이름도 맞춰 주세요.
+조명과 보관함을 범위 안에 설치하거나 코어를 나중에 설치해도 PowerOnEffectInstance가 없고 Started가 없는지 확인하는 테스트를 하나 추가해 주세요.
+work_process/MVP2/power/B-185-1-power-on-range-result.md: "조명·보관함은 언제 켜지나" 부분과 테스트 가이드 5번을 바뀐 동작에 맞게 고쳐 주세요.
+확인할 것
+코어 범위 안에 조명이나 보관함을 설치하거나 근처에 코어를 설치해도 연출이 없어야 해요.
+충전기·보건소·정산 콘솔은 지금처럼 두 가지 설치 순서 모두에서 연출이 나와야 해요.
+
+
+186. prompt-B-186.md 내용 참고해서 시설에 전력 연결 될 때 효과음 추가해줘

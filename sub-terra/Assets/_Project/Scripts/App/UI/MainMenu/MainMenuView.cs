@@ -44,6 +44,7 @@ namespace SubTerra.App.UI.MainMenu
         [SerializeField] private MainMenuIntroDirector intro;
         [SerializeField] private SlotFrameMagnetSettings frameSettings = new SlotFrameMagnetSettings();
         private SlotFrameMagnetTimeline frameTimeline;
+        private EmptySlotNoiseAudio slotNoise;
 
         [Header("Settings")]
         [SerializeField] private GameObject settingsRoot;
@@ -106,6 +107,8 @@ namespace SubTerra.App.UI.MainMenu
 
         private void OnEnable()
         {
+            slotNoise = GetComponent<EmptySlotNoiseAudio>();
+            if (slotNoise == null) slotNoise = gameObject.AddComponent<EmptySlotNoiseAudio>();
             RefreshLayout();
             var settingsLabel = settingsButton != null ? settingsButton.GetComponentInChildren<TMP_Text>(true) : null;
             if (settingsLabel != null) settingsLabel.text = "설정(esc)";
@@ -191,6 +194,7 @@ namespace SubTerra.App.UI.MainMenu
 
         private void OnDisable()
         {
+            if (slotNoise != null) slotNoise.StopNow();
             UnwireSlot(0, SelectSlot1);
             UnwireSlot(1, SelectSlot2);
             UnwireSlot(2, SelectSlot3);
@@ -255,11 +259,20 @@ namespace SubTerra.App.UI.MainMenu
         public void SetSlotKind(int slotId, SaveSlotCardKind kind)
         {
             var card = GetCard(slotId - 1);
+            if (card != null && card.Kind != kind && slotNoise != null) slotNoise.StopNow();
             if (card != null) card.SetKind(kind);
+        }
+
+        public void PlaySlotSelectedNoise(int slotId)
+        {
+            if (slotNoise == null || IsAnyModalOpen || (intro != null && intro.BlocksInput)) return;
+            var card = GetCard(slotId - 1);
+            slotNoise.SelectSlot(card != null && card.Kind == SaveSlotCardKind.Empty);
         }
 
         public void SetDeleteConfirmVisible(bool visible, int slotId)
         {
+            if (visible && slotNoise != null) slotNoise.StopNow();
             if (deleteConfirmRoot != null)
             {
                 deleteConfirmRoot.SetActive(visible);
@@ -275,6 +288,7 @@ namespace SubTerra.App.UI.MainMenu
         /// <summary>B-150: 선택 카드가 번쩍인 뒤 TV 꺼지듯 접히고 onClosed를 호출한다. 연출이 없으면 바로 호출.</summary>
         public void PlayExitTransition(Action onClosed)
         {
+            if (slotNoise != null) slotNoise.StopNow();
             if (intro == null)
             {
                 onClosed?.Invoke();
@@ -377,6 +391,8 @@ namespace SubTerra.App.UI.MainMenu
         {
             UpdateFrames();
             HandleKeyboardNavigation();
+            if (slotNoise != null) slotNoise.Tick(Time.unscaledDeltaTime,
+                IsAnyModalOpen || (intro != null && intro.BlocksInput));
         }
 
         private void UpdateFrames()
@@ -453,10 +469,12 @@ namespace SubTerra.App.UI.MainMenu
             if ((intro != null && intro.BlocksInput) || IsAnyModalOpen) return;
             var index = IndexOf(card);
             if (index >= 0) FrameTimeline.SetHover(index);
+            if (index >= 0 && slotNoise != null) slotNoise.SetHover(card.Kind == SaveSlotCardKind.Empty);
         }
 
         private void OnCardUnhovered(SaveSlotCardView card)
         {
+            if (slotNoise != null) slotNoise.SetHover(false);
             var index = IndexOf(card);
             if (index >= 0 && FrameTimeline.Hover == index) FrameTimeline.SetHover(-1);
         }
@@ -533,6 +551,7 @@ namespace SubTerra.App.UI.MainMenu
 
         public void SetOverwriteConfirmVisible(bool visible, int slotId)
         {
+            if (visible && slotNoise != null) slotNoise.StopNow();
             if (overwriteConfirmRoot != null)
             {
                 overwriteConfirmRoot.SetActive(visible);
@@ -553,6 +572,7 @@ namespace SubTerra.App.UI.MainMenu
 
         public void SetSettingsVisible(bool visible)
         {
+            if (visible && slotNoise != null) slotNoise.StopNow();
             if (settingsRoot != null)
             {
                 if (visible && controlSchemePanel == null) controlSchemePanel = ControlSchemePanel.Attach(settingsRoot);
