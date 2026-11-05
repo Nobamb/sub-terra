@@ -83,7 +83,6 @@ namespace SubTerra.App.Integration
         private bool tileMinedSfxBound;
         private DroneScanPingSfx droneScanPing;
         private DroneScanMarkSfx droneScanMark;
-        private PowerOnSfx powerOnSfx;
         private readonly CargoHeavySfxGate cargoHeavySfx = new CargoHeavySfxGate();
         private bool droneReadingsBound;
         private Action unbindProgressionPanel;
@@ -949,13 +948,6 @@ namespace SubTerra.App.Integration
                 });
                 droneScanMark.Bind(droneSensor);
             }
-
-            // B-186: 시설 전력 켜짐 "지직". 범위 판정당 한 번(BatchStarted)만 듣는다.
-            if (powerOnSfx == null)
-            {
-                powerOnSfx = new PowerOnSfx();
-                powerOnSfx.Bind();
-            }
         }
 
         private static void OnTileMinedForSfx(Vector3Int _, MiningTileDto tile)
@@ -1046,8 +1038,6 @@ namespace SubTerra.App.Integration
             droneScanPing = null;
             droneScanMark?.Dispose();
             droneScanMark = null;
-            powerOnSfx?.Dispose();
-            powerOnSfx = null;
             if (droneReadingsBound && bootstrap != null && bootstrap.State != null)
             {
                 bootstrap.State.EnergyChanged -= OnEnergyChangedForDrone;

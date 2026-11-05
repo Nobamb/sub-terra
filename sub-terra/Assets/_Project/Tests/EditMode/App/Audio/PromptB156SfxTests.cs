@@ -283,7 +283,7 @@ namespace SubTerra.App.Tests.Audio
         {
             var defaults = SfxLibraryDefaults.Create();
             // B-156~178 89칸 + B-179 슬라이더 드래그 1칸.
-            Assert.That(defaults.Count, Is.EqualTo(102)); // B-183 메뉴·드론 4칸, B-184 3칸, B-186 1칸 추가.
+            Assert.That(defaults.Count, Is.EqualTo(101)); // B-183 메뉴·드론 4칸 추가.
             var ids = new System.Collections.Generic.HashSet<SfxId>();
             foreach (var pair in defaults) Assert.That(ids.Add(pair.Entry.Id), Is.True);
             // 3번(구 UiBack)은 비워 둔다. 이름으로 쓰면 Obsolete 경고가 나므로 번호로 확인한다.

@@ -91,7 +91,7 @@ namespace SubTerra.App.Tests.Audio
                 defaults.Add(pair.Entry.Id, (pair.Entry, pair.FileName));
             }
 
-            Assert.That(defaults.Count, Is.EqualTo(102), "B-170 85칸 + B-178 4칸 + B-179 1칸 + B-179-1 3칸 + B-180-1 1칸");
+            Assert.That(defaults.Count, Is.EqualTo(101), "B-170 85칸 + B-178 4칸 + B-179 1칸 + B-179-1 3칸 + B-180-1 1칸");
             Assert.That((int)SfxId.MainMenuTypeTick, Is.EqualTo(86), "기존 번호는 그대로");
 
             var library = AssetDatabase.LoadAssetAtPath<SfxLibrary>(PromptB156SfxLibraryBuilder.AssetPath);

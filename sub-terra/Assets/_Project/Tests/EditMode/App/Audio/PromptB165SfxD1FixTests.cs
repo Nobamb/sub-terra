@@ -88,7 +88,7 @@ namespace SubTerra.App.Tests.Audio
                 Assert.That(asset.Volume, Is.EqualTo(row.Volume).Within(0.0001f), row.Id.ToString());
             }
 
-            Assert.That(defaults.Count, Is.EqualTo(102), "B-179-1 슬라이더 3칸 + B-180-1 잠긴 노드 덜그럭 1칸");
+            Assert.That(defaults.Count, Is.EqualTo(101), "B-179-1 슬라이더 3칸 + B-180-1 잠긴 노드 덜그럭 1칸");
         }
 
         // ---- ESC 설정창 ----
