@@ -1,0 +1,9 @@
+column=0; isolatedAlphaPixelsRemoved=1675; foregroundRgbChanged=0; nonzeroMarginPixels=0
+column=1; isolatedAlphaPixelsRemoved=1153; foregroundRgbChanged=0; nonzeroMarginPixels=0
+bounds=302,205,315,595
+bounds=302,207,360,593
+sourceUnchanged=True
+newWholeBodyCels=2
+runtimeApplied=False
+gifApngDecode=True
+groundTolerancePixels=2

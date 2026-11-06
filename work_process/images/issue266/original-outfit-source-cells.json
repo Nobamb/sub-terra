@@ -1,0 +1,77 @@
+[
+  {
+    "group": "walk",
+    "cell": 1,
+    "source": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Walk/walk_01.png"
+  },
+  {
+    "group": "walk",
+    "cell": 2,
+    "source": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Walk/walk_11.png"
+  },
+  {
+    "group": "walk",
+    "cell": 3,
+    "source": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Walk/walk_21.png"
+  },
+  {
+    "group": "walk",
+    "cell": 4,
+    "source": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Walk/walk_31.png"
+  },
+  {
+    "group": "ladder",
+    "cell": 1,
+    "source": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/LadderBack/ladder_back_neutral_v2.png"
+  },
+  {
+    "group": "ladder",
+    "cell": 2,
+    "source": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/LadderBack/ladder_back_style_02.png"
+  },
+  {
+    "group": "ladder",
+    "cell": 3,
+    "source": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/LadderBack/ladder_back_style_03.png"
+  },
+  {
+    "group": "ladder",
+    "cell": 4,
+    "source": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/LadderBack/ladder_back_style_04.png"
+  },
+  {
+    "group": "ladder",
+    "cell": 5,
+    "source": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/LadderBack/ladder_back_style_05.png"
+  },
+  {
+    "group": "mining",
+    "cell": 1,
+    "source": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_01.png"
+  },
+  {
+    "group": "mining",
+    "cell": 2,
+    "source": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_05.png"
+  },
+  {
+    "group": "mining",
+    "cell": 3,
+    "source": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_09.png"
+  },
+  {
+    "group": "mining",
+    "cell": 4,
+    "source": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_13.png"
+  },
+  {
+    "group": "mining",
+    "cell": 5,
+    "source": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_17.png"
+  },
+  {
+    "group": "mining",
+    "cell": 6,
+    "source": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Mining/mining_24.png"
+  }
+]

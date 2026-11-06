@@ -1,0 +1,6 @@
+opaqueRgbChanged=0; nonzeroMarginPixels=0; opaquePixels=533629; transparentPixels=1027097
+opaqueRgbChanged=0; nonzeroMarginPixels=0; opaquePixels=529350; transparentPixels=1030962
+workGifFrames=10
+finishGifFrames=8
+selectedUniquePoseHashes=11
+excluded=middle-03 (excessive crouch)
