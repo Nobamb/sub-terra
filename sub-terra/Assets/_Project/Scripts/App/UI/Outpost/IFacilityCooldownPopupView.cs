@@ -17,4 +17,13 @@ namespace SubTerra.App.UI.Outpost
         /// <summary>대기 팝업을 퇴장시킨다. 이미 퇴장 중이거나 숨김이면 아무 일도 하지 않는다.</summary>
         void HideFacilityCooldown();
     }
+
+    /// <summary>
+    /// B-181: 바인딩 해제처럼 플레이어가 보고 있는 변화가 아닌 경로에서 꺼짐음 없이 퇴장시킨다.
+    /// 선택 인터페이스라 구현하지 않은 View는 HideFacilityCooldown으로 대신한다.
+    /// </summary>
+    public interface IFacilityCooldownQuietHide
+    {
+        void HideFacilityCooldownQuietly();
+    }
 }

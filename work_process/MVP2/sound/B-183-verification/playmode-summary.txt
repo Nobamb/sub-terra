@@ -1,0 +1,12 @@
+Mode: PlayMode
+Scope: full
+Selected: 4
+Executed: 4
+Pass: 4
+Fail: 0
+Skip: 0
+Inconclusive: 0
+DurationSec: 4.232140
+Missing:
+Unexpected:
+ExitCode: 0

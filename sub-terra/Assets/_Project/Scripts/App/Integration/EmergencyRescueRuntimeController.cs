@@ -1,3 +1,4 @@
+using SubTerra.App.Audio;
 using SubTerra.App.Core;
 using SubTerra.App.Core.Data;
 using SubTerra.App.Drone.Dialogue;
@@ -10,6 +11,7 @@ using SubTerra.App.UI.EmergencyRescue;
 using SubTerra.App.UI.HUD;
 using SubTerra.Gameplay.Building;
 using SubTerra.Gameplay.Player;
+using SubTerra.Shared.Audio;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -23,6 +25,12 @@ namespace SubTerra.App.Integration
     {
         private const float DroneReminderDelaySeconds = 18f;
         private const string ReminderText = "구출이 필요하면 머리 위 버튼을 누르거나 R 키를 누르세요";
+
+        // B-181 ★ 구조 순간이동 소리. PM이 숫자만 바꿔 끼운다.
+        // 엘리베이터를 탄 것이 아니므로 구조 도착 "딩"은 넣지 않는다(PR #283 피드백).
+        public const SfxId RescueWarpSfx = SfxId.PortalWarp;
+        public const SfxId RescueFailSfx = SfxId.UiCancelFail;
+        public const string RescueFailureKey = "emergency.rescue";
 
         private SaveRuntimeController runtime;
         private GameState gameState;
@@ -238,6 +246,7 @@ namespace SubTerra.App.Integration
             if (!HasElevatorDestination())
             {
                 view.SetMessage("엘리베이터 위치를 찾지 못했습니다. 잠시 후 다시 시도해 주세요.");
+                PlayRescueFailSfx();
                 return;
             }
 
@@ -246,6 +255,7 @@ namespace SubTerra.App.Integration
             if (!EmergencyRescueCostRows.AreSame(view.DisplayedCost, current))
             {
                 view.Show(current, "화물 상태가 변경되었습니다. 최신 비용을 다시 확인해 주세요.");
+                PlayRescueFailSfx();
                 return;
             }
 
@@ -258,14 +268,22 @@ namespace SubTerra.App.Integration
                     failure == EmergencyRescueFailure.InventoryChanged
                         ? "화물 상태가 변경되었습니다. 최신 비용을 다시 확인해 주세요."
                         : "현재는 긴급 구출을 요청할 수 없습니다.");
+                PlayRescueFailSfx();
                 return;
             }
 
+            // B-181: 구조 버튼 확인음 대신 이동 전에 워프 한 번만 낸다.
+            SfxPlayer.Play(RescueWarpSfx);
             MoveToResolvedElevator();
             rescueCompleted = true;
             pendingReopen = false;
             HideAll();
             runtime?.SaveCurrent(AutoSaveReason.Manual);
+        }
+
+        private static void PlayRescueFailSfx()
+        {
+            FailureFeedback.Play(RescueFailSfx, RescueFailureKey);
         }
 
         private bool HasElevatorDestination()

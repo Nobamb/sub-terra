@@ -126,9 +126,9 @@ MonoBehaviour:
     maxDuration: 0.6
     fadeOut: 0.1
   - id: 16
-    clip: {fileID: 0}
+    clip: {fileID: 8300000, guid: acb80a0050743734f96a780d558011a2, type: 3}
     bus: 0
-    volume: 0.8
+    volume: 0.65
     pitch: 1
     startTime: 0
     maxDuration: 0
@@ -765,6 +765,70 @@ MonoBehaviour:
     startTime: 0.15
     maxDuration: 0
     fadeOut: 0.05
+  - id: 102
+    clip: {fileID: 8300000, guid: 76ac8a4ed800a5f408ce779e27c42fd2, type: 3}
+    bus: 0
+    volume: 0.4
+    pitch: 1
+    startTime: 0
+    maxDuration: 0
+    fadeOut: 0
+  - id: 103
+    clip: {fileID: 8300000, guid: 3f0cfde844712f14e83978a0c650ece5, type: 3}
+    bus: 0
+    volume: 0.5
+    pitch: 1
+    startTime: 0
+    maxDuration: 0
+    fadeOut: 0
+  - id: 104
+    clip: {fileID: 8300000, guid: 19167c0b497bbbb42b8fbecbaa6d6463, type: 3}
+    bus: 1
+    volume: 0.6
+    pitch: 1
+    startTime: 0
+    maxDuration: 0
+    fadeOut: 0
+  - id: 105
+    clip: {fileID: 8300000, guid: e1d0b596e3bdf8148b2ef76f01cc2297, type: 3}
+    bus: 1
+    volume: 0.6
+    pitch: 1
+    startTime: 0
+    maxDuration: 0
+    fadeOut: 0
+  - id: 99
+    clip: {fileID: 8300000, guid: a9bc040b00dc9ed439efc5ded5762f5e, type: 3}
+    bus: 1
+    volume: 1
+    pitch: 1
+    startTime: 0
+    maxDuration: 0
+    fadeOut: 0
+  - id: 100
+    clip: {fileID: 8300000, guid: 8e8aaaa63b96c5446bc23d6e8a9c565b, type: 3}
+    bus: 1
+    volume: 0.8
+    pitch: 1
+    startTime: 0
+    maxDuration: 0
+    fadeOut: 0
+  - id: 101
+    clip: {fileID: 8300000, guid: bc4c702158a5a6649a6b9a5f4ab7df72, type: 3}
+    bus: 1
+    volume: 0.5
+    pitch: 1
+    startTime: 0
+    maxDuration: 0
+    fadeOut: 0
+  - id: 106
+    clip: {fileID: 8300000, guid: 15fb094cb86576947bd2f318eb43b258, type: 3}
+    bus: 1
+    volume: 0.8
+    pitch: 1
+    startTime: 0
+    maxDuration: 0
+    fadeOut: 0
   uiBusVolume: 1
   worldBusVolume: 1
   alertBusVolume: 1

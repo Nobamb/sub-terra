@@ -142,7 +142,16 @@ namespace SubTerra.App.UI.Building
 
         public void CancelSelection()
         {
-            placement?.CancelPreview();
+            // B-181: 건설창을 닫아 취소하는 플레이어 경로. 들고 있던 시설이 있으면 취소음을 낸다.
+            if (placement is IBuildingFacilityMovePort movePort && movePort.IsMoveMode)
+            {
+                movePort.CancelMove(true);
+            }
+            else
+            {
+                placement?.CancelPreview();
+            }
+
             ClearSelectionState();
             view?.SetStatusMessage("건설 선택을 취소했습니다.");
         }

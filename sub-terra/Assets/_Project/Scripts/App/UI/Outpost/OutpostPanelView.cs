@@ -10,7 +10,8 @@ using UnityEngine.UI;
 namespace SubTerra.App.UI.Outpost
 {
     /// <summary>시설별 팝업으로 상태를 전달하는 전진기지 상호작용 View.</summary>
-    public sealed class OutpostPanelView : MonoBehaviour, IOutpostPanelView, IFacilityCooldownPopupView
+    public sealed class OutpostPanelView : MonoBehaviour, IOutpostPanelView, IFacilityCooldownPopupView,
+        IFacilityCooldownQuietHide
     {
         [SerializeField] private TMP_FontAsset messageFont;
         [SerializeField] private FacilityServicePopupView servicePopup;
@@ -125,6 +126,14 @@ namespace SubTerra.App.UI.Outpost
             if (cooldownPopup != null)
             {
                 cooldownPopup.HideFacilityCooldown();
+            }
+        }
+
+        public void HideFacilityCooldownQuietly()
+        {
+            if (cooldownPopup != null)
+            {
+                cooldownPopup.HideFacilityCooldownQuietly();
             }
         }
 
