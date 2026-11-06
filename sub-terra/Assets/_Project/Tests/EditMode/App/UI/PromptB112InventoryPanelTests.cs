@@ -53,7 +53,7 @@ namespace SubTerra.App.Tests.UI
             Assert.That(InventoryPanelDisplayFormatter.Percent(49.9f, 50f), Is.EqualTo("99%"));
             Assert.That(InventoryPanelDisplayFormatter.Percent(50f, 50f), Is.EqualTo("100%"));
             Assert.That(InventoryPanelDisplayFormatter.FillRatio(80f, 50f), Is.EqualTo(1f));
-            Assert.That(InventoryPanelDisplayFormatter.StateLine(42.5f, 50f), Does.Contain("거의 가득").And.Contain("7.5"));
+            Assert.That(InventoryPanelDisplayFormatter.StateLine(42.5f, 50f), Does.Contain("적재 한계 임박").And.Contain("7.5"));
             Assert.That(InventoryPanelDisplayFormatter.StateLine(50f, 50f), Does.Contain("가득 참"));
             Assert.That(InventoryPanelDisplayFormatter.UnsettledAmount(98765f), Is.EqualTo("98,765"));
             Assert.That(InventoryPanelDisplayFormatter.QuantityState(0), Is.EqualTo("보유 없음"));
@@ -104,12 +104,20 @@ namespace SubTerra.App.Tests.UI
             Assert.That(scroll.content, Is.SameAs(prefab.transform.Find("PanelRoot/StackScroll/Viewport/StackRows")));
             Assert.That(scroll.horizontal, Is.False);
 
-            // B-68 빌더가 다시 실행돼도 도움말 아이콘은 적재량 카드 안에 있어야 한다.
+            // 도움말은 고정 Footer에 두며 카드·행의 숫자를 가리지 않는다.
             var help = (RectTransform)prefab.transform.Find("PanelRoot/WeightHelpIcon");
             Assert.That(help.anchorMin, Is.EqualTo(new Vector2(0f, 1f)));
             Assert.That(help.anchoredPosition.x, Is.InRange(
                 PromptB112InventoryPanelBuilder.Margin,
-                PromptB112InventoryPanelBuilder.Margin + PromptB112InventoryPanelBuilder.CargoCardWidth - help.sizeDelta.x));
+                PromptB112InventoryPanelBuilder.PanelWidth - PromptB112InventoryPanelBuilder.Margin - help.sizeDelta.x));
+            Assert.That(help.anchoredPosition.y, Is.LessThan(PromptB112InventoryPanelBuilder.FooterTop));
+            Assert.That(prefab.transform.Find("PanelRoot/EmptyHint"), Is.Not.Null);
+            foreach (var row in prefab.GetComponentsInChildren<InventoryStackRowView>(true))
+            {
+                Assert.That(((RectTransform)row.transform.Find("Icon")).sizeDelta, Is.EqualTo(new Vector2(40f, 40f)));
+                Assert.That(((RectTransform)row.transform.Find("Quantity")).sizeDelta.x, Is.EqualTo(104f));
+                Assert.That(((RectTransform)row.transform.Find("Name")).sizeDelta.y, Is.GreaterThanOrEqualTo(44f));
+            }
 
             var tooltip = prefab.transform.Find("PanelRoot/WeightTooltip");
             Assert.That(tooltip.GetSiblingIndex(), Is.EqualTo(tooltip.parent.childCount - 1));

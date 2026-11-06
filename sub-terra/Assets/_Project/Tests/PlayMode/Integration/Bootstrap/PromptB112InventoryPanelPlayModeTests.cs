@@ -99,7 +99,7 @@ namespace SubTerra.App.Tests.PlayMode
 
             yield return null;
             AssertMatchesService(inventory, percent, stateLine, value);
-            Assert.That(stateLine.text, Does.Contain("거의 가득").Or.Contain("가득 참"));
+            Assert.That(stateLine.text, Does.Contain("적재 한계 임박").Or.Contain("가득 참"));
             if (visual) yield return UiTestWait.Capture(Path.Combine(evidence, "inventory-near-full-1920x1080.png"));
 
             // 가능한 만큼 채운다. 정확히 최대치에 닿으면 "가득 참"을 표시해야 한다.
