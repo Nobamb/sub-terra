@@ -69,9 +69,12 @@ namespace SubTerra.App.Integration
         private int lastPointerPlacementFrame = -1;
         private bool cursorPickHover;
         public bool IsMoveMode => pickingMoveTarget || (placementSystem != null && placementSystem.IsMoving);
+        // B-188: 건설 대상이 있어도 지형 블록 위에서 시작한 좌클릭은 채굴로 넘긴다. 그 칸은 원래 설치할 수 없는 칸이다.
         public bool OwnsPointerInput => IsMoveMode
-            || (placementSystem != null && placementSystem.Selection != null)
+            || (placementSystem != null && placementSystem.Selection != null && !PointerPressTargetsTerrain())
             || lastPointerPlacementFrame == Time.frameCount;
+        private int pointerPressFrame = -1;
+        private bool pointerPressOnTerrain;
         public event Action<string> MoveStatusChanged;
 
         // B-151 커서 연출용 읽기 전용 상태. 이동 안내(우클릭 · 이동)가 뜨는 조건과 같은 시설 호버를 쓴다.
@@ -323,12 +326,45 @@ namespace SubTerra.App.Integration
             }
             UpdateSupportRange(origin);
 
+            // 클릭 우선순위(B-188): UI 위 → UI, 지형 블록 위 → 채굴, 그 밖의 칸 → 설치 판정.
             if (Mouse.current.leftButton.wasPressedThisFrame
-                && (EventSystem.current == null || !EventSystem.current.IsPointerOverGameObject()))
+                && (EventSystem.current == null || !EventSystem.current.IsPointerOverGameObject())
+                && (placementSystem.IsMoving || !PointerPressTargetsTerrain()))
             {
                 lastPointerPlacementFrame = Time.frameCount;
                 placementSystem.TryPlaceAt(origin);
             }
+        }
+
+        /// <summary>이번 좌클릭이 지형 블록 위에서 시작됐는지. 누른 프레임에 한 번 정하고 뗄 때까지 유지한다.</summary>
+        private bool PointerPressTargetsTerrain()
+        {
+            var mouse = Mouse.current;
+            if (mouse == null || placementSystem == null || placementSystem.IsMoving)
+            {
+                return false;
+            }
+
+            if (mouse.leftButton.wasPressedThisFrame && pointerPressFrame != Time.frameCount)
+            {
+                pointerPressFrame = Time.frameCount;
+                pointerPressOnTerrain = IsTerrainBlockAt(mouse.position.ReadValue());
+            }
+
+            return mouse.leftButton.isPressed && pointerPressOnTerrain;
+        }
+
+        private bool IsTerrainBlockAt(Vector2 screen)
+        {
+            var terrain = GetTerrainTilemap();
+            var camera = targetCamera != null ? targetCamera : Camera.main;
+            if (terrain == null || camera == null)
+            {
+                return false;
+            }
+
+            var world = camera.ScreenToWorldPoint(new Vector3(screen.x, screen.y, -camera.transform.position.z));
+            return terrain.HasTile(placementSystem.WorldToCell(world));
         }
 
         /// <summary>

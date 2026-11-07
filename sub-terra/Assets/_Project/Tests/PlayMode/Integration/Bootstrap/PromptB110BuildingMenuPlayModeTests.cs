@@ -1,22 +1,28 @@
 using System.Collections;
 using System.IO;
+using System.Linq;
 using NUnit.Framework;
 using SubTerra.App.Core;
 using SubTerra.App.Core.Data;
+using SubTerra.App.Integration;
 using SubTerra.App.UI.Building;
 using SubTerra.App.UI.HUD;
 using SubTerra.Gameplay.Building;
+using SubTerra.Gameplay.Mining;
+using SubTerra.Gameplay.Player;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.LowLevel;
 using UnityEngine.TestTools;
 using UnityEngine.UI;
 
 namespace SubTerra.App.Tests.PlayMode
 {
     /// <summary>
-    /// prompt-B 110: 실제 Integration Scene에서 재구성한 시설 건설창의
-    /// 선택·비용 갱신·상태 배너·B 단축키·해상도별 배치를 확인하고 캡처를 남긴다.
+    /// prompt-B 110 → B-188: 실제 Integration Scene에서 아이콘 레일 건설 모드의
+    /// 선택·카드·비용 갱신·`>>` 목록·검색·상세·뒤로가기·B 닫기·해상도별 배치와 클릭 우선순위를 확인한다.
     /// </summary>
     public sealed class PromptB110BuildingMenuPlayModeTests
     {
@@ -66,8 +72,92 @@ namespace SubTerra.App.Tests.PlayMode
             Assert.That(result.IsSuccess, Is.True, result.Failure.ToString());
             Assert.That(state.Player.Energy, Is.EqualTo(energyBefore), "건설 자체는 플레이어 전력을 차감하지 않는다.");
             Assert.That(inventory.State.GetQuantity(DataIds.Minerals.Copper), Is.EqualTo(copperBefore - copperCost));
-            Assert.That(view.transform.Find("PanelRoot/DetailOperatingCondition").gameObject.activeSelf, Is.False);
+            Assert.That(Find(view.transform, "DetailOperatingCondition").gameObject.activeSelf, Is.False);
             Assert.That(environment.Save.ActiveSlot, Is.Zero);
+        }
+
+        /// <summary>B-188 E: 건설 대상을 고른 채로 지형 블록을 누르면 채굴, 빈 땅을 누르면 설치.</summary>
+        [UnityTest]
+        public IEnumerator BuildingMode_ClickOnTerrainMinesAndEmptyGroundPlaces()
+        {
+            environment = new UiTestEnvironment();
+            yield return environment.LoadIntegration();
+            var inventory = environment.Save.InventoryService;
+            Assert.That(inventory.TryAddMineralExact(DataIds.Minerals.Copper, 10).DidChange, Is.True);
+            Assert.That(inventory.TryAddMineralExact(DataIds.Minerals.Iron, 10).DidChange, Is.True);
+            var chrome = Object.FindAnyObjectByType<HudPanelChromeController>();
+            chrome.OpenBuildingMenu();
+            yield return null;
+            var view = Object.FindAnyObjectByType<BuildingMenuView>();
+            var binder = view.GetComponent<BuildingMenuBinder>();
+            var bridge = Object.FindAnyObjectByType<GameplayBuildingPlacementBridge>();
+            var placement = Object.FindAnyObjectByType<BuildingPlacementSystem>();
+            var mining = Object.FindAnyObjectByType<MiningSystem>();
+            var player = Object.FindAnyObjectByType<PlayerMovement>();
+            Assert.That(bridge != null && placement != null && mining != null && player != null, Is.True);
+            Assert.That(binder.SelectBuilding(DataIds.Buildings.SupportBasic), Is.True);
+
+            // 플레이어 옆·아래에서 UI에 가리지 않은 지형 블록을 찾는다.
+            var terrain = mining.ForegroundTilemap;
+            var playerCell = terrain.WorldToCell(player.Position);
+            var blockCell = new[] { Vector3Int.right, Vector3Int.left, Vector3Int.down }
+                .Select(o => playerCell + o)
+                .FirstOrDefault(c => terrain.HasTile(c) && !IsOverUi(ScreenOf(terrain.GetCellCenterWorld(c))));
+            Assert.That(terrain.HasTile(blockCell), Is.True, "플레이어 옆에 지형 블록이 없습니다.");
+            var rejected = 0;
+            var placed = 0;
+            void OnRejected(BuildingPlacementResult _) => rejected++;
+            void OnPlaced(BuildingPlacementResult _) => placed++;
+            var miningAttempts = 0;
+            void OnMining(MiningProgressState progress)
+            {
+                if (progress.Phase == MiningPhase.Mining || progress.Phase == MiningPhase.Failed) miningAttempts++;
+            }
+
+            placement.PlacementRejected += OnRejected;
+            placement.BuildingPlaced += OnPlaced;
+            mining.ProgressChanged += OnMining;
+            try
+            {
+                var mouse = environment.Mouse;
+                yield return UiTestWait.FocusGameView();
+                if (!mouse.enabled) InputSystem.EnableDevice(mouse);
+                mouse.MakeCurrent();
+                var blockScreen = ScreenOf(terrain.GetCellCenterWorld(blockCell));
+                InputSystem.QueueStateEvent(mouse, new MouseState { position = blockScreen });
+                yield return null;
+                InputSystem.QueueStateEvent(mouse, new MouseState { position = blockScreen, buttons = 1 });
+                yield return UiTestWait.Until(() => mouse.leftButton.isPressed, "mouse down terrain", 2f, "input");
+                Assert.That(bridge.OwnsPointerInput, Is.False, "지형 블록 위 누르기는 설치가 아니라 채굴이 가져간다.");
+                // 채굴 시도(진행 또는 보호 칸 실패 알림)가 일어나면 클릭이 채굴로 간 것이다. 스폰 바닥은 보호 칸일 수 있다.
+                yield return UiTestWait.Until(() => miningAttempts > 0, "mining attempt on terrain", 3f);
+                Assert.That(miningAttempts, Is.GreaterThan(0), "terrain click did not reach mining: cell=" + blockCell
+                    + " failure=" + mining.LastFailure + " owns=" + bridge.OwnsPointerInput);
+                Assert.That(rejected, Is.Zero, "지형 클릭이 설치 실패(겹침)로 처리되면 안 된다.");
+                Assert.That(placement.Selection, Is.Not.Null, "채굴해도 건설 대상은 유지된다.");
+                InputSystem.QueueStateEvent(mouse, new MouseState { position = blockScreen });
+                yield return UiTestWait.Until(() => !mouse.leftButton.isPressed, "mouse up terrain", 2f, "input");
+                yield return null;
+
+                // 설치 가능한 빈 땅: 같은 좌클릭이 설치로 간다.
+                Assert.That(placement.TryFindBestPlacementCell(1f, out var cell, out var failure), Is.True, failure.ToString());
+                var groundScreen = ScreenOf(terrain.GetCellCenterWorld(cell));
+                Assert.That(IsOverUi(groundScreen), Is.False, "설치 칸이 UI에 가려졌습니다.");
+                InputSystem.QueueStateEvent(mouse, new MouseState { position = groundScreen });
+                yield return null;
+                yield return null;
+                InputSystem.QueueStateEvent(mouse, new MouseState { position = groundScreen, buttons = 1 });
+                yield return UiTestWait.Until(() => placed > 0 || rejected > 0, "placement on empty ground", 2f);
+                Assert.That(placed, Is.EqualTo(1), "빈 땅 클릭은 기존 설치 판정으로 설치한다.");
+                InputSystem.QueueStateEvent(mouse, new MouseState { position = groundScreen });
+                yield return null;
+            }
+            finally
+            {
+                placement.PlacementRejected -= OnRejected;
+                placement.BuildingPlaced -= OnPlaced;
+                mining.ProgressChanged -= OnMining;
+            }
         }
 
         private IEnumerator VerifyStatesAndInput(bool visual)
@@ -80,76 +170,115 @@ namespace SubTerra.App.Tests.PlayMode
             var chrome = Object.FindAnyObjectByType<HudPanelChromeController>();
             Assert.That(chrome, Is.Not.Null);
             chrome.OpenBuildingMenu();
-            yield return null;
+            yield return new WaitForSecondsRealtime(BuildingModeSlideMotion.OpenDuration + 0.05f);
             var view = Object.FindAnyObjectByType<BuildingMenuView>();
             var binder = view.GetComponent<BuildingMenuBinder>();
             Assert.That(view, Is.Not.Null);
             Assert.That(binder.IsBound, Is.True);
             Assert.That(view.HasStructuredReferences(), Is.True);
+            Assert.That(view.HasBuildingModeReferences(), Is.True);
 
-            var panel = view.transform.Find("PanelRoot");
-            var detailName = panel.Find("DetailName").GetComponent<TMP_Text>();
-            var availability = panel.Find("AvailabilityText").GetComponent<TMP_Text>();
-            var costSection = panel.Find("CostSection").gameObject;
+            var root = view.transform;
+            var card = Find(root, "Card").gameObject;
+            var hint = Find(root, "HintChip").gameObject;
+            var catalogWindow = Find(root, "CatalogWindow").gameObject;
+            var detailName = Find(root, "DetailName").GetComponent<TMP_Text>();
+            var availability = Find(root, "AvailabilityText").GetComponent<TMP_Text>();
+            var costSection = Find(root, "CostSection").gameObject;
             Assert.That(detailName.text, Is.EqualTo("시설 미선택"));
             Assert.That(costSection.activeSelf, Is.False);
+            Assert.That(hint.activeSelf, Is.True, "미선택: 큰 안내 패널 없이 짧은 힌트만");
+            Assert.That(card.activeSelf, Is.False);
+            Assert.That(catalogWindow.activeSelf, Is.False, "기본은 레일+카드");
+            AssertNoControlGuide(root);
 
-            var evidence = Path.GetFullPath("Temp/visual/prompt-b110");
+            var evidence = Path.GetFullPath("Temp/visual/prompt-b188");
             if (visual) Directory.CreateDirectory(evidence);
-            if (visual) yield return UiTestWait.Capture(Path.Combine(evidence, "building-idle-1920x1080.png"));
+            if (visual) yield return UiTestWait.Capture(Path.Combine(evidence, "building-rail-idle-1920x1080.png"));
+
+            // 레일 호버: 아이콘 오른쪽에 홀로그램 이름표. 클릭은 막지 않는다(아래 ClickCenter가 raycast 첫 대상을 확인).
+            var support = Entry(root, DataIds.Buildings.SupportBasic);
+            var hologram = view.RailHologram;
+            Assert.That(hologram, Is.Not.Null);
+            yield return MoveMouseTo(environment.Mouse, (RectTransform)support);
+            yield return new WaitForSecondsRealtime(BuildingRailHologramMotion.OpenDuration + BuildingRailHologramMotion.TypeDuration + 0.05f);
+            Assert.That(hologram.IsShown && !hologram.IsClosing, Is.True, "호버 이름표");
+            Assert.That(hologram.CurrentName, Is.Not.Empty);
+            Assert.That(hologram.CurrentName, Is.EqualTo(Find(Find(root, "Row_" + DataIds.Buildings.SupportBasic), "Name").GetComponent<TMP_Text>().text),
+                "목록·카드와 같은 시설명");
+            var hologramRect = ScreenRect((RectTransform)hologram.transform);
+            var supportRect = ScreenRect((RectTransform)support);
+            Assert.That(hologramRect.xMin, Is.GreaterThan(supportRect.xMax), "아이콘 오른쪽");
+            Assert.That(hologramRect.center.y, Is.EqualTo(supportRect.center.y).Within(1f));
+            Assert.That(hologramRect.xMax, Is.LessThanOrEqualTo(Screen.width));
+            var holoText = Find(hologram.transform, "NameText").GetComponent<TMP_Text>();
+            holoText.ForceMeshUpdate();
+            Assert.That(holoText.isTextTruncated, Is.False);
+            Assert.That(holoText.maxVisibleCharacters, Is.GreaterThanOrEqualTo(holoText.text.Length), "글자가 다 찍혔다.");
+            Assert.That(hint.activeSelf, Is.False, "호버 중에는 힌트가 비켜 준다.");
+            if (visual) yield return UiTestWait.Capture(Path.Combine(evidence, "building-rail-hover-1920x1080.png"));
 
             // 버팀목 선택: 초기 인벤토리는 비어 있어 자원 부족이 문구·기호와 함께 보여야 한다.
-            var support = Entry(panel, DataIds.Buildings.SupportBasic);
-            yield return UiTestWait.Click(environment.Mouse, support.GetComponent<Button>());
-            yield return null;
+            yield return ClickCenter(environment.Mouse, support.GetComponent<Button>());
             Assert.That(binder.Presenter.SelectedBuildingId, Is.EqualTo(DataIds.Buildings.SupportBasic));
             Assert.That(support.GetComponent<BuildingMenuEntryVisual>().IsSelected, Is.True);
-            AssertOnlySelected(panel, DataIds.Buildings.SupportBasic);
+            AssertOnlySelected(root, DataIds.Buildings.SupportBasic);
+            Assert.That(card.activeSelf, Is.True);
+            Assert.That(hint.activeSelf, Is.False);
             Assert.That(detailName.text, Is.Not.EqualTo("시설 미선택"));
             Assert.That(costSection.activeSelf, Is.True);
             Assert.That(availability.text, Does.Contain("자원 부족"));
-            Assert.That(panel.Find("AvailabilityBanner/AvailabilityBadge/AvailabilityGlyph")
-                .GetComponent<TMP_Text>().text, Is.EqualTo(BuildingMenuDisplayFormatter.BlockedGlyph));
+            Assert.That(Find(root, "AvailabilityGlyph").GetComponent<TMP_Text>().text,
+                Is.EqualTo(BuildingMenuDisplayFormatter.BlockedGlyph));
+            AssertNoControlGuide(root);
             AssertInsideScreenAndClearOfHud(view);
-            AssertNotTruncated(panel);
-            if (visual) yield return UiTestWait.Capture(Path.Combine(evidence, "building-need-resources-1920x1080.png"));
+            AssertNotTruncated(root);
+            if (visual)
+            {
+                // 카드가 열린 상태에서 다른 아이콘 호버(이름표가 카드 위에 겹치는 경우) 모습.
+                yield return MoveMouseTo(environment.Mouse, (RectTransform)Entry(root, DataIds.Buildings.LadderBasic));
+                yield return new WaitForSecondsRealtime(BuildingRailHologramMotion.OpenDuration + BuildingRailHologramMotion.TypeDuration + 0.05f);
+                Assert.That(hologram.IsShown, Is.True);
+                Assert.That(card.activeSelf, Is.True, "카드는 호버로 숨지 않는다.");
+                yield return UiTestWait.Capture(Path.Combine(evidence, "building-rail-hover-card-1920x1080.png"));
+                yield return MoveMouseTo(environment.Mouse, (RectTransform)support);
+            }
 
-            // 자원을 얻으면 비용 행·목록 상태·설치 배너가 즉시 바뀌어야 한다.
+            if (visual) yield return UiTestWait.Capture(Path.Combine(evidence, "building-card-need-resources-1920x1080.png"));
+
+            // 자원을 얻으면 비용 행·상태가 즉시 바뀌어야 한다.
             var added = save.InventoryService.TryAddMineralExact(DataIds.Minerals.Copper, 6);
             Assert.That(added.DidChange, Is.True, "copper add");
             yield return null;
-            var row0 = panel.Find("CostSection/CostRow_0/State").GetComponent<TMP_Text>();
-            Assert.That(row0.text, Does.Contain("충분"));
-            Assert.That(support.Find("EntryState").GetComponent<TMP_Text>().text,
-                Is.EqualTo(BuildingMenuDisplayFormatter.ReadyGlyph));
+            var row0 = Find(root, "CostRow_0").Find("State").GetComponent<TMP_Text>();
+            Assert.That(row0.text, Is.EqualTo("충분"));
+            Assert.That(Find(root, "CostRow_0").Find("Amount").GetComponent<TMP_Text>().text, Does.Contain(" / "));
             Assert.That(availability.text, Does.Not.Contain("자원 부족"));
-            if (visual) yield return UiTestWait.Capture(Path.Combine(evidence, "building-affordable-1920x1080.png"));
+            if (visual) yield return UiTestWait.Capture(Path.Combine(evidence, "building-card-affordable-1920x1080.png"));
 
             // 비용 2종 중 일부만 부족한 시설: 부족한 광물만 경고 표시.
-            var core = Entry(panel, DataIds.Buildings.OutpostCoreBasic);
+            var core = Entry(root, DataIds.Buildings.OutpostCoreBasic);
             core.GetComponent<Button>().onClick.Invoke();
             yield return null;
-            AssertOnlySelected(panel, DataIds.Buildings.OutpostCoreBasic);
-            Assert.That(panel.Find("CostSection/CostRow_0").gameObject.activeSelf, Is.True);
-            Assert.That(panel.Find("CostSection/CostRow_1").gameObject.activeSelf, Is.True);
-            Assert.That(panel.Find("CostSection/CostRow_2").gameObject.activeSelf, Is.False);
-            Assert.That(panel.Find("CostSection/CostRow_1/State").GetComponent<TMP_Text>().text, Does.Contain("부족"));
+            AssertOnlySelected(root, DataIds.Buildings.OutpostCoreBasic);
+            Assert.That(Find(root, "CostRow_0").gameObject.activeSelf, Is.True);
+            Assert.That(Find(root, "CostRow_1").gameObject.activeSelf, Is.True);
+            Assert.That(Find(root, "CostRow_2").gameObject.activeSelf, Is.False);
+            Assert.That(Find(root, "CostRow_1").Find("State").GetComponent<TMP_Text>().text, Does.EndWith("부족"));
             Assert.That(availability.text, Does.Contain("자원 부족"));
-            AssertNotTruncated(panel);
-            if (visual) yield return UiTestWait.Capture(Path.Combine(evidence, "building-partial-1920x1080.png"));
+            AssertNotTruncated(root);
 
-            var condition = panel.Find("DetailOperatingCondition").GetComponent<TMP_Text>();
-            Assert.That(panel.Find("DetailPowerChip"), Is.Null);
+            var condition = Find(root, "DetailOperatingCondition").GetComponent<TMP_Text>();
             foreach (var id in new[]
             {
                 DataIds.Buildings.ChargerBasic, DataIds.Buildings.ClinicBasic, DataIds.Buildings.SettlementBasic
             })
             {
-                Entry(panel, id).GetComponent<Button>().onClick.Invoke();
+                Entry(root, id).GetComponent<Button>().onClick.Invoke();
                 yield return null;
                 Assert.That(condition.gameObject.activeSelf, Is.True, id);
-                Assert.That(condition.text, Is.EqualTo(ItemDisplayNames.OutpostName + " 영역 내에서만 작동합니다."), id);
-                AssertNotTruncated(panel);
+                Assert.That(condition.text, Is.EqualTo(ItemDisplayNames.OutpostName + " 범위 내"), id);
+                AssertNotTruncated(root);
             }
 
             if (visual)
@@ -158,26 +287,72 @@ namespace SubTerra.App.Tests.PlayMode
                 yield return environment.Resolution.Set(resolution.x, resolution.y);
                 Assert.That(Screen.width, Is.EqualTo(resolution.x));
                 AssertInsideScreenAndClearOfHud(view);
-                AssertNotTruncated(panel);
-                if (visual) yield return UiTestWait.Capture(Path.Combine(evidence, $"building-selected-{resolution.x}x{resolution.y}.png"));
+                AssertNotTruncated(root);
+                yield return UiTestWait.Capture(Path.Combine(evidence, $"building-card-{resolution.x}x{resolution.y}.png"));
             }
 
-            core.GetComponent<Button>().onClick.Invoke();
-            yield return null;
-            Assert.That(condition.gameObject.activeSelf, Is.False);
+            // `>>`: 레일은 그대로, 옆에 큰 목록과 검색창.
+            yield return ClickCenter(environment.Mouse, view.ExpandButton);
+            Assert.That(catalogWindow.activeSelf, Is.True);
+            Assert.That(Find(root, "ListPage").gameObject.activeSelf, Is.True);
+            Assert.That(Find(root, "Rail").gameObject.activeInHierarchy, Is.True);
+            Assert.That(card.activeSelf, Is.False);
+            Assert.That(Find(view.ExpandButton.transform, "Label").GetComponent<TMP_Text>().text, Is.EqualTo("<<"));
+            Assert.That(hologram.IsShown, Is.False, "큰 창을 펼치면 호버 이름표는 없다.");
+            AssertInsideScreenAndClearOfHud(view, (RectTransform)catalogWindow.transform);
+            if (visual) yield return UiTestWait.Capture(Path.Combine(evidence, "building-catalog-1920x1080.png"));
 
-            // B 단축키: 닫으면 선택이 취소되고, 다시 열면 미선택 상태로 시작한다.
+            // 검색: 시설명 일부만 남기고, 지우면 전체.
+            view.SetSearchQuery("충전");
+            yield return null;
+            var visibleRows = view.GetComponentsInChildren<BuildingMenuCatalogRowView>(false);
+            Assert.That(visibleRows.Select(r => r.BuildingId), Is.EqualTo(new[] { DataIds.Buildings.ChargerBasic }));
+            if (visual) yield return UiTestWait.Capture(Path.Combine(evidence, "building-catalog-search-1920x1080.png"));
+
+            // 목록에서 충전기 → 상세 + 레일 선택·설치 대상 동기화.
+            yield return ClickCenter(environment.Mouse, visibleRows[0].GetComponent<Button>());
+            Assert.That(Find(root, "DetailPage").gameObject.activeSelf, Is.True);
+            Assert.That(binder.Presenter.SelectedBuildingId, Is.EqualTo(DataIds.Buildings.ChargerBasic));
+            AssertOnlySelected(root, DataIds.Buildings.ChargerBasic);
+            Assert.That(Find(root, "DetailThumb").GetComponent<Image>().sprite, Is.Not.Null);
+            Assert.That(Find(root, "DetailPageCondition").GetComponent<TMP_Text>().text, Does.Contain("범위 내"));
+            Assert.That(Find(root, "DetailPageStatus").GetComponent<TMP_Text>().text, Is.Not.Empty);
+            AssertNotTruncated(root);
+            if (visual) yield return UiTestWait.Capture(Path.Combine(evidence, "building-detail-1920x1080.png"));
+
+            // 뒤로가기: 목록으로만, 검색어 유지.
+            yield return ClickCenter(environment.Mouse, view.BackButton);
+            Assert.That(chrome.IsBuildingMenuOpen, Is.True);
+            Assert.That(Find(root, "ListPage").gameObject.activeSelf, Is.True);
+            Assert.That(view.SearchField.text, Is.EqualTo("충전"));
+
+            // 상세가 열린 채로 B: 레일·카드·큰 창 모두 닫힘, 선택 취소.
+            view.OpenDetail(DataIds.Buildings.ChargerBasic);
             yield return PressB();
             Assert.That(chrome.IsBuildingMenuOpen, Is.False);
             Assert.That(binder.Presenter.SelectedBuildingId, Is.Empty);
+            yield return new WaitForSecondsRealtime(BuildingModeSlideMotion.CloseDuration + 0.05f);
+            Assert.That(view.gameObject.activeSelf, Is.False);
+
+            // 다시 열면 레일+미선택(목록 접힘, 검색어 비움)에서 시작한다.
             yield return PressB();
+            // 레일이 다 들어온 뒤에 누른다(슬라이드 중에는 아직 화면 왼쪽 밖에 있다).
+            yield return new WaitForSecondsRealtime(BuildingModeSlideMotion.OpenDuration + 0.05f);
             Assert.That(chrome.IsBuildingMenuOpen, Is.True);
             Assert.That(detailName.text, Is.EqualTo("시설 미선택"));
+            Assert.That(catalogWindow.activeSelf, Is.False);
+            Assert.That(view.SearchField.text, Is.Empty);
             Assert.That(condition.gameObject.activeSelf, Is.False);
-            AssertOnlySelected(panel, string.Empty);
+            AssertOnlySelected(root, string.Empty);
 
-            // X 버튼 닫기.
-            yield return UiTestWait.Click(environment.Mouse, view.CloseButton);
+            // `<<`로 접기.
+            view.ToggleExpanded();
+            yield return null;
+            Assert.That(catalogWindow.activeSelf, Is.True);
+            yield return ClickCenter(environment.Mouse, view.ExpandButton);
+            Assert.That(catalogWindow.activeSelf, Is.False);
+
+            chrome.CloseBuildingMenu();
             yield return null;
             Assert.That(chrome.IsBuildingMenuOpen, Is.False);
             Assert.That(save.ActiveSlot, Is.Zero);
@@ -185,51 +360,133 @@ namespace SubTerra.App.Tests.PlayMode
 
         private IEnumerator PressB() => UiTestWait.Press(keyboard, Key.B);
 
-        private static Transform Entry(Transform panel, string buildingId)
+        /// <summary>교훈(#269): pivot이 아닌 실제 RectTransform 중앙을 화면 좌표로 눌러 마스크 경계에 걸리지 않게 한다.</summary>
+        private static IEnumerator ClickCenter(Mouse mouse, Button button)
         {
-            var entry = panel.Find("Select_" + buildingId);
-            Assert.That(entry, Is.Not.Null, buildingId);
-            return entry;
+            yield return UiTestWait.FocusGameView();
+            if (!mouse.enabled) InputSystem.EnableDevice(mouse);
+            Canvas.ForceUpdateCanvases();
+            var rect = (RectTransform)button.transform;
+            var position = (Vector2)rect.TransformPoint(rect.rect.center);
+            var pointer = new PointerEventData(EventSystem.current) { position = position };
+            var hits = new System.Collections.Generic.List<RaycastResult>();
+            EventSystem.current.RaycastAll(pointer, hits);
+            var corners = new Vector3[4];
+            rect.GetWorldCorners(corners);
+            var group = button.GetComponentInParent<CanvasGroup>();
+            var diag = " pos=" + position + " screen=" + Screen.width + "x" + Screen.height
+                + " corners=" + corners[0] + ".." + corners[2] + " active=" + button.gameObject.activeInHierarchy
+                + " group=" + (group != null ? group.alpha + "/" + group.blocksRaycasts + "/" + group.interactable : "none");
+            Assert.That(hits, Is.Not.Empty, button.name + " has no raycast hit" + diag);
+            Assert.That(hits[0].gameObject.GetComponentInParent<Button>(), Is.SameAs(button), button.name + " is obstructed by " + hits[0].gameObject.name + diag);
+            mouse.MakeCurrent();
+            InputSystem.QueueStateEvent(mouse, new MouseState { position = position });
+            yield return null;
+            InputSystem.QueueStateEvent(mouse, new MouseState { position = position, buttons = 1 });
+            yield return UiTestWait.Until(() => mouse.leftButton.isPressed, "mouse down " + button.name, 2f, "input");
+            yield return null;
+            InputSystem.QueueStateEvent(mouse, new MouseState { position = position });
+            yield return UiTestWait.Until(() => !mouse.leftButton.isPressed, "mouse up " + button.name, 2f, "input");
+            yield return null;
+            yield return null;
         }
 
-        private static void AssertOnlySelected(Transform panel, string buildingId)
+        private static IEnumerator MoveMouseTo(Mouse mouse, RectTransform rect)
         {
-            foreach (var visual in panel.GetComponentsInChildren<BuildingMenuEntryVisual>(true))
+            yield return UiTestWait.FocusGameView();
+            if (!mouse.enabled) InputSystem.EnableDevice(mouse);
+            Canvas.ForceUpdateCanvases();
+            mouse.MakeCurrent();
+            InputSystem.QueueStateEvent(mouse, new MouseState { position = (Vector2)rect.TransformPoint(rect.rect.center) });
+            yield return null;
+            yield return null;
+        }
+
+        private static Vector2 ScreenOf(Vector3 world)
+        {
+            return Camera.main.WorldToScreenPoint(world);
+        }
+
+        private static bool IsOverUi(Vector2 screen)
+        {
+            var hits = new System.Collections.Generic.List<RaycastResult>();
+            EventSystem.current.RaycastAll(new PointerEventData(EventSystem.current) { position = screen }, hits);
+            return hits.Count > 0;
+        }
+
+        private static Transform Find(Transform root, string name)
+        {
+            var found = root.GetComponentsInChildren<Transform>(true).FirstOrDefault(t => t.name == name);
+            Assert.That(found, Is.Not.Null, name);
+            return found;
+        }
+
+        private static Transform Entry(Transform root, string buildingId) => Find(root, "Select_" + buildingId);
+
+        private static void AssertOnlySelected(Transform root, string buildingId)
+        {
+            foreach (var visual in root.GetComponentsInChildren<BuildingMenuEntryVisual>(true))
             {
                 Assert.That(visual.IsSelected, Is.EqualTo(visual.BuildingId == buildingId), visual.name);
             }
+
+            foreach (var row in root.GetComponentsInChildren<BuildingMenuCatalogRowView>(true))
+            {
+                Assert.That(row.IsSelected, Is.EqualTo(row.BuildingId == buildingId), row.name);
+            }
         }
 
-        private static void AssertNotTruncated(Transform panel)
+        private static void AssertNoControlGuide(Transform root)
+        {
+            foreach (var text in root.GetComponentsInChildren<TMP_Text>(false))
+            {
+                Assert.That(text.text, Does.Not.Contain("좌클릭"), text.name);
+                Assert.That(text.text, Does.Not.Contain("B 닫기"), text.name);
+            }
+        }
+
+        private static void AssertNotTruncated(Transform root)
         {
             Canvas.ForceUpdateCanvases();
-            foreach (var text in panel.GetComponentsInChildren<TMP_Text>(false))
+            foreach (var text in root.GetComponentsInChildren<TMP_Text>(false))
             {
                 text.ForceMeshUpdate();
                 Assert.That(text.isTextTruncated, Is.False, text.name + " truncated: " + text.text);
             }
         }
 
-        private static void AssertInsideScreenAndClearOfHud(BuildingMenuView view)
+        private static void AssertInsideScreenAndClearOfHud(BuildingMenuView view, RectTransform extra = null)
         {
-            var rect = (RectTransform)view.transform;
-            var menu = ScreenRect(rect);
-            Assert.That(menu.xMin, Is.GreaterThanOrEqualTo(0f));
-            Assert.That(menu.yMin, Is.GreaterThanOrEqualTo(0f), "건설창 하단이 화면 밖입니다.");
-            Assert.That(menu.xMax, Is.LessThanOrEqualTo(Screen.width));
-            Assert.That(menu.yMax, Is.LessThanOrEqualTo(Screen.height));
-
-            var quest = GameObject.Find("QuestSummaryButton");
-            if (quest != null && quest.activeInHierarchy)
+            var targets = new System.Collections.Generic.List<RectTransform>
             {
-                Assert.That(menu.Overlaps(ScreenRect((RectTransform)quest.transform)), Is.False, "퀘스트 카드와 겹칩니다.");
-            }
-
-            var side = Object.FindAnyObjectByType<GameplaySideMenuController>();
-            var open = side != null ? side.transform.Find("OpenMenuRoot") as RectTransform : null;
-            if (open != null && open.gameObject.activeInHierarchy)
+                (RectTransform)view.transform.Find("PanelRoot/Rail")
+            };
+            var side = view.transform.Find("PanelRoot/SidePane") as RectTransform;
+            if (side != null && side.gameObject.activeInHierarchy) targets.Add(side);
+            if (extra != null) targets.Add(extra);
+            foreach (var rect in targets)
             {
-                Assert.That(menu.Overlaps(ScreenRect(open)), Is.False, "우측 메뉴와 겹칩니다.");
+                var menu = ScreenRect(rect);
+                Assert.That(menu.xMin, Is.GreaterThanOrEqualTo(0f), rect.name);
+                Assert.That(menu.yMin, Is.GreaterThanOrEqualTo(0f), rect.name + " 하단이 화면 밖입니다.");
+                Assert.That(menu.xMax, Is.LessThanOrEqualTo(Screen.width), rect.name);
+                Assert.That(menu.yMax, Is.LessThanOrEqualTo(Screen.height), rect.name);
+
+                foreach (var hudName in new[] { "QuestSummaryButton", "BasicHUD" })
+                {
+                    var hud = GameObject.Find(hudName);
+                    if (hud != null && hud.activeInHierarchy)
+                    {
+                        Assert.That(menu.Overlaps(ScreenRect((RectTransform)hud.transform)), Is.False, rect.name + " ↔ " + hudName);
+                    }
+                }
+
+                var sideMenu = Object.FindAnyObjectByType<GameplaySideMenuController>();
+                var open = sideMenu != null ? sideMenu.transform.Find("OpenMenuRoot") as RectTransform : null;
+                if (open != null && open.gameObject.activeInHierarchy)
+                {
+                    Assert.That(menu.Overlaps(ScreenRect(open)), Is.False, rect.name + " ↔ 우측 메뉴");
+                }
             }
         }
 
@@ -243,6 +500,5 @@ namespace SubTerra.App.Tests.PlayMode
             var max = RectTransformUtility.WorldToScreenPoint(camera, corners[2]);
             return Rect.MinMaxRect(min.x, min.y, max.x, max.y);
         }
-
     }
 }
