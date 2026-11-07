@@ -121,12 +121,6 @@ namespace SubTerra.App.Tests.UI
             Assert.That(building.sizeDelta.y, Is.GreaterThanOrEqualTo(560f));
             var selection = building.Find("PanelRoot/SelectionText") as RectTransform
                 ?? building.Find("SelectionText") as RectTransform;
-            var detailScroll = building.Find("PanelRoot/DetailScroll") as RectTransform;
-            if (detailScroll != null)
-            {
-                Assert.That(detailScroll.anchoredPosition.x, Is.EqualTo(PromptB110BuildingMenuBuilder.RightColumnX));
-                Assert.That(detailScroll.Find("Viewport/Content/SelectionText"), Is.Not.Null);
-            }
             if (selection != null)
             {
                 // prompt-B 110: 좌측 목록(16+200) + 24px 간격 = 240.

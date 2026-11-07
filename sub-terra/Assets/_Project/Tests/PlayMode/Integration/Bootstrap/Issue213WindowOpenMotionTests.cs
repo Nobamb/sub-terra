@@ -41,7 +41,8 @@ namespace SubTerra.App.Tests.PlayMode
         public IEnumerator Issue213_RealMenuPrefabsRapidToggleAndPausedOpeningKeepInputAvailable()
         {
 #if UNITY_EDITOR
-            foreach (var name in new[] { "BuildingMenu", "InventoryPanel" })
+            // B-188: 건설창은 TV 창 연출 대신 레일 슬라이드(Issue188 검사)를 쓴다.
+            foreach (var name in new[] { "InventoryPanel" })
             {
                 var prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/Prefabs/UI/" + name + ".prefab");
                 Assert.That(prefab, Is.Not.Null);
@@ -203,15 +204,59 @@ namespace SubTerra.App.Tests.PlayMode
                 typeof(HudPanelChromeController).GetField("buildingMenuView", Private).SetValue(chrome, view);
                 var apply = typeof(HudPanelChromeController).GetMethod("ApplyBuildingMenuVisible", Private);
                 apply.Invoke(chrome, new object[] { true, false });
-                var motion = instance.GetComponent<TerminalWindowOpenMotion>();
-                motion.Advance(TerminalWindowOpenMotion.Duration);
+                // B-188: 건설 모드는 레일 슬라이드로 열고 닫는다. 닫힘 연출이 끝난 뒤에만 루트를 끈다.
+                var motion = instance.GetComponent<BuildingModeSlideMotion>();
+                Assert.That(motion, Is.Not.Null);
+                Assert.That(instance.GetComponent<TerminalWindowOpenMotion>(), Is.Null);
+                motion.Advance(BuildingModeSlideMotion.OpenDuration);
                 apply.Invoke(chrome, new object[] { false, false });
                 Assert.That(instance.activeSelf, Is.True);
                 Assert.That(motion.IsClosing, Is.True);
-                motion.Advance(TerminalWindowOpenMotion.CloseDuration + .01f);
+                motion.Advance(BuildingModeSlideMotion.CloseDuration + .01f);
                 Assert.That(instance.activeSelf, Is.False);
             }
             finally { Object.DestroyImmediate(host); }
+#else
+            Assert.Ignore("실제 프리팹 검사는 Editor 전용입니다.");
+#endif
+        }
+
+        [Test]
+        public void Issue188_BuildingRailSlidesInFromLeftAndRestoresPosition()
+        {
+#if UNITY_EDITOR
+            var prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/Prefabs/UI/BuildingMenu.prefab");
+            instance = Object.Instantiate(prefab);
+            var view = instance.GetComponent<BuildingMenuView>();
+            var panel = (RectTransform)instance.transform.Find("PanelRoot");
+            var rootPosition = ((RectTransform)instance.transform).anchoredPosition;
+            view.SetVisible(false);
+            var opening = instance.GetComponent<BuildingModeSlideMotion>();
+            if (opening != null) opening.Advance(1f);
+            Assert.That(instance.activeSelf, Is.False);
+            var rest = panel.anchoredPosition;
+            for (var i = 0; i < 2; i++)
+            {
+                view.SetVisible(true);
+                var motion = instance.GetComponent<BuildingModeSlideMotion>();
+                Assert.That(motion.IsPlaying, Is.True);
+                Assert.That(panel.anchoredPosition.x, Is.LessThan(rest.x), "왼쪽 화면 밖 방향에서 들어온다.");
+                motion.Advance(BuildingModeSlideMotion.OpenDuration * 0.5f);
+                var midway = panel.anchoredPosition;
+                view.SetVisible(true);
+                Assert.That(panel.anchoredPosition, Is.EqualTo(midway), "중복 표시 호출로 재시작하지 않는다.");
+                motion.Advance(BuildingModeSlideMotion.OpenDuration);
+                Assert.That(motion.IsPlaying, Is.False);
+                Assert.That(panel.anchoredPosition, Is.EqualTo(rest));
+                view.SetVisible(false);
+                Assert.That(motion.IsClosing, Is.True);
+                Assert.That(instance.activeSelf, Is.True, "닫힘을 마치기 전에 루트를 숨기지 않는다.");
+                motion.Advance(BuildingModeSlideMotion.CloseDuration + .01f);
+                Assert.That(instance.activeSelf, Is.False);
+                Assert.That(panel.anchoredPosition, Is.EqualTo(rest));
+            }
+
+            Assert.That(((RectTransform)instance.transform).anchoredPosition, Is.EqualTo(rootPosition), "Scene 배치값(루트)은 움직이지 않는다.");
 #else
             Assert.Ignore("실제 프리팹 검사는 Editor 전용입니다.");
 #endif

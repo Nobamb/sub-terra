@@ -86,7 +86,12 @@ namespace SubTerra.App.Tests.UI
         public void PromptB46_BuildingMenu_HasOneEmergencyPortalEntry()
         {
             var menu = AssetDatabase.LoadAssetAtPath<GameObject>(MenuPath);
-            var entries = menu.GetComponentsInChildren<BuildingMenuEntryButton>(true);
+            // B-188: 레일 아이콘 기준으로 센다. `>>` 목록 칸도 같은 시설을 하나씩 가진다.
+            var entries = menu.GetComponentsInChildren<BuildingMenuEntryVisual>(true)
+                .Select(v => v.GetComponent<BuildingMenuEntryButton>())
+                .ToArray();
+            Assert.That(menu.GetComponentsInChildren<BuildingMenuCatalogRowView>(true)
+                .Count(r => r.BuildingId == DataIds.Buildings.EmergencyEscapePortal), Is.EqualTo(1));
             var matches = 0;
             for (var i = 0; i < entries.Length; i++)
             {

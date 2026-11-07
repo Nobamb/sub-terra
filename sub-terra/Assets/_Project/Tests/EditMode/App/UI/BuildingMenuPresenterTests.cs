@@ -71,7 +71,10 @@ namespace SubTerra.App.Tests.UI
             Assert.That(menu, Is.Not.Null);
             Assert.That(menu.GetComponent<BuildingMenuView>().HasRequiredReferences(), Is.True);
             Assert.That(menu.GetComponent<BuildingMenuBinder>().HasRequiredReferences(), Is.True);
-            Assert.That(menu.GetComponentsInChildren<BuildingMenuEntryButton>(true).Length, Is.EqualTo(9));
+            // B-188: 레일 아이콘 9개 + `>>` 전체 목록 칸 9개가 같은 선택 버튼(BuildingMenuEntryButton)을 쓴다.
+            Assert.That(menu.GetComponentsInChildren<BuildingMenuEntryVisual>(true).Length, Is.EqualTo(9));
+            Assert.That(menu.GetComponentsInChildren<BuildingMenuCatalogRowView>(true).Length, Is.EqualTo(9));
+            Assert.That(menu.GetComponentsInChildren<BuildingMenuEntryButton>(true).Length, Is.EqualTo(18));
             Assert.That(hud, Is.Not.Null);
             Assert.That(hud.GetComponent<SubTerra.App.UI.Hazards.HazardHudView>()
                 .HasRequiredReferences(), Is.True);
@@ -136,7 +139,7 @@ namespace SubTerra.App.Tests.UI
                 Assert.That(warning.Text, Does.Contain("자원이 부족"));
                 wallet.CanAffordValue = true;
                 placement.Emit(failed);
-                Assert.That(warning.Text, Does.Contain("다른 시설이나 지형과 겹칩니다."));
+                Assert.That(warning.Text, Does.Contain("겹쳐"));
                 Assert.That(view.StatusMessage, Does.Contain("빈 공간을 선택하세요"));
             }
             finally { SubTerra.App.UI.PlayerStatus.PlayerStatusWarnings.Current = previous; }

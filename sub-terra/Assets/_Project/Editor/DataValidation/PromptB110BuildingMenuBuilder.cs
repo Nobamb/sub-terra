@@ -24,7 +24,7 @@ namespace SubTerra.App.Editor.DataValidation
         public const float HeaderHeight = 54f;
         public const float LeftColumnX = 16f;
         public const float EntryWidth = 200f;
-        public const float EntryHeight = 68f;
+        public const float EntryHeight = 46f;
         public const float EntrySpacing = 4f;
         public const float FirstEntryY = -88f;
         public const float RightColumnX = 240f;
@@ -51,7 +51,7 @@ namespace SubTerra.App.Editor.DataValidation
 
         public static float EntryY(int index)
         {
-            return -index * (EntryHeight + EntrySpacing);
+            return FirstEntryY - index * (EntryHeight + EntrySpacing);
         }
 
         public static string Build()
@@ -85,12 +85,6 @@ namespace SubTerra.App.Editor.DataValidation
 
             var title = panel.Find("Title").GetComponent<TMP_Text>();
             var font = title.font;
-            // Reuse serialized children on subsequent builds instead of creating duplicates.
-            foreach (string name in new[] { "SelectionText", "DetailOperatingCondition", "CostSection" })
-            {
-                var child = panel.Find("DetailScroll/Viewport/Content/" + name);
-                if (child != null) child.SetParent(panel, false);
-            }
             var knob = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Knob.psd");
 
             var rootRect = (RectTransform)root.transform;
@@ -107,7 +101,6 @@ namespace SubTerra.App.Editor.DataValidation
             BuildSectionLabels(panel, font, entries.Count);
             var detail = BuildDetail(panel, font);
             var costs = BuildCosts(panel, font);
-            var detailScroll = BuildDetailScroll(panel);
             var banner = BuildAvailability(panel, font, knob);
             BuildFooter(panel, font);
             BuildCorners(panel);
@@ -117,14 +110,13 @@ namespace SubTerra.App.Editor.DataValidation
             // 장식·텍스트가 시설 버튼 클릭을 가로채지 않게 한다.
             foreach (var graphic in root.GetComponentsInChildren<Graphic>(true))
             {
-                if (graphic.GetComponent<Button>() == null && graphic.transform != panel && graphic.name != "Viewport")
+                if (graphic.GetComponent<Button>() == null && graphic.transform != panel)
                 {
                     graphic.raycastTarget = false;
                 }
             }
 
             var so = new SerializedObject(view);
-            so.FindProperty("detailScroll").objectReferenceValue = detailScroll;
             so.FindProperty("entries").arraySize = entries.Count;
             for (var i = 0; i < entries.Count; i++)
             {
@@ -176,7 +168,7 @@ namespace SubTerra.App.Editor.DataValidation
             var hint = EnsureText(panel, "HotkeyHint", font);
             Style(hint, 13f, SubText, TextAlignmentOptions.MidlineRight, FontStyles.Normal);
             hint.text = "<color=#73F0FF>[B]</color> 열기 / 닫기";
-            PlaceTopRight(hint.rectTransform, -60f, -15f, 140f, 24f);
+            PlaceTopRight(hint.rectTransform, -56f, -15f, 140f, 24f);
 
             var divider = EnsureImage(panel, "HeaderDivider", new Color(0f, 0.85f, 1f, 0.55f));
             divider.rectTransform.anchorMin = new Vector2(0f, 1f);
@@ -206,18 +198,6 @@ namespace SubTerra.App.Editor.DataValidation
 
         private static List<BuildingMenuEntryVisual> BuildEntries(Transform panel, TMP_FontAsset font)
         {
-            var scroll = BuildScroll(panel, "FacilityScroll", LeftColumnX, FirstEntryY, EntryWidth, 452f);
-            var content = scroll.content;
-            var layout = content.GetComponent<VerticalLayoutGroup>();
-            if (layout == null) layout = content.gameObject.AddComponent<VerticalLayoutGroup>();
-            layout.spacing = EntrySpacing;
-            layout.childControlWidth = true;
-            layout.childControlHeight = false;
-            layout.childForceExpandWidth = true;
-            layout.childForceExpandHeight = false;
-            var fitter = content.GetComponent<ContentSizeFitter>();
-            if (fitter == null) fitter = content.gameObject.AddComponent<ContentSizeFitter>();
-            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
             // 기존 세로 순서(버팀목 → 긴급 탈출 포탈)를 그대로 유지한다.
             var buttons = panel.GetComponentsInChildren<BuildingMenuEntryButton>(true)
                 .OrderByDescending(b => ((RectTransform)b.transform).anchoredPosition.y)
@@ -226,9 +206,8 @@ namespace SubTerra.App.Editor.DataValidation
             for (var i = 0; i < buttons.Count; i++)
             {
                 var go = buttons[i].gameObject;
-                go.transform.SetParent(content, false);
                 var rect = (RectTransform)go.transform;
-                PlaceTopLeft(rect, 0f, EntryY(i), EntryWidth, EntryHeight);
+                PlaceTopLeft(rect, LeftColumnX, EntryY(i), EntryWidth, EntryHeight);
 
                 var bg = go.GetComponent<Image>();
                 bg.sprite = null;
@@ -262,25 +241,24 @@ namespace SubTerra.App.Editor.DataValidation
 
                 var icon = EnsureImage(go.transform, "Icon", Color.white);
                 icon.preserveAspect = true;
-                PlaceTopLeft(icon.rectTransform, 10f, -17f, 34f, 34f);
+                PlaceTopLeft(icon.rectTransform, 9f, -6f, 34f, 34f);
 
                 var label = EnsureText(go.transform, "Label", font);
                 Style(label, 17f, Color.white, TextAlignmentOptions.MidlineLeft, FontStyles.Bold);
-                label.textWrappingMode = TextWrappingModes.Normal;
-                label.maxVisibleLines = 2;
-                PlaceTopLeft(label.rectTransform, 54f, -4f, 138f, 44f);
+                label.enableAutoSizing = true;
+                label.fontSizeMin = 14f;
+                label.fontSizeMax = 17f;
+                PlaceTopLeft(label.rectTransform, 50f, -2f, 104f, 24f);
 
                 var cost = EnsureText(go.transform, "CostSummary", font);
                 Style(cost, 13f, SubText, TextAlignmentOptions.MidlineLeft, FontStyles.Normal);
                 cost.text = string.Empty;
-                PlaceTopLeft(cost.rectTransform, 54f, -48f, 138f, 16f);
+                PlaceTopLeft(cost.rectTransform, 50f, -25f, 142f, 19f);
 
                 var state = EnsureText(go.transform, "EntryState", font);
                 Style(state, 13f, new Color(0.56f, 0.96f, 0.78f, 1f), TextAlignmentOptions.MidlineRight, FontStyles.Bold);
                 state.text = string.Empty;
                 PlaceTopRight(state.rectTransform, -8f, -2f, 42f, 24f);
-                // Cost colors already identify shortages; leave the name column unobstructed.
-                state.gameObject.SetActive(false);
 
                 var visual = go.GetComponent<BuildingMenuEntryVisual>();
                 if (visual == null)
@@ -301,55 +279,7 @@ namespace SubTerra.App.Editor.DataValidation
                 result.Add(visual);
             }
 
-            content.sizeDelta = new Vector2(0f, Mathf.Max(0f, result.Count * (EntryHeight + EntrySpacing) - EntrySpacing));
-            LayoutRebuilder.ForceRebuildLayoutImmediate(content);
             return result;
-        }
-
-        private static ScrollRect BuildScroll(Transform panel, string name, float x, float y, float width, float height)
-        {
-            var root = EnsureRect(panel, name);
-            PlaceTopLeft(root, x, y, width, height);
-            var viewport = EnsureImage(root, "Viewport", Color.clear);
-            Stretch(viewport.rectTransform);
-            viewport.raycastTarget = true;
-            if (viewport.GetComponent<RectMask2D>() == null) viewport.gameObject.AddComponent<RectMask2D>();
-            var content = EnsureRect(viewport.transform, "Content");
-            content.anchorMin = new Vector2(0f, 1f);
-            content.anchorMax = Vector2.one;
-            content.pivot = new Vector2(.5f, 1f);
-            content.anchoredPosition = Vector2.zero;
-            var scroll = root.GetComponent<ScrollRect>();
-            if (scroll == null) scroll = root.gameObject.AddComponent<ScrollRect>();
-            scroll.content = content;
-            scroll.viewport = viewport.rectTransform;
-            scroll.horizontal = false;
-            scroll.vertical = true;
-            scroll.inertia = false;
-            scroll.movementType = ScrollRect.MovementType.Clamped;
-            scroll.scrollSensitivity = 32f;
-            return scroll;
-        }
-
-        private static ScrollRect BuildDetailScroll(Transform panel)
-        {
-            var scroll = BuildScroll(panel, "DetailScroll", RightColumnX, -172f, RightColumnWidth, 214f);
-            foreach (string name in new[] { "SelectionText", "DetailOperatingCondition", "CostSection" })
-            {
-                var child = panel.Find(name);
-                if (child != null) child.SetParent(scroll.content, false);
-            }
-            var height = scroll.content.GetComponent<LayoutElement>();
-            if (height == null) height = scroll.content.gameObject.AddComponent<LayoutElement>();
-            height.preferredHeight = 214f;
-            var fitter = scroll.content.GetComponent<ContentSizeFitter>();
-            if (fitter == null) fitter = scroll.content.gameObject.AddComponent<ContentSizeFitter>();
-            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-            scroll.content.sizeDelta = new Vector2(0f, 214f);
-            PlaceTopLeft((RectTransform)scroll.content.Find("SelectionText"), 0f, 0f, RightColumnWidth, 76f);
-            PlaceTopLeft((RectTransform)scroll.content.Find("DetailOperatingCondition"), 0f, -84f, RightColumnWidth, 42f);
-            PlaceTopLeft((RectTransform)scroll.content.Find("CostSection"), 0f, -138f, RightColumnWidth, 150f);
-            return scroll;
         }
 
         private readonly struct DetailRefs
@@ -381,17 +311,22 @@ namespace SubTerra.App.Editor.DataValidation
 
             var name = EnsureText(panel, "DetailName", font);
             Style(name, 21f, Color.white, TextAlignmentOptions.MidlineLeft, FontStyles.Bold);
-            name.textWrappingMode = TextWrappingModes.Normal;
+            name.enableAutoSizing = true;
+            name.fontSizeMin = 15f;
+            name.fontSizeMax = 21f;
             name.text = "시설 미선택";
-            PlaceTopLeft(name.rectTransform, RightColumnX + 88f, -86f, RightColumnWidth - 88f, 76f);
+            PlaceTopLeft(name.rectTransform, RightColumnX + 88f, -86f, RightColumnWidth - 88f, 34f);
 
             var operatingCondition = BuildOperatingCondition(panel, font);
 
             var body = panel.Find("SelectionText").GetComponent<TMP_Text>();
             Style(body, 16.5f, BodyText, TextAlignmentOptions.TopLeft, FontStyles.Normal);
+            body.enableAutoSizing = true;
+            body.fontSizeMin = 14f;
+            body.fontSizeMax = 16.5f;
             body.lineSpacing = 5f;
             body.textWrappingMode = TextWrappingModes.Normal;
-            body.overflowMode = TextOverflowModes.Overflow;
+            body.overflowMode = TextOverflowModes.Ellipsis;
             PlaceTopLeft(body.rectTransform, RightColumnX, -172f, RightColumnWidth, 76f);
 
             return new DetailRefs(icon, name, operatingCondition);
@@ -410,10 +345,8 @@ namespace SubTerra.App.Editor.DataValidation
             {
                 var panel = root.transform.Find("PanelRoot");
                 var name = panel.Find("DetailName").GetComponent<TMP_Text>();
-                var existing = panel.Find("DetailScroll/Viewport/Content/DetailOperatingCondition");
-                if (existing != null) existing.SetParent(panel, false);
                 var condition = BuildOperatingCondition(panel, name.font);
-                BuildDetailScroll(panel);
+                condition.transform.SetSiblingIndex(name.transform.GetSiblingIndex() + 1);
                 var so = new SerializedObject(root.GetComponent<BuildingMenuView>());
                 so.FindProperty("detailOperatingConditionText").objectReferenceValue = condition;
                 so.ApplyModifiedPropertiesWithoutUndo();
@@ -464,8 +397,8 @@ namespace SubTerra.App.Editor.DataValidation
 
             var label = EnsureText(section, "CostLabel", font);
             Style(label, 12.5f, Cyan, TextAlignmentOptions.MidlineLeft, FontStyles.Bold);
-            label.characterSpacing = 0f;
-            label.text = "건설 비용 <color=#6B8C99>· 보유 / 필요</color>";
+            label.characterSpacing = 3f;
+            label.text = "REQUIRED <color=#6B8C99>· 필요 자원</color>";
             PlaceTopLeft(label.rectTransform, 0f, -7f, RightColumnWidth, 18f);
 
             var rows = new List<BuildingMenuCostRowView>();
@@ -476,23 +409,19 @@ namespace SubTerra.App.Editor.DataValidation
 
                 var icon = EnsureImage(bg.transform, "Icon", Color.white);
                 icon.preserveAspect = true;
-                PlaceTopLeft(icon.rectTransform, 4f, -7f, 20f, 20f);
+                PlaceTopLeft(icon.rectTransform, 8f, -5f, 24f, 24f);
 
                 var name = EnsureText(bg.transform, "Name", font);
                 Style(name, 16f, Color.white, TextAlignmentOptions.MidlineLeft, FontStyles.Bold);
-                name.textWrappingMode = TextWrappingModes.Normal;
-                PlaceTopLeft(name.rectTransform, 32f, -1f, 44f, 32f);
+                PlaceTopLeft(name.rectTransform, 40f, -1f, 58f, 32f);
 
                 var amount = EnsureText(bg.transform, "Amount", font);
-                Style(amount, 14f, BodyText, TextAlignmentOptions.MidlineRight, FontStyles.Normal);
-                amount.enableAutoSizing = true;
-                amount.fontSizeMin = 12f;
-                amount.fontSizeMax = 14f;
-                PlaceTopLeft(amount.rectTransform, 84f, -1f, 74f, 32f);
+                Style(amount, 16f, BodyText, TextAlignmentOptions.MidlineLeft, FontStyles.Normal);
+                PlaceTopLeft(amount.rectTransform, 104f, -1f, 124f, 32f);
 
                 var state = EnsureText(bg.transform, "State", font);
-                Style(state, 12.5f, new Color(0.56f, 0.96f, 0.78f, 1f), TextAlignmentOptions.MidlineRight, FontStyles.Bold);
-                PlaceTopRight(state.rectTransform, -8f, -1f, 70f, 32f);
+                Style(state, 14f, new Color(0.56f, 0.96f, 0.78f, 1f), TextAlignmentOptions.MidlineRight, FontStyles.Bold);
+                PlaceTopRight(state.rectTransform, -8f, -1f, 84f, 32f);
 
                 var track = EnsureImage(bg.transform, "FillTrack", new Color(1f, 1f, 1f, 0.08f));
                 track.rectTransform.anchorMin = new Vector2(0f, 0f);
@@ -548,7 +477,7 @@ namespace SubTerra.App.Editor.DataValidation
         private static BannerRefs BuildAvailability(Transform panel, TMP_FontAsset font, Sprite knob)
         {
             var banner = EnsureImage(panel, "AvailabilityBanner", new Color(0.1f, 0.14f, 0.16f, 0.92f));
-            PlaceTopLeft(banner.rectTransform, RightColumnX, -398f, RightColumnWidth, 92f);
+            PlaceTopLeft(banner.rectTransform, RightColumnX, -410f, RightColumnWidth, 64f);
 
             var accent = EnsureImage(banner.transform, "AvailabilityAccent", new Color(0.45f, 0.62f, 0.7f, 1f));
             accent.rectTransform.anchorMin = new Vector2(0f, 0f);
@@ -560,7 +489,7 @@ namespace SubTerra.App.Editor.DataValidation
             var badge = EnsureImage(banner.transform, "AvailabilityBadge", new Color(0.45f, 0.62f, 0.7f, 1f));
             badge.sprite = knob;
             badge.type = Image.Type.Simple;
-            PlaceTopLeft(badge.rectTransform, 10f, -10f, 20f, 20f);
+            PlaceTopLeft(badge.rectTransform, 16f, -16f, 32f, 32f);
 
             var glyph = EnsureText(badge.transform, "AvailabilityGlyph", font);
             Style(glyph, 20f, new Color(0.02f, 0.06f, 0.08f, 1f), TextAlignmentOptions.Center, FontStyles.Bold);
@@ -569,11 +498,14 @@ namespace SubTerra.App.Editor.DataValidation
 
             var text = panel.Find("AvailabilityText").GetComponent<TMP_Text>();
             Style(text, 16f, new Color(0.72f, 0.84f, 0.9f, 1f), TextAlignmentOptions.MidlineLeft, FontStyles.Normal);
+            text.enableAutoSizing = true;
+            text.fontSizeMin = 13f;
+            text.fontSizeMax = 16f;
             text.textWrappingMode = TextWrappingModes.Normal;
-            text.overflowMode = TextOverflowModes.Overflow;
+            text.overflowMode = TextOverflowModes.Ellipsis;
             text.lineSpacing = 2f;
             text.text = BuildingMenuDisplayFormatter.AvailabilityText(BuildingAvailabilityDisplayKind.Idle, string.Empty);
-            PlaceTopLeft(text.rectTransform, RightColumnX + 36f, -404f, RightColumnWidth - 44f, 80f);
+            PlaceTopLeft(text.rectTransform, RightColumnX + 60f, -413f, RightColumnWidth - 70f, 58f);
 
             return new BannerRefs(banner, accent, badge, glyph);
         }
@@ -587,18 +519,18 @@ namespace SubTerra.App.Editor.DataValidation
             status.fontSizeMax = 13f;
             status.textWrappingMode = TextWrappingModes.Normal;
             status.overflowMode = TextOverflowModes.Ellipsis;
-            PlaceTopLeft(status.rectTransform, RightColumnX, -494f, RightColumnWidth, 20f);
+            PlaceTopLeft(status.rectTransform, RightColumnX, -480f, RightColumnWidth, 26f);
 
             var divider = EnsureImage(panel, "ControlsDivider", CyanFaint);
-            PlaceTopLeft(divider.rectTransform, RightColumnX, -518f, RightColumnWidth, 1f);
+            PlaceTopLeft(divider.rectTransform, RightColumnX, -512f, RightColumnWidth, 1f);
 
             var hint = EnsureText(panel, "ControlsHint", font);
             Style(hint, 14f, SubText, TextAlignmentOptions.MidlineLeft, FontStyles.Normal);
             hint.enableAutoSizing = true;
             hint.fontSizeMin = 12f;
             hint.fontSizeMax = 14f;
-            hint.text = "<color=#73F0FF>B</color> 닫기 · 휠로 목록/설명 이동";
-            PlaceTopLeft(hint.rectTransform, RightColumnX, -524f, RightColumnWidth, 20f);
+            hint.text = "<color=#73F0FF>좌클릭</color> 설치   <color=#73F0FF>C</color> 근접 설치   <color=#73F0FF>B</color> 닫기";
+            PlaceTopLeft(hint.rectTransform, RightColumnX, -518f, RightColumnWidth, 24f);
         }
 
         private static void BuildCorners(Transform panel)
@@ -639,7 +571,7 @@ namespace SubTerra.App.Editor.DataValidation
             var rect = (RectTransform)close;
             rect.anchorMin = rect.anchorMax = new Vector2(1f, 1f);
             rect.pivot = new Vector2(1f, 1f);
-            rect.anchoredPosition = new Vector2(-16f, -11f);
+            rect.anchoredPosition = new Vector2(-12f, -11f);
             rect.sizeDelta = new Vector2(32f, 32f);
 
             var image = close.GetComponent<Image>();
@@ -671,7 +603,7 @@ namespace SubTerra.App.Editor.DataValidation
             var order = new List<string>
             {
                 "HeaderBand", "HeaderAccent", "HeaderTag", "Title", "HotkeyHint", "HeaderDivider",
-                "ListSectionLabel", "DetailSectionLabel", "ColumnDivider", "BuildingListText", "FacilityScroll", "DetailScroll"
+                "ListSectionLabel", "DetailSectionLabel", "ColumnDivider", "BuildingListText"
             };
             order.AddRange(entries.Select(e => e.name));
             order.AddRange(new[]

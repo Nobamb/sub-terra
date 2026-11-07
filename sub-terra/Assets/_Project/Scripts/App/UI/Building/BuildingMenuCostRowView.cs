@@ -38,7 +38,6 @@ namespace SubTerra.App.UI.Building
             if (amountText != null)
             {
                 amountText.text = BuildingMenuDisplayFormatter.CostAmount(cost);
-                amountText.color = cost.IsEnough ? new Color(.8f, .89f, .93f) : missingColor;
             }
 
             var color = cost.IsEnough ? enoughColor : missingColor;
