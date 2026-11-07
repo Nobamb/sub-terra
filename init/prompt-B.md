@@ -3909,3 +3909,5 @@ work_process/MVP2/power/B-185-1-power-on-range-result.md: "조명·보관함은 
 
 187. prompt-B-187.md 내용 참고해서 배경 화면 수정해줘
 
+
+188. prompt-B-188.md 내용을 참고해서 기존 건설창 UI 및 기능 관련 수정 진행해줘
