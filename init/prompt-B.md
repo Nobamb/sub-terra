@@ -3911,3 +3911,6 @@ work_process/MVP2/power/B-185-1-power-on-range-result.md: "조명·보관함은 
 
 
 188. prompt-B-188.md 내용을 참고해서 기존 건설창 UI 및 기능 관련 수정 진행해줘
+
+
+189. prompt-B-189.md 내용을 참고해서 드론 말풍선 연출 효과 추가해줘
