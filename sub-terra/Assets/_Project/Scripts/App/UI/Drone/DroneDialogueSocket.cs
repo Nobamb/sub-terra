@@ -54,7 +54,25 @@ namespace SubTerra.App.UI.Drone
         private Image terminalSignalLine;
         private TextMeshProUGUI terminalTitle;
         private TextMeshProUGUI terminalStatus;
+        private TextMeshProUGUI terminalFooter;
         private DroneOperationalState operationalState = DroneOperationalState.Idle;
+
+        // B-189 말풍선 연출. visualRoot가 아니라 안쪽 패널에만 크기·오프셋을 건다.
+        private const int AllCharacters = 99999;
+        private const float TextInsetX = 16f;
+        private const float TextInsetBottom = 23f;
+        private const float TextInsetTop = 36f;
+        private bool panelMotionReady;
+        private Vector2 panelBaseSize;
+        private float panelHeight;
+        private float targetPanelHeight;
+        private float resizeFrom;
+        private float resizeElapsed = float.PositiveInfinity;
+        private bool appearing;
+        private float appearElapsed;
+        private bool typing;
+        private float typingElapsed;
+        private int[] typingLines;
 
         // B-181: 비프 생략 판정. 첫 대사(초기화)는 무음, 이후는 간격·정지·핑 겹침을 본다.
         private bool firstDialoguePending = true;
@@ -88,6 +106,11 @@ namespace SubTerra.App.UI.Drone
                 return;
             }
 
+            if (IsShowing)
+            {
+                AdvancePresentation(Time.unscaledDeltaTime);
+            }
+
             if (boundVisible && hasDialogue)
             {
                 RefreshPosition();
@@ -109,6 +132,7 @@ namespace SubTerra.App.UI.Drone
             var nextText = "> " + dialogue.Text;
             var sameText = IsShowing && hasDialogue && string.Equals(dialogueText.text, nextText, StringComparison.Ordinal);
             var wasBoundVisible = boundVisible;
+            var wasShowing = IsShowing;
             dialogueText.text = nextText;
             hasDialogue = true;
             // 바인딩 전이라도 대사가 오면 표시 가능하게 둔다(Bind SetVisible 레이스 방지).
@@ -128,8 +152,270 @@ namespace SubTerra.App.UI.Drone
             ApplyTerminalTheme();
             ApplyTerminalState(operationalState);
             TryPlayBubbleSfx(dialogue, sameText, wasBoundVisible);
+            if (!sameText)
+            {
+                targetPanelHeight = MeasurePanelHeight(nextText);
+            }
+
+            if (wasShowing && !sameText)
+            {
+                // 떠 있는 동안 바뀐 대사: 펼침 없이 지우고 다시 찍는다.
+                BeginRetype();
+            }
+
+            // 숨어 있다가 새로 뜨면 SetCanvasVisible이 등장 연출을 시작한다.
             SetCanvasVisible(true);
             RefreshPosition();
+        }
+
+        /// <summary>
+        /// B-189 등장 펼침·타이핑·높이 보간을 deltaTime(실제 초)만큼 진행한다. LateUpdate와 테스트가 함께 쓴다.
+        /// </summary>
+        public void AdvancePresentation(float deltaTime)
+        {
+            if (!IsShowing)
+            {
+                return;
+            }
+
+            if (AccessibilityPreferences.ReduceMotion)
+            {
+                if (appearing || typing || IsResizing)
+                {
+                    FinishPresentationImmediately();
+                }
+
+                return;
+            }
+
+            var step = Mathf.Clamp(deltaTime, 0f, DroneBubbleMotion.MaxStep);
+            if (appearing)
+            {
+                appearElapsed += step;
+                if (!DroneBubbleMotion.IsAppearDone(appearElapsed))
+                {
+                    ApplyPanelGeometry(
+                        DroneBubbleMotion.WidthScale(appearElapsed),
+                        DroneBubbleMotion.RiseOffset(appearElapsed),
+                        panelHeight);
+                    return;
+                }
+
+                // 폭이 다 펼쳐진 뒤에만 글자를 보인다.
+                appearing = false;
+                ApplyPanelGeometry(1f, 0f, panelHeight);
+                SetChromeTextVisible(true);
+                BeginTyping();
+                return;
+            }
+
+            if (IsResizing)
+            {
+                resizeElapsed += step;
+                panelHeight = DroneBubbleMotion.ResizeHeight(resizeFrom, targetPanelHeight, resizeElapsed);
+                ApplyPanelGeometry(1f, 0f, panelHeight);
+            }
+
+            if (typing)
+            {
+                typingElapsed += step;
+                var visible = DroneBubbleMotion.VisibleCharacters(typingElapsed, typingLines);
+                if (visible >= DroneBubbleMotion.TotalCharacters(typingLines))
+                {
+                    typing = false;
+                    SetDialogueVisibleCharacters(AllCharacters);
+                }
+                else
+                {
+                    SetDialogueVisibleCharacters(visible);
+                }
+            }
+        }
+
+        private bool IsResizing => resizeElapsed < DroneBubbleMotion.ResizeDuration;
+
+        private void BeginAppear()
+        {
+            appearing = true;
+            appearElapsed = 0f;
+            typing = false;
+            typingLines = null;
+            resizeElapsed = float.PositiveInfinity;
+            panelHeight = targetPanelHeight;
+            if (AccessibilityPreferences.ReduceMotion)
+            {
+                FinishPresentationImmediately();
+                return;
+            }
+
+            SetDialogueVisibleCharacters(0);
+            if (panelMotionReady)
+            {
+                SetChromeTextVisible(false);
+            }
+
+            ApplyPanelGeometry(DroneBubbleMotion.WidthScale(0f), DroneBubbleMotion.RiseOffset(0f), panelHeight);
+            ExtendVisibleAtLeast(DroneBubbleMotion.AppearDuration);
+        }
+
+        private void BeginRetype()
+        {
+            if (AccessibilityPreferences.ReduceMotion)
+            {
+                FinishPresentationImmediately();
+                return;
+            }
+
+            if (appearing)
+            {
+                // 펼치는 중이면 펼침은 그대로 잇고, 끝난 뒤 새 대사를 찍는다.
+                panelHeight = targetPanelHeight;
+                SetDialogueVisibleCharacters(0);
+                ApplyPanelGeometry(
+                    DroneBubbleMotion.WidthScale(appearElapsed),
+                    DroneBubbleMotion.RiseOffset(appearElapsed),
+                    panelHeight);
+                return;
+            }
+
+            if (!Mathf.Approximately(panelHeight, targetPanelHeight))
+            {
+                resizeFrom = panelHeight;
+                resizeElapsed = 0f;
+            }
+
+            BeginTyping();
+        }
+
+        private void BeginTyping()
+        {
+            typing = true;
+            typingElapsed = 0f;
+            SetDialogueVisibleCharacters(0);
+            typingLines = MeasureTypingLines();
+            if (DroneBubbleMotion.TotalCharacters(typingLines) <= 0)
+            {
+                typing = false;
+                SetDialogueVisibleCharacters(AllCharacters);
+                return;
+            }
+
+            // 타이핑이 끝나기 전에는 꺼지지 않게 한다.
+            ExtendVisibleAtLeast(DroneBubbleMotion.TypingDuration(typingLines.Length));
+        }
+
+        private void FinishPresentationImmediately()
+        {
+            appearing = false;
+            typing = false;
+            typingLines = null;
+            resizeElapsed = float.PositiveInfinity;
+            panelHeight = targetPanelHeight;
+            ApplyPanelGeometry(1f, 0f, panelHeight);
+            SetChromeTextVisible(true);
+            SetDialogueVisibleCharacters(AllCharacters);
+        }
+
+        private void StopPresentation()
+        {
+            appearing = false;
+            typing = false;
+            typingLines = null;
+            resizeElapsed = float.PositiveInfinity;
+        }
+
+        private void ExtendVisibleAtLeast(float seconds)
+        {
+            visibleUntil = Mathf.Max(visibleUntil, Time.unscaledTime + seconds);
+        }
+
+        private int[] MeasureTypingLines()
+        {
+            if (dialogueText == null)
+            {
+                return null;
+            }
+
+            var length = dialogueText.text != null ? dialogueText.text.Length : 0;
+            dialogueText.ForceMeshUpdate();
+            var info = dialogueText.textInfo;
+            if (info == null || info.lineCount <= 0 || info.lineInfo == null)
+            {
+                return new[] { length };
+            }
+
+            var count = Mathf.Min(info.lineCount, info.lineInfo.Length);
+            var lines = new int[count];
+            for (var i = 0; i < count; i++)
+            {
+                lines[i] = info.lineInfo[i].characterCount;
+            }
+
+            return lines;
+        }
+
+        private float MeasurePanelHeight(string text)
+        {
+            if (!panelMotionReady || dialogueText == null)
+            {
+                return panelHeight;
+            }
+
+            var textWidth = Mathf.Max(1f, panelBaseSize.x - TextInsetX * 2f);
+            var preferred = dialogueText.GetPreferredValues(text, textWidth, 10000f).y;
+            return Mathf.Max(panelBaseSize.y, preferred + TextInsetBottom + TextInsetTop);
+        }
+
+        private void ConfigurePanelMotion()
+        {
+            panelMotionReady = false;
+            if (terminalPanel == null || visualRoot == null || terminalPanel == visualRoot)
+            {
+                return;
+            }
+
+            var size = visualRoot.rect.size;
+            if (size.x <= 0f || size.y <= 0f)
+            {
+                return;
+            }
+
+            // 아래 변을 기준으로 세워 높이가 커져도 꼬리 위치는 그대로 둔다. 가로는 가운데에서 퍼진다.
+            panelBaseSize = size;
+            terminalPanel.anchorMin = new Vector2(0f, 0f);
+            terminalPanel.anchorMax = new Vector2(1f, 0f);
+            terminalPanel.pivot = new Vector2(0.5f, 0f);
+            panelHeight = size.y;
+            targetPanelHeight = size.y;
+            panelMotionReady = true;
+            ApplyPanelGeometry(1f, 0f, panelHeight);
+        }
+
+        private void ApplyPanelGeometry(float widthScale, float rise, float height)
+        {
+            if (!panelMotionReady)
+            {
+                return;
+            }
+
+            terminalPanel.sizeDelta = new Vector2((widthScale - 1f) * panelBaseSize.x, height);
+            terminalPanel.anchoredPosition = new Vector2(0f, rise);
+        }
+
+        private void SetDialogueVisibleCharacters(int count)
+        {
+            if (dialogueText != null && dialogueText.maxVisibleCharacters != count)
+            {
+                dialogueText.maxVisibleCharacters = count;
+            }
+        }
+
+        private void SetChromeTextVisible(bool visible)
+        {
+            var count = visible ? AllCharacters : 0;
+            if (terminalTitle != null) terminalTitle.maxVisibleCharacters = count;
+            if (terminalStatus != null) terminalStatus.maxVisibleCharacters = count;
+            if (terminalFooter != null) terminalFooter.maxVisibleCharacters = count;
         }
 
         public void SetVisible(bool visible)
@@ -323,6 +609,7 @@ namespace SubTerra.App.UI.Drone
 
             CreateTerminalFrame();
             StyleDialogueText();
+            ConfigurePanelMotion();
             bubbleThemeApplied = true;
             ApplyTerminalState(operationalState);
         }
@@ -361,7 +648,7 @@ namespace SubTerra.App.UI.Drone
             SetAnchors(terminalStatus.rectTransform, new Vector2(0.68f, 0f), Vector2.one,
                 Vector2.zero, new Vector2(-14f, 0f));
 
-            var terminalFooter = FindOrCreateText("TerminalFooter", terminalPanel);
+            terminalFooter = FindOrCreateText("TerminalFooter", terminalPanel);
             terminalFooter.text = "ANALYSIS STREAM  //  RX-01";
             terminalFooter.fontSize = 10f;
             terminalFooter.fontStyle = FontStyles.Bold;
@@ -390,7 +677,7 @@ namespace SubTerra.App.UI.Drone
             dialogueText.textWrappingMode = TextWrappingModes.Normal;
             dialogueText.raycastTarget = false;
             SetAnchors(dialogueText.rectTransform, Vector2.zero, Vector2.one,
-                new Vector2(16f, 23f), new Vector2(-16f, -36f));
+                new Vector2(TextInsetX, TextInsetBottom), new Vector2(-TextInsetX, -TextInsetTop));
         }
 
         private void ApplyTerminalState(DroneOperationalState state)
@@ -476,9 +763,20 @@ namespace SubTerra.App.UI.Drone
 
         private void SetCanvasVisible(bool visible)
         {
-            if (canvasGroup != null)
+            if (canvasGroup == null)
             {
-                canvasGroup.alpha = visible ? 1f : 0f;
+                return;
+            }
+
+            var wasShown = canvasGroup.alpha > 0f;
+            canvasGroup.alpha = visible ? 1f : 0f;
+            if (visible && !wasShown)
+            {
+                BeginAppear();
+            }
+            else if (!visible)
+            {
+                StopPresentation();
             }
         }
 
