@@ -13,7 +13,8 @@
 |---|---|
 | `sub-terra/Assets/_Project/Scripts/App/UI/Drone/DroneBubbleMotion.cs` (새 파일) | 연출 시간표 순수 계산(★ 상수, 폭·상승·높이 보간·줄 단위 타이핑) |
 | `sub-terra/Assets/_Project/Scripts/App/UI/Drone/DroneDialogueSocket.cs` | 연출 상태·적용(+302/−4) |
-| `sub-terra/Assets/_Project/Tests/EditMode/App/UI/PromptB189DroneBubbleMotionTests.cs` (새 파일) | EditMode 11개 |
+| `sub-terra/Assets/_Project/Tests/EditMode/App/UI/PromptB189DroneBubbleMotionTests.cs` (새 파일) | EditMode 14개(TV 켜짐 3개 추가) |
+| `init/rules/lessons/2026-11-09-issue284-stale-dll-test-pass.md` (새 파일) | 컴파일 오류로 옛 DLL에서 테스트가 통과한 실수 기록 |
 
 `DroneDialogueSocket.cs` 주요 위치(작업본 기준):
 - ~60 B-189 필드(`TextInset*`, 패널 크기·등장·타이핑 상태)
@@ -28,14 +29,33 @@
 ## ★ 상수 (`DroneBubbleMotion.cs`)
 | 상수 | 값 | 줄 |
 |---|---|---|
-| `AppearDuration` | 0.22f | 15 |
-| `AppearRisePixels` | 8f | 16 |
-| `AppearOvershoot` | 1.05f | 17 |
-| `AppearOvershootAt` | 0.72f (펼침 시간 중 넘침 최대 지점) | 19 |
+| `AppearDuration` | 0.22f | 17 |
+| `AppearRisePixels` | 8f | 18 |
+| `AppearOvershoot` | 1.05f | 19 |
 | `ResizeDuration` | 0.16f | 20 |
-| `TypingLineDuration` | `CoreCctvTimeline.TerminalLineTyping` (0.10f) | 23 |
-| `TypingLineInterval` | `CoreCctvTimeline.TerminalLineInterval` (0.12f) | 25 |
-| `MaxStep` | 0.05f (CCTV `CoreCctvPopupView.MaxStep`과 같은 값) | 28 |
+| `LineDuration` | 0.08f (TV 가로선이 뻗는 시간, 이후 0.22초까지 위아래로 열림) | 24 |
+| `LineThickness` | 3f | 26 |
+| `FlashPeak` / `FlashFade` | 0.85f / 0.12f | 28–29 |
+| `FlickerAt` / `FlickerWidth` / `FlickerPeak` | 0.26f / 0.035f / 0.2f | 31–33 |
+| `ScanDuration` / `ScanAlpha` / `ScanThickness` | 0.24f / 0.28f / 4f | 35–37 |
+| `TvEffectEnd` | `AppearDuration + ScanDuration` (0.46초) | 40 |
+| `TypingLineDuration` | `CoreCctvTimeline.TerminalLineTyping` (0.10f) | 119 |
+| `TypingLineInterval` | `CoreCctvTimeline.TerminalLineInterval` (0.12f) | 121 |
+| `MaxStep` | 0.05f (CCTV `CoreCctvPopupView.MaxStep`과 같은 값) | 124 |
+
+(1차의 `AppearOvershootAt`은 TV 켜짐 추가로 `LineDuration`으로 바뀌어 지웠다.)
+
+## 추가: TV 켜짐 연출 (PM 피드백 "켜지는 연출이 허전함" 반영)
+- 순서는 전진기지 코어 CCTV 팝업 켜짐(`CoreCctvTimeline.Window`: 선 → 프레임 펼침 → 섬광)과 같고, 시간은 말풍선 범위(0.22초)에 맞춰 짧다.
+  1. 0~0.08초: 두께 3의 밝은 강조색 가로선이 가운데에서 좌우로 뻗는다(폭 0 → 1.05).
+  2. 0.08~0.22초: 그 선이 **위아래로 열려** 화면이 된다(세로 스케일, 다 열린 높이의 가운데 기준). 폭은 1.05 → 1. 동시에 8 아래에서 올라온다.
+  3. 섬광(`PowerFlash`, 패널 전체 덮는 강조색)이 열리면서 0.85 → 0으로 빠져 어두운 화면이 드러난다.
+  4. 0.26초 무렵 한 번 약하게 깜빡임(0.2).
+  5. 0.22~0.46초: 주사선(`PowerScanline`, 두께 4, 최대 0.28)이 위에서 아래로 한 번 훑는다. 이 동안 타이핑은 이미 시작한다.
+- 강조색은 현재 상태 색을 따른다(평소 청록, 우선 경고 시 주황).
+- 폭은 크기(sizeDelta)로, 세로 열림만 스케일로 건다. 세로 스케일이라 선 단계에서는 머리줄·푸터·꼬리까지 화면 전체가 선으로 눌리고, 열리면서 제자리로 돌아온다. 꼬리 끝 위치는 다 열린 뒤 −72로 1차와 같다.
+- `PowerFlash`/`PowerScanline`은 `CreateTerminalFrame`에서 런타임에 만드는 Image(레이캐스트 꺼짐, 맨 위 순서)이며, 연출이 끝나거나 숨기거나 모션 감소면 `enabled = false`로 꺼 둔다. 프리팹 YAML 수정 없음.
+- 대사 변경(떠 있는 중)에는 TV 켜짐을 다시 하지 않는다. 효과음 추가 없음.
 
 ## 연출을 건 곳
 - `visualRoot`(=`WorldDialogueCanvas`, 매 프레임 위치·화면 스케일을 덮어씀)는 **건드리지 않는다**.
@@ -60,6 +80,12 @@
 - 클릭 통과(`interactable`/`blocksRaycasts` false), `OverlaySortingOrder`, Tab 분석 창(`DroneDialoguePanelView.cs`) 변경 없음.
 
 ## 테스트 결과
+- **TV 켜짐 추가 후(2차)**
+  - Unity 컴파일: 오류 0, B-189 파일에서 나오는 경고 0 (DLL이 원본보다 새것인지 확인).
+  - B-189 + B-181 + B-183 + B-34 묶음: **62 통과 / 0 실패** (B-189 14개 포함).
+  - Editor 수치(60fps): 0~0.067초 높이 3 고정·폭 0 → 476.6, 0.10~0.20초 높이 50.8 → 131.6(가운데 고정), 섬광 0.85 → 0(0.20초에 꺼짐), 0.267초 깜빡임 0.18, 주사선 0.233~0.433초 위→아래, 0.467초에 모두 꺼짐. 글자는 0.267초부터 찍힘. 대사 변경 시 세로 스케일 1·섬광 꺼짐 유지.
+  - 전체 EditMode는 2차 변경 뒤 다시 돌리지 않았다(아래 1차 결과만 있음).
+- **1차(펼침·타이핑)**
 - Unity 컴파일: 오류 없음 (실행 중인 Editor에서 새로고침 후 타입 로드 확인).
 - `PromptB189DroneBubbleMotionTests` 단독: **11 통과 / 0 실패**.
 - 관련 묶음(B-189, B-181 SFX, B-183 SFX, B-34 Digger-Bot UI): **59 통과 / 0 실패**.
@@ -74,7 +100,7 @@
 - `AppearRisePixels`는 말풍선 로컬 단위다. 실제 화면 픽셀은 확대 배율(`ApplyScreenScale`)에 따라 달라진다.
 
 ## 사용자 테스트 가이드 (직접 플레이)
-1. 광산에서 드론 말풍선이 새로 뜨면, 아래에서 올라오며 가로로 펼쳐지는지 본다.
+1. 광산에서 드론 말풍선이 새로 뜨면, 밝은 가로선이 좌우로 뻗은 뒤 위아래로 열리며(옛 TV 켜짐) 아래에서 올라오는지 본다. 섬광이 빠진 뒤 한 번 깜빡이고 주사선이 한 번 훑는지, 너무 요란하지 않은지 본다.
 2. 펼쳐지는 동안 글자가 찌그러져 보이지 않는지 본다. 폭이 다 펴진 뒤에 글자가 한 글자씩 찍히는지 본다.
 3. 말풍선 꼬리가 드론을 가리키는지 본다.
 4. 말풍선이 떠 있는 동안 대사가 바뀌면, 펼침이 다시 나오지 않고 기존 글자가 지워진 뒤 새 글자가 한 글자씩 찍히는지 본다. 길이가 달라지면 크기가 부드럽게 바뀌는지 본다.

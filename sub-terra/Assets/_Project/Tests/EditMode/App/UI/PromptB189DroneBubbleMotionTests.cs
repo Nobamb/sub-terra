@@ -45,7 +45,7 @@ namespace SubTerra.App.Tests.UI
         private static void DestroyOverlays()
         {
             // 에디트 모드에서는 OnDestroy가 오지 않을 수 있어 남은 오버레이를 직접 지운다.
-            foreach (var canvas in Object.FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            foreach (var canvas in Object.FindObjectsByType<Canvas>(FindObjectsInactive.Include))
             {
                 if (canvas != null && canvas.name == "DroneDialogueOverlayCanvas")
                 {
@@ -121,19 +121,66 @@ namespace SubTerra.App.Tests.UI
             var text = DialogueText();
             var baseWidth = panel.parent.GetComponent<RectTransform>().rect.width;
 
+            var height = panel.sizeDelta.y;
             Assert.That(panel.sizeDelta.x, Is.EqualTo(-baseWidth).Within(0.01f), "폭 0에서 시작");
-            Assert.That(panel.anchoredPosition.y, Is.LessThan(0f), "제자리보다 아래에서 시작");
+            Assert.That(panel.localScale.y * height, Is.EqualTo(DroneBubbleMotion.LineThickness).Within(0.01f), "가는 가로선으로 시작");
+            var lineCenter = panel.anchoredPosition.y + panel.localScale.y * height * 0.5f;
+            Assert.That(lineCenter, Is.LessThan(height * 0.5f), "가로선은 제자리 가운데보다 아래에서 시작");
             Assert.That(text.maxVisibleCharacters, Is.EqualTo(0), "펼치는 동안 글자는 숨긴다");
+            Assert.That(Flash().enabled, Is.True, "가로선 단계는 섬광으로 밝다");
 
             Advance(DroneBubbleMotion.AppearDuration * 0.5f);
             Assert.That(text.maxVisibleCharacters, Is.EqualTo(0), "다 펼쳐지기 전엔 글자 없음");
 
             Advance(DroneBubbleMotion.AppearDuration);
             Assert.That(panel.sizeDelta.x, Is.EqualTo(0f).Within(0.01f), "100% 폭");
+            Assert.That(panel.localScale.y, Is.EqualTo(1f), "위아래로 다 열림");
             Assert.That(panel.anchoredPosition.y, Is.EqualTo(0f).Within(0.01f));
 
             Advance(2f);
             Assert.That(text.maxVisibleCharacters, Is.GreaterThanOrEqualTo(text.text.Length), "다 찍힘");
+            Assert.That(Flash().enabled, Is.False, "섬광은 끝나면 꺼진다");
+            Assert.That(Scanline().enabled, Is.False, "주사선은 끝나면 꺼진다");
+        }
+
+        [Test]
+        public void TvOn_LineThenOpenFromCenter()
+        {
+            const float full = 132f;
+            Assert.That(DroneBubbleMotion.HeightScale(0f, full) * full, Is.EqualTo(DroneBubbleMotion.LineThickness).Within(0.001f));
+            Assert.That(DroneBubbleMotion.HeightScale(DroneBubbleMotion.LineDuration * 0.5f, full) * full,
+                Is.EqualTo(DroneBubbleMotion.LineThickness).Within(0.001f), "가로선 단계엔 두께 유지");
+            Assert.That(DroneBubbleMotion.WidthScale(DroneBubbleMotion.LineDuration),
+                Is.EqualTo(DroneBubbleMotion.AppearOvershoot).Within(0.001f), "가로선이 다 뻗은 뒤 열린다");
+            var mid = DroneBubbleMotion.HeightScale((DroneBubbleMotion.LineDuration + DroneBubbleMotion.AppearDuration) * 0.5f, full);
+            Assert.That(mid, Is.GreaterThan(DroneBubbleMotion.LineThickness / full).And.LessThan(1f));
+            Assert.That(DroneBubbleMotion.HeightScale(DroneBubbleMotion.AppearDuration, full), Is.EqualTo(1f));
+        }
+
+        [Test]
+        public void TvOn_FlashFadesThenFlickersOnce_ScanSweepsAfterOpen()
+        {
+            Assert.That(DroneBubbleMotion.FlashAlpha(0f), Is.EqualTo(DroneBubbleMotion.FlashPeak));
+            var afterFade = DroneBubbleMotion.LineDuration + DroneBubbleMotion.FlashFade;
+            Assert.That(DroneBubbleMotion.FlashAlpha(afterFade + 0.005f), Is.EqualTo(0f).Within(0.001f), "섬광이 빠진다");
+            Assert.That(DroneBubbleMotion.FlashAlpha(DroneBubbleMotion.FlickerAt), Is.EqualTo(DroneBubbleMotion.FlickerPeak).Within(0.001f), "한 번 깜빡임");
+            Assert.That(DroneBubbleMotion.FlashAlpha(DroneBubbleMotion.TvEffectEnd), Is.EqualTo(0f));
+
+            Assert.That(DroneBubbleMotion.ScanlineAlpha(DroneBubbleMotion.AppearDuration * 0.5f), Is.EqualTo(0f), "열리기 전엔 주사선 없음");
+            var scanMid = DroneBubbleMotion.AppearDuration + DroneBubbleMotion.ScanDuration * 0.5f;
+            Assert.That(DroneBubbleMotion.ScanlineAlpha(scanMid), Is.EqualTo(DroneBubbleMotion.ScanAlpha).Within(0.001f));
+            Assert.That(DroneBubbleMotion.ScanPosition(scanMid), Is.EqualTo(0.5f).Within(0.001f));
+            Assert.That(DroneBubbleMotion.ScanlineAlpha(DroneBubbleMotion.TvEffectEnd), Is.EqualTo(0f));
+        }
+
+        [Test]
+        public void TvOn_EffectImagesDoNotBlockClicks()
+        {
+            CreateSocket();
+            Say("스캔 결과");
+            Assert.That(Flash().raycastTarget, Is.False);
+            Assert.That(Scanline().raycastTarget, Is.False);
+            Assert.That(Flash().transform.GetSiblingIndex(), Is.GreaterThan(DialogueText().transform.GetSiblingIndex()), "섬광은 화면 위에 덮인다");
         }
 
         [Test]
@@ -147,6 +194,8 @@ namespace SubTerra.App.Tests.UI
 
             Say("새 광맥 감지");
             Assert.That(panel.sizeDelta.x, Is.EqualTo(0f).Within(0.01f), "펼침을 다시 하지 않는다");
+            Assert.That(panel.localScale.y, Is.EqualTo(1f), "TV 켜짐을 다시 하지 않는다");
+            Assert.That(Flash().enabled, Is.False);
             Assert.That(panel.anchoredPosition.y, Is.EqualTo(0f).Within(0.01f));
             Assert.That(text.maxVisibleCharacters, Is.EqualTo(0), "기존 글자를 지운다");
 
@@ -213,8 +262,11 @@ namespace SubTerra.App.Tests.UI
             var panel = Panel();
             var text = DialogueText();
             Assert.That(panel.sizeDelta.x, Is.EqualTo(0f).Within(0.01f));
+            Assert.That(panel.localScale.y, Is.EqualTo(1f));
             Assert.That(panel.anchoredPosition.y, Is.EqualTo(0f).Within(0.01f));
             Assert.That(text.maxVisibleCharacters, Is.GreaterThanOrEqualTo(text.text.Length));
+            Assert.That(Flash().enabled, Is.False, "모션 감소면 섬광 없음");
+            Assert.That(Scanline().enabled, Is.False);
         }
 
         [Test]
@@ -255,7 +307,7 @@ namespace SubTerra.App.Tests.UI
 
         private static RectTransform Overlay()
         {
-            var overlay = Object.FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None)
+            var overlay = Object.FindObjectsByType<Canvas>(FindObjectsInactive.Include)
                 .First(canvas => canvas.name == "DroneDialogueOverlayCanvas");
             return overlay.GetComponent<RectTransform>();
         }
@@ -268,6 +320,16 @@ namespace SubTerra.App.Tests.UI
         private static TMP_Text DialogueText()
         {
             return Panel().Find("DialogueText").GetComponent<TMP_Text>();
+        }
+
+        private static UnityEngine.UI.Image Flash()
+        {
+            return Panel().Find("PowerFlash").GetComponent<UnityEngine.UI.Image>();
+        }
+
+        private static UnityEngine.UI.Image Scanline()
+        {
+            return Panel().Find("PowerScanline").GetComponent<UnityEngine.UI.Image>();
         }
     }
 }

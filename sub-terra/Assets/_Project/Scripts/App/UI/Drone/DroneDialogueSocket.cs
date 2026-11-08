@@ -73,6 +73,12 @@ namespace SubTerra.App.UI.Drone
         private bool typing;
         private float typingElapsed;
         private int[] typingLines;
+        // B-189 TV 켜짐: 패널 위 섬광·주사선.
+        private Image tvFlash;
+        private Image tvScanline;
+        private bool tvEffectActive;
+        private float tvEffectElapsed;
+        private Color currentAccent = AccentCyan;
 
         // B-181: 비프 생략 판정. 첫 대사(초기화)는 무음, 이후는 간격·정지·핑 겹침을 본다.
         private bool firstDialoguePending = true;
@@ -189,21 +195,30 @@ namespace SubTerra.App.UI.Drone
             }
 
             var step = Mathf.Clamp(deltaTime, 0f, DroneBubbleMotion.MaxStep);
+            if (tvEffectActive)
+            {
+                // 섬광·깜빡임·주사선은 펼침이 끝난 뒤 타이핑 중에도 잠깐 이어진다.
+                tvEffectElapsed += step;
+                ApplyTvEffect(tvEffectElapsed);
+                if (tvEffectElapsed >= DroneBubbleMotion.TvEffectEnd)
+                {
+                    tvEffectActive = false;
+                    HideTvEffect();
+                }
+            }
+
             if (appearing)
             {
                 appearElapsed += step;
                 if (!DroneBubbleMotion.IsAppearDone(appearElapsed))
                 {
-                    ApplyPanelGeometry(
-                        DroneBubbleMotion.WidthScale(appearElapsed),
-                        DroneBubbleMotion.RiseOffset(appearElapsed),
-                        panelHeight);
+                    ApplyAppearFrame(appearElapsed);
                     return;
                 }
 
                 // 폭이 다 펼쳐진 뒤에만 글자를 보인다.
                 appearing = false;
-                ApplyPanelGeometry(1f, 0f, panelHeight);
+                ApplyPanelGeometry(1f, 1f, 0f, panelHeight);
                 SetChromeTextVisible(true);
                 BeginTyping();
                 return;
@@ -213,7 +228,7 @@ namespace SubTerra.App.UI.Drone
             {
                 resizeElapsed += step;
                 panelHeight = DroneBubbleMotion.ResizeHeight(resizeFrom, targetPanelHeight, resizeElapsed);
-                ApplyPanelGeometry(1f, 0f, panelHeight);
+                ApplyPanelGeometry(1f, 1f, 0f, panelHeight);
             }
 
             if (typing)
@@ -254,8 +269,58 @@ namespace SubTerra.App.UI.Drone
                 SetChromeTextVisible(false);
             }
 
-            ApplyPanelGeometry(DroneBubbleMotion.WidthScale(0f), DroneBubbleMotion.RiseOffset(0f), panelHeight);
+            ApplyAppearFrame(0f);
+            if (panelMotionReady)
+            {
+                tvEffectActive = true;
+                tvEffectElapsed = 0f;
+                ApplyTvEffect(0f);
+            }
+
             ExtendVisibleAtLeast(DroneBubbleMotion.AppearDuration);
+        }
+
+        /// <summary>TV 켜짐 한 시점의 패널 모양: 가로선 → 위아래로 열림, 살짝 아래에서 올라옴.</summary>
+        private void ApplyAppearFrame(float elapsed)
+        {
+            ApplyPanelGeometry(
+                DroneBubbleMotion.WidthScale(elapsed),
+                DroneBubbleMotion.HeightScale(elapsed, panelHeight),
+                DroneBubbleMotion.RiseOffset(elapsed),
+                panelHeight);
+        }
+
+        private void ApplyTvEffect(float elapsed)
+        {
+            if (tvFlash != null)
+            {
+                var alpha = DroneBubbleMotion.FlashAlpha(elapsed);
+                tvFlash.color = new Color(currentAccent.r, currentAccent.g, currentAccent.b, alpha);
+                tvFlash.enabled = alpha > 0.001f;
+            }
+
+            if (tvScanline != null)
+            {
+                var alpha = DroneBubbleMotion.ScanlineAlpha(elapsed);
+                tvScanline.color = new Color(currentAccent.r, currentAccent.g, currentAccent.b, alpha);
+                tvScanline.enabled = alpha > 0.001f;
+                var travel = Mathf.Max(0f, panelHeight - DroneBubbleMotion.ScanThickness);
+                tvScanline.rectTransform.anchoredPosition =
+                    new Vector2(0f, -travel * DroneBubbleMotion.ScanPosition(elapsed));
+            }
+        }
+
+        private void HideTvEffect()
+        {
+            if (tvFlash != null)
+            {
+                tvFlash.enabled = false;
+            }
+
+            if (tvScanline != null)
+            {
+                tvScanline.enabled = false;
+            }
         }
 
         private void BeginRetype()
@@ -271,10 +336,7 @@ namespace SubTerra.App.UI.Drone
                 // 펼치는 중이면 펼침은 그대로 잇고, 끝난 뒤 새 대사를 찍는다.
                 panelHeight = targetPanelHeight;
                 SetDialogueVisibleCharacters(0);
-                ApplyPanelGeometry(
-                    DroneBubbleMotion.WidthScale(appearElapsed),
-                    DroneBubbleMotion.RiseOffset(appearElapsed),
-                    panelHeight);
+                ApplyAppearFrame(appearElapsed);
                 return;
             }
 
@@ -311,9 +373,11 @@ namespace SubTerra.App.UI.Drone
             typingLines = null;
             resizeElapsed = float.PositiveInfinity;
             panelHeight = targetPanelHeight;
-            ApplyPanelGeometry(1f, 0f, panelHeight);
+            ApplyPanelGeometry(1f, 1f, 0f, panelHeight);
             SetChromeTextVisible(true);
             SetDialogueVisibleCharacters(AllCharacters);
+            tvEffectActive = false;
+            HideTvEffect();
         }
 
         private void StopPresentation()
@@ -322,6 +386,8 @@ namespace SubTerra.App.UI.Drone
             typing = false;
             typingLines = null;
             resizeElapsed = float.PositiveInfinity;
+            tvEffectActive = false;
+            HideTvEffect();
         }
 
         private void ExtendVisibleAtLeast(float seconds)
@@ -388,10 +454,14 @@ namespace SubTerra.App.UI.Drone
             panelHeight = size.y;
             targetPanelHeight = size.y;
             panelMotionReady = true;
-            ApplyPanelGeometry(1f, 0f, panelHeight);
+            ApplyPanelGeometry(1f, 1f, 0f, panelHeight);
         }
 
-        private void ApplyPanelGeometry(float widthScale, float rise, float height)
+        /// <summary>
+        /// 폭은 크기로(외곽선·꼬리가 찌그러지지 않게), 세로 열림은 스케일로(화면 전체가 선으로 눌린 TV 모양) 건다.
+        /// 세로는 다 열린 높이의 가운데를 기준으로 열리게 위치를 보정한다.
+        /// </summary>
+        private void ApplyPanelGeometry(float widthScale, float heightScale, float rise, float height)
         {
             if (!panelMotionReady)
             {
@@ -399,7 +469,8 @@ namespace SubTerra.App.UI.Drone
             }
 
             terminalPanel.sizeDelta = new Vector2((widthScale - 1f) * panelBaseSize.x, height);
-            terminalPanel.anchoredPosition = new Vector2(0f, rise);
+            terminalPanel.localScale = new Vector3(1f, heightScale, 1f);
+            terminalPanel.anchoredPosition = new Vector2(0f, rise + height * (1f - heightScale) * 0.5f);
         }
 
         private void SetDialogueVisibleCharacters(int count)
@@ -666,6 +737,20 @@ namespace SubTerra.App.UI.Drone
             terminalTail.rectTransform.localRotation = Quaternion.Euler(0f, 0f, 45f);
             terminalTail.color = TerminalBackground;
             terminalTail.transform.SetAsFirstSibling();
+
+            // B-189 TV 켜짐용. 평소에는 꺼 두고 등장할 때만 잠깐 켠다.
+            tvFlash = FindOrCreateImage("PowerFlash", terminalPanel);
+            SetAnchors(tvFlash.rectTransform, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+            tvFlash.transform.SetAsLastSibling();
+
+            tvScanline = FindOrCreateImage("PowerScanline", terminalPanel);
+            tvScanline.rectTransform.anchorMin = new Vector2(0f, 1f);
+            tvScanline.rectTransform.anchorMax = new Vector2(1f, 1f);
+            tvScanline.rectTransform.pivot = new Vector2(0.5f, 1f);
+            tvScanline.rectTransform.sizeDelta = new Vector2(0f, DroneBubbleMotion.ScanThickness);
+            tvScanline.rectTransform.anchoredPosition = Vector2.zero;
+            tvScanline.transform.SetAsLastSibling();
+            HideTvEffect();
         }
 
         private void StyleDialogueText()
@@ -683,6 +768,7 @@ namespace SubTerra.App.UI.Drone
         private void ApplyTerminalState(DroneOperationalState state)
         {
             var accent = state == DroneOperationalState.Priority ? AlertAmber : AccentCyan;
+            currentAccent = accent;
             if (terminalSignalLine != null)
             {
                 terminalSignalLine.color = accent;
