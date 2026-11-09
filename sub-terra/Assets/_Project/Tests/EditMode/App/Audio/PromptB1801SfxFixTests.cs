@@ -68,6 +68,24 @@ namespace SubTerra.App.Tests.Audio
         // ---------- B. 잠긴 업그레이드 클릭 ----------
 
         [Test]
+        public void Issue282_ReducedMotionLockedClickStillPlaysSoundAndSelects()
+        {
+            var node = OpenTreeNode(out _);
+            node.Apply(Snapshot(node.UpgradeId, false));
+            int clicked = 0;
+            node.Clicked += _ => clicked++;
+            played.Clear();
+            AccessibilityPreferences.ReduceMotion = true;
+
+            node.OnPointerClick(null);
+
+            Assert.That(played, Is.EqualTo(new[] { UpgradeTreeNodeView.LockedClickSfx }));
+            Assert.That(clicked, Is.EqualTo(1));
+            Assert.That(node.IsLockRattlePlaying, Is.False);
+            Assert.That(node.IsLockVisible, Is.True);
+        }
+
+        [Test]
         public void LockedNode_Click_RattlesLockOnce_NoSelectionClick_KeepsLock()
         {
             var node = OpenTreeNode(out _);

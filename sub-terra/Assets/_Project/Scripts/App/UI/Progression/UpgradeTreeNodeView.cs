@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using SubTerra.App.Audio;
 using SubTerra.App.Core.Data;
 using SubTerra.App.Progression;
+using SubTerra.Shared;
 using SubTerra.Shared.Audio;
 using TMPro;
 using UnityEngine;
@@ -94,6 +95,7 @@ namespace SubTerra.App.UI.Progression
         public float BlindAlpha => blind != null ? blind.alpha : 0f;
         public bool IsLockVisible => lockRoot != null && lockRoot.gameObject.activeSelf;
         public bool IsUnlockPlaying => unlockPlaying;
+        private bool reduceUnlockMotion;
         public bool IsAnimating => shakeRoutine != null || levelUpRoutine != null || unlockPlaying || lockRattlePlaying;
         public bool IsLockRattlePlaying => lockRattlePlaying;
 
@@ -199,7 +201,7 @@ namespace SubTerra.App.UI.Progression
             }
 
             SfxPlayer.Play(LockedClickSfx);
-            if (lockRoot == null || !lockRoot.gameObject.activeInHierarchy)
+            if (AccessibilityPreferences.ReduceMotion || lockRoot == null || !lockRoot.gameObject.activeInHierarchy)
             {
                 return true;
             }
@@ -216,6 +218,12 @@ namespace SubTerra.App.UI.Progression
         {
             if (!lockRattlePlaying)
             {
+                return;
+            }
+
+            if (AccessibilityPreferences.ReduceMotion)
+            {
+                StopLockRattle();
                 return;
             }
 
@@ -513,9 +521,9 @@ namespace SubTerra.App.UI.Progression
             yield return UpgradeTreeTween.Run(ShakeDuration, t =>
             {
                 var damping = 1f - t;
-                body.anchoredPosition = new Vector2(
-                    Mathf.Sin(t * Mathf.PI * 7f) * ShakeAmplitude * damping,
-                    0f);
+                body.anchoredPosition = AccessibilityPreferences.ReduceMotion
+                    ? Vector2.zero
+                    : new Vector2(Mathf.Sin(t * Mathf.PI * 7f) * ShakeAmplitude * damping, 0f);
                 // 경고색은 즉시 최대, 이후 원래 색으로 복귀한다.
                 var warn = 1f - t;
                 if (outline != null)
@@ -625,6 +633,7 @@ namespace SubTerra.App.UI.Progression
             CaptureLockBase();
             StopLockRattle();
             unlockPlaying = true;
+            reduceUnlockMotion = AccessibilityPreferences.ReduceMotion;
             unlockElapsed = 0f;
             unlockU = UnlockRevealTimeline.BeforeStart;
             unlockCue = cue;
@@ -663,8 +672,12 @@ namespace SubTerra.App.UI.Progression
             var crossedGlow = SfxPlayback.Crossed(unlockU, u, UnlockRevealTimeline.GlowAt);
             unlockU = u;
 
-            var pose = UnlockRevealTimeline.SampleLock(u, UnlockShackleKick, UnlockDrop, UnlockDropAngle, UnlockDrift);
-            if (u >= UnlockRevealTimeline.ShakeEnd && u < UnlockRevealTimeline.ClickEnd)
+            // Once reduced, keep this reveal still even if the setting changes again.
+            reduceUnlockMotion |= AccessibilityPreferences.ReduceMotion;
+            var pose = reduceUnlockMotion
+                ? new UnlockLockPose(Vector2.zero, 0f, 1f, 0f, 1f, u < UnlockRevealTimeline.GlowAt)
+                : UnlockRevealTimeline.SampleLock(u, UnlockShackleKick, UnlockDrop, UnlockDropAngle, UnlockDrift);
+            if (!reduceUnlockMotion && u >= UnlockRevealTimeline.ShakeEnd && u < UnlockRevealTimeline.ClickEnd)
             {
                 var kick = Mathf.InverseLerp(UnlockRevealTimeline.ShakeEnd, UnlockRevealTimeline.ClickEnd, u);
                 pose = new UnlockLockPose(pose.Offset, pose.Angle, pose.Scale,
@@ -687,16 +700,17 @@ namespace SubTerra.App.UI.Progression
                 ApplyStateColors();
             }
 
-            var reveal = u < UnlockRevealTimeline.FallEnd
-                ? 0f
+            var reveal = u < UnlockRevealTimeline.FallEnd ? 0f
+                : reduceUnlockMotion ? 1f
                 : (u - UnlockRevealTimeline.FallEnd) / (1f - UnlockRevealTimeline.FallEnd);
             if (blind != null)
             {
                 blind.alpha = 1f - UpgradeTreeTween.EaseOut(reveal);
             }
 
-            UpgradeTreeTween.SetColor(glow, UpgradeTreeTween.Cyan, reveal > 0f ? 0.9f * UpgradeTreeTween.Pulse(reveal) : 0f);
-            ApplyIconReveal(reveal);
+            UpgradeTreeTween.SetColor(glow, UpgradeTreeTween.Cyan,
+                !reduceUnlockMotion && reveal > 0f ? 0.9f * UpgradeTreeTween.Pulse(reveal) : 0f);
+            ApplyIconReveal(reduceUnlockMotion ? 0f : reveal);
 
             for (var i = 0; i < cueBuffer.Count; i++)
             {
