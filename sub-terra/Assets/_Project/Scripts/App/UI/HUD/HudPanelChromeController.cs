@@ -62,6 +62,15 @@ namespace SubTerra.App.UI.HUD
         public bool IsGameGuideOpen => gameGuideOpen;
         public bool IsInventoryPanelOpen => inventoryPanelOpen;
 
+        private System.Func<Vector2, bool> blockDiggerWorldClick;
+        private System.Action consumeDiggerWorldClick;
+
+        public void ConfigureDiggerWorldClick(System.Func<Vector2, bool> block, System.Action consume)
+        {
+            blockDiggerWorldClick = block;
+            consumeDiggerWorldClick = consume;
+        }
+
         public bool CloseTopPanel()
         {
             GameObject top = null;
@@ -646,8 +655,10 @@ namespace SubTerra.App.UI.HUD
             var world = camera.ScreenToWorldPoint(new Vector3(screen.x, screen.y, 0f));
             world.z = diggerBotWorldTarget.position.z;
             var distance = Vector2.Distance(world, diggerBotWorldTarget.position);
-            if (distance <= diggerClickRadius)
+            if (distance <= diggerClickRadius && blockDiggerWorldClick?.Invoke(world) != true)
             {
+                // HUD Update runs before player input so opening the window consumes this press.
+                consumeDiggerWorldClick?.Invoke();
                 ToggleDiggerBot();
             }
         }

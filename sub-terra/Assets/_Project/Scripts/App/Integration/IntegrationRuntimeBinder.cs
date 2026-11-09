@@ -1442,9 +1442,19 @@ namespace SubTerra.App.Integration
                 FindObjectsInactive.Exclude);
             if (miningController != null)
             {
-                miningController.SetPointerMiningBlocker(() => placementBridge != null
-                    ? placementBridge.OwnsPointerInput
-                    : buildingPlacementSystem != null && buildingPlacementSystem.Selection != null);
+                miningController.SetPointerMiningBlocker(PlacementOwnsPointerInput);
+            }
+
+            var chrome = Resolve<HudPanelChromeController>(null);
+            if (chrome != null)
+            {
+                chrome.ConfigureDiggerWorldClick(
+                    world => PlacementOwnsPointerInput()
+                        || (miningController != null && miningController.CanPrioritizePointerMining(world)),
+                    () =>
+                    {
+                        if (miningController != null) miningController.SuppressPointerUntilReleased();
+                    });
             }
 
             if (HasAnyValidDeferredInput())
@@ -1479,6 +1489,13 @@ namespace SubTerra.App.Integration
             {
                 deferredInputBehaviours = resolved.ToArray();
             }
+        }
+
+        private bool PlacementOwnsPointerInput()
+        {
+            return placementBridge != null
+                ? placementBridge.OwnsPointerInput
+                : buildingPlacementSystem != null && buildingPlacementSystem.Selection != null;
         }
 
         private bool HasAnyValidDeferredInput()

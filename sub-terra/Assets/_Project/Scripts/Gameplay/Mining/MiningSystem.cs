@@ -177,55 +177,22 @@ namespace SubTerra.Gameplay.Mining
             }
 
             ResolveServices();
-            if (!HasMiningPower || foregroundTilemap == null || tileResolver == null)
+            if (!HasMiningPower)
             {
-                return Fail(HasMiningPower
-                    ? MiningFailureReason.DependencyMissing
-                    : MiningFailureReason.InsufficientEnergy);
+                return Fail(MiningFailureReason.InsufficientEnergy);
             }
 
-            if (IsCellProtected(cell))
+            var failure = GetTerrainFailure(cell, out var tile, out var definition);
+            if (failure != MiningFailureReason.None)
             {
-                return Fail(MiningFailureReason.NotMineable);
+                return Fail(failure);
             }
 
-            TileBase tile = foregroundTilemap.GetTile(cell);
-            if (tile == null || !tileResolver.TryResolve(tile, out MiningTileDto definition))
+            RequiredEnergy = CalculateEnergyCost(definition.energyCost, recordRemainder: true);
+            failure = GetEnergyFailure(RequiredEnergy);
+            if (failure != MiningFailureReason.None)
             {
-                return Fail(MiningFailureReason.InvalidTarget);
-            }
-
-            // 해금 전에는 신호 칸을 캐지 못한다. 해금 후에는 일반 채굴 경로로 엔진 연료를 준다.
-            if (definition.tileId == LockedSignalTileId
-                && deepZoneAccess?.IsDeepZoneUnlocked != true)
-            {
-                return Fail(MiningFailureReason.DeepZoneLocked);
-            }
-
-            if (IsDeepZoneCell(cell) && deepZoneAccess?.IsDeepZoneUnlocked != true)
-            {
-                return Fail(MiningFailureReason.DeepZoneLocked);
-            }
-
-            if (!definition.isMineable)
-            {
-                return Fail(MiningFailureReason.NotMineable);
-            }
-
-            var drillLevel = upgradeEffects?.GetDrillLevel() ?? 0;
-            if (drillLevel < Mathf.Max(0, definition.requiredDrillLevel))
-            {
-                return Fail(MiningFailureReason.DrillLevelTooLow);
-            }
-
-            RequiredEnergy = CalculateEnergyCost(definition.energyCost);
-            if (RequiredEnergy > 0
-                && (miningTransaction == null
-                    || !miningTransaction.CanAffordEnergy(RequiredEnergy)))
-            {
-                return Fail(miningTransaction == null
-                    ? MiningFailureReason.DependencyMissing
-                    : MiningFailureReason.InsufficientEnergy);
+                return Fail(failure);
             }
 
             activeCell = cell;
@@ -274,7 +241,7 @@ namespace SubTerra.Gameplay.Mining
 
             ResolveServices();
             if (!TryGetDirectionalCell(origin, facingDirection, range, out var cell)
-                || !IsTargetTerrainMineable(cell))
+                || GetTerrainFailure(cell, out _, out _) != MiningFailureReason.None)
             {
                 return false;
             }
@@ -288,6 +255,16 @@ namespace SubTerra.Gameplay.Mining
         {
             return TryGetWorldPointCell(worldPoint, origin, range, out var cell)
                 && TryStartMining(cell);
+        }
+
+        public bool CanStartMiningAtWorldPoint(Vector2 worldPoint, Vector2 origin, float range)
+        {
+            ResolveServices();
+            return HasMiningPower
+                && TryGetWorldPointCell(worldPoint, origin, range, out var cell)
+                && GetTerrainFailure(cell, out _, out var definition) == MiningFailureReason.None
+                && GetEnergyFailure(CalculateEnergyCost(definition.energyCost, recordRemainder: false))
+                    == MiningFailureReason.None;
         }
 
         public bool TryMineInstant(Vector3Int cell)
@@ -393,33 +370,50 @@ namespace SubTerra.Gameplay.Mining
                 || (cellProtectionPredicate != null && cellProtectionPredicate(cell));
         }
 
-        private bool IsTargetTerrainMineable(Vector3Int cell)
+        private MiningFailureReason GetTerrainFailure(Vector3Int cell, out TileBase tile, out MiningTileDto definition)
         {
-            if (foregroundTilemap == null || tileResolver == null || IsCellProtected(cell))
+            tile = null;
+            definition = default;
+            if (foregroundTilemap == null || tileResolver == null)
             {
-                return false;
+                return MiningFailureReason.DependencyMissing;
             }
 
-            TileBase tile = foregroundTilemap.GetTile(cell);
-            if (tile == null || !tileResolver.TryResolve(tile, out MiningTileDto definition))
+            if (IsCellProtected(cell))
             {
-                return false;
+                return MiningFailureReason.NotMineable;
             }
 
-            if (definition.tileId == LockedSignalTileId
+            tile = foregroundTilemap.GetTile(cell);
+            if (tile == null || !tileResolver.TryResolve(tile, out definition))
+            {
+                return MiningFailureReason.InvalidTarget;
+            }
+
+            if ((definition.tileId == LockedSignalTileId || IsDeepZoneCell(cell))
                 && deepZoneAccess?.IsDeepZoneUnlocked != true)
             {
-                return false;
+                return MiningFailureReason.DeepZoneLocked;
             }
 
-            if (IsDeepZoneCell(cell) && deepZoneAccess?.IsDeepZoneUnlocked != true)
+            if (!definition.isMineable)
             {
-                return false;
+                return MiningFailureReason.NotMineable;
             }
 
             int drillLevel = upgradeEffects?.GetDrillLevel() ?? 0;
-            return definition.isMineable
-                && drillLevel >= Mathf.Max(0, definition.requiredDrillLevel);
+            return drillLevel < Mathf.Max(0, definition.requiredDrillLevel)
+                ? MiningFailureReason.DrillLevelTooLow
+                : MiningFailureReason.None;
+        }
+
+        private MiningFailureReason GetEnergyFailure(int requiredEnergy)
+        {
+            if (requiredEnergy <= 0) return MiningFailureReason.None;
+            if (miningTransaction == null) return MiningFailureReason.DependencyMissing;
+            return miningTransaction.CanAffordEnergy(requiredEnergy)
+                ? MiningFailureReason.None
+                : MiningFailureReason.InsufficientEnergy;
         }
 
         private bool IsDeepZoneCell(Vector3Int cell)
@@ -592,7 +586,7 @@ namespace SubTerra.Gameplay.Mining
             return Mathf.Max(0.01f, duration / speed);
         }
 
-        private int CalculateEnergyCost(int baseCost)
+        private int CalculateEnergyCost(int baseCost, bool recordRemainder)
         {
             var efficiency = upgradeEffects?.GetEnergyEfficiencyMultiplier() ?? 1f;
             if (efficiency <= 0f || float.IsNaN(efficiency) || float.IsInfinity(efficiency))
@@ -600,17 +594,23 @@ namespace SubTerra.Gameplay.Mining
                 efficiency = 1f;
             }
 
-            if (!Mathf.Approximately(efficiency, lastEnergyEfficiency))
-            {
-                energyRoundingRemainder = 0f;
-                lastEnergyEfficiency = efficiency;
-            }
-
-            return MiningEnergyCostCalculator.Calculate(
+            bool efficiencyChanged = !Mathf.Approximately(efficiency, lastEnergyEfficiency);
+            int cost = MiningEnergyCostCalculator.Calculate(
                 baseCost,
                 efficiency,
-                energyRoundingRemainder,
-                out pendingEnergyRoundingRemainder);
+                efficiencyChanged ? 0f : energyRoundingRemainder,
+                out var nextRemainder);
+            if (recordRemainder)
+            {
+                pendingEnergyRoundingRemainder = nextRemainder;
+                if (efficiencyChanged)
+                {
+                    energyRoundingRemainder = 0f;
+                    lastEnergyEfficiency = efficiency;
+                }
+            }
+
+            return cost;
         }
 
         private bool Fail(MiningFailureReason reason)

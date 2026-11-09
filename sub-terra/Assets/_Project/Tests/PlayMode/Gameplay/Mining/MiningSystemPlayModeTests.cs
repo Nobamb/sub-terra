@@ -98,6 +98,43 @@ namespace SubTerra.Gameplay.Mining.Tests
         }
 
         [Test]
+        public void Issue278_PointerProbeDistinguishesTargetsWithoutPublishingFailure()
+        {
+            CreateSystem(out var root, out var tilemap, out var resolver, out var system);
+            var tile = ScriptableObject.CreateInstance<Tile>();
+            try
+            {
+                var cell = Vector3Int.right;
+                var farCell = new Vector3Int(4, 0, 0);
+                resolver.RegisterRuntime(tile, new MiningTileDto(
+                    "tile.copper", "mineral.copper", 1, true, 1f, 0.2f, 0f, false));
+                tilemap.SetTile(cell, tile);
+                tilemap.SetTile(farCell, tile);
+                Vector2 origin = tilemap.GetCellCenterWorld(Vector3Int.zero);
+                Vector2 target = tilemap.GetCellCenterWorld(cell);
+                int notifications = 0;
+                system.ProgressChanged += _ => notifications++;
+
+                Assert.That(system.CanStartMiningAtWorldPoint(target, origin, 1.35f), Is.True);
+                Assert.That(system.CanStartMiningAtWorldPoint(tilemap.GetCellCenterWorld(farCell), origin, 1.35f), Is.False);
+                Assert.That(system.CanStartMiningAtWorldPoint(origin, origin, 1.35f), Is.False);
+                system.SetCellProtectionPredicate(c => c == cell);
+                Assert.That(system.CanStartMiningAtWorldPoint(target, origin, 1.35f), Is.False);
+                Assert.That(notifications, Is.Zero);
+                Assert.That(system.LastFailure, Is.EqualTo(MiningFailureReason.None));
+                Assert.That(system.IsMining, Is.False);
+
+                system.SetCellProtectionPredicate(null);
+                Assert.That(system.TryStartMiningAtWorldPoint(target, origin, 1.35f), Is.True);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+                Object.DestroyImmediate(tile);
+            }
+        }
+
+        [Test]
         public void ProtectedCellsCannotBeMined()
         {
             CreateSystem(out var root, out var tilemap, out var resolver, out var system);
@@ -669,6 +706,41 @@ namespace SubTerra.Gameplay.Mining.Tests
             Object.DestroyImmediate(input);
             InputSystem.RemoveDevice(mouse);
             InputSystem.RemoveDevice(keyboard);
+        }
+
+        [Test]
+        public void Issue278_DronePressIsSuppressedUntilTheMouseIsReleased()
+        {
+            var mouse = InputSystem.AddDevice<Mouse>();
+            var keyboard = InputSystem.AddDevice<Keyboard>();
+            var player = new GameObject("DroneClickMiningInput");
+            try
+            {
+                player.AddComponent<Rigidbody2D>().gravityScale = 0f;
+                player.AddComponent<PlayerMovement>();
+                var controller = player.AddComponent<PlayerMiningController>();
+                var readInput = typeof(PlayerMiningController).GetMethod("IsMiningInputPressed",
+                    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+                keyboard.MakeCurrent();
+                SetButtonState(mouse.leftButton, 1f);
+                mouse.MakeCurrent();
+                controller.SuppressPointerUntilReleased();
+                InvokePrivate(controller, "Update");
+                InvokePrivate(controller, "Update");
+                Assert.That(readInput.Invoke(controller, null), Is.False);
+
+                SetButtonState(mouse.leftButton, 0f);
+                InvokePrivate(controller, "Update");
+                SetButtonState(mouse.leftButton, 1f);
+                mouse.MakeCurrent();
+                Assert.That(readInput.Invoke(controller, null), Is.True);
+            }
+            finally
+            {
+                Object.DestroyImmediate(player);
+                InputSystem.RemoveDevice(mouse);
+                InputSystem.RemoveDevice(keyboard);
+            }
         }
 
         [Test]
