@@ -92,10 +92,11 @@ namespace SubTerra.App.Tests.PlayMode
                         var points=new Vector3[4]; tooltip.GetWorldCorners(points);
                         Assert.That(points[0].y,Is.GreaterThanOrEqualTo(0f));
                         Assert.That(points[2].x,Is.LessThanOrEqualTo(Screen.width));
-                        var cargo=(RectTransform)panel.Find("CargoCard");
-                        cargo.GetWorldCorners(points); float cardBottom=points[0].y;
+                        // 도움말은 ? 아이콘 오른쪽에서 열린다(왼쪽 가장자리가 아이콘보다 오른쪽).
+                        var iconRect=(RectTransform)help.transform;
+                        var iconCorners=new Vector3[4]; iconRect.GetWorldCorners(iconCorners);
                         tooltip.GetWorldCorners(points);
-                        Assert.That(points[2].y,Is.LessThan(cardBottom),"Tooltip covers cargo card");
+                        Assert.That(points[0].x,Is.GreaterThan(iconCorners[2].x),"Tooltip is not to the right of the help icon");
                     }
                     help.OnPointerExit(null);
                 }

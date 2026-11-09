@@ -309,7 +309,13 @@ namespace SubTerra.App.Tests.UI
             Assert.That(help.anchoredPosition.x + help.sizeDelta.x,
                 Is.LessThan(card.anchoredPosition.x + amount.anchoredPosition.x + amount.sizeDelta.x));
             var tooltip = panel.Find("WeightTooltip");
-            Assert.That(((RectTransform)tooltip).anchoredPosition.y, Is.LessThanOrEqualTo(-PromptB112InventoryPanelBuilder.PanelHeight));
+            // 도움말 본문은 ? 아이콘 오른쪽에서 열리는 홀로그램 창이며, 창 폭 안에 머문다.
+            var tipRect = (RectTransform)tooltip;
+            Assert.That(tipRect.anchoredPosition.x, Is.GreaterThan(help.anchoredPosition.x + help.sizeDelta.x));
+            Assert.That(tipRect.anchoredPosition.x + tipRect.sizeDelta.x, Is.LessThan(PromptB112InventoryPanelBuilder.PanelWidth));
+            Assert.That(tooltip.Find("Body/Description"), Is.Not.Null);
+            Assert.That(help.Find("Glow"), Is.Not.Null, "호버 글로우 층이 없습니다.");
+            Assert.That(help.GetComponent<UnityEngine.UI.Image>().sprite, Is.Not.Null, "둥근 ? 아이콘 이미지가 없습니다.");
             Assert.That(tooltip.GetSiblingIndex(), Is.EqualTo(tooltip.parent.childCount - 1));
 
             // C. 하단 조작 안내 문구는 없다.

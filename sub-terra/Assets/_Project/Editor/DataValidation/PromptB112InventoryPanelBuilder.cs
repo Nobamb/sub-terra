@@ -951,6 +951,17 @@ namespace SubTerra.App.Editor.DataValidation
             RemoveChild(panel, "ControlsHint");
         }
 
+        public const string HelpIconPath = "Assets/_Project/Art/UI/Inventory/inventory-help-icon.png";
+        public const string HelpGlowPath = "Assets/_Project/Art/UI/Inventory/inventory-help-glow.png";
+        public const float HelpIconSize = 24f;
+        public const float HelpBodyWidth = 370f;
+
+        private static readonly Color HologramFill = new Color(0.02f, 0.13f, 0.17f, 1f);
+        private static readonly Color HologramLine = new Color(0.45f, 0.95f, 1f, 0.85f);
+        private static readonly Color HelpTitleColor = new Color(0.45f, 0.95f, 1f, 1f);
+
+        // ?는 "적재 현황" 제목 옆의 둥근 청록 아이콘. 호버하면 원판 안 중앙에서 글로우가 천천히 켜지고,
+        // 설명창은 아이콘 오른쪽에서 건설창 이름표와 같은 홀로그램 모양으로 켜진다(연출은 InventoryWeightTooltip).
         private static void StyleWeightHelp(Transform panel)
         {
             var icon = panel.Find("WeightHelpIcon");
@@ -960,30 +971,209 @@ namespace SubTerra.App.Editor.DataValidation
                 return;
             }
 
-            // ?는 "적재 현황" 제목 옆에 두고, 도움말은 창 아래에 띄워 카드·표 숫자를 덮지 않는다.
-            PlaceTopLeft((RectTransform)icon, Margin + CardPadding + 78f, CardTop - 9f, 22f, 22f);
-            var image = icon.GetComponent<Image>();
-            image.color = Amber;
-            image.raycastTarget = true;
-            var outline = icon.GetComponent<Outline>();
-            if (outline != null)
+            var hover = icon.GetComponent<InventoryWeightTooltip>();
+            var iconRect = (RectTransform)icon;
+            var iconX = Margin + CardPadding + 78f;
+            var iconY = CardTop - 8f;
+            PlaceTopLeft(iconRect, iconX, iconY, HelpIconSize, HelpIconSize);
+            StyleHelpIcon(icon);
+
+            // 설명창은 아이콘 오른쪽에 붙는다. 연결선 높이가 아이콘 가운데에 오도록 창 위쪽을 조금 올려 둔다.
+            var tipRect = (RectTransform)tooltip;
+            PlaceTopLeft(tipRect,
+                iconX + HelpIconSize + 6f,
+                iconY - HelpIconSize * 0.5f + InventoryWeightTooltip.ConnectorDrop,
+                InventoryWeightTooltip.ConnectorLength + HelpBodyWidth,
+                120f);
+            // Outline은 Graphic에 기대므로 Outline → Image 순서로 지운다.
+            RemoveComponent<Outline>(tooltip.gameObject);
+            RemoveComponent<Image>(tooltip.gameObject);
+            var group = tooltip.GetComponent<CanvasGroup>();
+            if (group == null)
             {
-                outline.effectColor = new Color(0.05f, 0.075f, 0.11f, 1f);
-                outline.effectDistance = new Vector2(1f, -1f);
+                group = tooltip.gameObject.AddComponent<CanvasGroup>();
             }
 
-            var label = icon.Find("Label").GetComponent<TMP_Text>();
-            label.fontSize = 16f;
+            group.alpha = 0f;
+            group.interactable = false;
+            group.blocksRaycasts = false;
 
-            PlaceTopLeft((RectTransform)tooltip, Margin, -PanelHeight - 8f, ContentWidth, 130f);
-            var tipImage = tooltip.GetComponent<Image>();
-            tipImage.color = new Color(0.03f, 0.055f, 0.08f, 0.98f);
-            tipImage.raycastTarget = false;
-            EnsureOutline(tooltip.gameObject, new Color(1f, 0.72f, 0.2f, 0.6f), 1f);
-            var description = tooltip.Find("Description").GetComponent<TMP_Text>();
-            description.fontSize = 14.5f;
+            var drop = InventoryWeightTooltip.ConnectorDrop;
+            var connector = EnsureImage(tooltip, "Connector", new Color(0.45f, 0.95f, 1f, 0.75f));
+            AnchorTopLeft(connector.rectTransform, new Vector2(0f, 0.5f), new Vector2(0f, -drop),
+                new Vector2(InventoryWeightTooltip.ConnectorLength, 1.5f));
+            var node = EnsureImage(tooltip, "ConnectorNode", Cyan);
+            AnchorTopLeft(node.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0f, -drop), new Vector2(4f, 4f));
+
+            // 아래 카드·표 글자가 비치지 않도록 판은 불투명하게, 홀로그램 느낌은 테두리·바깥 빛·줄무늬·주사선으로 낸다.
+            var body = EnsureImage(tooltip, "Body", HologramFill);
+            AnchorTopLeft(body.rectTransform, new Vector2(0f, 1f - drop / 120f),
+                new Vector2(InventoryWeightTooltip.ConnectorLength, -drop), new Vector2(HelpBodyWidth, 120f));
+            EnsureOutline(body.gameObject, HologramLine, 1f);
+            EnsureHalo(body.gameObject);
+
+            var accent = EnsureImage(body.transform, "Accent", Cyan);
+            accent.rectTransform.anchorMin = new Vector2(0f, 0f);
+            accent.rectTransform.anchorMax = new Vector2(0f, 1f);
+            accent.rectTransform.pivot = new Vector2(0f, 0.5f);
+            accent.rectTransform.anchoredPosition = Vector2.zero;
+            accent.rectTransform.sizeDelta = new Vector2(2f, 0f);
+
+            for (var i = 0; i < 3; i++)
+            {
+                var stripe = EnsureImage(body.transform, "Stripe_" + i, new Color(0.45f, 0.95f, 1f, 0.06f));
+                var fraction = 1f - (i + 1) / 4f;
+                stripe.rectTransform.anchorMin = new Vector2(0f, fraction);
+                stripe.rectTransform.anchorMax = new Vector2(1f, fraction);
+                stripe.rectTransform.pivot = new Vector2(0.5f, 0.5f);
+                stripe.rectTransform.anchoredPosition = Vector2.zero;
+                stripe.rectTransform.sizeDelta = new Vector2(0f, 1f);
+            }
+
+            var scan = EnsureImage(body.transform, "ScanLine", new Color(0.6f, 1f, 1f, 0.2f));
+            scan.rectTransform.anchorMin = new Vector2(0f, 1f);
+            scan.rectTransform.anchorMax = new Vector2(1f, 1f);
+            scan.rectTransform.pivot = new Vector2(0.5f, 1f);
+            scan.rectTransform.anchoredPosition = Vector2.zero;
+            scan.rectTransform.sizeDelta = new Vector2(0f, 3f);
+            scan.rectTransform.localScale = Vector3.zero;
+
+            // 설명 글자는 예전 오브젝트를 그대로 옮겨 쓴다(텍스트 계약 유지).
+            var descriptionTransform = tooltip.Find("Description");
+            if (descriptionTransform == null)
+            {
+                descriptionTransform = body.transform.Find("Description");
+            }
+
+            var description = descriptionTransform.GetComponent<TMP_Text>();
+            description.transform.SetParent(body.transform, false);
+            description.transform.SetAsLastSibling();
+            Style(description, 13f, new Color(0.82f, 0.95f, 0.98f, 1f), TextAlignmentOptions.TopLeft, FontStyles.Normal);
             description.lineSpacing = 4f;
-            description.color = BodyText;
+            description.textWrappingMode = TextWrappingModes.Normal;
+            description.maxVisibleCharacters = 0;
+            var descRect = description.rectTransform;
+            descRect.anchorMin = Vector2.zero;
+            descRect.anchorMax = Vector2.one;
+            descRect.pivot = new Vector2(0.5f, 0.5f);
+            descRect.offsetMin = new Vector2(InventoryWeightTooltip.TextPaddingX, InventoryWeightTooltip.TextPaddingY);
+            descRect.offsetMax = new Vector2(-InventoryWeightTooltip.TextPaddingX, -InventoryWeightTooltip.TextPaddingY);
+            ColorizeHelpTitle(description);
+
+            connector.transform.SetSiblingIndex(0);
+            node.transform.SetSiblingIndex(1);
+            body.transform.SetSiblingIndex(2);
+
+            if (hover != null)
+            {
+                var glow = icon.Find("Glow").GetComponent<Image>();
+                hover.EditorSet(glow, group, body.rectTransform, description, scan.rectTransform);
+                EditorUtility.SetDirty(hover);
+            }
+        }
+
+        private static void StyleHelpIcon(Transform icon)
+        {
+            // Outline은 Graphic에 기대므로 먼저 지우고, 둥근 모양에 네모 테두리가 생기지 않게 한다.
+            RemoveComponent<Outline>(icon.gameObject);
+            var image = icon.GetComponent<Image>();
+            image.sprite = LoadHelpSprite(HelpIconPath);
+            image.type = Image.Type.Simple;
+            image.preserveAspect = true;
+            image.color = Color.white;
+            image.raycastTarget = true;
+
+            var glow = EnsureImage(icon, "Glow", new Color(0.55f, 0.96f, 1f, 0f));
+            glow.sprite = LoadHelpSprite(HelpGlowPath);
+            glow.type = Image.Type.Simple;
+            glow.rectTransform.anchorMin = glow.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
+            glow.rectTransform.pivot = new Vector2(0.5f, 0.5f);
+            glow.rectTransform.anchoredPosition = Vector2.zero;
+            // 원판의 테두리 링 안쪽에만 머물도록 지름을 원판보다 작게 둔다.
+            glow.rectTransform.sizeDelta = new Vector2(HelpIconSize * 0.76f, HelpIconSize * 0.76f);
+            glow.rectTransform.localScale = new Vector3(0.5f, 0.5f, 1f);
+
+            var label = icon.Find("Label").GetComponent<TMP_Text>();
+            label.fontSize = 15f;
+            label.color = new Color(0.86f, 1f, 1f, 1f);
+            label.fontStyle = FontStyles.Bold;
+            glow.transform.SetSiblingIndex(0);
+            label.transform.SetAsLastSibling();
+        }
+
+        // 첫 줄(제목)만 밝은 청록으로 칠한다. 이미 칠해져 있으면 그대로 둔다.
+        private static void ColorizeHelpTitle(TMP_Text description)
+        {
+            var raw = description.text;
+            if (string.IsNullOrEmpty(raw) || raw.Contains("<color"))
+            {
+                return;
+            }
+
+            var newline = raw.IndexOf('\n');
+            if (newline <= 0)
+            {
+                return;
+            }
+
+            description.text = "<color=#" + ColorUtility.ToHtmlStringRGB(HelpTitleColor) + "><b>"
+                + raw.Substring(0, newline) + "</b></color>" + raw.Substring(newline);
+        }
+
+        // 바깥으로 번지는 약한 빛: 같은 이미지에 두 번째 Outline을 얇게 겹친다.
+        private static void EnsureHalo(GameObject target)
+        {
+            var outlines = target.GetComponents<Outline>();
+            var halo = outlines.Length > 1 ? outlines[1] : target.AddComponent<Outline>();
+            halo.effectColor = new Color(0.3f, 0.9f, 1f, 0.2f);
+            halo.effectDistance = new Vector2(3f, -3f);
+            halo.useGraphicAlpha = true;
+        }
+
+        private static void AnchorTopLeft(RectTransform rect, Vector2 pivot, Vector2 position, Vector2 size)
+        {
+            rect.anchorMin = rect.anchorMax = new Vector2(0f, 1f);
+            rect.pivot = pivot;
+            rect.anchoredPosition = position;
+            rect.sizeDelta = size;
+        }
+
+        private static void RemoveComponent<T>(GameObject target) where T : Component
+        {
+            foreach (var component in target.GetComponents<T>())
+            {
+                UnityEngine.Object.DestroyImmediate(component);
+            }
+        }
+
+        private static Sprite LoadHelpSprite(string path)
+        {
+            AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);
+            var importer = AssetImporter.GetAtPath(path) as TextureImporter;
+            if (importer == null)
+            {
+                throw new InvalidOperationException("인벤토리 도움말 이미지가 없습니다: " + path);
+            }
+
+            if (importer.textureType != TextureImporterType.Sprite)
+            {
+                importer.textureType = TextureImporterType.Sprite;
+                importer.spriteImportMode = SpriteImportMode.Single;
+                importer.alphaIsTransparency = true;
+                importer.mipmapEnabled = false;
+                importer.textureCompression = TextureImporterCompression.Uncompressed;
+                importer.filterMode = FilterMode.Bilinear;
+                importer.maxTextureSize = 256;
+                importer.SaveAndReimport();
+            }
+
+            var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(path);
+            if (sprite == null)
+            {
+                throw new InvalidOperationException("인벤토리 도움말 스프라이트를 불러오지 못했습니다: " + path);
+            }
+
+            return sprite;
         }
 
         // 예전 임시 청록 코너 브래킷은 프레임 이미지가 대신하므로 지운다.
