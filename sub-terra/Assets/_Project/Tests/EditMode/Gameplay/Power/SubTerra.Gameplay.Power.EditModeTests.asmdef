@@ -1,7 +1,7 @@
 {
   "name": "SubTerra.Gameplay.Power.EditModeTests",
   "rootNamespace": "SubTerra.Gameplay.Power.Tests",
-  "references": ["SubTerra.Gameplay.Power", "UnityEngine.TestRunner", "UnityEditor.TestRunner"],
+  "references": ["SubTerra.Gameplay.Power", "SubTerra.Gameplay.Snapshot", "SubTerra.Shared", "UnityEngine.TestRunner", "UnityEditor.TestRunner"],
   "includePlatforms": ["Editor"],
   "excludePlatforms": [],
   "allowUnsafeCode": false,

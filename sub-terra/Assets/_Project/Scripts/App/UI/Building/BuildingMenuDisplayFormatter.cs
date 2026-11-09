@@ -85,29 +85,110 @@ namespace SubTerra.App.UI.Building
 
             switch (kind)
             {
+                // B-188: 설치 가능 옆에는 조작 안내를 붙이지 않는다(안내는 게임 가이드에만 둔다).
                 case BuildingAvailabilityDisplayKind.Ready:
-                    return "좌클릭으로 설치하거나 C로 가까운 위치에 설치하세요.";
+                    return string.Empty;
                 case BuildingAvailabilityDisplayKind.NeedResources:
                     return "자원이 부족합니다.";
                 case BuildingAvailabilityDisplayKind.CheckPlacement:
-                    return "커서를 설치 가능한 위치로 옮기세요.";
+                    return "설치 가능한 위치로 커서를 옮기세요.";
                 default:
-                    return "목록에서 시설을 고르면 설치 조건을 확인합니다.";
+                    return "시설을 고르면 설치 상태를 확인합니다.";
             }
         }
 
         public static string AvailabilityText(BuildingAvailabilityDisplayKind kind, string message)
         {
-            return "<b>" + Title(kind) + "</b>\n<size=90%>" + Detail(kind, message) + "</size>";
+            var detail = Detail(kind, message);
+            return string.IsNullOrEmpty(detail)
+                ? "<b>" + Title(kind) + "</b>"
+                : "<b>" + Title(kind) + "</b>\n<size=90%>" + detail + "</size>";
         }
 
+        /// <summary>B-188: 전진기지 코어 영역 전용 시설에만 짧은 운영 조건 라벨을 준다. 전력 소비량은 쓰지 않는다.</summary>
         public static string OperatingCondition(string buildingId)
+        {
+            return RequiresOutpostArea(buildingId)
+                ? (ItemDisplayNames.OutpostName + " 범위 내")
+                : string.Empty;
+        }
+
+        public static bool RequiresOutpostArea(string buildingId)
         {
             return buildingId == DataIds.Buildings.ChargerBasic
                 || buildingId == DataIds.Buildings.ClinicBasic
-                || buildingId == DataIds.Buildings.SettlementBasic
-                    ? (ItemDisplayNames.OutpostName + " 영역 내에서만 작동합니다.")
-                    : string.Empty;
+                || buildingId == DataIds.Buildings.SettlementBasic;
+        }
+
+        public const int ShortPurposeMaxLength = 40;
+
+        /// <summary>
+        /// B-188: 카드·목록용 짧은 용도(한두 줄). 설명의 첫 문장만 쓰고, 그래도 길면 단어 경계에서 줄여 "…"를 붙인다.
+        /// 전체 설명은 `>>` 상세에서 보여 준다.
+        /// </summary>
+        public static string ShortPurpose(string description)
+        {
+            if (string.IsNullOrEmpty(description))
+            {
+                return string.Empty;
+            }
+
+            var text = description.Trim();
+            for (var i = 0; i < text.Length; i++)
+            {
+                if (text[i] == '.' && (i == text.Length - 1 || char.IsWhiteSpace(text[i + 1])))
+                {
+                    text = text.Substring(0, i + 1);
+                    break;
+                }
+            }
+
+            if (text.Length <= ShortPurposeMaxLength)
+            {
+                return text;
+            }
+
+            var cut = text.LastIndexOf(' ', ShortPurposeMaxLength - 1);
+            if (cut <= 0)
+            {
+                cut = ShortPurposeMaxLength - 1;
+            }
+
+            return text.Substring(0, cut).TrimEnd() + "…";
+        }
+
+        /// <summary>
+        /// B-188: 시설명·짧은 용도에 검색어가 들어 있으면 true. 공백·대소문자는 무시하고 빈 검색어는 전체를 남긴다.
+        /// </summary>
+        public static bool MatchesSearch(string displayName, string purpose, string query)
+        {
+            var needle = NormalizeSearch(query);
+            if (needle.Length == 0)
+            {
+                return true;
+            }
+
+            return NormalizeSearch(displayName).Contains(needle)
+                || NormalizeSearch(purpose).Contains(needle);
+        }
+
+        private static string NormalizeSearch(string value)
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                return string.Empty;
+            }
+
+            var builder = new StringBuilder(value.Length);
+            for (var i = 0; i < value.Length; i++)
+            {
+                if (!char.IsWhiteSpace(value[i]))
+                {
+                    builder.Append(char.ToLowerInvariant(value[i]));
+                }
+            }
+
+            return builder.ToString();
         }
 
         public static bool HasAllCosts(IReadOnlyList<BuildingCostReadModel> costs)
@@ -194,16 +275,45 @@ namespace SubTerra.App.UI.Building
             return HasAllCosts(costs) ? ReadyGlyph : "부족";
         }
 
+        /// <summary>B-188: 비용 행 가운데 칸. `보유 / 필요` 순서이며 부족할 때만 보유 수량을 경고색으로 쓴다.</summary>
         public static string CostAmount(BuildingCostReadModel cost)
         {
-            var color = cost.IsEnough ? EnoughColorHex : MissingColorHex;
-            return "<size=85%>보유</size> <color=" + color + "><b>" + cost.Owned + "</b></color>"
-                + " <size=85%>/ 필요</size> <b>" + cost.Required + "</b>";
+            var owned = cost.IsEnough
+                ? "<b>" + cost.Owned + "</b>"
+                : "<color=" + MissingColorHex + "><b>" + cost.Owned + "</b></color>";
+            return owned + " / " + cost.Required;
         }
 
+        /// <summary>B-188: 비용 행 오른쪽 칸. `충분` 또는 `2 부족`.</summary>
         public static string CostState(BuildingCostReadModel cost)
         {
-            return cost.IsEnough ? ReadyGlyph + " 충분" : "× " + (cost.Required - cost.Owned) + " 부족";
+            return cost.IsEnough ? "충분" : (cost.Required - cost.Owned) + " 부족";
+        }
+
+        /// <summary>B-188: 전체 목록 한 칸의 비용 비교. `철 3 / 5  2 부족`을 자원마다 한 줄씩 쓴다.</summary>
+        public static string CostLines(IReadOnlyList<BuildingCostReadModel> costs)
+        {
+            if (costs == null || costs.Count == 0)
+            {
+                return "비용 없음";
+            }
+
+            var builder = new StringBuilder();
+            for (var i = 0; i < costs.Count; i++)
+            {
+                if (i > 0)
+                {
+                    builder.Append('\n');
+                }
+
+                var cost = costs[i];
+                builder.Append(ItemDisplayNames.Mineral(cost.ItemId)).Append(' ')
+                    .Append(CostAmount(cost)).Append("  <color=")
+                    .Append(cost.IsEnough ? EnoughColorHex : MissingColorHex).Append('>')
+                    .Append(CostState(cost)).Append("</color>");
+            }
+
+            return builder.ToString();
         }
 
         public static float CostFill(BuildingCostReadModel cost)

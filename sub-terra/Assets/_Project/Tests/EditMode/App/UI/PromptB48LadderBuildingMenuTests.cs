@@ -31,8 +31,9 @@ namespace SubTerra.App.Tests.UI
             "Assets/_Project/Scenes/App/Mine_Demo_Integration.unity";
 
         // prompt-B 110: 목록이 헤더 바로 아래에서 시작하는 행 구조로 바뀌었다.
-        private static readonly float FirstButtonY = PromptB110BuildingMenuBuilder.EntryY(0);
-        private static readonly float LastButtonY = PromptB110BuildingMenuBuilder.EntryY(8);
+        // B-188: 시설 버튼은 왼쪽 아이콘 레일에 세로로 쌓인다.
+        private static readonly float FirstButtonY = PromptB188BuildingModeBuilder.IconY(0);
+        private static readonly float LastButtonY = PromptB188BuildingModeBuilder.IconY(8);
         private const float PanelHeight = 560f;
 
         [Test]
@@ -102,8 +103,9 @@ namespace SubTerra.App.Tests.UI
             var lastBottom = Mathf.Abs(escapeRect.anchoredPosition.y) + escapeRect.sizeDelta.y;
             Assert.That(lastBottom, Is.LessThanOrEqualTo(PanelHeight));
 
+            // 레일 아이콘은 시설마다 하나. `>>` 목록 칸은 BuildingMenuCatalogRowView로 따로 센다.
             var matches = 0;
-            var entries = menu.GetComponentsInChildren<BuildingMenuEntryButton>(true);
+            var entries = RailEntries(menu);
             for (var i = 0; i < entries.Length; i++)
             {
                 var so = new SerializedObject(entries[i]);
@@ -187,9 +189,16 @@ namespace SubTerra.App.Tests.UI
             }
         }
 
+        private static BuildingMenuEntryButton[] RailEntries(GameObject menu)
+        {
+            return menu.GetComponentsInChildren<BuildingMenuEntryVisual>(true)
+                .Select(v => v.GetComponent<BuildingMenuEntryButton>())
+                .ToArray();
+        }
+
         private static BuildingMenuEntryButton FindEntry(GameObject menu, string buildingId)
         {
-            var entries = menu.GetComponentsInChildren<BuildingMenuEntryButton>(true);
+            var entries = RailEntries(menu);
             for (var i = 0; i < entries.Length; i++)
             {
                 var so = new SerializedObject(entries[i]);

@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using SubTerra.App.Audio;
 using SubTerra.App.Drone;
 using SubTerra.App.Drone.Dialogue;
 using SubTerra.App.UI.RunFailure;
+using SubTerra.Shared.Audio;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -25,6 +27,18 @@ namespace SubTerra.App.UI.Drone
         public const float PanelDialogueFontSize = 20f;
         public const string HeaderPrefix = "DIGGER-BOT  //  AI ANALYSIS  //  ";
         public const string HeaderCursor = "_";
+
+        // B-183 ★ 기존 음원·재생 간격·음량 배율.
+        public const SfxId DroneTerminalOpenSfx = SfxId.WindowTvOpen;
+        public const SfxId DroneTerminalCloseSfx = SfxId.WindowTvClose;
+        public const SfxId DroneTerminalTypeSfx = SfxId.MainMenuTypeTick;
+        public const SfxId DroneTerminalReasonSfx = SfxId.KeycapPop;
+        public const SfxId DronePrioritySfx = SfxId.DronePriorityAlert;
+        public const float DroneTerminalTvScale = 0.6f;
+        public const float DroneTerminalTypeGap = 0.06f;
+        public const float DroneTerminalTypeScale = 0.5f;
+        public const float DroneTerminalReasonPitchStep = 0.03f;
+        public const float DronePriorityMinGap = 2f;
 
         private const int AllCharacters = 99999;
         private const float OpenLineThickness = 10f;
@@ -70,6 +84,10 @@ namespace SubTerra.App.UI.Drone
         private bool priorityActive;
         private float priorityClock;
         private float appliedContentAlpha = 1f;
+        private int lastTypedCharacters;
+        private int lastReasonLines;
+        private float lastTypeAt = float.NegativeInfinity;
+        private Func<float> sfxClock = () => Time.realtimeSinceStartup;
 
         private static readonly Color TerminalBackground = new Color(0.012f, 0.035f, 0.055f, 0.975f);
         private static readonly Color TerminalHeader = new Color(0.018f, 0.12f, 0.16f, 0.99f);
@@ -244,6 +262,7 @@ namespace SubTerra.App.UI.Drone
 
             // 숨김 상태면 처음부터, 닫히던 중이면 접힌 정도에서 다시 펼친다.
             window.Open();
+            WindowTvSfx.Play(DroneTerminalOpenSfx, DroneTerminalTvScale);
             EnsureTerminalFx();
             BeginReveal(true);
         }
@@ -260,6 +279,8 @@ namespace SubTerra.App.UI.Drone
             }
 
             closeCallback = onClosed;
+            if (window.Phase != DroneTerminalPhase.Closing)
+                WindowTvSfx.Play(DroneTerminalCloseSfx, DroneTerminalTvScale);
             window.Close();
             ApplyTerminalFrame();
             return true;
@@ -288,6 +309,9 @@ namespace SubTerra.App.UI.Drone
             {
                 priorityActive = true;
                 priorityClock = 0f;
+                var player = SfxPlayer.Instance;
+                if (player == null || player.SecondsSinceLastPlayed(DronePrioritySfx) >= DronePriorityMinGap)
+                    SfxPlayer.Play(DronePrioritySfx);
                 ApplyTerminalFrame();
             }
         }
@@ -427,6 +451,8 @@ namespace SubTerra.App.UI.Drone
         /// </summary>
         private void BeginReveal(bool includeHeader)
         {
+            lastTypedCharacters = 0;
+            lastReasonLines = 0;
             revealActive = true;
             revealPlanDirty = true;
             revealIncludesHeader = includeHeader;
@@ -570,11 +596,14 @@ namespace SubTerra.App.UI.Drone
 
         private void ApplyTyping()
         {
+            var animateSfx = (revealActive || appendActive) && !revealPlanDirty
+                && window.Phase != DroneTerminalPhase.Closing;
             var headerLength = speakerText != null ? speakerText.text.Length : 0;
             var dialogueVisible = AllCharacters;
             var actionVisible = AllCharacters;
             var reasonVisible = AllCharacters;
             var headerVisible = headerLength;
+            var visibleReasonLines = reasonLines.Count;
 
             if (revealActive && revealPlanDirty)
             {
@@ -587,6 +616,7 @@ namespace SubTerra.App.UI.Drone
                 dialogueVisible = 0;
                 actionVisible = 0;
                 reasonVisible = 0;
+                visibleReasonLines = 0;
             }
             else if (revealActive)
             {
@@ -612,6 +642,7 @@ namespace SubTerra.App.UI.Drone
                     actionVisible = revealPlan.VisibleActionCharacters(
                         revealClock, actionText != null ? actionText.text.Length : 0);
                     var lines = Mathf.Min(reasonLines.Count, revealPlan.VisibleReasonLines(revealClock));
+                    visibleReasonLines = lines;
                     reasonVisible = DroneReasonDisplayFormatter.CharactersInFirstLines(reasonLines, lines);
                 }
             }
@@ -620,6 +651,7 @@ namespace SubTerra.App.UI.Drone
                 var lines = DroneTerminalTimeline.AppendedReasonLines(
                     appendFrom, appendTo, appendClock, terminalFx.reasonLineInterval);
                 lines = Mathf.Min(lines, reasonLines.Count);
+                visibleReasonLines = lines;
                 if (lines >= Mathf.Min(appendTo, reasonLines.Count))
                 {
                     appendActive = false;
@@ -641,6 +673,29 @@ namespace SubTerra.App.UI.Drone
             SetMaxVisible(dialogueText, dialogueVisible);
             SetMaxVisible(actionText, actionVisible);
             SetMaxVisible(reasonText, reasonVisible);
+            var typedCharacters = Mathf.Min(headerVisible, HeaderPrefix.Length)
+                + Mathf.Min(dialogueVisible, dialogueText != null ? dialogueText.text.Length : 0)
+                + Mathf.Min(actionVisible, actionText != null ? actionText.text.Length : 0);
+            PlayTypingSfx(typedCharacters, visibleReasonLines, animateSfx);
+        }
+
+        private void PlayTypingSfx(int typed, int lines, bool animate)
+        {
+            if (animate)
+            {
+                var now = sfxClock();
+                if (typed > lastTypedCharacters && now - lastTypeAt >= DroneTerminalTypeGap)
+                {
+                    lastTypeAt = now;
+                    SfxPlayer.Play(DroneTerminalTypeSfx, 1f, DroneTerminalTypeScale);
+                }
+
+                for (var line = lastReasonLines; line < lines; line++)
+                    SfxPlayer.Play(DroneTerminalReasonSfx, 1f + line * DroneTerminalReasonPitchStep);
+            }
+
+            lastTypedCharacters = typed;
+            lastReasonLines = lines;
         }
 
         private void ApplyPriority(Vector2 size)

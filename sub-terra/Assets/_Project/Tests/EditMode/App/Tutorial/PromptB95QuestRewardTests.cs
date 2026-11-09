@@ -421,7 +421,7 @@ namespace SubTerra.App.Tests.Tutorial
                     Is.EqualTo("Assets/_Project/Art/Icons/icon_lithium.png"));
                 Assert.That(
                     AssetDatabase.GetAssetPath(claim.transform.Find("ClaimRewardRow/Gold/Icon").GetComponent<UnityEngine.UI.Image>().sprite),
-                    Is.EqualTo("Assets/_Project/Art/UI/Gameplay/Quest/quest-icon-gold.png"));
+                    Is.EqualTo("Assets/_Project/Art/UI/SurfaceBase/Icons/icon-gold.png"));
 
                 var view = root.GetComponent<DemoObjectiveView>();
                 Assert.That(view, Is.Not.Null);

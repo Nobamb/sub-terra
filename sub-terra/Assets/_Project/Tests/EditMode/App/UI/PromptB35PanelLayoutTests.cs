@@ -57,18 +57,21 @@ namespace SubTerra.App.Tests.UI
                 }
             }
 
-            var selection = panelRoot.Find("SelectionText") as RectTransform;
+            // B-188: 2단 창 대신 왼쪽 아이콘 레일 + 오른쪽 카드(SidePane)로 바뀌어 레일과 카드 사이 간격을 본다.
+            var rail = panelRoot.Find("Rail") as RectTransform;
+            var side = panelRoot.Find("SidePane") as RectTransform;
             Assert.That(left, Is.Not.Null, "좌측 시설 버튼이 필요합니다.");
-            Assert.That(selection, Is.Not.Null, "우측 설명 텍스트가 필요합니다.");
+            Assert.That(rail, Is.Not.Null, "좌측 아이콘 레일이 필요합니다.");
+            Assert.That(side, Is.Not.Null, "우측 시설 카드가 필요합니다.");
+            Assert.That(left.parent, Is.SameAs(rail));
 
-            float leftEdge = left.anchoredPosition.x + left.sizeDelta.x;
-            float rightStart = selection.anchoredPosition.x;
+            float leftEdge = rail.anchoredPosition.x + rail.sizeDelta.x;
+            float rightStart = side.anchoredPosition.x;
             float gap = rightStart - leftEdge;
-            // prompt-B 110: 목록/상세 2단 구조로 재설계되어 간격 기준이 B110 빌더로 이동했다.
             Assert.That(
                 gap,
-                Is.EqualTo(PromptB110BuildingMenuBuilder.LeftRightGap).Within(1f),
-                "좌측 목록과 우측 상세 사이 간격이 유지되어야 합니다.");
+                Is.EqualTo(PromptB188BuildingModeBuilder.Gap).Within(1f),
+                "좌측 레일과 우측 카드 사이 간격이 유지되어야 합니다.");
         }
 
         [Test]

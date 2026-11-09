@@ -26,6 +26,8 @@ namespace SubTerra.App.Audio
         /// <summary>앞 소리가 아직 나는 중에 새 소리로 끊은 횟수.</summary>
         public static int InterruptedCount { get; private set; }
         public static SfxId LastId { get; private set; }
+        /// <summary>B-181: 마지막 재생의 음량 배율(검사용 읽기 전용).</summary>
+        public static float LastVolumeScale { get; private set; } = 1f;
         public static AudioSource Source => source;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -43,6 +45,14 @@ namespace SubTerra.App.Audio
         /// <returns>재생을 시작했으면 true.</returns>
         public static bool Play(SfxId id)
         {
+            return Play(id, 1f);
+        }
+
+        /// <summary>B-181: 칸 음량은 그대로 두고 이번 재생만 volumeScale(0~1로 자름)배로 낸다.</summary>
+        /// <returns>재생을 시작했으면 true.</returns>
+        public static bool Play(SfxId id, float volumeScale)
+        {
+            volumeScale = SfxRequests.ClampVolumeScale(volumeScale);
             if (id != SfxId.WindowTvOpen && id != SfxId.WindowTvClose)
             {
                 return false;
@@ -73,11 +83,13 @@ namespace SubTerra.App.Audio
                 source.Stop();
                 source.clip = entry.Clip;
                 source.pitch = pitch;
-                source.volume = entry.Volume * busVolume * SettingsRuntimeApplier.EffectiveVolume(AudioChannel.Sfx);
+                source.volume = entry.Volume * busVolume * SettingsRuntimeApplier.EffectiveVolume(AudioChannel.Sfx)
+                    * volumeScale;
                 source.time = plan.StartTime;
                 source.Play();
 
                 LastId = id;
+                LastVolumeScale = volumeScale;
                 lastStartedAt = now;
                 lastEndsAt = now + plan.RealDuration;
                 StartedCount++;
@@ -123,6 +135,7 @@ namespace SubTerra.App.Audio
             StartedCount = 0;
             InterruptedCount = 0;
             LastId = SfxId.None;
+            LastVolumeScale = 1f;
             lastStartedAt = 0f;
             lastEndsAt = 0f;
         }

@@ -24,7 +24,7 @@ namespace SubTerra.App.Editor.DataValidation
         public const string CopperIconPath = "Assets/_Project/Art/Icons/icon_copper.png";
         public const string IronIconPath = "Assets/_Project/Art/Icons/icon_iron.png";
         public const string LithiumIconPath = "Assets/_Project/Art/Icons/icon_lithium.png";
-        public const string GoldIconPath = "Assets/_Project/Art/UI/Gameplay/Quest/quest-icon-gold.png";
+        public const string GoldIconPath = "Assets/_Project/Art/UI/SurfaceBase/Icons/icon-gold.png";
 
         [MenuItem("SubTerra/UI/Build Prompt-B 152 Cargo Full Popup")]
         public static void BuildFromMenu()
