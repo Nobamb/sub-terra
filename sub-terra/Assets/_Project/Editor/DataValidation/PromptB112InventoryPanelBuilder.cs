@@ -25,7 +25,9 @@ namespace SubTerra.App.Editor.DataValidation
         // 화면 중앙의 플레이어·드론 대사와 겹치지 않도록 건설창(좌)·우측 메뉴 사이 오른쪽으로 둔다.
         public const float PanelOffsetX = 330f;
         public const float HeaderHeight = 54f;
-        public const float Margin = 16f;
+        // 좌우 여백은 프레임 측면 홈(안쪽으로 접히는 단차)을, 아래 여백은 하단 네온 테두리를 덮지 않는 값이다.
+        public const float Margin = 28f;
+        public const float BottomMargin = 24f;
         public const float ContentWidth = PanelWidth - Margin * 2f;
 
         // A. 적재 현황(가로 전체) + 오른쪽 미정산 스탬프
@@ -39,7 +41,7 @@ namespace SubTerra.App.Editor.DataValidation
 
         // B. 적재 내역 표: 제목·정렬 드롭다운 → 검색창 → 표 머리 → 목록(스크롤)
         public const float ListFrameTop = -192f;
-        public const float ListFrameHeight = PanelHeight + ListFrameTop - Margin;
+        public const float ListFrameHeight = PanelHeight + ListFrameTop - BottomMargin;
         public const float ListInset = 10f;
         public const float ListLabelTop = -199f;
         public const float SortWidth = 150f;
@@ -50,7 +52,7 @@ namespace SubTerra.App.Editor.DataValidation
         public const float ColumnHeaderTop = -271f;
         public const float ColumnHeaderHeight = 20f;
         public const float ListTop = -297f;
-        public const float ListHeight = PanelHeight + ListTop - Margin - 8f;
+        public const float ListHeight = PanelHeight + ListTop - BottomMargin - 8f;
         public const float RowWidth = ContentWidth - ListInset * 2f;
         public const float RowHeight = 50f;
         public const float RowSpacing = 2f;
@@ -70,8 +72,24 @@ namespace SubTerra.App.Editor.DataValidation
         public const string EmptyHintText = InventoryManifestQuery.EmptyCargoText;
         private const string TriangleArrowPath = "Assets/_Project/Art/UI/MainMenu/UI_Triangle_Arrow.png";
 
-        private static readonly Color PanelColor = new Color(0.022f, 0.045f, 0.065f, 1f);
-        private static readonly Color HeaderColor = new Color(0.035f, 0.085f, 0.115f, 1f);
+        // 창 프레임: 컨셉(B-190-concept.png)·설정창 프레임과 같은 네온 이중 테두리 + 바깥 글로우 + 거친 안쪽 질감.
+        // Codex 이미지 생성으로 만든 1285x1224 9-slice 이미지. 프레임 몸체(테두리 안쪽까지)는 x 60~1224, 윗선 y 109, 아랫선 y 1136.
+        // 몸체가 창(PanelWidth x PanelHeight)에 정확히 맞고 글로우·상단 탭은 창 밖으로 번지도록 WindowFrame 자식을 바깥으로 키운다.
+        public const string FramePath = "Assets/_Project/Art/UI/Inventory/inventory-window-frame.png";
+        public const string FrameObjectName = "WindowFrame";
+        public const float FrameSpriteWidth = 1285f;
+        public const float FrameSpriteHeight = 1224f;
+        public const float FrameBodyLeft = 60f;
+        public const float FrameBodyRight = 1225f;
+        public const float FrameBodyTop = 109f;
+        public const float FrameBodyBottom = 1137f;
+        // 몸체 가로 1165px가 창 폭 560으로 줄어드는 배율. 세로는 가운데(질감만 있는 구간)만 늘어난다.
+        public const float FramePixelsPerUnit = (FrameBodyRight - FrameBodyLeft) / PanelWidth;
+        // 9-slice 모서리: 측면 홈(y 400~520, 735~840)이 늘어나지 않도록 위 540 / 아래 489를 고정 영역에 둔다.
+        public static readonly Vector4 FrameSliceBorder = new Vector4(250f, 489f, 250f, 540f);
+        // 테두리 안쪽 여유: 닫기 버튼 등이 네온선을 덮지 않게 한다.
+        public const float FrameInset = 16f;
+
         private static readonly Color CardColor = new Color(0.04f, 0.085f, 0.115f, 1f);
         private static readonly Color ListFrameColor = new Color(0.03f, 0.065f, 0.09f, 1f);
         private static readonly Color RowColor = new Color(0.05f, 0.11f, 0.14f, 0.55f);
@@ -136,10 +154,12 @@ namespace SubTerra.App.Editor.DataValidation
             rootRect.anchoredPosition = new Vector2(PanelOffsetX, 0f);
 
             var panelImage = panel.GetComponent<Image>();
-            panelImage.sprite = null;
-            panelImage.color = PanelColor;
-            panelImage.raycastTarget = true;
-            EnsureOutline(panel.gameObject, new Color(0.2f, 0.75f, 0.9f, 0.55f), 1.5f);
+            ApplyWindowFrame(panel, panelImage);
+            var panelOutline = panel.GetComponent<Outline>();
+            if (panelOutline != null)
+            {
+                UnityEngine.Object.DestroyImmediate(panelOutline);
+            }
 
             BuildHeader(panel, font);
             var gauge = BuildCargoCard(panel, font);
@@ -150,7 +170,7 @@ namespace SubTerra.App.Editor.DataValidation
             var rows = BuildList(panel, font, out var rowsContent, out var stackScroll);
             RemoveFooter(panel);
             StyleWeightHelp(panel);
-            BuildCorners(panel);
+            RemoveLegacyCorners(panel);
             StyleClose(root.transform, font);
 
             // 문자열 계약(HudFormatter 요약)은 유지하되 화면에는 새 카드만 표시한다.
@@ -186,14 +206,62 @@ namespace SubTerra.App.Editor.DataValidation
                 + " search+sort=" + (searchField != null && sortDropdown != null);
         }
 
+        private static void ApplyWindowFrame(Transform panel, Image panelImage)
+        {
+            AssetDatabase.ImportAsset(FramePath, ImportAssetOptions.ForceSynchronousImport);
+            var importer = AssetImporter.GetAtPath(FramePath) as TextureImporter;
+            if (importer == null)
+            {
+                throw new InvalidOperationException("인벤토리 창 프레임 이미지가 없습니다: " + FramePath);
+            }
+
+            if (importer.textureType != TextureImporterType.Sprite || importer.spriteBorder != FrameSliceBorder)
+            {
+                importer.textureType = TextureImporterType.Sprite;
+                importer.spriteImportMode = SpriteImportMode.Single;
+                importer.alphaIsTransparency = true;
+                importer.mipmapEnabled = false;
+                importer.textureCompression = TextureImporterCompression.Uncompressed;
+                importer.filterMode = FilterMode.Bilinear;
+                importer.maxTextureSize = 2048;
+                importer.spriteBorder = FrameSliceBorder;
+                importer.SaveAndReimport();
+            }
+
+            var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(FramePath);
+            if (sprite == null)
+            {
+                throw new InvalidOperationException("인벤토리 창 프레임 스프라이트를 불러오지 못했습니다: " + FramePath);
+            }
+
+            // 창 판은 클릭 막이용으로만 남기고(투명), 그림은 바깥으로 번지는 자식 이미지가 그린다.
+            panelImage.sprite = null;
+            panelImage.type = Image.Type.Simple;
+            panelImage.color = new Color(0f, 0f, 0f, 0f);
+            panelImage.raycastTarget = true;
+            EditorUtility.SetDirty(panelImage);
+
+            var frame = EnsureImage(panel, FrameObjectName, Color.white);
+            var scale = 1f / FramePixelsPerUnit;
+            var rect = frame.rectTransform;
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.offsetMin = new Vector2(-FrameBodyLeft * scale, -(FrameSpriteHeight - FrameBodyBottom) * scale);
+            rect.offsetMax = new Vector2((FrameSpriteWidth - FrameBodyRight) * scale, FrameBodyTop * scale);
+            frame.sprite = sprite;
+            frame.type = Image.Type.Sliced;
+            frame.fillCenter = true;
+            frame.pixelsPerUnitMultiplier = FramePixelsPerUnit;
+            frame.raycastTarget = false;
+            EditorUtility.SetDirty(frame);
+        }
+
         private static void BuildHeader(Transform panel, TMP_FontAsset font)
         {
-            var band = EnsureImage(panel, "HeaderBand", HeaderColor);
-            band.rectTransform.anchorMin = new Vector2(0f, 1f);
-            band.rectTransform.anchorMax = new Vector2(1f, 1f);
-            band.rectTransform.pivot = new Vector2(0.5f, 1f);
-            band.rectTransform.anchoredPosition = Vector2.zero;
-            band.rectTransform.sizeDelta = new Vector2(0f, HeaderHeight);
+            // 제목 영역은 프레임 그림 위에 바로 올린다(별도 띠·구분선 없음).
+            RemoveChild(panel, "HeaderBand");
+            RemoveChild(panel, "HeaderDivider");
 
             // 조작 안내는 게임 가이드에만 둔다(B-190). 왼쪽 강조 막대는 가운데 제목으로 대체한다.
             RemoveChild(panel, "HotkeyHint");
@@ -202,25 +270,18 @@ namespace SubTerra.App.Editor.DataValidation
             var title = EnsureText(panel, "Title", font);
             Style(title, 22f, Color.white, TextAlignmentOptions.Center, FontStyles.Bold);
             title.text = "인벤토리";
-            PlaceTopCenter(title.rectTransform, 0f, -5f, 260f, 28f);
+            PlaceTopCenter(title.rectTransform, 0f, -11f, 260f, 28f);
 
             var tag = EnsureText(panel, "HeaderTag", font);
             Style(tag, 10.5f, SubText, TextAlignmentOptions.Center, FontStyles.Bold);
             tag.characterSpacing = 3f;
             tag.text = "CARGO INVENTORY";
-            PlaceTopCenter(tag.rectTransform, 0f, -33f, 200f, 14f);
+            PlaceTopCenter(tag.rectTransform, 0f, -38f, 200f, 14f);
 
             var left = EnsureImage(panel, "HeaderTagLineL", CyanLine);
-            PlaceTopCenter(left.rectTransform, -112f, -40f, 60f, 1f);
+            PlaceTopCenter(left.rectTransform, -112f, -45f, 60f, 1f);
             var right = EnsureImage(panel, "HeaderTagLineR", CyanLine);
-            PlaceTopCenter(right.rectTransform, 112f, -40f, 60f, 1f);
-
-            var divider = EnsureImage(panel, "HeaderDivider", new Color(0f, 0.85f, 1f, 0.55f));
-            divider.rectTransform.anchorMin = new Vector2(0f, 1f);
-            divider.rectTransform.anchorMax = new Vector2(1f, 1f);
-            divider.rectTransform.pivot = new Vector2(0.5f, 1f);
-            divider.rectTransform.anchoredPosition = new Vector2(0f, -HeaderHeight);
-            divider.rectTransform.sizeDelta = new Vector2(0f, 1.5f);
+            PlaceTopCenter(right.rectTransform, 112f, -45f, 60f, 1f);
         }
 
         private readonly struct GaugeRefs
@@ -925,30 +986,13 @@ namespace SubTerra.App.Editor.DataValidation
             description.color = BodyText;
         }
 
-        private static void BuildCorners(Transform panel)
+        // 예전 임시 청록 코너 브래킷은 프레임 이미지가 대신하므로 지운다.
+        private static void RemoveLegacyCorners(Transform panel)
         {
-            const float length = 22f;
-            const float thickness = 3f;
-            var corners = new[]
+            foreach (var id in new[] { "TL", "TR", "BL", "BR" })
             {
-                ("TL", new Vector2(0f, 1f)),
-                ("TR", new Vector2(1f, 1f)),
-                ("BL", new Vector2(0f, 0f)),
-                ("BR", new Vector2(1f, 0f))
-            };
-            foreach (var (id, anchor) in corners)
-            {
-                var h = EnsureImage(panel, "Corner" + id + "_H", Cyan);
-                var v = EnsureImage(panel, "Corner" + id + "_V", Cyan);
-                foreach (var image in new[] { h, v })
-                {
-                    image.rectTransform.anchorMin = image.rectTransform.anchorMax = anchor;
-                    image.rectTransform.pivot = anchor;
-                    image.rectTransform.anchoredPosition = Vector2.zero;
-                }
-
-                h.rectTransform.sizeDelta = new Vector2(length, thickness);
-                v.rectTransform.sizeDelta = new Vector2(thickness, length);
+                RemoveChild(panel, "Corner" + id + "_H");
+                RemoveChild(panel, "Corner" + id + "_V");
             }
         }
 
@@ -963,7 +1007,7 @@ namespace SubTerra.App.Editor.DataValidation
             var rect = (RectTransform)close;
             rect.anchorMin = rect.anchorMax = new Vector2(1f, 1f);
             rect.pivot = new Vector2(1f, 1f);
-            rect.anchoredPosition = new Vector2(-12f, -11f);
+            rect.anchoredPosition = new Vector2(-FrameInset - 8f, -FrameInset - 6f);
             rect.sizeDelta = new Vector2(32f, 32f);
 
             var image = close.GetComponent<Image>();
@@ -996,12 +1040,10 @@ namespace SubTerra.App.Editor.DataValidation
         {
             var order = new[]
             {
-                "HeaderBand", "HeaderTagLineL", "HeaderTagLineR", "HeaderTag", "Title", "HeaderDivider",
+                FrameObjectName, "HeaderBand", "HeaderTagLineL", "HeaderTagLineR", "HeaderTag", "Title", "HeaderDivider",
                 "CargoCard", "ValueCard", "CargoSummaryText", "UnsettledValueText",
                 "ListFrame", "ListSectionLabel", "SearchField", "ColumnHeader", "EmptyHint",
                 "StackScroll", "StacksText",
-                "CornerTL_H", "CornerTL_V", "CornerTR_H", "CornerTR_V",
-                "CornerBL_H", "CornerBL_V", "CornerBR_H", "CornerBR_V",
                 "WeightHelpIcon",
                 // 펼친 정렬 목록이 표 위에 그려지도록 드롭다운을 표 뒤에 둔다.
                 "SortDropdown"
