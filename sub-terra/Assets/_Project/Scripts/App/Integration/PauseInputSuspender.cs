@@ -9,7 +9,7 @@ using UnityEngine;
 namespace SubTerra.App.Integration
 {
     /// <summary>
-    /// UiPauseGate가 잡힌 동안 월드 쪽 입력 컴포넌트(이동·채굴·건설·엘리베이터·포탈)를 끄고,
+    /// UI 정지 또는 검색 입력 중 월드 쪽 입력 컴포넌트(이동·채굴·건설·엘리베이터·포탈)를 끄고,
     /// 풀리면 이 컴포넌트가 끈 것만 되살린다. Gameplay는 App을 참조할 수 없어 Integration에서 연결한다.
     /// </summary>
     [DefaultExecutionOrder(-400)]
@@ -21,19 +21,19 @@ namespace SubTerra.App.Integration
 
         private void OnEnable()
         {
-            UiPauseGate.Changed += Sync;
+            UiPauseGate.InputChanged += Sync;
             Sync();
         }
 
         private void OnDisable()
         {
-            UiPauseGate.Changed -= Sync;
+            UiPauseGate.InputChanged -= Sync;
             Resume();
         }
 
         private void Sync()
         {
-            if (UiPauseGate.IsHeld)
+            if (UiPauseGate.IsInputBlocked)
             {
                 Suspend();
             }

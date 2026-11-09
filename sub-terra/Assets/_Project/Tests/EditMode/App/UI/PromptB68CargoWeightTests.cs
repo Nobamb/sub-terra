@@ -46,10 +46,15 @@ namespace SubTerra.App.Tests.UI
 
             // prompt-B 112: 앵커가 달라도 같은 패널 좌표계에서 가로 범위를 비교한다.
             var panelWidth = ((RectTransform)prefab.transform).sizeDelta.x;
-            var cargoRange = HorizontalRange((RectTransform)cargo, panelWidth);
+            // prompt-B 190: ?는 화면에 보이는 "적재 현황" 제목 바로 오른쪽에 둔다(CargoSummaryText는 숨김 계약용).
+            var card = (RectTransform)prefab.transform.Find("PanelRoot/CargoCard");
+            var cargoLabel = (RectTransform)card.Find("CargoLabel");
+            var cardRange = HorizontalRange(card, panelWidth);
+            var labelRange = HorizontalRange(cargoLabel, card.sizeDelta.x);
+            var cargoRange = new Vector2(cardRange.x + labelRange.x, cardRange.x + labelRange.y);
             var iconRange = HorizontalRange((RectTransform)icon, panelWidth);
             var closeRange = HorizontalRange((RectTransform)close, panelWidth);
-            Assert.That(cargoRange.y, Is.LessThan(iconRange.x), "중량 텍스트와 도움말 아이콘이 겹칩니다.");
+            Assert.That(cargoRange.y, Is.LessThan(iconRange.x), "적재 현황 제목과 도움말 아이콘이 겹칩니다.");
             Assert.That(iconRange.y, Is.LessThan(closeRange.x), "도움말 아이콘이 닫기 버튼에 가려집니다.");
 
             var description = tooltip.GetComponentInChildren<TMP_Text>(true);

@@ -128,7 +128,13 @@ namespace SubTerra.App.Editor.DataValidation
                 + "• 최대 적재량에 도달하면 더 이상 자원을 채굴할 수 없습니다.\n"
                 + "• 적재율에 비례해 점프력이 기본의 75%까지 감소합니다.\n"
                 + "• 적재율에 비례해 낙하 충격이 최대 1.5배까지 증가합니다.";
+            // B-190 이후 설명 글자는 홀로그램 Body 아래로 옮겨져 있다.
             var descriptionRoot = root.transform.Find("Description");
+            if (descriptionRoot == null)
+            {
+                descriptionRoot = root.transform.Find("Body/Description");
+            }
+
             var description = descriptionRoot != null
                 ? descriptionRoot.GetComponent<TextMeshProUGUI>()
                 : null;

@@ -95,7 +95,7 @@ namespace SubTerra.App.Integration
         /// <summary>월드 우클릭: 시설 이동 시작, 이동 중이면 원래 위치를 보존하고 취소.</summary>
         public bool HandleWorldRightClick(Vector3 worldPosition)
         {
-            if (UiPauseGate.IsHeld) return false;
+            if (UiPauseGate.IsInputBlocked) return false;
             if (IsMoveMode)
             {
                 CancelPreview(true);
@@ -106,7 +106,7 @@ namespace SubTerra.App.Integration
 
         public bool TryBeginMoveFromWorld(Vector3 worldPosition)
         {
-            if (UiPauseGate.IsHeld || placementSystem == null || placementSystem.IsMoving) return false;
+            if (UiPauseGate.IsInputBlocked || placementSystem == null || placementSystem.IsMoving) return false;
             var previousId = selectedBuildingId;
             if (!placementSystem.TryBeginMoveAt(worldPosition)) return false;
             if (pickingMoveTarget) BuildingPlacementActivity.End();
@@ -162,7 +162,7 @@ namespace SubTerra.App.Integration
 
         private void UpdateMoveHoverHint()
         {
-            if (UiPauseGate.IsHeld || IsMoveMode || placementSystem == null
+            if (UiPauseGate.IsInputBlocked || IsMoveMode || placementSystem == null
                 || placementSystem.Selection != null || Mouse.current == null
                 || (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject()))
             {
@@ -205,7 +205,7 @@ namespace SubTerra.App.Integration
         private void UpdateCursorPickHover()
         {
             cursorPickHover = false;
-            if (!pickingMoveTarget || UiPauseGate.IsHeld || placementSystem == null || Mouse.current == null
+            if (!pickingMoveTarget || UiPauseGate.IsInputBlocked || placementSystem == null || Mouse.current == null
                 || (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject()))
                 return;
             var camera = targetCamera != null ? targetCamera : Camera.main;
@@ -219,7 +219,7 @@ namespace SubTerra.App.Integration
         {
             UpdateMoveHoverHint();
             UpdateCursorPickHover();
-            if (UiPauseGate.IsHeld)
+            if (UiPauseGate.IsInputBlocked)
             {
                 return;
             }

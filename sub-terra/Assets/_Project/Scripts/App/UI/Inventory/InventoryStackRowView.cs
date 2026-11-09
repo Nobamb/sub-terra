@@ -4,7 +4,7 @@ using UnityEngine.UI;
 
 namespace SubTerra.App.UI.Inventory
 {
-    /// <summary>하나의 광물 썸네일·이름·수량 행을 표시한다.</summary>
+    /// <summary>적재 내역 한 줄(아이콘·이름·개당 무게·수량·이 줄 무게)을 표시한다.</summary>
     public sealed class InventoryStackRowView : MonoBehaviour
     {
         [SerializeField] private string mineralId;
@@ -12,65 +12,67 @@ namespace SubTerra.App.UI.Inventory
         [SerializeField] private TMP_Text nameText;
         [SerializeField] private TMP_Text quantityText;
 
-        // prompt-B 112: 보유/미보유 상태를 색과 문구로 함께 구분한다.
+        // prompt-B 190: 명세표 열. 수량 0인 행은 표에 올리지 않는다.
         [SerializeField] private Image rowBackground;
-        [SerializeField] private Image accentBar;
         [SerializeField] private TMP_Text unitWeightText;
-        [SerializeField] private TMP_Text stateText;
-        [SerializeField] private Color ownedBackground = new Color(0.06f, 0.125f, 0.16f, 1f);
-        [SerializeField] private Color emptyBackground = new Color(0.03f, 0.05f, 0.065f, 1f);
+        [SerializeField] private TMP_Text lineWeightText;
+        [SerializeField] private Color ownedBackground = new Color(0.04f, 0.09f, 0.12f, 0.92f);
         [SerializeField] private Color ownedText = Color.white;
-        [SerializeField] private Color emptyText = new Color(0.48f, 0.58f, 0.63f, 1f);
-        [SerializeField] private Color ownedState = new Color(0.45f, 0.95f, 1f, 1f);
 
         public string MineralId => mineralId;
 
         public void SetStack(InventoryStackReadModel stack)
         {
             var owned = stack.Quantity > 0;
+            if (gameObject.activeSelf != owned)
+            {
+                gameObject.SetActive(owned);
+            }
+
+            if (!owned)
+            {
+                return;
+            }
+
             if (iconImage != null)
             {
                 iconImage.sprite = stack.Icon;
                 iconImage.enabled = stack.Icon != null;
-                iconImage.color = owned ? Color.white : new Color(1f, 1f, 1f, 0.4f);
+                iconImage.color = Color.white;
             }
 
             if (nameText != null)
             {
+                // TMP maxVisibleLines is runtime state, not a serialized prefab property.
+                if (unitWeightText != null) nameText.maxVisibleLines = 2;
                 nameText.text = string.IsNullOrEmpty(stack.DisplayName)
                     ? stack.MineralId
                     : stack.DisplayName;
-                nameText.color = owned ? ownedText : emptyText;
+                nameText.color = ownedText;
             }
 
             if (quantityText != null)
             {
-                // 신규 행은 "N 개" 형식, 기존 단일 텍스트 행은 "xN"을 유지한다.
-                quantityText.text = stateText != null
+                // 명세표 행은 "N 개" 형식, 기존 단일 텍스트 행은 "xN"을 유지한다.
+                quantityText.text = unitWeightText != null
                     ? InventoryPanelDisplayFormatter.Quantity(stack.Quantity)
                     : "x" + stack.Quantity;
-                quantityText.color = owned ? ownedText : emptyText;
+                quantityText.color = ownedText;
             }
 
-            if (unitWeightText != null && stack.UnitWeight > 0f)
+            if (unitWeightText != null)
             {
                 unitWeightText.text = InventoryPanelDisplayFormatter.UnitWeight(stack.UnitWeight);
             }
 
-            if (stateText != null)
+            if (lineWeightText != null)
             {
-                stateText.text = InventoryPanelDisplayFormatter.QuantityState(stack.Quantity);
-                stateText.color = owned ? ownedState : emptyText;
+                lineWeightText.text = InventoryPanelDisplayFormatter.LineWeight(stack.Quantity, stack.UnitWeight);
             }
 
             if (rowBackground != null)
             {
-                rowBackground.color = owned ? ownedBackground : emptyBackground;
-            }
-
-            if (accentBar != null)
-            {
-                accentBar.enabled = owned;
+                rowBackground.color = ownedBackground;
             }
         }
 
@@ -83,12 +85,11 @@ namespace SubTerra.App.UI.Inventory
             quantityText = quantity;
         }
 
-        public void EditorSetDetailReferences(Image background, Image accent, TMP_Text unitWeight, TMP_Text state)
+        public void EditorSetDetailReferences(Image background, TMP_Text unitWeight, TMP_Text lineWeight)
         {
             rowBackground = background;
-            accentBar = accent;
             unitWeightText = unitWeight;
-            stateText = state;
+            lineWeightText = lineWeight;
         }
 #endif
     }

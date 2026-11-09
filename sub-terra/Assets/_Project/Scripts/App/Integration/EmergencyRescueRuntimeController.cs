@@ -52,7 +52,7 @@ namespace SubTerra.App.Integration
 
         private void Update()
         {
-            if (!IsRescueAvailable || UiPauseGate.IsHeld)
+            if (!IsRescueAvailable || UiPauseGate.IsInputBlocked)
             {
                 return;
             }
