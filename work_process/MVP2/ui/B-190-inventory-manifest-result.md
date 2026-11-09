@@ -3,7 +3,7 @@
 - 기준 브랜치: `codex/issue-268-inventory-readability`
 - 이번 작업 시작 HEAD: `c78becbc` (1차 B-190 명세표 커밋 `c11535c5` + 보고서 커밋)
 - main merge 여부: **추가 merge 없음.** `git fetch` 후 `origin/main`(`5db79706`)이 이미 이 브랜치의 조상이라 merge할 것이 없었다. 충돌 없음.
-- 커밋 해시: (커밋 후 기재)
+- 커밋 해시: `4bbdadbb` (기능), 이 보고서 해시 기재는 후속 docs 커밋
 - 새 PR: 만들지 않음. 기존 #275 갱신 대상.
 
 ## 이번에 바뀐 점 (1차 대비)
@@ -157,8 +157,8 @@
 
 ## 완료 체크리스트
 
-- [ ] `codex/issue-268-inventory-readability` push 확인
-- [ ] 커밋 해시 기재
+- [x] `codex/issue-268-inventory-readability` push 확인
+- [x] 커밋 해시 기재
 - [x] Unity 컴파일 오류 없음 (빌드는 미검증)
 - [x] 기존 인벤토리 테스트가 새 배치·검색·정렬에 맞게 수정됨
 - [x] 상단이 적재 현황 + 작은 미정산 스탬프
