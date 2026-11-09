@@ -26,6 +26,8 @@ namespace SubTerra.App.UI.Inventory
         [SerializeField] private TMP_Text unsettledAmountText;
         [SerializeField] private TMP_Text ownedKindsText;
         [SerializeField] private TMP_Text emptyHintText;
+        // prompt-B 190: 적재 내역 표 머리. 실린 자원이 없으면 빈 안내만 남긴다.
+        [SerializeField] private GameObject columnHeaderRoot;
         [SerializeField] private Color cargoNormalColor = new Color(0.45f, 0.95f, 1f, 1f);
         [SerializeField] private Color cargoNearFullColor = new Color(1f, 0.72f, 0.2f, 1f);
         [SerializeField] private Color cargoFullColor = new Color(1f, 0.45f, 0.4f, 1f);
@@ -101,8 +103,6 @@ namespace SubTerra.App.UI.Inventory
                 return;
             }
 
-            var owned = 0;
-            var total = 0;
             for (var i = 0; i < stackRows.Length; i++)
             {
                 var row = stackRows[i];
@@ -131,17 +131,29 @@ namespace SubTerra.App.UI.Inventory
                 }
             }
 
+            var loaded = 0;
             for (var i = 0; i < stackRows.Length; i++)
             {
-                if (stackRows[i] == null) continue;
-                total++;
-                if (stacks != null && HasQuantity(stacks, stackRows[i].MineralId)) owned++;
+                if (stackRows[i] != null && stacks != null && HasQuantity(stacks, stackRows[i].MineralId))
+                {
+                    loaded++;
+                }
             }
+
             if (ownedKindsText != null)
             {
-                ownedKindsText.text = InventoryPanelDisplayFormatter.OwnedKinds(owned, total);
+                ownedKindsText.text = InventoryPanelDisplayFormatter.LoadedKinds(loaded);
             }
-            if (emptyHintText != null) emptyHintText.gameObject.SetActive(owned == 0);
+
+            if (emptyHintText != null)
+            {
+                emptyHintText.gameObject.SetActive(loaded == 0);
+            }
+
+            if (columnHeaderRoot != null)
+            {
+                columnHeaderRoot.SetActive(loaded > 0);
+            }
         }
 
         private static bool HasQuantity(IReadOnlyList<InventoryStackReadModel> stacks, string mineralId)

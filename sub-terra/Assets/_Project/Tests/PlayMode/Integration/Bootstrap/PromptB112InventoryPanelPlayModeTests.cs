@@ -70,8 +70,11 @@ namespace SubTerra.App.Tests.PlayMode
             var rows = panel.Find("StackScroll/Viewport/StackRows");
 
             AssertMatchesService(inventory, percent, stateLine, value);
-            Assert.That(owned.text, Is.EqualTo(InventoryPanelDisplayFormatter.OwnedKinds(0, 4)));
-            Assert.That(Text(rows, "Stack_" + DataIds.Minerals.Copper + "/State").text, Is.EqualTo("보유 없음"));
+            // prompt-B 190: 수량 0 행은 숨기고 빈 안내만 보인다.
+            Assert.That(owned.text, Is.EqualTo(InventoryPanelDisplayFormatter.LoadedKinds(0)));
+            Assert.That(rows.Find("Stack_" + DataIds.Minerals.Copper).gameObject.activeSelf, Is.False);
+            Assert.That(panel.Find("EmptyHint").gameObject.activeSelf, Is.True);
+            Assert.That(panel.Find("ColumnHeader").gameObject.activeSelf, Is.False);
             AssertInsideScreenAndClearOfHud(view);
             AssertNotTruncated(panel);
             var evidence = Path.GetFullPath("Temp/visual/prompt-b112");
@@ -84,10 +87,13 @@ namespace SubTerra.App.Tests.PlayMode
             Assert.That(inventory.TryAddMineralExact(DataIds.RareItems.EngineFuel, 1).DidChange, Is.True);
             yield return null;
             AssertMatchesService(inventory, percent, stateLine, value);
-            Assert.That(owned.text, Is.EqualTo(InventoryPanelDisplayFormatter.OwnedKinds(3, 4)));
+            Assert.That(owned.text, Is.EqualTo(InventoryPanelDisplayFormatter.LoadedKinds(3)));
             Assert.That(Text(rows, "Stack_" + DataIds.Minerals.Copper + "/Quantity").text, Does.Contain(">4<"));
-            Assert.That(Text(rows, "Stack_" + DataIds.Minerals.Copper + "/State").text, Is.EqualTo("보유 중"));
-            Assert.That(Text(rows, "Stack_" + DataIds.Minerals.Lithium + "/State").text, Is.EqualTo("보유 없음"));
+            AssertLineWeight(inventory, rows, DataIds.Minerals.Copper);
+            AssertLineWeight(inventory, rows, DataIds.Minerals.Iron);
+            Assert.That(rows.Find("Stack_" + DataIds.Minerals.Lithium).gameObject.activeSelf, Is.False);
+            Assert.That(panel.Find("EmptyHint").gameObject.activeSelf, Is.False);
+            Assert.That(panel.Find("ColumnHeader").gameObject.activeSelf, Is.True);
             AssertNotTruncated(panel);
             if (visual) yield return UiTestWait.Capture(Path.Combine(evidence, "inventory-normal-1920x1080.png"));
 
@@ -166,6 +172,25 @@ namespace SubTerra.App.Tests.PlayMode
             Assert.That(stateLine.text, Is.EqualTo(
                 InventoryPanelDisplayFormatter.StateLine(inventory.CurrentWeight, inventory.MaxCapacity)));
             Assert.That(value.text, Is.EqualTo(InventoryPanelDisplayFormatter.UnsettledAmount(inventory.UnsettledValue)));
+        }
+
+        private static void AssertLineWeight(InventoryService inventory, Transform rows, string mineralId)
+        {
+            var quantity = 0;
+            var unitWeight = 0f;
+            foreach (var stack in inventory.GetSnapshot().Stacks)
+            {
+                if (stack.MineralId == mineralId)
+                {
+                    quantity = stack.Quantity;
+                    unitWeight = stack.UnitWeight;
+                }
+            }
+
+            Assert.That(Text(rows, "Stack_" + mineralId + "/UnitWeight").text,
+                Is.EqualTo(InventoryPanelDisplayFormatter.UnitWeight(unitWeight)));
+            Assert.That(Text(rows, "Stack_" + mineralId + "/LineWeight").text,
+                Is.EqualTo(InventoryPanelDisplayFormatter.LineWeight(quantity, unitWeight)));
         }
 
         private static TMP_Text Text(Transform root, string path)

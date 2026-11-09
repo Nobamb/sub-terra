@@ -65,7 +65,7 @@ namespace SubTerra.App.Tests.PlayMode
                 Assert.That(view.PanelRoot.activeInHierarchy,Is.True);
                 yield return new WaitForSecondsRealtime(.3f);
                 Capture(view.PanelRoot,stage+"-empty-"+context);
-                if(!before) Assert.That(view.PanelRoot.transform.Find("EmptyHint").GetComponent<TMP_Text>().text,Is.EqualTo("보유 중인 자원이 없습니다"));
+                if(!before) Assert.That(view.PanelRoot.transform.Find("EmptyHint").GetComponent<TMP_Text>().text,Is.EqualTo("적재된 자원이 없습니다"));
                 Assert.That(inventory.TryAddMineralExact(DataIds.Minerals.Copper,4).DidChange,Is.True);
                 Assert.That(inventory.TryAddMineralExact(DataIds.Minerals.Iron,3).DidChange,Is.True);
                 Assert.That(inventory.TryAddMineralExact(DataIds.RareItems.EngineFuel,1).DidChange,Is.True);
@@ -79,7 +79,7 @@ namespace SubTerra.App.Tests.PlayMode
                     foreach(var row in view.GetComponentsInChildren<InventoryStackRowView>(true))
                     {
                         var qty=(RectTransform)row.transform.Find("Quantity");
-                        columns &= Mathf.Abs(qty.sizeDelta.x-104f)<.1f;
+                        columns &= Mathf.Abs(qty.sizeDelta.x-84f)<.1f;
                     }
                     Capture(view.PanelRoot,stage+"-"+context+"-"+size.x);
                     var help=panel.Find("WeightHelpIcon").GetComponent<InventoryWeightTooltip>();
@@ -117,7 +117,8 @@ namespace SubTerra.App.Tests.PlayMode
                 {
                     foreach(var text in view.PanelRoot.GetComponentsInChildren<TMP_Text>())
                     { text.ForceMeshUpdate(); Assert.That(text.isTextTruncated,Is.False,text.name+" "+text.text); }
-                    foreach(var row in view.GetComponentsInChildren<InventoryStackRowView>(true))
+                    // 수량 0 행은 숨겨지므로 보이는 행만 검사한다(B-190).
+                    foreach(var row in view.GetComponentsInChildren<InventoryStackRowView>(false))
                     {
                         var name=row.transform.Find("Name").GetComponent<TMP_Text>();
                         name.ForceMeshUpdate();
@@ -141,7 +142,7 @@ namespace SubTerra.App.Tests.PlayMode
                 yield return UiTestWait.Press(environment.Keyboard,Key.I);
                 yield return UiTestWait.Until(()=>!view.PanelRoot.activeInHierarchy,"I close",5f);
             }
-            Assert.That(columns,Is.True,"Quantity columns require width 104");
+            Assert.That(columns,Is.True,"Quantity columns require width 84");
         }
         private static void Capture(GameObject panel, string name)
         {

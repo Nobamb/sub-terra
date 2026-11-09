@@ -82,8 +82,9 @@ namespace SubTerra.App.UI.Inventory
                 return label;
             }
 
+            // prompt-B 190: 남은 적재량을 먼저 읽고 상태 문구를 뒤에 붙인다.
             var remaining = max > current ? max - current : 0f;
-            return label + "  ·  남은 적재량 " + HudFormatter.FormatCargoAmount(remaining);
+            return "남은 적재량 " + HudFormatter.FormatCargoAmount(remaining) + "  ·  " + label;
         }
 
         public static string UnsettledAmount(float value)
@@ -106,19 +107,26 @@ namespace SubTerra.App.UI.Inventory
             return "<b>" + quantity.ToString("#,0", CultureInfo.InvariantCulture) + "</b><size=60%> 개</size>";
         }
 
-        public static string QuantityState(int quantity)
-        {
-            return quantity > 0 ? "보유 중" : "보유 없음";
-        }
-
+        /// <summary>prompt-B 190: 명세표 개당 무게 열. 열 머리가 단위를 설명하므로 숫자만 둔다.</summary>
         public static string UnitWeight(float unitWeight)
         {
-            return unitWeight > 0f ? "개당 무게 " + HudFormatter.FormatCargoAmount(unitWeight) : string.Empty;
+            return HudFormatter.FormatCargoAmount(unitWeight);
         }
 
-        public static string OwnedKinds(int owned, int total)
+        /// <summary>prompt-B 190: 이 줄 무게 = 수량 × 개당 무게(표시 전용, 적재 판정에 쓰지 않는다).</summary>
+        public static string LineWeight(int quantity, float unitWeight)
         {
-            return "보유 " + owned + " / " + total + "종";
+            if (quantity <= 0 || unitWeight <= 0f)
+            {
+                return HudFormatter.FormatCargoAmount(0f);
+            }
+
+            return HudFormatter.FormatCargoAmount(quantity * unitWeight);
+        }
+
+        public static string LoadedKinds(int kinds)
+        {
+            return (kinds < 0 ? 0 : kinds).ToString(CultureInfo.InvariantCulture) + "종";
         }
     }
 }
