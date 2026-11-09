@@ -3914,3 +3914,6 @@ work_process/MVP2/power/B-185-1-power-on-range-result.md: "조명·보관함은 
 
 
 189. prompt-B-189.md 내용을 참고해서 드론 말풍선 연출 효과 추가해줘
+
+
+190. B-190-inventory 폴더의 prompt-B-190.md 내용 참고해서 인벤토리 UI 수정해줘 B-190-concept.png 이미지도 같이 참고해서 만들어주면 돼
