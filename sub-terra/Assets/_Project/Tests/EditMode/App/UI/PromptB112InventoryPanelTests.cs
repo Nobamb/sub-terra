@@ -88,7 +88,7 @@ namespace SubTerra.App.Tests.UI
                 Assert.That(rows.Where(r => r != copper).All(r => !r.gameObject.activeSelf), Is.True, "수량 0 행이 보입니다.");
                 Assert.That(copper.transform.Find("LineWeight").GetComponent<TMPro.TMP_Text>().text, Is.EqualTo("6"));
                 Assert.That(copper.transform.Find("UnitWeight").GetComponent<TMPro.TMP_Text>().text, Is.EqualTo("1.5"));
-                Assert.That(panel.Find("OwnedKindsText").GetComponent<TMPro.TMP_Text>().text, Is.EqualTo("1종"));
+                Assert.That(panel.Find("OwnedKindsText"), Is.Null, "종류 수 자리는 정렬 드롭다운이 쓴다.");
                 Assert.That(panel.Find("EmptyHint").gameObject.activeSelf, Is.False);
                 Assert.That(panel.Find("ColumnHeader").gameObject.activeSelf, Is.True);
 
@@ -97,6 +97,136 @@ namespace SubTerra.App.Tests.UI
                 Assert.That(panel.Find("EmptyHint").gameObject.activeSelf, Is.True);
                 Assert.That(panel.Find("EmptyHint").GetComponent<TMPro.TMP_Text>().text, Is.EqualTo("적재된 자원이 없습니다"));
                 Assert.That(panel.Find("ColumnHeader").gameObject.activeSelf, Is.False);
+            }
+            finally
+            {
+                PrefabUtility.UnloadPrefabContents(root);
+            }
+        }
+
+        private static InventoryStackReadModel[] CargoOf(int copper, int iron, int lithium, int fuel = 0)
+        {
+            return new[]
+            {
+                new InventoryStackReadModel("mineral.copper", "구리", null, copper, 1.5f),
+                new InventoryStackReadModel("mineral.iron", "철", null, iron, 2f),
+                new InventoryStackReadModel("mineral.lithium", "리튬", null, lithium, 0.8f),
+                new InventoryStackReadModel("item.rare.engine_fuel", "엔진 연료 (희귀)", null, fuel, 1f)
+            };
+        }
+
+        private static string[] Order(InventoryStackReadModel[] stacks, string query, InventoryManifestSort sort)
+        {
+            return InventoryManifestQuery.Apply(stacks, query, sort).Select(s => s.MineralId).ToArray();
+        }
+
+        [Test]
+        public void Query_DefaultRaritySortsCopperIronLithiumAndReverse()
+        {
+            // prompt-B 190: 희귀도 구리 < 철 < 리튬, 희귀 품목(엔진 연료)은 광물보다 높다.
+            var cargo = CargoOf(4, 12, 4);
+            Assert.That(InventoryManifestQuery.DefaultSort, Is.EqualTo(InventoryManifestSort.RarityAscending));
+            Assert.That(Order(cargo, "", InventoryManifestSort.RarityAscending),
+                Is.EqualTo(new[] { "mineral.copper", "mineral.iron", "mineral.lithium" }));
+            Assert.That(Order(cargo, "", InventoryManifestSort.RarityDescending),
+                Is.EqualTo(new[] { "mineral.lithium", "mineral.iron", "mineral.copper" }));
+            Assert.That(Order(CargoOf(1, 1, 1, 1), "", InventoryManifestSort.RarityDescending).First(),
+                Is.EqualTo("item.rare.engine_fuel"));
+        }
+
+        [Test]
+        public void Query_WeightSortUsesUnitWeightNotLineWeight()
+        {
+            // 철 2×1 = 2, 구리 1.5×10 = 15: 이 줄 무게라면 구리가 먼저지만 개당 무게 기준이라 철이 먼저다.
+            var cargo = CargoOf(10, 1, 4);
+            Assert.That(Order(cargo, "", InventoryManifestSort.WeightDescending),
+                Is.EqualTo(new[] { "mineral.iron", "mineral.copper", "mineral.lithium" }));
+            Assert.That(Order(cargo, "", InventoryManifestSort.WeightAscending),
+                Is.EqualTo(new[] { "mineral.lithium", "mineral.copper", "mineral.iron" }));
+        }
+
+        [Test]
+        public void Query_QuantityNameAndTieBreakRules()
+        {
+            var cargo = CargoOf(4, 12, 4);
+            Assert.That(Order(cargo, "", InventoryManifestSort.QuantityDescending),
+                Is.EqualTo(new[] { "mineral.iron", "mineral.copper", "mineral.lithium" }), "동률(구리·리튬 4개)은 희귀도순");
+            Assert.That(Order(cargo, "", InventoryManifestSort.QuantityAscending),
+                Is.EqualTo(new[] { "mineral.copper", "mineral.lithium", "mineral.iron" }));
+            Assert.That(Order(cargo, "", InventoryManifestSort.NameAscending),
+                Is.EqualTo(new[] { "mineral.copper", "mineral.lithium", "mineral.iron" }), "구리 → 리튬 → 철");
+            Assert.That(Order(cargo, "", InventoryManifestSort.NameDescending),
+                Is.EqualTo(new[] { "mineral.iron", "mineral.lithium", "mineral.copper" }));
+            Assert.That(InventoryManifestQuery.AllLabels(), Is.EqualTo(new[]
+            {
+                "수량 많은 순", "수량 적은 순", "무게 무거운 순", "무게 가벼운 순",
+                "희귀도순", "희귀도 역순", "가나다순", "가나다 역순"
+            }));
+        }
+
+        [Test]
+        public void Query_SearchMatchesDisplayNameAndSkipsEmptyStacks()
+        {
+            var cargo = CargoOf(4, 0, 4, 1);
+            Assert.That(Order(cargo, "구", InventoryManifestSort.RarityAscending), Is.EqualTo(new[] { "mineral.copper" }));
+            Assert.That(Order(cargo, "  연료 ", InventoryManifestSort.RarityAscending), Is.EqualTo(new[] { "item.rare.engine_fuel" }));
+            Assert.That(Order(cargo, "철", InventoryManifestSort.RarityAscending), Is.Empty, "수량 0인 철은 검색돼도 올리지 않는다.");
+            Assert.That(Order(cargo, "", InventoryManifestSort.RarityAscending),
+                Is.EqualTo(new[] { "mineral.copper", "mineral.lithium", "item.rare.engine_fuel" }));
+            Assert.That(InventoryManifestQuery.LoadedCount(cargo), Is.EqualTo(3));
+        }
+
+        [Test]
+        public void View_SearchSortKeepEachOtherAndResetOnReopen()
+        {
+            var root = PrefabUtility.LoadPrefabContents(PrefabPath);
+            try
+            {
+                var view = root.GetComponent<InventoryPanelView>();
+                var panel = root.transform.Find("PanelRoot");
+                var content = panel.Find("StackScroll/Viewport/StackRows");
+                var hint = panel.Find("EmptyHint").GetComponent<TMPro.TMP_Text>();
+                string[] Visible() => content.Cast<Transform>()
+                    .Where(t => t.gameObject.activeSelf)
+                    .Select(t => t.GetComponent<InventoryStackRowView>().MineralId)
+                    .ToArray();
+
+                view.SetStacks(CargoOf(4, 12, 4));
+                Assert.That(Visible(), Is.EqualTo(new[] { "mineral.copper", "mineral.iron", "mineral.lithium" }));
+
+                view.SetSort(InventoryManifestSort.RarityDescending);
+                Assert.That(Visible(), Is.EqualTo(new[] { "mineral.lithium", "mineral.iron", "mineral.copper" }));
+
+                view.SetSearchQuery("리");
+                Assert.That(Visible(), Is.EqualTo(new[] { "mineral.lithium", "mineral.copper" }), "구리·리튬");
+                Assert.That(view.Sort, Is.EqualTo(InventoryManifestSort.RarityDescending), "검색해도 정렬 유지");
+
+                view.SetSort(InventoryManifestSort.NameAscending);
+                Assert.That(view.SearchQuery, Is.EqualTo("리"), "정렬을 바꿔도 검색어 유지");
+                Assert.That(view.SearchField.text, Is.EqualTo("리"));
+                Assert.That(Visible(), Is.EqualTo(new[] { "mineral.copper", "mineral.lithium" }));
+
+                // 창을 연 채 채굴: 검색·정렬을 유지하고 표만 갱신.
+                view.SetStacks(CargoOf(4, 12, 0));
+                Assert.That(Visible(), Is.EqualTo(new[] { "mineral.copper" }));
+
+                view.SetSearchQuery("금");
+                Assert.That(Visible(), Is.Empty);
+                Assert.That(hint.gameObject.activeSelf, Is.True);
+                Assert.That(hint.text, Is.EqualTo("검색 결과가 없습니다"));
+                Assert.That(panel.Find("ColumnHeader").gameObject.activeSelf, Is.False);
+
+                // 실린 자원이 없으면 검색어와 상관없이 빈 적재 안내.
+                view.SetStacks(CargoOf(0, 0, 0));
+                Assert.That(hint.text, Is.EqualTo("적재된 자원이 없습니다"));
+
+                view.SetStacks(CargoOf(4, 12, 4));
+                view.ResetManifestControls();
+                Assert.That(view.SearchQuery, Is.Empty);
+                Assert.That(view.SearchField.text, Is.Empty);
+                Assert.That(view.Sort, Is.EqualTo(InventoryManifestSort.RarityAscending));
+                Assert.That(view.SortDropdown.value, Is.EqualTo((int)InventoryManifestSort.RarityAscending));
+                Assert.That(Visible(), Is.EqualTo(new[] { "mineral.copper", "mineral.iron", "mineral.lithium" }));
             }
             finally
             {
@@ -138,11 +268,14 @@ namespace SubTerra.App.Tests.UI
             foreach (var field in new[]
             {
                 "cargoAmountText", "cargoPercentText", "cargoStateText", "cargoFill",
-                "cargoFillImage", "unsettledAmountText", "ownedKindsText", "emptyHintText", "columnHeaderRoot"
+                "cargoFillImage", "unsettledAmountText", "emptyHintText", "columnHeaderRoot",
+                "searchField", "sortDropdown", "stackRowsContent", "stackScroll"
             })
             {
                 Assert.That(so.FindProperty(field).objectReferenceValue, Is.Not.Null, field);
             }
+
+            Assert.That(so.FindProperty("ownedKindsText").objectReferenceValue, Is.Null, "종류 수(N종)는 두지 않는다.");
 
             var scroll = prefab.transform.Find("PanelRoot/StackScroll").GetComponent<ScrollRect>();
             Assert.That(scroll.content, Is.SameAs(prefab.transform.Find("PanelRoot/StackScroll/Viewport/StackRows")));
@@ -165,6 +298,8 @@ namespace SubTerra.App.Tests.UI
                 Is.LessThan(stamp.anchoredPosition.x), "게이지 열이 스탬프에 닿습니다.");
             Assert.That(stamp.Find("UnsettledAmountText").GetComponent<TMPro.TMP_Text>().fontSizeMax,
                 Is.LessThan(amount.GetComponent<TMPro.TMP_Text>().fontSize));
+            Assert.That(stamp.Find("ValueLabel").GetComponent<TMPro.TMP_Text>().text, Is.EqualTo("미정산 가치"));
+            Assert.That(stamp.Find("ValueCaption"), Is.Null, "정산 시 받을 금액 문구는 넣지 않는다.");
 
             // 도움말 ?는 적재 현황 제목 옆, 도움말 본문은 창 아래(숫자 위를 덮지 않음).
             var help = (RectTransform)panel.Find("WeightHelpIcon");
@@ -192,6 +327,38 @@ namespace SubTerra.App.Tests.UI
                 Is.EqualTo(new[] { "자원", "개당 무게", "수량", "이 줄 무게" }));
             Assert.That(PromptB112InventoryPanelBuilder.VisibleRowCount(), Is.InRange(3.8f, 4.6f));
             Assert.That(PromptB112InventoryPanelBuilder.RowHeight, Is.LessThan(88f));
+
+            // C. 적재 내역 오른쪽 정렬 드롭다운 + 제목 아래·표 머리 위 검색창.
+            var label = (RectTransform)panel.Find("ListSectionLabel");
+            var sort = (RectTransform)panel.Find("SortDropdown");
+            var search = (RectTransform)panel.Find("SearchField");
+            var dropdown = sort.GetComponent<TMPro.TMP_Dropdown>();
+            Assert.That(sort.anchoredPosition.y, Is.EqualTo(label.anchoredPosition.y), "정렬은 적재 내역과 같은 줄");
+            Assert.That(sort.anchoredPosition.x, Is.GreaterThan(label.anchoredPosition.x + label.sizeDelta.x));
+            Assert.That(sort.anchoredPosition.x + sort.sizeDelta.x,
+                Is.LessThanOrEqualTo(card.anchoredPosition.x + card.sizeDelta.x));
+            Assert.That(dropdown.options.Select(o => o.text), Is.EqualTo(InventoryManifestQuery.AllLabels()));
+            Assert.That(dropdown.value, Is.EqualTo((int)InventoryManifestSort.RarityAscending));
+            Assert.That(dropdown.captionText.text, Is.EqualTo("희귀도순"));
+            Assert.That(search.anchoredPosition.y, Is.LessThan(label.anchoredPosition.y - label.sizeDelta.y + 0.1f));
+            Assert.That(search.anchoredPosition.y - search.sizeDelta.y,
+                Is.GreaterThanOrEqualTo(((RectTransform)header).anchoredPosition.y), "검색창은 표 머리 위");
+            var input = search.GetComponent<TMPro.TMP_InputField>();
+            Assert.That(((TMPro.TMP_Text)input.placeholder).text, Is.EqualTo("자원 이름 검색"));
+            Assert.That(input.lineType, Is.EqualTo(TMPro.TMP_InputField.LineType.SingleLine));
+            Assert.That(search.Find("SearchIcon"), Is.Not.Null, "왼쪽 돋보기");
+
+            // 펼친 정렬 목록은 창 안(아래쪽)으로만 내려오고 위의 적재 숫자를 덮지 않는다.
+            var template = dropdown.template;
+            Assert.That(template.pivot.y, Is.EqualTo(1f));
+            Assert.That(template.anchorMax.y, Is.EqualTo(0f));
+            var listBottom = sort.anchoredPosition.y - sort.sizeDelta.y + template.anchoredPosition.y - template.sizeDelta.y;
+            Assert.That(listBottom, Is.GreaterThanOrEqualTo(-PromptB112InventoryPanelBuilder.PanelHeight), "정렬 목록이 창 밖으로 나갑니다.");
+            Assert.That(template.Find("Scrollbar"), Is.Null, "8개 항목이 스크롤 없이 보인다.");
+            // 팝업 정렬(32100+) 창 위로 목록을 올리는 전용 드롭다운이어야 펼친 목록이 창 뒤에 깔리지 않는다.
+            Assert.That(dropdown, Is.InstanceOf<InventorySortDropdown>());
+            Assert.That(InventorySortDropdown.ListOrderAbove(32100), Is.EqualTo(32102));
+            Assert.That(InventorySortDropdown.ListOrderAbove(500), Is.EqualTo(InventorySortDropdown.DefaultListOrder));
 
             foreach (var row in prefab.GetComponentsInChildren<InventoryStackRowView>(true))
             {
@@ -244,6 +411,16 @@ namespace SubTerra.App.Tests.UI
             Assert.That(text, Does.Not.Contain("SurfaceBasePanel.prefab"));
             Assert.That(text, Does.Not.Contain("BuildingMenu.prefab"));
             Assert.That(text, Does.Not.Contain("FindAssets(\"t:Prefab"));
+        }
+
+        [Test]
+        public void EngineFuelRowBuilder_ReappliesManifestLayout()
+        {
+            // B-102 엔진 연료 행 추가가 옛 행 스타일을 복제해 명세표를 되돌리지 않아야 한다.
+            var text = System.IO.File.ReadAllText(System.IO.Path.Combine(
+                Application.dataPath, "_Project", "Editor", "DataValidation", "PromptB102SealedGlyphBuilder.cs"));
+            Assert.That(text, Does.Contain("PanelRoot/StackScroll/Viewport/StackRows"));
+            Assert.That(text, Does.Contain("PromptB112InventoryPanelBuilder.ApplyTo(root)"));
         }
     }
 }

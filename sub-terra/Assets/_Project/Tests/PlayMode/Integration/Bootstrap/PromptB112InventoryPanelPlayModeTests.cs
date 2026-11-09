@@ -66,12 +66,11 @@ namespace SubTerra.App.Tests.PlayMode
             var percent = Text(panel, "CargoCard/CargoPercentText");
             var stateLine = Text(panel, "CargoCard/CargoStateText");
             var value = Text(panel, "ValueCard/UnsettledAmountText");
-            var owned = Text(panel, "OwnedKindsText");
             var rows = panel.Find("StackScroll/Viewport/StackRows");
 
             AssertMatchesService(inventory, percent, stateLine, value);
-            // prompt-B 190: 수량 0 행은 숨기고 빈 안내만 보인다.
-            Assert.That(owned.text, Is.EqualTo(InventoryPanelDisplayFormatter.LoadedKinds(0)));
+            // prompt-B 190: 수량 0 행은 숨기고 빈 안내만 보인다. 종류 수(N종)는 두지 않는다.
+            Assert.That(panel.Find("OwnedKindsText"), Is.Null);
             Assert.That(rows.Find("Stack_" + DataIds.Minerals.Copper).gameObject.activeSelf, Is.False);
             Assert.That(panel.Find("EmptyHint").gameObject.activeSelf, Is.True);
             Assert.That(panel.Find("ColumnHeader").gameObject.activeSelf, Is.False);
@@ -87,15 +86,67 @@ namespace SubTerra.App.Tests.PlayMode
             Assert.That(inventory.TryAddMineralExact(DataIds.RareItems.EngineFuel, 1).DidChange, Is.True);
             yield return null;
             AssertMatchesService(inventory, percent, stateLine, value);
-            Assert.That(owned.text, Is.EqualTo(InventoryPanelDisplayFormatter.LoadedKinds(3)));
             Assert.That(Text(rows, "Stack_" + DataIds.Minerals.Copper + "/Quantity").text, Does.Contain(">4<"));
             AssertLineWeight(inventory, rows, DataIds.Minerals.Copper);
             AssertLineWeight(inventory, rows, DataIds.Minerals.Iron);
             Assert.That(rows.Find("Stack_" + DataIds.Minerals.Lithium).gameObject.activeSelf, Is.False);
             Assert.That(panel.Find("EmptyHint").gameObject.activeSelf, Is.False);
             Assert.That(panel.Find("ColumnHeader").gameObject.activeSelf, Is.True);
+            // 기본 희귀도순: 구리 → 철 → (희귀) 엔진 연료.
+            Assert.That(VisibleRows(rows), Is.EqualTo(new[]
+            {
+                DataIds.Minerals.Copper, DataIds.Minerals.Iron, DataIds.RareItems.EngineFuel
+            }));
             AssertNotTruncated(panel);
             if (visual) yield return UiTestWait.Capture(Path.Combine(evidence, "inventory-normal-1920x1080.png"));
+
+            // prompt-B 190: 검색은 표만 거르고 상단 수치는 전체 적재를 유지한다. 정렬을 바꿔도 검색어는 남는다.
+            view.SetSearchQuery("구");
+            yield return null;
+            Assert.That(VisibleRows(rows), Is.EqualTo(new[] { DataIds.Minerals.Copper }));
+            AssertMatchesService(inventory, percent, stateLine, value);
+            view.SortDropdown.value = (int)InventoryManifestSort.QuantityDescending;
+            yield return null;
+            Assert.That(view.SearchField.text, Is.EqualTo("구"));
+            Assert.That(view.Sort, Is.EqualTo(InventoryManifestSort.QuantityDescending));
+            // 열린 창에서 채굴: 검색·정렬을 유지한 채 갱신.
+            Assert.That(inventory.TryAddMineralExact(DataIds.Minerals.Copper, 1).DidChange, Is.True);
+            yield return null;
+            Assert.That(Text(rows, "Stack_" + DataIds.Minerals.Copper + "/Quantity").text, Does.Contain(">5<"));
+            Assert.That(view.SearchField.text, Is.EqualTo("구"));
+            view.SetSearchQuery("없는자원");
+            yield return null;
+            Assert.That(Text(panel, "EmptyHint").text, Is.EqualTo("검색 결과가 없습니다"));
+            if (visual) yield return UiTestWait.Capture(Path.Combine(evidence, "inventory-no-result-1920x1080.png"));
+
+            // 검색창에 포커스가 있는 동안 I는 창을 닫지 않는다.
+            view.SearchField.Select();
+            view.SearchField.ActivateInputField();
+            yield return null;
+            yield return null;
+            Assert.That(view.SearchField.isFocused, Is.True);
+            yield return PressI();
+            yield return null;
+            Assert.That(chrome.IsInventoryPanelOpen, Is.True, "검색 입력 중 I로 창이 닫혔습니다.");
+            view.SearchField.DeactivateInputField();
+            UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(null);
+            yield return null;
+            yield return null;
+            Assert.That(SubTerra.App.UI.UiPauseGate.IsHeldBy(InventoryPanelView.SearchPauseOwner), Is.False);
+
+            // 닫았다 다시 열면 검색어는 비고 정렬은 희귀도순으로 돌아간다.
+            yield return PressI();
+            Assert.That(chrome.IsInventoryPanelOpen, Is.False);
+            yield return new WaitForSecondsRealtime(SubTerra.App.UI.TerminalWindowOpenMotion.CloseDuration + .03f);
+            yield return PressI();
+            Assert.That(chrome.IsInventoryPanelOpen, Is.True);
+            Assert.That(view.SearchField.text, Is.Empty);
+            Assert.That(view.Sort, Is.EqualTo(InventoryManifestSort.RarityAscending));
+            Assert.That(view.SortDropdown.captionText.text, Is.EqualTo("희귀도순"));
+            Assert.That(VisibleRows(rows), Is.EqualTo(new[]
+            {
+                DataIds.Minerals.Copper, DataIds.Minerals.Iron, DataIds.RareItems.EngineFuel
+            }));
 
             // 적재율 80% 이상: 색과 함께 "거의 가득" 문구·남은 용량이 표시된다.
             while (inventory.CurrentWeight / inventory.MaxCapacity < 0.85f
@@ -191,6 +242,20 @@ namespace SubTerra.App.Tests.PlayMode
                 Is.EqualTo(InventoryPanelDisplayFormatter.UnitWeight(unitWeight)));
             Assert.That(Text(rows, "Stack_" + mineralId + "/LineWeight").text,
                 Is.EqualTo(InventoryPanelDisplayFormatter.LineWeight(quantity, unitWeight)));
+        }
+
+        private static string[] VisibleRows(Transform rows)
+        {
+            var result = new System.Collections.Generic.List<string>();
+            foreach (Transform child in rows)
+            {
+                if (child.gameObject.activeSelf)
+                {
+                    result.Add(child.GetComponent<InventoryStackRowView>().MineralId);
+                }
+            }
+
+            return result.ToArray();
         }
 
         private static TMP_Text Text(Transform root, string path)

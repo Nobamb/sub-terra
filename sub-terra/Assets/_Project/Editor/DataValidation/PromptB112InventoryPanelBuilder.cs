@@ -33,21 +33,26 @@ namespace SubTerra.App.Editor.DataValidation
         public const float CardHeight = 118f;
         public const float CardPadding = 14f;
         public const float StampWidth = 124f;
-        public const float StampHeight = 92f;
+        public const float StampHeight = 76f;
         public const float StampInset = 12f;
         public const float GaugeWidth = ContentWidth - CardPadding - StampWidth - StampInset - 18f;
 
-        // B. 적재 내역 표
+        // B. 적재 내역 표: 제목·정렬 드롭다운 → 검색창 → 표 머리 → 목록(스크롤)
         public const float ListFrameTop = -192f;
         public const float ListFrameHeight = PanelHeight + ListFrameTop - Margin;
         public const float ListInset = 10f;
-        public const float ListLabelTop = -200f;
-        public const float ColumnHeaderTop = -230f;
+        public const float ListLabelTop = -199f;
+        public const float SortWidth = 150f;
+        public const float SortHeight = 28f;
+        public const float SortItemHeight = 26f;
+        public const float SearchTop = -233f;
+        public const float SearchHeight = 30f;
+        public const float ColumnHeaderTop = -271f;
         public const float ColumnHeaderHeight = 20f;
-        public const float ListTop = -256f;
+        public const float ListTop = -297f;
         public const float ListHeight = PanelHeight + ListTop - Margin - 8f;
         public const float RowWidth = ContentWidth - ListInset * 2f;
-        public const float RowHeight = 60f;
+        public const float RowHeight = 50f;
         public const float RowSpacing = 2f;
 
         // 행 안 열(행 왼쪽 기준). 숫자 열은 오른쪽 끝을 맞춘다.
@@ -62,7 +67,8 @@ namespace SubTerra.App.Editor.DataValidation
         public const float LineWeightWidth = 104f;
         public const float NameWidth = UnitWeightRight - UnitWeightWidth - NameX - 10f;
 
-        public const string EmptyHintText = "적재된 자원이 없습니다";
+        public const string EmptyHintText = InventoryManifestQuery.EmptyCargoText;
+        private const string TriangleArrowPath = "Assets/_Project/Art/UI/MainMenu/UI_Triangle_Arrow.png";
 
         private static readonly Color PanelColor = new Color(0.022f, 0.045f, 0.065f, 1f);
         private static readonly Color HeaderColor = new Color(0.035f, 0.085f, 0.115f, 1f);
@@ -70,6 +76,8 @@ namespace SubTerra.App.Editor.DataValidation
         private static readonly Color ListFrameColor = new Color(0.03f, 0.065f, 0.09f, 1f);
         private static readonly Color RowColor = new Color(0.05f, 0.11f, 0.14f, 0.55f);
         private static readonly Color StampColor = new Color(0.13f, 0.09f, 0.03f, 1f);
+        private static readonly Color FieldColor = new Color(0.025f, 0.06f, 0.08f, 1f);
+        private static readonly Color Placeholder = new Color(0.45f, 0.6f, 0.66f, 1f);
         public static readonly Color Cyan = new Color(0.45f, 0.95f, 1f, 1f);
         private static readonly Color CyanLine = new Color(0f, 0.85f, 1f, 0.4f);
         private static readonly Color CyanFaint = new Color(0.2f, 0.8f, 0.95f, 0.2f);
@@ -137,7 +145,9 @@ namespace SubTerra.App.Editor.DataValidation
             var gauge = BuildCargoCard(panel, font);
             var value = BuildValueCard(panel, font);
             var listHeader = BuildListHeader(panel, font);
-            var rows = BuildList(panel, font);
+            var sortDropdown = BuildSortDropdown(panel, font);
+            var searchField = BuildSearchField(panel, font);
+            var rows = BuildList(panel, font, out var rowsContent, out var stackScroll);
             RemoveFooter(panel);
             StyleWeightHelp(panel);
             BuildCorners(panel);
@@ -160,14 +170,20 @@ namespace SubTerra.App.Editor.DataValidation
             so.FindProperty("cargoFill").objectReferenceValue = gauge.Fill.rectTransform;
             so.FindProperty("cargoFillImage").objectReferenceValue = gauge.Fill;
             so.FindProperty("unsettledAmountText").objectReferenceValue = value;
-            so.FindProperty("ownedKindsText").objectReferenceValue = listHeader.Kinds;
+            // 종류 수(N종) 자리는 정렬 드롭다운이 쓴다.
+            so.FindProperty("ownedKindsText").objectReferenceValue = null;
             so.FindProperty("emptyHintText").objectReferenceValue = listHeader.Empty;
             so.FindProperty("columnHeaderRoot").objectReferenceValue = listHeader.Columns;
+            so.FindProperty("searchField").objectReferenceValue = searchField;
+            so.FindProperty("sortDropdown").objectReferenceValue = sortDropdown;
+            so.FindProperty("stackRowsContent").objectReferenceValue = rowsContent;
+            so.FindProperty("stackScroll").objectReferenceValue = stackScroll;
             so.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(view);
 
             return "Prompt-B 190 InventoryPanel manifest rebuilt: rows=" + rows + " rowHeight=" + RowHeight
-                + " visibleRows=" + VisibleRowCount().ToString("0.0") + " size=" + PanelWidth + "x" + PanelHeight;
+                + " visibleRows=" + VisibleRowCount().ToString("0.0") + " size=" + PanelWidth + "x" + PanelHeight
+                + " search+sort=" + (searchField != null && sortDropdown != null);
         }
 
         private static void BuildHeader(Transform panel, TMP_FontAsset font)
@@ -288,7 +304,7 @@ namespace SubTerra.App.Editor.DataValidation
             var label = EnsureText(card.transform, "ValueLabel", font);
             Style(label, 13f, Amber, TextAlignmentOptions.MidlineLeft, FontStyles.Bold);
             label.text = "미정산 가치";
-            PlaceTopLeft(label.rectTransform, 10f, -8f, inner, 18f);
+            PlaceTopLeft(label.rectTransform, 10f, -10f, inner, 18f);
 
             var amount = EnsureText(card.transform, "UnsettledAmountText", font);
             Style(amount, 24f, Gold, TextAlignmentOptions.MidlineLeft, FontStyles.Bold);
@@ -296,24 +312,20 @@ namespace SubTerra.App.Editor.DataValidation
             amount.fontSizeMin = 13f;
             amount.fontSizeMax = 24f;
             amount.text = InventoryPanelDisplayFormatter.UnsettledAmount(0f);
-            PlaceTopLeft(amount.rectTransform, 10f, -28f, inner, 34f);
+            PlaceTopLeft(amount.rectTransform, 10f, -30f, inner, 36f);
 
-            var caption = EnsureText(card.transform, "ValueCaption", font);
-            Style(caption, 11f, SubText, TextAlignmentOptions.MidlineLeft, FontStyles.Normal);
-            caption.text = "정산 시 받을 금액";
-            PlaceTopLeft(caption.rectTransform, 10f, -66f, inner, 16f);
+            // B-190: 스탬프는 제목·금액만 둔다.
+            RemoveChild(card.transform, "ValueCaption");
             return amount;
         }
 
         private readonly struct ListHeaderRefs
         {
-            public readonly TMP_Text Kinds;
             public readonly TMP_Text Empty;
             public readonly GameObject Columns;
 
-            public ListHeaderRefs(TMP_Text kinds, TMP_Text empty, GameObject columns)
+            public ListHeaderRefs(TMP_Text empty, GameObject columns)
             {
-                Kinds = kinds;
                 Empty = empty;
                 Columns = columns;
             }
@@ -328,13 +340,10 @@ namespace SubTerra.App.Editor.DataValidation
             var label = EnsureText(panel, "ListSectionLabel", font);
             Style(label, 17f, Cyan, TextAlignmentOptions.MidlineLeft, FontStyles.Bold);
             label.text = "적재 내역";
-            PlaceTopLeft(label.rectTransform, Margin + ListInset + 4f, ListLabelTop, 82f, 24f);
+            PlaceTopLeft(label.rectTransform, Margin + ListInset + 4f, ListLabelTop, 120f, SortHeight);
 
-            var kinds = EnsureText(panel, "OwnedKindsText", font);
-            Style(kinds, 14f, SubText, TextAlignmentOptions.MidlineLeft, FontStyles.Bold);
-            kinds.text = InventoryPanelDisplayFormatter.LoadedKinds(0);
-            PlaceTopLeft(kinds.rectTransform, Margin + ListInset + 90f, ListLabelTop, 80f, 24f);
-
+            // B-190: 제목 옆 종류 수(N종) 자리에는 정렬 드롭다운을 둔다.
+            RemoveChild(panel, "OwnedKindsText");
             RemoveChild(panel, "ListDivider");
 
             // 표 머리: 자원 | 개당 무게 | 수량 | 이 줄 무게. 숫자 열은 행과 같은 오른쪽 끝을 쓴다.
@@ -354,7 +363,303 @@ namespace SubTerra.App.Editor.DataValidation
             Style(empty, 14f, SubText, TextAlignmentOptions.MidlineLeft, FontStyles.Normal);
             empty.text = EmptyHintText;
             PlaceTopLeft(empty.rectTransform, Margin + ListInset + 4f, ColumnHeaderTop, RowWidth - 8f, 22f);
-            return new ListHeaderRefs(kinds, empty, columns.gameObject);
+            return new ListHeaderRefs(empty, columns.gameObject);
+        }
+
+        /// <summary>적재 내역 오른쪽 정렬 드롭다운. 닫혀 있으면 지금 정렬 이름만, 펼치면 8개 항목이 아래로 나온다.</summary>
+        private static TMP_Dropdown BuildSortDropdown(Transform panel, TMP_FontAsset font)
+        {
+            var found = panel.Find("SortDropdown");
+            GameObject go;
+            if (found != null)
+            {
+                go = found.gameObject;
+            }
+            else
+            {
+                go = TMP_DefaultControls.CreateDropdown(new TMP_DefaultControls.Resources());
+                go.name = "SortDropdown";
+                go.transform.SetParent(panel, false);
+                SetLayer(go.transform, panel.gameObject.layer);
+            }
+
+            var dropdown = EnsureSortDropdownComponent(go);
+            PlaceTopLeft((RectTransform)go.transform,
+                Margin + ContentWidth - ListInset - SortWidth, ListLabelTop, SortWidth, SortHeight);
+
+            var back = go.GetComponent<Image>();
+            back.sprite = null;
+            back.type = Image.Type.Simple;
+            back.color = FieldColor;
+            back.raycastTarget = true;
+            EnsureOutline(go, new Color(0.3f, 0.85f, 1f, 0.75f), 1f);
+            dropdown.targetGraphic = back;
+            dropdown.transition = Selectable.Transition.ColorTint;
+            dropdown.colors = FieldColors();
+            var navigation = dropdown.navigation;
+            navigation.mode = Navigation.Mode.None;
+            dropdown.navigation = navigation;
+
+            var caption = dropdown.captionText;
+            caption.font = font;
+            Style(caption, 14f, Color.white, TextAlignmentOptions.MidlineLeft, FontStyles.Bold);
+            caption.rectTransform.anchorMin = Vector2.zero;
+            caption.rectTransform.anchorMax = Vector2.one;
+            caption.rectTransform.pivot = new Vector2(0.5f, 0.5f);
+            caption.rectTransform.offsetMin = new Vector2(12f, 0f);
+            caption.rectTransform.offsetMax = new Vector2(-28f, 0f);
+
+            var arrow = go.transform.Find("Arrow") != null ? go.transform.Find("Arrow").GetComponent<Image>() : null;
+            if (arrow != null)
+            {
+                // 설정 메뉴와 같은 삼각 화살표를 아래로 돌려 쓴다(새 스킨 없음).
+                arrow.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(TriangleArrowPath);
+                arrow.preserveAspect = true;
+                arrow.color = Cyan;
+                arrow.raycastTarget = false;
+                var arrowRect = arrow.rectTransform;
+                arrowRect.anchorMin = arrowRect.anchorMax = new Vector2(1f, 0.5f);
+                arrowRect.pivot = new Vector2(0.5f, 0.5f);
+                arrowRect.anchoredPosition = new Vector2(-14f, 0f);
+                arrowRect.sizeDelta = new Vector2(10f, 12f);
+                arrowRect.localRotation = Quaternion.Euler(0f, 0f, -90f);
+            }
+
+            StyleSortList(dropdown, font);
+
+            var labels = InventoryManifestQuery.AllLabels();
+            dropdown.ClearOptions();
+            dropdown.AddOptions(new List<string>(labels));
+            dropdown.SetValueWithoutNotify((int)InventoryManifestQuery.DefaultSort);
+            dropdown.RefreshShownValue();
+            EditorUtility.SetDirty(dropdown);
+            return dropdown;
+        }
+
+        /// <summary>기본 TMP_Dropdown을 창 위로 목록을 올리는 InventorySortDropdown으로 바꾼다(템플릿·글자 참조 유지).</summary>
+        private static TMP_Dropdown EnsureSortDropdownComponent(GameObject go)
+        {
+            var current = go.GetComponent<TMP_Dropdown>();
+            if (current is InventorySortDropdown)
+            {
+                return current;
+            }
+
+            RectTransform template = null;
+            TMP_Text caption = null;
+            TMP_Text item = null;
+            if (current != null)
+            {
+                template = current.template;
+                caption = current.captionText;
+                item = current.itemText;
+                UnityEngine.Object.DestroyImmediate(current);
+            }
+
+            var replaced = go.AddComponent<InventorySortDropdown>();
+            replaced.template = template;
+            replaced.captionText = caption;
+            replaced.itemText = item;
+            return replaced;
+        }
+
+        private static void StyleSortList(TMP_Dropdown dropdown, TMP_FontAsset font)
+        {
+            var template = dropdown.template;
+            if (template == null)
+            {
+                throw new InvalidOperationException("SortDropdown Template이 없습니다.");
+            }
+
+            // 8개 항목이 스크롤 없이 모두 보이고, 창 안(적재 내역 아래쪽)으로만 펼쳐진다.
+            var count = InventoryManifestQuery.SortCount;
+            template.anchorMin = new Vector2(0f, 0f);
+            template.anchorMax = new Vector2(1f, 0f);
+            template.pivot = new Vector2(0.5f, 1f);
+            template.anchoredPosition = new Vector2(0f, -2f);
+            template.sizeDelta = new Vector2(0f, count * SortItemHeight + 8f);
+            var templateImage = template.GetComponent<Image>();
+            templateImage.sprite = null;
+            templateImage.type = Image.Type.Simple;
+            templateImage.color = new Color(0.02f, 0.05f, 0.07f, 0.98f);
+            EnsureOutline(template.gameObject, new Color(0.3f, 0.85f, 1f, 0.7f), 1f);
+
+            var scrollbar = template.Find("Scrollbar");
+            if (scrollbar != null)
+            {
+                UnityEngine.Object.DestroyImmediate(scrollbar.gameObject);
+            }
+
+            var scrollRect = template.GetComponent<ScrollRect>();
+            scrollRect.verticalScrollbar = null;
+            scrollRect.horizontal = false;
+            scrollRect.movementType = ScrollRect.MovementType.Clamped;
+            scrollRect.inertia = false;
+
+            var viewport = (RectTransform)template.Find("Viewport");
+            viewport.anchorMin = Vector2.zero;
+            viewport.anchorMax = Vector2.one;
+            viewport.pivot = new Vector2(0f, 1f);
+            viewport.offsetMin = new Vector2(4f, 4f);
+            viewport.offsetMax = new Vector2(-4f, -4f);
+            var viewportImage = viewport.GetComponent<Image>();
+            if (viewportImage != null)
+            {
+                viewportImage.sprite = null;
+                viewportImage.color = Color.white;
+            }
+
+            var content = (RectTransform)viewport.Find("Content");
+            content.anchorMin = new Vector2(0f, 1f);
+            content.anchorMax = new Vector2(1f, 1f);
+            content.pivot = new Vector2(0.5f, 1f);
+            content.anchoredPosition = Vector2.zero;
+            content.sizeDelta = new Vector2(0f, SortItemHeight);
+
+            var item = (RectTransform)content.Find("Item");
+            item.anchorMin = new Vector2(0f, 0.5f);
+            item.anchorMax = new Vector2(1f, 0.5f);
+            item.pivot = new Vector2(0.5f, 0.5f);
+            item.anchoredPosition = Vector2.zero;
+            item.sizeDelta = new Vector2(0f, SortItemHeight);
+            var toggle = item.GetComponent<Toggle>();
+            var colors = toggle.colors;
+            colors.normalColor = new Color(1f, 1f, 1f, 0f);
+            colors.highlightedColor = new Color(0.18f, 0.62f, 0.7f, 0.85f);
+            colors.selectedColor = colors.highlightedColor;
+            colors.pressedColor = new Color(0.1f, 0.4f, 0.46f, 0.9f);
+            colors.colorMultiplier = 1f;
+            toggle.colors = colors;
+
+            var itemBack = item.Find("Item Background").GetComponent<Image>();
+            itemBack.sprite = null;
+            itemBack.color = new Color(0.05f, 0.11f, 0.14f, 1f);
+
+            // 지금 고른 항목은 왼쪽 청록 막대로 표시한다.
+            var check = item.Find("Item Checkmark").GetComponent<Image>();
+            check.sprite = null;
+            check.color = Cyan;
+            check.rectTransform.anchorMin = new Vector2(0f, 0.5f);
+            check.rectTransform.anchorMax = new Vector2(0f, 0.5f);
+            check.rectTransform.pivot = new Vector2(0f, 0.5f);
+            check.rectTransform.anchoredPosition = new Vector2(4f, 0f);
+            check.rectTransform.sizeDelta = new Vector2(3f, 14f);
+
+            var label = dropdown.itemText;
+            label.font = font;
+            Style(label, 14f, BodyText, TextAlignmentOptions.MidlineLeft, FontStyles.Normal);
+            // 템플릿 기본 문구(Option A)는 항목 생성 때 덮어쓰므로 비워 둔다.
+            label.text = string.Empty;
+            label.rectTransform.anchorMin = Vector2.zero;
+            label.rectTransform.anchorMax = Vector2.one;
+            label.rectTransform.offsetMin = new Vector2(14f, 0f);
+            label.rectTransform.offsetMax = new Vector2(-6f, 0f);
+            template.gameObject.SetActive(false);
+        }
+
+        /// <summary>제목 아래·표 머리 위 검색창. 왼쪽 돋보기와 "자원 이름 검색" placeholder.</summary>
+        private static TMP_InputField BuildSearchField(Transform panel, TMP_FontAsset font)
+        {
+            var back = EnsureImage(panel, "SearchField", FieldColor);
+            back.sprite = null;
+            back.raycastTarget = true;
+            PlaceTopLeft(back.rectTransform, Margin + ListInset, SearchTop, RowWidth, SearchHeight);
+            EnsureOutline(back.gameObject, new Color(0.3f, 0.85f, 1f, 0.6f), 1f);
+
+            BuildMagnifier(back.transform);
+
+            var area = EnsureRect(back.transform, "TextArea");
+            area.anchorMin = Vector2.zero;
+            area.anchorMax = Vector2.one;
+            area.pivot = new Vector2(0.5f, 0.5f);
+            area.offsetMin = new Vector2(34f, 2f);
+            area.offsetMax = new Vector2(-10f, -2f);
+            if (area.GetComponent<RectMask2D>() == null)
+            {
+                area.gameObject.AddComponent<RectMask2D>();
+            }
+
+            var placeholder = EnsureText(area, "Placeholder", font);
+            Style(placeholder, 14f, Placeholder, TextAlignmentOptions.MidlineLeft, FontStyles.Normal);
+            placeholder.text = InventoryManifestQuery.SearchPlaceholder;
+            Stretch(placeholder.rectTransform);
+
+            var text = EnsureText(area, "Text", font);
+            Style(text, 14f, Color.white, TextAlignmentOptions.MidlineLeft, FontStyles.Normal);
+            text.text = string.Empty;
+            text.richText = false;
+            Stretch(text.rectTransform);
+
+            var input = back.GetComponent<TMP_InputField>();
+            if (input == null)
+            {
+                input = back.gameObject.AddComponent<TMP_InputField>();
+            }
+
+            input.targetGraphic = back;
+            input.textViewport = area;
+            input.textComponent = text;
+            input.placeholder = placeholder;
+            input.fontAsset = font;
+            input.pointSize = 14f;
+            input.lineType = TMP_InputField.LineType.SingleLine;
+            input.contentType = TMP_InputField.ContentType.Standard;
+            input.characterLimit = 16;
+            input.caretColor = Cyan;
+            input.customCaretColor = true;
+            input.selectionColor = new Color(0.2f, 0.75f, 0.9f, 0.45f);
+            input.richText = false;
+            input.restoreOriginalTextOnEscape = false;
+            input.transition = Selectable.Transition.ColorTint;
+            input.colors = FieldColors();
+            var navigation = input.navigation;
+            navigation.mode = Navigation.Mode.None;
+            input.navigation = navigation;
+            input.SetTextWithoutNotify(string.Empty);
+            EditorUtility.SetDirty(input);
+            return input;
+        }
+
+        private static void BuildMagnifier(Transform field)
+        {
+            // 새 아이콘 에셋 없이 기본 원형 스프라이트로 돋보기를 그린다.
+            var knob = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Knob.psd");
+            var icon = EnsureRect(field, "SearchIcon");
+            icon.anchorMin = icon.anchorMax = new Vector2(0f, 0.5f);
+            icon.pivot = new Vector2(0.5f, 0.5f);
+            icon.anchoredPosition = new Vector2(17f, 0f);
+            icon.sizeDelta = new Vector2(16f, 16f);
+
+            var ring = EnsureImage(icon, "Ring", SubText);
+            ring.sprite = knob;
+            PlaceCenter(ring.rectTransform, -1.5f, 1.5f, 12f, 12f);
+            var hole = EnsureImage(icon, "Hole", FieldColor);
+            hole.sprite = knob;
+            PlaceCenter(hole.rectTransform, -1.5f, 1.5f, 8f, 8f);
+            var handle = EnsureImage(icon, "Handle", SubText);
+            handle.sprite = null;
+            PlaceCenter(handle.rectTransform, 4.5f, -4.5f, 2.5f, 6f);
+            handle.rectTransform.localRotation = Quaternion.Euler(0f, 0f, 45f);
+        }
+
+        private static ColorBlock FieldColors()
+        {
+            // 칸 색은 Image에 두고 틴트는 밝기 배수로만 쓴다. 틴트가 테두리(Outline)까지 어둡게 덮지 않게 한다.
+            const float multiplier = 1.6f;
+            var colors = ColorBlock.defaultColorBlock;
+            colors.normalColor = Gray(1f / multiplier);
+            colors.highlightedColor = Gray(1f);
+            colors.selectedColor = Gray(0.85f);
+            colors.pressedColor = Gray(1f);
+            colors.disabledColor = new Color(0.4f, 0.4f, 0.4f, 0.6f);
+            colors.colorMultiplier = multiplier;
+            colors.fadeDuration = 0.08f;
+            return colors;
+        }
+
+        private static Color Gray(float value)
+        {
+            return new Color(value, value, value, 1f);
         }
 
         private static void HeaderCell(Transform parent, string name, TMP_FontAsset font, string text,
@@ -366,7 +671,7 @@ namespace SubTerra.App.Editor.DataValidation
             PlaceTopLeft(cell.rectTransform, x, 0f, width, ColumnHeaderHeight);
         }
 
-        private static int BuildList(Transform panel, TMP_FontAsset font)
+        private static int BuildList(Transform panel, TMP_FontAsset font, out RectTransform rowsContent, out ScrollRect stackScroll)
         {
             var scroll = EnsureRect(panel, "StackScroll");
             PlaceTopLeft(scroll, Margin + ListInset, ListTop, RowWidth, ListHeight);
@@ -451,6 +756,8 @@ namespace SubTerra.App.Editor.DataValidation
                 BuildRow(row, font, weights);
             }
 
+            rowsContent = content;
+            stackScroll = scrollRect;
             return rows.Length;
         }
 
@@ -691,11 +998,13 @@ namespace SubTerra.App.Editor.DataValidation
             {
                 "HeaderBand", "HeaderTagLineL", "HeaderTagLineR", "HeaderTag", "Title", "HeaderDivider",
                 "CargoCard", "ValueCard", "CargoSummaryText", "UnsettledValueText",
-                "ListFrame", "ListSectionLabel", "OwnedKindsText", "ColumnHeader", "EmptyHint",
+                "ListFrame", "ListSectionLabel", "SearchField", "ColumnHeader", "EmptyHint",
                 "StackScroll", "StacksText",
                 "CornerTL_H", "CornerTL_V", "CornerTR_H", "CornerTR_V",
                 "CornerBL_H", "CornerBL_V", "CornerBR_H", "CornerBR_V",
-                "WeightHelpIcon"
+                "WeightHelpIcon",
+                // 펼친 정렬 목록이 표 위에 그려지도록 드롭다운을 표 뒤에 둔다.
+                "SortDropdown"
             };
 
             for (var i = 0; i < order.Length; i++)
@@ -801,6 +1110,23 @@ namespace SubTerra.App.Editor.DataValidation
             rect.pivot = new Vector2(0f, 1f);
             rect.anchoredPosition = new Vector2(x, y);
             rect.sizeDelta = new Vector2(width, height);
+        }
+
+        private static void PlaceCenter(RectTransform rect, float x, float y, float width, float height)
+        {
+            rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = new Vector2(x, y);
+            rect.sizeDelta = new Vector2(width, height);
+        }
+
+        private static void SetLayer(Transform root, int layer)
+        {
+            root.gameObject.layer = layer;
+            foreach (Transform child in root)
+            {
+                SetLayer(child, layer);
+            }
         }
 
         private static void PlaceTopCenter(RectTransform rect, float x, float y, float width, float height)

@@ -147,7 +147,12 @@ namespace SubTerra.App.Editor.DataValidation
             try
             {
                 var view = root.GetComponent<InventoryPanelView>();
-                var rowsRoot = root.transform.Find("PanelRoot/StackRows");
+                // B-190: 명세표 개편 뒤 행은 StackScroll/Viewport 아래에 있다.
+                var rowsRoot = root.transform.Find("PanelRoot/StackScroll/Viewport/StackRows");
+                if (rowsRoot == null)
+                {
+                    rowsRoot = root.transform.Find("PanelRoot/StackRows");
+                }
                 if (view == null || rowsRoot == null)
                 {
                     throw new System.InvalidOperationException("InventoryPanel StackRows missing.");
@@ -196,12 +201,8 @@ namespace SubTerra.App.Editor.DataValidation
                 rowProperty.GetArrayElementAtIndex(rowProperty.arraySize - 1).objectReferenceValue = row;
                 viewSo.ApplyModifiedPropertiesWithoutUndo();
 
-                var rootRect = root.GetComponent<RectTransform>();
-                if (rootRect.sizeDelta.y < 390f)
-                {
-                    rootRect.sizeDelta = new Vector2(rootRect.sizeDelta.x, 390f);
-                }
-
+                // 복제한 행이 옛 스타일(높이·열·상태 문구)로 남지 않게 명세표 배치를 다시 입힌다.
+                PromptB112InventoryPanelBuilder.ApplyTo(root);
                 PrefabUtility.SaveAsPrefabAsset(root, prefabPath);
             }
             finally

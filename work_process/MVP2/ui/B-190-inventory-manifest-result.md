@@ -1,95 +1,175 @@
-# B-190 인벤토리 UI: 화물칸 명세표 배치 결과 (#268 / #275)
+# B-190 인벤토리 UI: 화물칸 명세표 배치 + 검색·정렬 결과 (#268 / #275)
 
 - 기준 브랜치: `codex/issue-268-inventory-readability`
-- 작업 시작 HEAD: `bdeac16e` (PM이 main `5db79706`을 합쳐 둔 커밋)
+- 이번 작업 시작 HEAD: `c78becbc` (1차 B-190 명세표 커밋 `c11535c5` + 보고서 커밋)
 - main merge 여부: **추가 merge 없음.** `git fetch` 후 `origin/main`(`5db79706`)이 이미 이 브랜치의 조상이라 merge할 것이 없었다. 충돌 없음.
-- 커밋 해시: `c11535c5` (기능), 이 보고서 해시 기재는 후속 docs 커밋
+- 커밋 해시: (커밋 후 기재)
 - 새 PR: 만들지 않음. 기존 #275 갱신 대상.
+
+## 이번에 바뀐 점 (1차 대비)
+
+1. 프롬프트 갱신분 반영: **검색창**(`자원 이름 검색`)과 **8가지 정렬 드롭다운**(기본 `희귀도순`)을 넣었다. 1차에서는 명세에 없어서 빠져 있었다.
+2. `적재 내역` 옆의 `N종`을 지우고 그 자리에 정렬 드롭다운을 두었다.
+3. 미정산 스탬프에서 `정산 시 받을 금액` 문구를 지웠다. 이제 제목과 금액만 있다.
+4. **엔진 연료를 넣으면 옛 인벤토리 창으로 바뀌는 문제**를 고쳤다(아래 "엔진 연료" 참고).
+
+## 엔진 연료 → 옛 창 문제
+
+- 확인한 것: 현재 프리팹과 Mine·지상 기지 인스턴스는 모두 새 배치였다. 실제 Play에서 엔진 연료를 넣어 봐도 런타임에서는 새 배치가 유지되었다.
+- 원인: 엔진 연료 행을 추가하는 **B-102 빌더**(`PromptB102SealedGlyphBuilder.AddInventoryRareRow`)에 문제가 있었다.
+  - 이 빌더는 옛 경로 `PanelRoot/StackRows`를 찾았다. 1차 B-190에서 행은 `StackScroll/Viewport/StackRows`로 옮겨졌다.
+  - 또 기존 행을 복제만 하고 명세표 배치를 다시 입히지 않았다.
+  - 그래서 `SubTerra/Data/Build Prompt-B 102 Sealed Glyph Engine Fuel`을 다시 돌리면 실패하거나, 옛 구조에서 옛 스타일 행이 생겼다.
+- 수정:
+  - 새 경로를 먼저 찾고, 없으면 옛 경로를 찾게 했다.
+  - 행을 추가한 뒤 `PromptB112InventoryPanelBuilder.ApplyTo(root)`를 호출해 명세표 배치를 다시 입히게 했다.
+  - 옛 390 높이 보정은 지웠다. 창 크기는 ApplyTo가 560×532로 정한다.
+- 사용자가 본 장면이 이 빌더 때문인지는 직접 재현하지 못했다. 재현 화면이 다르면 알려 달라. **미검증.**
 
 ## 바꾼 파일·줄 (작업 후 기준, 근사)
 
 | 파일 | 내용 |
 | --- | --- |
-| `Editor/DataValidation/PromptB112InventoryPanelBuilder.cs` | 상수(~22-80): 행 높이 60, 열 오른쪽 끝, 스탬프 크기. `BuildHeader`(~176) 가운데 제목·`HotkeyHint` 제거. `BuildCargoCard`(~226) 가로 적재 현황. `BuildValueCard`(~275) 미정산 스탬프. `BuildListHeader`(~322) 적재 내역·종류 수·표 머리·빈 안내. `BuildRow`(~457) 명세표 행. `RemoveFooter`(~579) 하단 안내 제거. `StyleWeightHelp`(~586) `?` 위치 이동 |
-| `Prefabs/UI/InventoryPanel.prefab` | 위 빌더로만 재생성(손 YAML 수정 없음) |
-| `Scripts/App/UI/Inventory/InventoryPanelDisplayFormatter.cs` | `StateLine`(~76) 순서 `남은 적재량 N · 상태`. `UnitWeight`(~111) 숫자만. `LineWeight`(~117) 수량×개당 무게 추가. `LoadedKinds`(~127) `N종`. `QuantityState`·`OwnedKinds` 제거 |
-| `Scripts/App/UI/Inventory/InventoryStackRowView.cs` | 수량 0이면 행 숨김(~29). `lineWeightText`(~70). 보유/미보유 상태 문구·강조 막대 제거 |
-| `Scripts/App/UI/Inventory/InventoryPanelView.cs` | `columnHeaderRoot`(~30). `SetStacks` 실린 종류 수·빈 안내·표 머리 토글(~134-156) |
-| `Tests/EditMode/App/UI/PromptB112InventoryPanelTests.cs` | 새 배치 검사(스탬프 위치·크기, 표 머리 4열, 숫자 열 오른쪽 끝 정렬, 행 높이, 약 4행, 하단 안내 없음, 0행 숨김·빈 안내) |
-| `Tests/EditMode/App/UI/PromptB68CargoWeightTests.cs` | `?` 겹침 기준을 숨김 `CargoSummaryText` → 보이는 `적재 현황` 제목으로 변경 |
-| `Tests/PlayMode/.../PromptB112InventoryPanelPlayModeTests.cs` | `보유 없음` 행 검사 → 0행 숨김·이 줄 무게 검사 |
-| `Tests/PlayMode/.../Issue268InventoryReadabilityTests.cs` | 빈 안내 문구, 수량 열 폭 84, 보이는 행만 이름 2줄 검사 |
-| `init/rules/lessons/2026-11-09-issue268-cross-prompt-layout-tests.md` | 교훈 1건 |
+| `Scripts/App/UI/Inventory/InventoryManifestQuery.cs` (새 파일) | 정렬 enum(드롭다운 순서), 라벨 8개, 희귀도 순서, 수량 0 제외 → 이름 검색 → 정렬, 동률 규칙 |
+| `Scripts/App/UI/Inventory/InventorySortDropdown.cs` (새 파일) | `TMP_Dropdown` 하위 클래스. `CreateDropdownList`에서 펼친 목록을 창 Canvas+2로 올린다. 차단막은 TMP가 목록-1로 맞춘다. `OnSubmit`은 무시한다(채굴 Enter로 열리지 않음). |
+| `Scripts/App/UI/Inventory/InventoryPanelView.cs` | 필드 `searchField`·`sortDropdown`·`stackRowsContent`·`stackScroll`(~30) 추가. 내용은 아래와 같다. |
+| | - `SetStacks`/`SetSearchQuery`/`SetSort`/`ResetManifestControls`/`RefreshManifest`(~150-270) |
+| | - 검색창 `onSelect`/`onDeselect`/`onEndEdit`로 `UiPauseGate` 잡기·풀기(~330-370) |
+| | - `SetVisible`(~400): 닫을 때 입력·목록 정리, 다시 열 때 초기화 |
+| | - 인벤토리 UI 폴더 규칙(`Update` 폴링 금지)에 맞게 매 프레임 코드 없이 이벤트로만 동작한다. |
+| `Editor/DataValidation/PromptB112InventoryPanelBuilder.cs` | 상수(~32-60)는 스탬프 76, 검색창, 정렬, 표 머리, 목록, 행 높이 50이다. 그 밖에 아래를 바꿨다. |
+| | - `BuildValueCard`: 문구 제거 |
+| | - `BuildListHeader`: `OwnedKindsText` 제거 |
+| | - `BuildSortDropdown`/`StyleSortList`(~370-520) |
+| | - `BuildSearchField`/`BuildMagnifier`/`FieldColors`(~520-640) |
+| | - `OrderSiblings`, 뷰 참조 연결 |
+| `Editor/DataValidation/PromptB102SealedGlyphBuilder.cs` | `AddInventoryRareRow`(~146-200): 새 행 경로, 추가 후 `ApplyTo` |
+| `Prefabs/UI/InventoryPanel.prefab` | 위 빌더로만 재생성했다(YAML 손수정 없음). |
+| `Tests/EditMode/App/UI/PromptB112InventoryPanelTests.cs` | 아래 검사를 넣었다. |
+| | - 정렬 4종(희귀도·개당 무게·수량/가나다·동률), 검색 |
+| | - 뷰에서 검색·정렬 유지와 초기화 |
+| | - 프리팹의 드롭다운·검색창 위치, 목록이 창 안에 있는지 |
+| | - 스탬프 문구 제거, B-102 빌더 회귀 |
+| `Tests/PlayMode/.../PromptB112InventoryPanelPlayModeTests.cs` | `N종` 검사를 지웠다. 기본 희귀도순, 검색·정렬 실시간 갱신, 검색 결과 없음, 입력 중 I 무시, 다시 열 때 초기화를 검사한다. |
+| `init/rules/lessons/2026-11-09-issue268-builder-path-and-popup-sort.md` | 교훈 1건 |
 
 ## 배치
 
-창 크기 560×532와 위치(오른쪽 오프셋 330)는 그대로 두었다. `SurfaceBasePanel.prefab`이 루트 크기 560×532를 덮어쓰고 있어서, 크기를 바꾸면 지상 기지 창만 달라진다.
+창 크기 560×532와 위치(오른쪽 오프셋 330)는 바꾸지 않았다.
 
-- **헤더**: `인벤토리`를 가운데에 두고 아래에 작은 `CARGO INVENTORY`, 양옆에 가는 선을 그었다. `[I] 열기 / 닫기` 문구는 지웠다. 조작 안내는 가이드에만 둔다는 규칙 5에 따른 것이다.
-- **A. 적재 현황(`CargoCard`)**: 가로 528 전체를 쓴다. 왼쪽 열(폭 360)은 위에서부터 이렇게 읽힌다.
-  - `적재 현황` 제목과 `?`
-  - `현재 / 최대`(32px)와 같은 줄 오른쪽의 `%`(24px)
-  - 게이지(80% 기준선 유지)
-  - `남은 적재량 N · 적재 여유 / 적재 한계 임박` 또는 `적재량 가득 참`
-  - 색은 기존 판정을 따른다(여유 청록, 임박 주황, 가득 참 빨강).
-- **미정산 스탬프(`ValueCard`)**: 적재 현황 안쪽 오른쪽 끝에 124×92로 둔다(앰버 테두리). 줄은 `미정산 가치` / 금액 / `정산 시 받을 금액` 순이다. 금액은 최대 24px이고 13px까지 자동으로 줄어서 `1,234,567`도 칸 안에 들어간다.
-- **B. 적재 내역(`ListFrame`)**: 제목 `적재 내역` 옆에 `N종`을 둔다.
-  - 표 머리(`ColumnHeader`)는 `자원 | 개당 무게 | 수량 | 이 줄 무게`이고 아래에 규칙선을 긋는다.
-  - 행은 아이콘 40×40(x=12), 이름(x=62, 폭 142, 긴 이름만 2줄·자동 축소), 숫자 열 3개 순이다. 숫자 열은 오른쪽 정렬이고 오른쪽 끝이 284, 380, 496이며 표 머리와 일치한다.
-  - 행 사이는 규칙선으로 나눈다.
-- **행 높이와 보이는 행 수**: 행 높이 60, 간격 2, 목록 높이 252라서 한 화면에 약 4.1행이 보인다. 지금 카탈로그 4종은 스크롤 없이 모두 보인다.
-- **빈 목록**: 수량 0 행은 숨긴다. 실린 자원이 없으면 표 머리도 숨기고 제목 아래에 `적재된 자원이 없습니다`만 보인다.
-- **C. 하단**: `ControlsHint`와 `ControlsDivider`를 지웠다.
-  - `?`는 `적재 현황` 제목 바로 오른쪽으로 옮겼다.
-  - 도움말은 창 아래(-540)에 그대로 띄우므로 숫자를 덮지 않는다.
-- **유지한 것**: 계산(서비스 스냅샷 값 그대로), TV 열림·닫힘 연출, SFX, I 키, X 버튼.
-  - `이 줄 무게`는 표시 전용 곱셈이고 적재 판정에는 쓰지 않는다.
+- **A. 적재 현황(`CargoCard`)**: 1차와 같다. 위에서부터 `적재 현황`과 `?` → `현재 / 최대`(32px)와 같은 줄 오른쪽의 `%` → 게이지 → `남은 적재량 N · 상태` 순이다.
+- **미정산 스탬프(`ValueCard`)**: 124×76이고 적재 현황 안쪽 오른쪽에 세로 가운데로 둔다. `미정산 가치`(13px)와 금액(24px, 13px까지 자동 축소)만 있다.
+- **B. 적재 내역**:
+  - 제목 `적재 내역`(y -199)과 같은 줄 오른쪽에 `SortDropdown`(150×28)을 둔다.
+  - 그 아래 `SearchField`(y -233, 508×30)가 있다. 왼쪽에 돋보기가 있다. 새 아이콘 에셋 없이 기본 원형 스프라이트로 그렸다.
+  - `ColumnHeader`(y -271), 목록(y -297, 높이 211) 순이다.
+- **행 높이와 보이는 행 수**: 행 높이 50, 간격 2라서 한 화면에 약 4.1행이 보인다. 구리·철·리튬·엔진 연료 4종이 스크롤 없이 모두 보인다.
+- **정렬 목록**: 8항목 × 26 + 8 = 216이다. 드롭다운 아래로만 펼쳐지고 바닥이 창 안(-461 > -532)에 있다. 위의 적재 숫자는 가리지 않는다.
+  - 창이 팝업 정렬 Canvas(32100+)로 올라가 있어 TMP 기본 목록(30000)이 창 뒤에 그려졌다.
+  - 그래서 `InventorySortDropdown`이 목록을 창+2로 올린다. 차단막은 TMP가 목록-1(창+1)로 맞춘다.
+  - Play에서 확인한 값은 창 32100, 차단막 32101, 목록 32102다. 펼친 목록이 창 위에 보이고, 바깥을 누르면 닫힌다.
+- **청록 HUD 톤**: 검색창과 드롭다운은 기존 색을 쓴다. 칸 색은 Image에 두고, 틴트는 밝기 배수로만 쓴다. 그래야 테두리가 어두워지지 않는다.
+
+## 검색·정렬 규칙
+
+- 검색은 표시 이름(`구리`, `철`, `리튬`, `엔진 연료 (희귀)`)에 입력 글자가 들어 있는지 본다. 앞뒤 공백은 무시한다. 수량 0인 자원은 검색돼도 올리지 않는다.
+- 검색은 표만 거른다. 상단 적재량·남은 양·미정산 금액은 전체 적재 기준이다.
+- 드롭다운 순서는 `수량 많은 순`, `수량 적은 순`, `무게 무거운 순`, `무게 가벼운 순`, `희귀도순`(기본), `희귀도 역순`, `가나다순`, `가나다 역순`이다.
+- 무게 정렬은 **개당 무게** 기준이다(`이 줄 무게` 아님).
+- **희귀도 순서**: 아이템 데이터(`MineralData`)에 희귀도 필드가 없다. 그래서 `InventoryManifestQuery`의 `MineralRarityOrder`에 구리 < 철 < 리튬으로 적었다.
+  - 희귀 품목(`DataIds.RareItems.IsRare`, 엔진 연료)은 광물보다 높게 둔다.
+  - 모르는 광물은 그 사이에 둔다.
+  - 새 아이템 종류는 추가하지 않았다(#117).
+- 동률은 희귀도순으로, 그것도 같으면 가나다순으로 묶는다. 가나다는 한글 완성형 유니코드 순서다.
+- 창을 연 채 채굴·버림이 일어나면 검색어와 정렬을 유지한 채 다시 그린다.
+- 닫았다가 다시 열면 검색어는 비우고 정렬은 `희귀도순`으로 돌린다.
+- 검색창에 포커스가 있는 동안에는 건설창 검색과 같은 `UiPauseGate`(`inventory.search`)를 잡는다. 그래서 I·B·이동 키가 창과 월드로 가지 않는다. 시간도 멈춘다.
+  - Enter와 Esc는 입력만 끝내고 선택을 푼다. 창을 닫지 않는다.
+  - 포커스를 빼면 게이트를 풀고 I와 X로 닫힌다.
+- 드롭다운은 Enter(Submit)를 무시한다. 항목을 고른 뒤 선택이 남아 있어도 채굴 Enter가 목록을 다시 열지 않는다.
 
 ## 테스트 결과
 
-- EditMode(에디터 TestRunnerApi로 필터 실행: `Inventory`, `PromptB68CargoWeightTests`, `HudFormatter`, `PromptB182`): **74 통과 / 0 실패**
-  - 처음 실행에서는 `PromptB68CargoWeightTests.InventoryPanel_HasVisibleWeightHelpAndHoverDescription`이 실패했다. `?`를 옮긴 뒤에도 옛 요소를 기준으로 검사하고 있었기 때문이다. 기준을 고친 뒤 통과했다(교훈 기록).
-- PlayMode `PromptB112InventoryPanelPlayModeTests.InventoryPanel_LiveValuesStatesAndLayout`: **통과**. 실제 Integration Scene에서 I 열기, 실시간 갱신, 이 줄 무게, 임박·가득 참, 닫고 다시 열기, X 닫기를 확인했다.
-- PlayMode `InventoryPanel_StatesAndLayout_AtThreeResolutions`(Visual): **통과**. 1366×768, 1920×1080, 2560×1440에서 화면 안에 들어오고, 잘린 글자가 없고, HUD와 겹치지 않는다. 캡처는 `sub-terra/Temp/visual/prompt-b112/`에 있다.
-- 프리팹 미리보기 렌더(보통 / 긴 이름·큰 값 / 빈 목록 / 가득 참): `sub-terra/Temp/visual/prompt-b190/`. 잘린 글자 0건.
-- Unity 컴파일 오류 0건. 새 경고 없음(기존 CS0618 경고만 있음).
-- 전체 EditMode·PlayMode 일괄 실행은 하지 않았다. 범위 밖 에셋이 dirty 되는 것을 피하려고 관련 묶음만 실행했다.
+- EditMode(`SubTerra/Tests/Run Prompt-B 112 Inventory Panel Tests` 묶음): **56 통과 / 1 실패.**
+  - 실패 1건은 `PromptB32PanelLayoutTests.BuildingPanel_HasOnlyXClose_AndIncreasedSize`다. 건설창 크기 기대 580.8, 실제 500이다.
+  - 이 브랜치는 건설창 파일을 바꾸지 않았다. 이번 작업과 무관한 기존 실패로 보고 손대지 않았다.
+  - 첫 실행에서는 `InventoryStaticStructureTests.InventoryPanelSources_DoNotPollInUpdate`도 실패했다. 뷰에 `Update`를 넣었기 때문이다.
+    - 이벤트 방식(검색창 포커스 이벤트, `InventorySortDropdown`)으로 바꾼 뒤 통과했다(교훈 기록).
+- PlayMode `PromptB112InventoryPanelPlayModeTests`: **2 / 2 통과.** 실제 Integration Scene에서 아래를 확인했다.
+  - 기본 희귀도순(구리 → 철 → 엔진 연료)
+  - 검색 `구`와 정렬 변경 시 검색어 유지
+  - 열린 창에서 채굴 갱신
+  - `검색 결과가 없습니다`
+  - 검색 입력 중 I를 무시하고, 게이트가 풀리는지
+  - 닫고 다시 열 때 초기화
+  - 임박·가득 참
+  - 1366×768 / 1920×1080 / 2560×1440에서 화면 안에 있고 잘린 글자 없음
+  - 캡처는 `sub-terra/Temp/visual/prompt-b112/`에 있다.
+- 직접 Play 확인(MCP, 슬롯 0 격리 상태): 아래를 확인했다.
+  - 구리·철·리튬·엔진 연료 4행이 스크롤 없이 보인다.
+  - 엔진 연료를 넣어도 명세표 창이 그대로다.
+  - 펼친 정렬 목록이 창 위·창 안에 보인다.
+  - 캡처는 `sub-terra/Temp/visual/b190-v2-*.png`, `b190-v3-dropdown2.png`에 있다.
+- Unity 컴파일 오류 0건. 새 경고는 없다(기존 CS0618만 있음).
 
 ## 미검증
 
-- `Issue268InventoryReadabilityTests`: `-subterra-save-root` 명령줄 인자가 필요한 전용 실행이라 에디터에서 돌리지 않았다. **미검증.**
-- 직접 플레이 중 **채굴·버리기**로 열린 창이 바로 갱신되는지: 테스트에서 서비스 API로 바꾼 경우만 확인했다. **미검증.**
-- **지상 기지** 창 직접 확인: 같은 프리팹이고 루트 크기 오버라이드(560×532)도 그대로라 같은 배치일 것으로 보지만, 실제 화면은 **미검증.**
+- 실제 키보드·마우스로 검색창에 한글 입력(IME) 하기: 테스트는 `SetSearchQuery`와 `ActivateInputField`로만 확인했다. **미검증.**
+- 검색 입력 중 시간이 멈추는 것: 건설창 검색과 같은 방식을 따랐다. 플레이 감각은 **미검증.**
+- 지상 기지 창 직접 확인: 같은 프리팹이라 같은 배치일 것으로 보지만 화면은 **미검증.**
+- `Issue268InventoryReadabilityTests`: `-subterra-save-root` 전용 실행이라 돌리지 않았다. **미검증.**
+- B-102 빌더 메뉴를 실제로 다시 돌려 보지 않았다. 씬 저장이 함께 일어나 범위 밖이다. 소스 회귀 테스트만 있다. **미검증.**
 - Windows 빌드: **미검증.**
 
-## 참고(범위 밖, 손대지 않음)
+## 커밋하지 않은 변경
 
-- 컨셉 이미지의 `희귀도순` 정렬 드롭다운과 `자원 이름 검색` 칸은 프롬프트 명세에 없어 넣지 않았다(기능 추가 범위).
-- 작업 전부터 dirty였던 파일은 커밋하지 않았다: `NotoSansKR-Regular_SDF.asset`(동적 아틀라스, 렌더 중 글리프가 더 추가됨), `LiberationSans SDF - Fallback.asset`, URP·GraphicsSettings, `init/prompt-B.md`, `Assets/Resources*`.
+- `Scenes/Bootstrap/Bootstrap.unity`: 테스트 실행 전 "씬이 수정됨" 창에서 저장되었다.
+  - 바뀐 것은 Bootstrap의 빈 `InventoryPanelView` 스텁에 새 필드 기본값이 직렬화된 것뿐이다. 동작 변화는 없다.
+  - 범위 밖이라 커밋하지 않았다.
+- 작업 전부터 dirty였던 파일도 커밋하지 않았다: 폰트 아틀라스 2개, URP·GraphicsSettings, `init/prompt-B.md`, `Assets/Resources.meta`, `work_process/MVP2/B-190-inventory/`.
 
 ## 사용자 테스트 가이드 (직접 플레이)
 
-1. I로 인벤토리를 열면 가운데 팝업이 뜨는지 본다. 맨 위에 적재량(현재/최대, 게이지, 남은 양)이 먼저 보이고, 미정산 금액이 그보다 작은 스탬프로 보이는지 본다.
-2. 자원이 있을 때 표 머리가 `자원 | 개당 무게 | 수량 | 이 줄 무게`인지, 한 화면에 4개쯤 보이는지 본다.
-3. 각 줄의 `이 줄 무게`가 (수량 × 개당 무게)와 같은지 본다.
+1. I로 인벤토리를 열면 가운데 팝업이 뜨는지 본다. 맨 위에 적재량(현재/최대, 게이지, 남은 양)이 먼저 보이는지 본다. 오른쪽 스탬프 제목이 `미정산 가치`이고 금액이 적재량 숫자보다 작은지 본다.
+2. 자원이 있을 때 다음을 본다.
+   - 표 머리가 `자원 | 개당 무게 | 수량 | 이 줄 무게`인지
+   - `적재 내역` 오른쪽에 정렬 드롭다운이 있고, 그 아래에 `자원 이름 검색`창이 있는지
+   - 한 화면에 4개쯤 보이는지
+3. 한 줄의 `이 줄 무게`가 (수량 × 개당 무게)와 같은지 본다.
 4. 수량 0인 자원은 목록에 없는지 본다. 아무것도 없으면 `적재된 자원이 없습니다`만 보이는지 본다.
-5. 채굴하거나 자원을 버리면 열린 창의 적재량, 목록, 이 줄 무게, 미정산 금액이 바로 바뀌는지 본다. 닫았다 다시 열어도 최신 값인지 본다.
-6. 하단에 `I 닫기` 같은 조작 안내가 없는지 본다. I와 닫기 버튼으로 창이 닫히는지 본다.
+5. 채굴하거나 자원을 버리면 열린 창의 적재량·목록·이 줄 무게·미정산 금액이 바로 바뀌는지 본다. 검색어와 정렬은 창을 닫기 전까지 유지되는지 본다.
+6. 하단에 `I 닫기` 같은 조작 안내가 없는지 본다. 검색창 포커스가 없을 때 I와 닫기 버튼으로 창이 닫히는지 본다.
 7. `?`에 마우스를 올렸을 때 무게 도움말이 숫자를 가리지 않는지 본다.
 8. 적재가 거의 가득 차면 `적재 한계 임박`, 가득 차면 `적재량 가득 참`이 게이지와 함께 보이는지 본다.
-9. 지상 기지와 광산에서 같은 창인지 본다. 1366×768 / 1920×1080 / 2560×1440에서 창과 도움말이 화면 밖으로 나가지 않는지 본다.
-10. Unity Console에 새 빨간 오류나 노란 경고가 없는지 본다.
+9. 구리·철·리튬이 같이 있을 때 정렬을 확인한다.
+   - 기본 `희귀도순`은 구리 → 철 → 리튬, `희귀도 역순`은 리튬 → 철 → 구리인지
+   - `수량 많은 순`, `무게 무거운 순`(개당 무게), `가나다순`(구리 → 리튬 → 철)과 각 역순
+10. 검색을 확인한다.
+    - 검색창에 `구`를 넣으면 구리만 남는지, 검색어를 지우면 다시 전체(0개 제외)가 보이는지
+    - 맞는 이름이 없으면 `검색 결과가 없습니다`가 보이는지
+    - 검색 중에 정렬을 바꿔도 검색어가 유지되는지
+11. 포커스와 초기화를 확인한다.
+    - 검색창을 누른 뒤 I를 눌러도 창이 닫히지 않는지, 포커스를 뺀 뒤에는 I로 닫히는지
+    - 창을 닫았다 다시 열면 검색어가 비어 있고 정렬이 `희귀도순`인지
+12. 엔진 연료를 넣어도(디버그 `engine_fuel 1` 또는 채굴) 같은 명세표 창이고 `엔진 연료 (희귀)` 행이 같은 열로 보이는지 본다. `희귀도순`에서는 맨 아래에 있어야 한다.
+13. 지상 기지와 광산에서 같은 창인지 본다. 1366×768 / 1920×1080 / 2560×1440에서 창·드롭다운·도움말이 화면 밖으로 나가지 않는지 본다.
+14. Unity Console에 새 빨간 오류나 노란 경고가 없는지 본다.
 
 ## 완료 체크리스트
 
-- [x] `codex/issue-268-inventory-readability` push 확인
-- [x] 커밋 해시 기재
-- [x] Unity 컴파일·빌드 오류 없음 (컴파일만 확인했고 빌드는 미검증)
-- [x] 기존 인벤토리 테스트를 새 배치에 맞게 수정
+- [ ] `codex/issue-268-inventory-readability` push 확인
+- [ ] 커밋 해시 기재
+- [x] Unity 컴파일 오류 없음 (빌드는 미검증)
+- [x] 기존 인벤토리 테스트가 새 배치·검색·정렬에 맞게 수정됨
 - [x] 상단이 적재 현황 + 작은 미정산 스탬프
 - [x] 표 열이 자원·개당 무게·수량·이 줄 무게
+- [x] 검색창과 여덟 가지 정렬 드롭다운
+- [x] 기본 정렬이 희귀도순(구리→철→리튬)
+- [x] 무게 정렬이 개당 무게 기준
 - [x] 한 화면에 약 4행(4.1)
 - [x] 수량 0 행 숨김, 빈 안내 `적재된 자원이 없습니다`
+- [x] 검색 없음 안내 `검색 결과가 없습니다`
+- [x] 창을 다시 열면 검색·정렬 초기화
 - [x] 하단 조작 안내 없음
 - [x] `?`가 숫자를 가리지 않음
 - [x] 계산·TV 연출·SFX 미변경
