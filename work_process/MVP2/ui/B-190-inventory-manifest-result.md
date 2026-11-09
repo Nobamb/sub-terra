@@ -3,7 +3,7 @@
 - 기준 브랜치: `codex/issue-268-inventory-readability`
 - 작업 시작 HEAD: `bdeac16e` (PM이 main `5db79706`을 합쳐 둔 커밋)
 - main merge 여부: **추가 merge 없음.** `git fetch` 후 `origin/main`(`5db79706`)이 이미 이 브랜치의 조상이라 merge할 것이 없었다. 충돌 없음.
-- 커밋 해시: (커밋 후 기재)
+- 커밋 해시: `c11535c5` (기능), 이 보고서 해시 기재는 후속 docs 커밋
 - 새 PR: 만들지 않음. 기존 #275 갱신 대상.
 
 ## 바꾼 파일·줄 (작업 후 기준, 근사)
@@ -82,8 +82,8 @@
 
 ## 완료 체크리스트
 
-- [ ] `codex/issue-268-inventory-readability` push 확인 (사용자 승인 후)
-- [ ] 커밋 해시 기재 (사용자 승인 후)
+- [x] `codex/issue-268-inventory-readability` push 확인
+- [x] 커밋 해시 기재
 - [x] Unity 컴파일·빌드 오류 없음 (컴파일만 확인했고 빌드는 미검증)
 - [x] 기존 인벤토리 테스트를 새 배치에 맞게 수정
 - [x] 상단이 적재 현황 + 작은 미정산 스탬프
