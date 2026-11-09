@@ -75,8 +75,8 @@ namespace SubTerra.App.Integration
             if (keyboard == null) return;
             // B-170: 종료 확인 창이 ESC·X를 먼저 받고(-400), 떠 있는 동안 다른 단축키를 막는다.
             if (QuitConfirmFlow.IsBlockingInput) return;
-            // 시작 브리핑처럼 진행을 멈춘 동안에는 설정·종료 단축키를 막고 X(닫기)만 허용한다.
-            var paused = UiPauseGate.IsHeld;
+            // 시작 브리핑·검색 입력 중에는 설정·종료 단축키를 막고 X(닫기)만 허용한다.
+            var paused = UiPauseGate.IsInputBlocked;
             if (!paused && keyboard.escapeKey.wasPressedThisFrame) HandleEscape();
             var selected = UnityEngine.EventSystems.EventSystem.current;
             if (selected != null && selected.currentSelectedGameObject != null

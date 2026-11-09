@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using SubTerra.App.Core.Data;
 
@@ -50,6 +49,7 @@ namespace SubTerra.App.UI.Inventory
 
         private const int UnknownMineralRank = 50;
         private const int RareItemRank = 100;
+        private const string InitialConsonants = "ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ";
 
         public static int SortCount => Labels.Length;
 
@@ -110,8 +110,38 @@ namespace SubTerra.App.UI.Inventory
             }
 
             var trimmed = query == null ? string.Empty : query.Trim();
-            return trimmed.Length == 0
-                || DisplayName(stack).IndexOf(trimmed, StringComparison.OrdinalIgnoreCase) >= 0;
+            var name = DisplayName(stack);
+            for (var start = 0; start <= name.Length - trimmed.Length; start++)
+            {
+                var matched = true;
+                for (var i = 0; i < trimmed.Length; i++)
+                {
+                    if (!MatchesCharacter(name[start + i], trimmed[i], i == trimmed.Length - 1))
+                    {
+                        matched = false;
+                        break;
+                    }
+                }
+
+                if (matched) return true;
+            }
+
+            return false;
+        }
+
+        private static bool MatchesCharacter(char name, char query, bool last)
+        {
+            if (char.ToUpperInvariant(name) == char.ToUpperInvariant(query)) return true;
+            if (name < '가' || name > '힣') return false;
+
+            var initial = query >= '\u1100' && query <= '\u1112'
+                ? query - '\u1100'
+                : InitialConsonants.IndexOf(query);
+            if (initial >= 0) return (name - '가') / 588 == initial;
+
+            // 마지막 음절에 아직 받침을 조합하지 않았어도 같은 초성·중성 후보를 보여 준다.
+            return last && query >= '가' && query <= '힣' && (query - '가') % 28 == 0
+                && (name - '가') / 28 == (query - '가') / 28;
         }
 
         public static List<InventoryStackReadModel> Apply(

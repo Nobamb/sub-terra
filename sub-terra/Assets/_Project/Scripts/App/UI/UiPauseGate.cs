@@ -83,15 +83,20 @@ namespace SubTerra.App.UI
     /// <summary>
     /// 팝업 연출이 게임 진행을 멈출 때 쓰는 전역 정지 게이트.
     /// UI 연출은 Time.unscaledDeltaTime을 쓰므로 정지 중에도 재생된다.
-    /// 실시간 시계(광산 초기화 타이머)와 키 입력 처리는 IsHeld를 직접 확인한다.
+    /// 실시간 시계는 IsHeld, 키 입력 처리는 IsInputBlocked를 확인한다.
     /// </summary>
     public static class UiPauseGate
     {
         private static readonly PauseOwnership Shared = new PauseOwnership(
             () => Time.timeScale,
             value => Time.timeScale = value);
+        private static readonly HashSet<string> InputOwners = new HashSet<string>();
 
         public static bool IsHeld => Shared.IsHeld;
+        public static bool IsInputBlocked => IsHeld || InputOwners.Count > 0;
+
+        /// <summary>일시정지 또는 입력 전용 차단이 바뀔 때 알린다. 소리·시간은 IsHeld만 확인한다.</summary>
+        public static event Action InputChanged;
 
         public static event Action Changed
         {
@@ -99,15 +104,37 @@ namespace SubTerra.App.UI
             remove => Shared.Changed -= value;
         }
 
+        static UiPauseGate()
+        {
+            Shared.Changed += () => InputChanged?.Invoke();
+        }
+
         public static bool Acquire(string owner) => Shared.Acquire(owner);
         public static bool Release(string owner) => Shared.Release(owner);
         public static bool IsHeldBy(string owner) => Shared.IsHeldBy(owner);
+
+        /// <summary>검색 중 월드 입력만 차단하며 게임 시간과 기존 효과음은 계속 흐르게 한다.</summary>
+        public static bool AcquireInput(string owner)
+        {
+            if (string.IsNullOrEmpty(owner) || !InputOwners.Add(owner)) return false;
+            InputChanged?.Invoke();
+            return true;
+        }
+
+        public static bool ReleaseInput(string owner)
+        {
+            if (string.IsNullOrEmpty(owner) || !InputOwners.Remove(owner)) return false;
+            InputChanged?.Invoke();
+            return true;
+        }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetForPlaySession()
         {
             // 도메인 리로드를 끈 에디터에서 이전 세션의 정지가 남지 않게 한다.
             Shared.ReleaseAll();
+            InputOwners.Clear();
+            InputChanged?.Invoke();
             Application.quitting -= Shared.ReleaseAll;
             Application.quitting += Shared.ReleaseAll;
         }

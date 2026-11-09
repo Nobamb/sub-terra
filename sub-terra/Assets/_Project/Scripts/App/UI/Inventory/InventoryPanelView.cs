@@ -49,12 +49,12 @@ namespace SubTerra.App.UI.Inventory
         public string SearchQuery => searchQuery;
         public InventoryManifestSort Sort => sort;
 
-        public const string SearchPauseOwner = "inventory.search";
+        public const string SearchInputOwner = "inventory.search";
 
         private readonly List<InventoryStackReadModel> lastStacks = new List<InventoryStackReadModel>();
         private string searchQuery = string.Empty;
         private InventoryManifestSort sort = InventoryManifestQuery.DefaultSort;
-        private bool searchPauseHeld;
+        private bool searchInputHeld;
 
         private void Awake()
         {
@@ -71,7 +71,16 @@ namespace SubTerra.App.UI.Inventory
         private void OnDisable()
         {
             UnwireManifestControls();
-            ReleaseSearchPause();
+            ReleaseSearchInput();
+        }
+
+        private void LateUpdate()
+        {
+            if (searchField != null && searchField.isFocused && searchField.textComponent != null)
+            {
+                // TMP의 text는 확정된 문자열만 준다. 표시 문자열에는 IME 조합 중인 글자도 포함된다.
+                OnSearchChanged(searchField.textComponent.text.TrimEnd('\u200B'));
+            }
         }
 
         public void SetCargoSummary(string cargoText)
@@ -277,7 +286,9 @@ namespace SubTerra.App.UI.Inventory
 
         private void OnSearchChanged(string value)
         {
-            searchQuery = value ?? string.Empty;
+            var next = value ?? string.Empty;
+            if (searchQuery == next) return;
+            searchQuery = next;
             RefreshManifest();
             ScrollToTop();
         }
@@ -328,27 +339,27 @@ namespace SubTerra.App.UI.Inventory
 
         private void OnSearchSelected(string _)
         {
-            // 검색창에 글자를 치는 동안에는 I·B·이동 키가 창·월드로 가지 않게
-            // 건설창 검색과 같은 UI 정지 게이트를 잡는다(매 프레임 확인 없이 포커스 이벤트로만).
+            // I·B·이동 키는 막되 전역 일시정지로 기존 효과음을 끊지 않는다.
             var open = panelRoot == null || panelRoot.activeInHierarchy;
-            if (!open || searchPauseHeld || TerminalWindowOpenMotion.IsClosingWindow(gameObject))
+            if (!open || searchInputHeld || TerminalWindowOpenMotion.IsClosingWindow(gameObject))
             {
                 return;
             }
 
-            UiPauseGate.Acquire(SearchPauseOwner);
-            searchPauseHeld = UiPauseGate.IsHeldBy(SearchPauseOwner);
+            searchInputHeld = UiPauseGate.AcquireInput(SearchInputOwner);
         }
 
         private void OnSearchDeselected(string _)
         {
-            ReleaseSearchPause();
+            ReleaseSearchInput();
+            OnSearchChanged(searchField != null ? searchField.text : string.Empty);
         }
 
         private void OnSearchEndEdit(string _)
         {
             // Enter·Esc로 입력을 끝내면 선택도 풀어 다음 클릭에서 다시 포커스 이벤트가 오게 한다. 창은 닫지 않는다.
-            ReleaseSearchPause();
+            ReleaseSearchInput();
+            OnSearchChanged(searchField != null ? searchField.text : string.Empty);
             var eventSystem = EventSystem.current;
             if (eventSystem != null
                 && !eventSystem.alreadySelecting
@@ -359,15 +370,15 @@ namespace SubTerra.App.UI.Inventory
             }
         }
 
-        private void ReleaseSearchPause()
+        private void ReleaseSearchInput()
         {
-            if (!searchPauseHeld)
+            if (!searchInputHeld)
             {
                 return;
             }
 
-            searchPauseHeld = false;
-            UiPauseGate.Release(SearchPauseOwner);
+            searchInputHeld = false;
+            UiPauseGate.ReleaseInput(SearchInputOwner);
         }
 
         private void CloseManifestControls()
@@ -382,7 +393,7 @@ namespace SubTerra.App.UI.Inventory
                 sortDropdown.Hide();
             }
 
-            ReleaseSearchPause();
+            ReleaseSearchInput();
         }
 
         private Color LevelColor(InventoryCargoLevel level)

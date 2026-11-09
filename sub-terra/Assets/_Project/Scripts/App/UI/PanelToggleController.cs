@@ -53,7 +53,7 @@ namespace SubTerra.App.UI
 
         private void Update()
         {
-            if (UiPauseGate.IsHeld)
+            if (UiPauseGate.IsInputBlocked)
             {
                 return;
             }

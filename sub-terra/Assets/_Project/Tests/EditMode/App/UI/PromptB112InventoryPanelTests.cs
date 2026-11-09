@@ -176,6 +176,56 @@ namespace SubTerra.App.Tests.UI
             Assert.That(InventoryManifestQuery.LoadedCount(cargo), Is.EqualTo(3));
         }
 
+        [TestCase("ㄱ", "mineral.copper")]
+        [TestCase("ㄱㄹ", "mineral.copper")]
+        [TestCase("구ㄹ", "mineral.copper")]
+        [TestCase("ᄎ", "mineral.iron")]
+        [TestCase("ㅊ", "mineral.iron")]
+        [TestCase("처", "mineral.iron")]
+        [TestCase("ㄹㅌ", "mineral.lithium")]
+        [TestCase("리튜", "mineral.lithium")]
+        public void Query_SearchMatchesInitialsAndComposingLastSyllable(string query, string expected)
+        {
+            Assert.That(Order(CargoOf(4, 3, 2), query, InventoryManifestSort.RarityAscending),
+                Is.EqualTo(new[] { expected }));
+        }
+
+        [Test]
+        public void Query_InitialSearchStillExcludesEmptyAndUnrelatedNames()
+        {
+            Assert.That(Order(CargoOf(4, 0, 2), "ㅊ", InventoryManifestSort.RarityAscending), Is.Empty);
+            Assert.That(Order(CargoOf(4, 3, 2), "ㄱㅊ", InventoryManifestSort.RarityAscending), Is.Empty);
+            Assert.That(Order(CargoOf(4, 3, 2), "금", InventoryManifestSort.RarityAscending), Is.Empty);
+        }
+
+        [Test]
+        public void SearchInput_DoesNotPauseTimeOrAudioAndKeepsOtherPauseOwners()
+        {
+            const string modalOwner = "inventory-search-test.modal";
+            var previousScale = Time.timeScale;
+            Assert.That(SubTerra.App.UI.UiPauseGate.IsInputBlocked, Is.False);
+            try
+            {
+                Assert.That(SubTerra.App.UI.UiPauseGate.AcquireInput(InventoryPanelView.SearchInputOwner), Is.True);
+                Assert.That(SubTerra.App.UI.UiPauseGate.IsInputBlocked, Is.True);
+                Assert.That(SubTerra.App.UI.UiPauseGate.IsHeld, Is.False);
+                Assert.That(Time.timeScale, Is.EqualTo(previousScale));
+                SubTerra.App.UI.UiPauseGate.Acquire(modalOwner);
+                SubTerra.App.UI.UiPauseGate.ReleaseInput(InventoryPanelView.SearchInputOwner);
+                Assert.That(SubTerra.App.UI.UiPauseGate.IsHeldBy(modalOwner), Is.True);
+                Assert.That(SubTerra.App.UI.UiPauseGate.IsInputBlocked, Is.True);
+                Assert.That(Time.timeScale, Is.Zero);
+                SubTerra.App.UI.UiPauseGate.Release(modalOwner);
+                Assert.That(SubTerra.App.UI.UiPauseGate.IsInputBlocked, Is.False);
+                Assert.That(Time.timeScale, Is.EqualTo(previousScale));
+            }
+            finally
+            {
+                SubTerra.App.UI.UiPauseGate.ReleaseInput(InventoryPanelView.SearchInputOwner);
+                SubTerra.App.UI.UiPauseGate.Release(modalOwner);
+            }
+        }
+
         [Test]
         public void View_SearchSortKeepEachOtherAndResetOnReopen()
         {
