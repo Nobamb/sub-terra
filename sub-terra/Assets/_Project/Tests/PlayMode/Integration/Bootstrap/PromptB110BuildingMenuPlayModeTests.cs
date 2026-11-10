@@ -51,6 +51,94 @@ namespace SubTerra.App.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator BuildingMode_FollowupReclickCompositionAndUnscaledHover()
+        {
+            environment = new UiTestEnvironment();
+            yield return environment.LoadIntegration();
+            Object.FindAnyObjectByType<HudPanelChromeController>().OpenBuildingMenu();
+            yield return new WaitForSecondsRealtime(0.5f);
+            var view = Object.FindAnyObjectByType<BuildingMenuView>();
+            var binder = view.GetComponent<BuildingMenuBinder>();
+            var ladder = view.GetComponentsInChildren<BuildingMenuEntryVisual>(true)
+                .Single(e => e.BuildingId == DataIds.Buildings.LadderBasic);
+            var card = Find(view.transform, "Card");
+            var evidence = "Builds/B191-1/evidence";
+            Directory.CreateDirectory(evidence);
+            yield return ClickCenter(environment.Mouse, ladder.GetComponent<Button>());
+            Assert.That(card.gameObject.activeInHierarchy, Is.True);
+            yield return UiTestWait.Capture(Path.Combine(evidence, "small-card.png"));
+            yield return ClickCenter(environment.Mouse, ladder.GetComponent<Button>());
+            Assert.That(view.SelectedBuildingId, Is.Empty);
+            Assert.That(Object.FindAnyObjectByType<BuildingPlacementSystem>().Selection, Is.Null);
+            Assert.That(card.gameObject.activeSelf, Is.False);
+            yield return UiTestWait.Capture(Path.Combine(evidence, "reclick-cleared.png"));
+
+            // Update가 실제로 unscaled 시간을 사용해 정지 중에도 양방향 끝까지 진행한다.
+            InputState.Change(environment.Mouse.position, new Vector2(Screen.width - 4f, Screen.height - 4f));
+            yield return null;
+            var relay = ladder.GetComponent<BuildingRailHoverRelay>();
+            relay.OnPointerExit(null);
+            yield return new WaitForSecondsRealtime(0.35f);
+            Assert.That(view.RailHologram.IsShown, Is.False);
+            var scale = Time.timeScale;
+            var reduced = SubTerra.Shared.AccessibilityPreferences.ReduceMotion;
+            try
+            {
+                Time.timeScale = 0f;
+                SubTerra.Shared.AccessibilityPreferences.ReduceMotion = true;
+                relay.OnPointerEnter(null);
+                var tag = view.RailHologram;
+                yield return new WaitForSecondsRealtime(0.15f);
+                Assert.That(tag.GetComponent<CanvasGroup>().alpha, Is.InRange(0.05f, 0.99f));
+                yield return new WaitForSecondsRealtime(0.2f);
+                Assert.That(tag.GetComponent<CanvasGroup>().alpha, Is.EqualTo(1f));
+                Assert.That(ladder.HoverProgress, Is.EqualTo(1f));
+                relay.OnPointerExit(null);
+                yield return new WaitForSecondsRealtime(0.35f);
+                Assert.That(tag.IsShown, Is.False);
+                Assert.That(ladder.HoverProgress, Is.Zero);
+            }
+            finally
+            {
+                Time.timeScale = scale;
+                SubTerra.Shared.AccessibilityPreferences.ReduceMotion = reduced;
+            }
+
+            view.ToggleExpanded();
+            yield return new WaitForSecondsRealtime(0.5f);
+            EventSystem.current.SetSelectedGameObject(view.SearchField.gameObject);
+            view.SearchField.ActivateInputField();
+            yield return null;
+            var module = EventSystem.current.currentInputModule;
+            var previousInput = module.inputOverride;
+            var composition = view.gameObject.AddComponent<InventorySearchCompositionInput>();
+            module.inputOverride = composition;
+            try
+            {
+                foreach (var query in new[] { "ㅅ", "ㅅㄷ", "사ㄷ" })
+                {
+                    composition.Composition = query;
+                    view.SearchField.ForceLabelUpdate();
+                    yield return null;
+                    yield return null;
+                    Assert.That(view.SearchField.text, Is.Empty, "IME 미확정 문자열을 입력 필드에 다시 쓰지 않는다.");
+                    Assert.That(view.SearchField.textComponent.text.TrimEnd('\u200B'), Is.EqualTo(query));
+                    Assert.That(view.Navigation.Query, Is.EqualTo(query));
+                    Assert.That(view.GetComponentsInChildren<BuildingMenuCatalogRowView>(false)
+                        .Any(r => r.BuildingId == DataIds.Buildings.LadderBasic), Is.True);
+                    yield return UiTestWait.Capture(Path.Combine(evidence, "composition-" + query + ".png"));
+                }
+            }
+            finally
+            {
+                composition.Composition = string.Empty;
+                module.inputOverride = previousInput;
+                Object.DestroyImmediate(composition);
+            }
+            Assert.That(binder.IsBound, Is.True);
+        }
+
+        [UnityTest]
         public IEnumerator BuildingMenu_ConstructingPoweredFacilityDoesNotSpendPlayerPower()
         {
             environment = new UiTestEnvironment();
@@ -203,7 +291,7 @@ namespace SubTerra.App.Tests.PlayMode
             var hologram = view.RailHologram;
             Assert.That(hologram, Is.Not.Null);
             yield return MoveMouseTo(environment.Mouse, (RectTransform)support);
-            yield return new WaitForSecondsRealtime(BuildingRailHologramMotion.OpenDuration + BuildingRailHologramMotion.TypeDuration + 0.05f);
+            yield return new WaitForSecondsRealtime(view.RailHologram.HoverTransitionDurationSeconds + 0.05f);
             Assert.That(hologram.IsShown && !hologram.IsClosing, Is.True, "호버 이름표");
             Assert.That(hologram.CurrentName, Is.Not.Empty);
             Assert.That(hologram.CurrentName, Is.EqualTo(Find(Find(root, "Row_" + DataIds.Buildings.SupportBasic), "Name").GetComponent<TMP_Text>().text),
@@ -263,7 +351,7 @@ namespace SubTerra.App.Tests.PlayMode
             {
                 // 카드가 열린 상태에서 다른 아이콘 호버(이름표가 카드 위에 겹치는 경우) 모습.
                 yield return MoveMouseTo(environment.Mouse, (RectTransform)Entry(root, DataIds.Buildings.LadderBasic));
-                yield return new WaitForSecondsRealtime(BuildingRailHologramMotion.OpenDuration + BuildingRailHologramMotion.TypeDuration + 0.05f);
+                yield return new WaitForSecondsRealtime(view.RailHologram.HoverTransitionDurationSeconds + 0.05f);
                 Assert.That(hologram.IsShown, Is.True);
                 Assert.That(card.activeSelf, Is.True, "카드는 호버로 숨지 않는다.");
                 yield return UiTestWait.Capture(Path.Combine(evidence, "building-rail-hover-card-1920x1080.png"));

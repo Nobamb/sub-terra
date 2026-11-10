@@ -162,6 +162,7 @@ namespace SubTerra.App.Editor.DataValidation
             }
 
             var font = selectionText.font;
+            EnsureSearchJamo(font);
             var knob = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Knob.psd");
             var buttonOff = LoadMenuButtonSprite(MenuButtonOffPath);
             var buttonOn = LoadMenuButtonSprite(MenuButtonOnPath);
@@ -182,6 +183,11 @@ namespace SubTerra.App.Editor.DataValidation
             var side = BuildSidePane(panel, root.transform, font, knob);
             var catalog = BuildCatalog(panel, root.transform, view, binder, entries, font, buttonOff, buttonOn);
             var hologram = BuildRailHologram(panel, font);
+            var holograms = new List<BuildingRailHologram> { hologram };
+            for (var i = 1; i < entries.Count; i++)
+            {
+                holograms.Add(BuildRailHologram(panel, font, "RailHoverHologram_" + entries[i].BuildingId));
+            }
             foreach (var entry in entries)
             {
                 EnsureComponent<BuildingRailHoverRelay>(entry.gameObject).EditorSet(view);
@@ -205,6 +211,7 @@ namespace SubTerra.App.Editor.DataValidation
             side.Root.SetAsLastSibling();
             catalog.Window.transform.SetAsLastSibling();
             rail.SetAsLastSibling();
+            foreach (var tag in holograms) tag.transform.SetAsLastSibling();
             hologram.transform.SetAsLastSibling();
 
             var motion = root.GetComponent<BuildingModeSlideMotion>();
@@ -248,6 +255,7 @@ namespace SubTerra.App.Editor.DataValidation
             Set(viewSo, "detailPageStatus", catalog.Status);
             Set(viewSo, "detailPageStatusAccent", catalog.StatusAccent);
             Set(viewSo, "railHologram", hologram);
+            SetArray(viewSo, "railHolograms", holograms.Select(h => (UnityEngine.Object)h).ToList());
             Set(viewSo, "sortDropdown", catalog.Sort);
             Set(viewSo, "catalogContent", catalog.Content);
             Set(viewSo, "catalogScroll", catalog.Scroll);
@@ -444,6 +452,15 @@ namespace SubTerra.App.Editor.DataValidation
                 go.transform.SetParent(rail.transform, false);
                 PlaceTopLeft((RectTransform)go.transform, Padding, IconY(i), IconSize, IconSize);
                 StyleMenuButton(go, buttonOff, buttonOn, ButtonCorner);
+                // SpriteSwap은 즉시 바뀌므로 시설 호버만 별도 on 프레임의 알파로 전환한다.
+                go.GetComponent<UnityEngine.UI.Button>().transition = UnityEngine.UI.Selectable.Transition.None;
+                var hover = EnsureMenuSkin(go.transform, "HoverFrame", buttonOn, ButtonCorner);
+                hover.color = new Color(1f, 1f, 1f, 0f);
+                hover.transform.SetSiblingIndex(1);
+                var entrySo = new SerializedObject(entries[i]);
+                entrySo.FindProperty("hoverFrame").objectReferenceValue = hover;
+                entrySo.FindProperty("hoverTransitionDuration").floatValue = BuildingMenuEntryVisual.HoverTransitionDuration;
+                entrySo.ApplyModifiedPropertiesWithoutUndo();
 
                 // 선택: 켜진 메뉴 버튼 그림 + 왼쪽 청록 막대(호버와 구분).
                 var highlight = EnsureImage(go.transform, "SelectedHighlight", Clear);
@@ -458,7 +475,7 @@ namespace SubTerra.App.Editor.DataValidation
                 bar.rectTransform.pivot = new Vector2(0f, 0.5f);
                 bar.rectTransform.anchoredPosition = new Vector2(4f, 0f);
                 bar.rectTransform.sizeDelta = new Vector2(2.5f, -22f);
-                highlight.transform.SetSiblingIndex(1);
+                highlight.transform.SetSiblingIndex(2);
                 highlight.gameObject.SetActive(false);
 
                 var icon = EnsureImage(go.transform, "Icon", Color.white);
@@ -496,9 +513,9 @@ namespace SubTerra.App.Editor.DataValidation
         /// 레일 아이콘 호버 이름표: 아이콘에서 뻗는 연결선 + 반투명 청록 판 + 주사선 + 시설명.
         /// 모든 그래픽은 raycast를 끄고 CanvasGroup도 막지 않아 클릭·설치 판정에 끼지 않는다.
         /// </summary>
-        private static BuildingRailHologram BuildRailHologram(Transform panel, TMP_FontAsset font)
+        private static BuildingRailHologram BuildRailHologram(Transform panel, TMP_FontAsset font, string objectName = "RailHoverHologram")
         {
-            var root = EnsureRect(panel, "RailHoverHologram");
+            var root = EnsureRect(panel, objectName);
             PlaceTopLeft(root, RailWidth + BuildingRailHologram.Gap, -Padding - IconSize * 0.5f,
                 BuildingRailHologram.ConnectorLength + 120f, BuildingRailHologram.BodyHeight);
             root.pivot = new Vector2(0f, 0.5f);
@@ -620,16 +637,25 @@ namespace SubTerra.App.Editor.DataValidation
             refs.Hint = hint.gameObject;
 
             // 선택 카드: 아이콘·시설명 → 용도 → 운영 조건 → 건설 비용 → 설치 상태.
-            var card = EnsureImage(side, "Card", PanelColor);
+            var card = EnsureImage(side, "Card", Clear);
             card.raycastTarget = true;
-            EnsureOutline(card.gameObject, FrameOutline, 1.5f);
+            RemoveOutline(card.gameObject);
+            BuildWindowFrame(card.transform, CardWidth);
+            EnsureComponent<LayoutElement>(card.transform.Find(WindowFrameName).gameObject).ignoreLayout = true;
             var cardLayout = EnsureComponent<VerticalLayoutGroup>(card.gameObject);
             ConfigureVertical(cardLayout, new RectOffset(12, 12, 12, 12), 8f);
             refs.Card = card.gameObject;
             var inner = CardWidth - 24f;
 
             var header = EnsureRect(card.transform, "CardHeader");
+            EnsureImage(card.transform, "CardHeader", new Color(0.03f, 0.12f, 0.16f, 0.75f));
             EnsureLayoutElement(header.gameObject, 44f);
+            var titleDivider = EnsureImage(header, "TitleDivider", CyanLine);
+            titleDivider.rectTransform.anchorMin = Vector2.zero;
+            titleDivider.rectTransform.anchorMax = new Vector2(1f, 0f);
+            titleDivider.rectTransform.pivot = new Vector2(0.5f, 0f);
+            titleDivider.rectTransform.anchoredPosition = Vector2.zero;
+            titleDivider.rectTransform.sizeDelta = new Vector2(0f, 1f);
             var frame = Adopt(root, "DetailIconFrame", header);
             var frameImage = EnsureImage(frame.parent, frame.name, new Color(0.03f, 0.08f, 0.11f, 1f));
             PlaceTopLeft(frameImage.rectTransform, 0f, 0f, 44f, 44f);
@@ -1063,7 +1089,7 @@ namespace SubTerra.App.Editor.DataValidation
         /// B-191: 인벤토리 창과 같은 9-slice 네온 프레임. 몸체가 창에 맞고 글로우·상단 탭은 창 밖으로 번진다.
         /// 프레임 이미지 가져오기 설정(9-slice)은 인벤토리 빌더(B-112/190)가 관리하므로 여기서는 읽기만 한다.
         /// </summary>
-        private static void BuildWindowFrame(Transform window)
+        private static void BuildWindowFrame(Transform window, float width = CatalogWidth)
         {
             var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(WindowFramePath);
             if (sprite == null || sprite.border == Vector4.zero)
@@ -1072,7 +1098,7 @@ namespace SubTerra.App.Editor.DataValidation
             }
 
             var pixelsPerUnit = (PromptB112InventoryPanelBuilder.FrameBodyRight - PromptB112InventoryPanelBuilder.FrameBodyLeft)
-                / CatalogWidth;
+                / width;
             var scale = 1f / pixelsPerUnit;
             var frame = EnsureImage(window, WindowFrameName, Color.white);
             var rect = frame.rectTransform;
@@ -1092,6 +1118,14 @@ namespace SubTerra.App.Editor.DataValidation
             frame.raycastTarget = false;
             frame.transform.SetSiblingIndex(0);
             EditorUtility.SetDirty(frame);
+        }
+
+        private static void EnsureSearchJamo(TMP_FontAsset font)
+        {
+            var jamo = new string(Enumerable.Range(0x3131, 0x318E - 0x3131 + 1).Select(c => (char)c).ToArray());
+            // 런타임 조회표만 자모를 갖고 아틀라스는 비어 있는 경우를 기존 복구 경로로 동기화한다.
+            // 기존 글리프·자간은 유지하고 호환 자모만 추가·저장한다.
+            KoreanFontAssetUtility.EnsureCharactersSaved(font, jamo);
         }
 
         /// <summary>

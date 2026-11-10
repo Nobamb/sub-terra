@@ -216,7 +216,8 @@ namespace SubTerra.App.Tests.UI
                 Assert.That(skin.sprite, Is.SameAs(off), button.name);
                 Assert.That(skin.type, Is.EqualTo(Image.Type.Sliced), button.name);
                 Assert.That(button.targetGraphic, Is.SameAs(skin), button.name);
-                Assert.That(button.transition, Is.EqualTo(Selectable.Transition.SpriteSwap), button.name);
+                Assert.That(button.transition, Is.EqualTo(button.GetComponent<BuildingMenuEntryVisual>() != null
+                    ? Selectable.Transition.None : Selectable.Transition.SpriteSwap), button.name);
                 Assert.That(button.spriteState.highlightedSprite, Is.SameAs(on), button.name);
                 Assert.That(button.GetComponent<Image>().raycastTarget, Is.True, button.name + " 클릭 영역");
             }

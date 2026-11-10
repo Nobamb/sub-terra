@@ -77,6 +77,7 @@ namespace SubTerra.App.UI.Building
         [SerializeField] private Image detailPageStatusAccent;
         // 레일 아이콘 호버 시 오른쪽에 뜨는 홀로그램 이름표.
         [SerializeField] private BuildingRailHologram railHologram;
+        [SerializeField] private BuildingRailHologram[] railHolograms = new BuildingRailHologram[0];
         // B-191: 정렬 드롭다운·목록 칸 부모·건설 UI 전용 Canvas·안내 다시 띄우기 대기.
         [SerializeField] private TMP_Dropdown sortDropdown;
         [SerializeField] private RectTransform catalogContent;
@@ -132,6 +133,7 @@ namespace SubTerra.App.UI.Building
         private void OnDisable()
         {
             ReleaseSearchPause();
+            HideRailHoverNow();
         }
 
         private void Update()
@@ -420,16 +422,38 @@ namespace SubTerra.App.UI.Building
                 return;
             }
 
+            for (var i = 0; i < entries.Length; i++)
+            {
+                var matches = entries[i] != null && entries[i].BuildingId == buildingId;
+                if (entries[i] != null) entries[i].SetHovered(matches);
+                if (matches && i < railHolograms.Length && railHolograms[i] != null)
+                {
+                    if (railHologram != railHolograms[i]) railHologram.Hide(null);
+                    railHologram = railHolograms[i];
+                }
+            }
+
             var item = FindItem(buildingId);
             var displayName = item != null && !string.IsNullOrEmpty(item.DisplayName)
                 ? item.DisplayName
                 : ItemDisplayNames.Building(buildingId);
             railHologram.Show(anchor, displayName);
+            railHologram.transform.SetAsLastSibling();
             SetRailHoverActive(railHologram.IsShown);
         }
 
         public void HideRailHover(RectTransform anchor)
         {
+            if (anchor != null)
+            {
+                var entry = anchor.GetComponent<BuildingMenuEntryVisual>();
+                if (entry != null) entry.SetHovered(false);
+            }
+
+            foreach (var hologram in railHolograms)
+            {
+                if (hologram != null) hologram.Hide(anchor);
+            }
             if (railHologram != null)
             {
                 railHologram.Hide(anchor);
@@ -439,6 +463,14 @@ namespace SubTerra.App.UI.Building
 
         private void HideRailHoverNow()
         {
+            foreach (var entry in entries)
+            {
+                if (entry != null) entry.ClearHover();
+            }
+            foreach (var hologram in railHolograms)
+            {
+                if (hologram != null) hologram.HideNow();
+            }
             if (railHologram != null)
             {
                 railHologram.HideNow();
