@@ -30,6 +30,7 @@ namespace SubTerra.Gameplay.Mining
         private static readonly List<RaycastResult> PointerHits = new(8);
         private System.Func<bool> pointerMiningBlocker;
         private bool pointerClaimedByPlacement;
+        private bool pointerClaimedByDrone;
         private bool enterMiningSuppressed;
         private bool activeMiningOnLadder;
         private bool hasMiningAnimationContext;
@@ -43,6 +44,21 @@ namespace SubTerra.Gameplay.Mining
         public void SetPointerMiningBlocker(System.Func<bool> blocker)
         {
             pointerMiningBlocker = blocker;
+        }
+
+        public bool CanPrioritizePointerMining(Vector2 worldPoint)
+        {
+            return isActiveAndEnabled
+                && !ControlPreferences.IsSettingsOpen
+                && movement != null
+                && miningSystem != null
+                && IsLadderPointerTargetAllowed(worldPoint)
+                && miningSystem.CanStartMiningAtWorldPoint(worldPoint, movement.Position, reach);
+        }
+
+        public void SuppressPointerUntilReleased()
+        {
+            pointerClaimedByDrone = true;
         }
 
         public bool IsMining => miningSystem != null && miningSystem.IsMining;
@@ -81,7 +97,10 @@ namespace SubTerra.Gameplay.Mining
         private void Update()
         {
             if (Mouse.current == null || !Mouse.current.leftButton.isPressed)
+            {
                 pointerClaimedByPlacement = false;
+                pointerClaimedByDrone = false;
+            }
             else if (pointerMiningBlocker != null && pointerMiningBlocker())
                 pointerClaimedByPlacement = true;
 
@@ -243,7 +262,7 @@ namespace SubTerra.Gameplay.Mining
             }
 
             // 머리 위 구출 칩·팝업 등 UI 클릭이 채굴로 통과하지 않게 한다.
-            if (mousePressed && (pointerClaimedByPlacement || IsPointerOverUi()))
+            if (mousePressed && (pointerClaimedByPlacement || pointerClaimedByDrone || IsPointerOverUi()))
             {
                 return false;
             }
@@ -282,7 +301,8 @@ namespace SubTerra.Gameplay.Mining
         {
             pendingDirection = PlayerKeyboardControls.ReadMiningDirection(ControlPreferences.Scheme);
             pendingPointerTarget = Mouse.current != null
-                && Mouse.current.leftButton.isPressed && !pointerClaimedByPlacement && pendingDirection == Vector2.zero;
+                && Mouse.current.leftButton.isPressed && !pointerClaimedByPlacement && !pointerClaimedByDrone
+                && pendingDirection == Vector2.zero;
             if (pendingPointerTarget && Camera.main != null)
             {
                 Vector3 world = Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
@@ -303,10 +323,7 @@ namespace SubTerra.Gameplay.Mining
                 if (miningSystem.ForegroundTilemap == null || pendingDirection.y != 0f) return;
                 if (pendingPointerTarget)
                 {
-                    var map = miningSystem.ForegroundTilemap;
-                    var playerCell = map.WorldToCell(movement.Position);
-                    var targetCell = map.WorldToCell(pendingWorldPoint);
-                    if (targetCell.y != playerCell.y || targetCell.x == playerCell.x) return;
+                    if (!IsLadderPointerTargetAllowed(pendingWorldPoint)) return;
                 }
                 else
                 {
@@ -335,6 +352,18 @@ namespace SubTerra.Gameplay.Mining
                     movement.FacingDirection,
                     reach);
             }
+        }
+
+        private bool IsLadderPointerTargetAllowed(Vector2 worldPoint)
+        {
+            if (animationController == null || !animationController.CanMineOnLadder) return true;
+
+            var map = miningSystem.ForegroundTilemap;
+            if (map == null) return false;
+
+            var playerCell = map.WorldToCell(movement.Position);
+            var targetCell = map.WorldToCell(worldPoint);
+            return targetCell.y == playerCell.y && targetCell.x != playerCell.x;
         }
     }
 }
