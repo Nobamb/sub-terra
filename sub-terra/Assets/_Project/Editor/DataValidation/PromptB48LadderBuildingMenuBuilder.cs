@@ -117,7 +117,7 @@ namespace SubTerra.App.Editor.DataValidation
 
             data.EditorSet(
                 DataIds.Buildings.LadderBasic,
-                "기본 사다리",
+                "사다리",
                 "깊은 수직 갱도에서 중력 없이 오르내릴 수 있습니다. 철 1개·구리 3개로 세로 5칸 설치합니다.",
                 buildable,
                 AssetDatabase.LoadAssetAtPath<Sprite>(PhaseCElevatorLadderBuilder.LadderArtPath),

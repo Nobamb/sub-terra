@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Building_Light_Basic
   m_EditorClassIdentifier: SubTerra.App::SubTerra.App.Core.Data.BuildingData
   id: building.light.basic
-  displayName: "\uAE30\uBCF8 \uC870\uBA85"
+  displayName: "\uC870\uBA85"
   description: "\uC804\uB825\uC774 \uC5F0\uACB0\uB41C \uC9C0\uD558 \uAD6C\uC5ED\uC744
     \uBC1D\uD799\uB2C8\uB2E4."
   runtimePrefab: {fileID: 7593593327156216058, guid: 57b1560617d7d9a4da00b172c189a363, type: 3}

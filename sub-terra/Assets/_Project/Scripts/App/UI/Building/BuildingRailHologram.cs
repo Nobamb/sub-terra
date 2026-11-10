@@ -23,10 +23,11 @@ namespace SubTerra.App.UI.Building
         [SerializeField] private TMP_Text nameText;
         [SerializeField] private RectTransform scanLine;
         [SerializeField] private RectTransform glow;
+        [SerializeField, Min(0f)] private float hoverTransitionDuration = BuildingMenuEntryVisual.HoverTransitionDuration;
 
         private RectTransform anchor;
         private float elapsed;
-        private float closeElapsed;
+        private float hoverProgress;
         private int visibleCharacters = -1;
 
         public bool IsShown { get; private set; }
@@ -34,6 +35,8 @@ namespace SubTerra.App.UI.Building
         public bool IsClosing { get; private set; }
         public string CurrentName => nameText != null ? nameText.text : string.Empty;
         public RectTransform CurrentAnchor => anchor;
+        public float HoverTransitionDurationSeconds => hoverTransitionDuration;
+        public float HoverProgress => hoverProgress;
 
         public bool HasRequiredReferences()
         {
@@ -88,8 +91,7 @@ namespace SubTerra.App.UI.Building
 
             IsShown = true;
             IsClosing = false;
-            closeElapsed = 0f;
-            elapsed = AccessibilityPreferences.ReduceMotion ? BuildingRailHologramMotion.OpenDuration + BuildingRailHologramMotion.TypeDuration : 0f;
+            // 닫히는 도중 다시 들어오면 현재 밝기에서 방향만 바꾼다.
             visibleCharacters = -1;
             ApplyFrame();
         }
@@ -102,14 +104,13 @@ namespace SubTerra.App.UI.Building
                 return;
             }
 
-            if (AccessibilityPreferences.ReduceMotion || !isActiveAndEnabled)
+            if (!isActiveAndEnabled)
             {
                 HideNow();
                 return;
             }
 
             IsClosing = true;
-            closeElapsed = 0f;
         }
 
         public void HideNow()
@@ -118,7 +119,7 @@ namespace SubTerra.App.UI.Building
             IsClosing = false;
             anchor = null;
             elapsed = 0f;
-            closeElapsed = 0f;
+            hoverProgress = 0f;
             SetHidden();
         }
 
@@ -132,19 +133,15 @@ namespace SubTerra.App.UI.Building
             }
 
             deltaTime = Mathf.Max(0f, deltaTime);
-            if (IsClosing)
+            hoverProgress = Mathf.MoveTowards(hoverProgress, IsClosing ? 0f : 1f,
+                hoverTransitionDuration <= 0f ? 1f : deltaTime / hoverTransitionDuration);
+            if (IsClosing && hoverProgress <= 0f)
             {
-                closeElapsed += deltaTime;
-                if (closeElapsed >= BuildingRailHologramMotion.CloseDuration)
-                {
-                    HideNow();
-                    return;
-                }
+                HideNow();
+                return;
             }
-            else
-            {
-                elapsed += deltaTime;
-            }
+
+            elapsed += deltaTime;
 
             ApplyFrame();
         }
@@ -168,30 +165,25 @@ namespace SubTerra.App.UI.Building
         private void ApplyFrame()
         {
             var reduce = AccessibilityPreferences.ReduceMotion;
-            var alpha = reduce ? 1f : BuildingRailHologramMotion.Alpha(elapsed);
-            if (IsClosing)
-            {
-                alpha *= BuildingRailHologramMotion.CloseAlpha(closeElapsed);
-            }
-
-            group.alpha = alpha;
-            transform.localScale = new Vector3(reduce ? 1f : BuildingRailHologramMotion.ScaleX(elapsed), 1f, 1f);
+            var blend = Mathf.SmoothStep(0f, 1f, hoverProgress);
+            group.alpha = blend;
+            transform.localScale = new Vector3(Mathf.Lerp(BuildingRailHologramMotion.StartScaleX, 1f, blend), 1f, 1f);
 
             var length = nameText.text != null ? nameText.text.Length : 0;
-            var visible = reduce ? length : BuildingRailHologramMotion.VisibleCharacters(elapsed, length);
+            var visible = length;
             if (visible != visibleCharacters)
             {
                 visibleCharacters = visible;
                 nameText.maxVisibleCharacters = visible;
             }
 
-            var scanActive = !reduce && elapsed >= BuildingRailHologramMotion.OpenDuration;
+            var scanActive = !reduce && hoverProgress >= 1f;
             scanLine.localScale = scanActive ? Vector3.one : Vector3.zero;
 
             if (scanActive)
             {
                 var travel = Mathf.Max(0f, body.rect.height - scanLine.rect.height);
-                var position = BuildingRailHologramMotion.ScanPosition(elapsed - BuildingRailHologramMotion.OpenDuration);
+                var position = BuildingRailHologramMotion.ScanPosition(elapsed);
                 scanLine.anchoredPosition = new Vector2(0f, -travel * position);
             }
         }

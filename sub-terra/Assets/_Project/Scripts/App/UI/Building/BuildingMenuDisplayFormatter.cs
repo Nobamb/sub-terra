@@ -168,7 +168,8 @@ namespace SubTerra.App.UI.Building
                 return true;
             }
 
-            return NormalizeSearch(displayName).Contains(needle)
+            // B-191: 시설명은 초성·조합 중 글자까지 맞추고, 짧은 용도는 일반 글자 포함만 본다.
+            return KoreanSearch.Matches(displayName, needle)
                 || NormalizeSearch(purpose).Contains(needle);
         }
 

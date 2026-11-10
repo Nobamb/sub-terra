@@ -12,6 +12,9 @@ namespace SubTerra.App.UI.Building
     [RequireComponent(typeof(BuildingMenuEntryButton))]
     public sealed class BuildingMenuEntryVisual : MonoBehaviour
     {
+        public const float HoverTransitionDuration = 0.3f;
+        [SerializeField] private UnityEngine.UI.Image hoverFrame;
+        [SerializeField, Min(0f)] private float hoverTransitionDuration = HoverTransitionDuration;
         [SerializeField] private Image icon;
         [SerializeField] private TMP_Text nameText;
         [SerializeField] private TMP_Text costText;
@@ -23,6 +26,41 @@ namespace SubTerra.App.UI.Building
         [SerializeField] private Color missingStateColor = new Color(1f, 0.48f, 0.42f, 1f);
 
         private BuildingMenuEntryButton entry;
+        private bool hovered;
+        private float hoverProgress;
+
+        public float HoverTransitionDurationSeconds => hoverTransitionDuration;
+        public float HoverProgress => hoverProgress;
+
+        private void Update() => AdvanceHover(Time.unscaledDeltaTime);
+
+        private void OnDisable() => ClearHover();
+
+        public void SetHovered(bool value) => hovered = value;
+
+        public void ClearHover()
+        {
+            hovered = false;
+            hoverProgress = 0f;
+            ApplyHover();
+        }
+
+        public void AdvanceHover(float deltaTime)
+        {
+            hoverProgress = Mathf.MoveTowards(hoverProgress, hovered ? 1f : 0f,
+                hoverTransitionDuration <= 0f ? 1f : Mathf.Max(0f, deltaTime) / hoverTransitionDuration);
+            ApplyHover();
+        }
+
+        private void ApplyHover()
+        {
+            if (hoverFrame != null)
+            {
+                var color = hoverFrame.color;
+                color.a = Mathf.SmoothStep(0f, 1f, hoverProgress);
+                hoverFrame.color = color;
+            }
+        }
 
         public string BuildingId
         {

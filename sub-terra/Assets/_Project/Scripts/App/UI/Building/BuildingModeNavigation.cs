@@ -17,6 +17,7 @@ namespace SubTerra.App.UI.Building
         public BuildingModePage Page { get; private set; } = BuildingModePage.Rail;
         public string Query { get; private set; } = string.Empty;
         public string DetailBuildingId { get; private set; } = string.Empty;
+        public BuildingCatalogSort Sort { get; private set; } = BuildingCatalogQuery.DefaultSort;
 
         public bool IsExpanded => Page != BuildingModePage.Rail;
         public string ExpandLabel => IsExpanded ? "<<" : ">>";
@@ -52,11 +53,18 @@ namespace SubTerra.App.UI.Building
             Query = query ?? string.Empty;
         }
 
-        /// <summary>건설 모드를 닫을 때: 다음에 열면 레일+미선택 상태에서 시작한다.</summary>
+        /// <summary>B-191: 목록 정렬만 바꾼다. 검색어는 그대로 둔다.</summary>
+        public void SetSort(BuildingCatalogSort sort)
+        {
+            Sort = BuildingCatalogQuery.FromIndex((int)sort);
+        }
+
+        /// <summary>건설 모드를 닫을 때: 다음에 열면 레일+미선택·검색어 없음·기본 순에서 시작한다.</summary>
         public void Reset()
         {
             Page = BuildingModePage.Rail;
             Query = string.Empty;
+            Sort = BuildingCatalogQuery.DefaultSort;
             DetailBuildingId = string.Empty;
         }
     }

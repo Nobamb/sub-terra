@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using SubTerra.App.UI;
 using SubTerra.App.UI.Building;
+using SubTerra.App.UI.Inventory;
 using TMPro;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -15,6 +17,8 @@ namespace SubTerra.App.Editor.DataValidation
     /// 왼쪽 레일(아이콘+`>>`) · 고른 시설 카드 · `>>` 큰 창(목록·검색 / 상세)으로 나누고,
     /// 기존 Select_* 버튼·BuildingMenuEntryButton·View 참조는 옮겨서 그대로 재사용한다.
     /// 루트 RectTransform은 Integration Scene 인스턴스 값을 유지하므로 Scene은 수정하지 않는다.
+    /// prompt-B 191 (#304): 루트에 드론 말풍선 위로 올리는 전용 Canvas, 큰 창에 정렬 드롭다운을 넣고,
+    /// 레일은 오른쪽 위 메뉴 버튼 스프라이트, 카드와 큰 창은 정사각 프레임 이미지를 쓴다.
     /// </summary>
     public static class PromptB188BuildingModeBuilder
     {
@@ -28,8 +32,39 @@ namespace SubTerra.App.Editor.DataValidation
         public const float Gap = 8f;
         public const float SideX = RailWidth + Gap;
         public const float CardWidth = 300f;
-        public const float CatalogWidth = 520f;
-        public const float CatalogInnerWidth = CatalogWidth - 32f;
+        public const string CardFramePath = "Assets/_Project/Art/UI/Gameplay/building-card-square.png";
+        // B-191: 검색·정렬과 상세 정보를 담는 큰 창 폭.
+        public const float CatalogWidth = 560f;
+        public const float CatalogMargin = 28f;
+        // 정사각 큰 창에서도 목록 영역은 여섯 행이 온전히 들어가는 높이로 둔다(560 - 96 - 44 = 420).
+        public const float CatalogBottomMargin = 44f;
+        public const float CatalogInnerWidth = CatalogWidth - CatalogMargin * 2f;
+        // 프레임 바깥 글로우가 레일을 덮지 않게 조금 띄운다.
+        public const float CatalogX = SideX + 14f;
+        public const float SortWidth = 132f;
+        public const float SortItemHeight = 26f;
+        public const float SearchTop = 52f;
+        public const float SearchHeight = 32f;
+        public const float SearchGap = 8f;
+        public const float SearchWidth = CatalogInnerWidth - SortWidth - SearchGap;
+
+        // B-191: 레일에는 오른쪽 위 메뉴 버튼 그림을 재사용한다.
+        public const string MenuButtonOffPath = "Assets/_Project/Art/UI/Gameplay/SideMenu/menu-button-active-off.png";
+        public const string MenuButtonOnPath = "Assets/_Project/Art/UI/Gameplay/SideMenu/menu-button-active-on.png";
+        public const string WindowFramePath = CardFramePath;
+        public const string WindowFrameName = "WindowFrame";
+        public const string ButtonFrameName = "ButtonFrame";
+        private const string TriangleArrowPath = "Assets/_Project/Art/UI/MainMenu/UI_Triangle_Arrow.png";
+        // 메뉴 버튼 그림(2172x724): 몸체는 x 12~2160, y(위에서) 100~626이고 모서리 깎임이 약 120px이다.
+        // 9-slice로 깎인 모서리를 고정해 정사각 레일 버튼에서도 찌그러지지 않게 쓴다(메뉴 쪽 Simple 이미지는 영향 없음).
+        public static readonly Vector4 MenuButtonBorder = new Vector4(130f, 218f, 130f, 220f);
+        private const float MenuButtonPadX = 12f;
+        private const float MenuButtonPadTop = 100f;
+        private const float MenuButtonPadBottom = 98f;
+        private const float MenuButtonCornerPixels = 120f;
+        public const float RailCorner = 12f;
+        public const float ButtonCorner = 9f;
+        public const float IconInset = 8f;
         public const float RowHeight = 64f;
         public const float RowSpacing = 6f;
         public const int CostRowCount = 3;
@@ -47,6 +82,9 @@ namespace SubTerra.App.Editor.DataValidation
         private static readonly Color SubText = new Color(0.6f, 0.78f, 0.85f, 1f);
         private static readonly Color ConditionText = new Color(0.7f, 0.95f, 1f, 1f);
         private static readonly Color EnoughText = new Color(0.56f, 0.96f, 0.78f, 1f);
+        private static readonly Color FieldColor = new Color(0.025f, 0.06f, 0.08f, 1f);
+        private static readonly Color RailFrameTint = new Color(0.62f, 0.74f, 0.8f, 1f);
+        private static readonly Color Clear = new Color(0f, 0f, 0f, 0f);
 
         // B-110 머리말·열 구분·조작 안내 장식. 레일 모드에는 쓰지 않는다.
         private static readonly string[] ObsoleteDecorations =
@@ -82,14 +120,27 @@ namespace SubTerra.App.Editor.DataValidation
             }
 
             var root = PrefabUtility.LoadPrefabContents(BuildingMenuPrefabPath);
+            GameObject environment = null;
             try
             {
+                // 루트에 Canvas를 붙이면 부모 Canvas가 없을 때 루트 RectTransform이 화면 크기로 끌려간다.
+                // 임시 부모 Canvas 아래에서 작업해 Scene 배치값(앵커·위치·크기)을 그대로 저장한다.
+                environment = new GameObject("B191CanvasEnvironment", typeof(RectTransform), typeof(Canvas));
+                EditorSceneManager.MoveGameObjectToScene(environment, root.scene);
+                root.transform.SetParent(environment.transform, false);
+
                 var report = Apply(root);
                 PrefabUtility.SaveAsPrefabAsset(root, BuildingMenuPrefabPath);
                 return report;
             }
             finally
             {
+                root.transform.SetParent(null, false);
+                if (environment != null)
+                {
+                    UnityEngine.Object.DestroyImmediate(environment);
+                }
+
                 PrefabUtility.UnloadPrefabContents(root);
             }
         }
@@ -112,7 +163,11 @@ namespace SubTerra.App.Editor.DataValidation
             }
 
             var font = selectionText.font;
+            EnsureSearchJamo(font);
             var knob = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Knob.psd");
+            var buttonOff = LoadMenuButtonSprite(MenuButtonOffPath);
+            var buttonOn = LoadMenuButtonSprite(MenuButtonOnPath);
+            var modeCanvas = EnsureModeCanvas(root);
 
             PreparePanelRoot(panel);
             foreach (var name in ObsoleteDecorations)
@@ -125,10 +180,15 @@ namespace SubTerra.App.Editor.DataValidation
             }
 
             var entries = CollectEntries(root);
-            var rail = BuildRail(panel, entries, font, out var expandButton, out var expandLabel);
+            var rail = BuildRail(panel, entries, font, buttonOff, buttonOn, out var expandButton, out var expandLabel);
             var side = BuildSidePane(panel, root.transform, font, knob);
-            var catalog = BuildCatalog(panel, root.transform, view, binder, entries, font);
+            var catalog = BuildCatalog(panel, root.transform, view, binder, entries, font, buttonOff, buttonOn);
             var hologram = BuildRailHologram(panel, font);
+            var holograms = new List<BuildingRailHologram> { hologram };
+            for (var i = 1; i < entries.Count; i++)
+            {
+                holograms.Add(BuildRailHologram(panel, font, "RailHoverHologram_" + entries[i].BuildingId));
+            }
             foreach (var entry in entries)
             {
                 EnsureComponent<BuildingRailHoverRelay>(entry.gameObject).EditorSet(view);
@@ -152,6 +212,7 @@ namespace SubTerra.App.Editor.DataValidation
             side.Root.SetAsLastSibling();
             catalog.Window.transform.SetAsLastSibling();
             rail.SetAsLastSibling();
+            foreach (var tag in holograms) tag.transform.SetAsLastSibling();
             hologram.transform.SetAsLastSibling();
 
             var motion = root.GetComponent<BuildingModeSlideMotion>();
@@ -177,7 +238,6 @@ namespace SubTerra.App.Editor.DataValidation
             Set(viewSo, "rail", rail);
             Set(viewSo, "expandButton", expandButton);
             Set(viewSo, "expandLabel", expandLabel);
-            Set(viewSo, "hintChip", side.Hint);
             Set(viewSo, "card", side.Card);
             Set(viewSo, "statusChip", side.StatusChip);
             Set(viewSo, "catalogWindow", catalog.Window);
@@ -195,11 +255,139 @@ namespace SubTerra.App.Editor.DataValidation
             Set(viewSo, "detailPageStatus", catalog.Status);
             Set(viewSo, "detailPageStatusAccent", catalog.StatusAccent);
             Set(viewSo, "railHologram", hologram);
+            SetArray(viewSo, "railHolograms", holograms.Select(h => (UnityEngine.Object)h).ToList());
+            Set(viewSo, "sortDropdown", catalog.Sort);
+            Set(viewSo, "catalogContent", catalog.Content);
+            Set(viewSo, "catalogScroll", catalog.Scroll);
+            Set(viewSo, "modeCanvas", modeCanvas);
             viewSo.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(view);
 
-            return "Prompt-B 188 BuildingMenu building mode: rail=" + entries.Count
-                + " catalogRows=" + catalog.Rows.Count + " detailCostRows=" + catalog.CostRows.Count;
+            return "Prompt-B 188/191 BuildingMenu building mode: rail=" + entries.Count
+                + " catalogRows=" + catalog.Rows.Count + " detailCostRows=" + catalog.CostRows.Count
+                + " sortOptions=" + catalog.Sort.options.Count + " canvasOrder=" + modeCanvas.sortingOrder;
+        }
+
+        /// <summary>
+        /// B-191: 건설 UI(레일·카드·큰 창) 전체를 드론 말풍선 위에 그리는 전용 Canvas.
+        /// HUDCanvas 순서는 그대로 두고 이 창만 올린다. 값은 View 상수(말풍선 + 100)를 그대로 쓴다.
+        /// </summary>
+        private static Canvas EnsureModeCanvas(GameObject root)
+        {
+            var canvas = EnsureComponent<Canvas>(root);
+            EnsureComponent<GraphicRaycaster>(root);
+            canvas.additionalShaderChannels = AdditionalCanvasShaderChannels.TexCoord1
+                | AdditionalCanvasShaderChannels.Normal
+                | AdditionalCanvasShaderChannels.Tangent;
+            var so = new SerializedObject(canvas);
+            so.FindProperty("m_OverrideSorting").boolValue = true;
+            so.FindProperty("m_SortingOrder").intValue = BuildingMenuView.CanvasSortingOrder;
+            so.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(canvas);
+            return canvas;
+        }
+
+        private static Sprite LoadMenuButtonSprite(string path)
+        {
+            var importer = AssetImporter.GetAtPath(path) as TextureImporter;
+            if (importer == null)
+            {
+                throw new InvalidOperationException("메뉴 버튼 이미지가 없습니다: " + path);
+            }
+
+            if (importer.spriteBorder != MenuButtonBorder)
+            {
+                importer.spriteBorder = MenuButtonBorder;
+                importer.SaveAndReimport();
+            }
+
+            var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(path);
+            if (sprite == null)
+            {
+                throw new InvalidOperationException("메뉴 버튼 스프라이트를 불러오지 못했습니다: " + path);
+            }
+
+            return sprite;
+        }
+
+        /// <summary>메뉴 버튼 그림을 9-slice로 깔되, 그림의 투명 여백만큼 바깥으로 키워 몸체가 칸에 딱 맞게 한다.</summary>
+        private static Image EnsureMenuSkin(Transform parent, string name, Sprite sprite, float cornerUnits)
+        {
+            var skin = EnsureImage(parent, name, Color.white);
+            var multiplier = MenuButtonCornerPixels / cornerUnits;
+            var rect = skin.rectTransform;
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.offsetMin = new Vector2(-MenuButtonPadX / multiplier, -MenuButtonPadBottom / multiplier);
+            rect.offsetMax = new Vector2(MenuButtonPadX / multiplier, MenuButtonPadTop / multiplier);
+            skin.sprite = sprite;
+            skin.type = Image.Type.Sliced;
+            skin.fillCenter = true;
+            skin.pixelsPerUnitMultiplier = multiplier;
+            skin.raycastTarget = false;
+            var outline = skin.GetComponent<Outline>();
+            if (outline != null)
+            {
+                UnityEngine.Object.DestroyImmediate(outline);
+            }
+
+            EditorUtility.SetDirty(skin);
+            return skin;
+        }
+
+        /// <summary>오른쪽 위 메뉴 버튼과 같은 그림으로 버튼을 입힌다. 평소=off, 호버·누름=on.</summary>
+        private static Button StyleMenuButton(GameObject go, Sprite off, Sprite on, float cornerUnits)
+        {
+            var hitArea = go.GetComponent<Image>();
+            hitArea.sprite = null;
+            hitArea.color = Clear;
+            hitArea.raycastTarget = true;
+            RemoveOutline(go);
+
+            var frame = EnsureMenuSkin(go.transform, ButtonFrameName, off, cornerUnits);
+            frame.transform.SetSiblingIndex(0);
+
+            var button = EnsureComponent<Button>(go);
+            button.targetGraphic = frame;
+            button.transition = Selectable.Transition.SpriteSwap;
+            var state = button.spriteState;
+            state.highlightedSprite = on;
+            state.pressedSprite = on;
+            state.selectedSprite = null;
+            state.disabledSprite = null;
+            button.spriteState = state;
+            var navigation = button.navigation;
+            navigation.mode = Navigation.Mode.None;
+            button.navigation = navigation;
+            return button;
+        }
+
+        private static void RemoveOutline(GameObject go)
+        {
+            var outline = go.GetComponent<Outline>();
+            if (outline != null)
+            {
+                UnityEngine.Object.DestroyImmediate(outline);
+            }
+        }
+
+        private static void RemoveChild(Transform parent, string name)
+        {
+            var child = parent.Find(name);
+            if (child != null)
+            {
+                UnityEngine.Object.DestroyImmediate(child.gameObject);
+            }
+        }
+
+        private static void SetLayer(Transform target, int layer)
+        {
+            target.gameObject.layer = layer;
+            for (var i = 0; i < target.childCount; i++)
+            {
+                SetLayer(target.GetChild(i), layer);
+            }
         }
 
         private static void PreparePanelRoot(Transform panel)
@@ -240,45 +428,58 @@ namespace SubTerra.App.Editor.DataValidation
             Transform panel,
             List<BuildingMenuEntryVisual> entries,
             TMP_FontAsset font,
+            Sprite buttonOff,
+            Sprite buttonOn,
             out Button expandButton,
             out TMP_Text expandLabel)
         {
             var height = RailHeight(entries.Count);
-            var rail = EnsureImage(panel, "Rail", PanelColor);
+            // B-191: 레일 판도 메뉴 버튼과 같은 네온 프레임 그림을 쓴다. 판 자체는 클릭 막이(투명)로만 남긴다.
+            var rail = EnsureImage(panel, "Rail", Clear);
+            rail.sprite = null;
             rail.raycastTarget = true;
             PlaceTopLeft(rail.rectTransform, 0f, 0f, RailWidth, height);
-            EnsureOutline(rail.gameObject, FrameOutline, 1.5f);
-
-            var accent = EnsureImage(rail.transform, "RailAccent", Cyan);
-            accent.rectTransform.anchorMin = new Vector2(0f, 1f);
-            accent.rectTransform.anchorMax = new Vector2(1f, 1f);
-            accent.rectTransform.pivot = new Vector2(0.5f, 1f);
-            accent.rectTransform.anchoredPosition = Vector2.zero;
-            accent.rectTransform.sizeDelta = new Vector2(0f, 3f);
+            RemoveOutline(rail.gameObject);
+            RemoveChild(rail.transform, "RailAccent");
+            var railFrame = EnsureMenuSkin(rail.transform, "RailFrame", buttonOff, RailCorner);
+            railFrame.color = RailFrameTint;
+            railFrame.transform.SetSiblingIndex(0);
 
             for (var i = 0; i < entries.Count; i++)
             {
                 var go = entries[i].gameObject;
                 go.transform.SetParent(rail.transform, false);
                 PlaceTopLeft((RectTransform)go.transform, Padding, IconY(i), IconSize, IconSize);
-                StyleButton(go);
-                EnsureOutline(go, new Color(0.3f, 0.85f, 1f, 0.22f), 1f);
+                StyleMenuButton(go, buttonOff, buttonOn, ButtonCorner);
+                // SpriteSwap은 즉시 바뀌므로 시설 호버만 별도 on 프레임의 알파로 전환한다.
+                go.GetComponent<UnityEngine.UI.Button>().transition = UnityEngine.UI.Selectable.Transition.None;
+                var hover = EnsureMenuSkin(go.transform, "HoverFrame", buttonOn, ButtonCorner);
+                hover.color = new Color(1f, 1f, 1f, 0f);
+                hover.transform.SetSiblingIndex(1);
+                var entrySo = new SerializedObject(entries[i]);
+                entrySo.FindProperty("hoverFrame").objectReferenceValue = hover;
+                entrySo.FindProperty("hoverTransitionDuration").floatValue = BuildingMenuEntryVisual.HoverTransitionDuration;
+                entrySo.ApplyModifiedPropertiesWithoutUndo();
 
-                var highlight = EnsureImage(go.transform, "SelectedHighlight", HighlightFill);
+                // 선택: 켜진 메뉴 버튼 그림 + 왼쪽 청록 막대(호버와 구분).
+                var highlight = EnsureImage(go.transform, "SelectedHighlight", Clear);
+                highlight.sprite = null;
+                highlight.enabled = false;
                 Stretch(highlight.rectTransform, 0f);
-                EnsureOutline(highlight.gameObject, new Color(0.45f, 0.95f, 1f, 0.95f), 1.5f);
+                RemoveOutline(highlight.gameObject);
+                EnsureMenuSkin(highlight.transform, "SelectedFrame", buttonOn, ButtonCorner).transform.SetSiblingIndex(0);
                 var bar = EnsureImage(highlight.transform, "SelectedBar", Cyan);
                 bar.rectTransform.anchorMin = new Vector2(0f, 0f);
                 bar.rectTransform.anchorMax = new Vector2(0f, 1f);
                 bar.rectTransform.pivot = new Vector2(0f, 0.5f);
-                bar.rectTransform.anchoredPosition = Vector2.zero;
-                bar.rectTransform.sizeDelta = new Vector2(3f, 0f);
-                highlight.transform.SetSiblingIndex(0);
+                bar.rectTransform.anchoredPosition = new Vector2(4f, 0f);
+                bar.rectTransform.sizeDelta = new Vector2(2.5f, -22f);
+                highlight.transform.SetSiblingIndex(2);
                 highlight.gameObject.SetActive(false);
 
                 var icon = EnsureImage(go.transform, "Icon", Color.white);
                 icon.preserveAspect = true;
-                Stretch(icon.rectTransform, 6f);
+                Stretch(icon.rectTransform, IconInset);
 
                 // 레일에는 아이콘만 둔다. 이름·비용 글자는 참조 호환용으로 남기고 숨긴다.
                 foreach (var hidden in new[] { "Label", "CostSummary", "EntryState" })
@@ -297,9 +498,7 @@ namespace SubTerra.App.Editor.DataValidation
             var expand = EnsureImage(rail.transform, "ExpandButton", Color.white);
             PlaceTopLeft(expand.rectTransform, Padding, -(height - Padding - ExpandHeight), IconSize, ExpandHeight);
             expand.raycastTarget = true;
-            StyleButton(expand.gameObject);
-            EnsureOutline(expand.gameObject, new Color(0.3f, 0.85f, 1f, 0.6f), 1f);
-            expandButton = expand.GetComponent<Button>();
+            expandButton = StyleMenuButton(expand.gameObject, buttonOff, buttonOn, ButtonCorner);
 
             expandLabel = EnsureText(expand.transform, "Label", font);
             Style(expandLabel, 18f, Cyan, TextAlignmentOptions.Center, FontStyles.Bold);
@@ -313,9 +512,9 @@ namespace SubTerra.App.Editor.DataValidation
         /// 레일 아이콘 호버 이름표: 아이콘에서 뻗는 연결선 + 반투명 청록 판 + 주사선 + 시설명.
         /// 모든 그래픽은 raycast를 끄고 CanvasGroup도 막지 않아 클릭·설치 판정에 끼지 않는다.
         /// </summary>
-        private static BuildingRailHologram BuildRailHologram(Transform panel, TMP_FontAsset font)
+        private static BuildingRailHologram BuildRailHologram(Transform panel, TMP_FontAsset font, string objectName = "RailHoverHologram")
         {
-            var root = EnsureRect(panel, "RailHoverHologram");
+            var root = EnsureRect(panel, objectName);
             PlaceTopLeft(root, RailWidth + BuildingRailHologram.Gap, -Padding - IconSize * 0.5f,
                 BuildingRailHologram.ConnectorLength + 120f, BuildingRailHologram.BodyHeight);
             root.pivot = new Vector2(0f, 0.5f);
@@ -395,7 +594,6 @@ namespace SubTerra.App.Editor.DataValidation
         private sealed class SideRefs
         {
             public RectTransform Root;
-            public GameObject Hint;
             public GameObject Card;
             public GameObject StatusChip;
             public Image Icon;
@@ -423,30 +621,30 @@ namespace SubTerra.App.Editor.DataValidation
             sideFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
             refs.Root = side;
 
-            // 미선택: 큰 안내 패널 없이 짧은 힌트만.
-            var hint = EnsureImage(side, "HintChip", PanelColor);
-            hint.raycastTarget = true;
-            EnsureOutline(hint.gameObject, FrameOutline, 1f);
-            EnsureLayoutElement(hint.gameObject, 38f);
-            var hintText = EnsureText(hint.transform, "HintText", font);
-            Style(hintText, 15f, SubText, TextAlignmentOptions.MidlineLeft, FontStyles.Normal);
-            hintText.text = "시설을 고르세요";
-            Stretch(hintText.rectTransform, 0f);
-            hintText.rectTransform.offsetMin = new Vector2(14f, 0f);
-            hintText.rectTransform.offsetMax = new Vector2(-10f, 0f);
-            refs.Hint = hint.gameObject;
+            // B-191-3: 미선택일 때 띄우던 `시설을 고르세요` 안내는 없앤다(레일 아이콘만 보인다).
+            RemoveChild(side, "HintChip");
 
             // 선택 카드: 아이콘·시설명 → 용도 → 운영 조건 → 건설 비용 → 설치 상태.
-            var card = EnsureImage(side, "Card", PanelColor);
+            var card = EnsureImage(side, "Card", Clear);
             card.raycastTarget = true;
-            EnsureOutline(card.gameObject, FrameOutline, 1.5f);
+            RemoveOutline(card.gameObject);
+            BuildWindowFrame(card.transform, CardWidth);
+            EnsureComponent<LayoutElement>(card.transform.Find(WindowFrameName).gameObject).ignoreLayout = true;
+            EnsureLayoutElement(card.gameObject, CardWidth);
             var cardLayout = EnsureComponent<VerticalLayoutGroup>(card.gameObject);
-            ConfigureVertical(cardLayout, new RectOffset(12, 12, 12, 12), 8f);
+            ConfigureVertical(cardLayout, new RectOffset(16, 16, 16, 16), 6f);
             refs.Card = card.gameObject;
-            var inner = CardWidth - 24f;
+            var inner = CardWidth - 32f;
 
             var header = EnsureRect(card.transform, "CardHeader");
+            EnsureImage(card.transform, "CardHeader", new Color(0.03f, 0.12f, 0.16f, 0.75f));
             EnsureLayoutElement(header.gameObject, 44f);
+            var titleDivider = EnsureImage(header, "TitleDivider", CyanLine);
+            titleDivider.rectTransform.anchorMin = Vector2.zero;
+            titleDivider.rectTransform.anchorMax = new Vector2(1f, 0f);
+            titleDivider.rectTransform.pivot = new Vector2(0.5f, 0f);
+            titleDivider.rectTransform.anchoredPosition = Vector2.zero;
+            titleDivider.rectTransform.sizeDelta = new Vector2(0f, 1f);
             var frame = Adopt(root, "DetailIconFrame", header);
             var frameImage = EnsureImage(frame.parent, frame.name, new Color(0.03f, 0.08f, 0.11f, 1f));
             PlaceTopLeft(frameImage.rectTransform, 0f, 0f, 44f, 44f);
@@ -472,10 +670,13 @@ namespace SubTerra.App.Editor.DataValidation
             description.textWrappingMode = TextWrappingModes.Normal;
             description.lineSpacing = 2f;
             description.text = string.Empty;
+            EnsureLayoutElement(description.gameObject, 32f);
+            description.GetComponent<LayoutElement>().flexibleHeight = 1f;
 
             refs.Condition = Adopt(root, "DetailOperatingCondition", card.transform).GetComponent<TMP_Text>();
             Style(refs.Condition, 13.5f, ConditionText, TextAlignmentOptions.MidlineLeft, FontStyles.Bold);
             refs.Condition.text = string.Empty;
+            EnsureLayoutElement(refs.Condition.gameObject, 18f);
             refs.Condition.gameObject.SetActive(false);
 
             var costSection = Adopt(root, "CostSection", card.transform);
@@ -493,7 +694,7 @@ namespace SubTerra.App.Editor.DataValidation
 
             var banner = Adopt(root, "AvailabilityBanner", card.transform);
             refs.Banner = EnsureImage(banner.parent, banner.name, new Color(0.1f, 0.14f, 0.16f, 0.92f));
-            EnsureLayoutElement(banner.gameObject, 54f);
+            EnsureLayoutElement(banner.gameObject, 48f);
             refs.Accent = EnsureImage(banner, "AvailabilityAccent", new Color(0.45f, 0.62f, 0.7f, 1f));
             refs.Accent.rectTransform.anchorMin = new Vector2(0f, 0f);
             refs.Accent.rectTransform.anchorMax = new Vector2(0f, 1f);
@@ -538,9 +739,8 @@ namespace SubTerra.App.Editor.DataValidation
             statusChip.gameObject.SetActive(false);
             refs.StatusChip = statusChip.gameObject;
 
-            hint.transform.SetSiblingIndex(0);
-            card.transform.SetSiblingIndex(1);
-            statusChip.transform.SetSiblingIndex(2);
+            card.transform.SetSiblingIndex(0);
+            statusChip.transform.SetSiblingIndex(1);
             return refs;
         }
 
@@ -626,6 +826,9 @@ namespace SubTerra.App.Editor.DataValidation
             public List<BuildingMenuCostRowView> CostRows;
             public TMP_Text Status;
             public Image StatusAccent;
+            public TMP_Dropdown Sort;
+            public RectTransform Content;
+            public ScrollRect Scroll;
         }
 
         private static CatalogRefs BuildCatalog(
@@ -634,37 +837,38 @@ namespace SubTerra.App.Editor.DataValidation
             BuildingMenuView view,
             BuildingMenuBinder binder,
             List<BuildingMenuEntryVisual> entries,
-            TMP_FontAsset font)
+            TMP_FontAsset font,
+            Sprite buttonOff,
+            Sprite buttonOn)
         {
             var refs = new CatalogRefs();
-            var height = RailHeight(entries.Count);
-            var window = EnsureImage(panel, "CatalogWindow", PanelColor);
+            var height = CatalogWidth;
+            // 창 판은 클릭 막이로 두고 카드와 같은 프레임 그림을 뒤에 둔다.
+            var window = EnsureImage(panel, "CatalogWindow", Clear);
+            window.sprite = null;
             window.raycastTarget = true;
-            PlaceTopLeft(window.rectTransform, SideX, 0f, CatalogWidth, height);
-            EnsureOutline(window.gameObject, FrameOutline, 1.5f);
-            var accent = EnsureImage(window.transform, "CatalogAccent", Cyan);
-            accent.rectTransform.anchorMin = new Vector2(0f, 1f);
-            accent.rectTransform.anchorMax = new Vector2(1f, 1f);
-            accent.rectTransform.pivot = new Vector2(0.5f, 1f);
-            accent.rectTransform.anchoredPosition = Vector2.zero;
-            accent.rectTransform.sizeDelta = new Vector2(0f, 3f);
+            PlaceTopLeft(window.rectTransform, CatalogX, 0f, CatalogWidth, height);
+            RemoveOutline(window.gameObject);
+            RemoveChild(window.transform, "CatalogAccent");
+            BuildWindowFrame(window.transform);
             refs.Window = window.gameObject;
 
-            // 목록 + 검색
+            // 목록 + 검색 + 정렬
             var list = EnsureRect(window.transform, "ListPage");
             Stretch(list, 0f);
             refs.ListPage = list.gameObject;
             var title = Adopt(root, "Title", list).GetComponent<TMP_Text>();
-            Style(title, 20f, Color.white, TextAlignmentOptions.MidlineLeft, FontStyles.Bold);
+            Style(title, 22f, Color.white, TextAlignmentOptions.Center, FontStyles.Bold);
             title.text = "시설 목록 <color=#6B8C99><size=70%>· " + entries.Count + "</size></color>";
-            PlaceTopLeft(title.rectTransform, 16f, -12f, CatalogInnerWidth, 28f);
+            PlaceTopCenter(title.rectTransform, -11f, 300f, 28f);
 
             refs.Search = BuildSearchField(list, font);
+            refs.Sort = BuildSortDropdown(list, font);
 
             var scrollTop = 96f;
-            var scrollHeight = height - scrollTop - 12f;
+            var scrollHeight = height - scrollTop - CatalogBottomMargin;
             var scroll = EnsureRect(list, "CatalogScroll");
-            PlaceTopLeft(scroll, 16f, -scrollTop, CatalogInnerWidth, scrollHeight);
+            PlaceTopLeft(scroll, CatalogMargin, -scrollTop, CatalogInnerWidth, scrollHeight);
             var scrollRect = EnsureComponent<ScrollRect>(scroll.gameObject);
             var viewport = EnsureImage(scroll, "Viewport", new Color(0f, 0f, 0f, 0f));
             viewport.raycastTarget = true;
@@ -694,6 +898,8 @@ namespace SubTerra.App.Editor.DataValidation
             scrollRect.verticalScrollbar = scrollbar;
             scrollRect.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHide;
             scrollRect.verticalScrollbarSpacing = 0f;
+            refs.Content = content;
+            refs.Scroll = scrollRect;
 
             refs.Rows = new List<BuildingMenuCatalogRowView>();
             var rowWidth = CatalogInnerWidth - 12f;
@@ -706,7 +912,7 @@ namespace SubTerra.App.Editor.DataValidation
             var empty = EnsureText(list, "EmptyResult", font);
             Style(empty, 15f, SubText, TextAlignmentOptions.Center, FontStyles.Normal);
             empty.text = "맞는 시설이 없습니다.";
-            PlaceTopLeft(empty.rectTransform, 16f, -scrollTop - 24f, CatalogInnerWidth, 32f);
+            PlaceTopLeft(empty.rectTransform, CatalogMargin, -scrollTop - 24f, CatalogInnerWidth, 32f);
             empty.gameObject.SetActive(false);
             refs.Empty = empty.gameObject;
 
@@ -717,43 +923,46 @@ namespace SubTerra.App.Editor.DataValidation
 
             var back = EnsureImage(detail, "BackButton", Color.white);
             back.raycastTarget = true;
-            PlaceTopLeft(back.rectTransform, 16f, -12f, 128f, 32f);
-            StyleButton(back.gameObject);
-            EnsureOutline(back.gameObject, new Color(0.3f, 0.85f, 1f, 0.6f), 1f);
+            PlaceTopLeft(back.rectTransform, CatalogMargin, -14f, 124f, 30f);
+            refs.Back = StyleMenuButton(back.gameObject, buttonOff, buttonOn, 7f);
             var backLabel = EnsureText(back.transform, "Label", font);
-            Style(backLabel, 15f, Cyan, TextAlignmentOptions.Center, FontStyles.Bold);
+            Style(backLabel, 14.5f, Cyan, TextAlignmentOptions.Center, FontStyles.Bold);
             backLabel.text = "< 시설 목록";
             Stretch(backLabel.rectTransform, 0f);
-            refs.Back = back.GetComponent<Button>();
+
+            var detailTitle = EnsureText(detail, "DetailTitle", font);
+            Style(detailTitle, 22f, Color.white, TextAlignmentOptions.Center, FontStyles.Bold);
+            detailTitle.text = "시설 상세";
+            PlaceTopCenter(detailTitle.rectTransform, -11f, 200f, 28f);
 
             var thumbFrame = EnsureImage(detail, "ThumbFrame", new Color(0.03f, 0.08f, 0.11f, 1f));
-            PlaceTopLeft(thumbFrame.rectTransform, 16f, -56f, 136f, 136f);
+            PlaceTopLeft(thumbFrame.rectTransform, CatalogMargin, -58f, 136f, 136f);
             EnsureOutline(thumbFrame.gameObject, new Color(0.3f, 0.85f, 1f, 0.45f), 1f);
             refs.Thumb = EnsureImage(thumbFrame.transform, "DetailThumb", Color.white);
             refs.Thumb.preserveAspect = true;
             Stretch(refs.Thumb.rectTransform, 10f);
             refs.Thumb.enabled = false;
 
-            var textX = 168f;
-            var textWidth = CatalogWidth - textX - 16f;
+            var textX = CatalogMargin + 152f;
+            var textWidth = CatalogWidth - textX - CatalogMargin;
             refs.Name = EnsureText(detail, "DetailPageName", font);
             Style(refs.Name, 22f, Color.white, TextAlignmentOptions.MidlineLeft, FontStyles.Bold);
             refs.Name.enableAutoSizing = true;
             refs.Name.fontSizeMin = 16f;
             refs.Name.fontSizeMax = 22f;
             refs.Name.text = string.Empty;
-            PlaceTopLeft(refs.Name.rectTransform, textX, -56f, textWidth, 34f);
+            PlaceTopLeft(refs.Name.rectTransform, textX, -58f, textWidth, 34f);
 
             refs.Condition = EnsureText(detail, "DetailPageCondition", font);
             Style(refs.Condition, 14f, ConditionText, TextAlignmentOptions.MidlineLeft, FontStyles.Bold);
             refs.Condition.text = string.Empty;
-            PlaceTopLeft(refs.Condition.rectTransform, textX, -92f, textWidth, 24f);
+            PlaceTopLeft(refs.Condition.rectTransform, textX, -94f, textWidth, 24f);
             refs.Condition.gameObject.SetActive(false);
 
             var functionLabel = EnsureText(detail, "FunctionLabel", font);
             Style(functionLabel, 12.5f, Cyan, TextAlignmentOptions.MidlineLeft, FontStyles.Bold);
             functionLabel.text = "기능";
-            PlaceTopLeft(functionLabel.rectTransform, textX, -120f, textWidth, 18f);
+            PlaceTopLeft(functionLabel.rectTransform, textX, -122f, textWidth, 18f);
 
             refs.Function = EnsureText(detail, "DetailPageFunction", font);
             Style(refs.Function, 14.5f, BodyText, TextAlignmentOptions.TopLeft, FontStyles.Normal);
@@ -763,7 +972,7 @@ namespace SubTerra.App.Editor.DataValidation
             refs.Function.textWrappingMode = TextWrappingModes.Normal;
             refs.Function.lineSpacing = 2f;
             refs.Function.text = string.Empty;
-            PlaceTopLeft(refs.Function.rectTransform, textX, -140f, textWidth, 52f);
+            PlaceTopLeft(refs.Function.rectTransform, textX, -142f, textWidth, 52f);
 
             // 건설 비용 행 수(1~3)에 맞춰 설치 상태가 바로 아래에 붙도록 세로 레이아웃으로 쌓는다.
             foreach (var legacy in new[] { "DetailCostSection", "DetailStatus" })
@@ -776,7 +985,7 @@ namespace SubTerra.App.Editor.DataValidation
             }
 
             var body = EnsureRect(detail, "DetailBody");
-            PlaceTopLeft(body, 16f, -206f, CatalogInnerWidth, 10f);
+            PlaceTopLeft(body, CatalogMargin, -208f, CatalogInnerWidth, 10f);
             var bodyLayout = EnsureComponent<VerticalLayoutGroup>(body.gameObject);
             ConfigureVertical(bodyLayout, new RectOffset(0, 0, 0, 0), 4f);
             var bodyFitter = EnsureComponent<ContentSizeFitter>(body.gameObject);
@@ -818,10 +1027,10 @@ namespace SubTerra.App.Editor.DataValidation
 
         private static TMP_InputField BuildSearchField(Transform list, TMP_FontAsset font)
         {
-            var back = EnsureImage(list, "SearchField", new Color(0.04f, 0.09f, 0.12f, 1f));
+            var back = EnsureImage(list, "SearchField", FieldColor);
             back.raycastTarget = true;
-            PlaceTopLeft(back.rectTransform, 16f, -50f, CatalogInnerWidth, 36f);
-            EnsureOutline(back.gameObject, new Color(0.3f, 0.85f, 1f, 0.45f), 1f);
+            PlaceTopLeft(back.rectTransform, CatalogMargin, -SearchTop, SearchWidth, SearchHeight);
+            EnsureOutline(back.gameObject, new Color(0.3f, 0.85f, 1f, 0.75f), 1f);
 
             var area = EnsureRect(back.transform, "TextArea");
             Stretch(area, 0f);
@@ -839,7 +1048,14 @@ namespace SubTerra.App.Editor.DataValidation
             text.text = string.Empty;
             Stretch(text.rectTransform, 0f);
 
-            var input = EnsureComponent<TMP_InputField>(back.gameObject);
+            var input = back.GetComponent<BuildingSearchInputField>();
+            if (input == null)
+            {
+                // View의 검색 참조는 BuildCatalog 반환 후 새 컴포넌트로 다시 연결한다.
+                var previous = back.GetComponent<TMP_InputField>();
+                if (previous != null) UnityEngine.Object.DestroyImmediate(previous);
+                input = back.gameObject.AddComponent<BuildingSearchInputField>();
+            }
             input.targetGraphic = back;
             input.textViewport = area;
             input.textComponent = text;
@@ -865,6 +1081,240 @@ namespace SubTerra.App.Editor.DataValidation
             input.colors = colors;
             input.SetTextWithoutNotify(string.Empty);
             return input;
+        }
+
+        private static void BuildWindowFrame(Transform window, float width = CatalogWidth)
+        {
+            var importer = AssetImporter.GetAtPath(CardFramePath) as TextureImporter;
+            if (importer == null) throw new InvalidOperationException("건설 카드 프레임이 없습니다: " + CardFramePath);
+            var border = new Vector4(192f, 192f, 192f, 192f);
+            if (importer.textureType != TextureImporterType.Sprite || importer.spriteImportMode != SpriteImportMode.Single
+                || importer.spriteBorder != border || importer.textureCompression != TextureImporterCompression.Uncompressed)
+            {
+                importer.textureType = TextureImporterType.Sprite;
+                importer.spriteImportMode = SpriteImportMode.Single;
+                importer.spriteBorder = border;
+                importer.mipmapEnabled = false;
+                importer.alphaIsTransparency = true;
+                importer.textureCompression = TextureImporterCompression.Uncompressed;
+                importer.SaveAndReimport();
+            }
+
+            var frame = EnsureImage(window, WindowFrameName, Color.white);
+            Stretch(frame.rectTransform, 0f);
+            frame.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(CardFramePath);
+            frame.type = UnityEngine.UI.Image.Type.Sliced;
+            // 원본 계열 네온 프레임의 밝은 선을 창 경계에 맞추고 바깥 글로우 여백을 확보한다.
+            const float bodyLeft = 74f;
+            const float bodyRight = 1180f;
+            const float bodyTop = 80f;
+            const float bodyBottom = 1174f;
+            var pixelsPerUnit = (bodyRight - bodyLeft) / width;
+            frame.pixelsPerUnitMultiplier = pixelsPerUnit;
+            frame.rectTransform.offsetMin = new Vector2(-bodyLeft,
+                -(frame.sprite.rect.height - bodyBottom)) / pixelsPerUnit;
+            frame.rectTransform.offsetMax = new Vector2(frame.sprite.rect.width - bodyRight,
+                bodyTop) / pixelsPerUnit;
+            frame.raycastTarget = false;
+            frame.transform.SetSiblingIndex(0);
+        }
+
+        private static void EnsureSearchJamo(TMP_FontAsset font)
+        {
+            var jamo = new string(Enumerable.Range(0x3131, 0x318E - 0x3131 + 1).Select(c => (char)c).ToArray());
+            // 런타임 조회표만 자모를 갖고 아틀라스는 비어 있는 경우를 기존 복구 경로로 동기화한다.
+            // 기존 글리프·자간은 유지하고 호환 자모만 추가·저장한다.
+            KoreanFontAssetUtility.EnsureCharactersSaved(font, jamo);
+        }
+
+        /// <summary>
+        /// B-191: 검색창 오른쪽 정렬 드롭다운(기본 순·기본 역순·가나다순·가나다 역순).
+        /// 건설 UI Canvas가 말풍선 위(30_100)에 있어 TMP 기본 목록(30_000)이 뒤에 깔리므로,
+        /// 인벤토리와 같은 InventorySortDropdown으로 펼친 목록을 창보다 위에 올린다.
+        /// </summary>
+        private static TMP_Dropdown BuildSortDropdown(Transform list, TMP_FontAsset font)
+        {
+            var found = list.Find("SortDropdown");
+            GameObject go;
+            if (found != null)
+            {
+                go = found.gameObject;
+            }
+            else
+            {
+                go = TMP_DefaultControls.CreateDropdown(new TMP_DefaultControls.Resources());
+                go.name = "SortDropdown";
+                go.transform.SetParent(list, false);
+                SetLayer(go.transform, list.gameObject.layer);
+            }
+
+            var dropdown = go.GetComponent<TMP_Dropdown>();
+            if (!(dropdown is InventorySortDropdown))
+            {
+                var template = dropdown != null ? dropdown.template : null;
+                var captionText = dropdown != null ? dropdown.captionText : null;
+                var itemText = dropdown != null ? dropdown.itemText : null;
+                if (dropdown != null)
+                {
+                    UnityEngine.Object.DestroyImmediate(dropdown);
+                }
+
+                dropdown = go.AddComponent<InventorySortDropdown>();
+                dropdown.template = template;
+                dropdown.captionText = captionText;
+                dropdown.itemText = itemText;
+            }
+
+            PlaceTopLeft((RectTransform)go.transform,
+                CatalogMargin + CatalogInnerWidth - SortWidth, -SearchTop, SortWidth, SearchHeight);
+
+            var back = go.GetComponent<Image>();
+            back.sprite = null;
+            back.type = Image.Type.Simple;
+            back.color = FieldColor;
+            back.raycastTarget = true;
+            EnsureOutline(go, new Color(0.3f, 0.85f, 1f, 0.75f), 1f);
+            dropdown.targetGraphic = back;
+            dropdown.transition = Selectable.Transition.ColorTint;
+            var colors = dropdown.colors;
+            colors.normalColor = Color.white;
+            colors.highlightedColor = new Color(0.85f, 1f, 1f, 1f);
+            colors.selectedColor = Color.white;
+            colors.pressedColor = new Color(0.8f, 0.95f, 1f, 1f);
+            colors.colorMultiplier = 1f;
+            dropdown.colors = colors;
+            var navigation = dropdown.navigation;
+            navigation.mode = Navigation.Mode.None;
+            dropdown.navigation = navigation;
+
+            var caption = dropdown.captionText;
+            caption.font = font;
+            Style(caption, 14f, Color.white, TextAlignmentOptions.MidlineLeft, FontStyles.Bold);
+            caption.rectTransform.anchorMin = Vector2.zero;
+            caption.rectTransform.anchorMax = Vector2.one;
+            caption.rectTransform.pivot = new Vector2(0.5f, 0.5f);
+            caption.rectTransform.offsetMin = new Vector2(12f, 0f);
+            caption.rectTransform.offsetMax = new Vector2(-26f, 0f);
+
+            var arrowTransform = go.transform.Find("Arrow");
+            var arrow = arrowTransform != null ? arrowTransform.GetComponent<Image>() : null;
+            if (arrow != null)
+            {
+                // 인벤토리·설정과 같은 삼각 화살표를 아래로 돌려 쓴다.
+                arrow.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(TriangleArrowPath);
+                arrow.preserveAspect = true;
+                arrow.color = Cyan;
+                arrow.raycastTarget = false;
+                var arrowRect = arrow.rectTransform;
+                arrowRect.anchorMin = arrowRect.anchorMax = new Vector2(1f, 0.5f);
+                arrowRect.pivot = new Vector2(0.5f, 0.5f);
+                arrowRect.anchoredPosition = new Vector2(-14f, 0f);
+                arrowRect.sizeDelta = new Vector2(10f, 12f);
+                arrowRect.localRotation = Quaternion.Euler(0f, 0f, -90f);
+            }
+
+            StyleSortList(dropdown, font);
+
+            dropdown.ClearOptions();
+            dropdown.AddOptions(new List<string>(BuildingCatalogQuery.AllLabels()));
+            dropdown.SetValueWithoutNotify((int)BuildingCatalogQuery.DefaultSort);
+            dropdown.RefreshShownValue();
+            EditorUtility.SetDirty(dropdown);
+            return dropdown;
+        }
+
+        private static void StyleSortList(TMP_Dropdown dropdown, TMP_FontAsset font)
+        {
+            var template = dropdown.template;
+            if (template == null)
+            {
+                throw new InvalidOperationException("SortDropdown Template이 없습니다.");
+            }
+
+            // 4개 항목이 스크롤 없이 모두 보이고, 드롭다운 바로 아래(큰 창 안)로 펼쳐진다.
+            template.anchorMin = new Vector2(0f, 0f);
+            template.anchorMax = new Vector2(1f, 0f);
+            template.pivot = new Vector2(0.5f, 1f);
+            template.anchoredPosition = new Vector2(0f, -2f);
+            // TMP는 펼칠 때 목록 높이를 항목 합계에 맞춰 줄인다. 안쪽 여백을 두면 마지막 항목이 잘리므로 높이를 딱 맞춘다.
+            template.sizeDelta = new Vector2(0f, BuildingCatalogQuery.SortCount * SortItemHeight);
+            var templateImage = template.GetComponent<Image>();
+            templateImage.sprite = null;
+            templateImage.type = Image.Type.Simple;
+            templateImage.color = new Color(0.02f, 0.05f, 0.07f, 0.98f);
+            EnsureOutline(template.gameObject, new Color(0.3f, 0.85f, 1f, 0.7f), 1f);
+
+            var scrollbar = template.Find("Scrollbar");
+            if (scrollbar != null)
+            {
+                UnityEngine.Object.DestroyImmediate(scrollbar.gameObject);
+            }
+
+            var scrollRect = template.GetComponent<ScrollRect>();
+            scrollRect.verticalScrollbar = null;
+            scrollRect.horizontal = false;
+            scrollRect.movementType = ScrollRect.MovementType.Clamped;
+            scrollRect.inertia = false;
+
+            var viewport = (RectTransform)template.Find("Viewport");
+            viewport.anchorMin = Vector2.zero;
+            viewport.anchorMax = Vector2.one;
+            viewport.pivot = new Vector2(0f, 1f);
+            viewport.offsetMin = Vector2.zero;
+            viewport.offsetMax = Vector2.zero;
+            var viewportImage = viewport.GetComponent<Image>();
+            if (viewportImage != null)
+            {
+                viewportImage.sprite = null;
+                viewportImage.color = Color.white;
+            }
+
+            var content = (RectTransform)viewport.Find("Content");
+            content.anchorMin = new Vector2(0f, 1f);
+            content.anchorMax = new Vector2(1f, 1f);
+            content.pivot = new Vector2(0.5f, 1f);
+            content.anchoredPosition = Vector2.zero;
+            content.sizeDelta = new Vector2(0f, SortItemHeight);
+
+            var item = (RectTransform)content.Find("Item");
+            item.anchorMin = new Vector2(0f, 0.5f);
+            item.anchorMax = new Vector2(1f, 0.5f);
+            item.pivot = new Vector2(0.5f, 0.5f);
+            item.anchoredPosition = Vector2.zero;
+            item.sizeDelta = new Vector2(0f, SortItemHeight);
+            var toggle = item.GetComponent<Toggle>();
+            var colors = toggle.colors;
+            colors.normalColor = new Color(1f, 1f, 1f, 0f);
+            colors.highlightedColor = new Color(0.18f, 0.62f, 0.7f, 0.85f);
+            colors.selectedColor = colors.highlightedColor;
+            colors.pressedColor = new Color(0.1f, 0.4f, 0.46f, 0.9f);
+            colors.colorMultiplier = 1f;
+            toggle.colors = colors;
+
+            var itemBack = item.Find("Item Background").GetComponent<Image>();
+            itemBack.sprite = null;
+            itemBack.color = new Color(0.05f, 0.11f, 0.14f, 1f);
+
+            // 지금 고른 항목은 왼쪽 청록 막대로 표시한다.
+            var check = item.Find("Item Checkmark").GetComponent<Image>();
+            check.sprite = null;
+            check.color = Cyan;
+            check.raycastTarget = false;
+            check.rectTransform.anchorMin = new Vector2(0f, 0.5f);
+            check.rectTransform.anchorMax = new Vector2(0f, 0.5f);
+            check.rectTransform.pivot = new Vector2(0f, 0.5f);
+            check.rectTransform.anchoredPosition = new Vector2(4f, 0f);
+            check.rectTransform.sizeDelta = new Vector2(3f, 14f);
+
+            var label = dropdown.itemText;
+            label.font = font;
+            Style(label, 14f, BodyText, TextAlignmentOptions.MidlineLeft, FontStyles.Normal);
+            label.text = string.Empty;
+            label.rectTransform.anchorMin = Vector2.zero;
+            label.rectTransform.anchorMax = Vector2.one;
+            label.rectTransform.offsetMin = new Vector2(14f, 0f);
+            label.rectTransform.offsetMax = new Vector2(-6f, 0f);
+            template.gameObject.SetActive(false);
         }
 
         private static Scrollbar BuildScrollbar(RectTransform scroll)
@@ -1143,6 +1593,14 @@ namespace SubTerra.App.Editor.DataValidation
             rect.anchorMin = rect.anchorMax = new Vector2(0f, 1f);
             rect.pivot = new Vector2(0f, 1f);
             rect.anchoredPosition = new Vector2(x, y);
+            rect.sizeDelta = new Vector2(width, height);
+        }
+
+        private static void PlaceTopCenter(RectTransform rect, float y, float width, float height)
+        {
+            rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 1f);
+            rect.pivot = new Vector2(0.5f, 1f);
+            rect.anchoredPosition = new Vector2(0f, y);
             rect.sizeDelta = new Vector2(width, height);
         }
 
