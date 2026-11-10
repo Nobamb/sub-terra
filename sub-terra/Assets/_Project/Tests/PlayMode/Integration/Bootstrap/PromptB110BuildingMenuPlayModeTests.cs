@@ -51,6 +51,83 @@ namespace SubTerra.App.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator BuildingSearch_CommittedKeyboardTextAndImeCompositionStayInSync()
+        {
+            environment = new UiTestEnvironment();
+            yield return environment.LoadIntegration();
+            Object.FindAnyObjectByType<HudPanelChromeController>().OpenBuildingMenu();
+            yield return new WaitForSecondsRealtime(0.6f);
+            var view = Object.FindAnyObjectByType<BuildingMenuView>();
+            view.ToggleExpanded();
+            yield return new WaitForSecondsRealtime(0.5f);
+            EventSystem.current.SetSelectedGameObject(view.SearchField.gameObject);
+            view.SearchField.ActivateInputField();
+            yield return null;
+
+            foreach (var character in "사다리") InputSystem.QueueTextEvent(environment.Keyboard, character);
+            yield return null;
+            yield return null;
+            Assert.That(view.SearchField.text, Is.EqualTo("사다리"), "확정된 키보드 문자를 TMP 입력 문자열에 반영한다.");
+            Assert.That(view.Navigation.Query, Is.EqualTo("사다리"));
+            Assert.That(view.GetComponentsInChildren<BuildingMenuCatalogRowView>(false).Select(row => row.BuildingId),
+                Is.EqualTo(new[] { DataIds.Buildings.LadderBasic }));
+
+            // 두 입력 경로가 같은 문자를 주는 환경에서도 한 번만 입력한다.
+            InputSystem.QueueTextEvent(environment.Keyboard, 'a');
+            InputSystem.Update();
+            view.SearchField.ProcessEvent(new Event { type = EventType.KeyDown, character = 'a' });
+            yield return null;
+            Assert.That(view.SearchField.text, Is.EqualTo("사다리a"));
+            view.SearchField.ProcessEvent(new Event { type = EventType.KeyDown, keyCode = KeyCode.Backspace });
+            Assert.That(view.SearchField.text, Is.EqualTo("사다리"));
+
+            view.SetSearchQuery(string.Empty);
+            var module = EventSystem.current.currentInputModule;
+            var previousInput = module.inputOverride;
+            var composition = view.gameObject.AddComponent<InventorySearchCompositionInput>();
+            module.inputOverride = composition;
+            try
+            {
+                foreach (var partial in new[] { "ㅅ", "사" })
+                {
+                    composition.Composition = partial;
+                    view.SearchField.ForceLabelUpdate();
+                    yield return null;
+                    yield return null;
+                    Assert.That(view.SearchField.text, Is.Empty);
+                    Assert.That(view.Navigation.Query, Is.EqualTo(partial));
+                }
+                var committed = new[] { '사', '다', '리' };
+                var composing = new[] { "다", "리", "" };
+                var expected = new[] { "사", "사다", "사다리" };
+                for (var i = 0; i < committed.Length; i++)
+                {
+                    composition.Composition = composing[i];
+                    InputSystem.QueueTextEvent(environment.Keyboard, committed[i]);
+                    yield return null;
+                    yield return null;
+                    Assert.That(view.SearchField.text, Is.EqualTo(expected[i]));
+                    Assert.That(view.Navigation.Query, Is.EqualTo(expected[i] + composing[i]));
+                }
+            }
+            finally
+            {
+                composition.Composition = string.Empty;
+                module.inputOverride = previousInput;
+                Object.DestroyImmediate(composition);
+            }
+
+            InputSystem.QueueTextEvent(environment.Keyboard, 'x');
+            InputSystem.Update();
+            EventSystem.current.SetSelectedGameObject(null);
+            yield return null;
+            EventSystem.current.SetSelectedGameObject(view.SearchField.gameObject);
+            view.SearchField.ActivateInputField();
+            yield return null;
+            Assert.That(view.SearchField.text, Is.EqualTo("사다리"), "포커스를 잃은 큐는 다음 입력에 섞이지 않는다.");
+        }
+
+        [UnityTest]
         public IEnumerator BuildingMode_FollowupReclickCompositionAndUnscaledHover()
         {
             environment = new UiTestEnvironment();
@@ -352,7 +429,7 @@ namespace SubTerra.App.Tests.PlayMode
                 // 카드가 열린 상태에서 다른 아이콘 호버(이름표가 카드 위에 겹치는 경우) 모습.
                 yield return MoveMouseTo(environment.Mouse, (RectTransform)Entry(root, DataIds.Buildings.LadderBasic));
                 yield return new WaitForSecondsRealtime(view.RailHologram.HoverTransitionDurationSeconds + 0.05f);
-                Assert.That(hologram.IsShown, Is.True);
+                Assert.That(view.RailHologram.IsShown, Is.True);
                 Assert.That(card.activeSelf, Is.True, "카드는 호버로 숨지 않는다.");
                 yield return UiTestWait.Capture(Path.Combine(evidence, "building-rail-hover-card-1920x1080.png"));
                 yield return MoveMouseTo(environment.Mouse, (RectTransform)support);

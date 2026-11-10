@@ -115,17 +115,22 @@ namespace SubTerra.App.Tests.UI
         }
 
         [Test]
-        public void Card_ReusesDetailFrameWithoutChangingLayoutOrRaycasts()
+        public void Card_UsesDedicatedSquareFrameAndKeepsRaycastsInsideCard()
         {
             var card = Find("Card");
             var frame = card.transform.Find("WindowFrame").GetComponent<UnityEngine.UI.Image>();
             var detailFrame = Find("CatalogWindow").transform.Find("WindowFrame").GetComponent<UnityEngine.UI.Image>();
             Assert.That(frame.sprite, Is.SameAs(detailFrame.sprite));
+            Assert.That(AssetDatabase.GetAssetPath(frame.sprite), Is.EqualTo(
+                "Assets/_Project/Art/UI/Gameplay/building-card-square.png"));
             Assert.That(frame.type, Is.EqualTo(UnityEngine.UI.Image.Type.Sliced));
             Assert.That(frame.raycastTarget, Is.False);
             Assert.That(frame.GetComponent<UnityEngine.UI.LayoutElement>().ignoreLayout, Is.True);
-            Assert.That(card.GetComponent<UnityEngine.UI.VerticalLayoutGroup>().padding.left, Is.EqualTo(12));
+            Assert.That(card.GetComponent<UnityEngine.UI.VerticalLayoutGroup>().padding.left, Is.EqualTo(16));
             Assert.That(Find("SidePane").GetComponent<RectTransform>().sizeDelta.x, Is.EqualTo(300f));
+            Assert.That(card.GetComponent<UnityEngine.UI.LayoutElement>().preferredHeight, Is.EqualTo(300f));
+            Assert.That(frame.rectTransform.offsetMin, Is.EqualTo(Vector2.zero));
+            Assert.That(frame.rectTransform.offsetMax, Is.EqualTo(Vector2.zero));
             Assert.That(card.GetComponent<UnityEngine.UI.Image>().raycastTarget, Is.True);
         }
 

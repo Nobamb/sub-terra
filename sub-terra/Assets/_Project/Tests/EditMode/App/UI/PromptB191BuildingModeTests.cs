@@ -192,12 +192,12 @@ namespace SubTerra.App.Tests.UI
         }
 
         [Test]
-        public void Prefab_ReusesMenuButtonAndInventoryFrameArt()
+        public void Prefab_ReusesMenuButtonsAndSquareBuildingFrameArt()
         {
             var menu = AssetDatabase.LoadAssetAtPath<GameObject>(MenuPath);
             var off = AssetDatabase.LoadAssetAtPath<Sprite>(PromptB188BuildingModeBuilder.MenuButtonOffPath);
             var on = AssetDatabase.LoadAssetAtPath<Sprite>(PromptB188BuildingModeBuilder.MenuButtonOnPath);
-            var frameSprite = AssetDatabase.LoadAssetAtPath<Sprite>(PromptB112InventoryPanelBuilder.FramePath);
+            var frameSprite = AssetDatabase.LoadAssetAtPath<Sprite>(PromptB188BuildingModeBuilder.CardFramePath);
             Assert.That(off, Is.Not.Null);
             Assert.That(on, Is.Not.Null);
             Assert.That(frameSprite, Is.Not.Null);
@@ -232,16 +232,18 @@ namespace SubTerra.App.Tests.UI
                 Assert.That(entry.transform.Find("SelectedHighlight/SelectedFrame").GetComponent<Image>().sprite, Is.SameAs(on));
             }
 
-            // 큰 창: 인벤토리 창과 같은 9-slice 네온 프레임. 창 판은 클릭만 막고 그림은 프레임이 그린다.
+            // 큰 창의 목록·상세는 작은 카드와 같은 프레임 이미지를 쓴다.
             var window = menu.GetComponentsInChildren<Transform>(true).First(t => t.name == "CatalogWindow");
             var frame = window.Find(PromptB188BuildingModeBuilder.WindowFrameName).GetComponent<Image>();
             Assert.That(frame.sprite, Is.SameAs(frameSprite));
             Assert.That(frame.type, Is.EqualTo(Image.Type.Sliced));
             Assert.That(frame.raycastTarget, Is.False);
+            Assert.That(frame.rectTransform.offsetMin.magnitude, Is.LessThan(0.001f));
+            Assert.That(frame.rectTransform.offsetMax.magnitude, Is.LessThan(0.001f));
             Assert.That(frame.transform.GetSiblingIndex(), Is.Zero, "목록·상세보다 뒤에 그린다.");
             Assert.That(window.GetComponent<Image>().raycastTarget, Is.True, "창 안 클릭은 월드로 새지 않는다.");
             Assert.That(((RectTransform)window).sizeDelta.x, Is.EqualTo(PromptB112InventoryPanelBuilder.PanelWidth),
-                "인벤토리 창과 같은 폭이라 프레임 무늬 크기가 같다.");
+                "검색·정렬과 상세 정보의 기존 창 폭을 유지한다.");
             Assert.That(((RectTransform)window).anchorMin, Is.EqualTo(new Vector2(0f, 1f)), "가운데 팝업이 아니라 레일 옆 왼쪽 위에 붙는다.");
         }
 

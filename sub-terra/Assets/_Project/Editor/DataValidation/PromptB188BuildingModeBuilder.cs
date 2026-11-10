@@ -18,7 +18,7 @@ namespace SubTerra.App.Editor.DataValidation
     /// 기존 Select_* 버튼·BuildingMenuEntryButton·View 참조는 옮겨서 그대로 재사용한다.
     /// 루트 RectTransform은 Integration Scene 인스턴스 값을 유지하므로 Scene은 수정하지 않는다.
     /// prompt-B 191 (#304): 루트에 드론 말풍선 위로 올리는 전용 Canvas, 큰 창에 정렬 드롭다운을 넣고,
-    /// 레일은 오른쪽 위 메뉴 버튼 스프라이트, 큰 창은 인벤토리 창 프레임으로 맞춘다(새 그림 없음).
+    /// 레일은 오른쪽 위 메뉴 버튼 스프라이트, 카드와 큰 창은 정사각 프레임 이미지를 쓴다.
     /// </summary>
     public static class PromptB188BuildingModeBuilder
     {
@@ -32,7 +32,8 @@ namespace SubTerra.App.Editor.DataValidation
         public const float Gap = 8f;
         public const float SideX = RailWidth + Gap;
         public const float CardWidth = 300f;
-        // B-191: 인벤토리 창(560)과 같은 폭이라 프레임 무늬가 같은 크기로 보인다.
+        public const string CardFramePath = "Assets/_Project/Art/UI/Gameplay/building-card-square.png";
+        // B-191: 검색·정렬과 상세 정보를 담는 큰 창 폭.
         public const float CatalogWidth = 560f;
         public const float CatalogMargin = 28f;
         // 목록 높이가 칸 6개(+간격)에 딱 맞아 아래에 반쯤 잘린 칸이 걸치지 않는다(9칸 기준 550 - 96 - 34 = 420).
@@ -47,10 +48,10 @@ namespace SubTerra.App.Editor.DataValidation
         public const float SearchGap = 8f;
         public const float SearchWidth = CatalogInnerWidth - SortWidth - SearchGap;
 
-        // B-191: 재사용하는 기존 에셋. 레일 = 오른쪽 위 메뉴 버튼, 큰 창 = 인벤토리 창 프레임.
+        // B-191: 레일에는 오른쪽 위 메뉴 버튼 그림을 재사용한다.
         public const string MenuButtonOffPath = "Assets/_Project/Art/UI/Gameplay/SideMenu/menu-button-active-off.png";
         public const string MenuButtonOnPath = "Assets/_Project/Art/UI/Gameplay/SideMenu/menu-button-active-on.png";
-        public const string WindowFramePath = PromptB112InventoryPanelBuilder.FramePath;
+        public const string WindowFramePath = CardFramePath;
         public const string WindowFrameName = "WindowFrame";
         public const string ButtonFrameName = "ButtonFrame";
         private const string TriangleArrowPath = "Assets/_Project/Art/UI/MainMenu/UI_Triangle_Arrow.png";
@@ -642,10 +643,11 @@ namespace SubTerra.App.Editor.DataValidation
             RemoveOutline(card.gameObject);
             BuildWindowFrame(card.transform, CardWidth);
             EnsureComponent<LayoutElement>(card.transform.Find(WindowFrameName).gameObject).ignoreLayout = true;
+            EnsureLayoutElement(card.gameObject, CardWidth);
             var cardLayout = EnsureComponent<VerticalLayoutGroup>(card.gameObject);
-            ConfigureVertical(cardLayout, new RectOffset(12, 12, 12, 12), 8f);
+            ConfigureVertical(cardLayout, new RectOffset(16, 16, 16, 16), 6f);
             refs.Card = card.gameObject;
-            var inner = CardWidth - 24f;
+            var inner = CardWidth - 32f;
 
             var header = EnsureRect(card.transform, "CardHeader");
             EnsureImage(card.transform, "CardHeader", new Color(0.03f, 0.12f, 0.16f, 0.75f));
@@ -681,10 +683,13 @@ namespace SubTerra.App.Editor.DataValidation
             description.textWrappingMode = TextWrappingModes.Normal;
             description.lineSpacing = 2f;
             description.text = string.Empty;
+            EnsureLayoutElement(description.gameObject, 32f);
+            description.GetComponent<LayoutElement>().flexibleHeight = 1f;
 
             refs.Condition = Adopt(root, "DetailOperatingCondition", card.transform).GetComponent<TMP_Text>();
             Style(refs.Condition, 13.5f, ConditionText, TextAlignmentOptions.MidlineLeft, FontStyles.Bold);
             refs.Condition.text = string.Empty;
+            EnsureLayoutElement(refs.Condition.gameObject, 18f);
             refs.Condition.gameObject.SetActive(false);
 
             var costSection = Adopt(root, "CostSection", card.transform);
@@ -702,7 +707,7 @@ namespace SubTerra.App.Editor.DataValidation
 
             var banner = Adopt(root, "AvailabilityBanner", card.transform);
             refs.Banner = EnsureImage(banner.parent, banner.name, new Color(0.1f, 0.14f, 0.16f, 0.92f));
-            EnsureLayoutElement(banner.gameObject, 54f);
+            EnsureLayoutElement(banner.gameObject, 48f);
             refs.Accent = EnsureImage(banner, "AvailabilityAccent", new Color(0.45f, 0.62f, 0.7f, 1f));
             refs.Accent.rectTransform.anchorMin = new Vector2(0f, 0f);
             refs.Accent.rectTransform.anchorMax = new Vector2(0f, 1f);
@@ -852,7 +857,7 @@ namespace SubTerra.App.Editor.DataValidation
         {
             var refs = new CatalogRefs();
             var height = RailHeight(entries.Count);
-            // B-191: 창 판은 클릭 막이(투명)로만 두고, 그림은 인벤토리 창과 같은 네온 프레임이 그린다.
+            // 창 판은 클릭 막이로 두고 카드와 같은 프레임 그림을 뒤에 둔다.
             var window = EnsureImage(panel, "CatalogWindow", Clear);
             window.sprite = null;
             window.raycastTarget = true;
@@ -1057,7 +1062,14 @@ namespace SubTerra.App.Editor.DataValidation
             text.text = string.Empty;
             Stretch(text.rectTransform, 0f);
 
-            var input = EnsureComponent<TMP_InputField>(back.gameObject);
+            var input = back.GetComponent<BuildingSearchInputField>();
+            if (input == null)
+            {
+                // View의 검색 참조는 BuildCatalog 반환 후 새 컴포넌트로 다시 연결한다.
+                var previous = back.GetComponent<TMP_InputField>();
+                if (previous != null) UnityEngine.Object.DestroyImmediate(previous);
+                input = back.gameObject.AddComponent<BuildingSearchInputField>();
+            }
             input.targetGraphic = back;
             input.textViewport = area;
             input.textComponent = text;
@@ -1085,39 +1097,30 @@ namespace SubTerra.App.Editor.DataValidation
             return input;
         }
 
-        /// <summary>
-        /// B-191: 인벤토리 창과 같은 9-slice 네온 프레임. 몸체가 창에 맞고 글로우·상단 탭은 창 밖으로 번진다.
-        /// 프레임 이미지 가져오기 설정(9-slice)은 인벤토리 빌더(B-112/190)가 관리하므로 여기서는 읽기만 한다.
-        /// </summary>
         private static void BuildWindowFrame(Transform window, float width = CatalogWidth)
         {
-            var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(WindowFramePath);
-            if (sprite == null || sprite.border == Vector4.zero)
+            var importer = AssetImporter.GetAtPath(CardFramePath) as TextureImporter;
+            if (importer == null) throw new InvalidOperationException("건설 카드 프레임이 없습니다: " + CardFramePath);
+            var border = new Vector4(96f, 96f, 96f, 96f);
+            if (importer.textureType != TextureImporterType.Sprite || importer.spriteImportMode != SpriteImportMode.Single
+                || importer.spriteBorder != border || importer.textureCompression != TextureImporterCompression.Uncompressed)
             {
-                throw new InvalidOperationException("인벤토리 창 프레임(9-slice)을 불러오지 못했습니다: " + WindowFramePath);
+                importer.textureType = TextureImporterType.Sprite;
+                importer.spriteImportMode = SpriteImportMode.Single;
+                importer.spriteBorder = border;
+                importer.mipmapEnabled = false;
+                importer.alphaIsTransparency = true;
+                importer.textureCompression = TextureImporterCompression.Uncompressed;
+                importer.SaveAndReimport();
             }
 
-            var pixelsPerUnit = (PromptB112InventoryPanelBuilder.FrameBodyRight - PromptB112InventoryPanelBuilder.FrameBodyLeft)
-                / width;
-            var scale = 1f / pixelsPerUnit;
             var frame = EnsureImage(window, WindowFrameName, Color.white);
-            var rect = frame.rectTransform;
-            rect.anchorMin = Vector2.zero;
-            rect.anchorMax = Vector2.one;
-            rect.pivot = new Vector2(0.5f, 0.5f);
-            rect.offsetMin = new Vector2(
-                -PromptB112InventoryPanelBuilder.FrameBodyLeft * scale,
-                -(PromptB112InventoryPanelBuilder.FrameSpriteHeight - PromptB112InventoryPanelBuilder.FrameBodyBottom) * scale);
-            rect.offsetMax = new Vector2(
-                (PromptB112InventoryPanelBuilder.FrameSpriteWidth - PromptB112InventoryPanelBuilder.FrameBodyRight) * scale,
-                PromptB112InventoryPanelBuilder.FrameBodyTop * scale);
-            frame.sprite = sprite;
-            frame.type = Image.Type.Sliced;
-            frame.fillCenter = true;
-            frame.pixelsPerUnitMultiplier = pixelsPerUnit;
+            Stretch(frame.rectTransform, 0f);
+            frame.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(CardFramePath);
+            frame.type = UnityEngine.UI.Image.Type.Sliced;
+            frame.pixelsPerUnitMultiplier = frame.sprite.rect.width / width;
             frame.raycastTarget = false;
             frame.transform.SetSiblingIndex(0);
-            EditorUtility.SetDirty(frame);
         }
 
         private static void EnsureSearchJamo(TMP_FontAsset font)
