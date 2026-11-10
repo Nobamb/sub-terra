@@ -425,7 +425,6 @@ namespace SubTerra.App.Editor.DataValidation
 
             // 미선택: 큰 안내 패널 없이 짧은 힌트만.
             var hint = EnsureImage(side, "HintChip", PanelColor);
-            hint.raycastTarget = true;
             EnsureOutline(hint.gameObject, FrameOutline, 1f);
             EnsureLayoutElement(hint.gameObject, 38f);
             var hintText = EnsureText(hint.transform, "HintText", font);
@@ -438,7 +437,6 @@ namespace SubTerra.App.Editor.DataValidation
 
             // 선택 카드: 아이콘·시설명 → 용도 → 운영 조건 → 건설 비용 → 설치 상태.
             var card = EnsureImage(side, "Card", PanelColor);
-            card.raycastTarget = true;
             EnsureOutline(card.gameObject, FrameOutline, 1.5f);
             var cardLayout = EnsureComponent<VerticalLayoutGroup>(card.gameObject);
             ConfigureVertical(cardLayout, new RectOffset(12, 12, 12, 12), 8f);
@@ -527,7 +525,6 @@ namespace SubTerra.App.Editor.DataValidation
 
             // 설치 결과 메시지는 상태와 겹치지 않게 카드 밑 짧은 줄로 따로 둔다.
             var statusChip = EnsureImage(side, "StatusChip", PanelColor);
-            statusChip.raycastTarget = true;
             EnsureOutline(statusChip.gameObject, FrameOutline, 1f);
             var statusLayout = EnsureComponent<VerticalLayoutGroup>(statusChip.gameObject);
             ConfigureVertical(statusLayout, new RectOffset(12, 10, 7, 7), 0f);
