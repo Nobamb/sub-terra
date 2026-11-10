@@ -5,7 +5,9 @@ using NUnit.Framework;
 using SubTerra.App.Core;
 using SubTerra.App.Core.Data;
 using SubTerra.App.Integration;
+using SubTerra.App.UI;
 using SubTerra.App.UI.Building;
+using SubTerra.App.UI.Drone;
 using SubTerra.App.UI.HUD;
 using SubTerra.Gameplay.Building;
 using SubTerra.Gameplay.Mining;
@@ -218,6 +220,30 @@ namespace SubTerra.App.Tests.PlayMode
             Assert.That(hint.activeSelf, Is.False, "호버 중에는 힌트가 비켜 준다.");
             if (visual) yield return UiTestWait.Capture(Path.Combine(evidence, "building-rail-hover-1920x1080.png"));
 
+            // B-191: 건설 UI 전용 Canvas가 드론 말풍선 위에 있고, HUDCanvas 순서는 그대로다.
+            Assert.That(view.ModeCanvas, Is.Not.Null);
+            Assert.That(view.ModeCanvas.overrideSorting, Is.True);
+            Assert.That(view.ModeCanvas.sortingOrder, Is.EqualTo(BuildingMenuView.CanvasSortingOrder));
+            Assert.That(view.ModeCanvas.sortingOrder, Is.GreaterThan(DroneDialogueSocket.OverlaySortingOrder));
+            Assert.That(view.ModeCanvas.rootCanvas, Is.Not.SameAs(view.ModeCanvas), "HUDCanvas 아래에 그대로 있다.");
+            Assert.That(view.ModeCanvas.rootCanvas.sortingOrder, Is.LessThan(DroneDialogueSocket.OverlaySortingOrder),
+                "HUDCanvas 전체 순서는 말풍선 위로 올리지 않는다.");
+            Assert.That(hint.GetComponentInParent<Canvas>(), Is.SameAs(view.ModeCanvas), "`시설을 고르세요` 안내도 같은 Canvas");
+
+            // B-191: 버튼에서 다른 버튼으로 옮기는 동안 안내가 깜빡이지 않고, 떠난 뒤 약 0.3초가 지나야 다시 뜬다.
+            var hintFlickered = false;
+            yield return MoveMouseTo(environment.Mouse, (RectTransform)Entry(root, DataIds.Buildings.ChargerBasic));
+            hintFlickered |= hint.activeSelf;
+            yield return MoveMouseTo(environment.Mouse, (RectTransform)Entry(root, DataIds.Buildings.LadderBasic));
+            hintFlickered |= hint.activeSelf;
+            Assert.That(hintFlickered, Is.False, "버튼 사이를 옮길 때 안내가 켜지면 안 된다.");
+            InputSystem.QueueStateEvent(environment.Mouse,
+                new MouseState { position = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f) });
+            yield return UiTestWait.Until(() => view.IsHintReshowPending, "hint reshow wait", 2f, "input");
+            Assert.That(hint.activeSelf, Is.False, "떠난 직후에는 아직 숨긴다.");
+            yield return new WaitForSecondsRealtime(view.HintReshowDelaySeconds + 0.1f);
+            Assert.That(hint.activeSelf, Is.True, "대기 뒤 안내가 돌아온다.");
+
             // 버팀목 선택: 초기 인벤토리는 비어 있어 자원 부족이 문구·기호와 함께 보여야 한다.
             yield return ClickCenter(environment.Mouse, support.GetComponent<Button>());
             Assert.That(binder.Presenter.SelectedBuildingId, Is.EqualTo(DataIds.Buildings.SupportBasic));
@@ -299,8 +325,64 @@ namespace SubTerra.App.Tests.PlayMode
             Assert.That(card.activeSelf, Is.False);
             Assert.That(Find(view.ExpandButton.transform, "Label").GetComponent<TMP_Text>().text, Is.EqualTo("<<"));
             Assert.That(hologram.IsShown, Is.False, "큰 창을 펼치면 호버 이름표는 없다.");
+            // B-191: 큰 창은 TV 켜짐으로 나타난다. 연출 중에도 입력은 막지 않는다.
+            var windowMotion = catalogWindow.GetComponent<TerminalWindowOpenMotion>();
+            Assert.That(windowMotion, Is.Not.Null, "큰 창 TV 켜짐");
+            Assert.That(windowMotion.IsPlaying && !windowMotion.IsClosing, Is.True);
+            Assert.That(catalogWindow.GetComponent<CanvasGroup>().interactable, Is.True);
+            if (visual)
+            {
+                yield return new WaitForSecondsRealtime(TerminalWindowOpenMotion.Duration * 0.5f);
+                yield return UiTestWait.Capture(Path.Combine(evidence, "building-catalog-opening-1920x1080.png"));
+            }
+
+            yield return new WaitForSecondsRealtime(TerminalWindowOpenMotion.Duration + 0.05f);
+            Assert.That(windowMotion.IsPlaying, Is.False);
+            Assert.That(catalogWindow.transform.localScale, Is.EqualTo(Vector3.one));
             AssertInsideScreenAndClearOfHud(view, (RectTransform)catalogWindow.transform);
             if (visual) yield return UiTestWait.Capture(Path.Combine(evidence, "building-catalog-1920x1080.png"));
+
+            // B-191: 정렬 드롭다운. 펼친 목록은 큰 창 위에 그려지고, 펼친 동안 B·C·이동 키가 월드로 새지 않는다.
+            var railOrder = root.GetComponentsInChildren<BuildingMenuEntryVisual>(true).Select(v => v.BuildingId).ToList();
+            var defaultRows = view.GetComponentsInChildren<BuildingMenuCatalogRowView>(false).Select(r => r.BuildingId).ToList();
+            view.SortDropdown.Show();
+            yield return null;
+            yield return null;
+            Assert.That(view.SortDropdown.IsExpanded, Is.True);
+            var sortList = view.SortDropdown.transform.Find("Dropdown List");
+            Assert.That(sortList, Is.Not.Null, "펼친 정렬 목록");
+            Assert.That(sortList.GetComponent<Canvas>().sortingOrder, Is.GreaterThan(view.ModeCanvas.sortingOrder));
+            Assert.That(sortList.GetComponentsInChildren<Toggle>(false).Length, Is.EqualTo(BuildingCatalogQuery.SortCount));
+            Assert.That(UiPauseGate.IsHeldBy(BuildingMenuView.SearchPauseOwner), Is.True, "정렬 목록을 펼친 동안 입력 차단");
+            yield return PressB();
+            Assert.That(chrome.IsBuildingMenuOpen, Is.True, "정렬 목록을 펼친 동안 B는 건설 모드를 닫지 않는다.");
+            if (visual)
+            {
+                yield return new WaitForSecondsRealtime(0.25f);
+                yield return UiTestWait.Capture(Path.Combine(evidence, "building-catalog-sort-open-1920x1080.png"));
+            }
+
+            view.SortDropdown.Hide();
+            yield return new WaitForSecondsRealtime(0.3f);
+            Assert.That(UiPauseGate.IsHeldBy(BuildingMenuView.SearchPauseOwner), Is.False);
+            view.SortDropdown.value = (int)BuildingCatalogSort.NameAscending;
+            yield return null;
+            Assert.That(view.Navigation.Sort, Is.EqualTo(BuildingCatalogSort.NameAscending));
+            var sortedNames = view.GetComponentsInChildren<BuildingMenuCatalogRowView>(false)
+                .Select(r => Find(r.transform, "Name").GetComponent<TMP_Text>().text).ToList();
+            Assert.That(sortedNames, Is.Ordered.Using<string>(string.CompareOrdinal), "가나다순");
+            Assert.That(root.GetComponentsInChildren<BuildingMenuEntryVisual>(true).Select(v => v.BuildingId), Is.EqualTo(railOrder),
+                "레일 순서는 정렬과 무관");
+            if (visual) yield return UiTestWait.Capture(Path.Combine(evidence, "building-catalog-sort-name-1920x1080.png"));
+            view.SortDropdown.value = (int)BuildingCatalogSort.Default;
+            yield return null;
+            Assert.That(view.GetComponentsInChildren<BuildingMenuCatalogRowView>(false).Select(r => r.BuildingId), Is.EqualTo(defaultRows));
+
+            // B-191: 초성만 쳐도 걸러진다.
+            view.SetSearchQuery("ㅅㄷ");
+            yield return null;
+            Assert.That(view.GetComponentsInChildren<BuildingMenuCatalogRowView>(false).Select(r => r.BuildingId),
+                Is.EqualTo(new[] { DataIds.Buildings.LadderBasic }));
 
             // 검색: 시설명 일부만 남기고, 지우면 전체.
             view.SetSearchQuery("충전");
@@ -312,6 +394,11 @@ namespace SubTerra.App.Tests.PlayMode
             // 목록에서 충전기 → 상세 + 레일 선택·설치 대상 동기화.
             yield return ClickCenter(environment.Mouse, visibleRows[0].GetComponent<Button>());
             Assert.That(Find(root, "DetailPage").gameObject.activeSelf, Is.True);
+            // B-191: 상세 페이지에만 짧게 TV 켜짐. 큰 창은 다시 켜지 않는다.
+            Assert.That(Find(root, "DetailPage").GetComponent<TerminalWindowOpenMotion>(), Is.Not.Null);
+            Assert.That(windowMotion.IsPlaying, Is.False);
+            yield return new WaitForSecondsRealtime(TerminalWindowOpenMotion.Duration / BuildingMenuView.DetailMotionSpeed + 0.08f);
+            Assert.That(Find(root, "DetailPage").GetComponent<TerminalWindowOpenMotion>().IsPlaying, Is.False);
             Assert.That(binder.Presenter.SelectedBuildingId, Is.EqualTo(DataIds.Buildings.ChargerBasic));
             AssertOnlySelected(root, DataIds.Buildings.ChargerBasic);
             Assert.That(Find(root, "DetailThumb").GetComponent<Image>().sprite, Is.Not.Null);
@@ -324,6 +411,7 @@ namespace SubTerra.App.Tests.PlayMode
             yield return ClickCenter(environment.Mouse, view.BackButton);
             Assert.That(chrome.IsBuildingMenuOpen, Is.True);
             Assert.That(Find(root, "ListPage").gameObject.activeSelf, Is.True);
+            Assert.That(windowMotion.IsPlaying, Is.False, "뒤로가기는 연출 없음");
             Assert.That(view.SearchField.text, Is.EqualTo("충전"));
 
             // 상세가 열린 채로 B: 레일·카드·큰 창 모두 닫힘, 선택 취소.
@@ -349,8 +437,25 @@ namespace SubTerra.App.Tests.PlayMode
             view.ToggleExpanded();
             yield return null;
             Assert.That(catalogWindow.activeSelf, Is.True);
+            yield return new WaitForSecondsRealtime(TerminalWindowOpenMotion.Duration + 0.05f);
             yield return ClickCenter(environment.Mouse, view.ExpandButton);
+            // B-191: 거꾸로 접힌 뒤 꺼진다.
+            yield return new WaitForSecondsRealtime(TerminalWindowOpenMotion.CloseDuration + 0.05f);
             Assert.That(catalogWindow.activeSelf, Is.False);
+            Assert.That(catalogWindow.transform.localScale, Is.EqualTo(Vector3.one));
+
+            // B-191: `>>`/`<<` 연타 뒤에도 창이 반쯤 남지 않는다.
+            for (var i = 0; i < 5; i++)
+            {
+                view.ToggleExpanded();
+                yield return null;
+            }
+
+            Assert.That(view.Navigation.IsExpanded, Is.True);
+            yield return new WaitForSecondsRealtime(TerminalWindowOpenMotion.Duration + 0.05f);
+            Assert.That(catalogWindow.activeSelf, Is.True);
+            Assert.That(catalogWindow.transform.localScale, Is.EqualTo(Vector3.one));
+            Assert.That(catalogWindow.GetComponent<CanvasGroup>().alpha, Is.EqualTo(1f));
 
             chrome.CloseBuildingMenu();
             yield return null;

@@ -130,7 +130,10 @@ namespace SubTerra.App.Tests.UI
                 hologram.Advance(1f);
                 Assert.That(hologram.IsShown, Is.False);
                 Assert.That(group.alpha, Is.EqualTo(0f));
-                Assert.That(hint.activeSelf, Is.True, "호버가 끝나면 힌트가 돌아온다.");
+                // B-191: 버튼을 떠난 직후에는 힌트를 바로 띄우지 않고 잠깐 기다린 뒤 돌려놓는다.
+                Assert.That(hint.activeSelf, Is.False, "떠난 직후에는 아직 숨긴다.");
+                view.AdvanceHintDelay(view.HintReshowDelaySeconds + 0.01f);
+                Assert.That(hint.activeSelf, Is.True, "호버가 끝나고 대기가 지나면 힌트가 돌아온다.");
 
                 // `>>` 큰 창에서는 목록이 이름을 보여 주므로 띄우지 않는다.
                 ladder.GetComponent<BuildingRailHoverRelay>().OnPointerEnter(null);

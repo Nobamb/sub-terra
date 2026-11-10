@@ -181,7 +181,12 @@ namespace SubTerra.App.Tests.UI
         {
             // B-188: 빈 PanelRoot(500×560)가 지형 클릭을 삼키지 않고, 레일·카드·큰 창만 입력을 받는다.
             var menu = AssetDatabase.LoadAssetAtPath<GameObject>(MenuPath);
-            var allowed = new[] { "Rail", "HintChip", "Card", "StatusChip", "CatalogWindow", "SearchField", "Viewport", "Scrollbar", "Handle" };
+            // B-191: 정렬 드롭다운의 펼친 목록(Template·항목 배경)도 큰 창 안에서 클릭을 받는다.
+            var allowed = new[]
+            {
+                "Rail", "HintChip", "Card", "StatusChip", "CatalogWindow", "SearchField", "Viewport", "Scrollbar", "Handle",
+                "Template", "Item Background"
+            };
             foreach (var graphic in menu.GetComponentsInChildren<Graphic>(true))
             {
                 var isButton = graphic.GetComponent<Selectable>() != null;

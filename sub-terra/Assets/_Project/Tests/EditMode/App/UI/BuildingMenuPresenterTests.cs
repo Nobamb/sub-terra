@@ -91,6 +91,8 @@ namespace SubTerra.App.Tests.UI
 
             Assert.That(placement.CancelCount, Is.EqualTo(1));
             Assert.That(presenter.SelectedBuildingId, Is.Empty);
+            // B-191: 취소 문구는 띄우지 않는다.
+            Assert.That(view.StatusMessage, Is.Empty);
             Assert.That(state.GetBuildingSelection().HasSelection, Is.False);
             Assert.That(view.LastAvailability.PlacementState, Is.EqualTo(BuildingPlacementState.None));
         }
@@ -182,7 +184,9 @@ namespace SubTerra.App.Tests.UI
                 "결제는 A의 생성 성공 경로에서만 호출되며 성공 UI 이벤트가 다시 결제하면 안 됩니다.");
             Assert.That(presenter.SelectedBuildingId, Is.Empty);
             Assert.That(state.GetBuildingSelection().HasSelection, Is.False);
-            Assert.That(view.SuccessMessageCount, Is.EqualTo(1));
+            // B-191: 설치 완료 문구는 띄우지 않는다(상태 칸은 비운다).
+            Assert.That(view.SuccessMessageCount, Is.Zero);
+            Assert.That(view.StatusMessage, Is.Empty);
         }
 
         [Test]

@@ -209,8 +209,9 @@ namespace SubTerra.App.Tests.UI
                 Assert.That(VisibleRowIds(menu), Is.EqualTo(new[] { DataIds.Buildings.ChargerBasic }));
                 Assert.That(menu.activeSelf, Is.True);
 
-                // `<<`: 레일+카드로 접힌다.
+                // `<<`: 레일+카드로 접힌다. B-191: 큰 창은 TV 꺼짐 연출이 끝난 뒤 꺼진다.
                 view.ToggleExpanded();
+                catalogWindow.GetComponent<SubTerra.App.UI.TerminalWindowOpenMotion>().Advance(1f);
                 Assert.That(catalogWindow.activeSelf, Is.False);
                 Assert.That(card.activeSelf, Is.True);
 
@@ -241,10 +242,11 @@ namespace SubTerra.App.Tests.UI
                 view.SetBuildingList(CatalogItems(0, 0));
                 view.ClearSelection();
                 Assert.That(chip.activeSelf, Is.False);
-                view.SetStatusMessage("시설 설치가 완료되었습니다.");
+                // B-191: 취소·설치 완료 문구는 없어졌고, 설치 불가 이유는 그대로 이 칸에 뜬다.
+                view.SetStatusMessage("자원이 부족합니다.");
                 Assert.That(chip.activeSelf, Is.True);
-                Assert.That(Find(menu.transform, "StatusText").GetComponent<TMP_Text>().text, Is.EqualTo("시설 설치가 완료되었습니다."));
-                Assert.That(Find(menu.transform, "AvailabilityText").GetComponent<TMP_Text>().text, Does.Not.Contain("설치가 완료"));
+                Assert.That(Find(menu.transform, "StatusText").GetComponent<TMP_Text>().text, Is.EqualTo("자원이 부족합니다."));
+                Assert.That(Find(menu.transform, "AvailabilityText").GetComponent<TMP_Text>().text, Does.Not.Contain("자원이 부족"));
                 view.SetStatusMessage(string.Empty);
                 Assert.That(chip.activeSelf, Is.False);
             }
