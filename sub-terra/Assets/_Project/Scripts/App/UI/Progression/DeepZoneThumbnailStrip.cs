@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using SubTerra.App.Audio;
 using SubTerra.App.Progression;
+using SubTerra.Shared;
 using SubTerra.Shared.Audio;
 using TMPro;
 using UnityEngine;
@@ -50,6 +51,7 @@ namespace SubTerra.App.UI.Progression
         private readonly List<SfxId> cueBuffer = new List<SfxId>();
         private readonly SfxRepeatGate cueGate = new SfxRepeatGate(UnlockRevealTimeline.SameCueSeconds);
         private bool revealing;
+        private bool reduceRevealMotion;
         private float revealElapsed;
         private float revealU;
         private int revealFrom;
@@ -160,6 +162,7 @@ namespace SubTerra.App.UI.Progression
             revealing = true;
             revealElapsed = 0f;
             revealU = UnlockRevealTimeline.BeforeStart;
+            reduceRevealMotion = AccessibilityPreferences.ReduceMotion;
             StepReveal(0f);
             return true;
         }
@@ -235,6 +238,7 @@ namespace SubTerra.App.UI.Progression
             cueBuffer.Clear();
             UnlockRevealTimeline.CollectCues(revealU, u, cueBuffer);
             revealU = u;
+            reduceRevealMotion |= AccessibilityPreferences.ReduceMotion;
             for (var i = revealFrom; i < revealTo; i++)
             {
                 SampleReveal(cells[i], u);
@@ -254,6 +258,7 @@ namespace SubTerra.App.UI.Progression
         private void FinishReveal()
         {
             revealing = false;
+            reduceRevealMotion = false;
             for (var i = revealFrom; i < revealTo && i < cells.Count; i++)
             {
                 DrawUnlocked(cells[i]);
@@ -304,9 +309,16 @@ namespace SubTerra.App.UI.Progression
 
         private void SampleReveal(Cell cell, float u)
         {
-            if (u >= 1f)
+            bool reduced = reduceRevealMotion || AccessibilityPreferences.ReduceMotion;
+            if (u >= 1f || (reduced && u >= UnlockRevealTimeline.GlowAt))
             {
                 DrawUnlocked(cell);
+                return;
+            }
+
+            if (reduced)
+            {
+                DrawLocked(cell);
                 return;
             }
 
@@ -400,10 +412,11 @@ namespace SubTerra.App.UI.Progression
             var s = style;
             var period = Mathf.Max(2f, s.glintPeriod) * (1f + s.glintPeriodSpread * index);
             var phase = index * 0.37f;
-            var wave = 0.5f - 0.5f * Mathf.Cos((now / period + phase) * Mathf.PI * 2f);
+            bool reduced = AccessibilityPreferences.ReduceMotion;
+            var wave = reduced ? 0f : 0.5f - 0.5f * Mathf.Cos((now / period + phase) * Mathf.PI * 2f);
             var range = Vector2.Lerp(s.lockedGlintAlpha, s.unlockedGlintAlpha, cell.GlintBlend);
             var alpha = Mathf.Lerp(range.x, range.y, wave);
-            alpha = Mathf.Lerp(alpha, 1f, cell.GlintBoost);
+            alpha = Mathf.Lerp(alpha, 1f, reduced ? 0f : cell.GlintBoost);
             var color = Color.Lerp(s.lockedGlintColor, s.unlockedGlintColor, cell.GlintBlend);
             UpgradeTreeTween.SetColor(cell.Glint, color, alpha);
         }

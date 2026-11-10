@@ -181,6 +181,47 @@ namespace SubTerra.App.Tests.UI
 
         // ---------- A-2 노드 연출 ----------
 
+        [TestCase(true)]
+        [TestCase(false)]
+        public void Issue282_ReducedUnlockKeepsCuesAndDoesNotRestoreMotion(bool reducedAtStart)
+        {
+            var node = OpenTreeNode();
+            node.ManualTick = true;
+            node.Apply(Snapshot(node.UpgradeId, false));
+            node.SetRevealPending(true);
+            node.Apply(Snapshot(node.UpgradeId, true));
+            var lockRoot = FindChild(node.transform, "Lock");
+            var basePosition = lockRoot.anchoredPosition;
+            var cues = new List<SfxId>();
+
+            AccessibilityPreferences.ReduceMotion = reducedAtStart;
+            node.BeginUnlock(cues.Add);
+            node.StepUnlock(0.08f);
+            AccessibilityPreferences.ReduceMotion = true;
+            node.StepUnlock(0.4f);
+            Assert.That(lockRoot.anchoredPosition, Is.EqualTo(basePosition));
+            Assert.That(Quaternion.Angle(lockRoot.localRotation, Quaternion.identity), Is.LessThan(0.01f));
+            Assert.That(node.IsLockVisible, Is.True);
+
+            AccessibilityPreferences.ReduceMotion = false;
+            node.StepUnlock(0.05f);
+            Assert.That(lockRoot.anchoredPosition, Is.EqualTo(basePosition));
+            node.StepUnlock(0.2f);
+            Assert.That(node.IsLockVisible, Is.False);
+            Assert.That(node.BlindAlpha, Is.Zero);
+            foreach (var image in node.GetComponentsInChildren<Image>(true))
+            {
+                if (image.name == "UnlockIconReveal") Assert.That(image.gameObject.activeSelf, Is.False);
+            }
+            Assert.That(cues, Is.EqualTo(new[] { SfxId.UnlockRattle, SfxId.UnlockClick, SfxId.UnlockGlow }));
+
+            typeof(UpgradeTreeNodeView).GetMethod("OnDisable", Private).Invoke(node, null);
+            typeof(UpgradeTreeNodeView).GetMethod("OnEnable", Private).Invoke(node, null);
+            Assert.That(node.IsUnlockPlaying, Is.False);
+            Assert.That(node.IsRevealPending, Is.False);
+            Assert.That(node.BlindAlpha, Is.Zero);
+        }
+
         [Test]
         public void Node_PendingKeepsBlindAndLock_ThenFallsAndRevealsInOneSecond()
         {

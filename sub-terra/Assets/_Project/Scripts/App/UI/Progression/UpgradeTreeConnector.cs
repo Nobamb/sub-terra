@@ -1,4 +1,5 @@
 using System.Collections;
+using SubTerra.Shared;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -80,7 +81,7 @@ namespace SubTerra.App.UI.Progression
         /// <summary>신규 해금 시 점등선이 부모에서 자식으로 흐른다.</summary>
         public void PlayFlow(float duration)
         {
-            if (!isActiveAndEnabled)
+            if (!isActiveAndEnabled || AccessibilityPreferences.ReduceMotion)
             {
                 return;
             }
@@ -96,8 +97,16 @@ namespace SubTerra.App.UI.Progression
         private IEnumerator FlowRoutine(float duration)
         {
             var total = Mathf.Max(0.01f, lengthA + lengthB);
+            bool reduced = false;
             yield return UpgradeTreeTween.Run(duration, t =>
             {
+                reduced |= AccessibilityPreferences.ReduceMotion;
+                if (reduced)
+                {
+                    ApplySteady();
+                    return;
+                }
+
                 var travelled = total * UpgradeTreeTween.EaseOut(t);
                 SetSegment(litA, startA, dirA, lengthA, Mathf.Clamp(travelled, 0f, lengthA));
                 SetSegment(litB, startB, dirB, lengthB, Mathf.Clamp(travelled - lengthA, 0f, lengthB));
