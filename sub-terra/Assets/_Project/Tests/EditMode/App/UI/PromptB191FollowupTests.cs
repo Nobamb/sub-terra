@@ -129,8 +129,10 @@ namespace SubTerra.App.Tests.UI
             Assert.That(card.GetComponent<UnityEngine.UI.VerticalLayoutGroup>().padding.left, Is.EqualTo(16));
             Assert.That(Find("SidePane").GetComponent<RectTransform>().sizeDelta.x, Is.EqualTo(300f));
             Assert.That(card.GetComponent<UnityEngine.UI.LayoutElement>().preferredHeight, Is.EqualTo(300f));
-            Assert.That(frame.rectTransform.offsetMin, Is.EqualTo(Vector2.zero));
-            Assert.That(frame.rectTransform.offsetMax, Is.EqualTo(Vector2.zero));
+            Assert.That(frame.rectTransform.offsetMin.x, Is.LessThan(0f));
+            Assert.That(frame.rectTransform.offsetMin.y, Is.LessThan(0f));
+            Assert.That(frame.rectTransform.offsetMax.x, Is.GreaterThan(0f));
+            Assert.That(frame.rectTransform.offsetMax.y, Is.GreaterThan(0f));
             Assert.That(card.GetComponent<UnityEngine.UI.Image>().raycastTarget, Is.True);
         }
 

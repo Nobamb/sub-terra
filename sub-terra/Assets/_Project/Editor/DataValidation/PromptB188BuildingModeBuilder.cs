@@ -36,8 +36,8 @@ namespace SubTerra.App.Editor.DataValidation
         // B-191: 검색·정렬과 상세 정보를 담는 큰 창 폭.
         public const float CatalogWidth = 560f;
         public const float CatalogMargin = 28f;
-        // 목록 높이가 칸 6개(+간격)에 딱 맞아 아래에 반쯤 잘린 칸이 걸치지 않는다(9칸 기준 550 - 96 - 34 = 420).
-        public const float CatalogBottomMargin = 34f;
+        // 정사각 큰 창에서도 목록 영역은 여섯 행이 온전히 들어가는 높이로 둔다(560 - 96 - 44 = 420).
+        public const float CatalogBottomMargin = 44f;
         public const float CatalogInnerWidth = CatalogWidth - CatalogMargin * 2f;
         // 프레임 바깥 글로우가 레일을 덮지 않게 조금 띄운다.
         public const float CatalogX = SideX + 14f;
@@ -856,7 +856,7 @@ namespace SubTerra.App.Editor.DataValidation
             Sprite buttonOn)
         {
             var refs = new CatalogRefs();
-            var height = RailHeight(entries.Count);
+            var height = CatalogWidth;
             // 창 판은 클릭 막이로 두고 카드와 같은 프레임 그림을 뒤에 둔다.
             var window = EnsureImage(panel, "CatalogWindow", Clear);
             window.sprite = null;
@@ -1101,7 +1101,7 @@ namespace SubTerra.App.Editor.DataValidation
         {
             var importer = AssetImporter.GetAtPath(CardFramePath) as TextureImporter;
             if (importer == null) throw new InvalidOperationException("건설 카드 프레임이 없습니다: " + CardFramePath);
-            var border = new Vector4(96f, 96f, 96f, 96f);
+            var border = new Vector4(192f, 192f, 192f, 192f);
             if (importer.textureType != TextureImporterType.Sprite || importer.spriteImportMode != SpriteImportMode.Single
                 || importer.spriteBorder != border || importer.textureCompression != TextureImporterCompression.Uncompressed)
             {
@@ -1118,7 +1118,17 @@ namespace SubTerra.App.Editor.DataValidation
             Stretch(frame.rectTransform, 0f);
             frame.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(CardFramePath);
             frame.type = UnityEngine.UI.Image.Type.Sliced;
-            frame.pixelsPerUnitMultiplier = frame.sprite.rect.width / width;
+            // 원본 계열 네온 프레임의 밝은 선을 창 경계에 맞추고 바깥 글로우 여백을 확보한다.
+            const float bodyLeft = 74f;
+            const float bodyRight = 1180f;
+            const float bodyTop = 80f;
+            const float bodyBottom = 1174f;
+            var pixelsPerUnit = (bodyRight - bodyLeft) / width;
+            frame.pixelsPerUnitMultiplier = pixelsPerUnit;
+            frame.rectTransform.offsetMin = new Vector2(-bodyLeft,
+                -(frame.sprite.rect.height - bodyBottom)) / pixelsPerUnit;
+            frame.rectTransform.offsetMax = new Vector2(frame.sprite.rect.width - bodyRight,
+                bodyTop) / pixelsPerUnit;
             frame.raycastTarget = false;
             frame.transform.SetSiblingIndex(0);
         }

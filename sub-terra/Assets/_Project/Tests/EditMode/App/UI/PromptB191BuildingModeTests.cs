@@ -238,12 +238,15 @@ namespace SubTerra.App.Tests.UI
             Assert.That(frame.sprite, Is.SameAs(frameSprite));
             Assert.That(frame.type, Is.EqualTo(Image.Type.Sliced));
             Assert.That(frame.raycastTarget, Is.False);
-            Assert.That(frame.rectTransform.offsetMin.magnitude, Is.LessThan(0.001f));
-            Assert.That(frame.rectTransform.offsetMax.magnitude, Is.LessThan(0.001f));
+            Assert.That(frame.rectTransform.offsetMin.x, Is.LessThan(0f));
+            Assert.That(frame.rectTransform.offsetMin.y, Is.LessThan(0f));
+            Assert.That(frame.rectTransform.offsetMax.x, Is.GreaterThan(0f));
+            Assert.That(frame.rectTransform.offsetMax.y, Is.GreaterThan(0f));
             Assert.That(frame.transform.GetSiblingIndex(), Is.Zero, "목록·상세보다 뒤에 그린다.");
             Assert.That(window.GetComponent<Image>().raycastTarget, Is.True, "창 안 클릭은 월드로 새지 않는다.");
             Assert.That(((RectTransform)window).sizeDelta.x, Is.EqualTo(PromptB112InventoryPanelBuilder.PanelWidth),
                 "검색·정렬과 상세 정보의 기존 창 폭을 유지한다.");
+            Assert.That(((RectTransform)window).sizeDelta.y, Is.EqualTo(((RectTransform)window).sizeDelta.x));
             Assert.That(((RectTransform)window).anchorMin, Is.EqualTo(new Vector2(0f, 1f)), "가운데 팝업이 아니라 레일 옆 왼쪽 위에 붙는다.");
         }
 
