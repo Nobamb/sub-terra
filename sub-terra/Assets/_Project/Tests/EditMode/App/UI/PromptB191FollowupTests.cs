@@ -196,7 +196,6 @@ namespace SubTerra.App.Tests.UI
             Assert.That(first.HoverProgress, Is.LessThan(0.5f));
             Assert.That(second.HoverProgress, Is.GreaterThan(0f));
             Assert.That(second.IsClosing, Is.False, "이전 버튼의 늦은 Exit는 새 이름표를 끄지 않는다.");
-            Assert.That(Find("HintChip").activeSelf, Is.False);
             view.ToggleExpanded();
             foreach (var tag in menu.GetComponentsInChildren<BuildingRailHologram>(true))
                 Assert.That(tag.GetComponent<CanvasGroup>().alpha, Is.Zero);
@@ -212,12 +211,12 @@ namespace SubTerra.App.Tests.UI
 
         private void AssertCleared()
         {
+            view.FlushPendingCardClose();
             Assert.That(view.SelectedBuildingId, Is.Empty);
             Assert.That(binder.Presenter.SelectedBuildingId, Is.Empty);
             Assert.That(state.GetBuildingSelection().HasSelection, Is.False);
             Assert.That(placement.PreviewId, Is.Empty);
             Assert.That(Find("Card").activeSelf, Is.False);
-            Assert.That(Find("HintChip").activeSelf, Is.True);
             Assert.That(Find("StatusChip").activeSelf, Is.False);
         }
 

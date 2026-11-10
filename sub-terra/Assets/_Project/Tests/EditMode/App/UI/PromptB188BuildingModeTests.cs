@@ -81,7 +81,7 @@ namespace SubTerra.App.Tests.UI
         }
 
         [Test]
-        public void Prefab_DefaultIsRailWithHintAndNoControlGuideText()
+        public void Prefab_DefaultIsRailWithoutHintAndNoControlGuideText()
         {
             var menu = AssetDatabase.LoadAssetAtPath<GameObject>(MenuPath);
             var view = menu.GetComponent<BuildingMenuView>();
@@ -91,7 +91,8 @@ namespace SubTerra.App.Tests.UI
             Assert.That(Find(menu.transform, "CatalogWindow").gameObject.activeSelf, Is.False);
             Assert.That(Find(menu.transform, "Card").gameObject.activeSelf, Is.False);
             Assert.That(Find(menu.transform, "ExpandButton/Label").GetComponent<TMP_Text>().text, Is.EqualTo(">>"));
-            Assert.That(Find(menu.transform, "HintText").GetComponent<TMP_Text>().text, Is.EqualTo("시설을 고르세요"));
+            // B-191-3: 미선택 안내(`시설을 고르세요`)는 두지 않는다.
+            Assert.That(menu.GetComponentsInChildren<Transform>(true).Any(t => t.name == "HintChip" || t.name == "HintText"), Is.False);
             Assert.That(Find(menu.transform, "Placeholder").GetComponent<TMP_Text>().text, Is.EqualTo("시설명 검색"));
             Assert.That(Find(menu.transform, "BackButton/Label").GetComponent<TMP_Text>().text, Does.Contain("시설 목록"));
 
@@ -149,10 +150,9 @@ namespace SubTerra.App.Tests.UI
                 var listPage = Find(menu.transform, "ListPage").gameObject;
                 var detailPage = Find(menu.transform, "DetailPage").gameObject;
                 var card = Find(menu.transform, "Card").gameObject;
-                var hint = Find(menu.transform, "HintChip").gameObject;
                 var empty = Find(menu.transform, "EmptyResult").gameObject;
                 var expand = Find(menu.transform, "ExpandButton/Label").GetComponent<TMP_Text>();
-                Assert.That(hint.activeSelf, Is.True);
+                Assert.That(card.activeSelf, Is.False);
                 Assert.That(catalogWindow.activeSelf, Is.False);
 
                 // `>>`: 레일은 그대로, 옆에 목록. 작은 카드·힌트는 접힌다.
@@ -160,7 +160,7 @@ namespace SubTerra.App.Tests.UI
                 Assert.That(Find(menu.transform, "Rail").gameObject.activeSelf, Is.True);
                 Assert.That(catalogWindow.activeSelf && listPage.activeSelf, Is.True);
                 Assert.That(detailPage.activeSelf, Is.False);
-                Assert.That(card.activeSelf || hint.activeSelf, Is.False);
+                Assert.That(card.activeSelf, Is.False);
                 Assert.That(expand.text, Is.EqualTo("<<"));
                 Assert.That(VisibleRowIds(menu), Has.Count.EqualTo(items.Count));
                 var ladderRow = Row(menu, DataIds.Buildings.LadderBasic);

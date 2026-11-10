@@ -18,8 +18,6 @@ namespace SubTerra.App.UI.Building
     public sealed class BuildingMenuView : MonoBehaviour, IBuildingMenuView
     {
         public const string SearchPauseOwner = "building.search";
-        // B-191 ★ 레일 버튼에서 마우스가 떠난 뒤 `시설을 고르세요` 안내를 다시 띄우기까지 기다리는 시간(초).
-        public const float HintReshowDelay = 0.3f;
         // B-191 ★ 건설 UI 전체를 드론 말풍선 바로 위에 둔다. 퀘스트 팝업(30_500)·긴급 구출·일반 팝업·설정창보다는 아래.
         public const int SortingOrderAboveDroneBubble = 100;
         public const int CanvasSortingOrder = DroneDialogueSocket.OverlaySortingOrder + SortingOrderAboveDroneBubble;
@@ -58,7 +56,6 @@ namespace SubTerra.App.UI.Building
         [SerializeField] private RectTransform rail;
         [SerializeField] private Button expandButton;
         [SerializeField] private TMP_Text expandLabel;
-        [SerializeField] private GameObject hintChip;
         [SerializeField] private GameObject card;
         [SerializeField] private GameObject statusChip;
         [SerializeField] private GameObject catalogWindow;
@@ -78,12 +75,11 @@ namespace SubTerra.App.UI.Building
         // 레일 아이콘 호버 시 오른쪽에 뜨는 홀로그램 이름표.
         [SerializeField] private BuildingRailHologram railHologram;
         [SerializeField] private BuildingRailHologram[] railHolograms = new BuildingRailHologram[0];
-        // B-191: 정렬 드롭다운·목록 칸 부모·건설 UI 전용 Canvas·안내 다시 띄우기 대기.
+        // B-191: 정렬 드롭다운·목록 칸 부모·건설 UI 전용 Canvas.
         [SerializeField] private TMP_Dropdown sortDropdown;
         [SerializeField] private RectTransform catalogContent;
         [SerializeField] private ScrollRect catalogScroll;
         [SerializeField] private Canvas modeCanvas;
-        [SerializeField] private float hintReshowDelay = HintReshowDelay;
 
         private readonly BuildingModeNavigation navigation = new BuildingModeNavigation();
         private readonly List<BuildingMenuItemReadModel> cachedItems = new List<BuildingMenuItemReadModel>();
@@ -93,9 +89,11 @@ namespace SubTerra.App.UI.Building
         private bool hasAvailability;
         private bool controlsWired;
         private bool searchPauseHeld;
-        private bool railHoverActive;
-        private float hintReshowRemaining;
         private bool catalogOpen;
+        // B-191-3: 카드의 논리 표시 상태. 꺼짐 연출 중에는 false지만 GameObject는 아직 켜져 있다.
+        private bool cardShown;
+        // 선택 해제 직후 같은 프레임에 다른 시설이 골라지거나(교체) 건설 모드가 닫히면 카드 꺼짐을 걸지 않는다.
+        private bool cardClosePending;
         private readonly List<BuildingMenuCatalogRowView> matchedRows = new List<BuildingMenuCatalogRowView>();
         private readonly List<string> matchedNames = new List<string>();
 
@@ -110,8 +108,8 @@ namespace SubTerra.App.UI.Building
         public BuildingRailHologram RailHologram => railHologram;
         public TMP_Dropdown SortDropdown => sortDropdown;
         public Canvas ModeCanvas => modeCanvas;
-        public float HintReshowDelaySeconds => hintReshowDelay;
-        public bool IsHintReshowPending => hintReshowRemaining > 0f;
+        public ScrollRect CatalogScroll => catalogScroll;
+        public bool IsCardShown => cardShown;
 
         private void Awake()
         {
@@ -138,8 +136,6 @@ namespace SubTerra.App.UI.Building
 
         private void Update()
         {
-            AdvanceHintDelay(Time.unscaledDeltaTime);
-
             // 검색창에 글자를 치거나 정렬 목록을 펼친 동안에는 B·C·이동 키가 월드로 가지 않게 기존 UI 정지 게이트를 잡는다.
             var typing = navigation.Page == BuildingModePage.List
                 && !IsClosing()
@@ -158,6 +154,8 @@ namespace SubTerra.App.UI.Building
 
         private void LateUpdate()
         {
+            FlushPendingCardClose();
+
             // TMP의 text는 확정된 글자만 준다. 표시 문자열에는 IME로 조합 중인 글자도 들어 있어 키를 누를 때마다 거를 수 있다.
             if (searchField == null
                 || !searchField.isFocused
@@ -231,6 +229,7 @@ namespace SubTerra.App.UI.Building
                 selectedIcon.enabled = false;
             }
 
+            var changed = selectedBuildingId != item.BuildingId;
             selectedBuildingId = item.BuildingId;
             ReplaceCachedItem(item);
             RefreshEntrySelection();
@@ -252,6 +251,12 @@ namespace SubTerra.App.UI.Building
 
             ApplyPage();
             RenderDetail();
+
+            // B-191-3: 목록이 펼쳐진 채 레일에서 새 시설을 고르면 그 행이 보이도록 스크롤을 옮긴다(같은 시설 갱신은 제외).
+            if (changed && navigation.Page == BuildingModePage.List)
+            {
+                FocusCatalogRow(item.BuildingId);
+            }
         }
 
         public void ClearSelection()
@@ -260,7 +265,27 @@ namespace SubTerra.App.UI.Building
             selectedCosts = null;
             hasAvailability = false;
             RefreshEntrySelection();
+            ApplyPage();
 
+            // B-191-3: 카드가 꺼지는 연출 동안에는 보던 내용을 그대로 두고, 다 꺼진 뒤 비운다.
+            if (!IsCardVisibleWithoutSelection())
+            {
+                ResetSelectionContent();
+            }
+
+            RenderDetail();
+        }
+
+        private bool IsCardVisibleWithoutSelection()
+        {
+            return UsesBuildingMode
+                && card != null
+                && card.activeSelf
+                && string.IsNullOrEmpty(selectedBuildingId);
+        }
+
+        private void ResetSelectionContent()
+        {
             if (selectionText != null)
             {
                 selectionText.text = UsesBuildingMode
@@ -294,8 +319,6 @@ namespace SubTerra.App.UI.Building
             }
             SetActive(costSection, false);
             HideCostRows(costRows, 0);
-            ApplyPage();
-            RenderDetail();
         }
 
         private void HideLegacyChrome()
@@ -331,7 +354,12 @@ namespace SubTerra.App.UI.Building
 
             if (UsesStructuredLayout)
             {
-                ShowAvailabilityBanner(availability);
+                // 꺼지는 중인 카드의 상태 칸은 그대로 두고, 다 꺼진 뒤 마지막 값으로 맞춘다.
+                if (!IsCardVisibleWithoutSelection())
+                {
+                    ShowAvailabilityBanner(availability);
+                }
+
                 return;
             }
 
@@ -439,7 +467,6 @@ namespace SubTerra.App.UI.Building
                 : ItemDisplayNames.Building(buildingId);
             railHologram.Show(anchor, displayName);
             railHologram.transform.SetAsLastSibling();
-            SetRailHoverActive(railHologram.IsShown);
         }
 
         public void HideRailHover(RectTransform anchor)
@@ -457,7 +484,6 @@ namespace SubTerra.App.UI.Building
             if (railHologram != null)
             {
                 railHologram.Hide(anchor);
-                SetRailHoverActive(railHologram.IsShown && !railHologram.IsClosing);
             }
         }
 
@@ -474,43 +500,6 @@ namespace SubTerra.App.UI.Building
             if (railHologram != null)
             {
                 railHologram.HideNow();
-            }
-
-            railHoverActive = false;
-            hintReshowRemaining = 0f;
-        }
-
-        private void SetRailHoverActive(bool active)
-        {
-            if (railHoverActive == active)
-            {
-                if (active)
-                {
-                    hintReshowRemaining = 0f;
-                }
-
-                return;
-            }
-
-            railHoverActive = active;
-            // 버튼 사이를 지나는 짧은 틈에 안내가 깜빡이지 않게, 떠난 뒤 잠깐 기다렸다가 다시 띄운다.
-            hintReshowRemaining = active ? 0f : Mathf.Max(0f, hintReshowDelay);
-            ApplyPage();
-        }
-
-        /// <summary>안내 다시 띄우기 대기를 흘려보낸다. 게임이 멈춰 있어도 흐르도록 unscaled 시간을 넘긴다.</summary>
-        public void AdvanceHintDelay(float deltaTime)
-        {
-            if (hintReshowRemaining <= 0f)
-            {
-                return;
-            }
-
-            hintReshowRemaining -= Mathf.Max(0f, deltaTime);
-            if (hintReshowRemaining <= 0f)
-            {
-                hintReshowRemaining = 0f;
-                ApplyPage();
             }
         }
 
@@ -749,16 +738,160 @@ namespace SubTerra.App.UI.Building
                 ApplyDetailPage(page == BuildingModePage.Detail, !instant && catalogWasOpen);
             }
 
-            SetActive(card, page == BuildingModePage.Rail && hasSelection);
-            // "시설을 고르세요"는 호버 이름표가 떠 있는 동안, 그리고 버튼을 떠난 직후 잠깐은 비켜 준다.
-            SetActive(hintChip, page == BuildingModePage.Rail && !hasSelection
-                && !railHoverActive && hintReshowRemaining <= 0f);
+            // `<<`로 접히며 다시 보이는 카드는 큰 창 꺼짐 소리와 겹치지 않게 소리 없이 짧게 켠다.
+            ApplyCard(page == BuildingModePage.Rail && hasSelection, instant, catalogWasOpen && !expanded);
             SetActive(statusChip, page == BuildingModePage.Rail
                 && statusText != null && !string.IsNullOrEmpty(statusText.text));
             if (expandLabel != null)
             {
                 expandLabel.text = navigation.ExpandLabel;
             }
+        }
+
+        /// <summary>
+        /// B-191-3: 레일에서 시설을 고르면 카드도 큰 창과 같은 TV 켜짐으로 나타나고, 선택을 풀면 TV 꺼짐으로 사라진다.
+        /// 큰 창을 펼치거나 건설 모드를 열고 닫을 때는 연출 없이 바로 맞춘다.
+        /// </summary>
+        private void ApplyCard(bool show, bool instant, bool quiet)
+        {
+            if (card == null)
+            {
+                return;
+            }
+
+            if (instant || navigation.Page != BuildingModePage.Rail)
+            {
+                cardClosePending = false;
+                cardShown = show;
+                TerminalWindowOpenMotion.Stop(card);
+                SetActive(card, show);
+                if (!show && string.IsNullOrEmpty(selectedBuildingId))
+                {
+                    ResetSelectionContent();
+                }
+
+                return;
+            }
+
+            if (show)
+            {
+                var closeWasPending = cardClosePending;
+                cardClosePending = false;
+                if (cardShown)
+                {
+                    return;
+                }
+
+                cardShown = true;
+                // 해제 직후 같은 프레임에 다른 시설을 고른 교체: 카드는 켜진 그대로 내용만 바꾼다.
+                if (closeWasPending && card.activeSelf)
+                {
+                    return;
+                }
+
+                SetActive(card, true);
+                if (card.activeInHierarchy && !IsClosing())
+                {
+                    if (quiet)
+                    {
+                        TerminalWindowOpenMotion.OpenLight(card, DetailMotionSpeed);
+                    }
+                    else
+                    {
+                        TerminalWindowOpenMotion.Open(card);
+                    }
+                }
+
+                return;
+            }
+
+            if (cardShown)
+            {
+                cardShown = false;
+                cardClosePending = true;
+            }
+        }
+
+        /// <summary>선택 해제 뒤 프레임 끝까지 다시 골라지지 않았으면 카드 꺼짐을 시작한다. LateUpdate가 부른다.</summary>
+        public void FlushPendingCardClose()
+        {
+            if (!cardClosePending)
+            {
+                return;
+            }
+
+            cardClosePending = false;
+            if (cardShown || card == null)
+            {
+                return;
+            }
+
+            // 건설 모드 전체가 닫히는 중이면 카드는 패널과 함께 밀려 나가고, 다 닫힌 뒤 ResetMode가 정리한다.
+            if (IsClosing())
+            {
+                return;
+            }
+
+            if (!card.activeInHierarchy)
+            {
+                FinishCardClose();
+                return;
+            }
+
+            TerminalWindowOpenMotion.Close(card, FinishCardClose);
+        }
+
+        private void FinishCardClose()
+        {
+            // 꺼지는 도중 다시 골랐거나, 부모가 꺼지는 중(OnDisable)이면 건드리지 않는다. 다음 ApplyPage가 맞춘다.
+            if (cardShown || card == null || (card.activeSelf && !card.activeInHierarchy))
+            {
+                return;
+            }
+
+            SetActive(card, false);
+            if (string.IsNullOrEmpty(selectedBuildingId))
+            {
+                ResetSelectionContent();
+                if (UsesStructuredLayout && availabilityText != null)
+                {
+                    ShowAvailabilityBanner(latestAvailability);
+                }
+            }
+        }
+
+        /// <summary>B-191-3: 목록 행을 보이는 영역 가운데로 옮긴다. 끝 쪽 행은 스크롤 끝에 붙여 보인다.</summary>
+        private void FocusCatalogRow(string buildingId)
+        {
+            if (catalogScroll == null || catalogContent == null || catalogScroll.viewport == null || catalogRows == null)
+            {
+                return;
+            }
+
+            RectTransform rowRect = null;
+            for (var i = 0; i < catalogRows.Length; i++)
+            {
+                if (catalogRows[i] != null && catalogRows[i].BuildingId == buildingId)
+                {
+                    rowRect = catalogRows[i].transform as RectTransform;
+                    break;
+                }
+            }
+
+            // 검색으로 숨은 행은 따라가지 않는다.
+            if (rowRect == null || !rowRect.gameObject.activeInHierarchy)
+            {
+                return;
+            }
+
+            LayoutRebuilder.ForceRebuildLayoutImmediate(catalogContent);
+            var center = catalogContent.InverseTransformPoint(rowRect.TransformPoint(rowRect.rect.center)).y;
+            var fromTop = catalogContent.rect.yMax - center;
+            catalogScroll.StopMovement();
+            catalogScroll.verticalNormalizedPosition = BuildingCatalogScrollFocus.CenteredNormalizedPosition(
+                fromTop,
+                catalogContent.rect.height,
+                catalogScroll.viewport.rect.height);
         }
 
         /// <summary>
@@ -917,7 +1050,6 @@ namespace SubTerra.App.UI.Building
                 || slideMotion == null
                 || expandButton == null
                 || expandLabel == null
-                || hintChip == null
                 || card == null
                 || statusChip == null
                 || listPage == null

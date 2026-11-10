@@ -184,7 +184,7 @@ namespace SubTerra.App.Tests.UI
             // B-191: 정렬 드롭다운의 펼친 목록(Template·항목 배경)도 큰 창 안에서 클릭을 받는다.
             var allowed = new[]
             {
-                "Rail", "HintChip", "Card", "StatusChip", "CatalogWindow", "SearchField", "Viewport", "Scrollbar", "Handle",
+                "Rail", "Card", "StatusChip", "CatalogWindow", "SearchField", "Viewport", "Scrollbar", "Handle",
                 "Template", "Item Background"
             };
             foreach (var graphic in menu.GetComponentsInChildren<Graphic>(true))
@@ -292,7 +292,7 @@ namespace SubTerra.App.Tests.UI
                 Assert.That(Find(panel, "CostRow_1").gameObject.activeSelf, Is.True);
                 Assert.That(Find(panel, "CostRow_2").gameObject.activeSelf, Is.False);
                 Assert.That(Find(panel, "Card").gameObject.activeSelf, Is.True);
-                Assert.That(Find(panel, "HintChip").gameObject.activeSelf, Is.False);
+                Assert.That(Find(panel, "HintChip"), Is.Null, "B-191-3: `시설을 고르세요` 안내는 없다.");
 
                 view.SetAvailability(new BuildingAvailabilityReadModel(BuildingPlacementState.Previewing, false, "자원이 부족합니다."));
                 var availabilityText = Find(panel, "AvailabilityText").GetComponent<TMP_Text>().text;
@@ -300,12 +300,13 @@ namespace SubTerra.App.Tests.UI
                 Assert.That(availabilityText, Does.Contain("철 5개가 더 필요합니다."));
 
                 view.ClearSelection();
+                // B-191-3: 카드 꺼짐은 프레임 끝(LateUpdate)에 시작하고, 다 꺼진 뒤 내용을 비운다.
+                view.FlushPendingCardClose();
                 Assert.That(entry.IsSelected, Is.False);
                 Assert.That(Find(panel, "CostSection").gameObject.activeSelf, Is.False);
                 Assert.That(Find(panel, "DetailOperatingCondition").gameObject.activeSelf, Is.False);
-                // 미선택: 카드 대신 짧은 힌트만.
+                // 미선택: 카드도 안내 문구도 없이 레일만.
                 Assert.That(Find(panel, "Card").gameObject.activeSelf, Is.False);
-                Assert.That(Find(panel, "HintChip").gameObject.activeSelf, Is.True);
             }
             finally
             {

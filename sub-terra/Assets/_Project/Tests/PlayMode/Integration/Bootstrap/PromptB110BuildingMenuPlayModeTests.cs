@@ -50,6 +50,40 @@ namespace SubTerra.App.Tests.PlayMode
             yield return VerifyStatesAndInput(true);
         }
 
+        /// <summary>B-191-3: 목록을 펼친 채 레일에서 아래쪽 시설을 누르면 목록 스크롤이 그 행을 가운데(끝 쪽은 맨 아래)로 옮긴다.</summary>
+        [UnityTest]
+        public IEnumerator BuildingCatalog_RailSelectionScrollsRowIntoView()
+        {
+            environment = new UiTestEnvironment();
+            yield return environment.LoadIntegration();
+            Object.FindAnyObjectByType<HudPanelChromeController>().OpenBuildingMenu();
+            yield return new WaitForSecondsRealtime(BuildingModeSlideMotion.OpenDuration + 0.05f);
+            var view = Object.FindAnyObjectByType<BuildingMenuView>();
+            var root = view.transform;
+            yield return ClickCenter(environment.Mouse, view.ExpandButton);
+            yield return new WaitForSecondsRealtime(TerminalWindowOpenMotion.Duration + 0.05f);
+            var scroll = view.CatalogScroll;
+            Assert.That(scroll.verticalNormalizedPosition, Is.EqualTo(1f).Within(1e-3f), "처음엔 맨 위");
+            var evidence = Path.GetFullPath("Temp/visual/prompt-b191-3");
+            Directory.CreateDirectory(evidence);
+
+            foreach (var id in new[] { DataIds.Buildings.StorageBasic, DataIds.Buildings.SettlementBasic, DataIds.Buildings.EmergencyEscapePortal })
+            {
+                yield return ClickCenter(environment.Mouse, Entry(root, id).GetComponent<Button>());
+                yield return null;
+                Assert.That(view.SelectedBuildingId, Is.EqualTo(id));
+                var row = ScreenRect((RectTransform)Find(root, "Row_" + id));
+                var viewport = ScreenRect(scroll.viewport);
+                Assert.That(row.yMin, Is.GreaterThanOrEqualTo(viewport.yMin - 1f), id + " 아래가 잘리지 않는다.");
+                Assert.That(row.yMax, Is.LessThanOrEqualTo(viewport.yMax + 1f), id + " 위가 잘리지 않는다.");
+                if (id == DataIds.Buildings.StorageBasic)
+                    Assert.That(row.center.y, Is.EqualTo(viewport.center.y).Within(1.5f), "보관함은 가운데");
+                else
+                    Assert.That(scroll.verticalNormalizedPosition, Is.EqualTo(0f).Within(1e-3f), id + "는 맨 아래");
+                yield return UiTestWait.Capture(Path.Combine(evidence, "catalog-focus-" + id + ".png"));
+            }
+        }
+
         [UnityTest]
         public IEnumerator BuildingSearch_CommittedKeyboardTextAndImeCompositionStayInSync()
         {
@@ -143,10 +177,18 @@ namespace SubTerra.App.Tests.PlayMode
             Directory.CreateDirectory(evidence);
             yield return ClickCenter(environment.Mouse, ladder.GetComponent<Button>());
             Assert.That(card.gameObject.activeInHierarchy, Is.True);
+            // B-191-3: 카드는 TV 켜짐으로 나타나므로 다 켜진 뒤 찍는다.
+            yield return new WaitForSecondsRealtime(TerminalWindowOpenMotion.Duration + 0.05f);
             yield return UiTestWait.Capture(Path.Combine(evidence, "small-card.png"));
             yield return ClickCenter(environment.Mouse, ladder.GetComponent<Button>());
             Assert.That(view.SelectedBuildingId, Is.Empty);
             Assert.That(Object.FindAnyObjectByType<BuildingPlacementSystem>().Selection, Is.Null);
+            Assert.That(view.IsCardShown, Is.False);
+            // 재클릭 해제는 TV 꺼짐으로 사라진다.
+            yield return null;
+            var cardMotion = card.GetComponent<TerminalWindowOpenMotion>();
+            Assert.That(cardMotion != null && cardMotion.IsClosing, Is.True, "카드 TV 꺼짐");
+            yield return new WaitForSecondsRealtime(TerminalWindowOpenMotion.CloseDuration + 0.05f);
             Assert.That(card.gameObject.activeSelf, Is.False);
             yield return UiTestWait.Capture(Path.Combine(evidence, "reclick-cleared.png"));
 
@@ -239,6 +281,9 @@ namespace SubTerra.App.Tests.PlayMode
             Assert.That(result.IsSuccess, Is.True, result.Failure.ToString());
             Assert.That(state.Player.Energy, Is.EqualTo(energyBefore), "건설 자체는 플레이어 전력을 차감하지 않는다.");
             Assert.That(inventory.State.GetQuantity(DataIds.Minerals.Copper), Is.EqualTo(copperBefore - copperCost));
+            // B-191-3: 설치 완료 뒤 카드는 TV 꺼짐이 끝나고 나서 내용을 비운다.
+            yield return new WaitForSecondsRealtime(TerminalWindowOpenMotion.CloseDuration + 0.1f);
+            Assert.That(Find(view.transform, "Card").gameObject.activeSelf, Is.False);
             Assert.That(Find(view.transform, "DetailOperatingCondition").gameObject.activeSelf, Is.False);
             Assert.That(environment.Save.ActiveSlot, Is.Zero);
         }
@@ -347,14 +392,14 @@ namespace SubTerra.App.Tests.PlayMode
 
             var root = view.transform;
             var card = Find(root, "Card").gameObject;
-            var hint = Find(root, "HintChip").gameObject;
             var catalogWindow = Find(root, "CatalogWindow").gameObject;
             var detailName = Find(root, "DetailName").GetComponent<TMP_Text>();
             var availability = Find(root, "AvailabilityText").GetComponent<TMP_Text>();
             var costSection = Find(root, "CostSection").gameObject;
             Assert.That(detailName.text, Is.EqualTo("시설 미선택"));
             Assert.That(costSection.activeSelf, Is.False);
-            Assert.That(hint.activeSelf, Is.True, "미선택: 큰 안내 패널 없이 짧은 힌트만");
+            Assert.That(root.GetComponentsInChildren<Transform>(true).Any(t => t.name == "HintChip"), Is.False,
+                "B-191-3: 미선택이면 안내 문구 없이 레일만");
             Assert.That(card.activeSelf, Is.False);
             Assert.That(catalogWindow.activeSelf, Is.False, "기본은 레일+카드");
             AssertNoControlGuide(root);
@@ -382,7 +427,6 @@ namespace SubTerra.App.Tests.PlayMode
             holoText.ForceMeshUpdate();
             Assert.That(holoText.isTextTruncated, Is.False);
             Assert.That(holoText.maxVisibleCharacters, Is.GreaterThanOrEqualTo(holoText.text.Length), "글자가 다 찍혔다.");
-            Assert.That(hint.activeSelf, Is.False, "호버 중에는 힌트가 비켜 준다.");
             if (visual) yield return UiTestWait.Capture(Path.Combine(evidence, "building-rail-hover-1920x1080.png"));
 
             // B-191: 건설 UI 전용 Canvas가 드론 말풍선 위에 있고, HUDCanvas 순서는 그대로다.
@@ -393,21 +437,7 @@ namespace SubTerra.App.Tests.PlayMode
             Assert.That(view.ModeCanvas.rootCanvas, Is.Not.SameAs(view.ModeCanvas), "HUDCanvas 아래에 그대로 있다.");
             Assert.That(view.ModeCanvas.rootCanvas.sortingOrder, Is.LessThan(DroneDialogueSocket.OverlaySortingOrder),
                 "HUDCanvas 전체 순서는 말풍선 위로 올리지 않는다.");
-            Assert.That(hint.GetComponentInParent<Canvas>(), Is.SameAs(view.ModeCanvas), "`시설을 고르세요` 안내도 같은 Canvas");
-
-            // B-191: 버튼에서 다른 버튼으로 옮기는 동안 안내가 깜빡이지 않고, 떠난 뒤 약 0.3초가 지나야 다시 뜬다.
-            var hintFlickered = false;
-            yield return MoveMouseTo(environment.Mouse, (RectTransform)Entry(root, DataIds.Buildings.ChargerBasic));
-            hintFlickered |= hint.activeSelf;
-            yield return MoveMouseTo(environment.Mouse, (RectTransform)Entry(root, DataIds.Buildings.LadderBasic));
-            hintFlickered |= hint.activeSelf;
-            Assert.That(hintFlickered, Is.False, "버튼 사이를 옮길 때 안내가 켜지면 안 된다.");
-            InputSystem.QueueStateEvent(environment.Mouse,
-                new MouseState { position = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f) });
-            yield return UiTestWait.Until(() => view.IsHintReshowPending, "hint reshow wait", 2f, "input");
-            Assert.That(hint.activeSelf, Is.False, "떠난 직후에는 아직 숨긴다.");
-            yield return new WaitForSecondsRealtime(view.HintReshowDelaySeconds + 0.1f);
-            Assert.That(hint.activeSelf, Is.True, "대기 뒤 안내가 돌아온다.");
+            Assert.That(card.GetComponentInParent<Canvas>(), Is.SameAs(view.ModeCanvas), "카드도 같은 Canvas");
 
             // 버팀목 선택: 초기 인벤토리는 비어 있어 자원 부족이 문구·기호와 함께 보여야 한다.
             yield return ClickCenter(environment.Mouse, support.GetComponent<Button>());
@@ -415,7 +445,12 @@ namespace SubTerra.App.Tests.PlayMode
             Assert.That(support.GetComponent<BuildingMenuEntryVisual>().IsSelected, Is.True);
             AssertOnlySelected(root, DataIds.Buildings.SupportBasic);
             Assert.That(card.activeSelf, Is.True);
-            Assert.That(hint.activeSelf, Is.False);
+            // B-191-3: 카드도 큰 창과 같은 TV 켜짐으로 나타난다.
+            var cardMotion = card.GetComponent<TerminalWindowOpenMotion>();
+            Assert.That(cardMotion, Is.Not.Null, "카드 TV 켜짐");
+            yield return new WaitForSecondsRealtime(TerminalWindowOpenMotion.Duration + 0.05f);
+            Assert.That(cardMotion.IsPlaying, Is.False);
+            Assert.That(card.transform.localScale.y, Is.EqualTo(1f).Within(1e-3f));
             Assert.That(detailName.text, Is.Not.EqualTo("시설 미선택"));
             Assert.That(costSection.activeSelf, Is.True);
             Assert.That(availability.text, Does.Contain("자원 부족"));

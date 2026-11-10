@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Building_Storage_Basic
   m_EditorClassIdentifier: SubTerra.App::SubTerra.App.Core.Data.BuildingData
   id: building.storage.basic
-  displayName: "\uAE30\uBCF8 \uBCF4\uAD00\uD568"
+  displayName: "\uBCF4\uAD00\uD568"
   description: "\uD0D0\uC0AC \uC911 \uC218\uC9D1\uD55C \uAD11\uBB3C\uC744 \uC784\uC2DC
     \uBCF4\uAD00\uD569\uB2C8\uB2E4."
   runtimePrefab: {fileID: 8399673546014846682, guid: d0c7a301147833d46a0eda454df6de31, type: 3}

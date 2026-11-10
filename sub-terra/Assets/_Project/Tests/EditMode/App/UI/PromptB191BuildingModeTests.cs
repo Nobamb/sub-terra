@@ -144,8 +144,8 @@ namespace SubTerra.App.Tests.UI
             Assert.That(so.FindProperty("m_OverrideSorting").boolValue, Is.True);
             Assert.That(so.FindProperty("m_SortingOrder").intValue, Is.EqualTo(BuildingMenuView.CanvasSortingOrder));
 
-            // 레일·카드·큰 창·`시설을 고르세요` 안내·호버 이름표가 모두 이 Canvas 아래(다른 Canvas 없음)에 있다.
-            foreach (var name in new[] { "Rail", "Card", "HintChip", "StatusChip", "CatalogWindow", "RailHoverHologram" })
+            // 레일·카드·큰 창·호버 이름표가 모두 이 Canvas 아래(다른 Canvas 없음)에 있다.
+            foreach (var name in new[] { "Rail", "Card", "StatusChip", "CatalogWindow", "RailHoverHologram" })
             {
                 var target = menu.GetComponentsInChildren<Transform>(true).First(t => t.name == name);
                 var owner = target.GetComponentsInParent<Canvas>(true).First();
@@ -158,8 +158,7 @@ namespace SubTerra.App.Tests.UI
             Assert.That(rootRect.anchorMax, Is.EqualTo(new Vector2(0f, 1f)));
             Assert.That(rootRect.pivot, Is.EqualTo(new Vector2(0f, 1f)));
             Assert.That(rootRect.localScale, Is.EqualTo(Vector3.one));
-            Assert.That(new SerializedObject(view).FindProperty("hintReshowDelay").floatValue,
-                Is.EqualTo(BuildingMenuView.HintReshowDelay).Within(1e-5f));
+            Assert.That(new SerializedObject(view).FindProperty("hintReshowDelay"), Is.Null, "B-191-3: 안내 대기 값은 없다.");
         }
 
         [Test]
@@ -282,14 +281,14 @@ namespace SubTerra.App.Tests.UI
                 Assert.That(view.SortDropdown.value, Is.EqualTo((int)BuildingCatalogSort.NameDescending));
 
                 // 검색으로 걸러진 결과를 정렬하고, 정렬을 바꿔도 검색어는 남는다.
-                view.SetSearchQuery("ㄱㅂ");
+                view.SetSearchQuery("ㅈ");
                 var filtered = VisibleRowIds(menu);
                 Assert.That(filtered, Is.Not.Empty);
                 Assert.That(filtered.Count, Is.LessThan(defaultOrder.Count));
-                Assert.That(filtered.All(id => KoreanSearch.Matches(nameOf[id], "ㄱㅂ")), Is.True);
+                Assert.That(filtered.All(id => KoreanSearch.Matches(nameOf[id], "ㅈ")), Is.True);
                 view.SetSort(BuildingCatalogSort.NameAscending);
-                Assert.That(view.SearchField.text, Is.EqualTo("ㄱㅂ"));
-                Assert.That(view.Navigation.Query, Is.EqualTo("ㄱㅂ"));
+                Assert.That(view.SearchField.text, Is.EqualTo("ㅈ"));
+                Assert.That(view.Navigation.Query, Is.EqualTo("ㅈ"));
                 Assert.That(VisibleRowIds(menu), Is.EquivalentTo(filtered));
                 Assert.That(VisibleRowIds(menu).Select(id => nameOf[id]), Is.Ordered.Using<string>(string.CompareOrdinal));
 
@@ -415,7 +414,7 @@ namespace SubTerra.App.Tests.UI
         }
 
         [Test]
-        public void View_HintWaitsBeforeReturningAndNeverFlickersBetweenButtons()
+        public void View_CardTurnsOnAndOffLikeTvAndNoHintAppears()
         {
             var menu = Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(MenuPath));
             try
@@ -424,58 +423,65 @@ namespace SubTerra.App.Tests.UI
                 var items = CatalogItems();
                 view.SetBuildingList(items);
                 view.ClearSelection();
-                var hint = menu.GetComponentsInChildren<Transform>(true).First(t => t.name == "HintChip").gameObject;
                 var card = menu.GetComponentsInChildren<Transform>(true).First(t => t.name == "Card").gameObject;
-                var ladder = Relay(menu, DataIds.Buildings.LadderBasic);
-                var charger = Relay(menu, DataIds.Buildings.ChargerBasic);
-                Assert.That(BuildingMenuView.HintReshowDelay, Is.EqualTo(0.3f));
-                Assert.That(view.HintReshowDelaySeconds, Is.EqualTo(0.3f).Within(1e-5f));
-                Assert.That(hint.activeSelf, Is.True);
+                Assert.That(menu.GetComponentsInChildren<Transform>(true).Any(t => t.name == "HintChip"), Is.False);
+                Assert.That(card.activeSelf, Is.False);
 
-                // 버튼 A → (틈) → 버튼 B: 틈에서 안내가 다시 켜지지 않는다.
-                ladder.OnPointerEnter(null);
-                Assert.That(hint.activeSelf, Is.False);
-                ladder.OnPointerExit(null);
-                Assert.That(hint.activeSelf, Is.False, "떠난 즉시 켜지지 않는다.");
-                Assert.That(view.IsHintReshowPending, Is.True);
-                view.AdvanceHintDelay(0.1f);
-                Assert.That(hint.activeSelf, Is.False);
-                charger.OnPointerEnter(null);
-                Assert.That(view.IsHintReshowPending, Is.False, "다른 버튼을 호버하면 대기를 취소한다.");
-                view.AdvanceHintDelay(1f);
-                Assert.That(hint.activeSelf, Is.False, "호버 중에는 계속 숨긴다.");
-                Assert.That(view.RailHologram.IsShown && !view.RailHologram.IsClosing, Is.True, "새 이름표로 바로 넘어간다.");
-
-                // 아무 버튼도 호버하지 않고 0.3초가 지나야 다시 뜬다.
-                charger.OnPointerExit(null);
-                view.AdvanceHintDelay(0.29f);
-                Assert.That(hint.activeSelf, Is.False);
-                view.AdvanceHintDelay(0.02f);
-                Assert.That(hint.activeSelf, Is.True);
-                Assert.That(view.IsHintReshowPending, Is.False);
-
-                // 클릭해 고르면 카드가 바로 뜬다(대기와 무관).
-                ladder.OnPointerEnter(null);
-                view.SetSelection(items.First(i => i.BuildingId == DataIds.Buildings.LadderBasic));
+                // 레일에서 고르면 카드가 큰 창과 같은 TV 켜짐으로 나타난다.
+                var ladderItem = items.First(i => i.BuildingId == DataIds.Buildings.LadderBasic);
+                view.SetSelection(ladderItem);
+                var motion = card.GetComponent<TerminalWindowOpenMotion>();
                 Assert.That(card.activeSelf, Is.True);
-                Assert.That(hint.activeSelf, Is.False);
+                Assert.That(view.IsCardShown, Is.True);
+                Assert.That(motion, Is.Not.Null, "카드 TV 켜짐");
+                Assert.That(motion.IsPlaying && !motion.IsClosing, Is.True);
+                motion.Advance(TerminalWindowOpenMotion.Duration * 0.3f);
+                Assert.That(card.transform.localScale.y, Is.LessThan(1f), "가로선에서 세로로 펼쳐지는 중");
+                motion.Advance(1f);
+                Assert.That(motion.IsPlaying, Is.False);
+                Assert.That(card.transform.localScale.y, Is.EqualTo(1f).Within(1e-4f));
 
-                // 대기 중 `>>`로 펼치면 대기를 즉시 취소하고, 접어도 묵은 대기가 남지 않는다.
+                // 같은 프레임에 해제 → 다른 시설 선택(교체)은 카드를 끄지 않고 내용만 바꾼다.
                 view.ClearSelection();
-                ladder.OnPointerExit(null);
-                Assert.That(view.IsHintReshowPending, Is.True);
-                view.ToggleExpanded();
-                Assert.That(view.IsHintReshowPending, Is.False);
-                Assert.That(hint.activeSelf, Is.False);
-                view.ToggleExpanded();
-                Assert.That(hint.activeSelf, Is.True);
+                view.SetSelection(items.First(i => i.BuildingId == DataIds.Buildings.ChargerBasic));
+                view.FlushPendingCardClose();
+                Assert.That(card.activeSelf && view.IsCardShown, Is.True);
+                Assert.That(motion.IsPlaying, Is.False, "교체에는 꺼짐·켜짐을 다시 걸지 않는다.");
 
-                // 대기 중 건설 모드를 닫아도 대기가 남지 않는다.
-                ladder.OnPointerEnter(null);
-                ladder.OnPointerExit(null);
-                Assert.That(view.IsHintReshowPending, Is.True);
-                view.SetVisible(false);
-                Assert.That(view.IsHintReshowPending, Is.False);
+                // 해제하면 TV 꺼짐 동안 보던 내용을 유지하고, 다 꺼진 뒤 숨긴다.
+                var name = menu.GetComponentsInChildren<TMP_Text>(true).First(t => t.name == "DetailName");
+                var shownName = name.text;
+                view.ClearSelection();
+                Assert.That(view.IsCardShown, Is.False);
+                view.FlushPendingCardClose();
+                Assert.That(motion.IsClosing, Is.True, "TV 꺼짐");
+                Assert.That(card.activeSelf, Is.True);
+                Assert.That(name.text, Is.EqualTo(shownName), "꺼지는 동안 내용은 그대로");
+                motion.Advance(TerminalWindowOpenMotion.CloseDuration * 0.5f);
+                Assert.That(card.activeSelf, Is.True);
+                motion.Advance(1f);
+                Assert.That(card.activeSelf, Is.False);
+                Assert.That(name.text, Is.EqualTo("시설 미선택"));
+
+                // 꺼지는 도중 다시 고르면 그 자리에서 다시 켜진다.
+                view.SetSelection(ladderItem);
+                motion.Advance(1f);
+                view.ClearSelection();
+                view.FlushPendingCardClose();
+                motion.Advance(TerminalWindowOpenMotion.CloseDuration * 0.4f);
+                view.SetSelection(ladderItem);
+                Assert.That(motion.IsClosing, Is.False);
+                motion.Advance(1f);
+                Assert.That(card.activeSelf, Is.True);
+                Assert.That(card.transform.localScale.y, Is.EqualTo(1f).Within(1e-4f));
+
+                // `>>`로 펼치면 카드는 연출 없이 바로 접히고, `<<`로 접으면 다시 켜진다.
+                view.ToggleExpanded();
+                Assert.That(card.activeSelf, Is.False);
+                Assert.That(motion.IsPlaying, Is.False);
+                view.ToggleExpanded();
+                Assert.That(card.activeSelf, Is.True);
+                Assert.That(view.IsCardShown, Is.True);
             }
             finally
             {
@@ -484,7 +490,75 @@ namespace SubTerra.App.Tests.UI
         }
 
         [Test]
-        public void View_StatusChipClearsBackToDefaultHint()
+        public void View_RailSelectionScrollsCatalogRowToCenterOrBottom()
+        {
+            var menu = Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(MenuPath));
+            try
+            {
+                var view = menu.GetComponent<BuildingMenuView>();
+                var items = CatalogItems();
+                view.SetBuildingList(items);
+                view.ClearSelection();
+                view.ToggleExpanded();
+                var scroll = view.CatalogScroll;
+                Canvas.ForceUpdateCanvases();
+                Assert.That(scroll.verticalNormalizedPosition, Is.EqualTo(1f).Within(1e-3f), "처음엔 맨 위");
+
+                var viewport = scroll.viewport;
+                foreach (var item in items)
+                {
+                    view.SetSelection(item);
+                    Canvas.ForceUpdateCanvases();
+                    var row = (RectTransform)menu.GetComponentsInChildren<BuildingMenuCatalogRowView>(true)
+                        .Single(r => r.BuildingId == item.BuildingId).transform;
+                    var rowCorners = new Vector3[4];
+                    var viewCorners = new Vector3[4];
+                    row.GetWorldCorners(rowCorners);
+                    viewport.GetWorldCorners(viewCorners);
+                    Assert.That(rowCorners[0].y, Is.GreaterThanOrEqualTo(viewCorners[0].y - 0.5f), item.BuildingId + " 아래가 잘리지 않는다.");
+                    Assert.That(rowCorners[1].y, Is.LessThanOrEqualTo(viewCorners[1].y + 0.5f), item.BuildingId + " 위가 잘리지 않는다.");
+
+                    var rowMid = (rowCorners[0].y + rowCorners[1].y) * 0.5f;
+                    var viewMid = (viewCorners[0].y + viewCorners[1].y) * 0.5f;
+                    var normalized = scroll.verticalNormalizedPosition;
+                    var atEdge = normalized <= 1e-3f || normalized >= 1f - 1e-3f;
+                    Assert.That(atEdge || Mathf.Abs(rowMid - viewMid) < 0.5f, Is.True,
+                        item.BuildingId + " 가운데 또는 스크롤 끝 (normalized=" + normalized + ")");
+                }
+
+                // 맨 위 시설은 맨 위, 끝 쪽 시설(자원 정산기 이후)은 스크롤 맨 아래에 붙는다.
+                view.SetSelection(items.First(i => i.BuildingId == DataIds.Buildings.SupportBasic));
+                Assert.That(scroll.verticalNormalizedPosition, Is.EqualTo(1f).Within(1e-3f));
+                view.SetSelection(items.First(i => i.BuildingId == DataIds.Buildings.SettlementBasic));
+                Assert.That(scroll.verticalNormalizedPosition, Is.EqualTo(0f).Within(1e-3f));
+                view.SetSelection(items.First(i => i.BuildingId == DataIds.Buildings.StorageBasic));
+                var storageNormalized = scroll.verticalNormalizedPosition;
+                Assert.That(storageNormalized, Is.GreaterThan(1e-3f).And.LessThan(1f - 1e-3f), "보관함은 가운데에 둘 수 있다.");
+
+                // 같은 시설의 갱신(인벤토리 변화)은 사용자가 옮긴 스크롤을 되돌리지 않는다.
+                scroll.verticalNormalizedPosition = 0.5f;
+                view.SetSelection(items.First(i => i.BuildingId == DataIds.Buildings.StorageBasic));
+                Assert.That(scroll.verticalNormalizedPosition, Is.EqualTo(0.5f).Within(1e-3f));
+            }
+            finally
+            {
+                Object.DestroyImmediate(menu);
+            }
+        }
+
+        [Test]
+        public void ScrollFocus_CentersAndClampsToEnds()
+        {
+            // 목록 624 · 보이는 영역 420 → 움직일 수 있는 범위 204.
+            Assert.That(BuildingCatalogScrollFocus.CenteredNormalizedPosition(32f, 624f, 420f), Is.EqualTo(1f), "첫 행은 맨 위");
+            Assert.That(BuildingCatalogScrollFocus.CenteredNormalizedPosition(312f, 624f, 420f),
+                Is.EqualTo(1f - 102f / 204f).Within(1e-5f), "가운데");
+            Assert.That(BuildingCatalogScrollFocus.CenteredNormalizedPosition(452f, 624f, 420f), Is.EqualTo(0f), "자원 정산기부터는 맨 아래");
+            Assert.That(BuildingCatalogScrollFocus.CenteredNormalizedPosition(100f, 300f, 420f), Is.EqualTo(1f), "스크롤이 없으면 맨 위");
+        }
+
+        [Test]
+        public void View_StatusChipClearsBackToRailOnly()
         {
             var menu = Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(MenuPath));
             try
@@ -493,15 +567,13 @@ namespace SubTerra.App.Tests.UI
                 view.SetBuildingList(CatalogItems());
                 view.ClearSelection();
                 var chip = menu.GetComponentsInChildren<Transform>(true).First(t => t.name == "StatusChip").gameObject;
-                var hint = menu.GetComponentsInChildren<Transform>(true).First(t => t.name == "HintChip").gameObject;
 
-                // 취소·설치 완료 뒤 Presenter는 빈 문구를 보낸다 → 상태 칸이 사라지고 기본 안내만 남는다.
+                // 취소·설치 완료 뒤 Presenter는 빈 문구를 보낸다 → 상태 칸이 사라지고 레일만 남는다.
                 view.SetStatusMessage("자원이 부족합니다.");
                 Assert.That(chip.activeSelf, Is.True, "설치 불가 이유는 그대로 뜬다.");
                 view.ClearSelection();
                 view.SetStatusMessage(string.Empty);
                 Assert.That(chip.activeSelf, Is.False);
-                Assert.That(hint.activeSelf, Is.True);
             }
             finally
             {

@@ -86,6 +86,12 @@ namespace SubTerra.App.UI
                 completed?.Invoke();
                 return;
             }
+            // B-191-3: 소리 없이 짧게 켰던 창(OpenLight)도 닫을 때는 일반 창과 같은 길이·소리로 꺼진다.
+            if (!motion.IsPlaying)
+            {
+                motion.speed = 1f;
+                motion.silent = false;
+            }
             motion.PlayClose(completed);
         }
 

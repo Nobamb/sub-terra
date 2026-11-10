@@ -238,7 +238,6 @@ namespace SubTerra.App.Editor.DataValidation
             Set(viewSo, "rail", rail);
             Set(viewSo, "expandButton", expandButton);
             Set(viewSo, "expandLabel", expandLabel);
-            Set(viewSo, "hintChip", side.Hint);
             Set(viewSo, "card", side.Card);
             Set(viewSo, "statusChip", side.StatusChip);
             Set(viewSo, "catalogWindow", catalog.Window);
@@ -261,7 +260,6 @@ namespace SubTerra.App.Editor.DataValidation
             Set(viewSo, "catalogContent", catalog.Content);
             Set(viewSo, "catalogScroll", catalog.Scroll);
             Set(viewSo, "modeCanvas", modeCanvas);
-            viewSo.FindProperty("hintReshowDelay").floatValue = BuildingMenuView.HintReshowDelay;
             viewSo.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(view);
 
@@ -271,7 +269,7 @@ namespace SubTerra.App.Editor.DataValidation
         }
 
         /// <summary>
-        /// B-191: 건설 UI(레일·카드·큰 창·`시설을 고르세요` 안내) 전체를 드론 말풍선 위에 그리는 전용 Canvas.
+        /// B-191: 건설 UI(레일·카드·큰 창) 전체를 드론 말풍선 위에 그리는 전용 Canvas.
         /// HUDCanvas 순서는 그대로 두고 이 창만 올린다. 값은 View 상수(말풍선 + 100)를 그대로 쓴다.
         /// </summary>
         private static Canvas EnsureModeCanvas(GameObject root)
@@ -596,7 +594,6 @@ namespace SubTerra.App.Editor.DataValidation
         private sealed class SideRefs
         {
             public RectTransform Root;
-            public GameObject Hint;
             public GameObject Card;
             public GameObject StatusChip;
             public Image Icon;
@@ -624,18 +621,8 @@ namespace SubTerra.App.Editor.DataValidation
             sideFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
             refs.Root = side;
 
-            // 미선택: 큰 안내 패널 없이 짧은 힌트만.
-            var hint = EnsureImage(side, "HintChip", PanelColor);
-            hint.raycastTarget = true;
-            EnsureOutline(hint.gameObject, FrameOutline, 1f);
-            EnsureLayoutElement(hint.gameObject, 38f);
-            var hintText = EnsureText(hint.transform, "HintText", font);
-            Style(hintText, 15f, SubText, TextAlignmentOptions.MidlineLeft, FontStyles.Normal);
-            hintText.text = "시설을 고르세요";
-            Stretch(hintText.rectTransform, 0f);
-            hintText.rectTransform.offsetMin = new Vector2(14f, 0f);
-            hintText.rectTransform.offsetMax = new Vector2(-10f, 0f);
-            refs.Hint = hint.gameObject;
+            // B-191-3: 미선택일 때 띄우던 `시설을 고르세요` 안내는 없앤다(레일 아이콘만 보인다).
+            RemoveChild(side, "HintChip");
 
             // 선택 카드: 아이콘·시설명 → 용도 → 운영 조건 → 건설 비용 → 설치 상태.
             var card = EnsureImage(side, "Card", Clear);
@@ -752,9 +739,8 @@ namespace SubTerra.App.Editor.DataValidation
             statusChip.gameObject.SetActive(false);
             refs.StatusChip = statusChip.gameObject;
 
-            hint.transform.SetSiblingIndex(0);
-            card.transform.SetSiblingIndex(1);
-            statusChip.transform.SetSiblingIndex(2);
+            card.transform.SetSiblingIndex(0);
+            statusChip.transform.SetSiblingIndex(1);
             return refs;
         }
 
