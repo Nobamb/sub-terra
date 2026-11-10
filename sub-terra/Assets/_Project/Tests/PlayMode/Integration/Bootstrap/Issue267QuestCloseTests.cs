@@ -52,7 +52,6 @@ namespace SubTerra.App.Tests.PlayMode
                 "surface ready", 60f);
             GameBootstrapper.Instance.State.SetDemoProgress(DemoObjectiveIds.MineCopper, 1, false);
             GameBootstrapper.Instance.State.SetQuestRewardSettlement(string.Empty, 1);
-            bool aligned = true;
             for (int context = 0; context < 2; context++)
             {
                 if (context == 1)
@@ -76,19 +75,15 @@ namespace SubTerra.App.Tests.PlayMode
                     yield return new WaitForSecondsRealtime(1f);
                     Canvas.ForceUpdateCanvases();
                     var rect = (RectTransform)close.transform;
-                    var body = (RectTransform)panel.transform.Find("QuestDetailsBody");
-                    var label = (RectTransform)panel.transform.Find("QuestMissionLogLabel");
                     var title = (RectTransform)panel.transform.Find("QuestDetailsTitle");
                     var corners = new Vector3[4];
                     rect.GetWorldCorners(corners);
-                    float right = corners[2].x, top = corners[2].y, left = corners[0].x;
-                    body.GetWorldCorners(corners);
-                    aligned &= Mathf.Abs(right - corners[2].x) < 1f;
-                    label.GetWorldCorners(corners);
-                    aligned &= Mathf.Abs(top - corners[2].y) < 1f;
+                    float left = corners[0].x;
                     title.GetWorldCorners(corners);
                     Assert.That(left, Is.GreaterThan(corners[2].x), "X overlaps title");
-                    Assert.That(rect.sizeDelta, Is.EqualTo(new Vector2(68f, 68f)));
+                    Assert.That(rect.anchoredPosition, Is.EqualTo(new Vector2(-72f, -72f)));
+                    Assert.That(rect.sizeDelta, Is.EqualTo(new Vector2(61f, 61f)));
+                    Assert.That(close.GetComponent<UnityEngine.UI.Mask>().showMaskGraphic, Is.False);
                     UiTestWait.AssertClickTarget(close);
                     string stage = Array.IndexOf(args, "-subterra-ui-before") >= 0 ? "before" : "after";
                     Capture(panel, stage + "-" + context + "-" + size.x);
@@ -101,7 +96,6 @@ namespace SubTerra.App.Tests.PlayMode
                     Assert.That(panel.activeSelf, Is.False);
                 }
             }
-            Assert.That(aligned, Is.True, "X right/top edges must align to body/header content");
         }
 
         private static void Capture(GameObject panel, string name)
@@ -131,7 +125,7 @@ namespace SubTerra.App.Tests.PlayMode
                 RenderTexture.active = target;
                 image.ReadPixels(new Rect(0, 0, Screen.width, Screen.height), 0, 0);
                 image.Apply();
-                string directory = Path.GetFullPath("Builds/Issue267-20261103");
+                string directory = Path.GetFullPath("Builds/Issue267-CornerReview");
                 Directory.CreateDirectory(directory);
                 File.WriteAllBytes(Path.Combine(directory, name + ".png"), image.EncodeToPNG());
             }

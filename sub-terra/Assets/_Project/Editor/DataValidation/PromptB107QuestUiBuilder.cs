@@ -30,9 +30,53 @@ namespace SubTerra.App.Editor.DataValidation
         public const float SummaryHeaderInset = 36f;
         public const float SummaryHeaderY = -10f;
         public const float ThumbnailHeight = 236f;
+        private const string CloseCornerMaskPath = Art + "quest-close-corner-mask.png";
+
         public static void ApplyDetailsCloseLayout(RectTransform close)
         {
-            Place(close, -112f, -94f, 68f, 68f, Vector2.one, new Vector2(.5f, .5f));
+            Place(close, -72f, -72f, 61f, 61f, Vector2.one, new Vector2(.5f, .5f));
+            var image = close.GetComponent<UnityEngine.UI.Image>();
+            image.sprite = LoadCloseCornerMask();
+            image.color = Color.white;
+            var mask = close.GetComponent<UnityEngine.UI.Mask>();
+            if (mask == null) mask = close.gameObject.AddComponent<UnityEngine.UI.Mask>();
+            mask.showMaskGraphic = false;
+        }
+
+        private static Sprite LoadCloseCornerMask()
+        {
+            var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(CloseCornerMaskPath);
+            if (sprite != null) return sprite;
+
+            const int size = 64;
+            const int cut = 15;
+            var texture = new Texture2D(size, size, TextureFormat.RGBA32, false);
+            try
+            {
+                var pixels = new Color32[size * size];
+                for (int y = 0; y < size; y++)
+                for (int x = 0; x < size; x++)
+                    pixels[y * size + x] = new Color32(255, 255, 255,
+                        (byte)(x + y <= 2 * (size - 1) - cut ? 255 : 0));
+                texture.SetPixels32(pixels);
+                texture.Apply();
+                File.WriteAllBytes(CloseCornerMaskPath, texture.EncodeToPNG());
+            }
+            finally { UnityEngine.Object.DestroyImmediate(texture); }
+
+            AssetDatabase.ImportAsset(CloseCornerMaskPath, ImportAssetOptions.ForceSynchronousImport);
+            var importer = (TextureImporter)AssetImporter.GetAtPath(CloseCornerMaskPath);
+            importer.textureType = TextureImporterType.Sprite;
+            importer.spriteImportMode = SpriteImportMode.Single;
+            importer.alphaIsTransparency = true;
+            importer.mipmapEnabled = false;
+            importer.textureCompression = TextureImporterCompression.Uncompressed;
+            var settings = new TextureImporterSettings();
+            importer.ReadTextureSettings(settings);
+            settings.spriteMeshType = SpriteMeshType.FullRect;
+            importer.SetTextureSettings(settings);
+            importer.SaveAndReimport();
+            return AssetDatabase.LoadAssetAtPath<Sprite>(CloseCornerMaskPath);
         }
 
         [MenuItem("SubTerra/UI/Align Quest Details Close Button Only")]
@@ -341,8 +385,8 @@ namespace SubTerra.App.Editor.DataValidation
             Place(brand.rectTransform, 550f, -654f, 252f, 20f, new Vector2(0f, 1f), new Vector2(0f, 1f));
 
             var close = EnsureButton(panel, "QuestDetailsCloseButton");
-            ApplyDetailsCloseLayout(close.GetComponent<RectTransform>());
             ClearHit(close);
+            ApplyDetailsCloseLayout(close.GetComponent<RectTransform>());
             HideLabel(close.transform);
             EnsureFade(close, "quest-close-button-active-off", "quest-close-button-active-on");
             Wire(close, view.OnDetailsDismissClicked);
