@@ -354,6 +354,44 @@ namespace SubTerra.Gameplay.Structural.Tests
             Assert.That(fixture.Foreground.HasTile(attachedCell), Is.True);
         }
 
+        [TestCase(-1, 0, false)]
+        [TestCase(1, 0, false)]
+        [TestCase(0, 1, false)]
+        [TestCase(1, 0, true)]
+        public void Issue281_FirstCollapse_TelegraphsNewlyIsolatedBlock(
+            int offsetX, int offsetY, bool isProtected)
+        {
+            using var fixture = new StructuralFixture(1, true);
+            var firstCell = new Vector3Int(0, 2, 0);
+            var nextCell = firstCell + new Vector3Int(offsetX, offsetY, 0);
+            fixture.PlaceTile(nextCell);
+            SetField(fixture.System, "localRiskRadius", 0);
+            if (isProtected) fixture.System.RegisterProtectedCell(nextCell);
+            var collapses = new List<StructuralCollapseEventDto>();
+            fixture.System.CollapseTriggered += collapses.Add;
+
+            fixture.Mine(1f);
+            fixture.System.AdvanceSimulation(2f);
+
+            Assert.That(fixture.Foreground.HasTile(firstCell), Is.False);
+            Assert.That(fixture.Foreground.HasTile(nextCell), Is.True, "Keep the next tile during its warning.");
+            Assert.That(collapses, Has.Count.EqualTo(1));
+            Assert.That(collapses[0].cells, Has.Count.EqualTo(1));
+            if (!isProtected)
+                Assert.That(fixture.System.CurrentRisk, Is.EqualTo(StructuralRiskLevel.CollapseImminent));
+
+            fixture.System.AdvanceSimulation(2f);
+
+            Assert.That(fixture.Foreground.HasTile(nextCell), Is.EqualTo(isProtected));
+            Assert.That(collapses, Has.Count.EqualTo(isProtected ? 1 : 2));
+            if (!isProtected)
+            {
+                Assert.That(collapses[1].cells, Has.Count.EqualTo(1));
+                Assert.That(collapses[1].cells[0].x, Is.EqualTo(nextCell.x));
+                Assert.That(collapses[1].cells[0].y, Is.EqualTo(nextCell.y));
+            }
+        }
+
         private static List<CollapseCellDto> RunCollapse(long seed)
         {
             using var fixture = new StructuralFixture(7);

@@ -156,7 +156,8 @@ namespace SubTerra.Gameplay.Structural
             accumulatedImpact.TryGetValue(cell, out float currentImpact);
             accumulatedImpact[cell] = currentImpact + impact;
 
-            List<Vector3Int> isolated = CollectIsolatedNeighbors(cell);
+            var isolated = new List<Vector3Int>(4);
+            CollectIsolatedNeighbors(cell, isolated);
             var affected = CollectAffectedCeilingTiles(cell);
             ReevaluateTiles(
                 affected,
@@ -472,21 +473,19 @@ namespace SubTerra.Gameplay.Structural
         }
 
         /// <summary>
-        /// 채굴로 상하좌우 연결이 끊긴 인접 블록을 찾는다.
+        /// 채굴이나 붕괴로 상하좌우 연결이 끊긴 인접 블록을 찾는다.
         /// </summary>
-        private List<Vector3Int> CollectIsolatedNeighbors(Vector3Int minedCell)
+        private void CollectIsolatedNeighbors(Vector3Int removedCell, List<Vector3Int> isolated)
         {
-            var isolated = new List<Vector3Int>(4);
-            AddIfIsolated(minedCell + Vector3Int.up, isolated);
-            AddIfIsolated(minedCell + Vector3Int.down, isolated);
-            AddIfIsolated(minedCell + Vector3Int.left, isolated);
-            AddIfIsolated(minedCell + Vector3Int.right, isolated);
-            return isolated;
+            AddIfIsolated(removedCell + Vector3Int.up, isolated);
+            AddIfIsolated(removedCell + Vector3Int.down, isolated);
+            AddIfIsolated(removedCell + Vector3Int.left, isolated);
+            AddIfIsolated(removedCell + Vector3Int.right, isolated);
         }
 
         private void AddIfIsolated(Vector3Int cell, List<Vector3Int> isolated)
         {
-            if (IsIsolatedBlock(cell)) isolated.Add(cell);
+            if (IsIsolatedBlock(cell) && !isolated.Contains(cell)) isolated.Add(cell);
         }
 
         private bool IsIsolatedBlock(Vector3Int cell)
@@ -701,12 +700,14 @@ namespace SubTerra.Gameplay.Structural
                 worldSeed = worldSeed,
                 severity = ResolveSeverity(selected.Count)
             };
+            var removedCells = new List<Vector3Int>(selected.Count);
             for (int i = 0; i < selected.Count; i++)
             {
                 Vector3Int cell = selected[i];
                 if (!IsUnsupportedCeiling(cell)) continue;
                 crackOverlay?.PlayCollapse(cell, foregroundTilemap, Settings.CollapseFallSeconds);
                 foregroundTilemap.SetTile(cell, null);
+                removedCells.Add(cell);
                 collapse.cells.Add(new CollapseCellDto { x = cell.x, y = cell.y });
                 ClearTileRisk(cell);
             }
@@ -731,12 +732,13 @@ namespace SubTerra.Gameplay.Structural
             });
 
             var affected = new HashSet<Vector3Int>();
-            for (int i = 0; i < collapse.cells.Count; i++)
+            var isolated = new List<Vector3Int>(4);
+            foreach (Vector3Int removed in removedCells)
             {
-                var removed = new Vector3Int(collapse.cells[i].x, collapse.cells[i].y, 0);
                 affected.Add(removed);
                 foreach (Vector3Int nearby in EnumerateUnsupportedCeilingsNearMine(removed))
                     affected.Add(nearby);
+                CollectIsolatedNeighbors(removed, isolated);
             }
             ReevaluateTiles(
                 affected,
@@ -744,6 +746,7 @@ namespace SubTerra.Gameplay.Structural
                 Vector3Int.zero,
                 StructuralRiskCause.None,
                 0f);
+            BeginIsolatedCollapses(isolated);
             return collapse;
         }
 
