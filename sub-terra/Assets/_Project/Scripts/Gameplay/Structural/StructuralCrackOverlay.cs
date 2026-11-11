@@ -67,6 +67,9 @@ namespace SubTerra.Gameplay.Structural
         {
             public GameObject Root;
             public SpriteRenderer Renderer;
+            public Tilemap Source;
+            public TileBase Tile;
+            public Vector3Int? GroundCell;
             public Vector3 Start;
             public Vector3 End;
             public float Elapsed;
@@ -86,6 +89,7 @@ namespace SubTerra.Gameplay.Structural
         public Tilemap OverlayTilemap => overlayTilemap;
         public int ShakingCellCount => shakeVisuals.Count;
         public event System.Action Cleared;
+        public event System.Action<Vector3, TileBase> RockLanded;
 
         public bool TryGetNearestShakingCell(Vector3 world, out Vector3 cellCenter)
         {
@@ -190,6 +194,7 @@ namespace SubTerra.Gameplay.Structural
             if (sprite == null) sprite = ResolveCrackTile(StructuralRiskLevel.CollapseImminent) is Tile tile ? tile.sprite : null;
             if (sprite == null) return;
 
+            TileBase sourceTile = source.GetTile(cell);
             var root = new GameObject("StructuralFallingRock") { hideFlags = HideFlags.DontSave };
             root.transform.SetParent(transform, true);
             Vector3 start = source.GetCellCenterWorld(cell);
@@ -198,28 +203,37 @@ namespace SubTerra.Gameplay.Structural
             renderer.sprite = sprite;
             renderer.color = new Color(0.72f, 0.64f, 0.54f, 1f);
             renderer.sortingOrder = 90;
+            Vector3 end = ResolveFallEnd(cell, source, start, out Vector3Int? groundCell);
             fallingVisuals.Add(new FallingVisual
             {
                 Root = root,
                 Renderer = renderer,
+                Source = source,
+                Tile = sourceTile,
+                GroundCell = groundCell,
                 Start = start,
-                End = ResolveFallEnd(cell, source, start),
+                End = end,
                 Duration = Mathf.Max(0.05f, duration),
-                DamageMultiplier = resolveCollapseDamageMultiplier?.Invoke(source.GetTile(cell)) ?? 1f
+                DamageMultiplier = resolveCollapseDamageMultiplier?.Invoke(sourceTile) ?? 1f
             });
         }
 
-        private static Vector3 ResolveFallEnd(Vector3Int sourceCell, Tilemap source, Vector3 fallback)
+        private static Vector3 ResolveFallEnd(
+            Vector3Int sourceCell, Tilemap source, Vector3 fallback, out Vector3Int? groundCell)
         {
             int minimumY = source.cellBounds.yMin;
             var probe = sourceCell + Vector3Int.down;
             while (probe.y >= minimumY)
             {
                 if (source.HasTile(probe))
+                {
+                    groundCell = probe;
                     return source.GetCellCenterWorld(probe + Vector3Int.up);
+                }
                 probe += Vector3Int.down;
             }
 
+            groundCell = null;
             return fallback + Vector3.down * 3f;
         }
 
@@ -247,6 +261,13 @@ namespace SubTerra.Gameplay.Structural
             Cleared?.Invoke();
             RemoveUntrackedRuntimeVisuals();
             ClearShakeVisuals();
+            foreach (FallingVisual visual in fallingVisuals)
+            {
+                if (visual.Root == null) continue;
+                visual.Root.SetActive(false);
+                DestroyRuntimeObject(visual.Root);
+            }
+            fallingVisuals.Clear();
             if (overlayTilemap != null) overlayTilemap.ClearAllTiles();
             visibleCells.Clear();
             cellRisks.Clear();
@@ -680,6 +701,11 @@ namespace SubTerra.Gameplay.Structural
                     CreateImpactDust(visual.End);
                 DestroyRuntimeObject(visual.Root);
                 fallingVisuals.RemoveAt(i);
+                if (visual.Tile != null && visual.Source != null && visual.GroundCell.HasValue
+                    && visual.Source.HasTile(visual.GroundCell.Value))
+                {
+                    RockLanded?.Invoke(visual.End, visual.Tile);
+                }
             }
         }
 

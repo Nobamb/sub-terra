@@ -40,8 +40,14 @@ namespace SubTerra.Gameplay.Hazards
 
         public GasZone ActivateAt(Vector3Int cell, MiningTileDto tile)
         {
-            if (foregroundTilemap == null || !tile.containsGas) return null;
-            Vector3 position = foregroundTilemap.GetCellCenterWorld(cell);
+            return foregroundTilemap != null
+                ? ActivateAtWorldPosition(foregroundTilemap.GetCellCenterWorld(cell), tile)
+                : null;
+        }
+
+        public GasZone ActivateAtWorldPosition(Vector3 position, MiningTileDto tile)
+        {
+            if (!tile.containsGas) return null;
             GasZone zone = CreateZone(position);
             string id = $"gas-{nextZoneSequence++:D4}";
             float intensity = Mathf.Max(defaultIntensity, tile.structuralImpact);

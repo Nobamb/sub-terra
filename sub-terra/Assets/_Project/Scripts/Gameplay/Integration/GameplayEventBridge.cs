@@ -45,6 +45,7 @@ namespace SubTerra.Gameplay.Integration
                 structuralSystem.BindCollapseDamageReceiver(collapseDamageReceiver, collapseDamageMultiplier);
                 structuralSystem.RiskChanged += OnStructuralRiskChanged;
                 structuralSystem.CollapseTriggered += OnStructuralCollapse;
+                structuralSystem.RockLanded += OnRockLanded;
             }
             if (gasHazardSystem != null) gasHazardSystem.GasZoneActivated += OnGasZoneActivated;
             if (buildingPlacementSystem != null)
@@ -64,6 +65,7 @@ namespace SubTerra.Gameplay.Integration
             {
                 structuralSystem.RiskChanged -= OnStructuralRiskChanged;
                 structuralSystem.CollapseTriggered -= OnStructuralCollapse;
+                structuralSystem.RockLanded -= OnRockLanded;
             }
             if (gasHazardSystem != null) gasHazardSystem.GasZoneActivated -= OnGasZoneActivated;
             if (buildingPlacementSystem != null)
@@ -136,6 +138,15 @@ namespace SubTerra.Gameplay.Integration
         private void OnTileMined(Vector3Int cell, MiningTileDto tile)
         {
             Publish(new GameplayEventDto { type = GameplayEventType.TileMined, entityId = tile.tileId, reasonId = tile.mineralId, x = cell.x, y = cell.y, quantity = tile.quantity });
+        }
+
+        private void OnRockLanded(Vector3 position, TileBase tile)
+        {
+            if (gasHazardSystem != null && miningSystem != null
+                && miningSystem.TryResolveTile(tile, out var definition))
+            {
+                gasHazardSystem.ActivateAtWorldPosition(position, definition);
+            }
         }
 
         private void OnStructuralRiskChanged(StructuralRiskLevel risk)

@@ -55,6 +55,11 @@ namespace SubTerra.Gameplay.Structural
         public event Action<StructuralRiskLevel> RiskChanged;
         public event Action StructuralStatusChanged;
         public event Action<StructuralCollapseEventDto> CollapseTriggered;
+        public event Action<Vector3, TileBase> RockLanded
+        {
+            add { if (crackOverlay != null) crackOverlay.RockLanded += value; }
+            remove { if (crackOverlay != null) crackOverlay.RockLanded -= value; }
+        }
 
         public void ConfigureWorldSeed(long seed) => worldSeed = seed;
 
