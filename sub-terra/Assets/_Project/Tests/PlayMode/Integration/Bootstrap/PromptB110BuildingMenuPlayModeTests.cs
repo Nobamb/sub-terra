@@ -297,25 +297,54 @@ namespace SubTerra.App.Tests.PlayMode
             var inventory = environment.Save.InventoryService;
             Assert.That(inventory.TryAddMineralExact(DataIds.Minerals.Copper, 10).DidChange, Is.True);
             Assert.That(inventory.TryAddMineralExact(DataIds.Minerals.Iron, 10).DidChange, Is.True);
-            var chrome = Object.FindAnyObjectByType<HudPanelChromeController>();
-            chrome.OpenBuildingMenu();
+            yield return UiTestWait.Press(environment.Keyboard, Key.B);
+            yield return new WaitForSecondsRealtime(BuildingModeSlideMotion.OpenDuration + 0.05f);
             yield return null;
             var view = Object.FindAnyObjectByType<BuildingMenuView>();
-            var binder = view.GetComponent<BuildingMenuBinder>();
             var bridge = Object.FindAnyObjectByType<GameplayBuildingPlacementBridge>();
             var placement = Object.FindAnyObjectByType<BuildingPlacementSystem>();
             var mining = Object.FindAnyObjectByType<MiningSystem>();
             var player = Object.FindAnyObjectByType<PlayerMovement>();
             Assert.That(bridge != null && placement != null && mining != null && player != null, Is.True);
-            Assert.That(binder.SelectBuilding(DataIds.Buildings.SupportBasic), Is.True);
+            var railButton = Entry(view.transform, DataIds.Buildings.SupportBasic).GetComponent<Button>();
+            yield return ClickCenter(environment.Mouse, railButton);
+            Assert.That(placement.Selection, Is.Not.Null);
+            yield return new WaitForSecondsRealtime(0.4f);
+            var card = (RectTransform)Find(view.transform, "Card");
+            var status = (RectTransform)Find(view.transform, "StatusChip");
+            view.SetStatusMessage("검증용 설치 상태");
+            Canvas.ForceUpdateCanvases();
+            Assert.That(card.gameObject.activeInHierarchy && status.gameObject.activeInHierarchy, Is.True);
+            Assert.That(card.GetComponent<Image>().raycastTarget, Is.False);
+            Assert.That(status.GetComponent<Image>().raycastTarget, Is.False);
+            var camera = Camera.main;
+            var cameraPosition = camera.transform.position;
+            var cameraFollow = camera.GetComponent<PlayerCameraFollow>();
+            bool wasFollowing = cameraFollow != null && cameraFollow.enabled;
 
-            // 플레이어 옆·아래에서 UI에 가리지 않은 지형 블록을 찾는다.
+            // 플레이어 옆·아래의 지형을 정보 카드 아래에 오도록 카메라를 맞춘다.
             var terrain = mining.ForegroundTilemap;
             var playerCell = terrain.WorldToCell(player.Position);
-            var blockCell = new[] { Vector3Int.right, Vector3Int.left, Vector3Int.down }
-                .Select(o => playerCell + o)
-                .FirstOrDefault(c => terrain.HasTile(c) && !IsOverUi(ScreenOf(terrain.GetCellCenterWorld(c))));
-            Assert.That(terrain.HasTile(blockCell), Is.True, "플레이어 옆에 지형 블록이 없습니다.");
+            var playerMining = player.GetComponent<PlayerMiningController>();
+            var resolver = Object.FindAnyObjectByType<MiningTileResolver>();
+            Assert.That(resolver.TryFindTileById("tile.rock.normal", out var rock), Is.True);
+            var candidates = new[] { Vector3Int.right, Vector3Int.left, Vector3Int.up }
+                .Select(offset => playerCell + offset);
+            Vector3Int? blockCell = null;
+            foreach (var candidate in candidates)
+            {
+                // 입구 바닥은 보호되어 있으므로, 빈 인접 칸에 테스트용 일반 암석을 둔다.
+                bool wasEmpty = !terrain.HasTile(candidate);
+                if (wasEmpty) terrain.SetTile(candidate, rock);
+                if (playerMining.CanPrioritizePointerMining(terrain.GetCellCenterWorld(candidate)))
+                {
+                    blockCell = candidate;
+                    break;
+                }
+
+                if (wasEmpty) terrain.SetTile(candidate, null);
+            }
+            Assert.That(blockCell.HasValue, Is.True, "플레이어 옆에 실제로 캘 수 있는 블록이 없습니다.");
             var rejected = 0;
             var placed = 0;
             void OnRejected(BuildingPlacementResult _) => rejected++;
@@ -323,7 +352,27 @@ namespace SubTerra.App.Tests.PlayMode
             var miningAttempts = 0;
             void OnMining(MiningProgressState progress)
             {
-                if (progress.Phase == MiningPhase.Mining || progress.Phase == MiningPhase.Failed) miningAttempts++;
+                if (progress.Phase == MiningPhase.Mining) miningAttempts++;
+            }
+
+            IEnumerator ClickControlWithoutWorldInput(RectTransform control, Mouse mouse)
+            {
+                var screen = AlignWorldToPanel(terrain.GetCellCenterWorld(blockCell.Value), control);
+                Assert.That(IsOverUi(screen), Is.True, control.name + " has no UI raycast");
+                int oldMining = miningAttempts;
+                int oldPlaced = placed;
+                int oldRejected = rejected;
+                InputSystem.QueueStateEvent(mouse, new MouseState { position = screen });
+                yield return null;
+                InputSystem.QueueStateEvent(mouse, new MouseState { position = screen, buttons = 1 });
+                yield return UiTestWait.Until(() => mouse.leftButton.isPressed, "mouse down " + control.name, 2f, "input");
+                yield return null;
+                InputSystem.QueueStateEvent(mouse, new MouseState { position = screen });
+                yield return UiTestWait.Until(() => !mouse.leftButton.isPressed, "mouse up " + control.name, 2f, "input");
+                yield return null;
+                Assert.That(miningAttempts, Is.EqualTo(oldMining), control.name + " started mining");
+                Assert.That(placed, Is.EqualTo(oldPlaced), control.name + " placed a facility");
+                Assert.That(rejected, Is.EqualTo(oldRejected), control.name + " started a placement attempt");
             }
 
             placement.PlacementRejected += OnRejected;
@@ -335,13 +384,15 @@ namespace SubTerra.App.Tests.PlayMode
                 yield return UiTestWait.FocusGameView();
                 if (!mouse.enabled) InputSystem.EnableDevice(mouse);
                 mouse.MakeCurrent();
-                var blockScreen = ScreenOf(terrain.GetCellCenterWorld(blockCell));
+                if (cameraFollow != null) cameraFollow.enabled = false;
+                var blockScreen = AlignWorldToPanel(terrain.GetCellCenterWorld(blockCell.Value), card);
+                Assert.That(IsOverUi(blockScreen), Is.False, "시설 카드가 채굴 클릭을 받았습니다.");
                 InputSystem.QueueStateEvent(mouse, new MouseState { position = blockScreen });
                 yield return null;
                 InputSystem.QueueStateEvent(mouse, new MouseState { position = blockScreen, buttons = 1 });
                 yield return UiTestWait.Until(() => mouse.leftButton.isPressed, "mouse down terrain", 2f, "input");
                 Assert.That(bridge.OwnsPointerInput, Is.False, "지형 블록 위 누르기는 설치가 아니라 채굴이 가져간다.");
-                // 채굴 시도(진행 또는 보호 칸 실패 알림)가 일어나면 클릭이 채굴로 간 것이다. 스폰 바닥은 보호 칸일 수 있다.
+                // 보호 칸의 실패 알림과 구분해 누르고 있는 동안 실제 채굴이 진행되는지 확인한다.
                 yield return UiTestWait.Until(() => miningAttempts > 0, "mining attempt on terrain", 3f);
                 Assert.That(miningAttempts, Is.GreaterThan(0), "terrain click did not reach mining: cell=" + blockCell
                     + " failure=" + mining.LastFailure + " owns=" + bridge.OwnsPointerInput);
@@ -353,7 +404,9 @@ namespace SubTerra.App.Tests.PlayMode
 
                 // 설치 가능한 빈 땅: 같은 좌클릭이 설치로 간다.
                 Assert.That(placement.TryFindBestPlacementCell(1f, out var cell, out var failure), Is.True, failure.ToString());
-                var groundScreen = ScreenOf(terrain.GetCellCenterWorld(cell));
+                view.SetStatusMessage("검증용 설치 상태");
+                Canvas.ForceUpdateCanvases();
+                var groundScreen = AlignWorldToPanel(terrain.GetCellCenterWorld(cell), status);
                 Assert.That(IsOverUi(groundScreen), Is.False, "설치 칸이 UI에 가려졌습니다.");
                 InputSystem.QueueStateEvent(mouse, new MouseState { position = groundScreen });
                 yield return null;
@@ -363,13 +416,33 @@ namespace SubTerra.App.Tests.PlayMode
                 Assert.That(placed, Is.EqualTo(1), "빈 땅 클릭은 기존 설치 판정으로 설치한다.");
                 InputSystem.QueueStateEvent(mouse, new MouseState { position = groundScreen });
                 yield return null;
+                if (!terrain.HasTile(blockCell.Value)) terrain.SetTile(blockCell.Value, rock);
+                yield return ClickControlWithoutWorldInput((RectTransform)railButton.transform, mouse);
+                yield return ClickControlWithoutWorldInput((RectTransform)view.ExpandButton.transform, mouse);
+                yield return new WaitForSecondsRealtime(TerminalWindowOpenMotion.Duration + 0.05f);
+                yield return ClickControlWithoutWorldInput((RectTransform)view.SearchField.transform, mouse);
+                Assert.That(view.SearchField.isFocused, Is.True);
+                var row = view.GetComponentsInChildren<BuildingMenuCatalogRowView>(false).First();
+                yield return ClickControlWithoutWorldInput((RectTransform)row.transform, mouse);
             }
             finally
             {
+                camera.transform.position = cameraPosition;
+                if (cameraFollow != null) cameraFollow.enabled = wasFollowing;
                 placement.PlacementRejected -= OnRejected;
                 placement.BuildingPlaced -= OnPlaced;
                 mining.ProgressChanged -= OnMining;
             }
+        }
+
+        private static Vector2 AlignWorldToPanel(Vector3 world, RectTransform panel)
+        {
+            var camera = Camera.main;
+            var target = RectTransformUtility.WorldToScreenPoint(null, panel.TransformPoint(panel.rect.center));
+            var projected = camera.WorldToScreenPoint(world);
+            var targetWorld = camera.ScreenToWorldPoint(new Vector3(target.x, target.y, projected.z));
+            camera.transform.position += world - targetWorld;
+            return target;
         }
 
         private IEnumerator VerifyStatesAndInput(bool visual)
@@ -705,11 +778,6 @@ namespace SubTerra.App.Tests.PlayMode
             InputSystem.QueueStateEvent(mouse, new MouseState { position = (Vector2)rect.TransformPoint(rect.rect.center) });
             yield return null;
             yield return null;
-        }
-
-        private static Vector2 ScreenOf(Vector3 world)
-        {
-            return Camera.main.WorldToScreenPoint(world);
         }
 
         private static bool IsOverUi(Vector2 screen)
