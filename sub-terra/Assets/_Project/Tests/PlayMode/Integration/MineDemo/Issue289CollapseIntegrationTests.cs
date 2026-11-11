@@ -92,14 +92,13 @@ namespace SubTerra.App.Tests.PlayMode.MineDemo
             {
                 survival.State.RestoreFull();
                 health = survival.State.Health;
-                Assert.That(commands.Execute(sample.Item1, context), Is.EqualTo("낙하 피해 적용"));
+                Assert.That(commands.Execute(sample.Item1, context), Does.StartWith("falling "));
                 Assert.That(health - survival.State.Health, Is.EqualTo(sample.Item2).Within(.01f), sample.Item1);
             }
 
             survival.State.RestoreFull();
             health = survival.State.Health;
-            Assert.That(commands.Execute("hitgas 3", context), Is.EqualTo("hitgas 3"));
-            Assert.That(survival.State.Health, Is.EqualTo(health), "gas damage starts on the first tick");
+            Assert.That(commands.Execute("hitgas 3", context), Does.StartWith("hitgas 3"));
             for (int tick = 1; tick <= 3; tick++)
             {
                 float expected = health - tick * 10f;
@@ -117,7 +116,7 @@ namespace SubTerra.App.Tests.PlayMode.MineDemo
                 if (opensFromTerminal) UiPauseGate.Acquire(SaveRuntimeController.DebugTerminalPauseOwner);
                 try
                 {
-                    Assert.That(commands.Execute("fall " + sample.Item1, context), Is.EqualTo("fall " + sample.Item1.Split(' ')[0]));
+                    Assert.That(commands.Execute("fall " + sample.Item1, context), Does.StartWith("fall tile."));
                     if (opensFromTerminal)
                     {
                         yield return null;

@@ -1025,9 +1025,13 @@ namespace SubTerra.App.Integration
 
         private float ResolveCollapseDamageMultiplier(TileBase tile)
         {
-            return miningSystem != null && miningSystem.TryResolveTile(tile, out var definition)
-                ? GetCollapseDamageMultiplier(definition, bootstrap.AssignedCatalog as GameDataCatalog)
-                : 1f;
+            if (miningSystem == null || !miningSystem.TryResolveTile(tile, out var definition))
+            {
+                return 1f;
+            }
+
+            var catalog = bootstrap != null ? bootstrap.AssignedCatalog as GameDataCatalog : null;
+            return GetCollapseDamageMultiplier(definition, catalog);
         }
 
         public static float GetCollapseDamageMultiplier(MiningTileDto tile, GameDataCatalog catalog)

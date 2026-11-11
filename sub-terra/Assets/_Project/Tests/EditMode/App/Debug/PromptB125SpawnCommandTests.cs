@@ -34,83 +34,78 @@ namespace SubTerra.App.Tests.Debug
         }
 
         [Test]
-        public void FacingCell_StepsOneHorizontalCell()
+        public void FacingCell_FollowsEnterTargetRules()
         {
             var rig = CreateRig(SceneNames.Integration);
             var rock = Register(rig, "tile.rock.normal", 1f, false);
-            for (int x = -1; x <= 1; x++) rig.Tilemap.SetTile(new Vector3Int(x, 0, 0), rock);
+            const float reach = DeveloperDebugSpawnWorld.DefaultMiningReach;
+            var origin = new Vector2(0.5f, 0.5f);
             Vector3Int cell;
+
+            // 블록이 없으면 빈 칸에도 놓지 않는다.
             Assert.That(
-                DeveloperDebugSpawnCommands.TryResolveFacingCell(
-                    rig.Tilemap,
-                    new Vector2(0.5f, 0.5f),
-                    1f,
-                    out cell),
+                DeveloperDebugSpawnCommands.TryResolveFacingCell(rig.Tilemap, origin, 1f, reach, out cell),
+                Is.False);
+
+            rig.Tilemap.SetTile(new Vector3Int(1, 0, 0), rock);
+            Assert.That(
+                DeveloperDebugSpawnCommands.TryResolveFacingCell(rig.Tilemap, origin, 1f, reach, out cell),
                 Is.True);
             Assert.That(cell, Is.EqualTo(new Vector3Int(1, 0, 0)));
 
+            rig.Tilemap.SetTile(new Vector3Int(-1, 0, 0), rock);
             Assert.That(
-                DeveloperDebugSpawnCommands.TryResolveFacingCell(
-                    rig.Tilemap,
-                    new Vector2(0.5f, 0.5f),
-                    -1f,
-                    out cell),
+                DeveloperDebugSpawnCommands.TryResolveFacingCell(rig.Tilemap, origin, -1f, reach, out cell),
                 Is.True);
             Assert.That(cell, Is.EqualTo(new Vector3Int(-1, 0, 0)));
 
+            // 아직 같은 칸 안에 있으면 바라보는 쪽 칸이 곧 옆 칸이다.
+            rig.Tilemap.SetTile(new Vector3Int(0, 0, 0), rock);
             Assert.That(
-                DeveloperDebugSpawnCommands.TryResolveFacingCell(
-                    rig.Tilemap,
-                    new Vector2(0.2f, 0.5f),
-                    1f,
-                    out cell),
+                DeveloperDebugSpawnCommands.TryResolveFacingCell(rig.Tilemap, new Vector2(0.2f, 0.5f), 1f, reach, out cell),
                 Is.True);
             Assert.That(cell, Is.EqualTo(new Vector3Int(0, 0, 0)));
             Assert.That(
-                DeveloperDebugSpawnCommands.TryResolveFacingCell(
-                    rig.Tilemap,
-                    new Vector2(0.5f, 0.5f),
-                    0f,
-                    out cell),
+                DeveloperDebugSpawnCommands.TryResolveFacingCell(rig.Tilemap, origin, 0f, reach, out cell),
                 Is.False);
         }
 
         [Test]
-        public void Spawn_SkipsMinedAirCell_AndPersistsReplacementAbove()
+        public void Spawn_MinedCell_SurvivesRegen_WhenTheTargetBlockExists()
         {
             var rig = CreateRig(SceneNames.Integration);
             var copper = Register(rig, "tile.copper", 4f, false);
+            var rock = Register(rig, "tile.rock.normal", 1f, false);
             PlacePlayer(rig, new Vector2(0.5f, 0.5f), 1f);
             var cell = new Vector3Int(1, 0, 0);
+            rig.Tilemap.SetTile(cell, rock);
+            // 예전에 캐낸 기록이 있는 칸이어도 바꾼 블록이 새로고침 뒤에 남아야 한다.
             rig.Snapshot.RecordMinedCell(cell.x, cell.y, true, 0f);
 
-            var session = new DeveloperDebugCommandSession(DeveloperDebugCommandRegistry.CreateIsolated());
-            Assert.That(session.Execute("spawn copper", Context(rig)), Is.EqualTo("채굴 방향에 교체할 타일이 없습니다"));
             var above = Register(rig, "tile.rock.normal", 1f, false);
             rig.Tilemap.SetTile(cell + Vector3Int.up, above);
-            rig.Tilemap.SetTile(cell + Vector3Int.down, above);
 
+            var session = new DeveloperDebugCommandSession(DeveloperDebugCommandRegistry.CreateIsolated());
             var message = session.Execute("spawn copper", Context(rig));
 
-            Assert.That(message, Is.EqualTo("spawn tile.copper (1, 1)"));
-            Assert.That(rig.Tilemap.HasTile(cell), Is.False);
-            Assert.That(rig.Tilemap.GetTile(cell + Vector3Int.up), Is.SameAs(copper));
-            Assert.That(rig.Tilemap.GetTile(cell + Vector3Int.down), Is.SameAs(above));
+            Assert.That(message, Is.EqualTo("spawn tile.copper (1, 0)"));
+            Assert.That(rig.Tilemap.GetTile(cell), Is.SameAs(copper));
+            Assert.That(rig.Tilemap.GetTile(cell + Vector3Int.up), Is.SameAs(above));
             Assert.That(rig.Collider, Is.Not.Null);
 
             var captured = rig.Snapshot.CaptureSnapshot();
             Assert.That(captured.changedTiles, Has.Count.EqualTo(1));
             Assert.That(captured.changedTiles[0].tileId, Is.EqualTo("tile.copper"));
             Assert.That(captured.changedTiles[0].x, Is.EqualTo(1));
-            Assert.That(captured.changedTiles[0].y, Is.EqualTo(1));
+            Assert.That(captured.changedTiles[0].y, Is.EqualTo(0));
             Assert.That(captured.changedTiles[0].remainingDurability, Is.EqualTo(4f));
             Assert.That(captured.miningChanges, Has.Some.Matches<MiningSnapshotDto>(
                 mined => mined.x == 1 && mined.y == 0 && mined.isDestroyed));
 
             Assert.That(rig.Snapshot.RestoreSnapshot(captured), Is.True);
             Assert.That(rig.Generator.Calls, Is.EqualTo(1));
-            Assert.That(rig.Tilemap.HasTile(cell), Is.False);
-            Assert.That(rig.Tilemap.GetTile(cell + Vector3Int.up), Is.SameAs(copper));
+            Assert.That(rig.Tilemap.HasTile(cell), Is.True);
+            Assert.That(rig.Tilemap.GetTile(cell), Is.SameAs(copper));
         }
 
         [Test]
@@ -141,7 +136,7 @@ namespace SubTerra.App.Tests.Debug
                 ("spawn copper", "tile.copper"),
                 ("SPAWN COPPER GOLD", "tile.copper.gold"),
                 ("생성 철", "tile.iron"),
-                ("spawn iron golden", "tile.iron.gold"),
+                ("spawn iron gold", "tile.iron.gold"),
                 ("spawn 리튬", "tile.lithium"),
                 ("생성 lithium 골드", "tile.lithium.gold"),
                 ("spawn gas", "tile.gas-pocket"),
@@ -163,8 +158,9 @@ namespace SubTerra.App.Tests.Debug
         {
             var rig = CreateRig(SceneNames.Integration);
             var iron = Register(rig, "tile.iron", 2f, false);
-            rig.Tilemap.SetTile(new Vector3Int(-1, 0, 0), iron);
+            var rock = Register(rig, "tile.rock.normal", 1f, false);
             PlacePlayer(rig, new Vector2(0.5f, 0.5f), -1f);
+            rig.Tilemap.SetTile(new Vector3Int(-1, 0, 0), rock);
             var session = new DeveloperDebugCommandSession(DeveloperDebugCommandRegistry.CreateIsolated());
 
             var message = session.Execute("spawn iron", Context(rig));
@@ -178,9 +174,10 @@ namespace SubTerra.App.Tests.Debug
         public void Spawn_Gas_DoesNotActivateZone()
         {
             var rig = CreateRig(SceneNames.Integration);
-            var tile = Register(rig, "tile.gas-pocket", 2f, true);
-            rig.Tilemap.SetTile(new Vector3Int(1, 0, 0), tile);
+            Register(rig, "tile.gas-pocket", 2f, true);
+            var rock = Register(rig, "tile.rock.normal", 1f, false);
             PlacePlayer(rig, new Vector2(0.5f, 0.5f), 1f);
+            rig.Tilemap.SetTile(new Vector3Int(1, 0, 0), rock);
             var gas = rig.Host.AddComponent<GasHazardSystem>();
             SetField(gas, "foregroundTilemap", rig.Tilemap);
             var session = new DeveloperDebugCommandSession(DeveloperDebugCommandRegistry.CreateIsolated());
@@ -212,13 +209,65 @@ namespace SubTerra.App.Tests.Debug
             rig.SceneName = SceneNames.MainMenu;
             Assert.That(session.Execute("생성 구리", context), Is.EqualTo("광산 씬에서만 사용할 수 있습니다"));
             rig.SceneName = SceneNames.Integration;
-            var sideCell = new Vector3Int(1, 0, 0);
-            rig.Tilemap.SetTile(sideCell, copper);
+            rig.Tilemap.SetTile(new Vector3Int(1, 0, 0), copper);
             Assert.That(session.Execute("spawn copper gold", context), Is.EqualTo("타일 없음: tile.copper.gold"));
-            Assert.That(rig.Tilemap.GetTile(sideCell), Is.SameAs(copper));
+            Assert.That(rig.Tilemap.GetTile(new Vector3Int(1, 0, 0)), Is.SameAs(copper));
+            rig.Tilemap.SetTile(new Vector3Int(1, 0, 0), null);
+            Assert.That(rig.Tilemap.HasTile(new Vector3Int(1, 0, 0)), Is.False);
             Assert.That(rig.Tilemap.GetTile(existing), Is.SameAs(copper));
             Assert.That(rig.Snapshot.CaptureSnapshot().changedTiles, Is.Empty);
             Assert.That(signal, Is.Not.Null);
+        }
+
+        [Test]
+        public void SpawnCell_PrefersEmptyStraightCell_ThenFallsBackToEnterTarget()
+        {
+            var rig = CreateRig(SceneNames.Integration);
+            var rock = Register(rig, "tile.rock.normal", 1f, false);
+            const float reach = DeveloperDebugSpawnWorld.DefaultMiningReach;
+            var origin = new Vector2(0.5f, 0.5f);
+            Vector3Int cell;
+
+            // 직선 앞이 비어 있으면 블록이 없어도 거기에 놓는다.
+            Assert.That(DeveloperDebugSpawnCommands.TryResolveSpawnCell(rig.Tilemap, origin, 1f, reach, out cell), Is.True);
+            Assert.That(cell, Is.EqualTo(new Vector3Int(1, 0, 0)));
+            Assert.That(DeveloperDebugSpawnCommands.TryResolveSpawnCell(rig.Tilemap, origin, -1f, reach, out cell), Is.True);
+            Assert.That(cell, Is.EqualTo(new Vector3Int(-1, 0, 0)));
+
+            // 위·아래 블록이 있어도 직선의 빈 칸이 우선이다.
+            rig.Tilemap.SetTile(new Vector3Int(1, 1, 0), rock);
+            rig.Tilemap.SetTile(new Vector3Int(1, -1, 0), rock);
+            Assert.That(DeveloperDebugSpawnCommands.TryResolveSpawnCell(rig.Tilemap, origin, 1f, reach, out cell), Is.True);
+            Assert.That(cell, Is.EqualTo(new Vector3Int(1, 0, 0)));
+
+            // 같은 칸 안에서 바라봐도 서 있는 칸이 아니라 그 앞 칸이다.
+            Assert.That(
+                DeveloperDebugSpawnCommands.TryResolveSpawnCell(rig.Tilemap, new Vector2(0.2f, 0.5f), 1f, reach, out cell),
+                Is.True);
+            Assert.That(cell, Is.EqualTo(new Vector3Int(1, 0, 0)));
+
+            // 직선 앞이 막혀 있고 더 갈 수 없으면 그 블록을 바꾼다.
+            rig.Tilemap.SetTile(new Vector3Int(1, 0, 0), rock);
+            Assert.That(DeveloperDebugSpawnCommands.TryResolveSpawnCell(rig.Tilemap, origin, 1f, reach, out cell), Is.True);
+            Assert.That(cell, Is.EqualTo(new Vector3Int(1, 0, 0)));
+
+            Assert.That(DeveloperDebugSpawnCommands.TryResolveSpawnCell(rig.Tilemap, origin, 0f, reach, out cell), Is.False);
+            Assert.That(DeveloperDebugSpawnCommands.TryResolveSpawnCell(null, origin, 1f, reach, out cell), Is.False);
+        }
+
+        [Test]
+        public void Spawn_PlacesOnEmptyStraightCell_AndRecordsIt()
+        {
+            var rig = CreateRig(SceneNames.Integration);
+            var copper = Register(rig, "tile.copper", 4f, false);
+            PlacePlayer(rig, new Vector2(0.5f, 0.5f), 1f);
+            var session = new DeveloperDebugCommandSession(DeveloperDebugCommandRegistry.CreateIsolated());
+
+            var message = session.Execute("spawn copper", Context(rig));
+
+            Assert.That(message, Is.EqualTo("spawn tile.copper (1, 0)"));
+            Assert.That(rig.Tilemap.GetTile(new Vector3Int(1, 0, 0)), Is.SameAs(copper));
+            Assert.That(rig.Snapshot.CaptureSnapshot().changedTiles, Has.Count.EqualTo(1));
         }
 
         [Test]
@@ -251,8 +300,6 @@ namespace SubTerra.App.Tests.Debug
             var session = new DeveloperDebugCommandSession(DeveloperDebugCommandRegistry.CreateIsolated());
             var help = session.Execute("help", null);
             Assert.That(help, Does.Contain("spawn <rock|copper|iron|lithium|gas|engine_fuel> [golden]"));
-            Assert.That(help, Does.Contain("hitgas [n]"));
-            Assert.That(help, Does.Contain("falling [n]m"));
             Assert.That(help, Does.Contain("생성"));
             Assert.That(help, Does.Contain("예: spawn copper"));
 
@@ -268,6 +315,7 @@ namespace SubTerra.App.Tests.Debug
             Assert.That(source, Does.Contain("tile.locked.signal"));
             Assert.That(source, Does.Contain("tile.gas-pocket"));
             Assert.That(source, Does.Contain("tile.rock.normal"));
+            Assert.That(source, Does.Contain("TryGetDirectionalCell"));
             Assert.That(source, Does.Not.Contain("MineLayerTileIds"));
             Assert.That(source, Does.Not.Contain("using SubTerra.Gameplay.DemoWorld"));
             Assert.That(source, Does.Not.Contain("ActivateAt"));

@@ -69,12 +69,12 @@ namespace SubTerra.Gameplay.Structural
             public SpriteRenderer Renderer;
             public Tilemap Source;
             public TileBase Tile;
-            public Vector3Int? GroundCell;
+            public Vector3Int SourceCell;
             public Vector3 Start;
             public Vector3 End;
             public float Elapsed;
             public float Duration;
-            public float? DamageMultiplier;
+            public float DamageMultiplier = float.NaN;
             public bool ContactConsumed;
         }
 
@@ -189,14 +189,29 @@ namespace SubTerra.Gameplay.Structural
         /// <summary>삭제 직전 타일 스프라이트를 짧게 낙하시켜 증발처럼 보이지 않게 한다.</summary>
         public void PlayCollapse(Vector3Int cell, Tilemap source, float duration)
         {
-            if (source != null)
-                PlayCollapse(cell, source, duration, source.GetTile(cell), source.GetSprite(cell));
+            if (source == null) return;
+            Sprite sprite = source.GetSprite(cell);
+            if (sprite == null) sprite = ResolveCrackTile(StructuralRiskLevel.CollapseImminent) is Tile tile ? tile.sprite : null;
+            PlayFallingTile(cell, source, source.GetTile(cell), sprite, duration);
         }
 
-        internal bool PlayCollapse(Vector3Int cell, Tilemap source, float duration, TileBase sourceTile, Sprite sprite)
+        /// <summary>
+        /// 타일맵에 없는 타일도 셀 위치에서 낙석으로 떨어뜨린다(디버그 fall 명령).
+        /// 피해·착지 이벤트는 실제 붕괴와 같은 낙하 경로를 탄다.
+        /// </summary>
+        public bool PlayFallingTile(Vector3Int cell, Tilemap source, TileBase tile, float duration)
         {
-            if (sprite == null) sprite = ResolveCrackTile(StructuralRiskLevel.CollapseImminent) is Tile tile ? tile.sprite : null;
-            if (sprite == null) return false;
+            if (source == null || tile == null) return false;
+            var data = new TileData();
+            tile.GetTileData(cell, source, ref data);
+            Sprite sprite = data.sprite;
+            if (sprite == null) sprite = ResolveCrackTile(StructuralRiskLevel.CollapseImminent) is Tile crack ? crack.sprite : null;
+            return PlayFallingTile(cell, source, tile, sprite, duration);
+        }
+
+        private bool PlayFallingTile(Vector3Int cell, Tilemap source, TileBase sourceTile, Sprite sprite, float duration)
+        {
+            if (source == null || sprite == null) return false;
 
             var root = new GameObject("StructuralFallingRock") { hideFlags = HideFlags.DontSave };
             root.transform.SetParent(transform, true);
@@ -206,20 +221,31 @@ namespace SubTerra.Gameplay.Structural
             renderer.sprite = sprite;
             renderer.color = new Color(0.72f, 0.64f, 0.54f, 1f);
             renderer.sortingOrder = 90;
-            Vector3 end = ResolveFallEnd(cell, source, start, out Vector3Int? groundCell);
+            Vector3 end = ResolveFallEnd(cell, source, start, out _);
             fallingVisuals.Add(new FallingVisual
             {
                 Root = root,
                 Renderer = renderer,
                 Source = source,
                 Tile = sourceTile,
-                GroundCell = groundCell,
+                SourceCell = cell,
                 Start = start,
                 End = end,
                 Duration = Mathf.Max(0.05f, duration),
-                DamageMultiplier = resolveCollapseDamageMultiplier?.Invoke(sourceTile)
+                // 낙석마다 생성 시점의 배율을 보관한다. 콜백이 아직 없었다면(NaN) 접촉 시점에 읽는다.
+                DamageMultiplier = resolveCollapseDamageMultiplier != null
+                    ? ResolveDamageMultiplier(sourceTile)
+                    : float.NaN
             });
             return true;
+        }
+
+        private float ResolveDamageMultiplier(TileBase tile)
+        {
+            // 타일을 읽지 못하거나 콜백이 없으면 기본 피해(×1)다.
+            if (resolveCollapseDamageMultiplier == null) return 1f;
+            float multiplier = resolveCollapseDamageMultiplier(tile);
+            return multiplier > 0f ? multiplier : 1f;
         }
 
         private static Vector3 ResolveFallEnd(
@@ -693,19 +719,9 @@ namespace SubTerra.Gameplay.Structural
                     continue;
                 }
 
-                Vector3 previousPosition = visual.Root.transform.position;
-                if (visual.Source != null && visual.GroundCell is Vector3Int ground
-                    && !visual.Source.HasTile(ground))
-                {
-                    // A second rock may remove the floor during the same collapse.
-                    visual.End = ResolveFallEnd(ground, visual.Source, visual.End, out visual.GroundCell);
-                    visual.Start = previousPosition;
-                    visual.Duration = Mathf.Max(0.05f, visual.Duration - visual.Elapsed);
-                    visual.Elapsed = 0f;
-                }
-
                 visual.Elapsed += deltaTime;
                 float t = Mathf.Clamp01(visual.Elapsed / visual.Duration);
+                Vector3 previousPosition = visual.Root.transform.position;
                 Vector3 nextPosition = Vector3.Lerp(visual.Start, visual.End, t * t);
                 visual.Root.transform.position = nextPosition;
                 if (!visual.ContactConsumed
@@ -717,9 +733,10 @@ namespace SubTerra.Gameplay.Structural
                         nextPosition.y))
                 {
                     visual.ContactConsumed = true;
-                    float multiplier = visual.DamageMultiplier
-                        ?? resolveCollapseDamageMultiplier?.Invoke(visual.Tile) ?? 1f;
-                    collapseDamageReceiver.ApplyCollapseImpact(multiplier);
+                    collapseDamageReceiver.ApplyCollapseImpact(
+                        float.IsNaN(visual.DamageMultiplier)
+                            ? ResolveDamageMultiplier(visual.Tile)
+                            : visual.DamageMultiplier);
                 }
                 if (t < 1f) continue;
 
@@ -728,12 +745,20 @@ namespace SubTerra.Gameplay.Structural
                     CreateImpactDust(visual.End);
                 DestroyRuntimeObject(visual.Root);
                 fallingVisuals.RemoveAt(i);
-                if (visual.Tile != null && visual.Source != null && visual.GroundCell.HasValue
-                    && visual.Source.HasTile(visual.GroundCell.Value))
+                // 착지 바닥은 낙하가 끝나는 시점에 다시 찾는다. 같은 붕괴 묶음의 아래 칸이
+                // 먼저 떨어져도 그 아래 남은 바닥이 있으면 가스가 생략되지 않는다.
+                if (visual.Tile != null && visual.Source != null
+                    && TryFindLanding(visual.Source, visual.SourceCell, out Vector3 landing))
                 {
-                    RockLanded?.Invoke(visual.End, visual.Tile);
+                    RockLanded?.Invoke(landing, visual.Tile);
                 }
             }
+        }
+
+        private static bool TryFindLanding(Tilemap source, Vector3Int sourceCell, out Vector3 landing)
+        {
+            landing = ResolveFallEnd(sourceCell, source, Vector3.zero, out Vector3Int? ground);
+            return ground.HasValue;
         }
 
         private void CreateImpactDust(Vector3 position)

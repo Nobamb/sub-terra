@@ -14,22 +14,27 @@ using UnityEngine.Tilemaps;
 namespace SubTerra.App.Integration
 {
     /// <summary>
-    /// 스폰 명령이 만지는 광산 씬 대상. 탐색을 비우면 플레이 중 인스턴스를 찾는다.
+    /// 스폰·낙석 명령이 만지는 광산 씬 대상. 탐색을 비우면 플레이 중 인스턴스를 찾는다.
     /// </summary>
     public sealed class DeveloperDebugSpawnWorld
     {
+        /// <summary>PlayerMiningController.reach 기본값. Enter 목표 칸 계산에 쓴다.</summary>
+        public const float DefaultMiningReach = 1.35f;
+
         public DeveloperDebugSpawnWorld(
             string sceneName,
             PlayerMovement player,
             Tilemap foreground,
             MiningTileResolver resolver,
-            WorldSnapshotSystem snapshot)
+            WorldSnapshotSystem snapshot,
+            float miningReach = DefaultMiningReach)
         {
             SceneName = sceneName ?? string.Empty;
             Player = player;
             Foreground = foreground;
             Resolver = resolver;
             Snapshot = snapshot;
+            MiningReach = miningReach;
         }
 
         public string SceneName { get; }
@@ -37,11 +42,18 @@ namespace SubTerra.App.Integration
         public Tilemap Foreground { get; }
         public MiningTileResolver Resolver { get; }
         public WorldSnapshotSystem Snapshot { get; }
+        public float MiningReach { get; }
+
+        /// <summary>hit·fall·hitgas 명령이 쓰는 선택 대상. 비어 있으면 해당 명령이 없음으로 알린다.</summary>
+        public StructuralIntegritySystem Structural { get; set; }
+        public GasExposureEffectController GasEffect { get; set; }
+        public GameDataCatalog Catalog { get; set; }
     }
 
     /// <summary>
     /// 125-4 블록 스폰. 125-2 등록부에 명령을 넣고, 타일 ID는 여기 둔다.
     /// DemoWorld는 참조하지 않는다. 가스는 설치만 하고, 신호 타일의 채굴 규칙은 바꾸지 않는다.
+    /// B-193: 바라보는 직선의 빈 칸을 먼저 쓰고, 막혀 있으면 Enter 자동 채굴과 같은 칸의 블록을 바꾼다.
     /// </summary>
     public static class DeveloperDebugSpawnCommands
     {
@@ -52,8 +64,8 @@ namespace SubTerra.App.Integration
         private const string GasId = "tile.gas-pocket";
         private const string SignalId = "tile.locked.signal";
         private const string GoldSuffix = ".gold";
-        private const string ArgError = "spawn 인자 오류. 예: spawn copper";
-        private const string TileArguments = "<rock|copper|iron|lithium|gas|engine_fuel> [golden]";
+        private const int MaximumStraightScanCells = 3;
+        public const string NoTargetMessage = "눈앞에 놓거나 바꿀 칸이 없습니다";
 
         public static void Register(DeveloperDebugCommandRegistry registry)
         {
@@ -65,43 +77,131 @@ namespace SubTerra.App.Integration
             registry.Register(new DeveloperDebugCommandSpec(
                 "spawn",
                 new[] { "spawn", "생성" },
-                TileArguments,
+                "<rock|copper|iron|lithium|gas|engine_fuel> [golden]",
                 "spawn copper",
                 HandleSpawn));
-            registry.Register(new DeveloperDebugCommandSpec(
-                "hit", new[] { "hit" }, TileArguments, "hit iron golden", HandleHit));
-            registry.Register(new DeveloperDebugCommandSpec(
-                "fall", new[] { "fall" }, TileArguments, "fall lithium", HandleFall));
-            registry.Register(new DeveloperDebugCommandSpec(
-                "hitgas", new[] { "hitgas" }, "[n]", "hitgas 3", HandleHitGas));
-            registry.Register(new DeveloperDebugCommandSpec(
-                "falling", new[] { "falling" }, "[n]m", "falling 30m", HandleFalling));
         }
 
         public static DeveloperDebugSpawnWorld FindLive()
         {
             var scene = SceneManager.GetActiveScene();
+            var mining = UnityEngine.Object.FindAnyObjectByType<PlayerMiningController>(FindObjectsInactive.Include);
+            var bootstrap = GameBootstrapper.Instance;
             return new DeveloperDebugSpawnWorld(
                 scene.name,
                 UnityEngine.Object.FindAnyObjectByType<PlayerMovement>(FindObjectsInactive.Include),
                 FindForeground(),
                 UnityEngine.Object.FindAnyObjectByType<MiningTileResolver>(FindObjectsInactive.Include),
-                UnityEngine.Object.FindAnyObjectByType<WorldSnapshotSystem>(FindObjectsInactive.Include));
+                UnityEngine.Object.FindAnyObjectByType<WorldSnapshotSystem>(FindObjectsInactive.Include),
+                mining != null ? mining.Reach : DeveloperDebugSpawnWorld.DefaultMiningReach)
+            {
+                Structural = UnityEngine.Object.FindAnyObjectByType<StructuralIntegritySystem>(FindObjectsInactive.Include),
+                GasEffect = UnityEngine.Object.FindAnyObjectByType<GasExposureEffectController>(FindObjectsInactive.Include),
+                Catalog = bootstrap != null ? bootstrap.AssignedCatalog as GameDataCatalog : null
+            };
         }
 
+        /// <summary>
+        /// Enter 자동 채굴과 같은 목표 칸(MiningSystem.TryGetDirectionalCell)을 고른다.
+        /// 옆 칸을 먼저 보고 없으면 위·아래를 보며, 블록이 있는 칸만 대상이라 빈 칸에는 놓지 않는다.
+        /// </summary>
         public static bool TryResolveFacingCell(
             Tilemap tilemap,
             Vector2 origin,
             float facingDirection,
-            out Vector3Int cell,
-            float reach = PlayerMiningController.DefaultReach)
+            float range,
+            out Vector3Int cell)
         {
-            return MiningSystem.TryGetDirectionalCell(tilemap, origin, facingDirection, reach, out cell);
+            return MiningSystem.TryGetDirectionalCell(tilemap, origin, facingDirection, range, out cell);
+        }
+
+        /// <summary>
+        /// spawn 목표 칸. 바라보는 쪽 직선(플레이어와 같은 줄)에서 비어 있는 칸을 먼저 쓰고,
+        /// 그 줄이 막혀 있을 때만 Enter 채굴과 같은 칸의 블록을 바꾼다.
+        /// 플레이어가 서 있는 칸에는 놓지 않는다.
+        /// </summary>
+        public static bool TryResolveSpawnCell(
+            Tilemap tilemap,
+            Vector2 origin,
+            float facingDirection,
+            float range,
+            out Vector3Int cell)
+        {
+            cell = default;
+            if (tilemap == null || Mathf.Approximately(facingDirection, 0f))
+            {
+                return false;
+            }
+
+            var direction = facingDirection > 0f ? 1 : -1;
+            var candidate = tilemap.WorldToCell(origin);
+            var allowed = Mathf.Max(0f, range) + 0.5f;
+            for (var step = 0; step < MaximumStraightScanCells; step++)
+            {
+                candidate.x += direction;
+                var center = tilemap.GetCellCenterWorld(candidate);
+                if (Mathf.Abs(center.x - origin.x) > allowed || Mathf.Abs(center.y - origin.y) > allowed)
+                {
+                    break;
+                }
+
+                if (!tilemap.HasTile(candidate))
+                {
+                    cell = candidate;
+                    return true;
+                }
+            }
+
+            return TryResolveFacingCell(tilemap, origin, facingDirection, range, out cell);
+        }
+
+        /// <summary>
+        /// "명령 종류 [golden]" 인자를 타일 ID로 바꾼다. spawn·hit·fall이 같은 종류·별칭을 쓴다.
+        /// </summary>
+        public static bool TryReadTileId(
+            string[] tokens,
+            string label,
+            string example,
+            out string tileId,
+            out string error)
+        {
+            tileId = string.Empty;
+            error = label + " 인자 오류. 예: " + example;
+            if (tokens == null || tokens.Length < 2 || tokens.Length > 3)
+            {
+                return false;
+            }
+
+            if (!TryKind(tokens[1], out var baseId, out var goldAllowed))
+            {
+                return false;
+            }
+
+            var gold = false;
+            if (tokens.Length == 3)
+            {
+                if (!IsGold(tokens[2]))
+                {
+                    return false;
+                }
+
+                gold = true;
+            }
+
+            if (gold && !goldAllowed)
+            {
+                error = "엔진연료는 골드 변형이 없습니다";
+                return false;
+            }
+
+            tileId = gold ? baseId + GoldSuffix : baseId;
+            error = string.Empty;
+            return true;
         }
 
         private static string HandleSpawn(string[] tokens, DeveloperDebugCommandContext context)
         {
-            if (!TryRead(tokens, out var tileId, out var argumentError))
+            if (!TryReadTileId(tokens, "spawn", "spawn copper", out var tileId, out var argumentError))
             {
                 return argumentError;
             }
@@ -142,15 +242,14 @@ namespace SubTerra.App.Integration
                 return "스냅샷 없음";
             }
 
-            var miningController = world.Player.GetComponent<PlayerMiningController>();
-            if (!TryResolveFacingCell(
+            if (!TryResolveSpawnCell(
                     world.Foreground,
                     world.Player.Position,
                     world.Player.FacingDirection,
-                    out var cell,
-                    miningController != null ? miningController.Reach : PlayerMiningController.DefaultReach))
+                    world.MiningReach,
+                    out var cell))
             {
-                return "채굴 방향에 교체할 타일이 없습니다";
+                return NoTargetMessage;
             }
 
             if (!world.Resolver.TryFindTileById(tileId, out var tile) || tile == null)
@@ -174,125 +273,10 @@ namespace SubTerra.App.Integration
                 + ")";
         }
 
-        private static string HandleHit(string[] tokens, DeveloperDebugCommandContext context)
-        {
-            if (!TryGetCommandTile(tokens, context, out var world, out var tile, out var error)) return error;
-            var survival = context.FindPlayer();
-            if (survival == null) return "플레이어 생존 정보 없음";
-            if (!world.Resolver.TryResolve(tile, out var definition)) return "타일 정의 없음";
-
-            var bootstrap = GameBootstrapper.Instance;
-            var catalog = bootstrap != null ? bootstrap.AssignedCatalog as GameDataCatalog : null;
-            float multiplier = IntegrationRuntimeBinder.GetCollapseDamageMultiplier(definition, catalog);
-            return survival.ApplyCollapseImpact(multiplier) ? "hit " + definition.tileId : "낙석 피해가 적용되지 않았습니다";
-        }
-
-        private static string HandleFall(string[] tokens, DeveloperDebugCommandContext context)
-        {
-            if (!TryGetCommandTile(tokens, context, out var world, out var tile, out var error)) return error;
-            var structural = UnityEngine.Object.FindAnyObjectByType<StructuralIntegritySystem>();
-            if (structural == null || world.Player == null || world.Foreground == null)
-                return "낙석에 필요한 광산 정보 없음";
-
-            Vector2 head = world.Player.Position;
-            if (world.Player.TryGetBodyBounds(out var bounds)) head.y = bounds.max.y;
-            Vector3Int cell = world.Foreground.WorldToCell(head) + Vector3Int.up;
-            return structural.TryPlayDebugCollapse(cell, tile) ? "fall " + tokens[1] : "낙석을 시작할 수 없습니다";
-        }
-
-        private static string HandleHitGas(string[] tokens, DeveloperDebugCommandContext context)
-        {
-            if (!IsMine(context?.FindSpawnWorld())) return "광산 씬에서만 사용할 수 있습니다";
-            int tickCount = 1;
-            if (tokens.Length > 2 || (tokens.Length == 2 && (!int.TryParse(tokens[1], NumberStyles.None,
-                    CultureInfo.InvariantCulture, out tickCount) || tickCount < 1)))
-                return "hitgas 인자 오류. 예: hitgas 3";
-
-            var effect = UnityEngine.Object.FindAnyObjectByType<GasExposureEffectController>();
-            if (effect == null) return "가스 노출 컨트롤러 없음";
-            effect.ScheduleDebugGasDamage(tickCount);
-            return "hitgas " + tickCount.ToString(CultureInfo.InvariantCulture);
-        }
-
-        private static string HandleFalling(string[] tokens, DeveloperDebugCommandContext context)
-        {
-            if (!IsMine(context?.FindSpawnWorld())) return "광산 씬에서만 사용할 수 있습니다";
-            float distance = 0f;
-            if (tokens.Length > 2 || (tokens.Length == 2 && (!tokens[1].EndsWith("m", StringComparison.OrdinalIgnoreCase)
-                    || !float.TryParse(tokens[1].Substring(0, tokens[1].Length - 1),
-                        NumberStyles.AllowDecimalPoint | NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out distance)
-                    || float.IsNaN(distance) || float.IsInfinity(distance))))
-                return "falling 인자 오류. 예: falling 30m";
-
-            var survival = context.FindPlayer();
-            if (survival == null) return "플레이어 생존 정보 없음";
-            return survival.ApplyDebugLanding(distance) ? "낙하 피해 적용" : "낙하 피해가 적용되지 않았습니다";
-        }
-
-        private static bool TryGetCommandTile(string[] tokens, DeveloperDebugCommandContext context,
-            out DeveloperDebugSpawnWorld world, out TileBase tile, out string error)
-        {
-            world = null;
-            tile = null;
-            if (!TryRead(tokens, out var tileId, out error))
-            {
-                if (error == ArgError) error = tokens[0] + " 인자 오류. 예: " + tokens[0] + " copper";
-                return false;
-            }
-
-            world = context?.FindSpawnWorld();
-            if (!IsMine(world)) error = "광산 씬에서만 사용할 수 있습니다";
-            else if (world.Resolver == null) error = "타일 리졸버 없음";
-            else if (!world.Resolver.TryFindTileById(tileId, out tile)) error = "타일 없음: " + tileId;
-            else return true;
-            return false;
-        }
-
-        private static bool IsMine(DeveloperDebugSpawnWorld world)
-        {
-            return world != null && string.Equals(world.SceneName, SceneNames.Integration, StringComparison.Ordinal);
-        }
-
-        private static bool TryRead(string[] tokens, out string tileId, out string error)
-        {
-            tileId = string.Empty;
-            error = ArgError;
-            if (tokens == null || tokens.Length < 2 || tokens.Length > 3)
-            {
-                return false;
-            }
-
-            if (!TryKind(tokens[1], out var baseId, out var goldAllowed))
-            {
-                return false;
-            }
-
-            var gold = false;
-            if (tokens.Length == 3)
-            {
-                if (!IsGold(tokens[2]))
-                {
-                    return false;
-                }
-
-                gold = true;
-            }
-
-            if (gold && !goldAllowed)
-            {
-                error = "엔진연료는 골드 변형이 없습니다";
-                return false;
-            }
-
-            tileId = gold ? baseId + GoldSuffix : baseId;
-            error = string.Empty;
-            return true;
-        }
-
         private static bool TryKind(string token, out string tileId, out bool goldAllowed)
         {
             goldAllowed = true;
-            if (IsAny(token, "rock", "normal", "일반"))
+            if (IsAny(token, "rock", "normal", "일반", "암석"))
             {
                 tileId = RockId;
                 return true;
