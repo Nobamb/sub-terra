@@ -139,17 +139,65 @@ namespace SubTerra.App.Integration
             ApplyState(result.State, false);
             if (result.ExposureTickCount > 0)
             {
-                FailureInputRaised?.Invoke(new GasExposureFailureInputDto
-                {
-                    gasZoneId = result.State.GasZoneId,
-                    effectiveIntensity = result.State.EffectiveIntensity,
-                    cumulativeExposureSeconds = result.State.CumulativeExposure,
-                    damage = result.ExposureTickCount * settings.HealthDamagePerTick,
-                    severity = GasExposureFailureSeverity.Damage
-                });
+                RaiseDamageTick(
+                    result.State.GasZoneId,
+                    result.State.EffectiveIntensity,
+                    result.State.CumulativeExposure,
+                    result.ExposureTickCount);
             }
 
             return result;
+        }
+
+#if UNITY_EDITOR || SUBTERRA_BUILD_DEVELOPMENT
+        /// <summary>
+        /// 디버그 hitgas: 실제 가스 안에 있는 것처럼 틱 간격마다 같은 도트 입력(FailureInputRaised)을 낸다.
+        /// 첫 틱은 바로, 나머지는 틱 간격(기본 1초)으로 이어진다.
+        /// </summary>
+        public int DebugHealthDamagePerTick => settings.HealthDamagePerTick;
+
+        public void DebugRaiseDamageTicks(int count)
+        {
+            if (count <= 0 || !isActiveAndEnabled)
+            {
+                return;
+            }
+
+            // 첫 틱은 바로 낸다. 나머지는 틱 간격마다 이어서 낸다.
+            RaiseDebugDamageTick();
+            if (count > 1)
+            {
+                StartCoroutine(DebugDamageTicks(count - 1));
+            }
+        }
+
+        // 디버그 틱이 낸 피해만 카메라를 흔들지 않는다. 실제 가스 도트는 그대로 흔든다.
+        private void RaiseDebugDamageTick()
+        {
+            PlayerSurvivalController.RunWithoutDamageCameraShake(
+                () => RaiseDamageTick(string.Empty, 1f, 0f, 1));
+        }
+
+        private System.Collections.IEnumerator DebugDamageTicks(int remaining)
+        {
+            for (var i = 0; i < remaining; i++)
+            {
+                yield return new WaitForSeconds(settings.TickInterval);
+                RaiseDebugDamageTick();
+            }
+        }
+#endif
+
+        private void RaiseDamageTick(string zoneId, float intensity, float cumulative, int tickCount)
+        {
+            FailureInputRaised?.Invoke(new GasExposureFailureInputDto
+            {
+                gasZoneId = zoneId,
+                effectiveIntensity = intensity,
+                cumulativeExposureSeconds = cumulative,
+                damage = tickCount * settings.HealthDamagePerTick,
+                severity = GasExposureFailureSeverity.Damage
+            });
         }
 
         private void RefreshMitigation(bool forcePublish)

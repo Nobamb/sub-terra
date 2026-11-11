@@ -156,6 +156,12 @@ namespace SubTerra.Gameplay.Mining
             cellProtectionPredicate = predicate;
         }
 
+        public bool TryResolveTile(TileBase tile, out MiningTileDto definition)
+        {
+            definition = default;
+            return tileResolver != null && tileResolver.TryResolve(tile, out definition);
+        }
+
         public void ConfigureDeepZoneBoundary(int topY, int minDepth, int maxDepth)
         {
             deepZoneTopY = topY;
@@ -385,7 +391,7 @@ namespace SubTerra.Gameplay.Mining
             }
 
             tile = foregroundTilemap.GetTile(cell);
-            if (tile == null || !tileResolver.TryResolve(tile, out definition))
+            if (!TryResolveTile(tile, out definition))
             {
                 return MiningFailureReason.InvalidTarget;
             }
@@ -501,15 +507,25 @@ namespace SubTerra.Gameplay.Mining
             float range,
             out Vector3Int cell)
         {
+            return TryGetDirectionalCell(foregroundTilemap, origin, facingDirection, range, out cell);
+        }
+
+        public static bool TryGetDirectionalCell(
+            Tilemap tilemap,
+            Vector2 origin,
+            float facingDirection,
+            float range,
+            out Vector3Int cell)
+        {
             cell = default;
-            if (foregroundTilemap == null || Mathf.Approximately(facingDirection, 0f))
+            if (tilemap == null || Mathf.Approximately(facingDirection, 0f))
             {
                 return false;
             }
 
             int horizontalDirection = facingDirection > 0f ? 1 : -1;
-            Vector3Int sideCell = foregroundTilemap.WorldToCell(origin);
-            float sideCellCenterX = foregroundTilemap.GetCellCenterWorld(sideCell).x;
+            Vector3Int sideCell = tilemap.WorldToCell(origin);
+            float sideCellCenterX = tilemap.GetCellCenterWorld(sideCell).x;
             if ((horizontalDirection > 0 && sideCellCenterX <= origin.x)
                 || (horizontalDirection < 0 && sideCellCenterX >= origin.x))
             {
@@ -517,21 +533,21 @@ namespace SubTerra.Gameplay.Mining
             }
 
             // 엔터 채굴은 가까운 방향의 바로 옆을 먼저 보고, 빈칸이면 위와 아래를 차례로 확인한다.
-            if (IsDirectionalCandidate(sideCell, origin, range))
+            if (IsDirectionalCandidate(tilemap, sideCell, origin, range))
             {
                 cell = sideCell;
                 return true;
             }
 
             Vector3Int upperCell = sideCell + Vector3Int.up;
-            if (IsDirectionalCandidate(upperCell, origin, range))
+            if (IsDirectionalCandidate(tilemap, upperCell, origin, range))
             {
                 cell = upperCell;
                 return true;
             }
 
             Vector3Int lowerCell = sideCell + Vector3Int.down;
-            if (IsDirectionalCandidate(lowerCell, origin, range))
+            if (IsDirectionalCandidate(tilemap, lowerCell, origin, range))
             {
                 cell = lowerCell;
                 return true;
@@ -540,9 +556,9 @@ namespace SubTerra.Gameplay.Mining
             return false;
         }
 
-        private bool IsDirectionalCandidate(Vector3Int cell, Vector2 origin, float range)
+        private static bool IsDirectionalCandidate(Tilemap tilemap, Vector3Int cell, Vector2 origin, float range)
         {
-            return foregroundTilemap.HasTile(cell) && IsCellInRange(cell, origin, range);
+            return tilemap.HasTile(cell) && IsCellInRange(tilemap, cell, origin, range);
         }
 
         private bool TryGetWorldPointCell(
@@ -563,12 +579,12 @@ namespace SubTerra.Gameplay.Mining
 
         private bool IsCellInRange(Vector3Int cell, Vector2 origin, float range)
         {
-            if (foregroundTilemap == null)
-            {
-                return false;
-            }
+            return foregroundTilemap != null && IsCellInRange(foregroundTilemap, cell, origin, range);
+        }
 
-            Vector3 center = foregroundTilemap.GetCellCenterWorld(cell);
+        private static bool IsCellInRange(Tilemap tilemap, Vector3Int cell, Vector2 origin, float range)
+        {
+            Vector3 center = tilemap.GetCellCenterWorld(cell);
             float allowed = Mathf.Max(0f, range) + 0.5f;
             return Mathf.Abs(center.x - origin.x) <= allowed
                 && Mathf.Abs(center.y - origin.y) <= allowed;

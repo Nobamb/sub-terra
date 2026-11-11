@@ -2,15 +2,18 @@ using System.Collections.Generic;
 using System.Reflection;
 using NUnit.Framework;
 using SubTerra.App.Core;
+using SubTerra.App.Core.Data;
 using SubTerra.App.Economy;
 using SubTerra.App.Integration;
 using SubTerra.App.Inventory;
 using SubTerra.App.State;
 using SubTerra.Gameplay.Building;
+using SubTerra.Gameplay.Hazards;
 using SubTerra.Gameplay.Integration;
 using SubTerra.Gameplay.Mining;
 using SubTerra.Gameplay.Player;
 using SubTerra.Gameplay.Snapshot;
+using SubTerra.Gameplay.Structural;
 using SubTerra.Shared;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -27,6 +30,99 @@ namespace SubTerra.App.Tests.Integration
     {
         private const string IntegrationPath =
             "Assets/_Project/Scenes/App/Mine_Demo_Integration.unity";
+
+        [TestCase("tile.rock.normal", "", 1f)]
+        [TestCase("tile.copper", "mineral.copper", 1.5f)]
+        [TestCase("tile.iron", "mineral.iron", 2f)]
+        [TestCase("tile.lithium", "mineral.lithium", 0.8f)]
+        [TestCase("tile.rock.normal.gold", "", 1.3f)]
+        [TestCase("tile.iron.gold", "mineral.iron", 2.6f)]
+        [TestCase("tile.unknown", "mineral.unknown", 1f)]
+        public void Issue289_CollapseDamageMultiplierUsesMineralCatalogAndGold(
+            string tileId, string mineralId, float expected)
+        {
+            var catalog = AssetDatabase.LoadAssetAtPath<GameDataCatalog>(
+                "Assets/_Project/Data/Catalog/GameDataCatalog.asset");
+            Assert.That(catalog, Is.Not.Null);
+
+            var tile = new MiningTileDto { tileId = tileId, mineralId = mineralId };
+            Assert.That(IntegrationRuntimeBinder.GetCollapseDamageMultiplier(tile, catalog),
+                Is.EqualTo(expected).Within(0.001f));
+        }
+
+        [TestCase(true, true, false, 1)]
+        [TestCase(false, true, false, 0)]
+        [TestCase(true, false, false, 0)]
+        [TestCase(true, true, true, 0)]
+        public void Issue289_CollapseGasStartsOnlyAfterGroundLanding(
+            bool containsGas, bool hasGround, bool resetDuringFall, int expectedZones)
+        {
+            var host = new GameObject("CollapseGasFixture");
+            host.SetActive(false);
+            var grid = new GameObject("Grid", typeof(Grid));
+            grid.transform.SetParent(host.transform);
+            var mapObject = new GameObject("Foreground", typeof(Tilemap));
+            mapObject.transform.SetParent(grid.transform);
+            var map = mapObject.GetComponent<Tilemap>();
+            var tile = ScriptableObject.CreateInstance<Tile>();
+            var floor = ScriptableObject.CreateInstance<Tile>();
+            var settings = ScriptableObject.CreateInstance<StructuralRiskSettings>();
+            var overlay = host.AddComponent<StructuralCrackOverlay>();
+            var structural = host.AddComponent<StructuralIntegritySystem>();
+            var resolver = host.AddComponent<MiningTileResolver>();
+            var mining = host.AddComponent<MiningSystem>();
+            var gas = host.AddComponent<GasHazardSystem>();
+            var bridge = host.AddComponent<GameplayEventBridge>();
+            var tileDefinition = new MiningTileDto { containsGas = containsGas, structuralImpact = 0.9f };
+            var sourceCell = new Vector3Int(0, 3, 0);
+            SetPrivateField(structural, "foregroundTilemap", map);
+            SetPrivateField(structural, "crackOverlay", overlay);
+            SetPrivateField(structural, "riskSettings", settings);
+            SetPrivateField(mining, "tileResolver", resolver);
+            SetPrivateField(gas, "foregroundTilemap", map);
+            SetPrivateField(bridge, "miningSystem", mining);
+            SetPrivateField(bridge, "structuralSystem", structural);
+            SetPrivateField(bridge, "gasHazardSystem", gas);
+            resolver.RegisterRuntime(tile, tileDefinition);
+            map.SetTile(sourceCell, tile);
+            if (hasGround) map.SetTile(Vector3Int.zero, floor);
+            map.CompressBounds();
+
+            try
+            {
+                InvokePrivate(bridge, "OnEnable");
+                Assert.That(mining.TryResolveTile(tile, out _), Is.True);
+                InvokePrivate(structural, "CollapseUnsupportedCeiling", new[] { sourceCell });
+                Assert.That(map.HasTile(sourceCell), Is.False);
+                Assert.That(overlay.transform.Find("StructuralFallingRock"), Is.Not.Null);
+                InvokePrivate(overlay, "UpdateFallingVisuals", settings.CollapseFallSeconds * 0.5f);
+                Assert.That(gas.ActiveZones, Is.Empty);
+
+                if (resetDuringFall) structural.ClearRuntimeRiskState();
+                InvokePrivate(overlay, "UpdateFallingVisuals", settings.CollapseFallSeconds);
+                InvokePrivate(overlay, "UpdateFallingVisuals", settings.CollapseFallSeconds);
+                Assert.That(gas.ActiveZones, Has.Count.EqualTo(expectedZones));
+                if (expectedZones == 1)
+                {
+                    var landedGas = gas.ActiveZones[0];
+                    Assert.That(landedGas.transform.position, Is.EqualTo(map.GetCellCenterWorld(Vector3Int.up)));
+                    var minedGas = gas.ActivateAt(sourceCell, tileDefinition);
+                    Assert.That(landedGas.GasType, Is.EqualTo(minedGas.GasType));
+                    Assert.That(landedGas.Intensity, Is.EqualTo(minedGas.Intensity));
+                    Assert.That(landedGas.Radius, Is.EqualTo(minedGas.Radius));
+                    Assert.That(landedGas.RemainingDuration, Is.EqualTo(minedGas.RemainingDuration));
+                }
+            }
+            finally
+            {
+                InvokePrivate(bridge, "OnDisable");
+                InvokePrivate(overlay, "OnDestroy");
+                Object.DestroyImmediate(host);
+                Object.DestroyImmediate(tile);
+                Object.DestroyImmediate(floor);
+                Object.DestroyImmediate(settings);
+            }
+        }
 
         [Test]
         public void M_S01_IntegrationScene_HasCanonicalHierarchy()

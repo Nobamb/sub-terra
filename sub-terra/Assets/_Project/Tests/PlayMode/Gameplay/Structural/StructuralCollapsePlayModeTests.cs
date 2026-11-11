@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using System.Reflection;
 using NUnit.Framework;
 using SubTerra.Gameplay.Snapshot;
@@ -93,17 +94,17 @@ namespace SubTerra.Gameplay.Structural.Tests
         {
             using var fixture = new RuntimeFixture(1, true, false);
             var receiver = new CountingCollapseReceiver();
-            fixture.System.BindCollapseDamageReceiver(receiver);
+            var cell = new Vector3Int(0, 2, 0);
+            var originalTile = fixture.Foreground.GetTile(cell);
+            float weight = 1.5f;
+            fixture.System.BindCollapseDamageReceiver(receiver, tile => tile == originalTile ? weight : 1f);
 
-            fixture.CrackOverlay.PlayCollapse(
-                new Vector3Int(0, 2, 0), fixture.Foreground, 0.1f);
+            fixture.CrackOverlay.PlayCollapse(cell, fixture.Foreground, 0.1f);
+            weight = 2.6f;
+            fixture.CrackOverlay.PlayCollapse(cell, fixture.Foreground, 0.1f);
+            fixture.Foreground.SetTile(cell, null);
             yield return new WaitForSecondsRealtime(0.15f);
-            Assert.That(receiver.ImpactCount, Is.EqualTo(1));
-
-            fixture.CrackOverlay.PlayCollapse(
-                new Vector3Int(0, 2, 0), fixture.Foreground, 0.1f);
-            yield return new WaitForSecondsRealtime(0.15f);
-            Assert.That(receiver.ImpactCount, Is.EqualTo(2));
+            Assert.That(receiver.ImpactMultipliers, Is.EquivalentTo(new[] { 1.5f, 2.6f }));
         }
 
         [UnityTest]
@@ -120,18 +121,43 @@ namespace SubTerra.Gameplay.Structural.Tests
                 "착지 먼지도 수명이 끝나면 회수되어야 한다.");
         }
 
+        [UnityTest]
+        public IEnumerator FallingRock_UsesNextFloorWhenOriginalFloorCollapses()
+        {
+            using var fixture = new RuntimeFixture(1, true, false);
+            var start = new Vector3Int(0, 2, 0);
+            var oldFloor = Vector3Int.up;
+            var nextFloor = Vector3Int.down;
+            var tile = fixture.Foreground.GetTile(start);
+            fixture.Foreground.SetTile(oldFloor, tile);
+            fixture.Foreground.SetTile(nextFloor, tile);
+            fixture.Foreground.CompressBounds();
+            var landings = new List<Vector3>();
+            fixture.CrackOverlay.RockLanded += (position, _) => landings.Add(position);
+
+            fixture.CrackOverlay.PlayCollapse(start, fixture.Foreground, 0.1f);
+            fixture.Foreground.SetTile(oldFloor, null);
+            yield return new WaitForSecondsRealtime(0.2f);
+            Assert.That(landings, Is.EqualTo(new[] { fixture.Foreground.GetCellCenterWorld(Vector3Int.zero) }));
+
+            fixture.CrackOverlay.PlayCollapse(start, fixture.Foreground, 0.1f);
+            fixture.Foreground.SetTile(nextFloor, null);
+            yield return new WaitForSecondsRealtime(0.2f);
+            Assert.That(landings, Has.Count.EqualTo(1), "No landing event in a column with no remaining floor");
+        }
+
         private sealed class CountingCollapseReceiver : ICollapseDamageReceiver
         {
-            public int ImpactCount { get; private set; }
+            public List<float> ImpactMultipliers { get; } = new();
 
             public bool IsCollapseContact(float fromX, float fromY, float toX, float toY)
             {
                 return true;
             }
 
-            public bool ApplyCollapseImpact()
+            public bool ApplyCollapseImpact(float damageMultiplier)
             {
-                ImpactCount++;
+                ImpactMultipliers.Add(damageMultiplier);
                 return true;
             }
         }

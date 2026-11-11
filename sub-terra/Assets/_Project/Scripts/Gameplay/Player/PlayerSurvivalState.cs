@@ -25,7 +25,7 @@ namespace SubTerra.Gameplay.Player
 
         public bool TryApplyDamage(
             RunFailureCause cause,
-            int damage,
+            float damage,
             float currentTime,
             float invulnerabilitySeconds,
             bool forceIncapacitate,
@@ -42,7 +42,7 @@ namespace SubTerra.Gameplay.Player
                 return false;
             }
 
-            var appliedDamage = forceIncapacitate ? Health : Math.Max(0, damage);
+            var appliedDamage = forceIncapacitate ? Health : Math.Max(0f, damage);
             if (appliedDamage <= 0)
             {
                 return false;

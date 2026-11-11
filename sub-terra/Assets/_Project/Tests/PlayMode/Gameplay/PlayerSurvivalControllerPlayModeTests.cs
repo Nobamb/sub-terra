@@ -164,7 +164,8 @@ namespace SubTerra.Gameplay.Player.Tests
 
             AccessibilityPreferences.ReduceMotion = true;
             controller.RestoreAfterRescue();
-            Assert.That(controller.ApplyCollapseImpact(), Is.True);
+            Assert.That(controller.ApplyCollapseImpact(1.5f), Is.True);
+            Assert.That(controller.State.Health, Is.EqualTo(62.5f).Within(0.001f));
             Assert.That(cameraFollow.IsShakeActive, Is.False);
             Assert.That(renderer.color.a, Is.LessThan(1f));
 

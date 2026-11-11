@@ -38,7 +38,7 @@ namespace SubTerra.Shared
     public interface ICollapseDamageReceiver
     {
         bool IsCollapseContact(float fromX, float fromY, float toX, float toY);
-        bool ApplyCollapseImpact();
+        bool ApplyCollapseImpact(float damageMultiplier = 1f);
     }
 
     /// <summary>체력 관련 진행도 효과만 Gameplay 생존 상태에 제공하는 경계.</summary>

@@ -140,16 +140,48 @@ namespace SubTerra.Gameplay.Player
                 <= settings.CollapseHitRadius;
         }
 
-        public bool ApplyCollapseImpact()
+        public bool ApplyCollapseImpact(float damageMultiplier = 1f)
         {
             EnsureState();
             tokenSequence++;
             return ApplyDamage(
                 RunFailureCause.StructuralCollapse,
-                settings.MinorCollapseDamage,
+                settings.MinorCollapseDamage * damageMultiplier,
                 false,
                 "collapse-impact:" + tokenSequence.ToString(CultureInfo.InvariantCulture),
                 "structural_falling_rock");
+        }
+
+        private static bool suppressDamageCameraShake;
+
+        /// <summary>
+        /// 디버그 명령(hit·hitgas·falling)용: 안에서 받은 피해는 무적·피격음·깜빡임을 그대로 두고 카메라 흔들림만 뺀다.
+        /// 동기 호출 안에서만 유효하며, 중첩돼도 이전 값으로 돌아간다.
+        /// </summary>
+        public static void RunWithoutDamageCameraShake(Action action)
+        {
+            if (action == null)
+            {
+                return;
+            }
+
+            var previous = suppressDamageCameraShake;
+            suppressDamageCameraShake = true;
+            try
+            {
+                action();
+            }
+            finally
+            {
+                suppressDamageCameraShake = previous;
+            }
+        }
+
+        public bool ApplyCollapseImpactWithoutCameraShake(float damageMultiplier = 1f)
+        {
+            var applied = false;
+            RunWithoutDamageCameraShake(() => applied = ApplyCollapseImpact(damageMultiplier));
+            return applied;
         }
 
         public bool ApplyGasFailure(GasExposureFailureInputDto input)
@@ -242,7 +274,7 @@ namespace SubTerra.Gameplay.Player
 
         private bool ApplyDamage(
             RunFailureCause cause,
-            int damage,
+            float damage,
             bool forceIncapacitate,
             string failureToken,
             string sourceId)
@@ -276,7 +308,7 @@ namespace SubTerra.Gameplay.Player
                     failureToken = failureToken,
                     cause = cause,
                     sourceId = sourceId ?? string.Empty,
-                    damage = damage,
+                    damage = Mathf.RoundToInt(damage),
                     remainingHealth = Mathf.CeilToInt(State.Health),
                     returnToElevator = cause != RunFailureCause.PowerDepleted
                 });
@@ -330,7 +362,7 @@ namespace SubTerra.Gameplay.Player
                 }
             }
 
-            if (follow != null)
+            if (follow != null && !suppressDamageCameraShake)
             {
                 follow.RequestShake(
                     ResolveDamageShakeAmplitude(appliedDamage, State.MaximumHealth),
@@ -531,8 +563,19 @@ namespace SubTerra.Gameplay.Player
                 var ladderExempt = usedLadderDuringFall;
                 trackingFall = false;
                 usedLadderDuringFall = false;
-                var damaged = ApplyFall(distance, ladderExempt);
-                // B-164: 피해면 LandHeavy만, 아니면 0.3 이상 낙하에 Land. 사다리로 내려옴·치명 낙하는 무음.
+                ResolveLanding(distance, ladderExempt);
+            }
+
+            wasGrounded = grounded;
+        }
+
+        /// <summary>실제 낙하 착지와 디버그 falling 명령이 함께 쓰는 착지 처리(피해 + 착지음).</summary>
+        private bool ResolveLanding(float distance, bool ladderExempt)
+        {
+            var damaged = ApplyFall(distance, ladderExempt);
+            // B-164: 피해면 LandHeavy만, 아니면 0.3 이상 낙하에 Land. 사다리로 내려옴·치명 낙하는 무음.
+            if (playerMovement != null)
+            {
                 SfxRequests.Play(playerMovement.MoveSfx.ResolveLanding(
                     distance,
                     damaged,
@@ -540,7 +583,34 @@ namespace SubTerra.Gameplay.Player
                     State.CanAct));
             }
 
-            wasGrounded = grounded;
+            return damaged;
+        }
+
+        /// <summary>
+        /// 디버그 falling 명령: 그 높이에서 떨어져 착지한 것과 같은 피해·착지 효과를 준다.
+        /// 최소 낙사 높이보다 낮게 주면 최소 높이부터 적용한다.
+        /// </summary>
+        public bool SimulateFall(float fallHeightMeters)
+        {
+            EnsureState();
+            if (!State.CanAct)
+            {
+                return false;
+            }
+
+            var landed = false;
+            var height = Mathf.Max(fallHeightMeters, settings.MinimumFallDamageHeight);
+            RunWithoutDamageCameraShake(() => landed = ResolveLanding(height, false));
+            return landed;
+        }
+
+        public float MinimumFallHeight
+        {
+            get
+            {
+                EnsureState();
+                return settings.MinimumFallDamageHeight;
+            }
         }
 
         private void ResetFallTracking()

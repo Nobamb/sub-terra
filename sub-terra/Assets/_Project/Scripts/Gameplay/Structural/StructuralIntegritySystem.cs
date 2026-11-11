@@ -59,20 +59,88 @@ namespace SubTerra.Gameplay.Structural
         public event Action<StructuralRiskLevel> RiskChanged;
         public event Action StructuralStatusChanged;
         public event Action<StructuralCollapseEventDto> CollapseTriggered;
+        /// <summary>
+        /// 낙석 착지. 오버레이가 아직 준비되지 않았어도 구독을 버리지 않고 이 시스템이 들고 있다가,
+        /// 오버레이가 연결되는 순간 함께 이어 준다.
+        /// </summary>
+        public event Action<Vector3, TileBase> RockLanded
+        {
+            add { rockLanded += value; EnsureOverlayHooked(); }
+            remove { rockLanded -= value; }
+        }
+
+        private event Action<Vector3, TileBase> rockLanded;
+        private ICollapseDamageReceiver collapseDamageReceiver;
+        private Func<TileBase, float> resolveDamageMultiplier;
+        private StructuralCrackOverlay hookedOverlay;
 
         public void ConfigureWorldSeed(long seed) => worldSeed = seed;
 
-        public void BindCollapseDamageReceiver(ICollapseDamageReceiver receiver)
+        public void BindCollapseDamageReceiver(
+            ICollapseDamageReceiver receiver,
+            Func<TileBase, float> resolveDamageMultiplier = null)
         {
+            collapseDamageReceiver = receiver;
+            this.resolveDamageMultiplier = resolveDamageMultiplier;
+            // 오버레이가 아직 없으면 보관만 하고, 준비되는 시점(EnsureOverlayHooked)에 다시 붙인다.
             if (crackOverlay != null)
             {
                 crackOverlay.BindSourceTilemap(foregroundTilemap);
-                crackOverlay.BindCollapseDamageReceiver(receiver);
+                crackOverlay.BindCollapseDamageReceiver(receiver, resolveDamageMultiplier);
             }
+            EnsureOverlayHooked();
+        }
+
+        /// <summary>
+        /// 보관해 둔 피해 수신자·배율 콜백·착지 구독을 현재 오버레이에 붙인다.
+        /// 오버레이 교체나 늦은 연결이 있어도 여러 번 불러도 안전하다.
+        /// </summary>
+        private void EnsureOverlayHooked()
+        {
+            if (crackOverlay == null || hookedOverlay == crackOverlay) return;
+            if (hookedOverlay != null) hookedOverlay.RockLanded -= ForwardRockLanded;
+            hookedOverlay = crackOverlay;
+            hookedOverlay.RockLanded += ForwardRockLanded;
+            if (collapseDamageReceiver != null || resolveDamageMultiplier != null)
+            {
+                crackOverlay.BindSourceTilemap(foregroundTilemap);
+                crackOverlay.BindCollapseDamageReceiver(collapseDamageReceiver, resolveDamageMultiplier);
+            }
+        }
+
+        private void ForwardRockLanded(Vector3 position, TileBase tile) => rockLanded?.Invoke(position, tile);
+
+        private void OnEnable() => EnsureOverlayHooked();
+
+        /// <summary>
+        /// 디버그 fall 명령: 지정 칸 위치에서 타일 하나를 실제 낙석 경로로 떨어뜨린다.
+        /// 피해 배율·무적 시간·착지 가스는 일반 붕괴와 같은 코드를 탄다.
+        /// </summary>
+        public bool TryDropTile(Vector3Int cell, TileBase tile)
+        {
+            EnsureOverlayHooked();
+            if (crackOverlay == null || foregroundTilemap == null || tile == null) return false;
+            // 터미널이 열려 게임이 멈춘 동안에는 떨어뜨리지 않고, 닫힌 뒤에 시작한다.
+            if (Time.timeScale > 0f || !isActiveAndEnabled) return DropTileNow(cell, tile);
+            StartCoroutine(DropTileAfterPause(cell, tile));
+            return true;
+        }
+
+        private bool DropTileNow(Vector3Int cell, TileBase tile)
+        {
+            return crackOverlay != null && foregroundTilemap != null
+                && crackOverlay.PlayFallingTile(cell, foregroundTilemap, tile, Settings.CollapseFallSeconds);
+        }
+
+        private System.Collections.IEnumerator DropTileAfterPause(Vector3Int cell, TileBase tile)
+        {
+            while (Time.timeScale <= 0f) yield return null;
+            DropTileNow(cell, tile);
         }
 
         private void Update()
         {
+            EnsureOverlayHooked();
             AdvanceSimulation(Time.unscaledDeltaTime);
         }
 
