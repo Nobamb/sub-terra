@@ -347,6 +347,7 @@ namespace SubTerra.Gameplay.Structural.Tests
             fixture.PlaceTile(minedCell);
             fixture.PlaceTile(attachedCell + Vector3Int.right);
             fixture.PlaceTile(attachedCell + Vector3Int.right + Vector3Int.down);
+            fixture.System.RegisterProtectedCell(attachedCell + Vector3Int.right + Vector3Int.down);
 
             fixture.RemoveAndNotifyMined(minedCell, 0f);
             fixture.System.AdvanceSimulation(2f);
@@ -390,6 +391,39 @@ namespace SubTerra.Gameplay.Structural.Tests
                 Assert.That(collapses[1].cells[0].x, Is.EqualTo(nextCell.x));
                 Assert.That(collapses[1].cells[0].y, Is.EqualTo(nextCell.y));
             }
+        }
+
+        [TestCase(false, false)]
+        [TestCase(true, false)]
+        [TestCase(false, true)]
+        public void Issue281_MiningDisconnectsVerticalGroup_OnlyDropsWhenUnsupported(
+            bool protectTop, bool restoreAnchorDuringWarning)
+        {
+            using var fixture = new StructuralFixture(1, true);
+            var bottom = new Vector3Int(0, 2, 0);
+            var top = bottom + Vector3Int.up;
+            var mined = bottom + Vector3Int.left;
+            fixture.PlaceTile(top);
+            fixture.PlaceTile(mined);
+            if (protectTop) fixture.System.RegisterProtectedCell(top);
+            StructuralCollapseEventDto collapse = null;
+            fixture.System.CollapseTriggered += value => collapse = value;
+
+            fixture.RemoveAndNotifyMined(mined, 0f);
+            Assert.That(fixture.Foreground.HasTile(bottom), Is.True);
+            Assert.That(fixture.Foreground.HasTile(top), Is.True);
+            if (restoreAnchorDuringWarning)
+            {
+                fixture.PlaceTile(mined);
+                fixture.System.RegisterProtectedCell(mined);
+            }
+            fixture.System.AdvanceSimulation(2f);
+
+            bool supported = protectTop || restoreAnchorDuringWarning;
+            Assert.That(fixture.Foreground.HasTile(bottom), Is.EqualTo(supported));
+            Assert.That(fixture.Foreground.HasTile(top), Is.EqualTo(supported));
+            if (supported) Assert.That(collapse, Is.Null);
+            else Assert.That(collapse.cells, Has.Count.EqualTo(2));
         }
 
         private static List<CollapseCellDto> RunCollapse(long seed)
