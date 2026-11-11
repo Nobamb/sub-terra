@@ -218,6 +218,19 @@ namespace SubTerra.Gameplay.Snapshot
                 }
             }
 
+            // 이어하기의 고립 지형은 낙하 이벤트 없이 저장된 붕괴 셀과 같은 방식으로 제거한다.
+            List<Vector3Int> detached = structuralSystem.FindDetachedBlocksNearRemovedCells(minedCells);
+            if (detached.Count > 0)
+            {
+                var restoredCollapses = new List<CollapseSnapshotDto>(detached.Count);
+                foreach (Vector3Int cell in detached)
+                {
+                    restoredCollapses.Add(new CollapseSnapshotDto { x = cell.x, y = cell.y, isCollapsed = true });
+                }
+                ApplyCollapsedTiles(restoredCollapses);
+                minedCells.AddRange(detached);
+            }
+
             structuralSystem.RebuildRiskFromMinedCells(minedCells);
         }
 

@@ -140,6 +140,9 @@ namespace SubTerra.Gameplay.Snapshot.Tests
                 SetField(structural, "crackOverlay", overlay);
                 SetField(structural, "localRiskRadius", 1);
                 SetField(structural, "scanRadius", 3);
+                var wall = new Vector3Int(1, 1, 0);
+                tilemap.SetTile(wall, tile);
+                structural.RegisterProtectedCell(wall);
 
                 var snapshotSystem = host.AddComponent<WorldSnapshotSystem>();
                 SetField(snapshotSystem, "foregroundTilemap", tilemap);
@@ -165,6 +168,62 @@ namespace SubTerra.Gameplay.Snapshot.Tests
                 Assert.That(
                     structural.EvaluateAt(Vector3Int.zero),
                     Is.GreaterThan(StructuralRiskLevel.Stable));
+            }
+            finally
+            {
+                Object.DestroyImmediate(host);
+                Object.DestroyImmediate(tile);
+            }
+        }
+
+        [Test]
+        public void Issue281_RestoreSilentlyRemovesDetachedGroupAndRecordsIt()
+        {
+            var host = new GameObject("DetachedGroupRestore", typeof(Grid));
+            var terrain = new GameObject("Terrain", typeof(Tilemap), typeof(TilemapRenderer));
+            terrain.transform.SetParent(host.transform);
+            var map = terrain.GetComponent<Tilemap>();
+            var tile = ScriptableObject.CreateInstance<Tile>();
+            try
+            {
+                var bottom = new Vector3Int(0, 1, 0);
+                var top = bottom + Vector3Int.up;
+                var gap = bottom + Vector3Int.right;
+                var wall = gap + Vector3Int.right;
+                foreach (Vector3Int cell in new[] { bottom, top, gap, wall })
+                    map.SetTile(cell, tile);
+
+                var structural = host.AddComponent<StructuralIntegritySystem>();
+                var overlay = host.AddComponent<StructuralCrackOverlay>();
+                SetField(structural, "foregroundTilemap", map);
+                SetField(structural, "crackOverlay", overlay);
+                structural.RegisterProtectedCell(wall);
+                int collapseEvents = 0;
+                structural.CollapseTriggered += _ => collapseEvents++;
+                overlay.PlayCollapse(bottom, map, 0.1f);
+                Assert.That(overlay.transform.Find("StructuralFallingRock"), Is.Not.Null);
+
+                var snapshots = host.AddComponent<WorldSnapshotSystem>();
+                SetField(snapshots, "foregroundTilemap", map);
+                SetField(snapshots, "structuralSystem", structural);
+                var legacy = new WorldSnapshotDto();
+                legacy.miningChanges.Add(new MiningSnapshotDto { x = gap.x, y = gap.y, isDestroyed = true });
+
+                Assert.That(snapshots.RestoreSnapshot(legacy), Is.True);
+                structural.AdvanceSimulation(2f);
+                Assert.That(map.HasTile(bottom), Is.False);
+                Assert.That(map.HasTile(top), Is.False);
+                Assert.That(map.HasTile(wall), Is.True);
+                Assert.That(collapseEvents, Is.Zero);
+                Assert.That(overlay.transform.Find("StructuralFallingRock"), Is.Null);
+
+                WorldSnapshotDto saved = snapshots.CaptureSnapshot();
+                Assert.That(saved.collapseChanges, Has.Count.EqualTo(2));
+                map.SetTile(bottom, tile);
+                map.SetTile(top, tile);
+                Assert.That(snapshots.RestoreSnapshot(saved), Is.True);
+                Assert.That(map.HasTile(bottom) || map.HasTile(top), Is.False);
+                Assert.That(snapshots.CaptureSnapshot().collapseChanges, Has.Count.EqualTo(2));
             }
             finally
             {
@@ -222,6 +281,9 @@ namespace SubTerra.Gameplay.Snapshot.Tests
 
                 tilemap.SetTile(new Vector3Int(0, 1, 0), tile);
                 tilemap.SetTile(new Vector3Int(6, 1, 0), tile);
+                var wall = new Vector3Int(7, 1, 0);
+                tilemap.SetTile(wall, tile);
+                structural.RegisterProtectedCell(wall);
                 var impact = new MiningTileDto(
                     "tile.test",
                     string.Empty,
