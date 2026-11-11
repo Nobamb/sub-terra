@@ -304,6 +304,56 @@ namespace SubTerra.Gameplay.Structural.Tests
             Assert.That(emitted, Is.Null);
         }
 
+        [TestCase(-1, false)]
+        [TestCase(1, false)]
+        [TestCase(1, true)]
+        public void Issue281_RemovingLastSideNeighbor_OnlyDropsUnprotectedBlock(int side, bool isProtected)
+        {
+            using var fixture = new StructuralFixture(1, true);
+            var isolatedCell = new Vector3Int(0, 2, 0);
+            var minedCell = isolatedCell + new Vector3Int(side, 0, 0);
+            fixture.PlaceTile(minedCell);
+            if (isProtected) fixture.System.RegisterProtectedCell(isolatedCell);
+            StructuralCollapseEventDto emitted = null;
+            fixture.System.CollapseTriggered += value => emitted = value;
+
+            fixture.RemoveAndNotifyMined(minedCell, 0f);
+
+            Assert.That(fixture.Foreground.HasTile(isolatedCell), Is.True, "Keep the tile during the warning.");
+            if (!isProtected)
+                Assert.That(fixture.System.CurrentRisk, Is.EqualTo(StructuralRiskLevel.CollapseImminent));
+            fixture.System.AdvanceSimulation(2f);
+
+            Assert.That(fixture.Foreground.HasTile(isolatedCell), Is.EqualTo(isProtected));
+            if (isProtected)
+            {
+                Assert.That(emitted, Is.Null);
+            }
+            else
+            {
+                Assert.That(emitted, Is.Not.Null);
+                Assert.That(emitted.cells, Has.Count.EqualTo(1));
+                Assert.That(emitted.cells[0].x, Is.EqualTo(isolatedCell.x));
+                Assert.That(emitted.cells[0].y, Is.EqualTo(isolatedCell.y));
+            }
+        }
+
+        [Test]
+        public void Issue281_RemovingUpperNeighbor_DoesNotForceBlockAttachedToSideWallToDrop()
+        {
+            using var fixture = new StructuralFixture(1, true);
+            var attachedCell = new Vector3Int(0, 2, 0);
+            var minedCell = attachedCell + Vector3Int.up;
+            fixture.PlaceTile(minedCell);
+            fixture.PlaceTile(attachedCell + Vector3Int.right);
+            fixture.PlaceTile(attachedCell + Vector3Int.right + Vector3Int.down);
+
+            fixture.RemoveAndNotifyMined(minedCell, 0f);
+            fixture.System.AdvanceSimulation(2f);
+
+            Assert.That(fixture.Foreground.HasTile(attachedCell), Is.True);
+        }
+
         private static List<CollapseCellDto> RunCollapse(long seed)
         {
             using var fixture = new StructuralFixture(7);

@@ -156,7 +156,7 @@ namespace SubTerra.Gameplay.Structural
             accumulatedImpact.TryGetValue(cell, out float currentImpact);
             accumulatedImpact[cell] = currentImpact + impact;
 
-            List<Vector3Int> verticallyIsolated = CollectVerticallyIsolatedNeighbors(cell);
+            List<Vector3Int> isolated = CollectIsolatedNeighbors(cell);
             var affected = CollectAffectedCeilingTiles(cell);
             ReevaluateTiles(
                 affected,
@@ -164,7 +164,7 @@ namespace SubTerra.Gameplay.Structural
                 cell,
                 StructuralRiskCause.MiningImpact,
                 impact);
-            BeginVerticallyIsolatedCollapses(verticallyIsolated);
+            BeginIsolatedCollapses(isolated);
         }
 
         /// <summary>
@@ -472,29 +472,36 @@ namespace SubTerra.Gameplay.Structural
         }
 
         /// <summary>
-        /// prompt-B 80: 채굴 직후 위·아래가 모두 빈 상태가 된 인접 지형을 찾는다.
-        /// 넓은 영역을 다시 훑지 않고 채굴 셀의 두 수직 이웃만 확인한다.
+        /// 채굴로 상하좌우 연결이 끊긴 인접 블록을 찾는다.
         /// </summary>
-        private List<Vector3Int> CollectVerticallyIsolatedNeighbors(Vector3Int minedCell)
+        private List<Vector3Int> CollectIsolatedNeighbors(Vector3Int minedCell)
         {
-            var isolated = new List<Vector3Int>(2);
-            AddIfVerticallyIsolated(minedCell + Vector3Int.up, isolated);
-            AddIfVerticallyIsolated(minedCell + Vector3Int.down, isolated);
+            var isolated = new List<Vector3Int>(4);
+            AddIfIsolated(minedCell + Vector3Int.up, isolated);
+            AddIfIsolated(minedCell + Vector3Int.down, isolated);
+            AddIfIsolated(minedCell + Vector3Int.left, isolated);
+            AddIfIsolated(minedCell + Vector3Int.right, isolated);
             return isolated;
         }
 
-        private void AddIfVerticallyIsolated(Vector3Int cell, List<Vector3Int> isolated)
+        private void AddIfIsolated(Vector3Int cell, List<Vector3Int> isolated)
         {
-            if (!IsUnsupportedCeiling(cell)) return;
-            if (foregroundTilemap.HasTile(cell + Vector3Int.up)) return;
-            isolated.Add(cell);
+            if (IsIsolatedBlock(cell)) isolated.Add(cell);
+        }
+
+        private bool IsIsolatedBlock(Vector3Int cell)
+        {
+            return IsUnsupportedCeiling(cell)
+                && !foregroundTilemap.HasTile(cell + Vector3Int.up)
+                && !foregroundTilemap.HasTile(cell + Vector3Int.left)
+                && !foregroundTilemap.HasTile(cell + Vector3Int.right);
         }
 
         /// <summary>
-        /// 수직 고립은 위험 점수 임계값과 무관한 확정 붕괴 조건이다.
+        /// 사방이 빈 블록은 위험 점수 임계값과 무관하게 붕괴한다.
         /// 기존 예고·낙하·피해·스냅샷 경로를 그대로 사용하되 보호 셀과 버팀목은 제외한다.
         /// </summary>
-        private void BeginVerticallyIsolatedCollapses(IReadOnlyList<Vector3Int> isolated)
+        private void BeginIsolatedCollapses(IReadOnlyList<Vector3Int> isolated)
         {
             if (isolated == null || isolated.Count == 0) return;
 
@@ -502,9 +509,7 @@ namespace SubTerra.Gameplay.Structural
             for (int i = 0; i < isolated.Count; i++)
             {
                 Vector3Int cell = isolated[i];
-                if (!IsUnsupportedCeiling(cell)
-                    || foregroundTilemap.HasTile(cell + Vector3Int.up)
-                    || telegraphRemaining.ContainsKey(cell))
+                if (!IsIsolatedBlock(cell) || telegraphRemaining.ContainsKey(cell))
                 {
                     continue;
                 }
