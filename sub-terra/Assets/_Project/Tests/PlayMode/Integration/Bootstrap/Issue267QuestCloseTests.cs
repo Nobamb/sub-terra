@@ -81,7 +81,7 @@ namespace SubTerra.App.Tests.PlayMode
                     float left = corners[0].x;
                     title.GetWorldCorners(corners);
                     Assert.That(left, Is.GreaterThan(corners[2].x), "X overlaps title");
-                    Assert.That(rect.anchoredPosition, Is.EqualTo(new Vector2(-72f, -72f)));
+                    Assert.That(rect.anchoredPosition, Is.EqualTo(new Vector2(-72f, -92f)));
                     Assert.That(rect.sizeDelta, Is.EqualTo(new Vector2(61f, 61f)));
                     Assert.That(close.GetComponent<UnityEngine.UI.Mask>().showMaskGraphic, Is.False);
                     UiTestWait.AssertClickTarget(close);

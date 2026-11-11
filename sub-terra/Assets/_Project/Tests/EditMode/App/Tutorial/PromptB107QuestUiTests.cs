@@ -27,7 +27,7 @@ namespace SubTerra.App.Tests.Tutorial
             void Check(Transform target)
             {
                 var rect = (RectTransform)target;
-                Assert.That(rect.anchoredPosition, Is.EqualTo(new Vector2(-72f, -72f)));
+                Assert.That(rect.anchoredPosition, Is.EqualTo(new Vector2(-72f, -92f)));
                 Assert.That(rect.sizeDelta, Is.EqualTo(new Vector2(61f, 61f)));
                 Assert.That(target.GetComponent<UnityEngine.UI.Mask>().showMaskGraphic, Is.False);
                 Assert.That(target.GetComponent<UnityEngine.UI.Image>().sprite.name, Is.EqualTo("quest-close-corner-mask"));
@@ -44,7 +44,7 @@ namespace SubTerra.App.Tests.Tutorial
                     Assert.That(image.offsetMax, Is.EqualTo(Vector2.zero));
                 }
                 PromptB107QuestUiBuilder.ApplyDetailsCloseLayout(rect);
-                Assert.That(rect.anchoredPosition, Is.EqualTo(new Vector2(-72f, -72f)));
+                Assert.That(rect.anchoredPosition, Is.EqualTo(new Vector2(-72f, -92f)));
             }
         }
 

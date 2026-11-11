@@ -34,7 +34,7 @@ namespace SubTerra.App.Editor.DataValidation
 
         public static void ApplyDetailsCloseLayout(RectTransform close)
         {
-            Place(close, -72f, -72f, 61f, 61f, Vector2.one, new Vector2(.5f, .5f));
+            Place(close, -72f, -92f, 61f, 61f, Vector2.one, new Vector2(.5f, .5f));
             var image = close.GetComponent<UnityEngine.UI.Image>();
             image.sprite = LoadCloseCornerMask();
             image.color = Color.white;
