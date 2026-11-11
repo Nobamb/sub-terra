@@ -89,7 +89,7 @@ namespace SubTerra.App.Tests.Audio
 
         [TestCase(false)]
         [TestCase(true)]
-        public void Dropdown_OpenAndChange_RequestExactlyOnceAfterRepeatedWiring(bool building)
+        public void Dropdown_OpenCloseAndChange_RequestExactlyOnceAfterRepeatedWiring(bool building)
         {
             var dropdown = Control<TMP_Dropdown>(Spawn(building));
             Assert.That(dropdown.GetComponents<UiSearchSortClickSfx>().Length, Is.EqualTo(1));
@@ -99,15 +99,18 @@ namespace SubTerra.App.Tests.Audio
             Assert.That(requests, Is.EqualTo(new[] { SfxId.UiClick }));
             Assert.That(player.StartedCount, Is.EqualTo(before + 1));
             Expand(dropdown);
-            now += 0.1f;
-            dropdown.value = (dropdown.value + 1) % dropdown.options.Count;
+            Press(dropdown.gameObject);
             Assert.That(requests, Is.EqualTo(new[] { SfxId.UiClick, SfxId.UiClick }));
             Assert.That(player.StartedCount, Is.EqualTo(before + 2));
+            now += 0.1f;
+            dropdown.value = (dropdown.value + 1) % dropdown.options.Count;
+            Assert.That(requests, Is.EqualTo(new[] { SfxId.UiClick, SfxId.UiClick, SfxId.UiClick }));
+            Assert.That(player.StartedCount, Is.EqualTo(before + 3));
         }
 
         [TestCase(false)]
         [TestCase(true)]
-        public void Dropdown_HoverCloseRightClickDisabledAndCodeReset_AreSilent(bool building)
+        public void Dropdown_HoverRightClickDisabledAndCodeReset_AreSilent(bool building)
         {
             var dropdown = Control<TMP_Dropdown>(Spawn(building));
             requests.Clear();
@@ -118,7 +121,6 @@ namespace SubTerra.App.Tests.Audio
             dropdown.interactable = true;
             dropdown.value = (dropdown.value + 1) % dropdown.options.Count;
             Expand(dropdown);
-            Press(dropdown.gameObject);
             dropdown.SetValueWithoutNotify((dropdown.value + 1) % dropdown.options.Count);
             Assert.That(requests, Is.Empty);
         }

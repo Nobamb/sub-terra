@@ -79,11 +79,19 @@ namespace SubTerra.App.Tests.PlayMode
 
                 yield return Click(dropdown.gameObject);
                 clicks = 0;
-                ExecuteEvents.Execute(dropdown.gameObject, new PointerEventData(EventSystem.current), ExecuteEvents.pointerDownHandler);
-                dropdown.Hide();
-                dropdown.SetValueWithoutNotify(0);
-                Assert.That(clicks, Is.Zero, "열린 상태 누르기·닫기·코드 초기화");
+                yield return Click(dropdown.gameObject);
                 yield return new WaitForSecondsRealtime(0.3f);
+                Assert.That(dropdown.IsExpanded, Is.False);
+                Assert.That(clicks, Is.EqualTo(1), "헤더 재클릭으로 닫기");
+
+                yield return Click(dropdown.gameObject);
+                clicks = 0;
+                yield return Click(new Vector2(8f, 8f));
+                yield return new WaitForSecondsRealtime(0.3f);
+                Assert.That(dropdown.IsExpanded, Is.False);
+                Assert.That(clicks, Is.Zero, "바깥 클릭으로 닫기");
+                dropdown.SetValueWithoutNotify(0);
+                Assert.That(clicks, Is.Zero, "코드 초기화");
 
                 clicks = 0;
                 input.Select();
@@ -116,10 +124,15 @@ namespace SubTerra.App.Tests.PlayMode
 
         private IEnumerator Click(GameObject target)
         {
-            yield return UiTestWait.FocusGameView();
             Canvas.ForceUpdateCanvases();
             var rect = (RectTransform)target.transform;
             var position = RectTransformUtility.WorldToScreenPoint(null, rect.TransformPoint(rect.rect.center));
+            yield return Click(position);
+        }
+
+        private IEnumerator Click(Vector2 position)
+        {
+            yield return UiTestWait.FocusGameView();
             var mouse = environment.Mouse;
             mouse.MakeCurrent();
             InputSystem.QueueStateEvent(mouse, new MouseState { position = position });

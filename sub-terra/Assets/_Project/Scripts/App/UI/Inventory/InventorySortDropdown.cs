@@ -1,3 +1,4 @@
+using SubTerra.App.Audio;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -31,6 +32,29 @@ namespace SubTerra.App.UI.Inventory
             }
 
             return list;
+        }
+
+        protected override GameObject CreateBlocker(Canvas rootCanvas)
+        {
+            var blocker = base.CreateBlocker(rootCanvas);
+            var sound = GetComponent<UiSearchSortClickSfx>();
+            if (sound == null) return blocker;
+
+            // 열린 동안 헤더 재클릭도 TMP 차단막이 받는다. 바깥 클릭과 구분해 소리를 낸다.
+            var trigger = blocker.AddComponent<EventTrigger>();
+            var entry = new EventTrigger.Entry { eventID = EventTriggerType.PointerDown };
+            entry.callback.AddListener(data =>
+            {
+                var pointer = data as PointerEventData;
+                if (pointer != null && IsExpanded && sound != null
+                    && RectTransformUtility.RectangleContainsScreenPoint(
+                        transform as RectTransform, pointer.position, pointer.pressEventCamera))
+                {
+                    sound.OnPointerDown(pointer);
+                }
+            });
+            trigger.triggers.Add(entry);
+            return blocker;
         }
 
         public override void OnSubmit(BaseEventData eventData)

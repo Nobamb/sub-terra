@@ -5,7 +5,7 @@ using UnityEngine.EventSystems;
 
 namespace SubTerra.App.Audio
 {
-    /// <summary>B-192: 검색 시작·정렬 펼침·항목 변경에만 기존 클릭음을 연결한다.</summary>
+    /// <summary>B-192: 검색 시작·정렬 헤더 누름·항목 변경에 기존 클릭음을 연결한다.</summary>
     [DisallowMultipleComponent]
     public sealed class UiSearchSortClickSfx : MonoBehaviour, IPointerDownHandler
     {
@@ -53,7 +53,7 @@ namespace SubTerra.App.Audio
         public void OnPointerDown(PointerEventData eventData)
         {
             if (eventData.button != PointerEventData.InputButton.Left) return;
-            if (dropdown != null && dropdown.IsActive() && dropdown.IsInteractable() && !dropdown.IsExpanded)
+            if (dropdown != null && dropdown.IsActive() && dropdown.IsInteractable())
             {
                 SfxPlayer.Play(SfxId.UiClick);
             }
