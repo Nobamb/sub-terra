@@ -32,6 +32,9 @@ namespace SubTerra.App.UI
         private Action closeCompleted;
         // B-169: 소리 기준의 '보이는 창' 상태. 열기 소리를 낸 뒤 true, 닫기 시작·비활성화에서 false.
         private bool shown;
+        // B-191: 창 안 페이지처럼 소리 없이 더 짧게 켜는 가벼운 재생.
+        private float speed = 1f;
+        private bool silent;
 
         public bool IsPlaying { get; private set; }
         public bool IsClosing { get; private set; }
@@ -49,6 +52,22 @@ namespace SubTerra.App.UI
             var motion = root.GetComponent<TerminalWindowOpenMotion>();
             if (motion == null) motion = root.AddComponent<TerminalWindowOpenMotion>();
             motion.enabled = true;
+            motion.speed = 1f;
+            motion.silent = false;
+            motion.PlayOpen();
+        }
+
+        /// <summary>
+        /// B-191: 이미 열린 창 안의 페이지에만 같은 켜짐을 소리 없이 더 빠르게 건다(건설 상세).
+        /// </summary>
+        public static void OpenLight(GameObject root, float speedMultiplier)
+        {
+            if (root == null || !(root.transform is RectTransform)) return;
+            var motion = root.GetComponent<TerminalWindowOpenMotion>();
+            if (motion == null) motion = root.AddComponent<TerminalWindowOpenMotion>();
+            motion.enabled = true;
+            motion.speed = Mathf.Max(1f, speedMultiplier);
+            motion.silent = true;
             motion.PlayOpen();
         }
 
@@ -66,6 +85,12 @@ namespace SubTerra.App.UI
                 }
                 completed?.Invoke();
                 return;
+            }
+            // B-191-3: 소리 없이 짧게 켰던 창(OpenLight)도 닫을 때는 일반 창과 같은 길이·소리로 꺼진다.
+            if (!motion.IsPlaying)
+            {
+                motion.speed = 1f;
+                motion.silent = false;
             }
             motion.PlayClose(completed);
         }
@@ -116,14 +141,14 @@ namespace SubTerra.App.UI
         {
             if (shown) return;
             shown = true;
-            WindowTvSfx.Play(SfxId.WindowTvOpen);
+            if (!silent) WindowTvSfx.Play(SfxId.WindowTvOpen);
         }
 
         private void PlayCloseSound()
         {
             if (!shown) return;
             shown = false;
-            WindowTvSfx.Play(SfxId.WindowTvClose);
+            if (!silent) WindowTvSfx.Play(SfxId.WindowTvClose);
         }
 
         private void PlayClose(Action completed)
@@ -156,7 +181,7 @@ namespace SubTerra.App.UI
                 else Restore();
                 return;
             }
-            progress = Mathf.Clamp01(progress + Mathf.Max(0f, deltaTime) * (IsClosing ? -1f / CloseDuration : 1f / Duration));
+            progress = Mathf.Clamp01(progress + Mathf.Max(0f, deltaTime) * speed * (IsClosing ? -1f / CloseDuration : 1f / Duration));
             if (IsClosing && progress <= 0f) FinishClose();
             else if (!IsClosing && progress >= 1f) Restore();
             else ApplyFrame();

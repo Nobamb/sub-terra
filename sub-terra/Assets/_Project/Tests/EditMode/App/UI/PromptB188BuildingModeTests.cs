@@ -81,7 +81,7 @@ namespace SubTerra.App.Tests.UI
         }
 
         [Test]
-        public void Prefab_DefaultIsRailWithHintAndNoControlGuideText()
+        public void Prefab_DefaultIsRailWithoutHintAndNoControlGuideText()
         {
             var menu = AssetDatabase.LoadAssetAtPath<GameObject>(MenuPath);
             var view = menu.GetComponent<BuildingMenuView>();
@@ -91,7 +91,8 @@ namespace SubTerra.App.Tests.UI
             Assert.That(Find(menu.transform, "CatalogWindow").gameObject.activeSelf, Is.False);
             Assert.That(Find(menu.transform, "Card").gameObject.activeSelf, Is.False);
             Assert.That(Find(menu.transform, "ExpandButton/Label").GetComponent<TMP_Text>().text, Is.EqualTo(">>"));
-            Assert.That(Find(menu.transform, "HintText").GetComponent<TMP_Text>().text, Is.EqualTo("시설을 고르세요"));
+            // B-191-3: 미선택 안내(`시설을 고르세요`)는 두지 않는다.
+            Assert.That(menu.GetComponentsInChildren<Transform>(true).Any(t => t.name == "HintChip" || t.name == "HintText"), Is.False);
             Assert.That(Find(menu.transform, "Placeholder").GetComponent<TMP_Text>().text, Is.EqualTo("시설명 검색"));
             Assert.That(Find(menu.transform, "BackButton/Label").GetComponent<TMP_Text>().text, Does.Contain("시설 목록"));
 
@@ -149,10 +150,9 @@ namespace SubTerra.App.Tests.UI
                 var listPage = Find(menu.transform, "ListPage").gameObject;
                 var detailPage = Find(menu.transform, "DetailPage").gameObject;
                 var card = Find(menu.transform, "Card").gameObject;
-                var hint = Find(menu.transform, "HintChip").gameObject;
                 var empty = Find(menu.transform, "EmptyResult").gameObject;
                 var expand = Find(menu.transform, "ExpandButton/Label").GetComponent<TMP_Text>();
-                Assert.That(hint.activeSelf, Is.True);
+                Assert.That(card.activeSelf, Is.False);
                 Assert.That(catalogWindow.activeSelf, Is.False);
 
                 // `>>`: 레일은 그대로, 옆에 목록. 작은 카드·힌트는 접힌다.
@@ -160,7 +160,7 @@ namespace SubTerra.App.Tests.UI
                 Assert.That(Find(menu.transform, "Rail").gameObject.activeSelf, Is.True);
                 Assert.That(catalogWindow.activeSelf && listPage.activeSelf, Is.True);
                 Assert.That(detailPage.activeSelf, Is.False);
-                Assert.That(card.activeSelf || hint.activeSelf, Is.False);
+                Assert.That(card.activeSelf, Is.False);
                 Assert.That(expand.text, Is.EqualTo("<<"));
                 Assert.That(VisibleRowIds(menu), Has.Count.EqualTo(items.Count));
                 var ladderRow = Row(menu, DataIds.Buildings.LadderBasic);
@@ -209,8 +209,9 @@ namespace SubTerra.App.Tests.UI
                 Assert.That(VisibleRowIds(menu), Is.EqualTo(new[] { DataIds.Buildings.ChargerBasic }));
                 Assert.That(menu.activeSelf, Is.True);
 
-                // `<<`: 레일+카드로 접힌다.
+                // `<<`: 레일+카드로 접힌다. B-191: 큰 창은 TV 꺼짐 연출이 끝난 뒤 꺼진다.
                 view.ToggleExpanded();
+                catalogWindow.GetComponent<SubTerra.App.UI.TerminalWindowOpenMotion>().Advance(1f);
                 Assert.That(catalogWindow.activeSelf, Is.False);
                 Assert.That(card.activeSelf, Is.True);
 
@@ -241,10 +242,11 @@ namespace SubTerra.App.Tests.UI
                 view.SetBuildingList(CatalogItems(0, 0));
                 view.ClearSelection();
                 Assert.That(chip.activeSelf, Is.False);
-                view.SetStatusMessage("시설 설치가 완료되었습니다.");
+                // B-191: 취소·설치 완료 문구는 없어졌고, 설치 불가 이유는 그대로 이 칸에 뜬다.
+                view.SetStatusMessage("자원이 부족합니다.");
                 Assert.That(chip.activeSelf, Is.True);
-                Assert.That(Find(menu.transform, "StatusText").GetComponent<TMP_Text>().text, Is.EqualTo("시설 설치가 완료되었습니다."));
-                Assert.That(Find(menu.transform, "AvailabilityText").GetComponent<TMP_Text>().text, Does.Not.Contain("설치가 완료"));
+                Assert.That(Find(menu.transform, "StatusText").GetComponent<TMP_Text>().text, Is.EqualTo("자원이 부족합니다."));
+                Assert.That(Find(menu.transform, "AvailabilityText").GetComponent<TMP_Text>().text, Does.Not.Contain("자원이 부족"));
                 view.SetStatusMessage(string.Empty);
                 Assert.That(chip.activeSelf, Is.False);
             }

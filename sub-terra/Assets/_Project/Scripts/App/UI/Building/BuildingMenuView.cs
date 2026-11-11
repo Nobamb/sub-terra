@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Text;
 using SubTerra.App.Audio;
 using SubTerra.App.Core.Data;
+using SubTerra.App.UI.Drone;
 using SubTerra.Shared.Audio;
 using TMPro;
 using UnityEngine;
@@ -17,6 +18,11 @@ namespace SubTerra.App.UI.Building
     public sealed class BuildingMenuView : MonoBehaviour, IBuildingMenuView
     {
         public const string SearchPauseOwner = "building.search";
+        // B-191 ★ 건설 UI 전체를 드론 말풍선 바로 위에 둔다. 퀘스트 팝업(30_500)·긴급 구출·일반 팝업·설정창보다는 아래.
+        public const int SortingOrderAboveDroneBubble = 100;
+        public const int CanvasSortingOrder = DroneDialogueSocket.OverlaySortingOrder + SortingOrderAboveDroneBubble;
+        // B-191 ★ 큰 창이 이미 열린 뒤 상세 페이지에만 거는 가벼운 TV 켜짐 배속.
+        public const float DetailMotionSpeed = 1.6f;
 
         [SerializeField] private TMP_Text buildingListText;
         [SerializeField] private TMP_Text selectionText;
@@ -50,7 +56,6 @@ namespace SubTerra.App.UI.Building
         [SerializeField] private RectTransform rail;
         [SerializeField] private Button expandButton;
         [SerializeField] private TMP_Text expandLabel;
-        [SerializeField] private GameObject hintChip;
         [SerializeField] private GameObject card;
         [SerializeField] private GameObject statusChip;
         [SerializeField] private GameObject catalogWindow;
@@ -69,6 +74,12 @@ namespace SubTerra.App.UI.Building
         [SerializeField] private Image detailPageStatusAccent;
         // 레일 아이콘 호버 시 오른쪽에 뜨는 홀로그램 이름표.
         [SerializeField] private BuildingRailHologram railHologram;
+        [SerializeField] private BuildingRailHologram[] railHolograms = new BuildingRailHologram[0];
+        // B-191: 정렬 드롭다운·목록 칸 부모·건설 UI 전용 Canvas.
+        [SerializeField] private TMP_Dropdown sortDropdown;
+        [SerializeField] private RectTransform catalogContent;
+        [SerializeField] private ScrollRect catalogScroll;
+        [SerializeField] private Canvas modeCanvas;
 
         private readonly BuildingModeNavigation navigation = new BuildingModeNavigation();
         private readonly List<BuildingMenuItemReadModel> cachedItems = new List<BuildingMenuItemReadModel>();
@@ -78,7 +89,13 @@ namespace SubTerra.App.UI.Building
         private bool hasAvailability;
         private bool controlsWired;
         private bool searchPauseHeld;
-        private bool railHoverActive;
+        private bool catalogOpen;
+        // B-191-3: 카드의 논리 표시 상태. 꺼짐 연출 중에는 false지만 GameObject는 아직 켜져 있다.
+        private bool cardShown;
+        // 선택 해제 직후 같은 프레임에 다른 시설이 골라지거나(교체) 건설 모드가 닫히면 카드 꺼짐을 걸지 않는다.
+        private bool cardClosePending;
+        private readonly List<BuildingMenuCatalogRowView> matchedRows = new List<BuildingMenuCatalogRowView>();
+        private readonly List<string> matchedNames = new List<string>();
 
         public Button CloseButton => closeButton;
         public bool UsesStructuredLayout => entries != null && entries.Length > 0 && detailNameText != null;
@@ -89,34 +106,41 @@ namespace SubTerra.App.UI.Building
         public Button BackButton => backButton;
         public string SelectedBuildingId => selectedBuildingId;
         public BuildingRailHologram RailHologram => railHologram;
+        public TMP_Dropdown SortDropdown => sortDropdown;
+        public Canvas ModeCanvas => modeCanvas;
+        public ScrollRect CatalogScroll => catalogScroll;
+        public bool IsCardShown => cardShown;
 
         private void Awake()
         {
             HideLegacyChrome();
             WireControls();
-            ApplyPage();
+            ApplyCanvasOrder();
+            ApplyPage(true);
         }
 
         private void OnEnable()
         {
             HideLegacyChrome();
             WireControls();
-            ApplyPage();
+            ApplyCanvasOrder();
+            ApplyPage(true);
             PlayOpenMotion();
         }
 
         private void OnDisable()
         {
             ReleaseSearchPause();
+            HideRailHoverNow();
         }
 
         private void Update()
         {
-            // 검색창에 글자를 치는 동안에는 B·C·이동 키가 월드로 가지 않게 기존 UI 정지 게이트를 잡는다.
-            var typing = searchField != null
-                && searchField.isFocused
-                && navigation.Page == BuildingModePage.List
-                && !IsClosing();
+            // 검색창에 글자를 치거나 정렬 목록을 펼친 동안에는 B·C·이동 키가 월드로 가지 않게 기존 UI 정지 게이트를 잡는다.
+            var typing = navigation.Page == BuildingModePage.List
+                && !IsClosing()
+                && ((searchField != null && searchField.isFocused)
+                    || (sortDropdown != null && sortDropdown.IsExpanded));
             if (typing && !searchPauseHeld)
             {
                 UiPauseGate.Acquire(SearchPauseOwner);
@@ -125,6 +149,26 @@ namespace SubTerra.App.UI.Building
             else if (!typing && searchPauseHeld)
             {
                 ReleaseSearchPause();
+            }
+        }
+
+        private void LateUpdate()
+        {
+            FlushPendingCardClose();
+
+            // TMP의 text는 확정된 글자만 준다. 표시 문자열에는 IME로 조합 중인 글자도 들어 있어 키를 누를 때마다 거를 수 있다.
+            if (searchField == null
+                || !searchField.isFocused
+                || searchField.textComponent == null
+                || navigation.Page != BuildingModePage.List)
+            {
+                return;
+            }
+
+            var shown = searchField.textComponent.text.TrimEnd('\u200B');
+            if (shown != navigation.Query)
+            {
+                OnSearchChanged(shown);
             }
         }
 
@@ -185,6 +229,7 @@ namespace SubTerra.App.UI.Building
                 selectedIcon.enabled = false;
             }
 
+            var changed = selectedBuildingId != item.BuildingId;
             selectedBuildingId = item.BuildingId;
             ReplaceCachedItem(item);
             RefreshEntrySelection();
@@ -206,6 +251,12 @@ namespace SubTerra.App.UI.Building
 
             ApplyPage();
             RenderDetail();
+
+            // B-191-3: 목록이 펼쳐진 채 레일에서 새 시설을 고르면 그 행이 보이도록 스크롤을 옮긴다(같은 시설 갱신은 제외).
+            if (changed && navigation.Page == BuildingModePage.List)
+            {
+                FocusCatalogRow(item.BuildingId);
+            }
         }
 
         public void ClearSelection()
@@ -214,7 +265,27 @@ namespace SubTerra.App.UI.Building
             selectedCosts = null;
             hasAvailability = false;
             RefreshEntrySelection();
+            ApplyPage();
 
+            // B-191-3: 카드가 꺼지는 연출 동안에는 보던 내용을 그대로 두고, 다 꺼진 뒤 비운다.
+            if (!IsCardVisibleWithoutSelection())
+            {
+                ResetSelectionContent();
+            }
+
+            RenderDetail();
+        }
+
+        private bool IsCardVisibleWithoutSelection()
+        {
+            return UsesBuildingMode
+                && card != null
+                && card.activeSelf
+                && string.IsNullOrEmpty(selectedBuildingId);
+        }
+
+        private void ResetSelectionContent()
+        {
             if (selectionText != null)
             {
                 selectionText.text = UsesBuildingMode
@@ -248,8 +319,6 @@ namespace SubTerra.App.UI.Building
             }
             SetActive(costSection, false);
             HideCostRows(costRows, 0);
-            ApplyPage();
-            RenderDetail();
         }
 
         private void HideLegacyChrome()
@@ -285,7 +354,12 @@ namespace SubTerra.App.UI.Building
 
             if (UsesStructuredLayout)
             {
-                ShowAvailabilityBanner(availability);
+                // 꺼지는 중인 카드의 상태 칸은 그대로 두고, 다 꺼진 뒤 마지막 값으로 맞춘다.
+                if (!IsCardVisibleWithoutSelection())
+                {
+                    ShowAvailabilityBanner(availability);
+                }
+
                 return;
             }
 
@@ -376,42 +450,57 @@ namespace SubTerra.App.UI.Building
                 return;
             }
 
+            for (var i = 0; i < entries.Length; i++)
+            {
+                var matches = entries[i] != null && entries[i].BuildingId == buildingId;
+                if (entries[i] != null) entries[i].SetHovered(matches);
+                if (matches && i < railHolograms.Length && railHolograms[i] != null)
+                {
+                    if (railHologram != railHolograms[i]) railHologram.Hide(null);
+                    railHologram = railHolograms[i];
+                }
+            }
+
             var item = FindItem(buildingId);
             var displayName = item != null && !string.IsNullOrEmpty(item.DisplayName)
                 ? item.DisplayName
                 : ItemDisplayNames.Building(buildingId);
             railHologram.Show(anchor, displayName);
-            SetRailHoverActive(railHologram.IsShown);
+            railHologram.transform.SetAsLastSibling();
         }
 
         public void HideRailHover(RectTransform anchor)
         {
+            if (anchor != null)
+            {
+                var entry = anchor.GetComponent<BuildingMenuEntryVisual>();
+                if (entry != null) entry.SetHovered(false);
+            }
+
+            foreach (var hologram in railHolograms)
+            {
+                if (hologram != null) hologram.Hide(anchor);
+            }
             if (railHologram != null)
             {
                 railHologram.Hide(anchor);
-                SetRailHoverActive(railHologram.IsShown && !railHologram.IsClosing);
             }
         }
 
         private void HideRailHoverNow()
         {
+            foreach (var entry in entries)
+            {
+                if (entry != null) entry.ClearHover();
+            }
+            foreach (var hologram in railHolograms)
+            {
+                if (hologram != null) hologram.HideNow();
+            }
             if (railHologram != null)
             {
                 railHologram.HideNow();
             }
-
-            railHoverActive = false;
-        }
-
-        private void SetRailHoverActive(bool active)
-        {
-            if (railHoverActive == active)
-            {
-                return;
-            }
-
-            railHoverActive = active;
-            ApplyPage();
         }
 
         /// <summary>B-188 `>>`/`<<`: 전체 목록을 펼치거나 레일+카드로 접는다.</summary>
@@ -464,6 +553,52 @@ namespace SubTerra.App.UI.Building
             ApplySearchFilter();
         }
 
+        /// <summary>B-191: 목록 정렬을 바꾼다. 검색어와 레일 순서는 그대로다.</summary>
+        public void SetSort(BuildingCatalogSort sort)
+        {
+            navigation.SetSort(sort);
+            if (sortDropdown != null && sortDropdown.value != (int)navigation.Sort)
+            {
+                sortDropdown.SetValueWithoutNotify((int)navigation.Sort);
+            }
+
+            ApplySearchFilter();
+            ScrollCatalogToTop();
+        }
+
+        private void OnSortChanged(int index)
+        {
+            navigation.SetSort(BuildingCatalogQuery.FromIndex(index));
+            ApplySearchFilter();
+            ScrollCatalogToTop();
+        }
+
+        private void ScrollCatalogToTop()
+        {
+            if (catalogScroll != null)
+            {
+                catalogScroll.verticalNormalizedPosition = 1f;
+            }
+        }
+
+        private void CloseSortList()
+        {
+            if (sortDropdown != null && sortDropdown.IsExpanded)
+            {
+                sortDropdown.Hide();
+            }
+        }
+
+        private void ApplyCanvasOrder()
+        {
+            // 프리팹 값과 별개로 켤 때마다 상수로 다시 맞춘다(말풍선 값이 바뀌어도 따라간다).
+            if (modeCanvas != null)
+            {
+                modeCanvas.overrideSorting = true;
+                modeCanvas.sortingOrder = CanvasSortingOrder;
+            }
+        }
+
         private void HideImmediately()
         {
             ResetMode();
@@ -481,7 +616,12 @@ namespace SubTerra.App.UI.Building
                 searchField.SetTextWithoutNotify(string.Empty);
             }
 
-            ApplyPage();
+            if (sortDropdown != null && sortDropdown.value != (int)navigation.Sort)
+            {
+                sortDropdown.SetValueWithoutNotify((int)navigation.Sort);
+            }
+
+            ApplyPage(true);
             ApplySearchFilter();
         }
 
@@ -559,9 +699,16 @@ namespace SubTerra.App.UI.Building
                 searchField.onValueChanged.RemoveListener(OnSearchChanged);
                 searchField.onValueChanged.AddListener(OnSearchChanged);
             }
+
+            if (sortDropdown != null)
+            {
+                sortDropdown.onValueChanged.RemoveListener(OnSortChanged);
+                sortDropdown.onValueChanged.AddListener(OnSortChanged);
+            }
         }
 
-        private void ApplyPage()
+        /// <param name="instant">건설 모드를 열고 닫을 때처럼 연출 없이 바로 맞춘다.</param>
+        private void ApplyPage(bool instant = false)
         {
             if (!UsesBuildingMode)
             {
@@ -570,23 +717,283 @@ namespace SubTerra.App.UI.Building
 
             var page = navigation.Page;
             var hasSelection = !string.IsNullOrEmpty(selectedBuildingId);
-            if (page != BuildingModePage.Rail)
+            var expanded = page != BuildingModePage.Rail;
+            if (expanded)
             {
-                // 큰 창을 펼치면 이름표는 목록이 대신하므로 바로 지운다.
+                // 큰 창을 펼치면 이름표는 목록이 대신하므로 바로 지운다(안내 대기도 함께 취소).
                 HideRailHoverNow();
             }
 
-            SetActive(catalogWindow, page != BuildingModePage.Rail);
-            SetActive(listPage, page == BuildingModePage.List);
-            SetActive(detailPage, page == BuildingModePage.Detail);
-            SetActive(card, page == BuildingModePage.Rail && hasSelection);
-            // "시설을 고르세요"는 호버 이름표가 떠 있는 동안 비켜 준다(이름표에 반쯤 가려 글자가 잘려 보이지 않게).
-            SetActive(hintChip, page == BuildingModePage.Rail && !hasSelection && !railHoverActive);
+            if (page != BuildingModePage.List)
+            {
+                CloseSortList();
+            }
+
+            var catalogWasOpen = catalogOpen;
+            ApplyCatalogWindow(expanded, instant);
+            // `<<`로 접히는 연출 동안에는 보던 페이지를 그대로 두고, 연출이 끝나면 함께 끈다.
+            if (expanded || instant)
+            {
+                SetActive(listPage, page == BuildingModePage.List);
+                ApplyDetailPage(page == BuildingModePage.Detail, !instant && catalogWasOpen);
+            }
+
+            // `<<`로 접히며 다시 보이는 카드는 큰 창 꺼짐 소리와 겹치지 않게 소리 없이 짧게 켠다.
+            ApplyCard(page == BuildingModePage.Rail && hasSelection, instant, catalogWasOpen && !expanded);
             SetActive(statusChip, page == BuildingModePage.Rail
                 && statusText != null && !string.IsNullOrEmpty(statusText.text));
             if (expandLabel != null)
             {
                 expandLabel.text = navigation.ExpandLabel;
+            }
+        }
+
+        /// <summary>
+        /// B-191-3: 레일에서 시설을 고르면 카드도 큰 창과 같은 TV 켜짐으로 나타나고, 선택을 풀면 TV 꺼짐으로 사라진다.
+        /// 큰 창을 펼치거나 건설 모드를 열고 닫을 때는 연출 없이 바로 맞춘다.
+        /// </summary>
+        private void ApplyCard(bool show, bool instant, bool quiet)
+        {
+            if (card == null)
+            {
+                return;
+            }
+
+            if (instant || navigation.Page != BuildingModePage.Rail)
+            {
+                cardClosePending = false;
+                cardShown = show;
+                TerminalWindowOpenMotion.Stop(card);
+                SetActive(card, show);
+                if (!show && string.IsNullOrEmpty(selectedBuildingId))
+                {
+                    ResetSelectionContent();
+                }
+
+                return;
+            }
+
+            if (show)
+            {
+                var closeWasPending = cardClosePending;
+                cardClosePending = false;
+                if (cardShown)
+                {
+                    return;
+                }
+
+                cardShown = true;
+                // 해제 직후 같은 프레임에 다른 시설을 고른 교체: 카드는 켜진 그대로 내용만 바꾼다.
+                if (closeWasPending && card.activeSelf)
+                {
+                    return;
+                }
+
+                SetActive(card, true);
+                if (card.activeInHierarchy && !IsClosing())
+                {
+                    if (quiet)
+                    {
+                        TerminalWindowOpenMotion.OpenLight(card, DetailMotionSpeed);
+                    }
+                    else
+                    {
+                        TerminalWindowOpenMotion.Open(card);
+                    }
+                }
+
+                return;
+            }
+
+            if (cardShown)
+            {
+                cardShown = false;
+                cardClosePending = true;
+            }
+        }
+
+        /// <summary>선택 해제 뒤 프레임 끝까지 다시 골라지지 않았으면 카드 꺼짐을 시작한다. LateUpdate가 부른다.</summary>
+        public void FlushPendingCardClose()
+        {
+            if (!cardClosePending)
+            {
+                return;
+            }
+
+            cardClosePending = false;
+            if (cardShown || card == null)
+            {
+                return;
+            }
+
+            // 건설 모드 전체가 닫히는 중이면 카드는 패널과 함께 밀려 나가고, 다 닫힌 뒤 ResetMode가 정리한다.
+            if (IsClosing())
+            {
+                return;
+            }
+
+            if (!card.activeInHierarchy)
+            {
+                FinishCardClose();
+                return;
+            }
+
+            TerminalWindowOpenMotion.Close(card, FinishCardClose);
+        }
+
+        private void FinishCardClose()
+        {
+            // 꺼지는 도중 다시 골랐거나, 부모가 꺼지는 중(OnDisable)이면 건드리지 않는다. 다음 ApplyPage가 맞춘다.
+            if (cardShown || card == null || (card.activeSelf && !card.activeInHierarchy))
+            {
+                return;
+            }
+
+            SetActive(card, false);
+            if (string.IsNullOrEmpty(selectedBuildingId))
+            {
+                ResetSelectionContent();
+                if (UsesStructuredLayout && availabilityText != null)
+                {
+                    ShowAvailabilityBanner(latestAvailability);
+                }
+            }
+        }
+
+        /// <summary>B-191-3: 목록 행을 보이는 영역 가운데로 옮긴다. 끝 쪽 행은 스크롤 끝에 붙여 보인다.</summary>
+        private void FocusCatalogRow(string buildingId)
+        {
+            if (catalogScroll == null || catalogContent == null || catalogScroll.viewport == null || catalogRows == null)
+            {
+                return;
+            }
+
+            RectTransform rowRect = null;
+            for (var i = 0; i < catalogRows.Length; i++)
+            {
+                if (catalogRows[i] != null && catalogRows[i].BuildingId == buildingId)
+                {
+                    rowRect = catalogRows[i].transform as RectTransform;
+                    break;
+                }
+            }
+
+            // 검색으로 숨은 행은 따라가지 않는다.
+            if (rowRect == null || !rowRect.gameObject.activeInHierarchy)
+            {
+                return;
+            }
+
+            LayoutRebuilder.ForceRebuildLayoutImmediate(catalogContent);
+            var center = catalogContent.InverseTransformPoint(rowRect.TransformPoint(rowRect.rect.center)).y;
+            var fromTop = catalogContent.rect.yMax - center;
+            catalogScroll.StopMovement();
+            catalogScroll.verticalNormalizedPosition = BuildingCatalogScrollFocus.CenteredNormalizedPosition(
+                fromTop,
+                catalogContent.rect.height,
+                catalogScroll.viewport.rect.height);
+        }
+
+        /// <summary>
+        /// B-191: `>>` 큰 창은 인벤토리·설정과 같은 TV 켜짐으로 나타나고 `<<`로는 거꾸로 접힌다.
+        /// 연출 중에도 입력을 막지 않으며, 다시 누르면 지금 진행 위치에서 방향만 바꾼다.
+        /// </summary>
+        private void ApplyCatalogWindow(bool expanded, bool instant)
+        {
+            if (catalogWindow == null)
+            {
+                return;
+            }
+
+            if (instant)
+            {
+                catalogOpen = expanded;
+                TerminalWindowOpenMotion.Stop(catalogWindow);
+                SetActive(catalogWindow, expanded);
+                return;
+            }
+
+            if (expanded)
+            {
+                if (catalogOpen && catalogWindow.activeSelf)
+                {
+                    return;
+                }
+
+                catalogOpen = true;
+                SetActive(catalogWindow, true);
+                if (catalogWindow.activeInHierarchy)
+                {
+                    TerminalWindowOpenMotion.Open(catalogWindow);
+                }
+
+                return;
+            }
+
+            if (!catalogOpen)
+            {
+                if (!TerminalWindowOpenMotion.IsClosingWindow(catalogWindow))
+                {
+                    SetActive(catalogWindow, false);
+                }
+
+                return;
+            }
+
+            catalogOpen = false;
+            if (!catalogWindow.activeInHierarchy)
+            {
+                HideCatalogNow();
+                return;
+            }
+
+            TerminalWindowOpenMotion.Close(catalogWindow, FinishCatalogClose);
+        }
+
+        private void FinishCatalogClose()
+        {
+            // 접는 도중 다시 펼쳤거나, 부모가 꺼지는 중(OnDisable)이면 건드리지 않는다. 다음에 켤 때 ApplyPage가 맞춘다.
+            if (catalogOpen || catalogWindow == null || (catalogWindow.activeSelf && !catalogWindow.activeInHierarchy))
+            {
+                return;
+            }
+
+            HideCatalogNow();
+        }
+
+        private void HideCatalogNow()
+        {
+            if (detailPage != null)
+            {
+                TerminalWindowOpenMotion.Stop(detailPage);
+            }
+
+            SetActive(catalogWindow, false);
+            SetActive(listPage, false);
+            SetActive(detailPage, false);
+        }
+
+        private void ApplyDetailPage(bool show, bool animate)
+        {
+            if (detailPage == null)
+            {
+                return;
+            }
+
+            var wasShown = detailPage.activeSelf;
+            if (!show)
+            {
+                // 목록으로 돌아갈 때는 연출 없이 바로 바꾼다.
+                TerminalWindowOpenMotion.Stop(detailPage);
+                SetActive(detailPage, false);
+                return;
+            }
+
+            SetActive(detailPage, true);
+            // 큰 창이 이미 열려 있을 때만 상세 페이지에 짧게 건다. 창과 함께 열리면 창 연출 하나로 충분하다.
+            if (!wasShown && animate && detailPage.activeInHierarchy)
+            {
+                TerminalWindowOpenMotion.OpenLight(detailPage, DetailMotionSpeed);
             }
         }
 
@@ -643,7 +1050,6 @@ namespace SubTerra.App.UI.Building
                 || slideMotion == null
                 || expandButton == null
                 || expandLabel == null
-                || hintChip == null
                 || card == null
                 || statusChip == null
                 || listPage == null
@@ -657,6 +1063,10 @@ namespace SubTerra.App.UI.Building
                 || detailPageFunction == null
                 || detailPageStatus == null
                 || detailPageStatusAccent == null
+                || sortDropdown == null
+                || catalogContent == null
+                || catalogScroll == null
+                || modeCanvas == null
                 || catalogRows == null
                 || catalogRows.Length != (entries != null ? entries.Length : 0)
                 || detailCostRows == null
@@ -734,7 +1144,9 @@ namespace SubTerra.App.UI.Building
                 return;
             }
 
-            var visible = 0;
+            // catalogRows 배열 순서가 기본 순(레일과 같은 순서)이다. 걸러진 칸만 정렬해 보이는 순서를 바꾼다.
+            matchedRows.Clear();
+            matchedNames.Clear();
             for (var i = 0; i < catalogRows.Length; i++)
             {
                 var row = catalogRows[i];
@@ -751,14 +1163,29 @@ namespace SubTerra.App.UI.Building
                         item.DisplayName,
                         BuildingMenuDisplayFormatter.ShortPurpose(item.Description),
                         navigation.Query);
-                row.SetShown(match);
                 if (match)
                 {
-                    visible++;
+                    matchedRows.Add(row);
+                    matchedNames.Add(item != null ? item.DisplayName : string.Empty);
+                }
+                else
+                {
+                    row.SetShown(false);
                 }
             }
 
-            SetActive(emptyResult, visible == 0);
+            var order = BuildingCatalogQuery.Order(matchedNames, navigation.Sort);
+            for (var i = 0; i < order.Count; i++)
+            {
+                var row = matchedRows[order[i]];
+                row.SetShown(true);
+                if (catalogContent != null && row.transform.parent == catalogContent)
+                {
+                    row.transform.SetSiblingIndex(i);
+                }
+            }
+
+            SetActive(emptyResult, matchedRows.Count == 0);
         }
 
         private void RefreshEntrySelection()

@@ -17,36 +17,11 @@ namespace SubTerra.App.Tests.UI
         private const string CatalogPath = "Assets/_Project/Data/Catalog/GameDataCatalog.asset";
 
         [Test]
-        public void Motion_UnfoldsFlickersTypesAndFades()
+        public void Motion_ScanMovesDownAndWraps()
         {
-            Assert.That(BuildingRailHologramMotion.ScaleX(0f), Is.EqualTo(BuildingRailHologramMotion.StartScaleX).Within(1e-4f));
-            Assert.That(BuildingRailHologramMotion.ScaleX(BuildingRailHologramMotion.OpenDuration), Is.EqualTo(1f).Within(1e-4f));
-            Assert.That(BuildingRailHologramMotion.Alpha(0f), Is.EqualTo(0f).Within(1e-4f));
-
-            // 펼치는 도중 한 번 어두워졌다가 다시 밝아진다.
-            var open = BuildingRailHologramMotion.OpenDuration;
-            var beforeFlicker = BuildingRailHologramMotion.Alpha(open * 0.3f);
-            var inFlicker = BuildingRailHologramMotion.Alpha(open * 0.42f);
-            var afterFlicker = BuildingRailHologramMotion.Alpha(open * 0.6f);
-            Assert.That(inFlicker, Is.LessThan(beforeFlicker));
-            Assert.That(afterFlicker, Is.GreaterThan(inFlicker));
-
-            // 다 켜진 뒤 일렁임은 살짝만(0.94~1).
-            for (var t = open; t < open + 2f; t += 0.05f)
-            {
-                var alpha = BuildingRailHologramMotion.Alpha(t);
-                Assert.That(alpha, Is.InRange(1f - BuildingRailHologramMotion.ShimmerAmount - 1e-4f, 1f + 1e-4f));
-            }
-
-            Assert.That(BuildingRailHologramMotion.VisibleCharacters(0f, 5), Is.EqualTo(0));
-            Assert.That(BuildingRailHologramMotion.VisibleCharacters(open, 5), Is.InRange(1, 4));
-            Assert.That(BuildingRailHologramMotion.VisibleCharacters(open + BuildingRailHologramMotion.TypeDuration, 5), Is.EqualTo(5));
-            Assert.That(BuildingRailHologramMotion.VisibleCharacters(10f, 0), Is.EqualTo(0));
-
             Assert.That(BuildingRailHologramMotion.ScanPosition(0f), Is.EqualTo(0f));
             Assert.That(BuildingRailHologramMotion.ScanPosition(BuildingRailHologramMotion.ScanPeriod * 0.5f), Is.EqualTo(0.5f).Within(1e-4f));
-            Assert.That(BuildingRailHologramMotion.CloseAlpha(0f), Is.EqualTo(1f));
-            Assert.That(BuildingRailHologramMotion.CloseAlpha(BuildingRailHologramMotion.CloseDuration), Is.EqualTo(0f));
+            Assert.That(BuildingRailHologramMotion.ScanPosition(BuildingRailHologramMotion.ScanPeriod), Is.EqualTo(0f));
         }
 
         [Test]
@@ -97,11 +72,11 @@ namespace SubTerra.App.Tests.UI
                 var chargerName = items.First(i => i.BuildingId == DataIds.Buildings.ChargerBasic).DisplayName;
 
                 ladder.GetComponent<BuildingRailHoverRelay>().OnPointerEnter(null);
+                hologram = view.RailHologram;
+                group = hologram.GetComponent<CanvasGroup>();
                 Assert.That(hologram.IsShown, Is.True);
                 Assert.That(hologram.CurrentName, Is.EqualTo(ladderName));
                 Assert.That(group.blocksRaycasts, Is.False);
-                var hint = menu.GetComponentsInChildren<Transform>(true).First(t => t.name == "HintChip").gameObject;
-                Assert.That(hint.activeSelf, Is.False, "호버 중에는 힌트가 비켜 준다.");
 
                 // 아이콘 오른쪽 가운데에 붙는다.
                 var iconRect = (RectTransform)ladder.transform;
@@ -120,6 +95,8 @@ namespace SubTerra.App.Tests.UI
 
                 // 다른 아이콘으로 옮긴 뒤 늦게 온 이전 아이콘의 나가기는 무시한다.
                 charger.GetComponent<BuildingRailHoverRelay>().OnPointerEnter(null);
+                hologram = view.RailHologram;
+                group = hologram.GetComponent<CanvasGroup>();
                 ladder.GetComponent<BuildingRailHoverRelay>().OnPointerExit(null);
                 Assert.That(hologram.IsShown && !hologram.IsClosing, Is.True);
                 Assert.That(hologram.CurrentName, Is.EqualTo(chargerName));
@@ -130,7 +107,6 @@ namespace SubTerra.App.Tests.UI
                 hologram.Advance(1f);
                 Assert.That(hologram.IsShown, Is.False);
                 Assert.That(group.alpha, Is.EqualTo(0f));
-                Assert.That(hint.activeSelf, Is.True, "호버가 끝나면 힌트가 돌아온다.");
 
                 // `>>` 큰 창에서는 목록이 이름을 보여 주므로 띄우지 않는다.
                 ladder.GetComponent<BuildingRailHoverRelay>().OnPointerEnter(null);

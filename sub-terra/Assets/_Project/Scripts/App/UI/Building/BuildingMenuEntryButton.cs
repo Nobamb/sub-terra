@@ -46,7 +46,19 @@ namespace SubTerra.App.UI.Building
 
         private void Select()
         {
-            binder?.SelectBuilding(buildingId);
+            if (binder != null)
+            {
+                // 레일만 재클릭 해제한다. 큰 목록 행은 같은 시설도 상세 열기를 유지한다.
+                if (GetComponent<BuildingMenuEntryVisual>() != null
+                    && binder.Presenter != null && binder.Presenter.SelectedBuildingId == buildingId)
+                {
+                    binder.CancelSelection();
+                }
+                else
+                {
+                    binder.SelectBuilding(buildingId);
+                }
+            }
             // 선택 직후에도 키보드 Submit 잔여 대상을 남기지 않는다.
             UiKeyboardSubmitGuard.ClearSelection();
         }

@@ -153,7 +153,8 @@ namespace SubTerra.App.UI.Building
             }
 
             ClearSelectionState();
-            view?.SetStatusMessage("건설 선택을 취소했습니다.");
+            // B-191: 취소 문구는 띄우지 않고 상태 칸을 비워 기본 안내로 돌아간다.
+            view?.SetStatusMessage(string.Empty);
         }
 
         private void RefreshList()
@@ -237,7 +238,8 @@ namespace SubTerra.App.UI.Building
 
             if (result.state == BuildingPlacementState.Placed)
             {
-                view?.SetStatusMessage("시설 설치가 완료되었습니다.");
+                // B-191: 설치 완료 문구는 띄우지 않는다. 설치음은 배치 브리지가 그대로 낸다.
+                view?.SetStatusMessage(string.Empty);
                 ClearSelectionState();
             }
             else if (result.state == BuildingPlacementState.Failed)
