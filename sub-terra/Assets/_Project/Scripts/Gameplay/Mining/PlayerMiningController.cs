@@ -13,7 +13,8 @@ namespace SubTerra.Gameplay.Mining
         [SerializeField] private MiningSystem miningSystem;
         [SerializeField] private InputActionAsset inputActions;
         [SerializeField] private string mineActionPath = "Player/Attack";
-        [SerializeField, Min(0f)] private float reach = 1.35f;
+        public const float DefaultReach = 1.35f;
+        [SerializeField, Min(0f)] private float reach = DefaultReach;
 
         private PlayerMovement movement;
         private InputAction mineAction;
@@ -62,6 +63,7 @@ namespace SubTerra.Gameplay.Mining
         }
 
         public bool IsMining => miningSystem != null && miningSystem.IsMining;
+        public float Reach => reach;
 
         /// <summary>B-164: 채굴 키를 새로 누른 순간(누르기 시작·방향 바꿈). 실패음 반복 판정을 풀 때 쓴다.</summary>
         public event System.Action MiningPressed;
