@@ -7,6 +7,7 @@ using SubTerra.Gameplay.Power;
 using SubTerra.Gameplay.Structural;
 using SubTerra.Shared;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 
 namespace SubTerra.Gameplay.Integration
 {
@@ -32,6 +33,7 @@ namespace SubTerra.Gameplay.Integration
         private string lastInteractionFacilityInstanceId;
         private string lastInteractionFacilityBuildingId;
         private ICollapseDamageReceiver collapseDamageReceiver;
+        private Func<TileBase, float> collapseDamageMultiplier;
 
         private void Awake() => eventSink = eventSinkBehaviour as IGameplayEventSink;
 
@@ -40,7 +42,7 @@ namespace SubTerra.Gameplay.Integration
             if (miningSystem != null) miningSystem.TileMined += OnTileMined;
             if (structuralSystem != null)
             {
-                structuralSystem.BindCollapseDamageReceiver(collapseDamageReceiver);
+                structuralSystem.BindCollapseDamageReceiver(collapseDamageReceiver, collapseDamageMultiplier);
                 structuralSystem.RiskChanged += OnStructuralRiskChanged;
                 structuralSystem.CollapseTriggered += OnStructuralCollapse;
             }
@@ -74,12 +76,15 @@ namespace SubTerra.Gameplay.Integration
 
         public void SetEventSink(IGameplayEventSink sink) => eventSink = sink;
 
-        public void SetCollapseDamageReceiver(ICollapseDamageReceiver receiver)
+        public void SetCollapseDamageReceiver(
+            ICollapseDamageReceiver receiver,
+            Func<TileBase, float> resolveDamageMultiplier = null)
         {
             collapseDamageReceiver = receiver;
+            collapseDamageMultiplier = resolveDamageMultiplier;
             if (structuralSystem != null)
             {
-                structuralSystem.BindCollapseDamageReceiver(receiver);
+                structuralSystem.BindCollapseDamageReceiver(receiver, collapseDamageMultiplier);
             }
         }
 

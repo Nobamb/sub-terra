@@ -156,6 +156,12 @@ namespace SubTerra.Gameplay.Mining
             cellProtectionPredicate = predicate;
         }
 
+        public bool TryResolveTile(TileBase tile, out MiningTileDto definition)
+        {
+            definition = default;
+            return tileResolver != null && tileResolver.TryResolve(tile, out definition);
+        }
+
         public void ConfigureDeepZoneBoundary(int topY, int minDepth, int maxDepth)
         {
             deepZoneTopY = topY;
@@ -385,7 +391,7 @@ namespace SubTerra.Gameplay.Mining
             }
 
             tile = foregroundTilemap.GetTile(cell);
-            if (tile == null || !tileResolver.TryResolve(tile, out definition))
+            if (!TryResolveTile(tile, out definition))
             {
                 return MiningFailureReason.InvalidTarget;
             }

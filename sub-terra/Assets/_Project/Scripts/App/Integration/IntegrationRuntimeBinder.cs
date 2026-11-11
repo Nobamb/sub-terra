@@ -349,7 +349,8 @@ namespace SubTerra.App.Integration
                     if (gameplayEventBridge != null)
                     {
                         gameplayEventBridge.SetCollapseDamageReceiver(
-                            runFailureController.SurvivalController);
+                            runFailureController.SurvivalController,
+                            ResolveCollapseDamageMultiplier);
                     }
                     if (hudBinder != null)
                     {
@@ -1020,6 +1021,21 @@ namespace SubTerra.App.Integration
         private void OnDisable()
         {
             droneScanMark?.Unbind();
+        }
+
+        private float ResolveCollapseDamageMultiplier(TileBase tile)
+        {
+            return miningSystem != null && miningSystem.TryResolveTile(tile, out var definition)
+                ? GetCollapseDamageMultiplier(definition, bootstrap.AssignedCatalog as GameDataCatalog)
+                : 1f;
+        }
+
+        public static float GetCollapseDamageMultiplier(MiningTileDto tile, GameDataCatalog catalog)
+        {
+            float weight = catalog != null && catalog.TryGetMineral(tile.mineralId, out var mineral)
+                ? mineral.UnitWeight
+                : 1f;
+            return tile.tileId?.EndsWith(".gold", StringComparison.Ordinal) == true ? weight * 1.3f : weight;
         }
 
         private void OnDestroy()

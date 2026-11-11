@@ -39,6 +39,7 @@ namespace SubTerra.Gameplay.Structural
         private readonly HashSet<Vector3Int> visibleCells = new();
         private readonly List<Vector3Int> staleShakeCells = new();
         private ICollapseDamageReceiver collapseDamageReceiver;
+        private System.Func<TileBase, float> resolveCollapseDamageMultiplier;
         private Tilemap sourceTilemap;
         private TilemapRenderer sourceTilemapRenderer;
         private MaterialPropertyBlock shakeProperties;
@@ -70,6 +71,7 @@ namespace SubTerra.Gameplay.Structural
             public Vector3 End;
             public float Elapsed;
             public float Duration;
+            public float DamageMultiplier;
             public bool ContactConsumed;
         }
 
@@ -127,9 +129,12 @@ namespace SubTerra.Gameplay.Structural
             }
         }
 
-        public void BindCollapseDamageReceiver(ICollapseDamageReceiver receiver)
+        public void BindCollapseDamageReceiver(
+            ICollapseDamageReceiver receiver,
+            System.Func<TileBase, float> resolveDamageMultiplier = null)
         {
             collapseDamageReceiver = receiver;
+            resolveCollapseDamageMultiplier = resolveDamageMultiplier;
         }
 
         /// <summary>단일 천장 셀의 균열 표시를 해당 셀 위험 단계로 설정한다.</summary>
@@ -199,7 +204,8 @@ namespace SubTerra.Gameplay.Structural
                 Renderer = renderer,
                 Start = start,
                 End = ResolveFallEnd(cell, source, start),
-                Duration = Mathf.Max(0.05f, duration)
+                Duration = Mathf.Max(0.05f, duration),
+                DamageMultiplier = resolveCollapseDamageMultiplier?.Invoke(source.GetTile(cell)) ?? 1f
             });
         }
 
@@ -665,7 +671,7 @@ namespace SubTerra.Gameplay.Structural
                         nextPosition.y))
                 {
                     visual.ContactConsumed = true;
-                    collapseDamageReceiver.ApplyCollapseImpact();
+                    collapseDamageReceiver.ApplyCollapseImpact(visual.DamageMultiplier);
                 }
                 if (t < 1f) continue;
 

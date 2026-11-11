@@ -58,12 +58,14 @@ namespace SubTerra.Gameplay.Structural
 
         public void ConfigureWorldSeed(long seed) => worldSeed = seed;
 
-        public void BindCollapseDamageReceiver(ICollapseDamageReceiver receiver)
+        public void BindCollapseDamageReceiver(
+            ICollapseDamageReceiver receiver,
+            Func<TileBase, float> resolveDamageMultiplier = null)
         {
             if (crackOverlay != null)
             {
                 crackOverlay.BindSourceTilemap(foregroundTilemap);
-                crackOverlay.BindCollapseDamageReceiver(receiver);
+                crackOverlay.BindCollapseDamageReceiver(receiver, resolveDamageMultiplier);
             }
         }
 

@@ -140,13 +140,13 @@ namespace SubTerra.Gameplay.Player
                 <= settings.CollapseHitRadius;
         }
 
-        public bool ApplyCollapseImpact()
+        public bool ApplyCollapseImpact(float damageMultiplier = 1f)
         {
             EnsureState();
             tokenSequence++;
             return ApplyDamage(
                 RunFailureCause.StructuralCollapse,
-                settings.MinorCollapseDamage,
+                settings.MinorCollapseDamage * damageMultiplier,
                 false,
                 "collapse-impact:" + tokenSequence.ToString(CultureInfo.InvariantCulture),
                 "structural_falling_rock");
@@ -242,7 +242,7 @@ namespace SubTerra.Gameplay.Player
 
         private bool ApplyDamage(
             RunFailureCause cause,
-            int damage,
+            float damage,
             bool forceIncapacitate,
             string failureToken,
             string sourceId)
@@ -276,7 +276,7 @@ namespace SubTerra.Gameplay.Player
                     failureToken = failureToken,
                     cause = cause,
                     sourceId = sourceId ?? string.Empty,
-                    damage = damage,
+                    damage = Mathf.RoundToInt(damage),
                     remainingHealth = Mathf.CeilToInt(State.Health),
                     returnToElevator = cause != RunFailureCause.PowerDepleted
                 });

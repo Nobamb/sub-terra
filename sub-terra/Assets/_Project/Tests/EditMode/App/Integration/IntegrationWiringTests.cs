@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using NUnit.Framework;
 using SubTerra.App.Core;
+using SubTerra.App.Core.Data;
 using SubTerra.App.Economy;
 using SubTerra.App.Integration;
 using SubTerra.App.Inventory;
@@ -27,6 +28,25 @@ namespace SubTerra.App.Tests.Integration
     {
         private const string IntegrationPath =
             "Assets/_Project/Scenes/App/Mine_Demo_Integration.unity";
+
+        [TestCase("tile.rock.normal", "", 1f)]
+        [TestCase("tile.copper", "mineral.copper", 1.5f)]
+        [TestCase("tile.iron", "mineral.iron", 2f)]
+        [TestCase("tile.lithium", "mineral.lithium", 0.8f)]
+        [TestCase("tile.rock.normal.gold", "", 1.3f)]
+        [TestCase("tile.iron.gold", "mineral.iron", 2.6f)]
+        [TestCase("tile.unknown", "mineral.unknown", 1f)]
+        public void Issue289_CollapseDamageMultiplierUsesMineralCatalogAndGold(
+            string tileId, string mineralId, float expected)
+        {
+            var catalog = AssetDatabase.LoadAssetAtPath<GameDataCatalog>(
+                "Assets/_Project/Data/Catalog/GameDataCatalog.asset");
+            Assert.That(catalog, Is.Not.Null);
+
+            var tile = new MiningTileDto { tileId = tileId, mineralId = mineralId };
+            Assert.That(IntegrationRuntimeBinder.GetCollapseDamageMultiplier(tile, catalog),
+                Is.EqualTo(expected).Within(0.001f));
+        }
 
         [Test]
         public void M_S01_IntegrationScene_HasCanonicalHierarchy()
