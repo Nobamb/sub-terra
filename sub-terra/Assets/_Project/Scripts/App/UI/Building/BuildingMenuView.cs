@@ -672,6 +672,8 @@ namespace SubTerra.App.UI.Building
 
         private void WireControls()
         {
+            UiSearchSortClickSfx.Attach(searchField);
+            UiSearchSortClickSfx.Attach(sortDropdown);
             if (controlsWired)
             {
                 return;

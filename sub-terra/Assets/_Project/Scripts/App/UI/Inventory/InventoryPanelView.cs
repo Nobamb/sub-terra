@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using SubTerra.App.Audio;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -302,6 +303,8 @@ namespace SubTerra.App.UI.Inventory
 
         private void WireManifestControls()
         {
+            UiSearchSortClickSfx.Attach(searchField);
+            UiSearchSortClickSfx.Attach(sortDropdown);
             if (searchField != null)
             {
                 searchField.onValueChanged.RemoveListener(OnSearchChanged);
