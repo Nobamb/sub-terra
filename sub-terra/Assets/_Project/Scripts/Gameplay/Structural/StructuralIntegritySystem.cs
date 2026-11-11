@@ -63,6 +63,31 @@ namespace SubTerra.Gameplay.Structural
 
         public void ConfigureWorldSeed(long seed) => worldSeed = seed;
 
+#if UNITY_EDITOR || SUBTERRA_BUILD_DEVELOPMENT
+        public bool TryPlayDebugCollapse(Vector3Int cell, TileBase tile)
+        {
+            if (!isActiveAndEnabled || crackOverlay == null || foregroundTilemap == null || tile == null)
+                return false;
+
+            if (Time.timeScale > 0f) return PlayDebugCollapse(cell, tile);
+            StartCoroutine(PlayDebugCollapseAfterPause(cell, tile));
+            return true;
+        }
+
+        private System.Collections.IEnumerator PlayDebugCollapseAfterPause(Vector3Int cell, TileBase tile)
+        {
+            yield return new WaitUntil(() => Time.timeScale > 0f);
+            if (isActiveAndEnabled && crackOverlay != null && foregroundTilemap != null && tile != null)
+                PlayDebugCollapse(cell, tile);
+        }
+
+        private bool PlayDebugCollapse(Vector3Int cell, TileBase tile)
+        {
+            return crackOverlay.PlayCollapse(cell, foregroundTilemap, Settings.CollapseFallSeconds,
+                tile, tile is Tile basicTile ? basicTile.sprite : null);
+        }
+#endif
+
         public void BindCollapseDamageReceiver(
             ICollapseDamageReceiver receiver,
             Func<TileBase, float> resolveDamageMultiplier = null)

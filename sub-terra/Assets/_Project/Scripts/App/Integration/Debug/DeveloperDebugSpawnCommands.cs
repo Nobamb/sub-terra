@@ -2,9 +2,11 @@
 using System;
 using System.Globalization;
 using SubTerra.App.Core;
+using SubTerra.App.Core.Data;
 using SubTerra.Gameplay.Mining;
 using SubTerra.Gameplay.Player;
 using SubTerra.Gameplay.Snapshot;
+using SubTerra.Gameplay.Structural;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.Tilemaps;
@@ -51,6 +53,7 @@ namespace SubTerra.App.Integration
         private const string SignalId = "tile.locked.signal";
         private const string GoldSuffix = ".gold";
         private const string ArgError = "spawn 인자 오류. 예: spawn copper";
+        private const string TileArguments = "<rock|copper|iron|lithium|gas|engine_fuel> [golden]";
 
         public static void Register(DeveloperDebugCommandRegistry registry)
         {
@@ -62,9 +65,17 @@ namespace SubTerra.App.Integration
             registry.Register(new DeveloperDebugCommandSpec(
                 "spawn",
                 new[] { "spawn", "생성" },
-                "<normal|copper|iron|lithium|gas|engine_fuel> [gold]",
+                TileArguments,
                 "spawn copper",
                 HandleSpawn));
+            registry.Register(new DeveloperDebugCommandSpec(
+                "hit", new[] { "hit" }, TileArguments, "hit iron golden", HandleHit));
+            registry.Register(new DeveloperDebugCommandSpec(
+                "fall", new[] { "fall" }, TileArguments, "fall lithium", HandleFall));
+            registry.Register(new DeveloperDebugCommandSpec(
+                "hitgas", new[] { "hitgas" }, "[n]", "hitgas 3", HandleHitGas));
+            registry.Register(new DeveloperDebugCommandSpec(
+                "falling", new[] { "falling" }, "[n]m", "falling 30m", HandleFalling));
         }
 
         public static DeveloperDebugSpawnWorld FindLive()
@@ -78,33 +89,14 @@ namespace SubTerra.App.Integration
                 UnityEngine.Object.FindAnyObjectByType<WorldSnapshotSystem>(FindObjectsInactive.Include));
         }
 
-        /// <summary>
-        /// MiningSystem.TryGetDirectionalCell의 가로 한 칸만 복제한다.
-        /// 그 메서드는 빈 칸을 거절하고 위·아래를 보지만, 스폰은 공중에도 놓는다.
-        /// </summary>
         public static bool TryResolveFacingCell(
             Tilemap tilemap,
             Vector2 origin,
             float facingDirection,
-            out Vector3Int cell)
+            out Vector3Int cell,
+            float reach = PlayerMiningController.DefaultReach)
         {
-            cell = default;
-            if (tilemap == null || Mathf.Approximately(facingDirection, 0f))
-            {
-                return false;
-            }
-
-            var horizontalDirection = facingDirection > 0f ? 1 : -1;
-            var sideCell = tilemap.WorldToCell(origin);
-            var sideCellCenterX = tilemap.GetCellCenterWorld(sideCell).x;
-            if ((horizontalDirection > 0 && sideCellCenterX <= origin.x)
-                || (horizontalDirection < 0 && sideCellCenterX >= origin.x))
-            {
-                sideCell.x += horizontalDirection;
-            }
-
-            cell = sideCell;
-            return true;
+            return MiningSystem.TryGetDirectionalCell(tilemap, origin, facingDirection, reach, out cell);
         }
 
         private static string HandleSpawn(string[] tokens, DeveloperDebugCommandContext context)
@@ -150,13 +142,15 @@ namespace SubTerra.App.Integration
                 return "스냅샷 없음";
             }
 
+            var miningController = world.Player.GetComponent<PlayerMiningController>();
             if (!TryResolveFacingCell(
                     world.Foreground,
                     world.Player.Position,
                     world.Player.FacingDirection,
-                    out var cell))
+                    out var cell,
+                    miningController != null ? miningController.Reach : PlayerMiningController.DefaultReach))
             {
-                return "방향을 알 수 없습니다";
+                return "채굴 방향에 교체할 타일이 없습니다";
             }
 
             if (!world.Resolver.TryFindTileById(tileId, out var tile) || tile == null)
@@ -178,6 +172,85 @@ namespace SubTerra.App.Integration
                 + ", "
                 + cell.y.ToString(CultureInfo.InvariantCulture)
                 + ")";
+        }
+
+        private static string HandleHit(string[] tokens, DeveloperDebugCommandContext context)
+        {
+            if (!TryGetCommandTile(tokens, context, out var world, out var tile, out var error)) return error;
+            var survival = context.FindPlayer();
+            if (survival == null) return "플레이어 생존 정보 없음";
+            if (!world.Resolver.TryResolve(tile, out var definition)) return "타일 정의 없음";
+
+            var bootstrap = GameBootstrapper.Instance;
+            var catalog = bootstrap != null ? bootstrap.AssignedCatalog as GameDataCatalog : null;
+            float multiplier = IntegrationRuntimeBinder.GetCollapseDamageMultiplier(definition, catalog);
+            return survival.ApplyCollapseImpact(multiplier) ? "hit " + definition.tileId : "낙석 피해가 적용되지 않았습니다";
+        }
+
+        private static string HandleFall(string[] tokens, DeveloperDebugCommandContext context)
+        {
+            if (!TryGetCommandTile(tokens, context, out var world, out var tile, out var error)) return error;
+            var structural = UnityEngine.Object.FindAnyObjectByType<StructuralIntegritySystem>();
+            if (structural == null || world.Player == null || world.Foreground == null)
+                return "낙석에 필요한 광산 정보 없음";
+
+            Vector2 head = world.Player.Position;
+            if (world.Player.TryGetBodyBounds(out var bounds)) head.y = bounds.max.y;
+            Vector3Int cell = world.Foreground.WorldToCell(head) + Vector3Int.up;
+            return structural.TryPlayDebugCollapse(cell, tile) ? "fall " + tokens[1] : "낙석을 시작할 수 없습니다";
+        }
+
+        private static string HandleHitGas(string[] tokens, DeveloperDebugCommandContext context)
+        {
+            if (!IsMine(context?.FindSpawnWorld())) return "광산 씬에서만 사용할 수 있습니다";
+            int tickCount = 1;
+            if (tokens.Length > 2 || (tokens.Length == 2 && (!int.TryParse(tokens[1], NumberStyles.None,
+                    CultureInfo.InvariantCulture, out tickCount) || tickCount < 1)))
+                return "hitgas 인자 오류. 예: hitgas 3";
+
+            var effect = UnityEngine.Object.FindAnyObjectByType<GasExposureEffectController>();
+            if (effect == null) return "가스 노출 컨트롤러 없음";
+            effect.ScheduleDebugGasDamage(tickCount);
+            return "hitgas " + tickCount.ToString(CultureInfo.InvariantCulture);
+        }
+
+        private static string HandleFalling(string[] tokens, DeveloperDebugCommandContext context)
+        {
+            if (!IsMine(context?.FindSpawnWorld())) return "광산 씬에서만 사용할 수 있습니다";
+            float distance = 0f;
+            if (tokens.Length > 2 || (tokens.Length == 2 && (!tokens[1].EndsWith("m", StringComparison.OrdinalIgnoreCase)
+                    || !float.TryParse(tokens[1].Substring(0, tokens[1].Length - 1),
+                        NumberStyles.AllowDecimalPoint | NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out distance)
+                    || float.IsNaN(distance) || float.IsInfinity(distance))))
+                return "falling 인자 오류. 예: falling 30m";
+
+            var survival = context.FindPlayer();
+            if (survival == null) return "플레이어 생존 정보 없음";
+            return survival.ApplyDebugLanding(distance) ? "낙하 피해 적용" : "낙하 피해가 적용되지 않았습니다";
+        }
+
+        private static bool TryGetCommandTile(string[] tokens, DeveloperDebugCommandContext context,
+            out DeveloperDebugSpawnWorld world, out TileBase tile, out string error)
+        {
+            world = null;
+            tile = null;
+            if (!TryRead(tokens, out var tileId, out error))
+            {
+                if (error == ArgError) error = tokens[0] + " 인자 오류. 예: " + tokens[0] + " copper";
+                return false;
+            }
+
+            world = context?.FindSpawnWorld();
+            if (!IsMine(world)) error = "광산 씬에서만 사용할 수 있습니다";
+            else if (world.Resolver == null) error = "타일 리졸버 없음";
+            else if (!world.Resolver.TryFindTileById(tileId, out tile)) error = "타일 없음: " + tileId;
+            else return true;
+            return false;
+        }
+
+        private static bool IsMine(DeveloperDebugSpawnWorld world)
+        {
+            return world != null && string.Equals(world.SceneName, SceneNames.Integration, StringComparison.Ordinal);
         }
 
         private static bool TryRead(string[] tokens, out string tileId, out string error)
@@ -219,7 +292,7 @@ namespace SubTerra.App.Integration
         private static bool TryKind(string token, out string tileId, out bool goldAllowed)
         {
             goldAllowed = true;
-            if (IsAny(token, "normal", "일반"))
+            if (IsAny(token, "rock", "normal", "일반"))
             {
                 tileId = RockId;
                 return true;
@@ -262,7 +335,7 @@ namespace SubTerra.App.Integration
 
         private static bool IsGold(string token)
         {
-            return IsAny(token, "gold", "골드");
+            return IsAny(token, "golden", "gold", "골드");
         }
 
         private static bool IsAny(string token, params string[] expected)

@@ -31,6 +31,10 @@ namespace SubTerra.App.Integration
         private bool lastVisuallyCleared;
         private GasExposureEffectState lastPublishedState;
         private bool hasPublishedState;
+#if UNITY_EDITOR || SUBTERRA_BUILD_DEVELOPMENT
+        private Coroutine debugGasRoutine;
+        private int debugGasSequence;
+#endif
 
         public GasExposureEffectState CurrentState
         {
@@ -67,6 +71,13 @@ namespace SubTerra.App.Integration
 
         private void OnDisable()
         {
+#if UNITY_EDITOR || SUBTERRA_BUILD_DEVELOPMENT
+            if (debugGasRoutine != null)
+            {
+                StopCoroutine(debugGasRoutine);
+                debugGasRoutine = null;
+            }
+#endif
             if (gasSystem != null)
             {
                 gasSystem.ExposureChanged -= ApplyExposure;
@@ -139,18 +150,46 @@ namespace SubTerra.App.Integration
             ApplyState(result.State, false);
             if (result.ExposureTickCount > 0)
             {
-                FailureInputRaised?.Invoke(new GasExposureFailureInputDto
-                {
-                    gasZoneId = result.State.GasZoneId,
-                    effectiveIntensity = result.State.EffectiveIntensity,
-                    cumulativeExposureSeconds = result.State.CumulativeExposure,
-                    damage = result.ExposureTickCount * settings.HealthDamagePerTick,
-                    severity = GasExposureFailureSeverity.Damage
-                });
+                RaiseDamageTicks(result.State.GasZoneId, result.State.EffectiveIntensity,
+                    result.State.CumulativeExposure, result.ExposureTickCount);
             }
 
             return result;
         }
+
+        private void RaiseDamageTicks(string zoneId, float intensity, float exposureSeconds, int tickCount)
+        {
+            FailureInputRaised?.Invoke(new GasExposureFailureInputDto
+            {
+                gasZoneId = zoneId,
+                effectiveIntensity = intensity,
+                cumulativeExposureSeconds = exposureSeconds,
+                damage = tickCount * settings.HealthDamagePerTick,
+                severity = GasExposureFailureSeverity.Damage
+            });
+        }
+
+#if UNITY_EDITOR || SUBTERRA_BUILD_DEVELOPMENT
+        internal void ScheduleDebugGasDamage(int tickCount)
+        {
+            if (debugGasRoutine != null) StopCoroutine(debugGasRoutine);
+            debugGasRoutine = StartCoroutine(ApplyDebugGasDamage(tickCount, $"debug-gas-{++debugGasSequence}"));
+        }
+
+        private System.Collections.IEnumerator ApplyDebugGasDamage(int remaining, string zoneId)
+        {
+            float interval = settings.TickInterval;
+            float exposure = 0f;
+            var wait = new WaitForSeconds(interval);
+            while (remaining-- > 0)
+            {
+                yield return wait;
+                exposure += interval;
+                RaiseDamageTicks(zoneId, 1f, exposure, 1);
+            }
+            debugGasRoutine = null;
+        }
+#endif
 
         private void RefreshMitigation(bool forcePublish)
         {

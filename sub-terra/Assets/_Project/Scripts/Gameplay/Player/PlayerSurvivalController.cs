@@ -196,6 +196,15 @@ namespace SubTerra.Gameplay.Player
                 "fall_height");
         }
 
+#if UNITY_EDITOR || SUBTERRA_BUILD_DEVELOPMENT
+        public bool ApplyDebugLanding(float requestedDistance)
+        {
+            EnsureState();
+            ResetFallTracking();
+            return CompleteLanding(Mathf.Max(requestedDistance, settings.MinimumFallDamageHeight), false);
+        }
+#endif
+
         public bool ApplyPowerDepletion()
         {
             // Prompt-B 81: 전력 0은 행동불능/RunFailure가 아니다.
@@ -531,16 +540,19 @@ namespace SubTerra.Gameplay.Player
                 var ladderExempt = usedLadderDuringFall;
                 trackingFall = false;
                 usedLadderDuringFall = false;
-                var damaged = ApplyFall(distance, ladderExempt);
-                // B-164: 피해면 LandHeavy만, 아니면 0.3 이상 낙하에 Land. 사다리로 내려옴·치명 낙하는 무음.
-                SfxRequests.Play(playerMovement.MoveSfx.ResolveLanding(
-                    distance,
-                    damaged,
-                    ladderExempt,
-                    State.CanAct));
+                CompleteLanding(distance, ladderExempt);
             }
 
             wasGrounded = grounded;
+        }
+
+        private bool CompleteLanding(float distance, bool ladderExempt)
+        {
+            var damaged = ApplyFall(distance, ladderExempt);
+            // B-164: 피해면 LandHeavy만, 아니면 0.3 이상 낙하에 Land. 사다리로 내려옴·치명 낙하는 무음.
+            if (playerMovement != null)
+                SfxRequests.Play(playerMovement.MoveSfx.ResolveLanding(distance, damaged, ladderExempt, State.CanAct));
+            return damaged;
         }
 
         private void ResetFallTracking()

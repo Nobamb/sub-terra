@@ -121,6 +121,31 @@ namespace SubTerra.Gameplay.Structural.Tests
                 "착지 먼지도 수명이 끝나면 회수되어야 한다.");
         }
 
+        [UnityTest]
+        public IEnumerator FallingRock_UsesNextFloorWhenOriginalFloorCollapses()
+        {
+            using var fixture = new RuntimeFixture(1, true, false);
+            var start = new Vector3Int(0, 2, 0);
+            var oldFloor = Vector3Int.up;
+            var nextFloor = Vector3Int.down;
+            var tile = fixture.Foreground.GetTile(start);
+            fixture.Foreground.SetTile(oldFloor, tile);
+            fixture.Foreground.SetTile(nextFloor, tile);
+            fixture.Foreground.CompressBounds();
+            var landings = new List<Vector3>();
+            fixture.CrackOverlay.RockLanded += (position, _) => landings.Add(position);
+
+            fixture.CrackOverlay.PlayCollapse(start, fixture.Foreground, 0.1f);
+            fixture.Foreground.SetTile(oldFloor, null);
+            yield return new WaitForSecondsRealtime(0.2f);
+            Assert.That(landings, Is.EqualTo(new[] { fixture.Foreground.GetCellCenterWorld(Vector3Int.zero) }));
+
+            fixture.CrackOverlay.PlayCollapse(start, fixture.Foreground, 0.1f);
+            fixture.Foreground.SetTile(nextFloor, null);
+            yield return new WaitForSecondsRealtime(0.2f);
+            Assert.That(landings, Has.Count.EqualTo(1), "No landing event in a column with no remaining floor");
+        }
+
         private sealed class CountingCollapseReceiver : ICollapseDamageReceiver
         {
             public List<float> ImpactMultipliers { get; } = new();

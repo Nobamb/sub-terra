@@ -74,7 +74,7 @@ namespace SubTerra.Gameplay.Structural
             public Vector3 End;
             public float Elapsed;
             public float Duration;
-            public float DamageMultiplier;
+            public float? DamageMultiplier;
             public bool ContactConsumed;
         }
 
@@ -189,12 +189,15 @@ namespace SubTerra.Gameplay.Structural
         /// <summary>삭제 직전 타일 스프라이트를 짧게 낙하시켜 증발처럼 보이지 않게 한다.</summary>
         public void PlayCollapse(Vector3Int cell, Tilemap source, float duration)
         {
-            if (source == null) return;
-            Sprite sprite = source.GetSprite(cell);
-            if (sprite == null) sprite = ResolveCrackTile(StructuralRiskLevel.CollapseImminent) is Tile tile ? tile.sprite : null;
-            if (sprite == null) return;
+            if (source != null)
+                PlayCollapse(cell, source, duration, source.GetTile(cell), source.GetSprite(cell));
+        }
 
-            TileBase sourceTile = source.GetTile(cell);
+        internal bool PlayCollapse(Vector3Int cell, Tilemap source, float duration, TileBase sourceTile, Sprite sprite)
+        {
+            if (sprite == null) sprite = ResolveCrackTile(StructuralRiskLevel.CollapseImminent) is Tile tile ? tile.sprite : null;
+            if (sprite == null) return false;
+
             var root = new GameObject("StructuralFallingRock") { hideFlags = HideFlags.DontSave };
             root.transform.SetParent(transform, true);
             Vector3 start = source.GetCellCenterWorld(cell);
@@ -214,8 +217,9 @@ namespace SubTerra.Gameplay.Structural
                 Start = start,
                 End = end,
                 Duration = Mathf.Max(0.05f, duration),
-                DamageMultiplier = resolveCollapseDamageMultiplier?.Invoke(sourceTile) ?? 1f
+                DamageMultiplier = resolveCollapseDamageMultiplier?.Invoke(sourceTile)
             });
+            return true;
         }
 
         private static Vector3 ResolveFallEnd(
@@ -678,9 +682,19 @@ namespace SubTerra.Gameplay.Structural
                     continue;
                 }
 
+                Vector3 previousPosition = visual.Root.transform.position;
+                if (visual.Source != null && visual.GroundCell is Vector3Int ground
+                    && !visual.Source.HasTile(ground))
+                {
+                    // A second rock may remove the floor during the same collapse.
+                    visual.End = ResolveFallEnd(ground, visual.Source, visual.End, out visual.GroundCell);
+                    visual.Start = previousPosition;
+                    visual.Duration = Mathf.Max(0.05f, visual.Duration - visual.Elapsed);
+                    visual.Elapsed = 0f;
+                }
+
                 visual.Elapsed += deltaTime;
                 float t = Mathf.Clamp01(visual.Elapsed / visual.Duration);
-                Vector3 previousPosition = visual.Root.transform.position;
                 Vector3 nextPosition = Vector3.Lerp(visual.Start, visual.End, t * t);
                 visual.Root.transform.position = nextPosition;
                 if (!visual.ContactConsumed
@@ -692,7 +706,9 @@ namespace SubTerra.Gameplay.Structural
                         nextPosition.y))
                 {
                     visual.ContactConsumed = true;
-                    collapseDamageReceiver.ApplyCollapseImpact(visual.DamageMultiplier);
+                    float multiplier = visual.DamageMultiplier
+                        ?? resolveCollapseDamageMultiplier?.Invoke(visual.Tile) ?? 1f;
+                    collapseDamageReceiver.ApplyCollapseImpact(multiplier);
                 }
                 if (t < 1f) continue;
 
