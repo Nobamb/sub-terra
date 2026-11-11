@@ -250,6 +250,17 @@ namespace SubTerra.Gameplay.Structural
             telegraphingCells.Clear();
         }
 
+        public void CancelFallingRocks()
+        {
+            foreach (FallingVisual visual in fallingVisuals)
+            {
+                if (visual.Root == null) continue;
+                visual.Root.SetActive(false);
+                DestroyRuntimeObject(visual.Root);
+            }
+            fallingVisuals.Clear();
+        }
+
         private void RemoveUntrackedRuntimeVisuals()
         {
             // 이전 씬에 저장된 잔재는 런타임 목록에 없다. 이 컴포넌트의 직속 시각 자식만 정리한다.

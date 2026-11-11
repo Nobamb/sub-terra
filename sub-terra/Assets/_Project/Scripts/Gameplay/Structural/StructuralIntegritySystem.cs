@@ -13,6 +13,9 @@ namespace SubTerra.Gameplay.Structural
     /// </summary>
     public sealed class StructuralIntegritySystem : MonoBehaviour
     {
+        private static readonly Vector3Int[] NeighborOffsets =
+            { Vector3Int.up, Vector3Int.down, Vector3Int.left, Vector3Int.right };
+
         [SerializeField] private Tilemap foregroundTilemap;
         [SerializeField] private StructuralCrackOverlay crackOverlay;
         [SerializeField] private StructuralRiskSettings riskSettings;
@@ -39,6 +42,7 @@ namespace SubTerra.Gameplay.Structural
         private readonly Dictionary<Vector3Int, StructuralRiskCause> tileCauses = new();
         private readonly HashSet<Vector3Int> deferredCandidates = new();
         private readonly Dictionary<Vector3Int, float> telegraphRemaining = new();
+        private readonly HashSet<Vector3Int> detachedTelegraphs = new();
         private readonly List<PendingCollapse> pendingCollapses = new();
         private Func<Vector3Int, bool> cellProtectionPredicate;
 
@@ -89,6 +93,7 @@ namespace SubTerra.Gameplay.Structural
             accumulatedImpact.Clear();
             deferredCandidates.Clear();
             telegraphRemaining.Clear();
+            detachedTelegraphs.Clear();
             pendingCollapses.Clear();
             if (tileRisks.Count > 0)
             {
@@ -99,6 +104,7 @@ namespace SubTerra.Gameplay.Structural
                 }
             }
 
+            crackOverlay?.CancelFallingRocks();
             crackOverlay?.ClearAll();
             if (CurrentRisk != StructuralRiskLevel.Stable)
             {
@@ -156,7 +162,6 @@ namespace SubTerra.Gameplay.Structural
             accumulatedImpact.TryGetValue(cell, out float currentImpact);
             accumulatedImpact[cell] = currentImpact + impact;
 
-            List<Vector3Int> verticallyIsolated = CollectVerticallyIsolatedNeighbors(cell);
             var affected = CollectAffectedCeilingTiles(cell);
             ReevaluateTiles(
                 affected,
@@ -164,7 +169,7 @@ namespace SubTerra.Gameplay.Structural
                 cell,
                 StructuralRiskCause.MiningImpact,
                 impact);
-            BeginVerticallyIsolatedCollapses(verticallyIsolated);
+            BeginDetachedCollapses(FindDetachedBlocksNearRemovedCells(new[] { cell }));
         }
 
         /// <summary>
@@ -319,6 +324,7 @@ namespace SubTerra.Gameplay.Structural
 
             foreach (Vector3Int cell in affected)
             {
+                if (detachedTelegraphs.Contains(cell)) continue;
                 tileScores.TryGetValue(cell, out float previousScore);
                 if (!IsUnsupportedCeiling(cell))
                 {
@@ -472,42 +478,77 @@ namespace SubTerra.Gameplay.Structural
         }
 
         /// <summary>
-        /// prompt-B 80: 채굴 직후 위·아래가 모두 빈 상태가 된 인접 지형을 찾는다.
-        /// 넓은 영역을 다시 훑지 않고 채굴 셀의 두 수직 이웃만 확인한다.
+        /// 제거된 셀에 닿는 지형 중 어느 받침에도 연결되지 않은 블록을 찾는다.
         /// </summary>
-        private List<Vector3Int> CollectVerticallyIsolatedNeighbors(Vector3Int minedCell)
+        public List<Vector3Int> FindDetachedBlocksNearRemovedCells(IEnumerable<Vector3Int> removedCells)
         {
-            var isolated = new List<Vector3Int>(2);
-            AddIfVerticallyIsolated(minedCell + Vector3Int.up, isolated);
-            AddIfVerticallyIsolated(minedCell + Vector3Int.down, isolated);
-            return isolated;
+            return FindDetachedBlocks(EnumerateNeighbors(removedCells));
         }
 
-        private void AddIfVerticallyIsolated(Vector3Int cell, List<Vector3Int> isolated)
+        private static IEnumerable<Vector3Int> EnumerateNeighbors(IEnumerable<Vector3Int> cells)
         {
-            if (!IsUnsupportedCeiling(cell)) return;
-            if (foregroundTilemap.HasTile(cell + Vector3Int.up)) return;
-            isolated.Add(cell);
+            foreach (Vector3Int cell in cells)
+            foreach (Vector3Int offset in NeighborOffsets)
+                yield return cell + offset;
+        }
+
+        private List<Vector3Int> FindDetachedBlocks(IEnumerable<Vector3Int> seeds)
+        {
+            var detached = new List<Vector3Int>();
+            if (foregroundTilemap == null) return detached;
+
+            var visited = new HashSet<Vector3Int>();
+            var supported = new HashSet<Vector3Int>();
+            var component = new List<Vector3Int>();
+            foreach (Vector3Int seed in seeds)
+            {
+                if (visited.Contains(seed) || !foregroundTilemap.HasTile(seed)) continue;
+
+                component.Clear();
+                component.Add(seed);
+                visited.Add(seed);
+                bool hasSupport = false;
+                for (int i = 0; i < component.Count; i++)
+                {
+                    Vector3Int cell = component[i];
+                    if (IsProtected(cell) || GetSupportStrength(cell) > 0)
+                    {
+                        hasSupport = true;
+                        break;
+                    }
+
+                    foreach (Vector3Int offset in NeighborOffsets)
+                    {
+                        Vector3Int neighbor = cell + offset;
+                        if (supported.Contains(neighbor))
+                        {
+                            hasSupport = true;
+                            break;
+                        }
+                        if (foregroundTilemap.HasTile(neighbor) && visited.Add(neighbor))
+                            component.Add(neighbor);
+                    }
+                    if (hasSupport) break;
+                }
+
+                if (hasSupport) supported.UnionWith(component);
+                else detached.AddRange(component);
+            }
+            return detached;
         }
 
         /// <summary>
-        /// 수직 고립은 위험 점수 임계값과 무관한 확정 붕괴 조건이다.
+        /// 받침에서 떨어진 덩어리는 위험 점수 임계값과 무관하게 붕괴한다.
         /// 기존 예고·낙하·피해·스냅샷 경로를 그대로 사용하되 보호 셀과 버팀목은 제외한다.
         /// </summary>
-        private void BeginVerticallyIsolatedCollapses(IReadOnlyList<Vector3Int> isolated)
+        private void BeginDetachedCollapses(IReadOnlyList<Vector3Int> detached)
         {
-            if (isolated == null || isolated.Count == 0) return;
+            if (detached.Count == 0) return;
 
-            var selected = new List<Vector3Int>(isolated.Count);
-            for (int i = 0; i < isolated.Count; i++)
+            var selected = new List<Vector3Int>(detached.Count);
+            foreach (Vector3Int cell in detached)
             {
-                Vector3Int cell = isolated[i];
-                if (!IsUnsupportedCeiling(cell)
-                    || foregroundTilemap.HasTile(cell + Vector3Int.up)
-                    || telegraphRemaining.ContainsKey(cell))
-                {
-                    continue;
-                }
+                if (!detachedTelegraphs.Add(cell)) continue;
 
                 float forcedScore = Mathf.Max(
                     ComputeTileScore(cell),
@@ -544,6 +585,7 @@ namespace SubTerra.Gameplay.Structural
             tileCauses.Remove(cell);
             deferredCandidates.Remove(cell);
             telegraphRemaining.Remove(cell);
+            detachedTelegraphs.Remove(cell);
             crackOverlay?.SetTelegraphing(cell, false);
             if (hadRisk)
             {
@@ -660,7 +702,7 @@ namespace SubTerra.Gameplay.Structural
             for (int i = 0; i < cells.Count; i++)
             {
                 Vector3Int cell = cells[i];
-                if (!IsUnsupportedCeiling(cell))
+                if (detachedTelegraphs.Contains(cell) ? !foregroundTilemap.HasTile(cell) : !IsUnsupportedCeiling(cell))
                 {
                     cancelled.Add(cell);
                     continue;
@@ -680,7 +722,14 @@ namespace SubTerra.Gameplay.Structural
             }
 
             if (expired.Count > 0)
+            {
+                if (expired.Exists(detachedTelegraphs.Contains))
+                {
+                    // 같은 열의 낙석은 아래부터 제거해야 위쪽 낙석이 그 블록을 착지점으로 잡지 않는다.
+                    expired.Sort((a, b) => a.y != b.y ? a.y.CompareTo(b.y) : a.x.CompareTo(b.x));
+                }
                 CollapseUnsupportedCeiling(expired);
+            }
             else if (cancelled.Count > 0)
             {
                 UpdateCurrentRisk();
@@ -696,12 +745,26 @@ namespace SubTerra.Gameplay.Structural
                 worldSeed = worldSeed,
                 severity = ResolveSeverity(selected.Count)
             };
+            var removedCells = new List<Vector3Int>(selected.Count);
+            var detached = new HashSet<Vector3Int>();
+            if (detachedTelegraphs.Count > 0)
+            {
+                var expiredDetached = new List<Vector3Int>();
+                foreach (Vector3Int cell in selected)
+                    if (detachedTelegraphs.Contains(cell)) expiredDetached.Add(cell);
+                detached.UnionWith(FindDetachedBlocks(expiredDetached));
+            }
             for (int i = 0; i < selected.Count; i++)
             {
                 Vector3Int cell = selected[i];
-                if (!IsUnsupportedCeiling(cell)) continue;
+                if (detachedTelegraphs.Contains(cell) ? !detached.Contains(cell) : !IsUnsupportedCeiling(cell))
+                {
+                    ClearTileRisk(cell);
+                    continue;
+                }
                 crackOverlay?.PlayCollapse(cell, foregroundTilemap, Settings.CollapseFallSeconds);
                 foregroundTilemap.SetTile(cell, null);
+                removedCells.Add(cell);
                 collapse.cells.Add(new CollapseCellDto { x = cell.x, y = cell.y });
                 ClearTileRisk(cell);
             }
@@ -726,9 +789,8 @@ namespace SubTerra.Gameplay.Structural
             });
 
             var affected = new HashSet<Vector3Int>();
-            for (int i = 0; i < collapse.cells.Count; i++)
+            foreach (Vector3Int removed in removedCells)
             {
-                var removed = new Vector3Int(collapse.cells[i].x, collapse.cells[i].y, 0);
                 affected.Add(removed);
                 foreach (Vector3Int nearby in EnumerateUnsupportedCeilingsNearMine(removed))
                     affected.Add(nearby);
@@ -739,6 +801,7 @@ namespace SubTerra.Gameplay.Structural
                 Vector3Int.zero,
                 StructuralRiskCause.None,
                 0f);
+            BeginDetachedCollapses(FindDetachedBlocksNearRemovedCells(removedCells));
             return collapse;
         }
 
