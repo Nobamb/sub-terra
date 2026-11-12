@@ -1,0 +1,9 @@
+Precise garment occlusion fix on this five-pose female ladder sprite sheet. Keep exact head/helmet/hair/backpack proportions, arms/legs/boots positions, poses, camera and 3x2 layout. Change ONLY skirt/upper-thigh overlap boundary. Not a redesign.
+Problem: in raised-leg poses the thigh and cyan pouch look as though they punch through the SIDE or surface of the gray skirt. Correct this in all4 nonneutral poses:
+- Gray skirt front/rear panel must be the FRONT visible layer over the upper thigh where cloth overlaps. Cover any skin/brown thigh drawn ON TOP of gray fabric.
+- Thigh emerges naturally from BELOW a single coherent skirt hem, never a side hole, slit, torn gap, or line crossing through cloth.
+- Draw a gentle solid fabric fold that rests over the raised thigh. Side seam/hem may curve smoothly with leg underneath, without flaring up or revealing underwear/pelvis. Keep gray skirt opaque with hidden dark charcoal built-in safety shorts.
+- Cyan thigh pouch stays OUTSIDE on the leg BELOW hem, not stuck through fabric or connected to skirt panel. Keep orange side trim attached to skirt edge continuously; do not use orange strap to outline an exposed hole.
+- Keep standing neutral hem and female short-work-skirt style, no reverting to shorts, no crotch split.
+Keep knee/foot locations; solve by garment layering/drape, not different anatomy or pose. Entire boots/outlines intact. True transparent RGBA outside sprites, same1536x1024,512 cells, last cell empty. No glow/beam/background/shadow/labels.
+Inspect upper-right/top-middle raised right thigh and bottom-left/bottom-middle raised left thigh for consistent unbroken cloth silhouette.

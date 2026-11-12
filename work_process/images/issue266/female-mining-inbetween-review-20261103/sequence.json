@@ -1,0 +1,44 @@
+{
+  "work": [
+    "key-01",
+    "middle-01",
+    "key-02",
+    "middle-02",
+    "key-03",
+    "key-04",
+    "key-03",
+    "middle-02",
+    "key-02",
+    "middle-01"
+  ],
+  "runtimeApplied": false,
+  "uniqueCels": [
+    "key-01",
+    "middle-01",
+    "key-02",
+    "middle-02",
+    "key-03",
+    "key-04",
+    "middle-04",
+    "middle-05",
+    "key-05",
+    "middle-06",
+    "key-06"
+  ],
+  "finishPreviewFps": 6,
+  "workPreviewFps": 8,
+  "finish": [
+    "key-04",
+    "middle-04",
+    "middle-05",
+    "key-05",
+    "middle-06",
+    "key-06",
+    "key-06",
+    "key-06"
+  ],
+  "note": "Finish clip plays once and holds. Preview speed is not runtime timing. middle-03 rejected for excessive crouch.",
+  "excludedCels": [
+    "middle-03"
+  ]
+}

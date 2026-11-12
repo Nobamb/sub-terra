@@ -1,0 +1,10 @@
+column=-1; isolatedAlphaPixelsRemoved=53; negligibleAlphaOneRemoved=3590; foregroundRgbChanged=0; nonzeroMarginPixels=0
+column=-1; isolatedAlphaPixelsRemoved=77; negligibleAlphaOneRemoved=2812; foregroundRgbChanged=0; nonzeroMarginPixels=0
+column=-1; isolatedAlphaPixelsRemoved=41; negligibleAlphaOneRemoved=2425; foregroundRgbChanged=0; nonzeroMarginPixels=0
+column=-1; isolatedAlphaPixelsRemoved=81; negligibleAlphaOneRemoved=2403; foregroundRgbChanged=0; nonzeroMarginPixels=0
+column=-1; isolatedAlphaPixelsRemoved=49; negligibleAlphaOneRemoved=2127; foregroundRgbChanged=0; nonzeroMarginPixels=0
+bounds=352,215,336,584
+bounds=311,215,364,584
+bounds=280,215,351,585
+bounds=342,210,348,582
+bounds=315,201,331,591

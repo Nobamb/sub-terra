@@ -1,0 +1,1482 @@
+{
+  "runtimeApplied": false,
+  "canvasSize": 1024,
+  "reviewRootTopLeft": [
+    512.0,
+    800.0
+  ],
+  "reviewFootPivot": [
+    0.5,
+    0.21875
+  ],
+  "candidatePreserveExistingVisualPivot": [
+    0.45926339285714285,
+    0.50390625
+  ],
+  "candidateSpriteAlignment": 9,
+  "candidatePixelsPerUnit": 667.4285714285714,
+  "referenceMaleSource": "sub-terra/Assets/_Project/Art/Characters/Player/Frames/Walk/walk_01.png",
+  "referenceMalePpu": 256.0,
+  "referenceMaleTextureSize": [
+    256,
+    256
+  ],
+  "referenceMalePivot": [
+    0.5,
+    0.5
+  ],
+  "referenceMaleFootLocalY": -0.4375,
+  "referenceMaleBeltLocalX": 0.0625,
+  "referenceMaleOpaqueHeight": 224,
+  "helmetReferenceOrangeRegionWidth": 161.0,
+  "fixedScalePerMotion": {
+    "walk": 1.0,
+    "jump": 1.0,
+    "damage": 1.0662251655629138,
+    "knockout": 0.9698795180722891
+  },
+  "idleReference": "damage/pose-01.png",
+  "note": "Whole-cel uniform scale and translation review only. One fixed scale per motion; no anatomy changes. Airborne poses are not floor-snapped. reviewFootPivot is NOT a drop-in Unity pivot: preserve-existing candidate compensates for current male foot/waist offsets. PPU/pivot are NOT applied to Unity.",
+  "frames": [
+    {
+      "motion": "walk",
+      "frame": "key-01",
+      "source": "work_process/images/issue266/female-walk-eight-review-20261103/key-01.png",
+      "sourceSha256": "F706847116F03B28EDBC52B4446C69BF61B9CE6C6EDEF14B81A5AE1834B75DA8",
+      "output": "work_process/images/issue266/female-motion-alignment-review-20261103/walk/key-01.png",
+      "scale": 1.0,
+      "dx": 90.5,
+      "dy": 130.0,
+      "sourceRootX": 421.5,
+      "sourceRootY": 670.0,
+      "rootMethod": "cyan-belt-center",
+      "grounded": true,
+      "sourceMeasure": {
+        "Bounds": {
+          "Count": 119420,
+          "X": 200,
+          "Y": 86,
+          "Width": 374,
+          "Height": 584,
+          "CenterX": 387.0,
+          "CenterY": 378.0
+        },
+        "Helmet": {
+          "Count": 7010,
+          "X": 295,
+          "Y": 106,
+          "Width": 161,
+          "Height": 75,
+          "CenterX": 375.5,
+          "CenterY": 143.5
+        },
+        "Belt": {
+          "Count": 96,
+          "X": 415,
+          "Y": 401,
+          "Width": 13,
+          "Height": 10,
+          "CenterX": 421.5,
+          "CenterY": 406.0
+        }
+      },
+      "alignedMeasure": {
+        "Bounds": {
+          "Count": 119688,
+          "X": 290,
+          "Y": 216,
+          "Width": 375,
+          "Height": 584,
+          "CenterX": 477.5,
+          "CenterY": 508.0
+        },
+        "Helmet": {
+          "Count": 6988,
+          "X": 385,
+          "Y": 236,
+          "Width": 162,
+          "Height": 75,
+          "CenterX": 466.0,
+          "CenterY": 273.5
+        },
+        "Belt": {
+          "Count": 94,
+          "X": 505,
+          "Y": 531,
+          "Width": 14,
+          "Height": 10,
+          "CenterX": 512.0,
+          "CenterY": 536.0
+        }
+      }
+    },
+    {
+      "motion": "walk",
+      "frame": "middle-01",
+      "source": "work_process/images/issue266/female-walk-eight-review-20261103/middle-01.png",
+      "sourceSha256": "2782CF4530C01FD20B9CDBED5892D3413A2A0AEF8328082AE67B0F069278E04C",
+      "output": "work_process/images/issue266/female-motion-alignment-review-20261103/walk/middle-01.png",
+      "scale": 1.0,
+      "dx": 93.5,
+      "dy": 131.0,
+      "sourceRootX": 418.5,
+      "sourceRootY": 669.0,
+      "rootMethod": "cyan-belt-center",
+      "grounded": true,
+      "sourceMeasure": {
+        "Bounds": {
+          "Count": 110245,
+          "X": 214,
+          "Y": 85,
+          "Width": 323,
+          "Height": 584,
+          "CenterX": 375.5,
+          "CenterY": 377.0
+        },
+        "Helmet": {
+          "Count": 7208,
+          "X": 295,
+          "Y": 106,
+          "Width": 161,
+          "Height": 75,
+          "CenterX": 375.5,
+          "CenterY": 143.5
+        },
+        "Belt": {
+          "Count": 68,
+          "X": 413,
+          "Y": 406,
+          "Width": 11,
+          "Height": 8,
+          "CenterX": 418.5,
+          "CenterY": 410.0
+        }
+      },
+      "alignedMeasure": {
+        "Bounds": {
+          "Count": 110479,
+          "X": 307,
+          "Y": 216,
+          "Width": 324,
+          "Height": 584,
+          "CenterX": 469.0,
+          "CenterY": 508.0
+        },
+        "Helmet": {
+          "Count": 7198,
+          "X": 389,
+          "Y": 237,
+          "Width": 161,
+          "Height": 75,
+          "CenterX": 469.5,
+          "CenterY": 274.5
+        },
+        "Belt": {
+          "Count": 66,
+          "X": 507,
+          "Y": 537,
+          "Width": 10,
+          "Height": 8,
+          "CenterX": 512.0,
+          "CenterY": 541.0
+        }
+      }
+    },
+    {
+      "motion": "walk",
+      "frame": "key-02",
+      "source": "work_process/images/issue266/female-walk-eight-review-20261103/key-02.png",
+      "sourceSha256": "83623E52A3280F09AF044BD588C9AC939F019E5CB3E8DC842F7AE1397F58C386",
+      "output": "work_process/images/issue266/female-motion-alignment-review-20261103/walk/key-02.png",
+      "scale": 1.0,
+      "dx": 98.5,
+      "dy": 128.0,
+      "sourceRootX": 413.5,
+      "sourceRootY": 672.0,
+      "rootMethod": "cyan-belt-center",
+      "grounded": true,
+      "sourceMeasure": {
+        "Bounds": {
+          "Count": 106998,
+          "X": 207,
+          "Y": 86,
+          "Width": 323,
+          "Height": 586,
+          "CenterX": 368.5,
+          "CenterY": 379.0
+        },
+        "Helmet": {
+          "Count": 6923,
+          "X": 290,
+          "Y": 106,
+          "Width": 160,
+          "Height": 75,
+          "CenterX": 370.0,
+          "CenterY": 143.5
+        },
+        "Belt": {
+          "Count": 90,
+          "X": 407,
+          "Y": 405,
+          "Width": 13,
+          "Height": 9,
+          "CenterX": 413.5,
+          "CenterY": 409.5
+        }
+      },
+      "alignedMeasure": {
+        "Bounds": {
+          "Count": 107182,
+          "X": 305,
+          "Y": 214,
+          "Width": 324,
+          "Height": 586,
+          "CenterX": 467.0,
+          "CenterY": 507.0
+        },
+        "Helmet": {
+          "Count": 6911,
+          "X": 388,
+          "Y": 234,
+          "Width": 161,
+          "Height": 75,
+          "CenterX": 468.5,
+          "CenterY": 271.5
+        },
+        "Belt": {
+          "Count": 92,
+          "X": 505,
+          "Y": 533,
+          "Width": 13,
+          "Height": 9,
+          "CenterX": 511.5,
+          "CenterY": 537.5
+        }
+      }
+    },
+    {
+      "motion": "walk",
+      "frame": "middle-02",
+      "source": "work_process/images/issue266/female-walk-eight-review-20261103/middle-02.png",
+      "sourceSha256": "D8FCEA2C94AFFB8BB5478B090F3FC777B966177B38C2841B847D30EFA0398929",
+      "output": "work_process/images/issue266/female-motion-alignment-review-20261103/walk/middle-02.png",
+      "scale": 1.0,
+      "dx": 106.0,
+      "dy": 137.0,
+      "sourceRootX": 406.0,
+      "sourceRootY": 663.0,
+      "rootMethod": "cyan-belt-center",
+      "grounded": true,
+      "sourceMeasure": {
+        "Bounds": {
+          "Count": 112511,
+          "X": 208,
+          "Y": 85,
+          "Width": 360,
+          "Height": 578,
+          "CenterX": 388.0,
+          "CenterY": 374.0
+        },
+        "Helmet": {
+          "Count": 7141,
+          "X": 289,
+          "Y": 106,
+          "Width": 160,
+          "Height": 74,
+          "CenterX": 369.0,
+          "CenterY": 143.0
+        },
+        "Belt": {
+          "Count": 75,
+          "X": 400,
+          "Y": 407,
+          "Width": 12,
+          "Height": 9,
+          "CenterX": 406.0,
+          "CenterY": 411.5
+        }
+      },
+      "alignedMeasure": {
+        "Bounds": {
+          "Count": 112511,
+          "X": 314,
+          "Y": 222,
+          "Width": 360,
+          "Height": 578,
+          "CenterX": 494.0,
+          "CenterY": 511.0
+        },
+        "Helmet": {
+          "Count": 7141,
+          "X": 395,
+          "Y": 243,
+          "Width": 160,
+          "Height": 74,
+          "CenterX": 475.0,
+          "CenterY": 280.0
+        },
+        "Belt": {
+          "Count": 75,
+          "X": 506,
+          "Y": 544,
+          "Width": 12,
+          "Height": 9,
+          "CenterX": 512.0,
+          "CenterY": 548.5
+        }
+      }
+    },
+    {
+      "motion": "walk",
+      "frame": "key-03",
+      "source": "work_process/images/issue266/female-walk-eight-review-20261103/key-03.png",
+      "sourceSha256": "0587E8AC79DBE9B1130F384BC255FBF74D474CAA03A8FEC65FF4F551AE2A4C65",
+      "output": "work_process/images/issue266/female-motion-alignment-review-20261103/walk/key-03.png",
+      "scale": 1.0,
+      "dx": 90.0,
+      "dy": 129.0,
+      "sourceRootX": 422.0,
+      "sourceRootY": 671.0,
+      "rootMethod": "cyan-belt-center",
+      "grounded": true,
+      "sourceMeasure": {
+        "Bounds": {
+          "Count": 117386,
+          "X": 198,
+          "Y": 89,
+          "Width": 389,
+          "Height": 582,
+          "CenterX": 392.5,
+          "CenterY": 380.0
+        },
+        "Helmet": {
+          "Count": 6901,
+          "X": 295,
+          "Y": 109,
+          "Width": 162,
+          "Height": 75,
+          "CenterX": 376.0,
+          "CenterY": 146.5
+        },
+        "Belt": {
+          "Count": 71,
+          "X": 416,
+          "Y": 406,
+          "Width": 12,
+          "Height": 8,
+          "CenterX": 422.0,
+          "CenterY": 410.0
+        }
+      },
+      "alignedMeasure": {
+        "Bounds": {
+          "Count": 117386,
+          "X": 288,
+          "Y": 218,
+          "Width": 389,
+          "Height": 582,
+          "CenterX": 482.5,
+          "CenterY": 509.0
+        },
+        "Helmet": {
+          "Count": 6901,
+          "X": 385,
+          "Y": 238,
+          "Width": 162,
+          "Height": 75,
+          "CenterX": 466.0,
+          "CenterY": 275.5
+        },
+        "Belt": {
+          "Count": 71,
+          "X": 506,
+          "Y": 535,
+          "Width": 12,
+          "Height": 8,
+          "CenterX": 512.0,
+          "CenterY": 539.0
+        }
+      }
+    },
+    {
+      "motion": "walk",
+      "frame": "middle-03",
+      "source": "work_process/images/issue266/female-walk-eight-review-20261103/middle-03.png",
+      "sourceSha256": "63A3D6F8A98EA0DA10F3B95E544C2198AEE2E118082D01455319504D30203E35",
+      "output": "work_process/images/issue266/female-motion-alignment-review-20261103/walk/middle-03.png",
+      "scale": 1.0,
+      "dx": 95.5,
+      "dy": 131.0,
+      "sourceRootX": 416.5,
+      "sourceRootY": 669.0,
+      "rootMethod": "cyan-belt-center",
+      "grounded": true,
+      "sourceMeasure": {
+        "Bounds": {
+          "Count": 108650,
+          "X": 213,
+          "Y": 89,
+          "Width": 324,
+          "Height": 580,
+          "CenterX": 375.0,
+          "CenterY": 379.0
+        },
+        "Helmet": {
+          "Count": 7047,
+          "X": 295,
+          "Y": 110,
+          "Width": 161,
+          "Height": 74,
+          "CenterX": 375.5,
+          "CenterY": 147.0
+        },
+        "Belt": {
+          "Count": 77,
+          "X": 411,
+          "Y": 405,
+          "Width": 11,
+          "Height": 9,
+          "CenterX": 416.5,
+          "CenterY": 409.5
+        }
+      },
+      "alignedMeasure": {
+        "Bounds": {
+          "Count": 108908,
+          "X": 308,
+          "Y": 220,
+          "Width": 325,
+          "Height": 580,
+          "CenterX": 470.5,
+          "CenterY": 510.0
+        },
+        "Helmet": {
+          "Count": 7043,
+          "X": 391,
+          "Y": 241,
+          "Width": 161,
+          "Height": 74,
+          "CenterX": 471.5,
+          "CenterY": 278.0
+        },
+        "Belt": {
+          "Count": 75,
+          "X": 506,
+          "Y": 536,
+          "Width": 11,
+          "Height": 9,
+          "CenterX": 511.5,
+          "CenterY": 540.5
+        }
+      }
+    },
+    {
+      "motion": "walk",
+      "frame": "key-04",
+      "source": "work_process/images/issue266/female-walk-eight-review-20261103/key-04.png",
+      "sourceSha256": "AEAC177B91C7E8C3902565F7FDAF39611E0ABB8E6A9AD6555F90DE273DA6171F",
+      "output": "work_process/images/issue266/female-motion-alignment-review-20261103/walk/key-04.png",
+      "scale": 1.0,
+      "dx": 100.0,
+      "dy": 126.0,
+      "sourceRootX": 412.0,
+      "sourceRootY": 674.0,
+      "rootMethod": "cyan-belt-center",
+      "grounded": true,
+      "sourceMeasure": {
+        "Bounds": {
+          "Count": 106608,
+          "X": 206,
+          "Y": 89,
+          "Width": 326,
+          "Height": 585,
+          "CenterX": 369.0,
+          "CenterY": 381.5
+        },
+        "Helmet": {
+          "Count": 6892,
+          "X": 291,
+          "Y": 109,
+          "Width": 160,
+          "Height": 76,
+          "CenterX": 371.0,
+          "CenterY": 147.0
+        },
+        "Belt": {
+          "Count": 86,
+          "X": 406,
+          "Y": 405,
+          "Width": 12,
+          "Height": 9,
+          "CenterX": 412.0,
+          "CenterY": 409.5
+        }
+      },
+      "alignedMeasure": {
+        "Bounds": {
+          "Count": 106608,
+          "X": 306,
+          "Y": 215,
+          "Width": 326,
+          "Height": 585,
+          "CenterX": 469.0,
+          "CenterY": 507.5
+        },
+        "Helmet": {
+          "Count": 6892,
+          "X": 391,
+          "Y": 235,
+          "Width": 160,
+          "Height": 76,
+          "CenterX": 471.0,
+          "CenterY": 273.0
+        },
+        "Belt": {
+          "Count": 86,
+          "X": 506,
+          "Y": 531,
+          "Width": 12,
+          "Height": 9,
+          "CenterX": 512.0,
+          "CenterY": 535.5
+        }
+      }
+    },
+    {
+      "motion": "walk",
+      "frame": "middle-04",
+      "source": "work_process/images/issue266/female-walk-eight-review-20261103/middle-04.png",
+      "sourceSha256": "AF736B9122EFD9369CB44904A888A1FFE71AEC9F99A055FD5A8572FC00339B15",
+      "output": "work_process/images/issue266/female-motion-alignment-review-20261103/walk/middle-04.png",
+      "scale": 1.0,
+      "dx": 99.5,
+      "dy": 130.0,
+      "sourceRootX": 412.5,
+      "sourceRootY": 670.0,
+      "rootMethod": "cyan-belt-center",
+      "grounded": true,
+      "sourceMeasure": {
+        "Bounds": {
+          "Count": 112638,
+          "X": 209,
+          "Y": 89,
+          "Width": 365,
+          "Height": 581,
+          "CenterX": 391.5,
+          "CenterY": 379.5
+        },
+        "Helmet": {
+          "Count": 6986,
+          "X": 291,
+          "Y": 110,
+          "Width": 159,
+          "Height": 75,
+          "CenterX": 370.5,
+          "CenterY": 147.5
+        },
+        "Belt": {
+          "Count": 76,
+          "X": 407,
+          "Y": 407,
+          "Width": 11,
+          "Height": 9,
+          "CenterX": 412.5,
+          "CenterY": 411.5
+        }
+      },
+      "alignedMeasure": {
+        "Bounds": {
+          "Count": 112868,
+          "X": 308,
+          "Y": 219,
+          "Width": 366,
+          "Height": 581,
+          "CenterX": 491.0,
+          "CenterY": 509.5
+        },
+        "Helmet": {
+          "Count": 6979,
+          "X": 390,
+          "Y": 240,
+          "Width": 159,
+          "Height": 75,
+          "CenterX": 469.5,
+          "CenterY": 277.5
+        },
+        "Belt": {
+          "Count": 76,
+          "X": 506,
+          "Y": 537,
+          "Width": 12,
+          "Height": 9,
+          "CenterX": 512.0,
+          "CenterY": 541.5
+        }
+      }
+    },
+    {
+      "motion": "jump",
+      "frame": "pose-01",
+      "source": "work_process/images/issue266/female-jump-review-20261103/pose-01.png",
+      "sourceSha256": "EB2EFC02CE29BB167B086770E926CB655A1FE1FF422B91780BCE82592176BA02",
+      "output": "work_process/images/issue266/female-motion-alignment-review-20261103/jump/pose-01.png",
+      "scale": 1.0,
+      "dx": 102.5,
+      "dy": 146.0,
+      "sourceRootX": 409.5,
+      "sourceRootY": 654.0,
+      "rootMethod": "cyan-belt-center",
+      "grounded": true,
+      "sourceMeasure": {
+        "Bounds": {
+          "Count": 113315,
+          "X": 207,
+          "Y": 116,
+          "Width": 372,
+          "Height": 538,
+          "CenterX": 393.0,
+          "CenterY": 385.0
+        },
+        "Helmet": {
+          "Count": 7202,
+          "X": 338,
+          "Y": 135,
+          "Width": 161,
+          "Height": 72,
+          "CenterX": 418.5,
+          "CenterY": 171.0
+        },
+        "Belt": {
+          "Count": 70,
+          "X": 403,
+          "Y": 432,
+          "Width": 13,
+          "Height": 7,
+          "CenterX": 409.5,
+          "CenterY": 435.5
+        }
+      },
+      "alignedMeasure": {
+        "Bounds": {
+          "Count": 113516,
+          "X": 310,
+          "Y": 262,
+          "Width": 371,
+          "Height": 538,
+          "CenterX": 495.5,
+          "CenterY": 531.0
+        },
+        "Helmet": {
+          "Count": 7195,
+          "X": 441,
+          "Y": 281,
+          "Width": 160,
+          "Height": 72,
+          "CenterX": 521.0,
+          "CenterY": 317.0
+        },
+        "Belt": {
+          "Count": 66,
+          "X": 506,
+          "Y": 578,
+          "Width": 12,
+          "Height": 7,
+          "CenterX": 512.0,
+          "CenterY": 581.5
+        }
+      }
+    },
+    {
+      "motion": "jump",
+      "frame": "pose-02",
+      "source": "work_process/images/issue266/female-jump-review-20261103/pose-02.png",
+      "sourceSha256": "681DF62D692F1A3F2D7EC1891A0B14416EB17923AAD936D746A24168C2435D0F",
+      "output": "work_process/images/issue266/female-motion-alignment-review-20261103/jump/pose-02.png",
+      "scale": 1.0,
+      "dx": 124.0,
+      "dy": 138.5,
+      "sourceRootX": 388.0,
+      "sourceRootY": 661.5,
+      "rootMethod": "cyan-belt-center",
+      "grounded": false,
+      "sourceMeasure": {
+        "Bounds": {
+          "Count": 105416,
+          "X": 201,
+          "Y": 85,
+          "Width": 338,
+          "Height": 541,
+          "CenterX": 370.0,
+          "CenterY": 355.5
+        },
+        "Helmet": {
+          "Count": 6984,
+          "X": 291,
+          "Y": 104,
+          "Width": 159,
+          "Height": 72,
+          "CenterX": 370.5,
+          "CenterY": 140.0
+        },
+        "Belt": {
+          "Count": 61,
+          "X": 382,
+          "Y": 393,
+          "Width": 12,
+          "Height": 8,
+          "CenterX": 388.0,
+          "CenterY": 397.0
+        }
+      },
+      "alignedMeasure": {
+        "Bounds": {
+          "Count": 105608,
+          "X": 325,
+          "Y": 223,
+          "Width": 338,
+          "Height": 542,
+          "CenterX": 494.0,
+          "CenterY": 494.0
+        },
+        "Helmet": {
+          "Count": 6966,
+          "X": 415,
+          "Y": 243,
+          "Width": 159,
+          "Height": 71,
+          "CenterX": 494.5,
+          "CenterY": 278.5
+        },
+        "Belt": {
+          "Count": 59,
+          "X": 506,
+          "Y": 532,
+          "Width": 12,
+          "Height": 7,
+          "CenterX": 512.0,
+          "CenterY": 535.5
+        }
+      }
+    },
+    {
+      "motion": "jump",
+      "frame": "pose-03",
+      "source": "work_process/images/issue266/female-jump-review-20261103/pose-03.png",
+      "sourceSha256": "30BF9A0E82CD5D77F0177BAB28C1395A000799B2346D17E47D6C03FA55DC1E92",
+      "output": "work_process/images/issue266/female-motion-alignment-review-20261103/jump/pose-03.png",
+      "scale": 1.0,
+      "dx": 102.5,
+      "dy": 138.5,
+      "sourceRootX": 409.5,
+      "sourceRootY": 661.5,
+      "rootMethod": "cyan-belt-center",
+      "grounded": false,
+      "sourceMeasure": {
+        "Bounds": {
+          "Count": 114358,
+          "X": 209,
+          "Y": 73,
+          "Width": 353,
+          "Height": 583,
+          "CenterX": 385.5,
+          "CenterY": 364.5
+        },
+        "Helmet": {
+          "Count": 6633,
+          "X": 321,
+          "Y": 92,
+          "Width": 154,
+          "Height": 70,
+          "CenterX": 398.0,
+          "CenterY": 127.0
+        },
+        "Belt": {
+          "Count": 81,
+          "X": 403,
+          "Y": 379,
+          "Width": 13,
+          "Height": 9,
+          "CenterX": 409.5,
+          "CenterY": 383.5
+        }
+      },
+      "alignedMeasure": {
+        "Bounds": {
+          "Count": 114698,
+          "X": 311,
+          "Y": 211,
+          "Width": 354,
+          "Height": 584,
+          "CenterX": 488.0,
+          "CenterY": 503.0
+        },
+        "Helmet": {
+          "Count": 6615,
+          "X": 424,
+          "Y": 230,
+          "Width": 154,
+          "Height": 71,
+          "CenterX": 501.0,
+          "CenterY": 265.5
+        },
+        "Belt": {
+          "Count": 77,
+          "X": 505,
+          "Y": 517,
+          "Width": 13,
+          "Height": 9,
+          "CenterX": 511.5,
+          "CenterY": 521.5
+        }
+      }
+    },
+    {
+      "motion": "jump",
+      "frame": "pose-04",
+      "source": "work_process/images/issue266/female-jump-review-20261103/pose-04.png",
+      "sourceSha256": "3940A6CCE3668CE475F20D9271C74E4E8D6337486914CF36CD5DF2175E264661",
+      "output": "work_process/images/issue266/female-motion-alignment-review-20261103/jump/pose-04.png",
+      "scale": 1.0,
+      "dx": 134.0,
+      "dy": 131.0,
+      "sourceRootX": 378.0,
+      "sourceRootY": 669.0,
+      "rootMethod": "cyan-belt-center",
+      "grounded": true,
+      "sourceMeasure": {
+        "Bounds": {
+          "Count": 109866,
+          "X": 203,
+          "Y": 138,
+          "Width": 331,
+          "Height": 531,
+          "CenterX": 368.5,
+          "CenterY": 403.5
+        },
+        "Helmet": {
+          "Count": 6892,
+          "X": 295,
+          "Y": 158,
+          "Width": 157,
+          "Height": 74,
+          "CenterX": 373.5,
+          "CenterY": 195.0
+        },
+        "Belt": {
+          "Count": 75,
+          "X": 372,
+          "Y": 451,
+          "Width": 12,
+          "Height": 8,
+          "CenterX": 378.0,
+          "CenterY": 455.0
+        }
+      },
+      "alignedMeasure": {
+        "Bounds": {
+          "Count": 109866,
+          "X": 337,
+          "Y": 269,
+          "Width": 331,
+          "Height": 531,
+          "CenterX": 502.5,
+          "CenterY": 534.5
+        },
+        "Helmet": {
+          "Count": 6892,
+          "X": 429,
+          "Y": 289,
+          "Width": 157,
+          "Height": 74,
+          "CenterX": 507.5,
+          "CenterY": 326.0
+        },
+        "Belt": {
+          "Count": 75,
+          "X": 506,
+          "Y": 582,
+          "Width": 12,
+          "Height": 8,
+          "CenterX": 512.0,
+          "CenterY": 586.0
+        }
+      }
+    },
+    {
+      "motion": "damage",
+      "frame": "pose-01",
+      "source": "work_process/images/issue266/female-damage-review-20261103/pose-01.png",
+      "sourceSha256": "CFBA0B1A68B2879A9A51DAB2389F68F1AF0D5B5924D2DC10863DF9D36A292260",
+      "output": "work_process/images/issue266/female-motion-alignment-review-20261103/damage/pose-01.png",
+      "scale": 1.0662251655629138,
+      "dx": 55.655629139072914,
+      "dy": 95.22516556291396,
+      "sourceRootX": 428.0,
+      "sourceRootY": 661.0,
+      "rootMethod": "cyan-belt-center",
+      "grounded": true,
+      "sourceMeasure": {
+        "Bounds": {
+          "Count": 103931,
+          "X": 228,
+          "Y": 81,
+          "Width": 292,
+          "Height": 580,
+          "CenterX": 374.0,
+          "CenterY": 371.0
+        },
+        "Helmet": {
+          "Count": 6379,
+          "X": 295,
+          "Y": 100,
+          "Width": 151,
+          "Height": 74,
+          "CenterX": 370.5,
+          "CenterY": 137.0
+        },
+        "Belt": {
+          "Count": 75,
+          "X": 422,
+          "Y": 380,
+          "Width": 12,
+          "Height": 8,
+          "CenterX": 428.0,
+          "CenterY": 384.0
+        }
+      },
+      "alignedMeasure": {
+        "Bounds": {
+          "Count": 118462,
+          "X": 299,
+          "Y": 182,
+          "Width": 312,
+          "Height": 618,
+          "CenterX": 455.0,
+          "CenterY": 491.0
+        },
+        "Helmet": {
+          "Count": 7237,
+          "X": 371,
+          "Y": 202,
+          "Width": 161,
+          "Height": 79,
+          "CenterX": 451.5,
+          "CenterY": 241.5
+        },
+        "Belt": {
+          "Count": 89,
+          "X": 506,
+          "Y": 500,
+          "Width": 13,
+          "Height": 9,
+          "CenterX": 512.5,
+          "CenterY": 504.5
+        }
+      }
+    },
+    {
+      "motion": "damage",
+      "frame": "pose-02",
+      "source": "work_process/images/issue266/female-damage-review-20261103/pose-02.png",
+      "sourceSha256": "E0EBA065E30C2C250A3ED5220D97E36EB3F77B0FA85592E7E4FD85119C151FCD",
+      "output": "work_process/images/issue266/female-motion-alignment-review-20261103/damage/pose-02.png",
+      "scale": 1.0662251655629138,
+      "dx": 80.17880794701989,
+      "dy": 95.22516556291396,
+      "sourceRootX": 405.0,
+      "sourceRootY": 661.0,
+      "rootMethod": "cyan-belt-center",
+      "grounded": true,
+      "sourceMeasure": {
+        "Bounds": {
+          "Count": 102010,
+          "X": 191,
+          "Y": 85,
+          "Width": 307,
+          "Height": 576,
+          "CenterX": 344.5,
+          "CenterY": 373.0
+        },
+        "Helmet": {
+          "Count": 6183,
+          "X": 253,
+          "Y": 106,
+          "Width": 147,
+          "Height": 82,
+          "CenterX": 326.5,
+          "CenterY": 147.0
+        },
+        "Belt": {
+          "Count": 61,
+          "X": 399,
+          "Y": 373,
+          "Width": 12,
+          "Height": 7,
+          "CenterX": 405.0,
+          "CenterY": 376.5
+        }
+      },
+      "alignedMeasure": {
+        "Bounds": {
+          "Count": 116206,
+          "X": 283,
+          "Y": 186,
+          "Width": 328,
+          "Height": 614,
+          "CenterX": 447.0,
+          "CenterY": 493.0
+        },
+        "Helmet": {
+          "Count": 7017,
+          "X": 350,
+          "Y": 209,
+          "Width": 157,
+          "Height": 86,
+          "CenterX": 428.5,
+          "CenterY": 252.0
+        },
+        "Belt": {
+          "Count": 70,
+          "X": 506,
+          "Y": 493,
+          "Width": 12,
+          "Height": 8,
+          "CenterX": 512.0,
+          "CenterY": 497.0
+        }
+      }
+    },
+    {
+      "motion": "damage",
+      "frame": "pose-03",
+      "source": "work_process/images/issue266/female-damage-review-20261103/pose-03.png",
+      "sourceSha256": "C655945DD41E61583EAA404E5CF29CB4AAA4298482E23AACF758417605CBDB2E",
+      "output": "work_process/images/issue266/female-motion-alignment-review-20261103/damage/pose-03.png",
+      "scale": 1.0662251655629138,
+      "dx": 54.58940397351,
+      "dy": 99.4900662251656,
+      "sourceRootX": 429.0,
+      "sourceRootY": 657.0,
+      "rootMethod": "cyan-belt-center",
+      "grounded": true,
+      "sourceMeasure": {
+        "Bounds": {
+          "Count": 102502,
+          "X": 217,
+          "Y": 88,
+          "Width": 312,
+          "Height": 569,
+          "CenterX": 373.0,
+          "CenterY": 372.5
+        },
+        "Helmet": {
+          "Count": 6215,
+          "X": 277,
+          "Y": 109,
+          "Width": 144,
+          "Height": 83,
+          "CenterX": 349.0,
+          "CenterY": 150.5
+        },
+        "Belt": {
+          "Count": 73,
+          "X": 423,
+          "Y": 376,
+          "Width": 12,
+          "Height": 8,
+          "CenterX": 429.0,
+          "CenterY": 380.0
+        }
+      },
+      "alignedMeasure": {
+        "Bounds": {
+          "Count": 116801,
+          "X": 287,
+          "Y": 194,
+          "Width": 333,
+          "Height": 606,
+          "CenterX": 453.5,
+          "CenterY": 497.0
+        },
+        "Helmet": {
+          "Count": 7059,
+          "X": 351,
+          "Y": 216,
+          "Width": 153,
+          "Height": 88,
+          "CenterX": 427.5,
+          "CenterY": 260.0
+        },
+        "Belt": {
+          "Count": 85,
+          "X": 507,
+          "Y": 500,
+          "Width": 12,
+          "Height": 9,
+          "CenterX": 513.0,
+          "CenterY": 504.5
+        }
+      }
+    },
+    {
+      "motion": "damage",
+      "frame": "pose-04",
+      "source": "work_process/images/issue266/female-damage-review-20261103/pose-04.png",
+      "sourceSha256": "5C4D59DC4D790765C0ED7F9070B94ACDE28FE894D6898FC0F5385A7D7846B946",
+      "output": "work_process/images/issue266/female-motion-alignment-review-20261103/damage/pose-04.png",
+      "scale": 1.0662251655629138,
+      "dx": 95.10596026490072,
+      "dy": 97.35761589403978,
+      "sourceRootX": 391.0,
+      "sourceRootY": 659.0,
+      "rootMethod": "cyan-belt-center",
+      "grounded": true,
+      "sourceMeasure": {
+        "Bounds": {
+          "Count": 101466,
+          "X": 195,
+          "Y": 85,
+          "Width": 295,
+          "Height": 574,
+          "CenterX": 342.5,
+          "CenterY": 372.0
+        },
+        "Helmet": {
+          "Count": 6271,
+          "X": 263,
+          "Y": 104,
+          "Width": 149,
+          "Height": 73,
+          "CenterX": 337.5,
+          "CenterY": 140.5
+        },
+        "Belt": {
+          "Count": 79,
+          "X": 385,
+          "Y": 379,
+          "Width": 12,
+          "Height": 9,
+          "CenterX": 391.0,
+          "CenterY": 383.5
+        }
+      },
+      "alignedMeasure": {
+        "Bounds": {
+          "Count": 115555,
+          "X": 303,
+          "Y": 188,
+          "Width": 314,
+          "Height": 612,
+          "CenterX": 460.0,
+          "CenterY": 494.0
+        },
+        "Helmet": {
+          "Count": 7093,
+          "X": 376,
+          "Y": 208,
+          "Width": 158,
+          "Height": 78,
+          "CenterX": 455.0,
+          "CenterY": 247.0
+        },
+        "Belt": {
+          "Count": 83,
+          "X": 506,
+          "Y": 502,
+          "Width": 13,
+          "Height": 9,
+          "CenterX": 512.5,
+          "CenterY": 506.5
+        }
+      }
+    },
+    {
+      "motion": "knockout",
+      "frame": "pose-01",
+      "source": "work_process/images/issue266/female-knockout-review-20261103/pose-01.png",
+      "sourceSha256": "895EA5CEE43044ACC9457DEFA9455559A2FFF7FBDE87BBC917AE14130BDB9DA7",
+      "output": "work_process/images/issue266/female-motion-alignment-review-20261103/knockout/pose-01.png",
+      "scale": 0.9698795180722891,
+      "dx": 127.92771084337352,
+      "dy": 110.41566265060248,
+      "sourceRootX": 396.0,
+      "sourceRootY": 711.0,
+      "rootMethod": "cyan-belt-center",
+      "grounded": true,
+      "sourceMeasure": {
+        "Bounds": {
+          "Count": 119912,
+          "X": 223,
+          "Y": 87,
+          "Width": 338,
+          "Height": 624,
+          "CenterX": 392.0,
+          "CenterY": 399.0
+        },
+        "Helmet": {
+          "Count": 7561,
+          "X": 315,
+          "Y": 106,
+          "Width": 166,
+          "Height": 70,
+          "CenterX": 398.0,
+          "CenterY": 141.0
+        },
+        "Belt": {
+          "Count": 97,
+          "X": 389,
+          "Y": 406,
+          "Width": 14,
+          "Height": 10,
+          "CenterX": 396.0,
+          "CenterY": 411.0
+        }
+      },
+      "alignedMeasure": {
+        "Bounds": {
+          "Count": 112988,
+          "X": 344,
+          "Y": 194,
+          "Width": 328,
+          "Height": 606,
+          "CenterX": 508.0,
+          "CenterY": 497.0
+        },
+        "Helmet": {
+          "Count": 7101,
+          "X": 433,
+          "Y": 213,
+          "Width": 162,
+          "Height": 68,
+          "CenterX": 514.0,
+          "CenterY": 247.0
+        },
+        "Belt": {
+          "Count": 92,
+          "X": 505,
+          "Y": 504,
+          "Width": 14,
+          "Height": 10,
+          "CenterX": 512.0,
+          "CenterY": 509.0
+        }
+      }
+    },
+    {
+      "motion": "knockout",
+      "frame": "pose-02",
+      "source": "work_process/images/issue266/female-knockout-review-20261103/pose-02.png",
+      "sourceSha256": "DB34CF348C0ACC36872E8E6A4AD977DF248BFACAF21B10ABA91F8AF7E16C29F5",
+      "output": "work_process/images/issue266/female-motion-alignment-review-20261103/knockout/pose-02.png",
+      "scale": 0.9698795180722891,
+      "dx": 148.2951807228916,
+      "dy": 110.41566265060248,
+      "sourceRootX": 375.0,
+      "sourceRootY": 711.0,
+      "rootMethod": "cyan-belt-center",
+      "grounded": true,
+      "sourceMeasure": {
+        "Bounds": {
+          "Count": 120231,
+          "X": 227,
+          "Y": 115,
+          "Width": 341,
+          "Height": 596,
+          "CenterX": 397.5,
+          "CenterY": 413.0
+        },
+        "Helmet": {
+          "Count": 7511,
+          "X": 326,
+          "Y": 135,
+          "Width": 164,
+          "Height": 73,
+          "CenterX": 408.0,
+          "CenterY": 171.5
+        },
+        "Belt": {
+          "Count": 83,
+          "X": 368,
+          "Y": 433,
+          "Width": 14,
+          "Height": 9,
+          "CenterX": 375.0,
+          "CenterY": 437.5
+        }
+      },
+      "alignedMeasure": {
+        "Bounds": {
+          "Count": 113304,
+          "X": 368,
+          "Y": 222,
+          "Width": 331,
+          "Height": 578,
+          "CenterX": 533.5,
+          "CenterY": 511.0
+        },
+        "Helmet": {
+          "Count": 7050,
+          "X": 464,
+          "Y": 241,
+          "Width": 159,
+          "Height": 71,
+          "CenterX": 543.5,
+          "CenterY": 276.5
+        },
+        "Belt": {
+          "Count": 78,
+          "X": 504,
+          "Y": 530,
+          "Width": 14,
+          "Height": 9,
+          "CenterX": 511.0,
+          "CenterY": 534.5
+        }
+      }
+    },
+    {
+      "motion": "knockout",
+      "frame": "pose-03",
+      "source": "work_process/images/issue266/female-knockout-review-20261103/pose-03.png",
+      "sourceSha256": "CE5AD93C298A3C91BFF3FDE68381BCA49FBBF80342116DF23735E25A9DB2F2B5",
+      "output": "work_process/images/issue266/female-motion-alignment-review-20261103/knockout/pose-03.png",
+      "scale": 0.9698795180722891,
+      "dx": 191.9397590361446,
+      "dy": 188.97590361445782,
+      "sourceRootX": 330.0,
+      "sourceRootY": 630.0,
+      "rootMethod": "manual-pelvis-axis-review",
+      "grounded": true,
+      "sourceMeasure": {
+        "Bounds": {
+          "Count": 124905,
+          "X": 111,
+          "Y": 176,
+          "Width": 521,
+          "Height": 454,
+          "CenterX": 371.5,
+          "CenterY": 403.0
+        },
+        "Helmet": {
+          "Count": 7263,
+          "X": 399,
+          "Y": 194,
+          "Width": 158,
+          "Height": 85,
+          "CenterX": 478.0,
+          "CenterY": 236.5
+        },
+        "Belt": {
+          "Count": 35,
+          "X": 361,
+          "Y": 480,
+          "Width": 9,
+          "Height": 7,
+          "CenterX": 365.5,
+          "CenterY": 483.5
+        }
+      },
+      "alignedMeasure": {
+        "Bounds": {
+          "Count": 117677,
+          "X": 299,
+          "Y": 359,
+          "Width": 506,
+          "Height": 441,
+          "CenterX": 552.0,
+          "CenterY": 579.5
+        },
+        "Helmet": {
+          "Count": 6828,
+          "X": 579,
+          "Y": 377,
+          "Width": 153,
+          "Height": 82,
+          "CenterX": 655.5,
+          "CenterY": 418.0
+        },
+        "Belt": {
+          "Count": 33,
+          "X": 543,
+          "Y": 654,
+          "Width": 8,
+          "Height": 8,
+          "CenterX": 547.0,
+          "CenterY": 658.0
+        }
+      }
+    },
+    {
+      "motion": "knockout",
+      "frame": "pose-04",
+      "source": "work_process/images/issue266/female-knockout-review-20261103/pose-04.png",
+      "sourceSha256": "22EEF703A7CE5B223015E9D320FC161C7173CC114356792C72B363E4BAC34E5A",
+      "output": "work_process/images/issue266/female-motion-alignment-review-20261103/knockout/pose-04.png",
+      "scale": 0.9698795180722891,
+      "dx": 230.73493975903614,
+      "dy": 195.76506024096386,
+      "sourceRootX": 290.0,
+      "sourceRootY": 623.0,
+      "rootMethod": "manual-pelvis-axis-review",
+      "grounded": true,
+      "sourceMeasure": {
+        "Bounds": {
+          "Count": 110503,
+          "X": 15,
+          "Y": 344,
+          "Width": 669,
+          "Height": 279,
+          "CenterX": 349.5,
+          "CenterY": 483.5
+        },
+        "Helmet": {
+          "Count": 6634,
+          "X": 466,
+          "Y": 358,
+          "Width": 149,
+          "Height": 92,
+          "CenterX": 540.5,
+          "CenterY": 404.0
+        },
+        "Belt": {
+          "Count": 11,
+          "X": 350,
+          "Y": 474,
+          "Width": 3,
+          "Height": 5,
+          "CenterX": 351.5,
+          "CenterY": 476.5
+        }
+      },
+      "alignedMeasure": {
+        "Bounds": {
+          "Count": 104110,
+          "X": 246,
+          "Y": 529,
+          "Width": 649,
+          "Height": 271,
+          "CenterX": 570.5,
+          "CenterY": 664.5
+        },
+        "Helmet": {
+          "Count": 6235,
+          "X": 683,
+          "Y": 543,
+          "Width": 145,
+          "Height": 89,
+          "CenterX": 755.5,
+          "CenterY": 587.5
+        },
+        "Belt": {
+          "Count": 13,
+          "X": 571,
+          "Y": 655,
+          "Width": 3,
+          "Height": 5,
+          "CenterX": 572.5,
+          "CenterY": 657.5
+        }
+      }
+    }
+  ]
+}

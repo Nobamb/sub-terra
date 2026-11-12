@@ -1,0 +1,116 @@
+{
+  "newWholeBodyCels": 2,
+  "selectedSources": [
+    "v2 column 1",
+    "v1 column 0"
+  ],
+  "sourceSha256": [
+    "69B4785AC0E98E55A43DA39E324409E970224A5B024C46884F5F70F0D40A969F",
+    "F7AB57246001F910147AF4C9FDC2A2DB0A046851E666B175F72AE744EE5E47BA"
+  ],
+  "note": "Two selected whole-body drawings from the current recovery trials. No body-part assembly. Shared uniform scale, belt root and foot alignment only. Preview timing is review-only, not game timing.",
+  "frames": [
+    {
+      "scale": 0.92,
+      "dy": 88.83999999999992,
+      "measure": {
+        "Bounds": {
+          "Count": 119647,
+          "X": 317,
+          "Y": 223,
+          "Width": 328,
+          "Height": 577,
+          "CenterX": 481.0,
+          "CenterY": 511.5
+        },
+        "Helmet": {
+          "Count": 7736,
+          "X": 397,
+          "Y": 244,
+          "Width": 166,
+          "Height": 83,
+          "CenterX": 480.0,
+          "CenterY": 285.5
+        },
+        "Belt": {
+          "Count": 48,
+          "X": 506,
+          "Y": 551,
+          "Width": 12,
+          "Height": 8,
+          "CenterX": 512.0,
+          "CenterY": 555.0
+        }
+      },
+      "pose": 1,
+      "dx": 177.12
+    },
+    {
+      "scale": 0.92,
+      "dy": 88.83999999999992,
+      "measure": {
+        "Bounds": {
+          "Count": 123435,
+          "X": 320,
+          "Y": 191,
+          "Width": 323,
+          "Height": 609,
+          "CenterX": 481.5,
+          "CenterY": 495.5
+        },
+        "Helmet": {
+          "Count": 7452,
+          "X": 403,
+          "Y": 212,
+          "Width": 161,
+          "Height": 82,
+          "CenterX": 483.5,
+          "CenterY": 253.0
+        },
+        "Belt": {
+          "Count": 66,
+          "X": 504,
+          "Y": 524,
+          "Width": 14,
+          "Height": 8,
+          "CenterX": 511.0,
+          "CenterY": 528.0
+        }
+      },
+      "pose": 2,
+      "dx": 64.41999999999996
+    }
+  ],
+  "canvas": 1024,
+  "monotonicRecoveryHeight": true,
+  "before": [
+    0,
+    0,
+    3,
+    3,
+    3,
+    3,
+    3,
+    3
+  ],
+  "heights": [
+    531,
+    577,
+    609,
+    618
+  ],
+  "after": [
+    0,
+    0,
+    1,
+    2,
+    3,
+    3,
+    3,
+    3
+  ],
+  "runtimeApplied": false,
+  "fixedScale": 0.92,
+  "previewFps": 8,
+  "reviewGroundY": 800
+}

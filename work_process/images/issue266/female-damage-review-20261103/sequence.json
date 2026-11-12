@@ -1,0 +1,15 @@
+{
+  "uniqueCels": 4,
+  "previewFps": 4,
+  "note": "Slow key-pose review only; not full runtime frames or timing.",
+  "sequence": [
+    1,
+    2,
+    3,
+    4,
+    1
+  ],
+  "plays": 1,
+  "runtimeApplied": false,
+  "action": "damage"
+}
