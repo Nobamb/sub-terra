@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using System.Text;
 using SubTerra.App.Audio;
 using SubTerra.App.Core.Data;
-using SubTerra.App.UI.Drone;
 using SubTerra.Shared.Audio;
 using TMPro;
 using UnityEngine;
@@ -19,8 +18,7 @@ namespace SubTerra.App.UI.Building
     {
         public const string SearchPauseOwner = "building.search";
         // B-191 ★ 건설 UI 전체를 드론 말풍선 바로 위에 둔다. 퀘스트 팝업(30_500)·긴급 구출·일반 팝업·설정창보다는 아래.
-        public const int SortingOrderAboveDroneBubble = 100;
-        public const int CanvasSortingOrder = DroneDialogueSocket.OverlaySortingOrder + SortingOrderAboveDroneBubble;
+        public const int CanvasSortingOrder = 30_100;
         // B-191 ★ 큰 창이 이미 열린 뒤 상세 페이지에만 거는 가벼운 TV 켜짐 배속.
         public const float DetailMotionSpeed = 1.6f;
 

@@ -113,8 +113,6 @@ namespace SubTerra.App.Tests.UI
         [Test]
         public void SortingOrder_AboveDroneBubbleBelowPopups()
         {
-            Assert.That(BuildingMenuView.CanvasSortingOrder,
-                Is.EqualTo(DroneDialogueSocket.OverlaySortingOrder + BuildingMenuView.SortingOrderAboveDroneBubble));
             Assert.That(BuildingMenuView.CanvasSortingOrder, Is.GreaterThan(DroneDialogueSocket.OverlaySortingOrder));
             Assert.That(BuildingMenuView.CanvasSortingOrder, Is.LessThan(UiLayerPriority.QuestPopup));
             Assert.That(BuildingMenuView.CanvasSortingOrder, Is.LessThan(UiLayerPriority.EmergencyRescueIndicator));
