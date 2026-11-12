@@ -52,10 +52,10 @@ namespace SubTerra.Gameplay.Structural.Tests
             using var fixture = new RuntimeFixture(1, true, false);
             yield return null;
 
-            fixture.Mine(0.1f);
+            fixture.System.RebuildRiskFromMinedCells(new[] { new Vector3Int(0, 1, 0) });
 
             var warningCell = new Vector3Int(0, 2, 0);
-            Assert.That(fixture.System.CurrentRisk, Is.EqualTo(StructuralRiskLevel.Caution));
+            Assert.That(fixture.System.CurrentRisk, Is.EqualTo(StructuralRiskLevel.Danger));
             Assert.That(fixture.Foreground.HasTile(warningCell), Is.True);
             Assert.That(fixture.Overlay.HasTile(warningCell), Is.True);
             Assert.That(fixture.Overlay.GetComponent<Collider2D>(), Is.Null);
@@ -64,7 +64,8 @@ namespace SubTerra.Gameplay.Structural.Tests
         [UnityTest]
         public IEnumerator Collapse_RefreshesCollider_EmitsDto_AndEntersSnapshot()
         {
-            using var fixture = new RuntimeFixture(5, false, true);
+            using var fixture = new RuntimeFixture(13, false, true);
+            fixture.AddSideAnchors(6);
             yield return null;
             fixture.ForegroundCollider.ProcessTilemapChanges();
             StructuralCollapseEventDto received = null;
@@ -219,7 +220,7 @@ namespace SubTerra.Gameplay.Structural.Tests
             public void Mine(float structuralImpact)
             {
                 System.NotifyTileMined(
-                    Vector3Int.zero,
+                    new Vector3Int(0, 1, 0),
                     new MiningTileDto(
                         "tile.test",
                         string.Empty,
@@ -229,6 +230,16 @@ namespace SubTerra.Gameplay.Structural.Tests
                         1f,
                         structuralImpact,
                         false));
+            }
+
+            public void AddSideAnchors(int halfWidth)
+            {
+                var left = new Vector3Int(-halfWidth, 1, 0);
+                var right = new Vector3Int(halfWidth, 1, 0);
+                Foreground.SetTile(left, tile);
+                Foreground.SetTile(right, tile);
+                System.RegisterProtectedCell(left);
+                System.RegisterProtectedCell(right);
             }
 
             public void RestoreCollapsedTiles(StructuralCollapseEventDto collapse)

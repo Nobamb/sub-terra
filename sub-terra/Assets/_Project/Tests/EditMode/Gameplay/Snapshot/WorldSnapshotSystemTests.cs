@@ -129,9 +129,8 @@ namespace SubTerra.Gameplay.Snapshot.Tests
 
             try
             {
-                // y=1 바닥, y=2 비지지 천장. 채굴 셀 (0,0) 위 천장이 위험 후보.
-                tilemap.SetTile(new Vector3Int(0, 1, 0), tile);
-                tilemap.SetTile(new Vector3Int(0, 2, 0), tile);
+                for (int x = 0; x <= 3; x++)
+                    tilemap.SetTile(new Vector3Int(x, 1, 0), tile);
 
                 var structural = host.AddComponent<StructuralIntegritySystem>();
                 var overlay = overlayObject.AddComponent<StructuralCrackOverlay>();
@@ -140,8 +139,7 @@ namespace SubTerra.Gameplay.Snapshot.Tests
                 SetField(structural, "crackOverlay", overlay);
                 SetField(structural, "localRiskRadius", 1);
                 SetField(structural, "scanRadius", 3);
-                var wall = new Vector3Int(1, 1, 0);
-                tilemap.SetTile(wall, tile);
+                var wall = new Vector3Int(3, 1, 0);
                 structural.RegisterProtectedCell(wall);
 
                 var snapshotSystem = host.AddComponent<WorldSnapshotSystem>();
@@ -281,20 +279,11 @@ namespace SubTerra.Gameplay.Snapshot.Tests
 
                 tilemap.SetTile(new Vector3Int(0, 1, 0), tile);
                 tilemap.SetTile(new Vector3Int(6, 1, 0), tile);
-                var wall = new Vector3Int(7, 1, 0);
-                tilemap.SetTile(wall, tile);
+                for (int x = 7; x <= 9; x++)
+                    tilemap.SetTile(new Vector3Int(x, 1, 0), tile);
+                var wall = new Vector3Int(9, 1, 0);
                 structural.RegisterProtectedCell(wall);
-                var impact = new MiningTileDto(
-                    "tile.test",
-                    string.Empty,
-                    0,
-                    true,
-                    1f,
-                    1f,
-                    0.1f,
-                    false);
-                structural.NotifyTileMined(Vector3Int.zero, impact);
-                structural.NotifyTileMined(new Vector3Int(6, 0, 0), impact);
+                structural.RebuildRiskFromMinedCells(new[] { Vector3Int.zero, new Vector3Int(6, 0, 0) });
 
                 Assert.That(host.GetComponentsInChildren<BuildingInstance>().Length, Is.EqualTo(1));
                 Assert.That(structural.EvaluateAt(Vector3Int.zero), Is.EqualTo(StructuralRiskLevel.Stable));

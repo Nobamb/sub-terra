@@ -802,6 +802,11 @@ namespace SubTerra.Gameplay.Building
             return null;
         }
 
+        public Vector3 GetSelectedPlacementCenter(Vector3Int origin)
+        {
+            return FootprintWorldCenter(origin, selection.Footprint);
+        }
+
         private Vector3 CellToWorld(Vector3Int cell)
         {
             return terrainTilemap != null ? terrainTilemap.GetCellCenterWorld(cell) : cell;

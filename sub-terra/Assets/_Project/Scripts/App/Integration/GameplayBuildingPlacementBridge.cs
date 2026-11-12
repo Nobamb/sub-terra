@@ -324,7 +324,7 @@ namespace SubTerra.App.Integration
                     preview.SetCell(GetTerrainTilemap(), origin, previewValid);
                 }
             }
-            UpdateSupportRange(origin);
+            UpdateSupportRange(origin, previewValid);
 
             // 클릭 우선순위(B-188): UI 위 → UI, 지형 블록 위 → 채굴, 그 밖의 칸 → 설치 판정.
             if (Mouse.current.leftButton.wasPressedThisFrame
@@ -658,14 +658,14 @@ namespace SubTerra.App.Integration
             return sceneReferences != null ? sceneReferences.TerrainTilemap : null;
         }
 
-        private void UpdateSupportRange(Vector3Int origin)
+        private void UpdateSupportRange(Vector3Int origin, bool isValid)
         {
             if (preview == null || placementSystem == null || placementSystem.Selection == null)
                 return;
             SubTerra.Gameplay.Structural.StructuralSupport support = placementSystem.Selection.RuntimePrefab != null
                 ? placementSystem.Selection.RuntimePrefab.GetComponent<SubTerra.Gameplay.Structural.StructuralSupport>()
                 : null;
-            if (support == null)
+            if (!isValid || support == null || support.Strength <= 0)
             {
                 preview.HideSupportRange();
                 return;
@@ -673,7 +673,7 @@ namespace SubTerra.App.Integration
 
             preview.SetSupportRange(
                 GetTerrainTilemap(),
-                origin,
+                placementSystem.GetSelectedPlacementCenter(origin),
                 support.Radius,
                 placementSystem.StructuralSystem);
         }
