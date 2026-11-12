@@ -42,6 +42,9 @@ namespace SubTerra.App.UI.PlayerStatus
 
         public void ShowWarning(string key, string text) => model.ShowWarning(key, text);
 
+        /// <summary>진행 문구를 같은 자리에서 결과 문구로 바꾸고 등장 연출을 처음부터 다시 재생한다.</summary>
+        public void ShowResult(string key, string text) => model.ShowResult(key, text);
+
         public void SetProgress(string key, string text, float progress) => model.SetProgress(key, text, progress);
 
         public void Dismiss(string key) => model.Dismiss(key);
@@ -109,6 +112,11 @@ namespace SubTerra.App.UI.PlayerStatus
                 visual.SetLabel(entry.Text);
                 visual.SetGauge(entry.Progress);
                 visual.SetWanted(entry.Wanted);
+                if (entry.ConsumeRestart())
+                {
+                    visual.RestartShow();
+                }
+
                 visual.Tick(dt);
                 if (entry.Style == PlayerStatusStyle.Warning)
                 {
