@@ -35,6 +35,7 @@ namespace SubTerra.Gameplay.Structural
         private readonly Dictionary<Vector3Int, StructuralRiskLevel> tileRisks = new();
         private readonly Dictionary<Vector3Int, float> tileScores = new();
         private readonly Dictionary<Vector3Int, StructuralRiskCause> tileCauses = new();
+        private readonly Dictionary<Vector3Int, int> crackColumns = new();
         private readonly HashSet<Vector3Int> deferredCandidates = new();
         private readonly Dictionary<Vector3Int, float> telegraphRemaining = new();
         private readonly HashSet<Vector3Int> detachedTelegraphs = new();
@@ -168,6 +169,7 @@ namespace SubTerra.Gameplay.Structural
 
             crackOverlay?.CancelFallingRocks();
             crackOverlay?.ClearAll();
+            crackColumns.Clear();
             if (CurrentRisk != StructuralRiskLevel.Stable)
             {
                 CurrentRisk = StructuralRiskLevel.Stable;
@@ -262,15 +264,17 @@ namespace SubTerra.Gameplay.Structural
                 StructuralRiskLevel scoreLevel = StructuralRiskEvaluator.EvaluateScore(score, Settings);
                 bool telegraphing = telegraphRemaining.ContainsKey(ceiling);
                 StructuralRiskLevel displayLevel = ToDisplayRisk(scoreLevel, telegraphing);
+                StructuralRiskCause cause = tileCauses.TryGetValue(ceiling, out StructuralRiskCause value)
+                    ? value
+                    : StructuralRiskCause.Unsupported;
+                if (!detachedTelegraphs.Contains(ceiling))
+                    SyncCeilingCracks(ceiling, displayLevel, score, cause);
                 if (displayLevel < highest.Level
                     || (displayLevel == highest.Level && score <= highest.Score))
                 {
                     continue;
                 }
 
-                StructuralRiskCause cause = tileCauses.TryGetValue(ceiling, out StructuralRiskCause value)
-                    ? value
-                    : StructuralRiskCause.Unsupported;
                 highest = new StructuralRiskStatus(
                     ceiling,
                     score,
@@ -373,14 +377,10 @@ namespace SubTerra.Gameplay.Structural
                 if (cause == StructuralRiskCause.None && !tileCauses.TryGetValue(cell, out cause))
                     cause = StructuralRiskCause.Unsupported;
                 tileCauses[cell] = cause;
-                float intensity = Mathf.InverseLerp(
-                    Settings.CautionThreshold,
-                    Settings.CollapseImminentThreshold,
-                    score);
                 StructuralRiskLevel displayRisk = ToDisplayRisk(
                     risk,
                     telegraphRemaining.ContainsKey(cell));
-                crackOverlay?.SetCell(cell, displayRisk, intensity, cause);
+                SyncCeilingCracks(cell, displayRisk, score, cause);
                 if (pulseOnIncrease && score > previousScore + 0.001f)
                 {
                     crackOverlay?.PulseCell(cell);
@@ -396,6 +396,7 @@ namespace SubTerra.Gameplay.Structural
                 }
             }
 
+            RefreshAdjacentCrackColumns(affected);
             PruneDeferredCandidates();
 
             if (allowCollapse && collapseCandidates.Count > 0)
@@ -421,6 +422,76 @@ namespace SubTerra.Gameplay.Structural
 
             UpdateCurrentRisk();
             StructuralStatusChanged?.Invoke();
+        }
+
+        private void SyncCeilingCracks(
+            Vector3Int ceiling, StructuralRiskLevel level, float score, StructuralRiskCause cause)
+        {
+            if (crackOverlay == null) return;
+            if (level == StructuralRiskLevel.Stable)
+            {
+                ClearCrackColumn(ceiling, 0);
+                return;
+            }
+
+            crackOverlay.BindSourceTilemap(foregroundTilemap);
+            float intensity = Mathf.InverseLerp(Settings.CautionThreshold, Settings.CollapseImminentThreshold, score);
+            crackOverlay.SyncCell(ceiling, level, intensity, cause);
+
+            // Extend the visible crack up an exposed hanging column without adding collapse candidates.
+            int length = 1;
+            for (; length <= scanRadius; length++)
+            {
+                Vector3Int above = ceiling + Vector3Int.up * length;
+                if (!foregroundTilemap.HasTile(above)
+                    || foregroundTilemap.HasTile(above + Vector3Int.left)
+                    || foregroundTilemap.HasTile(above + Vector3Int.right)
+                    || IsProtected(above) || GetSupportStrength(above) > 0
+                    || tileRisks.ContainsKey(above))
+                    break;
+
+                crackOverlay.SyncCell(above, level, intensity, StructuralRiskCause.None);
+            }
+
+            ClearCrackColumn(ceiling, length);
+            crackColumns[ceiling] = length;
+        }
+
+        private void ClearCrackColumn(Vector3Int ceiling, int keep)
+        {
+            if (!crackColumns.TryGetValue(ceiling, out int length)) return;
+            for (int offset = keep; offset < length; offset++)
+            {
+                Vector3Int cell = ceiling + Vector3Int.up * offset;
+                if (!tileRisks.ContainsKey(cell)) crackOverlay?.ClearCell(cell);
+            }
+
+            if (keep == 0) crackColumns.Remove(ceiling);
+        }
+
+        private void RefreshAdjacentCrackColumns(HashSet<Vector3Int> affected)
+        {
+            if (crackColumns.Count == 0) return;
+            var sources = new HashSet<Vector3Int>();
+            foreach (Vector3Int cell in affected)
+            for (int offset = 1; offset <= scanRadius; offset++)
+            {
+                Vector3Int ceiling = cell + Vector3Int.down * offset;
+                if (crackColumns.ContainsKey(ceiling) && !affected.Contains(ceiling))
+                    sources.Add(ceiling);
+            }
+
+            foreach (Vector3Int ceiling in sources)
+            {
+                if (detachedTelegraphs.Contains(ceiling)) continue;
+                float score = IsUnsupportedCeiling(ceiling) ? ComputeTileScore(ceiling) : 0f;
+                var level = ToDisplayRisk(StructuralRiskEvaluator.EvaluateScore(score, Settings),
+                    telegraphRemaining.ContainsKey(ceiling));
+                var cause = tileCauses.TryGetValue(ceiling, out var trackedCause)
+                    ? trackedCause
+                    : StructuralRiskCause.Unsupported;
+                SyncCeilingCracks(ceiling, level, score, cause);
+            }
         }
 
         private float ComputeTileScore(Vector3Int ceiling)
@@ -607,6 +678,7 @@ namespace SubTerra.Gameplay.Structural
             telegraphRemaining.Remove(cell);
             detachedTelegraphs.Remove(cell);
             crackOverlay?.SetTelegraphing(cell, false);
+            ClearCrackColumn(cell, 0);
             if (hadRisk)
             {
                 crackOverlay?.ClearCell(cell);
@@ -644,7 +716,10 @@ namespace SubTerra.Gameplay.Structural
                     StructuralRiskCause cause = tileCauses.TryGetValue(cell, out StructuralRiskCause value)
                         ? value
                         : StructuralRiskCause.Unsupported;
-                    crackOverlay?.SetCell(cell, StructuralRiskLevel.CollapseImminent, 1f, cause);
+                    if (detachedTelegraphs.Contains(cell))
+                        crackOverlay?.SetCell(cell, StructuralRiskLevel.CollapseImminent, 1f, cause);
+                    else
+                        SyncCeilingCracks(cell, StructuralRiskLevel.CollapseImminent, score, cause);
                 }
             }
 

@@ -126,6 +126,41 @@ namespace SubTerra.Gameplay.Structural.Tests
         }
 
         [Test]
+        public void Issue316_ObservedHangingColumnCracksMatchWarningAndClearWithSupport()
+        {
+            using var fixture = new StructuralFixture(1, true);
+            var probe = new Vector3Int(0, 1, 0);
+            Vector3Int lower = probe + Vector3Int.up;
+            Vector3Int upper = lower + Vector3Int.up;
+            Vector3Int roof = upper + Vector3Int.up;
+            fixture.PlaceTile(upper);
+            for (int x = -1; x <= 1; x++)
+                fixture.PlaceTile(roof + Vector3Int.right * x);
+
+            var overlay = fixture.System.GetComponent<StructuralCrackOverlay>();
+            StructuralRiskStatus status = fixture.System.EvaluateStatusAt(probe);
+
+            Assert.That(status.Level, Is.EqualTo(StructuralRiskLevel.Danger));
+            Assert.That(overlay.TryGetCellRisk(lower, out var lowerRisk), Is.True);
+            Assert.That(overlay.TryGetCellRisk(upper, out var upperRisk), Is.True);
+            Assert.That(lowerRisk, Is.EqualTo(status.Level));
+            Assert.That(upperRisk, Is.EqualTo(status.Level));
+            Assert.That(fixture.Overlay.HasTile(roof), Is.False);
+            fixture.System.AdvanceSimulation(2f);
+            Assert.That(fixture.Foreground.HasTile(lower), Is.True);
+
+            var supportObject = new GameObject("Support");
+            supportObject.transform.SetParent(fixture.Root.transform);
+            supportObject.transform.position = fixture.Foreground.GetCellCenterWorld(Vector3Int.zero);
+            var support = supportObject.AddComponent<StructuralSupport>();
+            SetField(support, "radius", 2f);
+            fixture.System.RegisterSupport(support);
+
+            Assert.That(fixture.Overlay.HasTile(lower), Is.False);
+            Assert.That(fixture.Overlay.HasTile(upper), Is.False);
+        }
+
+        [Test]
         public void Issue281_RoofAnchorDoesNotReachAcrossGap()
         {
             using var fixture = new StructuralFixture(5, true);
