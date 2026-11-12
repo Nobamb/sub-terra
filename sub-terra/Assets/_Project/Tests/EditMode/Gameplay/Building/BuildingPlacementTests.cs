@@ -636,6 +636,7 @@ namespace SubTerra.Gameplay.Building.Tests
                 buildingId: "building.ladder.basic");
             try
             {
+                setup.Terrain.SetTile(Vector3Int.down, setup.Tile);
                 Assert.That(setup.Placement.TryPlaceAt(Vector3Int.zero).IsSuccess, Is.True);
                 setup.Placement.Select(setup.Definition);
 
@@ -654,6 +655,38 @@ namespace SubTerra.Gameplay.Building.Tests
                 Assert.That(upper.position.x, Is.EqualTo(lower.position.x));
                 Assert.That(upper.position.y - lower.position.y, Is.EqualTo(5f).Within(0.0001f),
                     "Stacked 1x5 ladders must share a continuous five-cell visual pitch.");
+            }
+            finally
+            {
+                setup.Dispose();
+            }
+        }
+
+        [Test]
+        public void Issue280_RejectsFloatingLadderAndExtensionsWithoutSpendingButRestoresOldLadder()
+        {
+            var setup = CreateSetup(10f, new Vector2(12f, 16f), new Vector2Int(1, 5),
+                needsGround: false, buildingId: "building.ladder.basic");
+            try
+            {
+                var origin = Vector3Int.zero;
+                Assert.That(setup.Placement.CanPlaceAt(origin, out var previewFailure), Is.False);
+                Assert.That(previewFailure, Is.EqualTo(BuildingPlacementFailure.MissingGround));
+                Assert.That(setup.Placement.TryPlaceAt(origin).Failure, Is.EqualTo(previewFailure));
+                SetField(setup.Placement, "restoreDefinitions", new[] { setup.Definition });
+                Assert.That(setup.Placement.TryRestoreBuilding(new BuildingSnapshotDto
+                {
+                    instanceId = "legacy-floating-ladder",
+                    buildingTypeId = setup.Definition.BuildingId,
+                    level = 1,
+                    health = 1f
+                }), Is.True);
+
+                setup.Placement.Select(setup.Definition);
+                Assert.That(setup.Placement.TryPlaceAt(Vector3Int.up * 5).Failure,
+                    Is.EqualTo(BuildingPlacementFailure.MissingGround));
+                Assert.That(setup.Wallet.SpendCount, Is.Zero);
+                Assert.That(setup.BuildingRoot.childCount, Is.EqualTo(1));
             }
             finally
             {

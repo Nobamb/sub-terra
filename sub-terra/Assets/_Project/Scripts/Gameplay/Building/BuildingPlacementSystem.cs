@@ -231,9 +231,9 @@ namespace SubTerra.Gameplay.Building
                     return false;
                 }
 
-                if (selection.RequiresGround
-                    && isBottomRow
-                    && groundTile == null)
+                bool isLadder = selection.BuildingId == LadderBuildingId;
+                if (isBottomRow && groundTile == null
+                    && (isLadder ? !HasGroundedLadderBelow(groundCell) : selection.RequiresGround))
                 {
                     failure = BuildingPlacementFailure.MissingGround;
                     return false;
@@ -785,6 +785,18 @@ namespace SubTerra.Gameplay.Building
                 && string.Equals(supportingBuildingId, LadderBuildingId, StringComparison.Ordinal);
         }
 
+        private bool HasGroundedLadderBelow(Vector3Int cell)
+        {
+            if (terrainTilemap == null) return false;
+            while (occupiedBuildings.TryGetValue(cell, out string buildingId) && buildingId == LadderBuildingId)
+            {
+                cell += Vector3Int.down;
+                if (terrainTilemap.HasTile(cell)) return true;
+            }
+
+            return false;
+        }
+
         private BuildingPlacementResult Reject(BuildingPlacementFailure failure, Vector3Int cell)
         {
             var result = new BuildingPlacementResult(false, failure, string.Empty, selection != null ? selection.BuildingId : string.Empty, cell);
@@ -842,8 +854,7 @@ namespace SubTerra.Gameplay.Building
             for (int x = 0; x < width; x++)
             {
                 Vector3Int groundCell = origin + new Vector3Int(x, -1, 0);
-                // RequiresGround는 배치 허용 조건이다. 사다리처럼 선택 사항인 시설도
-                // 실제 지반 위에 설치됐다면 그 지반은 시설 종류와 관계없이 보호한다.
+                // 실제 지반 위에 설치됐다면 시설 종류와 관계없이 보호한다.
                 if (terrainTilemap != null && terrainTilemap.HasTile(groundCell))
                 {
                     supportingGroundCells.Add(groundCell);
