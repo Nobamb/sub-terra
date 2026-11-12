@@ -173,6 +173,16 @@ namespace SubTerra.Gameplay.Structural
             UpdateShakeVisual(cell, cause);
         }
 
+        internal void SyncCell(Vector3Int cell, StructuralRiskLevel risk, float intensity, StructuralRiskCause cause)
+        {
+            if (cellRisks.TryGetValue(cell, out var currentRisk) && currentRisk == risk
+                && cellIntensities.TryGetValue(cell, out var currentIntensity) && currentIntensity == intensity
+                && cellCauses.TryGetValue(cell, out var currentCause) && currentCause == cause)
+                return;
+
+            SetCell(cell, risk, intensity, cause);
+        }
+
         /// <summary>이번 채굴로 약해진 천장만 짧게 펄스한다.</summary>
         public void PulseCell(Vector3Int cell)
         {
