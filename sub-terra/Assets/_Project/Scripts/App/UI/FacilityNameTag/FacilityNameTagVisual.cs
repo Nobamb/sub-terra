@@ -383,6 +383,24 @@ namespace SubTerra.App.UI.FacilityNameTag
             }
         }
 
+        /// <summary>
+        /// 켜진 채로 등장 연출만 처음(level 0)부터 다시 시작한다. 한 프레임도 꺼지지 않고 소리도 내지 않는다.
+        /// SetWanted(true)는 이미 켜져 있으면 아무것도 하지 않으므로 같은 자리에서 다시 등장시킬 때 이 함수를 쓴다.
+        /// </summary>
+        public void RestartShow()
+        {
+            wanted = true;
+            level = 0f;
+            clock = 0f;
+            settled = false;
+            if (root != null && !root.activeSelf)
+            {
+                root.SetActive(true);
+            }
+
+            Apply();
+        }
+
         /// <summary>unscaled 시간 기준으로 연출을 진행한다. 완전히 사라지면 오브젝트를 끈다.</summary>
         public void Tick(float deltaSeconds)
         {

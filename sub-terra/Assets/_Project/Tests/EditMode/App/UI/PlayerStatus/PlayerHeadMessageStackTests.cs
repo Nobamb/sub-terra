@@ -1,6 +1,7 @@
 using System.IO;
 using System.Linq;
 using NUnit.Framework;
+using SubTerra.App.UI.FacilityNameTag;
 using SubTerra.App.UI.PlayerStatus;
 using UnityEngine;
 
@@ -142,17 +143,30 @@ namespace SubTerra.App.Tests.PlayerStatus
 
             Assert.That(first.Wanted, Is.True, "진행 문구는 시간 제한 없이 떠 있다");
 
+            Assert.That(first.Level, Is.EqualTo(1f), "진행 문구는 등장을 마친 상태다");
             var second = model.SetProgress("mining.progress", "채굴 55%", 0.55f);
 
             Assert.That(model.Entries.Count, Is.EqualTo(1));
             Assert.That(ReferenceEquals(first, second), Is.True);
             Assert.That(second.Text, Is.EqualTo("채굴 55%"));
             Assert.That(second.Progress, Is.EqualTo(0.55f).Within(0.0001f));
+            Assert.That(second.Level, Is.EqualTo(1f), "진행 중 퍼센트 갱신은 등장을 다시 시작하지 않는다");
+            Assert.That(second.ShowRestartCount, Is.Zero);
 
-            var result = model.ShowInfo("mining.progress", "광석 +3 (+1 수확)");
+            var result = model.ShowResult("mining.progress", "광석 +3 (+1 수확)");
             Assert.That(ReferenceEquals(first, result), Is.True, "결과 문구는 같은 자리에서 바뀐다");
             Assert.That(result.Style, Is.EqualTo(PlayerStatusStyle.Info));
             Assert.That(result.Text, Is.EqualTo("광석 +3 (+1 수확)"));
+            Assert.That(result.Progress, Is.EqualTo(-1f), "결과로 바뀌면 채굴 게이지는 끈다");
+            Assert.That(result.Level, Is.EqualTo(0f), "등장 level이 0부터 다시 시작한다");
+            Assert.That(result.ShowRestartCount, Is.EqualTo(1));
+            Assert.That(result.Wanted, Is.True, "되감는 동안에도 꺼지지 않는다");
+            Assert.That(model.Entries.Count, Is.EqualTo(1));
+
+            model.Advance(Step);
+            Assert.That(result.Level, Is.EqualTo(Step / FacilityNameTagTimeline.ShowDuration).Within(0.0001f));
+            Assert.That(result.ConsumeRestart(), Is.True, "뷰가 그림 level도 되감도록 한 번 알려 준다");
+            Assert.That(result.ConsumeRestart(), Is.False);
 
             for (var i = 0; i < 60; i++)
             {
@@ -247,7 +261,7 @@ namespace SubTerra.App.Tests.PlayerStatus
                 Application.dataPath, "_Project", "Scripts", "App", "Integration", "MiningProgressHud.cs"));
 
             Assert.That(source, Does.Contain("messages.SetProgress("));
-            Assert.That(source, Does.Contain("messages.ShowInfo(ProgressKey, pendingYieldText)"));
+            Assert.That(source, Does.Contain("messages.ShowResult(ProgressKey, pendingYieldText)"));
             Assert.That(source, Does.Contain("messages.ShowWarning(FailureKey, failureMessage)"));
             Assert.That(source, Does.Not.Contain("ShowTemporaryMessage"));
         }

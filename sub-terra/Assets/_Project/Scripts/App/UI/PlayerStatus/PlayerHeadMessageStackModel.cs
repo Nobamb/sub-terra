@@ -52,6 +52,14 @@ namespace SubTerra.App.UI.PlayerStatus
         public float Offset { get; private set; }
         /// <summary>퇴장이 끝나 목록에서 빠질 항목.</summary>
         public bool IsFinished => !Wanted && Level <= 0f;
+        /// <summary>문구 위에 따로 그리는 장식(자원 아이콘)이 차지하는 높이(디자인 픽셀). 위 항목을 그만큼 밀어 올린다.</summary>
+        public float Headroom { get; private set; }
+        /// <summary>장식을 붙이거나 떼어 낼 때마다 오른다. 장식을 그리는 쪽이 자기 버전과 달라지면 물러난다.</summary>
+        public int DecorationVersion { get; private set; }
+        /// <summary>등장 연출을 처음부터 다시 시작한 횟수.</summary>
+        public int ShowRestartCount { get; private set; }
+
+        private bool restartPending;
 
         internal void SetText(string text)
         {
@@ -79,6 +87,41 @@ namespace SubTerra.App.UI.PlayerStatus
         internal void Leave()
         {
             Wanted = false;
+        }
+
+        /// <summary>같은 자리·같은 항목을 유지한 채 등장 연출만 처음(level 0)부터 다시 재생한다. 게이지는 끈다.</summary>
+        internal void RestartShow()
+        {
+            Wanted = true;
+            Level = 0f;
+            Progress = -1f;
+            ShowRestartCount++;
+            restartPending = true;
+        }
+
+        /// <summary>뷰가 그림의 등장 level을 함께 되감기 위해 한 번만 true를 돌려준다.</summary>
+        public bool ConsumeRestart()
+        {
+            var pending = restartPending;
+            restartPending = false;
+            return pending;
+        }
+
+        internal int AttachDecoration(float headroom)
+        {
+            Headroom = Math.Max(0f, headroom);
+            return ++DecorationVersion;
+        }
+
+        internal void ClearDecoration()
+        {
+            if (Headroom <= 0f)
+            {
+                return;
+            }
+
+            Headroom = 0f;
+            DecorationVersion++;
         }
 
         /// <summary>목표 위치로 옮긴다. 목표가 바뀌었을 때만 현재 위치에서 다시 슬라이드를 시작한다.</summary>
@@ -155,7 +198,46 @@ namespace SubTerra.App.UI.PlayerStatus
         {
             var entry = Show(key, text, PlayerStatusStyle.Info, float.PositiveInfinity);
             entry.SetProgress(progress);
+            // 다음 채굴이 시작되면 이전 결과에 붙어 있던 아이콘 자리는 비운다.
+            entry.ClearDecoration();
             return entry;
+        }
+
+        /// <summary>
+        /// 진행 문구를 결과 문구로 바꾼다. 같은 항목·같은 자리를 유지한 채 등장 연출을 처음부터 다시 재생하고 게이지를 끈다.
+        /// 진행 항목이 없으면 새 항목이 평소처럼 등장한다.
+        /// </summary>
+        public PlayerStatusEntry ShowResult(string key, string text)
+        {
+            var existing = FindMessage(key);
+            var entry = Show(key, text, PlayerStatusStyle.Info, PlayerStatusTimeline.HoldSeconds);
+            entry.SetProgress(-1f);
+            if (existing != null && ReferenceEquals(existing, entry))
+            {
+                entry.RestartShow();
+            }
+
+            return entry;
+        }
+
+        /// <summary>키의 문구 항목 중 지금 떠 있는 것. 없으면 null.</summary>
+        public PlayerStatusEntry FindShown(string key) => FindMessage(key);
+
+        public bool Contains(PlayerStatusEntry entry) => entry != null && entries.Contains(entry);
+
+        /// <summary>장식을 붙였던 쪽이 물러날 때 예약한 높이를 돌려준다. 그 사이 다른 장식이 붙었으면(버전이 다르면) 건드리지 않는다.</summary>
+        public void DetachDecoration(PlayerStatusEntry entry, int version)
+        {
+            if (entry != null && entry.DecorationVersion == version)
+            {
+                entry.ClearDecoration();
+            }
+        }
+
+        /// <summary>문구 위에 아이콘 같은 장식 높이를 예약한다. 위 항목은 그만큼 올라가며 MaxEntries에는 세지 않는다. 장식 버전을 돌려준다.</summary>
+        public int AttachDecoration(PlayerStatusEntry entry, float headroomPixels)
+        {
+            return entry != null && entries.Contains(entry) ? entry.AttachDecoration(headroomPixels) : 0;
         }
 
         /// <summary>키의 문구를 퇴장시킨다. 없으면 아무것도 하지 않는다.</summary>
@@ -236,7 +318,7 @@ namespace SubTerra.App.UI.PlayerStatus
                 }
 
                 entry.MoveTo(cursor);
-                cursor += entry.Height + PlayerStatusTimeline.StackGap;
+                cursor += entry.Height + entry.Headroom + PlayerStatusTimeline.StackGap;
             }
 
             for (var i = 0; i < entries.Count; i++)
@@ -288,7 +370,7 @@ namespace SubTerra.App.UI.PlayerStatus
             {
                 if (entries[i].Wanted)
                 {
-                    cursor += entries[i].Height + PlayerStatusTimeline.StackGap;
+                    cursor += entries[i].Height + entries[i].Headroom + PlayerStatusTimeline.StackGap;
                 }
             }
 

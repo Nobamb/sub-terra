@@ -66,6 +66,7 @@ namespace SubTerra.App.Integration
         [SerializeField] private PlayerMovement playerMovement;
         [SerializeField] private MiningProgressHud miningProgressHud;
         [SerializeField] private GoldPickupVfx goldPickupVfx;
+        private ResourcePickupVfx resourcePickupVfx;
         private PlayerHeadMessageStack playerHeadMessages;
         [SerializeField] private RunFailureRuntimeController runFailureController;
         private EmergencyRescueRuntimeController emergencyRescueController;
@@ -679,6 +680,14 @@ namespace SubTerra.App.Integration
                 }
             }
 
+            TryStep("BindResourcePickupVfx", () =>
+            {
+                resourcePickupVfx = GetComponent<ResourcePickupVfx>();
+                if (resourcePickupVfx == null) resourcePickupVfx = gameObject.AddComponent<ResourcePickupVfx>();
+                var catalog = bootstrap != null ? bootstrap.AssignedCatalog as GameDataCatalog : null;
+                resourcePickupVfx.BindTo(miningSystem, playerHeadMessages,
+                    id => catalog != null && catalog.TryGetInventoryItem(id, out var item) ? item.Icon : null);
+            });
             TryStep("BindMinimap", BindMinimap);
             SetHudVisible(true);
             SetDeferredInputEnabled(true);
@@ -841,6 +850,14 @@ namespace SubTerra.App.Integration
             if (result.Succeeded && result.AcceptedGold > 0 && goldPickupVfx != null)
             {
                 goldPickupVfx.SetPendingGold(result.AcceptedGold, result.AcceptedGoldBonus);
+            }
+
+            // 아이콘은 지급이 확정된 광물 수량으로만 띄운다. 실패·0개·골드만 있는 블록은 0이라 안 뜬다.
+            if (resourcePickupVfx != null)
+            {
+                resourcePickupVfx.QueueAccepted(
+                    mineralId,
+                    result.Succeeded ? result.AcceptedBaseQuantity + result.AcceptedBonusQuantity : 0);
             }
 
             return result.ToShared();
@@ -1044,6 +1061,7 @@ namespace SubTerra.App.Integration
 
         private void OnDestroy()
         {
+            if (resourcePickupVfx != null) resourcePickupVfx.Unbind();
             unbindProgressionPanel?.Invoke();
             unbindProgressionPanel = null;
             if (inventorySpeedBound && runtime != null && runtime.InventoryService != null)

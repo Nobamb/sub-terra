@@ -13,7 +13,7 @@ namespace SubTerra.App.Integration
     /// </summary>
     public sealed class MiningProgressHud : MonoBehaviour
     {
-        private const string ProgressKey = "mining.progress";
+        public const string ProgressKey = "mining.progress";
         private const string FailureKey = "mining.failure";
 
         // 예전 화면 공간 게이지 루트. 씬 호환을 위해 남겨 두고, 항상 꺼 둔다.
@@ -136,7 +136,8 @@ namespace SubTerra.App.Integration
                     else messages.ShowWarning(FailureKey, failureMessage);
                     break;
                 case MiningPhase.Completed when !string.IsNullOrEmpty(pendingYieldText):
-                    messages.ShowInfo(ProgressKey, pendingYieldText);
+                    // 같은 자리에서 시설 이름표와 같은 등장 연출을 다시 재생한다.
+                    messages.ShowResult(ProgressKey, pendingYieldText);
                     pendingYieldText = null;
                     break;
                 default:

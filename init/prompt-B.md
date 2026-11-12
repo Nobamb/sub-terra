@@ -3947,3 +3947,6 @@ work_process/MVP2/power/B-185-1-power-on-range-result.md: "조명·보관함은 
 
 
 193. prompt-B-193.md 내용을 참고해서 명령어 추가 및 낙석 데미지 차등 적용, 가스가 떨어질 때 가스가 퍼지는 효과 추가해줘
+
+
+194. prompt-B-194.md 내용 참고해서 자원을 캤을 때 연출 효과 추가해줘
