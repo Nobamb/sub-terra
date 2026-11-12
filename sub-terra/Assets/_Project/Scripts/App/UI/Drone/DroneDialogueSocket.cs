@@ -2,6 +2,7 @@ using System;
 using SubTerra.App.Audio;
 using SubTerra.App.Drone;
 using SubTerra.App.Drone.Dialogue;
+using SubTerra.App.Tutorial;
 using SubTerra.Shared;
 using SubTerra.Shared.Audio;
 using TMPro;
@@ -15,7 +16,7 @@ namespace SubTerra.App.UI.Drone
         IDroneDialogueView,
         IDroneOperationalStateView
     {
-        public const int OverlaySortingOrder = 30_000;
+        public const int OverlaySortingOrder = UiLayerPriority.DroneBubble;
 
         // B-181 ★ 말풍선 비프. PM이 숫자만 바꿔 끼운다.
         public const SfxId DroneBubbleSfx = SfxId.WorldFacilityTagBeep;

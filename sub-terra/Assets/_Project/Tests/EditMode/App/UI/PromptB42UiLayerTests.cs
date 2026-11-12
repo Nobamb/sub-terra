@@ -2,9 +2,11 @@ using System.Reflection;
 using NUnit.Framework;
 using SubTerra.App.Tutorial;
 using SubTerra.App.UI;
+using SubTerra.App.UI.Hazards;
 using SubTerra.App.UI.MainMenu;
 using SubTerra.App.UI.Progression;
 using SubTerra.App.UI.SurfaceBase;
+using SubTerra.App.UI.Tutorial;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -19,9 +21,53 @@ namespace SubTerra.App.Tests.UI
         {
             Assert.That(UiLayerPriority.SettingsModal, Is.GreaterThan(UiLayerPriority.TutorialGuidance));
             Assert.That(UiLayerPriority.ModalPanel, Is.GreaterThan(UiLayerPriority.SettingsModal));
-            Assert.That(UiLayerPriority.ModalPanel, Is.GreaterThan(UiLayerPriority.CriticalHazard));
+            Assert.That(UiLayerPriority.Hud, Is.GreaterThan(UiLayerPriority.TutorialGuidance));
+            Assert.That(UiLayerPriority.DroneBubble, Is.GreaterThan(UiLayerPriority.Hud));
+            Assert.That(UiLayerPriority.SettingsModal, Is.GreaterThan(UiLayerPriority.DroneBubble));
             Assert.That(UiLayerPriority.QuestPopup, Is.GreaterThan(SubTerra.App.UI.Drone.DroneDialogueSocket.OverlaySortingOrder));
             Assert.That(UiLayerPriority.QuestPopup, Is.LessThan(UiLayerPriority.EmergencyRescueModal));
+        }
+
+        [Test]
+        public void Issue287_SharedHudCanvasKeepsItsOrderDuringHazardChanges()
+        {
+            var root = new GameObject("HUDCanvas", typeof(RectTransform), typeof(Canvas));
+            try
+            {
+                var canvas = root.GetComponent<Canvas>();
+                canvas.sortingOrder = 500;
+                var hazard = root.AddComponent<HazardHudView>();
+                var tutorial = root.AddComponent<DemoObjectiveView>();
+                var warningPanel = new GameObject("GasPanel", typeof(RectTransform));
+                warningPanel.transform.SetParent(root.transform, false);
+                var warning = new GameObject("GasWarning", typeof(RectTransform));
+                warning.transform.SetParent(warningPanel.transform, false);
+                var guidance = new GameObject("TutorialGuidance", typeof(RectTransform));
+                guidance.transform.SetParent(root.transform, false);
+                var hazardSerialized = new SerializedObject(hazard);
+                hazardSerialized.FindProperty("gasWarningRoot").objectReferenceValue = warning;
+                hazardSerialized.ApplyModifiedPropertiesWithoutUndo();
+                var serialized = new SerializedObject(tutorial);
+                serialized.FindProperty("tutorialCanvas").objectReferenceValue = canvas;
+                serialized.ApplyModifiedPropertiesWithoutUndo();
+                typeof(HazardHudView).GetMethod("Awake", BindingFlags.Instance | BindingFlags.NonPublic)
+                    .Invoke(hazard, null);
+                typeof(DemoObjectiveView).GetMethod("Awake", BindingFlags.Instance | BindingFlags.NonPublic)
+                    .Invoke(tutorial, null);
+
+                Assert.That(canvas.sortingOrder, Is.EqualTo(600));
+                Assert.That(warningPanel.transform.GetSiblingIndex(), Is.GreaterThan(guidance.transform.GetSiblingIndex()));
+                tutorial.SetHazardYield(true);
+                hazard.SetGasPriority(true);
+                Assert.That(canvas.sortingOrder, Is.EqualTo(600));
+                hazard.SetGasPriority(false);
+                tutorial.SetHazardYield(false);
+                Assert.That(canvas.sortingOrder, Is.EqualTo(600));
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
         }
 
         [Test]

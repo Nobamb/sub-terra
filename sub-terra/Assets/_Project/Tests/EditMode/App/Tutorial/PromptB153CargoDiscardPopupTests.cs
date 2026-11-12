@@ -5,6 +5,8 @@ using SubTerra.App.Editor.DataValidation;
 using SubTerra.App.Inventory;
 using SubTerra.App.State;
 using SubTerra.App.Tutorial;
+using SubTerra.App.UI;
+using SubTerra.App.UI.Drone;
 using SubTerra.App.UI.Tutorial;
 using TMPro;
 using UnityEditor;
@@ -251,6 +253,7 @@ namespace SubTerra.App.Tests.Tutorial
             var env = CreateViewEnv(4f, 1, out var view, out var presenter, out var capacity, out var dump, out _, (Copper, 2));
             capacity.Tick(1f);
             Assert.That(capacity.State, Is.EqualTo(CargoFullPopupView.PopupState.Open));
+            AssertCargoPopupInFront(capacity.gameObject);
 
             view.OnCapacityDumpClicked();
             Assert.That(capacity.IsPaging, Is.True, "버릴 자원 선택은 페이지 넘김");
@@ -258,6 +261,7 @@ namespace SubTerra.App.Tests.Tutorial
             Assert.That(elapsed, Is.LessThanOrEqualTo(0.3f), "약 0.25초");
             Assert.That(presenter.IsDumpOpen, Is.True);
             Assert.That(dump.QuantityString(Copper), Is.EqualTo("×2"));
+            AssertCargoPopupInFront(dump.gameObject);
 
             // 구리 1개 버림 → 아직 부족 → 갱신된 값으로 돌아간다.
             view.OnDumpCopperOneClicked();
@@ -265,7 +269,7 @@ namespace SubTerra.App.Tests.Tutorial
             Assert.That(env.Inventory.State.GetQuantity(Copper), Is.EqualTo(1));
             Assert.That(dump.LoadString, Is.EqualTo("1.5 / 4"));
 
-            view.OnDumpClosedClicked();
+            Assert.That(view.TryCloseCargoPopup(PopupWindowSorting.Top), Is.True);
             Assert.That(dump.IsPaging, Is.True, "돌아가기도 페이지 넘김");
             RunUntil(capacity, dump, () => capacity.State == CargoFullPopupView.PopupState.Open);
             Assert.That(presenter.IsCapacityOpen, Is.True);
@@ -273,6 +277,17 @@ namespace SubTerra.App.Tests.Tutorial
             Assert.That(capacity.ShortfallString, Is.EqualTo("부족한 공간 2"));
             Assert.That(dump.gameObject.activeSelf, Is.False);
             Assert.That(presenter.IsInputLocked, Is.False);
+            AssertCargoPopupInFront(capacity.gameObject);
+        }
+
+        private static void AssertCargoPopupInFront(GameObject panel)
+        {
+            var canvas = panel.GetComponent<Canvas>();
+            Assert.That(canvas, Is.SameAs(PopupWindowSorting.Top));
+            Assert.That(canvas.overrideSorting, Is.True);
+            Assert.That(canvas.sortingOrder, Is.GreaterThan(UiLayerPriority.RunFailureModal));
+            Assert.That(canvas.sortingOrder, Is.GreaterThan(DroneDialogueSocket.OverlaySortingOrder));
+            Assert.That(panel.GetComponent<GraphicRaycaster>(), Is.Not.Null);
         }
 
         [Test]

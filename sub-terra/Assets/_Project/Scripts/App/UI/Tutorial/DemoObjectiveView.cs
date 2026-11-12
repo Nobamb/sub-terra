@@ -97,6 +97,8 @@ namespace SubTerra.App.UI.Tutorial
         private Canvas guidanceCanvas;
         private Canvas detailsCanvas;
         private Canvas claimCanvas;
+        private Canvas capacityCanvas;
+        private Canvas dumpCanvas;
         private bool capacityPopupHooked;
         // 화물 부족 창이 접히는 0.2초 동안 다음 창을 미뤄 두 창이 겹쳐 보이지 않게 한다.
         private bool dumpAfterCapacityClose;
@@ -304,7 +306,7 @@ namespace SubTerra.App.UI.Tutorial
 
         public void SetHazardYield(bool yieldToHazard)
         {
-            if (tutorialCanvas == null)
+            if (tutorialCanvas == null || tutorialCanvas.sortingOrder == UiLayerPriority.Hud)
             {
                 return;
             }
@@ -546,30 +548,37 @@ namespace SubTerra.App.UI.Tutorial
                 return;
             }
 
-            var popup = ResolveCapacityPopup();
-            if (popup != null)
+            if (visible)
             {
-                if (visible)
-                {
-                    popup.Show(false);
-                    capacityRoot.transform.SetAsLastSibling();
-                }
-                else
-                {
-                    popup.Close(pageToDump);
-                }
-
+                ShowCapacityPanel(false);
                 return;
             }
 
-            if (capacityRoot != null)
+            var popup = ResolveCapacityPopup();
+            if (popup != null)
             {
-                capacityRoot.SetActive(visible);
-                if (visible)
-                {
-                    capacityRoot.transform.SetAsLastSibling();
-                }
+                popup.Close(pageToDump);
+                return;
             }
+
+            if (capacityRoot != null) capacityRoot.SetActive(false);
+            PopupWindowSorting.Remove(capacityCanvas);
+        }
+
+        private void ShowCapacityPanel(bool page)
+        {
+            if (capacityRoot == null) return;
+            var popup = ResolveCapacityPopup();
+            if (popup != null) popup.Show(page);
+            else capacityRoot.SetActive(true);
+            RaiseCargoPopup(capacityRoot, ref capacityCanvas);
+        }
+
+        private static void RaiseCargoPopup(GameObject root, ref Canvas canvas)
+        {
+            root.transform.SetAsLastSibling();
+            EnsurePopupCanvas(root, ref canvas);
+            PopupWindowSorting.BringToFront(canvas);
         }
 
         public void SetCapacityChoiceText(string title, string body)
@@ -624,6 +633,7 @@ namespace SubTerra.App.UI.Tutorial
 
         private void OnCapacityPopupClosed()
         {
+            PopupWindowSorting.Remove(capacityCanvas);
             if (dumpAfterCapacityClose)
             {
                 dumpAfterCapacityClose = false;
@@ -639,6 +649,8 @@ namespace SubTerra.App.UI.Tutorial
 
         private void OnDestroy()
         {
+            PopupWindowSorting.Remove(capacityCanvas);
+            PopupWindowSorting.Remove(dumpCanvas);
             if (capacityPopup != null && capacityPopupHooked)
             {
                 capacityPopup.Closed -= OnCapacityPopupClosed;
@@ -678,23 +690,16 @@ namespace SubTerra.App.UI.Tutorial
             {
                 dumpRoot.SetActive(false);
             }
+            PopupWindowSorting.Remove(dumpCanvas);
         }
 
         private void ShowDumpPanel(bool page)
         {
+            if (dumpRoot == null) return;
             var popup = ResolveDumpPopup();
-            if (popup != null)
-            {
-                popup.Show(page);
-                dumpRoot.transform.SetAsLastSibling();
-                return;
-            }
-
-            if (dumpRoot != null)
-            {
-                dumpRoot.SetActive(true);
-                dumpRoot.transform.SetAsLastSibling();
-            }
+            if (popup != null) popup.Show(page);
+            else dumpRoot.SetActive(true);
+            RaiseCargoPopup(dumpRoot, ref dumpCanvas);
         }
 
         private CargoDiscardPopupView ResolveDumpPopup()
@@ -755,19 +760,11 @@ namespace SubTerra.App.UI.Tutorial
 
         private void OnDumpPopupClosed()
         {
+            PopupWindowSorting.Remove(dumpCanvas);
             if (capacityAfterDumpClose)
             {
                 capacityAfterDumpClose = false;
-                var popup = ResolveCapacityPopup();
-                if (popup != null)
-                {
-                    popup.Show(dumpPopup.LastCloseWasPage);
-                    capacityRoot.transform.SetAsLastSibling();
-                }
-                else
-                {
-                    SetCapacityChoiceVisible(true);
-                }
+                ShowCapacityPanel(dumpPopup.LastCloseWasPage);
             }
 
             if (claimAfterDumpClose)
@@ -861,6 +858,14 @@ namespace SubTerra.App.UI.Tutorial
             var motion = claimRoot.GetComponent<QuestClearPopupMotion>();
             // 닫히는 동안의 연타는 소비하되 지급 요청은 다시 보내지 않는다.
             if (motion == null || !motion.IsClosing) OnClaimConfirmClicked();
+            return true;
+        }
+
+        public bool TryCloseCargoPopup(Canvas topWindow)
+        {
+            if (topWindow == null) return false;
+            if (topWindow != dumpCanvas) return topWindow == capacityCanvas;
+            if (!IsDumpClosing()) OnDumpClosedClicked();
             return true;
         }
 

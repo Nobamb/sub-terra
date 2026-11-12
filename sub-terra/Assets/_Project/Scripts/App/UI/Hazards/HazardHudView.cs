@@ -19,7 +19,11 @@ namespace SubTerra.App.UI.Hazards
 
         private void Awake()
         {
-            EnsureHazardSortOrder(false);
+            if (hazardCanvas == null)
+                hazardCanvas = GetComponentInParent<Canvas>();
+            if (hazardCanvas != null)
+                hazardCanvas.sortingOrder = UiLayerPriority.Hud;
+            RaiseGasWarning();
         }
 
         public void SetStructuralStatus(HazardStatusReadModel status)
@@ -44,36 +48,23 @@ namespace SubTerra.App.UI.Hazards
 
         public void SetGasPriority(bool isPriority)
         {
-            if (isPriority && gasWarningRoot != null)
-            {
-                gasWarningRoot.transform.SetAsLastSibling();
-            }
-
-            EnsureHazardSortOrder(isPriority);
+            if (isPriority) RaiseGasWarning();
         }
 
-        /// <summary>위험 HUD sort order가 튜토리얼(UiLayerPriority.TutorialGuidance)보다 큰지 보장한다.</summary>
-        public void EnsureHazardSortOrder(bool isCritical)
+        private void RaiseGasWarning()
         {
-            if (hazardCanvas == null)
-            {
-                hazardCanvas = GetComponentInParent<Canvas>();
-            }
+            if (gasWarningRoot == null) return;
+            Transform warning = gasWarningRoot.transform;
+            warning.SetAsLastSibling();
+            if (hazardCanvas == null || warning == hazardCanvas.transform
+                || !warning.IsChildOf(hazardCanvas.transform)) return;
 
-            if (hazardCanvas == null)
-            {
-                return;
-            }
-
-            var target = UiLayerPriority.ResolveHazardSortOrder(isCritical);
-            if (hazardCanvas.sortingOrder < target)
-            {
-                hazardCanvas.sortingOrder = target;
-            }
+            while (warning.parent != hazardCanvas.transform) warning = warning.parent;
+            warning.SetAsLastSibling();
         }
 
         public int CurrentSortOrder =>
-            hazardCanvas != null ? hazardCanvas.sortingOrder : UiLayerPriority.HazardWarning;
+            hazardCanvas != null ? hazardCanvas.sortingOrder : UiLayerPriority.Hud;
 
         public bool HasRequiredReferences()
         {
