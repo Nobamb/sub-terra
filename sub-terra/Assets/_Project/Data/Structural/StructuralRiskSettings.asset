@@ -18,3 +18,12 @@ MonoBehaviour:
   collapseImminentThreshold: 90
   collapseTelegraphSeconds: 0.6
   collapseFallSeconds: 0.18
+  cautionCollapseChancePerMining: 0.15
+  dangerCollapseChancePerMining: 0.3
+  probabilisticRollRadiusCells: 2
+  probabilisticTelegraphSeconds: 1
+  probabilisticCollapseDamageMultiplier: 0.5
+  maxSimultaneousProbabilistic: 2
+  probabilisticGlobalCooldownSeconds: 1.5
+  probabilisticActiveSeconds: 30
+  offscreenMarginCells: 3

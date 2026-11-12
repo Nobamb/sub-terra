@@ -39,6 +39,11 @@ namespace SubTerra.Gameplay.Structural
         private readonly HashSet<Vector3Int> deferredCandidates = new();
         private readonly Dictionary<Vector3Int, float> telegraphRemaining = new();
         private readonly HashSet<Vector3Int> detachedTelegraphs = new();
+        private readonly HashSet<Vector3Int> probabilisticTelegraphs = new();
+        private readonly Dictionary<Vector3Int, float> probabilisticWindows = new();
+        private readonly List<Vector3Int> windowCells = new();
+        private System.Random probabilityRandom;
+        private float probabilityCooldown;
         private readonly List<PendingCollapse> pendingCollapses = new();
         private Func<Vector3Int, bool> cellProtectionPredicate;
 
@@ -70,7 +75,11 @@ namespace SubTerra.Gameplay.Structural
         private Func<TileBase, float> resolveDamageMultiplier;
         private StructuralCrackOverlay hookedOverlay;
 
-        public void ConfigureWorldSeed(long seed) => worldSeed = seed;
+        public void ConfigureWorldSeed(long seed)
+        {
+            worldSeed = seed;
+            probabilityRandom = null;
+        }
 
         public void BindCollapseDamageReceiver(
             ICollapseDamageReceiver receiver,
@@ -144,7 +153,11 @@ namespace SubTerra.Gameplay.Structural
         public void AdvanceSimulation(float deltaTime)
         {
             if (deltaTime <= 0f) return;
-            AdvanceTelegraphs(deltaTime);
+            Camera camera = probabilisticWindows.Count != 0 || probabilisticTelegraphs.Count != 0
+                ? Camera.main
+                : null;
+            AdvanceProbabilityWindows(deltaTime, camera);
+            AdvanceTelegraphs(deltaTime, camera);
             AdvancePendingCollapses(deltaTime);
         }
 
@@ -157,6 +170,10 @@ namespace SubTerra.Gameplay.Structural
             deferredCandidates.Clear();
             telegraphRemaining.Clear();
             detachedTelegraphs.Clear();
+            probabilisticTelegraphs.Clear();
+            probabilisticWindows.Clear();
+            probabilityCooldown = 0f;
+            probabilityRandom = null;
             pendingCollapses.Clear();
             if (tileRisks.Count > 0)
             {
@@ -209,6 +226,70 @@ namespace SubTerra.Gameplay.Structural
                 StructuralRiskCause.Unsupported,
                 pulseOnIncrease: tile.structuralImpact > 0f);
             BeginDetachedCollapses(FindDetachedBlocksNearRemovedCells(new[] { cell }));
+            RollMiningCollapse(cell, affected);
+        }
+
+        private void RollMiningCollapse(Vector3Int mined, HashSet<Vector3Int> affected)
+        {
+            foreach (Vector3Int cell in affected)
+            {
+                if (tileRisks.TryGetValue(cell, out var risk) && IsCrackedRisk(risk)
+                    && !telegraphRemaining.ContainsKey(cell))
+                    probabilisticWindows[cell] = Settings.ProbabilisticActiveSeconds;
+            }
+
+            if (probabilisticWindows.Count == 0) return;
+            Camera camera = Camera.main;
+            if (camera == null) return;
+            probabilityRandom ??= new System.Random(unchecked((int)(worldSeed ^ (worldSeed >> 32))));
+            int reach = Mathf.Min(MaximumWarningDistance, Settings.ProbabilisticRollRadiusCells);
+            for (int x = -reach; x <= reach; x++)
+            for (int y = 0; y <= 1; y++)
+            {
+                var cell = mined + new Vector3Int(x, y, 0);
+                if (!probabilisticWindows.ContainsKey(cell) || telegraphRemaining.ContainsKey(cell)
+                    || !tileRisks.TryGetValue(cell, out var risk) || !IsCrackedRisk(risk)
+                    || !IsOnMiningScreen(cell, camera)) continue;
+
+                float chance = risk == StructuralRiskLevel.Caution
+                    ? Settings.CautionCollapseChancePerMining : Settings.DangerCollapseChancePerMining;
+                if (probabilityRandom.NextDouble() >= chance || probabilityCooldown > 0f
+                    || probabilisticTelegraphs.Count >= Settings.MaxSimultaneousProbabilistic) continue;
+
+                probabilityCooldown = Settings.ProbabilisticGlobalCooldownSeconds;
+                probabilisticTelegraphs.Add(cell);
+                BeginTelegraph(new[] { cell }, Settings.ProbabilisticTelegraphSeconds);
+            }
+        }
+
+        private static bool IsCrackedRisk(StructuralRiskLevel risk) =>
+            risk == StructuralRiskLevel.Caution || risk == StructuralRiskLevel.Danger;
+
+        private void AdvanceProbabilityWindows(float deltaTime, Camera camera)
+        {
+            probabilityCooldown = Mathf.Max(0f, probabilityCooldown - deltaTime);
+            if (probabilisticWindows.Count == 0 || camera == null) return;
+            windowCells.Clear();
+            windowCells.AddRange(probabilisticWindows.Keys);
+            foreach (Vector3Int cell in windowCells)
+            {
+                if (!IsOnMiningScreen(cell, camera)) continue;
+                float remaining = probabilisticWindows[cell] - deltaTime;
+                if (remaining > 0f) probabilisticWindows[cell] = remaining;
+                else probabilisticWindows.Remove(cell);
+            }
+        }
+
+        private bool IsOnMiningScreen(Vector3Int cell, Camera camera)
+        {
+            if (camera == null || foregroundTilemap == null) return false;
+            int margin = Settings.OffscreenMarginCells;
+            var offset = new Vector3Int(margin, margin, 0);
+            Vector3 a = camera.WorldToViewportPoint(foregroundTilemap.GetCellCenterWorld(cell - offset));
+            Vector3 b = camera.WorldToViewportPoint(foregroundTilemap.GetCellCenterWorld(cell + offset));
+            return a.z > 0f && b.z > 0f
+                && Mathf.Max(a.x, b.x) >= 0f && Mathf.Min(a.x, b.x) <= 1f
+                && Mathf.Max(a.y, b.y) >= 0f && Mathf.Min(a.y, b.y) <= 1f;
         }
 
         /// <summary>
@@ -263,7 +344,7 @@ namespace SubTerra.Gameplay.Structural
                 float score = ComputeTileScore(ceiling);
                 StructuralRiskLevel scoreLevel = StructuralRiskEvaluator.EvaluateScore(score, Settings);
                 bool telegraphing = telegraphRemaining.ContainsKey(ceiling);
-                StructuralRiskLevel displayLevel = ToDisplayRisk(scoreLevel, telegraphing);
+                StructuralRiskLevel displayLevel = ToDisplayRisk(ceiling, scoreLevel);
                 StructuralRiskCause cause = tileCauses.TryGetValue(ceiling, out StructuralRiskCause value)
                     ? value
                     : StructuralRiskCause.Unsupported;
@@ -343,7 +424,8 @@ namespace SubTerra.Gameplay.Structural
             bool allowCollapse,
             Vector3Int actionCell,
             StructuralRiskCause actionCause,
-            bool pulseOnIncrease = false)
+            bool pulseOnIncrease = false,
+            HashSet<Vector3Int> probabilisticAffected = null)
         {
             if (crackOverlay != null)
                 crackOverlay.BindSourceTilemap(foregroundTilemap);
@@ -368,7 +450,16 @@ namespace SubTerra.Gameplay.Structural
                     continue;
                 }
 
-                if (risk != StructuralRiskLevel.CollapseImminent && telegraphRemaining.Remove(cell))
+                if (!IsCrackedRisk(risk)) probabilisticWindows.Remove(cell);
+                if (probabilisticAffected != null && probabilisticAffected.Contains(cell) && score > previousScore)
+                {
+                    probabilisticWindows.Remove(cell);
+                    // A future mining action may trigger the widened span; this fall must not.
+                    if (risk == StructuralRiskLevel.CollapseImminent) deferredCandidates.Add(cell);
+                }
+
+                if (risk != StructuralRiskLevel.CollapseImminent && !probabilisticTelegraphs.Contains(cell)
+                    && telegraphRemaining.Remove(cell))
                     crackOverlay?.SetTelegraphing(cell, false);
 
                 tileRisks[cell] = risk;
@@ -377,9 +468,7 @@ namespace SubTerra.Gameplay.Structural
                 if (cause == StructuralRiskCause.None && !tileCauses.TryGetValue(cell, out cause))
                     cause = StructuralRiskCause.Unsupported;
                 tileCauses[cell] = cause;
-                StructuralRiskLevel displayRisk = ToDisplayRisk(
-                    risk,
-                    telegraphRemaining.ContainsKey(cell));
+                StructuralRiskLevel displayRisk = ToDisplayRisk(cell, risk);
                 SyncCeilingCracks(cell, displayRisk, score, cause);
                 if (pulseOnIncrease && score > previousScore + 0.001f)
                 {
@@ -401,7 +490,7 @@ namespace SubTerra.Gameplay.Structural
 
             if (allowCollapse && collapseCandidates.Count > 0)
             {
-                List<Vector3Int> selected = telegraphRemaining.Count > 0
+                List<Vector3Int> selected = telegraphRemaining.Count > probabilisticTelegraphs.Count
                     ? new List<Vector3Int>()
                     : DeterministicCollapseSelector.Select(
                         collapseCandidates,
@@ -435,7 +524,8 @@ namespace SubTerra.Gameplay.Structural
             }
 
             crackOverlay.BindSourceTilemap(foregroundTilemap);
-            float intensity = Mathf.InverseLerp(Settings.CautionThreshold, Settings.CollapseImminentThreshold, score);
+            float intensity = level == StructuralRiskLevel.CollapseImminent ? 1f
+                : Mathf.InverseLerp(Settings.CautionThreshold, Settings.CollapseImminentThreshold, score);
             crackOverlay.SyncCell(ceiling, level, intensity, cause);
 
             // Extend the visible crack up an exposed hanging column without adding collapse candidates.
@@ -485,8 +575,7 @@ namespace SubTerra.Gameplay.Structural
             {
                 if (detachedTelegraphs.Contains(ceiling)) continue;
                 float score = IsUnsupportedCeiling(ceiling) ? ComputeTileScore(ceiling) : 0f;
-                var level = ToDisplayRisk(StructuralRiskEvaluator.EvaluateScore(score, Settings),
-                    telegraphRemaining.ContainsKey(ceiling));
+                var level = ToDisplayRisk(ceiling, StructuralRiskEvaluator.EvaluateScore(score, Settings));
                 var cause = tileCauses.TryGetValue(ceiling, out var trackedCause)
                     ? trackedCause
                     : StructuralRiskCause.Unsupported;
@@ -640,6 +729,8 @@ namespace SubTerra.Gameplay.Structural
             foreach (Vector3Int cell in detached)
             {
                 if (!detachedTelegraphs.Add(cell)) continue;
+                probabilisticTelegraphs.Remove(cell);
+                probabilisticWindows.Remove(cell);
 
                 float forcedScore = Mathf.Max(
                     ComputeTileScore(cell),
@@ -677,6 +768,8 @@ namespace SubTerra.Gameplay.Structural
             deferredCandidates.Remove(cell);
             telegraphRemaining.Remove(cell);
             detachedTelegraphs.Remove(cell);
+            probabilisticTelegraphs.Remove(cell);
+            probabilisticWindows.Remove(cell);
             crackOverlay?.SetTelegraphing(cell, false);
             ClearCrackColumn(cell, 0);
             if (hadRisk)
@@ -702,16 +795,16 @@ namespace SubTerra.Gameplay.Structural
                 deferredCandidates.Remove(remove[i]);
         }
 
-        private void BeginTelegraph(IReadOnlyList<Vector3Int> selected)
+        private void BeginTelegraph(IReadOnlyList<Vector3Int> selected, float? warningSeconds = null)
         {
             if (selected == null || selected.Count == 0) return;
-            float duration = Mathf.Max(0.01f, Settings.CollapseTelegraphSeconds);
+            float duration = Mathf.Max(0.01f, warningSeconds ?? Settings.CollapseTelegraphSeconds);
             for (int i = 0; i < selected.Count; i++)
             {
                 Vector3Int cell = selected[i];
                 telegraphRemaining[cell] = duration;
                 crackOverlay?.SetTelegraphing(cell, true);
-                if (tileScores.TryGetValue(cell, out float score))
+                if (tileScores.ContainsKey(cell))
                 {
                     StructuralRiskCause cause = tileCauses.TryGetValue(cell, out StructuralRiskCause value)
                         ? value
@@ -719,7 +812,8 @@ namespace SubTerra.Gameplay.Structural
                     if (detachedTelegraphs.Contains(cell))
                         crackOverlay?.SetCell(cell, StructuralRiskLevel.CollapseImminent, 1f, cause);
                     else
-                        SyncCeilingCracks(cell, StructuralRiskLevel.CollapseImminent, score, cause);
+                        SyncCeilingCracks(cell, StructuralRiskLevel.CollapseImminent,
+                            Settings.CollapseImminentThreshold, cause);
                 }
             }
 
@@ -727,7 +821,7 @@ namespace SubTerra.Gameplay.Structural
             StructuralStatusChanged?.Invoke();
         }
 
-        private void AdvanceTelegraphs(float deltaTime)
+        private void AdvanceTelegraphs(float deltaTime, Camera camera)
         {
             if (telegraphRemaining.Count == 0) return;
             var expired = new List<Vector3Int>();
@@ -742,6 +836,7 @@ namespace SubTerra.Gameplay.Structural
                     continue;
                 }
 
+                if (probabilisticTelegraphs.Contains(cell) && !IsOnMiningScreen(cell, camera)) continue;
                 float remaining = telegraphRemaining[cell] - deltaTime;
                 if (remaining <= 0f) expired.Add(cell);
                 else telegraphRemaining[cell] = remaining;
@@ -780,6 +875,7 @@ namespace SubTerra.Gameplay.Structural
                 severity = ResolveSeverity(selected.Count)
             };
             var removedCells = new List<Vector3Int>(selected.Count);
+            HashSet<Vector3Int> probabilisticAffected = null;
             var detached = new HashSet<Vector3Int>();
             if (detachedTelegraphs.Count > 0)
             {
@@ -796,9 +892,16 @@ namespace SubTerra.Gameplay.Structural
                     ClearTileRisk(cell);
                     continue;
                 }
-                crackOverlay?.PlayCollapse(cell, foregroundTilemap, Settings.CollapseFallSeconds);
+                bool probabilistic = probabilisticTelegraphs.Contains(cell);
+                float damageScale = probabilistic ? Settings.ProbabilisticCollapseDamageMultiplier : 1f;
+                crackOverlay?.PlayCollapse(cell, foregroundTilemap, Settings.CollapseFallSeconds, damageScale);
                 foregroundTilemap.SetTile(cell, null);
                 removedCells.Add(cell);
+                if (probabilistic)
+                {
+                    probabilisticAffected ??= new HashSet<Vector3Int>();
+                    CollectAffectedCeilingTiles(cell, probabilisticAffected);
+                }
                 collapse.cells.Add(new CollapseCellDto { x = cell.x, y = cell.y });
                 ClearTileRisk(cell);
             }
@@ -829,7 +932,8 @@ namespace SubTerra.Gameplay.Structural
                 affected,
                 allowCollapse: false,
                 Vector3Int.zero,
-                StructuralRiskCause.None);
+                StructuralRiskCause.None,
+                probabilisticAffected: probabilisticAffected);
             BeginDetachedCollapses(FindDetachedBlocksNearRemovedCells(removedCells));
             return collapse;
         }
@@ -938,9 +1042,7 @@ namespace SubTerra.Gameplay.Structural
             StructuralRiskLevel highest = StructuralRiskLevel.Stable;
             foreach (KeyValuePair<Vector3Int, StructuralRiskLevel> pair in tileRisks)
             {
-                StructuralRiskLevel risk = ToDisplayRisk(
-                    pair.Value,
-                    telegraphRemaining.ContainsKey(pair.Key));
+                StructuralRiskLevel risk = ToDisplayRisk(pair.Key, pair.Value);
                 if (risk > highest) highest = risk;
             }
 
@@ -949,11 +1051,10 @@ namespace SubTerra.Gameplay.Structural
             RiskChanged?.Invoke(highest);
         }
 
-        private static StructuralRiskLevel ToDisplayRisk(
-            StructuralRiskLevel scoreLevel,
-            bool telegraphing)
+        private StructuralRiskLevel ToDisplayRisk(Vector3Int cell, StructuralRiskLevel scoreLevel)
         {
-            return scoreLevel == StructuralRiskLevel.CollapseImminent && !telegraphing
+            if (probabilisticTelegraphs.Contains(cell)) return StructuralRiskLevel.CollapseImminent;
+            return scoreLevel == StructuralRiskLevel.CollapseImminent && !telegraphRemaining.ContainsKey(cell)
                 ? StructuralRiskLevel.Danger
                 : scoreLevel;
         }
