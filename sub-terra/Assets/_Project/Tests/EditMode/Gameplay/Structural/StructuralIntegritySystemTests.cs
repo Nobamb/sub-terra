@@ -125,6 +125,112 @@ namespace SubTerra.Gameplay.Structural.Tests
                 Is.EqualTo(expected != StructuralRiskLevel.Stable));
         }
 
+        [TestCase(7, 1, false)]
+        [TestCase(9, 1, true)]
+        [TestCase(7, 14, true)]
+        [TestCase(9, 0, false)]
+        public void Issue317_MiningRollUsesDistanceAndWorldSeed(int width, long seed, bool falls)
+        {
+            using var fixture = new StructuralFixture(width, true);
+            fixture.AddSideAnchors(width / 2);
+            var settings = fixture.EnableProbability();
+            SetField(settings, "probabilisticRollRadiusCells", 0);
+            fixture.System.ConfigureWorldSeed(seed);
+            var roof = new Vector3Int(0, 2, 0);
+            var overlay = fixture.System.GetComponent<StructuralCrackOverlay>();
+
+            fixture.Mine(0f);
+
+            Assert.That(overlay.IsTelegraphing(roof), Is.EqualTo(falls));
+            fixture.System.AdvanceSimulation(0.9f);
+            Assert.That(fixture.Foreground.HasTile(roof), Is.True);
+            fixture.System.AdvanceSimulation(0.2f);
+            Assert.That(fixture.Foreground.HasTile(roof), Is.EqualTo(!falls));
+        }
+
+        [Test]
+        public void Issue317_ProbabilisticWarningDoesNotBlockForcedCollapse()
+        {
+            using var fixture = new StructuralFixture(9, true);
+            fixture.AddSideAnchors(4);
+            var settings = fixture.EnableProbability();
+            SetField(settings, "probabilisticRollRadiusCells", 0);
+            SetField(settings, "dangerCollapseChancePerMining", 1f);
+            var overlay = fixture.System.GetComponent<StructuralCrackOverlay>();
+            var probabilistic = new Vector3Int(0, 2, 0);
+            var forced = new Vector3Int(4, 2, 0);
+            fixture.Mine(0f);
+
+            fixture.RemoveAndNotifyMined(new Vector3Int(4, 1, 0), 0f);
+
+            Assert.That(overlay.IsTelegraphing(probabilistic), Is.True);
+            Assert.That(overlay.IsTelegraphing(forced), Is.True);
+            fixture.System.AdvanceSimulation(0.7f);
+            Assert.That(fixture.Foreground.HasTile(forced), Is.False);
+            Assert.That(fixture.Foreground.HasTile(probabilistic), Is.True);
+        }
+
+        [Test]
+        public void Issue317_OffscreenWindowPausesAndExpiryDoesNotRoll()
+        {
+            using var fixture = new StructuralFixture(7, true);
+            fixture.AddSideAnchors(3);
+            var settings = fixture.EnableProbability();
+            SetField(settings, "cautionCollapseChancePerMining", 1f);
+            Camera camera = Camera.main;
+            Vector3 onScreen = camera.transform.position;
+            camera.transform.position += Vector3.right * 100f;
+            var roof = new Vector3Int(0, 2, 0);
+            var windows = (Dictionary<Vector3Int, float>)typeof(StructuralIntegritySystem)
+                .GetField("probabilisticWindows", BindingFlags.Instance | BindingFlags.NonPublic)
+                .GetValue(fixture.System);
+
+            fixture.Mine(0f);
+            fixture.System.AdvanceSimulation(45f);
+            Assert.That(windows[roof], Is.EqualTo(30f));
+            camera.transform.position = onScreen;
+            fixture.System.AdvanceSimulation(31f);
+            Assert.That(windows.ContainsKey(roof), Is.False);
+            Assert.That(fixture.Foreground.HasTile(roof), Is.True);
+
+            fixture.Mine(0f);
+            Assert.That(windows[roof], Is.EqualTo(30f));
+            camera.transform.position += Vector3.right * 100f;
+            fixture.System.AdvanceSimulation(2f);
+            Assert.That(fixture.Foreground.HasTile(roof), Is.True);
+            camera.transform.position = onScreen;
+            fixture.System.AdvanceSimulation(2f);
+            Assert.That(fixture.Foreground.HasTile(roof), Is.False);
+        }
+
+        [Test]
+        public void Issue317_WidenedCeilingWaitsForAnotherMiningAction()
+        {
+            using var fixture = new StructuralFixture(5, true);
+            var anchor = new Vector3Int(-2, 1, 0);
+            fixture.PlaceTile(anchor);
+            fixture.System.RegisterProtectedCell(anchor);
+            for (int x = 2; x <= 5; x++) fixture.PlaceTile(new Vector3Int(x, 3, 0));
+            var rightAnchor = new Vector3Int(5, 2, 0);
+            fixture.PlaceTile(rightAnchor);
+            fixture.System.RegisterProtectedCell(rightAnchor);
+            var settings = fixture.EnableProbability();
+            SetField(settings, "cautionCollapseChancePerMining", 1f);
+            SetField(settings, "dangerCollapseChancePerMining", 1f);
+
+            var first = new Vector3Int(1, 2, 0);
+            var widened = new Vector3Int(2, 2, 0);
+            fixture.Mine(0f);
+            fixture.System.AdvanceSimulation(1.1f);
+            Assert.That(fixture.Foreground.HasTile(first), Is.False);
+            fixture.System.AdvanceSimulation(5f);
+            Assert.That(fixture.Foreground.HasTile(widened), Is.True);
+
+            fixture.Mine(0f);
+            fixture.System.AdvanceSimulation(0.7f);
+            Assert.That(fixture.Foreground.HasTile(widened), Is.False);
+        }
+
         [Test]
         public void Issue316_ObservedHangingColumnCracksMatchWarningAndClearWithSupport()
         {
@@ -493,6 +599,8 @@ namespace SubTerra.Gameplay.Structural.Tests
         private sealed class StructuralFixture : IDisposable
         {
             private readonly Tile tile;
+            private StructuralRiskSettings probabilitySettings;
+            private Camera previousMainCamera;
 
             public StructuralFixture(int ceilingWidth, bool withOverlay = false)
             {
@@ -528,6 +636,22 @@ namespace SubTerra.Gameplay.Structural.Tests
             public Tilemap Foreground { get; }
             public Tilemap Overlay { get; }
             public StructuralIntegritySystem System { get; }
+
+            public StructuralRiskSettings EnableProbability()
+            {
+                previousMainCamera = Camera.main;
+                if (previousMainCamera != null) previousMainCamera.enabled = false;
+                var cameraObject = new GameObject("MainCamera", typeof(Camera)) { tag = "MainCamera" };
+                cameraObject.transform.SetParent(Root.transform);
+                cameraObject.transform.position = new Vector3(0f, 2f, -10f);
+                var camera = cameraObject.GetComponent<Camera>();
+                camera.orthographic = true;
+                camera.orthographicSize = 8f;
+                Assert.That(Camera.main, Is.SameAs(camera));
+                probabilitySettings = ScriptableObject.CreateInstance<StructuralRiskSettings>();
+                SetField(System, "riskSettings", probabilitySettings);
+                return probabilitySettings;
+            }
 
             public void Mine(float structuralImpact)
             {
@@ -579,6 +703,8 @@ namespace SubTerra.Gameplay.Structural.Tests
             {
                 UnityEngine.Object.DestroyImmediate(Root);
                 UnityEngine.Object.DestroyImmediate(tile);
+                if (probabilitySettings != null) UnityEngine.Object.DestroyImmediate(probabilitySettings);
+                if (previousMainCamera != null) previousMainCamera.enabled = true;
             }
         }
 

@@ -75,6 +75,7 @@ namespace SubTerra.Gameplay.Structural
             public float Elapsed;
             public float Duration;
             public float DamageMultiplier = float.NaN;
+            public float DamageScale = 1f;
             public bool ContactConsumed;
         }
 
@@ -197,12 +198,12 @@ namespace SubTerra.Gameplay.Structural
         }
 
         /// <summary>삭제 직전 타일 스프라이트를 짧게 낙하시켜 증발처럼 보이지 않게 한다.</summary>
-        public void PlayCollapse(Vector3Int cell, Tilemap source, float duration)
+        public void PlayCollapse(Vector3Int cell, Tilemap source, float duration, float damageScale = 1f)
         {
             if (source == null) return;
             Sprite sprite = source.GetSprite(cell);
             if (sprite == null) sprite = ResolveCrackTile(StructuralRiskLevel.CollapseImminent) is Tile tile ? tile.sprite : null;
-            PlayFallingTile(cell, source, source.GetTile(cell), sprite, duration);
+            PlayFallingTile(cell, source, source.GetTile(cell), sprite, duration, damageScale);
         }
 
         /// <summary>
@@ -219,7 +220,8 @@ namespace SubTerra.Gameplay.Structural
             return PlayFallingTile(cell, source, tile, sprite, duration);
         }
 
-        private bool PlayFallingTile(Vector3Int cell, Tilemap source, TileBase sourceTile, Sprite sprite, float duration)
+        private bool PlayFallingTile(Vector3Int cell, Tilemap source, TileBase sourceTile, Sprite sprite,
+            float duration, float damageScale = 1f)
         {
             if (source == null || sprite == null) return false;
 
@@ -242,6 +244,7 @@ namespace SubTerra.Gameplay.Structural
                 Start = start,
                 End = end,
                 Duration = Mathf.Max(0.05f, duration),
+                DamageScale = damageScale,
                 // 낙석마다 생성 시점의 배율을 보관한다. 콜백이 아직 없었다면(NaN) 접촉 시점에 읽는다.
                 DamageMultiplier = resolveCollapseDamageMultiplier != null
                     ? ResolveDamageMultiplier(sourceTile)
@@ -744,9 +747,9 @@ namespace SubTerra.Gameplay.Structural
                 {
                     visual.ContactConsumed = true;
                     collapseDamageReceiver.ApplyCollapseImpact(
-                        float.IsNaN(visual.DamageMultiplier)
+                        (float.IsNaN(visual.DamageMultiplier)
                             ? ResolveDamageMultiplier(visual.Tile)
-                            : visual.DamageMultiplier);
+                            : visual.DamageMultiplier) * visual.DamageScale);
                 }
                 if (t < 1f) continue;
 
