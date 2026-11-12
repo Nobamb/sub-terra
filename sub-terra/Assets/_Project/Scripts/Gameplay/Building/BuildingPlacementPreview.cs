@@ -127,25 +127,27 @@ namespace SubTerra.Gameplay.Building
         /// <summary>버팀목 선택 중 지지 반경과 설치 즉시 사라질 균열을 함께 표시한다.</summary>
         public void SetSupportRange(
             Tilemap tilemap,
-            Vector3Int origin,
+            Vector3 center,
             float radius,
             StructuralIntegritySystem structuralSystem)
         {
             HideSupportRange();
             if (tilemap == null || radius <= 0f) return;
 
-            int reach = Mathf.CeilToInt(radius);
-            var cells = new List<Vector3Int>();
-            for (int x = origin.x - reach; x <= origin.x + reach; x++)
-            for (int y = origin.y - reach; y <= origin.y + reach; y++)
+            Vector3 boundsRadius = new Vector3(radius, radius, 0f);
+            Vector3Int min = tilemap.WorldToCell(center - boundsRadius);
+            Vector3Int max = tilemap.WorldToCell(center + boundsRadius);
+            var cells = new List<(Vector3 WorldPosition, bool ClearsCrack)>();
+            int extra = structuralSystem != null ? StructuralIntegritySystem.StableDistance : 0;
+            for (int x = min.x - extra; x <= max.x + extra; x++)
+            for (int y = min.y; y <= max.y; y++)
             {
-                var cell = new Vector3Int(x, y, origin.z);
-                if (Vector2.Distance(
-                        tilemap.GetCellCenterWorld(origin),
-                        tilemap.GetCellCenterWorld(cell)) <= radius)
-                {
-                    cells.Add(cell);
-                }
+                var cell = new Vector3Int(x, y, min.z);
+                Vector3 position = tilemap.GetCellCenterWorld(cell);
+                bool clearsCrack = structuralSystem != null
+                    && structuralSystem.WouldSupportClearCeilingRisk(cell, center, radius);
+                if (clearsCrack || StructuralSupport.CoversPosition(center, position, radius))
+                    cells.Add((position, clearsCrack));
             }
 
             EnsureSupportRangeMarkers(cells.Count);
@@ -159,9 +161,8 @@ namespace SubTerra.Gameplay.Building
                     continue;
                 }
 
-                Vector3Int cell = cells[i];
-                bool clearsCrack = structuralSystem != null && structuralSystem.HasRiskAtCell(cell);
-                marker.transform.position = tilemap.GetCellCenterWorld(cell);
+                var (position, clearsCrack) = cells[i];
+                marker.transform.position = position;
                 SetWorldScale(marker.transform, clearsCrack ? 0.24f : 0.1f);
                 marker.sprite = dot;
                 marker.color = clearsCrack

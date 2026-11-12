@@ -22,8 +22,8 @@ namespace SubTerra.Gameplay.Structural.Tests
         [Test]
         public void Collapse_ExcludesProtectedCell_AndEmitsUnityIndependentDto()
         {
-            using var fixture = new StructuralFixture(5);
-            var protectedCell = new Vector3Int(0, 2, 0);
+            using var fixture = new StructuralFixture(11);
+            var protectedCell = new Vector3Int(-4, 2, 0);
             fixture.System.RegisterProtectedCell(protectedCell);
             StructuralCollapseEventDto emitted = null;
             fixture.System.CollapseTriggered += value => emitted = value;
@@ -33,7 +33,7 @@ namespace SubTerra.Gameplay.Structural.Tests
 
             Assert.That(fixture.Foreground.HasTile(protectedCell), Is.True);
             Assert.That(emitted, Is.Not.Null);
-            Assert.That(emitted.cells.Exists(cell => cell.x == 0 && cell.y == 2), Is.False);
+            Assert.That(emitted.cells.Exists(cell => cell.x == protectedCell.x && cell.y == protectedCell.y), Is.False);
             Assert.That(emitted.severity, Is.Not.EqualTo(0));
             foreach (FieldInfo field in typeof(StructuralCollapseEventDto).GetFields())
                 Assert.That(typeof(UnityEngine.Object).IsAssignableFrom(field.FieldType), Is.False);
@@ -58,9 +58,10 @@ namespace SubTerra.Gameplay.Structural.Tests
         [Test]
         public void RegisterSupport_ReevaluatesOnlyChangedArea_AndClearsCrackOverlay()
         {
-            using var fixture = new StructuralFixture(1, true);
+            using var fixture = new StructuralFixture(11, true);
+            fixture.AddSideAnchors(5);
             fixture.Mine(0.1f);
-            Assert.That(fixture.System.CurrentRisk, Is.EqualTo(StructuralRiskLevel.Caution));
+            Assert.That(fixture.System.CurrentRisk, Is.EqualTo(StructuralRiskLevel.CollapseImminent));
             Assert.That(fixture.Overlay.HasTile(new Vector3Int(0, 2, 0)), Is.True);
 
             GameObject supportObject = new("Support");
@@ -78,7 +79,8 @@ namespace SubTerra.Gameplay.Structural.Tests
         public void RemovingUnsupportedCeiling_ClearsStuckStructuralRisk()
         {
             // prompt-B 31-3: 위험 원인 블록을 제거하면 구조 위험이 고착되지 않고 안정으로 돌아와야 한다.
-            using var fixture = new StructuralFixture(3, true);
+            using var fixture = new StructuralFixture(9, true);
+            fixture.AddSideAnchors(4);
             fixture.Mine(0.2f);
             Assert.That(fixture.System.CurrentRisk, Is.EqualTo(StructuralRiskLevel.Danger));
 
@@ -93,67 +95,78 @@ namespace SubTerra.Gameplay.Structural.Tests
             Assert.That(fixture.Overlay.HasTile(new Vector3Int(0, 2, 0)), Is.False);
         }
 
-        [Test]
-        public void DistantMining_DoesNotEscalateExistingCautionZone()
+        [TestCase(5, 0, false, StructuralRiskLevel.Stable)]
+        [TestCase(5, -8, false, StructuralRiskLevel.Stable)]
+        [TestCase(7, 0, false, StructuralRiskLevel.Caution)]
+        [TestCase(9, 0, false, StructuralRiskLevel.Danger)]
+        [TestCase(11, 0, false, StructuralRiskLevel.CollapseImminent)]
+        [TestCase(11, 0, true, StructuralRiskLevel.Stable)]
+        public void Issue281_RoofRiskDependsOnHorizontalDistance(
+            int width, int floorY, bool centerPillar, StructuralRiskLevel expected)
         {
-            // prompt-B 36: 원격 채굴이 기존 주의 구역 가중치/표시를 끌어올리면 안 된다.
-            using var fixture = new DualZoneStructuralFixture();
-            var left = new Vector3Int(-10, 0, 0);
-            var right = new Vector3Int(10, 0, 0);
-            var leftCrack = new Vector3Int(-10, 2, 0);
+            using var fixture = new StructuralFixture(width, true);
+            SetField(fixture.System, "localRiskRadius", 0);
+            for (int y = floorY; y < 2; y++)
+            {
+                fixture.PlaceTile(new Vector3Int(-width / 2, y, 0));
+                fixture.PlaceTile(new Vector3Int(width / 2, y, 0));
+                if (centerPillar) fixture.PlaceTile(new Vector3Int(0, y, 0));
+            }
+            for (int x = -width / 2; x <= width / 2; x++)
+                fixture.PlaceTile(new Vector3Int(x, floorY, 0));
+            fixture.System.RegisterProtectedCell(new Vector3Int(-width / 2, floorY, 0));
 
-            fixture.MineAt(left, 0.1f);
-            Assert.That(fixture.System.EvaluateAt(left), Is.EqualTo(StructuralRiskLevel.Caution));
-            Assert.That(fixture.CrackOverlay.TryGetCellRisk(leftCrack, out StructuralRiskLevel leftVisual), Is.True);
-            Assert.That(leftVisual, Is.EqualTo(StructuralRiskLevel.Caution));
+            var probe = new Vector3Int(0, 1, 0);
+            if (centerPillar) fixture.System.RebuildRiskFromMinedCells(new[] { probe });
+            else fixture.Mine(0f);
 
-            fixture.MineAt(right, 0.3f);
-            Assert.That(fixture.System.EvaluateAt(right), Is.GreaterThanOrEqualTo(StructuralRiskLevel.Danger));
-
-            Assert.That(fixture.System.EvaluateAt(left), Is.EqualTo(StructuralRiskLevel.Caution));
-            Assert.That(fixture.CrackOverlay.TryGetCellRisk(leftCrack, out StructuralRiskLevel leftVisualAfter), Is.True);
-            Assert.That(leftVisualAfter, Is.EqualTo(StructuralRiskLevel.Caution));
-            Assert.That(fixture.System.CurrentRisk, Is.GreaterThanOrEqualTo(StructuralRiskLevel.Danger));
+            Assert.That(fixture.System.EvaluateAt(probe), Is.EqualTo(expected));
+            Assert.That(fixture.Overlay.HasTile(probe + Vector3Int.up),
+                Is.EqualTo(expected != StructuralRiskLevel.Stable));
         }
 
         [Test]
-        public void OppositeWallMining_DoesNotEscalateOtherWallCaution()
+        public void Issue281_RoofAnchorDoesNotReachAcrossGap()
         {
-            // 같은 갱도 맞은편 벽(가로 거리 2, localRiskRadius=1)도 독립이어야 한다.
-            using var fixture = new OppositeWallFixture();
-            var left = new Vector3Int(-1, 0, 0);
-            var right = new Vector3Int(1, 0, 0);
-            var leftCrack = new Vector3Int(-1, 2, 0);
+            using var fixture = new StructuralFixture(5, true);
+            fixture.Foreground.SetTile(new Vector3Int(-1, 2, 0), null);
+            fixture.PlaceTile(new Vector3Int(-2, 1, 0));
+            SetField(fixture.System, "localRiskRadius", 0);
 
-            fixture.MineAt(left, 0.1f);
-            Assert.That(fixture.CrackOverlay.TryGetCellRisk(leftCrack, out StructuralRiskLevel leftVisual), Is.True);
-            Assert.That(leftVisual, Is.EqualTo(StructuralRiskLevel.Caution));
+            fixture.Mine(0f);
 
-            fixture.MineAt(right, 0.45f);
-            Assert.That(fixture.System.EvaluateAt(right), Is.GreaterThanOrEqualTo(StructuralRiskLevel.Danger));
-
-            Assert.That(fixture.CrackOverlay.TryGetCellRisk(leftCrack, out StructuralRiskLevel leftAfter), Is.True);
-            Assert.That(leftAfter, Is.EqualTo(StructuralRiskLevel.Caution));
-            Assert.That(fixture.System.EvaluateAt(left), Is.EqualTo(StructuralRiskLevel.Caution));
+            Assert.That(fixture.System.EvaluateAt(new Vector3Int(0, 1, 0)),
+                Is.EqualTo(StructuralRiskLevel.CollapseImminent));
         }
 
         [Test]
-        public void NearbyMining_IncreasesLocalZoneRiskIndependently()
+        public void Issue281_PreviewAndPlacedSupportClearTheSameCeilingCells()
         {
-            using var fixture = new DualZoneStructuralFixture();
-            var center = new Vector3Int(-10, 0, 0);
-            var neighbor = new Vector3Int(-9, 0, 0);
+            using var fixture = new StructuralFixture(11, true);
+            fixture.AddSideAnchors(5);
+            fixture.Mine(0f);
+            var center = fixture.Foreground.GetCellCenterWorld(Vector3Int.zero);
+            var supportObject = new GameObject("Support");
+            supportObject.transform.SetParent(fixture.Root.transform);
+            supportObject.transform.position = center;
+            StructuralSupport support = supportObject.AddComponent<StructuralSupport>();
+            SetField(support, "radius", 2f);
+            var left = new Vector3Int(-2, 2, 0);
+            Assert.That(support.Supports(fixture.Foreground.GetCellCenterWorld(left)), Is.False);
 
-            fixture.MineAt(center, 0.1f);
-            Assert.That(fixture.System.EvaluateAt(center), Is.EqualTo(StructuralRiskLevel.Caution));
+            var expectedCleared = new List<Vector3Int>();
+            for (int x = -2; x <= 2; x++)
+            {
+                var cell = new Vector3Int(x, 2, 0);
+                Assert.That(fixture.System.HasRiskAtCell(cell), Is.True);
+                if (fixture.System.WouldSupportClearCeilingRisk(cell, center, support.Radius))
+                    expectedCleared.Add(cell);
+            }
 
-            fixture.MineAt(neighbor, 0.35f);
-            Assert.That(fixture.System.EvaluateAt(center), Is.GreaterThanOrEqualTo(StructuralRiskLevel.Danger));
-
-            // 원격은 왼쪽 충격이 섞이지 않아 Danger로 올라가지 않는다.
-            Assert.That(
-                fixture.System.EvaluateAt(new Vector3Int(10, 0, 0)),
-                Is.LessThan(StructuralRiskLevel.Danger));
+            Assert.That(expectedCleared, Has.Count.EqualTo(5));
+            fixture.System.RegisterSupport(support);
+            foreach (Vector3Int cell in expectedCleared)
+                Assert.That(fixture.System.HasRiskAtCell(cell), Is.False, cell.ToString());
         }
 
         [Test]
@@ -161,11 +174,11 @@ namespace SubTerra.Gameplay.Structural.Tests
         {
             // prompt-B 36-1: 세이브 복원처럼 런타임 상태를 비운 뒤 채굴 셀만으로 위험을 재구성한다.
             using var fixture = new StructuralFixture(1, true);
-            var mineCell = Vector3Int.zero;
+            var mineCell = new Vector3Int(0, 1, 0);
             var ceiling = new Vector3Int(0, 2, 0);
 
-            fixture.Mine(0.1f);
-            Assert.That(fixture.System.CurrentRisk, Is.EqualTo(StructuralRiskLevel.Caution));
+            fixture.System.RebuildRiskFromMinedCells(new[] { mineCell });
+            Assert.That(fixture.System.CurrentRisk, Is.EqualTo(StructuralRiskLevel.Danger));
             Assert.That(fixture.Overlay.HasTile(ceiling), Is.True);
 
             fixture.System.ClearRuntimeRiskState();
@@ -174,12 +187,12 @@ namespace SubTerra.Gameplay.Structural.Tests
 
             StructuralCollapseEventDto collapse = null;
             fixture.System.CollapseTriggered += value => collapse = value;
-            fixture.System.RebuildRiskFromMinedCells(new[] { mineCell }, 0.1f);
+            fixture.System.RebuildRiskFromMinedCells(new[] { mineCell });
 
             Assert.That(collapse, Is.Null);
-            Assert.That(fixture.System.CurrentRisk, Is.EqualTo(StructuralRiskLevel.Caution));
+            Assert.That(fixture.System.CurrentRisk, Is.EqualTo(StructuralRiskLevel.Danger));
             Assert.That(fixture.Overlay.HasTile(ceiling), Is.True);
-            Assert.That(fixture.System.EvaluateAt(mineCell), Is.EqualTo(StructuralRiskLevel.Caution));
+            Assert.That(fixture.System.EvaluateAt(mineCell), Is.EqualTo(StructuralRiskLevel.Danger));
             fixture.System.AdvanceSimulation(2f);
             Assert.That(collapse, Is.Null, "복원 재계산은 시간이 지나도 예고/붕괴를 만들면 안 됩니다.");
         }
@@ -187,7 +200,8 @@ namespace SubTerra.Gameplay.Structural.Tests
         [Test]
         public void Collapse_TelegraphsBeforeRemovingTile_AndSupportCancelsIt()
         {
-            using var fixture = new StructuralFixture(1, true);
+            using var fixture = new StructuralFixture(11, true);
+            fixture.AddSideAnchors(5);
             var ceiling = new Vector3Int(0, 2, 0);
             StructuralCollapseEventDto emitted = null;
             fixture.System.CollapseTriggered += value => emitted = value;
@@ -212,25 +226,10 @@ namespace SubTerra.Gameplay.Structural.Tests
         }
 
         [Test]
-        public void CrackIntensity_IncreasesWithinSameRiskBand()
+        public void RemovingSupport_RestoresSpanRiskWithSupportLossCause()
         {
-            using var fixture = new StructuralFixture(1, true);
-            var ceiling = new Vector3Int(0, 2, 0);
-
-            fixture.Mine(0.1f);
-            Assert.That(fixture.System.GetComponent<StructuralCrackOverlay>(), Is.Not.Null);
-            StructuralCrackOverlay overlay = fixture.System.GetComponent<StructuralCrackOverlay>();
-            Assert.That(overlay.TryGetCellIntensity(ceiling, out float first), Is.True);
-
-            fixture.Mine(0.05f);
-            Assert.That(overlay.TryGetCellIntensity(ceiling, out float second), Is.True);
-            Assert.That(second, Is.GreaterThan(first));
-        }
-
-        [Test]
-        public void RemovingSupport_RestoresAccumulatedRiskWithSupportLossCause()
-        {
-            using var fixture = new StructuralFixture(1, true);
+            using var fixture = new StructuralFixture(11, true);
+            fixture.AddSideAnchors(5);
             fixture.Mine(0.3f);
 
             GameObject supportObject = new("RemovableSupport");
@@ -243,7 +242,7 @@ namespace SubTerra.Gameplay.Structural.Tests
             fixture.System.UnregisterSupport(support);
             StructuralRiskStatus restored = fixture.System.EvaluateStatusAt(Vector3Int.zero);
 
-            Assert.That(restored.Level, Is.EqualTo(StructuralRiskLevel.Caution));
+            Assert.That(restored.Level, Is.EqualTo(StructuralRiskLevel.CollapseImminent));
             Assert.That(restored.Cause, Is.EqualTo(StructuralRiskCause.SupportRemoved));
         }
 
@@ -359,32 +358,39 @@ namespace SubTerra.Gameplay.Structural.Tests
         [TestCase(1, 0, false)]
         [TestCase(0, 1, false)]
         [TestCase(1, 0, true)]
-        public void Issue281_FirstCollapse_TelegraphsNewlyIsolatedBlock(
+        public void Issue281_FirstCollapse_TelegraphsNewlyIsolatedBlockUnlessSupported(
             int offsetX, int offsetY, bool isProtected)
         {
             using var fixture = new StructuralFixture(1, true);
             var firstCell = new Vector3Int(0, 2, 0);
             var nextCell = firstCell + new Vector3Int(offsetX, offsetY, 0);
             fixture.PlaceTile(nextCell);
-            SetField(fixture.System, "localRiskRadius", 0);
+            SetField(fixture.System, "maximumCollapseTiles", 1);
             if (isProtected) fixture.System.RegisterProtectedCell(nextCell);
             var collapses = new List<StructuralCollapseEventDto>();
             fixture.System.CollapseTriggered += collapses.Add;
 
-            fixture.Mine(1f);
+            var supportObject = new GameObject("Support");
+            supportObject.transform.SetParent(fixture.Root.transform);
+            supportObject.transform.position = fixture.Foreground.GetCellCenterWorld(Vector3Int.zero);
+            StructuralSupport support = supportObject.AddComponent<StructuralSupport>();
+            fixture.System.RegisterSupport(support);
+            fixture.System.UnregisterSupport(support);
             fixture.System.AdvanceSimulation(2f);
 
-            Assert.That(fixture.Foreground.HasTile(firstCell), Is.False);
+            Assert.That(fixture.Foreground.HasTile(firstCell), Is.EqualTo(isProtected));
             Assert.That(fixture.Foreground.HasTile(nextCell), Is.True, "Keep the next tile during its warning.");
-            Assert.That(collapses, Has.Count.EqualTo(1));
-            Assert.That(collapses[0].cells, Has.Count.EqualTo(1));
+            Assert.That(collapses, Has.Count.EqualTo(isProtected ? 0 : 1));
             if (!isProtected)
+            {
+                Assert.That(collapses[0].cells, Has.Count.EqualTo(1));
                 Assert.That(fixture.System.CurrentRisk, Is.EqualTo(StructuralRiskLevel.CollapseImminent));
+            }
 
             fixture.System.AdvanceSimulation(2f);
 
             Assert.That(fixture.Foreground.HasTile(nextCell), Is.EqualTo(isProtected));
-            Assert.That(collapses, Has.Count.EqualTo(isProtected ? 1 : 2));
+            Assert.That(collapses, Has.Count.EqualTo(isProtected ? 0 : 2));
             if (!isProtected)
             {
                 Assert.That(collapses[1].cells, Has.Count.EqualTo(1));
@@ -428,7 +434,8 @@ namespace SubTerra.Gameplay.Structural.Tests
 
         private static List<CollapseCellDto> RunCollapse(long seed)
         {
-            using var fixture = new StructuralFixture(7);
+            using var fixture = new StructuralFixture(13);
+            fixture.AddSideAnchors(6);
             fixture.System.ConfigureWorldSeed(seed);
             StructuralCollapseEventDto emitted = null;
             fixture.System.CollapseTriggered += value => emitted = value;
@@ -490,7 +497,7 @@ namespace SubTerra.Gameplay.Structural.Tests
             public void Mine(float structuralImpact)
             {
                 System.NotifyTileMined(
-                    Vector3Int.zero,
+                    new Vector3Int(0, 1, 0),
                     new MiningTileDto(
                         "tile.test",
                         string.Empty,
@@ -507,133 +514,19 @@ namespace SubTerra.Gameplay.Structural.Tests
                 Foreground.SetTile(cell, tile);
             }
 
+            public void AddSideAnchors(int halfWidth)
+            {
+                var left = new Vector3Int(-halfWidth, 1, 0);
+                var right = new Vector3Int(halfWidth, 1, 0);
+                PlaceTile(left);
+                PlaceTile(right);
+                System.RegisterProtectedCell(left);
+                System.RegisterProtectedCell(right);
+            }
+
             public void RemoveAndNotifyMined(Vector3Int cell, float structuralImpact)
             {
                 Foreground.SetTile(cell, null);
-                System.NotifyTileMined(
-                    cell,
-                    new MiningTileDto(
-                        "tile.test",
-                        string.Empty,
-                        0,
-                        true,
-                        1f,
-                        1f,
-                        structuralImpact,
-                        false));
-            }
-
-            public void Dispose()
-            {
-                UnityEngine.Object.DestroyImmediate(Root);
-                UnityEngine.Object.DestroyImmediate(tile);
-            }
-        }
-
-        private sealed class DualZoneStructuralFixture : IDisposable
-        {
-            private readonly Tile tile;
-
-            public DualZoneStructuralFixture()
-            {
-                Root = new GameObject("DualZoneStructuralFixture");
-                var grid = new GameObject("Grid");
-                grid.transform.SetParent(Root.transform);
-                grid.AddComponent<Grid>();
-                var foregroundObject = new GameObject("Foreground");
-                foregroundObject.transform.SetParent(grid.transform);
-                Foreground = foregroundObject.AddComponent<Tilemap>();
-                foregroundObject.AddComponent<TilemapRenderer>();
-                tile = ScriptableObject.CreateInstance<Tile>();
-
-                for (int x = -10; x <= -9; x++)
-                    Foreground.SetTile(new Vector3Int(x, 2, 0), tile);
-                for (int x = 9; x <= 10; x++)
-                    Foreground.SetTile(new Vector3Int(x, 2, 0), tile);
-
-                System = Root.AddComponent<StructuralIntegritySystem>();
-                SetField(System, "foregroundTilemap", Foreground);
-                SetField(System, "scanRadius", 3);
-                SetField(System, "localRiskRadius", 1);
-
-                var overlayObject = new GameObject("Overlay");
-                overlayObject.transform.SetParent(grid.transform);
-                Overlay = overlayObject.AddComponent<Tilemap>();
-                overlayObject.AddComponent<TilemapRenderer>();
-                CrackOverlay = Root.AddComponent<StructuralCrackOverlay>();
-                SetField(CrackOverlay, "overlayTilemap", Overlay);
-                SetField(System, "crackOverlay", CrackOverlay);
-            }
-
-            public GameObject Root { get; }
-            public Tilemap Foreground { get; }
-            public Tilemap Overlay { get; }
-            public StructuralCrackOverlay CrackOverlay { get; }
-            public StructuralIntegritySystem System { get; }
-
-            public void MineAt(Vector3Int cell, float structuralImpact)
-            {
-                System.NotifyTileMined(
-                    cell,
-                    new MiningTileDto(
-                        "tile.test",
-                        string.Empty,
-                        0,
-                        true,
-                        1f,
-                        1f,
-                        structuralImpact,
-                        false));
-            }
-
-            public void Dispose()
-            {
-                UnityEngine.Object.DestroyImmediate(Root);
-                UnityEngine.Object.DestroyImmediate(tile);
-            }
-        }
-
-        /// <summary>좁은 갱도 좌/우 벽 천장 픽스처.</summary>
-        private sealed class OppositeWallFixture : IDisposable
-        {
-            private readonly Tile tile;
-
-            public OppositeWallFixture()
-            {
-                Root = new GameObject("OppositeWallFixture");
-                var grid = new GameObject("Grid");
-                grid.transform.SetParent(Root.transform);
-                grid.AddComponent<Grid>();
-                var foregroundObject = new GameObject("Foreground");
-                foregroundObject.transform.SetParent(grid.transform);
-                Foreground = foregroundObject.AddComponent<Tilemap>();
-                tile = ScriptableObject.CreateInstance<Tile>();
-
-                // 좌 천장 x=-1, 우 천장 x=1 (거리 2 > localRiskRadius 1)
-                Foreground.SetTile(new Vector3Int(-1, 2, 0), tile);
-                Foreground.SetTile(new Vector3Int(1, 2, 0), tile);
-
-                System = Root.AddComponent<StructuralIntegritySystem>();
-                SetField(System, "foregroundTilemap", Foreground);
-                SetField(System, "scanRadius", 3);
-                SetField(System, "localRiskRadius", 1);
-
-                var overlayObject = new GameObject("Overlay");
-                overlayObject.transform.SetParent(grid.transform);
-                Overlay = overlayObject.AddComponent<Tilemap>();
-                CrackOverlay = Root.AddComponent<StructuralCrackOverlay>();
-                SetField(CrackOverlay, "overlayTilemap", Overlay);
-                SetField(System, "crackOverlay", CrackOverlay);
-            }
-
-            public GameObject Root { get; }
-            public Tilemap Foreground { get; }
-            public Tilemap Overlay { get; }
-            public StructuralCrackOverlay CrackOverlay { get; }
-            public StructuralIntegritySystem System { get; }
-
-            public void MineAt(Vector3Int cell, float structuralImpact)
-            {
                 System.NotifyTileMined(
                     cell,
                     new MiningTileDto(

@@ -8,11 +8,13 @@ namespace SubTerra.Gameplay.Structural
 {
     /// <summary>
     /// 채굴 변경점 주변만 재계산하고 확정된 균열·부분 붕괴 결과를 외부에 전달한다.
-    /// prompt-B 36: 위험 점수는 천장 타일 단위로, 가로 localRiskRadius 안의 충격·비지지 개수만 반영한다.
-    /// 먼 위치·맞은편 채굴이 다른 구역의 주의 단계를 위험으로 끌어올리지 않는다.
+    /// Ceiling risk depends on the horizontal distance to an anchor in the same row.
     /// </summary>
     public sealed class StructuralIntegritySystem : MonoBehaviour
     {
+        public const int StableDistance = 2;
+        private const int MaximumWarningDistance = 4;
+
         private static readonly Vector3Int[] NeighborOffsets =
             { Vector3Int.up, Vector3Int.down, Vector3Int.left, Vector3Int.right };
 
@@ -21,20 +23,13 @@ namespace SubTerra.Gameplay.Structural
         [SerializeField] private StructuralRiskSettings riskSettings;
         /// <summary>채굴 지점 위쪽으로 비지지 천장을 찾는 세로/탐색 범위.</summary>
         [SerializeField, Min(1)] private int scanRadius = 3;
-        /// <summary>
-        /// 가로 국소 구역 반경. 충격 합산·비지지 개수·재평가가 이 반경 안에서만 섞인다.
-        /// scanRadius와 분리해 맞은편 벽 등 다른 굴착 구역과 가중치가 섞이지 않게 한다.
-        /// </summary>
+        /// <summary>Horizontal search radius for the player risk display.</summary>
         [SerializeField, Min(0)] private int localRiskRadius = 1;
         [SerializeField, Min(1)] private int maximumCollapseTiles = 3;
-        [SerializeField, Min(1f)] private float miningImpactMultiplier = 100f;
         [SerializeField] private long worldSeed = 20260731L;
         [SerializeField] private TileBase[] protectedTiles = Array.Empty<TileBase>();
         [SerializeField] private Vector3Int[] protectedCells = Array.Empty<Vector3Int>();
         [SerializeField] private StructuralSupport[] supports = Array.Empty<StructuralSupport>();
-
-        /// <summary>채굴 셀 → 누적 충격.</summary>
-        private readonly Dictionary<Vector3Int, float> accumulatedImpact = new();
 
         /// <summary>비지지 천장 셀 → 현재 위험 단계(구역 독립).</summary>
         private readonly Dictionary<Vector3Int, StructuralRiskLevel> tileRisks = new();
@@ -158,7 +153,6 @@ namespace SubTerra.Gameplay.Structural
         /// </summary>
         public void ClearRuntimeRiskState()
         {
-            accumulatedImpact.Clear();
             deferredCandidates.Clear();
             telegraphRemaining.Clear();
             detachedTelegraphs.Clear();
@@ -185,58 +179,33 @@ namespace SubTerra.Gameplay.Structural
         /// <summary>
         /// prompt-B 36-1: 복원된 채굴 변경점과 현재 맵 기하를 기준으로 구조 위험을 재구성한다.
         /// 붕괴는 발동하지 않아 로드 중 추가 붕괴가 생기지 않는다.
-        /// 기본 충격은 카탈로그 일반 암석(0.25)과 동일한 값을 사용한다.
         /// </summary>
-        public void RebuildRiskFromMinedCells(
-            IEnumerable<Vector3Int> minedCells,
-            float defaultStructuralImpact = 0.25f)
+        public void RebuildRiskFromMinedCells(IEnumerable<Vector3Int> minedCells)
         {
             ClearRuntimeRiskState();
-            if (minedCells == null)
-            {
-                UpdateCurrentRisk();
-                return;
-            }
-
-            float impact = Mathf.Max(0f, defaultStructuralImpact) * miningImpactMultiplier;
             var affected = new HashSet<Vector3Int>();
-            foreach (Vector3Int cell in minedCells)
+            if (minedCells != null)
             {
-                if (impact > 0f)
-                {
-                    accumulatedImpact.TryGetValue(cell, out float currentImpact);
-                    accumulatedImpact[cell] = currentImpact + impact;
-                }
-
-                foreach (Vector3Int ceiling in EnumerateUnsupportedCeilingsNearMine(cell))
-                {
-                    affected.Add(ceiling);
-                }
+                foreach (Vector3Int cell in minedCells)
+                    CollectAffectedCeilingTiles(cell, affected);
             }
 
-            // 충격 없이도 비지지 천장 개수만으로 주의/위험이 될 수 있으므로
-            // 추적된 채굴 주변 천장을 전부 재평가한다.
             ReevaluateTiles(
                 affected,
                 allowCollapse: false,
                 Vector3Int.zero,
-                StructuralRiskCause.Unsupported,
-                0f);
+                StructuralRiskCause.Unsupported);
         }
 
         public void NotifyTileMined(Vector3Int cell, MiningTileDto tile)
         {
-            float impact = Mathf.Max(0f, tile.structuralImpact) * miningImpactMultiplier;
-            accumulatedImpact.TryGetValue(cell, out float currentImpact);
-            accumulatedImpact[cell] = currentImpact + impact;
-
             var affected = CollectAffectedCeilingTiles(cell);
             ReevaluateTiles(
                 affected,
                 allowCollapse: true,
                 cell,
-                StructuralRiskCause.MiningImpact,
-                impact);
+                StructuralRiskCause.Unsupported,
+                pulseOnIncrease: tile.structuralImpact > 0f);
             BeginDetachedCollapses(FindDetachedBlocksNearRemovedCells(new[] { cell }));
         }
 
@@ -347,35 +316,22 @@ namespace SubTerra.Gameplay.Structural
             }
         }
 
-        /// <summary>
-        /// 이번 채굴로 점수가 바뀔 수 있는 천장 셀만 모은다.
-        /// 원격 주의 타일은 포함하지 않아 재평가·색 덮어쓰기가 발생하지 않는다.
-        /// </summary>
-        private HashSet<Vector3Int> CollectAffectedCeilingTiles(Vector3Int minedCell)
+        private HashSet<Vector3Int> CollectAffectedCeilingTiles(Vector3Int removedCell)
         {
             var affected = new HashSet<Vector3Int>();
-
-            // 채굴 셀 자체(천장을 직접 캔 경우 위험 고착 해소).
-            affected.Add(minedCell);
-
-            foreach (Vector3Int ceiling in EnumerateUnsupportedCeilingsNearMine(minedCell))
-            {
-                affected.Add(ceiling);
-            }
-
-            // 이미 추적 중인 위험 타일 중, 이번 채굴의 가로 국소 범위에 들어오는 것만 재검사.
-            int horizontal = Mathf.Max(0, localRiskRadius);
-            int vertical = Mathf.Max(scanRadius, horizontal);
-            foreach (Vector3Int tracked in tileRisks.Keys)
-            {
-                if (Mathf.Abs(tracked.x - minedCell.x) <= horizontal
-                    && Mathf.Abs(tracked.y - minedCell.y) <= vertical)
-                {
-                    affected.Add(tracked);
-                }
-            }
-
+            CollectAffectedCeilingTiles(removedCell, affected);
             return affected;
+        }
+
+        private static void CollectAffectedCeilingTiles(Vector3Int removedCell, HashSet<Vector3Int> affected)
+        {
+            // Removing a tile can break a roof row or remove the anchor directly above it.
+            for (int dx = -MaximumWarningDistance; dx <= MaximumWarningDistance; dx++)
+            {
+                Vector3Int cell = removedCell + new Vector3Int(dx, 0, 0);
+                affected.Add(cell);
+                affected.Add(cell + Vector3Int.up);
+            }
         }
 
         private void ReevaluateTiles(
@@ -383,7 +339,7 @@ namespace SubTerra.Gameplay.Structural
             bool allowCollapse,
             Vector3Int actionCell,
             StructuralRiskCause actionCause,
-            float actionImpact)
+            bool pulseOnIncrease = false)
         {
             if (crackOverlay != null)
                 crackOverlay.BindSourceTilemap(foregroundTilemap);
@@ -408,14 +364,14 @@ namespace SubTerra.Gameplay.Structural
                     continue;
                 }
 
+                if (risk != StructuralRiskLevel.CollapseImminent && telegraphRemaining.Remove(cell))
+                    crackOverlay?.SetTelegraphing(cell, false);
+
                 tileRisks[cell] = risk;
                 tileScores[cell] = score;
-                StructuralRiskCause cause = ResolveCause(
-                    cell,
-                    actionCell,
-                    actionCause,
-                    actionImpact,
-                    previousScore);
+                StructuralRiskCause cause = actionCause;
+                if (cause == StructuralRiskCause.None && !tileCauses.TryGetValue(cell, out cause))
+                    cause = StructuralRiskCause.Unsupported;
                 tileCauses[cell] = cause;
                 float intensity = Mathf.InverseLerp(
                     Settings.CautionThreshold,
@@ -425,7 +381,7 @@ namespace SubTerra.Gameplay.Structural
                     risk,
                     telegraphRemaining.ContainsKey(cell));
                 crackOverlay?.SetCell(cell, displayRisk, intensity, cause);
-                if (score > previousScore + 0.001f && actionCause != StructuralRiskCause.None)
+                if (pulseOnIncrease && score > previousScore + 0.001f)
                 {
                     crackOverlay?.PulseCell(cell);
                 }
@@ -440,7 +396,6 @@ namespace SubTerra.Gameplay.Structural
                 }
             }
 
-            PruneOrphanImpacts();
             PruneDeferredCandidates();
 
             if (allowCollapse && collapseCandidates.Count > 0)
@@ -468,54 +423,51 @@ namespace SubTerra.Gameplay.Structural
             StructuralStatusChanged?.Invoke();
         }
 
-        private StructuralRiskLevel ComputeTileRisk(Vector3Int ceiling)
-        {
-            return StructuralRiskEvaluator.EvaluateScore(ComputeTileScore(ceiling), Settings);
-        }
-
         private float ComputeTileScore(Vector3Int ceiling)
         {
-            return StructuralRiskEvaluator.CalculateScore(
-                GetLocalImpactForCeiling(ceiling),
-                CountLocalUnsupportedCeilings(ceiling),
-                GetSupportStrength(ceiling),
-                Settings);
+            int distance = DistanceToSupport(ceiling);
+            if (distance <= StableDistance) return 0f;
+            if (distance == StableDistance + 1) return Settings.CautionThreshold;
+            if (distance == MaximumWarningDistance) return Settings.DangerThreshold;
+            return Settings.CollapseImminentThreshold;
         }
 
-        /// <summary>
-        /// 천장 타일 기준으로 가로 localRiskRadius·세로 scanRadius 안의 채굴 충격만 합산한다.
-        /// </summary>
-        private float GetLocalImpactForCeiling(Vector3Int ceiling)
+        private int DistanceToSupport(Vector3Int ceiling, Vector3 previewCenter = default, float previewRadius = 0f)
         {
-            float total = 0f;
-            int horizontal = Mathf.Max(0, localRiskRadius);
-            int vertical = Mathf.Max(1, scanRadius);
-            foreach (KeyValuePair<Vector3Int, float> pair in accumulatedImpact)
+            if (IsCeilingAnchor(ceiling, previewCenter, previewRadius)) return 0;
+
+            bool leftConnected = true;
+            bool rightConnected = true;
+            for (int distance = 1; distance <= MaximumWarningDistance && (leftConnected || rightConnected); distance++)
             {
-                Vector3Int mine = pair.Key;
-                if (Mathf.Abs(mine.x - ceiling.x) > horizontal) continue;
-                // 천장보다 아래(또는 동일 높이) 채굴만 해당 천장 구조에 기여한다.
-                if (mine.y > ceiling.y) continue;
-                if (ceiling.y - mine.y > vertical) continue;
-                total += pair.Value;
+                Vector3Int left = ceiling + Vector3Int.left * distance;
+                Vector3Int right = ceiling + Vector3Int.right * distance;
+                leftConnected = leftConnected && foregroundTilemap.HasTile(left);
+                rightConnected = rightConnected && foregroundTilemap.HasTile(right);
+                if ((leftConnected && IsCeilingAnchor(left, previewCenter, previewRadius))
+                    || (rightConnected && IsCeilingAnchor(right, previewCenter, previewRadius)))
+                    return distance;
             }
 
-            return total;
+            return MaximumWarningDistance + 1;
         }
 
-        /// <summary>천장 타일 주변 가로 국소 반경의 비지지 천장 개수.</summary>
-        private int CountLocalUnsupportedCeilings(Vector3Int ceiling)
+        private bool IsCeilingAnchor(Vector3Int cell, Vector3 previewCenter, float previewRadius)
         {
-            int count = 0;
-            int radius = Mathf.Max(0, localRiskRadius);
-            for (int x = ceiling.x - radius; x <= ceiling.x + radius; x++)
-            for (int y = ceiling.y - radius; y <= ceiling.y + radius; y++)
-            {
-                var cell = new Vector3Int(x, y, ceiling.z);
-                if (IsUnsupportedCeiling(cell)) count++;
-            }
+            return foregroundTilemap.HasTile(cell + Vector3Int.down)
+                || IsProtected(cell)
+                || (foregroundTilemap.HasTile(cell + Vector3Int.up) && IsProtected(cell + Vector3Int.up))
+                || GetSupportStrength(cell) > 0
+                || (previewRadius > 0f && StructuralSupport.CoversPosition(
+                    previewCenter, foregroundTilemap.GetCellCenterWorld(cell), previewRadius));
+        }
 
-            return count;
+        public bool WouldSupportClearCeilingRisk(Vector3Int cell, Vector3 center, float radius)
+        {
+            return radius > 0f
+                && IsUnsupportedCeiling(cell)
+                && DistanceToSupport(cell) > StableDistance
+                && DistanceToSupport(cell, center, radius) <= StableDistance;
         }
 
         /// <summary>
@@ -661,67 +613,6 @@ namespace SubTerra.Gameplay.Structural
             }
         }
 
-        private StructuralRiskCause ResolveCause(
-            Vector3Int ceiling,
-            Vector3Int actionCell,
-            StructuralRiskCause actionCause,
-            float actionImpact,
-            float previousScore)
-        {
-            if (actionCause == StructuralRiskCause.SupportRemoved)
-                return StructuralRiskCause.SupportRemoved;
-            if (actionCause != StructuralRiskCause.MiningImpact)
-                return tileCauses.TryGetValue(ceiling, out StructuralRiskCause prior)
-                    ? prior
-                    : StructuralRiskCause.Unsupported;
-
-            float unsupportedDelta = previousScore <= 0f
-                && ceiling + Vector3Int.down == actionCell
-                    ? Settings.UnsupportedTileWeight
-                    : 0f;
-            return unsupportedDelta >= actionImpact && unsupportedDelta > 0f
-                ? StructuralRiskCause.Unsupported
-                : StructuralRiskCause.MiningImpact;
-        }
-
-        /// <summary>주변에 비지지 천장이 더 이상 없는 채굴 충격을 제거한다.</summary>
-        private void PruneOrphanImpacts()
-        {
-            if (accumulatedImpact.Count == 0) return;
-
-            var remove = new List<Vector3Int>();
-            foreach (Vector3Int mine in accumulatedImpact.Keys)
-            {
-                if (!HasPotentialCeilingNearMine(mine)) remove.Add(mine);
-            }
-
-            for (int i = 0; i < remove.Count; i++)
-            {
-                accumulatedImpact.Remove(remove[i]);
-            }
-        }
-
-        /// <summary>버팀목은 위험 후보만 끄며 과거 채굴 충격 기록까지 지우지는 않는다.</summary>
-        private bool HasPotentialCeilingNearMine(Vector3Int mine)
-        {
-            if (foregroundTilemap == null) return false;
-            int horizontal = Mathf.Max(0, localRiskRadius);
-            int vertical = Mathf.Max(1, scanRadius);
-            for (int x = mine.x - horizontal; x <= mine.x + horizontal; x++)
-            for (int y = mine.y + 1; y <= mine.y + vertical; y++)
-            {
-                var cell = new Vector3Int(x, y, mine.z);
-                if (foregroundTilemap.HasTile(cell)
-                    && !foregroundTilemap.HasTile(cell + Vector3Int.down)
-                    && !IsProtected(cell))
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
         private void PruneDeferredCandidates()
         {
             if (deferredCandidates.Count == 0) return;
@@ -858,17 +749,12 @@ namespace SubTerra.Gameplay.Structural
 
             var affected = new HashSet<Vector3Int>();
             foreach (Vector3Int removed in removedCells)
-            {
-                affected.Add(removed);
-                foreach (Vector3Int nearby in EnumerateUnsupportedCeilingsNearMine(removed))
-                    affected.Add(nearby);
-            }
+                CollectAffectedCeilingTiles(removed, affected);
             ReevaluateTiles(
                 affected,
                 allowCollapse: false,
                 Vector3Int.zero,
-                StructuralRiskCause.None,
-                0f);
+                StructuralRiskCause.None);
             BeginDetachedCollapses(FindDetachedBlocksNearRemovedCells(removedCells));
             return collapse;
         }
@@ -929,44 +815,17 @@ namespace SubTerra.Gameplay.Structural
             }
 
             var affected = new HashSet<Vector3Int>();
-            float reach = support.Radius + Mathf.Max(localRiskRadius, 1);
-
-            foreach (Vector3Int tracked in tileRisks.Keys)
+            Vector3 center = support.transform.position;
+            Vector3 radius = new Vector3(support.Radius, support.Radius, 0f);
+            Vector3Int min = foregroundTilemap.WorldToCell(center - radius);
+            Vector3Int max = foregroundTilemap.WorldToCell(center + radius);
+            Vector3Int supportActionCell = foregroundTilemap.WorldToCell(center);
+            for (int x = min.x - MaximumWarningDistance; x <= max.x + MaximumWarningDistance; x++)
+            for (int y = min.y; y <= max.y; y++)
             {
-                Vector3 world = foregroundTilemap.GetCellCenterWorld(tracked);
-                if (Vector2.Distance(world, support.transform.position) <= reach)
-                    affected.Add(tracked);
+                affected.Add(new Vector3Int(x, y, supportActionCell.z));
             }
 
-            foreach (Vector3Int mine in accumulatedImpact.Keys)
-            {
-                Vector3 world = foregroundTilemap.GetCellCenterWorld(mine);
-                if (Vector2.Distance(world, support.transform.position) > reach) continue;
-                foreach (Vector3Int ceiling in EnumerateUnsupportedCeilingsNearMine(mine))
-                    affected.Add(ceiling);
-            }
-
-            if (affected.Count == 0)
-            {
-                Vector3Int supportCell = foregroundTilemap.WorldToCell(support.transform.position);
-                foreach (Vector3Int ceiling in EnumerateUnsupportedCeilingsNearMine(supportCell))
-                    affected.Add(ceiling);
-                // 버팀목이 천장 높이에 있을 수도 있다.
-                if (IsUnsupportedCeiling(supportCell) || tileRisks.ContainsKey(supportCell))
-                    affected.Add(supportCell);
-
-                // 버팀목 반경 안의 비지지 천장을 직접 스캔한다.
-                int cellReach = Mathf.CeilToInt(support.Radius) + localRiskRadius;
-                for (int x = supportCell.x - cellReach; x <= supportCell.x + cellReach; x++)
-                for (int y = supportCell.y - cellReach; y <= supportCell.y + cellReach; y++)
-                {
-                    var cell = new Vector3Int(x, y, supportCell.z);
-                    if (IsUnsupportedCeiling(cell))
-                        affected.Add(cell);
-                }
-            }
-
-            Vector3Int supportActionCell = foregroundTilemap.WorldToCell(support.transform.position);
             var previousDangerScores = new Dictionary<Vector3Int, float>();
             if (!supportRemoved)
             {
@@ -985,7 +844,7 @@ namespace SubTerra.Gameplay.Structural
                 allowCollapse: supportRemoved,
                 supportActionCell,
                 supportRemoved ? StructuralRiskCause.SupportRemoved : StructuralRiskCause.None,
-                0f);
+                pulseOnIncrease: supportRemoved);
 
             foreach (KeyValuePair<Vector3Int, float> previous in previousDangerScores)
             {

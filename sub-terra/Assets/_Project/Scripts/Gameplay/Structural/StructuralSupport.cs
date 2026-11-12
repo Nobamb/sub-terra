@@ -35,7 +35,12 @@ namespace SubTerra.Gameplay.Structural
 
         public bool Supports(Vector3 worldPosition)
         {
-            return Vector2.Distance(transform.position, worldPosition) <= radius;
+            return CoversPosition(transform.position, worldPosition, radius);
+        }
+
+        public static bool CoversPosition(Vector3 center, Vector3 worldPosition, float radius)
+        {
+            return ((Vector2)(worldPosition - center)).sqrMagnitude <= radius * radius;
         }
     }
 }

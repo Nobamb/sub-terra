@@ -924,7 +924,7 @@ namespace SubTerra.Gameplay.Building.Tests
                 var supportingGround = new Vector3Int(0, -1, 0);
                 setup.Terrain.SetTile(supportingGround, setup.Tile);
                 structural.NotifyTileMined(
-                    new Vector3Int(0, -3, 0),
+                    new Vector3Int(0, -2, 0),
                     new MiningTileDto(
                         "tile.test",
                         string.Empty,
@@ -1039,20 +1039,10 @@ namespace SubTerra.Gameplay.Building.Tests
                 setup.Terrain.SetTile(new Vector3Int(0, 1, 0), setup.Tile);
                 setup.Terrain.SetTile(new Vector3Int(6, -1, 0), setup.Tile);
                 setup.Terrain.SetTile(new Vector3Int(6, 1, 0), setup.Tile);
-                var impact = new MiningTileDto(
-                    "tile.test",
-                    string.Empty,
-                    0,
-                    true,
-                    1f,
-                    1f,
-                    0.1f,
-                    false);
-                structural.NotifyTileMined(Vector3Int.zero, impact);
-                structural.NotifyTileMined(new Vector3Int(6, 0, 0), impact);
+                structural.RebuildRiskFromMinedCells(new[] { Vector3Int.zero, new Vector3Int(6, 0, 0) });
 
-                Assert.That(structural.EvaluateAt(Vector3Int.zero), Is.EqualTo(StructuralRiskLevel.Caution));
-                Assert.That(structural.EvaluateAt(new Vector3Int(6, 0, 0)), Is.EqualTo(StructuralRiskLevel.Caution));
+                Assert.That(structural.EvaluateAt(Vector3Int.zero), Is.EqualTo(StructuralRiskLevel.Danger));
+                Assert.That(structural.EvaluateAt(new Vector3Int(6, 0, 0)), Is.EqualTo(StructuralRiskLevel.Danger));
 
                 var placed = setup.Placement.TryPlaceAt(Vector3Int.zero);
 
@@ -1060,7 +1050,7 @@ namespace SubTerra.Gameplay.Building.Tests
                 Assert.That(structural.EvaluateAt(Vector3Int.zero), Is.EqualTo(StructuralRiskLevel.Stable));
                 Assert.That(
                     structural.EvaluateAt(new Vector3Int(6, 0, 0)),
-                    Is.EqualTo(StructuralRiskLevel.Caution));
+                    Is.EqualTo(StructuralRiskLevel.Danger));
             }
             finally
             {
