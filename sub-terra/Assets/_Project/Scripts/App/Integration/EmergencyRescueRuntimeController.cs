@@ -7,11 +7,13 @@ using SubTerra.App.Save;
 using SubTerra.App.State;
 using SubTerra.App.UI;
 using SubTerra.App.UI.Drone;
+using SubTerra.App.UI.EmergencyEscape;
 using SubTerra.App.UI.EmergencyRescue;
 using SubTerra.App.UI.HUD;
 using SubTerra.Gameplay.Building;
 using SubTerra.Gameplay.Player;
 using SubTerra.Shared.Audio;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -31,6 +33,11 @@ namespace SubTerra.App.Integration
         public const SfxId RescueWarpSfx = SfxId.PortalWarp;
         public const SfxId RescueFailSfx = SfxId.UiCancelFail;
         public const string RescueFailureKey = "emergency.rescue";
+        /// <summary>워프 연출이 끝날 때까지 게임 진행을 멈추는 소유자. 구출 팝업을 닫아도 풀리지 않는다.</summary>
+        public const string WarpPauseOwner = "emergency-rescue-warp";
+
+        [Tooltip("비상 탈출(전력 고갈 구출) 워프 연출. 암전 + 간단 글리치 → 검은 화면에서 이동 → 켜지면 도착. 카메라는 움직이지 않는다.")]
+        [SerializeField] private EscapeWarpSettings warpSettings = new EscapeWarpSettings();
 
         private SaveRuntimeController runtime;
         private GameState gameState;
@@ -44,6 +51,13 @@ namespace SubTerra.App.Integration
         // 닫는 연출 도중 재열기 입력이 들어오면 닫기가 끝난 직후 같은 팝업을 다시 연다.
         private bool pendingReopen;
         private float closedAt = -1f;
+        private EscapeWarpRunner warpRunner;
+        private Coroutine warpRoutine;
+        private bool warpPending;
+
+        /// <summary>결제 뒤 연출이 끝나 플레이어가 옮겨지기까지 true.</summary>
+        public bool IsWarping => warpPending;
+        public EscapeWarpSettings WarpSettings => warpSettings;
 
         /// <summary>팝업이 화면에 있음(등장·열림·닫는 중). Esc 닫기 경로가 이 값을 본다.</summary>
         public bool IsPanelOpen => view != null && view.IsPopupVisible;
@@ -114,6 +128,8 @@ namespace SubTerra.App.Integration
 
         public void Unbind()
         {
+            // 연출 중 재바인딩·씬 정리가 와도 낸 비용만 잃지 않게 엘리베이터 도착을 마친다(참조를 비우기 전에).
+            AbortWarp();
             if (gameState != null)
             {
                 gameState.EnergyChanged -= OnEnergyChanged;
@@ -274,11 +290,82 @@ namespace SubTerra.App.Integration
 
             // B-181: 구조 버튼 확인음 대신 이동 전에 워프 한 번만 낸다.
             SfxPlayer.Play(RescueWarpSfx);
-            MoveToResolvedElevator();
             rescueCompleted = true;
             pendingReopen = false;
+            // 결제는 이미 끝났다. 팝업은 전환이 시작될 때 치우고, 이동은 글리치로 화면이 완전히 꺼졌을 때 한다.
             HideAll();
+            BeginRescueWarp();
+        }
+
+        private void BeginRescueWarp()
+        {
+            if (!Application.isPlaying)
+            {
+                // 에디트 모드(테스트)에서는 연출 없이 바로 이동한다.
+                ArriveAtElevator();
+                return;
+            }
+
+            warpPending = true;
+            // 구출은 평소 입력을 잠그지 않지만, 워프가 끝날 때까지는 월드가 멈춰 있어야 한다.
+            UiPauseGate.Acquire(WarpPauseOwner);
+            warpRunner = new EscapeWarpRunner(
+                warpSettings,
+                EscapeWarpStyle.Glitch,
+                EscapeWarpRunner.ResolveFollow(),
+                playerTransform,
+                ArriveAtElevator);
+            warpRoutine = StartCoroutine(RunWarp());
+        }
+
+        private IEnumerator RunWarp()
+        {
+            yield return StartCoroutine(warpRunner.Run());
+            FinishWarp();
+        }
+
+        /// <summary>플레이어 이동과 저장. 한 번만 호출된다(진행기가 보장).</summary>
+        private void ArriveAtElevator()
+        {
+            if (playerTransform != null && elevatorCenter != null)
+            {
+                MoveToResolvedElevator();
+            }
+
             runtime?.SaveCurrent(AutoSaveReason.Manual);
+        }
+
+        private void FinishWarp()
+        {
+            warpRoutine = null;
+            warpRunner = null;
+            warpPending = false;
+            UiPauseGate.Release(WarpPauseOwner);
+        }
+
+        private void AbortWarp()
+        {
+            if (!warpPending)
+            {
+                return;
+            }
+
+            if (warpRoutine != null)
+            {
+                StopCoroutine(warpRoutine);
+            }
+
+            if (warpRunner != null)
+            {
+                warpRunner.Abort();
+            }
+
+            FinishWarp();
+        }
+
+        private void OnDisable()
+        {
+            AbortWarp();
         }
 
         private static void PlayRescueFailSfx()

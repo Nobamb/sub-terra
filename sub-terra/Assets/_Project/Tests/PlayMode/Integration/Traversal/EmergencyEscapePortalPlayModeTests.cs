@@ -152,8 +152,14 @@ namespace SubTerra.App.Tests.PlayMode.Traversal
             Assert.That(
                 bridge.TryEscapeTo(EmergencyEscapeDestination.Elevator, string.Empty, out _),
                 Is.True);
+            // B-195: 결제는 즉시, 이동은 암전·켜짐·카메라 이동 뒤에 한다.
+            Assert.That(state.Player.Gold, Is.EqualTo(200), "결제는 확인 직후 한 번.");
+            Assert.That(state.Player.Energy, Is.EqualTo(90));
+            Assert.That(bridge.IsWarping, Is.True);
+            Assert.That(player.transform.position, Is.Not.EqualTo(elevator.transform.position), "연출 전에는 옮기지 않는다.");
+            yield return WaitForWarp(bridge);
             Assert.That(player.transform.position, Is.EqualTo(elevator.transform.position));
-            Assert.That(state.Player.Gold, Is.EqualTo(200));
+            Assert.That(state.Player.Gold, Is.EqualTo(200), "연출 중·뒤에도 다시 줄지 않는다.");
             Assert.That(state.Player.Energy, Is.EqualTo(90));
 
             var outpost = new GameObject("PromptB47_Outpost");
@@ -171,6 +177,7 @@ namespace SubTerra.App.Tests.PlayMode.Traversal
                     "building.outpost_core.basic-0002",
                     out _),
                 Is.True);
+            yield return WaitForWarp(bridge);
             Assert.That(
                 player.transform.position,
                 Is.EqualTo(outpost.transform.position + Vector3.up));
@@ -214,6 +221,7 @@ namespace SubTerra.App.Tests.PlayMode.Traversal
             Assert.That(
                 bridge.TryEscapeTo(EmergencyEscapeDestination.Elevator, string.Empty, out _),
                 Is.True);
+            yield return WaitForWarp(bridge);
             Assert.That(currentState.Progress.IsDemoComplete, Is.True);
             Assert.That(
                 currentState.Progress.CompletedObjectives,
@@ -240,6 +248,7 @@ namespace SubTerra.App.Tests.PlayMode.Traversal
                     "building.outpost_core.basic-prompt-b74",
                     out _),
                 Is.True);
+            yield return WaitForWarp(bridge);
             Assert.That(outpostState.Progress.IsDemoComplete, Is.True);
             Assert.That(
                 outpostState.Progress.CompletedObjectives,
@@ -252,6 +261,18 @@ namespace SubTerra.App.Tests.PlayMode.Traversal
             Object.Destroy(player);
             GameBootstrapper.ResetInstanceForTests();
             yield return null;
+        }
+
+        private static IEnumerator WaitForWarp(EmergencyEscapePortalRuntimeBridge bridge)
+        {
+            var waited = 0f;
+            while (bridge.IsWarping && waited < 6f)
+            {
+                waited += Time.unscaledDeltaTime;
+                yield return null;
+            }
+
+            Assert.That(bridge.IsWarping, Is.False, "워프 연출은 6초 안에 끝난다.");
         }
 
         private static void SetField(object target, string name, object value)

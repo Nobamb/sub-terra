@@ -189,6 +189,20 @@ namespace SubTerra.App.Tests.PlayMode
             Assert.That(state.Player.Gold, Is.EqualTo(goldBefore - goldCharged), "표시한 골드 비용과 실제 차감이 같다");
             Assert.That(Copper(), Is.EqualTo(copperBefore - copperCharged));
             Assert.That(Iron(), Is.EqualTo(ironBefore - ironCharged));
+            // 결제는 즉시 한 번, 이동은 글리치 워프 + 카메라 이동이 끝난 뒤 한 번.
+            Assert.That(controller.IsWarping, Is.True, "비상 탈출 워프 연출이 시작된다");
+            Assert.That(Player().position, Is.EqualTo(start), "연출 중에는 아직 옮겨지지 않는다");
+            var waited = 0f;
+            while (controller.IsWarping && waited < 6f)
+            {
+                waited += Time.unscaledDeltaTime;
+                yield return null;
+            }
+
+            Assert.That(controller.IsWarping, Is.False, "워프 연출은 6초 안에 끝난다");
+            Assert.That(state.Player.Gold, Is.EqualTo(goldBefore - goldCharged), "연출 중에도 골드는 다시 줄지 않는다");
+            Assert.That(Copper(), Is.EqualTo(copperBefore - copperCharged));
+            Assert.That(Iron(), Is.EqualTo(ironBefore - ironCharged));
             Assert.That(Player().position, Is.Not.EqualTo(start), "기존 이동 목적지(엘리베이터)로 이동한다");
             Assert.That(view.IsPopupVisible, Is.False);
             Assert.That(view.IsChipVisible, Is.False, "구출 뒤에는 안내가 남지 않는다");
