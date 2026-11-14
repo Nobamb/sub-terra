@@ -4,7 +4,8 @@ namespace SubTerra.Gameplay.Hazards
 {
     /// <summary>
     /// 유독가스 접근 시 카메라 전체를 덮는 월드 암전.
-    /// 설치된 조명 중심 5칸은 셰이더가 뚫어 불투명도 5% 붉은 빛만 남긴다.
+    /// 설치된 조명 5칸 안쪽은 셰이더가 부드럽게 뚫어 중심에 불투명도 5% 붉은 빛만 남긴다.
+    /// 가스 안에서는 GasInteriorHaze만큼 베일이 가스 녹색으로 살짝 물든다.
     /// </summary>
     [RequireComponent(typeof(SpriteRenderer))]
     public sealed class GasVisionWorldVeil : MonoBehaviour
@@ -17,9 +18,13 @@ namespace SubTerra.Gameplay.Hazards
         private static readonly int LightColorId = Shader.PropertyToID("_LightColor");
         private static readonly int LightsId = Shader.PropertyToID("_GasLights");
         private static readonly int LightCountId = Shader.PropertyToID("_GasLightCount");
+        private static readonly int LightInnerId = Shader.PropertyToID("_LightInner");
 
         [SerializeField] private SpriteRenderer veilRenderer;
         [SerializeField] private float opacity;
+        [SerializeField, Range(0f, 0.99f)] private float lightHoleInnerFraction = GasVisualRules.LightHoleInnerFraction;
+        [SerializeField, Range(0f, 1f)] private float hazeTintStrength = 0.5f;
+        [SerializeField, Range(0f, 0.3f)] private float hazeHoleExtraAlpha = 0.08f;
 
         private Material runtimeMaterial;
         private readonly Vector4[] lightBuffer = new Vector4[GasVisionHoleEvaluator.MaxLights];
@@ -57,7 +62,7 @@ namespace SubTerra.Gameplay.Hazards
 
         public Color SampleAt(Vector2 worldPosition)
         {
-            return GasVisionHoleEvaluator.Sample(worldPosition, opacity);
+            return GasVisionHoleEvaluator.Sample(worldPosition, opacity, lightHoleInnerFraction);
         }
 
         private void DetachFromCamera()
@@ -104,10 +109,12 @@ namespace SubTerra.Gameplay.Hazards
             var lightCount = GasVisionHoleEvaluator.CopyActiveLights(lightBuffer);
             if (runtimeMaterial != null)
             {
-                runtimeMaterial.SetColor(ColorId, new Color(0.04f, 0.05f, 0.05f, opacity));
+                var haze = GasInteriorHaze.Amount;
+                runtimeMaterial.SetColor(ColorId, GasVisualMath.VeilDark(opacity, haze, hazeTintStrength));
                 runtimeMaterial.SetColor(
                     LightColorId,
-                    new Color(1f, 0.12f, 0.08f, GasVisualRules.LightClearRedOpacity));
+                    GasVisualMath.LightHole(haze, hazeTintStrength, hazeHoleExtraAlpha));
+                runtimeMaterial.SetFloat(LightInnerId, lightHoleInnerFraction);
                 runtimeMaterial.SetVectorArray(LightsId, lightBuffer);
                 runtimeMaterial.SetFloat(LightCountId, lightCount);
             }

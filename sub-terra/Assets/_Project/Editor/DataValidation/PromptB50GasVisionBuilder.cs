@@ -129,15 +129,36 @@ namespace SubTerra.App.Editor.DataValidation
                 renderer = cloud.gameObject.AddComponent<SpriteRenderer>();
             }
 
-            var knob = LoadKnob();
-            renderer.sprite = knob;
-            renderer.color = new Color(0.22f, 0.82f, 0.34f, 0f);
+            // B-196: 딱딱한 Knob 대신 부드러운 방사형 스프라이트 + 모든 구역이 공유하는 GasCloud 머티리얼.
+            var assets = GasVfxAssetBuilder.EnsureAssets();
+            renderer.sprite = assets.SoftSprite;
+            renderer.sharedMaterial = assets.Material;
+            var cloudColor = GasVisualRules.GasTint;
+            cloudColor.a = 0f;
+            renderer.color = cloudColor;
             renderer.sortingOrder = 20;
             renderer.maskInteraction = SpriteMaskInteraction.VisibleOutsideMask;
             GasZoneVisual.FitSpriteToWorldDiameter(renderer, 0.01f);
 
             var visualSo = new SerializedObject(visual);
             visualSo.FindProperty("cloudRenderer").objectReferenceValue = renderer;
+            visualSo.FindProperty("cloudMaterial").objectReferenceValue = assets.Material;
+            visualSo.FindProperty("softSprite").objectReferenceValue = assets.SoftSprite;
+            // 프리팹 튜닝을 코드 기본값과 맞춘다. 재실행해도 부드러운 기본 연출로 돌아온다.
+            var defaults = new GasCloudTuning();
+            visualSo.FindProperty("tuning.core").floatValue = defaults.core;
+            visualSo.FindProperty("tuning.noiseAmount").floatValue = defaults.noiseAmount;
+            visualSo.FindProperty("tuning.edgeWarp").floatValue = defaults.edgeWarp;
+            visualSo.FindProperty("tuning.floorBias").floatValue = defaults.floorBias;
+            visualSo.FindProperty("tuning.topDensity").floatValue = defaults.topDensity;
+            visualSo.FindProperty("tuning.noiseScaleA").floatValue = defaults.noiseScaleA;
+            visualSo.FindProperty("tuning.noiseScaleB").floatValue = defaults.noiseScaleB;
+            visualSo.FindProperty("tuning.scrollA").vector2Value = defaults.scrollA;
+            visualSo.FindProperty("tuning.scrollB").vector2Value = defaults.scrollB;
+            visualSo.FindProperty("tuning.maxOpacity").floatValue = defaults.maxOpacity;
+            visualSo.FindProperty("tuning.motesPerZone").intValue = defaults.motesPerZone;
+            visualSo.FindProperty("tuning.moteMaxAlpha").floatValue = defaults.moteMaxAlpha;
+            visualSo.FindProperty("tuning.moteWorldSize").floatValue = defaults.moteWorldSize;
             visualSo.ApplyModifiedPropertiesWithoutUndo();
         }
 
@@ -155,10 +176,13 @@ namespace SubTerra.App.Editor.DataValidation
             go.transform.localPosition = Vector3.zero;
             go.transform.localScale = Vector3.one;
 
-            var knob = LoadKnob();
+            // B-196: 칼같이 잘리는 Knob 대신 가장자리가 부드럽게 사라지는 스프라이트. 지름은 판정 반지름과 같다.
+            var assets = GasVfxAssetBuilder.EnsureAssets();
             var renderer = go.AddComponent<SpriteRenderer>();
-            renderer.sprite = knob;
-            renderer.color = new Color(1f, 0.12f, 0.08f, GasVisualRules.LightClearRedOpacity);
+            renderer.sprite = assets.SoftSprite;
+            var tint = GasVisualRules.LightClearTint;
+            tint.a = GasVisualRules.LightClearRedOpacity;
+            renderer.color = tint;
             renderer.sortingOrder = 22;
             renderer.maskInteraction = SpriteMaskInteraction.None;
             GasZoneVisual.FitSpriteToWorldDiameter(
@@ -167,6 +191,9 @@ namespace SubTerra.App.Editor.DataValidation
 
             var source = go.AddComponent<GasVisionClearanceSource>();
             source.SetRadius(GasVisualRules.LightClearRadiusBlocks);
+            var sourceSo = new SerializedObject(source);
+            sourceSo.FindProperty("softSprite").objectReferenceValue = assets.SoftSprite;
+            sourceSo.ApplyModifiedPropertiesWithoutUndo();
         }
 
         private static void DestroyNamedDescendant(Transform root, string name)
@@ -337,16 +364,6 @@ namespace SubTerra.App.Editor.DataValidation
             return created.transform;
         }
 
-        private static Sprite LoadKnob()
-        {
-            var knob = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Knob.psd");
-            if (knob == null)
-            {
-                throw new InvalidOperationException("Built-in Knob sprite is required for gas vision.");
-            }
-
-            return knob;
-        }
     }
 }
 #endif

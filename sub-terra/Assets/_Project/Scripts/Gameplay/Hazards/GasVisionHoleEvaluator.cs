@@ -38,14 +38,55 @@ namespace SubTerra.Gameplay.Hazards
             return radius > 0f;
         }
 
-        public static Color Sample(Vector2 worldPosition, float darkOpacity)
+        /// <summary>
+        /// 조명 구멍이 걷은 정도(0~1). 가장 가까운 조명이 아니라 모든 조명 중 최댓값이며(셰이더와 동일),
+        /// 조명 반지름 밖에서는 항상 0이다. 구멍 판정(TryGetNearestLight/IsCleared)과 무관한 시각 값이다.
+        /// </summary>
+        public static float SampleCover(Vector2 worldPosition, float inner)
         {
-            if (TryGetNearestLight(worldPosition, out _, out _))
+            var cover = 0f;
+            var sources = GasVisionClearanceSource.ResolveActive();
+            for (var i = 0; i < sources.Count; i++)
             {
-                return new Color(1f, 0.12f, 0.08f, GasVisualRules.LightClearRedOpacity);
+                var source = sources[i];
+                if (source == null || !source.isActiveAndEnabled)
+                {
+                    continue;
+                }
+
+                var distance = Vector2.Distance(worldPosition, source.WorldPosition);
+                cover = Mathf.Max(cover, GasVisualMath.LightCover(distance, source.Radius, inner));
             }
 
-            return new Color(0.04f, 0.05f, 0.05f, Mathf.Clamp01(darkOpacity));
+            return cover;
+        }
+
+        public static Color Sample(Vector2 worldPosition, float darkOpacity)
+        {
+            return Sample(worldPosition, darkOpacity, GasVisualRules.LightHoleInnerFraction);
+        }
+
+        /// <summary>중심은 약한 붉은 빛, 경계로 갈수록 베일 색으로 스며든다.</summary>
+        public static Color Sample(Vector2 worldPosition, float darkOpacity, float inner)
+        {
+            var dark = new Color(
+                GasVisualRules.VeilDarkColor.r,
+                GasVisualRules.VeilDarkColor.g,
+                GasVisualRules.VeilDarkColor.b,
+                Mathf.Clamp01(darkOpacity));
+            var light = new Color(
+                GasVisualRules.LightClearTint.r,
+                GasVisualRules.LightClearTint.g,
+                GasVisualRules.LightClearTint.b,
+                GasVisualRules.LightClearRedOpacity);
+            // 셰이더와 같은 프리멀티플라이드 보간.
+            var cover = SampleCover(worldPosition, inner);
+            var alpha = Mathf.Lerp(dark.a, light.a, cover);
+            var rgb = Vector3.Lerp(
+                new Vector3(dark.r, dark.g, dark.b) * dark.a,
+                new Vector3(light.r, light.g, light.b) * light.a,
+                cover) / Mathf.Max(alpha, 0.0001f);
+            return new Color(rgb.x, rgb.y, rgb.z, alpha);
         }
 
         public static int CopyActiveLights(Vector4[] destination)
