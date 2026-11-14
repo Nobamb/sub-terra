@@ -24,6 +24,7 @@ namespace SubTerra.Gameplay.Hazards
         [SerializeField] private float opacity;
         [SerializeField, Range(0f, 0.99f)] private float lightHoleInnerFraction = GasVisualRules.LightHoleInnerFraction;
         [SerializeField, Range(0f, 1f)] private float hazeTintStrength = 0.5f;
+        [SerializeField, Range(0.05f, 0.6f)] private float lightHoleCenterAlpha = GasVisualRules.LightHoleCenterOpacity;
         [SerializeField, Range(0f, 0.3f)] private float hazeHoleExtraAlpha = 0.08f;
 
         private Material runtimeMaterial;
@@ -62,7 +63,7 @@ namespace SubTerra.Gameplay.Hazards
 
         public Color SampleAt(Vector2 worldPosition)
         {
-            return GasVisionHoleEvaluator.Sample(worldPosition, opacity, lightHoleInnerFraction);
+            return GasVisionHoleEvaluator.Sample(worldPosition, opacity, lightHoleInnerFraction, lightHoleCenterAlpha);
         }
 
         private void DetachFromCamera()
@@ -106,14 +107,21 @@ namespace SubTerra.Gameplay.Hazards
                 return;
             }
 
-            var lightCount = GasVisionHoleEvaluator.CopyActiveLights(lightBuffer);
+            // 전원이 켜진 화면 안 조명만 셰이더로 보낸다(상한 MaxLights).
+            Rect? view = null;
+            if (GasVisionHoleEvaluator.TryGetCameraWorldView(Camera.main, out var viewRect))
+            {
+                view = viewRect;
+            }
+
+            var lightCount = GasVisionHoleEvaluator.CopyActiveLights(lightBuffer, view);
             if (runtimeMaterial != null)
             {
                 var haze = GasInteriorHaze.Amount;
                 runtimeMaterial.SetColor(ColorId, GasVisualMath.VeilDark(opacity, haze, hazeTintStrength));
                 runtimeMaterial.SetColor(
                     LightColorId,
-                    GasVisualMath.LightHole(haze, hazeTintStrength, hazeHoleExtraAlpha));
+                    GasVisualMath.LightHole(haze, hazeTintStrength, hazeHoleExtraAlpha, lightHoleCenterAlpha));
                 runtimeMaterial.SetFloat(LightInnerId, lightHoleInnerFraction);
                 runtimeMaterial.SetVectorArray(LightsId, lightBuffer);
                 runtimeMaterial.SetFloat(LightCountId, lightCount);

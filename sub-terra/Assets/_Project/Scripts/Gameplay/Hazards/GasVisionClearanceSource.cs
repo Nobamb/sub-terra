@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using SubTerra.Gameplay.Power;
 using UnityEngine;
 
 namespace SubTerra.Gameplay.Hazards
@@ -12,9 +13,54 @@ namespace SubTerra.Gameplay.Hazards
 
         [SerializeField, Min(0.1f)] private float radius = GasVisualRules.LightClearRadiusBlocks;
         [SerializeField] private Sprite softSprite;
+        [SerializeField, Range(0f, 1f)] private float unpoweredLevel = GasVisualRules.LightUnpoweredLevel;
+
+        private PowerFacility facility;
+        private bool facilityResolved;
 
         public float Radius => radius;
         public Vector2 WorldPosition => transform.position;
+
+        /// <summary>
+        /// B-196-1: 후광·암전 구멍 같은 "빛 시각"을 보여 줄지(LightLevel > 0).
+        /// 구멍 판정(IsCleared/TryGetNearestLight)에는 쓰이지 않는다.
+        /// </summary>
+        public bool IsLit => LightLevel > 0.0001f;
+
+        /// <summary>
+        /// 빛 세기 비율(0~1). 조명은 전원 없이도 가스 시야를 뚫으므로(IsCleared) 전원이 없어도 약하게 빛난다.
+        /// 케이블 전원(IsPowered)이나 공급 범위 안이면 1, 아니면 unpoweredLevel. 시설이 없으면 1.
+        /// unpoweredLevel을 0으로 두면 전원이 꺼질 때 후광·구멍이 완전히 사라진다.
+        /// </summary>
+        public float LightLevel
+        {
+            get
+            {
+                if (!facilityResolved)
+                {
+                    facility = GetComponentInParent<PowerFacility>(true);
+                    facilityResolved = true;
+                }
+
+                if (facility == null || facility.IsInteractionAvailable || facility.IsInSupplyRange)
+                {
+                    return 1f;
+                }
+
+                return Mathf.Clamp01(unpoweredLevel);
+            }
+        }
+
+        public void SetUnpoweredLevel(float level)
+        {
+            unpoweredLevel = Mathf.Clamp01(level);
+        }
+
+        /// <summary>시설을 다시 찾는다. 시설 컴포넌트를 나중에 붙인 경우에만 필요하다.</summary>
+        public void RefreshPowerBinding()
+        {
+            facilityResolved = false;
+        }
 
         public static IReadOnlyList<GasVisionClearanceSource> ActiveSources => Active;
 
@@ -37,7 +83,9 @@ namespace SubTerra.Gameplay.Hazards
                 Active.Add(this);
             }
 
+            facilityResolved = false;
             ApplySoftVisual();
+            LightHaloVisual.EnsureFor(this);
         }
 
         /// <summary>

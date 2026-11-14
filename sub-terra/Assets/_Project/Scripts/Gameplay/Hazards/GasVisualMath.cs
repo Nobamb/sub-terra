@@ -69,10 +69,43 @@ namespace SubTerra.Gameplay.Hazards
         /// <summary>조명 구멍 중심 색. 가스 안에서는 알파가 조금 올라가고 녹색이 섞여 탁해진다.</summary>
         public static Color LightHole(float haze, float strength, float extraAlpha)
         {
+            return LightHole(haze, strength, extraAlpha, GasVisualRules.LightHoleCenterOpacity);
+        }
+
+        /// <summary>centerAlpha는 구멍 중심 기본 알파(B-196-1: 0.25~0.45 권장). 가스 안 추가분은 그 위에 더해진다.</summary>
+        public static Color LightHole(float haze, float strength, float extraAlpha, float centerAlpha)
+        {
             var amount = Mathf.Clamp01(haze) * Mathf.Clamp01(strength);
             var rgb = Color.Lerp(GasVisualRules.LightClearTint, GasVisualRules.GasTint, amount);
-            var alpha = GasVisualRules.LightClearRedOpacity + Mathf.Max(0f, extraAlpha) * Mathf.Clamp01(haze);
+            var alpha = Mathf.Clamp01(centerAlpha) + Mathf.Max(0f, extraAlpha) * Mathf.Clamp01(haze);
             return new Color(rgb.r, rgb.g, rgb.b, Mathf.Clamp01(alpha));
+        }
+
+        /// <summary>원(중심·반지름)이 직사각형과 겹치는지. 화면 밖 조명을 거를 때 쓴다.</summary>
+        public static bool CircleIntersectsRect(Vector2 center, float radius, Rect rect)
+        {
+            var nearestX = Mathf.Clamp(center.x, rect.xMin, rect.xMax);
+            var nearestY = Mathf.Clamp(center.y, rect.yMin, rect.yMax);
+            var dx = center.x - nearestX;
+            var dy = center.y - nearestY;
+            return dx * dx + dy * dy <= radius * radius;
+        }
+
+        /// <summary>
+        /// 후광 밝기 곱(1 이하). 아주 약하고 부드럽게 흔들린다. 모션 감소이거나 세기가 0이면 정확히 1로 고정한다.
+        /// </summary>
+        public static float HaloFlicker(float time, float seed, float strength, bool reduceMotion)
+        {
+            var amount = Mathf.Clamp(strength, 0f, 0.3f);
+            if (reduceMotion || amount <= 0f)
+            {
+                return 1f;
+            }
+
+            var wave = 0.6f * Mathf.Sin(time * 2.1f + seed * 6.28f)
+                + 0.4f * Mathf.Sin(time * 5.3f + seed * 17.7f);
+            var normalized = 0.5f + 0.5f * wave;
+            return 1f - amount * normalized;
         }
 
         /// <summary>가스 안 햇무리 정도. 안에 있으면 rise초, 나가면 fall초에 걸쳐 서서히 움직여 번쩍이지 않는다.</summary>

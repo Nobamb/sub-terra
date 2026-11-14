@@ -313,10 +313,10 @@ namespace SubTerra.Gameplay.Hazards.Tests
             Assert.That(hazy.a, Is.EqualTo(0.95f).Within(0.0001f), "불투명도(접근 판정 연출)는 건드리지 않는다");
 
             var hole = GasVisualMath.LightHole(0f, 0.5f, 0.08f);
-            Assert.That(hole.a, Is.EqualTo(GasVisualRules.LightClearRedOpacity).Within(0.0001f));
+            Assert.That(hole.a, Is.EqualTo(GasVisualRules.LightHoleCenterOpacity).Within(0.0001f));
             var hazyHole = GasVisualMath.LightHole(1f, 0.5f, 0.08f);
             Assert.That(hazyHole.a, Is.GreaterThan(hole.a));
-            Assert.That(hazyHole.a, Is.LessThan(0.2f));
+            Assert.That(hazyHole.a, Is.LessThan(0.6f));
         }
 
         private GasZoneVisual CreateZone(string id, Vector3 position)

@@ -194,6 +194,47 @@ namespace SubTerra.App.Editor.DataValidation
             var sourceSo = new SerializedObject(source);
             sourceSo.FindProperty("softSprite").objectReferenceValue = assets.SoftSprite;
             sourceSo.ApplyModifiedPropertiesWithoutUndo();
+
+            ApplyLightHalo(lightRoot, source, assets.SoftSprite);
+        }
+
+        /// <summary>
+        /// B-196-1: 전원이 켜진 조명이 가스 없이도 약 5칸을 따뜻하게 밝히는 후광을 넣는다.
+        /// 가산 공유 머티리얼은 런타임에 LightHaloVisual이 Resources/LightHalo 셰이더로 만든다(에셋 머티리얼 없음).
+        /// 재실행해도 예전 5% 붉은 틴트만 남는 모습으로 돌아가지 않도록 수치를 코드 기본값으로 맞춘다.
+        /// </summary>
+        public static void ApplyLightHalo(Transform lightRoot, GasVisionClearanceSource source, Sprite softSprite)
+        {
+            if (lightRoot == null)
+            {
+                throw new ArgumentNullException(nameof(lightRoot));
+            }
+
+            DestroyNamedDescendant(lightRoot, GasVisualRules.LightHaloChildName);
+
+            var go = new GameObject(GasVisualRules.LightHaloChildName);
+            go.transform.SetParent(lightRoot, false);
+            go.transform.localPosition = Vector3.zero;
+            go.transform.localScale = Vector3.one;
+
+            var renderer = go.AddComponent<SpriteRenderer>();
+            renderer.sprite = softSprite;
+            renderer.sortingOrder = 23;
+            renderer.maskInteraction = SpriteMaskInteraction.None;
+            renderer.enabled = false;
+
+            var halo = go.AddComponent<LightHaloVisual>();
+            var haloSo = new SerializedObject(halo);
+            haloSo.FindProperty("haloRenderer").objectReferenceValue = renderer;
+            haloSo.FindProperty("source").objectReferenceValue = source;
+            haloSo.FindProperty("softSprite").objectReferenceValue = softSprite;
+            haloSo.FindProperty("peakOpacity").floatValue = GasVisualRules.LightHaloOpacity;
+            haloSo.FindProperty("tint").colorValue = GasVisualRules.LightHaloTint;
+            haloSo.FindProperty("flickerStrength").floatValue = GasVisualRules.LightHaloFlickerStrength;
+            haloSo.FindProperty("fadeSeconds").floatValue = GasVisualRules.LightHaloFadeSeconds;
+            haloSo.FindProperty("sortingOrder").intValue = 23;
+            haloSo.ApplyModifiedPropertiesWithoutUndo();
+            GasZoneVisual.FitSpriteToWorldDiameter(renderer, GasVisualRules.LightClearRadiusBlocks * 2f);
         }
 
         private static void DestroyNamedDescendant(Transform root, string name)

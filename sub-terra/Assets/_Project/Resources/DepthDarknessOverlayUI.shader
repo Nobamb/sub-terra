@@ -19,6 +19,8 @@ Shader "SubTerra/DepthDarknessOverlayUI"
         _OccTexSize ("Occupancy Tex Size", Vector) = (0,0,0,0)
         _PlayerViewport ("Player Viewport", Vector) = (0.5,0.5,1,0)
         _ScanGlowRadius ("Scan Glow Radius Cells", Float) = 1.05
+        _LightHoleInner ("Light Hole Inner Fraction", Range(0, 0.99)) = 0.2
+        _LightHoleStrength ("Light Hole Strength", Range(0, 1)) = 0.85
     }
 
     SubShader
@@ -79,6 +81,10 @@ Shader "SubTerra/DepthDarknessOverlayUI"
             float _BlockDarkAlpha;
             float _Fade;
             float _ScanGlowRadius;
+            float _LightHoleInner;
+            float _LightHoleStrength;
+            float4 _DepthLights[32];
+            float _DepthLightCount;
             float4 _ClipRect;
 
             v2f vert(appdata_t v)
@@ -157,6 +163,25 @@ Shader "SubTerra/DepthDarknessOverlayUI"
                 float4 veiledOutline = float4(_OutlineColor.rgb * remain, fade);
                 float4 color = lerp(darkColor, veiledOutline, outline);
                 color.a *= 1.0 - saturate(scanGlow);
+
+                // B-196-1: 전원이 켜진 조명마다 부드러운 구멍. 플레이어가 조명 반지름 밖에 있어도 램프 주위는 밝다.
+                // 반지름 안쪽에서만 감쇠하므로 판정 범위(조명 5칸)보다 커지지 않는다. 전체 해제(IsClearedByLight)와는 별개다.
+                float holeCover = 0.0;
+                int holeCount = (int)_DepthLightCount;
+                for (int n = 0; n < 32; n++)
+                {
+                    if (n >= holeCount)
+                    {
+                        break;
+                    }
+
+                    float holeRadius = max(_DepthLights[n].z, 0.0001);
+                    float2 holeDelta = i.texcoord - _DepthLights[n].xy;
+                    holeDelta.x *= max(_DepthLights[n].w, 0.0001);
+                    holeCover = max(holeCover, 1.0 - smoothstep(_LightHoleInner * holeRadius, holeRadius, length(holeDelta)));
+                }
+
+                color.a *= 1.0 - saturate(holeCover * _LightHoleStrength);
 
                 color.a *= UnityGet2DClipping(i.worldPosition.xy, _ClipRect);
                 return color;

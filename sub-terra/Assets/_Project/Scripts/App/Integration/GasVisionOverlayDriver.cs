@@ -25,6 +25,7 @@ namespace SubTerra.App.Integration
         [SerializeField] private Camera targetCamera;
         [SerializeField, Range(0f, 0.99f)] private float lightHoleInnerFraction = GasVisualRules.LightHoleInnerFraction;
         [SerializeField, Range(0f, 1f)] private float hazeTintStrength = 0.5f;
+        [SerializeField, Range(0.05f, 0.6f)] private float lightHoleCenterAlpha = GasVisualRules.LightHoleCenterOpacity;
         [SerializeField, Range(0f, 0.3f)] private float hazeHoleExtraAlpha = 0.08f;
 
         private Material runtimeMaterial;
@@ -64,11 +65,11 @@ namespace SubTerra.App.Integration
             var camera = ResolveCamera();
             if (camera == null)
             {
-                return GasVisionHoleEvaluator.Sample(viewportPosition, opacity, lightHoleInnerFraction);
+                return GasVisionHoleEvaluator.Sample(viewportPosition, opacity, lightHoleInnerFraction, lightHoleCenterAlpha);
             }
 
             var world = camera.ViewportToWorldPoint(new Vector3(viewportPosition.x, viewportPosition.y, 0f));
-            return GasVisionHoleEvaluator.Sample(world, opacity, lightHoleInnerFraction);
+            return GasVisionHoleEvaluator.Sample(world, opacity, lightHoleInnerFraction, lightHoleCenterAlpha);
         }
 
         private void ApplyVisual()
@@ -90,66 +91,13 @@ namespace SubTerra.App.Integration
             runtimeMaterial.SetColor(DarkColorId, GasVisualMath.VeilDark(opacity, haze, hazeTintStrength));
             runtimeMaterial.SetColor(
                 LightColorId,
-                GasVisualMath.LightHole(haze, hazeTintStrength, hazeHoleExtraAlpha));
+                GasVisualMath.LightHole(haze, hazeTintStrength, hazeHoleExtraAlpha, lightHoleCenterAlpha));
             runtimeMaterial.SetFloat(LightInnerId, lightHoleInnerFraction);
 
             var camera = ResolveCamera();
-            var count = CopyViewportLights(camera, lightBuffer);
+            var count = GasVisionHoleEvaluator.CopyViewportLights(camera, lightBuffer);
             runtimeMaterial.SetVectorArray(LightsId, lightBuffer);
             runtimeMaterial.SetFloat(LightCountId, count);
-        }
-
-        private int CopyViewportLights(Camera camera, Vector4[] destination)
-        {
-            if (destination == null)
-            {
-                return 0;
-            }
-
-            var count = 0;
-            var sources = GasVisionClearanceSource.ActiveSources;
-            if (sources.Count == 0)
-            {
-                sources = Object.FindObjectsByType<GasVisionClearanceSource>(
-                    FindObjectsInactive.Exclude,
-                    FindObjectsSortMode.None);
-            }
-
-            var aspect = camera != null ? Mathf.Max(0.0001f, camera.aspect) : 1f;
-            for (var i = 0; i < sources.Count && count < destination.Length; i++)
-            {
-                var source = sources[i];
-                if (source == null || !source.isActiveAndEnabled)
-                {
-                    continue;
-                }
-
-                var world = source.WorldPosition;
-                Vector2 viewport;
-                float radiusY;
-                if (camera != null)
-                {
-                    var center = camera.WorldToViewportPoint(new Vector3(world.x, world.y, 0f));
-                    var edge = camera.WorldToViewportPoint(new Vector3(world.x, world.y + source.Radius, 0f));
-                    viewport = center;
-                    radiusY = Mathf.Abs(edge.y - center.y);
-                }
-                else
-                {
-                    viewport = world;
-                    radiusY = source.Radius;
-                }
-
-                destination[count] = new Vector4(viewport.x, viewport.y, radiusY, aspect);
-                count++;
-            }
-
-            for (var i = count; i < destination.Length; i++)
-            {
-                destination[i] = Vector4.zero;
-            }
-
-            return count;
         }
 
         private Camera ResolveCamera()

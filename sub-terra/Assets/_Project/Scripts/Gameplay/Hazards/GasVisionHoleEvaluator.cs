@@ -49,7 +49,8 @@ namespace SubTerra.Gameplay.Hazards
             for (var i = 0; i < sources.Count; i++)
             {
                 var source = sources[i];
-                if (source == null || !source.isActiveAndEnabled)
+                // 시각 값이라 전원이 꺼진 조명은 구멍을 만들지 않는다(판정 IsCleared는 별개).
+                if (source == null || !source.isActiveAndEnabled || !source.IsLit)
                 {
                     continue;
                 }
@@ -69,6 +70,12 @@ namespace SubTerra.Gameplay.Hazards
         /// <summary>중심은 약한 붉은 빛, 경계로 갈수록 베일 색으로 스며든다.</summary>
         public static Color Sample(Vector2 worldPosition, float darkOpacity, float inner)
         {
+            return Sample(worldPosition, darkOpacity, inner, GasVisualRules.LightHoleCenterOpacity);
+        }
+
+        /// <summary>centerAlpha는 구멍 중심 알파. 가스 안 추가분은 포함하지 않는 기본 시각 샘플이다.</summary>
+        public static Color Sample(Vector2 worldPosition, float darkOpacity, float inner, float centerAlpha)
+        {
             var dark = new Color(
                 GasVisualRules.VeilDarkColor.r,
                 GasVisualRules.VeilDarkColor.g,
@@ -78,7 +85,7 @@ namespace SubTerra.Gameplay.Hazards
                 GasVisualRules.LightClearTint.r,
                 GasVisualRules.LightClearTint.g,
                 GasVisualRules.LightClearTint.b,
-                GasVisualRules.LightClearRedOpacity);
+                Mathf.Clamp01(centerAlpha));
             // 셰이더와 같은 프리멀티플라이드 보간.
             var cover = SampleCover(worldPosition, inner);
             var alpha = Mathf.Lerp(dark.a, light.a, cover);
@@ -89,19 +96,30 @@ namespace SubTerra.Gameplay.Hazards
             return new Color(rgb.x, rgb.y, rgb.z, alpha);
         }
 
+        /// <summary>전원이 켜진 조명만 (x, y, 0, 반지름)으로 복사한다. 화면 거르기 없음.</summary>
         public static int CopyActiveLights(Vector4[] destination)
+        {
+            return CopyActiveLights(destination, null);
+        }
+
+        /// <summary>
+        /// 전원이 켜진 조명 중 worldView와 겹치는 것만 복사한다(null이면 화면 거르기 없음).
+        /// 개수는 destination 길이(최대 MaxLights)로 제한한다.
+        /// </summary>
+        public static int CopyActiveLights(Vector4[] destination, Rect? worldView)
         {
             if (destination == null)
             {
                 return 0;
             }
 
+            var limit = Mathf.Min(destination.Length, MaxLights);
             var count = 0;
             var sources = GasVisionClearanceSource.ResolveActive();
-            for (var i = 0; i < sources.Count && count < destination.Length; i++)
+            for (var i = 0; i < sources.Count && count < limit; i++)
             {
                 var source = sources[i];
-                if (source == null || !source.isActiveAndEnabled)
+                if (!IsVisualLight(source, worldView))
                 {
                     continue;
                 }
@@ -117,6 +135,90 @@ namespace SubTerra.Gameplay.Hazards
             }
 
             return count;
+        }
+
+        /// <summary>
+        /// 화면(뷰포트) 기준 (vx, vy, 세로 반지름, 가로세로비)로 복사한다. 암전·가스 오버레이 UI 셰이더용.
+        /// 전원이 켜진 화면 안 조명만 담고 MaxLights로 제한한다.
+        /// </summary>
+        public static int CopyViewportLights(Camera camera, Vector4[] destination)
+        {
+            if (destination == null)
+            {
+                return 0;
+            }
+
+            Rect? view = null;
+            if (TryGetCameraWorldView(camera, out var rect))
+            {
+                view = rect;
+            }
+
+            var aspect = camera != null ? Mathf.Max(0.0001f, camera.aspect) : 1f;
+            var limit = Mathf.Min(destination.Length, MaxLights);
+            var count = 0;
+            var sources = GasVisionClearanceSource.ResolveActive();
+            for (var i = 0; i < sources.Count && count < limit; i++)
+            {
+                var source = sources[i];
+                if (!IsVisualLight(source, view))
+                {
+                    continue;
+                }
+
+                var world = source.WorldPosition;
+                Vector2 viewport;
+                float radiusY;
+                if (camera != null)
+                {
+                    var center = camera.WorldToViewportPoint(new Vector3(world.x, world.y, 0f));
+                    var edge = camera.WorldToViewportPoint(new Vector3(world.x, world.y + source.Radius, 0f));
+                    viewport = center;
+                    radiusY = Mathf.Abs(edge.y - center.y);
+                }
+                else
+                {
+                    viewport = world;
+                    radiusY = source.Radius;
+                }
+
+                destination[count] = new Vector4(viewport.x, viewport.y, radiusY, aspect);
+                count++;
+            }
+
+            for (var i = count; i < destination.Length; i++)
+            {
+                destination[i] = Vector4.zero;
+            }
+
+            return count;
+        }
+
+        /// <summary>직교 카메라가 보는 월드 영역. 직교가 아니면 false(거르지 않는다).</summary>
+        public static bool TryGetCameraWorldView(Camera camera, out Rect view)
+        {
+            view = default;
+            if (camera == null || !camera.orthographic)
+            {
+                return false;
+            }
+
+            var halfHeight = camera.orthographicSize;
+            var halfWidth = halfHeight * Mathf.Max(0.0001f, camera.aspect);
+            var position = camera.transform.position;
+            view = new Rect(position.x - halfWidth, position.y - halfHeight, halfWidth * 2f, halfHeight * 2f);
+            return true;
+        }
+
+        private static bool IsVisualLight(GasVisionClearanceSource source, Rect? worldView)
+        {
+            if (source == null || !source.isActiveAndEnabled || !source.IsLit)
+            {
+                return false;
+            }
+
+            return !worldView.HasValue
+                || GasVisualMath.CircleIntersectsRect(source.WorldPosition, source.Radius, worldView.Value);
         }
     }
 }
