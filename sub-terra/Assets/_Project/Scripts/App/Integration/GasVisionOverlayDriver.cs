@@ -18,10 +18,14 @@ namespace SubTerra.App.Integration
         private static readonly int LightColorId = Shader.PropertyToID("_LightColor");
         private static readonly int LightsId = Shader.PropertyToID("_GasLights");
         private static readonly int LightCountId = Shader.PropertyToID("_GasLightCount");
+        private static readonly int LightInnerId = Shader.PropertyToID("_LightInner");
 
         [SerializeField] private CanvasGroup canvasGroup;
         [SerializeField] private Image overlayImage;
         [SerializeField] private Camera targetCamera;
+        [SerializeField, Range(0f, 0.99f)] private float lightHoleInnerFraction = GasVisualRules.LightHoleInnerFraction;
+        [SerializeField, Range(0f, 1f)] private float hazeTintStrength = 0.5f;
+        [SerializeField, Range(0f, 0.3f)] private float hazeHoleExtraAlpha = 0.08f;
 
         private Material runtimeMaterial;
         private readonly Vector4[] lightBuffer = new Vector4[GasVisionHoleEvaluator.MaxLights];
@@ -60,11 +64,11 @@ namespace SubTerra.App.Integration
             var camera = ResolveCamera();
             if (camera == null)
             {
-                return GasVisionHoleEvaluator.Sample(viewportPosition, opacity);
+                return GasVisionHoleEvaluator.Sample(viewportPosition, opacity, lightHoleInnerFraction);
             }
 
             var world = camera.ViewportToWorldPoint(new Vector3(viewportPosition.x, viewportPosition.y, 0f));
-            return GasVisionHoleEvaluator.Sample(world, opacity);
+            return GasVisionHoleEvaluator.Sample(world, opacity, lightHoleInnerFraction);
         }
 
         private void ApplyVisual()
@@ -82,10 +86,12 @@ namespace SubTerra.App.Integration
                 return;
             }
 
-            runtimeMaterial.SetColor(DarkColorId, new Color(0.04f, 0.05f, 0.05f, opacity));
+            var haze = GasInteriorHaze.Amount;
+            runtimeMaterial.SetColor(DarkColorId, GasVisualMath.VeilDark(opacity, haze, hazeTintStrength));
             runtimeMaterial.SetColor(
                 LightColorId,
-                new Color(1f, 0.12f, 0.08f, GasVisualRules.LightClearRedOpacity));
+                GasVisualMath.LightHole(haze, hazeTintStrength, hazeHoleExtraAlpha));
+            runtimeMaterial.SetFloat(LightInnerId, lightHoleInnerFraction);
 
             var camera = ResolveCamera();
             var count = CopyViewportLights(camera, lightBuffer);
