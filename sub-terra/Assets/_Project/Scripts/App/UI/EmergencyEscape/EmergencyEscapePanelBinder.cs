@@ -45,6 +45,10 @@ namespace SubTerra.App.UI.EmergencyEscape
                 return view.IsOpen;
             }
         }
+        /// <summary>닫기 연출까지 모두 끝나 창이 완전히 숨겨졌는가. 워프 연출은 이때부터 시작한다.</summary>
+        public bool IsPanelHidden => view == null
+            || view.State == EmergencyEscapePanelView.PlayState.Hidden;
+
         public bool IsTopWindow(Canvas canvas) => view != null
             && PopupWindowSorting.Contains(canvas, view.PanelRoot);
 

@@ -50,6 +50,11 @@ namespace SubTerra.App.UI.EmergencyEscape
         [SerializeField] private GameObject confirmHoverOverlay;
         [Tooltip("우상단 × 버튼의 호버 오버레이. 코어 팝업처럼 부드러운 그림을 입혀 가운데만 빛나게 한다.")]
         [SerializeField] private Image closeHoverGlow;
+        [Header("불투명 창 안쪽")]
+        [Tooltip("프레임 안쪽을 채우는 어두운 면(Window/Panel). 런타임에 프레임 실루엣에 맞는 그림을 입혀 켠다.")]
+        [SerializeField] private Image windowFill;
+        [Tooltip("창 테두리 그림(Window/Frame). 이 그림의 바깥 실루엣이 안쪽 채움의 경계다.")]
+        [SerializeField] private Image frameImage;
         [Header("전진기지 코어 팝업과 같은 질감")]
         [SerializeField] private RawImage hexPattern;
         [SerializeField] private RawImage scanlines;
@@ -72,6 +77,11 @@ namespace SubTerra.App.UI.EmergencyEscape
             [Tooltip("EscapeWormholeArt.Swirl 레이어 번호")] public int art;
             [Tooltip("기준 회전 속도 대비 배율")] public float speed = 1f;
         }
+
+        /// <summary>안쪽 채움 그림을 만들 수 없을 때 쓰는 사각형의 가장자리 여백(가로, 세로).</summary>
+        public static readonly Vector2 FallbackFillInset = new Vector2(60f, 44f);
+
+        public Image WindowFill => windowFill;
 
         /// <summary>창이 열린 직후부터 입자가 이미 피어오르도록 미리 돌려 두는 시간(초).</summary>
         private const float ParticlePrimeSeconds = 1f;
@@ -128,6 +138,7 @@ namespace SubTerra.App.UI.EmergencyEscape
             }
 
             artApplied = true;
+            ApplyWindowFill();
             SetTexture(hexPattern, CoreCctvArt.Hex());
             SetTexture(scanlines, CoreCctvArt.Scanline());
             SetSprite(vignette, CoreCctvArt.Vignette());
@@ -171,6 +182,39 @@ namespace SubTerra.App.UI.EmergencyEscape
             {
                 scanlines.uvRect = new Rect(0f, 0f, 1f, scanlines.rectTransform.rect.height / 4f);
             }
+        }
+
+        /// <summary>
+        /// 프레임 실루엣 안쪽을 불투명한 어두운 면으로 채운다. 그림이 프레임 모서리 깎임까지 따라가서
+        /// 안쪽은 광산이 비치지 않고 바깥으로는 검은 네모가 나가지 않는다. 만들 수 없으면 안전한 안쪽 여백 사각형으로 대신한다.
+        /// </summary>
+        private void ApplyWindowFill()
+        {
+            if (windowFill == null)
+            {
+                return;
+            }
+
+            var fill = frameImage != null ? EscapeWindowFillArt.FromFrame(frameImage.sprite) : null;
+            var rect = windowFill.rectTransform;
+            if (fill != null)
+            {
+                windowFill.sprite = fill;
+                windowFill.type = Image.Type.Simple;
+                rect.offsetMin = Vector2.zero;
+                rect.offsetMax = Vector2.zero;
+            }
+            else
+            {
+                // 프레임 구멍 안쪽에 확실히 들어가는 여백. 가장자리 장식은 비어 보일 수 있어도 바깥으로는 나가지 않는다.
+                windowFill.sprite = null;
+                rect.offsetMin = new Vector2(FallbackFillInset.x, FallbackFillInset.y);
+                rect.offsetMax = new Vector2(-FallbackFillInset.x, -FallbackFillInset.y);
+            }
+
+            windowFill.color = EscapeWindowFillArt.FillColor;
+            windowFill.raycastTarget = false;
+            windowFill.enabled = true;
         }
 
         private static void SetSprite(Image image, Sprite sprite)

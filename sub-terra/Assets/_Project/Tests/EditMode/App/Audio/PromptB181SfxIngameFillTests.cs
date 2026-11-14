@@ -353,7 +353,8 @@ namespace SubTerra.App.Tests.Audio
             const string warp = "SfxPlayer.Play(RescueWarpSfx);";
             Assert.That(CountOf(tryRescue, warp), Is.EqualTo(1), "성공 시 워프 한 번");
             Assert.That(tryRescue.IndexOf(warp, StringComparison.Ordinal),
-                Is.LessThan(tryRescue.IndexOf("MoveToResolvedElevator();", StringComparison.Ordinal)));
+                Is.LessThan(tryRescue.IndexOf("BeginRescueWarp();", StringComparison.Ordinal)),
+                "워프음은 이동(연출 시작) 전에 한 번. 이동 자체는 연출 뒤 ArriveAtElevator에서");
             Assert.That(CountOf(source, "SfxPlayer.Play("), Is.EqualTo(1), "워프 외 추가 재생(지연 도착음 등) 없음");
             Assert.That(source, Does.Not.Contain("ElevatorArriveDing"), "엘리베이터를 탄 것이 아니므로 구조 도착 딩 없음");
             Assert.That(source, Does.Not.Contain("RescueArrive"));

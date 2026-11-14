@@ -21,7 +21,6 @@ namespace SubTerra.App.Editor.DataValidation
 
         private const string MineResetArt = "Assets/_Project/Art/UI/SurfaceBase/MineReset/";
         private const string FramePath = MineResetArt + "mine-reset-frame.png";
-        private const string PanelPath = MineResetArt + "mine-reset-panel.png";
         private const string ConfirmButtonPath = MineResetArt + "mine-reset-button-confirm.png";
         /// <summary>이동 버튼 호버 빛이 버튼 테두리 안쪽에 머물도록 가장자리에서 띄우는 간격(가로, 세로).</summary>
         public static readonly Vector2 HoverInset = new Vector2(12f, 7f);
@@ -126,10 +125,12 @@ namespace SubTerra.App.Editor.DataValidation
 
             var shield = Stretch("InputShield", window);
             AddImage(shield, null, new Color(0f, 0f, 0f, 0f), true);
+            // B-195-2: 창 안쪽을 불투명하게 채우는 면. 프레임과 같은 크기로 늘리되, 그림은 런타임에
+            // View.ApplyArt가 프레임 바깥 실루엣에 맞춰 만들어 입힌다(EscapeWindowFillArt). 그래서 모서리가 깎인
+            // 프레임 밖으로 검은 네모가 나가지 않는다. 그림이 입혀지기 전에는 켜지 않는다. mine-reset-panel.png는 쓰지 않는다.
             var panel = Stretch("Panel", window);
-            panel.offsetMin = new Vector2(16f, 16f);
-            panel.offsetMax = new Vector2(-16f, -16f);
-            AddImage(panel, LoadSprite(PanelPath), Color.white, false);
+            var panelImage = AddImage(panel, null, EscapeWindowFillArt.FillColor, false);
+            panelImage.enabled = false;
             var hex = Stretch("HexPattern", window);
             hex.offsetMin = new Vector2(20f, 20f);
             hex.offsetMax = new Vector2(-20f, -20f);
@@ -137,7 +138,7 @@ namespace SubTerra.App.Editor.DataValidation
             hexImage.color = new Color(0.35f, 0.9f, 1f, 0.045f);
             hexImage.raycastTarget = false;
             var frame = Stretch("Frame", window);
-            AddImage(frame, LoadSprite(FramePath), Color.white, false);
+            var frameImage = AddImage(frame, LoadSprite(FramePath), Color.white, false);
 
             var title = AddText(window, "Title", font, TopLeft(SideMargin, 30f, 480f, 52f), 36f, TitleColor, TextAlignmentOptions.MidlineLeft);
             title.fontStyle = FontStyles.Bold;
@@ -268,6 +269,8 @@ namespace SubTerra.App.Editor.DataValidation
             Set(viewObject, "confirmButton", confirm);
             Set(viewObject, "confirmHoverOverlay", confirmHover.gameObject);
             Set(viewObject, "closeHoverGlow", cornerClose.targetGraphic);
+            Set(viewObject, "windowFill", panelImage);
+            Set(viewObject, "frameImage", frameImage);
             Set(viewObject, "hexPattern", hexImage);
             Set(viewObject, "scanlines", scan);
             Set(viewObject, "vignette", vignetteImage);

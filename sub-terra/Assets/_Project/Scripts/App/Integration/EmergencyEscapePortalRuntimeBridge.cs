@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using SubTerra.App.Core;
 using SubTerra.App.Core.Data;
@@ -6,6 +7,7 @@ using SubTerra.App.Run;
 using SubTerra.App.Save;
 using SubTerra.App.State;
 using SubTerra.App.Tutorial;
+using SubTerra.App.UI;
 using SubTerra.App.UI.EmergencyEscape;
 using SubTerra.Gameplay.Building;
 using SubTerra.Gameplay.Mining;
@@ -26,9 +28,23 @@ namespace SubTerra.App.Integration
         [SerializeField] private Vector2 outpostArrivalOffset = new(0f, 1f);
         [SerializeField] private EmergencyEscapePanelBinder panelBinder;
         [SerializeField] private PlayerCameraFollow cameraFollow;
+        [Tooltip("워프 연출 시간(초). 포탈은 검은 화면 + 웜홀 빨림 → 암전 속 이동 → 목적지 웜홀에서 나옴.")]
+        [SerializeField] private EscapeWarpSettings warpSettings = new EscapeWarpSettings();
+
+        /// <summary>워프 연출이 끝날 때까지 게임 진행을 멈추는 소유자. 창이 닫혀도 풀리지 않는다.</summary>
+        public const string WarpPauseOwner = "emergency-escape-warp";
 
         private GameState gameState;
         private EmergencyEscapeService service;
+        private EscapeWarpRunner warpRunner;
+        private Coroutine warpRoutine;
+        private bool warpPending;
+        private Vector3 warpTarget;
+        private bool warpArrived;
+
+        /// <summary>결제 뒤 연출이 끝나 플레이어가 옮겨지기까지 true.</summary>
+        public bool IsWarping => warpPending;
+        public EscapeWarpSettings WarpSettings => warpSettings;
 
         private void Start()
         {
@@ -137,6 +153,12 @@ namespace SubTerra.App.Integration
                 return false;
             }
 
+            if (warpPending)
+            {
+                reason = "긴급 이동 중입니다.";
+                return false;
+            }
+
             if (panelBinder == null)
             {
                 reason = "긴급 탈출 선택 창이 준비되지 않았습니다.";
@@ -220,28 +242,118 @@ namespace SubTerra.App.Integration
                 return false;
             }
 
+            // 결제는 확인 직후 한 번만. 이동은 연출이 끝난 뒤(BeginWarp)에 한다.
             if (!service.TrySpend(out _, out var failure))
             {
                 reason = ToReason(failure);
                 return false;
             }
 
-            TeleportPlayer(targetPosition);
-            DemoObjectiveDirector.AdvancePersistedState(
-                gameState,
-                DemoProgressSignal.EmergencyEscapeSucceeded);
+            // 창 닫기(웜홀 빨려듦) 연출은 그대로 둔다. 암전은 창이 다 닫힌 뒤에 시작한다.
             panelBinder?.Close();
-            // B-166: Enter로 확인했으면 닫기 연출 뒤 아직 눌린 Enter가 도착 자리 옆 칸 채굴(실패음)로 이어지지 않게 한다.
-            var mining = playerTransform.GetComponent<PlayerMiningController>();
-            if (mining != null)
-            {
-                mining.SuppressEnterUntilReleased();
-            }
-            SaveRuntimeController.Instance?.SaveCurrent(AutoSaveReason.Manual);
             reason = kind == EmergencyEscapeDestination.OutpostCore
                 ? (ItemDisplayNames.OutpostName + "로 긴급 이동했습니다.")
                 : "엘리베이터로 긴급 이동했습니다.";
+            BeginWarp(targetPosition);
             return true;
+        }
+
+        private void BeginWarp(Vector3 target)
+        {
+            warpTarget = target;
+            warpArrived = false;
+            warpPending = true;
+            if (!Application.isPlaying)
+            {
+                // 에디트 모드(테스트)에서는 연출 없이 바로 도착 처리한다.
+                CompleteArrival();
+                warpPending = false;
+                return;
+            }
+
+            // 창이 닫혀 자기 정지를 풀어도 연출이 끝날 때까지 월드가 멈춰 있게 먼저 잡는다.
+            UiPauseGate.Acquire(WarpPauseOwner);
+            warpRoutine = StartCoroutine(WarpRoutine());
+        }
+
+        private IEnumerator WarpRoutine()
+        {
+            // 이 프레임에 바인더가 Close를 시작한다. 창(웜홀 빨려듦)이 완전히 숨겨진 뒤에 포탈 웜홀 연출을 시작한다.
+            yield return null;
+            while (panelBinder != null && !panelBinder.IsPanelHidden)
+            {
+                yield return null;
+            }
+
+            // 포탈은 글리치 대신 웜홀 스타일: 검은 전체화면 + 웜홀에 빨려 들어간다. 카메라는 움직이지 않는다.
+            warpRunner = new EscapeWarpRunner(
+                warpSettings,
+                EscapeWarpStyle.Wormhole,
+                ResolveCameraFollow(),
+                playerTransform,
+                CompleteArrival);
+            yield return StartCoroutine(warpRunner.Run());
+            FinishWarp();
+        }
+
+        /// <summary>플레이어 이동과 그 뒤 처리(진행도, Enter 억제, 저장). 한 번만 실행한다.</summary>
+        private void CompleteArrival()
+        {
+            if (warpArrived)
+            {
+                return;
+            }
+
+            warpArrived = true;
+            if (playerTransform != null)
+            {
+                TeleportPlayer(warpTarget);
+            }
+
+            DemoObjectiveDirector.AdvancePersistedState(
+                gameState,
+                DemoProgressSignal.EmergencyEscapeSucceeded);
+            // B-166: Enter로 확인했으면 아직 눌린 Enter가 도착 자리 옆 칸 채굴(실패음)로 이어지지 않게 한다.
+            if (playerTransform != null)
+            {
+                var mining = playerTransform.GetComponent<PlayerMiningController>();
+                if (mining != null)
+                {
+                    mining.SuppressEnterUntilReleased();
+                }
+            }
+
+            SaveRuntimeController.Instance?.SaveCurrent(AutoSaveReason.Manual);
+        }
+
+        private void FinishWarp()
+        {
+            warpRoutine = null;
+            warpRunner = null;
+            warpPending = false;
+            UiPauseGate.Release(WarpPauseOwner);
+        }
+
+        private void OnDisable()
+        {
+            if (!warpPending)
+            {
+                return;
+            }
+
+            // 연출 도중 장면이 내려가도 이미 낸 비용만 잃지 않게 도착 처리를 마치고 정지를 푼다.
+            if (warpRoutine != null)
+            {
+                StopCoroutine(warpRoutine);
+            }
+
+            if (warpRunner != null)
+            {
+                warpRunner.Abort();
+            }
+
+            CompleteArrival();
+            FinishWarp();
         }
 
         private void EnsureRuntimeBindings()
