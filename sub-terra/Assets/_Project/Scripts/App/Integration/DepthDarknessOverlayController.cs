@@ -40,6 +40,10 @@ namespace SubTerra.App.Integration
         private static readonly int OutlineColorId = Shader.PropertyToID("_OutlineColor");
         private static readonly int BlockDarkAlphaId = Shader.PropertyToID("_BlockDarkAlpha");
         private static readonly int FadeId = Shader.PropertyToID("_Fade");
+        private static readonly int DepthLightsId = Shader.PropertyToID("_DepthLights");
+        private static readonly int DepthLightCountId = Shader.PropertyToID("_DepthLightCount");
+        private static readonly int LightHoleInnerId = Shader.PropertyToID("_LightHoleInner");
+        private static readonly int LightHoleStrengthId = Shader.PropertyToID("_LightHoleStrength");
 
         [SerializeField] private CanvasGroup canvasGroup;
         [SerializeField] private Image overlayImage;
@@ -49,6 +53,14 @@ namespace SubTerra.App.Integration
         [SerializeField] private DroneSensor droneSensor;
         [SerializeField, Range(0.01f, 0.5f)] private float playerVisibleRadius = 0.11f;
         [SerializeField, Range(0.001f, 0.2f)] private float edgeFeather = 0.04f;
+        [Header("가스 안 탁한 시야 (암전·조명 해제 판정에는 쓰이지 않는다)")]
+        [SerializeField, Range(0f, 0.4f)] private float gasHazeHoleShrink = 0.12f;
+        [SerializeField, Range(0f, 2f)] private float gasHazeFeatherGrow = 0.6f;
+        [SerializeField, Range(0f, 1f)] private float gasHazeDarkTint = 0.35f;
+        [Header("조명 주변 구멍 (B-196-1, 전원이 켜진 화면 안 조명만 · 전체 해제 판정과 별개)")]
+        [SerializeField, Range(0f, 1f)] private float lightHoleStrength = GasVisualRules.DarknessHoleStrength;
+        [SerializeField, Range(0f, 0.95f)] private float lightHoleInnerFraction = GasVisualRules.DarknessHoleInnerFraction;
+        [SerializeField, Range(0, GasVisionHoleEvaluator.MaxLights)] private int maxLightHoles = GasVisionHoleEvaluator.MaxLights;
 
         private GameState gameState;
         private Material runtimeMaterial;
@@ -56,11 +68,15 @@ namespace SubTerra.App.Integration
         private Color32[] occupancyPixels;
         private int currentDepth;
         private float boundaryWeight;
+        private readonly Vector4[] lightHoleBuffer = new Vector4[GasVisionHoleEvaluator.MaxLights];
+        private int lightHoleCount;
 
         public float CurrentOpacity { get; private set; }
         public float CurrentOccupiedDarkAlpha { get; private set; }
         public float CurrentBoundaryWeight => boundaryWeight;
         public bool IsClearedByLight { get; private set; }
+        /// <summary>이번 프레임 암전 셰이더에 구멍으로 보낸 조명 수(전원 켜짐·화면 안·상한 적용).</summary>
+        public int LightHoleCount => lightHoleCount;
 
         private void Awake()
         {
@@ -201,6 +217,8 @@ namespace SubTerra.App.Integration
                 IsClearedByLight,
                 boundaryWeight);
 
+            RefreshLightHoles();
+
             var sampleDepth = Mathf.Max(currentDepth, StartDepth);
             var targetOpacity = IsClearedByLight
                 ? 0f
@@ -248,6 +266,25 @@ namespace SubTerra.App.Integration
             PushOverlayMaterialToRenderer(targetOpacity, targetOccupiedDark, fade);
         }
 
+        // 전원이 켜진 화면 안 조명만 암전 셰이더 구멍으로 보낸다. 판정(IsClearedByLight)에는 영향이 없다.
+        private void RefreshLightHoles()
+        {
+            var camera = ResolveCamera();
+            var count = GasVisionHoleEvaluator.CopyViewportLights(camera, lightHoleBuffer);
+            var limit = Mathf.Clamp(maxLightHoles, 0, GasVisionHoleEvaluator.MaxLights);
+            if (count > limit)
+            {
+                for (var i = limit; i < count; i++)
+                {
+                    lightHoleBuffer[i] = Vector4.zero;
+                }
+
+                count = limit;
+            }
+
+            lightHoleCount = count;
+        }
+
         private void ApplyOverlayMaterial(
             Material material,
             float targetOpacity,
@@ -259,13 +296,20 @@ namespace SubTerra.App.Integration
                 return;
             }
 
-            material.SetColor(DarkColorId, new Color(0f, 0f, 0f, targetOpacity));
+            // 가스 안에서는 플레이어 주변 구멍이 조금 작고 흐려지며 어둠이 녹색으로 살짝 물든다.
+            var haze = GasInteriorHaze.Amount;
+            var dark = Color.Lerp(Color.black, GasVisualRules.HazeDarkColor, haze * gasHazeDarkTint);
+            material.SetColor(DarkColorId, new Color(dark.r, dark.g, dark.b, targetOpacity));
             material.SetFloat(BlockDarkAlphaId, targetOccupiedDark);
             material.SetFloat(FadeId, fade);
-            material.SetFloat(PlayerRadiusId, playerVisibleRadius);
-            material.SetFloat(FeatherId, edgeFeather);
+            material.SetFloat(PlayerRadiusId, playerVisibleRadius * (1f - gasHazeHoleShrink * haze));
+            material.SetFloat(FeatherId, edgeFeather * (1f + gasHazeFeatherGrow * haze));
             material.SetFloat(OutlineWidthId, DepthDarknessBlockVisual.OutlineWidthCells);
             material.SetColor(OutlineColorId, Color.white);
+            material.SetFloat(LightHoleInnerId, lightHoleInnerFraction);
+            material.SetFloat(LightHoleStrengthId, lightHoleStrength);
+            material.SetVectorArray(DepthLightsId, lightHoleBuffer);
+            material.SetFloat(DepthLightCountId, lightHoleCount);
         }
 
         private void PushOverlayMaterialToRenderer(

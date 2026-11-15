@@ -47,6 +47,43 @@ namespace SubTerra.App.Tests.Integration
         }
 
         [Test]
+        public void PromptB196_GasZonePrefab_UsesSoftCloudSpriteAndSharedMaterial()
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                PromptB50GasVisionBuilder.GasZonePrefabPath);
+            var cloud = prefab.transform.Find(PromptB50GasVisionBuilder.GasCloudName);
+            var renderer = cloud.GetComponent<SpriteRenderer>();
+            Assert.That(renderer.sprite, Is.Not.Null);
+            Assert.That(renderer.sprite.name, Is.EqualTo(GasVisualRules.SoftSpriteName));
+            Assert.That(renderer.sharedMaterial, Is.Not.Null);
+            Assert.That(renderer.sharedMaterial.shader.name, Is.EqualTo(GasVisualRules.CloudShaderName));
+            Assert.That(
+                AssetDatabase.GetAssetPath(renderer.sharedMaterial),
+                Is.EqualTo(GasVfxAssetBuilder.MaterialPath));
+            Assert.That(renderer.sharedMaterial.GetTexture("_NoiseA"), Is.Not.Null);
+            Assert.That(renderer.sharedMaterial.GetTexture("_NoiseB"), Is.Not.Null);
+            Assert.That(renderer.color.a, Is.LessThanOrEqualTo(GasVisualRules.GasVisualOpacity));
+
+            var noise = AssetDatabase.LoadAssetAtPath<Texture2D>(GasVfxAssetBuilder.NoiseAPath);
+            Assert.That(noise.wrapMode, Is.EqualTo(TextureWrapMode.Repeat));
+        }
+
+        [Test]
+        public void PromptB196_LightPrefab_ClearanceIsSoftNotKnob()
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                PromptB50GasVisionBuilder.LightPrefabPath);
+            var clearance = prefab.transform.Find(PromptB50GasVisionBuilder.LightClearanceName);
+            var renderer = clearance.GetComponent<SpriteRenderer>();
+            Assert.That(renderer.sprite.name, Is.EqualTo(GasVisualRules.SoftSpriteName));
+            var worldDiameter = renderer.sprite.bounds.size.x * clearance.lossyScale.x;
+            Assert.That(
+                worldDiameter,
+                Is.EqualTo(GasVisualRules.LightClearRadiusBlocks * 2f).Within(0.01f),
+                "시각 지름은 판정 지름과 같아 판정 범위보다 커지지 않는다");
+        }
+
+        [Test]
         public void PromptB50_IntegrationScene_WiresPrefabRadiusAndDarkOverlay()
         {
             var path = Path.Combine(

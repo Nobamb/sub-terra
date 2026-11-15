@@ -20,6 +20,7 @@ namespace SubTerra.App.Integration
         [SerializeField] private GasVisionWorldVeil worldVeil;
         [SerializeField] private GasVisionOverlayDriver overlayDriver;
         [SerializeField] private GasExposureEffectSettings settings = new();
+        [SerializeField] private GasInteriorHazeSettings hazeSettings = new();
 
         private GasExposureEffectModel model;
         private GameState gameState;
@@ -80,6 +81,7 @@ namespace SubTerra.App.Integration
             lastVisuallyCleared = false;
             playerMovement?.SetHazardSpeedMultiplier(1f);
             SetVisionObscuration(0f);
+            GasInteriorHaze.Reset();
         }
 
         public void Bind(GameState state, IUpgradeEffectProvider effects)
@@ -137,6 +139,7 @@ namespace SubTerra.App.Integration
             }
 
             ApplyState(result.State, false);
+            UpdateInteriorHaze(deltaTime, result.State);
             if (result.ExposureTickCount > 0)
             {
                 RaiseDamageTick(
@@ -187,6 +190,19 @@ namespace SubTerra.App.Integration
             }
         }
 #endif
+
+        // 생성 연출이 끝난 가스 안(노출 판정은 GasZone.Contains가 이미 열린 뒤에만 켜진다)에서만 서서히 오르고,
+        // 나가거나 가스가 사라지면 빠르게 걷힌다. 피해·감속·암전 판정에는 아무 영향이 없다.
+        private void UpdateInteriorHaze(float deltaTime, GasExposureEffectState state)
+        {
+            var target = state.IsExposed && !state.IsSheltered ? 1f : 0f;
+            GasInteriorHaze.Set(GasVisualMath.StepHaze(
+                GasInteriorHaze.Amount,
+                target,
+                deltaTime,
+                hazeSettings.riseSeconds,
+                hazeSettings.fallSeconds));
+        }
 
         private void RaiseDamageTick(string zoneId, float intensity, float cumulative, int tickCount)
         {
