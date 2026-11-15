@@ -503,9 +503,9 @@ namespace SubTerra.Gameplay.Structural
             return Settings.CollapseImminentThreshold;
         }
 
-        private int DistanceToSupport(Vector3Int ceiling, Vector3 previewCenter = default, float previewRadius = 0f)
+        private int DistanceToSupport(Vector3Int ceiling, BoundsInt? previewSupport = null)
         {
-            if (IsCeilingAnchor(ceiling, previewCenter, previewRadius)) return 0;
+            if (IsCeilingAnchor(ceiling, previewSupport)) return 0;
 
             bool leftConnected = true;
             bool rightConnected = true;
@@ -515,30 +515,29 @@ namespace SubTerra.Gameplay.Structural
                 Vector3Int right = ceiling + Vector3Int.right * distance;
                 leftConnected = leftConnected && foregroundTilemap.HasTile(left);
                 rightConnected = rightConnected && foregroundTilemap.HasTile(right);
-                if ((leftConnected && IsCeilingAnchor(left, previewCenter, previewRadius))
-                    || (rightConnected && IsCeilingAnchor(right, previewCenter, previewRadius)))
+                if ((leftConnected && IsCeilingAnchor(left, previewSupport))
+                    || (rightConnected && IsCeilingAnchor(right, previewSupport)))
                     return distance;
             }
 
             return MaximumWarningDistance + 1;
         }
 
-        private bool IsCeilingAnchor(Vector3Int cell, Vector3 previewCenter, float previewRadius)
+        private bool IsCeilingAnchor(Vector3Int cell, BoundsInt? previewSupport)
         {
             return foregroundTilemap.HasTile(cell + Vector3Int.down)
                 || IsProtected(cell)
                 || (foregroundTilemap.HasTile(cell + Vector3Int.up) && IsProtected(cell + Vector3Int.up))
                 || GetSupportStrength(cell) > 0
-                || (previewRadius > 0f && StructuralSupport.CoversPosition(
-                    previewCenter, foregroundTilemap.GetCellCenterWorld(cell), previewRadius));
+                || previewSupport?.Contains(cell) == true;
         }
 
-        public bool WouldSupportClearCeilingRisk(Vector3Int cell, Vector3 center, float radius)
+        public bool WouldSupportClearCeilingRisk(Vector3Int cell, BoundsInt previewSupport)
         {
-            return radius > 0f
+            return previewSupport.size.y > 0
                 && IsUnsupportedCeiling(cell)
                 && DistanceToSupport(cell) > StableDistance
-                && DistanceToSupport(cell, center, radius) <= StableDistance;
+                && DistanceToSupport(cell, previewSupport) <= StableDistance;
         }
 
         /// <summary>
@@ -866,11 +865,10 @@ namespace SubTerra.Gameplay.Structural
         private int GetSupportStrength(Vector3Int cell)
         {
             if (foregroundTilemap == null) return 0;
-            Vector3 worldPosition = foregroundTilemap.GetCellCenterWorld(cell);
             int total = 0;
             foreach (StructuralSupport support in supports)
             {
-                if (support != null && support.IsAvailable && support.Supports(worldPosition))
+                if (support != null && support.IsAvailable && support.Supports(cell, foregroundTilemap))
                     total += support.Strength;
             }
 
@@ -890,13 +888,10 @@ namespace SubTerra.Gameplay.Structural
             }
 
             var affected = new HashSet<Vector3Int>();
-            Vector3 center = support.transform.position;
-            Vector3 radius = new Vector3(support.Radius, support.Radius, 0f);
-            Vector3Int min = foregroundTilemap.WorldToCell(center - radius);
-            Vector3Int max = foregroundTilemap.WorldToCell(center + radius);
-            Vector3Int supportActionCell = foregroundTilemap.WorldToCell(center);
-            for (int x = min.x - MaximumWarningDistance; x <= max.x + MaximumWarningDistance; x++)
-            for (int y = min.y; y <= max.y; y++)
+            Vector3Int supportActionCell = foregroundTilemap.WorldToCell(support.transform.position);
+            int horizontal = support.HalfWidthCells + MaximumWarningDistance;
+            for (int x = supportActionCell.x - horizontal; x <= supportActionCell.x + horizontal; x++)
+            for (int y = supportActionCell.y + 1; y <= supportActionCell.y + support.VerticalReachCells; y++)
             {
                 affected.Add(new Vector3Int(x, y, supportActionCell.z));
             }

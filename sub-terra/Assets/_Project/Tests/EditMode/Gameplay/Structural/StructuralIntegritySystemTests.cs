@@ -153,7 +153,6 @@ namespace SubTerra.Gameplay.Structural.Tests
             supportObject.transform.SetParent(fixture.Root.transform);
             supportObject.transform.position = fixture.Foreground.GetCellCenterWorld(Vector3Int.zero);
             var support = supportObject.AddComponent<StructuralSupport>();
-            SetField(support, "radius", 2f);
             fixture.System.RegisterSupport(support);
 
             Assert.That(fixture.Overlay.HasTile(lower), Is.False);
@@ -185,16 +184,16 @@ namespace SubTerra.Gameplay.Structural.Tests
             supportObject.transform.SetParent(fixture.Root.transform);
             supportObject.transform.position = center;
             StructuralSupport support = supportObject.AddComponent<StructuralSupport>();
-            SetField(support, "radius", 2f);
             var left = new Vector3Int(-2, 2, 0);
-            Assert.That(support.Supports(fixture.Foreground.GetCellCenterWorld(left)), Is.False);
+            Assert.That(support.Supports(left, fixture.Foreground), Is.False);
 
+            var bounds = support.GetSupportBounds(fixture.Foreground, Vector3Int.zero);
             var expectedCleared = new List<Vector3Int>();
             for (int x = -2; x <= 2; x++)
             {
                 var cell = new Vector3Int(x, 2, 0);
                 Assert.That(fixture.System.HasRiskAtCell(cell), Is.True);
-                if (fixture.System.WouldSupportClearCeilingRisk(cell, center, support.Radius))
+                if (fixture.System.WouldSupportClearCeilingRisk(cell, bounds))
                     expectedCleared.Add(cell);
             }
 
@@ -202,6 +201,66 @@ namespace SubTerra.Gameplay.Structural.Tests
             fixture.System.RegisterSupport(support);
             foreach (Vector3Int cell in expectedCleared)
                 Assert.That(fixture.System.HasRiskAtCell(cell), Is.False, cell.ToString());
+        }
+
+        [TestCase(1)]
+        [TestCase(2)]
+        [TestCase(3)]
+        public void Issue325_SupportDistanceMatchesPreviewAtEveryCeilingHeight(int height)
+        {
+            using var fixture = new StructuralFixture(13, true);
+            for (int x = -6; x <= 6; x++)
+            {
+                fixture.Foreground.SetTile(new Vector3Int(x, 2, 0), null);
+                fixture.PlaceTile(new Vector3Int(x, height, 0));
+            }
+
+            var pillar = new GameObject("Support");
+            pillar.transform.SetParent(fixture.Root.transform);
+            pillar.transform.position = fixture.Foreground.GetCellCenterWorld(Vector3Int.zero);
+            var support = pillar.AddComponent<StructuralSupport>();
+            var bounds = support.GetSupportBounds(fixture.Foreground, Vector3Int.zero);
+            for (int x = -6; x <= 6; x++)
+            {
+                var ceiling = new Vector3Int(x, height, 0);
+                Assert.That(support.Supports(ceiling, fixture.Foreground), Is.EqualTo(Math.Abs(x) <= 1));
+                Assert.That(fixture.System.WouldSupportClearCeilingRisk(ceiling, bounds), Is.EqualTo(Math.Abs(x) <= 3));
+                fixture.System.EvaluateStatusAt(ceiling + Vector3Int.down);
+            }
+
+            fixture.System.RegisterSupport(support);
+            for (int x = -6; x <= 6; x++)
+            {
+                var ceiling = new Vector3Int(x, height, 0);
+                Assert.That(fixture.Overlay.HasTile(ceiling), Is.EqualTo(Math.Abs(x) >= 4), ceiling.ToString());
+            }
+
+            var overlay = fixture.System.GetComponent<StructuralCrackOverlay>();
+            Assert.That(overlay.TryGetCellRisk(new Vector3Int(4, height, 0), out var caution), Is.True);
+            Assert.That(caution, Is.EqualTo(StructuralRiskLevel.Caution));
+            Assert.That(overlay.TryGetCellRisk(new Vector3Int(5, height, 0), out var danger), Is.True);
+            Assert.That(danger, Is.EqualTo(StructuralRiskLevel.Danger));
+            fixture.System.UnregisterSupport(support);
+            Assert.That(fixture.Overlay.HasTile(new Vector3Int(0, height, 0)), Is.True);
+        }
+
+        [Test]
+        public void Issue325_StopsAtFirstCeiling_AndFindsNothingBeyondReach()
+        {
+            using var fixture = new StructuralFixture(1);
+            var pillar = new GameObject("Support");
+            pillar.transform.SetParent(fixture.Root.transform);
+            pillar.transform.position = fixture.Foreground.GetCellCenterWorld(Vector3Int.zero);
+            var support = pillar.AddComponent<StructuralSupport>();
+            var high = Vector3Int.up * 4;
+            fixture.PlaceTile(high);
+            Assert.That(support.Supports(high, fixture.Foreground), Is.False);
+            fixture.Foreground.SetTile(Vector3Int.up * 2, null);
+            Assert.That(support.GetSupportBounds(fixture.Foreground, Vector3Int.zero).size, Is.EqualTo(Vector3Int.zero));
+
+            SetField(support, "supportHalfWidthCells", 2);
+            SetField(support, "supportVerticalReachCells", 4);
+            Assert.That(support.Supports(high + Vector3Int.right * 2, fixture.Foreground), Is.True);
         }
 
         [Test]

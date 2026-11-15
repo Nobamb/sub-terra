@@ -101,7 +101,7 @@ namespace SubTerra.Gameplay.Building
             preview.SetSupportRange(
                 GetTerrainTilemap(),
                 placementSystem.GetSelectedPlacementCenter(origin),
-                support.Radius,
+                support,
                 placementSystem.StructuralSystem);
         }
 

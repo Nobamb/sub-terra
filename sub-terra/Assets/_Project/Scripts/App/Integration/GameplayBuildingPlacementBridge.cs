@@ -674,7 +674,7 @@ namespace SubTerra.App.Integration
             preview.SetSupportRange(
                 GetTerrainTilemap(),
                 placementSystem.GetSelectedPlacementCenter(origin),
-                support.Radius,
+                support,
                 placementSystem.StructuralSystem);
         }
 
