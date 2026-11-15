@@ -6,6 +6,33 @@ using SubTerra.Shared;
 
 namespace SubTerra.App.Drone
 {
+    public enum DroneStructuralWarning { Safe, Cracked, Collapse, Overhead, Telegraphing }
+
+    public readonly struct DroneStructuralForecast : IEquatable<DroneStructuralForecast>
+    {
+        public DroneStructuralForecast(DroneStructuralWarning warning, int ceilingRow, int direction)
+        {
+            Warning = warning;
+            CeilingRow = ceilingRow;
+            Direction = direction;
+        }
+
+        public DroneStructuralWarning Warning { get; }
+        public int CeilingRow { get; }
+        public int Direction { get; }
+
+        public bool Equals(DroneStructuralForecast other) =>
+            Warning == other.Warning && CeilingRow == other.CeilingRow && Direction == other.Direction;
+
+        public override bool Equals(object obj) => obj is DroneStructuralForecast other && Equals(other);
+        public override int GetHashCode() => HashCode.Combine(Warning, CeilingRow, Direction);
+    }
+
+    public interface IDroneStructuralForecastProvider : IDroneContextProvider
+    {
+        DroneStructuralForecast? ReadStructuralForecast();
+    }
+
     /// <summary>
     /// A가 제공한 실제 상태만 점수화한다. 시간·난수·컬렉션 열거 순서는 추천에 관여하지 않는다.
     /// </summary>
@@ -31,7 +58,7 @@ namespace SubTerra.App.Drone
                 : throw new ArgumentNullException(nameof(analysisSettings));
         }
 
-        public DroneAnalysisResult Analyze(DroneContextDto context)
+        public DroneAnalysisResult Analyze(DroneContextDto context, DroneStructuralForecast? forecast = null)
         {
             if (context == null)
             {
@@ -56,10 +83,10 @@ namespace SubTerra.App.Drone
             var hasCompleteSafetyContext = hasStructural && hasGas && hasEnergy;
             var lowEnergy = hasEnergy
                 && context.currentEnergy <= context.returnEnergyEstimate + settings.EnergyReserve;
-            var structuralWarning = hasStructural
-                && context.structuralIntegrity <= settings.StructuralWarningThreshold;
-            var structuralCritical = hasStructural
-                && context.structuralIntegrity <= settings.StructuralCriticalThreshold;
+            var structuralWarning = forecast.HasValue ? forecast.Value.Warning != DroneStructuralWarning.Safe
+                : hasStructural && context.structuralIntegrity <= settings.StructuralWarningThreshold;
+            var structuralCritical = forecast.HasValue ? forecast.Value.Warning >= DroneStructuralWarning.Collapse
+                : hasStructural && context.structuralIntegrity <= settings.StructuralCriticalThreshold;
             var gasWarning = hasGas && context.gasRisk >= settings.GasWarningThreshold;
             var gasCritical = hasGas && context.gasRisk >= settings.GasCriticalThreshold;
             var cargoFull = hasCargoCapacity
@@ -90,7 +117,7 @@ namespace SubTerra.App.Drone
                     + (structuralCritical ? settings.CriticalRiskBonus : 0);
                 builders[DroneAction.InstallSupport].Add(
                     "structural_integrity",
-                    FormatStructuralGuidance(context),
+                    FormatStructuralGuidance(context, forecast),
                     context.structuralIntegrity,
                     "ratio",
                     score,
@@ -245,7 +272,8 @@ namespace SubTerra.App.Drone
                 lowEnergy,
                 cargoFull,
                 lithiumNearby,
-                engineFuelNearby);
+                engineFuelNearby,
+                forecast);
             return new DroneAnalysisResult(recommendation, candidates, dialogue, usedFallback);
         }
 
@@ -336,7 +364,8 @@ namespace SubTerra.App.Drone
             bool lowEnergy,
             bool cargoFull,
             bool lithiumNearby,
-            bool engineFuelNearby)
+            bool engineFuelNearby,
+            DroneStructuralForecast? forecast)
         {
             string templateId;
             var urgent = false;
@@ -404,7 +433,8 @@ namespace SubTerra.App.Drone
                 ["safetyGuidance"] = CreateSafetyGuidance(
                     context,
                     structuralWarning,
-                    gasWarning)
+                    gasWarning,
+                    forecast)
             };
 
             if (context.currentEnergy >= 0)
@@ -476,7 +506,8 @@ namespace SubTerra.App.Drone
         private static string CreateSafetyGuidance(
             DroneContextDto context,
             bool structuralWarning,
-            bool gasWarning)
+            bool gasWarning,
+            DroneStructuralForecast? forecast)
         {
             var guidance = string.Empty;
             if (gasWarning)
@@ -492,16 +523,25 @@ namespace SubTerra.App.Drone
                     guidance += " ";
                 }
 
-                guidance += FormatStructuralGuidance(context);
+                guidance += FormatStructuralGuidance(context, forecast);
             }
 
             return guidance;
         }
 
-        private static string FormatStructuralGuidance(DroneContextDto context)
+        private static string FormatStructuralGuidance(DroneContextDto context, DroneStructuralForecast? forecast)
         {
-            if (context.structuralTelegraphing)
+            if (forecast?.Warning == DroneStructuralWarning.Telegraphing || (!forecast.HasValue && context.structuralTelegraphing))
                 return "저 빨간 천장이 곧 떨어집니다. 피하거나 버팀목을 설치하세요.";
+            if (forecast?.Warning == DroneStructuralWarning.Overhead)
+                return "머리 위 천장에 금이 갔어요. 비켜서세요.";
+            if (forecast?.Warning == DroneStructuralWarning.Collapse)
+            {
+                string direction = forecast.Value.Direction < 0 ? "왼쪽 끝 " : forecast.Value.Direction > 0 ? "오른쪽 끝 " : string.Empty;
+                return "더 파면 " + direction + "천장이 무너져요.";
+            }
+            if (forecast?.Warning == DroneStructuralWarning.Cracked)
+                return "근처 천장에 금이 갔어요. 캐면 무너질 수 있어요.";
             if (string.Equals(context.structuralCauseId, "unsupported", StringComparison.Ordinal))
                 return "이 천장 아래가 비었습니다. 더 파면 균열이 커집니다.";
             if (string.Equals(context.structuralCauseId, "support_removed", StringComparison.Ordinal))

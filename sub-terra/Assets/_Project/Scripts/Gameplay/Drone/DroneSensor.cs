@@ -149,7 +149,7 @@ namespace SubTerra.Gameplay.Drone
             Vector2 playerPosition = playerTransform != null ? playerTransform.position : transform.position;
             int depth = DroneContextCalculator.CalculateDepth(surfaceY, playerPosition.y);
             StructuralRiskStatus structuralStatus = structuralSystem != null
-                ? structuralSystem.EvaluateStatusAtWorld(playerPosition)
+                ? structuralSystem.EvaluateStatusAtWorld(playerPosition, synchronizeCracks: false)
                 : StructuralRiskStatus.Stable(Vector3Int.zero);
             GasRiskLevel gasRisk = appliedGasRisk
                 ?? (gasHazardSystem != null
@@ -158,6 +158,19 @@ namespace SubTerra.Gameplay.Drone
             float baseDistance = DroneContextCalculator.FindNearestDistance(playerPosition, outpostCores);
             IReadOnlyList<string> minerals = ScanNearbyMinerals(playerPosition);
             return new DroneContextDto(depth, currentEnergy, returnEnergyEstimate, structuralStatus.Level, gasRisk, unsettledCargoValue, cargoWeight, maxCargoWeight, baseDistance, minerals, returnPathAvailable, structuralStatus.Cause, structuralStatus.IsTelegraphing);
+        }
+
+        public bool TryForecastStructure(Vector3Int? target, out StructuralRiskStatus forecast, out bool overhead, out int direction)
+        {
+            forecast = default;
+            overhead = false;
+            direction = 0;
+            if (structuralSystem == null || playerTransform == null) return false;
+
+            var playerCell = structuralSystem.WorldToCell(playerTransform.position);
+            forecast = structuralSystem.ForecastMining(playerCell, target, out overhead);
+            direction = forecast.Cell.x.CompareTo(playerCell.x);
+            return true;
         }
 
         SubTerra.Shared.DroneContextDto SubTerra.Shared.IDroneContextProvider.CreateContext()

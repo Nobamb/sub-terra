@@ -1,10 +1,11 @@
 using System.Collections.Generic;
+using SubTerra.App.Drone;
 using SubTerra.Gameplay.Drone;
 using SubTerra.Gameplay.Hazards;
+using SubTerra.Gameplay.Mining;
 using SubTerra.Gameplay.Structural;
 using UnityEngine;
 using SharedContext = SubTerra.Shared.DroneContextDto;
-using SharedProvider = SubTerra.Shared.IDroneContextProvider;
 using SharedScanStateProvider = SubTerra.Shared.IDroneScanStateProvider;
 
 namespace SubTerra.App.Integration
@@ -13,10 +14,11 @@ namespace SubTerra.App.Integration
     /// A의 Runtime Sensor를 수정하지 않고 B가 합의된 Shared DTO로 읽게 하는 경계 어댑터.
     /// </summary>
     public sealed class DroneContextProviderAdapter : MonoBehaviour,
-        SharedProvider,
+        IDroneStructuralForecastProvider,
         SharedScanStateProvider
     {
         [SerializeField] private DroneSensor sensor;
+        private PlayerMiningController miningController;
 
         public bool IsScanPulseActive => sensor != null && sensor.IsScanPulseActive;
 
@@ -48,9 +50,26 @@ namespace SubTerra.App.Integration
             };
         }
 
-        public void BindTo(DroneSensor droneSensor)
+        public DroneStructuralForecast? ReadStructuralForecast()
+        {
+            Vector3Int? target = miningController != null && miningController.TryGetPredictedTargetCell(out var cell)
+                ? cell : null;
+            if (sensor == null || miningController == null
+                || !sensor.TryForecastStructure(target, out var status, out bool overhead, out int direction)) return null;
+
+            DroneStructuralWarning warning = status.IsTelegraphing ? DroneStructuralWarning.Telegraphing
+                : overhead ? DroneStructuralWarning.Overhead
+                : status.Level == StructuralRiskLevel.CollapseImminent ? DroneStructuralWarning.Collapse
+                : status.Level == StructuralRiskLevel.Caution ? DroneStructuralWarning.Cracked
+                : DroneStructuralWarning.Safe;
+            return new DroneStructuralForecast(warning, status.Cell.y,
+                warning == DroneStructuralWarning.Collapse ? direction : 0);
+        }
+
+        public void BindTo(DroneSensor droneSensor, PlayerMiningController playerMining = null)
         {
             sensor = droneSensor;
+            miningController = playerMining;
         }
 
         public bool HasRequiredReferences()

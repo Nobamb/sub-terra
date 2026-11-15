@@ -224,11 +224,34 @@ namespace SubTerra.Gameplay.Mining
         {
             if (foregroundTilemap == null) return Fail(MiningFailureReason.DependencyMissing);
             if (direction == Vector2.zero) return Fail(MiningFailureReason.InvalidTarget);
+            return TryGetAdjacentMiningCell(origin, direction, range, out var cell) && TryStartMining(cell);
+        }
+
+        private bool TryGetAdjacentMiningCell(Vector2 origin, Vector2 direction, float range, out Vector3Int cell)
+        {
             var offset = Mathf.Abs(direction.y) >= Mathf.Abs(direction.x)
                 ? new Vector3Int(0, direction.y > 0f ? 1 : -1, 0)
                 : new Vector3Int(direction.x > 0f ? 1 : -1, 0, 0);
-            var cell = foregroundTilemap.WorldToCell(origin) + offset;
-            return TryStartMiningAtWorldPoint(foregroundTilemap.GetCellCenterWorld(cell), origin, range);
+            cell = foregroundTilemap.WorldToCell(origin) + offset;
+            return IsCellInRange(cell, origin, range);
+        }
+
+        public bool TryGetKeyboardMiningCell(Vector2 origin, Vector2 direction, float facing, float range,
+            bool onLadder, out Vector3Int cell)
+        {
+            cell = default;
+            if (foregroundTilemap == null || (onLadder && direction.y != 0f)) return false;
+            if (onLadder && direction == Vector2.zero) direction = new Vector2(facing, 0f);
+            return direction != Vector2.zero
+                ? TryGetAdjacentMiningCell(origin, direction, range, out cell)
+                : !onLadder && TryGetDirectionalCell(origin, facing, range, out cell);
+        }
+
+        public bool CanMineCell(Vector3Int cell)
+        {
+            return HasMiningPower && GetTerrainFailure(cell, out _, out var definition) == MiningFailureReason.None
+                && GetEnergyFailure(CalculateEnergyCost(definition.energyCost, recordRemainder: false))
+                    == MiningFailureReason.None;
         }
 
         /// <summary>

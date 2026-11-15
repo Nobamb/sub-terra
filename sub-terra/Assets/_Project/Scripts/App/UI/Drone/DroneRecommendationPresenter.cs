@@ -1,6 +1,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using SubTerra.App.AI;
+using SubTerra.App.Core.Data;
 using SubTerra.App.Drone;
 using SubTerra.App.Drone.Dialogue;
 using SubTerra.Shared;
@@ -25,6 +26,7 @@ namespace SubTerra.App.UI.Drone
         private string lastShownTemplateId = string.Empty;
         private DroneAction lastShownAction;
         private bool hasShownDialogue;
+        private DroneStructuralForecast? lastShownStructuralForecast;
 
         public bool IsBound =>
             contextProvider != null && analysisService != null && dialogueGenerator != null;
@@ -94,6 +96,7 @@ namespace SubTerra.App.UI.Drone
             lastShownTemplateId = string.Empty;
             lastShownAction = default;
             hasShownDialogue = false;
+            lastShownStructuralForecast = null;
             PublishOperationalState(DroneOperationalState.Idle);
             worldDialogueView?.SetVisible(false);
         }
@@ -105,11 +108,16 @@ namespace SubTerra.App.UI.Drone
                 return null;
             }
 
-            var analysis = AnalyzeCurrentContext();
+            var analysis = AnalyzeCurrentContext(out var forecast);
             PublishOperationalState(DroneOperationalStateResolver.Resolve(
                 analysis != null && analysis.Dialogue != null && analysis.Dialogue.IsUrgent,
                 isScanPulseActive));
             reasonView?.SetAnalysis(analysis);
+
+            if (!System.Nullable.Equals(forecast, lastShownStructuralForecast)) lastShownStructuralForecast = null;
+            var structuralDialogue = forecast.HasValue
+                && analysis?.Dialogue?.TemplateId == DataIds.Dialogue.DroneStructuralWarning;
+            if (structuralDialogue && lastShownStructuralForecast.HasValue) return analysis;
 
             // 상황(추천 행동·템플릿)이 바뀌면 쿨다운을 무시하고 말풍선/창 대사를 즉시 갱신한다.
             var situationChanged = analysis?.Dialogue != null
@@ -118,11 +126,12 @@ namespace SubTerra.App.UI.Drone
                         analysis.Dialogue.TemplateId,
                         lastShownTemplateId,
                         System.StringComparison.Ordinal)
-                    || analysis.RecommendedAction != lastShownAction);
+                    || analysis.RecommendedAction != lastShownAction || structuralDialogue);
 
             var dialogue = dialogueGenerator.Generate(analysis, situationChanged);
             if (!dialogue.IsSuppressed)
             {
+                if (structuralDialogue) lastShownStructuralForecast = forecast;
                 lastShownTemplateId = dialogue.TemplateId ?? string.Empty;
                 lastShownAction = analysis != null
                     ? analysis.RecommendedAction
@@ -146,7 +155,7 @@ namespace SubTerra.App.UI.Drone
             }
 
             var version = bindingVersion;
-            var analysis = AnalyzeCurrentContext();
+            var analysis = AnalyzeCurrentContext(out _);
             reasonView?.SetAnalysis(analysis);
 
             if (cloudDialogueGenerator == null)
@@ -185,19 +194,22 @@ namespace SubTerra.App.UI.Drone
             }
         }
 
-        private DroneAnalysisResult AnalyzeCurrentContext()
+        private DroneAnalysisResult AnalyzeCurrentContext(out DroneStructuralForecast? forecast)
         {
+            forecast = null;
             DroneContextDto context;
             try
             {
                 context = contextProvider.CreateContext();
+                if (contextProvider is IDroneStructuralForecastProvider provider)
+                    forecast = provider.ReadStructuralForecast();
             }
             catch
             {
                 context = null;
             }
 
-            return analysisService.Analyze(context);
+            return analysisService.Analyze(context, forecast);
         }
 
         private void PublishOperationalState(DroneOperationalState state)

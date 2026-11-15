@@ -23,6 +23,7 @@ namespace SubTerra.Gameplay.Mining
         private Vector2 pendingWorldPoint;
         private Vector2 pendingDirection;
         private Vector2 lastMiningDirection;
+        private Vector2 lastKeyboardMiningDirection;
         private bool miningInputPressedLastFrame;
         private PlayerAnimationController animationController;
         private MiningDebrisVisual debrisVisual;
@@ -320,41 +321,40 @@ namespace SubTerra.Gameplay.Mining
 
         private void TryStartPendingTarget()
         {
-            if (animationController != null && animationController.CanMineOnLadder)
+            if (pendingPointerTarget)
             {
-                if (miningSystem.ForegroundTilemap == null || pendingDirection.y != 0f) return;
-                if (pendingPointerTarget)
-                {
-                    if (!IsLadderPointerTargetAllowed(pendingWorldPoint)) return;
-                }
-                else
-                {
-                    // Enter의 위·아래 대체 목표 탐색도 사다리에서는 사용하지 않는다.
-                    var direction = pendingDirection != Vector2.zero ? pendingDirection
-                        : new Vector2(movement.FacingDirection, 0f);
-                    miningSystem.TryStartMiningInDirection(movement.Position, direction, reach);
-                    return;
-                }
+                if (IsLadderPointerTargetAllowed(pendingWorldPoint))
+                    miningSystem.TryStartMiningAtWorldPoint(pendingWorldPoint, movement.Position, reach);
+                return;
             }
-            if (pendingDirection != Vector2.zero)
+
+            if (TryGetKeyboardTarget(pendingDirection, out var cell) && miningSystem.TryStartMining(cell))
             {
-                miningSystem.TryStartMiningInDirection(movement.Position, pendingDirection, reach);
-            }
-            else if (pendingPointerTarget)
-            {
-                miningSystem.TryStartMiningAtWorldPoint(
-                    pendingWorldPoint,
-                    movement.Position,
-                    reach);
-            }
-            else
-            {
-                miningSystem.TryStartMiningFrom(
-                    movement.Position,
-                    movement.FacingDirection,
-                    reach);
+                lastKeyboardMiningDirection = pendingDirection != Vector2.zero ? pendingDirection
+                    : new Vector2(movement.FacingDirection, 0f);
             }
         }
+
+        public bool TryGetPredictedTargetCell(out Vector3Int cell)
+        {
+            cell = default;
+            if (miningSystem == null || miningSystem.ForegroundTilemap == null || movement == null) return false;
+            var direction = PlayerKeyboardControls.ReadMiningDirection(ControlPreferences.Scheme);
+            if (TryGetKeyboardTarget(direction, out cell) && miningSystem.CanMineCell(cell)) return true;
+
+            var fallback = lastKeyboardMiningDirection;
+            if (fallback == Vector2.zero || (OnLadder && fallback.y != 0f))
+                fallback = new Vector2(movement.FacingDirection, 0f);
+            return miningSystem.TryGetKeyboardMiningCell(movement.Position, fallback, movement.FacingDirection,
+                       float.MaxValue, OnLadder, out cell)
+                && (!miningSystem.ForegroundTilemap.HasTile(cell) || miningSystem.CanMineCell(cell));
+        }
+
+        private bool OnLadder => animationController != null && animationController.CanMineOnLadder;
+
+        private bool TryGetKeyboardTarget(Vector2 direction, out Vector3Int cell) =>
+            miningSystem.TryGetKeyboardMiningCell(movement.Position, direction, movement.FacingDirection,
+                reach, OnLadder, out cell);
 
         private bool IsLadderPointerTargetAllowed(Vector2 worldPoint)
         {

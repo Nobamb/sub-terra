@@ -52,8 +52,53 @@ namespace SubTerra.App.Tests.Drone
             }
         }
 
-        private sealed class FixedProvider : IDroneContextProvider
+        [Test]
+        public void Issue324_StructuralDialogueUpdatesOnlyWhenRowStageOrDirectionChanges()
         {
+            var settings = ScriptableObject.CreateInstance<DroneAnalysisSettings>();
+            var template = ScriptableObject.CreateInstance<DialogueTemplateData>();
+            var explore = ScriptableObject.CreateInstance<DialogueTemplateData>();
+            try
+            {
+                settings.EditorSetDefaults();
+                template.EditorSet(DataIds.Dialogue.DroneStructuralWarning, "경고", "warning", 0, "{safetyGuidance}");
+                explore.EditorSet(DataIds.Dialogue.DroneExplore, "탐사", "explore", 0, "심도 {depth}");
+                var provider = new FixedProvider { Forecast = new DroneStructuralForecast(DroneStructuralWarning.Collapse, -8, -1) };
+                var view = new RecordingDialogueView();
+                var presenter = new DroneRecommendationPresenter(view, null);
+                presenter.Bind(provider, new DroneAnalysisService(settings),
+                    new TemplateDialogueGenerator(new[] { template, explore }, new FixedClock(), settings));
+
+                Assert.That(view.LastDialogue.Text, Does.Contain("왼쪽"));
+                Assert.That(view.DialogueCount, Is.EqualTo(1));
+                presenter.Refresh();
+                Assert.That(view.DialogueCount, Is.EqualTo(1));
+                provider.Forecast = new DroneStructuralForecast(DroneStructuralWarning.Collapse, -8, 1);
+                presenter.Refresh();
+                Assert.That(view.LastDialogue.Text, Does.Contain("오른쪽"));
+                provider.Forecast = new DroneStructuralForecast(DroneStructuralWarning.Overhead, -8, 0);
+                presenter.Refresh();
+                Assert.That(view.LastDialogue.Text, Does.Contain("머리 위"));
+                provider.Forecast = new DroneStructuralForecast(DroneStructuralWarning.Overhead, -9, 0);
+                presenter.Refresh();
+                Assert.That(view.DialogueCount, Is.EqualTo(4));
+                provider.Forecast = new DroneStructuralForecast(DroneStructuralWarning.Safe, -9, 0);
+                presenter.Refresh();
+                Assert.That(view.LastDialogue.TemplateId, Is.EqualTo(DataIds.Dialogue.DroneExplore));
+            }
+            finally
+            {
+                Object.DestroyImmediate(explore);
+                Object.DestroyImmediate(template);
+                Object.DestroyImmediate(settings);
+            }
+        }
+
+        private sealed class FixedProvider : IDroneStructuralForecastProvider
+        {
+            public DroneStructuralForecast? Forecast { get; set; }
+            public DroneStructuralForecast? ReadStructuralForecast() => Forecast;
+
             public DroneContextDto CreateContext()
             {
                 return new DroneContextDto
@@ -82,7 +127,12 @@ namespace SubTerra.App.Tests.Drone
         {
             public DroneDialogueResult LastDialogue { get; private set; }
             public DroneOperationalState LastOperationalState { get; private set; }
-            public void SetDialogue(DroneDialogueResult dialogue) => LastDialogue = dialogue;
+            public int DialogueCount { get; private set; }
+            public void SetDialogue(DroneDialogueResult dialogue)
+            {
+                LastDialogue = dialogue;
+                DialogueCount++;
+            }
             public void SetOperationalState(DroneOperationalState state) => LastOperationalState = state;
             public void SetVisible(bool visible) { }
         }

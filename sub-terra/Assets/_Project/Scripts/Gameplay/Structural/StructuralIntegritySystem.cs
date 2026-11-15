@@ -255,7 +255,9 @@ namespace SubTerra.Gameplay.Structural
         }
 
         /// <summary>플레이어 주변의 가장 높은 구조 상태와 그 원인을 반환한다.</summary>
-        public StructuralRiskStatus EvaluateStatusAt(Vector3Int center)
+        public StructuralRiskStatus EvaluateStatusAt(Vector3Int center) => ReadStatusAt(center, true);
+
+        private StructuralRiskStatus ReadStatusAt(Vector3Int center, bool synchronizeCracks)
         {
             StructuralRiskStatus highest = StructuralRiskStatus.Stable(center);
             foreach (Vector3Int ceiling in EnumerateUnsupportedCeilingsNearMine(center))
@@ -267,7 +269,7 @@ namespace SubTerra.Gameplay.Structural
                 StructuralRiskCause cause = tileCauses.TryGetValue(ceiling, out StructuralRiskCause value)
                     ? value
                     : StructuralRiskCause.Unsupported;
-                if (!detachedTelegraphs.Contains(ceiling))
+                if (synchronizeCracks && !detachedTelegraphs.Contains(ceiling))
                     SyncCeilingCracks(ceiling, displayLevel, score, cause);
                 if (displayLevel < highest.Level
                     || (displayLevel == highest.Level && score <= highest.Score))
@@ -286,11 +288,62 @@ namespace SubTerra.Gameplay.Structural
             return highest;
         }
 
-        public StructuralRiskStatus EvaluateStatusAtWorld(Vector3 worldPosition)
+        public StructuralRiskStatus EvaluateStatusAtWorld(Vector3 worldPosition, bool synchronizeCracks = true)
         {
             return foregroundTilemap == null
                 ? StructuralRiskStatus.Stable(Vector3Int.zero)
-                : EvaluateStatusAt(foregroundTilemap.WorldToCell(worldPosition));
+                : ReadStatusAt(foregroundTilemap.WorldToCell(worldPosition), synchronizeCracks);
+        }
+
+        public StructuralRiskStatus ForecastMining(Vector3Int playerCell, Vector3Int? minedCell, out bool overheadCracked)
+        {
+            overheadCracked = false;
+            if (foregroundTilemap == null) return StructuralRiskStatus.Stable(playerCell);
+
+            var pending = StructuralRiskStatus.Stable(playerCell);
+            foreach (var cell in telegraphRemaining.Keys)
+            {
+                if (cell.z != playerCell.z || cell.y <= playerCell.y || cell.y > playerCell.y + scanRadius
+                    || Mathf.Abs(cell.x - playerCell.x) > MaximumWarningDistance) continue;
+                PreferForecast(ref pending, cell, playerCell, StructuralRiskLevel.CollapseImminent, true);
+            }
+            if (pending.IsTelegraphing) return pending;
+
+            for (int height = 1; height <= scanRadius; height++)
+            {
+                var cell = playerCell + Vector3Int.up * height;
+                if (!foregroundTilemap.HasTile(cell)) continue;
+                overheadCracked = DistanceToSupport(cell) > StableDistance;
+                if (overheadCracked)
+                    return new StructuralRiskStatus(cell, 0f, StructuralRiskLevel.Danger, StructuralRiskCause.Unsupported, false);
+                break;
+            }
+
+            var forecast = StructuralRiskStatus.Stable(playerCell);
+            if (!minedCell.HasValue) return forecast;
+            foreach (var cell in CollectAffectedCeilingTiles(minedCell.Value))
+            {
+                if (!IsUnsupportedCeiling(cell, minedCell)) continue;
+                int distance = DistanceToSupport(cell, assumedRemoved: minedCell);
+                if (distance <= StableDistance) continue;
+                if (distance > MaximumWarningDistance && DistanceToSupport(cell) > MaximumWarningDistance
+                    && !deferredCandidates.Contains(cell)) continue;
+                var level = distance > MaximumWarningDistance ? StructuralRiskLevel.CollapseImminent : StructuralRiskLevel.Caution;
+                PreferForecast(ref forecast, cell, playerCell, level, false);
+            }
+            return forecast;
+        }
+
+        private static void PreferForecast(ref StructuralRiskStatus result, Vector3Int cell, Vector3Int playerCell,
+            StructuralRiskLevel level, bool telegraphing)
+        {
+            int distance = Mathf.Abs(cell.x - playerCell.x);
+            int previous = Mathf.Abs(result.Cell.x - playerCell.x);
+            bool directional = level == StructuralRiskLevel.CollapseImminent && !telegraphing;
+            var priority = (directional && distance == 0, distance, cell.y, cell.x);
+            var previousPriority = (directional && previous == 0, previous, result.Cell.y, result.Cell.x);
+            if (level < result.Level || (level == result.Level && priority.CompareTo(previousPriority) >= 0)) return;
+            result = new StructuralRiskStatus(cell, 0f, level, StructuralRiskCause.Unsupported, telegraphing);
         }
 
         public Vector3Int WorldToCell(Vector3 worldPosition)
@@ -503,9 +556,10 @@ namespace SubTerra.Gameplay.Structural
             return Settings.CollapseImminentThreshold;
         }
 
-        private int DistanceToSupport(Vector3Int ceiling, Vector3 previewCenter = default, float previewRadius = 0f)
+        private int DistanceToSupport(Vector3Int ceiling, Vector3 previewCenter = default, float previewRadius = 0f,
+            Vector3Int? assumedRemoved = null)
         {
-            if (IsCeilingAnchor(ceiling, previewCenter, previewRadius)) return 0;
+            if (IsCeilingAnchor(ceiling, previewCenter, previewRadius, assumedRemoved)) return 0;
 
             bool leftConnected = true;
             bool rightConnected = true;
@@ -513,25 +567,28 @@ namespace SubTerra.Gameplay.Structural
             {
                 Vector3Int left = ceiling + Vector3Int.left * distance;
                 Vector3Int right = ceiling + Vector3Int.right * distance;
-                leftConnected = leftConnected && foregroundTilemap.HasTile(left);
-                rightConnected = rightConnected && foregroundTilemap.HasTile(right);
-                if ((leftConnected && IsCeilingAnchor(left, previewCenter, previewRadius))
-                    || (rightConnected && IsCeilingAnchor(right, previewCenter, previewRadius)))
+                leftConnected = leftConnected && HasTerrain(left, assumedRemoved);
+                rightConnected = rightConnected && HasTerrain(right, assumedRemoved);
+                if ((leftConnected && IsCeilingAnchor(left, previewCenter, previewRadius, assumedRemoved))
+                    || (rightConnected && IsCeilingAnchor(right, previewCenter, previewRadius, assumedRemoved)))
                     return distance;
             }
 
             return MaximumWarningDistance + 1;
         }
 
-        private bool IsCeilingAnchor(Vector3Int cell, Vector3 previewCenter, float previewRadius)
+        private bool IsCeilingAnchor(Vector3Int cell, Vector3 previewCenter, float previewRadius, Vector3Int? assumedRemoved)
         {
-            return foregroundTilemap.HasTile(cell + Vector3Int.down)
+            return HasTerrain(cell + Vector3Int.down, assumedRemoved)
                 || IsProtected(cell)
-                || (foregroundTilemap.HasTile(cell + Vector3Int.up) && IsProtected(cell + Vector3Int.up))
+                || (HasTerrain(cell + Vector3Int.up, assumedRemoved) && IsProtected(cell + Vector3Int.up))
                 || GetSupportStrength(cell) > 0
                 || (previewRadius > 0f && StructuralSupport.CoversPosition(
                     previewCenter, foregroundTilemap.GetCellCenterWorld(cell), previewRadius));
         }
+
+        private bool HasTerrain(Vector3Int cell, Vector3Int? assumedRemoved) =>
+            (!assumedRemoved.HasValue || cell != assumedRemoved.Value) && foregroundTilemap.HasTile(cell);
 
         public bool WouldSupportClearCeilingRisk(Vector3Int cell, Vector3 center, float radius)
         {
@@ -559,10 +616,10 @@ namespace SubTerra.Gameplay.Structural
             }
         }
 
-        private bool IsUnsupportedCeiling(Vector3Int cell)
+        private bool IsUnsupportedCeiling(Vector3Int cell, Vector3Int? assumedRemoved = null)
         {
-            if (foregroundTilemap == null || !foregroundTilemap.HasTile(cell)) return false;
-            if (foregroundTilemap.HasTile(cell + Vector3Int.down)) return false;
+            if (foregroundTilemap == null || !HasTerrain(cell, assumedRemoved)) return false;
+            if (HasTerrain(cell + Vector3Int.down, assumedRemoved)) return false;
             if (IsProtected(cell)) return false;
             if (GetSupportStrength(cell) > 0) return false;
             return true;

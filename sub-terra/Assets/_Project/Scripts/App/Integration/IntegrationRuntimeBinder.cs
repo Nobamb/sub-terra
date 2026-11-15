@@ -409,7 +409,8 @@ namespace SubTerra.App.Integration
                 {
                     if (droneContextAdapter != null && droneSensor != null)
                     {
-                        droneContextAdapter.BindTo(droneSensor);
+                        droneContextAdapter.BindTo(droneSensor, playerMovement != null
+                            ? playerMovement.GetComponent<PlayerMiningController>() : null);
                     }
                 });
 
