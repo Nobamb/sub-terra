@@ -82,6 +82,15 @@ namespace SubTerra.App.UI.EmergencyEscape
             ApplyGlitch(frame);
         }
 
+        /// <summary>B-197: 씬이 바뀌어도 오버레이가 남게 한다(광산 만료 → 지상 씬 로드). 재생 중에만 적용된다.</summary>
+        public void PersistAcrossScenes()
+        {
+            if (root != null && Application.isPlaying)
+            {
+                Object.DontDestroyOnLoad(root);
+            }
+        }
+
         public void Destroy()
         {
             if (root == null)
