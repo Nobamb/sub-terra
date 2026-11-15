@@ -28,6 +28,7 @@ namespace SubTerra.App.Tests.UI
             public float AlphaAtLoad = -1f;
             public bool GlitchAtLoad;
             public bool OverlayAliveDuringLoad = true;
+            public bool GlitchDuringLoad;
             public MineTimeoutWarpSequence Warp;
 
             public IEnumerator Run()
@@ -40,6 +41,7 @@ namespace SubTerra.App.Tests.UI
                 {
                     // 씬이 바뀌는 동안에도 오버레이가 살아 있어야 한다.
                     OverlayAliveDuringLoad &= Warp.Overlay != null && Warp.Overlay.Root != null;
+                    GlitchDuringLoad |= Warp.Overlay != null && Warp.Overlay.GlitchVisible;
                     yield return null;
                 }
 
@@ -72,6 +74,81 @@ namespace SubTerra.App.Tests.UI
             Assert.That(brightAfterLoadWithoutSurface, Is.False, "지상이 열리기 전에 화면이 밝아지면 안 된다.");
             Assert.That(load.SurfaceActive, Is.True, "켜질 때는 이미 지상이다.");
             Assert.That(warp.BlackRan, Is.True);
+        }
+
+        [Test]
+        public void Warp_WhileLoadingBlack_GlitchIsNotFrozenOnScreen_AndArrivalGlitchPlaysAfter()
+        {
+            var load = new FakeLoad();
+            var warp = new MineTimeoutWarpSequence(new EscapeWarpSettings(), load.Run, false);
+            load.Warp = warp;
+
+            var run = warp.Run();
+            var glitchFramesAfterLoad = 0;
+            while (run.MoveNext())
+            {
+                if (load.SurfaceActive && warp.Overlay != null && warp.Overlay.GlitchVisible)
+                {
+                    glitchFramesAfterLoad++;
+                }
+            }
+
+            Assert.That(load.GlitchAtLoad, Is.False, "암전 대기 중에는 굳은 글리치 장면이 남지 않는다.");
+            Assert.That(load.GlitchDuringLoad, Is.False);
+            Assert.That(glitchFramesAfterLoad, Is.GreaterThan(0), "켜지면서 도착 글리치가 이어져 가라앉는다.");
+        }
+
+        [Test]
+        public void Warp_AfterLoad_ScreenOnIsNotTruncatedByTheLoadHitch()
+        {
+            // 로드 뒤 첫 프레임은 고정 간격으로 진행한다: 켜짐 구간의 프레임 수가 로드 길이와 무관하다.
+            var shortLoad = new FakeLoad();
+            var shortWarp = new MineTimeoutWarpSequence(new EscapeWarpSettings(), shortLoad.Run, false);
+            shortLoad.Warp = shortWarp;
+            var longLoad = new FakeLoad();
+            var longWarp = new MineTimeoutWarpSequence(new EscapeWarpSettings(), longLoad.Run, false);
+            longLoad.Warp = longWarp;
+
+            Assert.That(CountFramesAfterLoad(shortWarp, shortLoad), Is.EqualTo(CountFramesAfterLoad(longWarp, longLoad)));
+        }
+
+        private static int CountFramesAfterLoad(MineTimeoutWarpSequence warp, FakeLoad load)
+        {
+            var run = warp.Run();
+            var frames = 0;
+            while (run.MoveNext())
+            {
+                if (load.SurfaceActive)
+                {
+                    frames++;
+                }
+            }
+
+            return frames;
+        }
+
+        [Test]
+        public void GlitchSfx_ReusesStartBriefingCloseSound_WithoutNewIds()
+        {
+            Assert.That(EscapeGlitchSfx.Id, Is.EqualTo(SubTerra.Shared.Audio.SfxId.BriefingClose));
+            Assert.That(
+                SubTerra.App.UI.Tutorial.StartBriefingPopupMotion.CompactCloseSfx,
+                Is.Not.EqualTo(EscapeGlitchSfx.Id),
+                "게임 시작 팝업 닫힘은 BriefingClose(PlaySfx)를 쓴다.");
+            Assert.That(EscapeGlitchSfx.Play(false), Is.False, "재생 중이 아니면(EditMode) 소리를 내지 않는다.");
+            Assert.That(EscapeGlitchSfx.Play(true), Is.False, "모션 감소면 글리치가 없으니 소리도 없다.");
+        }
+
+        [Test]
+        public void GlitchSfx_IsStartedByRescueAndMineTimeoutPaths_NotByTheSharedRunner()
+        {
+            var root = Path.Combine(Application.dataPath, "_Project", "Scripts", "App");
+            var rescue = File.ReadAllText(Path.Combine(root, "Integration", "EmergencyRescueRuntimeController.cs"));
+            var sequence = File.ReadAllText(Path.Combine(root, "UI", "EmergencyEscape", "MineTimeoutWarpSequence.cs"));
+            var runner = File.ReadAllText(Path.Combine(root, "Integration", "EscapeWarpRunner.cs"));
+            Assert.That(rescue, Does.Contain("EscapeGlitchSfx.Play("));
+            Assert.That(sequence, Does.Contain("EscapeGlitchSfx.Play("));
+            Assert.That(runner, Does.Not.Contain("SfxPlayer"), "공용 진행기는 소리를 내지 않는다(포탈 웜홀은 무음 유지).");
         }
 
         [Test]

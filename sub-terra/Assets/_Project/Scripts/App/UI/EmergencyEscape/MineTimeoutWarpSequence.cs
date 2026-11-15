@@ -13,6 +13,7 @@ namespace SubTerra.App.UI.EmergencyEscape
     /// </summary>
     public sealed class MineTimeoutWarpSequence
     {
+        private const float NominalFrameSeconds = 1f / 60f;
         private readonly EscapeWarpSettings settings;
         private readonly Func<IEnumerator> onBlack;
         private readonly bool reduceMotion;
@@ -42,18 +43,29 @@ namespace SubTerra.App.UI.EmergencyEscape
             overlay = new EscapeWarpOverlay(settings);
             overlay.PersistAcrossScenes();
             overlay.Apply(timeline.Evaluate(0f));
+            EscapeGlitchSfx.Play(reduceMotion);
+            var afterBlack = false;
             try
             {
                 while (!timeline.IsComplete)
                 {
-                    var step = Mathf.Clamp(Time.unscaledDeltaTime, 0.001f, 0.1f);
+                    // 로드·저장으로 길어진 첫 프레임 간격은 켜짐 연출에서 빼, 글리치가 잘리지 않고 끝까지 재생되게 한다.
+                    var step = afterBlack
+                        ? NominalFrameSeconds
+                        : Mathf.Clamp(Time.unscaledDeltaTime, 0.001f, 0.1f);
+                    afterBlack = false;
                     var frame = timeline.Advance(step);
                     overlay.Apply(frame);
 
                     if (frame.ShouldTeleport)
                     {
-                        // 화면이 완전히 검다. 지상이 열릴 때까지 이 프레임에서 멈춘 채 기다린다.
+                        // 화면이 완전히 검다. 지상이 열릴 때까지 깨끗한 검정으로 기다린다.
+                        // 이동 프레임의 켜짐 글리치를 그대로 두면 로드 내내 한 장면으로 굳어 보이므로 지운다.
+                        // 글리치는 켜짐이 시작되는 다음 프레임부터 끊김 없이 이어져 가라앉는다.
+                        overlay.Apply(new EscapeWarpFrame(
+                            frame.Phase, frame.ElapsedSeconds, 1f, 0f, 0, true, frame.IsComplete));
                         blackRan = true;
+                        afterBlack = true;
                         if (onBlack != null)
                         {
                             var inner = onBlack();

@@ -307,6 +307,8 @@ namespace SubTerra.App.Integration
             }
 
             warpPending = true;
+            // 글리치가 시작될 때 게임 시작 팝업 닫힘 글리치음(모션 감소면 생략). PortalWarp와 별개로 한 번.
+            EscapeGlitchSfx.Play(SubTerra.Shared.AccessibilityPreferences.ReduceMotion);
             // 구출은 평소 입력을 잠그지 않지만, 워프가 끝날 때까지는 월드가 멈춰 있어야 한다.
             UiPauseGate.Acquire(WarpPauseOwner);
             warpRunner = new EscapeWarpRunner(
