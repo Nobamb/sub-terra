@@ -12,6 +12,7 @@ using SubTerra.App.Outpost;
 using SubTerra.App.Progression;
 using SubTerra.App.State;
 using SubTerra.App.Tutorial;
+using SubTerra.App.UI.EmergencyEscape;
 using SubTerra.App.UI.HUD;
 using SubTerra.App.UI.MainMenu;
 using SubTerra.Shared;
@@ -74,6 +75,11 @@ namespace SubTerra.App.Save
         private bool suppressMineWorldCapture;
         private float mineResetDirtyAccum;
         private MineResetClockOverlay mineResetClockOverlay;
+        private MineTimeoutWarpSequence timedResetWarp;
+
+        /// <summary>B-197: 광산 만료 → 지상 글리치 워프. 구출과 같은 설정을 쓰며 검사기에서 조절한다.</summary>
+        [SerializeField] private EscapeWarpSettings timedResetWarpSettings = new EscapeWarpSettings();
+        private const string TimedResetWarpPauseOwner = "mine-timeout-warp";
 
         /// <summary>지상 → 지하 탐사 출발 전력. 0이면 차감하지 않는다.</summary>
         public const int MineElevatorEnergyCost = 0;
@@ -181,6 +187,13 @@ namespace SubTerra.App.Save
             autoSave?.Dispose();
             progressionDerivedStateSynchronizer?.Dispose();
             progressionDerivedStateSynchronizer = null;
+            if (timedResetWarp != null)
+            {
+                timedResetWarp.Abort();
+                timedResetWarp = null;
+                SubTerra.App.UI.UiPauseGate.Release(TimedResetWarpPauseOwner);
+            }
+
             if (mineResetClockOverlay != null)
             {
                 mineResetClockOverlay.DestroyOverlay();
@@ -855,28 +868,18 @@ namespace SubTerra.App.Save
 
             if (wasInMine)
             {
-                // 전원 OFF 연출이 끝난 뒤에 지상 Scene을 로드한다.
-                yield return WaitForClockPowerOff();
-                if (new UnitySceneLoader().Load(SceneNames.SurfaceBase))
-                {
-                    const int maximumSceneWaitFrames = 300;
-                    var frames = 0;
-                    while (SceneManager.GetActiveScene().name != SceneNames.SurfaceBase
-                           && frames < maximumSceneWaitFrames)
-                    {
-                        frames++;
-                        yield return null;
-                    }
-                }
+                // B-197: 글리치 암전 → 완전히 검은 동안 시계 OFF·지상 로드·저장 → 켜지면 이미 지상 기지.
+                // 구출 글리치와 같은 시간표/설정을 쓰고, 오버레이는 씬 전환 뒤에도 켜짐이 끝날 때까지 남는다.
+                yield return RunTimedResetWarp();
             }
-
-            if (activeSlot > 0)
+            else if (activeSlot > 0)
             {
                 SaveCurrent(AutoSaveReason.MineReset);
             }
 
             EnsureMineResetClockOverlay();
             mineResetClockOverlay?.RefreshFromState();
+            // 팝업은 워프(암전·켜짐)가 모두 끝난 뒤에만 연다.
             if (showPopup)
             {
                 mineResetClockOverlay?.ShowTimedResetPopup(wasInMine);
@@ -884,6 +887,46 @@ namespace SubTerra.App.Save
 
             suppressMineWorldCapture = false;
             pendingTimedMineReset = false;
+        }
+
+        private IEnumerator RunTimedResetWarp()
+        {
+            var warp = new MineTimeoutWarpSequence(timedResetWarpSettings, LoadSurfaceWhileBlack);
+            timedResetWarp = warp;
+            // 연출 중 월드가 흘러 체력 0 전환 등이 끼어들지 않게 잠시 멈춘다(지상이 열리면 바로 푼다).
+            SubTerra.App.UI.UiPauseGate.Acquire(TimedResetWarpPauseOwner);
+            try
+            {
+                yield return StartCoroutine(warp.Run());
+            }
+            finally
+            {
+                SubTerra.App.UI.UiPauseGate.Release(TimedResetWarpPauseOwner);
+                timedResetWarp = null;
+            }
+        }
+
+        // 화면이 완전히 검은 동안에만 실행된다. 전원 OFF 연출 뒤 지상 Scene을 로드하고 저장한다.
+        private IEnumerator LoadSurfaceWhileBlack()
+        {
+            yield return WaitForClockPowerOff();
+            if (new UnitySceneLoader().Load(SceneNames.SurfaceBase))
+            {
+                const int maximumSceneWaitFrames = 300;
+                var frames = 0;
+                while (SceneManager.GetActiveScene().name != SceneNames.SurfaceBase
+                       && frames < maximumSceneWaitFrames)
+                {
+                    frames++;
+                    yield return null;
+                }
+            }
+
+            SubTerra.App.UI.UiPauseGate.Release(TimedResetWarpPauseOwner);
+            if (activeSlot > 0)
+            {
+                SaveCurrent(AutoSaveReason.MineReset);
+            }
         }
 
 #if UNITY_EDITOR || SUBTERRA_BUILD_DEVELOPMENT
