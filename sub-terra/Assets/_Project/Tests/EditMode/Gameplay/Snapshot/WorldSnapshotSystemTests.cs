@@ -175,6 +175,72 @@ namespace SubTerra.Gameplay.Snapshot.Tests
         }
 
         [Test]
+        public void Issue332_ExpeditionRestoresFacilitiesAndOldTerrainWithoutNewCollapse()
+        {
+            var host = new GameObject("Expedition", typeof(Grid));
+            var terrain = new GameObject("Terrain", typeof(Tilemap));
+            terrain.transform.SetParent(host.transform);
+            var map = terrain.GetComponent<Tilemap>();
+            var tile = ScriptableObject.CreateInstance<Tile>();
+            var support = new GameObject("Support");
+            var ladder = new GameObject("Ladder");
+            var supportDefinition = ScriptableObject.CreateInstance<BuildingPlacementDefinition>();
+            var ladderDefinition = ScriptableObject.CreateInstance<BuildingPlacementDefinition>();
+            try
+            {
+                support.AddComponent<StructuralSupport>();
+                supportDefinition.EditorSet("building.support.basic", support, Vector2Int.one, false);
+                ladderDefinition.EditorSet("building.ladder.basic", ladder, new Vector2Int(1, 5), false);
+                host.AddComponent<BaseWorldGeneratorSpy>();
+                var structural = host.AddComponent<StructuralIntegritySystem>();
+                SetField(structural, "foregroundTilemap", map);
+                Assert.That(structural.IsEnabledForWorld, Is.False);
+                var placement = host.AddComponent<BuildingPlacementSystem>();
+                SetField(placement, "terrainTilemap", map);
+                SetField(placement, "structuralIntegritySystem", structural);
+                SetField(placement, "restoreDefinitions", new[] { supportDefinition, ladderDefinition });
+                var snapshots = host.AddComponent<WorldSnapshotSystem>();
+                SetField(snapshots, "foregroundTilemap", map);
+                SetField(snapshots, "structuralSystem", structural);
+                SetField(snapshots, "buildingPlacementSystem", placement);
+
+                var hanging = new Vector3Int(0, 2, 0);
+                var mined = hanging + Vector3Int.right;
+                var oldCollapse = mined + Vector3Int.right;
+                foreach (var cell in new[] { hanging, mined, oldCollapse }) map.SetTile(cell, tile);
+                var save = new WorldSnapshotDto();
+                save.miningChanges.Add(new MiningSnapshotDto { x = mined.x, y = mined.y, isDestroyed = true });
+                save.collapseChanges.Add(new CollapseSnapshotDto { x = oldCollapse.x, y = oldCollapse.y, isCollapsed = true });
+                save.buildings.Add(new BuildingSnapshotDto
+                {
+                    instanceId = "support-old", buildingTypeId = supportDefinition.BuildingId, x = 8, level = 1, health = 1f
+                });
+                save.buildings.Add(new BuildingSnapshotDto
+                {
+                    instanceId = "ladder-old", buildingTypeId = ladderDefinition.BuildingId, x = 10, level = 1, health = 1f
+                });
+
+                Assert.That(snapshots.RestoreSnapshot(save), Is.True);
+                structural.NotifyTileMined(mined, default);
+                structural.AdvanceSimulation(2f);
+                Assert.That(map.HasTile(hanging), Is.True);
+                Assert.That(map.HasTile(mined) || map.HasTile(oldCollapse), Is.False);
+                Assert.That(structural.EvaluateAt(hanging + Vector3Int.down), Is.EqualTo(StructuralRiskLevel.Stable));
+                Assert.That(host.GetComponentsInChildren<BuildingInstance>(), Has.Length.EqualTo(2));
+                Assert.That(snapshots.CaptureSnapshot().collapseChanges, Has.Count.EqualTo(1));
+            }
+            finally
+            {
+                Object.DestroyImmediate(host);
+                Object.DestroyImmediate(tile);
+                Object.DestroyImmediate(support);
+                Object.DestroyImmediate(ladder);
+                Object.DestroyImmediate(supportDefinition);
+                Object.DestroyImmediate(ladderDefinition);
+            }
+        }
+
+        [Test]
         public void Issue281_RestoreSilentlyRemovesDetachedGroupAndRecordsIt()
         {
             var host = new GameObject("DetachedGroupRestore", typeof(Grid));

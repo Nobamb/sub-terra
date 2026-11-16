@@ -51,6 +51,8 @@ namespace SubTerra.Gameplay.Structural
         }
 
         public StructuralRiskLevel CurrentRisk { get; private set; } = StructuralRiskLevel.Stable;
+        // Generated expeditions retired ceiling collapse. Standalone structural test scenes still use it.
+        public bool IsEnabledForWorld => !TryGetComponent<IWorldBaseGenerator>(out _);
         public long WorldSeed => worldSeed;
         public event Action<StructuralRiskLevel> RiskChanged;
         public event Action StructuralStatusChanged;
@@ -106,7 +108,11 @@ namespace SubTerra.Gameplay.Structural
 
         private void ForwardRockLanded(Vector3 position, TileBase tile) => rockLanded?.Invoke(position, tile);
 
-        private void OnEnable() => EnsureOverlayHooked();
+        private void OnEnable()
+        {
+            if (IsEnabledForWorld) EnsureOverlayHooked();
+            else enabled = false;
+        }
 
         /// <summary>
         /// 디버그 fall 명령: 지정 칸 위치에서 타일 하나를 실제 낙석 경로로 떨어뜨린다.
@@ -114,6 +120,7 @@ namespace SubTerra.Gameplay.Structural
         /// </summary>
         public bool TryDropTile(Vector3Int cell, TileBase tile)
         {
+            if (!IsEnabledForWorld) return false;
             EnsureOverlayHooked();
             if (crackOverlay == null || foregroundTilemap == null || tile == null) return false;
             // 터미널이 열려 게임이 멈춘 동안에는 떨어뜨리지 않고, 닫힌 뒤에 시작한다.
@@ -184,6 +191,7 @@ namespace SubTerra.Gameplay.Structural
         /// </summary>
         public void RebuildRiskFromMinedCells(IEnumerable<Vector3Int> minedCells)
         {
+            if (!IsEnabledForWorld) return;
             ClearRuntimeRiskState();
             var affected = new HashSet<Vector3Int>();
             if (minedCells != null)
@@ -201,6 +209,7 @@ namespace SubTerra.Gameplay.Structural
 
         public void NotifyTileMined(Vector3Int cell, MiningTileDto tile)
         {
+            if (!IsEnabledForWorld) return;
             var affected = CollectAffectedCeilingTiles(cell);
             ReevaluateTiles(
                 affected,
@@ -216,7 +225,7 @@ namespace SubTerra.Gameplay.Structural
         /// </summary>
         public bool RegisterSupport(StructuralSupport support)
         {
-            if (support == null || Array.IndexOf(supports, support) >= 0) return false;
+            if (!IsEnabledForWorld || support == null || Array.IndexOf(supports, support) >= 0) return false;
             Array.Resize(ref supports, supports.Length + 1);
             supports[^1] = support;
             support.AvailabilityChanged += OnSupportAvailabilityChanged;
@@ -258,6 +267,7 @@ namespace SubTerra.Gameplay.Structural
         public StructuralRiskStatus EvaluateStatusAt(Vector3Int center)
         {
             StructuralRiskStatus highest = StructuralRiskStatus.Stable(center);
+            if (!IsEnabledForWorld) return highest;
             foreach (Vector3Int ceiling in EnumerateUnsupportedCeilingsNearMine(center))
             {
                 float score = ComputeTileScore(ceiling);

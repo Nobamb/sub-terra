@@ -132,20 +132,20 @@ namespace SubTerra.Gameplay.Building
             StructuralIntegritySystem structuralSystem)
         {
             HideSupportRange();
-            if (tilemap == null || radius <= 0f) return;
+            if (tilemap == null || radius <= 0f || structuralSystem == null || !structuralSystem.IsEnabledForWorld)
+                return;
 
             Vector3 boundsRadius = new Vector3(radius, radius, 0f);
             Vector3Int min = tilemap.WorldToCell(center - boundsRadius);
             Vector3Int max = tilemap.WorldToCell(center + boundsRadius);
             var cells = new List<(Vector3 WorldPosition, bool ClearsCrack)>();
-            int extra = structuralSystem != null ? StructuralIntegritySystem.StableDistance : 0;
+            int extra = StructuralIntegritySystem.StableDistance;
             for (int x = min.x - extra; x <= max.x + extra; x++)
             for (int y = min.y; y <= max.y; y++)
             {
                 var cell = new Vector3Int(x, y, min.z);
                 Vector3 position = tilemap.GetCellCenterWorld(cell);
-                bool clearsCrack = structuralSystem != null
-                    && structuralSystem.WouldSupportClearCeilingRisk(cell, center, radius);
+                bool clearsCrack = structuralSystem.WouldSupportClearCeilingRisk(cell, center, radius);
                 if (clearsCrack || StructuralSupport.CoversPosition(center, position, radius))
                     cells.Add((position, clearsCrack));
             }

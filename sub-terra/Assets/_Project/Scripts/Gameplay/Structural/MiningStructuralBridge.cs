@@ -19,7 +19,7 @@ namespace SubTerra.Gameplay.Structural
 
         private void OnEnable()
         {
-            if (miningSystem != null)
+            if (miningSystem != null && structuralIntegritySystem != null && structuralIntegritySystem.IsEnabledForWorld)
                 miningSystem.TileMined += OnTileMined;
         }
 
