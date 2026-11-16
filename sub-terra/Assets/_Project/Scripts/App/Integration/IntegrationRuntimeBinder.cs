@@ -40,7 +40,8 @@ namespace SubTerra.App.Integration
         IMiningTransaction,
         IGameplayEventSink,
         IIntegrationRestoreListener,
-        IPlayerPositionPersistence
+        IPlayerPositionPersistence,
+        IPlayerOxygenPersistence
     {
         [SerializeField] private BuildingPlacementSystem buildingPlacementSystem;
         [SerializeField] private HudBinder hudBinder;
@@ -568,6 +569,25 @@ namespace SubTerra.App.Integration
             if (miningSystem == null) miningSystem = Resolve<MiningSystem>(null);
             return miningSystem != null
                 && PlayerResumePosition.TryRestore(playerMovement, miningSystem.ForegroundTilemap, position);
+        }
+
+        public float? CapturePlayerOxygen()
+        {
+            var survival = runFailureController != null ? runFailureController.SurvivalController : null;
+            return survival != null && survival.OxygenMaximum > 0f
+                ? survival.OxygenRemaining : null;
+        }
+
+        public bool TryRestorePlayerOxygen(float remaining)
+        {
+            runFailureController = Resolve(runFailureController);
+            if (runFailureController == null || runFailureController.SurvivalController == null)
+            {
+                return false;
+            }
+
+            runFailureController.SurvivalController.RestoreOxygen(remaining);
+            return true;
         }
 
         /// <summary>SaveRuntime Continue 경로에서 월드 복원 직후 호출한다.</summary>

@@ -35,6 +35,12 @@ namespace SubTerra.Gameplay.Player
             return ratio <= cautionRatio ? OxygenRiskLevel.Caution : OxygenRiskLevel.Safe;
         }
 
+        internal void RestoreRemaining(float remaining)
+        {
+            Remaining = Math.Clamp(remaining, 0f, Maximum);
+            timeWithoutOxygen = 0d;
+        }
+
         public static float DrainMultiplier(bool climbing, bool moving, float loadRatio, float movementMultiplier,
             float ladderMultiplier, float fullCargoMultiplier, float ladderCargoCap)
         {

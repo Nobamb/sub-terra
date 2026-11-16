@@ -45,7 +45,8 @@ namespace SubTerra.App.Save
         WorldProviderMissing = 4,
         WorldRestoreFailed = 5,
         RecalculationFailed = 6,
-        PlayerPositionRestoreFailed = 7
+        PlayerPositionRestoreFailed = 7,
+        PlayerOxygenRestoreFailed = 8
     }
 
     public sealed class ContinueResult
@@ -71,6 +72,7 @@ namespace SubTerra.App.Save
         private readonly IDerivedStateRecalculator recalculator;
         private readonly ILoadedUiGate uiGate;
         private readonly IPlayerPositionPersistence playerPosition;
+        private readonly IPlayerOxygenPersistence playerOxygen;
 
         public ContinueService(
             LoadService loader,
@@ -79,7 +81,8 @@ namespace SubTerra.App.Save
             IWorldSnapshotResolver snapshotResolver,
             IDerivedStateRecalculator derivedStateRecalculator,
             ILoadedUiGate loadedUiGate,
-            IPlayerPositionPersistence positionPersistence = null)
+            IPlayerPositionPersistence positionPersistence = null,
+            IPlayerOxygenPersistence oxygenPersistence = null)
         {
             loadService = loader ?? throw new ArgumentNullException(nameof(loader));
             stateReceiver = restoredStateReceiver
@@ -91,6 +94,7 @@ namespace SubTerra.App.Save
                 ?? throw new ArgumentNullException(nameof(derivedStateRecalculator));
             uiGate = loadedUiGate ?? throw new ArgumentNullException(nameof(loadedUiGate));
             playerPosition = positionPersistence;
+            playerOxygen = oxygenPersistence;
         }
 
         public ContinueResult Continue(int slotId)
@@ -146,6 +150,11 @@ namespace SubTerra.App.Save
                 return new ContinueResult(ContinueStatus.PlayerPositionRestoreFailed, load);
             }
 
+            if (!TryRestoreOxygen(load.State, playerOxygen))
+            {
+                return new ContinueResult(ContinueStatus.PlayerOxygenRestoreFailed, load);
+            }
+
             uiGate.SetReady(true);
             return new ContinueResult(ContinueStatus.Success, load);
         }
@@ -153,6 +162,12 @@ namespace SubTerra.App.Save
         internal static bool RequiresWorldRestore(string sceneName)
         {
             return sceneName != SceneNames.SurfaceBase;
+        }
+
+        internal static bool TryRestoreOxygen(RestoredSaveState state, IPlayerOxygenPersistence persistence)
+        {
+            return state.ResumeOxygen is not float remaining
+                || (persistence != null && persistence.TryRestorePlayerOxygen(remaining));
         }
     }
 

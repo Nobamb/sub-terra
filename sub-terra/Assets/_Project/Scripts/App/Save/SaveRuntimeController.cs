@@ -530,6 +530,7 @@ namespace SubTerra.App.Save
                 return lastContinueResult;
             }
 
+            var playerPersistence = new ScenePlayerPersistence();
             var service = new ContinueService(
                 loadService,
                 this,
@@ -537,7 +538,8 @@ namespace SubTerra.App.Save
                 this,
                 this,
                 this,
-                new ScenePlayerPositionPersistence());
+                playerPersistence,
+                playerPersistence);
             suppressContinueCapture = true;
             lastContinueResult = service.Continue(slotId);
             if (lastContinueResult.IsSuccess)
@@ -747,16 +749,19 @@ namespace SubTerra.App.Save
                 TryCaptureMineWorldIntoCache(provider);
             }
 
+            var player = uiReady && canCaptureProvider ? ResolvePlayerPosition() : null;
+            var sceneName = SceneManager.GetActiveScene().name;
             return new SaveCaptureContext(
                 GameBootstrapper.Instance?.State,
                 inventory,
                 upgrades,
                 dialogueGenerator,
                 canCaptureProvider ? provider : null,
-                SceneManager.GetActiveScene().name,
+                sceneName,
                 Application.version,
                 mineWorldCache.Peek(),
-                uiReady && canCaptureProvider ? ResolvePlayerPosition()?.CapturePlayerPosition() : null);
+                player?.CapturePlayerPosition(),
+                sceneName == SceneNames.Integration ? (player as IPlayerOxygenPersistence)?.CapturePlayerOxygen() : null);
         }
 
         /// <summary>
@@ -1438,6 +1443,12 @@ namespace SubTerra.App.Save
                 }
             }
 
+            if (!ContinueService.TryRestoreOxygen(load.State, new ScenePlayerPersistence()))
+            {
+                CompleteContinue(new ContinueResult(ContinueStatus.PlayerOxygenRestoreFailed, load), completed);
+                yield break;
+            }
+
             ActivateSlot(slotId);
             dirty = false;
             suppressContinueCapture = false;
@@ -1474,11 +1485,14 @@ namespace SubTerra.App.Save
             return null;
         }
 
-        private sealed class ScenePlayerPositionPersistence : IPlayerPositionPersistence
+        private sealed class ScenePlayerPersistence : IPlayerPositionPersistence, IPlayerOxygenPersistence
         {
             public PlayerPositionSaveData CapturePlayerPosition() => ResolvePlayerPosition()?.CapturePlayerPosition();
             public bool TryRestorePlayerPosition(PlayerPositionSaveData position)
                 => ResolvePlayerPosition()?.TryRestorePlayerPosition(position) == true;
+            public float? CapturePlayerOxygen() => (ResolvePlayerPosition() as IPlayerOxygenPersistence)?.CapturePlayerOxygen();
+            public bool TryRestorePlayerOxygen(float remaining)
+                => (ResolvePlayerPosition() as IPlayerOxygenPersistence)?.TryRestorePlayerOxygen(remaining) == true;
         }
 
         private static void NotifyIntegrationDerivedRecalculated()

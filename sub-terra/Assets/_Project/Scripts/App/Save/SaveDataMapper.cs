@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using SubTerra.App.Core;
 using SubTerra.App.Drone.Dialogue;
 using SubTerra.App.Inventory;
 using SubTerra.App.Outpost;
@@ -37,6 +38,7 @@ namespace SubTerra.App.Save
             }
 
             var game = context.GameState;
+            var resumeOxygen = GetResumeOxygen(context.TargetSceneName, context.ResumeOxygen);
             var data = new GameSaveData
             {
                 saveVersion = SaveVersions.Current,
@@ -77,6 +79,8 @@ namespace SubTerra.App.Save
                 world = world,
                 resumePosition = context.ResumePosition != null && context.ResumePosition.IsValid
                     ? context.ResumePosition.Copy() : null,
+                hasResumeOxygen = resumeOxygen.HasValue,
+                resumeOxygen = resumeOxygen.GetValueOrDefault(),
                 mineResetElapsedSeconds = game.MineResetCycle.ElapsedSeconds,
                 mineResetPaidCount = game.MineResetCycle.PaidResetCount,
                 mineResetClockVisible = game.MineResetCycle.ClockVisible
@@ -135,8 +139,15 @@ namespace SubTerra.App.Save
                 data.world,
                 data.targetSceneName,
                 data.resumePosition != null && data.resumePosition.IsValid
-                    ? data.resumePosition.Copy() : null);
+                    ? data.resumePosition.Copy() : null,
+                GetResumeOxygen(data.targetSceneName, data.hasResumeOxygen ? data.resumeOxygen : null));
             return true;
+        }
+
+        private static float? GetResumeOxygen(string sceneName, float? remaining)
+        {
+            return sceneName == SceneNames.Integration && remaining is float value
+                && float.IsFinite(value) && value >= 0f ? value : null;
         }
 
         /// <summary>
