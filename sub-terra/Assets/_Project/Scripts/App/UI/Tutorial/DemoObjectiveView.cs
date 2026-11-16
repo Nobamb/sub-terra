@@ -4,6 +4,7 @@ using SubTerra.Shared.Audio;
 using SubTerra.App.Core.Data;
 using SubTerra.App.Tutorial;
 using SubTerra.App.UI;
+using SubTerra.App.UI.HUD;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -170,7 +171,7 @@ namespace SubTerra.App.UI.Tutorial
             UiSfx.Attach(card.GetComponent<Button>(), SfxId.None, hover: true);
             card.sizeDelta = new Vector2(460f, 116f);
             card.localScale = Vector3.one;
-            card.anchoredPosition = new Vector2(16f, -232f);
+            card.anchoredPosition = new Vector2(16f, -BasicHudView.BelowHudY);
             PlaceSummaryChild(card, "QuestMissionLabel", new Vector2(36f, -10f), new Vector2(170f, 32f));
             var mission = card.Find("QuestMissionLabel");
             if (mission != null && mission.TryGetComponent<TMP_Text>(out var missionText))

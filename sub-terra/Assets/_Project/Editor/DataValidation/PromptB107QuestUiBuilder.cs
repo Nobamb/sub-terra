@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using SubTerra.App.Tutorial;
+using SubTerra.App.UI.HUD;
 using SubTerra.App.UI.Tutorial;
 using TMPro;
 using UnityEditor;
@@ -24,7 +25,7 @@ namespace SubTerra.App.Editor.DataValidation
 
         // 압축한 HUD 아래에 배치한다. 긴 설명은 클릭해서 여는 기존 상세창에서 확인한다.
         public const float SummaryCardX = 16f;
-        public const float SummaryCardY = -232f;
+        public const float SummaryCardY = -BasicHudView.BelowHudY;
         public const float SummaryCardWidth = 460f;
         public const float SummaryCardHeight = 116f;
         public const float SummaryHeaderInset = 36f;

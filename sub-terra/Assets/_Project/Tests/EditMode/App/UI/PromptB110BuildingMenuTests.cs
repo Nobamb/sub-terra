@@ -150,7 +150,7 @@ namespace SubTerra.App.Tests.UI
             var last = rects[rects.Count - 1];
             Assert.That(expand.anchoredPosition.y, Is.LessThan(last.anchoredPosition.y - last.sizeDelta.y));
             Assert.That(-expand.anchoredPosition.y + expand.sizeDelta.y, Is.LessThanOrEqualTo(rail.sizeDelta.y));
-            Assert.That(rail.sizeDelta.y, Is.LessThanOrEqualTo(560f), "Scene 배치(16,-360) 아래 1080 안에 들어간다.");
+            Assert.That(rail.sizeDelta.y, Is.LessThanOrEqualTo(560f), "Scene 배치(16,-396) 아래 1080 안에 들어간다.");
         }
 
         [Test]

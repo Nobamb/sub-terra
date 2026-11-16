@@ -1064,6 +1064,7 @@ namespace SubTerra.App.Integration
             if (oxygenSurvival != null)
             {
                 oxygenSurvival.OxygenRiskChanged -= RenderOxygenRisk;
+                oxygenSurvival.OxygenChanged -= RenderOxygenLevel;
                 oxygenSurvival.BindOxygenDepth(null);
             }
             if (resourcePickupVfx != null) resourcePickupVfx.Unbind();
@@ -1183,7 +1184,15 @@ namespace SubTerra.App.Integration
             if (oxygenSurvival == null) return;
             oxygenSurvival.BindOxygenDepth(() => depthBridge.LastPublishedDepth);
             oxygenSurvival.OxygenRiskChanged += RenderOxygenRisk;
+            oxygenSurvival.OxygenChanged += RenderOxygenLevel;
             RenderOxygenRisk(oxygenSurvival.OxygenRisk);
+            RenderOxygenLevel(oxygenSurvival.OxygenRemaining, oxygenSurvival.OxygenMaximum);
+        }
+
+        private void RenderOxygenLevel(float current, float maximum)
+        {
+            if (hudBinder == null || hudBinder.BasicHud == null) return;
+            hudBinder.BasicHud.SetOxygenLevel(current, maximum);
         }
 
         private void RenderOxygenRisk(OxygenRiskLevel risk)
