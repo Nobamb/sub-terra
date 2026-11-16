@@ -104,6 +104,7 @@ namespace SubTerra.App.UI.Guide
 
         /// <summary>X 버튼. 실제 닫기 경로(chrome 상태 갱신 포함)는 가이드 호스트가 정한다.</summary>
         public event Action CloseRequested;
+        public event Action Hidden;
 
         /// <summary>확인용: true면 Update가 시간을 진행하지 않고 테스트가 Tick으로 직접 진행한다.</summary>
         public bool ManualTick { get; set; }
@@ -306,6 +307,7 @@ namespace SubTerra.App.UI.Guide
             }
 
             PopupWindowSorting.Remove(canvas);
+            Hidden?.Invoke();
         }
 
         private void OnDestroy()

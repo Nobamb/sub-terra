@@ -59,14 +59,16 @@ namespace SubTerra.Gameplay.Player
         private void Update()
         {
             EnsureState();
-            if ((oxygenDepth == null || oxygen.Remaining > 0d) && State.AdvanceRegeneration(Time.deltaTime))
+            float deltaTime = Time.deltaTime;
+            if (deltaTime <= 0f) return;
+            if ((oxygenDepth == null || oxygen.Remaining > 0d) && State.AdvanceRegeneration(deltaTime))
             {
                 PublishStateChanged();
             }
 
             UpdateDamageFlash();
             TrackFall();
-            AdvanceOxygen(Time.deltaTime);
+            AdvanceOxygen(deltaTime);
         }
 
         public void BindOxygenDepth(Func<float> readDepth, Func<bool> isGasExposed = null)

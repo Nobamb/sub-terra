@@ -627,10 +627,11 @@ namespace SubTerra.App.UI.SurfaceBase
             if (skin != null) skin.PlayApplySound();
         }
 
-        public void SetSettingsVisible(bool visible)
+        public void SetSettingsVisible(bool visible, Action onClosed = null)
         {
             if (settingsRoot == null)
             {
+                if (!visible) onClosed?.Invoke();
                 return;
             }
 
@@ -640,7 +641,11 @@ namespace SubTerra.App.UI.SurfaceBase
                 var skin = settingsRoot.GetComponent<SubTerra.App.UI.MainMenu.SettingsMenuSkin>();
                 if (skin != null && skin.isActiveAndEnabled && Application.isPlaying)
                 {
-                    skin.PlayCloseAnimation(() => settingsRoot.SetActive(false));
+                    skin.PlayCloseAnimation(() =>
+                    {
+                        if (settingsRoot != null) settingsRoot.SetActive(false);
+                        onClosed?.Invoke();
+                    });
                     return;
                 }
             }
@@ -649,6 +654,10 @@ namespace SubTerra.App.UI.SurfaceBase
             {
                 // prompt-B 44: 설정창을 Surface Base 본문(레벨 요약 포함)보다 상위 레이어로 올린다.
                 BringSettingsToFront();
+            }
+            else
+            {
+                onClosed?.Invoke();
             }
         }
 
