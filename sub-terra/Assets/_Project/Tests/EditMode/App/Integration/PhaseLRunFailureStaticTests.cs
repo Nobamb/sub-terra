@@ -31,20 +31,20 @@ namespace SubTerra.App.Tests.Integration
         {
             var shallow = new PlayerOxygenState(10f);
             var deep = new PlayerOxygenState(10f);
-            Assert.That(shallow.Advance(4f, 0, 1f, 0.25f, 1f), Is.Zero);
-            Assert.That(deep.Advance(4f, 4, 1f, 0.25f, 1f), Is.Zero);
+            Assert.That(shallow.Advance(4f, 12f, 0.25f, 0.0625f, 1f, 1f), Is.Zero);
+            Assert.That(deep.Advance(4f, 28f, 0.25f, 0.0625f, 1f, 1f), Is.Zero);
             Assert.That(shallow.Remaining, Is.EqualTo(6d));
             Assert.That(deep.Remaining, Is.EqualTo(2d));
             Assert.That(deep.GetRisk(0.35f, 0.15f), Is.EqualTo(OxygenRiskLevel.Caution));
 
-            Assert.That(deep.Advance(1.5f, 4, 1f, 0.25f, 1f), Is.Zero);
+            Assert.That(deep.Advance(1.5f, 28f, 0.25f, 0.0625f, 1f, 1f), Is.Zero);
             Assert.That(deep.GetRisk(0.35f, 0.15f), Is.EqualTo(OxygenRiskLevel.Critical));
-            Assert.That(deep.Advance(0f, 4, 1f, 0.25f, 1f), Is.Zero);
-            Assert.That(deep.Advance(0.5f, 4, 1f, 0.25f, 1f), Is.EqualTo(1));
-            Assert.That(deep.Advance(2.5f, 4, 1f, 0.25f, 1f), Is.EqualTo(2));
+            Assert.That(deep.Advance(0f, 28f, 0.25f, 0.0625f, 1f, 1f), Is.Zero);
+            Assert.That(deep.Advance(0.5f, 28f, 0.25f, 0.0625f, 1f, 1f), Is.EqualTo(1));
+            Assert.That(deep.Advance(2.5f, 28f, 0.25f, 0.0625f, 1f, 1f), Is.EqualTo(2));
             deep.Refill();
             Assert.That(deep.Remaining, Is.EqualTo(10d));
-            Assert.That(deep.Advance(5.5f, 4, 1f, 0.25f, 1f), Is.Zero);
+            Assert.That(deep.Advance(5.5f, 28f, 0.25f, 0.0625f, 1f, 1f), Is.Zero);
         }
 
         [Test]
@@ -57,8 +57,68 @@ namespace SubTerra.App.Tests.Integration
             Assert.That(idle, Is.EqualTo(1f));
             Assert.That(moving, Is.EqualTo(2.25f));
             Assert.That(climbing, Is.EqualTo(1.8f).Within(0.0001f));
-            oxygen.Advance(4f, 4, 1f, 0.25f, 1f, climbing);
+            oxygen.Advance(4f, 16f, 1f, 0.0625f, 1f, 1f, climbing);
             Assert.That(oxygen.Remaining, Is.EqualTo(85.6d).Within(0.0001d));
+        }
+
+        [TestCase(0f, 8d)]
+        [TestCase(10f, 8d)]
+        [TestCase(10.01f, 2d)]
+        public void Issue344_ShallowRecoveryTakesPriorityOverGas(float depth, double expected)
+        {
+            var oxygen = new PlayerOxygenState(10f);
+            oxygen.Advance(2f, 12f, 1f, 0f, 1f, 1f, drainMultiplier: 2f);
+            Assert.That(oxygen.Advance(2f, depth, 1f, 0f, 1f, 1f, drainMultiplier: 2f), Is.Zero);
+            Assert.That(oxygen.Remaining, Is.EqualTo(expected));
+            Assert.That(oxygen.Advance(30f, 10f, 1f, 0f, 1f, 1f, drainMultiplier: 2f), Is.Zero);
+            Assert.That(oxygen.Remaining, Is.EqualTo(oxygen.Maximum));
+        }
+
+        [Test]
+        public void Issue344_RecoveryClearsPartialDepletionTick()
+        {
+            var oxygen = new PlayerOxygenState(10f);
+            Assert.That(oxygen.Advance(10.75f, 12f, 1f, 0f, 1f, 1f), Is.Zero);
+            Assert.That(oxygen.Remaining, Is.Zero);
+            Assert.That(oxygen.Advance(0.25f, 10f, 1f, 0f, 1f, 1f), Is.Zero);
+            Assert.That(oxygen.Advance(0.75f, 12f, 1f, 0f, 1f, 1f), Is.Zero);
+            Assert.That(oxygen.Advance(0.5f, 12f, 1f, 0f, 1f, 1f), Is.EqualTo(1));
+        }
+
+        [Test]
+        public void Issue343_GasDoublesDeepOxygenDrainWithCargoAndStopsOnExit()
+        {
+            var host = new GameObject("OxygenGas");
+            try
+            {
+                var survival = host.AddComponent<PlayerSurvivalController>();
+                var depthBridge = host.AddComponent<GameplayDepthStatusBridge>();
+                depthBridge.SetPlayer(host.transform);
+                host.transform.position = new Vector3(0f, -10.01f, 0f);
+                bool exposed = false;
+                survival.BindOxygenDepth(depthBridge.GetCurrentDepthMeters, () => exposed);
+                survival.SetOxygenCargoLoadRatio(1f);
+                var tick = typeof(PlayerSurvivalController).GetMethod("AdvanceOxygen",
+                    BindingFlags.Instance | BindingFlags.NonPublic);
+
+                float start = survival.OxygenRemaining;
+                tick.Invoke(survival, new object[] { 10f });
+                float outside = start - survival.OxygenRemaining;
+                Assert.That(outside, Is.GreaterThan(0f));
+                start = survival.OxygenRemaining;
+                exposed = true;
+                tick.Invoke(survival, new object[] { 10f });
+                Assert.That(start - survival.OxygenRemaining, Is.EqualTo(2f * outside).Within(0.001f));
+
+                start = survival.OxygenRemaining;
+                exposed = false;
+                tick.Invoke(survival, new object[] { 10f });
+                Assert.That(start - survival.OxygenRemaining, Is.EqualTo(outside).Within(0.001f));
+            }
+            finally
+            {
+                Object.DestroyImmediate(host);
+            }
         }
 
         [Test]

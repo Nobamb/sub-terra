@@ -20,6 +20,9 @@ namespace SubTerra.Gameplay.Player
         [SerializeField, Min(1f)] private float maximumOxygen = 100f;
         [SerializeField, Min(0f)] private float oxygenPerSecond = 0.5f;
         [SerializeField, Min(0f)] private float oxygenPerSecondPerMeter = 0.02f;
+        [SerializeField, Min(0f), Tooltip("0이면 기본 산소 소모율을 얕은 구간 회복률로 사용합니다.")]
+        private float shallowOxygenRecoveryPerSecond;
+        [SerializeField, Min(1f)] private float gasOxygenDrainMultiplier = 2f;
         [SerializeField, Min(0.1f)] private float oxygenDamageInterval = 1f;
         [SerializeField, Min(0f)] private float oxygenDepletionDamage = 5f;
         [SerializeField, Range(0f, 1f)] private float oxygenCautionRatio = 0.35f;
@@ -33,6 +36,9 @@ namespace SubTerra.Gameplay.Player
         public float MaximumOxygen => maximumOxygen;
         public float OxygenPerSecond => oxygenPerSecond;
         public float OxygenPerSecondPerMeter => oxygenPerSecondPerMeter;
+        public float ShallowOxygenRecoveryPerSecond =>
+            shallowOxygenRecoveryPerSecond > 0f ? shallowOxygenRecoveryPerSecond : oxygenPerSecond;
+        public float GasOxygenDrainMultiplier => Mathf.Max(1f, gasOxygenDrainMultiplier);
         public float OxygenDamageInterval => oxygenDamageInterval;
         public float OxygenDepletionDamage => oxygenDepletionDamage;
         public float OxygenCautionRatio => oxygenCautionRatio;

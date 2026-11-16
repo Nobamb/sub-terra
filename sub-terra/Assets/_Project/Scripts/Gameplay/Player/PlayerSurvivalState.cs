@@ -12,6 +12,7 @@ namespace SubTerra.Gameplay.Player
 
     public sealed class PlayerOxygenState
     {
+        private const float MaximumRecoveryDepthMeters = 10f;
         private double timeWithoutOxygen;
         public float Maximum { get; }
         public double Remaining { get; private set; }
@@ -43,15 +44,23 @@ namespace SubTerra.Gameplay.Player
             return (moving ? movementMultiplier : 1f) * cargo;
         }
 
-        public int Advance(float deltaTime, int depth, float baseRate, float perMeter, float damageInterval,
-            float drainMultiplier = 1f)
+        public int Advance(float deltaTime, float depth, float baseRate, float perMeter, float damageInterval,
+            float shallowRecoveryPerSecond, float drainMultiplier = 1f)
         {
             if (deltaTime <= 0f) return 0;
+
+            if (depth <= MaximumRecoveryDepthMeters)
+            {
+                Remaining = Math.Min(Maximum, Remaining + shallowRecoveryPerSecond * (double)deltaTime);
+                timeWithoutOxygen = 0d;
+                return 0;
+            }
 
             double depletedTime = deltaTime;
             if (Remaining > 0d)
             {
-                double drainRate = (baseRate + perMeter * Math.Max(0, depth)) * drainMultiplier;
+                // 깊이별 소모량에는 기존과 같이 반올림한 깊이를 사용한다.
+                double drainRate = (baseRate + perMeter * Math.Round(depth)) * drainMultiplier;
                 if (drainRate <= 0d) return 0;
                 depletedTime -= Remaining / drainRate;
                 Remaining = Math.Max(0d, Remaining - drainRate * deltaTime);

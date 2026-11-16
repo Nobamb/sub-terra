@@ -26,6 +26,12 @@ namespace SubTerra.App.Integration
         /// <summary>현재 브리지가 마지막으로 GameState에 반영한 깊이(m).</summary>
         public int LastPublishedDepth => lastPublishedDepth == int.MinValue ? 0 : lastPublishedDepth;
 
+        public float GetCurrentDepthMeters()
+        {
+            var player = ResolvePlayer();
+            return player != null ? Mathf.Max(0f, surfaceY - player.position.y) : LastPublishedDepth;
+        }
+
         public float SurfaceY
         {
             get => surfaceY;
