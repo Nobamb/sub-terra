@@ -4798,6 +4798,10 @@ MonoBehaviour:
   upgradeButton: {fileID: 0}
   upgradeCloseButton: {fileID: 0}
   upgradeRoot: {fileID: 0}
+  upgradeCard: {fileID: 0}
+  inventoryButton: {fileID: 0}
+  inventoryRoot: {fileID: 0}
+  inventoryPanel: {fileID: 0}
   resetMineButton: {fileID: 0}
   resetMineFeeText: {fileID: 0}
   resetMineConfirmRoot: {fileID: 0}
@@ -9810,7 +9814,6 @@ MonoBehaviour:
   scanRadius: 3
   localRiskRadius: 1
   maximumCollapseTiles: 3
-  miningImpactMultiplier: 100
   worldSeed: 20260731
   protectedTiles:
   - {fileID: 11400000, guid: e006b8c9f8b501447b72e1ab2cce68b7, type: 2}
@@ -10078,7 +10081,6 @@ MonoBehaviour:
   audioSource: {fileID: 279480569}
   explorationBgmSource: {fileID: 0}
   dangerBgmSource: {fileID: 0}
-  warningTone: {fileID: 0}
   reduceMotion: 0
   cameraFollow: {fileID: 0}
 --- !u!82 &279480569
@@ -18103,7 +18105,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 31a19414c41e5ae4aae2af33fee712f6, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Mask
   m_ShowMaskGraphic: 0
 --- !u!1 &540731170
@@ -33479,6 +33481,7 @@ MonoBehaviour:
   - {fileID: 158639419}
   - {fileID: 171072610}
   - {fileID: 354122411}
+  frameBackings: []
   signalLine: {fileID: 158308258}
   signalMotes:
   - {fileID: 1118322100}
@@ -34971,7 +34974,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 16, y: -382}
+  m_AnchoredPosition: {x: 16, y: -418}
   m_SizeDelta: {x: 440, y: 32}
   m_Pivot: {x: 0, y: 1}
 --- !u!1 &924900955
@@ -36687,6 +36690,9 @@ MonoBehaviour:
     failureExposureThreshold: 10
     recoveryPerTick: 1
     healthDamagePerTick: 10
+  hazeSettings:
+    riseSeconds: 1.2
+    fallSeconds: 0.4
 --- !u!114 &976616840
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -36704,6 +36710,17 @@ MonoBehaviour:
   outpostArrivalOffset: {x: 0, y: 1}
   panelBinder: {fileID: 638013383}
   cameraFollow: {fileID: 0}
+  warpSettings:
+    blackoutDuration: 0.25
+    glitchDuration: 0.25
+    blackHoldDuration: 0.15
+    screenOnDuration: 0.3
+    glitchColor: {r: 0.3, g: 0.86, b: 0.92, a: 1}
+    secondaryColor: {r: 0.55, g: 0.95, b: 1, a: 1}
+    suckInDuration: 0.55
+    voidDuration: 0.45
+    emergeDuration: 0.65
+    wormholeWorldDiameter: 2.4
 --- !u!1 &984246657
 GameObject:
   m_ObjectHideFlags: 0
@@ -47569,6 +47586,10 @@ MonoBehaviour:
   canvasGroup: {fileID: 0}
   overlayImage: {fileID: 0}
   targetCamera: {fileID: 0}
+  lightHoleInnerFraction: 0.35
+  hazeTintStrength: 0.5
+  lightHoleCenterAlpha: 0.4
+  hazeHoleExtraAlpha: 0.08
 --- !u!1 &1282418287
 GameObject:
   m_ObjectHideFlags: 0
@@ -51024,6 +51045,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: SubTerra.App::SubTerra.App.UI.Progression.ProgressionPanelBinder
   view: {fileID: 1384950350}
+  tracePurchases: 0
 --- !u!114 &1384950350
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -96231,7 +96253,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 16, y: -232}
+  m_AnchoredPosition: {x: 16, y: -268}
   m_SizeDelta: {x: 460, y: 116}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &1726674422
@@ -106588,7 +106610,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1197547870862390238, guid: a289c635ff10e834facbb23edae98a14, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -360
+      value: -396
       objectReference: {fileID: 0}
     - target: {fileID: 1197547870862390238, guid: a289c635ff10e834facbb23edae98a14, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -108656,6 +108678,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: SubTerra.Gameplay.Hazards::SubTerra.Gameplay.Hazards.GasVisionWorldVeil
   veilRenderer: {fileID: 0}
   opacity: 0
+  lightHoleInnerFraction: 0.35
+  hazeTintStrength: 0.5
+  lightHoleCenterAlpha: 0.4
+  hazeHoleExtraAlpha: 0.08
 --- !u!212 &2032315800
 SpriteRenderer:
   serializedVersion: 3
