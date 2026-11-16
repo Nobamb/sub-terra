@@ -15,7 +15,7 @@ using UnityEngine.Tilemaps;
 
 namespace SubTerra.App.Tests.Debug
 {
-    /// <summary>B-193: hit / fall / hitgas / falling 명령과 spawn의 Enter 목표 칸 규칙.</summary>
+    /// <summary>B-193 및 #345의 가스·착지 명령과 spawn의 Enter 목표 칸 규칙.</summary>
     public sealed class PromptB193DebugCommandTests
     {
         private const string CatalogPath = "Assets/_Project/Data/Catalog/GameDataCatalog.asset";
@@ -35,135 +35,64 @@ namespace SubTerra.App.Tests.Debug
             created.Clear();
         }
 
-        [TestCase("hit rock", 25f)]
-        [TestCase("hit copper", 37.5f)]
-        [TestCase("hit iron", 50f)]
-        [TestCase("hit lithium", 20f)]
-        [TestCase("hit rock golden", 32.5f)]
-        [TestCase("hit iron golden", 65f)]
-        [TestCase("hit gas", 25f)]
-        [TestCase("hit 구리", 37.5f)]
-        [TestCase("hit normal gold", 32.5f)]
-        public void Hit_AppliesCollapseDamageByKindAndGold(string line, float expected)
+        [TestCase("hit")]
+        [TestCase("fall")]
+        [TestCase("낙석피해")]
+        [TestCase("낙석")]
+        public void RemovedCollapseCommands_AreUnknownAndMissingFromSuggestions(string alias)
+        {
+            var registry = DeveloperDebugCommandRegistry.CreateIsolated();
+            Assert.That(registry.Execute(alias, null), Is.EqualTo("알 수 없는 명령: " + alias));
+            var suggestions = new List<DeveloperDebugCommandInfo>();
+            registry.CollectPrefix(alias, suggestions);
+            Assert.That(suggestions.Exists(info => info.Name == "hit" || info.Name == "fall"), Is.False);
+        }
+
+        [TestCase("hitgas")]
+        [TestCase("falling")]
+        public void HazardCommands_AreUnavailableOutsideMine(string line)
+        {
+            var rig = CreateRig(SceneNames.SurfaceBase);
+            Assert.That(Session().Execute(line, Context(rig, CreateSurvival())),
+                Is.EqualTo("광산 씬에서만 사용할 수 있습니다"));
+        }
+
+        [TestCase("O2 1", 1)]
+        [TestCase("o2 1", 1)]
+        [TestCase("O2 -10", 0)]
+        [TestCase("O2 150", 100)]
+        public void OxygenCommand_SetsPercentAndPublishesChanges(string line, int percent)
         {
             var rig = CreateRig(SceneNames.Integration);
             var survival = CreateSurvival();
-            var session = Session();
+            survival.BindOxygenDepth(() => 25);
+            float published = -1f;
+            survival.OxygenChanged += (remaining, _) => published = remaining;
 
-            var message = session.Execute(line, Context(rig, survival));
-
-            Assert.That(message, Does.StartWith("hit tile."), message);
-            Assert.That(100f - survival.State.Health, Is.EqualTo(expected).Within(0.01f), line);
+            Assert.That(Session().Execute(line, Context(rig, survival)), Is.EqualTo("O2 " + percent + "%"));
+            Assert.That(survival.OxygenRemaining, Is.EqualTo(survival.OxygenMaximum * (percent / 100f)).Within(0.001f));
+            Assert.That(published, Is.EqualTo(survival.OxygenRemaining));
+            Assert.That(survival.OxygenRisk, Is.EqualTo(percent < 100 ? OxygenRiskLevel.Critical : OxygenRiskLevel.Safe));
         }
 
-        [Test]
-        public void Hit_SecondHitInsideInvulnerabilityIsRejected()
+        [TestCase("O2")]
+        [TestCase("O2 1.5")]
+        [TestCase("O2 100 %")]
+        public void OxygenCommand_RejectsInvalidPercent(string line)
         {
             var rig = CreateRig(SceneNames.Integration);
             var survival = CreateSurvival();
-            var session = Session();
-            var context = Context(rig, survival);
-
-            Assert.That(session.Execute("hit copper", context), Does.StartWith("hit tile.copper"));
-            var afterFirst = survival.State.Health;
-            Assert.That(session.Execute("hit copper", context), Does.StartWith("피해 없음"));
-            Assert.That(survival.State.Health, Is.EqualTo(afterFirst));
+            survival.BindOxygenDepth(() => 25);
+            Assert.That(Session().Execute(line, Context(rig, survival)), Does.Contain("인자 오류"));
+            Assert.That(survival.OxygenRemaining, Is.EqualTo(survival.OxygenMaximum));
         }
 
         [Test]
-        public void Hit_DoesNotShakeTheCamera_ButRealCollapseImpactStillDoes()
+        public void OxygenCommand_RequiresAnActiveExpedition()
         {
-            var rig = CreateRig(SceneNames.Integration);
-            var cameraObject = new GameObject("PromptB193Camera");
-            created.Add(cameraObject);
-            var follow = cameraObject.AddComponent<PlayerCameraFollow>();
-            var shakeField = typeof(PlayerCameraFollow).GetField(
-                "shakeTimeRemaining", BindingFlags.Instance | BindingFlags.NonPublic);
-            var previousReduceMotion = AccessibilityPreferences.ReduceMotion;
-            AccessibilityPreferences.ReduceMotion = false;
-            try
-            {
-                var survival = CreateSurvival();
-                SetField(survival, "cameraFollow", follow);
-
-                Assert.That(Session().Execute("hit copper", Context(rig, survival)), Does.StartWith("hit tile.copper"));
-                Assert.That((float)shakeField.GetValue(follow), Is.Zero, "hit 명령은 카메라를 흔들지 않는다");
-
-                var real = CreateSurvival();
-                SetField(real, "cameraFollow", follow);
-                Assert.That(real.ApplyCollapseImpact(1f), Is.True);
-                Assert.That((float)shakeField.GetValue(follow), Is.GreaterThan(0f), "실제 낙석 피해는 그대로 흔든다");
-
-                shakeField.SetValue(follow, 0f);
-                var faller = CreateSurvival();
-                SetField(faller, "cameraFollow", follow);
-                Assert.That(Session().Execute("falling 30m", Context(rig, faller)), Does.StartWith("falling 30m"));
-                Assert.That((float)shakeField.GetValue(follow), Is.Zero, "falling 명령은 카메라를 흔들지 않는다");
-                Assert.That(faller.State.Health, Is.LessThan(100f));
-
-                // 디버그 구간이 끝나면 다시 흔든다.
-                var after = CreateSurvival();
-                SetField(after, "cameraFollow", follow);
-                Assert.That(after.ApplyCollapseImpact(1f), Is.True);
-                Assert.That((float)shakeField.GetValue(follow), Is.GreaterThan(0f));
-            }
-            finally
-            {
-                AccessibilityPreferences.ReduceMotion = previousReduceMotion;
-            }
-        }
-
-        [Test]
-        public void Hit_DoesNotDropRocksOrMakeGas()
-        {
-            var rig = CreateRig(SceneNames.Integration);
+            var rig = CreateRig(SceneNames.SurfaceBase);
             var survival = CreateSurvival();
-
-            Assert.That(Session().Execute("hit gas", Context(rig, survival)), Does.StartWith("hit tile.gas-pocket"));
-
-            Assert.That(rig.Overlay.transform.Find("StructuralFallingRock"), Is.Null);
-        }
-
-        [Test]
-        public void HitAndFall_RejectBadArgumentsFuelGoldAndOtherScenes()
-        {
-            var rig = CreateRig(SceneNames.Integration);
-            var survival = CreateSurvival();
-            var session = Session();
-            var context = Context(rig, survival);
-
-            Assert.That(session.Execute("hit", context), Is.EqualTo("hit 인자 오류. 예: hit copper"));
-            Assert.That(session.Execute("hit nope", context), Is.EqualTo("hit 인자 오류. 예: hit copper"));
-            Assert.That(session.Execute("fall", context), Is.EqualTo("fall 인자 오류. 예: fall gas"));
-            Assert.That(session.Execute("hit engine_fuel golden", context), Is.EqualTo("엔진연료는 골드 변형이 없습니다"));
-            Assert.That(session.Execute("fall engine_fuel golden", context), Is.EqualTo("엔진연료는 골드 변형이 없습니다"));
-            Assert.That(survival.State.Health, Is.EqualTo(100f));
-
-            rig.SceneName = SceneNames.SurfaceBase;
-            Assert.That(session.Execute("hit copper", context), Is.EqualTo("광산 씬에서만 사용할 수 있습니다"));
-            Assert.That(session.Execute("fall copper", context), Is.EqualTo("광산 씬에서만 사용할 수 있습니다"));
-            Assert.That(session.Execute("hitgas", context), Is.EqualTo("광산 씬에서만 사용할 수 있습니다"));
-            Assert.That(session.Execute("falling", context), Is.EqualTo("광산 씬에서만 사용할 수 있습니다"));
-            Assert.That(survival.State.Health, Is.EqualTo(100f));
-        }
-
-        [Test]
-        public void Fall_StartsRealFallingRockAboveThePlayerHead()
-        {
-            var rig = CreateRig(SceneNames.Integration);
-            var survival = CreateSurvival();
-            var floor = rig.Register("tile.rock.normal", string.Empty, false);
-            rig.Tilemap.SetTile(new Vector3Int(1, -2, 0), floor);
-
-            var message = Session().Execute("fall iron golden", Context(rig, survival));
-
-            Assert.That(message, Does.StartWith("fall tile.iron.gold ("), message);
-            var rock = rig.Overlay.transform.Find("StructuralFallingRock");
-            Assert.That(rock, Is.Not.Null, "실제 낙하 경로(StructuralCrackOverlay 낙석)를 타야 한다");
-            var playerCell = rig.Tilemap.WorldToCell(rig.Player.Position);
-            Assert.That(rig.Tilemap.WorldToCell(rock.position).x, Is.EqualTo(playerCell.x));
-            Assert.That(rock.position.y, Is.GreaterThan(rig.Player.Position.y));
-            Assert.That(survival.State.Health, Is.EqualTo(100f), "피해는 낙석이 닿을 때 들어간다");
+            Assert.That(Session().Execute("O2 0", Context(rig, survival)), Does.Contain("광산 탐사 중에만"));
         }
 
         [TestCase("hitgas", 1)]
@@ -353,8 +282,8 @@ namespace SubTerra.App.Tests.Debug
         public void Help_ListsTheNewCommands_AndSourceStaysGated()
         {
             var help = Session().Execute("help", null);
-            Assert.That(help, Does.Contain("hit <rock|copper|iron|lithium|gas|engine_fuel> [golden]"));
-            Assert.That(help, Does.Contain("fall <rock|copper|iron|lithium|gas|engine_fuel> [golden]"));
+            Assert.That(help, Does.Not.Contain("hit <"));
+            Assert.That(help, Does.Not.Contain("fall <"));
             Assert.That(help, Does.Contain("hitgas [횟수]"));
             Assert.That(help, Does.Contain("falling [높이m]"));
             Assert.That(help, Does.Contain("spawn <rock|copper|iron|lithium|gas|engine_fuel> [golden]"));
@@ -363,9 +292,9 @@ namespace SubTerra.App.Tests.Debug
                 Application.dataPath,
                 "_Project/Scripts/App/Integration/Debug/DeveloperDebugCollapseCommands.cs"));
             Assert.That(source, Does.StartWith("#if UNITY_EDITOR || SUBTERRA_BUILD_DEVELOPMENT"));
-            Assert.That(source, Does.Contain("ApplyCollapseImpact"));
+            Assert.That(source, Does.Not.Contain("ApplyCollapseImpact"));
             Assert.That(source, Does.Contain("SimulateFall"));
-            Assert.That(source, Does.Contain("TryDropTile"));
+            Assert.That(source, Does.Not.Contain("TryDropTile"));
             Assert.That(source, Does.Contain("DebugRaiseDamageTicks"));
             Assert.That(source, Does.Not.Contain("SfxId"));
         }

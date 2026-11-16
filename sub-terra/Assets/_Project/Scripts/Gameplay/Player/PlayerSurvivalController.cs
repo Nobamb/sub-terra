@@ -323,6 +323,19 @@ namespace SubTerra.Gameplay.Player
         }
 
 #if UNITY_EDITOR || SUBTERRA_BUILD_DEVELOPMENT
+        public bool TrySetDebugOxygenPercent(int percent)
+        {
+            if (oxygenDepth == null || oxygen == null)
+            {
+                return false;
+            }
+
+            oxygen.SetDebugRemainingPercent(percent);
+            OxygenChanged?.Invoke(OxygenRemaining, OxygenMaximum);
+            RefreshOxygenRisk();
+            return true;
+        }
+
         public void SetHealthAbsolute(int health)
         {
             EnsureState();
