@@ -17,6 +17,8 @@ namespace SubTerra.Gameplay.Player
         [SerializeField, Min(0f)] private float minimumFallDamageHeight = 10f;
         [SerializeField, Min(0)] private int fallDamageAtThreshold = 10;
         [SerializeField, Min(0f)] private float fallDamagePerAdditionalMeter = 1f;
+        [SerializeField, Range(0f, 1f), Tooltip("완충판 위 착지 피해 = 같은 낙하·같은 짐의 일반 피해 × 이 비율. 0이면 피해 없음.")]
+        private float cushionLandingDamageRatio = SubTerra.Shared.CushionPadRules.DefaultLandingDamageRatio;
         [SerializeField, Min(1f)] private float maximumOxygen = 100f;
         [SerializeField, Min(0f)] private float oxygenPerSecond = 0.5f;
         [SerializeField, Min(0f)] private float oxygenPerSecondPerMeter = 0.02f;
@@ -58,5 +60,6 @@ namespace SubTerra.Gameplay.Player
         public float MinimumFallDamageHeight => minimumFallDamageHeight;
         public int FallDamageAtThreshold => fallDamageAtThreshold;
         public float FallDamagePerAdditionalMeter => fallDamagePerAdditionalMeter;
+        public float CushionLandingDamageRatio => cushionLandingDamageRatio;
     }
 }

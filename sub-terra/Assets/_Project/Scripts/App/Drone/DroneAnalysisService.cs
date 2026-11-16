@@ -501,12 +501,12 @@ namespace SubTerra.App.Drone
         private static string FormatStructuralGuidance(DroneContextDto context)
         {
             if (context.structuralTelegraphing)
-                return "저 빨간 천장이 곧 떨어집니다. 피하거나 버팀목을 설치하세요.";
+                return "저 빨간 천장이 곧 떨어집니다. 피하거나 완충판을 설치하세요.";
             if (string.Equals(context.structuralCauseId, "unsupported", StringComparison.Ordinal))
                 return "이 천장 아래가 비었습니다. 더 파면 균열이 커집니다.";
             if (string.Equals(context.structuralCauseId, "support_removed", StringComparison.Ordinal))
-                return "버팀목 보호가 사라졌습니다. 다시 보강하세요.";
-            return "채굴 충격이 쌓였습니다. 이 반경에 버팀목 설치를 준비하세요.";
+                return "완충판 보호가 사라졌습니다. 다시 보강하세요.";
+            return "채굴 충격이 쌓였습니다. 이 반경에 완충판 설치를 준비하세요.";
         }
 
         private static bool HasReason(DroneActionScore candidate, string reasonId)
@@ -565,7 +565,7 @@ namespace SubTerra.App.Drone
                 case DroneAction.ReturnToBase:
                     return "기지로 귀환";
                 case DroneAction.InstallSupport:
-                    return "버팀목 설치";
+                    return "완충판 설치";
                 case DroneAction.LeaveGasZone:
                     return "가스 구역 이탈";
                 case DroneAction.MineNearbyMineral:

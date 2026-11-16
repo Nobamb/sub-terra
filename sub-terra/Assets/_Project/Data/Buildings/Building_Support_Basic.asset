@@ -13,8 +13,10 @@ MonoBehaviour:
   m_Name: Building_Support_Basic
   m_EditorClassIdentifier: SubTerra.App::SubTerra.App.Core.Data.BuildingData
   id: building.support.basic
-  displayName: "\uBC84\uD300\uBAA9"
-  description: "단단한 착지 발판입니다. 버팀목 위에 착지하면 화물 무게로 인한 추가 피해를 막습니다."
+  displayName: "\uC644\uCDA9\uD310"
+  description: "\uCC29\uC9C0 \uD53C\uD574\uB97C \uC57D 10%\uB85C \uC904\uC5EC \uC8FC\uB294
+    \uBC1C\uD310\uC785\uB2C8\uB2E4. \uC704\uC5D0 \uC11C\uC11C \uC704/\uC544\uB798
+    \uBC29\uD5A5\uD0A4\uB85C \uB192\uC774\uB97C \uC870\uC808\uD569\uB2C8\uB2E4."
   runtimePrefab: {fileID: 876753129368335756, guid: c07253bcef8bfe645a16d80436788e1f, type: 3}
   icon: {fileID: 21300000, guid: 0f69f3d75d45e3240995a176aac8d034, type: 3}
   powerDraw: 0

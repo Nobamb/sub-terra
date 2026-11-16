@@ -248,7 +248,7 @@ namespace SubTerra.App.Integration
         {
             return cause == StructuralRiskCause.Unsupported ? "천장 아래가 비어 있음"
                 : cause == StructuralRiskCause.MiningImpact ? "채굴 충격 누적"
-                : cause == StructuralRiskCause.SupportRemoved ? "버팀목 보호 상실"
+                : cause == StructuralRiskCause.SupportRemoved ? "완충판 보호 상실"
                 : string.Empty;
         }
 
