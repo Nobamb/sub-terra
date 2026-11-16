@@ -52,13 +52,18 @@ namespace SubTerra.App.Tests.PlayMode
         // ---------- 표시 흐름 ----------
 
         [UnityTest]
-        public IEnumerator Flow_AutoOpen_Close_ChipAppears_NeverAutoReopens()
+        public IEnumerator Flow_EnergyZeroShowsChipWithoutOpeningOrPausing()
         {
             yield return Load();
             Prepare(600, 12, 20);
-            Deplete();
+            bool wasPaused = UiPauseGate.IsHeld;
+            Deplete(openPopup: false);
+            Assert.That(view.IsPopupVisible, Is.False);
+            Assert.That(view.IsChipVisible, Is.True);
+            Assert.That(UiPauseGate.IsHeld, Is.EqualTo(wasPaused));
+            controller.OpenPanel();
 
-            Assert.That(view.IsOpen, Is.True, "전력이 0이 되면 팝업이 자동으로 나타난다");
+            Assert.That(view.IsOpen, Is.True, "구출을 요청할 때 팝업이 나타난다");
             Assert.That(view.IsChipVisible, Is.False, "팝업이 열린 동안 안내 버튼은 숨겨진다");
             yield return UiTestWait.Until(() => view.IsStable, "popup intro finished");
             AssertDisplayedCostMatchesService();
@@ -215,7 +220,7 @@ namespace SubTerra.App.Tests.PlayMode
         }
 
         [UnityTest]
-        public IEnumerator Cleared_WhenEnergyRecovers_RemovesPopupChipAndEffects_ThenNextDepletionAutoOpens()
+        public IEnumerator Cleared_WhenEnergyRecovers_RemovesPopupChipAndEffects()
         {
             yield return Load();
             Prepare(300, 5, 5);
@@ -228,8 +233,10 @@ namespace SubTerra.App.Tests.PlayMode
             Assert.That(view.IsChipVisible, Is.False);
             AssertNothingOfOverlayRemains();
 
-            // 다음 고갈에서는 기존 규칙대로 다시 자동 표시된다.
-            Deplete();
+            Deplete(openPopup: false);
+            Assert.That(view.IsPopupVisible, Is.False);
+            Assert.That(view.IsChipVisible, Is.True);
+            controller.OpenPanel();
             Assert.That(view.IsOpen, Is.True);
             yield return UiTestWait.Until(() => view.IsStable, "second episode popup stable");
             yield return CloseByButton();
@@ -507,9 +514,10 @@ namespace SubTerra.App.Tests.PlayMode
             env.Save.InventoryService.AddMineral(DataIds.Minerals.Iron, iron);
         }
 
-        private void Deplete()
+        private void Deplete(bool openPopup = true)
         {
             state.SetCurrentEnergy(0);
+            if (openPopup) controller.OpenPanel();
         }
 
         private Transform Player()

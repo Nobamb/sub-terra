@@ -9,6 +9,23 @@ namespace SubTerra.App.Tests.Run
     public sealed class EmergencyRescueServiceTests
     {
         [Test]
+        public void Issue332_CriticalOxygenAllowsPaidRescueWithPowerRemaining()
+        {
+            var fixture = CreateFixture(300, 0, 0, 0);
+            fixture.State.SetCurrentEnergy(10);
+            bool criticalOxygen = false;
+            var service = new EmergencyRescueService(fixture.State, fixture.Inventory, () => criticalOxygen);
+
+            Assert.That(service.IsAvailable, Is.False);
+            Assert.That(service.TryRescue(out _, out _), Is.False);
+            Assert.That(fixture.State.Player.Gold, Is.EqualTo(300));
+            criticalOxygen = true;
+            Assert.That(service.IsAvailable, Is.True);
+            Assert.That(service.TryRescue(out _, out _), Is.True);
+            Assert.That(fixture.State.Player.Gold, Is.EqualTo(50));
+        }
+
+        [Test]
         public void PromptB81_Cost_UsesCappedGoldAndRoundedEightyPercentCargo()
         {
             Fixture fixture = CreateFixture(500, 10, 15, 7);

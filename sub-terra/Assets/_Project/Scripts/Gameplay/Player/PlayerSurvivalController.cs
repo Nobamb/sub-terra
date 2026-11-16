@@ -35,6 +35,7 @@ namespace SubTerra.Gameplay.Player
         private Func<int> oxygenDepth;
         private PlayerOxygenState oxygen;
         private OxygenRiskLevel oxygenRisk;
+        private float oxygenCargoLoadRatio;
 
         public PlayerSurvivalState State { get; private set; }
         public event Action<PlayerSurvivalState> StateChanged;
@@ -66,16 +67,35 @@ namespace SubTerra.Gameplay.Player
         public void BindOxygenDepth(Func<int> readDepth)
         {
             oxygenDepth = readDepth;
-            if (readDepth == null) return;
-            EnsureState();
-            oxygen ??= new PlayerOxygenState(settings.MaximumOxygen);
+            if (readDepth != null)
+            {
+                EnsureState();
+                oxygen ??= new PlayerOxygenState(settings.MaximumOxygen);
+            }
+            if (playerMovement != null)
+                playerMovement.SetLadderSpeedMultiplier(readDepth == null ? 1f : settings.ExpeditionLadderSpeedMultiplier);
+        }
+
+        public void SetOxygenCargoLoadRatio(float ratio) => oxygenCargoLoadRatio = Mathf.Clamp01(ratio);
+
+        public void RefillOxygen()
+        {
+            oxygen?.Refill();
+            RefreshOxygenRisk();
         }
 
         private void AdvanceOxygen(float deltaTime)
         {
             if (oxygenDepth == null || !State.CanAct || deltaTime <= 0f) return;
+            bool climbing = playerMovement != null && playerMovement.IsMovingOnLadder
+                && Mathf.Abs(playerMovement.VerticalSpeed) > 0.05f;
+            bool moving = playerMovement != null && !playerMovement.IsClimbing
+                && (playerMovement.IsJumpInProgress || playerMovement.HorizontalSpeed > 0.05f);
+            float workload = PlayerOxygenState.DrainMultiplier(climbing, moving, oxygenCargoLoadRatio,
+                settings.OxygenMovementMultiplier, settings.OxygenLadderMultiplier,
+                settings.OxygenFullCargoMultiplier, settings.OxygenLadderCargoCap);
             int hits = oxygen.Advance(deltaTime, oxygenDepth(), settings.OxygenPerSecond,
-                settings.OxygenPerSecondPerMeter, settings.OxygenDamageInterval);
+                settings.OxygenPerSecondPerMeter, settings.OxygenDamageInterval, workload);
             RefreshOxygenRisk();
             if (hits > 0)
                 ApplyDamage(RunFailureCause.OxygenDepleted, hits * settings.OxygenDepletionDamage, false,
@@ -274,8 +294,7 @@ namespace SubTerra.Gameplay.Player
             EnsureState();
             RestoreDamageFlash();
             State.RestoreFull();
-            oxygen?.Refill();
-            RefreshOxygenRisk();
+            RefillOxygen();
             PublishStateChanged();
             ResetFallTracking();
         }
