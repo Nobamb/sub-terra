@@ -216,8 +216,9 @@ namespace SubTerra.Gameplay.Player
                 : baseDamage + (int)additional;
         }
 
-        public static int ScaleDamage(int damage, float impactMultiplier)
+        public static int ScaleDamage(int damage, float impactMultiplier, bool stableLanding = false)
         {
+            if (stableLanding) return Math.Max(0, damage);
             if (damage <= 0 || impactMultiplier <= 0f || float.IsNaN(impactMultiplier))
             {
                 return 0;

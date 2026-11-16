@@ -17,7 +17,7 @@ MonoBehaviour:
   resultBuildingId: building.support.basic
   inputs:
   - itemId: mineral.copper
-    quantity: 2
+    quantity: 1
   outputs:
   - itemId: building.support.basic
     quantity: 1

@@ -358,7 +358,7 @@ namespace SubTerra.App.UI.Guide
             var a = S(0f, 0f, 0.7f, 0f, 1.0f, 1f, 3.3f, 1f, 3.6f, 0f);
             PanelBox(c, 62f, 38f, 118f, 28f, a, Teal);
             Spr(c, "art.warning", 16f, 14f, 38f).Color_(Amber).Fade(a);
-            Txt(c, "구조 위험 주의!", 10f, 66f, 38f, 90f, new Color(0.9f, 0.97f, 1f, 1f), true).Fade(a);
+            Txt(c, "가스 위험 주의!", 10f, 66f, 38f, 90f, new Color(0.9f, 0.97f, 1f, 1f), true).Fade(a);
             Key(c, "Tab", -131f, 42f, DemoTrack.Pulse(0.3f, 0.65f));
             return c;
         }
@@ -497,18 +497,18 @@ namespace SubTerra.App.UI.Guide
             Spr(c, "hud.bolt", 18f, -138f, 44f);
             Spr(c, "hud.energy.empty", 10f, -122f, 44f).PivotAt(0f, 0.5f);
             Spr(c, "hud.energy.bar", 10f, -122f, 44f).PivotAt(0f, 0.5f).Sx(S(0f, 1f, 0.3f, 1f, 1.5f, 0.02f, 4.2f, 0.02f));
-            var pop = S(0f, 0f, 1.7f, 0f, 1.95f, 1f, 2.55f, 1f, 2.85f, 0f);
+            var pop = S(0f, 0f, 2.6f, 0f, 2.85f, 1f, 4.0f, 1f, 4.2f, 0f);
             PanelBox(c, 54f, 8f, 132f, 62f, pop, Warn);
             Spr(c, "art.warning", 18f, 0f, 24f).Color_(Warn).Fade(pop);
-            Txt(c, "전력 고갈", 12f, 62f, 24f, 100f, Warn, true).Fade(pop);
+            Txt(c, "긴급 구출 요청", 12f, 62f, 24f, 100f, Warn, true).Fade(pop);
             Txt(c, "비용을 확인하고 구출", 8.5f, 54f, 6f, 120f, new Color(0.85f, 0.94f, 0.98f, 1f)).Fade(pop);
             Box(c, 60f, 14f, 54f, -12f, new Color(0.1f, 0.5f, 0.6f, 1f)).Fade(pop);
             Txt(c, "구출", 9f, 54f, -12f, 60f, Color.white, true).Fade(pop);
-            var chip = S(0f, 0f, 2.7f, 0f, 3.0f, 1f, 4.0f, 1f, 4.2f, 0f);
+            var chip = S(0f, 0f, 1.5f, 0f, 1.7f, 1f, 2.55f, 1f, 2.8f, 0f);
             PanelBox(c, -70f, 40f, 44f, 20f, chip, Teal);
             Spr(c, "art.arrowup", 12f, -78f, 40f).Color_(Teal).Fade(chip);
             Txt(c, "R", 10f, -62f, 40f, 16f, Teal, true).Fade(chip);
-            Key(c, "R", -135f, 18f, DemoTrack.Pulse(3.2f, 3.5f));
+            Key(c, "R", -135f, 18f, DemoTrack.Pulse(2.45f, 2.75f));
             return c;
         }
 
@@ -596,24 +596,14 @@ namespace SubTerra.App.UI.Guide
         {
             var c = New("structure", 4.2f, 1.9f);
             Backdrop(c);
-            for (var x = -153f; x <= 153.1f; x += Unit)
-            {
-                Tile(c, "tile.ground", x, GroundTop - Unit * 0.5f);
-                Tile(c, "tile.hard", x, GroundTop - Unit * 1.5f);
-                Tile(c, "tile.ground", x, 26f + Unit * 0.5f);
-            }
-
+            Floor(c);
             Player(c, -78f);
-            Tile(c, "tile.crack.yellow", 56f, 26f + Unit * 0.5f).Fade(S(0f, 0f, 0.3f, 1f, 1.0f, 1f, 1.2f, 0f, 4.2f, 0f));
-            Tile(c, "tile.crack.orange", 56f, 26f + Unit * 0.5f).Fade(S(0f, 0f, 0.9f, 0f, 1.2f, 1f, 1.5f, 1f, 1.7f, 0f, 4.2f, 0f));
-            Tile(c, "tile.crack.red", 56f, 26f + Unit * 0.5f)
-                .Fade(S(0f, 0f, 1.5f, 0f, 1.7f, 1f, 1.9f, 0.4f, 2.1f, 1f, 2.3f, 0.4f, 2.5f, 1f, 2.6f, 0f, 4.2f, 0f));
-            Tile(c, "tile.ground", 56f, 26f + Unit * 0.5f, 28f).Fade(S(0f, 0f, 2.55f, 0f, 2.6f, 1f, 3.05f, 1f, 3.1f, 0f))
-                .PosY(S(0f, 43f, 2.6f, 43f, 3.05f, GroundTop + 14f));
-            Spr(c, "art.soft", 56f, 56f, GroundTop + 4f).Color_(new Color(0.8f, 0.7f, 0.55f, 1f))
-                .Fade(S(0f, 0f, 3.0f, 0f, 3.15f, 0.7f, 3.8f, 0f));
-            Spr(c, "fac.support", 52f, 18f, GroundTop + 26f).Fade(S(0f, 0f, 3.4f, 0f, 3.6f, 1f, 4.2f, 1f));
-            Spr(c, "hud.structural.critical", 22f, 56f, 8f).Fade(S(0f, 0f, 1.5f, 0f, 1.7f, 1f, 2.6f, 1f, 2.7f, 0f));
+            PanelBox(c, 48f, 22f, 162f, 44f, K(1f), Teal);
+            Txt(c, "산소 위험도", 12f, 48f, 31f, 140f, Color.white, true);
+            Txt(c, "안전", 12f, 48f, 11f, 140f, Color.white, true).Fade(S(0f, 1f, 1.2f, 1f, 1.35f, 0f));
+            Txt(c, "주의", 12f, 48f, 11f, 140f, new Color(1f, 0.78f, 0.25f), true)
+                .Fade(S(0f, 0f, 1.2f, 0f, 1.35f, 1f, 2.5f, 1f, 2.65f, 0f));
+            Txt(c, "위험", 12f, 48f, 11f, 140f, Warn, true).Fade(S(0f, 0f, 2.5f, 0f, 2.65f, 1f));
             return c;
         }
 
@@ -654,7 +644,6 @@ namespace SubTerra.App.UI.Guide
                 Tile(c, kinds2[i], x + 144f, y).Fade(b);
             }
 
-            Tile(c, "tile.crack.red", -87f, -26f).Fade(a);
             Spr(c, "art.arrow", 28f, 0f, -38f).Color_(Teal);
             var blink = S(0f, 1f, 0.5f, 0.45f, 1.0f, 1f, 1.5f, 0.45f, 2.0f, 1f, 2.5f, 0.45f, 3.0f, 1f, 4f, 1f);
             PanelBox(c, 0f, 34f, 132f, 40f, K(1f), Warn);
@@ -716,16 +705,10 @@ namespace SubTerra.App.UI.Guide
         {
             var c = New("fac.support", 3f, 0.8f);
             Backdrop(c);
-            for (var x = -153f; x <= 153.1f; x += Unit)
-            {
-                Tile(c, "tile.ground", x, GroundTop - Unit * 0.5f);
-                Tile(c, "tile.hard", x, GroundTop - Unit * 1.5f);
-                Tile(c, "tile.ground", x, 26f + Unit * 0.5f);
-            }
-
-            Spr(c, "art.soft", 100f, 30f, 0f).Color_(Teal).Fade(S(0f, 0.15f, 1.5f, 0.4f, 3f, 0.15f));
+            Floor(c);
             Spr(c, "fac.support", 52f, 30f, GroundTop + 26f);
-            Player(c, -70f);
+            Player(c, 30f).PosY(S(0f, PlayerY + 76f, 0.7f, PlayerY + 76f, 1.25f, PlayerY + 52f, 3f, PlayerY + 52f));
+            Txt(c, "화물 추가 피해 방지", 10f, -78f, 24f, 128f, Teal, true);
             return c;
         }
 

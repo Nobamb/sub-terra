@@ -324,9 +324,7 @@ namespace SubTerra.App.Tutorial
             }
 
             if (CurrentObjectiveId == DemoObjectiveIds.PlaceSupportInDanger
-                && buildingId == DataIds.Buildings.SupportBasic
-                && gameplayEvent.buildingPlacement != null
-                && gameplayEvent.buildingPlacement.reducedStructuralRisk)
+                && buildingId == DataIds.Buildings.SupportBasic)
             {
                 HandleSignal(DemoProgressSignal.SupportPlacedInDanger);
             }

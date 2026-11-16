@@ -14,11 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: SubTerra.App::SubTerra.App.Core.Data.BuildingData
   id: building.support.basic
   displayName: "\uBC84\uD300\uBAA9"
-  description: "\uC8FC\uBCC0 \uC9C0\uD615\uC744 \uBCF4\uAC15\uD574 \uAD6C\uC870 \uC704\uD5D8\uC744
-    \uB0AE\uCDA5\uB2C8\uB2E4."
+  description: "단단한 착지 발판입니다. 버팀목 위에 착지하면 화물 무게로 인한 추가 피해를 막습니다."
   runtimePrefab: {fileID: 876753129368335756, guid: c07253bcef8bfe645a16d80436788e1f, type: 3}
   icon: {fileID: 21300000, guid: 0f69f3d75d45e3240995a176aac8d034, type: 3}
   powerDraw: 0
   buildCosts:
   - itemId: mineral.copper
-    quantity: 2
+    quantity: 1

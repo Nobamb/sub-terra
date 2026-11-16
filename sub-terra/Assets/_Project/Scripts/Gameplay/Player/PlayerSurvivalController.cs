@@ -268,6 +268,9 @@ namespace SubTerra.Gameplay.Player
         }
 
         public bool ApplyFall(float fallDistance, bool usedLadder = false)
+            => ApplyFall(fallDistance, usedLadder, stableLanding: false);
+
+        private bool ApplyFall(float fallDistance, bool usedLadder, bool stableLanding)
         {
             EnsureState();
             var damage = PlayerFallDamageRules.ScaleDamage(
@@ -277,7 +280,7 @@ namespace SubTerra.Gameplay.Player
                     settings.MinimumFallDamageHeight,
                     settings.FallDamageAtThreshold,
                     settings.FallDamagePerAdditionalMeter),
-                cargoFallImpactMultiplier);
+                cargoFallImpactMultiplier, stableLanding);
             if (damage <= 0)
             {
                 return false;
@@ -628,16 +631,16 @@ namespace SubTerra.Gameplay.Player
                 var ladderExempt = usedLadderDuringFall;
                 trackingFall = false;
                 usedLadderDuringFall = false;
-                ResolveLanding(distance, ladderExempt);
+                ResolveLanding(distance, ladderExempt, playerMovement.IsOnStableLandingPlatform);
             }
 
             wasGrounded = grounded;
         }
 
         /// <summary>실제 낙하 착지와 디버그 falling 명령이 함께 쓰는 착지 처리(피해 + 착지음).</summary>
-        private bool ResolveLanding(float distance, bool ladderExempt)
+        private bool ResolveLanding(float distance, bool ladderExempt, bool stableLanding = false)
         {
-            var damaged = ApplyFall(distance, ladderExempt);
+            var damaged = ApplyFall(distance, ladderExempt, stableLanding);
             // B-164: 피해면 LandHeavy만, 아니면 0.3 이상 낙하에 Land. 사다리로 내려옴·치명 낙하는 무음.
             if (playerMovement != null)
             {
