@@ -100,6 +100,41 @@ namespace SubTerra.App.Tests.Save
             Assert.That(restored.GameState.Player.Gold, Is.EqualTo(91));
         }
 
+        [TestCase(37.5f)]
+        [TestCase(0f)]
+        public void MineOxygen_RoundTripsIncludingDepletedOxygen(float remaining)
+        {
+            Assert.That(CreateSaveService(physical).Save(1, CreateContext(90, remaining)).IsSuccess, Is.True);
+            var loaded = CreateLoadService(physical).Load(1);
+            Assert.That(loaded.IsSuccess, Is.True);
+            Assert.That(loaded.State.ResumeOxygen, Is.EqualTo(remaining));
+        }
+
+        [Test]
+        public void LegacySaveWithoutOxygen_LeavesOxygenUnspecified()
+        {
+            var data = mapper.Capture(CreateContext(90));
+            string legacyJson = System.Text.RegularExpressions.Regex.Replace(json.Serialize(data),
+                "(?m)^\\s*\"(?:hasResumeOxygen|resumeOxygen)\": [^,]+,\\r?\\n", "");
+            Assert.That(legacyJson, Does.Not.Contain("hasResumeOxygen").And.Not.Contain("resumeOxygen"));
+            Assert.That(json.TryDeserialize(legacyJson, out var decoded), Is.EqualTo(SaveMigrationStatus.Current));
+            Assert.That(mapper.TryRestore(decoded, out var restored), Is.True);
+            Assert.That(restored.ResumeOxygen, Is.Null);
+        }
+
+        [TestCase(SceneNames.SurfaceBase, 37.5f)]
+        [TestCase(SceneNames.Integration, float.NaN)]
+        [TestCase(SceneNames.Integration, -1f)]
+        public void UnexpectedOxygen_DoesNotDiscardOtherwiseValidSave(string sceneName, float remaining)
+        {
+            var data = mapper.Capture(CreateContext(90));
+            data.targetSceneName = sceneName;
+            data.hasResumeOxygen = true;
+            data.resumeOxygen = remaining;
+            Assert.That(mapper.TryRestore(data, out var restored), Is.True);
+            Assert.That(restored.ResumeOxygen, Is.Null);
+        }
+
         [Test]
         public void K_F01_AllBStateAndWorldSnapshot_RoundTrip()
         {
@@ -502,7 +537,7 @@ namespace SubTerra.App.Tests.Save
             return new LoadService(fileSystem, paths, mapper, json);
         }
 
-        private SaveCaptureContext CreateContext(int gold)
+        private SaveCaptureContext CreateContext(int gold, float? resumeOxygen = null)
         {
             var outpost = new OutpostState();
             Assert.That(
@@ -559,7 +594,8 @@ namespace SubTerra.App.Tests.Save
                 dialogue,
                 new FixedWorldProvider(),
                 SceneNames.Integration,
-                "0.1-test");
+                "0.1-test",
+                resumeOxygen: resumeOxygen);
         }
 
         private T Track<T>(T value) where T : UnityEngine.Object

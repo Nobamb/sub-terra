@@ -94,6 +94,15 @@ namespace SubTerra.Gameplay.Player
             RefreshOxygenRisk();
         }
 
+        public void RestoreOxygen(float remaining)
+        {
+            EnsureState();
+            oxygen ??= new PlayerOxygenState(settings.MaximumOxygen);
+            oxygen.RestoreRemaining(remaining);
+            OxygenChanged?.Invoke(OxygenRemaining, OxygenMaximum);
+            RefreshOxygenRisk();
+        }
+
         private void AdvanceOxygen(float deltaTime)
         {
             if (oxygenDepth == null || !State.CanAct || deltaTime <= 0f) return;

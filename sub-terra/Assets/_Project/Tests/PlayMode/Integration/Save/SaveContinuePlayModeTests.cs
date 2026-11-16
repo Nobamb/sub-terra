@@ -101,16 +101,28 @@ namespace SubTerra.App.Tests.PlayMode.Save
                 player.GetComponent<Rigidbody2D>().position = saved;
                 player.transform.position = new Vector3(saved.x, saved.y, player.transform.position.z);
                 Physics2D.SyncTransforms();
+                var survival = UnityEngine.Object.FindAnyObjectByType<PlayerSurvivalController>();
+                Assert.That(survival, Is.Not.Null);
+                survival.RestoreOxygen(37.5f);
                 Assert.That(runtime.SaveCurrent().IsSuccess, Is.True);
                 var loaded = new LoadService(new PhysicalSaveFileSystem(), new SavePathPolicy(root),
                     new SaveDataMapper(new FixedClock()), new SaveJsonCodec(new SaveMigrationService())).Load(2);
                 Assert.That(loaded.State.ResumePosition, Is.Not.Null);
                 Assert.That(loaded.State.ResumePosition.x, Is.EqualTo(saved.x));
                 Assert.That(loaded.State.ResumePosition.y, Is.EqualTo(saved.y));
+                Assert.That(loaded.State.ResumeOxygen, Is.EqualTo(37.5f));
+                survival.RefillOxygen();
                 player.GetComponent<Rigidbody2D>().position = saved + Vector2.right;
                 bool completed = false;
                 bool succeeded = false;
-                runtime.BeginContinue(2, result => { completed = true; succeeded = result.IsSuccess; });
+                float restoredOxygen = -1f;
+                runtime.BeginContinue(2, result =>
+                {
+                    completed = true;
+                    succeeded = result.IsSuccess;
+                    if (succeeded)
+                        restoredOxygen = UnityEngine.Object.FindAnyObjectByType<PlayerSurvivalController>().OxygenRemaining;
+                });
                 Assert.That(runtime.SaveCurrent().Status, Is.EqualTo(SaveStatus.CaptureFailed));
                 yield return WaitForRuntimeCondition(() => completed);
                 Assert.That(succeeded, Is.True);
@@ -118,6 +130,7 @@ namespace SubTerra.App.Tests.PlayMode.Save
                 Assert.That(Vector2.Distance(player.Position, saved), Is.LessThan(0.1f),
                     "Saved " + saved + "; restored " + player.Position);
                 Assert.That(runtime.IsUiReady, Is.True);
+                Assert.That(restoredOxygen, Is.EqualTo(37.5f));
             }
             finally
             {

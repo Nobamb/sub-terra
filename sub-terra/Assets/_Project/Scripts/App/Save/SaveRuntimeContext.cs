@@ -26,6 +26,12 @@ namespace SubTerra.App.Save
         bool TryRestorePlayerPosition(PlayerPositionSaveData position);
     }
 
+    public interface IPlayerOxygenPersistence
+    {
+        float? CapturePlayerOxygen();
+        bool TryRestorePlayerOxygen(float remaining);
+    }
+
     public sealed class SaveCaptureContext
     {
         public GameState GameState { get; }
@@ -36,6 +42,7 @@ namespace SubTerra.App.Save
         public string TargetSceneName { get; }
         public string GameVersion { get; }
         public PlayerPositionSaveData ResumePosition { get; }
+        public float? ResumeOxygen { get; }
 
         /// <summary>
         /// Provider가 없을 때(Surface Base 등) 사용할 마지막 Mine world 폴백.
@@ -52,7 +59,8 @@ namespace SubTerra.App.Save
             string targetSceneName,
             string gameVersion,
             WorldSnapshotDto mineWorldFallback = null,
-            PlayerPositionSaveData resumePosition = null)
+            PlayerPositionSaveData resumePosition = null,
+            float? resumeOxygen = null)
         {
             GameState = gameState;
             Inventory = inventory;
@@ -63,6 +71,7 @@ namespace SubTerra.App.Save
             GameVersion = gameVersion ?? string.Empty;
             MineWorldFallback = mineWorldFallback;
             ResumePosition = resumePosition;
+            ResumeOxygen = resumeOxygen;
         }
     }
 
@@ -75,6 +84,7 @@ namespace SubTerra.App.Save
         public WorldSnapshotDto World { get; }
         public string TargetSceneName { get; }
         public PlayerPositionSaveData ResumePosition { get; }
+        public float? ResumeOxygen { get; }
 
         public RestoredSaveState(
             GameState gameState,
@@ -83,7 +93,8 @@ namespace SubTerra.App.Save
             DroneSaveData drone,
             WorldSnapshotDto world,
             string targetSceneName,
-            PlayerPositionSaveData resumePosition = null)
+            PlayerPositionSaveData resumePosition = null,
+            float? resumeOxygen = null)
         {
             GameState = gameState;
             Inventory = inventory;
@@ -92,6 +103,7 @@ namespace SubTerra.App.Save
             World = world;
             TargetSceneName = targetSceneName ?? string.Empty;
             ResumePosition = resumePosition;
+            ResumeOxygen = resumeOxygen;
         }
     }
 
