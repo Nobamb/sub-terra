@@ -333,7 +333,6 @@ namespace SubTerra.App.Integration
                     gasEffectController.FailureInputRaised += OnGasFailureInputRaised;
                     gasEffectController.EffectStateChanged += OnGasEffectStateChanged;
                     gasEffectController.Bind(
-                        bootstrap.State,
                         runtime.Progression != null ? runtime.Progression.Effects : null);
                 });
 

@@ -621,9 +621,9 @@ namespace SubTerra.App.UI.Guide
             Walker(c, S(0f, -100f, 1.1f, -14f, 3.0f, 40f, 4f, 40f), H(0f, 1f, 3.2f, 0f));
             Spr(c, "art.soft", 200f, 74f, 0f).Color_(new Color(0.5f, 1f, 0.3f, 0.45f)).Sx(K(1.3f));
             Box(c, StageWidth, StageHeight, 0f, 0f, new Color(0f, 0.04f, 0.02f, 1f)).Fade(S(0f, 0f, 1.2f, 0f, 3.0f, 0.5f, 4f, 0.5f));
-            Spr(c, "hud.bolt", 18f, -138f, 44f);
-            Spr(c, "hud.energy.empty", 10f, -122f, 44f).PivotAt(0f, 0.5f);
-            Spr(c, "hud.energy.bar", 10f, -122f, 44f).PivotAt(0f, 0.5f).Sx(S(0f, 1f, 1.2f, 1f, 3.0f, 0.45f, 4f, 0.45f));
+            Spr(c, "hud.heart", 18f, -138f, 44f);
+            Spr(c, "hud.hp.empty", 10f, -122f, 44f).PivotAt(0f, 0.5f);
+            Spr(c, "hud.hp.bar", 10f, -122f, 44f).PivotAt(0f, 0.5f).Sx(H(0f, 1f, 2.1f, 0.9f, 3.1f, 0.8f));
             Spr(c, "art.warning", 20f, 40f, 34f).Color_(Amber).Fade(S(0f, 0f, 1.3f, 0f, 1.5f, 1f, 1.9f, 0.5f, 2.3f, 1f, 2.7f, 0.5f, 3.1f, 1f, 4f, 1f));
             return c;
         }

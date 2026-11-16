@@ -33,7 +33,9 @@ namespace SubTerra.App.Tests.PlayMode.Hazards
             SetField(controller, "visionOverlay", overlay);
             SetField(bridge, "gasEffectController", controller);
             var state = GameState.CreateNew();
-            controller.Bind(state, null);
+            var initialEnergy = state.Player.Energy;
+            var gasDamage = 0;
+            controller.FailureInputRaised += input => gasDamage += input.damage;
             controller.EffectStateChanged += effect => droneSensor.SetAppliedGasRisk(effect.Risk);
             bridge.BindGameState(state);
             bridge.enabled = true;
@@ -53,6 +55,10 @@ namespace SubTerra.App.Tests.PlayMode.Hazards
             Assert.That(bridge.GasStatus.ValueText, Does.Contain("한계"));
             Assert.That(droneSensor.CaptureContext().GasRisk,
                 Is.EqualTo(GameplayGasRiskLevel.Critical));
+
+            controller.Advance(2f);
+            Assert.That(state.Player.Energy, Is.EqualTo(initialEnergy));
+            Assert.That(gasDamage, Is.EqualTo(20));
 
             controller.ApplyExposure(default);
             controller.Advance(1f);

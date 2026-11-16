@@ -274,7 +274,7 @@ namespace SubTerra.App.UI.Guide
                 .Link("fac.clinic", "mech.structure", "mech.gas");
 
             Mechanic("mech.power", "전력과 충전·구출", "전력을 확인하고 충전·구출을 이용", "power")
-                .Data("전력을 쓰는 때", "채굴할 때마다 · 가스 지대에 있을 때")
+                .Data("채굴 전력", "블록을 캘 때마다 소모됩니다. 소모량은 채굴한 블록에 따라 다릅니다.")
                 .Data("충전 방법", "지상 기지에 도착하면 가득 충전 · " + charger + "에서 E (전력 공급 범위 안, 재사용 대기 " + cooldown + ")")
                 .Step("안내 버튼 확인", "전력이 0이 되거나 산소가 위험 단계에 들어가면 머리 위에 구출 버튼이 나타납니다.")
                 .Step("직접 귀환", "전력이 없어도 걷기·점프·사다리로 엘리베이터까지 갈 수 있습니다.")
@@ -316,7 +316,7 @@ namespace SubTerra.App.UI.Guide
                 .Link("fac.support", "fac.ladder", "mech.power");
 
             Mechanic("mech.gas", "가스 지대", "가스를 피하고 정화 지대로 대피", "gas")
-                .Data("가스 속에서", "이동이 느려지고 시야가 흐려지며 전력이 계속 줄어듭니다.")
+                .Data("가스 속에서", "이동이 느려지고 시야가 흐려집니다.")
                 .Warning("오래 머물러 노출이 쌓이면 체력 피해나 행동불능으로 이어집니다. 가스 밖에서는 노출이 서서히 회복됩니다.")
                 .Data("대처", core + "의 가스 정화 안전지대 안에서는 가스의 영향을 받지 않습니다. 업그레이드 '"
                     + ItemDisplayNames.Upgrade(DataIds.Upgrades.GasResistance) + "'로 영향을 줄일 수 있습니다.")
