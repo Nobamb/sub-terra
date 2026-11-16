@@ -18,7 +18,7 @@ namespace SubTerra.Gameplay.Hazards.Tests
         }
 
         [Test]
-        public void H_F01_EnergyAndExposureAdvanceOnlyAtFixedTicks()
+        public void H_F01_ExposureAdvancesOnlyAtFixedTicks()
         {
             var model = new GasExposureEffectModel();
             model.SetExposure(CriticalExposure(), 0f, false);
@@ -27,12 +27,12 @@ namespace SubTerra.Gameplay.Hazards.Tests
             var firstTick = model.Advance(0.01f);
             var secondTick = model.Advance(1f);
 
-            Assert.That(beforeTick.EnergyDrain, Is.Zero);
+            Assert.That(beforeTick.ExposureTickCount, Is.Zero);
             Assert.That(beforeTick.State.CumulativeExposure, Is.Zero);
-            Assert.That(firstTick.EnergyDrain, Is.EqualTo(1));
             Assert.That(firstTick.ExposureTickCount, Is.EqualTo(1));
             Assert.That(firstTick.State.CumulativeExposure, Is.EqualTo(0.8f).Within(0.001f));
-            Assert.That(secondTick.EnergyDrain, Is.EqualTo(2));
+            Assert.That(secondTick.ExposureTickCount, Is.EqualTo(1));
+            Assert.That(secondTick.State.CumulativeExposure, Is.EqualTo(1.6f).Within(0.001f));
         }
 
         [Test]
@@ -65,7 +65,6 @@ namespace SubTerra.Gameplay.Hazards.Tests
             var raw = unprotected.Advance(5f);
             var protectedResult = protectedModel.Advance(5f);
 
-            Assert.That(protectedResult.EnergyDrain, Is.LessThan(raw.EnergyDrain));
             Assert.That(protectedResult.State.CumulativeExposure,
                 Is.LessThan(raw.State.CumulativeExposure));
             Assert.That(protectedResult.State.SpeedMultiplier,
@@ -85,12 +84,12 @@ namespace SubTerra.Gameplay.Hazards.Tests
             Assert.That(state.Risk, Is.EqualTo(GasRiskLevel.Safe));
             Assert.That(state.SpeedMultiplier, Is.EqualTo(1f));
             Assert.That(state.VisionObscuration, Is.Zero);
-            Assert.That(tick.EnergyDrain, Is.Zero);
+            Assert.That(tick.ExposureTickCount, Is.Zero);
             Assert.That(tick.State.CumulativeExposure, Is.Zero);
         }
 
         [Test]
-        public void PromptB50_LightClearanceKeepsFullOverlayAndGameplayDrain()
+        public void PromptB50_LightClearanceKeepsFullOverlayAndExposure()
         {
             var model = new GasExposureEffectModel();
             model.SetExposure(CriticalExposure(1f), 0f, false, false);
@@ -104,7 +103,7 @@ namespace SubTerra.Gameplay.Hazards.Tests
             Assert.That(lit.SpeedMultiplier, Is.LessThan(1f));
             Assert.That(lit.VisionObscuration, Is.EqualTo(GasVisualRules.FullApproachOpacity).Within(0.001f));
             Assert.That(stillExposed.State.VisionObscuration, Is.EqualTo(GasVisualRules.FullApproachOpacity).Within(0.001f));
-            Assert.That(stillExposed.EnergyDrain, Is.GreaterThan(0));
+            Assert.That(stillExposed.ExposureTickCount, Is.EqualTo(1));
         }
 
         [Test]

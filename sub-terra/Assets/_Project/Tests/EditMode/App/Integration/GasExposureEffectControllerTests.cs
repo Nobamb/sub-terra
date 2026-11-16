@@ -1,6 +1,5 @@
 using NUnit.Framework;
 using SubTerra.App.Integration;
-using SubTerra.App.State;
 using SubTerra.Gameplay.Hazards;
 using SubTerra.Shared;
 using UnityEngine;
@@ -11,34 +10,13 @@ namespace SubTerra.App.Tests.Integration
     public sealed class GasExposureEffectControllerTests
     {
         [Test]
-        public void H_F01_ControllerDrainsGameStateWithoutGoingBelowZero()
-        {
-            var gameObject = new GameObject("GasEffectController");
-            try
-            {
-                var controller = gameObject.AddComponent<GasExposureEffectController>();
-                var state = GameState.CreateNew();
-                controller.Bind(state, new FixedUpgradeEffects(0f));
-                controller.ApplyExposure(CriticalExposure());
-
-                controller.Advance(100f);
-
-                Assert.That(state.Player.Energy, Is.Zero);
-            }
-            finally
-            {
-                Object.DestroyImmediate(gameObject);
-            }
-        }
-
-        [Test]
         public void PromptB55_GasProducesTenHealthDamagePerSecond()
         {
             var gameObject = new GameObject("GasEffectController");
             try
             {
                 var controller = gameObject.AddComponent<GasExposureEffectController>();
-                controller.Bind(GameState.CreateNew(), new FixedUpgradeEffects(0f));
+                controller.Bind(new FixedUpgradeEffects(0f));
                 controller.ApplyExposure(CriticalExposure(1f));
                 GasExposureFailureInputDto captured = null;
                 var count = 0;
@@ -69,7 +47,7 @@ namespace SubTerra.App.Tests.Integration
             try
             {
                 var controller = gameObject.AddComponent<GasExposureEffectController>();
-                controller.Bind(GameState.CreateNew(), new FixedUpgradeEffects(0f));
+                controller.Bind(new FixedUpgradeEffects(0f));
                 controller.ApplyExposure(CriticalExposure());
 
                 controller.ApplyOutpostStatus(new OutpostStatusDto
@@ -81,7 +59,7 @@ namespace SubTerra.App.Tests.Integration
 
                 Assert.That(controller.CurrentState.IsSheltered, Is.True);
                 Assert.That(controller.CurrentState.Risk, Is.EqualTo(GameplayGasRiskLevel.Safe));
-                Assert.That(controller.Advance(5f).EnergyDrain, Is.Zero);
+                Assert.That(controller.Advance(5f).ExposureTickCount, Is.Zero);
             }
             finally
             {
@@ -96,7 +74,7 @@ namespace SubTerra.App.Tests.Integration
             try
             {
                 var controller = gameObject.AddComponent<GasExposureEffectController>();
-                controller.Bind(GameState.CreateNew(), new FixedUpgradeEffects(0f));
+                controller.Bind(new FixedUpgradeEffects(0f));
                 controller.ApplyExposure(CriticalExposure());
                 controller.ApplyOutpostStatus(new OutpostStatusDto
                 {
@@ -127,7 +105,7 @@ namespace SubTerra.App.Tests.Integration
             try
             {
                 var controller = gameObject.AddComponent<GasExposureEffectController>();
-                controller.Bind(GameState.CreateNew(), new FixedUpgradeEffects(0f));
+                controller.Bind(new FixedUpgradeEffects(0f));
                 controller.ApplyExposure(CriticalExposure());
 
                 controller.ApplyOutpostStatus(new OutpostStatusDto

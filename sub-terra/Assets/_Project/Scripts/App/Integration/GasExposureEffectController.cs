@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using SubTerra.App.State;
 using SubTerra.Gameplay.Hazards;
 using SubTerra.Gameplay.Player;
 using SubTerra.Shared;
@@ -9,7 +8,7 @@ using UnityEngine;
 namespace SubTerra.App.Integration
 {
     /// <summary>
-    /// Gameplay의 가스 판정을 Player 이동, App 전력, 시야 표현과 실패 입력에 연결한다.
+    /// Gameplay의 가스 판정을 Player 이동, 시야 표현과 피해 입력에 연결한다.
     /// Zone 판정은 재계산하지 않고 GasHazardSystem이 보낸 강도만 사용한다.
     /// </summary>
     public sealed class GasExposureEffectController : MonoBehaviour
@@ -23,7 +22,6 @@ namespace SubTerra.App.Integration
         [SerializeField] private GasInteriorHazeSettings hazeSettings = new();
 
         private GasExposureEffectModel model;
-        private GameState gameState;
         private IUpgradeEffectProvider upgradeEffects;
         private GasExposureState currentExposure;
         private readonly HashSet<string> shelteringOutpostIds = new(StringComparer.Ordinal);
@@ -84,9 +82,8 @@ namespace SubTerra.App.Integration
             GasInteriorHaze.Reset();
         }
 
-        public void Bind(GameState state, IUpgradeEffectProvider effects)
+        public void Bind(IUpgradeEffectProvider effects)
         {
-            gameState = state;
             upgradeEffects = effects;
             RefreshMitigation(true);
         }
@@ -133,11 +130,6 @@ namespace SubTerra.App.Integration
             EnsureModel();
             RefreshMitigation(false);
             var result = model.Advance(deltaTime);
-            if (result.EnergyDrain > 0 && gameState != null)
-            {
-                gameState.SetCurrentEnergy(gameState.Player.Energy - result.EnergyDrain);
-            }
-
             ApplyState(result.State, false);
             UpdateInteriorHaze(deltaTime, result.State);
             if (result.ExposureTickCount > 0)

@@ -7,7 +7,6 @@ namespace SubTerra.Gameplay.Hazards
     public sealed class GasExposureEffectSettings
     {
         [SerializeField, Min(0.1f)] private float tickInterval = 1f;
-        [SerializeField, Min(0f)] private float fullIntensityEnergyDrainPerTick = 2f;
         [SerializeField, Range(0f, 1f)] private float minimumSpeedMultiplier = 0.55f;
         [SerializeField, Range(0f, 1f)] private float maximumVisionObscuration = GasVisualRules.FullApproachOpacity;
         [SerializeField, Range(0f, 1f)] private float initialVisionObscuration = GasVisualRules.InitialApproachOpacity;
@@ -17,7 +16,6 @@ namespace SubTerra.Gameplay.Hazards
         [SerializeField, Min(1)] private int healthDamagePerTick = 10;
 
         public float TickInterval => tickInterval;
-        public float FullIntensityEnergyDrainPerTick => fullIntensityEnergyDrainPerTick;
         public float MinimumSpeedMultiplier => minimumSpeedMultiplier;
         public float MaximumVisionObscuration => maximumVisionObscuration;
         public float InitialVisionObscuration => initialVisionObscuration > 0f
@@ -36,14 +34,12 @@ namespace SubTerra.Gameplay.Hazards
 
         public GasExposureEffectSettings(
             float interval,
-            float energyDrain,
             float minimumSpeed,
             float maximumVision,
             float failureThreshold,
             float recovery)
         {
             tickInterval = Mathf.Max(0.1f, interval);
-            fullIntensityEnergyDrainPerTick = Mathf.Max(0f, energyDrain);
             minimumSpeedMultiplier = Mathf.Clamp01(minimumSpeed);
             maximumVisionObscuration = Mathf.Clamp01(maximumVision);
             failureExposureThreshold = Mathf.Max(0.1f, failureThreshold);
@@ -104,24 +100,21 @@ namespace SubTerra.Gameplay.Hazards
     public readonly struct GasExposureTickResult
     {
         public GasExposureEffectState State { get; }
-        public int EnergyDrain { get; }
         public bool FailureThresholdCrossed { get; }
         public int ExposureTickCount { get; }
 
         public GasExposureTickResult(
             GasExposureEffectState state,
-            int energyDrain,
             bool failureThresholdCrossed,
             int exposureTickCount)
         {
             State = state;
-            EnergyDrain = energyDrain;
             FailureThresholdCrossed = failureThresholdCrossed;
             ExposureTickCount = Math.Max(0, exposureTickCount);
         }
     }
 
-    /// <summary>프레임률과 무관하게 고정 tick으로 전력과 누적 노출을 계산한다.</summary>
+    /// <summary>프레임률과 무관하게 고정 tick으로 누적 노출을 계산한다.</summary>
     public sealed class GasExposureEffectModel
     {
         private readonly GasExposureEffectSettings settings;
@@ -129,7 +122,6 @@ namespace SubTerra.Gameplay.Hazards
         private float resistance;
         private bool sheltered;
         private float tickAccumulator;
-        private float energyAccumulator;
         private float cumulativeExposure;
         private bool failureLatched;
         private bool visuallyCleared;
@@ -165,11 +157,6 @@ namespace SubTerra.Gameplay.Hazards
             resistance = Mathf.Clamp01(gasResistance);
             sheltered = isSheltered;
             visuallyCleared = isVisuallyCleared;
-            if (!exposure.IsExposed || sheltered)
-            {
-                energyAccumulator = 0f;
-            }
-
             RefreshVisionFadeTarget();
             RefreshState();
             return CurrentState;
@@ -179,7 +166,6 @@ namespace SubTerra.Gameplay.Hazards
         {
             TickVisionFade(deltaTime);
             tickAccumulator += Mathf.Max(0f, deltaTime);
-            var drain = 0;
             var crossed = false;
             var exposureTicks = 0;
             while (tickAccumulator + 0.0001f >= settings.TickInterval)
@@ -190,10 +176,6 @@ namespace SubTerra.Gameplay.Hazards
                 {
                     exposureTicks++;
                     cumulativeExposure += settings.TickInterval * effectiveIntensity;
-                    energyAccumulator += settings.FullIntensityEnergyDrainPerTick * effectiveIntensity;
-                    var wholeDrain = Mathf.FloorToInt(energyAccumulator + 0.0001f);
-                    energyAccumulator -= wholeDrain;
-                    drain += wholeDrain;
                 }
                 else
                 {
@@ -215,7 +197,7 @@ namespace SubTerra.Gameplay.Hazards
             }
 
             RefreshState();
-            return new GasExposureTickResult(CurrentState, drain, crossed, exposureTicks);
+            return new GasExposureTickResult(CurrentState, crossed, exposureTicks);
         }
 
         public void Reset()
@@ -230,7 +212,6 @@ namespace SubTerra.Gameplay.Hazards
             visionFadeTo = 0f;
             visionFadeElapsed = settings.ApproachFadeSeconds;
             tickAccumulator = 0f;
-            energyAccumulator = 0f;
             cumulativeExposure = 0f;
             failureLatched = false;
             RefreshState();
