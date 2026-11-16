@@ -45,6 +45,14 @@ namespace SubTerra.App.UI.HUD
             return "체력 " + (int)System.Math.Ceiling(safeCurrent) + " / " + safeMaximum;
         }
 
+        public static string FormatOxygen(float current, float maximum)
+        {
+            var safeMaximum = float.IsNaN(maximum) || maximum < 1f ? 1f : maximum;
+            var safeCurrent = float.IsNaN(current) || current < 0f ? 0f : current;
+            safeCurrent = safeCurrent > safeMaximum ? safeMaximum : safeCurrent;
+            return (int)System.Math.Ceiling(safeCurrent) + " / " + (int)System.Math.Ceiling(safeMaximum);
+        }
+
         public static string FormatHealth(PlayerHealthReadModel model)
         {
             return FormatHealth(model.Current, model.Maximum);
