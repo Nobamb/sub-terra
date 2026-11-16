@@ -32,11 +32,16 @@ namespace SubTerra.Gameplay.Player
         private float damageFlashStartedAt;
         private float damageFlashUntil;
         private float cargoFallImpactMultiplier = 1f;
+        private Func<int> oxygenDepth;
+        private PlayerOxygenState oxygen;
+        private OxygenRiskLevel oxygenRisk;
 
         public PlayerSurvivalState State { get; private set; }
         public event Action<PlayerSurvivalState> StateChanged;
         public event Action<PlayerHealthReadModel> HealthChanged;
         public event Action<RunFailureInputDto> FailureRequested;
+        public event Action<OxygenRiskLevel> OxygenRiskChanged;
+        public OxygenRiskLevel OxygenRisk => oxygenRisk;
         public float CurrentCargoFallImpactMultiplier => cargoFallImpactMultiplier;
 
         private void Awake()
@@ -48,13 +53,42 @@ namespace SubTerra.Gameplay.Player
         private void Update()
         {
             EnsureState();
-            if (State.AdvanceRegeneration(Time.deltaTime))
+            if ((oxygenDepth == null || oxygen.Remaining > 0d) && State.AdvanceRegeneration(Time.deltaTime))
             {
                 PublishStateChanged();
             }
 
             UpdateDamageFlash();
             TrackFall();
+            AdvanceOxygen(Time.deltaTime);
+        }
+
+        public void BindOxygenDepth(Func<int> readDepth)
+        {
+            oxygenDepth = readDepth;
+            if (readDepth == null) return;
+            EnsureState();
+            oxygen ??= new PlayerOxygenState(settings.MaximumOxygen);
+        }
+
+        private void AdvanceOxygen(float deltaTime)
+        {
+            if (oxygenDepth == null || !State.CanAct || deltaTime <= 0f) return;
+            int hits = oxygen.Advance(deltaTime, oxygenDepth(), settings.OxygenPerSecond,
+                settings.OxygenPerSecondPerMeter, settings.OxygenDamageInterval);
+            RefreshOxygenRisk();
+            if (hits > 0)
+                ApplyDamage(RunFailureCause.OxygenDepleted, hits * settings.OxygenDepletionDamage, false,
+                    "oxygen:" + (++tokenSequence).ToString(CultureInfo.InvariantCulture), "oxygen");
+        }
+
+        private void RefreshOxygenRisk()
+        {
+            if (oxygen == null) return;
+            var next = oxygen.GetRisk(settings.OxygenCautionRatio, settings.OxygenCriticalRatio);
+            if (next == oxygenRisk) return;
+            oxygenRisk = next;
+            OxygenRiskChanged?.Invoke(next);
         }
 
         private void OnDisable()
@@ -240,6 +274,8 @@ namespace SubTerra.Gameplay.Player
             EnsureState();
             RestoreDamageFlash();
             State.RestoreFull();
+            oxygen?.Refill();
+            RefreshOxygenRisk();
             PublishStateChanged();
             ResetFallTracking();
         }

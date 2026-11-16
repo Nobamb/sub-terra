@@ -18,6 +18,7 @@ namespace SubTerra.App.UI.HUD
 
         private string currentText = string.Empty;
         private StructuralStatusKind currentKind = StructuralStatusKind.Safe;
+        private bool showingOxygen;
 
         public TextMeshProUGUI StructuralRiskText => structuralRiskText;
         public Image StatusIcon => statusIcon;
@@ -31,6 +32,24 @@ namespace SubTerra.App.UI.HUD
         }
 
         public void SetStructuralRisk(string text, StructuralStatusKind kind)
+        {
+            if (showingOxygen) return;
+            SetStatus(text, kind);
+        }
+
+        public void SetOxygenRisk(StructuralStatusKind kind)
+        {
+            showingOxygen = true;
+            string label = kind switch
+            {
+                StructuralStatusKind.Critical => "위험",
+                StructuralStatusKind.Caution => "주의",
+                _ => "안전"
+            };
+            SetStatus("산소 위험도 " + label, kind);
+        }
+
+        private void SetStatus(string text, StructuralStatusKind kind)
         {
             currentText = text ?? string.Empty;
             currentKind = kind;
