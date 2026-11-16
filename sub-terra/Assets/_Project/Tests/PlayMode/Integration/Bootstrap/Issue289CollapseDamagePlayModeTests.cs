@@ -139,53 +139,8 @@ namespace SubTerra.App.Tests.PlayMode
             var context = new DeveloperDebugCommandContext(
                 GameBootstrapper.Instance.State, runtime.InventoryService, () => world.Survival, null);
 
-            // hit: 낙석 피해만. 종류별 배율, 낙석 오브젝트나 가스는 없다.
-            var hits = new (string line, float expected)[]
-            {
-                ("hit rock", 25f), ("hit copper", 37.5f), ("hit iron", 50f), ("hit lithium", 20f),
-                ("hit rock golden", 32.5f), ("hit iron golden", 65f)
-            };
-            var zonesBefore = world.Gas.ActiveZones.Count;
-            foreach (var (line, expected) in hits)
-            {
-                yield return WaitInvulnerabilityEnd(world.Survival);
-                world.Survival.SetHealthAbsolute(100);
-                var message = session.Execute(line, context);
-                Log(line + " -> " + message);
-                Assert.That(100f - world.Survival.State.Health, Is.EqualTo(expected).Within(0.01f), line);
-            }
-
-            Assert.That(world.Gas.ActiveZones.Count, Is.EqualTo(zonesBefore), "hit은 착지 가스를 만들지 않는다");
-            yield return WaitInvulnerabilityEnd(world.Survival);
-            world.Survival.SetHealthAbsolute(100);
-            Assert.That(session.Execute("hit copper", context), Does.StartWith("hit tile.copper"));
-            Assert.That(session.Execute("hit copper", context), Does.StartWith("피해 없음"), "무적 시간 동안은 겹치지 않는다");
-            Assert.That(world.Survival.State.Health, Is.EqualTo(62.5f).Within(0.01f));
-            yield return WaitInvulnerabilityEnd(world.Survival);
-            Assert.That(session.Execute("hit copper", context), Does.StartWith("hit tile.copper"));
-            Assert.That(world.Survival.State.Health, Is.EqualTo(25f).Within(0.01f), "무적이 끝나면 다시 들어간다");
-
-            // fall: 머리 위에서 실제로 떨어져 피해와 (가스류) 착지 가스가 함께 나온다.
-            var falls = new (string line, float damage, int zones)[]
-            {
-                ("fall gas", 25f, 1), ("fall lithium", 20f, 1), ("fall lithium golden", 26f, 1),
-                ("fall copper", 37.5f, 0), ("fall rock golden", 32.5f, 0)
-            };
-            foreach (var (line, damage, zones) in falls)
-            {
-                yield return WaitInvulnerabilityEnd(world.Survival);
-                // 앞선 낙석이 남긴 가스가 도트 피해로 무적을 먼저 소모하지 않게 비운다.
-                world.Gas.ClearRestoredZones();
-                world.Survival.SetHealthAbsolute(100);
-                var zoneCount = world.Gas.ActiveZones.Count;
-                var message = session.Execute(line, context);
-                Assert.That(message, Does.StartWith("fall tile."), message);
-                Assert.That(world.Gas.ActiveZones.Count, Is.EqualTo(zoneCount), "낙하 도중에는 가스가 없다");
-                yield return new WaitForSecondsRealtime(1.2f);
-                Log(line + " -> health=" + world.Survival.State.Health + " zonesAdded=" + (world.Gas.ActiveZones.Count - zoneCount));
-                Assert.That(100f - world.Survival.State.Health, Is.EqualTo(damage).Within(0.01f), line);
-                Assert.That(world.Gas.ActiveZones.Count - zoneCount, Is.EqualTo(zones), line);
-            }
+            Assert.That(session.Execute("hit copper", context), Does.StartWith("알 수 없는 명령:"));
+            Assert.That(session.Execute("fall gas", context), Does.StartWith("알 수 없는 명령:"));
 
             // hitgas: 첫 틱은 바로, 이후 1초 간격으로 10씩.
             yield return WaitInvulnerabilityEnd(world.Survival);

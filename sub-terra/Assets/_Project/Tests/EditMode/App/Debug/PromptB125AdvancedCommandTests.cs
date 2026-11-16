@@ -163,8 +163,15 @@ namespace SubTerra.App.Tests.Debug
             Assert.That(MineResetService.GetFeeGold(state), Is.EqualTo(2000));
         }
 
-        [Test]
-        public void Timer_SignAndUnitChangeElapsed_EndUsesPopupReset()
+        [TestCase("timer 10", 600d)]
+        [TestCase("timer 10m", 600d)]
+        [TestCase("timer 1h", 3600d)]
+        [TestCase("timer 30s", 30d)]
+        [TestCase("timer 30 sec", 30d)]
+        [TestCase("timer 1 분", 60d)]
+        [TestCase("timer 2시간", 7200d)]
+        [TestCase("timer 4 hour", 10800d)]
+        public void Timer_SetsRemainingTime(string command, double remaining)
         {
             var session = new DeveloperDebugCommandSession(DeveloperDebugCommandRegistry.CreateIsolated());
             var state = GameState.CreateNew();
@@ -172,15 +179,26 @@ namespace SubTerra.App.Tests.Debug
             runtime.SetMineResetElapsedSeconds(1000d);
             var context = Context(state, null, null, runtime);
 
-            Assert.That(session.Execute("타이머 -10", context), Is.EqualTo("timer 1000 -> 400 remaining 02:53:20"));
-            Assert.That(session.Execute("timer 2h", context), Is.EqualTo("timer 400 -> 7600 remaining 00:53:20"));
-            Assert.That(session.Execute("timer 30 sec", context), Is.EqualTo("timer 7600 -> 7630 remaining 00:52:50"));
-            Assert.That(session.Execute("timer 1 분", context), Is.EqualTo("timer 7630 -> 7690 remaining 00:51:50"));
+            Assert.That(session.Execute(command, context), Does.StartWith("timer 1000 ->"));
+            Assert.That(MineResetService.GetRemainingSeconds(state), Is.EqualTo(remaining));
+            Assert.That(session.Execute("타이머 -10", context), Does.Contain("인자 오류"));
             Assert.That(session.Execute("timer", context), Does.Contain("인자 오류"));
-            Assert.That(state.MineResetCycle.ElapsedSeconds, Is.EqualTo(7690d));
+            Assert.That(MineResetService.GetRemainingSeconds(state), Is.EqualTo(remaining));
+            Assert.That(PopupActive(runtime), Is.False);
+        }
 
-            var ended = session.Execute("timer end", context);
-            Assert.That(ended, Is.EqualTo("timer 7690 -> 0 remaining 03:00:00"));
+        [TestCase("timer end")]
+        [TestCase("timer 0")]
+        [TestCase("timer 0s")]
+        public void Timer_ZeroOrEndUsesExistingExpirationPopup(string command)
+        {
+            var session = new DeveloperDebugCommandSession(DeveloperDebugCommandRegistry.CreateIsolated());
+            var state = GameState.CreateNew();
+            var runtime = CreateRuntime(state);
+            runtime.SetMineResetElapsedSeconds(1000d);
+            var context = Context(state, null, null, runtime);
+
+            Assert.That(session.Execute(command, context), Is.EqualTo("timer 1000 -> 0 remaining 03:00:00"));
             Assert.That(state.MineResetCycle.ElapsedSeconds, Is.Zero);
             Assert.That(state.MineResetCycle.PaidResetCount, Is.Zero);
             Assert.That(MineResetService.GetFeeGold(state), Is.EqualTo(500));
@@ -280,7 +298,8 @@ namespace SubTerra.App.Tests.Debug
             Assert.That(help, Does.Contain("minepayment [N] [costfree]"));
             Assert.That(help, Does.Contain("심층지역해금"));
             Assert.That(help, Does.Contain("광산초기화"));
-            Assert.That(help, Does.Contain("예: timer -10"));
+            Assert.That(help, Does.Contain("예: timer 10 / timer 30s"));
+            Assert.That(help, Does.Contain("예: O2 100"));
 
             var advanced = File.ReadAllText(SourcePath(
                 "_Project/Scripts/App/Integration/Debug/DeveloperDebugAdvancedCommands.cs"));

@@ -28,6 +28,14 @@ namespace SubTerra.Gameplay.Player
             timeWithoutOxygen = 0d;
         }
 
+#if UNITY_EDITOR || SUBTERRA_BUILD_DEVELOPMENT
+        internal void SetDebugRemainingPercent(int percent)
+        {
+            Remaining = Maximum * (Math.Clamp(percent, 0, 100) / 100d);
+            timeWithoutOxygen = 0d;
+        }
+#endif
+
         public OxygenRiskLevel GetRisk(float cautionRatio, float criticalRatio)
         {
             double ratio = Remaining / Maximum;

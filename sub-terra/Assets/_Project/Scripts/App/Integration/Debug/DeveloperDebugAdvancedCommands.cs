@@ -43,9 +43,15 @@ namespace SubTerra.App.Integration
             registry.Register(new DeveloperDebugCommandSpec(
                 "timer",
                 new[] { "timer", "타이머" },
-                "<n> [sec|min|hour] | end | reuse [hp|energy] [<n>s|m|h]",
-                "timer -10",
+                "<남은 시간 n>[s|m|h] 또는 <n> [sec|min|hour] | end | reuse [hp|energy] [<n>s|m|h]",
+                "timer 10 / timer 30s",
                 HandleTimer));
+            registry.Register(new DeveloperDebugCommandSpec(
+                "O2",
+                new[] { "O2" },
+                "<남은 산소 %>",
+                "O2 100",
+                HandleOxygen));
             registry.Register(new DeveloperDebugCommandSpec(
                 "minecost",
                 new[] { "minecost", "광산비용" },
@@ -244,9 +250,9 @@ namespace SubTerra.App.Integration
                 return HandleTimerReuse(tokens, context);
             }
 
-            if (!TryTimer(tokens, out var deltaSeconds, out var end))
+            if (!TryTimer(tokens, out var remainingSeconds))
             {
-                return "timer 인자 오류. 예: timer -10";
+                return "timer 인자 오류. 예: timer 10, timer 30s";
             }
 
             if (context == null || context.State == null || context.State.MineResetCycle == null)
@@ -261,9 +267,8 @@ namespace SubTerra.App.Integration
             }
 
             var before = context.State.MineResetCycle.ElapsedSeconds;
-            var next = end
-                ? MineResetService.CycleDurationSeconds
-                : before + deltaSeconds;
+            var duration = MineResetService.CycleDurationSeconds;
+            var next = duration - Math.Min(remainingSeconds, duration);
             runtime.SetMineResetElapsedSeconds(next);
             var after = context.State.MineResetCycle.ElapsedSeconds;
             var remaining = MineResetService.GetRemainingSeconds(context.State);
@@ -273,6 +278,28 @@ namespace SubTerra.App.Integration
                 + after.ToString("0.###", CultureInfo.InvariantCulture)
                 + " remaining "
                 + MineResetService.FormatClock(remaining);
+        }
+
+        private static string HandleOxygen(string[] tokens, DeveloperDebugCommandContext context)
+        {
+            if (tokens.Length != 2 || !TryParseInt(tokens[1], out var percent))
+            {
+                return "O2 인자 오류. 예: O2 100";
+            }
+
+            var player = context?.FindPlayer();
+            if (player == null)
+            {
+                return "플레이어 없음";
+            }
+
+            percent = Math.Clamp(percent, 0, 100);
+            if (!player.TrySetDebugOxygenPercent(percent))
+            {
+                return "광산 탐사 중에만 산소를 설정할 수 있습니다";
+            }
+
+            return "O2 " + percent.ToString(CultureInfo.InvariantCulture) + "%";
         }
 
         private static string HandleMineCost(string[] tokens, DeveloperDebugCommandContext context)
@@ -395,10 +422,9 @@ namespace SubTerra.App.Integration
             return true;
         }
 
-        private static bool TryTimer(string[] tokens, out double deltaSeconds, out bool end)
+        private static bool TryTimer(string[] tokens, out double remainingSeconds)
         {
-            deltaSeconds = 0d;
-            end = false;
+            remainingSeconds = 0d;
             if (tokens == null || tokens.Length < 2 || tokens.Length > 3)
             {
                 return false;
@@ -406,13 +432,7 @@ namespace SubTerra.App.Integration
 
             if (IsEnd(tokens[1]))
             {
-                if (tokens.Length != 2)
-                {
-                    return false;
-                }
-
-                end = true;
-                return true;
+                return tokens.Length == 2;
             }
 
             string unit = null;
@@ -434,12 +454,12 @@ namespace SubTerra.App.Integration
                 unit = tokens[2];
             }
 
-            if (!TryUnitSeconds(unit, out var unitSeconds))
+            if (amount < 0 || !TryUnitSeconds(unit, out var unitSeconds))
             {
                 return false;
             }
 
-            deltaSeconds = amount * unitSeconds;
+            remainingSeconds = amount * unitSeconds;
             return true;
         }
 
