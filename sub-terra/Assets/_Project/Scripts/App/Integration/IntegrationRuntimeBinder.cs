@@ -20,7 +20,6 @@ using SubTerra.Gameplay.Integration;
 using GasHazardSystem = SubTerra.Gameplay.Hazards.GasHazardSystem;
 using SubTerra.Gameplay.Mining;
 using SubTerra.Gameplay.Player;
-using StructuralCrackOverlay = SubTerra.Gameplay.Structural.StructuralCrackOverlay;
 using SubTerra.Shared;
 using SubTerra.Shared.Audio;
 using UnityEngine;
@@ -628,6 +627,8 @@ namespace SubTerra.App.Integration
             {
                 try
                 {
+                    if (hudBinder.StructuralHud != null)
+                        hudBinder.StructuralHud.gameObject.SetActive(false);
                     hudBinder.BindTo(bootstrap.State);
                 }
                 catch (Exception ex)
@@ -926,10 +927,6 @@ namespace SubTerra.App.Integration
             var gasFlow = GetComponent<GasFlowLoopAudio>();
             if (gasFlow == null) gasFlow = gameObject.AddComponent<GasFlowLoopAudio>();
             gasFlow.Configure(Resolve<GasHazardSystem>(null), movement != null ? movement.transform : null,
-                failureHandling, playerCanAct, () => elevator != null && elevator.IsRiding);
-            var shakeLoop = GetComponent<UnstableShakeLoopAudio>();
-            if (shakeLoop == null) shakeLoop = gameObject.AddComponent<UnstableShakeLoopAudio>();
-            shakeLoop.Configure(Resolve<StructuralCrackOverlay>(null), movement != null ? movement.transform : null,
                 failureHandling, playerCanAct, () => elevator != null && elevator.IsRiding);
 
             var survivalController = runFailureController != null ? runFailureController.SurvivalController : null;

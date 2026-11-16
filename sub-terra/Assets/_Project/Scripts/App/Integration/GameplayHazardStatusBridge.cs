@@ -52,7 +52,7 @@ namespace SubTerra.App.Integration
 
         private void OnEnable()
         {
-            if (structuralSystem != null)
+            if (structuralSystem != null && structuralSystem.IsEnabledForWorld)
             {
                 structuralSystem.StructuralStatusChanged += OnStructuralStatusChanged;
                 ResolvePlayerTarget();
@@ -154,7 +154,7 @@ namespace SubTerra.App.Integration
 
         private void RefreshLocalStructuralStatus(bool force)
         {
-            if (structuralSystem == null) return;
+            if (structuralSystem == null || !structuralSystem.IsEnabledForWorld) return;
             ResolvePlayerTarget();
             if (playerTarget == null)
             {

@@ -145,9 +145,10 @@ namespace SubTerra.Gameplay.Snapshot
             ApplyRemovedTiles(snapshot.miningChanges);
             ApplyChangedTiles(snapshot.changedTiles);
             ApplyCollapsedTiles(snapshot.collapseChanges);
-            // 버팀목 등 지지물이 먼저 복원된 뒤 구조 위험을 재계산해야 한다.
+            // Old snapshots keep terrain changes that were already recorded before collapse was retired.
             RestoreBuildings(snapshot.buildings);
-            RebuildStructuralRiskAfterRestore(snapshot);
+            if (structuralSystem != null && structuralSystem.IsEnabledForWorld)
+                RebuildStructuralRiskAfterRestore(snapshot);
             RestoreGasZones(snapshot.gasChanges);
             RestoreDiscoveredChunks(snapshot.discoveredChunkIds);
             RestorePowerConnections(snapshot.powerState);
