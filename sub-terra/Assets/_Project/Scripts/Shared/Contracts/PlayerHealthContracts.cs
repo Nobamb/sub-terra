@@ -2,6 +2,9 @@ using System;
 
 namespace SubTerra.Shared
 {
+    /// <summary>Marks a solid floor collider that suppresses extra landing damage from cargo.</summary>
+    public interface IStableLandingPlatform { }
+
     /// <summary>Gameplay 생존 상태를 HUD에 노출하는 읽기 전용 값.</summary>
     public readonly struct PlayerHealthReadModel
     {

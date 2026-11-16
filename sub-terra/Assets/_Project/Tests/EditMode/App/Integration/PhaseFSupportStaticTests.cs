@@ -5,6 +5,7 @@ using SubTerra.App.Editor.DataValidation;
 using SubTerra.App.Integration;
 using SubTerra.App.UI.Building;
 using SubTerra.Gameplay.Building;
+using SubTerra.Gameplay.Player;
 using SubTerra.Gameplay.Structural;
 using SubTerra.Shared;
 using UnityEditor;
@@ -31,6 +32,7 @@ namespace SubTerra.App.Tests.Integration
             var colliders = prefab.GetComponents<BoxCollider2D>();
             Assert.That(colliders.Length, Is.EqualTo(1));
             var capCollider = colliders.Single();
+            Assert.That(capCollider.TryGetComponent<IStableLandingPlatform>(out _), Is.True);
             Assert.That(capCollider.size, Is.EqualTo(new Vector2(1f, 0.4f)));
             Assert.That(capCollider.offset, Is.EqualTo(new Vector2(0f, 1.1f)));
             Assert.That(capCollider.usedByEffector, Is.True);
@@ -105,7 +107,19 @@ namespace SubTerra.App.Tests.Integration
             Assert.That(definition.BuildingId, Is.EqualTo(DataIds.Buildings.SupportBasic));
             Assert.That(definition.Costs.Count, Is.EqualTo(1));
             Assert.That(definition.Costs[0].ItemId, Is.EqualTo(DataIds.Minerals.Copper));
-            Assert.That(definition.Costs[0].Quantity, Is.EqualTo(2));
+            Assert.That(definition.Costs[0].Quantity, Is.EqualTo(1));
+            Assert.That(data.BuildCosts.Single().Quantity, Is.EqualTo(1));
+            var recipe = AssetDatabase.LoadAssetAtPath<RecipeData>(
+                "Assets/_Project/Data/Recipes/Recipe_Support_Basic.asset");
+            Assert.That(recipe.Inputs.Single().Quantity, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void Issue333_PlatformWaivesCargoDamageButKeepsHeightDamage()
+        {
+            int normalDamage = PlayerFallDamageRules.CalculateDamage(10f, false);
+            Assert.That(PlayerFallDamageRules.ScaleDamage(normalDamage, 1.5f), Is.EqualTo(15));
+            Assert.That(PlayerFallDamageRules.ScaleDamage(normalDamage, 1.5f, stableLanding: true), Is.EqualTo(10));
         }
 
         [Test]

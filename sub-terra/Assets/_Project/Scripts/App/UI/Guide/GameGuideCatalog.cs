@@ -234,7 +234,7 @@ namespace SubTerra.App.UI.Guide
 
             Control("ctrl.drone", "Digger-Bot", "탐사 보조 로봇의 조언을 확인합니다.", "Tab", "drone")
                 .Step("열기·닫기", "Tab 키 또는 월드의 Digger-Bot을 마우스로 클릭하면 Digger-Bot 창이 열리고 닫힙니다.")
-                .Text("Digger-Bot은 생존·구조 위험·가스·전력·귀환·탐사 순으로 상황을 살펴 지금 할 일을 추천합니다.")
+                .Text("Digger-Bot은 생존·가스·전력·귀환·탐사 상황을 살펴 지금 할 일을 추천합니다.")
                 .Tip("창을 닫아도 Digger-Bot의 분석과 경고 말풍선은 계속 동작합니다.")
                 .Link("mech.structure", "mech.gas");
 
@@ -276,9 +276,9 @@ namespace SubTerra.App.UI.Guide
             Mechanic("mech.power", "전력과 충전·구출", "전력을 확인하고 충전·구출을 이용", "power")
                 .Data("전력을 쓰는 때", "채굴할 때마다 · 가스 지대에 있을 때")
                 .Data("충전 방법", "지상 기지에 도착하면 가득 충전 · " + charger + "에서 E (전력 공급 범위 안, 재사용 대기 " + cooldown + ")")
-                .Step("전력 고갈", "전력이 0이 되면 구출 팝업이 열립니다.")
-                .Step("팝업을 닫으면", "플레이어 머리 위에 구출 버튼이 나타납니다.")
-                .Step("다시 열기", "버튼을 누르거나 R 키를 누르면 팝업이 다시 열립니다. R은 팝업만 열 뿐 구출을 실행하지 않습니다.")
+                .Step("안내 버튼 확인", "전력이 0이 되거나 산소가 위험 단계에 들어가면 머리 위에 구출 버튼이 나타납니다.")
+                .Step("직접 귀환", "전력이 없어도 걷기·점프·사다리로 엘리베이터까지 갈 수 있습니다.")
+                .Step("도움 요청", "버튼이나 R 키로 구출 팝업을 엽니다. R만 눌러서는 구출을 실행하지 않습니다.")
                 .Step("구출 실행", "팝업에서 비용을 확인하고 구출 버튼을 눌러야 실행되며, 엘리베이터 위치로 이동합니다.")
                 .Data("구출 비용", "골드는 보유량 안에서 최대 " + EmergencyRescueService.MaximumGoldCost + "G, 가진 화물은 "
                     + EmergencyRescueService.MineralLossPercent + "%가 차감됩니다. 보관함에 넣은 자원은 차감되지 않습니다. 정확한 값은 팝업에서 확인하세요.")
@@ -288,7 +288,7 @@ namespace SubTerra.App.UI.Guide
             Mechanic("mech.cargo", "화물 관리", "가득 차기 전에 보관하거나 판매", "cargo")
                 .Data("화물 한도", "자원마다 무게가 다르고, 화물 무게가 한도에 닿으면 더 담지 못합니다. 한도는 업그레이드로 늘릴 수 있습니다.")
                 .Warning("더 담을 수 없으면 채굴이 막히고 '화물이 가득 찼습니다. 귀환해 화물을 비우세요.'가 표시됩니다.")
-                .Data("무거울수록", "이동 속도와 점프력이 줄고, 높은 곳에서 떨어질 때 충격이 커집니다.")
+                .Data("무거울수록", "이동 속도와 점프력이 줄고, 산소 소모와 높은 곳에서의 착지 충격이 커집니다.")
                 .Data("비우는 방법", storage + "에 보관 · " + settlement + "에서 판매 · 지상 기지에서 판매")
                 .Tip("탐사 실패나 구출로 줄어드는 것은 가진 화물뿐입니다. 보관함의 자원은 안전합니다.")
                 .Link("fac.storage", "fac.settlement", "ctrl.inventory");
@@ -308,14 +308,12 @@ namespace SubTerra.App.UI.Guide
                 .Tip("CCTV 창은 " + core + "에서 멀어지면 닫히고, E 키로 다시 열 수 있습니다.")
                 .Link("fac.core", "mech.grid", "mech.gas");
 
-            Mechanic("mech.structure", "구조 위험", "버팀목과 귀환 경로 확보", "structure")
-                .Text("아래가 비어 있는 천장 칸이 위험합니다. 블록을 계속 캐면 균열이 짙어지고, 위·아래가 모두 비게 되면 곧 떨어집니다.")
-                .Step("상태 확인", "HUD의 구조 상태와 균열 표시를 살핍니다.")
-                .Step("점멸하면 피하기", "빨간 칸 중 점멸하는 칸이 곧 떨어집니다. 먼저 벗어나세요.")
-                .Step("미리 보강", "점멸하기 전에 근처에 " + support + "을 설치하면 위험도가 내려갑니다.")
-                .Warning("떨어지는 돌에 맞으면 체력이 줄어듭니다.")
-                .Tip("점멸하지 않는 빨간 칸은 아직 떨어지지 않습니다.")
-                .Link("fac.support", "mech.health", "ctrl.build");
+            Mechanic("mech.structure", "산소와 착지 위험", "남은 산소를 살피고 귀환로 확보", "structure")
+                .Text("광산에 머무는 동안 산소가 줄어듭니다. 더 깊은 곳에서 움직이거나 화물이 무거우면 소모가 빨라집니다.")
+                .Data("산소 위험도", "HUD에서 안전·주의·위험을 확인하세요. 산소가 0이면 체력이 주기적으로 줄어듭니다.")
+                .Tip("무거운 짐을 들고 오를 때 사다리는 화물로 인한 산소 소모 증가가 제한됩니다.")
+                .Data("착지 위험", "높이에서 떨어질 때 짐이 무거우면 피해가 커집니다. " + support + " 위에 착지하면 무게로 인한 추가 피해를 막습니다.")
+                .Link("fac.support", "fac.ladder", "mech.power");
 
             Mechanic("mech.gas", "가스 지대", "가스를 피하고 정화 지대로 대피", "gas")
                 .Data("가스 속에서", "이동이 느려지고 시야가 흐려지며 전력이 계속 줄어듭니다.")
@@ -325,7 +323,7 @@ namespace SubTerra.App.UI.Guide
                 .Tip("Digger-Bot이 가스 위험을 알려 주면 바로 벗어나세요.")
                 .Link("mech.core", "ctrl.drone");
 
-            var resetNow = LocalizationService.Get("mine_reset.confirm.reset.desc", "채굴한 타일 · 지하 시설 · 붕괴 · 가스");
+            var resetNow = LocalizationService.Get("mine_reset.confirm.reset.desc", "채굴한 타일 · 지하 시설 · 가스");
             var keepNow = LocalizationService.Get("mine_reset.confirm.keep.desc", "업그레이드 · 심층 해금 · 보유 광물");
             Mechanic("mech.reset", "광산 초기화", "남은 시간을 확인하고 귀환 준비", "reset")
                 .Data("자동 초기화", "지하 탐사 시간이 " + resetHours + " 쌓이면 새 광산이 만들어지고 지상 기지로 이동합니다. 지상 기지에서는 시간이 흐르지 않습니다.")
@@ -391,10 +389,11 @@ namespace SubTerra.App.UI.Guide
 
             Facility("fac.ladder", ladder, "다른 높이로 이동", "W S", DataIds.Buildings.LadderBasic)
                 .Data("사용", "닿은 상태에서 위·아래 이동 키로 오르내립니다. E 키는 쓰지 않습니다.")
+                .Tip("사다리를 오를 때는 화물 무게에 따른 산소 소모 증가에 상한이 있습니다.")
                 .Link("ctrl.ladder", "ctrl.build");
 
-            Facility("fac.support", support, "구조 위험 완화", string.Empty, DataIds.Buildings.SupportBasic)
-                .Data("효과", "설치한 곳 주변 천장의 붕괴 위험도를 낮춥니다.")
+            Facility("fac.support", support, "단단한 착지 발판", string.Empty, DataIds.Buildings.SupportBasic)
+                .Data("효과", "버팀목 위로 착지하면 화물 무게로 인한 추가 피해를 막습니다.")
                 .Link("mech.structure", "ctrl.build");
 
             Facility("fac.light", light, "지하 구역을 밝힘", string.Empty, DataIds.Buildings.LightBasic)

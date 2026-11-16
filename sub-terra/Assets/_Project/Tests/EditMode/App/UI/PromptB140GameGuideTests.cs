@@ -236,8 +236,8 @@ namespace SubTerra.App.Tests.UI
         {
             var steps = GameGuideCatalog.Get("mech.power").Lines.Where(l => l.Kind == GuideLineKind.Step).ToArray();
             Assert.That(steps.Length, Is.EqualTo(4));
-            Assert.That(steps[0].Text, Does.Contain("구출 팝업이 열립니다"));
-            Assert.That(steps[1].Text, Does.Contain("구출 버튼이 나타납니다"));
+            Assert.That(steps[0].Text, Does.Contain("구출 버튼이 나타납니다"));
+            Assert.That(steps[1].Text, Does.Contain("엘리베이터까지 갈 수 있습니다"));
             Assert.That(steps[2].Text, Does.Contain("R"));
             Assert.That(steps[2].Text, Does.Contain("구출을 실행하지 않습니다"));
             Assert.That(steps[3].Text, Does.Contain("비용을 확인"));
@@ -264,7 +264,8 @@ namespace SubTerra.App.Tests.UI
             Assert.That(core, Does.Contain(ItemDisplayNames.Building(DataIds.Buildings.ClinicBasic)));
             Assert.That(core, Does.Contain(ItemDisplayNames.Building(DataIds.Buildings.SettlementBasic)));
             Assert.That(Plain("mech.cargo"), Does.Contain("화물이 가득 찼습니다. 귀환해 화물을 비우세요."));
-            Assert.That(Plain("mech.structure"), Does.Contain("점멸"));
+            Assert.That(Plain("mech.structure"), Does.Contain("산소 위험도"));
+            Assert.That(Plain("fac.support"), Does.Contain("추가 피해"));
         }
 
         [Test]
@@ -336,7 +337,7 @@ namespace SubTerra.App.Tests.UI
             Assert.That(source, Is.Not.Null, "동적 폰트의 원본 폰트");
             var texts = new List<string>
             {
-                GameGuidePopupView.Title, "접기", "펼치기", "관련 안내", "전체", "자원", "시설", "REC", "E키를 눌러 귀환", "구조 위험 주의!"
+                GameGuidePopupView.Title, "접기", "펼치기", "관련 안내", "전체", "자원", "시설", "REC", "E키를 눌러 귀환"
             };
             foreach (var card in GameGuideCatalog.All) texts.AddRange(AllText(card));
             foreach (var step in GameGuideCatalog.FirstSteps) { texts.Add(step.Title); texts.Add(step.Caption); }

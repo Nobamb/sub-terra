@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using SubTerra.Shared;
 using SubTerra.Shared.Audio;
 using UnityEngine;
 
@@ -73,6 +74,7 @@ namespace SubTerra.Gameplay.Player
         public Vector2 Position => body != null ? body.position : (Vector2)transform.position;
         public float FacingDirection { get; private set; } = 1f;
         public bool IsGrounded { get; private set; }
+        internal bool IsOnStableLandingPlatform { get; private set; }
         public bool CanMove { get; private set; } = true;
         public bool IsClimbing { get; private set; }
         public bool IsTouchingLadder => activeLadders.Count > 0;
@@ -423,6 +425,7 @@ namespace SubTerra.Gameplay.Player
 
         private void UpdateGroundedState()
         {
+            IsOnStableLandingPlatform = false;
             // 에어 락 동안은 무조건 공중 취급 → 연타/즉시 재점프 불가.
             if (jumpAirLockRemaining > 0f)
             {
@@ -431,8 +434,9 @@ namespace SubTerra.Gameplay.Player
             }
 
             // 표시/기타용 착지: 접점 또는 짧은 발 밑 레이.
-            bool floorContact = HasFloorContact();
-            bool onFloor = floorContact || HasFloorProbeHit();
+            Collider2D floor = FindFloorContact();
+            if (floor == null) floor = FindFloorProbeHit();
+            bool onFloor = floor != null;
 
             // 강하게 상승 중이면 착지로 보지 않는다.
             if (onFloor && body != null && body.linearVelocityY > 0.4f)
@@ -442,6 +446,7 @@ namespace SubTerra.Gameplay.Player
             }
 
             IsGrounded = onFloor;
+            IsOnStableLandingPlatform = onFloor && IsStableLandingPlatform(floor);
 
             // 접점이 한 틱 누락돼도 발밑 보조 판정으로 착지를 확정한다.
             // 상승 중에는 위에서 반환하므로 공중에서 차지가 회복되지 않는다.
@@ -458,13 +463,11 @@ namespace SubTerra.Gameplay.Player
         /// Rigidbody 실제 충돌 접점 중 위쪽 노멀(바닥)만 착지로 인정.
         /// 공중에서는 접점이 없어 무한 점프 오탐을 막는다.
         /// </summary>
-        private bool HasFloorContact()
+        private Collider2D FindFloorContact()
         {
-            if (body == null)
-            {
-                return false;
-            }
+            if (body == null) return null;
 
+            Collider2D platform = null;
             int count = body.GetContacts(contactBuffer);
             for (int i = 0; i < count; i++)
             {
@@ -483,17 +486,19 @@ namespace SubTerra.Gameplay.Player
                 // 플레이어 기준 상대 노멀: 바닥은 대략 (0,1).
                 if (contact.normal.y >= minGroundNormalY)
                 {
-                    return true;
+                    // When ordinary ground and a platform both support the player, preserve normal damage.
+                    if (!IsStableLandingPlatform(other)) return other;
+                    platform = other;
                 }
             }
 
-            return false;
+            return platform;
         }
 
         /// <summary>
         /// 접점이 한 프레임 누락될 때 보조. 발 아래 짧은 레이만 사용.
         /// </summary>
-        private bool HasFloorProbeHit()
+        private Collider2D FindFloorProbeHit()
         {
             Vector2 origin;
             if (groundCheck != null)
@@ -507,7 +512,7 @@ namespace SubTerra.Gameplay.Player
             }
             else
             {
-                return false;
+                return null;
             }
 
             int hitCount = Physics2D.RaycastNonAlloc(
@@ -517,6 +522,8 @@ namespace SubTerra.Gameplay.Player
                 groundProbeDistance,
                 groundLayers);
 
+            Collider2D nearest = null;
+            float nearestDistance = float.PositiveInfinity;
             for (int i = 0; i < hitCount; i++)
             {
                 RaycastHit2D hit = probeHits[i];
@@ -530,14 +537,20 @@ namespace SubTerra.Gameplay.Player
                     continue;
                 }
 
-                if (hit.normal.y >= minGroundNormalY)
+                if (hit.normal.y >= minGroundNormalY
+                    && (hit.distance < nearestDistance
+                        || (hit.distance == nearestDistance && !IsStableLandingPlatform(hit.collider))))
                 {
-                    return true;
+                    nearest = hit.collider;
+                    nearestDistance = hit.distance;
                 }
             }
 
-            return false;
+            return nearest;
         }
+
+        private static bool IsStableLandingPlatform(Collider2D collider) =>
+            collider.TryGetComponent<IStableLandingPlatform>(out _);
 
         private bool IsInGroundLayer(int layer)
         {

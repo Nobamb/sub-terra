@@ -178,7 +178,7 @@ namespace SubTerra.App.Editor.DataValidation
             }
 
             definition.EditorSet(DataIds.Buildings.SupportBasic, prefab, Vector2Int.one, true);
-            definition.EditorSetCosts(new ItemCostDto(DataIds.Minerals.Copper, 2));
+            definition.EditorSetCosts(new ItemCostDto(DataIds.Minerals.Copper, 1));
             EditorUtility.SetDirty(definition);
             return definition;
         }

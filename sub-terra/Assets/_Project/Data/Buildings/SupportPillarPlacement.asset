@@ -18,4 +18,4 @@ MonoBehaviour:
   requiresGround: 1
   costs:
   - itemId: mineral.copper
-    quantity: 2
+    quantity: 1

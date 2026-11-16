@@ -1,10 +1,11 @@
 using System;
+using SubTerra.Shared;
 using UnityEngine;
 
 namespace SubTerra.Gameplay.Structural
 {
     /// <summary>Represents a placed support pillar or reinforcement in the gameplay layer.</summary>
-    public sealed class StructuralSupport : MonoBehaviour
+    public sealed class StructuralSupport : MonoBehaviour, IStableLandingPlatform
     {
         [SerializeField, Min(0.1f)] private float radius = 3f;
         [SerializeField, Min(0)] private int strength = 35;

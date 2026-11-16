@@ -145,8 +145,8 @@ namespace SubTerra.Shared.Localization
             Add("mine_reset.confirm.reset.title", "초기화", "Reset");
             Add(
                 "mine_reset.confirm.reset.desc",
-                "채굴한 타일 · 지하 시설 · 붕괴 · 가스",
-                "Mined tiles · Facilities · Collapse · Gas");
+                "채굴한 타일 · 지하 시설 · 가스",
+                "Mined tiles · Facilities · Gas");
             Add("mine_reset.confirm.keep.title", "유지", "Kept");
             Add(
                 "mine_reset.confirm.keep.desc",
