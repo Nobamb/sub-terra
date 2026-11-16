@@ -17,6 +17,21 @@ namespace SubTerra.Gameplay.Player
         [SerializeField, Min(0f)] private float minimumFallDamageHeight = 10f;
         [SerializeField, Min(0)] private int fallDamageAtThreshold = 10;
         [SerializeField, Min(0f)] private float fallDamagePerAdditionalMeter = 1f;
+        [SerializeField, Min(1f)] private float maximumOxygen = 100f;
+        [SerializeField, Min(0f)] private float oxygenPerSecond = 0.5f;
+        [SerializeField, Min(0f)] private float oxygenPerSecondPerMeter = 0.02f;
+        [SerializeField, Min(0.1f)] private float oxygenDamageInterval = 1f;
+        [SerializeField, Min(0f)] private float oxygenDepletionDamage = 5f;
+        [SerializeField, Range(0f, 1f)] private float oxygenCautionRatio = 0.35f;
+        [SerializeField, Range(0f, 1f)] private float oxygenCriticalRatio = 0.15f;
+
+        public float MaximumOxygen => maximumOxygen;
+        public float OxygenPerSecond => oxygenPerSecond;
+        public float OxygenPerSecondPerMeter => oxygenPerSecondPerMeter;
+        public float OxygenDamageInterval => oxygenDamageInterval;
+        public float OxygenDepletionDamage => oxygenDepletionDamage;
+        public float OxygenCautionRatio => oxygenCautionRatio;
+        public float OxygenCriticalRatio => oxygenCriticalRatio;
 
         public int MaximumHealth => maximumHealth;
         public float InvulnerabilitySeconds => invulnerabilitySeconds;

@@ -3,6 +3,60 @@ using SubTerra.Shared;
 
 namespace SubTerra.Gameplay.Player
 {
+    public enum OxygenRiskLevel
+    {
+        Safe,
+        Caution,
+        Critical
+    }
+
+    public sealed class PlayerOxygenState
+    {
+        private double timeWithoutOxygen;
+        public float Maximum { get; }
+        public double Remaining { get; private set; }
+
+        public PlayerOxygenState(float maximum)
+        {
+            Maximum = Math.Max(1f, maximum);
+            Refill();
+        }
+
+        public void Refill()
+        {
+            Remaining = Maximum;
+            timeWithoutOxygen = 0d;
+        }
+
+        public OxygenRiskLevel GetRisk(float cautionRatio, float criticalRatio)
+        {
+            double ratio = Remaining / Maximum;
+            if (ratio <= criticalRatio) return OxygenRiskLevel.Critical;
+            return ratio <= cautionRatio ? OxygenRiskLevel.Caution : OxygenRiskLevel.Safe;
+        }
+
+        public int Advance(float deltaTime, int depth, float baseRate, float perMeter, float damageInterval)
+        {
+            if (deltaTime <= 0f) return 0;
+
+            double depletedTime = deltaTime;
+            if (Remaining > 0d)
+            {
+                double drainRate = baseRate + perMeter * Math.Max(0, depth);
+                if (drainRate <= 0d) return 0;
+                depletedTime -= Remaining / drainRate;
+                Remaining = Math.Max(0d, Remaining - drainRate * deltaTime);
+                if (Remaining > 0d) return 0;
+            }
+
+            timeWithoutOxygen += Math.Max(0d, depletedTime);
+            double interval = Math.Max(0.1f, damageInterval);
+            int ticks = (int)(timeWithoutOxygen / interval);
+            timeWithoutOxygen -= ticks * interval;
+            return ticks;
+        }
+    }
+
     /// <summary>
     /// Unity 생명주기와 분리된 Player 생존 상태. 피해 시간은 호출자가 전달해 테스트를 결정론적으로 만든다.
     /// </summary>

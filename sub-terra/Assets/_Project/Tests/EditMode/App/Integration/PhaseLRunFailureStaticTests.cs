@@ -8,6 +8,7 @@ using SubTerra.App.Inventory;
 using SubTerra.App.Progression;
 using SubTerra.App.Save;
 using SubTerra.App.State;
+using SubTerra.App.UI.HUD;
 using SubTerra.App.UI.RunFailure;
 using SubTerra.Gameplay.Building;
 using SubTerra.Gameplay.Mining;
@@ -24,6 +25,46 @@ namespace SubTerra.App.Tests.Integration
     {
         private const string ScenePath =
             "Assets/_Project/Scenes/App/Mine_Demo_Integration.unity";
+
+        [Test]
+        public void Issue332_OxygenDrainsFasterAtDepthAndTicksOnlyAfterDepletion()
+        {
+            var shallow = new PlayerOxygenState(10f);
+            var deep = new PlayerOxygenState(10f);
+            Assert.That(shallow.Advance(4f, 0, 1f, 0.25f, 1f), Is.Zero);
+            Assert.That(deep.Advance(4f, 4, 1f, 0.25f, 1f), Is.Zero);
+            Assert.That(shallow.Remaining, Is.EqualTo(6d));
+            Assert.That(deep.Remaining, Is.EqualTo(2d));
+            Assert.That(deep.GetRisk(0.35f, 0.15f), Is.EqualTo(OxygenRiskLevel.Caution));
+
+            Assert.That(deep.Advance(1.5f, 4, 1f, 0.25f, 1f), Is.Zero);
+            Assert.That(deep.GetRisk(0.35f, 0.15f), Is.EqualTo(OxygenRiskLevel.Critical));
+            Assert.That(deep.Advance(0f, 4, 1f, 0.25f, 1f), Is.Zero);
+            Assert.That(deep.Advance(0.5f, 4, 1f, 0.25f, 1f), Is.EqualTo(1));
+            Assert.That(deep.Advance(2.5f, 4, 1f, 0.25f, 1f), Is.EqualTo(2));
+            deep.Refill();
+            Assert.That(deep.Remaining, Is.EqualTo(10d));
+            Assert.That(deep.Advance(5.5f, 4, 1f, 0.25f, 1f), Is.Zero);
+        }
+
+        [Test]
+        public void Issue332_OxygenStatusKeepsHudRowWhenLegacyStructureRefreshes()
+        {
+            var row = new GameObject("OxygenStatus");
+            try
+            {
+                var view = row.AddComponent<StructuralHudView>();
+                view.SetOxygenRisk(StructuralStatusKind.Critical);
+                view.SetStructuralRisk("구조 안전", StructuralStatusKind.Safe);
+                Assert.That(view.CurrentKind, Is.EqualTo(StructuralStatusKind.Critical));
+                Assert.That(RunFailureRevealTimeline.ResolveCauseSubtitle(RunFailureCause.OxygenDepleted),
+                    Does.Contain("산소 부족"));
+            }
+            finally
+            {
+                Object.DestroyImmediate(row);
+            }
+        }
 
         private sealed class UpgradeCatalog : IUpgradeCatalog
         {

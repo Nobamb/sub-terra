@@ -44,6 +44,7 @@ namespace SubTerra.App.Integration
     {
         [SerializeField] private BuildingPlacementSystem buildingPlacementSystem;
         [SerializeField] private HudBinder hudBinder;
+        private PlayerSurvivalController oxygenSurvival;
         [SerializeField] private GameplayHazardStatusBridge hazardBridge;
         [SerializeField] private GameplayDepthStatusBridge depthBridge;
         [SerializeField] private DepthDarknessOverlayController depthDarknessOverlay;
@@ -623,12 +624,11 @@ namespace SubTerra.App.Integration
 
             ResolveSceneReferences();
 
+            BindOxygen();
             if (hudBinder != null && bootstrap != null)
             {
                 try
                 {
-                    if (hudBinder.StructuralHud != null)
-                        hudBinder.StructuralHud.gameObject.SetActive(false);
                     hudBinder.BindTo(bootstrap.State);
                 }
                 catch (Exception ex)
@@ -1058,6 +1058,11 @@ namespace SubTerra.App.Integration
 
         private void OnDestroy()
         {
+            if (oxygenSurvival != null)
+            {
+                oxygenSurvival.OxygenRiskChanged -= RenderOxygenRisk;
+                oxygenSurvival.BindOxygenDepth(null);
+            }
             if (resourcePickupVfx != null) resourcePickupVfx.Unbind();
             unbindProgressionPanel?.Invoke();
             unbindProgressionPanel = null;
@@ -1168,6 +1173,29 @@ namespace SubTerra.App.Integration
         /// 플레이어 위치를 깊이(m)로 변환해 GameState에 연결한다.
         /// Scene에 브리지가 없으면 ApplicationRoot에 런타임 생성한다.
         /// </summary>
+        private void BindOxygen()
+        {
+            if (runFailureController == null || depthBridge == null) return;
+            oxygenSurvival = runFailureController.SurvivalController;
+            if (oxygenSurvival == null) return;
+            oxygenSurvival.BindOxygenDepth(() => depthBridge.LastPublishedDepth);
+            oxygenSurvival.OxygenRiskChanged += RenderOxygenRisk;
+            RenderOxygenRisk(oxygenSurvival.OxygenRisk);
+        }
+
+        private void RenderOxygenRisk(OxygenRiskLevel risk)
+        {
+            if (hudBinder == null || hudBinder.StructuralHud == null) return;
+            var row = hudBinder.StructuralHud;
+            row.SetOxygenRisk(risk switch
+            {
+                OxygenRiskLevel.Caution => StructuralStatusKind.Caution,
+                OxygenRiskLevel.Critical => StructuralStatusKind.Critical,
+                _ => StructuralStatusKind.Safe
+            });
+            row.gameObject.SetActive(true);
+        }
+
         private void BindDepthBridge()
         {
             if (bootstrap == null || bootstrap.State == null)
