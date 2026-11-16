@@ -24,6 +24,11 @@ namespace SubTerra.Gameplay.Player
         [SerializeField, Min(0f)] private float oxygenDepletionDamage = 5f;
         [SerializeField, Range(0f, 1f)] private float oxygenCautionRatio = 0.35f;
         [SerializeField, Range(0f, 1f)] private float oxygenCriticalRatio = 0.15f;
+        [SerializeField, Min(1f)] private float oxygenMovementMultiplier = 1.5f;
+        [SerializeField, Min(1f)] private float oxygenLadderMultiplier = 1.5f;
+        [SerializeField, Min(1f)] private float oxygenFullCargoMultiplier = 1.5f;
+        [SerializeField, Min(1f)] private float oxygenLadderCargoCap = 1.2f;
+        [SerializeField, Min(0.1f)] private float expeditionLadderSpeedMultiplier = 1.5f;
 
         public float MaximumOxygen => maximumOxygen;
         public float OxygenPerSecond => oxygenPerSecond;
@@ -32,6 +37,11 @@ namespace SubTerra.Gameplay.Player
         public float OxygenDepletionDamage => oxygenDepletionDamage;
         public float OxygenCautionRatio => oxygenCautionRatio;
         public float OxygenCriticalRatio => oxygenCriticalRatio;
+        public float OxygenMovementMultiplier => oxygenMovementMultiplier;
+        public float OxygenLadderMultiplier => oxygenLadderMultiplier;
+        public float OxygenFullCargoMultiplier => oxygenFullCargoMultiplier;
+        public float OxygenLadderCargoCap => oxygenLadderCargoCap;
+        public float ExpeditionLadderSpeedMultiplier => expeditionLadderSpeedMultiplier;
 
         public int MaximumHealth => maximumHealth;
         public float InvulnerabilitySeconds => invulnerabilitySeconds;

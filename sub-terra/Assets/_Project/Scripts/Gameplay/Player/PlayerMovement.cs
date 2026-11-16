@@ -31,6 +31,7 @@ namespace SubTerra.Gameplay.Player
         [SerializeField, Min(0f)] private float deceleration = 55f;
         [SerializeField, Min(0f)] private float jumpImpulse = 11f;
         [SerializeField, Min(0f)] private float ladderSpeed = 4f;
+        private float ladderSpeedMultiplier = 1f;
         [SerializeField, Range(0f, 0.2f)] private float coyoteTimeSeconds = 0.1f;
         [SerializeField, Range(0f, 0.2f)] private float jumpBufferSeconds = 0.1f;
 
@@ -350,10 +351,13 @@ namespace SubTerra.Gameplay.Player
             SfxRequests.Play(moveSfx.ResolveJump());
         }
 
+        internal void SetLadderSpeedMultiplier(float multiplier) => ladderSpeedMultiplier = multiplier;
+
         private void ApplyVerticalMovement()
         {
+            float climbSpeed = ladderSpeed * ladderSpeedMultiplier * CurrentSpeedMultiplier;
             var verticalVelocity = CanMove
-                ? verticalMoveInput * ladderSpeed * CurrentSpeedMultiplier
+                ? verticalMoveInput * climbSpeed
                 : 0f;
             if (TryGetLadderTop(out var top))
             {
@@ -378,7 +382,7 @@ namespace SubTerra.Gameplay.Player
                     // 위에서 걸친 경우 손을 댈 수 있는 높이까지 입력과 무관하게 내려온다.
                     // 마지막 틱의 이동만 제한해 순간 위치 보정이나 아래쪽 초과 이동을 피한다.
                     verticalVelocity = CanMove
-                        ? -Mathf.Min(ladderSpeed * CurrentSpeedMultiplier,
+                        ? -Mathf.Min(climbSpeed,
                             (playerTop - top) / Time.fixedDeltaTime)
                         : 0f;
                 }

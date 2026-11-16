@@ -66,16 +66,19 @@ namespace SubTerra.App.Run
 
         private readonly GameState gameState;
         private readonly InventoryService inventory;
+        private readonly Func<bool> isOxygenCritical;
 
-        public EmergencyRescueService(GameState state, InventoryService inventoryService)
+        public EmergencyRescueService(GameState state, InventoryService inventoryService,
+            Func<bool> isOxygenCritical = null)
         {
             gameState = state;
             inventory = inventoryService;
+            this.isOxygenCritical = isOxygenCritical;
         }
 
         public bool IsAvailable => GameState.IsComplete(gameState)
             && inventory != null
-            && gameState.Player.Energy <= 0
+            && (gameState.Player.Energy <= 0 || isOxygenCritical?.Invoke() == true)
             && gameState.Run.LifecyclePhase == RunLifecyclePhase.Active;
 
         public EmergencyRescueCost GetCurrentCost()
@@ -120,8 +123,7 @@ namespace SubTerra.App.Run
                 return false;
             }
 
-            if (gameState.Player.Energy > 0
-                || gameState.Run.LifecyclePhase != RunLifecyclePhase.Active)
+            if (!IsAvailable)
             {
                 failure = EmergencyRescueFailure.EnergyAvailable;
                 return false;

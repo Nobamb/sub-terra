@@ -373,7 +373,8 @@ namespace SubTerra.App.Integration
                         runtime,
                         bootstrap.State,
                         playerMovement != null ? playerMovement.transform : null,
-                        hudBinder);
+                        hudBinder,
+                        runFailureController != null ? runFailureController.SurvivalController : null);
                 });
 
             TryStep("WorldSfx", BindWorldSfx);
@@ -1010,6 +1011,8 @@ namespace SubTerra.App.Integration
                 : null;
             if (survival != null)
             {
+                survival.SetOxygenCargoLoadRatio(CargoLoadEffectPolicy.EvaluateLoadRatio(
+                    snapshot.CurrentWeight, snapshot.MaxCapacity));
                 survival.SetCargoFallImpactMultiplier(
                     CargoLoadEffectPolicy.EvaluateFallImpactMultiplier(
                         snapshot.CurrentWeight,

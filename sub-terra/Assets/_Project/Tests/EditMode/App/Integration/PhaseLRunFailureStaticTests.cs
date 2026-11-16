@@ -48,6 +48,20 @@ namespace SubTerra.App.Tests.Integration
         }
 
         [Test]
+        public void Issue334_OxygenCombinesDepthWorkloadAndCargoWithLadderCap()
+        {
+            var oxygen = new PlayerOxygenState(100f);
+            float idle = PlayerOxygenState.DrainMultiplier(false, false, 0f, 1.5f, 1.5f, 1.5f, 1.2f);
+            float moving = PlayerOxygenState.DrainMultiplier(false, true, 1f, 1.5f, 1.5f, 1.5f, 1.2f);
+            float climbing = PlayerOxygenState.DrainMultiplier(true, true, 1f, 1.5f, 1.5f, 1.5f, 1.2f);
+            Assert.That(idle, Is.EqualTo(1f));
+            Assert.That(moving, Is.EqualTo(2.25f));
+            Assert.That(climbing, Is.EqualTo(1.8f).Within(0.0001f));
+            oxygen.Advance(4f, 4, 1f, 0.25f, 1f, climbing);
+            Assert.That(oxygen.Remaining, Is.EqualTo(85.6d).Within(0.0001d));
+        }
+
+        [Test]
         public void Issue332_OxygenStatusKeepsHudRowWhenLegacyStructureRefreshes()
         {
             var row = new GameObject("OxygenStatus");

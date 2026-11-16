@@ -425,7 +425,7 @@ namespace SubTerra.App.Tests.UI
         public void Popup_Layout_UsesWarningTitleAndTwoButtons()
         {
             Transform content = view.transform.Find("Card/Content");
-            Assert.That(content.Find("Title").GetComponent<TMP_Text>().text, Is.EqualTo("전력이 바닥났습니다"));
+            Assert.That(content.Find("Title").GetComponent<TMP_Text>().text, Is.EqualTo("긴급 구출 요청"));
             Assert.That(content.Find("RescueButton/Label").GetComponent<TMP_Text>().text, Is.EqualTo("구출 요청"));
             Assert.That(content.Find("CloseButton/Label").GetComponent<TMP_Text>().text, Is.EqualTo("닫기"));
             var rescue = (RectTransform)content.Find("RescueButton");

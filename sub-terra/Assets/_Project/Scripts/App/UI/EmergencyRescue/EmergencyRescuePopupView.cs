@@ -25,9 +25,9 @@ namespace SubTerra.App.UI.EmergencyRescue
             Closing = 3
         }
 
-        public const string Title = "전력이 바닥났습니다";
+        public const string Title = "긴급 구출 요청";
         public const string DefaultMessage =
-            "전력이 모두 소진되었습니다.\n구출을 요청하면 엘리베이터로 이동하며 아래 자원이 차감됩니다.";
+            "구출을 요청하면 엘리베이터로 이동하며 아래 자원이 차감됩니다.";
         public const string RescueLabel = "구출 요청";
         public const string CloseLabel = "닫기";
         public static readonly Vector2 CardSize = new Vector2(880f, 675f);

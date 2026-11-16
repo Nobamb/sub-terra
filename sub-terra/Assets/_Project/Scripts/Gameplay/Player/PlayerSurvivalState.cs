@@ -35,14 +35,23 @@ namespace SubTerra.Gameplay.Player
             return ratio <= cautionRatio ? OxygenRiskLevel.Caution : OxygenRiskLevel.Safe;
         }
 
-        public int Advance(float deltaTime, int depth, float baseRate, float perMeter, float damageInterval)
+        public static float DrainMultiplier(bool climbing, bool moving, float loadRatio, float movementMultiplier,
+            float ladderMultiplier, float fullCargoMultiplier, float ladderCargoCap)
+        {
+            float cargo = 1f + (fullCargoMultiplier - 1f) * Math.Clamp(loadRatio, 0f, 1f);
+            if (climbing) return ladderMultiplier * Math.Min(cargo, ladderCargoCap);
+            return (moving ? movementMultiplier : 1f) * cargo;
+        }
+
+        public int Advance(float deltaTime, int depth, float baseRate, float perMeter, float damageInterval,
+            float drainMultiplier = 1f)
         {
             if (deltaTime <= 0f) return 0;
 
             double depletedTime = deltaTime;
             if (Remaining > 0d)
             {
-                double drainRate = baseRate + perMeter * Math.Max(0, depth);
+                double drainRate = (baseRate + perMeter * Math.Max(0, depth)) * drainMultiplier;
                 if (drainRate <= 0d) return 0;
                 depletedTime -= Remaining / drainRate;
                 Remaining = Math.Max(0d, Remaining - drainRate * deltaTime);

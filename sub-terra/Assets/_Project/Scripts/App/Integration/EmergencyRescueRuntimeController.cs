@@ -20,7 +20,7 @@ using UnityEngine.InputSystem;
 namespace SubTerra.App.Integration
 {
     /// <summary>
-    /// 전력 0 알림, R/머리 위 칩 재호출, 비용 결제와 엘리베이터 이동을 조립한다.
+    /// 전력 고갈·산소 위기 알림, 구출 요청, 비용 결제와 엘리베이터 이동을 조립한다.
     /// RunFailure 경로를 사용하지 않으므로 이동·점프·사다리 입력을 잠그지 않는다.
     /// </summary>
     public sealed class EmergencyRescueRuntimeController : MonoBehaviour
@@ -45,7 +45,7 @@ namespace SubTerra.App.Integration
         private Transform playerTransform;
         private Transform elevatorCenter;
         private EmergencyRescuePanelView view;
-        private bool initialPopupShown;
+        private PlayerSurvivalController survivalController;
         private bool rescueCompleted;
         private bool reminderShown;
         // 닫는 연출 도중 재열기 입력이 들어오면 닫기가 끝난 직후 같은 팝업을 다시 연다.
@@ -93,14 +93,17 @@ namespace SubTerra.App.Integration
             SaveRuntimeController saveRuntime,
             GameState state,
             Transform player,
-            HudBinder hud)
+            HudBinder hud,
+            PlayerSurvivalController survival = null)
         {
             Unbind();
             runtime = saveRuntime;
             gameState = state;
             playerTransform = player;
+            survivalController = survival;
             service = runtime != null && runtime.InventoryService != null && GameState.IsComplete(state)
-                ? new EmergencyRescueService(state, runtime.InventoryService)
+                ? new EmergencyRescueService(state, runtime.InventoryService,
+                    () => survivalController != null && survivalController.OxygenRisk == OxygenRiskLevel.Critical)
                 : null;
 
             EnsureView(hud);
@@ -116,14 +119,8 @@ namespace SubTerra.App.Integration
                 gameState.EnergyChanged += OnEnergyChanged;
             }
 
-            if (IsRescueAvailable)
-            {
-                BeginDepletionEpisode();
-            }
-            else
-            {
-                HideAll();
-            }
+            if (survivalController != null) survivalController.OxygenRiskChanged += OnOxygenRiskChanged;
+            RefreshRescueAvailability();
         }
 
         public void Unbind()
@@ -134,6 +131,7 @@ namespace SubTerra.App.Integration
             {
                 gameState.EnergyChanged -= OnEnergyChanged;
             }
+            if (survivalController != null) survivalController.OxygenRiskChanged -= OnOxygenRiskChanged;
 
             if (view != null)
             {
@@ -144,6 +142,7 @@ namespace SubTerra.App.Integration
 
             runtime = null;
             gameState = null;
+            survivalController = null;
             service = null;
             playerTransform = null;
             elevatorCenter = null;
@@ -175,7 +174,6 @@ namespace SubTerra.App.Integration
                 return;
             }
 
-            initialPopupShown = true;
             closedAt = -1f;
             pendingReopen = false;
             // 안내 버튼은 키캡 눌림 피드백과 함께 짧게 사라지지만, 팝업 열기는 그것을 기다리지 않는다.
@@ -222,30 +220,20 @@ namespace SubTerra.App.Integration
             closedAt = Time.unscaledTime;
         }
 
-        private void OnEnergyChanged(EnergyReadModel energy)
+        private void OnEnergyChanged(EnergyReadModel _) => RefreshRescueAvailability();
+
+        private void OnOxygenRiskChanged(OxygenRiskLevel _) => RefreshRescueAvailability();
+
+        private void RefreshRescueAvailability()
         {
-            if (energy.Current > 0)
+            if (service == null || !service.IsAvailable)
             {
                 ResetEpisode();
                 return;
             }
 
-            if (gameState?.Run?.LifecyclePhase == RunLifecyclePhase.Active)
-            {
-                BeginDepletionEpisode();
-            }
-        }
-
-        private void BeginDepletionEpisode()
-        {
-            if (!initialPopupShown)
-            {
-                OpenPanel();
-                return;
-            }
-
-            // 이미 한 번 보여 준 고갈 상황: 팝업을 자동으로 다시 열지 않고, 팝업이 없을 때만 안내 버튼을 둔다.
-            if (view != null && !view.IsPopupVisible)
+            // Keep movement available until the player explicitly requests the popup.
+            if (!rescueCompleted && view != null && !view.IsPopupVisible)
             {
                 view.SetChipVisible(true);
             }
@@ -332,6 +320,7 @@ namespace SubTerra.App.Integration
             if (playerTransform != null && elevatorCenter != null)
             {
                 MoveToResolvedElevator();
+                survivalController?.RefillOxygen();
             }
 
             runtime?.SaveCurrent(AutoSaveReason.Manual);
@@ -454,7 +443,6 @@ namespace SubTerra.App.Integration
 
         private void ResetEpisode()
         {
-            initialPopupShown = false;
             rescueCompleted = false;
             reminderShown = false;
             pendingReopen = false;
