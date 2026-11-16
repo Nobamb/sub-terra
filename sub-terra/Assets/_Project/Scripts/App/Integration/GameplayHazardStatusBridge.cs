@@ -228,8 +228,8 @@ namespace SubTerra.App.Integration
                 severity,
                 severity == HazardSeverity.Safe ? "안전"
                     : severity == HazardSeverity.Caution ? "주의"
-                    : severity == HazardSeverity.Imminent ? "붕괴 임박" : "위험",
-                FormatStructuralCause(status.Cause));
+                    : "위험",
+                string.Empty);
             if (hasStructuralStatus
                 && StructuralStatus.Severity == next.Severity
                 && StructuralStatus.Label == next.Label
@@ -242,14 +242,6 @@ namespace SubTerra.App.Integration
             hasStructuralStatus = true;
             gameState?.SetStructuralRisk(ToAppStructuralRisk(risk));
             StructuralStatusChanged?.Invoke(StructuralStatus);
-        }
-
-        private static string FormatStructuralCause(StructuralRiskCause cause)
-        {
-            return cause == StructuralRiskCause.Unsupported ? "천장 아래가 비어 있음"
-                : cause == StructuralRiskCause.MiningImpact ? "채굴 충격 누적"
-                : cause == StructuralRiskCause.SupportRemoved ? "버팀목 보호 상실"
-                : string.Empty;
         }
 
         private void OnGasExposureChanged(GasExposureState exposure)

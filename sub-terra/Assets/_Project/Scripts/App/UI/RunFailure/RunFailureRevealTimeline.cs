@@ -486,8 +486,6 @@ namespace SubTerra.App.UI.RunFailure
             {
                 case RunFailureCause.GasExposure:
                     return "유독 가스 농도 임계치 초과로 긴급 구조 시퀀스가 가동되었습니다.";
-                case RunFailureCause.StructuralCollapse:
-                    return "낙석 및 구조 붕괴 충격으로 기체가 파손되어 긴급 이송되었습니다.";
                 case RunFailureCause.Fall:
                     return "추락 충격으로 생명 유지 장치가 손상되어 긴급 이송되었습니다.";
                 case RunFailureCause.OxygenDepleted:

@@ -164,7 +164,7 @@ namespace SubTerra.App.Core.Data
                 case DataIds.Upgrades.MaximumEnergy:
                     return "휴대 가능한 최대 전력량을 늘려 심층 탐사를 안정적으로 유지합니다.";
                 case DataIds.Upgrades.MaximumHealth:
-                    return "최대 체력을 늘려 붕괴·가스·낙하 피해를 더 오래 버팁니다.";
+                    return "최대 체력을 늘려 산소 고갈·가스·낙하 피해를 더 오래 버팁니다.";
                 case DataIds.Upgrades.HealthRegeneration:
                     return "시간이 지날수록 체력을 자동으로 회복합니다.";
                 case DataIds.Upgrades.MaximumCargo:
