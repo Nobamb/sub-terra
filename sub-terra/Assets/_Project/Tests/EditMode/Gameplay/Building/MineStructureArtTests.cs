@@ -63,17 +63,23 @@ namespace SubTerra.Gameplay.Building.Tests
         [Test]
         public void SupportPrefab_UsesFinishedArtAndKeepsItsOneWayCap()
         {
-            Sprite art = AssetDatabase.LoadAssetAtPath<Sprite>(
-                "Assets/_Project/Art/Facilities/MVP/support_pillar_mine.png");
+            // B-199: 윗면 한 장(Cap)과 반복 기둥 조각(Post, Tiled)으로 나눈 임시 아트(기존 그림을 자른 것).
+            Sprite top = AssetDatabase.LoadAssetAtPath<Sprite>(
+                "Assets/_Project/Art/Facilities/MVP/cushion_pad_top.png");
+            Sprite post = AssetDatabase.LoadAssetAtPath<Sprite>(
+                "Assets/_Project/Art/Facilities/MVP/cushion_pad_post.png");
             GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
                 "Assets/_Project/Prefabs/Gameplay/Buildings/SupportPillar.prefab");
-            Assert.That(art, Is.Not.Null);
+            Assert.That(top, Is.Not.Null);
+            Assert.That(post, Is.Not.Null);
             Assert.That(prefab, Is.Not.Null);
 
             Transform visual = prefab.transform.Find("VisualRoot");
             Assert.That(visual, Is.Not.Null);
-            Assert.That(visual.Find("Post").GetComponent<SpriteRenderer>().sprite, Is.SameAs(art));
-            Assert.That(visual.Find("Cap").GetComponent<SpriteRenderer>().enabled, Is.False);
+            Assert.That(visual.Find("Post").GetComponent<SpriteRenderer>().sprite, Is.SameAs(post));
+            Assert.That(visual.Find("Post").GetComponent<SpriteRenderer>().drawMode, Is.EqualTo(SpriteDrawMode.Tiled));
+            Assert.That(visual.Find("Cap").GetComponent<SpriteRenderer>().sprite, Is.SameAs(top));
+            Assert.That(visual.Find("Cap").GetComponent<SpriteRenderer>().enabled, Is.True);
             Assert.That(prefab.GetComponent<BoxCollider2D>().usedByEffector, Is.True);
             Assert.That(prefab.GetComponent<PlatformEffector2D>().useOneWay, Is.True);
         }
