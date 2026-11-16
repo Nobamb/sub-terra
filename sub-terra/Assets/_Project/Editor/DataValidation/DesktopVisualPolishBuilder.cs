@@ -47,7 +47,7 @@ namespace SubTerra.App.Editor.DataValidation
                 var hud = roots.SelectMany(r => r.GetComponentsInChildren<BasicHudView>(true)).Single();
                 LayoutHud(hud);
                 var building = roots.SelectMany(r => r.GetComponentsInChildren<BuildingMenuView>(true)).Single();
-                Place((RectTransform)building.transform, 16f, 360f, PromptB110BuildingMenuBuilder.PanelWidth, 560f);
+                Place((RectTransform)building.transform, 16f, BasicHudView.BelowHudY + 128f,PromptB110BuildingMenuBuilder.PanelWidth, 560f);
                 var chrome = roots.SelectMany(r => r.GetComponentsInChildren<HudPanelChromeController>(true)).Single();
                 SetBool(chrome, "buildingMenuOpen", false);
                 var menu = roots.SelectMany(r => r.GetComponentsInChildren<GameplaySideMenuController>(true)).Single();

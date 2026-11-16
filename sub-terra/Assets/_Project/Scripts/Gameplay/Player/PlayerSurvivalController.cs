@@ -42,6 +42,10 @@ namespace SubTerra.Gameplay.Player
         public event Action<RunFailureInputDto> FailureRequested;
         public event Action<OxygenRiskLevel> OxygenRiskChanged;
         public OxygenRiskLevel OxygenRisk => oxygenRisk;
+        /// <summary>산소 값이 바뀔 때마다(현재, 최대) 알린다. HUD 게이지용 읽기 전용 통지.</summary>
+        public event Action<float, float> OxygenChanged;
+        public float OxygenRemaining => oxygen != null ? (float)oxygen.Remaining : 0f;
+        public float OxygenMaximum => oxygen != null ? oxygen.Maximum : 0f;
         public float CurrentCargoFallImpactMultiplier => cargoFallImpactMultiplier;
 
         private void Awake()
@@ -74,8 +78,10 @@ namespace SubTerra.Gameplay.Player
         private void AdvanceOxygen(float deltaTime)
         {
             if (oxygenDepth == null || !State.CanAct || deltaTime <= 0f) return;
+            double before = oxygen.Remaining;
             int hits = oxygen.Advance(deltaTime, oxygenDepth(), settings.OxygenPerSecond,
                 settings.OxygenPerSecondPerMeter, settings.OxygenDamageInterval);
+            if (oxygen.Remaining != before) OxygenChanged?.Invoke(OxygenRemaining, OxygenMaximum);
             RefreshOxygenRisk();
             if (hits > 0)
                 ApplyDamage(RunFailureCause.OxygenDepleted, hits * settings.OxygenDepletionDamage, false,
@@ -274,7 +280,11 @@ namespace SubTerra.Gameplay.Player
             EnsureState();
             RestoreDamageFlash();
             State.RestoreFull();
-            oxygen?.Refill();
+            if (oxygen != null)
+            {
+                oxygen.Refill();
+                OxygenChanged?.Invoke(OxygenRemaining, OxygenMaximum);
+            }
             RefreshOxygenRisk();
             PublishStateChanged();
             ResetFallTracking();
