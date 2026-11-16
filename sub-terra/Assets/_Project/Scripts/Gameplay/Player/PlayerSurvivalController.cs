@@ -32,7 +32,8 @@ namespace SubTerra.Gameplay.Player
         private float damageFlashStartedAt;
         private float damageFlashUntil;
         private float cargoFallImpactMultiplier = 1f;
-        private Func<int> oxygenDepth;
+        private Func<float> oxygenDepth;
+        private Func<bool> isOxygenGasExposed;
         private PlayerOxygenState oxygen;
         private OxygenRiskLevel oxygenRisk;
         private float oxygenCargoLoadRatio;
@@ -68,9 +69,10 @@ namespace SubTerra.Gameplay.Player
             AdvanceOxygen(Time.deltaTime);
         }
 
-        public void BindOxygenDepth(Func<int> readDepth)
+        public void BindOxygenDepth(Func<float> readDepth, Func<bool> isGasExposed = null)
         {
             oxygenDepth = readDepth;
+            isOxygenGasExposed = isGasExposed;
             if (readDepth != null)
             {
                 EnsureState();
@@ -103,8 +105,10 @@ namespace SubTerra.Gameplay.Player
                 settings.OxygenMovementMultiplier, settings.OxygenLadderMultiplier,
                 settings.OxygenFullCargoMultiplier, settings.OxygenLadderCargoCap);
             double before = oxygen.Remaining;
+            float gasMultiplier = isOxygenGasExposed?.Invoke() == true ? settings.GasOxygenDrainMultiplier : 1f;
             int hits = oxygen.Advance(deltaTime, oxygenDepth(), settings.OxygenPerSecond,
-                settings.OxygenPerSecondPerMeter, settings.OxygenDamageInterval, workload);
+                settings.OxygenPerSecondPerMeter, settings.OxygenDamageInterval,
+                settings.ShallowOxygenRecoveryPerSecond, workload * gasMultiplier);
             if (oxygen.Remaining != before) OxygenChanged?.Invoke(OxygenRemaining, OxygenMaximum);
             RefreshOxygenRisk();
             if (hits > 0)

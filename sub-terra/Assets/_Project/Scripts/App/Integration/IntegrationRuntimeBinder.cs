@@ -1181,11 +1181,18 @@ namespace SubTerra.App.Integration
             if (runFailureController == null || depthBridge == null) return;
             oxygenSurvival = runFailureController.SurvivalController;
             if (oxygenSurvival == null) return;
-            oxygenSurvival.BindOxygenDepth(() => depthBridge.LastPublishedDepth);
+            oxygenSurvival.BindOxygenDepth(depthBridge.GetCurrentDepthMeters, IsExposedToUnpurifiedGas);
             oxygenSurvival.OxygenRiskChanged += RenderOxygenRisk;
             oxygenSurvival.OxygenChanged += RenderOxygenLevel;
             RenderOxygenRisk(oxygenSurvival.OxygenRisk);
             RenderOxygenLevel(oxygenSurvival.OxygenRemaining, oxygenSurvival.OxygenMaximum);
+        }
+
+        private bool IsExposedToUnpurifiedGas()
+        {
+            if (gasEffectController == null) return false;
+            var exposure = gasEffectController.CurrentState;
+            return exposure.IsExposed && !exposure.IsSheltered;
         }
 
         private void RenderOxygenLevel(float current, float maximum)
