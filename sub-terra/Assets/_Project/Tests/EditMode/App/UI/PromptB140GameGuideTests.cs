@@ -81,7 +81,7 @@ namespace SubTerra.App.Tests.UI
             Assert.That(mechanics, Is.EqualTo(new[]
             {
                 "mech.base", "mech.health", "mech.power", "mech.cargo", "mech.grid", "mech.core",
-                "mech.structure", "mech.gas", "mech.reset"
+                "mech.oxygen", "mech.landing", "mech.gas", "mech.reset"
             }));
             var resources = GameGuideCatalog.ForTab(GuideTabKind.Resources);
             Assert.That(resources.Count(c => c.Kind == GuideCardKind.Resource), Is.EqualTo(5), "구리·철·리튬·엔진 연료·골드");
@@ -264,20 +264,28 @@ namespace SubTerra.App.Tests.UI
             Assert.That(core, Does.Contain(ItemDisplayNames.Building(DataIds.Buildings.ClinicBasic)));
             Assert.That(core, Does.Contain(ItemDisplayNames.Building(DataIds.Buildings.SettlementBasic)));
             Assert.That(Plain("mech.cargo"), Does.Contain("화물이 가득 찼습니다. 귀환해 화물을 비우세요."));
-            Assert.That(Plain("mech.structure"), Does.Contain("산소 위험도"));
-            Assert.That(Plain("fac.support"), Does.Contain("약 10%"));
+            Assert.That(Plain("mech.oxygen"), Does.Contain("산소 위험도"));
+            Assert.That(Plain("fac.support"), Does.Contain("10%까지"));
         }
 
         [Test]
-        public void Mechanics_OxygenGuideShowsShallowRecoveryAndDeepGasDrain()
+        public void Mechanics_OxygenAndLandingHaveSeparateContentAndRelatedLinks()
         {
-            var oxygen = Plain("mech.structure");
-            Assert.That(oxygen, Does.Contain("0~10m").And.Contain("가스가 있어도 산소가 최대량까지 회복"));
-            Assert.That(oxygen, Does.Contain("10m를 넘으면 산소가 줄어듭니다"));
+            var oxygen = GameGuideCatalog.Get("mech.oxygen");
+            Assert.That(oxygen.Title, Is.EqualTo("산소"));
+            Assert.That(oxygen.DemoId, Is.EqualTo("structure"));
+            Assert.That(oxygen.Related, Does.Contain("mech.gas"));
+            Assert.That(Plain(oxygen.Id), Does.Contain("0~10m").And.Contain("가스가 있어도 산소가 최대량까지 회복")
+                .And.Contain("10m를 넘으면 산소가 줄어듭니다").And.Contain("기본 2배").And.Contain("구출 요청 표식"));
+            Assert.That(Plain("mech.gas"), Does.Contain("10m를 넘는 곳에서 정화되지 않은 가스").And.Contain("기본 2배")
+                .And.Contain("10m 이내에서는 산소가 회복"));
+            Assert.That(GameGuideCatalog.Get("mech.gas").Related, Does.Contain(oxygen.Id));
 
-            var gas = Plain("mech.gas");
-            Assert.That(gas, Does.Contain("10m를 넘는 곳에서 정화되지 않은 가스").And.Contain("기본 2배"));
-            Assert.That(gas, Does.Contain("10m 이내에서는 산소가 회복"));
+            var landing = GameGuideCatalog.Get("mech.landing");
+            Assert.That(landing.Title, Is.EqualTo("착지 위험"));
+            Assert.That(Plain(landing.Id), Does.Contain("높은 높이에서 떨어질수록, 인벤토리의 무게가 무거울 수록 착지 피해가 커지게 됩니다. 완충판 위에 착지하게 될 경우, 피해가 10%까지 줄어들게 됩니다."));
+            Assert.That(landing.Related, Does.Contain("fac.support"));
+            Assert.That(GameGuideCatalog.Get("fac.support").Related, Does.Contain(landing.Id));
         }
 
         [Test]
