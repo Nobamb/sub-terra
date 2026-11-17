@@ -86,7 +86,7 @@ namespace SubTerra.App.Tests.UI
             var resources = GameGuideCatalog.ForTab(GuideTabKind.Resources);
             Assert.That(resources.Count(c => c.Kind == GuideCardKind.Resource), Is.EqualTo(5), "구리·철·리튬·엔진 연료·골드");
             Assert.That(resources.Count(c => c.Kind == GuideCardKind.Facility), Is.EqualTo(10),
-                "보관함·충전기·보건소·자원 정산기·코어·사다리·버팀목·조명·긴급 탈출 포탈·엘리베이터");
+                "보관함·충전기·보건소·자원 정산기·코어·사다리·완충판·조명·긴급 탈출 포탈·엘리베이터");
         }
 
         [Test]
@@ -148,7 +148,7 @@ namespace SubTerra.App.Tests.UI
             Assert.That(GameGuideCatalog.Get("fac.clinic").Title, Is.EqualTo("보건소"));
             Assert.That(GameGuideCatalog.Get("fac.settlement").Title, Is.EqualTo("자원 정산기"));
             Assert.That(GameGuideCatalog.Get("fac.core").Title, Is.EqualTo("전진기지"));
-            Assert.That(GameGuideCatalog.Get("fac.support").Title, Is.EqualTo("버팀목"));
+            Assert.That(GameGuideCatalog.Get("fac.support").Title, Is.EqualTo("완충판"));
             Assert.That(GameGuideCatalog.Get("fac.portal").Title, Is.EqualTo(ItemDisplayNames.Building(DataIds.Buildings.EmergencyEscapePortal)));
             Assert.That(GameGuideCatalog.Get("res.fuel").Title, Is.EqualTo("엔진 연료"));
         }
@@ -222,7 +222,7 @@ namespace SubTerra.App.Tests.UI
         public void Controls_InteractTextKeepsNameBubbleRule()
         {
             var text = Plain("ctrl.interact");
-            Assert.That(text, Does.Contain("가까워지면 시설 이름이 말풍선으로 표시됩니다(버팀목·사다리 제외)"));
+            Assert.That(text, Does.Contain("가까워지면 시설 이름이 말풍선으로 표시됩니다(완충판·사다리 제외)"));
             Assert.That(ItemDisplayNames.ShowsProximityName(DataIds.Buildings.SupportBasic), Is.False);
             Assert.That(ItemDisplayNames.ShowsProximityName(DataIds.Buildings.LadderBasic), Is.False);
             foreach (var name in new[] { "충전기", "보관함", "자원 정산기", "전진기지", "긴급 탈출 포탈" })
@@ -265,7 +265,7 @@ namespace SubTerra.App.Tests.UI
             Assert.That(core, Does.Contain(ItemDisplayNames.Building(DataIds.Buildings.SettlementBasic)));
             Assert.That(Plain("mech.cargo"), Does.Contain("화물이 가득 찼습니다. 귀환해 화물을 비우세요."));
             Assert.That(Plain("mech.structure"), Does.Contain("산소 위험도"));
-            Assert.That(Plain("fac.support"), Does.Contain("추가 피해"));
+            Assert.That(Plain("fac.support"), Does.Contain("약 10%"));
         }
 
         [Test]

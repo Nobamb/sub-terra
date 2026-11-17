@@ -292,7 +292,7 @@ namespace SubTerra.App.Editor.DataValidation
             Sprite outpostIcon = LoadFacilityIcon("outpost_core_cartoon_v3.png", icon);
             return new List<BuildingData>
             {
-                EnsureBuilding("Building_Support_Basic.asset", DataIds.Buildings.SupportBasic, "버팀목",
+                EnsureBuilding("Building_Support_Basic.asset", DataIds.Buildings.SupportBasic, "완충판",
                     "주변 지형을 보강해 구조 위험을 낮춥니다.", supportPrefab, 0,
                     LoadFacilityIcon("support_pillar_mine.png", icon),
                     new List<ItemCostEntry> { new ItemCostEntry(DataIds.Minerals.Copper, 2) }),

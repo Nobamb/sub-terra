@@ -53,7 +53,7 @@ namespace SubTerra.App.Editor.DataValidation
 
         private static readonly string[] ButtonLabels =
         {
-            "버팀목",
+            "완충판",
             "사다리",
             "조명",
             "충전기",

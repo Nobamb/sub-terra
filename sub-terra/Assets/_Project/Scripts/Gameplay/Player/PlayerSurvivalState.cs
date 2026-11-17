@@ -239,23 +239,48 @@ namespace SubTerra.Gameplay.Player
                 : baseDamage + (int)additional;
         }
 
-        public static int ScaleDamage(int damage, float impactMultiplier, bool stableLanding = false)
+        /// <summary>
+        /// 일반 착지는 낙하 피해에 화물 충격 배율을 곱한다. 완충판 착지(stableLanding)는
+        /// 같은 낙하·같은 짐의 일반 피해에 stableLandingRatio(기본 0.1)를 곱한다. 비율 0이면 0.
+        /// </summary>
+        public static int ScaleDamage(
+            int damage,
+            float impactMultiplier,
+            bool stableLanding = false,
+            float stableLandingRatio = CushionPadRules.DefaultLandingDamageRatio)
         {
-            if (stableLanding) return Math.Max(0, damage);
             if (damage <= 0 || impactMultiplier <= 0f || float.IsNaN(impactMultiplier))
             {
                 return 0;
             }
 
+            int normal;
             if (float.IsPositiveInfinity(impactMultiplier))
             {
-                return int.MaxValue;
+                normal = int.MaxValue;
+            }
+            else
+            {
+                var scaled = Math.Round(
+                    damage * (double)impactMultiplier,
+                    MidpointRounding.AwayFromZero);
+                normal = scaled >= int.MaxValue ? int.MaxValue : (int)scaled;
             }
 
-            var scaled = Math.Round(
-                damage * (double)impactMultiplier,
+            if (!stableLanding)
+            {
+                return normal;
+            }
+
+            if (float.IsNaN(stableLandingRatio) || stableLandingRatio <= 0f)
+            {
+                return 0;
+            }
+
+            var cushioned = Math.Round(
+                normal * (double)Math.Min(1f, stableLandingRatio),
                 MidpointRounding.AwayFromZero);
-            return scaled >= int.MaxValue ? int.MaxValue : (int)scaled;
+            return cushioned >= int.MaxValue ? int.MaxValue : (int)cushioned;
         }
     }
 }

@@ -33,8 +33,11 @@ namespace SubTerra.App.Tests.Integration
             Assert.That(colliders.Length, Is.EqualTo(1));
             var capCollider = colliders.Single();
             Assert.That(capCollider.TryGetComponent<IStableLandingPlatform>(out _), Is.True);
+            // B-199: 윗면 콜라이더 두께 0.4는 그대로, 위치는 기본(최소) 높이를 따른다. 지면 = 루트 y - 0.5.
+            var pad = prefab.GetComponent<CushionPad>();
+            Assert.That(pad, Is.Not.Null);
             Assert.That(capCollider.size, Is.EqualTo(new Vector2(1f, 0.4f)));
-            Assert.That(capCollider.offset, Is.EqualTo(new Vector2(0f, 1.1f)));
+            Assert.That(capCollider.offset.y + 0.2f, Is.EqualTo(pad.MinHeight - 0.5f).Within(0.001f));
             Assert.That(capCollider.usedByEffector, Is.True);
 
             var platformEffector = prefab.GetComponent<PlatformEffector2D>();
@@ -52,8 +55,10 @@ namespace SubTerra.App.Tests.Integration
             Assert.That(cap, Is.Not.Null, "T자 가로 캡 Visual Cap이 있어야 한다.");
             Assert.That(post.GetComponent<SpriteRenderer>(), Is.Not.Null);
             Assert.That(cap.GetComponent<SpriteRenderer>(), Is.Not.Null);
-            Assert.That(post.GetComponent<SpriteRenderer>().size, Is.EqualTo(new Vector2(0.4f, 1.8f)));
-            Assert.That(cap.GetComponent<SpriteRenderer>().size, Is.EqualTo(new Vector2(1f, 0.4f)));
+            // B-199: 기둥은 반복 조각 하나를 Tiled로 늘리고, 윗면은 그림 한 장(Simple)이다.
+            Assert.That(post.GetComponent<SpriteRenderer>().drawMode, Is.EqualTo(SpriteDrawMode.Tiled));
+            Assert.That(cap.GetComponent<SpriteRenderer>().drawMode, Is.EqualTo(SpriteDrawMode.Simple));
+            Assert.That(cap.GetComponent<SpriteRenderer>().sprite, Is.Not.Null);
         }
 
         [Test]
@@ -115,11 +120,12 @@ namespace SubTerra.App.Tests.Integration
         }
 
         [Test]
-        public void Issue333_PlatformWaivesCargoDamageButKeepsHeightDamage()
+        public void Issue349_PlatformLandingIsAboutTenPercentOfNormalDamage()
         {
+            // #333은 화물 추가 배율만 면제했다. #349부터는 같은 낙하·같은 짐의 일반 피해의 약 10%다.
             int normalDamage = PlayerFallDamageRules.CalculateDamage(10f, false);
             Assert.That(PlayerFallDamageRules.ScaleDamage(normalDamage, 1.5f), Is.EqualTo(15));
-            Assert.That(PlayerFallDamageRules.ScaleDamage(normalDamage, 1.5f, stableLanding: true), Is.EqualTo(10));
+            Assert.That(PlayerFallDamageRules.ScaleDamage(normalDamage, 1.5f, stableLanding: true), Is.EqualTo(2));
         }
 
         [Test]
@@ -135,7 +141,10 @@ namespace SubTerra.App.Tests.Integration
                 "y",
                 "rotation",
                 "level",
-                "health"
+                "health",
+                "footprintWidth",
+                "footprintHeight",
+                "cushionHeight"
             }));
             Assert.That(fields.Any(field => typeof(Object).IsAssignableFrom(field.FieldType)), Is.False);
         }

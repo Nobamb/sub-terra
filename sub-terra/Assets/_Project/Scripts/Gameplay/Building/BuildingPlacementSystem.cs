@@ -645,6 +645,22 @@ namespace SubTerra.Gameplay.Building
             nextInstanceSequence = 1;
         }
 
+        /// <summary>설치된 완충판의 현재 윗면 높이. 완충판이 아니거나 없으면 false(저장 캡처용).</summary>
+        public bool TryGetCushionHeight(string instanceId, out float height)
+        {
+            height = 0f;
+            if (string.IsNullOrEmpty(instanceId)) return false;
+            foreach (var entry in runtimeBuildings)
+            {
+                if (entry.Key == null || entry.Key.InstanceId != instanceId) continue;
+                if (!entry.Key.TryGetComponent<CushionPad>(out var pad)) return false;
+                height = pad.CurrentHeight;
+                return true;
+            }
+
+            return false;
+        }
+
         /// <summary>Restores a previously placed building without querying or spending the App-owned wallet.</summary>
         public bool TryRestoreBuilding(BuildingSnapshotDto snapshot)
             => TryRestoreBuilding(snapshot, out _);
@@ -693,6 +709,12 @@ namespace SubTerra.Gameplay.Building
                 buildingRoot != null ? buildingRoot : transform);
             BuildingInstance instance = instanceObject.GetComponent<BuildingInstance>() ?? instanceObject.AddComponent<BuildingInstance>();
             instance.Initialize(snapshot.instanceId, snapshot.buildingTypeId, footprint);
+            // 완충판 높이 복원. 옛 세이브(필드 없음=0)나 깨진 값은 기본(최소) 높이로 둔다.
+            if (instanceObject.TryGetComponent<CushionPad>(out var cushionPad))
+            {
+                cushionPad.SetHeight(snapshot.cushionHeight);
+                restoredSnapshot.cushionHeight = cushionPad.CurrentHeight;
+            }
             runtimeBuildings[instance] = new BuildingPlacementResult(true, BuildingPlacementFailure.None,
                 snapshot.instanceId, snapshot.buildingTypeId, cell, footprint: footprint);
             BindPowerNode(instanceObject, snapshot.instanceId);

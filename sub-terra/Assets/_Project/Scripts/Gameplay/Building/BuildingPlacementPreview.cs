@@ -22,6 +22,7 @@ namespace SubTerra.Gameplay.Building
         private Vector3 visualOffset = Vector3.zero;
         private Quaternion visualRotation = Quaternion.identity;
         private Vector3 visualScale = Vector3.one;
+        private SpriteRenderer cushionGhost;
         private FacilityFoundationVisual foundation;
         private Sprite foundationArtwork;
         private string foundationBuildingId;
@@ -36,6 +37,7 @@ namespace SubTerra.Gameplay.Building
         {
             EnsureRenderer();
             if (foundation != null) foundation.gameObject.SetActive(false);
+            HideCushionGhost();
             visualOffset = Vector3.zero;
             visualRotation = Quaternion.identity;
             visualScale = Vector3.one;
@@ -105,6 +107,54 @@ namespace SubTerra.Gameplay.Building
                 if (foundation != null) foundation.gameObject.SetActive(true);
             }
             else if (foundation != null) foundation.gameObject.SetActive(false);
+            ConfigureCushionGhost(prefab, source);
+        }
+
+        /// <summary>
+        /// 완충판은 윗면 그림이 대표 렌더러라 미리보기에 기둥이 빠진다. 설치 직후(기본=최소 높이)와
+        /// 같은 모습이 되도록 반복 기둥을 자식으로 함께 그린다. 미리보기 중에는 높이를 조절하지 않는다.
+        /// </summary>
+        private void ConfigureCushionGhost(GameObject prefab, SpriteRenderer source)
+        {
+            if (!prefab.TryGetComponent<CushionPad>(out var pad)
+                || pad.PostRenderer == null
+                || pad.PostRenderer.sprite == null
+                || pad.PostRenderer == source)
+            {
+                HideCushionGhost();
+                return;
+            }
+
+            SpriteRenderer post = pad.PostRenderer;
+            if (cushionGhost == null)
+            {
+                var ghostObject = new GameObject("CushionPadPostGhost");
+                ghostObject.transform.SetParent(transform, false);
+                cushionGhost = ghostObject.AddComponent<SpriteRenderer>();
+            }
+
+            cushionGhost.sprite = post.sprite;
+            cushionGhost.drawMode = post.drawMode;
+            cushionGhost.size = post.size;
+            cushionGhost.sortingLayerID = post.sortingLayerID;
+            cushionGhost.sortingOrder = Mathf.Max(post.sortingOrder, 50) - 1;
+            Transform prefabRoot = prefab.transform;
+            cushionGhost.transform.localPosition = prefabRoot.InverseTransformPoint(post.transform.position)
+                - prefabRoot.InverseTransformPoint(source.transform.position);
+            cushionGhost.transform.localRotation = Quaternion.identity;
+            cushionGhost.transform.localScale = Vector3.one;
+            cushionGhost.gameObject.SetActive(true);
+        }
+
+        private void HideCushionGhost()
+        {
+            if (cushionGhost != null) cushionGhost.gameObject.SetActive(false);
+        }
+
+        private void TintCushionGhost(bool isValid)
+        {
+            if (cushionGhost != null && cushionGhost.gameObject.activeSelf)
+                cushionGhost.color = isValid ? validColor : invalidColor;
         }
 
         public void SetCell(Tilemap tilemap, Vector3Int cell, bool isValid)
@@ -121,10 +171,11 @@ namespace SubTerra.Gameplay.Building
                 spriteRenderer.color = isValid ? validColor : invalidColor;
             }
 
+            TintCushionGhost(isValid);
             gameObject.SetActive(true);
         }
 
-        /// <summary>버팀목 선택 중 지지 반경과 설치 즉시 사라질 균열을 함께 표시한다.</summary>
+        /// <summary>완충판 선택 중 지지 반경과 설치 즉시 사라질 균열을 함께 표시한다.</summary>
         public void SetSupportRange(
             Tilemap tilemap,
             Vector3 center,

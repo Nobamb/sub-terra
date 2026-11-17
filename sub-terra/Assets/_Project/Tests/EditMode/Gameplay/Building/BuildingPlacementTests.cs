@@ -1091,6 +1091,51 @@ namespace SubTerra.Gameplay.Building.Tests
             }
         }
 
+        [TestCase(1.3f, 1.3f)]
+        [TestCase(0f, CushionPadRules.DefaultMinHeight)]
+        [TestCase(99f, CushionPadRules.DefaultMaxHeight)]
+        [TestCase(float.NaN, CushionPadRules.DefaultMinHeight)]
+        public void Issue349_RestoreCushionPad_AppliesSavedHeightAndLegacyDefaultsToMinimum(float saved, float expected)
+        {
+            var setup = CreateSetup(10f, new Vector2(20f, 20f));
+            try
+            {
+                setup.RuntimePrefab.AddComponent<CushionPad>();
+                SetField(setup.Placement, "restoreDefinitions", new[] { setup.Definition });
+                setup.Terrain.SetTile(new Vector3Int(0, -1, 0), setup.Tile);
+                Assert.That(setup.Placement.TryRestoreBuilding(
+                    new BuildingSnapshotDto { instanceId = "support-pad-1", buildingTypeId = "building.support.basic", cushionHeight = saved },
+                    out var restored), Is.True);
+
+                var pad = setup.BuildingRoot.GetChild(0).GetComponent<CushionPad>();
+                Assert.That(pad.CurrentHeight, Is.EqualTo(expected).Within(0.0001f));
+                Assert.That(restored.cushionHeight, Is.EqualTo(expected).Within(0.0001f));
+                Assert.That(setup.Placement.TryGetCushionHeight("support-pad-1", out var height), Is.True);
+                Assert.That(height, Is.EqualTo(expected).Within(0.0001f));
+                Assert.That(setup.Placement.TryGetCushionHeight("missing", out _), Is.False);
+            }
+            finally { setup.Dispose(); }
+        }
+
+        [Test]
+        public void Issue349_NewCushionPad_StartsAtMinimumAndKeepsAdjustedHeightForSave()
+        {
+            var setup = CreateSetup(10f, new Vector2(20f, 20f));
+            try
+            {
+                setup.RuntimePrefab.AddComponent<CushionPad>();
+                setup.Terrain.SetTile(new Vector3Int(0, -1, 0), setup.Tile);
+                var placed = setup.Placement.TryPlaceAt(Vector3Int.zero);
+                Assert.That(placed.IsSuccess, Is.True);
+                var pad = setup.BuildingRoot.GetChild(0).GetComponent<CushionPad>();
+                Assert.That(pad.CurrentHeight, Is.EqualTo(pad.MinHeight));
+                Assert.That(pad.TryStepHeight(1, out _), Is.True);
+                Assert.That(setup.Placement.TryGetCushionHeight(placed.InstanceId, out var height), Is.True);
+                Assert.That(height, Is.EqualTo(pad.MinHeight + pad.StepHeight).Within(0.0001f));
+            }
+            finally { setup.Dispose(); }
+        }
+
         private static PlacementSetup CreateSetup(
             float maximumDistance,
             Vector2 areaSize,

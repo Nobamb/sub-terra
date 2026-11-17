@@ -55,6 +55,8 @@ namespace SubTerra.Shared
         // Optional in old saves (zero); records the actual installed footprint.
         public int footprintWidth;
         public int footprintHeight;
+        // 완충판 윗면 높이(지면 기준). 옛 세이브에는 없어 0이며, 0 이하는 기본(최소) 높이로 복원한다.
+        public float cushionHeight;
     }
 
     /// <summary>
