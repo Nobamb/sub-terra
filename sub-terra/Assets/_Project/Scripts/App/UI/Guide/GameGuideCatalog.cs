@@ -309,19 +309,21 @@ namespace SubTerra.App.UI.Guide
                 .Link("fac.core", "mech.grid", "mech.gas");
 
             Mechanic("mech.structure", "산소와 착지 위험", "남은 산소를 살피고 귀환로 확보", "structure")
-                .Text("광산에 머무는 동안 산소가 줄어듭니다. 더 깊은 곳에서 움직이거나 화물이 무거우면 소모가 빨라집니다.")
+                .Data("산소 회복", "깊이 0~10m에서는 가스가 있어도 산소가 최대량까지 회복됩니다.")
+                .Data("산소 소모", "10m를 넘으면 산소가 줄어듭니다. 더 깊이 내려가거나 움직이거나 짐이 무거우면 소모가 빨라집니다.")
                 .Data("산소 위험도", "HUD에서 안전·주의·위험을 확인하세요. 산소가 0이면 체력이 주기적으로 줄어듭니다.")
                 .Tip("무거운 짐을 들고 오를 때 사다리는 화물로 인한 산소 소모 증가가 제한됩니다.")
                 .Data("착지 위험", "높이에서 떨어질 때 짐이 무거우면 피해가 커집니다. " + support + " 위에 착지하면 피해가 약 10%로 줄어듭니다.")
-                .Link("fac.support", "fac.ladder", "mech.power");
+                .Link("fac.support", "fac.ladder", "mech.power", "mech.gas");
 
             Mechanic("mech.gas", "가스 지대", "가스를 피하고 정화 지대로 대피", "gas")
                 .Data("가스 속에서", "이동이 느려지고 시야가 흐려집니다.")
+                .Data("산소 소모", "깊이 10m를 넘는 곳에서 정화되지 않은 가스에 노출되면 산소 소모가 기본 2배로 늘어납니다. 10m 이내에서는 산소가 회복됩니다.")
                 .Warning("오래 머물러 노출이 쌓이면 체력 피해나 행동불능으로 이어집니다. 가스 밖에서는 노출이 서서히 회복됩니다.")
                 .Data("대처", core + "의 가스 정화 안전지대 안에서는 가스의 영향을 받지 않습니다. 업그레이드 '"
                     + ItemDisplayNames.Upgrade(DataIds.Upgrades.GasResistance) + "'로 영향을 줄일 수 있습니다.")
                 .Tip("Digger-Bot이 가스 위험을 알려 주면 바로 벗어나세요.")
-                .Link("mech.core", "ctrl.drone");
+                .Link("mech.core", "ctrl.drone", "mech.structure");
 
             var resetNow = LocalizationService.Get("mine_reset.confirm.reset.desc", "채굴한 타일 · 지하 시설 · 가스");
             var keepNow = LocalizationService.Get("mine_reset.confirm.keep.desc", "업그레이드 · 심층 해금 · 보유 광물");
