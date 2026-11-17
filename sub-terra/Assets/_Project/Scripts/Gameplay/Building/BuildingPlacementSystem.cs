@@ -4,6 +4,7 @@ using SubTerra.Gameplay.Structural;
 using SubTerra.Gameplay.Power;
 using SubTerra.Shared;
 using UnityEngine;
+using UnityEngine.Rendering;
 using UnityEngine.Tilemaps;
 
 namespace SubTerra.Gameplay.Building
@@ -13,6 +14,7 @@ namespace SubTerra.Gameplay.Building
     {
         private const string ElevatorProtectedGroundTileName = "ElevatorProtectedBlock";
         private const string LadderBuildingId = "building.ladder.basic";
+        private const string CushionPadBuildingId = "building.support.basic";
 
         [SerializeField] private Tilemap terrainTilemap;
         [SerializeField] private Transform buildingRoot;
@@ -316,6 +318,7 @@ namespace SubTerra.Gameplay.Building
             string instanceId = $"{definition.BuildingId}-{nextInstanceSequence++:D4}";
             BuildingInstance instance = instanceObject.GetComponent<BuildingInstance>() ?? instanceObject.AddComponent<BuildingInstance>();
             instance.Initialize(instanceId, definition.BuildingId, footprint);
+            ApplyCushionPadSorting(instance);
             BindPowerNode(instanceObject, instanceId);
             foreach (Vector3Int cell in EnumerateFootprint(origin, footprint))
             {
@@ -709,6 +712,7 @@ namespace SubTerra.Gameplay.Building
                 buildingRoot != null ? buildingRoot : transform);
             BuildingInstance instance = instanceObject.GetComponent<BuildingInstance>() ?? instanceObject.AddComponent<BuildingInstance>();
             instance.Initialize(snapshot.instanceId, snapshot.buildingTypeId, footprint);
+            ApplyCushionPadSorting(instance);
             // 완충판 높이 복원. 옛 세이브(필드 없음=0)나 깨진 값은 기본(최소) 높이로 둔다.
             if (instanceObject.TryGetComponent<CushionPad>(out var cushionPad))
             {
@@ -745,6 +749,32 @@ namespace SubTerra.Gameplay.Building
                 footprint: footprint));
 
             return true;
+        }
+
+        private void ApplyCushionPadSorting(BuildingInstance instance)
+        {
+            if (instance.BuildingId != CushionPadBuildingId || terrainTilemap == null
+                || !terrainTilemap.TryGetComponent<TilemapRenderer>(out var terrainRenderer))
+            {
+                return;
+            }
+
+            int padOrder = terrainRenderer.sortingOrder - 1;
+            var grid = terrainTilemap.transform.parent;
+            var background = grid != null ? grid.Find("BackgroundTilemap") : null;
+            if (background != null && background.TryGetComponent<TilemapRenderer>(out var backgroundRenderer)
+                && backgroundRenderer.sortingLayerID == terrainRenderer.sortingLayerID
+                && backgroundRenderer.sortingOrder >= padOrder)
+            {
+                // Keep a slot between the cave wall and the foreground tiles.
+                backgroundRenderer.sortingOrder = padOrder - 1;
+            }
+
+            // Group the installed artwork so the cap still renders in front of the post.
+            if (!instance.TryGetComponent<SortingGroup>(out var group))
+                group = instance.gameObject.AddComponent<SortingGroup>();
+            group.sortingLayerID = terrainRenderer.sortingLayerID;
+            group.sortingOrder = padOrder;
         }
 
         private static Vector2Int SavedFootprint(BuildingSnapshotDto snapshot, BuildingPlacementDefinition definition)
