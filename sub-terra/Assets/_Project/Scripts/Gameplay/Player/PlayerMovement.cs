@@ -53,6 +53,7 @@ namespace SubTerra.Gameplay.Player
         private Collider2D bodyCollider;
         private readonly ContactPoint2D[] contactBuffer = new ContactPoint2D[16];
         private readonly RaycastHit2D[] probeHits = new RaycastHit2D[8];
+        private readonly List<RaycastHit2D> platformCeilingHits = new List<RaycastHit2D>(4);
         private float moveInput;
         private float verticalMoveInput;
         private readonly JumpGraceWindow jumpWindow = new JumpGraceWindow();
@@ -568,12 +569,33 @@ namespace SubTerra.Gameplay.Player
         {
             if (!CanMove || IsClimbing || body == null || direction == 0 || !IsOnAdjustablePlatform)
                 return false;
-            if (!standingPlatform.TryStepHeight(direction, out float delta) || Mathf.Abs(delta) <= 0.0001f)
+            if (!standingPlatform.TryStepHeight(direction, out float delta, HasPlatformHeadroom))
                 return false;
 
             body.position += new Vector2(0f, delta);
             body.linearVelocity = new Vector2(body.linearVelocityX, 0f);
             PlatformHeightAdjusted?.Invoke(delta);
+            return true;
+        }
+
+        private bool HasPlatformHeadroom(float heightDelta)
+        {
+            if (heightDelta <= 0f) return true;
+            if (bodyCollider == null || !bodyCollider.enabled) return false;
+
+            var filter = new ContactFilter2D { useTriggers = false };
+            filter.SetLayerMask(groundLayers);
+            int count = bodyCollider.Cast(Vector2.up, filter, platformCeilingHits,
+                heightDelta + Physics2D.defaultContactOffset);
+            for (int i = 0; i < count; i++)
+            {
+                var hit = platformCeilingHits[i];
+                if (hit.normal.y >= 0f) continue;
+                if (hit.collider.TryGetComponent<IAdjustableLandingPlatform>(out var platform)
+                    && ReferenceEquals(platform, standingPlatform)) continue;
+                return false;
+            }
+
             return true;
         }
 

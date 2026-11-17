@@ -16,6 +16,7 @@ namespace SubTerra.Gameplay.Player.Tests
 
         private GameObject playerObject;
         private GameObject groundObject;
+        private GameObject ceilingObject;
         private GameObject padObject;
         private GameObject survivalObject;
         private PlayerSurvivalSettings settings;
@@ -75,6 +76,7 @@ namespace SubTerra.Gameplay.Player.Tests
             Object.DestroyImmediate(playerObject);
             Object.DestroyImmediate(padObject);
             Object.DestroyImmediate(groundObject);
+            Object.DestroyImmediate(ceilingObject);
             Object.DestroyImmediate(settings);
             var hint = GameObject.Find("CushionPadHint");
             if (hint != null) Object.DestroyImmediate(hint);
@@ -140,6 +142,37 @@ namespace SubTerra.Gameplay.Player.Tests
             Assert.That(pad.CurrentHeight, Is.EqualTo(pad.MinHeight).Within(0.001f));
             Assert.That(movement.TryAdjustStandingPlatform(-1), Is.False, "최소 아래로는 못 내린다");
             Assert.That(survival.State.Health, Is.EqualTo(survival.State.MaximumHealth), "높이 조절은 낙하 피해를 주지 않는다");
+        }
+
+        [UnityTest]
+        public IEnumerator Adjust_OneCellBelowCeilingAllowsOneRaiseAndThenStops()
+        {
+            // 실제 플레이어 프리팹의 높이와 발 기준점으로 한 칸 공간을 재현한다.
+            playerObject.GetComponent<CapsuleCollider2D>().size = new Vector2(0.6f, 0.7f);
+            playerObject.transform.Find("GroundCheck").localPosition = new Vector3(0f, -0.35f, 0f);
+            yield return StandOnPad();
+
+            float ceilingBottom = pad.CurrentHeight + 1f;
+            ceilingObject = new GameObject("PadTestCeiling");
+            ceilingObject.transform.position = new Vector3(4f, ceilingBottom + 0.5f, 0f);
+            ceilingObject.AddComponent<BoxCollider2D>().size = Vector2.one;
+            Physics2D.SyncTransforms();
+
+            Assert.That(movement.TryAdjustStandingPlatform(1), Is.True);
+            yield return new WaitForFixedUpdate();
+            float raisedHeight = pad.CurrentHeight;
+            Vector2 raisedPosition = body.position;
+            Assert.That(raisedHeight, Is.EqualTo(pad.MinHeight + pad.StepHeight).Within(0.001f));
+            Assert.That(playerObject.GetComponent<CapsuleCollider2D>().bounds.max.y, Is.LessThan(ceilingBottom));
+            Assert.That(movement.TryAdjustStandingPlatform(1), Is.False);
+            Assert.That(pad.CurrentHeight, Is.EqualTo(raisedHeight));
+            Assert.That(body.position, Is.EqualTo(raisedPosition));
+
+            Assert.That(movement.TryAdjustStandingPlatform(-1), Is.True);
+            yield return new WaitForFixedUpdate();
+            Assert.That(movement.TryAdjustStandingPlatform(1), Is.True);
+            yield return new WaitForFixedUpdate();
+            Assert.That(movement.TryAdjustStandingPlatform(1), Is.False);
         }
 
         [UnityTest]
