@@ -11,8 +11,8 @@ namespace SubTerra.Shared
         /// <summary>지면에서 윗면까지의 현재 높이(월드 단위).</summary>
         float CurrentHeight { get; }
 
-        /// <summary>direction &gt; 0 한 단계 상승, &lt; 0 한 단계 하강. 높이가 실제로 바뀌면 true와 변화량.</summary>
-        bool TryStepHeight(int direction, out float heightDelta);
+        /// <summary>높이 변경 전에 제안된 변화량을 검사하고, 실제로 바뀌면 true와 변화량을 반환한다.</summary>
+        bool TryStepHeight(int direction, out float heightDelta, Func<float, bool> canApplyDelta = null);
     }
 
     /// <summary>

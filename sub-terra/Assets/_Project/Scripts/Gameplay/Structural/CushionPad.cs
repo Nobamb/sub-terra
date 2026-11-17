@@ -70,12 +70,12 @@ namespace SubTerra.Gameplay.Structural
             return delta;
         }
 
-        public bool TryStepHeight(int direction, out float heightDelta)
+        public bool TryStepHeight(int direction, out float heightDelta, Func<float, bool> canApplyDelta = null)
         {
             EnsureInitialized();
             float next = CushionPadRules.StepHeight(currentHeight, direction, minHeight, MaxHeight, stepHeight);
             heightDelta = next - currentHeight;
-            if (Mathf.Abs(heightDelta) <= 0.0001f)
+            if (Mathf.Abs(heightDelta) <= 0.0001f || (canApplyDelta != null && !canApplyDelta(heightDelta)))
             {
                 heightDelta = 0f;
                 return false;
