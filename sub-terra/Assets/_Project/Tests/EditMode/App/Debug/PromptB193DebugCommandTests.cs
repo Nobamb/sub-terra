@@ -176,6 +176,8 @@ namespace SubTerra.App.Tests.Debug
         [TestCase("falling abc")]
         [TestCase("falling NaN")]
         [TestCase("falling 5m 6m")]
+        [TestCase("falling cushion")]
+        [TestCase("falling 10m cushion extra")]
         public void Falling_RejectsBadHeights(string line)
         {
             var rig = CreateRig(SceneNames.Integration);
@@ -183,8 +185,26 @@ namespace SubTerra.App.Tests.Debug
 
             Assert.That(
                 Session().Execute(line, Context(rig, survival)),
-                Is.EqualTo("falling 인자 오류. 예: falling 30m"));
+                Is.EqualTo("falling 인자 오류. 예: falling 10m cushion"));
             Assert.That(survival.State.Health, Is.EqualTo(100f));
+        }
+
+        [TestCase("falling 10m cushion", 1f, 0.1f)]
+        [TestCase("낙하 10M CuShIoN", 1.7f, 0.25f)]
+        public void Falling_CushionUsesConfiguredRatioAfterCargo(string line, float cargoMultiplier, float ratio)
+        {
+            var rig = CreateRig(SceneNames.Integration);
+            var ordinary = CreateSurvival();
+            ordinary.SetCargoFallImpactMultiplier(cargoMultiplier);
+            var cushion = CreateSurvival();
+            cushion.SetCargoFallImpactMultiplier(cargoMultiplier);
+            var settings = typeof(PlayerSurvivalController).GetField("settings", BindingFlags.Instance | BindingFlags.NonPublic)
+                .GetValue(cushion) as PlayerSurvivalSettings;
+            SetField(settings, "cushionLandingDamageRatio", ratio);
+
+            Assert.That(Session().Execute("falling 10m", Context(rig, ordinary)), Does.StartWith("falling 10m -"));
+            Assert.That(Session().Execute(line, Context(rig, cushion)), Does.StartWith("falling 10m cushion -"));
+            Assert.That(100f - cushion.State.Health, Is.EqualTo((100f - ordinary.State.Health) * ratio).Within(0.01f));
         }
 
         [Test]
@@ -285,7 +305,7 @@ namespace SubTerra.App.Tests.Debug
             Assert.That(help, Does.Not.Contain("hit <"));
             Assert.That(help, Does.Not.Contain("fall <"));
             Assert.That(help, Does.Contain("hitgas [횟수]"));
-            Assert.That(help, Does.Contain("falling [높이m]"));
+            Assert.That(help, Does.Contain("falling [높이m [cushion]]").And.Contain("falling 10m cushion"));
             Assert.That(help, Does.Contain("spawn <rock|copper|iron|lithium|gas|engine_fuel> [golden]"));
 
             var source = System.IO.File.ReadAllText(System.IO.Path.Combine(
