@@ -58,7 +58,7 @@ namespace SubTerra.App.UI.Guide
             Register(Build()); Register(Inventory()); Register(Drone()); Register(Minimap()); Register(Clock());
             Register(Guide());
             Register(Base()); Register(Health()); Register(Power()); Register(Cargo()); Register(Grid());
-            Register(Core()); Register(Structure()); Register(Gas()); Register(Reset());
+            Register(Core()); Register(Structure()); Register(Landing()); Register(Gas()); Register(Reset());
             Register(ResourceScene("res.copper", "tile.ore.copper", "item:" + DataIds.Minerals.Copper, string.Empty));
             Register(ResourceScene("res.iron", "tile.ore.iron", "item:" + DataIds.Minerals.Iron, string.Empty));
             Register(ResourceScene("res.lithium", "tile.ore.lithium", "item:" + DataIds.Minerals.Lithium, string.Empty));
@@ -605,6 +605,28 @@ namespace SubTerra.App.UI.Guide
                 .Fade(S(0f, 0f, 1.2f, 0f, 1.35f, 1f, 2.5f, 1f, 2.65f, 0f));
             Txt(c, "위험", 12f, 48f, 11f, 140f, Warn, true).Fade(S(0f, 0f, 2.5f, 0f, 2.65f, 1f));
             return c;
+        }
+
+        private static DemoClip Landing()
+        {
+            var clip = New("landing", 2.8f, 1.3f);
+            Backdrop(clip);
+            Floor(clip);
+            const float padHeight = 20f;
+            const float dropHeight = 28f;
+            Spr(clip, "fac.support", padHeight, 77f, GroundTop + padHeight * 0.5f);
+            Player(clip, -77f).PosY(S(0f, PlayerY + dropHeight, 0.3f, PlayerY + dropHeight, 1.05f, PlayerY));
+            Player(clip, 77f).PosY(S(0f, PlayerY + padHeight + dropHeight, 0.3f, PlayerY + padHeight + dropHeight,
+                1.05f, PlayerY + padHeight));
+
+            Box(clip, 142f, 32f, -77f, -43f, Panel);
+            Box(clip, 142f, 32f, 77f, -43f, Panel);
+            Txt(clip, "지면 착지", 11f, -77f, -34f, 142f, Color.white, true);
+            Txt(clip, "완충판 착지", 11f, 77f, -34f, 142f, Color.white, true);
+            var impact = S(0f, 0f, 1.05f, 0f, 1.2f, 1f, 2.45f, 1f, 2.8f, 0f);
+            Txt(clip, "일반 착지 피해", 11f, -77f, -50f, 142f, Warn, true).Fade(impact);
+            Txt(clip, "일반 피해의 10%", 11f, 77f, -50f, 142f, Teal, true).Fade(impact);
+            return clip;
         }
 
         private static DemoClip Gas()
