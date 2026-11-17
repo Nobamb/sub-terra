@@ -108,7 +108,6 @@ namespace SubTerra.Gameplay.Mining
         private int deepZoneMinDepth;
         private int deepZoneMaxDepth;
         private bool hasDeepZoneBoundary;
-        private int? goldDropTopY;
         private Vector3Int activeCell;
         private TileBase activeTileAsset;
         private MiningTileDto activeTile;
@@ -169,12 +168,6 @@ namespace SubTerra.Gameplay.Mining
             deepZoneMinDepth = Mathf.Max(1, minDepth);
             deepZoneMaxDepth = Mathf.Max(deepZoneMinDepth, maxDepth);
             hasDeepZoneBoundary = true;
-        }
-
-        /// <summary>이 광산의 골드 드롭 정의를 1m당 기본 지급량으로 사용한다.</summary>
-        public void ConfigureGoldDropDepth(int topY)
-        {
-            goldDropTopY = topY;
         }
 
         public bool TryStartMining(Vector3Int cell)
@@ -446,12 +439,6 @@ namespace SubTerra.Gameplay.Mining
             if (!ValidateActiveMining())
             {
                 return false;
-            }
-
-            if (goldDropTopY.HasValue && activeTile.goldDrop > 0)
-            {
-                long depth = Math.Max(1L, (long)goldDropTopY.Value - activeCell.y + 1);
-                activeTile.goldDrop = (int)Math.Min(int.MaxValue, depth * activeTile.goldDrop);
             }
 
             if (miningTransaction != null)

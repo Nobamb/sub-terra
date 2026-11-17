@@ -90,7 +90,8 @@ namespace SubTerra.Gameplay.DemoWorld.Tests
             try
             {
                 var serialized = new SerializedObject(settings);
-                serialized.FindProperty("chancePercent").intValue = 100;
+                foreach (string field in new[] { "rockChancePercent", "gasChancePercent", "oreChancePercent" })
+                    serialized.FindProperty(field).intValue = 100;
                 serialized.ApplyModifiedPropertiesWithoutUndo();
                 for (int x = -50; x < 50; x++)
                 {
@@ -107,13 +108,15 @@ namespace SubTerra.Gameplay.DemoWorld.Tests
         [TestCase("tile.copper", "mineral.copper")]
         [TestCase("tile.iron", "mineral.iron")]
         [TestCase("tile.lithium", "mineral.lithium")]
-        public void OreVariantUsesCommonGoldRateAndPreservesMiningRules(string tileId, string mineralId)
+        public void OreGrantReadsCatalogAndPreservesMiningRules(string tileId, string mineralId)
         {
             var settings = AssetDatabase.LoadAssetAtPath<GoldDropSettings>("Assets/_Project/Data/World/GoldDropSettings.asset");
             Assert.That(settings, Is.Not.Null);
+            var prices = AssetDatabase.LoadAssetAtPath<ScriptableObject>("Assets/_Project/Data/Catalog/GameDataCatalog.asset") as IMineralPriceProvider;
+            Assert.That(prices.TryGetMineralUnitPrice(mineralId, out int price), Is.True);
             var original = new MiningTileDto(tileId, mineralId, 1, true, 7, 3, 4, false, 2, 3);
             var gold = settings.CreateVariant(original);
-            Assert.That(gold.goldDrop, Is.EqualTo(100));
+            Assert.That(gold.goldDrop, Is.EqualTo(price * 5));
             Assert.That(gold.tileId, Is.EqualTo(tileId + ".gold"));
             gold.tileId = original.tileId;
             gold.goldDrop = 0;
@@ -127,7 +130,7 @@ namespace SubTerra.Gameplay.DemoWorld.Tests
             try
             {
                 var gas = settings.CreateVariant(new MiningTileDto("tile.gas-pocket", "", 0, true, 1, 1, 1, true, 1, 2));
-                Assert.That(gas.goldDrop, Is.EqualTo(100));
+                Assert.That(gas.goldDrop, Is.EqualTo(50));
                 Assert.That(gas.containsGas, Is.True);
                 Assert.That(MineLayerTileIds.BaseTileId(gas.tileId), Is.EqualTo("tile.gas-pocket"));
             }

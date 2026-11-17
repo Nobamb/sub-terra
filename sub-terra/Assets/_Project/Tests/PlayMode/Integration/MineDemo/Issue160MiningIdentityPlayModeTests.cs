@@ -143,8 +143,7 @@ namespace SubTerra.App.Tests.PlayMode.MineDemo
             Assert.That(map.HasTile(cell), Is.False);
             Assert.That(events.Count, Is.EqualTo(eventCount + 1));
             Assert.That(events[events.Count - 1].tileId, Is.EqualTo(identity.Dto.tileId));
-            int expectedGold = identity.Dto.goldDrop > 0 ? identity.Depth * 100 : 0;
-            Assert.That(state.Player.Gold - goldBefore, Is.EqualTo(expectedGold), "테스트에는 골드 증가 업그레이드가 없다.");
+            Assert.That(state.Player.Gold - goldBefore, Is.EqualTo(identity.Dto.goldDrop), "테스트에는 골드 증가 업그레이드가 없다.");
             var bonus = env.Save.Progression.Effects.GetMiningYieldBonus(dto.mineralId);
             if (!string.IsNullOrEmpty(dto.mineralId))
                 Assert.That(inventory.State.GetQuantity(dto.mineralId) - before, Is.EqualTo(dto.quantity + bonus));
@@ -156,7 +155,7 @@ namespace SubTerra.App.Tests.PlayMode.MineDemo
             Assert.That(mining.TryMineInstant(cell), Is.False, "빈 셀 재채굴로 중복 지급/가스가 생기면 안 된다.");
             Assert.That(events.Count, Is.EqualTo(eventCount + 1));
             Assert.That(gas.ActiveZones.Count - zones, Is.EqualTo(dto.containsGas ? 1 : 0));
-            Assert.That(state.Player.Gold - goldBefore, Is.EqualTo(expectedGold));
+            Assert.That(state.Player.Gold - goldBefore, Is.EqualTo(identity.Dto.goldDrop));
             if (!string.IsNullOrEmpty(dto.mineralId))
                 Assert.That(inventory.State.GetQuantity(dto.mineralId) - before, Is.EqualTo(dto.quantity + bonus));
             Debug.Log($"[Issue160] cell={cell} depth={identity.Depth} tile={dto.tileId} sprite={identity.Sprite.name} mineral={dto.mineralId} quantity={dto.quantity + bonus} gas={dto.containsGas}");
