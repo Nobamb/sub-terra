@@ -368,28 +368,22 @@ namespace SubTerra.Gameplay.Player
             moteMaterial = CreateMaterial(shader, "CushionPadHintMote");
         }
 
-        // 키캡 그림 치수(텍스처 좌표, y가 위쪽). 윗면 위에 두께(Depth)만큼 내려간 옆면이 붙는다.
-        private const int FaceX0 = 3;
-        private const int FaceX1 = 36;
-        private const int FaceY0 = 8;
-        private const int FaceY1 = 36;
-        private const int Depth = 5;
-        private const int Chamfer = 6;
+        // 키캡 모양(팔각 윗면·옆면·색)은 Shared의 HologramKeycapPainter와 긴급탈출 R키가 함께 쓴다.
         // 화살표 글리프: 높이 14px, 머리 9줄 + 줄기 5줄. 글리프 y 0이 아래, 13이 꼭짓점 쪽이다.
         private const int GlyphBottomY = 15;
         private const int GlyphHeight = 14;
         private const int GlyphHeadRows = 9;
+
+        private static Material CreateMaterial(Shader shader, string name)
+        {
+            return shader != null ? new Material(shader) { name = name } : null;
+        }
 
         /// <summary>
         /// 청록색 홀로그램 키캡. 모서리를 크게 깎은 팔각 윗면 + 아래로 두께가 보이는 옆면,
         /// 좌상단은 밝고 우하단은 어두운 모따기 면, 안쪽으로 파인 판, 좌우 면이 나뉜 입체 화살표.
         /// 위 키는 꼭짓점이 위로, 아래 키는 꼭짓점이 아래로 향한다.
         /// </summary>
-        private static Material CreateMaterial(Shader shader, string name)
-        {
-            return shader != null ? new Material(shader) { name = name } : null;
-        }
-
         private static void BuildAtlasSprites()
         {
             var texture = new Texture2D(AtlasWidth, KeySize, TextureFormat.RGBA32, false)
@@ -431,72 +425,8 @@ namespace SubTerra.Gameplay.Player
 
         private static Color32 ShadePixel(int x, int y, bool pointUp)
         {
-            if (InsideCap(x, y, FaceY0, FaceY1)) return ShadeTopFace(x, y, pointUp);
-            if (InsideCap(x, y, FaceY0 - Depth, FaceY1 - Depth)) return ShadeSide(x, y);
-            return new Color32(0, 0, 0, 0);
-        }
-
-        /// <summary>모서리를 45도로 깎은 팔각형 안쪽인지.</summary>
-        private static bool InsideCap(int x, int y, int y0, int y1)
-        {
-            if (x < FaceX0 || x > FaceX1 || y < y0 || y > y1) return false;
-            int dx = Mathf.Min(x - FaceX0, FaceX1 - x);
-            int dy = Mathf.Min(y - y0, y1 - y);
-            return dx + dy >= Chamfer;
-        }
-
-        private static Color32 ShadeSide(int x, int y)
-        {
-            // 윗면 바로 아래로 보이는 두께. 아래 가장자리는 빛나는 선, 오른쪽으로 갈수록 어둡다.
-            if (!InsideCap(x, y - 1, FaceY0 - Depth, FaceY1 - Depth)) return new Color32(48, 208, 214, 255);
-            float t = Mathf.InverseLerp(FaceX0, FaceX1, x);
-            return LerpColor(new Color32(16, 118, 132, 238), new Color32(6, 62, 78, 238), t);
-        }
-
-        private static Color32 ShadeTopFace(int x, int y, bool pointUp)
-        {
-            int dl = x - FaceX0;
-            int dr = FaceX1 - x;
-            int db = y - FaceY0;
-            int dt = FaceY1 - y;
-            const float diagonal = 0.7071f;
-            // 가장자리까지 거리와 가장 가까운 면(0 위·1 왼·2 아래·3 오른·4 좌상·5 우상·6 좌하·7 우하).
-            float[] distances =
-            {
-                dt, dl, db, dr,
-                (dl + dt - Chamfer) * diagonal, (dr + dt - Chamfer) * diagonal,
-                (dl + db - Chamfer) * diagonal, (dr + db - Chamfer) * diagonal
-            };
-            int nearest = 0;
-            for (int i = 1; i < distances.Length; i++)
-            {
-                if (distances[i] < distances[nearest]) nearest = i;
-            }
-
-            float edge = distances[nearest];
-            if (edge < 1f) return new Color32(72, 246, 240, 255);
-            if (edge < 3.5f)
-            {
-                // 모따기 면 명암: 위·왼쪽은 밝고 아래·오른쪽은 어둡다. 우상·좌하 모서리는 중간.
-                if (nearest == 0 || nearest == 1 || nearest == 4) return new Color32(64, 198, 202, 248);
-                if (nearest == 2 || nearest == 3 || nearest == 7) return new Color32(14, 92, 108, 248);
-                return new Color32(38, 146, 156, 248);
-            }
-
-            if (edge < 4.5f) return new Color32(4, 40, 50, 240);
-
-            // 안쪽 판: 위가 약간 밝은 세로 그라데이션 + 가로 주사선(홀로그램 느낌).
-            float t = Mathf.InverseLerp(FaceY0, FaceY1, y);
-            Color32 face = LerpColor(new Color32(8, 54, 64, 216), new Color32(18, 92, 104, 216), t);
-            if (y % 3 == 0) face.a = (byte)(face.a * 0.82f);
-
-            switch (GlyphLevel(x, y, pointUp))
-            {
-                case 2: return new Color32(206, 255, 250, 255);
-                case 3: return new Color32(112, 216, 220, 255);
-                case 1: return Over(face, new Color32(40, 232, 226, 120));
-                default: return face;
-            }
+            HologramPixel pixel = HologramKeycapPainter.Shade(x, y, (gx, gy) => GlyphLevel(gx, gy, pointUp));
+            return new Color32(pixel.R, pixel.G, pixel.B, pixel.A);
         }
 
         /// <summary>0 없음, 1 글리프 둘레 빛, 2 글리프 왼쪽(밝은 면), 3 글리프 오른쪽(어두운 면).</summary>
@@ -525,28 +455,6 @@ namespace SubTerra.Gameplay.Player
             if (row >= GlyphHeight - GlyphHeadRows) half = 0.5f + (GlyphHeight - 1 - row) * 0.75f;
             else half = 2.5f;
             return Mathf.Abs(x + 0.5f - KeySize * 0.5f) <= half;
-        }
-
-        private static Color32 LerpColor(Color32 a, Color32 b, float t)
-        {
-            return new Color32(
-                (byte)Mathf.RoundToInt(Mathf.Lerp(a.r, b.r, t)),
-                (byte)Mathf.RoundToInt(Mathf.Lerp(a.g, b.g, t)),
-                (byte)Mathf.RoundToInt(Mathf.Lerp(a.b, b.b, t)),
-                (byte)Mathf.RoundToInt(Mathf.Lerp(a.a, b.a, t)));
-        }
-
-        /// <summary>straight alpha 두 색을 알파 가중으로 합성한다(색만 평균 내면 경계가 튄다).</summary>
-        private static Color32 Over(Color32 dst, Color32 src)
-        {
-            float sa = src.a / 255f;
-            float da = dst.a / 255f;
-            float oa = sa + da * (1f - sa);
-            if (oa <= 0f) return new Color32(0, 0, 0, 0);
-            float r = (src.r * sa + dst.r * da * (1f - sa)) / oa;
-            float g = (src.g * sa + dst.g * da * (1f - sa)) / oa;
-            float b = (src.b * sa + dst.b * da * (1f - sa)) / oa;
-            return new Color32((byte)Mathf.RoundToInt(r), (byte)Mathf.RoundToInt(g), (byte)Mathf.RoundToInt(b), (byte)Mathf.RoundToInt(oa * 255f));
         }
     }
 }
