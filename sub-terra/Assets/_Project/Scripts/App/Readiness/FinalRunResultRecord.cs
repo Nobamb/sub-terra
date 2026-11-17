@@ -51,7 +51,7 @@ namespace SubTerra.App.Readiness
                     Step("02-elevator", "시작 엘리베이터로 Mine 하강"),
                     Step("03-shallow-mine", "상층 구리 채굴 및 전력·화물 확인"),
                     Step("04-ladder-return", "수직 굴착 뒤 사다리/발판 복귀 경로"),
-                    Step("05-support", "균열 경고 후 버팀목 설치"),
+                    Step("05-support", "균열 경고 후 완충판 설치"),
                     Step("06-mid-gas", "중층 철/가스 효과와 드론 경고"),
                     Step("07-facilities", "조명·충전기·보관함·정산기·코어 설치"),
                     Step("08-outpost", "전진기지 충전/보관/정산/체크포인트"),

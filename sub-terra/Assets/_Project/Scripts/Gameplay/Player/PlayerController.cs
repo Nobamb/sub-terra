@@ -1,4 +1,5 @@
 using SubTerra.Shared;
+using SubTerra.Shared.Audio;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -12,6 +13,9 @@ namespace SubTerra.Gameplay.Player
         [SerializeField] private string jumpActionPath = "Player/Jump";
         [SerializeField] private string interactActionPath = "Player/Interact";
 
+        private const float PadRaisePitch = 1.08f;
+        private const float PadLowerPitch = 0.92f;
+
         private PlayerMovement movement;
         private InputAction moveAction;
         private InputAction jumpAction;
@@ -21,6 +25,11 @@ namespace SubTerra.Gameplay.Player
         {
             movement = GetComponent<PlayerMovement>();
             ResolveActions();
+            // 첫 사용 안내 홀로그램. 프리팹을 건드리지 않고 런타임에 한 번 붙인다.
+            if (GetComponent<CushionPadHintHologram>() == null)
+            {
+                gameObject.AddComponent<CushionPadHintHologram>();
+            }
         }
 
         private void OnEnable()
@@ -44,6 +53,19 @@ namespace SubTerra.Gameplay.Player
 
         private void Update()
         {
+            // 완충판 위: 위/아래 화살표는 높이 조절 전용(이동·사다리·채굴 방향에서 빠진다).
+            var onPad = movement.IsOnAdjustablePlatform && !ControlPreferences.IsSettingsOpen;
+            PlayerKeyboardControls.AdjustablePadActive = onPad;
+            if (onPad)
+            {
+                var step = PlayerKeyboardControls.ReadPadStep();
+                if (step != 0 && movement.TryAdjustStandingPlatform(step))
+                {
+                    // 새 소리 없이 기존 키캡 소리만 쓰고, 오르내림은 피치로 구분한다.
+                    SfxRequests.Play(SfxId.KeycapPop, step > 0 ? PadRaisePitch : PadLowerPitch);
+                }
+            }
+
             // Move InputAction은 WASD+방향키 한 합성이다. activeControl.device가 null인
             // 경우가 있어 채굴 전용 키가 이동으로 새어 나간다. 키보드는 항상 선택 방식을 따른다.
             var input = PlayerKeyboardControls.ReadMovement(ControlPreferences.Scheme);
@@ -61,6 +83,7 @@ namespace SubTerra.Gameplay.Player
 
         private void OnDisable()
         {
+            PlayerKeyboardControls.AdjustablePadActive = false;
             if (moveAction != null)
             {
                 moveAction.Disable();

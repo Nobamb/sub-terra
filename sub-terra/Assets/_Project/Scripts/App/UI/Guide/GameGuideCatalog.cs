@@ -205,7 +205,7 @@ namespace SubTerra.App.UI.Guide
 
             Control("ctrl.interact", "시설 상호작용", "시설 가까이에서 E 키로 사용합니다.", "E", "interact")
                 .Data("사용 조건", storage + "·" + charger + "·" + clinic + "·" + settlement + "·" + core + "·" + portal
-                    + " 가까이로 갑니다. 가까워지면 시설 이름이 말풍선으로 표시됩니다(버팀목·사다리 제외).")
+                    + " 가까이로 갑니다. 가까워지면 시설 이름이 말풍선으로 표시됩니다(" + support + "·사다리 제외).")
                 .Data("결과", "시설별 창이 열리거나 효과가 적용됩니다. " + charger + "·" + clinic + "·" + settlement
                     + "은 전력 공급 범위 안에서만 쓸 수 있습니다.")
                 .Tip(charger + "와 " + clinic + "는 한 번 쓰면 재사용 대기 시간(" + cooldown + ")이 있습니다. 대기 시간은 지하 탐사 중에 흐르고, 남은 시간은 안내 문구로 확인합니다.")
@@ -312,7 +312,7 @@ namespace SubTerra.App.UI.Guide
                 .Text("광산에 머무는 동안 산소가 줄어듭니다. 더 깊은 곳에서 움직이거나 화물이 무거우면 소모가 빨라집니다.")
                 .Data("산소 위험도", "HUD에서 안전·주의·위험을 확인하세요. 산소가 0이면 체력이 주기적으로 줄어듭니다.")
                 .Tip("무거운 짐을 들고 오를 때 사다리는 화물로 인한 산소 소모 증가가 제한됩니다.")
-                .Data("착지 위험", "높이에서 떨어질 때 짐이 무거우면 피해가 커집니다. " + support + " 위에 착지하면 무게로 인한 추가 피해를 막습니다.")
+                .Data("착지 위험", "높이에서 떨어질 때 짐이 무거우면 피해가 커집니다. " + support + " 위에 착지하면 피해가 약 10%로 줄어듭니다.")
                 .Link("fac.support", "fac.ladder", "mech.power");
 
             Mechanic("mech.gas", "가스 지대", "가스를 피하고 정화 지대로 대피", "gas")
@@ -392,8 +392,9 @@ namespace SubTerra.App.UI.Guide
                 .Tip("사다리를 오를 때는 화물 무게에 따른 산소 소모 증가에 상한이 있습니다.")
                 .Link("ctrl.ladder", "ctrl.build");
 
-            Facility("fac.support", support, "단단한 착지 발판", string.Empty, DataIds.Buildings.SupportBasic)
-                .Data("효과", "버팀목 위로 착지하면 화물 무게로 인한 추가 피해를 막습니다.")
+            Facility("fac.support", support, "높이를 바꾸는 착지 발판", string.Empty, DataIds.Buildings.SupportBasic)
+                .Data("효과", support + " 위로 착지하면 착지 피해가 일반 착지의 약 10%로 줄어듭니다.")
+                .Data("높이 조절", support + " 위에 서서 위/아래 방향키를 누르면 한 단계씩 높이거나 낮춥니다. 처음에는 가장 낮아 짐을 가득 싣고도 뛰어올라 탈 수 있습니다.")
                 .Link("mech.structure", "ctrl.build");
 
             Facility("fac.light", light, "지하 구역을 밝힘", string.Empty, DataIds.Buildings.LightBasic)

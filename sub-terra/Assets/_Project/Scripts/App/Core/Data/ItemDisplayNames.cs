@@ -65,7 +65,7 @@ namespace SubTerra.App.Core.Data
             switch (buildingId)
             {
                 case DataIds.Buildings.SupportBasic:
-                    return "버팀목";
+                    return "완충판";
                 case DataIds.Buildings.LadderBasic:
                     return "사다리";
                 case DataIds.Buildings.LightBasic:
@@ -88,7 +88,7 @@ namespace SubTerra.App.Core.Data
         }
 
         /// <summary>
-        /// 버팀목·사다리는 근접 말풍선에서 제외한다. 나머지 설치 시설만 시설명을 띄운다.
+        /// 완충판·사다리는 근접 말풍선에서 제외한다. 나머지 설치 시설만 시설명을 띄운다.
         /// </summary>
         public static bool ShowsProximityName(string buildingId)
         {

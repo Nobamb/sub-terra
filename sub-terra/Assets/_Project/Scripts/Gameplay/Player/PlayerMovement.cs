@@ -75,6 +75,11 @@ namespace SubTerra.Gameplay.Player
         public float FacingDirection { get; private set; } = 1f;
         public bool IsGrounded { get; private set; }
         internal bool IsOnStableLandingPlatform { get; private set; }
+        private IAdjustableLandingPlatform standingPlatform;
+        /// <summary>완충판 위에 서 있는 동안 true. 위/아래 키는 사다리·수직 이동이 아니라 판 높이 조절에 쓴다.</summary>
+        public bool IsOnAdjustablePlatform => IsGrounded && IsPlatformAlive(standingPlatform);
+        /// <summary>서 있는 완충판의 높이를 실제로 바꿨을 때 변화량과 함께 알린다.</summary>
+        public event System.Action<float> PlatformHeightAdjusted;
         public bool CanMove { get; private set; } = true;
         public bool IsClimbing { get; private set; }
         public bool IsTouchingLadder => activeLadders.Count > 0;
@@ -426,6 +431,7 @@ namespace SubTerra.Gameplay.Player
         private void UpdateGroundedState()
         {
             IsOnStableLandingPlatform = false;
+            standingPlatform = null;
             // 에어 락 동안은 무조건 공중 취급 → 연타/즉시 재점프 불가.
             if (jumpAirLockRemaining > 0f)
             {
@@ -447,6 +453,8 @@ namespace SubTerra.Gameplay.Player
 
             IsGrounded = onFloor;
             IsOnStableLandingPlatform = onFloor && IsStableLandingPlatform(floor);
+            if (IsOnStableLandingPlatform && floor.TryGetComponent<IAdjustableLandingPlatform>(out var adjustable))
+                standingPlatform = adjustable;
 
             // 접점이 한 틱 누락돼도 발밑 보조 판정으로 착지를 확정한다.
             // 상승 중에는 위에서 반환하므로 공중에서 차지가 회복되지 않는다.
@@ -547,6 +555,26 @@ namespace SubTerra.Gameplay.Player
             }
 
             return nearest;
+        }
+
+        private static bool IsPlatformAlive(IAdjustableLandingPlatform platform) =>
+            platform != null && (platform is not UnityEngine.Object unityObject || unityObject != null);
+
+        /// <summary>
+        /// 서 있는 완충판의 높이를 한 단계 바꾸고, 같은 양만큼 몸을 옮겨 낙하·관통 없이 판 위에 남긴다.
+        /// 판 위가 아니거나 사다리 중이거나 이미 최소/최대면 아무것도 바꾸지 않는다.
+        /// </summary>
+        public bool TryAdjustStandingPlatform(int direction)
+        {
+            if (!CanMove || IsClimbing || body == null || direction == 0 || !IsOnAdjustablePlatform)
+                return false;
+            if (!standingPlatform.TryStepHeight(direction, out float delta) || Mathf.Abs(delta) <= 0.0001f)
+                return false;
+
+            body.position += new Vector2(0f, delta);
+            body.linearVelocity = new Vector2(body.linearVelocityX, 0f);
+            PlatformHeightAdjusted?.Invoke(delta);
+            return true;
         }
 
         private static bool IsStableLandingPlatform(Collider2D collider) =>

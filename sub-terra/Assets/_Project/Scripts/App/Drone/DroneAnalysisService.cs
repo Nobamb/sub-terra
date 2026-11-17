@@ -556,7 +556,7 @@ namespace SubTerra.App.Drone
                 case DroneAction.ReturnToBase:
                     return "기지로 귀환";
                 case DroneAction.InstallSupport:
-                    return "버팀목 설치";
+                    return "완충판 설치";
                 case DroneAction.LeaveGasZone:
                     return "가스 구역 이탈";
                 case DroneAction.MineNearbyMineral:

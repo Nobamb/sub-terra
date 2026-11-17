@@ -292,8 +292,8 @@ namespace SubTerra.App.Editor.DataValidation
             Sprite outpostIcon = LoadFacilityIcon("outpost_core_cartoon_v3.png", icon);
             return new List<BuildingData>
             {
-                EnsureBuilding("Building_Support_Basic.asset", DataIds.Buildings.SupportBasic, "버팀목",
-                    "단단한 착지 발판입니다. 버팀목 위에 착지하면 화물 무게로 인한 추가 피해를 막습니다.", supportPrefab, 0,
+                EnsureBuilding("Building_Support_Basic.asset", DataIds.Buildings.SupportBasic, "완충판",
+                    "착지 피해를 약 10%로 줄여 주는 발판입니다. 위에 서서 위/아래 방향키로 높이를 조절합니다.", supportPrefab, 0,
                     LoadFacilityIcon("support_pillar_mine.png", icon),
                     new List<ItemCostEntry> { new ItemCostEntry(DataIds.Minerals.Copper, 1) }),
                 EnsureBuilding("Building_Light_Basic.asset", DataIds.Buildings.LightBasic, "조명",

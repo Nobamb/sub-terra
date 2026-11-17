@@ -207,7 +207,7 @@ namespace SubTerra.App.Tests.UI
             Assert.That(controls, Does.Contain("전진기지"));
             Assert.That(controls, Does.Contain("긴급 탈출 포탈"));
             Assert.That(controls, Does.Contain("말풍선"));
-            Assert.That(controls, Does.Contain("버팀목·사다리 제외"));
+            Assert.That(controls, Does.Contain("완충판·사다리 제외"));
         }
 
         [Test]

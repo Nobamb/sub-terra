@@ -125,7 +125,7 @@ namespace SubTerra.App.Tests.Drone
 
             Assert.That(result.Dialogue.Tokens["safetyGuidance"], Does.Contain("가스 구역에서 이탈"));
             Assert.That(result.Dialogue.Tokens["safetyGuidance"], Does.Contain("전진기지"));
-            Assert.That(result.Dialogue.Tokens["safetyGuidance"], Does.Not.Contain("버팀목"));
+            Assert.That(result.Dialogue.Tokens["safetyGuidance"], Does.Not.Contain("완충판"));
         }
 
         [Test]
