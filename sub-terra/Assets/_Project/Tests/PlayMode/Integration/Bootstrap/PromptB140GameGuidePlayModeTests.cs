@@ -2,12 +2,16 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using NUnit.Framework;
 using SubTerra.App.Integration;
+using SubTerra.App.Save;
 using SubTerra.App.UI;
 using SubTerra.App.UI.Guide;
 using SubTerra.App.UI.HUD;
+using SubTerra.Gameplay.Hazards;
 using SubTerra.Gameplay.Player;
+using SubTerra.Shared;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -301,6 +305,77 @@ namespace SubTerra.App.Tests.PlayMode
             yield return UiTestWait.Until(() => !UiPauseGate.IsHeld, "upgrade close releases pause");
             Assert.That(panels.IsVisible(RuntimePanelId.Upgrade), Is.False);
             Assert.That(Time.timeScale, Is.EqualTo(1f));
+        }
+
+        [UnityTest]
+        public IEnumerator Issue352_MineMenusFreezeClockAndGasDamage()
+        {
+            yield return Load();
+            var runtime = environment.Save;
+            Assert.That(runtime.ActiveSlot, Is.Zero);
+            var slot = typeof(SaveRuntimeController).GetField("activeSlot", BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(slot, Is.Not.Null);
+            var chrome = Chrome();
+            var menu = Object.FindAnyObjectByType<UndergroundMenuController>();
+            var panels = Object.FindAnyObjectByType<PanelToggleController>();
+            var survival = Object.FindAnyObjectByType<PlayerSurvivalController>();
+            var gas = Object.FindAnyObjectByType<GasHazardSystem>();
+            var effects = Object.FindAnyObjectByType<GasExposureEffectController>();
+            var position = Object.FindAnyObjectByType<PlayerMovement>().Position;
+            var zone = gas.RestoreGasZone(new GasSnapshotDto
+            {
+                gasZoneId = "issue352-test-gas",
+                gasTypeId = GasType.Toxic.ToString(),
+                concentrationLevel = 1f,
+                remainingDuration = 20f,
+                x = Mathf.RoundToInt(position.x),
+                y = Mathf.RoundToInt(position.y),
+                isActive = true
+            });
+            Assert.That(gas.CurrentExposure.IsExposed && !effects.CurrentState.IsSheltered, Is.True);
+            var ticks = 0;
+            void CountDamage(GasExposureFailureInputDto _) => ticks++;
+            effects.FailureInputRaised += CountDamage;
+            try
+            {
+                // Allow the real clock to tick without creating an autosave coordinator or writing a slot.
+                slot.SetValue(runtime, 1);
+                var menus = new (System.Action open, System.Action close, string owner)[]
+                {
+                    (chrome.OpenGameGuide, chrome.CloseGameGuide, UiPauseGate.MineGuide),
+                    (menu.OpenSettings, menu.CloseSettings, UiPauseGate.MineSettings),
+                    (panels.ToggleUpgrade, panels.CloseUpgrade, UiPauseGate.MineUpgrade)
+                };
+                foreach (var (open, close, owner) in menus)
+                {
+                    open();
+                    Assert.That(UiPauseGate.IsHeldBy(owner), Is.True, owner);
+                    var timer = runtime.MineResetRemainingSeconds;
+                    var gasTime = zone.RemainingDuration;
+                    var health = survival.State.Health;
+                    var damageTicks = ticks;
+                    yield return new WaitForSecondsRealtime(1.15f);
+                    Assert.That(runtime.MineResetRemainingSeconds, Is.EqualTo(timer), owner);
+                    Assert.That(zone.RemainingDuration, Is.EqualTo(gasTime), owner);
+                    Assert.That(ticks, Is.EqualTo(damageTicks), owner);
+                    Assert.That(survival.State.Health, Is.EqualTo(health), owner);
+
+                    close();
+                    yield return UiTestWait.Until(() => !UiPauseGate.IsHeld, owner + " closes");
+                    yield return UiTestWait.Until(() => runtime.MineResetRemainingSeconds < timer
+                        && zone.RemainingDuration < gasTime, owner + " resumes clock and gas");
+                }
+
+                var ticksBeforeResume = ticks;
+                var healthBeforeResume = survival.State.Health;
+                yield return UiTestWait.Until(() => ticks > ticksBeforeResume && survival.State.Health < healthBeforeResume,
+                    "gas damage resumes");
+            }
+            finally
+            {
+                slot.SetValue(runtime, 0);
+                effects.FailureInputRaised -= CountDamage;
+            }
         }
 
         [UnityTest]
