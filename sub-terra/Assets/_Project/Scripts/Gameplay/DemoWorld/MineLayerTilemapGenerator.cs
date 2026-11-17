@@ -142,6 +142,8 @@ namespace SubTerra.Gameplay.DemoWorld
 
             worldSeed = seed;
             CurrentLayout = layout;
+            if (goldDropSettings != null)
+                GetComponent<MiningSystem>()?.ConfigureGoldDropDepth(distribution.TopY);
             ConfigureDeepZoneMiningBoundary();
             snapshotSystem?.ConfigureBaseWorldIdentity(seed, generatorVersion);
             structuralSystem?.ConfigureWorldSeed(seed);

@@ -49,8 +49,9 @@ namespace SubTerra.Gameplay.DemoWorld.Editor
                             MineLayerTileIds.Lithium => MineLayerCellKind.Lithium,
                             _ => MineLayerCellKind.BoundaryRock
                         };
-                        if (settings.IsGold(generator.WorldSeed, cell.x, cell.y, kind)
-                            && resolver.TryFindTileById(id + ".gold", out var gold)) map.SetTile(cell, gold);
+                        string targetId = settings.IsGold(generator.WorldSeed, cell.x, cell.y, kind) ? id + ".gold" : id;
+                        if (targetId != definition.tileId && resolver.TryFindTileById(targetId, out var target))
+                            map.SetTile(cell, target);
                     }
                 }
                 EditorSceneManager.SaveScene(scene);
@@ -67,11 +68,6 @@ namespace SubTerra.Gameplay.DemoWorld.Editor
                 settings = ScriptableObject.CreateInstance<GoldDropSettings>();
                 AssetDatabase.CreateAsset(settings, SettingsPath);
             }
-            var data = new SerializedObject(settings);
-            data.FindProperty("mineralCatalog").objectReferenceValue = AssetDatabase.LoadAssetAtPath<ScriptableObject>(
-                "Assets/_Project/Data/Catalog/GameDataCatalog.asset");
-            data.ApplyModifiedPropertiesWithoutUndo();
-
             var serialized = new SerializedObject(generator);
             serialized.FindProperty("goldDropSettings").objectReferenceValue = settings;
             var resolver = serialized.FindProperty("tileResolver").objectReferenceValue as MiningTileResolver;
