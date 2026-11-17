@@ -83,9 +83,9 @@ namespace SubTerra.App.Integration
             if (keyboard == null) return;
             // B-170: 종료 확인 창이 ESC·X를 먼저 받고(-400), 떠 있는 동안 다른 단축키를 막는다.
             if (QuitConfirmFlow.IsBlockingInput) return;
-            // 시작 브리핑·검색 입력 중에는 설정·종료 단축키를 막고 X(닫기)만 허용한다.
+            // ESC와 설정 버튼은 같은 열기 조건을 사용한다.
             var paused = UiPauseGate.IsInputBlocked;
-            if ((!paused || IsSettingsOpen) && keyboard.escapeKey.wasPressedThisFrame) HandleEscape();
+            if (keyboard.escapeKey.wasPressedThisFrame) HandleEscape();
             var selected = UnityEngine.EventSystems.EventSystem.current;
             if (selected != null && selected.currentSelectedGameObject != null
                 && selected.currentSelectedGameObject.GetComponent<TMPro.TMP_InputField>() != null) return;
@@ -113,6 +113,8 @@ namespace SubTerra.App.Integration
                 return;
             }
 
+            if (holdsSettingsPause) return;
+
             if (UiPauseGate.IsHeldBy(UiPauseGate.MineGuide))
             {
                 if (chrome != null) chrome.CloseGameGuide();
@@ -124,8 +126,6 @@ namespace SubTerra.App.Integration
                 if (panels != null) panels.CloseUpgrade();
                 return;
             }
-
-            if (holdsSettingsPause) return;
 
             // 시작 브리핑은 가장 위에 뜨는 모달이므로 다른 팝업보다 먼저 닫는다.
             var briefing = FindFirstObjectByType<DemoObjectiveView>();
@@ -183,7 +183,7 @@ namespace SubTerra.App.Integration
         public void OpenSettings()
         {
             if (settings == null || settingsView == null || settingsRoot == null
-                || IsSettingsOpen || UiPauseGate.IsInputBlocked) return;
+                || IsSettingsOpen || !UiPauseGate.CanOpenMineSettings) return;
             // B-166: ESC와 설정 버튼이 모두 이 경로를 지난다. 엘리베이터 탑승 중에는 소리 없이 무시한다.
             if (IsElevatorRiding()) return;
             holdsSettingsPause = UiPauseGate.Acquire(UiPauseGate.MineSettings);

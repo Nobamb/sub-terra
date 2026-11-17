@@ -186,7 +186,8 @@ namespace SubTerra.App.UI.HUD
             if (UiPauseGate.IsInputBlocked)
             {
                 var pausedKeyboard = Keyboard.current;
-                if (pausedGuide != null && gameGuideOpen && pausedKeyboard != null
+                if (!UiPauseGate.IsHeldBy(UiPauseGate.MineSettings)
+                    && pausedGuide != null && gameGuideOpen && pausedKeyboard != null
                     && pausedKeyboard.gKey.wasPressedThisFrame)
                     CloseGameGuide();
                 return;
@@ -727,6 +728,7 @@ namespace SubTerra.App.UI.HUD
         private void ApplyGameGuideVisible(bool visible)
         {
             bool pauseMine = Application.isPlaying && gameObject.scene.name == SceneNames.Integration;
+            if (pauseMine && UiPauseGate.IsHeldBy(UiPauseGate.MineSettings)) return;
             if (visible && pauseMine && (!isActiveAndEnabled || UiPauseGate.IsInputBlocked)) return;
             gameGuideOpen = visible;
 
