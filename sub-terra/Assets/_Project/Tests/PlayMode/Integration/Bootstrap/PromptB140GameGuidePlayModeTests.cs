@@ -254,7 +254,7 @@ namespace SubTerra.App.Tests.PlayMode
         }
 
         [UnityTest]
-        public IEnumerator Issue352_MineMenusPauseWorldAndPreventOtherPanelsOpening()
+        public IEnumerator Issue366_MineMenusRespectPriorityAndKeepUnderlyingPause()
         {
             yield return Load();
             var chrome = Chrome();
@@ -266,45 +266,73 @@ namespace SubTerra.App.Tests.PlayMode
             body.linearVelocityY = -1f;
             var position = body.position;
 
+            chrome.OpenInventoryPanel();
+            Assert.That(chrome.IsInventoryPanelOpen, Is.True);
             chrome.OpenGameGuide();
             yield return WaitOpen(Popup());
             Assert.That(UiPauseGate.IsHeldBy(UiPauseGate.MineGuide), Is.True);
             Assert.That(body.position, Is.EqualTo(position));
             Assert.That(body.linearVelocityY, Is.EqualTo(-1f));
             Assert.That(survival.OxygenRemaining, Is.EqualTo(40f));
-            menu.HandleEscape();
             panels.ToggleUpgrade();
             chrome.OpenDiggerBot();
-            chrome.OpenInventoryPanel();
             chrome.OpenBuildingMenu();
-            Assert.That(menu.IsSettingsOpen, Is.False);
             Assert.That(panels.IsVisible(RuntimePanelId.Upgrade), Is.False);
-            Assert.That(chrome.IsDiggerBotOpen || chrome.IsInventoryPanelOpen || chrome.IsBuildingMenuOpen, Is.False);
+            Assert.That(chrome.IsDiggerBotOpen || chrome.IsBuildingMenuOpen, Is.False);
+            Assert.That(chrome.IsInventoryPanelOpen, Is.True);
+
+            yield return UiTestWait.Press(environment.Keyboard, Key.Escape);
+            Assert.That(menu.IsSettingsOpen, Is.True);
+            Assert.That(UiPauseGate.IsHeldBy(UiPauseGate.MineGuide), Is.True);
+            Assert.That(UiPauseGate.IsHeldBy(UiPauseGate.MineSettings), Is.True);
+            yield return UiTestWait.Press(environment.Keyboard, Key.G);
+            Assert.That(chrome.IsGameGuideOpen, Is.True, "설정 뒤 가이드가 G로 닫히면 안 된다");
+            yield return UiTestWait.Press(environment.Keyboard, Key.Escape);
+            yield return UiTestWait.Until(() => !UiPauseGate.IsHeldBy(UiPauseGate.MineSettings), "설정 닫힘");
+            Assert.That(chrome.IsGameGuideOpen, Is.True);
+            Assert.That(Time.timeScale, Is.Zero);
+            Assert.That(survival.OxygenRemaining, Is.EqualTo(40f));
             yield return UiTestWait.Press(environment.Keyboard, Key.G);
             yield return WaitHidden(Popup());
             Assert.That(Time.timeScale, Is.EqualTo(1f));
+            Assert.That(chrome.IsInventoryPanelOpen, Is.True);
+            chrome.CloseInventoryPanel();
 
             menu.OpenSettings();
             Assert.That(menu.IsSettingsOpen, Is.True);
             Assert.That(UiPauseGate.IsHeldBy(UiPauseGate.MineSettings), Is.True);
             chrome.OpenGameGuide();
             panels.ToggleUpgrade();
+            chrome.OpenBuildingMenu();
+            chrome.OpenInventoryPanel();
+            chrome.OpenDiggerBot();
             Assert.That(chrome.IsGameGuideOpen, Is.False);
             Assert.That(panels.IsVisible(RuntimePanelId.Upgrade), Is.False);
+            Assert.That(chrome.IsBuildingMenuOpen || chrome.IsInventoryPanelOpen || chrome.IsDiggerBotOpen, Is.False);
             yield return UiTestWait.Press(environment.Keyboard, Key.Escape);
             yield return UiTestWait.Until(() => !UiPauseGate.IsHeld, "settings close releases pause");
             Assert.That(menu.IsSettingsOpen, Is.False);
 
-            panels.ToggleUpgrade();
+            chrome.OpenBuildingMenu();
+            Assert.That(chrome.IsBuildingMenuOpen, Is.True);
+            yield return UiTestWait.Press(environment.Keyboard, Key.U);
             Assert.That(panels.IsVisible(RuntimePanelId.Upgrade), Is.True);
             Assert.That(UiPauseGate.IsHeldBy(UiPauseGate.MineUpgrade), Is.True);
-            menu.OpenSettings();
             chrome.OpenGameGuide();
-            Assert.That(menu.IsSettingsOpen || chrome.IsGameGuideOpen, Is.False);
+            Assert.That(chrome.IsGameGuideOpen, Is.False);
+            menu.OpenSettings();
+            Assert.That(menu.IsSettingsOpen, Is.True);
+            yield return UiTestWait.Press(environment.Keyboard, Key.U);
+            Assert.That(panels.IsVisible(RuntimePanelId.Upgrade), Is.True, "설정 뒤 업그레이드가 U로 닫히면 안 된다");
+            yield return UiTestWait.Press(environment.Keyboard, Key.Escape);
+            yield return UiTestWait.Until(() => !UiPauseGate.IsHeldBy(UiPauseGate.MineSettings), "설정 닫힘");
+            Assert.That(panels.IsVisible(RuntimePanelId.Upgrade), Is.True);
+            Assert.That(Time.timeScale, Is.Zero);
             yield return UiTestWait.Press(environment.Keyboard, Key.U);
             yield return UiTestWait.Until(() => !UiPauseGate.IsHeld, "upgrade close releases pause");
             Assert.That(panels.IsVisible(RuntimePanelId.Upgrade), Is.False);
             Assert.That(Time.timeScale, Is.EqualTo(1f));
+            Assert.That(chrome.IsBuildingMenuOpen, Is.True);
         }
 
         [UnityTest]

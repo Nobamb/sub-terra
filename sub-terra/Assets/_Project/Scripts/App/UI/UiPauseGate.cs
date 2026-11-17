@@ -24,6 +24,14 @@ namespace SubTerra.App.UI
 
         public bool IsHeld => owners.Count > 0;
         public bool IsHeldBy(string owner) => !string.IsNullOrEmpty(owner) && owners.Contains(owner);
+        internal bool IsHeldByOtherThan(string first, string second)
+        {
+            foreach (var owner in owners)
+            {
+                if (owner != first && owner != second) return true;
+            }
+            return false;
+        }
         public event Action Changed;
 
         public bool Acquire(string owner)
@@ -100,6 +108,8 @@ namespace SubTerra.App.UI
         public static bool IsInputBlocked => IsHeld || InputOwners.Count > 0;
         public static bool IsMineMenuHeld =>
             IsHeldBy(MineGuide) || IsHeldBy(MineSettings) || IsHeldBy(MineUpgrade);
+        public static bool CanOpenMineSettings =>
+            InputOwners.Count == 0 && !Shared.IsHeldByOtherThan(MineGuide, MineUpgrade);
 
         /// <summary>일시정지 또는 입력 전용 차단이 바뀔 때 알린다. 소리·시간은 IsHeld만 확인한다.</summary>
         public static event Action InputChanged;

@@ -62,7 +62,8 @@ namespace SubTerra.App.UI
                 ReleaseUpgradePause();
             }
 
-            if (UiPauseGate.IsInputBlocked && !(holdsUpgradePause && IsVisible(RuntimePanelId.Upgrade)))
+            if (UiPauseGate.IsHeldBy(UiPauseGate.MineSettings)
+                || (UiPauseGate.IsInputBlocked && !(holdsUpgradePause && IsVisible(RuntimePanelId.Upgrade))))
             {
                 return;
             }
@@ -110,6 +111,8 @@ namespace SubTerra.App.UI
             }
 
             if (visible && UiPauseGate.IsMineMenuHeld) return;
+            if (!visible && animate && panelId == RuntimePanelId.Upgrade
+                && UiPauseGate.IsHeldBy(UiPauseGate.MineSettings)) return;
             if (visible && panelId == RuntimePanelId.Upgrade
                 && Application.isPlaying && gameObject.scene.name == SceneNames.Integration)
             {
