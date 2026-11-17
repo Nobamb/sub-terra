@@ -232,11 +232,63 @@ namespace SubTerra.Gameplay.Mining
         {
             if (foregroundTilemap == null) return Fail(MiningFailureReason.DependencyMissing);
             if (direction == Vector2.zero) return Fail(MiningFailureReason.InvalidTarget);
-            var offset = Mathf.Abs(direction.y) >= Mathf.Abs(direction.x)
-                ? new Vector3Int(0, direction.y > 0f ? 1 : -1, 0)
-                : new Vector3Int(direction.x > 0f ? 1 : -1, 0, 0);
-            var cell = foregroundTilemap.WorldToCell(origin) + offset;
-            return TryStartMiningAtWorldPoint(foregroundTilemap.GetCellCenterWorld(cell), origin, range);
+            return TryGetAdjacentCell(origin, direction, range, out var cell) && TryStartMining(cell);
+        }
+
+        /// <summary>
+        /// 채굴을 시작하지 않고 키보드(엔터·채굴 방향키)가 고를 칸만 돌려준다(B-202 과녁용).
+        /// 방향키는 인접 한 칸, 엔터는 바라보는 옆칸 → 위 → 아래 순, 사다리에서는 좌우 한 칸만 쓴다.
+        /// 시작 경로(TryStartMiningInDirection·TryStartMiningFrom)와 같은 계산을 공유한다.
+        /// </summary>
+        public bool TryGetKeyboardTarget(
+            Vector2 origin,
+            float facingDirection,
+            Vector2 miningDirection,
+            bool onLadder,
+            float range,
+            out Vector3Int cell)
+        {
+            cell = default;
+            if (foregroundTilemap == null) return false;
+            if (onLadder)
+            {
+                if (miningDirection.y != 0f) return false;
+                Vector2 direction = miningDirection != Vector2.zero
+                    ? miningDirection
+                    : new Vector2(facingDirection, 0f);
+                return direction != Vector2.zero && TryGetAdjacentCell(origin, direction, range, out cell);
+            }
+
+            return miningDirection != Vector2.zero
+                ? TryGetAdjacentCell(origin, miningDirection, range, out cell)
+                : TryGetDirectionalCell(origin, facingDirection, range, out cell);
+        }
+
+        /// <summary>마우스가 가리키는 칸만 돌려준다. 클릭 채굴(TryStartMiningAtWorldPoint)과 같은 칸 계산이다.</summary>
+        public bool TryGetPointerTarget(
+            Vector2 worldPoint,
+            Vector2 origin,
+            bool onLadder,
+            float range,
+            out Vector3Int cell)
+        {
+            if (!TryGetWorldPointCell(worldPoint, origin, range, out cell)) return false;
+            return !onLadder || IsLadderPointerCell(foregroundTilemap, origin, cell);
+        }
+
+        /// <summary>사다리에서는 같은 높이의 다른 x 칸만 마우스 목표로 허용한다.</summary>
+        public static bool IsLadderPointerCell(Tilemap tilemap, Vector2 origin, Vector3Int targetCell)
+        {
+            if (tilemap == null) return false;
+            Vector3Int playerCell = tilemap.WorldToCell(origin);
+            return targetCell.y == playerCell.y && targetCell.x != playerCell.x;
+        }
+
+        /// <summary>채굴 시작 전에 칸이 캘 수 있는 지형인지(보호·타일·잠금·드릴 레벨) 상태 변경 없이 확인한다. 전력은 보지 않는다.</summary>
+        public bool IsTargetTerrainMineable(Vector3Int cell)
+        {
+            ResolveServices();
+            return GetTerrainFailure(cell, out _, out _) == MiningFailureReason.None;
         }
 
         /// <summary>
@@ -573,6 +625,17 @@ namespace SubTerra.Gameplay.Mining
         private static bool IsDirectionalCandidate(Tilemap tilemap, Vector3Int cell, Vector2 origin, float range)
         {
             return tilemap.HasTile(cell) && IsCellInRange(tilemap, cell, origin, range);
+        }
+
+        private bool TryGetAdjacentCell(Vector2 origin, Vector2 direction, float range, out Vector3Int cell)
+        {
+            cell = default;
+            if (foregroundTilemap == null || direction == Vector2.zero) return false;
+            var offset = Mathf.Abs(direction.y) >= Mathf.Abs(direction.x)
+                ? new Vector3Int(0, direction.y > 0f ? 1 : -1, 0)
+                : new Vector3Int(direction.x > 0f ? 1 : -1, 0, 0);
+            cell = foregroundTilemap.WorldToCell(origin) + offset;
+            return IsCellInRange(cell, origin, range);
         }
 
         private bool TryGetWorldPointCell(
