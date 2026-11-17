@@ -22,6 +22,10 @@ namespace SubTerra.App.UI.Progression
         private const int FrontPoolSize = 40;
         private const int BackPoolSize = 6;
 
+        /// <summary>가득 들이쉬었을 때 광부 상반신 그림이 옆으로 부푸는 비율. 자세와 높이 변화는 그림이 맡는다.</summary>
+        private const float MinerChestWide = 0.035f;
+        private static readonly Color BreathWhite = new Color(1f, 1f, 1f, 0.7f);
+
         private sealed class Particle
         {
             public RectTransform Rect;
@@ -46,11 +50,13 @@ namespace SubTerra.App.UI.Progression
         [SerializeField] private Image blindHoverGlow;
         [SerializeField] private RectTransform backLayer;
         [SerializeField] private RectTransform frontLayer;
-        [Tooltip("플러그 점등 / 열린 상자 몸통 / 입을 막는 손")]
+        [Tooltip("플러그 점등 / 열린 상자 몸통 / 입을 막는 손 / 광부 호흡 그림(지금)")]
         [SerializeField] private Image overlayA;
-        [Tooltip("상자 뚜껑")]
+        [Tooltip("상자 뚜껑 / 광부 호흡 그림(다음)")]
         [SerializeField] private Image overlayB;
-        [Tooltip("파편·동전·불꽃·체력(+) 입자")]
+        [Tooltip("광부 호흡 그림: 다 내쉼 → 들이쉬는 중 → 가득 들이쉼 → 입으로 내쉼")]
+        [SerializeField] private Sprite[] frameSprites = Array.Empty<Sprite>();
+        [Tooltip("파편·동전·불꽃·체력(+)·숨결 입자")]
         [SerializeField] private Sprite particleSprite;
         [SerializeField] private Sprite ringSprite;
         [SerializeField] private Sprite glowSprite;
@@ -114,6 +120,12 @@ namespace SubTerra.App.UI.Progression
         public void BeginHover()
         {
             hovered = true;
+            if (fxTime >= 0f && UpgradeIconFx.IsBreathing(kind))
+            {
+                // 호흡은 사라지는 중에 다시 올려도 처음으로 튀지 않고 이어서 쉰다.
+                return;
+            }
+
             if (fxTime < 0f || fxTime >= UpgradeIconFx.SequenceDuration(kind))
             {
                 fxTime = 0f;
@@ -334,7 +346,80 @@ namespace SubTerra.App.UI.Progression
                     Heal(t, size);
                     break;
                 }
+                case UpgradeIconFxKind.MaximumOxygen:
+                {
+                    // 뒤에서 흰 광채가 피어나고 O2가 천천히 부풀었다 줄어든다. 가로가 조금 더 커져 숨이 차오르는 느낌을 준다.
+                    var cycle = UpgradeIconFx.OxygenBreathCycle;
+                    var breath = UpgradeIconFx.Breath(t, cycle) * blend;
+                    iconRect.localScale = new Vector3(1f + 0.22f * breath, 1f + 0.18f * breath, 1f);
+                    iconRect.anchoredPosition = iconRest + new Vector2(0f, 0.04f * size * breath);
+                    SetTint(Color.white, blend * (0.2f + 0.42f * breath), 1.35f + 0.55f * breath);
+                    if (hovered && UpgradeIconFx.PassedCycleMark(previous, t, cycle, UpgradeIconFx.BreathExhaleStart(cycle)))
+                    {
+                        ExhaleBubbles(size);
+                    }
+
+                    break;
+                }
+                case UpgradeIconFxKind.OxygenEfficiency:
+                {
+                    if (overlayA == null || overlayB == null || frameSprites == null
+                        || frameSprites.Length < UpgradeIconFx.MinerBreathFrames)
+                    {
+                        break;
+                    }
+
+                    // 호흡 그림 두 장을 겹쳐 섞어 가며 넘긴다(들숨 → 멈춤 → 입으로 날숨). 아래쪽을 기준으로 살짝 부풀려
+                    // 그림 사이의 움직임을 잇는다. 완전히 덮기 전까지는 썸네일을 밑에 깔아 두어 켜질 때·꺼질 때 튀지 않는다.
+                    var cycle = UpgradeIconFx.MinerBreathCycle;
+                    var show = UpgradeIconFx.EaseOut(blend);
+                    var breath = UpgradeIconFx.Breath(t, cycle) * blend;
+                    UpgradeIconFx.MinerBreathFrame(t, cycle, out var from, out var to, out var mix);
+                    icon.canvasRenderer.SetAlpha(show >= 1f ? 0f : 1f);
+                    overlayA.sprite = frameSprites[from];
+                    overlayB.sprite = frameSprites[to];
+                    SetOverlay(overlayA, IconAlpha * show, Vector2.zero, 0f, Color.white);
+                    SetOverlay(overlayB, IconAlpha * show * mix, Vector2.zero, 0f, Color.white);
+                    // 두 그림의 머리 높이가 달라 그대로 섞으면 겹쳐 보인다. 섞는 동안 둘 다 같은 높이로 늘여 맞춘다.
+                    var rise = Mathf.Lerp(UpgradeIconFx.MinerFrameRise[from], UpgradeIconFx.MinerFrameRise[to], mix);
+                    var wide = 1f + MinerChestWide * breath;
+                    overlayA.rectTransform.localScale = new Vector3(wide, rise / UpgradeIconFx.MinerFrameRise[from], 1f);
+                    overlayB.rectTransform.localScale = new Vector3(wide, rise / UpgradeIconFx.MinerFrameRise[to], 1f);
+                    SetTint(Color.white, blend * (0.12f + 0.3f * breath), 1.4f + 0.4f * breath);
+
+                    var exhale = UpgradeIconFx.BreathExhaleStart(cycle);
+                    if (hovered && (UpgradeIconFx.PassedCycleMark(previous, t, cycle, exhale + 0.05f)
+                                    || UpgradeIconFx.PassedCycleMark(previous, t, cycle, exhale + 0.35f)
+                                    || UpgradeIconFx.PassedCycleMark(previous, t, cycle, exhale + 0.65f)))
+                    {
+                        BreathPuff(size);
+                    }
+
+                    break;
+                }
             }
+        }
+
+        /// <summary>O2가 숨을 내쉴 때 위로 떠오르는 작은 기포.</summary>
+        private void ExhaleBubbles(float size)
+        {
+            for (var i = 0; i < 4; i++)
+            {
+                var pos = new Vector2(UnityEngine.Random.Range(-0.42f, 0.42f), UnityEngine.Random.Range(0.1f, 0.3f)) * size;
+                var vel = new Vector2(UnityEngine.Random.Range(-0.08f, 0.08f), UnityEngine.Random.Range(0.3f, 0.5f)) * size;
+                var bubble = UnityEngine.Random.Range(0.12f, 0.2f) * size;
+                Spawn(front, frontLayer, particleSprite, BreathWhite, pos, vel, 0f,
+                    UnityEngine.Random.Range(0.9f, 1.3f), bubble, bubble * 1.7f, 0f, 0f, 0.25f);
+            }
+        }
+
+        /// <summary>광부 입가에서 앞쪽으로 퍼지며 사라지는 숨결.</summary>
+        private void BreathPuff(float size)
+        {
+            var pos = new Vector2(0.27f, -0.09f) * size;
+            var vel = new Vector2(UnityEngine.Random.Range(0.22f, 0.32f), UnityEngine.Random.Range(0.03f, 0.1f)) * size;
+            Spawn(front, frontLayer, particleSprite, BreathWhite, pos, vel, 0f,
+                1.2f, 0.12f * size, 0.42f * size, 0f, 0f, 0.15f);
         }
 
         private void Heal(float t, float size)
@@ -472,6 +557,16 @@ namespace SubTerra.App.UI.Progression
 
             SetOverlay(overlayA, 0f, Vector2.zero, 0f, Color.white);
             SetOverlay(overlayB, 0f, Vector2.zero, 0f, Color.white);
+            if (overlayA != null)
+            {
+                overlayA.rectTransform.localScale = Vector3.one;
+            }
+
+            if (overlayB != null)
+            {
+                overlayB.rectTransform.localScale = Vector3.one;
+            }
+
             SetTint(Color.clear, 0f, 1.6f);
             if (items != null)
             {

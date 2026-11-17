@@ -23,6 +23,7 @@ namespace SubTerra.Gameplay.Player
 
         private int tokenSequence;
         private IPlayerHealthUpgradeProvider healthUpgrades;
+        private IPlayerOxygenUpgradeProvider oxygenUpgrades;
         private bool wasGrounded;
         private bool trackingFall;
         private bool usedLadderDuringFall;
@@ -78,7 +79,7 @@ namespace SubTerra.Gameplay.Player
             if (readDepth != null)
             {
                 EnsureState();
-                oxygen ??= new PlayerOxygenState(settings.MaximumOxygen);
+                oxygen ??= new PlayerOxygenState(ResolveMaximumOxygen());
             }
             if (playerMovement != null)
                 playerMovement.SetLadderSpeedMultiplier(readDepth == null ? 1f : settings.ExpeditionLadderSpeedMultiplier);
@@ -99,7 +100,7 @@ namespace SubTerra.Gameplay.Player
         public void RestoreOxygen(float remaining)
         {
             EnsureState();
-            oxygen ??= new PlayerOxygenState(settings.MaximumOxygen);
+            oxygen ??= new PlayerOxygenState(ResolveMaximumOxygen());
             oxygen.RestoreRemaining(remaining);
             OxygenChanged?.Invoke(OxygenRemaining, OxygenMaximum);
             RefreshOxygenRisk();
@@ -117,9 +118,11 @@ namespace SubTerra.Gameplay.Player
                 settings.OxygenFullCargoMultiplier, settings.OxygenLadderCargoCap);
             double before = oxygen.Remaining;
             float gasMultiplier = isOxygenGasExposed?.Invoke() == true ? settings.GasOxygenDrainMultiplier : 1f;
+            // 소모 감소는 #334 배율·가스 배율이 곱해진 최종 소모율에 한 번 더 곱한다. 얕은 구간 회복에는 쓰이지 않는다.
+            float reductionMultiplier = ResolveOxygenDrainMultiplier();
             int hits = oxygen.Advance(deltaTime, oxygenDepth(), settings.OxygenPerSecond,
                 settings.OxygenPerSecondPerMeter, settings.OxygenDamageInterval,
-                settings.ShallowOxygenRecoveryPerSecond, workload * gasMultiplier);
+                settings.ShallowOxygenRecoveryPerSecond, workload * gasMultiplier * reductionMultiplier);
             if (oxygen.Remaining != before) OxygenChanged?.Invoke(OxygenRemaining, OxygenMaximum);
             RefreshOxygenRisk();
             if (hits > 0)
@@ -166,6 +169,22 @@ namespace SubTerra.Gameplay.Player
             if (State.ApplyUpgradeEffects(ResolveMaximumHealth(), ResolveRegeneration()))
             {
                 PublishStateChanged();
+            }
+        }
+
+        /// <summary>산소 최대량·소모 감소 업그레이드를 연결한다. 최대가 늘면 증가분만큼만 현재량이 오른다.</summary>
+        public void BindOxygenUpgradeEffects(IPlayerOxygenUpgradeProvider upgrades)
+        {
+            oxygenUpgrades = upgrades;
+            if (oxygen == null)
+            {
+                return;
+            }
+
+            if (oxygen.ApplyMaximum(ResolveMaximumOxygen()))
+            {
+                OxygenChanged?.Invoke(OxygenRemaining, OxygenMaximum);
+                RefreshOxygenRisk();
             }
         }
 
@@ -613,6 +632,31 @@ namespace SubTerra.Gameplay.Player
             return healthUpgrades != null
                 ? healthUpgrades.GetMaximumHealth(baseMaximum)
                 : baseMaximum;
+        }
+
+        private float ResolveMaximumOxygen()
+        {
+            var baseMaximum = settings != null ? settings.MaximumOxygen : 100f;
+            return oxygenUpgrades != null
+                ? oxygenUpgrades.GetMaximumOxygen(baseMaximum)
+                : baseMaximum;
+        }
+
+        private float ResolveOxygenDrainMultiplier()
+        {
+            if (oxygenUpgrades == null)
+            {
+                return 1f;
+            }
+
+            var reduction = oxygenUpgrades.GetOxygenDrainReduction();
+            if (float.IsNaN(reduction) || reduction <= 0f)
+            {
+                return 1f;
+            }
+
+            // 1에 가깝게 올려도 소모가 0이 되지 않도록 제공자 상한과 별도로 한 번 더 막는다.
+            return 1f - Mathf.Min(reduction, 0.95f);
         }
 
         private float ResolveRegeneration()

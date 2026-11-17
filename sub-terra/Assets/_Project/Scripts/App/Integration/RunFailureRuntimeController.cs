@@ -83,6 +83,8 @@ namespace SubTerra.App.Integration
                 survivalController.BindMovement(playerMovement);
                 survivalController.BindUpgradeEffects(
                     progression != null ? progression.Effects as IPlayerHealthUpgradeProvider : null);
+                survivalController.BindOxygenUpgradeEffects(
+                    progression != null ? progression.Effects as IPlayerOxygenUpgradeProvider : null);
                 survivalController.FailureRequested += OnFailureRequested;
                 if (playerMovement != null)
                 {
@@ -125,17 +127,29 @@ namespace SubTerra.App.Integration
 
         private void OnUpgradeChanged(UpgradeSnapshot upgrade)
         {
-            if (upgrade.UpgradeId != DataIds.Upgrades.MaximumHealth
-                && upgrade.UpgradeId != DataIds.Upgrades.HealthRegeneration)
+            var health = upgrade.UpgradeId == DataIds.Upgrades.MaximumHealth
+                || upgrade.UpgradeId == DataIds.Upgrades.HealthRegeneration;
+            var oxygen = upgrade.UpgradeId == DataIds.Upgrades.MaximumOxygen
+                || upgrade.UpgradeId == DataIds.Upgrades.OxygenEfficiency;
+            if (!health && !oxygen)
             {
                 return;
             }
 
-            // 구매 직후 현재 생존 상태를 다시 계산해 씬 전환 없이 체력 효과를 반영한다.
+            // 구매 직후 현재 생존 상태를 다시 계산해 씬 전환 없이 체력·산소 효과를 반영한다.
             if (survivalController != null)
             {
-                survivalController.BindUpgradeEffects(
-                    progression != null ? progression.Effects as IPlayerHealthUpgradeProvider : null);
+                if (health)
+                {
+                    survivalController.BindUpgradeEffects(
+                        progression != null ? progression.Effects as IPlayerHealthUpgradeProvider : null);
+                }
+
+                if (oxygen)
+                {
+                    survivalController.BindOxygenUpgradeEffects(
+                        progression != null ? progression.Effects as IPlayerOxygenUpgradeProvider : null);
+                }
             }
         }
 

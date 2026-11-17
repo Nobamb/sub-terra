@@ -16,5 +16,7 @@ namespace SubTerra.Shared
         float GetGasResistance();
         int GetMiningYieldBonus(string mineralId);
         int GetGoldGainBonusPercent();
+        float GetMaximumOxygen(float baseMaximum);
+        float GetOxygenDrainReduction();
     }
 }

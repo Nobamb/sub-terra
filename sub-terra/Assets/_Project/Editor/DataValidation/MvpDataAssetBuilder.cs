@@ -418,8 +418,25 @@ namespace SubTerra.App.Editor.DataValidation
                     Costs(Copper(8), IronLithium(8, 6))),
                 EnsureUpgrade("Upgrade_Gas_Resistance.asset", DataIds.Upgrades.GasResistance, "가스 저항",
                     new[] { 0.25f, 0.5f, 0.75f },
-                    Costs(Copper(6), CopperIron(6, 4), IronLithium(8, 6)))
+                    Costs(Copper(6), CopperIron(6, 4), IronLithium(8, 6))),
+                BuildMaximumOxygenUpgrade(),
+                BuildOxygenEfficiencyUpgrade()
             };
+        }
+
+        // prompt-B 200: 단계·효과·비용은 잠정치다. 검사기에서 조절한다.
+        public static UpgradeData BuildMaximumOxygenUpgrade()
+        {
+            return EnsureUpgrade("Upgrade_Maximum_Oxygen.asset", DataIds.Upgrades.MaximumOxygen, "최대 산소",
+                new[] { 40f, 80f, 130f },
+                Costs(Copper(6), CopperIron(6, 4), IronLithium(8, 5)));
+        }
+
+        public static UpgradeData BuildOxygenEfficiencyUpgrade()
+        {
+            return EnsureUpgrade("Upgrade_Oxygen_Efficiency.asset", DataIds.Upgrades.OxygenEfficiency, "산소 소모 감소",
+                new[] { 0.15f, 0.30f, 0.45f },
+                Costs(Copper(6), CopperIron(8, 5), IronLithium(10, 6)));
         }
 
         public static UpgradeData BuildGoldGainUpgrade()

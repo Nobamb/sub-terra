@@ -37,6 +37,10 @@ namespace SubTerra.App.Progression
                     return "구조 시 화물 보존";
                 case DataIds.Upgrades.GasResistance:
                     return "가스 피해";
+                case DataIds.Upgrades.MaximumOxygen:
+                    return "최대 산소";
+                case DataIds.Upgrades.OxygenEfficiency:
+                    return "산소 소모";
                 default:
                     return ItemDisplayNames.Upgrade(upgradeId);
             }
@@ -58,11 +62,13 @@ namespace SubTerra.App.Progression
                     return "+" + Number(PercentOf(upgradeId, value)) + "%";
                 case DataIds.Upgrades.DrillEfficiency:
                 case DataIds.Upgrades.GasResistance:
+                case DataIds.Upgrades.OxygenEfficiency:
                     return "-" + Number(Percent(value)) + "%";
                 case DataIds.Upgrades.DroneRescue:
                     return "+" + Number(Percent(value)) + "%";
                 case DataIds.Upgrades.MaximumEnergy:
                 case DataIds.Upgrades.MaximumHealth:
+                case DataIds.Upgrades.MaximumOxygen:
                     return "+" + Number(value);
                 case DataIds.Upgrades.HealthRegeneration:
                     return "+" + Number(value) + "/초";
