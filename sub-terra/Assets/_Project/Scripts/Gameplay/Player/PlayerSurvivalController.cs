@@ -686,7 +686,7 @@ namespace SubTerra.Gameplay.Player
         /// 디버그 falling 명령: 그 높이에서 떨어져 착지한 것과 같은 피해·착지 효과를 준다.
         /// 최소 낙사 높이보다 낮게 주면 최소 높이부터 적용한다.
         /// </summary>
-        public bool SimulateFall(float fallHeightMeters)
+        public bool SimulateFall(float fallHeightMeters, bool stableLanding = false)
         {
             EnsureState();
             if (!State.CanAct)
@@ -696,7 +696,7 @@ namespace SubTerra.Gameplay.Player
 
             var landed = false;
             var height = Mathf.Max(fallHeightMeters, settings.MinimumFallDamageHeight);
-            RunWithoutDamageCameraShake(() => landed = ResolveLanding(height, false));
+            RunWithoutDamageCameraShake(() => landed = ResolveLanding(height, false, stableLanding));
             return landed;
         }
 
