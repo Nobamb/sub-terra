@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using SubTerra.App.Core;
 using SubTerra.App.UI.Building;
 using SubTerra.App.UI.Progression;
 using SubTerra.App.UI.SurfaceBase;
@@ -32,6 +33,7 @@ namespace SubTerra.App.UI
         private readonly PanelVisibilityState state = new PanelVisibilityState();
         private readonly Dictionary<RuntimePanelId, GameObject> panelRoots =
             new Dictionary<RuntimePanelId, GameObject>();
+        private bool holdsUpgradePause;
 
         public event Action<RuntimePanelId, bool> VisibilityChanged;
 
@@ -53,7 +55,14 @@ namespace SubTerra.App.UI
 
         private void Update()
         {
-            if (UiPauseGate.IsInputBlocked)
+            if (holdsUpgradePause && (!panelRoots.TryGetValue(RuntimePanelId.Upgrade, out var upgradeRoot)
+                || upgradeRoot == null || !upgradeRoot.activeInHierarchy))
+            {
+                state.SetVisible(RuntimePanelId.Upgrade, false);
+                ReleaseUpgradePause();
+            }
+
+            if (UiPauseGate.IsInputBlocked && !(holdsUpgradePause && IsVisible(RuntimePanelId.Upgrade)))
             {
                 return;
             }
@@ -85,7 +94,7 @@ namespace SubTerra.App.UI
                 return;
             }
 
-            SetVisible(panelId, state.Toggle(panelId));
+            SetVisible(panelId, !state.IsVisible(panelId));
         }
 
         public void SetVisible(RuntimePanelId panelId, bool visible)
@@ -98,6 +107,14 @@ namespace SubTerra.App.UI
             if (!panelRoots.TryGetValue(panelId, out var panelRoot) || panelRoot == null)
             {
                 return;
+            }
+
+            if (visible && UiPauseGate.IsMineMenuHeld) return;
+            if (visible && panelId == RuntimePanelId.Upgrade
+                && Application.isPlaying && gameObject.scene.name == SceneNames.Integration)
+            {
+                if (!isActiveAndEnabled || UiPauseGate.IsInputBlocked) return;
+                holdsUpgradePause = UiPauseGate.Acquire(UiPauseGate.MineUpgrade);
             }
 
             if (!visible && panelId == RuntimePanelId.Building)
@@ -122,7 +139,7 @@ namespace SubTerra.App.UI
         /// B-167: 지상 기지와 같은 자물쇠 연출로 열고 닫는다. 닫기 요청 즉시 IsVisible은 false가 되고,
         /// 창 루트는 닫기 연출이 끝난 뒤 꺼진다. 닫는 중 다시 열면 지금 모양에서 이어서 연다.
         /// </summary>
-        private static void SetUpgradeVisible(GameObject panelRoot, bool visible, bool animate)
+        private void SetUpgradeVisible(GameObject panelRoot, bool visible, bool animate)
         {
             var motion = panelRoot.GetComponent<UpgradeWindowMotion>();
             if (motion == null)
@@ -140,6 +157,7 @@ namespace SubTerra.App.UI
                 {
                     motion.CompleteImmediately(false);
                     panelRoot.SetActive(false);
+                    ReleaseUpgradePause();
                     return;
                 }
 
@@ -148,6 +166,7 @@ namespace SubTerra.App.UI
                 motion.BeginClose(() =>
                 {
                     if (panelRoot != null) panelRoot.SetActive(false);
+                    ReleaseUpgradePause();
                 });
                 return;
             }
@@ -167,6 +186,20 @@ namespace SubTerra.App.UI
             {
                 motion.CompleteImmediately(true);
             }
+        }
+
+        private void OnDisable()
+        {
+            if (!holdsUpgradePause) return;
+            SetVisible(RuntimePanelId.Upgrade, false, false);
+            ReleaseUpgradePause();
+        }
+
+        private void ReleaseUpgradePause()
+        {
+            if (!holdsUpgradePause) return;
+            holdsUpgradePause = false;
+            UiPauseGate.Release(UiPauseGate.MineUpgrade);
         }
 
         public void ToggleBuilding() => Toggle(RuntimePanelId.Building);

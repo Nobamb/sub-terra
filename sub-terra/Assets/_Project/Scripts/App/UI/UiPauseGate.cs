@@ -87,6 +87,10 @@ namespace SubTerra.App.UI
     /// </summary>
     public static class UiPauseGate
     {
+        public const string MineGuide = "mine-guide";
+        public const string MineSettings = "mine-settings";
+        public const string MineUpgrade = "mine-upgrade";
+
         private static readonly PauseOwnership Shared = new PauseOwnership(
             () => Time.timeScale,
             value => Time.timeScale = value);
@@ -94,6 +98,8 @@ namespace SubTerra.App.UI
 
         public static bool IsHeld => Shared.IsHeld;
         public static bool IsInputBlocked => IsHeld || InputOwners.Count > 0;
+        public static bool IsMineMenuHeld =>
+            IsHeldBy(MineGuide) || IsHeldBy(MineSettings) || IsHeldBy(MineUpgrade);
 
         /// <summary>일시정지 또는 입력 전용 차단이 바뀔 때 알린다. 소리·시간은 IsHeld만 확인한다.</summary>
         public static event Action InputChanged;

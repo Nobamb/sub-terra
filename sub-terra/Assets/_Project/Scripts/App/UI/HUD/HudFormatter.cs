@@ -112,9 +112,8 @@ namespace SubTerra.App.UI.HUD
                 case StructuralRiskLevel.Caution:
                     return "구조 " + LabelCaution;
                 case StructuralRiskLevel.Critical:
-                    return "구조 " + LabelCritical;
                 case StructuralRiskLevel.Imminent:
-                    return "구조 붕괴 임박";
+                    return "구조 " + LabelCritical;
                 default:
                     return "구조 " + LabelSafe;
             }

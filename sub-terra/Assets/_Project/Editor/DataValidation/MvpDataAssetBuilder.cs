@@ -293,9 +293,9 @@ namespace SubTerra.App.Editor.DataValidation
             return new List<BuildingData>
             {
                 EnsureBuilding("Building_Support_Basic.asset", DataIds.Buildings.SupportBasic, "완충판",
-                    "주변 지형을 보강해 구조 위험을 낮춥니다.", supportPrefab, 0,
+                    "착지 피해를 약 10%로 줄여 주는 발판입니다. 위에 서서 위/아래 방향키로 높이를 조절합니다.", supportPrefab, 0,
                     LoadFacilityIcon("support_pillar_mine.png", icon),
-                    new List<ItemCostEntry> { new ItemCostEntry(DataIds.Minerals.Copper, 2) }),
+                    new List<ItemCostEntry> { new ItemCostEntry(DataIds.Minerals.Copper, 1) }),
                 EnsureBuilding("Building_Light_Basic.asset", DataIds.Buildings.LightBasic, "조명",
                     "전력이 연결된 지하 구역을 밝힙니다.", prefab, 1,
                     lightIcon, new List<ItemCostEntry> { new ItemCostEntry(DataIds.Minerals.Iron, 1) }),
@@ -374,7 +374,7 @@ namespace SubTerra.App.Editor.DataValidation
                 DataIds.Recipes.SupportBasic,
                 "Craft Basic Support",
                 DataIds.Buildings.SupportBasic,
-                new List<ItemCostEntry> { new ItemCostEntry(DataIds.Minerals.Copper, 2) },
+                new List<ItemCostEntry> { new ItemCostEntry(DataIds.Minerals.Copper, 1) },
                 new List<ItemCostEntry> { new ItemCostEntry(DataIds.Buildings.SupportBasic, 1) });
             EditorUtility.SetDirty(asset);
             return new List<RecipeData> { asset };
@@ -549,7 +549,7 @@ namespace SubTerra.App.Editor.DataValidation
                 EnsureDialogue(
                     "Dialogue_Drone_Structural_Warning.asset",
                     DataIds.Dialogue.DroneStructuralWarning,
-                    "붕괴 임박 경고",
+                    "산소 위험 경고",
                     "structural_critical",
                     600,
                     "{safetyGuidance}"),

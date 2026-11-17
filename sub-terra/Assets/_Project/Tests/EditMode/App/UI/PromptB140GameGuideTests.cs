@@ -269,6 +269,18 @@ namespace SubTerra.App.Tests.UI
         }
 
         [Test]
+        public void Mechanics_OxygenGuideShowsShallowRecoveryAndDeepGasDrain()
+        {
+            var oxygen = Plain("mech.structure");
+            Assert.That(oxygen, Does.Contain("0~10m").And.Contain("가스가 있어도 산소가 최대량까지 회복"));
+            Assert.That(oxygen, Does.Contain("10m를 넘으면 산소가 줄어듭니다"));
+
+            var gas = Plain("mech.gas");
+            Assert.That(gas, Does.Contain("10m를 넘는 곳에서 정화되지 않은 가스").And.Contain("기본 2배"));
+            Assert.That(gas, Does.Contain("10m 이내에서는 산소가 회복"));
+        }
+
+        [Test]
         public void FirstEnterStep_DescribesRealEntry_NotAnInventedElevatorBoarding()
         {
             var step = GameGuideCatalog.FirstSteps[0];
