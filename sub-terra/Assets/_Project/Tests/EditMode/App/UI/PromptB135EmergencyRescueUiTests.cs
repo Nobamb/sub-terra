@@ -604,6 +604,125 @@ namespace SubTerra.App.Tests.UI
             Assert.That(view.Chip.KeycapLabel.text, Is.EqualTo("R"));
         }
 
+        // ---------- B-201: R키를 완충판 방향키와 같은 각진 홀로그램으로 ----------
+
+        [Test]
+        public void Issue358_Keycap_IsAngularHologramNotRoundedRect()
+        {
+            Transform body = view.Chip.transform.Find("Content/InputHint/KeycapBody");
+            Assert.That(body.Find("KeycapTop"), Is.Null, "둥근 윗면 제거");
+            Assert.That(body.Find("KeycapSide"), Is.Null, "둥근 옆면 제거");
+            Assert.That(body.Find("KeycapRim"), Is.Null, "둥근 테두리 제거");
+            foreach (var image in body.GetComponentsInChildren<Image>(true))
+            {
+                Assert.That(image.type, Is.Not.EqualTo(Image.Type.Sliced), "9-slice 둥근 사각형이 아니다");
+            }
+
+            Sprite sprite = body.Find("KeycapCap").GetComponent<Image>().sprite;
+            Assert.That(sprite, Is.Not.Null);
+            Texture2D texture = sprite.texture;
+            Assert.That(texture.width, Is.EqualTo(SubTerra.Shared.HologramKeycapPainter.KeySize));
+            Assert.That(texture.filterMode, Is.EqualTo(FilterMode.Point));
+
+            // 완충판 방향키와 같은 공통 그리기 결과(글리프 없는 판)여야 한다.
+            for (var y = 0; y < texture.height; y++)
+            {
+                for (var x = 0; x < texture.width; x++)
+                {
+                    var expected = SubTerra.Shared.HologramKeycapPainter.Shade(x, y, null);
+                    Color32 actual = texture.GetPixel(x, y);
+                    Assert.That(actual.r, Is.EqualTo(expected.R), "(" + x + "," + y + ")");
+                    Assert.That(actual.g, Is.EqualTo(expected.G));
+                    Assert.That(actual.b, Is.EqualTo(expected.B));
+                    Assert.That(actual.a, Is.EqualTo(expected.A));
+                }
+            }
+
+            // 깎인 모서리는 비어 있고(둥근 반경이 아님) 윗면 가장자리는 밝은 청록 선이다.
+            Assert.That(texture.GetPixel(SubTerra.Shared.HologramKeycapPainter.FaceX0, SubTerra.Shared.HologramKeycapPainter.FaceY1).a, Is.Zero);
+            Assert.That(
+                (Color32)texture.GetPixel(20, SubTerra.Shared.HologramKeycapPainter.FaceY1),
+                Is.EqualTo(new Color32(72, 246, 240, 255)));
+        }
+
+        [Test]
+        public void Issue358_Keycap_LabelStaysRAndSitsOnTopFace()
+        {
+            Transform body = view.Chip.transform.Find("Content/InputHint/KeycapBody");
+            TMP_Text label = body.Find("KeyLabel").GetComponent<TMP_Text>();
+            Assert.That(label.text, Is.EqualTo(EmergencyRescueChipView.DefaultKeyLabel));
+            Assert.That(label.text, Is.EqualTo("R"));
+            Assert.That(label.rectTransform.anchoredPosition.y, Is.GreaterThan(0f), "윗면 중심은 스프라이트 중심보다 위");
+            Assert.That(body.Find("KeycapCap").GetComponent<Image>().raycastTarget, Is.False);
+        }
+
+        [Test]
+        public void Issue358_ReduceMotion_KeycapStaysStill_AndClickStillWorks()
+        {
+            var before = SubTerra.Shared.AccessibilityPreferences.ReduceMotion;
+            SubTerra.Shared.AccessibilityPreferences.ReduceMotion = true;
+            try
+            {
+                EmergencyRescueChipView chip = view.Chip;
+                var clicks = 0;
+                view.Bind(null, null, () => clicks++);
+                view.SetChipVisible(true);
+                chip.Tick(1f);
+                var restPosition = chip.KeycapRect.anchoredPosition;
+
+                for (var t = 0f; t < 12f; t += 0.02f)
+                {
+                    chip.Tick(0.02f);
+                    Assert.That(chip.IsKeycapPulsing, Is.False, "유도 누름 없음");
+                    Assert.That(chip.KeycapRect.anchoredPosition, Is.EqualTo(restPosition));
+                    Assert.That(chip.KeycapRect.localScale.x, Is.EqualTo(1f));
+                }
+
+                chip.Button.onClick.Invoke();
+                Assert.That(clicks, Is.EqualTo(1), "클릭 동작은 그대로");
+
+                // 실제 입력 눌림 연출도 키캡은 정지 그림이다. 표식은 기존대로 사라진다.
+                view.DismissChip(true);
+                Assert.That(chip.IsPressFeedbackPlaying, Is.True);
+                chip.Tick(0.08f);
+                Assert.That(chip.KeycapRect.anchoredPosition, Is.EqualTo(restPosition));
+                chip.Tick(0.3f);
+                Assert.That(chip.gameObject.activeSelf, Is.False);
+            }
+            finally
+            {
+                SubTerra.Shared.AccessibilityPreferences.ReduceMotion = before;
+            }
+        }
+
+        [Test]
+        public void Issue358_MotionOn_KeycapPulseReturns()
+        {
+            var before = SubTerra.Shared.AccessibilityPreferences.ReduceMotion;
+            SubTerra.Shared.AccessibilityPreferences.ReduceMotion = false;
+            try
+            {
+                EmergencyRescueChipView chip = view.Chip;
+                view.SetChipVisible(true);
+                chip.Tick(1f);
+                var pulsed = false;
+                for (var t = 0f; t < 6f && !pulsed; t += 0.02f)
+                {
+                    chip.Tick(0.02f);
+                    pulsed = chip.IsKeycapPulsing;
+                }
+
+                Assert.That(pulsed, Is.True);
+                chip.Tick(EmergencyRescueTimeline.KeycapPulseDuration * 0.4f);
+                Assert.That(chip.IsKeycapPulsing, Is.True);
+                Assert.That(chip.KeycapRect.anchoredPosition.y, Is.LessThan(0f));
+            }
+            finally
+            {
+                SubTerra.Shared.AccessibilityPreferences.ReduceMotion = before;
+            }
+        }
+
         private static RectTransform Cell(Transform table, int row, string column)
         {
             return (RectTransform)table.Find("Row" + row + "/" + column);

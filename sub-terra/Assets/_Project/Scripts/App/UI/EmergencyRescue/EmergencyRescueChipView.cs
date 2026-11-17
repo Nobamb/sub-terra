@@ -1,5 +1,6 @@
 using SubTerra.App.Audio;
 using SubTerra.App.Tutorial;
+using SubTerra.Shared;
 using SubTerra.Shared.Audio;
 using TMPro;
 using UnityEngine;
@@ -35,8 +36,11 @@ namespace SubTerra.App.UI.EmergencyRescue
         private static readonly Color Edge = new Color(0.25f, 0.95f, 0.92f, 0.55f);
         private static readonly Color Accent = new Color(0.62f, 1f, 0.97f, 1f);
         private static readonly Color HumanColor = new Color(0.55f, 0.95f, 1f, 0.95f);
-        private static readonly Color KeyTop = new Color(0.06f, 0.17f, 0.22f, 1f);
-        private static readonly Color KeySide = new Color(0.02f, 0.07f, 0.10f, 1f);
+        // 키캡 그림 자체가 청록 홀로그램 색을 담고 있다. 평상시는 완충판 방향키와 같이 살짝 어둡고, 눌리면 밝아진다.
+        private static readonly Color KeyRest = new Color(0.85f, 0.85f, 0.85f, 0.9f);
+        private static readonly Color KeyLabelColor = new Color(0.81f, 1f, 0.98f, 1f);
+        // 윗면(texture y 8~36)의 중심이 40x40 스프라이트 중심보다 위로 2.5px.
+        private const float KeyLabelOffsetY = 2.5f;
 
         private CanvasGroup rootGroup;
         private CanvasGroup holoGroup;
@@ -54,6 +58,7 @@ namespace SubTerra.App.UI.EmergencyRescue
         private Image arrowImage;
         private RectTransform keycapBody;
         private Image keycapGlow;
+        private Image keycapCap;
         private TMP_Text keycapText;
         private TMP_Text titleLabel;
 
@@ -262,6 +267,14 @@ namespace SubTerra.App.UI.EmergencyRescue
         // 반복 안내는 등장이 끝난 뒤 3~5초 간격으로 한 번씩만 시각적으로 눌린다. 입력은 만들지 않는다.
         private void TickKeycap(float dt)
         {
+            // 모션 감소: 반복 유도 누름을 시작하지 않고 진행 중이던 것도 멈춘다(정지 그림).
+            if (AccessibilityPreferences.ReduceMotion)
+            {
+                pulseClock = -1f;
+                idleClock = 0f;
+                return;
+            }
+
             if (pulseClock >= 0f)
             {
                 pulseClock += dt;
@@ -356,13 +369,16 @@ namespace SubTerra.App.UI.EmergencyRescue
             platform.color = EmergencyRescueUi.WithAlpha(EmergencyRescueUi.Teal, 0.55f + 0.3f * hover.Glow);
 
             // 키캡: 반복 안내(약하게)와 실제 입력(분명하게)을 한 몸체에 합치되 큰 쪽만 따른다.
-            var drop = Mathf.Max(KeycapIdleDrop * idleDepth, KeycapPressDrop * pressDepth);
-            var scale = Mathf.Min(1f - 0.08f * idleDepth, 1f - 0.16f * pressDepth);
+            // 모션 감소면 누름·바운스·발광을 모두 건너뛰고 정지 그림만 둔다(실제 입력 처리는 이 클래스 밖이라 영향 없음).
+            var keyIdle = AccessibilityPreferences.ReduceMotion ? 0f : idleDepth;
+            var keyPress = AccessibilityPreferences.ReduceMotion ? 0f : pressDepth;
+            var drop = Mathf.Max(KeycapIdleDrop * keyIdle, KeycapPressDrop * keyPress);
+            var scale = Mathf.Min(1f - 0.08f * keyIdle, 1f - 0.16f * keyPress);
             keycapBody.anchoredPosition = new Vector2(0f, -drop);
             keycapBody.localScale = new Vector3(scale, scale, 1f);
+            keycapCap.color = Color.Lerp(KeyRest, Color.white, Mathf.Max(keyIdle, keyPress));
             keycapGlow.color = EmergencyRescueUi.WithAlpha(
-                EmergencyRescueUi.Teal, Mathf.Max(0.85f * idleDepth, pressDepth));
-
+                EmergencyRescueUi.Teal, Mathf.Max(0.85f * keyIdle, keyPress));
         }
 
         private void Build(TMP_FontAsset font)
@@ -431,20 +447,15 @@ namespace SubTerra.App.UI.EmergencyRescue
             RectTransform key = EmergencyRescueUi.Rect(content, "InputHint", new Vector2(0f, -56f), new Vector2(60f, 46f));
             keycapGlow = EmergencyRescueUi.Image(
                 key, "KeycapGlow", EmergencyRescueArt.Soft(), Vector2.zero, new Vector2(76f, 62f), EmergencyRescueUi.Teal);
-            keycapBody = EmergencyRescueUi.Rect(key, "KeycapBody", Vector2.zero, new Vector2(40f, 34f));
-            Image side = EmergencyRescueUi.Image(
-                keycapBody, "KeycapSide", EmergencyRescueArt.RoundedRect(), new Vector2(0f, -3f), new Vector2(40f, 32f), KeySide);
-            side.type = Image.Type.Sliced;
-            Image top = EmergencyRescueUi.Image(
-                keycapBody, "KeycapTop", EmergencyRescueArt.RoundedRect(), Vector2.zero, new Vector2(40f, 32f), KeyTop);
-            top.type = Image.Type.Sliced;
-            Image rim = EmergencyRescueUi.Image(
-                keycapBody, "KeycapRim", EmergencyRescueArt.RoundedRect(), Vector2.zero, new Vector2(40f, 32f),
-                EmergencyRescueUi.WithAlpha(EmergencyRescueUi.Teal, 0.22f));
-            rim.type = Image.Type.Sliced;
+            const float capSize = HologramKeycapPainter.KeySize;
+            keycapBody = EmergencyRescueUi.Rect(key, "KeycapBody", Vector2.zero, new Vector2(capSize, capSize));
+            // 완충판 방향키와 같은 각진 홀로그램 키캡(Shared HologramKeycapPainter). 글자는 윗면 위에 얹는다.
+            keycapCap = EmergencyRescueUi.Image(
+                keycapBody, "KeycapCap", EmergencyRescueArt.HologramKeycap(), Vector2.zero,
+                new Vector2(capSize, capSize), KeyRest);
             keycapText = EmergencyRescueUi.Text(
-                keycapBody, "KeyLabel", font, 22f, FontStyles.Bold, Color.white,
-                TextAlignmentOptions.Center, Vector2.zero, new Vector2(40f, 32f));
+                keycapBody, "KeyLabel", font, 20f, FontStyles.Bold, KeyLabelColor,
+                TextAlignmentOptions.Center, new Vector2(0f, KeyLabelOffsetY), new Vector2(30f, 24f));
             keycapText.text = DefaultKeyLabel;
             Apply();
         }

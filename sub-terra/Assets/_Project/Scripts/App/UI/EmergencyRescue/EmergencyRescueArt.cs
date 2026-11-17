@@ -1,11 +1,12 @@
 using System;
 using System.Collections.Generic;
+using SubTerra.Shared;
 using UnityEngine;
 
 namespace SubTerra.App.UI.EmergencyRescue
 {
     /// <summary>
-    /// 구출 홀로그램 전용 절차 생성 그림: 사람 실루엣, 위쪽 화살표, 키캡, 코인, 부드러운 발광.
+    /// 구출 홀로그램 전용 절차 생성 그림: 사람 실루엣, 위쪽 화살표, 홀로그램 키캡, 코인, 부드러운 발광.
     /// 모두 흰색이라 Image.color로 색을 입히고, 각 부위가 따로 움직이도록 개별 스프라이트로 만든다.
     /// 새 이미지 파일을 늘리지 않으려고 작은 텍스처를 한 번만 만들어 재사용한다.
     /// </summary>
@@ -79,18 +80,44 @@ namespace SubTerra.App.UI.EmergencyRescue
             });
         }
 
-        /// <summary>9-slice 둥근 사각형. 키캡 윗면·옆면에 쓴다.</summary>
-        public static Sprite RoundedRect()
+        /// <summary>
+        /// 완충판 방향키와 같은 각진 청록 홀로그램 키캡(40x40, 글자 없는 판). 모양·색은 Shared의
+        /// <see cref="HologramKeycapPainter"/>가 정하며 완충판 힌트(CushionPadHintHologram)와 같은 코드다.
+        /// 도트 그림이라 Point 필터로 만들고, 색을 이미 담고 있어 Image.color는 밝기 조절에만 쓴다.
+        /// </summary>
+        public static Sprite HologramKeycap()
         {
-            return Shape("round", 32, 32, new Vector4(10f, 10f, 10f, 10f), (x, y) =>
+            const string key = "hologramKeycap";
+            if (Cache.TryGetValue(key, out var cached) && cached != null)
             {
-                const float radius = 9f;
-                var cx = Mathf.Clamp(x, radius, 32f - radius);
-                var cy = Mathf.Clamp(y, radius, 32f - radius);
-                var dx = x - cx;
-                var dy = y - cy;
-                return dx * dx + dy * dy <= radius * radius;
-            });
+                return cached;
+            }
+
+            const int size = HologramKeycapPainter.KeySize;
+            var texture = new Texture2D(size, size, TextureFormat.RGBA32, false)
+            {
+                wrapMode = TextureWrapMode.Clamp,
+                filterMode = FilterMode.Point,
+                hideFlags = HideFlags.HideAndDontSave
+            };
+            var pixels = new Color32[size * size];
+            for (var y = 0; y < size; y++)
+            {
+                for (var x = 0; x < size; x++)
+                {
+                    HologramPixel pixel = HologramKeycapPainter.Shade(x, y, null);
+                    pixels[y * size + x] = new Color32(pixel.R, pixel.G, pixel.B, pixel.A);
+                }
+            }
+
+            texture.SetPixels32(pixels);
+            texture.Apply(false, false);
+            var sprite = Sprite.Create(
+                texture, new Rect(0f, 0f, size, size), new Vector2(0.5f, 0.5f), 100f, 0, SpriteMeshType.FullRect);
+            sprite.name = "EmergencyRescueArt-" + key;
+            sprite.hideFlags = HideFlags.HideAndDontSave;
+            Cache[key] = sprite;
+            return sprite;
         }
 
         private static float Disc(float x, float y, float cx, float cy, float r)
