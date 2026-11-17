@@ -472,9 +472,9 @@ namespace SubTerra.App.Tests.Progression
             Assert.That(tree, Is.Not.Null);
 
             var ids = tree.Nodes.Select(n => n.UpgradeId).ToList();
-            Assert.That(ids.Count, Is.EqualTo(11));
-            Assert.That(ids.Distinct().Count(), Is.EqualTo(11));
-            Assert.That(tree.Connectors.Count, Is.EqualTo(10));
+            Assert.That(ids.Count, Is.EqualTo(13));
+            Assert.That(ids.Distinct().Count(), Is.EqualTo(13));
+            Assert.That(tree.Connectors.Count, Is.EqualTo(12));
             var view = prefab.GetComponentInChildren<ProgressionPanelView>(true);
             Assert.That(view.IsTreeMode, Is.True);
             // 노드 하나만 입력을 받고 장식은 레이캐스트를 받지 않는다.

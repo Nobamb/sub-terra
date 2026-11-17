@@ -17,7 +17,11 @@ namespace SubTerra.App.UI.Progression
         GasResistance = 8,
         MaximumEnergy = 9,
         MaximumHealth = 10,
-        HealthRegeneration = 11
+        HealthRegeneration = 11,
+        /// <summary>prompt-B 200: O2가 흰 광채와 함께 부풀었다 줄어드는 호흡.</summary>
+        MaximumOxygen = 12,
+        /// <summary>prompt-B 200: 썸네일의 광부 상반신이 호흡 그림 4장을 이어 가며 천천히 숨을 쉰다.</summary>
+        OxygenEfficiency = 13
     }
 
     /// <summary>
@@ -33,6 +37,16 @@ namespace SubTerra.App.UI.Progression
         public const float LidCloseEnd = 1.4f;
         public const float CargoItemDuration = 0.45f;
         public const float SpinSeconds = 0.5f;
+
+        /// <summary>최대 산소: O2가 한 번 부풀었다 줄어드는 시간.</summary>
+        public const float OxygenBreathCycle = 3.2f;
+
+        /// <summary>산소 소모 감소: 광부의 한 호흡. 소모가 줄어든 느낌이 나도록 O2보다 느리다.</summary>
+        public const float MinerBreathCycle = 3.8f;
+
+        /// <summary>한 호흡에서 들숨·멈춤이 차지하는 비율. 나머지는 날숨이라 들숨보다 길다.</summary>
+        public const float BreathInhaleShare = 0.4f;
+        public const float BreathHoldShare = 0.08f;
 
         /// <summary>화물 연출에서 구리·철·리튬이 차례로 나타나는 시각.</summary>
         public static readonly float[] CargoItemStarts = { 0.24f, 0.44f, 0.64f };
@@ -55,6 +69,8 @@ namespace SubTerra.App.UI.Progression
                 case DataIds.Upgrades.MaximumEnergy: return UpgradeIconFxKind.MaximumEnergy;
                 case DataIds.Upgrades.MaximumHealth: return UpgradeIconFxKind.MaximumHealth;
                 case DataIds.Upgrades.HealthRegeneration: return UpgradeIconFxKind.HealthRegeneration;
+                case DataIds.Upgrades.MaximumOxygen: return UpgradeIconFxKind.MaximumOxygen;
+                case DataIds.Upgrades.OxygenEfficiency: return UpgradeIconFxKind.OxygenEfficiency;
                 default: return UpgradeIconFxKind.None;
             }
         }
@@ -167,6 +183,111 @@ namespace SubTerra.App.UI.Progression
 
             var v = (t - 0.3f) / 0.2f;
             return 2f / 3f + (1f - (1f - v) * (1f - v)) / 3f;
+        }
+
+        public static bool IsBreathing(UpgradeIconFxKind kind)
+        {
+            return kind == UpgradeIconFxKind.MaximumOxygen || kind == UpgradeIconFxKind.OxygenEfficiency;
+        }
+
+        /// <summary>호흡 곡선(0=다 내쉼, 1=가득 들이쉼). 들숨 → 잠깐 멈춤 → 더 긴 날숨을 반복한다.</summary>
+        public static float Breath(float t, float cycle)
+        {
+            if (t <= 0f || cycle <= 0f)
+            {
+                return 0f;
+            }
+
+            var u = Mathf.Repeat(t, cycle) / cycle;
+            if (u < BreathInhaleShare)
+            {
+                return Smooth(u / BreathInhaleShare);
+            }
+
+            var exhale = BreathInhaleShare + BreathHoldShare;
+            return u < exhale ? 1f : 1f - Smooth((u - exhale) / (1f - exhale));
+        }
+
+        /// <summary>광부 호흡 그림 수. 0=다 내쉼(썸네일), 1=들이쉬는 중, 2=가득 들이쉼, 3=입으로 내쉼.</summary>
+        public const int MinerBreathFrames = 4;
+
+        /// <summary>
+        /// 그림마다 밑단에서 머리(헤드램프)까지의 높이 비(첫 장=1). 그림을 섞을 때 이 비율로 높이를 맞춰
+        /// 머리가 둘로 겹쳐 보이지 않게 한다. 그림을 바꾸면 다시 잰다.
+        /// </summary>
+        public static readonly float[] MinerFrameRise = { 1f, 1.041f, 1.107f, 1.022f };
+
+        /// <summary>날숨 구간에서 '입으로 내쉬는' 그림이 가장 또렷해지는 지점의 비율.</summary>
+        public const float MinerBlowShare = 0.35f;
+
+        /// <summary>
+        /// 광부 호흡의 이 시각에 겹쳐 그릴 두 그림과 섞는 정도(0=from만, 1=to만).
+        /// 0→1→2(들숨) → 2(멈춤) → 3→0(날숨) 순서로 이어져 그림이 끊기지 않는다.
+        /// </summary>
+        public static void MinerBreathFrame(float t, float cycle, out int from, out int to, out float mix)
+        {
+            from = 0;
+            to = 0;
+            mix = 0f;
+            if (t <= 0f || cycle <= 0f)
+            {
+                return;
+            }
+
+            var u = Mathf.Repeat(t, cycle) / cycle;
+            var half = BreathInhaleShare * 0.5f;
+            var exhale = BreathInhaleShare + BreathHoldShare;
+            var blow = exhale + (1f - exhale) * MinerBlowShare;
+            if (u < half)
+            {
+                to = 1;
+                mix = Smooth(u / half);
+            }
+            else if (u < BreathInhaleShare)
+            {
+                from = 1;
+                to = 2;
+                mix = Smooth((u - half) / half);
+            }
+            else if (u < exhale)
+            {
+                from = 2;
+                to = 2;
+            }
+            else if (u < blow)
+            {
+                from = 2;
+                to = 3;
+                mix = Smooth((u - exhale) / (blow - exhale));
+            }
+            else
+            {
+                from = 3;
+                mix = Smooth((u - blow) / (1f - blow));
+            }
+        }
+
+        /// <summary>한 호흡 안에서 날숨이 시작되는 시각(초).</summary>
+        public static float BreathExhaleStart(float cycle)
+        {
+            return cycle * (BreathInhaleShare + BreathHoldShare);
+        }
+
+        /// <summary>반복 연출에서 이번 프레임(previous → t)에 주기 안의 mark 시각을 지났는지.</summary>
+        public static bool PassedCycleMark(float previous, float t, float cycle, float mark)
+        {
+            if (cycle <= 0f || t <= previous)
+            {
+                return false;
+            }
+
+            return Mathf.Floor((t - mark) / cycle) > Mathf.Floor((previous - mark) / cycle);
+        }
+
+        public static float Smooth(float t)
+        {
+            t = Mathf.Clamp01(t);
+            return t * t * (3f - 2f * t);
         }
 
         public static float EaseOut(float t)

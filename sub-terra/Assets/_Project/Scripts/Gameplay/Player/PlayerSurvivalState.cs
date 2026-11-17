@@ -14,13 +14,34 @@ namespace SubTerra.Gameplay.Player
     {
         private const float MaximumRecoveryDepthMeters = 10f;
         private double timeWithoutOxygen;
-        public float Maximum { get; }
+        public float Maximum { get; private set; }
         public double Remaining { get; private set; }
 
         public PlayerOxygenState(float maximum)
         {
             Maximum = Math.Max(1f, maximum);
             Refill();
+        }
+
+        /// <summary>
+        /// 업그레이드로 최대량이 바뀔 때: 늘어난 만큼만 현재량을 올리고 전부 채우지는 않는다.
+        /// 줄어들면 현재량을 새 최대로 자른다.
+        /// </summary>
+        /// <returns>최대량이 실제로 바뀌었으면 true.</returns>
+        public bool ApplyMaximum(float maximum)
+        {
+            var next = Math.Max(1f, maximum);
+            if (Math.Abs(next - Maximum) < 0.0001f)
+            {
+                return false;
+            }
+
+            var increase = next - Maximum;
+            Maximum = next;
+            Remaining = increase > 0f
+                ? Math.Min(Maximum, Remaining + increase)
+                : Math.Min(Remaining, Maximum);
+            return true;
         }
 
         public void Refill()

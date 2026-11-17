@@ -25,6 +25,18 @@ namespace SubTerra.App.Editor.DataValidation
         public const string ShardPath = ArtFolder + "Fx/upgrade-fx-shard.png";
         public const string CoinPath = ArtFolder + "Fx/upgrade-fx-coin.png";
         public const string PlusPath = ArtFolder + "Fx/upgrade-fx-plus.png";
+
+        /// <summary>
+        /// prompt-B 200: 산소 소모 감소의 광부 상반신 호흡 그림(가스 저항 썸네일과 같은 구도).
+        /// 첫 장이 썸네일이고, 호버하면 다 내쉼 → 들이쉬는 중 → 가득 들이쉼 → 입으로 내쉼 순서로 이어진다.
+        /// </summary>
+        public static readonly string[] MinerBreathPaths =
+        {
+            ArtFolder + "Icons/upgrade-icon-miner-breath-01.png",
+            ArtFolder + "Icons/upgrade-icon-miner-breath-02.png",
+            ArtFolder + "Icons/upgrade-icon-miner-breath-03.png",
+            ArtFolder + "Icons/upgrade-icon-miner-breath-04.png"
+        };
         public const string CloseNormalPath = PromptB104SettingsMenuBuilder.CloseNormalPath;
         public const string CloseHoverPath = PromptB104SettingsMenuBuilder.CloseHoverPath;
         private const string SettingsArt = "Assets/_Project/Art/UI/MainMenu/Settings/";
@@ -66,6 +78,11 @@ namespace SubTerra.App.Editor.DataValidation
                          GasIconPath, GasHandPath, BoxBodyPath, BoxLidPath, PlugLitPath,
                          SparkPath, RingPath, ShardPath, CoinPath, PlusPath
                      })
+            {
+                PromptB118UpgradeTreeBuilder.ImportSprite(path, Vector4.zero);
+            }
+
+            foreach (var path in MinerBreathPaths)
             {
                 PromptB118UpgradeTreeBuilder.ImportSprite(path, Vector4.zero);
             }
@@ -226,6 +243,7 @@ namespace SubTerra.App.Editor.DataValidation
             Sprite particle = null;
             Sprite ring = null;
             Sprite[] items = System.Array.Empty<Sprite>();
+            Sprite[] frames = System.Array.Empty<Sprite>();
             switch (kind)
             {
                 case UpgradeIconFxKind.DrillEfficiency:
@@ -259,6 +277,22 @@ namespace SubTerra.App.Editor.DataValidation
                 case UpgradeIconFxKind.HealthRegeneration:
                     particle = Load(PlusPath);
                     break;
+                case UpgradeIconFxKind.MaximumOxygen:
+                    // 날숨 기포는 부드러운 빛 그림을 그대로 쓴다.
+                    particle = glowSprite;
+                    break;
+                case UpgradeIconFxKind.OxygenEfficiency:
+                    // 호흡 그림 두 장을 겹쳐 섞는다. 아래쪽을 pivot으로 두어 부풀 때 상반신 밑단이 뜨지 않는다.
+                    overlayA = Overlay(fxFront, "MinerBreathA", MinerBreathPaths[0], new Vector2(0.5f, 0f));
+                    overlayB = Overlay(fxFront, "MinerBreathB", MinerBreathPaths[0], new Vector2(0.5f, 0f));
+                    frames = new Sprite[MinerBreathPaths.Length];
+                    for (var i = 0; i < frames.Length; i++)
+                    {
+                        frames[i] = Load(MinerBreathPaths[i]);
+                    }
+
+                    particle = glowSprite;
+                    break;
             }
 
             var so = new SerializedObject(fx);
@@ -277,6 +311,13 @@ namespace SubTerra.App.Editor.DataValidation
             for (var i = 0; i < items.Length; i++)
             {
                 itemsProperty.GetArrayElementAtIndex(i).objectReferenceValue = items[i];
+            }
+
+            var framesProperty = so.FindProperty("frameSprites");
+            framesProperty.arraySize = frames.Length;
+            for (var i = 0; i < frames.Length; i++)
+            {
+                framesProperty.GetArrayElementAtIndex(i).objectReferenceValue = frames[i];
             }
 
             so.ApplyModifiedPropertiesWithoutUndo();

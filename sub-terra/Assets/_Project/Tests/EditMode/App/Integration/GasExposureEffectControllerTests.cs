@@ -153,6 +153,8 @@ namespace SubTerra.App.Tests.Integration
             public float GetDroneRescuePreservation(float basePreservation) => basePreservation;
             public float GetGasResistance() => resistance;
             public int GetGoldGainBonusPercent() => 0;
+            public float GetMaximumOxygen(float baseMaximum) => baseMaximum;
+            public float GetOxygenDrainReduction() => 0f;
             public int GetMiningYieldBonus(string mineralId) => 0;
         }
     }

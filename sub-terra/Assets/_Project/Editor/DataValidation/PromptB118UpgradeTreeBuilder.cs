@@ -61,7 +61,10 @@ namespace SubTerra.App.Editor.DataValidation
             new NodeDef(DataIds.Upgrades.DroneScan, "drone", 0f, -205f, DataIds.Upgrades.DrillSpeed),
             new NodeDef(DataIds.Upgrades.HealthRegeneration, "reset", -450f, 205f, DataIds.Upgrades.MaximumHealth),
             new NodeDef(DataIds.Upgrades.CargoGold, "coins", 450f, 0f, DataIds.Upgrades.MaximumCargo),
-            new NodeDef(DataIds.Upgrades.DroneRescue, "rescue", 225f, -205f, DataIds.Upgrades.DroneScan)
+            new NodeDef(DataIds.Upgrades.DroneRescue, "rescue", 225f, -205f, DataIds.Upgrades.DroneScan),
+            // prompt-B 200: 최대 전력 아래 가지에 산소 2종을 잇는다. x=-450은 체력 재생과 같은 열이다.
+            new NodeDef(DataIds.Upgrades.MaximumOxygen, "oxygen", -450f, 0f, DataIds.Upgrades.MaximumEnergy),
+            new NodeDef(DataIds.Upgrades.OxygenEfficiency, "miner", -450f, -205f, DataIds.Upgrades.MaximumOxygen)
         };
 
         private static readonly Vector2 NodeSize = new Vector2(128f, 136f);
@@ -927,6 +930,12 @@ namespace SubTerra.App.Editor.DataValidation
                     return LoadSprite("Assets/_Project/Art/Characters/Drone/digger_bot_idle.png");
                 case "rescue":
                     return LoadSprite("Assets/_Project/Art/Characters/Drone/digger_bot_side_right.png");
+                case "oxygen":
+                    // prompt-B 200: 새 아트 없이 HUD 산소 아이콘을 재사용한다.
+                    return LoadSprite("Assets/_Project/Art/UI/Gameplay/HUD/oxygen-icon.png");
+                case "miner":
+                    // 산소 소모 감소: 썸네일부터 광부 상반신이고, 호버하면 이 광부가 숨을 쉰다.
+                    return LoadSprite(PromptB1181UpgradeWindowBuilder.MinerBreathPaths[0]);
                 default:
                     return LoadSprite(ArtFolder + "Icons/upgrade-icon-" + key + ".png");
             }
