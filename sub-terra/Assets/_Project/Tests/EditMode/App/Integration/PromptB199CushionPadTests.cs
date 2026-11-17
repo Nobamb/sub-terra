@@ -53,8 +53,8 @@ namespace SubTerra.App.Tests.Integration
 
             Assert.That(GameGuideCatalog.Get("fac.support").Title, Is.EqualTo(NewName));
             Assert.That(GameGuideCatalog.PlainText(GuideTabKind.Resources), Does.Contain(NewName));
-            Assert.That(GuideDetailBuilder.ToPlainText(GuideDetailBuilder.Build(GameGuideCatalog.Get("mech.structure"), null)),
-                Does.Contain("약 10%").And.Not.Contain("추가 피해를 막"));
+            Assert.That(GuideDetailBuilder.ToPlainText(GuideDetailBuilder.Build(GameGuideCatalog.Get("mech.landing"), null)),
+                Does.Contain("10%까지").And.Not.Contain("추가 피해를 막"));
             Assert.That(GuideDetailBuilder.ToPlainText(GuideDetailBuilder.Build(GameGuideCatalog.Get("fac.support"), null)),
                 Does.Contain("위/아래 방향키"));
 
