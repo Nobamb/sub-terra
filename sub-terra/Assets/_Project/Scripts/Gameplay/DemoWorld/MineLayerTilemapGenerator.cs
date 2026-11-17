@@ -9,6 +9,10 @@ namespace SubTerra.Gameplay.DemoWorld
 {
     public sealed class MineLayerTilemapGenerator : MonoBehaviour, IWorldBaseGenerator
     {
+        public const string PureGoldTileId = "tile.pure-gold";
+        private const string PureGoldTilePath = "PureGoldMineTile";
+        private const int PureGoldPerMeter = 100;
+
         [SerializeField] private Tilemap foregroundTilemap;
         [SerializeField] private MineLayerDistribution distribution;
         [SerializeField] private TileBase rockTile;
@@ -29,6 +33,7 @@ namespace SubTerra.Gameplay.DemoWorld
         [SerializeField] private WorldSnapshotSystem snapshotSystem;
         [SerializeField] private StructuralIntegritySystem structuralSystem;
         [SerializeField] private long worldSeed = 20260731;
+        private TileBase pureGoldTile;
 
         public MineLayerLayout CurrentLayout { get; private set; }
         public long WorldSeed => worldSeed;
@@ -92,6 +97,7 @@ namespace SubTerra.Gameplay.DemoWorld
             // 이전 시드의 흔들림 복제본·숨김 색을 지운 뒤 새 타일을 배치한다.
             if (structuralSystem != null) structuralSystem.ClearRuntimeRiskState();
             RegisterGoldTiles();
+            RegisterPureGoldTile();
             foregroundTilemap.ClearAllTiles();
             foreach (MineLayerCell cell in layout.EnumerateCells())
             {
@@ -196,7 +202,46 @@ namespace SubTerra.Gameplay.DemoWorld
                 };
                 if (gold != null) return gold;
             }
+
+            if (!tutorial && cell.Kind == MineLayerCellKind.Rock
+                && pureGoldTile != null && IsPureGoldCell(seed, cell.X, cell.Y))
+            {
+                return pureGoldTile;
+            }
+
             return ResolveTile(cell.Kind);
+        }
+
+        private void RegisterPureGoldTile()
+        {
+            if (goldDropSettings == null) return;
+            if (pureGoldTile == null)
+                pureGoldTile = Resources.Load<TileBase>(PureGoldTilePath);
+
+            if (pureGoldTile == null || tileResolver == null
+                || !tileResolver.TryResolve(rockTile, out MiningTileDto rock) || !rock.isMineable)
+            {
+                pureGoldTile = null;
+                return;
+            }
+
+            var definition = new MiningTileDto(PureGoldTileId, string.Empty, 0, true, rock.durability,
+                rock.miningTime, rock.structuralImpact, false, rock.requiredDrillLevel, rock.energyCost, PureGoldPerMeter);
+            tileResolver.RegisterRuntime(pureGoldTile, definition);
+            GetComponent<MiningSystem>()?.ConfigureDepthScaledGoldTile(pureGoldTile, distribution.TopY);
+        }
+
+        private static bool IsPureGoldCell(long seed, int x, int y)
+        {
+            // 금이 박힌 기존 타일 및 광맥 배치와 별개의 좌표 난수. 일반 암석 중 1%만 판정한다.
+            unchecked
+            {
+                ulong h = (ulong)seed ^ ((ulong)(uint)x << 32) ^ (uint)y ^ 0x50555245474F4C44UL;
+                h = (h ^ (h >> 30)) * 0xBF58476D1CE4E5B9UL;
+                h = (h ^ (h >> 27)) * 0x94D049BB133111EBUL;
+                h ^= h >> 31;
+                return h % 100 == 0;
+            }
         }
 
         private void RegisterGoldTiles()

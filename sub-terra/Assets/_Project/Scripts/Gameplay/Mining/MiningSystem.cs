@@ -108,6 +108,8 @@ namespace SubTerra.Gameplay.Mining
         private int deepZoneMinDepth;
         private int deepZoneMaxDepth;
         private bool hasDeepZoneBoundary;
+        private TileBase depthScaledGoldTile;
+        private int depthScaledGoldTopY;
         private Vector3Int activeCell;
         private TileBase activeTileAsset;
         private MiningTileDto activeTile;
@@ -168,6 +170,12 @@ namespace SubTerra.Gameplay.Mining
             deepZoneMinDepth = Mathf.Max(1, minDepth);
             deepZoneMaxDepth = Mathf.Max(deepZoneMinDepth, maxDepth);
             hasDeepZoneBoundary = true;
+        }
+
+        public void ConfigureDepthScaledGoldTile(TileBase tile, int topY)
+        {
+            depthScaledGoldTile = tile;
+            depthScaledGoldTopY = topY;
         }
 
         public bool TryStartMining(Vector3Int cell)
@@ -439,6 +447,12 @@ namespace SubTerra.Gameplay.Mining
             if (!ValidateActiveMining())
             {
                 return false;
+            }
+
+            if (activeTileAsset == depthScaledGoldTile && activeTile.goldDrop > 0)
+            {
+                long depth = Math.Max(1L, (long)depthScaledGoldTopY - activeCell.y + 1);
+                activeTile.goldDrop = (int)Math.Min(int.MaxValue, depth * activeTile.goldDrop);
             }
 
             if (miningTransaction != null)
