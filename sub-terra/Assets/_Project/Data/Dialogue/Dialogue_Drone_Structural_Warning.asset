@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Dialogue_Drone_Structural_Warning
   m_EditorClassIdentifier: SubTerra.App::SubTerra.App.Core.Data.DialogueTemplateData
   id: dialogue.drone.structural.warning
-  displayName: "\uBD95\uAD34 \uC784\uBC15 \uACBD\uACE0"
+  displayName: "\uC0B0\uC18C \uC704\uD5D8 \uACBD\uACE0"
   situationKey: structural_critical
   priority: 600
   template: "{safetyGuidance}"

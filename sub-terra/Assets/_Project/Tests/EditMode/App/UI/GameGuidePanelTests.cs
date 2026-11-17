@@ -66,7 +66,7 @@ namespace SubTerra.App.Tests.UI
             Assert.That(controls, Does.Contain("[T]"));
             Assert.That(controls, Does.Contain("광산 초기화 타이머"));
             Assert.That(mechanics, Does.Contain("가스 지대"));
-            Assert.That(mechanics, Does.Contain("구조 위험"));
+            Assert.That(mechanics, Does.Contain("산소와 착지 위험"));
             Assert.That(resources, Does.Contain("리튬"));
             Assert.That(resources, Does.Contain("엘리베이터"));
         }
