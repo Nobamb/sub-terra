@@ -295,7 +295,7 @@ namespace SubTerra.Gameplay.Player
                     settings.MinimumFallDamageHeight,
                     settings.FallDamageAtThreshold,
                     settings.FallDamagePerAdditionalMeter),
-                cargoFallImpactMultiplier, stableLanding);
+                cargoFallImpactMultiplier, stableLanding, settings.CushionLandingDamageRatio);
             if (damage <= 0)
             {
                 return false;

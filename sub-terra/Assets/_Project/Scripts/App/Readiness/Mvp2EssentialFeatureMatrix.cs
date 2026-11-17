@@ -57,7 +57,7 @@ namespace SubTerra.App.Readiness
                     "SetCargoSpeedMultiplier API만 있고 호출 경로가 없음"),
                 Entry(
                     "support-placement",
-                    "버팀목 Preview/설치",
+                    "완충판 Preview/설치",
                     "F",
                     requiresRestore: true,
                     EvidenceKind.Definition | EvidenceKind.SurrogateTest | EvidenceKind.RuntimePrefab,

@@ -3,6 +3,7 @@
     "rootNamespace": "SubTerra.Gameplay.Player.Tests",
     "references": [
         "SubTerra.Gameplay.Player",
+        "SubTerra.Gameplay.Structural",
         "SubTerra.Shared"
     ],
     "includePlatforms": [],

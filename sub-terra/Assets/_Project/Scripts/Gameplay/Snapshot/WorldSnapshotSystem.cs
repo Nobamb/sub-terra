@@ -75,7 +75,7 @@ namespace SubTerra.Gameplay.Snapshot
                 miningChanges = new List<MiningSnapshotDto>(minedCells.Values),
                 changedTiles = new List<ChangedTileSnapshotDto>(changedCells.Values),
                 collapseChanges = new List<CollapseSnapshotDto>(collapsedCells.Values),
-                buildings = new List<BuildingSnapshotDto>(buildings.Values),
+                buildings = CaptureBuildings(),
                 gasChanges = CaptureGasZones(),
                 discoveredChunkIds = new List<string>(discoveredChunkIds),
                 // 케이블 토폴로지만 저장. 공급/소비 등 파생 전력값은 복원 후 재계산한다.
@@ -86,6 +86,25 @@ namespace SubTerra.Gameplay.Snapshot
             };
             snapshot.discoveredChunkIds.Sort(StringComparer.Ordinal);
             return snapshot;
+        }
+
+        /// <summary>저장 직전에 완충판의 현재 높이를 살아 있는 판에서 읽어 넣는다(높이는 조절할 때마다 바뀐다).</summary>
+        private List<BuildingSnapshotDto> CaptureBuildings()
+        {
+            var captured = new List<BuildingSnapshotDto>(buildings.Count);
+            foreach (BuildingSnapshotDto building in buildings.Values)
+            {
+                var entry = building;
+                if (buildingPlacementSystem != null
+                    && buildingPlacementSystem.TryGetCushionHeight(entry.instanceId, out float height))
+                {
+                    entry.cushionHeight = height;
+                }
+
+                captured.Add(entry);
+            }
+
+            return captured;
         }
 
         public bool RestoreSnapshot(WorldSnapshotDto snapshot)
