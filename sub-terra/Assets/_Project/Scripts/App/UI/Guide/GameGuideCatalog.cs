@@ -317,8 +317,9 @@ namespace SubTerra.App.UI.Guide
                 .Tip("무거운 짐을 들고 오를 때 사다리는 화물로 인한 산소 소모 증가가 제한됩니다.")
                 .Link("fac.ladder", "mech.power", "mech.gas");
 
-            Mechanic("mech.landing", "착지 위험", "낙하 높이와 화물 무게에 주의", string.Empty)
+            Mechanic("mech.landing", "착지 위험", "낙하 높이와 화물 무게에 주의", "landing")
                 .Text("높은 높이에서 떨어질수록, 인벤토리의 무게가 무거울 수록 착지 피해가 커지게 됩니다. 완충판 위에 착지하게 될 경우, 피해가 10%까지 줄어들게 됩니다.")
+                .Tip("높은 곳에서 내려올 때는 짐을 비우거나, 사다리를 이용하거나, 완충판 위에 착지하면 피해를 줄일 수 있습니다.")
                 .Link("fac.support", "mech.cargo");
 
             Mechanic("mech.gas", "가스 지대", "가스를 피하고 정화 지대로 대피", "gas")

@@ -283,6 +283,10 @@ namespace SubTerra.App.Tests.UI
 
             var landing = GameGuideCatalog.Get("mech.landing");
             Assert.That(landing.Title, Is.EqualTo("착지 위험"));
+            Assert.That(GuideDemoLibrary.TryGet(landing.DemoId, out var clip), Is.True);
+            Assert.That(clip.Id, Is.EqualTo("landing"));
+            Assert.That(landing.Lines.Any(block => block.Kind == GuideLineKind.Tip
+                && block.Text == "높은 곳에서 내려올 때는 짐을 비우거나, 사다리를 이용하거나, 완충판 위에 착지하면 피해를 줄일 수 있습니다."), Is.True);
             Assert.That(Plain(landing.Id), Does.Contain("높은 높이에서 떨어질수록, 인벤토리의 무게가 무거울 수록 착지 피해가 커지게 됩니다. 완충판 위에 착지하게 될 경우, 피해가 10%까지 줄어들게 됩니다."));
             Assert.That(landing.Related, Does.Contain("fac.support"));
             Assert.That(GameGuideCatalog.Get("fac.support").Related, Does.Contain(landing.Id));
