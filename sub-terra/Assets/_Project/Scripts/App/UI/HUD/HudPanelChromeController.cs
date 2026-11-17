@@ -1,4 +1,6 @@
 using SubTerra.App.Audio;
+using SubTerra.App.Core;
+using SubTerra.App.UI.Guide;
 using SubTerra.Shared.Audio;
 using SubTerra.App.UI.Building;
 using SubTerra.App.UI.Drone;
@@ -56,6 +58,7 @@ namespace SubTerra.App.UI.HUD
         [SerializeField] private bool gameGuideOpen;
         // prompt-B 33-1: 시작 시 인벤토리 창은 닫힌 상태.
         [SerializeField] private bool inventoryPanelOpen;
+        private GameGuidePopupView pausedGuide;
 
         public bool IsBuildingMenuOpen => buildingMenuOpen;
         public bool IsDiggerBotOpen => diggerBotOpen;
@@ -169,16 +172,35 @@ namespace SubTerra.App.UI.HUD
 
         private void OnDisable()
         {
+            if (pausedGuide != null)
+            {
+                var popup = pausedGuide;
+                ReleaseGuidePause();
+                popup.HideImmediate();
+            }
             UnwireButtons();
         }
 
         private void Update()
         {
-            if (UiPauseGate.IsInputBlocked) return;
+            if (UiPauseGate.IsInputBlocked)
+            {
+                var pausedKeyboard = Keyboard.current;
+                if (pausedGuide != null && gameGuideOpen && pausedKeyboard != null
+                    && pausedKeyboard.gKey.wasPressedThisFrame)
+                    CloseGameGuide();
+                return;
+            }
             // 게임 가이드 조작법: B=시설 건설, I=화물/인벤토리, G=게임 가이드, Tab=Digger-Bot
             var keyboard = Keyboard.current;
             if (keyboard != null)
             {
+                if (keyboard.gKey.wasPressedThisFrame)
+                {
+                    ToggleGameGuide();
+                    if (UiPauseGate.IsMineMenuHeld) return;
+                }
+
                 // 시설 건설 중 채굴 Enter가 EventSystem Submit으로 선택된
                 // 단축키(게임 가이드 등)를 다시 누르지 않게
                 // 매 프레임(EventSystem보다 먼저) 선택을 해제한다.
@@ -197,11 +219,6 @@ namespace SubTerra.App.UI.HUD
                 if (keyboard.iKey.wasPressedThisFrame)
                 {
                     ToggleInventoryPanel();
-                }
-
-                if (keyboard.gKey.wasPressedThisFrame)
-                {
-                    ToggleGameGuide();
                 }
 
                 // prompt-B 34: Tab 키로 digger-bot 창 활성/비활성.
@@ -468,6 +485,7 @@ namespace SubTerra.App.UI.HUD
 
         private void ApplyBuildingMenuVisible(bool visible, bool cancelSelection)
         {
+            if (visible && UiPauseGate.IsMineMenuHeld) return;
             buildingMenuOpen = visible;
 
             if (cancelSelection && !visible && buildingMenuBinder != null)
@@ -556,6 +574,7 @@ namespace SubTerra.App.UI.HUD
 
         private void ApplyDiggerBotVisible(bool visible)
         {
+            if (visible && UiPauseGate.IsMineMenuHeld) return;
             diggerBotOpen = visible;
 
             // 분석/말풍선용 호스트는 절대 끄지 않는다.
@@ -707,12 +726,20 @@ namespace SubTerra.App.UI.HUD
 
         private void ApplyGameGuideVisible(bool visible)
         {
+            bool pauseMine = Application.isPlaying && gameObject.scene.name == SceneNames.Integration;
+            if (visible && pauseMine && (!isActiveAndEnabled || UiPauseGate.IsInputBlocked)) return;
             gameGuideOpen = visible;
 
             if (gameGuideView != null)
             {
                 // View가 root 활성/비활성과 최전면 정렬까지 처리한다.
                 gameGuideView.SetVisible(visible);
+                if (visible && pauseMine && gameGuideView.Popup != null && gameGuideView.Popup.IsOpen
+                    && UiPauseGate.Acquire(UiPauseGate.MineGuide))
+                {
+                    pausedGuide = gameGuideView.Popup;
+                    pausedGuide.Hidden += ReleaseGuidePause;
+                }
             }
 
             if (gameGuideRoot != null)
@@ -731,8 +758,17 @@ namespace SubTerra.App.UI.HUD
             }
         }
 
+        private void ReleaseGuidePause()
+        {
+            if (pausedGuide != null) pausedGuide.Hidden -= ReleaseGuidePause;
+            pausedGuide = null;
+            gameGuideOpen = false;
+            UiPauseGate.Release(UiPauseGate.MineGuide);
+        }
+
         private void ApplyInventoryPanelVisible(bool visible)
         {
+            if (visible && UiPauseGate.IsMineMenuHeld) return;
             inventoryPanelOpen = visible;
             ResolveInventoryPanelIfNeeded();
 

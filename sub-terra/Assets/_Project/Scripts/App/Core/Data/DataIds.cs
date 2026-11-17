@@ -54,6 +54,8 @@ namespace SubTerra.App.Core.Data
             public const string DroneScan = "upgrade.drone.scan";
             public const string DroneRescue = "upgrade.drone.rescue";
             public const string GasResistance = "upgrade.gas.resistance";
+            public const string MaximumOxygen = "upgrade.oxygen.maximum";
+            public const string OxygenEfficiency = "upgrade.oxygen.efficiency";
         }
 
         public static class Recipes

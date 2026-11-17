@@ -28,6 +28,7 @@ namespace SubTerra.App.Integration
         [SerializeField] private OutpostPanelBinder outpost;
         [SerializeField] private EmergencyEscapePanelBinder escape;
         private SettingsSession settings;
+        private bool holdsSettingsPause;
 
         public bool IsSettingsOpen => settings != null && settings.IsOpen;
 
@@ -61,6 +62,7 @@ namespace SubTerra.App.Integration
         private void OnDisable()
         {
             CloseSettings();
+            ReleaseSettingsPause();
             if (settingsView == null) return;
             settingsView.SettingsApplyClicked -= ApplySettings;
             settingsView.SettingsCancelClicked -= CloseSettings;
@@ -71,13 +73,19 @@ namespace SubTerra.App.Integration
 
         private void Update()
         {
+            if (holdsSettingsPause && (settingsRoot == null || !settingsRoot.activeInHierarchy))
+            {
+                if (IsSettingsOpen) settings.Cancel();
+                ReleaseSettingsPause();
+            }
+
             var keyboard = Keyboard.current;
             if (keyboard == null) return;
             // B-170: 종료 확인 창이 ESC·X를 먼저 받고(-400), 떠 있는 동안 다른 단축키를 막는다.
             if (QuitConfirmFlow.IsBlockingInput) return;
             // 시작 브리핑·검색 입력 중에는 설정·종료 단축키를 막고 X(닫기)만 허용한다.
             var paused = UiPauseGate.IsInputBlocked;
-            if (!paused && keyboard.escapeKey.wasPressedThisFrame) HandleEscape();
+            if ((!paused || IsSettingsOpen) && keyboard.escapeKey.wasPressedThisFrame) HandleEscape();
             var selected = UnityEngine.EventSystems.EventSystem.current;
             if (selected != null && selected.currentSelectedGameObject != null
                 && selected.currentSelectedGameObject.GetComponent<TMPro.TMP_InputField>() != null) return;
@@ -104,6 +112,20 @@ namespace SubTerra.App.Integration
                 CloseSettings();
                 return;
             }
+
+            if (UiPauseGate.IsHeldBy(UiPauseGate.MineGuide))
+            {
+                if (chrome != null) chrome.CloseGameGuide();
+                return;
+            }
+
+            if (UiPauseGate.IsHeldBy(UiPauseGate.MineUpgrade))
+            {
+                if (panels != null) panels.CloseUpgrade();
+                return;
+            }
+
+            if (holdsSettingsPause) return;
 
             // 시작 브리핑은 가장 위에 뜨는 모달이므로 다른 팝업보다 먼저 닫는다.
             var briefing = FindFirstObjectByType<DemoObjectiveView>();
@@ -160,15 +182,17 @@ namespace SubTerra.App.Integration
 
         public void OpenSettings()
         {
-            if (settings == null || settingsView == null || IsSettingsOpen) return;
+            if (settings == null || settingsView == null || settingsRoot == null
+                || IsSettingsOpen || UiPauseGate.IsInputBlocked) return;
             // B-166: ESC와 설정 버튼이 모두 이 경로를 지난다. 엘리베이터 탑승 중에는 소리 없이 무시한다.
             if (IsElevatorRiding()) return;
+            holdsSettingsPause = UiPauseGate.Acquire(UiPauseGate.MineSettings);
             settings.Open();
             settingsView.SetSettingsDraft(settings.Draft);
             settingsView.SetSettingsVisible(true);
             // 지하 드론 말풍선과 다른 모달 위에서도 설정 조작이 가능해야 한다.
             if (settingsRoot != null)
-                settingsRoot.GetComponent<Canvas>().sortingOrder = PopupWindowSorting.SettingsSortOrder;
+                settingsView.RaiseSettingsAbovePopups();
             UiKeyboardSubmitGuard.ClearSelection();
         }
 
@@ -176,9 +200,16 @@ namespace SubTerra.App.Integration
         {
             if (!IsSettingsOpen || settingsView == null) return;
             settings.Cancel();
-            settingsView.SetSettingsVisible(false);
+            settingsView.SetSettingsVisible(false, ReleaseSettingsPause);
             SettingsRuntimeApplier.RestoreAppliedVolume(settings.Applied);
             UiKeyboardSubmitGuard.ClearSelection();
+        }
+
+        private void ReleaseSettingsPause()
+        {
+            if (!holdsSettingsPause) return;
+            holdsSettingsPause = false;
+            UiPauseGate.Release(UiPauseGate.MineSettings);
         }
 
         /// <summary>B-166: 탑승 중이면 설정창을 열지 않는다. 판정은 ElevatorController.IsRiding 한 곳에서 한다.</summary>
@@ -215,7 +246,7 @@ namespace SubTerra.App.Integration
             settingsView.PlaySettingsApplySound();
             settings.Apply();
             SettingsRuntimeApplier.Apply(settings.Applied, applyResolution: true);
-            settingsView.SetSettingsVisible(false);
+            settingsView.SetSettingsVisible(false, ReleaseSettingsPause);
         }
 
         private void ResetDefaults()

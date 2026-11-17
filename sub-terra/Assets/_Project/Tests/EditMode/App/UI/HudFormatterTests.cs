@@ -52,7 +52,7 @@ namespace SubTerra.App.Tests.UI
             Assert.That(HudFormatter.FormatStructuralRisk(StructuralRiskLevel.Critical),
                 Is.EqualTo("구조 " + HudFormatter.LabelCritical));
             Assert.That(HudFormatter.FormatStructuralRisk(StructuralRiskLevel.Imminent),
-                Is.EqualTo("구조 붕괴 임박"));
+                Is.EqualTo("구조 위험"));
             Assert.That(HudFormatter.FormatGasRisk(GasRiskLevel.Elevated),
                 Is.EqualTo("가스 " + HudFormatter.LabelGasElevated));
             Assert.That(HudFormatter.FormatGasRisk(GasRiskLevel.Hazard),

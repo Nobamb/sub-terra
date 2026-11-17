@@ -90,7 +90,7 @@ namespace SubTerra.App.Tests.UI
             Assert.That(HudFormatter.FormatStructuralRisk(StructuralRiskLevel.Safe), Is.EqualTo("구조 안전"));
             Assert.That(HudFormatter.FormatStructuralRisk(StructuralRiskLevel.Caution), Is.EqualTo("구조 주의"));
             Assert.That(HudFormatter.FormatStructuralRisk(StructuralRiskLevel.Critical), Is.EqualTo("구조 위험"));
-            Assert.That(HudFormatter.FormatStructuralRisk(StructuralRiskLevel.Imminent), Is.EqualTo("구조 붕괴 임박"));
+            Assert.That(HudFormatter.FormatStructuralRisk(StructuralRiskLevel.Imminent), Is.EqualTo("구조 위험"));
         }
 
         [Test]

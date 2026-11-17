@@ -539,6 +539,8 @@ namespace SubTerra.App.Tests.Run
                 basePreservation + rescueBonus;
             public float GetGasResistance() => 0f;
             public int GetGoldGainBonusPercent() => 0;
+            public float GetMaximumOxygen(float baseMaximum) => baseMaximum;
+            public float GetOxygenDrainReduction() => 0f;
             public int GetMiningYieldBonus(string mineralId) => 0;
         }
     }

@@ -30,8 +30,8 @@ namespace SubTerra.App.Integration
             registry.Register(new DeveloperDebugCommandSpec(
                 "falling",
                 new[] { "falling", "낙하" },
-                "[높이m]",
-                "falling 30m",
+                "[높이m [cushion]]",
+                "falling 10m cushion",
                 HandleFalling));
         }
 
@@ -71,14 +71,11 @@ namespace SubTerra.App.Integration
 
         private static string HandleFalling(string[] tokens, DeveloperDebugCommandContext context)
         {
-            const string usage = "falling 인자 오류. 예: falling 30m";
+            const string usage = "falling 인자 오류. 예: falling 10m cushion";
             float requested = 0f;
-            if (tokens != null && tokens.Length > 2)
-            {
-                return usage;
-            }
-
-            if (tokens != null && tokens.Length == 2 && !TryReadMeters(tokens[1], out requested))
+            int count = tokens?.Length ?? 0;
+            bool cushion = count == 3 && string.Equals(tokens[2], "cushion", StringComparison.OrdinalIgnoreCase);
+            if (count > 3 || (count == 3 && !cushion) || (count >= 2 && !TryReadMeters(tokens[1], out requested)))
             {
                 return usage;
             }
@@ -98,12 +95,13 @@ namespace SubTerra.App.Integration
             var height = Mathf.Max(requested, survival.MinimumFallHeight);
             var healthBefore = survival.State != null ? survival.State.Health : 0f;
             // 실제 낙사 착지와 같은 ApplyFall + 착지음 경로를 탄다.
-            if (!survival.SimulateFall(height))
+            if (!survival.SimulateFall(height, cushion))
             {
                 return "피해 없음(무적 시간 중이거나 행동불능)";
             }
 
-            return "falling " + Format(height) + "m -" + Format(healthBefore - survival.State.Health);
+            return "falling " + Format(height) + "m" + (cushion ? " cushion" : string.Empty)
+                + " -" + Format(healthBefore - survival.State.Health);
         }
 
         private static string ResolveMine(DeveloperDebugCommandContext context, out DeveloperDebugSpawnWorld world)

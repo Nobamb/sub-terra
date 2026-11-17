@@ -137,6 +137,10 @@ namespace SubTerra.App.Core.Data
                     return "드론 구조 보존";
                 case DataIds.Upgrades.GasResistance:
                     return "가스 저항";
+                case DataIds.Upgrades.MaximumOxygen:
+                    return "최대 산소";
+                case DataIds.Upgrades.OxygenEfficiency:
+                    return "산소 소모 감소";
                 default:
                     return upgradeId;
             }
@@ -164,7 +168,7 @@ namespace SubTerra.App.Core.Data
                 case DataIds.Upgrades.MaximumEnergy:
                     return "휴대 가능한 최대 전력량을 늘려 심층 탐사를 안정적으로 유지합니다.";
                 case DataIds.Upgrades.MaximumHealth:
-                    return "최대 체력을 늘려 붕괴·가스·낙하 피해를 더 오래 버팁니다.";
+                    return "최대 체력을 늘려 산소 고갈·가스·낙하 피해를 더 오래 버팁니다.";
                 case DataIds.Upgrades.HealthRegeneration:
                     return "시간이 지날수록 체력을 자동으로 회복합니다.";
                 case DataIds.Upgrades.MaximumCargo:
@@ -177,6 +181,10 @@ namespace SubTerra.App.Core.Data
                     return "탐사 실패 시 미정산 화물 손실을 줄이는 구조 보존 성능을 강화합니다.";
                 case DataIds.Upgrades.GasResistance:
                     return "독성 가스 노출 피해와 이동 페널티를 줄여 위험 지대를 견딥니다.";
+                case DataIds.Upgrades.MaximumOxygen:
+                    return "휴대 가능한 최대 산소량을 늘려 더 깊은 곳까지 오래 머뭅니다.";
+                case DataIds.Upgrades.OxygenEfficiency:
+                    return "깊이·행동·화물·가스가 반영된 산소 소모를 일정 비율 줄입니다. 깊을수록 소모는 여전히 커집니다.";
                 default:
                     return "장비 성능을 한 단계 강화합니다.";
             }

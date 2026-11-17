@@ -158,7 +158,7 @@ namespace SubTerra.App.Tests.PlayMode
             Mouse = InputSystem.AddDevice<Mouse>();
         }
 
-        public IEnumerator LoadIntegration(bool useCatalog = true)
+        public IEnumerator LoadIntegration(bool useCatalog = true, float sceneLoadTimeout = 10f)
         {
             var timer = Stopwatch.StartNew();
             GameBootstrapper.ResetInstanceForTests();
@@ -185,12 +185,12 @@ namespace SubTerra.App.Tests.PlayMode
             Assert.That(Save.ActiveSlot, Is.Zero, "Tests must not use player saves");
             Save.SetReady(true);
             var load = SceneManager.LoadSceneAsync(SceneNames.Integration);
-            yield return UiTestWait.Until(() => load.isDone, "Integration scene load", stage: "scene");
+            yield return UiTestWait.Until(() => load.isDone, "Integration scene load", timeout: sceneLoadTimeout, stage: "scene");
             yield return UiTestWait.Until(() =>
             {
                 var binder = Object.FindAnyObjectByType<IntegrationRuntimeBinder>();
                 return binder != null && binder.IsUiActivated;
-            }, "IntegrationRuntimeBinder.IsUiActivated");
+            }, "IntegrationRuntimeBinder.IsUiActivated", timeout: sceneLoadTimeout);
             yield return Resolution.Set(1920, 1080);
             BindInput();
             yield return DismissBriefing();

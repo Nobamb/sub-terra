@@ -120,6 +120,45 @@ namespace SubTerra.App.Tests.Progression
             Assert.That(UpgradeIconFx.SpinTurn(seconds), Is.EqualTo(SurfaceBaseButtonFeedback.SpinTurn(seconds)).Within(1e-5f));
         }
 
+        [Test]
+        public void IconFx_BreathInhalesHoldsThenExhalesLonger_AndRepeats()
+        {
+            var cycle = UpgradeIconFx.OxygenBreathCycle;
+            var inhale = cycle * UpgradeIconFx.BreathInhaleShare;
+            var exhaleStart = UpgradeIconFx.BreathExhaleStart(cycle);
+            Assert.That(UpgradeIconFx.Breath(0f, cycle), Is.EqualTo(0f));
+            Assert.That(UpgradeIconFx.Breath(inhale * 0.5f, cycle), Is.EqualTo(0.5f).Within(0.01f));
+            Assert.That(UpgradeIconFx.Breath((inhale + exhaleStart) * 0.5f, cycle), Is.EqualTo(1f), "가득 들이쉰 뒤 잠깐 멈춘다");
+            Assert.That(UpgradeIconFx.Breath(cycle * 0.999f, cycle), Is.LessThan(0.01f));
+            Assert.That(UpgradeIconFx.Breath(cycle + inhale * 0.5f, cycle), Is.EqualTo(0.5f).Within(0.01f), "반복");
+            Assert.That(cycle - exhaleStart, Is.GreaterThan(inhale), "날숨이 들숨보다 길다");
+            Assert.That(UpgradeIconFx.MinerBreathCycle, Is.GreaterThan(cycle), "광부는 O2보다 느리게 쉰다");
+
+            // 광부 호흡 그림: 0→1→2(들숨) → 2(멈춤) → 3→0(날숨). 구간 경계에서 그림이 끊기지 않는다.
+            var miner = UpgradeIconFx.MinerBreathCycle;
+            var minerInhale = miner * UpgradeIconFx.BreathInhaleShare;
+            UpgradeIconFx.MinerBreathFrame(0f, miner, out var from, out var to, out var mix);
+            Assert.That(new[] { from, to }, Is.EqualTo(new[] { 0, 0 }));
+            UpgradeIconFx.MinerBreathFrame(minerInhale * 0.25f, miner, out from, out to, out mix);
+            Assert.That(new[] { from, to }, Is.EqualTo(new[] { 0, 1 }));
+            Assert.That(mix, Is.EqualTo(0.5f).Within(0.01f));
+            UpgradeIconFx.MinerBreathFrame(minerInhale * 0.75f, miner, out from, out to, out mix);
+            Assert.That(new[] { from, to }, Is.EqualTo(new[] { 1, 2 }));
+            UpgradeIconFx.MinerBreathFrame(minerInhale + 0.01f, miner, out from, out to, out mix);
+            Assert.That(new[] { from, to }, Is.EqualTo(new[] { 2, 2 }), "가득 들이쉰 채 멈춤");
+            UpgradeIconFx.MinerBreathFrame(UpgradeIconFx.BreathExhaleStart(miner) + 0.01f, miner, out from, out to, out mix);
+            Assert.That(new[] { from, to }, Is.EqualTo(new[] { 2, 3 }));
+            Assert.That(mix, Is.LessThan(0.05f), "멈춤에서 이어진다");
+            UpgradeIconFx.MinerBreathFrame(miner * 0.999f, miner, out from, out to, out mix);
+            Assert.That(new[] { from, to }, Is.EqualTo(new[] { 3, 0 }));
+            Assert.That(mix, Is.GreaterThan(0.99f), "다 내쉰 그림으로 끝나 다음 호흡과 이어진다");
+
+            Assert.That(UpgradeIconFx.PassedCycleMark(0f, exhaleStart - 0.01f, cycle, exhaleStart), Is.False);
+            Assert.That(UpgradeIconFx.PassedCycleMark(exhaleStart - 0.01f, exhaleStart + 0.01f, cycle, exhaleStart), Is.True);
+            Assert.That(UpgradeIconFx.PassedCycleMark(exhaleStart + 0.01f, cycle, cycle, exhaleStart), Is.False);
+            Assert.That(UpgradeIconFx.PassedCycleMark(cycle, cycle + exhaleStart + 0.01f, cycle, exhaleStart), Is.True);
+        }
+
         // ------------------------------------------------------------------ 지상 기지 프리팹
 
         [Test]
@@ -301,6 +340,122 @@ namespace SubTerra.App.Tests.Progression
             }
         }
 
+        [Test]
+        public void Hover_MaximumOxygenBreathesWithWhiteGlowBehind_ThenReturnsToRest()
+        {
+            var instance = Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(SurfacePrefabPath));
+            try
+            {
+                var panel = OpenModal(instance);
+                var node = panel.GetComponentInChildren<UpgradeTreeView>(true).FindNode(DataIds.Upgrades.MaximumOxygen);
+                node.Apply(Snapshot(DataIds.Upgrades.MaximumOxygen, true));
+                var fx = node.GetComponent<UpgradeNodeHoverFx>();
+                var icon = node.transform.Find("Body/Icon").GetComponent<RectTransform>();
+                var rest = icon.anchoredPosition;
+                var cycle = UpgradeIconFx.OxygenBreathCycle;
+
+                fx.BeginHover();
+                Step(fx, cycle * 0.44f);
+                Assert.That(icon.localScale.x, Is.GreaterThan(1.18f), "가득 들이쉬면 O2가 부푼다");
+                var glow = node.transform.Find("Body/FxBack/TintGlow").GetComponent<Image>();
+                Assert.That(glow.enabled, Is.True);
+                Assert.That(glow.color.r, Is.GreaterThan(0.95f), "뒤쪽 광채는 흰색");
+                Assert.That(glow.color.b, Is.GreaterThan(0.95f));
+                Assert.That(glow.color.a, Is.GreaterThan(0.5f));
+                Assert.That(glow.transform.parent.GetSiblingIndex(), Is.LessThan(icon.GetSiblingIndex()), "광채는 아이콘 뒤");
+                var peakGlow = glow.rectTransform.sizeDelta.x;
+
+                Step(fx, cycle * 0.3f);
+                Assert.That(icon.localScale.x, Is.InRange(1.02f, 1.18f), "천천히 줄어드는 중");
+                Assert.That(node.transform.Find("Body/FxFront").GetComponentsInChildren<Image>(false)
+                    .Any(i => i.name.StartsWith("Fx")), Is.True, "내쉴 때 기포가 떠오른다");
+
+                Step(fx, cycle * 0.25f);
+                Assert.That(icon.localScale.x, Is.LessThan(1.02f), "다 내쉬면 원래 크기");
+                Assert.That(glow.rectTransform.sizeDelta.x, Is.LessThan(peakGlow));
+
+                Step(fx, cycle * 0.45f);
+                Assert.That(icon.localScale.x, Is.GreaterThan(1.18f), "호버 동안 계속 숨을 쉰다");
+
+                fx.EndHover();
+                Step(fx, 1f);
+                Assert.That(fx.IsPlaying, Is.False);
+                Assert.That(icon.localScale, Is.EqualTo(Vector3.one));
+                Assert.That(icon.anchoredPosition, Is.EqualTo(rest));
+                Assert.That(glow.enabled, Is.False);
+            }
+            finally
+            {
+                Object.DestroyImmediate(instance);
+            }
+        }
+
+        [Test]
+        public void Hover_OxygenEfficiencyShowsSlowlyBreathingMiner_ThenRestoresIcon()
+        {
+            var instance = Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(SurfacePrefabPath));
+            try
+            {
+                var panel = OpenModal(instance);
+                var node = panel.GetComponentInChildren<UpgradeTreeView>(true).FindNode(DataIds.Upgrades.OxygenEfficiency);
+                node.Apply(Snapshot(DataIds.Upgrades.OxygenEfficiency, true));
+                var fx = node.GetComponent<UpgradeNodeHoverFx>();
+                var icon = node.transform.Find("Body/Icon").GetComponent<Image>();
+                var now = node.transform.Find("Body/FxFront/MinerBreathA").GetComponent<Image>();
+                var next = node.transform.Find("Body/FxFront/MinerBreathB").GetComponent<Image>();
+                Assert.That(icon.sprite.name, Is.EqualTo("upgrade-icon-miner-breath-01"), "썸네일부터 광부 상반신");
+                Assert.That(now.enabled, Is.False, "평소에는 썸네일 한 장만 보인다");
+                Assert.That(now.rectTransform.pivot.y, Is.EqualTo(0f), "아래쪽을 기준으로 부풀어 밑단이 뜨지 않는다");
+                var cycle = UpgradeIconFx.MinerBreathCycle;
+                var inhale = cycle * UpgradeIconFx.BreathInhaleShare;
+
+                fx.BeginHover();
+                Step(fx, inhale * 0.25f);
+                Assert.That(now.enabled, Is.True);
+                Assert.That(icon.canvasRenderer.GetAlpha(), Is.EqualTo(0f).Within(0.01f), "썸네일 대신 호흡 그림을 그린다");
+                Assert.That(now.sprite.name, Is.EqualTo("upgrade-icon-miner-breath-01"));
+                Assert.That(next.sprite.name, Is.EqualTo("upgrade-icon-miner-breath-02"), "들이쉬는 그림이 겹쳐 섞인다");
+                Assert.That(next.color.a, Is.InRange(0.2f, 0.8f));
+                var early = now.rectTransform.localScale;
+                Assert.That(early.y, Is.GreaterThan(1.01f), "섞는 동안 앞 그림은 다음 그림 높이로 올라간다");
+                Assert.That(early.y * UpgradeIconFx.MinerFrameRise[0],
+                    Is.EqualTo(next.rectTransform.localScale.y * UpgradeIconFx.MinerFrameRise[1]).Within(1e-3f),
+                    "겹친 두 그림의 머리 높이가 같아 둘로 보이지 않는다");
+
+                Step(fx, cycle * 0.44f - inhale * 0.25f);
+                Assert.That(now.sprite.name, Is.EqualTo("upgrade-icon-miner-breath-03"), "가득 들이쉰 그림에서 잠깐 멈춘다");
+                var full = now.rectTransform.localScale;
+                Assert.That(full.y, Is.EqualTo(1f).Within(1e-4f), "멈춘 그림은 늘이지 않는다");
+                Assert.That(full.x, Is.GreaterThan(early.x + 0.02f), "들이쉬면 가슴이 옆으로 부푼다");
+                Assert.That(next.rectTransform.localScale, Is.EqualTo(full), "겹친 두 그림은 같이 움직인다");
+
+                var exhaleStart = UpgradeIconFx.BreathExhaleStart(cycle);
+                var blow = exhaleStart + (cycle - exhaleStart) * UpgradeIconFx.MinerBlowShare;
+                Step(fx, blow + 0.05f - cycle * 0.44f);
+                Assert.That(now.sprite.name, Is.EqualTo("upgrade-icon-miner-breath-04"), "입으로 내쉬는 그림");
+                Assert.That(next.sprite.name, Is.EqualTo("upgrade-icon-miner-breath-01"), "다 내쉰 그림으로 돌아간다");
+                Assert.That(now.rectTransform.localScale.y, Is.LessThan(full.y), "내쉬면 내려온다");
+                Assert.That(node.transform.Find("Body/FxFront").GetComponentsInChildren<Image>(true)
+                    .Any(i => i.name.StartsWith("Fx")), Is.True, "입가의 숨결");
+
+                Step(fx, cycle - blow + inhale);
+                Assert.That(now.sprite.name, Is.EqualTo("upgrade-icon-miner-breath-03"), "호버 동안 계속 숨을 쉰다");
+
+                fx.EndHover();
+                Step(fx, 1f);
+                Assert.That(fx.IsPlaying, Is.False);
+                Assert.That(now.enabled, Is.False);
+                Assert.That(next.enabled, Is.False);
+                Assert.That(now.rectTransform.localScale, Is.EqualTo(Vector3.one));
+                Assert.That(next.rectTransform.localScale, Is.EqualTo(Vector3.one));
+                Assert.That(icon.canvasRenderer.GetAlpha(), Is.EqualTo(1f));
+            }
+            finally
+            {
+                Object.DestroyImmediate(instance);
+            }
+        }
+
         // ------------------------------------------------------------------ 스크롤 확대/축소
 
         [Test]
@@ -362,7 +517,7 @@ namespace SubTerra.App.Tests.Progression
                 Assert.That(purchase.Find("Frame"), Is.Not.Null);
 
                 Assert.That(panel.IsTreeMode, Is.True);
-                Assert.That(panel.GetComponentsInChildren<UpgradeNodeHoverFx>(true).Length, Is.EqualTo(11));
+                Assert.That(panel.GetComponentsInChildren<UpgradeNodeHoverFx>(true).Length, Is.EqualTo(13));
                 Assert.That(panel.GetComponentsInChildren<Transform>(true).Any(t => t.name == "DeepZoneText"), Is.False);
             }
             finally

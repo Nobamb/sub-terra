@@ -36,6 +36,7 @@ namespace SubTerra.App.Progression
 
             if (upgradeId.StartsWith("upgrade.energy.")
                 || upgradeId.StartsWith("upgrade.health.")
+                || upgradeId.StartsWith("upgrade.oxygen.")
                 || upgradeId.StartsWith("upgrade.cargo."))
             {
                 return UpgradeCategory.Capacity;

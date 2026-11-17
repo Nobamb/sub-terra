@@ -200,7 +200,7 @@ namespace SubTerra.App.Editor.DataValidation
             var root = CreatePanel(parent, "GameGuidePanel", new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(1180f, 740f));
             CreateText(root.transform, "Title", new Vector2(28f, -24f), new Vector2(950f, 44f), 30f, "게임 가이드 [G]");
             CreateText(root.transform, "GuideText", new Vector2(28f, -88f), new Vector2(1100f, 580f), 18f,
-                "기본 조작\n이동/점프/채굴 후 B 시설 건설, I 화물, U 업그레이드를 사용합니다.\n\n구조 위험\n아래가 빈 천장만 위험합니다. 아래·옆을 더 파면 균열이 짙어집니다. 빨간 칸 중 점멸하는 칸만 곧 떨어지므로 먼저 피하세요. 미리 준비한 완충판을 점멸 반경에 설치하면 붕괴를 취소할 수 있습니다.\n\n가스·전력 상태와 Digger-Bot 권고도 함께 확인하세요.");
+                "기본 조작\n이동/점프/채굴 후 B 시설 건설, I 화물, U 업그레이드를 사용합니다.\n\n산소와 착지 위험\n10m 이내에서는 산소가 회복됩니다. 더 깊은 곳에서는 산소가 줄고, 정화되지 않은 가스에 노출되면 기본 2배로 소모됩니다. 짐이 무거울수록 착지 피해가 커집니다. 완충판에 착지하면 일반 착지 피해의 약 10%만 받습니다.\n\n가스·전력 상태와 Digger-Bot 권고도 함께 확인하세요.");
             return root;
         }
 

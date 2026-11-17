@@ -112,7 +112,7 @@ namespace SubTerra.App.Tests.Drone
             Assert.That(result.Dialogue.IsUrgent, Is.True);
             Assert.That(result.Dialogue.Tokens["safetyGuidance"], Does.Contain("가스 구역에서 이탈"));
             Assert.That(result.Dialogue.Tokens["safetyGuidance"], Does.Contain("전진기지"));
-            Assert.That(result.Dialogue.Tokens["safetyGuidance"], Does.Contain("완충판 설치"));
+            Assert.That(result.Dialogue.Tokens["safetyGuidance"], Does.Contain("안전한 쪽으로 이동"));
         }
 
         [Test]
@@ -136,27 +136,26 @@ namespace SubTerra.App.Tests.Drone
 
             var result = service.Analyze(context);
 
-            Assert.That(result.Dialogue.Tokens["safetyGuidance"], Does.Contain("완충판 설치"));
+            Assert.That(result.Dialogue.Tokens["safetyGuidance"], Does.Contain("안전한 쪽으로 이동"));
             Assert.That(result.Dialogue.Tokens["safetyGuidance"], Does.Not.Contain("가스 구역"));
             Assert.That(result.Dialogue.Tokens["safetyGuidance"], Does.Not.Contain("전진기지"));
         }
 
         [Test]
-        public void StructuralDialogue_UsesCauseAndTelegraphInsteadOfNormalizedNumber()
+        public void LegacyStructuralDialogue_UsesGeneralSafetyGuidance()
         {
             var context = SafeContext();
             context.structuralIntegrity = 0.3f;
             context.structuralCauseId = "unsupported";
 
             var warning = service.Analyze(context);
-            Assert.That(warning.Dialogue.Tokens["safetyGuidance"], Does.Contain("천장 아래가 비었습니다"));
+            Assert.That(warning.Dialogue.Tokens["safetyGuidance"], Does.Contain("안전한 쪽으로 이동"));
             Assert.That(warning.Dialogue.Tokens["safetyGuidance"], Does.Not.Contain("0.3"));
 
             context.structuralIntegrity = 0f;
             context.structuralTelegraphing = true;
             var imminent = service.Analyze(context);
-            Assert.That(imminent.Dialogue.Tokens["safetyGuidance"], Does.Contain("빨간 천장"));
-            Assert.That(imminent.Dialogue.Tokens["safetyGuidance"], Does.Contain("피하거나"));
+            Assert.That(imminent.Dialogue.Tokens["safetyGuidance"], Is.EqualTo(warning.Dialogue.Tokens["safetyGuidance"]));
         }
 
         [Test]
