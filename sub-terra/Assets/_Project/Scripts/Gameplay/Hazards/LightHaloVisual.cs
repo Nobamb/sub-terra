@@ -152,7 +152,7 @@ namespace SubTerra.Gameplay.Hazards
             FitToRadius();
             var flicker = GasVisualMath.HaloFlicker(time, seed, flickerStrength, reduceMotion);
             var color = tint;
-            color.a = Mathf.Clamp01(peakOpacity) * level * flicker;
+            color.a = Mathf.Clamp01(peakOpacity) * level * flicker * source.VisualOpacity;
             haloRenderer.color = color;
             haloRenderer.enabled = color.a > 0.002f;
             CurrentAlpha = color.a;
@@ -176,7 +176,8 @@ namespace SubTerra.Gameplay.Hazards
                 return;
             }
 
-            var radius = source.Radius;
+            // B-204: 켠 직후에는 시각 반지름이 커진다. 판정 반지름(source.Radius)은 바꾸지 않는다.
+            var radius = source.VisualRadius;
             if (Mathf.Abs(radius - fittedRadius) < 0.0001f)
             {
                 return;

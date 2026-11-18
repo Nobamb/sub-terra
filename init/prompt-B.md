@@ -3987,3 +3987,5 @@ work_process/MVP2/power/B-185-1-power-on-range-result.md: "조명·보관함은 
 202-2. prompt-B-202-1.md 내용 참고해서 이번에는 채굴 구역 관련 표식에 대한 표식 디자인 추가 및 등장 연출 추가해줘
 
 203. prompt-B-203.md 내용 참고해서 가스 발생 및 발생 종료 시에 적용할 fade-in/out 연출 적용해줘
+
+204. prompt-B-204.md 내용 참고해서 조명, 전진기지 범위가 퍼져나갈 때에 연출도 적용시켜줘
