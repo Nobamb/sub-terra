@@ -1,3 +1,4 @@
+using SubTerra.Shared;
 using UnityEngine;
 
 namespace SubTerra.Gameplay.Power
@@ -13,8 +14,16 @@ namespace SubTerra.Gameplay.Power
         [SerializeField, Min(0.1f)] private float radius = DefaultRadius;
         [SerializeField] private LineRenderer rangeLine;
         private Material runtimeMaterial;
+        private Vector3[] circlePoints;
+        private float spreadProgress = 1f;
 
+        /// <summary>전력 공급·정화 판정 반지름. 퍼짐 연출 중에도 항상 최종값이다.</summary>
         public float Radius => radius;
+
+        /// <summary>화면에 그려지는 원의 반지름. 퍼짐 연출 중에만 Radius보다 작다.</summary>
+        public float VisualRadius => radius * RangeSpreadMath.RadiusFraction(spreadProgress);
+
+        public bool IsSpreading => spreadProgress < 1f;
         public LineRenderer RangeLine => rangeLine;
 
         private void Awake()
@@ -32,8 +41,47 @@ namespace SubTerra.Gameplay.Power
         public void Configure(float supplyRadius)
         {
             radius = Mathf.Max(0.1f, supplyRadius);
+            spreadProgress = 1f;
             EnsureLine();
             RebuildCircle();
+        }
+
+        /// <summary>
+        /// B-204: 원 표시만 중심에서 최종 반지름까지 빠르게 퍼뜨린다. Contains(전력 판정)는 처음부터 최종 반지름이다.
+        /// 모션 감소면 연출 없이 최종 원으로 둔다. 복원·기존 코어는 이 메서드를 부르지 않는다.
+        /// </summary>
+        public void BeginSpread()
+        {
+            if (AccessibilityPreferences.ReduceMotion)
+            {
+                spreadProgress = 1f;
+            }
+            else
+            {
+                spreadProgress = 0f;
+            }
+
+            EnsureLine();
+            RebuildCircle();
+        }
+
+        /// <summary>퍼짐을 deltaTime만큼 진행한다. Update가 부르며 테스트도 직접 부를 수 있다.</summary>
+        public void AdvanceSpread(float deltaTime)
+        {
+            if (spreadProgress >= 1f)
+            {
+                return;
+            }
+
+            spreadProgress = AccessibilityPreferences.ReduceMotion
+                ? 1f
+                : RangeSpreadMath.Advance(spreadProgress, deltaTime, RangeSpreadMath.CoreSpreadSeconds);
+            RebuildCircle();
+        }
+
+        private void Update()
+        {
+            AdvanceSpread(Time.deltaTime);
         }
 
         public bool Contains(Vector3 worldPosition)
@@ -104,13 +152,15 @@ namespace SubTerra.Gameplay.Power
                 return;
             }
 
+            circlePoints ??= new Vector3[CircleSegments];
+            var drawRadius = VisualRadius;
             for (var index = 0; index < CircleSegments; index++)
             {
                 float angle = index * Mathf.PI * 2f / CircleSegments;
-                rangeLine.SetPosition(
-                    index,
-                    new Vector3(Mathf.Cos(angle) * radius, Mathf.Sin(angle) * radius, 0f));
+                circlePoints[index] = new Vector3(Mathf.Cos(angle) * drawRadius, Mathf.Sin(angle) * drawRadius, 0f);
             }
+
+            rangeLine.SetPositions(circlePoints);
         }
     }
 }

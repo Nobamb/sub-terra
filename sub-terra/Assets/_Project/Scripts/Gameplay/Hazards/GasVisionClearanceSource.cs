@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using SubTerra.Gameplay.Power;
+using SubTerra.Shared;
 using UnityEngine;
 
 namespace SubTerra.Gameplay.Hazards
@@ -17,8 +18,22 @@ namespace SubTerra.Gameplay.Hazards
 
         private PowerFacility facility;
         private bool facilityResolved;
+        private float revealProgress = 1f;
+        private SpriteRenderer clearanceRenderer;
 
+        /// <summary>가스 시야를 뚫는 판정 반지름. 켠 직후에도 항상 최종값이다.</summary>
         public float Radius => radius;
+
+        /// <summary>
+        /// B-204: 후광·암전 구멍·범위 스프라이트가 그리는 시각 반지름. 켠 직후 중심에서 Radius까지 빠르게 커진다.
+        /// 판정(IsCleared·Contains·TryGetNearestLight)에는 쓰지 않는다.
+        /// </summary>
+        public float VisualRadius => radius * RangeSpreadMath.RadiusFraction(revealProgress);
+
+        /// <summary>범위 표시 불투명도 비율(0~1). 켠 직후 점점 짙어진다.</summary>
+        public float VisualOpacity => RangeSpreadMath.OpacityFraction(revealProgress);
+
+        public bool IsRevealing => revealProgress < 1f;
         public Vector2 WorldPosition => transform.position;
 
         /// <summary>
@@ -62,6 +77,35 @@ namespace SubTerra.Gameplay.Hazards
             facilityResolved = false;
         }
 
+        /// <summary>
+        /// B-204: 방금 설치해 켠 조명의 시각 범위를 중심에서 빠르게 퍼뜨린다. 판정 반지름은 그대로 최종값이다.
+        /// 복원·이미 켜진 조명은 부르지 않으며, 모션 감소면 연출 없이 최종 범위로 둔다.
+        /// </summary>
+        public void BeginReveal()
+        {
+            revealProgress = AccessibilityPreferences.ReduceMotion ? 1f : 0f;
+            ApplySoftVisual();
+        }
+
+        /// <summary>켠 직후 퍼짐을 deltaTime만큼 진행한다. Update가 부르며 테스트도 직접 부를 수 있다.</summary>
+        public void AdvanceReveal(float deltaTime)
+        {
+            if (revealProgress >= 1f)
+            {
+                return;
+            }
+
+            revealProgress = AccessibilityPreferences.ReduceMotion
+                ? 1f
+                : RangeSpreadMath.Advance(revealProgress, deltaTime, RangeSpreadMath.LightSpreadSeconds);
+            ApplySoftVisual();
+        }
+
+        private void Update()
+        {
+            AdvanceReveal(Time.deltaTime);
+        }
+
         public static IReadOnlyList<GasVisionClearanceSource> ActiveSources => Active;
 
         public static IReadOnlyList<GasVisionClearanceSource> ResolveActive()
@@ -84,17 +128,24 @@ namespace SubTerra.Gameplay.Hazards
             }
 
             facilityResolved = false;
+            // 다시 켜지는 경우(비활성→활성)에는 퍼짐 없이 최종 범위로 바로 보인다.
+            revealProgress = 1f;
             ApplySoftVisual();
             LightHaloVisual.EnsureFor(this);
         }
 
         /// <summary>
         /// 같은 오브젝트의 붉은 시야 스프라이트를 가장자리가 부드러운 스프라이트로 맞춘다.
-        /// 지름은 판정 반지름(radius) 그대로라 시각이 판정 범위보다 커지지 않는다.
+        /// 지름은 시각 반지름(켠 직후 외에는 판정 반지름 그대로)이라 시각이 판정 범위보다 커지지 않는다.
         /// </summary>
         public void ApplySoftVisual()
         {
-            var renderer = GetComponent<SpriteRenderer>();
+            if (clearanceRenderer == null)
+            {
+                clearanceRenderer = GetComponent<SpriteRenderer>();
+            }
+
+            var renderer = clearanceRenderer;
             if (renderer == null)
             {
                 return;
@@ -107,9 +158,9 @@ namespace SubTerra.Gameplay.Hazards
             }
 
             var tint = GasVisualRules.LightClearTint;
-            tint.a = GasVisualRules.LightClearRedOpacity;
+            tint.a = GasVisualRules.LightClearRedOpacity * VisualOpacity;
             renderer.color = tint;
-            GasZoneVisual.FitSpriteToWorldDiameter(renderer, radius * 2f);
+            GasZoneVisual.FitSpriteToWorldDiameter(renderer, VisualRadius * 2f);
         }
 
         private void OnDisable()

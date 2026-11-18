@@ -56,7 +56,7 @@ namespace SubTerra.Gameplay.Hazards
                 }
 
                 var distance = Vector2.Distance(worldPosition, source.WorldPosition);
-                cover = Mathf.Max(cover, GasVisualMath.LightCover(distance, source.Radius, inner));
+                cover = Mathf.Max(cover, GasVisualMath.LightCover(distance, source.VisualRadius, inner));
             }
 
             return cover;
@@ -125,7 +125,7 @@ namespace SubTerra.Gameplay.Hazards
                 }
 
                 var position = source.WorldPosition;
-                destination[count] = new Vector4(position.x, position.y, 0f, source.Radius);
+                destination[count] = new Vector4(position.x, position.y, 0f, source.VisualRadius);
                 count++;
             }
 
@@ -172,14 +172,14 @@ namespace SubTerra.Gameplay.Hazards
                 if (camera != null)
                 {
                     var center = camera.WorldToViewportPoint(new Vector3(world.x, world.y, 0f));
-                    var edge = camera.WorldToViewportPoint(new Vector3(world.x, world.y + source.Radius, 0f));
+                    var edge = camera.WorldToViewportPoint(new Vector3(world.x, world.y + source.VisualRadius, 0f));
                     viewport = center;
                     radiusY = Mathf.Abs(edge.y - center.y);
                 }
                 else
                 {
                     viewport = world;
-                    radiusY = source.Radius;
+                    radiusY = source.VisualRadius;
                 }
 
                 destination[count] = new Vector4(viewport.x, viewport.y, radiusY, aspect);

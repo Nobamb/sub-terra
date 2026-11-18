@@ -179,6 +179,10 @@ namespace SubTerra.Gameplay.Integration
         private void OnBuildingPlaced(BuildingPlacementResult result)
         {
             PublishBuildingResult(result, BuildingPlacementState.Placed);
+            if (result.IsSuccess)
+            {
+                BeginRangeSpread(result);
+            }
 
             if (result.IsSuccess && result.BuildingId == "building.outpost_core.basic")
             {
@@ -192,6 +196,55 @@ namespace SubTerra.Gameplay.Integration
                 });
             }
         }
+        /// <summary>
+        /// B-204: 방금 설치한(복원·이동 제외) 코어 범위 원과 조명 시각 범위만 중심에서 빠르게 퍼뜨린다.
+        /// 전력·가스 시야 판정은 처음부터 최종 반지름이라 연출과 무관하다.
+        /// </summary>
+        private void BeginRangeSpread(BuildingPlacementResult result)
+        {
+            try
+            {
+                if (result.BuildingId == "building.outpost_core.basic" && powerNetworkSystem != null)
+                {
+                    EnsureOutpostRangeIndicators();
+                    foreach (PowerNode node in powerNetworkSystem.Nodes)
+                    {
+                        if (!IsOutpostCoreSource(node))
+                        {
+                            continue;
+                        }
+
+                        var instance = node.GetComponent<BuildingInstance>();
+                        var range = node.GetComponent<PowerSupplyRangeIndicator>();
+                        if (instance != null && range != null && instance.InstanceId == result.InstanceId)
+                        {
+                            range.BeginSpread();
+                        }
+                    }
+                }
+
+                var lights = GasVisionClearanceSource.ActiveSources;
+                for (var index = 0; index < lights.Count; index++)
+                {
+                    var light = lights[index];
+                    if (light == null)
+                    {
+                        continue;
+                    }
+
+                    var owner = light.GetComponentInParent<BuildingInstance>();
+                    if (owner != null && owner.InstanceId == result.InstanceId)
+                    {
+                        light.BeginReveal();
+                    }
+                }
+            }
+            catch (Exception exception)
+            {
+                Debug.LogException(exception, this);
+            }
+        }
+
         private void OnBuildingRejected(BuildingPlacementResult result) => PublishBuildingResult(result, BuildingPlacementState.Failed);
 
         private void PublishBuildingResult(BuildingPlacementResult result, BuildingPlacementState state)
