@@ -265,7 +265,7 @@ namespace SubTerra.Gameplay.Mining
         }
 
         /// <summary>
-        /// 과녁을 띄울 칸. 채굴 중이면 그 칸, 아니면 최근 입력(마우스 호버 또는 키보드 목표).
+        /// 과녁을 띄울 칸. 채굴 중이면 그 칸, 마우스가 우선이고 호버 칸이 유효하면 그 칸, 그 외에는 키보드 목표.
         /// 사거리·지형만 보며 전력 부족으로는 숨기지 않는다.
         /// </summary>
         public bool TryResolveReticleCell(out Vector3Int cell)
@@ -280,14 +280,14 @@ namespace SubTerra.Gameplay.Mining
 
             if (targetPriority.Source == MiningTargetSource.Pointer)
             {
-                if (Mouse.current == null || Camera.main == null
-                    || pointerClaimedByPlacement || pointerClaimedByDrone || IsPointerOverUi())
+                var mouse = Mouse.current;
+                var camera = Camera.main;
+                if (mouse != null && camera != null
+                    && !pointerClaimedByPlacement && !pointerClaimedByDrone && !IsPointerOverUi())
                 {
-                    return false;
+                    Vector3 world = camera.ScreenToWorldPoint(mouse.position.ReadValue());
+                    if (TryResolvePointerReticleCell(world, out cell)) return true;
                 }
-
-                Vector3 world = Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
-                return TryResolvePointerReticleCell(world, out cell);
             }
 
             return TryResolveKeyboardReticleCell(out cell);

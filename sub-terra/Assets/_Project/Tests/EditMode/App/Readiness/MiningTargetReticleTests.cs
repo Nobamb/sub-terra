@@ -5,6 +5,8 @@ using SubTerra.Gameplay.Player;
 using SubTerra.Shared;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.LowLevel;
 using UnityEngine.Tilemaps;
 
 namespace SubTerra.App.Tests.EditMode.Readiness
@@ -274,6 +276,52 @@ namespace SubTerra.App.Tests.EditMode.Readiness
         }
 
         [Test]
+        public void Controller_PointerOutOfReachFallsBackToKeyboard_AndRecoversOnValidHover()
+        {
+            var keyboardCell = Cell(Side, 0);
+            var pointerCell = Cell(0, 1);
+            var outOfReachCell = Cell(3, 0);
+            map.SetTile(keyboardCell, mineable);
+            map.SetTile(pointerCell, mineable);
+            map.SetTile(outOfReachCell, mineable);
+
+            var camera = Camera.main;
+            if (camera == null)
+            {
+                camera = new GameObject("Mining reticle test camera", typeof(Camera)).GetComponent<Camera>();
+                camera.transform.SetParent(world.transform);
+                camera.transform.position = new Vector3(0f, 0f, -10f);
+                camera.orthographic = true;
+                camera.tag = "MainCamera";
+            }
+
+            var previousMouse = Mouse.current;
+            var mouse = InputSystem.AddDevice<Mouse>();
+            try
+            {
+                mouse.MakeCurrent();
+                controller.TargetPriority.NotePointerInput();
+                InputState.Change(mouse.position, (Vector2)camera.WorldToScreenPoint(map.GetCellCenterWorld(pointerCell)));
+                Assert.That(controller.TryResolveReticleCell(out var cell), Is.True);
+                Assert.That(cell, Is.EqualTo(pointerCell));
+
+                InputState.Change(mouse.position, (Vector2)camera.WorldToScreenPoint(map.GetCellCenterWorld(outOfReachCell)));
+                Assert.That(controller.TryResolveReticleCell(out cell), Is.True);
+                Assert.That(cell, Is.EqualTo(keyboardCell));
+                Assert.That(controller.TargetPriority.Source, Is.EqualTo(MiningTargetSource.Pointer));
+
+                InputState.Change(mouse.position, (Vector2)camera.WorldToScreenPoint(map.GetCellCenterWorld(pointerCell)));
+                Assert.That(controller.TryResolveReticleCell(out cell), Is.True);
+                Assert.That(cell, Is.EqualTo(pointerCell));
+            }
+            finally
+            {
+                InputSystem.RemoveDevice(mouse);
+                previousMouse?.MakeCurrent();
+            }
+        }
+
+        [Test]
         public void Controller_PriorityPicksPointerOrKeyboardCell_AndMiningPinsActiveCell()
         {
             map.SetTile(Cell(Side, 0), mineable);
@@ -288,7 +336,7 @@ namespace SubTerra.App.Tests.EditMode.Readiness
             Assert.That(controller.TryResolveReticleCell(out cell), Is.True);
             Assert.That(cell, Is.EqualTo(Cell(0, -1)));
 
-            // 깨지면 다음 목표로 옮긴다(여기서는 포인터가 우선이라 카메라가 없어 숨는다).
+            // 채굴이 끝나면 현재 입력 우선순위로 다음 목표를 고른다.
             mining.CancelMining();
             controller.TargetPriority.NoteKeyboardInput();
             Assert.That(controller.TryResolveReticleCell(out cell), Is.True);
