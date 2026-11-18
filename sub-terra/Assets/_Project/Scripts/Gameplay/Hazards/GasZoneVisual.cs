@@ -68,7 +68,8 @@ namespace SubTerra.Gameplay.Hazards
                 return;
             }
 
-            var progress = zone.IsActive ? zone.SpawnProgress : 0f;
+            // 등장은 0→1, 종료 후 페이드아웃은 1→0으로 같은 곡선을 거꾸로 쓴다.
+            var progress = zone.VisualProgress;
             var diameter = zone.Radius * 2f * Mathf.Max(0.05f, progress);
             FitSpriteToWorldDiameter(cloudRenderer, diameter);
             var color = GasVisualRules.GasTint;
@@ -76,7 +77,7 @@ namespace SubTerra.Gameplay.Hazards
             cloudRenderer.color = color;
             cloudRenderer.maskInteraction = SpriteMaskInteraction.VisibleOutsideMask;
             cloudRenderer.sortingOrder = 20;
-            cloudRenderer.enabled = zone.IsActive && progress > 0.001f;
+            cloudRenderer.enabled = (zone.IsActive || zone.IsFadingOut) && progress > 0.001f;
             ApplyPropertyBlock();
         }
 
@@ -86,13 +87,13 @@ namespace SubTerra.Gameplay.Hazards
         /// </summary>
         public void UpdateMotes(bool visible, float time)
         {
-            if (zone == null || cloudRenderer == null || !zone.IsActive || !visible)
+            if (zone == null || cloudRenderer == null || !(zone.IsActive || zone.IsFadingOut) || !visible)
             {
                 ReleaseMotes();
                 return;
             }
 
-            var progress = zone.SpawnProgress;
+            var progress = zone.VisualProgress;
             var target = progress > 0.4f ? tuning.MotesCapped : 0;
             while (motes.Count > target)
             {
