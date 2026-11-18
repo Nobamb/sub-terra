@@ -27,8 +27,11 @@ namespace SubTerra.Gameplay.Mining
     }
 
     /// <summary>
-    /// 과녁의 위치(목표 변경 시 미끄러짐)와 조임 정도를 계산하는 순수 로직.
+    /// 과녁의 위치(목표 변경 시 미끄러짐), 조임, 등장(락온) 연출을 계산하는 순수 로직.
     /// ReduceMotion이면 미끄러짐·조임 없이 목표 칸에 바로 붙은 정지 꺾쇠다.
+    /// 등장은 숨김→표시 때 한 번 재생하는 로컬 연출이라 ReduceMotion과 무관하게 재생한다.
+    /// 등장: 꺾쇠가 멀리서 조여 들어오며 진해지고, 조준선은 조금 늦게 커진 채 돌며 맞춰진다.
+    /// 재조준: 이미 보이는 중 칸이 바뀌면 미끄러짐 위에 더 작은 같은 모양의 맥동만 얹는다.
     /// </summary>
     public sealed class MiningReticleMotion
     {
@@ -36,10 +39,28 @@ namespace SubTerra.Gameplay.Mining
         public const float PinchPeriodSeconds = 1.8f;
         public const float PinchDepth = 0.05f;
 
+        public const float AppearSeconds = 0.34f;
+        /// <summary>등장 시작 때 꺾쇠가 칸 중심에서 벌어진 배수(1 = 칸 모서리).</summary>
+        public const float AppearStartSpread = 1.85f;
+        /// <summary>조준선은 등장 진행도의 이 비율만큼 늦게 시작한다.</summary>
+        public const float CrosshairDelay = 0.15f;
+        public const float CrosshairStartScale = 2.4f;
+        public const float CrosshairStartTurnDegrees = 60f;
+
+        public const float RetargetSeconds = 0.16f;
+        public const float RetargetSpread = 1.22f;
+        public const float RetargetCrosshairScale = 1.5f;
+        public const float RetargetTurnDegrees = 45f;
+
+        /// <summary>칸 안쪽 틴트의 평상시 세기(0~1). 등장·재조준 때만 이보다 밝아졌다 돌아온다.</summary>
+        public const float FillSettledAlpha = 0.5f;
+
         private Vector2 from;
         private Vector2 to;
         private float slideElapsed = SlideSeconds;
         private float pinchTime;
+        private float appearElapsed = AppearSeconds;
+        private float retargetElapsed = RetargetSeconds;
 
         public bool Visible { get; private set; }
         public Vector2 Position { get; private set; }
@@ -47,10 +68,56 @@ namespace SubTerra.Gameplay.Mining
         /// <summary>꺾쇠가 칸 안쪽으로 조여든 거리(월드 단위).</summary>
         public float Inset { get; private set; }
 
+        /// <summary>등장 진행도 0~1.</summary>
+        public float AppearProgress => Mathf.Clamp01(appearElapsed / AppearSeconds);
+        public bool IsAppearing => appearElapsed < AppearSeconds;
+
+        /// <summary>꺾쇠 위치 배수. 등장 시작 1.85 → 1, 재조준 시 1.22 → 1 (ease-out).</summary>
+        public float BracketSpread =>
+            Mathf.Lerp(AppearStartSpread, 1f, EaseOut(AppearProgress)) * Mathf.Lerp(RetargetSpread, 1f, EaseOut(RetargetProgress));
+
+        /// <summary>꺾쇠 알파 배수 0 → 1. 재조준에서는 변하지 않는다.</summary>
+        public float BracketAlpha => Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(AppearProgress / 0.35f));
+
+        public float CrosshairScale =>
+            Mathf.Lerp(CrosshairStartScale, 1f, EaseOut(CrosshairProgress))
+            * Mathf.Lerp(RetargetCrosshairScale, 1f, EaseOut(RetargetProgress));
+
+        /// <summary>조준선이 아직 돌아야 할 각도(도). 끝나면 0.</summary>
+        public float CrosshairTurn =>
+            Mathf.Lerp(CrosshairStartTurnDegrees, 0f, EaseOut(CrosshairProgress))
+            + Mathf.Lerp(RetargetTurnDegrees, 0f, EaseOut(RetargetProgress));
+
+        public float CrosshairAlpha => Mathf.Clamp01(CrosshairProgress / 0.35f);
+
+        /// <summary>칸 틴트 세기. 등장 중 1까지 올랐다가 평상시 값으로 가라앉고, 재조준 때 살짝 밝아진다.</summary>
+        public float FillAlpha
+        {
+            get
+            {
+                float t = AppearProgress;
+                float appear = t < 0.4f
+                    ? t / 0.4f
+                    : Mathf.Lerp(1f, FillSettledAlpha, Mathf.SmoothStep(0f, 1f, (t - 0.4f) / 0.6f));
+                float bump = 0.4f * (1f - EaseOut(RetargetProgress));
+                return Mathf.Clamp01(appear + bump * (t >= 1f ? 1f : 0f));
+            }
+        }
+
+        private float RetargetProgress => Mathf.Clamp01(retargetElapsed / RetargetSeconds);
+        private float CrosshairProgress => Mathf.Clamp01((AppearProgress - CrosshairDelay) / (1f - CrosshairDelay));
+
         public void SetTarget(Vector2 center, bool reduceMotion)
         {
             if (!Visible || reduceMotion)
             {
+                // 숨은 상태에서 처음 켜질 때만 등장을 처음부터 재생한다. 모션 감소 중의 칸 이동은 그대로 붙는다.
+                if (!Visible)
+                {
+                    appearElapsed = 0f;
+                    retargetElapsed = RetargetSeconds;
+                }
+
                 Snap(center);
                 Visible = true;
                 return;
@@ -60,6 +127,7 @@ namespace SubTerra.Gameplay.Mining
             from = Position;
             to = center;
             slideElapsed = 0f;
+            retargetElapsed = 0f;
         }
 
         public void Hide()
@@ -68,12 +136,16 @@ namespace SubTerra.Gameplay.Mining
             Inset = 0f;
             pinchTime = 0f;
             slideElapsed = SlideSeconds;
+            appearElapsed = AppearSeconds;
+            retargetElapsed = RetargetSeconds;
         }
 
         public void Tick(float deltaTime, bool reduceMotion)
         {
             if (!Visible) return;
             float dt = Mathf.Max(0f, deltaTime);
+            if (appearElapsed < AppearSeconds) appearElapsed = Mathf.Min(AppearSeconds, appearElapsed + dt);
+            if (retargetElapsed < RetargetSeconds) retargetElapsed = Mathf.Min(RetargetSeconds, retargetElapsed + dt);
             if (reduceMotion)
             {
                 Snap(to);
@@ -93,6 +165,13 @@ namespace SubTerra.Gameplay.Mining
             Inset = PinchDepth * (0.5f - 0.5f * Mathf.Cos(pinchTime / PinchPeriodSeconds * Mathf.PI * 2f));
         }
 
+        // 1 - (1 - t)^3
+        private static float EaseOut(float t)
+        {
+            float inverse = 1f - Mathf.Clamp01(t);
+            return 1f - inverse * inverse * inverse;
+        }
+
         private void Snap(Vector2 center)
         {
             from = center;
@@ -103,24 +182,33 @@ namespace SubTerra.Gameplay.Mining
     }
 
     /// <summary>
-    /// 캘 칸의 네 모서리에 얇은 청록 ㄱ자 꺾쇠를 그리는 월드 오브젝트 하나.
-    /// 그림은 코드로 만든 한 장의 텍스처를 네 방향으로 뒤집어 쓰며, 프리팹·씬을 건드리지 않는다.
-    /// 소리는 내지 않는다.
+    /// 캘 칸에 띄우는 각진 청록 홀로그램 과녁 하나: 네 모서리 꺾쇠, 한가운데 다이아 조준선, 칸 안쪽 틴트.
+    /// 그림은 코드로 만들고(<see cref="MiningTargetReticleArt"/>), 프리팹·씬을 건드리지 않는다. 소리는 내지 않는다.
+    /// 루트는 칸 중심에 둔다. 등장·재조준은 꺾쇠 위치 배수와 각 부품의 알파·스케일·회전에만 걸고,
+    /// 느린 조임(Inset)은 꺾쇠 위치에만 건다. 둘은 서로를 읽지 않는다.
     /// </summary>
     public sealed class MiningTargetReticle : MonoBehaviour
     {
         // 지형(0~10대)·가스(20~23) 위, 건설 미리보기(49~50)와 균열(90~92)·스캔(94~95) 아래.
+        public const int FillSortingOrder = 23;
         public const int SortingOrder = 24;
-        private const int ArmPixels = 8;
-        private const int ThicknessPixels = 2;
-        private const float PixelsPerUnit = 32f;
-        private static readonly Color ReticleColor = new Color(0.3f, 0.95f, 0.92f, 0.8f);
+        public const int CrosshairSortingOrder = SortingOrder + 1;
+        public const float BracketFinalAlpha = 0.95f;
+        public const float CrosshairFinalAlpha = 0.95f;
 
         private static Sprite cornerSprite;
+        private static Sprite crosshairSprite;
+        private static Sprite fillSprite;
+        // 텍스처가 다른 스프라이트가 한 머티리얼을 공유하면 같은 배치로 묶여 첫 텍스처로 다 그려진다.
+        // 부품마다 머티리얼을 따로 두고 mainTexture를 직접 넣는다.
         private static Material cornerMaterial;
+        private static Material crosshairMaterial;
+        private static Material fillMaterial;
 
         private readonly MiningReticleMotion motion = new MiningReticleMotion();
         private readonly SpriteRenderer[] corners = new SpriteRenderer[4];
+        private SpriteRenderer crosshair;
+        private SpriteRenderer fill;
         private Transform root;
         private Vector2 cellSize = Vector2.one;
 
@@ -128,13 +216,23 @@ namespace SubTerra.Gameplay.Mining
         public Vector2 CurrentCenter => motion.Position;
         public Vector2 TargetCenter => motion.Target;
         public float Inset => motion.Inset;
+        public float BracketSpread => motion.BracketSpread;
+        public float BracketAlpha => motion.BracketAlpha;
+        public float CrosshairScale => motion.CrosshairScale;
+        public float CrosshairTurn => motion.CrosshairTurn;
         public SpriteRenderer[] Corners => corners;
+        public SpriteRenderer Crosshair => crosshair;
+        public SpriteRenderer Fill => fill;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStatics()
         {
             cornerSprite = null;
+            crosshairSprite = null;
+            fillSprite = null;
             cornerMaterial = null;
+            crosshairMaterial = null;
+            fillMaterial = null;
         }
 
         private void OnDisable() => Present(false, default, Vector2.one, 0f);
@@ -168,71 +266,88 @@ namespace SubTerra.Gameplay.Mining
             Vector2 half = cellSize * 0.5f;
             Vector2 center = motion.Position;
             float inset = motion.Inset;
-            float hx = Mathf.Max(0f, half.x - inset);
-            float hy = Mathf.Max(0f, half.y - inset);
+            float hx = Mathf.Max(0f, half.x - inset) * motion.BracketSpread;
+            float hy = Mathf.Max(0f, half.y - inset) * motion.BracketSpread;
+            root.position = new Vector3(center.x, center.y, 0f);
+
+            var bracketColor = new Color(1f, 1f, 1f, BracketFinalAlpha * motion.BracketAlpha);
             // 0=좌하 1=우하 2=좌상 3=우상. 원본 그림은 좌하 모서리이고 나머지는 뒤집어 쓴다.
             for (int i = 0; i < corners.Length; i++)
             {
                 bool right = (i & 1) != 0;
                 bool top = (i & 2) != 0;
                 Transform t = corners[i].transform;
-                t.position = new Vector3(center.x + (right ? hx : -hx), center.y + (top ? hy : -hy), 0f);
+                t.localPosition = new Vector3(right ? hx : -hx, top ? hy : -hy, 0f);
                 t.localScale = new Vector3(cellSize.x, cellSize.y, 1f);
+                corners[i].color = bracketColor;
             }
+
+            Transform cross = crosshair.transform;
+            cross.localPosition = Vector3.zero;
+            cross.localRotation = Quaternion.Euler(0f, 0f, motion.CrosshairTurn);
+            float crossScale = motion.CrosshairScale;
+            cross.localScale = new Vector3(cellSize.x * crossScale, cellSize.y * crossScale, 1f);
+            crosshair.color = new Color(1f, 1f, 1f, CrosshairFinalAlpha * motion.CrosshairAlpha);
+
+            Transform tint = fill.transform;
+            tint.localPosition = Vector3.zero;
+            tint.localScale = new Vector3(cellSize.x, cellSize.y, 1f);
+            fill.color = new Color(1f, 1f, 1f, motion.FillAlpha);
         }
 
         private void EnsureBuilt()
         {
             if (root != null) return;
-            EnsureSprite();
+            EnsureSprites();
             root = new GameObject("MiningTargetReticle").transform;
             root.SetParent(null, false);
+
+            fill = NewRenderer("Tint", fillSprite, fillMaterial, FillSortingOrder);
             for (int i = 0; i < corners.Length; i++)
             {
-                var corner = new GameObject("Corner" + i);
-                corner.transform.SetParent(root, false);
-                var renderer = corner.AddComponent<SpriteRenderer>();
-                renderer.sprite = cornerSprite;
-                renderer.sharedMaterial = cornerMaterial;
-                renderer.color = ReticleColor;
-                renderer.flipX = (i & 1) != 0;
-                renderer.flipY = (i & 2) != 0;
-                renderer.sortingOrder = SortingOrder;
-                corners[i] = renderer;
+                SpriteRenderer corner = NewRenderer("Corner" + i, cornerSprite, cornerMaterial, SortingOrder);
+                corner.flipX = (i & 1) != 0;
+                corner.flipY = (i & 2) != 0;
+                corners[i] = corner;
             }
 
+            crosshair = NewRenderer("Crosshair", crosshairSprite, crosshairMaterial, CrosshairSortingOrder);
             root.gameObject.SetActive(false);
         }
 
-        private static void EnsureSprite()
+        private SpriteRenderer NewRenderer(string objectName, Sprite sprite, Material material, int order)
         {
-            if (cornerSprite != null && cornerMaterial != null) return;
-            var texture = new Texture2D(ArmPixels, ArmPixels, TextureFormat.RGBA32, false)
+            var child = new GameObject(objectName);
+            child.transform.SetParent(root, false);
+            var renderer = child.AddComponent<SpriteRenderer>();
+            renderer.sprite = sprite;
+            renderer.sharedMaterial = material;
+            renderer.color = new Color(1f, 1f, 1f, 0f);
+            renderer.sortingOrder = order;
+            return renderer;
+        }
+
+        private static void EnsureSprites()
+        {
+            if (cornerSprite != null && crosshairSprite != null && fillSprite != null
+                && cornerMaterial != null && crosshairMaterial != null && fillMaterial != null)
             {
-                name = "MiningTargetReticleCorner",
-                filterMode = FilterMode.Point,
-                wrapMode = TextureWrapMode.Clamp
-            };
-            var pixels = new Color32[ArmPixels * ArmPixels];
-            for (int y = 0; y < ArmPixels; y++)
-            {
-                for (int x = 0; x < ArmPixels; x++)
-                {
-                    bool arm = x < ThicknessPixels || y < ThicknessPixels;
-                    pixels[y * ArmPixels + x] = arm ? new Color32(255, 255, 255, 255) : new Color32(0, 0, 0, 0);
-                }
+                return;
             }
 
-            texture.SetPixels32(pixels);
-            texture.Apply(false, false);
-            // 피벗을 좌하 모서리에 둬서 뒤집어도 칸의 모서리에 그대로 붙는다.
-            cornerSprite = Sprite.Create(
-                texture,
-                new Rect(0f, 0f, ArmPixels, ArmPixels),
-                Vector2.zero,
-                PixelsPerUnit);
+            cornerSprite = MiningTargetReticleArt.BuildCornerSprite();
+            crosshairSprite = MiningTargetReticleArt.BuildCrosshairSprite();
+            fillSprite = MiningTargetReticleArt.BuildFillSprite();
             Shader shader = Shader.Find("Sprites/Default");
-            cornerMaterial = shader != null ? new Material(shader) { name = "MiningTargetReticle" } : null;
+            cornerMaterial = BuildMaterial(shader, "MiningTargetReticleCorner", cornerSprite);
+            crosshairMaterial = BuildMaterial(shader, "MiningTargetReticleCrosshair", crosshairSprite);
+            fillMaterial = BuildMaterial(shader, "MiningTargetReticleTint", fillSprite);
+        }
+
+        private static Material BuildMaterial(Shader shader, string materialName, Sprite sprite)
+        {
+            if (shader == null) return null;
+            return new Material(shader) { name = materialName, mainTexture = sprite.texture, hideFlags = HideFlags.HideAndDontSave };
         }
     }
 }

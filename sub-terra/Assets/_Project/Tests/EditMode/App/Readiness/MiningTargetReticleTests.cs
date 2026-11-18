@@ -447,6 +447,162 @@ namespace SubTerra.App.Tests.EditMode.Readiness
                 Assert.That(corner.sortingOrder, Is.LessThan(90));
         }
 
+        // ───── B-202-2: 등장(락온) 연출·조준선 ─────
+
+        [Test]
+        public void Motion_AppearStartsOpenAndInvisible_ThenLocksOnToFinal()
+        {
+            var motion = new MiningReticleMotion();
+            motion.SetTarget(Vector2.zero, false);
+            motion.Tick(0f, false);
+            Assert.That(motion.BracketSpread, Is.EqualTo(MiningReticleMotion.AppearStartSpread).Within(1e-4f));
+            Assert.That(motion.BracketAlpha, Is.EqualTo(0f).Within(1e-4f));
+            Assert.That(motion.CrosshairScale, Is.EqualTo(MiningReticleMotion.CrosshairStartScale).Within(1e-4f));
+            Assert.That(motion.CrosshairTurn, Is.EqualTo(MiningReticleMotion.CrosshairStartTurnDegrees).Within(1e-3f));
+            Assert.That(motion.CrosshairAlpha, Is.EqualTo(0f).Within(1e-4f));
+            Assert.That(motion.FillAlpha, Is.EqualTo(0f).Within(1e-4f));
+
+            motion.Tick(MiningReticleMotion.AppearSeconds * .5f, false);
+            Assert.That(motion.BracketSpread, Is.LessThan(MiningReticleMotion.AppearStartSpread).And.GreaterThan(1f));
+            Assert.That(motion.BracketAlpha, Is.GreaterThan(0f));
+            Assert.That(motion.CrosshairScale, Is.LessThan(MiningReticleMotion.CrosshairStartScale).And.GreaterThan(1f));
+            Assert.That(motion.CrosshairTurn, Is.GreaterThan(0f).And.LessThan(MiningReticleMotion.CrosshairStartTurnDegrees));
+            // ease-out이라 반 시간에 이미 대부분 조여들었다.
+            Assert.That(motion.BracketSpread, Is.LessThan(1f + (MiningReticleMotion.AppearStartSpread - 1f) * .5f));
+
+            motion.Tick(MiningReticleMotion.AppearSeconds, false);
+            Assert.That(motion.BracketSpread, Is.EqualTo(1f).Within(1e-4f));
+            Assert.That(motion.BracketAlpha, Is.EqualTo(1f).Within(1e-4f));
+            Assert.That(motion.CrosshairScale, Is.EqualTo(1f).Within(1e-4f));
+            Assert.That(motion.CrosshairTurn, Is.EqualTo(0f).Within(1e-4f));
+            Assert.That(motion.CrosshairAlpha, Is.EqualTo(1f).Within(1e-4f));
+            Assert.That(motion.FillAlpha, Is.EqualTo(MiningReticleMotion.FillSettledAlpha).Within(1e-4f));
+        }
+
+        [Test]
+        public void Motion_CrosshairLagsBehindBrackets()
+        {
+            var motion = new MiningReticleMotion();
+            motion.SetTarget(Vector2.zero, false);
+            motion.Tick(MiningReticleMotion.AppearSeconds * MiningReticleMotion.CrosshairDelay * .9f, false);
+            Assert.That(motion.BracketAlpha, Is.GreaterThan(0f));
+            Assert.That(motion.CrosshairAlpha, Is.EqualTo(0f).Within(1e-4f), "조준선은 꺾쇠보다 늦게 나타난다");
+        }
+
+        [Test]
+        public void Motion_MovingWhileVisibleOnlyPulsesSmallRetarget_NotFullAppear_ButShowAfterHideReplays()
+        {
+            var motion = new MiningReticleMotion();
+            motion.SetTarget(Vector2.zero, false);
+            motion.Tick(MiningReticleMotion.AppearSeconds * 2f, false);
+
+            motion.SetTarget(new Vector2(2f, 0f), false);
+            motion.Tick(0f, false);
+            Assert.That(motion.BracketAlpha, Is.EqualTo(1f).Within(1e-4f), "칸 이동은 등장처럼 사라졌다 나타나지 않는다");
+            Assert.That(motion.CrosshairAlpha, Is.EqualTo(1f).Within(1e-4f));
+            Assert.That(motion.BracketSpread, Is.EqualTo(MiningReticleMotion.RetargetSpread).Within(1e-4f));
+            Assert.That(motion.BracketSpread, Is.LessThan(MiningReticleMotion.AppearStartSpread));
+            motion.Tick(MiningReticleMotion.SlideSeconds * .5f, false);
+            Assert.That(motion.Position.x, Is.GreaterThan(0f).And.LessThan(2f), "미끄러짐은 그대로 돈다");
+            motion.Tick(MiningReticleMotion.RetargetSeconds, false);
+            Assert.That(motion.BracketSpread, Is.EqualTo(1f).Within(1e-4f));
+            Assert.That(motion.CrosshairTurn, Is.EqualTo(0f).Within(1e-4f));
+
+            motion.Hide();
+            motion.SetTarget(new Vector2(2f, 0f), false);
+            motion.Tick(0f, false);
+            Assert.That(motion.BracketSpread, Is.EqualTo(MiningReticleMotion.AppearStartSpread).Within(1e-4f), "숨겼다 다시 뜨면 등장 재생");
+            Assert.That(motion.BracketAlpha, Is.EqualTo(0f).Within(1e-4f));
+        }
+
+        [Test]
+        public void Motion_AppearPlaysEvenWithReduceMotion_WhileCornersStayStatic()
+        {
+            var motion = new MiningReticleMotion();
+            motion.SetTarget(Vector2.zero, true);
+            motion.Tick(MiningReticleMotion.AppearSeconds * .25f, true);
+            Assert.That(motion.BracketSpread, Is.GreaterThan(1f), "등장은 로컬 연출이라 모션 감소에서도 재생");
+            Assert.That(motion.Inset, Is.EqualTo(0f));
+            motion.Tick(MiningReticleMotion.AppearSeconds, true);
+            Assert.That(motion.BracketSpread, Is.EqualTo(1f).Within(1e-4f));
+
+            // 모션 감소 중 칸 이동은 재조준 맥동 없이 그대로 붙는다.
+            motion.SetTarget(new Vector2(5f, 0f), true);
+            motion.Tick(0f, true);
+            Assert.That(motion.BracketSpread, Is.EqualTo(1f).Within(1e-4f));
+            Assert.That(motion.Position, Is.EqualTo(new Vector2(5f, 0f)));
+        }
+
+        [Test]
+        public void Reticle_BuildsDetailedArt_AndPartsLayerBelowCracksAndScan()
+        {
+            var reticle = player.AddComponent<MiningTargetReticle>();
+            reticle.Present(true, new Vector3(2.5f, 1.5f, 0f), Vector2.one, .5f);
+            Assert.That(reticle.Corners[0].sprite.texture.width, Is.GreaterThanOrEqualTo(48), "거친 8px 그림이 아니라 고해상도");
+            Assert.That(reticle.Crosshair.sprite.texture.width, Is.GreaterThanOrEqualTo(48));
+            Assert.That(reticle.Fill, Is.Not.Null);
+            // 텍스처가 다른 스프라이트가 한 머티리얼을 공유하면 첫 텍스처로 다 그려져 꺾쇠가 뭉개진다.
+            Assert.That(reticle.Corners[0].sharedMaterial, Is.Not.SameAs(reticle.Crosshair.sharedMaterial));
+            Assert.That(reticle.Corners[0].sharedMaterial, Is.Not.SameAs(reticle.Fill.sharedMaterial));
+            Assert.That(reticle.Crosshair.sharedMaterial, Is.Not.SameAs(reticle.Fill.sharedMaterial));
+            foreach (var part in new[] { reticle.Corners[0], reticle.Corners[3], reticle.Crosshair, reticle.Fill })
+                Assert.That(part.sharedMaterial.mainTexture, Is.SameAs(part.sprite.texture), part.name);
+            Assert.That(reticle.Fill.sortingOrder, Is.LessThan(reticle.Corners[0].sortingOrder));
+            Assert.That(reticle.Crosshair.sortingOrder, Is.GreaterThanOrEqualTo(reticle.Corners[0].sortingOrder));
+            Assert.That(reticle.Crosshair.sortingOrder, Is.LessThan(90));
+            // 꺾쇠 그림은 모서리 쪽에만 있고(칸 중앙 쪽 위쪽 끝은 비어 있음), 한가운데 조준선은 중심이 차 있다.
+            Assert.That(CenterAlpha(reticle.Crosshair.sprite), Is.GreaterThan(.9f), "조준선 중심점");
+            // 꺾쇠 스프라이트는 모서리에서 먼 안쪽(칸 중앙 쪽)이 비어 있다. 안쪽 다이아 점과도 떨어진 곳을 본다.
+            var corner = reticle.Corners[0].sprite.texture;
+            Assert.That(corner.GetPixel(corner.width - 6, corner.height - 6).a, Is.LessThan(.05f), "꺾쇠 안쪽은 비어 있다");
+            Assert.That(corner.GetPixel(MiningTargetReticleArt.CornerMargin + 20, MiningTargetReticleArt.CornerMargin + 3).a,
+                Is.GreaterThan(.9f), "꺾쇠 팔 위");
+        }
+
+        [Test]
+        public void Reticle_AppliesLockOnToPartsAndKeepsCrosshairCentered()
+        {
+            var reticle = player.AddComponent<MiningTargetReticle>();
+            var center = new Vector3(2.5f, 1.5f, 0f);
+            reticle.Present(true, center, Vector2.one, 0f);
+            Assert.That(reticle.BracketSpread, Is.EqualTo(MiningReticleMotion.AppearStartSpread).Within(1e-4f));
+            Assert.That(reticle.Corners[0].color.a, Is.EqualTo(0f).Within(1e-4f));
+            Assert.That(reticle.Crosshair.color.a, Is.EqualTo(0f).Within(1e-4f));
+            // 벌어진 상태: 좌하 꺾쇠가 칸 모서리보다 더 바깥에 있다.
+            Assert.That(reticle.Corners[0].transform.position.x, Is.LessThan(center.x - .5f - .1f));
+            Assert.That(reticle.Crosshair.transform.position.x, Is.EqualTo(center.x).Within(1e-4f), "조준선은 칸 한가운데");
+            Assert.That(reticle.Crosshair.transform.position.y, Is.EqualTo(center.y).Within(1e-4f));
+            Vector3 mid = (reticle.Corners[0].transform.position + reticle.Corners[3].transform.position) * .5f;
+            Assert.That(mid.x, Is.EqualTo(center.x).Within(1e-4f), "벌어져도 칸 중심에서 밀리지 않는다");
+            Assert.That(mid.y, Is.EqualTo(center.y).Within(1e-4f));
+
+            reticle.Present(true, center, Vector2.one, MiningReticleMotion.AppearSeconds * 2f);
+            // 등장이 끝나면 꺾쇠는 칸 모서리에서 느린 조임(Inset)만큼만 안쪽에 있다.
+            Assert.That(reticle.Corners[0].transform.position.x, Is.EqualTo(center.x - (.5f - reticle.Inset)).Within(1e-4f));
+            Assert.That(reticle.Corners[3].transform.position.y, Is.EqualTo(center.y + (.5f - reticle.Inset)).Within(1e-4f));
+            Assert.That(reticle.Corners[0].color.a, Is.EqualTo(MiningTargetReticle.BracketFinalAlpha).Within(1e-4f));
+            Assert.That(reticle.Crosshair.color.a, Is.EqualTo(MiningTargetReticle.CrosshairFinalAlpha).Within(1e-4f));
+            Assert.That(reticle.Crosshair.transform.localScale.x, Is.EqualTo(1f).Within(1e-4f));
+            Assert.That(reticle.Crosshair.transform.localEulerAngles.z, Is.EqualTo(0f).Within(1e-3f));
+            Assert.That(reticle.Fill.color.a, Is.EqualTo(MiningReticleMotion.FillSettledAlpha).Within(1e-4f));
+
+            // 이미 보이는 채로 칸을 옮겨도 사라졌다 다시 나타나지 않는다(작은 재조준 맥동만).
+            reticle.Present(true, center + Vector3.right, Vector2.one, .016f);
+            Assert.That(reticle.Corners[0].color.a, Is.EqualTo(MiningTargetReticle.BracketFinalAlpha).Within(1e-4f));
+
+            // 숨겼다 다시 뜨면 등장을 다시 재생한다.
+            reticle.Present(false, default, Vector2.one, 0f);
+            reticle.Present(true, center, Vector2.one, 0f);
+            Assert.That(reticle.BracketSpread, Is.EqualTo(MiningReticleMotion.AppearStartSpread).Within(1e-4f));
+            Assert.That(reticle.Corners[0].color.a, Is.EqualTo(0f).Within(1e-4f));
+        }
+
+        private static float CenterAlpha(Sprite sprite)
+        {
+            var texture = sprite.texture;
+            return texture.GetPixel(texture.width / 2, texture.height / 2).a;
+        }
+
         private static void Set(object target, string name, object value) => target.GetType().GetField(name, Private).SetValue(target, value);
         private static void Invoke(object target, string name, params object[] args) => target.GetType().GetMethod(name, Private).Invoke(target, args);
     }
