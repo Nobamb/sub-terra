@@ -1,0 +1,609 @@
+using System.Reflection;
+using NUnit.Framework;
+using SubTerra.Gameplay.Mining;
+using SubTerra.Gameplay.Player;
+using SubTerra.Shared;
+using UnityEditor;
+using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.LowLevel;
+using UnityEngine.Tilemaps;
+
+namespace SubTerra.App.Tests.EditMode.Readiness
+{
+    /// <summary>B-202: 채굴 과녁이 실제 채굴 칸과 같은 칸을 고르고, 규칙대로 숨고, 우선권·모션 감소를 따르는지 확인한다.</summary>
+    public sealed class MiningTargetReticleTests
+    {
+        private const BindingFlags Private = BindingFlags.Instance | BindingFlags.NonPublic;
+        private const float Reach = PlayerMiningController.DefaultReach;
+        private static readonly Vector2 Origin = new Vector2(.5f, .5f);
+
+        private sealed class DrillStub : IUpgradeEffectProvider
+        {
+            public int Level;
+            public int GetDrillLevel() => Level;
+            public float GetDrillSpeedMultiplier() => 1f;
+            public float GetEnergyEfficiencyMultiplier() => 1f;
+            public int GetMaximumEnergy(int baseMaximum) => baseMaximum;
+            public float GetMaximumCargoWeight(float baseMaximum) => baseMaximum;
+            public float GetDroneScanRadius(float baseRadius) => baseRadius;
+            public float GetDroneRescuePreservation(float basePreservation) => basePreservation;
+            public float GetGasResistance() => 0f;
+            public int GetMiningYieldBonus(string mineralId) => 0;
+            public int GetGoldGainBonusPercent() => 0;
+            public float GetMaximumOxygen(float baseMaximum) => baseMaximum;
+            public float GetOxygenDrainReduction() => 0f;
+        }
+
+        private GameObject world;
+        private GameObject player;
+        private Tilemap map;
+        private MiningSystem mining;
+        private MiningTileResolver resolver;
+        private Tile mineable;
+        private Tile hard;
+        private Tile drillTwo;
+        private PlayerMovement movement;
+        private PlayerAnimationController animation;
+        private PlayerMiningController controller;
+        private bool wasSettingsOpen;
+        private bool wasReduceMotion;
+
+        [SetUp]
+        public void SetUp()
+        {
+            wasSettingsOpen = ControlPreferences.IsSettingsOpen;
+            wasReduceMotion = AccessibilityPreferences.ReduceMotion;
+            ControlPreferences.IsSettingsOpen = false;
+            AccessibilityPreferences.ReduceMotion = false;
+            BuildingPlacementActivity.ResetForTests();
+
+            world = new GameObject("B202 test world", typeof(Grid));
+            var tiles = new GameObject("Tiles", typeof(Tilemap));
+            tiles.transform.SetParent(world.transform);
+            map = tiles.GetComponent<Tilemap>();
+            resolver = world.AddComponent<MiningTileResolver>();
+            mining = world.AddComponent<MiningSystem>();
+            Set(mining, "foregroundTilemap", map);
+            Set(mining, "tileResolver", resolver);
+            mineable = ScriptableObject.CreateInstance<Tile>();
+            hard = ScriptableObject.CreateInstance<Tile>();
+            drillTwo = ScriptableObject.CreateInstance<Tile>();
+            resolver.RegisterRuntime(mineable, new MiningTileDto("tile.b202", "", 0, true, 1f, 5f, 0f, false));
+            resolver.RegisterRuntime(hard, new MiningTileDto("tile.b202.hard", "", 0, false, 1f, 5f, 0f, false));
+            resolver.RegisterRuntime(drillTwo, new MiningTileDto("tile.b202.drill", "", 0, true, 1f, 5f, 0f, false, 2));
+            mining.SetRuntimeServices(null, new DrillStub { Level = 0 });
+
+            player = Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(
+                "Assets/_Project/Prefabs/Gameplay/Player/Player.prefab"));
+            player.transform.position = new Vector3(Origin.x, Origin.y, 0f);
+            movement = player.GetComponent<PlayerMovement>();
+            animation = player.GetComponentInChildren<PlayerAnimationController>();
+            controller = player.GetComponent<PlayerMiningController>();
+            if (controller == null) controller = player.AddComponent<PlayerMiningController>();
+            Invoke(movement, "Awake");
+            player.GetComponent<Rigidbody2D>().position = Origin;
+            Invoke(animation, "Awake");
+            Invoke(controller, "Awake");
+            Set(controller, "miningSystem", mining);
+            Set(movement, "<IsGrounded>k__BackingField", true);
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            Object.DestroyImmediate(player);
+            Object.DestroyImmediate(world);
+            Object.DestroyImmediate(mineable);
+            Object.DestroyImmediate(hard);
+            Object.DestroyImmediate(drillTwo);
+            BuildingPlacementActivity.ResetForTests();
+            ControlPreferences.IsSettingsOpen = wasSettingsOpen;
+            AccessibilityPreferences.ReduceMotion = wasReduceMotion;
+        }
+
+        private static Vector3Int Cell(int x, int y) => new Vector3Int(x, y, 0);
+
+        private int Side => movement.FacingDirection >= 0f ? 1 : -1;
+
+        // ───── 키보드: 엔터 ─────
+
+        [Test]
+        public void Enter_LookupMatchesStartedCell_ForSideThenUpThenDown()
+        {
+            Vector3Int side = Cell(Side, 0);
+            Vector3Int up = side + Vector3Int.up;
+            Vector3Int down = side + Vector3Int.down;
+            map.SetTile(up, mineable);
+            map.SetTile(down, mineable);
+            map.SetTile(side, mineable);
+
+            AssertEnterMatchesStart(side);
+
+            map.SetTile(side, null);
+            AssertEnterMatchesStart(up);
+
+            map.SetTile(up, null);
+            AssertEnterMatchesStart(down);
+
+            map.SetTile(down, null);
+            Assert.That(mining.TryGetKeyboardTarget(Origin, movement.FacingDirection, Vector2.zero, false, Reach, out _), Is.False);
+            Assert.That(mining.TryStartMiningFrom(Origin, movement.FacingDirection, Reach), Is.False);
+        }
+
+        private void AssertEnterMatchesStart(Vector3Int expected)
+        {
+            Assert.That(mining.TryGetKeyboardTarget(Origin, movement.FacingDirection, Vector2.zero, false, Reach, out var cell), Is.True);
+            Assert.That(cell, Is.EqualTo(expected));
+            Assert.That(mining.TryStartMiningFrom(Origin, movement.FacingDirection, Reach), Is.True);
+            Assert.That(mining.ActiveCell, Is.EqualTo(cell));
+            mining.CancelMining();
+        }
+
+        // ───── 키보드: 채굴 방향키 ─────
+
+        [TestCase(0, 1)]
+        [TestCase(0, -1)]
+        [TestCase(1, 0)]
+        [TestCase(-1, 0)]
+        public void DirectionKey_LookupMatchesStartedAdjacentCell(int x, int y)
+        {
+            map.SetTile(Cell(x, y), mineable);
+            Assert.That(mining.TryGetKeyboardTarget(Origin, movement.FacingDirection, new Vector2(x, y), false, Reach, out var cell), Is.True);
+            Assert.That(cell, Is.EqualTo(Cell(x, y)));
+            Assert.That(mining.TryStartMiningInDirection(Origin, new Vector2(x, y), Reach), Is.True);
+            Assert.That(mining.ActiveCell, Is.EqualTo(cell));
+        }
+
+        [Test]
+        public void DirectionKey_DoesNotFallBackToOtherCells()
+        {
+            map.SetTile(Cell(1, 1), mineable);
+            map.SetTile(Cell(1, -1), mineable);
+            // 오른쪽 방향키인데 옆칸이 비어 있어도 위·아래로 대체하지 않는다. 칸은 돌려주되 지형 검사에서 걸린다.
+            Assert.That(mining.TryGetKeyboardTarget(Origin, 1f, Vector2.right, false, Reach, out var cell), Is.True);
+            Assert.That(cell, Is.EqualTo(Cell(1, 0)));
+            Assert.That(mining.IsTargetTerrainMineable(cell), Is.False);
+        }
+
+        // ───── 사다리 ─────
+
+        [TestCase(0, 1)]
+        [TestCase(0, -1)]
+        public void Ladder_VerticalDirectionHasNoTarget(int x, int y)
+        {
+            map.SetTile(Cell(x, y), mineable);
+            Assert.That(mining.TryGetKeyboardTarget(Origin, 1f, new Vector2(x, y), true, Reach, out _), Is.False);
+        }
+
+        [Test]
+        public void Ladder_EnterUsesFacingSideOnlyWithoutVerticalFallback()
+        {
+            map.SetTile(Cell(1, 1), mineable);
+            map.SetTile(Cell(1, -1), mineable);
+            Assert.That(mining.TryGetKeyboardTarget(Origin, 1f, Vector2.zero, true, Reach, out var cell), Is.True);
+            Assert.That(cell, Is.EqualTo(Cell(1, 0)));
+            Assert.That(mining.IsTargetTerrainMineable(cell), Is.False, "옆칸이 비면 과녁은 없다");
+
+            map.SetTile(Cell(1, 0), mineable);
+            Assert.That(mining.TryGetKeyboardTarget(Origin, 1f, Vector2.zero, true, Reach, out cell), Is.True);
+            Assert.That(cell, Is.EqualTo(Cell(1, 0)));
+            Assert.That(mining.TryGetKeyboardTarget(Origin, -1f, Vector2.left, true, Reach, out cell), Is.True);
+            Assert.That(cell, Is.EqualTo(Cell(-1, 0)));
+        }
+
+        [Test]
+        public void Ladder_PointerAllowsOnlySameRowOtherColumn()
+        {
+            foreach (var offset in new[] { Cell(0, 1), Cell(0, -1), Cell(1, 1), Cell(-1, 1), Cell(1, 0), Cell(-1, 0), Cell(0, 0) })
+                map.SetTile(offset, mineable);
+            foreach (var offset in new[] { Cell(0, 1), Cell(0, -1), Cell(1, 1), Cell(-1, 1), Cell(0, 0) })
+                Assert.That(mining.TryGetPointerTarget(map.GetCellCenterWorld(offset), Origin, true, Reach, out _), Is.False, offset.ToString());
+            Assert.That(mining.TryGetPointerTarget(map.GetCellCenterWorld(Cell(1, 0)), Origin, true, Reach, out var cell), Is.True);
+            Assert.That(cell, Is.EqualTo(Cell(1, 0)));
+            // 같은 점이 바닥에서는 위·아래 칸도 허용된다.
+            Assert.That(mining.TryGetPointerTarget(map.GetCellCenterWorld(Cell(0, 1)), Origin, false, Reach, out _), Is.True);
+        }
+
+        // ───── 마우스 ─────
+
+        [Test]
+        public void Pointer_LookupMatchesClickCell_AndRespectsReach()
+        {
+            map.SetTile(Cell(1, 1), mineable);
+            map.SetTile(Cell(3, 0), mineable);
+            Vector2 inside = map.GetCellCenterWorld(Cell(1, 1)) + new Vector3(.2f, -.2f, 0f);
+            Assert.That(mining.TryGetPointerTarget(inside, Origin, false, Reach, out var cell), Is.True);
+            Assert.That(cell, Is.EqualTo(Cell(1, 1)));
+            Assert.That(mining.TryStartMiningAtWorldPoint(inside, Origin, Reach), Is.True);
+            Assert.That(mining.ActiveCell, Is.EqualTo(cell));
+            mining.CancelMining();
+
+            Vector2 far = map.GetCellCenterWorld(Cell(3, 0));
+            Assert.That(mining.TryGetPointerTarget(far, Origin, false, Reach, out _), Is.False);
+            Assert.That(mining.TryStartMiningAtWorldPoint(far, Origin, Reach), Is.False);
+        }
+
+        // ───── 지형·드릴·전력 ─────
+
+        [Test]
+        public void Terrain_HidesForNoTileUnmineableAndLowDrill_ButStartFailureStillReported()
+        {
+            map.SetTile(Cell(1, 0), mineable);
+            map.SetTile(Cell(-1, 0), hard);
+            map.SetTile(Cell(0, 1), drillTwo);
+            Assert.That(mining.IsTargetTerrainMineable(Cell(1, 0)), Is.True);
+            Assert.That(mining.IsTargetTerrainMineable(Cell(0, -1)), Is.False, "타일 없음");
+            Assert.That(mining.IsTargetTerrainMineable(Cell(-1, 0)), Is.False, "캘 수 없음");
+            Assert.That(mining.IsTargetTerrainMineable(Cell(0, 1)), Is.False, "드릴 레벨 부족");
+
+            Assert.That(mining.TryStartMining(Cell(0, 1)), Is.False);
+            Assert.That(mining.LastFailure, Is.EqualTo(MiningFailureReason.DrillLevelTooLow), "실패 HUD용 사유는 그대로");
+        }
+
+        [Test]
+        public void Terrain_ProtectedCellHides()
+        {
+            map.SetTile(Cell(1, 0), mineable);
+            mining.SetCellProtectionPredicate(cell => cell == Cell(1, 0));
+            Assert.That(mining.IsTargetTerrainMineable(Cell(1, 0)), Is.False);
+        }
+
+        [Test]
+        public void NoPower_DoesNotHideTarget()
+        {
+            map.SetTile(Cell(1, 0), mineable);
+            mining.SetMiningPowerAvailable(false);
+            Assert.That(mining.IsTargetTerrainMineable(Cell(1, 0)), Is.True);
+        }
+
+        // ───── 컨트롤러 조회 ─────
+
+        [Test]
+        public void Controller_KeyboardAndPointerLookups_UseSameRulesAsStart()
+        {
+            map.SetTile(Cell(Side, 0), mineable);
+            Assert.That(controller.TryResolveKeyboardReticleCell(out var cell), Is.True);
+            Assert.That(cell, Is.EqualTo(Cell(Side, 0)));
+
+            map.SetTile(Cell(0, 1), mineable);
+            Vector2 world = map.GetCellCenterWorld(Cell(0, 1));
+            Assert.That(controller.TryResolvePointerReticleCell(world, out cell), Is.True);
+            Assert.That(cell, Is.EqualTo(Cell(0, 1)));
+
+            map.SetTile(Cell(0, 1), drillTwo);
+            Assert.That(controller.TryResolvePointerReticleCell(world, out _), Is.False);
+        }
+
+        [Test]
+        public void Controller_PointerOutOfReachFallsBackToKeyboard_AndRecoversOnValidHover()
+        {
+            var keyboardCell = Cell(Side, 0);
+            var pointerCell = Cell(0, 1);
+            var outOfReachCell = Cell(3, 0);
+            map.SetTile(keyboardCell, mineable);
+            map.SetTile(pointerCell, mineable);
+            map.SetTile(outOfReachCell, mineable);
+
+            var camera = Camera.main;
+            if (camera == null)
+            {
+                camera = new GameObject("Mining reticle test camera", typeof(Camera)).GetComponent<Camera>();
+                camera.transform.SetParent(world.transform);
+                camera.transform.position = new Vector3(0f, 0f, -10f);
+                camera.orthographic = true;
+                camera.tag = "MainCamera";
+            }
+
+            var previousMouse = Mouse.current;
+            var mouse = InputSystem.AddDevice<Mouse>();
+            try
+            {
+                mouse.MakeCurrent();
+                controller.TargetPriority.NotePointerInput();
+                InputState.Change(mouse.position, (Vector2)camera.WorldToScreenPoint(map.GetCellCenterWorld(pointerCell)));
+                Assert.That(controller.TryResolveReticleCell(out var cell), Is.True);
+                Assert.That(cell, Is.EqualTo(pointerCell));
+
+                InputState.Change(mouse.position, (Vector2)camera.WorldToScreenPoint(map.GetCellCenterWorld(outOfReachCell)));
+                Assert.That(controller.TryResolveReticleCell(out cell), Is.True);
+                Assert.That(cell, Is.EqualTo(keyboardCell));
+                Assert.That(controller.TargetPriority.Source, Is.EqualTo(MiningTargetSource.Pointer));
+
+                InputState.Change(mouse.position, (Vector2)camera.WorldToScreenPoint(map.GetCellCenterWorld(pointerCell)));
+                Assert.That(controller.TryResolveReticleCell(out cell), Is.True);
+                Assert.That(cell, Is.EqualTo(pointerCell));
+            }
+            finally
+            {
+                InputSystem.RemoveDevice(mouse);
+                previousMouse?.MakeCurrent();
+            }
+        }
+
+        [Test]
+        public void Controller_PriorityPicksPointerOrKeyboardCell_AndMiningPinsActiveCell()
+        {
+            map.SetTile(Cell(Side, 0), mineable);
+            map.SetTile(Cell(0, -1), mineable);
+            Assert.That(controller.TargetPriority.Source, Is.EqualTo(MiningTargetSource.Keyboard));
+            Assert.That(controller.TryResolveReticleCell(out var cell), Is.True);
+            Assert.That(cell, Is.EqualTo(Cell(Side, 0)));
+
+            // 채굴 중에는 우선권과 무관하게 캐는 칸에 붙는다.
+            Assert.That(mining.TryStartMining(Cell(0, -1)), Is.True);
+            controller.TargetPriority.NotePointerInput();
+            Assert.That(controller.TryResolveReticleCell(out cell), Is.True);
+            Assert.That(cell, Is.EqualTo(Cell(0, -1)));
+
+            // 채굴이 끝나면 현재 입력 우선순위로 다음 목표를 고른다.
+            mining.CancelMining();
+            controller.TargetPriority.NoteKeyboardInput();
+            Assert.That(controller.TryResolveReticleCell(out cell), Is.True);
+            Assert.That(cell, Is.EqualTo(Cell(Side, 0)));
+        }
+
+        // ───── 게이트와 표시 ─────
+
+        [Test]
+        public void Reticle_ShowsOnKeyboardTarget_AndHidesInSettingsAndBuildMode()
+        {
+            map.SetTile(Cell(Side, 0), mineable);
+            Invoke(controller, "UpdateTargetReticle", .016f);
+            var reticle = controller.Reticle;
+            Assert.That(reticle, Is.Not.Null);
+            Assert.That(reticle.IsVisible, Is.True);
+            Assert.That((Vector3)reticle.TargetCenter, Is.EqualTo(map.GetCellCenterWorld(Cell(Side, 0))));
+
+            ControlPreferences.IsSettingsOpen = true;
+            Invoke(controller, "UpdateTargetReticle", .016f);
+            Assert.That(reticle.IsVisible, Is.False);
+            ControlPreferences.IsSettingsOpen = false;
+
+            Invoke(controller, "UpdateTargetReticle", .016f);
+            Assert.That(reticle.IsVisible, Is.True);
+            BuildingPlacementActivity.Begin();
+            Invoke(controller, "UpdateTargetReticle", .016f);
+            Assert.That(reticle.IsVisible, Is.False);
+            BuildingPlacementActivity.End();
+
+            map.SetTile(Cell(Side, 0), null);
+            Invoke(controller, "UpdateTargetReticle", .016f);
+            Assert.That(reticle.IsVisible, Is.False, "목표 없음");
+        }
+
+        [Test]
+        public void Reticle_DisablingControllerHidesIt()
+        {
+            map.SetTile(Cell(Side, 0), mineable);
+            Invoke(controller, "UpdateTargetReticle", .016f);
+            var reticle = controller.Reticle;
+            Assert.That(reticle.IsVisible, Is.True);
+            Invoke(controller, "OnDisable"); // EditMode에서는 자동 호출되지 않는다
+            Assert.That(reticle.IsVisible, Is.False);
+        }
+
+        // ───── 순수 로직 ─────
+
+        [Test]
+        public void Priority_LastInputWins_AndStartsWithKeyboard()
+        {
+            var priority = new MiningTargetPriority();
+            Assert.That(priority.Source, Is.EqualTo(MiningTargetSource.Keyboard));
+            priority.NotePointerInput();
+            Assert.That(priority.Source, Is.EqualTo(MiningTargetSource.Pointer));
+            priority.NoteKeyboardInput();
+            Assert.That(priority.Source, Is.EqualTo(MiningTargetSource.Keyboard));
+            priority.NotePointerInput();
+            priority.Reset();
+            Assert.That(priority.Source, Is.EqualTo(MiningTargetSource.Keyboard));
+        }
+
+        [Test]
+        public void Motion_SlidesOnTargetChange_AndPinchesSlowly()
+        {
+            var motion = new MiningReticleMotion();
+            motion.SetTarget(Vector2.zero, false);
+            motion.Tick(0f, false);
+            Assert.That(motion.Visible, Is.True);
+            Assert.That(motion.Inset, Is.EqualTo(0f).Within(1e-4f));
+
+            motion.SetTarget(new Vector2(2f, 0f), false);
+            motion.Tick(MiningReticleMotion.SlideSeconds * .5f, false);
+            Assert.That(motion.Position.x, Is.GreaterThan(0f).And.LessThan(2f), "미끄러지는 중");
+            motion.Tick(MiningReticleMotion.SlideSeconds, false);
+            Assert.That(motion.Position.x, Is.EqualTo(2f).Within(1e-4f));
+
+            motion.Tick(MiningReticleMotion.PinchPeriodSeconds * .5f - MiningReticleMotion.SlideSeconds * 1.5f, false);
+            Assert.That(motion.Inset, Is.EqualTo(MiningReticleMotion.PinchDepth).Within(1e-3f), "반 주기에 가장 조여든다");
+        }
+
+        [Test]
+        public void Motion_ReduceMotionKeepsStaticCornersWithoutSlide()
+        {
+            AccessibilityPreferences.ReduceMotion = true;
+            var motion = new MiningReticleMotion();
+            motion.SetTarget(Vector2.zero, true);
+            motion.SetTarget(new Vector2(3f, 1f), true);
+            motion.Tick(.3f, true);
+            Assert.That(motion.Position, Is.EqualTo(new Vector2(3f, 1f)));
+            Assert.That(motion.Inset, Is.EqualTo(0f));
+            motion.Tick(MiningReticleMotion.PinchPeriodSeconds * .5f, true);
+            Assert.That(motion.Inset, Is.EqualTo(0f));
+        }
+
+        [Test]
+        public void Reticle_ReduceMotionPlacesStaticCornersImmediately()
+        {
+            var reticle = player.AddComponent<MiningTargetReticle>();
+            AccessibilityPreferences.ReduceMotion = true;
+            reticle.Present(true, new Vector3(1.5f, .5f, 0f), Vector2.one, .5f);
+            reticle.Present(true, new Vector3(4.5f, 2.5f, 0f), Vector2.one, .016f);
+            Assert.That(reticle.CurrentCenter, Is.EqualTo(new Vector2(4.5f, 2.5f)));
+            Assert.That(reticle.Inset, Is.EqualTo(0f));
+            Assert.That(reticle.Corners[0].transform.position.x, Is.EqualTo(4f).Within(1e-4f));
+            Assert.That(reticle.Corners[3].transform.position.y, Is.EqualTo(3f).Within(1e-4f));
+            foreach (var corner in reticle.Corners)
+                Assert.That(corner.sortingOrder, Is.LessThan(90));
+        }
+
+        // ───── B-202-2: 등장(락온) 연출·조준선 ─────
+
+        [Test]
+        public void Motion_AppearStartsOpenAndInvisible_ThenLocksOnToFinal()
+        {
+            var motion = new MiningReticleMotion();
+            motion.SetTarget(Vector2.zero, false);
+            motion.Tick(0f, false);
+            Assert.That(motion.BracketSpread, Is.EqualTo(MiningReticleMotion.AppearStartSpread).Within(1e-4f));
+            Assert.That(motion.BracketAlpha, Is.EqualTo(0f).Within(1e-4f));
+            Assert.That(motion.CrosshairScale, Is.EqualTo(MiningReticleMotion.CrosshairStartScale).Within(1e-4f));
+            Assert.That(motion.CrosshairTurn, Is.EqualTo(MiningReticleMotion.CrosshairStartTurnDegrees).Within(1e-3f));
+            Assert.That(motion.CrosshairAlpha, Is.EqualTo(0f).Within(1e-4f));
+            Assert.That(motion.FillAlpha, Is.EqualTo(0f).Within(1e-4f));
+
+            motion.Tick(MiningReticleMotion.AppearSeconds * .5f, false);
+            Assert.That(motion.BracketSpread, Is.LessThan(MiningReticleMotion.AppearStartSpread).And.GreaterThan(1f));
+            Assert.That(motion.BracketAlpha, Is.GreaterThan(0f));
+            Assert.That(motion.CrosshairScale, Is.LessThan(MiningReticleMotion.CrosshairStartScale).And.GreaterThan(1f));
+            Assert.That(motion.CrosshairTurn, Is.GreaterThan(0f).And.LessThan(MiningReticleMotion.CrosshairStartTurnDegrees));
+            // ease-out이라 반 시간에 이미 대부분 조여들었다.
+            Assert.That(motion.BracketSpread, Is.LessThan(1f + (MiningReticleMotion.AppearStartSpread - 1f) * .5f));
+
+            motion.Tick(MiningReticleMotion.AppearSeconds, false);
+            Assert.That(motion.BracketSpread, Is.EqualTo(1f).Within(1e-4f));
+            Assert.That(motion.BracketAlpha, Is.EqualTo(1f).Within(1e-4f));
+            Assert.That(motion.CrosshairScale, Is.EqualTo(1f).Within(1e-4f));
+            Assert.That(motion.CrosshairTurn, Is.EqualTo(0f).Within(1e-4f));
+            Assert.That(motion.CrosshairAlpha, Is.EqualTo(1f).Within(1e-4f));
+            Assert.That(motion.FillAlpha, Is.EqualTo(MiningReticleMotion.FillSettledAlpha).Within(1e-4f));
+        }
+
+        [Test]
+        public void Motion_CrosshairLagsBehindBrackets()
+        {
+            var motion = new MiningReticleMotion();
+            motion.SetTarget(Vector2.zero, false);
+            motion.Tick(MiningReticleMotion.AppearSeconds * MiningReticleMotion.CrosshairDelay * .9f, false);
+            Assert.That(motion.BracketAlpha, Is.GreaterThan(0f));
+            Assert.That(motion.CrosshairAlpha, Is.EqualTo(0f).Within(1e-4f), "조준선은 꺾쇠보다 늦게 나타난다");
+        }
+
+        [Test]
+        public void Motion_MovingWhileVisibleOnlyPulsesSmallRetarget_NotFullAppear_ButShowAfterHideReplays()
+        {
+            var motion = new MiningReticleMotion();
+            motion.SetTarget(Vector2.zero, false);
+            motion.Tick(MiningReticleMotion.AppearSeconds * 2f, false);
+
+            motion.SetTarget(new Vector2(2f, 0f), false);
+            motion.Tick(0f, false);
+            Assert.That(motion.BracketAlpha, Is.EqualTo(1f).Within(1e-4f), "칸 이동은 등장처럼 사라졌다 나타나지 않는다");
+            Assert.That(motion.CrosshairAlpha, Is.EqualTo(1f).Within(1e-4f));
+            Assert.That(motion.BracketSpread, Is.EqualTo(MiningReticleMotion.RetargetSpread).Within(1e-4f));
+            Assert.That(motion.BracketSpread, Is.LessThan(MiningReticleMotion.AppearStartSpread));
+            motion.Tick(MiningReticleMotion.SlideSeconds * .5f, false);
+            Assert.That(motion.Position.x, Is.GreaterThan(0f).And.LessThan(2f), "미끄러짐은 그대로 돈다");
+            motion.Tick(MiningReticleMotion.RetargetSeconds, false);
+            Assert.That(motion.BracketSpread, Is.EqualTo(1f).Within(1e-4f));
+            Assert.That(motion.CrosshairTurn, Is.EqualTo(0f).Within(1e-4f));
+
+            motion.Hide();
+            motion.SetTarget(new Vector2(2f, 0f), false);
+            motion.Tick(0f, false);
+            Assert.That(motion.BracketSpread, Is.EqualTo(MiningReticleMotion.AppearStartSpread).Within(1e-4f), "숨겼다 다시 뜨면 등장 재생");
+            Assert.That(motion.BracketAlpha, Is.EqualTo(0f).Within(1e-4f));
+        }
+
+        [Test]
+        public void Motion_AppearPlaysEvenWithReduceMotion_WhileCornersStayStatic()
+        {
+            var motion = new MiningReticleMotion();
+            motion.SetTarget(Vector2.zero, true);
+            motion.Tick(MiningReticleMotion.AppearSeconds * .25f, true);
+            Assert.That(motion.BracketSpread, Is.GreaterThan(1f), "등장은 로컬 연출이라 모션 감소에서도 재생");
+            Assert.That(motion.Inset, Is.EqualTo(0f));
+            motion.Tick(MiningReticleMotion.AppearSeconds, true);
+            Assert.That(motion.BracketSpread, Is.EqualTo(1f).Within(1e-4f));
+
+            // 모션 감소 중 칸 이동은 재조준 맥동 없이 그대로 붙는다.
+            motion.SetTarget(new Vector2(5f, 0f), true);
+            motion.Tick(0f, true);
+            Assert.That(motion.BracketSpread, Is.EqualTo(1f).Within(1e-4f));
+            Assert.That(motion.Position, Is.EqualTo(new Vector2(5f, 0f)));
+        }
+
+        [Test]
+        public void Reticle_BuildsDetailedArt_AndPartsLayerBelowCracksAndScan()
+        {
+            var reticle = player.AddComponent<MiningTargetReticle>();
+            reticle.Present(true, new Vector3(2.5f, 1.5f, 0f), Vector2.one, .5f);
+            Assert.That(reticle.Corners[0].sprite.texture.width, Is.GreaterThanOrEqualTo(48), "거친 8px 그림이 아니라 고해상도");
+            Assert.That(reticle.Crosshair.sprite.texture.width, Is.GreaterThanOrEqualTo(48));
+            Assert.That(reticle.Fill, Is.Not.Null);
+            // 텍스처가 다른 스프라이트가 한 머티리얼을 공유하면 첫 텍스처로 다 그려져 꺾쇠가 뭉개진다.
+            Assert.That(reticle.Corners[0].sharedMaterial, Is.Not.SameAs(reticle.Crosshair.sharedMaterial));
+            Assert.That(reticle.Corners[0].sharedMaterial, Is.Not.SameAs(reticle.Fill.sharedMaterial));
+            Assert.That(reticle.Crosshair.sharedMaterial, Is.Not.SameAs(reticle.Fill.sharedMaterial));
+            foreach (var part in new[] { reticle.Corners[0], reticle.Corners[3], reticle.Crosshair, reticle.Fill })
+                Assert.That(part.sharedMaterial.mainTexture, Is.SameAs(part.sprite.texture), part.name);
+            Assert.That(reticle.Fill.sortingOrder, Is.LessThan(reticle.Corners[0].sortingOrder));
+            Assert.That(reticle.Crosshair.sortingOrder, Is.GreaterThanOrEqualTo(reticle.Corners[0].sortingOrder));
+            Assert.That(reticle.Crosshair.sortingOrder, Is.LessThan(90));
+            // 꺾쇠 그림은 모서리 쪽에만 있고(칸 중앙 쪽 위쪽 끝은 비어 있음), 한가운데 조준선은 중심이 차 있다.
+            Assert.That(CenterAlpha(reticle.Crosshair.sprite), Is.GreaterThan(.9f), "조준선 중심점");
+            // 꺾쇠 스프라이트는 모서리에서 먼 안쪽(칸 중앙 쪽)이 비어 있다. 안쪽 다이아 점과도 떨어진 곳을 본다.
+            var corner = reticle.Corners[0].sprite.texture;
+            Assert.That(corner.GetPixel(corner.width - 6, corner.height - 6).a, Is.LessThan(.05f), "꺾쇠 안쪽은 비어 있다");
+            Assert.That(corner.GetPixel(MiningTargetReticleArt.CornerMargin + 20, MiningTargetReticleArt.CornerMargin + 3).a,
+                Is.GreaterThan(.9f), "꺾쇠 팔 위");
+        }
+
+        [Test]
+        public void Reticle_AppliesLockOnToPartsAndKeepsCrosshairCentered()
+        {
+            var reticle = player.AddComponent<MiningTargetReticle>();
+            var center = new Vector3(2.5f, 1.5f, 0f);
+            reticle.Present(true, center, Vector2.one, 0f);
+            Assert.That(reticle.BracketSpread, Is.EqualTo(MiningReticleMotion.AppearStartSpread).Within(1e-4f));
+            Assert.That(reticle.Corners[0].color.a, Is.EqualTo(0f).Within(1e-4f));
+            Assert.That(reticle.Crosshair.color.a, Is.EqualTo(0f).Within(1e-4f));
+            // 벌어진 상태: 좌하 꺾쇠가 칸 모서리보다 더 바깥에 있다.
+            Assert.That(reticle.Corners[0].transform.position.x, Is.LessThan(center.x - .5f - .1f));
+            Assert.That(reticle.Crosshair.transform.position.x, Is.EqualTo(center.x).Within(1e-4f), "조준선은 칸 한가운데");
+            Assert.That(reticle.Crosshair.transform.position.y, Is.EqualTo(center.y).Within(1e-4f));
+            Vector3 mid = (reticle.Corners[0].transform.position + reticle.Corners[3].transform.position) * .5f;
+            Assert.That(mid.x, Is.EqualTo(center.x).Within(1e-4f), "벌어져도 칸 중심에서 밀리지 않는다");
+            Assert.That(mid.y, Is.EqualTo(center.y).Within(1e-4f));
+
+            reticle.Present(true, center, Vector2.one, MiningReticleMotion.AppearSeconds * 2f);
+            // 등장이 끝나면 꺾쇠는 칸 모서리에서 느린 조임(Inset)만큼만 안쪽에 있다.
+            Assert.That(reticle.Corners[0].transform.position.x, Is.EqualTo(center.x - (.5f - reticle.Inset)).Within(1e-4f));
+            Assert.That(reticle.Corners[3].transform.position.y, Is.EqualTo(center.y + (.5f - reticle.Inset)).Within(1e-4f));
+            Assert.That(reticle.Corners[0].color.a, Is.EqualTo(MiningTargetReticle.BracketFinalAlpha).Within(1e-4f));
+            Assert.That(reticle.Crosshair.color.a, Is.EqualTo(MiningTargetReticle.CrosshairFinalAlpha).Within(1e-4f));
+            Assert.That(reticle.Crosshair.transform.localScale.x, Is.EqualTo(1f).Within(1e-4f));
+            Assert.That(reticle.Crosshair.transform.localEulerAngles.z, Is.EqualTo(0f).Within(1e-3f));
+            Assert.That(reticle.Fill.color.a, Is.EqualTo(MiningReticleMotion.FillSettledAlpha).Within(1e-4f));
+
+            // 이미 보이는 채로 칸을 옮겨도 사라졌다 다시 나타나지 않는다(작은 재조준 맥동만).
+            reticle.Present(true, center + Vector3.right, Vector2.one, .016f);
+            Assert.That(reticle.Corners[0].color.a, Is.EqualTo(MiningTargetReticle.BracketFinalAlpha).Within(1e-4f));
+
+            // 숨겼다 다시 뜨면 등장을 다시 재생한다.
+            reticle.Present(false, default, Vector2.one, 0f);
+            reticle.Present(true, center, Vector2.one, 0f);
+            Assert.That(reticle.BracketSpread, Is.EqualTo(MiningReticleMotion.AppearStartSpread).Within(1e-4f));
+            Assert.That(reticle.Corners[0].color.a, Is.EqualTo(0f).Within(1e-4f));
+        }
+
+        private static float CenterAlpha(Sprite sprite)
+        {
+            var texture = sprite.texture;
+            return texture.GetPixel(texture.width / 2, texture.height / 2).a;
+        }
+
+        private static void Set(object target, string name, object value) => target.GetType().GetField(name, Private).SetValue(target, value);
+        private static void Invoke(object target, string name, params object[] args) => target.GetType().GetMethod(name, Private).Invoke(target, args);
+    }
+}

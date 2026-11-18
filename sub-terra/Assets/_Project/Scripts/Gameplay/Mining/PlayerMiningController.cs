@@ -4,6 +4,7 @@ using SubTerra.Shared;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
+using UnityEngine.Tilemaps;
 
 namespace SubTerra.Gameplay.Mining
 {
@@ -35,6 +36,14 @@ namespace SubTerra.Gameplay.Mining
         private bool enterMiningSuppressed;
         private bool activeMiningOnLadder;
         private bool hasMiningAnimationContext;
+        private readonly MiningTargetPriority targetPriority = new MiningTargetPriority();
+        private MiningTargetReticle reticle;
+        private Vector2 lastReticleDirection;
+        private bool reticleFailed;
+
+        /// <summary>B-202: 과녁이 키보드 목표와 마우스 호버 중 누구를 따르는지(가장 최근 입력).</summary>
+        public MiningTargetPriority TargetPriority => targetPriority;
+        public MiningTargetReticle Reticle => reticle;
 
         /// <summary>B-166: 창을 Enter로 확인한 뒤 그 누르기가 채굴로 이어지지 않게, Enter를 한 번 뗄 때까지 채굴 키로 보지 않는다.</summary>
         public void SuppressEnterUntilReleased()
@@ -94,6 +103,9 @@ namespace SubTerra.Gameplay.Mining
             miningInputPressedLastFrame = false;
             lastMiningDirection = Vector2.zero;
             hasMiningAnimationContext = false;
+            lastReticleDirection = Vector2.zero;
+            targetPriority.Reset();
+            if (reticle != null) reticle.Present(false, default, Vector2.one, 0f);
         }
 
         private void Update()
@@ -192,6 +204,117 @@ namespace SubTerra.Gameplay.Mining
 
             ShowMiningAnimation();
             miningSystem.TickMining(Time.deltaTime, movement.Position, reach);
+        }
+
+        private void LateUpdate()
+        {
+            if (reticleFailed) return;
+            try
+            {
+                UpdateTargetReticle(Time.unscaledDeltaTime);
+            }
+            catch (System.Exception exception)
+            {
+                // 과녁은 보조 표시이므로 실패해도 채굴은 계속 둔다. 매 프레임 로그가 쌓이지 않게 한 번만 알린다.
+                reticleFailed = true;
+                Debug.LogError("[MiningTargetReticle] 갱신 실패: " + exception.Message, this);
+                if (reticle != null) reticle.Present(false, default, Vector2.one, 0f);
+            }
+        }
+
+        private void UpdateTargetReticle(float deltaTime)
+        {
+            if (reticle == null)
+            {
+                reticle = GetComponent<MiningTargetReticle>();
+                if (reticle == null) reticle = gameObject.AddComponent<MiningTargetReticle>();
+            }
+
+            Tilemap map = miningSystem != null ? miningSystem.ForegroundTilemap : null;
+            if (map == null || movement == null || ControlPreferences.IsSettingsOpen
+                || BuildingPlacementActivity.IsActive)
+            {
+                reticle.Present(false, default, Vector2.one, deltaTime);
+                return;
+            }
+
+            TrackTargetPriority();
+            bool hasTarget = TryResolveReticleCell(out Vector3Int cell);
+            reticle.Present(hasTarget, hasTarget ? map.GetCellCenterWorld(cell) : default, map.cellSize, deltaTime);
+        }
+
+        private void TrackTargetPriority()
+        {
+            Vector2 direction = PlayerKeyboardControls.ReadMiningDirection(ControlPreferences.Scheme);
+            Mouse mouse = Mouse.current;
+            if (mouse != null
+                && (mouse.delta.ReadValue().sqrMagnitude > 0f || mouse.leftButton.wasPressedThisFrame))
+            {
+                targetPriority.NotePointerInput();
+            }
+
+            bool enterPressed = Keyboard.current != null
+                && Keyboard.current.enterKey.wasPressedThisFrame
+                && !enterMiningSuppressed;
+            if (enterPressed || (direction != Vector2.zero && direction != lastReticleDirection))
+            {
+                targetPriority.NoteKeyboardInput();
+            }
+
+            lastReticleDirection = direction;
+        }
+
+        /// <summary>
+        /// 과녁을 띄울 칸. 채굴 중이면 그 칸, 마우스가 우선이고 호버 칸이 유효하면 그 칸, 그 외에는 키보드 목표.
+        /// 사거리·지형만 보며 전력 부족으로는 숨기지 않는다.
+        /// </summary>
+        public bool TryResolveReticleCell(out Vector3Int cell)
+        {
+            cell = default;
+            if (miningSystem == null || movement == null) return false;
+            if (miningSystem.IsMining)
+            {
+                cell = miningSystem.ActiveCell;
+                return true;
+            }
+
+            if (targetPriority.Source == MiningTargetSource.Pointer)
+            {
+                var mouse = Mouse.current;
+                var camera = Camera.main;
+                if (mouse != null && camera != null
+                    && !pointerClaimedByPlacement && !pointerClaimedByDrone && !IsPointerOverUi())
+                {
+                    Vector3 world = camera.ScreenToWorldPoint(mouse.position.ReadValue());
+                    if (TryResolvePointerReticleCell(world, out cell)) return true;
+                }
+            }
+
+            return TryResolveKeyboardReticleCell(out cell);
+        }
+
+        public bool TryResolveKeyboardReticleCell(out Vector3Int cell)
+        {
+            cell = default;
+            if (miningSystem == null || movement == null) return false;
+            bool onLadder = animationController != null && animationController.CanMineOnLadder;
+            return miningSystem.TryGetKeyboardTarget(
+                    movement.Position,
+                    movement.FacingDirection,
+                    PlayerKeyboardControls.ReadMiningDirection(ControlPreferences.Scheme),
+                    onLadder,
+                    reach,
+                    out cell)
+                && miningSystem.IsTargetTerrainMineable(cell);
+        }
+
+        public bool TryResolvePointerReticleCell(Vector2 worldPoint, out Vector3Int cell)
+        {
+            cell = default;
+            if (miningSystem == null || movement == null) return false;
+            bool onLadder = animationController != null && animationController.CanMineOnLadder;
+            return miningSystem.TryGetPointerTarget(worldPoint, movement.Position, onLadder, reach, out cell)
+                && miningSystem.IsTargetTerrainMineable(cell);
         }
 
         private void EnsureDebrisVisual()
@@ -363,9 +486,7 @@ namespace SubTerra.Gameplay.Mining
             var map = miningSystem.ForegroundTilemap;
             if (map == null) return false;
 
-            var playerCell = map.WorldToCell(movement.Position);
-            var targetCell = map.WorldToCell(worldPoint);
-            return targetCell.y == playerCell.y && targetCell.x != playerCell.x;
+            return MiningSystem.IsLadderPointerCell(map, movement.Position, map.WorldToCell(worldPoint));
         }
     }
 }
