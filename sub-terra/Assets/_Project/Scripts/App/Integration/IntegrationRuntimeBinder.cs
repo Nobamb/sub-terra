@@ -9,6 +9,7 @@ using SubTerra.App.Outpost;
 using SubTerra.App.Save;
 using SubTerra.App.State;
 using SubTerra.App.UI.HUD;
+using SubTerra.App.UI.Intro;
 using SubTerra.App.UI.Inventory;
 using SubTerra.App.UI.Outpost;
 using SubTerra.App.UI.PlayerStatus;
@@ -81,6 +82,8 @@ namespace SubTerra.App.Integration
         private IntegrationActivationGate activationGate;
         private bool contractsWired;
         private bool uiActivated;
+        private bool newGameIntroPlayed;
+        private bool tutorialBindDeferred;
         private bool inventorySpeedBound;
         private bool tileMinedSfxBound;
         private DroneScanPingSfx droneScanPing;
@@ -119,6 +122,10 @@ namespace SubTerra.App.Integration
                 yield break;
             }
 
+            // 새 게임 첫 광산 진입이면 월드·튜토리얼 바인딩보다 먼저 인트로 오버레이로 화면을 덮는다.
+            // 튜토리얼 바인딩(시작 브리핑 표시)은 인트로가 끝난 뒤로 미룬다.
+            var introPlayer = BeginNewGameIntroIfNeeded();
+
             // 개별 바인딩 실패가 Start 코루틴을 죽여 HUD/입력이 영구 비활성 되는 것을 막는다.
             try
             {
@@ -140,6 +147,9 @@ namespace SubTerra.App.Integration
                 waited++;
                 yield return null;
             }
+
+            // 인트로 영상 → 게임 화면 켜짐 연출이 끝나면 미뤄 둔 튜토리얼 바인딩(시작 브리핑)을 이어서 한다.
+            yield return FinishNewGameIntro(introPlayer);
 
             if (runtime == null || !runtime.IsUiReady)
             {
@@ -167,6 +177,80 @@ namespace SubTerra.App.Integration
                     ex);
                 ForceEnableHudAndInput();
             }
+        }
+
+        /// <summary>
+        /// 목표 진행이 비어 있는 첫 광산 진입(시작 브리핑이 뜨는 조건과 같음)에서만 인트로를 재생한다.
+        /// 실패해도 HUD 활성화를 막지 않는다.
+        /// </summary>
+        private NewGameIntroPlayer BeginNewGameIntroIfNeeded()
+        {
+            // 반드시 WireContracts(튜토리얼 BindTo가 목표 진행을 채운다)보다 먼저 판정한다.
+            var progress = bootstrap != null && bootstrap.State != null ? bootstrap.State.Progress : null;
+            var firstEntry = NewGameIntroPolicy.IsFirstMineEntry(progress);
+            if (!NewGameIntroPolicy.ShouldPlayTurnOnOnly(firstEntry, newGameIntroPlayed))
+            {
+                return null;
+            }
+
+            try
+            {
+                var playVideo = NewGameIntroPolicy.ShouldPlayVideo(
+                    firstEntry,
+                    AccessibilityPreferences.ReduceMotion,
+                    NewGameIntroPlayer.VideoAvailable(),
+                    false);
+                var player = NewGameIntroPlayer.Create();
+                StartCoroutine(player.Run(playVideo));
+                newGameIntroPlayed = true;
+                tutorialBindDeferred = true;
+                return player;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning("[SubTerra] New game intro failed; continuing without it. " + ex);
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// 오버레이가 사라질 때까지(정지 해제 후) 기다린 뒤 미뤄 둔 튜토리얼 바인딩을 한다.
+        /// UnityEngine.Object null 검사는 파괴를 감지한다.
+        /// </summary>
+        private IEnumerator FinishNewGameIntro(NewGameIntroPlayer player)
+        {
+            // 영상 길이(약 50초)보다 넉넉한 상한을 둬서 예외로 오버레이가 남아도 HUD가 영구히 막히지 않게 한다.
+            var giveUp = Time.realtimeSinceStartup + 120f;
+            while (player != null && Time.realtimeSinceStartup < giveUp)
+            {
+                yield return null;
+            }
+
+            if (player != null)
+            {
+                Destroy(player.gameObject);
+            }
+
+            if (tutorialBindDeferred)
+            {
+                tutorialBindDeferred = false;
+                TryStep("TutorialDirector", BindTutorialDirector);
+            }
+        }
+
+        private void BindTutorialDirector()
+        {
+            if (tutorialDirector == null || runtime == null || bootstrap == null)
+            {
+                return;
+            }
+
+            tutorialDirector.BindTo(
+                bootstrap.State,
+                runtime.InventoryService,
+                runtime.Economy,
+                runtime.Progression,
+                outpostService);
         }
 
         /// <summary>
@@ -502,12 +586,13 @@ namespace SubTerra.App.Integration
                     }
 
                     eventFanOut.Add(tutorialDirector);
-                    tutorialDirector.BindTo(
-                        bootstrap.State,
-                        runtime.InventoryService,
-                        runtime.Economy,
-                        runtime.Progression,
-                        outpostService);
+                    // 인트로 중에는 시작 브리핑이 먼저 뜨지 않도록 바인딩을 인트로 뒤로 미룬다.
+                    if (tutorialBindDeferred)
+                    {
+                        return;
+                    }
+
+                    BindTutorialDirector();
                 });
 
             // GameplayEventBridge가 초기 전력 스냅샷을 발행하기 전에 모든
