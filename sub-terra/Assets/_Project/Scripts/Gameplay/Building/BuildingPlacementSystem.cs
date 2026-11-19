@@ -316,6 +316,9 @@ namespace SubTerra.Gameplay.Building
             string instanceId = $"{definition.BuildingId}-{nextInstanceSequence++:D4}";
             BuildingInstance instance = instanceObject.GetComponent<BuildingInstance>() ?? instanceObject.AddComponent<BuildingInstance>();
             instance.Initialize(instanceId, definition.BuildingId, footprint);
+            // B-206: 새 설치는 0.5초 건설 연출(시각 전용). 점유·전력·충돌은 아래에서 바로 확정되고,
+            // 전력 바인딩보다 먼저 시작해야 켜짐 연출이 건설 뒤로 미뤄진다. 복원은 이 경로를 타지 않는다.
+            FacilityConstructionEffect.Begin(instanceObject, definition.BuildingId);
             BindPowerNode(instanceObject, instanceId);
             foreach (Vector3Int cell in EnumerateFootprint(origin, footprint))
             {
@@ -410,6 +413,8 @@ namespace SubTerra.Gameplay.Building
             foreach (var cell in EnumerateFootprint(old.Cell, old.Footprint)) occupiedBuildings.Remove(cell);
             instance.transform.position = FootprintWorldCenter(origin, footprint);
             instance.Initialize(instance.InstanceId, instance.BuildingId, footprint);
+            // 옮긴 시설도 새로 지을 때와 같은 시설별 건설 연출을 보여 준다(시각 전용, 이동 가능 시설만 이 경로를 탄다).
+            FacilityConstructionEffect.Begin(instance.gameObject, instance.BuildingId);
             foreach (var cell in EnumerateFootprint(origin, footprint)) occupiedBuildings[cell] = instance.BuildingId;
             var result = new BuildingPlacementResult(true, BuildingPlacementFailure.None,
                 instance.InstanceId, instance.BuildingId, origin, footprint: footprint);

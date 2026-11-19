@@ -16,6 +16,7 @@ namespace SubTerra.Gameplay.Power
         private Material runtimeMaterial;
         private Vector3[] circlePoints;
         private float spreadProgress = 1f;
+        private float spreadDelay;
 
         /// <summary>전력 공급·정화 판정 반지름. 퍼짐 연출 중에도 항상 최종값이다.</summary>
         public float Radius => radius;
@@ -50,15 +51,18 @@ namespace SubTerra.Gameplay.Power
         /// B-204: 원 표시만 중심에서 최종 반지름까지 빠르게 퍼뜨린다. Contains(전력 판정)는 처음부터 최종 반지름이다.
         /// 모션 감소면 연출 없이 최종 원으로 둔다. 복원·기존 코어는 이 메서드를 부르지 않는다.
         /// </summary>
-        public void BeginSpread()
+        public void BeginSpread(float delaySeconds = 0f)
         {
             if (AccessibilityPreferences.ReduceMotion)
             {
                 spreadProgress = 1f;
+                spreadDelay = 0f;
             }
             else
             {
                 spreadProgress = 0f;
+                // B-206: 건설 연출이 끝난 뒤 퍼지도록 시작만 미룬다. 판정 반지름에는 영향 없다.
+                spreadDelay = Mathf.Max(0f, delaySeconds);
             }
 
             EnsureLine();
@@ -71,6 +75,18 @@ namespace SubTerra.Gameplay.Power
             if (spreadProgress >= 1f)
             {
                 return;
+            }
+
+            if (spreadDelay > 0f)
+            {
+                spreadDelay -= Mathf.Max(0f, deltaTime);
+                if (spreadDelay > 0f)
+                {
+                    return;
+                }
+
+                deltaTime = -spreadDelay;
+                spreadDelay = 0f;
             }
 
             spreadProgress = AccessibilityPreferences.ReduceMotion
