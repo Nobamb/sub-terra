@@ -202,6 +202,8 @@ namespace SubTerra.Gameplay.Integration
         /// </summary>
         private void BeginRangeSpread(BuildingPlacementResult result)
         {
+            // B-206: 건설 연출(0.5초)이 끝난 다음 퍼지도록 남은 시간만큼 시작을 미룬다. 판정은 처음부터 최종값.
+            var delay = FacilityConstructionEffect.RemainingSecondsFor(result.InstanceId);
             try
             {
                 if (result.BuildingId == "building.outpost_core.basic" && powerNetworkSystem != null)
@@ -218,7 +220,7 @@ namespace SubTerra.Gameplay.Integration
                         var range = node.GetComponent<PowerSupplyRangeIndicator>();
                         if (instance != null && range != null && instance.InstanceId == result.InstanceId)
                         {
-                            range.BeginSpread();
+                            range.BeginSpread(delay);
                         }
                     }
                 }
@@ -235,7 +237,7 @@ namespace SubTerra.Gameplay.Integration
                     var owner = light.GetComponentInParent<BuildingInstance>();
                     if (owner != null && owner.InstanceId == result.InstanceId)
                     {
-                        light.BeginReveal();
+                        light.BeginReveal(delay);
                     }
                 }
             }

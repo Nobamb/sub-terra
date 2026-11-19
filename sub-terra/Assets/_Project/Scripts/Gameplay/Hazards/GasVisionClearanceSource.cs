@@ -19,6 +19,7 @@ namespace SubTerra.Gameplay.Hazards
         private PowerFacility facility;
         private bool facilityResolved;
         private float revealProgress = 1f;
+        private float revealDelay;
         private SpriteRenderer clearanceRenderer;
 
         /// <summary>가스 시야를 뚫는 판정 반지름. 켠 직후에도 항상 최종값이다.</summary>
@@ -81,9 +82,11 @@ namespace SubTerra.Gameplay.Hazards
         /// B-204: 방금 설치해 켠 조명의 시각 범위를 중심에서 빠르게 퍼뜨린다. 판정 반지름은 그대로 최종값이다.
         /// 복원·이미 켜진 조명은 부르지 않으며, 모션 감소면 연출 없이 최종 범위로 둔다.
         /// </summary>
-        public void BeginReveal()
+        public void BeginReveal(float delaySeconds = 0f)
         {
             revealProgress = AccessibilityPreferences.ReduceMotion ? 1f : 0f;
+            // B-206: 건설 연출이 끝난 뒤 퍼지도록 시작만 미룬다.
+            revealDelay = revealProgress >= 1f ? 0f : Mathf.Max(0f, delaySeconds);
             ApplySoftVisual();
         }
 
@@ -93,6 +96,18 @@ namespace SubTerra.Gameplay.Hazards
             if (revealProgress >= 1f)
             {
                 return;
+            }
+
+            if (revealDelay > 0f)
+            {
+                revealDelay -= Mathf.Max(0f, deltaTime);
+                if (revealDelay > 0f)
+                {
+                    return;
+                }
+
+                deltaTime = -revealDelay;
+                revealDelay = 0f;
             }
 
             revealProgress = AccessibilityPreferences.ReduceMotion

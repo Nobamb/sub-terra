@@ -78,6 +78,29 @@ namespace SubTerra.Gameplay.Power
         {
             try
             {
+                // B-206: 건설 연출이 진행 중이면 끝난 뒤에 켜짐 연출을 시작한다(판정은 이미 켜진 상태).
+                var gate = GetComponent<IPowerOnVisualGate>();
+                if (gate != null && gate.TryHold(PlayAfterHold)) return true;
+                return PlayPowerOnEffectNow();
+            }
+            catch (Exception exception)
+            {
+                Debug.LogException(exception, this);
+                return false;
+            }
+        }
+
+        private void PlayAfterHold()
+        {
+            // 기다리는 사이 범위를 벗어났거나 비활성화됐으면 켜짐 연출을 만들지 않는다.
+            if (this == null || !isActiveAndEnabled || !IsInSupplyRange || PowerOnEffect.IsSuppressed) return;
+            if (PlayPowerOnEffectNow()) PowerOnEffect.FlushPendingStarts();
+        }
+
+        private bool PlayPowerOnEffectNow()
+        {
+            try
+            {
                 if (powerOnEffect == null) powerOnEffect = GetComponent<PowerOnEffect>();
                 if (powerOnEffect == null) powerOnEffect = gameObject.AddComponent<PowerOnEffect>();
                 powerOnEffect.Bind(this);
