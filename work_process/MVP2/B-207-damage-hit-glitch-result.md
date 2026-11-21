@@ -3,7 +3,7 @@
 ## 기준
 - 기준 브랜치·커밋: `origin/main` `0c51ec15c858428362aa4f4cf55b0e03b4492cc8` 위의 B-207 문서 커밋 `9322ff84`
 - 작업 브랜치: `MVP2-fix151`. 원격 `origin/MVP2-fix151`은 B-207 문서 커밋(`9322ff84`)만 있는 이 작업용 브랜치라 그대로 썼다.
-- 커밋 해시: **없음(미커밋)**. 저장소 규칙상 사용자 동의 전에는 커밋·push하지 않았다.
+- 커밋 해시: `9f298d85` (기능), 보고서 갱신 커밋은 그 뒤. 사용자 요청으로 PR을 열었다(B-207 문서는 PR 미생성이 원칙).
 
 ## 바꾼 파일
 - 수정 `Scripts/Gameplay/Player/PlayerSurvivalController.cs`: `DamageApplied(cause, appliedDamage, becameIncapacitated)` 이벤트를 추가했다. `ApplyDamage`에서 체력이 실제로 깎였을 때(`appliedDamage > 0`)만 낸다. App 참조는 없다.
@@ -65,8 +65,8 @@
 8. 새 효과음이 없는지, Console에 새 빨간 오류가 없는지 본다.
 
 ## 완료 체크리스트
-- [ ] `MVP2-fix151` push 확인(미커밋, 사용자 동의 대기)
-- [ ] 커밋 해시 기재(미커밋)
+- [x] `MVP2-fix151` push 확인
+- [x] 커밋 해시 기재
 - [x] Unity 컴파일 오류 없음
 - [x] EditMode 새 실패 없음(실행한 묶음 기준, 기존 실패 5개는 변경 전에도 실패)
 - [x] 낙하·붕괴 피해 시 짧은 붉은 글리치+틴트, 검사기 조절(EditMode 확인, 실제 화면은 미검증)
@@ -81,6 +81,6 @@
 - [x] Gameplay→App 참조 없음
 - [x] 프리팹 YAML 손수정 없음
 - [x] main 직접 커밋 없음
-- [x] PR 안 만듦
+- [ ] PR 안 만듦(사용자 요청으로 PR 생성)
 - [x] 브랜치 삭제 안 함
 - [x] #359 미수정
