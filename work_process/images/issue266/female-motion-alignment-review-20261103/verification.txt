@@ -1,0 +1,15 @@
+sourceImagesUnchanged=True
+fixedScalePerMotion=True
+alignedCels=20
+groundedBottomTolerancePixels=2
+clippedCels=0
+candidatePixelsPerUnit=667.428571428571
+preserveExistingVisualPivot=0.459263392857143,0.50390625
+runtimeApplied=False
+groundedActualMaxDriftPixels=0
+airborneMinFootClearancePixels=5
+groundedCels=18
+candidateExistingMaleLocalOffsetsMatch=True
+GIF/APNG decode=OK
+walkCompareFrames=8
+transitionFrames=16

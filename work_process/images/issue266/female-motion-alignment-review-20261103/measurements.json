@@ -1,0 +1,682 @@
+[
+  {
+    "motion": "walk",
+    "frame": "key-01",
+    "source": "work_process/images/issue266/female-walk-eight-review-20261103/key-01.png",
+    "measure": {
+      "Bounds": {
+        "Count": 119420,
+        "X": 200,
+        "Y": 86,
+        "Width": 374,
+        "Height": 584,
+        "CenterX": 387.0,
+        "CenterY": 378.0
+      },
+      "Helmet": {
+        "Count": 7010,
+        "X": 295,
+        "Y": 106,
+        "Width": 161,
+        "Height": 75,
+        "CenterX": 375.5,
+        "CenterY": 143.5
+      },
+      "Belt": {
+        "Count": 96,
+        "X": 415,
+        "Y": 401,
+        "Width": 13,
+        "Height": 10,
+        "CenterX": 421.5,
+        "CenterY": 406.0
+      }
+    }
+  },
+  {
+    "motion": "walk",
+    "frame": "middle-01",
+    "source": "work_process/images/issue266/female-walk-eight-review-20261103/middle-01.png",
+    "measure": {
+      "Bounds": {
+        "Count": 110245,
+        "X": 214,
+        "Y": 85,
+        "Width": 323,
+        "Height": 584,
+        "CenterX": 375.5,
+        "CenterY": 377.0
+      },
+      "Helmet": {
+        "Count": 7208,
+        "X": 295,
+        "Y": 106,
+        "Width": 161,
+        "Height": 75,
+        "CenterX": 375.5,
+        "CenterY": 143.5
+      },
+      "Belt": {
+        "Count": 68,
+        "X": 413,
+        "Y": 406,
+        "Width": 11,
+        "Height": 8,
+        "CenterX": 418.5,
+        "CenterY": 410.0
+      }
+    }
+  },
+  {
+    "motion": "walk",
+    "frame": "key-02",
+    "source": "work_process/images/issue266/female-walk-eight-review-20261103/key-02.png",
+    "measure": {
+      "Bounds": {
+        "Count": 106998,
+        "X": 207,
+        "Y": 86,
+        "Width": 323,
+        "Height": 586,
+        "CenterX": 368.5,
+        "CenterY": 379.0
+      },
+      "Helmet": {
+        "Count": 6923,
+        "X": 290,
+        "Y": 106,
+        "Width": 160,
+        "Height": 75,
+        "CenterX": 370.0,
+        "CenterY": 143.5
+      },
+      "Belt": {
+        "Count": 90,
+        "X": 407,
+        "Y": 405,
+        "Width": 13,
+        "Height": 9,
+        "CenterX": 413.5,
+        "CenterY": 409.5
+      }
+    }
+  },
+  {
+    "motion": "walk",
+    "frame": "middle-02",
+    "source": "work_process/images/issue266/female-walk-eight-review-20261103/middle-02.png",
+    "measure": {
+      "Bounds": {
+        "Count": 112511,
+        "X": 208,
+        "Y": 85,
+        "Width": 360,
+        "Height": 578,
+        "CenterX": 388.0,
+        "CenterY": 374.0
+      },
+      "Helmet": {
+        "Count": 7141,
+        "X": 289,
+        "Y": 106,
+        "Width": 160,
+        "Height": 74,
+        "CenterX": 369.0,
+        "CenterY": 143.0
+      },
+      "Belt": {
+        "Count": 75,
+        "X": 400,
+        "Y": 407,
+        "Width": 12,
+        "Height": 9,
+        "CenterX": 406.0,
+        "CenterY": 411.5
+      }
+    }
+  },
+  {
+    "motion": "walk",
+    "frame": "key-03",
+    "source": "work_process/images/issue266/female-walk-eight-review-20261103/key-03.png",
+    "measure": {
+      "Bounds": {
+        "Count": 117386,
+        "X": 198,
+        "Y": 89,
+        "Width": 389,
+        "Height": 582,
+        "CenterX": 392.5,
+        "CenterY": 380.0
+      },
+      "Helmet": {
+        "Count": 6901,
+        "X": 295,
+        "Y": 109,
+        "Width": 162,
+        "Height": 75,
+        "CenterX": 376.0,
+        "CenterY": 146.5
+      },
+      "Belt": {
+        "Count": 71,
+        "X": 416,
+        "Y": 406,
+        "Width": 12,
+        "Height": 8,
+        "CenterX": 422.0,
+        "CenterY": 410.0
+      }
+    }
+  },
+  {
+    "motion": "walk",
+    "frame": "middle-03",
+    "source": "work_process/images/issue266/female-walk-eight-review-20261103/middle-03.png",
+    "measure": {
+      "Bounds": {
+        "Count": 108650,
+        "X": 213,
+        "Y": 89,
+        "Width": 324,
+        "Height": 580,
+        "CenterX": 375.0,
+        "CenterY": 379.0
+      },
+      "Helmet": {
+        "Count": 7047,
+        "X": 295,
+        "Y": 110,
+        "Width": 161,
+        "Height": 74,
+        "CenterX": 375.5,
+        "CenterY": 147.0
+      },
+      "Belt": {
+        "Count": 77,
+        "X": 411,
+        "Y": 405,
+        "Width": 11,
+        "Height": 9,
+        "CenterX": 416.5,
+        "CenterY": 409.5
+      }
+    }
+  },
+  {
+    "motion": "walk",
+    "frame": "key-04",
+    "source": "work_process/images/issue266/female-walk-eight-review-20261103/key-04.png",
+    "measure": {
+      "Bounds": {
+        "Count": 106608,
+        "X": 206,
+        "Y": 89,
+        "Width": 326,
+        "Height": 585,
+        "CenterX": 369.0,
+        "CenterY": 381.5
+      },
+      "Helmet": {
+        "Count": 6892,
+        "X": 291,
+        "Y": 109,
+        "Width": 160,
+        "Height": 76,
+        "CenterX": 371.0,
+        "CenterY": 147.0
+      },
+      "Belt": {
+        "Count": 86,
+        "X": 406,
+        "Y": 405,
+        "Width": 12,
+        "Height": 9,
+        "CenterX": 412.0,
+        "CenterY": 409.5
+      }
+    }
+  },
+  {
+    "motion": "walk",
+    "frame": "middle-04",
+    "source": "work_process/images/issue266/female-walk-eight-review-20261103/middle-04.png",
+    "measure": {
+      "Bounds": {
+        "Count": 112638,
+        "X": 209,
+        "Y": 89,
+        "Width": 365,
+        "Height": 581,
+        "CenterX": 391.5,
+        "CenterY": 379.5
+      },
+      "Helmet": {
+        "Count": 6986,
+        "X": 291,
+        "Y": 110,
+        "Width": 159,
+        "Height": 75,
+        "CenterX": 370.5,
+        "CenterY": 147.5
+      },
+      "Belt": {
+        "Count": 76,
+        "X": 407,
+        "Y": 407,
+        "Width": 11,
+        "Height": 9,
+        "CenterX": 412.5,
+        "CenterY": 411.5
+      }
+    }
+  },
+  {
+    "motion": "jump",
+    "frame": "pose-01",
+    "source": "work_process/images/issue266/female-jump-review-20261103/pose-01.png",
+    "measure": {
+      "Bounds": {
+        "Count": 113315,
+        "X": 207,
+        "Y": 116,
+        "Width": 372,
+        "Height": 538,
+        "CenterX": 393.0,
+        "CenterY": 385.0
+      },
+      "Helmet": {
+        "Count": 7202,
+        "X": 338,
+        "Y": 135,
+        "Width": 161,
+        "Height": 72,
+        "CenterX": 418.5,
+        "CenterY": 171.0
+      },
+      "Belt": {
+        "Count": 70,
+        "X": 403,
+        "Y": 432,
+        "Width": 13,
+        "Height": 7,
+        "CenterX": 409.5,
+        "CenterY": 435.5
+      }
+    }
+  },
+  {
+    "motion": "jump",
+    "frame": "pose-02",
+    "source": "work_process/images/issue266/female-jump-review-20261103/pose-02.png",
+    "measure": {
+      "Bounds": {
+        "Count": 105416,
+        "X": 201,
+        "Y": 85,
+        "Width": 338,
+        "Height": 541,
+        "CenterX": 370.0,
+        "CenterY": 355.5
+      },
+      "Helmet": {
+        "Count": 6984,
+        "X": 291,
+        "Y": 104,
+        "Width": 159,
+        "Height": 72,
+        "CenterX": 370.5,
+        "CenterY": 140.0
+      },
+      "Belt": {
+        "Count": 61,
+        "X": 382,
+        "Y": 393,
+        "Width": 12,
+        "Height": 8,
+        "CenterX": 388.0,
+        "CenterY": 397.0
+      }
+    }
+  },
+  {
+    "motion": "jump",
+    "frame": "pose-03",
+    "source": "work_process/images/issue266/female-jump-review-20261103/pose-03.png",
+    "measure": {
+      "Bounds": {
+        "Count": 114358,
+        "X": 209,
+        "Y": 73,
+        "Width": 353,
+        "Height": 583,
+        "CenterX": 385.5,
+        "CenterY": 364.5
+      },
+      "Helmet": {
+        "Count": 6633,
+        "X": 321,
+        "Y": 92,
+        "Width": 154,
+        "Height": 70,
+        "CenterX": 398.0,
+        "CenterY": 127.0
+      },
+      "Belt": {
+        "Count": 81,
+        "X": 403,
+        "Y": 379,
+        "Width": 13,
+        "Height": 9,
+        "CenterX": 409.5,
+        "CenterY": 383.5
+      }
+    }
+  },
+  {
+    "motion": "jump",
+    "frame": "pose-04",
+    "source": "work_process/images/issue266/female-jump-review-20261103/pose-04.png",
+    "measure": {
+      "Bounds": {
+        "Count": 109866,
+        "X": 203,
+        "Y": 138,
+        "Width": 331,
+        "Height": 531,
+        "CenterX": 368.5,
+        "CenterY": 403.5
+      },
+      "Helmet": {
+        "Count": 6892,
+        "X": 295,
+        "Y": 158,
+        "Width": 157,
+        "Height": 74,
+        "CenterX": 373.5,
+        "CenterY": 195.0
+      },
+      "Belt": {
+        "Count": 75,
+        "X": 372,
+        "Y": 451,
+        "Width": 12,
+        "Height": 8,
+        "CenterX": 378.0,
+        "CenterY": 455.0
+      }
+    }
+  },
+  {
+    "motion": "damage",
+    "frame": "pose-01",
+    "source": "work_process/images/issue266/female-damage-review-20261103/pose-01.png",
+    "measure": {
+      "Bounds": {
+        "Count": 103931,
+        "X": 228,
+        "Y": 81,
+        "Width": 292,
+        "Height": 580,
+        "CenterX": 374.0,
+        "CenterY": 371.0
+      },
+      "Helmet": {
+        "Count": 6379,
+        "X": 295,
+        "Y": 100,
+        "Width": 151,
+        "Height": 74,
+        "CenterX": 370.5,
+        "CenterY": 137.0
+      },
+      "Belt": {
+        "Count": 75,
+        "X": 422,
+        "Y": 380,
+        "Width": 12,
+        "Height": 8,
+        "CenterX": 428.0,
+        "CenterY": 384.0
+      }
+    }
+  },
+  {
+    "motion": "damage",
+    "frame": "pose-02",
+    "source": "work_process/images/issue266/female-damage-review-20261103/pose-02.png",
+    "measure": {
+      "Bounds": {
+        "Count": 102010,
+        "X": 191,
+        "Y": 85,
+        "Width": 307,
+        "Height": 576,
+        "CenterX": 344.5,
+        "CenterY": 373.0
+      },
+      "Helmet": {
+        "Count": 6183,
+        "X": 253,
+        "Y": 106,
+        "Width": 147,
+        "Height": 82,
+        "CenterX": 326.5,
+        "CenterY": 147.0
+      },
+      "Belt": {
+        "Count": 61,
+        "X": 399,
+        "Y": 373,
+        "Width": 12,
+        "Height": 7,
+        "CenterX": 405.0,
+        "CenterY": 376.5
+      }
+    }
+  },
+  {
+    "motion": "damage",
+    "frame": "pose-03",
+    "source": "work_process/images/issue266/female-damage-review-20261103/pose-03.png",
+    "measure": {
+      "Bounds": {
+        "Count": 102502,
+        "X": 217,
+        "Y": 88,
+        "Width": 312,
+        "Height": 569,
+        "CenterX": 373.0,
+        "CenterY": 372.5
+      },
+      "Helmet": {
+        "Count": 6215,
+        "X": 277,
+        "Y": 109,
+        "Width": 144,
+        "Height": 83,
+        "CenterX": 349.0,
+        "CenterY": 150.5
+      },
+      "Belt": {
+        "Count": 73,
+        "X": 423,
+        "Y": 376,
+        "Width": 12,
+        "Height": 8,
+        "CenterX": 429.0,
+        "CenterY": 380.0
+      }
+    }
+  },
+  {
+    "motion": "damage",
+    "frame": "pose-04",
+    "source": "work_process/images/issue266/female-damage-review-20261103/pose-04.png",
+    "measure": {
+      "Bounds": {
+        "Count": 101466,
+        "X": 195,
+        "Y": 85,
+        "Width": 295,
+        "Height": 574,
+        "CenterX": 342.5,
+        "CenterY": 372.0
+      },
+      "Helmet": {
+        "Count": 6271,
+        "X": 263,
+        "Y": 104,
+        "Width": 149,
+        "Height": 73,
+        "CenterX": 337.5,
+        "CenterY": 140.5
+      },
+      "Belt": {
+        "Count": 79,
+        "X": 385,
+        "Y": 379,
+        "Width": 12,
+        "Height": 9,
+        "CenterX": 391.0,
+        "CenterY": 383.5
+      }
+    }
+  },
+  {
+    "motion": "knockout",
+    "frame": "pose-01",
+    "source": "work_process/images/issue266/female-knockout-review-20261103/pose-01.png",
+    "measure": {
+      "Bounds": {
+        "Count": 119912,
+        "X": 223,
+        "Y": 87,
+        "Width": 338,
+        "Height": 624,
+        "CenterX": 392.0,
+        "CenterY": 399.0
+      },
+      "Helmet": {
+        "Count": 7561,
+        "X": 315,
+        "Y": 106,
+        "Width": 166,
+        "Height": 70,
+        "CenterX": 398.0,
+        "CenterY": 141.0
+      },
+      "Belt": {
+        "Count": 97,
+        "X": 389,
+        "Y": 406,
+        "Width": 14,
+        "Height": 10,
+        "CenterX": 396.0,
+        "CenterY": 411.0
+      }
+    }
+  },
+  {
+    "motion": "knockout",
+    "frame": "pose-02",
+    "source": "work_process/images/issue266/female-knockout-review-20261103/pose-02.png",
+    "measure": {
+      "Bounds": {
+        "Count": 120231,
+        "X": 227,
+        "Y": 115,
+        "Width": 341,
+        "Height": 596,
+        "CenterX": 397.5,
+        "CenterY": 413.0
+      },
+      "Helmet": {
+        "Count": 7511,
+        "X": 326,
+        "Y": 135,
+        "Width": 164,
+        "Height": 73,
+        "CenterX": 408.0,
+        "CenterY": 171.5
+      },
+      "Belt": {
+        "Count": 83,
+        "X": 368,
+        "Y": 433,
+        "Width": 14,
+        "Height": 9,
+        "CenterX": 375.0,
+        "CenterY": 437.5
+      }
+    }
+  },
+  {
+    "motion": "knockout",
+    "frame": "pose-03",
+    "source": "work_process/images/issue266/female-knockout-review-20261103/pose-03.png",
+    "measure": {
+      "Bounds": {
+        "Count": 124905,
+        "X": 111,
+        "Y": 176,
+        "Width": 521,
+        "Height": 454,
+        "CenterX": 371.5,
+        "CenterY": 403.0
+      },
+      "Helmet": {
+        "Count": 7263,
+        "X": 399,
+        "Y": 194,
+        "Width": 158,
+        "Height": 85,
+        "CenterX": 478.0,
+        "CenterY": 236.5
+      },
+      "Belt": {
+        "Count": 35,
+        "X": 361,
+        "Y": 480,
+        "Width": 9,
+        "Height": 7,
+        "CenterX": 365.5,
+        "CenterY": 483.5
+      }
+    }
+  },
+  {
+    "motion": "knockout",
+    "frame": "pose-04",
+    "source": "work_process/images/issue266/female-knockout-review-20261103/pose-04.png",
+    "measure": {
+      "Bounds": {
+        "Count": 110503,
+        "X": 15,
+        "Y": 344,
+        "Width": 669,
+        "Height": 279,
+        "CenterX": 349.5,
+        "CenterY": 483.5
+      },
+      "Helmet": {
+        "Count": 6634,
+        "X": 466,
+        "Y": 358,
+        "Width": 149,
+        "Height": 92,
+        "CenterX": 540.5,
+        "CenterY": 404.0
+      },
+      "Belt": {
+        "Count": 11,
+        "X": 350,
+        "Y": 474,
+        "Width": 3,
+        "Height": 5,
+        "CenterX": 351.5,
+        "CenterY": 476.5
+      }
+    }
+  }
+]

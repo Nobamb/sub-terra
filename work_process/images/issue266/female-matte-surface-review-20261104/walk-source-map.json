@@ -1,0 +1,64 @@
+{
+  "frames": [
+    {
+      "source": "female-motion-alignment-review-20261103/walk/key-01.png",
+      "sheetScale": 0.7363013698630136,
+      "cell": 0,
+      "name": "key-01",
+      "sha256": "26B89310DB81CD2E9B6F151A5A7FE40A36490D722D7D6B2F74869C2A12E82E74"
+    },
+    {
+      "source": "female-motion-alignment-review-20261103/walk/middle-01.png",
+      "sheetScale": 0.7363013698630136,
+      "cell": 1,
+      "name": "middle-01",
+      "sha256": "B4617B2D55AF91F26F1ACF428518212EA322DC2423BB4BE39224929615647E5E"
+    },
+    {
+      "source": "female-motion-alignment-review-20261103/walk/key-02.png",
+      "sheetScale": 0.7337883959044369,
+      "cell": 2,
+      "name": "key-02",
+      "sha256": "F0183F7665AE82973354635C3EF5AFCA0077B16C03DDCE8EDEF5B4931FD1D262"
+    },
+    {
+      "source": "female-gait-repair-review-20261104/middle-02.png",
+      "sheetScale": 0.7401032702237521,
+      "cell": 3,
+      "name": "middle-02",
+      "sha256": "FC590F5F46FA511B9B23758871B8A798DE005F1B698E3726BA253F6526F52D45"
+    },
+    {
+      "source": "female-motion-alignment-review-20261103/walk/key-03.png",
+      "sheetScale": 0.738831615120275,
+      "cell": 4,
+      "name": "key-03",
+      "sha256": "D14768E3312129C664DFAFA336731535EC22D15F2A7BFD31385A4F38C4B71E28"
+    },
+    {
+      "source": "female-motion-alignment-review-20261103/walk/middle-03.png",
+      "sheetScale": 0.7413793103448276,
+      "cell": 5,
+      "name": "middle-03",
+      "sha256": "8800A3A0F1C85C24CEB35D5DB548AB1FAC1478EC6E9B14A71CD5DF46E74CA153"
+    },
+    {
+      "source": "female-motion-alignment-review-20261103/walk/key-04.png",
+      "sheetScale": 0.7350427350427351,
+      "cell": 6,
+      "name": "key-04",
+      "sha256": "943B54523315988F84AFEFB2D36EAD288A11F580891D244E9B7493FA30E86429"
+    },
+    {
+      "source": "female-gait-repair-review-20261104/middle-04.png",
+      "sheetScale": 0.7401032702237521,
+      "cell": 7,
+      "name": "middle-04",
+      "sha256": "E03B03F75B6A93C06AF87734F2A94B5ACEA7332597F49D45CCC86B43227EDBCE"
+    }
+  ],
+  "rows": 3,
+  "columns": 3,
+  "runtimeApplied": false,
+  "motion": "walk"
+}

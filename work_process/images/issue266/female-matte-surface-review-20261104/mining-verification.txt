@@ -1,0 +1,22 @@
+column=-1; isolatedAlphaPixelsRemoved=4; negligibleAlphaOneRemoved=3438; foregroundRgbChanged=0; nonzeroMarginPixels=0
+column=-1; isolatedAlphaPixelsRemoved=19; negligibleAlphaOneRemoved=3098; foregroundRgbChanged=0; nonzeroMarginPixels=0
+column=-1; isolatedAlphaPixelsRemoved=18; negligibleAlphaOneRemoved=3044; foregroundRgbChanged=0; nonzeroMarginPixels=0
+column=-1; isolatedAlphaPixelsRemoved=29; negligibleAlphaOneRemoved=3449; foregroundRgbChanged=0; nonzeroMarginPixels=0
+column=-1; isolatedAlphaPixelsRemoved=24; negligibleAlphaOneRemoved=3161; foregroundRgbChanged=0; nonzeroMarginPixels=0
+column=-1; isolatedAlphaPixelsRemoved=25; negligibleAlphaOneRemoved=3132; foregroundRgbChanged=0; nonzeroMarginPixels=0
+column=-1; isolatedAlphaPixelsRemoved=29; negligibleAlphaOneRemoved=3138; foregroundRgbChanged=0; nonzeroMarginPixels=0
+column=-1; isolatedAlphaPixelsRemoved=11; negligibleAlphaOneRemoved=3491; foregroundRgbChanged=0; nonzeroMarginPixels=0
+column=-1; isolatedAlphaPixelsRemoved=22; negligibleAlphaOneRemoved=3589; foregroundRgbChanged=0; nonzeroMarginPixels=0
+column=-1; isolatedAlphaPixelsRemoved=22; negligibleAlphaOneRemoved=3862; foregroundRgbChanged=0; nonzeroMarginPixels=0
+column=-1; isolatedAlphaPixelsRemoved=15; negligibleAlphaOneRemoved=4108; foregroundRgbChanged=0; nonzeroMarginPixels=0
+bounds=346,215,437,586
+bounds=345,213,436,587
+bounds=340,215,445,585
+bounds=335,215,458,585
+bounds=338,216,427,584
+bounds=330,217,414,584
+bounds=329,214,413,586
+bounds=277,215,432,586
+bounds=240,212,469,587
+bounds=253,213,464,587
+bounds=263,212,449,589

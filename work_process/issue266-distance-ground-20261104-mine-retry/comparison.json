@@ -1,0 +1,38 @@
+[
+  {
+    "mode": "time-original",
+    "samples": 0,
+    "groundedSamples": 0,
+    "maxGroundGap": null,
+    "maxMaleIdleReferenceGap": null,
+    "stationarySamples": 0,
+    "stationaryMovingPoses": 0,
+    "heldWalkPairs": 0,
+    "maxHeldSoleDrift": null,
+    "maxSpeed": null
+  },
+  {
+    "mode": "distance-ground",
+    "samples": 0,
+    "groundedSamples": 0,
+    "maxGroundGap": null,
+    "maxMaleIdleReferenceGap": null,
+    "stationarySamples": 0,
+    "stationaryMovingPoses": 0,
+    "heldWalkPairs": 0,
+    "maxHeldSoleDrift": null,
+    "maxSpeed": null
+  },
+  {
+    "mode": "mine",
+    "samples": 9,
+    "groundedSamples": 7,
+    "maxGroundGap": 0.0,
+    "maxMaleIdleReferenceGap": 0.06251000000000007,
+    "stationarySamples": 2,
+    "stationaryMovingPoses": 0,
+    "heldWalkPairs": 0,
+    "maxHeldSoleDrift": null,
+    "maxSpeed": 5.76456
+  }
+]

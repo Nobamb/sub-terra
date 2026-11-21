@@ -1,0 +1,211 @@
+{
+  "count": 5,
+  "frames": [
+    {
+      "sourceCell": 0,
+      "measure": {
+        "Bounds": {
+          "Count": 75244,
+          "X": 137,
+          "Y": 37,
+          "Width": 268,
+          "Height": 468,
+          "CenterX": 271.0,
+          "CenterY": 271.0
+        },
+        "Helmet": {
+          "Count": 6539,
+          "X": 194,
+          "Y": 53,
+          "Width": 148,
+          "Height": 61,
+          "CenterX": 268.0,
+          "CenterY": 83.5
+        },
+        "Belt": {
+          "Count": 71,
+          "X": 311,
+          "Y": 282,
+          "Width": 8,
+          "Height": 11,
+          "CenterX": 315.0,
+          "CenterY": 287.5
+        }
+      },
+      "scale": 1.2478632478632479,
+      "output": "C:\\Users\\jeone\\sub-terra\\work_process\\images\\issue266\\female-matte-surface-review-20261104\\ladder\\pose-01.png",
+      "dx": 181.94017094017096,
+      "dy": 169.82905982905982,
+      "name": "pose-01",
+      "clean": "C:\\Users\\jeone\\sub-terra\\work_process\\images\\issue266\\female-matte-surface-review-20261104\\ladder\\pose-01-clean.png"
+    },
+    {
+      "sourceCell": 1,
+      "measure": {
+        "Bounds": {
+          "Count": 73759,
+          "X": 103,
+          "Y": 37,
+          "Width": 292,
+          "Height": 468,
+          "CenterX": 249.0,
+          "CenterY": 271.0
+        },
+        "Helmet": {
+          "Count": 4311,
+          "X": 162,
+          "Y": 41,
+          "Width": 123,
+          "Height": 73,
+          "CenterX": 223.5,
+          "CenterY": 77.5
+        },
+        "Belt": {
+          "Count": 71,
+          "X": 286,
+          "Y": 278,
+          "Width": 9,
+          "Height": 11,
+          "CenterX": 290.5,
+          "CenterY": 283.5
+        }
+      },
+      "scale": 1.2478632478632479,
+      "output": "C:\\Users\\jeone\\sub-terra\\work_process\\images\\issue266\\female-matte-surface-review-20261104\\ladder\\pose-02.png",
+      "dx": 181.94017094017096,
+      "dy": 169.82905982905982,
+      "name": "pose-02",
+      "clean": "C:\\Users\\jeone\\sub-terra\\work_process\\images\\issue266\\female-matte-surface-review-20261104\\ladder\\pose-02-clean.png"
+    },
+    {
+      "sourceCell": 2,
+      "measure": {
+        "Bounds": {
+          "Count": 76502,
+          "X": 78,
+          "Y": 36,
+          "Width": 282,
+          "Height": 469,
+          "CenterX": 219.0,
+          "CenterY": 270.5
+        },
+        "Helmet": {
+          "Count": 6444,
+          "X": 130,
+          "Y": 53,
+          "Width": 147,
+          "Height": 61,
+          "CenterX": 203.5,
+          "CenterY": 83.5
+        },
+        "Belt": {
+          "Count": 75,
+          "X": 257,
+          "Y": 277,
+          "Width": 8,
+          "Height": 11,
+          "CenterX": 261.0,
+          "CenterY": 282.5
+        }
+      },
+      "scale": 1.2478632478632479,
+      "output": "C:\\Users\\jeone\\sub-terra\\work_process\\images\\issue266\\female-matte-surface-review-20261104\\ladder\\pose-03.png",
+      "dx": 181.94017094017096,
+      "dy": 169.82905982905982,
+      "name": "pose-03",
+      "clean": "C:\\Users\\jeone\\sub-terra\\work_process\\images\\issue266\\female-matte-surface-review-20261104\\ladder\\pose-03-clean.png"
+    },
+    {
+      "sourceCell": 3,
+      "measure": {
+        "Bounds": {
+          "Count": 71274,
+          "X": 129,
+          "Y": 33,
+          "Width": 278,
+          "Height": 465,
+          "CenterX": 268.0,
+          "CenterY": 265.5
+        },
+        "Helmet": {
+          "Count": 7128,
+          "X": 195,
+          "Y": 37,
+          "Width": 147,
+          "Height": 72,
+          "CenterX": 268.5,
+          "CenterY": 73.0
+        },
+        "Belt": {
+          "Count": 75,
+          "X": 313,
+          "Y": 276,
+          "Width": 8,
+          "Height": 10,
+          "CenterX": 317.0,
+          "CenterY": 281.0
+        }
+      },
+      "scale": 1.2478632478632479,
+      "output": "C:\\Users\\jeone\\sub-terra\\work_process\\images\\issue266\\female-matte-surface-review-20261104\\ladder\\pose-04.png",
+      "dx": 181.94017094017096,
+      "dy": 169.82905982905982,
+      "name": "pose-04",
+      "clean": "C:\\Users\\jeone\\sub-terra\\work_process\\images\\issue266\\female-matte-surface-review-20261104\\ladder\\pose-04-clean.png"
+    },
+    {
+      "sourceCell": 4,
+      "measure": {
+        "Bounds": {
+          "Count": 70876,
+          "X": 107,
+          "Y": 25,
+          "Width": 265,
+          "Height": 473,
+          "CenterX": 239.5,
+          "CenterY": 261.5
+        },
+        "Helmet": {
+          "Count": 6269,
+          "X": 166,
+          "Y": 48,
+          "Width": 146,
+          "Height": 60,
+          "CenterX": 239.0,
+          "CenterY": 78.0
+        },
+        "Belt": {
+          "Count": 77,
+          "X": 281,
+          "Y": 276,
+          "Width": 8,
+          "Height": 11,
+          "CenterX": 285.0,
+          "CenterY": 281.5
+        }
+      },
+      "scale": 1.2478632478632479,
+      "output": "C:\\Users\\jeone\\sub-terra\\work_process\\images\\issue266\\female-matte-surface-review-20261104\\ladder\\pose-05.png",
+      "dx": 181.94017094017096,
+      "dy": 169.82905982905982,
+      "name": "pose-05",
+      "clean": "C:\\Users\\jeone\\sub-terra\\work_process\\images\\issue266\\female-matte-surface-review-20261104\\ladder\\pose-05-clean.png"
+    }
+  ],
+  "motion": "ladder",
+  "order": [
+    "pose-01",
+    "pose-02",
+    "pose-03",
+    "pose-02",
+    "pose-01",
+    "pose-04",
+    "pose-05",
+    "pose-04"
+  ],
+  "previewFps": 5,
+  "sheetSha256": "275AA2AA845895F37CEDFF6E5F1EDE82B9D9E20AAC46F82482083152C87DE079",
+  "runtimeApplied": false,
+  "sheet": "work_process/images/issue266/female-ladder-matte-sheet-v1-20261104.png",
+  "note": "Whole-cel uniform scaling and translation only. Surface repaint by image tool; original masters preserved. Background-only cleanup retains foreground RGB. Animation cadence is a review preview, not runtime."
+}

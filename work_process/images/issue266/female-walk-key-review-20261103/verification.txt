@@ -1,0 +1,5 @@
+opaqueRgbChanged=0; nonzeroMarginPixels=0; opaquePixels=439987; transparentPixels=1122033
+miningOutputUnchanged=True
+gifFrames=4
+uniquePoseHashes=4
+gifAndApngDecode=OK

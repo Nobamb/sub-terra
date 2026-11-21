@@ -1,0 +1,5 @@
+walk: GIFframes=8; GIF/APNG decode=OK
+jump: GIFframes=6; GIF/APNG decode=OK
+damage: GIFframes=5; GIF/APNG decode=OK
+knockout: GIFframes=6; GIF/APNG decode=OK
+12 male pose references found in actual Player prefab bindings

@@ -1,0 +1,19 @@
+{
+  "previewCycleSeconds": 1.6,
+  "uniqueCels": 8,
+  "previewFps": 5,
+  "sourcePixelScaleUnchanged": true,
+  "order": [
+    "key-01",
+    "middle-01",
+    "key-02",
+    "middle-02",
+    "key-03",
+    "middle-03",
+    "key-04",
+    "middle-04"
+  ],
+  "note": "Original whole-body keys plus four newly drawn whole-body inbetweens. No blended or warped limbs; runtime40 not supplied.",
+  "canvasCellPixels": 768,
+  "runtimeApplied": false
+}

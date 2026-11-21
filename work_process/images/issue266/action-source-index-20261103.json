@@ -1,0 +1,62 @@
+[
+  {
+    "group": "jump",
+    "cell": 1,
+    "source": "JumpReady/jump_ready_08.png"
+  },
+  {
+    "group": "jump",
+    "cell": 2,
+    "source": "JumpRise/jump_rise_12.png"
+  },
+  {
+    "group": "jump",
+    "cell": 3,
+    "source": "JumpFall/jump_fall_12.png"
+  },
+  {
+    "group": "jump",
+    "cell": 4,
+    "source": "JumpFall/jump_fall_24.png"
+  },
+  {
+    "group": "damage",
+    "cell": 1,
+    "source": "Damage/damage_01.png"
+  },
+  {
+    "group": "damage",
+    "cell": 2,
+    "source": "Damage/damage_02.png"
+  },
+  {
+    "group": "damage",
+    "cell": 3,
+    "source": "Damage/damage_03.png"
+  },
+  {
+    "group": "damage",
+    "cell": 4,
+    "source": "Damage/damage_04.png"
+  },
+  {
+    "group": "knockout",
+    "cell": 1,
+    "source": "Knockout/knockout_01.png"
+  },
+  {
+    "group": "knockout",
+    "cell": 2,
+    "source": "Knockout/knockout_16.png"
+  },
+  {
+    "group": "knockout",
+    "cell": 3,
+    "source": "Knockout/knockout_32.png"
+  },
+  {
+    "group": "knockout",
+    "cell": 4,
+    "source": "Knockout/knockout_48.png"
+  }
+]

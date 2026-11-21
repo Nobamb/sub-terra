@@ -1,0 +1,98 @@
+{
+  "plays": 1,
+  "fixedScale": 0.92,
+  "previewFps": 6,
+  "note": "Whole-body drawings; shared uniform scale and translation only. Single-play held review; game acceleration/foot lock not applied.",
+  "canvas": 1024,
+  "newWholeBodyCels": 2,
+  "runtimeApplied": false,
+  "after": [
+    "idle",
+    "idle",
+    "entry-01",
+    "entry-02",
+    "key-01",
+    "middle-01",
+    "key-02",
+    "middle-02",
+    "key-03",
+    "middle-03",
+    "key-04",
+    "middle-04"
+  ],
+  "reviewGroundY": 800,
+  "previewFrames": 12,
+  "frames": [
+    {
+      "scale": 0.92,
+      "dx": 29.91999999999996,
+      "pose": 1,
+      "dy": 97.12,
+      "measure": {
+        "Bounds": {
+          "Count": 111339,
+          "X": 302,
+          "Y": 205,
+          "Width": 315,
+          "Height": 595,
+          "CenterX": 459.5,
+          "CenterY": 502.5
+        },
+        "Helmet": {
+          "Count": 7492,
+          "X": 378,
+          "Y": 226,
+          "Width": 161,
+          "Height": 80,
+          "CenterX": 458.5,
+          "CenterY": 266.0
+        },
+        "Belt": {
+          "Count": 64,
+          "X": 506,
+          "Y": 520,
+          "Width": 12,
+          "Height": 8,
+          "CenterX": 512.0,
+          "CenterY": 524.0
+        }
+      }
+    },
+    {
+      "scale": 0.92,
+      "dx": 28.539999999999964,
+      "pose": 2,
+      "dy": 98.95999999999992,
+      "measure": {
+        "Bounds": {
+          "Count": 113362,
+          "X": 302,
+          "Y": 207,
+          "Width": 360,
+          "Height": 593,
+          "CenterX": 482.0,
+          "CenterY": 503.5
+        },
+        "Helmet": {
+          "Count": 7475,
+          "X": 377,
+          "Y": 228,
+          "Width": 161,
+          "Height": 80,
+          "CenterX": 457.5,
+          "CenterY": 268.0
+        },
+        "Belt": {
+          "Count": 58,
+          "X": 508,
+          "Y": 522,
+          "Width": 10,
+          "Height": 8,
+          "CenterX": 513.0,
+          "CenterY": 526.0
+        }
+      }
+    }
+  ],
+  "sourceSha256": "BB49EDC9122D33F18B602B097689230FD062E75C8F79050E20287EB083667119"
+}

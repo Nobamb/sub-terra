@@ -1,0 +1,32 @@
+[
+  {
+    "name": "idle",
+    "source": "female-motion-alignment-review-20261103/damage/pose-01.png",
+    "sha256": "0875AB26E5FCDDABEBE6002ABBA10EAFC41016904AD5BE9BC349348F085D5FAE",
+    "cell": 0
+  },
+  {
+    "name": "entry-01",
+    "source": "female-walk-entry-review-20261103/entry-01.png",
+    "sha256": "BDA8CE4EDDE6C658F5439B8B0D405BB2A3DEBDB6BFB032D17E1B98013D161065",
+    "cell": 1
+  },
+  {
+    "name": "entry-02",
+    "source": "female-walk-entry-review-20261103/entry-02.png",
+    "sha256": "8AF3C3D0FAE9779C6F5CB8F79F548D60918CE0817028C0F46A01760FC1CA4CEF",
+    "cell": 2
+  },
+  {
+    "name": "stop-near",
+    "source": "female-gait-repair-review-20261104/stop-near.png",
+    "sha256": "A46DFB8A5BF4AA232FF930D34D6BDC449BEA39095825C032F05537A98B2480D7",
+    "cell": 3
+  },
+  {
+    "name": "stop-far",
+    "source": "female-gait-repair-review-20261104/stop-far.png",
+    "sha256": "2B30232ECFD9218C925611A10717E341E065F8B118933710F0BEDDF838F85900",
+    "cell": 4
+  }
+]

@@ -1,0 +1,441 @@
+{
+  "runtimeApplied": false,
+  "sheetSha256": "D65A64E17D310609A76E68F483E29F3FDB5D56184FDA545FD78CAC54452D90DF",
+  "note": "Whole-cel uniform scaling and translation only. Surface repaint by image tool; original masters preserved. Background-only cleanup retains foreground RGB. Animation cadence is a review preview, not runtime.",
+  "count": 11,
+  "sheet": "work_process/images/issue266/female-mining-matte-sheet-v1-20261104.png",
+  "order": [
+    "key-01",
+    "middle-01",
+    "key-02",
+    "middle-02",
+    "key-03",
+    "key-04",
+    "key-03",
+    "middle-02",
+    "key-02",
+    "middle-01"
+  ],
+  "frames": [
+    {
+      "dx": 219.0426229508197,
+      "sourceCell": 0,
+      "measure": {
+        "Bounds": {
+          "Count": 40430,
+          "X": 67,
+          "Y": 35,
+          "Width": 228,
+          "Height": 305,
+          "CenterX": 181.0,
+          "CenterY": 187.5
+        },
+        "Helmet": {
+          "Count": 2134,
+          "X": 140,
+          "Y": 47,
+          "Width": 84,
+          "Height": 46,
+          "CenterX": 182.0,
+          "CenterY": 70.0
+        },
+        "Belt": {
+          "Count": 175,
+          "X": 211,
+          "Y": 225,
+          "Width": 17,
+          "Height": 17,
+          "CenterX": 219.5,
+          "CenterY": 233.5
+        }
+      },
+      "output": "C:\\Users\\jeone\\sub-terra\\work_process\\images\\issue266\\female-matte-surface-review-20261104\\mining\\key-01.png",
+      "dy": 148.98360655737702,
+      "name": "key-01",
+      "scale": 1.9147540983606557,
+      "clean": "C:\\Users\\jeone\\sub-terra\\work_process\\images\\issue266\\female-matte-surface-review-20261104\\mining\\key-01-clean.png"
+    },
+    {
+      "dx": 216.1704918032787,
+      "sourceCell": 1,
+      "measure": {
+        "Bounds": {
+          "Count": 41040,
+          "X": 67,
+          "Y": 35,
+          "Width": 228,
+          "Height": 306,
+          "CenterX": 181.0,
+          "CenterY": 188.0
+        },
+        "Helmet": {
+          "Count": 2184,
+          "X": 142,
+          "Y": 47,
+          "Width": 85,
+          "Height": 47,
+          "CenterX": 184.5,
+          "CenterY": 70.5
+        },
+        "Belt": {
+          "Count": 55,
+          "X": 111,
+          "Y": 216,
+          "Width": 9,
+          "Height": 11,
+          "CenterX": 115.5,
+          "CenterY": 221.5
+        }
+      },
+      "output": "C:\\Users\\jeone\\sub-terra\\work_process\\images\\issue266\\female-matte-surface-review-20261104\\mining\\middle-01.png",
+      "dy": 147.0688524590164,
+      "name": "middle-01",
+      "scale": 1.9147540983606557,
+      "clean": "C:\\Users\\jeone\\sub-terra\\work_process\\images\\issue266\\female-matte-surface-review-20261104\\mining\\middle-01-clean.png"
+    },
+    {
+      "dx": 214.25573770491803,
+      "sourceCell": 2,
+      "measure": {
+        "Bounds": {
+          "Count": 41950,
+          "X": 66,
+          "Y": 35,
+          "Width": 232,
+          "Height": 306,
+          "CenterX": 182.0,
+          "CenterY": 188.0
+        },
+        "Helmet": {
+          "Count": 2285,
+          "X": 140,
+          "Y": 48,
+          "Width": 86,
+          "Height": 49,
+          "CenterX": 183.0,
+          "CenterY": 72.5
+        },
+        "Belt": {
+          "Count": 55,
+          "X": 107,
+          "Y": 217,
+          "Width": 10,
+          "Height": 9,
+          "CenterX": 112.0,
+          "CenterY": 221.5
+        }
+      },
+      "output": "C:\\Users\\jeone\\sub-terra\\work_process\\images\\issue266\\female-matte-surface-review-20261104\\mining\\key-02.png",
+      "dy": 147.0688524590164,
+      "name": "key-02",
+      "scale": 1.9147540983606557,
+      "clean": "C:\\Users\\jeone\\sub-terra\\work_process\\images\\issue266\\female-matte-surface-review-20261104\\mining\\key-02-clean.png"
+    },
+    {
+      "dx": 218.08524590163933,
+      "sourceCell": 3,
+      "measure": {
+        "Bounds": {
+          "Count": 43652,
+          "X": 61,
+          "Y": 35,
+          "Width": 239,
+          "Height": 305,
+          "CenterX": 180.5,
+          "CenterY": 187.5
+        },
+        "Helmet": {
+          "Count": 2413,
+          "X": 142,
+          "Y": 47,
+          "Width": 88,
+          "Height": 52,
+          "CenterX": 186.0,
+          "CenterY": 73.0
+        },
+        "Belt": {
+          "Count": 58,
+          "X": 105,
+          "Y": 214,
+          "Width": 10,
+          "Height": 10,
+          "CenterX": 110.0,
+          "CenterY": 219.0
+        }
+      },
+      "output": "C:\\Users\\jeone\\sub-terra\\work_process\\images\\issue266\\female-matte-surface-review-20261104\\mining\\middle-02.png",
+      "dy": 148.98360655737702,
+      "name": "middle-02",
+      "scale": 1.9147540983606557,
+      "clean": "C:\\Users\\jeone\\sub-terra\\work_process\\images\\issue266\\female-matte-surface-review-20261104\\mining\\middle-02-clean.png"
+    },
+    {
+      "dx": 204.68196721311477,
+      "sourceCell": 4,
+      "measure": {
+        "Bounds": {
+          "Count": 42543,
+          "X": 69,
+          "Y": 35,
+          "Width": 223,
+          "Height": 305,
+          "CenterX": 180.5,
+          "CenterY": 187.5
+        },
+        "Helmet": {
+          "Count": 2393,
+          "X": 142,
+          "Y": 48,
+          "Width": 89,
+          "Height": 50,
+          "CenterX": 186.5,
+          "CenterY": 73.0
+        },
+        "Belt": {
+          "Count": 63,
+          "X": 106,
+          "Y": 214,
+          "Width": 10,
+          "Height": 11,
+          "CenterX": 111.0,
+          "CenterY": 219.5
+        }
+      },
+      "output": "C:\\Users\\jeone\\sub-terra\\work_process\\images\\issue266\\female-matte-surface-review-20261104\\mining\\key-03.png",
+      "dy": 148.98360655737702,
+      "name": "key-03",
+      "scale": 1.9147540983606557,
+      "clean": "C:\\Users\\jeone\\sub-terra\\work_process\\images\\issue266\\female-matte-surface-review-20261104\\mining\\key-03-clean.png"
+    },
+    {
+      "dx": 189.3639344262295,
+      "sourceCell": 5,
+      "measure": {
+        "Bounds": {
+          "Count": 42238,
+          "X": 74,
+          "Y": 36,
+          "Width": 216,
+          "Height": 304,
+          "CenterX": 182.0,
+          "CenterY": 188.0
+        },
+        "Helmet": {
+          "Count": 2503,
+          "X": 153,
+          "Y": 48,
+          "Width": 90,
+          "Height": 52,
+          "CenterX": 198.0,
+          "CenterY": 74.0
+        },
+        "Belt": {
+          "Count": 69,
+          "X": 116,
+          "Y": 213,
+          "Width": 10,
+          "Height": 12,
+          "CenterX": 121.0,
+          "CenterY": 219.0
+        }
+      },
+      "output": "C:\\Users\\jeone\\sub-terra\\work_process\\images\\issue266\\female-matte-surface-review-20261104\\mining\\key-04.png",
+      "dy": 148.98360655737702,
+      "name": "key-04",
+      "scale": 1.9147540983606557,
+      "clean": "C:\\Users\\jeone\\sub-terra\\work_process\\images\\issue266\\female-matte-surface-review-20261104\\mining\\key-04-clean.png"
+    },
+    {
+      "dx": 190.32131147540986,
+      "sourceCell": 6,
+      "measure": {
+        "Bounds": {
+          "Count": 41290,
+          "X": 73,
+          "Y": 35,
+          "Width": 215,
+          "Height": 306,
+          "CenterX": 180.5,
+          "CenterY": 188.0
+        },
+        "Helmet": {
+          "Count": 2418,
+          "X": 155,
+          "Y": 47,
+          "Width": 88,
+          "Height": 51,
+          "CenterX": 199.0,
+          "CenterY": 72.5
+        },
+        "Belt": {
+          "Count": 147,
+          "X": 213,
+          "Y": 215,
+          "Width": 15,
+          "Height": 15,
+          "CenterX": 220.5,
+          "CenterY": 222.5
+        }
+      },
+      "output": "C:\\Users\\jeone\\sub-terra\\work_process\\images\\issue266\\female-matte-surface-review-20261104\\mining\\middle-04.png",
+      "dy": 147.0688524590164,
+      "name": "middle-04",
+      "scale": 1.9147540983606557,
+      "clean": "C:\\Users\\jeone\\sub-terra\\work_process\\images\\issue266\\female-matte-surface-review-20261104\\mining\\middle-04-clean.png"
+    },
+    {
+      "dx": 147.2393442622951,
+      "sourceCell": 7,
+      "measure": {
+        "Bounds": {
+          "Count": 39159,
+          "X": 68,
+          "Y": 35,
+          "Width": 226,
+          "Height": 305,
+          "CenterX": 181.0,
+          "CenterY": 187.5
+        },
+        "Helmet": {
+          "Count": 2227,
+          "X": 162,
+          "Y": 47,
+          "Width": 87,
+          "Height": 47,
+          "CenterX": 205.5,
+          "CenterY": 70.5
+        },
+        "Belt": {
+          "Count": 54,
+          "X": 199,
+          "Y": 203,
+          "Width": 9,
+          "Height": 6,
+          "CenterX": 203.5,
+          "CenterY": 206.0
+        }
+      },
+      "output": "C:\\Users\\jeone\\sub-terra\\work_process\\images\\issue266\\female-matte-surface-review-20261104\\mining\\middle-05.png",
+      "dy": 148.98360655737702,
+      "name": "middle-05",
+      "scale": 1.9147540983606557,
+      "clean": "C:\\Users\\jeone\\sub-terra\\work_process\\images\\issue266\\female-matte-surface-review-20261104\\mining\\middle-05-clean.png"
+    },
+    {
+      "dx": 128.09180327868853,
+      "sourceCell": 8,
+      "measure": {
+        "Bounds": {
+          "Count": 38437,
+          "X": 59,
+          "Y": 35,
+          "Width": 244,
+          "Height": 307,
+          "CenterX": 181.0,
+          "CenterY": 188.5
+        },
+        "Helmet": {
+          "Count": 2168,
+          "X": 173,
+          "Y": 48,
+          "Width": 86,
+          "Height": 46,
+          "CenterX": 216.0,
+          "CenterY": 71.0
+        },
+        "Belt": {
+          "Count": 8,
+          "X": 185,
+          "Y": 200,
+          "Width": 3,
+          "Height": 4,
+          "CenterX": 186.5,
+          "CenterY": 202.0
+        }
+      },
+      "output": "C:\\Users\\jeone\\sub-terra\\work_process\\images\\issue266\\female-matte-surface-review-20261104\\mining\\key-05.png",
+      "dy": 145.15409836065578,
+      "name": "key-05",
+      "scale": 1.9147540983606557,
+      "clean": "C:\\Users\\jeone\\sub-terra\\work_process\\images\\issue266\\female-matte-surface-review-20261104\\mining\\key-05-clean.png"
+    },
+    {
+      "dx": 138.62295081967216,
+      "sourceCell": 9,
+      "measure": {
+        "Bounds": {
+          "Count": 42382,
+          "X": 60,
+          "Y": 35,
+          "Width": 242,
+          "Height": 307,
+          "CenterX": 181.0,
+          "CenterY": 188.5
+        },
+        "Helmet": {
+          "Count": 2234,
+          "X": 171,
+          "Y": 47,
+          "Width": 87,
+          "Height": 49,
+          "CenterX": 214.5,
+          "CenterY": 71.5
+        },
+        "Belt": {
+          "Count": 8,
+          "X": 181,
+          "Y": 200,
+          "Width": 3,
+          "Height": 4,
+          "CenterX": 182.5,
+          "CenterY": 202.0
+        }
+      },
+      "output": "C:\\Users\\jeone\\sub-terra\\work_process\\images\\issue266\\female-matte-surface-review-20261104\\mining\\middle-06.png",
+      "dy": 145.15409836065578,
+      "name": "middle-06",
+      "scale": 1.9147540983606557,
+      "clean": "C:\\Users\\jeone\\sub-terra\\work_process\\images\\issue266\\female-matte-surface-review-20261104\\mining\\middle-06-clean.png"
+    },
+    {
+      "dx": 140.53770491803277,
+      "sourceCell": 10,
+      "measure": {
+        "Bounds": {
+          "Count": 41276,
+          "X": 64,
+          "Y": 34,
+          "Width": 234,
+          "Height": 307,
+          "CenterX": 181.0,
+          "CenterY": 187.5
+        },
+        "Helmet": {
+          "Count": 1996,
+          "X": 179,
+          "Y": 55,
+          "Width": 77,
+          "Height": 47,
+          "CenterX": 217.5,
+          "CenterY": 78.5
+        },
+        "Belt": {
+          "Count": 8,
+          "X": 178,
+          "Y": 203,
+          "Width": 3,
+          "Height": 3,
+          "CenterX": 179.5,
+          "CenterY": 204.5
+        }
+      },
+      "output": "C:\\Users\\jeone\\sub-terra\\work_process\\images\\issue266\\female-matte-surface-review-20261104\\mining\\key-06.png",
+      "dy": 147.0688524590164,
+      "name": "key-06",
+      "scale": 1.9147540983606557,
+      "clean": "C:\\Users\\jeone\\sub-terra\\work_process\\images\\issue266\\female-matte-surface-review-20261104\\mining\\key-06-clean.png"
+    }
+  ],
+  "motion": "mining",
+  "previewFps": 8
+}

@@ -1,0 +1,58 @@
+column=-1; isolatedAlphaPixelsRemoved=31; negligibleAlphaOneRemoved=3256; foregroundRgbChanged=0; nonzeroMarginPixels=0
+column=-1; isolatedAlphaPixelsRemoved=53; negligibleAlphaOneRemoved=3715; foregroundRgbChanged=0; nonzeroMarginPixels=0
+column=-1; isolatedAlphaPixelsRemoved=46; negligibleAlphaOneRemoved=2899; foregroundRgbChanged=0; nonzeroMarginPixels=0
+column=-1; isolatedAlphaPixelsRemoved=48; negligibleAlphaOneRemoved=2878; foregroundRgbChanged=0; nonzeroMarginPixels=0
+column=-1; isolatedAlphaPixelsRemoved=57; negligibleAlphaOneRemoved=2954; foregroundRgbChanged=0; nonzeroMarginPixels=0
+bounds=298,188,316,612
+bounds=298,202,345,599
+bounds=298,213,399,588
+bounds=292,193,337,608
+bounds=291,194,336,607
+column=-1; isolatedAlphaPixelsRemoved=27; negligibleAlphaOneRemoved=7836; foregroundRgbChanged=0; nonzeroMarginPixels=0
+column=-1; isolatedAlphaPixelsRemoved=56; negligibleAlphaOneRemoved=7196; foregroundRgbChanged=0; nonzeroMarginPixels=0
+column=-1; isolatedAlphaPixelsRemoved=40; negligibleAlphaOneRemoved=4522; foregroundRgbChanged=0; nonzeroMarginPixels=0
+column=-1; isolatedAlphaPixelsRemoved=55; negligibleAlphaOneRemoved=7748; foregroundRgbChanged=0; nonzeroMarginPixels=0
+column=-1; isolatedAlphaPixelsRemoved=11; negligibleAlphaOneRemoved=9493; foregroundRgbChanged=0; nonzeroMarginPixels=0
+column=-1; isolatedAlphaPixelsRemoved=30; negligibleAlphaOneRemoved=5881; foregroundRgbChanged=0; nonzeroMarginPixels=0
+column=-1; isolatedAlphaPixelsRemoved=43; negligibleAlphaOneRemoved=9377; foregroundRgbChanged=0; nonzeroMarginPixels=0
+column=-1; isolatedAlphaPixelsRemoved=57; negligibleAlphaOneRemoved=9631; foregroundRgbChanged=0; nonzeroMarginPixels=0
+bounds=290,222,374,578
+bounds=303,222,321,577
+bounds=305,222,322,578
+bounds=303,225,325,575
+bounds=282,225,397,575
+bounds=307,224,322,576
+bounds=302,224,327,576
+bounds=296,224,327,576
+column=-1; isolatedAlphaPixelsRemoved=53; negligibleAlphaOneRemoved=3590; foregroundRgbChanged=0; nonzeroMarginPixels=0
+column=-1; isolatedAlphaPixelsRemoved=77; negligibleAlphaOneRemoved=2812; foregroundRgbChanged=0; nonzeroMarginPixels=0
+column=-1; isolatedAlphaPixelsRemoved=41; negligibleAlphaOneRemoved=2425; foregroundRgbChanged=0; nonzeroMarginPixels=0
+column=-1; isolatedAlphaPixelsRemoved=81; negligibleAlphaOneRemoved=2403; foregroundRgbChanged=0; nonzeroMarginPixels=0
+column=-1; isolatedAlphaPixelsRemoved=49; negligibleAlphaOneRemoved=2127; foregroundRgbChanged=0; nonzeroMarginPixels=0
+bounds=353,217,335,583
+bounds=312,217,363,582
+bounds=281,217,350,583
+bounds=343,212,347,580
+bounds=316,203,331,589
+column=-1; isolatedAlphaPixelsRemoved=4; negligibleAlphaOneRemoved=3438; foregroundRgbChanged=0; nonzeroMarginPixels=0
+column=-1; isolatedAlphaPixelsRemoved=19; negligibleAlphaOneRemoved=3098; foregroundRgbChanged=0; nonzeroMarginPixels=0
+column=-1; isolatedAlphaPixelsRemoved=18; negligibleAlphaOneRemoved=3044; foregroundRgbChanged=0; nonzeroMarginPixels=0
+column=-1; isolatedAlphaPixelsRemoved=29; negligibleAlphaOneRemoved=3449; foregroundRgbChanged=0; nonzeroMarginPixels=0
+column=-1; isolatedAlphaPixelsRemoved=24; negligibleAlphaOneRemoved=3161; foregroundRgbChanged=0; nonzeroMarginPixels=0
+column=-1; isolatedAlphaPixelsRemoved=25; negligibleAlphaOneRemoved=3132; foregroundRgbChanged=0; nonzeroMarginPixels=0
+column=-1; isolatedAlphaPixelsRemoved=29; negligibleAlphaOneRemoved=3138; foregroundRgbChanged=0; nonzeroMarginPixels=0
+column=-1; isolatedAlphaPixelsRemoved=11; negligibleAlphaOneRemoved=3491; foregroundRgbChanged=0; nonzeroMarginPixels=0
+column=-1; isolatedAlphaPixelsRemoved=22; negligibleAlphaOneRemoved=3589; foregroundRgbChanged=0; nonzeroMarginPixels=0
+column=-1; isolatedAlphaPixelsRemoved=22; negligibleAlphaOneRemoved=3862; foregroundRgbChanged=0; nonzeroMarginPixels=0
+column=-1; isolatedAlphaPixelsRemoved=15; negligibleAlphaOneRemoved=4108; foregroundRgbChanged=0; nonzeroMarginPixels=0
+bounds=352,235,422,566
+bounds=351,233,422,567
+bounds=345,234,431,566
+bounds=342,235,442,565
+bounds=343,235,413,565
+bounds=336,236,400,565
+bounds=336,233,399,567
+bounds=285,235,417,566
+bounds=249,232,454,567
+bounds=261,232,448,568
+bounds=271,232,433,569

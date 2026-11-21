@@ -1,0 +1,4 @@
+pose=1; source={X=155,Y=8,Width=298,Height=586}; wholeCelOffset=70,70; noScale=True
+pose=2; source={X=745,Y=12,Width=313,Height=582}; wholeCelOffset=211,70; noScale=True
+pose=4; source={X=749,Y=639,Width=301,Height=580}; wholeCelOffset=211,211; noScale=True
+pose=3; source={X=144,Y=642,Width=318,Height=575}; wholeCelOffset=70,211; noScale=True

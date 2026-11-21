@@ -1,0 +1,38 @@
+[
+  {
+    "mode": "time-original",
+    "samples": 76,
+    "groundedSamples": 70,
+    "maxGroundGap": 0.060100000000034015,
+    "maxMaleIdleReferenceGap": 0.0626999999999498,
+    "stationarySamples": 32,
+    "stationaryMovingPoses": 16,
+    "heldWalkPairs": 25,
+    "maxHeldSoleDrift": 0.3728999999999587,
+    "maxSpeed": 5.76456
+  },
+  {
+    "mode": "distance-ground",
+    "samples": 86,
+    "groundedSamples": 81,
+    "maxGroundGap": 0.0,
+    "maxMaleIdleReferenceGap": 0.07799999999997453,
+    "stationarySamples": 39,
+    "stationaryMovingPoses": 0,
+    "heldWalkPairs": 0,
+    "maxHeldSoleDrift": null,
+    "maxSpeed": 5.76456
+  },
+  {
+    "mode": "mine",
+    "samples": 0,
+    "groundedSamples": 0,
+    "maxGroundGap": null,
+    "maxMaleIdleReferenceGap": null,
+    "stationarySamples": 0,
+    "stationaryMovingPoses": 0,
+    "heldWalkPairs": 0,
+    "maxHeldSoleDrift": null,
+    "maxSpeed": null
+  }
+]

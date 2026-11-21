@@ -1,0 +1,325 @@
+{
+  "count": 8,
+  "sheetSha256": "43942F678E95596DE6E013DB8542588E5B07955CE1BE8ADD7FEBF2632844870A",
+  "motion": "walk",
+  "previewFps": 8,
+  "sheet": "work_process/images/issue266/female-walk-matte-sheet-v1-20261104.png",
+  "frames": [
+    {
+      "measure": {
+        "Bounds": {
+          "Count": 46714,
+          "X": 94,
+          "Y": 37,
+          "Width": 231,
+          "Height": 357,
+          "CenterX": 209.5,
+          "CenterY": 215.5
+        },
+        "Helmet": {
+          "Count": 2757,
+          "X": 153,
+          "Y": 53,
+          "Width": 99,
+          "Height": 48,
+          "CenterX": 202.5,
+          "CenterY": 77.0
+        },
+        "Belt": {
+          "Count": 48,
+          "X": 227,
+          "Y": 230,
+          "Width": 8,
+          "Height": 6,
+          "CenterX": 231.0,
+          "CenterY": 233.0
+        }
+      },
+      "sourceCell": 0,
+      "scale": 1.6358543417366946,
+      "clean": "C:\\Users\\jeone\\sub-terra\\work_process\\images\\issue266\\female-matte-surface-review-20261104\\walk\\key-01-clean.png",
+      "name": "key-01",
+      "dx": 172.56022408963588,
+      "dy": 155.47338935574226,
+      "output": "C:\\Users\\jeone\\sub-terra\\work_process\\images\\issue266\\female-matte-surface-review-20261104\\walk\\key-01.png"
+    },
+    {
+      "measure": {
+        "Bounds": {
+          "Count": 43286,
+          "X": 108,
+          "Y": 37,
+          "Width": 198,
+          "Height": 357,
+          "CenterX": 207.0,
+          "CenterY": 215.5
+        },
+        "Helmet": {
+          "Count": 2760,
+          "X": 157,
+          "Y": 53,
+          "Width": 99,
+          "Height": 47,
+          "CenterX": 206.5,
+          "CenterY": 76.5
+        },
+        "Belt": {
+          "Count": 43,
+          "X": 233,
+          "Y": 232,
+          "Width": 8,
+          "Height": 6,
+          "CenterX": 237.0,
+          "CenterY": 235.0
+        }
+      },
+      "sourceCell": 1,
+      "scale": 1.6358543417366946,
+      "clean": "C:\\Users\\jeone\\sub-terra\\work_process\\images\\issue266\\female-matte-surface-review-20261104\\walk\\middle-01-clean.png",
+      "name": "middle-01",
+      "dx": 78.49859943977594,
+      "dy": 155.47338935574226,
+      "output": "C:\\Users\\jeone\\sub-terra\\work_process\\images\\issue266\\female-matte-surface-review-20261104\\walk\\middle-01.png"
+    },
+    {
+      "measure": {
+        "Bounds": {
+          "Count": 41346,
+          "X": 109,
+          "Y": 37,
+          "Width": 199,
+          "Height": 357,
+          "CenterX": 208.5,
+          "CenterY": 215.5
+        },
+        "Helmet": {
+          "Count": 2757,
+          "X": 158,
+          "Y": 53,
+          "Width": 100,
+          "Height": 47,
+          "CenterX": 208.0,
+          "CenterY": 76.5
+        },
+        "Belt": {
+          "Count": 42,
+          "X": 233,
+          "Y": 231,
+          "Width": 7,
+          "Height": 6,
+          "CenterX": 236.5,
+          "CenterY": 234.0
+        }
+      },
+      "sourceCell": 2,
+      "scale": 1.6358543417366946,
+      "clean": "C:\\Users\\jeone\\sub-terra\\work_process\\images\\issue266\\female-matte-surface-review-20261104\\walk\\key-02-clean.png",
+      "name": "key-02",
+      "dx": 179.10364145658264,
+      "dy": 155.47338935574226,
+      "output": "C:\\Users\\jeone\\sub-terra\\work_process\\images\\issue266\\female-matte-surface-review-20261104\\walk\\key-02.png"
+    },
+    {
+      "measure": {
+        "Bounds": {
+          "Count": 42241,
+          "X": 108,
+          "Y": 39,
+          "Width": 201,
+          "Height": 355,
+          "CenterX": 208.5,
+          "CenterY": 216.5
+        },
+        "Helmet": {
+          "Count": 2741,
+          "X": 158,
+          "Y": 54,
+          "Width": 100,
+          "Height": 47,
+          "CenterX": 208.0,
+          "CenterY": 77.5
+        },
+        "Belt": {
+          "Count": 19,
+          "X": 234,
+          "Y": 232,
+          "Width": 7,
+          "Height": 4,
+          "CenterX": 237.5,
+          "CenterY": 234.0
+        }
+      },
+      "sourceCell": 3,
+      "scale": 1.6358543417366946,
+      "clean": "C:\\Users\\jeone\\sub-terra\\work_process\\images\\issue266\\female-matte-surface-review-20261104\\walk\\middle-02-clean.png",
+      "name": "middle-02",
+      "dx": 201.18767507002804,
+      "dy": 155.47338935574226,
+      "output": "C:\\Users\\jeone\\sub-terra\\work_process\\images\\issue266\\female-matte-surface-review-20261104\\walk\\middle-02.png"
+    },
+    {
+      "measure": {
+        "Bounds": {
+          "Count": 46502,
+          "X": 88,
+          "Y": 39,
+          "Width": 245,
+          "Height": 355,
+          "CenterX": 210.5,
+          "CenterY": 216.5
+        },
+        "Helmet": {
+          "Count": 2642,
+          "X": 150,
+          "Y": 54,
+          "Width": 99,
+          "Height": 46,
+          "CenterX": 199.5,
+          "CenterY": 77.0
+        },
+        "Belt": {
+          "Count": 26,
+          "X": 226,
+          "Y": 233,
+          "Width": 8,
+          "Height": 4,
+          "CenterX": 230.0,
+          "CenterY": 235.0
+        }
+      },
+      "sourceCell": 4,
+      "scale": 1.6358543417366946,
+      "clean": "C:\\Users\\jeone\\sub-terra\\work_process\\images\\issue266\\female-matte-surface-review-20261104\\walk\\key-03-clean.png",
+      "name": "key-03",
+      "dx": 170.92436974789916,
+      "dy": 155.47338935574226,
+      "output": "C:\\Users\\jeone\\sub-terra\\work_process\\images\\issue266\\female-matte-surface-review-20261104\\walk\\key-03.png"
+    },
+    {
+      "measure": {
+        "Bounds": {
+          "Count": 43681,
+          "X": 109,
+          "Y": 39,
+          "Width": 200,
+          "Height": 356,
+          "CenterX": 209.0,
+          "CenterY": 217.0
+        },
+        "Helmet": {
+          "Count": 2615,
+          "X": 161,
+          "Y": 54,
+          "Width": 98,
+          "Height": 46,
+          "CenterX": 210.0,
+          "CenterY": 77.0
+        },
+        "Belt": {
+          "Count": 43,
+          "X": 232,
+          "Y": 231,
+          "Width": 8,
+          "Height": 7,
+          "CenterX": 236.0,
+          "CenterY": 234.5
+        }
+      },
+      "sourceCell": 5,
+      "scale": 1.6358543417366946,
+      "clean": "C:\\Users\\jeone\\sub-terra\\work_process\\images\\issue266\\female-matte-surface-review-20261104\\walk\\middle-03-clean.png",
+      "name": "middle-03",
+      "dx": 229.8151260504202,
+      "dy": 153.83753501400565,
+      "output": "C:\\Users\\jeone\\sub-terra\\work_process\\images\\issue266\\female-matte-surface-review-20261104\\walk\\middle-03.png"
+    },
+    {
+      "measure": {
+        "Bounds": {
+          "Count": 42198,
+          "X": 107,
+          "Y": 39,
+          "Width": 202,
+          "Height": 356,
+          "CenterX": 208.0,
+          "CenterY": 217.0
+        },
+        "Helmet": {
+          "Count": 2664,
+          "X": 159,
+          "Y": 54,
+          "Width": 100,
+          "Height": 46,
+          "CenterX": 209.0,
+          "CenterY": 77.0
+        },
+        "Belt": {
+          "Count": 43,
+          "X": 233,
+          "Y": 230,
+          "Width": 7,
+          "Height": 7,
+          "CenterX": 236.5,
+          "CenterY": 233.5
+        }
+      },
+      "sourceCell": 6,
+      "scale": 1.6358543417366946,
+      "clean": "C:\\Users\\jeone\\sub-terra\\work_process\\images\\issue266\\female-matte-surface-review-20261104\\walk\\key-04-clean.png",
+      "name": "key-04",
+      "dx": 196.28011204481794,
+      "dy": 153.83753501400565,
+      "output": "C:\\Users\\jeone\\sub-terra\\work_process\\images\\issue266\\female-matte-surface-review-20261104\\walk\\key-04.png"
+    },
+    {
+      "measure": {
+        "Bounds": {
+          "Count": 44030,
+          "X": 105,
+          "Y": 39,
+          "Width": 202,
+          "Height": 356,
+          "CenterX": 206.0,
+          "CenterY": 217.0
+        },
+        "Helmet": {
+          "Count": 2715,
+          "X": 157,
+          "Y": 55,
+          "Width": 100,
+          "Height": 46,
+          "CenterX": 207.0,
+          "CenterY": 78.0
+        },
+        "Belt": {
+          "Count": 45,
+          "X": 235,
+          "Y": 234,
+          "Width": 7,
+          "Height": 7,
+          "CenterX": 238.5,
+          "CenterY": 237.5
+        }
+      },
+      "sourceCell": 7,
+      "scale": 1.6358543417366946,
+      "clean": "C:\\Users\\jeone\\sub-terra\\work_process\\images\\issue266\\female-matte-surface-review-20261104\\walk\\middle-04-clean.png",
+      "name": "middle-04",
+      "dx": 172.56022408963588,
+      "dy": 153.83753501400565,
+      "output": "C:\\Users\\jeone\\sub-terra\\work_process\\images\\issue266\\female-matte-surface-review-20261104\\walk\\middle-04.png"
+    }
+  ],
+  "note": "Whole-cel uniform scaling and translation only. Surface repaint by image tool; original masters preserved. Background-only cleanup retains foreground RGB. Animation cadence is a review preview, not runtime.",
+  "runtimeApplied": false,
+  "order": [
+    "key-01",
+    "middle-01",
+    "key-02",
+    "middle-02",
+    "key-03",
+    "middle-03",
+    "key-04",
+    "middle-04"
+  ]
+}

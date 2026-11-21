@@ -1,0 +1,2261 @@
+{
+  "frontMedianHelmetWidth": 161,
+  "clips": [
+    {
+      "Name": "entry-walk-stop-near",
+      "Fps": 8,
+      "Order": [
+        "transition/idle",
+        "transition/idle",
+        "transition/idle",
+        "transition/idle",
+        "transition/entry-01",
+        "transition/entry-02",
+        "walk/key-01",
+        "walk/middle-01",
+        "walk/key-02",
+        "walk/middle-02",
+        "walk/key-03",
+        "walk/middle-03",
+        "walk/key-04",
+        "walk/middle-04",
+        "transition/entry-01",
+        "transition/stop-near",
+        "transition/idle",
+        "transition/idle",
+        "transition/idle"
+      ]
+    },
+    {
+      "Name": "entry-walk-stop-far",
+      "Fps": 8,
+      "Order": [
+        "transition/idle",
+        "transition/idle",
+        "transition/entry-01",
+        "transition/entry-02",
+        "walk/key-01",
+        "walk/middle-01",
+        "walk/key-02",
+        "walk/middle-02",
+        "walk/key-03",
+        "transition/entry-01",
+        "transition/stop-far",
+        "transition/idle",
+        "transition/idle"
+      ]
+    },
+    {
+      "Name": "ladder",
+      "Fps": 5,
+      "Order": [
+        "ladder/pose-01",
+        "ladder/pose-02",
+        "ladder/pose-03",
+        "ladder/pose-02",
+        "ladder/pose-01",
+        "ladder/pose-04",
+        "ladder/pose-05",
+        "ladder/pose-04"
+      ]
+    },
+    {
+      "Name": "mining",
+      "Fps": 8,
+      "Order": [
+        "mining/key-01",
+        "mining/middle-01",
+        "mining/key-02",
+        "mining/middle-02",
+        "mining/key-03",
+        "mining/key-04",
+        "mining/key-03",
+        "mining/middle-02",
+        "mining/key-02",
+        "mining/middle-01"
+      ]
+    }
+  ],
+  "rearMedianHelmetWidth": 183,
+  "runtimeApplied": false,
+  "frames": [
+    {
+      "rootMethod": "waist-x and supporting shoe ground; whole-cel only",
+      "after": {
+        "Bounds": {
+          "Count": 121144,
+          "X": 298,
+          "Y": 188,
+          "Width": 316,
+          "Height": 612,
+          "CenterX": 456.0,
+          "CenterY": 494.0
+        },
+        "Helmet": {
+          "Count": 7618,
+          "X": 370,
+          "Y": 214,
+          "Width": 161,
+          "Height": 76,
+          "CenterX": 450.5,
+          "CenterY": 252.0
+        },
+        "Belt": {
+          "Count": 119,
+          "X": 506,
+          "Y": 502,
+          "Width": 13,
+          "Height": 11,
+          "CenterX": 512.5,
+          "CenterY": 507.5
+        }
+      },
+      "before": {
+        "Bounds": {
+          "Count": 61507,
+          "X": 142,
+          "Y": 47,
+          "Width": 226,
+          "Height": 436,
+          "CenterX": 255.0,
+          "CenterY": 265.0
+        },
+        "Helmet": {
+          "Count": 5289,
+          "X": 194,
+          "Y": 52,
+          "Width": 135,
+          "Height": 67,
+          "CenterX": 261.5,
+          "CenterY": 85.5
+        },
+        "Belt": {
+          "Count": 61,
+          "X": 291,
+          "Y": 270,
+          "Width": 9,
+          "Height": 9,
+          "CenterX": 295.5,
+          "CenterY": 274.5
+        }
+      },
+      "dx": 97.89334862385317,
+      "medianHelmetSourceWidth": 137.0,
+      "sourceSheet": "female-transition-matte-sheet-v3-alpha-20261104.png",
+      "motion": "transition",
+      "output": "transition\\idle.png",
+      "clean": "transition\\idle-clean.png",
+      "groundError": 0,
+      "targetHelmetWidth": 161.0,
+      "cell": 0,
+      "name": "idle",
+      "scaleMethod": "fixed neutral stature 611; orange seam components are not anatomical head width",
+      "sourceSha256": "37377C5786981B33299E29923C43D0CC11DD67760ED91CC609FD1B7512C6A53A",
+      "scale": 1.401376146788991,
+      "dy": 123.1353211009174
+    },
+    {
+      "rootMethod": "waist-x and supporting shoe ground; whole-cel only",
+      "after": {
+        "Bounds": {
+          "Count": 125769,
+          "X": 298,
+          "Y": 202,
+          "Width": 345,
+          "Height": 599,
+          "CenterX": 470.5,
+          "CenterY": 501.5
+        },
+        "Helmet": {
+          "Count": 8390,
+          "X": 376,
+          "Y": 228,
+          "Width": 167,
+          "Height": 80,
+          "CenterX": 459.5,
+          "CenterY": 268.0
+        },
+        "Belt": {
+          "Count": 88,
+          "X": 506,
+          "Y": 520,
+          "Width": 10,
+          "Height": 9,
+          "CenterX": 511.0,
+          "CenterY": 524.5
+        }
+      },
+      "before": {
+        "Bounds": {
+          "Count": 63848,
+          "X": 121,
+          "Y": 56,
+          "Width": 246,
+          "Height": 426,
+          "CenterX": 244.0,
+          "CenterY": 269.0
+        },
+        "Helmet": {
+          "Count": 4168,
+          "X": 177,
+          "Y": 74,
+          "Width": 119,
+          "Height": 57,
+          "CenterX": 236.5,
+          "CenterY": 102.5
+        },
+        "Belt": {
+          "Count": 52,
+          "X": 269,
+          "Y": 282,
+          "Width": 8,
+          "Height": 7,
+          "CenterX": 273.0,
+          "CenterY": 285.5
+        }
+      },
+      "dx": 129.42431192660547,
+      "medianHelmetSourceWidth": 137.0,
+      "sourceSheet": "female-transition-matte-sheet-v3-alpha-20261104.png",
+      "motion": "transition",
+      "output": "transition\\entry-01.png",
+      "clean": "transition\\entry-01-clean.png",
+      "groundError": 1,
+      "targetHelmetWidth": 161.0,
+      "cell": 1,
+      "name": "entry-01",
+      "scaleMethod": "fixed neutral stature 611; orange seam components are not anatomical head width",
+      "sourceSha256": "37377C5786981B33299E29923C43D0CC11DD67760ED91CC609FD1B7512C6A53A",
+      "scale": 1.401376146788991,
+      "dy": 124.53669724770634
+    },
+    {
+      "rootMethod": "waist-x and supporting shoe ground; whole-cel only",
+      "after": {
+        "Bounds": {
+          "Count": 126822,
+          "X": 298,
+          "Y": 213,
+          "Width": 399,
+          "Height": 588,
+          "CenterX": 497.5,
+          "CenterY": 507.0
+        },
+        "Helmet": {
+          "Count": 11236,
+          "X": 380,
+          "Y": 221,
+          "Width": 194,
+          "Height": 96,
+          "CenterX": 477.0,
+          "CenterY": 269.0
+        },
+        "Belt": {
+          "Count": 120,
+          "X": 505,
+          "Y": 529,
+          "Width": 12,
+          "Height": 11,
+          "CenterX": 511.0,
+          "CenterY": 534.5
+        }
+      },
+      "before": {
+        "Bounds": {
+          "Count": 64386,
+          "X": 91,
+          "Y": 63,
+          "Width": 285,
+          "Height": 419,
+          "CenterX": 233.5,
+          "CenterY": 272.5
+        },
+        "Helmet": {
+          "Count": 5733,
+          "X": 149,
+          "Y": 69,
+          "Width": 139,
+          "Height": 68,
+          "CenterX": 218.5,
+          "CenterY": 103.0
+        },
+        "Belt": {
+          "Count": 61,
+          "X": 238,
+          "Y": 289,
+          "Width": 10,
+          "Height": 7,
+          "CenterX": 243.0,
+          "CenterY": 292.5
+        }
+      },
+      "dx": 171.46559633027522,
+      "medianHelmetSourceWidth": 137.0,
+      "sourceSheet": "female-transition-matte-sheet-v3-alpha-20261104.png",
+      "motion": "transition",
+      "output": "transition\\entry-02.png",
+      "clean": "transition\\entry-02-clean.png",
+      "groundError": 1,
+      "targetHelmetWidth": 161.0,
+      "cell": 2,
+      "name": "entry-02",
+      "scaleMethod": "fixed neutral stature 611; orange seam components are not anatomical head width",
+      "sourceSha256": "37377C5786981B33299E29923C43D0CC11DD67760ED91CC609FD1B7512C6A53A",
+      "scale": 1.401376146788991,
+      "dy": 124.53669724770634
+    },
+    {
+      "rootMethod": "waist-x and supporting shoe ground; whole-cel only",
+      "after": {
+        "Bounds": {
+          "Count": 127887,
+          "X": 292,
+          "Y": 193,
+          "Width": 337,
+          "Height": 608,
+          "CenterX": 460.5,
+          "CenterY": 497.0
+        },
+        "Helmet": {
+          "Count": 10672,
+          "X": 370,
+          "Y": 200,
+          "Width": 191,
+          "Height": 96,
+          "CenterX": 465.5,
+          "CenterY": 248.0
+        },
+        "Belt": {
+          "Count": 142,
+          "X": 506,
+          "Y": 502,
+          "Width": 14,
+          "Height": 13,
+          "CenterX": 513.0,
+          "CenterY": 508.5
+        }
+      },
+      "before": {
+        "Bounds": {
+          "Count": 64919,
+          "X": 138,
+          "Y": 48,
+          "Width": 240,
+          "Height": 433,
+          "CenterX": 258.0,
+          "CenterY": 264.5
+        },
+        "Helmet": {
+          "Count": 5447,
+          "X": 193,
+          "Y": 53,
+          "Width": 137,
+          "Height": 68,
+          "CenterX": 261.5,
+          "CenterY": 87.0
+        },
+        "Belt": {
+          "Count": 75,
+          "X": 290,
+          "Y": 268,
+          "Width": 10,
+          "Height": 10,
+          "CenterX": 295.0,
+          "CenterY": 273.0
+        }
+      },
+      "dx": 98.5940366972477,
+      "medianHelmetSourceWidth": 137.0,
+      "sourceSheet": "female-transition-matte-sheet-v3-alpha-20261104.png",
+      "motion": "transition",
+      "output": "transition\\stop-near.png",
+      "clean": "transition\\stop-near-clean.png",
+      "groundError": 1,
+      "targetHelmetWidth": 161.0,
+      "cell": 3,
+      "name": "stop-near",
+      "scaleMethod": "fixed neutral stature 611; orange seam components are not anatomical head width",
+      "sourceSha256": "37377C5786981B33299E29923C43D0CC11DD67760ED91CC609FD1B7512C6A53A",
+      "scale": 1.401376146788991,
+      "dy": 125.9380733944954
+    },
+    {
+      "rootMethod": "waist-x and supporting shoe ground; whole-cel only",
+      "after": {
+        "Bounds": {
+          "Count": 127184,
+          "X": 291,
+          "Y": 194,
+          "Width": 336,
+          "Height": 607,
+          "CenterX": 459.0,
+          "CenterY": 497.5
+        },
+        "Helmet": {
+          "Count": 11119,
+          "X": 369,
+          "Y": 202,
+          "Width": 195,
+          "Height": 96,
+          "CenterX": 466.5,
+          "CenterY": 250.0
+        },
+        "Belt": {
+          "Count": 128,
+          "X": 505,
+          "Y": 504,
+          "Width": 13,
+          "Height": 12,
+          "CenterX": 511.5,
+          "CenterY": 510.0
+        }
+      },
+      "before": {
+        "Bounds": {
+          "Count": 64564,
+          "X": 122,
+          "Y": 49,
+          "Width": 240,
+          "Height": 432,
+          "CenterX": 242.0,
+          "CenterY": 265.0
+        },
+        "Helmet": {
+          "Count": 5684,
+          "X": 178,
+          "Y": 54,
+          "Width": 139,
+          "Height": 69,
+          "CenterX": 247.5,
+          "CenterY": 88.5
+        },
+        "Belt": {
+          "Count": 69,
+          "X": 275,
+          "Y": 270,
+          "Width": 9,
+          "Height": 8,
+          "CenterX": 279.5,
+          "CenterY": 274.0
+        }
+      },
+      "dx": 120.31536697247702,
+      "medianHelmetSourceWidth": 137.0,
+      "sourceSheet": "female-transition-matte-sheet-v3-alpha-20261104.png",
+      "motion": "transition",
+      "output": "transition\\stop-far.png",
+      "clean": "transition\\stop-far-clean.png",
+      "groundError": 1,
+      "targetHelmetWidth": 161.0,
+      "cell": 4,
+      "name": "stop-far",
+      "scaleMethod": "fixed neutral stature 611; orange seam components are not anatomical head width",
+      "sourceSha256": "37377C5786981B33299E29923C43D0CC11DD67760ED91CC609FD1B7512C6A53A",
+      "scale": 1.401376146788991,
+      "dy": 125.9380733944954
+    },
+    {
+      "rootMethod": "waist-x and supporting shoe ground; whole-cel only",
+      "after": {
+        "Bounds": {
+          "Count": 122574,
+          "X": 290,
+          "Y": 222,
+          "Width": 374,
+          "Height": 578,
+          "CenterX": 477.0,
+          "CenterY": 511.0
+        },
+        "Helmet": {
+          "Count": 7194,
+          "X": 385,
+          "Y": 249,
+          "Width": 160,
+          "Height": 76,
+          "CenterX": 465.0,
+          "CenterY": 287.0
+        },
+        "Belt": {
+          "Count": 122,
+          "X": 505,
+          "Y": 534,
+          "Width": 13,
+          "Height": 11,
+          "CenterX": 511.5,
+          "CenterY": 539.5
+        }
+      },
+      "before": {
+        "Bounds": {
+          "Count": 46714,
+          "X": 94,
+          "Y": 37,
+          "Width": 231,
+          "Height": 357,
+          "CenterX": 209.5,
+          "CenterY": 215.5
+        },
+        "Helmet": {
+          "Count": 2757,
+          "X": 153,
+          "Y": 53,
+          "Width": 99,
+          "Height": 48,
+          "CenterX": 202.5,
+          "CenterY": 77.0
+        },
+        "Belt": {
+          "Count": 48,
+          "X": 227,
+          "Y": 230,
+          "Width": 8,
+          "Height": 6,
+          "CenterX": 231.0,
+          "CenterY": 233.0
+        }
+      },
+      "dx": 138.2211055276382,
+      "medianHelmetSourceWidth": 99.5,
+      "sourceSheet": "female-walk-matte-sheet-v1-20261104.png",
+      "motion": "walk",
+      "output": "walk\\key-01.png",
+      "clean": "walk\\key-01-clean.png",
+      "groundError": 0,
+      "targetHelmetWidth": 161.0,
+      "cell": 0,
+      "name": "key-01",
+      "scaleMethod": "motion-specific median orange helmet diagnostic, visually reviewed",
+      "sourceSha256": "43942F678E95596DE6E013DB8542588E5B07955CE1BE8ADD7FEBF2632844870A",
+      "scale": 1.6180904522613064,
+      "dy": 162.4723618090453
+    },
+    {
+      "rootMethod": "waist-x and supporting shoe ground; whole-cel only",
+      "after": {
+        "Bounds": {
+          "Count": 113495,
+          "X": 303,
+          "Y": 222,
+          "Width": 321,
+          "Height": 577,
+          "CenterX": 463.5,
+          "CenterY": 510.5
+        },
+        "Helmet": {
+          "Count": 7210,
+          "X": 383,
+          "Y": 249,
+          "Width": 160,
+          "Height": 76,
+          "CenterX": 463.0,
+          "CenterY": 287.0
+        },
+        "Belt": {
+          "Count": 108,
+          "X": 506,
+          "Y": 538,
+          "Width": 12,
+          "Height": 10,
+          "CenterX": 512.0,
+          "CenterY": 543.0
+        }
+      },
+      "before": {
+        "Bounds": {
+          "Count": 43286,
+          "X": 108,
+          "Y": 37,
+          "Width": 198,
+          "Height": 357,
+          "CenterX": 207.0,
+          "CenterY": 215.5
+        },
+        "Helmet": {
+          "Count": 2760,
+          "X": 157,
+          "Y": 53,
+          "Width": 99,
+          "Height": 47,
+          "CenterX": 206.5,
+          "CenterY": 76.5
+        },
+        "Belt": {
+          "Count": 43,
+          "X": 233,
+          "Y": 232,
+          "Width": 8,
+          "Height": 6,
+          "CenterX": 237.0,
+          "CenterY": 235.0
+        }
+      },
+      "dx": 128.51256281407035,
+      "medianHelmetSourceWidth": 99.5,
+      "sourceSheet": "female-walk-matte-sheet-v1-20261104.png",
+      "motion": "walk",
+      "output": "walk\\middle-01.png",
+      "clean": "walk\\middle-01-clean.png",
+      "groundError": -1,
+      "targetHelmetWidth": 161.0,
+      "cell": 1,
+      "name": "middle-01",
+      "scaleMethod": "motion-specific median orange helmet diagnostic, visually reviewed",
+      "sourceSha256": "43942F678E95596DE6E013DB8542588E5B07955CE1BE8ADD7FEBF2632844870A",
+      "scale": 1.6180904522613064,
+      "dy": 162.4723618090453
+    },
+    {
+      "rootMethod": "waist-x and supporting shoe ground; whole-cel only",
+      "after": {
+        "Bounds": {
+          "Count": 108389,
+          "X": 305,
+          "Y": 222,
+          "Width": 322,
+          "Height": 578,
+          "CenterX": 466.0,
+          "CenterY": 511.0
+        },
+        "Helmet": {
+          "Count": 7214,
+          "X": 384,
+          "Y": 249,
+          "Width": 162,
+          "Height": 76,
+          "CenterX": 465.0,
+          "CenterY": 287.0
+        },
+        "Belt": {
+          "Count": 111,
+          "X": 505,
+          "Y": 536,
+          "Width": 12,
+          "Height": 10,
+          "CenterX": 511.0,
+          "CenterY": 541.0
+        }
+      },
+      "before": {
+        "Bounds": {
+          "Count": 41346,
+          "X": 109,
+          "Y": 37,
+          "Width": 199,
+          "Height": 357,
+          "CenterX": 208.5,
+          "CenterY": 215.5
+        },
+        "Helmet": {
+          "Count": 2757,
+          "X": 158,
+          "Y": 53,
+          "Width": 100,
+          "Height": 47,
+          "CenterX": 208.0,
+          "CenterY": 76.5
+        },
+        "Belt": {
+          "Count": 42,
+          "X": 233,
+          "Y": 231,
+          "Width": 7,
+          "Height": 6,
+          "CenterX": 236.5,
+          "CenterY": 234.0
+        }
+      },
+      "dx": 129.32160804020106,
+      "medianHelmetSourceWidth": 99.5,
+      "sourceSheet": "female-walk-matte-sheet-v1-20261104.png",
+      "motion": "walk",
+      "output": "walk\\key-02.png",
+      "clean": "walk\\key-02-clean.png",
+      "groundError": 0,
+      "targetHelmetWidth": 161.0,
+      "cell": 2,
+      "name": "key-02",
+      "scaleMethod": "motion-specific median orange helmet diagnostic, visually reviewed",
+      "sourceSha256": "43942F678E95596DE6E013DB8542588E5B07955CE1BE8ADD7FEBF2632844870A",
+      "scale": 1.6180904522613064,
+      "dy": 162.4723618090453
+    },
+    {
+      "rootMethod": "waist-x and supporting shoe ground; whole-cel only",
+      "after": {
+        "Bounds": {
+          "Count": 110857,
+          "X": 303,
+          "Y": 225,
+          "Width": 325,
+          "Height": 575,
+          "CenterX": 465.5,
+          "CenterY": 512.5
+        },
+        "Helmet": {
+          "Count": 7161,
+          "X": 383,
+          "Y": 251,
+          "Width": 163,
+          "Height": 75,
+          "CenterX": 464.5,
+          "CenterY": 288.5
+        },
+        "Belt": {
+          "Count": 59,
+          "X": 507,
+          "Y": 537,
+          "Width": 12,
+          "Height": 7,
+          "CenterX": 513.0,
+          "CenterY": 540.5
+        }
+      },
+      "before": {
+        "Bounds": {
+          "Count": 42241,
+          "X": 108,
+          "Y": 39,
+          "Width": 201,
+          "Height": 355,
+          "CenterX": 208.5,
+          "CenterY": 216.5
+        },
+        "Helmet": {
+          "Count": 2741,
+          "X": 158,
+          "Y": 54,
+          "Width": 100,
+          "Height": 47,
+          "CenterX": 208.0,
+          "CenterY": 77.5
+        },
+        "Belt": {
+          "Count": 19,
+          "X": 234,
+          "Y": 232,
+          "Width": 7,
+          "Height": 4,
+          "CenterX": 237.5,
+          "CenterY": 234.0
+        }
+      },
+      "dx": 127.7035175879397,
+      "medianHelmetSourceWidth": 99.5,
+      "sourceSheet": "female-walk-matte-sheet-v1-20261104.png",
+      "motion": "walk",
+      "output": "walk\\middle-02.png",
+      "clean": "walk\\middle-02-clean.png",
+      "groundError": 0,
+      "targetHelmetWidth": 161.0,
+      "cell": 3,
+      "name": "middle-02",
+      "scaleMethod": "motion-specific median orange helmet diagnostic, visually reviewed",
+      "sourceSha256": "43942F678E95596DE6E013DB8542588E5B07955CE1BE8ADD7FEBF2632844870A",
+      "scale": 1.6180904522613064,
+      "dy": 162.4723618090453
+    },
+    {
+      "rootMethod": "waist-x and supporting shoe ground; whole-cel only",
+      "after": {
+        "Bounds": {
+          "Count": 122024,
+          "X": 282,
+          "Y": 225,
+          "Width": 397,
+          "Height": 575,
+          "CenterX": 480.5,
+          "CenterY": 512.5
+        },
+        "Helmet": {
+          "Count": 6905,
+          "X": 382,
+          "Y": 250,
+          "Width": 161,
+          "Height": 74,
+          "CenterX": 462.5,
+          "CenterY": 287.0
+        },
+        "Belt": {
+          "Count": 63,
+          "X": 506,
+          "Y": 540,
+          "Width": 12,
+          "Height": 6,
+          "CenterX": 512.0,
+          "CenterY": 543.0
+        }
+      },
+      "before": {
+        "Bounds": {
+          "Count": 46502,
+          "X": 88,
+          "Y": 39,
+          "Width": 245,
+          "Height": 355,
+          "CenterX": 210.5,
+          "CenterY": 216.5
+        },
+        "Helmet": {
+          "Count": 2642,
+          "X": 150,
+          "Y": 54,
+          "Width": 99,
+          "Height": 46,
+          "CenterX": 199.5,
+          "CenterY": 77.0
+        },
+        "Belt": {
+          "Count": 26,
+          "X": 226,
+          "Y": 233,
+          "Width": 8,
+          "Height": 4,
+          "CenterX": 230.0,
+          "CenterY": 235.0
+        }
+      },
+      "dx": 139.8391959798995,
+      "medianHelmetSourceWidth": 99.5,
+      "sourceSheet": "female-walk-matte-sheet-v1-20261104.png",
+      "motion": "walk",
+      "output": "walk\\key-03.png",
+      "clean": "walk\\key-03-clean.png",
+      "groundError": 0,
+      "targetHelmetWidth": 161.0,
+      "cell": 4,
+      "name": "key-03",
+      "scaleMethod": "motion-specific median orange helmet diagnostic, visually reviewed",
+      "sourceSha256": "43942F678E95596DE6E013DB8542588E5B07955CE1BE8ADD7FEBF2632844870A",
+      "scale": 1.6180904522613064,
+      "dy": 162.4723618090453
+    },
+    {
+      "rootMethod": "waist-x and supporting shoe ground; whole-cel only",
+      "after": {
+        "Bounds": {
+          "Count": 114600,
+          "X": 307,
+          "Y": 224,
+          "Width": 322,
+          "Height": 576,
+          "CenterX": 468.0,
+          "CenterY": 512.0
+        },
+        "Helmet": {
+          "Count": 6824,
+          "X": 390,
+          "Y": 249,
+          "Width": 159,
+          "Height": 73,
+          "CenterX": 469.5,
+          "CenterY": 285.5
+        },
+        "Belt": {
+          "Count": 106,
+          "X": 505,
+          "Y": 535,
+          "Width": 13,
+          "Height": 10,
+          "CenterX": 511.5,
+          "CenterY": 540.0
+        }
+      },
+      "before": {
+        "Bounds": {
+          "Count": 43681,
+          "X": 109,
+          "Y": 39,
+          "Width": 200,
+          "Height": 356,
+          "CenterX": 209.0,
+          "CenterY": 217.0
+        },
+        "Helmet": {
+          "Count": 2615,
+          "X": 161,
+          "Y": 54,
+          "Width": 98,
+          "Height": 46,
+          "CenterX": 210.0,
+          "CenterY": 77.0
+        },
+        "Belt": {
+          "Count": 43,
+          "X": 232,
+          "Y": 231,
+          "Width": 8,
+          "Height": 7,
+          "CenterX": 236.0,
+          "CenterY": 234.5
+        }
+      },
+      "dx": 130.1306532663317,
+      "medianHelmetSourceWidth": 99.5,
+      "sourceSheet": "female-walk-matte-sheet-v1-20261104.png",
+      "motion": "walk",
+      "output": "walk\\middle-03.png",
+      "clean": "walk\\middle-03-clean.png",
+      "groundError": 0,
+      "targetHelmetWidth": 161.0,
+      "cell": 5,
+      "name": "middle-03",
+      "scaleMethod": "motion-specific median orange helmet diagnostic, visually reviewed",
+      "sourceSha256": "43942F678E95596DE6E013DB8542588E5B07955CE1BE8ADD7FEBF2632844870A",
+      "scale": 1.6180904522613064,
+      "dy": 160.854271356784
+    },
+    {
+      "rootMethod": "waist-x and supporting shoe ground; whole-cel only",
+      "after": {
+        "Bounds": {
+          "Count": 110678,
+          "X": 302,
+          "Y": 224,
+          "Width": 327,
+          "Height": 576,
+          "CenterX": 465.5,
+          "CenterY": 512.0
+        },
+        "Helmet": {
+          "Count": 6977,
+          "X": 386,
+          "Y": 249,
+          "Width": 162,
+          "Height": 74,
+          "CenterX": 467.0,
+          "CenterY": 286.0
+        },
+        "Belt": {
+          "Count": 111,
+          "X": 505,
+          "Y": 534,
+          "Width": 12,
+          "Height": 10,
+          "CenterX": 511.0,
+          "CenterY": 539.0
+        }
+      },
+      "before": {
+        "Bounds": {
+          "Count": 42198,
+          "X": 107,
+          "Y": 39,
+          "Width": 202,
+          "Height": 356,
+          "CenterX": 208.0,
+          "CenterY": 217.0
+        },
+        "Helmet": {
+          "Count": 2664,
+          "X": 159,
+          "Y": 54,
+          "Width": 100,
+          "Height": 46,
+          "CenterX": 209.0,
+          "CenterY": 77.0
+        },
+        "Belt": {
+          "Count": 43,
+          "X": 233,
+          "Y": 230,
+          "Width": 7,
+          "Height": 7,
+          "CenterX": 236.5,
+          "CenterY": 233.5
+        }
+      },
+      "dx": 129.32160804020106,
+      "medianHelmetSourceWidth": 99.5,
+      "sourceSheet": "female-walk-matte-sheet-v1-20261104.png",
+      "motion": "walk",
+      "output": "walk\\key-04.png",
+      "clean": "walk\\key-04-clean.png",
+      "groundError": 0,
+      "targetHelmetWidth": 161.0,
+      "cell": 6,
+      "name": "key-04",
+      "scaleMethod": "motion-specific median orange helmet diagnostic, visually reviewed",
+      "sourceSha256": "43942F678E95596DE6E013DB8542588E5B07955CE1BE8ADD7FEBF2632844870A",
+      "scale": 1.6180904522613064,
+      "dy": 160.854271356784
+    },
+    {
+      "rootMethod": "waist-x and supporting shoe ground; whole-cel only",
+      "after": {
+        "Bounds": {
+          "Count": 115509,
+          "X": 296,
+          "Y": 224,
+          "Width": 327,
+          "Height": 576,
+          "CenterX": 459.5,
+          "CenterY": 512.0
+        },
+        "Helmet": {
+          "Count": 7102,
+          "X": 379,
+          "Y": 250,
+          "Width": 163,
+          "Height": 74,
+          "CenterX": 460.5,
+          "CenterY": 287.0
+        },
+        "Belt": {
+          "Count": 112,
+          "X": 507,
+          "Y": 540,
+          "Width": 11,
+          "Height": 11,
+          "CenterX": 512.5,
+          "CenterY": 545.5
+        }
+      },
+      "before": {
+        "Bounds": {
+          "Count": 44030,
+          "X": 105,
+          "Y": 39,
+          "Width": 202,
+          "Height": 356,
+          "CenterX": 206.0,
+          "CenterY": 217.0
+        },
+        "Helmet": {
+          "Count": 2715,
+          "X": 157,
+          "Y": 55,
+          "Width": 100,
+          "Height": 46,
+          "CenterX": 207.0,
+          "CenterY": 78.0
+        },
+        "Belt": {
+          "Count": 45,
+          "X": 235,
+          "Y": 234,
+          "Width": 7,
+          "Height": 7,
+          "CenterX": 238.5,
+          "CenterY": 237.5
+        }
+      },
+      "dx": 126.0854271356784,
+      "medianHelmetSourceWidth": 99.5,
+      "sourceSheet": "female-walk-matte-sheet-v1-20261104.png",
+      "motion": "walk",
+      "output": "walk\\middle-04.png",
+      "clean": "walk\\middle-04-clean.png",
+      "groundError": 0,
+      "targetHelmetWidth": 161.0,
+      "cell": 7,
+      "name": "middle-04",
+      "scaleMethod": "motion-specific median orange helmet diagnostic, visually reviewed",
+      "sourceSha256": "43942F678E95596DE6E013DB8542588E5B07955CE1BE8ADD7FEBF2632844870A",
+      "scale": 1.6180904522613064,
+      "dy": 160.854271356784
+    },
+    {
+      "rootMethod": "fixed-neutral-body-axis; lifted feet preserved",
+      "after": {
+        "Bounds": {
+          "Count": 116971,
+          "X": 353,
+          "Y": 217,
+          "Width": 335,
+          "Height": 583,
+          "CenterX": 520.5,
+          "CenterY": 508.5
+        },
+        "Helmet": {
+          "Count": 11245,
+          "X": 425,
+          "Y": 222,
+          "Width": 184,
+          "Height": 91,
+          "CenterX": 517.0,
+          "CenterY": 267.5
+        },
+        "Belt": {
+          "Count": 108,
+          "X": 571,
+          "Y": 523,
+          "Width": 10,
+          "Height": 13,
+          "CenterX": 576.0,
+          "CenterY": 529.5
+        }
+      },
+      "before": {
+        "Bounds": {
+          "Count": 75244,
+          "X": 137,
+          "Y": 37,
+          "Width": 268,
+          "Height": 468,
+          "CenterX": 271.0,
+          "CenterY": 271.0
+        },
+        "Helmet": {
+          "Count": 6539,
+          "X": 194,
+          "Y": 53,
+          "Width": 148,
+          "Height": 61,
+          "CenterX": 268.0,
+          "CenterY": 83.5
+        },
+        "Belt": {
+          "Count": 71,
+          "X": 311,
+          "Y": 282,
+          "Width": 8,
+          "Height": 11,
+          "CenterX": 315.0,
+          "CenterY": 287.5
+        }
+      },
+      "dx": 182.72448979591837,
+      "medianHelmetSourceWidth": 147.0,
+      "sourceSheet": "female-ladder-matte-sheet-v1-20261104.png",
+      "motion": "ladder",
+      "output": "ladder\\pose-01.png",
+      "clean": "ladder\\pose-01-clean.png",
+      "groundError": 0,
+      "targetHelmetWidth": 183.0,
+      "cell": 0,
+      "name": "pose-01",
+      "scaleMethod": "motion-specific median orange helmet diagnostic, visually reviewed",
+      "sourceSha256": "275AA2AA845895F37CEDFF6E5F1EDE82B9D9E20AAC46F82482083152C87DE079",
+      "scale": 1.2448979591836735,
+      "dy": 171.32653061224482
+    },
+    {
+      "rootMethod": "fixed-neutral-body-axis; lifted feet preserved",
+      "after": {
+        "Bounds": {
+          "Count": 114640,
+          "X": 312,
+          "Y": 217,
+          "Width": 363,
+          "Height": 582,
+          "CenterX": 493.5,
+          "CenterY": 508.0
+        },
+        "Helmet": {
+          "Count": 6662,
+          "X": 384,
+          "Y": 222,
+          "Width": 155,
+          "Height": 91,
+          "CenterX": 461.5,
+          "CenterY": 267.5
+        },
+        "Belt": {
+          "Count": 112,
+          "X": 540,
+          "Y": 518,
+          "Width": 11,
+          "Height": 13,
+          "CenterX": 545.5,
+          "CenterY": 524.5
+        }
+      },
+      "before": {
+        "Bounds": {
+          "Count": 73759,
+          "X": 103,
+          "Y": 37,
+          "Width": 292,
+          "Height": 468,
+          "CenterX": 249.0,
+          "CenterY": 271.0
+        },
+        "Helmet": {
+          "Count": 4311,
+          "X": 162,
+          "Y": 41,
+          "Width": 123,
+          "Height": 73,
+          "CenterX": 223.5,
+          "CenterY": 77.5
+        },
+        "Belt": {
+          "Count": 71,
+          "X": 286,
+          "Y": 278,
+          "Width": 9,
+          "Height": 11,
+          "CenterX": 290.5,
+          "CenterY": 283.5
+        }
+      },
+      "dx": 182.72448979591837,
+      "medianHelmetSourceWidth": 147.0,
+      "sourceSheet": "female-ladder-matte-sheet-v1-20261104.png",
+      "motion": "ladder",
+      "output": "ladder\\pose-02.png",
+      "clean": "ladder\\pose-02-clean.png",
+      "groundError": -1,
+      "targetHelmetWidth": 183.0,
+      "cell": 1,
+      "name": "pose-02",
+      "scaleMethod": "motion-specific median orange helmet diagnostic, visually reviewed",
+      "sourceSha256": "275AA2AA845895F37CEDFF6E5F1EDE82B9D9E20AAC46F82482083152C87DE079",
+      "scale": 1.2448979591836735,
+      "dy": 171.32653061224482
+    },
+    {
+      "rootMethod": "fixed-neutral-body-axis; lifted feet preserved",
+      "after": {
+        "Bounds": {
+          "Count": 118820,
+          "X": 281,
+          "Y": 217,
+          "Width": 350,
+          "Height": 583,
+          "CenterX": 456.0,
+          "CenterY": 508.5
+        },
+        "Helmet": {
+          "Count": 9978,
+          "X": 345,
+          "Y": 237,
+          "Width": 184,
+          "Height": 77,
+          "CenterX": 437.0,
+          "CenterY": 275.5
+        },
+        "Belt": {
+          "Count": 118,
+          "X": 503,
+          "Y": 516,
+          "Width": 10,
+          "Height": 14,
+          "CenterX": 508.0,
+          "CenterY": 523.0
+        }
+      },
+      "before": {
+        "Bounds": {
+          "Count": 76502,
+          "X": 78,
+          "Y": 36,
+          "Width": 282,
+          "Height": 469,
+          "CenterX": 219.0,
+          "CenterY": 270.5
+        },
+        "Helmet": {
+          "Count": 6444,
+          "X": 130,
+          "Y": 53,
+          "Width": 147,
+          "Height": 61,
+          "CenterX": 203.5,
+          "CenterY": 83.5
+        },
+        "Belt": {
+          "Count": 75,
+          "X": 257,
+          "Y": 277,
+          "Width": 8,
+          "Height": 11,
+          "CenterX": 261.0,
+          "CenterY": 282.5
+        }
+      },
+      "dx": 182.72448979591837,
+      "medianHelmetSourceWidth": 147.0,
+      "sourceSheet": "female-ladder-matte-sheet-v1-20261104.png",
+      "motion": "ladder",
+      "output": "ladder\\pose-03.png",
+      "clean": "ladder\\pose-03-clean.png",
+      "groundError": 0,
+      "targetHelmetWidth": 183.0,
+      "cell": 2,
+      "name": "pose-03",
+      "scaleMethod": "motion-specific median orange helmet diagnostic, visually reviewed",
+      "sourceSha256": "275AA2AA845895F37CEDFF6E5F1EDE82B9D9E20AAC46F82482083152C87DE079",
+      "scale": 1.2448979591836735,
+      "dy": 171.32653061224482
+    },
+    {
+      "rootMethod": "fixed-neutral-body-axis; lifted feet preserved",
+      "after": {
+        "Bounds": {
+          "Count": 110748,
+          "X": 343,
+          "Y": 212,
+          "Width": 347,
+          "Height": 580,
+          "CenterX": 516.5,
+          "CenterY": 502.0
+        },
+        "Helmet": {
+          "Count": 11043,
+          "X": 426,
+          "Y": 217,
+          "Width": 183,
+          "Height": 90,
+          "CenterX": 517.5,
+          "CenterY": 262.0
+        },
+        "Belt": {
+          "Count": 118,
+          "X": 573,
+          "Y": 515,
+          "Width": 10,
+          "Height": 13,
+          "CenterX": 578.0,
+          "CenterY": 521.5
+        }
+      },
+      "before": {
+        "Bounds": {
+          "Count": 71274,
+          "X": 129,
+          "Y": 33,
+          "Width": 278,
+          "Height": 465,
+          "CenterX": 268.0,
+          "CenterY": 265.5
+        },
+        "Helmet": {
+          "Count": 7128,
+          "X": 195,
+          "Y": 37,
+          "Width": 147,
+          "Height": 72,
+          "CenterX": 268.5,
+          "CenterY": 73.0
+        },
+        "Belt": {
+          "Count": 75,
+          "X": 313,
+          "Y": 276,
+          "Width": 8,
+          "Height": 10,
+          "CenterX": 317.0,
+          "CenterY": 281.0
+        }
+      },
+      "dx": 182.72448979591837,
+      "medianHelmetSourceWidth": 147.0,
+      "sourceSheet": "female-ladder-matte-sheet-v1-20261104.png",
+      "motion": "ladder",
+      "output": "ladder\\pose-04.png",
+      "clean": "ladder\\pose-04-clean.png",
+      "groundError": -8,
+      "targetHelmetWidth": 183.0,
+      "cell": 3,
+      "name": "pose-04",
+      "scaleMethod": "motion-specific median orange helmet diagnostic, visually reviewed",
+      "sourceSha256": "275AA2AA845895F37CEDFF6E5F1EDE82B9D9E20AAC46F82482083152C87DE079",
+      "scale": 1.2448979591836735,
+      "dy": 171.32653061224482
+    },
+    {
+      "rootMethod": "fixed-neutral-body-axis; lifted feet preserved",
+      "after": {
+        "Bounds": {
+          "Count": 110128,
+          "X": 316,
+          "Y": 203,
+          "Width": 331,
+          "Height": 589,
+          "CenterX": 481.5,
+          "CenterY": 497.5
+        },
+        "Helmet": {
+          "Count": 9687,
+          "X": 390,
+          "Y": 231,
+          "Width": 181,
+          "Height": 74,
+          "CenterX": 480.5,
+          "CenterY": 268.0
+        },
+        "Belt": {
+          "Count": 121,
+          "X": 533,
+          "Y": 515,
+          "Width": 10,
+          "Height": 14,
+          "CenterX": 538.0,
+          "CenterY": 522.0
+        }
+      },
+      "before": {
+        "Bounds": {
+          "Count": 70876,
+          "X": 107,
+          "Y": 25,
+          "Width": 265,
+          "Height": 473,
+          "CenterX": 239.5,
+          "CenterY": 261.5
+        },
+        "Helmet": {
+          "Count": 6269,
+          "X": 166,
+          "Y": 48,
+          "Width": 146,
+          "Height": 60,
+          "CenterX": 239.0,
+          "CenterY": 78.0
+        },
+        "Belt": {
+          "Count": 77,
+          "X": 281,
+          "Y": 276,
+          "Width": 8,
+          "Height": 11,
+          "CenterX": 285.0,
+          "CenterY": 281.5
+        }
+      },
+      "dx": 182.72448979591837,
+      "medianHelmetSourceWidth": 147.0,
+      "sourceSheet": "female-ladder-matte-sheet-v1-20261104.png",
+      "motion": "ladder",
+      "output": "ladder\\pose-05.png",
+      "clean": "ladder\\pose-05-clean.png",
+      "groundError": -8,
+      "targetHelmetWidth": 183.0,
+      "cell": 4,
+      "name": "pose-05",
+      "scaleMethod": "motion-specific median orange helmet diagnostic, visually reviewed",
+      "sourceSha256": "275AA2AA845895F37CEDFF6E5F1EDE82B9D9E20AAC46F82482083152C87DE079",
+      "scale": 1.2448979591836735,
+      "dy": 171.32653061224482
+    },
+    {
+      "rootMethod": "shoe-ground-span; drill display excluded",
+      "after": {
+        "Bounds": {
+          "Count": 138745,
+          "X": 352,
+          "Y": 235,
+          "Width": 422,
+          "Height": 566,
+          "CenterX": 563.0,
+          "CenterY": 518.0
+        },
+        "Helmet": {
+          "Count": 7277,
+          "X": 488,
+          "Y": 258,
+          "Width": 156,
+          "Height": 85,
+          "CenterX": 566.0,
+          "CenterY": 300.5
+        },
+        "Belt": {
+          "Count": 585,
+          "X": 619,
+          "Y": 587,
+          "Width": 32,
+          "Height": 31,
+          "CenterX": 635.0,
+          "CenterY": 602.5
+        }
+      },
+      "before": {
+        "Bounds": {
+          "Count": 40430,
+          "X": 67,
+          "Y": 35,
+          "Width": 228,
+          "Height": 305,
+          "CenterX": 181.0,
+          "CenterY": 187.5
+        },
+        "Helmet": {
+          "Count": 2134,
+          "X": 140,
+          "Y": 47,
+          "Width": 84,
+          "Height": 46,
+          "CenterX": 182.0,
+          "CenterY": 70.0
+        },
+        "Belt": {
+          "Count": 175,
+          "X": 211,
+          "Y": 225,
+          "Width": 17,
+          "Height": 17,
+          "CenterX": 219.5,
+          "CenterY": 233.5
+        }
+      },
+      "dx": 228.8620689655172,
+      "medianHelmetSourceWidth": 87.0,
+      "sourceSheet": "female-mining-matte-sheet-v1-20261104.png",
+      "motion": "mining",
+      "output": "mining\\key-01.png",
+      "clean": "mining\\key-01-clean.png",
+      "groundError": 1,
+      "targetHelmetWidth": 161.0,
+      "cell": 0,
+      "name": "key-01",
+      "scaleMethod": "motion-specific median orange helmet diagnostic, visually reviewed",
+      "sourceSha256": "D65A64E17D310609A76E68F483E29F3FDB5D56184FDA545FD78CAC54452D90DF",
+      "scale": 1.8505747126436782,
+      "dy": 170.80459770114942
+    },
+    {
+      "rootMethod": "shoe-ground-span; drill display excluded",
+      "after": {
+        "Bounds": {
+          "Count": 140861,
+          "X": 351,
+          "Y": 233,
+          "Width": 422,
+          "Height": 567,
+          "CenterX": 562.0,
+          "CenterY": 516.5
+        },
+        "Helmet": {
+          "Count": 7459,
+          "X": 488,
+          "Y": 257,
+          "Width": 159,
+          "Height": 86,
+          "CenterX": 567.5,
+          "CenterY": 300.0
+        },
+        "Belt": {
+          "Count": 194,
+          "X": 431,
+          "Y": 569,
+          "Width": 17,
+          "Height": 20,
+          "CenterX": 439.5,
+          "CenterY": 579.0
+        }
+      },
+      "before": {
+        "Bounds": {
+          "Count": 41040,
+          "X": 67,
+          "Y": 35,
+          "Width": 228,
+          "Height": 306,
+          "CenterX": 181.0,
+          "CenterY": 188.0
+        },
+        "Helmet": {
+          "Count": 2184,
+          "X": 142,
+          "Y": 47,
+          "Width": 85,
+          "Height": 47,
+          "CenterX": 184.5,
+          "CenterY": 70.5
+        },
+        "Belt": {
+          "Count": 55,
+          "X": 111,
+          "Y": 216,
+          "Width": 9,
+          "Height": 11,
+          "CenterX": 115.5,
+          "CenterY": 221.5
+        }
+      },
+      "dx": 226.0862068965517,
+      "medianHelmetSourceWidth": 87.0,
+      "sourceSheet": "female-mining-matte-sheet-v1-20261104.png",
+      "motion": "mining",
+      "output": "mining\\middle-01.png",
+      "clean": "mining\\middle-01-clean.png",
+      "groundError": 0,
+      "targetHelmetWidth": 161.0,
+      "cell": 1,
+      "name": "middle-01",
+      "scaleMethod": "motion-specific median orange helmet diagnostic, visually reviewed",
+      "sourceSha256": "D65A64E17D310609A76E68F483E29F3FDB5D56184FDA545FD78CAC54452D90DF",
+      "scale": 1.8505747126436782,
+      "dy": 168.9540229885057
+    },
+    {
+      "rootMethod": "shoe-ground-span; drill display excluded",
+      "after": {
+        "Bounds": {
+          "Count": 143947,
+          "X": 345,
+          "Y": 234,
+          "Width": 431,
+          "Height": 566,
+          "CenterX": 560.5,
+          "CenterY": 517.0
+        },
+        "Helmet": {
+          "Count": 7808,
+          "X": 482,
+          "Y": 258,
+          "Width": 160,
+          "Height": 91,
+          "CenterX": 562.0,
+          "CenterY": 303.5
+        },
+        "Belt": {
+          "Count": 198,
+          "X": 422,
+          "Y": 570,
+          "Width": 18,
+          "Height": 18,
+          "CenterX": 431.0,
+          "CenterY": 579.0
+        }
+      },
+      "before": {
+        "Bounds": {
+          "Count": 41950,
+          "X": 66,
+          "Y": 35,
+          "Width": 232,
+          "Height": 306,
+          "CenterX": 182.0,
+          "CenterY": 188.0
+        },
+        "Helmet": {
+          "Count": 2285,
+          "X": 140,
+          "Y": 48,
+          "Width": 86,
+          "Height": 49,
+          "CenterX": 183.0,
+          "CenterY": 72.5
+        },
+        "Belt": {
+          "Count": 55,
+          "X": 107,
+          "Y": 217,
+          "Width": 10,
+          "Height": 9,
+          "CenterX": 112.0,
+          "CenterY": 221.5
+        }
+      },
+      "dx": 224.23563218390802,
+      "medianHelmetSourceWidth": 87.0,
+      "sourceSheet": "female-mining-matte-sheet-v1-20261104.png",
+      "motion": "mining",
+      "output": "mining\\key-02.png",
+      "clean": "mining\\key-02-clean.png",
+      "groundError": 0,
+      "targetHelmetWidth": 161.0,
+      "cell": 2,
+      "name": "key-02",
+      "scaleMethod": "motion-specific median orange helmet diagnostic, visually reviewed",
+      "sourceSha256": "D65A64E17D310609A76E68F483E29F3FDB5D56184FDA545FD78CAC54452D90DF",
+      "scale": 1.8505747126436782,
+      "dy": 168.9540229885057
+    },
+    {
+      "rootMethod": "shoe-ground-span; drill display excluded",
+      "after": {
+        "Bounds": {
+          "Count": 149772,
+          "X": 342,
+          "Y": 235,
+          "Width": 442,
+          "Height": 565,
+          "CenterX": 563.0,
+          "CenterY": 517.5
+        },
+        "Helmet": {
+          "Count": 8241,
+          "X": 490,
+          "Y": 258,
+          "Width": 164,
+          "Height": 95,
+          "CenterX": 572.0,
+          "CenterY": 305.5
+        },
+        "Belt": {
+          "Count": 202,
+          "X": 423,
+          "Y": 566,
+          "Width": 18,
+          "Height": 20,
+          "CenterX": 432.0,
+          "CenterY": 576.0
+        }
+      },
+      "before": {
+        "Bounds": {
+          "Count": 43652,
+          "X": 61,
+          "Y": 35,
+          "Width": 239,
+          "Height": 305,
+          "CenterX": 180.5,
+          "CenterY": 187.5
+        },
+        "Helmet": {
+          "Count": 2413,
+          "X": 142,
+          "Y": 47,
+          "Width": 88,
+          "Height": 52,
+          "CenterX": 186.0,
+          "CenterY": 73.0
+        },
+        "Belt": {
+          "Count": 58,
+          "X": 105,
+          "Y": 214,
+          "Width": 10,
+          "Height": 10,
+          "CenterX": 110.0,
+          "CenterY": 219.0
+        }
+      },
+      "dx": 227.9367816091954,
+      "medianHelmetSourceWidth": 87.0,
+      "sourceSheet": "female-mining-matte-sheet-v1-20261104.png",
+      "motion": "mining",
+      "output": "mining\\middle-02.png",
+      "clean": "mining\\middle-02-clean.png",
+      "groundError": 0,
+      "targetHelmetWidth": 161.0,
+      "cell": 3,
+      "name": "middle-02",
+      "scaleMethod": "motion-specific median orange helmet diagnostic, visually reviewed",
+      "sourceSha256": "D65A64E17D310609A76E68F483E29F3FDB5D56184FDA545FD78CAC54452D90DF",
+      "scale": 1.8505747126436782,
+      "dy": 170.80459770114942
+    },
+    {
+      "rootMethod": "shoe-ground-span; drill display excluded",
+      "after": {
+        "Bounds": {
+          "Count": 146001,
+          "X": 343,
+          "Y": 235,
+          "Width": 413,
+          "Height": 565,
+          "CenterX": 549.5,
+          "CenterY": 517.5
+        },
+        "Helmet": {
+          "Count": 8160,
+          "X": 478,
+          "Y": 260,
+          "Width": 164,
+          "Height": 93,
+          "CenterX": 560.0,
+          "CenterY": 306.5
+        },
+        "Belt": {
+          "Count": 216,
+          "X": 411,
+          "Y": 566,
+          "Width": 19,
+          "Height": 21,
+          "CenterX": 420.5,
+          "CenterY": 576.5
+        }
+      },
+      "before": {
+        "Bounds": {
+          "Count": 42543,
+          "X": 69,
+          "Y": 35,
+          "Width": 223,
+          "Height": 305,
+          "CenterX": 180.5,
+          "CenterY": 187.5
+        },
+        "Helmet": {
+          "Count": 2393,
+          "X": 142,
+          "Y": 48,
+          "Width": 89,
+          "Height": 50,
+          "CenterX": 186.5,
+          "CenterY": 73.0
+        },
+        "Belt": {
+          "Count": 63,
+          "X": 106,
+          "Y": 214,
+          "Width": 10,
+          "Height": 11,
+          "CenterX": 111.0,
+          "CenterY": 219.5
+        }
+      },
+      "dx": 214.98275862068965,
+      "medianHelmetSourceWidth": 87.0,
+      "sourceSheet": "female-mining-matte-sheet-v1-20261104.png",
+      "motion": "mining",
+      "output": "mining\\key-03.png",
+      "clean": "mining\\key-03-clean.png",
+      "groundError": 0,
+      "targetHelmetWidth": 161.0,
+      "cell": 4,
+      "name": "key-03",
+      "scaleMethod": "motion-specific median orange helmet diagnostic, visually reviewed",
+      "sourceSha256": "D65A64E17D310609A76E68F483E29F3FDB5D56184FDA545FD78CAC54452D90DF",
+      "scale": 1.8505747126436782,
+      "dy": 170.80459770114942
+    },
+    {
+      "rootMethod": "shoe-ground-span; drill display excluded",
+      "after": {
+        "Bounds": {
+          "Count": 144951,
+          "X": 336,
+          "Y": 236,
+          "Width": 400,
+          "Height": 565,
+          "CenterX": 536.0,
+          "CenterY": 518.5
+        },
+        "Helmet": {
+          "Count": 8542,
+          "X": 482,
+          "Y": 260,
+          "Width": 167,
+          "Height": 97,
+          "CenterX": 565.5,
+          "CenterY": 308.5
+        },
+        "Belt": {
+          "Count": 238,
+          "X": 414,
+          "Y": 565,
+          "Width": 20,
+          "Height": 21,
+          "CenterX": 424.0,
+          "CenterY": 575.5
+        }
+      },
+      "before": {
+        "Bounds": {
+          "Count": 42238,
+          "X": 74,
+          "Y": 36,
+          "Width": 216,
+          "Height": 304,
+          "CenterX": 182.0,
+          "CenterY": 188.0
+        },
+        "Helmet": {
+          "Count": 2503,
+          "X": 153,
+          "Y": 48,
+          "Width": 90,
+          "Height": 52,
+          "CenterX": 198.0,
+          "CenterY": 74.0
+        },
+        "Belt": {
+          "Count": 69,
+          "X": 116,
+          "Y": 213,
+          "Width": 10,
+          "Height": 12,
+          "CenterX": 121.0,
+          "CenterY": 219.0
+        }
+      },
+      "dx": 200.17816091954023,
+      "medianHelmetSourceWidth": 87.0,
+      "sourceSheet": "female-mining-matte-sheet-v1-20261104.png",
+      "motion": "mining",
+      "output": "mining\\key-04.png",
+      "clean": "mining\\key-04-clean.png",
+      "groundError": 1,
+      "targetHelmetWidth": 161.0,
+      "cell": 5,
+      "name": "key-04",
+      "scaleMethod": "motion-specific median orange helmet diagnostic, visually reviewed",
+      "sourceSha256": "D65A64E17D310609A76E68F483E29F3FDB5D56184FDA545FD78CAC54452D90DF",
+      "scale": 1.8505747126436782,
+      "dy": 170.80459770114942
+    },
+    {
+      "rootMethod": "shoe-ground-span; drill display excluded",
+      "after": {
+        "Bounds": {
+          "Count": 141691,
+          "X": 336,
+          "Y": 233,
+          "Width": 399,
+          "Height": 567,
+          "CenterX": 535.5,
+          "CenterY": 516.5
+        },
+        "Helmet": {
+          "Count": 8280,
+          "X": 487,
+          "Y": 257,
+          "Width": 164,
+          "Height": 94,
+          "CenterX": 569.0,
+          "CenterY": 304.0
+        },
+        "Belt": {
+          "Count": 499,
+          "X": 595,
+          "Y": 567,
+          "Width": 28,
+          "Height": 28,
+          "CenterX": 609.0,
+          "CenterY": 581.0
+        }
+      },
+      "before": {
+        "Bounds": {
+          "Count": 41290,
+          "X": 73,
+          "Y": 35,
+          "Width": 215,
+          "Height": 306,
+          "CenterX": 180.5,
+          "CenterY": 188.0
+        },
+        "Helmet": {
+          "Count": 2418,
+          "X": 155,
+          "Y": 47,
+          "Width": 88,
+          "Height": 51,
+          "CenterX": 199.0,
+          "CenterY": 72.5
+        },
+        "Belt": {
+          "Count": 147,
+          "X": 213,
+          "Y": 215,
+          "Width": 15,
+          "Height": 15,
+          "CenterX": 220.5,
+          "CenterY": 222.5
+        }
+      },
+      "dx": 201.10344827586204,
+      "medianHelmetSourceWidth": 87.0,
+      "sourceSheet": "female-mining-matte-sheet-v1-20261104.png",
+      "motion": "mining",
+      "output": "mining\\middle-04.png",
+      "clean": "mining\\middle-04-clean.png",
+      "groundError": 0,
+      "targetHelmetWidth": 161.0,
+      "cell": 6,
+      "name": "middle-04",
+      "scaleMethod": "motion-specific median orange helmet diagnostic, visually reviewed",
+      "sourceSha256": "D65A64E17D310609A76E68F483E29F3FDB5D56184FDA545FD78CAC54452D90DF",
+      "scale": 1.8505747126436782,
+      "dy": 168.9540229885057
+    },
+    {
+      "rootMethod": "shoe-ground-span; drill display excluded",
+      "after": {
+        "Bounds": {
+          "Count": 134477,
+          "X": 285,
+          "Y": 235,
+          "Width": 417,
+          "Height": 566,
+          "CenterX": 493.5,
+          "CenterY": 518.0
+        },
+        "Helmet": {
+          "Count": 7612,
+          "X": 459,
+          "Y": 259,
+          "Width": 160,
+          "Height": 86,
+          "CenterX": 539.0,
+          "CenterY": 302.0
+        },
+        "Belt": {
+          "Count": 16,
+          "X": 488,
+          "Y": 543,
+          "Width": 5,
+          "Height": 4,
+          "CenterX": 490.5,
+          "CenterY": 545.0
+        }
+      },
+      "before": {
+        "Bounds": {
+          "Count": 39159,
+          "X": 68,
+          "Y": 35,
+          "Width": 226,
+          "Height": 305,
+          "CenterX": 181.0,
+          "CenterY": 187.5
+        },
+        "Helmet": {
+          "Count": 2227,
+          "X": 162,
+          "Y": 47,
+          "Width": 87,
+          "Height": 47,
+          "CenterX": 205.5,
+          "CenterY": 70.5
+        },
+        "Belt": {
+          "Count": 54,
+          "X": 199,
+          "Y": 203,
+          "Width": 9,
+          "Height": 6,
+          "CenterX": 203.5,
+          "CenterY": 206.0
+        }
+      },
+      "dx": 159.4655172413793,
+      "medianHelmetSourceWidth": 87.0,
+      "sourceSheet": "female-mining-matte-sheet-v1-20261104.png",
+      "motion": "mining",
+      "output": "mining\\middle-05.png",
+      "clean": "mining\\middle-05-clean.png",
+      "groundError": 1,
+      "targetHelmetWidth": 161.0,
+      "cell": 7,
+      "name": "middle-05",
+      "scaleMethod": "motion-specific median orange helmet diagnostic, visually reviewed",
+      "sourceSha256": "D65A64E17D310609A76E68F483E29F3FDB5D56184FDA545FD78CAC54452D90DF",
+      "scale": 1.8505747126436782,
+      "dy": 170.80459770114942
+    },
+    {
+      "rootMethod": "shoe-ground-span; drill display excluded",
+      "after": {
+        "Bounds": {
+          "Count": 131897,
+          "X": 249,
+          "Y": 232,
+          "Width": 454,
+          "Height": 567,
+          "CenterX": 476.0,
+          "CenterY": 515.5
+        },
+        "Helmet": {
+          "Count": 7418,
+          "X": 461,
+          "Y": 256,
+          "Width": 160,
+          "Height": 86,
+          "CenterX": 541.0,
+          "CenterY": 299.0
+        },
+        "Belt": {
+          "Count": 26,
+          "X": 483,
+          "Y": 538,
+          "Width": 5,
+          "Height": 6,
+          "CenterX": 485.5,
+          "CenterY": 541.0
+        }
+      },
+      "before": {
+        "Bounds": {
+          "Count": 38437,
+          "X": 59,
+          "Y": 35,
+          "Width": 244,
+          "Height": 307,
+          "CenterX": 181.0,
+          "CenterY": 188.5
+        },
+        "Helmet": {
+          "Count": 2168,
+          "X": 173,
+          "Y": 48,
+          "Width": 86,
+          "Height": 46,
+          "CenterX": 216.0,
+          "CenterY": 71.0
+        },
+        "Belt": {
+          "Count": 8,
+          "X": 185,
+          "Y": 200,
+          "Width": 3,
+          "Height": 4,
+          "CenterX": 186.5,
+          "CenterY": 202.0
+        }
+      },
+      "dx": 140.9597701149425,
+      "medianHelmetSourceWidth": 87.0,
+      "sourceSheet": "female-mining-matte-sheet-v1-20261104.png",
+      "motion": "mining",
+      "output": "mining\\key-05.png",
+      "clean": "mining\\key-05-clean.png",
+      "groundError": -1,
+      "targetHelmetWidth": 161.0,
+      "cell": 8,
+      "name": "key-05",
+      "scaleMethod": "motion-specific median orange helmet diagnostic, visually reviewed",
+      "sourceSha256": "D65A64E17D310609A76E68F483E29F3FDB5D56184FDA545FD78CAC54452D90DF",
+      "scale": 1.8505747126436782,
+      "dy": 167.1034482758621
+    },
+    {
+      "rootMethod": "shoe-ground-span; drill display excluded",
+      "after": {
+        "Bounds": {
+          "Count": 145463,
+          "X": 261,
+          "Y": 232,
+          "Width": 448,
+          "Height": 568,
+          "CenterX": 485.0,
+          "CenterY": 516.0
+        },
+        "Helmet": {
+          "Count": 7631,
+          "X": 468,
+          "Y": 255,
+          "Width": 159,
+          "Height": 89,
+          "CenterX": 547.5,
+          "CenterY": 299.5
+        },
+        "Belt": {
+          "Count": 27,
+          "X": 485,
+          "Y": 538,
+          "Width": 6,
+          "Height": 6,
+          "CenterX": 488.0,
+          "CenterY": 541.0
+        }
+      },
+      "before": {
+        "Bounds": {
+          "Count": 42382,
+          "X": 60,
+          "Y": 35,
+          "Width": 242,
+          "Height": 307,
+          "CenterX": 181.0,
+          "CenterY": 188.5
+        },
+        "Helmet": {
+          "Count": 2234,
+          "X": 171,
+          "Y": 47,
+          "Width": 87,
+          "Height": 49,
+          "CenterX": 214.5,
+          "CenterY": 71.5
+        },
+        "Belt": {
+          "Count": 8,
+          "X": 181,
+          "Y": 200,
+          "Width": 3,
+          "Height": 4,
+          "CenterX": 182.5,
+          "CenterY": 202.0
+        }
+      },
+      "dx": 151.13793103448273,
+      "medianHelmetSourceWidth": 87.0,
+      "sourceSheet": "female-mining-matte-sheet-v1-20261104.png",
+      "motion": "mining",
+      "output": "mining\\middle-06.png",
+      "clean": "mining\\middle-06-clean.png",
+      "groundError": 0,
+      "targetHelmetWidth": 161.0,
+      "cell": 9,
+      "name": "middle-06",
+      "scaleMethod": "motion-specific median orange helmet diagnostic, visually reviewed",
+      "sourceSha256": "D65A64E17D310609A76E68F483E29F3FDB5D56184FDA545FD78CAC54452D90DF",
+      "scale": 1.8505747126436782,
+      "dy": 167.1034482758621
+    },
+    {
+      "rootMethod": "shoe-ground-span; drill display excluded",
+      "after": {
+        "Bounds": {
+          "Count": 141662,
+          "X": 271,
+          "Y": 232,
+          "Width": 433,
+          "Height": 569,
+          "CenterX": 487.5,
+          "CenterY": 516.5
+        },
+        "Helmet": {
+          "Count": 6834,
+          "X": 484,
+          "Y": 271,
+          "Width": 142,
+          "Height": 87,
+          "CenterX": 555.0,
+          "CenterY": 314.5
+        },
+        "Belt": {
+          "Count": 35,
+          "X": 482,
+          "Y": 544,
+          "Width": 7,
+          "Height": 7,
+          "CenterX": 485.5,
+          "CenterY": 547.5
+        }
+      },
+      "before": {
+        "Bounds": {
+          "Count": 41276,
+          "X": 64,
+          "Y": 34,
+          "Width": 234,
+          "Height": 307,
+          "CenterX": 181.0,
+          "CenterY": 187.5
+        },
+        "Helmet": {
+          "Count": 1996,
+          "X": 179,
+          "Y": 55,
+          "Width": 77,
+          "Height": 47,
+          "CenterX": 217.5,
+          "CenterY": 78.5
+        },
+        "Belt": {
+          "Count": 8,
+          "X": 178,
+          "Y": 203,
+          "Width": 3,
+          "Height": 3,
+          "CenterX": 179.5,
+          "CenterY": 204.5
+        }
+      },
+      "dx": 152.9885057471264,
+      "medianHelmetSourceWidth": 87.0,
+      "sourceSheet": "female-mining-matte-sheet-v1-20261104.png",
+      "motion": "mining",
+      "output": "mining\\key-06.png",
+      "clean": "mining\\key-06-clean.png",
+      "groundError": 1,
+      "targetHelmetWidth": 161.0,
+      "cell": 10,
+      "name": "key-06",
+      "scaleMethod": "motion-specific median orange helmet diagnostic, visually reviewed",
+      "sourceSha256": "D65A64E17D310609A76E68F483E29F3FDB5D56184FDA545FD78CAC54452D90DF",
+      "scale": 1.8505747126436782,
+      "dy": 168.9540229885057
+    }
+  ],
+  "groundLine": 800,
+  "note": "One uniform scale per motion, whole-cel translation only. Front/rear head projections use separate visual calibration. Raised ladder feet preserved. Waist x anchoring excludes held drill display. Ground and helmet metrics are image-space review checks, not runtime collision/IK validation.",
+  "canvas": 1024
+}
