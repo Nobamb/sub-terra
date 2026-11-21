@@ -43,6 +43,11 @@ namespace SubTerra.Gameplay.Player
         public event Action<PlayerSurvivalState> StateChanged;
         public event Action<PlayerHealthReadModel> HealthChanged;
         public event Action<RunFailureInputDto> FailureRequested;
+        /// <summary>
+        /// B-207: 체력이 실제로 깎였을 때만(원인, 실제 피해, 행동불능 여부) 알린다.
+        /// 화면 연출은 App/통합 쪽이 원인을 보고 고른다. 무적으로 막힌 피해는 알리지 않는다.
+        /// </summary>
+        public event Action<RunFailureCause, float, bool> DamageApplied;
         public event Action<OxygenRiskLevel> OxygenRiskChanged;
         public OxygenRiskLevel OxygenRisk => oxygenRisk;
         /// <summary>산소 값이 바뀔 때마다(현재, 최대) 알린다. HUD 게이지용 읽기 전용 통지.</summary>
@@ -413,6 +418,11 @@ namespace SubTerra.Gameplay.Player
             if (hurtSfx != SfxId.None)
             {
                 SfxRequests.Play(hurtSfx);
+            }
+
+            if (appliedDamage > 0f)
+            {
+                DamageApplied?.Invoke(cause, appliedDamage, becameIncapacitated);
             }
 
             PublishStateChanged();

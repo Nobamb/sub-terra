@@ -39,6 +39,7 @@ namespace SubTerra.App.Integration
         private bool headlessRevealSkipped;
         private bool headlessConfirmed;
         private int playerMoveExecutionCount;
+        private DamageHitGlitchController damageHitGlitch;
 
         public event Action<PlayerRescueResultDto> PlayerRescued;
         public bool IsHandling => (failureService != null && failureService.IsHandling) || resolveRoutine != null;
@@ -86,6 +87,7 @@ namespace SubTerra.App.Integration
                 survivalController.BindOxygenUpgradeEffects(
                     progression != null ? progression.Effects as IPlayerOxygenUpgradeProvider : null);
                 survivalController.FailureRequested += OnFailureRequested;
+                BindDamageHitGlitch();
                 if (playerMovement != null)
                 {
                     var animController = playerMovement.GetComponentInChildren<PlayerAnimationController>(true);
@@ -109,6 +111,11 @@ namespace SubTerra.App.Integration
                 survivalController.FailureRequested -= OnFailureRequested;
             }
 
+            if (damageHitGlitch != null)
+            {
+                damageHitGlitch.Unbind();
+            }
+
             if (progression != null)
             {
                 progression.UpgradeChanged -= OnUpgradeChanged;
@@ -123,6 +130,29 @@ namespace SubTerra.App.Integration
             hasCommittedPendingFailure = false;
             headlessRevealSkipped = false;
             headlessConfirmed = false;
+        }
+
+        /// <summary>B-207: 같은 오브젝트의 피해 글리치(씬에 없으면 런타임에 붙인다)를 생존 컨트롤러에 연결한다.</summary>
+        private void BindDamageHitGlitch()
+        {
+            try
+            {
+                if (damageHitGlitch == null)
+                {
+                    damageHitGlitch = GetComponent<DamageHitGlitchController>();
+                }
+
+                if (damageHitGlitch == null)
+                {
+                    damageHitGlitch = gameObject.AddComponent<DamageHitGlitchController>();
+                }
+
+                damageHitGlitch.Bind(survivalController);
+            }
+            catch (Exception exception)
+            {
+                Debug.LogError("[RunFailureRuntimeController] 피해 글리치 연결 실패: " + exception);
+            }
         }
 
         private void OnUpgradeChanged(UpgradeSnapshot upgrade)
