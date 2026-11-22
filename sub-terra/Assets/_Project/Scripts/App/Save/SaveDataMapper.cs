@@ -52,7 +52,8 @@ namespace SubTerra.App.Save
                     gold = game.Player.Gold,
                     cargoWeight = game.Player.Cargo,
                     unsettledValue = game.Player.UnsettledValue,
-                    progress = game.Player.Progress
+                    progress = game.Player.Progress,
+                    gender = (int)game.Player.Gender
                 },
                 progress = new ProgressSaveData
                 {
@@ -124,6 +125,7 @@ namespace SubTerra.App.Save
                 data.mineResetPaidCount,
                 data.mineResetClockVisible);
             var game = GameState.FromParts(player, progress, run, outpost, mineReset);
+            game?.SetPlayerGender(RestoreGender(data.player.gender));
             var inventory = RestoreInventory(data.inventory);
             var upgrades = RestoreUpgrades(data.upgrades);
             if (game == null || inventory == null || upgrades == null)
@@ -279,6 +281,12 @@ namespace SubTerra.App.Save
             }
 
             return result;
+        }
+
+        /// <summary>옛 저장(항목 없음 = 0)과 모르는 값은 남자로 복원한다.</summary>
+        private static PlayerGender RestoreGender(int value)
+        {
+            return value == (int)PlayerGender.Female ? PlayerGender.Female : PlayerGender.Male;
         }
 
         private static InventoryState RestoreInventory(InventorySaveData data)

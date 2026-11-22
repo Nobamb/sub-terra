@@ -34,6 +34,9 @@ namespace SubTerra.Gameplay.Player
         private float launchSpeed;
         private float progress;
         private float riseStartProgress;
+        private int readyCount;
+        private int riseCount;
+        private int fallCount;
 
         public PlayerJumpAnimationSequence(PlayerJumpAnimationSettings settings)
         {
@@ -48,6 +51,19 @@ namespace SubTerra.Gameplay.Player
         public int FrameIndex { get; private set; }
         public bool IsActive => Phase != PlayerJumpPhase.None;
         public bool IsAirborne => Phase != PlayerJumpPhase.None && Phase != PlayerJumpPhase.Land;
+
+        /// <summary>B-208: 현재 그림 세트의 실제 장수. 0이면 설정값을 그대로 쓴다.</summary>
+        public void SetFrameCounts(int ready, int rise, int fall)
+        {
+            readyCount = Math.Max(0, ready);
+            riseCount = Math.Max(0, rise);
+            fallCount = Math.Max(0, fall);
+        }
+
+        // 설정값과 실제 장수 중 작은 값. 남자 세트는 장수가 설정값과 같아 결과가 그대로다.
+        private int RiseLastFrame => Limit(settings.riseLastFrame, riseCount);
+        private int FallLoopLastFrame => Limit(settings.fallLoopLastFrame, fallCount);
+        private int LandFirstFrame => Limit(settings.landFirstFrame, readyCount);
 
         public void StartJump(float launchVerticalSpeed)
         {
@@ -90,8 +106,8 @@ namespace SubTerra.Gameplay.Player
             if (Phase == PlayerJumpPhase.Rise)
             {
                 if (verticalSpeed > 0f) ShowRise();
-                // 프레임 간격 때문에 마지막 칸을 건너뛰었으면 정점에서 24를 한 번 보여 준다.
-                else if (FrameIndex < settings.riseLastFrame - 1) Show(PlayerJumpClip.Rise, settings.riseLastFrame - 1);
+                // 프레임 간격 때문에 마지막 칸을 건너뛰었으면 정점에서 마지막 장을 한 번 보여 준다.
+                else if (FrameIndex < RiseLastFrame - 1) Show(PlayerJumpClip.Rise, RiseLastFrame - 1);
                 else BeginApex();
                 return;
             }
@@ -137,7 +153,7 @@ namespace SubTerra.Gameplay.Player
                     }
                     break;
                 case PlayerJumpPhase.FallLoop:
-                    Show(PlayerJumpClip.Fall, FrameIndex < settings.fallLoopLastFrame - 1
+                    Show(PlayerJumpClip.Fall, FrameIndex < FallLoopLastFrame - 1
                         ? FrameIndex + 1 : settings.fallLoopFirstFrame - 1);
                     break;
                 case PlayerJumpPhase.Land:
@@ -158,7 +174,7 @@ namespace SubTerra.Gameplay.Player
         private void ShowRise()
         {
             int first = settings.takeOffLastFrame;
-            int count = Math.Max(1, settings.riseLastFrame - first);
+            int count = Math.Max(1, RiseLastFrame - first);
             float span = 1f - riseStartProgress;
             float local = span > 0.0001f ? Clamp01((progress - riseStartProgress) / span) : 1f;
             int step = Math.Min(count - 1, (int)Math.Floor(local * count));
@@ -173,7 +189,7 @@ namespace SubTerra.Gameplay.Player
 
         private void BeginLand()
         {
-            Show(PlayerJumpClip.Ready, settings.landFirstFrame - 1);
+            Show(PlayerJumpClip.Ready, LandFirstFrame - 1);
             Enter(PlayerJumpPhase.Land);
         }
 
@@ -198,6 +214,8 @@ namespace SubTerra.Gameplay.Player
             PlayerJumpPhase.FallLoop => settings.fallLoopFps,
             _ => settings.landFps
         });
+
+        private static int Limit(int configured, int count) => count > 0 ? Math.Min(configured, count) : configured;
 
         private static float Clamp01(float value) => value < 0f ? 0f : value > 1f ? 1f : value;
     }

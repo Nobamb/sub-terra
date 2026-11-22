@@ -310,6 +310,7 @@ namespace SubTerra.App.Integration
 
             TryStep("EnsureGameplayServices", () => runtime.EnsureGameplayServices());
             TryStep("MineBackdrop", EnsureMineBackdrop);
+            TryStep("PlayerGenderVisual", BindPlayerGenderVisual);
             TryStep(
                 "BindGameState",
                 () =>
@@ -1359,6 +1360,18 @@ namespace SubTerra.App.Integration
             if (backdrop != null && terrain != null)
                 backdrop.FocusCellYProvider = () => terrain != null && playerMovement != null
                     ? terrain.WorldToCell(playerMovement.transform.position).y : 0f;
+        }
+
+        // B-208: 저장된 성별 그림을 첫 그리기 전에 넣고 이후 변경(gender 명령)을 따른다.
+        private void BindPlayerGenderVisual()
+        {
+            if (playerMovement == null) return;
+            if (bootstrap != null && bootstrap.State != null && bootstrap.State.Player != null)
+            {
+                PlayerGenderPresentation.Set(bootstrap.State.Player.Gender);
+            }
+
+            PlayerGenderVisualBridge.Attach(playerMovement.GetComponentInChildren<PlayerAnimationController>(true));
         }
 
         private void BindDepthDarkness()
