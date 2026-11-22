@@ -3,7 +3,7 @@
 ## 기준
 - 기준 브랜치·커밋: `origin/main` `64f84fcc2d86236afd705dea9c6fa31ce4eb49a1` (문서 작성 시점 `0c51ec15` 이후 B-207 병합 커밋)
 - 작업 브랜치: `MVP2-fix152` (원격에 같은 이름 없음)
-- 커밋 해시: 아직 없음. 변경은 스테이징까지만 했고, 커밋·push는 사용자 승인 뒤 한다. PR은 만들지 않았고 #266은 건드리지 않았다.
+- 커밋 해시: `b52f727c` (기능), 보고서 갱신 커밋은 그 뒤. 사용자 요청으로 PR을 열었다(B-208 문서는 PR 미생성이 원칙). #266은 건드리지 않았다.
 
 ## 바꾼 파일
 - Shared: 추가 `Scripts/Shared/PlayerGender.cs` (`Male = 0`, `Female = 1`)
@@ -143,8 +143,8 @@ SaveRuntimeController.Instance.StartNewGame(slotId, confirmOverwrite: true, gend
 - 씬 재배선 없음(`IntegrationRuntimeBinder` 참조 변경 없음, 브리지는 런타임에 붙음).
 
 ## 완료 체크리스트
-- [ ] `MVP2-fix152` push 확인 (사용자 승인 대기)
-- [ ] 커밋 해시 기재 (사용자 승인 대기)
+- [x] `MVP2-fix152` push 확인
+- [x] 커밋 해시 기재
 - [x] Unity 컴파일 오류 없음
 - [x] EditMode 새 실패 없음(실행 묶음 기준. 기존 5개 + 환경 의존 1개, 위 설명)
 - [x] 여자 장수 = 표(빠진 장 복제 없음)
@@ -163,9 +163,9 @@ SaveRuntimeController.Instance.StartNewGame(slotId, confirmOverwrite: true, gend
 - [x] Gameplay→App 참조 없음
 - [x] 프리팹 YAML 손수정 없음
 - [x] main 직접 커밋 없음
-- [x] PR 안 만듦
+- [x] PR: 문서는 미생성이었으나 사용자 요청으로 생성
 - [x] 브랜치 삭제 안 함
 - [x] #266 미수정
 
 ## 커밋
-- 기능: (사용자 승인 후 커밋하고 기재)
+- 기능: `b52f727c` feat: 여자 캐릭터 모션 세트와 성별 저장·디버그 명령 추가 (프롬프트 B-208)
