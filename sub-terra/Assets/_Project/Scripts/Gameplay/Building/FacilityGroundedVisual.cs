@@ -76,18 +76,17 @@ namespace SubTerra.Gameplay.Building
         public static Bounds GetVisibleBounds(Sprite sprite)
         {
             if (meshBounds.TryGetValue(sprite, out Bounds bounds)) return bounds;
-            // Measured opaque bounds (alpha >= 64) of the unchanged source PNGs.
+            // Measured opaque bounds (alpha >= 64) of the source PNGs.
             // Sprite vertices can include transparent margins. Never align those margins to the floor.
             Rect pixels = default;
             Texture2D texture = sprite.texture;
             if (texture.name == "emergency_escape_portal_v1" && texture.width == 1254 && texture.height == 1254)
                 pixels = Rect.MinMaxRect(49f, 140f, 1205f, 1112f);
-            else if (texture.name == "charger_basic_cartoon_v2" && texture.width == 1240 && texture.height == 1269)
-                pixels = Rect.MinMaxRect(184f, 79f, 1073f, 1227f);
+            else if ((texture.name == "charger_basic_cartoon_v2" || texture.name == "ChargerGrounded")
+                && texture.width == 1228 && texture.height == 1281)
+                pixels = Rect.MinMaxRect(43f, 70f, 1148f, 1217f);
             else if (texture.name == "storage_basic_cartoon_v2" && texture.width == 1312 && texture.height == 1199)
                 pixels = Rect.MinMaxRect(74f, 96f, 1257f, 1098f);
-            else if (texture.name == "ChargerGrounded" && texture.width == 1240 && texture.height == 1269)
-                pixels = Rect.MinMaxRect(173f, 84f, 1067f, 1220f);
             else if (texture.name == "StorageGrounded" && texture.width == 1315 && texture.height == 1196)
                 pixels = Rect.MinMaxRect(57f, 89f, 1258f, 1101f);
             else if (texture.name == "OutpostCoreTall" && texture.width == 948 && texture.height == 1659)
