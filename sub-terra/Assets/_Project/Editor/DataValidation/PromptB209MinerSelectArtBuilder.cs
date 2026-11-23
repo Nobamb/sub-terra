@@ -23,8 +23,6 @@ namespace SubTerra.App.Editor.DataValidation
         {
             new Entry { Name = "miner-card-frame.png", Border = Vector4.zero },
             new Entry { Name = "miner-pedestal.png", Border = Vector4.zero },
-            new Entry { Name = "miner-button-frame.png", Border = new Vector4(72f, 40f, 72f, 40f) },
-            new Entry { Name = "miner-button-frame-off.png", Border = new Vector4(72f, 40f, 72f, 40f) },
             new Entry { Name = "miner-screen-frame.png", Border = new Vector4(270f, 170f, 270f, 170f) },
         };
 

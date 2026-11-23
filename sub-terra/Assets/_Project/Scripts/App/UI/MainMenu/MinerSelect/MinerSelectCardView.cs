@@ -71,6 +71,8 @@ namespace SubTerra.App.UI.MainMenu
         public float AppliedReveal { get; private set; }
         public float AppliedFill { get; private set; }
         public float AppliedBrightness { get; private set; }
+        public float GlowAlpha => glow != null ? glow.color.a : 0f;
+        public float BodyScale => body != null ? body.localScale.x : 1f;
         /// <summary>스캔 줄이 보이는지와 위치(카드 안 y).</summary>
         public bool ScanVisible => scanBar != null && scanBar.enabled;
         public float ScanY => scanBar != null ? scanBar.rectTransform.anchoredPosition.y : 0f;
@@ -105,9 +107,11 @@ namespace SubTerra.App.UI.MainMenu
             // 호버 때 커지는 몸통. 판정 영역은 그대로 둔다.
             body = MinerSelectPanel.NewRect(root, "Body", Vector2.zero, new Vector2(Width, Height));
 
-            glow = MinerSelectPanel.NewImage(body, "Glow", MinerSelectArt.EdgeGlow(), MinerSelectArt.Cyan, false);
+            // 고른 카드만 깎인 테두리를 따라 바깥으로 빛난다(빛 그림의 선 자리가 카드 테두리 선에 맞게 둔다).
+            glow = MinerSelectPanel.NewImage(body, "Glow", MinerSelectArt.CardGlow(), MinerSelectArt.Cyan, false);
             glow.type = UnityEngine.UI.Image.Type.Sliced;
-            Stretch(glow.rectTransform, -MinerSelectArt.EdgeGlowOutset + 6f);
+            Stretch(glow.rectTransform, -(MinerSelectArt.CardGlowPad - MinerSelectArt.CardOutlineInset));
+            SetAlpha(glow, 0f);
 
             inner = MinerSelectPanel.NewImage(body, "Inner", MinerSelectArt.VerticalFade(), new Color(0.02f, 0.13f, 0.17f, 0.62f), false);
             Stretch(inner.rectTransform, 12f);
@@ -204,7 +208,9 @@ namespace SubTerra.App.UI.MainMenu
 
             if (body != null)
             {
-                var scale = Mathf.Lerp(1f, MinerSelectMotion.HoverScale, Mathf.Max(v.Hover, v.Selected * 0.6f));
+                var grow = Mathf.Clamp01(Mathf.Max(v.Hover, v.Selected * 0.6f));
+                grow = grow * grow * (3f - 2f * grow);
+                var scale = Mathf.Lerp(1f, MinerSelectMotion.HoverScale, grow);
                 body.localScale = new Vector3(scale, scale, 1f);
             }
 
@@ -215,7 +221,7 @@ namespace SubTerra.App.UI.MainMenu
                 frame.color = UsesFrameArt ? tint : new Color(MinerSelectArt.Cyan.r, MinerSelectArt.Cyan.g, MinerSelectArt.Cyan.b, tint.a);
             }
 
-            SetAlpha(glow, (0.1f + 0.75f * lit) * b);
+            SetAlpha(glow, 0.85f * v.Selected * b);
             SetAlpha(inner, (0.5f + 0.15f * lit) * Mathf.Lerp(0.7f, 1f, b));
             SetAlpha(hex, (0.05f + 0.06f * lit) * b);
             SetAlpha(scanlines, (0.08f + 0.06f * lit) * b);
@@ -253,15 +259,16 @@ namespace SubTerra.App.UI.MainMenu
                 material.SetFloat(RevealId, v.Reveal);
                 material.SetFloat(FillId, v.Fill);
                 material.SetFloat(BrightnessId, figureBrightness);
-                // 고르지 않은 실루엣은 가끔 지직거리고, 색이 입혀질수록 안정된다.
-                material.SetFloat(GlitchId, Mathf.Lerp(0.35f, 0.05f, Mathf.Max(v.Reveal, v.Fill)));
-                figure.color = new Color(1f, 1f, 1f, Mathf.Lerp(v.Flicker, 1f, v.Fill));
+                // 고르지 않은 실루엣은 가끔 지직거리고 깜빡인다. 고르면(드러나면) 흔들림 없이 또렷하게 선다.
+                var steady = Mathf.Max(v.Reveal, v.Fill);
+                material.SetFloat(GlitchId, Mathf.Lerp(0.35f, 0f, steady));
+                figure.color = new Color(1f, 1f, 1f, Mathf.Lerp(v.Flicker, 1f, steady));
             }
             else
             {
                 var holo = MinerSelectArt.Cyan * Mathf.Min(1f, figureBrightness);
                 var tint = Color.Lerp(holo, Color.white, v.Fill);
-                tint.a = Mathf.Lerp(v.Flicker, 1f, v.Fill);
+                tint.a = Mathf.Lerp(v.Flicker, 1f, Mathf.Max(v.Reveal, v.Fill));
                 figure.color = tint;
             }
         }

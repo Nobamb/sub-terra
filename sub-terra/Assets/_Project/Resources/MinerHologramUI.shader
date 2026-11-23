@@ -1,7 +1,8 @@
 Shader "SubTerra/MinerHologramUI"
 {
     // B-209 광부 선택 카드의 광부 그림. UI-Default 기반.
-    // 기본: 윤곽 테두리만 빛나는 청록 실루엣. _Reveal: 위→아래 스캔 줄이 지나간 곳부터 얼굴·옷 선이 드러남.
+    // 기본: 윤곽 테두리만 빛나는 청록 실루엣. _Reveal: 위→아래 스캔 줄이 지나간 곳부터 얼굴·옷 선이 드러남
+    // (청록 단색 계조 + 밝기 선명화 + 또렷한 가장자리, 스캔라인은 옅게).
     // _Fill: 위→아래 스캔 줄이 지나간 곳부터 원래 색. _Glitch: 가로 띠 어긋남.
     Properties
     {
@@ -157,15 +158,32 @@ Shader "SubTerra/MinerHologramUI"
                 half body = 0.32 + 0.2 * localY;
                 half3 silhouette = cyan * body + cyan * rim * 1.5 + cyan * lines * 0.12;
 
-                // 드러난 홀로그램: 원본 밝기를 청록에 섞고 선을 밝힌다.
-                half3 detailed = cyan * (0.18 + luma * 1.05) + cyan * lines * 0.9 + cyan * rim * 0.8;
+                // 드러난 홀로그램: 1텍셀 이웃으로 밝기를 선명하게 한 뒤 청록 계조로 칠한다(어두운 선은 어둡게 남아 생김새가 또렷하다).
+                float2 p1 = _MainTex_TexelSize.xy;
+                half4 n0 = Sample(uv - float2(p1.x, 0));
+                half4 n1 = Sample(uv + float2(p1.x, 0));
+                half4 n2 = Sample(uv - float2(0, p1.y));
+                half4 n3 = Sample(uv + float2(0, p1.y));
+                half3 lw = half3(0.299, 0.587, 0.114);
+                half nA = n0.a + n1.a + n2.a + n3.a;
+                half nLuma = (dot(n0.rgb, lw) * n0.a + dot(n1.rgb, lw) * n1.a + dot(n2.rgb, lw) * n2.a + dot(n3.rgb, lw) * n3.a)
+                    / max(nA, 0.001);
+                half sharp = saturate(luma + (luma - nLuma) * 0.85);
+                half3 shade = lerp(cyan * 0.1, cyan * 0.9, smoothstep(0.0, 0.6, sharp));
+                shade = lerp(shade, lerp(cyan, half3(1, 1, 1), 0.35), smoothstep(0.6, 1.0, sharp));
+                half rimThin = saturate((tex.a - min(min(n0.a, n1.a), min(n2.a, n3.a))) * 1.6);
+                half3 detailed = shade * 1.1 + cyan * rimThin * 0.35;
+                // 확대된 그림의 번진 알파 가장자리를 화면 1px 안쪽으로 모은다.
+                half edgeW = max(fwidth(tex.a), 0.0001);
+                half crispA = saturate((tex.a - 0.5) / edgeW + 0.5);
+                half detailAlpha = lerp(tex.a, crispA, 0.75);
 
                 float revealLine = ScanLine(_Reveal);
                 float revealed = smoothstep(revealLine - 0.012, revealLine + 0.012, localY);
                 half3 holo = lerp(silhouette, detailed, revealed) * _Brightness;
 
                 float scan = 0.5 + 0.5 * sin((localY * _ScanDensity - _Time.y * 2.2) * 6.2831853);
-                holo *= 1.0 - _ScanAlpha * scan;
+                holo *= 1.0 - _ScanAlpha * scan * lerp(1.0, 0.3, revealed);
 
                 float fillLine = ScanLine(_Fill);
                 float filled = smoothstep(fillLine - 0.01, fillLine + 0.01, localY) * step(0.0001, _Fill);
@@ -182,7 +200,7 @@ Shader "SubTerra/MinerHologramUI"
                 float frontF = exp(-abs(dF) * 140.0) + saturate(1.0 - dF * 10.0) * step(0.0, dF) * 0.3;
                 rgb += lerp(cyan, half3(1, 1, 1), 0.5) * frontF * activeF * 1.3 * step(0.02, tex.a);
 
-                half holoAlpha = tex.a * (0.62 + 0.3 * revealed) + rim * 0.3;
+                half holoAlpha = lerp(tex.a * 0.62 + rim * 0.3, detailAlpha * 0.96, revealed);
                 half alpha = saturate(lerp(holoAlpha, tex.a, filled));
                 half4 color = half4(rgb, alpha) * i.color;
 

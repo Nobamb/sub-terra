@@ -100,7 +100,8 @@ namespace SubTerra.App.UI.MainMenu
         public const float AppearNoiseTailSeconds = 0.2f;
         /// <summary>돌아가기 때 TV 꺼지듯 접히는 시간.</summary>
         public const float CloseSeconds = 0.3f;
-        public const float HoverSeconds = 0.15f;
+        /// <summary>마우스를 올렸을 때 카드가 커지는 데 걸리는 시간.</summary>
+        public const float HoverSeconds = 0.3f;
         public const float HoverScale = 1.03f;
         /// <summary>안 고른 카드의 밝기.</summary>
         public const float DimmedBrightness = 0.45f;

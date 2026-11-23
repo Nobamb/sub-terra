@@ -387,6 +387,51 @@ namespace SubTerra.App.Tests.UI.MainMenu
         }
 
         [Test]
+        public void Card_GlowOnlyWhenSelected_HoverGrowsOverThreeTenths()
+        {
+            Assert.That(MinerSelectMotion.HoverSeconds, Is.EqualTo(0.3f));
+            var panel = OpenPanel(out _);
+            var card = panel.Card(0);
+            var other = panel.Card(1);
+            TickFor(panel, 0.1f);
+            Assert.That(card.GlowAlpha, Is.Zero, "고르기 전에는 바깥 빛이 없다");
+            Assert.That(card.BodyScale, Is.EqualTo(1f).Within(0.0001f));
+
+            card.OnPointerEnter(null);
+            TickFor(panel, 0.15f);
+            Assert.That(card.BodyScale, Is.GreaterThan(1f));
+            Assert.That(card.BodyScale, Is.LessThan(MinerSelectMotion.HoverScale - 0.005f), "0.15초에는 아직 다 커지지 않는다");
+            Assert.That(card.GlowAlpha, Is.Zero, "마우스만 올려도 바깥 빛은 없다");
+            TickFor(panel, 0.2f);
+            Assert.That(card.BodyScale, Is.EqualTo(MinerSelectMotion.HoverScale).Within(0.0001f));
+
+            panel.PressCard(0);
+            TickFor(panel, 0.5f);
+            Assert.That(card.GlowAlpha, Is.GreaterThan(0.5f), "고른 카드만 바깥 빛");
+            Assert.That(other.GlowAlpha, Is.Zero);
+        }
+
+        [Test]
+        public void Buttons_UseRoundedOutlineAndGreyWhenOff()
+        {
+            var panel = OpenPanel(out _);
+            var buttons = panel.GetComponentsInChildren<MinerSelectButtonView>(true);
+            Assert.That(buttons.Length, Is.EqualTo(2));
+            foreach (var button in buttons)
+            {
+                Assert.That(button.Frame.sprite, Is.SameAs(MinerSelectArt.RoundedOutline()));
+                Assert.That(button.Frame.type, Is.EqualTo(UnityEngine.UI.Image.Type.Sliced));
+                Assert.That(button.GetComponentInChildren<UnityEngine.UI.Mask>(true), Is.Not.Null, "빛은 둥근 바탕 안에서만");
+            }
+
+            Assert.That(panel.StartLit, Is.False);
+            var start = System.Array.Find(buttons, b => b.name == "StartButton");
+            Assert.That(start.Frame.color.b, Is.LessThan(0.7f), "꺼진 탐사 시작은 회색 테두리");
+            panel.PressCard(0);
+            Assert.That(start.Frame.color, Is.EqualTo(MinerSelectArt.Cyan));
+        }
+
+        [Test]
         public void Motion_CloseFoldsToLineThenEnds()
         {
             var start = MinerSelectMotion.EvaluateClose(0f, false);
@@ -418,10 +463,12 @@ namespace SubTerra.App.Tests.UI.MainMenu
         {
             Assert.That(MinerSelectArt.CardFrame(), Is.Not.Null);
             Assert.That(MinerSelectArt.PedestalArt(), Is.Not.Null);
-            Assert.That(MinerSelectArt.ButtonFrame(), Is.Not.Null);
-            Assert.That(MinerSelectArt.ButtonFrameOff(), Is.Not.Null);
             Assert.That(MinerSelectArt.ScreenFrame(), Is.Not.Null);
-            Assert.That(MinerSelectArt.ButtonFrame().border.x, Is.GreaterThan(0f), "버튼은 9분할");
+            Assert.That(MinerSelectArt.RoundedOutline().border.x, Is.GreaterThan(MinerSelectArt.ButtonLineInset + MinerSelectArt.ButtonCornerRadius),
+                "버튼 둥근 테두리는 모서리가 늘어나지 않는 9분할");
+            Assert.That(MinerSelectArt.RoundedFill().border.x, Is.EqualTo(MinerSelectArt.RoundedOutline().border.x), "바탕·마스크는 테두리와 같은 모양");
+            Assert.That(MinerSelectArt.CardGlow().border.x, Is.GreaterThan(MinerSelectArt.CardGlowPad + MinerSelectArt.CardChamfer),
+                "카드 빛의 깎인 모서리는 9분할 모서리 안에 있다");
             Assert.That(MinerSelectArt.ScreenFrame().border.x, Is.GreaterThan(0f), "화면 테두리는 9분할");
             Assert.That(MinerSelectArt.HologramShader(), Is.Not.Null);
             Assert.That(MinerSelectArt.GlitchShader(), Is.Not.Null);
@@ -476,6 +523,11 @@ namespace SubTerra.App.Tests.UI.MainMenu
             FinishAppear(panel);
             sounds.Clear();
             return panel;
+        }
+
+        private static void TickFor(MinerSelectPanel panel, float seconds)
+        {
+            for (var t = 0f; t < seconds - 0.0001f; t += 1f / 100f) panel.Tick(1f / 100f);
         }
 
         private static void FinishAppear(MinerSelectPanel panel)

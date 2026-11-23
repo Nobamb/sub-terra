@@ -5,8 +5,8 @@ using UnityEngine;
 namespace SubTerra.App.UI.MainMenu
 {
     /// <summary>
-    /// 광부 선택 화면 그림. 카드 테두리·받침대·버튼·화면 테두리는 Codex로 그린 PNG(Resources/UI/MinerSelect),
-    /// 빛기둥·스캔 줄·그라데이션·입자 점은 절차 생성, 홀로그램·글리치는 셰이더다.
+    /// 광부 선택 화면 그림. 카드 테두리·받침대·화면 테두리는 Codex로 그린 PNG(Resources/UI/MinerSelect),
+    /// 버튼 둥근 테두리·카드 빛·빛기둥·스캔 줄·그라데이션·입자 점은 절차 생성, 홀로그램·글리치는 셰이더다.
     /// 그림이나 셰이더가 없으면 단색·절차 그림으로 대체한다.
     /// </summary>
     public static class MinerSelectArt
@@ -16,10 +16,15 @@ namespace SubTerra.App.UI.MainMenu
         public const string GlitchShaderName = "SubTerra/MinerSelectGlitchUI";
         public const string GlitchShaderResourceName = "MinerSelectGlitchUI";
         public const string ArtRoot = "UI/MinerSelect/";
-        /// <summary>9분할 그림의 테두리 px(빌더와 같은 값).</summary>
-        public const float ButtonBorderPixels = 72f;
-        public const float ButtonArtHeight = 124f;
-        public const float EdgeGlowOutset = 26f;
+        /// <summary>버튼 둥근 테두리: 그림 가장자리에서 선 가운데까지 px, 모서리 반지름, 선 두께.</summary>
+        public const float ButtonLineInset = 5f;
+        public const float ButtonCornerRadius = 14f;
+        public const float ButtonLineWidth = 2.5f;
+        /// <summary>카드 빛: 그림 가장자리에서 카드 테두리 선까지 px(빛이 번지는 폭).</summary>
+        public const float CardGlowPad = 16f;
+        /// <summary>카드 테두리 그림에서 바깥 선이 카드 가장자리보다 안쪽인 px와 깎인 모서리 길이(UI px).</summary>
+        public const float CardOutlineInset = 7f;
+        public const float CardChamfer = 21f;
         public static readonly Color Cyan = new Color(0.42f, 0.94f, 1f, 1f);
 
         private static readonly Dictionary<string, Sprite> Cache = new Dictionary<string, Sprite>(StringComparer.Ordinal);
@@ -30,8 +35,6 @@ namespace SubTerra.App.UI.MainMenu
 
         public static Sprite CardFrame() => LoadArt("miner-card-frame");
         public static Sprite PedestalArt() => LoadArt("miner-pedestal");
-        public static Sprite ButtonFrame() => LoadArt("miner-button-frame");
-        public static Sprite ButtonFrameOff() => LoadArt("miner-button-frame-off");
         public static Sprite ScreenFrame() => LoadArt("miner-screen-frame");
 
         private static Sprite LoadArt(string name)
@@ -92,37 +95,80 @@ namespace SubTerra.App.UI.MainMenu
         }
 
         /// <summary>
-        /// 카드 바깥으로만 번지는 빛(9분할). 그림 가장자리에서 EdgeGlowOutset px 안쪽이 카드 테두리 자리이고,
-        /// 그 안쪽은 금방 투명해져 카드 바탕을 밝히지 않는다.
+        /// 고른 카드 바깥으로만 번지는 빛(9분할). 카드 테두리처럼 모서리가 깎인 팔각형을 따라가고,
+        /// 테두리 선 안쪽은 금방 투명해져 카드 바탕을 밝히지 않는다. 1 그림 px = 1 UI px.
         /// </summary>
-        public static Sprite EdgeGlow()
+        public static Sprite CardGlow()
         {
-            return Get("edge-glow", () =>
+            return Get("card-glow", () =>
             {
-                const int size = 96;
+                const int size = 128;
+                const float pad = CardGlowPad;
                 var pixels = new Color32[size * size];
                 for (var y = 0; y < size; y++)
                 {
                     for (var x = 0; x < size; x++)
                     {
-                        float d = Mathf.Min(Mathf.Min(x, y), Mathf.Min(size - 1 - x, size - 1 - y));
-                        float a;
-                        if (d < EdgeGlowOutset)
-                        {
-                            var k = d / EdgeGlowOutset;
-                            a = k * k * 0.9f;
-                        }
-                        else
-                        {
-                            a = 0.9f * Mathf.Exp(-(d - EdgeGlowOutset) / 4f);
-                        }
-
-                        pixels[y * size + x] = new Color32(255, 255, 255, (byte)Mathf.RoundToInt(Mathf.Clamp01(a) * 255f));
+                        var dx = Mathf.Min(x + 0.5f, size - x - 0.5f);
+                        var dy = Mathf.Min(y + 0.5f, size - y - 0.5f);
+                        // 테두리 선 바깥 거리(양수 바깥, 음수 안쪽). 깎인 모서리는 45° 면까지의 거리.
+                        var d = Mathf.Max(Mathf.Max(pad - dx, pad - dy), (2f * pad + CardChamfer - dx - dy) * 0.70710678f);
+                        // 바깥 꼬리는 그림 가장자리에서 정확히 0이 되게 줄인다(리니어 색 공간에서는 옅은 꼬리도 네모 상자로 보인다).
+                        var edge = Mathf.Clamp01(1f - d / pad);
+                        var a = d > 0f ? Mathf.Exp(-d / 4f) * edge * edge : Mathf.Exp(d / 1.6f);
+                        pixels[y * size + x] = new Color32(255, 255, 255, (byte)Mathf.RoundToInt(Mathf.Clamp01(a * 0.9f) * 255f));
                     }
                 }
 
-                return Make(size, size, pixels, new Vector4(40f, 40f, 40f, 40f));
+                return Make(size, size, pixels, new Vector4(56f, 56f, 56f, 56f));
             });
+        }
+
+        /// <summary>버튼 둥근 테두리 선(9분할, 흰색이라 색은 Image에서 입힌다). 선 바깥으로 약한 빛.</summary>
+        public static Sprite RoundedOutline()
+        {
+            return Get("rounded-outline", () => RoundedRect(true));
+        }
+
+        /// <summary>버튼 둥근 바탕(테두리 선 가운데까지 채움). 버튼 안 빛을 자르는 마스크로도 쓴다.</summary>
+        public static Sprite RoundedFill()
+        {
+            return Get("rounded-fill", () => RoundedRect(false));
+        }
+
+        private static Sprite RoundedRect(bool outline)
+        {
+            const int size = 64;
+            const float half = ButtonLineWidth * 0.5f;
+            var pixels = new Color32[size * size];
+            for (var y = 0; y < size; y++)
+            {
+                for (var x = 0; x < size; x++)
+                {
+                    var dx = Mathf.Min(x + 0.5f, size - x - 0.5f);
+                    var dy = Mathf.Min(y + 0.5f, size - y - 0.5f);
+                    // 테두리 선 가운데까지의 둥근 사각형 거리(음수 안쪽).
+                    var qx = ButtonLineInset + ButtonCornerRadius - dx;
+                    var qy = ButtonLineInset + ButtonCornerRadius - dy;
+                    var outside = new Vector2(Mathf.Max(qx, 0f), Mathf.Max(qy, 0f)).magnitude;
+                    var d = outside + Mathf.Min(Mathf.Max(qx, qy), 0f) - ButtonCornerRadius;
+                    float a;
+                    if (outline)
+                    {
+                        var core = Mathf.Clamp01(half + 0.5f - Mathf.Abs(d));
+                        var halo = d > 0f ? 0.32f * Mathf.Exp(-(d - half) / 1.8f) : 0.18f * Mathf.Exp((d + half) / 1.5f);
+                        a = Mathf.Max(core, Mathf.Clamp01(halo));
+                    }
+                    else
+                    {
+                        a = Mathf.Clamp01(0.5f - d);
+                    }
+
+                    pixels[y * size + x] = new Color32(255, 255, 255, (byte)Mathf.RoundToInt(a * 255f));
+                }
+            }
+
+            return Make(size, size, pixels, new Vector4(24f, 24f, 24f, 24f));
         }
 
         /// <summary>카드 안쪽 바탕: 아래가 조금 진하고 위로 옅어지는 세로 그라데이션.</summary>
