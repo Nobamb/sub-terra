@@ -1,3 +1,4 @@
+using SubTerra.Shared;
 using SubTerra.Shared.Audio;
 using UnityEngine;
 
@@ -21,6 +22,8 @@ namespace SubTerra.Gameplay.Player
         private const int FiveFrameLadderTopB = 6;
         private const float FootstepMinHorizontalSpeed = 0.1f;
         private const float FootstepAlternatePitch = 0.96f;
+        // 기절 뒤 가스 숨쉬기 반복이 시작하는 그림 번호(1부터). 끝은 실제 마지막 장이다.
+        private const int KnockoutBreathingFirstFrame = 37;
 
         [SerializeField] private SpriteRenderer spriteRenderer;
         [SerializeField] private Animator animator;
@@ -46,6 +49,9 @@ namespace SubTerra.Gameplay.Player
         [SerializeField, Min(0f)] private float ladderSettleDelay = 0.08f;
         [Tooltip("B-164: 걷기 그림에서 발이 닿는 프레임. 이 프레임으로 넘어갈 때 발소리를 낸다.")]
         [SerializeField] private int[] footstepFrames = { 1, 21 };
+        [Tooltip("B-208: 성별별 그림 묶음. 비어 있으면 위 프레임 배열을 그대로 쓴다.")]
+        [SerializeField] private PlayerAnimationSet maleAnimationSet;
+        [SerializeField] private PlayerAnimationSet femaleAnimationSet;
 
         [SerializeField] private PlayerMovement movement;
         private bool isMining;
@@ -76,6 +82,10 @@ namespace SubTerra.Gameplay.Player
         private float jumpBobBaseY;
 
         public bool IsShowingLadderVisual => IsLadderState(currentState);
+        /// <summary>B-208: 지금 그리는 그림 세트의 성별. 프리팹 기본 그림은 남자다.</summary>
+        public PlayerGender Gender { get; private set; }
+        public PlayerAnimationSet MaleAnimationSet => maleAnimationSet;
+        public PlayerAnimationSet FemaleAnimationSet => femaleAnimationSet;
         /// <summary>B-175: 점프 그림 단계. #265 연출은 PhaseChanged를 구독한다.</summary>
         public PlayerJumpAnimationSequence JumpAnimation => JumpSequence;
         public bool IsShowingLadderMiningVisual => currentState == "LadderMining";
@@ -87,12 +97,47 @@ namespace SubTerra.Gameplay.Player
             && !movement.IsApproachingLadderFromAbove
             && (movement.IsClimbing || (movement.IsTouchingLadder
                 && (IsShowingLadderVisual || IsShowingLadderMiningVisual || miningOnLadder)));
-        private PlayerMiningAnimationSequence MiningSequence =>
-            miningSequence ??= new PlayerMiningAnimationSequence(miningAnimation);
-        private PlayerLadderMiningAnimationSequence LadderMiningSequence =>
-            ladderMiningSequence ??= new PlayerLadderMiningAnimationSequence(ladderMiningAnimation);
-        private PlayerJumpAnimationSequence JumpSequence =>
-            jumpSequence ??= new PlayerJumpAnimationSequence(jumpAnimation);
+        private PlayerMiningAnimationSequence MiningSequence
+        {
+            get
+            {
+                if (miningSequence == null)
+                {
+                    miningSequence = new PlayerMiningAnimationSequence(miningAnimation);
+                    miningSequence.SetFrameCount(Count(miningFrames));
+                }
+
+                return miningSequence;
+            }
+        }
+
+        private PlayerLadderMiningAnimationSequence LadderMiningSequence
+        {
+            get
+            {
+                if (ladderMiningSequence == null)
+                {
+                    ladderMiningSequence = new PlayerLadderMiningAnimationSequence(ladderMiningAnimation);
+                    ladderMiningSequence.SetFrameCount(Count(ladderMiningFrames));
+                }
+
+                return ladderMiningSequence;
+            }
+        }
+
+        private PlayerJumpAnimationSequence JumpSequence
+        {
+            get
+            {
+                if (jumpSequence == null)
+                {
+                    jumpSequence = new PlayerJumpAnimationSequence(jumpAnimation);
+                    jumpSequence.SetFrameCounts(Count(jumpReadyFrames), Count(jumpRiseFrames), Count(jumpFallFrames));
+                }
+
+                return jumpSequence;
+            }
+        }
         private bool IsHoldingLadder => movement != null
             && (movement.IsClimbing || (movement.IsTouchingLadder && !movement.IsJumpInProgress));
         private bool HasJumpPhaseFrames => HasFrames(jumpReadyFrames) && HasFrames(jumpRiseFrames)
@@ -167,6 +212,7 @@ namespace SubTerra.Gameplay.Player
                 return;
             }
 
+            SyncSequenceFrameCounts();
             if (movement.IsGrounded)
             {
                 lastGroundedAt = Time.unscaledTime;
@@ -264,7 +310,57 @@ namespace SubTerra.Gameplay.Player
             damageFrames = damage;
             knockoutFrames = knockout;
             ResetLadderPlayback();
+            SyncSequenceFrameCounts();
         }
+
+        /// <summary>
+        /// B-208: 성별 그림 세트로 바꾼다. 해당 세트가 연결되지 않았으면 false를 돌려주고 그림을 그대로 둔다.
+        /// </summary>
+        public bool SetGender(PlayerGender gender)
+        {
+            var set = gender == PlayerGender.Female ? femaleAnimationSet : maleAnimationSet;
+            if (set == null)
+            {
+                return false;
+            }
+
+            ApplyAnimationSet(set);
+            return true;
+        }
+
+        /// <summary>
+        /// 그림 배열만 바꾼다. 상태·채굴/점프 진행·시간은 그대로 두고 다음 그리기부터 새 그림을 쓴다.
+        /// 진행 중인 번호가 새 세트 장수를 넘으면 그리기 단계에서 마지막 장으로 자른다.
+        /// </summary>
+        public void ApplyAnimationSet(PlayerAnimationSet set)
+        {
+            if (set == null)
+            {
+                return;
+            }
+
+            idleFrames = set.idleFrames;
+            walkFrames = set.walkFrames;
+            jumpReadyFrames = set.jumpReadyFrames;
+            jumpRiseFrames = set.jumpRiseFrames;
+            jumpFallFrames = set.jumpFallFrames;
+            ladderFrames = set.ladderFrames;
+            miningFrames = set.miningFrames;
+            ladderMiningFrames = set.ladderMiningFrames;
+            damageFrames = set.damageFrames;
+            knockoutFrames = set.knockoutFrames;
+            Gender = set.gender;
+            SyncSequenceFrameCounts();
+        }
+
+        private void SyncSequenceFrameCounts()
+        {
+            MiningSequence.SetFrameCount(Count(miningFrames));
+            LadderMiningSequence.SetFrameCount(Count(ladderMiningFrames));
+            JumpSequence.SetFrameCounts(Count(jumpReadyFrames), Count(jumpRiseFrames), Count(jumpFallFrames));
+        }
+
+        private static int Count(Sprite[] frames) => frames != null ? frames.Length : 0;
 
         public void SetMining(bool value)
         {
@@ -524,11 +620,13 @@ namespace SubTerra.Gameplay.Player
                 frameIndex = Mathf.Min(MiningSequence.FrameIndex, frames.Length - 1);
             else if (stateName == "LadderMining")
                 frameIndex = Mathf.Min(LadderMiningSequence.FrameIndex, frames.Length - 1);
-            else if (stateName == "Knockout" && frames.Length >= 48
-                && elapsed >= 48f / Mathf.Max(0.01f, knockoutFps)
+            else if (stateName == "Knockout" && frames.Length > KnockoutBreathingFirstFrame
+                && elapsed >= frames.Length / Mathf.Max(0.01f, knockoutFps)
                 && knockoutCause == SubTerra.Shared.RunFailureCause.GasExposure)
-                frameIndex = 36 + Mathf.FloorToInt((elapsed - 48f / Mathf.Max(0.01f, knockoutFps))
-                    * knockoutBreathingFps) % 12;
+                // 끝까지 재생한 뒤 37~마지막 장(남자 48, 여자 47)을 숨쉬기로 반복한다.
+                frameIndex = KnockoutBreathingFirstFrame - 1
+                    + Mathf.FloorToInt((elapsed - frames.Length / Mathf.Max(0.01f, knockoutFps))
+                        * knockoutBreathingFps) % (frames.Length - KnockoutBreathingFirstFrame + 1);
 
             if (frames[frameIndex] != null)
             {

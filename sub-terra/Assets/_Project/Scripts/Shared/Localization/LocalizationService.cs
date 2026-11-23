@@ -121,6 +121,16 @@ namespace SubTerra.Shared.Localization
             Add("settings.bgm_volume", "배경음", "Music");
             Add("settings.sfx_volume", "효과음", "Sound Effects");
             Add("settings.bgm_hint", "배경음은 배경음 슬라이더로 조절됩니다.", "Music is adjusted with the Music slider.");
+            // B-209 새 게임 전 광부 선택 화면.
+            Add("miner_select.ops", "SUB-TERRA OPS", "SUB-TERRA OPS");
+            Add("miner_select.title", "광부 선택", "Select Miner");
+            Add("miner_select.registration", "MINER REGISTRATION", "MINER REGISTRATION");
+            Add("miner_select.subtitle", "탐사를 시작할 광부를 선택하세요.", "Choose the miner who will lead the expedition.");
+            Add("miner_select.male", "남자", "Male");
+            Add("miner_select.female", "여자", "Female");
+            Add("miner_select.hint", "광부를 선택해 주세요", "Select a miner");
+            Add("miner_select.start", "탐사 시작", "Start Expedition");
+            Add("miner_select.back", "돌아가기", "Back");
             Add("economy.sell.title", "광물 판매", "Sell Minerals");
             Add("economy.sell.owned", "보유 {0}", "Owned {0}");
             Add("economy.sell.unit_price", "단가 {0}G", "Unit {0}G");

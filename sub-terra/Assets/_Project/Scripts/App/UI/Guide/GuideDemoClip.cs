@@ -141,6 +141,19 @@ namespace SubTerra.App.UI.Guide
         public string IdleKey = string.Empty;
         public DemoTrack FrameActive;
         public DemoTrack FrameIndex;
+        /// <summary>B-208: Animate에 넘긴 키 접두사. 성별 장면으로 바꿀 때 장수를 다시 계산한다.</summary>
+        public string AnimPrefix = string.Empty;
+        /// <summary>B-208: AnimateMining 장면의 시작·완료 시각. 음수면 채굴 장면이 아니다.</summary>
+        public float MiningStart = -1f;
+        public float MiningCompletedAt = -1f;
+
+        /// <summary>같은 트랙을 공유하는 얕은 복사본. 성별 장면이 키·프레임 배열만 바꿔 쓴다.</summary>
+        public DemoLayer Clone()
+        {
+            var copy = (DemoLayer)MemberwiseClone();
+            copy.FrameKeys = FrameKeys != null ? (string[])FrameKeys.Clone() : null;
+            return copy;
+        }
 
         public DemoLayer PosX(DemoTrack track) { X = track; return this; }
         public DemoLayer PosY(DemoTrack track) { Y = track; return this; }
@@ -166,13 +179,26 @@ namespace SubTerra.App.UI.Guide
             Fps = fps;
             IdleKey = idleKey;
             FrameActive = active;
+            AnimPrefix = prefix;
             return this;
         }
 
         public DemoLayer AnimateMining(float start, float completedAt)
         {
-            Animate("player.mine", 24, 12f, "player.idle",
-                DemoTrack.Hold(0f, 0f, start, 1f, completedAt + 10f / 60f, 0f));
+            return AnimateMining(start, completedAt, "player.mine", GuidePlayerArt.MaleMineFrameCount, "player.idle");
+        }
+
+        /// <summary>
+        /// 채굴 시연. 작업 1~13은 12fps, 블록이 깨지면 15번부터 마지막 장까지 60fps로 마친다.
+        /// 남자 24장은 15~24(10장), 여자 23장은 15~23(9장)이다.
+        /// </summary>
+        public DemoLayer AnimateMining(float start, float completedAt, string prefix, int frameCount, string idleKey)
+        {
+            var finishCount = Mathf.Max(1, frameCount - 14);
+            Animate(prefix, frameCount, 12f, idleKey,
+                DemoTrack.Hold(0f, 0f, start, 1f, completedAt + finishCount / 60f, 0f));
+            MiningStart = start;
+            MiningCompletedAt = completedAt;
             var frames = new List<float>();
             for (var i = 0; i < 13 && start + i / 12f < completedAt; i++)
             {
@@ -180,7 +206,7 @@ namespace SubTerra.App.UI.Guide
                 frames.Add(i);
             }
             // 블록이 사라지는 순간 회수를 시작하고 실제 캐릭터처럼 60fps로 마친다.
-            for (var i = 0; i < 10; i++)
+            for (var i = 0; i < finishCount; i++)
             {
                 frames.Add(completedAt + i / 60f);
                 frames.Add(14 + i);

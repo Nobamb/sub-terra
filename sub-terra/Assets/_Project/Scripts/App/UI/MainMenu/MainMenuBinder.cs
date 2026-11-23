@@ -1,7 +1,9 @@
 using SubTerra.App.Audio;
 using SubTerra.App.Save;
 using SubTerra.App.UI.HUD;
+using SubTerra.App.UI.Intro;
 using SubTerra.App.UI.QuitConfirm;
+using SubTerra.Shared;
 using SubTerra.Shared.Audio;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -27,6 +29,7 @@ namespace SubTerra.App.UI.MainMenu
         private MainMenuPresenter presenter;
         private bool startingNewGame;
         private bool continuing;
+        private MinerSelectPanel boundMinerSelect;
 
         public MainMenuPresenter Presenter => presenter;
         public bool IsBound => presenter != null;
@@ -98,6 +101,8 @@ namespace SubTerra.App.UI.MainMenu
                 view.MasterVolumePreviewChanged -= OnMasterVolumePreview;
             }
 
+            BindMinerSelect(null);
+
             if (presenter != null)
             {
                 presenter.ContinueRequested -= OnContinue;
@@ -115,6 +120,8 @@ namespace SubTerra.App.UI.MainMenu
             if (presenter == null || view == null || Keyboard.current == null) return;
             // B-170: 종료 확인 창이 ESC·X를 먼저 받는다.
             if (QuitConfirmFlow.IsBlockingInput) return;
+            // B-209: 광부 선택 화면이 Esc(돌아가기)·키보드를 직접 받는다.
+            if (view.IsMinerSelectOpen) return;
             if (Keyboard.current.escapeKey.wasPressedThisFrame)
             {
                 if (presenter.Settings.IsOpen) OnSettingsCancel();
@@ -157,14 +164,14 @@ namespace SubTerra.App.UI.MainMenu
 
         private void OnNewGameClicked()
         {
-            if (startingNewGame || continuing) return;
+            if (startingNewGame || continuing || (view != null && view.IsMinerSelectOpen)) return;
             SfxPlayer.Play(SfxId.UiConfirm);
             presenter?.RequestNewGame();
         }
 
         private void OnContinueClicked()
         {
-            if (startingNewGame || continuing) return;
+            if (startingNewGame || continuing || (view != null && view.IsMinerSelectOpen)) return;
             SfxPlayer.Play(SfxId.UiConfirm);
             presenter?.RequestContinue();
         }
@@ -327,7 +334,8 @@ namespace SubTerra.App.UI.MainMenu
 
         private void OnStartNewGame(int slotId)
         {
-            // 덮어쓰기 확인을 통과한 경로만 여기에 온다.
+            // 덮어쓰기 확인을 통과한 경로만 여기에 온다. B-209: 바로 시작하지 않고 광부 선택 화면을 연다.
+            // 저장·덮어쓰기는 선택 화면에서 탐사 시작을 누른 뒤(MinerSelectSession.TryStart)에만 일어난다.
             if (startingNewGame) return;
             var runtime = SaveRuntimeController.Instance;
             if (runtime == null)
@@ -337,9 +345,107 @@ namespace SubTerra.App.UI.MainMenu
             }
             // 같은 클릭에서 이미 확인음이 났으면 연타 제한이 한 번으로 줄인다.
             SfxPlayer.Play(SfxId.UiConfirm);
+            if (slotId < SavePathPolicy.MinimumSlot || slotId > SavePathPolicy.MaximumSlot)
+            {
+                SfxPlayer.Play(SfxId.UiCancelFail);
+                return;
+            }
+
+            var session = new MinerSelectSession(slotId, StartNewGameEntry);
+            var panel = view != null ? view.ShowMinerSelect(session) : null;
+            if (panel == null)
+            {
+                // 화면을 만들지 못하면 예전처럼 기본 광부(남자)로 바로 시작한다.
+                Debug.LogWarning("[SubTerra] Miner select screen unavailable; starting with the default miner.");
+                StartWithoutMinerSelect(slotId);
+                return;
+            }
+
+            BindMinerSelect(panel);
+        }
+
+        private static bool StartNewGameEntry(int slotId, bool confirmOverwrite, PlayerGender gender)
+        {
+            var runtime = SaveRuntimeController.Instance;
+            return runtime != null && runtime.StartNewGame(slotId, confirmOverwrite, gender);
+        }
+
+        private void BindMinerSelect(MinerSelectPanel panel)
+        {
+            if (boundMinerSelect == panel) return;
+            if (boundMinerSelect != null)
+            {
+                boundMinerSelect.BackRequested -= OnMinerSelectBack;
+                boundMinerSelect.LaunchReady -= OnMinerSelectLaunch;
+            }
+
+            boundMinerSelect = panel;
+            if (boundMinerSelect != null)
+            {
+                boundMinerSelect.BackRequested += OnMinerSelectBack;
+                boundMinerSelect.LaunchReady += OnMinerSelectLaunch;
+            }
+        }
+
+        private void OnMinerSelectBack()
+        {
+            // 슬롯·저장은 그대로다. 덮어쓰기 허락도 버린다(다시 새 게임을 누르면 다시 묻는다).
+            if (view != null) view.HideMinerSelect();
+            if (presenter != null)
+            {
+                presenter.OverwriteGate.Clear();
+                presenter.SelectSlot(presenter.SelectedSlot);
+            }
+        }
+
+        /// <summary>선택 화면이 검게 닫혔다. 인트로 영상 → 새 게임 시작(씬 로드) → 켜짐 연출 순서로 넘긴다.</summary>
+        private void OnMinerSelectLaunch(MinerSelectSession session)
+        {
+            if (startingNewGame || session == null) return;
+            startingNewGame = true;
+            try
+            {
+                var playVideo = NewGameIntroPolicy.ShouldPlayVideo(
+                    true,
+                    AccessibilityPreferences.ReduceMotion,
+                    NewGameIntroPlayer.VideoAvailable());
+                var player = NewGameIntroPlayer.Create();
+                player.StartCoroutine(player.RunNewGameLaunch(
+                    playVideo,
+                    session.TryStart,
+                    IsNewGameReady,
+                    OnMinerSelectLaunchFailed));
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogWarning("[SubTerra] New game intro failed; starting without it. " + ex);
+                if (!session.HasStarted && !session.TryStart())
+                {
+                    OnMinerSelectLaunchFailed();
+                }
+            }
+        }
+
+        private static bool IsNewGameReady()
+        {
+            var runtime = SaveRuntimeController.Instance;
+            return runtime == null || runtime.IsUiReady;
+        }
+
+        private void OnMinerSelectLaunchFailed()
+        {
+            if (this == null) return;
+            startingNewGame = false;
+            if (view != null && view.MinerSelect != null) view.MinerSelect.RecoverAfterFailedStart();
+            SfxPlayer.Play(SfxId.UiCancelFail);
+        }
+
+        private void StartWithoutMinerSelect(int slotId)
+        {
             startingNewGame = true;
             view.PlayExitTransition(() =>
             {
+                var runtime = SaveRuntimeController.Instance;
                 if (runtime == null || !runtime.StartNewGame(slotId, confirmOverwrite: true))
                 {
                     startingNewGame = false;

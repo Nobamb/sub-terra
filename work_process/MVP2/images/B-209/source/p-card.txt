@@ -1,0 +1,8 @@
+Generate an image with your image generation tool. Use the attached concept image ONLY as a style reference (look at the cyan holographic card frames around the two miners).
+Draw ONE empty holographic sci-fi selection card frame, straight front view, flat 2D game UI asset, portrait 2:3 canvas, the frame fills the canvas with a small even margin.
+- Thin glowing cyan (#6BF0FF) neon border with chamfered (cut) corners, a faint thinner inner second outline, short tick segments and tiny notches along the edges, small corner brackets.
+- Three small slanted glowing bars "///" near the top-left corner inside the frame.
+- Soft cyan inner glow only close to the border, very faint holographic hex grid texture fading toward the center.
+- The interior of the card is EMPTY and pure black. Everything outside the border is pure black #000000.
+- No text, no letters, no characters, no people, no pedestal, no logo. Crisp, clean, symmetrical, high quality.
+Save a copy of the final image as ./miner-card-frame.png in the current folder.

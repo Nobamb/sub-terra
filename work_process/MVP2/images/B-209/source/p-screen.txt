@@ -1,0 +1,7 @@
+Generate an image with your image generation tool. Use the attached concept image ONLY as a style reference (look at the thin glowing outer border of the whole screen).
+Draw ONE full-screen HUD border frame for a game menu, flat 2D game UI asset, landscape canvas, the border runs around the canvas edge with a small margin.
+- Thin glowing cyan (#6BF0FF) neon line with chamfered (cut) corners, a second very thin parallel line just inside it, small corner bracket details, three small slanted bars "///" near the top-left and top-right corners, a few short tick marks and notches near each corner.
+- Keep ALL decorations within 15 percent of each corner. The middle parts of all four edges must be plain straight lines (they will be stretched).
+- Interior and outside are pure black #000000, empty.
+- No text, no letters, no logo, no scene. Crisp, symmetrical, high quality.
+Save a copy of the final image as ./miner-screen-frame.png in the current folder.
