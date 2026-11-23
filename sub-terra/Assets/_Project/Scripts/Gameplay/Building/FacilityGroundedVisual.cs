@@ -85,11 +85,12 @@ namespace SubTerra.Gameplay.Building
                 pixels = Rect.MinMaxRect(49f, 140f, 1205f, 1112f);
             else if (texture.name == "charger_basic_cartoon_v2" && texture.width == 1240 && texture.height == 1269)
                 pixels = Rect.MinMaxRect(184f, 79f, 1073f, 1227f);
+            else if (texture.name == "storage_basic_cartoon_v2" && texture.width == 1312 && texture.height == 1199)
+                pixels = Rect.MinMaxRect(74f, 96f, 1257f, 1098f);
             else if (texture.name == "ChargerGrounded" && texture.width == 1240 && texture.height == 1269)
                 pixels = Rect.MinMaxRect(173f, 84f, 1067f, 1220f);
-            else if ((texture.name == "storage_basic_cartoon_v2" || texture.name == "StorageGrounded")
-                && texture.width == 1536 && texture.height == 1024)
-                pixels = Rect.MinMaxRect(224f, 131f, 1307f, 911f);
+            else if (texture.name == "StorageGrounded" && texture.width == 1315 && texture.height == 1196)
+                pixels = Rect.MinMaxRect(57f, 89f, 1258f, 1101f);
             else if (texture.name == "OutpostCoreTall" && texture.width == 948 && texture.height == 1659)
                 pixels = Rect.MinMaxRect(58f, 55f, 891f, 1596f);
             else if (texture.name == "outpost_core_cartoon_v3" && texture.width == 1292 && texture.height == 1218)
@@ -99,6 +100,9 @@ namespace SubTerra.Gameplay.Building
                 pixels = Rect.MinMaxRect(195f, 64f, 937f, 1304f);
             else if (texture.name == "settlement_console_cartoon_v3" && texture.width == 1230 && texture.height == 1278)
                 pixels = Rect.MinMaxRect(177f, 64f, 1108f, 1274f);
+            else if ((texture.name == "storage_basic_cartoon_v2" || texture.name == "StorageGrounded")
+                && texture.width == 1536 && texture.height == 1024)
+                pixels = Rect.MinMaxRect(224f, 131f, 1307f, 911f);
             if (pixels.width > 0f)
             {
                 Vector2 min = (Vector2.Max(pixels.min, sprite.rect.min) - sprite.rect.min - sprite.pivot) / sprite.pixelsPerUnit;
