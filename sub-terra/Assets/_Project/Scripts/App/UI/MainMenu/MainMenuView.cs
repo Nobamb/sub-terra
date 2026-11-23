@@ -570,12 +570,19 @@ namespace SubTerra.App.UI.MainMenu
             if (skin != null) skin.PlayApplySound();
         }
 
+        private ControlSchemePanel AttachControlSchemePanel()
+        {
+            var panel = ControlSchemePanel.Attach(settingsRoot);
+            if (panel != null) panel.LockGuideGender(SubTerra.Shared.PlayerGender.Male);
+            return panel;
+        }
+
         public void SetSettingsVisible(bool visible)
         {
             if (visible && slotNoise != null) slotNoise.StopNow();
             if (settingsRoot != null)
             {
-                if (visible && controlSchemePanel == null) controlSchemePanel = ControlSchemePanel.Attach(settingsRoot);
+                if (visible && controlSchemePanel == null) controlSchemePanel = AttachControlSchemePanel();
                 if (!visible)
                 {
                     var skin = settingsRoot.GetComponent<SettingsMenuSkin>();
@@ -614,7 +621,7 @@ namespace SubTerra.App.UI.MainMenu
                 ? GameLanguageCodes.Korean
                 : values.LanguageCode;
             draftFrameRate = values.FrameRate;
-            if (controlSchemePanel == null) controlSchemePanel = ControlSchemePanel.Attach(settingsRoot);
+            if (controlSchemePanel == null) controlSchemePanel = AttachControlSchemePanel();
             if (controlSchemePanel != null) controlSchemePanel.SetDraft(values.Controls);
 
             if (masterVolumeSlider != null)

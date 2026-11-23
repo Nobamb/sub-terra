@@ -28,10 +28,21 @@ namespace SubTerra.Gameplay.Player
         private float cancelFrameSeconds;
         private int cancelledDirection;
         private int workStep = 1;
+        private int frameCount;
 
         public int FrameIndex { get; private set; }
         public int Direction { get; private set; } = 1;
         public bool IsActive => phase != Phase.Idle;
+
+        /// <summary>B-208: 현재 그림 세트의 실제 장수. 0이면 설정값을 그대로 쓴다.</summary>
+        public void SetFrameCount(int count)
+        {
+            frameCount = Math.Max(0, count);
+        }
+
+        private int FinishLastFrame => frameCount > 0
+            ? Math.Min(settings.finishLastFrame, frameCount)
+            : settings.finishLastFrame;
 
         public PlayerLadderMiningAnimationSequence(PlayerLadderMiningAnimationSettings settings)
         {
@@ -113,7 +124,7 @@ namespace SubTerra.Gameplay.Player
                         FrameIndex += workStep;
                         break;
                     case Phase.Finish:
-                        if (FrameIndex < settings.finishLastFrame - 1) FrameIndex++;
+                        if (FrameIndex < FinishLastFrame - 1) FrameIndex++;
                         else phase = Phase.Idle;
                         break;
                     case Phase.Cancel:

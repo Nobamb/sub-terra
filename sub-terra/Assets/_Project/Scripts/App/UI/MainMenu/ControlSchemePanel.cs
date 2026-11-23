@@ -119,6 +119,12 @@ namespace SubTerra.App.UI.MainMenu
             return true;
         }
 
+        /// <summary>B-208: 메인 메뉴는 저장된 게임이 없으니 조작 안내 그림을 한 성별(남자)로 고정한다.</summary>
+        public void LockGuideGender(SubTerra.Shared.PlayerGender gender)
+        {
+            if (terminal != null && terminal.Stage != null) terminal.Stage.LockGender(gender);
+        }
+
         public static ControlScheme PeekSelected(GameObject settingsRoot, ControlScheme fallback)
         {
             if (settingsRoot == null) return fallback;

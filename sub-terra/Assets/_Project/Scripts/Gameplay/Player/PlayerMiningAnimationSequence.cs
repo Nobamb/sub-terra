@@ -17,8 +17,11 @@ namespace SubTerra.Gameplay.Player
     // 그림 번호만 계산한다. 채굴 판정·시간·소리는 이 순서에 의존하지 않는다.
     public sealed class PlayerMiningAnimationSequence
     {
+        /// <summary>마무리 마지막 그림 번호(1부터). 실제 장수가 더 적으면 마지막 장에서 끝낸다.</summary>
+        public const int FinishLastFrame = 24;
         private enum Phase { Idle, Start, Work, Return, Finish, Cancel }
         private readonly PlayerMiningAnimationSettings settings;
+        private int frameCount;
         private Phase phase;
         private float elapsed;
         private float sinceCancelled = float.PositiveInfinity;
@@ -33,6 +36,14 @@ namespace SubTerra.Gameplay.Player
 
         public int FrameIndex { get; private set; }
         public bool IsActive => phase != Phase.Idle;
+
+        /// <summary>B-208: 현재 그림 세트의 실제 장수. 0이면 설정값을 그대로 쓴다.</summary>
+        public void SetFrameCount(int count)
+        {
+            frameCount = Math.Max(0, count);
+        }
+
+        private int FinishLastIndex => (frameCount > 0 ? Math.Min(FinishLastFrame, frameCount) : FinishLastFrame) - 1;
 
         public void Start()
         {
@@ -133,7 +144,7 @@ namespace SubTerra.Gameplay.Player
                     }
                     break;
                 case Phase.Finish:
-                    if (FrameIndex < 23) FrameIndex++;
+                    if (FrameIndex < FinishLastIndex) FrameIndex++;
                     else phase = Phase.Idle;
                     break;
                 case Phase.Cancel:

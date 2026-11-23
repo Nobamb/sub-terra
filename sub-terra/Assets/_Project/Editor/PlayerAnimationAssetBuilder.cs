@@ -232,7 +232,9 @@ namespace SubTerra.Editor
                     throw new InvalidOperationException("Walk input did not replace the Idle sprite.");
                 }
 
-                Debug.Log("Player animation runtime validation passed: movement input changed Idle to Walk.");
+                // B-208: 여자 세트 장수가 표와 다르거나 남자 그림이 섞이면 오류로 멈춘다.
+                SubTerra.App.Editor.DataValidation.PromptB208PlayerAnimationSetBuilder.Validate();
+                Debug.Log("Player animation runtime validation passed: movement input changed Idle to Walk; female set counts match B-208.");
             }
             finally
             {

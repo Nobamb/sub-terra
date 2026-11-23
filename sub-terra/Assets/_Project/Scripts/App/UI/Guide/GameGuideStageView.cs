@@ -1,5 +1,7 @@
 using System.Collections.Generic;
+using SubTerra.App.State;
 using SubTerra.App.UI.Sell;
+using SubTerra.Shared;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -37,12 +39,18 @@ namespace SubTerra.App.UI.Guide
         private TMP_FontAsset font;
         private IGuideSprites sprites;
         private DemoClip clip;
+        private DemoClip sourceClip;
+        private PlayerGender boundGender;
+        private PlayerGender? lockedGender;
         private bool playing;
         private bool showKeys = true;
         private float clock;
         private float lastScaleWidth = -1f;
 
         public DemoClip Clip => clip;
+        /// <summary>B-208: 지금 그리는 플레이어 그림 성별.</summary>
+        public PlayerGender BoundGender => boundGender;
+        private PlayerGender CurrentGender => lockedGender ?? PlayerGenderPresentation.Current;
         public bool IsPlaying => playing;
         public float Clock => clock;
         public int LayerCount => layers.Count;
@@ -75,11 +83,49 @@ namespace SubTerra.App.UI.Guide
             sprites = value;
         }
 
+        /// <summary>B-208: 메인 메뉴처럼 게임 성별과 상관없이 한 성별만 보여 줄 때 쓴다.</summary>
+        public void LockGender(PlayerGender gender)
+        {
+            lockedGender = gender;
+            RefreshGender();
+        }
+
+        /// <summary>현재 성별이 바뀌었으면 같은 장면·시각·재생 상태로 그림만 다시 만든다.</summary>
+        public void RefreshGender()
+        {
+            if (sourceClip == null || boundGender == CurrentGender)
+            {
+                return;
+            }
+
+            var time = clock;
+            var wasPlaying = playing;
+            Bind(sourceClip, showKeys);
+            playing = wasPlaying;
+            Show(time);
+        }
+
+        // 꺼져 있던 동안(조작 단말 화면 닫힘 등) 바뀐 성별을 다시 보일 때 바로 맞춘다.
+        private void OnEnable()
+        {
+            RefreshGender();
+        }
+
+        private void Update()
+        {
+            if (sourceClip != null && boundGender != CurrentGender)
+            {
+                RefreshGender();
+            }
+        }
+
         /// <summary>장면을 바꾼다. 이전 장면의 층은 모두 정리하고 재생은 멈춘다.</summary>
         public void Bind(DemoClip next, bool withKeys)
         {
             Clear();
-            clip = next;
+            sourceClip = next;
+            boundGender = CurrentGender;
+            clip = GuidePlayerArt.ForGender(next, boundGender);
             showKeys = withKeys;
             clock = 0f;
             playing = false;
@@ -162,6 +208,7 @@ namespace SubTerra.App.UI.Guide
         {
             playing = false;
             clip = null;
+            sourceClip = null;
             for (var i = 0; i < layers.Count; i++)
             {
                 if (layers[i].Rect != null)
