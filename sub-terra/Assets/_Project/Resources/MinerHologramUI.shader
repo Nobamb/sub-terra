@@ -1,16 +1,19 @@
 Shader "SubTerra/MinerHologramUI"
 {
-    // B-209 광부 선택 카드. UI-Default 기반에 청록 실루엣, 윤곽 또렷하게(_Detail), 아래에서 위로 원래 색 차오름(_Fill)만 더했다.
+    // B-209 광부 선택 카드의 광부 그림. UI-Default 기반.
+    // 기본: 윤곽 테두리만 빛나는 청록 실루엣. _Reveal: 위→아래 스캔 줄이 지나간 곳부터 얼굴·옷 선이 드러남.
+    // _Fill: 위→아래 스캔 줄이 지나간 곳부터 원래 색. _Glitch: 가로 띠 어긋남.
     Properties
     {
         [PerRendererData] _MainTex ("Sprite Texture", 2D) = "white" {}
         _Color ("Tint", Color) = (1,1,1,1)
         _HoloColor ("Hologram Color", Color) = (0.42, 0.94, 1, 1)
-        _Detail ("Detail", Range(0, 1)) = 0
-        _Fill ("Color Fill", Range(0, 1)) = 0
+        _Reveal ("Detail Scan (top to bottom)", Range(0, 1)) = 0
+        _Fill ("Color Scan (top to bottom)", Range(0, 1)) = 0
         _Brightness ("Brightness", Range(0, 2)) = 1
+        _Glitch ("Band Glitch", Range(0, 1)) = 0.15
         _ScanAlpha ("Scanline Strength", Range(0, 1)) = 0.22
-        _ScanDensity ("Scanline Count", Float) = 90
+        _ScanDensity ("Scanline Count", Float) = 110
         _UvRect ("Sprite UV Rect", Vector) = (0, 0, 1, 1)
 
         _StencilComp ("Stencil Comparison", Float) = 8
@@ -56,7 +59,7 @@ Shader "SubTerra/MinerHologramUI"
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
-            #pragma target 2.0
+            #pragma target 3.0
             #include "UnityCG.cginc"
             #include "UnityUI.cginc"
             #pragma multi_compile_local _ UNITY_UI_CLIP_RECT
@@ -80,14 +83,16 @@ Shader "SubTerra/MinerHologramUI"
             };
 
             sampler2D _MainTex;
+            float4 _MainTex_TexelSize;
             fixed4 _Color;
             fixed4 _TextureSampleAdd;
             float4 _ClipRect;
             float4 _MainTex_ST;
             fixed4 _HoloColor;
-            float _Detail;
+            float _Reveal;
             float _Fill;
             float _Brightness;
+            float _Glitch;
             float _ScanAlpha;
             float _ScanDensity;
             float4 _UvRect;
@@ -104,29 +109,81 @@ Shader "SubTerra/MinerHologramUI"
                 return o;
             }
 
+            float Hash(float n)
+            {
+                return frac(sin(n * 12.9898) * 43758.5453);
+            }
+
+            half4 Sample(float2 uv)
+            {
+                return tex2D(_MainTex, uv) + _TextureSampleAdd;
+            }
+
+            // 스캔 줄 위치(1=위, 0=아래). 진행 0이면 그림 위쪽 밖, 1이면 아래쪽 밖.
+            float ScanLine(float progress)
+            {
+                return lerp(1.04, -0.04, saturate(progress));
+            }
+
             fixed4 frag(v2f i) : SV_Target
             {
-                half4 tex = tex2D(_MainTex, i.texcoord) + _TextureSampleAdd;
+                float localY = saturate((i.texcoord.y - _UvRect.y) / max(_UvRect.w, 0.0001));
+
+                // 가로 띠 어긋남: 시간마다 바뀌는 띠 몇 개만 옆으로 밀린다.
+                float t = floor(_Time.y * 14.0);
+                float band = floor(localY * 46.0);
+                float pick = Hash(band * 1.7 + t * 7.3);
+                float shift = step(1.0 - _Glitch * 0.18, pick) * (Hash(band + t * 3.1) - 0.5) * 0.05 * _UvRect.z;
+                float2 uv = i.texcoord + float2(shift, 0.0);
+
+                half4 tex = Sample(uv);
+                float2 px = _MainTex_TexelSize.xy * 1.6;
+                half aL = Sample(uv - float2(px.x, 0)).a;
+                half aR = Sample(uv + float2(px.x, 0)).a;
+                half aD = Sample(uv - float2(0, px.y)).a;
+                half aU = Sample(uv + float2(0, px.y)).a;
+                half lL = dot(Sample(uv - float2(px.x, 0)).rgb, half3(0.299, 0.587, 0.114));
+                half lR = dot(Sample(uv + float2(px.x, 0)).rgb, half3(0.299, 0.587, 0.114));
+                half lD = dot(Sample(uv - float2(0, px.y)).rgb, half3(0.299, 0.587, 0.114));
+                half lU = dot(Sample(uv + float2(0, px.y)).rgb, half3(0.299, 0.587, 0.114));
                 half luma = dot(tex.rgb, half3(0.299, 0.587, 0.114));
 
-                // 기본은 그림 모양만 보이는 단색 청록. _Detail이 오르면 원본 밝기가 섞여 얼굴·옷 경계가 드러난다.
-                half flat = 0.72 + 0.1 * luma;
-                half detailed = saturate(0.18 + luma * 1.45);
-                half shade = lerp(flat, detailed, saturate(_Detail));
-                half3 holo = _HoloColor.rgb * shade * _Brightness;
+                // 실루엣 가장자리(바깥 윤곽)와 안쪽 선(밝기 경계).
+                half rim = saturate((tex.a - min(min(aL, aR), min(aD, aU))) * 2.2);
+                half lines = saturate((abs(lR - lL) + abs(lU - lD)) * 2.4) * tex.a;
 
-                float localY = saturate((i.texcoord.y - _UvRect.y) / max(_UvRect.w, 0.0001));
-                float scan = 0.5 + 0.5 * sin((localY * _ScanDensity - _Time.y * 1.6) * 6.2831853);
+                // 기본 실루엣: 위가 조금 밝은 단색 청록 + 빛나는 테두리.
+                half3 cyan = _HoloColor.rgb;
+                half body = 0.32 + 0.2 * localY;
+                half3 silhouette = cyan * body + cyan * rim * 1.5 + cyan * lines * 0.12;
+
+                // 드러난 홀로그램: 원본 밝기를 청록에 섞고 선을 밝힌다.
+                half3 detailed = cyan * (0.18 + luma * 1.05) + cyan * lines * 0.9 + cyan * rim * 0.8;
+
+                float revealLine = ScanLine(_Reveal);
+                float revealed = smoothstep(revealLine - 0.012, revealLine + 0.012, localY);
+                half3 holo = lerp(silhouette, detailed, revealed) * _Brightness;
+
+                float scan = 0.5 + 0.5 * sin((localY * _ScanDensity - _Time.y * 2.2) * 6.2831853);
                 holo *= 1.0 - _ScanAlpha * scan;
 
-                // 확정 때 아래에서 위로 원래 색이 차오르고, 경계에 밝은 스캔 줄이 지나간다.
-                float hasFill = step(0.0001, _Fill);
-                float filled = (1.0 - smoothstep(_Fill - 0.035, _Fill, localY)) * hasFill;
+                float fillLine = ScanLine(_Fill);
+                float filled = smoothstep(fillLine - 0.01, fillLine + 0.01, localY) * step(0.0001, _Fill);
                 half3 rgb = lerp(holo, tex.rgb, filled);
-                float front = saturate(1.0 - abs(localY - _Fill) / 0.02) * hasFill * step(_Fill, 0.999);
-                rgb += _HoloColor.rgb * front * 0.9 * step(0.02, tex.a);
 
-                half alpha = tex.a * lerp(0.86, 1.0, filled);
+                // 진행 중인 스캔 줄: 줄 바로 위는 밝은 띠, 그 위로 잠깐 남는 잔광.
+                float active = step(0.0001, _Reveal) * step(_Reveal, 0.9999);
+                float dR = localY - revealLine;
+                float frontR = exp(-abs(dR) * 140.0) + saturate(1.0 - dR * 9.0) * step(0.0, dR) * 0.35;
+                rgb += cyan * frontR * active * 1.2 * step(0.02, tex.a);
+
+                float activeF = step(0.0001, _Fill) * step(_Fill, 0.9999);
+                float dF = localY - fillLine;
+                float frontF = exp(-abs(dF) * 140.0) + saturate(1.0 - dF * 10.0) * step(0.0, dF) * 0.3;
+                rgb += lerp(cyan, half3(1, 1, 1), 0.5) * frontF * activeF * 1.3 * step(0.02, tex.a);
+
+                half holoAlpha = tex.a * (0.62 + 0.3 * revealed) + rim * 0.3;
+                half alpha = saturate(lerp(holoAlpha, tex.a, filled));
                 half4 color = half4(rgb, alpha) * i.color;
 
                 #ifdef UNITY_UI_CLIP_RECT
