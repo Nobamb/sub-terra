@@ -49,6 +49,11 @@ namespace SubTerra.App.UI.MainMenu
         [Header("Settings")]
         [SerializeField] private GameObject settingsRoot;
         private ControlSchemePanel controlSchemePanel;
+        // B-209: 새 게임 전 광부 선택 화면. 처음 열 때 코드로 만든다.
+        private MinerSelectPanel minerSelect;
+        private CanvasGroup menuContentGroup;
+        private float menuContentAlpha = 1f;
+        private bool menuContentHidden;
 
         public bool TryCloseControlSchemePanel() => controlSchemePanel != null && controlSchemePanel.Close();
         public bool IsOverwriteConfirmVisible => overwriteConfirmRoot != null && overwriteConfirmRoot.activeSelf;
@@ -428,7 +433,62 @@ namespace SubTerra.App.UI.MainMenu
         private bool IsAnyModalOpen =>
             (settingsRoot != null && settingsRoot.activeSelf)
             || IsOverwriteConfirmVisible
-            || IsDeleteConfirmVisible;
+            || IsDeleteConfirmVisible
+            || IsMinerSelectOpen;
+
+        public MinerSelectPanel MinerSelect => minerSelect;
+        public bool IsMinerSelectOpen => minerSelect != null && minerSelect.IsOpen;
+
+        /// <summary>B-209: 메뉴 내용(로고·슬롯·버튼)을 숨기고 광부 선택 화면을 처음 상태로 연다. 배경은 그대로 비친다.</summary>
+        public MinerSelectPanel ShowMinerSelect(MinerSelectSession session)
+        {
+            if (minerSelect == null)
+            {
+                minerSelect = MinerSelectPanel.Create((RectTransform)transform, MenuFont());
+            }
+
+            if (minerSelect == null || session == null) return null;
+            if (slotNoise != null) slotNoise.StopNow();
+            FrameTimeline.SetHover(-1);
+            SetMenuContentHidden(true);
+            minerSelect.Open(session);
+            return minerSelect;
+        }
+
+        /// <summary>선택 화면을 닫고 메뉴를 다시 보이게 한다(돌아가기).</summary>
+        public void HideMinerSelect()
+        {
+            if (minerSelect != null) minerSelect.Close();
+            SetMenuContentHidden(false);
+        }
+
+        private TMP_FontAsset MenuFont()
+        {
+            if (messageText != null && messageText.font != null) return messageText.font;
+            var sample = GetComponentInChildren<TMP_Text>(true);
+            return sample != null ? sample.font : null;
+        }
+
+        private void SetMenuContentHidden(bool hidden)
+        {
+            if (menuContent == null || hidden == menuContentHidden) return;
+            if (menuContentGroup == null)
+            {
+                menuContentGroup = menuContent.GetComponent<CanvasGroup>();
+                if (menuContentGroup == null) menuContentGroup = menuContent.gameObject.AddComponent<CanvasGroup>();
+            }
+
+            menuContentHidden = hidden;
+            if (hidden)
+            {
+                menuContentAlpha = menuContentGroup.alpha;
+                menuContentGroup.alpha = 0f;
+            }
+            else
+            {
+                menuContentGroup.alpha = menuContentAlpha;
+            }
+        }
 
         private SaveSlotCardView GetCard(int index)
         {

@@ -11,9 +11,10 @@ using UnityEngine.Video;
 namespace SubTerra.App.UI.Intro
 {
     /// <summary>
-    /// 새 게임 첫 광산 진입 인트로. 화면 전체 오버레이에서 StreamingAssets의 MP4를 재생하고,
+    /// 새 게임 인트로. 화면 전체 오버레이에서 StreamingAssets의 MP4를 재생하고,
     /// 영상 끝의 꺼짐을 되감듯 게임 화면이 켜지는 연출로 이어 준다.
-    /// 재생 동안 UiPauseGate로 게임 시간·월드 입력을 멈추고, 끝나면 풀어서 시작 브리핑이 이어지게 한다.
+    /// B-209부터 광부 선택 화면의 글리치 전환 직후(새 게임 바로 뒤) RunNewGameLaunch로 재생한다:
+    /// 검은 화면 → 영상 → 새 게임 시작(씬 로드, 그동안 검은 화면 유지) → 켜짐 연출.
     /// 오버레이는 코드로 만들어 Scene/프리팹 YAML을 건드리지 않는다.
     /// </summary>
     public sealed class NewGameIntroPlayer : MonoBehaviour
@@ -22,11 +23,13 @@ namespace SubTerra.App.UI.Intro
         public const string VideoRelativePath = "Video/sub-terra-intro.mp4";
         /// <summary>Canvas.sortingOrder 최댓값. 설정창(32_760)보다도 위에서 화면을 덮는다.</summary>
         public const int SortingOrder = 32_767;
-        /// <summary>엘리베이터 도착 직후의 키 입력이 건너뛰기로 읽히지 않게 하는 시간.</summary>
+        /// <summary>선택 화면에서 누른 키가 바로 건너뛰기로 읽히지 않게 하는 시간.</summary>
         public const float SkipGraceSeconds = 0.6f;
         public const float PrepareTimeoutSeconds = 10f;
         /// <summary>켜진 게임 화면을 잠깐 보여 준 뒤 HUD·브리핑으로 넘긴다.</summary>
         public const float HoldAfterTurnOnSeconds = 0.35f;
+        /// <summary>새 게임 씬 로드·첫 저장이 끝나기를 기다리는 상한. 넘으면 그냥 켠다.</summary>
+        public const float LoadTimeoutSeconds = 20f;
         private const int NoiseBarCount = 8;
         private static readonly Color Cyan = new Color(0.42f, 0.94f, 1f, 1f);
 
@@ -86,6 +89,80 @@ namespace SubTerra.App.UI.Intro
             {
                 ReleasePause();
                 Destroy(gameObject);
+            }
+        }
+
+        /// <summary>
+        /// B-209 새 게임 시작 순서. 오버레이는 씬이 바뀌어도 남아(DontDestroyOnLoad) 메인 메뉴가 다시 비치지 않는다.
+        /// startGame이 false면(또는 예외) onStartFailed를 부르고 오버레이를 걷는다. 그때 화면은 아직 메인 메뉴다.
+        /// isGameReady가 true가 될 때까지 검은 화면을 유지한 뒤 켜짐 연출을 한다.
+        /// </summary>
+        public IEnumerator RunNewGameLaunch(bool playVideo, Func<bool> startGame, Func<bool> isGameReady, Action onStartFailed)
+        {
+            if (transform.parent == null) DontDestroyOnLoad(gameObject);
+            // 셔터를 먼저 닫아 영상 준비·씬 로드 중에도 뒤 화면이 비치지 않게 한다.
+            ApplyTurnOn(new NewGameTurnOnFrame(0f, 0f, 0f, 0f, 0f, 0, false));
+            var started = false;
+            try
+            {
+                if (playVideo)
+                {
+                    yield return PlayVideo();
+                }
+
+                try
+                {
+                    started = startGame != null && startGame();
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning("[SubTerra] New game start failed during intro. " + ex);
+                    started = false;
+                }
+
+                if (!started)
+                {
+                    yield break;
+                }
+
+                var giveUp = Time.realtimeSinceStartup + LoadTimeoutSeconds;
+                while (Time.realtimeSinceStartup < giveUp)
+                {
+                    var ready = false;
+                    try
+                    {
+                        ready = isGameReady == null || isGameReady();
+                    }
+                    catch (Exception)
+                    {
+                        ready = true;
+                    }
+
+                    if (ready) break;
+                    yield return null;
+                }
+
+                // 새 씬의 첫 배치·레이아웃이 끝난 프레임에서 켠다.
+                yield return null;
+                AcquirePause();
+                yield return PlayTurnOn();
+                yield return new WaitForSecondsRealtime(HoldAfterTurnOnSeconds);
+            }
+            finally
+            {
+                ReleasePause();
+                Destroy(gameObject);
+                if (!started && onStartFailed != null)
+                {
+                    try
+                    {
+                        onStartFailed();
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogException(ex);
+                    }
+                }
             }
         }
 

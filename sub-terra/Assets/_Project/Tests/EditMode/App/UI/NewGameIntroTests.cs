@@ -1,6 +1,5 @@
 using System.IO;
 using NUnit.Framework;
-using SubTerra.App.State;
 using SubTerra.App.UI.Intro;
 
 namespace SubTerra.App.Tests.UI
@@ -10,32 +9,19 @@ namespace SubTerra.App.Tests.UI
         private const float Frame = 1f / 60f;
 
         [Test]
-        public void IsFirstMineEntry_TrueOnlyWhenObjectiveProgressIsEmpty()
+        public void ShouldPlayVideo_OnlyOnNewGameStartWithoutReduceMotionAndWithFile()
         {
-            Assert.That(NewGameIntroPolicy.IsFirstMineEntry(new ProgressState(0)), Is.True);
-            Assert.That(NewGameIntroPolicy.IsFirstMineEntry(GameState.CreateNew().Progress), Is.True);
-            Assert.That(NewGameIntroPolicy.IsFirstMineEntry(new ProgressState(0, false, "mine_block")), Is.False);
-            Assert.That(NewGameIntroPolicy.IsFirstMineEntry(new ProgressState(2)), Is.False);
-            Assert.That(NewGameIntroPolicy.IsFirstMineEntry(new ProgressState(0, false, null, true)), Is.False);
-            Assert.That(NewGameIntroPolicy.IsFirstMineEntry(null), Is.False);
+            // B-209: 영상은 광부 선택 직후(새 게임 시작)에만. 이어하기는 이 경로를 타지 않는다.
+            Assert.That(NewGameIntroPolicy.ShouldPlayVideo(true, false, true), Is.True);
+            Assert.That(NewGameIntroPolicy.ShouldPlayVideo(false, false, true), Is.False, "이어하기·재진입");
+            Assert.That(NewGameIntroPolicy.ShouldPlayVideo(true, true, true), Is.False, "모션 감소");
+            Assert.That(NewGameIntroPolicy.ShouldPlayVideo(true, false, false), Is.False, "영상 없음");
         }
 
         [Test]
-        public void ShouldPlayVideo_RequiresFirstEntryAndNoReduceMotionAndFile()
+        public void FirstMineEntry_NoLongerPlaysIntro()
         {
-            Assert.That(NewGameIntroPolicy.ShouldPlayVideo(true, false, true, false), Is.True);
-            Assert.That(NewGameIntroPolicy.ShouldPlayVideo(false, false, true, false), Is.False, "이어하기·재진입");
-            Assert.That(NewGameIntroPolicy.ShouldPlayVideo(true, true, true, false), Is.False, "모션 감소");
-            Assert.That(NewGameIntroPolicy.ShouldPlayVideo(true, false, false, false), Is.False, "영상 없음");
-            Assert.That(NewGameIntroPolicy.ShouldPlayVideo(true, false, true, true), Is.False, "이미 재생");
-        }
-
-        [Test]
-        public void ShouldPlayTurnOnOnly_StillTrueWhenVideoIsSkipped()
-        {
-            Assert.That(NewGameIntroPolicy.ShouldPlayTurnOnOnly(true, false), Is.True);
-            Assert.That(NewGameIntroPolicy.ShouldPlayTurnOnOnly(false, false), Is.False);
-            Assert.That(NewGameIntroPolicy.ShouldPlayTurnOnOnly(true, true), Is.False);
+            Assert.That(NewGameIntroPolicy.PlaysOnFirstMineEntry, Is.False);
         }
 
         [Test]
