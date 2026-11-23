@@ -1,0 +1,7 @@
+Generate an image with your image generation tool. Use the attached concept image ONLY as a style reference (look at the wide button at the bottom and the small back button).
+Draw ONE wide empty sci-fi holographic button frame, straight front view, flat 2D game UI asset, landscape canvas, the button centered with an aspect ratio of about 6:1, spanning about 90 percent of the canvas width.
+- Thin glowing cyan (#6BF0FF) double neon outline, chamfered cut corners, small bright accent tick segments at the left and right ends, tiny notches on the top and bottom edges near the corners.
+- The middle parts of the top and bottom edges are plain straight lines (they will be stretched).
+- Soft inner glow only along the outline. The inside of the button is EMPTY and pure black. Outside is pure black #000000.
+- No text, no letters, no icon, no arrow. Crisp, symmetrical, high quality.
+Save a copy of the final image as ./miner-button-frame.png in the current folder.
