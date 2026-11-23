@@ -59,6 +59,7 @@ namespace SubTerra.Gameplay.Building
             bool largeCharger = charger && footprint.x != 1;
             // Explicit legacy 1x2 saves keep their narrow occupied area; new outposts use 2x2.
             float width = portal ? 1.84f : outpost ? footprint.x == 1 ? 0.92f : 1.8f : largeCharger ? 1.8f : 0.96f;
+            if (storage) width = 0.98f; // Match one tile with a small gap between neighboring boxes.
             float height = outpost ? 1.78f : largeCharger || tallUtility || portal ? 1.82f : 0.96f;
             int rows = outpost || largeCharger || tallUtility || portal ? 2 : 1;
             bool hasFoundation = FacilityFoundationVisual.Supports(buildingId);
@@ -84,12 +85,11 @@ namespace SubTerra.Gameplay.Building
                 pixels = Rect.MinMaxRect(49f, 140f, 1205f, 1112f);
             else if (texture.name == "charger_basic_cartoon_v2" && texture.width == 1240 && texture.height == 1269)
                 pixels = Rect.MinMaxRect(184f, 79f, 1073f, 1227f);
-            else if (texture.name == "storage_basic_cartoon_v2" && texture.width == 1312 && texture.height == 1199)
-                pixels = Rect.MinMaxRect(74f, 96f, 1257f, 1098f);
             else if (texture.name == "ChargerGrounded" && texture.width == 1240 && texture.height == 1269)
                 pixels = Rect.MinMaxRect(173f, 84f, 1067f, 1220f);
-            else if (texture.name == "StorageGrounded" && texture.width == 1315 && texture.height == 1196)
-                pixels = Rect.MinMaxRect(57f, 89f, 1258f, 1101f);
+            else if ((texture.name == "storage_basic_cartoon_v2" || texture.name == "StorageGrounded")
+                && texture.width == 1536 && texture.height == 1024)
+                pixels = Rect.MinMaxRect(224f, 131f, 1307f, 911f);
             else if (texture.name == "OutpostCoreTall" && texture.width == 948 && texture.height == 1659)
                 pixels = Rect.MinMaxRect(58f, 55f, 891f, 1596f);
             else if (texture.name == "outpost_core_cartoon_v3" && texture.width == 1292 && texture.height == 1218)
