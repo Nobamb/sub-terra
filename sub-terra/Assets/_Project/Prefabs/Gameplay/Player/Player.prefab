@@ -621,4 +621,6 @@ MonoBehaviour:
   ladderDistancePerFrame: 0.25
   ladderSettleDelay: 0.08
   footstepFrames: 0100000015000000
+  maleAnimationSet: {fileID: 11400000, guid: 36b38365a44bd7a4eaa1990370649f95, type: 2}
+  femaleAnimationSet: {fileID: 11400000, guid: b11ddaf8a0f27e942a81dab73fa53abd, type: 2}
   movement: {fileID: 3152244689760817088}

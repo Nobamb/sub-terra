@@ -1,5 +1,6 @@
 using System;
 using SubTerra.App.Outpost;
+using SubTerra.Shared;
 
 namespace SubTerra.App.State
 {
@@ -82,6 +83,8 @@ namespace SubTerra.App.State
         public float Cargo { get; private set; }
         public float UnsettledValue { get; private set; }
         public float Progress { get; private set; }
+        /// <summary>B-208: 캐릭터 성별. 새 게임·옛 저장의 기본은 남자다.</summary>
+        public PlayerGender Gender { get; private set; }
 
         private PlayerState() { }
 
@@ -131,6 +134,11 @@ namespace SubTerra.App.State
         internal void ApplyUnsettledValue(float value)
         {
             UnsettledValue = value < 0f ? 0f : value;
+        }
+
+        internal void ApplyGender(PlayerGender gender)
+        {
+            Gender = gender == PlayerGender.Female ? PlayerGender.Female : PlayerGender.Male;
         }
     }
 
@@ -292,6 +300,7 @@ namespace SubTerra.App.State
         public event Action<string> InteractionPromptChanged;
         public event Action DemoProgressChanged;
         public event Action MineResetCycleChanged;
+        public event Action<PlayerGender> PlayerGenderChanged;
 
         private GameState() { }
 
@@ -449,6 +458,19 @@ namespace SubTerra.App.State
             Player.ApplyCargo(cargo);
             Player.ApplyUnsettledValue(value);
             InventoryChanged?.Invoke(GetInventory());
+        }
+
+        /// <summary>B-208: 캐릭터 성별 설정. 정의되지 않은 값은 남자로 본다. 동일 값이면 이벤트 없음.</summary>
+        public void SetPlayerGender(PlayerGender gender)
+        {
+            var before = Player.Gender;
+            Player.ApplyGender(gender);
+            if (Player.Gender == before)
+            {
+                return;
+            }
+
+            PlayerGenderChanged?.Invoke(Player.Gender);
         }
 
         /// <summary>깊이 설정. 동일 값이면 이벤트 없음.</summary>

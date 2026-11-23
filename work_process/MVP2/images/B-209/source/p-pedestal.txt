@@ -1,0 +1,7 @@
+Generate an image with your image generation tool. Use the attached concept image ONLY as a style reference (look at the glowing round projector bases under the two miners).
+Draw ONE holographic projector pedestal, seen from slightly above (about 25 degree top-down angle so the top is a wide flat ellipse), flat 2D game UI asset, landscape canvas, centered, about 80 percent of the canvas width.
+- Round emitter platform made of glowing cyan (#6BF0FF) concentric rings, segmented light ticks around the rim, a small bright center light pool on the top surface, thin rim of the platform side glowing faintly.
+- Only glowing/emissive parts; no vertical light beam, no character, no floor, no shadow, no scene.
+- Pure black #000000 background everywhere.
+- No text, no letters, no logo. Crisp, symmetrical, high quality.
+Save a copy of the final image as ./miner-pedestal.png in the current folder.

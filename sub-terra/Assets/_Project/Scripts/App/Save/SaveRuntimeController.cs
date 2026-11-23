@@ -238,8 +238,9 @@ namespace SubTerra.App.Save
         /// <summary>
         /// 새 게임 시작. confirmOverwrite가 false이고 슬롯에 세이브가 있으면 거부한다.
         /// 기본 첫 Scene은 Surface Base이며, 탐사는 TryStartExploration으로만 진입한다.
+        /// gender는 새 게임 캐릭터 성별이다(B-208: 기본 남자, B-209 선택 화면이 이 값만 넘긴다).
         /// </summary>
-        public bool StartNewGame(int slotId, bool confirmOverwrite = false)
+        public bool StartNewGame(int slotId, bool confirmOverwrite = false, PlayerGender gender = PlayerGender.Male)
         {
             if (!IsAllowedSlot(slotId))
             {
@@ -261,6 +262,7 @@ namespace SubTerra.App.Save
                 return false;
             }
             var state = GameState.CreateNew();
+            state.SetPlayerGender(gender);
             if (!ApplyRuntimeState(
                     state,
                     new InventoryState(),
@@ -675,6 +677,7 @@ namespace SubTerra.App.Save
 
             RebuildGameplayServices(state, restoredInventory, restoredUpgrades);
             BindStateDirtyEvents(state);
+            PlayerGenderPresentation.Set(state.Player.Gender);
             mineResetClockOverlay?.RefreshFromState();
             return true;
         }
@@ -1529,6 +1532,7 @@ namespace SubTerra.App.Save
             state.DepthChanged += OnPersistentStateChanged;
             state.StructuralRiskChanged += OnPersistentStateChanged;
             state.GasExposureChanged += OnPersistentStateChanged;
+            state.PlayerGenderChanged += OnPlayerGenderChanged;
         }
 
         private void UnbindStateDirtyEvents()
@@ -1545,12 +1549,20 @@ namespace SubTerra.App.Save
             state.DepthChanged -= OnPersistentStateChanged;
             state.StructuralRiskChanged -= OnPersistentStateChanged;
             state.GasExposureChanged -= OnPersistentStateChanged;
+            state.PlayerGenderChanged -= OnPlayerGenderChanged;
             boundState = null;
         }
 
         private void OnPersistentStateChanged<T>(T _)
         {
             dirty = true;
+        }
+
+        // 성별은 다음 저장에 남기고 플레이어·가이드 그림에 바로 알린다.
+        private void OnPlayerGenderChanged(PlayerGender gender)
+        {
+            dirty = true;
+            PlayerGenderPresentation.Set(gender);
         }
 
         private static bool IsAllowedSlot(int slotId)

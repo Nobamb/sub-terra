@@ -40,6 +40,8 @@ namespace SubTerra.App.Save
         public float cargoWeight;
         public float unsettledValue;
         public float progress;
+        /// <summary>B-208: PlayerGender 정수값. 항목이 없는 옛 저장은 0(남자)으로 읽힌다.</summary>
+        public int gender;
     }
 
     [Serializable]

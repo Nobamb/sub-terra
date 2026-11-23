@@ -35,6 +35,17 @@ namespace SubTerra.App.Editor.DataValidation
             Add("player.damage.1", "Characters/Player/Frames/Damage/damage_01.png");
             Add("player.knockout.1", "Characters/Player/Frames/Knockout/knockout_48.png");
 
+            // B-208: 여자 그림은 player.female.* 키. 걷기 39장, 채굴 23장, 기절 대표 그림은 마지막 47번이다.
+            const string female = "Characters/Player/Female/Frames/";
+            Add(GuidePlayerArt.FemaleKeyPrefix + "idle", female + "Idle/player_idle_01.png");
+            for (var i = 1; i <= GuidePlayerArt.FemaleWalkFrameCount; i++) Add(GuidePlayerArt.FemaleKeyPrefix + "walk." + i, female + "Walk/walk_" + i.ToString("00") + ".png");
+            for (var i = 1; i <= GuidePlayerArt.FemaleMineFrameCount; i++) Add(GuidePlayerArt.FemaleKeyPrefix + "mine." + i, female + "Mining/mining_" + i.ToString("00") + ".png");
+            Add(GuidePlayerArt.FemaleKeyPrefix + "ladder.1", female + "LadderBack/ladder_back_neutral_v2.png");
+            for (var i = 2; i <= 5; i++) Add(GuidePlayerArt.FemaleKeyPrefix + "ladder." + i, female + "LadderBack/ladder_back_style_" + i.ToString("00") + ".png");
+            Add(GuidePlayerArt.FemaleKeyPrefix + "jump.4", female + "JumpRise/jump_rise_12.png");
+            Add(GuidePlayerArt.FemaleKeyPrefix + "damage.1", female + "Damage/damage_01.png");
+            Add(GuidePlayerArt.FemaleKeyPrefix + "knockout.1", female + "Knockout/knockout_47.png");
+
             Add("tile.ground", "Tiles/Ground/ground_normal_01.png");
             Add("tile.ground.2", "Tiles/Ground/ground_normal_02.png");
             Add("tile.hard", "Tiles/Ground/ground_hard_01.png");
