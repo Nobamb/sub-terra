@@ -52,17 +52,19 @@ namespace SubTerra.Gameplay.Building
             bool charger = buildingId == "building.charger.basic";
             bool storage = buildingId == "building.storage.basic";
             bool outpost = buildingId == "building.outpost_core.basic";
+            bool clinic = buildingId == "building.clinic.basic";
             bool portal = buildingId == "building.escape_portal.emergency";
             bool utility = buildingId == "building.light.basic" || buildingId == "building.settlement.basic";
-            if (!charger && !storage && !outpost && !utility && !portal) return false;
+            if (!charger && !storage && !outpost && !clinic && !utility && !portal) return false;
             bool tallUtility = utility && footprint.y != 1;
             bool largeCharger = charger && footprint.x != 1;
             // Explicit legacy 1x2 saves keep their narrow occupied area; new outposts use 2x2.
-            float width = portal ? 1.84f : outpost ? footprint.x == 1 ? 0.92f : 1.8f : largeCharger ? 1.8f : 0.96f;
-            float height = outpost ? 1.78f : largeCharger || tallUtility || portal ? 1.82f : 0.96f;
-            int rows = outpost || largeCharger || tallUtility || portal ? 2 : 1;
+            float width = portal ? 1.84f : outpost ? footprint.x == 1 ? 0.92f : 1.8f : largeCharger || clinic ? 1.8f : 0.96f;
+            float height = outpost ? 1.78f : clinic ? 1.6f : largeCharger || tallUtility || portal ? 1.82f : 0.96f;
+            int rows = outpost || clinic || largeCharger || tallUtility || portal ? 2 : 1;
             bool hasFoundation = FacilityFoundationVisual.Supports(buildingId);
-            float contactHeight = portal ? -0.04f : hasFoundation ? FacilityFoundationVisual.ArtworkContactHeight : -0.08f;
+            float contactHeight = portal ? -0.04f : clinic ? -0.2f
+                : hasFoundation ? FacilityFoundationVisual.ArtworkContactHeight : -0.08f;
             height = Mathf.Min(height, rows - Mathf.Max(0f, contactHeight) - 0.02f);
             Bounds bounds = GetVisibleBounds(sprite);
             float factor = Mathf.Min(width / Mathf.Max(bounds.size.x, 0.0001f),
@@ -92,13 +94,19 @@ namespace SubTerra.Gameplay.Building
                 pixels = Rect.MinMaxRect(57f, 89f, 1258f, 1101f);
             else if (texture.name == "OutpostCoreTall" && texture.width == 948 && texture.height == 1659)
                 pixels = Rect.MinMaxRect(58f, 55f, 891f, 1596f);
-            else if (texture.name == "outpost_core_cartoon_v3" && texture.width == 1292 && texture.height == 1218)
-                // PNG top-left bounds (74,0)-(1216,1132), converted to Unity bottom-left pixels.
-                pixels = Rect.MinMaxRect(74f, 86f, 1216f, 1218f);
+            else if (texture.name == "outpost_core_cartoon_v3" && texture.width == 1536 && texture.height == 1024)
+                pixels = Rect.MinMaxRect(23f, 77f, 1513f, 927f);
             else if (texture.name == "light_basic_cartoon_v3" && texture.width == 1166 && texture.height == 1349)
-                pixels = Rect.MinMaxRect(195f, 64f, 937f, 1304f);
-            else if (texture.name == "settlement_console_cartoon_v3" && texture.width == 1230 && texture.height == 1278)
-                pixels = Rect.MinMaxRect(177f, 64f, 1108f, 1274f);
+                pixels = Rect.MinMaxRect(185f, 82f, 885f, 1272f);
+            else if (texture.name == "settlement_console_cartoon_v3" && texture.width == 1095 && texture.height == 1436)
+                pixels = Rect.MinMaxRect(138f, 89f, 957f, 1346f);
+            else if (texture.name == "clinic_basic_cartoon_v3" && texture.width == 1513 && texture.height == 1040)
+                pixels = Rect.MinMaxRect(127f, 95f, 1386f, 823f);
+
+            // Both portal states use the same alignment so the ring stays fixed when the artwork changes.
+            if ((texture.name == "emergency_escape_portal_v1" || texture.name == "PortalInactive")
+                && texture.width == 1312 && texture.height == 1199)
+                pixels = Rect.MinMaxRect(103f, 75f, 1209f, 1150f);
             if (pixels.width > 0f)
             {
                 Vector2 min = (Vector2.Max(pixels.min, sprite.rect.min) - sprite.rect.min - sprite.pivot) / sprite.pixelsPerUnit;

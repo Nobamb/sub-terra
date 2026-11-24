@@ -16,7 +16,7 @@ namespace SubTerra.App.Tests.UI
     public sealed class PromptB49FacilityVisualTests
     {
         [Test]
-        public void OutpostOriginalArtwork_FitsTwoByTwoWithoutDistortion()
+        public void OutpostDomeArtwork_FitsTwoByTwoWithoutDistortion()
         {
             Sprite sprite = PromptB49FacilityVisualBuilder.GetArtworkSprite(FacilityVisualKind.OutpostCore);
             Assert.That(sprite, Is.Not.Null);
@@ -25,7 +25,7 @@ namespace SubTerra.App.Tests.UI
                 new Vector2Int(2, 2), out _, out var scale), Is.True);
             var bounds = FacilityGroundedVisual.GetVisibleBounds(sprite);
             Assert.That(bounds.size.x * scale.x, Is.InRange(1.7f, 1.81f));
-            Assert.That(bounds.size.y * scale.y, Is.InRange(1.55f, 1.79f));
+            Assert.That(bounds.size.y * scale.y, Is.InRange(1.0f, 1.08f));
             Assert.That(scale.x, Is.EqualTo(scale.y));
         }
 
@@ -44,6 +44,7 @@ namespace SubTerra.App.Tests.UI
         [TestCase("Charger", "ChargerGrounded", 2, 2)]
         [TestCase("Storage", "StorageGrounded", 1, 1)]
         [TestCase("OutpostCore", "outpost_core_cartoon_v3", 2, 2)]
+        [TestCase("Clinic", "clinic_basic_cartoon_v3", 2, 2)]
         public void GroundedFacility_MenuPreviewAndPlacedArtworkMatch(string dataName, string spriteName, int width, int height)
         {
             var data = AssetDatabase.LoadAssetAtPath<BuildingData>(
@@ -51,6 +52,7 @@ namespace SubTerra.App.Tests.UI
             var expected = dataName == "Light" ? PromptB49FacilityVisualBuilder.GetArtworkSprite(FacilityVisualKind.Light)
                 : dataName == "Settlement" ? PromptB49FacilityVisualBuilder.GetArtworkSprite(FacilityVisualKind.Settlement)
                 : dataName == "OutpostCore" ? PromptB49FacilityVisualBuilder.GetArtworkSprite(FacilityVisualKind.OutpostCore)
+                : dataName == "Clinic" ? PromptB49FacilityVisualBuilder.GetArtworkSprite(FacilityVisualKind.Clinic)
                 : Resources.Load<Sprite>("Facilities/" + spriteName);
             Assert.That(data, Is.Not.Null);
             Assert.That(data.Icon, Is.SameAs(expected), "Menu list and details use the catalog icon.");
@@ -251,11 +253,13 @@ namespace SubTerra.App.Tests.UI
                         : path == PromptB49FacilityVisualBuilder.SettlementPrefabPath ? DataIds.Buildings.SettlementBasic
                         : path == PromptB49FacilityVisualBuilder.ChargerPrefabPath ? DataIds.Buildings.ChargerBasic
                         : path == PromptB49FacilityVisualBuilder.StoragePrefabPath ? DataIds.Buildings.StorageBasic
-                        : path == PromptB49FacilityVisualBuilder.OutpostPrefabPath ? DataIds.Buildings.OutpostCoreBasic : null;
+                        : path == PromptB49FacilityVisualBuilder.OutpostPrefabPath ? DataIds.Buildings.OutpostCoreBasic
+                        : path == PromptB49FacilityVisualBuilder.ClinicPrefabPath ? DataIds.Buildings.ClinicBasic : null;
                     if (facilityId != null)
                         FacilityGroundedVisual.Apply(instance.transform, facilityId,
                             path == PromptB49FacilityVisualBuilder.ChargerPrefabPath ? new Vector2Int(2, 2)
                                 : path == PromptB49FacilityVisualBuilder.OutpostPrefabPath ? new Vector2Int(2, 2)
+                                : path == PromptB49FacilityVisualBuilder.ClinicPrefabPath ? new Vector2Int(2, 2)
                                 : path == PromptB49FacilityVisualBuilder.LightPrefabPath || path == PromptB49FacilityVisualBuilder.SettlementPrefabPath
                                     ? new Vector2Int(1, 2) : Vector2Int.one);
                     var visualRoot = instance.transform.Find(

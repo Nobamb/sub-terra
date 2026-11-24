@@ -352,10 +352,14 @@ namespace SubTerra.App.Editor.DataValidation
                 : kind == FacilityVisualKind.Storage ? "building.storage.basic"
                 : kind == FacilityVisualKind.OutpostCore ? "building.outpost_core.basic"
                 : kind == FacilityVisualKind.Light ? "building.light.basic"
-                : kind == FacilityVisualKind.Settlement ? "building.settlement.basic" : null;
-            Vector2Int footprint = kind == FacilityVisualKind.Charger ? new Vector2Int(2, 2)
-                : kind == FacilityVisualKind.OutpostCore ? new Vector2Int(2, 2)
-                : kind == FacilityVisualKind.Light || kind == FacilityVisualKind.Settlement ? new Vector2Int(1, 2) : Vector2Int.one;
+                : kind == FacilityVisualKind.Settlement ? "building.settlement.basic"
+                : kind == FacilityVisualKind.Clinic ? "building.clinic.basic" : null;
+            Vector2Int footprint = kind switch
+            {
+                FacilityVisualKind.Charger or FacilityVisualKind.OutpostCore or FacilityVisualKind.Clinic => new Vector2Int(2, 2),
+                FacilityVisualKind.Light or FacilityVisualKind.Settlement => new Vector2Int(1, 2),
+                _ => Vector2Int.one
+            };
             if (FacilityGroundedVisual.TryGetGeometry(sprite, id, footprint, out var position, out var size))
             {
                 artwork.localPosition = position;
