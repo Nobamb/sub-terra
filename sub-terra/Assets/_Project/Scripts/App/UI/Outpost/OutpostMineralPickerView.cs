@@ -1,3 +1,4 @@
+using static SubTerra.Shared.Localization.LocalizationService;
 using System;
 using System.Collections.Generic;
 using SubTerra.App.Audio;
@@ -22,6 +23,7 @@ namespace SubTerra.App.UI.Outpost
 
         private readonly List<GameObject> spawnedOptions = new List<GameObject>();
         private string selectedMineralId = string.Empty;
+        private IReadOnlyList<OutpostMineralOption> currentOptions;
         private int originalSiblingIndex;
 
         public event Action<string> SearchChanged;
@@ -86,7 +88,7 @@ namespace SubTerra.App.UI.Outpost
 
             if (captionText != null && string.IsNullOrEmpty(captionText.text))
             {
-                captionText.text = "자원 선택";
+                captionText.text = Text("자원 선택", "Choose a resource");
             }
         }
 
@@ -104,10 +106,19 @@ namespace SubTerra.App.UI.Outpost
             }
         }
 
+        private void OnEnable()
+        {
+            LanguageChanged += RefreshCaption;
+            RefreshCaption();
+        }
+
+        private void OnDisable() => LanguageChanged -= RefreshCaption;
+
         public void SetOptions(IReadOnlyList<OutpostMineralOption> options, string selectedId)
         {
             selectedMineralId = selectedId ?? string.Empty;
-            UpdateCaption(options);
+            currentOptions = options;
+            RefreshCaption();
             RebuildOptions(options);
         }
 
@@ -168,8 +179,9 @@ namespace SubTerra.App.UI.Outpost
             }
         }
 
-        private void UpdateCaption(IReadOnlyList<OutpostMineralOption> options)
+        private void RefreshCaption()
         {
+            var options = currentOptions;
             if (captionText == null)
             {
                 return;
@@ -177,7 +189,7 @@ namespace SubTerra.App.UI.Outpost
 
             if (string.IsNullOrEmpty(selectedMineralId))
             {
-                captionText.text = "자원 선택";
+                captionText.text = Text("자원 선택", "Choose a resource");
                 return;
             }
 
@@ -187,13 +199,13 @@ namespace SubTerra.App.UI.Outpost
                 {
                     if (options[i].MineralId == selectedMineralId)
                     {
-                        captionText.text = options[i].DisplayName;
+                        captionText.text = options[i].LocalizedName;
                         return;
                     }
                 }
             }
 
-            captionText.text = ItemDisplayNames.Mineral(selectedMineralId);
+            captionText.text = ItemDisplayNames.LocalizedMineral(selectedMineralId);
         }
 
         private void RebuildOptions(IReadOnlyList<OutpostMineralOption> options)
@@ -211,7 +223,7 @@ namespace SubTerra.App.UI.Outpost
             if (emptyLabel != null)
             {
                 emptyLabel.gameObject.SetActive(count == 0);
-                emptyLabel.text = "일치하는 자원이 없습니다.";
+                emptyLabel.text = Text("일치하는 자원이 없습니다.", "No resources match.");
             }
 
             if (count == 0 || optionTemplate == null || optionsContent == null)
@@ -228,7 +240,7 @@ namespace SubTerra.App.UI.Outpost
                 var label = instance.GetComponentInChildren<TMP_Text>(true);
                 if (label != null)
                 {
-                    label.text = option.Label;
+                    LocalizedUiText.Bind(label, () => option.Label);
                 }
 
                 var image = instance.GetComponent<Image>();

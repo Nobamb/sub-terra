@@ -916,7 +916,7 @@ namespace SubTerra.App.UI.Tutorial
 
             rewardCaption = ResourceSellUi.Label(content, "RewardCaption", 0f, 0f, 10f, 36f, font, 15f, FontStyles.Normal,
                 CargoPopupChrome.TextMuted(skin), TextAlignmentOptions.Right);
-            rewardCaption.text = CargoDiscardText.RewardCaption;
+            LocalizedUiText.Bind(rewardCaption, () => CargoDiscardText.RewardCaption);
             chips = new Chip[4];
             for (var i = 0; i < chips.Length; i++)
             {
@@ -928,7 +928,7 @@ namespace SubTerra.App.UI.Tutorial
                 chips[i] = new Chip { Icon = icon, Amount = amount };
             }
 
-            gauge = CargoGaugeView.Build(content, Pad, GaugeY, innerW, skin, font, CargoDiscardText.Cleared);
+            gauge = CargoGaugeView.Build(content, Pad, GaugeY, innerW, skin, font, () => CargoDiscardText.Cleared);
             rows = new[]
             {
                 BuildRow(content, CopperRowName, DataIds.Minerals.Copper, skin != null ? skin.copperIcon : null, 0),
@@ -940,7 +940,7 @@ namespace SubTerra.App.UI.Tutorial
             UiSfx.Attach(backButton, SfxId.None, hover: true, failWhenDisabled: false, hoverGate: () => CanPlaySfx);
             var neutral = Color.Lerp(teal, CargoPopupChrome.TextMuted(skin), 0.45f);
             backFeedback = CargoPopupChrome.BuildChoice(backButton, content, (size.x - BackW) * 0.5f, BackY, BackW, BackH, neutral,
-                CargoFullPopupArt.BackIcon(), 28f, CargoDiscardText.BackTitle, CargoDiscardText.BackSubtitle, true, font, skin,
+                CargoFullPopupArt.BackIcon(), 28f, () => CargoDiscardText.BackTitle, () => CargoDiscardText.BackSubtitle, true, font, skin,
                 out _);
             footer = CargoPopupFooter.Build(content, FooterY, innerW, font, skin);
         }
@@ -1024,7 +1024,7 @@ namespace SubTerra.App.UI.Tutorial
                 }
 
                 row.Buttons[k] = button;
-                row.Feedback[k] = CargoPopupChrome.BuildCompactButton(button, label, accent, tint, font, skin);
+                row.Feedback[k] = CargoPopupChrome.BuildCompactButton(button, () => CargoDiscardText.ButtonLabel(kind), accent, tint, font, skin);
                 // 필요는 "전부 버려도 N 부족"까지 들어가도록 이웃 칸 쪽으로 조금 넓게 쓴다.
                 var freedW = kind == CargoDiscardKind.Needed ? 140f : ButtonW;
                 var freed = ResourceSellUi.Label(root, "Freed" + kind, x + (ButtonW - freedW) * 0.5f, 6f + ButtonH + 2f, freedW, 24f,

@@ -75,6 +75,9 @@ namespace SubTerra.Shared.Localization
             return fallback ?? key;
         }
 
+        public static string Text(string korean, string english) =>
+            Current == GameLanguage.English ? english : korean;
+
         public static string FormatMasterVolume(float volume01)
         {
             int percent = (int)Math.Round(Math.Max(0f, Math.Min(1f, volume01)) * 100f);

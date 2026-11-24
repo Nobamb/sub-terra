@@ -1,3 +1,5 @@
+using SubTerra.Shared.Localization;
+
 namespace SubTerra.App.Core.Data
 {
     /// <summary>
@@ -8,6 +10,50 @@ namespace SubTerra.App.Core.Data
     {
         public const string SettlementName = "자원 정산기";
         public const string OutpostName = "전진기지";
+
+        public static string LocalizedMineral(string itemId)
+        {
+            return itemId switch
+            {
+                DataIds.Minerals.Copper => LocalizationService.Get("quest.reward_copper"),
+                DataIds.Minerals.Iron => LocalizationService.Get("quest.reward_iron"),
+                DataIds.Minerals.Lithium => LocalizationService.Get("quest.reward_lithium"),
+                DataIds.RareItems.EngineFuel => LocalizationService.Text("엔진 연료", "Engine Fuel"),
+                _ => Mineral(itemId)
+            };
+        }
+
+        public static string LocalizedBuilding(string buildingId)
+        {
+            if (LocalizationService.Current != GameLanguage.English) return Building(buildingId);
+            return buildingId switch
+            {
+                DataIds.Buildings.SupportBasic => "Cushion Pad",
+                DataIds.Buildings.LadderBasic => "Ladder",
+                DataIds.Buildings.LightBasic => "Light",
+                DataIds.Buildings.ChargerBasic => "Charger",
+                DataIds.Buildings.ClinicBasic => "Clinic",
+                DataIds.Buildings.StorageBasic => "Storage Chest",
+                DataIds.Buildings.SettlementBasic => "Settlement Terminal",
+                DataIds.Buildings.OutpostCoreBasic => "Outpost",
+                DataIds.Buildings.EmergencyEscapePortal => "Emergency Escape Portal",
+                _ => Building(buildingId)
+            };
+        }
+
+        public static string LocalizedUpgrade(string upgradeId)
+        {
+            if (LocalizationService.Current != GameLanguage.English) return Upgrade(upgradeId);
+            return upgradeId switch
+            {
+                DataIds.Upgrades.DrillSpeed => "Drill Speed",
+                DataIds.Upgrades.DroneScan => "Drone Scan",
+                DataIds.Upgrades.GasResistance => "Gas Resistance",
+                DataIds.Upgrades.HealthRegeneration => "Health Regeneration",
+                DataIds.Upgrades.DroneRescue => "Drone Rescue",
+                _ => Upgrade(upgradeId)
+            };
+        }
 
         /// <summary>구형 카탈로그의 설명 문구도 현재 표시 명칭에 맞춘다. 영구 ID는 변경하지 않는다.</summary>
         public static string NormalizeFacilityText(string text)

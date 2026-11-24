@@ -1,3 +1,5 @@
+using SubTerra.App.Core.Data;
+using static SubTerra.Shared.Localization.LocalizationService;
 using System;
 using System.Collections.Generic;
 using SubTerra.App.Audio;
@@ -123,6 +125,7 @@ namespace SubTerra.App.UI.Outpost
         private InventorySnapshot playerCargo;
         private InventorySnapshot storage;
         private string selectedId = string.Empty;
+        private string selectedDisplayName;
         private int owned;
         private int stored;
         private int quantity = 1;
@@ -254,6 +257,7 @@ namespace SubTerra.App.UI.Outpost
 
             gameObject.SetActive(true);
             state = PopupState.Opening;
+            RefreshLocalizedText();
             clock = 0f;
             ResetScroll(playerList);
             ResetScroll(storageList);
@@ -361,8 +365,11 @@ namespace SubTerra.App.UI.Outpost
             }
         }
 
+        private void OnEnable() => LanguageChanged += RefreshLocalizedText;
+
         private void OnDisable()
         {
+            LanguageChanged -= RefreshLocalizedText;
             // 씬 전환·부모 비활성화로 꺼져도 다음 표시가 깨끗하게 시작되도록 되돌린다.
             state = PopupState.Hidden;
             HideEffects();
@@ -428,10 +435,10 @@ namespace SubTerra.App.UI.Outpost
 
             if (selectionName != null)
             {
-                selectionName.text = HasSelection ? displayName ?? selectedId : SelectPrompt;
+                selectedDisplayName = displayName;
+                RefreshSelectionText();
                 selectionName.color = HasSelection ? ResourceSellUi.TextMain : ResourceSellUi.TextMuted;
                 selectionName.fontStyle = HasSelection ? FontStyles.Bold : FontStyles.Normal;
-                selectionCounts.text = HasSelection ? "보유 " + owned + " · 보관 " + stored : string.Empty;
                 var sprite = HasSelection ? ResolveIcon(selectedId) : null;
                 selectionIcon.sprite = sprite != null ? sprite : StorageBoxArt.Gem();
                 selectionIcon.color = sprite != null ? Color.white : ResourceSellUi.Teal;
@@ -440,6 +447,22 @@ namespace SubTerra.App.UI.Outpost
 
             MarkSelectedRows();
             RenderSelection();
+        }
+
+        private void RefreshLocalizedText()
+        {
+            RenderLists();
+            RefreshSelectionText();
+            RenderSelection();
+        }
+
+        private void RefreshSelectionText()
+        {
+            if (selectionName == null) return;
+            selectionName.text = HasSelection
+                ? Text(selectedDisplayName ?? selectedId, ItemDisplayNames.LocalizedMineral(selectedId))
+                : Text(SelectPrompt, "Choose a resource.");
+            selectionCounts.text = HasSelection ? Text($"보유 {owned} · 보관 {stored}", $"Carried {owned} · Stored {stored}") : string.Empty;
         }
 
         public void SetMineralOptions(IReadOnlyList<OutpostMineralOption> options, string selectedMineralId)
@@ -598,13 +621,13 @@ namespace SubTerra.App.UI.Outpost
             var withdraw = HasSelection ? StorageTransferPreview.WithdrawAmount(quantity, selectedId, storage, playerCargo) : 0;
             if (!HasSelection)
             {
-                previewText.text = "<color=#9EC2D1>" + PreviewPrompt + "</color>";
+                previewText.text = "<color=#9EC2D1>" + Text(PreviewPrompt, "Choose a resource to preview the transfer.") + "</color>";
             }
             else
             {
-                previewText.text = "보관  <b>" + deposit + "개</b>" + AllNote(quantity, owned)
-                    + "\n꺼내기  <b>" + withdraw + "개</b>"
-                    + (withdraw < requestedWithdraw ? " (화물 공간 한도)" : AllNote(quantity, stored));
+                previewText.text = Text($"보관  <b>{deposit}개</b>", $"Deposit  <b>{deposit}</b>") + AllNote(quantity, owned)
+                    + Text($"\n꺼내기  <b>{withdraw}개</b>", $"\nWithdraw  <b>{withdraw}</b>")
+                    + (withdraw < requestedWithdraw ? Text(" (화물 공간 한도)", " (cargo limit)") : AllNote(quantity, stored));
             }
 
             depositButton.Button.interactable = !busy && deposit > 0;
@@ -623,7 +646,7 @@ namespace SubTerra.App.UI.Outpost
 
         private static string AllNote(int requested, int available)
         {
-            return requested > available && available > 0 ? "  <color=#9EC2D1>(전부)</color>" : string.Empty;
+            return requested > available && available > 0 ? Text("  <color=#9EC2D1>(전부)</color>", "  <color=#9EC2D1>(all)</color>") : string.Empty;
         }
 
         // ---------------- 입력 ----------------
@@ -1021,8 +1044,8 @@ namespace SubTerra.App.UI.Outpost
             listGroup = Group(contentRoot, "Lists");
             controlsGroup = Group(contentRoot, "Controls");
             BuildHeader(headerGroup.transform, skin);
-            BuildList(listGroup.transform, playerList, Pad, "보유 자원", "화물", PlayerEmptyLabel, "PlayerCargo");
-            BuildList(listGroup.transform, storageList, RightX, "보관 자원", "보관함", StorageEmptyLabel, "StorageCargo");
+            BuildList(listGroup.transform, playerList, Pad, () => Text("보유 자원", "Carried Resources"), () => Text("화물", "Cargo"), () => Text(PlayerEmptyLabel, "Cargo is empty."), "PlayerCargo");
+            BuildList(listGroup.transform, storageList, RightX, () => Text("보관 자원", "Stored Resources"), () => Text("보관함", "Storage"), () => Text(StorageEmptyLabel, "Storage is empty."), "StorageCargo");
             BuildControls(controlsGroup.transform);
         }
 
@@ -1038,7 +1061,7 @@ namespace SubTerra.App.UI.Outpost
                 ResourceSellUi.WithAlpha(ResourceSellUi.Teal, 0.9f));
             var title = ResourceSellUi.Label(header, "Title", Pad + 18f, TitleY, 420f, 64f, font, 40f, FontStyles.Bold,
                 TitleColor, TextAlignmentOptions.Left);
-            title.text = Title;
+            LocalizedUiText.Bind(title, () => Text(Title, "Storage Chest"));
             title.characterSpacing = 3f;
             if (skin != null && skin.titleDivider != null)
             {
@@ -1049,7 +1072,7 @@ namespace SubTerra.App.UI.Outpost
 
             var hint = ResourceSellUi.Label(header, "Hint", Pad + 18f, TitleY + 90f, 620f, 30f, font, 20f, FontStyles.Normal,
                 ResourceSellUi.TextMuted, TextAlignmentOptions.Left);
-            hint.text = HintLabel;
+            LocalizedUiText.Bind(hint, () => Text(HintLabel, "Choose a resource and quantity to deposit or withdraw."));
 
             closeButton = ResourceSellButton.Create(header, "CloseButton", CardSize.x - Pad - CloseSize, HeaderRowY, CloseSize,
                 CloseSize, font, null, 20f, ResourceSellButton.Variant.Close, ResourceSellArt.Cross(), 22f);
@@ -1064,7 +1087,7 @@ namespace SubTerra.App.UI.Outpost
             icon.enabled = cargoSprite != null;
             var label = ResourceSellUi.Label(header, "CargoLabel", x + 62f, y - 2f, 200f, 26f, font, 17f, FontStyles.Normal,
                 ResourceSellUi.TextMuted, TextAlignmentOptions.Left);
-            label.text = "화물 적재량";
+            LocalizedUiText.Bind(label, () => Text("화물 적재량", "Cargo Load"));
             cargoNumbers = ResourceSellUi.Label(header, "CargoNumbers", x + 230f, y - 2f, CardSize.x - Pad - x - 230f, 26f,
                 font, 17f, FontStyles.Normal, ResourceSellUi.TextMain, TextAlignmentOptions.Right);
             var bar = ResourceSellUi.Place(header, "CargoGauge", x + 62f, y + 30f, CardSize.x - Pad - x - 62f, 18f);
@@ -1076,28 +1099,28 @@ namespace SubTerra.App.UI.Outpost
             outline.pixelsPerUnitMultiplier = 2f;
         }
 
-        private void BuildList(Transform parent, CargoList list, float x, string title, string subtitle, string empty, string name)
+        private void BuildList(Transform parent, CargoList list, float x, Func<string> title, Func<string> subtitle, Func<string> empty, string name)
         {
             var section = ResourceSellUi.Place(parent, name, x, SectionY, ColumnW, ListY + ListH - SectionY);
             const float localStrip = StripY - SectionY;
             const float localList = ListY - SectionY;
 
-            var heading = ResourceSellUi.Label(section, "Title", 4f, 0f, 160f, 40f, font, 24f, FontStyles.Bold,
+            var heading = ResourceSellUi.Label(section, "Title", 4f, 0f, 230f, 40f, font, 24f, FontStyles.Bold,
                 ResourceSellUi.TextMain, TextAlignmentOptions.Left);
-            heading.text = title;
-            var sub = ResourceSellUi.Label(section, "Subtitle", 4f + heading.GetPreferredValues(title).x + 12f, 4f, 120f, 36f,
+            LocalizedUiText.Bind(heading, title);
+            var sub = ResourceSellUi.Label(section, "Subtitle", 242f, 4f, 85f, 36f,
                 font, 17f, FontStyles.Normal, ResourceSellUi.TextMuted, TextAlignmentOptions.Left);
-            sub.text = subtitle;
+            LocalizedUiText.Bind(sub, subtitle);
             list.Totals = ResourceSellUi.Label(section, "Totals", ColumnW - 340f, 4f, 336f, 36f, font, 18f, FontStyles.Normal,
                 ResourceSellUi.TextMuted, TextAlignmentOptions.Right);
 
             var strip = ResourceSellUi.Place(section, "ColumnHeader", 0f, localStrip, StorageCargoRowView.Columns.RowWidth, 34f);
             ResourceSellUi.Image(strip, "Strip", ResourceSellArt.ChamferFill(), ResourceSellUi.Strip);
             ResourceSellUi.Image(strip, "StripLine", ResourceSellArt.ChamferOutline(), ResourceSellUi.WithAlpha(ResourceSellUi.Teal, 0.18f));
-            ColumnLabel(strip, "자원", StorageCargoRowView.Columns.IconX + 4f, 200f, TextAlignmentOptions.Left);
-            ColumnLabel(strip, "수량", StorageCargoRowView.Columns.QuantityX, StorageCargoRowView.Columns.QuantityW,
+            ColumnLabel(strip, "자원", "Resource", StorageCargoRowView.Columns.IconX + 4f, 200f, TextAlignmentOptions.Left);
+            ColumnLabel(strip, "수량", "Qty", StorageCargoRowView.Columns.QuantityX, StorageCargoRowView.Columns.QuantityW,
                 TextAlignmentOptions.Right);
-            ColumnLabel(strip, "무게", StorageCargoRowView.Columns.WeightX, StorageCargoRowView.Columns.WeightW,
+            ColumnLabel(strip, "무게", "Weight", StorageCargoRowView.Columns.WeightX, StorageCargoRowView.Columns.WeightW,
                 TextAlignmentOptions.Right);
 
             var view = ResourceSellUi.Place(section, "ListView", 0f, localList, ColumnW, ListH);
@@ -1138,15 +1161,15 @@ namespace SubTerra.App.UI.Outpost
 
             list.Empty = ResourceSellUi.Label(section, "Empty", 0f, localList, ColumnW, ListH, font, 21f, FontStyles.Normal,
                 ResourceSellUi.TextMuted, TextAlignmentOptions.Center);
-            list.Empty.text = empty;
+            LocalizedUiText.Bind(list.Empty, empty);
             list.Empty.gameObject.SetActive(false);
         }
 
-        private void ColumnLabel(Transform parent, string text, float x, float w, TextAlignmentOptions alignment)
+        private void ColumnLabel(Transform parent, string text, string english, float x, float w, TextAlignmentOptions alignment)
         {
             var label = ResourceSellUi.Label(parent, "Col_" + text, x, 0f, w, 34f, font, 16f, FontStyles.Normal,
                 ResourceSellUi.TextMuted, alignment);
-            label.text = text;
+            LocalizedUiText.Bind(label, () => Text(text, english));
         }
 
         private void BuildControls(Transform controls)
@@ -1160,7 +1183,7 @@ namespace SubTerra.App.UI.Outpost
             selectionIcon.enabled = false;
             selectionName = ResourceSellUi.Label(selection, "Name", 62f, 0f, 260f, ControlH, font, 21f, FontStyles.Normal,
                 ResourceSellUi.TextMuted, TextAlignmentOptions.Left);
-            selectionName.text = SelectPrompt;
+            selectionName.text = Text(SelectPrompt, "Choose a resource.");
             selectionCounts = ResourceSellUi.Label(selection, "Counts", ColumnW - 300f, 0f, 282f, ControlH, font, 19f,
                 FontStyles.Normal, ResourceSellUi.TextMain, TextAlignmentOptions.Right);
 
@@ -1180,7 +1203,7 @@ namespace SubTerra.App.UI.Outpost
             ResourceSellUi.Image(bar, "Line", ResourceSellArt.ChamferOutline(), ResourceSellUi.WithAlpha(ResourceSellUi.Teal, 0.38f));
 
             var x = Pad + 32f;
-            Caption(controls, "QuantityCaption", "수량", x, FooterY + 16f);
+            Caption(controls, "QuantityCaption", "수량", "Quantity", x, FooterY + 16f);
             const float inputY = FooterY + 52f;
             const float inputH = 56f;
             const float minusW = 44f;
@@ -1210,6 +1233,7 @@ namespace SubTerra.App.UI.Outpost
 
             allQuantityButton = ResourceSellButton.Create(controls, "QuantityAllButton", qx, inputY, 76f, inputH, font,
                 "모두", 21f, ResourceSellButton.Variant.Normal);
+            LocalizedUiText.Bind(allQuantityButton.GetComponentInChildren<TMP_Text>(true), () => Text("모두", "All"));
             allQuantityButton.Button.onClick.AddListener(SelectAllQuantity);
             UiSfx.Attach(allQuantityButton.Button, SfxId.UiClick, failWhenDisabled: false);
             qx += 84f;
@@ -1217,7 +1241,7 @@ namespace SubTerra.App.UI.Outpost
             var withdrawX = Pad + barWidth - 28f - ActionW;
             var depositX = withdrawX - 16f - ActionW;
             var previewX = qx + 20f;
-            Caption(controls, "PreviewCaption", "옮길 수량", previewX, FooterY + 16f);
+            Caption(controls, "PreviewCaption", "옮길 수량", "Transfer Preview", previewX, FooterY + 16f);
             previewText = ResourceSellUi.Label(controls, "Preview", previewX, inputY - 4f, depositX - 28f - previewX, 64f, font, 20f,
                 FontStyles.Normal, ResourceSellUi.TextMain, TextAlignmentOptions.TopLeft);
             previewText.richText = true;
@@ -1229,6 +1253,8 @@ namespace SubTerra.App.UI.Outpost
                 DepositLabel, 23f, ResourceSellButton.Variant.Primary, ResourceSellArt.FillDown(), 26f);
             withdrawButton = ResourceSellButton.Create(controls, "WithdrawButton", withdrawX, actionY, ActionW, ActionH, font,
                 WithdrawLabel, 23f, ResourceSellButton.Variant.Primary, StorageBoxArt.LiftUp(), 26f);
+            LocalizedUiText.Bind(depositButton.GetComponentInChildren<TMP_Text>(true), () => Text(DepositLabel, "Deposit"));
+            LocalizedUiText.Bind(withdrawButton.GetComponentInChildren<TMP_Text>(true), () => Text(WithdrawLabel, "Withdraw"));
             FitLabel(depositButton);
             FitLabel(withdrawButton);
             depositButton.Button.onClick.AddListener(RequestDeposit);
@@ -1238,6 +1264,8 @@ namespace SubTerra.App.UI.Outpost
                 "전체 보관", 23f, ResourceSellButton.Variant.Normal);
             withdrawAllButton = ResourceSellButton.Create(controls, "WithdrawAllButton", withdrawX, bulkY, ActionW, ActionH, font,
                 "전체 꺼내기", 23f, ResourceSellButton.Variant.Normal);
+            LocalizedUiText.Bind(depositAllButton.GetComponentInChildren<TMP_Text>(true), () => Text("전체 보관", "Deposit All"));
+            LocalizedUiText.Bind(withdrawAllButton.GetComponentInChildren<TMP_Text>(true), () => Text("전체 꺼내기", "Withdraw All"));
             FitLabel(depositAllButton);
             FitLabel(withdrawAllButton);
             depositAllButton.Button.onClick.AddListener(RequestDepositAll);
@@ -1267,6 +1295,7 @@ namespace SubTerra.App.UI.Outpost
             // Awake 전에 참조를 넣어야 기존 Picker 초기화(리스너 연결)가 그대로 돈다.
             pickerObject.SetActive(false);
             var search = BuildInput(rect, "SearchInput", 0f, 0f, 300f, ControlH, "자원 이름 검색", 19f, TextAlignmentOptions.Left, false);
+            LocalizedUiText.Bind(search.placeholder as TMP_Text, () => Text("자원 이름 검색", "Search resources"));
             var caption = ResourceSellButton.Create(rect, "CaptionButton", 316f, 0f, ColumnW - 316f, ControlH, font, "자원 선택", 20f,
                 ResourceSellButton.Variant.Normal);
             var captionLabel = caption.GetComponentInChildren<TMP_Text>(true);
@@ -1299,7 +1328,7 @@ namespace SubTerra.App.UI.Outpost
 
             var empty = ResourceSellUi.Text(ResourceSellUi.Centered(optionsContent, "EmptyLabel", Vector2.zero, new Vector2(0f, 44f)),
                 font, 18f, FontStyles.Normal, ResourceSellUi.TextMuted, TextAlignmentOptions.Center);
-            empty.text = "일치하는 자원이 없습니다.";
+            LocalizedUiText.Bind(empty, () => Text("일치하는 자원이 없습니다.", "No resources match."));
             var emptyLayout = empty.gameObject.AddComponent<LayoutElement>();
             emptyLayout.minHeight = 44f;
             emptyLayout.preferredHeight = 44f;
@@ -1392,11 +1421,11 @@ namespace SubTerra.App.UI.Outpost
             return input;
         }
 
-        private void Caption(Transform parent, string name, string text, float x, float y)
+        private void Caption(Transform parent, string name, string text, string english, float x, float y)
         {
             var label = ResourceSellUi.Label(parent, name, x, y, 220f, 26f, font, 17f, FontStyles.Normal,
                 ResourceSellUi.TextMuted, TextAlignmentOptions.Left);
-            label.text = text;
+            LocalizedUiText.Bind(label, () => Text(text, english));
         }
     }
 }

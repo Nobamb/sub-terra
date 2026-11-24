@@ -1,3 +1,4 @@
+using static SubTerra.Shared.Localization.LocalizationService;
 using System;
 using System.Collections.Generic;
 using SubTerra.App.Core.Data;
@@ -39,8 +40,8 @@ namespace SubTerra.App.UI.Outpost
 
         public event Action Changed;
 
-        public string Hint => HintText;
-        public string BulkRuleNotice => BulkNotice;
+        public string Hint => Text(HintText, "Settlement Terminal · Select resources and quantities to sell for gold.");
+        public string BulkRuleNotice => Text(BulkNotice, "Sell rare items at the surface base.");
 
         public void SetIconResolver(Func<string, Sprite> resolver)
         {
@@ -70,14 +71,14 @@ namespace SubTerra.App.UI.Outpost
                 var rare = DataIds.RareItems.IsRare(stack.MineralId);
                 lines.Add(new ResourceSellLine(
                     stack.MineralId,
-                    ItemDisplayNames.PreferDisplay(stack.MineralId, stack.DisplayName),
+                    Text(ItemDisplayNames.PreferDisplay(stack.MineralId, stack.DisplayName), ItemDisplayNames.LocalizedMineral(stack.MineralId)),
                     stack.Quantity,
                     stack.UnitPrice,
                     stack.UnitWeight,
                     iconResolver != null ? iconResolver(stack.MineralId) : null,
                     canSell: !rare,
                     inBulk: !rare,
-                    note: rare ? RareNote : string.Empty));
+                    note: rare ? Text(RareNote, "Sell at the surface") : string.Empty));
             }
 
             return new ResourceSellSnapshot(
@@ -93,7 +94,7 @@ namespace SubTerra.App.UI.Outpost
         {
             if (presenter == null)
             {
-                return new ResourceSellCommitResult(false, 0, "전진기지 서비스가 연결되지 않았습니다.");
+                return new ResourceSellCommitResult(false, 0, Text("전진기지 서비스가 연결되지 않았습니다.", "Outpost services are unavailable."));
             }
 
             var result = presenter.RequestSellBatch(items);

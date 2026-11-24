@@ -36,7 +36,7 @@ namespace SubTerra.App.UI.Tutorial
         private Cell[] overflowCells;
         private Image overflowBracket;
         private Image overflowGlow;
-        private string clearedLabel;
+        private System.Func<string> clearedLabel;
 
         public RectTransform Root { get; private set; }
         public TMP_Text LoadText { get; private set; }
@@ -47,7 +47,7 @@ namespace SubTerra.App.UI.Tutorial
 
         /// <summary>clearedLabel: 부족이 없을 때 부족 문구 자리에 청록으로 보일 글자(B-152는 비움).</summary>
         public static CargoGaugeView Build(
-            RectTransform parent, float x, float y, float width, CargoFullPopupSkin skin, TMP_FontAsset font, string clearedLabel)
+            RectTransform parent, float x, float y, float width, CargoFullPopupSkin skin, TMP_FontAsset font, System.Func<string> clearedLabel)
         {
             var gauge = new CargoGaugeView { skin = skin, clearedLabel = clearedLabel };
             var panel = ResourceSellUi.Place(parent, "CargoGauge", x, y, width, Height);
@@ -60,7 +60,7 @@ namespace SubTerra.App.UI.Tutorial
             var textMain = CargoPopupChrome.TextMain(skin);
             var caption = ResourceSellUi.Label(panel, "Caption", RowX, 16f, 300f, 32f, font, 20f, FontStyles.Normal,
                 textMain, TextAlignmentOptions.Left);
-            caption.text = CargoFullPopupText.LoadCaption;
+            LocalizedUiText.Bind(caption, () => CargoFullPopupText.LoadCaption);
             gauge.LoadText = ResourceSellUi.Label(panel, "Load", width - 24f - 320f, 10f, 320f, 42f, font, 28f, FontStyles.Bold,
                 textMain, TextAlignmentOptions.Right);
             gauge.LoadText.enableAutoSizing = true;
@@ -103,7 +103,7 @@ namespace SubTerra.App.UI.Tutorial
             LoadText.text = CargoFullPopupText.LoadLabel(model);
             ShortfallText.text = model.IsShort
                 ? CargoFullPopupText.ShortfallLabel(model)
-                : clearedLabel ?? string.Empty;
+                : clearedLabel?.Invoke() ?? string.Empty;
             LayoutCells();
         }
 

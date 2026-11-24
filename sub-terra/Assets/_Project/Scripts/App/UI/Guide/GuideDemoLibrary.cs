@@ -1,3 +1,4 @@
+using SubTerra.Shared.Localization;
 using System.Collections.Generic;
 using SubTerra.App.Core.Data;
 using UnityEngine;
@@ -29,6 +30,7 @@ namespace SubTerra.App.UI.Guide
         private static readonly Color Green = new Color(0.55f, 1f, 0.45f, 1f);
 
         private static Dictionary<string, DemoClip> clips;
+        private static GameLanguage clipLanguage;
 
         public static IEnumerable<DemoClip> All
         {
@@ -48,11 +50,12 @@ namespace SubTerra.App.UI.Guide
 
         private static void Ensure()
         {
-            if (clips != null)
+            if (clips != null && clipLanguage == LocalizationService.Current)
             {
                 return;
             }
 
+            clipLanguage = LocalizationService.Current;
             clips = new Dictionary<string, DemoClip>();
             Register(Move()); Register(Ladder()); Register(Elevator()); Register(Interact()); Register(Mine());
             Register(Build()); Register(Inventory()); Register(Drone()); Register(Minimap()); Register(Clock());
@@ -62,7 +65,7 @@ namespace SubTerra.App.UI.Guide
             Register(ResourceScene("res.copper", "tile.ore.copper", "item:" + DataIds.Minerals.Copper, string.Empty));
             Register(ResourceScene("res.iron", "tile.ore.iron", "item:" + DataIds.Minerals.Iron, string.Empty));
             Register(ResourceScene("res.lithium", "tile.ore.lithium", "item:" + DataIds.Minerals.Lithium, string.Empty));
-            Register(ResourceScene("res.fuel", "tile.hard", "item:" + DataIds.RareItems.EngineFuel, "희귀 신호"));
+            Register(ResourceScene("res.fuel", "tile.hard", "item:" + DataIds.RareItems.EngineFuel, LocalizationService.Text("희귀 신호", "Rare Signal")));
             Register(ResourceScene("res.gold", "tile.gold", "icon.gold", string.Empty));
             Register(FacilityScene("fac.storage", "fac.storage", 56f, true, Teal));
             Register(FacilityScene("fac.charger", "fac.charger", 60f, true, Teal));
@@ -247,7 +250,7 @@ namespace SubTerra.App.UI.Guide
                 .PosX(S(0f, -120f, 1.2f, 24f, 4f, 24f))
                 .PosY(S(0f, PlayerY, 1.95f, PlayerY, 3.2f, PlayerY + 74f, 4f, PlayerY + 74f)).Fade(vanish);
             Box(c, 96f, 16f, 24f, 56f, new Color(0.1f, 0.35f, 0.4f, 0.55f)).Fade(S(0f, 0f, 1.1f, 0f, 1.4f, 1f, 1.9f, 1f, 2.1f, 0f));
-            Txt(c, "E키를 눌러 귀환", 10f, 24f, 56f, 96f, Teal, true).Fade(S(0f, 0f, 1.1f, 0f, 1.4f, 1f, 1.9f, 1f, 2.1f, 0f));
+            Txt(c, LocalizationService.Text("E키를 눌러 귀환", "Press E to Return"), 10f, 24f, 56f, 96f, Teal, true).Fade(S(0f, 0f, 1.1f, 0f, 1.4f, 1f, 1.9f, 1f, 2.1f, 0f));
             Key(c, "E", -135f, 42f, DemoTrack.Pulse(1.55f, 1.95f));
             return c;
         }
@@ -358,7 +361,7 @@ namespace SubTerra.App.UI.Guide
             var a = S(0f, 0f, 0.7f, 0f, 1.0f, 1f, 3.3f, 1f, 3.6f, 0f);
             PanelBox(c, 62f, 38f, 118f, 28f, a, Teal);
             Spr(c, "art.warning", 16f, 14f, 38f).Color_(Amber).Fade(a);
-            Txt(c, "가스 위험 주의!", 10f, 66f, 38f, 90f, new Color(0.9f, 0.97f, 1f, 1f), true).Fade(a);
+            Txt(c, LocalizationService.Text("가스 위험 주의!", "Gas Hazard!"), 10f, 66f, 38f, 90f, new Color(0.9f, 0.97f, 1f, 1f), true).Fade(a);
             Key(c, "Tab", -131f, 42f, DemoTrack.Pulse(0.3f, 0.65f));
             return c;
         }
@@ -402,7 +405,7 @@ namespace SubTerra.App.UI.Guide
             Player(c, -70f);
             var a = S(0f, 0f, 0.6f, 0f, 0.9f, 1f, 3.3f, 1f, 3.6f, 0f);
             PanelBox(c, 0f, 34f, 132f, 40f, a, Teal);
-            Txt(c, "광산 초기화까지", 8f, 0f, 44f, 120f, new Color(0.6f, 0.8f, 0.86f, 1f)).Fade(a);
+            Txt(c, LocalizationService.Text("광산 초기화까지", "Reset In"), 8f, 0f, 44f, 120f, new Color(0.6f, 0.8f, 0.86f, 1f)).Fade(a);
             Txt(c, "02:41:09", 17f, 0f, 29f, 120f, Teal, true).Fade(a);
             Key(c, "T", -135f, 42f, DemoTrack.Pulse(0.3f, 0.6f));
             return c;
@@ -416,7 +419,7 @@ namespace SubTerra.App.UI.Guide
                 .Fade(S(0f, 0f, 0.55f, 0f, 0.75f, 1f, 1.5f, 1f, 1.8f, 0f));
             var a = S(0f, 0f, 1.45f, 0f, 1.8f, 1f, 3.0f, 1f, 3.4f, 0f);
             PanelBox(c, 0f, 0f, 190f, 92f, a, Teal);
-            Txt(c, "SUB-TERRA 게임 가이드", 11f, 0f, 30f, 180f, new Color(0.84f, 0.98f, 1f, 1f), true).Fade(a);
+            Txt(c, LocalizationService.Text("SUB-TERRA 게임 가이드", "SUB-TERRA Game Guide"), 11f, 0f, 30f, 180f, new Color(0.84f, 0.98f, 1f, 1f), true).Fade(a);
             for (var i = 0; i < 3; i++)
             {
                 Box(c, 52f, 22f, -58f + i * 58f, -4f, new Color(0.1f, 0.2f, 0.26f, 1f)).Fade(a);
@@ -434,10 +437,10 @@ namespace SubTerra.App.UI.Guide
             Backdrop(c);
             var names = new[]
             {
-                "지하 탐사 시작",
-                "자원 판매",
-                "업그레이드",
-                "새 광산 초기화"
+                LocalizationService.Text("지하 탐사 시작", "Start Expedition"),
+                LocalizationService.Text("자원 판매", "Sell Resources"),
+                LocalizationService.Text("업그레이드", "Upgrades"),
+                LocalizationService.Text("새 광산 초기화", "Reset Mine")
             };
             var icons = new[] { "icon.mine", "icon.sell", "icon.upgrade", "icon.reset" };
             var xs = new[] { 0f, -100f, 0f, 100f };
@@ -467,7 +470,7 @@ namespace SubTerra.App.UI.Guide
 
             Spr(c, "hud.bolt", 18f, -112f, -43f);
             Spr(c, "hud.energy.bar", 9f, -98f, -43f).PivotAt(0f, 0.5f);
-            Txt(c, "도착하면 전력 가득 충전", 9f, 36f, -43f, 130f, new Color(0.62f, 0.88f, 0.95f, 1f));
+            Txt(c, LocalizationService.Text("도착하면 전력 가득 충전", "Power Refilled on Arrival"), 9f, 36f, -43f, 130f, new Color(0.62f, 0.88f, 0.95f, 1f));
             return c;
         }
 
@@ -500,10 +503,10 @@ namespace SubTerra.App.UI.Guide
             var pop = S(0f, 0f, 2.6f, 0f, 2.85f, 1f, 4.0f, 1f, 4.2f, 0f);
             PanelBox(c, 54f, 8f, 132f, 62f, pop, Warn);
             Spr(c, "art.warning", 18f, 0f, 24f).Color_(Warn).Fade(pop);
-            Txt(c, "긴급 구출 요청", 12f, 62f, 24f, 100f, Warn, true).Fade(pop);
-            Txt(c, "비용을 확인하고 구출", 8.5f, 54f, 6f, 120f, new Color(0.85f, 0.94f, 0.98f, 1f)).Fade(pop);
+            Txt(c, LocalizationService.Text("긴급 구출 요청", "Emergency Rescue"), 12f, 62f, 24f, 100f, Warn, true).Fade(pop);
+            Txt(c, LocalizationService.Text("비용을 확인하고 구출", "Check the Rescue Cost"), 8.5f, 54f, 6f, 120f, new Color(0.85f, 0.94f, 0.98f, 1f)).Fade(pop);
             Box(c, 60f, 14f, 54f, -12f, new Color(0.1f, 0.5f, 0.6f, 1f)).Fade(pop);
-            Txt(c, "구출", 9f, 54f, -12f, 60f, Color.white, true).Fade(pop);
+            Txt(c, LocalizationService.Text("구출", "Rescue"), 9f, 54f, -12f, 60f, Color.white, true).Fade(pop);
             var chip = S(0f, 0f, 1.5f, 0f, 1.7f, 1f, 2.55f, 1f, 2.8f, 0f);
             PanelBox(c, -70f, 40f, 44f, 20f, chip, Teal);
             Spr(c, "art.arrowup", 12f, -78f, 40f).Color_(Teal).Fade(chip);
@@ -522,7 +525,7 @@ namespace SubTerra.App.UI.Guide
             Spr(c, "icon.cargo", 18f, -138f, 44f);
             Box(c, 96f, 8f, -80f, 44f, new Color(1f, 1f, 1f, 0.12f));
             Box(c, 96f, 8f, -128f, 44f, Amber).PivotAt(0f, 0.5f).Sx(S(0f, 0.15f, 1.8f, 1f, 2.6f, 1f, 3.4f, 0.25f, 4f, 0.25f)).At(-128f, 44f);
-            Txt(c, "가득 참", 10f, -52f, 44f, 60f, Amber, true).Fade(S(0f, 0f, 1.7f, 0f, 1.9f, 1f, 2.5f, 1f, 2.7f, 0f));
+            Txt(c, LocalizationService.Text("가득 참", "Full"), 10f, -52f, 44f, 60f, Amber, true).Fade(S(0f, 0f, 1.7f, 0f, 1.9f, 1f, 2.5f, 1f, 2.7f, 0f));
             var ids = new[] { DataIds.Minerals.Copper, DataIds.Minerals.Iron, DataIds.Minerals.Lithium };
             for (var i = 0; i < 3; i++)
             {
@@ -549,9 +552,9 @@ namespace SubTerra.App.UI.Guide
             Spr(c, "fac.charger", 46f, -12f, GroundTop + 23f);
             Spr(c, "fac.clinic", 46f, 62f, GroundTop + 23f).Color_(new Color(0.45f, 0.5f, 0.55f, 1f));
             Spr(c, "fac.settlement", 50f, 116f, GroundTop + 25f).Color_(new Color(0.45f, 0.5f, 0.55f, 1f));
-            Txt(c, "연결됨", 9f, -12f, -41f, 60f, Teal, true);
-            Txt(c, "미연결", 9f, 62f, -41f, 60f, Warn, true);
-            Txt(c, "미연결", 9f, 116f, -41f, 60f, Warn, true);
+            Txt(c, LocalizationService.Text("연결됨", "Connected"), 9f, -12f, -41f, 60f, Teal, true);
+            Txt(c, LocalizationService.Text("미연결", "Offline"), 9f, 62f, -41f, 60f, Warn, true);
+            Txt(c, LocalizationService.Text("미연결", "Offline"), 9f, 116f, -41f, 60f, Warn, true);
             Spr(c, "hud.bolt", 16f, -12f, 30f).Fade(S(0f, 0.4f, 0.6f, 1f, 1.2f, 0.4f, 1.8f, 1f, 3.6f, 0.4f));
             return c;
         }
@@ -599,11 +602,11 @@ namespace SubTerra.App.UI.Guide
             Floor(c);
             Player(c, -78f);
             PanelBox(c, 48f, 22f, 162f, 44f, K(1f), Teal);
-            Txt(c, "산소 위험도", 12f, 48f, 31f, 140f, Color.white, true);
-            Txt(c, "안전", 12f, 48f, 11f, 140f, Color.white, true).Fade(S(0f, 1f, 1.2f, 1f, 1.35f, 0f));
-            Txt(c, "주의", 12f, 48f, 11f, 140f, new Color(1f, 0.78f, 0.25f), true)
+            Txt(c, LocalizationService.Text("산소 위험도", "Oxygen Status"), 12f, 48f, 31f, 140f, Color.white, true);
+            Txt(c, LocalizationService.Text("안전", "Safe"), 12f, 48f, 11f, 140f, Color.white, true).Fade(S(0f, 1f, 1.2f, 1f, 1.35f, 0f));
+            Txt(c, LocalizationService.Text("주의", "Caution"), 12f, 48f, 11f, 140f, new Color(1f, 0.78f, 0.25f), true)
                 .Fade(S(0f, 0f, 1.2f, 0f, 1.35f, 1f, 2.5f, 1f, 2.65f, 0f));
-            Txt(c, "위험", 12f, 48f, 11f, 140f, Warn, true).Fade(S(0f, 0f, 2.5f, 0f, 2.65f, 1f));
+            Txt(c, LocalizationService.Text("위험", "Critical"), 12f, 48f, 11f, 140f, Warn, true).Fade(S(0f, 0f, 2.5f, 0f, 2.65f, 1f));
             return c;
         }
 
@@ -621,11 +624,11 @@ namespace SubTerra.App.UI.Guide
 
             Box(clip, 142f, 32f, -77f, -43f, Panel);
             Box(clip, 142f, 32f, 77f, -43f, Panel);
-            Txt(clip, "지면 착지", 11f, -77f, -34f, 142f, Color.white, true);
-            Txt(clip, "완충판 착지", 11f, 77f, -34f, 142f, Color.white, true);
+            Txt(clip, LocalizationService.Text("지면 착지", "Ground Landing"), 11f, -77f, -34f, 142f, Color.white, true);
+            Txt(clip, LocalizationService.Text("완충판 착지", "Cushion Pad Landing"), 11f, 77f, -34f, 142f, Color.white, true);
             var impact = S(0f, 0f, 1.05f, 0f, 1.2f, 1f, 2.45f, 1f, 2.8f, 0f);
-            Txt(clip, "일반 착지 피해", 11f, -77f, -50f, 142f, Warn, true).Fade(impact);
-            Txt(clip, "일반 피해의 10%", 11f, 77f, -50f, 142f, Teal, true).Fade(impact);
+            Txt(clip, LocalizationService.Text("일반 착지 피해", "Normal Fall Damage"), 11f, -77f, -50f, 142f, Warn, true).Fade(impact);
+            Txt(clip, LocalizationService.Text("일반 피해의 10%", "10% of Normal Damage"), 11f, 77f, -50f, 142f, Teal, true).Fade(impact);
             return clip;
         }
 
@@ -670,7 +673,7 @@ namespace SubTerra.App.UI.Guide
             var blink = S(0f, 1f, 0.5f, 0.45f, 1.0f, 1f, 1.5f, 0.45f, 2.0f, 1f, 2.5f, 0.45f, 3.0f, 1f, 4f, 1f);
             PanelBox(c, 0f, 34f, 132f, 40f, K(1f), Warn);
             Txt(c, "00:00:00", 17f, 0f, 30f, 120f, Warn, true).Fade(blink);
-            Txt(c, "광산 초기화까지", 8f, 0f, 44f, 120f, new Color(0.9f, 0.7f, 0.68f, 1f));
+            Txt(c, LocalizationService.Text("광산 초기화까지", "Reset In"), 8f, 0f, 44f, 120f, new Color(0.9f, 0.7f, 0.68f, 1f));
             return c;
         }
 
@@ -730,7 +733,7 @@ namespace SubTerra.App.UI.Guide
             Floor(c);
             Spr(c, "fac.support", 52f, 30f, GroundTop + 26f);
             Player(c, 30f).PosY(S(0f, PlayerY + 76f, 0.7f, PlayerY + 76f, 1.25f, PlayerY + 52f, 3f, PlayerY + 52f));
-            Txt(c, "화물 추가 피해 방지", 10f, -78f, 24f, 128f, Teal, true);
+            Txt(c, LocalizationService.Text("화물 추가 피해 방지", "Prevents Extra Cargo Damage"), 10f, -78f, 24f, 128f, Teal, true);
             return c;
         }
 
@@ -755,7 +758,7 @@ namespace SubTerra.App.UI.Guide
             line.SizeIsRect = true;
             line.Tint = Teal;
             Spr(c, "icon.mine", 20f, -108f, 8f);
-            Txt(c, "지하 탐사 시작", 10f, -58f, 8f, 100f, Color.white, true);
+            Txt(c, LocalizationService.Text("지하 탐사 시작", "Start Expedition"), 10f, -58f, 8f, 100f, Color.white, true);
             Spr(c, "art.arrow", 22f, 4f, 8f).Color_(Teal).Fade(S(0f, 0.3f, 1.5f, 0.3f, 1.8f, 1f, 3.4f, 1f));
             Floor(c, 60f, 153f);
             Spr(c, "player.idle", PlayerHeight, 100f, PlayerY).Fade(S(0f, 0f, 1.6f, 0f, 2.0f, 1f, 3.4f, 1f));

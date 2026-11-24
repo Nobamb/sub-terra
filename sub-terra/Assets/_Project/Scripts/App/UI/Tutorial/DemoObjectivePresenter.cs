@@ -328,7 +328,14 @@ namespace SubTerra.App.UI.Tutorial
             if (detailsOpen) RenderDetails();
             else view?.SetDetailsText(model.Title, model.Description, model.NextActionHint);
             if (guidanceOpen) view?.SetGuidanceText(model.GuidanceTitle, model.GuidanceBody);
-            if (claimOpen && rewards != null) RenderClaimText(rewards.PendingObjectiveId, rewards.PendingReward);
+            if (rewards == null) return;
+            if (claimOpen) RenderClaimText(rewards.PendingObjectiveId, rewards.PendingReward);
+            if (capacityOpen)
+            {
+                view?.SetCapacityChoiceText(CargoFullPopupText.Title, CargoFullPopupText.Guide);
+                view?.SetCapacityChoice(rewards.DescribeCargoShortfall(), rewards.PendingReward);
+            }
+            if (dumpOpen) RenderDump();
         }
 
         private void OnProgressChanged(DemoObjectiveReadModel model)

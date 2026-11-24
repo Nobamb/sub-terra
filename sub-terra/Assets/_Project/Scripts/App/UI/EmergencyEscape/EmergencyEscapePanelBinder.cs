@@ -1,3 +1,4 @@
+using static SubTerra.Shared.Localization.LocalizationService;
 using System.Collections.Generic;
 using SubTerra.App.Audio;
 using SubTerra.App.Run;
@@ -228,7 +229,7 @@ namespace SubTerra.App.UI.EmergencyEscape
 
             if (preview.TryGetDestinationPosition(selected.Kind, selected.InstanceId, out var position))
             {
-                view.ShowDestination(position, selected.DisplayName);
+                view.ShowDestination(position, EscapeDestinationListModel.DisplayNameFor(selected));
             }
         }
 
@@ -263,14 +264,14 @@ namespace SubTerra.App.UI.EmergencyEscape
 
             if (port == null)
             {
-                view?.SetResult("긴급 탈출 경로가 준비되지 않았습니다.", true);
+                view?.SetResult(Text("긴급 탈출 경로가 준비되지 않았습니다.", "The escape route is unavailable."), true);
                 SfxPlayer.Play(SfxId.UiCancelFail);
                 return;
             }
 
             if (options == null || options.Count == 0)
             {
-                view?.SetResult("이동할 목적지가 없습니다.", true);
+                view?.SetResult(Text("이동할 목적지가 없습니다.", "No destinations are available."), true);
                 SfxPlayer.Play(SfxId.UiCancelFail);
                 return;
             }

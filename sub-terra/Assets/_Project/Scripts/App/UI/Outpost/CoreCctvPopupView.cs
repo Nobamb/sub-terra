@@ -1,3 +1,4 @@
+using static SubTerra.Shared.Localization.LocalizationService;
 using SubTerra.App.Audio;
 using SubTerra.App.Core.Data;
 using System;
@@ -205,9 +206,20 @@ namespace SubTerra.App.UI.Outpost
         {
             EnsureArt();
             EnsureNameTag();
+            BindStaticLabels();
             if (itemTemplate != null)
             {
                 itemTemplate.gameObject.SetActive(false);
+            }
+        }
+
+        private void BindStaticLabels()
+        {
+            foreach (var label in GetComponentsInChildren<TMP_Text>(true))
+            {
+                if (label.text == TitleLabel) LocalizedUiText.Bind(label, () => Text(TitleLabel, "Outpost"));
+                else if (label.text == EmptyListLabel) LocalizedUiText.Bind(label, () => Text(EmptyListLabel, "No Connected Facilities"));
+                else if (label.text == ConnectedLabel) LocalizedUiText.Bind(label, () => Text(ConnectedLabel, "Connected"));
             }
         }
 
@@ -496,8 +508,8 @@ namespace SubTerra.App.UI.Outpost
             {
                 terminalLatched = true;
                 var count = list.Count;
-                SetTerminalLine(2, count > 0 ? "> 시설 " + count + "개 확인" : "> 연결된 시설 없음");
-                SetTerminalLine(3, count > 0 ? "> 영상 연결" : string.Empty);
+                SetTerminalLine(2, count > 0 ? Text($"> 시설 {count}개 확인", $"> Facilities found: {count}") : Text("> 연결된 시설 없음", "> No connected facilities"));
+                SetTerminalLine(3, count > 0 ? Text("> 영상 연결", "> Video connected") : string.Empty);
             }
 
             for (var i = 0; i < CoreCctvTimeline.TerminalLineCount; i++)
@@ -1502,8 +1514,8 @@ namespace SubTerra.App.UI.Outpost
                 terminalLengths[i] = 0;
             }
 
-            SetTerminalLine(0, "> 코어 단말 접속");
-            SetTerminalLine(1, "> 연결된 시설 조회");
+            SetTerminalLine(0, Text("> 코어 단말 접속", "> Connecting to outpost"));
+            SetTerminalLine(1, Text("> 연결된 시설 조회", "> Scanning connected facilities"));
             SetTerminalLine(2, string.Empty);
             SetTerminalLine(3, string.Empty);
         }

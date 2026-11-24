@@ -163,7 +163,7 @@ namespace SubTerra.App.UI.Outpost
                 result.Add(new CoreCctvFacility(
                     facility.InstanceId,
                     facility.BuildingId,
-                    ItemDisplayNames.Building(facility.BuildingId)));
+                    ItemDisplayNames.LocalizedBuilding(facility.BuildingId)));
             }
 
             result.Sort(Compare);
