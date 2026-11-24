@@ -10,6 +10,7 @@ namespace SubTerra.Shared.Localization
     public static class LocalizationService
     {
         private static GameLanguage current = GameLanguage.Korean;
+        private static GameLanguage? previewLanguage;
         private static readonly Dictionary<string, string> Korean = new Dictionary<string, string>(StringComparer.Ordinal);
         private static readonly Dictionary<string, string> English = new Dictionary<string, string>(StringComparer.Ordinal);
         private static bool tablesReady;
@@ -19,7 +20,7 @@ namespace SubTerra.Shared.Localization
             get
             {
                 EnsureTables();
-                return current;
+                return previewLanguage ?? current;
             }
         }
 
@@ -42,6 +43,15 @@ namespace SubTerra.Shared.Localization
             SetLanguage(GameLanguageCodes.FromCode(code));
         }
 
+        /// <summary>Render the settings draft without notifying listeners of an applied language change.</summary>
+        public static void PreviewLanguage(string code, Action render)
+        {
+            var previous = previewLanguage;
+            previewLanguage = GameLanguageCodes.FromCode(code);
+            try { render(); }
+            finally { previewLanguage = previous; }
+        }
+
         public static string Get(string key, string fallback = null)
         {
             EnsureTables();
@@ -50,7 +60,7 @@ namespace SubTerra.Shared.Localization
                 return fallback ?? string.Empty;
             }
 
-            Dictionary<string, string> primary = current == GameLanguage.English ? English : Korean;
+            Dictionary<string, string> primary = Current == GameLanguage.English ? English : Korean;
             if (primary.TryGetValue(key, out string value) && !string.IsNullOrEmpty(value))
             {
                 return value;
@@ -162,6 +172,55 @@ namespace SubTerra.Shared.Localization
             Add("quit_confirm.title", "게임 종료", "Quit Game");
             Add("quit_confirm.question", "게임을 종료할까요?", "Quit the game?");
             Add("quit_confirm.autosave", "진행 상황은 자동으로 저장됩니다.", "Your progress will be saved automatically.");
+
+            Add("hud.energy", "전력", "Power");
+            Add("hud.health", "체력", "Health");
+            Add("hud.cargo", "화물", "Cargo");
+            Add("quest.progress", "진행도", "Progress");
+            Add("quest.mission_hint", "MISSION · 방법 보기", "MISSION · View Details");
+            Add("quest.next_action", "다음 행동: {0}", "Next: {0}");
+            Add("quest.cleared", "클리어", "Cleared");
+            Add("quest.in_progress", "진행 중", "In Progress");
+            Add("quest.incomplete", "미완료", "Incomplete");
+            Add("quest.all_goals", "모든 목표 완료", "All Goals Complete");
+            Add("quest.claim_title", "퀘스트 클리어", "Quest Complete");
+            Add("quest.claim_description", "퀘스트 목표를 달성했습니다.", "You completed the quest objective.");
+            Add("quest.claim_hint", "닫으면 보상이 지급됩니다.", "Close this window to receive your reward.");
+            Add("quest.reward_header", "클리어 보상", "Completion Rewards");
+            Add("quest.reward", "보상", "Reward");
+            Add("quest.reward_none", "없음", "None");
+            Add("quest.reward_copper", "구리", "Copper");
+            Add("quest.reward_iron", "철", "Iron");
+            Add("quest.reward_lithium", "리튬", "Lithium");
+            Add("quest.reward_gold", "골드", "Gold");
+            English["quest.briefing_title"] = "Survivor Briefing";
+            English["quest.briefing_body"] = "No resources remain on the surface.\n"
+                + "The cultivation facility preserves humanity's genetic information.\n"
+                + "Successful genetic engineering could bring humanity back.\n"
+                + "The resources we need are now underground.\n\n"
+                + "Descend. Mine what you can. Endure, and return alive.";
+            Add("quest.briefing_confirm", "작업 시작", "Begin Work");
+            English["quest.demo_complete_title"] = "All Demo Objectives Complete";
+            English["quest.demo_complete_body"] = "You made it back through the emergency escape portal.";
+            // Korean objective text lives in DemoObjectiveCatalog and remains the fallback.
+            AddQuestEnglish("mine_block", "Remove a Block", "Press Enter or click to remove one block.", "Aim at a block, then press Enter or click.");
+            AddQuestEnglish("mine_copper", "Mine Copper", "Mine a copper block to collect copper.", "Find and mine a copper block.");
+            AddQuestEnglish("upgrade_drill_speed", "Upgrade Drill Speed", "Open the upgrade window and upgrade drill speed once.", "Buy a drill speed upgrade.");
+            AddQuestEnglish("travel_to_surface", "Travel to the Surface", "Enter the elevator and press the interact key (E) to return to the surface base.", "Press E while inside the elevator.");
+            AddQuestEnglish("return_to_mine", "Resume Mining", "Return to the mine, step out of the elevator, and keep mining.", "Move beyond the three dark blocks beneath the elevator.");
+            AddQuestEnglish("mine_iron", "Mine Iron", "Mine an iron block to collect iron.", "Find and mine an iron block.");
+            AddQuestEnglish("place_support_in_danger", "Install a Cushion Pad", "Place a cushion pad. Landing on it reduces fall damage to about 10%.", "Install one cushion pad.");
+            AddQuestEnglish("place_ladder", "Install a Ladder", "Select a ladder in the build menu and place it.", "Place a ladder in a vertical passage.");
+            AddQuestEnglish("place_light_at_depth", "Install a Deep-Mine Light", "Descend to at least 10 m and install a light.", "Place a light at a depth of 10 m or more.");
+            AddQuestEnglish("store_mineral", "Store Minerals", "Install a storage chest, then store at least one mineral.", "Place a storage chest and deposit a mineral.");
+            AddQuestEnglish("install_outpost_core", "Install an Outpost", "Install an outpost to activate a checkpoint.", "Place an outpost from the build menu.");
+            AddQuestEnglish("charge_near_outpost", "Recharge at an Outpost", "Place a charger near the outpost you just built, then recharge your power.", "Place a charger within 10 tiles of the outpost and recharge.");
+            AddQuestEnglish("heal_near_outpost", "Heal at an Outpost", "Install a clinic near an outpost and restore your health.", "Place a clinic within 10 tiles of the outpost and heal.");
+            AddQuestEnglish("unlock_deep_zone", "Unlock the Deep Zone", "Reach Drill Speed Lv. 2, Drone Scan Lv. 2 and Gas Resistance Lv. 1 to unlock the deep zone.", "Buy the required upgrades.");
+            AddQuestEnglish("mine_lithium", "Mine Lithium", "Mine a lithium block in the deep zone to collect lithium.", "Mine a deep-zone lithium deposit.");
+            AddQuestEnglish("purify_gas_with_outpost", "Purify Gas", "Build an outpost within five tiles of a lithium or gas block before mining it. Approach the released gas while inside the purification area.", "Build an outpost, mine a nearby lithium or gas block, then approach the gas inside the purification area.");
+            AddQuestEnglish("sell_at_settlement", "Sell Minerals at an Outpost", "Install a settlement terminal within 10 tiles of the outpost, then sell minerals.", "Place a settlement terminal and sell minerals.");
+            AddQuestEnglish("emergency_escape_return", "Return by Emergency Portal", "Use an emergency escape portal to return to an outpost or the elevator.", "Enter the portal and choose a destination.");
             // B-209 새 게임 전 광부 선택 화면.
             Add("miner_select.ops", "SUB-TERRA OPS", "SUB-TERRA OPS");
             Add("miner_select.title", "광부 선택", "Select Miner");
@@ -257,6 +316,14 @@ namespace SubTerra.Shared.Localization
                 default:
                     return Get("settings.frame.auto", "자동(기본값)");
             }
+        }
+
+        private static void AddQuestEnglish(string id, string title, string description, string hint)
+        {
+            var key = "demo.quest." + id;
+            English[key + ".title"] = title;
+            English[key + ".description"] = description;
+            English[key + ".hint"] = hint;
         }
 
         private static void Add(string key, string ko, string en)

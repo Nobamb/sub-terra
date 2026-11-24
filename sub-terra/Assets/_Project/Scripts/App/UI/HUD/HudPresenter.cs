@@ -65,6 +65,13 @@ namespace SubTerra.App.UI.HUD
             boundState = null;
         }
 
+        public void RefreshLocalizedText()
+        {
+            var energy = boundState?.GetEnergy() ?? default;
+            view.SetEnergy(HudFormatter.FormatEnergy(energy));
+            view.SetCargo(HudFormatter.FormatCargo(boundState?.GetInventory().CargoWeight ?? 0f));
+        }
+
         private void RenderAll()
         {
             var energy = boundState.GetEnergy();

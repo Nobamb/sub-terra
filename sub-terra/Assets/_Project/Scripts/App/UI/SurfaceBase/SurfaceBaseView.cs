@@ -990,11 +990,8 @@ namespace SubTerra.App.UI.SurfaceBase
             draftLanguageCode = index == 1
                 ? GameLanguageCodes.English
                 : GameLanguageCodes.Korean;
-            var previous = LocalizationService.Current;
-            LocalizationService.SetLanguageCode(draftLanguageCode);
             float volume = masterVolumeSlider != null ? masterVolumeSlider.value : 0.5f;
-            RefreshSettingsLabels(volume);
-            LocalizationService.SetLanguage(previous);
+            LocalizationService.PreviewLanguage(draftLanguageCode, () => RefreshSettingsLabels(volume));
         }
 
         private void OnFrameRateDropdownChanged(int index)
@@ -1044,11 +1041,8 @@ namespace SubTerra.App.UI.SurfaceBase
             draftLanguageCode = draftLanguageCode == GameLanguageCodes.English
                 ? GameLanguageCodes.Korean
                 : GameLanguageCodes.English;
-            var previous = LocalizationService.Current;
-            LocalizationService.SetLanguageCode(draftLanguageCode);
             float volume = masterVolumeSlider != null ? masterVolumeSlider.value : 0.5f;
-            RefreshSettingsLabels(volume);
-            LocalizationService.SetLanguage(previous);
+            LocalizationService.PreviewLanguage(draftLanguageCode, () => RefreshSettingsLabels(volume));
         }
 
         private void OnExplore() => ExploreClicked?.Invoke();

@@ -1,12 +1,17 @@
+using SubTerra.Shared.Localization;
+
 namespace SubTerra.App.Tutorial
 {
     /// <summary>단일 데모 목표 정의. 정적 표 항목이며 런타임 State와 분리한다.</summary>
     public sealed class DemoObjectiveDefinition
     {
         public string Id { get; }
-        public string Title { get; }
-        public string Description { get; }
-        public string NextActionHint { get; }
+        private readonly string title;
+        private readonly string description;
+        private readonly string nextActionHint;
+        public string Title => LocalizationService.Get(Id + ".title", title);
+        public string Description => LocalizationService.Get(Id + ".description", description);
+        public string NextActionHint => LocalizationService.Get(Id + ".hint", nextActionHint);
         public DemoProgressSignal RequiredSignal { get; }
         public string NextObjectiveId { get; }
         public bool IsTerminal { get; }
@@ -29,15 +34,15 @@ namespace SubTerra.App.Tutorial
             QuestReward reward = default)
         {
             Id = id ?? string.Empty;
-            Title = title ?? string.Empty;
-            Description = description ?? string.Empty;
-            NextActionHint = nextActionHint ?? string.Empty;
+            this.title = title ?? string.Empty;
+            this.description = description ?? string.Empty;
+            this.nextActionHint = nextActionHint ?? string.Empty;
             RequiredSignal = requiredSignal;
             NextObjectiveId = nextObjectiveId ?? string.Empty;
             IsTerminal = isTerminal;
             ShowsDismissibleGuidance = showsDismissibleGuidance;
-            GuidanceTitle = string.IsNullOrEmpty(guidanceTitle) ? Title : guidanceTitle;
-            GuidanceBody = string.IsNullOrEmpty(guidanceBody) ? Description : guidanceBody;
+            GuidanceTitle = string.IsNullOrEmpty(guidanceTitle) ? this.title : guidanceTitle;
+            GuidanceBody = string.IsNullOrEmpty(guidanceBody) ? this.description : guidanceBody;
             Reward = reward;
         }
     }

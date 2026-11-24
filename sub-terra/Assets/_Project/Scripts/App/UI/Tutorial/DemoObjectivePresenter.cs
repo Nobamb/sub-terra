@@ -2,6 +2,7 @@ using System;
 using SubTerra.App.Audio;
 using SubTerra.App.Tutorial;
 using SubTerra.Shared.Audio;
+using SubTerra.Shared.Localization;
 
 namespace SubTerra.App.UI.Tutorial
 {
@@ -53,6 +54,7 @@ namespace SubTerra.App.UI.Tutorial
             if (director != null)
             {
                 director.ProgressChanged += OnProgressChanged;
+                LocalizationService.LanguageChanged += RefreshLocalizedText;
             }
 
             if (rewards != null)
@@ -78,6 +80,7 @@ namespace SubTerra.App.UI.Tutorial
 
         public void Unbind()
         {
+            LocalizationService.LanguageChanged -= RefreshLocalizedText;
             if (view is DemoObjectiveView questView) questView.SetCargoSfxQuiet(true);
             if (director != null)
             {
@@ -317,6 +320,17 @@ namespace SubTerra.App.UI.Tutorial
             Render(director?.ReadModel ?? default);
         }
 
+        private void RefreshLocalizedText()
+        {
+            if (director == null) return;
+            var model = director.ReadModel;
+            view?.SetObjective(model);
+            if (detailsOpen) RenderDetails();
+            else view?.SetDetailsText(model.Title, model.Description, model.NextActionHint);
+            if (guidanceOpen) view?.SetGuidanceText(model.GuidanceTitle, model.GuidanceBody);
+            if (claimOpen && rewards != null) RenderClaimText(rewards.PendingObjectiveId, rewards.PendingReward);
+        }
+
         private void OnProgressChanged(DemoObjectiveReadModel model)
         {
             Render(model);
@@ -370,22 +384,27 @@ namespace SubTerra.App.UI.Tutorial
             claimOpen = true;
             view?.SetDumpPanelVisible(false);
             view?.SetCapacityChoiceVisible(false);
-            var questTitle = DemoObjectiveCatalog.TryGet(result.ObjectiveId, out var definition)
+            RenderClaimText(result.ObjectiveId, result.Reward);
+            view?.SetClaimVisible(true);
+        }
+
+        private void RenderClaimText(string objectiveId, QuestReward reward)
+        {
+            var questTitle = DemoObjectiveCatalog.TryGet(objectiveId, out var definition)
                 ? definition.Title
-                : result.ObjectiveId;
+                : objectiveId;
             view?.SetClaimText(
-                "퀘스트 클리어",
+                LocalizationService.Get("quest.claim_title"),
                 questTitle,
-                result.Reward.FormatKorean(),
-                "닫으면 보상이 지급됩니다.");
+                reward.FormatLocalized(),
+                LocalizationService.Get("quest.claim_hint"));
             if (view is DemoObjectiveView questView)
             {
                 questView.SetClaimProgress(
-                    DemoObjectiveCatalog.IndexOf(result.ObjectiveId) + 1,
+                    DemoObjectiveCatalog.IndexOf(objectiveId) + 1,
                     DemoObjectiveIds.RequiredCount);
-                questView.SetClaimRewards(result.Reward);
+                questView.SetClaimRewards(reward);
             }
-            view?.SetClaimVisible(true);
         }
 
         private void CloseClaim()
@@ -434,11 +453,11 @@ namespace SubTerra.App.UI.Tutorial
             var isDemoComplete = director != null && director.IsDemoComplete;
             var isCleared = viewedIndex < completed || isDemoComplete;
             var isCurrent = !isDemoComplete && viewedIndex == completed;
-            var status = isCleared ? "클리어" : isCurrent ? "진행 중" : "미완료";
+            var status = LocalizationService.Get(isCleared ? "quest.cleared" : isCurrent ? "quest.in_progress" : "quest.incomplete");
             var nextAction = isCleared ? string.Empty : definition.NextActionHint;
             view?.SetDetailsText(definition.Title, definition.Description, nextAction);
             view?.SetDetailsStatus(status);
-            view?.SetDetailsReward("클리어 보상: " + definition.Reward.FormatKorean());
+            view?.SetDetailsReward(LocalizationService.Get("quest.reward_header") + ": " + definition.Reward.FormatLocalized());
             view?.SetDetailsIndex((viewedIndex + 1) + "/" + DemoObjectiveIds.RequiredCount);
             view?.SetDetailsNavInteractable(
                 viewedIndex > 0,

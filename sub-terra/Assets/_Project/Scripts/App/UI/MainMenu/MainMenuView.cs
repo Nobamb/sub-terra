@@ -922,16 +922,7 @@ namespace SubTerra.App.UI.MainMenu
 
         private void RefreshSettingsLanguagePreview(float volume)
         {
-            var previous = LocalizationService.Current;
-            try
-            {
-                LocalizationService.SetLanguageCode(draftLanguageCode);
-                RefreshSettingsLabels(volume);
-            }
-            finally
-            {
-                LocalizationService.SetLanguage(previous);
-            }
+            LocalizationService.PreviewLanguage(draftLanguageCode, () => RefreshSettingsLabels(volume));
         }
 
         private void SyncResolutionDropdown()

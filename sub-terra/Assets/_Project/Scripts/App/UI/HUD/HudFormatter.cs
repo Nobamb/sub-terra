@@ -1,5 +1,6 @@
 using SubTerra.App.State;
 using SubTerra.Shared;
+using SubTerra.Shared.Localization;
 
 namespace SubTerra.App.UI.HUD
 {
@@ -19,6 +20,11 @@ namespace SubTerra.App.UI.HUD
 
         public static string FormatEnergy(int current, int max)
         {
+            return LocalizationService.Get("hud.energy") + " " + FormatEnergyValue(current, max);
+        }
+
+        public static string FormatEnergyValue(int current, int max)
+        {
             if (current < 0)
             {
                 current = 0;
@@ -29,7 +35,7 @@ namespace SubTerra.App.UI.HUD
                 max = 0;
             }
 
-            return "전력 " + current + " / " + max;
+            return current + " / " + max;
         }
 
         public static string FormatEnergy(EnergyReadModel model)
@@ -39,10 +45,15 @@ namespace SubTerra.App.UI.HUD
 
         public static string FormatHealth(float current, int maximum)
         {
+            return LocalizationService.Get("hud.health") + " " + FormatHealthValue(current, maximum);
+        }
+
+        public static string FormatHealthValue(float current, int maximum)
+        {
             var safeMaximum = maximum < 1 ? 1 : maximum;
             var safeCurrent = float.IsNaN(current) || current < 0f ? 0f : current;
             safeCurrent = safeCurrent > safeMaximum ? safeMaximum : safeCurrent;
-            return "체력 " + (int)System.Math.Ceiling(safeCurrent) + " / " + safeMaximum;
+            return (int)System.Math.Ceiling(safeCurrent) + " / " + safeMaximum;
         }
 
         public static string FormatOxygen(float current, float maximum)
@@ -82,7 +93,7 @@ namespace SubTerra.App.UI.HUD
 
         public static string FormatCargo(float cargoWeight)
         {
-            return "화물 " + FormatCargoAmount(cargoWeight);
+            return LocalizationService.Get("hud.cargo") + " " + FormatCargoAmount(cargoWeight);
         }
 
         /// <summary>

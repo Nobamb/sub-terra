@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using SubTerra.App.Audio;
 using SubTerra.Shared.Audio;
+using SubTerra.Shared.Localization;
 using SubTerra.App.Core.Data;
 using SubTerra.App.Tutorial;
 using SubTerra.App.UI;
@@ -96,6 +97,9 @@ namespace SubTerra.App.UI.Tutorial
 
         private int defaultTutorialSort = UiLayerPriority.TutorialGuidance;
         private Canvas guidanceCanvas;
+        private TMP_FontAsset briefingFont;
+        private Material briefingMaterial;
+        private TMP_Text briefingButtonLabel;
         private Canvas detailsCanvas;
         private Canvas claimCanvas;
         private Canvas capacityCanvas;
@@ -151,12 +155,14 @@ namespace SubTerra.App.UI.Tutorial
 
             if (progressCountText != null)
             {
-                progressCountText.text = "진행도 " + model.CompletedCount + " / " + model.TotalCount;
+                progressCountText.text = LocalizationService.Get("quest.progress") + " " + model.CompletedCount + " / " + model.TotalCount;
             }
 
             // 기본 카드는 지금 목표만 보여 준다. 체크는 데모 목표를 모두 끝낸 뒤에만 켠다.
             var cleared = model.IsDemoComplete
                 || (model.TotalCount > 0 && model.CompletedCount >= model.TotalCount);
+            SetLocalizedLabel(objectiveTitleText != null ? objectiveTitleText.transform.parent : null,
+                "QuestMissionLabel", "quest.mission_hint");
             if (basicStatusIcon != null)
             {
                 basicStatusIcon.sprite = cleared ? basicStatusClearSprite : basicStatusRingSprite;
@@ -176,7 +182,7 @@ namespace SubTerra.App.UI.Tutorial
             var mission = card.Find("QuestMissionLabel");
             if (mission != null && mission.TryGetComponent<TMP_Text>(out var missionText))
             {
-                missionText.text = "MISSION · 방법 보기";
+                missionText.text = LocalizationService.Get("quest.mission_hint");
                 missionText.fontSize = 18f;
             }
             PlaceSummaryChild(card, "ProgressCount", new Vector2(-36f, -10f), new Vector2(170f, 32f));
@@ -284,6 +290,7 @@ namespace SubTerra.App.UI.Tutorial
 
         public void SetGuidanceText(string title, string body)
         {
+            RefreshBriefingFont();
             if (guidanceTitleText != null)
             {
                 guidanceTitleText.text = title ?? string.Empty;
@@ -293,6 +300,47 @@ namespace SubTerra.App.UI.Tutorial
             {
                 guidanceBodyText.text = body ?? string.Empty;
             }
+        }
+
+        private void RefreshBriefingFont()
+        {
+            if (guidanceRoot == null || guidanceBodyText == null) return;
+            if (briefingFont == null)
+            {
+                briefingFont = guidanceBodyText.font;
+                briefingMaterial = guidanceBodyText.fontSharedMaterial;
+                foreach (var button in guidanceRoot.GetComponentsInChildren<Button>(true))
+                {
+                    if (button.name != "DismissButton") continue;
+                    briefingButtonLabel = button.GetComponentInChildren<TMP_Text>(true);
+                    break;
+                }
+            }
+
+            // The authored static briefing font contains the Korean briefing glyphs only.
+            var useEnglish = LocalizationService.Current == GameLanguage.English;
+            var englishFont = objectiveTitleText != null ? objectiveTitleText.font : null;
+            if (englishFont == null) englishFont = TMP_Settings.defaultFontAsset;
+            var font = useEnglish ? englishFont : briefingFont;
+            var material = useEnglish ? (font != null ? font.material : null) : briefingMaterial;
+            SetBriefingFont(guidanceTitleText, font, material);
+            SetBriefingFont(guidanceBodyText, font, material);
+            SetBriefingFont(briefingButtonLabel, font, material);
+            if (briefingButtonLabel != null)
+                briefingButtonLabel.text = LocalizationService.Get("quest.briefing_confirm");
+        }
+
+        private static void SetBriefingFont(TMP_Text text, TMP_FontAsset font, Material material)
+        {
+            if (text == null || font == null || text.font == font) return;
+            text.font = font;
+            text.fontSharedMaterial = material;
+        }
+
+        private static void SetLocalizedLabel(Transform root, string childName, string key)
+        {
+            var label = root != null ? root.Find(childName)?.GetComponent<TMP_Text>() : null;
+            if (label != null) label.text = LocalizationService.Get(key);
         }
 
         public void SetInputLocked(bool locked)
@@ -375,7 +423,7 @@ namespace SubTerra.App.UI.Tutorial
             {
                 detailsNextActionText.text = string.IsNullOrEmpty(nextAction)
                     ? string.Empty
-                    : "다음 행동: " + nextAction;
+                    : string.Format(LocalizationService.Get("quest.next_action"), nextAction);
             }
         }
 
@@ -434,6 +482,7 @@ namespace SubTerra.App.UI.Tutorial
             }
 
             LayoutRewardSlots(reward);
+            SetLocalizedLabel(detailsRoot != null ? detailsRoot.transform : null, "QuestRewardHeader", "quest.reward_header");
 
             if (detailsStatusIcon != null)
             {
@@ -443,6 +492,7 @@ namespace SubTerra.App.UI.Tutorial
             if (detailsClearBadge != null)
             {
                 detailsClearBadge.SetActive(cleared);
+                SetLocalizedLabel(detailsClearBadge.transform, "Label", "quest.cleared");
             }
 
             if (detailsProgressText != null)
@@ -454,13 +504,13 @@ namespace SubTerra.App.UI.Tutorial
             {
                 var demoFinished = isAllComplete
                     && objectiveId == DemoObjectiveIds.EmergencyEscapeReturn;
-                detailsStatusText.text = demoFinished
-                    ? "모든 목표 완료"
+                detailsStatusText.text = LocalizationService.Get(demoFinished
+                    ? "quest.all_goals"
                     : cleared
-                        ? "클리어"
+                        ? "quest.cleared"
                         : current
-                            ? "진행 중"
-                            : "미완료";
+                            ? "quest.in_progress"
+                            : "quest.incomplete");
             }
 
             if (detailsRewardText != null)
@@ -469,7 +519,7 @@ namespace SubTerra.App.UI.Tutorial
                 detailsRewardText.gameObject.SetActive(!anyReward);
                 if (!anyReward)
                 {
-                    detailsRewardText.text = "없음";
+                    detailsRewardText.text = LocalizationService.Get("quest.reward_none");
                 }
             }
 
@@ -484,10 +534,10 @@ namespace SubTerra.App.UI.Tutorial
         {
             var slots = new[]
             {
-                (slot: copperSlot, amount: reward.Copper),
-                (slot: ironSlot, amount: reward.Iron),
-                (slot: lithiumSlot, amount: reward.Lithium),
-                (slot: goldSlot, amount: reward.Gold)
+                (slot: copperSlot, amount: reward.Copper, key: "quest.reward_copper"),
+                (slot: ironSlot, amount: reward.Iron, key: "quest.reward_iron"),
+                (slot: lithiumSlot, amount: reward.Lithium, key: "quest.reward_lithium"),
+                (slot: goldSlot, amount: reward.Gold, key: "quest.reward_gold")
             };
 
             var visible = 0;
@@ -519,7 +569,7 @@ namespace SubTerra.App.UI.Tutorial
                     continue;
                 }
 
-                slot.SetAmount(slots[i].amount);
+                slot.SetAmount(slots[i].amount, LocalizationService.Get(slots[i].key));
                 if (slots[i].amount <= 0)
                 {
                     continue;
@@ -891,7 +941,7 @@ namespace SubTerra.App.UI.Tutorial
         {
             if (claimProgressText != null)
             {
-                claimProgressText.text = "진행도  " + index + " / " + count;
+                claimProgressText.text = LocalizationService.Get("quest.progress") + "  " + index + " / " + count;
             }
         }
 
@@ -900,7 +950,7 @@ namespace SubTerra.App.UI.Tutorial
             if (claimRewardRow == null) return;
 
             var names = new[] { "Copper", "Iron", "Lithium", "Gold" };
-            var labels = new[] { "구리", "철", "리튬", "골드" };
+            var keys = new[] { "quest.reward_copper", "quest.reward_iron", "quest.reward_lithium", "quest.reward_gold" };
             var amounts = new[] { reward.Copper, reward.Iron, reward.Lithium, reward.Gold };
             var visible = 0;
             for (var i = 0; i < amounts.Length; i++)
@@ -915,7 +965,7 @@ namespace SubTerra.App.UI.Tutorial
                 item.gameObject.SetActive(amounts[i] > 0);
                 if (amounts[i] <= 0) continue;
                 var label = item.GetComponentInChildren<TMP_Text>(true);
-                if (label != null) label.text = labels[i] + " × " + amounts[i];
+                if (label != null) label.text = LocalizationService.Get(keys[i]) + " × " + amounts[i];
             }
 
             if (claimRewardText != null) claimRewardText.gameObject.SetActive(visible == 0);
@@ -925,6 +975,8 @@ namespace SubTerra.App.UI.Tutorial
         public void SetClaimText(string title, string questTitle, string rewardText, string hint)
         {
             ApplyClaimLayout(claimRoot != null ? claimRoot.transform : null);
+            SetLocalizedLabel(claimRoot != null ? claimRoot.transform : null, "ClaimDescription", "quest.claim_description");
+            SetLocalizedLabel(claimRewardRow, "ClaimRewardLabel", "quest.reward");
             if (claimRewardRow != null)
                 claimRewardRow.anchoredPosition = new Vector2(0f, ClaimRewardRowY);
             if (claimHintText != null)
