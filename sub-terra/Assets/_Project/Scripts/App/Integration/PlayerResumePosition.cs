@@ -23,6 +23,8 @@ namespace SubTerra.App.Integration
         {
             if (saved == null || !saved.IsValid) return true; // 구세이브는 기존 시작점 유지.
             if (player == null || terrain == null) return false;
+            if (terrain.TryGetComponent<TilemapCollider2D>(out var tileCollider) && tileCollider.hasTilemapChanges)
+                tileCollider.ProcessTilemapChanges();
             Physics2D.SyncTransforms();
             if (!player.TryGetBodyBounds(out var bounds)) return false;
             var offset = (Vector2)bounds.center - player.Position;
