@@ -17,6 +17,10 @@ namespace SubTerra.App.UI.Guide
         public const int FemaleWalkFrameCount = 39;
         public const int MaleMineFrameCount = 24;
         public const int FemaleMineFrameCount = 23;
+        // B-210: 새 사다리 오르기. 남자 32장, 여자 25장을 1→N으로 반복하고 한 바퀴는 옛 8칸 순서와 같은 1초다.
+        public const int MaleLadderFrameCount = 32;
+        public const int FemaleLadderFrameCount = 25;
+        public const float LadderCycleSeconds = 1f;
 
         private static readonly Dictionary<DemoClip, DemoClip> FemaleClips = new Dictionary<DemoClip, DemoClip>();
 
@@ -25,6 +29,11 @@ namespace SubTerra.App.UI.Guide
 
         public static int MineFrameCount(PlayerGender gender) =>
             gender == PlayerGender.Female ? FemaleMineFrameCount : MaleMineFrameCount;
+
+        public static int LadderFrameCount(PlayerGender gender) =>
+            gender == PlayerGender.Female ? FemaleLadderFrameCount : MaleLadderFrameCount;
+
+        public static float LadderFps(PlayerGender gender) => LadderFrameCount(gender) / LadderCycleSeconds;
 
         /// <summary>남자 플레이어 키를 성별 키로 바꾼다. 플레이어 키가 아니면 그대로 둔다.</summary>
         public static string KeyFor(string key, PlayerGender gender)
@@ -93,9 +102,15 @@ namespace SubTerra.App.UI.Guide
             {
                 layer.Animate(femalePrefix, FemaleWalkFrameCount, source.Fps, layer.IdleKey, source.FrameActive);
             }
+            else if (source.AnimPrefix == "player.ladder")
+            {
+                // 한 바퀴 시간을 남자 장면과 같게 두고 여자 장수로 다시 만든다.
+                layer.Animate(femalePrefix, FemaleLadderFrameCount,
+                    source.Fps * FemaleLadderFrameCount / MaleLadderFrameCount, layer.IdleKey, source.FrameActive);
+            }
             else
             {
-                // 사다리처럼 남녀 장수가 같은 장면은 순서를 그대로 두고 키만 바꾼다.
+                // 남녀 장수가 같은 장면은 순서를 그대로 두고 키만 바꾼다.
                 for (var i = 0; i < layer.FrameKeys.Length; i++)
                 {
                     layer.FrameKeys[i] = KeyFor(source.FrameKeys[i], PlayerGender.Female);

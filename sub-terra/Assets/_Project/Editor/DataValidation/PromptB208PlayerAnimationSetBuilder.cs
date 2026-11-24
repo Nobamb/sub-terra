@@ -36,18 +36,23 @@ namespace SubTerra.App.Editor.DataValidation
             "ladder_back_style_04", "ladder_back_style_05"
         };
 
-        /// <summary>B-208 표의 여자 장수. 빠진 장은 복제하지 않는다.</summary>
+        /// <summary>
+        /// 여자 장수. 빠진 장은 복제하지 않는다. B-210에서 사다리 오르기 25·사다리 채굴 25를 새 그림으로 바꾸고
+        /// 가스 피해 34·사다리 피격 25를 더했다.
+        /// </summary>
         public static readonly IReadOnlyDictionary<string, int> FemaleCounts = new Dictionary<string, int>
         {
-            { "idleFrames", 1 }, { "walkFrames", 39 }, { "miningFrames", 23 }, { "ladderMiningFrames", 23 },
+            { "idleFrames", 1 }, { "walkFrames", 39 }, { "miningFrames", 23 }, { "ladderMiningFrames", 25 },
             { "jumpReadyFrames", 7 }, { "jumpRiseFrames", 23 }, { "jumpFallFrames", 23 },
-            { "knockoutFrames", 47 }, { "ladderFrames", 5 }, { "damageFrames", 8 }
+            { "knockoutFrames", 47 }, { "ladderFrames", 25 }, { "damageFrames", 8 },
+            { "gasDamageFrames", 34 }, { "ladderHitFrames", 25 }
         };
 
         private static readonly string[] FrameFields =
         {
             "idleFrames", "walkFrames", "jumpReadyFrames", "jumpRiseFrames", "jumpFallFrames",
-            "ladderFrames", "miningFrames", "ladderMiningFrames", "damageFrames", "knockoutFrames"
+            "ladderFrames", "miningFrames", "ladderMiningFrames", "damageFrames", "knockoutFrames",
+            "gasDamageFrames", "ladderHitFrames"
         };
 
         [MenuItem("SubTerra/MVP2/Build Prompt-B 208 Player Animation Sets")]
@@ -168,6 +173,8 @@ namespace SubTerra.App.Editor.DataValidation
                 case "ladderMiningFrames": return set.ladderMiningFrames;
                 case "damageFrames": return set.damageFrames;
                 case "knockoutFrames": return set.knockoutFrames;
+                case "gasDamageFrames": return set.gasDamageFrames;
+                case "ladderHitFrames": return set.ladderHitFrames;
                 default: throw new ArgumentOutOfRangeException(nameof(field), field, null);
             }
         }
@@ -180,11 +187,15 @@ namespace SubTerra.App.Editor.DataValidation
             set.jumpReadyFrames = Load("JumpReady", Numbered("jump_ready", 7));
             set.jumpRiseFrames = Load("JumpRise", Numbered("jump_rise", 23));
             set.jumpFallFrames = Load("JumpFall", Numbered("jump_fall", 23));
-            set.ladderFrames = Load("LadderBack", LadderNames);
+            set.ladderFrames = Load("LadderClimb", Numbered("ladder_climb", 25));
             set.miningFrames = Load("Mining", Numbered("mining", 23));
-            set.ladderMiningFrames = Load("LadderMining", Numbered("ladder_mining", 23));
+            set.ladderMiningFrames = Load("LadderMiningV2", Numbered("ladder_mining_v2", 25));
             set.damageFrames = Load("Damage", DamageNames);
             set.knockoutFrames = Load("Knockout", Numbered("knockout", 47));
+            set.gasDamageFrames = Load("GasDamage", Numbered("gas_damage", 34));
+            set.ladderHitFrames = Load("LadderHit", Numbered("ladder_hit", 25));
+            set.ladderStepFrames = (int[])PromptB210PlayerMotionsBuilder.FemaleLadderStepFrames.Clone();
+            set.ladderMiningRanges = PromptB210PlayerMotionsBuilder.LadderMiningRanges;
             EditorUtility.SetDirty(set);
         }
 
@@ -201,6 +212,10 @@ namespace SubTerra.App.Editor.DataValidation
             set.ladderMiningFrames = Read(animation, "ladderMiningFrames");
             set.damageFrames = Read(animation, "damageFrames");
             set.knockoutFrames = Read(animation, "knockoutFrames");
+            set.gasDamageFrames = Read(animation, "gasDamageFrames");
+            set.ladderHitFrames = Read(animation, "ladderHitFrames");
+            set.ladderStepFrames = ReadInts(animation, "ladderStepFrames");
+            set.ladderMiningRanges = ReadRanges(animation, "ladderMiningRanges");
             foreach (var field in FrameFields)
             {
                 var frames = Frames(set, field);
@@ -223,6 +238,29 @@ namespace SubTerra.App.Editor.DataValidation
             }
 
             return frames;
+        }
+
+        private static int[] ReadInts(SerializedObject animation, string field)
+        {
+            var property = animation.FindProperty(field);
+            var values = new int[property.arraySize];
+            for (var i = 0; i < values.Length; i++)
+            {
+                values[i] = property.GetArrayElementAtIndex(i).intValue;
+            }
+
+            return values;
+        }
+
+        private static PlayerLadderMiningFrameRanges ReadRanges(SerializedObject animation, string field)
+        {
+            var property = animation.FindProperty(field);
+            return new PlayerLadderMiningFrameRanges(
+                property.FindPropertyRelative("startLastFrame").intValue,
+                property.FindPropertyRelative("workFirstFrame").intValue,
+                property.FindPropertyRelative("workLastFrame").intValue,
+                property.FindPropertyRelative("finishFirstFrame").intValue,
+                property.FindPropertyRelative("finishLastFrame").intValue);
         }
 
         private static string[] Numbered(string prefix, int count)

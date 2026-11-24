@@ -187,6 +187,33 @@ namespace SubTerra.Gameplay.Player
             return CanAct && currentTime < invulnerableUntil;
         }
 
+        /// <summary>B-210: 경직 끝 시각. 경직이 없으면 시작 전 값(0 이하)이다.</summary>
+        public float HitStunEndsAt { get; private set; } = float.NegativeInfinity;
+
+        /// <summary>B-210: 가스·낙하·붕괴만 경직을 건다. 산소 0 틱은 연출을 따로 할 때까지 제외한다.</summary>
+        public static bool CausesHitStun(RunFailureCause cause) =>
+            cause == RunFailureCause.GasExposure
+            || cause == RunFailureCause.Fall
+            || cause == RunFailureCause.StructuralCollapse;
+
+        public bool IsHitStunned(float currentTime) => CanAct && currentTime < HitStunEndsAt;
+
+        /// <summary>
+        /// 실제로 체력이 깎인 뒤 부른다. 경직 중이면 늘리거나 다시 시작하지 않는다(끝 시각은 처음 그대로).
+        /// </summary>
+        public bool TryStartHitStun(RunFailureCause cause, float currentTime, float seconds)
+        {
+            if (!CanAct || seconds <= 0f || !CausesHitStun(cause) || IsHitStunned(currentTime))
+            {
+                return false;
+            }
+
+            HitStunEndsAt = currentTime + seconds;
+            return true;
+        }
+
+        public void ClearHitStun() => HitStunEndsAt = float.NegativeInfinity;
+
         public bool ApplyUpgradeEffects(int maximumHealth, float healthRegenerationPerSecond)
         {
             var nextMaximum = Math.Max(1, maximumHealth);
@@ -213,6 +240,7 @@ namespace SubTerra.Gameplay.Player
             CanAct = true;
             LastDamageCause = RunFailureCause.Unknown;
             invulnerableUntil = 0f;
+            HitStunEndsAt = float.NegativeInfinity;
             return changed;
         }
 

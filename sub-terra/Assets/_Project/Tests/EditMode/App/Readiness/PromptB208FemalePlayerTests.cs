@@ -97,11 +97,13 @@ namespace SubTerra.App.Tests.EditMode.Readiness
         {
             Assert.That(PromptB208PlayerAnimationSetBuilder.CollectErrors(), Is.Empty);
             var female = AssetDatabase.LoadAssetAtPath<PlayerAnimationSet>(PromptB208PlayerAnimationSetBuilder.FemaleSetPath);
+            // B-210: 사다리 오르기·사다리 채굴을 새 25장으로 바꾸고 가스 피해 34·사다리 피격 25를 더했다.
             var expected = new Dictionary<string, int>
             {
-                { "idleFrames", 1 }, { "walkFrames", 39 }, { "miningFrames", 23 }, { "ladderMiningFrames", 23 },
+                { "idleFrames", 1 }, { "walkFrames", 39 }, { "miningFrames", 23 }, { "ladderMiningFrames", 25 },
                 { "jumpReadyFrames", 7 }, { "jumpRiseFrames", 23 }, { "jumpFallFrames", 23 },
-                { "knockoutFrames", 47 }, { "ladderFrames", 5 }, { "damageFrames", 8 }
+                { "knockoutFrames", 47 }, { "ladderFrames", 25 }, { "damageFrames", 8 },
+                { "gasDamageFrames", 34 }, { "ladderHitFrames", 25 }
             };
             foreach (var pair in expected)
             {
@@ -111,8 +113,9 @@ namespace SubTerra.App.Tests.EditMode.Readiness
             }
 
             var root = PromptB208PlayerAnimationSetBuilder.FemaleFramesRoot;
+            // 옛 여자 LadderBack 5·LadderMining 23은 지우지 않고 남겨 둔다(B-210 범위 밖 삭제 금지).
             Assert.That(Directory.GetFiles(root, "*.png", SearchOption.AllDirectories).Length,
-                Is.EqualTo(expected.Values.Sum()), "여자 폴더 PNG 수 = 표 합계");
+                Is.EqualTo(expected.Values.Sum() + 5 + 23), "여자 폴더 PNG 수 = 표 합계 + 옛 사다리 그림");
             Assert.That(Directory.GetFiles(root, "*.webm", SearchOption.AllDirectories)
                 .Concat(Directory.GetFiles(root, "*.mov", SearchOption.AllDirectories)), Is.Empty);
         }
@@ -146,7 +149,8 @@ namespace SubTerra.App.Tests.EditMode.Readiness
             Assert.That(male, Is.Not.Null);
             Assert.That(animation.FemaleAnimationSet, Is.Not.Null);
             foreach (var field in new[] { "idleFrames", "walkFrames", "jumpReadyFrames", "jumpRiseFrames", "jumpFallFrames",
-                         "ladderFrames", "miningFrames", "ladderMiningFrames", "damageFrames", "knockoutFrames" })
+                         "ladderFrames", "miningFrames", "ladderMiningFrames", "damageFrames", "knockoutFrames",
+                         "gasDamageFrames", "ladderHitFrames" })
             {
                 var property = serialized.FindProperty(field);
                 var frames = PromptB208PlayerAnimationSetBuilder.Frames(male, field);
@@ -324,7 +328,8 @@ namespace SubTerra.App.Tests.EditMode.Readiness
             var female = AssetDatabase.LoadAssetAtPath<PlayerAnimationSet>(PromptB208PlayerAnimationSetBuilder.FemaleSetPath);
             for (var i = 1; i <= 39; i++) Assert.That(skin.Get("player.female.walk." + i), Is.EqualTo(female.walkFrames[i - 1]));
             for (var i = 1; i <= 23; i++) Assert.That(skin.Get("player.female.mine." + i), Is.EqualTo(female.miningFrames[i - 1]));
-            for (var i = 1; i <= 5; i++) Assert.That(skin.Get("player.female.ladder." + i), Is.EqualTo(female.ladderFrames[i - 1]));
+            for (var i = 1; i <= GuidePlayerArt.FemaleLadderFrameCount; i++) Assert.That(skin.Get("player.female.ladder." + i), Is.EqualTo(female.ladderFrames[i - 1]));
+            Assert.That(skin.Get("player.female.ladder." + (GuidePlayerArt.FemaleLadderFrameCount + 1)), Is.Null);
             Assert.That(skin.Get("player.female.walk.40"), Is.Null);
             Assert.That(skin.Get("player.female.mine.24"), Is.Null);
             Assert.That(skin.Get("player.female.idle"), Is.EqualTo(female.idleFrames[0]));

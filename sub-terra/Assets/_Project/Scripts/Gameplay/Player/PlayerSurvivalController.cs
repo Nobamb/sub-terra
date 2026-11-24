@@ -55,11 +55,16 @@ namespace SubTerra.Gameplay.Player
         public float OxygenRemaining => oxygen != null ? (float)oxygen.Remaining : 0f;
         public float OxygenMaximum => oxygen != null ? oxygen.Maximum : 0f;
         public float CurrentCargoFallImpactMultiplier => cargoFallImpactMultiplier;
+        /// <summary>B-210: 가스·낙하·붕괴 피해 직후 조작을 막는 중. 기절(CanAct false)이면 false다.</summary>
+        public bool IsHitStunned => State != null && State.IsHitStunned(Time.unscaledTime);
+        public float HitStunEndsAt => State != null ? State.HitStunEndsAt : float.NegativeInfinity;
+        public float HitStunSeconds => settings != null ? settings.HitStunSeconds : PlayerSurvivalSettings.DefaultHitStunSeconds;
 
         private void Awake()
         {
             EnsureState();
             ResetFallTracking();
+            if (playerMovement != null) playerMovement.BindHitStunSource(this);
         }
 
         private void Update()
@@ -164,6 +169,7 @@ namespace SubTerra.Gameplay.Player
         public void BindMovement(PlayerMovement movement)
         {
             playerMovement = movement;
+            if (movement != null) movement.BindHitStunSource(this);
             ResetFallTracking();
         }
 
@@ -413,6 +419,12 @@ namespace SubTerra.Gameplay.Player
             }
 
             var appliedDamage = healthBeforeDamage - State.Health;
+            // B-210: 그림·입력이 HealthChanged에서 경직을 읽도록 알림보다 먼저 건다.
+            if (appliedDamage > 0f && !becameIncapacitated)
+            {
+                State.TryStartHitStun(cause, Time.unscaledTime, HitStunSeconds);
+            }
+
             StartDamageFeedback(appliedDamage);
             var hurtSfx = ResolveHurtSfx(cause, appliedDamage, becameIncapacitated);
             if (hurtSfx != SfxId.None)

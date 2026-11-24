@@ -66,26 +66,16 @@ namespace SubTerra.App.Tests.Readiness
             Assert.IsNull(
                 visualRoot.GetComponent<PlayerLadderPoseController>(),
                 "런타임은 파츠 컨트롤러가 아니라 전체 프레임을 사용해야 한다.");
-            Assert.AreEqual(5, ladderFrames.arraySize);
-            Assert.AreEqual(0.25f, serializedAnimation.FindProperty("ladderDistancePerFrame").floatValue);
+            // B-210: 5장 뒷모습 등반을 새 사다리 오르기 32장 한 바퀴(2유닛)로 바꿨다.
+            Assert.AreEqual(32, ladderFrames.arraySize);
+            Assert.AreEqual(2f, serializedAnimation.FindProperty("ladderCycleDistance").floatValue);
             Assert.IsNull(serializedAnimation.FindProperty("ladderDownFrames"));
-            bool styled = AssetDatabase.GetAssetPath(ladderFrames.GetArrayElementAtIndex(0).objectReferenceValue)
-                .EndsWith("ladder_back_neutral_v2.png");
             for (var index = 0; index < ladderFrames.arraySize; index++)
             {
                 Assert.NotNull(ladderFrames.GetArrayElementAtIndex(index).objectReferenceValue);
                 string path = AssetDatabase.GetAssetPath(ladderFrames.GetArrayElementAtIndex(index).objectReferenceValue);
-                if (index == 0)
-                {
-                    // The original neutral pose remains a supported rollback during the art trial.
-                    Assert.That(path, Is.EqualTo(
-                        "Assets/_Project/Art/Characters/Player/Frames/LadderBack/ladder_back_neutral_v2.png").Or.EqualTo(
-                        "Assets/_Project/Art/Characters/Player/Frames/LadderBack/ladder_back_01.png"));
-                    continue;
-                }
                 Assert.AreEqual(
-                    "Assets/_Project/Art/Characters/Player/Frames/LadderBack/ladder_back_" + (styled ? "style_" : "")
-                        + (index + 1).ToString("D2") + ".png",
+                    "Assets/_Project/Art/Characters/Player/Frames/LadderClimb/ladder_climb_" + (index + 1).ToString("D2") + ".png",
                     path);
             }
 

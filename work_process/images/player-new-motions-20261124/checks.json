@@ -1,0 +1,2757 @@
+{
+  "canvas": 256,
+  "sets": {
+    "male": {
+      "GasDamage": {
+        "source": "new_motion_nukki/damage_new",
+        "count": 34,
+        "frames": [
+          {
+            "source": "0001.png",
+            "output": "gas_damage_01.png",
+            "bbox": [
+              63,
+              14,
+              193,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "88986f48a3195280bcfe890d3f3a76dcddf8ff929888514a9f194420b470aeb2"
+          },
+          {
+            "source": "0002.png",
+            "output": "gas_damage_02.png",
+            "bbox": [
+              63,
+              14,
+              193,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "88986f48a3195280bcfe890d3f3a76dcddf8ff929888514a9f194420b470aeb2"
+          },
+          {
+            "source": "0003.png",
+            "output": "gas_damage_03.png",
+            "bbox": [
+              63,
+              14,
+              193,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "a795334faab1aee1736b85dbf157f46148eb6e1ac46380f56befa057ce352063"
+          },
+          {
+            "source": "0004.png",
+            "output": "gas_damage_04.png",
+            "bbox": [
+              63,
+              14,
+              193,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "a795334faab1aee1736b85dbf157f46148eb6e1ac46380f56befa057ce352063"
+          },
+          {
+            "source": "0005.png",
+            "output": "gas_damage_05.png",
+            "bbox": [
+              63,
+              14,
+              193,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "4918b7b8ffb2ade436358d192deeefe6aa9d057d7b9e2af855b92694e63ba211"
+          },
+          {
+            "source": "0006.png",
+            "output": "gas_damage_06.png",
+            "bbox": [
+              63,
+              14,
+              193,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "4918b7b8ffb2ade436358d192deeefe6aa9d057d7b9e2af855b92694e63ba211"
+          },
+          {
+            "source": "0007.png",
+            "output": "gas_damage_07.png",
+            "bbox": [
+              63,
+              15,
+              194,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "43c48f8420445b5bdbd40253e168678c9978dc6c6856ad9e3ed4365a2732b692"
+          },
+          {
+            "source": "0008.png",
+            "output": "gas_damage_08.png",
+            "bbox": [
+              63,
+              15,
+              194,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "43c48f8420445b5bdbd40253e168678c9978dc6c6856ad9e3ed4365a2732b692"
+          },
+          {
+            "source": "0009.png",
+            "output": "gas_damage_09.png",
+            "bbox": [
+              63,
+              15,
+              204,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "d20fecdfe5a822d84057db39d6b940b5d3826aa680adbecae0eae1ba6345d5e8"
+          },
+          {
+            "source": "0010.png",
+            "output": "gas_damage_10.png",
+            "bbox": [
+              63,
+              15,
+              204,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "d20fecdfe5a822d84057db39d6b940b5d3826aa680adbecae0eae1ba6345d5e8"
+          },
+          {
+            "source": "0011.png",
+            "output": "gas_damage_11.png",
+            "bbox": [
+              63,
+              16,
+              203,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "8168908828677d57ec4b5ae2351efd5472652db09ded6f6ae49d3a619e30d376"
+          },
+          {
+            "source": "0012.png",
+            "output": "gas_damage_12.png",
+            "bbox": [
+              63,
+              16,
+              203,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "8168908828677d57ec4b5ae2351efd5472652db09ded6f6ae49d3a619e30d376"
+          },
+          {
+            "source": "0013.png",
+            "output": "gas_damage_13.png",
+            "bbox": [
+              63,
+              17,
+              201,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "2b438b830ab29b03459ebcdcbe9b3f634c16048f295d54b57b0c8afee9fac659"
+          },
+          {
+            "source": "0014.png",
+            "output": "gas_damage_14.png",
+            "bbox": [
+              63,
+              17,
+              201,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "2b438b830ab29b03459ebcdcbe9b3f634c16048f295d54b57b0c8afee9fac659"
+          },
+          {
+            "source": "0015.png",
+            "output": "gas_damage_15.png",
+            "bbox": [
+              63,
+              17,
+              203,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "e1db0af1a5ae1033586d084c068fc9243b1c668442dc6eead5ae646d20c16a7d"
+          },
+          {
+            "source": "0016.png",
+            "output": "gas_damage_16.png",
+            "bbox": [
+              63,
+              17,
+              203,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "e1db0af1a5ae1033586d084c068fc9243b1c668442dc6eead5ae646d20c16a7d"
+          },
+          {
+            "source": "0017.png",
+            "output": "gas_damage_17.png",
+            "bbox": [
+              63,
+              18,
+              204,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "f58bf7af9913966b3483c213cc4c7373a06f9ee06d7911e6b796b4a449b84a08"
+          },
+          {
+            "source": "0018.png",
+            "output": "gas_damage_18.png",
+            "bbox": [
+              63,
+              18,
+              204,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "f58bf7af9913966b3483c213cc4c7373a06f9ee06d7911e6b796b4a449b84a08"
+          },
+          {
+            "source": "0019.png",
+            "output": "gas_damage_19.png",
+            "bbox": [
+              63,
+              18,
+              205,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "4b8f41c89748f4c06f8103d71eea1061dcc3de00bef34fd5a217341c716dbacc"
+          },
+          {
+            "source": "0020.png",
+            "output": "gas_damage_20.png",
+            "bbox": [
+              63,
+              18,
+              205,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "4b8f41c89748f4c06f8103d71eea1061dcc3de00bef34fd5a217341c716dbacc"
+          },
+          {
+            "source": "0021.png",
+            "output": "gas_damage_21.png",
+            "bbox": [
+              63,
+              18,
+              203,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "e7fc4718eceeb4af853cba0fa5feeedd6dc70100428b3fced61157f225ce95d5"
+          },
+          {
+            "source": "0022.png",
+            "output": "gas_damage_22.png",
+            "bbox": [
+              63,
+              18,
+              203,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "e7fc4718eceeb4af853cba0fa5feeedd6dc70100428b3fced61157f225ce95d5"
+          },
+          {
+            "source": "0023.png",
+            "output": "gas_damage_23.png",
+            "bbox": [
+              63,
+              17,
+              202,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "59cfb9aaba51e7453b4d4364b6d608b6dfeec18a06a3ce14c7926e1573e309d2"
+          },
+          {
+            "source": "0024.png",
+            "output": "gas_damage_24.png",
+            "bbox": [
+              63,
+              17,
+              202,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "59cfb9aaba51e7453b4d4364b6d608b6dfeec18a06a3ce14c7926e1573e309d2"
+          },
+          {
+            "source": "0025.png",
+            "output": "gas_damage_25.png",
+            "bbox": [
+              63,
+              16,
+              203,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "53f38ebb56b04f20f1e9fd193bb0727b6ae111dbe7fb6ff5d60869cde839a30f"
+          },
+          {
+            "source": "0026.png",
+            "output": "gas_damage_26.png",
+            "bbox": [
+              63,
+              16,
+              203,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "53f38ebb56b04f20f1e9fd193bb0727b6ae111dbe7fb6ff5d60869cde839a30f"
+          },
+          {
+            "source": "0027.png",
+            "output": "gas_damage_27.png",
+            "bbox": [
+              63,
+              16,
+              202,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "759acf5dea89826609d5615b00c3dd3784111654d0a497c9018d124e1d9a7d4d"
+          },
+          {
+            "source": "0028.png",
+            "output": "gas_damage_28.png",
+            "bbox": [
+              63,
+              16,
+              202,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "759acf5dea89826609d5615b00c3dd3784111654d0a497c9018d124e1d9a7d4d"
+          },
+          {
+            "source": "0029.png",
+            "output": "gas_damage_29.png",
+            "bbox": [
+              63,
+              15,
+              195,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "425dcefbe00283ba1814c376d1244b0f5c17e5de3669b4c99f3649cc430b7b32"
+          },
+          {
+            "source": "0030.png",
+            "output": "gas_damage_30.png",
+            "bbox": [
+              63,
+              15,
+              195,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "425dcefbe00283ba1814c376d1244b0f5c17e5de3669b4c99f3649cc430b7b32"
+          },
+          {
+            "source": "0031.png",
+            "output": "gas_damage_31.png",
+            "bbox": [
+              63,
+              14,
+              193,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "ed39f9e40eecc0de573f2dd22cbc30e930915fafeabfc6965ce47dd77f3d41d6"
+          },
+          {
+            "source": "0032.png",
+            "output": "gas_damage_32.png",
+            "bbox": [
+              63,
+              14,
+              193,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "ed39f9e40eecc0de573f2dd22cbc30e930915fafeabfc6965ce47dd77f3d41d6"
+          },
+          {
+            "source": "0033.png",
+            "output": "gas_damage_33.png",
+            "bbox": [
+              63,
+              14,
+              193,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "fc5ad924016964911a279fa8a08f9735091f169368162412c9a352ad3075de00"
+          },
+          {
+            "source": "0034.png",
+            "output": "gas_damage_34.png",
+            "bbox": [
+              63,
+              14,
+              193,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "fc5ad924016964911a279fa8a08f9735091f169368162412c9a352ad3075de00"
+          }
+        ]
+      },
+      "LadderClimb": {
+        "source": "new_motion_nukki/new_ladder",
+        "count": 32,
+        "frames": [
+          {
+            "source": "0001.png",
+            "output": "ladder_climb_01.png",
+            "bbox": [
+              74,
+              19,
+              183,
+              246
+            ],
+            "foot_from_bottom": 10,
+            "sha256": "edc9bbcc2faf86a2c55ad7d6cbed693670028088e60509dc61744be4ed18d033"
+          },
+          {
+            "source": "0002.png",
+            "output": "ladder_climb_02.png",
+            "bbox": [
+              74,
+              20,
+              183,
+              246
+            ],
+            "foot_from_bottom": 10,
+            "sha256": "16cdec9c8b50471737b59993cd69f5cfef1a0e53d0c08308a6c20d3d78388de6"
+          },
+          {
+            "source": "0003.png",
+            "output": "ladder_climb_03.png",
+            "bbox": [
+              74,
+              20,
+              183,
+              247
+            ],
+            "foot_from_bottom": 9,
+            "sha256": "ceba054b84e194d11d4efac0cbae1bad74cdbdcf4c0b77a63934c665bb9425a4"
+          },
+          {
+            "source": "0004.png",
+            "output": "ladder_climb_04.png",
+            "bbox": [
+              74,
+              20,
+              182,
+              247
+            ],
+            "foot_from_bottom": 9,
+            "sha256": "18b850151cd8a299fbe19c61f8ab348490174714401876f37a1dada193426143"
+          },
+          {
+            "source": "0005.png",
+            "output": "ladder_climb_05.png",
+            "bbox": [
+              74,
+              18,
+              182,
+              242
+            ],
+            "foot_from_bottom": 14,
+            "sha256": "a868cd77b8b7359d41e24fb4c1cfa43c3048be0553fd84fd9880e2e141036156"
+          },
+          {
+            "source": "0006.png",
+            "output": "ladder_climb_06.png",
+            "bbox": [
+              74,
+              17,
+              182,
+              237
+            ],
+            "foot_from_bottom": 19,
+            "sha256": "1e5d9c07583f80d3fefce44e46fab624b75622ee59ae6137a18c29c48448d413"
+          },
+          {
+            "source": "0007.png",
+            "output": "ladder_climb_07.png",
+            "bbox": [
+              73,
+              15,
+              181,
+              234
+            ],
+            "foot_from_bottom": 22,
+            "sha256": "12a5f1172cc333a29ae5996caf8f5e7efadea24969a777cb36493d9e548453b6"
+          },
+          {
+            "source": "0008.png",
+            "output": "ladder_climb_08.png",
+            "bbox": [
+              72,
+              14,
+              181,
+              235
+            ],
+            "foot_from_bottom": 21,
+            "sha256": "a3a0f90218a5bf3cb5ba2812a097649e3a3441c976c45dee7200b9134d847fc9"
+          },
+          {
+            "source": "0009.png",
+            "output": "ladder_climb_09.png",
+            "bbox": [
+              71,
+              13,
+              182,
+              235
+            ],
+            "foot_from_bottom": 21,
+            "sha256": "68c246b4d0b32b3d73e139ee50a891ef2c32f5dc38d16fadc85b54ab4d4f4ec9"
+          },
+          {
+            "source": "0010.png",
+            "output": "ladder_climb_10.png",
+            "bbox": [
+              71,
+              12,
+              182,
+              236
+            ],
+            "foot_from_bottom": 20,
+            "sha256": "1832e2e2398ad6ab643becde61f908892410b3bfd21ec5513294573cae73aaa8"
+          },
+          {
+            "source": "0011.png",
+            "output": "ladder_climb_11.png",
+            "bbox": [
+              71,
+              12,
+              183,
+              237
+            ],
+            "foot_from_bottom": 19,
+            "sha256": "073ce643238bfe84dede7cf6033c44b1bc845e01f5924e07d71f6540ba38f2ef"
+          },
+          {
+            "source": "0012.png",
+            "output": "ladder_climb_12.png",
+            "bbox": [
+              71,
+              13,
+              184,
+              239
+            ],
+            "foot_from_bottom": 17,
+            "sha256": "ccd8c754e17ba5ff36900b770b9e5ae80f7a44d0bdd44ea54c6050a78e012ea0"
+          },
+          {
+            "source": "0013.png",
+            "output": "ladder_climb_13.png",
+            "bbox": [
+              71,
+              14,
+              184,
+              240
+            ],
+            "foot_from_bottom": 16,
+            "sha256": "49aa4d61e933b7696f6695153451bc7fe31e472015c4818aeef427497241f98e"
+          },
+          {
+            "source": "0014.png",
+            "output": "ladder_climb_14.png",
+            "bbox": [
+              71,
+              15,
+              183,
+              242
+            ],
+            "foot_from_bottom": 14,
+            "sha256": "8854c20c3e704c732d193bc724123d44f43b5230247cf47726fe5ebd4cc6b572"
+          },
+          {
+            "source": "0015.png",
+            "output": "ladder_climb_15.png",
+            "bbox": [
+              71,
+              16,
+              181,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "7738efd00daba1e544785207982f19d86264a1c3729410e8cdf6612ecec34b96"
+          },
+          {
+            "source": "0016.png",
+            "output": "ladder_climb_16.png",
+            "bbox": [
+              71,
+              17,
+              180,
+              245
+            ],
+            "foot_from_bottom": 11,
+            "sha256": "f4d9b0f973699463fa4869910fbf0df3b103a6ba7714cde5c28960cc6ca33352"
+          },
+          {
+            "source": "0017.png",
+            "output": "ladder_climb_17.png",
+            "bbox": [
+              72,
+              18,
+              178,
+              245
+            ],
+            "foot_from_bottom": 11,
+            "sha256": "2a3985b222a50e8f67467750a828445aa513cb9b9377ab36892ec0e5a740c1a3"
+          },
+          {
+            "source": "0018.png",
+            "output": "ladder_climb_18.png",
+            "bbox": [
+              72,
+              18,
+              178,
+              246
+            ],
+            "foot_from_bottom": 10,
+            "sha256": "8f1faeb34efc9c33445e58b30c6b1dba8589d36d5b623d684ec7fd2ab6cff273"
+          },
+          {
+            "source": "0019.png",
+            "output": "ladder_climb_19.png",
+            "bbox": [
+              72,
+              17,
+              179,
+              243
+            ],
+            "foot_from_bottom": 13,
+            "sha256": "572797fb5a5ff568c03d6fb46ed76ace5d112c81574be75ecb80f12ee4ced4e3"
+          },
+          {
+            "source": "0020.png",
+            "output": "ladder_climb_20.png",
+            "bbox": [
+              73,
+              16,
+              180,
+              238
+            ],
+            "foot_from_bottom": 18,
+            "sha256": "6d7354d2618e8cd240f2f80c38bfdca81ff45d1c11a49f111eaffead3bfc932d"
+          },
+          {
+            "source": "0021.png",
+            "output": "ladder_climb_21.png",
+            "bbox": [
+              73,
+              15,
+              181,
+              233
+            ],
+            "foot_from_bottom": 23,
+            "sha256": "1d53addb2613df888368eda33813a98816a727933f88a165427d9822dbd24d20"
+          },
+          {
+            "source": "0022.png",
+            "output": "ladder_climb_22.png",
+            "bbox": [
+              73,
+              13,
+              182,
+              228
+            ],
+            "foot_from_bottom": 28,
+            "sha256": "92c99f2f0cb2b1867fa10afb3b7053491f47a506a06dbc42940db81576ba556b"
+          },
+          {
+            "source": "0023.png",
+            "output": "ladder_climb_23.png",
+            "bbox": [
+              74,
+              12,
+              183,
+              229
+            ],
+            "foot_from_bottom": 27,
+            "sha256": "095d6027834b6592d8fb62199422b9bc0d98978e714b582c750c0a4e1a1e16f5"
+          },
+          {
+            "source": "0024.png",
+            "output": "ladder_climb_24.png",
+            "bbox": [
+              74,
+              10,
+              183,
+              230
+            ],
+            "foot_from_bottom": 26,
+            "sha256": "747f2025633593a0733a9e646168bd1c2d21f111865a1383dbdfab649fd7171d"
+          },
+          {
+            "source": "0025.png",
+            "output": "ladder_climb_25.png",
+            "bbox": [
+              74,
+              10,
+              184,
+              231
+            ],
+            "foot_from_bottom": 25,
+            "sha256": "4d55eebf48954dff6b2e480dc1fa25b45206080b35533817f4d05c4732f37562"
+          },
+          {
+            "source": "0026.png",
+            "output": "ladder_climb_26.png",
+            "bbox": [
+              74,
+              10,
+              185,
+              232
+            ],
+            "foot_from_bottom": 24,
+            "sha256": "d062bbd5193a26efc22b4b7107c7c544a44460b60637bb8d5d6e715558996069"
+          },
+          {
+            "source": "0027.png",
+            "output": "ladder_climb_27.png",
+            "bbox": [
+              73,
+              10,
+              185,
+              233
+            ],
+            "foot_from_bottom": 23,
+            "sha256": "951b1c4c81353f03bf0f2a69441cbd54a5f2f1b199bf9c87a8f72f3708493008"
+          },
+          {
+            "source": "0028.png",
+            "output": "ladder_climb_28.png",
+            "bbox": [
+              72,
+              11,
+              185,
+              234
+            ],
+            "foot_from_bottom": 22,
+            "sha256": "0d11ca8605bfe4196b65ab4d35ad22ad45f64770416e6d67e82579f8a79ec200"
+          },
+          {
+            "source": "0029.png",
+            "output": "ladder_climb_29.png",
+            "bbox": [
+              72,
+              12,
+              185,
+              234
+            ],
+            "foot_from_bottom": 22,
+            "sha256": "8195f219353dbd61620b484cc7c657172a51dc49fff6a73c9ae671563e5764b0"
+          },
+          {
+            "source": "0030.png",
+            "output": "ladder_climb_30.png",
+            "bbox": [
+              72,
+              13,
+              185,
+              235
+            ],
+            "foot_from_bottom": 21,
+            "sha256": "54398620321eaffe8c63154604fdb6d1de95661db6bdda4ce4f81c7d48134fd4"
+          },
+          {
+            "source": "0031.png",
+            "output": "ladder_climb_31.png",
+            "bbox": [
+              73,
+              14,
+              185,
+              235
+            ],
+            "foot_from_bottom": 21,
+            "sha256": "1ee0f01d4a73b2449391c9135e3bb3b3f39eeafe961f63b4431cac48cf43f2af"
+          },
+          {
+            "source": "0032.png",
+            "output": "ladder_climb_32.png",
+            "bbox": [
+              74,
+              14,
+              185,
+              235
+            ],
+            "foot_from_bottom": 21,
+            "sha256": "8a2696e6cbdfd9057b72eb0a84b990980098ca5c0168b96982f91639e1045ab7"
+          }
+        ]
+      },
+      "LadderHit": {
+        "source": "new_motion_nukki/ladder_hit",
+        "count": 25,
+        "frames": [
+          {
+            "source": "0001.png",
+            "output": "ladder_hit_01.png",
+            "bbox": [
+              74,
+              20,
+              184,
+              246
+            ],
+            "foot_from_bottom": 10,
+            "sha256": "01f714a75769cc0a48745876cf3066e71618f8bc9d39f310b882bc4938823fba"
+          },
+          {
+            "source": "0002.png",
+            "output": "ladder_hit_02.png",
+            "bbox": [
+              74,
+              20,
+              184,
+              246
+            ],
+            "foot_from_bottom": 10,
+            "sha256": "35339be7533cead377b3e11e50ea9309ec6686f63dae8583ebcfd805f7232615"
+          },
+          {
+            "source": "0003.png",
+            "output": "ladder_hit_03.png",
+            "bbox": [
+              73,
+              20,
+              184,
+              246
+            ],
+            "foot_from_bottom": 10,
+            "sha256": "77d49a49ba82e42858fa05c7fa3ebf70ee1c809d50d63638cb392c9eb14bc4d8"
+          },
+          {
+            "source": "0004.png",
+            "output": "ladder_hit_04.png",
+            "bbox": [
+              72,
+              20,
+              186,
+              246
+            ],
+            "foot_from_bottom": 10,
+            "sha256": "53b737442746f3dfa6c0cf873362acebf3510cd5f3f48d01e53d451474d2f85d"
+          },
+          {
+            "source": "0005.png",
+            "output": "ladder_hit_05.png",
+            "bbox": [
+              71,
+              20,
+              188,
+              246
+            ],
+            "foot_from_bottom": 10,
+            "sha256": "f583fed7f958a3c16eb4098882961574b620c66cb83acf1b03c6d1dbbd314287"
+          },
+          {
+            "source": "0006.png",
+            "output": "ladder_hit_06.png",
+            "bbox": [
+              72,
+              20,
+              188,
+              246
+            ],
+            "foot_from_bottom": 10,
+            "sha256": "f35c1c39e80ab078cc78febe08163f0c32605105784f9b0d1ef75cfcb034b8a1"
+          },
+          {
+            "source": "0007.png",
+            "output": "ladder_hit_07.png",
+            "bbox": [
+              72,
+              20,
+              188,
+              246
+            ],
+            "foot_from_bottom": 10,
+            "sha256": "29f047bb0cb878a62b733cf06a93074f9da3d7549e0d995c7c69222d91b24064"
+          },
+          {
+            "source": "0008.png",
+            "output": "ladder_hit_08.png",
+            "bbox": [
+              72,
+              20,
+              186,
+              246
+            ],
+            "foot_from_bottom": 10,
+            "sha256": "dd1fafd9a65a35fa4622cead9217d0569e76e6234d5b9a49f074defa7585d188"
+          },
+          {
+            "source": "0009.png",
+            "output": "ladder_hit_09.png",
+            "bbox": [
+              72,
+              18,
+              186,
+              246
+            ],
+            "foot_from_bottom": 10,
+            "sha256": "f13fcbeefbb284d4adea60cf54f18f6d86fcbaa2b421eff2d6f67c4c0a3a4f0c"
+          },
+          {
+            "source": "0010.png",
+            "output": "ladder_hit_10.png",
+            "bbox": [
+              72,
+              20,
+              186,
+              246
+            ],
+            "foot_from_bottom": 10,
+            "sha256": "74ee6dc711ecc9da233b07b78426ae33190be2f265b0b0d819d85f2716402a55"
+          },
+          {
+            "source": "0011.png",
+            "output": "ladder_hit_11.png",
+            "bbox": [
+              67,
+              28,
+              184,
+              246
+            ],
+            "foot_from_bottom": 10,
+            "sha256": "ad4986e87c0de77befefc9c6d5e26a40ced57373dc7ba74d68f473b99a548d7a"
+          },
+          {
+            "source": "0012.png",
+            "output": "ladder_hit_12.png",
+            "bbox": [
+              65,
+              32,
+              184,
+              246
+            ],
+            "foot_from_bottom": 10,
+            "sha256": "59284508d68d115c632811db8dda53e46687074a2215daa84ce3b02908622669"
+          },
+          {
+            "source": "0013.png",
+            "output": "ladder_hit_13.png",
+            "bbox": [
+              64,
+              32,
+              184,
+              246
+            ],
+            "foot_from_bottom": 10,
+            "sha256": "b28a4b1dff440d86626910e93f186397450ef069391565bcc5c8013dea4bd5ed"
+          },
+          {
+            "source": "0014.png",
+            "output": "ladder_hit_14.png",
+            "bbox": [
+              64,
+              32,
+              184,
+              246
+            ],
+            "foot_from_bottom": 10,
+            "sha256": "836c96da0c033902788bf6ebd343d0329616efdf2ab823a724d72d8638154e71"
+          },
+          {
+            "source": "0015.png",
+            "output": "ladder_hit_15.png",
+            "bbox": [
+              64,
+              34,
+              182,
+              246
+            ],
+            "foot_from_bottom": 10,
+            "sha256": "826981afef16d62ac5af500d0f69a965fb3e00e5400620fa4e60390a0d1266d6"
+          },
+          {
+            "source": "0016.png",
+            "output": "ladder_hit_16.png",
+            "bbox": [
+              66,
+              32,
+              186,
+              246
+            ],
+            "foot_from_bottom": 10,
+            "sha256": "673b54ba567fc76f56d30ff6bfb23aa386cbb9c0fa768600d007aa89af6d8d45"
+          },
+          {
+            "source": "0017.png",
+            "output": "ladder_hit_17.png",
+            "bbox": [
+              66,
+              32,
+              184,
+              246
+            ],
+            "foot_from_bottom": 10,
+            "sha256": "0e3e61832b057ee26575ca226f6732a25169812ed4ae1939074b58129c3e09e7"
+          },
+          {
+            "source": "0018.png",
+            "output": "ladder_hit_18.png",
+            "bbox": [
+              64,
+              34,
+              182,
+              246
+            ],
+            "foot_from_bottom": 10,
+            "sha256": "1f886dd83ee6c2c0f108d91dc157e84ed3d38053e064bac02ed40b17f1c6daa6"
+          },
+          {
+            "source": "0019.png",
+            "output": "ladder_hit_19.png",
+            "bbox": [
+              66,
+              32,
+              184,
+              246
+            ],
+            "foot_from_bottom": 10,
+            "sha256": "575f909d3835bc323deb05e712e84e12c41808608a4f76fe665b3f51bc749788"
+          },
+          {
+            "source": "0020.png",
+            "output": "ladder_hit_20.png",
+            "bbox": [
+              68,
+              26,
+              186,
+              246
+            ],
+            "foot_from_bottom": 10,
+            "sha256": "7842d34fbe52b525baa1685ef4d26a53066b1715537abce9d799229183d00eb5"
+          },
+          {
+            "source": "0021.png",
+            "output": "ladder_hit_21.png",
+            "bbox": [
+              71,
+              20,
+              186,
+              246
+            ],
+            "foot_from_bottom": 10,
+            "sha256": "72d16e406dc53e98dd068b061dd7ff3c482e2470307660a2032ba0433d22c829"
+          },
+          {
+            "source": "0022.png",
+            "output": "ladder_hit_22.png",
+            "bbox": [
+              72,
+              20,
+              186,
+              246
+            ],
+            "foot_from_bottom": 10,
+            "sha256": "e90c92562ad96a01b756823e20cd91bce2ca267e30f53254bf53a6df316fd381"
+          },
+          {
+            "source": "0023.png",
+            "output": "ladder_hit_23.png",
+            "bbox": [
+              74,
+              20,
+              184,
+              246
+            ],
+            "foot_from_bottom": 10,
+            "sha256": "94a9a7030c6e747746a5202eeaea4f6038a2a386261833a06e80150d879dd261"
+          },
+          {
+            "source": "0024.png",
+            "output": "ladder_hit_24.png",
+            "bbox": [
+              74,
+              20,
+              183,
+              246
+            ],
+            "foot_from_bottom": 10,
+            "sha256": "aaa8e5ceb5ef3a7289f1fd841071c0177fa7cc11bb2daa28a90e2983cec6bb88"
+          },
+          {
+            "source": "0025.png",
+            "output": "ladder_hit_25.png",
+            "bbox": [
+              74,
+              20,
+              183,
+              246
+            ],
+            "foot_from_bottom": 10,
+            "sha256": "c166d76e610aa7abf0919960fb3f95b27fa7698d8251a9c988874f48ad55da7f"
+          }
+        ]
+      },
+      "LadderMiningV2": {
+        "source": "new_motion_nukki/laddermining",
+        "count": 25,
+        "frames": [
+          {
+            "source": "0001.png",
+            "output": "ladder_mining_v2_01.png",
+            "bbox": [
+              74,
+              20,
+              184,
+              246
+            ],
+            "foot_from_bottom": 10,
+            "sha256": "0078d9fe8139a2bd3f10e780437c2aad8dff3f66ef43b262fbeaecefc00460d8"
+          },
+          {
+            "source": "0002.png",
+            "output": "ladder_mining_v2_02.png",
+            "bbox": [
+              74,
+              20,
+              184,
+              247
+            ],
+            "foot_from_bottom": 9,
+            "sha256": "8c1725831bff84d964dd887cf7cc7d8c8903873bd9c4faf1ff0224bc71e33bed"
+          },
+          {
+            "source": "0003.png",
+            "output": "ladder_mining_v2_03.png",
+            "bbox": [
+              71,
+              18,
+              184,
+              240
+            ],
+            "foot_from_bottom": 16,
+            "sha256": "c3a8e544b87adcd0a61022fe2fca7e367663916233efc0e3dde3543d45ee999a"
+          },
+          {
+            "source": "0004.png",
+            "output": "ladder_mining_v2_04.png",
+            "bbox": [
+              68,
+              16,
+              188,
+              242
+            ],
+            "foot_from_bottom": 14,
+            "sha256": "48473fcec1fb88022060e61e9650de6c86cc0bc25c991649533b3f6fd964ca01"
+          },
+          {
+            "source": "0005.png",
+            "output": "ladder_mining_v2_05.png",
+            "bbox": [
+              62,
+              11,
+              208,
+              243
+            ],
+            "foot_from_bottom": 13,
+            "sha256": "e87929922579ca4d6b9beeaa3cbd9f0100c1a9a7ecbb6ed265912f54771c5668"
+          },
+          {
+            "source": "0006.png",
+            "output": "ladder_mining_v2_06.png",
+            "bbox": [
+              58,
+              8,
+              224,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "572f4b1713ee6577832b83ce7b1cd3c33480afa855b673fd05c57a6c8f371a7b"
+          },
+          {
+            "source": "0007.png",
+            "output": "ladder_mining_v2_07.png",
+            "bbox": [
+              58,
+              8,
+              228,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "8ab761cae093079f77f46e358e1e7dfffb30dd17f7445f43020568ae9420ab58"
+          },
+          {
+            "source": "0008.png",
+            "output": "ladder_mining_v2_08.png",
+            "bbox": [
+              58,
+              8,
+              230,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "a09828b6bc95e92ac2235ebb28f85a3dde549e1b707952f4f2b7511e88671b7a"
+          },
+          {
+            "source": "0009.png",
+            "output": "ladder_mining_v2_09.png",
+            "bbox": [
+              58,
+              8,
+              230,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "45bf569b8f3447f33361cefc122fb7d402a1e0e6d9fd215400100d196e9a34f4"
+          },
+          {
+            "source": "0010.png",
+            "output": "ladder_mining_v2_10.png",
+            "bbox": [
+              58,
+              8,
+              230,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "a2be304008da764a6262a34112f0e35dc02dd5e140141894b7be6501b937239b"
+          },
+          {
+            "source": "0011.png",
+            "output": "ladder_mining_v2_11.png",
+            "bbox": [
+              58,
+              8,
+              230,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "d2f4aa292940c5af31d6d53a9c76c5a29a11f3cbc41e7b888d4178f275dfc87d"
+          },
+          {
+            "source": "0012.png",
+            "output": "ladder_mining_v2_12.png",
+            "bbox": [
+              58,
+              8,
+              230,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "33e85a6067fb9f54c4079af5f7d0727e6f4583a48b14e4adce22be28e78dfd9f"
+          },
+          {
+            "source": "0013.png",
+            "output": "ladder_mining_v2_13.png",
+            "bbox": [
+              58,
+              8,
+              230,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "40fdbbbf2260002035726a87bab62edb977b8e72e1cec09ea23fe87329dcbabd"
+          },
+          {
+            "source": "0014.png",
+            "output": "ladder_mining_v2_14.png",
+            "bbox": [
+              58,
+              8,
+              230,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "cf5f4d7740a88738cad75efd04b09ac3ab2c898095331062a11e96fa3ee9a12c"
+          },
+          {
+            "source": "0015.png",
+            "output": "ladder_mining_v2_15.png",
+            "bbox": [
+              58,
+              8,
+              230,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "d2f483a6c7b7047af435a3bd1f09be8655b9334e095509b8ea95d8d8ee7b7661"
+          },
+          {
+            "source": "0016.png",
+            "output": "ladder_mining_v2_16.png",
+            "bbox": [
+              58,
+              8,
+              230,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "c6e907b0e6c9ddde78455b50cc55a1d3e13614ad5ed35cd098515efa68852b42"
+          },
+          {
+            "source": "0017.png",
+            "output": "ladder_mining_v2_17.png",
+            "bbox": [
+              58,
+              8,
+              230,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "9738ac10d5b4b71b048803e3d995b1f3e211663ef245655fee74adec6cb32025"
+          },
+          {
+            "source": "0018.png",
+            "output": "ladder_mining_v2_18.png",
+            "bbox": [
+              58,
+              8,
+              230,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "8dcaa9c43261a85173fa32b98e76280f262facea5e86215d693ded28685f689a"
+          },
+          {
+            "source": "0019.png",
+            "output": "ladder_mining_v2_19.png",
+            "bbox": [
+              58,
+              8,
+              230,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "32570d72ac7ca75550fdf65a3c29c65615e2c2067f76266c178ca2ae13791a25"
+          },
+          {
+            "source": "0020.png",
+            "output": "ladder_mining_v2_20.png",
+            "bbox": [
+              60,
+              10,
+              228,
+              245
+            ],
+            "foot_from_bottom": 11,
+            "sha256": "18367120abe70f452826b0c322dfa6a33ea9e538bd13b1bf8e41be3028dcc3ca"
+          },
+          {
+            "source": "0021.png",
+            "output": "ladder_mining_v2_21.png",
+            "bbox": [
+              64,
+              18,
+              204,
+              246
+            ],
+            "foot_from_bottom": 10,
+            "sha256": "3947c27eac17ce0c58af18454f5da1a9a363be5c4ab15994727d30e77697416c"
+          },
+          {
+            "source": "0022.png",
+            "output": "ladder_mining_v2_22.png",
+            "bbox": [
+              68,
+              20,
+              187,
+              243
+            ],
+            "foot_from_bottom": 13,
+            "sha256": "108e83bf37cbc59a3edc9c6e9f4338f56ae087b2096274233757ff43579bb199"
+          },
+          {
+            "source": "0023.png",
+            "output": "ladder_mining_v2_23.png",
+            "bbox": [
+              72,
+              18,
+              184,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "4f54aefa045804b678331318c49c3f52945bdf0bed61053fc5f20144465a9356"
+          },
+          {
+            "source": "0024.png",
+            "output": "ladder_mining_v2_24.png",
+            "bbox": [
+              74,
+              18,
+              184,
+              246
+            ],
+            "foot_from_bottom": 10,
+            "sha256": "0940741817e5a94bb64ab9c0c2599a508fc8e23de5b5696389d19fadcb13e43d"
+          },
+          {
+            "source": "0025.png",
+            "output": "ladder_mining_v2_25.png",
+            "bbox": [
+              74,
+              20,
+              184,
+              246
+            ],
+            "foot_from_bottom": 10,
+            "sha256": "f9656fa002da58d6c6a0b4289b57a2fb7bd790e8352c19720caaea12f6a4abe6"
+          }
+        ]
+      }
+    },
+    "female": {
+      "GasDamage": {
+        "source": "female_new_nukki/damage_new",
+        "count": 34,
+        "frames": [
+          {
+            "source": "0001.png",
+            "output": "gas_damage_01.png",
+            "bbox": [
+              62,
+              16,
+              188,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "680e00801a821e4ad4abe83e86a31e8aa9e35b221f280bb071c371deac628234"
+          },
+          {
+            "source": "0002.png",
+            "output": "gas_damage_02.png",
+            "bbox": [
+              62,
+              16,
+              192,
+              243
+            ],
+            "foot_from_bottom": 13,
+            "sha256": "3cddfe7296a77ce934131b00a196ffda7b166c6662c76ae5551e4f5a1446fef4"
+          },
+          {
+            "source": "0003.png",
+            "output": "gas_damage_03.png",
+            "bbox": [
+              62,
+              16,
+              192,
+              243
+            ],
+            "foot_from_bottom": 13,
+            "sha256": "e69a67e9eef7640d3bb510716575d94613709fc02db3cbd6c349d7ef2c140eea"
+          },
+          {
+            "source": "0004.png",
+            "output": "gas_damage_04.png",
+            "bbox": [
+              62,
+              18,
+              192,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "98a5a1e97a024d7aa69a48a99f457c72e7903a09bb46570cb34842eaaa6fe480"
+          },
+          {
+            "source": "0005.png",
+            "output": "gas_damage_05.png",
+            "bbox": [
+              62,
+              17,
+              192,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "b1102a5d4dd328f66e57dafe32483171c3b38c66b72a68ccad7dfc4a80a6feaf"
+          },
+          {
+            "source": "0006.png",
+            "output": "gas_damage_06.png",
+            "bbox": [
+              62,
+              17,
+              192,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "65bb4d94fa6f951fc2bef37d8caf3848ecf1ee5271583aaffed18b76d23420b8"
+          },
+          {
+            "source": "0007.png",
+            "output": "gas_damage_07.png",
+            "bbox": [
+              62,
+              17,
+              192,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "0b70c98db02898aa0e2f94ddce42d3a0192e2659d7ff0bda077d497a5569958c"
+          },
+          {
+            "source": "0008.png",
+            "output": "gas_damage_08.png",
+            "bbox": [
+              62,
+              18,
+              192,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "34d2e40cd97c8a0629054bf0f6b93302815179e261c7d710dfe1c324cbf909c3"
+          },
+          {
+            "source": "0009.png",
+            "output": "gas_damage_09.png",
+            "bbox": [
+              62,
+              18,
+              194,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "db3f0b0ee0aea2b0447424e64bf4bdaa760de54519f35577a26e2f54e7f3067c"
+          },
+          {
+            "source": "0010.png",
+            "output": "gas_damage_10.png",
+            "bbox": [
+              62,
+              18,
+              206,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "fcb6c83e13b6034a14323fba0f6652587341f18bf81ae5f92347c73a8aa3e74c"
+          },
+          {
+            "source": "0011.png",
+            "output": "gas_damage_11.png",
+            "bbox": [
+              62,
+              18,
+              206,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "4caa92aa2c7f3da6e9f9598c97731876685dc894e3da43cbc72c1d48012fee9e"
+          },
+          {
+            "source": "0012.png",
+            "output": "gas_damage_12.png",
+            "bbox": [
+              62,
+              18,
+              205,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "d384c99d68876de0304023ad01232d76ca19f04bd3a74e4f339824d18d58cc12"
+          },
+          {
+            "source": "0013.png",
+            "output": "gas_damage_13.png",
+            "bbox": [
+              62,
+              18,
+              202,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "398bf2375d53fcfc8d597265c1bb03ebb9da238352635492e07887ceda212514"
+          },
+          {
+            "source": "0014.png",
+            "output": "gas_damage_14.png",
+            "bbox": [
+              62,
+              18,
+              202,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "3bda0cc4b04127f6622696aa7a93c462f1e6cb1a9258790b6835a5055d4c77b5"
+          },
+          {
+            "source": "0015.png",
+            "output": "gas_damage_15.png",
+            "bbox": [
+              62,
+              18,
+              204,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "ecae6e4dc8c48526ace287e92ca32840d81529aef0f139390a1d28f4818db094"
+          },
+          {
+            "source": "0016.png",
+            "output": "gas_damage_16.png",
+            "bbox": [
+              62,
+              18,
+              205,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "e0e80b8a8e665b6def55a9833538658eac248bb869760cdcece742b23cc059c9"
+          },
+          {
+            "source": "0017.png",
+            "output": "gas_damage_17.png",
+            "bbox": [
+              62,
+              21,
+              207,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "cb0c57c13fcf3d043698fa1cd36b574110c7a7fa490e483255152924f34dceeb"
+          },
+          {
+            "source": "0018.png",
+            "output": "gas_damage_18.png",
+            "bbox": [
+              62,
+              20,
+              207,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "5b90492d0ae96b3aee699f4de48bcebcd3f94221edebcec169f6bebe94607c3d"
+          },
+          {
+            "source": "0019.png",
+            "output": "gas_damage_19.png",
+            "bbox": [
+              64,
+              20,
+              208,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "a324e50e942e18073dbe0fb0b8352279ea3a0e01546901cbfefe8ebf767c0d68"
+          },
+          {
+            "source": "0020.png",
+            "output": "gas_damage_20.png",
+            "bbox": [
+              64,
+              20,
+              208,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "7180e41dbd9f0dc53f28e2514f1bfed6f5bd02f46c15a0d7f30d3ca89283fa9f"
+          },
+          {
+            "source": "0021.png",
+            "output": "gas_damage_21.png",
+            "bbox": [
+              66,
+              24,
+              210,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "184f30a7b98a76889ab761db44ed83fee54b08b9694bab57b7c3c01f5dfd7be1"
+          },
+          {
+            "source": "0022.png",
+            "output": "gas_damage_22.png",
+            "bbox": [
+              66,
+              22,
+              208,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "27c561dc5495c8d0b820225802a4f61dd996393d637edfd3e7c2224feddd0abf"
+          },
+          {
+            "source": "0023.png",
+            "output": "gas_damage_23.png",
+            "bbox": [
+              66,
+              22,
+              208,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "ea0b4b79e054108a1514ce1983ef7e8456a5b2bbcecf81d979e7812d15db7b4b"
+          },
+          {
+            "source": "0024.png",
+            "output": "gas_damage_24.png",
+            "bbox": [
+              64,
+              21,
+              208,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "58bce9b6f52c590cac20700ad6e8c00196ef0cdde948b34b46cc8616aae39e06"
+          },
+          {
+            "source": "0025.png",
+            "output": "gas_damage_25.png",
+            "bbox": [
+              64,
+              21,
+              206,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "0ee7d3f79267ab92ce51b41a288cc59bbdda4155ca64e6f5e9048d7a608e5adb"
+          },
+          {
+            "source": "0026.png",
+            "output": "gas_damage_26.png",
+            "bbox": [
+              65,
+              20,
+              207,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "c48421bbb806f872b52c1a77a76eac92a6c43916fd6aee2fe422674b1c6dd7d0"
+          },
+          {
+            "source": "0027.png",
+            "output": "gas_damage_27.png",
+            "bbox": [
+              64,
+              20,
+              205,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "f6f403a1ac62a01141c2888e42698297ae5ad9caba9693a009194c608d58ee81"
+          },
+          {
+            "source": "0028.png",
+            "output": "gas_damage_28.png",
+            "bbox": [
+              64,
+              20,
+              205,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "3f5a1299ea92b909810eb4f15e6854f8dc2dd3628529672ff28224f03eb96f5b"
+          },
+          {
+            "source": "0029.png",
+            "output": "gas_damage_29.png",
+            "bbox": [
+              64,
+              20,
+              198,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "92f1fad9feff9452ccf199afc6f33cf14522737a099f09c86cf832195d78a6b8"
+          },
+          {
+            "source": "0030.png",
+            "output": "gas_damage_30.png",
+            "bbox": [
+              62,
+              20,
+              196,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "f7bf48513abe5b9c5e1a60e89fa03dba2f1131b873a3f7df23827670f64f224d"
+          },
+          {
+            "source": "0031.png",
+            "output": "gas_damage_31.png",
+            "bbox": [
+              62,
+              18,
+              194,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "3ea3773e75e934aa5ff142db6130e79278228ad140ac17196e375a2e2b1302e3"
+          },
+          {
+            "source": "0032.png",
+            "output": "gas_damage_32.png",
+            "bbox": [
+              62,
+              19,
+              192,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "7a9a71d6927e5768b562a8df20e5783f629583da334790d068fd6687e0aecf5f"
+          },
+          {
+            "source": "0033.png",
+            "output": "gas_damage_33.png",
+            "bbox": [
+              62,
+              19,
+              190,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "cb52cab43f3bd7363dfc6350fd79fdfa5dd24623f8e8d947c9b19766b759c96c"
+          },
+          {
+            "source": "0034.png",
+            "output": "gas_damage_34.png",
+            "bbox": [
+              62,
+              19,
+              190,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "8128d4a78e906f799ecb32deaf235637dc89e1851dc5277c376b39ebe0042b8a"
+          }
+        ]
+      },
+      "LadderClimb": {
+        "source": "female_new_nukki/new_ladder",
+        "count": 25,
+        "frames": [
+          {
+            "source": "0001.png",
+            "output": "ladder_climb_01.png",
+            "bbox": [
+              80,
+              30,
+              176,
+              237
+            ],
+            "foot_from_bottom": 19,
+            "sha256": "1d53bff4e51d266e29588942b156d8cecb9c5ed125f63226aab6ccfbec860620"
+          },
+          {
+            "source": "0002.png",
+            "output": "ladder_climb_02.png",
+            "bbox": [
+              80,
+              30,
+              172,
+              235
+            ],
+            "foot_from_bottom": 21,
+            "sha256": "558676c348212229a4ae278804b8c596a8f61f7f921d86c5e6bf25285b1fcc3e"
+          },
+          {
+            "source": "0003.png",
+            "output": "ladder_climb_03.png",
+            "bbox": [
+              74,
+              30,
+              175,
+              232
+            ],
+            "foot_from_bottom": 24,
+            "sha256": "33ccf0ca76ef6b7f8554b1d2e69296bf184ae57671ae1d7fb07bfb81df751cc1"
+          },
+          {
+            "source": "0004.png",
+            "output": "ladder_climb_04.png",
+            "bbox": [
+              72,
+              29,
+              171,
+              232
+            ],
+            "foot_from_bottom": 24,
+            "sha256": "917a77096a33c0282737ccd733003cf1f62b34d51ff48f530cc1790638874420"
+          },
+          {
+            "source": "0005.png",
+            "output": "ladder_climb_05.png",
+            "bbox": [
+              72,
+              28,
+              171,
+              234
+            ],
+            "foot_from_bottom": 22,
+            "sha256": "eda57d14aa953a0fa60560b68de42599058c74bf38bca775df4d89bc29358e50"
+          },
+          {
+            "source": "0006.png",
+            "output": "ladder_climb_06.png",
+            "bbox": [
+              75,
+              27,
+              170,
+              238
+            ],
+            "foot_from_bottom": 18,
+            "sha256": "0a0d63d0923c1df8b03b2557d4dfe3b0b21461f9b261543154eb72779d4eaf8d"
+          },
+          {
+            "source": "0007.png",
+            "output": "ladder_climb_07.png",
+            "bbox": [
+              77,
+              26,
+              170,
+              240
+            ],
+            "foot_from_bottom": 16,
+            "sha256": "d5f81531f34e71adfd1734eb939a366697be2fc714b15d28b05d7533e512ef3d"
+          },
+          {
+            "source": "0008.png",
+            "output": "ladder_climb_08.png",
+            "bbox": [
+              77,
+              24,
+              170,
+              239
+            ],
+            "foot_from_bottom": 17,
+            "sha256": "b7d7d1f1856321cb5857ff720ff69cfd8e12ca03eebb1b3d9c41df7525c0e1b1"
+          },
+          {
+            "source": "0009.png",
+            "output": "ladder_climb_09.png",
+            "bbox": [
+              78,
+              26,
+              170,
+              240
+            ],
+            "foot_from_bottom": 16,
+            "sha256": "829741f3574b08f67b41cf5238b429721e7001b4747544fa49b4891e61e0bd11"
+          },
+          {
+            "source": "0010.png",
+            "output": "ladder_climb_10.png",
+            "bbox": [
+              80,
+              27,
+              170,
+              238
+            ],
+            "foot_from_bottom": 18,
+            "sha256": "e380325aeb5fcefba96f1675d8c6f1657a7a2af0141428dc5ea06d95ec413108"
+          },
+          {
+            "source": "0011.png",
+            "output": "ladder_climb_11.png",
+            "bbox": [
+              80,
+              27,
+              172,
+              238
+            ],
+            "foot_from_bottom": 18,
+            "sha256": "f8e7ac0731f0cacdc0d6c83614c7fbfb3e04a15c302bd865e48a55ae599eba51"
+          },
+          {
+            "source": "0012.png",
+            "output": "ladder_climb_12.png",
+            "bbox": [
+              81,
+              28,
+              172,
+              234
+            ],
+            "foot_from_bottom": 22,
+            "sha256": "ac36d3383a7252d3fcc5c57eaefc48a6c3b672595d1211aff251ea0c38e5d2ba"
+          },
+          {
+            "source": "0013.png",
+            "output": "ladder_climb_13.png",
+            "bbox": [
+              82,
+              29,
+              176,
+              230
+            ],
+            "foot_from_bottom": 26,
+            "sha256": "40979636467188e5cba70b0dc853838eb98c85a2708eb9ba5944cda1a1c1d346"
+          },
+          {
+            "source": "0014.png",
+            "output": "ladder_climb_14.png",
+            "bbox": [
+              82,
+              28,
+              176,
+              231
+            ],
+            "foot_from_bottom": 25,
+            "sha256": "d48af1bb954088aab7f08d4b99ce44a0df6c9a9b5ab9602adb5194234b08a17f"
+          },
+          {
+            "source": "0015.png",
+            "output": "ladder_climb_15.png",
+            "bbox": [
+              82,
+              28,
+              180,
+              231
+            ],
+            "foot_from_bottom": 25,
+            "sha256": "5240e8e2bc931d4c86e4d5a64814a84a5099fc4cc4d8a606886fbd18becf551a"
+          },
+          {
+            "source": "0016.png",
+            "output": "ladder_climb_16.png",
+            "bbox": [
+              78,
+              27,
+              182,
+              231
+            ],
+            "foot_from_bottom": 25,
+            "sha256": "e04100faf457bdfc0863e0f07f716ecbaf23c3554545ec3b37c08cb476c70219"
+          },
+          {
+            "source": "0017.png",
+            "output": "ladder_climb_17.png",
+            "bbox": [
+              84,
+              26,
+              182,
+              232
+            ],
+            "foot_from_bottom": 24,
+            "sha256": "5bc361167cb8e10b49ee11e4ebe31ee67a30fc901d1c5c43583b9fa937ca7e98"
+          },
+          {
+            "source": "0018.png",
+            "output": "ladder_climb_18.png",
+            "bbox": [
+              86,
+              25,
+              186,
+              234
+            ],
+            "foot_from_bottom": 22,
+            "sha256": "270fccc2c89706f30f86b16e1a31f27caeac0560e7280766e05512241113ae53"
+          },
+          {
+            "source": "0019.png",
+            "output": "ladder_climb_19.png",
+            "bbox": [
+              86,
+              24,
+              184,
+              235
+            ],
+            "foot_from_bottom": 21,
+            "sha256": "2a2a8e44a3aadd060bc05536897e2c5b8d84fa212c6a376bca36cfca71c52a5a"
+          },
+          {
+            "source": "0020.png",
+            "output": "ladder_climb_20.png",
+            "bbox": [
+              87,
+              24,
+              179,
+              237
+            ],
+            "foot_from_bottom": 19,
+            "sha256": "0cbe11dd3c54eda64e33f388b75d0bba1bedd6255f4ab640e24ff904ee07385e"
+          },
+          {
+            "source": "0021.png",
+            "output": "ladder_climb_21.png",
+            "bbox": [
+              88,
+              24,
+              177,
+              239
+            ],
+            "foot_from_bottom": 17,
+            "sha256": "1c753ae3c901b8d13089b1a75bd648fa21234a748a5a84ad2deb0b7faab95404"
+          },
+          {
+            "source": "0022.png",
+            "output": "ladder_climb_22.png",
+            "bbox": [
+              87,
+              24,
+              176,
+              240
+            ],
+            "foot_from_bottom": 16,
+            "sha256": "b07b7a7c7f78325bfd954f8df2450b4f51a2ecb9f23b5144d745c3c8c2c99d35"
+          },
+          {
+            "source": "0023.png",
+            "output": "ladder_climb_23.png",
+            "bbox": [
+              87,
+              24,
+              176,
+              240
+            ],
+            "foot_from_bottom": 16,
+            "sha256": "1187d5642e99f3dd664a409b6172065c0092aa9635a01ee8883eec616eda869d"
+          },
+          {
+            "source": "0024.png",
+            "output": "ladder_climb_24.png",
+            "bbox": [
+              86,
+              25,
+              174,
+              240
+            ],
+            "foot_from_bottom": 16,
+            "sha256": "8b116fb90390a7ca818005e2bcd559acf80755e2d3acbdb22db0e15f99959298"
+          },
+          {
+            "source": "0025.png",
+            "output": "ladder_climb_25.png",
+            "bbox": [
+              78,
+              26,
+              172,
+              238
+            ],
+            "foot_from_bottom": 18,
+            "sha256": "720681db75ac96d4f318521a730cb13f39fca314bf6a4f6ef52610611806c803"
+          }
+        ]
+      },
+      "LadderHit": {
+        "source": "female_new_nukki/ladder_hit",
+        "count": 25,
+        "frames": [
+          {
+            "source": "0001.png",
+            "output": "ladder_hit_01.png",
+            "bbox": [
+              72,
+              16,
+              178,
+              243
+            ],
+            "foot_from_bottom": 13,
+            "sha256": "cbf47867169ddc3fe31e21ad45e4c2ef01e59a6205d9bb064350d294114873de"
+          },
+          {
+            "source": "0002.png",
+            "output": "ladder_hit_02.png",
+            "bbox": [
+              71,
+              15,
+              178,
+              243
+            ],
+            "foot_from_bottom": 13,
+            "sha256": "142ab456941282acea6a439fb40cd125920e5d005ddbc2b5dfb5d6e993ba3d78"
+          },
+          {
+            "source": "0003.png",
+            "output": "ladder_hit_03.png",
+            "bbox": [
+              72,
+              15,
+              182,
+              243
+            ],
+            "foot_from_bottom": 13,
+            "sha256": "1360a6d38232d167f9e544c5220f5fc7a7c7f21a7bffac0f38dfde8ac40a3428"
+          },
+          {
+            "source": "0004.png",
+            "output": "ladder_hit_04.png",
+            "bbox": [
+              72,
+              15,
+              186,
+              243
+            ],
+            "foot_from_bottom": 13,
+            "sha256": "8f429b3f46c5a0ad965538900b22abaa4546d2da5cbf9cafd9683dfea5242357"
+          },
+          {
+            "source": "0005.png",
+            "output": "ladder_hit_05.png",
+            "bbox": [
+              71,
+              16,
+              184,
+              243
+            ],
+            "foot_from_bottom": 13,
+            "sha256": "a4ea2f02b90fbf88e75083243bfdb26cb6949b82570e8cd814b8f9d620dca5c4"
+          },
+          {
+            "source": "0006.png",
+            "output": "ladder_hit_06.png",
+            "bbox": [
+              70,
+              15,
+              186,
+              243
+            ],
+            "foot_from_bottom": 13,
+            "sha256": "998d4ddc31a24a44efa6a190f0f0b7bd26034585f92e8460de48239c3df7b7e1"
+          },
+          {
+            "source": "0007.png",
+            "output": "ladder_hit_07.png",
+            "bbox": [
+              70,
+              15,
+              186,
+              243
+            ],
+            "foot_from_bottom": 13,
+            "sha256": "3fd45a1dabca8991786bfb0ef75c134680d635483aab6a10721338359399d465"
+          },
+          {
+            "source": "0008.png",
+            "output": "ladder_hit_08.png",
+            "bbox": [
+              71,
+              16,
+              185,
+              243
+            ],
+            "foot_from_bottom": 13,
+            "sha256": "7e179fceafe2799a0d1a80b7fabd478e29b444051b0f6cf914020e05e79192e5"
+          },
+          {
+            "source": "0009.png",
+            "output": "ladder_hit_09.png",
+            "bbox": [
+              71,
+              16,
+              184,
+              243
+            ],
+            "foot_from_bottom": 13,
+            "sha256": "fc3d1181a3f2d2da172e2226aabb37f16330101c5afbcf41c560ce9dedd0364e"
+          },
+          {
+            "source": "0010.png",
+            "output": "ladder_hit_10.png",
+            "bbox": [
+              70,
+              16,
+              184,
+              243
+            ],
+            "foot_from_bottom": 13,
+            "sha256": "059baa1167ec84b2936934d6e197d5a6352bb8a94f6f8f16a355aaf1b571a703"
+          },
+          {
+            "source": "0011.png",
+            "output": "ladder_hit_11.png",
+            "bbox": [
+              64,
+              19,
+              182,
+              243
+            ],
+            "foot_from_bottom": 13,
+            "sha256": "36899f9b7225060825c40fd74364bad56b446132dd89f134c3f665fcc15fc281"
+          },
+          {
+            "source": "0012.png",
+            "output": "ladder_hit_12.png",
+            "bbox": [
+              62,
+              25,
+              180,
+              243
+            ],
+            "foot_from_bottom": 13,
+            "sha256": "8fd62086d8d181d8b70b1f01d23216f31b953923c9a373cb0e2de8ef8cced40f"
+          },
+          {
+            "source": "0013.png",
+            "output": "ladder_hit_13.png",
+            "bbox": [
+              61,
+              25,
+              180,
+              243
+            ],
+            "foot_from_bottom": 13,
+            "sha256": "04f596321678c676e4e33166d1640d1a42c20dd215f45730c62bf0d4d51e804e"
+          },
+          {
+            "source": "0014.png",
+            "output": "ladder_hit_14.png",
+            "bbox": [
+              60,
+              27,
+              180,
+              243
+            ],
+            "foot_from_bottom": 13,
+            "sha256": "0348bf88825564bf30561ceadfbeb76380bd9032beede1e14e7ec712074da2b1"
+          },
+          {
+            "source": "0015.png",
+            "output": "ladder_hit_15.png",
+            "bbox": [
+              63,
+              26,
+              182,
+              243
+            ],
+            "foot_from_bottom": 13,
+            "sha256": "73f6dc4d581fe03c9169ea24df07470e80a4aa50e9a6f2c7427e2cf81166cb57"
+          },
+          {
+            "source": "0016.png",
+            "output": "ladder_hit_16.png",
+            "bbox": [
+              61,
+              27,
+              181,
+              243
+            ],
+            "foot_from_bottom": 13,
+            "sha256": "499b0a04a966046ce6b665522b33953de45c3a2f95db8cb764abc2a5beb7cdef"
+          },
+          {
+            "source": "0017.png",
+            "output": "ladder_hit_17.png",
+            "bbox": [
+              61,
+              25,
+              182,
+              243
+            ],
+            "foot_from_bottom": 13,
+            "sha256": "344b350fa80b9ed18bd0390efac35ac1b5f19ffddea261d6b8acc29d2e3e22e7"
+          },
+          {
+            "source": "0018.png",
+            "output": "ladder_hit_18.png",
+            "bbox": [
+              61,
+              27,
+              182,
+              243
+            ],
+            "foot_from_bottom": 13,
+            "sha256": "f554a2c9e9d831364159d5a0b09d6f71178612d635019bf2caf010a7486d425c"
+          },
+          {
+            "source": "0019.png",
+            "output": "ladder_hit_19.png",
+            "bbox": [
+              64,
+              23,
+              182,
+              243
+            ],
+            "foot_from_bottom": 13,
+            "sha256": "86125906e529b050c74c542a542ce767dad533fa0fecb09bdb100dfe272ba00f"
+          },
+          {
+            "source": "0020.png",
+            "output": "ladder_hit_20.png",
+            "bbox": [
+              67,
+              18,
+              184,
+              243
+            ],
+            "foot_from_bottom": 13,
+            "sha256": "9b9bb8ebd576fd69c3149e38e282370692bf1fd72e40fb2a5ba25b52a2e43e9d"
+          },
+          {
+            "source": "0021.png",
+            "output": "ladder_hit_21.png",
+            "bbox": [
+              66,
+              18,
+              184,
+              243
+            ],
+            "foot_from_bottom": 13,
+            "sha256": "f9b24513763d8ff340ca7f2b62b5617d2e1a16e61d5b28a78a8b3ec8844da3ca"
+          },
+          {
+            "source": "0022.png",
+            "output": "ladder_hit_22.png",
+            "bbox": [
+              70,
+              16,
+              183,
+              243
+            ],
+            "foot_from_bottom": 13,
+            "sha256": "c08f3929cabf1720afa9a3a6e655aebd109a92247a1726b395ee7e77ded5e66d"
+          },
+          {
+            "source": "0023.png",
+            "output": "ladder_hit_23.png",
+            "bbox": [
+              72,
+              16,
+              181,
+              243
+            ],
+            "foot_from_bottom": 13,
+            "sha256": "edddbd09df662854be2d55c953ce7bb09e855cdc7f13ab0d622956ee88567d7f"
+          },
+          {
+            "source": "0024.png",
+            "output": "ladder_hit_24.png",
+            "bbox": [
+              73,
+              16,
+              178,
+              243
+            ],
+            "foot_from_bottom": 13,
+            "sha256": "b55c4b00aee6c9628daea751841bee9de4f6af4ad53735e75f2ad211224464b6"
+          },
+          {
+            "source": "0025.png",
+            "output": "ladder_hit_25.png",
+            "bbox": [
+              72,
+              16,
+              178,
+              243
+            ],
+            "foot_from_bottom": 13,
+            "sha256": "affdbe75bea81dd5503e5460541bd3a87eb3d281e3fe25556d2e6a6548628d0c"
+          }
+        ]
+      },
+      "LadderMiningV2": {
+        "source": "female_new_nukki/laddermining",
+        "count": 25,
+        "frames": [
+          {
+            "source": "0001.png",
+            "output": "ladder_mining_v2_01.png",
+            "bbox": [
+              72,
+              15,
+              180,
+              250
+            ],
+            "foot_from_bottom": 6,
+            "sha256": "4c37cb051fa856e54582ddd62d8fd57a289502a4811f9f06bc70d7f904394764"
+          },
+          {
+            "source": "0002.png",
+            "output": "ladder_mining_v2_02.png",
+            "bbox": [
+              71,
+              15,
+              180,
+              250
+            ],
+            "foot_from_bottom": 6,
+            "sha256": "d850aa555b8eb61400858d30985fec701a3cf75dbae5dfca0df847eff98c14fa"
+          },
+          {
+            "source": "0003.png",
+            "output": "ladder_mining_v2_03.png",
+            "bbox": [
+              66,
+              18,
+              176,
+              250
+            ],
+            "foot_from_bottom": 6,
+            "sha256": "92f4559918109cf2290e922330e4872d32a5a54bd654a184803e5f5100541b43"
+          },
+          {
+            "source": "0004.png",
+            "output": "ladder_mining_v2_04.png",
+            "bbox": [
+              56,
+              17,
+              181,
+              248
+            ],
+            "foot_from_bottom": 8,
+            "sha256": "a75650af925c172bf7606d87cb8fa67a279993ff9de00bf15f0bfa91bbaca98c"
+          },
+          {
+            "source": "0005.png",
+            "output": "ladder_mining_v2_05.png",
+            "bbox": [
+              39,
+              13,
+              203,
+              246
+            ],
+            "foot_from_bottom": 10,
+            "sha256": "2e0ada738b129dcc8c742b1c3d170172f397d7d69d7827224cb3c23e1fbcb679"
+          },
+          {
+            "source": "0006.png",
+            "output": "ladder_mining_v2_06.png",
+            "bbox": [
+              43,
+              10,
+              220,
+              245
+            ],
+            "foot_from_bottom": 11,
+            "sha256": "ee00e70eb955399b1cf7a0a63aabfe6a1e8416bc5458a2436e5c632a92f3384e"
+          },
+          {
+            "source": "0007.png",
+            "output": "ladder_mining_v2_07.png",
+            "bbox": [
+              52,
+              8,
+              232,
+              245
+            ],
+            "foot_from_bottom": 11,
+            "sha256": "26cee2235a6be4dffd7e59c8526027405ab20f743923fab4984e222fc32110cb"
+          },
+          {
+            "source": "0008.png",
+            "output": "ladder_mining_v2_08.png",
+            "bbox": [
+              56,
+              6,
+              234,
+              245
+            ],
+            "foot_from_bottom": 11,
+            "sha256": "b56d7523fd458b86d7b22fd1717336071fd5147e52695007e57ac7ae02b84fe4"
+          },
+          {
+            "source": "0009.png",
+            "output": "ladder_mining_v2_09.png",
+            "bbox": [
+              57,
+              6,
+              234,
+              245
+            ],
+            "foot_from_bottom": 11,
+            "sha256": "76c49a91f773bf4227fe7f12d6dcbd6026b1d391e622134095df2253eea3b706"
+          },
+          {
+            "source": "0010.png",
+            "output": "ladder_mining_v2_10.png",
+            "bbox": [
+              57,
+              6,
+              234,
+              245
+            ],
+            "foot_from_bottom": 11,
+            "sha256": "d0e94c90e6e6c69067390ba90452ed8fca7cbf1eda147caf772c4c218273c2b3"
+          },
+          {
+            "source": "0011.png",
+            "output": "ladder_mining_v2_11.png",
+            "bbox": [
+              56,
+              6,
+              231,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "b761568f3a0995d7079a3b42b8f65a7280ac725cdcee5af7e6f419de7b7d0716"
+          },
+          {
+            "source": "0012.png",
+            "output": "ladder_mining_v2_12.png",
+            "bbox": [
+              56,
+              6,
+              232,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "998e171898c505b6776482dd2f6385fc3a7c3f9801683e90b6a974d02a48b888"
+          },
+          {
+            "source": "0013.png",
+            "output": "ladder_mining_v2_13.png",
+            "bbox": [
+              56,
+              6,
+              232,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "5809b84de9806d8de22a5f6d01073a7b3b190f162ac1bbae06a7ca63dad5196a"
+          },
+          {
+            "source": "0014.png",
+            "output": "ladder_mining_v2_14.png",
+            "bbox": [
+              56,
+              6,
+              231,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "de585f97df094fd3b4eec75e979146ada8d7514d6310c774630338da625aaa0e"
+          },
+          {
+            "source": "0015.png",
+            "output": "ladder_mining_v2_15.png",
+            "bbox": [
+              56,
+              6,
+              231,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "48e77919ed9790ce640cdcbf24237a7622aa058e3b36c752dba1e1e0df1e849b"
+          },
+          {
+            "source": "0016.png",
+            "output": "ladder_mining_v2_16.png",
+            "bbox": [
+              56,
+              6,
+              231,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "74788babdbe5ae800f9f0f96af3d6fb84c87ac2ac52c256e31faaec07471b17e"
+          },
+          {
+            "source": "0017.png",
+            "output": "ladder_mining_v2_17.png",
+            "bbox": [
+              54,
+              6,
+              232,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "4a7afdab8189f9e6caa59302ce8c9396acb4f0f9e18d55bccf792fa5d906400e"
+          },
+          {
+            "source": "0018.png",
+            "output": "ladder_mining_v2_18.png",
+            "bbox": [
+              52,
+              6,
+              230,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "8b1f28ce80eaab9b25add4579b16c1aea02416f8700ed0ee91f5673020659f5b"
+          },
+          {
+            "source": "0019.png",
+            "output": "ladder_mining_v2_19.png",
+            "bbox": [
+              48,
+              6,
+              230,
+              244
+            ],
+            "foot_from_bottom": 12,
+            "sha256": "f066f224a69302f567d39a7de720c7646aeb3a0aecc31befd6bceb06603652f7"
+          },
+          {
+            "source": "0020.png",
+            "output": "ladder_mining_v2_20.png",
+            "bbox": [
+              48,
+              12,
+              223,
+              246
+            ],
+            "foot_from_bottom": 10,
+            "sha256": "855f458033a82f794373ce83cbdc523665ce5b160615a09dd72f20a7b1cf2f00"
+          },
+          {
+            "source": "0021.png",
+            "output": "ladder_mining_v2_21.png",
+            "bbox": [
+              54,
+              18,
+              203,
+              246
+            ],
+            "foot_from_bottom": 10,
+            "sha256": "bd5c8bcc897f4734a6a0f3d448d96e62a7d9fca480d43b432ce535b01115da21"
+          },
+          {
+            "source": "0022.png",
+            "output": "ladder_mining_v2_22.png",
+            "bbox": [
+              61,
+              18,
+              180,
+              246
+            ],
+            "foot_from_bottom": 10,
+            "sha256": "0dc58c8f509f3e347b9f9a9bf6f99770a95c8484275e68955c9ca57cecb00866"
+          },
+          {
+            "source": "0023.png",
+            "output": "ladder_mining_v2_23.png",
+            "bbox": [
+              71,
+              16,
+              182,
+              247
+            ],
+            "foot_from_bottom": 9,
+            "sha256": "18772e0672ca5d243a1b82ab13a4d532dd0b0672e5ef1690d3b9972344812779"
+          },
+          {
+            "source": "0024.png",
+            "output": "ladder_mining_v2_24.png",
+            "bbox": [
+              72,
+              16,
+              182,
+              247
+            ],
+            "foot_from_bottom": 9,
+            "sha256": "43afe1023db9ae4fc7adb5f4c78617b5d2a1dab588456a6461aca3c69b650f66"
+          },
+          {
+            "source": "0025.png",
+            "output": "ladder_mining_v2_25.png",
+            "bbox": [
+              72,
+              16,
+              180,
+              247
+            ],
+            "foot_from_bottom": 9,
+            "sha256": "2b3db4d087271760f6eb8a5ef51dee55a64f35815e4851c72195d5578a8dba6e"
+          }
+        ]
+      }
+    }
+  }
+}
