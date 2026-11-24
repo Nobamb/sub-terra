@@ -516,6 +516,46 @@ namespace SubTerra.App.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator Issue372_LandingGuideRendersLabeledRowAndRetainsTip()
+        {
+            yield return Load();
+            var chrome = Chrome();
+            chrome.OpenGameGuide();
+            var popup = Popup();
+            yield return WaitOpen(popup);
+            popup.GuideState.SelectTab(GuideTabKind.Mechanics);
+            popup.GuideState.SelectCard("mech.landing");
+            yield return null;
+            Canvas.ForceUpdateCanvases();
+
+            var label = popup.GetComponentsInChildren<TMP_Text>(false).Single(t => t.name == "DataLabel");
+            Assert.That(label.text, Is.EqualTo("추락 시"));
+            var rows = label.transform.parent;
+            var body = rows.Find("DataText").GetComponent<TMP_Text>();
+            Assert.That(body.text, Is.EqualTo("높은 높이에서 떨어질수록, 인벤토리의 무게가 무거울 수록 착지 피해가 커지게 됩니다. 완충판 위에 착지하게 될 경우, 피해가 10%까지 줄어들게 됩니다."));
+            Assert.That(body.rectTransform.anchoredPosition.x, Is.GreaterThan(label.rectTransform.anchoredPosition.x));
+            var topDivider = (RectTransform)rows.Find("LandingRowTopDivider");
+            var bottomDivider = (RectTransform)rows.Find("Divider");
+            Assert.That(topDivider, Is.Not.Null);
+            Assert.That(bottomDivider, Is.Not.Null);
+            Assert.That(topDivider.gameObject.activeInHierarchy && bottomDivider.gameObject.activeInHierarchy, Is.True);
+            Assert.That(topDivider.anchoredPosition.y, Is.GreaterThan(label.rectTransform.anchoredPosition.y));
+            Assert.That(bottomDivider.anchoredPosition.y, Is.LessThan(body.rectTransform.anchoredPosition.y));
+            Assert.That(rows.Find("Tip/Text").GetComponent<TMP_Text>().text,
+                Is.EqualTo("높은 곳에서 내려올 때는 짐을 비우거나, 사다리를 이용하거나, 완충판 위에 착지하면 피해를 줄일 수 있습니다."));
+            Assert.That(rows.Find("Related_fac.support"), Is.Not.Null);
+            Assert.That(rows.Find("Related_mech.cargo"), Is.Not.Null);
+
+            if (!Application.isBatchMode)
+            {
+                Directory.CreateDirectory("Builds/Issue372-20261124");
+                yield return UiTestWait.Capture("Builds/Issue372-20261124/landing.png");
+            }
+            chrome.CloseGameGuide();
+            yield return WaitHidden(popup);
+        }
+
+        [UnityTest]
         public IEnumerator Guide_FitsRepresentativeResolutions_WithoutClippedText()
         {
             yield return Load();
