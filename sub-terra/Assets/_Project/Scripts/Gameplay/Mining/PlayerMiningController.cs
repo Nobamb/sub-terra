@@ -36,6 +36,7 @@ namespace SubTerra.Gameplay.Mining
         private bool enterMiningSuppressed;
         private bool activeMiningOnLadder;
         private bool hasMiningAnimationContext;
+        private bool wasHitStunned;
         private readonly MiningTargetPriority targetPriority = new MiningTargetPriority();
         private MiningTargetReticle reticle;
         private Vector2 lastReticleDirection;
@@ -103,6 +104,7 @@ namespace SubTerra.Gameplay.Mining
             miningInputPressedLastFrame = false;
             lastMiningDirection = Vector2.zero;
             hasMiningAnimationContext = false;
+            wasHitStunned = false;
             lastReticleDirection = Vector2.zero;
             targetPriority.Reset();
             if (reticle != null) reticle.Present(false, default, Vector2.one, 0f);
@@ -136,6 +138,11 @@ namespace SubTerra.Gameplay.Mining
                 if (animationController != null) animationController.InterruptMining();
                 startPending = false;
                 hasMiningAnimationContext = false;
+                return;
+            }
+
+            if (HandleHitStun())
+            {
                 return;
             }
 
@@ -204,6 +211,44 @@ namespace SubTerra.Gameplay.Mining
 
             ShowMiningAnimation();
             miningSystem.TickMining(Time.deltaTime, movement.Position, reach);
+        }
+
+        /// <summary>
+        /// B-210: 피격 경직 중에는 채굴 진행을 멈추고 새 채굴을 받지 않는다(진행도는 그대로 둔다).
+        /// 경직이 끝날 때 채굴 버튼을 계속 누르고 있으면 이어서 채굴하고(그림은 ResumeAfterDamage),
+        /// 떼었으면 그 블록 채굴을 끝낸다. 버튼만 누르고 있던 경우에는 새 목표를 다시 잡는다.
+        /// </summary>
+        private bool HandleHitStun()
+        {
+            if (movement.IsHitStunned)
+            {
+                wasHitStunned = true;
+                startPending = false;
+                miningInputPressedLastFrame = IsMiningInputPressed();
+                lastMiningDirection = PlayerKeyboardControls.ReadMiningDirection(ControlPreferences.Scheme);
+                return true;
+            }
+
+            if (!wasHitStunned)
+            {
+                return false;
+            }
+
+            wasHitStunned = false;
+            bool held = IsMiningInputPressed();
+            miningInputPressedLastFrame = held;
+            if (miningSystem.IsMining && !held)
+            {
+                miningSystem.CancelMining();
+                if (animationController != null) animationController.SetMining(false);
+                hasMiningAnimationContext = false;
+            }
+            else if (!miningSystem.IsMining && held)
+            {
+                CaptureCurrentTarget();
+            }
+
+            return false;
         }
 
         private void LateUpdate()

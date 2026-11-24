@@ -147,9 +147,9 @@ namespace SubTerra.App.UI.ControlTerminal
             var to = up ? high : low;
             var fade = LoopFade(duration, 0.15f, 1.75f);
             var ladder = Spr(clip, "player.ladder.1", PlayerHeight, 56f, from).Fade(fade)
-                .Animate("player.ladder", 8, 8f, "player.ladder.1", H(0f, 0f, 0.2f, 1f, 1.5f, 0f))
+                .Animate("player.ladder", GuidePlayerArt.MaleLadderFrameCount, GuidePlayerArt.LadderFps(SubTerra.Shared.PlayerGender.Male),
+                    "player.ladder.1", H(0f, 0f, 0.2f, 1f, 1.5f, 0f))
                 .PosY(S(0f, from, 0.2f, from, 1.5f, to, duration, to));
-            ladder.FrameKeys = new[] { "player.ladder.1", "player.ladder.2", "player.ladder.3", "player.ladder.2", "player.ladder.1", "player.ladder.4", "player.ladder.5", "player.ladder.4" };
             Arrow(clip, "art.arrowup", 92f, 24f, Teal, up ? 0f : 180f, fade);
             return clip;
         }

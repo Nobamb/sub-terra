@@ -133,7 +133,7 @@ namespace SubTerra.App.Tests.PlayMode.MineDemo
             yield return UiTestWait.Capture("Temp/b174-play-evidence/ladder-idle.png");
             var fields = new SerializedObject(animation);
             var frames = fields.FindProperty("ladderMiningFrames");
-            Assert.That(frames.arraySize, Is.EqualTo(24));
+            Assert.That(frames.arraySize, Is.EqualTo(25), "B-210 새 사다리 채굴 25장");
             int initialFrame = Time.frameCount;
             foreach (int side in new[] { 1, -1 })
             {
@@ -150,7 +150,7 @@ namespace SubTerra.App.Tests.PlayMode.MineDemo
                 yield return null;
                 Assert.That(Mathf.Sign(renderer.transform.localScale.x), Is.EqualTo(side), "ActiveCell로 방향 결정");
                 yield return UiTestWait.Capture("Temp/b174-play-evidence/" + side + "-start.png");
-                yield return UiTestWait.Until(() => sequence.FrameIndex >= 12 && sequence.FrameIndex <= 15,
+                yield return UiTestWait.Until(() => sequence.FrameIndex >= 8 && sequence.FrameIndex <= 17,
                     "B174 work loop", 3f);
                 Assert.That(mining.IsMining, Is.True, "버튼을 누르지 않아도 계속 채굴");
                 var seen = new HashSet<int>();
@@ -160,7 +160,7 @@ namespace SubTerra.App.Tests.PlayMode.MineDemo
                     seen.Add(sequence.FrameIndex);
                     yield return null;
                 }
-                CollectionAssert.AreEquivalent(new[] { 12, 13, 14, 15 }, seen);
+                CollectionAssert.AreEquivalent(new[] { 8, 9, 10, 11, 12, 13, 14, 15, 16, 17 }, seen);
                 yield return UiTestWait.Capture("Temp/b174-play-evidence/" + side + "-work.png");
                 int completionFrame = -1;
                 Action<MiningProgressState> observe = progress =>
@@ -170,7 +170,7 @@ namespace SubTerra.App.Tests.PlayMode.MineDemo
                 mining.ProgressChanged += observe;
                 mining.TickMining(10f);
                 mining.ProgressChanged -= observe;
-                Assert.That(completionFrame, Is.EqualTo(16), "완료 이벤트 안에서 즉시 17번");
+                Assert.That(completionFrame, Is.EqualTo(18), "완료 이벤트 안에서 즉시 19번");
                 yield return UiTestWait.Capture("Temp/b174-play-evidence/" + side + "-finish.png");
                 yield return UiTestWait.Until(() => animation.IsShowingLadderVisual, "B174 ladder return", 2f);
                 Assert.That(renderer.transform.localScale.x, Is.GreaterThan(0f));

@@ -223,9 +223,9 @@ namespace SubTerra.App.UI.Guide
 
             Tile(c, "tile.ground", 90f, -43f);
             var ladder = Spr(c, "player.ladder.1", PlayerHeight, 56f, 0f)
-                .Animate("player.ladder", 8, 8f, "player.ladder.1", H(0f, 0f, 0.25f, 1f, 1.55f, 0f, 1.85f, 1f, 3.15f, 0f))
+                .Animate("player.ladder", GuidePlayerArt.MaleLadderFrameCount, GuidePlayerArt.LadderFps(SubTerra.Shared.PlayerGender.Male),
+                    "player.ladder.1", H(0f, 0f, 0.25f, 1f, 1.55f, 0f, 1.85f, 1f, 3.15f, 0f))
                 .PosY(S(0f, -8f, 0.25f, -8f, 1.55f, 34f, 1.85f, 34f, 3.15f, -8f, 3.6f, -8f));
-            ladder.FrameKeys = new[] { "player.ladder.1", "player.ladder.2", "player.ladder.3", "player.ladder.2", "player.ladder.1", "player.ladder.4", "player.ladder.5", "player.ladder.4" };
             Spr(c, "art.arrowup", 16f, 84f, 14f).Color_(Teal)
                 .Fade(S(0f, 0f, 0.3f, 1f, 1.45f, 1f, 1.55f, 0f, 3.6f, 0f));
             Spr(c, "art.arrowup", 16f, 84f, 14f).Color_(Teal).Rot(K(180f))
@@ -718,7 +718,8 @@ namespace SubTerra.App.UI.Guide
                 Spr(c, "fac.ladder", Unit, 30f, GroundTop + Unit * 0.5f + i * Unit);
             }
 
-            Spr(c, "player.ladder.1", PlayerHeight, 30f, 6f).Animate("player.ladder", 5, 8f, "player.ladder.1", K(1f))
+            Spr(c, "player.ladder.1", PlayerHeight, 30f, 6f).Animate("player.ladder", GuidePlayerArt.MaleLadderFrameCount,
+                    GuidePlayerArt.LadderFps(SubTerra.Shared.PlayerGender.Male), "player.ladder.1", K(1f))
                 .PosY(S(0f, -8f, 1.5f, 30f, 3f, -8f));
             return c;
         }

@@ -17,6 +17,31 @@ namespace SubTerra.Gameplay.Player
         public float restartGraceSeconds = 0.15f;
     }
 
+    /// <summary>
+    /// B-210: 그림 세트별 사다리 채굴 구간(1부터). 비어 있으면(IsSet false) 컨트롤러 설정값을 쓴다.
+    /// </summary>
+    [Serializable]
+    public struct PlayerLadderMiningFrameRanges
+    {
+        public int startLastFrame;
+        public int workFirstFrame;
+        public int workLastFrame;
+        public int finishFirstFrame;
+        public int finishLastFrame;
+
+        public PlayerLadderMiningFrameRanges(int startLast, int workFirst, int workLast, int finishFirst, int finishLast)
+        {
+            startLastFrame = startLast;
+            workFirstFrame = workFirst;
+            workLastFrame = workLast;
+            finishFirstFrame = finishFirst;
+            finishLastFrame = finishLast;
+        }
+
+        public bool IsSet => startLastFrame > 0 && workFirstFrame > 0 && workLastFrame >= workFirstFrame
+            && finishFirstFrame > 0 && finishLastFrame >= finishFirstFrame;
+    }
+
     // Unity 시간·채굴 판정과 분리된 사다리 전용 그림 순서. 설정의 그림 번호는 1부터다.
     public sealed class PlayerLadderMiningAnimationSequence
     {
@@ -29,6 +54,7 @@ namespace SubTerra.Gameplay.Player
         private int cancelledDirection;
         private int workStep = 1;
         private int frameCount;
+        private PlayerLadderMiningFrameRanges ranges;
 
         public int FrameIndex { get; private set; }
         public int Direction { get; private set; } = 1;
@@ -40,9 +66,25 @@ namespace SubTerra.Gameplay.Player
             frameCount = Math.Max(0, count);
         }
 
-        private int FinishLastFrame => frameCount > 0
-            ? Math.Min(settings.finishLastFrame, frameCount)
-            : settings.finishLastFrame;
+        /// <summary>B-210: 세트별 구간. 비어 있으면 설정값을 쓴다.</summary>
+        public void SetFrameRanges(PlayerLadderMiningFrameRanges frameRanges)
+        {
+            ranges = frameRanges;
+        }
+
+        public int StartLastFrame => ranges.IsSet ? ranges.startLastFrame : settings.startLastFrame;
+        public int WorkFirstFrame => ranges.IsSet ? ranges.workFirstFrame : settings.workFirstFrame;
+        public int WorkLastFrame => ranges.IsSet ? ranges.workLastFrame : settings.workLastFrame;
+        public int FinishFirstFrame => ranges.IsSet ? ranges.finishFirstFrame : settings.finishFirstFrame;
+
+        public int FinishLastFrame
+        {
+            get
+            {
+                int last = ranges.IsSet ? ranges.finishLastFrame : settings.finishLastFrame;
+                return frameCount > 0 ? Math.Min(last, frameCount) : last;
+            }
+        }
 
         public PlayerLadderMiningAnimationSequence(PlayerLadderMiningAnimationSettings settings)
         {
@@ -54,7 +96,7 @@ namespace SubTerra.Gameplay.Player
             Direction = direction < 0 ? -1 : 1;
             bool resume = phase != Phase.Finish && Direction == cancelledDirection
                 && sinceCancelled <= settings.restartGraceSeconds;
-            FrameIndex = resume ? settings.workFirstFrame - 1 : 0;
+            FrameIndex = resume ? WorkFirstFrame - 1 : 0;
             phase = resume ? Phase.Work : Phase.Start;
             workStep = 1;
             elapsed = 0f;
@@ -63,7 +105,7 @@ namespace SubTerra.Gameplay.Player
 
         public void Complete()
         {
-            FrameIndex = settings.finishFirstFrame - 1;
+            FrameIndex = FinishFirstFrame - 1;
             phase = Phase.Finish;
             elapsed = 0f;
             sinceCancelled = float.PositiveInfinity;
@@ -87,7 +129,7 @@ namespace SubTerra.Gameplay.Player
 
         public void ResumeAfterDamage()
         {
-            FrameIndex = settings.workFirstFrame - 1;
+            FrameIndex = WorkFirstFrame - 1;
             phase = Phase.Work;
             workStep = 1;
             elapsed = 0f;
@@ -112,15 +154,15 @@ namespace SubTerra.Gameplay.Player
                 switch (phase)
                 {
                     case Phase.Start:
-                        if (++FrameIndex >= settings.startLastFrame)
+                        if (++FrameIndex >= StartLastFrame)
                         {
-                            FrameIndex = settings.workFirstFrame - 1;
+                            FrameIndex = WorkFirstFrame - 1;
                             phase = Phase.Work;
                         }
                         break;
                     case Phase.Work:
-                        if (FrameIndex >= settings.workLastFrame - 1) workStep = -1;
-                        else if (FrameIndex <= settings.workFirstFrame - 1) workStep = 1;
+                        if (FrameIndex >= WorkLastFrame - 1) workStep = -1;
+                        else if (FrameIndex <= WorkFirstFrame - 1) workStep = 1;
                         FrameIndex += workStep;
                         break;
                     case Phase.Finish:

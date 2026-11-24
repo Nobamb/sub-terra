@@ -28,8 +28,8 @@ namespace SubTerra.App.Editor.DataValidation
             Add("player.idle", "Characters/Player/Frames/Idle/player_idle_01.png");
             for (var i = 1; i <= GuideDemoLibrary.PlayerWalkFrameCount; i++) Add("player.walk." + i, "Characters/Player/Frames/Walk/walk_" + i.ToString("00") + ".png");
             for (var i = 1; i <= 24; i++) Add("player.mine." + i, "Characters/Player/Frames/Mining/mining_" + i.ToString("00") + ".png");
-            Add("player.ladder.1", "Characters/Player/Frames/LadderBack/ladder_back_neutral_v2.png");
-            for (var i = 2; i <= 5; i++) Add("player.ladder." + i, "Characters/Player/Frames/LadderBack/ladder_back_style_" + i.ToString("00") + ".png");
+            // B-210: 새 사다리 오르기 한 바퀴(남자 32장).
+            for (var i = 1; i <= GuidePlayerArt.MaleLadderFrameCount; i++) Add("player.ladder." + i, "Characters/Player/Frames/LadderClimb/ladder_climb_" + i.ToString("00") + ".png");
             // B-175: 다리를 접고 오르는 새 상승 그림.
             Add("player.jump.4", "Characters/Player/Frames/JumpRise/jump_rise_12.png");
             Add("player.damage.1", "Characters/Player/Frames/Damage/damage_01.png");
@@ -40,8 +40,7 @@ namespace SubTerra.App.Editor.DataValidation
             Add(GuidePlayerArt.FemaleKeyPrefix + "idle", female + "Idle/player_idle_01.png");
             for (var i = 1; i <= GuidePlayerArt.FemaleWalkFrameCount; i++) Add(GuidePlayerArt.FemaleKeyPrefix + "walk." + i, female + "Walk/walk_" + i.ToString("00") + ".png");
             for (var i = 1; i <= GuidePlayerArt.FemaleMineFrameCount; i++) Add(GuidePlayerArt.FemaleKeyPrefix + "mine." + i, female + "Mining/mining_" + i.ToString("00") + ".png");
-            Add(GuidePlayerArt.FemaleKeyPrefix + "ladder.1", female + "LadderBack/ladder_back_neutral_v2.png");
-            for (var i = 2; i <= 5; i++) Add(GuidePlayerArt.FemaleKeyPrefix + "ladder." + i, female + "LadderBack/ladder_back_style_" + i.ToString("00") + ".png");
+            for (var i = 1; i <= GuidePlayerArt.FemaleLadderFrameCount; i++) Add(GuidePlayerArt.FemaleKeyPrefix + "ladder." + i, female + "LadderClimb/ladder_climb_" + i.ToString("00") + ".png");
             Add(GuidePlayerArt.FemaleKeyPrefix + "jump.4", female + "JumpRise/jump_rise_12.png");
             Add(GuidePlayerArt.FemaleKeyPrefix + "damage.1", female + "Damage/damage_01.png");
             Add(GuidePlayerArt.FemaleKeyPrefix + "knockout.1", female + "Knockout/knockout_47.png");

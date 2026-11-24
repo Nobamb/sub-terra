@@ -71,6 +71,7 @@ namespace SubTerra.Gameplay.Player
         private float hazardSpeedMultiplier = 1f;
         private readonly PlayerMoveSfxGate moveSfx = new PlayerMoveSfxGate();
         private readonly LadderSfxGate ladderSfx = new LadderSfxGate();
+        private PlayerSurvivalController hitStunSource;
 
         public Vector2 Position => body != null ? body.position : (Vector2)transform.position;
         public float FacingDirection { get; private set; } = 1f;
@@ -82,16 +83,23 @@ namespace SubTerra.Gameplay.Player
         /// <summary>서 있는 완충판의 높이를 실제로 바꿨을 때 변화량과 함께 알린다.</summary>
         public event System.Action<float> PlatformHeightAdjusted;
         public bool CanMove { get; private set; } = true;
+        /// <summary>
+        /// B-210: 피격 경직 중. 이동·점프·사다리 오르내리기·뛰어내리기 입력을 무시한다(입력 값은 보관해 끝나면 바로 이어진다).
+        /// </summary>
+        public bool IsHitStunned => hitStunSource != null && hitStunSource.IsHitStunned;
+        private bool AcceptsControl => CanMove && !IsHitStunned;
+        private float MoveInput => IsHitStunned ? 0f : moveInput;
+        private float VerticalInput => IsHitStunned ? 0f : verticalMoveInput;
         public bool IsClimbing { get; private set; }
         public bool IsTouchingLadder => activeLadders.Count > 0;
         public bool IsApproachingLadderFromAbove => IsClimbing && body != null
             && !ascendingTowardsLadderExit
             && TryGetLadderTop(out var top) && PlayerTop > top + 0.001f;
         public bool IsJumpInProgress => jumpUsedUntilLand && !IsGrounded;
-        public bool IsDescendingLadder => IsClimbing && verticalMoveInput < -0.01f;
-        public bool IsMovingOnLadder => IsClimbing && Mathf.Abs(verticalMoveInput) > 0.01f;
-        public bool IsMovementRequested => Mathf.Abs(moveInput) > 0.01f
-            || Mathf.Abs(verticalMoveInput) > 0.01f;
+        public bool IsDescendingLadder => IsClimbing && VerticalInput < -0.01f;
+        public bool IsMovingOnLadder => IsClimbing && Mathf.Abs(VerticalInput) > 0.01f;
+        public bool IsMovementRequested => Mathf.Abs(MoveInput) > 0.01f
+            || Mathf.Abs(VerticalInput) > 0.01f;
         public float CurrentSpeedMultiplier => cargoSpeedMultiplier * hazardSpeedMultiplier;
         public float CurrentJumpMultiplier => cargoJumpMultiplier;
         /// <summary>실제 가로 속도 크기. 벽을 밀고 있으면 0에 가깝다.</summary>
@@ -131,6 +139,13 @@ namespace SubTerra.Gameplay.Player
         {
             body = GetComponent<Rigidbody2D>();
             bodyCollider = GetComponent<Collider2D>();
+            if (hitStunSource == null) hitStunSource = GetComponentInParent<PlayerSurvivalController>();
+        }
+
+        /// <summary>B-210: 경직 판단을 읽을 생존 컨트롤러. 통합 바인더가 BindMovement에서 연결한다.</summary>
+        public void BindHitStunSource(PlayerSurvivalController source)
+        {
+            hitStunSource = source;
         }
 
         private void FixedUpdate()
@@ -172,7 +187,7 @@ namespace SubTerra.Gameplay.Player
         {
             moveInput = Mathf.Clamp(horizontal, -1f, 1f);
 
-            if (Mathf.Abs(moveInput) > 0.01f)
+            if (Mathf.Abs(moveInput) > 0.01f && !IsHitStunned)
             {
                 FacingDirection = Mathf.Sign(moveInput);
             }
@@ -180,7 +195,7 @@ namespace SubTerra.Gameplay.Player
 
         public void RequestJump()
         {
-            if (CanMove) jumpWindow.Request(Time.time, jumpBufferSeconds);
+            if (AcceptsControl) jumpWindow.Request(Time.time, jumpBufferSeconds);
         }
 
         public void SetVerticalMoveInput(float vertical)
@@ -283,7 +298,7 @@ namespace SubTerra.Gameplay.Player
 
         private void ApplyHorizontalMovement()
         {
-            float targetVelocity = CanMove ? moveInput * moveSpeed * CurrentSpeedMultiplier : 0f;
+            float targetVelocity = AcceptsControl ? moveInput * moveSpeed * CurrentSpeedMultiplier : 0f;
             float rate = Mathf.Abs(targetVelocity) > 0.01f ? acceleration : deceleration;
             float nextVelocityX = Mathf.MoveTowards(
                 body.linearVelocityX,
@@ -292,6 +307,9 @@ namespace SubTerra.Gameplay.Player
             // 공중에서 벽/발판 옆면을 계속 밀면 마찰과 모서리 반력이 낙하를 받친다.
             // 바닥으로 인정되지 않는 접점에는 밀어 넣지 않고, 반대 방향 이탈은 허용한다.
             if (!IsGrounded && !IsClimbing && IsPushingIntoSide(nextVelocityX))
+                nextVelocityX = 0f;
+            // B-210: 땅에서 경직이면 미끄러지지 않고 그 자리에 선다. 공중은 좌우 조작만 없이 떨어진다.
+            if (IsHitStunned && IsGrounded && !IsClimbing)
                 nextVelocityX = 0f;
             body.linearVelocity = new Vector2(nextVelocityX, body.linearVelocityY);
         }
@@ -314,7 +332,7 @@ namespace SubTerra.Gameplay.Player
         /// </summary>
         private bool TryApplyJump()
         {
-            if (!CanMove || body == null)
+            if (!AcceptsControl || body == null)
             {
                 jumpWindow.Clear();
                 return false;
@@ -364,13 +382,14 @@ namespace SubTerra.Gameplay.Player
         private void ApplyVerticalMovement()
         {
             float climbSpeed = ladderSpeed * ladderSpeedMultiplier * CurrentSpeedMultiplier;
-            var verticalVelocity = CanMove
-                ? verticalMoveInput * climbSpeed
+            // B-210: 경직 중에는 사다리에 매달린 채 멈춘다(중력 0 그대로).
+            var verticalVelocity = AcceptsControl
+                ? VerticalInput * climbSpeed
                 : 0f;
             if (TryGetLadderTop(out var top))
             {
                 var playerTop = PlayerTop;
-                if (verticalMoveInput < -0.01f) ascendingTowardsLadderExit = false;
+                if (VerticalInput < -0.01f) ascendingTowardsLadderExit = false;
                 if (verticalVelocity > 0f && playerTop <= top + 0.001f)
                     ascendingTowardsLadderExit = true;
                 if (ascendingTowardsLadderExit && verticalVelocity > 0f)
@@ -389,7 +408,7 @@ namespace SubTerra.Gameplay.Player
                 {
                     // 위에서 걸친 경우 손을 댈 수 있는 높이까지 입력과 무관하게 내려온다.
                     // 마지막 틱의 이동만 제한해 순간 위치 보정이나 아래쪽 초과 이동을 피한다.
-                    verticalVelocity = CanMove
+                    verticalVelocity = AcceptsControl
                         ? -Mathf.Min(climbSpeed,
                             (playerTop - top) / Time.fixedDeltaTime)
                         : 0f;
@@ -419,12 +438,12 @@ namespace SubTerra.Gameplay.Player
                 || IsClimbing
                 || activeLadders.Count == 0
                 || jumpAirLockRemaining > 0f
-                || Mathf.Abs(verticalMoveInput) <= 0.01f)
+                || Mathf.Abs(VerticalInput) <= 0.01f)
             {
                 return;
             }
 
-            if (verticalMoveInput > 0f && TryGetLadderTop(out var top) && PlayerBottom >= top - 0.001f)
+            if (VerticalInput > 0f && TryGetLadderTop(out var top) && PlayerBottom >= top - 0.001f)
                 return;
             EnterLadderMode();
         }
@@ -567,7 +586,7 @@ namespace SubTerra.Gameplay.Player
         /// </summary>
         public bool TryAdjustStandingPlatform(int direction)
         {
-            if (!CanMove || IsClimbing || body == null || direction == 0 || !IsOnAdjustablePlatform)
+            if (!AcceptsControl || IsClimbing || body == null || direction == 0 || !IsOnAdjustablePlatform)
                 return false;
             if (!standingPlatform.TryStepHeight(direction, out float delta, HasPlatformHeadroom))
                 return false;

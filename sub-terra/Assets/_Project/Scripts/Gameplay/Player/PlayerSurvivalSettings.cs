@@ -10,6 +10,8 @@ namespace SubTerra.Gameplay.Player
     {
         [SerializeField, Min(1)] private int maximumHealth = 100;
         [SerializeField, Min(0f)] private float invulnerabilitySeconds = 0.75f;
+        [SerializeField, Min(0f), Tooltip("B-210: 가스·낙하·붕괴 피해 뒤 조작을 막는 시간. 무적 시간보다 짧아야 영구 경직이 생기지 않는다.")]
+        private float hitStunSeconds = DefaultHitStunSeconds;
         [SerializeField, Min(0)] private int minorCollapseDamage = 25;
         [SerializeField, Min(0)] private int majorCollapseDamage = 50;
         [SerializeField, Min(0)] private int severeCollapseDamage = 100;
@@ -53,6 +55,21 @@ namespace SubTerra.Gameplay.Player
 
         public int MaximumHealth => maximumHealth;
         public float InvulnerabilitySeconds => invulnerabilitySeconds;
+        public const float DefaultHitStunSeconds = 0.4f;
+        public float HitStunSeconds => hitStunSeconds;
+
+        /// <summary>경직이 무적 시간 이상이면 피해가 끊기지 않고 이어져 계속 굳을 수 있다.</summary>
+        public static bool IsHitStunLongerThanInvulnerability(float hitStun, float invulnerability) =>
+            hitStun > 0f && hitStun >= invulnerability;
+
+        private void OnValidate()
+        {
+            if (IsHitStunLongerThanInvulnerability(hitStunSeconds, invulnerabilitySeconds))
+            {
+                Debug.LogWarning("[PlayerSurvivalSettings] hitStunSeconds(" + hitStunSeconds
+                    + ")가 invulnerabilitySeconds(" + invulnerabilitySeconds + ") 이상입니다. 경직이 계속 이어질 수 있습니다.", this);
+            }
+        }
         public int MinorCollapseDamage => minorCollapseDamage;
         public int MajorCollapseDamage => majorCollapseDamage;
         public int SevereCollapseDamage => severeCollapseDamage;
