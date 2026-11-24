@@ -59,9 +59,15 @@ namespace SubTerra.Gameplay.Building
             bool tallUtility = utility && footprint.y != 1;
             bool largeCharger = charger && footprint.x != 1;
             // Explicit legacy 1x2 saves keep their narrow occupied area; new outposts use 2x2.
-            float width = portal ? 1.84f : outpost ? footprint.x == 1 ? 0.92f : 1.8f : largeCharger || clinic ? 1.8f : 0.96f;
-            float height = outpost ? 1.78f : clinic ? 1.6f : largeCharger || tallUtility || portal ? 1.82f : 0.96f;
-            int rows = outpost || clinic || largeCharger || tallUtility || portal ? 2 : 1;
+            float width = portal ? 1.84f : outpost ? footprint.x == 1 ? 0.92f : 1.8f : largeCharger ? 1.8f : 0.96f;
+            float height = outpost ? 1.78f : largeCharger || tallUtility || portal ? 1.82f : 0.96f;
+            int rows = outpost || largeCharger || tallUtility || portal ? 2 : 1;
+            if (clinic)
+            {
+                width = 1.8f;
+                height = 1.6f;
+                rows = 2;
+            }
             bool hasFoundation = FacilityFoundationVisual.Supports(buildingId);
             float contactHeight = portal ? -0.04f : clinic ? -0.2f
                 : hasFoundation ? FacilityFoundationVisual.ArtworkContactHeight : -0.08f;
@@ -82,7 +88,15 @@ namespace SubTerra.Gameplay.Building
             // Sprite vertices can include transparent margins. Never align those margins to the floor.
             Rect pixels = default;
             Texture2D texture = sprite.texture;
-            if (texture.name == "emergency_escape_portal_v1" && texture.width == 1254 && texture.height == 1254)
+            // Both portal states use the same alignment so the ring stays fixed when the artwork changes.
+            if ((texture.name == "emergency_escape_portal_v1" || texture.name == "PortalInactive")
+                && texture.width == 1312 && texture.height == 1199)
+                pixels = Rect.MinMaxRect(103f, 75f, 1209f, 1150f);
+            else if (texture.name == "clinic_basic_cartoon_v3" && texture.width == 1513 && texture.height == 1040)
+                pixels = Rect.MinMaxRect(127f, 95f, 1386f, 823f);
+            else if (texture.name == "settlement_console_cartoon_v3" && texture.width == 1095 && texture.height == 1436)
+                pixels = Rect.MinMaxRect(138f, 89f, 957f, 1346f);
+            else if (texture.name == "emergency_escape_portal_v1" && texture.width == 1254 && texture.height == 1254)
                 pixels = Rect.MinMaxRect(49f, 140f, 1205f, 1112f);
             else if (texture.name == "charger_basic_cartoon_v2" && texture.width == 1240 && texture.height == 1269)
                 pixels = Rect.MinMaxRect(184f, 79f, 1073f, 1227f);
@@ -98,15 +112,8 @@ namespace SubTerra.Gameplay.Building
                 pixels = Rect.MinMaxRect(23f, 77f, 1513f, 927f);
             else if (texture.name == "light_basic_cartoon_v3" && texture.width == 1166 && texture.height == 1349)
                 pixels = Rect.MinMaxRect(185f, 82f, 885f, 1272f);
-            else if (texture.name == "settlement_console_cartoon_v3" && texture.width == 1095 && texture.height == 1436)
-                pixels = Rect.MinMaxRect(138f, 89f, 957f, 1346f);
-            else if (texture.name == "clinic_basic_cartoon_v3" && texture.width == 1513 && texture.height == 1040)
-                pixels = Rect.MinMaxRect(127f, 95f, 1386f, 823f);
-
-            // Both portal states use the same alignment so the ring stays fixed when the artwork changes.
-            if ((texture.name == "emergency_escape_portal_v1" || texture.name == "PortalInactive")
-                && texture.width == 1312 && texture.height == 1199)
-                pixels = Rect.MinMaxRect(103f, 75f, 1209f, 1150f);
+            else if (texture.name == "settlement_console_cartoon_v3" && texture.width == 1230 && texture.height == 1278)
+                pixels = Rect.MinMaxRect(177f, 64f, 1108f, 1274f);
             if (pixels.width > 0f)
             {
                 Vector2 min = (Vector2.Max(pixels.min, sprite.rect.min) - sprite.rect.min - sprite.pivot) / sprite.pixelsPerUnit;
