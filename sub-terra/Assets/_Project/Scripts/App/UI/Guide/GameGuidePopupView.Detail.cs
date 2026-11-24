@@ -214,6 +214,12 @@ namespace SubTerra.App.UI.Guide
             }
 
             // 조작·설명 → 경고 → 팁.
+            if (model.CardId == "mech.landing")
+            {
+                AddDataDivider("LandingRowTopDivider", y);
+                y += 8f;
+            }
+
             for (var i = 0; i < model.Lines.Count; i++)
             {
                 var line = model.Lines[i];
@@ -342,9 +348,14 @@ namespace SubTerra.App.UI.Guide
             Wrapped(detailRows, "DataText", labelWidth + 10f, y, DetailInner - labelWidth - 10f, line.Text, 18f,
                 FontStyles.Normal, BodyColor, out var textHeight);
             var rowBottom = y + Mathf.Max(labelHeight, textHeight);
-            var divider = ResourceSellUi.Place(detailRows, "Divider", 0f, rowBottom + 6f, DetailInner, 1f);
-            ResourceSellUi.AddImage(divider, null, new Color(0.42f, 0.94f, 1f, 0.12f));
+            AddDataDivider("Divider", rowBottom + 6f);
             return rowBottom + 14f;
+        }
+
+        private void AddDataDivider(string name, float y)
+        {
+            var divider = ResourceSellUi.Place(detailRows, name, 0f, y, DetailInner, 1f);
+            ResourceSellUi.AddImage(divider, null, new Color(0.42f, 0.94f, 1f, 0.12f));
         }
 
         private float AddNote(string text, float y, bool warning)
