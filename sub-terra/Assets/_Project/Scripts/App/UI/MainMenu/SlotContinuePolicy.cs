@@ -1,4 +1,5 @@
 using SubTerra.App.Save;
+using SubTerra.Shared.Localization;
 
 namespace SubTerra.App.UI.MainMenu
 {
@@ -60,19 +61,14 @@ namespace SubTerra.App.UI.MainMenu
 
         public static string Describe(SlotContinueEligibility eligibility)
         {
-            switch (eligibility)
+            return LocalizationService.Get(eligibility switch
             {
-                case SlotContinueEligibility.Empty:
-                    return "세이브 없음";
-                case SlotContinueEligibility.Ready:
-                    return "이어하기 가능";
-                case SlotContinueEligibility.RecoverableFromBackup:
-                    return "백업으로 복구 가능";
-                case SlotContinueEligibility.Unrecoverable:
-                    return "세이브 손상 — 복구 불가";
-                default:
-                    return "잘못된 슬롯";
-            }
+                SlotContinueEligibility.Empty => "main_menu.slot_status_empty",
+                SlotContinueEligibility.Ready => "main_menu.slot_status_ready",
+                SlotContinueEligibility.RecoverableFromBackup => "main_menu.slot_status_backup",
+                SlotContinueEligibility.Unrecoverable => "main_menu.slot_status_corrupted",
+                _ => "main_menu.slot_status_invalid"
+            });
         }
     }
 }

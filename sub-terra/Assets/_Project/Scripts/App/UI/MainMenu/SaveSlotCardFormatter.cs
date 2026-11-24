@@ -1,6 +1,7 @@
 using System;
 using SubTerra.App.Save;
 using SubTerra.App.Tutorial;
+using SubTerra.Shared.Localization;
 
 namespace SubTerra.App.UI.MainMenu
 {
@@ -34,7 +35,7 @@ namespace SubTerra.App.UI.MainMenu
 
         public static string Title(int slotId)
         {
-            return "탐사 기록 " + slotId.ToString("00");
+            return string.Format(LocalizationService.Get("main_menu.slot_title"), slotId);
         }
 
         public static string MaximumDepth(SaveSlotMetadata metadata)
@@ -63,7 +64,7 @@ namespace SubTerra.App.UI.MainMenu
         {
             if (metadata == null)
             {
-                return "Slot ?";
+                return LocalizationService.Get("main_menu.slot_unknown");
             }
 
             var title = Title(metadata.SlotId);
@@ -71,19 +72,19 @@ namespace SubTerra.App.UI.MainMenu
             {
                 case SaveSlotCardKind.Empty:
                     return title
-                        + "\n<size=78%><color=#91A7AE>비어 있는 기록</color></size>"
-                        + "\n<size=70%><color=#6F858C>새 탐사를 시작하세요.</color></size>";
+                        + "\n<size=78%><color=#91A7AE>" + LocalizationService.Get("main_menu.slot_empty") + "</color></size>"
+                        + "\n<size=70%><color=#6F858C>" + LocalizationService.Get("main_menu.slot_start_hint") + "</color></size>";
                 case SaveSlotCardKind.Corrupted:
                     return title
-                        + "\n<size=78%><color=#E6A23C>기록 손상 · 이어하기 불가</color></size>";
+                        + "\n<size=78%><color=#E6A23C>" + LocalizationService.Get("main_menu.slot_corrupted") + "</color></size>";
             }
 
             return title
                 + (metadata.IsRecoverableFromBackup ? "  <size=70%><color=#E6A23C>[Backup]</color></size>" : string.Empty)
-                + "\n<size=78%><color=#C7DFE3>골드 <color=#FFE66B>" + metadata.Gold + "G</color>"
-                + "   ·   최대 깊이 " + MaximumDepth(metadata)
-                + "   ·   목표 " + Objectives(metadata) + "</color></size>"
-                + "\n<size=70%><color=#91A7AE>마지막 저장  " + SavedAt(metadata) + "</color></size>";
+                + "\n<size=78%><color=#C7DFE3>" + LocalizationService.Get("main_menu.slot_gold") + " <color=#FFE66B>" + metadata.Gold + "G</color>"
+                + "   ·   " + LocalizationService.Get("main_menu.slot_depth") + " " + MaximumDepth(metadata)
+                + "   ·   " + LocalizationService.Get("main_menu.slot_objectives") + " " + Objectives(metadata) + "</color></size>"
+                + "\n<size=70%><color=#91A7AE>" + LocalizationService.Get("main_menu.slot_last_save") + "  " + SavedAt(metadata) + "</color></size>";
         }
     }
 }

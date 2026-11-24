@@ -5,6 +5,7 @@ using SubTerra.App.UI.Intro;
 using SubTerra.App.UI.QuitConfirm;
 using SubTerra.Shared;
 using SubTerra.Shared.Audio;
+using SubTerra.Shared.Localization;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -49,6 +50,7 @@ namespace SubTerra.App.UI.MainMenu
 
             var initialSettings = SettingsRuntimeApplier.LoadOrDefaults();
             SettingsRuntimeApplier.Apply(initialSettings, applyResolution: true);
+            view.RefreshMenuLabels();
 
             presenter = new MainMenuPresenter(
                 view,
@@ -327,7 +329,7 @@ namespace SubTerra.App.UI.MainMenu
             presenter.Refresh();
             if (view != null)
             {
-                view.SetMessage("이어하기 실패: " + result.Status);
+                view.SetMessage(string.Format(LocalizationService.Get("main_menu.continue_failed"), result.Status));
                 SfxPlayer.Play(SfxId.UiCancelFail);
             }
         }
@@ -464,7 +466,13 @@ namespace SubTerra.App.UI.MainMenu
 
         private void OnSettingsApplied(SettingsValues values)
         {
+            var previousLanguage = LocalizationService.Current;
             SettingsRuntimeApplier.Apply(values, applyResolution: true);
+            if (LocalizationService.Current != previousLanguage)
+            {
+                view.RefreshMenuLabels();
+                presenter.Refresh();
+            }
         }
     }
 }

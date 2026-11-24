@@ -115,8 +115,7 @@ namespace SubTerra.App.UI.MainMenu
             slotNoise = GetComponent<EmptySlotNoiseAudio>();
             if (slotNoise == null) slotNoise = gameObject.AddComponent<EmptySlotNoiseAudio>();
             RefreshLayout();
-            var settingsLabel = settingsButton != null ? settingsButton.GetComponentInChildren<TMP_Text>(true) : null;
-            if (settingsLabel != null) settingsLabel.text = "설정(esc)";
+            RefreshMenuLabels();
             WireSlot(0, SelectSlot1);
             WireSlot(1, SelectSlot2);
             WireSlot(2, SelectSlot3);
@@ -285,8 +284,7 @@ namespace SubTerra.App.UI.MainMenu
 
             if (visible && deleteMessageText != null)
             {
-                deleteMessageText.text = SaveSlotCardFormatter.Title(slotId)
-                    + "을 삭제할까요?\n<size=85%><color=#E6A23C>되돌릴 수 없습니다.</color></size>";
+                RefreshDeleteMessage(slotId);
             }
         }
 
@@ -347,6 +345,53 @@ namespace SubTerra.App.UI.MainMenu
             {
                 text.text = label;
                 text.alpha = enabled ? 1f : 0.4f;
+            }
+        }
+
+        public void RefreshMenuLabels()
+        {
+            SetButtonLabel(newGameButton, "main_menu.new_game");
+            SetButtonLabel(settingsButton, "main_menu.settings");
+            SetButtonLabel(quitButton, "main_menu.quit");
+            SetButtonLabel(overwriteConfirmButton, "main_menu.confirm");
+            SetButtonLabel(overwriteCancelButton, "settings.cancel");
+            SetButtonLabel(deleteConfirmButton, "main_menu.delete");
+            SetButtonLabel(deleteCancelButton, "settings.cancel");
+            SetNamedLabel(overwriteConfirmRoot, "OverwriteTitle", "main_menu.overwrite_title");
+            SetNamedLabel(deleteConfirmRoot, "DeleteTitle", "main_menu.delete_title");
+            if (IsOverwriteConfirmVisible && overwriteMessageText != null)
+                RefreshOverwriteMessage(currentSelectedSlotId);
+            if (IsDeleteConfirmVisible && deleteMessageText != null)
+                RefreshDeleteMessage(currentSelectedSlotId);
+        }
+
+        private void RefreshDeleteMessage(int slotId)
+        {
+            deleteMessageText.text = string.Format(LocalizationService.Get("main_menu.delete_question"),
+                SaveSlotCardFormatter.Title(slotId))
+                + "\n<size=85%><color=#E6A23C>" + LocalizationService.Get("main_menu.delete_warning") + "</color></size>";
+        }
+
+        private void RefreshOverwriteMessage(int slotId)
+        {
+            overwriteMessageText.text = string.Format(LocalizationService.Get("main_menu.overwrite_question"), slotId);
+        }
+
+        private static void SetButtonLabel(Button button, string key)
+        {
+            if (button == null) return;
+            var label = button.GetComponentInChildren<TMP_Text>(true);
+            if (label != null) label.text = LocalizationService.Get(key);
+        }
+
+        private static void SetNamedLabel(GameObject root, string name, string key)
+        {
+            if (root == null) return;
+            foreach (var label in root.GetComponentsInChildren<TMP_Text>(true))
+            {
+                if (label.name != name) continue;
+                label.text = LocalizationService.Get(key);
+                return;
             }
         }
 
@@ -619,8 +664,7 @@ namespace SubTerra.App.UI.MainMenu
 
             if (visible && overwriteMessageText != null)
             {
-                overwriteMessageText.text =
-                    "슬롯 " + slotId + " 세이브를 덮어쓰시겠습니까?";
+                RefreshOverwriteMessage(slotId);
             }
         }
 
@@ -705,7 +749,7 @@ namespace SubTerra.App.UI.MainMenu
             SyncResolutionDropdown();
             SyncLanguageDropdown();
             SyncFrameRateDropdown();
-            RefreshSettingsLabels(values.MasterVolume);
+            RefreshSettingsLanguagePreview(values.MasterVolume);
         }
 
         public void SetVersionLabel(string version)
@@ -807,6 +851,13 @@ namespace SubTerra.App.UI.MainMenu
 
         private void RefreshSettingsLabels(float volume)
         {
+            SetNamedLabel(settingsRoot, "SettingsTitle", "settings.title");
+            SetButtonLabel(settingsApplyButton, "settings.apply");
+            SetButtonLabel(settingsCancelButton, "settings.cancel");
+            SetButtonLabel(settingsDefaultsButton, "settings.defaults");
+            SetAutomaticOptionLabel(resolutionDropdown, "settings.resolution.auto");
+            SetAutomaticOptionLabel(frameRateDropdown, "settings.frame.auto");
+
             if (masterVolumeLabel != null)
             {
                 masterVolumeLabel.text = SettingsMenuSkin.FormatVolume(settingsRoot, volume);
@@ -859,6 +910,27 @@ namespace SubTerra.App.UI.MainMenu
                 bgmHintLabel.text = LocalizationService.Get(
                     "settings.bgm_hint",
                     "배경음은 배경음 슬라이더로 조절됩니다.");
+            }
+        }
+
+        private static void SetAutomaticOptionLabel(TMP_Dropdown dropdown, string key)
+        {
+            if (dropdown == null || dropdown.options.Count == 0) return;
+            dropdown.options[0].text = LocalizationService.Get(key);
+            dropdown.RefreshShownValue();
+        }
+
+        private void RefreshSettingsLanguagePreview(float volume)
+        {
+            var previous = LocalizationService.Current;
+            try
+            {
+                LocalizationService.SetLanguageCode(draftLanguageCode);
+                RefreshSettingsLabels(volume);
+            }
+            finally
+            {
+                LocalizationService.SetLanguage(previous);
             }
         }
 
@@ -972,11 +1044,7 @@ namespace SubTerra.App.UI.MainMenu
             draftLanguageCode = index == 1
                 ? GameLanguageCodes.English
                 : GameLanguageCodes.Korean;
-            var previous = LocalizationService.Current;
-            LocalizationService.SetLanguageCode(draftLanguageCode);
-            float volume = masterVolumeSlider != null ? masterVolumeSlider.value : 0.5f;
-            RefreshSettingsLabels(volume);
-            LocalizationService.SetLanguage(previous);
+            RefreshSettingsLanguagePreview(masterVolumeSlider != null ? masterVolumeSlider.value : 0.5f);
         }
 
         private void OnFrameRateDropdownChanged(int index)
@@ -986,7 +1054,11 @@ namespace SubTerra.App.UI.MainMenu
 
         private void OnMasterVolumeChanged(float value)
         {
-            if (masterVolumeLabel != null)
+            if (LocalizationService.Current != GameLanguageCodes.FromCode(draftLanguageCode))
+            {
+                RefreshSettingsLanguagePreview(value);
+            }
+            else if (masterVolumeLabel != null)
             {
                 masterVolumeLabel.text = SettingsMenuSkin.FormatVolume(settingsRoot, value);
             }
@@ -1081,11 +1153,7 @@ namespace SubTerra.App.UI.MainMenu
                 ? GameLanguageCodes.Korean
                 : GameLanguageCodes.English;
             // 라벨 미리보기는 선택 언어 기준으로 갱신(적용 전 미리보기).
-            var previous = LocalizationService.Current;
-            LocalizationService.SetLanguageCode(draftLanguageCode);
-            float volume = masterVolumeSlider != null ? masterVolumeSlider.value : 0.5f;
-            RefreshSettingsLabels(volume);
-            LocalizationService.SetLanguage(previous);
+            RefreshSettingsLanguagePreview(masterVolumeSlider != null ? masterVolumeSlider.value : 0.5f);
         }
 
         private void WireSlot(int index, UnityEngine.Events.UnityAction action)
