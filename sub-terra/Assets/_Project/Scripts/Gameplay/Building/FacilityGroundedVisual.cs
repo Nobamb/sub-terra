@@ -60,6 +60,7 @@ namespace SubTerra.Gameplay.Building
             bool largeCharger = charger && footprint.x != 1;
             // Explicit legacy 1x2 saves keep their narrow occupied area; new outposts use 2x2.
             float width = portal ? 1.84f : outpost ? footprint.x == 1 ? 0.92f : 1.8f : largeCharger ? 1.8f : 0.96f;
+            if (storage) width = 0.98f; // Match one tile with a small gap between neighboring boxes.
             float height = outpost ? 1.78f : largeCharger || tallUtility || portal ? 1.82f : 0.96f;
             int rows = outpost || largeCharger || tallUtility || portal ? 2 : 1;
             if (clinic)
@@ -113,6 +114,9 @@ namespace SubTerra.Gameplay.Building
                 pixels = Rect.MinMaxRect(185f, 82f, 885f, 1272f);
             else if (texture.name == "settlement_console_cartoon_v3" && texture.width == 1230 && texture.height == 1278)
                 pixels = Rect.MinMaxRect(177f, 64f, 1108f, 1274f);
+            else if ((texture.name == "storage_basic_cartoon_v2" || texture.name == "StorageGrounded")
+                && texture.width == 1536 && texture.height == 1024)
+                pixels = Rect.MinMaxRect(224f, 131f, 1307f, 911f);
             if (pixels.width > 0f)
             {
                 Vector2 min = (Vector2.Max(pixels.min, sprite.rect.min) - sprite.rect.min - sprite.pivot) / sprite.pixelsPerUnit;
