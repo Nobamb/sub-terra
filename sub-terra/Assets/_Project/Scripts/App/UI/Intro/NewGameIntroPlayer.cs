@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.IO;
 using SubTerra.App.Audio;
+using SubTerra.Shared;
 using SubTerra.Shared.Audio;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -21,6 +22,8 @@ namespace SubTerra.App.UI.Intro
     {
         public const string PauseOwner = "new-game-intro";
         public const string VideoRelativePath = "Video/sub-terra-intro.mp4";
+        /// <summary>B-212: 여자 광부를 고르면 재생하는 영상. 없으면 남자 영상으로 폴백한다.</summary>
+        public const string FemaleVideoRelativePath = "Video/sub-terra-intro-female.mp4";
         /// <summary>Canvas.sortingOrder 최댓값. 설정창(32_760)보다도 위에서 화면을 덮는다.</summary>
         public const int SortingOrder = 32_767;
         /// <summary>선택 화면에서 누른 키가 바로 건너뛰기로 읽히지 않게 하는 시간.</summary>
@@ -46,8 +49,49 @@ namespace SubTerra.App.UI.Intro
         private bool loopPointReached;
         private bool videoFailed;
         private bool holdsPause;
+        private string videoUrl;
 
-        public static string VideoPath => Path.Combine(Application.streamingAssetsPath, VideoRelativePath);
+        public static string VideoPath => PathFor(VideoRelativePath);
+
+        public static string PathFor(string relativePath) => Path.Combine(Application.streamingAssetsPath, relativePath);
+
+        /// <summary>성별이 원래 재생해야 하는 영상(파일 유무와 무관).</summary>
+        public static string VideoRelativePathFor(PlayerGender gender)
+        {
+            return gender == PlayerGender.Female ? FemaleVideoRelativePath : VideoRelativePath;
+        }
+
+        /// <summary>
+        /// 실제로 재생할 영상 전체 경로. 여자 파일이 없으면 남자 파일로 폴백하고 경고를 남긴다. 둘 다 없으면 null.
+        /// </summary>
+        public static string ResolveVideoPath(PlayerGender gender)
+        {
+            var relative = NewGameIntroPolicy.ResolveVideoRelativePath(
+                gender, VideoRelativePath, FemaleVideoRelativePath, FileExistsInStreamingAssets, out var fellBack);
+            if (fellBack)
+            {
+                Debug.LogWarning("[SubTerra] Intro video for " + gender + " not found at " + PathFor(VideoRelativePathFor(gender))
+                    + (relative != null ? "; falling back to " + relative + "." : "; no intro video available."));
+            }
+            else if (relative == null)
+            {
+                Debug.LogWarning("[SubTerra] Intro video not found at " + PathFor(VideoRelativePathFor(gender)) + "; skipping to turn-on.");
+            }
+
+            return relative == null ? null : PathFor(relative);
+        }
+
+        private static bool FileExistsInStreamingAssets(string relativePath)
+        {
+            try
+            {
+                return File.Exists(PathFor(relativePath));
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
 
         public static bool VideoAvailable()
         {
@@ -96,10 +140,13 @@ namespace SubTerra.App.UI.Intro
         /// B-209 새 게임 시작 순서. 오버레이는 씬이 바뀌어도 남아(DontDestroyOnLoad) 메인 메뉴가 다시 비치지 않는다.
         /// startGame이 false면(또는 예외) onStartFailed를 부르고 오버레이를 걷는다. 그때 화면은 아직 메인 메뉴다.
         /// isGameReady가 true가 될 때까지 검은 화면을 유지한 뒤 켜짐 연출을 한다.
+        /// videoPath(B-212)는 재생할 영상 전체 경로이고, 비우면 남자 영상을 연다.
         /// </summary>
-        public IEnumerator RunNewGameLaunch(bool playVideo, Func<bool> startGame, Func<bool> isGameReady, Action onStartFailed)
+        public IEnumerator RunNewGameLaunch(bool playVideo, Func<bool> startGame, Func<bool> isGameReady, Action onStartFailed, string videoPath = null)
         {
             if (transform.parent == null) DontDestroyOnLoad(gameObject);
+            // B-212: 고른 광부 성별로 정한 파일. 비어 있으면 남자 영상(기존 동작).
+            videoUrl = videoPath;
             // 셔터를 먼저 닫아 영상 준비·씬 로드 중에도 뒤 화면이 비치지 않게 한다.
             ApplyTurnOn(new NewGameTurnOnFrame(0f, 0f, 0f, 0f, 0f, 0, false));
             var started = false;
@@ -235,7 +282,7 @@ namespace SubTerra.App.UI.Intro
                 videoPlayer.skipOnDrop = true;
                 videoPlayer.waitForFirstFrame = true;
                 videoPlayer.source = VideoSource.Url;
-                videoPlayer.url = VideoPath;
+                videoPlayer.url = string.IsNullOrEmpty(videoUrl) ? VideoPath : videoUrl;
                 videoPlayer.renderMode = VideoRenderMode.RenderTexture;
                 videoPlayer.targetTexture = renderTexture;
                 videoPlayer.audioOutputMode = VideoAudioOutputMode.AudioSource;

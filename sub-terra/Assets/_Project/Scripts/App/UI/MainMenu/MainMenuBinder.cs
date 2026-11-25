@@ -405,16 +405,17 @@ namespace SubTerra.App.UI.MainMenu
             startingNewGame = true;
             try
             {
-                var playVideo = NewGameIntroPolicy.ShouldPlayVideo(
-                    true,
-                    AccessibilityPreferences.ReduceMotion,
-                    NewGameIntroPlayer.VideoAvailable());
+                // B-212: 고른 광부 성별로 영상을 정한다(여자 파일이 없으면 남자로 폴백). 모션 감소면 파일을 고르지 않는다.
+                var reduceMotion = AccessibilityPreferences.ReduceMotion;
+                var videoPath = reduceMotion ? null : NewGameIntroPlayer.ResolveVideoPath(session.Flow.Selected);
+                var playVideo = NewGameIntroPolicy.ShouldPlayVideo(true, reduceMotion, videoPath != null);
                 var player = NewGameIntroPlayer.Create();
                 player.StartCoroutine(player.RunNewGameLaunch(
                     playVideo,
                     session.TryStart,
                     IsNewGameReady,
-                    OnMinerSelectLaunchFailed));
+                    OnMinerSelectLaunchFailed,
+                    videoPath));
             }
             catch (System.Exception ex)
             {
