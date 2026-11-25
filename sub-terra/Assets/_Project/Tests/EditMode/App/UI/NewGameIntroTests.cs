@@ -1,6 +1,7 @@
 using System.IO;
 using NUnit.Framework;
 using SubTerra.App.UI.Intro;
+using SubTerra.Shared;
 
 namespace SubTerra.App.Tests.UI
 {
@@ -100,6 +101,101 @@ namespace SubTerra.App.Tests.UI
             Assert.That(
                 File.Exists(Path.Combine(UnityEngine.Application.dataPath, "StreamingAssets", NewGameIntroPlayer.VideoRelativePath)),
                 Is.True);
+        }
+
+        [Test]
+        public void ResolveVideo_MalePlaysMaleVideo()
+        {
+            var path = Resolve(PlayerGender.Male, true, true, out var fellBack);
+
+            Assert.That(path, Is.EqualTo(NewGameIntroPlayer.VideoRelativePath));
+            Assert.That(fellBack, Is.False);
+        }
+
+        [Test]
+        public void ResolveVideo_FemalePlaysFemaleVideoWhenPresent()
+        {
+            var path = Resolve(PlayerGender.Female, true, true, out var fellBack);
+
+            Assert.That(path, Is.EqualTo(NewGameIntroPlayer.FemaleVideoRelativePath));
+            Assert.That(fellBack, Is.False);
+        }
+
+        [Test]
+        public void ResolveVideo_FemaleFallsBackToMaleWhenFemaleFileMissing()
+        {
+            var path = Resolve(PlayerGender.Female, true, false, out var fellBack);
+
+            Assert.That(path, Is.EqualTo(NewGameIntroPlayer.VideoRelativePath));
+            Assert.That(fellBack, Is.True);
+            Assert.That(NewGameIntroPolicy.ShouldPlayVideo(true, false, path != null), Is.True, "폴백 파일이 있으면 재생");
+        }
+
+        [Test]
+        public void ResolveVideo_NoFilesMeansNoVideo()
+        {
+            foreach (var gender in new[] { PlayerGender.Male, PlayerGender.Female })
+            {
+                var path = Resolve(gender, false, false, out _);
+
+                Assert.That(path, Is.Null, gender.ToString());
+                Assert.That(NewGameIntroPolicy.ShouldPlayVideo(true, false, path != null), Is.False, gender.ToString());
+            }
+        }
+
+        [Test]
+        public void ResolveVideo_ReduceMotionAndContinueStillSkipVideo()
+        {
+            var female = Resolve(PlayerGender.Female, true, true, out _);
+
+            Assert.That(NewGameIntroPolicy.ShouldPlayVideo(true, true, female != null), Is.False, "모션 감소");
+            Assert.That(NewGameIntroPolicy.ShouldPlayVideo(false, false, female != null), Is.False, "이어하기");
+        }
+
+        [Test]
+        public void ResolveVideo_ExistsCheckThatThrowsCountsAsMissing()
+        {
+            var path = NewGameIntroPolicy.ResolveVideoRelativePath(
+                PlayerGender.Female,
+                NewGameIntroPlayer.VideoRelativePath,
+                NewGameIntroPlayer.FemaleVideoRelativePath,
+                relative => relative == NewGameIntroPlayer.VideoRelativePath ? true : throw new IOException("locked"),
+                out var fellBack);
+
+            Assert.That(path, Is.EqualTo(NewGameIntroPlayer.VideoRelativePath));
+            Assert.That(fellBack, Is.True);
+        }
+
+        [Test]
+        public void FemaleIntroVideo_PathConstantAndShippedFile()
+        {
+            Assert.That(NewGameIntroPlayer.FemaleVideoRelativePath, Is.EqualTo("Video/sub-terra-intro-female.mp4"));
+            Assert.That(NewGameIntroPlayer.VideoRelativePathFor(PlayerGender.Female), Is.EqualTo(NewGameIntroPlayer.FemaleVideoRelativePath));
+            Assert.That(NewGameIntroPlayer.VideoRelativePathFor(PlayerGender.Male), Is.EqualTo(NewGameIntroPlayer.VideoRelativePath));
+            Assert.That(
+                File.Exists(Path.Combine(UnityEngine.Application.dataPath, "StreamingAssets", NewGameIntroPlayer.FemaleVideoRelativePath)),
+                Is.True);
+        }
+
+        [Test]
+        public void MenuLaunch_ResolvesVideoFromSelectedGender()
+        {
+            var menu = File.ReadAllText(Path.Combine(
+                UnityEngine.Application.dataPath, "_Project", "Scripts", "App", "UI", "MainMenu", "MainMenuBinder.cs"));
+
+            Assert.That(menu, Does.Contain("NewGameIntroPlayer.ResolveVideoPath(session.Flow.Selected)"));
+            Assert.That(menu, Does.Contain("videoPath));"), "RunNewGameLaunch가 고른 파일을 연다");
+        }
+
+        private static string Resolve(PlayerGender gender, bool maleExists, bool femaleExists, out bool fellBack)
+        {
+            return NewGameIntroPolicy.ResolveVideoRelativePath(
+                gender,
+                NewGameIntroPlayer.VideoRelativePath,
+                NewGameIntroPlayer.FemaleVideoRelativePath,
+                relative => relative == NewGameIntroPlayer.VideoRelativePath ? maleExists
+                    : relative == NewGameIntroPlayer.FemaleVideoRelativePath && femaleExists,
+                out fellBack);
         }
     }
 }
