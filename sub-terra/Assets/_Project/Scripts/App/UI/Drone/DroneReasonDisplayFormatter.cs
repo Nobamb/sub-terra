@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
 using SubTerra.App.Drone;
+using SubTerra.Shared.Localization;
 
 namespace SubTerra.App.UI.Drone
 {
@@ -18,7 +19,7 @@ namespace SubTerra.App.UI.Drone
 
         public static string FormatAction(DroneAction action)
         {
-            return ActionPrefix + DroneAnalysisService.FormatAction(action);
+            return LocalizationService.Text(ActionPrefix, "AI Advice // ") + DroneAnalysisService.FormatAction(action);
         }
 
         /// <summary>근거 줄 목록. 근거가 없으면 안내 한 줄.</summary>
@@ -35,7 +36,7 @@ namespace SubTerra.App.UI.Drone
 
             if (lines.Count == 0)
             {
-                lines.Add(EmptyReasons);
+                lines.Add(LocalizationService.Text(EmptyReasons, "No additional risks detected."));
             }
 
             return lines;
@@ -96,7 +97,7 @@ namespace SubTerra.App.UI.Drone
                 case "risk":
                     return Percent(value);
                 case "ratio":
-                    return "무결성 " + Percent(value);
+                    return LocalizationService.Text("무결성 ", "Integrity ") + Percent(value);
                 case "gold":
                     return Math.Round(value, MidpointRounding.AwayFromZero)
                         .ToString("0", CultureInfo.InvariantCulture) + "G";

@@ -188,8 +188,22 @@ namespace SubTerra.Shared.Localization
                 "E로 목적지 선택 창을 엽니다. {0}G와 최대 전력의 {1}%를 내고 엘리베이터나 설치한 전진기지로 이동합니다.",
                 "Press E to choose a destination. Spend {0}G and {1}% of maximum power to travel to the elevator or a built outpost.");
 
+            English["dialogue.drone.cargo.full"] = "Cargo: {cargoWeight}/{maxCargoWeight}. Your cargo is full. Return to base.";
+            English["dialogue.drone.survival.emergency"] = "{reason} Check whether you can take the recommended action: {action}.";
+            English["dialogue.drone.explore"] = "Depth: {depth}. No immediate risk detected. You can continue descending.";
+            English["dialogue.drone.gas.warning"] = "{safetyGuidance}";
+            English["dialogue.drone.lithium"] = "Nearby signal detected: {mineralId}.";
+            English["dialogue.drone.outpost"] = "Nearest base: {nearestBaseDistance}m. Consider building an outpost.";
+            English["dialogue.drone.return"] = "Unsold cargo value: {unsettledCargoValue}. Return to base.";
+            English["dialogue.drone.structural.warning"] = "{safetyGuidance}";
+            English["dialogue.low_power.warning"] = "Power: {currentEnergy}. Estimated return cost: {returnEnergyEstimate}. Recommendation: {action}.";
+
             Add("hud.energy", "전력", "Power");
             Add("hud.health", "체력", "Health");
+            Add("hud.oxygen", "산소", "Oxygen");
+            Add("hud.oxygen_safe", "산소 위험도 안전", "Oxygen: Safe");
+            Add("hud.oxygen_caution", "산소 위험도 주의", "Oxygen: Caution");
+            Add("hud.oxygen_critical", "산소 위험도 위험", "Oxygen: Critical");
             Add("hud.cargo", "화물", "Cargo");
             Add("quest.progress", "진행도", "Progress");
             Add("quest.mission_hint", "MISSION · 방법 보기", "MISSION · View Details");

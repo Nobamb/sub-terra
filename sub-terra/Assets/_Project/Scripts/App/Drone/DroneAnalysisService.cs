@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using SubTerra.App.Core.Data;
 using SubTerra.Shared;
+using static SubTerra.Shared.Localization.LocalizationService;
 
 namespace SubTerra.App.Drone
 {
@@ -77,7 +78,7 @@ namespace SubTerra.App.Drone
                     + (gasCritical ? settings.CriticalRiskBonus : 0);
                 builders[DroneAction.LeaveGasZone].Add(
                     "gas_risk",
-                    "가스 위험 " + Format(context.gasRisk),
+                    Text("가스 위험 ", "Gas risk: ") + Format(context.gasRisk),
                     context.gasRisk,
                     "risk",
                     score,
@@ -99,8 +100,8 @@ namespace SubTerra.App.Drone
 
             if (lowEnergy)
             {
-                var message = "현재 전력 " + context.currentEnergy
-                    + ", 귀환 예상 " + context.returnEnergyEstimate;
+                var message = Text("현재 전력 ", "Power: ") + context.currentEnergy
+                    + Text(", 귀환 예상 ", ", estimated return cost: ") + context.returnEnergyEstimate;
                 if (context.returnPathAvailable)
                 {
                     builders[DroneAction.ReturnToBase].Add(
@@ -115,7 +116,7 @@ namespace SubTerra.App.Drone
                 {
                     builders[DroneAction.BuildOutpost].Add(
                         "return_path_unavailable",
-                        message + ", 귀환 경로 없음",
+                        message + Text(", 귀환 경로 없음", ", no return route"),
                         context.currentEnergy,
                         "energy",
                         settings.LowEnergyReturnScore,
@@ -127,7 +128,7 @@ namespace SubTerra.App.Drone
                 {
                     builders[DroneAction.Recharge].Add(
                         "base_nearby",
-                        "가장 가까운 기지 " + Format(context.nearestBaseDistance) + "m",
+                        Text("가장 가까운 기지 ", "Nearest base: ") + Format(context.nearestBaseDistance) + "m",
                         context.nearestBaseDistance,
                         "m",
                         settings.RechargeScore,
@@ -141,7 +142,7 @@ namespace SubTerra.App.Drone
             {
                 builders[DroneAction.ReturnToBase].Add(
                     "valuable_cargo",
-                    "미정산 가치 " + context.unsettledCargoValue,
+                    Text("미정산 가치 ", "Unsold cargo value: ") + context.unsettledCargoValue,
                     context.unsettledCargoValue,
                     "gold",
                     settings.CargoReturnScore,
@@ -152,7 +153,7 @@ namespace SubTerra.App.Drone
             {
                 builders[DroneAction.ReturnToBase].Add(
                     "inventory_full",
-                    "화물 " + Format(context.cargoWeight)
+                    Text("화물 ", "Cargo: ") + Format(context.cargoWeight)
                         + "/" + Format(context.maxCargoWeight),
                     context.cargoWeight,
                     "weight",
@@ -164,7 +165,7 @@ namespace SubTerra.App.Drone
             {
                 builders[DroneAction.MineNearbyMineral].Add(
                     "rare_signal",
-                    "희귀 신호 / 엔진 연료 후보",
+                    Text("희귀 신호 / 엔진 연료 후보", "Rare signal / possible engine fuel"),
                     1,
                     "detected",
                     settings.LithiumScore + 5,
@@ -174,7 +175,7 @@ namespace SubTerra.App.Drone
             {
                 builders[DroneAction.MineNearbyMineral].Add(
                     "nearby_lithium",
-                    "인근 광물 " + DataIds.Minerals.Lithium,
+                    Text("인근 광물 ", "Nearby mineral: ") + ItemDisplayNames.LocalizedMineral(DataIds.Minerals.Lithium),
                     1,
                     "detected",
                     settings.LithiumScore,
@@ -188,7 +189,7 @@ namespace SubTerra.App.Drone
             {
                 builders[DroneAction.BuildOutpost].Add(
                     "outpost_gap",
-                    "심도 " + context.depth + ", 기지 거리 "
+                    Text("심도 ", "Depth: ") + context.depth + Text(", 기지 거리 ", ", distance to base: ")
                         + Format(context.nearestBaseDistance) + "m",
                     context.nearestBaseDistance,
                     "m",
@@ -200,7 +201,7 @@ namespace SubTerra.App.Drone
             {
                 builders[DroneAction.BuildOutpost].Add(
                     "return_path_unavailable",
-                    "현재 귀환 경로를 사용할 수 없습니다.",
+                    Text("현재 귀환 경로를 사용할 수 없습니다.", "The return route is currently unavailable."),
                     double.NaN,
                     string.Empty,
                     settings.OutpostScore,
@@ -213,7 +214,7 @@ namespace SubTerra.App.Drone
                 var hasKnownImmediateRisk = gasWarning || structuralWarning || lowEnergy;
                 builders[DroneAction.ReturnToBase].Add(
                     "context_incomplete",
-                    "핵심 안전 상태가 불완전해 추가 탐사를 보류합니다.",
+                    Text("핵심 안전 상태가 불완전해 추가 탐사를 보류합니다.", "Pause exploration until safety conditions are known."),
                     double.NaN,
                     string.Empty,
                     0,
@@ -227,7 +228,7 @@ namespace SubTerra.App.Drone
             {
                 builders[DroneAction.ContinueDescending].Add(
                     "exploration_safe",
-                    hasDepth ? "현재 심도 " + context.depth : "확인된 즉시 위험 없음",
+                    hasDepth ? Text("현재 심도 ", "Current depth: ") + context.depth : Text("확인된 즉시 위험 없음", "No immediate risk detected"),
                     hasDepth ? context.depth : double.NaN,
                     hasDepth ? "depth" : string.Empty,
                     settings.DescendScore,
@@ -253,7 +254,7 @@ namespace SubTerra.App.Drone
         {
             var reason = new DroneReason(
                 "context_unavailable",
-                "드론 상태를 확인할 수 없어 추가 탐사를 보류합니다.",
+                Text("드론 상태를 확인할 수 없어 추가 탐사를 보류합니다.", "Pause exploration until the drone status can be checked."),
                 double.NaN,
                 string.Empty,
                 0);
@@ -481,8 +482,9 @@ namespace SubTerra.App.Drone
             var guidance = string.Empty;
             if (gasWarning)
             {
-                guidance = "가스 위험 " + Format(context.gasRisk)
-                    + (". 가스 구역에서 이탈하거나 " + ItemDisplayNames.OutpostName + "를 설치해 안전지대를 확보하세요.");
+                guidance = Text("가스 위험 ", "Gas risk: ") + Format(context.gasRisk)
+                    + Text(". 가스 구역에서 이탈하거나 " + ItemDisplayNames.OutpostName + "를 설치해 안전지대를 확보하세요.",
+                        ". Leave the gas zone or build an outpost to create a safe area.");
             }
 
             if (structuralWarning)
@@ -498,7 +500,7 @@ namespace SubTerra.App.Drone
             return guidance;
         }
 
-        private const string StructuralGuidance = "주변을 살피고 안전한 쪽으로 이동하세요.";
+        private static string StructuralGuidance => Text("주변을 살피고 안전한 쪽으로 이동하세요.", "Check your surroundings and move to safety.");
 
         private static bool HasReason(DroneActionScore candidate, string reasonId)
         {
@@ -554,19 +556,19 @@ namespace SubTerra.App.Drone
             switch (action)
             {
                 case DroneAction.ReturnToBase:
-                    return "기지로 귀환";
+                    return Text("기지로 귀환", "Return to Base");
                 case DroneAction.InstallSupport:
-                    return "완충판 설치";
+                    return Text("완충판 설치", "Install a Cushion Pad");
                 case DroneAction.LeaveGasZone:
-                    return "가스 구역 이탈";
+                    return Text("가스 구역 이탈", "Leave the Gas Zone");
                 case DroneAction.MineNearbyMineral:
-                    return "인근 광물 채굴";
+                    return Text("인근 광물 채굴", "Mine Nearby Minerals");
                 case DroneAction.BuildOutpost:
-                    return "전진기지 설치";
+                    return Text("전진기지 설치", "Build an Outpost");
                 case DroneAction.Recharge:
-                    return "충전";
+                    return Text("충전", "Recharge");
                 default:
-                    return "하강 계속";
+                    return Text("하강 계속", "Continue Descending");
             }
         }
 

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using SubTerra.App.Core.Data;
+using SubTerra.Shared.Localization;
 
 namespace SubTerra.App.Drone.Dialogue
 {
@@ -81,13 +82,16 @@ namespace SubTerra.App.Drone.Dialogue
             }
 
             var missingToken = false;
-            var rendered = TokenPattern.Replace(template.Template, match =>
+            var localizedTemplate = LocalizationService.Get(request.TemplateId, template.Template);
+            var rendered = TokenPattern.Replace(localizedTemplate, match =>
             {
                 var key = match.Groups[1].Value;
                 if (request.Tokens.TryGetValue(key, out var value)
                     && !string.IsNullOrEmpty(value))
                 {
-                    return value;
+                    return key == "mineralId" && LocalizationService.Current == GameLanguage.English
+                        ? ItemDisplayNames.LocalizedMineral(value)
+                        : value;
                 }
 
                 missingToken = true;
@@ -170,7 +174,8 @@ namespace SubTerra.App.Drone.Dialogue
         {
             return new DroneDialogueResult(
                 templateId,
-                "현재 상태를 확인하고 안전한 위치에서 다시 분석하세요.",
+                LocalizationService.Text("현재 상태를 확인하고 안전한 위치에서 다시 분석하세요.",
+                    "Check your status and run the analysis again from a safe spot."),
                 false,
                 true,
                 isUrgent);

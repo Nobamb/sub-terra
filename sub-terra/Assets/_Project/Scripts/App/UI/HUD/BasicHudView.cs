@@ -174,6 +174,7 @@ namespace SubTerra.App.UI.HUD
         {
             SetGaugeLabel("EnergyLabel", "hud.energy");
             SetGaugeLabel("HealthLabel", "hud.health");
+            SetGaugeLabel("OxygenLabel", "hud.oxygen");
         }
 
         private void SetGaugeLabel(string objectName, string key)
