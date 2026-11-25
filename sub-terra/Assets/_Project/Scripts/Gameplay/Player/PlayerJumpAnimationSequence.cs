@@ -76,6 +76,26 @@ namespace SubTerra.Gameplay.Player
 
         public void Reset() => Enter(PlayerJumpPhase.None);
 
+        /// <summary>
+        /// B-211: 가변 점프로 위 속도가 잘렸다. 지금 그림 진행은 그대로 두고, 남은 상승(1-진행)을 새 속도에 맞춰 나눠
+        /// 상승 그림이 한 번에 건너뛰지 않게 한다. 오르는 단계가 아니면 아무것도 바꾸지 않는다.
+        /// </summary>
+        public void ContinueAfterSpeedCut(float verticalSpeed)
+        {
+            if ((Phase != PlayerJumpPhase.TakeOff && Phase != PlayerJumpPhase.Rise) || verticalSpeed <= 0f)
+            {
+                return;
+            }
+
+            float remaining = 1f - progress;
+            if (remaining <= 0.0001f)
+            {
+                return;
+            }
+
+            launchSpeed = verticalSpeed / remaining;
+        }
+
         /// <param name="airborne">유예를 거친 공중 여부(사다리 제외).</param>
         public void Tick(float deltaSeconds, bool airborne, float verticalSpeed, bool moveRequested)
         {

@@ -4011,3 +4011,6 @@ work_process/MVP2/power/B-185-1-power-on-range-result.md: "조명·보관함은 
 
 
 210. prompt-B-210.md 문서 내용 참고해서 추가 스프라이트(남자:new_motion_nukki/여자:female_new_nukki) 참고해서 게임 내에 적용해줘
+
+
+211. prompt-B-211.md 문서 내용 참고해서 점프 손맛이 날 수 있도록 기존 점프 효과를 더욱 생동감있게 표현해줘

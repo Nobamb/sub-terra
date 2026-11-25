@@ -133,7 +133,8 @@ namespace SubTerra.Gameplay.Player
                 shakeAmplitude = nextAmplitude;
             }
 
-            shakeDuration = Mathf.Max(shakeDuration, nextDuration);
+            // 끝난 흔들림의 길이가 남아 다음 짧은 흔들림(B-211 착지 0.1초)의 감쇠를 줄이지 않게 한다.
+            shakeDuration = shakeTimeRemaining > 0f ? Mathf.Max(shakeDuration, nextDuration) : nextDuration;
             shakeTimeRemaining = Mathf.Max(shakeTimeRemaining, nextDuration);
         }
 

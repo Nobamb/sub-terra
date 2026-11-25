@@ -489,16 +489,7 @@ namespace SubTerra.Gameplay.Player
                 return;
             }
 
-            PlayerCameraFollow follow = cameraFollow;
-            if (follow == null)
-            {
-                Camera main = Camera.main;
-                if (main != null)
-                {
-                    follow = main.GetComponent<PlayerCameraFollow>();
-                }
-            }
-
+            PlayerCameraFollow follow = ResolveCameraFollow();
             if (follow != null && !suppressDamageCameraShake)
             {
                 follow.RequestShake(
@@ -511,6 +502,33 @@ namespace SubTerra.Gameplay.Player
             damageFlashStartedAt = Time.unscaledTime;
             damageFlashUntil = damageFlashStartedAt + settings.InvulnerabilitySeconds;
             UpdateDamageFlash();
+        }
+
+        private PlayerCameraFollow ResolveCameraFollow()
+        {
+            if (cameraFollow != null)
+            {
+                return cameraFollow;
+            }
+
+            Camera main = Camera.main;
+            return main != null ? main.GetComponent<PlayerCameraFollow>() : null;
+        }
+
+        /// <summary>B-211: 높은 곳에서 피해 없이 착지했을 때만 아주 짧고 약하게. 피해 흔들림과 같은 카메라 경로를 쓴다.</summary>
+        private void RequestLandingShake(in PlayerLandingInfo landing)
+        {
+            if (!PlayerLandingFeedbackRules.TryResolveShake(landing, suppressDamageCameraShake,
+                    AccessibilityPreferences.ReduceMotion, out var amplitude, out var duration))
+            {
+                return;
+            }
+
+            var follow = ResolveCameraFollow();
+            if (follow != null)
+            {
+                follow.RequestShake(amplitude, duration);
+            }
         }
 
         private void CacheFlashRenderers()
@@ -743,6 +761,14 @@ namespace SubTerra.Gameplay.Player
                     damaged,
                     ladderExempt,
                     State.CanAct));
+            }
+
+            // B-211: 착지 손맛. 피해 착지는 위 피해 흔들림만 쓰고, 찌그러짐·먼지는 이 이벤트를 구독한다.
+            var landing = new PlayerLandingInfo(distance, ladderExempt, stableLanding, damaged, State.CanAct);
+            RequestLandingShake(landing);
+            if (playerMovement != null)
+            {
+                playerMovement.ReportLanding(landing);
             }
 
             return damaged;
