@@ -176,6 +176,18 @@ namespace SubTerra.Shared.Localization
             Add("quit_confirm.question", "게임을 종료할까요?", "Quit the game?");
             Add("quit_confirm.autosave", "진행 상황은 자동으로 저장됩니다.", "Your progress will be saved automatically.");
 
+            English["building.support.basic.description"] = "Reduces fall damage to about 10% of normal. Stand on the pad and press Up or Down to adjust its height.";
+            English["building.ladder.basic.description"] = "Climb up and down vertical shafts. Places a five-tile section.";
+            English["building.light.basic.description"] = "Lights an underground area when powered.";
+            English["building.charger.basic.description"] = "Recharges your equipment when connected to the power grid.";
+            English["building.clinic.basic.description"] = "Restores you to full health when connected to the power grid.";
+            English["building.storage.basic.description"] = "Deposit and withdraw minerals collected during expeditions.";
+            Add("building.settlement.basic.description", "들고 있는 광물을 판매해 골드를 얻습니다.", "Sell carried minerals for gold.");
+            English["building.outpost_core.basic.description"] = "Powers connected facilities, creates a gas purification zone and serves as a checkpoint.";
+            Add("building.escape_portal.emergency.description",
+                "E로 목적지 선택 창을 엽니다. {0}G와 최대 전력의 {1}%를 내고 엘리베이터나 설치한 전진기지로 이동합니다.",
+                "Press E to choose a destination. Spend {0}G and {1}% of maximum power to travel to the elevator or a built outpost.");
+
             Add("hud.energy", "전력", "Power");
             Add("hud.health", "체력", "Health");
             Add("hud.cargo", "화물", "Cargo");

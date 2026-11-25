@@ -32,7 +32,7 @@ namespace SubTerra.App.UI.Building
 
             if (nameText != null)
             {
-                nameText.text = ItemDisplayNames.Mineral(cost.ItemId);
+                nameText.text = ItemDisplayNames.LocalizedMineral(cost.ItemId);
             }
 
             if (amountText != null)

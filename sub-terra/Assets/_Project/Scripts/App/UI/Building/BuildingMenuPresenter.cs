@@ -8,6 +8,7 @@ using SubTerra.App.Inventory;
 using SubTerra.App.State;
 using SubTerra.Shared;
 using SubTerra.Shared.Audio;
+using SubTerra.Shared.Localization;
 
 namespace SubTerra.App.UI.Building
 {
@@ -61,6 +62,7 @@ namespace SubTerra.App.UI.Building
                 placement.PlacementChanged += OnPlacementChanged;
             }
 
+            LocalizationService.LanguageChanged += RefreshLanguage;
             RefreshList();
             ClearSelectionState();
         }
@@ -75,6 +77,7 @@ namespace SubTerra.App.UI.Building
             unbinding = true;
             try
             {
+                LocalizationService.LanguageChanged -= RefreshLanguage;
                 if (inventory != null)
                 {
                     inventory.InventoryChanged -= OnInventoryChanged;
@@ -110,7 +113,7 @@ namespace SubTerra.App.UI.Building
                 || data == null
                 || data.RuntimePrefab == null)
             {
-                view?.SetStatusMessage("선택할 수 없는 시설입니다.");
+                view?.SetStatusMessage(LocalizationService.Text("선택할 수 없는 시설입니다.", "This facility cannot be selected."));
                 return false;
             }
 
@@ -128,7 +131,7 @@ namespace SubTerra.App.UI.Building
 
             if (!placement.BeginPreview(data.Id))
             {
-                view?.SetStatusMessage("건설 Preview를 시작할 수 없습니다.");
+                view?.SetStatusMessage(LocalizationService.Text("건설 미리보기를 시작할 수 없습니다.", "Could not start the placement preview."));
                 ClearSelectionState();
                 return false;
             }
@@ -210,7 +213,21 @@ namespace SubTerra.App.UI.Building
                     : null;
         }
 
-        private void OnInventoryChanged(InventorySnapshot _)
+        private void OnInventoryChanged(InventorySnapshot _) => RefreshContent();
+
+        private void RefreshLanguage()
+        {
+            RefreshContent();
+            if (latestPlacement?.state == BuildingPlacementState.Failed)
+            {
+                var canAfford = wallet != null && selected != null
+                    && wallet.CanAfford(ItemCostMapping.ToDtoList(selected.BuildCosts));
+                var reason = wallet != null && !canAfford ? "cannot_afford" : latestPlacement.reasonId;
+                view?.SetStatusMessage(FormatPlacementReason(reason, true));
+            }
+        }
+
+        private void RefreshContent()
         {
             RefreshList();
             if (selected != null)
@@ -246,9 +263,7 @@ namespace SubTerra.App.UI.Building
             {
                 var resourceShort = wallet != null && selected != null
                     && !wallet.CanAfford(ItemCostMapping.ToDtoList(selected.BuildCosts));
-                var message = resourceShort
-                    ? "자원이 부족합니다."
-                    : FormatPlacementReason(result.reasonId, true);
+                var message = FormatPlacementReason(resourceShort ? "cannot_afford" : result.reasonId, true);
                 view?.SetStatusMessage(message);
                 PlayerStatusWarnings.Current?.ShowWarning("building.placement-failed", message);
                 // B-168: 마우스 클릭·C 단축키 실패가 모두 여기로 온다. 다시 시도할 때마다 난다.
@@ -271,9 +286,7 @@ namespace SubTerra.App.UI.Building
 
             var costs = ItemCostMapping.ToDtoList(selected.BuildCosts);
             var canAfford = wallet != null && wallet.CanAfford(costs);
-            var message = !canAfford
-                ? "자원이 부족합니다."
-                : FormatPlacementReason(latestPlacement?.reasonId, false);
+            var message = FormatPlacementReason(canAfford ? latestPlacement?.reasonId : "cannot_afford", false);
 
             view?.SetAvailability(new BuildingAvailabilityReadModel(
                 latestPlacement?.state ?? BuildingPlacementState.Previewing,
@@ -298,29 +311,29 @@ namespace SubTerra.App.UI.Building
             switch (reasonId)
             {
                 case "occupied":
-                    return "다른 시설이나 지형과 겹칩니다. 빈 공간을 선택하세요.";
+                    return LocalizationService.Text("다른 시설이나 지형과 겹칩니다. 빈 공간을 선택하세요.", "Overlaps terrain or another facility. Choose an empty space.");
                 case "elevator_space":
-                    return "엘리베이터 이동 공간입니다. 승강로 밖을 선택하세요.";
+                    return LocalizationService.Text("엘리베이터 이동 공간입니다. 승강로 밖을 선택하세요.", "This is the elevator shaft. Choose a spot outside it.");
                 case "missing_ground":
-                    return "시설을 지지할 지면이 없습니다. 바닥 위를 선택하세요.";
+                    return LocalizationService.Text("시설을 지지할 지면이 없습니다. 바닥 위를 선택하세요.", "This facility needs ground beneath it. Choose a spot above solid ground.");
                 case "invalid_definition":
-                    return "시설 데이터가 올바르지 않습니다.";
+                    return LocalizationService.Text("시설 데이터가 올바르지 않습니다.", "Facility data is invalid.");
                 case "instantiate_failed":
-                    return "시설 생성에 실패했습니다.";
+                    return LocalizationService.Text("시설 생성에 실패했습니다.", "Could not create the facility.");
                 case "spend_failed":
-                    return "비용 차감에 실패했습니다.";
+                    return LocalizationService.Text("비용 차감에 실패했습니다.", "Could not deduct the build cost.");
                 case "cannot_afford":
-                    return "자원이 부족합니다.";
+                    return BuildingMenuDisplayFormatter.Detail(BuildingAvailabilityDisplayKind.NeedResources, string.Empty);
                 case "wallet_unavailable":
-                    return "건설 자원 상태를 확인할 수 없습니다.";
+                    return LocalizationService.Text("건설 자원 상태를 확인할 수 없습니다.", "Could not check available resources.");
                 case "no_selection":
-                    return "선택된 시설이 없습니다.";
+                    return LocalizationService.Text("선택된 시설이 없습니다.", "Select a facility first.");
                 case "out_of_range":
-                    return "플레이어에게서 너무 먼 위치입니다. 가까이 이동하세요.";
+                    return LocalizationService.Text("플레이어에게서 너무 먼 위치입니다. 가까이 이동하세요.", "Too far away. Move closer.");
                 case "outside_allowed_area":
-                    return "건설이 허용되지 않은 구역입니다. 구역 안을 선택하세요.";
+                    return LocalizationService.Text("건설이 허용되지 않은 구역입니다. 구역 안을 선택하세요.", "Building is restricted here. Choose a spot in the allowed area.");
                 default:
-                    return failed ? "시설 설치에 실패했습니다." : string.Empty;
+                    return failed ? LocalizationService.Text("시설 설치에 실패했습니다.", "Could not place the facility.") : string.Empty;
             }
         }
     }
