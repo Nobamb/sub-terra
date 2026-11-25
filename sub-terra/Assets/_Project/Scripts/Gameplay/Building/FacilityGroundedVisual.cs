@@ -70,8 +70,8 @@ namespace SubTerra.Gameplay.Building
                 rows = 2;
             }
             bool hasFoundation = FacilityFoundationVisual.Supports(buildingId);
-            float contactHeight = portal ? -0.04f : clinic ? -0.2f
-                : hasFoundation ? FacilityFoundationVisual.ArtworkContactHeight : -0.08f;
+            float contactHeight = portal || clinic || hasFoundation
+                ? FacilityFoundationVisual.ArtworkContactHeight : -0.08f;
             height = Mathf.Min(height, rows - Mathf.Max(0f, contactHeight) - 0.02f);
             Bounds bounds = GetVisibleBounds(sprite);
             float factor = Mathf.Min(width / Mathf.Max(bounds.size.x, 0.0001f),

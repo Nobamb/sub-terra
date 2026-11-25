@@ -9,7 +9,7 @@ namespace SubTerra.Gameplay.Building.Tests
         private const string ClinicPrefabPath = "Assets/_Project/Prefabs/Gameplay/Power/ClinicFacility.prefab";
 
         [Test]
-        public void ClinicArtwork_OverlapsFirstRockRowWithoutChangingItsShape()
+        public void ClinicArtwork_MatchesSharedFacilityGroundContact()
         {
             GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(ClinicPrefabPath);
             Assert.That(prefab, Is.Not.Null);
@@ -24,8 +24,14 @@ namespace SubTerra.Gameplay.Building.Tests
                 renderers,
                 renderer => renderer != null && renderer.enabled && renderer.sprite != null);
             Assert.That(artwork, Is.Not.Null);
-            Assert.That(artwork.bounds.size.x, Is.EqualTo(1.8f).Within(0.02f));
-            Assert.That(artwork.bounds.min.y, Is.EqualTo(-1.2f).Within(0.015f));
+            Bounds opaque = FacilityGroundedVisual.GetVisibleBounds(artwork.sprite);
+            float visibleWidth = artwork.transform.TransformPoint(opaque.max).x - artwork.transform.TransformPoint(opaque.min).x;
+            Assert.That(visibleWidth, Is.EqualTo(1.8f).Within(0.02f));
+            float expectedContact = -1f + FacilityFoundationVisual.ArtworkContactHeight;
+            Assert.That(artwork.transform.TransformPoint(opaque.min).y, Is.EqualTo(expectedContact).Within(0.015f));
+            Assert.That(FacilityGroundedVisual.TryGetGeometry(artwork.sprite, "building.clinic.basic",
+                new Vector2Int(2, 2), out Vector3 offset, out Vector3 scale), Is.True);
+            Assert.That(offset.y + opaque.min.y * scale.y, Is.EqualTo(expectedContact).Within(0.015f));
             Assert.That(poweredVisual.localPosition.y, Is.EqualTo(artwork.bounds.center.y).Within(0.015f));
         }
     }
