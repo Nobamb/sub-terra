@@ -3,6 +3,7 @@ using System.Text;
 using SubTerra.App.Audio;
 using SubTerra.App.Core.Data;
 using SubTerra.Shared.Audio;
+using SubTerra.Shared.Localization;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -289,8 +290,9 @@ namespace SubTerra.App.UI.Building
                 selectionText.text = UsesBuildingMode
                     ? string.Empty
                     : UsesStructuredLayout
-                        ? "왼쪽 목록에서 설치할 시설을 선택하세요.\n용도, 필요 자원과 설치 조건이 여기에 표시됩니다."
-                        : "시설을 선택하세요.";
+                        ? LocalizationService.Text("왼쪽 목록에서 설치할 시설을 선택하세요.\n용도, 필요 자원과 설치 조건이 여기에 표시됩니다.",
+                            "Choose a facility on the left to see its purpose, costs and placement conditions.")
+                        : LocalizationService.Text("시설을 선택하세요.", "Choose a facility.");
             }
 
             if (selectedIcon != null)
@@ -307,7 +309,7 @@ namespace SubTerra.App.UI.Building
 
             if (detailNameText != null)
             {
-                detailNameText.text = "시설 미선택";
+                detailNameText.text = BuildingMenuDisplayFormatter.Title(BuildingAvailabilityDisplayKind.Idle);
             }
 
             if (detailOperatingConditionText != null)
@@ -363,7 +365,7 @@ namespace SubTerra.App.UI.Building
 
             if (availability.CanPlace)
             {
-                availabilityText.text = "✓ 설치 가능";
+                availabilityText.text = "✓ " + BuildingMenuDisplayFormatter.Title(BuildingAvailabilityDisplayKind.Ready);
                 availabilityText.color = new Color(0.35f, 0.92f, 0.5f);
                 return;
             }
@@ -374,7 +376,9 @@ namespace SubTerra.App.UI.Building
                 return;
             }
 
-            var prefix = availability.CanAfford ? "⚠ 위치 확인" : "X 자원 부족";
+            var prefix = availability.CanAfford
+                ? LocalizationService.Text("⚠ 위치 확인", "⚠ Check Placement")
+                : LocalizationService.Text("X 자원 부족", "X Not Enough Resources");
             availabilityText.text = string.IsNullOrEmpty(availability.Message)
                 ? prefix
                 : prefix + "\n" + availability.Message;
@@ -462,7 +466,7 @@ namespace SubTerra.App.UI.Building
             var item = FindItem(buildingId);
             var displayName = item != null && !string.IsNullOrEmpty(item.DisplayName)
                 ? item.DisplayName
-                : ItemDisplayNames.Building(buildingId);
+                : ItemDisplayNames.LocalizedBuilding(buildingId);
             railHologram.Show(anchor, displayName);
             railHologram.transform.SetAsLastSibling();
         }
@@ -1272,7 +1276,9 @@ namespace SubTerra.App.UI.Building
             if (detailPageCondition != null)
             {
                 var condition = BuildingMenuDisplayFormatter.OperatingCondition(item.BuildingId);
-                detailPageCondition.text = string.IsNullOrEmpty(condition) ? string.Empty : "설치 조건 · " + condition;
+                detailPageCondition.text = string.IsNullOrEmpty(condition)
+                    ? string.Empty
+                    : LocalizationService.Text("설치 조건 · ", "Placement Condition · ") + condition;
                 SetActive(detailPageCondition.gameObject, !string.IsNullOrEmpty(condition));
             }
 
@@ -1454,7 +1460,7 @@ namespace SubTerra.App.UI.Building
             builder
                 .Append(item.Description)
                 .AppendLine()
-                .Append("비용: ");
+                .Append(LocalizationService.Text("비용: ", "Cost: "));
 
             for (var i = 0; i < item.Costs.Count; i++)
             {
@@ -1464,7 +1470,7 @@ namespace SubTerra.App.UI.Building
                 }
 
                 var cost = item.Costs[i];
-                builder.Append(ItemDisplayNames.Mineral(cost.ItemId))
+                builder.Append(ItemDisplayNames.LocalizedMineral(cost.ItemId))
                     .Append(' ')
                     .Append(cost.Owned)
                     .Append('/')
