@@ -122,6 +122,8 @@ namespace SubTerra.App.UI.Building
         {
             HideLegacyChrome();
             WireControls();
+            LocalizationService.LanguageChanged += RefreshCatalogLabels;
+            RefreshCatalogLabels();
             ApplyCanvasOrder();
             ApplyPage(true);
             PlayOpenMotion();
@@ -129,6 +131,7 @@ namespace SubTerra.App.UI.Building
 
         private void OnDisable()
         {
+            LocalizationService.LanguageChanged -= RefreshCatalogLabels;
             ReleaseSearchPause();
             HideRailHoverNow();
         }
@@ -1139,6 +1142,62 @@ namespace SubTerra.App.UI.Building
                     row.Apply(item);
                 }
             }
+        }
+
+        private void RefreshCatalogLabels()
+        {
+            if (!UsesBuildingMode) return;
+
+            var title = LocalizationService.Text("시설 목록", "Facilities");
+            SetCatalogLabel(listPage, "Title", title + " <color=#6B8C99><size=70%>· "
+                + (catalogRows?.Length ?? 0) + "</size></color>");
+            SetCatalogLabel(detailPage, "BackButton/Label", "< " + title);
+            SetCatalogLabel(detailPage, "DetailTitle", LocalizationService.Text("시설 상세", "Facility Details"));
+            SetCatalogLabel(detailPage, "FunctionLabel", LocalizationService.Text("기능", "Function"));
+            var costCaption = LocalizationService.Text(
+                "건설 비용 <color=#6B8C99>· 보유 / 필요</color>",
+                "Build Cost <color=#6B8C99>· Owned / Required</color>");
+            SetCatalogLabel(costSection, "CostLabel", costCaption);
+            SetCatalogLabel(detailPage, "DetailBody/CostLabel", costCaption);
+            if (emptyResult != null && emptyResult.TryGetComponent<TMP_Text>(out var emptyLabel))
+                emptyLabel.text = LocalizationService.Text("맞는 시설이 없습니다.", "No facilities match.");
+            if (searchField != null && searchField.placeholder is TMP_Text placeholder)
+                placeholder.text = LocalizationService.Text("시설명 검색", "Search facilities");
+
+            RefreshSortLabels();
+        }
+
+        private static void SetCatalogLabel(GameObject page, string path, string text)
+        {
+            var target = page != null ? page.transform.Find(path) : null;
+            if (target != null && target.TryGetComponent<TMP_Text>(out var label))
+                label.text = text;
+        }
+
+        private void RefreshSortLabels()
+        {
+            if (sortDropdown == null) return;
+            var labels = BuildingCatalogQuery.AllLabels();
+            var options = sortDropdown.options;
+            var changed = options.Count != labels.Count;
+            if (changed)
+            {
+                sortDropdown.ClearOptions();
+                sortDropdown.AddOptions(new List<string>(labels));
+            }
+            else
+            {
+                for (var i = 0; i < labels.Count; i++)
+                {
+                    if (options[i].text == labels[i]) continue;
+                    options[i].text = labels[i];
+                    changed = true;
+                }
+            }
+
+            if (changed) CloseSortList();
+            sortDropdown.SetValueWithoutNotify((int)navigation.Sort);
+            sortDropdown.RefreshShownValue();
         }
 
         private void ApplySearchFilter()
