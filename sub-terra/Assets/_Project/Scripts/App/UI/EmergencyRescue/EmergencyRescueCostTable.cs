@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using SubTerra.Shared.Localization;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -56,6 +57,10 @@ namespace SubTerra.App.UI.EmergencyRescue
         private readonly TMP_FontAsset font;
         private readonly List<Row> rows = new List<Row>();
         private readonly GameObject header;
+        private readonly TMP_Text resourceHeading;
+        private readonly TMP_Text costHeading;
+        private readonly TMP_Text beforeHeading;
+        private readonly TMP_Text afterHeading;
         private readonly TMP_Text emptyNote;
 
         public EmergencyRescueCostTable(Transform parent, TMP_FontAsset font)
@@ -65,10 +70,10 @@ namespace SubTerra.App.UI.EmergencyRescue
 
             RectTransform headerRect = EmergencyRescueUi.Rect(root, "Header", Vector2.zero, Vector2.zero);
             header = headerRect.gameObject;
-            AddHeaderText(headerRect, "자원", NameLeftX, NameRightX, TextAlignmentOptions.MidlineLeft);
-            AddHeaderText(headerRect, "차감량", DeductRightX - DeductWidth, DeductRightX, TextAlignmentOptions.MidlineRight);
-            AddHeaderText(headerRect, "현재 보유", BeforeRightX - BeforeWidth, BeforeRightX, TextAlignmentOptions.MidlineRight);
-            AddHeaderText(headerRect, "구출 후 잔량", AfterRightX - AfterWidth, AfterRightX, TextAlignmentOptions.MidlineRight);
+            resourceHeading = AddHeaderText(headerRect, "자원", NameLeftX, NameRightX, TextAlignmentOptions.MidlineLeft);
+            costHeading = AddHeaderText(headerRect, "차감량", DeductRightX - DeductWidth, DeductRightX, TextAlignmentOptions.MidlineRight);
+            beforeHeading = AddHeaderText(headerRect, "현재 보유", BeforeRightX - BeforeWidth, BeforeRightX, TextAlignmentOptions.MidlineRight);
+            afterHeading = AddHeaderText(headerRect, "구출 후 잔량", AfterRightX - AfterWidth, AfterRightX, TextAlignmentOptions.MidlineRight);
             EmergencyRescueUi.Image(
                 headerRect, "HeaderLine", null, new Vector2(0f, HeaderY - HeaderHeight * 0.5f),
                 new Vector2(PlateHalfWidth * 2f - 8f, 1.5f),
@@ -115,6 +120,10 @@ namespace SubTerra.App.UI.EmergencyRescue
         {
             var count = data != null ? data.Count : 0;
             VisibleRowCount = count;
+            resourceHeading.text = LocalizationService.Get("rescue.cost.resource");
+            costHeading.text = LocalizationService.Get("rescue.cost.deduct");
+            beforeHeading.text = LocalizationService.Get("rescue.cost.before");
+            afterHeading.text = LocalizationService.Get("rescue.cost.after");
             header.SetActive(count > 0);
             emptyNote.gameObject.SetActive(count == 0);
             emptyNote.text = emptyMessage ?? string.Empty;
@@ -154,13 +163,13 @@ namespace SubTerra.App.UI.EmergencyRescue
             }
         }
 
-        private void AddHeaderText(
+        private TMP_Text AddHeaderText(
             RectTransform parent, string text, float left, float right, TextAlignmentOptions alignment)
         {
             TMP_Text label = EmergencyRescueUi.Text(
                 parent, "Header" + text, font, 18f, FontStyles.Bold, EmergencyRescueUi.TextMuted, alignment,
                 new Vector2((left + right) * 0.5f, HeaderY), new Vector2(right - left, HeaderHeight));
-            label.text = text;
+            return label;
         }
 
         private Row EnsureRow(int index)
