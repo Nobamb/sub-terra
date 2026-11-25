@@ -98,6 +98,7 @@ namespace SubTerra.Gameplay.Player
         private bool footstepAlternate;
         private PlayerJumpAnimationSequence jumpSequence;
         private int observedJumpCount;
+        private int observedJumpCutCount;
         private bool jumpBobApplied;
         private float jumpBobBaseY;
 
@@ -116,6 +117,8 @@ namespace SubTerra.Gameplay.Player
         public PlayerDamageVisual DamageVisual => damageVisual;
         public float DamageVisualDuration => damageVisualDuration;
         public bool IsShowingHitStunVisual => currentState == "Damage" && damageIsHitStun;
+        /// <summary>B-211: 기절(행동불능) 그림 중. 찌그러짐 같은 몸 연출을 끈다.</summary>
+        public bool IsShowingKnockoutVisual => wasIncapacitated;
         private float HitStunSeconds => survival != null ? survival.HitStunSeconds : PlayerSurvivalSettings.DefaultHitStunSeconds;
         private bool UsesLadderCycle => ladderFrames != null && ladderFrames.Length > 5;
         public int LadderDamageDirection => ladderDamageDirection;
@@ -202,6 +205,7 @@ namespace SubTerra.Gameplay.Player
             if (movement != null)
             {
                 observedJumpCount = movement.JumpCount;
+                observedJumpCutCount = movement.JumpCutCount;
             }
         }
 
@@ -500,6 +504,9 @@ namespace SubTerra.Gameplay.Player
             // 착지 틱에 버퍼 점프가 바로 실행되면 공중 상태가 끊기지 않으므로 실행 횟수로 본다.
             bool started = movement.JumpCount != observedJumpCount;
             observedJumpCount = movement.JumpCount;
+            // B-211: 손을 떼 위 속도가 잘리면 상승 그림이 건너뛰지 않게 남은 상승을 다시 나눈다.
+            bool cut = movement.JumpCutCount != observedJumpCutCount;
+            observedJumpCutCount = movement.JumpCutCount;
 
             if (incapacitated || IsHoldingLadder)
             {
@@ -510,6 +517,10 @@ namespace SubTerra.Gameplay.Player
             if (started)
             {
                 JumpSequence.StartJump(movement.LastJumpLaunchSpeed);
+            }
+            else if (cut)
+            {
+                JumpSequence.ContinueAfterSpeedCut(movement.VerticalSpeed);
             }
 
             bool airborne = !movement.IsGrounded && !IsWalkGroundGrace();
