@@ -102,6 +102,25 @@ namespace SubTerra.App.Tests.PlayMode.Save
             Assert.That(terrain.HasTile(new Vector3Int(0, -2, 0)), Is.True);
         }
 
+        [Test]
+        public void RecentlyClearedTile_RefreshesColliderBeforeRestoringExactPosition()
+        {
+            tile.colliderType = Tile.ColliderType.Grid;
+            var cell = new Vector3Int(0, -2, 0);
+            terrain.SetTile(cell, tile);
+            var tileCollider = terrain.gameObject.AddComponent<TilemapCollider2D>();
+            tileCollider.ProcessTilemapChanges();
+            Physics2D.SyncTransforms();
+
+            var saved = Position(0.5f, -1.6f);
+            Assert.That(tileCollider.OverlapPoint(new Vector2(saved.x, saved.y)), Is.True);
+            terrain.SetTile(cell, null);
+            Assert.That(tileCollider.hasTilemapChanges, Is.True);
+
+            Assert.That(PlayerResumePosition.TryRestore(player, terrain, saved), Is.True);
+            Assert.That(player.Position, Is.EqualTo(new Vector2(saved.x, saved.y)));
+        }
+
         private static PlayerPositionSaveData Position(float x, float y)
             => new PlayerPositionSaveData { hasPosition = true, x = x, y = y };
     }

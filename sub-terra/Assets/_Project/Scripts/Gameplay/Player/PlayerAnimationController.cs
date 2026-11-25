@@ -4,14 +4,20 @@ using UnityEngine;
 
 namespace SubTerra.Gameplay.Player
 {
+    /// <summary>B-210: 다침 그림 종류. 가스 피해·사다리 피격은 경직 시간 안에 압축해 끝까지 보인다.</summary>
+    public enum PlayerDamageVisual
+    {
+        Damage,
+        GasDamage,
+        LadderHit
+    }
+
     // SpriteRenderer를 직접 갱신한다. Animator 클립은 에셋 미리보기/확장용으로 보존하되,
     // 런타임 표시가 Animator 평가 순서에 의존하지 않도록 한다.
     public sealed class PlayerAnimationController : MonoBehaviour
     {
         public const int WalkFrameCount = SubTerra.Shared.PlayerWalkCycle.FrameCount;
         public const float WalkFrameRate = SubTerra.Shared.PlayerWalkCycle.FrameRate;
-        // B-176: 다침 8장 × 20fps. 마지막 4-idle 장까지 보이게 한다.
-        private const float DamageDuration = 0.4f;
         private const float WalkGroundVisualGraceDuration = 0.06f;
         private const float LadderMovementEpsilon = 0.0001f;
         private const float LadderVisualGraceDuration = 0.1f;
@@ -39,13 +45,24 @@ namespace SubTerra.Gameplay.Player
         [SerializeField] private Sprite[] ladderMiningFrames;
         [SerializeField] private Sprite[] damageFrames;
         [SerializeField] private Sprite[] knockoutFrames;
+        [Tooltip("B-210: 땅에서 가스 피해 경직 그림. 비어 있으면 damageFrames.")]
+        [SerializeField] private Sprite[] gasDamageFrames;
+        [Tooltip("B-210: 사다리를 잡은 채 다친 뒷모습. 비어 있으면 damageFrames.")]
+        [SerializeField] private Sprite[] ladderHitFrames;
+        [Tooltip("B-210: 사다리 오르기 한 바퀴(6장 이상)에서 발소리를 내는 그림 번호(1부터).")]
+        [SerializeField] private int[] ladderStepFrames;
+        [Tooltip("B-210: 그림 세트별 사다리 채굴 구간. 비어 있으면 ladderMiningAnimation 값.")]
+        [SerializeField] private PlayerLadderMiningFrameRanges ladderMiningRanges;
         [SerializeField] private PlayerMiningAnimationSettings miningAnimation = new();
         [SerializeField] private PlayerLadderMiningAnimationSettings ladderMiningAnimation = new();
         [SerializeField] private PlayerJumpAnimationSettings jumpAnimation = new();
         [SerializeField, Min(0.01f)] private float damageFps = 20f;
         [SerializeField, Min(0.01f)] private float knockoutFps = 24f;
         [SerializeField, Min(0.01f)] private float knockoutBreathingFps = 12f;
+        [Tooltip("옛 3·5장 사다리 순서에서 한 칸당 이동 거리.")]
         [SerializeField, Min(0.01f)] private float ladderDistancePerFrame = 0.5f;
+        [Tooltip("B-210: 6장 이상 사다리 세트가 한 바퀴(1→N) 도는 이동 거리. 한 장 = 이 값 ÷ 장수.")]
+        [SerializeField, Min(0.01f)] private float ladderCycleDistance = 2f;
         [SerializeField, Min(0f)] private float ladderSettleDelay = 0.08f;
         [Tooltip("B-164: 걷기 그림에서 발이 닿는 프레임. 이 프레임으로 넘어갈 때 발소리를 낸다.")]
         [SerializeField] private int[] footstepFrames = { 1, 21 };
@@ -63,6 +80,9 @@ namespace SubTerra.Gameplay.Player
         private PlayerSurvivalController survival;
         private float previousHealth;
         private float damageUntil;
+        private float damageVisualDuration;
+        private bool damageIsHitStun;
+        private PlayerDamageVisual damageVisual;
         private int ladderDamageDirection = 1;
         private string currentState;
         private float stateStartedAt;
@@ -92,6 +112,12 @@ namespace SubTerra.Gameplay.Player
         public int LadderMiningDirection => LadderMiningSequence.Direction;
         /// <summary>B-176: 사다리를 잡은 채 다치는 중. 이동 방향 대신 LadderDamageDirection으로 고정한다.</summary>
         public bool IsShowingLadderDamageVisual => currentState == "Damage" && IsHoldingLadder;
+        /// <summary>B-210: 지금(또는 마지막) 다침 그림 종류와 그 길이.</summary>
+        public PlayerDamageVisual DamageVisual => damageVisual;
+        public float DamageVisualDuration => damageVisualDuration;
+        public bool IsShowingHitStunVisual => currentState == "Damage" && damageIsHitStun;
+        private float HitStunSeconds => survival != null ? survival.HitStunSeconds : PlayerSurvivalSettings.DefaultHitStunSeconds;
+        private bool UsesLadderCycle => ladderFrames != null && ladderFrames.Length > 5;
         public int LadderDamageDirection => ladderDamageDirection;
         public bool CanMineOnLadder => movement != null && !movement.IsJumpInProgress
             && !movement.IsApproachingLadderFromAbove
@@ -119,6 +145,7 @@ namespace SubTerra.Gameplay.Player
                 {
                     ladderMiningSequence = new PlayerLadderMiningAnimationSequence(ladderMiningAnimation);
                     ladderMiningSequence.SetFrameCount(Count(ladderMiningFrames));
+                    ladderMiningSequence.SetFrameRanges(ladderMiningRanges);
                 }
 
                 return ladderMiningSequence;
@@ -349,6 +376,10 @@ namespace SubTerra.Gameplay.Player
             ladderMiningFrames = set.ladderMiningFrames;
             damageFrames = set.damageFrames;
             knockoutFrames = set.knockoutFrames;
+            gasDamageFrames = set.gasDamageFrames;
+            ladderHitFrames = set.ladderHitFrames;
+            ladderStepFrames = set.ladderStepFrames;
+            ladderMiningRanges = set.ladderMiningRanges;
             Gender = set.gender;
             SyncSequenceFrameCounts();
         }
@@ -357,6 +388,7 @@ namespace SubTerra.Gameplay.Player
         {
             MiningSequence.SetFrameCount(Count(miningFrames));
             LadderMiningSequence.SetFrameCount(Count(ladderMiningFrames));
+            LadderMiningSequence.SetFrameRanges(ladderMiningRanges);
             JumpSequence.SetFrameCounts(Count(jumpReadyFrames), Count(jumpRiseFrames), Count(jumpFallFrames));
         }
 
@@ -541,17 +573,81 @@ namespace SubTerra.Gameplay.Player
         {
             if (health.Current < previousHealth)
             {
-                damageUntil = Time.unscaledTime + DamageDuration;
-                // 사다리 채굴 중 맞으면 그 방향, 아니면 사다리 그림처럼 오른쪽을 본다.
-                ladderDamageDirection = LadderMiningSequence.IsActive ? LadderMiningSequence.Direction : 1;
+                StartDamageVisual();
             }
 
             previousHealth = health.Current;
         }
 
+        /// <summary>
+        /// B-210: 가스·낙하·붕괴 경직이면 경직 끝까지 그 원인 그림(사다리를 잡고 있으면 원인과 관계없이 사다리 피격),
+        /// 그 밖의 피해(산소 0 틱 등)는 지금처럼 damageFrames를 HitStunSeconds 동안 보인다.
+        /// 경직 그림 중 다시 다쳐도 늘리거나 다시 시작하지 않는다.
+        /// </summary>
+        private void StartDamageVisual()
+        {
+            float now = Time.unscaledTime;
+            if (damageIsHitStun && now < damageUntil)
+            {
+                return;
+            }
+
+            // 사다리 채굴 중 맞으면 그 방향, 아니면 사다리 그림처럼 오른쪽을 본다.
+            ladderDamageDirection = LadderMiningSequence.IsActive ? LadderMiningSequence.Direction : 1;
+            if (survival != null && survival.IsHitStunned)
+            {
+                damageIsHitStun = true;
+                damageUntil = Mathf.Max(now + 0.01f, survival.HitStunEndsAt);
+                damageVisualDuration = damageUntil - now;
+                damageVisual = IsHoldingLadder ? PlayerDamageVisual.LadderHit
+                    : survival.State != null && survival.State.LastDamageCause == SubTerra.Shared.RunFailureCause.GasExposure
+                        ? PlayerDamageVisual.GasDamage
+                        : PlayerDamageVisual.Damage;
+                if (currentState == "Damage")
+                {
+                    stateStartedAt = now;
+                }
+
+                return;
+            }
+
+            damageIsHitStun = false;
+            damageVisual = PlayerDamageVisual.Damage;
+            damageVisualDuration = HitStunSeconds;
+            damageUntil = now + damageVisualDuration;
+        }
+
+        private Sprite[] ResolveHitStunFrames() => damageVisual switch
+        {
+            PlayerDamageVisual.GasDamage when HasFrames(gasDamageFrames) => gasDamageFrames,
+            PlayerDamageVisual.LadderHit when HasFrames(ladderHitFrames) => ladderHitFrames,
+            _ => null
+        };
+
+        // 장 번호 = 경과 ÷ 길이 × 장수. 화면 프레임에 맞춰 건너뛰고 마지막 장에서 멈춘다.
+        private bool TryPlayCompressedDamage()
+        {
+            var frames = ResolveHitStunFrames();
+            if (frames == null)
+            {
+                return false;
+            }
+
+            float duration = Mathf.Max(0.01f, damageVisualDuration);
+            float elapsed = Mathf.Clamp(duration - (damageUntil - Time.unscaledTime), 0f, duration);
+            int index = Mathf.Clamp(Mathf.FloorToInt(elapsed / duration * frames.Length), 0, frames.Length - 1);
+            if (frames[index] != null)
+            {
+                spriteRenderer.sprite = frames[index];
+            }
+
+            return true;
+        }
+
         private void HandleFailureRequested(SubTerra.Shared.RunFailureInputDto dto)
         {
             damageUntil = 0f;
+            damageIsHitStun = false;
             knockoutCause = dto != null && dto.cause != SubTerra.Shared.RunFailureCause.Unknown
                 ? dto.cause
                 : survival != null && survival.State != null
@@ -601,6 +697,11 @@ namespace SubTerra.Gameplay.Player
             if (HasJumpPhaseFrames && stateName == "LadderDrop")
             {
                 PlayLadderDrop();
+                return;
+            }
+
+            if (stateName == "Damage" && TryPlayCompressedDamage())
+            {
                 return;
             }
 
@@ -721,6 +822,11 @@ namespace SubTerra.Gameplay.Player
 
         private int ResolveLadderFrameIndex()
         {
+            if (UsesLadderCycle)
+            {
+                return ResolveLadderCycleFrameIndex();
+            }
+
             var distancePerFrame = Mathf.Max(0.01f, ladderDistancePerFrame);
             var sequenceLength = ladderFrames.Length >= 5 ? FiveFrameLadderSequence.Length : 4;
             var steps = Mathf.FloorToInt(Mathf.Abs(ladderTravelDistance) / distancePerFrame);
@@ -749,6 +855,43 @@ namespace SubTerra.Gameplay.Player
                 3 => 2,
                 _ => 0
             };
+        }
+
+        // B-210: 세트 전체를 한 바퀴로 쓴다. 올라가면 1→N, 내려가면 N→1. 발소리는 ladderStepFrames 장에 닿을 때.
+        private int ResolveLadderCycleFrameIndex()
+        {
+            int count = ladderFrames.Length;
+            float distancePerFrame = Mathf.Max(0.01f, ladderCycleDistance) / count;
+            int steps = Mathf.FloorToInt(Mathf.Abs(ladderTravelDistance) / distancePerFrame);
+            if (steps > 0)
+            {
+                int direction = ladderTravelDistance > 0f ? 1 : -1;
+                ladderTravelDistance -= direction * steps * distancePerFrame;
+                bool step = false;
+                for (int i = 0; i < steps; i++)
+                {
+                    ladderSequenceIndex = ((ladderSequenceIndex + direction) % count + count) % count;
+                    step |= IsLadderStepFrame(ladderSequenceIndex, count);
+                }
+
+                if (step)
+                {
+                    SfxRequests.Play(movement.LadderSfx.OnClimbStep());
+                }
+            }
+
+            return ladderSequenceIndex;
+        }
+
+        private bool IsLadderStepFrame(int frameIndex, int count)
+        {
+            if (ladderStepFrames != null && ladderStepFrames.Length > 0)
+            {
+                return System.Array.IndexOf(ladderStepFrames, frameIndex + 1) >= 0;
+            }
+
+            // 발소리 장이 비어 있는 세트는 한 바퀴의 1/4·3/4 지점에서 낸다.
+            return frameIndex == count / 4 || frameIndex == count * 3 / 4;
         }
 
         private static bool IsLadderTopIndex(int sequenceIndex, bool fiveFrames)

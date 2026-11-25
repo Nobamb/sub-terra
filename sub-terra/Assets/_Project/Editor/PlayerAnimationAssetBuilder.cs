@@ -234,7 +234,9 @@ namespace SubTerra.Editor
 
                 // B-208: 여자 세트 장수가 표와 다르거나 남자 그림이 섞이면 오류로 멈춘다.
                 SubTerra.App.Editor.DataValidation.PromptB208PlayerAnimationSetBuilder.Validate();
-                Debug.Log("Player animation runtime validation passed: movement input changed Idle to Walk; female set counts match B-208.");
+                // B-210: 남자 새 모션 장수(34/32/25/25)·발소리 장·사다리 채굴 구간. 여자 빈 필드는 경고만.
+                SubTerra.App.Editor.DataValidation.PromptB210PlayerMotionsBuilder.Validate();
+                Debug.Log("Player animation runtime validation passed: movement input changed Idle to Walk; female set counts match B-208; B-210 motions linked.");
             }
             finally
             {

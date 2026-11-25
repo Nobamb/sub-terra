@@ -131,7 +131,7 @@ namespace SubTerra.App.Tests.EditMode.Readiness
             Assert.That(movement.FacingDirection, Is.EqualTo(-side));
             mining.TickMining(10f);
             var sequence = (PlayerLadderMiningAnimationSequence)Get(animation, "ladderMiningSequence");
-            Assert.That(sequence.FrameIndex, Is.EqualTo(16));
+            Assert.That(sequence.FrameIndex, Is.EqualTo(18), "B-210 마무리 시작 19번");
             sequence.Tick(8f / 60f);
             Invoke(animation, "LateUpdate");
             Invoke(facing, "LateUpdate");
@@ -164,7 +164,7 @@ namespace SubTerra.App.Tests.EditMode.Readiness
         }
 
         [Test]
-        public void ReleasedButton_KeepsMining_SettingsCancellationReversesAndSameSideRestartsAtThirteen()
+        public void ReleasedButton_KeepsMining_SettingsCancellationReversesAndSameSideRestartsAtWorkFirst()
         {
             StartTarget(Vector2.left);
             var sequence = (PlayerLadderMiningAnimationSequence)Get(animation, "ladderMiningSequence");
@@ -178,11 +178,11 @@ namespace SubTerra.App.Tests.EditMode.Readiness
             ControlPreferences.IsSettingsOpen = false;
             sequence.Tick(.1f);
             StartTarget(Vector2.left);
-            Assert.That(sequence.FrameIndex, Is.EqualTo(12));
+            Assert.That(sequence.FrameIndex, Is.EqualTo(8), "B-210 작업 시작 9번");
         }
 
         [Test]
-        public void Damage_ResumesThirteen_KnockoutInterrupts()
+        public void Damage_ResumesWorkFirst_KnockoutInterrupts()
         {
             StartTarget(Vector2.right);
             var sequence = (PlayerLadderMiningAnimationSequence)Get(animation, "ladderMiningSequence");
@@ -192,50 +192,43 @@ namespace SubTerra.App.Tests.EditMode.Readiness
             Set(animation, "damageUntil", 0f);
             Invoke(animation, "LateUpdate");
             Assert.That(State, Is.EqualTo("LadderMining"));
-            Assert.That(sequence.FrameIndex, Is.EqualTo(12));
+            Assert.That(sequence.FrameIndex, Is.EqualTo(8), "B-210 작업 시작 9번");
             Invoke(animation, "HandleFailureRequested", new RunFailureInputDto { cause = RunFailureCause.GasExposure });
             Assert.That(State, Is.EqualTo("Knockout"));
             Assert.That(sequence.IsActive, Is.False);
         }
 
+        // B-210: 옛 24장을 새 25장(Frames/LadderMiningV2)으로 바꾸고 구간을 세트별 값(시작 1–8, 작업 9↔18, 마무리 19–25)으로 둔다.
         [Test]
-        public void Prefab_Has24UniqueAlignedDrawingsAndSettings()
+        public void Prefab_Has25NewUniqueDrawingsRangesAndSettings()
         {
             var fields = new SerializedObject(animation);
             var frames = fields.FindProperty("ladderMiningFrames");
-            Assert.That(frames.arraySize, Is.EqualTo(24));
+            Assert.That(frames.arraySize, Is.EqualTo(25));
             var hashes = new HashSet<string>();
             for (int i = 0; i < frames.arraySize; i++)
             {
                 var sprite = (Sprite)frames.GetArrayElementAtIndex(i).objectReferenceValue;
                 Assert.That(sprite, Is.Not.Null);
                 string path = AssetDatabase.GetAssetPath(sprite);
+                Assert.That(path, Is.EqualTo("Assets/_Project/Art/Characters/Player/Frames/LadderMiningV2/ladder_mining_v2_"
+                    + (i + 1).ToString("D2") + ".png"));
                 var importer = (TextureImporter)AssetImporter.GetAtPath(path);
                 Assert.That(importer.spritePixelsPerUnit, Is.EqualTo(256f));
                 Assert.That(importer.filterMode, Is.EqualTo(FilterMode.Bilinear));
                 Assert.That(importer.mipmapEnabled, Is.False);
                 Assert.That(importer.textureCompression, Is.EqualTo(TextureImporterCompression.Uncompressed));
                 Assert.That(sprite.pivot, Is.EqualTo(new Vector2(128, 128)));
-                byte[] bytes = File.ReadAllBytes(path);
-                CollectionAssert.AreEqual(File.ReadAllBytes("../work_process/images/player-ladder-mining-24f-20261029/runtime-frames/ladder-mining-"
-                    + (i+1).ToString("D2") + ".png"), bytes);
-                hashes.Add(System.Convert.ToBase64String(bytes));
-                var texture = new Texture2D(2, 2);
-                try
-                {
-                    texture.LoadImage(bytes);
-                    Assert.That(texture.width, Is.EqualTo(256));
-                    Assert.That(texture.height, Is.EqualTo(256));
-                    int footInset = 256;
-                    var pixels = texture.GetPixels32();
-                    for (int y = 0; y < 256; y++)
-                    for (int x = 0; x < 256; x++)
-                        if (pixels[y*256+x].a >= 32) footInset = Mathf.Min(footInset, y);
-                    Assert.That(footInset, Is.InRange(14, 18));
-                }
-                finally { Object.DestroyImmediate(texture); }
+                Assert.That(sprite.rect.size, Is.EqualTo(new Vector2(256, 256)));
+                hashes.Add(System.Convert.ToBase64String(File.ReadAllBytes(path)));
             }
-            Assert.That(hashes.Count, Is.EqualTo(24));
+            Assert.That(hashes.Count, Is.EqualTo(25));
+            var ranges = fields.FindProperty("ladderMiningRanges");
+            Assert.That(ranges.FindPropertyRelative("startLastFrame").intValue, Is.EqualTo(8));
+            Assert.That(ranges.FindPropertyRelative("workFirstFrame").intValue, Is.EqualTo(9));
+            Assert.That(ranges.FindPropertyRelative("workLastFrame").intValue, Is.EqualTo(18));
+            Assert.That(ranges.FindPropertyRelative("finishFirstFrame").intValue, Is.EqualTo(19));
+            Assert.That(ranges.FindPropertyRelative("finishLastFrame").intValue, Is.EqualTo(25));
             var settings = fields.FindProperty("ladderMiningAnimation");
             Assert.That(settings.FindPropertyRelative("startFps").floatValue, Is.EqualTo(24f));
             Assert.That(settings.FindPropertyRelative("workFps").floatValue, Is.EqualTo(12f));

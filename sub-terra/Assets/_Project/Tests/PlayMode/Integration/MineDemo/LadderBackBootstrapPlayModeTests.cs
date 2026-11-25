@@ -17,7 +17,9 @@ namespace SubTerra.App.Tests.PlayMode.MineDemo
 {
     public sealed class LadderBackBootstrapPlayModeTests
     {
-        private const string Frames = "Assets/_Project/Art/Characters/Player/Frames/LadderBack/";
+        // B-210: 5장 뒷모습 등반 대신 새 사다리 오르기 32장(256, PPU 256) 한 바퀴.
+        private const string Frames = "Assets/_Project/Art/Characters/Player/Frames/LadderClimb/";
+        private const int FrameCount = 32;
         private PlayerMovement movement;
         private SpriteRenderer visual;
         private Sprite[] frames;
@@ -67,22 +69,15 @@ namespace SubTerra.App.Tests.PlayMode.MineDemo
             visual = movement.transform.Find("VisualRoot").GetComponent<SpriteRenderer>();
             var configuredFrames = new SerializedObject(
                 visual.GetComponent<PlayerAnimationController>()).FindProperty("ladderFrames");
-            Assert.That(configuredFrames.arraySize, Is.EqualTo(5));
-            frames = new Sprite[5];
-            bool styled = AssetDatabase.GetAssetPath(configuredFrames.GetArrayElementAtIndex(0).objectReferenceValue)
-                .EndsWith("ladder_back_neutral_v2.png");
+            Assert.That(configuredFrames.arraySize, Is.EqualTo(FrameCount));
+            frames = new Sprite[FrameCount];
             for (var i = 0; i < frames.Length; i++)
             {
                 frames[i] = configuredFrames.GetArrayElementAtIndex(i).objectReferenceValue as Sprite;
                 Assert.That(frames[i], Is.Not.Null);
-                string framePath = AssetDatabase.GetAssetPath(frames[i]);
-                if (i == 0)
-                    Assert.That(framePath, Is.EqualTo(Frames + "ladder_back_neutral_v2.png")
-                        .Or.EqualTo(Frames + "ladder_back_01.png"));
-                else
-                    Assert.That(framePath, Is.EqualTo(Frames + "ladder_back_" + (styled ? "style_" : "") + "0" + (i + 1) + ".png"));
-                Assert.That(frames[i].texture.width, Is.EqualTo(1254));
-                Assert.That(frames[i].pixelsPerUnit, Is.EqualTo(styled ? 1084f : 1254f));
+                Assert.That(AssetDatabase.GetAssetPath(frames[i]), Is.EqualTo(Frames + "ladder_climb_" + (i + 1).ToString("00") + ".png"));
+                Assert.That(frames[i].texture.width, Is.EqualTo(256));
+                Assert.That(frames[i].pixelsPerUnit, Is.EqualTo(256f));
             }
 
             // 실제 5칸 시설 프리팹으로 연결과 물리 등반을 검증한다.
@@ -171,11 +166,12 @@ namespace SubTerra.App.Tests.PlayMode.MineDemo
             var wasSimulated = body.simulated;
             var wasEnabled = animation.enabled;
             var localPosition = visual.transform.localPosition;
-            var step = new SerializedObject(animation).FindProperty("ladderDistancePerFrame").floatValue;
+            var step = new SerializedObject(animation).FindProperty("ladderCycleDistance").floatValue / FrameCount;
             var tick = typeof(PlayerAnimationController).GetMethod("LateUpdate", BindingFlags.Instance | BindingFlags.NonPublic);
-            var sequence = direction > 0f
-                ? new[] { 0, 1, 2, 1, 0, 3, 4, 3, 0 }
-                : new[] { 0, 3, 4, 3, 0, 1, 2, 1, 0 };
+            // 올라가면 1→N, 내려가면 N→1로 한 바퀴 돌아 1번으로 돌아온다.
+            var sequence = new int[FrameCount + 1];
+            for (var i = 0; i <= FrameCount; i++)
+                sequence[i] = direction > 0f ? i % FrameCount : (FrameCount - i) % FrameCount;
             try
             {
                 animation.enabled = false;

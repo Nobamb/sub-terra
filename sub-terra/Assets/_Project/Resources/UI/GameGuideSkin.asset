@@ -144,15 +144,69 @@ MonoBehaviour:
   - key: player.mine.24
     sprite: {fileID: 21300000, guid: a4df1a9a38d181345b1f0b38673694f8, type: 3}
   - key: player.ladder.1
-    sprite: {fileID: 21300000, guid: 86bb9ae731578a74fa39b2464a75ed46, type: 3}
+    sprite: {fileID: 21300000, guid: 4b1e0c8f11910a14891e2a648b282efa, type: 3}
   - key: player.ladder.2
-    sprite: {fileID: 21300000, guid: fa4f29abc4a63ff4bada3dd0a9cb5237, type: 3}
+    sprite: {fileID: 21300000, guid: e307bf6e1a6d89448a0acbea19c3ab1e, type: 3}
   - key: player.ladder.3
-    sprite: {fileID: 21300000, guid: c70489b371526cb428e8a81d61071184, type: 3}
+    sprite: {fileID: 21300000, guid: 814e2cfceb57e214294d1f1d0cbac003, type: 3}
   - key: player.ladder.4
-    sprite: {fileID: 21300000, guid: b9dcfaa001a35f046b0b76c28df0c63d, type: 3}
+    sprite: {fileID: 21300000, guid: 7a244e7e5f009d54abc580be5bd885ef, type: 3}
   - key: player.ladder.5
-    sprite: {fileID: 21300000, guid: 5912301cac5a9a04c851fc6aa6800fdd, type: 3}
+    sprite: {fileID: 21300000, guid: ee7950dc8d3adf94ea773e72bb1155c4, type: 3}
+  - key: player.ladder.6
+    sprite: {fileID: 21300000, guid: b9ec5eeed48255542a129569827781d3, type: 3}
+  - key: player.ladder.7
+    sprite: {fileID: 21300000, guid: ccd969cbdb3060e4c8e8b95b993dbd82, type: 3}
+  - key: player.ladder.8
+    sprite: {fileID: 21300000, guid: 0b7c740d823557d40bac9b9f82f3d958, type: 3}
+  - key: player.ladder.9
+    sprite: {fileID: 21300000, guid: 6c92e0b0ca11c3141a38993b481af453, type: 3}
+  - key: player.ladder.10
+    sprite: {fileID: 21300000, guid: 0c6512dc60e2b0743b72f884bcb835ee, type: 3}
+  - key: player.ladder.11
+    sprite: {fileID: 21300000, guid: 933f6ecb185ef6f429a8ea5bc69b428a, type: 3}
+  - key: player.ladder.12
+    sprite: {fileID: 21300000, guid: fa2546f0d7dc5c04dae31c1636c8ed13, type: 3}
+  - key: player.ladder.13
+    sprite: {fileID: 21300000, guid: d4bbd5098074bbb4b8e58bc04422deb1, type: 3}
+  - key: player.ladder.14
+    sprite: {fileID: 21300000, guid: 36712f5fd57a5c241868052a1434f709, type: 3}
+  - key: player.ladder.15
+    sprite: {fileID: 21300000, guid: d16144d35b034844c889b8f0d5087cd3, type: 3}
+  - key: player.ladder.16
+    sprite: {fileID: 21300000, guid: 8d098f6f1ea2e9245a1fd49341bfe00c, type: 3}
+  - key: player.ladder.17
+    sprite: {fileID: 21300000, guid: 16ebbf68ea527ae41920fa7ff1217194, type: 3}
+  - key: player.ladder.18
+    sprite: {fileID: 21300000, guid: 9b301920a39f5c24bba9fcfa9540d740, type: 3}
+  - key: player.ladder.19
+    sprite: {fileID: 21300000, guid: 3f6686d2af16c0f49896167fc7db7ae3, type: 3}
+  - key: player.ladder.20
+    sprite: {fileID: 21300000, guid: 4c7e999496f889a4e8307b988222d0a4, type: 3}
+  - key: player.ladder.21
+    sprite: {fileID: 21300000, guid: 50f4165ae24ad8843830417628b04bb4, type: 3}
+  - key: player.ladder.22
+    sprite: {fileID: 21300000, guid: d3839613be596554ebfc000b22557e09, type: 3}
+  - key: player.ladder.23
+    sprite: {fileID: 21300000, guid: fc8da43080af2f94695cc7eda3bb4b10, type: 3}
+  - key: player.ladder.24
+    sprite: {fileID: 21300000, guid: 47df901c6322fd64a9cf4e803fc14720, type: 3}
+  - key: player.ladder.25
+    sprite: {fileID: 21300000, guid: 0fff7fcadbfbc434f9675f70fc266af4, type: 3}
+  - key: player.ladder.26
+    sprite: {fileID: 21300000, guid: 18e6ec07f18ea9d478b1d664ea4a3b08, type: 3}
+  - key: player.ladder.27
+    sprite: {fileID: 21300000, guid: d4eba3f07673285419eae59271bfc9f9, type: 3}
+  - key: player.ladder.28
+    sprite: {fileID: 21300000, guid: d9bf1d7c388431345bb9695abd2d4fff, type: 3}
+  - key: player.ladder.29
+    sprite: {fileID: 21300000, guid: 23380529f12f02646b448b8a32981ad9, type: 3}
+  - key: player.ladder.30
+    sprite: {fileID: 21300000, guid: b03c10263412f86448dc806a0e1119ed, type: 3}
+  - key: player.ladder.31
+    sprite: {fileID: 21300000, guid: 4db88ab90c0c66549b26468a848746e0, type: 3}
+  - key: player.ladder.32
+    sprite: {fileID: 21300000, guid: b6e8842f92f14bf46a643bc27050e522, type: 3}
   - key: player.jump.4
     sprite: {fileID: 21300000, guid: 2bcf2e62099519840b9da799f4bdb00b, type: 3}
   - key: player.damage.1
@@ -286,15 +340,55 @@ MonoBehaviour:
   - key: player.female.mine.23
     sprite: {fileID: 21300000, guid: a5db19919ca9b554b97efae7bdc7cb22, type: 3}
   - key: player.female.ladder.1
-    sprite: {fileID: 21300000, guid: a3ea55372e375de43865fb920c5b803c, type: 3}
+    sprite: {fileID: 21300000, guid: 1a38a1917e99e2b4ebc85a9930720542, type: 3}
   - key: player.female.ladder.2
-    sprite: {fileID: 21300000, guid: a202cb3eddbca984dae3d6ac68ccd70a, type: 3}
+    sprite: {fileID: 21300000, guid: 5e731ba1b870c7f44a947976db053d9b, type: 3}
   - key: player.female.ladder.3
-    sprite: {fileID: 21300000, guid: c0b4b92eaa2174c478d8df9712ec001c, type: 3}
+    sprite: {fileID: 21300000, guid: c0ca90171c8c8564b8a434c6dee2cf35, type: 3}
   - key: player.female.ladder.4
-    sprite: {fileID: 21300000, guid: fbc18f4f5ae35ac449677d87ded3438e, type: 3}
+    sprite: {fileID: 21300000, guid: efc9f9be481f2c445ba9dfd8773d7e7b, type: 3}
   - key: player.female.ladder.5
-    sprite: {fileID: 21300000, guid: 1e0047cc085823e4fab457ea9db44125, type: 3}
+    sprite: {fileID: 21300000, guid: cd0a4de26f796cd41a08ed2d752cdb22, type: 3}
+  - key: player.female.ladder.6
+    sprite: {fileID: 21300000, guid: 33ab0ac4087db134b9dd19b6efea165e, type: 3}
+  - key: player.female.ladder.7
+    sprite: {fileID: 21300000, guid: 7ae86cf940bd2a544a581db0391149e5, type: 3}
+  - key: player.female.ladder.8
+    sprite: {fileID: 21300000, guid: 63078f273c3f70749b8f8fdd0a3cf1f4, type: 3}
+  - key: player.female.ladder.9
+    sprite: {fileID: 21300000, guid: 34a185621d102104d822510f35ce5b4d, type: 3}
+  - key: player.female.ladder.10
+    sprite: {fileID: 21300000, guid: eadd7f78df15ea042a1d3f6bb13dde3e, type: 3}
+  - key: player.female.ladder.11
+    sprite: {fileID: 21300000, guid: a3af2c03d2b0f23428b63f9417b5dd5b, type: 3}
+  - key: player.female.ladder.12
+    sprite: {fileID: 21300000, guid: 5be74b81ee61ed749a81b8c07f4527a0, type: 3}
+  - key: player.female.ladder.13
+    sprite: {fileID: 21300000, guid: 967cfc90f0f79444c9a656d9e5aa09db, type: 3}
+  - key: player.female.ladder.14
+    sprite: {fileID: 21300000, guid: 3023bb910df519a4eb21da27af8d3f87, type: 3}
+  - key: player.female.ladder.15
+    sprite: {fileID: 21300000, guid: 9ee700928fdb2aa4daa0cac2d2bc209a, type: 3}
+  - key: player.female.ladder.16
+    sprite: {fileID: 21300000, guid: 67bff5ff46f58de4d9ce749c198b0ab1, type: 3}
+  - key: player.female.ladder.17
+    sprite: {fileID: 21300000, guid: 2aa00d8d4695bbb4eab1b8df30f93075, type: 3}
+  - key: player.female.ladder.18
+    sprite: {fileID: 21300000, guid: b5830415fa8a3d54bbbdd3ce9e9e8025, type: 3}
+  - key: player.female.ladder.19
+    sprite: {fileID: 21300000, guid: a01fbe2afe3e49740b2dc85129f61b82, type: 3}
+  - key: player.female.ladder.20
+    sprite: {fileID: 21300000, guid: d14aee71ca6317941b22635a8eadcbcd, type: 3}
+  - key: player.female.ladder.21
+    sprite: {fileID: 21300000, guid: bf84876dfcfdb9a42993ba94e611921c, type: 3}
+  - key: player.female.ladder.22
+    sprite: {fileID: 21300000, guid: 3bb28f91c061a234398ffcb5b37a1f38, type: 3}
+  - key: player.female.ladder.23
+    sprite: {fileID: 21300000, guid: 24470b59eef108342843c831ef2eb80d, type: 3}
+  - key: player.female.ladder.24
+    sprite: {fileID: 21300000, guid: 6b98aa78cde7d1c4e89f2da31f85a387, type: 3}
+  - key: player.female.ladder.25
+    sprite: {fileID: 21300000, guid: 559c58a067a0382429ee0bd013f6850d, type: 3}
   - key: player.female.jump.4
     sprite: {fileID: 21300000, guid: a5e20f6ceeb139646b19143339578647, type: 3}
   - key: player.female.damage.1
