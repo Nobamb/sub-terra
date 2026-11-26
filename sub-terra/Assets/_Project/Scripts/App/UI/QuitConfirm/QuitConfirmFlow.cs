@@ -136,7 +136,7 @@ namespace SubTerra.App.UI.QuitConfirm
         private void Update()
         {
             if (ManualTick) return;
-            var keyboard = Keyboard.current;
+            var keyboard = UiPauseGate.IsDebugTerminalOpen ? null : Keyboard.current;
             var mouse = Mouse.current;
             var escape = keyboard != null && (keyboard.escapeKey.wasPressedThisFrame || keyboard.xKey.wasPressedThisFrame);
             var anyInput = (keyboard != null && keyboard.anyKey.wasPressedThisFrame)

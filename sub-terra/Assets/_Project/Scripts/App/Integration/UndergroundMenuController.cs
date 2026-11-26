@@ -79,6 +79,7 @@ namespace SubTerra.App.Integration
                 ReleaseSettingsPause();
             }
 
+            if (UiPauseGate.IsDebugTerminalOpen) return;
             var keyboard = Keyboard.current;
             if (keyboard == null) return;
             // B-170: 종료 확인 창이 ESC·X를 먼저 받고(-400), 떠 있는 동안 다른 단축키를 막는다.

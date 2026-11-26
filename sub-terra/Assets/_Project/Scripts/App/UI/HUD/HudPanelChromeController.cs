@@ -183,6 +183,7 @@ namespace SubTerra.App.UI.HUD
 
         private void Update()
         {
+            if (UiPauseGate.IsDebugTerminalOpen) return;
             if (UiPauseGate.IsInputBlocked)
             {
                 var pausedKeyboard = Keyboard.current;

@@ -596,7 +596,7 @@ namespace SubTerra.App.UI.MainMenu
 
         private void HandleFooterKeyboard()
         {
-            if (!Application.isPlaying) return;
+            if (!Application.isPlaying || UiPauseGate.IsDebugTerminalOpen) return;
             var keyboard = Keyboard.current;
             if (keyboard == null) return;
             bool left = keyboard.leftArrowKey.wasPressedThisFrame;

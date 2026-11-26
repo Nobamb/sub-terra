@@ -247,7 +247,7 @@ namespace SubTerra.App.UI.MainMenu
         private static bool SkipPressed()
         {
             var keyboard = Keyboard.current;
-            if (keyboard != null && keyboard.anyKey.wasPressedThisFrame) return true;
+            if (!UiPauseGate.IsDebugTerminalOpen && keyboard != null && keyboard.anyKey.wasPressedThisFrame) return true;
             var mouse = Mouse.current;
             return mouse != null && (mouse.leftButton.wasPressedThisFrame || mouse.rightButton.wasPressedThisFrame);
         }

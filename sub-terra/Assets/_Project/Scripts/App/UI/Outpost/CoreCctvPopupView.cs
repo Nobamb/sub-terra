@@ -1263,6 +1263,7 @@ namespace SubTerra.App.UI.Outpost
 
         private void HandleKeyboard()
         {
+            if (UiPauseGate.IsDebugTerminalOpen) return;
             if (state == PlayState.Exiting || list.Count == 0 || !IsTopWindow())
             {
                 return;

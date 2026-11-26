@@ -385,6 +385,7 @@ namespace SubTerra.App.UI.MainMenu
 
         private void HandleKeyboard()
         {
+            if (UiPauseGate.IsDebugTerminalOpen) return;
             var keyboard = Keyboard.current;
             if (keyboard == null) return;
             if (keyboard.escapeKey.wasPressedThisFrame) PressBack();

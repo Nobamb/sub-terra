@@ -62,7 +62,7 @@ namespace SubTerra.App.UI
                 ReleaseUpgradePause();
             }
 
-            if (UiPauseGate.IsHeldBy(UiPauseGate.MineSettings)
+            if (UiPauseGate.IsDebugTerminalOpen || UiPauseGate.IsHeldBy(UiPauseGate.MineSettings)
                 || (UiPauseGate.IsInputBlocked && !(holdsUpgradePause && IsVisible(RuntimePanelId.Upgrade))))
             {
                 return;
