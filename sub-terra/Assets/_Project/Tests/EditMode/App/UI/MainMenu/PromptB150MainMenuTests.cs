@@ -468,13 +468,23 @@ namespace SubTerra.App.Tests.UI.MainMenu
                 var rect = (RectTransform)button.transform;
                 var size = rect.sizeDelta;
                 var position = rect.anchoredPosition;
-                view.SetPrimaryAction("새 탐사 시작", true);
-                Assert.That(button.interactable, Is.True);
-                Assert.That(button.GetComponentInChildren<TMPro.TMP_Text>(true).text, Is.EqualTo("새 탐사 시작"));
-                view.SetPrimaryAction("이어하기", true);
-                Assert.That(button.GetComponentInChildren<TMPro.TMP_Text>(true).text, Is.EqualTo("이어하기"));
-                Assert.That(rect.sizeDelta, Is.EqualTo(size));
-                Assert.That(rect.anchoredPosition, Is.EqualTo(position));
+                var icon = (RectTransform)button.transform.Find("Icon");
+                var label = button.GetComponentInChildren<TMPro.TMP_Text>(true);
+                foreach (var action in new[] { "Start Expedition", "Continue", "새 탐사 시작", "이어하기" })
+                {
+                    view.SetPrimaryAction(action, true);
+                    Assert.That(button.interactable, Is.True);
+                    Assert.That(label.text, Is.EqualTo(action));
+                    Assert.That(rect.sizeDelta, Is.EqualTo(size));
+                    Assert.That(rect.anchoredPosition, Is.EqualTo(position));
+                    var textWidth = label.GetPreferredValues(action).x;
+                    var iconRight = icon.anchoredPosition.x + icon.rect.width / 2f;
+                    var textLeft = label.rectTransform.anchoredPosition.x - textWidth / 2f;
+                    var textRight = textLeft + textWidth;
+                    Assert.That(textLeft - iconRight, Is.EqualTo(MainMenuView.PrimaryActionIconGap).Within(0.5f), action);
+                    Assert.That(textRight + iconRight - icon.rect.width, Is.Zero.Within(0.5f), action);
+                    Assert.That(label.rectTransform.rect.width, Is.GreaterThanOrEqualTo(textWidth), action);
+                }
             }
             finally { UnityEngine.Object.DestroyImmediate(instance); }
         }

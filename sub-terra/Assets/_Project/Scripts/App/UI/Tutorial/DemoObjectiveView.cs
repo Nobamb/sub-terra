@@ -969,7 +969,32 @@ namespace SubTerra.App.UI.Tutorial
             }
 
             if (claimRewardText != null) claimRewardText.gameObject.SetActive(visible == 0);
+            FitClaimRewardLabel();
             UnityEngine.UI.LayoutRebuilder.ForceRebuildLayoutImmediate(claimRewardRow);
+        }
+
+        private void FitClaimRewardLabel()
+        {
+            var label = claimRewardRow.Find("ClaimRewardLabel")?.GetComponent<TMP_Text>();
+            var layout = claimRewardRow.GetComponent<UnityEngine.UI.HorizontalLayoutGroup>();
+            if (label == null || layout == null) return;
+
+            var available = claimRewardRow.rect.width - layout.padding.horizontal;
+            foreach (Transform child in claimRewardRow)
+            {
+                if (child != label.transform && child.gameObject.activeSelf && child is RectTransform item)
+                    available -= item.rect.width + layout.spacing;
+            }
+
+            label.textWrappingMode = TextWrappingModes.NoWrap;
+            label.enableAutoSizing = false;
+            label.fontSize = ClaimRewardLabelFontSize;
+            var preferred = Mathf.Ceil(label.GetPreferredValues(label.text).x) + 2f;
+            var width = Mathf.Min(Mathf.Max(ClaimRewardLabelMinWidth, preferred), Mathf.Max(1f, available));
+            label.rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, width);
+            label.fontSizeMax = ClaimRewardLabelFontSize;
+            label.fontSizeMin = 18f;
+            label.enableAutoSizing = preferred > width;
         }
 
         public void SetClaimText(string title, string questTitle, string rewardText, string hint)
@@ -1003,6 +1028,8 @@ namespace SubTerra.App.UI.Tutorial
         }
 
         public const float ClaimRewardRowY = -420f;
+        public const float ClaimRewardLabelFontSize = 32f;
+        public const float ClaimRewardLabelMinWidth = 100f;
         public const float ClaimHintY = -302f;
 
         // 빌더와 실행 중 팝업이 같은 간격을 사용한다. 안내는 설명 바로 아래, 보상은 하단 구획에 둔다.
