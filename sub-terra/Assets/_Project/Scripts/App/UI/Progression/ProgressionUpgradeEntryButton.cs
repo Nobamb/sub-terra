@@ -79,7 +79,7 @@ namespace SubTerra.App.UI.Progression
                     continue;
                 }
 
-                var name = ItemDisplayNames.PreferDisplay(upgrade.UpgradeId, upgrade.DisplayName);
+                var name = ItemDisplayNames.LocalizedUpgrade(upgrade.UpgradeId, upgrade.DisplayName);
                 label.text = name
                     + "  Lv."
                     + upgrade.CurrentLevel

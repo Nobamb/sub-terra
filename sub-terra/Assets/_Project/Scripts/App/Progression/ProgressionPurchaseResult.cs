@@ -1,3 +1,5 @@
+using SubTerra.Shared.Localization;
+
 namespace SubTerra.App.Progression
 {
     public enum ProgressionPurchaseStatus
@@ -63,7 +65,7 @@ namespace SubTerra.App.Progression
                 previousLevel,
                 currentLevel,
                 effectValue,
-                "업그레이드 구매 완료",
+                LocalizationService.Text("업그레이드 구매 완료", "Upgrade purchased"),
                 string.Empty,
                 newlyUnlocked);
         }

@@ -482,7 +482,10 @@ namespace SubTerra.App.UI.Tutorial
             }
 
             LayoutRewardSlots(reward);
-            SetLocalizedLabel(detailsRoot != null ? detailsRoot.transform : null, "QuestRewardHeader", "quest.reward_header");
+            var panel = detailsRoot != null ? detailsRoot.transform : null;
+            var missionHeader = panel?.Find("QuestMissionHeader")?.GetComponent<TMP_Text>();
+            if (missionHeader != null) missionHeader.text = LocalizationService.Text("임무 내용", "Mission Details");
+            SetLocalizedLabel(panel, "QuestRewardHeader", "quest.reward_header");
 
             if (detailsStatusIcon != null)
             {

@@ -8,6 +8,7 @@ using SubTerra.App.Progression;
 using SubTerra.App.UI.SurfaceBase;
 using SubTerra.Shared;
 using SubTerra.Shared.Audio;
+using static SubTerra.Shared.Localization.LocalizationService;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -264,6 +265,10 @@ namespace SubTerra.App.UI.Progression
 
         public void Render(IReadOnlyList<UpgradeSnapshot> upgrades)
         {
+            SetText(effectGroup?.transform.Find("CurrentCaption")?.GetComponent<TMP_Text>(), Text("현재", "Current"));
+            SetText(effectNextCaption?.GetComponent<TMP_Text>(), Text("다음", "Next"));
+            SetText(costGroup?.transform.Find("CostTitle")?.GetComponent<TMP_Text>(), Text("필요 재료", "Required Materials"));
+            SetText(maxBadge?.transform.Find("Label")?.GetComponent<TMP_Text>(), Text("최대 레벨 달성", "Max Level Reached"));
             snapshots.Clear();
             if (upgrades != null)
             {
@@ -497,11 +502,11 @@ namespace SubTerra.App.UI.Progression
             SetActive(detailQuestion, true);
             SetText(detailName, "???");
             SetText(detailLevel, string.Empty);
-            SetText(detailDescription, "아직 해금되지 않은 업그레이드입니다.");
+            SetText(detailDescription, Text("아직 해금되지 않은 업그레이드입니다.", "This upgrade is locked."));
             SetActive(effectGroup, false);
             SetActive(costGroup, false);
             SetActive(maxBadge, false);
-            SetText(statusText, "잠금");
+            SetText(statusText, Text("잠금", "Locked"));
             SetColor(statusText, UpgradeTreeTween.TextDim);
             SetText(hintText, upgrade.LockedReason);
             SetPurchaseVisible(false);
@@ -520,7 +525,7 @@ namespace SubTerra.App.UI.Progression
             }
 
             SetActive(detailQuestion, false);
-            SetText(detailName, ItemDisplayNames.PreferDisplay(upgrade.UpgradeId, upgrade.DisplayName));
+            SetText(detailName, ItemDisplayNames.LocalizedUpgrade(upgrade.UpgradeId, upgrade.DisplayName));
             SetText(detailLevel, "Lv." + upgrade.CurrentLevel + " / " + upgrade.MaximumLevel);
 
             var description = ItemDisplayNames.UpgradeDescription(upgrade.UpgradeId);
@@ -543,12 +548,12 @@ namespace SubTerra.App.UI.Progression
 
             if (upgrade.CanAffordNextLevel)
             {
-                SetText(statusText, "구매 가능");
+                SetText(statusText, Text("구매 가능", "Available"));
                 SetColor(statusText, UpgradeTreeTween.Cyan);
             }
             else
             {
-                SetText(statusText, "재료 부족");
+                SetText(statusText, Text("재료 부족", "Need Materials"));
                 SetColor(statusText, UpgradeTreeTween.Warning);
             }
 
@@ -556,7 +561,7 @@ namespace SubTerra.App.UI.Progression
             SetPurchaseVisible(true);
             if (purchaseLabel != null)
             {
-                purchaseLabel.text = upgrade.CanAffordNextLevel ? "업그레이드" : "재료 부족";
+                purchaseLabel.text = upgrade.CanAffordNextLevel ? Text("업그레이드", "Upgrade") : Text("재료 부족", "Need Materials");
             }
 
             if (purchaseGroup != null)
@@ -584,7 +589,7 @@ namespace SubTerra.App.UI.Progression
                         builder.Append(" · ");
                     }
 
-                    builder.Append(ItemName(shortage.ItemId)).Append(' ').Append(shortage.Quantity).Append(" 부족");
+                    builder.AppendFormat(Text("{0} {1} 부족", "{0}: {1} short"), ItemName(shortage.ItemId), shortage.Quantity);
                 }
             }
 
@@ -597,8 +602,8 @@ namespace SubTerra.App.UI.Progression
                     builder.Append('\n');
                 }
 
-                builder.Append("Lv.").Append(upgrade.CurrentLevel + 1)
-                    .Append(" 달성 시 주변 업그레이드 ").Append(opens).Append("개 해금");
+                builder.AppendFormat(Text("Lv.{0} 달성 시 주변 업그레이드 {1}개 해금", "Lv.{0} unlocks adjacent upgrades ({1})"),
+                    upgrade.CurrentLevel + 1, opens);
             }
 
             return builder.ToString();
@@ -627,7 +632,7 @@ namespace SubTerra.App.UI.Progression
             var maxed = upgrade.IsMaximumLevel;
             if (upgrade.UpgradeId == DataIds.Upgrades.CargoYield)
             {
-                SetText(effectName, "채굴 추가 획득");
+                SetText(effectName, Text("채굴 추가 획득", "Bonus Mining Yield"));
                 SetText(effectCurrent, FormatYield(upgrade.CurrentMiningYieldBonuses));
                 SetText(effectNext, maxed ? string.Empty : FormatYield(upgrade.NextMiningYieldBonuses));
             }
@@ -665,11 +670,11 @@ namespace SubTerra.App.UI.Progression
                         builder.Append('\n');
                     }
 
-                    builder.Append(ItemDisplayNames.Mineral(entry.MineralId)).Append(" +").Append(entry.Quantity);
+                    builder.Append(ItemDisplayNames.LocalizedMineral(entry.MineralId)).Append(" +").Append(entry.Quantity);
                 }
             }
 
-            return builder.Length > 0 ? builder.ToString() : "없음";
+            return builder.Length > 0 ? builder.ToString() : Text("없음", "None");
         }
 
         private void BuildCost(UpgradeSnapshot upgrade)
@@ -693,7 +698,7 @@ namespace SubTerra.App.UI.Progression
                 {
                     builder.Append("<color=#FF6B52>")
                         .Append(ItemName(cost.ItemId)).Append(" ×").Append(cost.Quantity)
-                        .Append("  (").Append(missing).Append(" 부족)</color>");
+                        .AppendFormat(Text("  ({0} 부족)", "  ({0} short)"), missing).Append("</color>");
                 }
                 else
                 {
@@ -701,7 +706,7 @@ namespace SubTerra.App.UI.Progression
                 }
             }
 
-            costText.text = builder.Length > 0 ? builder.ToString() : "없음";
+            costText.text = builder.Length > 0 ? builder.ToString() : Text("없음", "None");
             costText.color = UpgradeTreeTween.TextMain;
         }
 
@@ -720,7 +725,7 @@ namespace SubTerra.App.UI.Progression
 
         private static string ItemName(string itemId)
         {
-            return itemId == DataIds.Currency.Gold ? "골드" : ItemDisplayNames.Mineral(itemId);
+            return itemId == DataIds.Currency.Gold ? Text("골드", "Gold") : ItemDisplayNames.LocalizedMineral(itemId);
         }
 
         private void SetPurchaseVisible(bool visible)

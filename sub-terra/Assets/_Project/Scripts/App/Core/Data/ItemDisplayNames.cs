@@ -41,17 +41,25 @@ namespace SubTerra.App.Core.Data
             };
         }
 
-        public static string LocalizedUpgrade(string upgradeId)
+        public static string LocalizedUpgrade(string upgradeId, string catalogDisplayName = null)
         {
-            if (LocalizationService.Current != GameLanguage.English) return Upgrade(upgradeId);
+            if (LocalizationService.Current != GameLanguage.English) return PreferDisplay(upgradeId, catalogDisplayName);
             return upgradeId switch
             {
                 DataIds.Upgrades.DrillSpeed => "Drill Speed",
-                DataIds.Upgrades.DroneScan => "Drone Scan",
-                DataIds.Upgrades.GasResistance => "Gas Resistance",
+                DataIds.Upgrades.DrillEfficiency => "Drill Efficiency",
+                DataIds.Upgrades.MaximumEnergy => "Max Power",
+                DataIds.Upgrades.MaximumHealth => "Max Health",
                 DataIds.Upgrades.HealthRegeneration => "Health Regeneration",
+                DataIds.Upgrades.MaximumCargo => "Cargo Capacity",
+                DataIds.Upgrades.CargoYield => "Mining Yield",
+                DataIds.Upgrades.CargoGold => "Gold Yield",
+                DataIds.Upgrades.DroneScan => "Drone Scan",
                 DataIds.Upgrades.DroneRescue => "Drone Rescue",
-                _ => Upgrade(upgradeId)
+                DataIds.Upgrades.GasResistance => "Gas Resistance",
+                DataIds.Upgrades.MaximumOxygen => "Max Oxygen",
+                DataIds.Upgrades.OxygenEfficiency => "Oxygen Efficiency",
+                _ => PreferDisplay(upgradeId, catalogDisplayName)
             };
         }
 
@@ -199,7 +207,8 @@ namespace SubTerra.App.Core.Data
         public static string UpgradeDescription(string upgradeId)
         {
             if (upgradeId == DataIds.Upgrades.CargoGold)
-                return "광물 판매·정산과 골드 블록 채굴로 받는 골드가 늘어납니다. 퀘스트 보상에는 적용되지 않습니다.";
+                return LocalizationService.Text("광물 판매·정산과 골드 블록 채굴로 받는 골드가 늘어납니다. 퀘스트 보상에는 적용되지 않습니다.",
+                    "Earn more gold from sales, settlements and gold blocks. Quest rewards stay the same.");
             if (string.IsNullOrEmpty(upgradeId))
             {
                 return string.Empty;
@@ -208,31 +217,44 @@ namespace SubTerra.App.Core.Data
             switch (upgradeId)
             {
                 case DataIds.Upgrades.DrillSpeed:
-                    return "채굴에 걸리는 시간을 줄여 같은 구간을 더 빠르게 뚫습니다. 레벨이 오를수록 더 희귀한 자원을 채취할 수 있습니다.";
+                    return LocalizationService.Text("채굴에 걸리는 시간을 줄여 같은 구간을 더 빠르게 뚫습니다. 레벨이 오를수록 더 희귀한 자원을 채취할 수 있습니다.",
+                        "Mine faster. Higher levels let you extract rarer resources.");
                 case DataIds.Upgrades.DrillEfficiency:
-                    return "채굴 시 소모되는 전력을 줄여 더 오래 탐사할 수 있습니다.";
+                    return LocalizationService.Text("채굴 시 소모되는 전력을 줄여 더 오래 탐사할 수 있습니다.",
+                        "Use less power when mining to explore longer.");
                 case DataIds.Upgrades.MaximumEnergy:
-                    return "휴대 가능한 최대 전력량을 늘려 심층 탐사를 안정적으로 유지합니다.";
+                    return LocalizationService.Text("휴대 가능한 최대 전력량을 늘려 심층 탐사를 안정적으로 유지합니다.",
+                        "Carry more power for deeper expeditions.");
                 case DataIds.Upgrades.MaximumHealth:
-                    return "최대 체력을 늘려 산소 고갈·가스·낙하 피해를 더 오래 버팁니다.";
+                    return LocalizationService.Text("최대 체력을 늘려 산소 고갈·가스·낙하 피해를 더 오래 버팁니다.",
+                        "Increase maximum health to survive oxygen depletion, gas and falls longer.");
                 case DataIds.Upgrades.HealthRegeneration:
-                    return "시간이 지날수록 체력을 자동으로 회복합니다.";
+                    return LocalizationService.Text("시간이 지날수록 체력을 자동으로 회복합니다.",
+                        "Recover health automatically over time.");
                 case DataIds.Upgrades.MaximumCargo:
-                    return "한 번에 운반할 수 있는 화물 중량 한도를 늘립니다.";
+                    return LocalizationService.Text("한 번에 운반할 수 있는 화물 중량 한도를 늘립니다.",
+                        "Increase the maximum cargo weight you can carry.");
                 case DataIds.Upgrades.CargoYield:
-                    return "구리 칸을 캘 때 추가로 얻는 광물 수입니다. 추가분도 화물 무게에 포함됩니다.";
+                    return LocalizationService.Text("구리 칸을 캘 때 추가로 얻는 광물 수입니다. 추가분도 화물 무게에 포함됩니다.",
+                        "Gain extra minerals from copper blocks. They still count toward cargo weight.");
                 case DataIds.Upgrades.DroneScan:
-                    return "Digger-Bot이 주변 광물·위험을 감지하는 범위를 확장합니다.";
+                    return LocalizationService.Text("Digger-Bot이 주변 광물·위험을 감지하는 범위를 확장합니다.",
+                        "Increase the range at which Digger-Bot detects minerals and hazards.");
                 case DataIds.Upgrades.DroneRescue:
-                    return "탐사 실패 시 미정산 화물 손실을 줄이는 구조 보존 성능을 강화합니다.";
+                    return LocalizationService.Text("탐사 실패 시 미정산 화물 손실을 줄이는 구조 보존 성능을 강화합니다.",
+                        "Keep more unsold cargo if an expedition fails.");
                 case DataIds.Upgrades.GasResistance:
-                    return "독성 가스 노출 피해와 이동 페널티를 줄여 위험 지대를 견딥니다.";
+                    return LocalizationService.Text("독성 가스 노출 피해와 이동 페널티를 줄여 위험 지대를 견딥니다.",
+                        "Reduce toxic gas damage and its movement penalty.");
                 case DataIds.Upgrades.MaximumOxygen:
-                    return "휴대 가능한 최대 산소량을 늘려 더 깊은 곳까지 오래 머뭅니다.";
+                    return LocalizationService.Text("휴대 가능한 최대 산소량을 늘려 더 깊은 곳까지 오래 머뭅니다.",
+                        "Carry more oxygen to stay longer at greater depths.");
                 case DataIds.Upgrades.OxygenEfficiency:
-                    return "깊이·행동·화물·가스가 반영된 산소 소모를 일정 비율 줄입니다. 깊을수록 소모는 여전히 커집니다.";
+                    return LocalizationService.Text("깊이·행동·화물·가스가 반영된 산소 소모를 일정 비율 줄입니다. 깊을수록 소모는 여전히 커집니다.",
+                        "Reduce oxygen use from depth, activity, cargo and gas. Deeper areas still use more oxygen.");
                 default:
-                    return "장비 성능을 한 단계 강화합니다.";
+                    return LocalizationService.Text("장비 성능을 한 단계 강화합니다.",
+                        "Improve equipment performance.");
             }
         }
 
@@ -240,7 +262,7 @@ namespace SubTerra.App.Core.Data
         public static string UpgradeUnlockDescription(string upgradeId, int currentLevel)
         {
             return upgradeId == DataIds.Upgrades.DrillSpeed && currentLevel == 0
-                ? "Lv.1 업그레이드 시 철을 채취할 수 있습니다."
+                ? LocalizationService.Text("Lv.1 업그레이드 시 철을 채취할 수 있습니다.", "Lv.1 unlocks iron mining.")
                 : string.Empty;
         }
 

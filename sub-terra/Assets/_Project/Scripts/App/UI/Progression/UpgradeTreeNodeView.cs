@@ -304,7 +304,7 @@ namespace SubTerra.App.UI.Progression
             if (nameLabel != null)
             {
                 nameLabel.text = showContent
-                    ? ItemDisplayNames.PreferDisplay(value.UpgradeId, value.DisplayName)
+                    ? ItemDisplayNames.LocalizedUpgrade(value.UpgradeId, value.DisplayName)
                     : string.Empty;
             }
 
