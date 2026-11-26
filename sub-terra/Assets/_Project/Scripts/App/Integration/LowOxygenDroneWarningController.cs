@@ -8,6 +8,7 @@ using SubTerra.App.UI.Drone;
 using SubTerra.App.UI.HUD;
 using SubTerra.Gameplay.Player;
 using SubTerra.Shared;
+using SubTerra.Shared.Localization;
 using UnityEngine;
 
 namespace SubTerra.App.Integration
@@ -206,6 +207,11 @@ namespace SubTerra.App.Integration
 
         private static string ResolveWarningText()
         {
+            if (LocalizationService.Current == GameLanguage.English)
+            {
+                return LocalizationService.Get(DataIds.Dialogue.DroneOxygenWarning, DroneOxygenWarningFx.DefaultText);
+            }
+
             var bootstrap = GameBootstrapper.Instance;
             var catalog = bootstrap != null ? bootstrap.AssignedCatalog as GameDataCatalog : null;
             if (catalog != null
