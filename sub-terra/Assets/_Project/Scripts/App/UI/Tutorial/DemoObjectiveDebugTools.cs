@@ -23,7 +23,7 @@ namespace SubTerra.App.UI.Tutorial
         private void Update()
         {
             // 프로젝트의 활성 입력 백엔드와 같은 Input System을 사용해 Scene 진입 시 예외를 막는다.
-            if (Keyboard.current?.f9Key.wasPressedThisFrame == true
+            if (!UiPauseGate.IsDebugTerminalOpen && Keyboard.current?.f9Key.wasPressedThisFrame == true
                 && tutorialBinder != null)
             {
                 tutorialBinder.DebugForceAdvanceObjective();

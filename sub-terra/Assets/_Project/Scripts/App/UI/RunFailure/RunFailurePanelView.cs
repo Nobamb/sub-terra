@@ -2392,12 +2392,14 @@ namespace SubTerra.App.UI.RunFailure
 
         private static bool WasAnySkipKeyPressedThisFrame()
         {
+            if (UiPauseGate.IsDebugTerminalOpen) return false;
             var keyboard = Keyboard.current;
             return keyboard != null && keyboard.anyKey.wasPressedThisFrame;
         }
 
         private static bool WasConfirmKeyPressedThisFrame()
         {
+            if (UiPauseGate.IsDebugTerminalOpen) return false;
             var keyboard = Keyboard.current;
             if (keyboard == null)
             {

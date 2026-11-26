@@ -483,6 +483,7 @@ namespace SubTerra.App.UI.Drone
 
         private bool WasSkipRequested()
         {
+            if (UiPauseGate.IsDebugTerminalOpen) return false;
             if (window.Phase != DroneTerminalPhase.Opening && !revealActive && !appendActive)
             {
                 return false;

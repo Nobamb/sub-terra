@@ -87,7 +87,7 @@ namespace SubTerra.App.UI.EmergencyEscape
 
         private void Update()
         {
-            if (view == null || !view.IsOpen)
+            if (UiPauseGate.IsDebugTerminalOpen || view == null || !view.IsOpen)
             {
                 return;
             }
@@ -132,7 +132,7 @@ namespace SubTerra.App.UI.EmergencyEscape
         // 같은 프레임에 설정 창이 함께 열리지 않도록 모든 Update가 끝난 LateUpdate에서 닫는다.
         private void LateUpdate()
         {
-            if (view == null || !view.IsOpen)
+            if (UiPauseGate.IsDebugTerminalOpen || view == null || !view.IsOpen)
             {
                 return;
             }

@@ -117,6 +117,7 @@ namespace SubTerra.App.UI.MainMenu
 
         private void Update()
         {
+            if (UiPauseGate.IsDebugTerminalOpen) return;
             if (presenter == null || view == null || Keyboard.current == null) return;
             // B-170: 종료 확인 창이 ESC·X를 먼저 받는다.
             if (QuitConfirmFlow.IsBlockingInput) return;

@@ -200,6 +200,7 @@ namespace SubTerra.App.UI.SurfaceBase
 
         private void Update()
         {
+            if (UiPauseGate.IsDebugTerminalOpen) return;
             var keyboard = Keyboard.current;
             if (settings == null || view == null || keyboard == null) return;
             // B-170: 종료 확인 창이 ESC·X를 먼저 받고, 떠 있는 동안 다른 단축키를 막는다.

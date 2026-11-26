@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using SubTerra.App.Save;
 using UnityEngine;
 
 namespace SubTerra.App.UI
@@ -105,6 +106,7 @@ namespace SubTerra.App.UI
         private static readonly HashSet<string> InputOwners = new HashSet<string>();
 
         public static bool IsHeld => Shared.IsHeld;
+        public static bool IsDebugTerminalOpen => IsHeldBy(SaveRuntimeController.DebugTerminalPauseOwner);
         public static bool IsInputBlocked => IsHeld || InputOwners.Count > 0;
         public static bool IsMineMenuHeld =>
             IsHeldBy(MineGuide) || IsHeldBy(MineSettings) || IsHeldBy(MineUpgrade);
