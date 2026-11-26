@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using static SubTerra.Shared.Localization.LocalizationService;
 using SubTerra.Shared;
 
 namespace SubTerra.App.UI.ControlTerminal
@@ -39,7 +40,8 @@ namespace SubTerra.App.UI.ControlTerminal
         public const string MouseKey = "마우스 클릭";
         public const int SchemeCount = 3;
 
-        public static string Title(ControlScheme scheme) => "키 조작 방식 " + ((int)scheme + 1) + " / " + SchemeCount;
+        public static string Title(ControlScheme scheme) =>
+            string.Format(Text("키 조작 방식 {0} / {1}", "Control Scheme {0} / {1}"), (int)scheme + 1, SchemeCount);
 
         public const string Caption = "키보드 · 이동 / 채굴";
         public const string HoverHint = "키에 마우스를 올리면 동작을 미리 볼 수 있습니다.";
@@ -48,12 +50,15 @@ namespace SubTerra.App.UI.ControlTerminal
         {
             if (scheme == ControlScheme.Classic)
             {
-                return "WASD / 방향키: 이동 (위·아래는 사다리)\n마우스 클릭: 선택 블록 채굴 · Enter: 바라보는 방향 채굴";
+                return Text("WASD / 방향키: 이동 (위·아래는 사다리)\n마우스 클릭: 선택 블록 채굴 · Enter: 바라보는 방향 채굴",
+                    "WASD / arrows: move (up and down on ladders)\nClick to mine a block · Enter to mine ahead");
             }
 
-            return (scheme == ControlScheme.WasdMove ? "WASD: 이동 · 방향키: 상하좌우 채굴"
-                    : "방향키: 이동 · WASD: 상하좌우 채굴")
-                + "\n캐릭터 위치 기준 인접 블록 채굴 · 마우스 / Enter도 사용 가능";
+            return (scheme == ControlScheme.WasdMove
+                    ? Text("WASD: 이동 · 방향키: 상하좌우 채굴", "WASD: move · Arrows: mine in four directions")
+                    : Text("방향키: 이동 · WASD: 상하좌우 채굴", "Arrows: move · WASD: mine in four directions"))
+                + "\n" + Text("캐릭터 위치 기준 인접 블록 채굴 · 마우스 / Enter도 사용 가능",
+                    "Mine adjacent blocks. You can also click or press Enter.");
         }
 
         public static bool IsWasd(string key) => key == "W" || key == "A" || key == "S" || key == "D";
@@ -120,11 +125,11 @@ namespace SubTerra.App.UI.ControlTerminal
             {
                 case ControlKeyRole.Move:
                 case ControlKeyRole.Mine:
-                    var role = RoleOf(function) == ControlKeyRole.Move ? "이동" : "채굴";
+                    var role = RoleOf(function) == ControlKeyRole.Move ? Text("이동", "Move") : Text("채굴", "Mine");
                     if (IsWasd(key) || IsArrow(key)) return DirectionGlyph(key) + " " + role;
                     return role;
                 case ControlKeyRole.Jump:
-                    return "점프";
+                    return Text("점프", "Jump");
                 default:
                     return string.Empty;
             }
@@ -141,17 +146,17 @@ namespace SubTerra.App.UI.ControlTerminal
         {
             switch (function)
             {
-                case ControlKeyFunction.MoveLeft: return "왼쪽 이동";
-                case ControlKeyFunction.MoveRight: return "오른쪽 이동";
-                case ControlKeyFunction.MoveUp: return "사다리 위로";
-                case ControlKeyFunction.MoveDown: return "사다리 아래로";
-                case ControlKeyFunction.Jump: return "점프";
-                case ControlKeyFunction.MineLeft: return "왼쪽 블록 채굴";
-                case ControlKeyFunction.MineRight: return "오른쪽 블록 채굴";
-                case ControlKeyFunction.MineUp: return "위쪽 블록 채굴";
-                case ControlKeyFunction.MineDown: return "아래쪽 블록 채굴";
-                case ControlKeyFunction.MineFacing: return "바라보는 방향 채굴";
-                case ControlKeyFunction.MineMouse: return "선택한 블록 채굴";
+                case ControlKeyFunction.MoveLeft: return Text("왼쪽 이동", "Move left");
+                case ControlKeyFunction.MoveRight: return Text("오른쪽 이동", "Move right");
+                case ControlKeyFunction.MoveUp: return Text("사다리 위로", "Climb up");
+                case ControlKeyFunction.MoveDown: return Text("사다리 아래로", "Climb down");
+                case ControlKeyFunction.Jump: return Text("점프", "Jump");
+                case ControlKeyFunction.MineLeft: return Text("왼쪽 블록 채굴", "Mine left");
+                case ControlKeyFunction.MineRight: return Text("오른쪽 블록 채굴", "Mine right");
+                case ControlKeyFunction.MineUp: return Text("위쪽 블록 채굴", "Mine above");
+                case ControlKeyFunction.MineDown: return Text("아래쪽 블록 채굴", "Mine below");
+                case ControlKeyFunction.MineFacing: return Text("바라보는 방향 채굴", "Mine ahead");
+                case ControlKeyFunction.MineMouse: return Text("선택한 블록 채굴", "Mine selected block");
                 default: return string.Empty;
             }
         }

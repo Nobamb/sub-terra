@@ -2,6 +2,8 @@ using System;
 using SubTerra.App.Progression;
 using SubTerra.App.Save;
 using SubTerra.App.State;
+using SubTerra.App.Tutorial;
+using static SubTerra.Shared.Localization.LocalizationService;
 
 namespace SubTerra.App.UI.SurfaceBase
 {
@@ -88,9 +90,9 @@ namespace SubTerra.App.UI.SurfaceBase
         {
             if (state == null)
             {
-                view.SetGoals(0, "상태 없음");
+                view.SetGoals(0, Text("상태 없음", "No status"));
                 view.SetEnergy(0, 0, explorationEnergyCost);
-                view.SetDeepZoneLock(false, "상태 없음");
+                view.SetDeepZoneLock(false, Text("상태 없음", "No status"));
                 view.SetRecentRun(0, true, "-", "-");
                 return;
             }
@@ -99,9 +101,10 @@ namespace SubTerra.App.UI.SurfaceBase
 
             var completed = state.Progress.CompletedObjectives;
             var objectiveId = state.Progress.CurrentObjectiveId;
-            var goalSummary = string.IsNullOrEmpty(objectiveId)
-                ? "완료 목표 " + completed + "개"
-                : "완료 " + completed + " · 현재 " + objectiveId;
+            var objectiveTitle = DemoObjectiveCatalog.TryGet(objectiveId, out var objective) ? objective.Title : objectiveId;
+            var goalSummary = string.IsNullOrEmpty(objectiveTitle)
+                ? string.Format(Text("완료 목표 {0}개", "Objectives Completed: {0}"), completed)
+                : string.Format(Text("완료 {0} · 현재 {1}", "Completed {0} · Current: {1}"), completed, objectiveTitle);
             view.SetGoals(completed, goalSummary);
 
             ZoneAccessResult access;
@@ -112,7 +115,7 @@ namespace SubTerra.App.UI.SurfaceBase
             }
             else
             {
-                access = new ZoneAccessResult(false, false, "진행도 서비스 없음");
+                access = new ZoneAccessResult(false, false, Text("진행도 서비스 없음", "Progression unavailable"));
             }
 
             view.SetDeepZoneLock(access.IsUnlocked, access.Reason);

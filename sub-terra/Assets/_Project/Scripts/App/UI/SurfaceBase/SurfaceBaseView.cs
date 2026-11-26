@@ -62,8 +62,8 @@ namespace SubTerra.App.UI.SurfaceBase
 
         public void SetResources(float cargo, int gold)
         {
-            if (cargoText != null) cargoText.text = "화물 " + cargo.ToString("0.##");
-            if (goldText != null) goldText.text = "골드 <color=#FFE66B>" + gold + "G</color>";
+            if (cargoText != null) cargoText.text = LocalizationService.Text("화물 ", "Cargo ") + cargo.ToString("0.##");
+            if (goldText != null) goldText.text = LocalizationService.Text("골드 ", "Gold ") + "<color=#FFE66B>" + gold + "G</color>";
         }
 
         /// <summary>업그레이드 버튼과 U 키에서 쓰는 열기 경로. 자물쇠가 부서지며 창이 펼쳐진다.</summary>
@@ -236,7 +236,7 @@ namespace SubTerra.App.UI.SurfaceBase
 
         private void OnEnable()
         {
-            SetButtonLabel(settingsButton, "설정(esc)");
+            RefreshBaseLabels();
             if (upgradeButton != null) upgradeButton.onClick.AddListener(OnUpgrade);
             if (upgradeCloseButton != null) upgradeCloseButton.onClick.AddListener(OnUpgradeClose);
             if (inventoryButton != null) inventoryButton.onClick.AddListener(OnInventory);
@@ -344,11 +344,30 @@ namespace SubTerra.App.UI.SurfaceBase
             }
         }
 
+        public void RefreshBaseLabels()
+        {
+            SetButtonLabel(settingsButton, LocalizationService.Get("main_menu.settings"));
+            var content = transform.Find("SurfaceBaseContent");
+            if (content == null) return;
+
+            var title = content.Find("Title")?.GetComponent<TMP_Text>();
+            if (title != null) title.text = LocalizationService.Text("지상 기지", "Surface Base");
+            var secondaryTitle = content.Find("EnglishTitle");
+            if (secondaryTitle != null) secondaryTitle.gameObject.SetActive(LocalizationService.Current != GameLanguage.English);
+            SetButtonLabel(exploreButton, LocalizationService.Text("지하 탐사 시작", "Explore Mine"));
+            SetButtonLabel(quitButton, LocalizationService.Get("main_menu.quit"));
+            SetButtonLabel(upgradeButton, LocalizationService.Text("업그레이드", "Upgrades"));
+            SetButtonLabel(inventoryButton, LocalizationService.Text("인벤토리", "Inventory"));
+            SetButtonLabel(content.Find("QuestButton")?.GetComponent<Button>(), LocalizationService.Text("퀘스트", "Quests"));
+            SetButtonLabel(content.Find("OpenSellButton")?.GetComponent<Button>(), LocalizationService.Get("economy.sell.title"));
+        }
+
         public void SetGoals(int completedObjectives, string summary)
         {
             if (goalsText != null)
             {
-                goalsText.text = summary ?? ("목표 " + completedObjectives);
+                goalsText.text = summary ?? string.Format(
+                    LocalizationService.Text("목표 {0}", "Objectives {0}"), completedObjectives);
             }
         }
 
@@ -357,8 +376,8 @@ namespace SubTerra.App.UI.SurfaceBase
             if (deepZoneText != null)
             {
                 deepZoneText.text = unlocked
-                    ? "심층 구역: 해금"
-                    : "심층 잠금: " + (reason ?? string.Empty);
+                    ? LocalizationService.Text("심층 구역: 해금", "Deep Zone: Unlocked")
+                    : LocalizationService.Text("심층 잠금: ", "Deep Zone Locked: ") + (reason ?? string.Empty);
             }
         }
 
@@ -373,20 +392,19 @@ namespace SubTerra.App.UI.SurfaceBase
             var safeMax = Mathf.Max(0, max);
             var safeCost = Mathf.Max(0, explorationCost);
             var afterDeparture = Mathf.Max(0, safeCurrent - safeCost);
-            energyText.text = "전력 " + safeCurrent + " / " + safeMax
-                + "  ·  지하행 " + safeCost + " 소모"
-                + "  ·  도착 예상 " + afterDeparture;
+            energyText.text = string.Format(LocalizationService.Text(
+                "전력 {0} / {1}  ·  지하행 {2} 소모  ·  도착 예상 {3}",
+                "Power {0} / {1}  ·  Descent costs {2}  ·  Arrival {3}"),
+                safeCurrent, safeMax, safeCost, afterDeparture);
         }
 
         public void SetRecentRun(int depth, bool isSafe, string structural, string gas)
         {
             if (recentRunText != null)
             {
-                recentRunText.text =
-                    "최근 탐사 깊이 " + depth
-                    + " / " + (isSafe ? "안전" : "위험")
-                    + " / 구조 " + structural
-                    + " / 가스 " + gas;
+                recentRunText.text = string.Format(LocalizationService.Text(
+                    "최근 탐사 깊이 {0} / {1} / 구조 {2} / 가스 {3}",
+                    "Last Depth {0} / {1} / Structure {2} / Gas {3}"), depth, RiskLabel(isSafe), structural, gas);
             }
         }
 
@@ -397,13 +415,15 @@ namespace SubTerra.App.UI.SurfaceBase
                 return;
             }
 
-            recentRunText.text = "귀환 결과 · 최고 깊이 " + result.MaximumDepth
-                + " / 화물 " + result.CargoWeight.ToString("0.##")
-                + " / 판매 예상 " + result.UnsettledValue.ToString("0.##")
-                + " / " + (result.IsSafe ? "안전" : "위험")
-                + " / 구조 " + result.StructuralRisk
-                + " / 가스 " + result.GasExposure;
+            recentRunText.text = string.Format(LocalizationService.Text(
+                "귀환 결과 · 최고 깊이 {0} / 화물 {1:0.##} / 판매 예상 {2:0.##} / {3} / 구조 {4} / 가스 {5}",
+                "Return · Max Depth {0} / Cargo {1:0.##} / Est. Sale {2:0.##} / {3} / Structure {4} / Gas {5}"),
+                result.MaximumDepth, result.CargoWeight, result.UnsettledValue, RiskLabel(result.IsSafe),
+                result.StructuralRisk, result.GasExposure);
         }
+
+        private static string RiskLabel(bool safe) =>
+            safe ? LocalizationService.Text("안전", "Safe") : LocalizationService.Text("위험", "Danger");
 
         public void SetExplorationBusy(bool busy)
         {

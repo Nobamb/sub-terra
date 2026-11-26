@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using SubTerra.App.Core.Data;
 using SubTerra.App.Economy;
 using SubTerra.Shared;
+using SubTerra.Shared.Localization;
 // ItemDisplayNames: 업그레이드 표시 이름 한국어 폴백
 
 namespace SubTerra.App.Progression
@@ -330,12 +331,14 @@ namespace SubTerra.App.Progression
         {
             if (state == null)
             {
-                return new ZoneAccessResult(false, false, "진행도 상태가 없습니다.");
+                return new ZoneAccessResult(false, false,
+                    LocalizationService.Text("진행도 상태가 없습니다.", "Progression unavailable."));
             }
 
             if (state.IsZoneUnlocked(DataIds.Zones.Deep))
             {
-                return new ZoneAccessResult(true, false, "심층 구역 잠금 해제됨");
+                return new ZoneAccessResult(true, false,
+                    LocalizationService.Text("심층 구역 잠금 해제됨", "Deep Zone unlocked"));
             }
 
             var activeRule = rule ?? DeepZoneUnlockRule.Mvp;
@@ -344,7 +347,8 @@ namespace SubTerra.App.Progression
                 return new ZoneAccessResult(
                     false,
                     false,
-                    $"목표 완료 {activeRule.RequiredCompletedObjectives}개 필요");
+                    string.Format(LocalizationService.Text("목표 완료 {0}개 필요", "Complete {0} objectives"),
+                        activeRule.RequiredCompletedObjectives));
             }
 
             for (var i = 0; i < activeRule.UpgradeRequirements.Count; i++)
@@ -356,17 +360,19 @@ namespace SubTerra.App.Progression
                     || current < requirement.RequiredLevel)
                 {
                     // prompt-B 33-1: drone.scan 등 영구 ID 대신 한국어 표시 이름.
-                    var upgradeName = ItemDisplayNames.PreferDisplay(
-                        requirement.UpgradeId,
-                        requirement.UpgradeId);
+                    var upgradeName = LocalizationService.Current == GameLanguage.English
+                        ? ItemDisplayNames.LocalizedUpgrade(requirement.UpgradeId)
+                        : ItemDisplayNames.PreferDisplay(requirement.UpgradeId, requirement.UpgradeId);
                     return new ZoneAccessResult(
                         false,
                         false,
-                        $"{upgradeName} {requirement.RequiredLevel}레벨 필요");
+                        string.Format(LocalizationService.Text("{0} {1}레벨 필요", "Requires {0} Lv. {1}"),
+                            upgradeName, requirement.RequiredLevel));
                 }
             }
 
-            return new ZoneAccessResult(true, false, "심층 구역 잠금 해제 조건 충족");
+            return new ZoneAccessResult(true, false,
+                LocalizationService.Text("심층 구역 잠금 해제 조건 충족", "Deep Zone requirements met"));
         }
 
         /// <summary>조건을 만족한 심층 잠금을 영구 상태에 한 번만 기록한다.</summary>
@@ -381,7 +387,8 @@ namespace SubTerra.App.Progression
             }
 
             var didUnlock = state.ApplyZoneUnlock(DataIds.Zones.Deep);
-            var result = new ZoneAccessResult(true, didUnlock, "심층 구역 잠금 해제됨");
+            var result = new ZoneAccessResult(true, didUnlock,
+                LocalizationService.Text("심층 구역 잠금 해제됨", "Deep Zone unlocked"));
             if (didUnlock)
             {
                 DeepZoneAccessChanged?.Invoke(result);

@@ -4,6 +4,7 @@ using SubTerra.App.UI.Guide;
 using SubTerra.App.UI.Sell;
 using SubTerra.Shared;
 using SubTerra.Shared.Audio;
+using SubTerra.Shared.Localization;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -26,6 +27,8 @@ namespace SubTerra.App.UI.MainMenu
         private RectTransform cardRect;
         private TMP_FontAsset font;
         private ControlTerminalView terminal;
+        private TMP_Text changeControlsLabel;
+        private TMP_Text closeControlsLabel;
         private bool isOpen;
         public ControlScheme Selected { get; private set; }
         public bool IsOpen => isOpen && overlay != null && overlay.activeSelf;
@@ -52,9 +55,16 @@ namespace SubTerra.App.UI.MainMenu
             return panel;
         }
 
-        private void OnEnable() => ControlPreferences.IsSettingsOpen = true;
+        private void OnEnable()
+        {
+            ControlPreferences.IsSettingsOpen = true;
+            LocalizationService.LanguageChanged += RefreshLanguage;
+            RefreshLanguage();
+        }
+
         private void OnDisable()
         {
+            LocalizationService.LanguageChanged -= RefreshLanguage;
             ControlPreferences.IsSettingsOpen = false;
             Close();
             // 비활성화되면 연출을 기다리지 않고 즉시 정리한다.
@@ -156,7 +166,11 @@ namespace SubTerra.App.UI.MainMenu
                 UiSfx.Attach(authoredButton.GetComponent<Button>(), SfxId.None, hover: true);
             }
             else
+            {
                 SimpleButton(transform, "ChangeControls", "키 조작 변경", 0, -366, 280, 40, Open);
+                authoredButton = transform.Find("ChangeControls");
+            }
+            changeControlsLabel = authoredButton?.GetComponentInChildren<TMP_Text>(true);
             var backdrop = Rect(transform, "ControlSchemeOverlay", 0, 0, 0, 0);
             backdrop.anchorMin = Vector2.zero;
             backdrop.anchorMax = Vector2.one;
@@ -181,7 +195,17 @@ namespace SubTerra.App.UI.MainMenu
                 ControlTerminalArt.ButtonNormal(), ControlTerminalArt.ButtonHover());
             Button(chrome, "CloseControlsX", null, ControlTerminalLayout.CardWidth * 0.5f - 64f, ControlTerminalLayout.CardHeight * 0.5f - 64f, 56, 56, () => Close(), 20f,
                 ControlTerminalArt.ButtonNormal(), ControlTerminalArt.ButtonHover(), ControlTerminalArt.CloseIcon());
+            closeControlsLabel = chrome.Find("CloseControls")?.GetComponentInChildren<TMP_Text>(true);
             overlay.SetActive(false);
+            RefreshLanguage();
+        }
+
+        private void RefreshLanguage()
+        {
+            if (changeControlsLabel != null)
+                changeControlsLabel.text = LocalizationService.Text("키 조작 변경", "Change Controls");
+            if (closeControlsLabel != null)
+                closeControlsLabel.text = LocalizationService.Text("선택 후 돌아가기", "Confirm & Back");
             Refresh(false);
         }
 

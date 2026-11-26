@@ -4,6 +4,7 @@ using SubTerra.App.UI.ControlTerminal;
 using SubTerra.App.UI.Guide;
 using SubTerra.App.UI.MainMenu;
 using SubTerra.Shared;
+using SubTerra.Shared.Localization;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -17,6 +18,27 @@ namespace SubTerra.App.Tests.UI
         private bool originalBlocked;
         private bool hadPref;
         private int originalPref;
+
+        [Test]
+        public void ControlCopy_FollowsAppliedLanguageWithoutChangingKeyIdentity()
+        {
+            var previous = LocalizationService.Current;
+            try
+            {
+                LocalizationService.SetLanguage(GameLanguage.English);
+                Assert.That(ControlTerminalBindings.Title(ControlScheme.Classic), Is.EqualTo("Control Scheme 1 / 3"));
+                Assert.That(ControlTerminalBindings.Description(ControlScheme.Classic), Does.Contain("Click to mine"));
+                Assert.That(ControlTerminalBindings.FunctionName(ControlKeyFunction.MineMouse), Is.EqualTo("Mine selected block"));
+                Assert.That(ControlTerminalBindings.FunctionOf(ControlScheme.Classic, ControlTerminalBindings.MouseKey),
+                    Is.EqualTo(ControlKeyFunction.MineMouse));
+                LocalizationService.SetLanguage(GameLanguage.Korean);
+                Assert.That(ControlTerminalBindings.Title(ControlScheme.Classic), Is.EqualTo("키 조작 방식 1 / 3"));
+            }
+            finally
+            {
+                LocalizationService.SetLanguage(previous);
+            }
+        }
 
         [SetUp]
         public void SetUp()
