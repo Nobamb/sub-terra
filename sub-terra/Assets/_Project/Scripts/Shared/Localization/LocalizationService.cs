@@ -175,6 +175,8 @@ namespace SubTerra.Shared.Localization
                 "Press B or Esc to close Build and clear the selection.");
             Add("guide.upgrade.close", "ESC 또는 오른쪽 위 X 버튼으로 닫습니다.",
                 "Press Esc or use the X button in the upper right.");
+            Add("dialogue.drone.oxygen.warning", "산소가 부족합니다. 위로 올라가거나 긴급 탈출(구출 요청)을 쓰세요.",
+                "Low oxygen. Climb higher or select Request Rescue.");
             Add("mine_reset.timed.title", "탐사 시간 종료", "Exploration Time Over");
             Add(
                 "mine_reset.timed.highlight",

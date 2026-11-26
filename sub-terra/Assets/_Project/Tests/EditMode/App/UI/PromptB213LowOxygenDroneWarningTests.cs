@@ -10,6 +10,7 @@ using SubTerra.App.Run;
 using SubTerra.App.UI.Drone;
 using SubTerra.Gameplay.Player;
 using SubTerra.Shared.Audio;
+using SubTerra.Shared.Localization;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -45,6 +46,27 @@ namespace SubTerra.App.Tests.UI
         }
 
         private void Record(SfxId id, float pitch) => played.Add((id, pitch));
+
+        [Test]
+        public void WarningText_FollowsAppliedLanguage()
+        {
+            var resolve = typeof(LowOxygenDroneWarningController).GetMethod(
+                "ResolveWarningText", BindingFlags.NonPublic | BindingFlags.Static);
+            Assert.That(resolve, Is.Not.Null);
+            var originalLanguage = LocalizationService.Current;
+            try
+            {
+                LocalizationService.SetLanguage(GameLanguage.English);
+                Assert.That(resolve.Invoke(null, null), Is.EqualTo("Low oxygen. Climb higher or select Request Rescue."));
+
+                LocalizationService.SetLanguage(GameLanguage.Korean);
+                Assert.That(resolve.Invoke(null, null), Is.EqualTo(DroneOxygenWarningFx.DefaultText));
+            }
+            finally
+            {
+                LocalizationService.SetLanguage(originalLanguage);
+            }
+        }
 
         [Test]
         public void Policy_FirstDropFiresOnce_AndDoesNotRepeatWhileCritical()
