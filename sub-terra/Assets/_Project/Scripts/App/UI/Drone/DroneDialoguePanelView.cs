@@ -304,7 +304,8 @@ namespace SubTerra.App.UI.Drone
             var rect = root != null ? root.transform as RectTransform : null;
             if (rect != null)
             {
-                oxygenWarningFx = new DroneOxygenWarningFx(rect, true);
+                // X 버튼이 있는 헤더 영역에는 글리치·왜곡을 넣지 않는다.
+                oxygenWarningFx = new DroneOxygenWarningFx(rect, true, DroneOxygenWarningFx.TerminalHeaderExclusion);
             }
         }
 

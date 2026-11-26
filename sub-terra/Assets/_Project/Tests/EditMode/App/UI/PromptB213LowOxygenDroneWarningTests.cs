@@ -204,11 +204,116 @@ namespace SubTerra.App.Tests.UI
                     var b = DroneOxygenWarningFx.Sliver(t, i);
                     Assert.That(a.OffsetX, Is.EqualTo(b.OffsetX), "같은 시간이면 같은 모양");
                     Assert.That(a.RightSide, Is.EqualTo(i % 2 == 1));
-                    Assert.That(Mathf.Abs(a.OffsetX), Is.LessThanOrEqualTo(DroneOxygenWarningFx.MaxSliverOffset + 1f));
                     Assert.That(a.CenterY, Is.InRange(0f, 1f));
-                    Assert.That(a.Height, Is.LessThan(0.25f), "가장자리 조각만, 패널 전체를 덮지 않는다");
+                    Assert.That(a.Width, Is.GreaterThan(a.Height * 2.5f), "가로로 길고 세로로 얇다");
+                    Assert.That(a.Height, Is.InRange(DroneOxygenWarningFx.SliverMinHeight, DroneOxygenWarningFx.SliverMaxHeight));
+                    // 중심이 바깥쪽으로 폭의 15~45% → 조각의 65~95%가 패널 밖.
+                    var outsideRatio = 0.5f + Mathf.Abs(a.OffsetX) / a.Width;
+                    Assert.That(outsideRatio, Is.InRange(0.64f, 0.96f), "대부분 패널 밖으로 빠져나온다");
+                    Assert.That(Mathf.Sign(a.OffsetX), Is.EqualTo(a.RightSide ? 1f : -1f));
                 }
             }
+        }
+
+        [Test]
+        public void Warp_StripOffsets_AreBoundedDeterministic_AndZeroInExcludedHeader()
+        {
+            var anyShift = false;
+            for (var step = 0; step < 60; step++)
+            {
+                var t = step * DroneOxygenWarningFx.JitterStep;
+                var shifted = 0;
+                for (var s = 0; s < DroneOxygenEdgeWarp.StripCount; s++)
+                {
+                    var offset = DroneOxygenWarningFx.StripOffset(t, s, DroneOxygenEdgeWarp.StripCount, false);
+                    Assert.That(offset, Is.EqualTo(DroneOxygenWarningFx.StripOffset(t, s, DroneOxygenEdgeWarp.StripCount, false)));
+                    Assert.That(Mathf.Abs(offset), Is.LessThanOrEqualTo(DroneOxygenEdgeWarp.MaxShift), "살짝만 왜곡");
+                    Assert.That(DroneOxygenWarningFx.StripOffset(t, s, DroneOxygenEdgeWarp.StripCount, true), Is.EqualTo(0f));
+                    if (Mathf.Abs(offset) > 0.001f) shifted++;
+                }
+
+                Assert.That(shifted, Is.LessThanOrEqualTo(12), "일부 띠만 밀린다");
+                anyShift |= shifted > 0;
+            }
+
+            Assert.That(anyShift, Is.True);
+        }
+
+        [Test]
+        public void Warp_SplitsBackgroundQuadIntoStrips_AndKeepsHeaderStripsInPlace()
+        {
+            var rect = new Rect(-200f, -80f, 400f, 160f);
+            var quad = new List<UIVertex>
+            {
+                V(-200f, -80f, 0f, 0f), V(-200f, 80f, 0f, 1f), V(200f, 80f, 1f, 1f),
+                V(200f, 80f, 1f, 1f), V(200f, -80f, 1f, 0f), V(-200f, -80f, 0f, 0f)
+            };
+            const float exclusion = DroneOxygenWarningFx.TerminalHeaderExclusion;
+            for (var step = 0; step < 30; step++)
+            {
+                var output = new List<UIVertex>();
+                DroneOxygenEdgeWarp.WarpStream(quad, output, rect, exclusion, step * DroneOxygenWarningFx.JitterStep);
+                Assert.That(output.Count, Is.EqualTo(DroneOxygenEdgeWarp.StripCount * 6), "가로 띠로 잘린다");
+                foreach (var v in output)
+                {
+                    Assert.That(Mathf.Abs(Mathf.Abs(v.position.x) - 200f), Is.LessThanOrEqualTo(DroneOxygenEdgeWarp.MaxShift + 0.01f));
+                    Assert.That(v.uv0.y, Is.InRange(0f, 1f));
+                    if (v.position.y > rect.yMax - exclusion + 0.01f)
+                    {
+                        Assert.That(Mathf.Abs(v.position.x), Is.EqualTo(200f).Within(0.01f), "X 버튼 헤더 영역은 그대로");
+                    }
+                }
+            }
+        }
+
+        [Test]
+        public void Fx_AddsWarpOnlyToPanelBackground_AndClearsOnHide()
+        {
+            var panelGo = NewHost("B213_PanelBg");
+            var panel = panelGo.AddComponent<RectTransform>();
+            panel.sizeDelta = new Vector2(400f, 160f);
+            panelGo.AddComponent<Image>();
+            var fx = new DroneOxygenWarningFx(panel, true, DroneOxygenWarningFx.TerminalHeaderExclusion);
+            var warp = panelGo.GetComponent<DroneOxygenEdgeWarp>();
+            Assert.That(fx.HasWarp, Is.True);
+            Assert.That(warp, Is.Not.Null);
+            var haloWarp = panel.Find("OxygenWarningHalo").GetComponent<DroneOxygenEdgeWarp>();
+            Assert.That(haloWarp, Is.Not.Null, "후광도 같은 띠로 찢겨 곧은 선이 틀을 덮지 않는다");
+            Assert.That(panel.GetComponentsInChildren<DroneOxygenEdgeWarp>(true).Length, Is.EqualTo(2), "배경·후광에만 붙고 글자에는 없다");
+
+            fx.Apply(0.2f);
+            Assert.That(warp.IsWarping, Is.True);
+            Assert.That(haloWarp.IsWarping, Is.True);
+            fx.Hide();
+            Assert.That(warp.IsWarping, Is.False);
+            Assert.That(haloWarp.IsWarping, Is.False);
+        }
+
+        [Test]
+        public void Warp_PiecesOutsideReferenceRect_StayInPlace()
+        {
+            // 후광 위아래 줄처럼 기준 패널 밖(2px 넘게)에 있는 조각은 밀지 않는다.
+            var rect = new Rect(-200f, -80f, 400f, 160f);
+            var below = new List<UIVertex>
+            {
+                V(-216f, -96f, 0f, 0f), V(-216f, -80f, 0f, 1f), V(216f, -80f, 1f, 1f),
+                V(216f, -80f, 1f, 1f), V(216f, -96f, 1f, 0f), V(-216f, -96f, 0f, 0f)
+            };
+            for (var step = 0; step < 30; step++)
+            {
+                var output = new List<UIVertex>();
+                DroneOxygenEdgeWarp.WarpStream(below, output, rect, 0f, step * DroneOxygenWarningFx.JitterStep);
+                Assert.That(output.All(v => Mathf.Abs(Mathf.Abs(v.position.x) - 216f) < 0.01f), Is.True);
+            }
+        }
+
+        private static UIVertex V(float x, float y, float u, float v)
+        {
+            var vertex = UIVertex.simpleVert;
+            vertex.position = new Vector3(x, y, 0f);
+            vertex.uv0 = new Vector4(u, v, 0f, 0f);
+            vertex.color = Color.white;
+            return vertex;
         }
 
         [Test]
