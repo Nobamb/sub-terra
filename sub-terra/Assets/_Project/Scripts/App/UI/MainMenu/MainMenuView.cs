@@ -593,6 +593,7 @@ namespace SubTerra.App.UI.MainMenu
 
         private void HandleKeyboardNavigation()
         {
+            if (UiPauseGate.IsDebugTerminalOpen) return;
             // 설정 창·덮어쓰기/삭제 확인창이 열려 있거나 부팅·전환 연출 중이면 슬롯/액션 키보드 탐색을 차단한다.
             if (IsAnyModalOpen || (intro != null && intro.BlocksInput))
             {

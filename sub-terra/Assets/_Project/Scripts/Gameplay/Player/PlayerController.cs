@@ -30,6 +30,17 @@ namespace SubTerra.Gameplay.Player
             {
                 gameObject.AddComponent<CushionPadHintHologram>();
             }
+
+            // B-211 점프·착지 손맛. 프리팹 YAML 대신 런타임에 붙인다.
+            if (GetComponent<PlayerSquashStretch>() == null)
+            {
+                gameObject.AddComponent<PlayerSquashStretch>();
+            }
+
+            if (GetComponent<PlayerLandingDust>() == null)
+            {
+                gameObject.AddComponent<PlayerLandingDust>();
+            }
         }
 
         private void OnEnable()
@@ -45,6 +56,8 @@ namespace SubTerra.Gameplay.Player
             {
                 // started: 누른 순간 1회만. performed 연타/홀드 반복을 피한다.
                 jumpAction.started += OnJumpStarted;
+                // B-211: 뗀 순간(canceled)으로 가변 점프 높이를 정한다.
+                jumpAction.canceled += OnJumpCanceled;
                 jumpAction.Enable();
             }
 
@@ -92,6 +105,7 @@ namespace SubTerra.Gameplay.Player
             if (jumpAction != null)
             {
                 jumpAction.started -= OnJumpStarted;
+                jumpAction.canceled -= OnJumpCanceled;
                 jumpAction.Disable();
             }
 
@@ -121,6 +135,17 @@ namespace SubTerra.Gameplay.Player
             }
 
             movement.RequestJump();
+        }
+
+        private void OnJumpCanceled(InputAction.CallbackContext context)
+        {
+            // started와 같이 설정 창이 열려 있으면 무시한다.
+            if (!context.canceled || ControlPreferences.IsSettingsOpen)
+            {
+                return;
+            }
+
+            movement.ReleaseJump();
         }
     }
 }

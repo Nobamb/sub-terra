@@ -1202,7 +1202,7 @@ namespace SubTerra.App.UI.Tutorial
             return popup == null || popup.TryAcceptChoice();
         }
 
-        /// <summary>돌아가기·X 키. 화물 부족 창으로 페이지를 넘기고, 이미 닫히는 중이면 무시한다.</summary>
+        /// <summary>돌아가기·ESC. 화물 부족 창으로 페이지를 넘기고, 이미 닫히는 중이면 무시한다.</summary>
         public void OnDumpClosedClicked()
         {
             var popup = ResolveDumpPopup();

@@ -136,15 +136,15 @@ namespace SubTerra.App.UI.QuitConfirm
         private void Update()
         {
             if (ManualTick) return;
-            var keyboard = Keyboard.current;
+            var keyboard = UiPauseGate.IsDebugTerminalOpen ? null : Keyboard.current;
             var mouse = Mouse.current;
-            var escape = keyboard != null && (keyboard.escapeKey.wasPressedThisFrame || keyboard.xKey.wasPressedThisFrame);
+            var escape = keyboard != null && keyboard.escapeKey.wasPressedThisFrame;
             var anyInput = (keyboard != null && keyboard.anyKey.wasPressedThisFrame)
                 || (mouse != null && (mouse.leftButton.wasPressedThisFrame || mouse.rightButton.wasPressedThisFrame));
             HandleInput(escape, anyInput, Mathf.Min(Time.unscaledDeltaTime, MaxStep));
         }
 
-        /// <summary>입력 처리는 여기 한 곳. escape = ESC·X, anyInput = 아무 키·클릭(연출 중 바로 종료).</summary>
+        /// <summary>입력 처리는 여기 한 곳. escape = ESC, anyInput = 아무 키·클릭(연출 중 바로 종료).</summary>
         public void HandleInput(bool escape, bool anyInput, float deltaSeconds)
         {
             var phase = sequence.Current;

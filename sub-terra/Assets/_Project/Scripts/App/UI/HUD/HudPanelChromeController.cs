@@ -74,6 +74,9 @@ namespace SubTerra.App.UI.HUD
             consumeDiggerWorldClick = consume;
         }
 
+        public bool ContainsInventoryWindow(Canvas canvas) =>
+            inventoryPanelOpen && PopupWindowSorting.Contains(canvas, inventoryPanelRoot);
+
         public bool CloseTopPanel()
         {
             GameObject top = null;
@@ -81,7 +84,6 @@ namespace SubTerra.App.UI.HUD
             Consider(buildingMenuOpen, buildingMenuRoot, CloseBuildingMenu, ref top, ref close);
             Consider(diggerBotOpen, diggerBotRoot, CloseDiggerBot, ref top, ref close);
             Consider(gameGuideOpen, gameGuideRoot, CloseGameGuide, ref top, ref close);
-            Consider(inventoryPanelOpen, inventoryPanelRoot, CloseInventoryPanel, ref top, ref close);
             if (close == null) return false;
             close();
             return true;
@@ -96,8 +98,6 @@ namespace SubTerra.App.UI.HUD
             if (gameGuideOpen && (PopupWindowSorting.Contains(canvas, gameGuideRoot)
                     || (gameGuideView != null && gameGuideView.OwnsCanvas(canvas))))
             { CloseGameGuide(); return true; }
-            if (inventoryPanelOpen && PopupWindowSorting.Contains(canvas, inventoryPanelRoot))
-            { CloseInventoryPanel(); return true; }
             return false;
         }
 
@@ -183,6 +183,7 @@ namespace SubTerra.App.UI.HUD
 
         private void Update()
         {
+            if (UiPauseGate.IsDebugTerminalOpen) return;
             if (UiPauseGate.IsInputBlocked)
             {
                 var pausedKeyboard = Keyboard.current;

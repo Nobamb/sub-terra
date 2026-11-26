@@ -62,7 +62,7 @@ namespace SubTerra.App.UI
                 ReleaseUpgradePause();
             }
 
-            if (UiPauseGate.IsHeldBy(UiPauseGate.MineSettings)
+            if (UiPauseGate.IsDebugTerminalOpen || UiPauseGate.IsHeldBy(UiPauseGate.MineSettings)
                 || (UiPauseGate.IsInputBlocked && !(holdsUpgradePause && IsVisible(RuntimePanelId.Upgrade))))
             {
                 return;
@@ -164,7 +164,7 @@ namespace SubTerra.App.UI
                     return;
                 }
 
-                // 닫는 중인 창이 X키의 '맨 위 창'으로 잡혀 다음 창 닫기를 막지 않게 정렬 목록에서 먼저 뺀다(그리는 순서는 유지).
+                // 닫는 중인 창이 ESC의 '맨 위 창'으로 잡히지 않도록 정렬 목록에서 먼저 뺀다(그리는 순서는 유지).
                 PopupWindowSorting.Remove(canvas);
                 motion.BeginClose(() =>
                 {

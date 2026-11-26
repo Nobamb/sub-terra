@@ -148,9 +148,9 @@ namespace SubTerra.App.Tests.PlayMode
             Assert.That(motion.IsFullOpen, Is.True);
             yield return WaitForUpgrade(motion, true);
             yield return Capture("surface-upgrade");
-            yield return Press(Key.X);
+            yield return Press(Key.Escape);
             Assert.That(view.IsUpgradeVisible, Is.False);
-            Assert.That(settings.IsOpen, Is.False, "X는 현재 창만 닫는다.");
+            Assert.That(settings.IsOpen, Is.False, "ESC는 현재 창만 닫는다.");
             Assert.That(motion.IsClosing, Is.True);
             Assert.That(view.IsSecondaryClosing, Is.True);
             binder.ToggleInventory();
@@ -158,7 +158,7 @@ namespace SubTerra.App.Tests.PlayMode
             binder.ToggleUpgrade();
             Assert.That(motion.IsOpening, Is.True, "U route can reopen during closing.");
             yield return WaitForUpgrade(motion, true);
-            yield return Press(Key.X);
+            yield return Press(Key.Escape);
             Assert.That(motion.IsClosing, Is.True);
             yield return WaitForUpgrade(motion, false);
             root.transform.Find("SurfaceBaseContent/UpgradeButton").GetComponent<UnityEngine.UI.Button>().onClick.Invoke();
@@ -174,40 +174,23 @@ namespace SubTerra.App.Tests.PlayMode
         }
 
         [UnityTest]
-        public IEnumerator Issue260_EscapeTogglesSettingsAndPreservesUnderlyingWindows()
+        public IEnumerator Issue397_EscapeClosesQuestAndUpgradeButKeepsInventory()
         {
             yield return Create(30f);
             var quests = binder.GetComponent<SurfaceBaseQuestPanel>();
             Assert.That(quests.Open(SubTerra.App.Core.GameBootstrapper.Instance.State), Is.True);
             yield return new WaitForSecondsRealtime(.4f);
-            yield return Press(Key.Escape);
-            Assert.That(settings.IsOpen, Is.True);
-            Assert.That(quests.IsOpen, Is.True);
-            var settingsCanvas = root.transform.Find("SettingsPanel").GetComponent<Canvas>();
-            Assert.That(settingsCanvas.sortingOrder, Is.GreaterThan(SubTerra.App.UI.PopupWindowSorting.Top.sortingOrder));
-            yield return new WaitForSecondsRealtime(.5f);
-            yield return Capture("quest-settings", "issue260");
-            yield return Press(Key.Escape);
-            Assert.That(settings.IsOpen, Is.False);
-            Assert.That(quests.IsOpen, Is.True);
-            yield return new WaitForSecondsRealtime(.5f);
             yield return Press(Key.X);
+            Assert.That(quests.IsOpen, Is.True);
+            yield return Press(Key.Escape);
             Assert.That(quests.IsOpen, Is.False);
+            Assert.That(settings.IsOpen, Is.False);
             yield return new WaitForSecondsRealtime(.5f);
 
             binder.ToggleUpgrade();
             yield return WaitForUpgrade(view.UpgradeMotion, true);
             yield return Press(Key.Escape);
-            Assert.That(settings.IsOpen, Is.True);
-            Assert.That(view.IsUpgradeVisible, Is.True);
-            Assert.That(view.UpgradeMotion.IsClosing, Is.False);
-            yield return new WaitForSecondsRealtime(.5f);
-            yield return Capture("upgrade-settings", "issue260");
-            yield return Press(Key.X);
             Assert.That(settings.IsOpen, Is.False);
-            Assert.That(view.IsUpgradeVisible, Is.True);
-            yield return new WaitForSecondsRealtime(.5f);
-            yield return Press(Key.X);
             yield return WaitForUpgrade(view.UpgradeMotion, false);
 
             binder.ToggleInventory();
@@ -219,11 +202,10 @@ namespace SubTerra.App.Tests.PlayMode
             Assert.That(settings.IsOpen, Is.False);
             Assert.That(view.IsInventoryVisible, Is.True);
             yield return new WaitForSecondsRealtime(.5f);
-            yield return Press(Key.X);
+            yield return Press(Key.I);
             Assert.That(view.IsInventoryVisible, Is.False);
-            yield return new WaitForSecondsRealtime(.3f);
             yield return Press(Key.Escape);
-            Assert.That(settings.IsOpen, Is.True, "창이 없어도 ESC는 설정창을 연다.");
+            Assert.That(settings.IsOpen, Is.True, "닫을 창이 없으면 설정창을 연다.");
         }
 
         [UnityTest]

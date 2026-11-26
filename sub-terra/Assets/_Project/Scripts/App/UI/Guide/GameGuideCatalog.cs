@@ -233,7 +233,7 @@ namespace SubTerra.App.UI.Guide
             Control("ctrl.build", L("시설 건설", "Build Facilities"), L("B로 건설 창을 열고 C로 설치합니다.", "Press B to open Build and C to place."), "B -> C", "build")
                 .Step(L("건설 창 열기", "Open Build"), L("B 키로 시설 건설 창을 열고 설치할 시설을 고릅니다.", "Press B and select a facility."))
                 .Step(L("설치", "Place"), L("C 키를 누르면 플레이어 가까운 설치 가능한 칸에 설치합니다. 미리보기 칸을 마우스로 가리켜 왼쪽 클릭해도 설치됩니다.", "Press C to build on a valid tile near you. You can also click the placement preview."))
-                .Step(L("취소", "Cancel"), L("B 또는 X로 창을 닫으면 선택이 취소됩니다.", "Press B or X to close Build and clear the selection."))
+                .Step(L("취소", "Cancel"), LocalizationService.Get("guide.build.close"))
                 .Data(L("사용 조건", "Requirements"), L("시설마다 정해진 재료(광물)를 가지고 있어야 합니다. 재료가 부족하거나 설치할 수 없는 칸이면 설치되지 않습니다.", "Each facility needs specific minerals. You need enough materials and a valid tile."))
                 .Link("fac.support", "fac.ladder", "fac.light");
 
@@ -263,7 +263,7 @@ namespace SubTerra.App.UI.Guide
             Control("ctrl.guide", L("가이드 열기", "Open the Guide"), L("G 키 또는 오른쪽 메뉴에서 이 창을 엽니다.", "Press G or use the right-hand menu."), "G", "guide")
                 .Step(L("G", "G"), L("G 키로 가이드를 열고 닫습니다.", "Press G to toggle the guide."))
                 .Step(L("오른쪽 메뉴", "Right-hand Menu"), L("/ 키로 여닫는 오른쪽 메뉴의 가이드 버튼으로도 열 수 있습니다.", "Press / to toggle the menu and select Guide."))
-                .Step(L("닫기", "Close"), L("오른쪽 위 X 버튼이나 X 키로 닫습니다.", "Use the X button at the upper right or press X."))
+                .Step(L("닫기", "Close"), LocalizationService.Get("guide.upgrade.close"))
                 .Tip(L("광산에서 가이드를 열면 게임이 일시정지됩니다. 가이드를 닫는 연출이 끝나면 탐사가 재개됩니다.", "Opening the guide in the mine pauses the game. Exploration resumes after the closing animation."));
 
             // ---------------------------------------------------------------- 핵심 메커니즘

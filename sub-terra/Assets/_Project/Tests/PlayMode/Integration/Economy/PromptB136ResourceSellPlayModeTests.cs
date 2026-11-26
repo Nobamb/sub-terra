@@ -245,7 +245,7 @@ namespace SubTerra.App.Tests.PlayMode
         }
 
         [UnityTest]
-        public IEnumerator Surface_CloseByXKeyDuringIntro_ByButtonDuringSale_AndRepeatedOpen_LeaveNothing()
+        public IEnumerator Surface_CloseByEscapeDuringIntro_ByButtonDuringSale_AndRepeatedOpen_LeaveNothing()
         {
             var binder = default(EconomyPanelBinder);
             yield return LoadSurface(b => binder = b);
@@ -253,13 +253,13 @@ namespace SubTerra.App.Tests.PlayMode
             var popup = binder.View.SellPopup;
             var open = FindButton("OpenSellButton");
 
-            // 등장 도중 X 키: 기존 지상 기지 X(최상위 창 닫기) 경로로 닫힌다.
+            // 등장 도중 ESC로 지상 기지 판매창을 닫는다.
             yield return ClickCenter(open);
             yield return UiTestWait.Delay(0.2f, "mid intro");
             Assert.That(popup.State, Is.EqualTo(ResourceSellPopupView.PopupState.Opening));
-            yield return UiTestWait.Press(env.Keyboard, Key.X);
+            yield return UiTestWait.Press(env.Keyboard, Key.Escape);
             Assert.That(popup.IsClosing || !popup.IsVisible, Is.True);
-            yield return UiTestWait.Until(() => !popup.IsVisible, "closed after X");
+            yield return UiTestWait.Until(() => !popup.IsVisible, "closed after Escape");
             AssertClosedClean(popup);
             Assert.That(binder.IsModalVisible, Is.False);
 
@@ -414,7 +414,7 @@ namespace SubTerra.App.Tests.PlayMode
         }
 
         [UnityTest]
-        public IEnumerator Console_RangeExit_XKey_AndCloseButton_CloseCleanly_EvenDuringIntro()
+        public IEnumerator Console_RangeExit_Escape_AndCloseButton_CloseCleanly_EvenDuringIntro()
         {
             var scene = default(ConsoleScene);
             yield return LoadConsole(s => scene = s);
@@ -441,12 +441,12 @@ namespace SubTerra.App.Tests.PlayMode
             yield return UiTestWait.Until(() => !popup.IsVisible, "closed after leaving while open");
             AssertClosedClean(popup);
 
-            // X 키(최상위 팝업 닫기).
+            // ESC(최상위 팝업 닫기).
             yield return scene.ReturnToSettlement();
             scene.Binder.Presenter.ToggleInteractionPanel();
             yield return UiTestWait.Until(() => popup.State == ResourceSellPopupView.PopupState.Open, "open for X");
-            yield return UiTestWait.Press(env.Keyboard, Key.X);
-            yield return UiTestWait.Until(() => !popup.IsVisible, "closed by X key");
+            yield return UiTestWait.Press(env.Keyboard, Key.Escape);
+            yield return UiTestWait.Until(() => !popup.IsVisible, "closed by Escape");
             Assert.That(scene.Binder.Presenter.IsInteractionPanelOpen, Is.False);
             AssertClosedClean(popup);
 

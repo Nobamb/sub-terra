@@ -66,7 +66,7 @@ namespace SubTerra.App.UI.SurfaceBase
             if (goldText != null) goldText.text = "골드 <color=#FFE66B>" + gold + "G</color>";
         }
 
-        /// <summary>업그레이드 버튼·ESC·X키·창 X 버튼이 함께 쓰는 열기 경로. 자물쇠가 부서지며 창이 펼쳐진다.</summary>
+        /// <summary>업그레이드 버튼과 U 키에서 쓰는 열기 경로. 자물쇠가 부서지며 창이 펼쳐진다.</summary>
         public void RequestUpgradeOpen()
         {
             var motion = EnsureUpgradeMotion();

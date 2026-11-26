@@ -119,36 +119,33 @@ namespace SubTerra.App.UI.MainMenu
 
         private void Update()
         {
+            if (UiPauseGate.IsDebugTerminalOpen) return;
             if (presenter == null || view == null || Keyboard.current == null) return;
-            // B-170: 종료 확인 창이 ESC·X를 먼저 받는다.
+            // 종료 확인 창이 ESC를 먼저 받는다.
             if (QuitConfirmFlow.IsBlockingInput) return;
             // B-209: 광부 선택 화면이 Esc(돌아가기)·키보드를 직접 받는다.
             if (view.IsMinerSelectOpen) return;
-            if (Keyboard.current.escapeKey.wasPressedThisFrame)
+            if (!Keyboard.current.escapeKey.wasPressedThisFrame) return;
+
+            if (presenter.Settings.IsOpen)
             {
-                if (presenter.Settings.IsOpen) OnSettingsCancel();
-                else if (CanOpenSettingsFromEscape()) OnSettingsClicked();
+                if (!view.TryCloseControlSchemePanel()) OnSettingsCancel();
+                return;
             }
-            if (Keyboard.current.xKey.wasPressedThisFrame)
+
+            var topWindow = PopupWindowSorting.Top;
+            if (topWindow != null)
             {
-                var selected = UnityEngine.EventSystems.EventSystem.current;
-                if (selected != null && selected.currentSelectedGameObject != null
-                    && selected.currentSelectedGameObject.GetComponent<TMPro.TMP_InputField>() != null) return;
-                if (presenter.Settings.IsOpen)
-                {
-                    if (!view.TryCloseControlSchemePanel()) OnSettingsCancel();
-                }
-                else if (PopupWindowSorting.Top != null)
-                {
-                    var topWindow = PopupWindowSorting.Top;
-                    var clock = topWindow.GetComponentInParent<MineResetClockOverlay>();
-                    if (clock != null && clock.TryClosePopup(topWindow)) return;
-                    if (view.IsTopOverwriteWindow(topWindow)) OnOverwriteCancel();
-                    else if (view.IsTopDeleteWindow(topWindow)) OnDeleteCancel();
-                }
-                else if (view.IsOverwriteConfirmVisible) OnOverwriteCancel();
-                else if (view.IsDeleteConfirmVisible) OnDeleteCancel();
+                var clock = topWindow.GetComponentInParent<MineResetClockOverlay>();
+                if (clock != null && clock.TryClosePopup(topWindow)) return;
+                if (view.IsTopOverwriteWindow(topWindow)) OnOverwriteCancel();
+                else if (view.IsTopDeleteWindow(topWindow)) OnDeleteCancel();
+                return;
             }
+
+            if (view.IsOverwriteConfirmVisible) OnOverwriteCancel();
+            else if (view.IsDeleteConfirmVisible) OnDeleteCancel();
+            else if (CanOpenSettingsFromEscape()) OnSettingsClicked();
         }
 
         public bool HasRequiredReferences()
@@ -201,7 +198,7 @@ namespace SubTerra.App.UI.MainMenu
         private void OnDeleteCancel()
         {
             if (presenter == null) return;
-            // 확인 창이 떠 있었을 때만 닫힘음(취소·X 버튼·X 키 공통).
+            // 확인 창이 떠 있었을 때만 닫힘음(취소·X 버튼·ESC 공통).
             var wasOpen = presenter.IsDeleteConfirmOpen;
             presenter.CancelDeleteSlot();
             if (wasOpen)
@@ -407,16 +404,17 @@ namespace SubTerra.App.UI.MainMenu
             startingNewGame = true;
             try
             {
-                var playVideo = NewGameIntroPolicy.ShouldPlayVideo(
-                    true,
-                    AccessibilityPreferences.ReduceMotion,
-                    NewGameIntroPlayer.VideoAvailable());
+                // B-212: 고른 광부 성별로 영상을 정한다(여자 파일이 없으면 남자로 폴백). 모션 감소면 파일을 고르지 않는다.
+                var reduceMotion = AccessibilityPreferences.ReduceMotion;
+                var videoPath = reduceMotion ? null : NewGameIntroPlayer.ResolveVideoPath(session.Flow.Selected);
+                var playVideo = NewGameIntroPolicy.ShouldPlayVideo(true, reduceMotion, videoPath != null);
                 var player = NewGameIntroPlayer.Create();
                 player.StartCoroutine(player.RunNewGameLaunch(
                     playVideo,
                     session.TryStart,
                     IsNewGameReady,
-                    OnMinerSelectLaunchFailed));
+                    OnMinerSelectLaunchFailed,
+                    videoPath));
             }
             catch (System.Exception ex)
             {

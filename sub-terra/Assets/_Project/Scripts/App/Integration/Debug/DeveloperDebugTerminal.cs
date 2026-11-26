@@ -17,8 +17,10 @@ namespace SubTerra.App.Integration
 {
     /// <summary>
     /// 개발자 디버그 터미널. Bootstrap DontDestroyOnLoad 루트 아래에 붙고 오버레이는 코드로 만든다.
-    /// Ctrl+` 로 열고 닫는다. 열린 동안 debug-terminal 정지가 이동·채굴을 막는다.
+    /// Ctrl+` 로 열고 닫는다. 열린 동안 debug-terminal 정지가 게임 입력과 단축키를 막는다.
     /// </summary>
+    // HUD나 종료 확인창보다 먼저 열어 같은 프레임의 게임 단축키도 차단한다.
+    [DefaultExecutionOrder(-500)]
     [DisallowMultipleComponent]
     public sealed class DeveloperDebugTerminal : MonoBehaviour
     {
@@ -488,6 +490,18 @@ namespace SubTerra.App.Integration
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = new Vector2(1920f, 1080f);
             scaler.matchWidthOrHeight = 0.5f;
+
+            // 패널 바깥을 클릭해도 아래 창의 버튼에 선택이 남아 Enter가 전달되지 않게 한다.
+            var backdrop = new GameObject("InputBackdrop", typeof(RectTransform), typeof(Image));
+            var backdropRect = backdrop.GetComponent<RectTransform>();
+            backdropRect.SetParent(canvasRoot.transform, false);
+            backdropRect.anchorMin = Vector2.zero;
+            backdropRect.anchorMax = Vector2.one;
+            backdropRect.offsetMin = Vector2.zero;
+            backdropRect.offsetMax = Vector2.zero;
+            var backdropImage = backdrop.GetComponent<Image>();
+            backdropImage.color = Color.clear;
+            backdropImage.canvasRenderer.cullTransparentMesh = false;
 
             var panel = new GameObject("Panel", typeof(RectTransform), typeof(Image));
             panel.transform.SetParent(canvasRoot.transform, false);

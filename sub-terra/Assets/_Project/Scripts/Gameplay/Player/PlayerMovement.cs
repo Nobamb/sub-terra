@@ -23,6 +23,32 @@ namespace SubTerra.Gameplay.Player
         }
     }
 
+    /// <summary>
+    /// B-211 가변 점프: 오르는 중 손을 떼면 위 속도를 한 번 줄이되, 꼭대기가 최소 높이 아래로 내려가면 아직 자르지 않는다.
+    /// 물리 틱(반암시적 오일러)으로 실제 오르는 높이를 계산해 1칸 턱을 항상 넘게 한다.
+    /// </summary>
+    public static class VariableJumpRule
+    {
+        /// <summary>지금 위 속도로 물리 틱마다 더 오를 높이. 틱 간격이 0이면 v²/2g.</summary>
+        public static float RemainingRise(float upwardSpeed, float gravity, float fixedStep)
+        {
+            if (upwardSpeed <= 0f || gravity <= 0f) return 0f;
+            if (fixedStep <= 0f) return upwardSpeed * upwardSpeed / (2f * gravity);
+            float decrement = gravity * fixedStep;
+            int steps = (int)System.Math.Floor(upwardSpeed / decrement);
+            return fixedStep * (steps * upwardSpeed - decrement * steps * (steps + 1) * 0.5f);
+        }
+
+        /// <param name="risenSoFar">뜬 자리에서 지금까지 오른 높이</param>
+        public static bool CanCut(float risenSoFar, float upwardSpeed, float multiplier,
+            float minApexHeight, float gravity, float fixedStep)
+        {
+            if (upwardSpeed <= 0f) return false;
+            return risenSoFar + RemainingRise(upwardSpeed * multiplier, gravity, fixedStep)
+                >= minApexHeight - 0.0001f;
+        }
+    }
+
     [RequireComponent(typeof(Rigidbody2D))]
     public sealed class PlayerMovement : MonoBehaviour
     {
@@ -35,6 +61,13 @@ namespace SubTerra.Gameplay.Player
         private float ladderSpeedMultiplier = 1f;
         [SerializeField, Range(0f, 0.2f)] private float coyoteTimeSeconds = 0.1f;
         [SerializeField, Range(0f, 0.2f)] private float jumpBufferSeconds = 0.1f;
+
+        [Header("Variable Jump (B-211)")]
+        [SerializeField] private bool variableJumpEnabled = true;
+        [Tooltip("오르는 중 점프 키를 떼면 위 속도에 한 번 곱한다.")]
+        [SerializeField, Range(0f, 1f)] private float jumpReleaseVelocityMultiplier = 0.5f;
+        [Tooltip("짧게 눌러도 꼭대기가 이 높이(칸) 아래로 내려가지 않는다. 1칸 턱 보장.")]
+        [SerializeField, Min(0f)] private float minJumpApexHeight = 1.1f;
 
         [Header("Ground Check")]
         [SerializeField] private Transform groundCheck;
@@ -63,6 +96,10 @@ namespace SubTerra.Gameplay.Player
         /// 착지(물리 접촉 + 비상승) 전까지 절대 회복하지 않는다.
         /// </summary>
         private bool jumpUsedUntilLand;
+        private bool jumpHeld;
+        // 땅 점프 뒤 아직 자르지 않았고 오르는 중이면 true. 사다리 점프는 켜지 않는다.
+        private bool jumpCutArmed;
+        private float jumpLaunchY;
         private float gravityBeforeClimbing;
         private bool ascendingTowardsLadderExit;
         private readonly HashSet<LadderZone> activeLadders = new HashSet<LadderZone>();
@@ -110,6 +147,14 @@ namespace SubTerra.Gameplay.Player
         public int JumpCount { get; private set; }
         /// <summary>B-175: 마지막 점프의 시작 위 속도(화물 배율 반영).</summary>
         public float LastJumpLaunchSpeed { get; private set; }
+        /// <summary>B-211: 손을 떼 위 속도를 자를 때마다 1 증가. 점프 그림이 남은 상승을 다시 나눈다.</summary>
+        public int JumpCutCount { get; private set; }
+        /// <summary>B-211: 점프 키를 누르고 있는가(started~canceled).</summary>
+        public bool IsJumpHeld => jumpHeld;
+        /// <summary>
+        /// B-211: 착지 판정(TrackFall·디버그 falling) 한 번마다 한 번 알린다. 찌그러짐·먼지가 구독한다.
+        /// </summary>
+        public event System.Action<PlayerLandingInfo> Landed;
         /// <summary>B-164: 점프·착지 소리 판정. 착지는 PlayerSurvivalController가 같은 판정기로 낸다.</summary>
         public PlayerMoveSfxGate MoveSfx => moveSfx;
         /// <summary>B-164: 사다리 잡기·놓기·걸음 소리 판정.</summary>
@@ -162,6 +207,8 @@ namespace SubTerra.Gameplay.Player
             ApplyHorizontalMovement();
 
             var jumped = TryApplyJump();
+            // 점프한 틱은 Impulse가 아직 속도에 반영되기 전이라 다음 틱부터 본다.
+            if (!jumped) TryCutJump();
             if (IsClimbing && !jumped)
             {
                 if (CanMove && IsMovingOnLadder)
@@ -180,6 +227,8 @@ namespace SubTerra.Gameplay.Player
         private void OnDisable()
         {
             jumpWindow.Clear();
+            jumpHeld = false;
+            jumpCutArmed = false;
             ExitLadder();
         }
 
@@ -195,7 +244,20 @@ namespace SubTerra.Gameplay.Player
 
         public void RequestJump()
         {
+            jumpHeld = true;
             if (AcceptsControl) jumpWindow.Request(Time.time, jumpBufferSeconds);
+        }
+
+        /// <summary>B-211: 점프 키를 뗐다. 오르는 중이면 다음 물리 틱부터 자르기 규칙을 본다.</summary>
+        public void ReleaseJump()
+        {
+            jumpHeld = false;
+        }
+
+        /// <summary>B-211: 착지 판정을 구독자에게 알린다. PlayerSurvivalController가 착지마다 한 번 부른다.</summary>
+        public void ReportLanding(PlayerLandingInfo landing)
+        {
+            Landed?.Invoke(landing);
         }
 
         public void SetVerticalMoveInput(float vertical)
@@ -347,15 +409,51 @@ namespace SubTerra.Gameplay.Player
                 // Trigger 안에 남아 있으면 접촉 정보를 보존해, 공중에서도 다시 사다리를 잡을 수 있다.
                 ExitLadderMode();
                 body.linearVelocity = new Vector2(body.linearVelocityX, 0f);
-                ApplyJumpImpulse();
+                // B-211: 사다리를 벗어나는 높이가 바뀌지 않게 사다리 점프는 자르지 않는다.
+                ApplyJumpImpulse(allowReleaseCut: false);
                 return true;
             }
 
-            ApplyJumpImpulse();
+            ApplyJumpImpulse(allowReleaseCut: true);
             return true;
         }
 
-        private void ApplyJumpImpulse()
+        /// <summary>
+        /// B-211: 오르는 중 키가 떨어져 있으면 위 속도를 한 번만 줄인다. 내려가기 시작하면 더는 보지 않는다.
+        /// 경직 여부와 관계없는 물리 규칙이다.
+        /// </summary>
+        private void TryCutJump()
+        {
+            if (!jumpCutArmed || body == null)
+            {
+                return;
+            }
+
+            float upwardSpeed = body.linearVelocityY;
+            if (!variableJumpEnabled || IsClimbing || upwardSpeed <= 0f)
+            {
+                jumpCutArmed = false;
+                return;
+            }
+
+            if (jumpHeld)
+            {
+                return;
+            }
+
+            float gravity = Mathf.Abs(Physics2D.gravity.y) * body.gravityScale;
+            if (!VariableJumpRule.CanCut(body.position.y - jumpLaunchY, upwardSpeed,
+                    jumpReleaseVelocityMultiplier, minJumpApexHeight, gravity, Time.fixedDeltaTime))
+            {
+                return;
+            }
+
+            body.linearVelocity = new Vector2(body.linearVelocityX, upwardSpeed * jumpReleaseVelocityMultiplier);
+            jumpCutArmed = false;
+            JumpCutCount++;
+        }
+
+        private void ApplyJumpImpulse(bool allowReleaseCut)
         {
             // 하강 중 점프 시 속도 상쇄 후 일정한 상승을 준다.
             if (body.linearVelocityY < 0f)
@@ -372,6 +470,8 @@ namespace SubTerra.Gameplay.Player
                 ForceMode2D.Impulse);
             jumpAirLockRemaining = jumpAirLockDuration;
             jumpUsedUntilLand = true;
+            jumpCutArmed = allowReleaseCut && variableJumpEnabled;
+            jumpLaunchY = body.position.y;
             IsGrounded = false;
             // 땅·코요테·입력 버퍼·사다리 점프가 모두 이곳을 지나므로 한 번만 난다.
             SfxRequests.Play(moveSfx.ResolveJump());
@@ -484,6 +584,7 @@ namespace SubTerra.Gameplay.Player
                 && body.linearVelocityY <= 0.1f)
             {
                 jumpUsedUntilLand = false;
+                jumpCutArmed = false;
             }
         }
 

@@ -349,21 +349,27 @@ namespace SubTerra.App.Tests.PlayMode
         }
 
         [UnityTest]
-        public IEnumerator Storage_CloseDuringIntro_XKey_Interact_CloseButton_RangeExit_Repeat_LeaveNothing()
+        public IEnumerator Storage_EscapeKeepsWindowOpen_InteractAndCloseButtonDismissIt()
         {
             var scene = default(StorageScene);
             yield return Load(s => scene = s);
             Add(Copper, 3);
             var presenter = scene.Binder.Presenter;
 
-            // 상자가 올라오는 중 X 키(최상위 팝업 닫기).
+            // 보관함은 ESC로 닫지 않으며 설정을 닫은 뒤에도 그대로 남는다.
             presenter.ToggleInteractionPanel();
             var popup = scene.View.StoragePopup;
             yield return UiTestWait.Delay(0.15f, "rising");
             Assert.That(popup.State, Is.EqualTo(StoragePopupView.PopupState.Opening));
-            yield return UiTestWait.Press(env.Keyboard, Key.X);
-            Assert.That(popup.IsClosing || !popup.IsVisible, Is.True);
-            yield return UiTestWait.Until(() => !popup.IsVisible, "closed by X during rise");
+            var menu = Object.FindAnyObjectByType<SubTerra.App.Integration.UndergroundMenuController>();
+            yield return UiTestWait.Press(env.Keyboard, Key.Escape);
+            Assert.That(menu.IsSettingsOpen, Is.True);
+            Assert.That(popup.IsVisible && !popup.IsClosing, Is.True);
+            yield return UiTestWait.Press(env.Keyboard, Key.Escape);
+            Assert.That(menu.IsSettingsOpen, Is.False);
+            Assert.That(popup.IsVisible && !popup.IsClosing, Is.True);
+            presenter.ToggleInteractionPanel();
+            yield return UiTestWait.Until(() => !popup.IsVisible, "closed by interaction after settings");
             AssertClosedClean(popup);
             Assert.That(presenter.IsInteractionPanelOpen, Is.False);
 
@@ -405,7 +411,7 @@ namespace SubTerra.App.Tests.PlayMode
                 yield return UiTestWait.Until(() => popup.State == StoragePopupView.PopupState.Open, "reopen " + i);
                 Assert.That(popup.SelectedMineralId, Is.Empty);
                 yield return ClickCenter(Row(popup.PlayerRows, Copper).Button);
-                yield return UiTestWait.Press(env.Keyboard, Key.X);
+                presenter.ToggleInteractionPanel();
                 yield return UiTestWait.Until(() => !popup.IsVisible, "close " + i);
                 AssertClosedClean(popup);
             }

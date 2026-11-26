@@ -24,6 +24,9 @@ namespace SubTerra.Gameplay.Building
         private PlayerMovement rider;
         private IEmergencyEscapePortalPort escapePort;
         private int lastRequestFrame = -1;
+        private SpriteRenderer artwork;
+        private Sprite activeArtwork;
+        private Sprite inactiveArtwork;
 
         public bool HasRider => rider != null;
 
@@ -115,6 +118,13 @@ namespace SubTerra.Gameplay.Building
                 powerNode = GetComponent<PowerNode>();
             }
 
+            artwork = transform.Find("VisualRoot/Artwork")?.GetComponent<SpriteRenderer>();
+            if (artwork != null)
+            {
+                activeArtwork = artwork.sprite;
+                inactiveArtwork = Resources.Load<Sprite>("Facilities/PortalInactive");
+            }
+
             ResolveInput();
             ResolvePort();
         }
@@ -151,6 +161,12 @@ namespace SubTerra.Gameplay.Building
 
         private void Update()
         {
+            if (artwork != null && activeArtwork != null && inactiveArtwork != null)
+            {
+                Sprite sprite = HasPowerService ? activeArtwork : inactiveArtwork;
+                if (artwork.sprite != sprite) artwork.sprite = sprite;
+            }
+
             if (WasInteractPressedThisFrame())
             {
                 RequestEscape();

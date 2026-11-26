@@ -33,6 +33,10 @@ namespace SubTerra.App.UI.Outpost
         public bool IsBound => presenter != null && presenter.IsBound;
         public bool IsTopWindow(Canvas canvas) => view != null
             && PopupWindowSorting.Contains(canvas, view.ActiveWindowRoot);
+        public bool IsStorageOpen => view != null && view.StoragePopup != null && view.StoragePopup.IsVisible;
+
+        public bool ContainsStorageWindow(Canvas canvas) => IsStorageOpen
+            && PopupWindowSorting.Contains(canvas, view.StoragePopup.gameObject);
 
         private void Awake()
         {

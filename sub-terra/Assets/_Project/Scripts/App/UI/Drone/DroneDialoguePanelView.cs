@@ -89,11 +89,20 @@ namespace SubTerra.App.UI.Drone
         private float lastTypeAt = float.NegativeInfinity;
         private Func<float> sfxClock = () => Time.realtimeSinceStartup;
 
+        // B-213 산소 부족 경고: 빨간 본문·헤더, 둘레 후광, 가장자리 글리치. 유지 중 분석 대사는 미뤄 둔다.
+        private bool oxygenWarningActive;
+        private float oxygenWarningUntil;
+        private float oxygenWarningElapsed;
+        private DroneOxygenWarningFx oxygenWarningFx;
+        private DroneDialogueResult deferredDialogue;
+        private Outline panelOutline;
+
         private static readonly Color TerminalBackground = new Color(0.012f, 0.035f, 0.055f, 0.975f);
         private static readonly Color TerminalHeader = new Color(0.018f, 0.12f, 0.16f, 0.99f);
         private static readonly Color AccentCyan = new Color(0.18f, 0.84f, 0.92f, 1f);
         private static readonly Color AlertAmber = new Color(1f, 0.66f, 0.16f, 1f);
         private static readonly Color PriorityFlashText = new Color(1f, 0.96f, 0.86f, 1f);
+        private static readonly Color DialogueTextColor = new Color(0.92f, 0.98f, 1f, 1f);
 
         /// <summary>닫기(X) 버튼. HudPanelChromeController가 배선한다.</summary>
         public Button CloseButton => closeButton;
@@ -101,6 +110,8 @@ namespace SubTerra.App.UI.Drone
         /// <summary>열기·닫기 연출 상태. 연출을 쓰지 않는 환경에서는 Hidden에 머문다.</summary>
         public DroneTerminalPhase TerminalPhase => window != null ? window.Phase : DroneTerminalPhase.Hidden;
         public bool IsTerminalRevealing => revealActive || appendActive;
+        public bool IsOxygenWarningActive => oxygenWarningActive;
+        public bool HasOxygenWarningHalo => oxygenWarningFx != null && oxygenWarningFx.HasHalo;
 
         private void Awake()
         {
@@ -123,6 +134,7 @@ namespace SubTerra.App.UI.Drone
 
         private void Update()
         {
+            TickOxygenWarning(Time.unscaledDeltaTime);
             if (window == null || window.Phase == DroneTerminalPhase.Hidden)
             {
                 return;
@@ -185,11 +197,136 @@ namespace SubTerra.App.UI.Drone
                 return;
             }
 
+            if (oxygenWarningActive && Time.unscaledTime >= oxygenWarningUntil)
+            {
+                EndOxygenWarning();
+            }
+
+            if (oxygenWarningActive)
+            {
+                // 경고가 끝나면 마지막 분석 대사로 조용히 돌아간다.
+                deferredDialogue = dialogue;
+                return;
+            }
+
             ApplyTerminalSkin();
             // 같은 추천에서 바뀐 대사는 타이핑 없이 조용히 교체한다.
             SetTextIfChanged(dialogueText, dialogue.Text);
             // 창 제목과 같은 크기의 본문 글자 크기를 유지한다.
             dialogueText.fontSize = PanelDialogueFontSize;
+        }
+
+        /// <summary>
+        /// B-213 산소 부족 경고. holdSeconds 동안 창 문구를 빨간 경고로 바꾸고 둘레 후광·가장자리 글리치를 켠다.
+        /// 창을 여는 것은 HudPanelChromeController가 한다. 이미 열린 창이면 경고 문구를 다시 찍는다.
+        /// 소리는 직접 내지 않는다(말풍선의 심각한 긴급음과 기존 열기·PRIORITY 소리만).
+        /// </summary>
+        public void ShowOxygenWarning(DroneDialogueResult dialogue, float holdSeconds)
+        {
+            if (dialogueText == null || dialogue == null || string.IsNullOrWhiteSpace(dialogue.Text))
+            {
+                return;
+            }
+
+            ApplyTerminalSkin();
+            if (!oxygenWarningActive)
+            {
+                deferredDialogue = null;
+            }
+
+            oxygenWarningActive = true;
+            oxygenWarningUntil = Time.unscaledTime + Mathf.Max(0.1f, holdSeconds);
+            oxygenWarningElapsed = 0f;
+            SetTextIfChanged(dialogueText, dialogue.Text);
+            dialogueText.fontSize = PanelDialogueFontSize;
+            ApplyOxygenWarningTheme(true);
+            EnsureOxygenWarningFx();
+            if (IsTerminalAnimating()
+                && window.Phase == DroneTerminalPhase.Shown
+                && !revealActive)
+            {
+                // 이미 떠 있던 창: 펼침 없이 경고 문구만 다시 찍는다.
+                BeginReveal(false);
+            }
+
+            if (oxygenWarningFx != null && IsVisible)
+            {
+                oxygenWarningFx.Apply(0f);
+            }
+        }
+
+        private void TickOxygenWarning(float deltaTime)
+        {
+            if (!oxygenWarningActive)
+            {
+                return;
+            }
+
+            if (Time.unscaledTime >= oxygenWarningUntil)
+            {
+                EndOxygenWarning();
+                return;
+            }
+
+            // 모션 감소여도 후광·가장자리 글리치는 창 둘레에만 있으므로 그대로 둔다.
+            oxygenWarningElapsed += Mathf.Max(0f, deltaTime);
+            if (oxygenWarningFx != null && IsVisible)
+            {
+                oxygenWarningFx.Apply(oxygenWarningElapsed);
+            }
+        }
+
+        private void EndOxygenWarning()
+        {
+            oxygenWarningActive = false;
+            if (oxygenWarningFx != null)
+            {
+                oxygenWarningFx.Hide();
+            }
+
+            ApplyOxygenWarningTheme(false);
+            var deferred = deferredDialogue;
+            deferredDialogue = null;
+            if (deferred != null)
+            {
+                SetDialogue(deferred);
+            }
+        }
+
+        private void EnsureOxygenWarningFx()
+        {
+            if (oxygenWarningFx != null)
+            {
+                return;
+            }
+
+            var root = panelRoot != null ? panelRoot : gameObject;
+            var rect = root != null ? root.transform as RectTransform : null;
+            if (rect != null)
+            {
+                // X 버튼이 있는 헤더 영역에는 글리치·왜곡을 넣지 않는다.
+                oxygenWarningFx = new DroneOxygenWarningFx(rect, true, DroneOxygenWarningFx.TerminalHeaderExclusion);
+            }
+        }
+
+        private void ApplyOxygenWarningTheme(bool warning)
+        {
+            if (panelOutline != null)
+            {
+                var edge = warning ? DroneOxygenWarningFx.AlertRed : AccentCyan;
+                panelOutline.effectColor = new Color(edge.r, edge.g, edge.b, warning ? 0.95f : 0.72f);
+            }
+
+            if (dialogueText != null)
+            {
+                dialogueText.color = warning ? DroneOxygenWarningFx.AlertText : DialogueTextColor;
+            }
+
+            ApplyHeaderState();
+            if (!priorityActive)
+            {
+                RestoreHeaderColors();
+            }
         }
 
         public void SetAnalysis(DroneAnalysisResult analysis)
@@ -348,6 +485,7 @@ namespace SubTerra.App.UI.Drone
             outline.effectColor = new Color(AccentCyan.r, AccentCyan.g, AccentCyan.b, 0.72f);
             outline.effectDistance = new Vector2(1.5f, -1.5f);
             outline.useGraphicAlpha = true;
+            panelOutline = outline;
 
             var shadow = root.GetComponent<Shadow>();
             if (shadow == null)
@@ -383,7 +521,7 @@ namespace SubTerra.App.UI.Drone
                     new Vector2(18f, -34f), new Vector2(0f, -2f));
             }
 
-            StyleText(dialogueText, new Color(0.92f, 0.98f, 1f, 1f));
+            StyleText(dialogueText, DialogueTextColor);
             StyleText(actionText, new Color(0.34f, 0.94f, 0.84f, 1f));
             StyleText(reasonText, new Color(0.7f, 0.86f, 0.9f, 1f));
             StyleCloseButton(header.rectTransform);
@@ -398,21 +536,33 @@ namespace SubTerra.App.UI.Drone
                 return;
             }
 
-            var label = operationalState switch
-            {
-                DroneOperationalState.Scanning => "SCANNING",
-                DroneOperationalState.Priority => "PRIORITY",
-                _ => "IDLE"
-            };
+            var label = oxygenWarningActive
+                ? "O2 CRITICAL"
+                : operationalState switch
+                {
+                    DroneOperationalState.Scanning => "SCANNING",
+                    DroneOperationalState.Priority => "PRIORITY",
+                    _ => "IDLE"
+                };
             SetTextIfChanged(speakerText, HeaderPrefix + label + HeaderCursor);
             speakerText.color = HeaderTextColor();
         }
 
         private Color HeaderTextColor()
         {
+            if (oxygenWarningActive)
+            {
+                return DroneOxygenWarningFx.AlertRed;
+            }
+
             return operationalState == DroneOperationalState.Priority
                 ? AlertAmber
                 : AccentCyan;
+        }
+
+        private Color HeaderBarColor()
+        {
+            return oxygenWarningActive ? DroneOxygenWarningFx.AlertHeader : TerminalHeader;
         }
 
         private bool CanAnimateTerminal()
@@ -483,6 +633,7 @@ namespace SubTerra.App.UI.Drone
 
         private bool WasSkipRequested()
         {
+            if (UiPauseGate.IsDebugTerminalOpen) return false;
             if (window.Phase != DroneTerminalPhase.Opening && !revealActive && !appendActive)
             {
                 return false;
@@ -717,7 +868,7 @@ namespace SubTerra.App.UI.Drone
             var flash = DroneTerminalTimeline.PriorityFlash(priorityClock, duration);
             if (headerBar != null)
             {
-                headerBar.color = Color.Lerp(TerminalHeader, terminalFx.priorityColor, flash * 0.85f);
+                headerBar.color = Color.Lerp(HeaderBarColor(), terminalFx.priorityColor, flash * 0.85f);
             }
 
             if (speakerText != null)
@@ -750,7 +901,7 @@ namespace SubTerra.App.UI.Drone
         {
             if (headerBar != null)
             {
-                headerBar.color = TerminalHeader;
+                headerBar.color = HeaderBarColor();
             }
 
             if (speakerText != null)

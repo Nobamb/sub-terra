@@ -88,7 +88,7 @@ namespace SubTerra.App.UI.EmergencyEscape
 
         private void Update()
         {
-            if (view == null || !view.IsOpen)
+            if (UiPauseGate.IsDebugTerminalOpen || view == null || !view.IsOpen)
             {
                 return;
             }
@@ -129,21 +129,12 @@ namespace SubTerra.App.UI.EmergencyEscape
             }
         }
 
-        // 게임 시간이 멈춘 동안 UndergroundMenuController가 Esc를 막으므로 창이 직접 받는다.
-        // 같은 프레임에 설정 창이 함께 열리지 않도록 모든 Update가 끝난 LateUpdate에서 닫는다.
-        private void LateUpdate()
+        public bool TryCloseFromEscape()
         {
-            if (view == null || !view.IsOpen)
-            {
-                return;
-            }
+            if (view == null || !view.IsOpen) return false;
 
-            var keyboard = Keyboard.current;
-            if (keyboard != null && keyboard.escapeKey.wasPressedThisFrame && Time.frameCount > openFrame
-                && !QuitConfirm.QuitConfirmFlow.IsBlockingInput)
-            {
-                Close();
-            }
+            if (Time.frameCount > openFrame) Close();
+            return true;
         }
 
         public void BindTo(IEmergencyEscapePortalPort escapePort)
