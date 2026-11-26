@@ -2,6 +2,7 @@ using SubTerra.App.Audio;
 using SubTerra.App.UI.PlayerStatus;
 using SubTerra.Gameplay.Mining;
 using SubTerra.Shared.Audio;
+using static SubTerra.Shared.Localization.LocalizationService;
 using UnityEngine;
 
 namespace SubTerra.App.Integration
@@ -165,13 +166,16 @@ namespace SubTerra.App.Integration
 
             return reason switch
             {
-                MiningFailureReason.DrillLevelTooLow => "드릴 레벨이 부족합니다. 지상에서 업그레이드하세요.",
-                MiningFailureReason.InsufficientEnergy => "채굴 전력이 부족합니다.",
-                MiningFailureReason.InventoryFull => "화물이 가득 찼습니다. 귀환해 화물을 비우세요.",
-                MiningFailureReason.OutOfRange => "채굴 범위를 벗어났습니다.",
-                MiningFailureReason.NotMineable => "채굴할 수 없는 지형입니다.",
-                MiningFailureReason.DeepZoneLocked => "심층 구역이 해금되어야 채굴할 수 있는 자원입니다.",
-                _ => "채굴할 수 없습니다."
+                MiningFailureReason.DrillLevelTooLow => Text("드릴 레벨이 부족합니다. 지상에서 업그레이드하세요.",
+                    "Drill level too low. Upgrade at the surface."),
+                MiningFailureReason.InsufficientEnergy => Text("채굴 전력이 부족합니다.", "Not enough power to mine."),
+                MiningFailureReason.InventoryFull => Text("화물이 가득 찼습니다. 귀환해 화물을 비우세요.",
+                    "Cargo is full. Return to unload."),
+                MiningFailureReason.OutOfRange => Text("채굴 범위를 벗어났습니다.", "Out of mining range."),
+                MiningFailureReason.NotMineable => Text("채굴할 수 없는 지형입니다.", "This terrain cannot be mined."),
+                MiningFailureReason.DeepZoneLocked => Text("심층 구역이 해금되어야 채굴할 수 있는 자원입니다.",
+                    "Unlock the Deep Zone to mine this resource."),
+                _ => Text("채굴할 수 없습니다.", "Cannot mine here.")
             };
         }
     }

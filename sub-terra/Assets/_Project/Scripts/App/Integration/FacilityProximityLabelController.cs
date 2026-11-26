@@ -142,7 +142,7 @@ namespace SubTerra.App.Integration
                 {
                     var candidate = candidates[i];
                     var bubble = GetOrCreateBubble(candidate.Id);
-                    bubble.SetLabel(ItemDisplayNames.Building(candidate.Instance.BuildingId));
+                    bubble.SetLabel(ItemDisplayNames.LocalizedBuilding(candidate.Instance.BuildingId));
                     var anchor = FacilityNameTagAnchor.Compute(candidate.Instance);
                     var rect = TagRect(anchor, bubble.Width);
                     if (Overlaps(rect))
@@ -179,16 +179,12 @@ namespace SubTerra.App.Integration
         public bool TryGetVisibleLabel(string buildingId, out string label)
         {
             label = string.Empty;
-            foreach (var pair in bubbles)
+            foreach (var candidate in candidates)
             {
-                if (!pair.Value.IsWanted)
+                if (candidate.Instance != null && candidate.Instance.BuildingId == buildingId
+                    && bubbles.TryGetValue(candidate.Id, out var bubble) && bubble != null && bubble.IsWanted)
                 {
-                    continue;
-                }
-
-                if (pair.Value.Label == ItemDisplayNames.Building(buildingId))
-                {
-                    label = pair.Value.Label;
+                    label = bubble.Label;
                     return true;
                 }
             }

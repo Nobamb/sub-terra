@@ -1,4 +1,5 @@
 using SubTerra.Shared;
+using SubTerra.Shared.Localization;
 
 namespace SubTerra.Gameplay.Player
 {
@@ -42,8 +43,8 @@ namespace SubTerra.Gameplay.Player
         {
             return kind switch
             {
-                ElevatorPromptKind.Board => BoardLabel,
-                ElevatorPromptKind.Return => ReturnLabel,
+                ElevatorPromptKind.Board => LocalizationService.Text(BoardLabel, "Press E to Board"),
+                ElevatorPromptKind.Return => LocalizationService.Text(ReturnLabel, "Press E to Return"),
                 _ => string.Empty
             };
         }

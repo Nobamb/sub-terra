@@ -17,6 +17,7 @@ using SubTerra.App.UI.HUD;
 using SubTerra.App.UI.MainMenu;
 using SubTerra.Shared;
 using SubTerra.Shared.Audio;
+using SubTerra.Shared.Localization;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -1285,13 +1286,18 @@ namespace SubTerra.App.Save
         {
             return failure switch
             {
-                ElevatorTravelFailure.Busy => "엘리베이터가 이미 이동 중입니다.",
+                ElevatorTravelFailure.Busy => LocalizationService.Text("엘리베이터가 이미 이동 중입니다.",
+                    "The elevator is already moving."),
                 ElevatorTravelFailure.InsufficientEnergy =>
-                    "엘리베이터 전력이 부족합니다. (필요 전력 " + MineElevatorEnergyCost + ")",
-                ElevatorTravelFailure.BlockedExit => "도착 지점이 막혀 이동할 수 없습니다.",
-                ElevatorTravelFailure.SceneLoadFailed => "목적지 Scene 로드에 실패했습니다.",
-                ElevatorTravelFailure.InvalidDestination => "엘리베이터 목적지가 올바르지 않습니다.",
-                _ => "엘리베이터를 이용할 수 없습니다."
+                    string.Format(LocalizationService.Text("엘리베이터 전력이 부족합니다. (필요 전력 {0})",
+                        "Not enough elevator power. ({0} required)"), MineElevatorEnergyCost),
+                ElevatorTravelFailure.BlockedExit => LocalizationService.Text("도착 지점이 막혀 이동할 수 없습니다.",
+                    "The destination is blocked."),
+                ElevatorTravelFailure.SceneLoadFailed => LocalizationService.Text("목적지 Scene 로드에 실패했습니다.",
+                    "Could not load the destination."),
+                ElevatorTravelFailure.InvalidDestination => LocalizationService.Text("엘리베이터 목적지가 올바르지 않습니다.",
+                    "Invalid elevator destination."),
+                _ => LocalizationService.Text("엘리베이터를 이용할 수 없습니다.", "The elevator is unavailable.")
             };
         }
 

@@ -1,6 +1,7 @@
 using NUnit.Framework;
 using SubTerra.Gameplay.Player;
 using SubTerra.Shared;
+using SubTerra.Shared.Localization;
 using TMPro;
 using UnityEditor;
 using UnityEngine;
@@ -42,9 +43,22 @@ namespace SubTerra.App.Tests.Readiness
         [Test]
         public void GetLabel_UsesPlayerFacingKeyPrompts()
         {
-            Assert.AreEqual("E키를 눌러 탑승", ElevatorPromptResolver.GetLabel(ElevatorPromptKind.Board));
-            Assert.AreEqual("E키를 눌러 귀환", ElevatorPromptResolver.GetLabel(ElevatorPromptKind.Return));
-            Assert.AreEqual(string.Empty, ElevatorPromptResolver.GetLabel(ElevatorPromptKind.None));
+            var previousLanguage = LocalizationService.Current;
+            try
+            {
+                LocalizationService.SetLanguage(GameLanguage.Korean);
+                Assert.AreEqual("E키를 눌러 탑승", ElevatorPromptResolver.GetLabel(ElevatorPromptKind.Board));
+                Assert.AreEqual("E키를 눌러 귀환", ElevatorPromptResolver.GetLabel(ElevatorPromptKind.Return));
+
+                LocalizationService.SetLanguage(GameLanguage.English);
+                Assert.AreEqual("Press E to Board", ElevatorPromptResolver.GetLabel(ElevatorPromptKind.Board));
+                Assert.AreEqual("Press E to Return", ElevatorPromptResolver.GetLabel(ElevatorPromptKind.Return));
+                Assert.AreEqual(string.Empty, ElevatorPromptResolver.GetLabel(ElevatorPromptKind.None));
+            }
+            finally
+            {
+                LocalizationService.SetLanguage(previousLanguage);
+            }
         }
 
         [Test]
