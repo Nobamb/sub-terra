@@ -90,12 +90,20 @@ namespace SubTerra.App.UI.Drone
         private Func<SfxId, float> secondsSinceSfx = DefaultSecondsSinceSfx;
         private Func<bool> isSfxPaused = DefaultSfxPaused;
 
+        // B-213 산소 부족 경고: 빨간 테마와 가장자리 글리치. 유지 중에는 분석 대사가 덮어쓰지 않는다.
+        private bool oxygenWarningActive;
+        private float oxygenWarningUntil;
+        private float oxygenWarningElapsed;
+        private DroneOxygenWarningFx oxygenWarningFx;
+        private Outline terminalOutline;
+
         private static readonly Color TerminalBackground = new Color(0.012f, 0.035f, 0.055f, 0.975f);
         private static readonly Color TerminalHeader = new Color(0.018f, 0.12f, 0.16f, 0.99f);
         private static readonly Color AccentCyan = new Color(0.18f, 0.84f, 0.92f, 1f);
         private static readonly Color AlertAmber = new Color(1f, 0.66f, 0.16f, 1f);
 
         public bool IsShowing => canvasGroup != null && canvasGroup.alpha > 0f;
+        public bool IsOxygenWarningActive => oxygenWarningActive;
 
         private void Awake()
         {
@@ -107,6 +115,7 @@ namespace SubTerra.App.UI.Drone
 
         private void LateUpdate()
         {
+            TickOxygenWarning(Time.unscaledDeltaTime);
             if (IsShowing && Time.unscaledTime >= visibleUntil)
             {
                 SetCanvasVisible(false);
@@ -125,6 +134,44 @@ namespace SubTerra.App.UI.Drone
         }
 
         public void SetDialogue(DroneDialogueResult dialogue)
+        {
+            if (oxygenWarningActive && Time.unscaledTime >= oxygenWarningUntil)
+            {
+                EndOxygenWarning();
+            }
+
+            // 경고가 떠 있는 동안 분석 루프 대사는 버린다(경고 문구를 지우지 않게).
+            if (oxygenWarningActive)
+            {
+                return;
+            }
+
+            ShowDialogue(dialogue, false);
+        }
+
+        /// <summary>
+        /// B-213 산소 부족 경고 말풍선. 빨간 테마·가장자리 글리치로 urgentVisibleSeconds 동안 띄운다.
+        /// 효과음은 심각한 긴급 말풍선 소리를 한 번 낸다(간격 생략 규칙보다 우선, 정지 중에는 생략).
+        /// </summary>
+        public void ShowOxygenWarning(DroneDialogueResult dialogue)
+        {
+            if (dialogue == null || dialogueText == null || string.IsNullOrWhiteSpace(dialogue.Text))
+            {
+                return;
+            }
+
+            oxygenWarningActive = true;
+            oxygenWarningUntil = Time.unscaledTime + urgentVisibleSeconds;
+            oxygenWarningElapsed = 0f;
+            ShowDialogue(dialogue, true);
+            ApplyOxygenWarningTheme(true);
+            if (oxygenWarningFx != null && IsShowing)
+            {
+                oxygenWarningFx.Apply(0f);
+            }
+        }
+
+        private void ShowDialogue(DroneDialogueResult dialogue, bool forceSfx)
         {
             if (dialogue == null || dialogue.IsSuppressed || dialogueText == null)
             {
@@ -158,7 +205,7 @@ namespace SubTerra.App.UI.Drone
 
             ApplyTerminalTheme();
             ApplyTerminalState(operationalState);
-            TryPlayBubbleSfx(dialogue, sameText, wasBoundVisible);
+            TryPlayBubbleSfx(dialogue, sameText, wasBoundVisible, forceSfx);
             if (!sameText)
             {
                 targetPanelHeight = MeasurePanelHeight(nextText);
@@ -545,16 +592,22 @@ namespace SubTerra.App.UI.Drone
         }
 
         /// <returns>비프를 냈으면 true. 생략한 회차는 늦춰 내지 않는다.</returns>
-        private bool TryPlayBubbleSfx(DroneDialogueResult dialogue, bool sameText, bool wasBoundVisible)
+        private bool TryPlayBubbleSfx(DroneDialogueResult dialogue, bool sameText, bool wasBoundVisible, bool force = false)
         {
             var first = firstDialoguePending;
             firstDialoguePending = false;
+            var now = sfxClock();
+            if (force)
+            {
+                // B-213 경고는 한 번뿐이라 간격·핑 겹침 생략 규칙을 적용하지 않는다. 정지 중이면 내지 않는다.
+                return !isSfxPaused() && PlayBubbleSfx(dialogue, now);
+            }
+
             if (first || sameText || !wasBoundVisible)
             {
                 return false;
             }
 
-            var now = sfxClock();
             if (now < quietUntil || isSfxPaused())
             {
                 return false;
@@ -573,6 +626,11 @@ namespace SubTerra.App.UI.Drone
                 return false;
             }
 
+            return PlayBubbleSfx(dialogue, now);
+        }
+
+        private bool PlayBubbleSfx(DroneDialogueResult dialogue, float now)
+        {
             hasBeeped = true;
             lastBeepAt = now;
             var id = !dialogue.IsUrgent ? DroneBubbleSfx
@@ -668,6 +726,7 @@ namespace SubTerra.App.UI.Drone
             outline.effectColor = new Color(AccentCyan.r, AccentCyan.g, AccentCyan.b, 0.72f);
             outline.effectDistance = new Vector2(1.5f, -1.5f);
             outline.useGraphicAlpha = true;
+            terminalOutline = outline;
 
             var shadow = terminalPanel.GetComponent<Shadow>();
             if (shadow == null)
@@ -682,6 +741,7 @@ namespace SubTerra.App.UI.Drone
             CreateTerminalFrame();
             StyleDialogueText();
             ConfigurePanelMotion();
+            oxygenWarningFx = new DroneOxygenWarningFx(terminalPanel, false);
             bubbleThemeApplied = true;
             ApplyTerminalState(operationalState);
         }
@@ -768,7 +828,13 @@ namespace SubTerra.App.UI.Drone
 
         private void ApplyTerminalState(DroneOperationalState state)
         {
-            var accent = state == DroneOperationalState.Priority ? AlertAmber : AccentCyan;
+            if (oxygenWarningActive)
+            {
+                ApplyOxygenWarningTheme(true);
+                return;
+            }
+
+            var accent =state == DroneOperationalState.Priority ? AlertAmber : AccentCyan;
             currentAccent = accent;
             if (terminalSignalLine != null)
             {
@@ -793,6 +859,89 @@ namespace SubTerra.App.UI.Drone
                     : state == DroneOperationalState.Scanning
                         ? "SCANNING"
                         : "IDLE";
+            }
+        }
+
+        private void TickOxygenWarning(float deltaTime)
+        {
+            if (!oxygenWarningActive)
+            {
+                return;
+            }
+
+            if (Time.unscaledTime >= oxygenWarningUntil)
+            {
+                EndOxygenWarning();
+                return;
+            }
+
+            // 모션 감소여도 가장자리 글리치는 화면 전체 연출이 아니므로 그대로 둔다.
+            oxygenWarningElapsed += Mathf.Max(0f, deltaTime);
+            if (oxygenWarningFx == null)
+            {
+                return;
+            }
+
+            if (IsShowing)
+            {
+                oxygenWarningFx.Apply(oxygenWarningElapsed);
+            }
+            else
+            {
+                oxygenWarningFx.Hide();
+            }
+        }
+
+        private void EndOxygenWarning()
+        {
+            oxygenWarningActive = false;
+            if (oxygenWarningFx != null)
+            {
+                oxygenWarningFx.Hide();
+            }
+
+            ApplyOxygenWarningTheme(false);
+            if (bubbleThemeApplied)
+            {
+                ApplyTerminalState(operationalState);
+            }
+        }
+
+        /// <summary>경고 중에는 머리 표시·외곽선·본문을 빨간 경고색으로, 끝나면 원래 터미널 색으로 둔다.</summary>
+        private void ApplyOxygenWarningTheme(bool warning)
+        {
+            if (terminalOutline != null)
+            {
+                var edge = warning ? DroneOxygenWarningFx.AlertRed : AccentCyan;
+                terminalOutline.effectColor = new Color(edge.r, edge.g, edge.b, warning ? 0.95f : 0.72f);
+            }
+
+            if (dialogueText != null && bubbleThemeApplied)
+            {
+                dialogueText.color = warning ? DroneOxygenWarningFx.AlertText : new Color(0.92f, 0.98f, 1f, 1f);
+            }
+
+            if (!warning)
+            {
+                return;
+            }
+
+            currentAccent = DroneOxygenWarningFx.AlertRed;
+            if (terminalSignalLine != null)
+            {
+                terminalSignalLine.color = DroneOxygenWarningFx.AlertRed;
+            }
+
+            if (terminalTitle != null)
+            {
+                terminalTitle.color = DroneOxygenWarningFx.AlertRed;
+                terminalTitle.text = "DIGGER-BOT  //  O2 CRITICAL";
+            }
+
+            if (terminalStatus != null)
+            {
+                terminalStatus.color = DroneOxygenWarningFx.AlertRed;
+                terminalStatus.text = "O2 LOW";
             }
         }
 
@@ -864,6 +1013,10 @@ namespace SubTerra.App.UI.Drone
             else if (!visible)
             {
                 StopPresentation();
+                if (oxygenWarningFx != null)
+                {
+                    oxygenWarningFx.Hide();
+                }
             }
         }
 

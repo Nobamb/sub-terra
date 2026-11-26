@@ -71,6 +71,7 @@ namespace SubTerra.App.Integration
         private PlayerHeadMessageStack playerHeadMessages;
         [SerializeField] private RunFailureRuntimeController runFailureController;
         private EmergencyRescueRuntimeController emergencyRescueController;
+        private LowOxygenDroneWarningController lowOxygenWarningController;
         private ExplorationMinimap minimap;
 
         private SaveRuntimeController runtime;
@@ -396,6 +397,25 @@ namespace SubTerra.App.Integration
                         runFailureController != null ? runFailureController.SurvivalController : null);
                 });
 
+            // B-213: 구출 표식 갱신과 섞지 않고 산소 부족 드론 경고만 따로 구독한다.
+            TryStep(
+                "LowOxygenDroneWarning",
+                () =>
+                {
+                    if (lowOxygenWarningController == null)
+                    {
+                        lowOxygenWarningController = GetComponent<LowOxygenDroneWarningController>();
+                    }
+
+                    if (lowOxygenWarningController == null)
+                    {
+                        lowOxygenWarningController = gameObject.AddComponent<LowOxygenDroneWarningController>();
+                    }
+
+                    lowOxygenWarningController.Bind(
+                        runFailureController != null ? runFailureController.SurvivalController : null);
+                });
+
             TryStep("WorldSfx", BindWorldSfx);
 
             var dataCatalog = bootstrap.AssignedCatalog as GameDataCatalog;
@@ -599,7 +619,17 @@ namespace SubTerra.App.Integration
                 return false;
             }
 
-            runFailureController.SurvivalController.RestoreOxygen(remaining);
+            // B-213: 저장 복원으로 바뀐 산소 위험 단계는 "떨어지는 순간"이 아니므로 경고하지 않는다.
+            if (lowOxygenWarningController != null) lowOxygenWarningController.BeginRestore();
+            try
+            {
+                runFailureController.SurvivalController.RestoreOxygen(remaining);
+            }
+            finally
+            {
+                if (lowOxygenWarningController != null) lowOxygenWarningController.EndRestore();
+            }
+
             return true;
         }
 
@@ -1160,6 +1190,11 @@ namespace SubTerra.App.Integration
             if (emergencyRescueController != null)
             {
                 emergencyRescueController.Unbind();
+            }
+
+            if (lowOxygenWarningController != null)
+            {
+                lowOxygenWarningController.Unbind();
             }
         }
 
