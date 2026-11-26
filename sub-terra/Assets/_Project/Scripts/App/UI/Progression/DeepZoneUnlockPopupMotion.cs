@@ -34,6 +34,7 @@ namespace SubTerra.App.UI.Progression
         private StartBriefingPopupMotion transition;
         private DeepZoneUnlockArtMotion art;
         private CanvasGroup group;
+        private TMP_Text detailText;
 
         public StartBriefingPopupMotion Transition => transition;
         public DeepZoneUnlockArtMotion Art => art;
@@ -109,6 +110,7 @@ namespace SubTerra.App.UI.Progression
 
         private void Configure(DeepZoneUnlockPopupSkin skin, Parts parts)
         {
+            detailText = parts.Detail;
             transition = gameObject.AddComponent<StartBriefingPopupMotion>();
             transition.enabled = false;
             transition.ConfigureCompact(
@@ -142,6 +144,11 @@ namespace SubTerra.App.UI.Progression
         /// <summary>처음부터 연다. 닫는 중이면 닫기를 끊고 연출을 다시 시작한다.</summary>
         public void Open()
         {
+            if (detailText != null)
+            {
+                detailText.text = DeepZoneUnlockPopupText.Detail;
+            }
+
             if (group != null)
             {
                 group.blocksRaycasts = true;
