@@ -101,6 +101,16 @@ namespace SubTerra.App.Core.Data
             return DataIds.RareItems.IsRare(itemId) ? name + " (희귀)" : name;
         }
 
+        public static string LocalizedInventory(string itemId, string catalogDisplayName = null)
+        {
+            var name = LocalizedMineral(itemId);
+            if ((string.IsNullOrEmpty(name) || name == itemId) && !string.IsNullOrEmpty(catalogDisplayName))
+                name = catalogDisplayName;
+
+            if (!DataIds.RareItems.IsRare(itemId)) return name;
+            return name + LocalizationService.Text(" (희귀)", " (Rare)");
+        }
+
         public static string Building(string buildingId)
         {
             if (string.IsNullOrEmpty(buildingId))

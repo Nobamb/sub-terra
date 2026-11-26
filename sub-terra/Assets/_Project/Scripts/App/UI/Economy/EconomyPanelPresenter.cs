@@ -506,18 +506,7 @@ namespace SubTerra.App.UI.Economy
         /// <summary>판매 목록 표시 이름. 희귀 품목은 이름에 '(희귀)'를 붙인다.</summary>
         public static string ResolveSellDisplayName(InventoryStackEntry stack)
         {
-            var isRare = DataIds.RareItems.IsRare(stack.MineralId);
-            var displayName = ItemDisplayNames.Inventory(stack.MineralId);
-            if (string.IsNullOrEmpty(displayName) || displayName == stack.MineralId)
-            {
-                displayName = string.IsNullOrEmpty(stack.DisplayName) ? stack.MineralId : stack.DisplayName;
-                if (isRare && displayName.IndexOf("희귀", System.StringComparison.Ordinal) < 0)
-                {
-                    displayName += " (희귀)";
-                }
-            }
-
-            return displayName;
+            return ItemDisplayNames.LocalizedInventory(stack.MineralId, stack.DisplayName);
         }
 
         /// <summary>

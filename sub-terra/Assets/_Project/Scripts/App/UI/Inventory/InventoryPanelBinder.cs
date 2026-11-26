@@ -1,5 +1,6 @@
 using SubTerra.App.Inventory;
 using SubTerra.App.Core.Data;
+using SubTerra.Shared.Localization;
 using UnityEngine;
 
 namespace SubTerra.App.UI.Inventory
@@ -23,6 +24,7 @@ namespace SubTerra.App.UI.Inventory
         private void OnEnable()
         {
             EnsurePresenter();
+            LocalizationService.LanguageChanged += presenter.Refresh;
             if (boundService != null)
             {
                 presenter.Bind(boundService);
@@ -33,6 +35,7 @@ namespace SubTerra.App.UI.Inventory
         {
             if (presenter != null)
             {
+                LocalizationService.LanguageChanged -= presenter.Refresh;
                 presenter.Unbind();
             }
         }

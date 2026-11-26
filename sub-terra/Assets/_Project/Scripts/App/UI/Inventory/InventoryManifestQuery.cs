@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using SubTerra.App.Core.Data;
+using SubTerra.Shared.Localization;
 
 namespace SubTerra.App.UI.Inventory
 {
@@ -39,6 +40,18 @@ namespace SubTerra.App.UI.Inventory
             "가나다 역순"
         };
 
+        private static readonly string[] EnglishLabels =
+        {
+            "Quantity ↓",
+            "Quantity ↑",
+            "Weight ↓",
+            "Weight ↑",
+            "Rarity ↑",
+            "Rarity ↓",
+            "A–Z",
+            "Z–A"
+        };
+
         // 아이템 데이터에 희귀도 필드가 없어 현재 적재 자원 순서를 여기 둔다(#117: 새 종류 추가 없음).
         private static readonly string[] MineralRarityOrder =
         {
@@ -56,7 +69,8 @@ namespace SubTerra.App.UI.Inventory
         public static string Label(InventoryManifestSort sort)
         {
             var index = (int)sort;
-            return index >= 0 && index < Labels.Length ? Labels[index] : Labels[(int)DefaultSort];
+            var labels = LocalizationService.Current == GameLanguage.English ? EnglishLabels : Labels;
+            return labels[index >= 0 && index < labels.Length ? index : (int)DefaultSort];
         }
 
         public static IReadOnlyList<string> AllLabels()
@@ -217,8 +231,7 @@ namespace SubTerra.App.UI.Inventory
 
         private static int CompareNames(InventoryStackReadModel a, InventoryStackReadModel b)
         {
-            // 한글 완성형은 유니코드 순서가 가나다순이다.
-            return string.CompareOrdinal(DisplayName(a), DisplayName(b));
+            return string.Compare(DisplayName(a), DisplayName(b), System.StringComparison.OrdinalIgnoreCase);
         }
 
         private static string DisplayName(InventoryStackReadModel stack)

@@ -5,7 +5,9 @@ using SubTerra.App.Core.Data;
 using SubTerra.App.Editor.DataValidation;
 using SubTerra.App.Inventory;
 using SubTerra.App.State;
+using SubTerra.App.UI.Economy;
 using SubTerra.App.UI.Inventory;
+using SubTerra.Shared.Localization;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
@@ -17,6 +19,34 @@ namespace SubTerra.App.Tests.UI
     {
         private const string PrefabPath = PromptB112InventoryPanelBuilder.InventoryPanelPrefabPath;
         private const string CatalogPath = "Assets/_Project/Data/Catalog/GameDataCatalog.asset";
+
+        [Test]
+        public void LocalizedManifest_UsesTheSameRareNameAsSalesAndSearchesByDisplayedName()
+        {
+            var previous = LocalizationService.Current;
+            try
+            {
+                var id = DataIds.RareItems.EngineFuel;
+                var saleEntry = new InventoryStackEntry(id, "엔진 연료", 2, 1f, 10);
+                LocalizationService.SetLanguage(GameLanguage.English);
+                var name = ItemDisplayNames.LocalizedInventory(id);
+                Assert.That(name, Is.EqualTo("Engine Fuel (Rare)"));
+                Assert.That(EconomyPanelPresenter.ResolveSellDisplayName(saleEntry), Is.EqualTo(name));
+                var row = new InventoryStackReadModel(id, name, null, 2);
+                Assert.That(InventoryManifestQuery.Matches(row, "fuel"), Is.True);
+                Assert.That(InventoryManifestQuery.Label(InventoryManifestSort.NameAscending), Is.EqualTo("A–Z"));
+                Assert.That(InventoryPanelDisplayFormatter.Quantity(2), Is.EqualTo("<b>2</b>"));
+
+                LocalizationService.SetLanguage(GameLanguage.Korean);
+                Assert.That(EconomyPanelPresenter.ResolveSellDisplayName(saleEntry), Is.EqualTo("엔진 연료 (희귀)"));
+                Assert.That(InventoryManifestQuery.Label(InventoryManifestSort.NameAscending), Is.EqualTo("가나다순"));
+                Assert.That(InventoryPanelDisplayFormatter.Quantity(2), Does.Contain("개"));
+            }
+            finally
+            {
+                LocalizationService.SetLanguage(previous);
+            }
+        }
 
         private sealed class DetailRecordingView : IInventoryPanelView, IInventoryPanelDetailView
         {

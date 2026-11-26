@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using SubTerra.App.Audio;
+using SubTerra.Shared.Localization;
+using static SubTerra.Shared.Localization.LocalizationService;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -67,10 +69,13 @@ namespace SubTerra.App.UI.Inventory
         private void OnEnable()
         {
             WireManifestControls();
+            LocalizationService.LanguageChanged += RefreshLanguage;
+            RefreshLanguage();
         }
 
         private void OnDisable()
         {
+            LocalizationService.LanguageChanged -= RefreshLanguage;
             UnwireManifestControls();
             ReleaseSearchInput();
         }
@@ -240,8 +245,8 @@ namespace SubTerra.App.UI.Inventory
             {
                 // 실린 자원이 없으면 검색어와 상관없이 빈 적재 안내만 둔다.
                 emptyHintText.text = loaded == 0
-                    ? InventoryManifestQuery.EmptyCargoText
-                    : InventoryManifestQuery.NoSearchResultText;
+                    ? Text(InventoryManifestQuery.EmptyCargoText, "No cargo loaded")
+                    : Text(InventoryManifestQuery.NoSearchResultText, "No search results");
                 emptyHintText.gameObject.SetActive(shown == 0);
             }
 
@@ -249,6 +254,39 @@ namespace SubTerra.App.UI.Inventory
             {
                 columnHeaderRoot.SetActive(shown > 0);
             }
+        }
+
+        private void RefreshLanguage()
+        {
+            var root = panelRoot != null ? panelRoot.transform : null;
+            SetNamedLabel(root, "Title", Text("인벤토리", "Inventory"));
+            SetNamedLabel(root, "CargoCard/CargoLabel", Text("적재 현황", "Cargo"));
+            SetNamedLabel(root, "ValueCard/ValueLabel", Text("미정산 가치", "Unsold Value"));
+            SetNamedLabel(root, "ListSectionLabel", Text("적재 내역", "Manifest"));
+            var columns = columnHeaderRoot != null ? columnHeaderRoot.transform : null;
+            SetNamedLabel(columns, "ColResource", Text("자원", "Resource"));
+            SetNamedLabel(columns, "ColUnitWeight", Text("개당 무게", "Unit Wt."));
+            SetNamedLabel(columns, "ColQuantity", Text("수량", "Qty."));
+            SetNamedLabel(columns, "ColLineWeight", Text("이 줄 무게", "Row Wt."));
+
+            if (searchField != null && searchField.placeholder is TMP_Text placeholder)
+                placeholder.text = Text(InventoryManifestQuery.SearchPlaceholder, "Search resources");
+
+            if (sortDropdown != null)
+            {
+                if (sortDropdown.IsExpanded) sortDropdown.Hide();
+                var count = Mathf.Min(sortDropdown.options.Count, InventoryManifestQuery.SortCount);
+                for (var i = 0; i < count; i++)
+                    sortDropdown.options[i].text = InventoryManifestQuery.Label(InventoryManifestQuery.FromIndex(i));
+                sortDropdown.RefreshShownValue();
+            }
+
+            RefreshManifest();
+        }
+
+        private static void SetNamedLabel(Transform root, string path, string label)
+        {
+            SetText(root != null ? root.Find(path)?.GetComponent<TMP_Text>() : null, label);
         }
 
         private InventoryStackRowView FindRow(string mineralId)

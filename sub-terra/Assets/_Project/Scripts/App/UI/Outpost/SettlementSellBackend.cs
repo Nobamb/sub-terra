@@ -71,7 +71,7 @@ namespace SubTerra.App.UI.Outpost
                 var rare = DataIds.RareItems.IsRare(stack.MineralId);
                 lines.Add(new ResourceSellLine(
                     stack.MineralId,
-                    Text(ItemDisplayNames.PreferDisplay(stack.MineralId, stack.DisplayName), ItemDisplayNames.LocalizedMineral(stack.MineralId)),
+                    ItemDisplayNames.LocalizedInventory(stack.MineralId, stack.DisplayName),
                     stack.Quantity,
                     stack.UnitPrice,
                     stack.UnitWeight,

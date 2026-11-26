@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using SubTerra.App.Core.Data;
 using SubTerra.App.Inventory;
 using SubTerra.App.UI.HUD;
+using static SubTerra.Shared.Localization.LocalizationService;
 
 namespace SubTerra.App.UI.Inventory
 {
@@ -54,6 +55,8 @@ namespace SubTerra.App.UI.Inventory
             Render(snapshot);
         }
 
+        public void Refresh() => Render(boundService?.GetSnapshot());
+
         private void Render(InventorySnapshot snapshot)
         {
             if (snapshot == null)
@@ -62,25 +65,23 @@ namespace SubTerra.App.UI.Inventory
                 return;
             }
 
-            view.SetCargoSummary(
-                HudFormatter.FormatCargoSummary(snapshot.CurrentWeight, snapshot.MaxCapacity));
-            view.SetUnsettledValue(HudFormatter.FormatUnsettledValue(snapshot.UnsettledValue));
-            RenderDetail(snapshot.CurrentWeight, snapshot.MaxCapacity, snapshot.UnsettledValue);
+            RenderSummary(snapshot.CurrentWeight, snapshot.MaxCapacity, snapshot.UnsettledValue);
             view.SetStacksText(FormatStacks(snapshot));
             view.SetStacks(CreateStackReadModels(snapshot));
         }
 
         private void RenderEmpty()
         {
-            view.SetCargoSummary(HudFormatter.FormatCargoSummary(0f, 0f));
-            view.SetUnsettledValue(HudFormatter.FormatUnsettledValue(0f));
-            RenderDetail(0f, 0f, 0f);
+            RenderSummary(0f, 0f, 0f);
             view.SetStacksText(string.Empty);
             view.SetStacks(System.Array.Empty<InventoryStackReadModel>());
         }
 
-        private void RenderDetail(float currentWeight, float maxCapacity, float unsettledValue)
+        private void RenderSummary(float currentWeight, float maxCapacity, float unsettledValue)
         {
+            view.SetCargoSummary(Text("인벤토리 ", "Inventory ") + HudFormatter.FormatCargoAmount(currentWeight)
+                + " / " + HudFormatter.FormatCargoAmount(maxCapacity));
+            view.SetUnsettledValue(Text("미정산 ", "Unsettled ") + System.Math.Max(0f, unsettledValue).ToString("0"));
             // prompt-B 112: 스냅샷 수치를 그대로 넘겨 게이지·가치 카드를 갱신한다.
             if (view is IInventoryPanelDetailView detail)
             {
@@ -106,13 +107,7 @@ namespace SubTerra.App.UI.Inventory
                 }
 
                 var entry = stacks[i];
-                var name = ItemDisplayNames.Inventory(entry.MineralId);
-                if (string.IsNullOrEmpty(name) || name == entry.MineralId)
-                {
-                    name = string.IsNullOrEmpty(entry.DisplayName) ? entry.MineralId : entry.DisplayName;
-                }
-
-                sb.Append(name);
+                sb.Append(ItemDisplayNames.LocalizedInventory(entry.MineralId, entry.DisplayName));
                 sb.Append(" x");
                 sb.Append(entry.Quantity);
             }
@@ -136,7 +131,7 @@ namespace SubTerra.App.UI.Inventory
                 var stack = stacks[i];
                 result.Add(new InventoryStackReadModel(
                     stack.MineralId,
-                    stack.DisplayName,
+                    ItemDisplayNames.LocalizedInventory(stack.MineralId, stack.DisplayName),
                     null,
                     stack.Quantity,
                     stack.UnitWeight));
@@ -165,7 +160,7 @@ namespace SubTerra.App.UI.Inventory
 
                 result.Add(new InventoryStackReadModel(
                     item.Id,
-                    ItemDisplayNames.Inventory(item.Id),
+                    ItemDisplayNames.LocalizedInventory(item.Id, item.DisplayName),
                     item.Icon,
                     snapshot.GetQuantity(item.Id),
                     item.UnitWeight));

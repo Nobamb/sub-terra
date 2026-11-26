@@ -1,6 +1,7 @@
 using System.Globalization;
 using SubTerra.App.UI.HUD;
 using UnityEngine;
+using static SubTerra.Shared.Localization.LocalizationService;
 
 namespace SubTerra.App.UI.Inventory
 {
@@ -63,13 +64,13 @@ namespace SubTerra.App.UI.Inventory
             switch (level)
             {
                 case InventoryCargoLevel.Full:
-                    return "적재량 가득 참";
+                    return Text("적재량 가득 참", "Cargo full");
                 case InventoryCargoLevel.NearFull:
-                    return "적재 한계 임박";
+                    return Text("적재 한계 임박", "Nearly full");
                 case InventoryCargoLevel.Normal:
-                    return "적재 여유";
+                    return Text("적재 여유", "Space available");
                 default:
-                    return "비어 있음";
+                    return Text("비어 있음", "Empty");
             }
         }
 
@@ -84,7 +85,7 @@ namespace SubTerra.App.UI.Inventory
 
             // prompt-B 190: 남은 적재량을 먼저 읽고 상태 문구를 뒤에 붙인다.
             var remaining = max > current ? max - current : 0f;
-            return "남은 적재량 " + HudFormatter.FormatCargoAmount(remaining) + "  ·  " + label;
+            return Text("남은 적재량 ", "Free capacity: ") + HudFormatter.FormatCargoAmount(remaining) + "  ·  " + label;
         }
 
         public static string UnsettledAmount(float value)
@@ -104,7 +105,7 @@ namespace SubTerra.App.UI.Inventory
                 quantity = 0;
             }
 
-            return "<b>" + quantity.ToString("#,0", CultureInfo.InvariantCulture) + "</b><size=60%> 개</size>";
+            return "<b>" + quantity.ToString("#,0", CultureInfo.InvariantCulture) + "</b>" + Text("<size=60%> 개</size>", string.Empty);
         }
 
         /// <summary>prompt-B 190: 명세표 개당 무게 열. 열 머리가 단위를 설명하므로 숫자만 둔다.</summary>
@@ -126,7 +127,8 @@ namespace SubTerra.App.UI.Inventory
 
         public static string LoadedKinds(int kinds)
         {
-            return (kinds < 0 ? 0 : kinds).ToString(CultureInfo.InvariantCulture) + "종";
+            kinds = System.Math.Max(0, kinds);
+            return kinds.ToString(CultureInfo.InvariantCulture) + Text("종", kinds == 1 ? " type" : " types");
         }
     }
 }

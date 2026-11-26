@@ -5,6 +5,7 @@ using SubTerra.App.Economy;
 using SubTerra.App.Inventory;
 using SubTerra.App.State;
 using SubTerra.App.UI.Sell;
+using static SubTerra.Shared.Localization.LocalizationService;
 
 namespace SubTerra.App.UI.Economy
 {
@@ -50,8 +51,8 @@ namespace SubTerra.App.UI.Economy
 
         public event Action Changed;
 
-        public string Hint => HintText;
-        public string BulkRuleNotice => BulkNotice;
+        public string Hint => Text(HintText, "Choose resources and quantities to sell for gold.");
+        public string BulkRuleNotice => Text(BulkNotice, "Select Max skips rare items. Enter quantities manually.");
 
         public ResourceSellSnapshot Read(bool fresh)
         {
@@ -81,7 +82,7 @@ namespace SubTerra.App.UI.Economy
                     ResolveIcon(stack.MineralId),
                     canSell: true,
                     inBulk: !rare,
-                    note: rare ? RareNote : string.Empty));
+                    note: rare ? Text(RareNote, "Manual quantity only") : string.Empty));
             }
 
             return new ResourceSellSnapshot(
@@ -97,7 +98,7 @@ namespace SubTerra.App.UI.Economy
         {
             if (presenter == null)
             {
-                return new ResourceSellCommitResult(false, 0, "판매 서비스가 연결되지 않았습니다.");
+                return new ResourceSellCommitResult(false, 0, Text("판매 서비스가 연결되지 않았습니다.", "Selling is unavailable."));
             }
 
             var result = presenter.RequestSellBatch(items);
