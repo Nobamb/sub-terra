@@ -3,6 +3,7 @@ using SubTerra.App.Audio;
 using SubTerra.App.UI.QuitConfirm;
 using SubTerra.Shared;
 using SubTerra.Shared.Audio;
+using SubTerra.Shared.Localization;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -66,6 +67,7 @@ namespace SubTerra.App.UI.MainMenu
 
         private void OnEnable()
         {
+            LocalizationService.LanguageChanged += RefreshBootLabels;
             if (!Application.isPlaying)
             {
                 ApplyFinal();
@@ -86,6 +88,7 @@ namespace SubTerra.App.UI.MainMenu
 
         private void OnDisable()
         {
+            LocalizationService.LanguageChanged -= RefreshBootLabels;
             booting = false;
             exiting = false;
             quitting = false;
@@ -256,7 +259,7 @@ namespace SubTerra.App.UI.MainMenu
         {
             if (!Boot.ClockStarted || Boot.IsComplete) return;
             var subtitleLength = subtitleText != null && subtitleText.text != null ? subtitleText.text.Length : 0;
-            var typed = Boot.TypedCharacters(headerConnecting != null ? headerConnecting.Length : 0, subtitleLength);
+            var typed = Boot.TypedCharacters(ConnectingLabel.Length, subtitleLength);
             if (typeTicks.Step(typed, Boot.Elapsed)) SfxPlayer.Play(SfxId.MainMenuTypeTick);
         }
 
@@ -281,20 +284,8 @@ namespace SubTerra.App.UI.MainMenu
         {
             var frame = Boot.Sample();
             SetShutters(frame.Open, frame.LineWidth, frame.LineAlpha);
-            if (headerText != null)
-            {
-                headerText.text = frame.HeaderConnected ? headerConnected : headerConnecting;
-                headerText.maxVisibleCharacters = frame.HeaderConnected
-                    ? 99999
-                    : Mathf.CeilToInt(headerConnecting.Length * frame.HeaderTyping);
-            }
-
+            ApplyBootLabels(frame);
             ApplyLogo(frame);
-            if (subtitleText != null)
-            {
-                var length = subtitleText.text != null ? subtitleText.text.Length : 0;
-                subtitleText.maxVisibleCharacters = frame.IsComplete ? 99999 : Mathf.CeilToInt(length * frame.SubtitleTyping);
-            }
 
             for (var i = 0; i < cards.Length; i++)
             {
@@ -311,6 +302,30 @@ namespace SubTerra.App.UI.MainMenu
             if (continueGroup != null) continueGroup.alpha = Boot.ContinueAlpha();
             for (var i = 0; i < secondaryGroups.Length; i++)
                 if (secondaryGroups[i] != null) secondaryGroups[i].alpha = Boot.SecondaryAlpha(i);
+        }
+
+        private string ConnectingLabel => LocalizationService.Text(headerConnecting ?? string.Empty,
+            "SUB-TERRA OPS // CONNECTING...");
+
+        private void RefreshBootLabels() => ApplyBootLabels(Boot.Sample());
+
+        private void ApplyBootLabels(MainMenuBootFrame frame)
+        {
+            if (headerText != null)
+            {
+                headerText.text = frame.HeaderConnected
+                    ? LocalizationService.Text(headerConnected ?? string.Empty, "SUB-TERRA OPS // SIGNAL CONNECTED")
+                    : ConnectingLabel;
+                headerText.maxVisibleCharacters = frame.HeaderConnected
+                    ? 99999 : Mathf.CeilToInt(headerText.text.Length * frame.HeaderTyping);
+            }
+
+            if (subtitleText != null)
+            {
+                subtitleText.text = LocalizationService.Text("봉인 너머에서 신호가 온다.", "A signal comes from beyond the seal.");
+                subtitleText.maxVisibleCharacters = frame.IsComplete
+                    ? 99999 : Mathf.CeilToInt(subtitleText.text.Length * frame.SubtitleTyping);
+            }
         }
 
         private void ApplyLogo(MainMenuBootFrame frame)

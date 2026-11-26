@@ -108,7 +108,6 @@ namespace SubTerra.App.UI.SurfaceBase
                 boundCycleState.MineResetCycleChanged += OnMineResetCycleChanged;
                 boundCycleState.CreditsChanged += OnCreditsChanged;
                 boundCycleState.InventoryChanged += OnCargoChanged;
-                RefreshResources();
             }
 
             var initialSettings = SettingsRuntimeApplier.LoadOrDefaults();
@@ -119,7 +118,6 @@ namespace SubTerra.App.UI.SurfaceBase
             view.SetMineResetBusy(false);
             view.SetUpgradeVisible(false);
             view.SetInventoryVisible(false);
-            RefreshMineResetFeeLabel();
 
             view.ExploreClicked += OnExploreClicked;
             view.UpgradeClicked += OnUpgradeClicked;
@@ -136,11 +134,13 @@ namespace SubTerra.App.UI.SurfaceBase
             view.ResetMineConfirmed += OnResetMineConfirmed;
             view.ResetMineCancelled += OnResetMineCancelled;
 
-            presenter.RefreshReadModel();
+            LocalizationService.LanguageChanged += RefreshLanguage;
+            RefreshLanguage();
         }
 
         private void OnDisable()
         {
+            LocalizationService.LanguageChanged -= RefreshLanguage;
             if (view != null)
             {
                 view.ExploreClicked -= OnExploreClicked;
@@ -288,6 +288,14 @@ namespace SubTerra.App.UI.SurfaceBase
         {
             if (view != null && boundCycleState != null)
                 view.SetResources(boundCycleState.Player.Cargo, boundCycleState.Player.Gold);
+        }
+
+        private void RefreshLanguage()
+        {
+            view?.RefreshBaseLabels();
+            RefreshResources();
+            presenter?.RefreshReadModel();
+            RefreshMineResetFeeLabel();
         }
 
         private void OnUpgradeClicked()

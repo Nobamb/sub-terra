@@ -4,6 +4,7 @@ using SubTerra.App.UI.Guide;
 using SubTerra.App.UI.Sell;
 using SubTerra.Shared;
 using SubTerra.Shared.Audio;
+using SubTerra.Shared.Localization;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -113,6 +114,7 @@ namespace SubTerra.App.UI.ControlTerminal
 
         private Phase phase = Phase.Hidden;
         private ControlScheme scheme = ControlScheme.Classic;
+        private GameLanguage language;
         private bool schemeApplied;
         private float introTime;
         private float outroTime;
@@ -456,10 +458,14 @@ namespace SubTerra.App.UI.ControlTerminal
         /// <summary>조작 방식에 맞춰 키 기능·글자·설명을 갱신한다. 키·시연 화면 오브젝트는 다시 만들지 않는다.</summary>
         public void SetScheme(ControlScheme next, bool animate)
         {
-            bool changed = !schemeApplied || next != scheme;
+            var currentLanguage = LocalizationService.Current;
+            bool changed = !schemeApplied || next != scheme || currentLanguage != language;
             scheme = next;
+            language = currentLanguage;
             schemeApplied = true;
             title.text = ControlTerminalBindings.Title(next);
+            caption.text = LocalizationService.Text(ControlTerminalBindings.Caption, "Keyboard · Move / Mine");
+            hint.text = LocalizationService.Text(ControlTerminalBindings.HoverHint, "Hover over a key to preview its action.");
             description.text = ControlTerminalBindings.Description(next);
             if (!changed) return;
             ClearHover();

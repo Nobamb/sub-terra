@@ -187,6 +187,8 @@ namespace SubTerra.App.UI.ControlTerminal
         public void Bind(ControlScheme scheme)
         {
             Function = ControlTerminalBindings.FunctionOf(scheme, Id);
+            if (Def.IsMouse && label != null)
+                label.text = SubTerra.Shared.Localization.LocalizationService.Text(ControlTerminalBindings.MouseKey, "Mouse click");
             if (role != null) role.text = ControlTerminalBindings.RoleLabel(scheme, Id);
             if (hit != null) hit.raycastTarget = IsFunctionKey;
             if (!IsFunctionKey)
