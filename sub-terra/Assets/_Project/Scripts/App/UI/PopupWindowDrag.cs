@@ -293,13 +293,17 @@ namespace SubTerra.App.UI
         public const int SettingsSortOrder = 32_760;
         private static readonly List<Canvas> OpenWindows = new List<Canvas>();
 
-        public static Canvas Top
+        public static Canvas Top => FindTop();
+
+        public static Canvas FindTop(System.Predicate<Canvas> include = null)
         {
-            get
+            Refresh();
+            for (var i = OpenWindows.Count - 1; i >= 0; i--)
             {
-                Refresh();
-                return OpenWindows.Count > 0 ? OpenWindows[OpenWindows.Count - 1] : null;
+                if (include == null || include(OpenWindows[i])) return OpenWindows[i];
             }
+
+            return null;
         }
 
         public static bool Contains(Canvas canvas, GameObject root)

@@ -171,6 +171,10 @@ namespace SubTerra.Shared.Localization
             Add("mine_reset.fail.busy", "지금은 새 광산을 열 수 없습니다.", "Cannot open a new mine right now.");
             Add("mine_reset.fail.surface", "지상 기지에서만 새 광산을 열 수 있습니다.", "New mines can only be opened at Surface Base.");
             Add("mine_reset.clock.label", "광산 초기화까지", "Mine Reset In");
+            Add("guide.build.close", "B 또는 ESC로 창을 닫으면 선택이 취소됩니다.",
+                "Press B or Esc to close Build and clear the selection.");
+            Add("guide.upgrade.close", "ESC 또는 오른쪽 위 X 버튼으로 닫습니다.",
+                "Press Esc or use the X button in the upper right.");
             Add("mine_reset.timed.title", "탐사 시간 종료", "Exploration Time Over");
             Add(
                 "mine_reset.timed.highlight",

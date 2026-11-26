@@ -82,103 +82,93 @@ namespace SubTerra.App.Integration
             if (UiPauseGate.IsDebugTerminalOpen) return;
             var keyboard = Keyboard.current;
             if (keyboard == null) return;
-            // B-170: 종료 확인 창이 ESC·X를 먼저 받고(-400), 떠 있는 동안 다른 단축키를 막는다.
+            // 종료 확인 창이 ESC를 먼저 받고(-400), 같은 프레임의 다른 단축키를 막는다.
             if (QuitConfirmFlow.IsBlockingInput) return;
-            // ESC와 설정 버튼은 같은 열기 조건을 사용한다.
-            var paused = UiPauseGate.IsInputBlocked;
-            if (keyboard.escapeKey.wasPressedThisFrame) HandleEscape();
+            if (keyboard.escapeKey.wasPressedThisFrame)
+            {
+                HandleEscape();
+                return;
+            }
             var selected = UnityEngine.EventSystems.EventSystem.current;
             if (selected != null && selected.currentSelectedGameObject != null
                 && selected.currentSelectedGameObject.GetComponent<TMPro.TMP_InputField>() != null) return;
-            if (keyboard.xKey.wasPressedThisFrame) HandleCloseTopPopup();
-            if (!paused && keyboard.oKey.wasPressedThisFrame) RequestQuit();
+            if (!UiPauseGate.IsInputBlocked && keyboard.oKey.wasPressedThisFrame) RequestQuit();
         }
 
         public void HandleEscape()
         {
-            if (IsSettingsOpen)
-            {
-                CloseSettings();
-                return;
-            }
-
+            if (UiPauseGate.IsDebugTerminalOpen || QuitConfirmFlow.IsBlockingInput) return;
+            if (HandleCloseTopPopup()) return;
+            if (chrome != null && chrome.IsInventoryPanelOpen) UiKeyboardSubmitGuard.ClearSelection();
             OpenSettings();
         }
 
-        public void HandleCloseTopPopup()
+        public bool HandleCloseTopPopup()
         {
             if (IsSettingsOpen)
             {
-                if (settingsView != null && settingsView.TryCloseControlSchemePanel()) return;
-                CloseSettings();
-                return;
+                if (settingsView == null || !settingsView.TryCloseControlSchemePanel()) CloseSettings();
+                return true;
             }
 
-            if (holdsSettingsPause) return;
+            if (holdsSettingsPause) return true;
 
-            if (UiPauseGate.IsHeldBy(UiPauseGate.MineGuide))
-            {
-                if (chrome != null) chrome.CloseGameGuide();
-                return;
-            }
-
-            if (UiPauseGate.IsHeldBy(UiPauseGate.MineUpgrade))
-            {
-                if (panels != null) panels.CloseUpgrade();
-                return;
-            }
-
-            // 시작 브리핑은 가장 위에 뜨는 모달이므로 다른 팝업보다 먼저 닫는다.
+            // 시작 브리핑은 최상위 고정 모달이다. 보관함과 인벤토리는 ESC 후보에서 뺀다.
             var briefing = FindFirstObjectByType<DemoObjectiveView>();
-            if (briefing != null && briefing.TryCloseGuidance()) return;
+            if (briefing != null && briefing.TryCloseGuidance()) return true;
 
-            var topWindow = PopupWindowSorting.Top;
+            var topWindow = PopupWindowSorting.FindTop(canvas =>
+                (chrome == null || !chrome.ContainsInventoryWindow(canvas))
+                && (outpost == null || !outpost.ContainsStorageWindow(canvas)));
+            // 긴급 탈출 창은 일반 팝업 목록 대신 고정된 Canvas 순서를 사용한다.
+            if (escape != null && (topWindow == null || EmergencyEscapePanelView.SortingOrder > topWindow.sortingOrder)
+                && escape.TryCloseFromEscape()) return true;
             if (topWindow != null)
             {
-                if (briefing != null && briefing.TryCloseClaimPopup(topWindow)) return;
-                if (briefing != null && briefing.TryCloseDetailsPopup(topWindow)) return;
-                if (briefing != null && briefing.TryCloseCargoPopup(topWindow)) return;
+                if (briefing != null && briefing.TryCloseClaimPopup(topWindow)) return true;
+                if (briefing != null && briefing.TryCloseDetailsPopup(topWindow)) return true;
+                if (briefing != null && briefing.TryCloseCargoPopup(topWindow)) return true;
                 var deepZone = topWindow.GetComponent<DeepZoneUnlockPopupEscClose>();
-                if (deepZone != null) { deepZone.Close(); return; }
+                if (deepZone != null) { deepZone.Close(); return true; }
                 var rescueView = topWindow.GetComponent<EmergencyRescuePanelView>();
                 if (rescueView != null)
                 {
                     var rescueController = FindFirstObjectByType<EmergencyRescueRuntimeController>();
                     if (rescueController != null) rescueController.ClosePanel();
-                    return;
+                    return true;
                 }
                 var clock = topWindow.GetComponentInParent<MineResetClockOverlay>();
-                if (clock != null && clock.TryClosePopup(topWindow)) return;
+                if (clock != null && clock.TryClosePopup(topWindow)) return true;
                 if (outpost != null && outpost.IsTopWindow(topWindow))
-                { outpost.ClosePanel(); return; }
-                if (escape != null && escape.IsTopWindow(topWindow))
-                { escape.Close(); return; }
-                if (chrome != null && chrome.CloseTopPanel(topWindow)) return;
+                { outpost.ClosePanel(); return true; }
+                if (escape != null && escape.IsTopWindow(topWindow) && escape.TryCloseFromEscape()) return true;
+                if (chrome != null && chrome.CloseTopPanel(topWindow)) return true;
                 if (panels != null && panels.IsVisible(RuntimePanelId.Upgrade)
                     && topWindow.GetComponentInChildren<ProgressionPanelView>(true) != null)
-                { panels.CloseUpgrade(); return; }
-                return;
+                { panels.CloseUpgrade(); }
+                // 최상위 모달이 닫기 연출 중이어도 아래 창이나 설정으로 ESC를 전달하지 않는다.
+                return true;
             }
 
-            if (TryHideOpenDeepZoneUnlockPopup()) return;
-
-            var objectives = FindFirstObjectByType<DemoObjectiveView>();
-            if (objectives != null && objectives.TryCloseTopPopup()) return;
+            if (TryHideOpenDeepZoneUnlockPopup()) return true;
+            if (briefing != null && briefing.TryCloseTopPopup()) return true;
 
             var rescue = FindFirstObjectByType<EmergencyRescueRuntimeController>();
-            if (rescue != null && rescue.IsPanelOpen) { rescue.ClosePanel(); return; }
-            if (outpost != null && outpost.Presenter != null && outpost.Presenter.IsInteractionPanelOpen)
-            { outpost.ClosePanel(); return; }
-            if (escape != null && escape.IsOpen) { escape.Close(); return; }
-            if (chrome != null && chrome.CloseTopPanel()) return;
+            if (rescue != null && rescue.IsPanelOpen) { rescue.ClosePanel(); return true; }
+            if (outpost != null && !outpost.IsStorageOpen && outpost.Presenter != null
+                && outpost.Presenter.IsInteractionPanelOpen)
+            { outpost.ClosePanel(); return true; }
+            if (chrome != null && chrome.CloseTopPanel()) return true;
             if (panels != null && panels.IsVisible(RuntimePanelId.Upgrade))
             {
                 panels.CloseUpgrade();
-                return;
+                return true;
             }
+
             var placement = FindFirstObjectByType<GameplayBuildingPlacementBridge>();
-            // B-181: ESC 취소도 플레이어 입력이라 들고 있던 시설이면 취소음을 낸다.
-            if (placement != null) placement.CancelPreview(true);
+            if (placement == null || !placement.HasActivePreview) return false;
+            placement.CancelPreview(true);
+            return true;
         }
 
         public void OpenSettings()

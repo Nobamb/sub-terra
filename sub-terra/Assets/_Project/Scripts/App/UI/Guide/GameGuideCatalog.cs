@@ -223,7 +223,7 @@ namespace SubTerra.App.UI.Guide
             Control("ctrl.build", "시설 건설", "B로 건설 창을 열고 C로 설치합니다.", "B -> C", "build")
                 .Step("건설 창 열기", "B 키로 시설 건설 창을 열고 설치할 시설을 고릅니다.")
                 .Step("설치", "C 키를 누르면 플레이어 가까운 설치 가능한 칸에 설치합니다. 미리보기 칸을 마우스로 가리켜 왼쪽 클릭해도 설치됩니다.")
-                .Step("취소", "B 또는 X로 창을 닫으면 선택이 취소됩니다.")
+                .Step("취소", LocalizationService.Get("guide.build.close"))
                 .Data("사용 조건", "시설마다 정해진 재료(광물)를 가지고 있어야 합니다. 재료가 부족하거나 설치할 수 없는 칸이면 설치되지 않습니다.")
                 .Link("fac.support", "fac.ladder", "fac.light");
 
@@ -253,7 +253,7 @@ namespace SubTerra.App.UI.Guide
             Control("ctrl.guide", "가이드 열기", "G 키 또는 오른쪽 메뉴에서 이 창을 엽니다.", "G", "guide")
                 .Step("G", "G 키로 가이드를 열고 닫습니다.")
                 .Step("오른쪽 메뉴", "/ 키로 여닫는 오른쪽 메뉴의 가이드 버튼으로도 열 수 있습니다.")
-                .Step("닫기", "오른쪽 위 X 버튼이나 X 키로 닫습니다.")
+                .Step("닫기", LocalizationService.Get("guide.upgrade.close"))
                 .Tip("광산에서 가이드를 열면 게임이 일시정지됩니다. 가이드를 닫는 연출이 끝나면 탐사가 재개됩니다.");
 
             // ---------------------------------------------------------------- 핵심 메커니즘

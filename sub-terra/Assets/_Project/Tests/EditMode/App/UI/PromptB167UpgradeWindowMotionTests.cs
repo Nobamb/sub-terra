@@ -426,7 +426,7 @@ namespace SubTerra.App.Tests.UI
         }
 
         [Test]
-        public void SurfaceBinder_ButtonEscXKeyAndCloseButtonUseSameRequests()
+        public void SurfaceBinder_ButtonAndEscapeCloseUpgradeAndXKeyDoesNothing()
         {
             var instance = Spawn();
             var view = instance.GetComponent<SurfaceBaseView>();
@@ -456,16 +456,16 @@ namespace SubTerra.App.Tests.UI
 
             WithKeyboard(keyboard =>
             {
-                foreach (var key in new[] { Key.Escape, Key.X })
-                {
-                    view.RequestUpgradeOpen();
-                    Run(motion, 0.6f);
-                    Assert.That(motion.IsSettled, Is.True);
-                    Press(keyboard, key);
-                    typeof(SurfaceBaseBinder).GetMethod("Update", Private).Invoke(binder, null);
-                    Assert.That(motion.IsClosing, Is.True, key + " 키는 닫기 연출 경로를 탄다.");
-                    Run(motion, 0.4f);
-                }
+                view.RequestUpgradeOpen();
+                Run(motion, 0.6f);
+                Assert.That(motion.IsSettled, Is.True);
+                var update = typeof(SurfaceBaseBinder).GetMethod("Update", Private);
+                Press(keyboard, Key.X);
+                update.Invoke(binder, null);
+                Assert.That(motion.IsSettled, Is.True);
+                Press(keyboard, Key.Escape);
+                update.Invoke(binder, null);
+                Assert.That(motion.IsClosing, Is.True);
             });
         }
 
@@ -501,7 +501,7 @@ namespace SubTerra.App.Tests.UI
             panels.CloseUpgrade();
             Assert.That(panels.IsVisible(RuntimePanelId.Upgrade), Is.False, "닫기 요청 즉시 닫힌 것으로 본다.");
             Assert.That(card.gameObject.activeSelf, Is.True, "창은 닫기 연출이 끝난 뒤 꺼진다.");
-            Assert.That(PopupWindowSorting.Top, Is.Not.SameAs(card.GetComponent<Canvas>()), "닫는 중인 창은 X키 맨 위 창이 아니다.");
+            Assert.That(PopupWindowSorting.Top, Is.Not.SameAs(card.GetComponent<Canvas>()), "닫는 중인 창은 ESC 후보에서 빠진다.");
             Run(motion, 0.15f);
             panels.ToggleUpgrade();
             Assert.That(motion.IsOpening, Is.True, "닫는 중 다시 열면 이어서 연다.");

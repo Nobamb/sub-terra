@@ -58,34 +58,34 @@ namespace SubTerra.App.Tests.UI
         }
 
         [Test]
-        public void Escape_TogglesSettingsWithoutClosingOtherPanels()
+        public void Escape_ClosesBuildBeforeOpeningSettings()
         {
             var chrome = menu.GetComponent<HudPanelChromeController>();
             chrome.OpenBuildingMenu();
             menu.HandleEscape();
-            Assert.That(chrome.IsBuildingMenuOpen, Is.True);
-            Assert.That(menu.IsSettingsOpen, Is.True);
-            menu.HandleEscape();
+            Assert.That(chrome.IsBuildingMenuOpen, Is.False);
             Assert.That(menu.IsSettingsOpen, Is.False);
-            Assert.That(chrome.IsBuildingMenuOpen, Is.True);
+            menu.HandleEscape();
+            Assert.That(menu.IsSettingsOpen, Is.True);
         }
 
         [Test]
-        public void X_ClosesOnePanelAtATimeWithoutOpeningSettings()
+        public void Escape_SkipsInventoryAndClosesTheBuildWindowBelowIt()
         {
             var chrome = menu.GetComponent<HudPanelChromeController>();
             chrome.OpenBuildingMenu();
             chrome.OpenInventoryPanel();
-            menu.HandleCloseTopPopup();
-            Assert.That(chrome.IsInventoryPanelOpen, Is.False);
-            Assert.That(chrome.IsBuildingMenuOpen, Is.True);
-            menu.HandleCloseTopPopup();
-            Assert.That(chrome.IsBuildingMenuOpen || chrome.IsInventoryPanelOpen, Is.False);
+            menu.HandleEscape();
+            Assert.That(chrome.IsInventoryPanelOpen, Is.True);
+            Assert.That(chrome.IsBuildingMenuOpen, Is.False);
             Assert.That(menu.IsSettingsOpen, Is.False);
+            menu.HandleEscape();
+            Assert.That(menu.IsSettingsOpen, Is.True);
+            Assert.That(chrome.IsInventoryPanelOpen, Is.True);
         }
 
         [Test]
-        public void Issue253_XClosesQuestDetailsAndConsumesRepeatedClose()
+        public void Issue253_EscapeClosesQuestDetailsAndConsumesRepeatedClose()
         {
             var view = scene.GetRootGameObjects().SelectMany(root =>
                 root.GetComponentsInChildren<SubTerra.App.UI.Tutorial.DemoObjectiveView>(true)).Single();
@@ -111,7 +111,7 @@ namespace SubTerra.App.Tests.UI
         }
 
         [Test]
-        public void Issue217_XClosesTopQuestRewardThroughExistingConfirmAction()
+        public void Issue217_EscapeClosesTopQuestRewardThroughExistingConfirmAction()
         {
             var view = scene.GetRootGameObjects().SelectMany(root =>
                 root.GetComponentsInChildren<SubTerra.App.UI.Tutorial.DemoObjectiveView>(true)).Single();
