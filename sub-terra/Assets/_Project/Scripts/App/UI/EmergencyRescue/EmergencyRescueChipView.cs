@@ -2,6 +2,7 @@ using SubTerra.App.Audio;
 using SubTerra.App.Tutorial;
 using SubTerra.Shared;
 using SubTerra.Shared.Audio;
+using SubTerra.Shared.Localization;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -209,9 +210,24 @@ namespace SubTerra.App.UI.EmergencyRescue
             hovered = false;
         }
 
+        private void OnEnable()
+        {
+            LocalizationService.LanguageChanged += RefreshTitle;
+            RefreshTitle();
+        }
+
         private void OnDisable()
         {
+            LocalizationService.LanguageChanged -= RefreshTitle;
             ResetState();
+        }
+
+        private void RefreshTitle()
+        {
+            if (titleLabel != null)
+            {
+                titleLabel.text = LocalizationService.Get("rescue.request", TitleText);
+            }
         }
 
         /// <summary>확인용: true면 Update가 시간을 진행하지 않아 테스트가 Tick으로 프레임을 직접 진행한다.</summary>
@@ -426,7 +442,10 @@ namespace SubTerra.App.UI.EmergencyRescue
             titleLabel = EmergencyRescueUi.Text(
                 content, "Label", font, 21f, FontStyles.Bold, EmergencyRescueUi.TextMain,
                 TextAlignmentOptions.Center, new Vector2(0f, 66f), new Vector2(w - 8f, 30f));
-            titleLabel.text = TitleText;
+            titleLabel.enableAutoSizing = true;
+            titleLabel.fontSizeMin = 15f;
+            titleLabel.fontSizeMax = 21f;
+            RefreshTitle();
 
             // 픽토그램(가운데): 엘리베이터 레일·발판 위의 사람과 위쪽 화살표.
             RectTransform picto = EmergencyRescueUi.Rect(content, "Pictogram", Vector2.zero, new Vector2(96f, 96f));

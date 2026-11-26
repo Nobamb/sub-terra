@@ -326,6 +326,34 @@ namespace SubTerra.Shared.Localization
                 "다음 유료 초기화 비용: {0:N0} G",
                 "Next paid reset cost: {0:N0} G");
             Add("mine_reset.timed.ok", "확인", "OK");
+
+            Add("rescue.title", "긴급 구출 요청", "Emergency Rescue");
+            Add("rescue.request", "구출 요청", "Request Rescue");
+            Add("rescue.close", "닫기", "Close");
+            Add("rescue.confirm", "구출을 요청하면 엘리베이터로 이동하며 아래 자원이 차감됩니다.",
+                "Requesting rescue returns you to the elevator and deducts the resources listed below.");
+            Add("rescue.reminder", "구출이 필요하면 머리 위 버튼을 누르거나 R 키를 누르세요.",
+                "Need rescue? Click the marker above your character or press R.");
+            Add("rescue.fail.destination", "엘리베이터 위치를 찾지 못했습니다. 잠시 후 다시 시도해 주세요.",
+                "Couldn’t locate the elevator. Please try again shortly.");
+            Add("rescue.fail.cost_changed", "화물 상태가 변경되었습니다. 최신 비용을 다시 확인해 주세요.",
+                "Your cargo has changed. Review the updated rescue cost.");
+            Add("rescue.fail.unavailable", "현재는 긴급 구출을 요청할 수 없습니다.",
+                "Emergency rescue is currently unavailable.");
+            Add("rescue.cost.resource", "자원", "Resource");
+            Add("rescue.cost.deduct", "차감량", "Cost");
+            Add("rescue.cost.before", "현재 보유", "Before");
+            Add("rescue.cost.after", "구출 후 잔량", "After");
+            Add("rescue.cost.gold", "골드", "Gold");
+            Add("rescue.resource.mineral.copper", "구리", "Copper");
+            Add("rescue.resource.mineral.iron", "철", "Iron");
+            Add("rescue.resource.mineral.lithium", "리튬", "Lithium");
+            Add("rescue.resource.item.rare.engine_fuel", "엔진 연료", "Engine Fuel");
+            Add("rescue.cost.free", "보유 골드와 미정산 화물이 없어 무료로 구출됩니다.",
+                "Rescue is free because you have no gold or unsold cargo.");
+            Add("rescue.cost.missing", "비용 정보를 불러올 수 없습니다.", "Couldn’t load the rescue cost.");
+            Add("rescue.cost.mineral_loss", "※ 미정산 광물은 종류별 {0}%가 차감됩니다.",
+                "Rescue deducts {0}% of each unsold mineral type.");
         }
 
         public static string FormatFrameRateOption(int optionIndex)
