@@ -69,6 +69,8 @@ namespace SubTerra.App.Integration
         private int lastPointerPlacementFrame = -1;
         private bool cursorPickHover;
         public bool IsMoveMode => pickingMoveTarget || (placementSystem != null && placementSystem.IsMoving);
+        public bool HasActivePreview => IsMoveMode || !string.IsNullOrEmpty(selectedBuildingId)
+            || (placementSystem != null && placementSystem.Selection != null);
         // B-188: 건설 대상이 있어도 지형 블록 위에서 시작한 좌클릭은 채굴로 넘긴다. 그 칸은 원래 설치할 수 없는 칸이다.
         public bool OwnsPointerInput => IsMoveMode
             || (placementSystem != null && placementSystem.Selection != null && !PointerPressTargetsTerrain())

@@ -203,12 +203,15 @@ namespace SubTerra.App.UI.SurfaceBase
             if (UiPauseGate.IsDebugTerminalOpen) return;
             var keyboard = Keyboard.current;
             if (settings == null || view == null || keyboard == null) return;
-            // B-170: 종료 확인 창이 ESC·X를 먼저 받고, 떠 있는 동안 다른 단축키를 막는다.
+            // 종료 확인 창이 ESC를 먼저 받고, 같은 프레임의 다른 단축키를 막는다.
             if (QuitConfirmFlow.IsBlockingInput) return;
             if (keyboard.escapeKey.wasPressedThisFrame)
             {
-                if (settings.IsOpen) OnSettingsCancel();
-                else if (CanOpenSettingsFromEscape()) OnSettingsClicked();
+                if (settings.IsOpen)
+                {
+                    if (!view.TryCloseControlSchemePanel()) OnSettingsCancel();
+                }
+                else if (!TryCloseSurfaceWindow() && CanOpenSettingsFromEscape()) OnSettingsClicked();
                 return;
             }
             var selected = UnityEngine.EventSystems.EventSystem.current;
@@ -217,18 +220,12 @@ namespace SubTerra.App.UI.SurfaceBase
             if (keyboard.iKey.wasPressedThisFrame) { ToggleInventory(); return; }
             if (keyboard.uKey.wasPressedThisFrame) { ToggleUpgrade(); return; }
             if (!UiPauseGate.IsHeld && keyboard.oKey.wasPressedThisFrame) OnQuitClicked();
-            if (!keyboard.xKey.wasPressedThisFrame) return;
-            if (settings.IsOpen)
-            {
-                if (!view.TryCloseControlSchemePanel()) OnSettingsCancel();
-                return;
-            }
-            TryCloseSurfaceWindow();
         }
 
         private bool TryCloseSurfaceWindow()
         {
-            var topWindow = TopSurfaceWindow();
+            var topWindow = PopupWindowSorting.FindTop(canvas =>
+                !view.ContainsInventoryWindow(canvas) && IsSurfaceWindowVisible(canvas));
             if (topWindow != null)
             {
                 if (questPanel != null && questPanel.TryCloseTopWindow(topWindow)) return true;
@@ -236,12 +233,8 @@ namespace SubTerra.App.UI.SurfaceBase
                 if (deepZone != null) { deepZone.Close(); return true; }
                 var clock = topWindow.GetComponentInParent<MineResetClockOverlay>();
                 if (clock != null && clock.TryClosePopup(topWindow)) return true;
-                if (view.IsTopMineResetConfirmWindow(topWindow)
-                    || (view.IsMineResetConfirmVisible && !view.IsUpgradeVisible
-                        && !(economyBinder != null && economyBinder.IsModalVisible)))
+                if (view.IsTopMineResetConfirmWindow(topWindow))
                 { OnResetMineCancelled(); return true; }
-                if (view.IsInventoryVisible && view.ContainsInventoryWindow(topWindow))
-                { OnInventoryCloseClicked(); return true; }
                 if (view.IsTopUpgradeWindow(topWindow))
                 { OnUpgradeCloseClicked(); return true; }
                 if (economyBinder != null && economyBinder.IsTopWindow(topWindow))
@@ -252,7 +245,6 @@ namespace SubTerra.App.UI.SurfaceBase
                 ? progressionBinder.GetComponentInChildren<ProgressionPanelView>(true) : null;
             if (progressionView != null && progressionView.TryHideDeepZoneUnlockPopup()) return true;
             if (view.IsMineResetConfirmVisible) { OnResetMineCancelled(); return true; }
-            if (view.IsInventoryVisible) { OnInventoryCloseClicked(); return true; }
             if (view.IsUpgradeVisible) { OnUpgradeCloseClicked(); return true; }
             if (economyBinder != null && economyBinder.IsModalVisible) { economyBinder.CloseModal(); return true; }
             return false;
@@ -263,13 +255,18 @@ namespace SubTerra.App.UI.SurfaceBase
             var top = PopupWindowSorting.Top;
             while (top != null)
             {
-                // 이전 판매 카드처럼 활성 오브젝트를 투명하게 숨기는 창은 모달이 아니다.
-                var group = top.GetComponentInParent<CanvasGroup>();
-                if (group == null || group.alpha > 0f || group.blocksRaycasts) return top;
+                if (IsSurfaceWindowVisible(top)) return top;
                 PopupWindowSorting.Remove(top);
                 top = PopupWindowSorting.Top;
             }
             return null;
+        }
+
+        private static bool IsSurfaceWindowVisible(Canvas window)
+        {
+            // 이전 판매 카드처럼 활성 오브젝트를 투명하게 숨기는 창은 모달이 아니다.
+            var group = window.GetComponentInParent<CanvasGroup>();
+            return group == null || group.alpha > 0f || group.blocksRaycasts;
         }
 
         private void OnInventoryChangedForProgression(InventorySnapshot _)
@@ -302,7 +299,7 @@ namespace SubTerra.App.UI.SurfaceBase
             if (progressionBinder.Presenter != null) progressionBinder.Presenter.Refresh();
         }
 
-        // ESC·X키·창 X 버튼이 함께 쓰는 닫기 경로.
+        // ESC·U·창 X 버튼이 함께 쓰는 닫기 경로.
         private void OnUpgradeCloseClicked()
         {
             if (view != null) view.RequestUpgradeClose();

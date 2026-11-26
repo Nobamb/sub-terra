@@ -145,7 +145,7 @@ namespace SubTerra.App.Tests.PlayMode
                     Assert.That(GameBootstrapper.Instance.State, Is.SameAs(runtimeState));
                 }
                 binder.Presenter.RequestNewGame();
-                yield return PressX();
+                yield return PressEscape();
                 Assert.That(view.IsOverwriteConfirmVisible, Is.False);
                 binder.Presenter.RequestNewGame();
                 binder.Presenter.OpenSettings();
@@ -157,12 +157,12 @@ namespace SubTerra.App.Tests.PlayMode
                     "settings opening animation", stage: "animation");
                 Assert.That(settingsRoot.GetComponent<Canvas>().sortingOrder,
                     Is.GreaterThan(window.GetComponent<Canvas>().sortingOrder));
-                yield return PressX();
+                yield return PressEscape();
                 yield return UiTestWait.Until(() => !binder.Presenter.Settings.IsOpen && !settingsRoot.activeInHierarchy,
                     "settings close animation", stage: "animation");
                 Assert.That(binder.Presenter.Settings.IsOpen, Is.False);
                 Assert.That(view.IsOverwriteConfirmVisible, Is.True);
-                yield return PressX();
+                yield return PressEscape();
                 Assert.That(view.IsOverwriteConfirmVisible, Is.False);
                 Assert.That(starts, Is.Zero);
                 Assert.That(File.ReadAllBytes(slot.Normal), Is.EqualTo(before));
@@ -238,9 +238,9 @@ namespace SubTerra.App.Tests.PlayMode
             yield return null;
         }
 
-        private IEnumerator PressX()
+        private IEnumerator PressEscape()
         {
-            InputSystem.QueueStateEvent(keyboard, new KeyboardState(Key.X));
+            InputSystem.QueueStateEvent(keyboard, new KeyboardState(Key.Escape));
             yield return null;
             InputSystem.QueueStateEvent(keyboard, new KeyboardState());
             yield return null;

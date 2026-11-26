@@ -162,8 +162,8 @@ namespace SubTerra.App.Tests.PlayMode
             yield return WaitOpen(popup);
             Assert.That(popup.GuideState.CurrentCardId, Is.EqualTo("ctrl.mine"));
 
-            // X 키(기존 최상위 팝업 닫기 경로).
-            yield return UiTestWait.Press(environment.Keyboard, Key.X);
+            // ESC로 가장 위의 가이드를 닫는다.
+            yield return UiTestWait.Press(environment.Keyboard, Key.Escape);
             Assert.That(chrome.IsGameGuideOpen, Is.False);
             yield return WaitHidden(popup);
         }
@@ -281,7 +281,7 @@ namespace SubTerra.App.Tests.PlayMode
             Assert.That(chrome.IsDiggerBotOpen || chrome.IsBuildingMenuOpen, Is.False);
             Assert.That(chrome.IsInventoryPanelOpen, Is.True);
 
-            yield return UiTestWait.Press(environment.Keyboard, Key.Escape);
+            menu.OpenSettings();
             Assert.That(menu.IsSettingsOpen, Is.True);
             Assert.That(UiPauseGate.IsHeldBy(UiPauseGate.MineGuide), Is.True);
             Assert.That(UiPauseGate.IsHeldBy(UiPauseGate.MineSettings), Is.True);
@@ -292,8 +292,9 @@ namespace SubTerra.App.Tests.PlayMode
             Assert.That(chrome.IsGameGuideOpen, Is.True);
             Assert.That(Time.timeScale, Is.Zero);
             Assert.That(survival.OxygenRemaining, Is.EqualTo(40f));
-            yield return UiTestWait.Press(environment.Keyboard, Key.G);
+            yield return UiTestWait.Press(environment.Keyboard, Key.Escape);
             yield return WaitHidden(Popup());
+            Assert.That(menu.IsSettingsOpen, Is.False);
             Assert.That(Time.timeScale, Is.EqualTo(1f));
             Assert.That(chrome.IsInventoryPanelOpen, Is.True);
             chrome.CloseInventoryPanel();
@@ -328,7 +329,7 @@ namespace SubTerra.App.Tests.PlayMode
             yield return UiTestWait.Until(() => !UiPauseGate.IsHeldBy(UiPauseGate.MineSettings), "설정 닫힘");
             Assert.That(panels.IsVisible(RuntimePanelId.Upgrade), Is.True);
             Assert.That(Time.timeScale, Is.Zero);
-            yield return UiTestWait.Press(environment.Keyboard, Key.U);
+            yield return UiTestWait.Press(environment.Keyboard, Key.Escape);
             yield return UiTestWait.Until(() => !UiPauseGate.IsHeld, "upgrade close releases pause");
             Assert.That(panels.IsVisible(RuntimePanelId.Upgrade), Is.False);
             Assert.That(Time.timeScale, Is.EqualTo(1f));
