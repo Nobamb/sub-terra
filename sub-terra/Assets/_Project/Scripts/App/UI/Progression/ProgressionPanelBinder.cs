@@ -1,6 +1,7 @@
 using System;
 using SubTerra.App.Progression;
 using SubTerra.App.Save;
+using SubTerra.Shared.Localization;
 using UnityEngine;
 
 namespace SubTerra.App.UI.Progression
@@ -37,10 +38,11 @@ namespace SubTerra.App.UI.Progression
 
         private void OnEnable()
         {
+            LocalizationService.LanguageChanged += RefreshLanguage;
             // 패널을 다시 열었을 때, 채굴 등으로 바뀐 보유 자원을 즉시 다시 반영한다.
             if (presenter != null && presenter.IsBound)
             {
-                presenter.Refresh();
+                presenter.RefreshForLanguage();
             }
 
             // 열릴 때 다른 HUD에 묻히지 않도록 앞으로.
@@ -48,6 +50,17 @@ namespace SubTerra.App.UI.Progression
             {
                 view.BringToFront();
             }
+        }
+
+        private void OnDisable()
+        {
+            LocalizationService.LanguageChanged -= RefreshLanguage;
+        }
+
+        private void RefreshLanguage()
+        {
+            view?.ApplyWindowTitle();
+            presenter?.RefreshForLanguage();
         }
 
         private void OnDestroy()

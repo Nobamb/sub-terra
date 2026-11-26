@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using SubTerra.App.Core.Data;
+using SubTerra.Shared.Localization;
 
 namespace SubTerra.App.Progression
 {
@@ -61,16 +62,17 @@ namespace SubTerra.App.Progression
             if (catalog == null || !catalog.TryGetUpgrade(requirementId, out var requirement)
                 || requirement == null)
             {
-                return "해금 조건 확인 불가";
+                return LocalizationService.Text("해금 조건 확인 불가", "Requirements unavailable");
             }
 
             if (!IsUnlocked(requirement, state))
             {
-                return "상위 업그레이드 해금 필요";
+                return LocalizationService.Text("상위 업그레이드 해금 필요", "Unlock the preceding upgrade first");
             }
 
-            var name = ItemDisplayNames.PreferDisplay(requirement.Id, requirement.DisplayName);
-            return name + " Lv." + data.UnlockRequiredLevel + " 필요";
+            var name = ItemDisplayNames.LocalizedUpgrade(requirement.Id, requirement.DisplayName);
+            return string.Format(LocalizationService.Text("{0} Lv.{1} 필요", "Requires {0} Lv.{1}"),
+                name, data.UnlockRequiredLevel);
         }
 
         /// <summary>현재 해금 상태인 업그레이드 ID를 채운다. 구매 전후 비교로 신규 해금을 찾는 데 쓴다.</summary>

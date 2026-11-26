@@ -7,6 +7,7 @@ using SubTerra.App.Editor.DataValidation;
 using SubTerra.App.Progression;
 using SubTerra.App.UI.Progression;
 using SubTerra.Shared;
+using SubTerra.Shared.Localization;
 using UnityEditor;
 using UnityEngine;
 
@@ -15,6 +16,30 @@ namespace SubTerra.App.Tests.Progression
     /// <summary>prompt-B 118: 업그레이드 트리 해금 규칙, 구매 검증, 표시 수치 검증.</summary>
     public sealed class PromptB118UpgradeTreeTests
     {
+        [Test]
+        public void UpgradeAndDeepZoneCopy_FollowsAppliedLanguage()
+        {
+            var original = LocalizationService.Current;
+            try
+            {
+                LocalizationService.SetLanguage(GameLanguage.English);
+                Assert.That(ItemDisplayNames.LocalizedUpgrade(DataIds.Upgrades.DrillEfficiency), Is.EqualTo("Drill Efficiency"));
+                Assert.That(UpgradeEffectFormatter.EffectName(DataIds.Upgrades.DrillSpeed), Is.EqualTo("Mining Speed"));
+                Assert.That(DeepZoneUnlockRule.Mvp.DescribeUpgradeRequirements(), Does.Contain("Drill Speed Lv.2"));
+                var zones = Resources.Load<DeepZoneDisplaySettings>(DeepZoneDisplaySettings.ResourcePath);
+                Assert.That(zones, Is.Not.Null);
+                Assert.That(zones.LevelTitle(1), Does.Contain("(Planned)"));
+                Assert.That(zones.LevelCondition(1, false), Does.Contain("13 demo objectives"));
+                LocalizationService.SetLanguage(GameLanguage.Korean);
+                Assert.That(ItemDisplayNames.LocalizedUpgrade(DataIds.Upgrades.DrillEfficiency), Is.EqualTo("드릴 전력 효율"));
+                Assert.That(zones.LevelTitle(1), Does.Contain("(예정)"));
+            }
+            finally
+            {
+                LocalizationService.SetLanguage(original);
+            }
+        }
+
         [Test]
         public void UnlockedIcon_IsFilledButCoveredWhileUnlockRevealIsPending()
         {

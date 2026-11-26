@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using static SubTerra.Shared.Localization.LocalizationService;
 using UnityEngine;
 
 namespace SubTerra.App.Progression
@@ -12,6 +13,7 @@ namespace SubTerra.App.Progression
         [SerializeField] private int maximumDepth;
         [SerializeField] private bool availableInDemo;
         [SerializeField] private string plannedRequirement;
+        [SerializeField] private string plannedRequirementEnglish;
         [Tooltip("업그레이드 창 썸네일. 비어 있으면 레벨별 단색 칸으로 대체한다.")]
         [SerializeField] private Sprite thumbnail;
         [Tooltip("썸네일과 같은 크기의 투명 PNG. 광물 자리만 불투명하게 칠한다. 비어 있으면 반짝임을 끈다.")]
@@ -20,6 +22,8 @@ namespace SubTerra.App.Progression
         public int MaximumDepth => maximumDepth;
         public bool AvailableInDemo => availableInDemo;
         public string PlannedRequirement => plannedRequirement ?? string.Empty;
+        public string LocalizedPlannedRequirement => string.IsNullOrWhiteSpace(plannedRequirementEnglish)
+            ? PlannedRequirement : Text(PlannedRequirement, plannedRequirementEnglish);
         public Sprite Thumbnail => thumbnail;
         public Sprite MineralMask => mineralMask;
 
@@ -54,7 +58,8 @@ namespace SubTerra.App.Progression
         {
             var settings = Resources.Load<DeepZoneDisplaySettings>(ResourcePath);
             return settings != null ? settings.BuildText(access, compact)
-                : "심층 구역 · " + (access.IsUnlocked ? "해금됨" : "잠금") + "\n" + DeepZoneUnlockRule.Mvp.DescribeUpgradeRequirements();
+                : Text("심층 구역", "Deep Zone") + " · " + (access.IsUnlocked ? Text("해금됨", "Unlocked") : Text("잠금", "Locked"))
+                    + "\n" + DeepZoneUnlockRule.Mvp.DescribeUpgradeRequirements();
         }
 
         /// <summary>표시상 해금된 레벨 수. 지금은 기존 해금 1개만 Lv.1로 본다(#50에서 Lv.2·3이 생기면 여기만 바꾼다).</summary>
@@ -64,8 +69,8 @@ namespace SubTerra.App.Progression
         public string BuildSummary(ZoneAccessResult access)
         {
             var current = UnlockedLevelCount(access);
-            var text = "심층 구역 Lv." + current + "/" + levels.Length;
-            return current == levels.Length && current > 0 ? text + " · 모든 구역 해금" : text;
+            var text = Text("심층 구역 Lv.", "Deep Zone Lv.") + current + "/" + levels.Length;
+            return current == levels.Length && current > 0 ? text + Text(" · 모든 구역 해금", " · All Zones Unlocked") : text;
         }
 
         /// <summary>썸네일 아래 띠 첫 줄. 예: "Lv.2 · 41~75M (예정)"</summary>
@@ -73,23 +78,23 @@ namespace SubTerra.App.Progression
         {
             var level = levels[index];
             var text = "Lv." + (index + 1) + " · " + Range(level);
-            return level.AvailableInDemo ? text : text + " (예정)";
+            return level.AvailableInDemo ? text : text + Text(" (예정)", " (Planned)");
         }
 
         /// <summary>썸네일 아래 띠 둘째 줄. 해금됨 / Lv.1 실제 조건 / 이후 레벨 예정 조건.</summary>
         public string LevelCondition(int index, bool unlocked)
         {
-            if (unlocked) return "해금됨";
-            return index == 0 ? DeepZoneUnlockRule.Mvp.DescribeUpgradeRequirements() : levels[index].PlannedRequirement;
+            if (unlocked) return Text("해금됨", "Unlocked");
+            return index == 0 ? DeepZoneUnlockRule.Mvp.DescribeUpgradeRequirements() : levels[index].LocalizedPlannedRequirement;
         }
 
         public string BuildText(ZoneAccessResult access, bool compact)
         {
             var current = UnlockedLevelCount(access);
-            var text = new StringBuilder("심층 구역 Lv.").Append(current).Append('/').Append(levels.Length);
-            if (current > 0) text.Append(" · ").Append(Range(levels[0])).Append(" · 해금됨");
-            else text.Append(" · 잠금");
-            if (current == levels.Length && current > 0) text.Append(" · 모든 구역 해금");
+            var text = new StringBuilder(Text("심층 구역 Lv.", "Deep Zone Lv.")).Append(current).Append('/').Append(levels.Length);
+            if (current > 0) text.Append(" · ").Append(Range(levels[0])).Append(Text(" · 해금됨", " · Unlocked"));
+            else text.Append(Text(" · 잠금", " · Locked"));
+            if (current == levels.Length && current > 0) text.Append(Text(" · 모든 구역 해금", " · All Zones Unlocked"));
             if (compact)
             {
                 text.Append('\n');
@@ -97,7 +102,7 @@ namespace SubTerra.App.Progression
                 {
                     if (i > 0) text.Append("  /  ");
                     text.Append("Lv.").Append(i + 1).Append(' ').Append(Range(levels[i]));
-                    if (!levels[i].AvailableInDemo) text.Append(" (예정)");
+                    if (!levels[i].AvailableInDemo) text.Append(Text(" (예정)", " (Planned)"));
                 }
                 return text.Append('\n').Append(DeepZoneUnlockRule.Mvp.DescribeUpgradeRequirements()).ToString();
             }
@@ -105,9 +110,10 @@ namespace SubTerra.App.Progression
             {
                 var level = levels[i];
                 text.Append("\n\nLv.").Append(i + 1).Append(" · ").Append(Range(level));
-                text.Append(i < current ? " · 해금" : level.AvailableInDemo ? " · 잠금" : " · 예정 (Demo 미지원)");
-                text.Append('\n').Append(i == 0 ? "해금 조건: " + DeepZoneUnlockRule.Mvp.DescribeUpgradeRequirements()
-                    : "예정 조건: " + level.PlannedRequirement);
+                text.Append(i < current ? Text(" · 해금", " · Unlocked")
+                    : level.AvailableInDemo ? Text(" · 잠금", " · Locked") : Text(" · 예정 (Demo 미지원)", " · Planned (Not in Demo)"));
+                text.Append('\n').Append(i == 0 ? Text("해금 조건: ", "Requires: ") + DeepZoneUnlockRule.Mvp.DescribeUpgradeRequirements()
+                    : Text("예정 조건: ", "Planned Requirements: ") + level.LocalizedPlannedRequirement);
             }
             if (!access.IsUnlocked && !string.IsNullOrEmpty(access.Reason)) text.Append("\n\n").Append(access.Reason);
             return text.ToString();

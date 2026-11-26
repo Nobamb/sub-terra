@@ -44,7 +44,7 @@ namespace SubTerra.App.Progression
             var parts = new List<string>();
             foreach (var requirement in UpgradeRequirements)
             {
-                parts.Add(ItemDisplayNames.Upgrade(requirement.UpgradeId) + " Lv." + requirement.RequiredLevel);
+                parts.Add(ItemDisplayNames.LocalizedUpgrade(requirement.UpgradeId) + " Lv." + requirement.RequiredLevel);
             }
 
             return string.Join(" · ", parts);

@@ -2,6 +2,8 @@ using System;
 using SubTerra.App.Core.Data;
 using SubTerra.App.Progression;
 
+using static SubTerra.Shared.Localization.LocalizationService;
+
 namespace SubTerra.App.UI.Progression
 {
     /// <summary>
@@ -152,7 +154,7 @@ namespace SubTerra.App.UI.Progression
                     ProgressionPurchaseStatus.Busy,
                     selectedUpgradeId,
                     0,
-                    "처리 중입니다.",
+                    Text("처리 중입니다.", "Working…"),
                     "Presenter re-entry blocked.");
                 ApplyResult(result);
                 return result;
@@ -164,7 +166,7 @@ namespace SubTerra.App.UI.Progression
                     ProgressionPurchaseStatus.DependencyMissing,
                     selectedUpgradeId,
                     0,
-                    "진행도 서비스가 없습니다.",
+                    Text("진행도 서비스가 없습니다.", "Progression unavailable."),
                     "ProgressionService not bound.");
                 ApplyResult(result);
                 return result;
@@ -189,7 +191,7 @@ namespace SubTerra.App.UI.Progression
         {
             if (service == null)
             {
-                var missing = new ZoneAccessResult(false, false, "진행도 서비스가 없습니다.");
+                var missing = new ZoneAccessResult(false, false, Text("진행도 서비스가 없습니다.", "Progression unavailable."));
                 view?.SetDeepZoneAccess(missing);
                 return missing;
             }
@@ -199,6 +201,13 @@ namespace SubTerra.App.UI.Progression
                 : service.GetDeepZoneAccess(completedObjectives);
             view?.SetDeepZoneAccess(result);
             return result;
+        }
+
+        internal void RefreshForLanguage()
+        {
+            Refresh();
+            if (view is ProgressionPanelView panel && panel.IsTreeMode && service != null && completedObjectivesProvider != null)
+                RefreshDeepZoneAccess(completedObjectivesProvider(), persistUnlock: false);
         }
 
         public void Refresh()

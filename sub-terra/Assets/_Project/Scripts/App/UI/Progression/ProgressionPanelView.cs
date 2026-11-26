@@ -8,6 +8,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using static SubTerra.Shared.Localization.LocalizationService;
 
 namespace SubTerra.App.UI.Progression
 {
@@ -114,7 +115,7 @@ namespace SubTerra.App.UI.Progression
         {
             var root = panelRoot != null ? panelRoot.transform : transform;
             foreach (var label in root.GetComponentsInChildren<TMP_Text>(true))
-                if (label.name == "UpgradeTitle" || label.name == "UpgradeTreeTitle") label.text = "업그레이드";
+                if (label.name == "UpgradeTitle" || label.name == "UpgradeTreeTitle") label.text = Text("업그레이드", "Upgrades");
         }
 
         public void BindPresenter(ProgressionPanelPresenter target)
@@ -206,7 +207,7 @@ namespace SubTerra.App.UI.Progression
 
             if (UpgradeCategoryRules.IsDeepZoneTab(activeCategory))
             {
-                upgradeListText.text = "심층 구역 탭";
+                upgradeListText.text = Text("심층 구역 탭", "Deep Zone");
                 return;
             }
 
@@ -226,7 +227,7 @@ namespace SubTerra.App.UI.Progression
                         builder.AppendLine();
                     }
 
-                    builder.Append(ItemDisplayNames.PreferDisplay(item.UpgradeId, item.DisplayName))
+                    builder.Append(ItemDisplayNames.LocalizedUpgrade(item.UpgradeId, item.DisplayName))
                         .Append("  Lv.")
                         .Append(item.CurrentLevel)
                         .Append('/')
@@ -236,7 +237,7 @@ namespace SubTerra.App.UI.Progression
 
             upgradeListText.text = builder.Length > 0
                 ? builder.ToString()
-                : "이 탭에 업그레이드가 없습니다.";
+                : Text("이 탭에 업그레이드가 없습니다.", "No upgrades in this tab.");
         }
 
         private void EnsureUpgradeButtons(IReadOnlyList<UpgradeSnapshot> upgrades)
@@ -346,7 +347,7 @@ namespace SubTerra.App.UI.Progression
                 deepZoneText.text = string.Empty;
             }
 
-            var name = ItemDisplayNames.PreferDisplay(upgrade.UpgradeId, upgrade.DisplayName);
+            var name = ItemDisplayNames.LocalizedUpgrade(upgrade.UpgradeId, upgrade.DisplayName);
             if (detailText != null)
             {
                 bool isDroneScan = upgrade.UpgradeId == DataIds.Upgrades.DroneScan;
@@ -365,21 +366,22 @@ namespace SubTerra.App.UI.Progression
                 if (upgrade.UpgradeId == DataIds.Upgrades.CargoGold)
                 {
                     builder.AppendLine().Append(description).AppendLine()
-                        .Append("현재 +").Append(upgrade.CurrentEffectValue.ToString("0")).Append('%');
+                        .Append(Text("현재 +", "Current +")).Append(upgrade.CurrentEffectValue.ToString("0")).Append('%');
                     if (upgrade.IsMaximumLevel)
-                        builder.Append(" (2배)").AppendLine().Append("최대 레벨입니다.");
+                        builder.Append(Text(" (2배)", " (double)")).AppendLine().Append(Text("최대 레벨입니다.", "Max level reached."));
                     else
                     {
-                        builder.Append(" → 다음 +").Append(upgrade.NextEffectValue.ToString("0")).Append('%')
-                            .AppendLine().Append("필요 재료: ");
+                        builder.Append(Text(" → 다음 +", " → Next +")).Append(upgrade.NextEffectValue.ToString("0")).Append('%')
+                            .AppendLine().Append(Text("필요 재료: ", "Required Materials: "));
                         for (var i = 0; i < upgrade.NextCosts.Count; i++)
                         {
                             if (i > 0) builder.Append(", ");
                             var cost = upgrade.NextCosts[i];
-                            builder.Append(ItemDisplayNames.Cost(cost.ItemId, cost.Quantity));
+                            builder.Append(cost.ItemId == DataIds.Currency.Gold ? cost.Quantity + "G"
+                                : ItemDisplayNames.LocalizedMineral(cost.ItemId) + " x" + cost.Quantity);
                         }
                         builder.AppendLine().Append(upgrade.CanAffordNextLevel
-                            ? "구매 가능" : "자원 부족 (골드·인벤토리 보유량 기준)");
+                            ? Text("구매 가능", "Available") : Text("자원 부족 (골드·인벤토리 보유량 기준)", "Not enough gold or materials"));
                     }
                 }
                 else if (isMiningYield)
@@ -389,19 +391,19 @@ namespace SubTerra.App.UI.Progression
                 else if (upgrade.IsMaximumLevel)
                 {
                     builder.AppendLine()
-                        .Append(isDroneScan ? "현재 반경 " : "현재 수치 ")
+                        .Append(isDroneScan ? Text("현재 반경 ", "Current Range ") : Text("현재 수치 ", "Current Value "))
                         .Append(upgrade.CurrentEffectValue.ToString("0.##"))
                         .AppendLine()
                         .Append(description)
                         .AppendLine()
-                        .Append("최대 레벨입니다.");
+                        .Append(Text("최대 레벨입니다.", "Max level reached."));
                 }
                 else
                 {
                     builder.AppendLine()
-                        .Append(isDroneScan ? "현재 반경 " : "현재 ")
+                        .Append(isDroneScan ? Text("현재 반경 ", "Current Range ") : Text("현재 ", "Current "))
                         .Append(upgrade.CurrentEffectValue.ToString("0.##"))
-                        .Append(isDroneScan ? "  →  다음 반경 " : "  →  다음 ")
+                        .Append(isDroneScan ? Text("  →  다음 반경 ", "  →  Next Range ") : Text("  →  다음 ", "  →  Next "))
                         .Append(upgrade.NextEffectValue.ToString("0.##"));
 
                     if (!isDroneScan)
@@ -424,11 +426,11 @@ namespace SubTerra.App.UI.Progression
                     }
 
                     builder.AppendLine()
-                        .Append("필요 재료: ");
+                        .Append(Text("필요 재료: ", "Required Materials: "));
 
                     if (upgrade.NextCosts == null || upgrade.NextCosts.Count == 0)
                     {
-                        builder.Append("없음");
+                        builder.Append(Text("없음", "None"));
                     }
                     else
                     {
@@ -440,7 +442,7 @@ namespace SubTerra.App.UI.Progression
                             }
 
                             var cost = upgrade.NextCosts[i];
-                            builder.Append(ItemDisplayNames.Mineral(cost.ItemId))
+                            builder.Append(ItemDisplayNames.LocalizedMineral(cost.ItemId))
                                 .Append(" x")
                                 .Append(cost.Quantity);
                         }
@@ -448,8 +450,8 @@ namespace SubTerra.App.UI.Progression
 
                     builder.AppendLine()
                         .Append(upgrade.CanAffordNextLevel
-                            ? "구매 가능"
-                            : "자원 부족 (인벤토리 보유량 기준)");
+                            ? Text("구매 가능", "Available")
+                            : Text("자원 부족 (인벤토리 보유량 기준)", "Not enough materials"));
                 }
 
                 detailText.gameObject.SetActive(true);
@@ -474,29 +476,29 @@ namespace SubTerra.App.UI.Progression
             if (upgrade.IsMaximumLevel)
             {
                 builder.AppendLine()
-                    .Append("현재 ")
+                    .Append(Text("현재 ", "Current "))
                     .Append(FormatMiningYieldLine(upgrade.CurrentMiningYieldBonuses))
                     .AppendLine()
-                    .Append("최대 레벨입니다.");
+                    .Append(Text("최대 레벨입니다.", "Max level reached."));
                 return;
             }
 
             builder.AppendLine()
-                .Append("현재")
+                .Append(Text("현재", "Current"))
                 .AppendLine()
                 .Append(FormatMiningYieldLine(upgrade.CurrentMiningYieldBonuses))
                 .AppendLine()
-                .Append("→ 다음")
+                .Append(Text("→ 다음", "→ Next"))
                 .AppendLine()
                 .Append(FormatMiningYieldLine(upgrade.NextMiningYieldBonuses))
                 .AppendLine()
-                .Append("같은 타일에서 더 많이 얻지만, 한 번 만재량은 화물 업그레이드가 담당합니다.")
+                .Append(Text("같은 타일에서 더 많이 얻지만, 한 번 만재량은 화물 업그레이드가 담당합니다.", "Gain more from the same tile. Cargo upgrades increase carrying capacity."))
                 .AppendLine()
-                .Append("필요 재료: ");
+                .Append(Text("필요 재료: ", "Required Materials: "));
 
             if (upgrade.NextCosts == null || upgrade.NextCosts.Count == 0)
             {
-                builder.Append("없음");
+                builder.Append(Text("없음", "None"));
             }
             else
             {
@@ -508,7 +510,7 @@ namespace SubTerra.App.UI.Progression
                     }
 
                     var cost = upgrade.NextCosts[i];
-                    builder.Append(ItemDisplayNames.Mineral(cost.ItemId))
+                    builder.Append(ItemDisplayNames.LocalizedMineral(cost.ItemId))
                         .Append(" x")
                         .Append(cost.Quantity);
                 }
@@ -516,15 +518,15 @@ namespace SubTerra.App.UI.Progression
 
             builder.AppendLine()
                 .Append(upgrade.CanAffordNextLevel
-                    ? "구매 가능"
-                    : "자원 부족 (인벤토리 보유량 기준)");
+                    ? Text("구매 가능", "Available")
+                    : Text("자원 부족 (인벤토리 보유량 기준)", "Not enough materials"));
         }
 
         private static string FormatMiningYieldLine(IReadOnlyList<MineralBonusEntry> bonuses)
         {
-            return "구리 +" + ReadMiningYieldBonus(bonuses, DataIds.Minerals.Copper)
-                + "  철 +" + ReadMiningYieldBonus(bonuses, DataIds.Minerals.Iron)
-                + "  리튬 +" + ReadMiningYieldBonus(bonuses, DataIds.Minerals.Lithium);
+            return ItemDisplayNames.LocalizedMineral(DataIds.Minerals.Copper) + " +" + ReadMiningYieldBonus(bonuses, DataIds.Minerals.Copper)
+                + "  " + ItemDisplayNames.LocalizedMineral(DataIds.Minerals.Iron) + " +" + ReadMiningYieldBonus(bonuses, DataIds.Minerals.Iron)
+                + "  " + ItemDisplayNames.LocalizedMineral(DataIds.Minerals.Lithium) + " +" + ReadMiningYieldBonus(bonuses, DataIds.Minerals.Lithium);
         }
 
         private static int ReadMiningYieldBonus(
@@ -1051,7 +1053,7 @@ namespace SubTerra.App.UI.Progression
                         builder.AppendLine();
                     }
 
-                    builder.Append(ItemDisplayNames.PreferDisplay(item.UpgradeId, item.DisplayName))
+                    builder.Append(ItemDisplayNames.LocalizedUpgrade(item.UpgradeId, item.DisplayName))
                         .Append("  Lv.")
                         .Append(item.CurrentLevel)
                         .Append('/')
@@ -1059,7 +1061,7 @@ namespace SubTerra.App.UI.Progression
                 }
             }
 
-            return builder.Length > 0 ? builder.ToString() : "업그레이드 없음";
+            return builder.Length > 0 ? builder.ToString() : Text("업그레이드 없음", "No upgrades");
         }
 
         private static string BuildDeepZoneDetail(ZoneAccessResult access)

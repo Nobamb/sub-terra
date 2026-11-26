@@ -1,4 +1,5 @@
 using System;
+using static SubTerra.Shared.Localization.LocalizationService;
 using System.Globalization;
 using SubTerra.App.Core.Data;
 
@@ -18,29 +19,29 @@ namespace SubTerra.App.Progression
             switch (upgradeId)
             {
                 case DataIds.Upgrades.DrillSpeed:
-                    return "채굴 속도";
+                    return Text("채굴 속도", "Mining Speed");
                 case DataIds.Upgrades.DrillEfficiency:
-                    return "채굴 전력 소모";
+                    return Text("채굴 전력 소모", "Mining Power Use");
                 case DataIds.Upgrades.MaximumEnergy:
-                    return "최대 전력";
+                    return Text("최대 전력", "Max Power");
                 case DataIds.Upgrades.MaximumHealth:
-                    return "최대 체력";
+                    return Text("최대 체력", "Max Health");
                 case DataIds.Upgrades.HealthRegeneration:
-                    return "체력 재생";
+                    return Text("체력 재생", "Health Regeneration");
                 case DataIds.Upgrades.MaximumCargo:
-                    return "최대 화물 중량";
+                    return Text("최대 화물 중량", "Cargo Capacity");
                 case DataIds.Upgrades.CargoGold:
-                    return "골드 획득";
+                    return Text("골드 획득", "Gold Yield");
                 case DataIds.Upgrades.DroneScan:
-                    return "드론 스캔 반경";
+                    return Text("드론 스캔 반경", "Drone Scan Range");
                 case DataIds.Upgrades.DroneRescue:
-                    return "구조 시 화물 보존";
+                    return Text("구조 시 화물 보존", "Rescue Cargo Retention");
                 case DataIds.Upgrades.GasResistance:
-                    return "가스 피해";
+                    return Text("가스 피해", "Gas Damage");
                 case DataIds.Upgrades.MaximumOxygen:
-                    return "최대 산소";
+                    return Text("최대 산소", "Max Oxygen");
                 case DataIds.Upgrades.OxygenEfficiency:
-                    return "산소 소모";
+                    return Text("산소 소모", "Oxygen Use");
                 default:
                     return ItemDisplayNames.Upgrade(upgradeId);
             }
@@ -52,7 +53,7 @@ namespace SubTerra.App.Progression
             // 레벨 0은 "+0%"/"-0%" 대신 읽기 쉬운 문구로 보여 준다.
             if (value <= 0f)
             {
-                return upgradeId == DataIds.Upgrades.DrillSpeed ? "기본" : "없음";
+                return upgradeId == DataIds.Upgrades.DrillSpeed ? Text("기본", "Base") : Text("없음", "None");
             }
 
             switch (upgradeId)
@@ -71,11 +72,11 @@ namespace SubTerra.App.Progression
                 case DataIds.Upgrades.MaximumOxygen:
                     return "+" + Number(value);
                 case DataIds.Upgrades.HealthRegeneration:
-                    return "+" + Number(value) + "/초";
+                    return "+" + Number(value) + Text("/초", "/s");
                 case DataIds.Upgrades.MaximumCargo:
                     return "+" + Number(value) + "kg";
                 case DataIds.Upgrades.DroneScan:
-                    return Number(value) + "칸";
+                    return Number(value) + Text("칸", " tiles");
                 default:
                     return Number(value);
             }

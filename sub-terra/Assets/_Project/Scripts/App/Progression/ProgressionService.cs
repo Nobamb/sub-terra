@@ -42,7 +42,7 @@ namespace SubTerra.App.Progression
                 ProgressionPurchaseStatus.InvalidRequest,
                 string.Empty,
                 0,
-                "구매 내역이 없습니다.",
+                LocalizationService.Text("구매 내역이 없습니다.", "No purchases yet."),
                 "No purchase yet.");
         }
 
@@ -54,7 +54,7 @@ namespace SubTerra.App.Progression
                     ProgressionPurchaseStatus.DependencyMissing,
                     upgradeId,
                     0,
-                    "필수 서비스가 없습니다.",
+                    LocalizationService.Text("필수 서비스가 없습니다.", "Required services are unavailable."),
                     "State, catalog, or wallet missing.");
             }
 
@@ -64,7 +64,7 @@ namespace SubTerra.App.Progression
                     ProgressionPurchaseStatus.InvalidRequest,
                     upgradeId,
                     0,
-                    "잘못된 업그레이드입니다.",
+                    LocalizationService.Text("잘못된 업그레이드입니다.", "Invalid upgrade."),
                     "Empty upgrade id.");
             }
 
@@ -74,7 +74,7 @@ namespace SubTerra.App.Progression
                     ProgressionPurchaseStatus.UpgradeNotFound,
                     upgradeId,
                     state.GetLevel(upgradeId),
-                    "업그레이드를 찾을 수 없습니다.",
+                    LocalizationService.Text("업그레이드를 찾을 수 없습니다.", "Upgrade not found."),
                     "Unknown upgrade id.");
             }
 
@@ -89,7 +89,7 @@ namespace SubTerra.App.Progression
                     ProgressionPurchaseStatus.InvalidDefinition,
                     upgradeId,
                     currentLevel,
-                    "업그레이드 데이터가 올바르지 않습니다.",
+                    LocalizationService.Text("업그레이드 데이터가 올바르지 않습니다.", "Invalid upgrade data."),
                     "Invalid maximum level, level count, or restored level.");
             }
 
@@ -111,7 +111,7 @@ namespace SubTerra.App.Progression
                     ProgressionPurchaseStatus.MaximumLevel,
                     upgradeId,
                     currentLevel,
-                    "이미 최대 레벨입니다.",
+                    LocalizationService.Text("이미 최대 레벨입니다.", "Already at max level."),
                     "Maximum level reached.");
             }
 
@@ -129,7 +129,7 @@ namespace SubTerra.App.Progression
                     ProgressionPurchaseStatus.InvalidDefinition,
                     upgradeId,
                     currentLevel,
-                    "업그레이드 단계 데이터가 올바르지 않습니다.",
+                    LocalizationService.Text("업그레이드 단계 데이터가 올바르지 않습니다.", "Invalid upgrade level data."),
                     "Missing or invalid next level, effect, or costs.");
             }
 
@@ -141,7 +141,7 @@ namespace SubTerra.App.Progression
                     ProgressionPurchaseStatus.InvalidDefinition,
                     upgradeId,
                     currentLevel,
-                    "업그레이드 비용 데이터가 올바르지 않습니다.",
+                    LocalizationService.Text("업그레이드 비용 데이터가 올바르지 않습니다.", "Invalid upgrade cost data."),
                     costDiagnostic);
             }
 
@@ -152,7 +152,7 @@ namespace SubTerra.App.Progression
                     ProgressionPurchaseStatus.InsufficientResources,
                     upgradeId,
                     currentLevel,
-                    "업그레이드 비용이 부족합니다.",
+                    LocalizationService.Text("업그레이드 비용이 부족합니다.", "Not enough resources for this upgrade."),
                     "Wallet cannot afford normalized costs.");
             }
 
@@ -163,7 +163,7 @@ namespace SubTerra.App.Progression
                     ProgressionPurchaseStatus.SpendFailed,
                     upgradeId,
                     currentLevel,
-                    "업그레이드 비용 차감에 실패했습니다.",
+                    LocalizationService.Text("업그레이드 비용 차감에 실패했습니다.", "Could not spend resources for this upgrade."),
                     "Wallet spend failed after affordability check.");
             }
 
@@ -443,7 +443,7 @@ namespace SubTerra.App.Progression
             RaiseUpgradeAtLeast(DataIds.Upgrades.GasResistance, 1);
             var didUnlock = state.ApplyZoneUnlock(DataIds.Zones.Deep);
             DeepZoneAccessChanged?.Invoke(
-                new ZoneAccessResult(true, didUnlock, "심층 구역 잠금 해제됨"));
+                new ZoneAccessResult(true, didUnlock, LocalizationService.Text("심층 구역 잠금 해제됨", "Deep Zone unlocked")));
         }
 
         private void RaiseUpgradeAtLeast(string upgradeId, int minimumLevel)
