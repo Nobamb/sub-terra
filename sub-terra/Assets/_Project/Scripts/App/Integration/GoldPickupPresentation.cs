@@ -1,4 +1,5 @@
 using UnityEngine;
+using SubTerra.Shared.Localization;
 
 namespace SubTerra.App.Integration
 {
@@ -64,7 +65,9 @@ namespace SubTerra.App.Integration
         /// <summary>추가 줄 문구. 0 이하면 줄 자체가 없다.</summary>
         public static string FormatBonus(int bonusGold)
         {
-            return bonusGold > 0 ? "추가 골드 +" + bonusGold + " G" : string.Empty;
+            return bonusGold > 0
+                ? string.Format(LocalizationService.Text("추가 골드 +{0} G", "Bonus Gold +{0} G"), bonusGold)
+                : string.Empty;
         }
 
         /// <summary>확정 골드에서 기본 획득량만 문구로 만든다.</summary>

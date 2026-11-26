@@ -2,6 +2,7 @@ using SubTerra.App.Core.Data;
 using SubTerra.App.Economy;
 using SubTerra.App.State;
 using SubTerra.Shared;
+using static SubTerra.Shared.Localization.LocalizationService;
 
 namespace SubTerra.App.Inventory
 {
@@ -123,18 +124,22 @@ namespace SubTerra.App.Inventory
             int acceptedBonus,
             int acceptedGold = 0, int acceptedGoldBonus = 0)
         {
-            string goldText = acceptedGold > 0 ? "골드 +" + acceptedGold + "G" : string.Empty;
-            if (acceptedGoldBonus > 0) goldText += " (+" + acceptedGoldBonus + "G 보너스)";
+            string goldText = acceptedGold > 0
+                ? string.Format(Text("골드 +{0}G", "Gold +{0}G"), acceptedGold)
+                : string.Empty;
+            if (acceptedGoldBonus > 0)
+                goldText += string.Format(Text(" (+{0}G 보너스)", " (+{0}G bonus)"), acceptedGoldBonus);
             if (string.IsNullOrEmpty(mineralId) || acceptedBase + acceptedBonus <= 0)
             {
                 return goldText;
             }
 
             string suffix = acceptedGold > 0 ? "  " + goldText : string.Empty;
-            var name = ItemDisplayNames.Mineral(mineralId);
+            var name = ItemDisplayNames.LocalizedMineral(mineralId);
             if (acceptedBonus > 0)
             {
-                return name + " +" + acceptedBase + " (+" + acceptedBonus + " 수확)" + suffix;
+                return string.Format(Text("{0} +{1} (+{2} 수확)", "{0} +{1} (+{2} extra)"),
+                    name, acceptedBase, acceptedBonus) + suffix;
             }
 
             return name + " +" + acceptedBase + suffix;
