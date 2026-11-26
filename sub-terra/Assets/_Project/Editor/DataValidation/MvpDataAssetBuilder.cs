@@ -577,6 +577,14 @@ namespace SubTerra.App.Editor.DataValidation
                     "gas_risk",
                     500,
                     "{safetyGuidance}"),
+                // B-213 산소 부족 드론 경고. 분석 루프가 아니라 전용 경로에서 한 번만 쓴다.
+                EnsureDialogue(
+                    "Dialogue_Drone_Oxygen_Warning.asset",
+                    DataIds.Dialogue.DroneOxygenWarning,
+                    "산소 부족 경고",
+                    "oxygen_critical",
+                    650,
+                    "산소가 부족합니다. 위로 올라가거나 긴급 탈출(구출 요청)을 쓰세요."),
                 EnsureDialogue(
                     "Dialogue_LowPower_Warning.asset",
                     DataIds.Dialogue.LowPowerWarning,

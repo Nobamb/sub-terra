@@ -74,6 +74,7 @@ namespace SubTerra.App.Core.Data
             public const string DroneEmergency = "dialogue.drone.survival.emergency";
             public const string DroneStructuralWarning = "dialogue.drone.structural.warning";
             public const string DroneGasWarning = "dialogue.drone.gas.warning";
+            public const string DroneOxygenWarning = "dialogue.drone.oxygen.warning";
             public const string DroneCargoFull = "dialogue.drone.cargo.full";
             public const string DroneReturn = "dialogue.drone.return";
             public const string DroneLithium = "dialogue.drone.lithium";
