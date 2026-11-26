@@ -9,6 +9,7 @@ using SubTerra.App.UI.HUD;
 using SubTerra.App.UI.MainMenu;
 using SubTerra.Shared;
 using SubTerra.Shared.Audio;
+using SubTerra.Shared.Localization;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -676,7 +677,7 @@ namespace SubTerra.App.UI.RunFailure
                 18f,
                 TextAlignmentOptions.MidlineLeft);
             cargoHeaderLeftText.fontStyle = FontStyles.Bold;
-            cargoHeaderLeftText.text = "유실 자원 목록";
+            cargoHeaderLeftText.text = LocalizationService.Text("유실 자원 목록", "Lost Resources");
             SetStretch(cargoHeaderLeftText.rectTransform, new Vector2(24f, 0f), new Vector2(-240f, 0f));
 
             cargoHeaderRightText = CreateTextElement(
@@ -686,7 +687,7 @@ namespace SubTerra.App.UI.RunFailure
                 18f,
                 TextAlignmentOptions.MidlineRight);
             cargoHeaderRightText.fontStyle = FontStyles.Bold;
-            cargoHeaderRightText.text = "유실 수량";
+            cargoHeaderRightText.text = LocalizationService.Text("유실 수량", "Quantity Lost");
             SetStretch(cargoHeaderRightText.rectTransform, new Vector2(240f, 0f), new Vector2(-24f, 0f));
 
             // 스크롤 뷰포트
@@ -838,7 +839,7 @@ namespace SubTerra.App.UI.RunFailure
                 27f,
                 TextAlignmentOptions.Center);
             confirmButtonText.fontStyle = FontStyles.Bold;
-            confirmButtonText.text = "확인";
+            confirmButtonText.text = LocalizationService.Text("확인", "Confirm");
             confirmButtonText.characterSpacing = 4f;
             SetStretch(confirmButtonText.rectTransform, Vector2.zero, Vector2.zero);
         }
@@ -1040,6 +1041,16 @@ namespace SubTerra.App.UI.RunFailure
             revealTimeline = new RunFailureRevealTimeline(rescue, visualSettings);
             transitionTimeline = new RunFailureTransitionTimeline(rescue.cause, visualSettings, false);
 
+            if (cargoHeaderLeftText != null)
+            {
+                cargoHeaderLeftText.text = LocalizationService.Text("유실 자원 목록", "Lost Resources");
+            }
+
+            if (cargoHeaderRightText != null)
+            {
+                cargoHeaderRightText.text = LocalizationService.Text("유실 수량", "Quantity Lost");
+            }
+
             BuildCargoRows(rescue.lostCargo, revealTimeline.GlitchColor);
             ApplyStaticTheme(revealTimeline.GlitchColor, revealTimeline.SecondarySplitColor);
 
@@ -1062,6 +1073,10 @@ namespace SubTerra.App.UI.RunFailure
             revealTimeline = null;
             transitionTimeline = null;
 
+            var fallbackMessage = LocalizationService.Text(
+                "입력과 생존 상태를 복구했습니다. 엘리베이터에서 다시 귀환하세요.",
+                "Controls and vital signs restored. Try returning via the elevator again.");
+
             if (windowCanvasGroup != null)
             {
                 windowCanvasGroup.alpha = 1f;
@@ -1075,22 +1090,23 @@ namespace SubTerra.App.UI.RunFailure
 
             if (titleText != null)
             {
-                titleText.text = "Scene 전환 실패 — 현장 안전 지점 복귀";
+                titleText.text = LocalizationService.Text(
+                    "Scene 전환 실패 — 현장 안전 지점 복귀", "Return Failed — Back at Safe Point");
             }
 
             if (subtitleText != null)
             {
-                subtitleText.text = "입력과 생존 상태를 복구했습니다. 엘리베이터에서 다시 귀환하세요.";
+                subtitleText.text = fallbackMessage;
             }
 
             if (detailText != null)
             {
-                detailText.text = "입력과 생존 상태를 복구했습니다. 엘리베이터에서 다시 귀환하세요.";
+                detailText.text = fallbackMessage;
             }
 
             if (preservationText != null)
             {
-                preservationText.text = "입력과 생존 상태를 복구했습니다. 엘리베이터에서 다시 귀환하세요.";
+                preservationText.text = fallbackMessage;
             }
         }
 
@@ -1395,7 +1411,7 @@ namespace SubTerra.App.UI.RunFailure
 
             if (confirmButtonText != null)
             {
-                confirmButtonText.text = "확인";
+                confirmButtonText.text = LocalizationService.Text("확인", "Confirm");
             }
         }
 
@@ -2288,6 +2304,15 @@ namespace SubTerra.App.UI.RunFailure
             }
 
             displayName = ItemDisplayNames.PreferDisplay(mineralId, catalogName);
+            if (LocalizationService.Current == GameLanguage.English)
+            {
+                var localizedName = ItemDisplayNames.LocalizedMineral(mineralId);
+                if (!string.IsNullOrEmpty(localizedName) && localizedName != mineralId)
+                {
+                    displayName = localizedName;
+                }
+            }
+
             if (iconSprite == null)
             {
                 iconSprite = RunFailureGlitchArt.GetFallbackMineralSprite();

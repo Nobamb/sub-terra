@@ -6,6 +6,7 @@ using SubTerra.App.Tutorial;
 using SubTerra.App.UI;
 using SubTerra.App.UI.Progression;
 using SubTerra.App.UI.Tutorial;
+using SubTerra.Shared.Localization;
 using TMPro;
 using UnityEditor;
 using UnityEngine;
@@ -48,6 +49,33 @@ namespace SubTerra.App.Tests.UI
             Assert.That(DeepZoneUnlockPopupText.Header(1), Is.EqualTo("심층 구역 Lv.1 해금"));
             Assert.That(DeepZoneUnlockPopupText.Range(36, 40), Is.EqualTo("36~40M 진입 가능"));
             Assert.That(DeepZoneUnlockPopupText.Range(36, 40, 1), Is.EqualTo("심층 구역 Lv.1 · 36~40M"));
+        }
+
+        [Test]
+        public void ReopeningPopup_RefreshesTextInSelectedLanguage()
+        {
+            var previousLanguage = LocalizationService.Current;
+            try
+            {
+                LocalizationService.SetLanguage(GameLanguage.Korean);
+                view.ShowDeepZoneUnlockPopup();
+                Assert.That(Find("Title").GetComponent<TMP_Text>().text, Is.EqualTo("심층 구역 해금"));
+
+                LocalizationService.SetLanguage(GameLanguage.English);
+                view.ShowDeepZoneUnlockPopup();
+
+                var skin = LoadSkin();
+                Assert.That(Find("Title").GetComponent<TMP_Text>().text, Is.EqualTo("Deep Zone Unlocked"));
+                Assert.That(Find("Message").GetComponent<TMP_Text>().text,
+                    Is.EqualTo($"Depths open: {skin.minDepth}~{skin.maxDepth}M"));
+                Assert.That(Find("Detail").GetComponent<TMP_Text>().text, Is.EqualTo("A deep layer rich in lithium is now open."));
+                Assert.That(Find(DeepZoneUnlockPopupMotion.CloseButtonName).GetComponentInChildren<TMP_Text>(true).text,
+                    Is.EqualTo("Close"));
+            }
+            finally
+            {
+                LocalizationService.SetLanguage(previousLanguage);
+            }
         }
 
         [Test]

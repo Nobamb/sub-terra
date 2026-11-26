@@ -1,4 +1,3 @@
-using SubTerra.App.Core.Data;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -93,7 +92,7 @@ namespace SubTerra.App.UI.Building
 
             if (nameText != null)
             {
-                nameText.text = ItemDisplayNames.Building(item.BuildingId);
+                nameText.text = item.DisplayName;
             }
 
             if (costText != null)

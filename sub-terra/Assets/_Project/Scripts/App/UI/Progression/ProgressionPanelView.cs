@@ -585,7 +585,8 @@ namespace SubTerra.App.UI.Progression
 
         public void ShowDeepZoneUnlockPopup()
         {
-            const string fallbackMessage = "심층 구역 잠금이 해제되었습니다";
+            var fallbackMessage = SubTerra.Shared.Localization.LocalizationService.Text(
+                "심층 구역 잠금이 해제되었습니다", "The deep zone is now open.");
             CreateDeepZoneUnlockPopupIfNeeded();
             EnsureDeepZoneUnlockCloseButton();
             var skinned = deepZoneUnlockPopupMotion != null && deepZoneUnlockPopupSkin != null;
@@ -777,6 +778,12 @@ namespace SubTerra.App.UI.Progression
                     deepZoneUnlockPopupRoot.transform);
             }
 
+            var closeLabel = deepZoneUnlockPopupCloseButton.GetComponentInChildren<TMP_Text>(true);
+            if (closeLabel != null)
+            {
+                closeLabel.text = DeepZoneUnlockPopupText.CloseLabel;
+            }
+
             // 런타임 버튼이라 persistent 리스너가 없다. 중복 등록을 막기 위해 비운 뒤 닫기만 연결한다.
             deepZoneUnlockPopupCloseButton.onClick.RemoveAllListeners();
             deepZoneUnlockPopupCloseButton.onClick.AddListener(HideDeepZoneUnlockPopup);
@@ -836,7 +843,7 @@ namespace SubTerra.App.UI.Progression
             label.raycastTarget = false;
             label.alignment = TextAlignmentOptions.Center;
             label.fontSize = 22f;
-            label.text = "닫기";
+            label.text = DeepZoneUnlockPopupText.CloseLabel;
             var labelRect = label.rectTransform;
             labelRect.anchorMin = Vector2.zero;
             labelRect.anchorMax = Vector2.one;

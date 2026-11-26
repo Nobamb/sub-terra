@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using SubTerra.App.UI.Sell;
 using SubTerra.Shared;
+using SubTerra.Shared.Localization;
 using UnityEngine;
 
 namespace SubTerra.App.UI.RunFailure
@@ -130,7 +131,7 @@ namespace SubTerra.App.UI.RunFailure
     /// </summary>
     public sealed class RunFailureRevealTimeline
     {
-        public const string EmptyCargoMessage = "잃은 자원 없음";
+        public static string EmptyCargoMessage => LocalizationService.Text("잃은 자원 없음", "No resources lost");
         public const float StepSeconds = 1f / 30f;
 
         private const float IdleSlotSeconds = 0.4f;
@@ -476,8 +477,8 @@ namespace SubTerra.App.UI.RunFailure
         public static string ResolveCauseTitle(RunFailureCause cause)
         {
             return cause == RunFailureCause.GasExposure
-                ? "가스 중독"
-                : "체력 소진";
+                ? LocalizationService.Text("가스 중독", "Gas Poisoning")
+                : LocalizationService.Text("체력 소진", "Health Depleted");
         }
 
         public static string ResolveCauseSubtitle(RunFailureCause cause)
@@ -485,20 +486,26 @@ namespace SubTerra.App.UI.RunFailure
             switch (cause)
             {
                 case RunFailureCause.GasExposure:
-                    return "유독 가스 농도 임계치 초과로 긴급 구조 시퀀스가 가동되었습니다.";
+                    return LocalizationService.Text(
+                        "유독 가스 농도 임계치 초과로 긴급 구조 시퀀스가 가동되었습니다.",
+                        "Toxic gas levels triggered an emergency rescue.");
                 case RunFailureCause.Fall:
-                    return "추락 충격으로 생명 유지 장치가 손상되어 긴급 이송되었습니다.";
+                    return LocalizationService.Text(
+                        "추락 충격으로 생명 유지 장치가 손상되어 긴급 이송되었습니다.",
+                        "A fall damaged life support and triggered an emergency evacuation.");
                 case RunFailureCause.OxygenDepleted:
-                    return "산소 부족으로 긴급 이송되었습니다.";
+                    return LocalizationService.Text("산소 부족으로 긴급 이송되었습니다.", "Low oxygen triggered an emergency evacuation.");
                 default:
-                    return "생명 유지 한계 도달로 긴급 구조 드론이 출동했습니다.";
+                    return LocalizationService.Text(
+                        "생명 유지 한계 도달로 긴급 구조 드론이 출동했습니다.",
+                        "Life support reached its limit and a rescue drone was dispatched.");
             }
         }
 
         public static string FormatPreservationLine(float preservationRatio)
         {
             var percent = Mathf.RoundToInt(Mathf.Clamp01(preservationRatio) * 100f);
-            return "드론 구조: 화물 " + percent + "% 보존";
+            return LocalizationService.Text($"드론 구조: 화물 {percent}% 보존", $"Drone rescue: {percent}% of cargo saved");
         }
 
         private static float Bell(float value, float center, float radius)
