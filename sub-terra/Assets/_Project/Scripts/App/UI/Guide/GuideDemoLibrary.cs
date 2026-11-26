@@ -260,7 +260,7 @@ namespace SubTerra.App.UI.Guide
             var c = New("interact", 3.6f, 2.3f);
             Backdrop(c);
             Floor(c);
-            var chargerName = ItemDisplayNames.Building(DataIds.Buildings.ChargerBasic);
+            var chargerName = ItemDisplayNames.LocalizedBuilding(DataIds.Buildings.ChargerBasic);
             Spr(c, "art.soft", 90f, 52f, 6f).Color_(new Color(0.3f, 0.9f, 1f, 1f))
                 .Fade(S(0f, 0f, 1.9f, 0f, 2.3f, 0.55f, 3.0f, 0f));
             Spr(c, "fac.charger", 56f, 52f, GroundTop + 28f);
@@ -570,9 +570,9 @@ namespace SubTerra.App.UI.Guide
             PanelBox(c, 66f, 6f, 168f, 100f, K(1f), Teal);
             var names = new[]
             {
-                ItemDisplayNames.Building(DataIds.Buildings.ChargerBasic),
-                ItemDisplayNames.Building(DataIds.Buildings.ClinicBasic),
-                ItemDisplayNames.Building(DataIds.Buildings.SettlementBasic)
+                ItemDisplayNames.LocalizedBuilding(DataIds.Buildings.ChargerBasic),
+                ItemDisplayNames.LocalizedBuilding(DataIds.Buildings.ClinicBasic),
+                ItemDisplayNames.LocalizedBuilding(DataIds.Buildings.SettlementBasic)
             };
             var previews = new[] { "fac.charger", "fac.clinic", "fac.settlement" };
             for (var i = 0; i < 3; i++)
@@ -580,13 +580,13 @@ namespace SubTerra.App.UI.Guide
                 var y = 30f - i * 22f;
                 var t0 = 0.3f + i * 1.2f;
                 var sel = S(0f, 0f, t0, 0f, t0 + 0.12f, 1f, t0 + 1.08f, 1f, t0 + 1.2f, 0f, 4f, 0f);
-                var row = Spr(c, "art.fill", 0f, 36f, y);
-                row.Size = new Vector2(66f, 18f);
+                var row = Spr(c, "art.fill", 0f, 32f, y);
+                row.Size = new Vector2(94f, 18f);
                 row.SizeIsRect = true;
                 row.Tint = new Color(0.42f, 0.94f, 1f, 0.35f);
                 row.Fade(sel);
-                Txt(c, names[i], 9f, 36f, y, 62f, Color.white, true);
-                Spr(c, previews[i], 50f, 100f, -2f).Fade(sel);
+                Txt(c, names[i], 9f, 32f, y, 90f, Color.white, true);
+                Spr(c, previews[i], 50f, 112f, -2f).Fade(sel);
             }
 
             Box(c, 6f, 6f, 126f, 44f, Warn).Fade(S(0f, 1f, 0.5f, 0.2f, 1f, 1f, 1.5f, 0.2f, 2f, 1f, 2.5f, 0.2f, 3f, 1f, 3.5f, 0.2f, 4f, 1f));

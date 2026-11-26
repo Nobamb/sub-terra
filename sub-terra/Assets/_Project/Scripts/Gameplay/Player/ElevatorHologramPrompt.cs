@@ -1,5 +1,6 @@
 using System;
 using SubTerra.Shared.Audio;
+using SubTerra.Shared.Localization;
 using TMPro;
 using UnityEngine;
 
@@ -57,6 +58,7 @@ namespace SubTerra.Gameplay.Player
                 if (elevator != null)
                 {
                     elevator.PromptChanged += OnPromptChanged;
+                    LocalizationService.LanguageChanged += OnPromptChanged;
                     SetPrompt(elevator.PromptKind);
                 }
             }
@@ -68,6 +70,7 @@ namespace SubTerra.Gameplay.Player
 
         private void OnDisable()
         {
+            LocalizationService.LanguageChanged -= OnPromptChanged;
             if (elevator != null)
             {
                 elevator.PromptChanged -= OnPromptChanged;
