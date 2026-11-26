@@ -39,8 +39,6 @@ namespace SubTerra.App.Integration
             {
                 if (shortcuts[i].name != "SettingsShortcut") continue;
                 UiSfx.Attach(shortcuts[i], SfxId.None, hover: true);
-                var label = shortcuts[i].GetComponentInChildren<TMPro.TMP_Text>(true);
-                if (label != null) label.text = "설정(esc)";
                 break;
             }
             for (var i = 0; i < shortcuts.Length; i++)

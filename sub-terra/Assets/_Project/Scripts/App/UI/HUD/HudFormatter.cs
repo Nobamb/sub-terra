@@ -72,13 +72,13 @@ namespace SubTerra.App.UI.HUD
         public static string FormatGold(int gold)
         {
             var safe = gold < 0 ? 0 : gold;
-            return "골드 " + safe;
+            return LocalizationService.Text("골드 ", "Gold ") + safe;
         }
 
         public static string FormatDepth(int depth)
         {
             var safe = depth < 0 ? 0 : depth;
-            return "깊이 " + safe + "m";
+            return LocalizationService.Text("깊이 ", "Depth ") + safe + "m";
         }
 
         public static string FormatCargoAmount(float cargoWeight)
@@ -113,7 +113,7 @@ namespace SubTerra.App.UI.HUD
                 value = 0f;
             }
 
-            return "미정산 " + value.ToString("0");
+            return LocalizationService.Text("미정산 ", "Unsettled ") + value.ToString("0");
         }
 
         public static string FormatStructuralRisk(StructuralRiskLevel level)
