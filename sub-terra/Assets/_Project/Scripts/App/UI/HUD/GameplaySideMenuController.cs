@@ -1,6 +1,7 @@
 using System.Collections;
 using SubTerra.App.Audio;
 using SubTerra.Shared.Audio;
+using SubTerra.Shared.Localization;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -21,7 +22,12 @@ namespace SubTerra.App.UI.HUD
         public bool IsOpen { get; private set; }
         public bool IsTransitioning { get; private set; }
 
-        private void OnEnable() => ResetClosed();
+        private void OnEnable()
+        {
+            LocalizationService.LanguageChanged += RefreshLabels;
+            RefreshLabels();
+            ResetClosed();
+        }
 
         private void Update()
         {
@@ -56,8 +62,28 @@ namespace SubTerra.App.UI.HUD
 
         private void OnDisable()
         {
+            LocalizationService.LanguageChanged -= RefreshLabels;
             StopAllCoroutines();
             ResetClosed();
+        }
+
+        private void RefreshLabels()
+        {
+            var bar = openRoot != null ? openRoot.Find("PanelShortcutBar") : null;
+            if (bar == null) return;
+
+            SetShortcutLabel(bar, "Open0", LocalizationService.Text("시설", "Build") + " [B]");
+            SetShortcutLabel(bar, "Open1", LocalizationService.Text("인벤토리", "Inventory") + " [I]");
+            SetShortcutLabel(bar, "Open2", LocalizationService.Text("업그레이드", "Upgrades") + " [U]");
+            SetShortcutLabel(bar, "Open3", LocalizationService.Text("게임 가이드", "Game Guide") + " [G]");
+            SetShortcutLabel(bar, "SettingsShortcut", LocalizationService.Get("main_menu.settings"));
+            SetShortcutLabel(bar, "QuitShortcut", LocalizationService.Text("게임 종료 (O)", "Quit (O)"));
+        }
+
+        private static void SetShortcutLabel(Transform bar, string buttonName, string text)
+        {
+            var label = bar.Find(buttonName)?.GetComponentInChildren<TMP_Text>(true);
+            if (label != null) label.text = text;
         }
 
         private void ResetClosed()

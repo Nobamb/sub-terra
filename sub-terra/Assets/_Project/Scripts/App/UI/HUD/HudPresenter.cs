@@ -68,8 +68,12 @@ namespace SubTerra.App.UI.HUD
         public void RefreshLocalizedText()
         {
             var energy = boundState?.GetEnergy() ?? default;
+            var inventory = boundState?.GetInventory() ?? default;
             view.SetEnergy(HudFormatter.FormatEnergy(energy));
-            view.SetCargo(HudFormatter.FormatCargo(boundState?.GetInventory().CargoWeight ?? 0f));
+            view.SetCargo(HudFormatter.FormatCargo(inventory.CargoWeight));
+            view.SetDepth(HudFormatter.FormatDepth(boundState?.Run.Depth ?? 0));
+            view.SetGold(HudFormatter.FormatGold(boundState?.Player.Gold ?? 0));
+            view.SetUnsettledValue(HudFormatter.FormatUnsettledValue(inventory.UnsettledValue));
         }
 
         private void RenderAll()

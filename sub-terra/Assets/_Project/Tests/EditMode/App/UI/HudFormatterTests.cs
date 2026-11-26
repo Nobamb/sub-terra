@@ -1,11 +1,34 @@
 using NUnit.Framework;
 using SubTerra.App.State;
 using SubTerra.App.UI.HUD;
+using SubTerra.Shared.Localization;
 
 namespace SubTerra.App.Tests.UI
 {
     public sealed class HudFormatterTests
     {
+        [Test]
+        public void MineCounters_SwitchLanguageAndKeepValues()
+        {
+            var previous = LocalizationService.Current;
+            try
+            {
+                LocalizationService.SetLanguage(GameLanguage.English);
+                Assert.That(HudFormatter.FormatDepth(12), Is.EqualTo("Depth 12m"));
+                Assert.That(HudFormatter.FormatGold(37), Is.EqualTo("Gold 37"));
+                Assert.That(HudFormatter.FormatUnsettledValue(45f), Is.EqualTo("Unsettled 45"));
+
+                LocalizationService.SetLanguage(GameLanguage.Korean);
+                Assert.That(HudFormatter.FormatDepth(12), Is.EqualTo("깊이 12m"));
+                Assert.That(HudFormatter.FormatGold(37), Is.EqualTo("골드 37"));
+                Assert.That(HudFormatter.FormatUnsettledValue(45f), Is.EqualTo("미정산 45"));
+            }
+            finally
+            {
+                LocalizationService.SetLanguage(previous);
+            }
+        }
+
         [Test]
         public void FormatEnergy_UsesCurrentAndMax()
         {
