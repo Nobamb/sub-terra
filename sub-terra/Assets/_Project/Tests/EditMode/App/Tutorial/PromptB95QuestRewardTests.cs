@@ -8,6 +8,7 @@ using SubTerra.App.Save;
 using SubTerra.App.State;
 using SubTerra.App.Tutorial;
 using SubTerra.App.UI.Tutorial;
+using SubTerra.Shared.Localization;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -358,6 +359,30 @@ namespace SubTerra.App.Tests.Tutorial
                 Assert.That(row.anchoredPosition.y, Is.EqualTo(-420f));
                 Assert.That(hint.anchoredPosition, Is.EqualTo(new Vector2(330f, -302f)));
                 Assert.That(panel.gameObject.activeSelf, Is.False);
+                var previousLanguage = LocalizationService.Current;
+                try
+                {
+                    LocalizationService.SetLanguage(GameLanguage.English);
+                    view.SetClaimText("Quest Complete", "Objective", "", "");
+                    view.SetClaimRewards(new QuestReward(3, 0, 0, 0));
+                    var rewardLabel = row.Find("ClaimRewardLabel").GetComponent<TMP_Text>();
+                    Assert.That(rewardLabel.text, Is.EqualTo("Reward"));
+                    Assert.That(rewardLabel.textWrappingMode, Is.EqualTo(TextWrappingModes.NoWrap));
+                    Assert.That(rewardLabel.rectTransform.rect.width,
+                        Is.GreaterThanOrEqualTo(rewardLabel.GetPreferredValues().x));
+                    Assert.That(row.Find("Copper/Amount").GetComponent<TMP_Text>().text, Is.EqualTo("Copper × 3"));
+
+                    view.SetClaimRewards(new QuestReward(3, 3, 3, 50));
+                    var layout = row.GetComponent<HorizontalLayoutGroup>();
+                    var usedWidth = rewardLabel.rectTransform.rect.width + layout.padding.horizontal;
+                    foreach (var name in new[] { "Copper", "Iron", "Lithium", "Gold" })
+                        usedWidth += ((RectTransform)row.Find(name)).rect.width + layout.spacing;
+                    Assert.That(usedWidth, Is.LessThanOrEqualTo(row.rect.width));
+                }
+                finally
+                {
+                    LocalizationService.SetLanguage(previousLanguage);
+                }
                 Assert.That(panel.Find("ClaimCloseButton").GetComponent<Button>().onClick.GetPersistentMethodName(0),
                     Is.EqualTo(nameof(DemoObjectiveView.OnClaimConfirmClicked)));
             }

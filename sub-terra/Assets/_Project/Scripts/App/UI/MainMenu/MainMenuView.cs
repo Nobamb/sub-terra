@@ -345,7 +345,34 @@ namespace SubTerra.App.UI.MainMenu
             {
                 text.text = label;
                 text.alpha = enabled ? 1f : 0.4f;
+                var icon = continueButton.transform.Find("Icon") as RectTransform;
+                if (icon != null) ApplyPrimaryActionLayout((RectTransform)continueButton.transform, text, icon);
             }
+        }
+
+        public const float PrimaryActionIconSize = 70f;
+        public const float PrimaryActionIconGap = 20f;
+
+        public static void ApplyPrimaryActionLayout(RectTransform button, TMP_Text label, RectTransform icon)
+        {
+            const float labelPadding = 16f;
+            var maxTextWidth = Mathf.Max(1f, button.rect.width - PrimaryActionIconSize
+                - PrimaryActionIconGap - labelPadding * 2f);
+            label.textWrappingMode = TextWrappingModes.NoWrap;
+            label.overflowMode = TextOverflowModes.Ellipsis;
+            var textWidth = Mathf.Min(label.GetPreferredValues(label.text).x, maxTextWidth);
+            var left = -(PrimaryActionIconSize + PrimaryActionIconGap + textWidth) * 0.5f;
+            var center = new Vector2(0.5f, 0.5f);
+
+            icon.anchorMin = icon.anchorMax = icon.pivot = center;
+            icon.sizeDelta = new Vector2(PrimaryActionIconSize, PrimaryActionIconSize);
+            icon.anchoredPosition = new Vector2(left + PrimaryActionIconSize * 0.5f, -2f);
+
+            var textRect = label.rectTransform;
+            textRect.anchorMin = textRect.anchorMax = textRect.pivot = center;
+            textRect.sizeDelta = new Vector2(textWidth + labelPadding, button.rect.height - 8f);
+            textRect.anchoredPosition = new Vector2(left + PrimaryActionIconSize
+                + PrimaryActionIconGap + textWidth * 0.5f, -4f);
         }
 
         public void RefreshMenuLabels()

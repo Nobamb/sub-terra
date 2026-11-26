@@ -191,9 +191,11 @@ namespace SubTerra.App.Editor.DataValidation
             var existingRewardLabel = panel.transform.Find("ClaimRewardLabel");
             if (existingRewardLabel != null) existingRewardLabel.SetParent(rewardRow, false);
             var rewardLabel = EnsureText(rewardRow, "ClaimRewardLabel", Vector2.zero,
-                new Vector2(100f, 44f), 32f, TextAlignmentOptions.MidlineLeft, font);
+                new Vector2(DemoObjectiveView.ClaimRewardLabelMinWidth, 44f),
+                DemoObjectiveView.ClaimRewardLabelFontSize, TextAlignmentOptions.MidlineLeft, font);
             rewardLabel.transform.SetAsFirstSibling();
             rewardLabel.text = "보상";
+            rewardLabel.textWrappingMode = TextWrappingModes.NoWrap;
             rewardLabel.color = new Color(0.4f, 1f, 1f, 1f);
             var check = EnsureImage(panel.transform, "ClaimCheckSign", SpriteAt("check-sign.png"),
                 new Vector2(0f, 1f), new Vector2(230f, -270f), new Vector2(112f, 112f));

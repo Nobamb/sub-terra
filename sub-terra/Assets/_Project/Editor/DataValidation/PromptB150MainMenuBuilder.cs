@@ -54,8 +54,8 @@ namespace SubTerra.App.Editor.DataValidation
         public const float DeleteInsetX = 36f;
         public const float DeleteInsetY = 34f;
         public const float DeleteIdleAlpha = 0.72f;
-        public const float ContinueIconSize = 70f;
-        public const float ContinueIconGap = 20f;
+        public const float ContinueIconSize = MainMenuView.PrimaryActionIconSize;
+        public const float ContinueIconGap = MainMenuView.PrimaryActionIconGap;
 
         private static readonly Vector4 BarBorder = new Vector4(22f, 0f, 22f, 0f);
 
@@ -112,7 +112,8 @@ namespace SubTerra.App.Editor.DataValidation
                 new Vector2(ContinueSize.x, ContinueSize.x * 728f / 2159f), contIcon, bright: true,
                 glowColor: new Color(0.45f, 0.9f, 1f));
             ButtonLabel(cont, "이어하기", 40f, 0f, -4f, 330f, Hex("E6FBFF"), bold: true);
-            PlaceContinueContent(cont, contIcon);
+            MainMenuView.ApplyPrimaryActionLayout((RectTransform)cont.transform,
+                cont.transform.Find("Label").GetComponent<TMP_Text>(), contIcon.rectTransform);
 
             var labels = new[] { "새 게임", "설정(esc)", "종료" };
             var names = new[] { "NewGameButton", "SettingsButton", "QuitButton" };
@@ -459,19 +460,6 @@ namespace SubTerra.App.Editor.DataValidation
             label.raycastTarget = false;
             Place(label.rectTransform, x, y, width, ((RectTransform)button.transform).sizeDelta.y - 8f);
             label.transform.SetAsLastSibling();
-        }
-
-        /// <summary>이어하기 아이콘과 글자를 한 묶음으로 보고 버튼 가운데에 놓는다. 아이콘과 글자 사이는 일정한 간격만 둔다.</summary>
-        private static void PlaceContinueContent(UnityEngine.UI.Button button, Image icon)
-        {
-            var label = button.transform.Find("Label").GetComponent<TMP_Text>();
-            var textWidth = Mathf.Min(label.GetPreferredValues(label.text).x, 320f);
-            var total = ContinueIconSize + ContinueIconGap + textWidth;
-            var left = -total * 0.5f;
-            // 아이콘 그림이 칸 안에서 약간 위로 그려져 있어 2px 내린다.
-            Place(icon.rectTransform, left + ContinueIconSize * 0.5f, -2f, ContinueIconSize, ContinueIconSize);
-            Place(label.rectTransform, left + ContinueIconSize + ContinueIconGap + textWidth * 0.5f, -4f,
-                textWidth + 16f, ((RectTransform)button.transform).sizeDelta.y - 8f);
         }
 
         private static TMP_Text Text(Transform parent, string name, TMP_FontAsset font, string value,
