@@ -4,6 +4,7 @@ using SubTerra.App.Run;
 using SubTerra.App.UI.HUD;
 using SubTerra.App.UI.MainMenu;
 using SubTerra.Shared.Audio;
+using SubTerra.Shared.Localization;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -41,6 +42,7 @@ namespace SubTerra.App.UI.EmergencyRescue
         private Canvas canvas;
         private GlitchPopupChrome chrome;
         private RectTransform contentRect;
+        private TMP_Text titleText;
         private TMP_Text messageText;
         private TMP_Text footerText;
         private EmergencyRescueCostTable table;
@@ -126,12 +128,17 @@ namespace SubTerra.App.UI.EmergencyRescue
         public void Refresh(EmergencyRescueCost cost, string message)
         {
             displayedCost = cost;
-            SetMessage(string.IsNullOrWhiteSpace(message) ? DefaultMessage : message);
+            titleText.text = LocalizationService.Get("rescue.title", Title);
+            rescueLabel.text = LocalizationService.Get("rescue.request", RescueLabel);
+            closeLabel.text = LocalizationService.Get("rescue.close", CloseLabel);
+            SetMessage(string.IsNullOrWhiteSpace(message)
+                ? LocalizationService.Get("rescue.confirm", DefaultMessage) : message);
+            string costNote = EmergencyRescueCostRows.BuildFooter(cost);
             table.Apply(
                 EmergencyRescueCostRows.Build(cost),
-                cost == null ? EmergencyRescueCostRows.BuildFooter(null) : EmergencyRescueCostRows.FreeMessage,
+                cost == null || cost.IsFree ? costNote : LocalizationService.Get("rescue.cost.free"),
                 iconResolver);
-            footerText.text = cost == null || cost.IsFree ? string.Empty : EmergencyRescueCostRows.BuildFooter(cost);
+            footerText.text = cost == null || cost.IsFree ? string.Empty : costNote;
         }
 
         public void SetMessage(string message)
@@ -304,14 +311,13 @@ namespace SubTerra.App.UI.EmergencyRescue
 
         private void BuildContent(MineResetTimedPopupSkin skin)
         {
-            TMP_Text title = EmergencyRescueUi.Text(
+            titleText = EmergencyRescueUi.Text(
                 contentRect, "Title", font, 40f, FontStyles.Bold, EmergencyRescueUi.TitleRed,
                 TextAlignmentOptions.Center, new Vector2(0f, 262f), new Vector2(600f, 56f));
-            title.text = Title;
-            title.characterSpacing = 3f;
-            title.enableAutoSizing = true;
-            title.fontSizeMin = 28f;
-            title.fontSizeMax = 40f;
+            titleText.characterSpacing = 3f;
+            titleText.enableAutoSizing = true;
+            titleText.fontSizeMin = 28f;
+            titleText.fontSizeMax = 40f;
 
             // 제목 양옆 붉은 마름모. 경고색은 제목과 이 장식에만 쓴다.
             for (var side = -1; side <= 1; side += 2)

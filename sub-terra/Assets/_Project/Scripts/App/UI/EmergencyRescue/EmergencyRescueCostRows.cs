@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using SubTerra.App.Run;
+using SubTerra.Shared.Localization;
 
 namespace SubTerra.App.UI.EmergencyRescue
 {
@@ -50,23 +51,26 @@ namespace SubTerra.App.UI.EmergencyRescue
             {
                 rows.Add(new EmergencyRescueCostRow(
                     GoldResourceId,
-                    GoldName,
+                    LocalizationService.Get("rescue.cost.gold", GoldName),
                     true,
                     FormatDeduct(cost.GoldCharged, GoldUnit),
                     FormatAmount(cost.GoldBefore, GoldUnit),
                     FormatAmount(cost.GoldAfter, GoldUnit)));
             }
 
+            string unit = LocalizationService.Current == GameLanguage.English ? string.Empty : ItemUnit;
             for (var i = 0; i < cost.Minerals.Count; i++)
             {
                 EmergencyRescueMineralCost mineral = cost.Minerals[i];
+                string fallbackName = string.IsNullOrWhiteSpace(mineral.DisplayName)
+                    ? mineral.MineralId : mineral.DisplayName;
                 rows.Add(new EmergencyRescueCostRow(
                     mineral.MineralId,
-                    string.IsNullOrWhiteSpace(mineral.DisplayName) ? mineral.MineralId : mineral.DisplayName,
+                    LocalizationService.Get("rescue.resource." + mineral.MineralId, fallbackName),
                     false,
-                    FormatDeduct(mineral.Charged, ItemUnit),
-                    FormatAmount(mineral.Before, ItemUnit),
-                    FormatAmount(mineral.After, ItemUnit)));
+                    FormatDeduct(mineral.Charged, unit),
+                    FormatAmount(mineral.Before, unit),
+                    FormatAmount(mineral.After, unit)));
             }
 
             return rows;
@@ -87,12 +91,13 @@ namespace SubTerra.App.UI.EmergencyRescue
         {
             if (cost == null)
             {
-                return "비용 정보를 불러올 수 없습니다.";
+                return LocalizationService.Get("rescue.cost.missing");
             }
 
             return cost.IsFree
-                ? FreeMessage
-                : "※ 미정산 광물은 종류별 " + EmergencyRescueService.MineralLossPercent + "%가 차감됩니다.";
+                ? LocalizationService.Get("rescue.cost.free", FreeMessage)
+                : string.Format(CultureInfo.InvariantCulture,
+                    LocalizationService.Get("rescue.cost.mineral_loss"), EmergencyRescueService.MineralLossPercent);
         }
 
         /// <summary>표시한 비용과 지금 계산한 비용이 같은지. 다르면 결제 전에 다시 보여 준다.</summary>
