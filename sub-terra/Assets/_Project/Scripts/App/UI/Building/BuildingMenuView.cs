@@ -3,6 +3,7 @@ using System.Text;
 using SubTerra.App.Audio;
 using SubTerra.App.Core.Data;
 using SubTerra.Shared.Audio;
+using SubTerra.Shared.Localization;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -121,6 +122,8 @@ namespace SubTerra.App.UI.Building
         {
             HideLegacyChrome();
             WireControls();
+            LocalizationService.LanguageChanged += RefreshCatalogLabels;
+            RefreshCatalogLabels();
             ApplyCanvasOrder();
             ApplyPage(true);
             PlayOpenMotion();
@@ -128,6 +131,7 @@ namespace SubTerra.App.UI.Building
 
         private void OnDisable()
         {
+            LocalizationService.LanguageChanged -= RefreshCatalogLabels;
             ReleaseSearchPause();
             HideRailHoverNow();
         }
@@ -289,8 +293,9 @@ namespace SubTerra.App.UI.Building
                 selectionText.text = UsesBuildingMode
                     ? string.Empty
                     : UsesStructuredLayout
-                        ? "왼쪽 목록에서 설치할 시설을 선택하세요.\n용도, 필요 자원과 설치 조건이 여기에 표시됩니다."
-                        : "시설을 선택하세요.";
+                        ? LocalizationService.Text("왼쪽 목록에서 설치할 시설을 선택하세요.\n용도, 필요 자원과 설치 조건이 여기에 표시됩니다.",
+                            "Choose a facility on the left to see its purpose, costs and placement conditions.")
+                        : LocalizationService.Text("시설을 선택하세요.", "Choose a facility.");
             }
 
             if (selectedIcon != null)
@@ -307,7 +312,7 @@ namespace SubTerra.App.UI.Building
 
             if (detailNameText != null)
             {
-                detailNameText.text = "시설 미선택";
+                detailNameText.text = BuildingMenuDisplayFormatter.Title(BuildingAvailabilityDisplayKind.Idle);
             }
 
             if (detailOperatingConditionText != null)
@@ -363,7 +368,7 @@ namespace SubTerra.App.UI.Building
 
             if (availability.CanPlace)
             {
-                availabilityText.text = "✓ 설치 가능";
+                availabilityText.text = "✓ " + BuildingMenuDisplayFormatter.Title(BuildingAvailabilityDisplayKind.Ready);
                 availabilityText.color = new Color(0.35f, 0.92f, 0.5f);
                 return;
             }
@@ -374,7 +379,9 @@ namespace SubTerra.App.UI.Building
                 return;
             }
 
-            var prefix = availability.CanAfford ? "⚠ 위치 확인" : "X 자원 부족";
+            var prefix = availability.CanAfford
+                ? LocalizationService.Text("⚠ 위치 확인", "⚠ Check Placement")
+                : LocalizationService.Text("X 자원 부족", "X Not Enough Resources");
             availabilityText.text = string.IsNullOrEmpty(availability.Message)
                 ? prefix
                 : prefix + "\n" + availability.Message;
@@ -462,7 +469,7 @@ namespace SubTerra.App.UI.Building
             var item = FindItem(buildingId);
             var displayName = item != null && !string.IsNullOrEmpty(item.DisplayName)
                 ? item.DisplayName
-                : ItemDisplayNames.Building(buildingId);
+                : ItemDisplayNames.LocalizedBuilding(buildingId);
             railHologram.Show(anchor, displayName);
             railHologram.transform.SetAsLastSibling();
         }
@@ -1137,6 +1144,62 @@ namespace SubTerra.App.UI.Building
             }
         }
 
+        private void RefreshCatalogLabels()
+        {
+            if (!UsesBuildingMode) return;
+
+            var title = LocalizationService.Text("시설 목록", "Facilities");
+            SetCatalogLabel(listPage, "Title", title + " <color=#6B8C99><size=70%>· "
+                + (catalogRows?.Length ?? 0) + "</size></color>");
+            SetCatalogLabel(detailPage, "BackButton/Label", "< " + title);
+            SetCatalogLabel(detailPage, "DetailTitle", LocalizationService.Text("시설 상세", "Facility Details"));
+            SetCatalogLabel(detailPage, "FunctionLabel", LocalizationService.Text("기능", "Function"));
+            var costCaption = LocalizationService.Text(
+                "건설 비용 <color=#6B8C99>· 보유 / 필요</color>",
+                "Build Cost <color=#6B8C99>· Owned / Required</color>");
+            SetCatalogLabel(costSection, "CostLabel", costCaption);
+            SetCatalogLabel(detailPage, "DetailBody/CostLabel", costCaption);
+            if (emptyResult != null && emptyResult.TryGetComponent<TMP_Text>(out var emptyLabel))
+                emptyLabel.text = LocalizationService.Text("맞는 시설이 없습니다.", "No facilities match.");
+            if (searchField != null && searchField.placeholder is TMP_Text placeholder)
+                placeholder.text = LocalizationService.Text("시설명 검색", "Search facilities");
+
+            RefreshSortLabels();
+        }
+
+        private static void SetCatalogLabel(GameObject page, string path, string text)
+        {
+            var target = page != null ? page.transform.Find(path) : null;
+            if (target != null && target.TryGetComponent<TMP_Text>(out var label))
+                label.text = text;
+        }
+
+        private void RefreshSortLabels()
+        {
+            if (sortDropdown == null) return;
+            var labels = BuildingCatalogQuery.AllLabels();
+            var options = sortDropdown.options;
+            var changed = options.Count != labels.Count;
+            if (changed)
+            {
+                sortDropdown.ClearOptions();
+                sortDropdown.AddOptions(new List<string>(labels));
+            }
+            else
+            {
+                for (var i = 0; i < labels.Count; i++)
+                {
+                    if (options[i].text == labels[i]) continue;
+                    options[i].text = labels[i];
+                    changed = true;
+                }
+            }
+
+            if (changed) CloseSortList();
+            sortDropdown.SetValueWithoutNotify((int)navigation.Sort);
+            sortDropdown.RefreshShownValue();
+        }
+
         private void ApplySearchFilter()
         {
             if (catalogRows == null || catalogRows.Length == 0)
@@ -1272,7 +1335,9 @@ namespace SubTerra.App.UI.Building
             if (detailPageCondition != null)
             {
                 var condition = BuildingMenuDisplayFormatter.OperatingCondition(item.BuildingId);
-                detailPageCondition.text = string.IsNullOrEmpty(condition) ? string.Empty : "설치 조건 · " + condition;
+                detailPageCondition.text = string.IsNullOrEmpty(condition)
+                    ? string.Empty
+                    : LocalizationService.Text("설치 조건 · ", "Placement Condition · ") + condition;
                 SetActive(detailPageCondition.gameObject, !string.IsNullOrEmpty(condition));
             }
 
@@ -1454,7 +1519,7 @@ namespace SubTerra.App.UI.Building
             builder
                 .Append(item.Description)
                 .AppendLine()
-                .Append("비용: ");
+                .Append(LocalizationService.Text("비용: ", "Cost: "));
 
             for (var i = 0; i < item.Costs.Count; i++)
             {
@@ -1464,7 +1529,7 @@ namespace SubTerra.App.UI.Building
                 }
 
                 var cost = item.Costs[i];
-                builder.Append(ItemDisplayNames.Mineral(cost.ItemId))
+                builder.Append(ItemDisplayNames.LocalizedMineral(cost.ItemId))
                     .Append(' ')
                     .Append(cost.Owned)
                     .Append('/')

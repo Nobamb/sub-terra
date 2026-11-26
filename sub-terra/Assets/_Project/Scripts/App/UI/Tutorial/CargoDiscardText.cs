@@ -1,3 +1,4 @@
+using static SubTerra.Shared.Localization.LocalizationService;
 using SubTerra.App.Tutorial;
 using SubTerra.App.UI.HUD;
 
@@ -16,11 +17,11 @@ namespace SubTerra.App.UI.Tutorial
     /// <summary>화물 버리기 창(B-153) 문구. 무게는 화물 부족 창과 같은 HUD 형식이다.</summary>
     public static class CargoDiscardText
     {
-        public const string Title = "화물 버리기";
-        public const string RewardCaption = "받을 보상";
-        public const string BackTitle = "돌아가기";
-        public const string BackSubtitle = "화물 부족 창으로";
-        public const string Cleared = "공간 확보 완료";
+        public static string Title => Text("화물 버리기", "Discard Cargo");
+        public static string RewardCaption => Text("받을 보상", "Pending Reward");
+        public static string BackTitle => Text("돌아가기", "Back");
+        public static string BackSubtitle => Text("화물 부족 창으로", "Return to cargo space warning");
+        public static string Cleared => Text("공간 확보 완료", "Space available");
         public const string Minus = "−";
 
         public static readonly CargoDiscardKind[] Kinds =
@@ -33,7 +34,18 @@ namespace SubTerra.App.UI.Tutorial
         };
 
         /// <summary>B-152·B-153 창이 쓰는 모든 글자. 폰트 에셋에 미리 넣고, 테스트가 빠진 글자를 찾는다.</summary>
-        public static string FontCharacters =>
+        public static string FontCharacters
+        {
+            get
+            {
+                var characters = string.Empty;
+                PreviewLanguage("ko", () => characters = CurrentFontCharacters);
+                PreviewLanguage("en", () => characters += CurrentFontCharacters);
+                return characters;
+            }
+        }
+
+        private static string CurrentFontCharacters =>
             CargoFullPopupText.Title
             + CargoFullPopupText.Guide
             + CargoFullPopupText.RewardCaption
@@ -66,15 +78,15 @@ namespace SubTerra.App.UI.Tutorial
             switch (kind)
             {
                 case CargoDiscardKind.One:
-                    return "1개";
+                    return Text("1개", "1 item");
                 case CargoDiscardKind.Five:
-                    return "5개";
+                    return Text("5개", "5 items");
                 case CargoDiscardKind.Ten:
-                    return "10개";
+                    return Text("10개", "10 items");
                 case CargoDiscardKind.Needed:
-                    return "필요";
+                    return Text("필요", "Needed");
                 default:
-                    return "전부";
+                    return Text("전부", "All");
             }
         }
 
@@ -104,9 +116,9 @@ namespace SubTerra.App.UI.Tutorial
         /// <summary>"개당 2 · 합계 160".</summary>
         public static string Detail(float unitWeight, int quantity)
         {
-            return "개당 "
+            return Text("개당 ", "Each ")
                 + HudFormatter.FormatCargoAmount(CargoDiscardMath.Round2(unitWeight))
-                + " · 합계 "
+                + Text(" · 합계 ", " · Total ")
                 + HudFormatter.FormatCargoAmount(CargoDiscardMath.Weight(quantity, unitWeight));
         }
 
@@ -126,10 +138,11 @@ namespace SubTerra.App.UI.Tutorial
 
             if (!need.Covers)
             {
-                return "전부 버려도 " + HudFormatter.FormatCargoAmount(need.Remaining) + " 부족";
+                var remaining = HudFormatter.FormatCargoAmount(need.Remaining);
+                return Text($"전부 버려도 {remaining} 부족", $"Still short by {remaining}");
             }
 
-            return Minus + HudFormatter.FormatCargoAmount(need.Freed) + " (" + need.Count + "개)";
+            return Minus + HudFormatter.FormatCargoAmount(need.Freed) + " (" + Text(need.Count + "개", need.Count.ToString()) + ")";
         }
     }
 }

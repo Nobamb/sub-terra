@@ -1,5 +1,6 @@
 using TMPro;
 using UnityEngine;
+using SubTerra.Shared.Localization;
 
 namespace SubTerra.App.UI.HUD
 {
@@ -136,12 +137,14 @@ namespace SubTerra.App.UI.HUD
 
         public void SetEnergy(string text)
         {
-            SetText(energyText, energyGauge != null ? text.Replace("전력 ", "") : text);
+            if (energyGauge == null) SetText(energyText, text);
         }
 
         public void SetEnergyLevel(float current, int maximum)
         {
-            if (energyGauge != null) energyGauge.SetValue(current, maximum);
+            if (energyGauge == null) return;
+            SetText(energyText, HudFormatter.FormatEnergyValue((int)current, maximum));
+            energyGauge.SetValue(current, maximum);
         }
 
         /// <summary>산소 게이지. 전력과 같은 감소 보간을 쓰며 체력 잔상은 켜지 않는다.</summary>
@@ -158,12 +161,31 @@ namespace SubTerra.App.UI.HUD
             {
                 healthGauge.EnableDamageTrail();
                 healthGauge.SetValue(current, maximum);
+                SetText(healthText, HudFormatter.FormatHealthValue(current, maximum));
             }
         }
 
         public void SetHealth(string text)
         {
-            SetText(healthText, healthGauge != null ? text.Replace("체력 ", "") : text);
+            if (healthGauge == null) SetText(healthText, text);
+        }
+
+        public void RefreshLocalizedLabels()
+        {
+            SetGaugeLabel("EnergyLabel", "hud.energy");
+            SetGaugeLabel("HealthLabel", "hud.health");
+            SetGaugeLabel("OxygenLabel", "hud.oxygen");
+        }
+
+        private void SetGaugeLabel(string objectName, string key)
+        {
+            var label = transform.Find(objectName);
+            var caption = label != null ? label.GetComponent<TMP_Text>() : null;
+            if (caption == null) return;
+            caption.enableAutoSizing = true;
+            caption.fontSizeMin = 14f;
+            caption.fontSizeMax = 20f;
+            SetText(caption, LocalizationService.Get(key));
         }
 
         public void SetDepth(string text)
@@ -217,7 +239,7 @@ namespace SubTerra.App.UI.HUD
                 && interactionPromptText != null;
         }
 
-        private static void SetText(TextMeshProUGUI target, string text)
+        private static void SetText(TMP_Text target, string text)
         {
             if (target != null)
             {

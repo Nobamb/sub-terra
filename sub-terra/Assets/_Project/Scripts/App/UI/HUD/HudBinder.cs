@@ -1,6 +1,7 @@
 using SubTerra.App.Core;
 using SubTerra.App.State;
 using SubTerra.Shared;
+using SubTerra.Shared.Localization;
 using UnityEngine;
 
 namespace SubTerra.App.UI.HUD
@@ -29,16 +30,28 @@ namespace SubTerra.App.UI.HUD
             EnsurePresenter();
             presenter.Bind(ResolveState());
             BindHealthEvents();
+            if (basicHud != null) basicHud.RefreshLocalizedLabels();
+            LocalizationService.LanguageChanged += RefreshLocalizedText;
         }
 
         private void OnDisable()
         {
+            LocalizationService.LanguageChanged -= RefreshLocalizedText;
             if (presenter != null)
             {
                 presenter.Unbind();
             }
 
             UnbindHealthEvents();
+        }
+
+        private void RefreshLocalizedText()
+        {
+            presenter?.RefreshLocalizedText();
+            if (basicHud == null) return;
+            basicHud.RefreshLocalizedLabels();
+            if (healthSource != null)
+                basicHud.SetHealth(HudFormatter.FormatHealth(healthSource.GetHealth()));
         }
 
         /// <summary>테스트·수동 주입용. 활성 중에 호출하면 즉시 재바인드한다.</summary>

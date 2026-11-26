@@ -1,3 +1,4 @@
+using static SubTerra.Shared.Localization.LocalizationService;
 using System;
 using System.Collections.Generic;
 using SubTerra.App.Audio;
@@ -452,8 +453,17 @@ namespace SubTerra.App.UI.Sell
             }
         }
 
+        private void OnEnable() => LanguageChanged += RefreshLanguage;
+
+        private void RefreshLanguage()
+        {
+            if (session != null) session.Refresh();
+            else Render();
+        }
+
         private void OnDisable()
         {
+            LanguageChanged -= RefreshLanguage;
             // 씬 전환·부모 비활성화로 꺼져도 다음 표시가 깨끗하게 시작되도록 되돌린다.
             if (state != PopupState.Hidden)
             {
@@ -624,16 +634,16 @@ namespace SubTerra.App.UI.Sell
 
             ApplyCargo(quote, snapshot);
 
-            totalQuantityText.text = ResourceSellUi.Number(quote.TotalQuantity) + "개";
+            totalQuantityText.text = ResourceSellUi.Number(quote.TotalQuantity) + Text("개", string.Empty);
             totalGoldText.text = "+" + ResourceSellUi.GoldText(quote.TotalGold);
             bonusText.text = quote.BonusGold > 0
-                ? "기본 " + ResourceSellUi.GoldText(quote.BaseGold) + " + 보너스 " + ResourceSellUi.GoldText(quote.BonusGold)
+                ? Text("기본 ", "Base ") + ResourceSellUi.GoldText(quote.BaseGold) + Text(" + 보너스 ", " + Bonus ") + ResourceSellUi.GoldText(quote.BonusGold)
                 : string.Empty;
             projectionText.text = "<color=#E6F7FF>" + ResourceSellUi.Number(snapshot.Gold) + "</color>  →  <color=#FFCC4D>"
                 + ResourceSellUi.GoldText(quote.GoldAfter) + "</color>";
             sellLabel.text = quote.TotalGold > 0 || quote.TotalQuantity > 0
-                ? SellLabel + " · +" + ResourceSellUi.GoldText(quote.TotalGold)
-                : SellLabel;
+                ? Text(SellLabel, "Sell") + " · +" + ResourceSellUi.GoldText(quote.TotalGold)
+                : Text(SellLabel, "Sell");
 
             sellButton.Button.interactable = interactable && quote.CanSell;
             selectAllButton.Button.interactable = interactable && session.HasBulkTargets;
@@ -1257,7 +1267,7 @@ namespace SubTerra.App.UI.Sell
                 ResourceSellUi.WithAlpha(ResourceSellUi.Teal, 0.9f));
             var title = ResourceSellUi.Label(header, "Title", Pad + 18f, TitleY, 420f, 64f, font, 40f, FontStyles.Bold,
                 TitleColor, TextAlignmentOptions.Left);
-            title.text = Title;
+            LocalizedUiText.Bind(title, () => Text(Title, "Sell Resources"));
             title.characterSpacing = 3f;
             if (skin != null && skin.titleDivider != null)
             {
@@ -1275,7 +1285,7 @@ namespace SubTerra.App.UI.Sell
             goldIcon.preserveAspect = true;
             goldLabel = ResourceSellUi.Label(header, "GoldLabel", 0f, 0f, 52f, 48f, font, 20f, FontStyles.Normal,
                 ResourceSellUi.TextMain, TextAlignmentOptions.Center);
-            goldLabel.text = "골드";
+            LocalizedUiText.Bind(goldLabel, () => Text("골드", "Gold"));
             goldValue = ResourceSellUi.Label(header, "GoldValue", 0f, 0f, 120f, 48f, font, 30f, FontStyles.Bold,
                 ResourceSellUi.Gold, TextAlignmentOptions.Right);
             goldValue.overflowMode = TextOverflowModes.Overflow;
@@ -1290,14 +1300,14 @@ namespace SubTerra.App.UI.Sell
             ResourceSellUi.Image(headerStrip, "Strip", ResourceSellArt.ChamferFill(), ResourceSellUi.Strip);
             ResourceSellUi.Image(headerStrip, "StripLine", ResourceSellArt.ChamferOutline(),
                 ResourceSellUi.WithAlpha(ResourceSellUi.Teal, 0.18f));
-            ColumnLabel(headerStrip, "자원", ResourceSellRowView.Columns.IconX + 8f, 200f, TextAlignmentOptions.Left);
-            ColumnLabel(headerStrip, "보유", ResourceSellRowView.Columns.OwnedX, ResourceSellRowView.Columns.OwnedW,
+            ColumnLabel(headerStrip, "자원", "Resource", ResourceSellRowView.Columns.IconX + 8f, 200f, TextAlignmentOptions.Left);
+            ColumnLabel(headerStrip, "보유", "Owned", ResourceSellRowView.Columns.OwnedX, ResourceSellRowView.Columns.OwnedW,
                 TextAlignmentOptions.Center);
-            ColumnLabel(headerStrip, "개당 가격", ResourceSellRowView.Columns.PriceX, ResourceSellRowView.Columns.PriceW,
+            ColumnLabel(headerStrip, "개당 가격", "Unit Price", ResourceSellRowView.Columns.PriceX, ResourceSellRowView.Columns.PriceW,
                 TextAlignmentOptions.Center);
-            ColumnLabel(headerStrip, "판매 수량", ResourceSellRowView.Columns.ControlsX, ResourceSellRowView.Columns.ControlsW,
+            ColumnLabel(headerStrip, "판매 수량", "Quantity", ResourceSellRowView.Columns.ControlsX, ResourceSellRowView.Columns.ControlsW,
                 TextAlignmentOptions.Center);
-            ColumnLabel(headerStrip, "받을 골드", ResourceSellRowView.Columns.GoldX, ResourceSellRowView.Columns.GoldW,
+            ColumnLabel(headerStrip, "받을 골드", "Gold Earned", ResourceSellRowView.Columns.GoldX, ResourceSellRowView.Columns.GoldW,
                 TextAlignmentOptions.Right);
 
             BuildList(list);
@@ -1307,6 +1317,8 @@ namespace SubTerra.App.UI.Sell
                 SelectAllLabel, 20f, ResourceSellButton.Variant.Normal, ResourceSellArt.FillDown(), 20f);
             resetButton = ResourceSellButton.Create(footer, "ResetButton", Pad + 216f, ToolsY, 214f, 50f, font,
                 ResetLabel, 20f, ResourceSellButton.Variant.Normal, ResourceSellArt.ResetArc(), 20f);
+            LocalizedUiText.Bind(selectAllButton.GetComponentInChildren<TMP_Text>(true), () => Text(SelectAllLabel, "Select Max"));
+            LocalizedUiText.Bind(resetButton.GetComponentInChildren<TMP_Text>(true), () => Text(ResetLabel, "Reset Selection"));
             selectAllButton.Button.onClick.AddListener(OnSelectAll);
             resetButton.Button.onClick.AddListener(OnReset);
             UiSfx.Attach(selectAllButton.Button, SfxId.UiClick, failWhenDisabled: false);
@@ -1325,11 +1337,11 @@ namespace SubTerra.App.UI.Sell
             return rect.gameObject.AddComponent<CanvasGroup>();
         }
 
-        private void ColumnLabel(Transform parent, string text, float x, float w, TextAlignmentOptions alignment)
+        private void ColumnLabel(Transform parent, string text, string english, float x, float w, TextAlignmentOptions alignment)
         {
             var label = ResourceSellUi.Label(parent, "Col_" + text, x, 0f, w, 40f, font, 18f, FontStyles.Normal,
                 ResourceSellUi.TextMuted, alignment);
-            label.text = text;
+            LocalizedUiText.Bind(label, () => Text(text, english));
         }
 
         private void BuildCargo(Transform header)
@@ -1342,7 +1354,7 @@ namespace SubTerra.App.UI.Sell
             icon.enabled = cargoSprite != null;
             var label = ResourceSellUi.Label(header, "CargoLabel", x + 62f, y - 2f, 200f, 26f, font, 17f, FontStyles.Normal,
                 ResourceSellUi.TextMuted, TextAlignmentOptions.Left);
-            label.text = "화물 적재량";
+            LocalizedUiText.Bind(label, () => Text("화물 적재량", "Cargo Load"));
             cargoNumbers = ResourceSellUi.Label(header, "CargoNumbers", x + 230f, y - 2f, CardSize.x - Pad - x - 230f, 26f,
                 font, 17f, FontStyles.Normal, ResourceSellUi.TextMain, TextAlignmentOptions.Right);
 
@@ -1415,7 +1427,7 @@ namespace SubTerra.App.UI.Sell
 
             emptyText = ResourceSellUi.Label(list, "Empty", Pad, ListY, width, ListH, font, 24f, FontStyles.Normal,
                 ResourceSellUi.TextMuted, TextAlignmentOptions.Center);
-            emptyText.text = EmptyLabel;
+            LocalizedUiText.Bind(emptyText, () => Text(EmptyLabel, "No resources to sell."));
             emptyText.gameObject.SetActive(false);
         }
 
@@ -1432,7 +1444,7 @@ namespace SubTerra.App.UI.Sell
             var sellX = Pad + barWidth - 28f - SellButtonW;
             var x = Pad + gap;
 
-            Caption(footer, "QuantityCaption", "판매 예정", x, top + 16f);
+            Caption(footer, "QuantityCaption", "판매 예정", "To Sell", x, top + 16f);
             var cube = ResourceSellUi.AddImage(ResourceSellUi.Place(footer, "QuantityIcon", x, top + 54f, 34f, 34f),
                 cargoSprite, cargoSprite != null ? Color.white : Color.clear);
             cube.preserveAspect = true;
@@ -1442,7 +1454,7 @@ namespace SubTerra.App.UI.Sell
             Divider(footer, x, top);
             x += 2f + gap;
 
-            Caption(footer, "GoldCaption", "받을 골드", x, top + 16f);
+            Caption(footer, "GoldCaption", "받을 골드", "Gold Earned", x, top + 16f);
             summaryGlow = ResourceSellUi.AddImage(ResourceSellUi.Place(footer, "GoldGlow", x - 50f, top - 4f, 340f, SummaryH + 8f),
                 ResourceSellArt.Soft(), Color.clear);
             var coin = ResourceSellUi.AddImage(ResourceSellUi.Place(footer, "GoldCoin", x, top + 52f, 38f, 38f),
@@ -1457,7 +1469,7 @@ namespace SubTerra.App.UI.Sell
             Divider(footer, x, top);
             x += 2f + gap;
 
-            Caption(footer, "ProjectionCaption", "예상 골드", x, top + 16f);
+            Caption(footer, "ProjectionCaption", "예상 골드", "Gold After Sale", x, top + 16f);
             var projectionWidth = sellX - 40f - x;
             projectionText = ResourceSellUi.Label(footer, "Projection", x, top + 50f, projectionWidth, 44f, font, 26f,
                 FontStyles.Bold, Color.white, TextAlignmentOptions.Left);
@@ -1482,11 +1494,11 @@ namespace SubTerra.App.UI.Sell
             UiSfx.Attach(sellButton.Button, SfxId.None);
         }
 
-        private void Caption(Transform parent, string name, string text, float x, float y)
+        private void Caption(Transform parent, string name, string text, string english, float x, float y)
         {
             var label = ResourceSellUi.Label(parent, name, x, y, 220f, 26f, font, 17f, FontStyles.Normal,
                 ResourceSellUi.TextMuted, TextAlignmentOptions.Left);
-            label.text = text;
+            LocalizedUiText.Bind(label, () => Text(text, english));
         }
 
         private static void Divider(Transform parent, float x, float top)

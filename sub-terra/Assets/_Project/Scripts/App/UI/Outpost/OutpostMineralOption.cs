@@ -1,3 +1,4 @@
+using static SubTerra.Shared.Localization.LocalizationService;
 using System;
 using System.Collections.Generic;
 using SubTerra.App.Core.Data;
@@ -13,8 +14,10 @@ namespace SubTerra.App.UI.Outpost
         public int OwnedQuantity { get; }
         public int StoredQuantity { get; }
 
+        public string LocalizedName => Text(DisplayName, ItemDisplayNames.LocalizedMineral(MineralId));
+
         public string Label =>
-            DisplayName + "  (보유 " + OwnedQuantity + " / 보관 " + StoredQuantity + ")";
+            LocalizedName + Text($"  (보유 {OwnedQuantity} / 보관 {StoredQuantity})", $"  (Carried {OwnedQuantity} / Stored {StoredQuantity})");
 
         public OutpostMineralOption(
             string mineralId,
@@ -110,7 +113,7 @@ namespace SubTerra.App.UI.Outpost
 
         private static bool Matches(OutpostMineralOption option, string needle)
         {
-            if (ContainsIgnoreCase(option.DisplayName, needle)
+            if (ContainsIgnoreCase(option.LocalizedName, needle) || ContainsIgnoreCase(option.DisplayName, needle)
                 || ContainsIgnoreCase(option.MineralId, needle)
                 || ContainsIgnoreCase(option.Label, needle))
             {

@@ -1,3 +1,4 @@
+using static SubTerra.Shared.Localization.LocalizationService;
 using System;
 using SubTerra.App.Audio;
 using SubTerra.Shared.Audio;
@@ -160,6 +161,7 @@ namespace SubTerra.App.UI.Sell
             plus.Button.onClick.AddListener(() => Raise(1));
             plusFive.Button.onClick.AddListener(() => Raise(PlusFive));
             plusTen.Button.onClick.AddListener(() => Raise(PlusTen));
+            LocalizedUiText.Bind(max.GetComponentInChildren<TMP_Text>(true), () => Text("최대", "Max"));
             max.Button.onClick.AddListener(() =>
             {
                 if (!string.IsNullOrEmpty(ItemId))

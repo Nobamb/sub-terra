@@ -1,5 +1,6 @@
 using SubTerra.App.Core.Data;
 using System.Collections.Generic;
+using SubTerra.Shared.Localization;
 
 namespace SubTerra.App.Tutorial
 {
@@ -132,9 +133,11 @@ namespace SubTerra.App.Tutorial
 
             // 마지막 퀘스트 완료 뒤에도 같은 영구 ID를 유지하므로, 완료 전 작업 문구를
             // 그대로 내보내면 실제 State가 완료됐어도 HUD에서는 미완료처럼 보인다.
-            var title = isDemoComplete ? DemoCompleteTitle : definition.Title;
+            var title = isDemoComplete
+                ? LocalizationService.Get("quest.demo_complete_title", DemoCompleteTitle)
+                : definition.Title;
             var description = isDemoComplete
-                ? DemoCompleteDescription
+                ? LocalizationService.Get("quest.demo_complete_body", DemoCompleteDescription)
                 : definition.Description;
             var nextActionHint = isDemoComplete ? string.Empty : definition.NextActionHint;
 
@@ -148,8 +151,10 @@ namespace SubTerra.App.Tutorial
                 definition.IsTerminal,
                 isDemoComplete,
                 definition.ShowsDismissibleGuidance,
-                definition.GuidanceTitle,
-                definition.GuidanceBody);
+                definition.ShowsDismissibleGuidance
+                    ? LocalizationService.Get("quest.briefing_title", definition.GuidanceTitle) : definition.GuidanceTitle,
+                definition.ShowsDismissibleGuidance
+                    ? LocalizationService.Get("quest.briefing_body", definition.GuidanceBody) : definition.GuidanceBody);
         }
 
         private static QuestReward R(int copper = 0, int iron = 0, int lithium = 0, int gold = 0)

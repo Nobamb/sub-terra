@@ -1,3 +1,4 @@
+using static SubTerra.Shared.Localization.LocalizationService;
 using System;
 using System.Collections.Generic;
 using SubTerra.App.Core.Data;
@@ -166,6 +167,7 @@ namespace SubTerra.App.UI.Guide
         internal static GameGuideCardView CreateStepTile(
             Transform parent,
             GuideFirstStep step,
+            int stepIndex,
             float x,
             float y,
             TMP_FontAsset font,
@@ -202,7 +204,7 @@ namespace SubTerra.App.UI.Guide
             number.text = step.Number;
             var title = ResourceSellUi.Label(rect, "Title", 60f, 8f, StepWidth - 68f, 30f, font, 20f, FontStyles.Bold,
                 Color.white, TextAlignmentOptions.MidlineLeft);
-            title.text = step.Title;
+            LocalizedUiText.Bind(title, () => GameGuideCatalog.FirstSteps[stepIndex].Title);
             title.overflowMode = TextOverflowModes.Ellipsis;
 
             var stageWidth = StepWidth - 20f;
@@ -215,7 +217,7 @@ namespace SubTerra.App.UI.Guide
 
             var caption = ResourceSellUi.Label(rect, "Caption", 10f, 42f + stageWidth * 0.375f + 4f, stageWidth, 28f, font,
                 16f, FontStyles.Normal, ResourceSellUi.TextMuted, TextAlignmentOptions.MidlineLeft);
-            caption.text = step.Caption;
+            LocalizedUiText.Bind(caption, () => GameGuideCatalog.FirstSteps[stepIndex].Caption);
             caption.overflowMode = TextOverflowModes.Ellipsis;
             view.Apply(true);
             return view;
@@ -265,7 +267,7 @@ namespace SubTerra.App.UI.Guide
             name.fontSizeMax = 22f;
             name.fontSizeMin = 15f;
 
-            var tagText = def.Kind == GuideCardKind.Resource ? "자원" : "시설";
+            var tagText = def.Kind == GuideCardKind.Resource ? Text("자원", "Resource") : Text("시설", "Facility");
             var tagRect = ResourceSellUi.Place(rect, "Tag", 104f, 46f, 52f, 24f);
             ResourceSellUi.AddImage(tagRect, ResourceSellArt.ChamferFill(), new Color(0.10f, 0.20f, 0.27f, 1f));
             var tagBorder = ResourceSellUi.Image(tagRect, "Line", ResourceSellArt.ChamferOutline(),

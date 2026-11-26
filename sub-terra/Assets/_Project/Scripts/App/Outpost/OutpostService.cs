@@ -1,3 +1,4 @@
+using static SubTerra.Shared.Localization.LocalizationService;
 using System;
 using System.Collections.Generic;
 using SubTerra.App.Core.Data;
@@ -149,9 +150,9 @@ namespace SubTerra.App.Outpost
                     return false;
                 }
 
-                message = facilityName
-                    + " 사용불가, 전력망 미연결\n"
-                    + ("엘리베이터 또는 " + ItemDisplayNames.OutpostName + " 근처에서 전력망 연결이 가능합니다.");
+                message = Text(
+                    facilityName + " 사용불가, 전력망 미연결\n엘리베이터 또는 " + ItemDisplayNames.OutpostName + " 근처에서 전력망 연결이 가능합니다.",
+                    $"{ItemDisplayNames.LocalizedBuilding(buildingId)} is offline. Build within power range of an elevator or outpost.");
                 return true;
             }
 
@@ -202,6 +203,14 @@ namespace SubTerra.App.Outpost
 
             var minutes = total / 60;
             var seconds = total % 60;
+            if (Current == SubTerra.Shared.Localization.GameLanguage.English)
+            {
+                var facility = ItemDisplayNames.LocalizedBuilding(buildingId == DataIds.Buildings.ClinicBasic
+                    ? DataIds.Buildings.ClinicBasic : DataIds.Buildings.ChargerBasic);
+                var duration = minutes == 0 ? $"{seconds}s" : $"{minutes}m {seconds}s";
+                return $"{facility} ready in {duration}.";
+            }
+
             if (minutes > 0 && seconds == 0)
             {
                 return facilityName + " 재사용까지 " + minutes + "분 남았습니다.";
@@ -248,7 +257,7 @@ namespace SubTerra.App.Outpost
                 string.Empty,
                 target - before,
                 0,
-                target == before ? "이미 완전히 충전되었습니다." : "충전이 완료되었습니다.");
+                target == before ? Text("이미 완전히 충전되었습니다.", "Power is already full.") : Text("충전이 완료되었습니다.", "Power recharged."));
             RaiseSnapshotChanged();
             return Complete(result);
         }
@@ -277,7 +286,7 @@ namespace SubTerra.App.Outpost
                 return Complete(Fail(
                     OutpostOperationStatus.DependencyMissing,
                     OutpostOperationKind.Heal,
-                    "플레이어 체력 상태가 연결되지 않았습니다."));
+                    Text("플레이어 체력 상태가 연결되지 않았습니다.", "Player health is unavailable.")));
             }
 
             var restored = healthCommand.RestoreFull();
@@ -287,7 +296,7 @@ namespace SubTerra.App.Outpost
                 string.Empty,
                 0,
                 0,
-                restored ? "체력 회복이 완료되었습니다." : "이미 체력이 최대입니다.");
+                restored ? Text("체력 회복이 완료되었습니다.", "Health restored.") : Text("이미 체력이 최대입니다.", "Health is already full."));
             RaiseSnapshotChanged();
             return Complete(result);
         }
@@ -321,7 +330,7 @@ namespace SubTerra.App.Outpost
                 return Complete(Fail(
                     OutpostOperationStatus.InsufficientQuantity,
                     OutpostOperationKind.Deposit,
-                    "플레이어 화물이 부족합니다."));
+                    Text("플레이어 화물이 부족합니다.", "Not enough cargo.")));
             }
 
             if (storageQuantity > int.MaxValue - transferQuantity)
@@ -329,7 +338,7 @@ namespace SubTerra.App.Outpost
                 return Complete(Fail(
                     OutpostOperationStatus.OverflowRisk,
                     OutpostOperationKind.Deposit,
-                    "보관함 수량 한도를 초과합니다."));
+                    Text("보관함 수량 한도를 초과합니다.", "Storage quantity limit exceeded.")));
             }
 
             // 출발지 검증을 모두 마친 뒤 두 상태를 한 경로에서 변경한다.
@@ -339,7 +348,7 @@ namespace SubTerra.App.Outpost
                 return Complete(Fail(
                     OutpostOperationStatus.InsufficientQuantity,
                     OutpostOperationKind.Deposit,
-                    "화물 이동에 실패했습니다."));
+                    Text("화물 이동에 실패했습니다.", "Could not transfer cargo.")));
             }
 
             state.SetStorageQuantity(mineralId, storageQuantity + transferQuantity);
@@ -348,7 +357,7 @@ namespace SubTerra.App.Outpost
                 mineralId,
                 transferQuantity,
                 0,
-                "보관함에 " + transferQuantity + "개를 옮겼습니다.");
+                Text($"보관함에 {transferQuantity}개를 옮겼습니다.", $"Deposited {transferQuantity}."));
             RaiseSnapshotChanged();
             return Complete(result);
         }
@@ -381,7 +390,7 @@ namespace SubTerra.App.Outpost
                 return Complete(Fail(
                     OutpostOperationStatus.InsufficientQuantity,
                     OutpostOperationKind.Withdraw,
-                    "보관함 수량이 부족합니다."));
+                    Text("보관함 수량이 부족합니다.", "Not enough in storage.")));
             }
 
             var playerQuantity = inventory.State.GetQuantity(mineralId);
@@ -390,7 +399,7 @@ namespace SubTerra.App.Outpost
                 return Complete(Fail(
                     OutpostOperationStatus.OverflowRisk,
                     OutpostOperationKind.Withdraw,
-                    "플레이어 화물 수량 한도를 초과합니다."));
+                    Text("플레이어 화물 수량 한도를 초과합니다.", "Cargo quantity limit exceeded.")));
             }
 
             // 화물의 기존 부분 수용 규칙을 사용하고 실제로 받은 양만 보관함에서 차감한다.
@@ -401,7 +410,7 @@ namespace SubTerra.App.Outpost
                 return Complete(Fail(
                     OutpostOperationStatus.CapacityExceeded,
                     OutpostOperationKind.Withdraw,
-                    "자원을 꺼낼 화물 공간이 부족합니다."));
+                    Text("자원을 꺼낼 화물 공간이 부족합니다.", "Not enough cargo space to withdraw resources.")));
             }
 
             int accepted = addition.AcceptedQuantity;
@@ -412,8 +421,8 @@ namespace SubTerra.App.Outpost
                 accepted,
                 0,
                 accepted < transferQuantity
-                    ? "화물 공간이 부족해 " + accepted + "개만 꺼냈습니다."
-                    : "화물로 " + accepted + "개를 옮겼습니다.");
+                    ? Text($"화물 공간이 부족해 {accepted}개만 꺼냈습니다.", $"Cargo space limited the withdrawal to {accepted}.")
+                    : Text($"화물로 {accepted}개를 옮겼습니다.", $"Withdrew {accepted}."));
             RaiseSnapshotChanged();
             return Complete(result);
         }
@@ -442,7 +451,7 @@ namespace SubTerra.App.Outpost
 
             if (items.Count == 0)
                 return Complete(Fail(OutpostOperationStatus.InsufficientQuantity, kind,
-                    deposit ? "보관할 화물이 없습니다." : "꺼낼 자원이 없습니다."));
+                    deposit ? Text("보관할 화물이 없습니다.", "No cargo to deposit.") : Text("꺼낼 자원이 없습니다.", "Nothing to withdraw.")));
 
             long requestedTotal = 0;
             foreach (var item in items)
@@ -451,7 +460,7 @@ namespace SubTerra.App.Outpost
                     return Complete(failure);
                 var destination = deposit ? state.GetStorageQuantity(item.Key) : inventory.State.GetQuantity(item.Key);
                 if (deposit && (destination > int.MaxValue - item.Value || requestedTotal > int.MaxValue - item.Value))
-                    return Complete(Fail(OutpostOperationStatus.OverflowRisk, kind, "이동 수량 한도를 초과합니다."));
+                    return Complete(Fail(OutpostOperationStatus.OverflowRisk, kind, Text("이동 수량 한도를 초과합니다.", "Transfer quantity limit exceeded.")));
                 requestedTotal += item.Value;
             }
 
@@ -462,21 +471,21 @@ namespace SubTerra.App.Outpost
                 items = PlanBalancedWithdrawal(items, out total);
                 if (total == 0)
                     return Complete(Fail(OutpostOperationStatus.CapacityExceeded, kind,
-                        "자원을 꺼낼 화물 공간이 부족합니다."));
+                        Text("자원을 꺼낼 화물 공간이 부족합니다.", "Not enough cargo space to withdraw resources.")));
             }
 
             var mutation = deposit ? inventory.TryReduceMany(items) : inventory.TryAddManyExact(items);
             if (mutation.Status != InventoryMutationStatus.Success)
                 return Complete(Fail(deposit ? OutpostOperationStatus.InsufficientQuantity : OutpostOperationStatus.CapacityExceeded,
-                    kind, "전체 자원 이동에 실패했습니다."));
+                    kind, Text("전체 자원 이동에 실패했습니다.", "Could not transfer all resources.")));
 
             foreach (var item in items)
                 state.SetStorageQuantity(item.Key, state.GetStorageQuantity(item.Key) + (deposit ? item.Value : -item.Value));
             RaiseSnapshotChanged();
             var partial = !deposit && total < requestedTotal;
             return Complete(new OutpostOperationResult(OutpostOperationStatus.Success, kind, string.Empty, total, 0,
-                deposit ? "모든 화물을 보관했습니다."
-                    : partial ? "화물 공간이 부족해 일부만 꺼냈습니다." : "보관된 모든 자원을 꺼냈습니다.",
+                deposit ? Text("모든 화물을 보관했습니다.", "All cargo deposited.")
+                    : partial ? Text("화물 공간이 부족해 일부만 꺼냈습니다.", "Cargo space limited the withdrawal.") : Text("보관된 모든 자원을 꺼냈습니다.", "All stored resources withdrawn."),
                 partial));
         }
 
@@ -582,7 +591,7 @@ namespace SubTerra.App.Outpost
                 return Complete(Fail(
                     OutpostOperationStatus.InvalidRequest,
                     kind,
-                    "희귀 품목은 지상 기지에서 개별 선택 판매하세요."));
+                    Text("희귀 품목은 지상 기지에서 개별 선택 판매하세요.", "Select and sell rare items individually at the surface base.")));
             }
             if (!TryValidateFacility(DataIds.Buildings.SettlementBasic, kind, out var failure))
             {
@@ -604,7 +613,7 @@ namespace SubTerra.App.Outpost
                 return Complete(Fail(
                     OutpostOperationStatus.InvalidRequest,
                     kind,
-                    "정산 ID가 필요합니다."));
+                    Text("정산 ID가 필요합니다.", "A sale ID is required.")));
             }
 
             if (completedSettlementIds.Contains(settlementId))
@@ -612,7 +621,7 @@ namespace SubTerra.App.Outpost
                 return Complete(Fail(
                     OutpostOperationStatus.AlreadyProcessed,
                     kind,
-                    "이미 처리된 정산입니다."));
+                    Text("이미 처리된 정산입니다.", "This sale was already processed.")));
             }
 
             if (inventory.State.GetQuantity(mineralId) < quantity)
@@ -620,7 +629,7 @@ namespace SubTerra.App.Outpost
                 return Complete(Fail(
                     OutpostOperationStatus.InsufficientQuantity,
                     kind,
-                    "보유 수량이 부족합니다."));
+                    Text("보유 수량이 부족합니다.", "Not enough in cargo.")));
             }
 
             if (info.UnitPrice > 0 && quantity > int.MaxValue / info.UnitPrice)
@@ -628,7 +637,7 @@ namespace SubTerra.App.Outpost
                 return Complete(Fail(
                     OutpostOperationStatus.OverflowRisk,
                     kind,
-                    "정산 금액 한도를 초과합니다."));
+                    Text("정산 금액 한도를 초과합니다.", "Sale value limit exceeded.")));
             }
 
             var goldGain = info.UnitPrice * quantity;
@@ -638,7 +647,7 @@ namespace SubTerra.App.Outpost
                 return Complete(Fail(
                     OutpostOperationStatus.OverflowRisk,
                     kind,
-                    "골드 한도를 초과합니다."));
+                    Text("골드 한도를 초과합니다.", "Gold limit exceeded.")));
             }
 
             var reduction = inventory.TryReduceMineral(mineralId, quantity);
@@ -647,7 +656,7 @@ namespace SubTerra.App.Outpost
                 return Complete(Fail(
                     OutpostOperationStatus.InsufficientQuantity,
                     kind,
-                    "플레이어 화물 정산에 실패했습니다."));
+                    Text("플레이어 화물 정산에 실패했습니다.", "Could not sell the selected cargo.")));
             }
 
             gameState.AddGold(goldGain);
@@ -657,7 +666,7 @@ namespace SubTerra.App.Outpost
                 mineralId,
                 quantity,
                 goldGain,
-                "정산이 완료되었습니다. +" + EconomyPricing.FormatGoldGain(goldGain, goldBonus));
+                Text("정산이 완료되었습니다. +", "Sale completed. +") + EconomyPricing.FormatGoldGain(goldGain, goldBonus));
             RaiseSnapshotChanged();
             Complete(result);
             AutoSaveRequested?.Invoke(
@@ -685,7 +694,7 @@ namespace SubTerra.App.Outpost
             const OutpostOperationKind kind = OutpostOperationKind.SettlePlayerCargo;
             if (items == null || items.Count == 0)
             {
-                return Complete(Fail(OutpostOperationStatus.InvalidRequest, kind, "판매할 자원을 선택하세요."));
+                return Complete(Fail(OutpostOperationStatus.InvalidRequest, kind, Text("판매할 자원을 선택하세요.", "Select resources to sell.")));
             }
 
             for (var i = 0; i < items.Count; i++)
@@ -695,7 +704,7 @@ namespace SubTerra.App.Outpost
                     return Complete(Fail(
                         OutpostOperationStatus.InvalidRequest,
                         kind,
-                        "희귀 품목은 지상 기지에서 개별 선택 판매하세요."));
+                        Text("희귀 품목은 지상 기지에서 개별 선택 판매하세요.", "Select and sell rare items individually at the surface base.")));
                 }
             }
 
@@ -706,12 +715,12 @@ namespace SubTerra.App.Outpost
 
             if (string.IsNullOrEmpty(settlementId))
             {
-                return Complete(Fail(OutpostOperationStatus.InvalidRequest, kind, "정산 ID가 필요합니다."));
+                return Complete(Fail(OutpostOperationStatus.InvalidRequest, kind, Text("정산 ID가 필요합니다.", "A sale ID is required.")));
             }
 
             if (completedSettlementIds.Contains(settlementId))
             {
-                return Complete(Fail(OutpostOperationStatus.AlreadyProcessed, kind, "이미 처리된 정산입니다."));
+                return Complete(Fail(OutpostOperationStatus.AlreadyProcessed, kind, Text("이미 처리된 정산입니다.", "This sale was already processed.")));
             }
 
             var merged = new List<KeyValuePair<string, int>>(items.Count);
@@ -738,7 +747,7 @@ namespace SubTerra.App.Outpost
                 }
                 else if (merged[index].Value > int.MaxValue - items[i].Value)
                 {
-                    return Complete(Fail(OutpostOperationStatus.OverflowRisk, kind, "정산 수량 한도를 초과합니다."));
+                    return Complete(Fail(OutpostOperationStatus.OverflowRisk, kind, Text("정산 수량 한도를 초과합니다.", "Sale quantity limit exceeded.")));
                 }
                 else
                 {
@@ -753,26 +762,26 @@ namespace SubTerra.App.Outpost
                 catalog.TryGetMineral(merged[i].Key, out var info);
                 if (inventory.State.GetQuantity(merged[i].Key) < merged[i].Value)
                 {
-                    return Complete(Fail(OutpostOperationStatus.InsufficientQuantity, kind, "보유 수량이 부족합니다."));
+                    return Complete(Fail(OutpostOperationStatus.InsufficientQuantity, kind, Text("보유 수량이 부족합니다.", "Not enough in cargo.")));
                 }
 
                 baseGold += (long)info.UnitPrice * merged[i].Value;
                 if (baseGold > int.MaxValue)
                 {
-                    return Complete(Fail(OutpostOperationStatus.OverflowRisk, kind, "정산 금액 한도를 초과합니다."));
+                    return Complete(Fail(OutpostOperationStatus.OverflowRisk, kind, Text("정산 금액 한도를 초과합니다.", "Sale value limit exceeded.")));
                 }
             }
 
             if (!EconomyPricing.TryAddBonus((int)baseGold, effects?.GetGoldGainBonusPercent() ?? 0,
                 gameState.Player.Gold, out var goldBonus, out var goldGain, out _))
             {
-                return Complete(Fail(OutpostOperationStatus.OverflowRisk, kind, "골드 한도를 초과합니다."));
+                return Complete(Fail(OutpostOperationStatus.OverflowRisk, kind, Text("골드 한도를 초과합니다.", "Gold limit exceeded.")));
             }
 
             var reduction = inventory.TryReduceMany(merged);
             if (reduction.Status != InventoryMutationStatus.Success)
             {
-                return Complete(Fail(OutpostOperationStatus.InsufficientQuantity, kind, "플레이어 화물 정산에 실패했습니다."));
+                return Complete(Fail(OutpostOperationStatus.InsufficientQuantity, kind, Text("플레이어 화물 정산에 실패했습니다.", "Could not sell the selected cargo.")));
             }
 
             gameState.AddGold(goldGain);
@@ -782,7 +791,7 @@ namespace SubTerra.App.Outpost
                 merged.Count == 1 ? merged[0].Key : string.Empty,
                 SumQuantities(merged),
                 goldGain,
-                "정산이 완료되었습니다. +" + EconomyPricing.FormatGoldGain(goldGain, goldBonus));
+                Text("정산이 완료되었습니다. +", "Sale completed. +") + EconomyPricing.FormatGoldGain(goldGain, goldBonus));
             RaiseSnapshotChanged();
             Complete(result);
             AutoSaveRequested?.Invoke(
@@ -817,7 +826,7 @@ namespace SubTerra.App.Outpost
                 return Complete(Fail(
                     OutpostOperationStatus.InvalidRequest,
                     kind,
-                    "정산 ID가 필요합니다."));
+                    Text("정산 ID가 필요합니다.", "A sale ID is required.")));
             }
 
             if (completedSettlementIds.Contains(settlementId))
@@ -825,7 +834,7 @@ namespace SubTerra.App.Outpost
                 return Complete(Fail(
                     OutpostOperationStatus.AlreadyProcessed,
                     kind,
-                    "이미 처리된 정산입니다."));
+                    Text("이미 처리된 정산입니다.", "This sale was already processed.")));
             }
 
             if (!TryBuildSettlement(
@@ -844,7 +853,7 @@ namespace SubTerra.App.Outpost
                 return Complete(Fail(
                     OutpostOperationStatus.OverflowRisk,
                     kind,
-                    "골드 한도를 초과합니다."));
+                    Text("골드 한도를 초과합니다.", "Gold limit exceeded.")));
             }
 
             if (source == OutpostSettlementSource.PlayerCargo)
@@ -855,7 +864,7 @@ namespace SubTerra.App.Outpost
                     return Complete(Fail(
                         OutpostOperationStatus.InsufficientQuantity,
                         kind,
-                        "플레이어 화물 정산에 실패했습니다."));
+                        Text("플레이어 화물 정산에 실패했습니다.", "Could not sell the selected cargo.")));
                 }
             }
             else
@@ -869,7 +878,7 @@ namespace SubTerra.App.Outpost
             gameState.AddGold(goldGain);
             completedSettlementIds.Add(settlementId);
             var result = Success(kind, string.Empty, SumQuantities(reductions), goldGain,
-                "정산이 완료되었습니다. +" + EconomyPricing.FormatGoldGain(goldGain, goldBonus));
+                Text("정산이 완료되었습니다. +", "Sale completed. +") + EconomyPricing.FormatGoldGain(goldGain, goldBonus));
             RaiseSnapshotChanged();
             Complete(result);
             AutoSaveRequested?.Invoke(
@@ -888,7 +897,7 @@ namespace SubTerra.App.Outpost
                 return Complete(Fail(
                     OutpostOperationStatus.InvalidRequest,
                     OutpostOperationKind.Install,
-                    "전진기지 인스턴스 ID가 필요합니다."));
+                    Text("전진기지 인스턴스 ID가 필요합니다.", "An outpost instance ID is required.")));
             }
 
             if (state.HasInstalledOutpost(instanceId))
@@ -896,7 +905,7 @@ namespace SubTerra.App.Outpost
                 return Complete(Fail(
                     OutpostOperationStatus.AlreadyProcessed,
                     OutpostOperationKind.Install,
-                    "이미 처리된 전진기지입니다."));
+                    Text("이미 처리된 전진기지입니다.", "This outpost is already registered.")));
             }
 
             state.RecordInstallation(instanceId, checkpointId, checkpointX, checkpointY);
@@ -914,7 +923,7 @@ namespace SubTerra.App.Outpost
                 string.Empty,
                 1,
                 0,
-                "전진기지 체크포인트가 등록되었습니다.");
+                Text("전진기지 체크포인트가 등록되었습니다.", "Outpost checkpoint registered."));
             RaiseSnapshotChanged();
             Complete(result);
             AutoSaveRequested?.Invoke(
@@ -951,7 +960,7 @@ namespace SubTerra.App.Outpost
                 failure = Fail(
                     OutpostOperationStatus.DependencyMissing,
                     kind,
-                    "필수 서비스가 연결되지 않았습니다.");
+                    Text("필수 서비스가 연결되지 않았습니다.", "Required services are unavailable."));
                 return false;
             }
 
@@ -972,7 +981,7 @@ namespace SubTerra.App.Outpost
                 failure = Fail(
                     OutpostOperationStatus.OutpostUnavailable,
                     kind,
-                    runtimeStatus?.inactiveReasonId ?? "전진기지를 사용할 수 없습니다.");
+                    runtimeStatus?.inactiveReasonId ?? Text("전진기지를 사용할 수 없습니다.", "This outpost is unavailable."));
                 return false;
             }
 
@@ -1003,7 +1012,7 @@ namespace SubTerra.App.Outpost
                             OutpostOperationStatus.FacilityUnavailable,
                             kind,
                             string.IsNullOrEmpty(facility.inactiveReasonId)
-                                ? "시설이 비활성 상태입니다."
+                                ? Text("시설이 비활성 상태입니다.", "This facility is inactive.")
                                 : facility.inactiveReasonId);
                         return false;
                     }
@@ -1018,7 +1027,7 @@ namespace SubTerra.App.Outpost
                     OutpostOperationStatus.OutpostUnavailable,
                     kind,
                     string.IsNullOrEmpty(runtimeStatus.inactiveReasonId)
-                        ? "전진기지를 사용할 수 없습니다."
+                        ? Text("전진기지를 사용할 수 없습니다.", "This outpost is unavailable.")
                         : runtimeStatus.inactiveReasonId);
                 return false;
             }
@@ -1026,7 +1035,7 @@ namespace SubTerra.App.Outpost
             failure = Fail(
                 OutpostOperationStatus.FacilityUnavailable,
                 kind,
-                "연결된 시설이 없습니다.");
+                Text("연결된 시설이 없습니다.", "No connected facilities."));
             return false;
         }
 
@@ -1041,7 +1050,7 @@ namespace SubTerra.App.Outpost
                 failure = Fail(
                     OutpostOperationStatus.FacilityUnavailable,
                     kind,
-                    "연결된 시설이 없습니다.");
+                    Text("연결된 시설이 없습니다.", "No connected facilities."));
                 return false;
             }
 
@@ -1138,7 +1147,7 @@ namespace SubTerra.App.Outpost
                 failure = Fail(
                     OutpostOperationStatus.InvalidRequest,
                     kind,
-                    "광물 ID와 수량을 확인해 주세요.");
+                    Text("광물 ID와 수량을 확인해 주세요.", "Check the selected mineral and quantity."));
                 return false;
             }
 
@@ -1186,7 +1195,7 @@ namespace SubTerra.App.Outpost
                 failure = Fail(
                     OutpostOperationStatus.InsufficientQuantity,
                     kind,
-                    "정산할 광물이 없습니다.");
+                    Text("정산할 광물이 없습니다.", "There are no minerals to sell."));
                 return false;
             }
 
@@ -1200,7 +1209,7 @@ namespace SubTerra.App.Outpost
                     failure = Fail(
                         OutpostOperationStatus.InvalidRequest,
                         kind,
-                        "정산할 수 없는 광물이 있습니다.");
+                        Text("정산할 수 없는 광물이 있습니다.", "Some minerals cannot be sold here."));
                     return false;
                 }
 
@@ -1209,7 +1218,7 @@ namespace SubTerra.App.Outpost
                     failure = Fail(
                         OutpostOperationStatus.OverflowRisk,
                         kind,
-                        "정산 금액 한도를 초과합니다.");
+                        Text("정산 금액 한도를 초과합니다.", "Sale value limit exceeded."));
                     return false;
                 }
 
@@ -1219,7 +1228,7 @@ namespace SubTerra.App.Outpost
                     failure = Fail(
                         OutpostOperationStatus.OverflowRisk,
                         kind,
-                        "정산 금액 한도를 초과합니다.");
+                        Text("정산 금액 한도를 초과합니다.", "Sale value limit exceeded."));
                     return false;
                 }
 

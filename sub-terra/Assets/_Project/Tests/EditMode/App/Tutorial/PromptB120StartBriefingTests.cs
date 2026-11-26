@@ -3,6 +3,7 @@ using NUnit.Framework;
 using SubTerra.App.Tutorial;
 using SubTerra.App.UI;
 using SubTerra.App.UI.Tutorial;
+using SubTerra.Shared.Localization;
 using TMPro;
 using UnityEditor;
 
@@ -23,6 +24,42 @@ namespace SubTerra.App.Tests.UI
         {
             Assert.That(DemoObjectiveCatalog.IntroductionGuidanceBody, Is.EqualTo(ExpectedBody));
             Assert.That(DemoObjectiveCatalog.IntroductionGuidanceConfirmLabel, Is.EqualTo("작업 시작"));
+        }
+
+        [Test]
+        public void Issue127_PreviewDoesNotApplyLanguageAndAllObjectivesHaveEnglishText()
+        {
+            var originalLanguage = LocalizationService.Current;
+            LocalizationService.SetLanguage(GameLanguage.Korean);
+            var changes = 0;
+            Action count = () => changes++;
+            LocalizationService.LanguageChanged += count;
+            try
+            {
+                var koreanBriefing = DemoObjectiveCatalog.ToReadModel(DemoObjectiveIds.MineBlock, 0, false);
+                LocalizationService.PreviewLanguage("en", () =>
+                {
+                    var englishBriefing = DemoObjectiveCatalog.ToReadModel(DemoObjectiveIds.MineBlock, 0, false);
+                    Assert.That(englishBriefing.ObjectiveId, Is.EqualTo(koreanBriefing.ObjectiveId));
+                    Assert.That(englishBriefing.GuidanceTitle, Is.EqualTo("Survivor Briefing"));
+                    Assert.That(englishBriefing.GuidanceBody, Does.StartWith("No resources remain"));
+                    foreach (var objective in DemoObjectiveCatalog.All)
+                    {
+                        Assert.That(objective.Title, Does.Not.Match("[가-힣]"), objective.Id);
+                        Assert.That(objective.Description, Does.Not.Match("[가-힣]"), objective.Id);
+                        Assert.That(objective.NextActionHint, Does.Not.Match("[가-힣]"), objective.Id);
+                    }
+                });
+                Assert.That(changes, Is.Zero);
+                Assert.That(LocalizationService.Current, Is.EqualTo(GameLanguage.Korean));
+                Assert.That(DemoObjectiveCatalog.ToReadModel(DemoObjectiveIds.MineBlock, 0, false).GuidanceBody,
+                    Is.EqualTo(koreanBriefing.GuidanceBody));
+            }
+            finally
+            {
+                LocalizationService.LanguageChanged -= count;
+                LocalizationService.SetLanguage(originalLanguage);
+            }
         }
 
         [Test]

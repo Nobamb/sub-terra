@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using SubTerra.App.Core.Data;
+using SubTerra.App.Run;
 using SubTerra.Shared;
+using SubTerra.Shared.Localization;
 using UnityEngine;
 
 namespace SubTerra.App.UI.Building
@@ -27,9 +29,29 @@ namespace SubTerra.App.UI.Building
     /// <summary>BuildingData에서 만든 시설 목록 항목. Gameplay 판정값은 포함하지 않는다.</summary>
     public sealed class BuildingMenuItemReadModel
     {
+        private readonly string displayName;
+        private readonly string description;
+
         public string BuildingId { get; }
-        public string DisplayName { get; }
-        public string Description { get; }
+        public string DisplayName
+        {
+            get
+            {
+                if (LocalizationService.Current != GameLanguage.English) return displayName;
+                var localizedName = ItemDisplayNames.LocalizedBuilding(BuildingId);
+                return localizedName == BuildingId ? displayName : localizedName;
+            }
+        }
+        public string Description
+        {
+            get
+            {
+                var text = LocalizationService.Get(BuildingId + ".description", description);
+                if (BuildingId != DataIds.Buildings.EmergencyEscapePortal) return text;
+                return string.Format(text, EmergencyEscapeService.GoldCost,
+                    Math.Round(EmergencyEscapeService.MaximumEnergyCostRatio * 100d));
+            }
+        }
         public Sprite Icon { get; }
         public int PowerDraw { get; }
         public IReadOnlyList<BuildingCostReadModel> Costs { get; }
@@ -43,8 +65,8 @@ namespace SubTerra.App.UI.Building
             IReadOnlyList<BuildingCostReadModel> costs)
         {
             BuildingId = buildingId ?? string.Empty;
-            DisplayName = ItemDisplayNames.PreferDisplay(buildingId, displayName);
-            Description = ItemDisplayNames.NormalizeFacilityText(description);
+            this.displayName = ItemDisplayNames.PreferDisplay(BuildingId, displayName);
+            this.description = ItemDisplayNames.NormalizeFacilityText(description);
             Icon = icon;
             PowerDraw = powerDraw < 0 ? 0 : powerDraw;
             Costs = costs ?? Array.Empty<BuildingCostReadModel>();

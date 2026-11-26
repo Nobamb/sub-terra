@@ -10,7 +10,7 @@ namespace SubTerra.App.UI.Tutorial
         [SerializeField] private TMP_Text amountText;
         [SerializeField] private string mineralLabel;
 
-        public void SetAmount(int amount)
+        public void SetAmount(int amount, string label = null)
         {
             var show = amount > 0;
             gameObject.SetActive(show);
@@ -19,9 +19,10 @@ namespace SubTerra.App.UI.Tutorial
                 return;
             }
 
-            if (nameText != null && !string.IsNullOrEmpty(mineralLabel))
+            var displayLabel = label ?? mineralLabel;
+            if (nameText != null && !string.IsNullOrEmpty(displayLabel))
             {
-                nameText.text = mineralLabel;
+                nameText.text = displayLabel;
             }
 
             if (amountText != null)

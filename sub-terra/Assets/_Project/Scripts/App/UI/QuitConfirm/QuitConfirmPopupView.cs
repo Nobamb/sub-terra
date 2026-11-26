@@ -4,6 +4,7 @@ using SubTerra.App.UI.EmergencyRescue;
 using SubTerra.App.UI.HUD;
 using SubTerra.App.UI.MainMenu;
 using SubTerra.Shared.Audio;
+using SubTerra.Shared.Localization;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -43,6 +44,7 @@ namespace SubTerra.App.UI.QuitConfirm
         private GlitchPopupChrome chrome;
         private RectTransform contentRect;
         private Image icon;
+        private TMP_Text title;
         private TMP_Text messageText;
         private TMP_Text noteText;
         private Button confirmButton;
@@ -114,6 +116,11 @@ namespace SubTerra.App.UI.QuitConfirm
         {
             if (state != PopupState.Hidden) return false;
             reducedMotion = reduced;
+            title.text = LocalizationService.Get("quit_confirm.title", Title);
+            messageText.text = LocalizationService.Get("quit_confirm.question", Message);
+            noteText.text = LocalizationService.Get("quit_confirm.autosave", SaveNote);
+            confirmText.text = LocalizationService.Get("main_menu.quit", ConfirmLabel);
+            cancelText.text = LocalizationService.Get("settings.cancel", CancelLabel);
             if (noteText != null) noteText.gameObject.SetActive(inGame);
             LayoutMessage(inGame);
             state = PopupState.Opening;
@@ -235,7 +242,7 @@ namespace SubTerra.App.UI.QuitConfirm
 
         private void BuildContent(MineResetTimedPopupSkin skin)
         {
-            TMP_Text title = EmergencyRescueUi.Text(
+            title = EmergencyRescueUi.Text(
                 contentRect, "Title", font, 40f, FontStyles.Bold, EmergencyRescueUi.TitleRed,
                 TextAlignmentOptions.Center, new Vector2(0f, 262f), new Vector2(600f, 56f));
             title.text = Title;

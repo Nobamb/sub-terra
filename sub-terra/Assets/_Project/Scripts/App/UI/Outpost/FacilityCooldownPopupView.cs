@@ -1,3 +1,4 @@
+using static SubTerra.Shared.Localization.LocalizationService;
 using System;
 using SubTerra.App.Audio;
 using SubTerra.App.Core.Data;
@@ -204,7 +205,7 @@ namespace SubTerra.App.UI.Outpost
                 ApplyIcon();
                 if (nameText != null)
                 {
-                    nameText.text = ItemDisplayNames.Building(buildingId);
+                    nameText.text = ItemDisplayNames.LocalizedBuilding(buildingId);
                 }
 
                 displaySeconds = -1;
@@ -947,11 +948,13 @@ namespace SubTerra.App.UI.Outpost
                 icon.enabled = false;
                 nameText = CreateText(readout, "Name", new Vector2(53f, 64f), new Vector2(150f, 32f), 22f,
                     ResourceSellUi.TextMain, TextAlignmentOptions.Left);
+                LocalizedUiText.Bind(nameText, () => ItemDisplayNames.LocalizedBuilding(buildingId));
                 divider = CreateImage(readout, "Divider", new Vector2(0f, 42f), new Vector2(240f, 1.5f),
                     ResourceSellUi.WithAlpha(ResourceSellUi.Teal, 0.3f), null);
                 BuildDigits(readout);
-                CreateText(readout, "Caption", new Vector2(0f, -66f), new Vector2(300f, 26f), 18f,
-                    ResourceSellUi.TextMuted, TextAlignmentOptions.Center).text = Caption;
+                var captionText = CreateText(readout, "Caption", new Vector2(0f, -66f), new Vector2(300f, 26f), 18f,
+                    ResourceSellUi.TextMuted, TextAlignmentOptions.Center);
+                LocalizedUiText.Bind(captionText, () => Text(Caption, "Cooldown Remaining"));
 
                 // 0초 섬광: 가장자리 빛 위에 중앙 빛을 겹친다. 글자 위까지 덮는 것은 TV가 꺼지는 순간뿐이다.
                 flashEdge = CreateImage(content, "FlashEdge", Vector2.zero, new Vector2(WindowWidth, WindowHeight),

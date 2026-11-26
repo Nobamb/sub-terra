@@ -152,7 +152,7 @@ namespace SubTerra.App.UI.Tutorial
             var footer = new CargoPopupFooter { y = y };
             footer.text = ResourceSellUi.Label(content, "Footer", CargoPopupChrome.Pad, y, innerW, 28f, font, 16f,
                 FontStyles.Normal, CargoPopupChrome.TextMuted(skin), TextAlignmentOptions.Center);
-            footer.text.text = CargoFullPopupText.Footer;
+            LocalizedUiText.Bind(footer.text, () => CargoFullPopupText.Footer);
             footer.lineLeft = ResourceSellUi.AddImage(
                 ResourceSellUi.Place(content, "FooterLineLeft", CargoPopupChrome.Pad, y + 13f, 10f, 2f), null,
                 CargoPopupChrome.WithAlpha(teal, 0.25f));
@@ -252,8 +252,8 @@ namespace SubTerra.App.UI.Tutorial
             Color accent,
             Sprite iconSprite,
             float iconSize,
-            string titleLabel,
-            string subtitleLabel,
+            System.Func<string> titleLabel,
+            System.Func<string> subtitleLabel,
             bool compact,
             TMP_FontAsset font,
             CargoFullPopupSkin skin,
@@ -279,7 +279,7 @@ namespace SubTerra.App.UI.Tutorial
             title.transform.SetAsLastSibling();
             var titleSize = compact ? 22f : 26f;
             SetRect(title.rectTransform, 92f, compact ? 8f : 20f, width - 92f - 20f, compact ? 30f : 40f);
-            title.text = titleLabel;
+            LocalizedUiText.Bind(title, titleLabel);
             title.fontSize = titleSize;
             title.fontStyle = FontStyles.Bold;
             title.alignment = TextAlignmentOptions.Left;
@@ -293,7 +293,7 @@ namespace SubTerra.App.UI.Tutorial
             var subSize = compact ? 15f : 17f;
             subtitle = ResourceSellUi.Label(rect, "Subtitle", 92f, compact ? 37f : 62f, width - 92f - 20f, compact ? 22f : 28f,
                 font, subSize, FontStyles.Normal, TextMuted(skin), TextAlignmentOptions.Left);
-            subtitle.text = subtitleLabel;
+            if (subtitleLabel != null) LocalizedUiText.Bind(subtitle, subtitleLabel);
             subtitle.enableAutoSizing = true;
             subtitle.fontSizeMin = compact ? 12f : 13f;
             subtitle.fontSizeMax = subSize;
@@ -308,14 +308,14 @@ namespace SubTerra.App.UI.Tutorial
 
         /// <summary>글자만 있는 작은 각진 버튼(버리기 수량 버튼). 위치는 호출한 쪽이 정한다.</summary>
         public static CargoFullChoiceButton BuildCompactButton(
-            Button target, string label, Color accent, float faceTint, TMP_FontAsset font, CargoFullPopupSkin skin)
+            Button target, System.Func<string> label, Color accent, float faceTint, TMP_FontAsset font, CargoFullPopupSkin skin)
         {
             var rect = (RectTransform)target.transform;
             var glow = PrepareFace(target, rect, accent, out var face, out var border);
             var title = ResolveLabel(rect, font);
             title.transform.SetAsLastSibling();
             ResourceSellUi.Stretch(title.rectTransform);
-            title.text = label;
+            LocalizedUiText.Bind(title, label);
             title.fontSize = 18f;
             title.fontStyle = FontStyles.Bold;
             title.alignment = TextAlignmentOptions.Center;

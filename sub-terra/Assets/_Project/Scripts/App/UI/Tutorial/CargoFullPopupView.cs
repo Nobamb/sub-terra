@@ -625,10 +625,10 @@ namespace SubTerra.App.UI.Tutorial
             var buttonW = (innerW - ButtonGap) * 0.5f;
             dumpFeedback = CargoPopupChrome.BuildChoice(dumpButton, content, Pad, ButtonsY, buttonW, ButtonH,
                 CargoPopupChrome.Teal(skin), CargoFullPopupArt.ListIcon(), 32f,
-                CargoFullPopupText.DumpTitle, CargoFullPopupText.DumpSubtitle, false, font, skin, out _);
+                () => CargoFullPopupText.DumpTitle, () => CargoFullPopupText.DumpSubtitle, false, font, skin, out _);
             forfeitFeedback = CargoPopupChrome.BuildChoice(forfeitButton, content, Pad + buttonW + ButtonGap, ButtonsY, buttonW,
                 ButtonH, CargoPopupChrome.Danger(skin), skin != null ? skin.trashIcon : null, 36f,
-                CargoFullPopupText.ForfeitTitle, string.Empty, false, font, skin, out forfeitSubtitle);
+                () => CargoFullPopupText.ForfeitTitle, null, false, font, skin, out forfeitSubtitle);
             footer = CargoPopupFooter.Build(content, FooterY, innerW, font, skin);
             UiSfx.Attach(dumpButton, SfxId.None, hover: true, failWhenDisabled: false, hoverGate: () => CanPlaySfx);
             UiSfx.Attach(forfeitButton, SfxId.None, hover: true, failWhenDisabled: false, hoverGate: () => CanPlaySfx);
@@ -654,7 +654,7 @@ namespace SubTerra.App.UI.Tutorial
 
             rewardCaption = ResourceSellUi.Label(rewardCard, "Caption", 0f, 0f, 100f, 24f, font, 16f, FontStyles.Normal,
                 CargoPopupChrome.TextMuted(skin), TextAlignmentOptions.Left);
-            rewardCaption.text = CargoFullPopupText.RewardCaption;
+            LocalizedUiText.Bind(rewardCaption, () => CargoFullPopupText.RewardCaption);
             rewardAmount = ResourceSellUi.Label(rewardCard, "Amount", 0f, 0f, 100f, 48f, font, 32f, FontStyles.Bold,
                 CargoPopupChrome.TextMain(skin), TextAlignmentOptions.Left);
         }

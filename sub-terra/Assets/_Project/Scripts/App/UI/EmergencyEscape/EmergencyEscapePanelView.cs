@@ -1,3 +1,4 @@
+using static SubTerra.Shared.Localization.LocalizationService;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -122,6 +123,21 @@ namespace SubTerra.App.UI.EmergencyEscape
         private void Awake()
         {
             ApplyArt();
+            foreach (var label in GetComponentsInChildren<TMP_Text>(true))
+            {
+                switch (label.text)
+                {
+                    case "긴급 탈출 포탈":
+                        LocalizedUiText.Bind(label, () => Text("긴급 탈출 포탈", "Emergency Escape Portal"));
+                        break;
+                    case "이동 목적지":
+                        LocalizedUiText.Bind(label, () => Text("이동 목적지", "Destination"));
+                        break;
+                }
+            }
+
+            var confirmLabel = confirmButton != null ? confirmButton.GetComponentInChildren<TMP_Text>(true) : null;
+            LocalizedUiText.Bind(confirmLabel, () => Text("이동", "Travel"));
         }
 
         private void OnDisable()
@@ -486,7 +502,7 @@ namespace SubTerra.App.UI.EmergencyEscape
                 row.name = "Row" + i;
                 row.gameObject.SetActive(true);
                 var data = model.Rows[i];
-                row.Bind(i, data.Option.DisplayName, data.Enabled, data.Reason, HandleRowClicked);
+                row.Bind(i, EscapeDestinationListModel.DisplayNameFor(data.Option), data.Enabled, data.Reason, HandleRowClicked);
                 rows.Add(row);
             }
 
@@ -503,7 +519,7 @@ namespace SubTerra.App.UI.EmergencyEscape
         {
             if (costText != null)
             {
-                costText.text = "비용: " + gold + "G + 전력 " + energy;
+                costText.text = Text($"비용: {gold}G + 전력 {energy}", $"Cost: {gold}G + {energy} power");
             }
         }
 
@@ -536,7 +552,7 @@ namespace SubTerra.App.UI.EmergencyEscape
 
             if (!Application.isPlaying || video == null)
             {
-                SetCctvStatus(CctvOfflineLabel);
+                SetCctvStatus(Text(CctvOfflineLabel, "CCTV Standby"));
                 return;
             }
 
@@ -549,7 +565,7 @@ namespace SubTerra.App.UI.EmergencyEscape
             ResizeRig();
             if (rig.Texture == null)
             {
-                SetCctvStatus(CctvOfflineLabel);
+                SetCctvStatus(Text(CctvOfflineLabel, "CCTV Standby"));
                 return;
             }
 
@@ -687,8 +703,8 @@ namespace SubTerra.App.UI.EmergencyEscape
 
         private void ApplyTerminal(float line1, float line2)
         {
-            ApplyTypedLine(terminalLine1, TerminalLine1, line1);
-            ApplyTypedLine(terminalLine2, TerminalLine2, line2);
+            ApplyTypedLine(terminalLine1, Text(TerminalLine1, "> Connecting to the escape portal..."), line1);
+            ApplyTypedLine(terminalLine2, Text(TerminalLine2, "> Connected"), line2);
         }
 
         private static void ApplyTypedLine(TMP_Text target, string full, float progress)

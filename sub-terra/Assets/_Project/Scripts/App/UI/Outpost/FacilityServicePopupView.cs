@@ -1,3 +1,4 @@
+using static SubTerra.Shared.Localization.LocalizationService;
 using System.Collections.Generic;
 using SubTerra.App.Audio;
 using SubTerra.App.UI.HUD;
@@ -119,6 +120,7 @@ namespace SubTerra.App.UI.Outpost
 
         private void OnEnable()
         {
+            LanguageChanged += RefreshLocalizedText;
             // 닫힘 소리는 Hide가 내므로 닫기 버튼에는 호버만 붙인다.
             UiSfx.Attach(closeButton, SfxId.None, hover: true);
             // Show를 거치지 않은 활성화(부모 패널이 꺼졌다 켜진 경우)에는 멈춘 화면이 남지 않도록 다시 숨긴다.
@@ -130,6 +132,7 @@ namespace SubTerra.App.UI.Outpost
 
         private void OnDisable()
         {
+            LanguageChanged -= RefreshLocalizedText;
             showRequested = false;
             // 씬 전환·비활성화로 꺼져도 다음 표시가 깨끗하게 시작되도록 모든 상태를 되돌린다.
             state = PlayState.Hidden;
@@ -367,18 +370,26 @@ namespace SubTerra.App.UI.Outpost
             return IsClinic ? healthFill : energyFill;
         }
 
-        private void ApplyKindContent()
+        private void RefreshLocalizedText()
         {
             if (titleText != null)
             {
-                titleText.text = IsClinic ? ClinicTitle : ChargerTitle;
+                titleText.text = IsClinic ? Text(ClinicTitle, "Clinic") : Text(ChargerTitle, "Charger");
             }
 
             if (descriptionText != null)
             {
-                descriptionText.text = IsClinic ? ClinicDescription : ChargerDescription;
+                descriptionText.text = IsClinic
+                    ? Text(ClinicDescription, "Restores you to full health.")
+                    : Text(ChargerDescription, "Refills your power.");
             }
 
+            lastValueKey = int.MinValue;
+        }
+
+        private void ApplyKindContent()
+        {
+            RefreshLocalizedText();
             if (icon != null)
             {
                 icon.sprite = IsClinic ? heartSprite : boltSprite;

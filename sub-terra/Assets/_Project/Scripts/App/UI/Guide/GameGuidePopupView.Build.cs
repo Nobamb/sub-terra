@@ -1,3 +1,4 @@
+using static SubTerra.Shared.Localization.LocalizationService;
 using System.Collections.Generic;
 using SubTerra.App.Audio;
 using SubTerra.App.Core.Data;
@@ -138,7 +139,7 @@ namespace SubTerra.App.UI.Guide
         {
             titleText = ResourceSellUi.Label(tabsRect, "Title", 0f, 46f, CardSize.x, 64f, font, 40f, FontStyles.Bold, TitleColor,
                 TextAlignmentOptions.Center);
-            titleText.text = Title;
+            LocalizedUiText.Bind(titleText, () => Text(Title, "SUB-TERRA Game Guide"));
             titleText.characterSpacing = 3f;
 
             closeButton = GameGuideButton.Create(tabsRect, "CloseButton", CardSize.x - Pad - 52f, 54f, 52f, 52f, font, string.Empty,
@@ -157,6 +158,7 @@ namespace SubTerra.App.UI.Guide
                 var index = i;
                 var button = GameGuideButton.Create(tabsRect, "Tab_" + i, Pad + i * (tabWidth + gap), TabY, tabWidth, TabHeight,
                     font, GameGuideCatalog.TabTitle((GuideTabKind)i), 24f, GameGuideButton.Kind.Tab);
+                LocalizedUiText.Bind(button.GetComponentInChildren<TMP_Text>(true), () => GameGuideCatalog.TabTitle((GuideTabKind)index));
                 button.Button.onClick.AddListener(() => guideState.SelectTab((GuideTabKind)index));
                 AttachGuideSfx(button.Button, true);
                 tabButtons[i] = button;
@@ -182,14 +184,14 @@ namespace SubTerra.App.UI.Guide
             ResourceSellUi.AddImage(ResourceSellUi.Place(expanded, "Accent", 18f, 14f, 4f, 30f), null, ResourceSellUi.Teal);
             var title = ResourceSellUi.Label(expanded, "Title", 32f, 10f, 620f, 40f, font, 28f, FontStyles.Bold, Color.white,
                 TextAlignmentOptions.MidlineLeft);
-            title.text = GameGuideCatalog.FirstExploreTitle;
+            LocalizedUiText.Bind(title, () => GameGuideCatalog.FirstExploreTitle);
             var steps = GameGuideCatalog.FirstSteps;
             const float arrowGap = 24f;
             var tileGap = (BodyWidth - 28f - steps.Count * GameGuideCardView.StepWidth) / (steps.Count - 1);
             for (var i = 0; i < steps.Count; i++)
             {
                 var x = 14f + i * (GameGuideCardView.StepWidth + tileGap);
-                var tile = GameGuideCardView.CreateStepTile(expanded, steps[i], x, 54f, font, sprites);
+                var tile = GameGuideCardView.CreateStepTile(expanded, steps[i], i, x, 54f, font, sprites);
                 tile.Clicked += OnCardClicked;
                 AttachGuideSfx(tile.Button, true);
                 stepTiles.Add(tile);
@@ -208,7 +210,7 @@ namespace SubTerra.App.UI.Guide
             info.preserveAspect = true;
             var hint = ResourceSellUi.Label(expanded, "Hint", 48f, 54f + GameGuideCardView.StepHeight + 4f, 700f, 28f, font, 17f,
                 FontStyles.Normal, ResourceSellUi.Teal, TextAlignmentOptions.MidlineLeft);
-            hint.text = GameGuideCatalog.FirstExploreHint;
+            LocalizedUiText.Bind(hint, () => GameGuideCatalog.FirstExploreHint);
 
             // 접은 모양: 이름표와 단계 아이콘·제목만.
             var collapsedImage = ResourceSellUi.Image(firstRoot, "Collapsed", null, Color.clear);
@@ -218,7 +220,7 @@ namespace SubTerra.App.UI.Guide
             ResourceSellUi.AddImage(ResourceSellUi.Place(collapsed, "Accent", 18f, 22f, 4f, 32f), null, ResourceSellUi.Teal);
             var label = ResourceSellUi.Label(collapsed, "Label", 32f, 18f, 150f, 40f, font, 24f, FontStyles.Bold, Color.white,
                 TextAlignmentOptions.MidlineLeft);
-            label.text = GameGuideCatalog.FirstExploreCollapsedLabel;
+            LocalizedUiText.Bind(label, () => GameGuideCatalog.FirstExploreCollapsedLabel);
             const float miniWidth = 184f;
             var miniGap = 24f;
             var startX = 184f;
@@ -229,6 +231,8 @@ namespace SubTerra.App.UI.Guide
                 var mini = GameGuideButton.Create(collapsed, "Mini_" + step.Number, x, 16f, miniWidth, 44f, font, step.Title, 16f,
                     GameGuideButton.Kind.Normal, StepIcon(step.IconKey), 24f);
                 var targetId = step.TargetCardId;
+                var stepIndex = i;
+                LocalizedUiText.Bind(mini.GetComponentInChildren<TMP_Text>(true), () => GameGuideCatalog.FirstSteps[stepIndex].Title);
                 mini.Button.onClick.AddListener(() => OnCardClicked(targetId));
                 AttachGuideSfx(mini.Button, true);
                 miniItems.Add(mini);
@@ -290,12 +294,14 @@ namespace SubTerra.App.UI.Guide
         {
             var list = lists[(int)GuideTabKind.Resources];
             list.FilterRow = ResourceSellUi.Place(list.Root, "FilterRow", 0f, 0f, ListWidth, FilterRowHeight);
-            var names = new[] { "전체", "자원", "시설" };
+            var koreanNames = new[] { "전체", "자원", "시설" };
+            var englishNames = new[] { "All", "Resources", "Facilities" };
             for (var i = 0; i < 3; i++)
             {
                 var index = i;
-                var chip = GameGuideButton.Create(list.FilterRow, "Filter_" + i, i * 102f, 4f, 94f, 40f, font, names[i], 19f,
+                var chip = GameGuideButton.Create(list.FilterRow, "Filter_" + i, i * 102f, 4f, 94f, 40f, font, Text(koreanNames[i], englishNames[i]), 19f,
                     GameGuideButton.Kind.Chip);
+                LocalizedUiText.Bind(chip.GetComponentInChildren<TMP_Text>(true), () => Text(koreanNames[index], englishNames[index]));
                 chip.Button.onClick.AddListener(() => guideState.SetFilter((GuideFilter)index));
                 AttachGuideSfx(chip.Button, true);
                 filterButtons[i] = chip;
@@ -471,7 +477,7 @@ namespace SubTerra.App.UI.Guide
                 firstCollapsedGroup.alpha = collapsedAlpha;
                 firstCollapsedGroup.blocksRaycasts = collapsedAlpha > 0.5f;
                 firstCollapsedGroup.interactable = collapsedAlpha > 0.5f;
-                firstToggleLabel.text = guideState.FirstExploreExpanded ? "접기" : "펼치기";
+                firstToggleLabel.text = guideState.FirstExploreExpanded ? Text("접기", "Collapse") : Text("펼치기", "Expand");
                 firstToggleChevron.localRotation = Quaternion.Euler(0f, 0f, guideState.FirstExploreExpanded ? 180f : 0f);
             }
 
