@@ -11,6 +11,7 @@ using SubTerra.App.UI.MainMenu;
 using SubTerra.App.UI.SurfaceBase;
 using SubTerra.App.UI;
 using SubTerra.Shared;
+using SubTerra.Shared.Localization;
 using UnityEngine;
 
 namespace SubTerra.App.Tests.UI.MainMenu
@@ -170,6 +171,35 @@ namespace SubTerra.App.Tests.UI.MainMenu
             presenter.RequestContinue();
             Assert.That(starts, Is.EqualTo(new[] { 2 }), "덮어쓰기 확인 없이 큰 버튼이 새 게임을 시작하면 안 된다.");
             Assert.That(continues, Is.EqualTo(new[] { 1 }));
+        }
+
+        [Test]
+        public void Issue127_MenuRefreshUsesSelectedLanguageWithoutChangingSlotAction()
+        {
+            Assert.That(CreateSave().Save(1, CreateContext(777)).IsSuccess, Is.True);
+            var view = new RecordingMenuView();
+            using var presenter = new MainMenuPresenter(view, CreateLoad(), "test");
+            var originalLanguage = LocalizationService.Current;
+            try
+            {
+                LocalizationService.SetLanguage(GameLanguage.English);
+                presenter.Refresh();
+                Assert.That(view.PrimaryLabel, Is.EqualTo("Continue"));
+                Assert.That(SaveSlotCardFormatter.Title(1), Is.EqualTo("Expedition Log 01"));
+                presenter.SelectSlot(2);
+                Assert.That(view.PrimaryLabel, Is.EqualTo("Start Expedition"));
+                Assert.That(view.PrimaryEnabled, Is.True);
+
+                LocalizationService.SetLanguage(GameLanguage.Korean);
+                presenter.Refresh();
+                Assert.That(presenter.SelectedSlot, Is.EqualTo(2));
+                Assert.That(view.PrimaryLabel, Is.EqualTo("새 탐사 시작"));
+                Assert.That(view.PrimaryEnabled, Is.True);
+            }
+            finally
+            {
+                LocalizationService.SetLanguage(originalLanguage);
+            }
         }
 
         [Test]

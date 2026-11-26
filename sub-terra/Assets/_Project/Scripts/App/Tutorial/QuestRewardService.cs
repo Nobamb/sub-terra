@@ -1,3 +1,4 @@
+using static SubTerra.Shared.Localization.LocalizationService;
 using System;
 using System.Collections.Generic;
 using SubTerra.App.Core.Data;
@@ -208,11 +209,11 @@ namespace SubTerra.App.Tutorial
             }
 
             var needed = PendingReward.ComputeMineralWeight(inventory.CatalogLookup);
-            return "현재 화물 "
+            return Text("현재 화물 ", "Cargo ")
                 + inventory.CurrentWeight.ToString("0.#")
                 + " / "
                 + inventory.MaxCapacity.ToString("0.#")
-                + "  ·  보상 중량 "
+                + Text("  ·  보상 중량 ", "  ·  Reward weight ")
                 + needed.ToString("0.#");
         }
 
@@ -230,25 +231,7 @@ namespace SubTerra.App.Tutorial
                 PendingReward.ComputeMineralWeight(inventory.CatalogLookup));
         }
 
-        public static string DisplayNameOf(string mineralId)
-        {
-            if (mineralId == DataIds.Minerals.Copper)
-            {
-                return "구리";
-            }
-
-            if (mineralId == DataIds.Minerals.Iron)
-            {
-                return "철";
-            }
-
-            if (mineralId == DataIds.Minerals.Lithium)
-            {
-                return "리튬";
-            }
-
-            return mineralId ?? string.Empty;
-        }
+        public static string DisplayNameOf(string mineralId) => ItemDisplayNames.LocalizedMineral(mineralId);
 
         private QuestRewardGrantResult TryGrant(string objectiveId)
         {

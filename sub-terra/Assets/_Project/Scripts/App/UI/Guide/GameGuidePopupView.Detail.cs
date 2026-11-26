@@ -1,3 +1,4 @@
+using static SubTerra.Shared.Localization.LocalizationService;
 using System.Collections.Generic;
 using SubTerra.App.UI.Sell;
 using TMPro;
@@ -77,6 +78,35 @@ namespace SubTerra.App.UI.Guide
         /// 선택 상태에 맞춰 탭·필터·목록·상세를 갱신한다. force면 상세를 다시 만들고 첫 탐사 안내 높이를 즉시 맞춘다.
         /// 등장 연출은 다시 재생하지 않고, 상세 내용만 짧게 페이드한다.
         /// </summary>
+        private void RefreshLanguage()
+        {
+            if (displayedLanguage != Current)
+            {
+                displayedLanguage = Current;
+                foreach (var list in lists)
+                {
+                    foreach (var entry in list.Cards)
+                    {
+                        entry.gameObject.SetActive(false);
+                        GuideUtil.Dispose(entry.gameObject);
+                    }
+                    list.Cards.Clear();
+                    list.Built = false;
+                }
+
+                var steps = GameGuideCatalog.FirstSteps;
+                for (var i = 0; i < stepTiles.Count; i++)
+                {
+                    if (GuideDemoLibrary.TryGet(steps[i].DemoId, out var clip))
+                    {
+                        stepTiles[i].Stage.Bind(clip, false);
+                        stepTiles[i].Stage.ShowThumb();
+                    }
+                }
+            }
+            RefreshAll(true);
+        }
+
         private void RefreshAll(bool force)
         {
             var tab = guideState.Tab;
@@ -390,7 +420,7 @@ namespace SubTerra.App.UI.Guide
 
             var header = ResourceSellUi.Label(detailRows, "RelatedHeader", 0f, y + 4f, DetailInner, 24f, font, 17f, FontStyles.Bold,
                 ResourceSellUi.TextMuted, TextAlignmentOptions.MidlineLeft);
-            header.text = "관련 안내";
+            header.text = Text("관련 안내", "Related Guides");
             y += 34f;
             var x = 0f;
             var rowY = y;

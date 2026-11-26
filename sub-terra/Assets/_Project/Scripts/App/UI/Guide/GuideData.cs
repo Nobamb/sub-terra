@@ -27,11 +27,14 @@ namespace SubTerra.App.UI.Guide
 
     public readonly struct GuideCost
     {
+        private readonly string itemId;
         public string ItemName { get; }
+        public string DisplayName => string.IsNullOrEmpty(itemId) ? ItemName : ItemDisplayNames.LocalizedMineral(itemId);
         public int Quantity { get; }
 
-        public GuideCost(string itemName, int quantity)
+        public GuideCost(string itemName, int quantity, string itemId = null)
         {
+            this.itemId = itemId;
             ItemName = itemName;
             Quantity = quantity;
         }
@@ -184,7 +187,8 @@ namespace SubTerra.App.UI.Guide
             var costs = new List<GuideCost>();
             for (var i = 0; data.BuildCosts != null && i < data.BuildCosts.Count; i++)
             {
-                costs.Add(new GuideCost(ItemDisplayNames.Mineral(data.BuildCosts[i].ItemId), data.BuildCosts[i].Quantity));
+                var cost = data.BuildCosts[i];
+                costs.Add(new GuideCost(ItemDisplayNames.Mineral(cost.ItemId), cost.Quantity, cost.ItemId));
             }
 
             return new GuideBuildingInfo(data.Id, name, data.Icon, ItemDisplayNames.NormalizeFacilityText(data.Description), data.PowerDraw, costs);

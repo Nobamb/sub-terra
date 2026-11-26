@@ -1,3 +1,4 @@
+using static SubTerra.Shared.Localization.LocalizationService;
 using System;
 using System.Collections.Generic;
 
@@ -178,12 +179,12 @@ namespace SubTerra.App.UI.Sell
         {
             if (committing)
             {
-                return new ResourceSellConfirmOutcome(ResourceSellConfirmStatus.Busy, "처리 중입니다.");
+                return new ResourceSellConfirmOutcome(ResourceSellConfirmStatus.Busy, Text("처리 중입니다.", "Processing…"));
             }
 
             if (backend == null)
             {
-                return new ResourceSellConfirmOutcome(ResourceSellConfirmStatus.Failed, "판매 서비스가 연결되지 않았습니다.");
+                return new ResourceSellConfirmOutcome(ResourceSellConfirmStatus.Failed, Text("판매 서비스가 연결되지 않았습니다.", "Sales are unavailable."));
             }
 
             var displayed = snapshot;
@@ -193,19 +194,19 @@ namespace SubTerra.App.UI.Sell
             if (adjusted)
             {
                 RaiseChanged();
-                return new ResourceSellConfirmOutcome(ResourceSellConfirmStatus.Adjusted, AdjustedMessage);
+                return new ResourceSellConfirmOutcome(ResourceSellConfirmStatus.Adjusted, Text(AdjustedMessage, "Stock changed. Review the adjusted quantities and try again."));
             }
 
             var items = selection.ToItems(snapshot);
             if (items.Count == 0)
             {
-                return new ResourceSellConfirmOutcome(ResourceSellConfirmStatus.Empty, "판매할 수량을 선택하세요.");
+                return new ResourceSellConfirmOutcome(ResourceSellConfirmStatus.Empty, Text("판매할 수량을 선택하세요.", "Choose a quantity to sell."));
             }
 
             var quote = ResourceSellQuote.Compute(snapshot, selection);
             if (quote.Overflow)
             {
-                return new ResourceSellConfirmOutcome(ResourceSellConfirmStatus.Failed, "골드 한도를 초과합니다.");
+                return new ResourceSellConfirmOutcome(ResourceSellConfirmStatus.Failed, Text("골드 한도를 초과합니다.", "Gold limit exceeded."));
             }
 
             var goldBefore = snapshot.Gold;
@@ -227,7 +228,7 @@ namespace SubTerra.App.UI.Sell
                 RaiseChanged();
                 return new ResourceSellConfirmOutcome(
                     ResourceSellConfirmStatus.Failed,
-                    string.IsNullOrEmpty(result.Message) ? "판매에 실패했습니다." : result.Message);
+                    string.IsNullOrEmpty(result.Message) ? Text("판매에 실패했습니다.", "Sale failed.") : result.Message);
             }
 
             var sold = new List<string>(items.Count);

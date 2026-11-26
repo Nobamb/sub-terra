@@ -1,3 +1,4 @@
+using SubTerra.Shared.Localization;
 using System;
 using System.Collections.Generic;
 using SubTerra.App.Audio;
@@ -109,6 +110,8 @@ namespace SubTerra.App.UI.Guide
         /// <summary>확인용: true면 Update가 시간을 진행하지 않고 테스트가 Tick으로 직접 진행한다.</summary>
         public bool ManualTick { get; set; }
 
+        private GameLanguage displayedLanguage;
+
         /// <summary>canvasRoot 아래에 창 루트(자체 Canvas)를 만든다. 뒤쪽 클릭은 창 영역만 막는다.</summary>
         public static GameGuidePopupView Create(Transform canvasRoot, IGuideData guideData)
         {
@@ -179,9 +182,11 @@ namespace SubTerra.App.UI.Guide
 
             guideState.Changed -= OnStateChanged;
             guideState.Changed += OnStateChanged;
-            if (!resume)
+            LocalizationService.LanguageChanged -= RefreshLanguage;
+            LocalizationService.LanguageChanged += RefreshLanguage;
+            if (!resume || displayedLanguage != LocalizationService.Current)
             {
-                RefreshAll(true);
+                RefreshLanguage();
             }
 
             transform.SetAsLastSibling();
@@ -298,6 +303,7 @@ namespace SubTerra.App.UI.Guide
 
         private void OnDisable()
         {
+            LocalizationService.LanguageChanged -= RefreshLanguage;
             // 씬 전환·부모 비활성화로 꺼져도 다음 표시가 깨끗하게 시작되도록 되돌린다.
             state = PopupState.Hidden;
             StopDemo();
@@ -312,6 +318,7 @@ namespace SubTerra.App.UI.Guide
 
         private void OnDestroy()
         {
+            LocalizationService.LanguageChanged -= RefreshLanguage;
             if (guideState != null)
             {
                 guideState.Changed -= OnStateChanged;

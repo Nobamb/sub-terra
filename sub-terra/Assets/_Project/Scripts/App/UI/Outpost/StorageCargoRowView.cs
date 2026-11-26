@@ -1,3 +1,4 @@
+using static SubTerra.Shared.Localization.LocalizationService;
 using System;
 using SubTerra.App.Audio;
 using SubTerra.App.UI.Sell;
@@ -95,8 +96,8 @@ namespace SubTerra.App.UI.Outpost
         public void Bind(StorageCargoLine line, Sprite iconSprite, bool isSelected)
         {
             MineralId = line.MineralId;
-            nameText.text = line.DisplayName;
-            quantityText.text = line.Quantity.ToString("N0") + "개";
+            nameText.text = Text(line.DisplayName, SubTerra.App.Core.Data.ItemDisplayNames.LocalizedMineral(line.MineralId));
+            quantityText.text = line.Quantity.ToString("N0") + Text("개", string.Empty);
             weightText.text = StorageTransferPreview.Weight(line.Weight);
             icon.sprite = iconSprite != null ? iconSprite : StorageBoxArt.Gem();
             icon.color = iconSprite != null ? Color.white : ResourceSellUi.Teal;

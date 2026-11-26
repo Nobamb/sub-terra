@@ -1,4 +1,6 @@
+using static SubTerra.Shared.Localization.LocalizationService;
 using System;
+using SubTerra.App.Core.Data;
 using System.Collections.Generic;
 using SubTerra.App.Run;
 using SubTerra.Shared;
@@ -54,6 +56,18 @@ namespace SubTerra.App.UI.EmergencyEscape
             return model;
         }
 
+        public static string DisplayNameFor(EmergencyEscapeDestinationOption option)
+        {
+            if (option.Kind == EmergencyEscapeDestination.Elevator)
+                return Text(option.DisplayName, "Elevator");
+
+            const string prefix = ItemDisplayNames.OutpostName + " ";
+            return Current == SubTerra.Shared.Localization.GameLanguage.English
+                && option.DisplayName.StartsWith(prefix, StringComparison.Ordinal)
+                ? "Outpost " + option.DisplayName.Substring(prefix.Length)
+                : option.DisplayName;
+        }
+
         public static string ReasonFor(EmergencyEscapePaymentFailure failure)
         {
             switch (failure)
@@ -61,11 +75,11 @@ namespace SubTerra.App.UI.EmergencyEscape
                 case EmergencyEscapePaymentFailure.None:
                     return string.Empty;
                 case EmergencyEscapePaymentFailure.InsufficientGold:
-                    return GoldShortReason;
+                    return Text(GoldShortReason, "Not enough gold");
                 case EmergencyEscapePaymentFailure.InsufficientEnergy:
-                    return EnergyShortReason;
+                    return Text(EnergyShortReason, "Not enough power");
                 default:
-                    return UnavailableReason;
+                    return Text(UnavailableReason, "Unavailable");
             }
         }
 

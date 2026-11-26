@@ -1,4 +1,5 @@
 using TMPro;
+using SubTerra.Shared.Localization;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -28,8 +29,11 @@ namespace SubTerra.App.UI.HUD
 
         private void OnEnable()
         {
+            LocalizationService.LanguageChanged += Apply;
             Apply();
         }
+
+        private void OnDisable() => LocalizationService.LanguageChanged -= Apply;
 
         public void SetStructuralRisk(string text, StructuralStatusKind kind)
         {
@@ -40,13 +44,7 @@ namespace SubTerra.App.UI.HUD
         public void SetOxygenRisk(StructuralStatusKind kind)
         {
             showingOxygen = true;
-            string label = kind switch
-            {
-                StructuralStatusKind.Critical => "위험",
-                StructuralStatusKind.Caution => "주의",
-                _ => "안전"
-            };
-            SetStatus("산소 위험도 " + label, kind);
+            SetStatus(string.Empty, kind);
         }
 
         private void SetStatus(string text, StructuralStatusKind kind)
@@ -66,7 +64,14 @@ namespace SubTerra.App.UI.HUD
             var style = StructuralStatusPresentation.Resolve(currentKind);
             if (structuralRiskText != null)
             {
-                structuralRiskText.text = currentText;
+                structuralRiskText.text = showingOxygen
+                    ? LocalizationService.Get(currentKind switch
+                    {
+                        StructuralStatusKind.Critical => "hud.oxygen_critical",
+                        StructuralStatusKind.Caution => "hud.oxygen_caution",
+                        _ => "hud.oxygen_safe"
+                    })
+                    : currentText;
                 structuralRiskText.color = style.TextColor;
             }
 

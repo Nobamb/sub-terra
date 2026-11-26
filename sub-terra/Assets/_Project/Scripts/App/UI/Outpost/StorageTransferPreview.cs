@@ -1,3 +1,4 @@
+using static SubTerra.Shared.Localization.LocalizationService;
 using System.Collections.Generic;
 using System.Globalization;
 using SubTerra.App.Core.Data;
@@ -136,7 +137,8 @@ namespace SubTerra.App.UI.Outpost
 
         public static string TotalsText(StorageCargoTotals totals)
         {
-            return totals.Kinds + "종 · " + totals.Quantity + "개 · " + Weight(totals.Weight);
+            return Text($"{totals.Kinds}종 · {totals.Quantity}개", $"{totals.Kinds} types · {totals.Quantity} items")
+                + " · " + Weight(totals.Weight);
         }
 
         private static void Collect(InventorySnapshot snapshot, List<string> ids, int max)

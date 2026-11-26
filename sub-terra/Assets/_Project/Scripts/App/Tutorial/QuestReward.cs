@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Text;
 using SubTerra.App.Core.Data;
 using SubTerra.App.Inventory;
+using SubTerra.Shared.Localization;
 
 namespace SubTerra.App.Tutorial
 {
@@ -74,18 +75,18 @@ namespace SubTerra.App.Tutorial
             return InventoryCalculator.ComputeTotalWeight(quantities, catalog);
         }
 
-        public string FormatKorean()
+        public string FormatLocalized()
         {
             if (IsEmpty)
             {
-                return "없음";
+                return LocalizationService.Get("quest.reward_none");
             }
 
             var builder = new StringBuilder();
-            Append(builder, "구리", Copper);
-            Append(builder, "철", Iron);
-            Append(builder, "리튬", Lithium);
-            Append(builder, "골드", Gold);
+            Append(builder, LocalizationService.Get("quest.reward_copper"), Copper);
+            Append(builder, LocalizationService.Get("quest.reward_iron"), Iron);
+            Append(builder, LocalizationService.Get("quest.reward_lithium"), Lithium);
+            Append(builder, LocalizationService.Get("quest.reward_gold"), Gold);
             return builder.ToString();
         }
 

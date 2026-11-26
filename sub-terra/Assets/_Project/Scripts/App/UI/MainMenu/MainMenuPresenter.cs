@@ -1,5 +1,6 @@
 using System;
 using SubTerra.App.Save;
+using SubTerra.Shared.Localization;
 
 namespace SubTerra.App.UI.MainMenu
 {
@@ -93,15 +94,17 @@ namespace SubTerra.App.UI.MainMenu
             var metadata = loader.GetSlotMetadata(slotId);
             var eligibility = SlotContinuePolicy.FromMetadata(metadata);
             var canContinue = SlotContinuePolicy.CanContinue(eligibility);
-            var message = "선택 슬롯 " + slotId + " — " + SlotContinuePolicy.Describe(eligibility);
+            var message = string.Format(LocalizationService.Get("main_menu.selected_slot"),
+                slotId, SlotContinuePolicy.Describe(eligibility));
             if (eligibility == SlotContinueEligibility.Unrecoverable)
             {
-                message += " (이어하기 불가, 새 게임 시 확인 필요)";
+                message += LocalizationService.Get("main_menu.selected_slot_corrupted");
             }
 
             view.SetSelectedSlot(slotId, canContinue, message);
             var empty = eligibility == SlotContinueEligibility.Empty;
-            view.SetPrimaryAction(empty ? "새 탐사 시작" : "이어하기", empty || canContinue);
+            view.SetPrimaryAction(LocalizationService.Get(empty ? "main_menu.start_expedition" : "main_menu.continue"),
+                empty || canContinue);
         }
 
         public void RequestContinue()
@@ -138,7 +141,7 @@ namespace SubTerra.App.UI.MainMenu
             {
                 // 기존 슬롯 덮어쓰기는 명시 확인 없이 수행하지 않는다.
                 view.SetOverwriteConfirmVisible(true, selectedSlot);
-                view.SetMessage("슬롯 " + selectedSlot + "에 세이브가 있습니다. 덮어쓸까요?");
+                view.SetMessage(string.Format(LocalizationService.Get("main_menu.overwrite_status"), selectedSlot));
                 return status;
             }
 
@@ -149,7 +152,7 @@ namespace SubTerra.App.UI.MainMenu
             }
             else
             {
-                view.SetMessage("새 게임을 시작할 수 없습니다.");
+                view.SetMessage(LocalizationService.Get("main_menu.start_failed"));
             }
 
             return status;
@@ -175,7 +178,7 @@ namespace SubTerra.App.UI.MainMenu
             // 취소: 파일·GameState 불변. 게이트만 닫는다.
             var status = overwriteGate.CancelOverwrite();
             view.SetOverwriteConfirmVisible(false, selectedSlot);
-            view.SetMessage("새 게임이 취소되었습니다.");
+            view.SetMessage(LocalizationService.Get("main_menu.start_cancelled"));
             return status;
         }
 
@@ -228,9 +231,9 @@ namespace SubTerra.App.UI.MainMenu
         public void CompleteDeleteSlot(int slotId, bool deleted)
         {
             Refresh();
-            view.SetMessage(deleted
-                ? SaveSlotCardFormatter.Title(slotId) + "을 삭제했습니다."
-                : SaveSlotCardFormatter.Title(slotId) + "을 삭제하지 못했습니다.");
+            view.SetMessage(string.Format(
+                LocalizationService.Get(deleted ? "main_menu.delete_success" : "main_menu.delete_failed"),
+                SaveSlotCardFormatter.Title(slotId)));
         }
 
         public void OpenSettings()
@@ -269,7 +272,7 @@ namespace SubTerra.App.UI.MainMenu
             var decision = QuitPolicy.Decide(isDirty, saveInProgress);
             if (decision == QuitDecision.DeferWhileSaving)
             {
-                view.SetQuitBlockedMessage("저장 중입니다. 잠시 후 다시 시도하세요.");
+                view.SetQuitBlockedMessage(LocalizationService.Get("main_menu.quit_blocked"));
                 return decision;
             }
 

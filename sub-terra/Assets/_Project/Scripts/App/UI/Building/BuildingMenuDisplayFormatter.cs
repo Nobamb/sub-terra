@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Text;
 using SubTerra.App.Core.Data;
 using SubTerra.Shared;
+using SubTerra.Shared.Localization;
 
 namespace SubTerra.App.UI.Building
 {
@@ -27,6 +28,8 @@ namespace SubTerra.App.UI.Building
 
         public const string MissingColorHex = "#FF7A6B";
         public const string EnoughColorHex = "#8FF5C8";
+
+        private static string NoCost => LocalizationService.Text("비용 없음", "No Cost");
 
         public static BuildingAvailabilityDisplayKind Classify(BuildingAvailabilityReadModel availability)
         {
@@ -65,13 +68,13 @@ namespace SubTerra.App.UI.Building
             switch (kind)
             {
                 case BuildingAvailabilityDisplayKind.Ready:
-                    return "설치 가능";
+                    return LocalizationService.Text("설치 가능", "Ready to Place");
                 case BuildingAvailabilityDisplayKind.NeedResources:
-                    return "자원 부족";
+                    return LocalizationService.Text("자원 부족", "Not Enough Resources");
                 case BuildingAvailabilityDisplayKind.CheckPlacement:
-                    return "설치 위치 확인";
+                    return LocalizationService.Text("설치 위치 확인", "Check Placement");
                 default:
-                    return "시설 미선택";
+                    return LocalizationService.Text("시설 미선택", "No Facility Selected");
             }
         }
 
@@ -89,11 +92,11 @@ namespace SubTerra.App.UI.Building
                 case BuildingAvailabilityDisplayKind.Ready:
                     return string.Empty;
                 case BuildingAvailabilityDisplayKind.NeedResources:
-                    return "자원이 부족합니다.";
+                    return LocalizationService.Text("자원이 부족합니다.", "You need more resources.");
                 case BuildingAvailabilityDisplayKind.CheckPlacement:
-                    return "설치 가능한 위치로 커서를 옮기세요.";
+                    return LocalizationService.Text("설치 가능한 위치로 커서를 옮기세요.", "Move the cursor to a valid tile.");
                 default:
-                    return "시설을 고르면 설치 상태를 확인합니다.";
+                    return LocalizationService.Text("시설을 고르면 설치 상태를 확인합니다.", "Choose a facility to check placement.");
             }
         }
 
@@ -109,7 +112,7 @@ namespace SubTerra.App.UI.Building
         public static string OperatingCondition(string buildingId)
         {
             return RequiresOutpostArea(buildingId)
-                ? (ItemDisplayNames.OutpostName + " 범위 내")
+                ? LocalizationService.Text(ItemDisplayNames.OutpostName + " 범위 내", "Within Outpost Range")
                 : string.Empty;
         }
 
@@ -215,7 +218,7 @@ namespace SubTerra.App.UI.Building
         {
             if (costs == null || costs.Count == 0)
             {
-                return "비용 없음";
+                return NoCost;
             }
 
             var builder = new StringBuilder();
@@ -227,7 +230,7 @@ namespace SubTerra.App.UI.Building
                 }
 
                 var cost = costs[i];
-                var label = ItemDisplayNames.Mineral(cost.ItemId) + " " + cost.Required;
+                var label = ItemDisplayNames.LocalizedMineral(cost.ItemId) + " " + cost.Required;
                 if (cost.IsEnough)
                 {
                     builder.Append(label);
@@ -250,7 +253,8 @@ namespace SubTerra.App.UI.Building
                 return string.Empty;
             }
 
-            var builder = new StringBuilder();
+            var english = LocalizationService.Current == GameLanguage.English;
+            var shortages = new List<string>();
             for (var i = 0; i < costs.Count; i++)
             {
                 var cost = costs[i];
@@ -259,21 +263,23 @@ namespace SubTerra.App.UI.Building
                     continue;
                 }
 
-                if (builder.Length > 0)
-                {
-                    builder.Append(", ");
-                }
-
-                builder.Append(ItemDisplayNames.Mineral(cost.ItemId)).Append(' ')
-                    .Append(cost.Required - cost.Owned).Append('개');
+                var name = ItemDisplayNames.LocalizedMineral(cost.ItemId);
+                var missing = cost.Required - cost.Owned;
+                shortages.Add(english ? $"{missing} more {name}" : $"{name} {missing}개");
             }
 
-            return builder.Length > 0 ? builder.Append("가 더 필요합니다.").ToString() : string.Empty;
+            if (shortages.Count == 0) return string.Empty;
+            if (!english) return string.Join(", ", shortages) + "가 더 필요합니다.";
+            if (shortages.Count == 1) return "Need " + shortages[0] + ".";
+
+            var last = shortages[shortages.Count - 1];
+            shortages.RemoveAt(shortages.Count - 1);
+            return "Need " + string.Join(", ", shortages) + " and " + last + ".";
         }
 
         public static string EntryStateLabel(IReadOnlyList<BuildingCostReadModel> costs)
         {
-            return HasAllCosts(costs) ? ReadyGlyph : "부족";
+            return HasAllCosts(costs) ? ReadyGlyph : LocalizationService.Text("부족", "Short");
         }
 
         /// <summary>B-188: 비용 행 가운데 칸. `보유 / 필요` 순서이며 부족할 때만 보유 수량을 경고색으로 쓴다.</summary>
@@ -288,7 +294,9 @@ namespace SubTerra.App.UI.Building
         /// <summary>B-188: 비용 행 오른쪽 칸. `충분` 또는 `2 부족`.</summary>
         public static string CostState(BuildingCostReadModel cost)
         {
-            return cost.IsEnough ? "충분" : (cost.Required - cost.Owned) + " 부족";
+            return cost.IsEnough
+                ? LocalizationService.Text("충분", "Enough")
+                : (cost.Required - cost.Owned) + LocalizationService.Text(" 부족", " short");
         }
 
         /// <summary>B-188: 전체 목록 한 칸의 비용 비교. `철 3 / 5  2 부족`을 자원마다 한 줄씩 쓴다.</summary>
@@ -296,7 +304,7 @@ namespace SubTerra.App.UI.Building
         {
             if (costs == null || costs.Count == 0)
             {
-                return "비용 없음";
+                return NoCost;
             }
 
             var builder = new StringBuilder();
@@ -308,7 +316,7 @@ namespace SubTerra.App.UI.Building
                 }
 
                 var cost = costs[i];
-                builder.Append(ItemDisplayNames.Mineral(cost.ItemId)).Append(' ')
+                builder.Append(ItemDisplayNames.LocalizedMineral(cost.ItemId)).Append(' ')
                     .Append(CostAmount(cost)).Append("  <color=")
                     .Append(cost.IsEnough ? EnoughColorHex : MissingColorHex).Append('>')
                     .Append(CostState(cost)).Append("</color>");

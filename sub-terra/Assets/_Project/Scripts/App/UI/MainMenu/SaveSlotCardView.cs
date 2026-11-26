@@ -3,6 +3,7 @@ using SubTerra.App.Audio;
 using SubTerra.App.Save;
 using SubTerra.App.UI.Outpost;
 using SubTerra.Shared.Audio;
+using SubTerra.Shared.Localization;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -116,8 +117,9 @@ namespace SubTerra.App.UI.MainMenu
             var text = placeholder != null ? placeholder.GetComponent<TMP_Text>() : null;
             if (text != null)
             {
-                text.text = value == SaveSlotCardKind.Empty ? "신호 없음"
-                    : value == SaveSlotCardKind.Corrupted ? "<color=#E6A23C>신호 손상</color>"
+                text.text = value == SaveSlotCardKind.Empty ? LocalizationService.Get("main_menu.signal_missing")
+                    : value == SaveSlotCardKind.Corrupted
+                        ? "<color=#E6A23C>" + LocalizationService.Get("main_menu.signal_corrupted") + "</color>"
                     : "NO VISUAL\nRECORD";
             }
             RefreshDelete();

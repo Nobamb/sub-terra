@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using SubTerra.Shared.Localization;
 
 namespace SubTerra.App.UI.Building
 {
@@ -18,7 +19,7 @@ namespace SubTerra.App.UI.Building
     {
         public const BuildingCatalogSort DefaultSort = BuildingCatalogSort.Default;
 
-        private static readonly string[] Labels =
+        private static readonly string[] KoreanLabels =
         {
             "기본 순",
             "기본 역순",
@@ -26,22 +27,29 @@ namespace SubTerra.App.UI.Building
             "가나다 역순"
         };
 
-        public static int SortCount => Labels.Length;
+        private static readonly string[] EnglishLabels =
+        {
+            "Default",
+            "Reverse Default",
+            "A-Z",
+            "Z-A"
+        };
+
+        public static int SortCount => KoreanLabels.Length;
 
         public static IReadOnlyList<string> AllLabels()
         {
-            return Labels;
+            return LocalizationService.Current == GameLanguage.English ? EnglishLabels : KoreanLabels;
         }
 
         public static string Label(BuildingCatalogSort sort)
         {
-            var index = (int)sort;
-            return index >= 0 && index < Labels.Length ? Labels[index] : Labels[(int)DefaultSort];
+            return AllLabels()[(int)FromIndex((int)sort)];
         }
 
         public static BuildingCatalogSort FromIndex(int index)
         {
-            return index >= 0 && index < Labels.Length ? (BuildingCatalogSort)index : DefaultSort;
+            return index >= 0 && index < SortCount ? (BuildingCatalogSort)index : DefaultSort;
         }
 
         /// <summary>
