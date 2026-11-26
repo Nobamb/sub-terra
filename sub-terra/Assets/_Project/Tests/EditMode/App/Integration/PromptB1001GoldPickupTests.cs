@@ -3,9 +3,11 @@ using System.IO;
 using NUnit.Framework;
 using SubTerra.App.Editor.DataValidation;
 using SubTerra.App.Integration;
+using SubTerra.App.Inventory;
 using SubTerra.App.UI.FacilityNameTag;
 using SubTerra.App.UI.HUD;
 using SubTerra.Gameplay.Mining;
+using SubTerra.Shared.Localization;
 using TMPro;
 using UnityEditor;
 using UnityEngine;
@@ -15,6 +17,30 @@ namespace SubTerra.App.Tests.Integration
 {
     public sealed class PromptB1001GoldPickupTests
     {
+        [Test]
+        public void PickupLabels_FollowLanguageAndKeepAwardedAmounts()
+        {
+            var previous = LocalizationService.Current;
+            try
+            {
+                LocalizationService.SetLanguage(GameLanguage.English);
+                Assert.That(MiningYieldCommit.FormatHudFeedback("mineral.copper", 1, 2, 25, 5),
+                    Is.EqualTo("Copper +1 (+2 extra)  Gold +25G (+5G bonus)"));
+                Assert.That(GoldPickupPresentation.FormatMainText(25, 5), Is.EqualTo("+20 G"));
+                Assert.That(GoldPickupPresentation.FormatBonusText(25, 5), Is.EqualTo("Bonus Gold +5 G"));
+                Assert.That(GoldPickupPresentation.FormatBonusText(20, 0), Is.Empty);
+
+                LocalizationService.SetLanguage(GameLanguage.Korean);
+                Assert.That(MiningYieldCommit.FormatHudFeedback("mineral.copper", 1, 2, 25, 5),
+                    Is.EqualTo("구리 +1 (+2 수확)  골드 +25G (+5G 보너스)"));
+                Assert.That(GoldPickupPresentation.FormatBonusText(25, 5), Is.EqualTo("추가 골드 +5 G"));
+            }
+            finally
+            {
+                LocalizationService.SetLanguage(previous);
+            }
+        }
+
         private readonly List<Object> created = new List<Object>();
 
         [TearDown]

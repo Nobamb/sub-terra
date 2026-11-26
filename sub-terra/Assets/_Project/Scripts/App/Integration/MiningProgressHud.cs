@@ -123,9 +123,10 @@ namespace SubTerra.App.Integration
             switch (state.Phase)
             {
                 case MiningPhase.Mining:
+                    var miningLabel = SubTerra.Shared.Localization.LocalizationService.Text("채굴", "Mining");
                     messages.SetProgress(
                         ProgressKey,
-                        $"채굴 {Mathf.RoundToInt(state.Progress * 100f)}%",
+                        $"{miningLabel} {Mathf.RoundToInt(state.Progress * 100f)}%",
                         Mathf.Clamp01(state.Progress));
                     break;
                 case MiningPhase.Failed:

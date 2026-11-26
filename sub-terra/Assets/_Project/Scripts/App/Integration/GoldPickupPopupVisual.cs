@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using SubTerra.App.UI.FacilityNameTag;
+using SubTerra.Shared.Localization;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -720,6 +721,7 @@ namespace SubTerra.App.Integration
             private readonly Image flash;
             private readonly bool isMain;
             private int shownValue = -1;
+            private GameLanguage shownLanguage;
             private int activeGhosts;
 
             public RectTransform Slot { get; }
@@ -815,12 +817,14 @@ namespace SubTerra.App.Integration
 
             public void SetValue(int value)
             {
-                if (value == shownValue)
+                var language = LocalizationService.Current;
+                if (value == shownValue && (isMain || language == shownLanguage))
                 {
                     return;
                 }
 
                 shownValue = value;
+                shownLanguage = language;
                 Label = !isMain
                     ? GoldPickupPresentation.FormatBonus(value)
                     : GoldPickupPresentation.FormatBase(value);
