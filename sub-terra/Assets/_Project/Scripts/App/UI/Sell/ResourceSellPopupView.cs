@@ -457,8 +457,8 @@ namespace SubTerra.App.UI.Sell
 
         private void RefreshLanguage()
         {
-            if (session != null) session.Refresh();
-            else Render();
+            session?.Refresh();
+            Render();
         }
 
         private void OnDisable()
