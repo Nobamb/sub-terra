@@ -215,11 +215,12 @@ namespace SubTerra.Gameplay.Building.Tests
             Assert.That(building.GetComponentsInChildren<SpriteRenderer>(true).Any(r => r.name == "StorageOpenVideo"), Is.False);
         }
 
-        [TestCase("building.charger.basic")]
-        [TestCase("building.clinic.basic")]
-        public void ChargerAndClinic_IconAppearsEmptyAboveTheFacility_ThenFillsToTheOriginal(string buildingId)
+        [TestCase("building.charger.basic", 2)]
+        [TestCase("building.charger.basic", 1)]
+        [TestCase("building.clinic.basic", 2)]
+        public void ChargerAndClinic_IconAppearsEmpty_ThenFillsToTheOriginal(string buildingId, int footprintSize)
         {
-            GameObject building = Spawn(buildingId);
+            GameObject building = Spawn(buildingId, new Vector2Int(footprintSize, footprintSize));
             Power(building, true);
             var animation = building.GetComponent<FacilityIdleAnimation>();
             SpriteRenderer artwork = building.transform.Find("VisualRoot/Artwork").GetComponent<SpriteRenderer>();
@@ -231,7 +232,10 @@ namespace SubTerra.Gameplay.Building.Tests
             SpriteRenderer icon = building.GetComponentsInChildren<SpriteRenderer>(true).Single(r => r.name == "IconFill");
             Assert.That(icon.sprite.name, Does.EndWith("_0"), "처음은 속이 빈 아이콘");
             Assert.That(icon.enabled, Is.True);
-            Assert.That(icon.bounds.center.y, Is.GreaterThan(artwork.bounds.max.y - 0.1f), "아이콘은 시설 위에 나타난다");
+            if (animation.Kind == FacilityIdleKind.Clinic)
+            {
+                Assert.That(icon.bounds.center.y, Is.GreaterThan(artwork.bounds.max.y - 0.1f), "보건소 하트는 시설 위에 나타난다");
+            }
             Assert.That(icon.sortingOrder, Is.GreaterThan(artwork.sortingOrder));
 
             animation.Tick(fillEnd * 0.5f);
@@ -241,6 +245,14 @@ namespace SubTerra.Gameplay.Building.Tests
             animation.Tick(fillEnd + 0.05f - animation.Elapsed);   // 가득 찬 직후
             Assert.That(animation.IsPlaying, Is.True);
             Assert.That(icon.sprite.name, Does.EndWith("_" + (FacilityIdleAnchors.IconFillFrames - 1)), "원래 아이콘으로 돌아온다");
+            if (animation.Kind == FacilityIdleKind.Charger)
+            {
+                Bounds visible = FacilityGroundedVisual.GetVisibleBounds(artwork.sprite);
+                float canopyTop = artwork.transform.TransformPoint(visible.max).y;
+                Assert.That(icon.bounds.max.y, Is.LessThan(canopyTop), "번쩍이는 순간에도 번개는 차양 아래에 있다");
+                animation.Tick(FacilityIdleAnchors.ChargerSeconds - 0.2f - animation.Elapsed);
+                Assert.That(icon.bounds.max.y, Is.LessThan(canopyTop), "사라지기 직전에도 번개는 천장과 이름표 영역에 닿지 않는다");
+            }
             animation.Tick(FacilityIdleAnchors.DurationOf(animation.Kind));
             Assert.That(animation.IsPlaying, Is.False);
         }
@@ -596,7 +608,7 @@ namespace SubTerra.Gameplay.Building.Tests
             if (facility != null) facility.SetSupplyRangePowered(on, false);
         }
 
-        private GameObject Spawn(string buildingId)
+        private GameObject Spawn(string buildingId, Vector2Int? footprint = null)
         {
             string path = Facilities.First(entry => entry.id == buildingId).path;
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
@@ -606,7 +618,7 @@ namespace SubTerra.Gameplay.Building.Tests
             BuildingInstance instance = go.GetComponent<BuildingInstance>();
             if (instance == null) instance = go.AddComponent<BuildingInstance>();
             instance.Initialize($"{buildingId}-idle{sequence++}", buildingId,
-                buildingId == "building.charger.basic" ? new Vector2Int(2, 2) : default);
+                footprint ?? (buildingId == "building.charger.basic" ? new Vector2Int(2, 2) : default));
             return go;
         }
     }

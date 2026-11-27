@@ -103,7 +103,7 @@ namespace SubTerra.Gameplay.Building
     }
 
     /// <summary>
-    /// 충전기·보건소 공통: 시설 위에 팝업 아이콘이 속이 빈 채로 톡 나타나고, 아래에서 위로 액체가 차오르며
+    /// 충전기·보건소 공통: 팝업 아이콘이 속이 빈 채로 톡 나타나고, 아래에서 위로 액체가 차오르며
     /// 천천히 떠오르다가 가득 차면 번쩍이며 원래 아이콘으로 돌아온 뒤 옅어진다. 차오름 프레임은 미리 구운 시트다.
     /// 시설별 분위기(정전기 / 회복)는 ApplyAura에서 덧그린다.
     /// </summary>
@@ -112,7 +112,7 @@ namespace SubTerra.Gameplay.Building
         protected SpriteRenderer Icon, Aura, Flash, Ring;
         protected abstract Sprite IconFrame(int frame);
         protected abstract Color Tint { get; }
-        protected abstract Vector2 Anchor { get; }
+        protected abstract Vector3 IconCenter(IdleFxContext c, float riseProgress);
         protected abstract float FillEnd { get; }
         protected abstract float Duration { get; }
 
@@ -145,8 +145,7 @@ namespace SubTerra.Gameplay.Building
             // 톡 나타남(살짝 넘쳤다 제자리) + 가득 찬 순간 한 번 튀어 오름.
             float scale = BackOut(appear);
             if (completing) scale *= 1f + 0.16f * Mathf.Sin(Mathf.PI * complete) * (1f - complete * 0.5f);
-            float rise = FacilityIdleAnchors.IconRise * Smooth(Mathf.Clamp01(t / Duration));
-            Vector3 center = c.Point(Anchor) + new Vector3(0f, FacilityIdleAnchors.IconLift + rise, 0f);
+            Vector3 center = IconCenter(c, Smooth(Mathf.Clamp01(t / Duration)));
 
             Icon.sprite = IconFrame(FacilityIdleAnchors.IconFillFrame(level));
             IdleFxContext.Put(Icon, center, new Vector2(size * scale, size * scale), 0f, Alpha(Color.white, alpha));
@@ -187,7 +186,7 @@ namespace SubTerra.Gameplay.Building
     }
 
     /// <summary>
-    /// 충전기: 충전 완료창의 번개 아이콘이 차양 위에 빈 채로 나타나, 둘레에 청록 정전기가 탁탁 튀는 동안
+    /// 충전기: 충전 완료창의 번개 아이콘이 차양 아래 빈 공간에 나타나, 둘레에 청록 정전기가 탁탁 튀는 동안
     /// 아래에서 위로 청록 액체가 차올라 원래 번개로 돌아온다. 번개 화면도 같이 빛나고, 가득 차면 정전기가 사방으로 터진다.
     /// </summary>
     internal sealed class ChargerIdleFx : IconFillIdleFx
@@ -202,7 +201,8 @@ namespace SubTerra.Gameplay.Building
 
         protected override Sprite IconFrame(int frame) => FacilityIdleSprites.ChargerIcon(frame);
         protected override Color Tint => PowerOnEffect.Cyan;
-        protected override Vector2 Anchor => FacilityIdleAnchors.ChargerIcon;
+        protected override Vector3 IconCenter(IdleFxContext c, float riseProgress)
+            => c.Point(FacilityIdleAnchors.ChargerIcon + Vector2.up * (FacilityIdleAnchors.ChargerIconRise * riseProgress));
         protected override float FillEnd => FacilityIdleAnchors.ChargerFillEnd;
         protected override float Duration => FacilityIdleAnchors.ChargerSeconds;
 
@@ -279,7 +279,8 @@ namespace SubTerra.Gameplay.Building
 
         protected override Sprite IconFrame(int frame) => FacilityIdleSprites.ClinicIcon(frame);
         protected override Color Tint => Red;
-        protected override Vector2 Anchor => FacilityIdleAnchors.ClinicTower;
+        protected override Vector3 IconCenter(IdleFxContext c, float riseProgress)
+            => c.Point(FacilityIdleAnchors.ClinicTower) + Vector3.up * (FacilityIdleAnchors.IconLift + FacilityIdleAnchors.IconRise * riseProgress);
         protected override float FillEnd => FacilityIdleAnchors.ClinicFillEnd;
         protected override float Duration => FacilityIdleAnchors.ClinicSeconds;
 

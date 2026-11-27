@@ -34,7 +34,7 @@ namespace SubTerra.Gameplay.Building
         public const float LightOverlayWidth = 0.34f;
         public const float LightOverlayMaxAlpha = 0.8f;
 
-        // 충전기·보건소 공통: 시설 위에 아이콘(충전 완료창 번개 / 회복창 하트)이 빈 채로 나타나
+        // 충전기·보건소 공통: 아이콘(충전 완료창 번개 / 회복창 하트)이 빈 채로 나타나
         // 아래에서 위로 액체가 차오르며 원래 색으로 돌아온다. 크기는 보이는 폭 비율, 높이는 칸 단위.
         public const float IconWidth = 0.34f;                 // ★ 아이콘 크기(보이는 폭 대비)
         public const float IconLift = 0.42f;                  // ★ 시설 꼭대기에서 아이콘 중심까지(칸)
@@ -45,7 +45,8 @@ namespace SubTerra.Gameplay.Building
         public const float ClinicFillEnd = 1.75f;             // ★ 보건소: 가득 차는 시각(부드럽게)
         public const float IconCompleteSeconds = 0.35f;       // 가득 찬 뒤 번쩍이며 튀는 시간
         public const float IconFadeSeconds = 0.45f;           // 끝에서 옅어지는 시간
-        public static readonly Vector2 ChargerIcon = new(0.50f, 1.00f);   // 차양 위 가운데
+        public static readonly Vector2 ChargerIcon = new(0.39f, 0.60f);   // 차양 아래, 기둥과 충전 화면 사이
+        public const float ChargerIconRise = 0.15f;                       // 보이는 높이 대비 떠오르는 거리
         public static readonly Vector2 ChargerScreen = new(0.55f, 0.54f); // 번개 화면(차오르는 동안 같이 빛남)
         public static readonly Vector2 ClinicTower = new(0.50f, 0.99f);   // 가운데 탑 꼭대기
         public static readonly Vector2 ClinicCross = new(0.50f, 0.72f);   // 십자 간판(심장 박동에 맞춰 빛남)
