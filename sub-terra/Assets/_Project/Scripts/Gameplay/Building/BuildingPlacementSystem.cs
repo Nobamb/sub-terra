@@ -35,7 +35,24 @@ namespace SubTerra.Gameplay.Building
         private SubTerra.Gameplay.Player.ElevatorController[] placementElevators;
         private readonly Dictionary<BuildingInstance, SpriteRenderer[]> authoredBuildingRenderers = new();
         private readonly Dictionary<BuildingInstance, BuildingPlacementResult> runtimeBuildings = new();
-        private BuildingInstance movingBuilding;
+        private BuildingInstance movingBuildingValue;
+
+        // B-214: 옮기기를 고른 시설은 주기 연출을 하지 않는다. 설치 시스템이 값을 바꿀 때마다 정적 값도 맞춘다.
+        private BuildingInstance movingBuilding
+        {
+            get => movingBuildingValue;
+            set
+            {
+                movingBuildingValue = value;
+                MovingInstance = value;
+            }
+        }
+
+        /// <summary>지금 옮기기를 고른 시설(없으면 null). 시각 연출이 이동 중인 시설을 건너뛰는 데 쓴다.</summary>
+        public static BuildingInstance MovingInstance { get; private set; }
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetMovingInstance() => MovingInstance = null;
 
         public BuildingPlacementDefinition Selection => selection;
         public bool IsMoving => movingBuilding != null;

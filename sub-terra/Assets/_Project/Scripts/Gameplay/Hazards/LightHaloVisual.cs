@@ -1,3 +1,4 @@
+using SubTerra.Gameplay.Power;
 using SubTerra.Shared;
 using UnityEngine;
 
@@ -28,6 +29,7 @@ namespace SubTerra.Gameplay.Hazards
         private float level;
         private float seed;
         private float fittedRadius = -1f;
+        private FacilityVisualDim dim;
 
         /// <summary>현재 후광 밝기 비율(0~1, 깜빡임 제외). 테스트·디버그용.</summary>
         public float Level => level;
@@ -152,10 +154,21 @@ namespace SubTerra.Gameplay.Hazards
             FitToRadius();
             var flicker = GasVisualMath.HaloFlicker(time, seed, flickerStrength, reduceMotion);
             var color = tint;
-            color.a = Mathf.Clamp01(peakOpacity) * level * flicker * source.VisualOpacity;
+            color.a = Mathf.Clamp01(peakOpacity) * level * flicker * source.VisualOpacity * DimFactor(frame);
             haloRenderer.color = color;
             haloRenderer.enabled = color.a > 0.002f;
             CurrentAlpha = color.a;
+        }
+
+        // B-214: 조명 깜빡임 연출이 시설 루트의 FacilityVisualDim으로 후광 알파만 낮춘다(가스 시야 판정은 그대로).
+        private float DimFactor(int frame)
+        {
+            if (dim == null && (frame & 15) == 0)
+            {
+                dim = GetComponentInParent<FacilityVisualDim>(true);
+            }
+
+            return dim != null ? dim.Multiplier : 1f;
         }
 
         private float FadeStep(float deltaTime, bool reduceMotion)

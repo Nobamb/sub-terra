@@ -22,6 +22,14 @@ namespace SubTerra.Gameplay.Power
         /// </summary>
         public bool IsInSupplyRange { get; private set; }
 
+        /// <summary>
+        /// B-214: 시설 그림 연출 전용 공급 범위 판정. 조명·보관함처럼 IsInSupplyRange를 쓰지 않는 시설도 채운다.
+        /// 가스 시야·켜짐 연출·상호작용 판정에는 쓰이지 않는다.
+        /// </summary>
+        public bool IsInVisualSupplyRange { get; private set; }
+
+        public void SetVisualSupplyRange(bool inRange) => IsInVisualSupplyRange = inRange;
+
         private void Awake()
         {
             if (powerNode == null) powerNode = GetComponent<PowerNode>();

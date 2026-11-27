@@ -1,0 +1,1586 @@
+fileFormatVersion: 2
+guid: d55d986e82939fb439264a8519c2c14e
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -488250754439920227
+    second: StorageOpenSheet_0
+  - first:
+      213: 4185328790659908781
+    second: StorageOpenSheet_1
+  - first:
+      213: -7897694816941712455
+    second: StorageOpenSheet_2
+  - first:
+      213: -3340834811805101369
+    second: StorageOpenSheet_3
+  - first:
+      213: -4805888650280285288
+    second: StorageOpenSheet_4
+  - first:
+      213: -8562997793025273360
+    second: StorageOpenSheet_5
+  - first:
+      213: -2183170301954946256
+    second: StorageOpenSheet_6
+  - first:
+      213: 3909442314091668757
+    second: StorageOpenSheet_7
+  - first:
+      213: -1482396291926325855
+    second: StorageOpenSheet_8
+  - first:
+      213: -165415940906322389
+    second: StorageOpenSheet_9
+  - first:
+      213: -4473185053017082837
+    second: StorageOpenSheet_10
+  - first:
+      213: 8488879790383178047
+    second: StorageOpenSheet_11
+  - first:
+      213: 4044319028330519723
+    second: StorageOpenSheet_12
+  - first:
+      213: 6911162229384100685
+    second: StorageOpenSheet_13
+  - first:
+      213: 6898888314166758144
+    second: StorageOpenSheet_14
+  - first:
+      213: -6869551145290333690
+    second: StorageOpenSheet_15
+  - first:
+      213: 8858288376881133341
+    second: StorageOpenSheet_16
+  - first:
+      213: -3394378364440843338
+    second: StorageOpenSheet_17
+  - first:
+      213: -4830244660164711892
+    second: StorageOpenSheet_18
+  - first:
+      213: -3900233488216255558
+    second: StorageOpenSheet_19
+  - first:
+      213: 3259470234240165601
+    second: StorageOpenSheet_20
+  - first:
+      213: 6256383120587821250
+    second: StorageOpenSheet_21
+  - first:
+      213: -5431451304398749192
+    second: StorageOpenSheet_22
+  - first:
+      213: 343948734949843696
+    second: StorageOpenSheet_23
+  - first:
+      213: -4078788869916734770
+    second: StorageOpenSheet_24
+  - first:
+      213: 5968922180481301285
+    second: StorageOpenSheet_25
+  - first:
+      213: 1827267982306163859
+    second: StorageOpenSheet_26
+  - first:
+      213: 5920188210374576150
+    second: StorageOpenSheet_27
+  - first:
+      213: -502583935828140369
+    second: StorageOpenSheet_28
+  - first:
+      213: 6630881917850643058
+    second: StorageOpenSheet_29
+  - first:
+      213: 2703196708461028312
+    second: StorageOpenSheet_30
+  - first:
+      213: -7847569299293518441
+    second: StorageOpenSheet_31
+  - first:
+      213: 6115282734907069159
+    second: StorageOpenSheet_32
+  - first:
+      213: 6351556838198219409
+    second: StorageOpenSheet_33
+  - first:
+      213: -424882526863772076
+    second: StorageOpenSheet_34
+  - first:
+      213: -5797231921759541061
+    second: StorageOpenSheet_35
+  - first:
+      213: 8120377224087476750
+    second: StorageOpenSheet_36
+  - first:
+      213: 6088756591691791260
+    second: StorageOpenSheet_37
+  - first:
+      213: -5124850134461260370
+    second: StorageOpenSheet_38
+  - first:
+      213: 3671751135995160003
+    second: StorageOpenSheet_39
+  - first:
+      213: 6346226568491003582
+    second: StorageOpenSheet_40
+  - first:
+      213: -9217915508456350575
+    second: StorageOpenSheet_41
+  - first:
+      213: -2957607435052614680
+    second: StorageOpenSheet_42
+  - first:
+      213: -1729252105516719397
+    second: StorageOpenSheet_43
+  - first:
+      213: -1699513098388178745
+    second: StorageOpenSheet_44
+  - first:
+      213: -2617995268518280635
+    second: StorageOpenSheet_45
+  - first:
+      213: 6712400319877612077
+    second: StorageOpenSheet_46
+  - first:
+      213: 7774232745719175332
+    second: StorageOpenSheet_47
+  - first:
+      213: -111829135622345492
+    second: StorageOpenSheet_48
+  - first:
+      213: 39039520784317384
+    second: StorageOpenSheet_49
+  - first:
+      213: -4185183134954342622
+    second: StorageOpenSheet_50
+  - first:
+      213: -1851626759935220390
+    second: StorageOpenSheet_51
+  - first:
+      213: -7303896551375045931
+    second: StorageOpenSheet_52
+  - first:
+      213: 3380042767789419540
+    second: StorageOpenSheet_53
+  - first:
+      213: 418182610342597320
+    second: StorageOpenSheet_54
+  - first:
+      213: -6514638895263552532
+    second: StorageOpenSheet_55
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 0
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 2
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: StorageOpenSheet_0
+      rect:
+        serializedVersion: 2
+        x: 3
+        y: 1515
+        width: 274
+        height: 198
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d95ca4496826939f0800000000000000
+      internalID: -488250754439920227
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StorageOpenSheet_1
+      rect:
+        serializedVersion: 2
+        x: 283
+        y: 1515
+        width: 274
+        height: 198
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: da4cf7b3c56451a30800000000000000
+      internalID: 4185328790659908781
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StorageOpenSheet_2
+      rect:
+        serializedVersion: 2
+        x: 563
+        y: 1515
+        width: 274
+        height: 198
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9bbdeb36860c56290800000000000000
+      internalID: -7897694816941712455
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StorageOpenSheet_3
+      rect:
+        serializedVersion: 2
+        x: 843
+        y: 1515
+        width: 274
+        height: 198
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7c2191d6078f2a1d0800000000000000
+      internalID: -3340834811805101369
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StorageOpenSheet_4
+      rect:
+        serializedVersion: 2
+        x: 1123
+        y: 1515
+        width: 274
+        height: 198
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 89b46f93cbd0e4db0800000000000000
+      internalID: -4805888650280285288
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StorageOpenSheet_5
+      rect:
+        serializedVersion: 2
+        x: 1403
+        y: 1515
+        width: 274
+        height: 198
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0f1564e30ee1a2980800000000000000
+      internalID: -8562997793025273360
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StorageOpenSheet_6
+      rect:
+        serializedVersion: 2
+        x: 1683
+        y: 1515
+        width: 274
+        height: 198
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 03b0bc36d22d3b1e0800000000000000
+      internalID: -2183170301954946256
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StorageOpenSheet_7
+      rect:
+        serializedVersion: 2
+        x: 3
+        y: 1299
+        width: 274
+        height: 198
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 515a0515211214630800000000000000
+      internalID: 3909442314091668757
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StorageOpenSheet_8
+      rect:
+        serializedVersion: 2
+        x: 283
+        y: 1299
+        width: 274
+        height: 198
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1a500633d687d6be0800000000000000
+      internalID: -1482396291926325855
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StorageOpenSheet_9
+      rect:
+        serializedVersion: 2
+        x: 563
+        y: 1299
+        width: 274
+        height: 198
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b267712041354bdf0800000000000000
+      internalID: -165415940906322389
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StorageOpenSheet_10
+      rect:
+        serializedVersion: 2
+        x: 843
+        y: 1299
+        width: 274
+        height: 198
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b24745ce4ed0ce1c0800000000000000
+      internalID: -4473185053017082837
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StorageOpenSheet_11
+      rect:
+        serializedVersion: 2
+        x: 1123
+        y: 1299
+        width: 274
+        height: 199
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f3128ce713f8ec570800000000000000
+      internalID: 8488879790383178047
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StorageOpenSheet_12
+      rect:
+        serializedVersion: 2
+        x: 1403
+        y: 1299
+        width: 274
+        height: 200
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bac5ef18abe402830800000000000000
+      internalID: 4044319028330519723
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StorageOpenSheet_13
+      rect:
+        serializedVersion: 2
+        x: 1683
+        y: 1298
+        width: 274
+        height: 205
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d4b39834e6169ef50800000000000000
+      internalID: 6911162229384100685
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StorageOpenSheet_14
+      rect:
+        serializedVersion: 2
+        x: 3
+        y: 1082
+        width: 274
+        height: 208
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 00bc00fae56cdbf50800000000000000
+      internalID: 6898888314166758144
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StorageOpenSheet_15
+      rect:
+        serializedVersion: 2
+        x: 283
+        y: 1082
+        width: 275
+        height: 209
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 602879a31a37aa0a0800000000000000
+      internalID: -6869551145290333690
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StorageOpenSheet_16
+      rect:
+        serializedVersion: 2
+        x: 563
+        y: 1082
+        width: 274
+        height: 210
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d17b8f57856feea70800000000000000
+      internalID: 8858288376881133341
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StorageOpenSheet_17
+      rect:
+        serializedVersion: 2
+        x: 843
+        y: 1082
+        width: 274
+        height: 210
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6bb6b3a9cdeb4e0d0800000000000000
+      internalID: -3394378364440843338
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StorageOpenSheet_18
+      rect:
+        serializedVersion: 2
+        x: 1123
+        y: 1082
+        width: 274
+        height: 210
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c2aa7a4c21687fcb0800000000000000
+      internalID: -4830244660164711892
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StorageOpenSheet_19
+      rect:
+        serializedVersion: 2
+        x: 1403
+        y: 1082
+        width: 274
+        height: 211
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ab399c98e469fd9c0800000000000000
+      internalID: -3900233488216255558
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StorageOpenSheet_20
+      rect:
+        serializedVersion: 2
+        x: 1683
+        y: 1082
+        width: 274
+        height: 211
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1e628db98e6fb3d20800000000000000
+      internalID: 3259470234240165601
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StorageOpenSheet_21
+      rect:
+        serializedVersion: 2
+        x: 3
+        y: 866
+        width: 274
+        height: 211
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2c01369ec4323d650800000000000000
+      internalID: 6256383120587821250
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StorageOpenSheet_22
+      rect:
+        serializedVersion: 2
+        x: 283
+        y: 866
+        width: 274
+        height: 211
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8f10b72d0db9f94b0800000000000000
+      internalID: -5431451304398749192
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StorageOpenSheet_23
+      rect:
+        serializedVersion: 2
+        x: 563
+        y: 866
+        width: 274
+        height: 211
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0f261a75d83f5c400800000000000000
+      internalID: 343948734949843696
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StorageOpenSheet_24
+      rect:
+        serializedVersion: 2
+        x: 843
+        y: 866
+        width: 274
+        height: 211
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ecacbc6122b3567c0800000000000000
+      internalID: -4078788869916734770
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StorageOpenSheet_25
+      rect:
+        serializedVersion: 2
+        x: 1123
+        y: 866
+        width: 274
+        height: 211
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 52bb983391fd5d250800000000000000
+      internalID: 5968922180481301285
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StorageOpenSheet_26
+      rect:
+        serializedVersion: 2
+        x: 1403
+        y: 866
+        width: 274
+        height: 211
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 39cbdc27c82cb5910800000000000000
+      internalID: 1827267982306163859
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StorageOpenSheet_27
+      rect:
+        serializedVersion: 2
+        x: 1683
+        y: 866
+        width: 274
+        height: 211
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 61805d29fcbb82250800000000000000
+      internalID: 5920188210374576150
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StorageOpenSheet_28
+      rect:
+        serializedVersion: 2
+        x: 3
+        y: 650
+        width: 274
+        height: 211
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fae552bb2967609f0800000000000000
+      internalID: -502583935828140369
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StorageOpenSheet_29
+      rect:
+        serializedVersion: 2
+        x: 283
+        y: 650
+        width: 274
+        height: 211
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 27a6c0de8ff950c50800000000000000
+      internalID: 6630881917850643058
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StorageOpenSheet_30
+      rect:
+        serializedVersion: 2
+        x: 563
+        y: 650
+        width: 274
+        height: 211
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8d323dd851fa38520800000000000000
+      internalID: 2703196708461028312
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StorageOpenSheet_31
+      rect:
+        serializedVersion: 2
+        x: 843
+        y: 650
+        width: 274
+        height: 210
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 795495dec45d71390800000000000000
+      internalID: -7847569299293518441
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StorageOpenSheet_32
+      rect:
+        serializedVersion: 2
+        x: 1123
+        y: 650
+        width: 274
+        height: 210
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7e2173b4f39ddd450800000000000000
+      internalID: 6115282734907069159
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StorageOpenSheet_33
+      rect:
+        serializedVersion: 2
+        x: 1403
+        y: 650
+        width: 275
+        height: 209
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1921287da43452850800000000000000
+      internalID: 6351556838198219409
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StorageOpenSheet_34
+      rect:
+        serializedVersion: 2
+        x: 1683
+        y: 650
+        width: 275
+        height: 208
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 456b30bc7938a1af0800000000000000
+      internalID: -424882526863772076
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StorageOpenSheet_35
+      rect:
+        serializedVersion: 2
+        x: 3
+        y: 434
+        width: 274
+        height: 205
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bb8a7fe38481c8fa0800000000000000
+      internalID: -5797231921759541061
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StorageOpenSheet_36
+      rect:
+        serializedVersion: 2
+        x: 283
+        y: 435
+        width: 274
+        height: 202
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e0a18ebcf0061b070800000000000000
+      internalID: 8120377224087476750
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StorageOpenSheet_37
+      rect:
+        serializedVersion: 2
+        x: 563
+        y: 435
+        width: 274
+        height: 201
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c9b7b9b4cdb9f7450800000000000000
+      internalID: 6088756591691791260
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StorageOpenSheet_38
+      rect:
+        serializedVersion: 2
+        x: 843
+        y: 435
+        width: 274
+        height: 200
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: eadd25094ffd0e8b0800000000000000
+      internalID: -5124850134461260370
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StorageOpenSheet_39
+      rect:
+        serializedVersion: 2
+        x: 1123
+        y: 435
+        width: 274
+        height: 199
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3c5e0a4543ea4f230800000000000000
+      internalID: 3671751135995160003
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StorageOpenSheet_40
+      rect:
+        serializedVersion: 2
+        x: 1403
+        y: 435
+        width: 274
+        height: 199
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ebe6d07b073521850800000000000000
+      internalID: 6346226568491003582
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StorageOpenSheet_41
+      rect:
+        serializedVersion: 2
+        x: 1683
+        y: 435
+        width: 274
+        height: 199
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 19c15e40fa2631080800000000000000
+      internalID: -9217915508456350575
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StorageOpenSheet_42
+      rect:
+        serializedVersion: 2
+        x: 3
+        y: 219
+        width: 274
+        height: 198
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8eb72a835b774f6d0800000000000000
+      internalID: -2957607435052614680
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StorageOpenSheet_43
+      rect:
+        serializedVersion: 2
+        x: 283
+        y: 219
+        width: 274
+        height: 198
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bd2649b3f567008e0800000000000000
+      internalID: -1729252105516719397
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StorageOpenSheet_44
+      rect:
+        serializedVersion: 2
+        x: 563
+        y: 219
+        width: 274
+        height: 198
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7c8f27767dd1a68e0800000000000000
+      internalID: -1699513098388178745
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StorageOpenSheet_45
+      rect:
+        serializedVersion: 2
+        x: 843
+        y: 219
+        width: 274
+        height: 198
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 542805c8c230babd0800000000000000
+      internalID: -2617995268518280635
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StorageOpenSheet_46
+      rect:
+        serializedVersion: 2
+        x: 1123
+        y: 219
+        width: 274
+        height: 198
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d220680f68c372d50800000000000000
+      internalID: 6712400319877612077
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StorageOpenSheet_47
+      rect:
+        serializedVersion: 2
+        x: 1403
+        y: 219
+        width: 274
+        height: 198
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4a81dc91e7f93eb60800000000000000
+      internalID: 7774232745719175332
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StorageOpenSheet_48
+      rect:
+        serializedVersion: 2
+        x: 1683
+        y: 219
+        width: 274
+        height: 198
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cece0bf5ef3b27ef0800000000000000
+      internalID: -111829135622345492
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StorageOpenSheet_49
+      rect:
+        serializedVersion: 2
+        x: 3
+        y: 3
+        width: 274
+        height: 198
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8cbfc80cc32ba8000800000000000000
+      internalID: 39039520784317384
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StorageOpenSheet_50
+      rect:
+        serializedVersion: 2
+        x: 283
+        y: 3
+        width: 274
+        height: 198
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2273711ec1e3be5c0800000000000000
+      internalID: -4185183134954342622
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StorageOpenSheet_51
+      rect:
+        serializedVersion: 2
+        x: 563
+        y: 3
+        width: 274
+        height: 198
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a55247da543bd46e0800000000000000
+      internalID: -1851626759935220390
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StorageOpenSheet_52
+      rect:
+        serializedVersion: 2
+        x: 843
+        y: 3
+        width: 274
+        height: 198
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5daf613c8c853aa90800000000000000
+      internalID: -7303896551375045931
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StorageOpenSheet_53
+      rect:
+        serializedVersion: 2
+        x: 1123
+        y: 3
+        width: 274
+        height: 198
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 41c67b33df258ee20800000000000000
+      internalID: 3380042767789419540
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StorageOpenSheet_54
+      rect:
+        serializedVersion: 2
+        x: 1403
+        y: 3
+        width: 274
+        height: 198
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8c257b45edeadc500800000000000000
+      internalID: 418182610342597320
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: StorageOpenSheet_55
+      rect:
+        serializedVersion: 2
+        x: 1683
+        y: 3
+        width: 274
+        height: 198
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ceb6fd7d07a5795a0800000000000000
+      internalID: -6514638895263552532
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      StorageOpenSheet_0: -488250754439920227
+      StorageOpenSheet_1: 4185328790659908781
+      StorageOpenSheet_10: -4473185053017082837
+      StorageOpenSheet_11: 8488879790383178047
+      StorageOpenSheet_12: 4044319028330519723
+      StorageOpenSheet_13: 6911162229384100685
+      StorageOpenSheet_14: 6898888314166758144
+      StorageOpenSheet_15: -6869551145290333690
+      StorageOpenSheet_16: 8858288376881133341
+      StorageOpenSheet_17: -3394378364440843338
+      StorageOpenSheet_18: -4830244660164711892
+      StorageOpenSheet_19: -3900233488216255558
+      StorageOpenSheet_2: -7897694816941712455
+      StorageOpenSheet_20: 3259470234240165601
+      StorageOpenSheet_21: 6256383120587821250
+      StorageOpenSheet_22: -5431451304398749192
+      StorageOpenSheet_23: 343948734949843696
+      StorageOpenSheet_24: -4078788869916734770
+      StorageOpenSheet_25: 5968922180481301285
+      StorageOpenSheet_26: 1827267982306163859
+      StorageOpenSheet_27: 5920188210374576150
+      StorageOpenSheet_28: -502583935828140369
+      StorageOpenSheet_29: 6630881917850643058
+      StorageOpenSheet_3: -3340834811805101369
+      StorageOpenSheet_30: 2703196708461028312
+      StorageOpenSheet_31: -7847569299293518441
+      StorageOpenSheet_32: 6115282734907069159
+      StorageOpenSheet_33: 6351556838198219409
+      StorageOpenSheet_34: -424882526863772076
+      StorageOpenSheet_35: -5797231921759541061
+      StorageOpenSheet_36: 8120377224087476750
+      StorageOpenSheet_37: 6088756591691791260
+      StorageOpenSheet_38: -5124850134461260370
+      StorageOpenSheet_39: 3671751135995160003
+      StorageOpenSheet_4: -4805888650280285288
+      StorageOpenSheet_40: 6346226568491003582
+      StorageOpenSheet_41: -9217915508456350575
+      StorageOpenSheet_42: -2957607435052614680
+      StorageOpenSheet_43: -1729252105516719397
+      StorageOpenSheet_44: -1699513098388178745
+      StorageOpenSheet_45: -2617995268518280635
+      StorageOpenSheet_46: 6712400319877612077
+      StorageOpenSheet_47: 7774232745719175332
+      StorageOpenSheet_48: -111829135622345492
+      StorageOpenSheet_49: 39039520784317384
+      StorageOpenSheet_5: -8562997793025273360
+      StorageOpenSheet_50: -4185183134954342622
+      StorageOpenSheet_51: -1851626759935220390
+      StorageOpenSheet_52: -7303896551375045931
+      StorageOpenSheet_53: 3380042767789419540
+      StorageOpenSheet_54: 418182610342597320
+      StorageOpenSheet_55: -6514638895263552532
+      StorageOpenSheet_6: -2183170301954946256
+      StorageOpenSheet_7: 3909442314091668757
+      StorageOpenSheet_8: -1482396291926325855
+      StorageOpenSheet_9: -165415940906322389
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
