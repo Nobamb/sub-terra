@@ -417,7 +417,7 @@ namespace SubTerra.Gameplay.Integration
                     }
 
                     var instance = node.GetComponent<BuildingInstance>();
-                    if (instance == null || !IsProximityPoweredFacility(instance.BuildingId))
+                    if (instance == null)
                     {
                         continue;
                     }
@@ -428,9 +428,15 @@ namespace SubTerra.Gameplay.Integration
                         continue;
                     }
 
-                    facility.SetSupplyRangePowered(
-                        IsWithinPowerSupplyRange(node.transform.position),
-                        allowEffect);
+                    var inRange = IsWithinPowerSupplyRange(node.transform.position);
+                    // B-214: 조명·보관함도 주기 그림 연출이 범위를 알 수 있게 연출 전용 값만 채운다(판정·켜짐 연출과 무관).
+                    facility.SetVisualSupplyRange(inRange);
+                    if (!IsProximityPoweredFacility(instance.BuildingId))
+                    {
+                        continue;
+                    }
+
+                    facility.SetSupplyRangePowered(inRange, allowEffect);
                 }
             }
             catch (Exception exception)

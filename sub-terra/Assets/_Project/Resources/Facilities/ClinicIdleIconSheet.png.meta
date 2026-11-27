@@ -1,0 +1,780 @@
+fileFormatVersion: 2
+guid: cdb04e330f26bb444aef09e3f6d66388
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 8994358064914985158
+    second: ClinicIdleIconSheet_0
+  - first:
+      213: -2606389223343048950
+    second: ClinicIdleIconSheet_1
+  - first:
+      213: -5217222404067264774
+    second: ClinicIdleIconSheet_2
+  - first:
+      213: 1349884885342693319
+    second: ClinicIdleIconSheet_3
+  - first:
+      213: 3250050711410520536
+    second: ClinicIdleIconSheet_4
+  - first:
+      213: -4490786549536475589
+    second: ClinicIdleIconSheet_5
+  - first:
+      213: 8904982696761777269
+    second: ClinicIdleIconSheet_6
+  - first:
+      213: 8430835007822896259
+    second: ClinicIdleIconSheet_7
+  - first:
+      213: -8940695846437058042
+    second: ClinicIdleIconSheet_8
+  - first:
+      213: 7745099843056395713
+    second: ClinicIdleIconSheet_9
+  - first:
+      213: -9175343583096055063
+    second: ClinicIdleIconSheet_10
+  - first:
+      213: 7054794463614347386
+    second: ClinicIdleIconSheet_11
+  - first:
+      213: -8442434074446157676
+    second: ClinicIdleIconSheet_12
+  - first:
+      213: -8160692514870729454
+    second: ClinicIdleIconSheet_13
+  - first:
+      213: 2498765340104629447
+    second: ClinicIdleIconSheet_14
+  - first:
+      213: -579651133968224444
+    second: ClinicIdleIconSheet_15
+  - first:
+      213: -3607713212377688387
+    second: ClinicIdleIconSheet_16
+  - first:
+      213: -2575573788620423321
+    second: ClinicIdleIconSheet_17
+  - first:
+      213: 5538741889279792009
+    second: ClinicIdleIconSheet_18
+  - first:
+      213: 7786315374489700658
+    second: ClinicIdleIconSheet_19
+  - first:
+      213: -4815153253745704257
+    second: ClinicIdleIconSheet_20
+  - first:
+      213: 3665507694457224196
+    second: ClinicIdleIconSheet_21
+  - first:
+      213: 6596885347393694070
+    second: ClinicIdleIconSheet_22
+  - first:
+      213: 7993742172958748985
+    second: ClinicIdleIconSheet_23
+  - first:
+      213: 1083147770405091878
+    second: ClinicIdleIconSheet_24
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 0
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 2
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: ClinicIdleIconSheet_0
+      rect:
+        serializedVersion: 2
+        x: 6
+        y: 668
+        width: 152
+        height: 137
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 6c07de1810162dc70800000000000000
+      internalID: 8994358064914985158
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClinicIdleIconSheet_1
+      rect:
+        serializedVersion: 2
+        x: 170
+        y: 668
+        width: 152
+        height: 137
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a073b348fce34dbd0800000000000000
+      internalID: -2606389223343048950
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClinicIdleIconSheet_2
+      rect:
+        serializedVersion: 2
+        x: 334
+        y: 668
+        width: 152
+        height: 137
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: af67c539dd3b897b0800000000000000
+      internalID: -5217222404067264774
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClinicIdleIconSheet_3
+      rect:
+        serializedVersion: 2
+        x: 498
+        y: 668
+        width: 152
+        height: 137
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7c72586b621cbb210800000000000000
+      internalID: 1349884885342693319
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClinicIdleIconSheet_4
+      rect:
+        serializedVersion: 2
+        x: 662
+        y: 668
+        width: 152
+        height: 137
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8d131ab07ef7a1d20800000000000000
+      internalID: 3250050711410520536
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClinicIdleIconSheet_5
+      rect:
+        serializedVersion: 2
+        x: 6
+        y: 504
+        width: 152
+        height: 137
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b36b6c82d658da1c0800000000000000
+      internalID: -4490786549536475589
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClinicIdleIconSheet_6
+      rect:
+        serializedVersion: 2
+        x: 170
+        y: 504
+        width: 152
+        height: 137
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 57c5c73059ad49b70800000000000000
+      internalID: 8904982696761777269
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClinicIdleIconSheet_7
+      rect:
+        serializedVersion: 2
+        x: 334
+        y: 504
+        width: 152
+        height: 137
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 38c163965c7500570800000000000000
+      internalID: 8430835007822896259
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClinicIdleIconSheet_8
+      rect:
+        serializedVersion: 2
+        x: 498
+        y: 504
+        width: 152
+        height: 137
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 60a0f4c5f744ce380800000000000000
+      internalID: -8940695846437058042
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClinicIdleIconSheet_9
+      rect:
+        serializedVersion: 2
+        x: 662
+        y: 504
+        width: 152
+        height: 137
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1c56f4f954f1c7b60800000000000000
+      internalID: 7745099843056395713
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClinicIdleIconSheet_10
+      rect:
+        serializedVersion: 2
+        x: 6
+        y: 340
+        width: 152
+        height: 137
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9ea566dcf91aaa080800000000000000
+      internalID: -9175343583096055063
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClinicIdleIconSheet_11
+      rect:
+        serializedVersion: 2
+        x: 170
+        y: 340
+        width: 152
+        height: 137
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a78202fcf2aa7e160800000000000000
+      internalID: 7054794463614347386
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClinicIdleIconSheet_12
+      rect:
+        serializedVersion: 2
+        x: 334
+        y: 340
+        width: 152
+        height: 137
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 498abf070f276da80800000000000000
+      internalID: -8442434074446157676
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClinicIdleIconSheet_13
+      rect:
+        serializedVersion: 2
+        x: 498
+        y: 340
+        width: 152
+        height: 137
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 215e0f915656fbe80800000000000000
+      internalID: -8160692514870729454
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClinicIdleIconSheet_14
+      rect:
+        serializedVersion: 2
+        x: 662
+        y: 340
+        width: 152
+        height: 137
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7cc9ef976d56da220800000000000000
+      internalID: 2498765340104629447
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClinicIdleIconSheet_15
+      rect:
+        serializedVersion: 2
+        x: 6
+        y: 176
+        width: 152
+        height: 137
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 44feb226d5aa4f7f0800000000000000
+      internalID: -579651133968224444
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClinicIdleIconSheet_16
+      rect:
+        serializedVersion: 2
+        x: 170
+        y: 176
+        width: 152
+        height: 137
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: db69eb4a2f3deedc0800000000000000
+      internalID: -3607713212377688387
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClinicIdleIconSheet_17
+      rect:
+        serializedVersion: 2
+        x: 334
+        y: 176
+        width: 152
+        height: 137
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 76ff8740949b14cd0800000000000000
+      internalID: -2575573788620423321
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClinicIdleIconSheet_18
+      rect:
+        serializedVersion: 2
+        x: 498
+        y: 176
+        width: 152
+        height: 137
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 983191d17609ddc40800000000000000
+      internalID: 5538741889279792009
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClinicIdleIconSheet_19
+      rect:
+        serializedVersion: 2
+        x: 662
+        y: 176
+        width: 152
+        height: 137
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2390f95549c8e0c60800000000000000
+      internalID: 7786315374489700658
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClinicIdleIconSheet_20
+      rect:
+        serializedVersion: 2
+        x: 6
+        y: 12
+        width: 152
+        height: 137
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fb2cb63a0a32d2db0800000000000000
+      internalID: -4815153253745704257
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClinicIdleIconSheet_21
+      rect:
+        serializedVersion: 2
+        x: 170
+        y: 12
+        width: 152
+        height: 137
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 40c7591d3df7ed230800000000000000
+      internalID: 3665507694457224196
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClinicIdleIconSheet_22
+      rect:
+        serializedVersion: 2
+        x: 334
+        y: 12
+        width: 152
+        height: 137
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 679616b8548dc8b50800000000000000
+      internalID: 6596885347393694070
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClinicIdleIconSheet_23
+      rect:
+        serializedVersion: 2
+        x: 498
+        y: 12
+        width: 152
+        height: 137
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 931f345572a7fee60800000000000000
+      internalID: 7993742172958748985
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ClinicIdleIconSheet_24
+      rect:
+        serializedVersion: 2
+        x: 662
+        y: 12
+        width: 152
+        height: 137
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 62a704e882d180f00800000000000000
+      internalID: 1083147770405091878
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      ClinicIdleIconSheet_0: 8994358064914985158
+      ClinicIdleIconSheet_1: -2606389223343048950
+      ClinicIdleIconSheet_10: -9175343583096055063
+      ClinicIdleIconSheet_11: 7054794463614347386
+      ClinicIdleIconSheet_12: -8442434074446157676
+      ClinicIdleIconSheet_13: -8160692514870729454
+      ClinicIdleIconSheet_14: 2498765340104629447
+      ClinicIdleIconSheet_15: -579651133968224444
+      ClinicIdleIconSheet_16: -3607713212377688387
+      ClinicIdleIconSheet_17: -2575573788620423321
+      ClinicIdleIconSheet_18: 5538741889279792009
+      ClinicIdleIconSheet_19: 7786315374489700658
+      ClinicIdleIconSheet_2: -5217222404067264774
+      ClinicIdleIconSheet_20: -4815153253745704257
+      ClinicIdleIconSheet_21: 3665507694457224196
+      ClinicIdleIconSheet_22: 6596885347393694070
+      ClinicIdleIconSheet_23: 7993742172958748985
+      ClinicIdleIconSheet_24: 1083147770405091878
+      ClinicIdleIconSheet_3: 1349884885342693319
+      ClinicIdleIconSheet_4: 3250050711410520536
+      ClinicIdleIconSheet_5: -4490786549536475589
+      ClinicIdleIconSheet_6: 8904982696761777269
+      ClinicIdleIconSheet_7: 8430835007822896259
+      ClinicIdleIconSheet_8: -8940695846437058042
+      ClinicIdleIconSheet_9: 7745099843056395713
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

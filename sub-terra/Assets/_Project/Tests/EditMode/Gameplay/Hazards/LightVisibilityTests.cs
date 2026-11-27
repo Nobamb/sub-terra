@@ -164,6 +164,32 @@ namespace SubTerra.Gameplay.Hazards.Tests
         }
 
         [Test]
+        public void FacilityVisualDim_LowersOnlyTheHaloAlpha_NotTheJudgement()
+        {
+            // B-214: 조명 깜빡임은 그림(후광 알파)만 바꾼다. 가스 시야 범위·판정은 그대로다.
+            var light = CreateLight(Vector3.zero, powered: true);
+            var host = light.transform.parent != null ? light.transform.parent.gameObject : light.gameObject;
+            var dim = host.AddComponent<FacilityVisualDim>();
+            var halo = LightHaloVisual.EnsureFor(light);
+            var radius = light.Radius;
+
+            halo.Tick(1f, 1f, 16, null);
+            var full = halo.CurrentAlpha;
+            Assert.That(full, Is.GreaterThan(0.2f));
+
+            dim.Multiplier = 0.35f;
+            halo.Tick(1f, 1f, 17, null);
+            Assert.That(halo.CurrentAlpha, Is.EqualTo(full * 0.35f).Within(0.002f));
+            Assert.That(light.Radius, Is.EqualTo(radius), "판정 반지름은 그대로");
+            Assert.That(GasVisionClearanceSource.IsCleared(new Vector2(3f, 0f)), Is.True, "깜빡이는 동안에도 시야 확보");
+            Assert.That(light.LightLevel, Is.EqualTo(1f));
+
+            dim.Multiplier = 1f;
+            halo.Tick(1f, 1f, 18, null);
+            Assert.That(halo.CurrentAlpha, Is.EqualTo(full).Within(0.002f), "다시 환해진다");
+        }
+
+        [Test]
         public void HaloBudgetStopsAtTheCap()
         {
             var taken = 0;

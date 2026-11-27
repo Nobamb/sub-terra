@@ -310,6 +310,7 @@ namespace SubTerra.App.Integration
             DeveloperDebugSpawnCommands.Register(registry);
             DeveloperDebugCollapseCommands.Register(registry);
             DeveloperDebugGenderCommands.Register(registry);
+            DeveloperDebugFacilityIdleCommands.Register(registry);
             return registry;
         }
 

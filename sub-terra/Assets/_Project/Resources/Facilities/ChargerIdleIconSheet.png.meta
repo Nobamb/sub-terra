@@ -1,0 +1,780 @@
+fileFormatVersion: 2
+guid: db16a77cfe7134c49a2a6079ecc4159f
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -2912231911060762091
+    second: ChargerIdleIconSheet_0
+  - first:
+      213: 1555469112240746762
+    second: ChargerIdleIconSheet_1
+  - first:
+      213: 1584879092893523555
+    second: ChargerIdleIconSheet_2
+  - first:
+      213: 8111519436828200983
+    second: ChargerIdleIconSheet_3
+  - first:
+      213: 8379839800675474600
+    second: ChargerIdleIconSheet_4
+  - first:
+      213: -7394377462276263769
+    second: ChargerIdleIconSheet_5
+  - first:
+      213: 3685367293058135780
+    second: ChargerIdleIconSheet_6
+  - first:
+      213: 74404910486192324
+    second: ChargerIdleIconSheet_7
+  - first:
+      213: -777347890099751817
+    second: ChargerIdleIconSheet_8
+  - first:
+      213: -6479203092098342898
+    second: ChargerIdleIconSheet_9
+  - first:
+      213: -7528046080445015109
+    second: ChargerIdleIconSheet_10
+  - first:
+      213: -2257725208777471762
+    second: ChargerIdleIconSheet_11
+  - first:
+      213: 7307687247749777316
+    second: ChargerIdleIconSheet_12
+  - first:
+      213: -724330291199584191
+    second: ChargerIdleIconSheet_13
+  - first:
+      213: 8809939810977505372
+    second: ChargerIdleIconSheet_14
+  - first:
+      213: 4410037380209602772
+    second: ChargerIdleIconSheet_15
+  - first:
+      213: 300760130218922345
+    second: ChargerIdleIconSheet_16
+  - first:
+      213: 3753152932457397858
+    second: ChargerIdleIconSheet_17
+  - first:
+      213: -4715636940543912787
+    second: ChargerIdleIconSheet_18
+  - first:
+      213: 349694225713796480
+    second: ChargerIdleIconSheet_19
+  - first:
+      213: 8467512830696656020
+    second: ChargerIdleIconSheet_20
+  - first:
+      213: 8656388261005751171
+    second: ChargerIdleIconSheet_21
+  - first:
+      213: 1215023210256514744
+    second: ChargerIdleIconSheet_22
+  - first:
+      213: -6099942964910618959
+    second: ChargerIdleIconSheet_23
+  - first:
+      213: 5549597245182344910
+    second: ChargerIdleIconSheet_24
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 0
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 2
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: ChargerIdleIconSheet_0
+      rect:
+        serializedVersion: 2
+        x: 25
+        y: 657
+        width: 115
+        height: 159
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5129aada18ca597d0800000000000000
+      internalID: -2912231911060762091
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ChargerIdleIconSheet_1
+      rect:
+        serializedVersion: 2
+        x: 189
+        y: 657
+        width: 115
+        height: 159
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a01b3369ae2269510800000000000000
+      internalID: 1555469112240746762
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ChargerIdleIconSheet_2
+      rect:
+        serializedVersion: 2
+        x: 353
+        y: 657
+        width: 115
+        height: 159
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 36e9cdf432f9ef510800000000000000
+      internalID: 1584879092893523555
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ChargerIdleIconSheet_3
+      rect:
+        serializedVersion: 2
+        x: 517
+        y: 657
+        width: 115
+        height: 159
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 71052dc73f7e19070800000000000000
+      internalID: 8111519436828200983
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ChargerIdleIconSheet_4
+      rect:
+        serializedVersion: 2
+        x: 681
+        y: 657
+        width: 115
+        height: 159
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8ac11f186eb2b4470800000000000000
+      internalID: 8379839800675474600
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ChargerIdleIconSheet_5
+      rect:
+        serializedVersion: 2
+        x: 25
+        y: 493
+        width: 115
+        height: 159
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7a07ed900e4e16990800000000000000
+      internalID: -7394377462276263769
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ChargerIdleIconSheet_6
+      rect:
+        serializedVersion: 2
+        x: 189
+        y: 493
+        width: 115
+        height: 159
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4e6b291f60e052330800000000000000
+      internalID: 3685367293058135780
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ChargerIdleIconSheet_7
+      rect:
+        serializedVersion: 2
+        x: 353
+        y: 493
+        width: 115
+        height: 159
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4c003133fd6580100800000000000000
+      internalID: 74404910486192324
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ChargerIdleIconSheet_8
+      rect:
+        serializedVersion: 2
+        x: 517
+        y: 493
+        width: 115
+        height: 159
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 77474b7663e4635f0800000000000000
+      internalID: -777347890099751817
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ChargerIdleIconSheet_9
+      rect:
+        serializedVersion: 2
+        x: 681
+        y: 493
+        width: 115
+        height: 159
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e00add3bd1f3516a0800000000000000
+      internalID: -6479203092098342898
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ChargerIdleIconSheet_10
+      rect:
+        serializedVersion: 2
+        x: 25
+        y: 329
+        width: 115
+        height: 159
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bbb9d42a9f1078790800000000000000
+      internalID: -7528046080445015109
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ChargerIdleIconSheet_11
+      rect:
+        serializedVersion: 2
+        x: 189
+        y: 329
+        width: 115
+        height: 159
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ee8cf5272e2faa0e0800000000000000
+      internalID: -2257725208777471762
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ChargerIdleIconSheet_12
+      rect:
+        serializedVersion: 2
+        x: 353
+        y: 329
+        width: 115
+        height: 159
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4a707c385de1a6560800000000000000
+      internalID: 7307687247749777316
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ChargerIdleIconSheet_13
+      rect:
+        serializedVersion: 2
+        x: 517
+        y: 329
+        width: 115
+        height: 159
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1485ef41079a2f5f0800000000000000
+      internalID: -724330291199584191
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ChargerIdleIconSheet_14
+      rect:
+        serializedVersion: 2
+        x: 681
+        y: 329
+        width: 115
+        height: 159
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c50e2edb491334a70800000000000000
+      internalID: 8809939810977505372
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ChargerIdleIconSheet_15
+      rect:
+        serializedVersion: 2
+        x: 25
+        y: 165
+        width: 115
+        height: 159
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4d07695c1a9933d30800000000000000
+      internalID: 4410037380209602772
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ChargerIdleIconSheet_16
+      rect:
+        serializedVersion: 2
+        x: 189
+        y: 165
+        width: 115
+        height: 159
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9619c44beb38c2400800000000000000
+      internalID: 300760130218922345
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ChargerIdleIconSheet_17
+      rect:
+        serializedVersion: 2
+        x: 353
+        y: 165
+        width: 115
+        height: 159
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 26eb6def4b0e51430800000000000000
+      internalID: 3753152932457397858
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ChargerIdleIconSheet_18
+      rect:
+        serializedVersion: 2
+        x: 517
+        y: 165
+        width: 115
+        height: 159
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: da49b25ef21be8eb0800000000000000
+      internalID: -4715636940543912787
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ChargerIdleIconSheet_19
+      rect:
+        serializedVersion: 2
+        x: 681
+        y: 165
+        width: 115
+        height: 159
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0851da7ab0d5ad400800000000000000
+      internalID: 349694225713796480
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ChargerIdleIconSheet_20
+      rect:
+        serializedVersion: 2
+        x: 25
+        y: 1
+        width: 115
+        height: 159
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 49c8cb48e06a28570800000000000000
+      internalID: 8467512830696656020
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ChargerIdleIconSheet_21
+      rect:
+        serializedVersion: 2
+        x: 189
+        y: 1
+        width: 115
+        height: 159
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 383fb17824ba12870800000000000000
+      internalID: 8656388261005751171
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ChargerIdleIconSheet_22
+      rect:
+        serializedVersion: 2
+        x: 353
+        y: 1
+        width: 115
+        height: 159
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8beb1391c21acd010800000000000000
+      internalID: 1215023210256514744
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ChargerIdleIconSheet_23
+      rect:
+        serializedVersion: 2
+        x: 517
+        y: 1
+        width: 115
+        height: 159
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1b60c5a3136a85ba0800000000000000
+      internalID: -6099942964910618959
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ChargerIdleIconSheet_24
+      rect:
+        serializedVersion: 2
+        x: 681
+        y: 1
+        width: 115
+        height: 159
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ece749d9a41240d40800000000000000
+      internalID: 5549597245182344910
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      ChargerIdleIconSheet_0: -2912231911060762091
+      ChargerIdleIconSheet_1: 1555469112240746762
+      ChargerIdleIconSheet_10: -7528046080445015109
+      ChargerIdleIconSheet_11: -2257725208777471762
+      ChargerIdleIconSheet_12: 7307687247749777316
+      ChargerIdleIconSheet_13: -724330291199584191
+      ChargerIdleIconSheet_14: 8809939810977505372
+      ChargerIdleIconSheet_15: 4410037380209602772
+      ChargerIdleIconSheet_16: 300760130218922345
+      ChargerIdleIconSheet_17: 3753152932457397858
+      ChargerIdleIconSheet_18: -4715636940543912787
+      ChargerIdleIconSheet_19: 349694225713796480
+      ChargerIdleIconSheet_2: 1584879092893523555
+      ChargerIdleIconSheet_20: 8467512830696656020
+      ChargerIdleIconSheet_21: 8656388261005751171
+      ChargerIdleIconSheet_22: 1215023210256514744
+      ChargerIdleIconSheet_23: -6099942964910618959
+      ChargerIdleIconSheet_24: 5549597245182344910
+      ChargerIdleIconSheet_3: 8111519436828200983
+      ChargerIdleIconSheet_4: 8379839800675474600
+      ChargerIdleIconSheet_5: -7394377462276263769
+      ChargerIdleIconSheet_6: 3685367293058135780
+      ChargerIdleIconSheet_7: 74404910486192324
+      ChargerIdleIconSheet_8: -777347890099751817
+      ChargerIdleIconSheet_9: -6479203092098342898
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
